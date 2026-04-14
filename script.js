@@ -178,7 +178,7 @@ function initSectionToggles(){
     const btn = document.getElementById(name + 'Toggle');
     const body = document.getElementById(name + 'SectionBody');
     if(!btn || !body) return;
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => { e.preventDefault();
       setSectionCollapsed(name, !body.classList.contains('collapsed'));
     });
   });
@@ -186,6 +186,18 @@ function initSectionToggles(){
   ['inventory','vendor','history','noMatch','usage'].forEach(name => {
     setSectionCollapsed(name, !!states[name]);
   });
+}
+
+
+function safeArray(value){
+  return Array.isArray(value) ? value : [];
+}
+function safeString(value){
+  return value == null ? '' : String(value);
+}
+function safeNumber(value, fallback = 0){
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
 }
 
 function safeEl(id){
@@ -990,7 +1002,9 @@ function renderQuickOrderDraft(){
   `).join('') || `<tr><td colspan="5" class="quick-order-empty">No quick order items added yet.</td></tr>`;
 }
 function removeQuickOrderItem(index){
-  quickOrderDraftItems.splice(index, 1);
+  const idx = safeNumber(index, -1);
+  if(!Array.isArray(quickOrderDraftItems) || idx < 0 || idx >= quickOrderDraftItems.length) return;
+  quickOrderDraftItems.splice(idx, 1);
   renderQuickOrderDraft();
 }
 function openQuickOrderModal(){
@@ -1463,6 +1477,7 @@ function renderQuickOrderVendorTabs(){
 }
 
 function renderOrderHistory(){
+  state.orderHistory = safeArray(state.orderHistory);
   const wrap = document.getElementById('historyList');
   if(!wrap) return;
   const searchTerm = normalizeName(document.getElementById('historySearchInput')?.value || '');
@@ -1574,6 +1589,10 @@ async function reExportHistoryOrder(id){
 }
 window.reExportHistoryOrder = reExportHistoryOrder;
 function render(){
+  state.master = safeArray(state.master);
+  state.noMatches = safeArray(state.noMatches);
+  state.orderHistory = safeArray(state.orderHistory);
+  state.placedOrders = safeArray(state.placedOrders);
   const q = normalizeName(document.getElementById('searchInput')?.value || '');
   const vendorFilter = document.getElementById('vendorFilter')?.value || 'ALL';
   const inventoryVendors = ['ALL','LOOP','SOUTHERN','BREAKTHRU','WINE MERCHANT','UNKNOWN'];
@@ -1607,7 +1626,7 @@ function render(){
   renderSuggestionsSummary(vendRows);
   const totalBottles = vendRows.reduce((sum, r) => sum + parseNum(getEffectiveOrder(r)), 0);
   const editedCount = vendRows.filter(r => supportsManualFinalOrder(r.vendor) && r.orderOverride !== '' && r.orderOverride !== null && r.orderOverride !== undefined).length;
-  document.getElementById('vendorSummary').textContent = `Current list: ${vendRows.length} code${vendRows.length===1?'':'s'} | ${fmt(totalBottles)} bottle${Number(totalBottles)===1?'':'s'} | ${editedCount} edited`;
+  const vendorSummaryEl = safeEl('vendorSummary'); if(vendorSummaryEl) vendorSummaryEl.textContent = `Current list: ${vendRows.length} code${vendRows.length===1?'':'s'} | ${fmt(totalBottles)} bottle${Number(totalBottles)===1?'':'s'} | ${editedCount} edited`;
   renderOrderHistory();
 
   document.getElementById('noMatchBody').innerHTML = state.noMatches.map((r,i)=>{
@@ -1740,18 +1759,15 @@ function showPreviewModal(){
 function closePreviewModal(){ document.getElementById('previewModalBg').classList.add('hidden'); pendingImport = null; }
 function applyPendingImport(){
   if(!pendingImport) return;
-  document.getElementById('previewModalBg').classList.add('hidden');
-  const importMatches = pendingImport.matches;
-  state.master = pendingImport.previewMaster.map(r => ({...r, orderOverride:''}));
+  state.master = pendingImport.previewMaster;
   state.noMatches = pendingImport.noMatches;
-  state.placedOrders = [];
-  compareSelection = [];
   state.lastCountName = pendingImport.fileName;
   state.lastUpdated = new Date().toISOString();
-  pendingImport = null;
   saveState();
   render();
-  setStatus(`Count imported: ${state.lastCountName}. Matches: ${importMatches}. No matches: ${state.noMatches.length}. Previous placed-order locks cleared for the new weekly cycle.`);
+  setStatus(`Count imported: ${pendingImport.fileName}. Matches: ${pendingImport.matches}. No matches: ${pendingImport.noMatches.length}.`);
+  document.getElementById('previewModalBg').classList.add('hidden');
+  pendingImport = null;
 }
 
 function openNoMatchModal(index){
@@ -1830,71 +1846,6 @@ function saveNoMatchAsItem(){
   closeModal();
   setStatus(`Item '${item}' created and saved to the persistent master.`);
 }
-
-
-function openNewItemModal(){
-  const codeEl = document.getElementById('newItemCode');
-  const vendorEl = document.getElementById('newItemVendor');
-  const nameEl = document.getElementById('newItemName');
-  const onHandEl = document.getElementById('newItemOnHand');
-  const suggestedEl = document.getElementById('newItemSuggested');
-  const valueEl = document.getElementById('newItemValue');
-  const finalOrderEl = document.getElementById('newItemFinalOrder');
-  if(codeEl) codeEl.value = '';
-  if(vendorEl) vendorEl.value = 'UNKNOWN';
-  if(nameEl) nameEl.value = '';
-  if(onHandEl) onHandEl.value = '';
-  if(suggestedEl) suggestedEl.value = '';
-  if(valueEl) valueEl.value = '';
-  if(finalOrderEl) finalOrderEl.value = '';
-  document.getElementById('newItemModalBg').classList.remove('hidden');
-}
-window.openNewItemModal = openNewItemModal;
-
-function closeNewItemModal(){
-  document.getElementById('newItemModalBg').classList.add('hidden');
-}
-window.closeNewItemModal = closeNewItemModal;
-
-function saveNewInventoryItem(){
-  const code = document.getElementById('newItemCode').value.trim();
-  const item = document.getElementById('newItemName').value.trim();
-  let vendor = document.getElementById('newItemVendor').value;
-  const onHand = parseNum(document.getElementById('newItemOnHand').value);
-  const suggested = parseNum(document.getElementById('newItemSuggested').value);
-  const value = Math.max(0, parseNum(document.getElementById('newItemValue').value));
-  const finalOrderRaw = document.getElementById('newItemFinalOrder').value;
-  const itemNorm = normalizeName(item);
-  if(!item) return alert('Item name is required.');
-  if(vendor === 'UNKNOWN' && code) vendor = inferVendor(code);
-  const duplicate = (state.master || []).some(r =>
-    (code && String(r.code || '').trim() === code) ||
-    (itemNorm && normalizeName(r.item || '') === itemNorm)
-  );
-  if(duplicate){
-    return alert('An item with the same code or item name already exists in Inventory.');
-  }
-  const orderOverride = (finalOrderRaw === '' || finalOrderRaw === null || finalOrderRaw === undefined)
-    ? ''
-    : Math.max(0, parseNum(finalOrderRaw));
-  state.master.push({
-    code,
-    item,
-    itemNorm,
-    vendor: String(vendor || 'UNKNOWN').trim().toUpperCase(),
-    onHand,
-    suggested,
-    value,
-    toOrder: computeToOrder(onHand, suggested),
-    orderOverride
-  });
-  state.master.sort((a,b) => String(a.item || '').localeCompare(String(b.item || '')));
-  saveState();
-  render();
-  closeNewItemModal();
-  setStatus(`New inventory item '${item}' created.`);
-}
-window.saveNewInventoryItem = saveNewInventoryItem;
 
 function updateFinalOrder(index, value){
   const row = state.master[index];
@@ -2078,7 +2029,7 @@ function exportCurrentVendorXlsx(){
   setStatus(`Vendor XLSX exported for ${activeVendorTab}.`);
 }
 async function exportVendorJpgFromRows(vendor, rows, filename){
-  const safeRows = (rows || []).filter(r => parseNum(r.finalOrder !== undefined ? r.finalOrder : getEffectiveOrder(r)) > 0);
+  const safeRows = safeArray(rows).filter(r => r && parseNum(r.finalOrder !== undefined ? r.finalOrder : getEffectiveOrder(r)) > 0);
   const totalBottles = safeRows.reduce((sum, r) => sum + parseNum(r.finalOrder !== undefined ? r.finalOrder : getEffectiveOrder(r)), 0);
   const editedCount = safeRows.filter(r => supportsManualFinalOrder(r.vendor) && r.orderOverride !== '' && r.orderOverride !== null && r.orderOverride !== undefined).length;
   const temp = document.createElement('div');
@@ -2316,15 +2267,13 @@ function exportNoMatch(){
 }
 
 function resetOnHand(){
-  if(!state.master.length) return;
-  if(!confirm('Reset all ON HAND values to 0?')) return;
+  if(!state.master.length) return alert('Load a master first.');
+  if(!confirm('This will set ON HAND to 0 for every item in the persistent master. Continue?')) return;
   state.master = state.master.map(r => ({...r, onHand:0, toOrder:computeToOrder(0, r.suggested), orderOverride:''}));
-  state.noMatches = [];
-  state.placedOrders = [];
-  compareSelection = [];
+  state.lastUpdated = new Date().toISOString();
   saveState();
   render();
-  setStatus('All ON HAND values reset to 0. Previous placed-order locks cleared for the next weekly count.');
+  setStatus('All ON HAND values were reset to 0. Load the new weekly count when you are ready.');
 }
 
 function exportBackup(){
@@ -2620,10 +2569,6 @@ document.getElementById('linkCancel').addEventListener('click', closeLinkModal);
 document.getElementById('linkSave').addEventListener('click', saveNoMatchLink);
 document.getElementById('previewCancel').addEventListener('click', closePreviewModal);
 document.getElementById('previewApply').addEventListener('click', applyPendingImport);
-document.getElementById('newItemCancel').addEventListener('click', closeNewItemModal);
-document.getElementById('newItemSave').addEventListener('click', saveNewInventoryItem);
-document.getElementById('newItemModalBg').addEventListener('click', e=>{ if(e.target.id==='newItemModalBg') closeNewItemModal(); });
-bindIfExists('addInventoryItemBtn', 'click', openNewItemModal);
 document.getElementById('editCancel').addEventListener('click', closeEditModal);
 document.getElementById('editSave').addEventListener('click', saveEditedItem);
 document.getElementById('editDelete').addEventListener('click', deleteEditedItem);
@@ -2642,7 +2587,7 @@ const historyDateFilter = document.getElementById('historyDateFilter');
 if(historySearchInput) historySearchInput.addEventListener('input', renderOrderHistory);
 if(historyVendorFilter) historyVendorFilter.addEventListener('change', renderOrderHistory);
 if(historyDateFilter) historyDateFilter.addEventListener('change', renderOrderHistory);
-bindIfExists('compareOrdersBtn', 'click', openCompareModal);
+bindIfExists('compareOrdersBtn', 'click', (e)=>{ e.preventDefault(); e.stopPropagation(); openCompareModal(); });
 bindIfExists('clearCompareBtn', 'click', clearCompareSelection);
 
 const compareModalCloseBtn = document.getElementById('compareModalClose');
@@ -2661,7 +2606,7 @@ if(compareModalBgEl){
   });
 }
 
-bindIfExists('quickOrderBtn', 'click', openQuickOrderModal);
+bindIfExists('quickOrderBtn', 'click', (e)=>{ e.preventDefault(); e.stopPropagation(); openQuickOrderModal(); });
 
 bindIfExists('quickOrderCancelBtn', 'click', closeQuickOrderModal);
 bindIfExists('quickOrderAddItemBtn', 'click', addQuickOrderItem);

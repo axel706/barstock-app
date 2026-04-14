@@ -1863,7 +1863,7 @@
     }
 
 
-    /* v3.1 polish + stability */
+    /* v3.0.1 polish + stability */
     :root{
       --ease-smooth:cubic-bezier(.22,.61,.36,1);
       --dur-fast:.16s;
@@ -2623,7 +2623,7 @@
     }
 
 
-    /* v3.1 polish + stability */
+    /* v3.0.1 polish + stability */
     :root{
       --ease-smooth:cubic-bezier(.22,.61,.36,1);
       --dur-fast:.16s;
