@@ -27,25 +27,57 @@ function showStatus(message, ok = true) {
   el.style.color = ok ? '#dcfce7' : '#fee2e2'
 }
 
-async function testSupabaseConnection() {
-  try {
-    const { data, error } = await supabaseClient
-      .from('locations')
-      .select('name')
-      .order('name')
+async function loadLocations() {
+  const { data, error } = await supabaseClient
+    .from('locations')
+    .select('name')
+    .order('name')
 
-    if (error) {
-      showStatus('Supabase read error: ' + error.message, false)
-      console.error(error)
-      return
-    }
-
-    showStatus('Supabase conectado. Locations: ' + data.map(x => x.name).join(', '), true)
-    console.log('✅ Supabase conectado:', data)
-  } catch (err) {
-    showStatus('Supabase fatal error', false)
-    console.error(err)
+  if (error) {
+    showStatus('Read error: ' + error.message, false)
+    return
   }
+
+  showStatus('Locations: ' + data.map(x => x.name).join(', '), true)
 }
 
-window.addEventListener('load', testSupabaseConnection)
+async function insertTestLocation() {
+  const name = 'Test ' + Math.floor(Math.random() * 1000)
+
+  const { error } = await supabaseClient
+    .from('locations')
+    .insert([{ name }])
+
+  if (error) {
+    showStatus('Insert error: ' + error.message, false)
+    return
+  }
+
+  showStatus('Inserted: ' + name, true)
+  loadLocations()
+}
+
+function createButton() {
+  const btn = document.createElement('button')
+  btn.textContent = '➕ Add Test Location'
+  btn.style.position = 'fixed'
+  btn.style.left = '16px'
+  btn.style.bottom = '16px'
+  btn.style.zIndex = '99999'
+  btn.style.padding = '12px 14px'
+  btn.style.borderRadius = '12px'
+  btn.style.background = '#0284c7'
+  btn.style.color = '#fff'
+  btn.style.border = 'none'
+  btn.style.fontWeight = '700'
+  btn.style.cursor = 'pointer'
+
+  btn.onclick = insertTestLocation
+
+  document.body.appendChild(btn)
+}
+
+window.addEventListener('load', () => {
+  loadLocations()
+  createButton()
+})
