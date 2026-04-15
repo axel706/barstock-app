@@ -54,3 +54,40 @@ function cloudRestore() {
         })
     })
 }
+
+async function pushInventoryToDB() {
+  try {
+    if (!state || !state.master) {
+      alert('no inventory found')
+      return
+    }
+
+    const rows = state.master.map(r => ({
+      code: r.code || '',
+      item: r.item || '',
+      vendor: r.vendor || '',
+      on_hand: r.onHand || 0,
+      suggested: r.suggested || 0,
+      value: r.value || 0
+    }))
+
+    const { error } = await supabaseClient
+      .from('inventory_items')
+      .insert(rows)
+
+    if (error) {
+      console.error(error)
+      alert('error pushing inventory')
+      return
+    }
+
+    alert('inventory pushed to DB 🚀')
+
+  } catch (e) {
+    console.error(e)
+    alert('crash')
+  }
+}
+
+window.pushInventoryToDB = pushInventoryToDB
+
