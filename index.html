@@ -2780,6 +2780,7 @@
 
 </style>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="wrap">
@@ -5914,5 +5915,152 @@ initSectionToggles();
 renderUsage();
 if(state.master.length){ setStatus(`Persistent master ready. ${state.master.length} items loaded from local storage. Excel-style TO ORDER rounding refreshed, and Final Order overrides are available for Southern, Breakthru, and Wine Merchant.`); }
 </script>
+
+<script>
+const SUPABASE_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+const LAST_CLOUD_BACKUP_KEY = 'barstock_last_cloud_backup_name';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+function cloudShowStatus(message, ok = true) {
+  let el = document.getElementById('supabaseStatus');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'supabaseStatus';
+    el.style.position = 'fixed';
+    el.style.right = '16px';
+    el.style.bottom = '16px';
+    el.style.zIndex = '99999';
+    el.style.padding = '12px 14px';
+    el.style.borderRadius = '12px';
+    el.style.fontWeight = '700';
+    el.style.fontFamily = 'system-ui, sans-serif';
+    el.style.maxWidth = '520px';
+    el.style.boxShadow = '0 10px 24px rgba(0,0,0,.2)';
+    document.body.appendChild(el);
+  }
+  el.textContent = message;
+  el.style.background = ok ? '#166534' : '#7f1d1d';
+  el.style.color = '#fff';
+}
+
+function cloudBuildPayload() {
+  if (typeof state === 'undefined') throw new Error('App state unavailable');
+  return {
+    exportedAt: new Date().toISOString(),
+    source: 'BarStock Pro V3.1 Web',
+    storageKeys: {
+      state: typeof STORAGE_KEY !== 'undefined' ? STORAGE_KEY : null,
+      aliases: typeof ALIAS_KEY !== 'undefined' ? ALIAS_KEY : null,
+      usage: typeof USAGE_STORAGE_KEY !== 'undefined' ? USAGE_STORAGE_KEY : null,
+      priceAliases: typeof PRICE_ALIAS_KEY !== 'undefined' ? PRICE_ALIAS_KEY : null
+    },
+    summary: {
+      masterCount: Array.isArray(state?.master) ? state.master.length : 0,
+      noMatchCount: Array.isArray(state?.noMatches) ? state.noMatches.length : 0,
+      orderHistoryCount: Array.isArray(state?.orderHistory) ? state.orderHistory.length : 0,
+      placedOrdersCount: Array.isArray(state?.placedOrders) ? state.placedOrders.length : 0,
+      usageCount: Array.isArray(typeof usageData !== 'undefined' ? usageData : []) ? usageData.length : 0
+    },
+    state,
+    aliases: typeof aliases !== 'undefined' ? aliases : {},
+    usageData: typeof usageData !== 'undefined' ? usageData : [],
+    priceAliases: typeof priceAliases !== 'undefined' ? priceAliases : {}
+  };
+}
+
+async function cloudSave() {
+  try {
+    const payload = cloudBuildPayload();
+    const fileName = `real-backup-${Date.now()}.json`;
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const { error } = await supabaseClient.storage
+      .from('backups')
+      .upload(fileName, blob, { contentType: 'application/json', upsert: false });
+    if (error) {
+      cloudShowStatus('Cloud backup error: ' + error.message, false);
+      console.error(error);
+      return false;
+    }
+    localStorage.setItem(LAST_CLOUD_BACKUP_KEY, fileName);
+    cloudShowStatus(`Cloud backup saved: ${fileName} | Master: ${payload.summary.masterCount}`, true);
+    const exportMenu = document.getElementById('exportMenu');
+    if (exportMenu) exportMenu.classList.add('hidden');
+    return true;
+  } catch (err) {
+    cloudShowStatus('Cloud backup failed: ' + err.message, false);
+    console.error(err);
+    return false;
+  }
+}
+
+async function cloudRestoreByName(fileName) {
+  const { data, error } = await supabaseClient.storage.from('backups').download(fileName);
+  if (error) {
+    cloudShowStatus('Cloud restore error: ' + error.message, false);
+    console.error(error);
+    return false;
+  }
+  const payload = JSON.parse(await data.text());
+  if (payload.storageKeys?.state) localStorage.setItem(payload.storageKeys.state, JSON.stringify(payload.state));
+  if (payload.storageKeys?.aliases) localStorage.setItem(payload.storageKeys.aliases, JSON.stringify(payload.aliases || {}));
+  if (payload.storageKeys?.usage) localStorage.setItem(payload.storageKeys.usage, JSON.stringify(payload.usageData || []));
+  if (payload.storageKeys?.priceAliases) localStorage.setItem(payload.storageKeys.priceAliases, JSON.stringify(payload.priceAliases || {}));
+  localStorage.setItem(LAST_CLOUD_BACKUP_KEY, fileName);
+  cloudShowStatus('Cloud backup restored', true);
+  const importMenu = document.getElementById('importMenu');
+  if (importMenu) importMenu.classList.add('hidden');
+  setTimeout(() => location.reload(), 900);
+  return true;
+}
+
+async function cloudRestore() {
+  try {
+    const { data: files, error } = await supabaseClient.storage
+      .from('backups')
+      .list('', { limit: 100, sortBy: { column: 'name', order: 'desc' } });
+    if (error) {
+      cloudShowStatus('Cloud list error: ' + error.message, false);
+      console.error(error);
+      return false;
+    }
+    const latest = (files || []).find(f => f.name.startsWith('real-backup-'));
+    if (!latest) {
+      cloudShowStatus('No cloud backups found', false);
+      return false;
+    }
+    return await cloudRestoreByName(latest.name);
+  } catch (err) {
+    cloudShowStatus('Cloud restore failed: ' + err.message, false);
+    console.error(err);
+    return false;
+  }
+}
+
+async function cloudCheckForNewerBackup() {
+  try {
+    const { data: files, error } = await supabaseClient.storage
+      .from('backups')
+      .list('', { limit: 100, sortBy: { column: 'name', order: 'desc' } });
+    if (error || !files) return;
+    const latest = files.find(f => f.name.startsWith('real-backup-'));
+    if (!latest) return;
+    const lastKnown = localStorage.getItem(LAST_CLOUD_BACKUP_KEY);
+    if (latest.name !== lastKnown) {
+      const shouldRestore = confirm('A newer cloud backup is available. Load it now?');
+      if (shouldRestore) await cloudRestoreByName(latest.name);
+    }
+  } catch (err) {
+    console.error('Cloud backup check failed', err);
+  }
+}
+
+window.cloudSave = cloudSave;
+window.cloudRestore = cloudRestore;
+window.addEventListener('load', () => {
+  setTimeout(cloudCheckForNewerBackup, 1500);
+});
+</script>
+
 </body>
 </html>
