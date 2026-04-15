@@ -17,7 +17,7 @@ function showStatus(message, ok = true) {
     el.style.borderRadius = '12px'
     el.style.fontWeight = '700'
     el.style.fontFamily = 'system-ui, sans-serif'
-    el.style.maxWidth = '460px'
+    el.style.maxWidth = '520px'
     el.style.boxShadow = '0 10px 24px rgba(0,0,0,.2)'
     document.body.appendChild(el)
   }
@@ -25,20 +25,6 @@ function showStatus(message, ok = true) {
   el.textContent = message
   el.style.background = ok ? '#166534' : '#7f1d1d'
   el.style.color = ok ? '#dcfce7' : '#fee2e2'
-}
-
-async function loadLocations() {
-  const { data, error } = await supabaseClient
-    .from('locations')
-    .select('name')
-    .order('name')
-
-  if (error) {
-    showStatus('Read error: ' + error.message, false)
-    return
-  }
-
-  showStatus('Supabase OK. Locations: ' + data.map(x => x.name).join(', '), true)
 }
 
 function getRealBackupPayload() {
@@ -103,26 +89,108 @@ async function uploadRealBackup() {
   }
 }
 
+async function restoreLatestBackup() {
+  try {
+    const { data: files, error: listError } = await supabaseClient.storage
+      .from('backups')
+      .list('', {
+        limit: 100,
+        sortBy: { column: 'name', order: 'desc' }
+      })
+
+    if (listError) {
+      showStatus('List error: ' + listError.message, false)
+      console.error(listError)
+      return
+    }
+
+    const realFiles = (files || []).filter(f => f.name.startsWith('real-backup-'))
+    if (!realFiles.length) {
+      showStatus('No real backups found', false)
+      return
+    }
+
+    const latest = realFiles[0]
+
+    const { data: downloadData, error: downloadError } = await supabaseClient.storage
+      .from('backups')
+      .download(latest.name)
+
+    if (downloadError) {
+      showStatus('Download error: ' + downloadError.message, false)
+      console.error(downloadError)
+      return
+    }
+
+    const text = await downloadData.text()
+    const payload = JSON.parse(text)
+
+    if (!payload.state) {
+      showStatus('Backup is missing state', false)
+      return
+    }
+
+    if (payload.storageKeys?.state) {
+      localStorage.setItem(payload.storageKeys.state, JSON.stringify(payload.state))
+    }
+    if (payload.storageKeys?.aliases) {
+      localStorage.setItem(payload.storageKeys.aliases, JSON.stringify(payload.aliases || {}))
+    }
+    if (payload.storageKeys?.usage) {
+      localStorage.setItem(payload.storageKeys.usage, JSON.stringify(payload.usageData || []))
+    }
+    if (payload.storageKeys?.priceAliases) {
+      localStorage.setItem(payload.storageKeys.priceAliases, JSON.stringify(payload.priceAliases || {}))
+    }
+
+    showStatus(
+      `Backup restored: ${latest.name} | Master: ${payload.summary?.masterCount ?? 'n/a'}`,
+      true
+    )
+
+    setTimeout(() => {
+      location.reload()
+    }, 1200)
+  } catch (err) {
+    showStatus('Restore failed: ' + err.message, false)
+    console.error(err)
+  }
+}
+
 function createButtons() {
-  const btn = document.createElement('button')
-  btn.textContent = '☁️ Upload Real Backup'
-  btn.style.position = 'fixed'
-  btn.style.left = '16px'
-  btn.style.bottom = '16px'
-  btn.style.zIndex = '99999'
-  btn.style.padding = '12px 14px'
-  btn.style.borderRadius = '12px'
-  btn.style.background = '#0284c7'
-  btn.style.color = '#fff'
-  btn.style.border = 'none'
-  btn.style.fontWeight = '700'
-  btn.style.cursor = 'pointer'
-  btn.onclick = uploadRealBackup
-  document.body.appendChild(btn)
+  const uploadBtn = document.createElement('button')
+  uploadBtn.textContent = '☁️ Upload Real Backup'
+  uploadBtn.style.position = 'fixed'
+  uploadBtn.style.left = '16px'
+  uploadBtn.style.bottom = '16px'
+  uploadBtn.style.zIndex = '99999'
+  uploadBtn.style.padding = '12px 14px'
+  uploadBtn.style.borderRadius = '12px'
+  uploadBtn.style.background = '#0284c7'
+  uploadBtn.style.color = '#fff'
+  uploadBtn.style.border = 'none'
+  uploadBtn.style.fontWeight = '700'
+  uploadBtn.style.cursor = 'pointer'
+  uploadBtn.onclick = uploadRealBackup
+  document.body.appendChild(uploadBtn)
+
+  const restoreBtn = document.createElement('button')
+  restoreBtn.textContent = '☁️ Restore Latest Backup'
+  restoreBtn.style.position = 'fixed'
+  restoreBtn.style.left = '16px'
+  restoreBtn.style.bottom = '70px'
+  restoreBtn.style.zIndex = '99999'
+  restoreBtn.style.padding = '12px 14px'
+  restoreBtn.style.borderRadius = '12px'
+  restoreBtn.style.background = '#16a34a'
+  restoreBtn.style.color = '#fff'
+  restoreBtn.style.border = 'none'
+  restoreBtn.style.fontWeight = '700'
+  restoreBtn.style.cursor = 'pointer'
+  restoreBtn.onclick = restoreLatestBackup
+  document.body.appendChild(restoreBtn)
 }
 
 window.addEventListener('load', () => {
-  loadLocations()
   createButtons()
 })
-
