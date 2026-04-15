@@ -2803,7 +2803,7 @@
         <div id="importMenu" class="menu hidden">
           <label class="filelbl">Import Weekly Count <input type="file" id="countFile" accept=".xlsx,.xls,.csv" /></label>
           <label class="filelbl">Import Local Backup <input type="file" id="backupFile" accept=".json" /></label>
-          <button id="cloudRestoreBtn">Restore Latest Cloud Backup</button>
+          <button id="cloudRestoreBtn" onclick="cloudRestore()">Restore Latest Cloud Backup</button>
         </div>
       </div>
       <div class="toolbar-group">
@@ -2812,7 +2812,7 @@
           <button id="exportMasterBtn">Export Master CSV</button>
           <button id="exportNoMatchBtn">Export No Match CSV</button>
           <button id="backupBtn">Export Local Backup</button>
-          <button id="cloudSaveBtn">Save Cloud Backup</button>
+          <button id="cloudSaveBtn" onclick="cloudSave()">Save Cloud Backup</button>
           <button id="exportWeeklyPdfBtn">Export Weekly Order (PDF)</button>
           <button id="exportWeeklyXlsxBtn">Export Weekly Order (XLSX)</button>
         </div>
