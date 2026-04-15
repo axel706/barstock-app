@@ -7,43 +7,53 @@
   
 
 
+
 <script>
-(() => {
-  const PUSH_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
-  const PUSH_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
-  const client = supabase.createClient(PUSH_URL, PUSH_KEY);
-
-  window.pushInventoryToDB = async function () {
-    try {
-      if (!state || !Array.isArray(state.master)) {
-        alert('no inventory');
-        return;
-      }
-
-      const rows = state.master.map(r => ({
-        code: r.code || '',
-        item_name: r.item || '',
-        vendor: r.vendor || '',
-        suggested: Number(r.suggested || 0),
-        on_hand: Number(r.onHand || 0),
-        value: Number(r.value || 0)
-      }));
-
-      const { error } = await client.from('inventory_items').insert(rows);
-
-      if (error) {
-        console.error(error);
-        alert(error.message);
-        return;
-      }
-
-      alert('inventory pushed 🚀');
-    } catch (e) {
-      console.error(e);
-      alert('crash');
+window.pushInventoryToDB = async function () {
+  try {
+    if (typeof state === 'undefined' || !state || !Array.isArray(state.master)) {
+      alert('no inventory found');
+      return;
     }
-  };
-})();
+
+    const { data: locationRow, error: locationError } = await supabaseClient
+      .from('locations')
+      .select('id')
+      .eq('name', 'The Crown Tavern')
+      .single();
+
+    if (locationError || !locationRow) {
+      console.error(locationError);
+      alert('could not find The Crown Tavern location');
+      return;
+    }
+
+    const rows = state.master.map(r => ({
+      location_id: locationRow.id,
+      code: r.code || '',
+      item_name: r.item || '',
+      vendor: r.vendor || '',
+      suggested: Number(r.suggested || 0),
+      on_hand: Number(r.onHand || 0),
+      value: Number(r.value || 0)
+    }));
+
+    const { error } = await supabaseClient
+      .from('inventory_items')
+      .insert(rows);
+
+    if (error) {
+      console.error(error);
+      alert('error: ' + error.message);
+      return;
+    }
+
+    alert('inventory pushed 🚀');
+  } catch (e) {
+    console.error(e);
+    alert('crash: ' + e.message);
+  }
+};
 </script>
 
 </body>
