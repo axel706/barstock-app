@@ -41,43 +41,55 @@ async function loadLocations() {
   showStatus('Locations: ' + data.map(x => x.name).join(', '), true)
 }
 
-async function insertTestLocation() {
-  const name = 'Test ' + Math.floor(Math.random() * 1000)
+async function uploadTestBackup() {
+  const payload = {
+    createdAt: new Date().toISOString(),
+    source: 'BarStock Pro V3.1',
+    note: 'Test backup from web app',
+    locations: ['The Crown Tavern', 'The Jockey Tavern', "Will's & Bill's"]
+  }
 
-  const { error } = await supabaseClient
-    .from('locations')
-    .insert([{ name }])
+  const fileName = `test-backup-${Date.now()}.json`
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    type: 'application/json'
+  })
+
+  const { error } = await supabaseClient.storage
+    .from('backups')
+    .upload(fileName, blob, {
+      contentType: 'application/json',
+      upsert: false
+    })
 
   if (error) {
-    showStatus('Insert error: ' + error.message, false)
+    showStatus('Upload error: ' + error.message, false)
+    console.error(error)
     return
   }
 
-  showStatus('Inserted: ' + name, true)
-  loadLocations()
+  showStatus('Backup uploaded: ' + fileName, true)
+  console.log('✅ Backup uploaded:', fileName)
 }
 
-function createButton() {
-  const btn = document.createElement('button')
-  btn.textContent = '➕ Add Test Location'
-  btn.style.position = 'fixed'
-  btn.style.left = '16px'
-  btn.style.bottom = '16px'
-  btn.style.zIndex = '99999'
-  btn.style.padding = '12px 14px'
-  btn.style.borderRadius = '12px'
-  btn.style.background = '#0284c7'
-  btn.style.color = '#fff'
-  btn.style.border = 'none'
-  btn.style.fontWeight = '700'
-  btn.style.cursor = 'pointer'
-
-  btn.onclick = insertTestLocation
-
-  document.body.appendChild(btn)
+function createButtons() {
+  const writeBtn = document.createElement('button')
+  writeBtn.textContent = '☁️ Upload Test Backup'
+  writeBtn.style.position = 'fixed'
+  writeBtn.style.left = '16px'
+  writeBtn.style.bottom = '16px'
+  writeBtn.style.zIndex = '99999'
+  writeBtn.style.padding = '12px 14px'
+  writeBtn.style.borderRadius = '12px'
+  writeBtn.style.background = '#0284c7'
+  writeBtn.style.color = '#fff'
+  writeBtn.style.border = 'none'
+  writeBtn.style.fontWeight = '700'
+  writeBtn.style.cursor = 'pointer'
+  writeBtn.onclick = uploadTestBackup
+  document.body.appendChild(writeBtn)
 }
 
 window.addEventListener('load', () => {
   loadLocations()
-  createButton()
+  createButtons()
 })
