@@ -125,3 +125,4 @@ window.addEventListener('load', () => {
   loadLocations()
   createButtons()
 })
+
