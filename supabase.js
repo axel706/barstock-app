@@ -4,7 +4,12 @@ const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S'
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
 window.supabaseClient = supabaseClient
 
-function showStatus(message, ok = true) {
+function cloudStatus(message, ok = true) {
+  if (typeof setStatus === 'function') {
+    setStatus(message)
+    return
+  }
+
   let el = document.getElementById('supabaseStatus')
   if (!el) {
     el = document.createElement('div')
@@ -52,7 +57,9 @@ function getRealBackupPayload() {
     state,
     aliases: typeof aliases !== 'undefined' ? aliases : {},
     usageData: typeof usageData !== 'undefined' ? usageData : [],
-    priceAliases: typeof priceAliases !== 'undefined' ? priceAliases : {}
+    priceAliases: typeof priceAliases !== 'undefined' ? priceAliases : {},
+    theme: document.body.classList.contains('light') ? 'light' : 'dark',
+    sectionStates: typeof loadSectionStates === 'function' ? loadSectionStates() : {}
   }
 }
 
@@ -73,18 +80,18 @@ async function uploadRealBackup() {
       })
 
     if (error) {
-      showStatus('Upload error: ' + error.message, false)
+      cloudStatus('Cloud backup failed: ' + error.message, false)
       console.error(error)
       return
     }
 
-    showStatus(
-      `Backup uploaded: ${fileName} | Master: ${payload.summary.masterCount} | No Match: ${payload.summary.noMatchCount}`,
+    cloudStatus(
+      `Cloud backup saved. Master: ${payload.summary.masterCount} | No Match: ${payload.summary.noMatchCount}`,
       true
     )
     console.log('✅ Real backup uploaded:', fileName, payload)
   } catch (err) {
-    showStatus('Backup failed: ' + err.message, false)
+    cloudStatus('Cloud backup failed: ' + err.message, false)
     console.error(err)
   }
 }
@@ -99,14 +106,14 @@ async function restoreLatestBackup() {
       })
 
     if (listError) {
-      showStatus('List error: ' + listError.message, false)
+      cloudStatus('Cloud restore failed: ' + listError.message, false)
       console.error(listError)
       return
     }
 
     const realFiles = (files || []).filter(f => f.name.startsWith('real-backup-'))
     if (!realFiles.length) {
-      showStatus('No real backups found', false)
+      cloudStatus('No cloud backups found.', false)
       return
     }
 
@@ -117,7 +124,7 @@ async function restoreLatestBackup() {
       .download(latest.name)
 
     if (downloadError) {
-      showStatus('Download error: ' + downloadError.message, false)
+      cloudStatus('Cloud restore failed: ' + downloadError.message, false)
       console.error(downloadError)
       return
     }
@@ -126,7 +133,7 @@ async function restoreLatestBackup() {
     const payload = JSON.parse(text)
 
     if (!payload.state) {
-      showStatus('Backup is missing state', false)
+      cloudStatus('Selected cloud backup is missing app state.', false)
       return
     }
 
@@ -142,55 +149,69 @@ async function restoreLatestBackup() {
     if (payload.storageKeys?.priceAliases) {
       localStorage.setItem(payload.storageKeys.priceAliases, JSON.stringify(payload.priceAliases || {}))
     }
+    if (payload.storageKeys?.theme && payload.theme) {
+      localStorage.setItem(payload.storageKeys.theme, payload.theme)
+    }
 
-    showStatus(
-      `Backup restored: ${latest.name} | Master: ${payload.summary?.masterCount ?? 'n/a'}`,
+    cloudStatus(
+      `Cloud backup restored. Master: ${payload.summary?.masterCount ?? 'n/a'}`,
       true
     )
 
     setTimeout(() => {
       location.reload()
-    }, 1200)
+    }, 900)
   } catch (err) {
-    showStatus('Restore failed: ' + err.message, false)
+    cloudStatus('Cloud restore failed: ' + err.message, false)
     console.error(err)
   }
 }
 
-function createButtons() {
-  const uploadBtn = document.createElement('button')
-  uploadBtn.textContent = '☁️ Upload Real Backup'
-  uploadBtn.style.position = 'fixed'
-  uploadBtn.style.left = '16px'
-  uploadBtn.style.bottom = '16px'
-  uploadBtn.style.zIndex = '99999'
-  uploadBtn.style.padding = '12px 14px'
-  uploadBtn.style.borderRadius = '12px'
-  uploadBtn.style.background = '#0284c7'
-  uploadBtn.style.color = '#fff'
-  uploadBtn.style.border = 'none'
-  uploadBtn.style.fontWeight = '700'
-  uploadBtn.style.cursor = 'pointer'
-  uploadBtn.onclick = uploadRealBackup
-  document.body.appendChild(uploadBtn)
+function makeMenuButton(id, text, handler) {
+  const btn = document.createElement('button')
+  btn.id = id
+  btn.type = 'button'
+  btn.textContent = text
+  btn.addEventListener('click', handler)
+  return btn
+}
 
-  const restoreBtn = document.createElement('button')
-  restoreBtn.textContent = '☁️ Restore Latest Backup'
-  restoreBtn.style.position = 'fixed'
-  restoreBtn.style.left = '16px'
-  restoreBtn.style.bottom = '70px'
-  restoreBtn.style.zIndex = '99999'
-  restoreBtn.style.padding = '12px 14px'
-  restoreBtn.style.borderRadius = '12px'
-  restoreBtn.style.background = '#16a34a'
-  restoreBtn.style.color = '#fff'
-  restoreBtn.style.border = 'none'
-  restoreBtn.style.fontWeight = '700'
-  restoreBtn.style.cursor = 'pointer'
-  restoreBtn.onclick = restoreLatestBackup
-  document.body.appendChild(restoreBtn)
+function renameLocalBackupLabels() {
+  const backupBtn = document.getElementById('backupBtn')
+  if (backupBtn) backupBtn.textContent = 'Export Local Backup'
+
+  const backupInput = document.getElementById('backupFile')
+  if (backupInput) {
+    const label = backupInput.closest('label')
+    if (label) {
+      const textNode = Array.from(label.childNodes).find(n => n.nodeType === Node.TEXT_NODE)
+      if (textNode) {
+        textNode.nodeValue = 'Import Local Backup '
+      } else {
+        label.prepend('Import Local Backup ')
+      }
+    }
+  }
+}
+
+function injectCloudButtons() {
+  renameLocalBackupLabels()
+
+  const exportMenu = document.getElementById('exportMenu')
+  if (exportMenu && !document.getElementById('cloudBackupBtn')) {
+    exportMenu.appendChild(
+      makeMenuButton('cloudBackupBtn', 'Save Cloud Backup', uploadRealBackup)
+    )
+  }
+
+  const importMenu = document.getElementById('importMenu')
+  if (importMenu && !document.getElementById('cloudRestoreBtn')) {
+    importMenu.appendChild(
+      makeMenuButton('cloudRestoreBtn', 'Restore Latest Cloud Backup', restoreLatestBackup)
+    )
+  }
 }
 
 window.addEventListener('load', () => {
-  createButtons()
+  injectCloudButtons()
 })
