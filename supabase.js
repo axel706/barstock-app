@@ -15,96 +15,132 @@ function showStatus(message, ok = true) {
     el.style.padding = '12px 14px'
     el.style.borderRadius = '12px'
     el.style.fontWeight = '700'
-    el.style.background = ok ? '#166534' : '#7f1d1d'
-    el.style.color = '#fff'
+    el.style.fontFamily = 'system-ui, sans-serif'
+    el.style.maxWidth = '520px'
+    el.style.boxShadow = '0 10px 24px rgba(0,0,0,.2)'
     document.body.appendChild(el)
   }
+
   el.textContent = message
+  el.style.background = ok ? '#166534' : '#7f1d1d'
+  el.style.color = '#fff'
 }
 
 function getPayload() {
   return {
     exportedAt: new Date().toISOString(),
-    state,
-    aliases: aliases || {},
-    usageData: usageData || [],
-    priceAliases: priceAliases || {}
+    source: 'BarStock Pro V3.1 Web',
+    state: typeof state !== 'undefined' ? state : null,
+    aliases: typeof aliases !== 'undefined' ? aliases : {},
+    usageData: typeof usageData !== 'undefined' ? usageData : [],
+    priceAliases: typeof priceAliases !== 'undefined' ? priceAliases : {}
   }
 }
 
 async function saveCloud() {
   try {
     const payload = getPayload()
+
+    if (!payload.state) {
+      showStatus('❌ no app state found', false)
+      return
+    }
+
     const fileName = `real-backup-${Date.now()}.json`
 
     const { error } = await supabaseClient.storage
       .from('backups')
-      .upload(fileName, new Blob([JSON.stringify(payload)]))
+      .upload(
+        fileName,
+        new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }),
+        { contentType: 'application/json', upsert: false }
+      )
 
     if (error) {
-      showStatus('❌ upload error')
+      showStatus('❌ upload error: ' + error.message, false)
       console.error(error)
       return
     }
 
     showStatus('✅ Cloud backup saved')
+    const exportMenu = document.getElementById('exportMenu')
+    if (exportMenu) exportMenu.classList.add('hidden')
   } catch (e) {
-    showStatus('❌ crash')
+    showStatus('❌ crash on save', false)
     console.error(e)
   }
 }
 
 async function restoreCloud() {
   try {
-    const { data: files } = await supabaseClient.storage
+    const { data: files, error: listError } = await supabaseClient.storage
       .from('backups')
-      .list('', { sortBy: { column: 'name', order: 'desc' } })
+      .list('', { limit: 100, sortBy: { column: 'name', order: 'desc' } })
 
-    const latest = files.find(f => f.name.startsWith('real-backup-'))
-    if (!latest) return showStatus('no backups')
+    if (listError) {
+      showStatus('❌ list error: ' + listError.message, false)
+      console.error(listError)
+      return
+    }
 
-    const { data } = await supabaseClient.storage
+    const latest = (files || []).find(f => f.name.startsWith('real-backup-'))
+    if (!latest) {
+      showStatus('❌ no cloud backups', false)
+      return
+    }
+
+    const { data, error: downloadError } = await supabaseClient.storage
       .from('backups')
       .download(latest.name)
 
+    if (downloadError) {
+      showStatus('❌ download error: ' + downloadError.message, false)
+      console.error(downloadError)
+      return
+    }
+
     const payload = JSON.parse(await data.text())
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload.state))
-    localStorage.setItem(ALIAS_KEY, JSON.stringify(payload.aliases || {}))
-    localStorage.setItem(USAGE_STORAGE_KEY, JSON.stringify(payload.usageData || []))
-    localStorage.setItem(PRICE_ALIAS_KEY, JSON.stringify(payload.priceAliases || {}))
+    if (typeof STORAGE_KEY !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(payload.state))
+    if (typeof ALIAS_KEY !== 'undefined') localStorage.setItem(ALIAS_KEY, JSON.stringify(payload.aliases || {}))
+    if (typeof USAGE_STORAGE_KEY !== 'undefined') localStorage.setItem(USAGE_STORAGE_KEY, JSON.stringify(payload.usageData || []))
+    if (typeof PRICE_ALIAS_KEY !== 'undefined') localStorage.setItem(PRICE_ALIAS_KEY, JSON.stringify(payload.priceAliases || {}))
 
-    showStatus('✅ restored')
-    setTimeout(() => location.reload(), 800)
+    showStatus('✅ Cloud backup restored')
+    const importMenu = document.getElementById('importMenu')
+    if (importMenu) importMenu.classList.add('hidden')
+
+    setTimeout(() => location.reload(), 900)
   } catch (e) {
-    showStatus('❌ restore error')
+    showStatus('❌ restore failed', false)
     console.error(e)
   }
 }
 
-function attachHandlers() {
-  const saveBtn = document.getElementById('cloudSaveBtn')
-  const restoreBtn = document.getElementById('cloudRestoreBtn')
+document.addEventListener('click', async (e) => {
+  const saveBtn = e.target.closest('#cloudSaveBtn')
+  const restoreBtn = e.target.closest('#cloudRestoreBtn')
 
   if (saveBtn) {
-    saveBtn.onclick = saveCloud
+    e.preventDefault()
+    e.stopPropagation()
+    await saveCloud()
+    return
   }
 
   if (restoreBtn) {
-    restoreBtn.onclick = restoreCloud
+    e.preventDefault()
+    e.stopPropagation()
+    await restoreCloud()
+    return
   }
-}
+}, true)
 
-function waitAndAttach() {
-  let tries = 0
-  const i = setInterval(() => {
-    tries++
-    attachHandlers()
-
-    if (document.getElementById('cloudSaveBtn') || tries > 20) {
-      clearInterval(i)
-    }
-  }, 300)
-}
-
-window.addEventListener('load', waitAndAttach)
+window.addEventListener('load', () => {
+  showStatus('Cloud controls armed')
+  setTimeout(() => {
+    const hasSave = !!document.getElementById('cloudSaveBtn')
+    const hasRestore = !!document.getElementById('cloudRestoreBtn')
+    console.log('Cloud buttons found:', { hasSave, hasRestore })
+  }, 800)
+})
