@@ -78,20 +78,23 @@ async function uploadRealBackup() {
       return
     }
 
-    showStatus(
-      `Cloud backup saved: ${fileName} | Master: ${payload.summary.masterCount}`,
-      true
-    )
+    showStatus(`Cloud backup saved: ${fileName} | Master: ${payload.summary.masterCount}`, true)
   } catch (err) {
     showStatus('Cloud backup failed: ' + err.message, false)
+    console.error(err)
   }
 }
 
 async function restoreLatestBackup() {
   try {
-    const { data: files } = await supabaseClient.storage
+    const { data: files, error: listError } = await supabaseClient.storage
       .from('backups')
       .list('', { limit: 100, sortBy: { column: 'name', order: 'desc' } })
+
+    if (listError) {
+      showStatus('Cloud list error: ' + listError.message, false)
+      return
+    }
 
     const latest = (files || []).find(f => f.name.startsWith('real-backup-'))
     if (!latest) {
@@ -99,46 +102,102 @@ async function restoreLatestBackup() {
       return
     }
 
-    const { data } = await supabaseClient.storage
+    const { data, error: downloadError } = await supabaseClient.storage
       .from('backups')
       .download(latest.name)
 
+    if (downloadError) {
+      showStatus('Cloud download error: ' + downloadError.message, false)
+      return
+    }
+
     const payload = JSON.parse(await data.text())
 
-    localStorage.setItem(payload.storageKeys.state, JSON.stringify(payload.state))
-    localStorage.setItem(payload.storageKeys.aliases, JSON.stringify(payload.aliases || {}))
-    localStorage.setItem(payload.storageKeys.usage, JSON.stringify(payload.usageData || []))
-    localStorage.setItem(payload.storageKeys.priceAliases, JSON.stringify(payload.priceAliases || {}))
+    if (payload.storageKeys?.state) localStorage.setItem(payload.storageKeys.state, JSON.stringify(payload.state))
+    if (payload.storageKeys?.aliases) localStorage.setItem(payload.storageKeys.aliases, JSON.stringify(payload.aliases || {}))
+    if (payload.storageKeys?.usage) localStorage.setItem(payload.storageKeys.usage, JSON.stringify(payload.usageData || []))
+    if (payload.storageKeys?.priceAliases) localStorage.setItem(payload.storageKeys.priceAliases, JSON.stringify(payload.priceAliases || {}))
 
     showStatus('Cloud backup restored', true)
-
     setTimeout(() => location.reload(), 1000)
   } catch (err) {
-    showStatus('Cloud restore failed', false)
+    showStatus('Cloud restore failed: ' + err.message, false)
+    console.error(err)
   }
 }
 
-function injectButtons() {
+function renameLocalBackupLabels() {
+  const backupBtn = document.getElementById('backupBtn')
+  if (backupBtn) backupBtn.textContent = 'Export Local Backup'
+
+  const backupFile = document.getElementById('backupFile')
+  if (backupFile) {
+    const label = backupFile.closest('label')
+    if (label) {
+      label.innerHTML = 'Import Local Backup <input type="file" id="backupFile" accept=".json" />'
+      const newInput = label.querySelector('#backupFile')
+      if (newInput && typeof importBackup === 'function') {
+        newInput.addEventListener('change', async e => {
+          const f = e.target.files[0]
+          if (!f) return
+          try {
+            await importBackup(f)
+          } catch (err) {
+            alert('Invalid backup file.')
+          }
+          e.target.value = ''
+          const m = document.getElementById('importMenu')
+          if (m) m.classList.add('hidden')
+        })
+      }
+    }
+  }
+}
+
+function injectCloudButtons() {
   const exportMenu = document.getElementById('exportMenu')
   const importMenu = document.getElementById('importMenu')
 
-  if (exportMenu && !document.getElementById('cloudSave')) {
-    const btn = document.createElement('button')
-    btn.id = 'cloudSave'
-    btn.textContent = 'Save Cloud Backup'
-    btn.onclick = uploadRealBackup
-    exportMenu.appendChild(btn)
+  if (exportMenu && !document.getElementById('cloudSaveBtn')) {
+    const cloudSaveBtn = document.createElement('button')
+    cloudSaveBtn.id = 'cloudSaveBtn'
+    cloudSaveBtn.textContent = 'Save Cloud Backup'
+    cloudSaveBtn.addEventListener('click', async () => {
+      await uploadRealBackup()
+      exportMenu.classList.add('hidden')
+    })
+    exportMenu.appendChild(cloudSaveBtn)
   }
 
-  if (importMenu && !document.getElementById('cloudRestore')) {
-    const btn = document.createElement('button')
-    btn.id = 'cloudRestore'
-    btn.textContent = 'Restore Latest Cloud Backup'
-    btn.onclick = restoreLatestBackup
-    importMenu.appendChild(btn)
+  if (importMenu && !document.getElementById('cloudRestoreBtn')) {
+    const cloudRestoreBtn = document.createElement('button')
+    cloudRestoreBtn.id = 'cloudRestoreBtn'
+    cloudRestoreBtn.textContent = 'Restore Latest Cloud Backup'
+    cloudRestoreBtn.addEventListener('click', async () => {
+      await restoreLatestBackup()
+      importMenu.classList.add('hidden')
+    })
+    importMenu.appendChild(cloudRestoreBtn)
   }
 }
 
-window.addEventListener('load', () => {
-  setTimeout(injectButtons, 300)
-})
+function bootCloudMenus() {
+  renameLocalBackupLabels()
+  injectCloudButtons()
+}
+
+function bootWithRetries() {
+  let tries = 0
+  const timer = setInterval(() => {
+    tries += 1
+    bootCloudMenus()
+
+    const ok = document.getElementById('cloudSaveBtn') && document.getElementById('cloudRestoreBtn')
+    if (ok || tries > 20) {
+      clearInterval(timer)
+      if (ok) showStatus('Cloud menu options ready', true)
+    }
+  }, 300)
+}
+
+window.addEventListener('load', bootWithRetries)
