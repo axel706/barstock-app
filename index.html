@@ -5306,7 +5306,7 @@ function closeNewItemModal(){
 }
 window.closeNewItemModal = closeNewItemModal;
 
-function saveNewInventoryItem(){
+async function saveNewInventoryItem(){
   const code = document.getElementById('newItemCode').value.trim();
   const item = document.getElementById('newItemName').value.trim();
   let vendor = document.getElementById('newItemVendor').value;
