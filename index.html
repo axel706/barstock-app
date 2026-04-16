@@ -6537,5 +6537,57 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 </script>
 <!-- BARSTOCK ORDER HISTORY CLOUD END -->
 
+
+<!-- BARSTOCK PLACED ORDERS DERIVED START -->
+<script>
+(() => {
+  if (window.__barstockPlacedOrdersDerivedBooted) return;
+  window.__barstockPlacedOrdersDerivedBooted = true;
+
+  function rebuildPlacedOrdersFromHistory() {
+    if (typeof state === 'undefined') return;
+    if (!Array.isArray(state.orderHistory)) {
+      state.orderHistory = [];
+    }
+
+    const keys = [];
+
+    (state.orderHistory || []).forEach(order => {
+      (order.items || []).forEach(item => {
+        if (typeof placedKeyForRow === 'function') {
+          const key = placedKeyForRow({
+            code: item.code || '',
+            item: item.item || '',
+            vendor: item.vendor || order.vendor || ''
+          });
+          if (key) keys.push(key);
+        }
+      });
+    });
+
+    state.placedOrders = Array.from(new Set(keys.filter(Boolean)));
+  }
+
+  window.rebuildPlacedOrdersFromHistory = rebuildPlacedOrdersFromHistory;
+
+  // Ejecutar al abrir, después de que Order History cloud haya cargado
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      try {
+        rebuildPlacedOrdersFromHistory();
+        if (typeof saveState === 'function') saveState();
+        if (typeof render === 'function') render();
+        if (typeof setStatus === 'function') {
+          setStatus(`Placed Orders rebuilt from Order History: ${state.placedOrders.length}`);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }, 1800);
+  });
+})();
+</script>
+<!-- BARSTOCK PLACED ORDERS DERIVED END -->
+
 </body>
 </html>
