@@ -4856,13 +4856,64 @@ function toggleHistoryDetails(id){
   if(el) el.classList.toggle('hidden');
 }
 window.toggleHistoryDetails = toggleHistoryDetails;
-function deleteHistoryOrder(id){
-  state.orderHistory = (state.orderHistory||[]).filter(order => order.id !== id);
-  compareSelection = compareSelection.filter(entryId => entryId !== id);
-  saveState();
-  renderCompareToolbar();
-  renderOrderHistory();
-  setStatus('Order removed from history.');
+async function deleteHistoryOrder(id){
+  const ORDER_CLOUD_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const ORDER_CLOUD_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+
+  try{
+    // 1. borrar líneas
+    const itemsRes = await fetch(
+      `${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?app_order_id=eq.${encodeURIComponent(id)}`,
+      {
+        method: 'DELETE',
+        headers: {
+          apikey: ORDER_CLOUD_KEY,
+          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
+        }
+      }
+    );
+
+    if(!itemsRes.ok){
+      const txt = await itemsRes.text();
+      throw new Error('Error deleting vendor_order_items: ' + txt);
+    }
+
+    // 2. borrar encabezado
+    const orderRes = await fetch(
+      `${ORDER_CLOUD_URL}/rest/v1/vendor_orders?app_order_id=eq.${encodeURIComponent(id)}`,
+      {
+        method: 'DELETE',
+        headers: {
+          apikey: ORDER_CLOUD_KEY,
+          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
+        }
+      }
+    );
+
+    if(!orderRes.ok){
+      const txt = await orderRes.text();
+      throw new Error('Error deleting vendor_orders: ' + txt);
+    }
+
+    // 3. borrar local solo si cloud salió bien
+    state.orderHistory = (state.orderHistory||[]).filter(order => order.id !== id);
+    compareSelection = compareSelection.filter(entryId => entryId !== id);
+
+    // opcional: reconstruir placedOrders desde historial restante
+    if(typeof rebuildPlacedOrdersFromHistory === 'function'){
+      rebuildPlacedOrdersFromHistory();
+    }
+
+    saveState();
+    renderCompareToolbar();
+    renderOrderHistory();
+    if(typeof render === 'function') render();
+    setStatus('Order removed from history and cloud.');
+  } catch(err){
+    console.error(err);
+    alert('Could not delete order from cloud.');
+    setStatus('Error deleting order from cloud.');
+  }
 }
 window.deleteHistoryOrder = deleteHistoryOrder;
 function reopenHistoryOrder(id){
