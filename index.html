@@ -5727,11 +5727,40 @@ function exportBackup(){
   URL.revokeObjectURL(a.href);
   setStatus('Backup exported.');
 }
-function resetMaster(){
+async function resetMaster(){
   if(!confirm('This will erase the persistent master stored in the app. Continue?')) return;
-  state = defaultState();
-  aliases = {};
-  saveState(); saveAliases(); render(); setStatus('Persistent master reset.');
+
+  const SUPABASE_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+
+  try{
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/inventory_items`,
+      {
+        method: 'DELETE',
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+
+    if(!res.ok){
+      const txt = await res.text();
+      throw new Error('Error deleting inventory_items: ' + txt);
+    }
+
+    state = defaultState();
+    aliases = {};
+    saveState();
+    saveAliases();
+    render();
+    setStatus('Persistent master reset locally and in cloud.');
+  } catch(err){
+    console.error(err);
+    alert('Could not reset master in cloud.');
+    setStatus('Error resetting master in cloud.');
+  }
 }
 async function importBackup(file){
   const text = await file.text();
