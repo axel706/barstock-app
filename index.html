@@ -6350,6 +6350,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
         vendor_order_id: vendorOrderId,
         app_order_id: order.id,
         vendor: order.vendor || '',
+        code: r.code || '',
         item_name: r.item || '',
         quantity: qty,
         unit_price: unitPrice,
@@ -6473,7 +6474,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     }
 
     const itemsRes = await fetch(
-      `${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?select=vendor_order_id,app_order_id,vendor,item_name,quantity,unit_price,created_at`,
+      `${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?select=vendor_order_id,app_order_id,code,vendor,item_name,quantity,unit_price,created_at`,
       {
         headers: {
           apikey: ORDER_CLOUD_KEY,
@@ -6503,7 +6504,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       totalUnits: Number(order.total_units || 0),
       subtotal: Number(order.subtotal || 0),
       items: (itemsByOrderId[order.id] || []).map(item => ({
-        code: '',
+        code: String(item.code || '').trim(),
         item: String(item.item_name || '').trim(),
         vendor: String(item.vendor || order.vendor || 'UNKNOWN').trim().toUpperCase(),
         onHand: 0,
