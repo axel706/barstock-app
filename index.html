@@ -5106,9 +5106,13 @@ function showPreviewModal(){
   document.getElementById('previewModalBg').classList.remove('hidden');
 }
 function closePreviewModal(){ document.getElementById('previewModalBg').classList.add('hidden'); pendingImport = null; }
-function applyPendingImport(){
+async function applyPendingImport(){
   if(!pendingImport) return;
   document.getElementById('previewModalBg').classList.add('hidden');
+
+  const SUPABASE_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+
   const importMatches = pendingImport.matches;
   state.master = pendingImport.previewMaster.map(r => ({...r, orderOverride:''}));
   state.noMatches = pendingImport.noMatches;
@@ -5117,9 +5121,87 @@ function applyPendingImport(){
   state.lastCountName = pendingImport.fileName;
   state.lastUpdated = new Date().toISOString();
   pendingImport = null;
+
   saveState();
   render();
-  setStatus(`Count imported: ${state.lastCountName}. Matches: ${importMatches}. No matches: ${state.noMatches.length}. Previous placed-order locks cleared for the new weekly cycle.`);
+
+  try{
+    // 1. buscar location_id de The Crown Tavern
+    const locRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/locations?name=eq.${encodeURIComponent('The Crown Tavern')}&select=id,name`,
+      {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+
+    const locData = await locRes.json();
+    const locationId = locData?.[0]?.id;
+
+    if(!locationId){
+      throw new Error('Could not find The Crown Tavern location');
+    }
+
+    // 2. borrar inventory_items actuales de esa locación
+    const deleteRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/inventory_items?location_id=eq.${locationId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+
+    if(!deleteRes.ok){
+      const txt = await deleteRes.text();
+      throw new Error('Error deleting inventory_items: ' + txt);
+    }
+
+    // 3. reinsertar el master actualizado
+    const rows = (state.master || []).map(r => ({
+      location_id: locationId,
+      code: r.code || '',
+      item_name: r.item || '',
+      vendor: r.vendor || '',
+      suggested: Number(r.suggested || 0),
+      on_hand: Number(r.onHand || 0),
+      value: Number(r.value || 0)
+    }));
+
+    const chunkSize = 200;
+    for(let i = 0; i < rows.length; i += chunkSize){
+      const chunk = rows.slice(i, i + chunkSize);
+
+      const insertRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/inventory_items`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            Prefer: 'return=minimal'
+          },
+          body: JSON.stringify(chunk)
+        }
+      );
+
+      if(!insertRes.ok){
+        const txt = await insertRes.text();
+        throw new Error('Error inserting inventory_items: ' + txt);
+      }
+    }
+
+    setStatus(`Count imported: ${state.lastCountName}. Matches: ${importMatches}. No matches: ${state.noMatches.length}. Synced to cloud for the new weekly cycle.`);
+  } catch(err){
+    console.error(err);
+    setStatus(`Count imported locally, but cloud sync failed.`);
+    alert('Count imported locally, but cloud sync failed.');
+  }
 }
 
 function openNoMatchModal(index){
