@@ -6248,5 +6248,156 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 </script>
 <!-- BARSTOCK INVENTORY SYNC END -->
 
+
+<!-- BARSTOCK INVENTORY AUTOSYNC START -->
+<script>
+(() => {
+  if (window.__barstockInventoryAutosyncBooted) return;
+  window.__barstockInventoryAutosyncBooted = true;
+
+  const INV_SYNC_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const INV_SYNC_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+  const INV_SYNC_LOCATION = 'The Crown Tavern';
+
+  let syncTimer = null;
+  let syncInFlight = false;
+  let lastMasterHash = '';
+
+  function invHashMaster() {
+    try {
+      return JSON.stringify((state?.master || []).map(r => ({
+        code: r.code || '',
+        item: r.item || '',
+        vendor: r.vendor || '',
+        onHand: Number(r.onHand || 0),
+        suggested: Number(r.suggested || 0),
+        value: Number(r.value || 0)
+      })));
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function invSyncStatus(msg) {
+    try {
+      if (typeof setStatus === 'function') setStatus(msg);
+      else console.log(msg);
+    } catch (e) {
+      console.log(msg);
+    }
+  }
+
+  async function invFetchLocationId() {
+    const res = await fetch(
+      `${INV_SYNC_URL}/rest/v1/locations?name=eq.${encodeURIComponent(INV_SYNC_LOCATION)}&select=id,name`,
+      {
+        headers: {
+          apikey: INV_SYNC_KEY,
+          Authorization: `Bearer ${INV_SYNC_KEY}`
+        }
+      }
+    );
+    const data = await res.json();
+    if (!Array.isArray(data) || !data.length) {
+      throw new Error(`No se encontró la locación ${INV_SYNC_LOCATION}`);
+    }
+    return data[0].id;
+  }
+
+  async function invPushMasterToSupabase() {
+    if (syncInFlight) return;
+    if (typeof state === 'undefined' || !state || !Array.isArray(state.master)) return;
+
+    const currentHash = invHashMaster();
+    if (!currentHash || currentHash === lastMasterHash) return;
+
+    syncInFlight = true;
+
+    try {
+      const locationId = await invFetchLocationId();
+
+      const delRes = await fetch(
+        `${INV_SYNC_URL}/rest/v1/inventory_items?location_id=eq.${locationId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            apikey: INV_SYNC_KEY,
+            Authorization: `Bearer ${INV_SYNC_KEY}`
+          }
+        }
+      );
+
+      if (!delRes.ok) {
+        const txt = await delRes.text();
+        throw new Error('Error borrando inventory_items: ' + txt);
+      }
+
+      const rows = state.master.map(r => ({
+        location_id: locationId,
+        code: r.code || '',
+        item_name: r.item || '',
+        vendor: r.vendor || '',
+        suggested: Number(r.suggested || 0),
+        on_hand: Number(r.onHand || 0),
+        value: Number(r.value || 0)
+      }));
+
+      const chunkSize = 200;
+      for (let i = 0; i < rows.length; i += chunkSize) {
+        const chunk = rows.slice(i, i + chunkSize);
+
+        const insRes = await fetch(`${INV_SYNC_URL}/rest/v1/inventory_items`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: INV_SYNC_KEY,
+            Authorization: `Bearer ${INV_SYNC_KEY}`,
+            Prefer: 'return=minimal'
+          },
+          body: JSON.stringify(chunk)
+        });
+
+        if (!insRes.ok) {
+          const txt = await insRes.text();
+          throw new Error(`Error subiendo chunk ${i / chunkSize + 1}: ${txt}`);
+        }
+      }
+
+      lastMasterHash = currentHash;
+      invSyncStatus(`Inventory synced to cloud: ${rows.length} items`);
+    } catch (err) {
+      console.error(err);
+      invSyncStatus('Error syncing inventory to cloud');
+    } finally {
+      syncInFlight = false;
+    }
+  }
+
+  function queueInventorySync() {
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(invPushMasterToSupabase, 800);
+  }
+
+  if (typeof saveState === 'function' && !window.__barstockSaveStateWrapped) {
+    window.__barstockSaveStateWrapped = true;
+    const originalSaveState = saveState;
+
+    saveState = function (...args) {
+      const result = originalSaveState.apply(this, args);
+      queueInventorySync();
+      return result;
+    };
+  }
+
+  // Tomar snapshot inicial para no resubir inmediatamente lo recién cargado desde cloud
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      lastMasterHash = invHashMaster();
+    }, 1500);
+  });
+})();
+</script>
+<!-- BARSTOCK INVENTORY AUTOSYNC END -->
+
 </body>
 </html>
