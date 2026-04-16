@@ -5496,7 +5496,16 @@ async function placeCurrentOrder(){
     state.placedOrders = Array.from(new Set([...(state.placedOrders || []), ...placedKeys]));
     saveState();
     render();
-    setStatus(`${vendorAtStart} order placed, saved to Order History, and cleared from Ordering.`);
+    try {
+      if (window.persistOrderToSupabase) {
+        await window.persistOrderToSupabase(order);
+      }
+      setStatus(`${vendorAtStart} order placed, saved to Order History, synced to cloud, and cleared from Ordering.`);
+    } catch (cloudErr) {
+      console.error(cloudErr);
+      setStatus(`${vendorAtStart} order placed locally, but cloud sync failed.`);
+      alert('Order saved locally, but cloud sync failed.');
+    }
   } finally {
     isPlacingOrder = false;
     if(placeBtn){ placeBtn.disabled = false; placeBtn.textContent = placeBtn.dataset.originalLabel || 'PLACE ORDER'; }
@@ -6247,6 +6256,135 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 })();
 </script>
 <!-- BARSTOCK INVENTORY SYNC END -->
+
+
+<!-- BARSTOCK ORDER CLOUD START -->
+<script>
+(() => {
+  if (window.__barstockOrderCloudBooted) return;
+  window.__barstockOrderCloudBooted = true;
+
+  const ORDER_SYNC_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const ORDER_SYNC_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+  const ORDER_SYNC_LOCATION = 'The Crown Tavern';
+
+  async function orderCloudFetchLocationId() {
+    const res = await fetch(
+      `${ORDER_SYNC_URL}/rest/v1/locations?name=eq.${encodeURIComponent(ORDER_SYNC_LOCATION)}&select=id,name`,
+      {
+        headers: {
+          apikey: ORDER_SYNC_KEY,
+          Authorization: `Bearer ${ORDER_SYNC_KEY}`
+        }
+      }
+    );
+    const data = await res.json();
+    if (!Array.isArray(data) || !data.length) {
+      throw new Error(`No se encontró la locación ${ORDER_SYNC_LOCATION}`);
+    }
+    return data[0].id;
+  }
+
+  async function persistOrderToSupabase(order) {
+    const locationId = await orderCloudFetchLocationId();
+
+    const vendorOrderPayload = {
+      app_order_id: order.id,
+      location_id: locationId,
+      location_name: ORDER_SYNC_LOCATION,
+      vendor: order.vendor || '',
+      status: 'placed',
+      subtotal: Number(order.subtotal || 0),
+      filename: order.filename || '',
+      export_type: order.exportType || '',
+      total_units: Number(order.totalUnits || 0)
+    };
+
+    // UPSERT de la orden principal
+    const orderRes = await fetch(
+      `${ORDER_SYNC_URL}/rest/v1/vendor_orders?on_conflict=app_order_id`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: ORDER_SYNC_KEY,
+          Authorization: `Bearer ${ORDER_SYNC_KEY}`,
+          Prefer: 'resolution=merge-duplicates,return=representation'
+        },
+        body: JSON.stringify(vendorOrderPayload)
+      }
+    );
+
+    if (!orderRes.ok) {
+      const txt = await orderRes.text();
+      throw new Error('Error guardando vendor_orders: ' + txt);
+    }
+
+    const orderRows = await orderRes.json();
+    const vendorOrderId = orderRows?.[0]?.id;
+    if (!vendorOrderId) {
+      throw new Error('No se recibió el id de vendor_orders');
+    }
+
+    // limpiar items previos de esa orden si existían
+    const delRes = await fetch(
+      `${ORDER_SYNC_URL}/rest/v1/vendor_order_items?app_order_id=eq.${encodeURIComponent(order.id)}`,
+      {
+        method: 'DELETE',
+        headers: {
+          apikey: ORDER_SYNC_KEY,
+          Authorization: `Bearer ${ORDER_SYNC_KEY}`
+        }
+      }
+    );
+
+    if (!delRes.ok) {
+      const txt = await delRes.text();
+      throw new Error('Error limpiando vendor_order_items: ' + txt);
+    }
+
+    const itemRows = (order.items || []).map((r) => {
+      const qty = Number(r.finalOrder || r.quantity || 0);
+      const unitPrice = Number(r.value || 0);
+      return {
+        vendor_order_id: vendorOrderId,
+        app_order_id: order.id,
+        vendor: order.vendor || '',
+        item_name: r.item || '',
+        quantity: qty,
+        unit_price: unitPrice,
+        line_total: Number((qty * unitPrice).toFixed(2))
+      };
+    }).filter(r => r.quantity > 0);
+
+    if (itemRows.length) {
+      const itemsRes = await fetch(
+        `${ORDER_SYNC_URL}/rest/v1/vendor_order_items`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: ORDER_SYNC_KEY,
+            Authorization: `Bearer ${ORDER_SYNC_KEY}`,
+            Prefer: 'return=minimal'
+          },
+          body: JSON.stringify(itemRows)
+        }
+      );
+
+      if (!itemsRes.ok) {
+        const txt = await itemsRes.text();
+        throw new Error('Error guardando vendor_order_items: ' + txt);
+      }
+    }
+
+    return vendorOrderId;
+  }
+
+  window.persistOrderToSupabase = persistOrderToSupabase;
+})();
+</script>
+<!-- BARSTOCK ORDER CLOUD END -->
 
 </body>
 </html>
