@@ -6810,11 +6810,60 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   if (window.__barstockPlacedOrdersDerivedBooted) return;
   window.__barstockPlacedOrdersDerivedBooted = true;
 
-  function rebuildPlacedOrdersFromHistory() {
-    if (typeof state === 'undefined') return;
-    if (!Array.isArray(state.orderHistory)) {
-      state.orderHistory = [];
-    }
+  async function rebuildPlacedOrdersFromHistory() {
+  if (typeof state === 'undefined') return;
+
+  const SUPABASE_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+
+  try {
+    // obtener location_id
+    const locRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/locations?name=eq.${encodeURIComponent('The Crown Tavern')}&select=id,weekly_reset_at`,
+      {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+
+    const locData = await locRes.json();
+    const location = locData?.[0];
+
+    if (!location) return;
+
+    const resetAt = location.weekly_reset_at
+      ? new Date(location.weekly_reset_at)
+      : null;
+
+    const keys = [];
+
+    (state.orderHistory || []).forEach(order => {
+      const orderDate = new Date(order.createdAt || 0);
+
+      // 👇 ignorar órdenes antes del reset
+      if (resetAt && orderDate < resetAt) return;
+
+      (order.items || []).forEach(item => {
+        if (typeof placedKeyForRow === 'function') {
+          const key = placedKeyForRow({
+            code: item.code || '',
+            item: item.item || '',
+            vendor: item.vendor || order.vendor || ''
+          });
+          if (key) keys.push(key);
+        }
+      });
+    });
+
+    state.placedOrders = Array.from(new Set(keys.filter(Boolean)));
+  } catch (err) {
+    console.error('Error rebuilding placedOrders with reset filter', err);
+  }
+}
+
+window.rebuildPlacedOrdersFromHistory = rebuildPlacedOrdersFromHistory;
 
     const keys = [];
 
