@@ -5696,16 +5696,99 @@ function exportNoMatch(){
   setStatus('No Match CSV exported.');
 }
 
-function resetOnHand(){
+async function resetOnHand(){
   if(!state.master.length) return;
   if(!confirm('Reset all ON HAND values to 0?')) return;
-  state.master = state.master.map(r => ({...r, onHand:0, toOrder:computeToOrder(0, r.suggested), orderOverride:''}));
-  state.noMatches = [];
-  state.placedOrders = [];
-  compareSelection = [];
-  saveState();
-  render();
-  setStatus('All ON HAND values reset to 0. Previous placed-order locks cleared for the next weekly count.');
+
+  const SUPABASE_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+
+  try{
+    // 1. buscar location_id de The Crown Tavern
+    const locRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/locations?name=eq.${encodeURIComponent('The Crown Tavern')}&select=id,name`,
+      {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+
+    const locData = await locRes.json();
+    const locationId = locData?.[0]?.id;
+
+    if(!locationId){
+      throw new Error('Could not find The Crown Tavern location');
+    }
+
+    // 2. resetear ON HAND en Supabase item por item
+    for (const row of state.master) {
+      const patchRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/inventory_items?location_id=eq.${locationId}&code=eq.${encodeURIComponent(row.code || '')}&item_name=eq.${encodeURIComponent(row.item || '')}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            Prefer: 'return=minimal'
+          },
+          body: JSON.stringify({
+            on_hand: 0,
+            suggested: Number(row.suggested || 0),
+            value: Number(row.value || 0)
+          })
+        }
+      );
+
+      if(!patchRes.ok){
+        const txt = await patchRes.text();
+        throw new Error('Error updating inventory_items: ' + txt);
+      }
+    }
+
+    // 3. marcar inicio de nuevo ciclo semanal
+    const resetRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/locations?id=eq.${locationId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          Prefer: 'return=minimal'
+        },
+        body: JSON.stringify({
+          weekly_reset_at: new Date().toISOString()
+        })
+      }
+    );
+
+    if(!resetRes.ok){
+      const txt = await resetRes.text();
+      throw new Error('Error updating weekly_reset_at: ' + txt);
+    }
+
+    // 4. limpiar local solo si cloud salió bien
+    state.master = state.master.map(r => ({
+      ...r,
+      onHand: 0,
+      toOrder: computeToOrder(0, r.suggested),
+      orderOverride: ''
+    }));
+    state.noMatches = [];
+    state.placedOrders = [];
+    compareSelection = [];
+
+    saveState();
+    render();
+    setStatus('All ON HAND values reset to 0 locally and in cloud.');
+  } catch(err){
+    console.error(err);
+    alert('Could not reset ON HAND in cloud.');
+    setStatus('Error resetting ON HAND in cloud.');
+  }
 }
 
 function exportBackup(){
