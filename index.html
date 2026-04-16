@@ -6406,8 +6406,52 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     }
   }
 
+  function normalizeCloudOrder(order) {
+    return {
+      id: String(order?.id || ''),
+      vendor: String(order?.vendor || 'UNKNOWN').trim().toUpperCase(),
+      createdAt: order?.createdAt || new Date().toISOString(),
+      exportType: order?.exportType || 'vendor_jpg',
+      filename: String(order?.filename || ''),
+      totalUnits: Number(order?.totalUnits || 0),
+      subtotal: Number(order?.subtotal || 0),
+      items: Array.isArray(order?.items) ? order.items.map(item => ({
+        code: String(item?.code || '').trim(),
+        item: String(item?.item || '').trim(),
+        vendor: String(item?.vendor || order?.vendor || 'UNKNOWN').trim().toUpperCase(),
+        onHand: Number(item?.onHand || 0),
+        suggested: Number(item?.suggested || 0),
+        value: Number(item?.value || 0),
+        toOrder: Number(item?.toOrder || 0),
+        orderOverride: item?.orderOverride ?? '',
+        finalOrder: Number(item?.finalOrder || 0)
+      })) : []
+    };
+  }
+
+  function mergeOrderHistory(localOrders, cloudOrders) {
+    const merged = new Map();
+
+    // primero local
+    (localOrders || []).forEach(order => {
+      const normalized = normalizeCloudOrder(order);
+      merged.set(normalized.id, normalized);
+    });
+
+    // luego cloud pisa local si comparten id
+    (cloudOrders || []).forEach(order => {
+      const normalized = normalizeCloudOrder(order);
+      merged.set(normalized.id, normalized);
+    });
+
+    return Array.from(merged.values()).sort(
+      (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+    );
+  }
+
   async function loadOrderHistoryFromSupabase() {
-    // 1. Traer órdenes principales
+    const localHistory = Array.isArray(state.orderHistory) ? [...state.orderHistory] : [];
+
     const ordersRes = await fetch(
       `${ORDER_CLOUD_URL}/rest/v1/vendor_orders?location_name=eq.${encodeURIComponent(ORDER_CLOUD_LOCATION)}&select=id,app_order_id,vendor,filename,export_type,total_units,subtotal,created_at&order=created_at.desc`,
       {
@@ -6423,13 +6467,11 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       throw new Error('Respuesta inválida de vendor_orders');
     }
 
-    // si no hay nada en cloud, no pisar historial local
     if (!orders.length) {
       orderCloudStatus('Order History cloud vacío, se conserva el historial local');
       return;
     }
 
-    // 2. Traer líneas de orden
     const itemsRes = await fetch(
       `${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?select=vendor_order_id,app_order_id,vendor,item_name,quantity,unit_price,created_at`,
       {
@@ -6445,7 +6487,6 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       throw new Error('Respuesta inválida de vendor_order_items');
     }
 
-    // 3. Agrupar líneas por vendor_order_id
     const itemsByOrderId = {};
     items.forEach(item => {
       const key = item.vendor_order_id;
@@ -6453,8 +6494,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       itemsByOrderId[key].push(item);
     });
 
-    // 4. Reconstruir state.orderHistory con el formato esperado por la app
-    const rebuilt = orders.map(order => ({
+    const cloudHistory = orders.map(order => ({
       id: String(order.app_order_id || order.id || ''),
       vendor: String(order.vendor || 'UNKNOWN').trim().toUpperCase(),
       createdAt: order.created_at || new Date().toISOString(),
@@ -6475,11 +6515,12 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       }))
     }));
 
-    state.orderHistory = rebuilt;
+    state.orderHistory = mergeOrderHistory(localHistory, cloudHistory);
+
     if (typeof saveState === 'function') saveState();
     if (typeof render === 'function') render();
 
-    orderCloudStatus(`Order History cloud cargado: ${rebuilt.length} órdenes`);
+    orderCloudStatus(`Order History merged: local ${localHistory.length} + cloud ${cloudHistory.length} = ${state.orderHistory.length}`);
   }
 
   window.loadOrderHistoryFromSupabase = loadOrderHistoryFromSupabase;
