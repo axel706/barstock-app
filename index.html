@@ -6386,5 +6386,115 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 </script>
 <!-- BARSTOCK ORDER CLOUD END -->
 
+
+<!-- BARSTOCK ORDER HISTORY CLOUD START -->
+<script>
+(() => {
+  if (window.__barstockOrderHistoryCloudBooted) return;
+  window.__barstockOrderHistoryCloudBooted = true;
+
+  const ORDER_CLOUD_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const ORDER_CLOUD_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+  const ORDER_CLOUD_LOCATION = 'The Crown Tavern';
+
+  function orderCloudStatus(msg) {
+    try {
+      if (typeof setStatus === 'function') setStatus(msg);
+      else console.log(msg);
+    } catch (e) {
+      console.log(msg);
+    }
+  }
+
+  async function loadOrderHistoryFromSupabase() {
+    // 1. Traer órdenes principales
+    const ordersRes = await fetch(
+      `${ORDER_CLOUD_URL}/rest/v1/vendor_orders?location_name=eq.${encodeURIComponent(ORDER_CLOUD_LOCATION)}&select=id,app_order_id,vendor,filename,export_type,total_units,subtotal,created_at&order=created_at.desc`,
+      {
+        headers: {
+          apikey: ORDER_CLOUD_KEY,
+          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
+        }
+      }
+    );
+
+    const orders = await ordersRes.json();
+    if (!Array.isArray(orders)) {
+      throw new Error('Respuesta inválida de vendor_orders');
+    }
+
+    // si no hay nada en cloud, no pisar historial local
+    if (!orders.length) {
+      orderCloudStatus('Order History cloud vacío, se conserva el historial local');
+      return;
+    }
+
+    // 2. Traer líneas de orden
+    const itemsRes = await fetch(
+      `${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?select=vendor_order_id,app_order_id,vendor,item_name,quantity,unit_price,created_at`,
+      {
+        headers: {
+          apikey: ORDER_CLOUD_KEY,
+          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
+        }
+      }
+    );
+
+    const items = await itemsRes.json();
+    if (!Array.isArray(items)) {
+      throw new Error('Respuesta inválida de vendor_order_items');
+    }
+
+    // 3. Agrupar líneas por vendor_order_id
+    const itemsByOrderId = {};
+    items.forEach(item => {
+      const key = item.vendor_order_id;
+      if (!itemsByOrderId[key]) itemsByOrderId[key] = [];
+      itemsByOrderId[key].push(item);
+    });
+
+    // 4. Reconstruir state.orderHistory con el formato esperado por la app
+    const rebuilt = orders.map(order => ({
+      id: String(order.app_order_id || order.id || ''),
+      vendor: String(order.vendor || 'UNKNOWN').trim().toUpperCase(),
+      createdAt: order.created_at || new Date().toISOString(),
+      exportType: order.export_type || 'vendor_jpg',
+      filename: String(order.filename || ''),
+      totalUnits: Number(order.total_units || 0),
+      subtotal: Number(order.subtotal || 0),
+      items: (itemsByOrderId[order.id] || []).map(item => ({
+        code: '',
+        item: String(item.item_name || '').trim(),
+        vendor: String(item.vendor || order.vendor || 'UNKNOWN').trim().toUpperCase(),
+        onHand: 0,
+        suggested: 0,
+        value: Number(item.unit_price || 0),
+        toOrder: 0,
+        orderOverride: '',
+        finalOrder: Number(item.quantity || 0)
+      }))
+    }));
+
+    state.orderHistory = rebuilt;
+    if (typeof saveState === 'function') saveState();
+    if (typeof render === 'function') render();
+
+    orderCloudStatus(`Order History cloud cargado: ${rebuilt.length} órdenes`);
+  }
+
+  window.loadOrderHistoryFromSupabase = loadOrderHistoryFromSupabase;
+
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      loadOrderHistoryFromSupabase().catch(err => {
+        console.error(err);
+        orderCloudStatus('Error cargando Order History cloud');
+      });
+    }, 1200);
+  });
+})();
+</script>
+<!-- BARSTOCK ORDER HISTORY CLOUD END -->
+
 </body>
 </html>
