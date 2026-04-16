@@ -4960,6 +4960,7 @@ async function loadMasterFile(file){
   state.lastMasterName = `${file.name} [${sheetName}]`;
   state.lastUpdated = new Date().toISOString();
   saveState();
+  if(window.queueInventorySync) window.queueInventorySync();
   render();
   setStatus(`Master loaded from ${file.name}. ${master.length} items saved persistently.`);
 }
@@ -5206,6 +5207,7 @@ function saveNewInventoryItem(){
   });
   state.master.sort((a,b) => String(a.item || '').localeCompare(String(b.item || '')));
   saveState();
+  if(window.queueInventorySync) window.queueInventorySync();
   render();
   closeNewItemModal();
   setStatus(`New inventory item '${item}' created.`);
@@ -5245,6 +5247,7 @@ function quickZeroSuggested(index){
   if(row.orderOverride !== '' && row.orderOverride !== null && row.orderOverride !== undefined) row.orderOverride = '';
   state.lastUpdated = new Date().toISOString();
   saveState();
+  if(window.queueInventorySync) window.queueInventorySync();
   render();
   setStatus(`Suggested set to 0 for '${row.item}'.`);
 }
@@ -5287,6 +5290,7 @@ function saveEditedItem(){
   Object.keys(aliases).forEach(k => { if(aliases[k] === oldNorm) aliases[k] = itemNorm; });
   saveAliases();
   saveState();
+  if(window.queueInventorySync) window.queueInventorySync();
   render();
   closeEditModal();
   setStatus(`Item '${item}' updated.`);
@@ -5301,6 +5305,7 @@ function deleteEditedItem(){
   Object.keys(aliases).forEach(k => { if(aliases[k] === removedNorm) delete aliases[k]; });
   saveAliases();
   saveState();
+  if(window.queueInventorySync) window.queueInventorySync();
   render();
   closeEditModal();
   setStatus(`Item '${row.item}' deleted from the master.`);
@@ -6133,6 +6138,115 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 })();
 </script>
 <!-- BARSTOCK INVENTORY REALTIME END -->
+
+
+<!-- BARSTOCK INVENTORY SYNC START -->
+<script>
+(() => {
+  if (window.__barstockInventorySyncBooted) return;
+  window.__barstockInventorySyncBooted = true;
+
+  const INV_SYNC_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const INV_SYNC_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+  const INV_SYNC_LOCATION = 'The Crown Tavern';
+
+  function invSyncStatus(msg) {
+    try {
+      if (typeof setStatus === 'function') setStatus(msg);
+      else console.log(msg);
+    } catch (e) {
+      console.log(msg);
+    }
+  }
+
+  async function invFetchLocationId() {
+    const res = await fetch(
+      `${INV_SYNC_URL}/rest/v1/locations?name=eq.${encodeURIComponent(INV_SYNC_LOCATION)}&select=id,name`,
+      {
+        headers: {
+          apikey: INV_SYNC_KEY,
+          Authorization: `Bearer ${INV_SYNC_KEY}`
+        }
+      }
+    );
+    const data = await res.json();
+    if (!Array.isArray(data) || !data.length) {
+      throw new Error(`No se encontró la locación ${INV_SYNC_LOCATION}`);
+    }
+    return data[0].id;
+  }
+
+  async function invPushMasterToSupabase() {
+    if (typeof state === 'undefined' || !state || !Array.isArray(state.master)) return;
+
+    const locationId = await invFetchLocationId();
+
+    // limpiar locación actual para evitar duplicados
+    const delRes = await fetch(
+      `${INV_SYNC_URL}/rest/v1/inventory_items?location_id=eq.${locationId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          apikey: INV_SYNC_KEY,
+          Authorization: `Bearer ${INV_SYNC_KEY}`
+        }
+      }
+    );
+
+    if (!delRes.ok) {
+      const txt = await delRes.text();
+      throw new Error('Error borrando inventory_items: ' + txt);
+    }
+
+    const rows = state.master.map(r => ({
+      location_id: locationId,
+      code: r.code || '',
+      item_name: r.item || '',
+      vendor: r.vendor || '',
+      suggested: Number(r.suggested || 0),
+      on_hand: Number(r.onHand || 0),
+      value: Number(r.value || 0)
+    }));
+
+    const chunkSize = 200;
+    for (let i = 0; i < rows.length; i += chunkSize) {
+      const chunk = rows.slice(i, i + chunkSize);
+
+      const insRes = await fetch(`${INV_SYNC_URL}/rest/v1/inventory_items`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: INV_SYNC_KEY,
+          Authorization: `Bearer ${INV_SYNC_KEY}`,
+          Prefer: 'return=minimal'
+        },
+        body: JSON.stringify(chunk)
+      });
+
+      if (!insRes.ok) {
+        const txt = await insRes.text();
+        throw new Error(`Error subiendo chunk ${i / chunkSize + 1}: ${txt}`);
+      }
+    }
+
+    invSyncStatus(`Inventory synced to cloud: ${rows.length} items`);
+  }
+
+  let syncTimer = null;
+  window.queueInventorySync = function () {
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(async () => {
+      try {
+        await invPushMasterToSupabase();
+      } catch (err) {
+        console.error(err);
+        invSyncStatus('Error syncing inventory to cloud');
+      }
+    }, 600);
+  };
+})();
+</script>
+<!-- BARSTOCK INVENTORY SYNC END -->
 
 </body>
 </html>
