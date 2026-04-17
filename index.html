@@ -7452,7 +7452,8 @@ async function syncOrdersToCloud(){
     if(!locationId) throw new Error('No location found');
 
     // 2. borrar todo en cloud
-    await fetch(`${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?location_id=eq.${locationId}`, {
+    // vendor_order_items no tiene location_id, así que borramos todo
+    await fetch(`${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?app_order_id=not.is.null`, {
       method: 'DELETE',
       headers: {
         apikey: ORDER_CLOUD_KEY,
@@ -7498,7 +7499,6 @@ async function syncOrdersToCloud(){
       // crear items
       const items = (order.items || []).map(i => ({
         app_order_id: order.id,
-        location_id: locationId,
         code: i.code || '',
         item_name: i.item || '',
         quantity: Number(i.finalOrder || 0)
