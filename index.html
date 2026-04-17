@@ -4916,16 +4916,68 @@ async function deleteHistoryOrder(id){
   }
 }
 window.deleteHistoryOrder = deleteHistoryOrder;
-function reopenHistoryOrder(id){
+async function reopenHistoryOrder(id){
   const order = (state.orderHistory||[]).find(entry => entry.id === id);
   if(!order) return;
-  const reopenKeys = (order.items || []).map(item => placedKeyForRow(item));
-  state.placedOrders = (state.placedOrders || []).filter(key => !reopenKeys.includes(key));
-  state.orderHistory = (state.orderHistory || []).filter(entry => entry.id !== id);
-  compareSelection = compareSelection.filter(entryId => entryId !== id);
-  saveState();
-  render();
-  setStatus(`${order.vendor} order re-opened and returned to Ordering.`);
+
+  const ORDER_CLOUD_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const ORDER_CLOUD_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+
+  try{
+    // 1. borrar líneas en cloud
+    const itemsRes = await fetch(
+      `${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?app_order_id=eq.${encodeURIComponent(id)}`,
+      {
+        method: 'DELETE',
+        headers: {
+          apikey: ORDER_CLOUD_KEY,
+          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
+        }
+      }
+    );
+
+    if(!itemsRes.ok){
+      const txt = await itemsRes.text();
+      throw new Error('Error deleting vendor_order_items: ' + txt);
+    }
+
+    // 2. borrar encabezado en cloud
+    const orderRes = await fetch(
+      `${ORDER_CLOUD_URL}/rest/v1/vendor_orders?app_order_id=eq.${encodeURIComponent(id)}`,
+      {
+        method: 'DELETE',
+        headers: {
+          apikey: ORDER_CLOUD_KEY,
+          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
+        }
+      }
+    );
+
+    if(!orderRes.ok){
+      const txt = await orderRes.text();
+      throw new Error('Error deleting vendor_orders: ' + txt);
+    }
+
+    // 3. actualizar local solo si cloud salió bien
+    const reopenKeys = (order.items || []).map(item => placedKeyForRow(item));
+    state.placedOrders = (state.placedOrders || []).filter(key => !reopenKeys.includes(key));
+    state.orderHistory = (state.orderHistory || []).filter(entry => entry.id !== id);
+    compareSelection = compareSelection.filter(entryId => entryId !== id);
+
+    if(typeof rebuildPlacedOrdersFromHistory === 'function'){
+      Promise.resolve(rebuildPlacedOrdersFromHistory()).catch(console.error);
+    }
+
+    saveState();
+    render();
+    renderOrderHistory();
+    renderCompareToolbar();
+    setStatus(`${order.vendor} order re-opened and removed from cloud history.`);
+  } catch(err){
+    console.error(err);
+    alert('Could not re-open order in cloud.');
+    setStatus('Error re-opening order in cloud.');
+  }
 }
 window.reopenHistoryOrder = reopenHistoryOrder;
 async function reExportHistoryOrder(id){
