@@ -4857,6 +4857,7 @@ function toggleHistoryDetails(id){
 }
 window.toggleHistoryDetails = toggleHistoryDetails;
 async function deleteHistoryOrder(id){
+  await refreshOrdersFromCloud();
   const ORDER_CLOUD_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
   const ORDER_CLOUD_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
 
@@ -4916,7 +4917,82 @@ async function deleteHistoryOrder(id){
   }
 }
 window.deleteHistoryOrder = deleteHistoryOrder;
+
+
+async function refreshOrdersFromCloud(){
+  const ORDER_CLOUD_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const ORDER_CLOUD_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+
+  try{
+    const locRes = await fetch(
+      `${ORDER_CLOUD_URL}/rest/v1/locations?name=eq.${encodeURIComponent('The Crown Tavern')}&select=id`,
+      {
+        headers: {
+          apikey: ORDER_CLOUD_KEY,
+          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
+        }
+      }
+    );
+
+    const locData = await locRes.json();
+    const locationId = locData?.[0]?.id;
+    if(!locationId) throw new Error('No location found');
+
+    const ordersRes = await fetch(
+      `${ORDER_CLOUD_URL}/rest/v1/vendor_orders?location_id=eq.${locationId}&select=*`,
+      {
+        headers: {
+          apikey: ORDER_CLOUD_KEY,
+          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
+        }
+      }
+    );
+
+    const orders = await ordersRes.json();
+
+    const itemsRes = await fetch(
+      `${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?location_id=eq.${locationId}&select=*`,
+      {
+        headers: {
+          apikey: ORDER_CLOUD_KEY,
+          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
+        }
+      }
+    );
+
+    const items = await itemsRes.json();
+
+    state.orderHistory = (orders || []).map(order => ({
+      id: order.app_order_id,
+      vendor: order.vendor,
+      date: order.created_at,
+      items: (items || [])
+        .filter(i => i.app_order_id === order.app_order_id)
+        .map(i => ({
+          code: i.code,
+          item: i.item_name,
+          finalOrder: Number(i.quantity || 0)
+        }))
+    }));
+
+    if(typeof rebuildPlacedOrdersFromHistory === 'function'){
+      await rebuildPlacedOrdersFromHistory();
+    }
+
+    saveState();
+    render();
+    renderOrderHistory();
+
+  } catch(err){
+    console.error(err);
+    setStatus('Could not refresh orders from cloud.');
+  }
+}
+
+window.refreshOrdersFromCloud = refreshOrdersFromCloud;
+
 async function reopenHistoryOrder(id){
+  await refreshOrdersFromCloud();
   const order = (state.orderHistory||[]).find(entry => entry.id === id);
   if(!order) return;
 
@@ -5894,6 +5970,7 @@ function exportVendorLoopReady(){
 }
 
 async function placeCurrentOrder(){
+  await refreshOrdersFromCloud();
   if(isPlacingOrder || !canPlaceOrder()) return;
   const placeBtn = document.getElementById('placeOrderBtn');
   const vendorAtStart = activeVendorTab;
