@@ -5260,7 +5260,7 @@ function ignoreNoMatch(index){ state.noMatches.splice(index,1); saveState(); ren
 window.ignoreNoMatch = ignoreNoMatch;
 function closeModal(){ document.getElementById('modalBg').classList.add('hidden'); currentNoMatchIndex = null; }
 
-function saveNoMatchAsItem(){
+async function saveNoMatchAsItem(){
   if(currentNoMatchIndex===null) return;
   const raw = state.noMatches[currentNoMatchIndex];
   const item = document.getElementById('nmName').value.trim();
@@ -5271,14 +5271,78 @@ function saveNoMatchAsItem(){
   if(!item) return alert('Item name is required.');
   if(vendor==='UNKNOWN' && code) vendor = inferVendor(code);
   const itemNorm = normalizeName(item);
-  state.master.push({code,item,itemNorm,onHand,suggested,vendor,toOrder:computeToOrder(onHand,suggested)});
+
+  state.master.push({
+    code,
+    item,
+    itemNorm,
+    onHand,
+    suggested,
+    vendor,
+    toOrder:computeToOrder(onHand,suggested)
+  });
+
   aliases[normalizeName(raw.rawItem)] = itemNorm;
   saveAliases();
   state.noMatches.splice(currentNoMatchIndex,1);
   saveState();
   render();
   closeModal();
-  setStatus(`Item '${item}' created and saved to the persistent master.`);
+
+  const SUPABASE_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+
+  try {
+    const locRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/locations?name=eq.${encodeURIComponent('The Crown Tavern')}&select=id`,
+      {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+
+    const locData = await locRes.json();
+    const locationId = locData?.[0]?.id;
+
+    if(!locationId){
+      throw new Error('No location found');
+    }
+
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/inventory_items`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          Prefer: 'return=minimal'
+        },
+        body: JSON.stringify([{
+          location_id: locationId,
+          code: code || '',
+          item_name: item || '',
+          vendor: String(vendor || 'UNKNOWN').trim().toUpperCase(),
+          suggested: Number(suggested || 0),
+          on_hand: Number(onHand || 0),
+          value: 0
+        }])
+      }
+    );
+
+    if(!res.ok){
+      const txt = await res.text();
+      throw new Error(txt);
+    }
+
+    setStatus(`Item '${item}' created from No Match and synced to cloud.`);
+  } catch(err){
+    console.error(err);
+    setStatus('Item created locally from No Match, but cloud sync failed.');
+    alert('Item created locally, but cloud sync failed.');
+  }
 }
 
 
