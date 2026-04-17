@@ -5237,23 +5237,101 @@ function renderLinkOptions(){
   if(currentLinkMasterIndex!==null) sel.value = String(currentLinkMasterIndex);
 }
 function closeLinkModal(){ document.getElementById('linkModalBg').classList.add('hidden'); currentLinkMasterIndex = null; }
-function saveNoMatchLink(){
+async function saveNoMatchLink(){
   if(currentNoMatchIndex===null) return;
   const sel = document.getElementById('linkSelect');
   const idx = Number(sel.value);
   if(!Number.isFinite(idx)) return alert('Choose an existing item first.');
+
   const nm = state.noMatches[currentNoMatchIndex];
-  aliases[normalizeName(nm.rawItem)] = state.master[idx].itemNorm;
+  const target = state.master[idx];
+  const rawNorm = normalizeName(nm.rawItem);
+
+  aliases[rawNorm] = target.itemNorm;
+
   if(document.getElementById('linkUseCount').checked){
-    state.master[idx].onHand = nm.count;
-    state.master[idx].toOrder = computeToOrder(nm.count, state.master[idx].suggested);
+    target.onHand = nm.count;
+    target.toOrder = computeToOrder(nm.count, target.suggested);
   }
+
   saveAliases();
   state.noMatches.splice(currentNoMatchIndex,1);
   saveState();
   render();
   closeLinkModal();
-  setStatus(`Linked '${nm.rawItem}' to '${state.master[idx].item}'. Future imports will remember it.`);
+
+  const SUPABASE_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+
+  try{
+    const locRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/locations?name=eq.${encodeURIComponent('The Crown Tavern')}&select=id`,
+      {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+
+    const locData = await locRes.json();
+    const locationId = locData?.[0]?.id;
+    if(!locationId) throw new Error('No location found');
+
+    const aliasRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/inventory_aliases?on_conflict=location_id,raw_item`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          Prefer: 'resolution=merge-duplicates,return=minimal'
+        },
+        body: JSON.stringify([{
+          location_id: locationId,
+          raw_item: rawNorm,
+          item_norm: target.itemNorm
+        }])
+      }
+    );
+
+    if(!aliasRes.ok){
+      const txt = await aliasRes.text();
+      throw new Error('Error saving inventory_aliases: ' + txt);
+    }
+
+    if(document.getElementById('linkUseCount').checked){
+      const patchRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/inventory_items?location_id=eq.${locationId}&code=eq.${encodeURIComponent(target.code || '')}&item_name=eq.${encodeURIComponent(target.item || '')}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            Prefer: 'return=minimal'
+          },
+          body: JSON.stringify({
+            on_hand: Number(target.onHand || 0),
+            suggested: Number(target.suggested || 0),
+            value: Number(target.value || 0)
+          })
+        }
+      );
+
+      if(!patchRes.ok){
+        const txt = await patchRes.text();
+        throw new Error('Error updating inventory_items from No Match link: ' + txt);
+      }
+    }
+
+    setStatus(`Linked '${nm.rawItem}' to '${target.item}' and synced to cloud.`);
+  } catch(err){
+    console.error(err);
+    setStatus('No Match link saved locally, but cloud sync failed.');
+    alert('No Match link saved locally, but cloud sync failed.');
+  }
 }
 
 function ignoreNoMatch(index){ state.noMatches.splice(index,1); saveState(); render(); setStatus('No match ignored.'); }
