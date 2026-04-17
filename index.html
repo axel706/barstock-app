@@ -7430,5 +7430,111 @@ window.rebuildPlacedOrdersFromHistory = rebuildPlacedOrdersFromHistory;
 </script>
 <!-- BARSTOCK NO MATCH CLOUD END -->
 
+
+
+async function syncOrdersToCloud(){
+  const ORDER_CLOUD_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const ORDER_CLOUD_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+
+  try{
+    // 1. obtener location_id
+    const locRes = await fetch(
+      `${ORDER_CLOUD_URL}/rest/v1/locations?name=eq.${encodeURIComponent('The Crown Tavern')}&select=id`,
+      {
+        headers: {
+          apikey: ORDER_CLOUD_KEY,
+          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
+        }
+      }
+    );
+
+    const locData = await locRes.json();
+    const locationId = locData?.[0]?.id;
+    if(!locationId) throw new Error('No location found');
+
+    // 2. borrar todo en cloud
+    await fetch(`${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?location_id=eq.${locationId}`, {
+      method: 'DELETE',
+      headers: {
+        apikey: ORDER_CLOUD_KEY,
+        Authorization: `Bearer ${ORDER_CLOUD_KEY}`
+      }
+    });
+
+    await fetch(`${ORDER_CLOUD_URL}/rest/v1/vendor_orders?location_id=eq.${locationId}`, {
+      method: 'DELETE',
+      headers: {
+        apikey: ORDER_CLOUD_KEY,
+        Authorization: `Bearer ${ORDER_CLOUD_KEY}`
+      }
+    });
+
+    // 3. reconstruir desde state.orderHistory
+    const orders = state.orderHistory || [];
+
+    for(const order of orders){
+
+      // crear order
+      const orderRes = await fetch(`${ORDER_CLOUD_URL}/rest/v1/vendor_orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: ORDER_CLOUD_KEY,
+          Authorization: `Bearer ${ORDER_CLOUD_KEY}`,
+          Prefer: 'return=minimal'
+        },
+        body: JSON.stringify({
+          app_order_id: order.id,
+          location_id: locationId,
+          vendor: order.vendor,
+          created_at: order.date || new Date().toISOString()
+        })
+      });
+
+      if(!orderRes.ok){
+        const txt = await orderRes.text();
+        throw new Error('Error inserting order: ' + txt);
+      }
+
+      // crear items
+      const items = (order.items || []).map(i => ({
+        app_order_id: order.id,
+        location_id: locationId,
+        code: i.code || '',
+        item_name: i.item || '',
+        quantity: Number(i.finalOrder || 0)
+      }));
+
+      if(items.length){
+        const itemsRes = await fetch(`${ORDER_CLOUD_URL}/rest/v1/vendor_order_items`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: ORDER_CLOUD_KEY,
+            Authorization: `Bearer ${ORDER_CLOUD_KEY}`,
+            Prefer: 'return=minimal'
+          },
+          body: JSON.stringify(items)
+        });
+
+        if(!itemsRes.ok){
+          const txt = await itemsRes.text();
+          throw new Error('Error inserting items: ' + txt);
+        }
+      }
+    }
+
+    setStatus('Orders synced from this device to cloud successfully.');
+    alert('Cloud now matches this device.');
+
+  } catch(err){
+    console.error(err);
+    alert('Error syncing orders to cloud.');
+    setStatus('Sync failed.');
+  }
+}
+
+window.syncOrdersToCloud = syncOrdersToCloud;
+
 </body>
 </html>
