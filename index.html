@@ -7436,7 +7436,6 @@ async function syncOrdersToCloud(){
   const ORDER_CLOUD_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
 
   try{
-    // 1. obtener location_id
     const locRes = await fetch(
       `${ORDER_CLOUD_URL}/rest/v1/locations?name=eq.${encodeURIComponent('The Crown Tavern')}&select=id`,
       {
@@ -7451,88 +7450,75 @@ async function syncOrdersToCloud(){
     const locationId = locData?.[0]?.id;
     if(!locationId) throw new Error('No location found');
 
-    // 2. borrar todo en cloud
-    // vendor_order_items no tiene location_id, así que borramos todo
-    await fetch(`${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?app_order_id=not.is.null`, {
-      method: 'DELETE',
-      headers: {
-        apikey: ORDER_CLOUD_KEY,
-        Authorization: `Bearer ${ORDER_CLOUD_KEY}`
-      }
-    });
-
-    await fetch(`${ORDER_CLOUD_URL}/rest/v1/vendor_orders?location_id=eq.${locationId}`, {
-      method: 'DELETE',
-      headers: {
-        apikey: ORDER_CLOUD_KEY,
-        Authorization: `Bearer ${ORDER_CLOUD_KEY}`
-      }
-    });
-
-    // 3. reconstruir desde state.orderHistory
-    const orders = state.orderHistory || [];
-
-    for(const order of orders){
-
-      // crear order
-      const orderRes = await fetch(`${ORDER_CLOUD_URL}/rest/v1/vendor_orders`, {
-        method: 'POST',
+    // 1. borrar items de órdenes existentes de Crown
+    const existingOrdersRes = await fetch(
+      `${ORDER_CLOUD_URL}/rest/v1/vendor_orders?location_id=eq.${locationId}&select=app_order_id`,
+      {
         headers: {
-          'Content-Type': 'application/json',
           apikey: ORDER_CLOUD_KEY,
-          Authorization: `Bearer ${ORDER_CLOUD_KEY}`,
-          Prefer: 'return=minimal'
-        },
-        body: JSON.stringify({
-          app_order_id: order.id,
-          location_id: locationId,
-          vendor: order.vendor,
-          created_at: order.date || new Date().toISOString()
-        })
-      });
-
-      if(!orderRes.ok){
-        const txt = await orderRes.text();
-        throw new Error('Error inserting order: ' + txt);
-      }
-
-      // crear items
-      const items = (order.items || []).map(i => ({
-        app_order_id: order.id,
-        code: i.code || '',
-        item_name: i.item || '',
-        quantity: Number(i.finalOrder || 0)
-      }));
-
-      if(items.length){
-        const itemsRes = await fetch(`${ORDER_CLOUD_URL}/rest/v1/vendor_order_items`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: ORDER_CLOUD_KEY,
-            Authorization: `Bearer ${ORDER_CLOUD_KEY}`,
-            Prefer: 'return=minimal'
-          },
-          body: JSON.stringify(items)
-        });
-
-        if(!itemsRes.ok){
-          const txt = await itemsRes.text();
-          throw new Error('Error inserting items: ' + txt);
+          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
         }
       }
+    );
+
+    const existingOrders = await existingOrdersRes.json();
+    if(!Array.isArray(existingOrders)) throw new Error('Could not read existing vendor_orders');
+
+    for(const row of existingOrders){
+      const appOrderId = row?.app_order_id;
+      if(!appOrderId) continue;
+
+      const delItemsRes = await fetch(
+        `${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?app_order_id=eq.${encodeURIComponent(appOrderId)}`,
+        {
+          method: 'DELETE',
+          headers: {
+            apikey: ORDER_CLOUD_KEY,
+            Authorization: `Bearer ${ORDER_CLOUD_KEY}`
+          }
+        }
+      );
+
+      if(!delItemsRes.ok){
+        const txt = await delItemsRes.text();
+        throw new Error('Error deleting vendor_order_items: ' + txt);
+      }
+    }
+
+    // 2. borrar órdenes de Crown
+    const delOrdersRes = await fetch(
+      `${ORDER_CLOUD_URL}/rest/v1/vendor_orders?location_id=eq.${locationId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          apikey: ORDER_CLOUD_KEY,
+          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
+        }
+      }
+    );
+
+    if(!delOrdersRes.ok){
+      const txt = await delOrdersRes.text();
+      throw new Error('Error deleting vendor_orders: ' + txt);
+    }
+
+    // 3. reconstruir cloud usando la función buena que ya existe
+    const orders = state.orderHistory || [];
+    for(const order of orders){
+      if(typeof persistOrderToSupabase !== 'function'){
+        throw new Error('persistOrderToSupabase is not available');
+      }
+      await persistOrderToSupabase(order);
     }
 
     setStatus('Orders synced from this device to cloud successfully.');
     alert('Cloud now matches this device.');
-
   } catch(err){
     console.error(err);
     alert('Error syncing orders to cloud.');
     setStatus('Sync failed.');
   }
 }
-
 window.syncOrdersToCloud = syncOrdersToCloud;
 </script>
 
