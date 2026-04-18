@@ -7670,5 +7670,24 @@ window.addEventListener('load', () => {
 </script>
 <!-- BARSTOCK ORDERS REALTIME END -->
 
+
+<!-- BARSTOCK BUILD BADGE START -->
+<script>
+window.__BARSTOCK_BUILD_ID = "ORDERS-BUILD-20260418-1";
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    try {
+      if (typeof setStatus === 'function') {
+        setStatus(`Build: ${window.__BARSTOCK_BUILD_ID}`);
+      }
+      document.title = document.title + " [ORDERS-BUILD-20260418-1]";
+    } catch (e) {
+      console.error(e);
+    }
+  }, 250);
+});
+</script>
+<!-- BARSTOCK BUILD BADGE END -->
+
 </body>
 </html>
