@@ -6003,6 +6003,9 @@ async function placeCurrentOrder(){
     const placedKeys = rows.map(placedKeyForRow);
     state.placedOrders = Array.from(new Set([...(state.placedOrders || []), ...placedKeys]));
     saveState();
+    if (typeof rebuildPlacedOrdersFromHistory === 'function') {
+      await rebuildPlacedOrdersFromHistory();
+    }
     render();
     try {
       if (window.persistOrderToSupabase) {
@@ -7170,7 +7173,6 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
 
   try {
-    // obtener location_id
     const locRes = await fetch(
       `${SUPABASE_URL}/rest/v1/locations?name=eq.${encodeURIComponent('The Crown Tavern')}&select=id,weekly_reset_at`,
       {
@@ -7183,39 +7185,32 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
     const locData = await locRes.json();
     const location = locData?.[0];
-
     if (!location) return;
 
-    const resetAt = location.weekly_reset_at
-      ? new Date(location.weekly_reset_at)
-      : null;
-
+    const resetAt = location.weekly_reset_at ? new Date(location.weekly_reset_at) : null;
     const keys = [];
 
     (state.orderHistory || []).forEach(order => {
-      const orderDate = new Date(order.createdAt || 0);
+      const orderDate = new Date(order.createdAt || order.date || 0);
 
-      // 👇 ignorar órdenes antes del reset
+      // ignorar órdenes anteriores al reset semanal
       if (resetAt && orderDate < resetAt) return;
 
       (order.items || []).forEach(item => {
-        if (typeof placedKeyForRow === 'function') {
-          const key = placedKeyForRow({
-            code: item.code || '',
-            item: item.item || '',
-            vendor: item.vendor || order.vendor || ''
-          });
-          if (key) keys.push(key);
-        }
+        const key = placedKeyForRow({
+          code: item.code || '',
+          item: item.item || '',
+          vendor: (item.vendor || order.vendor || '').toUpperCase()
+        });
+        if (key) keys.push(key);
       });
     });
 
     state.placedOrders = Array.from(new Set(keys.filter(Boolean)));
   } catch (err) {
-    console.error('Error rebuilding placedOrders with reset filter', err);
+    console.error('Error rebuilding placedOrders from history', err);
   }
 }
-
 window.rebuildPlacedOrdersFromHistory = rebuildPlacedOrdersFromHistory;
 
     const keys = [];
