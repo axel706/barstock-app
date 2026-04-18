@@ -7498,5 +7498,185 @@ window.addEventListener('load', () => {
   }, 1200);
 });
 
+
+<!-- BARSTOCK ORDERS REALTIME START -->
+<script>
+(() => {
+  if (window.__barstockOrdersRealtimeBooted) return;
+  window.__barstockOrdersRealtimeBooted = true;
+
+  const ORDERS_RT_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const ORDERS_RT_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+  const ORDERS_RT_LOCATION = 'The Crown Tavern';
+
+  let ordersRefreshTimer = null;
+
+  function ordersRtStatus(msg) {
+    try {
+      if (typeof setStatus === 'function') setStatus(msg);
+      else console.log(msg);
+    } catch (e) {
+      console.log(msg);
+    }
+  }
+
+  function debounceOrdersRefresh() {
+    clearTimeout(ordersRefreshTimer);
+    ordersRefreshTimer = setTimeout(() => {
+      loadOrdersRealtimeFromCloud().catch(err => {
+        console.error(err);
+        ordersRtStatus('Error refreshing orders from cloud.');
+      });
+    }, 350);
+  }
+
+  async function ensureSupabaseSdk() {
+    if (window.supabase) return;
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  async function fetchOrdersLocationId() {
+    const res = await fetch(
+      `${ORDERS_RT_URL}/rest/v1/locations?name=eq.${encodeURIComponent(ORDERS_RT_LOCATION)}&select=id`,
+      {
+        headers: {
+          apikey: ORDERS_RT_KEY,
+          Authorization: `Bearer ${ORDERS_RT_KEY}`
+        }
+      }
+    );
+    const data = await res.json();
+    const locationId = data?.[0]?.id;
+    if (!locationId) throw new Error('No location found for orders realtime');
+    return locationId;
+  }
+
+  async function loadOrdersRealtimeFromCloud() {
+    const locationId = await fetchOrdersLocationId();
+
+    const ordersRes = await fetch(
+      `${ORDERS_RT_URL}/rest/v1/vendor_orders?location_id=eq.${locationId}&select=app_order_id,vendor,created_at,export_type,filename,total_units,subtotal&order=created_at.desc`,
+      {
+        headers: {
+          apikey: ORDERS_RT_KEY,
+          Authorization: `Bearer ${ORDERS_RT_KEY}`
+        }
+      }
+    );
+
+    const orders = await ordersRes.json();
+    if (!Array.isArray(orders)) throw new Error('Invalid vendor_orders response');
+
+    const itemsRes = await fetch(
+      `${ORDERS_RT_URL}/rest/v1/vendor_order_items?select=app_order_id,code,item_name,vendor,quantity,unit_price`,
+      {
+        headers: {
+          apikey: ORDERS_RT_KEY,
+          Authorization: `Bearer ${ORDERS_RT_KEY}`
+        }
+      }
+    );
+
+    const items = await itemsRes.json();
+    if (!Array.isArray(items)) throw new Error('Invalid vendor_order_items response');
+
+    const itemsByAppOrderId = {};
+    for (const item of items) {
+      const key = String(item.app_order_id || '');
+      if (!key) continue;
+      if (!itemsByAppOrderId[key]) itemsByAppOrderId[key] = [];
+      itemsByAppOrderId[key].push(item);
+    }
+
+    state.orderHistory = orders.map(order => ({
+      id: String(order.app_order_id || ''),
+      vendor: String(order.vendor || 'UNKNOWN').trim().toUpperCase(),
+      createdAt: order.created_at || new Date().toISOString(),
+      date: order.created_at || new Date().toISOString(),
+      exportType: order.export_type || 'vendor_jpg',
+      filename: String(order.filename || ''),
+      totalUnits: Number(order.total_units || 0),
+      subtotal: Number(order.subtotal || 0),
+      items: (itemsByAppOrderId[String(order.app_order_id || '')] || []).map(item => ({
+        code: String(item.code || '').trim(),
+        item: String(item.item_name || '').trim(),
+        vendor: String(item.vendor || order.vendor || 'UNKNOWN').trim().toUpperCase(),
+        onHand: 0,
+        suggested: 0,
+        value: Number(item.unit_price || 0),
+        toOrder: 0,
+        orderOverride: '',
+        finalOrder: Number(item.quantity || 0)
+      }))
+    }));
+
+    if (typeof rebuildPlacedOrdersFromHistory === 'function') {
+      await rebuildPlacedOrdersFromHistory();
+    } else {
+      state.placedOrders = [];
+    }
+
+    if (typeof saveState === 'function') saveState();
+    if (typeof render === 'function') render();
+    if (typeof renderOrderHistory === 'function') renderOrderHistory();
+    if (typeof renderCompareToolbar === 'function') renderCompareToolbar();
+  }
+
+  async function enableOrdersRealtime() {
+    await ensureSupabaseSdk();
+
+    await loadOrdersRealtimeFromCloud();
+
+    const rtClient = window.supabase.createClient(ORDERS_RT_URL, ORDERS_RT_KEY);
+
+    if (window.__barstockOrdersRealtimeChannel) {
+      try { await window.__barstockOrdersRealtimeChannel.unsubscribe(); } catch (e) {}
+    }
+
+    window.__barstockOrdersRealtimeChannel = rtClient
+      .channel('barstock-orders-live')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'vendor_orders' },
+        () => debounceOrdersRefresh()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'vendor_order_items' },
+        () => debounceOrdersRefresh()
+      )
+      .subscribe((status) => {
+        console.log('Orders realtime status:', status);
+        if (status === 'SUBSCRIBED') {
+          ordersRtStatus('Orders realtime connected');
+        }
+      });
+  }
+
+  window.loadOrdersRealtimeFromCloud = loadOrdersRealtimeFromCloud;
+  window.enableOrdersRealtime = enableOrdersRealtime;
+
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      enableOrdersRealtime().catch(err => {
+        console.error(err);
+        ordersRtStatus('Error connecting orders realtime.');
+      });
+    }, 1600);
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) debounceOrdersRefresh();
+  });
+})();
+</script>
+<!-- BARSTOCK ORDERS REALTIME END -->
+
 </body>
 </html>
