@@ -6003,9 +6003,6 @@ async function placeCurrentOrder(){
     const placedKeys = rows.map(placedKeyForRow);
     state.placedOrders = Array.from(new Set([...(state.placedOrders || []), ...placedKeys]));
     saveState();
-    if (typeof rebuildPlacedOrdersFromHistory === 'function') {
-      await rebuildPlacedOrdersFromHistory();
-    }
     render();
     try {
       if (window.persistOrderToSupabase) {
