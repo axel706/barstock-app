@@ -7238,21 +7238,7 @@ window.rebuildPlacedOrdersFromHistory = rebuildPlacedOrdersFromHistory;
 
   window.rebuildPlacedOrdersFromHistory = rebuildPlacedOrdersFromHistory;
 
-  // Ejecutar al abrir, después de que Order History cloud haya cargado
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      try {
-        rebuildPlacedOrdersFromHistory();
-        if (typeof saveState === 'function') saveState();
-        if (typeof render === 'function') render();
-        if (typeof setStatus === 'function') {
-          setStatus(`Placed Orders rebuilt from Order History: ${state.placedOrders.length}`);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    }, 1800);
-  });
+
 })();
 </script>
 <!-- BARSTOCK PLACED ORDERS DERIVED END -->
