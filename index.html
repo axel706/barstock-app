@@ -7785,5 +7785,51 @@ window.__BARSTOCK_BUILD_ID = "ORDERS-BUILD-20260418-2";
 </script>
 <!-- BARSTOCK PLACE ORDER OVERRIDE END -->
 
+
+<!-- BARSTOCK PLACE ORDER FORCE BIND START -->
+<script>
+(() => {
+  if (window.__barstockPlaceOrderForceBindBooted) return;
+  window.__barstockPlaceOrderForceBindBooted = true;
+
+  function bindPlaceOrderButtonToCloudFirst() {
+    const oldBtn = document.getElementById('placeOrderBtn');
+    if (!oldBtn) return;
+
+    const newBtn = oldBtn.cloneNode(true);
+    oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+
+    newBtn.addEventListener('click', async () => {
+      try {
+        if (typeof window.placeCurrentOrder !== 'function') {
+          throw new Error('placeCurrentOrder unavailable');
+        }
+        await window.placeCurrentOrder();
+      } catch (err) {
+        console.error(err);
+        alert('Could not place vendor order.');
+        if (typeof setStatus === 'function') {
+          setStatus('Error placing vendor order.');
+        }
+      }
+    });
+
+    console.log('✅ placeOrderBtn force-bound to current window.placeCurrentOrder');
+    if (typeof setStatus === 'function') {
+      setStatus('Place Order button rebound to cloud-first handler.');
+    }
+  }
+
+  window.bindPlaceOrderButtonToCloudFirst = bindPlaceOrderButtonToCloudFirst;
+
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      bindPlaceOrderButtonToCloudFirst();
+    }, 2200);
+  });
+})();
+</script>
+<!-- BARSTOCK PLACE ORDER FORCE BIND END -->
+
 </body>
 </html>
