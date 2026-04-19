@@ -3351,6 +3351,10 @@ let historyVendorTab = 'ALL';
 function defaultState(){ return {master:[], noMatches:[], orderHistory:[], placedOrders:[], lastMasterName:null, lastCountName:null, lastUpdated:null}; }
 function migrateLegacy(primaryKey, legacyKeys, fallback){
   try {
+
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+
     const current = localStorage.getItem(primaryKey);
     if (current) return JSON.parse(current) || fallback;
     for (const key of legacyKeys){
@@ -7684,15 +7688,21 @@ window.addEventListener('load', () => {
 
     try {
       // 1. export local file como siempre
-      if (vendorAtStart === 'LOOP') {
-        if (typeof exportLoopCsvFromRows === 'function') {
-          const ok = exportLoopCsvFromRows(rows, order.filename);
-          if (ok === false) throw new Error('Could not export LOOP CSV');
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+      if (!isMobile) {
+        if (vendorAtStart === 'LOOP') {
+          if (typeof exportLoopCsvFromRows === 'function') {
+            const ok = exportLoopCsvFromRows(rows, order.filename);
+            if (ok === false) throw new Error('Could not export LOOP CSV');
+          }
+        } else {
+          if (typeof exportVendorJpgFromRows === 'function') {
+            await exportVendorJpgFromRows(vendorAtStart, rows, order.filename);
+          }
         }
       } else {
-        if (typeof exportVendorJpgFromRows === 'function') {
-          await exportVendorJpgFromRows(vendorAtStart, rows, order.filename);
-        }
+        console.log('📱 Mobile detected → skipping export');
       }
 
       // 2. cloud obligatorio
