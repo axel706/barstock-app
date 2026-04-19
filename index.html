@@ -7492,344 +7492,148 @@ window.addEventListener('load', () => {
 });
 
 
-<!-- BARSTOCK ORDERS REALTIME START -->
+
+<!-- BARSTOCK ORDERS CORE START -->
 <script>
 (() => {
-  if (window.__barstockOrdersRealtimeBooted) return;
-  window.__barstockOrdersRealtimeBooted = true;
+  if (window.__barstockOrdersCoreBooted) return;
+  window.__barstockOrdersCoreBooted = true;
 
-  const ORDERS_RT_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
-  const ORDERS_RT_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
-  const ORDERS_RT_LOCATION = 'The Crown Tavern';
+  const ORDERS_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const ORDERS_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+  const ORDERS_LOCATION = 'The Crown Tavern';
 
-  let ordersRefreshTimer = null;
-
-  function ordersRtStatus(msg) {
-    try {
-      if (typeof setStatus === 'function') setStatus(msg);
-      else console.log(msg);
-    } catch (e) {
-      console.log(msg);
-    }
-  }
-
-  function debounceOrdersRefresh() {
-    clearTimeout(ordersRefreshTimer);
-    ordersRefreshTimer = setTimeout(() => {
-      loadOrdersRealtimeFromCloud().catch(err => {
-        console.error(err);
-        ordersRtStatus('Error refreshing orders from cloud.');
-      });
-    }, 350);
-  }
-
-  async function ensureSupabaseSdk() {
-    if (window.supabase) return;
-    await new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-      s.onload = resolve;
-      s.onerror = reject;
-      document.head.appendChild(s);
-    });
-  }
-
-  async function fetchOrdersLocationId() {
+  async function getOrdersLocationId() {
     const res = await fetch(
-      `${ORDERS_RT_URL}/rest/v1/locations?name=eq.${encodeURIComponent(ORDERS_RT_LOCATION)}&select=id`,
+      `${ORDERS_URL}/rest/v1/locations?name=eq.${encodeURIComponent(ORDERS_LOCATION)}&select=id,weekly_reset_at`,
       {
         headers: {
-          apikey: ORDERS_RT_KEY,
-          Authorization: `Bearer ${ORDERS_RT_KEY}`
+          apikey: ORDERS_KEY,
+          Authorization: `Bearer ${ORDERS_KEY}`
         }
       }
     );
     const data = await res.json();
-    const locationId = data?.[0]?.id;
-    if (!locationId) throw new Error('No location found for orders realtime');
-    return locationId;
+    const row = data?.[0];
+    if (!row?.id) throw new Error('No location found for Orders');
+    return row;
   }
 
-  async function loadOrdersRealtimeFromCloud() {
-    const locationId = await fetchOrdersLocationId();
+  async function rebuildPlacedOrdersFromHistory() {
+    try {
+      const location = await getOrdersLocationId();
+      const resetAt = location.weekly_reset_at ? new Date(location.weekly_reset_at) : null;
+      const keys = [];
 
-    const ordersRes = await fetch(
-      `${ORDERS_RT_URL}/rest/v1/vendor_orders?location_id=eq.${locationId}&select=app_order_id,vendor,created_at,export_type,filename,total_units,subtotal&order=created_at.desc`,
-      {
-        headers: {
-          apikey: ORDERS_RT_KEY,
-          Authorization: `Bearer ${ORDERS_RT_KEY}`
-        }
-      }
-    );
+      (state.orderHistory || []).forEach(order => {
+        const orderDate = new Date(order.createdAt || order.date || 0);
+        if (resetAt && orderDate < resetAt) return;
 
-    const orders = await ordersRes.json();
-    if (!Array.isArray(orders)) throw new Error('Invalid vendor_orders response');
+        (order.items || []).forEach(item => {
+          if (typeof placedKeyForRow !== 'function') return;
+          const key = placedKeyForRow({
+            code: item.code || '',
+            item: item.item || '',
+            vendor: String(item.vendor || order.vendor || '').trim().toUpperCase()
+          });
+          if (key) keys.push(key);
+        });
+      });
 
-    const itemsRes = await fetch(
-      `${ORDERS_RT_URL}/rest/v1/vendor_order_items?select=app_order_id,code,item_name,vendor,quantity,unit_price`,
-      {
-        headers: {
-          apikey: ORDERS_RT_KEY,
-          Authorization: `Bearer ${ORDERS_RT_KEY}`
-        }
-      }
-    );
-
-    const items = await itemsRes.json();
-    if (!Array.isArray(items)) throw new Error('Invalid vendor_order_items response');
-
-    const itemsByAppOrderId = {};
-    for (const item of items) {
-      const key = String(item.app_order_id || '');
-      if (!key) continue;
-      if (!itemsByAppOrderId[key]) itemsByAppOrderId[key] = [];
-      itemsByAppOrderId[key].push(item);
+      state.placedOrders = Array.from(new Set(keys.filter(Boolean)));
+    } catch (err) {
+      console.error('rebuildPlacedOrdersFromHistory failed', err);
     }
+  }
 
-    state.orderHistory = orders.map(order => ({
-      id: String(order.app_order_id || ''),
-      vendor: String(order.vendor || 'UNKNOWN').trim().toUpperCase(),
-      createdAt: order.created_at || new Date().toISOString(),
-      date: order.created_at || new Date().toISOString(),
-      exportType: order.export_type || 'vendor_jpg',
-      filename: String(order.filename || ''),
-      totalUnits: Number(order.total_units || 0),
-      subtotal: Number(order.subtotal || 0),
-      items: (itemsByAppOrderId[String(order.app_order_id || '')] || []).map(item => ({
-        code: String(item.code || '').trim(),
-        item: String(item.item_name || '').trim(),
-        vendor: String(item.vendor || order.vendor || 'UNKNOWN').trim().toUpperCase(),
-        onHand: 0,
-        suggested: 0,
-        value: Number(item.unit_price || 0),
-        toOrder: 0,
-        orderOverride: '',
-        finalOrder: Number(item.quantity || 0)
-      }))
-    }));
+  async function loadOrdersFromCloud() {
+    try {
+      const location = await getOrdersLocationId();
+      const locationId = location.id;
 
-    if (typeof rebuildPlacedOrdersFromHistory === 'function') {
+      const ordersRes = await fetch(
+        `${ORDERS_URL}/rest/v1/vendor_orders?location_id=eq.${locationId}&select=app_order_id,vendor,created_at,export_type,filename,total_units,subtotal&order=created_at.desc`,
+        {
+          headers: {
+            apikey: ORDERS_KEY,
+            Authorization: `Bearer ${ORDERS_KEY}`
+          }
+        }
+      );
+      const orders = await ordersRes.json();
+      if (!Array.isArray(orders)) throw new Error('Invalid vendor_orders response');
+
+      const itemsRes = await fetch(
+        `${ORDERS_URL}/rest/v1/vendor_order_items?select=app_order_id,code,item_name,vendor,quantity,unit_price`,
+        {
+          headers: {
+            apikey: ORDERS_KEY,
+            Authorization: `Bearer ${ORDERS_KEY}`
+          }
+        }
+      );
+      const items = await itemsRes.json();
+      if (!Array.isArray(items)) throw new Error('Invalid vendor_order_items response');
+
+      const itemsByOrder = {};
+      for (const item of items) {
+        const key = String(item.app_order_id || '');
+        if (!key) continue;
+        if (!itemsByOrder[key]) itemsByOrder[key] = [];
+        itemsByOrder[key].push(item);
+      }
+
+      state.orderHistory = orders.map(order => ({
+        id: String(order.app_order_id || ''),
+        vendor: String(order.vendor || 'UNKNOWN').trim().toUpperCase(),
+        createdAt: order.created_at || new Date().toISOString(),
+        date: order.created_at || new Date().toISOString(),
+        exportType: order.export_type || 'vendor_jpg',
+        filename: String(order.filename || ''),
+        totalUnits: Number(order.total_units || 0),
+        subtotal: Number(order.subtotal || 0),
+        items: (itemsByOrder[String(order.app_order_id || '')] || []).map(item => ({
+          code: String(item.code || '').trim(),
+          item: String(item.item_name || '').trim(),
+          vendor: String(item.vendor || order.vendor || 'UNKNOWN').trim().toUpperCase(),
+          onHand: 0,
+          suggested: 0,
+          value: Number(item.unit_price || 0),
+          toOrder: 0,
+          orderOverride: '',
+          finalOrder: Number(item.quantity || 0)
+        }))
+      }));
+
       await rebuildPlacedOrdersFromHistory();
-    } else {
-      state.placedOrders = [];
-    }
-
-    if (typeof saveState === 'function') saveState();
-    if (typeof render === 'function') render();
-    if (typeof renderOrderHistory === 'function') renderOrderHistory();
-    if (typeof renderCompareToolbar === 'function') renderCompareToolbar();
-  }
-
-  async function enableOrdersRealtime() {
-    await ensureSupabaseSdk();
-
-    await loadOrdersRealtimeFromCloud();
-
-    const rtClient = window.supabase.createClient(ORDERS_RT_URL, ORDERS_RT_KEY);
-
-    if (window.__barstockOrdersRealtimeChannel) {
-      try { await window.__barstockOrdersRealtimeChannel.unsubscribe(); } catch (e) {}
-    }
-
-    window.__barstockOrdersRealtimeChannel = rtClient
-      .channel('barstock-orders-live')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'vendor_orders' },
-        () => debounceOrdersRefresh()
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'vendor_order_items' },
-        () => debounceOrdersRefresh()
-      )
-      .subscribe((status) => {
-        console.log('Orders realtime status:', status);
-        if (status === 'SUBSCRIBED') {
-          ordersRtStatus('Orders realtime connected');
-        }
-      });
-  }
-
-  window.loadOrdersRealtimeFromCloud = loadOrdersRealtimeFromCloud;
-  window.enableOrdersRealtime = enableOrdersRealtime;
-
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      enableOrdersRealtime().catch(err => {
-        console.error(err);
-        ordersRtStatus('Error connecting orders realtime.');
-      });
-    }, 1600);
-  });
-
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) debounceOrdersRefresh();
-  });
-})();
-</script>
-<!-- BARSTOCK ORDERS REALTIME END -->
-
-
-
-<!-- BARSTOCK BUILD BADGE START -->
-<script>
-window.__BARSTOCK_BUILD_ID = "ORDERS-BUILD-20260418-2";
-</script>
-<!-- BARSTOCK BUILD BADGE END -->
-
-
-<!-- BARSTOCK PLACE ORDER OVERRIDE START -->
-<script>
-(() => {
-  if (window.__barstockPlaceOrderOverrideBooted) return;
-  window.__barstockPlaceOrderOverrideBooted = true;
-
-  async function placeCurrentOrderCloudFirst(){
-    if (typeof isPlacingOrder !== 'undefined' && isPlacingOrder) return;
-    if (typeof canPlaceOrder === 'function' && !canPlaceOrder()) return;
-
-    const placeBtn = document.getElementById('placeOrderBtn');
-    const vendorAtStart = typeof activeVendorTab !== 'undefined' ? activeVendorTab : 'ALL';
-    const rows = (typeof getOrderRowsForVendor === 'function' ? getOrderRowsForVendor(vendorAtStart) : [])
-      .map(r => (typeof cloneOrderRow === 'function' ? cloneOrderRow(r) : r))
-      .filter(r => (typeof parseNum === 'function' ? parseNum(r.finalOrder) : Number(r.finalOrder || 0)) > 0);
-
-    if(!rows.length){
-      alert('No items available to place for this vendor.');
-      return;
-    }
-
-    const now = new Date().toISOString();
-    const order = {
-      id: typeof uniqueOrderId === 'function' ? uniqueOrderId() : `ord_${Date.now()}`,
-      vendor: vendorAtStart,
-      createdAt: now,
-      exportType: vendorAtStart === 'LOOP' ? 'loop_csv' : 'vendor_jpg',
-      filename: vendorAtStart === 'LOOP'
-        ? 'loop_upload.csv'
-        : (typeof currentVendorFilenameStem === 'function' ? `${currentVendorFilenameStem()}.jpg` : `vendor_order_${String(vendorAtStart || '').toLowerCase().replace(/\s+/g,'_')}.jpg`),
-      items: rows,
-      totalUnits: rows.reduce((sum, r) => sum + (typeof parseNum === 'function' ? parseNum(r.finalOrder) : Number(r.finalOrder || 0)), 0),
-      subtotal: typeof computeOrderSubtotal === 'function' ? computeOrderSubtotal(rows) : 0
-    };
-
-    if (typeof isPlacingOrder !== 'undefined') isPlacingOrder = true;
-    if(placeBtn){
-      placeBtn.disabled = true;
-      placeBtn.dataset.originalLabel = placeBtn.textContent;
-      placeBtn.textContent = 'PLACING…';
-    }
-
-    try{
-      // export local file primero, como siempre
-      if(vendorAtStart === 'LOOP'){
-        if(typeof exportLoopCsvFromRows === 'function'){
-          const ok = exportLoopCsvFromRows(rows, order.filename);
-          if(ok === false) throw new Error('Could not export LOOP CSV.');
-        }
-      } else {
-        if(typeof exportVendorJpgFromRows === 'function'){
-          await exportVendorJpgFromRows(vendorAtStart, rows, order.filename);
-        }
-      }
-
-      // cloud obligatorio
-      if(typeof window.persistOrderToSupabase !== 'function'){
-        throw new Error('persistOrderToSupabase unavailable');
-      }
-
-      await window.persistOrderToSupabase(order);
-
-      // solo si cloud salió bien, actualizamos local
-      state.orderHistory = Array.isArray(state.orderHistory) ? state.orderHistory : [];
-      state.orderHistory.unshift(order);
-
-      const placedKeys = rows.map(r => typeof placedKeyForRow === 'function' ? placedKeyForRow(r) : '');
-      state.placedOrders = Array.from(new Set([...(state.placedOrders || []), ...placedKeys.filter(Boolean)]));
 
       if (typeof saveState === 'function') saveState();
       if (typeof render === 'function') render();
       if (typeof renderOrderHistory === 'function') renderOrderHistory();
       if (typeof renderCompareToolbar === 'function') renderCompareToolbar();
-
-      // después refrescamos desde cloud para dejar ambos mundos alineados
-      if (typeof loadOrdersRealtimeFromCloud === 'function') {
-        await loadOrdersRealtimeFromCloud();
-      } else if (typeof loadOrdersFromCloud === 'function') {
-        await loadOrdersFromCloud();
-      }
-
-      if (typeof setStatus === 'function') {
-        setStatus(`${vendorAtStart} order placed and synced to cloud.`);
-      }
-    } catch(err){
-      console.error(err);
-      alert('Order was NOT saved to cloud, so it was not kept locally.');
-      if (typeof setStatus === 'function') {
-        setStatus('Order failed because cloud save failed.');
-      }
-    } finally {
-      if (typeof isPlacingOrder !== 'undefined') isPlacingOrder = false;
-      if(placeBtn){
-        placeBtn.disabled = false;
-        placeBtn.textContent = placeBtn.dataset.originalLabel || 'PLACE ORDER';
-      }
+      if (typeof setStatus === 'function') setStatus('Orders loaded from cloud.');
+    } catch (err) {
+      console.error('loadOrdersFromCloud failed', err);
+      if (typeof setStatus === 'function') setStatus('Could not load orders from cloud.');
     }
   }
 
-  window.placeCurrentOrder = placeCurrentOrderCloudFirst;
-  try { placeCurrentOrder = placeCurrentOrderCloudFirst; } catch(e) {}
-})();
-</script>
-<!-- BARSTOCK PLACE ORDER OVERRIDE END -->
-
-
-<!-- BARSTOCK PLACE ORDER FORCE BIND START -->
-<script>
-(() => {
-  if (window.__barstockPlaceOrderForceBindBooted) return;
-  window.__barstockPlaceOrderForceBindBooted = true;
-
-  function bindPlaceOrderButtonToCloudFirst() {
-    const oldBtn = document.getElementById('placeOrderBtn');
-    if (!oldBtn) return;
-
-    const newBtn = oldBtn.cloneNode(true);
-    oldBtn.parentNode.replaceChild(newBtn, oldBtn);
-
-    newBtn.addEventListener('click', async () => {
-      try {
-        if (typeof window.placeCurrentOrder !== 'function') {
-          throw new Error('placeCurrentOrder unavailable');
-        }
-        await window.placeCurrentOrder();
-      } catch (err) {
-        console.error(err);
-        alert('Could not place vendor order.');
-        if (typeof setStatus === 'function') {
-          setStatus('Error placing vendor order.');
-        }
-      }
-    });
-
-    console.log('✅ placeOrderBtn force-bound to current window.placeCurrentOrder');
-    if (typeof setStatus === 'function') {
-      setStatus('Place Order button rebound to cloud-first handler.');
-    }
+  async function initOrdersModule() {
+    await loadOrdersFromCloud();
   }
 
-  window.bindPlaceOrderButtonToCloudFirst = bindPlaceOrderButtonToCloudFirst;
+  window.rebuildPlacedOrdersFromHistory = rebuildPlacedOrdersFromHistory;
+  window.loadOrdersFromCloud = loadOrdersFromCloud;
+  window.initOrdersModule = initOrdersModule;
 
   window.addEventListener('load', () => {
     setTimeout(() => {
-      bindPlaceOrderButtonToCloudFirst();
-    }, 2200);
+      initOrdersModule().catch(console.error);
+    }, 1200);
   });
 })();
 </script>
-<!-- BARSTOCK PLACE ORDER FORCE BIND END -->
+<!-- BARSTOCK ORDERS CORE END -->
 
 </body>
 </html>
