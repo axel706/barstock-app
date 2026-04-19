@@ -7770,5 +7770,88 @@ window.addEventListener('load', () => {
 </script>
 <!-- BARSTOCK PLACE ORDER CLEAN END -->
 
+
+<!-- BARSTOCK ORDERS REALTIME CLEAN START -->
+<script>
+(() => {
+  if (window.__barstockOrdersRealtimeCleanBooted) return;
+  window.__barstockOrdersRealtimeCleanBooted = true;
+
+  const ORDERS_RT_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const ORDERS_RT_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+
+  let ordersRealtimeTimer = null;
+
+  function debounceOrdersCloudReload() {
+    clearTimeout(ordersRealtimeTimer);
+    ordersRealtimeTimer = setTimeout(() => {
+      if (typeof window.loadOrdersFromCloud === 'function') {
+        window.loadOrdersFromCloud().catch(err => {
+          console.error('Orders realtime reload failed', err);
+        });
+      }
+    }, 700);
+  }
+
+  async function ensureSupabaseRealtimeSdk() {
+    if (window.supabase) return;
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  async function enableOrdersRealtimeClean() {
+    await ensureSupabaseRealtimeSdk();
+
+    const client = window.supabase.createClient(ORDERS_RT_URL, ORDERS_RT_KEY);
+
+    if (window.__barstockOrdersRealtimeChannelClean) {
+      try {
+        await window.__barstockOrdersRealtimeChannelClean.unsubscribe();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    window.__barstockOrdersRealtimeChannelClean = client
+      .channel('barstock-orders-realtime-clean')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'vendor_orders' },
+        () => debounceOrdersCloudReload()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'vendor_order_items' },
+        () => debounceOrdersCloudReload()
+      )
+      .subscribe((status) => {
+        console.log('Orders realtime clean status:', status);
+      });
+  }
+
+  window.enableOrdersRealtimeClean = enableOrdersRealtimeClean;
+
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      enableOrdersRealtimeClean().catch(err => {
+        console.error('enableOrdersRealtimeClean failed', err);
+      });
+    }, 1700);
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && typeof window.loadOrdersFromCloud === 'function') {
+      window.loadOrdersFromCloud().catch(console.error);
+    }
+  });
+})();
+</script>
+<!-- BARSTOCK ORDERS REALTIME CLEAN END -->
+
 </body>
 </html>
