@@ -2790,7 +2790,8 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260420-184509</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260420-185800</div>
+
 
 
 
@@ -5542,38 +5543,9 @@ async function saveNoMatchLink(){
   }
 }
 
-function ignoreNoMatch(index){ state.noMatches.splice(index,1); saveState(); render(); setStatus('No match ignored.'); }
-window.ignoreNoMatch = ignoreNoMatch;
-function closeModal(){ document.getElementById('modalBg').classList.add('hidden'); currentNoMatchIndex = null; }
-
-async function saveNoMatchAsItem(){
-  if(currentNoMatchIndex===null) return;
-  const raw = state.noMatches[currentNoMatchIndex];
-  const item = document.getElementById('nmName').value.trim();
-  const code = document.getElementById('nmCode').value.trim();
-  let vendor = document.getElementById('nmVendor').value;
-  const onHand = parseNum(document.getElementById('nmOnHand').value);
-  const suggested = parseNum(document.getElementById('nmSuggested').value);
-  if(!item) return alert('Item name is required.');
-  if(vendor==='UNKNOWN' && code) vendor = inferVendor(code);
-  const itemNorm = normalizeName(item);
-
-  state.master.push({
-    code,
-    item,
-    itemNorm,
-    onHand,
-    suggested,
-    vendor,
-    toOrder:computeToOrder(onHand,suggested)
-  });
-
-  aliases[normalizeName(raw.rawItem)] = itemNorm;
-  saveAliases();
-  state.noMatches.splice(currentNoMatchIndex,1);
-  saveState();
-  render();
-  closeModal();
+async function ignoreNoMatch(index){
+  const nm = state.noMatches[index];
+  if(!nm) return;
 
   const SUPABASE_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
@@ -5591,11 +5563,76 @@ async function saveNoMatchAsItem(){
 
     const locData = await locRes.json();
     const locationId = locData?.[0]?.id;
+    if(!locationId) throw new Error('No location found');
 
-    if(!locationId){
-      throw new Error('No location found');
+    const deleteNmRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/inventory_no_matches?location_id=eq.${locationId}&raw_item=eq.${encodeURIComponent(nm.rawItem || '')}`,
+      {
+        method: 'DELETE',
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+
+    if(!deleteNmRes.ok){
+      const txt = await deleteNmRes.text();
+      throw new Error('Error deleting inventory_no_matches: ' + txt);
     }
 
+    state.noMatches.splice(index,1);
+    saveState();
+    render();
+
+    if(typeof loadNoMatchesFromSupabase === 'function'){
+      await loadNoMatchesFromSupabase();
+    }
+
+    setStatus('No match ignored.');
+  } catch(err){
+    console.error(err);
+    alert('Could not ignore No Match in cloud.');
+    setStatus('Error ignoring No Match.');
+  }
+}
+window.ignoreNoMatch = ignoreNoMatch;
+function closeModal(){ document.getElementById('modalBg').classList.add('hidden'); currentNoMatchIndex = null; }
+
+async function saveNoMatchAsItem(){
+  if(currentNoMatchIndex===null) return;
+
+  const raw = state.noMatches[currentNoMatchIndex];
+  const item = document.getElementById('nmName').value.trim();
+  const code = document.getElementById('nmCode').value.trim();
+  let vendor = document.getElementById('nmVendor').value;
+  const onHand = parseNum(document.getElementById('nmOnHand').value);
+  const suggested = parseNum(document.getElementById('nmSuggested').value);
+
+  if(!item) return alert('Item name is required.');
+  if(vendor==='UNKNOWN' && code) vendor = inferVendor(code);
+
+  const itemNorm = normalizeName(item);
+
+  const SUPABASE_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+
+  try {
+    const locRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/locations?name=eq.${encodeURIComponent('The Crown Tavern')}&select=id`,
+      {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+
+    const locData = await locRes.json();
+    const locationId = locData?.[0]?.id;
+    if(!locationId) throw new Error('No location found');
+
+    // 1. crear item en cloud
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/inventory_items`,
       {
@@ -5620,14 +5657,77 @@ async function saveNoMatchAsItem(){
 
     if(!res.ok){
       const txt = await res.text();
-      throw new Error(txt);
+      throw new Error('Error inserting inventory_items: ' + txt);
+    }
+
+    // 2. guardar alias en cloud
+    const aliasRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/inventory_aliases?on_conflict=location_id,raw_item`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          Prefer: 'resolution=merge-duplicates,return=minimal'
+        },
+        body: JSON.stringify([{
+          location_id: locationId,
+          raw_item: normalizeName(raw.rawItem || ''),
+          item_norm: itemNorm
+        }])
+      }
+    );
+
+    if(!aliasRes.ok){
+      const txt = await aliasRes.text();
+      throw new Error('Error saving inventory_aliases: ' + txt);
+    }
+
+    // 3. borrar no match en cloud
+    const deleteNmRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/inventory_no_matches?location_id=eq.${locationId}&raw_item=eq.${encodeURIComponent(raw.rawItem || '')}`,
+      {
+        method: 'DELETE',
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+
+    if(!deleteNmRes.ok){
+      const txt = await deleteNmRes.text();
+      throw new Error('Error deleting inventory_no_matches: ' + txt);
+    }
+
+    // 4. actualizar local solo si cloud salió bien
+    state.master.push({
+      code,
+      item,
+      itemNorm,
+      onHand,
+      suggested,
+      vendor,
+      toOrder:computeToOrder(onHand,suggested)
+    });
+
+    aliases[normalizeName(raw.rawItem)] = itemNorm;
+    saveAliases();
+    state.noMatches.splice(currentNoMatchIndex,1);
+    saveState();
+    render();
+    closeModal();
+
+    if(typeof loadNoMatchesFromSupabase === 'function'){
+      await loadNoMatchesFromSupabase();
     }
 
     setStatus(`Item '${item}' created from No Match and synced to cloud.`);
   } catch(err){
     console.error(err);
-    setStatus('Item created locally from No Match, but cloud sync failed.');
-    alert('Item created locally, but cloud sync failed.');
+    alert('Could not create item from No Match in cloud.');
+    setStatus('Error creating item from No Match.');
   }
 }
 
