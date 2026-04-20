@@ -2790,7 +2790,8 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260420-183233</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260420-184509</div>
+
 
 
 
@@ -7642,6 +7643,89 @@ window.addEventListener('load', () => {
 })();
 </script>
 <!-- BARSTOCK ORDERS REALTIME CLEAN END -->
+
+
+<!-- BARSTOCK NO MATCH REALTIME CLEAN START -->
+<script>
+(() => {
+  if (window.__barstockNoMatchRealtimeCleanBooted) return;
+  window.__barstockNoMatchRealtimeCleanBooted = true;
+
+  const NM_RT_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const NM_RT_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+
+  let noMatchRealtimeTimer = null;
+
+  function debounceNoMatchReload() {
+    clearTimeout(noMatchRealtimeTimer);
+    noMatchRealtimeTimer = setTimeout(() => {
+      if (typeof window.loadNoMatchesFromSupabase === 'function') {
+        window.loadNoMatchesFromSupabase().catch(err => {
+          console.error('No Match realtime reload failed', err);
+        });
+      }
+    }, 500);
+  }
+
+  async function ensureNoMatchRealtimeSdk() {
+    if (window.supabase) return;
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  async function enableNoMatchRealtimeClean() {
+    await ensureNoMatchRealtimeSdk();
+
+    const client = window.supabase.createClient(NM_RT_URL, NM_RT_KEY);
+
+    if (window.__barstockNoMatchRealtimeChannelClean) {
+      try {
+        await window.__barstockNoMatchRealtimeChannelClean.unsubscribe();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    window.__barstockNoMatchRealtimeChannelClean = client
+      .channel('barstock-no-match-realtime-clean')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'inventory_no_matches' },
+        () => debounceNoMatchReload()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'inventory_aliases' },
+        () => debounceNoMatchReload()
+      )
+      .subscribe((status) => {
+        console.log('No Match realtime clean status:', status);
+      });
+  }
+
+  window.enableNoMatchRealtimeClean = enableNoMatchRealtimeClean;
+
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      enableNoMatchRealtimeClean().catch(err => {
+        console.error('enableNoMatchRealtimeClean failed', err);
+      });
+    }, 1800);
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && typeof window.loadNoMatchesFromSupabase === 'function') {
+      window.loadNoMatchesFromSupabase().catch(console.error);
+    }
+  });
+})();
+</script>
+<!-- BARSTOCK NO MATCH REALTIME CLEAN END -->
 
 </body>
 </html>
