@@ -2792,7 +2792,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260420-202009</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260420-202051</div>
+
+
 
 
 
@@ -7793,6 +7795,8 @@ window.addEventListener('load', () => {
 <!-- BARSTOCK NO MATCH REALTIME CLEAN END -->
 
 
+
+
 <!-- BARSTOCK UX POLISH START -->
 <script>
 (() => {
@@ -7851,6 +7855,63 @@ window.addEventListener('load', () => {
 })();
 </script>
 <!-- BARSTOCK UX POLISH END -->
+<!-- BARSTOCK UX POLISH START -->
+<script>
+(() => {
+  if (window.__barstockUxPolishBooted) return;
+  window.__barstockUxPolishBooted = true;
 
+  const originalSetStatus = typeof window.setStatus === 'function' ? window.setStatus : null;
+  let statusFadeTimer = null;
+
+  function polishSetStatus(message){
+    if (originalSetStatus) {
+      originalSetStatus(message);
+    } else {
+      const bar = document.getElementById('statusBar');
+      if (bar) bar.textContent = String(message || '');
+    }
+
+    const bar = document.getElementById('statusBar');
+    if (!bar) return;
+
+    bar.classList.remove('status-fade');
+    bar.classList.remove('status-pop');
+    void bar.offsetWidth;
+    bar.classList.add('status-pop');
+
+    clearTimeout(statusFadeTimer);
+    statusFadeTimer = setTimeout(() => {
+      bar.classList.add('status-fade');
+      bar.classList.remove('status-pop');
+    }, 1800);
+  }
+
+  window.setStatus = polishSetStatus;
+
+  function setButtonBusy(btn, label){
+    if (!btn) return;
+    if (!btn.dataset.originalLabel) {
+      btn.dataset.originalLabel = btn.textContent;
+    }
+    btn.disabled = true;
+    btn.classList.add('btn-busy');
+    if (label) btn.textContent = label;
+  }
+
+  function clearButtonBusy(btn){
+    if (!btn) return;
+    btn.disabled = false;
+    btn.classList.remove('btn-busy');
+    if (btn.dataset.originalLabel) {
+      btn.textContent = btn.dataset.originalLabel;
+    }
+  }
+
+  window.setButtonBusy = setButtonBusy;
+  window.clearButtonBusy = clearButtonBusy;
+})();
+</script>
+<!-- BARSTOCK UX POLISH END -->
 </body>
 </html>
