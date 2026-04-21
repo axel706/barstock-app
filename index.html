@@ -2792,7 +2792,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260420-204532</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260420-205514</div>
+
+
 
 
 
@@ -5922,20 +5924,69 @@ function saveEditedItem(){
   closeEditModal();
   setStatus(`Item '${item}' updated.`);
 }
-function deleteEditedItem(){
-  if(currentEditIndex===null) return;
+async function deleteEditedItem(){
+  if(currentEditIndex===null || currentEditIndex===undefined) return;
+
   const row = state.master[currentEditIndex];
   if(!row) return;
-  if(!confirm(`Delete '${row.item}' from the persistent master?`)) return;
-  const removedNorm = row.itemNorm;
-  state.master.splice(currentEditIndex,1);
-  Object.keys(aliases).forEach(k => { if(aliases[k] === removedNorm) delete aliases[k]; });
-  saveAliases();
-  saveState();
-  if(window.queueInventorySync) window.queueInventorySync();
-  render();
-  closeEditModal();
-  setStatus(`Item '${row.item}' deleted from the master.`);
+  if(!confirm(`Delete '${row.item}' from Inventory?`)) return;
+
+  const SUPABASE_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+
+  try{
+    const locRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/locations?name=eq.${encodeURIComponent('The Crown Tavern')}&select=id`,
+      {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+
+    const locData = await locRes.json();
+    const locationId = locData?.[0]?.id;
+    if(!locationId) throw new Error('No location found');
+
+    const code = String(row.code || '').trim();
+    const item = String(row.item || '').trim();
+
+    let deleteUrl = `${SUPABASE_URL}/rest/v1/inventory_items?location_id=eq.${locationId}&item_name=eq.${encodeURIComponent(item)}`;
+    if(code){
+      deleteUrl += `&code=eq.${encodeURIComponent(code)}`;
+    }
+
+    const delRes = await fetch(deleteUrl, {
+      method: 'DELETE',
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`
+      }
+    });
+
+    if(!delRes.ok){
+      const txt = await delRes.text();
+      throw new Error('Error deleting inventory_items: ' + txt);
+    }
+
+    // local solo después de cloud OK
+    state.master.splice(currentEditIndex,1);
+    saveState();
+    render();
+    closeEditModal();
+
+    // opcional: recargar desde cloud si el loader existe
+    if(typeof loadInventoryFromSupabase === 'function'){
+      try { await loadInventoryFromSupabase(); } catch(e) {}
+    }
+
+    setStatus(`Item '${item}' deleted from Inventory and cloud.`);
+  } catch(err){
+    console.error(err);
+    alert('Could not delete inventory item from cloud.');
+    setStatus('Error deleting inventory item from cloud.');
+  }
 }
 
 function currentVendorFilenameStem(){
