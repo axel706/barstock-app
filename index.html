@@ -2748,7 +2748,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260420-193051</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260420-200909</div>
+
+
 
 
 
@@ -4939,8 +4941,7 @@ async function refreshOrdersFromCloud(){
 window.refreshOrdersFromCloud = refreshOrdersFromCloud;
 
 async function reopenHistoryOrder(id){
-  await refreshOrdersFromCloud();
-  const order = (state.orderHistory||[]).find(entry => entry.id === id);
+  const order = (state.orderHistory || []).find(entry => entry.id === id);
   if(!order) return;
 
   const ORDER_CLOUD_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
@@ -4981,25 +4982,20 @@ async function reopenHistoryOrder(id){
       throw new Error('Error deleting vendor_orders: ' + txt);
     }
 
-    // 3. actualizar local solo si cloud salió bien
-    const reopenKeys = (order.items || []).map(item => placedKeyForRow(item));
-    state.placedOrders = (state.placedOrders || []).filter(key => !reopenKeys.includes(key));
-    state.orderHistory = (state.orderHistory || []).filter(entry => entry.id !== id);
-    compareSelection = compareSelection.filter(entryId => entryId !== id);
-
-    if(typeof rebuildPlacedOrdersFromHistory === 'function'){
-      Promise.resolve(rebuildPlacedOrdersFromHistory()).catch(console.error);
+    // 3. recargar verdad desde cloud
+    if (typeof window.loadOrdersFromCloud === 'function') {
+      await window.loadOrdersFromCloud();
     }
 
-    saveState();
-    render();
-    renderOrderHistory();
-    renderCompareToolbar();
-    setStatus(`${order.vendor} order re-opened and removed from cloud history.`);
+    if (typeof setStatus === 'function') {
+      setStatus(`${order.vendor} order re-opened and synced from cloud.`);
+    }
   } catch(err){
     console.error(err);
-    alert('Could not re-open order in cloud.');
-    setStatus('Error re-opening order in cloud.');
+    alert('Could not re-open order from cloud.');
+    if (typeof setStatus === 'function') {
+      setStatus('Error re-opening order from cloud.');
+    }
   }
 }
 window.reopenHistoryOrder = reopenHistoryOrder;
