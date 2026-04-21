@@ -1987,7 +1987,51 @@
       }
     }
 
+
+  button:disabled,
+  .filelbl.disabled,
+  .ui-control:disabled{
+    opacity:.62 !important;
+    cursor:not-allowed !important;
+    transform:none !important;
+    box-shadow:none !important;
+  }
+
+  .btn-busy{
+    position:relative;
+    pointer-events:none !important;
+  }
+
+  .btn-busy::after{
+    content:'';
+    width:12px;
+    height:12px;
+    border-radius:999px;
+    border:2px solid currentColor;
+    border-top-color:transparent;
+    display:inline-block;
+    margin-left:8px;
+    animation:barstockSpin .7s linear infinite;
+    vertical-align:-2px;
+  }
+
+  @keyframes barstockSpin{
+    to{ transform:rotate(360deg); }
+  }
+
+  #statusBar{
+    transition:opacity .25s ease, transform .25s ease, color .2s ease;
+  }
+
+  #statusBar.status-fade{
+    opacity:.72;
+  }
+
+  #statusBar.status-pop{
+    transform:translateY(-1px);
+  }
 </style>
+
 
 <style id="v2717-1-fixes">
   #historyVendorFilter,
@@ -2748,7 +2792,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260420-200909</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260420-202009</div>
+
+
 
 
 
@@ -4784,9 +4830,9 @@ function renderOrderHistory(){
                 <button class="ui-control" onclick="compareWithPrevious('${order.id}')">Compare to Previous</button>
                 <button class="ui-control" onclick="openHistoryDateEdit('${order.id}')">Edit Date</button>
                 <button class="ui-control" onclick="toggleHistoryDetails('${order.id}')">View</button>
-                <button class="ui-control success" onclick="reopenHistoryOrder('${order.id}')">Re-open</button>
+                <button class="ui-control success" onclick="reopenHistoryOrder('${order.id}', this)">Re-open</button>
                 <button class="ui-control primary" onclick="reExportHistoryOrder('${order.id}')">Re-export</button>
-                <button class="ui-control danger" onclick="deleteHistoryOrder('${order.id}')">Delete</button>
+                <button class="ui-control danger" onclick="deleteHistoryOrder('${order.id}', this)">Delete</button>
               </div>
             </div>
           </div>
@@ -4806,12 +4852,13 @@ function toggleHistoryDetails(id){
   if(el) el.classList.toggle('hidden');
 }
 window.toggleHistoryDetails = toggleHistoryDetails;
-async function deleteHistoryOrder(id){
+async function deleteHistoryOrder(id, triggerBtn){
   await refreshOrdersFromCloud();
   const ORDER_CLOUD_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
   const ORDER_CLOUD_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
 
   try{
+    if (typeof setButtonBusy === 'function') setButtonBusy(triggerBtn, 'DELETING');
     // 1. borrar líneas
     const itemsRes = await fetch(
       `${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?app_order_id=eq.${encodeURIComponent(id)}`,
@@ -4864,6 +4911,8 @@ async function deleteHistoryOrder(id){
     console.error(err);
     alert('Could not delete order from cloud.');
     setStatus('Error deleting order from cloud.');
+  } finally {
+    if (typeof clearButtonBusy === 'function') clearButtonBusy(triggerBtn);
   }
 }
 window.deleteHistoryOrder = deleteHistoryOrder;
@@ -4940,7 +4989,7 @@ async function refreshOrdersFromCloud(){
 
 window.refreshOrdersFromCloud = refreshOrdersFromCloud;
 
-async function reopenHistoryOrder(id){
+async function reopenHistoryOrder(id, triggerBtn){
   const order = (state.orderHistory || []).find(entry => entry.id === id);
   if(!order) return;
 
@@ -4948,6 +4997,7 @@ async function reopenHistoryOrder(id){
   const ORDER_CLOUD_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
 
   try{
+    if (typeof setButtonBusy === 'function') setButtonBusy(triggerBtn, 'REOPENING');
     // 1. borrar líneas en cloud
     const itemsRes = await fetch(
       `${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?app_order_id=eq.${encodeURIComponent(id)}`,
@@ -4996,6 +5046,8 @@ async function reopenHistoryOrder(id){
     if (typeof setStatus === 'function') {
       setStatus('Error re-opening order from cloud.');
     }
+  } finally {
+    if (typeof clearButtonBusy === 'function') clearButtonBusy(triggerBtn);
   }
 }
 window.reopenHistoryOrder = reopenHistoryOrder;
@@ -7492,9 +7544,12 @@ window.addEventListener('load', () => {
 
     if (typeof isPlacingOrder !== 'undefined') isPlacingOrder = true;
     if (placeBtn) {
-      placeBtn.disabled = true;
-      placeBtn.dataset.originalLabel = placeBtn.textContent;
-      placeBtn.textContent = 'PLACING...';
+      if (typeof setButtonBusy === 'function') setButtonBusy(placeBtn, 'PLACING');
+      else {
+        placeBtn.disabled = true;
+        placeBtn.dataset.originalLabel = placeBtn.textContent;
+        placeBtn.textContent = 'PLACING...';
+      }
     }
 
     try {
@@ -7542,8 +7597,11 @@ window.addEventListener('load', () => {
     } finally {
       if (typeof isPlacingOrder !== 'undefined') isPlacingOrder = false;
       if (placeBtn) {
-        placeBtn.disabled = false;
-        placeBtn.textContent = placeBtn.dataset.originalLabel || 'PLACE ORDER';
+        if (typeof clearButtonBusy === 'function') clearButtonBusy(placeBtn);
+        else {
+          placeBtn.disabled = false;
+          placeBtn.textContent = placeBtn.dataset.originalLabel || 'PLACE ORDER';
+        }
       }
     }
   }
@@ -7733,6 +7791,66 @@ window.addEventListener('load', () => {
 })();
 </script>
 <!-- BARSTOCK NO MATCH REALTIME CLEAN END -->
+
+
+<!-- BARSTOCK UX POLISH START -->
+<script>
+(() => {
+  if (window.__barstockUxPolishBooted) return;
+  window.__barstockUxPolishBooted = true;
+
+  const originalSetStatus = typeof window.setStatus === 'function' ? window.setStatus : null;
+  let statusFadeTimer = null;
+
+  function polishSetStatus(message){
+    if (originalSetStatus) {
+      originalSetStatus(message);
+    } else {
+      const bar = document.getElementById('statusBar');
+      if (bar) bar.textContent = String(message || '');
+    }
+
+    const bar = document.getElementById('statusBar');
+    if (!bar) return;
+
+    bar.classList.remove('status-fade');
+    bar.classList.remove('status-pop');
+    void bar.offsetWidth;
+    bar.classList.add('status-pop');
+
+    clearTimeout(statusFadeTimer);
+    statusFadeTimer = setTimeout(() => {
+      bar.classList.add('status-fade');
+      bar.classList.remove('status-pop');
+    }, 1800);
+  }
+
+  window.setStatus = polishSetStatus;
+
+  function setButtonBusy(btn, label){
+    if (!btn) return;
+    if (!btn.dataset.originalLabel) {
+      btn.dataset.originalLabel = btn.textContent;
+    }
+    btn.disabled = true;
+    btn.classList.add('btn-busy');
+    if (label) btn.textContent = label;
+  }
+
+  function clearButtonBusy(btn){
+    if (!btn) return;
+    btn.disabled = false;
+    btn.classList.remove('btn-busy');
+    if (btn.dataset.originalLabel) {
+      btn.textContent = btn.dataset.originalLabel;
+    }
+  }
+
+  window.setButtonBusy = setButtonBusy;
+  window.clearButtonBusy = clearButtonBusy;
+})();
+</script>
+<!-- BARSTOCK UX POLISH END -->
 
 </body>
 </html>
