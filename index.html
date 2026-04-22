@@ -1987,7 +1987,6 @@
       }
     }
 
-
   button:disabled,
   .filelbl.disabled,
   .ui-control:disabled{
@@ -2031,7 +2030,6 @@
     transform:translateY(-1px);
   }
 </style>
-
 
 <style id="v2717-1-fixes">
   #historyVendorFilter,
@@ -2792,19 +2790,7 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260420-205514</div>
-
-
-
-
-
-
-
-
-
-
-
-
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260421-230224</div>
 
 
 
@@ -6140,58 +6126,6 @@ function exportVendorLoopReady(){
   }
 }
 
-async function placeCurrentOrder(){
-  await refreshOrdersFromCloud();
-  if(isPlacingOrder || !canPlaceOrder()) return;
-  const placeBtn = document.getElementById('placeOrderBtn');
-  const vendorAtStart = activeVendorTab;
-  const rows = getOrderRowsForVendor(vendorAtStart).map(cloneOrderRow).filter(r => parseNum(r.finalOrder) > 0);
-  if(!rows.length){
-    alert('No items available to place for this vendor.');
-    return;
-  }
-  const now = new Date().toISOString();
-  const order = {
-    id: uniqueOrderId(),
-    vendor: vendorAtStart,
-    createdAt: now,
-    exportType: vendorAtStart === 'LOOP' ? 'loop_csv' : 'vendor_jpg',
-    filename: vendorAtStart === 'LOOP' ? 'loop_upload.csv' : `${currentVendorFilenameStem()}.jpg`,
-    items: rows,
-    totalUnits: rows.reduce((sum, r) => sum + parseNum(r.finalOrder), 0),
-    subtotal: computeOrderSubtotal(rows)
-  };
-  isPlacingOrder = true;
-  if(placeBtn){ placeBtn.disabled = true; placeBtn.dataset.originalLabel = placeBtn.textContent; placeBtn.textContent = 'PLACING…'; }
-  try{
-    if(vendorAtStart === 'LOOP'){
-      if(!exportLoopCsvFromRows(rows, order.filename)) return;
-    } else {
-      await exportVendorJpgFromRows(vendorAtStart, rows, order.filename);
-    }
-    state.orderHistory = Array.isArray(state.orderHistory) ? state.orderHistory : [];
-    state.orderHistory.unshift(order);
-    const placedKeys = rows.map(placedKeyForRow);
-    state.placedOrders = Array.from(new Set([...(state.placedOrders || []), ...placedKeys]));
-    saveState();
-    render();
-    try {
-      if (window.persistOrderToSupabase) {
-        await window.persistOrderToSupabase(order);
-      }
-      setStatus(`${vendorAtStart} order placed, saved to Order History, synced to cloud, and cleared from Ordering.`);
-    } catch (cloudErr) {
-      console.error(cloudErr);
-      setStatus(`${vendorAtStart} order placed locally, but cloud sync failed.`);
-      alert('Order saved locally, but cloud sync failed.');
-    }
-  } finally {
-    isPlacingOrder = false;
-    if(placeBtn){ placeBtn.disabled = false; placeBtn.textContent = placeBtn.dataset.originalLabel || 'PLACE ORDER'; }
-  }
-}
-window.placeCurrentOrder = placeCurrentOrder;
-
 async function exportWeeklyOrderPdf(){
   const sections = getWeeklyOrderSections();
   if(!sections.length){
@@ -7234,192 +7168,6 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 </script>
 <!-- BARSTOCK NO MATCH CLOUD END -->
 
-<script>
-async function syncOrdersToCloud(){
-  const ORDER_CLOUD_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
-  const ORDER_CLOUD_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
-
-  try{
-    const locRes = await fetch(
-      `${ORDER_CLOUD_URL}/rest/v1/locations?name=eq.${encodeURIComponent('The Crown Tavern')}&select=id`,
-      {
-        headers: {
-          apikey: ORDER_CLOUD_KEY,
-          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
-        }
-      }
-    );
-
-    const locData = await locRes.json();
-    const locationId = locData?.[0]?.id;
-    if(!locationId) throw new Error('No location found');
-
-    // 1. borrar items de órdenes existentes de Crown
-    const existingOrdersRes = await fetch(
-      `${ORDER_CLOUD_URL}/rest/v1/vendor_orders?location_id=eq.${locationId}&select=app_order_id`,
-      {
-        headers: {
-          apikey: ORDER_CLOUD_KEY,
-          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
-        }
-      }
-    );
-
-    const existingOrders = await existingOrdersRes.json();
-    if(!Array.isArray(existingOrders)) throw new Error('Could not read existing vendor_orders');
-
-    for(const row of existingOrders){
-      const appOrderId = row?.app_order_id;
-      if(!appOrderId) continue;
-
-      const delItemsRes = await fetch(
-        `${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?app_order_id=eq.${encodeURIComponent(appOrderId)}`,
-        {
-          method: 'DELETE',
-          headers: {
-            apikey: ORDER_CLOUD_KEY,
-            Authorization: `Bearer ${ORDER_CLOUD_KEY}`
-          }
-        }
-      );
-
-      if(!delItemsRes.ok){
-        const txt = await delItemsRes.text();
-        throw new Error('Error deleting vendor_order_items: ' + txt);
-      }
-    }
-
-    // 2. borrar órdenes de Crown
-    const delOrdersRes = await fetch(
-      `${ORDER_CLOUD_URL}/rest/v1/vendor_orders?location_id=eq.${locationId}`,
-      {
-        method: 'DELETE',
-        headers: {
-          apikey: ORDER_CLOUD_KEY,
-          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
-        }
-      }
-    );
-
-    if(!delOrdersRes.ok){
-      const txt = await delOrdersRes.text();
-      throw new Error('Error deleting vendor_orders: ' + txt);
-    }
-
-    // 3. reconstruir cloud usando la función buena que ya existe
-    const orders = state.orderHistory || [];
-    for(const order of orders){
-      if(typeof persistOrderToSupabase !== 'function'){
-        throw new Error('persistOrderToSupabase is not available');
-      }
-      await persistOrderToSupabase(order);
-    }
-
-    setStatus('Orders synced from this device to cloud successfully.');
-    alert('Cloud now matches this device.');
-  } catch(err){
-    console.error(err);
-    alert('Error syncing orders to cloud.');
-    setStatus('Sync failed.');
-  }
-}
-window.syncOrdersToCloud = syncOrdersToCloud;
-</script>
-<!-- FIXED SCRIPT BREAK -->
-<script>
-<script>
-async function loadOrdersFromCloud(){
-  const ORDER_CLOUD_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
-  const ORDER_CLOUD_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
-
-  try{
-    // 1) location_id
-    const locRes = await fetch(
-      `${ORDER_CLOUD_URL}/rest/v1/locations?name=eq.${encodeURIComponent('The Crown Tavern')}&select=id`,
-      {
-        headers: {
-          apikey: ORDER_CLOUD_KEY,
-          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
-        }
-      }
-    );
-    const locData = await locRes.json();
-    const locationId = locData?.[0]?.id;
-    if(!locationId) throw new Error('No location found');
-
-    // 2) orders
-    const ordersRes = await fetch(
-      `${ORDER_CLOUD_URL}/rest/v1/vendor_orders?location_id=eq.${locationId}&select=*`,
-      {
-        headers: {
-          apikey: ORDER_CLOUD_KEY,
-          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
-        }
-      }
-    );
-    const orders = await ordersRes.json();
-
-    // 3) items (no tienen location_id)
-    const itemsRes = await fetch(
-      `${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?select=*`,
-      {
-        headers: {
-          apikey: ORDER_CLOUD_KEY,
-          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
-        }
-      }
-    );
-    const items = await itemsRes.json();
-
-    // 4) reconstruir (REEMPLAZO TOTAL)
-    state.orderHistory = (orders || []).map(o => ({
-      id: o.app_order_id,
-      vendor: o.vendor,
-      date: o.created_at,
-      items: (items || [])
-        .filter(i => i.app_order_id === o.app_order_id)
-        .map(i => ({
-          code: i.code,
-          item: i.item_name,
-          finalOrder: Number(i.quantity || 0)
-        }))
-    }));
-
-    // 5) reconstruir placedOrders
-    if(typeof rebuildPlacedOrdersFromHistory === 'function'){
-      await rebuildPlacedOrdersFromHistory();
-    } else {
-      state.placedOrders = [];
-      (state.orderHistory || []).forEach(order => {
-        (order.items || []).forEach(it => {
-          if(typeof placedKeyForRow === 'function'){
-            state.placedOrders.push(placedKeyForRow(it));
-          }
-        });
-      });
-    }
-
-    saveState();
-    render();
-    renderOrderHistory();
-
-    setStatus('Orders loaded from cloud (replace).');
-
-  } catch(err){
-    console.error(err);
-    setStatus('Could not load orders from cloud.');
-  }
-}
-window.loadOrdersFromCloud = loadOrdersFromCloud;
-
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    if (typeof loadOrdersFromCloud === 'function') {
-      loadOrdersFromCloud();
-    }
-  }, 1200);
-});
-
 <!-- BARSTOCK ORDERS CORE START -->
 <script>
 (() => {
@@ -7851,11 +7599,6 @@ async function loadOrdersFromCloud() {
 })();
 </script>
 <!-- BARSTOCK NO MATCH REALTIME CLEAN END -->
-
-
-
-
-
 
 <!-- BARSTOCK UX POLISH START -->
 <script>
