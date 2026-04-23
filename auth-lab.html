@@ -2876,7 +2876,7 @@
 
 <div id="loginScreen">
   <div id="loginCard">
-    <h2 id="loginTitle">Sign In</h2>
+    <h2 id="loginTitle">Sign In</h2>\n    <div id="loginSubtitle">Access your inventory and ordering workspace.</div>
 
     <div class="login-field">
       <input id="loginEmail" type="email" placeholder="Email">
@@ -2886,9 +2886,9 @@
       <input id="loginPassword" type="password" placeholder="Password">
     </div>
 
-    <button id="loginBtn">Login</button>
+    <div id="loginMeta">Forgot password?</div>\n\n    <button id="loginBtn">Login</button>
 
-    <div id="loginMsg"></div>
+    <div id="loginFoot">Don’t have an account? <span class="accent">Sign up</span></div>\n\n    <div id="loginMsg"></div>
   </div>
 </div>
 
@@ -7900,35 +7900,81 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     justify-content:center;
     padding:32px;
     background:
-      radial-gradient(circle at 22% 70%, rgba(59,130,246,.42) 0%, rgba(59,130,246,0) 18%),
-      radial-gradient(circle at 72% 24%, rgba(34,211,238,.30) 0%, rgba(34,211,238,0) 16%),
-      radial-gradient(circle at 82% 82%, rgba(34,211,238,.35) 0%, rgba(34,211,238,0) 10%),
-      linear-gradient(180deg, rgba(2,6,23,.93), rgba(3,10,28,.96));
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+      radial-gradient(circle at 20% 72%, rgba(37,99,235,.30) 0%, rgba(37,99,235,0) 20%),
+      radial-gradient(circle at 75% 24%, rgba(34,211,238,.22) 0%, rgba(34,211,238,0) 18%),
+      linear-gradient(180deg, rgba(2,6,23,.52), rgba(2,6,23,.70));
+    backdrop-filter: blur(16px) saturate(115%);
+    -webkit-backdrop-filter: blur(16px) saturate(115%);
   }
 
   #loginScreen.show{
     display:flex !important;
   }
 
+  #loginScreen::before,
+  #loginScreen::after{
+    content:"";
+    position:absolute;
+    border-radius:999px;
+    pointer-events:none;
+  }
+
+  #loginScreen::before{
+    width:220px;
+    height:220px;
+    left:18%;
+    top:18%;
+    background: radial-gradient(circle at 35% 35%, rgba(103,232,249,.92), rgba(34,211,238,.56) 54%, rgba(34,211,238,0) 72%);
+    opacity:.95;
+  }
+
+  #loginScreen::after{
+    width:260px;
+    height:260px;
+    right:14%;
+    bottom:12%;
+    background: radial-gradient(circle at 35% 35%, rgba(96,165,250,.85), rgba(37,99,235,.48) 55%, rgba(37,99,235,0) 76%);
+    opacity:.9;
+  }
+
   #loginCard{
-    width:min(560px, 92vw);
-    border-radius:28px;
-    padding:34px 34px 28px;
-    background:linear-gradient(180deg, rgba(17,24,39,.68), rgba(15,23,42,.78));
-    border:1px solid rgba(125,211,252,.58);
-    box-shadow:0 20px 80px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);
+    position:relative;
+    width:min(520px, 92vw);
+    border-radius:26px;
+    padding:30px 30px 24px;
+    background:
+      linear-gradient(180deg, rgba(15,23,42,.68), rgba(15,23,42,.78));
+    border:1px solid rgba(148,163,184,.22);
+    box-shadow:
+      0 30px 80px rgba(0,0,0,.45),
+      inset 0 1px 0 rgba(255,255,255,.05);
     backdrop-filter: blur(22px);
     -webkit-backdrop-filter: blur(22px);
+    overflow:hidden;
+  }
+
+  #loginCard::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background: linear-gradient(135deg, rgba(56,189,248,.10), rgba(255,255,255,0) 28%, rgba(59,130,246,.06) 70%, rgba(255,255,255,0));
   }
 
   #loginTitle{
     color:#f8fafc;
-    font-size:22px;
-    font-weight:700;
+    font-size:28px;
+    font-weight:800;
     text-align:center;
-    margin:0 0 24px;
+    margin:0 0 10px;
+    letter-spacing:.01em;
+  }
+
+  #loginSubtitle{
+    color:rgba(226,232,240,.78);
+    font-size:14px;
+    text-align:center;
+    margin:0 0 22px;
   }
 
   .login-field{
@@ -7940,11 +7986,30 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     height:54px;
     padding:0 16px;
     border-radius:14px;
-    border:1px solid rgba(148,163,184,.28);
-    background:rgba(15,23,42,.38);
+    border:1px solid rgba(148,163,184,.18);
+    background:rgba(15,23,42,.42);
     color:#e5f3ff;
     outline:none;
     box-sizing:border-box;
+    transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
+  }
+
+  .login-field input::placeholder{
+    color:rgba(191,219,254,.42);
+  }
+
+  .login-field input:focus{
+    border-color:rgba(56,189,248,.62);
+    box-shadow:0 0 0 4px rgba(14,165,233,.12);
+    background:rgba(15,23,42,.54);
+  }
+
+  #loginMeta{
+    display:flex;
+    justify-content:flex-end;
+    margin:4px 2px 18px;
+    font-size:12px;
+    color:rgba(191,219,254,.82);
   }
 
   #loginBtn{
@@ -7952,11 +8017,31 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     height:54px;
     border:none;
     border-radius:14px;
-    font-size:20px;
-    font-weight:700;
-    color:#eaf6ff;
-    background:linear-gradient(180deg, #22b5f6, #149ae4);
+    font-size:18px;
+    font-weight:800;
+    color:#eff9ff;
+    background:linear-gradient(180deg, #25b7f3, #149ae4);
+    box-shadow:0 12px 30px rgba(14,165,233,.24);
     cursor:pointer;
+    transition:transform .15s ease, filter .15s ease, box-shadow .15s ease;
+  }
+
+  #loginBtn:hover{
+    filter:brightness(1.03);
+    transform:translateY(-1px);
+    box-shadow:0 14px 34px rgba(14,165,233,.28);
+  }
+
+  #loginFoot{
+    margin-top:16px;
+    text-align:center;
+    font-size:13px;
+    color:rgba(226,232,240,.82);
+  }
+
+  #loginFoot .accent{
+    color:#22c7ff;
+    font-weight:700;
   }
 
   #loginMsg{
@@ -7980,6 +8065,18 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     color:#fff;
     font-weight:700;
     cursor:pointer;
+  }
+
+  @media (max-width: 640px){
+    #loginCard{
+      width:min(94vw, 520px);
+      padding:24px 18px 20px;
+      border-radius:22px;
+    }
+
+    #loginTitle{
+      font-size:24px;
+    }
   }
 </style>
 
