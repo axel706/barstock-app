@@ -2780,8 +2780,119 @@
 
 </style>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+
+<style>
+  body.auth-locked{
+    overflow:hidden !important;
+  }
+
+  #appShell.auth-hidden{
+    display:none !important;
+  }
+
+  #loginScreen{
+    position:fixed;
+    inset:0;
+    z-index:999999;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:32px;
+    background:
+      radial-gradient(circle at 22% 70%, rgba(59,130,246,.42) 0%, rgba(59,130,246,0) 18%),
+      radial-gradient(circle at 72% 24%, rgba(34,211,238,.30) 0%, rgba(34,211,238,0) 16%),
+      radial-gradient(circle at 82% 82%, rgba(34,211,238,.35) 0%, rgba(34,211,238,0) 10%),
+      linear-gradient(180deg, rgba(2,6,23,.93), rgba(3,10,28,.96));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  #loginScreen.show{
+    display:flex !important;
+  }
+
+  #loginCard{
+    width:min(560px, 92vw);
+    border-radius:28px;
+    padding:34px 34px 28px;
+    background:linear-gradient(180deg, rgba(17,24,39,.68), rgba(15,23,42,.78));
+    border:1px solid rgba(125,211,252,.58);
+    box-shadow:0 20px 80px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+  }
+
+  #loginTitle{
+    color:#f8fafc;
+    font-size:22px;
+    font-weight:700;
+    text-align:center;
+    margin:0 0 24px;
+  }
+
+  .login-field{
+    margin-bottom:14px;
+  }
+
+  .login-field input{
+    width:100%;
+    height:54px;
+    padding:0 16px;
+    border-radius:14px;
+    border:1px solid rgba(148,163,184,.28);
+    background:rgba(15,23,42,.38);
+    color:#e5f3ff;
+    outline:none;
+    box-sizing:border-box;
+  }
+
+  #loginBtn{
+    width:100%;
+    height:54px;
+    border:none;
+    border-radius:14px;
+    font-size:20px;
+    font-weight:700;
+    color:#eaf6ff;
+    background:linear-gradient(180deg, #22b5f6, #149ae4);
+    cursor:pointer;
+  }
+
+  #loginMsg{
+    min-height:18px;
+    margin-top:10px;
+    text-align:center;
+    font-size:13px;
+    color:#fca5a5;
+  }
+
+  #logoutBtn{
+    display:none;
+  }
+</style>
+
+<div id="loginScreen">
+  <div id="loginCard">
+    <h2 id="loginTitle">Sign In</h2>
+
+    <div class="login-field">
+      <input id="loginEmail" type="email" placeholder="Email">
+    </div>
+
+    <div class="login-field">
+      <input id="loginPassword" type="password" placeholder="Password">
+    </div>
+
+    <button id="loginBtn">Login</button>
+
+    <div id="loginMsg"></div>
+  </div>
+</div>
+
+<div id="appShell">
 <div class="wrap">
   <div class="hero">
     <div>
@@ -2800,6 +2911,7 @@
 
   </div>
 </div></h1></div></div>
+      <button id="logoutBtn" class="danger half">Logout</button>
       <button id="themeToggle" class="theme-toggle" aria-label="Toggle light and dark mode" title="Toggle light and dark mode">
         <span id="themeIcon" class="theme-icon">☾</span>
       </button>
@@ -7661,5 +7773,341 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 })();
 </script>
 <!-- BARSTOCK UX POLISH END -->
+</div>
+
+<script>
+(() => {
+  const SUPABASE_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+
+  if (!window.supabase) {
+    console.error('Supabase JS not loaded');
+    return;
+  }
+
+  const supabaseAuth = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  window.supabaseAuth = supabaseAuth;
+
+  function showAppForSession() {
+    const loginScreen = document.getElementById('loginScreen');
+    const appShell = document.getElementById('appShell');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    document.body.classList.remove('auth-locked');
+    if (loginScreen) loginScreen.classList.remove('show');
+    if (appShell) appShell.classList.remove('auth-hidden');
+    if (logoutBtn) logoutBtn.style.display = '';
+  }
+
+  function showLoginScreen() {
+    const loginScreen = document.getElementById('loginScreen');
+    const appShell = document.getElementById('appShell');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    document.body.classList.add('auth-locked');
+    if (loginScreen) loginScreen.classList.add('show');
+    if (appShell) appShell.classList.add('auth-hidden');
+    if (logoutBtn) logoutBtn.style.display = 'none';
+  }
+
+  async function checkAuth() {
+    try {
+      const { data, error } = await supabaseAuth.auth.getUser();
+      if (error || !data?.user) {
+        showLoginScreen();
+        return false;
+      }
+      showAppForSession();
+      return true;
+    } catch (err) {
+      console.error(err);
+      showLoginScreen();
+      return false;
+    }
+  }
+
+  async function login() {
+    const email = document.getElementById('loginEmail')?.value?.trim() || '';
+    const password = document.getElementById('loginPassword')?.value || '';
+    const msg = document.getElementById('loginMsg');
+    const btn = document.getElementById('loginBtn');
+
+    if (msg) msg.textContent = '';
+    if (!email || !password) {
+      if (msg) msg.textContent = 'Enter email and password.';
+      return;
+    }
+
+    try {
+      btn.disabled = true;
+      const { error } = await supabaseAuth.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      location.reload();
+    } catch (err) {
+      console.error(err);
+      if (msg) msg.textContent = err.message || 'Login failed.';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function logout() {
+    try {
+      await supabaseAuth.auth.signOut();
+    } catch (err) {
+      console.error(err);
+    }
+    location.reload();
+  }
+
+  window.addEventListener('load', () => {
+    const btn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const password = document.getElementById('loginPassword');
+
+    if (btn) btn.onclick = login;
+    if (logoutBtn) logoutBtn.onclick = logout;
+    if (password) {
+      password.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') login();
+      });
+    }
+
+    setTimeout(() => {
+      checkAuth();
+    }, 50);
+  });
+})();
+</script>
+
+
+<!-- AUTH LAB LOGIN START -->
+<style>
+  body.auth-locked{
+    overflow:hidden !important;
+  }
+
+  #appShell.auth-hidden{
+    display:none !important;
+  }
+
+  #loginScreen{
+    position:fixed;
+    inset:0;
+    z-index:999999;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:32px;
+    background:
+      radial-gradient(circle at 22% 70%, rgba(59,130,246,.42) 0%, rgba(59,130,246,0) 18%),
+      radial-gradient(circle at 72% 24%, rgba(34,211,238,.30) 0%, rgba(34,211,238,0) 16%),
+      radial-gradient(circle at 82% 82%, rgba(34,211,238,.35) 0%, rgba(34,211,238,0) 10%),
+      linear-gradient(180deg, rgba(2,6,23,.93), rgba(3,10,28,.96));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  #loginScreen.show{
+    display:flex !important;
+  }
+
+  #loginCard{
+    width:min(560px, 92vw);
+    border-radius:28px;
+    padding:34px 34px 28px;
+    background:linear-gradient(180deg, rgba(17,24,39,.68), rgba(15,23,42,.78));
+    border:1px solid rgba(125,211,252,.58);
+    box-shadow:0 20px 80px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+  }
+
+  #loginTitle{
+    color:#f8fafc;
+    font-size:22px;
+    font-weight:700;
+    text-align:center;
+    margin:0 0 24px;
+  }
+
+  .login-field{
+    margin-bottom:14px;
+  }
+
+  .login-field input{
+    width:100%;
+    height:54px;
+    padding:0 16px;
+    border-radius:14px;
+    border:1px solid rgba(148,163,184,.28);
+    background:rgba(15,23,42,.38);
+    color:#e5f3ff;
+    outline:none;
+    box-sizing:border-box;
+  }
+
+  #loginBtn{
+    width:100%;
+    height:54px;
+    border:none;
+    border-radius:14px;
+    font-size:20px;
+    font-weight:700;
+    color:#eaf6ff;
+    background:linear-gradient(180deg, #22b5f6, #149ae4);
+    cursor:pointer;
+  }
+
+  #loginMsg{
+    min-height:18px;
+    margin-top:10px;
+    text-align:center;
+    font-size:13px;
+    color:#fca5a5;
+  }
+
+  #logoutBtn{
+    position:fixed;
+    top:12px;
+    left:12px;
+    z-index:999998;
+    display:none;
+    padding:10px 14px;
+    border:none;
+    border-radius:10px;
+    background:#b91c1c;
+    color:#fff;
+    font-weight:700;
+    cursor:pointer;
+  }
+</style>
+
+<div id="loginScreen">
+  <div id="loginCard">
+    <h2 id="loginTitle">Sign In</h2>
+
+    <div class="login-field">
+      <input id="loginEmail" type="email" placeholder="Email">
+    </div>
+
+    <div class="login-field">
+      <input id="loginPassword" type="password" placeholder="Password">
+    </div>
+
+    <button id="loginBtn">Login</button>
+
+    <div id="loginMsg"></div>
+  </div>
+</div>
+
+<button id="logoutBtn">Logout</button>
+
+<script>
+(() => {
+  const SUPABASE_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+
+  if (!window.supabase) {
+    console.error('Supabase JS not loaded');
+    return;
+  }
+
+  const supabaseAuth = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  window.supabaseAuth = supabaseAuth;
+
+  function showAppForSession() {
+    const loginScreen = document.getElementById('loginScreen');
+    const appShell = document.getElementById('appShell');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    document.body.classList.remove('auth-locked');
+    if (loginScreen) loginScreen.classList.remove('show');
+    if (appShell) appShell.classList.remove('auth-hidden');
+    if (logoutBtn) logoutBtn.style.display = 'block';
+  }
+
+  function showLoginScreen() {
+    const loginScreen = document.getElementById('loginScreen');
+    const appShell = document.getElementById('appShell');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    document.body.classList.add('auth-locked');
+    if (loginScreen) loginScreen.classList.add('show');
+    if (appShell) appShell.classList.add('auth-hidden');
+    if (logoutBtn) logoutBtn.style.display = 'none';
+  }
+
+  async function checkAuth() {
+    try {
+      const { data, error } = await supabaseAuth.auth.getUser();
+      if (error || !data?.user) {
+        showLoginScreen();
+        return false;
+      }
+      showAppForSession();
+      return true;
+    } catch (err) {
+      console.error(err);
+      showLoginScreen();
+      return false;
+    }
+  }
+
+  async function login() {
+    const email = document.getElementById('loginEmail')?.value?.trim() || '';
+    const password = document.getElementById('loginPassword')?.value || '';
+    const msg = document.getElementById('loginMsg');
+    const btn = document.getElementById('loginBtn');
+
+    if (msg) msg.textContent = '';
+    if (!email || !password) {
+      if (msg) msg.textContent = 'Enter email and password.';
+      return;
+    }
+
+    try {
+      btn.disabled = true;
+      const { error } = await supabaseAuth.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      location.reload();
+    } catch (err) {
+      console.error(err);
+      if (msg) msg.textContent = err.message || 'Login failed.';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function logout() {
+    try {
+      await supabaseAuth.auth.signOut();
+    } catch (err) {
+      console.error(err);
+    }
+    location.reload();
+  }
+
+  window.addEventListener('load', () => {
+    const btn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const password = document.getElementById('loginPassword');
+
+    if (btn) btn.onclick = login;
+    if (logoutBtn) logoutBtn.onclick = logout;
+    if (password) {
+      password.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') login();
+      });
+    }
+
+    setTimeout(() => {
+      checkAuth();
+    }, 50);
+  });
+})();
+</script>
+<!-- AUTH LAB LOGIN END -->
+
 </body>
 </html>
