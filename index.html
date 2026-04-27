@@ -4,7 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BarStock Pro V3.1</title>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+function logout(){
+  try{
+    if (window.supabaseAuth) {
+      window.supabaseAuth.auth.signOut();
+    }
+  }catch(e){ console.error(e); }
+
+  localStorage.clear();
+  location.reload();
+}
+</script>
+
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
@@ -2791,7 +2803,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260427-160952</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260427-161245</div>
+
+
 
 
 
@@ -6972,6 +6986,10 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   window.enableInventoryRealtime = enableInventoryRealtime;
 
   window.addEventListener('load', () => {
+  const logoutBtn = document.getElementById('authLogoutBtn');
+  if (logoutBtn) {
+    logoutBtn.onclick = logout;
+  }
     setTimeout(() => {
       enableInventoryRealtime().catch(err => {
         console.error(err);
@@ -7172,6 +7190,10 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   window.loadNoMatchesFromSupabase = loadNoMatchesFromSupabase;
 
   window.addEventListener('load', () => {
+  const logoutBtn = document.getElementById('authLogoutBtn');
+  if (logoutBtn) {
+    logoutBtn.onclick = logout;
+  }
     setTimeout(() => {
       loadNoMatchesFromSupabase();
     }, 1400);
@@ -7314,6 +7336,10 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   window.initOrdersModule = initOrdersModule;
 
   window.addEventListener('load', () => {
+  const logoutBtn = document.getElementById('authLogoutBtn');
+  if (logoutBtn) {
+    logoutBtn.onclick = logout;
+  }
     setTimeout(() => {
       initOrdersModule().catch(console.error);
     }, 1200);
@@ -7449,6 +7475,10 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   }
 
   window.addEventListener('load', () => {
+  const logoutBtn = document.getElementById('authLogoutBtn');
+  if (logoutBtn) {
+    logoutBtn.onclick = logout;
+  }
     setTimeout(() => {
       bindCleanPlaceOrderHandler();
     }, 1500);
@@ -7518,6 +7548,10 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   window.enableOrdersRealtimeClean = enableOrdersRealtimeClean;
 
   window.addEventListener('load', () => {
+  const logoutBtn = document.getElementById('authLogoutBtn');
+  if (logoutBtn) {
+    logoutBtn.onclick = logout;
+  }
     setTimeout(() => {
       enableOrdersRealtimeClean().catch(err => {
         console.error('enableOrdersRealtimeClean failed', err);
@@ -7595,6 +7629,10 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   window.enableNoMatchRealtimeClean = enableNoMatchRealtimeClean;
 
   window.addEventListener('load', () => {
+  const logoutBtn = document.getElementById('authLogoutBtn');
+  if (logoutBtn) {
+    logoutBtn.onclick = logout;
+  }
     setTimeout(() => {
       enableNoMatchRealtimeClean().catch(err => {
         console.error('enableNoMatchRealtimeClean failed', err);
@@ -7893,6 +7931,11 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   }
 
   function hideOverlay(){
+    const logoutBtn = document.getElementById('authLogoutBtn');
+    if (logoutBtn) {
+        logoutBtn.style.display = 'block';
+        logoutBtn.style.opacity = '1';
+    }
     document.body.classList.remove('auth-locked');
     document.body.style.pointerEvents = '';
     const overlay = document.getElementById('authOverlay');
@@ -7958,6 +8001,10 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   }
 
   window.addEventListener('load', () => {
+  const logoutBtn = document.getElementById('authLogoutBtn');
+  if (logoutBtn) {
+    logoutBtn.onclick = logout;
+  }
     const btn = document.getElementById('authLoginBtn');
     const password = document.getElementById('authPassword');
 
@@ -7974,5 +8021,6 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 </script>
 <!-- BARSTOCK AUTH OVERLAY SAFE END -->
 
+<button id="authLogoutBtn">Logout</button>
 </body>
 </html>
