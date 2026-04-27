@@ -2803,7 +2803,8 @@ function logout(){
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260427-163434</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260427-164328</div>
+
 
 
 
@@ -6989,10 +6990,6 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   window.enableInventoryRealtime = enableInventoryRealtime;
 
   window.addEventListener('load', () => {
-  const logoutBtn = document.getElementById('authLogoutBtn');
-  if (logoutBtn) {
-    logoutBtn.onclick = logout;
-  }
     setTimeout(() => {
       enableInventoryRealtime().catch(err => {
         console.error(err);
@@ -7193,10 +7190,6 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   window.loadNoMatchesFromSupabase = loadNoMatchesFromSupabase;
 
   window.addEventListener('load', () => {
-  const logoutBtn = document.getElementById('authLogoutBtn');
-  if (logoutBtn) {
-    logoutBtn.onclick = logout;
-  }
     setTimeout(() => {
       loadNoMatchesFromSupabase();
     }, 1400);
@@ -7339,10 +7332,6 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   window.initOrdersModule = initOrdersModule;
 
   window.addEventListener('load', () => {
-  const logoutBtn = document.getElementById('authLogoutBtn');
-  if (logoutBtn) {
-    logoutBtn.onclick = logout;
-  }
     setTimeout(() => {
       initOrdersModule().catch(console.error);
     }, 1200);
@@ -7478,10 +7467,6 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   }
 
   window.addEventListener('load', () => {
-  const logoutBtn = document.getElementById('authLogoutBtn');
-  if (logoutBtn) {
-    logoutBtn.onclick = logout;
-  }
     setTimeout(() => {
       bindCleanPlaceOrderHandler();
     }, 1500);
@@ -7551,10 +7536,6 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   window.enableOrdersRealtimeClean = enableOrdersRealtimeClean;
 
   window.addEventListener('load', () => {
-  const logoutBtn = document.getElementById('authLogoutBtn');
-  if (logoutBtn) {
-    logoutBtn.onclick = logout;
-  }
     setTimeout(() => {
       enableOrdersRealtimeClean().catch(err => {
         console.error('enableOrdersRealtimeClean failed', err);
@@ -7632,10 +7613,6 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   window.enableNoMatchRealtimeClean = enableNoMatchRealtimeClean;
 
   window.addEventListener('load', () => {
-  const logoutBtn = document.getElementById('authLogoutBtn');
-  if (logoutBtn) {
-    logoutBtn.onclick = logout;
-  }
     setTimeout(() => {
       enableNoMatchRealtimeClean().catch(err => {
         console.error('enableNoMatchRealtimeClean failed', err);
