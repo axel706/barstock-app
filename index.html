@@ -2790,7 +2790,10 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260427-151709</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260427-152449</div>
+
+
+
 
 
 
@@ -7661,5 +7664,82 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 })();
 </script>
 <!-- BARSTOCK UX POLISH END -->
+
+
+<!-- BARSTOCK AUTH OVERLAY SAFE START -->
+<style>
+#authOverlay{
+  position:fixed;
+  inset:0;
+  z-index:999999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  background: rgba(15,23,42,0.35);
+}
+
+#authCard{
+  width:360px;
+  padding:28px;
+  border-radius:16px;
+
+  background: rgba(15,23,42,0.75);
+  border:1px solid rgba(255,255,255,0.1);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+
+#authCard h2{
+  color:#fff;
+  margin-bottom:16px;
+}
+
+#authCard input{
+  width:100%;
+  height:44px;
+  margin-bottom:10px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,0.1);
+  background:rgba(15,23,42,0.6);
+  color:#fff;
+  padding:0 10px;
+}
+
+#authCard button{
+  width:100%;
+  height:44px;
+  background:#0ea5e9;
+  border:none;
+  border-radius:8px;
+  color:#fff;
+  font-weight:700;
+  cursor:pointer;
+}
+</style>
+
+<div id="authOverlay">
+  <div id="authCard">
+    <h2>Sign In</h2>
+    <input placeholder="Email">
+    <input placeholder="Password" type="password">
+    <button>Login</button>
+  </div>
+</div>
+
+<script>
+document.body.style.pointerEvents = "none";
+document.getElementById("authOverlay").style.pointerEvents = "auto";
+</script>
+
+<!-- BARSTOCK AUTH OVERLAY SAFE END -->
+
+
 </body>
 </html>
