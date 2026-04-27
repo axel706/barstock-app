@@ -2803,7 +2803,8 @@ function logout(){
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260427-161825</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260427-163434</div>
+
 
 
 
@@ -8002,14 +8003,25 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     }
   }
 
-  window.addEventListener('load', () => {
-  const logoutBtn = document.getElementById('authLogoutBtn');
-  if (logoutBtn) {
-    logoutBtn.onclick = logout;
+  async function logout(){
+    try{
+      authClient = authClient || window.supabaseAuth || window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      window.supabaseAuth = authClient;
+      await authClient.auth.signOut();
+    } catch(err){
+      console.error(err);
+    } finally {
+      showOverlay();
+      location.reload();
+    }
   }
+
+  window.addEventListener('load', () => {
+    const logoutBtn = document.getElementById('authLogoutBtn');
     const btn = document.getElementById('authLoginBtn');
     const password = document.getElementById('authPassword');
 
+    if (logoutBtn) logoutBtn.onclick = logout;
     if (btn) btn.onclick = login;
     if (password) {
       password.addEventListener('keydown', e => {
@@ -8023,69 +8035,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 </script>
 <!-- BARSTOCK AUTH OVERLAY SAFE END -->
 
-<button id="authLogoutBtn">Logout</button>
-
-<!-- BARSTOCK FORCE LOGOUT START -->
-<button id="barstockForceLogoutBtn" type="button">Logout</button>
-
-<style>
-  #barstockForceLogoutBtn{
-    position:fixed !important;
-    top:62px !important;
-    right:18px !important;
-    z-index:2147483647 !important;
-    display:none;
-    padding:10px 14px !important;
-    border-radius:12px !important;
-    border:1px solid rgba(255,255,255,.25) !important;
-    background:rgba(15,23,42,.88) !important;
-    color:#fff !important;
-    font-weight:900 !important;
-    cursor:pointer !important;
-    box-shadow:0 10px 28px rgba(0,0,0,.35) !important;
-    backdrop-filter:blur(10px);
-    -webkit-backdrop-filter:blur(10px);
-  }
-</style>
-
-<script>
-(() => {
-  const SUPABASE_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
-
-  async function setupForceLogout(){
-    const btn = document.getElementById('barstockForceLogoutBtn');
-    if (!btn || !window.supabase) return;
-
-    const client = window.supabaseAuth || window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    window.supabaseAuth = client;
-
-    const { data } = await client.auth.getUser();
-
-    if (data && data.user) {
-      btn.style.display = 'block';
-    } else {
-      btn.style.display = 'none';
-    }
-
-    btn.onclick = async () => {
-      try {
-        await client.auth.signOut();
-      } catch(e) {
-        console.error(e);
-      }
-      location.reload();
-    };
-  }
-
-  window.addEventListener('load', () => {
-    setTimeout(setupForceLogout, 500);
-    setTimeout(setupForceLogout, 1500);
-    setTimeout(setupForceLogout, 3000);
-  });
-})();
-</script>
-<!-- BARSTOCK FORCE LOGOUT END -->
+<button id="authLogoutBtn" type="button">Logout</button>
 
 </body>
 </html>
