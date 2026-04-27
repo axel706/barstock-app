@@ -2780,6 +2780,7 @@
 
 </style>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="wrap">
@@ -2790,7 +2791,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260427-152449</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260427-153235</div>
+
+
 
 
 
@@ -7666,80 +7669,260 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <!-- BARSTOCK UX POLISH END -->
 
 
+
 <!-- BARSTOCK AUTH OVERLAY SAFE START -->
 <style>
-#authOverlay{
-  position:fixed;
-  inset:0;
-  z-index:999999;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  body.auth-locked{
+    overflow:hidden !important;
+  }
 
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  #authOverlay{
+    position:fixed;
+    inset:0;
+    z-index:999999;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:28px;
+    background:rgba(2,6,23,.38);
+    backdrop-filter:blur(14px) saturate(115%);
+    -webkit-backdrop-filter:blur(14px) saturate(115%);
+  }
 
-  background: rgba(15,23,42,0.35);
-}
+  #authOverlay.show{
+    display:flex !important;
+  }
 
-#authCard{
-  width:360px;
-  padding:28px;
-  border-radius:16px;
+  #authCard{
+    width:min(520px,92vw);
+    padding:38px 38px 32px;
+    border-radius:26px;
+    background:rgba(15,23,42,.68);
+    border:1px solid rgba(148,163,184,.38);
+    box-shadow:0 28px 90px rgba(0,0,0,.52), inset 0 1px 0 rgba(255,255,255,.08);
+    backdrop-filter:blur(24px) saturate(120%);
+    -webkit-backdrop-filter:blur(24px) saturate(120%);
+  }
 
-  background: rgba(15,23,42,0.75);
-  border:1px solid rgba(255,255,255,0.1);
+  #authBrand{
+    text-align:center;
+    color:#eaf6ff;
+    font-size:22px;
+    font-weight:900;
+    letter-spacing:.08em;
+    margin-bottom:18px;
+  }
 
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  #authCard h2{
+    text-align:center;
+    color:#fff;
+    font-size:32px;
+    font-weight:900;
+    margin:0 0 8px;
+  }
 
-  box-shadow:0 20px 60px rgba(0,0,0,0.5);
-}
+  #authSub{
+    text-align:center;
+    color:rgba(226,232,240,.78);
+    font-size:14px;
+    margin-bottom:26px;
+  }
 
-#authCard h2{
-  color:#fff;
-  margin-bottom:16px;
-}
+  .auth-label{
+    display:block;
+    color:#f8fafc;
+    font-size:14px;
+    font-weight:800;
+    margin:0 0 8px 2px;
+  }
 
-#authCard input{
-  width:100%;
-  height:44px;
-  margin-bottom:10px;
-  border-radius:8px;
-  border:1px solid rgba(255,255,255,0.1);
-  background:rgba(15,23,42,0.6);
-  color:#fff;
-  padding:0 10px;
-}
+  .auth-field{
+    margin-bottom:16px;
+  }
 
-#authCard button{
-  width:100%;
-  height:44px;
-  background:#0ea5e9;
-  border:none;
-  border-radius:8px;
-  color:#fff;
-  font-weight:700;
-  cursor:pointer;
-}
+  .auth-field input{
+    width:100%;
+    height:54px;
+    box-sizing:border-box;
+    padding:0 16px;
+    border-radius:14px;
+    border:1px solid rgba(203,213,225,.36);
+    background:rgba(15,23,42,.58);
+    color:#fff;
+    outline:none;
+    font-size:15px;
+  }
+
+  .auth-field input::placeholder{
+    color:rgba(226,232,240,.58);
+  }
+
+  .auth-field input:focus{
+    border-color:rgba(56,189,248,.75);
+    box-shadow:0 0 0 4px rgba(14,165,233,.14);
+  }
+
+  #authForgot{
+    color:#38bdf8;
+    font-size:13px;
+    font-weight:700;
+    margin:0 0 18px;
+  }
+
+  #authLoginBtn{
+    width:100%;
+    height:54px;
+    border:0;
+    border-radius:14px;
+    background:linear-gradient(180deg,#1fb6ff,#0f8ee8);
+    color:#fff;
+    font-size:18px;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow:0 14px 34px rgba(14,165,233,.32);
+  }
+
+  #authFoot{
+    margin-top:18px;
+    text-align:center;
+    font-size:13px;
+    color:rgba(248,250,252,.82);
+  }
+
+  #authFoot span{
+    color:#38bdf8;
+    font-weight:800;
+  }
+
+  #authMsg{
+    min-height:18px;
+    margin-top:10px;
+    text-align:center;
+    font-size:13px;
+    color:#fca5a5;
+  }
 </style>
 
 <div id="authOverlay">
   <div id="authCard">
-    <h2>Sign In</h2>
-    <input placeholder="Email">
-    <input placeholder="Password" type="password">
-    <button>Login</button>
+    <div id="authBrand">BARSTOCK</div>
+    <h2>Welcome back</h2>
+    <div id="authSub">Access your inventory and ordering workspace.</div>
+
+    <label class="auth-label" for="authEmail">Email</label>
+    <div class="auth-field">
+      <input id="authEmail" type="email" placeholder="Enter your email">
+    </div>
+
+    <label class="auth-label" for="authPassword">Password</label>
+    <div class="auth-field">
+      <input id="authPassword" type="password" placeholder="Enter your password">
+    </div>
+
+    <div id="authForgot">Forgot password?</div>
+
+    <button id="authLoginBtn">Login</button>
+
+    <div id="authFoot">Don’t have an account? <span>Sign up</span></div>
+    <div id="authMsg"></div>
   </div>
 </div>
 
 <script>
-document.body.style.pointerEvents = "none";
-document.getElementById("authOverlay").style.pointerEvents = "auto";
+(() => {
+  const SUPABASE_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
+
+  let authClient = null;
+
+  function showOverlay(){
+    document.body.classList.add('auth-locked');
+    document.body.style.pointerEvents = '';
+    const overlay = document.getElementById('authOverlay');
+    if (overlay) overlay.classList.add('show');
+  }
+
+  function hideOverlay(){
+    document.body.classList.remove('auth-locked');
+    document.body.style.pointerEvents = '';
+    const overlay = document.getElementById('authOverlay');
+    if (overlay) overlay.classList.remove('show');
+  }
+
+  async function checkAuth(){
+    try{
+      if (!window.supabase) throw new Error('Supabase JS not loaded');
+      authClient = authClient || window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      window.supabaseAuth = authClient;
+
+      const { data, error } = await authClient.auth.getUser();
+      if (error || !data?.user) {
+        showOverlay();
+        return false;
+      }
+
+      hideOverlay();
+      return true;
+    } catch(err){
+      console.error(err);
+      showOverlay();
+      return false;
+    }
+  }
+
+  async function login(){
+    const email = document.getElementById('authEmail')?.value?.trim() || '';
+    const password = document.getElementById('authPassword')?.value || '';
+    const msg = document.getElementById('authMsg');
+    const btn = document.getElementById('authLoginBtn');
+
+    if (msg) msg.textContent = '';
+    if (!email || !password) {
+      if (msg) msg.textContent = 'Enter email and password.';
+      return;
+    }
+
+    try{
+      if (!window.supabase) throw new Error('Supabase JS not loaded');
+      authClient = authClient || window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Logging in...';
+      }
+
+      const { error } = await authClient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+
+      hideOverlay();
+      location.reload();
+    } catch(err){
+      console.error(err);
+      if (msg) msg.textContent = err.message || 'Login failed.';
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Login';
+      }
+    }
+  }
+
+  window.addEventListener('load', () => {
+    const btn = document.getElementById('authLoginBtn');
+    const password = document.getElementById('authPassword');
+
+    if (btn) btn.onclick = login;
+    if (password) {
+      password.addEventListener('keydown', e => {
+        if (e.key === 'Enter') login();
+      });
+    }
+
+    setTimeout(checkAuth, 100);
+  });
+})();
 </script>
-
 <!-- BARSTOCK AUTH OVERLAY SAFE END -->
-
 
 </body>
 </html>
