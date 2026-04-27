@@ -4,18 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BarStock Pro V3.1</title>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
-function logout(){
-  try{
-    if (window.supabaseAuth) {
-      window.supabaseAuth.auth.signOut();
-    }
-  }catch(e){ console.error(e); }
-
-  localStorage.clear();
-  location.reload();
-}
-</script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -2803,7 +2792,9 @@ function logout(){
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260427-164328</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260427-164850</div>
+
+
 
 
 
@@ -7903,6 +7894,12 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
   let authClient = null;
 
+  function getAuthClient(){
+    authClient = authClient || window.supabaseAuth || window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    window.supabaseAuth = authClient;
+    return authClient;
+  }
+
   function showOverlay(){
     document.body.classList.add('auth-locked');
     document.body.style.pointerEvents = '';
@@ -7925,8 +7922,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   async function checkAuth(){
     try{
       if (!window.supabase) throw new Error('Supabase JS not loaded');
-      authClient = authClient || window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      window.supabaseAuth = authClient;
+      authClient = getAuthClient();
 
       const { data, error } = await authClient.auth.getUser();
       if (error || !data?.user) {
@@ -7957,7 +7953,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
     try{
       if (!window.supabase) throw new Error('Supabase JS not loaded');
-      authClient = authClient || window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      authClient = getAuthClient();
 
       if (btn) {
         btn.disabled = true;
@@ -7982,8 +7978,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
   async function logout(){
     try{
-      authClient = authClient || window.supabaseAuth || window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      window.supabaseAuth = authClient;
+      authClient = getAuthClient();
       await authClient.auth.signOut();
     } catch(err){
       console.error(err);
