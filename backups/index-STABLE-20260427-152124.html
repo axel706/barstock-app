@@ -5,20 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BarStock Pro V3.1</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-
-<script>
-window.BARSTOCK_CONFIG = window.BARSTOCK_CONFIG || {
-  SUPABASE_URL: 'https://lqmoftpedmbhtuzlbbuh.supabase.co',
-  SUPABASE_KEY: 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S',
-  LOCATION_NAME: 'The Crown Tavern'
-};
-</script>
-
   <style>
     :root{
       --control-h:52px;
@@ -2790,7 +2780,6 @@ window.BARSTOCK_CONFIG = window.BARSTOCK_CONFIG || {
 
 </style>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="wrap">
@@ -2801,26 +2790,7 @@ window.BARSTOCK_CONFIG = window.BARSTOCK_CONFIG || {
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260427-211523</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260427-151709</div>
 
 
 
@@ -7691,158 +7661,5 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 })();
 </script>
 <!-- BARSTOCK UX POLISH END -->
-
-
-
-<!-- BARSTOCK AUTH OVERLAY SAFE START -->
-<link rel="stylesheet" href="styles/auth.css">
-
-<div id="authOverlay">
-  <div id="authCard">
-    <div id="authBrand">BARSTOCK</div>
-    <h2>Welcome back</h2>
-    <div id="authSub">Access your inventory and ordering workspace.</div>
-
-    <label class="auth-label" for="authEmail">Email</label>
-    <div class="auth-field">
-      <input id="authEmail" type="email" placeholder="Enter your email">
-    </div>
-
-    <label class="auth-label" for="authPassword">Password</label>
-    <div class="auth-field">
-      <input id="authPassword" type="password" placeholder="Enter your password">
-    </div>
-
-    <div id="authForgot">Forgot password?</div>
-
-    <button id="authLoginBtn">Login</button>
-
-    <div id="authFoot">Don’t have an account? <span>Sign up</span></div>
-    <div id="authMsg"></div>
-  </div>
-</div>
-
-<script>
-(() => {
-  const SUPABASE_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
-
-  let authClient = null;
-
-  function getAuthClient(){
-    authClient = authClient || window.supabaseAuth || window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    window.supabaseAuth = authClient;
-    return authClient;
-  }
-
-  function showOverlay(){
-    document.body.classList.add('auth-locked');
-    document.body.style.pointerEvents = '';
-    const overlay = document.getElementById('authOverlay');
-    if (overlay) overlay.classList.add('show');
-  }
-
-  function hideOverlay(){
-    const logoutBtn = document.getElementById('authLogoutBtn');
-    if (logoutBtn) {
-        logoutBtn.style.display = 'block';
-        logoutBtn.style.opacity = '1';
-    }
-    document.body.classList.remove('auth-locked');
-    document.body.style.pointerEvents = '';
-    const overlay = document.getElementById('authOverlay');
-    if (overlay) overlay.classList.remove('show');
-  }
-
-  async function checkAuth(){
-    try{
-      if (!window.supabase) throw new Error('Supabase JS not loaded');
-      authClient = getAuthClient();
-
-      const { data, error } = await authClient.auth.getUser();
-      if (error || !data?.user) {
-        showOverlay();
-        return false;
-      }
-
-      hideOverlay();
-      return true;
-    } catch(err){
-      console.error(err);
-      showOverlay();
-      return false;
-    }
-  }
-
-  async function login(){
-    const email = document.getElementById('authEmail')?.value?.trim() || '';
-    const password = document.getElementById('authPassword')?.value || '';
-    const msg = document.getElementById('authMsg');
-    const btn = document.getElementById('authLoginBtn');
-
-    if (msg) msg.textContent = '';
-    if (!email || !password) {
-      if (msg) msg.textContent = 'Enter email and password.';
-      return;
-    }
-
-    try{
-      if (!window.supabase) throw new Error('Supabase JS not loaded');
-      authClient = getAuthClient();
-
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = 'Logging in...';
-      }
-
-      const { error } = await authClient.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-
-      hideOverlay();
-      location.reload();
-    } catch(err){
-      console.error(err);
-      if (msg) msg.textContent = err.message || 'Login failed.';
-    } finally {
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = 'Login';
-      }
-    }
-  }
-
-  async function logout(){
-    try{
-      authClient = getAuthClient();
-      await authClient.auth.signOut();
-    } catch(err){
-      console.error(err);
-    } finally {
-      showOverlay();
-      location.reload();
-    }
-  }
-
-  window.addEventListener('load', () => {
-    const logoutBtn = document.getElementById('authLogoutBtn');
-    const btn = document.getElementById('authLoginBtn');
-    const password = document.getElementById('authPassword');
-
-    if (logoutBtn) logoutBtn.onclick = logout;
-    if (btn) btn.onclick = login;
-    if (password) {
-      password.addEventListener('keydown', e => {
-        if (e.key === 'Enter') login();
-      });
-    }
-
-    setTimeout(checkAuth, 100);
-  });
-})();
-</script>
-<!-- BARSTOCK AUTH OVERLAY SAFE END -->
-
-<button id="authLogoutBtn" type="button">Logout</button>
-
 </body>
 </html>
