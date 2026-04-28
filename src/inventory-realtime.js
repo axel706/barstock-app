@@ -81,6 +81,18 @@
     if (typeof saveState === 'function') saveState();
     if (typeof render === 'function') render();
 
+    // 🔥 Sync Ordering + Quick Order after realtime update
+    try {
+      if (typeof rebuildPlacedOrdersFromHistory === 'function') {
+        rebuildPlacedOrdersFromHistory();
+      }
+      if (typeof render === 'function') {
+        render();
+      }
+    } catch (e) {
+      console.warn('Realtime post-sync failed', e);
+    }
+
     setRealtimeStatus(`Inventory cloud cargado: ${state.master.length} items`);
   }
 
