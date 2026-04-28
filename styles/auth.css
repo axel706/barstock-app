@@ -11,9 +11,9 @@ body.auth-locked{
   align-items:center;
   justify-content:center;
   padding:28px;
-  background:rgba(5,10,25,.55);
-  backdrop-filter:blur(20px) saturate(140%);
-  -webkit-backdrop-filter:blur(20px) saturate(140%);
+  background:rgba(2,6,23,.34);
+  backdrop-filter:blur(26px) saturate(150%) brightness(.82);
+  -webkit-backdrop-filter:blur(26px) saturate(150%) brightness(.82);
 }
 
 #authOverlay.show{
@@ -24,35 +24,43 @@ body.auth-locked{
 #authCard{
   width:min(460px,92vw);
   padding:42px 38px 34px;
-  border-radius:24px;
+  border-radius:26px;
 
-  background:linear-gradient(
-    145deg,
-    rgba(30,40,70,.65),
-    rgba(15,20,40,.55)
-  );
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.16), rgba(255,255,255,.05)),
+    linear-gradient(180deg, rgba(15,23,42,.70), rgba(2,6,23,.58));
 
-  border:1px solid rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.32);
 
   box-shadow:
-    0 40px 120px rgba(0,0,0,.65),
-    inset 0 1px 0 rgba(255,255,255,.08);
+    0 42px 120px rgba(0,0,0,.70),
+    0 0 0 1px rgba(96,165,250,.10),
+    inset 0 1px 0 rgba(255,255,255,.22),
+    inset 0 -1px 0 rgba(255,255,255,.06);
 
-  backdrop-filter:blur(30px);
-  -webkit-backdrop-filter:blur(30px);
+  backdrop-filter:blur(38px) saturate(165%);
+  -webkit-backdrop-filter:blur(38px) saturate(165%);
 
   position:relative;
+  overflow:hidden;
 }
 
 /* glow sutil */
 #authCard::before{
   content:'';
   position:absolute;
-  inset:-1px;
-  border-radius:24px;
-  background:linear-gradient(120deg, rgba(59,130,246,.25), transparent 60%);
-  opacity:.6;
+  inset:0;
+  border-radius:26px;
+  background:
+    radial-gradient(circle at 22% 0%, rgba(96,165,250,.24), transparent 38%),
+    linear-gradient(120deg, rgba(255,255,255,.16), transparent 45%);
+  opacity:.95;
   pointer-events:none;
+}
+
+#authCard > *{
+  position:relative;
+  z-index:1;
 }
 
 /* 🔹 Branding */
@@ -61,7 +69,7 @@ body.auth-locked{
   font-size:18px;
   font-weight:900;
   letter-spacing:.12em;
-  color:#dbeafe;
+  color:#ffffff;
   margin-bottom:18px;
 }
 
@@ -77,7 +85,7 @@ body.auth-locked{
 /* 🔹 Subtitle */
 #authSub{
   text-align:center;
-  color:rgba(226,232,240,.75);
+  color:rgba(248,250,252,.92);
   font-size:14px;
   margin-bottom:26px;
 }
@@ -87,7 +95,7 @@ body.auth-locked{
   display:block;
   font-size:13px;
   font-weight:700;
-  color:rgba(226,232,240,.9);
+  color:#ffffff;
   margin:0 0 6px 2px;
 }
 
@@ -102,25 +110,26 @@ body.auth-locked{
   padding:0 16px;
   border-radius:12px;
 
-  background:rgba(15,23,42,.55);
-  border:1px solid rgba(255,255,255,.12);
+  background:rgba(2,6,23,.50);
+  border:1px solid rgba(255,255,255,.26);
 
-  color:#fff;
-  font-size:14px;
+  color:#ffffff;
+  font-size:15px;
+  font-weight:700;
 
   transition:all .2s ease;
 }
 
 /* placeholder */
 .auth-field input::placeholder{
-  color:rgba(226,232,240,.45);
+  color:rgba(248,250,252,.72);
 }
 
 /* focus */
 .auth-field input:focus{
-  border-color:rgba(59,130,246,.6);
-  box-shadow:0 0 0 3px rgba(59,130,246,.15);
-  background:rgba(15,23,42,.7);
+  border-color:rgba(125,211,252,.85);
+  box-shadow:0 0 0 4px rgba(56,189,248,.18);
+  background:rgba(2,6,23,.68);
 }
 
 /* 🔹 Forgot password */
@@ -164,7 +173,7 @@ body.auth-locked{
   margin-top:20px;
   text-align:center;
   font-size:13px;
-  color:rgba(226,232,240,.7);
+  color:rgba(248,250,252,.86);
 }
 
 #authFoot span{
