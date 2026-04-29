@@ -2795,7 +2795,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260428-233355</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260428-233809</div>
+
+
 
 
 
@@ -4811,8 +4813,20 @@ function setQuickOrderVendor(vendor){
 function renderQuickOrderVendorTabs(){
   const wrap = safeEl('quickOrderVendorTabs');
   if(!wrap) return;
+
   const vendors = ['LOOP','SOUTHERN','BREAKTHRU','WINE MERCHANT','UNKNOWN'];
-  wrap.innerHTML = vendors.map(v => `<button class="${quickOrderVendorTab===v?'active':''}" onclick="setQuickOrderVendor('${v.replace(/'/g,"\'")}')">${v}</button>`).join('');
+
+  wrap.innerHTML = vendors.map(v => `
+    <button type="button" class="${quickOrderVendorTab===v?'active':''}" data-quick-vendor="${escapeHtml(v)}">
+      ${v}
+    </button>
+  `).join('');
+
+  wrap.querySelectorAll('button[data-quick-vendor]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setQuickOrderVendor(btn.dataset.quickVendor || 'LOOP');
+    });
+  });
 }
 
 function renderOrderHistory(){
