@@ -88,12 +88,12 @@
       }
 
       if (typeof populateQuickOrderProducts === 'function') {
-        const activeQuickVendor = typeof quickOrderVendorTab !== 'undefined' ? quickOrderVendorTab : 'LOOP';
-        populateQuickOrderProducts(activeQuickVendor);
-      }
-
-      if (typeof renderQuickOrderVendorTabs === 'function') {
-        renderQuickOrderVendorTabs();
+        const quickModal = document.getElementById('quickOrderModalBg');
+        const quickModalOpen = quickModal && !quickModal.classList.contains('hidden');
+        if (quickModalOpen) {
+          const activeQuickVendor = typeof quickOrderVendorTab !== 'undefined' ? quickOrderVendorTab : 'LOOP';
+          populateQuickOrderProducts(activeQuickVendor);
+        }
       }
 
       if (typeof render === 'function') {
