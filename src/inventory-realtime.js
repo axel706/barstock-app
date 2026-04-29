@@ -81,16 +81,26 @@
     if (typeof saveState === 'function') saveState();
     if (typeof render === 'function') render();
 
-    // 🔥 Sync Ordering + Quick Order after realtime update
+    // Sync dependent modules after realtime inventory update
     try {
       if (typeof rebuildPlacedOrdersFromHistory === 'function') {
         rebuildPlacedOrdersFromHistory();
       }
+
+      if (typeof populateQuickOrderProducts === 'function') {
+        const activeQuickVendor = typeof quickOrderVendorTab !== 'undefined' ? quickOrderVendorTab : 'LOOP';
+        populateQuickOrderProducts(activeQuickVendor);
+      }
+
+      if (typeof renderQuickOrderVendorTabs === 'function') {
+        renderQuickOrderVendorTabs();
+      }
+
       if (typeof render === 'function') {
         render();
       }
     } catch (e) {
-      console.warn('Realtime post-sync failed', e);
+      console.warn('Realtime dependent module sync failed', e);
     }
 
     setRealtimeStatus(`Inventory cloud cargado: ${state.master.length} items`);
