@@ -1,0 +1,225 @@
+index.html:3396:function defaultState(){ return {master:[], noMatches:[], orderHistory:[], placedOrders:[], lastMasterName:null, lastCountName:null, lastUpdated:null}; }
+index.html:3397:function migrateLegacy(primaryKey, legacyKeys, fallback){
+index.html:3416:function loadState(){
+index.html:3419:function saveState(){
+index.html:3427:function loadAliases(){ return migrateLegacy(ALIAS_KEY, LEGACY_ALIAS_KEYS, {}); }
+index.html:3428:function saveAliases(){
+index.html:3436:function loadPriceAliases(){
+index.html:3445:function savePriceAliases(){
+index.html:3448:function uniqueOrderId(){
+index.html:3452:function clampNonNegative(n){
+index.html:3456:function reconcileImportedState(raw){
+index.html:3502:function loadTheme(){ try{return localStorage.getItem(THEME_KEY) || 'dark';}catch{return 'dark';} }
+index.html:3503:function saveTheme(theme){ try{localStorage.setItem(THEME_KEY, theme);}catch{} }
+index.html:3504:function applyTheme(theme){
+index.html:3512:function toggleTheme(){
+index.html:3518:function loadSectionStates(){
+index.html:3525:function saveSectionStates(states){
+index.html:3530:function setSectionCollapsed(sectionName, collapsed){
+index.html:3541:function initSectionToggles(){
+index.html:3556:function safeEl(id){
+index.html:3560:function bindIfExists(id, eventName, handler){
+index.html:3565:function setStatus(msg){
+index.html:3569:function normalizeName(s){ return String(s||'').trim().toUpperCase().replace(/\s+/g,' '); }
+index.html:3570:function parseNum(v){ if(v===null||v===undefined||v==='') return 0; let n = Number(String(v).replace(/,/g,'')); return Number.isFinite(n)?n:0; }
+index.html:3571:function roundOnHand(v){
+index.html:3577:function computeToOrder(onHand,suggested){ return Math.max(0, parseNum(suggested) - roundOnHand(onHand)); }
+index.html:3578:function supportsManualFinalOrder(vendor){ return ['SOUTHERN','BREAKTHRU','WINE MERCHANT'].includes(String(vendor||'').toUpperCase()); }
+index.html:3579:function getEffectiveOrder(row){
+index.html:3585:function toOrderClass(v){
+index.html:3591:function vendorQuery(){
+index.html:3595:function reconcileLoadedMaster(){
+index.html:3618:function resetLegacyValuesIfNeeded(){
+index.html:3630:function inferVendor(code){
+index.html:3639:function badge(v){
+index.html:3643:function sanitizeForTokens(s){ return normalizeName(s).replace(/[^A-Z0-9 ]/g,' '); }
+index.html:3644:function tokenSet(s){ return Array.from(new Set(sanitizeForTokens(s).split(/\s+/).filter(Boolean))); }
+index.html:3645:function scoreMatch(rawName, itemName){
+index.html:3658:function bestMatch(rawName){
+index.html:3667:function cleanInvoiceCode(raw){
+index.html:3670:function normalizeOcrText(raw){
+index.html:3681:function looksLikeTableHeader(line){
+index.html:3685:function looksLikeDescriptionLine(line){
+index.html:3691:function moneyishValue(token){
+index.html:3710:function extractMoneyishTokens(text){
+index.html:3720:function extractTailQuantity(text){
+index.html:3733:function rowChunkLooksComplete(lines){
+index.html:3736:function parseInvoiceRowChunk(lines, vendor){
+index.html:3782:function rememberPriceAlias(row, masterIndex){
+index.html:3791:function findMasterIndexByItemNorm(itemNorm, vendorHint=''){
+index.html:3798:function findInvoicePriceMatch(row){
+index.html:3838:function extractInvoiceRowsFromText(text, vendor){
+index.html:3848:  function flushCurrent(){
+index.html:3903:function scoreInvoiceScanResult(text, vendor){
+index.html:3910:async function loadImageFromFile(file){
+index.html:3923:function buildScaledCanvas(img, scale=2){
+index.html:3938:function applyInvoiceCanvasMode(canvas, mode){
+index.html:3956:async function canvasToBlob(canvas){
+index.html:3959:async function buildInvoiceOcrSources(file){
+index.html:3970:function invoiceStatusLabel(row){
+index.html:3977:function renderInvoicePreview(){
+index.html:4013:async function runInvoiceScan(){
+index.html:4067:function parseCurrentInvoiceText(){
+index.html:4083:function rememberFocus(){
+index.html:4086:function restoreFocus(){
+index.html:4091:function openInvoiceScanModal(){
+index.html:4097:function closeInvoiceScanModal(){
+index.html:4101:function applyInvoicePriceUpdates(){
+index.html:4122:function openInvoiceLinkModal(index){
+index.html:4133:function renderInvoiceLinkOptions(){
+index.html:4148:function closeInvoiceLinkModal(){
+index.html:4153:function saveInvoiceLink(){
+index.html:4166:function detectColumns(row){
+index.html:4184:function rowsFromWorkbook(data, preferIN=true){
+index.html:4194:function parseFile(file, preferIN=true){
+index.html:4213:function materializeMaster(rows){
+index.html:4238:function fmt(v){ return Number.isInteger(v) ? String(v) : Number(v).toFixed(2).replace(/\.00$/,''); }
+index.html:4239:function fmtMoney(v){ return '$' + parseNum(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+index.html:4240:function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+index.html:4242:function rowOrderHistoryMatchesItem(orderItem, row){
+index.html:4248:function getRecentVendorOrders(vendor, limit = 6){
+index.html:4254:function getRecentRowQuantities(row, limit = 6){
+index.html:4265:function buildRowSuggestion(row){
+index.html:4294:function suggestionChipHtml(row){
+index.html:4305:function renderSuggestionsSummary(rows){
+index.html:4325:function populateQuickOrderProducts(vendor){
+index.html:4333:function renderQuickOrderDraft(){
+index.html:4352:function removeQuickOrderItem(index){
+index.html:4356:function openQuickOrderModal(){
+index.html:4380:function closeQuickOrderModal(){
+index.html:4383:function addQuickOrderItem(){
+index.html:4415:async function saveQuickOrder(){
+index.html:4473:function getRecentQuickOrders(row, limit = 6){
+index.html:4485:function getCurrentVendorRows(){
+index.html:4495:function vendorLabel(){ return activeVendorTab==='ALL' ? 'All Vendors' : activeVendorTab; }
+index.html:4496:function placedKeyForRow(row){ return `${String(row.vendor||'').toUpperCase()}||${normalizeName(row.code)}||${normalizeName(row.item)}`; }
+index.html:4497:function isRowPlaced(row){ return Array.isArray(state.placedOrders) && state.placedOrders.includes(placedKeyForRow(row)); }
+index.html:4498:function getOrderRowsForVendor(vendor){
+index.html:4505:function canPlaceOrder(){ return ['LOOP','SOUTHERN','BREAKTHRU','WINE MERCHANT'].includes(activeVendorTab); }
+index.html:4507:function formatHistoryGroupDate(ts){
+index.html:4510:function normalizeHistoryDateInput(ts){
+index.html:4520:function formatHistoryDate(ts){
+index.html:4523:function hasRegisteredValueForOrdering(row){
+index.html:4533:function orderingBadgeCell(row){
+index.html:4539:function effectiveFinalOrder(row){
+index.html:4543:function orderingVisibleRows(rows){
+index.html:4547:function computeOrderSubtotal(rows){
+index.html:4556:function cloneOrderRow(row){
+index.html:4570:function clearCompareSelection(){
+index.html:4575:function toggleCompareSelection(id){
+index.html:4588:function renderCompareToolbar(){
+index.html:4602:function openCompareModal(){
+index.html:4660:function toggleCompareUnchanged(){
+index.html:4665:function closeCompareModal(){
+index.html:4669:function orderComparisonKey(item){
+index.html:4674:function buildOrderComparison(orderA, orderB){
+index.html:4705:function diffClass(value){
+index.html:4710:function fmtSigned(value){
+index.html:4716:function renderCompareSection(title, rows, options = {}){
+index.html:4745:function findPreviousOrder(currentId){
+index.html:4755:function compareWithPrevious(id){
+index.html:4765:function openHistoryDateEdit(id){
+index.html:4784:function closeHistoryDateEdit(){
+index.html:4789:function saveHistoryDateEdit(){
+index.html:4818:function setHistoryVendorFilter(vendor){
+index.html:4823:function renderHistoryVendorTabs(){
+index.html:4829:function setQuickOrderVendor(vendor){
+index.html:4836:function renderQuickOrderVendorTabs(){
+index.html:4855:function renderOrderHistory(){
+index.html:4928:function toggleHistoryDetails(id){
+index.html:4933:async function deleteHistoryOrder(id, triggerBtn){
+index.html:4998:async function refreshOrdersFromCloud(){
+index.html:5070:async function reopenHistoryOrder(id, triggerBtn){
+index.html:5132:async function reExportHistoryOrder(id){
+index.html:5144:function render(){
+index.html:5193:function setVendorTab(v){ activeVendorTab=v; render(); }
+index.html:5195:function setInventoryVendorFilter(v){ document.getElementById('vendorFilter').value = v; render(); }
+index.html:5198:async function loadMasterFile(file){
+index.html:5220:function findMatchIndex(rawName){
+index.html:5225:function resolveCountMatch(rawName){
+index.html:5251:async function importCountFile(file){
+index.html:5292:function showPreviewModal(){
+index.html:5309:function closePreviewModal(){ document.getElementById('previewModalBg').classList.add('hidden'); pendingImport = null; }
+index.html:5310:async function applyPendingImport(){
+index.html:5457:function openNoMatchModal(index){
+index.html:5468:function openLinkModal(index, suggestedIndex=null){
+index.html:5478:function renderLinkOptions(){
+index.html:5489:function closeLinkModal(){ document.getElementById('linkModalBg').classList.add('hidden'); currentLinkMasterIndex = null; }
+index.html:5490:async function saveNoMatchLink(){
+index.html:5609:async function ignoreNoMatch(index){
+index.html:5663:function closeModal(){ document.getElementById('modalBg').classList.add('hidden'); currentNoMatchIndex = null; }
+index.html:5665:async function saveNoMatchAsItem(){
+index.html:5797:function openNewItemModal(){
+index.html:5816:function closeNewItemModal(){
+index.html:5821:async function saveNewInventoryItem(){
+index.html:5917:function updateFinalOrder(index, value){
+index.html:5930:function resetFinalOrder(index){
+index.html:5940:function quickZeroSuggested(index){
+index.html:5955:function openEditModal(index){
+index.html:5969:function closeEditModal(){
+index.html:5973:async function saveEditedItem(){
+index.html:6066:async function deleteEditedItem(){
+index.html:6131:function currentVendorFilenameStem(){
+index.html:6134:function weeklyOrderDateLabel(){
+index.html:6137:function weeklyOrderVendorOrder(){
+index.html:6141:function quickLogoHeaderHtml(titleText, subtitleText=''){
+index.html:6155:function vendorSoftColor(vendor){
+index.html:6165:function getWeeklyOrderSections(){
+index.html:6183:function exportXlsx(filename, rows){
+index.html:6189:function exportLoopCsvFromRows(rows, filename='loop_upload.csv'){
+index.html:6208:function exportCurrentVendorCsv(){
+index.html:6213:function exportCurrentVendorXlsx(){
+index.html:6218:async function exportVendorJpgFromRows(vendor, rows, filename){
+index.html:6270:async function exportCurrentVendorJpg(){
+index.html:6276:function exportVendorLoopReady(){
+index.html:6282:async function exportWeeklyOrderPdf(){
+index.html:6339:function exportWeeklyOrderXlsx(){
+index.html:6366:function exportCsv(filename, rows){
+index.html:6376:function exportMaster(){
+index.html:6381:function exportLoop(){
+index.html:6408:function exportNoMatch(){
+index.html:6414:async function resetOnHand(){
+index.html:6509:function exportBackup(){
+index.html:6528:async function resetMaster(){
+index.html:6583:async function importBackup(file){
+index.html:6684:function fmt2(v){
+index.html:6689:function usageVendorBadge(vendor){
+index.html:6694:function loadUsageData(){
+index.html:6704:function saveUsageData(){
+index.html:6709:function normalizeLooseName(s){
+index.html:6716:function tokenKey(s){
+index.html:6723:function buildMasterLookupMaps(){
+index.html:6734:function findUsageMatch(item, lookup){
+index.html:6741:function renderUsage(){
+index.html:6768:function parseCsvLine(line){
+index.html:6792:function normalizeHeader(s){ return String(s||'').trim().toUpperCase(); }
+index.html:6794:function parseTheoreticalUsageCsv(text, type){
+index.html:7006:  async function orderCloudFetchLocationId() {
+index.html:7023:  async function persistOrderToSupabase(order) {
+index.html:7135:  async function loadNoMatchesFromSupabase() {
+index.html:7203:  async function getOrdersLocationId() {
+index.html:7219:  async function rebuildPlacedOrdersFromHistory() {
+index.html:7246:  async function loadOrdersFromCloud() {
+index.html:7318:  async function initOrdersModule() {
+index.html:7341:  async function placeCurrentOrderCloudFirst(){
+index.html:7441:  function bindCleanPlaceOrderHandler() {
+index.html:7481:  function debounceOrdersCloudReload() {
+index.html:7492:  async function ensureSupabaseRealtimeSdk() {
+index.html:7503:  async function enableOrdersRealtimeClean() {
+index.html:7558:  function debounceNoMatchReload() {
+index.html:7569:  async function ensureNoMatchRealtimeSdk() {
+index.html:7580:  async function enableNoMatchRealtimeClean() {
+index.html:7633:  function polishSetStatus(message){
+index.html:7658:  function setButtonBusy(btn, label){
+index.html:7668:  function clearButtonBusy(btn){
+src/auth.js:8:  function getAuthClient(){
+src/auth.js:18:  function showOverlay(){
+src/auth.js:25:  function hideOverlay(){
+src/auth.js:37:  async function checkAuth(){
+src/auth.js:57:  async function login(){
+src/auth.js:94:  async function logout(){
+src/inventory-realtime.js:9:  async function ensureSupabaseSdk() {
+src/inventory-realtime.js:20:  function setRealtimeStatus(msg) {
+src/inventory-realtime.js:30:  async function fetchLocationId() {
+src/inventory-realtime.js:47:  async function loadInventoryFromSupabase() {
+src/inventory-realtime.js:109:  async function enableInventoryRealtime() {

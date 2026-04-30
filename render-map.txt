@@ -1,0 +1,26 @@
+index.html:4117:render();
+index.html:4462:      render();
+index.html:4986:    if(typeof render === 'function') render();
+index.html:5059:    render();
+index.html:5144:function render(){
+index.html:5193:function setVendorTab(v){ activeVendorTab=v; render(); }
+index.html:5195:function setInventoryVendorFilter(v){ document.getElementById('vendorFilter').value = v; render(); }
+index.html:5216:  render();
+index.html:5327:  render();
+index.html:5594:    render();
+index.html:5649:    render();
+index.html:5782:    render();
+index.html:5855:  render();
+index.html:5926:  render();
+index.html:5935:  render();
+index.html:5950:  render();
+index.html:6057:    render();
+index.html:6115:    render();
+index.html:6500:    render();
+index.html:6575:    render();
+index.html:6601:  render();
+index.html:6985:render();
+index.html:7170:      if (typeof render === 'function') render();
+index.html:7308:      if (typeof render === 'function') render();
+src/inventory-realtime.js:82:    if (typeof render === 'function') render();
+src/inventory-realtime.js:100:        render();

@@ -92,10 +92,6 @@
         populateQuickOrderProducts(activeQuickVendor);
       }
 
-      if (typeof renderQuickOrderVendorTabs === 'function') {
-        renderQuickOrderVendorTabs();
-      }
-
       if (typeof render === 'function') {
         render();
       }

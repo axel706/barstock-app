@@ -1,0 +1,266 @@
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+function rowOrderHistoryMatchesItem(orderItem, row){
+  const codeA = String(orderItem?.code || '').trim();
+  const codeB = String(row?.code || '').trim();
+  if(codeA && codeB && codeA === codeB) return true;
+  return normalizeName(orderItem?.item || '') === normalizeName(row?.item || '');
+}
+function getRecentVendorOrders(vendor, limit = 6){
+  return (state.orderHistory || [])
+    .filter(order => String(order.vendor || '').toUpperCase() === String(vendor || '').toUpperCase())
+    .sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+    .slice(0, limit);
+}
+function getRecentRowQuantities(row, limit = 6){
+  const orders = getRecentVendorOrders(row?.vendor, limit);
+  const quantities = [];
+  orders.forEach(order => {
+    const match = (order.items || []).find(item => rowOrderHistoryMatchesItem(item, row));
+    if(match && parseNum(match.finalOrder) > 0){
+      quantities.push(parseNum(match.finalOrder));
+    }
+  });
+  return quantities;
+}
+function buildRowSuggestion(row){
+  const suggested = parseNum(row?.suggested);
+  const recentQty = getRecentRowQuantities(row, 6);
+  const recentQuick = getRecentQuickOrders(row, 6);
+  if(recentQuick.length >= 2){
+    const avgQuick = recentQuick.reduce((sum, qty) => sum + qty, 0) / recentQuick.length;
+    const recommended = Math.ceil((suggested + avgQuick) / 2);
+    if(avgQuick >= 2){
+      return { type:'low', label:`Quick orders +${fmt(avgQuick)} avg`, detail:`Consider ${Math.max(suggested+1, recommended)}` };
+    }
+  }
+  if(recentQty.length >= 2){
+    const avg = recentQty.reduce((sum, qty) => sum + qty, 0) / recentQty.length;
+    if(avg >= suggested + 1 && avg >= Math.max(2, suggested * 1.25)){
+      return { type:'low', label:'Suggested low' };
+    }
+    if(suggested >= 2 && avg <= suggested * 0.5){
+      return { type:'high', label:'Suggested high' };
+    }
+  }
+  const recentOrders = getRecentVendorOrders(row?.vendor, 3);
+  if(recentOrders.length >= 3){
+    const presentRecently = recentOrders.some(order => (order.items || []).some(item => rowOrderHistoryMatchesItem(item, row)));
+    if(!presentRecently && suggested > 0){
+      return { type:'skip', label:'Not in recent orders' };
+    }
+  }
+  return null;
+}
+function suggestionChipHtml(row){
+  const suggestion = buildRowSuggestion(row);
+  if(!suggestion) return '';
+  const klass = suggestion.type === 'low'
+    ? 'suggestion-low'
+    : suggestion.type === 'high'
+      ? 'suggestion-high'
+      : 'suggestion-skip';
+  const title = suggestion.detail ? `${suggestion.label} • ${suggestion.detail}` : suggestion.label;
+  return `<span class="suggestion-chip ${klass}" title="${escapeHtml(title)}">${escapeHtml(suggestion.label)}</span>`;
+}
+function renderSuggestionsSummary(rows){
+  const wrap = document.getElementById('smartSuggestionsSummary');
+  if(!wrap) return;
+  const suggestions = (rows || []).map(row => buildRowSuggestion(row)).filter(Boolean);
+  const low = suggestions.filter(s => s.type === 'low').length;
+  const high = suggestions.filter(s => s.type === 'high').length;
+  const skip = suggestions.filter(s => s.type === 'skip').length;
+  const parts = [];
+  if(low) parts.push(`${low} suggested low`);
+  if(high) parts.push(`${high} suggested high`);
+  if(skip) parts.push(`${skip} not in recent orders`);
+  if(!parts.length){
+    wrap.classList.add('hidden');
+    wrap.innerHTML = '';
+    return;
+  }
+  wrap.classList.remove('hidden');
+  wrap.innerHTML = `<strong>Smart Suggestions</strong> <span class="small">• ${parts.join(' • ')}</span>`;
+}
+
+function populateQuickOrderProducts(vendor){
+  const list = document.getElementById('quickOrderProductsList');
+  if(!list) return;
+  const rows = (state.master || [])
+    .filter(r => !vendor || String(r.vendor||'').toUpperCase() === String(vendor||'').toUpperCase())
+    .sort((a,b) => String(a.item||'').localeCompare(String(b.item||'')));
+  list.innerHTML = rows.map(r => `<option value="${escapeHtml(r.item)}"></option>`).join('');
+}
+function renderQuickOrderDraft(){
+  const body = safeEl('quickOrderItemsBody');
+  const subtotal = safeEl('quickOrderSubtotalAmount');
+  const countWrap = safeEl('quickOrderCount');
+  if(!body || !subtotal || !countWrap) return;
+  if(!Array.isArray(quickOrderDraftItems)) quickOrderDraftItems = [];
+  const total = quickOrderDraftItems.reduce((sum, item) => sum + (parseNum(item.qty) * parseNum(item.value)), 0);
+  subtotal.textContent = fmtMoney(total);
+  countWrap.textContent = `${quickOrderDraftItems.length} item${quickOrderDraftItems.length===1?'':'s'}`;
+  body.innerHTML = quickOrderDraftItems.map((item, index) => `
+    <tr>
+      <td><span class="quick-order-item-name">${escapeHtml(item.item)}</span></td>
+      <td>${fmt(item.qty)}</td>
+      <td>${fmtMoney(item.value)}</td>
+      <td>${fmtMoney(parseNum(item.qty) * parseNum(item.value))}</td>
+      <td><div class="rowactions"><button class="danger ui-control" type="button" onclick="removeQuickOrderItem(${index})">Remove</button></div></td>
+    </tr>
+  `).join('') || `<tr><td colspan="5" class="quick-order-empty">No quick order items added yet.</td></tr>`;
+}
+function removeQuickOrderItem(index){
+  quickOrderDraftItems.splice(index, 1);
+  renderQuickOrderDraft();
+}
+function openQuickOrderModal(){
+  const dateEl = document.getElementById('quickOrderDateInput');
+  const timeEl = document.getElementById('quickOrderTimeInput');
+  const productEl = document.getElementById('quickOrderProductInput');
+  const qtyEl = document.getElementById('quickOrderQtyInput');
+  const priceEl = document.getElementById('quickOrderPriceInput');
+  const noteEl = document.getElementById('quickOrderNoteInput');
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth()+1).padStart(2,'0');
+  const d = String(now.getDate()).padStart(2,'0');
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  quickOrderDraftItems = [];
+  setQuickOrderVendor(activeVendorTab !== 'ALL' ? activeVendorTab : 'LOOP');
+  if(dateEl) dateEl.value = `${y}-${m}-${d}`;
+  if(timeEl) timeEl.value = `${hh}:${mm}`;
+  if(productEl) productEl.value = '';
+  if(qtyEl) qtyEl.value = '1';
+  if(priceEl) priceEl.value = '';
+  if(noteEl) noteEl.value = 'Quick Order';
+  renderQuickOrderDraft();
+  document.getElementById('quickOrderModalBg')?.classList.remove('hidden');
+}
+function closeQuickOrderModal(){
+  document.getElementById('quickOrderModalBg')?.classList.add('hidden');
+}
+function addQuickOrderItem(){
+  const vendor = quickOrderVendorTab;
+  const product = String(document.getElementById('quickOrderProductInput')?.value || '').trim();
+  const qty = Math.max(0, parseNum(document.getElementById('quickOrderQtyInput')?.value));
+  const manualPrice = parseNum(document.getElementById('quickOrderPriceInput')?.value);
+  if(!vendor || !product || qty <= 0){
+    setStatus('Please complete vendor, product, and quantity.');
+    return;
+  }
+  const match = (state.master || []).find(r => String(r.vendor||'').toUpperCase() === vendor && normalizeName(r.item||'') === normalizeName(product));
+  const value = manualPrice > 0 ? manualPrice : parseNum(match?.value);
+  quickOrderDraftItems.push({
+    code: String(match?.code || '').trim(),
+    item: product,
+    vendor,
+    onHand: clampNonNegative(match?.onHand),
+    suggested: clampNonNegative(match?.suggested),
+    value: clampNonNegative(value),
+    qty: clampNonNegative(qty),
+    toOrder: clampNonNegative(qty),
+    orderOverride: clampNonNegative(qty),
+    finalOrder: clampNonNegative(qty),
+    quickOrder: true
+  });
+  const productEl = document.getElementById('quickOrderProductInput');
+  const qtyEl = document.getElementById('quickOrderQtyInput');
+  const priceEl = document.getElementById('quickOrderPriceInput');
+  if(productEl) productEl.value = '';
+  if(qtyEl) qtyEl.value = '1';
+  if(priceEl) priceEl.value = '';
+  renderQuickOrderDraft();
+}
+async function saveQuickOrder(){
+  const vendor = quickOrderVendorTab;
+  const dateValue = String(document.getElementById('quickOrderDateInput')?.value || '').trim();
+  const timeValue = String(document.getElementById('quickOrderTimeInput')?.value || '12:00').trim() || '12:00';
+  const note = String(document.getElementById('quickOrderNoteInput')?.value || 'Quick Order').trim() || 'Quick Order';
+  if(!vendor || !dateValue || !quickOrderDraftItems.length){
+    setStatus('Add at least one item and complete vendor/date.');
+    return;
+  }
+  const when = new Date(`${dateValue}T${timeValue}:00`);
+  if(Number.isNaN(when.getTime())){
+    setStatus('Invalid quick order date or time.');
+    return;
+  }
+  const items = quickOrderDraftItems.map(item => ({
+    ...item,
+    finalOrder: parseNum(item.qty || item.finalOrder),
+    note
+  }));
+  const totalUnits = items.reduce((sum, item) => sum + parseNum(item.qty || item.finalOrder), 0);
+  const subtotal = items.reduce((sum, item) => sum + (parseNum(item.qty || item.finalOrder) * parseNum(item.value)), 0);
+  const exportType = vendor === 'LOOP' ? 'loop_csv' : 'vendor_jpg';
+  const filename = vendor === 'LOOP' ? 'LOOP upload-ready CSV' : 'Vendor JPG';
+  const entry = {
+    id: uniqueOrderId(),
+    vendor,
+    createdAt: when.toISOString(),
+    exportType,
+    filename,
+    totalUnits: clampNonNegative(totalUnits),
+    subtotal: clampNonNegative(subtotal),
+    items,
+    quickOrder: true,
+    note
+  };
+  try{
+    if (typeof window.persistOrderToSupabase !== 'function') {
+      throw new Error('persistOrderToSupabase unavailable');
+    }
+
+    await window.persistOrderToSupabase(entry);
+
+    if (typeof window.loadOrdersFromCloud === 'function') {
+      await window.loadOrdersFromCloud();
+    } else {
+      state.orderHistory = [entry, ...(state.orderHistory || [])];
+      saveState();
+      render();
+    }
+
+    closeQuickOrderModal();
+    setStatus('Quick Order saved to Order History and synced to cloud.');
+  } catch(err){
+    console.error(err);
+    alert('Quick Order was NOT saved to cloud.\n\n' + (err.message || String(err)));
+    setStatus('Quick Order failed because cloud save failed.');
+  }
+}
+function getRecentQuickOrders(row, limit = 6){
+  const orders = getRecentVendorOrders(row?.vendor, limit).filter(order => !!order.quickOrder);
+  const quantities = [];
+  orders.forEach(order => {
+    const match = (order.items || []).find(item => rowOrderHistoryMatchesItem(item, row));
+    if(match && parseNum(match.finalOrder) > 0){
+      quantities.push(parseNum(match.finalOrder));
+    }
+  });
+  return quantities;
+}
+
+function getCurrentVendorRows(){
+  const q = vendorQuery();
+  return state.master.filter(r => {
+    const effective = getEffectiveOrder(r);
+    const shouldShow = parseNum(effective) > 0;
+    const matchesVendor = (activeVendorTab==='ALL' || r.vendor===activeVendorTab);
+    const matchesSearch = !q || r.itemNorm.includes(q) || normalizeName(r.code).includes(q) || normalizeName(r.vendor).includes(q);
+    return shouldShow && matchesVendor && matchesSearch && !isRowPlaced(r);
+  });
+}
+function vendorLabel(){ return activeVendorTab==='ALL' ? 'All Vendors' : activeVendorTab; }
+function placedKeyForRow(row){ return `${String(row.vendor||'').toUpperCase()}||${normalizeName(row.code)}||${normalizeName(row.item)}`; }
+function isRowPlaced(row){ return Array.isArray(state.placedOrders) && state.placedOrders.includes(placedKeyForRow(row)); }
+function getOrderRowsForVendor(vendor){
+  return state.master.filter(r => {
+    const effective = getEffectiveOrder(r);
+    const shouldShow = parseNum(effective) > 0;
+    return shouldShow && r.vendor === vendor && !isRowPlaced(r);
+  });
+}
+function canPlaceOrder(){ return ['LOOP','SOUTHERN','BREAKTHRU','WINE MERCHANT'].includes(activeVendorTab); }

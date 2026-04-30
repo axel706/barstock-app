@@ -1,0 +1,104 @@
+index.html:3375:state.orderHistory = Array.isArray(state.orderHistory) ? state.orderHistory : [];
+index.html:3376:state.placedOrders = Array.isArray(state.placedOrders) ? state.placedOrders : [];
+index.html:3424:    setStatus('Could not save current state.');
+index.html:3596:  if(!Array.isArray(state.master)) return;
+index.html:3597:  state.master = state.master.map(r => {
+index.html:3621:    if(!Array.isArray(state.master) || !state.master.length){
+index.html:3625:    state.master = state.master.map(r => ({...r, value: 0}));
+index.html:3660:  state.master.forEach((r, idx) => {
+index.html:3783:  if(!row || !Number.isFinite(masterIndex) || !state.master[masterIndex]) return;
+index.html:3784:  const itemNorm = state.master[masterIndex].itemNorm;
+index.html:3794:  let idx = state.master.findIndex(r => r.itemNorm === itemNorm && (!vendor || vendor==='UNKNOWN' || r.vendor === vendor));
+index.html:3796:  return state.master.findIndex(r => r.itemNorm === itemNorm);
+index.html:3802:  const candidates = state.master.map((item, idx) => ({item, idx})).filter(({item}) => !vendorHint || vendorHint==='UNKNOWN' || item.vendor === vendorHint);
+index.html:3996:    const matched = Number.isFinite(row.matchIndex) && row.matchIndex >= 0 ? state.master[row.matchIndex] : null;
+index.html:4109:      state.master[row.matchIndex].value = parseNum(row.price);
+index.html:4138:  const ranked = state.master
+index.html:4249:  return (state.orderHistory || [])
+index.html:4328:  const rows = (state.master || [])
+index.html:4392:  const match = (state.master || []).find(r => String(r.vendor||'').toUpperCase() === vendor && normalizeName(r.item||'') === normalizeName(product));
+index.html:4460:      state.orderHistory = [entry, ...(state.orderHistory || [])];
+index.html:4487:  return state.master.filter(r => {
+index.html:4497:function isRowPlaced(row){ return Array.isArray(state.placedOrders) && state.placedOrders.includes(placedKeyForRow(row)); }
+index.html:4499:  return state.master.filter(r => {
+index.html:4527:  const match = (state.master || []).find(m =>
+index.html:4608:  const orderA = (state.orderHistory || []).find(order => order.id === idA);
+index.html:4609:  const orderB = (state.orderHistory || []).find(order => order.id === idB);
+index.html:4746:  const list = (state.orderHistory || []).slice().sort((a,b)=> new Date(a.createdAt) - new Date(b.createdAt));
+index.html:4756:  const curr = (state.orderHistory||[]).find(o=>o.id===id);
+index.html:4766:  const order = (state.orderHistory || []).find(o => o.id === id);
+index.html:4807:  state.orderHistory = (state.orderHistory || []).map(order => {
+index.html:4861:  const history = Array.isArray(state.orderHistory) ? [...state.orderHistory] : [];
+index.html:4975:    state.orderHistory = (state.orderHistory||[]).filter(order => order.id !== id);
+index.html:5041:    state.orderHistory = (orders || []).map(order => ({
+index.html:5071:  const order = (state.orderHistory || []).find(entry => entry.id === id);
+index.html:5133:  const order = (state.orderHistory||[]).find(entry => entry.id === id);
+index.html:5149:  const filtered = state.master.filter(r => (!q || r.itemNorm.includes(q) || normalizeName(r.code).includes(q)) && (vendorFilter==='ALL' || r.vendor===vendorFilter));
+index.html:5151:    const idx = state.master.findIndex(m => m.itemNorm===r.itemNorm && String(m.code||'')===String(r.code||''));
+index.html:5168:    const masterIndex = state.master.findIndex(m => m.itemNorm===r.itemNorm && String(m.code||'')===String(r.code||''));
+index.html:5181:  document.getElementById('noMatchBody').innerHTML = state.noMatches.map((r,i)=>{
+index.html:5188:  document.getElementById('itemsMetric').textContent = state.master.length;
+index.html:5189:  document.getElementById('toOrderMetric').textContent = state.master.filter(r=>r.toOrder>0).length;
+index.html:5190:  document.getElementById('noMatchMetric').textContent = state.noMatches.length;
+index.html:5191:  document.getElementById('masterStatus').textContent = state.lastMasterName ? `Loaded: ${state.lastMasterName}` : 'No master loaded';
+index.html:5202:  const existingByKey = new Map((state.master || []).map(r => [`${normalizeName(r.code)}||${normalizeName(r.item)}`, r]));
+index.html:5203:  state.master = master.map(row => {
+index.html:5211:  state.noMatches = [];
+index.html:5212:  state.lastMasterName = `${file.name} [${sheetName}]`;
+index.html:5213:  state.lastUpdated = new Date().toISOString();
+index.html:5230:  state.master.forEach((r, idx) => {
+index.html:5237:  state.master.forEach((r, idx) => {
+index.html:5243:  const scored = state.master.map((r, idx) => ({idx, score: scoreMatch(rawName, r.item)})).filter(x => x.score >= 0.34).sort((a,b) => b.score - a.score);
+index.html:5252:  if(!state.master.length) throw new Error('Load a master first.');
+index.html:5262:  const previewMaster = state.master.map(r => ({...r}));
+index.html:5318:  state.master = pendingImport.previewMaster.map(r => ({...r, orderOverride:''}));
+index.html:5319:  state.noMatches = pendingImport.noMatches;
+index.html:5320:  state.placedOrders = [];
+index.html:5322:  state.lastCountName = pendingImport.fileName;
+index.html:5323:  state.lastUpdated = new Date().toISOString();
+index.html:5366:    const rows = (state.master || []).map(r => ({
+index.html:5417:    const noMatchRows = (state.noMatches || []).map(r => ({
+index.html:5449:    setStatus(`Count imported: ${state.lastCountName}. Matches: ${importMatches}. No matches: ${state.noMatches.length}. Synced to cloud for the new weekly cycle.`);
+index.html:5459:  const nm = state.noMatches[index];
+index.html:5470:  const nm = state.noMatches[index];
+index.html:5472:  document.getElementById('linkSearch').value = suggestedIndex!==null && state.master[suggestedIndex] ? state.master[suggestedIndex].item : nm.rawItem;
+index.html:5480:  const ranked = state.master.map((r, idx) => ({idx, item:r.item, vendor:r.vendor, score:q ? scoreMatch(q, r.item) : 0}));
+index.html:5496:  const nm = state.noMatches[currentNoMatchIndex];
+index.html:5497:  const target = state.master[idx];
+index.html:5592:    state.noMatches.splice(currentNoMatchIndex,1);
+index.html:5610:  const nm = state.noMatches[index];
+index.html:5647:    state.noMatches.splice(index,1);
+index.html:5668:  const raw = state.noMatches[currentNoMatchIndex];
+index.html:5768:    state.master.push({
+index.html:5780:    state.noMatches.splice(currentNoMatchIndex,1);
+index.html:5832:  const duplicate = (state.master || []).some(r =>
+index.html:5842:  state.master.push({
+index.html:5853:  state.master.sort((a,b) => String(a.item || '').localeCompare(String(b.item || '')));
+index.html:5918:  const row = state.master[index];
+index.html:5931:  const row = state.master[index];
+index.html:5941:  const row = state.master[index];
+index.html:5947:  state.lastUpdated = new Date().toISOString();
+index.html:5956:  const row = state.master[index];
+index.html:5975:  const row = state.master[currentEditIndex];
+index.html:6053:    state.master[currentEditIndex] = updatedRow;
+index.html:6069:  const row = state.master[currentEditIndex];
+index.html:6113:    state.master.splice(currentEditIndex,1);
+index.html:6166:  const rows = state.master
+index.html:6377:  const rows = state.master.map(r => ({CODE:r.code, ITEM:r.item, 'ON HAND':r.onHand, SUGGESTED:r.suggested, 'TO ORDER':r.toOrder, VALUE:r.value, 'FINAL ORDER OVERRIDE': r.orderOverride==='' ? '' : r.orderOverride, VENDOR:r.vendor}));
+index.html:6382:  const rows = state.master
+index.html:6409:  const rows = state.noMatches.map(r => ({ITEM:r.rawItem, COUNT:r.count}));
+index.html:6415:  if(!state.master.length) return;
+index.html:6441:    for (const row of state.master) {
+index.html:6489:    state.master = state.master.map(r => ({
+index.html:6495:    state.noMatches = [];
+index.html:6496:    state.placedOrders = [];
+index.html:6642:    const rows = (state.master || []).map(r => ({
+index.html:6726:  for(const m of state.master){
+index.html:6991:if(state.master.length){ setStatus(`Persistent master ready. ${state.master.length} items loaded from local storage. Excel-style TO ORDER rounding refreshed, and Final Order overrides are available for Southern, Breakthru, and Wine Merchant.`); }
+index.html:7164:      state.noMatches = rows.map(r => ({
+index.html:7172:        setStatus(`No Match loaded from cloud: ${state.noMatches.length}`);
+index.html:7225:      (state.orderHistory || []).forEach(order => {
+index.html:7240:      state.placedOrders = Array.from(new Set(keys.filter(Boolean)));
+index.html:7283:      state.orderHistory = orders.map(order => ({
+src/inventory-realtime.js:65:    state.master = rows.map(r => {
+src/inventory-realtime.js:106:    setRealtimeStatus(`Inventory cloud cargado: ${state.master.length} items`);

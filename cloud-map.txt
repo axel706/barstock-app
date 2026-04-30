@@ -1,0 +1,36 @@
+index.html:4451:    if (typeof window.persistOrderToSupabase !== 'function') {
+index.html:4452:      throw new Error('persistOrderToSupabase unavailable');
+index.html:4455:    await window.persistOrderToSupabase(entry);
+index.html:4457:    if (typeof window.loadOrdersFromCloud === 'function') {
+index.html:4458:      await window.loadOrdersFromCloud();
+index.html:5114:    if (typeof window.loadOrdersFromCloud === 'function') {
+index.html:5115:      await window.loadOrdersFromCloud();
+index.html:6994:<script src="src/inventory-realtime.js"></script>
+index.html:7023:  async function persistOrderToSupabase(order) {
+index.html:7120:  window.persistOrderToSupabase = persistOrderToSupabase;
+index.html:7246:  async function loadOrdersFromCloud() {
+index.html:7313:      console.error('loadOrdersFromCloud failed', err);
+index.html:7319:    await loadOrdersFromCloud();
+index.html:7323:  window.loadOrdersFromCloud = loadOrdersFromCloud;
+index.html:7403:      if (typeof window.persistOrderToSupabase !== 'function') {
+index.html:7404:        throw new Error('persistOrderToSupabase unavailable');
+index.html:7407:      await window.persistOrderToSupabase(order);
+index.html:7410:      if (typeof window.loadOrdersFromCloud === 'function') {
+index.html:7411:        await window.loadOrdersFromCloud();
+index.html:7413:        throw new Error('loadOrdersFromCloud unavailable');
+index.html:7484:      if (typeof window.loadOrdersFromCloud === 'function') {
+index.html:7485:        window.loadOrdersFromCloud().catch(err => {
+index.html:7486:          console.error('Orders realtime reload failed', err);
+index.html:7506:    const client = window.supabase.createClient(ORDERS_RT_URL, ORDERS_RT_KEY);
+index.html:7513:      .channel('barstock-orders-realtime-clean')
+index.html:7539:    if (!document.hidden && typeof window.loadOrdersFromCloud === 'function') {
+index.html:7540:      window.loadOrdersFromCloud().catch(console.error);
+index.html:7563:          console.error('No Match realtime reload failed', err);
+index.html:7583:    const client = window.supabase.createClient(NM_RT_URL, NM_RT_KEY);
+index.html:7590:      .channel('barstock-no-match-realtime-clean')
+src/auth.js:13:    authClient = authClient || window.supabaseAuth || window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+src/inventory-realtime.js:84:    // Sync dependent modules after realtime inventory update
+src/inventory-realtime.js:112:    const rtClient = window.supabase.createClient(BARSTOCK_RT_URL, BARSTOCK_RT_KEY);
+src/inventory-realtime.js:121:      .channel('barstock-inventory-master-live')
+src/inventory-realtime.js:135:          setRealtimeStatus('Inventory realtime conectado');
+src/inventory-realtime.js:146:        setRealtimeStatus('Error conectando inventory realtime');
