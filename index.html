@@ -2795,7 +2795,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260428-233809</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260429-232646</div>
+
+
 
 
 
@@ -4410,7 +4412,7 @@ function addQuickOrderItem(){
   if(priceEl) priceEl.value = '';
   renderQuickOrderDraft();
 }
-function saveQuickOrder(){
+async function saveQuickOrder(){
   const vendor = quickOrderVendorTab;
   const dateValue = String(document.getElementById('quickOrderDateInput')?.value || '').trim();
   const timeValue = String(document.getElementById('quickOrderTimeInput')?.value || '12:00').trim() || '12:00';
@@ -4424,9 +4426,13 @@ function saveQuickOrder(){
     setStatus('Invalid quick order date or time.');
     return;
   }
-  const items = quickOrderDraftItems.map(item => ({...item, note}));
-  const totalUnits = items.reduce((sum, item) => sum + parseNum(item.finalOrder), 0);
-  const subtotal = items.reduce((sum, item) => sum + (parseNum(item.finalOrder) * parseNum(item.value)), 0);
+  const items = quickOrderDraftItems.map(item => ({
+    ...item,
+    finalOrder: parseNum(item.qty || item.finalOrder),
+    note
+  }));
+  const totalUnits = items.reduce((sum, item) => sum + parseNum(item.qty || item.finalOrder), 0);
+  const subtotal = items.reduce((sum, item) => sum + (parseNum(item.qty || item.finalOrder) * parseNum(item.value)), 0);
   const exportType = vendor === 'LOOP' ? 'loop_csv' : 'vendor_jpg';
   const filename = vendor === 'LOOP' ? 'LOOP upload-ready CSV' : 'Vendor JPG';
   const entry = {
@@ -4441,11 +4447,28 @@ function saveQuickOrder(){
     quickOrder: true,
     note
   };
-  state.orderHistory = [entry, ...(state.orderHistory || [])];
-  saveState();
-  closeQuickOrderModal();
-  render();
-  setStatus('Quick Order saved to Order History.');
+  try{
+    if (typeof window.persistOrderToSupabase !== 'function') {
+      throw new Error('persistOrderToSupabase unavailable');
+    }
+
+    await window.persistOrderToSupabase(entry);
+
+    if (typeof window.loadOrdersFromCloud === 'function') {
+      await window.loadOrdersFromCloud();
+    } else {
+      state.orderHistory = [entry, ...(state.orderHistory || [])];
+      saveState();
+      render();
+    }
+
+    closeQuickOrderModal();
+    setStatus('Quick Order saved to Order History and synced to cloud.');
+  } catch(err){
+    console.error(err);
+    alert('Quick Order was NOT saved to cloud.\n\n' + (err.message || String(err)));
+    setStatus('Quick Order failed because cloud save failed.');
+  }
 }
 function getRecentQuickOrders(row, limit = 6){
   const orders = getRecentVendorOrders(row?.vendor, limit).filter(order => !!order.quickOrder);
