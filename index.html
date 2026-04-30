@@ -2796,7 +2796,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260429-235723</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260430-000620</div>
+
+
 
 
 
@@ -6997,6 +6999,37 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 </script>
 
 <script src="src/inventory-realtime.js"></script>
+
+
+<!-- BARSTOCK EVENT LISTENERS START -->
+<script>
+(() => {
+  if (window.__barstockEventListenersBooted) return;
+  window.__barstockEventListenersBooted = true;
+
+  if (!window.BarStockEvents) return;
+
+  BarStockEvents.on('inventoryUpdated', () => {
+    try {
+      if (typeof rebuildPlacedOrdersFromHistory === 'function') {
+        rebuildPlacedOrdersFromHistory();
+      }
+
+      if (typeof populateQuickOrderProducts === 'function') {
+        const vendor = typeof quickOrderVendorTab !== 'undefined' ? quickOrderVendorTab : 'LOOP';
+        populateQuickOrderProducts(vendor);
+      }
+
+      if (typeof render === 'function') {
+        render();
+      }
+    } catch (e) {
+      console.warn('inventoryUpdated listener failed', e);
+    }
+  });
+})();
+</script>
+<!-- BARSTOCK EVENT LISTENERS END -->
 
 <!-- BARSTOCK ORDER CLOUD START -->
 <script>
