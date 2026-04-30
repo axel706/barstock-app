@@ -88,24 +88,6 @@
       });
     }
 
-    // Sync dependent modules after realtime inventory update
-    try {
-      if (typeof rebuildPlacedOrdersFromHistory === 'function') {
-        rebuildPlacedOrdersFromHistory();
-      }
-
-      if (typeof populateQuickOrderProducts === 'function') {
-        const activeQuickVendor = typeof quickOrderVendorTab !== 'undefined' ? quickOrderVendorTab : 'LOOP';
-        populateQuickOrderProducts(activeQuickVendor);
-      }
-
-      if (typeof render === 'function') {
-        render();
-      }
-    } catch (e) {
-      console.warn('Realtime dependent module sync failed', e);
-    }
-
     setRealtimeStatus(`Inventory cloud cargado: ${state.master.length} items`);
   }
 
