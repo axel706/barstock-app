@@ -10,7 +10,7 @@
       throw new Error('BarStock config is missing Supabase credentials');
     }
 
-    authClient = authClient || window.supabaseAuth || window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    authClient = authClient || window.supabaseAuth || window.BarStockSupabase.getClient();
     window.supabaseAuth = authClient;
     return authClient;
   }

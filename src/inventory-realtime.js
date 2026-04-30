@@ -94,7 +94,7 @@
   async function enableInventoryRealtime() {
     await ensureSupabaseSdk();
 
-    const rtClient = window.supabase.createClient(BARSTOCK_RT_URL, BARSTOCK_RT_KEY);
+    const rtClient = window.BarStockSupabase.getClient();
 
     await loadInventoryFromSupabase();
 

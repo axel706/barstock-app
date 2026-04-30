@@ -13,6 +13,7 @@
 
 <script src="src/config.js"></script>
 <script src="src/events.js"></script>
+<script src="src/supabase-client.js"></script>
 
   <style>
     :root{
@@ -2796,7 +2797,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260430-185356</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260430-190549</div>
+
+
 
 
 
@@ -7041,7 +7044,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   async function enableOrdersRealtimeClean() {
     await ensureSupabaseRealtimeSdk();
 
-    const client = window.supabase.createClient(ORDERS_RT_URL, ORDERS_RT_KEY);
+    const client = window.BarStockSupabase.getClient();
 
     if (window.__barstockOrdersRealtimeChannelClean) {
       try { await window.__barstockOrdersRealtimeChannelClean.unsubscribe(); } catch (e) {}
@@ -7118,7 +7121,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   async function enableNoMatchRealtimeClean() {
     await ensureNoMatchRealtimeSdk();
 
-    const client = window.supabase.createClient(NM_RT_URL, NM_RT_KEY);
+    const client = window.BarStockSupabase.getClient();
 
     if (window.__barstockNoMatchRealtimeChannelClean) {
       try { await window.__barstockNoMatchRealtimeChannelClean.unsubscribe(); } catch (e) {}
