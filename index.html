@@ -2796,7 +2796,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260430-003105</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260430-003917</div>
+
+
 
 
 
@@ -7035,6 +7037,32 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 </script>
 <!-- BARSTOCK EVENT LISTENERS END -->
 
+
+<!-- BARSTOCK ORDERS EVENT LISTENERS START -->
+<script>
+(() => {
+  if (window.__barstockOrdersEventListenersBooted) return;
+  window.__barstockOrdersEventListenersBooted = true;
+
+  if (!window.BarStockEvents) return;
+
+  BarStockEvents.on('ordersUpdated', () => {
+    try {
+      if (typeof rebuildPlacedOrdersFromHistory === 'function') {
+        rebuildPlacedOrdersFromHistory();
+      }
+
+      if (typeof render === 'function') render();
+      if (typeof renderOrderHistory === 'function') renderOrderHistory();
+      if (typeof renderCompareToolbar === 'function') renderCompareToolbar();
+    } catch (e) {
+      console.warn('ordersUpdated listener failed', e);
+    }
+  });
+})();
+</script>
+<!-- BARSTOCK ORDERS EVENT LISTENERS END -->
+
 <!-- BARSTOCK ORDER CLOUD START -->
 <script>
 (() => {
@@ -7347,9 +7375,18 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       await rebuildPlacedOrdersFromHistory();
 
       if (typeof saveState === 'function') saveState();
-      if (typeof render === 'function') render();
-      if (typeof renderOrderHistory === 'function') renderOrderHistory();
-      if (typeof renderCompareToolbar === 'function') renderCompareToolbar();
+
+      if (window.BarStockEvents && typeof window.BarStockEvents.emit === 'function') {
+        window.BarStockEvents.emit('ordersUpdated', {
+          source: 'orders-cloud',
+          count: state.orderHistory.length
+        });
+      } else {
+        if (typeof render === 'function') render();
+        if (typeof renderOrderHistory === 'function') renderOrderHistory();
+        if (typeof renderCompareToolbar === 'function') renderCompareToolbar();
+      }
+
       if (typeof setStatus === 'function') setStatus('Orders loaded from cloud.');
     } catch (err) {
       console.error('loadOrdersFromCloud failed', err);
