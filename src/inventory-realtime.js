@@ -81,6 +81,13 @@
     if (typeof saveState === 'function') saveState();
     if (typeof render === 'function') render();
 
+    if (window.BarStockEvents && typeof window.BarStockEvents.emit === 'function') {
+      window.BarStockEvents.emit('inventoryUpdated', {
+        source: 'inventory-realtime',
+        itemCount: state.master.length
+      });
+    }
+
     // Sync dependent modules after realtime inventory update
     try {
       if (typeof rebuildPlacedOrdersFromHistory === 'function') {
