@@ -2796,7 +2796,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260430-184741</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260430-185356</div>
+
+
 
 
 
@@ -6853,14 +6855,18 @@ if (typeof saveQuickOrder === 'function') {
 const quickOrderModalEl = document.getElementById('quickOrderModalBg');
 if(quickOrderModalEl){
   quickOrderModalEl.addEventListener('click', (e)=>{
-    if(e.target === quickOrderModalEl) closeQuickOrderModal();
+    if(e.target === quickOrderModalEl && typeof closeQuickOrderModal === 'function') {
+      closeQuickOrderModal();
+    }
   });
 }
 
 render();
 renderCompareToolbar();
 renderHistoryVendorTabs();
-renderQuickOrderVendorTabs();
+if (typeof renderQuickOrderVendorTabs === 'function') {
+  renderQuickOrderVendorTabs();
+}
 initSectionToggles();
 renderUsage();
 if(state.master.length){ setStatus(`Persistent master ready. ${state.master.length} items loaded from local storage. Excel-style TO ORDER rounding refreshed, and Final Order overrides are available for Southern, Breakthru, and Wine Merchant.`); }
