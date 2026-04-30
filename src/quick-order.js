@@ -194,6 +194,21 @@
     };
 
     try{
+      if (window.BarStockOrderValidator && typeof window.BarStockOrderValidator.validate === 'function') {
+        const validation = await window.BarStockOrderValidator.validate(entry);
+        if (validation?.warnings?.length) {
+          console.warn('Quick Order validation warnings:', validation.warnings);
+
+          if (window.BarStockLogger) {
+            window.BarStockLogger.log('quick_order_validation_warnings', {
+              vendor,
+              orderId: entry.id,
+              warnings: validation.warnings
+            });
+          }
+        }
+      }
+
       if (typeof window.persistOrderToSupabase !== 'function') {
         throw new Error('persistOrderToSupabase unavailable');
       }
