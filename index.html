@@ -2796,7 +2796,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260430-123420</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260430-124916</div>
+
+
 
 
 
@@ -7027,7 +7029,9 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
         rebuildPlacedOrdersFromHistory();
       }
 
-      if (typeof populateQuickOrderProducts === 'function') {
+      if (window.BarStockQuickOrder && typeof window.BarStockQuickOrder.refreshProducts === 'function') {
+        window.BarStockQuickOrder.refreshProducts();
+      } else if (typeof populateQuickOrderProducts === 'function') {
         const vendor = typeof quickOrderVendorTab !== 'undefined' ? quickOrderVendorTab : 'LOOP';
         populateQuickOrderProducts(vendor);
       }
