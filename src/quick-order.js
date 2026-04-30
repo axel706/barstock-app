@@ -210,6 +210,15 @@
 
       closeModal();
       setStatus('Quick Order saved to Order History and synced to cloud.');
+
+      if (window.BarStockLogger) {
+        window.BarStockLogger.log("quick_order_saved", {
+          vendor,
+          totalUnits,
+          subtotal,
+          itemCount: items.length
+        });
+      }
     } catch(err){
       console.error(err);
       alert('Quick Order was NOT saved to cloud.\\n\\n' + (err.message || String(err)));
