@@ -9,7 +9,9 @@
   }
 
   function getMaster(){
-    return window.state?.master || [];
+    if (window.state?.master) return window.state.master;
+    if (typeof state !== 'undefined' && Array.isArray(state.master)) return state.master;
+    return [];
   }
 
   function refreshProducts(vendor = quickOrderVendorTab){
