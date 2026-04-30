@@ -1,3 +1,20 @@
+      const vendor = (r[cols.vendor] && String(r[cols.vendor]).trim()) || inferVendor(code);
+      return {
+        code:String(code||'').trim(),
+        item:String(item||'').trim(),
+        itemNorm: normalizeName(item),
+        onHand,
+        suggested,
+        vendor,
+        value: 0,
+        toOrder: computeToOrder(onHand,suggested),
+        orderOverride:''
+      };
+    })
+    .filter(r => r.itemNorm);
+}
+function fmt(v){ return Number.isInteger(v) ? String(v) : Number(v).toFixed(2).replace(/\.00$/,''); }
+function fmtMoney(v){ return '$' + parseNum(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 
 function rowOrderHistoryMatchesItem(orderItem, row){
@@ -247,20 +264,3 @@ function getCurrentVendorRows(){
   const q = vendorQuery();
   return state.master.filter(r => {
     const effective = getEffectiveOrder(r);
-    const shouldShow = parseNum(effective) > 0;
-    const matchesVendor = (activeVendorTab==='ALL' || r.vendor===activeVendorTab);
-    const matchesSearch = !q || r.itemNorm.includes(q) || normalizeName(r.code).includes(q) || normalizeName(r.vendor).includes(q);
-    return shouldShow && matchesVendor && matchesSearch && !isRowPlaced(r);
-  });
-}
-function vendorLabel(){ return activeVendorTab==='ALL' ? 'All Vendors' : activeVendorTab; }
-function placedKeyForRow(row){ return `${String(row.vendor||'').toUpperCase()}||${normalizeName(row.code)}||${normalizeName(row.item)}`; }
-function isRowPlaced(row){ return Array.isArray(state.placedOrders) && state.placedOrders.includes(placedKeyForRow(row)); }
-function getOrderRowsForVendor(vendor){
-  return state.master.filter(r => {
-    const effective = getEffectiveOrder(r);
-    const shouldShow = parseNum(effective) > 0;
-    return shouldShow && r.vendor === vendor && !isRowPlaced(r);
-  });
-}
-function canPlaceOrder(){ return ['LOOP','SOUTHERN','BREAKTHRU','WINE MERCHANT'].includes(activeVendorTab); }
