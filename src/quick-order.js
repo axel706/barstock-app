@@ -228,9 +228,9 @@
 
   function bindControls(){
     replaceButtonHandler('quickOrderBtn', openModal);
-    replaceButtonHandler('quickOrderAddBtn', addItem);
+    replaceButtonHandler('quickOrderAddItemBtn', addItem);
     replaceButtonHandler('quickOrderSaveBtn', save);
-    replaceButtonHandler('quickOrderCancel', closeModal);
+    replaceButtonHandler('quickOrderCancelBtn', closeModal);
 
     renderVendorTabs();
     refreshProducts(quickOrderVendorTab);
