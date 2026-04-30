@@ -200,11 +200,13 @@
           console.warn('Quick Order validation warnings:', validation.warnings);
 
           if (window.BarStockLogger) {
-            window.BarStockLogger.log('quick_order_validation_warnings', {
+            console.info('Sending validation warnings to backend log...');
+            await window.BarStockLogger.log('quick_order_validation_warnings', {
               vendor,
               orderId: entry.id,
               warnings: validation.warnings
             });
+            console.info('Validation warnings sent to backend log.');
           }
         }
       }
