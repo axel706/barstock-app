@@ -2799,7 +2799,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260430-231939</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260430-232742</div>
+
+
 
 
 
@@ -4935,7 +4937,7 @@ async function refreshOrdersFromCloud(){
     const orders = await ordersRes.json();
 
     const itemsRes = await fetch(
-      `${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?location_id=eq.${locationId}&select=*`,
+      `${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?select=*`,
       {
         headers: {
           apikey: ORDER_CLOUD_KEY,
@@ -4950,7 +4952,7 @@ async function refreshOrdersFromCloud(){
       id: order.app_order_id,
       vendor: order.vendor,
       date: order.created_at,
-      items: (items || [])
+      items: (Array.isArray(items) ? items : [])
         .filter(i => i.app_order_id === order.app_order_id)
         .map(i => ({
           code: i.code,
