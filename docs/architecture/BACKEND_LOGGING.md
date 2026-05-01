@@ -38,3 +38,26 @@ Configured in `src/config.js`:
 GitHub Pages hosts the frontend.
 Vercel hosts backend API routes.
 Supabase remains the database and realtime provider.
+
+## Persistent storage
+
+Backend logs are now persisted to Supabase table:
+
+- `public.app_logs`
+
+The `/api/log` endpoint writes to Supabase using:
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Both are stored as Vercel environment variables and must never be exposed in frontend code.
+
+## Verified
+
+Test event confirmed:
+
+- `db_test`
+
+Flow verified:
+
+Frontend/curl → Vercel `/api/log` → Supabase `app_logs`
