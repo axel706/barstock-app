@@ -199,6 +199,10 @@
         if (validation?.warnings?.length) {
           console.warn('Quick Order validation warnings:', validation.warnings);
 
+          if (typeof setStatus === 'function') {
+            setStatus('⚠️ ' + validation.warnings.join(' | '));
+          }
+
           if (window.BarStockLogger) {
             console.info('Sending validation warnings to backend log...');
             await window.BarStockLogger.log('quick_order_validation_warnings', {
