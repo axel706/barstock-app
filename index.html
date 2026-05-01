@@ -2799,7 +2799,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260501-124537</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260501-125435</div>
+
+
 
 
 
@@ -5925,51 +5927,22 @@ async function saveEditedItem(){
     orderOverride: (supportsManualFinalOrder(vendor) && finalOrderRaw !== '') ? Math.max(0, parseNum(finalOrderRaw)) : ''
   };
 
-  const SUPABASE_URL = window.BARSTOCK_CONFIG?.SUPABASE_URL || 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
-  const SUPABASE_KEY = window.BARSTOCK_CONFIG?.SUPABASE_KEY || 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
-  const LOCATION_NAME = window.BARSTOCK_CONFIG?.LOCATION_NAME || 'The Crown Tavern';
-
   try{
     setStatus(`Saving '${item}' to cloud...`);
 
-    const locRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/locations?name=eq.${encodeURIComponent(LOCATION_NAME)}&select=id`,
-      {
-        headers:{
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`
-        }
-      }
-    );
-
-    const locData = await locRes.json();
-    const locationId = locData?.[0]?.id;
-    if(!locationId) throw new Error(`Could not find ${LOCATION_NAME} location`);
-
-    const patchRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/inventory_items?location_id=eq.${locationId}&code=eq.${encodeURIComponent(oldCode)}&item_name=eq.${encodeURIComponent(oldItem)}`,
-      {
-        method:'PATCH',
-        headers:{
-          'Content-Type':'application/json',
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-          Prefer:'return=minimal'
-        },
-        body: JSON.stringify({
-          code,
-          item_name: item,
-          vendor,
-          on_hand: Number(onHand || 0),
-          suggested: Number(suggested || 0),
-          value: Number(value || 0)
-        })
-      }
-    );
-
-    if(!patchRes.ok){
-      const txt = await patchRes.text();
-      throw new Error('Error updating inventory_items: ' + txt);
+    if (window.BarStockInventoryCloud) {
+      await window.BarStockInventoryCloud.patchInventoryItem({
+        oldCode,
+        oldItem,
+        code,
+        item,
+        vendor,
+        onHand,
+        suggested,
+        value
+      });
+    } else {
+      throw new Error('Inventory cloud module not available');
     }
 
     state.master[currentEditIndex] = updatedRow;
