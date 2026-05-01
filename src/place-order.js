@@ -70,6 +70,17 @@
 
       await window.persistOrderToSupabase(order);
 
+      if (window.BarStockLogger) {
+        window.BarStockLogger.log('place_order_saved', {
+          vendor: vendorAtStart,
+          orderId: order.id,
+          totalUnits: order.totalUnits,
+          subtotal: order.subtotal,
+          itemCount: rows.length,
+          exportType: order.exportType
+        });
+      }
+
       // 3. recargar verdad desde cloud
       if (typeof window.loadOrdersFromCloud === 'function') {
         await window.loadOrdersFromCloud();
