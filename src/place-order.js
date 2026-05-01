@@ -45,7 +45,25 @@
       }
     }
 
+    let validationWarnings = [];
+
     try {
+      if (window.BarStockOrderValidator && typeof window.BarStockOrderValidator.validate === 'function') {
+        const validation = await window.BarStockOrderValidator.validate(order);
+        if (validation?.warnings?.length) {
+          validationWarnings = validation.warnings;
+          console.warn('Place Order validation warnings:', validation.warnings);
+
+          if (window.BarStockLogger) {
+            await window.BarStockLogger.log('place_order_validation_warnings', {
+              vendor: vendorAtStart,
+              orderId: order.id,
+              warnings: validation.warnings
+            });
+          }
+        }
+      }
+
       // 1. export local file como siempre
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
@@ -89,7 +107,33 @@
       }
 
       if (typeof setStatus === 'function') {
-        setStatus(`${vendorAtStart} order placed and synced to cloud.`);
+        if (validationWarnings.length) {
+          setStatus(`${vendorAtStart} order placed with warnings.`);
+        } else {
+          setStatus(`${vendorAtStart} order placed and synced to cloud.`);
+        }
+      }
+
+      if (validationWarnings.length) {
+        const warningEl = document.createElement('div');
+        warningEl.textContent = '⚠️ ' + validationWarnings.join(' | ');
+        warningEl.style.position = 'fixed';
+        warningEl.style.bottom = '20px';
+        warningEl.style.right = '20px';
+        warningEl.style.background = '#ffcc00';
+        warningEl.style.color = '#000';
+        warningEl.style.padding = '12px 16px';
+        warningEl.style.borderRadius = '8px';
+        warningEl.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
+        warningEl.style.zIndex = '999999';
+        warningEl.style.fontSize = '14px';
+        warningEl.style.maxWidth = '420px';
+
+        document.body.appendChild(warningEl);
+
+        setTimeout(() => {
+          warningEl.remove();
+        }, 7000);
       }
 
     } catch (err) {
