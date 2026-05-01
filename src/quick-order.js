@@ -234,7 +234,28 @@
 
       closeModal();
       if (validationWarnings.length) {
-        setStatus('Quick Order saved. ⚠️ ' + validationWarnings.join(' | '));
+        const warningText = validationWarnings.join(' | ');
+        setStatus('Quick Order saved with warnings.');
+
+        const warningEl = document.createElement('div');
+        warningEl.textContent = '⚠️ ' + warningText;
+        warningEl.style.position = 'fixed';
+        warningEl.style.bottom = '20px';
+        warningEl.style.right = '20px';
+        warningEl.style.background = '#ffcc00';
+        warningEl.style.color = '#000';
+        warningEl.style.padding = '12px 16px';
+        warningEl.style.borderRadius = '8px';
+        warningEl.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
+        warningEl.style.zIndex = '999999';
+        warningEl.style.fontSize = '14px';
+        warningEl.style.maxWidth = '420px';
+
+        document.body.appendChild(warningEl);
+
+        setTimeout(() => {
+          warningEl.remove();
+        }, 7000);
       } else {
         setStatus('Quick Order saved to Order History and synced to cloud.');
       }
