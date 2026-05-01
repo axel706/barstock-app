@@ -193,10 +193,13 @@
       note
     };
 
+    let validationWarnings = [];
+
     try{
       if (window.BarStockOrderValidator && typeof window.BarStockOrderValidator.validate === 'function') {
         const validation = await window.BarStockOrderValidator.validate(entry);
         if (validation?.warnings?.length) {
+          validationWarnings = validation.warnings;
           console.warn('Quick Order validation warnings:', validation.warnings);
 
           if (typeof setStatus === 'function') {
@@ -230,7 +233,11 @@
       }
 
       closeModal();
-      setStatus('Quick Order saved to Order History and synced to cloud.');
+      if (validationWarnings.length) {
+        setStatus('Quick Order saved. ⚠️ ' + validationWarnings.join(' | '));
+      } else {
+        setStatus('Quick Order saved to Order History and synced to cloud.');
+      }
 
       if (window.BarStockLogger) {
         window.BarStockLogger.log("quick_order_saved", {
