@@ -194,8 +194,12 @@
     };
 
     let validationWarnings = [];
+    const saveBtn = document.getElementById('quickOrderSaveBtn');
 
     try{
+      if (typeof setButtonBusy === 'function') {
+        setButtonBusy(saveBtn, 'Saving...');
+      }
       if (window.BarStockOrderValidator && typeof window.BarStockOrderValidator.validate === 'function') {
         const validation = await window.BarStockOrderValidator.validate(entry);
         if (validation?.warnings?.length) {
@@ -272,6 +276,10 @@
       console.error(err);
       alert('Quick Order was NOT saved to cloud.\\n\\n' + (err.message || String(err)));
       setStatus('Quick Order failed because cloud save failed.');
+    } finally {
+      if (typeof clearButtonBusy === 'function') {
+        clearButtonBusy(saveBtn);
+      }
     }
   }
 
