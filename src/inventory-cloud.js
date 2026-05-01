@@ -96,8 +96,40 @@
     return true;
   }
 
+  async function createInventoryItem({ code, item, vendor, onHand, suggested, value }) {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+
+    const res = await fetch(`${url}/rest/v1/inventory_items`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        Prefer: 'return=minimal'
+      },
+      body: JSON.stringify([{
+        location_id: locationId,
+        code: code || '',
+        item_name: item || '',
+        vendor: String(vendor || 'UNKNOWN').trim().toUpperCase(),
+        suggested: Number(suggested || 0),
+        on_hand: Number(onHand || 0),
+        value: Number(value || 0)
+      }])
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error('Error creating inventory_items: ' + txt);
+    }
+
+    return true;
+  }
+
   window.BarStockInventoryCloud = {
     fetchLocationId,
+    createInventoryItem,
     patchInventoryItem,
     deleteInventoryItem
   };

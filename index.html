@@ -2799,7 +2799,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260501-125435</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260501-130617</div>
+
+
 
 
 
@@ -5779,54 +5781,18 @@ async function saveNewInventoryItem(){
   render();
   closeNewItemModal();
 
-  const SUPABASE_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
-
   try {
-    // 1. obtener location_id
-    const locRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/locations?name=eq.${encodeURIComponent('The Crown Tavern')}&select=id`,
-      {
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`
-        }
-      }
-    );
-
-    const locData = await locRes.json();
-    const locationId = locData?.[0]?.id;
-
-    if(!locationId){
-      throw new Error('No location found');
-    }
-
-    // 2. insertar SOLO el nuevo item
-    const insertRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/inventory_items`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-          Prefer: 'return=minimal'
-        },
-        body: JSON.stringify([{
-          location_id: locationId,
-          code: code || '',
-          item_name: item || '',
-          vendor: String(vendor || 'UNKNOWN').trim().toUpperCase(),
-          suggested: Number(suggested || 0),
-          on_hand: Number(onHand || 0),
-          value: Number(value || 0)
-        }])
-      }
-    );
-
-    if(!insertRes.ok){
-      const txt = await insertRes.text();
-      throw new Error(txt);
+    if (window.BarStockInventoryCloud) {
+      await window.BarStockInventoryCloud.createInventoryItem({
+        code,
+        item,
+        vendor,
+        onHand,
+        suggested,
+        value
+      });
+    } else {
+      throw new Error('Inventory cloud module not available');
     }
 
     setStatus(`New inventory item '${item}' created and synced to cloud.`);
