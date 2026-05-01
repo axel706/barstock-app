@@ -23,5 +23,8 @@
   "homepage": "https://github.com/axel706/barstock-app#readme",
   "devDependencies": {
     "@playwright/test": "^1.59.1"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.105.1"
   }
 }
