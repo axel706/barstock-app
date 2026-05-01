@@ -1,0 +1,27 @@
+{
+  "name": "barstock-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "supabase.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/axel706/barstock-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/axel706/barstock-app/issues"
+  },
+  "homepage": "https://github.com/axel706/barstock-app#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}
