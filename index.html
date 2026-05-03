@@ -2799,7 +2799,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260503-123213</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260503-124012</div>
+
+
 
 
 
@@ -5608,17 +5610,7 @@ async function saveNoMatchAsItem(){
     // 3. borrar no match en cloud
     await window.BarStockNoMatchCloud.deleteNoMatch(raw.rawItem || '');
 
-    // 4. actualizar local solo si cloud salió bien
-    state.master.push({
-      code,
-      item,
-      itemNorm,
-      onHand,
-      suggested,
-      vendor,
-      toOrder:computeToOrder(onHand,suggested)
-    });
-
+    // 4. actualizar alias/local No Match solo si cloud salió bien
     aliases[normalizeName(raw.rawItem)] = itemNorm;
     saveAliases();
     state.noMatches.splice(currentNoMatchIndex,1);
