@@ -72,7 +72,7 @@
         },
         body: JSON.stringify([{
           location_id: locationId,
-          raw_item: normalizeName(rawItem || ''),
+          raw_item: String(rawItem || '').toLowerCase().trim(),
           item_norm: itemNorm
         }])
       }
