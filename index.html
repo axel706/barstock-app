@@ -2799,7 +2799,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260503-121129</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260503-122325</div>
+
+
 
 
 
@@ -5580,92 +5582,29 @@ async function saveNoMatchAsItem(){
 
   const itemNorm = normalizeName(item);
 
-  const SUPABASE_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
-
   try {
-    const locRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/locations?name=eq.${encodeURIComponent('The Crown Tavern')}&select=id`,
-      {
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`
-        }
-      }
-    );
-
-    const locData = await locRes.json();
-    const locationId = locData?.[0]?.id;
-    if(!locationId) throw new Error('No location found');
+    if (!window.BarStockInventoryCloud || !window.BarStockNoMatchCloud) {
+      throw new Error('Inventory / No Match cloud modules not available');
+    }
 
     // 1. crear item en cloud
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/inventory_items`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-          Prefer: 'return=minimal'
-        },
-        body: JSON.stringify([{
-          location_id: locationId,
-          code: code || '',
-          item_name: item || '',
-          vendor: String(vendor || 'UNKNOWN').trim().toUpperCase(),
-          suggested: Number(suggested || 0),
-          on_hand: Number(onHand || 0),
-          value: 0
-        }])
-      }
-    );
-
-    if(!res.ok){
-      const txt = await res.text();
-      throw new Error('Error inserting inventory_items: ' + txt);
-    }
+    await window.BarStockInventoryCloud.createInventoryItem({
+      code,
+      item,
+      vendor,
+      onHand,
+      suggested,
+      value: 0
+    });
 
     // 2. guardar alias en cloud
-    const aliasRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/inventory_aliases?on_conflict=location_id,raw_item`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-          Prefer: 'resolution=merge-duplicates,return=minimal'
-        },
-        body: JSON.stringify([{
-          location_id: locationId,
-          raw_item: normalizeName(raw.rawItem || ''),
-          item_norm: itemNorm
-        }])
-      }
-    );
-
-    if(!aliasRes.ok){
-      const txt = await aliasRes.text();
-      throw new Error('Error saving inventory_aliases: ' + txt);
-    }
+    await window.BarStockNoMatchCloud.saveAlias({
+      rawItem: raw.rawItem || '',
+      itemNorm
+    });
 
     // 3. borrar no match en cloud
-    const deleteNmRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/inventory_no_matches?location_id=eq.${locationId}&raw_item=eq.${encodeURIComponent(raw.rawItem || '')}`,
-      {
-        method: 'DELETE',
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`
-        }
-      }
-    );
-
-    if(!deleteNmRes.ok){
-      const txt = await deleteNmRes.text();
-      throw new Error('Error deleting inventory_no_matches: ' + txt);
-    }
+    await window.BarStockNoMatchCloud.deleteNoMatch(raw.rawItem || '');
 
     // 4. actualizar local solo si cloud salió bien
     state.master.push({

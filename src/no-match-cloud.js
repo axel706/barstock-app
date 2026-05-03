@@ -56,8 +56,39 @@
     return true;
   }
 
+  async function saveAlias({ rawItem, itemNorm }) {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+
+    const res = await fetch(
+      `${url}/rest/v1/inventory_aliases?on_conflict=location_id,raw_item`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: key,
+          Authorization: `Bearer ${key}`,
+          Prefer: 'resolution=merge-duplicates,return=minimal'
+        },
+        body: JSON.stringify([{
+          location_id: locationId,
+          raw_item: normalizeName(rawItem || ''),
+          item_norm: itemNorm
+        }])
+      }
+    );
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error('Error saving inventory_aliases: ' + txt);
+    }
+
+    return true;
+  }
+
   window.BarStockNoMatchCloud = {
     fetchLocationId,
+    saveAlias,
     deleteNoMatch
   };
 })();
