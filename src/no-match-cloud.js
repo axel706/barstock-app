@@ -86,8 +86,35 @@
     return true;
   }
 
+  async function loadNoMatches() {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+
+    const res = await fetch(
+      `${url}/rest/v1/inventory_no_matches?location_id=eq.${locationId}&select=raw_item,count&order=raw_item.asc`,
+      {
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${key}`
+        }
+      }
+    );
+
+    const rows = await res.json();
+
+    if (!Array.isArray(rows)) {
+      throw new Error('Invalid inventory_no_matches response');
+    }
+
+    return rows.map(r => ({
+      rawItem: String(r.raw_item || '').trim(),
+      count: Number(r.count || 0)
+    })).filter(r => r.rawItem);
+  }
+
   window.BarStockNoMatchCloud = {
     fetchLocationId,
+    loadNoMatches,
     saveAlias,
     deleteNoMatch
   };
