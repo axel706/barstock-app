@@ -2799,7 +2799,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260504-153415</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260504-154310</div>
+
+
 
 
 
@@ -4882,43 +4884,13 @@ function toggleHistoryDetails(id){
 window.toggleHistoryDetails = toggleHistoryDetails;
 async function deleteHistoryOrder(id, triggerBtn){
   await refreshOrdersFromCloud();
-  const ORDER_CLOUD_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
-  const ORDER_CLOUD_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
-
   try{
     if (typeof setButtonBusy === 'function') setButtonBusy(triggerBtn, 'DELETING');
-    // 1. borrar líneas
-    const itemsRes = await fetch(
-      `${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?app_order_id=eq.${encodeURIComponent(id)}`,
-      {
-        method: 'DELETE',
-        headers: {
-          apikey: ORDER_CLOUD_KEY,
-          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
-        }
-      }
-    );
 
-    if(!itemsRes.ok){
-      const txt = await itemsRes.text();
-      throw new Error('Error deleting vendor_order_items: ' + txt);
-    }
-
-    // 2. borrar encabezado
-    const orderRes = await fetch(
-      `${ORDER_CLOUD_URL}/rest/v1/vendor_orders?app_order_id=eq.${encodeURIComponent(id)}`,
-      {
-        method: 'DELETE',
-        headers: {
-          apikey: ORDER_CLOUD_KEY,
-          Authorization: `Bearer ${ORDER_CLOUD_KEY}`
-        }
-      }
-    );
-
-    if(!orderRes.ok){
-      const txt = await orderRes.text();
-      throw new Error('Error deleting vendor_orders: ' + txt);
+    if (typeof window.deleteOrderFromSupabase === 'function') {
+      await window.deleteOrderFromSupabase(id);
+    } else {
+      throw new Error('Orders cloud delete helper not available');
     }
 
     // 3. borrar local solo si cloud salió bien
