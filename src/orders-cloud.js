@@ -11,19 +11,21 @@
     };
   }
 
+  window.BarStockOrdersConfig = window.BarStockOrdersConfig || getOrdersConfig;
+
   async function orderCloudFetchLocationId() {
     const res = await fetch(
-      `${getOrdersConfig().url}/rest/v1/locations?name=eq.${encodeURIComponent(getOrdersConfig().locationName)}&select=id,name`,
+      `${window.BarStockOrdersConfig().url}/rest/v1/locations?name=eq.${encodeURIComponent(window.BarStockOrdersConfig().locationName)}&select=id,name`,
       {
         headers: {
-          apikey: getOrdersConfig().key,
-          Authorization: `Bearer ${getOrdersConfig().key}`
+          apikey: window.BarStockOrdersConfig().key,
+          Authorization: `Bearer ${window.BarStockOrdersConfig().key}`
         }
       }
     );
     const data = await res.json();
     if (!Array.isArray(data) || !data.length) {
-      throw new Error(`No se encontró la locación ${getOrdersConfig().locationName}`);
+      throw new Error(`No se encontró la locación ${window.BarStockOrdersConfig().locationName}`);
     }
     return data[0].id;
   }
@@ -34,7 +36,7 @@
     const vendorOrderPayload = {
       app_order_id: order.id,
       location_id: locationId,
-      location_name: getOrdersConfig().locationName,
+      location_name: window.BarStockOrdersConfig().locationName,
       vendor: order.vendor || '',
       status: 'placed',
       subtotal: Number(order.subtotal || 0),
@@ -45,13 +47,13 @@
 
     // UPSERT de la orden principal
     const orderRes = await fetch(
-      `${getOrdersConfig().url}/rest/v1/vendor_orders?on_conflict=app_order_id`,
+      `${window.BarStockOrdersConfig().url}/rest/v1/vendor_orders?on_conflict=app_order_id`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          apikey: getOrdersConfig().key,
-          Authorization: `Bearer ${getOrdersConfig().key}`,
+          apikey: window.BarStockOrdersConfig().key,
+          Authorization: `Bearer ${window.BarStockOrdersConfig().key}`,
           Prefer: 'resolution=merge-duplicates,return=representation'
         },
         body: JSON.stringify(vendorOrderPayload)
@@ -71,12 +73,12 @@
 
     // limpiar items previos de esa orden si existían
     const delRes = await fetch(
-      `${getOrdersConfig().url}/rest/v1/vendor_order_items?app_order_id=eq.${encodeURIComponent(order.id)}`,
+      `${window.BarStockOrdersConfig().url}/rest/v1/vendor_order_items?app_order_id=eq.${encodeURIComponent(order.id)}`,
       {
         method: 'DELETE',
         headers: {
-          apikey: getOrdersConfig().key,
-          Authorization: `Bearer ${getOrdersConfig().key}`
+          apikey: window.BarStockOrdersConfig().key,
+          Authorization: `Bearer ${window.BarStockOrdersConfig().key}`
         }
       }
     );
@@ -103,13 +105,13 @@
 
     if (itemRows.length) {
       const itemsRes = await fetch(
-        `${getOrdersConfig().url}/rest/v1/vendor_order_items`,
+        `${window.BarStockOrdersConfig().url}/rest/v1/vendor_order_items`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            apikey: getOrdersConfig().key,
-            Authorization: `Bearer ${getOrdersConfig().key}`,
+            apikey: window.BarStockOrdersConfig().key,
+            Authorization: `Bearer ${window.BarStockOrdersConfig().key}`,
             Prefer: 'return=minimal'
           },
           body: JSON.stringify(itemRows)
@@ -134,11 +136,11 @@
 
   async function getOrdersLocationId() {
     const res = await fetch(
-      `${getOrdersConfig().url}/rest/v1/locations?name=eq.${encodeURIComponent(getOrdersConfig().locationName)}&select=id,weekly_reset_at`,
+      `${window.BarStockOrdersConfig().url}/rest/v1/locations?name=eq.${encodeURIComponent(window.BarStockOrdersConfig().locationName)}&select=id,weekly_reset_at`,
       {
         headers: {
-          apikey: getOrdersConfig().key,
-          Authorization: `Bearer ${getOrdersConfig().key}`
+          apikey: window.BarStockOrdersConfig().key,
+          Authorization: `Bearer ${window.BarStockOrdersConfig().key}`
         }
       }
     );
@@ -181,11 +183,11 @@
       const locationId = location.id;
 
       const ordersRes = await fetch(
-        `${getOrdersConfig().url}/rest/v1/vendor_orders?location_id=eq.${locationId}&select=app_order_id,vendor,created_at,export_type,filename,total_units,subtotal&order=created_at.desc`,
+        `${window.BarStockOrdersConfig().url}/rest/v1/vendor_orders?location_id=eq.${locationId}&select=app_order_id,vendor,created_at,export_type,filename,total_units,subtotal&order=created_at.desc`,
         {
           headers: {
-            apikey: getOrdersConfig().key,
-            Authorization: `Bearer ${getOrdersConfig().key}`
+            apikey: window.BarStockOrdersConfig().key,
+            Authorization: `Bearer ${window.BarStockOrdersConfig().key}`
           }
         }
       );
@@ -193,11 +195,11 @@
       if (!Array.isArray(orders)) throw new Error('Invalid vendor_orders response');
 
       const itemsRes = await fetch(
-        `${getOrdersConfig().url}/rest/v1/vendor_order_items?select=app_order_id,code,item_name,vendor,quantity,unit_price`,
+        `${window.BarStockOrdersConfig().url}/rest/v1/vendor_order_items?select=app_order_id,code,item_name,vendor,quantity,unit_price`,
         {
           headers: {
-            apikey: getOrdersConfig().key,
-            Authorization: `Bearer ${getOrdersConfig().key}`
+            apikey: window.BarStockOrdersConfig().key,
+            Authorization: `Bearer ${window.BarStockOrdersConfig().key}`
           }
         }
       );
