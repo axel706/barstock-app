@@ -2,23 +2,28 @@
   if (window.__barstockOrderCloudBooted) return;
   window.__barstockOrderCloudBooted = true;
 
-  const ORDER_CLOUD_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
-  const ORDER_SYNC_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
-  const ORDER_SYNC_LOCATION = 'The Crown Tavern';
+  function getOrdersConfig() {
+    const config = window.BARSTOCK_CONFIG || {};
+    return {
+      url: config.SUPABASE_URL,
+      key: config.SUPABASE_KEY,
+      locationName: config.LOCATION_NAME || 'The Crown Tavern'
+    };
+  }
 
   async function orderCloudFetchLocationId() {
     const res = await fetch(
-      `${ORDER_CLOUD_URL}/rest/v1/locations?name=eq.${encodeURIComponent(ORDER_SYNC_LOCATION)}&select=id,name`,
+      `${getOrdersConfig().url}/rest/v1/locations?name=eq.${encodeURIComponent(getOrdersConfig().locationName)}&select=id,name`,
       {
         headers: {
-          apikey: ORDER_SYNC_KEY,
-          Authorization: `Bearer ${ORDER_SYNC_KEY}`
+          apikey: getOrdersConfig().key,
+          Authorization: `Bearer ${getOrdersConfig().key}`
         }
       }
     );
     const data = await res.json();
     if (!Array.isArray(data) || !data.length) {
-      throw new Error(`No se encontró la locación ${ORDER_SYNC_LOCATION}`);
+      throw new Error(`No se encontró la locación ${getOrdersConfig().locationName}`);
     }
     return data[0].id;
   }
@@ -29,7 +34,7 @@
     const vendorOrderPayload = {
       app_order_id: order.id,
       location_id: locationId,
-      location_name: ORDER_SYNC_LOCATION,
+      location_name: getOrdersConfig().locationName,
       vendor: order.vendor || '',
       status: 'placed',
       subtotal: Number(order.subtotal || 0),
@@ -40,13 +45,13 @@
 
     // UPSERT de la orden principal
     const orderRes = await fetch(
-      `${ORDER_CLOUD_URL}/rest/v1/vendor_orders?on_conflict=app_order_id`,
+      `${getOrdersConfig().url}/rest/v1/vendor_orders?on_conflict=app_order_id`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          apikey: ORDER_SYNC_KEY,
-          Authorization: `Bearer ${ORDER_SYNC_KEY}`,
+          apikey: getOrdersConfig().key,
+          Authorization: `Bearer ${getOrdersConfig().key}`,
           Prefer: 'resolution=merge-duplicates,return=representation'
         },
         body: JSON.stringify(vendorOrderPayload)
@@ -66,12 +71,12 @@
 
     // limpiar items previos de esa orden si existían
     const delRes = await fetch(
-      `${ORDER_CLOUD_URL}/rest/v1/vendor_order_items?app_order_id=eq.${encodeURIComponent(order.id)}`,
+      `${getOrdersConfig().url}/rest/v1/vendor_order_items?app_order_id=eq.${encodeURIComponent(order.id)}`,
       {
         method: 'DELETE',
         headers: {
-          apikey: ORDER_SYNC_KEY,
-          Authorization: `Bearer ${ORDER_SYNC_KEY}`
+          apikey: getOrdersConfig().key,
+          Authorization: `Bearer ${getOrdersConfig().key}`
         }
       }
     );
@@ -98,13 +103,13 @@
 
     if (itemRows.length) {
       const itemsRes = await fetch(
-        `${ORDER_CLOUD_URL}/rest/v1/vendor_order_items`,
+        `${getOrdersConfig().url}/rest/v1/vendor_order_items`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            apikey: ORDER_SYNC_KEY,
-            Authorization: `Bearer ${ORDER_SYNC_KEY}`,
+            apikey: getOrdersConfig().key,
+            Authorization: `Bearer ${getOrdersConfig().key}`,
             Prefer: 'return=minimal'
           },
           body: JSON.stringify(itemRows)
@@ -127,17 +132,13 @@
   if (window.__barstockOrdersCoreBooted) return;
   window.__barstockOrdersCoreBooted = true;
 
-  const ORDERS_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
-  const ORDERS_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
-  const ORDERS_LOCATION = 'The Crown Tavern';
-
   async function getOrdersLocationId() {
     const res = await fetch(
-      `${ORDERS_URL}/rest/v1/locations?name=eq.${encodeURIComponent(ORDERS_LOCATION)}&select=id,weekly_reset_at`,
+      `${getOrdersConfig().url}/rest/v1/locations?name=eq.${encodeURIComponent(getOrdersConfig().locationName)}&select=id,weekly_reset_at`,
       {
         headers: {
-          apikey: ORDERS_KEY,
-          Authorization: `Bearer ${ORDERS_KEY}`
+          apikey: getOrdersConfig().key,
+          Authorization: `Bearer ${getOrdersConfig().key}`
         }
       }
     );
@@ -180,11 +181,11 @@
       const locationId = location.id;
 
       const ordersRes = await fetch(
-        `${ORDERS_URL}/rest/v1/vendor_orders?location_id=eq.${locationId}&select=app_order_id,vendor,created_at,export_type,filename,total_units,subtotal&order=created_at.desc`,
+        `${getOrdersConfig().url}/rest/v1/vendor_orders?location_id=eq.${locationId}&select=app_order_id,vendor,created_at,export_type,filename,total_units,subtotal&order=created_at.desc`,
         {
           headers: {
-            apikey: ORDERS_KEY,
-            Authorization: `Bearer ${ORDERS_KEY}`
+            apikey: getOrdersConfig().key,
+            Authorization: `Bearer ${getOrdersConfig().key}`
           }
         }
       );
@@ -192,11 +193,11 @@
       if (!Array.isArray(orders)) throw new Error('Invalid vendor_orders response');
 
       const itemsRes = await fetch(
-        `${ORDERS_URL}/rest/v1/vendor_order_items?select=app_order_id,code,item_name,vendor,quantity,unit_price`,
+        `${getOrdersConfig().url}/rest/v1/vendor_order_items?select=app_order_id,code,item_name,vendor,quantity,unit_price`,
         {
           headers: {
-            apikey: ORDERS_KEY,
-            Authorization: `Bearer ${ORDERS_KEY}`
+            apikey: getOrdersConfig().key,
+            Authorization: `Bearer ${getOrdersConfig().key}`
           }
         }
       );
