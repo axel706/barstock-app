@@ -127,6 +127,45 @@
     return vendorOrderId;
   }
 
+  async function deleteOrderFromSupabase(id) {
+    const { url, key } = window.BarStockOrdersConfig();
+
+    const itemsRes = await fetch(
+      `${url}/rest/v1/vendor_order_items?app_order_id=eq.${encodeURIComponent(id)}`,
+      {
+        method: 'DELETE',
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${key}`
+        }
+      }
+    );
+
+    if (!itemsRes.ok) {
+      const txt = await itemsRes.text();
+      throw new Error('Error deleting vendor_order_items: ' + txt);
+    }
+
+    const orderRes = await fetch(
+      `${url}/rest/v1/vendor_orders?app_order_id=eq.${encodeURIComponent(id)}`,
+      {
+        method: 'DELETE',
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${key}`
+        }
+      }
+    );
+
+    if (!orderRes.ok) {
+      const txt = await orderRes.text();
+      throw new Error('Error deleting vendor_orders: ' + txt);
+    }
+
+    return true;
+  }
+
+  window.deleteOrderFromSupabase = deleteOrderFromSupabase;
   window.persistOrderToSupabase = persistOrderToSupabase;
 })();
 
