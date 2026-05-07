@@ -40,9 +40,6 @@
         box-shadow var(--motion-med) ease,
         background var(--motion-med) ease;
     }
-    table{width:100%;border-collapse:collapse;font-size:14px}
-    th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left}
-    th{position:sticky;top:0;background:#111827;z-index:1}
     .tablewrap{max-height:440px;overflow:auto;border-radius:14px;border:1px solid rgba(255,255,255,.08)}
     .pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700}
     .loop{background:#082f49;color:#bae6fd}.southern{background:#1f2937;color:#e5e7eb}.breakthru{background:#2b1a05;color:#fde68a}.wine{background:#2a1234;color:#f5d0fe}.unknown{background:#3f3f46;color:#e4e4e7}
