@@ -1,0 +1,17 @@
+.wrap{max-width:1300px;margin:0 auto;padding:24px;position:relative;z-index:1}
+
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0 24px}
+
+    .toolbar,.sectionhead{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.topbar{width:100%;justify-content:center;margin:0 auto}
+
+    .topbar > button,.topbar > .filelbl,.topbar > .toolbar-group{width:270px;min-height:58px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:16px}
+
+    .topbar > button.half{width:130px;min-width:130px}
+
+    .topbar > .toolbar-group #exportMenuBtn,.topbar > .toolbar-group #importMenuBtn{width:100%;min-height:58px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:16px}
+
+    .topbar > .toolbar-group{display:block}
+
+    .topbar .menu{right:auto;left:0;width:270px}
+
+    .sectionhead{justify-content:space-between;margin:18px 0 12px}

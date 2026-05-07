@@ -1,4 +1,3 @@
-    .wrap{max-width:1300px;margin:0 auto;padding:24px;position:relative;z-index:1}
     .hero{display:flex;justify-content:center;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:18px;padding:18px 20px;border-radius:18px;background:rgba(17,24,39,.86);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.08);box-shadow:0 8px 24px rgba(0,0,0,.28);position:relative;z-index:40;overflow:visible}
     .brand{display:flex;align-items:center;gap:16px}.hero > div:first-child{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;width:100%}.theme-toggle{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:#1f2937;color:#e5e7eb;border:1px solid rgba(255,255,255,.1);cursor:pointer}.theme-toggle:hover{border-color:rgba(56,189,248,.65)}body.light .theme-toggle{background:#ffffff;color:#0f172a;border-color:rgba(15,23,42,.12)}.theme-icon{font-size:20px;line-height:1}
     .toolbar-group{position:relative}
@@ -8,16 +7,8 @@
     .menu.hidden{display:none}
     h1{margin:0;font-size:32px} h1 .brand-lockup{display:flex}.version-tag{color:#f8fafc;font-weight:800;text-shadow:0 1px 8px rgba(0,0,0,.35)} body.light .version-tag{color:#0f172a;text-shadow:0 1px 6px rgba(255,255,255,.35)}
     .sub{color:var(--sub)}
-    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0 24px}
     .card{background:rgba(17,24,39,.86);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.28)}
     .metric{font-size:28px;font-weight:700;margin-top:8px}
-    .toolbar,.sectionhead{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.topbar{width:100%;justify-content:center;margin:0 auto}
-    .topbar > button,.topbar > .filelbl,.topbar > .toolbar-group{width:270px;min-height:58px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:16px}
-    .topbar > button.half{width:130px;min-width:130px}
-    .topbar > .toolbar-group #exportMenuBtn,.topbar > .toolbar-group #importMenuBtn{width:100%;min-height:58px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:16px}
-    .topbar > .toolbar-group{display:block}
-    .topbar .menu{right:auto;left:0;width:270px}
-    .sectionhead{justify-content:space-between;margin:18px 0 12px}
     button,.filelbl{
       background:#1f2937;
       color:var(--text);
