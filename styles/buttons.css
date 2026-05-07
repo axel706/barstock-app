@@ -1,0 +1,20 @@
+    button,.filelbl{
+      background:#1f2937;
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:var(--control-radius);
+      padding:10px 14px;
+      font-weight:600;
+      cursor:pointer;
+      transition:
+        transform var(--motion-fast) ease,
+        box-shadow var(--motion-med) ease,
+        border-color var(--motion-med) ease,
+        background var(--motion-med) ease,
+        opacity var(--motion-fast) ease;
+    }
+    button:hover,.filelbl:hover{border-color:rgba(56,189,248,.65)}
+    .primary,.filelbl.primary{background:linear-gradient(90deg,#0284c7,#38bdf8);color:#ffffff;border:none}
+    .danger{background:#3b1217;color:#fecaca}
+    .success{background:#0e2d1f;color:#bbf7d0}
+    .filelbl input{display:none}
