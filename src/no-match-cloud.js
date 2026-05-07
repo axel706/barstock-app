@@ -112,9 +112,61 @@
     })).filter(r => r.rawItem);
   }
 
+  async function replaceNoMatches(noMatches) {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+
+    const deleteRes = await fetch(
+      `${url}/rest/v1/inventory_no_matches?location_id=eq.${locationId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${key}`
+        }
+      }
+    );
+
+    if (!deleteRes.ok) {
+      const txt = await deleteRes.text();
+      throw new Error('Error deleting inventory_no_matches: ' + txt);
+    }
+
+    const rows = (noMatches || []).map(r => ({
+      location_id: locationId,
+      raw_item: r.rawItem || '',
+      count: Number(r.count || 0)
+    })).filter(r => r.raw_item);
+
+    const chunkSize = 200;
+
+    for (let i = 0; i < rows.length; i += chunkSize) {
+      const chunk = rows.slice(i, i + chunkSize);
+
+      const insertRes = await fetch(`${url}/rest/v1/inventory_no_matches`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: key,
+          Authorization: `Bearer ${key}`,
+          Prefer: 'return=minimal'
+        },
+        body: JSON.stringify(chunk)
+      });
+
+      if (!insertRes.ok) {
+        const txt = await insertRes.text();
+        throw new Error('Error inserting inventory_no_matches: ' + txt);
+      }
+    }
+
+    return true;
+  }
+
   window.BarStockNoMatchCloud = {
     fetchLocationId,
     loadNoMatches,
+    replaceNoMatches,
     saveAlias,
     deleteNoMatch
   };
