@@ -127,10 +127,100 @@
     return true;
   }
 
+  async function resetOnHandForItems(items) {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+
+    for (const row of items || []) {
+      const item = row?.item || '';
+      const code = row?.code || '';
+
+      let patchUrl = `${url}/rest/v1/inventory_items?location_id=eq.${locationId}&item_name=eq.${encodeURIComponent(item)}`;
+
+      if (code) {
+        patchUrl += `&code=eq.${encodeURIComponent(code)}`;
+      }
+
+      const res = await fetch(patchUrl, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: key,
+          Authorization: `Bearer ${key}`,
+          Prefer: 'return=minimal'
+        },
+        body: JSON.stringify({
+          on_hand: 0
+        })
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error('Error resetting inventory_items: ' + txt);
+      }
+    }
+
+    return true;
+  }
+
+  async function touchWeeklyReset() {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+
+    const res = await fetch(
+      `${url}/rest/v1/locations?id=eq.${locationId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: key,
+          Authorization: `Bearer ${key}`,
+          Prefer: 'return=minimal'
+        },
+        body: JSON.stringify({
+          weekly_reset_at: new Date().toISOString()
+        })
+      }
+    );
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error('Error updating weekly_reset_at: ' + txt);
+    }
+
+    return true;
+  }
+
+  async function deleteAllInventoryItems() {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+
+    const res = await fetch(
+      `${url}/rest/v1/inventory_items?location_id=eq.${locationId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${key}`
+        }
+      }
+    );
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error('Error deleting inventory_items: ' + txt);
+    }
+
+    return true;
+  }
+
   window.BarStockInventoryCloud = {
     fetchLocationId,
     createInventoryItem,
     patchInventoryItem,
-    deleteInventoryItem
+    deleteInventoryItem,
+    resetOnHandForItems,
+    touchWeeklyReset,
+    deleteAllInventoryItems
   };
 })();
