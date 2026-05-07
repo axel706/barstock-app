@@ -2799,7 +2799,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260506-213837</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260506-215036</div>
+
+
 
 
 
@@ -6106,75 +6108,11 @@ async function importBackup(file){
 
   // Sync inventory master to Supabase after backup import
   try{
-    const SUPABASE_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
-
-    const locRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/locations?name=eq.${encodeURIComponent('The Crown Tavern')}&select=id,name`,
-      {
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`
-        }
-      }
-    );
-
-    const locData = await locRes.json();
-    const locationId = locData?.[0]?.id;
-
-    if(!locationId){
-      throw new Error('Could not find The Crown Tavern location');
+    if (!window.BarStockInventoryCloud) {
+      throw new Error('Inventory cloud module not available');
     }
 
-    const deleteRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/inventory_items?location_id=eq.${locationId}`,
-      {
-        method: 'DELETE',
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`
-        }
-      }
-    );
-
-    if(!deleteRes.ok){
-      const txt = await deleteRes.text();
-      throw new Error('Error deleting inventory_items: ' + txt);
-    }
-
-    const rows = (state.master || []).map(r => ({
-      location_id: locationId,
-      code: r.code || '',
-      item_name: r.item || '',
-      vendor: r.vendor || '',
-      suggested: Number(r.suggested || 0),
-      on_hand: Number(r.onHand || 0),
-      value: Number(r.value || 0)
-    }));
-
-    const chunkSize = 200;
-    for(let i = 0; i < rows.length; i += chunkSize){
-      const chunk = rows.slice(i, i + chunkSize);
-
-      const insertRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/inventory_items`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`,
-            Prefer: 'return=minimal'
-          },
-          body: JSON.stringify(chunk)
-        }
-      );
-
-      if(!insertRes.ok){
-        const txt = await insertRes.text();
-        throw new Error('Error inserting inventory_items: ' + txt);
-      }
-    }
+    await window.BarStockInventoryCloud.replaceInventoryMaster(state.master || []);
 
     setStatus('Backup imported and synced to cloud.');
   } catch(err){

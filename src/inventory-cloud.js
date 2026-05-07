@@ -214,6 +214,47 @@
     return true;
   }
 
+  async function replaceInventoryMaster(masterRows) {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+
+    await deleteAllInventoryItems();
+
+    const rows = (masterRows || []).map(r => ({
+      location_id: locationId,
+      code: r.code || '',
+      item_name: r.item || '',
+      vendor: r.vendor || '',
+      suggested: Number(r.suggested || 0),
+      on_hand: Number(r.onHand || 0),
+      value: Number(r.value || 0)
+    }));
+
+    const chunkSize = 200;
+
+    for (let i = 0; i < rows.length; i += chunkSize) {
+      const chunk = rows.slice(i, i + chunkSize);
+
+      const res = await fetch(`${url}/rest/v1/inventory_items`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: key,
+          Authorization: `Bearer ${key}`,
+          Prefer: 'return=minimal'
+        },
+        body: JSON.stringify(chunk)
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error('Error inserting inventory_items: ' + txt);
+      }
+    }
+
+    return true;
+  }
+
   window.BarStockInventoryCloud = {
     fetchLocationId,
     createInventoryItem,
@@ -221,6 +262,7 @@
     deleteInventoryItem,
     resetOnHandForItems,
     touchWeeklyReset,
-    deleteAllInventoryItems
+    deleteAllInventoryItems,
+    replaceInventoryMaster
   };
 })();
