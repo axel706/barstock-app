@@ -35,7 +35,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260507-174615</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260507-180606</div>
+
+
 
 
 
@@ -3633,9 +3635,6 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   if (window.__barstockNoMatchCloudBooted) return;
   window.__barstockNoMatchCloudBooted = true;
 
-  const NM_CLOUD_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
-  const NM_CLOUD_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
-  const NM_CLOUD_LOCATION = 'The Crown Tavern';
 
   async function loadNoMatchesFromSupabase() {
     try {
@@ -3681,8 +3680,6 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   if (window.__barstockOrdersRealtimeCleanBooted) return;
   window.__barstockOrdersRealtimeCleanBooted = true;
 
-  const ORDERS_RT_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
-  const ORDERS_RT_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
 
   let ordersRealtimeTimer = null;
 
@@ -3697,19 +3694,8 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     }, 700);
   }
 
-  async function ensureSupabaseRealtimeSdk() {
-    if (window.supabase) return;
-    await new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-      s.onload = resolve;
-      s.onerror = reject;
-      document.head.appendChild(s);
-    });
-  }
 
   async function enableOrdersRealtimeClean() {
-    await ensureSupabaseRealtimeSdk();
 
     const client = window.BarStockSupabase.getClient();
 
@@ -3758,8 +3744,6 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   if (window.__barstockNoMatchRealtimeCleanBooted) return;
   window.__barstockNoMatchRealtimeCleanBooted = true;
 
-  const NM_RT_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
-  const NM_RT_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
 
   let noMatchRealtimeTimer = null;
 
@@ -3774,19 +3758,8 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     }, 500);
   }
 
-  async function ensureNoMatchRealtimeSdk() {
-    if (window.supabase) return;
-    await new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-      s.onload = resolve;
-      s.onerror = reject;
-      document.head.appendChild(s);
-    });
-  }
 
   async function enableNoMatchRealtimeClean() {
-    await ensureNoMatchRealtimeSdk();
 
     const client = window.BarStockSupabase.getClient();
 
