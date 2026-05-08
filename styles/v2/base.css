@@ -4,5 +4,6 @@
 }
 
 .barstock-v2 {
-  display: none;
+  display:block;
+  margin:24px;
 }
