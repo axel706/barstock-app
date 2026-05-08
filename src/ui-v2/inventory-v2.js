@@ -2,7 +2,9 @@
   if (window.BarStockInventoryV2) return;
 
   function getRows() {
-    return Array.isArray(window.state?.master) ? window.state.master : [];
+    if (Array.isArray(window.state?.master)) return window.state.master;
+    if (typeof state !== 'undefined' && Array.isArray(state.master)) return state.master;
+    return [];
   }
 
   function render() {
