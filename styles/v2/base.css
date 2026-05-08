@@ -1,0 +1,8 @@
+:root {
+  --v2-radius: 18px;
+  --v2-gap: 16px;
+}
+
+.barstock-v2 {
+  display: none;
+}
