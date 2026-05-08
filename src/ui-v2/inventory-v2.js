@@ -8,6 +8,9 @@
   }
 
   function render() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('uiV2') !== '1') return;
+
     const root = document.getElementById('barstockInventoryV2');
     if (!root) return;
 
