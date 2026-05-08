@@ -1,0 +1,30 @@
+.barstock-v2{
+  padding:24px;
+}
+
+.v2-panel{
+  background:rgba(15,23,42,.72);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:24px;
+  padding:24px;
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+}
+
+.v2-section-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.v2-section-head h2{
+  margin:0;
+  font-size:28px;
+  font-weight:700;
+}
+
+.v2-section-head span{
+  opacity:.7;
+  font-size:14px;
+}
