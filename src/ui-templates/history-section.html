@@ -1,0 +1,29 @@
+
+  <div class="card section-card" id="historySection">
+    <div class="section-header-row">
+      <div style="flex:1 1 auto">
+        <div class="sectionhead">
+          <div>
+            <strong><span class="section-title">Order History</span></strong>
+            <div class="small muted">Browse previously placed orders, filter them, and export or reopen them when needed.</div>
+          </div>
+        </div>
+      </div>
+      <button id="historyToggle" class="section-toggle" title="Collapse or expand Order History">−</button>
+    </div>
+    <div class="section-body" id="historySectionBody">
+      <div id="compareToolbar" class="compare-toolbar hidden">
+        <div id="compareStatus" class="compare-status">0 selected</div>
+        <button id="compareOrdersBtn" class="primary ui-control" disabled>Compare Orders</button>
+        <button id="clearCompareBtn" class="ui-control">Clear</button>
+      </div>
+      <div class="history-controls-top">
+        <div class="tabs history-vendor-tabs" id="historyVendorTabs"></div>
+      </div>
+      <div class="history-controls-bottom">
+        <input id="historySearchInput" class="ui-control" placeholder="Search orders..." />
+        <input id="historyDateFilter" class="ui-control" type="date" />
+      </div>
+      <div id="historyList" class="history-list"></div>
+    </div>
+  </div>

@@ -1,0 +1,57 @@
+
+  <div class="card section-card" id="usageSection">
+    <div class="section-header-row">
+      <div style="flex:1 1 auto">
+        <div class="sectionhead">
+          <div>
+            <strong><span class="section-title">Theoretical Usage</span></strong>
+            <div class="small muted">Import sales usage files to compare sold quantities with expected product usage.</div>
+          </div>
+        </div>
+      </div>
+      <button id="usageToggle" class="section-toggle" title="Collapse or expand Theoretical Usage">−</button>
+    </div>
+    <div class="section-body" id="usageSectionBody">
+      <div class="inventory-controls-top">
+        <label class="filelbl">Import Liquor CSV <input type="file" id="usageLiquorFile" accept=".csv" /></label>
+        <label class="filelbl">Import Wine CSV <input type="file" id="usageWineFile" accept=".csv" /></label>
+        <button id="resetUsageBtn" class="danger">Reset</button>
+      </div>
+      <div class="inventory-controls-bottom">
+        <input id="usageSearchInput" placeholder="Filter current order" />
+      </div>
+      <div class="tablewrap">
+        <table>
+          <colgroup>
+            <col class="code-col">
+            <col class="item-col">
+            <col class="vendor-col">
+            <col class="sold-col">
+            <col class="usage-col">
+          </colgroup>
+          <thead><tr><th>CODE</th><th>ITEM</th><th>VENDOR</th><th>SOLD</th><th>USAGE</th></tr></thead>
+          <tbody id="usageBody"></tbody>
+        </table>
+      </div>
+      <div id="usageEmpty" class="small muted">No theoretical usage file loaded</div>
+    </div>
+  </div>
+
+  <div class="status" id="statusBar">Ready.</div>
+</div>
+
+<div id="modalBg" class="modalbg hidden">
+  <div class="modal">
+    <h3 style="margin-top:0">Create Item from No Match</h3>
+    <div class="formgrid">
+      <div class="full"><label>Item name<br><input id="nmName" style="width:100%"></label></div>
+      <div><label>Code<br><input id="nmCode" style="width:100%"></label></div>
+      <div><label>Vendor<br>
+        <select id="nmVendor" style="width:100%">
+          <option value="LOOP">LOOP</option>
+          <option value="SOUTHERN">SOUTHERN</option>
+          <option value="BREAKTHRU">BREAKTHRU</option>
+          <option value="WINE MERCHANT">WINE MERCHANT</option>
+          <option value="UNKNOWN">UNKNOWN</option>
+        </select>
+      </label></div>
