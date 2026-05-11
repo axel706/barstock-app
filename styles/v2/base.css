@@ -5,4 +5,9 @@
 
 .barstock-v2 {
   display: block;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 24px;
+  position: relative;
+  z-index: 1;
 }
