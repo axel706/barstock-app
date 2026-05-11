@@ -42,7 +42,8 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260511-192508</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260511-192856</div>
+
 
 
 
@@ -313,7 +314,14 @@
     <div class="card"><div class="metric-card-head"><div class="muted">Master status</div><div class="metric-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v6h6"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div></div><div class="metric small" id="masterStatus">No master loaded</div></div>
   </div>
 
-  <div class="card section-card" id="inventorySection">
+  
+<div id="inventoryTemplateMount" class="hidden"></div>
+<div id="vendorTemplateMount" class="hidden"></div>
+<div id="historyTemplateMount" class="hidden"></div>
+<div id="noMatchTemplateMount" class="hidden"></div>
+<div id="usageTemplateMount" class="hidden"></div>
+
+<div class="card section-card" id="inventorySection">
     <div class="section-header-row">
       <div style="flex:1 1 auto">
         <div class="sectionhead inventory-header-row">
@@ -3939,5 +3947,6 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
 <button id="authLogoutBtn" type="button">Logout</button>
 
+  <script src="src/ui-templates/load-templates.js"></script>
 </body>
 </html>
