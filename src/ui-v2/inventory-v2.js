@@ -27,7 +27,7 @@
       el.setAttribute('aria-disabled', 'true');
     });
 
-    root.innerHTML = '';
+    root.innerHTML = '<div class="v2-preview-label">Inventory V2 Preview — visual clone, actions disabled</div>';
     root.appendChild(clone);
   }
 
