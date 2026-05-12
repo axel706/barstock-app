@@ -2,9 +2,11 @@
   if (window.__barstockInventoryRealtimeBooted) return;
   window.__barstockInventoryRealtimeBooted = true;
 
-  const BARSTOCK_RT_URL = 'https://lqmoftpedmbhtuzlbbuh.supabase.co';
-  const BARSTOCK_RT_KEY = 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S';
-  const BARSTOCK_RT_LOCATION_NAME = 'The Crown Tavern';
+  const config = window.BARSTOCK_CONFIG || {};
+
+  const BARSTOCK_RT_URL = config.SUPABASE_URL;
+  const BARSTOCK_RT_KEY = config.SUPABASE_KEY;
+  const BARSTOCK_RT_LOCATION_NAME = config.LOCATION_NAME || 'The Crown Tavern';
 
   async function ensureSupabaseSdk() {
     if (window.supabase) return;
