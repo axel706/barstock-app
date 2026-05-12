@@ -6,6 +6,7 @@
     return {
       url: config.SUPABASE_URL,
       key: config.SUPABASE_KEY,
+      accountId: config.ACCOUNT_ID || 'crown-hospitality-group',
       locationName: config.LOCATION_NAME || 'The Crown Tavern'
     };
   }
