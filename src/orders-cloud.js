@@ -7,7 +7,7 @@
     return {
       url: config.SUPABASE_URL,
       key: config.SUPABASE_KEY,
-      accountId: config.ACCOUNT_ID || 'crown-hospitality-group',
+      accountId: config.ACCOUNT_ID || 'wjm-hospitality',
       locationName: config.LOCATION_NAME || 'The Crown Tavern'
     };
   }
@@ -16,7 +16,7 @@
 
   async function orderCloudFetchLocationId() {
     const res = await fetch(
-      `${window.BarStockOrdersConfig().url}/rest/v1/locations?name=eq.${encodeURIComponent(window.BarStockOrdersConfig().locationName)}&select=id,name`,
+      `${window.BarStockOrdersConfig().url}/rest/v1/locations?account_id=eq.${encodeURIComponent(window.BarStockOrdersConfig().accountId)}&name=eq.${encodeURIComponent(window.BarStockOrdersConfig().locationName)}&select=id,name`,
       {
         headers: {
           apikey: window.BarStockOrdersConfig().key,
@@ -176,7 +176,7 @@
 
   async function getOrdersLocationId() {
     const res = await fetch(
-      `${window.BarStockOrdersConfig().url}/rest/v1/locations?name=eq.${encodeURIComponent(window.BarStockOrdersConfig().locationName)}&select=id,weekly_reset_at`,
+      `${window.BarStockOrdersConfig().url}/rest/v1/locations?account_id=eq.${encodeURIComponent(window.BarStockOrdersConfig().accountId)}&name=eq.${encodeURIComponent(window.BarStockOrdersConfig().locationName)}&select=id,weekly_reset_at`,
       {
         headers: {
           apikey: window.BarStockOrdersConfig().key,
