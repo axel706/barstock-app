@@ -2,7 +2,7 @@ window.BARSTOCK_CONFIG = window.BARSTOCK_CONFIG || {
   SUPABASE_URL: 'https://lqmoftpedmbhtuzlbbuh.supabase.co',
   SUPABASE_KEY: 'sb_publishable_OOsEgZD8rRC6115PkGSHsA_nAB9n68S',
 
-  ACCOUNT_ID: 'crown-hospitality-group',
+  ACCOUNT_ID: 'wjm-hospitality',
 
   LOCATION_NAME: 'The Crown Tavern',
 
