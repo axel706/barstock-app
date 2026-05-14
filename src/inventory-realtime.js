@@ -6,6 +6,7 @@
 
   const BARSTOCK_RT_URL = config.SUPABASE_URL;
   const BARSTOCK_RT_KEY = config.SUPABASE_KEY;
+  const BARSTOCK_RT_ACCOUNT_ID = config.ACCOUNT_ID || 'crown-hospitality-group';
   const BARSTOCK_RT_LOCATION_NAME = config.LOCATION_NAME || 'The Crown Tavern';
 
   async function ensureSupabaseSdk() {
@@ -31,7 +32,7 @@
 
   async function fetchLocationId() {
     const res = await fetch(
-      `${BARSTOCK_RT_URL}/rest/v1/locations?name=eq.${encodeURIComponent(BARSTOCK_RT_LOCATION_NAME)}&select=id,name`,
+      `${BARSTOCK_RT_URL}/rest/v1/locations?account_id=eq.${encodeURIComponent(BARSTOCK_RT_ACCOUNT_ID)}&name=eq.${encodeURIComponent(BARSTOCK_RT_LOCATION_NAME)}&select=id,name`,
       {
         headers: {
           apikey: BARSTOCK_RT_KEY,
