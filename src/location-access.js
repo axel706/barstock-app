@@ -42,7 +42,23 @@
     })).filter(location => location.name);
   }
 
+  function getActiveLocationName(){
+    return localStorage.getItem('barstock.activeLocationName')
+      || window.BARSTOCK_CONFIG?.LOCATION_NAME
+      || 'The Crown Tavern';
+  }
+
+  function setActiveLocationName(name){
+    if (!name) return;
+    localStorage.setItem('barstock.activeLocationName', name);
+    if (window.BARSTOCK_CONFIG) {
+      window.BARSTOCK_CONFIG.LOCATION_NAME = name;
+    }
+  }
+
   window.BarStockLocationAccess = {
-    getAllowedLocations
+    getAllowedLocations,
+    getActiveLocationName,
+    setActiveLocationName
   };
 })();
