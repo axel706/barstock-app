@@ -12,10 +12,10 @@
   }
 
   async function fetchLocationId() {
-    const { url, key, accountId, locationName } = getConfig();
+    const { url, key, locationName } = getConfig();
 
     const res = await fetch(
-      `${url}/rest/v1/locations?account_id=eq.${encodeURIComponent(accountId)}&name=eq.${encodeURIComponent(locationName)}&select=id`,
+      `${url}/rest/v1/locations?name=eq.${encodeURIComponent(locationName)}&select=id`,
       {
         headers: {
           apikey: key,
