@@ -78,6 +78,17 @@
       const { error } = await authClient.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
+      const locations = await window.BarStockLocationAccess.getAllowedLocations();
+
+      if (locations.length > 1) {
+        showLocationSelector(locations);
+        return;
+      }
+
+      if (locations.length === 1) {
+        window.BarStockLocationAccess.setActiveLocationName(locations[0].name);
+      }
+
       hideOverlay();
       location.reload();
     } catch(err){
@@ -89,6 +100,30 @@
         btn.textContent = 'Login';
       }
     }
+  }
+
+  function showLocationSelector(locations){
+    const step = document.getElementById('authLocationStep');
+    const select = document.getElementById('authLocationSelect');
+    const btn = document.getElementById('authLoginBtn');
+    const msg = document.getElementById('authMsg');
+
+    if (!step || !select || !btn) return;
+
+    select.innerHTML = locations.map(location => (
+      `<option value="${location.name}">${location.name}</option>`
+    )).join('');
+
+    step.style.display = 'block';
+    if (msg) msg.textContent = 'Select a location to continue.';
+
+    btn.textContent = 'Continue';
+    btn.onclick = () => {
+      const selected = select.value;
+      window.BarStockLocationAccess.setActiveLocationName(selected);
+      hideOverlay();
+      location.reload();
+    };
   }
 
   async function logout(){
