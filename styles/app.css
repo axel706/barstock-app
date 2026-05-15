@@ -1963,3 +1963,31 @@
   #statusBar.status-pop{
     transform:translateY(-1px);
   }
+
+/* Header actions: logout + theme toggle */
+.header-actions{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+.header-actions #authLogoutBtn,
+.header-actions #themeToggle{
+  height:42px !important;
+  min-height:42px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+.header-actions #authLogoutBtn{
+  min-width:92px !important;
+}
+
+.header-actions #themeToggle{
+  width:42px !important;
+  min-width:42px !important;
+  flex:0 0 42px !important;
+}
