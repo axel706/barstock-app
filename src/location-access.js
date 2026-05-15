@@ -65,15 +65,44 @@
   }
 
 
-  function renderActiveLocationBadge(){
+  async function renderActiveLocationControls(){
     const badge = document.getElementById('locationBadge');
-    if (!badge) return;
+    const select = document.getElementById('headerLocationSelect');
 
-    const name = getActiveLocationName();
-    badge.textContent = name ? `LOCATION: ${name}` : 'LOCATION: NOT SELECTED';
+    const activeName = getActiveLocationName();
+
+    if (badge) {
+      badge.textContent = activeName ? `LOCATION: ${activeName}` : 'LOCATION: NOT SELECTED';
+    }
+
+    if (!select) return;
+
+    try {
+      const locations = await getAllowedLocations();
+
+      if (!locations || locations.length <= 1) {
+        select.style.display = 'none';
+        return;
+      }
+
+      select.innerHTML = locations.map(location => (
+        `<option value="${location.name}">${location.name}</option>`
+      )).join('');
+
+      select.value = activeName;
+      select.style.display = 'block';
+
+      select.onchange = () => {
+        setActiveLocationName(select.value);
+        window.location.reload();
+      };
+    } catch (error) {
+      console.warn('Could not load header location selector', error);
+      select.style.display = 'none';
+    }
   }
 
-  document.addEventListener('DOMContentLoaded', renderActiveLocationBadge);
+  document.addEventListener('DOMContentLoaded', renderActiveLocationControls);
 
   window.BarStockLocationAccess = {
     getAllowedLocations,
