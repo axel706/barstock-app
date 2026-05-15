@@ -40,7 +40,8 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260515-142003</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260515-142941</div>
+
 
 
 
@@ -873,7 +874,18 @@
 </div>
 
 <script>
-const STORAGE_KEY = 'crown_inventory_v14';
+const BASE_STORAGE_KEY = 'crown_inventory_v14';
+function getActiveStorageSuffix(){
+  try {
+    return (window.BarStockLocationAccess?.getActiveLocationName?.() || window.BARSTOCK_CONFIG?.LOCATION_NAME || 'The Crown Tavern')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+  } catch {
+    return 'the_crown_tavern';
+  }
+}
+const STORAGE_KEY = `${BASE_STORAGE_KEY}_${getActiveStorageSuffix()}`;
 const ALIAS_KEY = 'crown_inventory_aliases_v14';
 const LEGACY_STORAGE_KEYS = ['crown_inventory_v13','crown_inventory_v15'];
 const LEGACY_ALIAS_KEYS = ['crown_inventory_aliases_v13','crown_inventory_aliases_v15'];
