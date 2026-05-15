@@ -64,24 +64,7 @@
         }
       }
 
-      // 1. export local file como siempre
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-      if (!isMobile) {
-        if (vendorAtStart === 'LOOP') {
-          if (typeof exportLoopCsvFromRows === 'function') {
-            const ok = exportLoopCsvFromRows(rows, order.filename);
-            if (ok === false) throw new Error('Could not export LOOP CSV');
-          }
-        } else {
-          if (typeof exportVendorJpgFromRows === 'function') {
-            await exportVendorJpgFromRows(vendorAtStart, rows, order.filename);
-          }
-        }
-      } else {
-      }
-
-      // 2. cloud obligatorio
+      // 1. cloud obligatorio: save order before any local export/download prompt
       if (typeof window.persistOrderToSupabase !== 'function') {
         throw new Error('persistOrderToSupabase unavailable');
       }
@@ -111,6 +94,28 @@
           setStatus(`${vendorAtStart} order placed with warnings.`);
         } else {
           setStatus(`${vendorAtStart} order placed and synced to cloud.`);
+        }
+      }
+
+      // 4. optional local export after cloud save; never block order placement
+      try {
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+        if (!isMobile) {
+          if (vendorAtStart === 'LOOP') {
+            if (typeof exportLoopCsvFromRows === 'function') {
+              exportLoopCsvFromRows(rows, order.filename);
+            }
+          } else {
+            if (typeof exportVendorJpgFromRows === 'function') {
+              await exportVendorJpgFromRows(vendorAtStart, rows, order.filename);
+            }
+          }
+        }
+      } catch (exportErr) {
+        console.warn('Order saved, but local export failed:', exportErr);
+        if (typeof setStatus === 'function') {
+          setStatus(`${vendorAtStart} order placed. Local export was skipped or blocked.`);
         }
       }
 
