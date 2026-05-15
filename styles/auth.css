@@ -104,7 +104,8 @@ body.auth-locked{
   margin-bottom:16px;
 }
 
-.auth-field input{
+.auth-field input,
+.auth-field select{
   width:100%;
   height:52px;
   padding:0 16px;
@@ -126,7 +127,8 @@ body.auth-locked{
 }
 
 /* focus */
-.auth-field input:focus{
+.auth-field input:focus,
+.auth-field select:focus{
   border-color:rgba(125,211,252,.85);
   box-shadow:0 0 0 4px rgba(56,189,248,.18);
   background:rgba(2,6,23,.68);
@@ -184,10 +186,6 @@ body.auth-locked{
 
 /* 🔹 Logout btn */
 #authLogoutBtn{
-  position:fixed !important;
-  top:64px !important;
-  right:18px !important;
-  z-index:1000002 !important;
   display:none;
 
   padding:10px 14px !important;
@@ -199,5 +197,11 @@ body.auth-locked{
   color:#fff !important;
   font-weight:800 !important;
 
-  box-shadow:0 10px 30px rgba(0,0,0,.4) !important;
+  box-shadow:0 10px 30px rgba(0,0,0,.18) !important;
+}
+
+.auth-logout-inline{
+  position:static !important;
+  z-index:auto !important;
+  margin-left:8px !important;
 }
