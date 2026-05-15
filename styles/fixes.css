@@ -785,3 +785,27 @@
     max-width:100% !important;
   }
 }
+
+/* Mobile order history action wrapping */
+@media (max-width: 640px){
+  .history-card{
+    max-width:100% !important;
+    overflow:hidden !important;
+  }
+
+  .history-actions{
+    display:grid !important;
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+    gap:8px !important;
+    width:100% !important;
+  }
+
+  .history-actions button{
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    white-space:normal !important;
+    padding:10px 8px !important;
+    line-height:1.15 !important;
+  }
+}
