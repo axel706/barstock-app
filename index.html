@@ -40,7 +40,8 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260515-142941</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260515-143725</div>
+
 
 
 
@@ -886,15 +887,15 @@ function getActiveStorageSuffix(){
   }
 }
 const STORAGE_KEY = `${BASE_STORAGE_KEY}_${getActiveStorageSuffix()}`;
-const ALIAS_KEY = 'crown_inventory_aliases_v14';
+const ALIAS_KEY = `crown_inventory_aliases_v14_${getActiveStorageSuffix()}`;
 const LEGACY_STORAGE_KEYS = ['crown_inventory_v13','crown_inventory_v15'];
 const LEGACY_ALIAS_KEYS = ['crown_inventory_aliases_v13','crown_inventory_aliases_v15'];
 const THEME_KEY = 'crown_inventory_theme';
 const VALUE_RESET_MIGRATION_KEY = 'crown_inventory_value_reset_v241';
-const USAGE_STORAGE_KEY = 'crown_inventory_theoretical_usage_v1';
-const PRICE_ALIAS_KEY = 'crown_inventory_price_aliases_v1';
+const USAGE_STORAGE_KEY = `crown_inventory_theoretical_usage_v1_${getActiveStorageSuffix()}`;
+const PRICE_ALIAS_KEY = `crown_inventory_price_aliases_v1_${getActiveStorageSuffix()}`;
 let usageData = [];
-const SECTION_STATE_KEY = 'crown_inventory_section_visibility';
+const SECTION_STATE_KEY = `crown_inventory_section_visibility_${getActiveStorageSuffix()}`;
 let state = loadState();
 state.orderHistory = Array.isArray(state.orderHistory) ? state.orderHistory : [];
 state.placedOrders = Array.isArray(state.placedOrders) ? state.placedOrders : [];
