@@ -210,14 +210,14 @@ body.auth-locked{
 /* Auth card blue glass polish */
 #authOverlay #authCard{
   background:
-    linear-gradient(145deg, rgba(15, 23, 42, .18), rgba(10, 24, 49, .10)) !important;
-  border:1px solid rgba(96, 165, 250, .38) !important;
+    linear-gradient(145deg, rgba(255,255,255,.08), rgba(255,255,255,.03)) !important;
+  border:1px solid rgba(255,255,255,.16) !important;
   box-shadow:
-    0 28px 90px rgba(0, 0, 0, .52),
+    0 18px 60px rgba(0, 0, 0, .22),
     0 0 0 1px rgba(255,255,255,.06) inset,
-    0 0 80px rgba(59, 130, 246, .32) !important;
-  backdrop-filter: blur(52px) saturate(210%) brightness(1.08) !important;
-  -webkit-backdrop-filter: blur(52px) saturate(210%) brightness(1.08) !important;
+    0 0 120px rgba(59, 130, 246, .20) !important;
+  backdrop-filter: blur(70px) saturate(240%) brightness(1.18) !important;
+  -webkit-backdrop-filter: blur(70px) saturate(240%) brightness(1.18) !important;
 }
 
 #authOverlay .auth-title,
@@ -236,8 +236,8 @@ body.auth-locked{
 }
 
 #authOverlay .auth-field{
-  background:rgba(15, 23, 42, .46) !important;
-  border:1px solid rgba(148, 163, 184, .38) !important;
+  background:rgba(255,255,255,.06) !important;
+  border:1px solid rgba(255,255,255,.14) !important;
   box-shadow:0 0 0 1px rgba(255,255,255,.035) inset !important;
 }
 
