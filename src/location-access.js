@@ -56,6 +56,14 @@
     }
   }
 
+
+
+  const initialLocation = getActiveLocationName();
+
+  if (window.BARSTOCK_CONFIG && initialLocation) {
+    window.BARSTOCK_CONFIG.LOCATION_NAME = initialLocation;
+  }
+
   window.BarStockLocationAccess = {
     getAllowedLocations,
     getActiveLocationName,
