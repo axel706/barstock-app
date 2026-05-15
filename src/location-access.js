@@ -64,6 +64,17 @@
     window.BARSTOCK_CONFIG.LOCATION_NAME = initialLocation;
   }
 
+
+  function renderActiveLocationBadge(){
+    const badge = document.getElementById('locationBadge');
+    if (!badge) return;
+
+    const name = getActiveLocationName();
+    badge.textContent = name ? `LOCATION: ${name}` : 'LOCATION: NOT SELECTED';
+  }
+
+  document.addEventListener('DOMContentLoaded', renderActiveLocationBadge);
+
   window.BarStockLocationAccess = {
     getAllowedLocations,
     getActiveLocationName,
