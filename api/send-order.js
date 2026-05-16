@@ -9,7 +9,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "Method not allowed" });
 
   try {
-    const { to, cc, vendor, items, totalUnits, subtotal, locationName } = req.body || {};
+    const { to, cc, vendor, items, totalUnits, subtotal, locationName, jpgBase64, filename } = req.body || {};
 
     if (!to || !vendor || !items?.length) {
       return res.status(400).json({ ok: false, error: "Missing required fields" });
@@ -27,33 +27,55 @@ module.exports = async function handler(req, res) {
 
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
-    const itemRows = items.map(item =>
-      `  - ${item.item} (${item.code || 'N/A'}) - Qty: ${item.finalOrder}`
-    ).join('\n');
+    const subject = `Order for ${vendor} - ${new Date().toLocaleDateString()}`;
+    const safeFilename = filename || `${vendor.toLowerCase().replace(/\s+/g, '_')}_order.jpg`;
 
     const emailBody = [
-      `Order from: ${locationName || 'BarStock'}`,
-      `Vendor: ${vendor}`,
-      `Date: ${new Date().toLocaleDateString()}`,
+      `Hello,`,
       ``,
-      `Items:`,
-      itemRows,
+      `Please find attached the order from ${locationName || 'BarStock'} for ${vendor}.`,
       ``,
-      `Total units: ${totalUnits}`,
-      `Subtotal: $${Number(subtotal || 0).toFixed(2)}`,
+      `Summary:`,
+      `  Items: ${items.length}`,
+      `  Total units: ${totalUnits}`,
       ``,
       `Sent via BarStock Pro`
-    ].join('\n');
+    ].join('\r\n');
 
-    const subject = `Order for ${vendor} - ${new Date().toLocaleDateString()}`;
-
-    const message = [
+    const boundary = '----barstock_boundary_' + Date.now();
+    const headers = [
       `To: ${to}`,
+      cc ? `Cc: ${cc}` : null,
       `Subject: ${subject}`,
+      `MIME-Version: 1.0`,
+      `Content-Type: multipart/mixed; boundary="${boundary}"`,
+      ``
+    ].filter(Boolean).join('\r\n');
+
+    const bodyPart = [
+      `--${boundary}`,
       `Content-Type: text/plain; charset=utf-8`,
+      `Content-Transfer-Encoding: 7bit`,
       ``,
-      emailBody
-    ].join('\n');
+      emailBody,
+      ``
+    ].join('\r\n');
+
+    let attachmentPart = '';
+    if (jpgBase64) {
+      attachmentPart = [
+        `--${boundary}`,
+        `Content-Type: image/jpeg; name="${safeFilename}"`,
+        `Content-Disposition: attachment; filename="${safeFilename}"`,
+        `Content-Transfer-Encoding: base64`,
+        ``,
+        jpgBase64.match(/.{1,76}/g).join('\r\n'),
+        ``
+      ].join('\r\n');
+    }
+
+    const closing = `--${boundary}--`;
+    const message = [headers, bodyPart, attachmentPart, closing].filter(Boolean).join('\r\n');
 
     const encoded = Buffer.from(message).toString('base64url');
 

@@ -40,7 +40,8 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260516-123120</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260516-123904</div>
+
 
 
 
@@ -2919,7 +2920,7 @@ function exportCurrentVendorXlsx(){
   exportXlsx(`${currentVendorFilenameStem()}.xlsx`, rows);
   setStatus(`Vendor XLSX exported for ${activeVendorTab}.`);
 }
-async function exportVendorJpgFromRows(vendor, rows, filename){
+async function generateVendorJpgCanvas(vendor, rows){
   const safeRows = (rows || []).filter(r => parseNum(r.finalOrder !== undefined ? r.finalOrder : getEffectiveOrder(r)) > 0);
   const totalBottles = safeRows.reduce((sum, r) => sum + parseNum(r.finalOrder !== undefined ? r.finalOrder : getEffectiveOrder(r)), 0);
   const editedCount = safeRows.filter(r => supportsManualFinalOrder(r.vendor) && r.orderOverride !== '' && r.orderOverride !== null && r.orderOverride !== undefined).length;
@@ -2966,6 +2967,11 @@ async function exportVendorJpgFromRows(vendor, rows, filename){
   document.body.appendChild(temp);
   const canvas = await html2canvas(temp, {backgroundColor:'#ffffff', scale:2, windowWidth:1600, windowHeight:temp.scrollHeight + 100});
   temp.remove();
+  return canvas;
+}
+
+async function exportVendorJpgFromRows(vendor, rows, filename){
+  const canvas = await generateVendorJpgCanvas(vendor, rows);
   const a = document.createElement('a');
   a.href = canvas.toDataURL('image/jpeg', 0.95);
   a.download = filename;
@@ -3849,13 +3855,19 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
 
 <div id="emailOrderModalBg" class="modalbg hidden">
-  <div class="modal" style="width:min(480px,96vw)">
+  <div class="modal" style="width:min(720px,96vw);max-height:92vh;overflow-y:auto">
     <h3 style="margin-top:0">Email Order</h3>
     <div class="small muted" id="emailOrderModalLabel" style="margin-bottom:16px"></div>
     <label style="display:block;margin-bottom:6px;font-weight:600">To</label>
     <input id="emailOrderTo" type="email" placeholder="vendor@example.com" style="width:100%;margin-bottom:12px">
     <label style="display:block;margin-bottom:6px;font-weight:600">CC <span class="muted small">(optional)</span></label>
-    <input id="emailOrderCc" type="email" placeholder="manager@example.com" style="width:100%;margin-bottom:20px">
+    <input id="emailOrderCc" type="email" placeholder="manager@example.com" style="width:100%;margin-bottom:16px">
+    <div style="margin-bottom:20px">
+      <label style="display:block;margin-bottom:6px;font-weight:600">Order preview (will be attached as JPG)</label>
+      <div id="emailOrderPreview" style="border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:8px;background:rgba(255,255,255,.04);max-height:380px;overflow-y:auto;display:flex;align-items:center;justify-content:center;min-height:120px">
+        <div class="small muted">Generating preview...</div>
+      </div>
+    </div>
     <div style="display:flex;gap:10px;justify-content:flex-end">
       <button class="ui-control" onclick="closeEmailOrderModal()">Cancel</button>
       <button class="ui-control primary" id="emailOrderSendBtn" onclick="sendEmailOrder()">Send Email</button>
@@ -3867,35 +3879,54 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script>
 // EMAIL ORDER MODULE
 let _emailOrderContext = null;
+let _emailOrderJpgBase64 = null;
 
-window.openEmailOrderModal = function(historyOrderId) {
+window.openEmailOrderModal = async function(historyOrderId) {
   const modal = document.getElementById('emailOrderModalBg');
   const label = document.getElementById('emailOrderModalLabel');
   const toInput = document.getElementById('emailOrderTo');
   const ccInput = document.getElementById('emailOrderCc');
+  const preview = document.getElementById('emailOrderPreview');
+
+  let vendor, rows;
 
   if (historyOrderId) {
     const order = (state.orderHistory || []).find(o => o.id === historyOrderId);
     if (!order) return;
     _emailOrderContext = { type: 'history', order };
-    label.textContent = order.vendor + ' order — ' + new Date(order.createdAt).toLocaleDateString();
+    vendor = order.vendor;
+    rows = order.items;
+    label.textContent = vendor + ' order - ' + new Date(order.createdAt).toLocaleDateString();
   } else {
-    const vendor = typeof activeVendorTab !== 'undefined' ? activeVendorTab : 'ALL';
-    const rows = (typeof getOrderRowsForVendor === 'function' ? getOrderRowsForVendor(vendor) : [])
+    vendor = typeof activeVendorTab !== 'undefined' ? activeVendorTab : 'ALL';
+    rows = (typeof getOrderRowsForVendor === 'function' ? getOrderRowsForVendor(vendor) : [])
       .filter(r => Number((typeof parseNum === 'function' ? parseNum(r.finalOrder) : r.finalOrder) || 0) > 0);
     if (!rows.length) { alert('No items to email for this vendor.'); return; }
     _emailOrderContext = { type: 'current', vendor, rows };
-    label.textContent = vendor + ' order — ' + rows.length + ' items';
+    label.textContent = vendor + ' order - ' + rows.length + ' items';
   }
 
   toInput.value = '';
   ccInput.value = '';
+  preview.innerHTML = '<div class="small muted">Generating preview...</div>';
+  _emailOrderJpgBase64 = null;
   modal.classList.remove('hidden');
+
+  try {
+    const canvas = await generateVendorJpgCanvas(vendor, rows);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+    _emailOrderJpgBase64 = dataUrl.split(',')[1];
+    preview.innerHTML = '<img src="' + dataUrl + '" style="max-width:100%;height:auto;border-radius:6px;display:block">';
+  } catch (err) {
+    console.error('Preview generation failed:', err);
+    preview.innerHTML = '<div class="small" style="color:#ef4444">Could not generate preview: ' + err.message + '</div>';
+  }
 };
 
 window.closeEmailOrderModal = function() {
   document.getElementById('emailOrderModalBg').classList.add('hidden');
   _emailOrderContext = null;
+  _emailOrderJpgBase64 = null;
 };
 
 window.sendEmailOrder = async function() {
@@ -3905,6 +3936,7 @@ window.sendEmailOrder = async function() {
 
   if (!to) { alert('Please enter a recipient email.'); return; }
   if (!_emailOrderContext) return;
+  if (!_emailOrderJpgBase64) { alert('Preview not ready yet, please wait.'); return; }
 
   let vendor, items, totalUnits, subtotal;
 
@@ -3926,6 +3958,7 @@ window.sendEmailOrder = async function() {
   }
 
   const locationName = (window.BARSTOCK_CONFIG || {}).LOCATION_NAME || 'BarStock';
+  const filename = vendor.toLowerCase().replace(/\s+/g, '_') + '_order_' + new Date().toISOString().slice(0,10) + '.jpg';
 
   if (typeof setButtonBusy === 'function') setButtonBusy(btn, 'SENDING');
 
@@ -3933,7 +3966,7 @@ window.sendEmailOrder = async function() {
     const res = await fetch('https://barstock-app.vercel.app/api/send-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to, cc: cc || undefined, vendor, items, totalUnits, subtotal, locationName })
+      body: JSON.stringify({ to, cc: cc || undefined, vendor, items, totalUnits, subtotal, locationName, jpgBase64: _emailOrderJpgBase64, filename })
     });
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'Unknown error');
