@@ -40,7 +40,8 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260516-123904</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260516-125126</div>
+
 
 
 
@@ -3621,6 +3622,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
 <script src="src/orders-cloud.js"></script>
 <script src="src/order-history-ui.js"></script>
+<script src="src/email-order.js"></script>
 
 <script src="src/place-order.js"></script>
 <script src="src/quick-order.js"></script>
@@ -3876,117 +3878,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 </div>
 
 
-<script>
-// EMAIL ORDER MODULE
-let _emailOrderContext = null;
-let _emailOrderJpgBase64 = null;
 
-window.openEmailOrderModal = async function(historyOrderId) {
-  const modal = document.getElementById('emailOrderModalBg');
-  const label = document.getElementById('emailOrderModalLabel');
-  const toInput = document.getElementById('emailOrderTo');
-  const ccInput = document.getElementById('emailOrderCc');
-  const preview = document.getElementById('emailOrderPreview');
-
-  let vendor, rows;
-
-  if (historyOrderId) {
-    const order = (state.orderHistory || []).find(o => o.id === historyOrderId);
-    if (!order) return;
-    _emailOrderContext = { type: 'history', order };
-    vendor = order.vendor;
-    rows = order.items;
-    label.textContent = vendor + ' order - ' + new Date(order.createdAt).toLocaleDateString();
-  } else {
-    vendor = typeof activeVendorTab !== 'undefined' ? activeVendorTab : 'ALL';
-    rows = (typeof getOrderRowsForVendor === 'function' ? getOrderRowsForVendor(vendor) : [])
-      .filter(r => Number((typeof parseNum === 'function' ? parseNum(r.finalOrder) : r.finalOrder) || 0) > 0);
-    if (!rows.length) { alert('No items to email for this vendor.'); return; }
-    _emailOrderContext = { type: 'current', vendor, rows };
-    label.textContent = vendor + ' order - ' + rows.length + ' items';
-  }
-
-  toInput.value = '';
-  ccInput.value = '';
-  preview.innerHTML = '<div class="small muted">Generating preview...</div>';
-  _emailOrderJpgBase64 = null;
-  modal.classList.remove('hidden');
-
-  try {
-    const canvas = await generateVendorJpgCanvas(vendor, rows);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-    _emailOrderJpgBase64 = dataUrl.split(',')[1];
-    preview.innerHTML = '<img src="' + dataUrl + '" style="max-width:100%;height:auto;border-radius:6px;display:block">';
-  } catch (err) {
-    console.error('Preview generation failed:', err);
-    preview.innerHTML = '<div class="small" style="color:#ef4444">Could not generate preview: ' + err.message + '</div>';
-  }
-};
-
-window.closeEmailOrderModal = function() {
-  document.getElementById('emailOrderModalBg').classList.add('hidden');
-  _emailOrderContext = null;
-  _emailOrderJpgBase64 = null;
-};
-
-window.sendEmailOrder = async function() {
-  const to = document.getElementById('emailOrderTo').value.trim();
-  const cc = document.getElementById('emailOrderCc').value.trim();
-  const btn = document.getElementById('emailOrderSendBtn');
-
-  if (!to) { alert('Please enter a recipient email.'); return; }
-  if (!_emailOrderContext) return;
-  if (!_emailOrderJpgBase64) { alert('Preview not ready yet, please wait.'); return; }
-
-  let vendor, items, totalUnits, subtotal;
-
-  if (_emailOrderContext.type === 'history') {
-    const order = _emailOrderContext.order;
-    vendor = order.vendor;
-    items = order.items;
-    totalUnits = order.totalUnits;
-    subtotal = order.subtotal;
-  } else {
-    vendor = _emailOrderContext.vendor;
-    items = _emailOrderContext.rows.map(r => ({
-      item: r.item,
-      code: r.code,
-      finalOrder: typeof getEffectiveOrder === 'function' ? getEffectiveOrder(r) : r.toOrder
-    }));
-    totalUnits = items.reduce((sum, r) => sum + Number(r.finalOrder || 0), 0);
-    subtotal = typeof computeOrderSubtotal === 'function' ? computeOrderSubtotal(_emailOrderContext.rows) : 0;
-  }
-
-  const locationName = (window.BARSTOCK_CONFIG || {}).LOCATION_NAME || 'BarStock';
-  const filename = vendor.toLowerCase().replace(/\s+/g, '_') + '_order_' + new Date().toISOString().slice(0,10) + '.jpg';
-
-  if (typeof setButtonBusy === 'function') setButtonBusy(btn, 'SENDING');
-
-  try {
-    const res = await fetch('https://barstock-app.vercel.app/api/send-order', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to, cc: cc || undefined, vendor, items, totalUnits, subtotal, locationName, jpgBase64: _emailOrderJpgBase64, filename })
-    });
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || 'Unknown error');
-    window.closeEmailOrderModal();
-    if (typeof setStatus === 'function') setStatus('Order emailed to ' + to + '.');
-  } catch (err) {
-    console.error(err);
-    alert('Could not send email: ' + err.message);
-  } finally {
-    if (typeof clearButtonBusy === 'function') clearButtonBusy(btn);
-  }
-};
-
-document.addEventListener('DOMContentLoaded', function() {
-  const bg = document.getElementById('emailOrderModalBg');
-  if (bg) bg.addEventListener('click', function(e) {
-    if (e.target.id === 'emailOrderModalBg') window.closeEmailOrderModal();
-  });
-});
-</script>
 
 </body>
 </html>
