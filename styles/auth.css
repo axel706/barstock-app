@@ -11,9 +11,9 @@ body.auth-locked{
   align-items:center;
   justify-content:center;
   padding:28px;
-  background:rgba(2,6,23,.15);
-  backdrop-filter:none;
-  -webkit-backdrop-filter:none;
+  background:rgba(2,6,23,.34);
+  backdrop-filter:blur(26px) saturate(150%) brightness(.82);
+  -webkit-backdrop-filter:blur(26px) saturate(150%) brightness(.82);
 }
 
 #authOverlay.show{
@@ -26,7 +26,9 @@ body.auth-locked{
   padding:42px 38px 34px;
   border-radius:26px;
 
-  background:rgba(15,23,42,.08);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.16), rgba(255,255,255,.05)),
+    linear-gradient(180deg, rgba(15,23,42,.70), rgba(2,6,23,.58));
 
   border:1px solid rgba(255,255,255,.10);
 
