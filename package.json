@@ -25,6 +25,7 @@
     "@playwright/test": "^1.59.1"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.105.1"
+    "@supabase/supabase-js": "^2.105.1",
+    "googleapis": "^171.4.0"
   }
 }
