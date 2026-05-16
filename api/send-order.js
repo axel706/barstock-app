@@ -28,7 +28,7 @@ module.exports = async function handler(req, res) {
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
     const itemRows = items.map(item =>
-      `  - ${item.item} (${item.code || 'N/A'}) — Qty: ${item.finalOrder}`
+      `  - ${item.item} (${item.code || 'N/A'}) - Qty: ${item.finalOrder}`
     ).join('\n');
 
     const emailBody = [
@@ -45,7 +45,7 @@ module.exports = async function handler(req, res) {
       `Sent via BarStock Pro`
     ].join('\n');
 
-    const subject = `Order for ${vendor} — ${new Date().toLocaleDateString()}`;
+    const subject = `Order for ${vendor} - ${new Date().toLocaleDateString()}`;
 
     const message = [
       `To: ${to}`,
