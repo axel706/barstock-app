@@ -60,39 +60,35 @@ module.exports = async function handler(req, res) {
     ].join('\r\n');
 
     const boundary = '----barstock_boundary_' + Date.now();
-    const headers = [
+    const nl = '\r\n';
+
+    const headerLines = [
       `To: ${to}`,
       cc ? `Cc: ${cc}` : null,
       `Subject: ${subject}`,
       `MIME-Version: 1.0`,
-      `Content-Type: multipart/mixed; boundary="${boundary}"`,
-      ``
-    ].filter(Boolean).join('\r\n');
+      `Content-Type: multipart/mixed; boundary="${boundary}"`
+    ].filter(Boolean);
 
-    const bodyPart = [
-      `--${boundary}`,
-      `Content-Type: text/plain; charset=utf-8`,
-      `Content-Transfer-Encoding: 7bit`,
-      ``,
-      emailBody,
-      ``
-    ].join('\r\n');
+    let message = headerLines.join(nl) + nl + nl;
 
-    let attachmentPart = '';
+    // Text part
+    message += `--${boundary}` + nl;
+    message += `Content-Type: text/plain; charset="UTF-8"` + nl;
+    message += `Content-Transfer-Encoding: 7bit` + nl + nl;
+    message += emailBody + nl + nl;
+
+    // Attachment part
     if (jpgBase64) {
-      attachmentPart = [
-        `--${boundary}`,
-        `Content-Type: image/jpeg; name="${safeFilename}"`,
-        `Content-Disposition: attachment; filename="${safeFilename}"`,
-        `Content-Transfer-Encoding: base64`,
-        ``,
-        jpgBase64.match(/.{1,76}/g).join('\r\n'),
-        ``
-      ].join('\r\n');
+      const wrapped = jpgBase64.replace(/\s/g, '').match(/.{1,76}/g).join(nl);
+      message += `--${boundary}` + nl;
+      message += `Content-Type: image/jpeg; name="${safeFilename}"` + nl;
+      message += `Content-Disposition: attachment; filename="${safeFilename}"` + nl;
+      message += `Content-Transfer-Encoding: base64` + nl + nl;
+      message += wrapped + nl + nl;
     }
 
-    const closing = `--${boundary}--`;
-    const message = [headers, bodyPart, attachmentPart, closing].filter(Boolean).join('\r\n');
+    message += `--${boundary}--`;
 
     const encoded = Buffer.from(message).toString('base64url');
 
