@@ -83,7 +83,7 @@ ${jpgBase64 ? `<div style="margin:16px 0;text-align:center"><img src="cid:${cid}
 <p>Kindly confirm receipt and expected delivery date at your earliest convenience.</p>
 <p>If you have any questions or need clarification about this order, please reply directly to this email.</p>
 <p>Thank you,<br>
-The ${escapeHtml(loc)} Team</p>
+${escapeHtml(loc)} Team</p>
 <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0">
 <p style="color:#94a3b8;font-size:12px">Sent via BarStock Pro<br>Automated ordering system</p>
 </body></html>`;
@@ -123,17 +123,6 @@ The ${escapeHtml(loc)} Team</p>
     }
 
     message += `--${relatedBoundary}--` + nl + nl;
-
-    // Attachment (downloadable JPG)
-    if (jpgBase64) {
-      const cleanB64 = jpgBase64.replace(/\s/g, '');
-      const wrapped = cleanB64.match(/.{1,76}/g).join(nl);
-      message += `--${mixedBoundary}` + nl;
-      message += `Content-Type: image/jpeg; name="${safeFilename}"` + nl;
-      message += `Content-Disposition: attachment; filename="${safeFilename}"` + nl;
-      message += `Content-Transfer-Encoding: base64` + nl + nl;
-      message += wrapped + nl + nl;
-    }
 
     message += `--${mixedBoundary}--`;
 
