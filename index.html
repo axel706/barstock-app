@@ -40,7 +40,9 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260516-121029</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260516-122245</div>
+
+
 
 
 
@@ -3859,6 +3861,98 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     </div>
   </div>
 </div>
+
+
+<script>
+// EMAIL ORDER MODULE
+let _emailOrderContext = null;
+
+window.openEmailOrderModal = function(historyOrderId) {
+  const modal = document.getElementById('emailOrderModalBg');
+  const label = document.getElementById('emailOrderModalLabel');
+  const toInput = document.getElementById('emailOrderTo');
+  const ccInput = document.getElementById('emailOrderCc');
+
+  if (historyOrderId) {
+    const order = (state.orderHistory || []).find(o => o.id === historyOrderId);
+    if (!order) return;
+    _emailOrderContext = { type: 'history', order };
+    label.textContent = order.vendor + ' order — ' + new Date(order.createdAt).toLocaleDateString();
+  } else {
+    const vendor = typeof activeVendorTab !== 'undefined' ? activeVendorTab : 'ALL';
+    const rows = (typeof getOrderRowsForVendor === 'function' ? getOrderRowsForVendor(vendor) : [])
+      .filter(r => Number((typeof parseNum === 'function' ? parseNum(r.finalOrder) : r.finalOrder) || 0) > 0);
+    if (!rows.length) { alert('No items to email for this vendor.'); return; }
+    _emailOrderContext = { type: 'current', vendor, rows };
+    label.textContent = vendor + ' order — ' + rows.length + ' items';
+  }
+
+  toInput.value = '';
+  ccInput.value = '';
+  modal.classList.remove('hidden');
+};
+
+window.closeEmailOrderModal = function() {
+  document.getElementById('emailOrderModalBg').classList.add('hidden');
+  _emailOrderContext = null;
+};
+
+window.sendEmailOrder = async function() {
+  const to = document.getElementById('emailOrderTo').value.trim();
+  const cc = document.getElementById('emailOrderCc').value.trim();
+  const btn = document.getElementById('emailOrderSendBtn');
+
+  if (!to) { alert('Please enter a recipient email.'); return; }
+  if (!_emailOrderContext) return;
+
+  let vendor, items, totalUnits, subtotal;
+
+  if (_emailOrderContext.type === 'history') {
+    const order = _emailOrderContext.order;
+    vendor = order.vendor;
+    items = order.items;
+    totalUnits = order.totalUnits;
+    subtotal = order.subtotal;
+  } else {
+    vendor = _emailOrderContext.vendor;
+    items = _emailOrderContext.rows.map(r => ({
+      item: r.item,
+      code: r.code,
+      finalOrder: typeof getEffectiveOrder === 'function' ? getEffectiveOrder(r) : r.toOrder
+    }));
+    totalUnits = items.reduce((sum, r) => sum + Number(r.finalOrder || 0), 0);
+    subtotal = typeof computeOrderSubtotal === 'function' ? computeOrderSubtotal(_emailOrderContext.rows) : 0;
+  }
+
+  const locationName = (window.BARSTOCK_CONFIG || {}).LOCATION_NAME || 'BarStock';
+
+  if (typeof setButtonBusy === 'function') setButtonBusy(btn, 'SENDING');
+
+  try {
+    const res = await fetch('https://barstock-app.vercel.app/api/send-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, cc: cc || undefined, vendor, items, totalUnits, subtotal, locationName })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Unknown error');
+    window.closeEmailOrderModal();
+    if (typeof setStatus === 'function') setStatus('Order emailed to ' + to + '.');
+  } catch (err) {
+    console.error(err);
+    alert('Could not send email: ' + err.message);
+  } finally {
+    if (typeof clearButtonBusy === 'function') clearButtonBusy(btn);
+  }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+  const bg = document.getElementById('emailOrderModalBg');
+  if (bg) bg.addEventListener('click', function(e) {
+    if (e.target.id === 'emailOrderModalBg') window.closeEmailOrderModal();
+  });
+});
+</script>
 
 </body>
 </html>
