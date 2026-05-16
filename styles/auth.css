@@ -26,20 +26,16 @@ body.auth-locked{
   padding:42px 38px 34px;
   border-radius:26px;
 
-  background:
-    linear-gradient(145deg, rgba(255,255,255,.16), rgba(255,255,255,.05)),
-    linear-gradient(180deg, rgba(15,23,42,.70), rgba(2,6,23,.58));
+  background:rgba(15,23,42,.50);
 
-  border:1px solid rgba(255,255,255,.32);
+  border:1px solid rgba(255,255,255,.10);
 
   box-shadow:
-    0 42px 120px rgba(0,0,0,.70),
-    0 0 0 1px rgba(96,165,250,.10),
-    inset 0 1px 0 rgba(255,255,255,.22),
-    inset 0 -1px 0 rgba(255,255,255,.06);
+    0 16px 38px rgba(2,6,23,.30),
+    inset 0 1px 0 rgba(255,255,255,.08);
 
-  backdrop-filter:blur(38px) saturate(165%);
-  -webkit-backdrop-filter:blur(38px) saturate(165%);
+  backdrop-filter:blur(18px) saturate(145%);
+  -webkit-backdrop-filter:blur(18px) saturate(145%);
 
   position:relative;
   overflow:hidden;
