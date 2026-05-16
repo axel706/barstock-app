@@ -60,6 +60,7 @@
                   <button class="ui-control" onclick="toggleHistoryDetails('${order.id}')">View</button>
                   <button class="ui-control success" onclick="reopenHistoryOrder('${order.id}', this)">Re-open</button>
                   <button class="ui-control primary" onclick="reExportHistoryOrder('${order.id}')">Re-export</button>
+                <button class="ui-control primary" onclick="openEmailOrderModal('${order.id}')">Email</button>
                   <button class="ui-control danger" onclick="deleteHistoryOrder('${order.id}', this)">Delete</button>
                 </div>
               </div>

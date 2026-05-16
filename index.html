@@ -40,7 +40,8 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260516-115044</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260516-121029</div>
+
 
 
 
@@ -505,6 +506,7 @@
           </div>
         </div>
         <button id="placeOrderBtn" class="success">PLACE ORDER</button>
+        <button id="emailOrderBtn" class="primary" onclick="openEmailOrderModal()">EMAIL ORDER</button>
       </div>
     </div>
   </div>
@@ -3841,6 +3843,22 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/auth.js"></script>
 <!-- BARSTOCK AUTH OVERLAY SAFE END -->
 
+
+
+<div id="emailOrderModalBg" class="modalbg hidden">
+  <div class="modal" style="width:min(480px,96vw)">
+    <h3 style="margin-top:0">Email Order</h3>
+    <div class="small muted" id="emailOrderModalLabel" style="margin-bottom:16px"></div>
+    <label style="display:block;margin-bottom:6px;font-weight:600">To</label>
+    <input id="emailOrderTo" type="email" placeholder="vendor@example.com" style="width:100%;margin-bottom:12px">
+    <label style="display:block;margin-bottom:6px;font-weight:600">CC <span class="muted small">(optional)</span></label>
+    <input id="emailOrderCc" type="email" placeholder="manager@example.com" style="width:100%;margin-bottom:20px">
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="ui-control" onclick="closeEmailOrderModal()">Cancel</button>
+      <button class="ui-control primary" id="emailOrderSendBtn" onclick="sendEmailOrder()">Send Email</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
