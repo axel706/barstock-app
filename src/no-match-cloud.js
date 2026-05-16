@@ -171,4 +171,29 @@
     saveAlias,
     deleteNoMatch
   };
+
+  // Bootstrap: carga no-matches al inicio y expone función global
+  async function loadNoMatchesFromSupabase() {
+    try {
+      state.noMatches = await window.BarStockNoMatchCloud.loadNoMatches();
+      if (typeof saveState === 'function') saveState();
+      if (typeof render === 'function') render();
+      if (typeof setStatus === 'function') {
+        setStatus(`No Match loaded from cloud: ${state.noMatches.length}`);
+      }
+    } catch (err) {
+      console.error(err);
+      if (typeof setStatus === 'function') {
+        setStatus('Could not load No Match from cloud.');
+      }
+    }
+  }
+
+  window.loadNoMatchesFromSupabase = loadNoMatchesFromSupabase;
+
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      loadNoMatchesFromSupabase();
+    }, 1400);
+  });
 })();
