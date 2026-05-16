@@ -40,7 +40,7 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260515-225541</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260516-003213</div>
 
 
 
@@ -1950,7 +1950,7 @@ function cloneOrderRow(row){
 function clearCompareSelection(){
   compareSelection = [];
   renderCompareToolbar();
-  renderOrderHistory();
+  window.renderOrderHistory && window.renderOrderHistory();
 }
 function toggleCompareSelection(id){
   if(compareSelection.includes(id)){
@@ -1963,7 +1963,7 @@ function toggleCompareSelection(id){
     compareSelection = [...compareSelection, id];
   }
   renderCompareToolbar();
-  renderOrderHistory();
+  window.renderOrderHistory && window.renderOrderHistory();
 }
 function renderCompareToolbar(){
   const toolbar = document.getElementById('compareToolbar');
@@ -2190,7 +2190,7 @@ function saveHistoryDateEdit(){
   });
   saveState();
   closeHistoryDateEdit();
-  renderOrderHistory();
+  window.renderOrderHistory && window.renderOrderHistory();
   renderCompareToolbar();
   setStatus('Order date updated.');
 }
@@ -2198,7 +2198,7 @@ function saveHistoryDateEdit(){
 function setHistoryVendorFilter(vendor){
   historyVendorTab = String(vendor || 'ALL').toUpperCase();
   renderHistoryVendorTabs();
-  renderOrderHistory();
+  window.renderOrderHistory && window.renderOrderHistory();
 }
 function renderHistoryVendorTabs(){
   const wrap = safeEl('historyVendorTabs');
@@ -2242,7 +2242,7 @@ function render(){
   const totalBottles = vendRows.reduce((sum, r) => sum + parseNum(getEffectiveOrder(r)), 0);
   const editedCount = vendRows.filter(r => supportsManualFinalOrder(r.vendor) && r.orderOverride !== '' && r.orderOverride !== null && r.orderOverride !== undefined).length;
   document.getElementById('vendorSummary').textContent = `Current list: ${vendRows.length} code${vendRows.length===1?'':'s'} | ${fmt(totalBottles)} bottle${Number(totalBottles)===1?'':'s'} | ${editedCount} edited`;
-  renderOrderHistory();
+  window.renderOrderHistory && window.renderOrderHistory();
 
   document.getElementById('noMatchBody').innerHTML = state.noMatches.map((r,i)=>{
     const suggestion = bestMatch(r.rawItem);
@@ -3481,9 +3481,9 @@ usageData = loadUsageData();
 const historySearchInput = document.getElementById('historySearchInput');
 const historyVendorFilter = document.getElementById('historyVendorFilter');
 const historyDateFilter = document.getElementById('historyDateFilter');
-if(historySearchInput) historySearchInput.addEventListener('input', renderOrderHistory);
-if(historyVendorFilter) historyVendorFilter.addEventListener('change', renderOrderHistory);
-if(historyDateFilter) historyDateFilter.addEventListener('change', renderOrderHistory);
+if(historySearchInput) historySearchInput.addEventListener('input', () => window.renderOrderHistory && window.renderOrderHistory());
+if(historyVendorFilter) historyVendorFilter.addEventListener('change', () => window.renderOrderHistory && window.renderOrderHistory());
+if(historyDateFilter) historyDateFilter.addEventListener('change', () => window.renderOrderHistory && window.renderOrderHistory());
 bindIfExists('compareOrdersBtn', 'click', openCompareModal);
 bindIfExists('clearCompareBtn', 'click', clearCompareSelection);
 
@@ -3586,7 +3586,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       }
 
       if (typeof render === 'function') render();
-      if (typeof renderOrderHistory === 'function') renderOrderHistory();
+      if (typeof renderOrderHistory === 'function') window.renderOrderHistory && window.renderOrderHistory();
       if (typeof renderCompareToolbar === 'function') renderCompareToolbar();
     } catch (e) {
       console.warn('ordersUpdated listener failed', e);
