@@ -234,17 +234,24 @@
       const orders = await ordersRes.json();
       if (!Array.isArray(orders)) throw new Error('Invalid vendor_orders response');
 
-      const itemsRes = await fetch(
-        `${window.BarStockOrdersConfig().url}/rest/v1/vendor_order_items?select=app_order_id,code,item_name,vendor,quantity,unit_price`,
-        {
-          headers: {
-            apikey: window.BarStockOrdersConfig().key,
-            Authorization: `Bearer ${window.BarStockOrdersConfig().key}`
+      // Filtrar items solo por los app_order_ids de esta locación
+      const orderIds = orders.map(o => o.app_order_id).filter(Boolean);
+      let items = [];
+
+      if (orderIds.length > 0) {
+        const idsParam = orderIds.map(id => `"${id}"`).join(',');
+        const itemsRes = await fetch(
+          `${window.BarStockOrdersConfig().url}/rest/v1/vendor_order_items?app_order_id=in.(${idsParam})&select=app_order_id,code,item_name,vendor,quantity,unit_price`,
+          {
+            headers: {
+              apikey: window.BarStockOrdersConfig().key,
+              Authorization: `Bearer ${window.BarStockOrdersConfig().key}`
+            }
           }
-        }
-      );
-      const items = await itemsRes.json();
-      if (!Array.isArray(items)) throw new Error('Invalid vendor_order_items response');
+        );
+        items = await itemsRes.json();
+        if (!Array.isArray(items)) throw new Error('Invalid vendor_order_items response');
+      }
 
       const itemsByOrder = {};
       for (const item of items) {
