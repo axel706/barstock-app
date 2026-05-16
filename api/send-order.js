@@ -30,16 +30,33 @@ module.exports = async function handler(req, res) {
     const subject = `Order for ${vendor} - ${new Date().toLocaleDateString()}`;
     const safeFilename = filename || `${vendor.toLowerCase().replace(/\s+/g, '_')}_order.jpg`;
 
+    const loc = locationName || 'BarStock';
     const emailBody = [
-      `Hello,`,
+      `Hello there,`,
       ``,
-      `Please find attached the order from ${locationName || 'BarStock'} for ${vendor}.`,
+      `This email confirms a new order request from ${loc}.`,
+      `The details for ${vendor} are summarized below.`,
       ``,
-      `Summary:`,
-      `  Items: ${items.length}`,
-      `  Total units: ${totalUnits}`,
+      `ORDER SUMMARY`,
+      `-------------`,
+      `Location: ${loc}`,
+      `Vendor: ${vendor}`,
+      `Date: ${new Date().toLocaleDateString()}`,
+      `Items: ${items.length}`,
+      `Total units: ${totalUnits}`,
       ``,
-      `Sent via BarStock Pro`
+      `Please find the complete order details attached as a JPG file.`,
+      `Kindly confirm receipt and expected delivery date at your earliest convenience.`,
+      ``,
+      `If you have any questions or need clarification about this order,`,
+      `please reply directly to this email.`,
+      ``,
+      `Thank you,`,
+      `The ${loc} Team`,
+      ``,
+      `-----------------------------`,
+      `Sent via BarStock Pro`,
+      `Automated ordering system`
     ].join('\r\n');
 
     const boundary = '----barstock_boundary_' + Date.now();
