@@ -38,48 +38,13 @@
     return { vendor, items, totalUnits, subtotal };
   }
 
-  let _manropeFontsCache = null;
-
-  async function loadManropeFonts() {
-    if (_manropeFontsCache) return _manropeFontsCache;
-    try {
-      async function fetchFontBase64(url) {
-        const blob = await fetch(url).then(r => r.blob());
-        return new Promise(res => {
-          const fr = new FileReader();
-          fr.onload = () => res(fr.result.split(',')[1]);
-          fr.readAsDataURL(blob);
-        });
-      }
-      const [regular, bold] = await Promise.all([
-        fetchFontBase64('assets/fonts/Manrope-Regular.ttf'),
-        fetchFontBase64('assets/fonts/Manrope-Bold.ttf')
-      ]);
-      _manropeFontsCache = { regular, bold };
-      return _manropeFontsCache;
-    } catch(e) {
-      console.warn('Manrope fonts failed to load, fallback to helvetica', e);
-      return null;
-    }
-  }
-
   async function generatePdfBase64(vendor, items, summary) {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const margin = 40;
     let y = margin;
-
-    // Load and register Manrope
-    const fonts = await loadManropeFonts();
-    let fontFamily = 'helvetica';
-    if (fonts) {
-      pdf.addFileToVFS('Manrope-Regular.ttf', fonts.regular);
-      pdf.addFont('Manrope-Regular.ttf', 'Manrope', 'normal');
-      pdf.addFileToVFS('Manrope-Bold.ttf', fonts.bold);
-      pdf.addFont('Manrope-Bold.ttf', 'Manrope', 'bold');
-      fontFamily = 'Manrope';
-    }
+    const fontFamily = 'helvetica';
 
     // Logo
     try {
