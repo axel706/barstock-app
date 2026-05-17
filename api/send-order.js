@@ -1,4 +1,6 @@
-const { google } = require('googleapis');
+const { Resend } = require('resend');
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -9,63 +11,21 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "Method not allowed" });
 
   try {
-    const { to, cc, vendor, items, totalUnits, subtotal, locationName, jpgBase64, filename } = req.body || {};
+    const { to, cc, vendor, items, totalUnits, subtotal, locationName, jpgBase64, filename, fromName } = req.body || {};
 
     if (!to || !vendor || !items?.length) {
       return res.status(400).json({ ok: false, error: "Missing required fields" });
     }
 
-    const oauth2Client = new google.auth.OAuth2(
-      process.env.GMAIL_CLIENT_ID,
-      process.env.GMAIL_CLIENT_SECRET,
-      'https://barstock-app.vercel.app/api/auth/callback'
-    );
-
-    oauth2Client.setCredentials({
-      refresh_token: process.env.GMAIL_REFRESH_TOKEN
-    });
-
-    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
-
     const subject = `Order for ${vendor} - ${new Date().toLocaleDateString()}`;
     const safeFilename = filename || `${vendor.toLowerCase().replace(/\s+/g, '_')}_order.jpg`;
-
     const loc = locationName || 'BarStock';
-    const emailBody = [
-      `Hello there,`,
-      ``,
-      `This email confirms a new order request from ${loc}.`,
-      `The details for ${vendor} are summarized below.`,
-      ``,
-      `ORDER SUMMARY`,
-      `-------------`,
-      `Location: ${loc}`,
-      `Vendor: ${vendor}`,
-      `Date: ${new Date().toLocaleDateString()}`,
-      `Items: ${items.length}`,
-      `Total units: ${totalUnits}`,
-      ``,
-      `Please find the complete order details attached as a JPG file.`,
-      `Kindly confirm receipt and expected delivery date at your earliest convenience.`,
-      ``,
-      `If you have any questions or need clarification about this order,`,
-      `please reply directly to this email.`,
-      ``,
-      `Thank you,`,
-      `The ${loc} Team`,
-      ``,
-      `-----------------------------`,
-      `Sent via BarStock Pro`,
-      `Automated ordering system`
-    ].join('\r\n');
+    const senderName = fromName || loc;
 
-    const nl = '\r\n';
-    const mixedBoundary = '----barstock_mixed_' + Date.now();
-    const relatedBoundary = '----barstock_related_' + Date.now();
-    const cid = 'order_image_' + Date.now() + '@barstock';
-
-    // Build HTML body with inline image
     const escapeHtml = s => String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+    const cid = 'order_image_' + Date.now();
+
     const htmlBody = `<!DOCTYPE html><html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0f172a;line-height:1.6;max-width:680px;margin:0 auto;padding:20px">
 <p>Hello there,</p>
 <p>This email confirms a new order request from <strong>${escapeHtml(loc)}</strong>.<br>
@@ -88,52 +48,31 @@ ${escapeHtml(loc)} Team</p>
 <p style="color:#94a3b8;font-size:12px">Sent via BarStock Pro<br>Automated ordering system</p>
 </body></html>`;
 
-    const headerLines = [
-      `To: ${to}`,
-      cc ? `Cc: ${cc}` : null,
-      `Subject: ${subject}`,
-      `MIME-Version: 1.0`,
-      `Content-Type: multipart/mixed; boundary="${mixedBoundary}"`
-    ].filter(Boolean);
+    const payload = {
+      from: `${senderName} <orders@barstockpro.com>`,
+      to: [to],
+      subject,
+      html: htmlBody,
+    };
 
-    let message = headerLines.join(nl) + nl + nl;
+    if (cc) payload.cc = [cc];
 
-    // ---- Outer mixed: related (text+inline image) + attachment ----
-
-    // Start related (HTML body + inline image)
-    message += `--${mixedBoundary}` + nl;
-    message += `Content-Type: multipart/related; boundary="${relatedBoundary}"` + nl + nl;
-
-    // HTML body
-    message += `--${relatedBoundary}` + nl;
-    message += `Content-Type: text/html; charset="UTF-8"` + nl;
-    message += `Content-Transfer-Encoding: 7bit` + nl + nl;
-    message += htmlBody + nl + nl;
-
-    // Inline image
     if (jpgBase64) {
-      const cleanB64 = jpgBase64.replace(/\s/g, '');
-      const wrapped = cleanB64.match(/.{1,76}/g).join(nl);
-      message += `--${relatedBoundary}` + nl;
-      message += `Content-Type: image/jpeg` + nl;
-      message += `Content-Transfer-Encoding: base64` + nl;
-      message += `Content-ID: <${cid}>` + nl;
-      message += `Content-Disposition: inline; filename="${safeFilename}"` + nl + nl;
-      message += wrapped + nl + nl;
+      payload.attachments = [{
+        filename: safeFilename,
+        content: jpgBase64,
+        content_id: cid,
+      }];
     }
 
-    message += `--${relatedBoundary}--` + nl + nl;
+    const result = await resend.emails.send(payload);
 
-    message += `--${mixedBoundary}--`;
+    if (result.error) {
+      console.error('Resend error:', result.error);
+      return res.status(500).json({ ok: false, error: result.error.message || 'Resend failed' });
+    }
 
-    const encoded = Buffer.from(message).toString('base64url');
-
-    await gmail.users.messages.send({
-      userId: 'me',
-      requestBody: { raw: encoded }
-    });
-
-    return res.status(200).json({ ok: true });
+    return res.status(200).json({ ok: true, id: result.data?.id });
 
   } catch (err) {
     console.error('send-order error:', err);
