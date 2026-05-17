@@ -38,12 +38,48 @@
     return { vendor, items, totalUnits, subtotal };
   }
 
-  async function generatePdfBase64(vendor, rows, jpgDataUrl, summary) {
+  let _manropeFontsCache = null;
+
+  async function loadManropeFonts() {
+    if (_manropeFontsCache) return _manropeFontsCache;
+    try {
+      async function fetchFontBase64(url) {
+        const blob = await fetch(url).then(r => r.blob());
+        return new Promise(res => {
+          const fr = new FileReader();
+          fr.onload = () => res(fr.result.split(',')[1]);
+          fr.readAsDataURL(blob);
+        });
+      }
+      const [regular, bold] = await Promise.all([
+        fetchFontBase64('assets/fonts/Manrope-Regular.ttf'),
+        fetchFontBase64('assets/fonts/Manrope-Bold.ttf')
+      ]);
+      _manropeFontsCache = { regular, bold };
+      return _manropeFontsCache;
+    } catch(e) {
+      console.warn('Manrope fonts failed to load, fallback to helvetica', e);
+      return null;
+    }
+  }
+
+  async function generatePdfBase64(vendor, items, summary) {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const margin = 40;
     let y = margin;
+
+    // Load and register Manrope
+    const fonts = await loadManropeFonts();
+    let fontFamily = 'helvetica';
+    if (fonts) {
+      pdf.addFileToVFS('Manrope-Regular.ttf', fonts.regular);
+      pdf.addFont('Manrope-Regular.ttf', 'Manrope', 'normal');
+      pdf.addFileToVFS('Manrope-Bold.ttf', fonts.bold);
+      pdf.addFont('Manrope-Bold.ttf', 'Manrope', 'bold');
+      fontFamily = 'Manrope';
+    }
 
     // Logo
     try {
@@ -94,26 +130,49 @@
       y += 16;
     });
 
-    y += 16;
+    y += 20;
 
-    // Image
-    if (jpgDataUrl) {
-      const imgWidth = pageWidth - (margin * 2);
-      const img = new Image();
-      await new Promise(res => { img.onload = res; img.src = jpgDataUrl; });
-      const ratio = img.height / img.width;
-      const imgHeight = imgWidth * ratio;
+    // Items table header
+    pdf.setFont(fontFamily, 'bold');
+    pdf.setFontSize(14);
+    pdf.setTextColor(15, 23, 42);
+    pdf.text('ITEMS', margin, y);
+    y += 12;
 
-      // Check if image fits, add new page if not
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      if (y + imgHeight > pageHeight - margin) {
-        pdf.addPage();
-        y = margin;
+    const tableBody = (items || []).map(item => [
+      String(item.code || ''),
+      String(item.item || ''),
+      String(item.finalOrder || 0)
+    ]);
+
+    pdf.autoTable({
+      startY: y,
+      head: [['CODE', 'ITEM', 'QTY']],
+      body: tableBody,
+      margin: { left: margin, right: margin },
+      styles: {
+        font: fontFamily,
+        fontSize: 10,
+        cellPadding: 6,
+        textColor: [15, 23, 42],
+        lineColor: [226, 232, 240],
+        lineWidth: 0.5
+      },
+      headStyles: {
+        fillColor: [241, 245, 249],
+        textColor: [15, 23, 42],
+        fontStyle: 'bold',
+        halign: 'left'
+      },
+      columnStyles: {
+        0: { cellWidth: 80 },
+        1: { cellWidth: 'auto' },
+        2: { cellWidth: 60, halign: 'right', fontStyle: 'bold' }
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252]
       }
-
-      pdf.addImage(jpgDataUrl, 'JPEG', margin, y, imgWidth, imgHeight);
-      y += imgHeight + 20;
-    }
+    });
 
     // Footer
     const pageHeight = pdf.internal.pageSize.getHeight();
@@ -213,9 +272,8 @@
     if (typeof setButtonBusy === 'function') setButtonBusy(btn, 'SENDING');
 
     try {
-      // Generate PDF from current JPG + summary
-      const jpgDataUrl = 'data:image/jpeg;base64,' + _emailOrderJpgBase64;
-      const pdfBase64 = await generatePdfBase64(data.vendor, null, jpgDataUrl, {
+      // Generate PDF with summary + items table
+      const pdfBase64 = await generatePdfBase64(data.vendor, data.items, {
         location: locationName,
         vendor: data.vendor,
         date: new Date().toLocaleDateString(),
