@@ -46,7 +46,7 @@
     let y = margin;
     const fontFamily = 'helvetica';
 
-    // Logo
+    // Logo (preserves aspect ratio)
     try {
       const logoUrl = 'assets/barstock_logo_full_transparent.png';
       const logoData = await fetch(logoUrl).then(r => r.blob()).then(b => new Promise(res => {
@@ -54,7 +54,11 @@
         fr.onload = () => res(fr.result);
         fr.readAsDataURL(b);
       }));
-      pdf.addImage(logoData, 'PNG', margin, y, 100, 28);
+      const logoImg = new Image();
+      await new Promise(res => { logoImg.onload = res; logoImg.src = logoData; });
+      const logoTargetHeight = 40;
+      const logoWidth = logoImg.width * (logoTargetHeight / logoImg.height);
+      pdf.addImage(logoData, 'PNG', margin, y, logoWidth, logoTargetHeight);
     } catch(e) { console.warn('Logo not loaded', e); }
 
     // Title

@@ -28,7 +28,6 @@ module.exports = async function handler(req, res) {
 <p>Hello there,</p>
 <p>This email confirms a new order request from <strong>${escapeHtml(loc)}</strong>.<br>
 The details for <strong>${escapeHtml(vendor)}</strong> are summarized below and attached as a PDF document.</p>
-${jpgBase64 ? `<div style="margin:20px 0;text-align:center"><img src="data:image/jpeg;base64,${jpgBase64}" alt="Order details" style="max-width:100%;border:1px solid #e2e8f0;border-radius:8px"></div>` : ''}
 <p>Kindly confirm receipt and expected delivery date at your earliest convenience.</p>
 <p>If you have any questions or need clarification about this order, please reply directly to this email.</p>
 <p>Thank you,<br>
