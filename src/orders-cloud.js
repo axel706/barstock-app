@@ -43,7 +43,8 @@
       subtotal: Number(order.subtotal || 0),
       filename: order.filename || '',
       export_type: order.exportType || '',
-      total_units: Number(order.totalUnits || 0)
+      total_units: Number(order.totalUnits || 0),
+      created_at: order.createdAt || order.date || new Date().toISOString()
     };
 
     // UPSERT de la orden principal
