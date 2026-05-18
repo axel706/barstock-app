@@ -11,7 +11,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "Method not allowed" });
 
   try {
-    const { to, cc, vendor, items, totalUnits, subtotal, locationName, jpgBase64, pdfBase64, filename, fromName } = req.body || {};
+    const { to, cc, replyTo, vendor, items, totalUnits, subtotal, locationName, jpgBase64, pdfBase64, filename, fromName } = req.body || {};
 
     if (!to || !vendor || !items?.length) {
       return res.status(400).json({ ok: false, error: "Missing required fields" });
@@ -44,6 +44,7 @@ ${escapeHtml(loc)} Team</p>
     };
 
     if (cc) payload.cc = [cc];
+    if (replyTo) payload.reply_to = replyTo;
 
     if (pdfBase64) {
       payload.attachments = [{

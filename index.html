@@ -15,6 +15,8 @@
 <script src="src/events.js"></script>
 <script src="src/supabase-client.js"></script>
 <script src="src/location-access.js?v=active-location-2"></script>
+<script src="src/location-settings.js"></script>
+<script src="src/settings-ui.js"></script>
 <script src="src/logger.js"></script>
 <script src="src/order-validator.js"></script>
 
@@ -40,7 +42,8 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260517-003644</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260518-101423</div>
+
 
 
 
@@ -389,6 +392,7 @@
 </div></h1></div></div>
       <div class="header-actions">
         <button id="authLogoutBtn" class="auth-logout-inline" type="button">Logout</button>
+        <button id="settingsBtn" class="theme-toggle" type="button" aria-label="Settings" title="Settings" onclick="openSettingsModal()"><span class="theme-icon">⚙</span></button>
         <button id="themeToggle" class="theme-toggle" aria-label="Toggle light and dark mode" title="Toggle light and dark mode">
           <span id="themeIcon" class="theme-icon">☾</span>
         </button>
@@ -3888,6 +3892,25 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
 
 
+
+
+<div id="settingsModalBg" class="modalbg hidden">
+  <div class="modal" style="width:min(520px,96vw)">
+    <h3 style="margin-top:0">Settings</h3>
+    <div class="small muted" style="margin-bottom:16px">Configuration for this location</div>
+
+    <div style="margin-bottom:20px">
+      <label style="display:block;margin-bottom:6px;font-weight:600">Reply-to email <span class="muted small">(optional)</span></label>
+      <input id="settingsReplyToEmail" type="email" placeholder="manager@example.com" style="width:100%;margin-bottom:6px">
+      <div class="small muted">When a vendor replies to an order email, the reply will go to this address. If empty, replies go to the user who sent the order.</div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="ui-control" onclick="closeSettingsModal()">Cancel</button>
+      <button class="ui-control primary" id="settingsSaveBtn" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

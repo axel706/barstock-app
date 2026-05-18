@@ -250,6 +250,16 @@
         totalUnits: data.totalUnits
       });
 
+      // Determine reply-to: custom location setting → logged-in user → null
+      let replyTo = null;
+      try {
+        if (window.BarStockLocationSettings) {
+          replyTo = await window.BarStockLocationSettings.getReplyToEmail();
+        }
+      } catch(e) {
+        console.warn('Could not get reply-to email', e);
+      }
+
       const payload = {
         to,
         vendor: data.vendor,
@@ -263,6 +273,7 @@
       };
 
       if (cc) payload.cc = cc;
+      if (replyTo) payload.replyTo = replyTo;
 
       const res = await fetch(ENDPOINT, {
         method: 'POST',
