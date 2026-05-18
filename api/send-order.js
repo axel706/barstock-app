@@ -44,7 +44,7 @@ ${escapeHtml(loc)} Team</p>
     };
 
     if (cc) payload.cc = [cc];
-    if (replyTo) payload.reply_to = replyTo;
+    if (replyTo) payload.replyTo = replyTo;
 
     if (pdfBase64) {
       payload.attachments = [{
