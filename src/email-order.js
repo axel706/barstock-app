@@ -275,6 +275,15 @@
       if (cc) payload.cc = cc;
       if (replyTo) payload.replyTo = replyTo;
 
+      console.log('🔍 EMAIL ORDER PAYLOAD:', {
+        to: payload.to,
+        vendor: payload.vendor,
+        itemsCount: payload.items?.length,
+        hasJpg: !!payload.jpgBase64,
+        hasPdf: !!payload.pdfBase64,
+        replyTo: payload.replyTo,
+        cc: payload.cc
+      });
       const res = await fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
