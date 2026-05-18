@@ -42,7 +42,8 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260518-183510</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260518-184552</div>
+
 
 
 
@@ -3205,6 +3206,10 @@ async function resetMaster(){
 
     if (window.BarStockNoMatchCloud) {
       await window.BarStockNoMatchCloud.replaceNoMatches([]);
+    }
+
+    if (window.BarStockOrdersCloud) {
+      await window.BarStockOrdersCloud.deleteAllOrders();
     }
 
     // 3. limpiar local solo si cloud salió bien
