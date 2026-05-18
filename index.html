@@ -42,7 +42,8 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260518-171709</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260518-173441</div>
+
 
 
 
@@ -1134,7 +1135,7 @@ function roundOnHand(v){
   return frac >= 0.60 ? Math.ceil(n) : Math.floor(n);
 }
 function computeToOrder(onHand,suggested){ return Math.max(0, parseNum(suggested) - roundOnHand(onHand)); }
-function supportsManualFinalOrder(vendor){ return ['SOUTHERN','BREAKTHRU','WINE MERCHANT'].includes(String(vendor||'').toUpperCase()); }
+function supportsManualFinalOrder(vendor){ return ['SOUTHERN','BREAKTHRU','WINE MERCHANT','LOOP'].includes(String(vendor||'').toUpperCase()); }
 function getEffectiveOrder(row){
   if(supportsManualFinalOrder(row.vendor) && row.orderOverride !== '' && row.orderOverride !== null && row.orderOverride !== undefined){
     return Math.max(0, parseNum(row.orderOverride));
