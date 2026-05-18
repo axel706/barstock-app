@@ -164,9 +164,11 @@
     return true;
   }
 
-  async function touchWeeklyReset() {
+  async function touchWeeklyReset(customDate) {
     const { url, key } = getConfig();
     const locationId = await fetchLocationId();
+
+    const resetAt = customDate || new Date().toISOString();
 
     const res = await fetch(
       `${url}/rest/v1/locations?id=eq.${locationId}`,
@@ -179,7 +181,7 @@
           Prefer: 'return=minimal'
         },
         body: JSON.stringify({
-          weekly_reset_at: new Date().toISOString()
+          weekly_reset_at: resetAt
         })
       }
     );

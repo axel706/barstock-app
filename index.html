@@ -42,7 +42,8 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260518-184552</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260518-194210</div>
+
 
 
 
@@ -3260,6 +3261,22 @@ async function importBackup(file){
 
     if (window.BarStockOrdersCloud) {
       await window.BarStockOrdersCloud.replaceOrders(state.orderHistory || []);
+    }
+
+    // Ajustar weekly_reset_at para que las ordenes del backup cuenten como placedOrders
+    if (window.BarStockInventoryCloud && (state.orderHistory || []).length) {
+      const dates = state.orderHistory
+        .map(o => new Date(o.createdAt || o.date || 0).getTime())
+        .filter(n => Number.isFinite(n) && n > 0);
+      if (dates.length) {
+        const oldest = new Date(Math.min(...dates) - 1000).toISOString();
+        await window.BarStockInventoryCloud.touchWeeklyReset(oldest);
+      }
+    }
+
+    if (window.rebuildPlacedOrdersFromHistory) {
+      await window.rebuildPlacedOrdersFromHistory();
+      if (typeof render === 'function') render();
     }
 
     setStatus('Backup imported and synced to cloud.');
