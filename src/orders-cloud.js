@@ -309,9 +309,41 @@
     await loadOrdersFromCloud();
   }
 
+  async function deleteAllOrders() {
+    const cfg = window.BarStockOrdersConfig();
+    const locRes = await fetch(
+      `${cfg.url}/rest/v1/locations?account_id=eq.${encodeURIComponent(cfg.accountId)}&name=eq.${encodeURIComponent(cfg.locationName)}&select=id`,
+      { headers: { apikey: cfg.key, Authorization: `Bearer ${cfg.key}` } }
+    );
+    const locData = await locRes.json();
+    if (!Array.isArray(locData) || !locData.length) throw new Error('Location not found');
+    const locationId = locData[0].id;
+
+    const res = await fetch(
+      `${cfg.url}/rest/v1/vendor_orders?location_id=eq.${locationId}`,
+      {
+        method: 'DELETE',
+        headers: { apikey: cfg.key, Authorization: `Bearer ${cfg.key}` }
+      }
+    );
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error('Error deleting vendor_orders: ' + txt);
+    }
+  }
+
+  async function replaceOrders(orders) {
+    await deleteAllOrders();
+    for (const order of (orders || [])) {
+      await persistOrderToSupabase(order);
+    }
+  }
+
   window.rebuildPlacedOrdersFromHistory = rebuildPlacedOrdersFromHistory;
   window.loadOrdersFromCloud = loadOrdersFromCloud;
   window.initOrdersModule = initOrdersModule;
+  window.BarStockOrdersCloud = { deleteAllOrders, replaceOrders, loadOrdersFromCloud };
 
   window.addEventListener('load', () => {
     setTimeout(() => {

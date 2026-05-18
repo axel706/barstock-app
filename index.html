@@ -42,7 +42,8 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260518-173441</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260518-182629</div>
+
 
 
 
@@ -3249,6 +3250,10 @@ async function importBackup(file){
 
     if (window.BarStockNoMatchCloud) {
       await window.BarStockNoMatchCloud.replaceNoMatches(state.noMatches || []);
+    }
+
+    if (window.BarStockOrdersCloud) {
+      await window.BarStockOrdersCloud.replaceOrders(state.orderHistory || []);
     }
 
     setStatus('Backup imported and synced to cloud.');
