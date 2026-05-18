@@ -42,7 +42,8 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260518-103928</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260518-171709</div>
+
 
 
 
@@ -3199,6 +3200,10 @@ async function resetMaster(){
 
     await window.BarStockInventoryCloud.deleteAllInventoryItems();
 
+    if (window.BarStockNoMatchCloud) {
+      await window.BarStockNoMatchCloud.replaceNoMatches([]);
+    }
+
     // 3. limpiar local solo si cloud salió bien
     state = defaultState();
     aliases = {};
@@ -3240,6 +3245,10 @@ async function importBackup(file){
     }
 
     await window.BarStockInventoryCloud.replaceInventoryMaster(state.master || []);
+
+    if (window.BarStockNoMatchCloud) {
+      await window.BarStockNoMatchCloud.replaceNoMatches(state.noMatches || []);
+    }
 
     setStatus('Backup imported and synced to cloud.');
   } catch(err){
