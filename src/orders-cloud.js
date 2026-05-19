@@ -193,14 +193,23 @@
 
   async function rebuildPlacedOrdersFromHistory() {
     try {
-      const location = await getOrdersLocationId();
-      const resetAt = location.weekly_reset_at ? new Date(location.weekly_reset_at) : null;
       const keys = [];
 
+      // Agrupar orderHistory por vendor y elegir la mas reciente de cada uno
+      const latestByVendor = {};
       (state.orderHistory || []).forEach(order => {
-        const orderDate = new Date(order.createdAt || order.date || 0);
-        if (resetAt && orderDate < resetAt) return;
+        const vendor = String(order.vendor || '').trim().toUpperCase();
+        if (!vendor) return;
+        const orderTime = new Date(order.createdAt || order.date || 0).getTime();
+        if (!Number.isFinite(orderTime) || orderTime <= 0) return;
 
+        if (!latestByVendor[vendor] || orderTime > latestByVendor[vendor].time) {
+          latestByVendor[vendor] = { time: orderTime, order };
+        }
+      });
+
+      // Marcar items de la orden mas reciente de cada vendor como placed
+      Object.values(latestByVendor).forEach(({ order }) => {
         (order.items || []).forEach(item => {
           if (typeof placedKeyForRow !== 'function') return;
           const key = placedKeyForRow({
