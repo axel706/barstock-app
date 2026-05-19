@@ -42,7 +42,8 @@
   <div class="brand-text">
     <div class="brand-name">BarStock Pro</div>
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260518-235405</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260519-000741</div>
+
 
 
 
@@ -3266,14 +3267,16 @@ async function importBackup(file){
       await window.BarStockOrdersCloud.replaceOrders(state.orderHistory || []);
     }
 
-    // Ajustar weekly_reset_at para que las ordenes del backup cuenten como placedOrders
+    // Ajustar weekly_reset_at al inicio del dia (00:00:01) de la orden mas reciente
+    // Asi solo las ordenes de ese dia (ciclo actual) cuentan como placedOrders
     if (window.BarStockInventoryCloud && (state.orderHistory || []).length) {
       const dates = state.orderHistory
         .map(o => new Date(o.createdAt || o.date || 0).getTime())
         .filter(n => Number.isFinite(n) && n > 0);
       if (dates.length) {
-        const oldest = new Date(Math.min(...dates) - 1000).toISOString();
-        await window.BarStockInventoryCloud.touchWeeklyReset(oldest);
+        const mostRecent = new Date(Math.max(...dates));
+        const startOfDay = new Date(mostRecent.getFullYear(), mostRecent.getMonth(), mostRecent.getDate(), 0, 0, 1);
+        await window.BarStockInventoryCloud.touchWeeklyReset(startOfDay.toISOString());
       }
     }
 
