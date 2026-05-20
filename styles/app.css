@@ -1467,12 +1467,12 @@
       width:100%;
     }
     .metric-card-icon{
-      width:34px;
-      height:34px;
+      width:28px;
+      height:28px;
       display:flex;
       align-items:center;
       justify-content:center;
-      border-radius:10px;
+      border-radius:8px;
       flex:0 0 auto;
       background:rgba(255,255,255,.08);
       border:1px solid rgba(255,255,255,.10);
@@ -1480,8 +1480,8 @@
       color:currentColor;
     }
     .metric-card-icon svg{
-      width:18px;
-      height:18px;
+      width:15px;
+      height:15px;
       display:block;
       stroke:currentColor;
     }
