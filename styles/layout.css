@@ -1,6 +1,6 @@
 .wrap{max-width:1300px;margin:0 auto;padding:24px;position:relative;z-index:1}
 
-    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0 14px}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0 14px;align-items:start}
 
     .toolbar,.sectionhead{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.topbar{width:100%;justify-content:center;margin:0 auto}
 
