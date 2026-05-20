@@ -1470,8 +1470,7 @@
       max-width:100%;
     }
     .grid > .card .muted{
-      font-size:11px;
-      line-height:1.2;
+      font-size:13px;
     }
     .grid > .card .metric-card-head{
       gap:6px;
@@ -1484,12 +1483,12 @@
       width:100%;
     }
     .metric-card-icon{
-      width:28px;
-      height:28px;
+      width:22px;
+      height:22px;
       display:flex;
       align-items:center;
       justify-content:center;
-      border-radius:8px;
+      border-radius:6px;
       flex:0 0 auto;
       background:rgba(255,255,255,.08);
       border:1px solid rgba(255,255,255,.10);
@@ -1497,8 +1496,8 @@
       color:currentColor;
     }
     .metric-card-icon svg{
-      width:15px;
-      height:15px;
+      width:12px;
+      height:12px;
       display:block;
       stroke:currentColor;
     }
