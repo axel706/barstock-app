@@ -1462,6 +1462,13 @@
     .grid > .card{
       padding:6px 12px !important;
     }
+    .grid > .card .metric.small{
+      font-size:11px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:100%;
+    }
     .metric-card-head{
       display:flex;
       align-items:center;
