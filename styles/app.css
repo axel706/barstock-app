@@ -1537,6 +1537,7 @@
       display:inline-flex;
       align-items:baseline;
       color:inherit;
+      margin-left:4px;
     }
     .brand-logo-dot{
       color:#3b82f6;
