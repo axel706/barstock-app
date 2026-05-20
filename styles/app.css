@@ -1460,22 +1460,22 @@
     }
 
     .grid > .card{
-      padding:8px 14px !important;
-      height:72px !important;
+      padding:10px 14px !important;
+      height:82px !important;
       overflow:hidden;
     }
     .grid > .card .muted{
-      font-size:13px;
+      font-size:14px;
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
     }
     .grid > .card .metric{
-      font-size:22px !important;
-      margin-top:2px !important;
+      font-size:24px !important;
+      margin-top:4px !important;
     }
     .grid > .card .metric.small{
-      font-size:12px !important;
+      font-size:13px !important;
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
