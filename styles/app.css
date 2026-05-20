@@ -1459,6 +1459,9 @@
       color:#0f172a !important;
     }
 
+    .grid > .card{
+      padding:10px 14px !important;
+    }
     .metric-card-head{
       display:flex;
       align-items:center;
