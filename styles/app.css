@@ -1469,6 +1469,13 @@
       text-overflow:ellipsis;
       max-width:100%;
     }
+    .grid > .card .muted{
+      font-size:11px;
+      line-height:1.2;
+    }
+    .grid > .card .metric-card-head{
+      gap:6px;
+    }
     .metric-card-head{
       display:flex;
       align-items:center;
