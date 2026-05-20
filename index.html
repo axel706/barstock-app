@@ -41,7 +41,8 @@
   <div class="brand-logo-type" id="headerLogo">BarStock<span class="brand-logo-dot">.</span><span class="brand-logo-pro">Pro</span></div>
   <div class="brand-text">
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260520-000637</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260520-001112</div>
+
 
 
 
@@ -2881,10 +2882,9 @@ function quickLogoHeaderHtml(titleText, subtitleText=''){
   const subtitleHtml = subtitleText ? `<div style="font-size:12px;opacity:.72;margin-top:2px">${escapeHtml(subtitleText)}</div>` : '';
   return `
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-      <img src="assets/barstock_logo_full_transparent.png" alt="BarStock Pro logo" style="width:64px;height:auto;display:block;object-fit:contain;">
       <div style="display:flex;flex-direction:column;justify-content:center;">
-        <div style="font-size:22px;font-weight:800;line-height:1.05">BarStock Pro</div>
-        <div style="font-size:13px;font-weight:700;opacity:.82;margin-top:2px">${escapeHtml(titleText || '')}</div>
+        <div style="font-size:28px;font-weight:800;letter-spacing:-0.03em;line-height:1;display:inline-flex;align-items:baseline;">BarStock<span style="color:#3b82f6;">.</span><span style="font-size:12px;font-weight:700;color:#64748b;margin-left:5px;letter-spacing:0.08em;text-transform:uppercase;">Pro</span></div>
+        <div style="font-size:13px;font-weight:700;opacity:.82;margin-top:4px">${escapeHtml(titleText || '')}</div>
         ${subtitleHtml}
       </div>
     </div>
@@ -2971,10 +2971,9 @@ async function generateVendorJpgCanvas(vendor, rows){
     <div style="border:1px solid rgba(15,23,42,.10);border-radius:18px;padding:18px;background:#ffffff; box-shadow:0 10px 30px rgba(15,23,42,.08)">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:14px;">
         <div style="display:flex;align-items:center;gap:14px;">
-          <img src="assets/barstock_logo_full_transparent.png" alt="BarStock Pro logo" style="width:132px;height:auto;display:block;object-fit:contain;">
-          <div>
-            <div style="font-size:34px;font-weight:800;color:#0f172a;">BarStock Pro</div>
-            <div style="color:#64748b;">Vendor Order Export</div>
+          <div style="display:flex;flex-direction:column;justify-content:center;">
+            <div style="font-size:46px;font-weight:800;letter-spacing:-0.03em;line-height:1;display:inline-flex;align-items:baseline;color:#0f172a;">BarStock<span style="color:#3b82f6;">.</span><span style="font-size:18px;font-weight:700;color:#64748b;margin-left:7px;letter-spacing:0.08em;text-transform:uppercase;">Pro</span></div>
+            <div style="color:#64748b;margin-top:4px;">Vendor Order Export</div>
           </div>
         </div>
         <div style="text-align:right;">
