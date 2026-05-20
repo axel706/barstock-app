@@ -5,7 +5,7 @@
     .menu button,.menu .filelbl{display:block;width:100%;text-align:left;background:transparent;border-radius:10px;border:none;padding:10px 12px}
     .menu button:hover,.menu .filelbl:hover{background:rgba(56,189,248,.08);border:none}
     .menu.hidden{display:none}
-    h1{margin:0;font-size:32px} h1 .brand-lockup{display:flex}.version-tag{color:#f8fafc;font-weight:800;text-shadow:0 1px 8px rgba(0,0,0,.35)} body.light .version-tag{color:#0f172a;text-shadow:0 1px 6px rgba(255,255,255,.35)}
+    h1{margin:0;font-size:32px;padding:0} h1 .brand-lockup{display:flex;padding-left:0}.version-tag{color:#f8fafc;font-weight:800;text-shadow:0 1px 8px rgba(0,0,0,.35)} body.light .version-tag{color:#0f172a;text-shadow:0 1px 6px rgba(255,255,255,.35)}
     .sub{color:var(--sub)}
     .card{background:rgba(17,24,39,.86);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.28)}
     .metric{font-size:28px;font-weight:700;margin-top:8px}
@@ -1530,7 +1530,7 @@
     }
 
     .brand-logo-type{
-      font-size:28px;
+      font-size:34px;
       font-weight:800;
       letter-spacing:-0.03em;
       line-height:1;
@@ -1542,10 +1542,10 @@
       color:#3b82f6;
     }
     .brand-logo-pro{
-      font-size:12px;
+      font-size:13px;
       font-weight:700;
       color:#64748b;
-      margin-left:5px;
+      margin-left:6px;
       letter-spacing:0.08em;
       text-transform:uppercase;
     }
