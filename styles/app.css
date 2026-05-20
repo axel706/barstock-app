@@ -1529,6 +1529,27 @@
       text-transform:uppercase;
     }
 
+    .brand-logo-type{
+      font-size:28px;
+      font-weight:800;
+      letter-spacing:-0.03em;
+      line-height:1;
+      display:inline-flex;
+      align-items:baseline;
+      color:inherit;
+    }
+    .brand-logo-dot{
+      color:#3b82f6;
+    }
+    .brand-logo-pro{
+      font-size:12px;
+      font-weight:700;
+      color:#64748b;
+      margin-left:5px;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+    }
+
     .brand-lockup{
       display:flex;
       align-items:center;
