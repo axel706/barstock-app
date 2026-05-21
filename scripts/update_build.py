@@ -15,7 +15,7 @@ html = re.sub(
     flags=re.DOTALL
 )
 
-target = '<div class="brand-version">v3.1</div>'
+target = '<div class="brand-version">v1.0</div>'
 replacement = f'{target}\n<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">{build}</div>'
 
 if target not in html:
