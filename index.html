@@ -41,7 +41,8 @@
   <div class="brand-logo-type" id="headerLogo">BarStock<span class="brand-logo-dot">.</span><span class="brand-logo-pro">Pro</span></div>
   <div class="brand-text">
     <div class="brand-version">v3.1</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260521-111613</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260521-112259</div>
+
 
 
 
@@ -2459,6 +2460,15 @@ async function applyPendingImport(){
     if (!window.BarStockInventoryCloud || !window.BarStockNoMatchCloud) {
       throw new Error('Inventory / No Match cloud modules not available');
     }
+
+    // Aplicar el preview al state ANTES de sincronizar
+    const importMatches = pendingImport.matches || 0;
+    state.master = pendingImport.previewMaster.map(r => ({...r}));
+    state.noMatches = pendingImport.noMatches || [];
+    state.lastCountName = pendingImport.fileName;
+    state.lastUpdated = new Date().toISOString();
+    saveState();
+    render();
 
     await window.BarStockInventoryCloud.replaceInventoryMaster(state.master || []);
     await window.BarStockNoMatchCloud.replaceNoMatches(state.noMatches || []);
