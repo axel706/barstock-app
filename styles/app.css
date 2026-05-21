@@ -1471,15 +1471,17 @@
     .grid > .card.metric-inline .muted{
       font-size:14px;
       white-space:nowrap;
-      flex:0 0 auto;
+      flex:1 1 auto;
+      margin-right:auto;
     }
     .grid > .card.metric-inline .metric{
-      font-size:22px !important;
+      font-size:28px !important;
       font-weight:700 !important;
       margin:0 !important;
       line-height:1 !important;
       white-space:nowrap;
       flex:0 0 auto;
+      text-align:right;
     }
     .grid > .card.metric-inline .metric.small{
       font-size:13px !important;
@@ -1488,10 +1490,10 @@
       overflow:hidden;
       text-overflow:ellipsis;
       min-width:0;
-      flex:1 1 auto;
+      flex:0 1 auto;
+      text-align:right;
     }
     .grid > .card.metric-inline .metric-card-icon{
-      margin-left:auto;
       flex:0 0 auto;
     }
     .metric-card-head{
