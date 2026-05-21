@@ -46,26 +46,24 @@
     let y = margin;
     const fontFamily = 'helvetica';
 
-    // Logo (preserves aspect ratio)
-    try {
-      const logoUrl = 'assets/barstock_logo_full_transparent.png';
-      const logoData = await fetch(logoUrl).then(r => r.blob()).then(b => new Promise(res => {
-        const fr = new FileReader();
-        fr.onload = () => res(fr.result);
-        fr.readAsDataURL(b);
-      }));
-      const logoImg = new Image();
-      await new Promise(res => { logoImg.onload = res; logoImg.src = logoData; });
-      const logoTargetHeight = 40;
-      const logoWidth = logoImg.width * (logoTargetHeight / logoImg.height);
-      pdf.addImage(logoData, 'PNG', margin, y, logoWidth, logoTargetHeight);
-    } catch(e) { console.warn('Logo not loaded', e); }
+    // Logo tipografico BarStock.Pro
+    pdf.setFont(fontFamily, 'bold');
+    pdf.setFontSize(28);
+    pdf.setTextColor(15, 23, 42);
+    pdf.text('BarStock', margin, y + 22);
+    const barstockW = pdf.getTextWidth('BarStock');
+    pdf.setTextColor(59, 130, 246);
+    pdf.text('.', margin + barstockW, y + 22);
+    const dotW = pdf.getTextWidth('.');
+    pdf.setFontSize(11);
+    pdf.setTextColor(100, 116, 139);
+    pdf.text('PRO', margin + barstockW + dotW + 4, y + 20);
 
-    // Title
+    // Title (right)
     pdf.setFont(fontFamily, 'bold');
     pdf.setFontSize(20);
     pdf.setTextColor(15, 23, 42);
-    pdf.text('BarStock Pro Order', pageWidth - margin, y + 18, { align: 'right' });
+    pdf.text('Order', pageWidth - margin, y + 20, { align: 'right' });
     y += 60;
 
     // Divider
