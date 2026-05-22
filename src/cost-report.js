@@ -1,0 +1,745 @@
+/* ============================================================
+   COST REPORT MODULE — Wine & Liquor Cost
+   - Clases prefijadas cr-
+   - localStorage POR LOCACIÓN (usa el sufijo de la app)
+   - Lee la locación activa de BARSTOCK_CONFIG
+   - PDF sin caracteres Unicode (flechas -> +/-)
+   ============================================================ */
+(function () {
+  'use strict';
+
+  const DEFAULT_VENDORS = ['LOOP / PLCB', 'FWGS', 'BREAKTHRU', 'SOUTHERN', 'WINE MERCHANT'];
+  let vendors = [];
+
+  // Clave de storage por locación — replica el patrón de la app.
+  function storageKey() {
+    let suffix = 'default';
+    try {
+      if (typeof getActiveStorageSuffix === 'function') {
+        suffix = getActiveStorageSuffix();
+      } else if (window.BARSTOCK_CONFIG && window.BARSTOCK_CONFIG.LOCATION_NAME) {
+        suffix = window.BARSTOCK_CONFIG.LOCATION_NAME;
+      }
+    } catch (e) { /* noop */ }
+    return 'barstock_cost_reports_' + suffix;
+  }
+
+  function activeLocationName() {
+    try {
+      if (window.BARSTOCK_CONFIG && window.BARSTOCK_CONFIG.LOCATION_NAME) {
+        return window.BARSTOCK_CONFIG.LOCATION_NAME;
+      }
+    } catch (e) { /* noop */ }
+    return 'BarStock';
+  }
+
+  function init() {
+    const fromEl = document.getElementById('crPeriodFrom');
+    const toEl = document.getElementById('crPeriodTo');
+    if (!fromEl || !toEl) return; // sección no presente
+
+    const today = new Date();
+    const lastSunday = new Date(today);
+    lastSunday.setDate(today.getDate() - today.getDay());
+    const lastMonday = new Date(lastSunday);
+    lastMonday.setDate(lastSunday.getDate() - 6);
+    fromEl.value = formatDate(lastMonday);
+    toEl.value = formatDate(lastSunday);
+
+    vendors = DEFAULT_VENDORS.map(name => ({ name, invoices: [{ wine: '', liquor: '' }] }));
+    renderVendors();
+    updatePreview();
+    renderHistory();
+    // El colapso lo maneja initSectionToggles() de la app (botón costReportToggle).
+  }
+
+  function formatDate(d) { return d.toISOString().slice(0, 10); }
+
+  function renderVendors() {
+    const container = document.getElementById('crVendorsContainer');
+    if (!container) return;
+    container.innerHTML = '';
+    vendors.forEach((v, vIdx) => {
+      const block = document.createElement('div');
+      block.className = 'cr-vendor-block';
+      const subtotalWine = v.invoices.reduce((s, i) => s + (parseFloat(i.wine) || 0), 0);
+      const subtotalLiquor = v.invoices.reduce((s, i) => s + (parseFloat(i.liquor) || 0), 0);
+      block.innerHTML = `
+        <div class="cr-vendor-block-head">
+          <div class="cr-vendor-tag">${escapeHtml(v.name)}</div>
+          <div class="cr-vendor-subtotal">
+            <span>Wine <strong>$${subtotalWine.toFixed(2)}</strong></span>
+            <span class="cr-sep">·</span>
+            <span>Liquor <strong>$${subtotalLiquor.toFixed(2)}</strong></span>
+          </div>
+        </div>
+        <div class="cr-invoice-rows">
+          ${v.invoices.map((inv, iIdx) => `
+            <div class="cr-invoice-row">
+              <div class="cr-invoice-label">Invoice ${iIdx + 1}</div>
+              <div class="cr-invoice-input"><input type="number" step="0.01" placeholder="Wine" value="${inv.wine}" oninput="BarStockCostReport._updateInvoice(${vIdx}, ${iIdx}, 'wine', this.value)"></div>
+              <div class="cr-invoice-input"><input type="number" step="0.01" placeholder="Liquor" value="${inv.liquor}" oninput="BarStockCostReport._updateInvoice(${vIdx}, ${iIdx}, 'liquor', this.value)"></div>
+              ${v.invoices.length > 1 ? `<button class="cr-btn-remove" onclick="BarStockCostReport._removeInvoice(${vIdx}, ${iIdx})" title="Remove">×</button>` : '<div></div>'}
+            </div>
+          `).join('')}
+        </div>
+        <button class="cr-btn-add-invoice" onclick="BarStockCostReport._addInvoice(${vIdx})">+ Add invoice</button>
+      `;
+      container.appendChild(block);
+    });
+  }
+
+  function updateInvoice(vIdx, iIdx, field, value) {
+    vendors[vIdx].invoices[iIdx][field] = value;
+    const block = document.querySelectorAll('.cr-vendor-block')[vIdx];
+    if (block) {
+      const subtotalEl = block.querySelector('.cr-vendor-subtotal');
+      const v = vendors[vIdx];
+      const wine = v.invoices.reduce((s, i) => s + (parseFloat(i.wine) || 0), 0);
+      const liquor = v.invoices.reduce((s, i) => s + (parseFloat(i.liquor) || 0), 0);
+      subtotalEl.innerHTML = `<span>Wine <strong>$${wine.toFixed(2)}</strong></span><span class="cr-sep">·</span><span>Liquor <strong>$${liquor.toFixed(2)}</strong></span>`;
+    }
+    updatePreview();
+  }
+
+  function addInvoice(vIdx) { vendors[vIdx].invoices.push({ wine: '', liquor: '' }); renderVendors(); }
+  function removeInvoice(vIdx, iIdx) {
+    vendors[vIdx].invoices.splice(iIdx, 1);
+    if (vendors[vIdx].invoices.length === 0) vendors[vIdx].invoices.push({ wine: '', liquor: '' });
+    renderVendors();
+    updatePreview();
+  }
+  function addCustomVendor() {
+    const name = prompt('Custom vendor name:');
+    if (!name) return;
+    vendors.push({ name: name.trim().toUpperCase(), invoices: [{ wine: '', liquor: '' }] });
+    renderVendors();
+  }
+
+  function getValues() {
+    const num = id => parseFloat((document.getElementById(id) || {}).value) || 0;
+    const str = id => ((document.getElementById(id) || {}).value) || '';
+    const byVendor = vendors.map(v => ({
+      name: v.name,
+      wine: v.invoices.reduce((s, i) => s + (parseFloat(i.wine) || 0), 0),
+      liquor: v.invoices.reduce((s, i) => s + (parseFloat(i.liquor) || 0), 0)
+    }));
+    return {
+      byVendor,
+      totalWine: byVendor.reduce((s, v) => s + v.wine, 0),
+      totalLiquor: byVendor.reduce((s, v) => s + v.liquor, 0),
+      wineSales: num('crWineSales'),
+      liquorSales: num('crLiquorSales'),
+      wineTarget: num('crWineTarget'),
+      liquorTarget: num('crLiquorTarget'),
+      wineSalesLY: num('crWineSalesLY'),
+      liquorSalesLY: num('crLiquorSalesLY'),
+      notes: str('crNotes'),
+      periodFrom: str('crPeriodFrom'),
+      periodTo: str('crPeriodTo')
+    };
+  }
+
+  function updatePreview() {
+    if (!document.getElementById('crPurchasesHead')) return;
+    const d = getValues();
+    const total = d.totalWine + d.totalLiquor;
+    const expectedWine = d.wineSales * (d.wineTarget / 100);
+    const expectedLiquor = d.liquorSales * (d.liquorTarget / 100);
+    const expectedWineLY = d.wineSalesLY * (d.wineTarget / 100);
+    const expectedLiquorLY = d.liquorSalesLY * (d.liquorTarget / 100);
+
+    document.getElementById('crPurchasesHead').innerHTML =
+      '<th>Category</th>' + d.byVendor.map(v => `<th class="cr-right">${escapeHtml(v.name)}</th>`).join('') + '<th class="cr-right">Total</th>';
+    document.getElementById('crPurchasesBody').innerHTML = `
+      <tr><td><strong>Wine</strong></td>${d.byVendor.map(v => `<td class="cr-right">${fmtMoney(v.wine)}</td>`).join('')}<td class="cr-right"><strong>${fmtMoney(d.totalWine)}</strong></td></tr>
+      <tr><td><strong>Liquor</strong></td>${d.byVendor.map(v => `<td class="cr-right">${fmtMoney(v.liquor)}</td>`).join('')}<td class="cr-right"><strong>${fmtMoney(d.totalLiquor)}</strong></td></tr>
+    `;
+    document.getElementById('crPurchasesFoot').innerHTML =
+      `<td>Total Purchases</td>${d.byVendor.map(v => `<td class="cr-right">${fmtMoney(v.wine + v.liquor)}</td>`).join('')}<td class="cr-right">${fmtMoney(total)}</td>`;
+
+    const wineRealClass = d.totalWine > expectedWine ? 'cr-cogs-bad' : 'cr-cogs-good';
+    const liquorRealClass = d.totalLiquor > expectedLiquor ? 'cr-cogs-bad' : 'cr-cogs-good';
+    document.getElementById('crBenchmarkBody').innerHTML = `
+      <tr><td><strong>Wine</strong></td><td class="cr-right">${fmtMoney(d.wineSales)}</td><td class="cr-right cr-target-display">${Math.round(d.wineTarget)}%</td><td class="cr-right">${fmtMoney(expectedWine)}</td><td class="cr-right ${wineRealClass}">${fmtMoney(d.totalWine)}</td></tr>
+      <tr><td><strong>Liquor</strong></td><td class="cr-right">${fmtMoney(d.liquorSales)}</td><td class="cr-right cr-target-display">${Math.round(d.liquorTarget)}%</td><td class="cr-right">${fmtMoney(expectedLiquor)}</td><td class="cr-right ${liquorRealClass}">${fmtMoney(d.totalLiquor)}</td></tr>
+    `;
+    const totalRealClass = total > (expectedWine + expectedLiquor) ? 'cr-cogs-bad' : 'cr-cogs-good';
+    document.getElementById('crBenchmarkFoot').innerHTML =
+      `<td>Totals</td><td></td><td></td><td class="cr-right">${fmtMoney(expectedWine + expectedLiquor)}</td><td class="cr-right ${totalRealClass}">${fmtMoney(total)}</td>`;
+
+    const wineCogs = d.wineSales > 0 ? (d.totalWine / d.wineSales) * 100 : 0;
+    const liquorCogs = d.liquorSales > 0 ? (d.totalLiquor / d.liquorSales) * 100 : 0;
+    document.getElementById('crPerformanceBody').innerHTML = `
+      <tr><td><strong>Wine</strong></td><td class="cr-right">${fmtMoney(d.wineSales)}</td><td class="cr-right ${wineCogs > d.wineTarget ? 'cr-cogs-bad' : 'cr-cogs-good'}">${Math.round(wineCogs)}%</td></tr>
+      <tr><td><strong>Liquor</strong></td><td class="cr-right">${fmtMoney(d.liquorSales)}</td><td class="cr-right ${liquorCogs > d.liquorTarget ? 'cr-cogs-bad' : 'cr-cogs-good'}">${Math.round(liquorCogs)}%</td></tr>
+    `;
+
+    const wineSalesDiff = d.wineSalesLY > 0 ? ((d.wineSales - d.wineSalesLY) / d.wineSalesLY) * 100 : null;
+    const liquorSalesDiff = d.liquorSalesLY > 0 ? ((d.liquorSales - d.liquorSalesLY) / d.liquorSalesLY) * 100 : null;
+    const wineSpendDiff = expectedWineLY > 0 ? ((d.totalWine - expectedWineLY) / expectedWineLY) * 100 : null;
+    const liquorSpendDiff = expectedLiquorLY > 0 ? ((d.totalLiquor - expectedLiquorLY) / expectedLiquorLY) * 100 : null;
+
+    document.getElementById('crYoyBody').innerHTML = `
+      <tr>
+        <td><strong>Wine</strong></td>
+        <td class="cr-right">${fmtMoney(d.wineSalesLY)}</td>
+        <td class="cr-right">${fmtMoney(expectedWineLY)}</td>
+        <td class="cr-right">${diffPill(wineSalesDiff, 'sales')}</td>
+        <td class="cr-right">${diffPill(wineSpendDiff, 'spend')}</td>
+      </tr>
+      <tr>
+        <td><strong>Liquor</strong></td>
+        <td class="cr-right">${fmtMoney(d.liquorSalesLY)}</td>
+        <td class="cr-right">${fmtMoney(expectedLiquorLY)}</td>
+        <td class="cr-right">${diffPill(liquorSalesDiff, 'sales')}</td>
+        <td class="cr-right">${diffPill(liquorSpendDiff, 'spend')}</td>
+      </tr>
+    `;
+
+    renderSmartNotes(d, expectedWine, expectedLiquor, expectedWineLY, expectedLiquorLY);
+  }
+
+  function diffPill(diff, kind) {
+    if (diff === null) return '<span style="color:#94a3b8">N/A</span>';
+    const sign = diff > 0 ? '+' : (diff < 0 ? '-' : '');
+    let cls;
+    if (kind === 'spend') cls = diff > 0 ? 'cr-cogs-bad' : 'cr-cogs-good';
+    else cls = diff < 0 ? 'cr-cogs-bad' : 'cr-cogs-good';
+    if (Math.abs(diff) < 0.5) cls = 'cr-target-display';
+    return `<span class="${cls}">${sign}${Math.round(Math.abs(diff))}%</span>`;
+  }
+
+  function renderSmartNotes(d, expectedWine, expectedLiquor, expectedWineLY, expectedLiquorLY) {
+    const container = document.getElementById('crSmartNotes');
+    if (!container) return;
+    const note1 = buildPerformanceNote(d, expectedWine, expectedLiquor);
+    const note2 = buildYoYNote(d, expectedWineLY, expectedLiquorLY);
+    let html = '';
+    if (note1) html += `<div class="cr-smart-note"><div class="cr-smart-note-title">Performance vs Expected</div>${note1}</div>`;
+    if (note2) html += `<div class="cr-smart-note" style="border-left-color:#166534"><div class="cr-smart-note-title">Year-over-Year Insight</div>${note2}</div>`;
+    container.innerHTML = html;
+  }
+
+  function buildPerformanceNote(d, expectedWine, expectedLiquor) {
+    if (d.wineSales <= 0 && d.liquorSales <= 0) return '';
+    const parts = [];
+    const totalActual = d.totalWine + d.totalLiquor;
+    const totalExpected = expectedWine + expectedLiquor;
+
+    if (d.wineSales > 0) {
+      const cogs = Math.round((d.totalWine / d.wineSales) * 100);
+      const diffDollars = d.totalWine - expectedWine;
+      const diffPts = cogs - Math.round(d.wineTarget);
+      if (Math.abs(diffPts) < 1) {
+        parts.push('<strong>Wine</strong> spend landed on target at ' + cogs + '% COGS — ' + fmtMoney(d.totalWine) + ' actual vs ' + fmtMoney(expectedWine) + ' expected.');
+      } else if (diffPts > 0) {
+        parts.push('<strong>Wine</strong> came in at ' + cogs + '% COGS, <span class="cr-up">' + diffPts + '% above the ' + Math.round(d.wineTarget) + '% target</span> — actual ' + fmtMoney(d.totalWine) + ' vs expected ' + fmtMoney(expectedWine) + ', an overspend of <span class="cr-up">' + fmtMoney(diffDollars) + '</span>.');
+      } else {
+        parts.push('<strong>Wine</strong> came in at ' + cogs + '% COGS, <span class="cr-down">' + Math.abs(diffPts) + '% below the ' + Math.round(d.wineTarget) + '% target</span> — actual ' + fmtMoney(d.totalWine) + ' vs expected ' + fmtMoney(expectedWine) + ', savings of <span class="cr-down">' + fmtMoney(Math.abs(diffDollars)) + '</span>.');
+      }
+    }
+
+    if (d.liquorSales > 0) {
+      const cogs = Math.round((d.totalLiquor / d.liquorSales) * 100);
+      const diffDollars = d.totalLiquor - expectedLiquor;
+      const diffPts = cogs - Math.round(d.liquorTarget);
+      if (Math.abs(diffPts) < 1) {
+        parts.push('<strong>Liquor</strong> spend landed on target at ' + cogs + '% COGS — ' + fmtMoney(d.totalLiquor) + ' actual vs ' + fmtMoney(expectedLiquor) + ' expected.');
+      } else if (diffPts > 0) {
+        parts.push('<strong>Liquor</strong> came in at ' + cogs + '% COGS, <span class="cr-up">' + diffPts + '% above the ' + Math.round(d.liquorTarget) + '% target</span> — actual ' + fmtMoney(d.totalLiquor) + ' vs expected ' + fmtMoney(expectedLiquor) + ', an overspend of <span class="cr-up">' + fmtMoney(diffDollars) + '</span>.');
+      } else {
+        parts.push('<strong>Liquor</strong> came in at ' + cogs + '% COGS, <span class="cr-down">' + Math.abs(diffPts) + '% below the ' + Math.round(d.liquorTarget) + '% target</span> — actual ' + fmtMoney(d.totalLiquor) + ' vs expected ' + fmtMoney(expectedLiquor) + ', savings of <span class="cr-down">' + fmtMoney(Math.abs(diffDollars)) + '</span>.');
+      }
+    }
+
+    if (totalExpected > 0) {
+      const pct = Math.round(((totalActual - totalExpected) / totalExpected) * 100);
+      if (Math.abs(pct) >= 1) {
+        if (pct > 0) {
+          parts.push('<strong>Overall</strong> spend was <span class="cr-up">' + pct + '% above budget</span> — ' + fmtMoney(totalActual) + ' actual vs ' + fmtMoney(totalExpected) + ' expected.');
+        } else {
+          parts.push('<strong>Overall</strong> spend was <span class="cr-down">' + Math.abs(pct) + '% under budget</span> — ' + fmtMoney(totalActual) + ' actual vs ' + fmtMoney(totalExpected) + ' expected.');
+        }
+      }
+    }
+
+    return parts.join(' ');
+  }
+
+  function buildYoYNote(d) {
+    const haveLY = (d.wineSalesLY > 0 || d.liquorSalesLY > 0);
+    if (!haveLY) return '';
+    const salesNow = d.wineSales + d.liquorSales;
+    const salesLY = d.wineSalesLY + d.liquorSalesLY;
+    if (salesLY <= 0 || salesNow <= 0) return '';
+    const pct = Math.round(((salesNow - salesLY) / salesLY) * 100);
+    const diff = Math.abs(salesNow - salesLY);
+    if (Math.abs(pct) < 1) {
+      return 'Sales were flat versus the same period last year — ' + fmtMoney(salesNow) + ' this week vs ' + fmtMoney(salesLY) + ' last year.';
+    } else if (pct > 0) {
+      return '<strong>Sales</strong> were <span class="cr-down">' + pct + '% higher</span> than the same period last year — ' + fmtMoney(salesNow) + ' this week vs ' + fmtMoney(salesLY) + ' last year (' + fmtMoney(diff) + ' more in revenue).';
+    } else {
+      return '<strong>Sales</strong> were <span class="cr-up">' + Math.abs(pct) + '% lower</span> than the same period last year — ' + fmtMoney(salesNow) + ' this week vs ' + fmtMoney(salesLY) + ' last year (' + fmtMoney(diff) + ' less in revenue).';
+    }
+  }
+
+  function stripHtml(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  }
+
+  function fmtMoney(n) {
+    return '$' + (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  }
+
+  function loadReports() {
+    try { return JSON.parse(localStorage.getItem(storageKey()) || '[]'); }
+    catch (e) { return []; }
+  }
+
+  async function saveReport() {
+    const d = getValues();
+    if (!d.periodFrom || !d.periodTo) { alert('Please set the report period.'); return; }
+    const report = {
+      periodFrom: d.periodFrom, periodTo: d.periodTo,
+      vendors: d.byVendor,
+      totalWine: d.totalWine, totalLiquor: d.totalLiquor,
+      wineSales: d.wineSales, liquorSales: d.liquorSales,
+      wineTarget: d.wineTarget, liquorTarget: d.liquorTarget,
+      wineSalesLY: d.wineSalesLY, liquorSalesLY: d.liquorSalesLY,
+      notes: d.notes
+    };
+    if (window.BarStockCostReportCloud) {
+      try {
+        await window.BarStockCostReportCloud.saveReport(report);
+        await renderHistory();
+        alert('Report saved to cloud.');
+        return;
+      } catch (e) {
+        console.error('Cloud save failed, falling back to local', e);
+      }
+    }
+    // Fallback local
+    const wineCogs = d.wineSales > 0 ? (d.totalWine / d.wineSales) * 100 : 0;
+    const liquorCogs = d.liquorSales > 0 ? (d.totalLiquor / d.liquorSales) * 100 : 0;
+    const localReport = { id: 'rep_' + Date.now(), savedAt: new Date().toISOString(), wineCogs, liquorCogs, ...report };
+    const reports = loadReports();
+    reports.push(localReport);
+    if (reports.length > 24) reports.shift();
+    localStorage.setItem(storageKey(), JSON.stringify(reports));
+    await renderHistory();
+    alert('Report saved locally (cloud unavailable).');
+  }
+
+  // Normaliza un registro del cloud (snake_case) al formato de la UI (camelCase)
+  function normalizeCloudReport(r) {
+    const wineCogs = r.wine_sales > 0 ? (r.total_wine / r.wine_sales) * 100 : 0;
+    const liquorCogs = r.liquor_sales > 0 ? (r.total_liquor / r.liquor_sales) * 100 : 0;
+    return {
+      id: r.id,
+      periodFrom: r.period_from, periodTo: r.period_to,
+      vendors: r.vendors || [],
+      totalWine: Number(r.total_wine) || 0, totalLiquor: Number(r.total_liquor) || 0,
+      wineSales: Number(r.wine_sales) || 0, liquorSales: Number(r.liquor_sales) || 0,
+      wineTarget: Number(r.wine_target) || 0, liquorTarget: Number(r.liquor_target) || 0,
+      wineSalesLY: Number(r.wine_sales_ly) || 0, liquorSalesLY: Number(r.liquor_sales_ly) || 0,
+      wineCogs, liquorCogs,
+      notes: r.notes || ''
+    };
+  }
+
+  // Caché de los reportes actualmente mostrados (para loadReport)
+  let _shownReports = [];
+
+  async function renderHistory() {
+    const container = document.getElementById('crHistoryContainer');
+    if (!container) return;
+
+    let reports = [];
+    if (window.BarStockCostReportCloud) {
+      try {
+        const cloudRows = await window.BarStockCostReportCloud.listReports();
+        reports = cloudRows.map(normalizeCloudReport);
+      } catch (e) {
+        console.error('Cloud list failed, falling back to local', e);
+        reports = loadReports().slice().reverse();
+      }
+    } else {
+      reports = loadReports().slice().reverse();
+    }
+
+    _shownReports = reports;
+
+    if (!reports.length) {
+      container.innerHTML = '<div class="cr-history-empty">No saved reports yet. Save a report to see it here.</div>';
+      return;
+    }
+    container.innerHTML = '<div class="cr-history-list">' + reports.map(r => `
+      <div class="cr-history-item">
+        <div class="cr-history-item-info">
+          <div class="cr-history-item-period">${formatPeriod(r.periodFrom, r.periodTo)}</div>
+          <div class="cr-history-item-stats">Wine ${Math.round(r.wineCogs || 0)}% · Liquor ${Math.round(r.liquorCogs || 0)}% · Total ${fmtMoney(r.totalWine + r.totalLiquor)}</div>
+        </div>
+        <div class="cr-history-item-actions">
+          <button class="cr-btn-small" onclick="BarStockCostReport._loadReport('${r.id}')">Load</button>
+          <button class="cr-btn-small cr-danger" onclick="BarStockCostReport._deleteReport('${r.id}')">Delete</button>
+        </div>
+      </div>
+    `).join('') + '</div>';
+  }
+
+  function formatPeriod(from, to) {
+    const f = new Date(from + 'T00:00:00');
+    const t = new Date(to + 'T00:00:00');
+    const opts = { month: 'short', day: 'numeric', year: 'numeric' };
+    return `${f.toLocaleDateString('en-US', opts)} — ${t.toLocaleDateString('en-US', opts)}`;
+  }
+
+  function loadReport(id) {
+    const reports = _shownReports.length ? _shownReports : loadReports();
+    const r = reports.find(x => String(x.id) === String(id));
+    if (!r) return;
+    const setV = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    setV('crPeriodFrom', r.periodFrom);
+    setV('crPeriodTo', r.periodTo);
+    setV('crWineSales', r.wineSales);
+    setV('crLiquorSales', r.liquorSales);
+    setV('crWineTarget', r.wineTarget);
+    setV('crLiquorTarget', r.liquorTarget);
+    setV('crWineSalesLY', r.wineSalesLY || '');
+    setV('crLiquorSalesLY', r.liquorSalesLY || '');
+    setV('crNotes', r.notes || '');
+    vendors = r.vendors.map(v => ({
+      name: v.name,
+      invoices: [{ wine: v.wine.toString(), liquor: v.liquor.toString() }]
+    }));
+    renderVendors();
+    updatePreview();
+    const section = document.getElementById('costReportSection');
+    if (section) section.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  async function deleteReport(id) {
+    if (!confirm('Delete this report?')) return;
+    if (window.BarStockCostReportCloud) {
+      try {
+        await window.BarStockCostReportCloud.deleteReport(id);
+        await renderHistory();
+        return;
+      } catch (e) {
+        console.error('Cloud delete failed, falling back to local', e);
+      }
+    }
+    const reports = loadReports().filter(r => String(r.id) !== String(id));
+    localStorage.setItem(storageKey(), JSON.stringify(reports));
+    await renderHistory();
+  }
+
+  function resetForm() {
+    if (!confirm('Reset all current data?')) return;
+    vendors = DEFAULT_VENDORS.map(name => ({ name, invoices: [{ wine: '', liquor: '' }] }));
+    ['crWineSales', 'crLiquorSales', 'crWineSalesLY', 'crLiquorSalesLY', 'crNotes'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    const wt = document.getElementById('crWineTarget'); if (wt) wt.value = '22';
+    const lt = document.getElementById('crLiquorTarget'); if (lt) lt.value = '15';
+    renderVendors();
+    updatePreview();
+  }
+
+  // ============================================================
+  // PDF — sin caracteres Unicode (flechas reemplazadas por +/-)
+  // ============================================================
+  async function generatePdf() {
+    const d = getValues();
+    const location = activeLocationName();
+    if (!d.periodFrom || !d.periodTo) { alert('Please set the report period.'); return; }
+
+    const expectedWine = d.wineSales * (d.wineTarget / 100);
+    const expectedLiquor = d.liquorSales * (d.liquorTarget / 100);
+    const expectedWineLY = d.wineSalesLY * (d.wineTarget / 100);
+    const expectedLiquorLY = d.liquorSalesLY * (d.liquorTarget / 100);
+    const wineCogs = d.wineSales > 0 ? (d.totalWine / d.wineSales) * 100 : 0;
+    const liquorCogs = d.liquorSales > 0 ? (d.totalLiquor / d.liquorSales) * 100 : 0;
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 40;
+    let y = margin + 10;
+
+    const TBL_STYLES = { fontSize: 9.5, cellPadding: { top: 8, right: 12, bottom: 8, left: 12 }, font: 'helvetica', lineColor: [218, 224, 234], lineWidth: 0, textColor: [15, 23, 42], valign: 'middle' };
+    const TBL_HEAD = { fillColor: [241, 245, 251], textColor: [30, 60, 90], fontStyle: 'bold', fontSize: 8.5, cellPadding: { top: 9, right: 12, bottom: 9, left: 12 } };
+    const TBL_FOOT = { fillColor: [232, 240, 250], textColor: [15, 23, 42], fontStyle: 'bold' };
+    const TBL_ALT = [248, 250, 253];
+
+    function drawRoundedBlock(startY, endY) { pdf.setDrawColor(200, 215, 230); pdf.setLineWidth(0.8); pdf.roundedRect(margin, startY, pageW - margin * 2, endY - startY, 6, 6, 'S'); }
+    function drawBanner(text) {
+      pdf.setFillColor(30, 91, 138);
+      pdf.roundedRect(margin, y, pageW - margin * 2, 24, 6, 6, 'F');
+      pdf.setFillColor(30, 91, 138);
+      pdf.rect(margin, y + 10, pageW - margin * 2, 14, 'F');
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10); pdf.setTextColor(255, 255, 255);
+      pdf.text(text, pageW / 2, y + 16, { align: 'center' });
+      y += 24;
+    }
+    function ensureSpace(needed) { if (y > pageH - margin - needed) { pdf.addPage(); y = margin + 10; } }
+    function rowSeparators(data) {
+      if (data.section === 'body' || data.section === 'head') {
+        pdf.setDrawColor(218, 224, 234); pdf.setLineWidth(0.4);
+        const cell = data.cell;
+        pdf.line(cell.x, cell.y + cell.height, cell.x + cell.width, cell.y + cell.height);
+      }
+    }
+
+    // HEADER — logo tipográfico
+    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(28); pdf.setTextColor(15, 23, 42);
+    pdf.text('BarStock', margin, y);
+    const barstockW = pdf.getTextWidth('BarStock');
+    pdf.setTextColor(59, 130, 246); pdf.text('.', margin + barstockW, y);
+    const dotW = pdf.getTextWidth('.');
+    pdf.setFontSize(11); pdf.setTextColor(100, 116, 139);
+    pdf.text('PRO', margin + barstockW + dotW + 4, y - 2);
+
+    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(13); pdf.setTextColor(22, 101, 52);
+    pdf.text(location, pageW - margin, y, { align: 'right' });
+
+    y += 18;
+    pdf.setDrawColor(218, 224, 234); pdf.setLineWidth(1);
+    pdf.line(margin, y, pageW - margin, y);
+    y += 28;
+
+    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(18); pdf.setTextColor(30, 91, 138);
+    pdf.text('Wine & Liquor Cost Performance Report', pageW / 2, y, { align: 'center' });
+    y += 18;
+    pdf.setFont('helvetica', 'normal'); pdf.setFontSize(10); pdf.setTextColor(100, 116, 139);
+    pdf.text('Period: ' + formatPeriod(d.periodFrom, d.periodTo), pageW / 2, y, { align: 'center' });
+    y += 30;
+
+    const tableWidth = pageW - margin * 2;
+    function shortVendorName(name) {
+      const n = name.toUpperCase();
+      if (n.includes('LOOP') || n.includes('PLCB')) return 'PLCB';
+      if (n.includes('WINE MERCHANT')) return 'WINE M.';
+      if (n.includes('BREAKTHRU')) return 'BT';
+      if (n.includes('SOUTHERN')) return 'SOUTHERN';
+      if (n.includes('FWGS')) return 'FWGS';
+      return name.toUpperCase().substring(0, 10);
+    }
+    const vendorHeaders = d.byVendor.map(v => shortVendorName(v.name));
+    const numVendors = d.byVendor.length;
+    const firstColW = Math.max(100, tableWidth * 0.18);
+    const otherColW = (tableWidth - firstColW) / (numVendors + 1);
+    const purchasesColStyles = { 0: { halign: 'left', fontStyle: 'bold', cellWidth: firstColW } };
+    for (let i = 1; i <= numVendors + 1; i++) purchasesColStyles[i] = { halign: 'right', cellWidth: otherColW };
+
+    let blockStart = y;
+    drawBanner('PURCHASES OVERVIEW');
+    pdf.autoTable({
+      startY: y,
+      head: [['CATEGORY', ...vendorHeaders, 'TOTAL']],
+      body: [
+        ['Wine', ...d.byVendor.map(v => fmtMoney(v.wine)), fmtMoney(d.totalWine)],
+        ['Liquor', ...d.byVendor.map(v => fmtMoney(v.liquor)), fmtMoney(d.totalLiquor)]
+      ],
+      foot: [['TOTAL PURCHASES', ...d.byVendor.map(v => fmtMoney(v.wine + v.liquor)), fmtMoney(d.totalWine + d.totalLiquor)]],
+      margin: { left: margin, right: margin }, theme: 'plain',
+      styles: TBL_STYLES, headStyles: TBL_HEAD, footStyles: { ...TBL_FOOT, halign: 'right' },
+      alternateRowStyles: { fillColor: TBL_ALT }, columnStyles: purchasesColStyles,
+      didParseCell: (data) => {
+        if (data.section === 'head' && data.column.index > 0) data.cell.styles.halign = 'right';
+        if (data.section === 'body' && data.column.index === numVendors + 1) data.cell.styles.fontStyle = 'bold';
+        if (data.section === 'foot') data.cell.styles.halign = data.column.index === 0 ? 'left' : 'right';
+      },
+      didDrawCell: rowSeparators
+    });
+    y = pdf.lastAutoTable.finalY; drawRoundedBlock(blockStart, y); y += 22;
+
+    ensureSpace(150);
+    const benchColW = tableWidth / 5;
+    blockStart = y;
+    drawBanner('COST BENCHMARK COMPARISON');
+    pdf.autoTable({
+      startY: y,
+      head: [['CATEGORY', 'SALES', 'TARGET %', 'EXPECTED COST', 'REAL COST']],
+      body: [
+        ['Wine', fmtMoney(d.wineSales), Math.round(d.wineTarget) + '%', fmtMoney(expectedWine), fmtMoney(d.totalWine)],
+        ['Liquor', fmtMoney(d.liquorSales), Math.round(d.liquorTarget) + '%', fmtMoney(expectedLiquor), fmtMoney(d.totalLiquor)]
+      ],
+      foot: [['TOTALS', '', '', fmtMoney(expectedWine + expectedLiquor), fmtMoney(d.totalWine + d.totalLiquor)]],
+      margin: { left: margin, right: margin }, theme: 'plain',
+      styles: TBL_STYLES, headStyles: TBL_HEAD, footStyles: TBL_FOOT,
+      alternateRowStyles: { fillColor: TBL_ALT },
+      columnStyles: {
+        0: { halign: 'left', fontStyle: 'bold', cellWidth: benchColW },
+        1: { halign: 'right', cellWidth: benchColW },
+        2: { halign: 'right', textColor: [22, 101, 52], fontStyle: 'bold', cellWidth: benchColW },
+        3: { halign: 'right', cellWidth: benchColW },
+        4: { halign: 'right', cellWidth: benchColW, fontStyle: 'bold' }
+      },
+      didParseCell: (data) => {
+        if (data.section === 'head' && data.column.index > 0) data.cell.styles.halign = 'right';
+        if (data.section === 'foot') data.cell.styles.halign = data.column.index === 0 ? 'left' : 'right';
+        if (data.section === 'body' && data.column.index === 4) {
+          const isWine = data.row.index === 0;
+          const real = isWine ? d.totalWine : d.totalLiquor;
+          const expected = isWine ? expectedWine : expectedLiquor;
+          data.cell.styles.textColor = real > expected ? [220, 38, 38] : [22, 101, 52];
+        }
+        if (data.section === 'foot' && data.column.index === 4) {
+          const real = d.totalWine + d.totalLiquor; const expected = expectedWine + expectedLiquor;
+          data.cell.styles.textColor = real > expected ? [220, 38, 38] : [22, 101, 52];
+        }
+      },
+      didDrawCell: rowSeparators
+    });
+    y = pdf.lastAutoTable.finalY; drawRoundedBlock(blockStart, y); y += 22;
+
+    ensureSpace(110);
+    const perfColW = tableWidth / 3;
+    blockStart = y;
+    drawBanner('COST PERFORMANCE');
+    pdf.autoTable({
+      startY: y,
+      head: [['CATEGORY', 'SALES', 'COGS %']],
+      body: [
+        ['Wine', fmtMoney(d.wineSales), Math.round(wineCogs) + '%'],
+        ['Liquor', fmtMoney(d.liquorSales), Math.round(liquorCogs) + '%']
+      ],
+      margin: { left: margin, right: margin }, theme: 'plain',
+      styles: TBL_STYLES, headStyles: TBL_HEAD, alternateRowStyles: { fillColor: TBL_ALT },
+      columnStyles: {
+        0: { halign: 'left', fontStyle: 'bold', cellWidth: perfColW },
+        1: { halign: 'right', cellWidth: perfColW },
+        2: { halign: 'right', cellWidth: perfColW }
+      },
+      didParseCell: (data) => {
+        if (data.section === 'head' && data.column.index > 0) data.cell.styles.halign = 'right';
+        if (data.section === 'body' && data.column.index === 2) {
+          const cogs = data.row.index === 0 ? wineCogs : liquorCogs;
+          const target = data.row.index === 0 ? d.wineTarget : d.liquorTarget;
+          data.cell.styles.textColor = cogs > target ? [220, 38, 38] : [22, 101, 52];
+          data.cell.styles.fontStyle = 'bold';
+        }
+      },
+      didDrawCell: rowSeparators
+    });
+    y = pdf.lastAutoTable.finalY; drawRoundedBlock(blockStart, y); y += 22;
+
+    const haveLY = (d.wineSalesLY > 0 || d.liquorSalesLY > 0);
+    if (haveLY) {
+      ensureSpace(130);
+      const wineSalesDiff = d.wineSalesLY > 0 ? ((d.wineSales - d.wineSalesLY) / d.wineSalesLY) * 100 : null;
+      const liquorSalesDiff = d.liquorSalesLY > 0 ? ((d.liquorSales - d.liquorSalesLY) / d.liquorSalesLY) * 100 : null;
+      const wineSpendDiff = expectedWineLY > 0 ? ((d.totalWine - expectedWineLY) / expectedWineLY) * 100 : null;
+      const liquorSpendDiff = expectedLiquorLY > 0 ? ((d.totalLiquor - expectedLiquorLY) / expectedLiquorLY) * 100 : null;
+
+      function diffText(diff) {
+        if (diff === null) return 'N/A';
+        if (Math.abs(diff) < 0.5) return 'Flat';
+        const sign = diff > 0 ? '+' : '-';
+        return sign + Math.round(Math.abs(diff)) + '%';
+      }
+
+      const yoyColW = tableWidth / 5;
+      blockStart = y;
+      drawBanner('YEAR-OVER-YEAR COMPARISON');
+      pdf.autoTable({
+        startY: y,
+        head: [['CATEGORY', 'SALES LY', 'EXPECTED COST LY', 'SALES CHG', 'SPEND CHG VS LY']],
+        body: [
+          ['Wine', fmtMoney(d.wineSalesLY), fmtMoney(expectedWineLY), diffText(wineSalesDiff), diffText(wineSpendDiff)],
+          ['Liquor', fmtMoney(d.liquorSalesLY), fmtMoney(expectedLiquorLY), diffText(liquorSalesDiff), diffText(liquorSpendDiff)]
+        ],
+        margin: { left: margin, right: margin }, theme: 'plain',
+        styles: TBL_STYLES, headStyles: TBL_HEAD, alternateRowStyles: { fillColor: TBL_ALT },
+        columnStyles: {
+          0: { halign: 'left', fontStyle: 'bold', cellWidth: yoyColW },
+          1: { halign: 'right', cellWidth: yoyColW },
+          2: { halign: 'right', cellWidth: yoyColW },
+          3: { halign: 'right', cellWidth: yoyColW, fontStyle: 'bold' },
+          4: { halign: 'right', cellWidth: yoyColW, fontStyle: 'bold' }
+        },
+        didParseCell: (data) => {
+          if (data.section === 'head' && data.column.index > 0) data.cell.styles.halign = 'right';
+          if (data.section === 'body' && data.column.index === 3) {
+            const diff = data.row.index === 0 ? wineSalesDiff : liquorSalesDiff;
+            if (diff !== null) data.cell.styles.textColor = diff < 0 ? [220, 38, 38] : [22, 101, 52];
+          }
+          if (data.section === 'body' && data.column.index === 4) {
+            const diff = data.row.index === 0 ? wineSpendDiff : liquorSpendDiff;
+            if (diff !== null) data.cell.styles.textColor = diff > 0 ? [220, 38, 38] : [22, 101, 52];
+          }
+        },
+        didDrawCell: rowSeparators
+      });
+      y = pdf.lastAutoTable.finalY; drawRoundedBlock(blockStart, y); y += 24;
+    }
+
+    const perfText = stripHtml(buildPerformanceNote(d, expectedWine, expectedLiquor));
+    const yoyText = stripHtml(buildYoYNote(d));
+    if (perfText || yoyText) {
+      ensureSpace(70);
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(13); pdf.setTextColor(30, 91, 138);
+      pdf.text('Auto Insights', margin, y); y += 16;
+    }
+    if (perfText) {
+      ensureSpace(40);
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(100, 116, 139);
+      pdf.text('PERFORMANCE VS EXPECTED', margin, y); y += 12;
+      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(10); pdf.setTextColor(15, 23, 42);
+      const lines = pdf.splitTextToSize(perfText, pageW - margin * 2);
+      ensureSpace(lines.length * 13 + 10); pdf.text(lines, margin, y); y += lines.length * 13 + 14;
+    }
+    if (yoyText) {
+      ensureSpace(40);
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(100, 116, 139);
+      pdf.text('YEAR-OVER-YEAR INSIGHT', margin, y); y += 12;
+      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(10); pdf.setTextColor(15, 23, 42);
+      const lines = pdf.splitTextToSize(yoyText, pageW - margin * 2);
+      ensureSpace(lines.length * 13 + 10); pdf.text(lines, margin, y); y += lines.length * 13 + 14;
+    }
+
+    if (d.notes && d.notes.trim()) {
+      ensureSpace(60);
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(13); pdf.setTextColor(30, 91, 138);
+      pdf.text('Manager Notes', margin, y); y += 16;
+      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(10); pdf.setTextColor(71, 85, 105);
+      const lines = pdf.splitTextToSize(d.notes, pageW - margin * 2);
+      ensureSpace(lines.length * 13 + 10); pdf.text(lines, margin, y); y += lines.length * 13 + 10;
+    }
+
+    pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); pdf.setTextColor(148, 163, 184);
+    pdf.text(location + ' \u2013 Internal Use Only', margin, pageH - 30);
+    pdf.text('Generated by BarStock Pro \u00b7 Automated reporting system', pageW - margin, pageH - 30, { align: 'right' });
+
+    pdf.save('cost_report_' + d.periodFrom + '_to_' + d.periodTo + '.pdf');
+  }
+
+  // API pública
+  window.BarStockCostReport = {
+    init,
+    addCustomVendor,
+    saveReport,
+    resetForm,
+    generatePdf,
+    updatePreview,
+    _updateInvoice: updateInvoice,
+    _addInvoice: addInvoice,
+    _removeInvoice: removeInvoice,
+    _loadReport: loadReport,
+    _deleteReport: deleteReport
+  };
+
+  // Auto-init cuando el DOM esté listo
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();

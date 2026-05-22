@@ -28,6 +28,7 @@
 
   <link rel="stylesheet" href="styles/fixes.css">
   <link rel="stylesheet" href="styles/auth.css">
+  <link rel="stylesheet" href="styles/cost-report.css">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -41,7 +42,8 @@
   <div class="brand-logo-type" id="headerLogo">BarStock<span class="brand-logo-dot">.</span><span class="brand-logo-pro">Pro</span></div>
   <div class="brand-text">
     <div class="brand-version">v1.0</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260521-194613</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260522-125212</div>
+
 
 
 
@@ -621,6 +623,139 @@
     </div>
   </div>
 
+  <div class="card section-card cr-section" id="costReportSection">
+    <div class="section-header-row">
+      <div style="flex:1 1 auto">
+        <div class="sectionhead">
+          <div>
+            <strong><span class="section-title">Wine &amp; Liquor Cost</span></strong>
+            <div class="small muted">Capture weekly invoices by vendor, track COGS against benchmarks, and compare against last year.</div>
+          </div>
+        </div>
+      </div>
+      <button id="costReportToggle" class="section-toggle" title="Collapse or expand Wine &amp; Liquor Cost">−</button>
+    </div>
+    <div class="section-body" id="costReportSectionBody">
+
+      <div class="cr-subsection">
+        <div class="cr-subsection-header"><h3 class="cr-subsection-title">Reporting Period</h3></div>
+        <div class="cr-period-grid">
+          <div><label>From</label><input type="date" id="crPeriodFrom"></div>
+          <div><label>To</label><input type="date" id="crPeriodTo"></div>
+        </div>
+      </div>
+
+      <div class="cr-subsection">
+        <div class="cr-subsection-header">
+          <h3 class="cr-subsection-title">Purchases by Vendor</h3>
+          <button class="cr-btn-secondary" onclick="BarStockCostReport.addCustomVendor()">+ Add custom vendor</button>
+        </div>
+        <div class="cr-vendor-list" id="crVendorsContainer"></div>
+      </div>
+
+      <div class="cr-subsection">
+        <div class="cr-subsection-header"><h3 class="cr-subsection-title">Sales &amp; Targets</h3></div>
+
+        <div class="cr-sub-block-title">This Week</div>
+        <div class="cr-sales-grid">
+          <div>
+            <label>Wine Sales</label>
+            <div class="cr-invoice-input"><input type="number" id="crWineSales" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()"></div>
+          </div>
+          <div>
+            <label>Wine Target %</label>
+            <div class="cr-target-input"><input type="number" id="crWineTarget" step="0.01" value="22" oninput="BarStockCostReport.updatePreview()"></div>
+          </div>
+          <div>
+            <label>Liquor Sales</label>
+            <div class="cr-invoice-input"><input type="number" id="crLiquorSales" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()"></div>
+          </div>
+          <div>
+            <label>Liquor Target %</label>
+            <div class="cr-target-input"><input type="number" id="crLiquorTarget" step="0.01" value="15" oninput="BarStockCostReport.updatePreview()"></div>
+          </div>
+        </div>
+
+        <div class="cr-sub-block-title">Same Period · Last Year</div>
+        <div class="cr-sales-grid">
+          <div>
+            <label>Wine Sales (LY)</label>
+            <div class="cr-invoice-input"><input type="number" id="crWineSalesLY" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()"></div>
+          </div>
+          <div>
+            <label>Liquor Sales (LY)</label>
+            <div class="cr-invoice-input"><input type="number" id="crLiquorSalesLY" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cr-subsection">
+        <div class="cr-subsection-header"><h3 class="cr-subsection-title">Notes (optional, manual)</h3></div>
+        <textarea id="crNotes" placeholder="Add comments about this week's performance, anomalies, special events..."></textarea>
+      </div>
+
+      <div class="cr-subsection">
+        <div class="cr-subsection-header"><h3 class="cr-subsection-title">Report Preview</h3></div>
+
+        <div class="cr-preview-banner">Purchases Overview</div>
+        <div class="cr-preview-table-wrapper">
+          <table class="cr-preview-table" id="crPurchasesTable">
+            <thead><tr id="crPurchasesHead"></tr></thead>
+            <tbody id="crPurchasesBody"></tbody>
+            <tfoot><tr id="crPurchasesFoot"></tr></tfoot>
+          </table>
+        </div>
+
+        <div class="cr-preview-banner">Cost Benchmark Comparison</div>
+        <div class="cr-preview-table-wrapper">
+          <table class="cr-preview-table">
+            <thead>
+              <tr><th>Category</th><th class="cr-right">Sales</th><th class="cr-right">Target %</th><th class="cr-right">Expected Cost</th><th class="cr-right">Real Cost</th></tr>
+            </thead>
+            <tbody id="crBenchmarkBody"></tbody>
+            <tfoot><tr id="crBenchmarkFoot"></tr></tfoot>
+          </table>
+        </div>
+
+        <div class="cr-preview-banner">Cost Performance</div>
+        <div class="cr-preview-table-wrapper">
+          <table class="cr-preview-table">
+            <thead>
+              <tr><th>Category</th><th class="cr-right">Sales</th><th class="cr-right">COGS %</th></tr>
+            </thead>
+            <tbody id="crPerformanceBody"></tbody>
+          </table>
+        </div>
+
+        <div class="cr-preview-banner">Year-over-Year Comparison</div>
+        <div class="cr-preview-table-wrapper">
+          <table class="cr-preview-table">
+            <thead>
+              <tr><th>Category</th><th class="cr-right">Sales LY</th><th class="cr-right">Expected Cost LY</th><th class="cr-right">Sales Chg</th><th class="cr-right">Spend Chg vs LY</th></tr>
+            </thead>
+            <tbody id="crYoyBody"></tbody>
+          </table>
+        </div>
+
+        <div id="crSmartNotes"></div>
+      </div>
+
+      <div class="cr-subsection">
+        <div class="cr-actions-row">
+          <button class="cr-btn-ghost" onclick="BarStockCostReport.resetForm()">Reset</button>
+          <button class="cr-btn-success" onclick="BarStockCostReport.saveReport()">Save Report</button>
+          <button class="cr-btn-primary" onclick="BarStockCostReport.generatePdf()">Generate Report (PDF)</button>
+        </div>
+      </div>
+
+      <div class="cr-subsection">
+        <div class="cr-subsection-header"><h3 class="cr-subsection-title">Saved Reports</h3></div>
+        <div id="crHistoryContainer"></div>
+      </div>
+
+    </div>
+  </div>
+
   <div class="card section-card" id="usageSection">
     <div class="section-header-row">
       <div style="flex:1 1 auto">
@@ -1136,7 +1271,7 @@ function setSectionCollapsed(sectionName, collapsed){
   saveSectionStates(states);
 }
 function initSectionToggles(){
-  ['inventory','vendor','history','noMatch','usage'].forEach(name => {
+  ['inventory','vendor','history','noMatch','usage','costReport'].forEach(name => {
     const btn = document.getElementById(name + 'Toggle');
     const body = document.getElementById(name + 'SectionBody');
     if(!btn || !body) return;
@@ -1145,7 +1280,7 @@ function initSectionToggles(){
     });
   });
   const states = loadSectionStates();
-  ['inventory','vendor','history','noMatch','usage'].forEach(name => {
+  ['inventory','vendor','history','noMatch','usage','costReport'].forEach(name => {
     setSectionCollapsed(name, !!states[name]);
   });
 }
@@ -3740,6 +3875,8 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
 <script src="src/place-order.js"></script>
 <script src="src/quick-order.js"></script>
+<script src="src/cost-report-cloud.js"></script>
+<script src="src/cost-report.js"></script>
 
 <!-- BARSTOCK ORDERS REALTIME CLEAN START -->
 <script>
