@@ -17,6 +17,15 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ ok: false, error: "Missing required fields" });
     }
 
+    // Normaliza destinatarios: acepta string ("a@x.com, b@y.com") o array -> array limpio
+    const normalizeEmails = (val) => {
+      if (!val) return [];
+      const arr = Array.isArray(val) ? val : String(val).split(',');
+      return arr.map(e => String(e).trim()).filter(Boolean);
+    };
+    const toList = normalizeEmails(to);
+    const ccList = normalizeEmails(cc);
+
     const subject = `Order for ${vendor} - ${new Date().toLocaleDateString()}`;
     const safeFilename = filename || `${vendor.toLowerCase().replace(/\s+/g, '_')}_order.pdf`;
     const loc = locationName || 'BarStock';
@@ -38,12 +47,12 @@ ${escapeHtml(loc)} Team</p>
 
     const payload = {
       from: `${senderName} <orders@barstockpro.com>`,
-      to: [to],
+      to: toList,
       subject,
       html: htmlBody,
     };
 
-    if (cc) payload.cc = [cc];
+    if (ccList.length) payload.cc = ccList;
     if (replyTo) payload.replyTo = replyTo;
 
     if (pdfBase64) {

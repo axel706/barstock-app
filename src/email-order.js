@@ -213,13 +213,23 @@
     const cc = String(document.getElementById('emailOrderCc')?.value || '').trim();
     const btn = document.getElementById('emailOrderSendBtn');
 
-    if (!isValidEmail(to)) {
-      alert('Please enter a valid recipient email.');
+    // Validar múltiples emails separados por coma
+    const splitEmails = (val) => String(val || '').split(',').map(e => e.trim()).filter(Boolean);
+    const toEmails = splitEmails(to);
+    const ccEmails = splitEmails(cc);
+
+    if (!toEmails.length) {
+      alert('Please enter at least one recipient email.');
       return;
     }
-
-    if (cc && !isValidEmail(cc)) {
-      alert('CC field is not a valid email. Leave it empty or enter a valid email.');
+    const badTo = toEmails.find(e => !isValidEmail(e));
+    if (badTo) {
+      alert('Invalid recipient email: ' + badTo + '\nSeparate multiple emails with commas.');
+      return;
+    }
+    const badCc = ccEmails.find(e => !isValidEmail(e));
+    if (badCc) {
+      alert('Invalid CC email: ' + badCc + '\nSeparate multiple emails with commas.');
       return;
     }
 
@@ -259,7 +269,7 @@
       }
 
       const payload = {
-        to,
+        to: toEmails,
         vendor: data.vendor,
         items: data.items,
         totalUnits: data.totalUnits,
@@ -270,7 +280,7 @@
         filename
       };
 
-      if (cc) payload.cc = cc;
+      if (ccEmails.length) payload.cc = ccEmails;
       if (replyTo) payload.replyTo = replyTo;
 
       console.log('🔍 EMAIL ORDER PAYLOAD:', {
@@ -292,13 +302,13 @@
       if (!result.ok) throw new Error(result.error || 'Unknown error');
 
       closeModal();
-      if (typeof setStatus === 'function') setStatus('Order emailed to ' + to + '.');
+      if (typeof setStatus === 'function') setStatus('Order emailed to ' + toEmails.join(', ') + '.');
 
       if (window.BarStockLogger) {
         window.BarStockLogger.log('email_order_sent', {
           vendor: data.vendor,
-          to,
-          cc: cc || null,
+          to: toEmails.join(', '),
+          cc: ccEmails.join(', ') || null,
           itemCount: data.items.length
         });
       }

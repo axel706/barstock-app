@@ -42,7 +42,8 @@
   <div class="brand-logo-type" id="headerLogo">BarStock<span class="brand-logo-dot">.</span><span class="brand-logo-pro">Pro</span></div>
   <div class="brand-text">
     <div class="brand-version">v1.0</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260523-115128</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260523-121213</div>
+
 
 
 
@@ -4238,10 +4239,10 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   <div class="modal" style="width:min(720px,96vw);max-height:92vh;overflow-y:auto">
     <h3 style="margin-top:0">Email Order</h3>
     <div class="small muted" id="emailOrderModalLabel" style="margin-bottom:16px"></div>
-    <label style="display:block;margin-bottom:6px;font-weight:600">To</label>
-    <input id="emailOrderTo" type="email" placeholder="vendor@example.com" style="width:100%;margin-bottom:12px">
-    <label style="display:block;margin-bottom:6px;font-weight:600">CC <span class="muted small">(optional)</span></label>
-    <input id="emailOrderCc" type="email" placeholder="manager@example.com" style="width:100%;margin-bottom:16px">
+    <label style="display:block;margin-bottom:6px;font-weight:600">To <span class="muted small">(separate multiple with commas)</span></label>
+    <input id="emailOrderTo" type="text" placeholder="vendor@example.com, buyer@example.com" style="width:100%;margin-bottom:12px">
+    <label style="display:block;margin-bottom:6px;font-weight:600">CC <span class="muted small">(optional, separate multiple with commas)</span></label>
+    <input id="emailOrderCc" type="text" placeholder="manager@example.com, owner@example.com" style="width:100%;margin-bottom:16px">
     <div style="margin-bottom:20px">
       <label style="display:block;margin-bottom:6px;font-weight:600">Order preview (will be attached as JPG)</label>
       <div id="emailOrderPreview" style="border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:8px;background:rgba(255,255,255,.04);max-height:380px;overflow-y:auto;display:flex;align-items:center;justify-content:center;min-height:120px">
