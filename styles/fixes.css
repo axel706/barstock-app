@@ -97,7 +97,7 @@
       display:flex;
       gap:12px;
       align-items:center;
-      flex-wrap:nowrap;
+      flex-wrap:wrap;
       min-width:0;
     }
     .history-vendor-tabs button{
@@ -240,25 +240,25 @@
 
     .history-controls-top{
       display:flex;
-      justify-content:center !important;
+      justify-content:flex-start !important;
       align-items:center;
       gap:12px;
-      flex-wrap:nowrap;
+      flex-wrap:wrap;
       margin-bottom:14px;
     }
     .history-vendor-tabs{
       display:flex;
       gap:12px;
       align-items:center;
-      justify-content:center !important;
-      flex-wrap:nowrap;
+      justify-content:flex-start !important;
+      flex-wrap:wrap;
       width:100%;
-      max-width:980px;
-      margin:0 auto;
+      max-width:none;
+      margin:0;
     }
     .history-vendor-tabs button{
-      flex:1 1 0 !important;
-      min-width:160px !important;
+      flex:0 1 auto !important;
+      min-width:120px !important;
       min-height:52px !important;
       height:52px !important;
       font-size:14px !important;

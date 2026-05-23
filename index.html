@@ -42,7 +42,8 @@
   <div class="brand-logo-type" id="headerLogo">BarStock<span class="brand-logo-dot">.</span><span class="brand-logo-pro">Pro</span></div>
   <div class="brand-text">
     <div class="brand-version">v1.0</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260522-125212</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260523-115128</div>
+
 
 
 
@@ -1359,19 +1360,134 @@ function resetLegacyValuesIfNeeded(){
     localStorage.setItem(VALUE_RESET_MIGRATION_KEY, 'done');
   }catch(e){}
 }
+// Mapeo de vendors cargado desde Supabase (se llena en hydrateVendorMappings).
+// Si está vacío, inferVendor usa el hardcode de respaldo.
+window.__vendorMappings = window.__vendorMappings || [];
+
 function inferVendor(code){
   const c = String(code||'').trim().toUpperCase();
   if(!c) return 'UNKNOWN';
+
+  const maps = window.__vendorMappings || [];
+  if (maps.length) {
+    // Primero: reglas de prefijo (search_term no vacío)
+    for (const m of maps) {
+      const term = String(m.search_term || '').trim().toUpperCase();
+      if (term && c.startsWith(term)) return String(m.vendor).trim().toUpperCase();
+    }
+    // Luego: regla numérica (is_numeric)
+    if (/^\d+$/.test(c)) {
+      const numRule = maps.find(m => m.is_numeric);
+      if (numRule) return String(numRule.vendor).trim().toUpperCase();
+    }
+    return 'UNKNOWN';
+  }
+
+  // Fallback hardcode (si no hay mapeo cargado)
   if(/^\d+$/.test(c)) return 'LOOP';
   if(c.startsWith('ST')) return 'SOUTHERN';
   if(c.startsWith('BT')) return 'BREAKTHRU';
   if(c.startsWith('NVO') || c.startsWith('NVA')) return 'WINE MERCHANT';
   return 'UNKNOWN';
 }
-function badge(v){
-  const cls = v==='LOOP'?'loop':v==='SOUTHERN'?'southern':v==='BREAKTHRU'?'breakthru':v==='WINE MERCHANT'?'wine':'unknown';
-  return `<span class="pill ${cls}">${v}</span>`;
+
+// Carga el mapeo desde Supabase a memoria. Llamar al iniciar y al cambiar de locación.
+async function hydrateVendorMappings(){
+  try {
+    if (window.BarStockVendorMappingCloud) {
+      const rows = await window.BarStockVendorMappingCloud.listMappings();
+      window.__vendorMappings = Array.isArray(rows) ? rows : [];
+    }
+  } catch (e) {
+    console.warn('Could not load vendor mappings, using hardcode fallback', e);
+    window.__vendorMappings = [];
+  }
+  // Redibujar tabs que dependen del mapeo (pueden haberse dibujado antes de cargar)
+  try {
+    if (typeof render === 'function') render();
+    if (typeof renderHistoryVendorTabs === 'function') renderHistoryVendorTabs();
+  } catch (e) { console.warn('Re-render after mapping load failed', e); }
 }
+window.hydrateVendorMappings = hydrateVendorMappings;
+
+// Devuelve la lista de vendors activos (nombres únicos) desde el mapeo de Supabase.
+// Fallback a los 4 default si no hay mapeo cargado. NO incluye ALL ni UNKNOWN.
+function getActiveVendors(){
+  const maps = window.__vendorMappings || [];
+  if (maps.length) {
+    const seen = [];
+    for (const m of maps) {
+      const v = String(m.vendor || '').trim().toUpperCase();
+      if (v && !seen.includes(v)) seen.push(v);
+    }
+    return seen;
+  }
+  // Fallback hardcode
+  return ['LOOP','SOUTHERN','BREAKTHRU','WINE MERCHANT'];
+}
+// Vendors + UNKNOWN (para tabs de inventory/ordering que muestran no-asignados)
+function getVendorsWithUnknown(){
+  const list = getActiveVendors().slice();
+  if (!list.includes('UNKNOWN')) list.push('UNKNOWN');
+  return list;
+}
+// Con ALL al inicio (para filtros)
+function getVendorsForFilter(){
+  return ['ALL', ...getVendorsWithUnknown()];
+}
+window.getActiveVendors = getActiveVendors;
+window.getVendorsWithUnknown = getVendorsWithUnknown;
+window.getVendorsForFilter = getVendorsForFilter;
+
+// Re-evalúa el vendor de cada item del master usando el mapeo actual.
+// Se llama al guardar vendor codes en Settings, para reclasificar sin recargar el master.
+async function reapplyVendorMapping(){
+  if (!state.master || !state.master.length) {
+    render();
+    return;
+  }
+  let changed = 0;
+  state.master = state.master.map(r => {
+    const newVendor = inferVendor(r.code);
+    if (newVendor !== r.vendor) { changed++; return { ...r, vendor: newVendor }; }
+    return r;
+  });
+  saveState();
+  render();
+  if (typeof renderHistoryVendorTabs === 'function') renderHistoryVendorTabs();
+  // Sincronizar al cloud si hubo cambios
+  if (changed > 0 && window.BarStockInventoryCloud) {
+    try {
+      await window.BarStockInventoryCloud.replaceInventoryMaster(state.master || []);
+    } catch (e) {
+      console.error('Could not sync re-applied vendors to cloud', e);
+    }
+  }
+}
+window.reapplyVendorMapping = reapplyVendorMapping;
+function badge(v){
+  const known = {'LOOP':'loop','SOUTHERN':'southern','BREAKTHRU':'breakthru','WINE MERCHANT':'wine','UNKNOWN':'unknown'};
+  const upper = String(v||'').trim().toUpperCase();
+  if (known[upper]) {
+    return `<span class="pill ${known[upper]}">${v}</span>`;
+  }
+  // Vendor nuevo: color generado a partir del nombre (consistente)
+  const color = vendorColorFromName(upper);
+  return `<span class="pill" style="background:${color.bg};color:${color.fg};border-color:${color.border}">${v}</span>`;
+}
+
+// Genera un color HSL estable basado en el nombre (mismo nombre = mismo color siempre)
+function vendorColorFromName(name){
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  const hue = Math.abs(hash) % 360;
+  return {
+    bg: `hsla(${hue}, 70%, 50%, 0.18)`,
+    fg: `hsl(${hue}, 75%, 75%)`,
+    border: `hsla(${hue}, 70%, 50%, 0.35)`
+  };
+}
+window.vendorColorFromName = vendorColorFromName;
 function sanitizeForTokens(s){ return normalizeName(s).replace(/[^A-Z0-9 ]/g,' '); }
 function tokenSet(s){ return Array.from(new Set(sanitizeForTokens(s).split(/\s+/).filter(Boolean))); }
 function scoreMatch(rawName, itemName){
@@ -2086,7 +2202,7 @@ function getOrderRowsForVendor(vendor){
     return shouldShow && r.vendor === vendor && !isRowPlaced(r);
   });
 }
-function canPlaceOrder(){ return ['LOOP','SOUTHERN','BREAKTHRU','WINE MERCHANT'].includes(activeVendorTab); }
+function canPlaceOrder(){ return getActiveVendors().includes(activeVendorTab) && activeVendorTab !== 'UNKNOWN'; }
 
 function formatHistoryGroupDate(ts){
   try{return new Date(ts).toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});}catch{return 'Unknown Date';}
@@ -2407,14 +2523,14 @@ function setHistoryVendorFilter(vendor){
 function renderHistoryVendorTabs(){
   const wrap = safeEl('historyVendorTabs');
   if(!wrap) return;
-  const vendors = ['ALL','LOOP','SOUTHERN','BREAKTHRU','WINE MERCHANT','UNKNOWN'];
+  const vendors = getVendorsForFilter();
   wrap.innerHTML = vendors.map(v => `<button class="${historyVendorTab===v?'active':''}" onclick="setHistoryVendorFilter('${v.replace(/'/g,"\'")}')">${v==='ALL' ? 'All Vendors' : v}</button>`).join('');
 }
 // Order history UI functions moved to src/order-history-ui.js
 function render(){
   const q = normalizeName(document.getElementById('searchInput')?.value || '');
   const vendorFilter = document.getElementById('vendorFilter')?.value || 'ALL';
-  const inventoryVendors = ['ALL','LOOP','SOUTHERN','BREAKTHRU','WINE MERCHANT','UNKNOWN'];
+  const inventoryVendors = getVendorsForFilter();
   document.getElementById('inventoryVendorTabs').innerHTML = inventoryVendors.map(v => `<button class="${vendorFilter===v?'active':''}" onclick="setInventoryVendorFilter('${v.replace(/'/g,"\'")}')">${v==='ALL'?'ALL':v}</button>`).join('');
   const filtered = state.master.filter(r => (!q || r.itemNorm.includes(q) || normalizeName(r.code).includes(q)) && (vendorFilter==='ALL' || r.vendor===vendorFilter));
   document.getElementById('inventoryBody').innerHTML = filtered.map(r => {
@@ -2422,7 +2538,7 @@ function render(){
     return `<tr><td>${escapeHtml(r.code)}</td><td>${escapeHtml(r.item)}</td><td>${badge(r.vendor)}</td><td>${fmt(r.onHand)}</td><td>${fmt(r.suggested)}</td><td>${fmt(r.toOrder)}</td><td>${fmtMoney(r.value)}</td><td><div class="rowactions"><button onclick="openEditModal(${idx})">Edit</button><button class="danger" onclick="quickZeroSuggested(${idx})">Zero Suggested</button></div></td></tr>`;
   }).join('') || `<tr><td colspan="8" class="muted">No inventory loaded.</td></tr>`;
 
-  const vendors = ['ALL','LOOP','SOUTHERN','BREAKTHRU','WINE MERCHANT','UNKNOWN'];
+  const vendors = getVendorsForFilter();
   document.getElementById('vendorTabs').innerHTML = vendors.map(v => `<button class="${activeVendorTab===v?'active':''}" onclick="setVendorTab('${v.replace(/'/g,"\'")}')">${v}</button>`).join('');
   const vendRows = getCurrentVendorRows();
   const vendorSectionBody = document.getElementById('vendorSectionBody');
@@ -2580,7 +2696,7 @@ function showPreviewModal(){
   document.getElementById('previewChangesMetric').textContent = pendingImport.changes.length;
   document.getElementById('previewToOrderMetric').textContent = pendingImport.previewMaster.filter(r => r.toOrder > 0).length;
   document.getElementById('previewBody').innerHTML = pendingImport.changes.slice(0,20).map(r => `<tr><td>${escapeHtml(r.item)}</td><td>${fmt(r.oldOnHand)}</td><td>${fmt(r.newOnHand)}</td><td>${fmt(r.newToOrder)}</td><td>${badge(r.vendor)}</td></tr>`).join('') || `<tr><td colspan="5" class="muted">No ON HAND values would change.</td></tr>`;
-  const vendors = ['LOOP','SOUTHERN','BREAKTHRU','WINE MERCHANT','UNKNOWN'];
+  const vendors = getVendorsWithUnknown();
   const vendorRows = vendors.map(v => {
     const rows = pendingImport.previewMaster.filter(r => r.vendor===v && r.toOrder>0);
     return {vendor:v, codes:rows.length, bottles:rows.reduce((sum, r) => sum + parseNum(r.toOrder), 0)};
@@ -3058,7 +3174,7 @@ function weeklyOrderDateLabel(){
   return `Week of ${new Date().toLocaleDateString(undefined, {year:'numeric', month:'long', day:'numeric'})}`;
 }
 function weeklyOrderVendorOrder(){
-  return ['LOOP','SOUTHERN','BREAKTHRU','WINE MERCHANT','UNKNOWN'];
+  return getVendorsWithUnknown();
 }
 
 function quickLogoHeaderHtml(titleText, subtitleText=''){
@@ -3805,6 +3921,8 @@ renderUsage();
 if(state.master.length){ setStatus(`Persistent master ready. ${state.master.length} items loaded from local storage. Excel-style TO ORDER rounding refreshed, and Final Order overrides are available for Southern, Breakthru, and Wine Merchant.`); }
 </script>
 
+<script src="src/vendor-mapping-cloud.js"></script>
+<script src="src/settings-vendor-codes.js"></script>
 <script src="src/inventory-realtime.js"></script>
 <script src="src/inventory-cloud.js?v=account-wjm-1"></script>
 <script src="src/no-match-cloud.js"></script>
@@ -3924,6 +4042,15 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   }
 
   window.enableOrdersRealtimeClean = enableOrdersRealtimeClean;
+
+  // Cargar mapeo de vendors desde Supabase al iniciar (antes de cargar masters)
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      if (typeof hydrateVendorMappings === 'function') {
+        hydrateVendorMappings().catch(err => console.error('hydrateVendorMappings failed', err));
+      }
+    }, 800);
+  });
 
   window.addEventListener('load', () => {
     setTimeout(() => {
@@ -4133,20 +4260,52 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
 
 <div id="settingsModalBg" class="modalbg hidden">
-  <div class="modal" style="width:min(520px,96vw)">
-    <h3 style="margin-top:0">Settings</h3>
-    <div class="small muted" style="margin-bottom:16px">Configuration for this location</div>
+  <div class="modal" style="width:min(560px,96vw)">
+    <h3 style="margin-top:0" id="settingsTitle">Settings</h3>
+    <div class="small muted" style="margin-bottom:16px" id="settingsSubtitle">Configuration for this location</div>
 
-    <div style="margin-bottom:20px">
-      <label style="display:block;margin-bottom:6px;font-weight:600">Reply-to email <span class="muted small">(optional)</span></label>
-      <input id="settingsReplyToEmail" type="email" placeholder="manager@example.com" style="width:100%;margin-bottom:6px">
-      <div class="small muted">When a vendor replies to an order email, the reply will go to this address. If empty, replies go to the user who sent the order.</div>
+    <!-- MENU -->
+    <div id="settingsMenu">
+      <button class="settings-menu-item" onclick="showSettingsPanel('general')">
+        <span class="settings-menu-label">General</span>
+        <span class="settings-menu-desc">Reply-to email for vendor orders</span>
+        <span class="settings-menu-arrow">›</span>
+      </button>
+      <button class="settings-menu-item" onclick="showSettingsPanel('vendorCodes')">
+        <span class="settings-menu-label">Vendor Codes</span>
+        <span class="settings-menu-desc">Map product codes to vendors when loading a master</span>
+        <span class="settings-menu-arrow">›</span>
+      </button>
     </div>
 
-    <div style="display:flex;gap:10px;justify-content:flex-end">
-      <button class="ui-control" onclick="closeSettingsModal()">Cancel</button>
-      <button class="ui-control primary" id="settingsSaveBtn" onclick="saveSettings()">Save</button>
+    <!-- PANEL: General -->
+    <div id="settingsPanel-general" class="settings-panel hidden">
+      <button class="settings-back" onclick="backToSettingsMenu()">‹ Back</button>
+      <div style="margin:14px 0 20px">
+        <label style="display:block;margin-bottom:6px;font-weight:600">Reply-to email <span class="muted small">(optional)</span></label>
+        <input id="settingsReplyToEmail" type="email" placeholder="manager@example.com" style="width:100%;margin-bottom:6px">
+        <div class="small muted">When a vendor replies to an order email, the reply will go to this address. If empty, replies go to the user who sent the order.</div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="ui-control" onclick="closeSettingsModal()">Cancel</button>
+        <button class="ui-control primary" id="settingsSaveBtn" onclick="saveSettings()">Save</button>
+      </div>
     </div>
+
+    <!-- PANEL: Vendor Codes -->
+    <div id="settingsPanel-vendorCodes" class="settings-panel hidden">
+      <button class="settings-back" onclick="backToSettingsMenu()">‹ Back</button>
+      <div style="margin:14px 0 12px">
+        <div class="small muted" style="margin-bottom:10px">When loading a master, the app reads each product's code and assigns it to a vendor based on the term it starts with. Edit the terms or add new vendors below. "Numeric" means codes that are only digits (e.g. 12345).</div>
+        <div id="vendorCodesList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+        <button class="ui-control" type="button" onclick="addVendorCodeRow()" style="font-size:13px">+ Add vendor</button>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+        <button class="ui-control" onclick="closeSettingsModal()">Cancel</button>
+        <button class="ui-control primary" id="vendorCodesSaveBtn" onclick="saveVendorCodes()">Save</button>
+      </div>
+    </div>
+
   </div>
 </div>
 

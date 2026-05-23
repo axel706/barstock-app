@@ -3,19 +3,27 @@
 
   async function openModal() {
     const modal = document.getElementById('settingsModalBg');
-    const input = document.getElementById('settingsReplyToEmail');
-    if (!modal || !input) return;
+    if (!modal) return;
 
-    input.value = '';
+    // Mostrar el menú, ocultar paneles
+    const menu = document.getElementById('settingsMenu');
+    if (menu) menu.classList.remove('hidden');
+    document.querySelectorAll('.settings-panel').forEach(p => p.classList.add('hidden'));
+
     modal.classList.remove('hidden');
 
-    try {
-      if (window.BarStockLocationSettings) {
-        const settings = await window.BarStockLocationSettings.getSettings();
-        input.value = settings?.reply_to_email || '';
+    // Pre-cargar el reply-to en background (para que su panel ya lo tenga)
+    const input = document.getElementById('settingsReplyToEmail');
+    if (input) {
+      input.value = '';
+      try {
+        if (window.BarStockLocationSettings) {
+          const settings = await window.BarStockLocationSettings.getSettings();
+          input.value = settings?.reply_to_email || '';
+        }
+      } catch(e) {
+        console.warn('Could not load settings', e);
       }
-    } catch(e) {
-      console.warn('Could not load settings', e);
     }
   }
 
