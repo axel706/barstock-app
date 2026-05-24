@@ -1,0 +1,309 @@
+(() => {
+  if (window.BarStockEmailCostReport?.active) return;
+
+  const ENDPOINT = 'https://barstock-app.vercel.app/api/send-cost-report';
+
+  function isValidEmail(email) {
+    if (!email) return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  }
+
+  function fmt(v) {
+    return '$' + (Number(v) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function fmtPct(v) { return (Number(v) || 0).toFixed(1) + '%'; }
+
+  function generatePreviewCanvas(d) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 640;
+    canvas.height = 400;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+
+    // Background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, canvas.height);
+
+    // Header bar
+    ctx.fillStyle = '#1e5b8a';
+    ctx.fillRect(0, 0, W, 52);
+
+    // Logo
+    ctx.font = 'bold 22px -apple-system, Helvetica, sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('BarStock', 24, 33);
+    const bw = ctx.measureText('BarStock').width;
+    ctx.fillStyle = '#93c5fd';
+    ctx.fillText('.', 24 + bw, 33);
+    const dw = ctx.measureText('.').width;
+    ctx.font = 'bold 11px -apple-system, Helvetica, sans-serif';
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillText('PRO', 24 + bw + dw + 3, 31);
+
+    // Title right
+    ctx.font = 'bold 13px -apple-system, Helvetica, sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'right';
+    ctx.fillText('Wine & Liquor Cost Report', W - 24, 33);
+    ctx.textAlign = 'left';
+
+    let y = 80;
+
+    // Location + period
+    const loc = (window.BARSTOCK_CONFIG || {}).LOCATION_NAME || 'BarStock';
+    ctx.font = 'bold 15px -apple-system, Helvetica, sans-serif';
+    ctx.fillStyle = '#0f172a';
+    ctx.fillText(loc, 24, y);
+
+    ctx.font = '12px -apple-system, Helvetica, sans-serif';
+    ctx.fillStyle = '#64748b';
+    const period = d.periodFrom && d.periodTo ? d.periodFrom + ' → ' + d.periodTo : 'Period not set';
+    ctx.fillText(period, 24, y + 18);
+    y += 48;
+
+    // Divider
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(24, y); ctx.lineTo(W - 24, y); ctx.stroke();
+    y += 20;
+
+    // COGS values
+    const wineCogs  = d.wineSales  > 0 ? (d.totalWine   / d.wineSales)  * 100 : 0;
+    const liquorCogs = d.liquorSales > 0 ? (d.totalLiquor / d.liquorSales) * 100 : 0;
+
+    function drawMetricCard(x, cardY, cardW, label, cost, cogs, target) {
+      ctx.fillStyle = '#f8fafc';
+      roundRect(ctx, x, cardY, cardW, 88, 8);
+      ctx.fill();
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 1;
+      roundRect(ctx, x, cardY, cardW, 88, 8);
+      ctx.stroke();
+
+      ctx.font = 'bold 11px -apple-system, Helvetica, sans-serif';
+      ctx.fillStyle = '#64748b';
+      ctx.fillText(label.toUpperCase(), x + 14, cardY + 20);
+
+      ctx.font = 'bold 20px -apple-system, Helvetica, sans-serif';
+      ctx.fillStyle = '#0f172a';
+      ctx.fillText(cost, x + 14, cardY + 46);
+
+      const cogsNum = parseFloat(cogs);
+      const tgtNum  = parseFloat(target);
+      const cogsColor = cogsNum > tgtNum ? '#ef4444' : '#16a34a';
+      ctx.font = 'bold 13px -apple-system, Helvetica, sans-serif';
+      ctx.fillStyle = cogsColor;
+      ctx.fillText('COGS ' + cogs, x + 14, cardY + 66);
+
+      ctx.font = '11px -apple-system, Helvetica, sans-serif';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText('target ' + target, x + 14, cardY + 82);
+    }
+
+    const cardW = (W - 24 * 2 - 14) / 2;
+    drawMetricCard(24,          y, cardW, 'Wine',   fmt(d.totalWine),   fmtPct(wineCogs),   fmtPct(d.wineTarget));
+    drawMetricCard(24 + cardW + 14, y, cardW, 'Liquor', fmt(d.totalLiquor), fmtPct(liquorCogs), fmtPct(d.liquorTarget));
+    y += 108;
+
+    // Vendor breakdown (max 4)
+    if (d.byVendor && d.byVendor.length) {
+      ctx.font = 'bold 11px -apple-system, Helvetica, sans-serif';
+      ctx.fillStyle = '#64748b';
+      ctx.fillText('COST BY VENDOR', 24, y);
+      y += 14;
+
+      const shown = d.byVendor.slice(0, 4);
+      shown.forEach(v => {
+        const total = (v.wine || 0) + (v.liquor || 0);
+        ctx.font = '12px -apple-system, Helvetica, sans-serif';
+        ctx.fillStyle = '#0f172a';
+        ctx.fillText(v.name, 24, y + 14);
+        ctx.textAlign = 'right';
+        ctx.font = 'bold 12px -apple-system, Helvetica, sans-serif';
+        ctx.fillStyle = '#1e5b8a';
+        ctx.fillText(fmt(total), W - 24, y + 14);
+        ctx.textAlign = 'left';
+        y += 20;
+      });
+      if (d.byVendor.length > 4) {
+        ctx.font = '11px -apple-system, Helvetica, sans-serif';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('+ ' + (d.byVendor.length - 4) + ' more vendors — see PDF', 24, y + 12);
+      }
+    }
+
+    // Footer
+    ctx.font = '10px -apple-system, Helvetica, sans-serif';
+    ctx.fillStyle = '#cbd5e1';
+    ctx.textAlign = 'center';
+    ctx.fillText('Generated by BarStock Pro', W / 2, canvas.height - 12);
+    ctx.textAlign = 'left';
+
+    return canvas;
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  async function openModal() {
+    const modal   = document.getElementById('emailCostReportModalBg');
+    const preview = document.getElementById('emailCostReportPreview');
+    const toInput = document.getElementById('emailCostReportTo');
+    const ccInput = document.getElementById('emailCostReportCc');
+    if (!modal) return;
+
+    if (!window.BarStockCostReport) {
+      alert('Cost report module not loaded.');
+      return;
+    }
+
+    const d = window.BarStockCostReport.getValues();
+    if (!d.periodFrom || !d.periodTo) {
+      alert('Please set the report period before emailing.');
+      return;
+    }
+
+    if (toInput) toInput.value = '';
+    if (ccInput) ccInput.value = '';
+    if (preview) preview.innerHTML = '<div class="small muted">Generating preview...</div>';
+    modal.classList.remove('hidden');
+
+    try {
+      const canvas = generatePreviewCanvas(d);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      if (preview) {
+        preview.innerHTML = '<img src="' + dataUrl + '" style="max-width:100%;height:auto;border-radius:6px;display:block">';
+      }
+    } catch (err) {
+      console.error('Cost report preview failed:', err);
+      if (preview) {
+        preview.innerHTML = '<div class="small" style="color:#ef4444">Could not generate preview: ' + err.message + '</div>';
+      }
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('emailCostReportModalBg')?.classList.add('hidden');
+  }
+
+  async function send() {
+    const to  = String(document.getElementById('emailCostReportTo')?.value  || '').trim();
+    const cc  = String(document.getElementById('emailCostReportCc')?.value  || '').trim();
+    const btn = document.getElementById('emailCostReportSendBtn');
+
+    const splitEmails = val => String(val || '').split(',').map(e => e.trim()).filter(Boolean);
+    const toEmails = splitEmails(to);
+    const ccEmails = splitEmails(cc);
+
+    if (!toEmails.length) { alert('Please enter at least one recipient email.'); return; }
+    const badTo = toEmails.find(e => !isValidEmail(e));
+    if (badTo) { alert('Invalid recipient email: ' + badTo + '\nSeparate multiple emails with commas.'); return; }
+    const badCc = ccEmails.find(e => !isValidEmail(e));
+    if (badCc) { alert('Invalid CC email: ' + badCc + '\nSeparate multiple emails with commas.'); return; }
+
+    if (!window.BarStockCostReport) return;
+    const d = window.BarStockCostReport.getValues();
+    if (!d.periodFrom || !d.periodTo) { alert('Please set the report period.'); return; }
+
+    const wineCogs   = d.wineSales  > 0 ? (d.totalWine   / d.wineSales)  * 100 : 0;
+    const liquorCogs = d.liquorSales > 0 ? (d.totalLiquor / d.liquorSales) * 100 : 0;
+
+    const locationName = (window.BARSTOCK_CONFIG || {}).LOCATION_NAME || 'BarStock';
+    const filename = 'cost_report_' + d.periodFrom + '_to_' + d.periodTo + '.pdf';
+
+    if (typeof setButtonBusy === 'function') setButtonBusy(btn, 'SENDING');
+
+    try {
+      const pdfBase64 = await window.BarStockCostReport.generatePdfBase64();
+      if (!pdfBase64) throw new Error('PDF generation returned empty.');
+
+      let replyTo = null;
+      try {
+        if (window.BarStockLocationSettings) {
+          replyTo = await window.BarStockLocationSettings.getReplyToEmail();
+        }
+      } catch(e) { console.warn('Could not get reply-to email', e); }
+
+      const payload = {
+        to: toEmails,
+        locationName,
+        periodFrom: d.periodFrom,
+        periodTo: d.periodTo,
+        totalWine: d.totalWine,
+        totalLiquor: d.totalLiquor,
+        wineSales: d.wineSales,
+        liquorSales: d.liquorSales,
+        wineTarget: d.wineTarget,
+        liquorTarget: d.liquorTarget,
+        wineCogs,
+        liquorCogs,
+        byVendor: d.byVendor,
+        notes: d.notes,
+        pdfBase64,
+        filename
+      };
+
+      if (ccEmails.length) payload.cc = ccEmails;
+      if (replyTo) payload.replyTo = replyTo;
+
+      console.log('📊 EMAIL COST REPORT PAYLOAD:', {
+        to: payload.to, cc: payload.cc,
+        period: payload.periodFrom + ' → ' + payload.periodTo,
+        hasPdf: !!payload.pdfBase64,
+        replyTo: payload.replyTo
+      });
+
+      const res = await fetch(ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await res.json();
+      if (!result.ok) throw new Error(result.error || 'Unknown error');
+
+      closeModal();
+      if (typeof setStatus === 'function') setStatus('Cost report emailed to ' + toEmails.join(', ') + '.');
+
+      if (window.BarStockLogger) {
+        window.BarStockLogger.log('email_cost_report_sent', {
+          to: toEmails.join(', '),
+          cc: ccEmails.join(', ') || null,
+          period: d.periodFrom + ' to ' + d.periodTo
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Could not send email: ' + err.message);
+    } finally {
+      if (typeof clearButtonBusy === 'function') clearButtonBusy(btn);
+    }
+  }
+
+  function bindModalBackdrop() {
+    const bg = document.getElementById('emailCostReportModalBg');
+    if (!bg) return;
+    bg.addEventListener('click', function(e) {
+      if (e.target.id === 'emailCostReportModalBg') closeModal();
+    });
+  }
+
+  window.openEmailCostReportModal  = openModal;
+  window.closeEmailCostReportModal = closeModal;
+  window.sendEmailCostReport       = send;
+
+  window.BarStockEmailCostReport = { active: true, openModal, closeModal, send, isValidEmail };
+
+  document.addEventListener('DOMContentLoaded', bindModalBackdrop);
+})();
