@@ -50,8 +50,15 @@ module.exports = async function handler(req, res) {
     ).join('');
 
     const htmlBody = `<!DOCTYPE html><html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0f172a;line-height:1.6;max-width:680px;margin:0 auto;padding:20px">
-<p>Hello,</p>
-<p>Please find attached the <strong>Wine &amp; Liquor Cost Performance Report</strong> for <strong>${escapeHtml(loc)}</strong>, covering the period <strong>${escapeHtml(periodFrom)} to ${escapeHtml(periodTo)}</strong>.</p>
+<p>Dear ${escapeHtml(loc)} Management,</p>
+<p>This is an automated report from <strong>BarStock Pro</strong> on behalf of <strong>${escapeHtml(loc)}</strong>.</p>
+<p>The attached <strong>Wine &amp; Liquor Cost Performance Report</strong> covers the period from <strong>${escapeHtml(periodFrom)}</strong> through <strong>${escapeHtml(periodTo)}</strong> and includes:</p>
+<ul style="padding-left:20px;margin:12px 0">
+  <li>Actual cost of goods sold (COGS) for wine and liquor categories</li>
+  <li>Variance analysis against established cost targets</li>
+  <li>Vendor-level invoice breakdown</li>
+  <li>Year-over-year sales and cost comparison</li>
+</ul>
 
 <table style="width:100%;border-collapse:collapse;margin:24px 0;font-size:14px">
   <thead>
@@ -81,7 +88,7 @@ module.exports = async function handler(req, res) {
   </tbody>
 </table>
 
-${vendorRows ? `<p style="font-weight:600;margin-bottom:8px">Cost breakdown by vendor:</p>
+${vendorRows ? `<p style="font-weight:600;margin-bottom:8px">Vendor-level invoice breakdown:</p>
 <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:14px">
   <thead>
     <tr style="background:#f1f5fb">
@@ -96,10 +103,10 @@ ${vendorRows ? `<p style="font-weight:600;margin-bottom:8px">Cost breakdown by v
 
 ${notes ? `<p><strong>Notes:</strong> ${escapeHtml(notes)}</p>` : ''}
 
-<p>The full report is attached as a PDF for your records.</p>
-<p>Thank you,<br>${escapeHtml(loc)} Team</p>
+<p>This document is intended for internal review and financial record-keeping. Please do not hesitate to contact the management team if you require additional detail or have questions regarding the figures presented.</p>
+<p>Sincerely,<br>${escapeHtml(loc)} Management</p>
 <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0">
-<p style="color:#94a3b8;font-size:12px">Sent via BarStock Pro<br>Wine &amp; Liquor Cost Reporting</p>
+<p style="color:#94a3b8;font-size:12px">Powered by BarStock Pro &mdash; Wine &amp; Liquor Cost Reporting</p>
 </body></html>`;
 
     const payload = {
