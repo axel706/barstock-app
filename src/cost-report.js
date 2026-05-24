@@ -290,6 +290,7 @@
     return tmp.textContent || tmp.innerText || '';
   }
 
+  function fmtPct(n) { return (Number(n) || 0).toFixed(1) + '%'; }
   function fmtMoney(n) {
     return '$' + (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
@@ -519,7 +520,7 @@
     y += 18;
     pdf.setFont('helvetica', 'normal'); pdf.setFontSize(10); pdf.setTextColor(100, 116, 139);
     pdf.text('Period: ' + formatPeriod(d.periodFrom, d.periodTo), pageW / 2, y, { align: 'center' });
-    y += 30;
+    y += 16;
 
     const tableWidth = pageW - margin * 2;
     function shortVendorName(name) {
@@ -537,6 +538,80 @@
     const otherColW = (tableWidth - firstColW) / (numVendors + 1);
     const purchasesColStyles = { 0: { halign: 'left', fontStyle: 'bold', cellWidth: firstColW } };
     for (let i = 1; i <= numVendors + 1; i++) purchasesColStyles[i] = { halign: 'right', cellWidth: otherColW };
+
+    // ── 3 PÍLDORAS: Wine / Liquor / YoY ──────────────────────────────
+    const cardH    = 88;
+    const cardW    = (tableWidth - 16) / 3;
+    const r        = 8;
+    const pill     = [
+      { x: margin,                  label: 'WINE',   cost: d.totalWine,   cogs: wineCogs,   target: d.wineTarget  },
+      { x: margin + cardW + 8,      label: 'LIQUOR', cost: d.totalLiquor, cogs: liquorCogs, target: d.liquorTarget },
+    ];
+
+    // Wine & Liquor cards
+    pill.forEach(p => {
+      // Card background
+      pdf.setFillColor(248, 250, 253);
+      pdf.roundedRect(p.x, y, cardW, cardH, r, r, 'F');
+      pdf.setDrawColor(200, 215, 230); pdf.setLineWidth(0.8);
+      pdf.roundedRect(p.x, y, cardW, cardH, r, r, 'S');
+
+      // Label
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(100, 116, 139);
+      pdf.text(p.label, p.x + 14, y + 18);
+
+      // Cost
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(17); pdf.setTextColor(15, 23, 42);
+      pdf.text(fmtMoney(p.cost), p.x + 14, y + 42);
+
+      // COGS% — rojo si > target, verde si <=
+      const cogsColor = p.cogs > p.target ? [220, 38, 38] : [22, 163, 74];
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10.5);
+      pdf.setTextColor(...cogsColor);
+      pdf.text('COGS ' + fmtPct(p.cogs), p.x + 14, y + 60);
+
+      // Target
+      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9); pdf.setTextColor(148, 163, 184);
+      pdf.text('target ' + fmtPct(p.target), p.x + 14, y + 74);
+    });
+
+    // YoY card
+    const yoyX = margin + (cardW + 8) * 2;
+    const wineChg   = d.wineSalesLY  > 0 ? ((d.wineSales  - d.wineSalesLY)  / d.wineSalesLY)  * 100 : null;
+    const liqChg    = d.liquorSalesLY > 0 ? ((d.liquorSales - d.liquorSalesLY) / d.liquorSalesLY) * 100 : null;
+    const fmtChg = v => v === null ? 'N/A' : (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+    const chgColor = v => v === null ? [148, 163, 184] : v >= 0 ? [22, 163, 74] : [220, 38, 38];
+
+    pdf.setFillColor(248, 250, 253);
+    pdf.roundedRect(yoyX, y, cardW, cardH, r, r, 'F');
+    pdf.setDrawColor(200, 215, 230); pdf.setLineWidth(0.8);
+    pdf.roundedRect(yoyX, y, cardW, cardH, r, r, 'S');
+
+    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(100, 116, 139);
+    pdf.text('YEAR-OVER-YEAR SALES', yoyX + 14, y + 18);
+
+    // Wine row
+    pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9); pdf.setTextColor(100, 116, 139);
+    pdf.text('Wine LY: ' + fmtMoney(d.wineSalesLY), yoyX + 14, y + 36);
+    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10.5);
+    pdf.setTextColor(...chgColor(wineChg));
+    pdf.text(fmtChg(wineChg), yoyX + cardW - 14, y + 36, { align: 'right' });
+
+    // Liquor row
+    pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9); pdf.setTextColor(100, 116, 139);
+    pdf.text('Liquor LY: ' + fmtMoney(d.liquorSalesLY), yoyX + 14, y + 54);
+    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10.5);
+    pdf.setTextColor(...chgColor(liqChg));
+    pdf.text(fmtChg(liqChg), yoyX + cardW - 14, y + 54, { align: 'right' });
+
+    // Divider + label
+    pdf.setDrawColor(218, 224, 234); pdf.setLineWidth(0.4);
+    pdf.line(yoyX + 14, y + 62, yoyX + cardW - 14, y + 62);
+    pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); pdf.setTextColor(148, 163, 184);
+    pdf.text('vs same period this year', yoyX + 14, y + 74);
+
+    y += cardH + 12;
+    // ─────────────────────────────────────────────────────────────────
 
     let blockStart = y;
     drawBanner('PURCHASES OVERVIEW');
@@ -558,7 +633,7 @@
       },
       didDrawCell: rowSeparators
     });
-    y = pdf.lastAutoTable.finalY; drawRoundedBlock(blockStart, y); y += 22;
+    y = pdf.lastAutoTable.finalY; drawRoundedBlock(blockStart, y); y += 12;
 
     ensureSpace(150);
     const benchColW = tableWidth / 5;
@@ -598,7 +673,7 @@
       },
       didDrawCell: rowSeparators
     });
-    y = pdf.lastAutoTable.finalY; drawRoundedBlock(blockStart, y); y += 22;
+    y = pdf.lastAutoTable.finalY; drawRoundedBlock(blockStart, y); y += 12;
 
     ensureSpace(110);
     const perfColW = tableWidth / 3;
@@ -629,80 +704,18 @@
       },
       didDrawCell: rowSeparators
     });
-    y = pdf.lastAutoTable.finalY; drawRoundedBlock(blockStart, y); y += 22;
-
-    const haveLY = (d.wineSalesLY > 0 || d.liquorSalesLY > 0);
-    if (haveLY) {
-      ensureSpace(130);
-      const wineSalesDiff = d.wineSalesLY > 0 ? ((d.wineSales - d.wineSalesLY) / d.wineSalesLY) * 100 : null;
-      const liquorSalesDiff = d.liquorSalesLY > 0 ? ((d.liquorSales - d.liquorSalesLY) / d.liquorSalesLY) * 100 : null;
-      const wineSpendDiff = expectedWineLY > 0 ? ((d.totalWine - expectedWineLY) / expectedWineLY) * 100 : null;
-      const liquorSpendDiff = expectedLiquorLY > 0 ? ((d.totalLiquor - expectedLiquorLY) / expectedLiquorLY) * 100 : null;
-
-      function diffText(diff) {
-        if (diff === null) return 'N/A';
-        if (Math.abs(diff) < 0.5) return 'Flat';
-        const sign = diff > 0 ? '+' : '-';
-        return sign + Math.round(Math.abs(diff)) + '%';
-      }
-
-      const yoyColW = tableWidth / 5;
-      blockStart = y;
-      drawBanner('YEAR-OVER-YEAR COMPARISON');
-      pdf.autoTable({
-        startY: y,
-        head: [['CATEGORY', 'SALES LY', 'EXPECTED COST LY', 'SALES CHG', 'SPEND CHG VS LY']],
-        body: [
-          ['Wine', fmtMoney(d.wineSalesLY), fmtMoney(expectedWineLY), diffText(wineSalesDiff), diffText(wineSpendDiff)],
-          ['Liquor', fmtMoney(d.liquorSalesLY), fmtMoney(expectedLiquorLY), diffText(liquorSalesDiff), diffText(liquorSpendDiff)]
-        ],
-        margin: { left: margin, right: margin }, theme: 'plain',
-        styles: TBL_STYLES, headStyles: TBL_HEAD, alternateRowStyles: { fillColor: TBL_ALT },
-        columnStyles: {
-          0: { halign: 'left', fontStyle: 'bold', cellWidth: yoyColW },
-          1: { halign: 'right', cellWidth: yoyColW },
-          2: { halign: 'right', cellWidth: yoyColW },
-          3: { halign: 'right', cellWidth: yoyColW, fontStyle: 'bold' },
-          4: { halign: 'right', cellWidth: yoyColW, fontStyle: 'bold' }
-        },
-        didParseCell: (data) => {
-          if (data.section === 'head' && data.column.index > 0) data.cell.styles.halign = 'right';
-          if (data.section === 'body' && data.column.index === 3) {
-            const diff = data.row.index === 0 ? wineSalesDiff : liquorSalesDiff;
-            if (diff !== null) data.cell.styles.textColor = diff < 0 ? [220, 38, 38] : [22, 101, 52];
-          }
-          if (data.section === 'body' && data.column.index === 4) {
-            const diff = data.row.index === 0 ? wineSpendDiff : liquorSpendDiff;
-            if (diff !== null) data.cell.styles.textColor = diff > 0 ? [220, 38, 38] : [22, 101, 52];
-          }
-        },
-        didDrawCell: rowSeparators
-      });
-      y = pdf.lastAutoTable.finalY; drawRoundedBlock(blockStart, y); y += 24;
-    }
+    y = pdf.lastAutoTable.finalY; drawRoundedBlock(blockStart, y); y += 12;
 
     const perfText = stripHtml(buildPerformanceNote(d, expectedWine, expectedLiquor));
-    const yoyText = stripHtml(buildYoYNote(d));
-    if (perfText || yoyText) {
-      ensureSpace(70);
+    if (perfText) {
+      y += 16;
       pdf.setFont('helvetica', 'bold'); pdf.setFontSize(13); pdf.setTextColor(30, 91, 138);
       pdf.text('Auto Insights', margin, y); y += 16;
-    }
-    if (perfText) {
-      ensureSpace(40);
       pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(100, 116, 139);
       pdf.text('PERFORMANCE VS EXPECTED', margin, y); y += 12;
       pdf.setFont('helvetica', 'normal'); pdf.setFontSize(10); pdf.setTextColor(15, 23, 42);
       const lines = pdf.splitTextToSize(perfText, pageW - margin * 2);
-      ensureSpace(lines.length * 13 + 10); pdf.text(lines, margin, y); y += lines.length * 13 + 14;
-    }
-    if (yoyText) {
-      ensureSpace(40);
-      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(100, 116, 139);
-      pdf.text('YEAR-OVER-YEAR INSIGHT', margin, y); y += 12;
-      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(10); pdf.setTextColor(15, 23, 42);
-      const lines = pdf.splitTextToSize(yoyText, pageW - margin * 2);
-      ensureSpace(lines.length * 13 + 10); pdf.text(lines, margin, y); y += lines.length * 13 + 14;
+      pdf.text(lines, margin, y); y += lines.length * 13 + 14;
     }
 
     if (d.notes && d.notes.trim()) {
