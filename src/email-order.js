@@ -18,6 +18,7 @@
       const order = _emailOrderContext.order;
       return {
         vendor: order.vendor,
+        poNumber: order.poNumber || '',
         items: order.items,
         totalUnits: order.totalUnits,
         subtotal: order.subtotal
@@ -35,123 +36,214 @@
       ? computeOrderSubtotal(_emailOrderContext.rows)
       : 0;
 
-    return { vendor, items, totalUnits, subtotal };
+    // poNumber desde la orden más reciente del vendor en orderHistory
+    let poNumber = '';
+    if (typeof state !== 'undefined' && Array.isArray(state.orderHistory)) {
+      const match = state.orderHistory.find(o => o.vendor === vendor && o.poNumber);
+      if (match) poNumber = match.poNumber;
+    }
+
+    return { vendor, poNumber, items, totalUnits, subtotal };
   }
 
   async function generatePdfBase64(vendor, items, summary) {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const margin = 40;
+    const W = pdf.internal.pageSize.getWidth();
+    const H = pdf.internal.pageSize.getHeight();
+    const margin = 48;
+    const contentW = W - margin * 2;
     let y = margin;
-    const fontFamily = 'helvetica';
+    const f = 'helvetica';
 
-    // Logo tipografico BarStock.Pro
-    pdf.setFont(fontFamily, 'bold');
-    pdf.setFontSize(28);
-    pdf.setTextColor(15, 23, 42);
-    pdf.text('BarStock', margin, y + 22);
-    const barstockW = pdf.getTextWidth('BarStock');
+    // ── helpers ──────────────────────────────────────────────
+    function txt(text, x, yy, opts) { pdf.text(String(text || ''), x, yy, opts || {}); }
+    function line(x1, y1, x2, y2, color) {
+      pdf.setDrawColor(...(color || [226, 232, 240]));
+      pdf.setLineWidth(0.8);
+      pdf.line(x1, y1, x2, y2);
+    }
+    function roundRect(x, ry, w, h, r, fill, stroke) {
+      if (fill) { pdf.setFillColor(...fill); pdf.roundedRect(x, ry, w, h, r, r, 'F'); }
+      if (stroke) { pdf.setDrawColor(...stroke); pdf.setLineWidth(0.5); pdf.roundedRect(x, ry, w, h, r, r, 'S'); }
+    }
+    function label(text, x, yy) {
+      pdf.setFont(f, 'normal'); pdf.setFontSize(8.5); pdf.setTextColor(148, 163, 184);
+      txt(text, x, yy);
+    }
+    function value(text, x, yy, bold) {
+      pdf.setFont(f, bold ? 'bold' : 'normal'); pdf.setFontSize(10); pdf.setTextColor(15, 23, 42);
+      txt(text, x, yy);
+    }
+
+    // ── HEADER ────────────────────────────────────────────────
+    // Logo
+    pdf.setFont(f, 'bold'); pdf.setFontSize(22); pdf.setTextColor(15, 23, 42);
+    txt('BarStock', margin, y + 16);
+    const bw = pdf.getTextWidth('BarStock');
     pdf.setTextColor(59, 130, 246);
-    pdf.text('.', margin + barstockW, y + 22);
-    const dotW = pdf.getTextWidth('.');
-    pdf.setFontSize(11);
-    pdf.setTextColor(100, 116, 139);
-    pdf.text('PRO', margin + barstockW + dotW + 4, y + 20);
+    txt('.', margin + bw, y + 16);
+    const dw = pdf.getTextWidth('.');
+    pdf.setFont(f, 'bold'); pdf.setFontSize(9); pdf.setTextColor(148, 163, 184);
+    txt('PRO', margin + bw + dw + 3, y + 14);
 
-    // Title (right)
-    pdf.setFont(fontFamily, 'bold');
-    pdf.setFontSize(20);
-    pdf.setTextColor(15, 23, 42);
-    pdf.text('Order', pageWidth - margin, y + 20, { align: 'right' });
-    y += 60;
+    // Location name under logo
+    pdf.setFont(f, 'normal'); pdf.setFontSize(10); pdf.setTextColor(100, 116, 139);
+    txt(summary.location || '', margin, y + 30);
 
-    // Divider
-    pdf.setDrawColor(226, 232, 240);
-    pdf.setLineWidth(1);
-    pdf.line(margin, y, pageWidth - margin, y);
-    y += 24;
+    // Right side — Purchase Order title + PO number + status badge
+    pdf.setFont(f, 'bold'); pdf.setFontSize(20); pdf.setTextColor(15, 23, 42);
+    txt('Purchase Order', W - margin, y + 16, { align: 'right' });
 
-    // Order Summary
-    pdf.setFont(fontFamily, 'bold');
-    pdf.setFontSize(14);
-    pdf.text('ORDER SUMMARY', margin, y);
-    y += 20;
+    if (summary.poNumber) {
+      // PO badge
+      const poText = summary.poNumber;
+      pdf.setFont(f, 'bold'); pdf.setFontSize(10); pdf.setTextColor(30, 91, 138);
+      const poW = pdf.getTextWidth(poText) + 16;
+      roundRect(W - margin - poW, y + 20, poW, 16, 3, [241, 245, 251], [181, 212, 244]);
+      txt(poText, W - margin - poW / 2, y + 31, { align: 'center' });
+    }
 
-    pdf.setFont(fontFamily, 'normal');
-    pdf.setFontSize(11);
-    const summaryLines = [
-      ['Location:', summary.location],
-      ['Vendor:', summary.vendor],
-      ['Date:', summary.date],
-      ['Items:', String(summary.items)],
-      ['Total units:', String(summary.totalUnits)]
-    ];
-    summaryLines.forEach(([label, value]) => {
-      pdf.setTextColor(100, 116, 139);
-      pdf.text(label, margin, y);
-      pdf.setTextColor(15, 23, 42);
-      pdf.setFont(fontFamily, 'bold');
-      pdf.text(value, margin + 90, y);
-      pdf.setFont(fontFamily, 'normal');
-      y += 16;
-    });
+    // Open badge
+    const badgeX = summary.poNumber ? W - margin - (pdf.getTextWidth(summary.poNumber) + 16) - 10 - 38 : W - margin - 38;
+    roundRect(badgeX, y + 20, 38, 16, 3, [232, 240, 250], null);
+    pdf.setFont(f, 'bold'); pdf.setFontSize(8); pdf.setTextColor(30, 91, 138);
+    txt('Open', badgeX + 19, y + 31, { align: 'center' });
 
-    y += 20;
+    y += 48;
+    line(margin, y, W - margin, y);
+    y += 18;
 
-    // Items table header
-    pdf.setFont(fontFamily, 'bold');
-    pdf.setFontSize(14);
-    pdf.setTextColor(15, 23, 42);
-    pdf.text('ITEMS', margin, y);
+    // ── META GRID — 2 columnas ────────────────────────────────
+    const colW = contentW / 2;
+
+    // Col izquierda — Order info
+    pdf.setFont(f, 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(148, 163, 184);
+    txt('ORDER INFO', margin, y);
     y += 12;
 
-    const tableBody = (items || []).map(item => [
-      String(item.code || ''),
-      String(item.item || ''),
-      String(item.finalOrder || 0)
-    ]);
-
-    pdf.autoTable({
-      startY: y,
-      head: [['CODE', 'ITEM', 'QTY']],
-      body: tableBody,
-      margin: { left: margin, right: margin },
-      styles: {
-        font: fontFamily,
-        fontSize: 10,
-        cellPadding: 6,
-        textColor: [15, 23, 42],
-        lineColor: [226, 232, 240],
-        lineWidth: 0.5
-      },
-      headStyles: {
-        fillColor: [241, 245, 249],
-        textColor: [15, 23, 42],
-        fontStyle: 'bold',
-        halign: 'left'
-      },
-      columnStyles: {
-        0: { cellWidth: 80 },
-        1: { cellWidth: 'auto' },
-        2: { cellWidth: 60, halign: 'right', fontStyle: 'bold' }
-      },
-      alternateRowStyles: {
-        fillColor: [248, 250, 252]
-      }
+    const orderRows = [
+      ['Date issued',         summary.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })],
+      ['Requested delivery',  summary.deliveryDate ? (() => { const [y,m,d] = summary.deliveryDate.split('-'); return new Date(+y,+m-1,+d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); })() : ''],
+      ['Buyer',               summary.buyerName || ''],
+      ['Contact',             summary.buyerEmail || ''],
+    ];
+    orderRows.forEach(([k, v]) => {
+      if (!v) return;
+      label(k, margin, y);
+      value(v, margin + 90, y, false);
+      y += 14;
     });
 
-    // Footer
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    pdf.setFont(fontFamily, 'normal');
-    pdf.setFontSize(9);
-    pdf.setTextColor(148, 163, 184);
-    pdf.text('Generated by BarStock Pro - Automated ordering system', pageWidth / 2, pageHeight - 24, { align: 'center' });
+    // Col derecha — Vendor info (resetear y al inicio de la sección)
+    const metaStartY = y - (orderRows.filter(r => r[1]).length * 14) - 12;
+    let vy = metaStartY;
+    pdf.setFont(f, 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(148, 163, 184);
+    txt('VENDOR', margin + colW, vy);
+    vy += 12;
+
+    const vendorRows = [
+      ['Company',    vendor],
+      ['Account #',  summary.vendorDefaults?.account_number || ''],
+      ['Rep',        summary.vendorDefaults?.rep_name || ''],
+      ['Phone',      summary.vendorDefaults?.rep_phone || ''],
+    ];
+    vendorRows.forEach(([k, v]) => {
+      label(k, margin + colW, vy);
+      pdf.setFont(f, v === vendor ? 'bold' : 'normal');
+      pdf.setFontSize(10);
+      pdf.setTextColor(v === vendor ? 30 : 15, v === vendor ? 91 : 23, v === vendor ? 138 : 42);
+      txt(v || '', margin + colW + 72, vy);
+      vy += 14;
+    });
+
+    y = Math.max(y, vy) + 10;
+    line(margin, y, W - margin, y);
+    y += 16;
+
+    // ── ITEMS TABLE ───────────────────────────────────────────
+    pdf.setFont(f, 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(148, 163, 184);
+    txt('ITEMS ORDERED', margin, y);
+    y += 10;
+
+    const cols = { code: margin, item: margin + 72, qty: W - margin };
+    const rowH = 22;
+
+    // Table header
+    pdf.setFillColor(241, 245, 251);
+    pdf.rect(margin, y, contentW, rowH, 'F');
+    pdf.setFont(f, 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(30, 60, 90);
+    txt('CODE',  cols.code + 6,  y + 14);
+    txt('ITEM DESCRIPTION', cols.item, y + 14);
+    txt('QTY',  cols.qty,  y + 14, { align: 'right' });
+    y += rowH;
+
+    // Table rows
+    (items || []).forEach((item, i) => {
+      if (i % 2 === 1) { pdf.setFillColor(248, 250, 253); pdf.rect(margin, y, contentW, rowH, 'F'); }
+      pdf.setDrawColor(241, 245, 249); pdf.setLineWidth(0.4);
+      pdf.line(margin, y + rowH, W - margin, y + rowH);
+
+      pdf.setFont(f, 'normal'); pdf.setFontSize(9.5); pdf.setTextColor(100, 116, 139);
+      txt(String(item.code || ''), cols.code + 6, y + 14);
+
+      pdf.setFont(f, 'normal'); pdf.setFontSize(9.5); pdf.setTextColor(15, 23, 42);
+      const itemName = String(item.item || '');
+      const maxW = cols.qty - cols.item - 20;
+      const truncated = pdf.getTextWidth(itemName) > maxW
+        ? itemName.substring(0, Math.floor(itemName.length * maxW / pdf.getTextWidth(itemName)) - 1) + '…'
+        : itemName;
+      txt(truncated, cols.item, y + 14);
+
+      pdf.setFont(f, 'bold'); pdf.setFontSize(9.5); pdf.setTextColor(30, 91, 138);
+      txt(String(item.finalOrder || 0), cols.qty, y + 14, { align: 'right' });
+      y += rowH;
+    });
+
+    // Table footer — total
+    pdf.setFillColor(232, 240, 250);
+    pdf.rect(margin, y, contentW, rowH, 'F');
+    pdf.setFont(f, 'bold'); pdf.setFontSize(9.5); pdf.setTextColor(15, 23, 42);
+    txt('Total units ordered', cols.code + 6, y + 14);
+    txt(String(summary.totalUnits || 0), cols.qty, y + 14, { align: 'right' });
+    y += rowH + 16;
+
+    // ── DELIVERY & TERMS BOX ──────────────────────────────────
+    const defs = summary.vendorDefaults || {};
+    const hasDelivery = defs.delivery_window || defs.delivery_address || defs.special_instructions;
+    if (hasDelivery) {
+      roundRect(margin, y, contentW, 66, 6, [248, 250, 252], [226, 232, 240]);
+      pdf.setFont(f, 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(148, 163, 184);
+      txt('DELIVERY & TERMS', margin + 12, y + 14);
+
+      const termCols = [
+        ['Payment terms',       ''],
+        ['Delivery window',     defs.delivery_window || ''],
+        ['Delivery address',    defs.delivery_address || ''],
+        ['Special instructions',defs.special_instructions || ''],
+      ].filter(r => r[1]);
+
+      const tcW = contentW / Math.min(termCols.length, 4);
+      termCols.forEach((tc, i) => {
+        const tx = margin + 12 + i * tcW;
+        label(tc[0], tx, y + 28);
+        value(tc[1], tx, y + 42, true);
+      });
+      y += 82;
+    }
+
+    // ── FOOTER ────────────────────────────────────────────────
+    line(margin, H - 36, W - margin, H - 36);
+    pdf.setFont(f, 'normal'); pdf.setFontSize(8.5); pdf.setTextColor(148, 163, 184);
+    txt('Generated by BarStock Pro · Internal use only', margin, H - 22);
+    if (summary.poNumber) {
+      txt(summary.poNumber + ' · ' + (summary.date || '') + ' · Page 1 of 1', W - margin, H - 22, { align: 'right' });
+    }
 
     return pdf.output('datauristring').split(',')[1];
   }
 
-  async function openModal(historyOrderId) {
+    async function openModal(historyOrderId) {
     const modal = document.getElementById('emailOrderModalBg');
     const label = document.getElementById('emailOrderModalLabel');
     const toInput = document.getElementById('emailOrderTo');
@@ -250,12 +342,26 @@
 
     try {
       // Generate PDF with summary + items table
+      const deliveryDate = String(document.getElementById('emailOrderDeliveryDate')?.value || '');
+      let vendorDefaults = {};
+      try {
+        if (window.BarStockVendorDefaults) {
+          const vd = await window.BarStockVendorDefaults.getDefaults(data.vendor);
+          vendorDefaults = vd || {};
+        }
+      } catch(e) { console.warn('Could not load vendor defaults', e); }
+
       const pdfBase64 = await generatePdfBase64(data.vendor, data.items, {
         location: locationName,
         vendor: data.vendor,
-        date: new Date().toLocaleDateString(),
+        poNumber: data.poNumber || '',
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        deliveryDate,
+        buyerName: (window.BARSTOCK_CONFIG || {}).USER_NAME || '',
+        buyerEmail: (window.BARSTOCK_CONFIG || {}).USER_EMAIL || '',
         items: data.items.length,
-        totalUnits: data.totalUnits
+        totalUnits: data.totalUnits,
+        vendorDefaults
       });
 
       // Determine reply-to: custom location setting → logged-in user → null
@@ -328,6 +434,45 @@
     });
   }
 
+  async function previewPdf() {
+    const btn = document.getElementById('emailOrderPreviewPdfBtn');
+    const data = getContextData();
+    if (!data) return;
+    const locationName = (window.BARSTOCK_CONFIG || {}).LOCATION_NAME || 'BarStock';
+    const deliveryDate = String(document.getElementById('emailOrderDeliveryDate')?.value || '');
+    let vendorDefaults = {};
+    try {
+      if (window.BarStockVendorDefaults) {
+        const vd = await window.BarStockVendorDefaults.getDefaults(data.vendor);
+        vendorDefaults = vd || {};
+      }
+    } catch(e) {}
+    if (typeof setButtonBusy === 'function') setButtonBusy(btn, 'GENERATING');
+    try {
+      const pdfBase64 = await generatePdfBase64(data.vendor, data.items, {
+        location: locationName,
+        vendor: data.vendor,
+        poNumber: data.poNumber || '',
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        deliveryDate,
+        buyerName: (window.BARSTOCK_CONFIG || {}).USER_NAME || '',
+        buyerEmail: (window.BARSTOCK_CONFIG || {}).USER_EMAIL || '',
+        items: data.items.length,
+        totalUnits: data.totalUnits,
+        vendorDefaults
+      });
+      const link = document.createElement('a');
+      link.href = 'data:application/pdf;base64,' + pdfBase64;
+      link.download = data.vendor.toLowerCase().replace(/\s+/g, '_') + '_order_preview.pdf';
+      link.click();
+    } catch(err) {
+      alert('Could not generate PDF: ' + err.message);
+    } finally {
+      if (typeof clearButtonBusy === 'function') clearButtonBusy(btn);
+    }
+  }
+
+  window.previewOrderPdf = previewPdf;
   window.openEmailOrderModal = openModal;
   window.closeEmailOrderModal = closeModal;
   window.sendEmailOrder = send;
