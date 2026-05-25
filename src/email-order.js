@@ -217,23 +217,22 @@
     ].filter(r => r[1]);
     if (termRows.length) {
       const labelW = 110;
-      const valueW = contentW - labelW - 24;
+      const valueW = contentW - labelW - 36;
       const rowHeights = termRows.map(([k, v]) => {
-        pdf.setFontSize(9.5);
-        const lines = pdf.splitTextToSize(v, valueW);
-        return Math.max(18, lines.length * 13 + 6);
+        pdf.setFont(f, 'normal'); pdf.setFontSize(9.5);
+        const lines = pdf.splitTextToSize(String(v), valueW);
+        return Math.max(18, lines.length * 14 + 6);
       });
-      const boxH = 22 + rowHeights.reduce((a, b) => a + b, 0);
+      const boxH = 26 + rowHeights.reduce((a, b) => a + b, 0);
       roundRect(margin, y, contentW, boxH, 6, [248, 250, 252], [226, 232, 240]);
       pdf.setFont(f, 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(148, 163, 184);
-      txt('DELIVERY & TERMS', margin + 12, y + 14);
-      let ty = y + 28;
+      txt('DELIVERY & TERMS', margin + 12, y + 16);
+      let ty = y + 30;
       termRows.forEach(([k, v], i) => {
         label(k, margin + 12, ty);
-        pdf.setFontSize(9.5);
-        const lines = pdf.splitTextToSize(v, valueW);
-        pdf.setFont(f, 'bold'); pdf.setTextColor(15, 23, 42);
-        lines.forEach((line, li) => { txt(line, margin + labelW + 12, ty + li * 13); });
+        pdf.setFont(f, 'bold'); pdf.setFontSize(9.5); pdf.setTextColor(15, 23, 42);
+        const lines = pdf.splitTextToSize(String(v), valueW);
+        lines.forEach((line, li) => { txt(line, margin + labelW + 12, ty + li * 14); });
         ty += rowHeights[i];
       });
       y += boxH + 16;
