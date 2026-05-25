@@ -210,26 +210,33 @@
 
     // ── DELIVERY & TERMS BOX ──────────────────────────────────
     const defs = summary.vendorDefaults || {};
-    const hasDelivery = defs.delivery_window || defs.delivery_address || defs.special_instructions;
-    if (hasDelivery) {
-      roundRect(margin, y, contentW, 66, 6, [248, 250, 252], [226, 232, 240]);
+    const termRows = [
+      ['Delivery window',      defs.delivery_window      || ''],
+      ['Delivery address',     defs.delivery_address     || ''],
+      ['Special instructions', defs.special_instructions || ''],
+    ].filter(r => r[1]);
+    if (termRows.length) {
+      const labelW = 110;
+      const valueW = contentW - labelW - 24;
+      const rowHeights = termRows.map(([k, v]) => {
+        pdf.setFontSize(9.5);
+        const lines = pdf.splitTextToSize(v, valueW);
+        return Math.max(18, lines.length * 13 + 6);
+      });
+      const boxH = 22 + rowHeights.reduce((a, b) => a + b, 0);
+      roundRect(margin, y, contentW, boxH, 6, [248, 250, 252], [226, 232, 240]);
       pdf.setFont(f, 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(148, 163, 184);
       txt('DELIVERY & TERMS', margin + 12, y + 14);
-
-      const termCols = [
-        ['Payment terms',       ''],
-        ['Delivery window',     defs.delivery_window || ''],
-        ['Delivery address',    defs.delivery_address || ''],
-        ['Special instructions',defs.special_instructions || ''],
-      ].filter(r => r[1]);
-
-      const tcW = contentW / Math.min(termCols.length, 4);
-      termCols.forEach((tc, i) => {
-        const tx = margin + 12 + i * tcW;
-        label(tc[0], tx, y + 28);
-        value(tc[1], tx, y + 42, true);
+      let ty = y + 28;
+      termRows.forEach(([k, v], i) => {
+        label(k, margin + 12, ty);
+        pdf.setFontSize(9.5);
+        const lines = pdf.splitTextToSize(v, valueW);
+        pdf.setFont(f, 'bold'); pdf.setTextColor(15, 23, 42);
+        lines.forEach((line, li) => { txt(line, margin + labelW + 12, ty + li * 13); });
+        ty += rowHeights[i];
       });
-      y += 82;
+      y += boxH + 16;
     }
 
     // ── FOOTER ────────────────────────────────────────────────
