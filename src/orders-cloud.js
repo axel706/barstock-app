@@ -31,8 +31,47 @@
     return data[0].id;
   }
 
+  const PO_PREFIXES = {
+    'The Crown Tavern': 'CT',
+    'The Jockey Tavern': 'JT',
+    "Will's & Bill's":  'WB',
+    'DEVELOP':          'DP'
+  };
+
+  function getPoPrefix() {
+    const name = window.BarStockOrdersConfig().locationName || '';
+    return PO_PREFIXES[name] || name.replace(/[^A-Z]/gi, '').substring(0, 3).toUpperCase() || 'PO';
+  }
+
+  async function getNextPoNumber(locationId) {
+    try {
+      const cfg = window.BarStockOrdersConfig();
+      const res = await fetch(
+        `${cfg.url}/rest/v1/rpc/increment_po_counter`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: cfg.key,
+            Authorization: `Bearer ${cfg.key}`
+          },
+          body: JSON.stringify({ p_location_id: locationId })
+        }
+      );
+      if (!res.ok) throw new Error('RPC failed: ' + await res.text());
+      const counter = await res.json();
+      const prefix = getPoPrefix();
+      return `${prefix}-${String(counter).padStart(4, '0')}`;
+    } catch (err) {
+      console.warn('getNextPoNumber failed, using fallback:', err);
+      return `PO-${Date.now()}`;
+    }
+  }
+
   async function persistOrderToSupabase(order) {
     const locationId = await orderCloudFetchLocationId();
+
+    const poNumber = await getNextPoNumber(locationId);
 
     const vendorOrderPayload = {
       app_order_id: order.id,
@@ -40,6 +79,7 @@
       location_name: window.BarStockOrdersConfig().locationName,
       vendor: order.vendor || '',
       status: 'placed',
+      po_number: poNumber,
       subtotal: Number(order.subtotal || 0),
       filename: order.filename || '',
       export_type: order.exportType || '',
@@ -224,7 +264,7 @@
       const locationId = location.id;
 
       const ordersRes = await fetch(
-        `${window.BarStockOrdersConfig().url}/rest/v1/vendor_orders?location_id=eq.${locationId}&select=app_order_id,vendor,created_at,export_type,filename,total_units,subtotal&order=created_at.desc`,
+        `${window.BarStockOrdersConfig().url}/rest/v1/vendor_orders?location_id=eq.${locationId}&select=app_order_id,vendor,created_at,export_type,filename,total_units,subtotal,po_number&order=created_at.desc`,
         {
           headers: {
             apikey: window.BarStockOrdersConfig().key,
@@ -269,6 +309,7 @@
         date: order.created_at || new Date().toISOString(),
         exportType: order.export_type || 'vendor_jpg',
         filename: String(order.filename || ''),
+        poNumber: String(order.po_number || ''),
         totalUnits: Number(order.total_units || 0),
         subtotal: Number(order.subtotal || 0),
         items: (itemsByOrder[String(order.app_order_id || '')] || []).map(item => ({

@@ -415,6 +415,12 @@
 
       if (ccEmails.length) payload.cc = ccEmails;
       if (replyTo) payload.replyTo = replyTo;
+      try {
+        if (window.BarStockSenderProfile) {
+          const sp = await window.BarStockSenderProfile.getProfile();
+          if (sp?.name) payload.senderName = sp.name;
+        }
+      } catch(e) { console.warn('Could not get sender profile for order email', e); }
 
       console.log('🔍 EMAIL ORDER PAYLOAD:', {
         to: payload.to,

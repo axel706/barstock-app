@@ -17,6 +17,7 @@ module.exports = async function handler(req, res) {
       totalWine, totalLiquor, wineSales, liquorSales,
       wineTarget, liquorTarget, wineCogs, liquorCogs,
       byVendor, notes,
+      senderName,
       pdfBase64, filename
     } = req.body || {};
 
@@ -98,7 +99,7 @@ ${vendorRows ? `<p style="font-weight:600;margin-bottom:8px">Vendor-level invoic
 ${notes ? `<p><strong>Notes:</strong> ${escapeHtml(notes)}</p>` : ''}
 
 <p>This document is intended for internal review and financial record-keeping. Please do not hesitate to contact me if you require additional detail or have questions regarding the figures presented.</p>
-<p>Sincerely,<br>Axel Torres</p>
+<p>Sincerely,<br>${escapeHtml(senderName || loc)}</p>
 <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0">
 <p style="color:#94a3b8;font-size:12px">Powered by BarStock Pro &mdash; Wine &amp; Liquor Cost Reporting</p>
 </body></html>`;

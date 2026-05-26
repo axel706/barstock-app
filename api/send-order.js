@@ -11,7 +11,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "Method not allowed" });
 
   try {
-    const { to, cc, replyTo, vendor, items, totalUnits, subtotal, locationName, jpgBase64, pdfBase64, filename, fromName } = req.body || {};
+    const { to, cc, replyTo, vendor, items, totalUnits, subtotal, locationName, jpgBase64, pdfBase64, filename, fromName, senderName: senderNameFromBody } = req.body || {};
 
     if (!to || !vendor || !items?.length) {
       return res.status(400).json({ ok: false, error: "Missing required fields" });
@@ -29,7 +29,7 @@ module.exports = async function handler(req, res) {
     const subject = `Order for ${vendor} - ${new Date().toLocaleDateString()}`;
     const safeFilename = filename || `${vendor.toLowerCase().replace(/\s+/g, '_')}_order.pdf`;
     const loc = locationName || 'BarStock';
-    const senderName = fromName || loc;
+    const senderName = senderNameFromBody || fromName || loc;
 
     const escapeHtml = s => String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -40,7 +40,7 @@ The details for <strong>${escapeHtml(vendor)}</strong> are summarized below and 
 <p>Kindly confirm receipt and expected delivery date at your earliest convenience.</p>
 <p>If you have any questions or need clarification about this order, please reply directly to this email.</p>
 <p>Thank you,<br>
-${escapeHtml(loc)} Team</p>
+${escapeHtml(senderName || loc + ' Team')}</p>
 <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0">
 <p style="color:#94a3b8;font-size:12px">Sent via BarStock Pro<br>Automated ordering system</p>
 </body></html>`;

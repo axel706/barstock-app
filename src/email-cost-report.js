@@ -1,7 +1,7 @@
 (() => {
   if (window.BarStockEmailCostReport?.active) return;
 
-  const ENDPOINT = 'https://barstock-app.vercel.app/api/send-cost-report';
+  const ENDPOINT = 'https://barstock-app-git-develop-axel706s-projects.vercel.app/api/send-cost-report';
 
   function isValidEmail(email) {
     if (!email) return false;
@@ -243,6 +243,14 @@
         }
       } catch(e) { console.warn('Could not get reply-to email', e); }
 
+      let senderName = '';
+      try {
+        if (window.BarStockSenderProfile) {
+          const sp = await window.BarStockSenderProfile.getProfile();
+          senderName = sp?.name || '';
+        }
+      } catch(e) { console.warn('Could not get sender profile', e); }
+
       const payload = {
         to: toEmails,
         locationName,
@@ -258,6 +266,7 @@
         liquorCogs,
         byVendor: d.byVendor,
         notes: d.notes,
+        senderName,
         pdfBase64,
         filename
       };
