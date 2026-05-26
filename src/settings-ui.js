@@ -53,8 +53,11 @@
         throw new Error('Location settings module not available');
       }
 
+      const recipInput = document.getElementById('settingsReportRecipients');
+      const reportRecipients = String(recipInput?.value || '').trim();
       await window.BarStockLocationSettings.saveSettings({
-        reply_to_email: replyTo || null
+        reply_to_email: replyTo || null,
+        report_recipients: reportRecipients
       });
 
       closeModal();

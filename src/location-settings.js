@@ -50,6 +50,7 @@
     const payload = {
       location_id: locationId,
       reply_to_email: settings.reply_to_email || null,
+      report_recipients: settings.report_recipients || '',
       updated_at: new Date().toISOString()
     };
 
@@ -73,6 +74,16 @@
     }
 
     return true;
+  }
+
+  async function getReportRecipients() {
+    try {
+      const settings = await getSettings();
+      if (settings.report_recipients) return settings.report_recipients;
+    } catch(e) {
+      console.warn('Could not load report recipients', e);
+    }
+    return '';
   }
 
   async function getReplyToEmail() {
@@ -100,6 +111,7 @@
   window.BarStockLocationSettings = {
     getSettings,
     saveSettings,
-    getReplyToEmail
+    getReplyToEmail,
+    getReportRecipients
   };
 })();

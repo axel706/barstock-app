@@ -174,8 +174,16 @@
       return;
     }
 
-    if (toInput) toInput.value = '';
     if (ccInput) ccInput.value = '';
+    if (toInput) {
+      toInput.value = '';
+      try {
+        if (window.BarStockLocationSettings) {
+          const recipients = await window.BarStockLocationSettings.getReportRecipients();
+          if (recipients) toInput.value = recipients;
+        }
+      } catch(e) { console.warn('Could not load report recipients', e); }
+    }
     if (preview) preview.innerHTML = '<div class="small muted">Generating preview...</div>';
     modal.classList.remove('hidden');
 
