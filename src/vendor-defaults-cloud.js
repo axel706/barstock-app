@@ -63,6 +63,7 @@
       const payload = {
         location_id:          locationId,
         vendor,
+        vendor_email:          fields.vendor_email          || '',
         account_number:        fields.account_number        || '',
         rep_name:              fields.rep_name              || '',
         rep_phone:             fields.rep_phone             || '',

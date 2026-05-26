@@ -36,6 +36,7 @@
       const el = document.getElementById(id);
       if (el) el.value = val || '';
     };
+    set('od_vendor_email',         data?.vendor_email         || '');
     set('od_account_number',       data?.account_number       || '');
     set('od_rep_name',             data?.rep_name             || '');
     set('od_rep_phone',            data?.rep_phone            || '');
@@ -47,6 +48,7 @@
   function readForm() {
     const get = id => String((document.getElementById(id) || {}).value || '').trim();
     return {
+      vendor_email:         get('od_vendor_email'),
       account_number:       get('od_account_number'),
       rep_name:             get('od_rep_name'),
       rep_phone:            get('od_rep_phone'),

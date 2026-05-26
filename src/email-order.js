@@ -125,8 +125,9 @@
     const orderRows = [
       ['Date issued',         summary.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })],
       ['Requested delivery',  summary.deliveryDate ? (() => { const [y,m,d] = summary.deliveryDate.split('-'); return new Date(+y,+m-1,+d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); })() : ''],
-      ['Buyer',               summary.buyerName || ''],
-      ['Contact',             summary.buyerEmail || ''],
+      ['Buyer',    summary.buyerName ? (summary.buyerTitle ? summary.buyerName + ' · ' + summary.buyerTitle : summary.buyerName) : ''],
+      ['Email',    summary.buyerEmail || ''],
+      ['Phone',    summary.buyerPhone || ''],
     ];
     orderRows.forEach(([k, v]) => {
       if (!v) return;
@@ -279,10 +280,21 @@
       label.textContent = vendor + ' order - ' + rows.length + ' items';
     }
 
-    if (toInput) toInput.value = '';
     if (ccInput) ccInput.value = '';
     if (preview) preview.innerHTML = '<div class="small muted">Generating preview...</div>';
     _emailOrderJpgBase64 = null;
+
+    // Pre-llenar To con el email del vendor si existe
+    if (toInput) {
+      toInput.value = '';
+      try {
+        if (window.BarStockVendorDefaults) {
+          const vd = await window.BarStockVendorDefaults.getDefaults(vendor);
+          if (vd?.vendor_email) toInput.value = vd.vendor_email;
+        }
+      } catch(e) { console.warn('Could not load vendor email', e); }
+    }
+
     modal.classList.remove('hidden');
 
     try {
@@ -350,12 +362,19 @@
       // Generate PDF with summary + items table
       const deliveryDate = String(document.getElementById('emailOrderDeliveryDate')?.value || '');
       let vendorDefaults = {};
+      let senderProfile = {};
       try {
         if (window.BarStockVendorDefaults) {
           const vd = await window.BarStockVendorDefaults.getDefaults(data.vendor);
           vendorDefaults = vd || {};
         }
       } catch(e) { console.warn('Could not load vendor defaults', e); }
+      try {
+        if (window.BarStockSenderProfile) {
+          const sp = await window.BarStockSenderProfile.getProfile();
+          senderProfile = sp || {};
+        }
+      } catch(e) { console.warn('Could not load sender profile', e); }
 
       const pdfBase64 = await generatePdfBase64(data.vendor, data.items, {
         location: locationName,
@@ -363,8 +382,10 @@
         poNumber: data.poNumber || '',
         date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         deliveryDate,
-        buyerName: (window.BARSTOCK_CONFIG || {}).USER_NAME || '',
-        buyerEmail: (window.BARSTOCK_CONFIG || {}).USER_EMAIL || '',
+        buyerName: senderProfile.name || '',
+        buyerEmail: senderProfile.email || '',
+        buyerPhone: senderProfile.phone || '',
+        buyerTitle: senderProfile.title || '',
         items: data.items.length,
         totalUnits: data.totalUnits,
         vendorDefaults
@@ -447,10 +468,17 @@
     const locationName = (window.BARSTOCK_CONFIG || {}).LOCATION_NAME || 'BarStock';
     const deliveryDate = String(document.getElementById('emailOrderDeliveryDate')?.value || '');
     let vendorDefaults = {};
+    let senderProfile = {};
     try {
       if (window.BarStockVendorDefaults) {
         const vd = await window.BarStockVendorDefaults.getDefaults(data.vendor);
         vendorDefaults = vd || {};
+      }
+    } catch(e) {}
+    try {
+      if (window.BarStockSenderProfile) {
+        const sp = await window.BarStockSenderProfile.getProfile();
+        senderProfile = sp || {};
       }
     } catch(e) {}
     if (typeof setButtonBusy === 'function') setButtonBusy(btn, 'GENERATING');
@@ -461,8 +489,10 @@
         poNumber: data.poNumber || '',
         date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         deliveryDate,
-        buyerName: (window.BARSTOCK_CONFIG || {}).USER_NAME || '',
-        buyerEmail: (window.BARSTOCK_CONFIG || {}).USER_EMAIL || '',
+        buyerName: senderProfile.name || '',
+        buyerEmail: senderProfile.email || '',
+        buyerPhone: senderProfile.phone || '',
+        buyerTitle: senderProfile.title || '',
         items: data.items.length,
         totalUnits: data.totalUnits,
         vendorDefaults

@@ -42,7 +42,8 @@
   <div class="brand-logo-type" id="headerLogo">BarStock<span class="brand-logo-dot">.</span><span class="brand-logo-pro">Pro</span></div>
   <div class="brand-text">
     <div class="brand-version">v1.0</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260525-195909</div>
+<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260525-205954</div>
+
 
 
 
@@ -4003,6 +4004,8 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/email-order.js"></script>
 <script src="src/email-cost-report.js"></script>
 <script src="src/vendor-defaults-cloud.js"></script>
+<script src="src/sender-profile-cloud.js"></script>
+<script src="src/settings-sender-profile.js"></script>
 <script src="src/settings-order-defaults.js"></script>
 
 <script src="src/place-order.js"></script>
@@ -4325,6 +4328,11 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
         <span class="settings-menu-desc">Delivery info and vendor details per vendor</span>
         <span class="settings-menu-arrow">›</span>
       </button>
+      <button class="settings-menu-item" onclick="showSettingsPanel('senderProfile')">
+        <span class="settings-menu-label">Sender Profile</span>
+        <span class="settings-menu-desc">Your name, email and phone shown on purchase orders</span>
+        <span class="settings-menu-arrow">›</span>
+      </button>
     </div>
 
     <!-- PANEL: General -->
@@ -4341,6 +4349,38 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       </div>
     </div>
 
+    <!-- PANEL: Sender Profile -->
+    <div id="settingsPanel-senderProfile" class="settings-panel hidden">
+      <button class="settings-back" onclick="backToSettingsMenu()">‹ Back</button>
+      <div style="margin:14px 0 12px">
+        <div class="small muted" style="margin-bottom:16px">Your information as it appears on purchase orders sent to vendors.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div>
+            <label style="display:block;margin-bottom:4px;font-size:12px;font-weight:600">Full name</label>
+            <input id="sp_name" type="text" placeholder="Axel Torres" style="width:100%">
+          </div>
+          <div>
+            <label style="display:block;margin-bottom:4px;font-size:12px;font-weight:600">Title <span class="muted small">(optional)</span></label>
+            <input id="sp_title" type="text" placeholder="General Manager" style="width:100%">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label style="display:block;margin-bottom:4px;font-size:12px;font-weight:600">Email</label>
+            <input id="sp_email" type="email" placeholder="axel@crowninconcord.com" style="width:100%">
+          </div>
+          <div>
+            <label style="display:block;margin-bottom:4px;font-size:12px;font-weight:600">Phone <span class="muted small">(optional)</span></label>
+            <input id="sp_phone" type="text" placeholder="215-555-0198" style="width:100%">
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+        <button class="ui-control" onclick="closeSettingsModal()">Cancel</button>
+        <button class="ui-control primary" id="senderProfileSaveBtn" onclick="saveSenderProfile()">Save</button>
+      </div>
+    </div>
+
     <!-- PANEL: Order Defaults -->
     <div id="settingsPanel-orderDefaults" class="settings-panel hidden">
       <button class="settings-back" onclick="backToSettingsMenu()">‹ Back</button>
@@ -4348,6 +4388,10 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
         <div class="small muted" style="margin-bottom:12px">Delivery info and vendor details saved per vendor. Used automatically when generating order PDFs.</div>
         <div id="orderDefaultsVendorTabs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"></div>
         <div id="orderDefaultsForm" style="display:flex;flex-direction:column;gap:12px">
+          <div style="margin-bottom:12px">
+            <label style="display:block;margin-bottom:4px;font-size:12px;font-weight:600">Vendor email <span class="muted small">(pre-filled when emailing orders)</span></label>
+            <input id="od_vendor_email" type="email" placeholder="orders@vendor.com" style="width:100%">
+          </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div>
               <label style="display:block;margin-bottom:4px;font-size:12px;font-weight:600">Account number <span class="muted small">(optional)</span></label>
