@@ -1,7 +1,7 @@
 (() => {
   if (window.BarStockEmailCostReport?.active) return;
 
-  const ENDPOINT = 'https://barstock-app-git-develop-axel706s-projects.vercel.app/api/send-cost-report';
+  const ENDPOINT = 'https://barstock-app.vercel.app/api/send-cost-report';
 
   function isValidEmail(email) {
     if (!email) return false;
