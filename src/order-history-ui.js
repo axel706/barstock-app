@@ -41,29 +41,27 @@
         <div class="history-date-label">${escapeHtml(label)}</div>
         ${orders.map(order => `
           <div class="history-card">
-            <div class="history-top">
-              <div class="history-row-1">
-                ${badge(order.vendor)}
-                <span class="history-date-inline">${escapeHtml(formatHistoryDate(order.createdAt))}</span>
+            <div class="hc-row">
+              ${badge(order.vendor)}
+              ${order.poNumber ? `<span class="hc-po">${escapeHtml(order.poNumber)}</span>` : ''}
+              <div class="hc-meta">
+                <span class="hc-meta-item"><strong>${escapeHtml(String(order.items.length))}</strong> item${order.items.length===1?'':'s'}</span>
+                <span class="hc-meta-item"><strong>${escapeHtml(fmt(order.totalUnits))}</strong> btl</span>
+                <span class="hc-meta-item"><strong>${escapeHtml(fmtMoney(order.subtotal || 0))}</strong></span>
+                <span class="hc-meta-item" style="color:var(--sub);font-size:11px">${escapeHtml(order.exportType === 'loop_csv' ? 'CSV' : 'JPG')}</span>
               </div>
-              <div class="history-row-2">
-                <div class="history-row-2-left">
-                  <span class="history-filetype">${escapeHtml(order.exportType === 'loop_csv' ? 'LOOP upload-ready CSV' : 'Vendor JPG')}</span>
-                  <span class="pill unknown history-meta-pill">${escapeHtml(String(order.items.length))} item${order.items.length===1?'':'s'}</span>
-                  <span class="pill unknown history-meta-pill">${escapeHtml(fmt(order.totalUnits))} bottle${Number(order.totalUnits)===1?'':'s'}</span>
-                  <span class="pill unknown history-meta-pill">${escapeHtml(fmtMoney(order.subtotal || 0))}</span>
-                </div>
-                <div class="history-row-2-right history-actions">
-                  <button class="ui-control compare-select-btn ${compareSelection.includes(order.id) ? 'active' : ''}" onclick="toggleCompareSelection('${order.id}')">${compareSelection.includes(order.id) ? 'Selected' : 'Select'}</button>
-                  <button class="ui-control" onclick="compareWithPrevious('${order.id}')">Compare to Previous</button>
-                  <button class="ui-control" onclick="openHistoryDateEdit('${order.id}')">Edit Date</button>
-                  <button class="ui-control" onclick="toggleHistoryDetails('${order.id}')">View</button>
-                  <button class="ui-control success" onclick="reopenHistoryOrder('${order.id}', this)">Re-open</button>
-                  <button class="ui-control primary" onclick="reExportHistoryOrder('${order.id}')">Re-export</button>
-                <button class="ui-control primary" onclick="openEmailOrderModal('${order.id}')">Email</button>
-                  <button class="ui-control danger" onclick="deleteHistoryOrder('${order.id}', this)">Delete</button>
-                </div>
-              </div>
+              <span class="hc-time">${escapeHtml(formatHistoryDate(order.createdAt))}</span>
+              <button class="hc-icon-btn primary" onclick="openEmailOrderModal('${order.id}')" title="Email order"><i class="ti ti-mail" style="font-size:16px"></i></button>
+              <button class="hc-icon-btn" onclick="reopenHistoryOrder('${order.id}', this)" title="Re-open order"><i class="ti ti-refresh" style="font-size:16px"></i></button>
+              <button class="hc-icon-btn danger" onclick="deleteHistoryOrder('${order.id}', this)" title="Delete order"><i class="ti ti-trash" style="font-size:16px"></i></button>
+              <button class="hc-icon-btn" onclick="toggleHcExpanded('${order.id}')" title="More actions" id="hcChevron_${order.id}"><i class="ti ti-dots" style="font-size:16px"></i></button>
+            </div>
+            <div class="hc-expanded hidden" id="hcExpanded_${order.id}">
+              <button class="hc-exp-btn" onclick="toggleHistoryDetails('${order.id}')">View items</button>
+              <button class="hc-exp-btn compare-select-btn ${compareSelection.includes(order.id) ? 'active' : ''}" onclick="toggleCompareSelection('${order.id}')">${compareSelection.includes(order.id) ? 'Selected' : 'Select'}</button>
+              <button class="hc-exp-btn" onclick="compareWithPrevious('${order.id}')">Compare to previous</button>
+              <button class="hc-exp-btn" onclick="openHistoryDateEdit('${order.id}')">Edit date</button>
+              <button class="hc-exp-btn" onclick="reExportHistoryOrder('${order.id}')">Re-export</button>
             </div>
             <div class="history-items hidden" id="historyItems_${order.id}">
               <table>
@@ -170,7 +168,18 @@
     }
   }
 
+  function toggleHcExpanded(id) {
+    const panel = document.getElementById('hcExpanded_' + id);
+    const btn = document.getElementById('hcChevron_' + id);
+    if (!panel) return;
+    panel.classList.toggle('hidden');
+    if (btn) btn.innerHTML = panel.classList.contains('hidden')
+      ? '<i class="ti ti-dots" style="font-size:16px"></i>'
+      : '<i class="ti ti-x" style="font-size:16px"></i>';
+  }
+
   window.renderOrderHistory     = renderOrderHistory;
+  window.toggleHcExpanded       = toggleHcExpanded;
   window.toggleHistoryDetails   = toggleHistoryDetails;
   window.deleteHistoryOrder     = deleteHistoryOrder;
   window.refreshOrdersFromCloud = refreshOrdersFromCloud;

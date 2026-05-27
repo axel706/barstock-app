@@ -17,7 +17,7 @@ module.exports = async function handler(req, res) {
       totalWine, totalLiquor, wineSales, liquorSales,
       wineTarget, liquorTarget, wineCogs, liquorCogs,
       byVendor, notes,
-      senderName,
+      senderName, senderEmail,
       pdfBase64, filename
     } = req.body || {};
 
@@ -112,6 +112,8 @@ ${notes ? `<p><strong>Notes:</strong> ${escapeHtml(notes)}</p>` : ''}
     };
 
     if (ccList.length) payload.cc = ccList;
+    if (senderEmail) payload.bcc = [senderEmail];
+    if (senderEmail) payload.bcc = [senderEmail];
     if (replyTo) payload.replyTo = replyTo;
 
     if (pdfBase64) {

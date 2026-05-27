@@ -419,6 +419,7 @@
         if (window.BarStockSenderProfile) {
           const sp = await window.BarStockSenderProfile.getProfile();
           if (sp?.name) payload.senderName = sp.name;
+          if (sp?.email) payload.senderEmail = sp.email;
         }
       } catch(e) { console.warn('Could not get sender profile for order email', e); }
 

@@ -11,7 +11,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "Method not allowed" });
 
   try {
-    const { to, cc, replyTo, vendor, items, totalUnits, subtotal, locationName, jpgBase64, pdfBase64, filename, fromName, senderName: senderNameFromBody } = req.body || {};
+    const { to, cc, replyTo, vendor, items, totalUnits, subtotal, locationName, jpgBase64, pdfBase64, filename, fromName, senderName: senderNameFromBody, senderEmail } = req.body || {};
 
     if (!to || !vendor || !items?.length) {
       return res.status(400).json({ ok: false, error: "Missing required fields" });
@@ -53,6 +53,7 @@ ${escapeHtml(senderName || loc + ' Team')}</p>
     };
 
     if (ccList.length) payload.cc = ccList;
+    if (senderEmail) payload.bcc = [senderEmail];
     if (replyTo) payload.replyTo = replyTo;
 
     if (pdfBase64) {

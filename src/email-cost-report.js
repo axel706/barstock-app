@@ -244,10 +244,12 @@
       } catch(e) { console.warn('Could not get reply-to email', e); }
 
       let senderName = '';
+      let senderEmail = '';
       try {
         if (window.BarStockSenderProfile) {
           const sp = await window.BarStockSenderProfile.getProfile();
           senderName = sp?.name || '';
+          senderEmail = sp?.email || '';
         }
       } catch(e) { console.warn('Could not get sender profile', e); }
 
@@ -267,6 +269,7 @@
         byVendor: d.byVendor,
         notes: d.notes,
         senderName,
+        senderEmail,
         pdfBase64,
         filename
       };
