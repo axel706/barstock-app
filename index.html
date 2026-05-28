@@ -95,7 +95,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260528-161428</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260528-172711</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -3889,7 +3889,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   const STORAGE_KEY = 'bs_background';
 
   function getLocationKey() {
-    const loc = (window.BARSTOCK_CONFIG?.LOCATION_NAME || 'default').replace(/\s+/g,'_').toLowerCase();
+    const loc = (localStorage.getItem('barstock.activeLocationName') || window.BARSTOCK_CONFIG?.LOCATION_NAME || 'default').replace(/\s+/g,'_').toLowerCase();
     return STORAGE_KEY + '_' + loc;
   }
 
