@@ -37,458 +37,75 @@
 
 
 <div class="wrap">
-  <div class="hero">
-    <div>
-      <div class="brand"><div><h1><div class="brand-lockup">
-  <div class="brand-logo-type" id="headerLogo">BarStock<span class="brand-logo-dot">.</span><span class="brand-logo-pro">Pro</span></div>
-  <div class="brand-text">
-    <div class="brand-version">v1.3</div>
-<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">BUILD-20260527-211237</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div id="locationBadge" style="font-size:12px;font-weight:800;color:#34d399;margin-top:2px;letter-spacing:0.5px;">CARGANDO LOCACIÓN...</div>
-<select id="headerLocationSelect" style="display:none;margin-top:6px;max-width:240px;padding:6px 10px;border-radius:10px;font-size:12px;font-weight:800;"></select>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-</div></h1></div></div>
-      <div class="header-actions">
-        <button id="authLogoutBtn" class="auth-logout-inline" type="button">Logout</button>
-        <button id="settingsBtn" class="theme-toggle" type="button" aria-label="Settings" title="Settings" onclick="openSettingsModal()"><span class="theme-icon">⚙</span></button>
-        <button id="themeToggle" class="theme-toggle" aria-label="Toggle light and dark mode" title="Toggle light and dark mode">
-          <span id="themeIcon" class="theme-icon">☾</span>
-        </button>
+  <div class="bs-header card">
+    <div class="bs-header-line1">
+      <div class="brand-logo-type" id="headerLogo">BarStock<span class="brand-logo-dot">.</span><span class="brand-logo-pro">PRO</span></div>
+      <div class="bs-spacer"></div>
+      <div class="bs-loc-wrap" style="position:relative;">
+        <div class="bs-loc-chip" id="bsLocChip">
+          <span class="bs-loc-gdot"></span>
+          <span id="bsLocName">Cargando...</span>
+          <i class="ti ti-chevron-down" aria-hidden="true" style="font-size:13px;color:var(--sub);"></i>
+        </div>
+        <select id="headerLocationSelect" class="bs-loc-select" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:none;"></select>
+      </div>
+      <div class="bs-spacer"></div>
+      <div class="bs-header-controls">
+        <button id="themeToggle" class="bs-icon-btn" aria-label="Toggle light and dark mode" title="Toggle light and dark mode"><span id="themeIcon" class="theme-icon">&#9790;</span></button>
+        <button id="settingsBtn" class="bs-icon-btn" type="button" aria-label="Settings" title="Settings" onclick="openSettingsModal()"><i class="ti ti-settings" aria-hidden="true"></i></button>
+        <button id="authLogoutBtn" class="bs-logout-btn" type="button"><i class="ti ti-logout" aria-hidden="true"></i>Logout</button>
       </div>
     </div>
-    <div class="toolbar topbar">
-      <label class="filelbl primary">Load Master Once <input type="file" id="masterFile" accept=".xlsx,.xls,.csv" /></label>
-      <div class="toolbar-group">
-        <button id="importMenuBtn">Import ▾</button>
-        <div id="importMenu" class="menu hidden">
-          <label class="filelbl">Import Weekly Count <input type="file" id="countFile" accept=".xlsx,.xls,.csv" /></label>
-          <label class="filelbl">Import Backup <input type="file" id="backupFile" accept=".json" /></label>
-        </div>
+    <div class="bs-header-line2">
+      <div class="bs-stat-tab bs-stat-featured">
+        <span class="bs-stat-label">Items to order</span>
+        <span class="bs-stat-value" id="toOrderMetric">0</span>
       </div>
-      <div class="toolbar-group">
-        <button id="exportMenuBtn">Export ▾</button>
-        <div id="exportMenu" class="menu hidden">
-          <button id="exportMasterBtn">Export Master CSV</button>
-          <button id="exportNoMatchBtn">Export No Match CSV</button>
-          <button id="backupBtn">Export Backup</button>
-          <button id="exportWeeklyPdfBtn">Export Weekly Order (PDF)</button>
-          <button id="exportWeeklyXlsxBtn">Export Weekly Order (XLSX)</button>
-        </div>
+      <div class="bs-stat-tab">
+        <span class="bs-stat-label">Items in master</span>
+        <span class="bs-stat-value" id="itemsMetric">0</span>
       </div>
-      <button id="resetOnHandBtn" class="danger half">Reset On Hand</button>
-      <button id="resetBtn" class="danger half">Reset Master</button>
+      <div class="bs-stat-tab bs-stat-alert">
+        <span class="bs-stat-label">No matches</span>
+        <span class="bs-stat-value" id="noMatchMetric">0</span>
+      </div>
+      <div class="bs-stat-tab">
+        <span class="bs-stat-label">Master status</span>
+        <div class="bs-status-chip"><span class="bs-status-dot" id="bsStatusDot"></span><span id="masterStatus">No master loaded</span></div>
+      </div>
     </div>
-  </div>
-
-  <div class="grid">
-    <div class="card metric-inline"><div class="muted">Items in master</div><div class="metric" id="itemsMetric">0</div><div class="metric-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5 12 3l9 4.5-9 4.5L3 7.5Z"/><path d="M3 12l9 4.5 9-4.5"/><path d="M3 16.5 12 21l9-4.5"/></svg></div></div>
-    <div class="card metric-inline"><div class="muted">Items to order</div><div class="metric" id="toOrderMetric">0</div><div class="metric-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h8.8a2 2 0 0 0 2-1.6L23 7H7.4"/><path d="M10 10h8"/></svg></div></div>
-    <div class="card metric-inline"><div class="muted">Current no matches</div><div class="metric" id="noMatchMetric">0</div><div class="metric-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 13.5 13.5 10.5"/><path d="M7 7a4 4 0 0 1 5.7 0l4.3 4.3a4 4 0 0 1 0 5.7 4 4 0 0 1-5.7 0"/><path d="M13 17a4 4 0 0 1-5.7 0L3 12.7a4 4 0 0 1 0-5.7 4 4 0 0 1 5.7 0"/></svg></div></div>
-    <div class="card metric-inline"><div class="muted">Master status</div><div class="metric small" id="masterStatus">No master loaded</div><div class="metric-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v6h6"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div></div>
+    <div class="bs-header-line3">
+      <label class="bs-btn bs-btn-primary bs-filelbl"><i class="ti ti-cloud-download" aria-hidden="true"></i>Load master<input type="file" id="masterFile" accept=".xlsx,.xls,.csv" /></label>
+      <div class="bs-toolbar-group">
+        <button id="importMenuBtn" class="bs-btn bs-btn-default"><i class="ti ti-file-import" aria-hidden="true"></i>Import <i class="ti ti-chevron-down" style="font-size:12px" aria-hidden="true"></i></button>
+        <div id="importMenu" class="bs-dropdown hidden">
+          <label class="bs-dd-item bs-dd-filelbl"><i class="ti ti-table-import" aria-hidden="true"></i>Import weekly count<input type="file" id="countFile" accept=".xlsx,.xls,.csv" style="display:none;" /></label>
+          <label class="bs-dd-item bs-dd-filelbl"><i class="ti ti-archive" aria-hidden="true"></i>Import backup<input type="file" id="backupFile" accept=".json" style="display:none;" /></label>
+        </div>
+      </div>
+      <div class="bs-toolbar-group">
+        <button id="exportMenuBtn" class="bs-btn bs-btn-default"><i class="ti ti-file-export" aria-hidden="true"></i>Export <i class="ti ti-chevron-down" style="font-size:12px" aria-hidden="true"></i></button>
+        <div id="exportMenu" class="bs-dropdown hidden">
+          <button id="exportMasterBtn" class="bs-dd-item"><i class="ti ti-table-export" aria-hidden="true"></i>Export master CSV</button>
+          <button id="exportNoMatchBtn" class="bs-dd-item"><i class="ti ti-file-x" aria-hidden="true"></i>Export no match CSV</button>
+          <button id="backupBtn" class="bs-dd-item"><i class="ti ti-database-export" aria-hidden="true"></i>Export backup</button>
+          <button id="exportWeeklyPdfBtn" class="bs-dd-item"><i class="ti ti-file-description" aria-hidden="true"></i>Export weekly order (PDF)</button>
+          <button id="exportWeeklyXlsxBtn" class="bs-dd-item"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i>Export weekly order (XLSX)</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
+        <span class="bs-build" id="buildBadge">BUILD-20260527-230048BUILD-20260527-211237</span>
+        <div class="bs-toolbar-group">
+        <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
+        <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
+          <button id="resetOnHandBtn" class="bs-dd-item"><i class="ti ti-refresh" aria-hidden="true"></i>Reset on hand</button>
+          <div class="bs-dd-divider"></div>
+          <button id="resetBtn" class="bs-dd-item bs-dd-danger"><i class="ti ti-trash" aria-hidden="true"></i>Reset master</button>
+        </div>
+        </div>
+      </div>
+    </div>
+    <div id="locationBadge" style="display:none;"></div>
   </div>
 
   <div class="card section-card" id="inventorySection">
@@ -3805,15 +3422,18 @@ const importMenuBtn=document.getElementById('importMenuBtn');
 const importMenu=document.getElementById('importMenu');
 const exportMenuBtn=document.getElementById('exportMenuBtn');
 const exportMenu=document.getElementById('exportMenu');
-importMenuBtn.addEventListener('click',(e)=>{e.stopPropagation();importMenu.classList.toggle('hidden');exportMenu.classList.add('hidden');});
-exportMenuBtn.addEventListener('click',(e)=>{e.stopPropagation();exportMenu.classList.toggle('hidden');importMenu.classList.add('hidden');});
+const bsMoreBtn=document.getElementById('bsMoreBtn');
+const bsMoreMenu=document.getElementById('bsMoreMenu');
+function bsCloseAllMenus(){importMenu.classList.add('hidden');exportMenu.classList.add('hidden');bsMoreMenu.classList.add('hidden');}
+importMenuBtn.addEventListener('click',(e)=>{e.stopPropagation();const wasHidden=importMenu.classList.contains('hidden');bsCloseAllMenus();if(wasHidden)importMenu.classList.remove('hidden');});
+exportMenuBtn.addEventListener('click',(e)=>{e.stopPropagation();const wasHidden=exportMenu.classList.contains('hidden');bsCloseAllMenus();if(wasHidden)exportMenu.classList.remove('hidden');});
+bsMoreBtn.addEventListener('click',(e)=>{e.stopPropagation();const wasHidden=bsMoreMenu.classList.contains('hidden');bsCloseAllMenus();if(wasHidden)bsMoreMenu.classList.remove('hidden');});
 importMenu.addEventListener('click',(e)=>e.stopPropagation());
 exportMenu.addEventListener('click',(e)=>e.stopPropagation());
+bsMoreMenu.addEventListener('click',(e)=>e.stopPropagation());
 ['exportMasterBtn','exportNoMatchBtn','backupBtn','exportWeeklyPdfBtn','exportWeeklyXlsxBtn'].forEach(id=>{document.getElementById(id).addEventListener('click',()=>exportMenu.classList.add('hidden'));});
-document.addEventListener('click',(e)=>{
-  if(!importMenu.classList.contains('hidden') && !importMenu.contains(e.target) && e.target!==importMenuBtn){importMenu.classList.add('hidden');}
-  if(!exportMenu.classList.contains('hidden') && !exportMenu.contains(e.target) && e.target!==exportMenuBtn){exportMenu.classList.add('hidden');}
-});
+document.addEventListener('click',()=>bsCloseAllMenus());
+
 document.getElementById('exportMasterBtn').addEventListener('click', exportMaster);
 document.getElementById('exportNoMatchBtn').addEventListener('click', exportNoMatch);
 document.getElementById('exportWeeklyPdfBtn').addEventListener('click', ()=>exportWeeklyOrderPdf().catch(err=>{alert('Could not export Weekly Order PDF.'); setStatus('Error exporting Weekly Order PDF.');}));

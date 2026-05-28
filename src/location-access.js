@@ -68,12 +68,13 @@
   async function renderActiveLocationControls(){
     const badge = document.getElementById('locationBadge');
     const select = document.getElementById('headerLocationSelect');
+    const locName = document.getElementById('bsLocName');
+    const locChip = document.getElementById('bsLocChip');
 
     const activeName = getActiveLocationName();
 
-    if (badge) {
-      badge.textContent = activeName ? `LOCATION: ${activeName}` : 'LOCATION: NOT SELECTED';
-    }
+    if (badge) badge.textContent = '';
+    if (locName) locName.textContent = activeName || 'Sin locación';
 
     if (!select) return;
 
@@ -81,24 +82,43 @@
       const locations = await getAllowedLocations();
 
       if (!locations || locations.length <= 1) {
-        select.style.display = 'none';
+        if (locChip) locChip.style.cursor = 'default';
         return;
       }
 
       select.innerHTML = locations.map(location => (
         `<option value="${location.name}">${location.name}</option>`
       )).join('');
-
       select.value = activeName;
-      select.style.display = 'block';
 
       select.onchange = () => {
         setActiveLocationName(select.value);
         window.location.reload();
       };
+
+      if (locChip) {
+        locChip.style.cursor = 'pointer';
+        locChip.onclick = (e) => {
+          e.stopPropagation();
+          const isOpen = select.style.pointerEvents === 'auto';
+          if (isOpen) {
+            select.style.opacity = '0';
+            select.style.pointerEvents = 'none';
+          } else {
+            select.style.opacity = '1';
+            select.style.pointerEvents = 'auto';
+            select.focus();
+          }
+        };
+        document.addEventListener('click', (e) => {
+          if (!locChip.contains(e.target) && !select.contains(e.target)) {
+            select.style.opacity = '0';
+            select.style.pointerEvents = 'none';
+          }
+        });
+      }
     } catch (error) {
       console.warn('Could not load header location selector', error);
-      select.style.display = 'none';
     }
   }
 

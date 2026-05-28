@@ -15,8 +15,8 @@ html = re.sub(
     flags=re.DOTALL
 )
 
-target = '<div class="brand-version">v1.3</div>'
-replacement = f'{target}\n<div id="buildBadge" style="font-size:12px;font-weight:800;opacity:.7;margin-top:4px;">{build}</div>'
+target = '<span class="bs-build" id="buildBadge">'
+replacement = f'<span class="bs-build" id="buildBadge">{build}'
 
 if target not in html:
     raise SystemExit("No encontré el bloque brand-version para insertar el build badge.")
