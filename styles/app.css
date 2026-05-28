@@ -1157,8 +1157,8 @@
     @media(max-width:980px){
       .inventory-controls-top{flex-wrap:wrap}
       .inventory-controls-top .tabs{flex:1 1 100%;flex-wrap:wrap}
-      .inventory-controls-top .inventory-tools{width:100%;justify-content:flex-start}
-      .inventory-controls-top .inventory-tools button{min-width:220px}
+      .inventory-controls-top .inventory-tools{width:100%;justify-content:flex-start;flex-wrap:wrap;}
+      .inventory-controls-top .inventory-tools button{min-width:0 !important;flex:1 1 calc(50% - 6px);}
     }
 
     .scan-debug{margin-top:12px;border-radius:18px;padding:12px 14px;background:rgba(255,255,255,.56);border:1px solid rgba(148,163,184,.24)}
@@ -1736,8 +1736,8 @@
       .vendor-export-wrap #vendorExportMenuBtn{width:100%}
       .history-controls-top,
       .history-controls-bottom{flex-wrap:wrap !important}
-      .history-vendor-tabs{max-width:none;flex-wrap:wrap !important}
-      .history-vendor-tabs button{min-width:140px !important;flex:1 1 calc(33.333% - 8px) !important}
+      .history-vendor-tabs{max-width:none;flex-wrap:nowrap !important;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+      .history-vendor-tabs button{min-width:auto !important;flex:0 0 auto !important;white-space:nowrap;}
       .vendor-controls-bottom{flex-wrap:wrap}
       .vendor-controls-bottom #vendorSearchInput{min-width:0;width:100%}
       #quickOrderBtn{width:100% !important;min-width:0 !important}
@@ -1781,12 +1781,18 @@
       .hero{padding:14px 16px !important}
       .brand-header-logo{width:76px !important}
       .brand-name{font-size:20px !important}
-      .section-card{padding:16px !important}
+      .section-card{padding:16px !important;}
+      .section-header-row{min-width:0;overflow:hidden;gap:8px;}
+      .section-header-row > div:first-child{min-width:0;flex:1 1 0;overflow:hidden;}
+      .section-toggle{min-width:44px !important;min-height:44px !important;flex-shrink:0;}
       .metric{font-size:24px !important}
       .inventory-controls-top .tabs button,
-      .vendor-controls-top .tabs button,
-      .history-vendor-tabs button{
+      .vendor-controls-top .tabs button{
         flex:1 1 100% !important;
+      }
+      .history-vendor-tabs button{
+        flex:0 0 auto !important;
+        white-space:nowrap;
       }
       .compare-toolbar{justify-content:stretch !important}
       .compare-toolbar .compare-status,
@@ -2228,3 +2234,26 @@ body.light .bs-dropdown{border-color:rgba(0,0,0,0.12);}
 .bs-dd-divider{height:1px;background:rgba(255,255,255,0.06);margin:4px 0;}
 body.light .bs-dd-divider{background:rgba(0,0,0,0.07);}
 .bs-dd-filelbl{cursor:pointer;}
+
+/* ===== BS HEADER MOBILE ===== */
+@media(max-width:640px){
+  input[type='date']{width:100% !important;max-width:100% !important;box-sizing:border-box !important;min-width:0 !important;}
+  .bs-header-line1{padding:10px 14px;gap:6px;}
+  #headerLogo{font-size:15px !important;}
+  .brand-logo-pro{font-size:9px !important;}
+  .bs-loc-chip{font-size:11px;padding:4px 8px;gap:5px;}
+  .bs-header-controls{gap:4px;}
+  .bs-icon-btn{width:28px;height:28px;}
+  .bs-logout-btn{padding:4px 8px;font-size:12px;}
+  .bs-logout-btn i{display:none;}
+  .bs-header-line2{flex-wrap:wrap;}
+  .bs-stat-tab{flex:1 1 45%;border-right:none;border-bottom:1px solid rgba(255,255,255,0.06);padding:8px 12px;}
+  .bs-stat-tab:nth-child(odd){border-right:1px solid rgba(255,255,255,0.06);}
+  .bs-stat-tab:nth-last-child(-n+2){border-bottom:none;}
+  .bs-stat-featured .bs-stat-value{font-size:22px;}
+  .bs-stat-value{font-size:18px;}
+  .bs-header-line3{padding:8px 14px;flex-wrap:nowrap;overflow-x:auto;gap:6px;}
+  .bs-header-line3::-webkit-scrollbar{display:none;}
+  .bs-btn{padding:6px 10px;font-size:12px;white-space:nowrap;}
+  .bs-build{display:none;}
+}
