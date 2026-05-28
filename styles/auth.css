@@ -64,11 +64,12 @@ body.auth-locked{
 /* 🔹 Branding */
 #authBrand{
   text-align:center;
-  font-size:18px;
-  font-weight:900;
-  letter-spacing:.12em;
+  font-size:34px;
+  font-weight:700;
+  letter-spacing:-.01em;
   color:#ffffff;
   margin-bottom:18px;
+  font-family:"Manrope",-apple-system,sans-serif;
 }
 
 /* 🔹 Title */
