@@ -625,6 +625,18 @@
       pointer-events:none;
       backface-visibility:hidden;
     }
+    #bgLayer{
+      position:fixed;
+      inset:0;
+      z-index:-2;
+      background-size:cover;
+      background-position:center center;
+      background-repeat:no-repeat;
+      pointer-events:none;
+      transition:background-image 0.6s ease;
+    }
+    #bgLayer.active{z-index:-1;}
+    body.has-custom-bg::before{display:none;}
     body::after{
       content:'';
       position:fixed;

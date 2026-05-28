@@ -36,6 +36,7 @@
 <body>
 
 
+<div id="bgLayer"></div>
 <div class="wrap">
   <div class="bs-header card">
     <div class="bs-header-line1">
@@ -94,7 +95,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260527-233106</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260528-153249</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -3874,6 +3875,94 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 </div>
 
 <script src="src/auth.js"></script>
+<script>
+// ===== BACKGROUND SELECTOR =====
+(function(){
+  const BACKGROUNDS = [
+    { id: 'wills-bills',    label: "Will's & Bill's",    src: 'assets/backgrounds/wills-bills.jpg' },
+    { id: 'jockey-bar',     label: 'The Jockey Tavern',  src: 'assets/backgrounds/jockey-bar.jpg' },
+    { id: 'crown-dining',   label: 'Crown Dining',       src: 'assets/backgrounds/crown-dining.jpg' },
+    { id: 'crown-lounge',   label: 'Crown Lounge',       src: 'assets/backgrounds/crown-lounge.jpg' },
+    { id: 'default',        label: 'Default',            src: 'assets/bar-background.jpg' },
+  ];
+
+  const STORAGE_KEY = 'bs_background';
+
+  function getLocationKey() {
+    const loc = (window.BARSTOCK_CONFIG?.LOCATION_NAME || 'default').replace(/\s+/g,'_').toLowerCase();
+    return STORAGE_KEY + '_' + loc;
+  }
+
+  function applyBackground(src) {
+    const layer = document.getElementById('bgLayer');
+    if (!layer) return;
+    if (!src || src === 'default') {
+      layer.style.backgroundImage = '';
+      layer.classList.remove('active');
+      document.body.classList.remove('has-custom-bg');
+    } else {
+      layer.style.backgroundImage = `url('${src}')`;
+      layer.classList.add('active');
+      document.body.classList.add('has-custom-bg');
+    }
+  }
+
+  function loadSavedBackground() {
+    const saved = localStorage.getItem(getLocationKey());
+    if (saved) applyBackground(saved);
+  }
+
+  function saveBackground(src) {
+    if (!src || src === 'default') {
+      localStorage.removeItem(getLocationKey());
+      applyBackground(null);
+    } else {
+      localStorage.setItem(getLocationKey(), src);
+      applyBackground(src);
+    }
+  }
+
+  function renderBgGrid() {
+    const grid = document.getElementById('bgGrid');
+    if (!grid) return;
+    const current = localStorage.getItem(getLocationKey()) || '';
+    grid.innerHTML = BACKGROUNDS.map(bg => `
+      <div class="bg-thumb ${current === bg.src ? 'bg-thumb-active' : ''}" data-src="${bg.src}" style="
+        background-image:url('${bg.src}');
+        background-size:cover;
+        background-position:center;
+        border-radius:10px;
+        height:90px;
+        cursor:pointer;
+        border:2px solid ${current === bg.src ? 'var(--accent)' : 'transparent'};
+        position:relative;
+        overflow:hidden;
+      ">
+        <div style="position:absolute;bottom:0;left:0;right:0;padding:4px 8px;background:rgba(0,0,0,.55);font-size:11px;font-weight:600;color:#fff;">${bg.label}</div>
+      </div>
+    `).join('');
+    grid.querySelectorAll('.bg-thumb').forEach(el => {
+      el.addEventListener('click', () => {
+        saveBackground(el.dataset.src);
+        renderBgGrid();
+      });
+    });
+    const removeBtn = document.getElementById('bgRemoveBtn');
+    if (removeBtn) removeBtn.onclick = () => { saveBackground(null); renderBgGrid(); };
+  }
+
+  window.addEventListener('load', () => {
+    loadSavedBackground();
+    const orig = window.showSettingsPanel;
+    window.showSettingsPanel = function(panel) {
+      if (panel === 'appearance') renderBgGrid();
+      if (orig) orig(panel);
+    };
+  });
+
+  window.BarStockBackground = { loadSavedBackground, renderBgGrid };
+})();
+</script>
 <!-- BARSTOCK AUTH OVERLAY SAFE END -->
 
 
@@ -3958,6 +4047,11 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       <button class="settings-menu-item" onclick="showSettingsPanel('senderProfile')">
         <span class="settings-menu-label">Sender Profile</span>
         <span class="settings-menu-desc">Your name, email and phone shown on purchase orders</span>
+        <span class="settings-menu-arrow">›</span>
+      </button>
+      <button class="settings-menu-item" onclick="showSettingsPanel('appearance')">
+        <span class="settings-menu-label">Appearance</span>
+        <span class="settings-menu-desc">Background image for this location</span>
         <span class="settings-menu-arrow">›</span>
       </button>
     </div>
@@ -4057,6 +4151,17 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
         <button class="ui-control" onclick="closeSettingsModal()">Cancel</button>
         <button class="ui-control primary" id="orderDefaultsSaveBtn" onclick="saveOrderDefaults()">Save</button>
+      </div>
+    </div>
+
+    <!-- PANEL: Appearance -->
+    <div id="settingsPanel-appearance" class="settings-panel hidden">
+      <button class="settings-back-btn" onclick="showSettingsPanel(null)">‹ Back</button>
+      <h4 style="margin:0 0 4px">Background</h4>
+      <div class="small muted" style="margin-bottom:16px">Choose a background image for this location</div>
+      <div id="bgGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;"></div>
+      <div style="margin-top:16px;">
+        <button id="bgRemoveBtn" class="btn-sm" style="color:var(--bad);background:transparent;border:1px solid var(--bad);border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;">Remove background</button>
       </div>
     </div>
 
