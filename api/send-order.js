@@ -46,7 +46,7 @@ ${escapeHtml(senderName || loc + ' Team')}</p>
 </body></html>`;
 
     const payload = {
-      from: `${senderName} <orders@barstockpro.com>`,
+      from: `${loc} <orders@barstockpro.com>`,
       to: toList,
       subject,
       html: htmlBody,
