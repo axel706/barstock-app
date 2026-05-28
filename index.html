@@ -95,7 +95,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260528-172711</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260528-175314</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -107,6 +107,14 @@
       </div>
     </div>
     <div id="locationBadge" style="display:none;"></div>
+    <div class="bs-header-line4" id="bsNavTabs">
+      <button class="bs-nav-tab" onclick="bsScrollTo('inventorySection')">Inventory</button>
+      <button class="bs-nav-tab" onclick="bsScrollTo('vendorSection')">Ordering</button>
+      <button class="bs-nav-tab" onclick="bsScrollTo('historySection')">Order History</button>
+      <button class="bs-nav-tab" onclick="bsScrollTo('noMatchSection')">No Match</button>
+      <button class="bs-nav-tab" onclick="bsScrollTo('costReportSection')">Costs</button>
+      <button class="bs-nav-tab" onclick="bsScrollTo('usageSection')">Usage</button>
+    </div>
   </div>
 
   <div class="card section-card" id="inventorySection">
@@ -3875,6 +3883,56 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 </div>
 
 <script src="src/auth.js"></script>
+<script>
+(function(){
+  // Scroll to section
+  window.bsScrollTo = function(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const header = document.getElementById('bsHeader') || document.querySelector('.bs-header');
+    const headerH = header ? header.offsetHeight : 80;
+    const top = el.getBoundingClientRect().top + window.scrollY - headerH - 8;
+    window.scrollTo({ top, behavior: 'smooth' });
+  };
+
+  // Active tab highlight
+  const sections = [
+    { id: 'inventorySection', tab: 0 },
+    { id: 'vendorSection', tab: 1 },
+    { id: 'historySection', tab: 2 },
+    { id: 'noMatchSection', tab: 3 },
+    { id: 'costReportSection', tab: 4 },
+    { id: 'usageSection', tab: 5 },
+  ];
+
+  function updateActiveTab() {
+    const header = document.querySelector('.bs-header');
+    if (!header) return;
+    const headerH = header.offsetHeight;
+    let active = 0;
+    sections.forEach(({ id, tab }) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.getBoundingClientRect().top <= headerH + 32) active = tab;
+    });
+    document.querySelectorAll('.bs-nav-tab').forEach((btn, i) => {
+      btn.classList.toggle('active', i === active);
+    });
+  }
+
+  // Collapse on scroll
+  window.addEventListener('scroll', () => {
+    const header = document.querySelector('.bs-header');
+    if (!header) return;
+    if (window.scrollY > 60) {
+      header.classList.add('collapsed');
+    } else {
+      header.classList.remove('collapsed');
+    }
+    updateActiveTab();
+  }, { passive: true });
+})();
+</script>
 <script>
 // ===== BACKGROUND SELECTOR =====
 (function(){

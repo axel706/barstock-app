@@ -2182,7 +2182,7 @@
 }
 
 /* ===== BS HEADER ===== */
-.bs-header{background:rgba(17,24,39,.86);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:0;margin-bottom:16px;position:relative;z-index:40;box-shadow:0 8px 24px rgba(0,0,0,.28);}
+.bs-header{background:rgba(17,24,39,.86);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:0;margin-bottom:60px;position:relative;z-index:40;box-shadow:0 8px 24px rgba(0,0,0,.28);}
 body.light .bs-header{background:rgba(255,255,255,.96);border-color:rgba(15,23,42,.08);box-shadow:0 8px 22px rgba(15,23,42,.08);}
 .bs-header-line1{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.06);}
 body.light .bs-header-line1{border-bottom-color:rgba(0,0,0,0.07);}
@@ -2256,4 +2256,57 @@ body.light .bs-dd-divider{background:rgba(0,0,0,0.07);}
   .bs-header-line3::-webkit-scrollbar{display:none;}
   .bs-btn{padding:6px 10px;font-size:12px;white-space:nowrap;}
   .bs-build{display:none;}
+}
+
+/* ===== BS HEADER STICKY + COLLAPSE ===== */
+.card.section-card{scroll-margin-top:200px;}
+.bs-header{
+  position:sticky;
+  top:0;
+  z-index:40;
+  transition:all 0.3s ease;
+}
+.bs-header-line4{
+  display:none;
+  align-items:center;
+  gap:4px;
+  padding:6px 20px;
+  border-top:1px solid rgba(255,255,255,0.06);
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.bs-header-line4::-webkit-scrollbar{display:none;}
+body.light .bs-header-line4{border-top-color:rgba(0,0,0,0.07);}
+.bs-nav-tab{
+  background:transparent;
+  border:none;
+  color:var(--sub);
+  font-size:13px;
+  font-weight:600;
+  font-family:inherit;
+  padding:5px 12px;
+  border-radius:20px;
+  cursor:pointer;
+  white-space:nowrap;
+  flex-shrink:0;
+  transition:background 0.15s ease, color 0.15s ease;
+}
+.bs-nav-tab:hover{background:var(--muted);color:var(--text);}
+.bs-nav-tab.active{background:var(--muted);color:var(--text);}
+
+/* Collapsed state */
+.bs-header.collapsed .bs-header-line2,
+.bs-header.collapsed .bs-header-line3{
+  display:none;
+}
+.bs-header.collapsed .bs-header-line4{
+  display:flex;
+}
+.bs-header.collapsed{
+  border-radius:0 0 18px 18px;
+}
+
+@media(max-width:640px){
+  .bs-header-line4{padding:6px 14px;}
+  .bs-nav-tab{font-size:12px;padding:4px 10px;}
 }
