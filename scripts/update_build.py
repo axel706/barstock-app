@@ -7,21 +7,15 @@ html = p.read_text(encoding="utf-8")
 
 build = datetime.now().strftime("BUILD-%Y%m%d-%H%M%S")
 
-# elimina badge previo si existe
-html = re.sub(
-    r'<div id="buildBadge".*?>.*?</div>',
-    '',
-    html,
-    flags=re.DOTALL
-)
-
-target = '<span class="bs-build" id="buildBadge">'
-replacement = f'<span class="bs-build" id="buildBadge">{build}'
-
-if target not in html:
+# reemplaza contenido del badge
+if '<span class="bs-build" id="buildBadge">' not in html:
     raise SystemExit("No encontré el bloque brand-version para insertar el build badge.")
 
-html = html.replace(target, replacement, 1)
+html = re.sub(
+    r'(<span class="bs-build" id="buildBadge">)[^<]*',
+    rf'\g<1>{build}',
+    html
+)
 
 p.write_text(html, encoding="utf-8")
 print(build)
