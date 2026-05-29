@@ -2295,6 +2295,8 @@ body.light .bs-header-line4{border-top-color:rgba(0,0,0,0.07);}
 }
 .bs-nav-tab:hover{background:var(--muted);color:var(--text);}
 .bs-nav-tab.active{background:var(--muted);color:var(--text);}
+.bs-back-btn{background:transparent;border:none;color:var(--sub);font-size:13px;font-weight:600;font-family:inherit;padding:5px 12px;border-radius:20px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.bs-back-btn:hover{background:var(--muted);color:var(--text);}
 
 /* Collapsed state */
 .bs-header.collapsed .bs-header-line2,

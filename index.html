@@ -95,7 +95,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260529-132757</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260529-134654</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -108,6 +108,7 @@
     </div>
     <div id="locationBadge" style="display:none;"></div>
     <div class="bs-header-line4" id="bsNavTabs">
+      <button class="bs-back-btn" id="bsNavBackBtn" style="display:none;">← Overview</button>
       <button class="bs-nav-tab" onclick="bsScrollTo('inventorySection')">Inventory</button>
       <button class="bs-nav-tab" onclick="bsScrollTo('vendorSection')">Ordering</button>
       <button class="bs-nav-tab" onclick="bsScrollTo('historySection')">Order History</button>
@@ -3971,6 +3972,8 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       target.appendChild(bsMiniNav);
     }
     if (typeof setSectionCollapsed === 'function') setSectionCollapsed(name, false);
+    const backBtn = document.getElementById('bsNavBackBtn');
+    if (backBtn) { backBtn.style.display = 'inline-flex'; backBtn.onclick = bsCloseSection; }
     window.scrollTo({top:0, behavior:'smooth'});
   };
 
@@ -3978,15 +3981,12 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     const wrap = document.querySelector('.wrap');
     wrap.classList.remove('bs-focus-mode');
     document.querySelectorAll('.card.section-card').forEach(el => el.classList.remove('bs-active-section'));
+    const backBtn = document.getElementById('bsNavBackBtn');
+    if (backBtn) backBtn.style.display = 'none';
     window.scrollTo({top:0, behavior:'smooth'});
   };
 
-  // Focus grid back button
-  const bsFocusBack = document.createElement('div');
-  bsFocusBack.className = 'bs-focus-back';
-  bsFocusBack.innerHTML = '<i class="ti ti-arrow-left" aria-hidden="true"></i> Back to overview';
-  bsFocusBack.onclick = bsCloseSection;
-  document.getElementById('bsFocusGrid').before(bsFocusBack);
+  const bsFocusBack = null;
 
   // Mini nav
   const bsMiniNav = document.createElement('div');
