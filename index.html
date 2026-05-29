@@ -95,7 +95,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260529-122818</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260529-130009</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -114,6 +114,45 @@
       <button class="bs-nav-tab" onclick="bsScrollTo('noMatchSection')">No Match</button>
       <button class="bs-nav-tab" onclick="bsScrollTo('costReportSection')">Costs</button>
       <button class="bs-nav-tab" onclick="bsScrollTo('usageSection')">Usage</button>
+    </div>
+  </div>
+
+  <div id="bsFocusGrid" class="bs-focus-grid">
+    <div class="bs-focus-card card" onclick="bsOpenSection('inventory')">
+      <i class="ti ti-package bs-focus-icon" aria-hidden="true"></i>
+      <div class="bs-focus-title">Inventory</div>
+      <div class="bs-focus-sub" id="fgSub-inventory">Loading...</div>
+      <div class="bs-focus-badge" id="fgBadge-inventory"></div>
+    </div>
+    <div class="bs-focus-card card" onclick="bsOpenSection('vendor')">
+      <i class="ti ti-shopping-cart bs-focus-icon" aria-hidden="true"></i>
+      <div class="bs-focus-title">Ordering</div>
+      <div class="bs-focus-sub" id="fgSub-vendor">Review active orders</div>
+      <div class="bs-focus-badge" id="fgBadge-vendor"></div>
+    </div>
+    <div class="bs-focus-card card" onclick="bsOpenSection('history')">
+      <i class="ti ti-history bs-focus-icon" aria-hidden="true"></i>
+      <div class="bs-focus-title">Order History</div>
+      <div class="bs-focus-sub" id="fgSub-history">Previously placed orders</div>
+      <div class="bs-focus-badge" id="fgBadge-history"></div>
+    </div>
+    <div class="bs-focus-card card" onclick="bsOpenSection('noMatch')">
+      <i class="ti ti-alert-circle bs-focus-icon" aria-hidden="true"></i>
+      <div class="bs-focus-title">No Match</div>
+      <div class="bs-focus-sub" id="fgSub-noMatch">Items needing review</div>
+      <div class="bs-focus-badge warn" id="fgBadge-noMatch"></div>
+    </div>
+    <div class="bs-focus-card card" onclick="bsOpenSection('costReport')">
+      <i class="ti ti-chart-bar bs-focus-icon" aria-hidden="true"></i>
+      <div class="bs-focus-title">Costs</div>
+      <div class="bs-focus-sub" id="fgSub-costReport">Track COGS vs benchmarks</div>
+      <div class="bs-focus-badge" id="fgBadge-costReport"></div>
+    </div>
+    <div class="bs-focus-card card" onclick="bsOpenSection('usage')">
+      <i class="ti ti-chart-dots bs-focus-icon" aria-hidden="true"></i>
+      <div class="bs-focus-title">Usage</div>
+      <div class="bs-focus-sub" id="fgSub-usage">Compare sales vs usage</div>
+      <div class="bs-focus-badge" id="fgBadge-usage"></div>
     </div>
   </div>
 
@@ -3921,6 +3960,81 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   }
 
   // Collapse on scroll
+  // Focus mode functions
+  window.bsOpenSection = function(name) {
+    const wrap = document.querySelector('.wrap');
+    wrap.classList.add('bs-focus-mode');
+    document.querySelectorAll('.card.section-card').forEach(el => el.classList.remove('bs-active-section'));
+    const target = document.getElementById(name + 'Section');
+    if (target) {
+      target.classList.add('bs-active-section');
+      target.appendChild(bsMiniNav);
+    }
+    if (typeof setSectionCollapsed === 'function') setSectionCollapsed(name, false);
+    window.scrollTo({top:0, behavior:'smooth'});
+  };
+
+  window.bsCloseSection = function() {
+    const wrap = document.querySelector('.wrap');
+    wrap.classList.remove('bs-focus-mode');
+    document.querySelectorAll('.card.section-card').forEach(el => el.classList.remove('bs-active-section'));
+    window.scrollTo({top:0, behavior:'smooth'});
+  };
+
+  // Focus grid back button
+  const bsFocusBack = document.createElement('div');
+  bsFocusBack.className = 'bs-focus-back';
+  bsFocusBack.innerHTML = '<i class="ti ti-arrow-left" aria-hidden="true"></i> Back to overview';
+  bsFocusBack.onclick = bsCloseSection;
+  document.getElementById('bsFocusGrid').before(bsFocusBack);
+
+  // Mini nav
+  const bsMiniNav = document.createElement('div');
+  bsMiniNav.className = 'bs-focus-mininav';
+  const miniSections = [
+    {id:'inventory', icon:'ti-package', label:'Inventory'},
+    {id:'vendor', icon:'ti-shopping-cart', label:'Ordering'},
+    {id:'history', icon:'ti-history', label:'History'},
+    {id:'noMatch', icon:'ti-alert-circle', label:'No Match'},
+    {id:'costReport', icon:'ti-chart-bar', label:'Costs'},
+    {id:'usage', icon:'ti-chart-dots', label:'Usage'},
+  ];
+  miniSections.forEach(s => {
+    const el = document.createElement('div');
+    el.className = 'bs-focus-minicard';
+    el.innerHTML = `<i class="ti ${s.icon}" aria-hidden="true"></i><span class="bs-focus-minicard-title">${s.label}</span>`;
+    el.onclick = () => bsOpenSection(s.id);
+    bsMiniNav.appendChild(el);
+  });
+
+  // Update focus grid badges
+  function bsUpdateFocusGrid() {
+    const itemsMetric = document.getElementById('itemsMetric');
+    const toOrderMetric = document.getElementById('toOrderMetric');
+    const noMatchMetric = document.getElementById('noMatchMetric');
+    if (itemsMetric) {
+      document.getElementById('fgSub-inventory').textContent = (itemsMetric.textContent || '0') + ' items loaded';
+    }
+    if (toOrderMetric) {
+      const n = toOrderMetric.textContent || '0';
+      const badge = document.getElementById('fgBadge-inventory');
+      if (badge) badge.textContent = n > 0 ? n + ' to order' : '';
+    }
+    if (noMatchMetric) {
+      const n = noMatchMetric.textContent || '0';
+      const badge = document.getElementById('fgBadge-noMatch');
+      if (badge) badge.textContent = n > 0 ? n + ' pending' : '';
+    }
+  }
+  setInterval(bsUpdateFocusGrid, 2000);
+  window.addEventListener('load', bsUpdateFocusGrid);
+
+  // Update nav tabs to use focus mode
+  document.querySelectorAll('.bs-nav-tab').forEach((btn, i) => {
+    const sections = ['inventory','vendor','history','noMatch','costReport','usage'];
+    btn.onclick = () => bsOpenSection(sections[i]);
+  });
+
   window.addEventListener('scroll', () => {
     const header = document.querySelector('.bs-header');
     if (!header) return;
