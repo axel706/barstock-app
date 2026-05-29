@@ -101,11 +101,11 @@
       min-width:0;
     }
     .history-vendor-tabs button{
-      min-width:160px !important;
-      min-height:52px !important;
-      height:52px !important;
-      font-size:14px !important;
-      padding:0 18px !important;
+      min-width:auto !important;
+      min-height:36px !important;
+      height:36px !important;
+      font-size:13px !important;
+      padding:0 14px !important;
       display:flex;
       align-items:center;
       justify-content:center;
@@ -258,16 +258,16 @@
     }
     .history-vendor-tabs button{
       flex:0 1 auto !important;
-      min-width:120px !important;
-      min-height:52px !important;
-      height:52px !important;
-      font-size:14px !important;
-      padding:0 18px !important;
+      min-width:auto !important;
+      min-height:36px !important;
+      height:36px !important;
+      font-size:13px !important;
+      padding:0 14px !important;
       display:flex !important;
       align-items:center !important;
       justify-content:center !important;
       text-align:center !important;
-      border-radius:12px !important;
+      border-radius:10px !important;
     }
 
     body.light .hero{
