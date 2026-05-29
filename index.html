@@ -95,7 +95,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260528-175314</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260529-122818</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -3926,8 +3926,10 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     if (!header) return;
     if (window.scrollY > 60) {
       header.classList.add('collapsed');
+      header.style.marginBottom = '80px';
     } else {
       header.classList.remove('collapsed');
+      header.style.marginBottom = '40px';
     }
     updateActiveTab();
   }, { passive: true });
