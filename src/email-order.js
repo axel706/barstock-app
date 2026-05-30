@@ -314,6 +314,16 @@
 
   function closeModal() {
     document.getElementById('emailOrderModalBg')?.classList.add('hidden');
+    const overlay = document.getElementById('emailOrderSuccessOverlay');
+    const circle  = document.getElementById('emailOrderCheckCircle');
+    const svg     = document.getElementById('emailOrderCheckSvg');
+    const msg     = document.getElementById('emailOrderSuccessMsg');
+    const sub     = document.getElementById('emailOrderSuccessSub');
+    if (overlay) { overlay.style.opacity = '0'; overlay.style.pointerEvents = 'none'; }
+    if (circle)  { circle.style.transform = 'scale(0)'; circle.style.opacity = '0'; }
+    if (svg)     { const pl = svg.querySelector('polyline'); if (pl) pl.style.strokeDashoffset = '30'; }
+    if (msg)     { msg.style.opacity = '0'; msg.style.transform = 'translateY(8px)'; }
+    if (sub)     { sub.style.opacity = '0'; sub.style.transform = 'translateY(8px)'; sub.textContent = ''; }
     _emailOrderContext = null;
     _emailOrderJpgBase64 = null;
   }
@@ -441,8 +451,26 @@
       const result = await res.json();
       if (!result.ok) throw new Error(result.error || 'Unknown error');
 
-      closeModal();
       if (typeof setStatus === 'function') setStatus('Order emailed to ' + toEmails.join(', ') + '.');
+      const overlay = document.getElementById('emailOrderSuccessOverlay');
+      const circle  = document.getElementById('emailOrderCheckCircle');
+      const svg     = document.getElementById('emailOrderCheckSvg');
+      const sub     = document.getElementById('emailOrderSuccessSub');
+      if (overlay && circle && svg && sub) {
+        sub.textContent = toEmails.join(', ');
+        overlay.style.opacity = '1';
+        overlay.style.pointerEvents = 'auto';
+        setTimeout(() => { circle.style.transform = 'scale(1)'; circle.style.opacity = '1'; }, 50);
+        setTimeout(() => { svg.querySelector('polyline').style.strokeDashoffset = '0'; }, 400);
+        setTimeout(() => {
+          document.getElementById('emailOrderSuccessMsg').style.opacity = '1';
+          document.getElementById('emailOrderSuccessMsg').style.transform = 'translateY(0)';
+        }, 550);
+        setTimeout(() => { sub.style.opacity = '1'; sub.style.transform = 'translateY(0)'; }, 700);
+        setTimeout(() => { closeModal(); }, 2600);
+      } else {
+        closeModal();
+      }
 
       if (window.BarStockLogger) {
         window.BarStockLogger.log('email_order_sent', {
