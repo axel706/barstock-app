@@ -43,42 +43,42 @@
         </div>
 
         <div id="bsObCard" style="background:rgba(10,18,35,0.92);border:0.5px solid rgba(255,255,255,0.2);border-radius:16px;padding:28px 32px;width:100%;box-sizing:border-box;opacity:0;transform:translateY(16px);transition:opacity 0.5s ease,transform 0.5s ease;">
-          <div style="font-size:17px;font-weight:500;color:#ffffff;margin-bottom:10px;text-align:center;">One last thing before you get started</div>
-          <div style="font-size:13px;color:#e2e8f0;line-height:1.65;margin-bottom:20px;text-align:center;">
-            BarStock Pro sends order emails and cost reports directly to your vendors on your behalf.<br><br>
-            We need a <strong style="color:#cbd5e1;font-weight:500;">Reply To</strong> address so vendors know who to respond to, and a <strong style="color:#cbd5e1;font-weight:500;">Sender Profile</strong> with your name and contact info — it appears as the signature on every email sent from BarStock Pro.
+          <div style="font-size:17px;font-weight:500;color:#ffffff;margin-bottom:20px;text-align:center;">One last thing before you get started</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
+            <div style="font-size:13px;color:#e2e8f0;line-height:1.65;">
+              BarStock Pro sends order emails and cost reports directly to your vendors on your behalf.<br><br>
+              We need a <strong style="color:#fff;font-weight:500;">Reply To</strong> address so vendors know who to respond to, and a <strong style="color:#fff;font-weight:500;">Sender Profile</strong> with your name and contact info — it appears as the signature on every email sent from BarStock Pro.
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;flex-direction:column;gap:5px;">
+                <div style="font-size:12px;font-weight:500;color:#cbd5e1;display:flex;align-items:center;gap:6px;">Reply To <span style="font-size:11px;background:rgba(239,68,68,0.15);color:#f87171;padding:1px 7px;border-radius:20px;">Required</span></div>
+                <input id="bsObReplyTo" type="email" placeholder="manager@yourbar.com" style="height:36px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.07);padding:0 12px;font-size:13px;color:#f1f5f9;width:100%;box-sizing:border-box;">
+              </div>
+              <div style="width:100%;height:0.5px;background:rgba(255,255,255,0.08);"></div>
+              <div style="font-size:11px;font-weight:500;color:#94a3b8;text-transform:uppercase;letter-spacing:0.1em;">Sender Profile</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <div style="font-size:12px;font-weight:500;color:#cbd5e1;">Name</div>
+                  <input id="bsObName" type="text" placeholder="Jamie Rivera" style="height:36px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.07);padding:0 12px;font-size:13px;color:#f1f5f9;width:100%;box-sizing:border-box;">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <div style="font-size:12px;font-weight:500;color:#cbd5e1;">Email</div>
+                  <input id="bsObEmail" type="email" placeholder="jamie@yourbar.com" style="height:36px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.07);padding:0 12px;font-size:13px;color:#f1f5f9;width:100%;box-sizing:border-box;">
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <div style="font-size:12px;font-weight:500;color:#cbd5e1;">Phone</div>
+                  <input id="bsObPhone" type="tel" placeholder="+1 312 555 0192" style="height:36px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.07);padding:0 12px;font-size:13px;color:#f1f5f9;width:100%;box-sizing:border-box;">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <div style="font-size:12px;font-weight:500;color:#cbd5e1;">Title</div>
+                  <input id="bsObTitle" type="text" placeholder="Bar Manager" style="height:36px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.07);padding:0 12px;font-size:13px;color:#f1f5f9;width:100%;box-sizing:border-box;">
+                </div>
+              </div>
+            </div>
           </div>
-
-          <div style="display:flex;flex-direction:column;gap:14px;">
-            <div style="display:flex;flex-direction:column;gap:5px;">
-              <div style="font-size:12px;font-weight:500;color:#cbd5e1;display:flex;align-items:center;gap:6px;">Reply To <span style="font-size:11px;background:rgba(239,68,68,0.15);color:#f87171;padding:1px 7px;border-radius:20px;">Required</span></div>
-              <input id="bsObReplyTo" type="email" placeholder="manager@yourbar.com" style="height:38px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.07);padding:0 12px;font-size:13px;color:#f1f5f9;width:100%;box-sizing:border-box;">
-            </div>
-            <div style="width:100%;height:0.5px;background:rgba(255,255,255,0.08);"></div>
-            <div style="font-size:11px;font-weight:500;color:#94a3b8;text-transform:uppercase;letter-spacing:0.1em;">Sender Profile</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-              <div style="display:flex;flex-direction:column;gap:5px;">
-                <div style="font-size:12px;font-weight:500;color:#cbd5e1;">Name</div>
-                <input id="bsObName" type="text" placeholder="Jamie Rivera" style="height:38px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.07);padding:0 12px;font-size:13px;color:#f1f5f9;width:100%;box-sizing:border-box;">
-              </div>
-              <div style="display:flex;flex-direction:column;gap:5px;">
-                <div style="font-size:12px;font-weight:500;color:#cbd5e1;">Email</div>
-                <input id="bsObEmail" type="email" placeholder="jamie@yourbar.com" style="height:38px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.07);padding:0 12px;font-size:13px;color:#f1f5f9;width:100%;box-sizing:border-box;">
-              </div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-              <div style="display:flex;flex-direction:column;gap:5px;">
-                <div style="font-size:12px;font-weight:500;color:#cbd5e1;">Phone</div>
-                <input id="bsObPhone" type="tel" placeholder="+1 312 555 0192" style="height:38px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.07);padding:0 12px;font-size:13px;color:#f1f5f9;width:100%;box-sizing:border-box;">
-              </div>
-              <div style="display:flex;flex-direction:column;gap:5px;">
-                <div style="font-size:12px;font-weight:500;color:#cbd5e1;">Title</div>
-                <input id="bsObTitle" type="text" placeholder="Bar Manager" style="height:38px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.07);padding:0 12px;font-size:13px;color:#f1f5f9;width:100%;box-sizing:border-box;">
-              </div>
-            </div>
-          </div>
-
-          <button id="bsObSaveBtn" style="width:100%;height:46px;border-radius:10px;background:#fff;border:none;color:#0f172a;font-size:15px;font-weight:700;cursor:pointer;margin-top:24px;">Save & continue</button>
+          <button id="bsObSaveBtn" style="width:100%;height:46px;border-radius:10px;background:#22c55e;border:none;color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-top:24px;">Save & continue</button>
         </div>
 
         <div id="bsObSkip" style="font-size:12px;color:#475569;margin-top:14px;cursor:pointer;opacity:0;transition:opacity 0.5s ease;">Skip for now</div>
