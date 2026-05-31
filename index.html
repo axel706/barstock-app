@@ -99,7 +99,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260531-120936</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260531-130833</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -3682,7 +3682,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/orders-cloud.js"></script>
 <script src="src/order-history-ui.js"></script>
 <script src="src/onboarding.js"></script>
-    <script src="src/email-order.js?v=logo2"></script>
+    <script src="src/email-order.js?v=logo3"></script>
 <script src="src/email-cost-report.js"></script>
 <script src="src/vendor-defaults-cloud.js"></script>
 <script src="src/sender-profile-cloud.js"></script>
@@ -4086,12 +4086,37 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     }
   }
 
-  function loadSavedBackground() {
+  async function getLocationId() {
+    try {
+      const client = window.BarStockSupabase?.getClient();
+      if (!client) return null;
+      const locName = localStorage.getItem('barstock.activeLocationName') || window.BARSTOCK_CONFIG?.LOCATION_NAME;
+      if (!locName) return null;
+      const { data } = await client.from('locations').select('id').eq('name', locName).eq('account_id', window.BARSTOCK_CONFIG?.ACCOUNT_ID || 'wjm-hospitality').single();
+      return data?.id || null;
+    } catch(e) { return null; }
+  }
+
+  async function loadSavedBackground() {
+    // Intentar cargar desde Supabase primero
+    try {
+      const client = window.BarStockSupabase?.getClient();
+      const locationId = await getLocationId();
+      if (client && locationId) {
+        const { data } = await client.from('locations').select('background_src').eq('id', locationId).single();
+        if (data?.background_src) {
+          localStorage.setItem(getLocationKey(), data.background_src);
+          applyBackground(data.background_src);
+          return;
+        }
+      }
+    } catch(e) {}
+    // Fallback a localStorage
     const saved = localStorage.getItem(getLocationKey());
     if (saved) applyBackground(saved);
   }
 
-  function saveBackground(src) {
+  async function saveBackground(src) {
     if (!src || src === 'default') {
       localStorage.removeItem(getLocationKey());
       applyBackground(null);
@@ -4099,6 +4124,14 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       localStorage.setItem(getLocationKey(), src);
       applyBackground(src);
     }
+    // Sincronizar con Supabase
+    try {
+      const client = window.BarStockSupabase?.getClient();
+      const locationId = await getLocationId();
+      if (client && locationId) {
+        await client.from('locations').update({ background_src: src || null }).eq('id', locationId);
+      }
+    } catch(e) { console.warn('Could not sync background to Supabase:', e); }
   }
 
   function renderBgGrid() {

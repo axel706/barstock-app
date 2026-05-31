@@ -91,9 +91,14 @@
     // PRO
     pdf.setFont(f, 'bold'); pdf.setFontSize(8); pdf.setTextColor(100, 116, 139);
     txt('PRO', margin + bw + 9, y + 16);
-    // Location bajo logo
-    pdf.setFont(f, 'normal'); pdf.setFontSize(9); pdf.setTextColor(100, 116, 139);
-    txt(summary.location || '', margin, y + 30);
+    // Location — pill azul
+    pdf.setFont(f, 'bold'); pdf.setFontSize(8);
+    const locText = (summary.location || '').toUpperCase();
+    const locW = pdf.getTextWidth(locText) + 16;
+    pdf.setFillColor(56, 189, 248);
+    pdf.roundedRect(margin, y + 20, locW, 14, 7, 7, 'F');
+    pdf.setTextColor(15, 23, 42);
+    txt(locText, margin + locW / 2, y + 30, { align: 'center' });
 
     // Derecha — titulo + capsula PO
     pdf.setFont(f, 'bold'); pdf.setFontSize(10); pdf.setTextColor(248, 250, 252);

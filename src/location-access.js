@@ -54,6 +54,10 @@
     if (window.BARSTOCK_CONFIG) {
       window.BARSTOCK_CONFIG.LOCATION_NAME = name;
     }
+    // Recargar fondo de la locacion seleccionada
+    if (window.BarStockBackground?.loadSavedBackground) {
+      window.BarStockBackground.loadSavedBackground();
+    }
   }
 
 
