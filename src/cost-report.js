@@ -475,17 +475,15 @@
     let y = margin + 10;
 
     const TBL_STYLES = { fontSize: 9.5, cellPadding: { top: 8, right: 12, bottom: 8, left: 12 }, font: 'helvetica', lineColor: [218, 224, 234], lineWidth: 0, textColor: [15, 23, 42], valign: 'middle' };
-    const TBL_HEAD = { fillColor: [241, 245, 251], textColor: [30, 60, 90], fontStyle: 'bold', fontSize: 8.5, cellPadding: { top: 9, right: 12, bottom: 9, left: 12 } };
-    const TBL_FOOT = { fillColor: [232, 240, 250], textColor: [15, 23, 42], fontStyle: 'bold' };
+    const TBL_HEAD = { fillColor: [224, 242, 254], textColor: [15, 23, 42], fontStyle: 'bold', fontSize: 8.5, cellPadding: { top: 9, right: 12, bottom: 9, left: 12 } };
+    const TBL_FOOT = { fillColor: [224, 242, 254], textColor: [15, 23, 42], fontStyle: 'bold' };
     const TBL_ALT = [248, 250, 253];
 
     function drawRoundedBlock(startY, endY) { pdf.setDrawColor(200, 215, 230); pdf.setLineWidth(0.8); pdf.roundedRect(margin, startY, pageW - margin * 2, endY - startY, 6, 6, 'S'); }
     function drawBanner(text) {
-      pdf.setFillColor(30, 91, 138);
-      pdf.roundedRect(margin, y, pageW - margin * 2, 24, 6, 6, 'F');
-      pdf.setFillColor(30, 91, 138);
-      pdf.rect(margin, y + 10, pageW - margin * 2, 14, 'F');
-      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10); pdf.setTextColor(255, 255, 255);
+      pdf.setFillColor(15, 23, 42);
+      pdf.roundedRect(margin, y, pageW - margin * 2, 24, 4, 4, 'F');
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10); pdf.setTextColor(224, 242, 254);
       pdf.text(text, pageW / 2, y + 16, { align: 'center' });
       y += 24;
     }
@@ -498,29 +496,46 @@
       }
     }
 
-    // HEADER — logo tipográfico
-    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(28); pdf.setTextColor(15, 23, 42);
-    pdf.text('BarStock', margin, y);
+    // HEADER — navy bg + linea azul
+    const hdrH = y + 42;
+    pdf.setFillColor(15, 23, 42);
+    pdf.rect(0, 0, pageW, hdrH, 'F');
+
+    // Logo — BarStock
+    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(22); pdf.setTextColor(248, 250, 252);
+    pdf.text('BarStock', margin, y + 16);
     const barstockW = pdf.getTextWidth('BarStock');
-    pdf.setTextColor(59, 130, 246); pdf.text('.', margin + barstockW, y);
-    const dotW = pdf.getTextWidth('.');
-    pdf.setFontSize(11); pdf.setTextColor(100, 116, 139);
-    pdf.text('PRO', margin + barstockW + dotW + 4, y - 2);
+    // Punto circular azul
+    pdf.setFillColor(56, 189, 248);
+    pdf.circle(margin + barstockW + 3.5, y + 13.5, 2.6, 'F');
+    // PRO
+    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8); pdf.setTextColor(100, 116, 139);
+    pdf.text('PRO', margin + barstockW + 9, y + 16);
+    // Location — pill azul
+    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8);
+    const locW = pdf.getTextWidth(location.toUpperCase()) + 16;
+    pdf.setFillColor(56, 189, 248);
+    pdf.roundedRect(margin, y + 20, locW, 14, 7, 7, 'F');
+    pdf.setTextColor(15, 23, 42);
+    pdf.text(location.toUpperCase(), margin + locW / 2, y + 30, { align: 'center' });
 
-    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(13); pdf.setTextColor(22, 101, 52);
-    pdf.text(location, pageW - margin, y, { align: 'right' });
+    // Derecha — titulo + capsula con periodo
+    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10); pdf.setTextColor(248, 250, 252);
+    pdf.text('COST REPORT', pageW - margin, y + 14, { align: 'right' });
 
-    y += 18;
-    pdf.setDrawColor(218, 224, 234); pdf.setLineWidth(1);
-    pdf.line(margin, y, pageW - margin, y);
+    const periodText = formatPeriod(d.periodFrom, d.periodTo);
+    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8);
+    const periodW = pdf.getTextWidth(periodText) + 16;
+    pdf.setFillColor(56, 189, 248);
+    pdf.roundedRect(pageW - margin - periodW, y + 20, periodW, 14, 7, 7, 'F');
+    pdf.setTextColor(15, 23, 42);
+    pdf.text(periodText, pageW - margin - periodW / 2, y + 30, { align: 'center' });
+
+    y = hdrH;
+    // Linea azul de acento — full width
+    pdf.setFillColor(56, 189, 248);
+    pdf.rect(0, y, pageW, 3, 'F');
     y += 28;
-
-    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(18); pdf.setTextColor(30, 91, 138);
-    pdf.text('Wine & Liquor Cost Performance Report', pageW / 2, y, { align: 'center' });
-    y += 18;
-    pdf.setFont('helvetica', 'normal'); pdf.setFontSize(10); pdf.setTextColor(100, 116, 139);
-    pdf.text('Period: ' + formatPeriod(d.periodFrom, d.periodTo), pageW / 2, y, { align: 'center' });
-    y += 16;
 
     const tableWidth = pageW - margin * 2;
     function shortVendorName(name) {
@@ -551,9 +566,9 @@
     // Wine & Liquor cards
     pill.forEach(p => {
       // Card background
-      pdf.setFillColor(248, 250, 253);
+      pdf.setFillColor(240, 249, 255);
       pdf.roundedRect(p.x, y, cardW, cardH, r, r, 'F');
-      pdf.setDrawColor(200, 215, 230); pdf.setLineWidth(0.8);
+      pdf.setDrawColor(56, 189, 248); pdf.setLineWidth(0.8);
       pdf.roundedRect(p.x, y, cardW, cardH, r, r, 'S');
 
       // Label
@@ -582,9 +597,9 @@
     const fmtChg = v => v === null ? 'N/A' : (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
     const chgColor = v => v === null ? [148, 163, 184] : v >= 0 ? [22, 163, 74] : [220, 38, 38];
 
-    pdf.setFillColor(248, 250, 253);
+    pdf.setFillColor(240, 249, 255);
     pdf.roundedRect(yoyX, y, cardW, cardH, r, r, 'F');
-    pdf.setDrawColor(200, 215, 230); pdf.setLineWidth(0.8);
+    pdf.setDrawColor(56, 189, 248); pdf.setLineWidth(0.8);
     pdf.roundedRect(yoyX, y, cardW, cardH, r, r, 'S');
 
     pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(100, 116, 139);

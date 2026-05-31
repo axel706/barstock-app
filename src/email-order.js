@@ -76,96 +76,108 @@
       txt(text, x, yy);
     }
 
-    // ── HEADER ────────────────────────────────────────────────
-    // Logo
-    pdf.setFont(f, 'bold'); pdf.setFontSize(22); pdf.setTextColor(15, 23, 42);
+    // ── HEADER — navy bg + linea azul ───────────────────────
+    const hdrH = y + 42; // margin + contenido
+    pdf.setFillColor(15, 23, 42);
+    pdf.rect(0, 0, W, hdrH, 'F');
+
+    // Logo — BarStock
+    pdf.setFont(f, 'bold'); pdf.setFontSize(22); pdf.setTextColor(248, 250, 252);
     txt('BarStock', margin, y + 16);
     const bw = pdf.getTextWidth('BarStock');
-    pdf.setTextColor(59, 130, 246);
-    txt('.', margin + bw, y + 16);
-    const dw = pdf.getTextWidth('.');
-    pdf.setFont(f, 'bold'); pdf.setFontSize(9); pdf.setTextColor(148, 163, 184);
-    txt('PRO', margin + bw + dw + 3, y + 14);
-
-    // Location name under logo
-    pdf.setFont(f, 'normal'); pdf.setFontSize(10); pdf.setTextColor(100, 116, 139);
+    // Punto circular azul
+    pdf.setFillColor(56, 189, 248);
+    pdf.circle(margin + bw + 3.5, y + 13.5, 2.6, 'F');
+    // PRO
+    pdf.setFont(f, 'bold'); pdf.setFontSize(8); pdf.setTextColor(100, 116, 139);
+    txt('PRO', margin + bw + 9, y + 16);
+    // Location bajo logo
+    pdf.setFont(f, 'normal'); pdf.setFontSize(9); pdf.setTextColor(100, 116, 139);
     txt(summary.location || '', margin, y + 30);
 
-    // Right side — Purchase Order title + PO number + status badge
-    pdf.setFont(f, 'bold'); pdf.setFontSize(20); pdf.setTextColor(15, 23, 42);
-    txt('Purchase Order', W - margin, y + 16, { align: 'right' });
+    // Derecha — titulo + capsula PO
+    pdf.setFont(f, 'bold'); pdf.setFontSize(10); pdf.setTextColor(248, 250, 252);
+    txt('PURCHASE ORDER', W - margin, y + 14, { align: 'right' });
 
     if (summary.poNumber) {
-      // PO badge
       const poText = summary.poNumber;
-      pdf.setFont(f, 'bold'); pdf.setFontSize(10); pdf.setTextColor(30, 91, 138);
+      pdf.setFont(f, 'bold'); pdf.setFontSize(9);
       const poW = pdf.getTextWidth(poText) + 16;
-      roundRect(W - margin - poW, y + 20, poW, 16, 3, [241, 245, 251], [181, 212, 244]);
-      txt(poText, W - margin - poW / 2, y + 31, { align: 'center' });
+      pdf.setFillColor(56, 189, 248);
+      pdf.roundedRect(W - margin - poW, y + 20, poW, 14, 7, 7, 'F');
+      pdf.setTextColor(15, 23, 42);
+      txt(poText, W - margin - poW / 2, y + 30, { align: 'center' });
     }
 
-    // Open badge
-    const badgeX = summary.poNumber ? W - margin - (pdf.getTextWidth(summary.poNumber) + 16) - 10 - 38 : W - margin - 38;
-    roundRect(badgeX, y + 20, 38, 16, 3, [232, 240, 250], null);
-    pdf.setFont(f, 'bold'); pdf.setFontSize(8); pdf.setTextColor(30, 91, 138);
-    txt('Open', badgeX + 19, y + 31, { align: 'center' });
-
-    y += 48;
-    line(margin, y, W - margin, y);
+    y = hdrH;
+    // Linea azul de acento — full width
+    pdf.setFillColor(56, 189, 248);
+    pdf.rect(0, y, W, 3, 'F');
     y += 18;
 
-    // ── META GRID — 2 columnas ────────────────────────────────
+    // ── META GRID — 2 cards ──────────────────────────────────
     const colW = contentW / 2;
+    const cardPad = 12;
+    const cardGap = 8;
+    const cardW = (contentW - cardGap) / 2;
 
-    // Col izquierda — Order info
-    pdf.setFont(f, 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(148, 163, 184);
-    txt('ORDER INFO', margin, y);
-    y += 12;
-
-    const orderRows = [
-      ['Date issued',         summary.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })],
-      ['Requested delivery',  summary.deliveryDate ? (() => { const [y,m,d] = summary.deliveryDate.split('-'); return new Date(+y,+m-1,+d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); })() : ''],
+    // Calcular altura de cards
+    const orderRowsData = [
+      ['Date issued',        summary.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })],
+      ['Requested delivery', summary.deliveryDate ? (() => { const [yr,mo,dy] = summary.deliveryDate.split('-'); return new Date(+yr,+mo-1,+dy).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); })() : ''],
       ['Buyer',    summary.buyerName ? (summary.buyerTitle ? summary.buyerName + ' · ' + summary.buyerTitle : summary.buyerName) : ''],
       ['Email',    summary.buyerEmail || ''],
       ['Phone',    summary.buyerPhone || ''],
-    ];
-    orderRows.forEach(([k, v]) => {
-      if (!v) return;
-      label(k, margin, y);
-      value(v, margin + 90, y, false);
-      y += 14;
+    ].filter(r => r[1]);
+    const vendorRowsData = [
+      ['Company',   vendor],
+      ['Account #', summary.vendorDefaults?.account_number || ''],
+      ['Rep',       summary.vendorDefaults?.rep_name || ''],
+      ['Phone',     summary.vendorDefaults?.rep_phone || ''],
+    ].filter(r => r[1]);
+
+    const cardH = Math.max(orderRowsData.length, vendorRowsData.length) * 14 + cardPad * 2 + 16;
+
+    // Card ORDER INFO
+    pdf.setFillColor(247, 249, 252);
+    pdf.setDrawColor(218, 224, 234);
+    pdf.setLineWidth(0.5);
+    pdf.roundedRect(margin, y, cardW, cardH, 4, 4, 'FD');
+    pdf.setFont(f, 'bold'); pdf.setFontSize(7.5); pdf.setTextColor(148, 163, 184);
+    txt('ORDER INFO', margin + cardPad, y + cardPad + 4);
+    let oy = y + cardPad + 16;
+    orderRowsData.forEach(([k, v]) => {
+      label(k, margin + cardPad, oy);
+      value(v, margin + cardPad + 88, oy, false);
+      oy += 14;
     });
 
-    // Col derecha — Vendor info (resetear y al inicio de la sección)
-    const metaStartY = y - (orderRows.filter(r => r[1]).length * 14) - 12;
-    let vy = metaStartY;
-    pdf.setFont(f, 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(148, 163, 184);
-    txt('VENDOR', margin + colW, vy);
-    vy += 12;
-
-    const vendorRows = [
-      ['Company',    vendor],
-      ['Account #',  summary.vendorDefaults?.account_number || ''],
-      ['Rep',        summary.vendorDefaults?.rep_name || ''],
-      ['Phone',      summary.vendorDefaults?.rep_phone || ''],
-    ];
-    vendorRows.forEach(([k, v]) => {
-      label(k, margin + colW, vy);
+    // Card VENDOR
+    const vCardX = margin + cardW + cardGap;
+    pdf.setFillColor(247, 249, 252);
+    pdf.setDrawColor(218, 224, 234);
+    pdf.roundedRect(vCardX, y, cardW, cardH, 4, 4, 'FD');
+    pdf.setFont(f, 'bold'); pdf.setFontSize(7.5); pdf.setTextColor(148, 163, 184);
+    txt('VENDOR', vCardX + cardPad, y + cardPad + 4);
+    let vy = y + cardPad + 16;
+    vendorRowsData.forEach(([k, v]) => {
+      label(k, vCardX + cardPad, vy);
       pdf.setFont(f, v === vendor ? 'bold' : 'normal');
       pdf.setFontSize(10);
       pdf.setTextColor(v === vendor ? 30 : 15, v === vendor ? 91 : 23, v === vendor ? 138 : 42);
-      txt(v || '', margin + colW + 72, vy);
+      txt(v || '', vCardX + cardPad + 72, vy);
       vy += 14;
     });
 
-    y = Math.max(y, vy) + 10;
-    line(margin, y, W - margin, y);
-    y += 16;
+    y += cardH + 16;
 
     // ── ITEMS TABLE ───────────────────────────────────────────
-    pdf.setFont(f, 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(148, 163, 184);
-    txt('ITEMS ORDERED', margin, y);
-    y += 10;
+    // Badge navy — ITEMS ORDERED full width
+    pdf.setFillColor(30, 58, 95);
+    pdf.rect(0, y, W, 20, 'F');
+    pdf.setFont(f, 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(224, 242, 254);
+    txt('ITEMS ORDERED', margin, y + 13);
+    y += 26;
 
     const cols = { code: margin, item: margin + 72, qty: W - margin };
     const rowH = 22;
@@ -179,8 +191,22 @@
     txt('QTY',  cols.qty,  y + 14, { align: 'right' });
     y += rowH;
 
-    // Table rows
+    // Table rows — con paginacion automatica
     (items || []).forEach((item, i) => {
+      // Page break si no hay espacio para otra fila + footer
+      if (y + rowH + 60 > H) {
+        pdf.addPage();
+        y = margin + 16;
+        // Repetir header de tabla en nueva pagina
+        pdf.setFillColor(241, 245, 251);
+        pdf.rect(margin, y, contentW, rowH, 'F');
+        pdf.setFont(f, 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(30, 60, 90);
+        txt('CODE', cols.code + 6, y + 14);
+        txt('ITEM DESCRIPTION', cols.item, y + 14);
+        txt('QTY', cols.qty, y + 14, { align: 'right' });
+        y += rowH;
+      }
+
       if (i % 2 === 1) { pdf.setFillColor(248, 250, 253); pdf.rect(margin, y, contentW, rowH, 'F'); }
       pdf.setDrawColor(241, 245, 249); pdf.setLineWidth(0.4);
       pdf.line(margin, y + rowH, W - margin, y + rowH);
@@ -239,12 +265,19 @@
       y += boxH + 16;
     }
 
-    // ── FOOTER ────────────────────────────────────────────────
-    line(margin, H - 36, W - margin, H - 36);
-    pdf.setFont(f, 'normal'); pdf.setFontSize(8.5); pdf.setTextColor(148, 163, 184);
-    txt('Generated by BarStock Pro · Internal use only', margin, H - 22);
-    if (summary.poNumber) {
-      txt(summary.poNumber + ' · ' + (summary.date || '') + ' · Page 1 of 1', W - margin, H - 22, { align: 'right' });
+    // ── FOOTER — todas las paginas ──────────────────────────
+    const totalPages = pdf.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      pdf.setPage(p);
+      line(margin, H - 36, W - margin, H - 36);
+      pdf.setFont(f, 'normal'); pdf.setFontSize(8.5); pdf.setTextColor(148, 163, 184);
+      // Generated by solo en ultima pagina
+      if (p === totalPages) {
+        txt('Generated by BarStock Pro · Internal use only', margin, H - 22);
+      }
+      if (summary.poNumber) {
+        txt(summary.poNumber + ' · ' + (summary.date || '') + ' · Page ' + p + ' of ' + totalPages, W - margin, H - 22, { align: 'right' });
+      }
     }
 
     return pdf.output('datauristring').split(',')[1];
