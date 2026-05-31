@@ -34,10 +34,10 @@
 
         <div style="position:relative;display:inline-flex;align-items:baseline;margin-bottom:16px;">
           <div id="bsObBarstock" style="font-size:52px;font-weight:800;letter-spacing:-0.03em;line-height:1;color:#f8fafc;opacity:0;transform:translateX(-10px);transition:opacity 0.5s ease,transform 0.5s ease;">BarStock</div>
-          <div style="position:relative;display:inline-flex;align-items:baseline;">
-            <div id="bsObBurst1" style="position:absolute;border-radius:50%;background:#38bdf8;pointer-events:none;transform:translate(-50%,-50%);left:50%;top:40%;width:10px;height:10px;opacity:0;"></div>
-            <div id="bsObBurst2" style="position:absolute;border-radius:50%;background:rgba(56,189,248,0.4);pointer-events:none;transform:translate(-50%,-50%);left:50%;top:40%;width:10px;height:10px;opacity:0;"></div>
-            <div id="bsObDot" style="font-size:52px;font-weight:800;color:#38bdf8;opacity:0;transition:opacity 0.3s ease;position:relative;">.</div>
+          <div style="position:relative;display:inline-flex;align-items:flex-end;justify-content:center;width:14px;margin-bottom:8px;">
+            <div id="bsObBurst1" style="position:absolute;border-radius:50%;background:#38bdf8;pointer-events:none;transform:translate(-50%,-50%);left:50%;top:50%;width:10px;height:10px;opacity:0;"></div>
+            <div id="bsObBurst2" style="position:absolute;border-radius:50%;background:rgba(56,189,248,0.4);pointer-events:none;transform:translate(-50%,-50%);left:50%;top:50%;width:10px;height:10px;opacity:0;"></div>
+            <div id="bsObDot" style="width:13px;height:13px;border-radius:50%;background:#38bdf8;opacity:0;transition:opacity 0.3s ease;position:relative;flex-shrink:0;"></div>
           </div>
           <div id="bsObPro" style="font-size:19px;font-weight:700;color:#64748b;margin-left:7px;letter-spacing:0.08em;text-transform:uppercase;opacity:0;transform:translateX(10px);transition:opacity 0.5s ease,transform 0.5s ease;">PRO</div>
         </div>
@@ -137,11 +137,77 @@
         window.BarStockLocationSettings?.saveSettings?.({ reply_to_email: replyTo }),
         (name || email) && window.BarStockSenderProfile?.saveProfile?.({ name, email, phone, title })
       ]);
-      dismiss();
+      runOutroAndDismiss();
     } catch(err) {
       console.error('Onboarding save error:', err);
       if (btn) { btn.disabled=false; btn.textContent='Save & continue'; }
     }
+  }
+
+  function runOutroAndDismiss() {
+    const el = document.getElementById(OVERLAY_ID);
+    if (!el) { dismiss(); return; }
+
+    // Ocultar card y skip
+    const card = document.getElementById('bsObCard');
+    const skip = document.getElementById('bsObSkip');
+    const welcome = document.getElementById('bsObWelcome');
+    if (card) { card.style.transition='opacity 0.5s ease'; card.style.opacity='0'; card.style.pointerEvents='none'; }
+    if (skip) { skip.style.opacity='0'; }
+    if (welcome) { welcome.style.opacity='0'; }
+
+    // Reemplazar logo con version animable
+    const logoWrap = document.getElementById('bsObContent');
+    const outroDiv = document.createElement('div');
+    outroDiv.style.cssText = 'display:inline-flex;align-items:baseline;font-size:64px;font-weight:800;letter-spacing:-0.03em;line-height:1;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:100000;';
+    outroDiv.innerHTML = `
+      <div class="bsOutroBarstock" id="bsOutroBarstock">BarStock</div>
+      <div style="position:relative;display:inline-flex;align-items:flex-end;justify-content:center;width:14px;margin-bottom:8px;">
+        <div class="bsGlowRing" id="bsGlowRing1" style="width:40px;height:40px;background:radial-gradient(circle, rgba(56,189,248,0.95) 0%, rgba(56,189,248,0.5) 35%, transparent 70%);"></div>
+        <div class="bsGlowRing" id="bsGlowRing2" style="width:80px;height:80px;background:radial-gradient(circle, rgba(56,189,248,0.6) 0%, rgba(56,189,248,0.2) 45%, transparent 70%);"></div>
+        <div class="bsOutroDot" id="bsOutroDot"></div>
+      </div>
+      <div class="bsOutroPro" id="bsOutroPro">PRO</div>
+    `;
+
+    // Ocultar logo original
+    const origLogo = logoWrap.querySelector('div[style*="inline-flex"][style*="margin-bottom"]');
+    if (origLogo) origLogo.style.display = 'none';
+    logoWrap.appendChild(outroDiv);
+
+    // Correr animacion
+    setTimeout(() => {
+      document.getElementById('bsOutroBarstock').classList.add('hide');
+      document.getElementById('bsOutroPro').classList.add('hide');
+    }, 400);
+
+    setTimeout(() => {
+      const r1 = document.getElementById('bsGlowRing1');
+      const r2 = document.getElementById('bsGlowRing2');
+      r1.style.transition = 'opacity 0.5s ease';
+      r2.style.transition = 'opacity 0.5s ease';
+      r1.style.opacity = '1';
+      r2.style.opacity = '1';
+      setTimeout(() => {
+        r1.style.transition = 'transform 1.8s cubic-bezier(0.4,0,0.15,1), opacity 1.8s ease';
+        r2.style.transition = 'transform 1.8s cubic-bezier(0.4,0,0.15,1), opacity 1.4s ease';
+        r1.style.transform = 'translate(-50%,-50%) scale(0)';
+        r2.style.transform = 'translate(-50%,-50%) scale(0)';
+        r2.style.opacity = '0';
+      }, 80);
+    }, 1100);
+
+    setTimeout(() => {
+      const dot = document.getElementById('bsOutroDot');
+      dot.classList.add('flash');
+      setTimeout(() => {
+        dot.classList.remove('flash');
+        dot.classList.add('hide');
+      }, 200);
+    }, 2950);
+
+    // Dismiss completo
+    setTimeout(() => dismiss(), 3400);
   }
 
   function dismiss() {
@@ -157,8 +223,16 @@
     @keyframes bsObBurst { 0%{opacity:0.7;transform:translate(-50%,-50%) scale(1)} 100%{opacity:0;transform:translate(-50%,-50%) scale(18)} }
     @keyframes bsObRays  { 0%{opacity:0.5;transform:translate(-50%,-50%) scale(1) rotate(0deg)} 100%{opacity:0;transform:translate(-50%,-50%) scale(12) rotate(15deg)} }
     #bsObReplyTo:focus,#bsObName:focus,#bsObEmail:focus,#bsObPhone:focus,#bsObTitle:focus { outline:none;border-color:#38bdf8 !important;background:rgba(56,189,248,0.07) !important; }
-    #bsObSaveBtn:hover { background:#e0f2fe !important; }
+    #bsObSaveBtn:hover { background:#16a34a !important; }
     #bsObSkip:hover { color:#94a3b8 !important; }
+    .bsOutroBarstock { color:#f8fafc;opacity:1;transition:opacity 0.9s ease,transform 0.9s ease; }
+    .bsOutroBarstock.hide { opacity:0 !important;transform:translateX(-10px) !important; }
+    .bsOutroPro { color:#64748b;font-size:22px;font-weight:700;margin-left:7px;letter-spacing:0.08em;text-transform:uppercase;opacity:1;transition:opacity 0.9s ease,transform 0.9s ease;align-self:flex-end;margin-bottom:6px; }
+    .bsOutroPro.hide { opacity:0 !important;transform:translateX(10px) !important; }
+    .bsOutroDot { width:13px;height:13px;border-radius:50%;background:#38bdf8;position:relative;z-index:3;transition:opacity 0.2s ease,box-shadow 0.2s ease;flex-shrink:0; }
+    .bsOutroDot.flash { box-shadow:0 0 0 6px rgba(56,189,248,0.6),0 0 30px 10px rgba(56,189,248,0.8),0 0 60px 20px rgba(56,189,248,0.4);background:#fff; }
+    .bsOutroDot.hide { opacity:0 !important;box-shadow:none !important; }
+    .bsGlowRing { position:absolute;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%) scale(10);opacity:0;pointer-events:none;z-index:2; }
   `;
   document.head.appendChild(style);
 
