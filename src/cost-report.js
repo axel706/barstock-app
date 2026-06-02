@@ -754,6 +754,138 @@
   }
 
   // API pública
+  // ── PERIOD MODE TOGGLE ──────────────────────────────────
+  let _periodMode = 'weekly'; // 'weekly' | 'monthly'
+
+  function setPeriodMode(mode) {
+    _periodMode = mode;
+    const btnWeekly  = document.getElementById('crToggleWeekly');
+    const btnMonthly = document.getElementById('crToggleMonthly');
+    const label      = document.getElementById('crThisPeriodLabel');
+    const desc       = document.getElementById('crSectionDesc');
+    const notes      = document.getElementById('crNotes');
+
+    if (mode === 'weekly') {
+      if (btnWeekly)  { btnWeekly.style.background = '#38bdf8'; btnWeekly.style.color = '#0f172a'; }
+      if (btnMonthly) { btnMonthly.style.background = 'transparent'; btnMonthly.style.color = '#94a3b8'; }
+      if (label) label.textContent = 'This Week';
+      if (desc)  desc.textContent  = 'Capture weekly invoices by vendor, track COGS against benchmarks, and compare against last year.';
+      if (notes) notes.placeholder = "Add comments about this week's performance, anomalies, special events...";
+    } else {
+      if (btnWeekly)  { btnWeekly.style.background = 'transparent'; btnWeekly.style.color = '#94a3b8'; }
+      if (btnMonthly) { btnMonthly.style.background = '#38bdf8'; btnMonthly.style.color = '#0f172a'; }
+      if (label) label.textContent = 'This Month';
+      if (desc)  desc.textContent  = 'Capture monthly invoices by vendor, track COGS against benchmarks, and compare against last year.';
+      if (notes) notes.placeholder = "Add comments about this month's performance, anomalies, special events...";
+    }
+  }
+
+  function getPeriodMode() { return _periodMode; }
+
+  // ── COMPARATIVA ──────────────────────────────────────────
+  let _compareReport = null;
+
+  async function toggleCompareSelector() {
+    const wrap = document.getElementById('crCompareSelectorWrap');
+    const btn  = document.getElementById('crCompareToggleBtn');
+    if (!wrap) return;
+    const isOpen = wrap.style.display !== 'none';
+    if (isOpen) {
+      wrap.style.display = 'none';
+      btn.textContent = '+ Select report to compare';
+      _compareReport = null;
+      document.getElementById('crComparePreview').innerHTML = '';
+      return;
+    }
+    const select = document.getElementById('crCompareSelect');
+    select.innerHTML = '<option value="">— Select a saved report —</option>';
+    let reports = [];
+    if (window.BarStockCostReportCloud) {
+      try {
+        const cloudRows = await window.BarStockCostReportCloud.listReports();
+        reports = cloudRows.map(normalizeCloudReport);
+      } catch(e) { reports = loadReports().slice().reverse(); }
+    } else {
+      reports = loadReports().slice().reverse();
+    }
+    reports.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = formatPeriod(r.periodFrom, r.periodTo) + ' — Wine ' + Math.round(r.wineCogs||0) + '% · Liquor ' + Math.round(r.liquorCogs||0) + '%';
+      select.appendChild(opt);
+    });
+    wrap.style.display = 'block';
+    btn.textContent = '− Hide selector';
+    wrap._reports = reports;
+  }
+
+  function loadComparison(id) {
+    if (!id) { _compareReport = null; document.getElementById('crComparePreview').innerHTML = ''; return; }
+    const wrap = document.getElementById('crCompareSelectorWrap');
+    const reports = wrap?._reports || _shownReports;
+    const r = reports.find(x => String(x.id) === String(id));
+    if (!r) return;
+    _compareReport = r;
+    renderComparePreview();
+  }
+
+  function renderComparePreview() {
+    const container = document.getElementById('crComparePreview');
+    if (!container || !_compareReport) return;
+    const prev = _compareReport;
+    const curr = getValues();
+    const currWineCogs   = curr.wineSales   > 0 ? (curr.totalWine   / curr.wineSales)   * 100 : 0;
+    const currLiquorCogs = curr.liquorSales > 0 ? (curr.totalLiquor / curr.liquorSales) * 100 : 0;
+    const prevWineCogs   = prev.wineCogs   || 0;
+    const prevLiquorCogs = prev.liquorCogs || 0;
+    const wineCogsChg   = currWineCogs   - prevWineCogs;
+    const liquorCogsChg = currLiquorCogs - prevLiquorCogs;
+    const wineVsTarget   = currWineCogs   - (curr.wineTarget   || 22);
+    const liquorVsTarget = currLiquorCogs - (curr.liquorTarget || 15);
+    const arrow = v => v > 0 ? '▲' : v < 0 ? '▼' : '—';
+    const vsTargetBadge = (v) => {
+      if (Math.abs(v) < 0.1) return '<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;background:rgba(22,163,74,.12);color:#15803d;">✓ on target</span>';
+      if (v > 0) return `<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;background:rgba(220,38,38,.12);color:#b91c1c;">+${v.toFixed(1)}% over</span>`;
+      return `<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;background:rgba(22,163,74,.12);color:#15803d;">${v.toFixed(1)}% under</span>`;
+    };
+    const deltaClr = (v) => v > 0 ? 'color:#dc2626;font-weight:500;' : v < 0 ? 'color:#16a34a;font-weight:500;' : '';
+
+    container.innerHTML = `
+      <div class="cr-preview-banner" style="margin-top:12px;">Period Comparison</div>
+      <div class="cr-preview-table-wrapper">
+        <table class="cr-preview-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th class="cr-right">Target</th>
+              <th class="cr-right">Prev COGS% <small style="font-weight:400;color:#94a3b8;">${formatPeriod(prev.periodFrom, prev.periodTo)}</small></th>
+              <th class="cr-right">Curr COGS%</th>
+              <th class="cr-right">Δ vs prev</th>
+              <th class="cr-right">Vs target</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span style="display:inline-flex;align-items:center;gap:6px;"><i class="ti ti-glass-full" style="color:#38bdf8;font-size:15px;" aria-hidden="true"></i>Wine</span></td>
+              <td class="cr-right" style="color:#94a3b8;">${curr.wineTarget || 22}%</td>
+              <td class="cr-right">${prevWineCogs.toFixed(1)}%</td>
+              <td class="cr-right">${currWineCogs.toFixed(1)}%</td>
+              <td class="cr-right" style="${deltaClr(wineCogsChg)}">${arrow(wineCogsChg)} ${Math.abs(wineCogsChg).toFixed(1)}%</td>
+              <td class="cr-right">${vsTargetBadge(wineVsTarget)}</td>
+            </tr>
+            <tr>
+              <td><span style="display:inline-flex;align-items:center;gap:6px;"><i class="ti ti-bottle" style="color:#22c55e;font-size:15px;" aria-hidden="true"></i>Liquor</span></td>
+              <td class="cr-right" style="color:#94a3b8;">${curr.liquorTarget || 15}%</td>
+              <td class="cr-right">${prevLiquorCogs.toFixed(1)}%</td>
+              <td class="cr-right">${currLiquorCogs.toFixed(1)}%</td>
+              <td class="cr-right" style="${deltaClr(liquorCogsChg)}">${arrow(liquorCogsChg)} ${Math.abs(liquorCogsChg).toFixed(1)}%</td>
+              <td class="cr-right">${vsTargetBadge(liquorVsTarget)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>`;
+  }
+
   window.BarStockCostReport = {
     init,
     addCustomVendor,
@@ -763,6 +895,12 @@
     generatePdfBase64: () => generatePdf(false),
     getValues,
     updatePreview,
+    setPeriodMode,
+    getPeriodMode,
+    toggleCompareSelector,
+    loadComparison,
+    renderComparePreview,
+    getCompareReport: () => _compareReport,
     _updateInvoice: updateInvoice,
     _addInvoice: addInvoice,
     _removeInvoice: removeInvoice,

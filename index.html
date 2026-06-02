@@ -99,7 +99,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260531-130833</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260601-201824</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -317,8 +317,14 @@
       <div style="flex:1 1 auto">
         <div class="sectionhead">
           <div>
-            <strong><span class="section-title">Wine &amp; Liquor Cost</span></strong>
-            <div class="small muted">Capture weekly invoices by vendor, track COGS against benchmarks, and compare against last year.</div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+              <strong><span class="section-title">Wine &amp; Liquor Cost</span></strong>
+              <div id="crPeriodToggle" style="display:flex;align-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:2px;gap:2px;">
+                <button id="crToggleWeekly" onclick="BarStockCostReport.setPeriodMode('weekly')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:18px;border:none;cursor:pointer;background:#38bdf8;color:#0f172a;font-family:inherit;transition:all 0.18s ease;">Weekly</button>
+                <button id="crToggleMonthly" onclick="BarStockCostReport.setPeriodMode('monthly')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:18px;border:none;cursor:pointer;background:transparent;color:#94a3b8;font-family:inherit;transition:all 0.18s ease;">Monthly</button>
+              </div>
+            </div>
+            <div class="small muted" id="crSectionDesc">Capture weekly invoices by vendor, track COGS against benchmarks, and compare against last year.</div>
           </div>
         </div>
       </div>
@@ -345,7 +351,7 @@
       <div class="cr-subsection">
         <div class="cr-subsection-header"><h3 class="cr-subsection-title">Sales &amp; Targets</h3></div>
 
-        <div class="cr-sub-block-title">This Week</div>
+        <div class="cr-sub-block-title" id="crThisPeriodLabel">This Week</div>
         <div class="cr-sales-grid">
           <div>
             <label>Wine Sales</label>
@@ -427,6 +433,19 @@
         </div>
 
         <div id="crSmartNotes"></div>
+
+        <div id="crCompareSection" style="margin-top:16px;border-top:0.5px solid rgba(255,255,255,.08);padding-top:16px;">
+          <div class="cr-subsection-header" style="margin-bottom:10px;">
+            <h3 class="cr-subsection-title">Compare with Previous Period <span class="small muted" style="font-weight:400;font-size:12px;">(optional)</span></h3>
+            <button class="cr-btn-secondary" id="crCompareToggleBtn" onclick="BarStockCostReport.toggleCompareSelector()">+ Select report to compare</button>
+          </div>
+          <div id="crCompareSelectorWrap" style="display:none;margin-bottom:12px;">
+            <select id="crCompareSelect" style="width:100%;" onchange="BarStockCostReport.loadComparison(this.value)">
+              <option value="">— Select a saved report —</option>
+            </select>
+          </div>
+          <div id="crComparePreview"></div>
+        </div>
       </div>
 
       <div class="cr-subsection">
