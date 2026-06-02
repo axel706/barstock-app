@@ -765,22 +765,146 @@
     const desc       = document.getElementById('crSectionDesc');
     const notes      = document.getElementById('crNotes');
 
+    const monthlySection = document.getElementById('crMonthlyBuildSection');
     if (mode === 'weekly') {
       if (btnWeekly)  { btnWeekly.style.background = '#38bdf8'; btnWeekly.style.color = '#0f172a'; }
       if (btnMonthly) { btnMonthly.style.background = 'transparent'; btnMonthly.style.color = '#94a3b8'; }
       if (label) label.textContent = 'This Week';
       if (desc)  desc.textContent  = 'Capture weekly invoices by vendor, track COGS against benchmarks, and compare against last year.';
       if (notes) notes.placeholder = "Add comments about this week's performance, anomalies, special events...";
+      if (monthlySection) monthlySection.style.display = 'none';
     } else {
       if (btnWeekly)  { btnWeekly.style.background = 'transparent'; btnWeekly.style.color = '#94a3b8'; }
       if (btnMonthly) { btnMonthly.style.background = '#38bdf8'; btnMonthly.style.color = '#0f172a'; }
       if (label) label.textContent = 'This Month';
       if (desc)  desc.textContent  = 'Capture monthly invoices by vendor, track COGS against benchmarks, and compare against last year.';
       if (notes) notes.placeholder = "Add comments about this month's performance, anomalies, special events...";
+      if (monthlySection) { monthlySection.style.display = 'block'; loadMonthlyReportsList(); }
     }
   }
 
   function getPeriodMode() { return _periodMode; }
+
+  // ── MONTHLY BUILD FROM WEEKLY REPORTS ────────────────────
+  let _selectedWeeklyIds = new Set();
+
+  async function loadMonthlyReportsList() {
+    const container = document.getElementById('crMonthlyReportsList');
+    const applyBtn  = document.getElementById('crMonthlyApplyBtn');
+    if (!container) return;
+    _selectedWeeklyIds.clear();
+
+    let reports = [];
+    if (window.BarStockCostReportCloud) {
+      try {
+        const cloudRows = await window.BarStockCostReportCloud.listReports();
+        reports = cloudRows.map(normalizeCloudReport);
+      } catch(e) { reports = loadReports().slice().reverse(); }
+    } else {
+      reports = loadReports().slice().reverse();
+    }
+
+    if (!reports.length) {
+      container.innerHTML = '<div style="font-size:13px;color:#94a3b8;">No saved weekly reports found.</div>';
+      return;
+    }
+
+    container.innerHTML = reports.map(r => `
+      <div class="cr-vendor-block" style="cursor:pointer;" onclick="BarStockCostReport.toggleWeeklySelectionEl('${r.id}', this)">
+        <div class="cr-vendor-block-head">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <input type="checkbox" id="chk_${r.id}" value="${r.id}" onchange="BarStockCostReport.toggleWeeklySelection('${r.id}', this.checked)" onclick="event.stopPropagation()" style="width:16px;height:16px;accent-color:#38bdf8;cursor:pointer;flex-shrink:0;">
+            <div class="cr-vendor-tag">${formatPeriod(r.periodFrom, r.periodTo)}</div>
+          </div>
+          <div class="cr-vendor-subtotal">
+            <span>Wine <strong>${Math.round(r.wineCogs||0)}%</strong></span>
+            <span class="cr-sep">·</span>
+            <span>Liquor <strong>${Math.round(r.liquorCogs||0)}%</strong></span>
+            <span class="cr-sep">·</span>
+            <span>Total <strong>${fmtMoney((r.totalWine||0)+(r.totalLiquor||0))}</strong></span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    container._reports = reports;
+    if (applyBtn) applyBtn.style.display = 'none';
+  }
+
+  function toggleWeeklySelectionEl(id, el) {
+    const chk = document.getElementById('chk_' + id);
+    if (!chk) return;
+    chk.checked = !chk.checked;
+    toggleWeeklySelection(id, chk.checked);
+    el.style.borderColor = chk.checked ? '#38bdf8' : '';
+    el.style.background = chk.checked ? 'rgba(56,189,248,0.08)' : '';
+  }
+
+  function toggleWeeklySelection(id, checked) {
+    if (checked) _selectedWeeklyIds.add(id);
+    else _selectedWeeklyIds.delete(id);
+    const applyBtn = document.getElementById('crMonthlyApplyBtn');
+    if (applyBtn) applyBtn.style.display = _selectedWeeklyIds.size > 0 ? 'block' : 'none';
+  }
+
+  function applyWeeklyReports() {
+    const container = document.getElementById('crMonthlyReportsList');
+    const reports = (container?._reports || []).filter(r => _selectedWeeklyIds.has(String(r.id)));
+    if (!reports.length) return;
+
+    // Sumar ventas
+    let totalWineSales   = 0;
+    let totalLiquorSales = 0;
+    let totalWineSalesLY = 0;
+    let totalLiquorSalesLY = 0;
+
+    reports.forEach(r => {
+      totalWineSales    += r.wineSales    || 0;
+      totalLiquorSales  += r.liquorSales  || 0;
+      totalWineSalesLY  += r.wineSalesLY  || 0;
+      totalLiquorSalesLY += r.liquorSalesLY || 0;
+    });
+
+    // Setear periodo: desde el mas antiguo al mas reciente
+    const sorted = [...reports].sort((a, b) => a.periodFrom.localeCompare(b.periodFrom));
+    const periodFrom = sorted[0].periodFrom;
+    const periodTo   = sorted[sorted.length - 1].periodTo;
+
+    // Pre-llenar campos de ventas y periodo
+    const setV = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    setV('crPeriodFrom', periodFrom);
+    setV('crPeriodTo',   periodTo);
+    setV('crWineSales',    totalWineSales.toFixed(2));
+    setV('crLiquorSales',  totalLiquorSales.toFixed(2));
+    setV('crWineSalesLY',  totalWineSalesLY.toFixed(2));
+    setV('crLiquorSalesLY', totalLiquorSalesLY.toFixed(2));
+
+    // Sumar vendors — byVendor tiene {name, wine, liquor} totales por reporte
+    // Creamos una invoice por semana seleccionada para cada vendor
+    const vendorMap = {};
+    reports.forEach((r, rIdx) => {
+      (r.vendors || []).forEach(v => {
+        const key = v.name?.toUpperCase() || 'UNKNOWN';
+        if (!vendorMap[key]) vendorMap[key] = { name: v.name, weeklyTotals: [] };
+        vendorMap[key].weeklyTotals.push({
+          wine:   parseFloat(v.wine)   || 0,
+          liquor: parseFloat(v.liquor) || 0
+        });
+      });
+    });
+
+    // Una invoice por semana — permite ver el desglose semanal dentro del reporte mensual
+    vendors = Object.values(vendorMap).map(v => ({
+      name: v.name,
+      invoices: v.weeklyTotals.length > 0
+        ? v.weeklyTotals.map(wt => ({ wine: wt.wine.toFixed(2), liquor: wt.liquor.toFixed(2) }))
+        : [{ wine: '', liquor: '' }]
+    }));
+    renderVendors();
+    updatePreview();
+
+    alert(`Applied ${reports.length} weekly report${reports.length > 1 ? 's' : ''}. Period: ${formatPeriod(periodFrom, periodTo)}.`);
+  }
 
   // ── COMPARATIVA ──────────────────────────────────────────
   let _compareReport = null;
@@ -901,6 +1025,9 @@
     loadComparison,
     renderComparePreview,
     getCompareReport: () => _compareReport,
+    toggleWeeklySelection,
+    toggleWeeklySelectionEl,
+    applyWeeklyReports,
     _updateInvoice: updateInvoice,
     _addInvoice: addInvoice,
     _removeInvoice: removeInvoice,

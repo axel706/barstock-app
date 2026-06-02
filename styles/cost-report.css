@@ -73,6 +73,40 @@ body.light .cr-section textarea { background: rgba(255,255,255,.7); color:#0f172
 
 /* Vendor blocks */
 .cr-vendor-list { display: grid; gap: 14px; }
+.cr-weekly-report-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: var(--card, rgba(255,255,255,0.5));
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.cr-weekly-report-item:hover {
+  border-color: rgba(56, 189, 248, 0.5);
+  background: var(--card, rgba(255,255,255,0.6));
+}
+.cr-weekly-check {
+  width: 18px;
+  height: 18px;
+  accent-color: #38bdf8;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.cr-weekly-info { flex: 1; }
+.cr-weekly-period {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.cr-weekly-stats {
+  font-size: 12px;
+  color: var(--sub);
+  margin-top: 3px;
+}
+
 .cr-vendor-block {
   background: var(--card, rgba(255,255,255,0.5));
   border: 1px solid rgba(148, 163, 184, 0.2);
