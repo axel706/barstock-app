@@ -86,6 +86,7 @@
         <div id="importMenu" class="bs-dropdown hidden">
           <label class="bs-dd-item bs-dd-filelbl"><i class="ti ti-table-import" aria-hidden="true"></i>Import weekly count<input type="file" id="countFile" accept=".xlsx,.xls,.csv" style="display:none;" /></label>
           <label class="bs-dd-item bs-dd-filelbl"><i class="ti ti-archive" aria-hidden="true"></i>Import backup<input type="file" id="backupFile" accept=".json" style="display:none;" /></label>
+          <label class="bs-dd-item bs-dd-filelbl"><i class="ti ti-chart-bar" aria-hidden="true"></i>Import cost reports<input type="file" id="costReportsImportFile" accept=".json" style="display:none;" onchange="importCostReportsBackup(this)" /></label>
         </div>
       </div>
       <div class="bs-toolbar-group">
@@ -96,10 +97,11 @@
           <button id="backupBtn" class="bs-dd-item"><i class="ti ti-database-export" aria-hidden="true"></i>Export backup</button>
           <button id="exportWeeklyPdfBtn" class="bs-dd-item"><i class="ti ti-file-description" aria-hidden="true"></i>Export weekly order (PDF)</button>
           <button id="exportWeeklyXlsxBtn" class="bs-dd-item"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i>Export weekly order (XLSX)</button>
+          <button id="exportCostReportsBtn" class="bs-dd-item" onclick="exportCostReportsBackup()"><i class="ti ti-chart-bar" aria-hidden="true"></i>Export cost reports</button>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260602-225624</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260602-230255</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -3206,6 +3208,57 @@ async function resetOnHand(){
     alert('Could not reset ON HAND in cloud.');
     setStatus('Error resetting ON HAND in cloud.');
   }
+}
+
+async function exportCostReportsBackup() {
+  let reports = [];
+  if (window.BarStockCostReportCloud) {
+    try {
+      const rows = await window.BarStockCostReportCloud.listReports();
+      reports = rows;
+    } catch(e) { console.error(e); }
+  }
+  if (!reports.length) { alert('No cost reports found to export.'); return; }
+  const blob = new Blob([JSON.stringify({ version: '1.0', exportedAt: new Date().toISOString(), reports }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cost_reports_backup_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+}
+
+async function importCostReportsBackup(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const text = await file.text();
+  let data;
+  try { data = JSON.parse(text); } catch(e) { alert('Invalid JSON file.'); return; }
+  const reports = data.reports || data;
+  if (!Array.isArray(reports) || !reports.length) { alert('No reports found in file.'); return; }
+  if (!confirm(`Import ${reports.length} cost reports? Existing reports will not be deleted.`)) return;
+  if (!window.BarStockCostReportCloud) { alert('Cloud not available.'); return; }
+  let count = 0;
+  for (const r of reports) {
+    try {
+      await window.BarStockCostReportCloud.saveReport({
+        periodFrom: r.period_from || r.periodFrom,
+        periodTo: r.period_to || r.periodTo,
+        vendors: r.vendors || [],
+        totalWine: r.total_wine || r.totalWine || 0,
+        totalLiquor: r.total_liquor || r.totalLiquor || 0,
+        wineSales: r.wine_sales || r.wineSales || 0,
+        liquorSales: r.liquor_sales || r.liquorSales || 0,
+        wineTarget: r.wine_target || r.wineTarget || 22,
+        liquorTarget: r.liquor_target || r.liquorTarget || 15,
+        wineSalesLY: r.wine_sales_ly || r.wineSalesLY || 0,
+        liquorSalesLY: r.liquor_sales_ly || r.liquorSalesLY || 0,
+        notes: r.notes || ''
+      });
+      count++;
+    } catch(e) { console.error('Failed to import report:', e); }
+  }
+  alert(`Imported ${count} of ${reports.length} cost reports successfully.`);
+  input.value = '';
+  if (window.BarStockCostReport) window.BarStockCostReport.init();
 }
 
 function exportBackup(){
