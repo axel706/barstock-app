@@ -396,8 +396,11 @@ body.light .cr-section textarea { background: rgba(255,255,255,.7); color:#0f172
 .cr-heatmap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
 .cr-heatmap-month { background: var(--card, rgba(255,255,255,0.5)); border: 1px solid rgba(148,163,184,0.2); border-radius: 12px; overflow: visible; }
 .cr-heatmap-month-name { font-size: 11px; font-weight: 700; color: var(--sub, #64748b); padding: 6px 10px; background: rgba(255,255,255,0.1); letter-spacing: 0.04em; text-transform: uppercase; }
-.cr-heatmap-weeks { display: flex; flex-direction: column; gap: 1px; padding: 6px; }
+.cr-heatmap-weeks { display: flex; flex-direction: column; gap: 1px; padding: 6px; align-items: center; }
 .cr-heatmap-week { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 6px; cursor: pointer; transition: background 0.15s; position: relative; }
+.cr-heatmap-dots { display: flex; gap: 4px; flex-shrink: 0; }
+.cr-heatmap-dot-col { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.cr-dot-label { font-size: 8px; font-weight: 700; color: var(--sub, #64748b); line-height: 1; }
 .cr-heatmap-week:hover { background: rgba(255,255,255,0.15); }
 .cr-heatmap-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; transition: transform 0.15s; }
 .cr-heatmap-week:hover .cr-heatmap-dot { transform: scale(1.3); }

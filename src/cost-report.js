@@ -454,11 +454,24 @@
         const label = monthName(ym);
         const weeksHtml = reps.length === 0
           ? '<div class="cr-heatmap-empty-month">—</div>'
-          : reps.map(r => `
+          : reps.map(r => {
+            const wColor = (() => { const o = (r.wineCogs||0)-(r.wineTarget||22); return o<=0?'#22c55e':o<=3?'#f59e0b':'#ef4444'; })();
+            const lColor = (() => { const o = (r.liquorCogs||0)-(r.liquorTarget||15); return o<=0?'#22c55e':o<=3?'#f59e0b':'#ef4444'; })();
+            return `
             <div class="cr-heatmap-week" onclick="BarStockCostReport._showPopover(event, '${r.id}')">
-              <div class="cr-heatmap-dot" style="background:${dotColor(r)};"></div>
+              <div style="display:flex;gap:3px;flex-shrink:0;">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:1px;">
+                  <span style="font-size:8px;font-weight:700;color:var(--sub,#64748b);line-height:1;">W</span>
+                  <div class="cr-heatmap-dot" style="background:${wColor};"></div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:1px;">
+                  <span style="font-size:8px;font-weight:700;color:var(--sub,#64748b);line-height:1;">L</span>
+                  <div class="cr-heatmap-dot" style="background:${lColor};"></div>
+                </div>
+              </div>
               <span class="cr-heatmap-week-label">${r.periodFrom.slice(8)} – ${r.periodTo.slice(8)}</span>
-            </div>`).join('');
+            </div>`;
+          }).join('');
         return `
           <div class="cr-heatmap-month">
             <div class="cr-heatmap-month-name">${label}</div>
