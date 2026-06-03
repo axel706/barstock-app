@@ -314,7 +314,8 @@
       wineSales: d.wineSales, liquorSales: d.liquorSales,
       wineTarget: d.wineTarget, liquorTarget: d.liquorTarget,
       wineSalesLY: d.wineSalesLY, liquorSalesLY: d.liquorSalesLY,
-      notes: d.notes
+      notes: d.notes,
+      weeklyCogsData: _weeklyCogsData.length > 0 ? _weeklyCogsData : undefined
     };
     if (window.BarStockCostReportCloud) {
       try {
@@ -420,6 +421,8 @@
       name: v.name,
       invoices: [{ wine: v.wine.toString(), liquor: v.liquor.toString() }]
     }));
+    // Restaurar weekly cogs data si el reporte tiene multiples invoices
+    _weeklyCogsData = r.weeklyCogsData || [];
     renderVendors();
     updatePreview();
     const section = document.getElementById('costReportSection');
@@ -474,8 +477,8 @@
     const margin = 40;
     let y = margin + 10;
 
-    const TBL_STYLES = { fontSize: 9.5, cellPadding: { top: 8, right: 12, bottom: 8, left: 12 }, font: 'helvetica', lineColor: [218, 224, 234], lineWidth: 0, textColor: [15, 23, 42], valign: 'middle' };
-    const TBL_HEAD = { fillColor: [224, 242, 254], textColor: [15, 23, 42], fontStyle: 'bold', fontSize: 8.5, cellPadding: { top: 9, right: 12, bottom: 9, left: 12 } };
+    const TBL_STYLES = { fontSize: 8, cellPadding: { top: 5, right: 8, bottom: 5, left: 8 }, font: 'helvetica', lineColor: [218, 224, 234], lineWidth: 0, textColor: [15, 23, 42], valign: 'middle' };
+    const TBL_HEAD = { fillColor: [224, 242, 254], textColor: [15, 23, 42], fontStyle: 'bold', fontSize: 7.5, cellPadding: { top: 5, right: 8, bottom: 5, left: 8 } };
     const TBL_FOOT = { fillColor: [224, 242, 254], textColor: [15, 23, 42], fontStyle: 'bold' };
     const TBL_ALT = [248, 250, 253];
 
@@ -626,7 +629,7 @@
     pdf.text('vs same period this year', yoyX + 14, y + 74);
 
     y += cardH + 12;
-    // ─────────────────────────────────────────────────────────────────
+
 
     let blockStart = y;
     drawBanner('PURCHASES OVERVIEW');
@@ -650,7 +653,6 @@
     });
     y = pdf.lastAutoTable.finalY; drawRoundedBlock(blockStart, y); y += 12;
 
-    ensureSpace(150);
     const benchColW = tableWidth / 5;
     blockStart = y;
     drawBanner('COST BENCHMARK COMPARISON');
@@ -690,7 +692,6 @@
     });
     y = pdf.lastAutoTable.finalY; drawRoundedBlock(blockStart, y); y += 12;
 
-    ensureSpace(110);
     const perfColW = tableWidth / 3;
     blockStart = y;
     drawBanner('COST PERFORMANCE');
@@ -721,8 +722,107 @@
     });
     y = pdf.lastAutoTable.finalY; drawRoundedBlock(blockStart, y); y += 12;
 
+    // ── GRAFICO SEMANAL ──────────────────────────────────────
+    const weeklyData = _weeklyCogsData.length > 1 ? _weeklyCogsData : null;
+    if (weeklyData) {
+      ensureSpace(140);
+      const chartBlockStart = y;
+      const chartW  = pageW - margin * 2;
+      const chartH  = 80;
+      const padL = 32; const padB = 20; const padT = 8; const padR = 32;
+      const plotX = margin + padL;
+      const plotW = chartW - padL - padR;
+      const plotH = chartH - padT - padB;
+      const maxInvoices = weeklyData.length;
+
+      const weeklyWine   = weeklyData.map(w => w.wineCogs);
+      const weeklyLiquor = weeklyData.map(w => w.liquorCogs);
+
+      const allVals = [...weeklyWine, ...weeklyLiquor, 22, 15];
+      const maxVal  = Math.ceil(Math.max(...allVals) / 5) * 5 || 40;
+      const minVal  = 0;
+      const range   = maxVal - minVal;
+
+      // Banner — identico al resto
+      drawBanner('WEEKLY SPEND TREND');
+
+      const plotY0 = y + padT;
+
+      const innerPad = plotW * 0.12;
+      const toX = (i) => maxInvoices > 1 ? plotX + innerPad + (i / (maxInvoices - 1)) * (plotW - innerPad * 2) : plotX + plotW / 2;
+      const toY = (v) => plotY0 + plotH - ((v - minVal) / range) * plotH;
+
+      // Grid lines
+      const gridSteps = 4;
+      for (let g = 0; g <= gridSteps; g++) {
+        const gv = minVal + (range / gridSteps) * g;
+        const gy = toY(gv);
+        pdf.setDrawColor(218, 224, 234); pdf.setLineWidth(0.3);
+        pdf.line(plotX, gy, plotX + plotW, gy);
+        pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7); pdf.setTextColor(148, 163, 184);
+        pdf.text(Math.round(gv) + '%', plotX - 3, gy + 2, { align: 'right' });
+      }
+
+      // Target punteado
+      const drawDashed = (val, color) => {
+        const ty = toY(val);
+        pdf.setDrawColor(...color); pdf.setLineWidth(0.8);
+        for (let dx = 0; dx < plotW; dx += 6) pdf.line(plotX + dx, ty, Math.min(plotX + dx + 3, plotX + plotW), ty);
+      };
+      drawDashed(22, [239, 68, 68]);
+      drawDashed(15, [245, 158, 11]);
+
+      // Lineas y puntos
+      const drawLine = (data, color) => {
+        if (data.length < 2) return;
+        pdf.setDrawColor(...color); pdf.setLineWidth(1.5);
+        for (let i = 0; i < data.length - 1; i++) pdf.line(toX(i), toY(data[i]), toX(i+1), toY(data[i+1]));
+        data.forEach((v, i) => {
+          pdf.setFillColor(...color);
+          pdf.circle(toX(i), toY(v), 2, 'F');
+          pdf.setFont('helvetica', 'bold'); pdf.setFontSize(7); pdf.setTextColor(...color);
+          pdf.text(v.toFixed(0) + '%', toX(i), toY(v) - 3, { align: 'center' });
+        });
+      };
+      drawLine(weeklyWine,   [56, 189, 248]);
+      drawLine(weeklyLiquor, [34, 197, 94]);
+
+      // X labels — solo numero de semana para evitar overflow
+      for (let i = 0; i < maxInvoices; i++) {
+        pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7); pdf.setTextColor(148, 163, 184);
+        pdf.text('Wk ' + (i + 1), toX(i), plotY0 + plotH + 10, { align: 'center' });
+      }
+
+      // Leyenda inline compacta
+      const legY = plotY0 + plotH + 16;
+      const legItems = [
+        { label: 'Wine COGS%', color: [56, 189, 248] },
+        { label: 'Liquor COGS%', color: [34, 197, 94] },
+        { label: 'Wine target 22%', color: [239, 68, 68], dashed: true },
+        { label: 'Liquor target 15%', color: [245, 158, 11], dashed: true },
+      ];
+      let legX = plotX;
+      legItems.forEach(item => {
+        if (item.dashed) {
+          pdf.setDrawColor(...item.color); pdf.setLineWidth(0.8);
+          for (let dx = 0; dx < 12; dx += 4) pdf.line(legX + dx, legY, legX + dx + 2, legY);
+        } else {
+          pdf.setFillColor(...item.color); pdf.circle(legX + 3, legY, 1.5, 'F');
+          pdf.setDrawColor(...item.color); pdf.setLineWidth(0.8); pdf.line(legX, legY, legX + 6, legY);
+        }
+        pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7); pdf.setTextColor(100, 116, 139);
+        pdf.text(item.label, legX + 10, legY + 2);
+        legX += pdf.getTextWidth(item.label) + 20;
+      });
+
+      y += chartH + 20;
+      drawRoundedBlock(chartBlockStart, y);
+      y += 8;
+    }
+
     const perfText = stripHtml(buildPerformanceNote(d, expectedWine, expectedLiquor));
     if (perfText) {
+      ensureSpace(80);
       y += 16;
       pdf.setFont('helvetica', 'bold'); pdf.setFontSize(13); pdf.setTextColor(30, 91, 138);
       pdf.text('Auto Insights', margin, y); y += 16;
@@ -743,8 +843,15 @@
     }
 
     pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); pdf.setTextColor(148, 163, 184);
-    pdf.text(location + ' \u2013 Internal Use Only', margin, pageH - 30);
-    pdf.text('Generated by BarStock Pro \u00b7 Automated reporting system', pageW - margin, pageH - 30, { align: 'right' });
+    const totalPgs = pdf.getNumberOfPages();
+    for (let pg = 1; pg <= totalPgs; pg++) {
+      pdf.setPage(pg);
+      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); pdf.setTextColor(148, 163, 184);
+      pdf.text(location + ' \u2013 Internal Use Only', margin, pageH - 20);
+      if (pg === totalPgs) {
+        pdf.text('Generated by BarStock Pro \u00b7 Automated reporting system', pageW - margin, pageH - 20, { align: 'right' });
+      }
+    }
 
     if (saveFile) {
       pdf.save('cost_report_' + d.periodFrom + '_to_' + d.periodTo + '.pdf');
@@ -787,6 +894,7 @@
 
   // ── MONTHLY BUILD FROM WEEKLY REPORTS ────────────────────
   let _selectedWeeklyIds = new Set();
+  let _weeklyCogsData = [];
 
   async function loadMonthlyReportsList() {
     const container = document.getElementById('crMonthlyReportsList');
@@ -900,6 +1008,14 @@
         ? v.weeklyTotals.map(wt => ({ wine: wt.wine.toFixed(2), liquor: wt.liquor.toFixed(2) }))
         : [{ wine: '', liquor: '' }]
     }));
+
+    // Guardar COGS% por semana para el grafico
+    _weeklyCogsData = sorted.map(r => ({
+      label: formatPeriod(r.periodFrom, r.periodTo).split(' — ')[0],
+      wineCogs:   r.wineCogs   || 0,
+      liquorCogs: r.liquorCogs || 0
+    }));
+
     renderVendors();
     updatePreview();
 
