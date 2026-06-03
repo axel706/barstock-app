@@ -132,17 +132,9 @@
     const { url, key } = getConfig();
     const locationId = await fetchLocationId();
 
-    for (const row of items || []) {
-      const item = row?.item || '';
-      const code = row?.code || '';
-
-      let patchUrl = `${url}/rest/v1/inventory_items?location_id=eq.${locationId}&item_name=eq.${encodeURIComponent(item)}`;
-
-      if (code) {
-        patchUrl += `&code=eq.${encodeURIComponent(code)}`;
-      }
-
-      const res = await fetch(patchUrl, {
+    const res = await fetch(
+      `${url}/rest/v1/inventory_items?location_id=eq.${locationId}`,
+      {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -150,15 +142,13 @@
           Authorization: `Bearer ${key}`,
           Prefer: 'return=minimal'
         },
-        body: JSON.stringify({
-          on_hand: 0
-        })
-      });
-
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error('Error resetting inventory_items: ' + txt);
+        body: JSON.stringify({ on_hand: 0 })
       }
+    );
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error('Error resetting inventory_items: ' + txt);
     }
 
     return true;
