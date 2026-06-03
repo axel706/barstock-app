@@ -99,7 +99,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260602-225148</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260602-225624</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -360,35 +360,40 @@
       <div class="cr-subsection">
         <div class="cr-subsection-header"><h3 class="cr-subsection-title">Sales &amp; Targets</h3></div>
 
-        <div class="cr-sub-block-title" id="crThisPeriodLabel">This Week</div>
-        <div class="cr-sales-grid">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
           <div>
-            <label>Wine Sales</label>
-            <div class="cr-invoice-input"><input type="number" id="crWineSales" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()"></div>
+            <div class="cr-sub-block-title" id="crThisPeriodLabel">This Week</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div>
+                <label>Wine Sales</label>
+                <div class="cr-invoice-input"><input type="number" id="crWineSales" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()"></div>
+              </div>
+              <div>
+                <label>Wine Target %</label>
+                <div class="cr-target-input"><input type="number" id="crWineTarget" step="0.01" value="22" oninput="BarStockCostReport.updatePreview()"></div>
+              </div>
+              <div>
+                <label>Liquor Sales</label>
+                <div class="cr-invoice-input"><input type="number" id="crLiquorSales" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()"></div>
+              </div>
+              <div>
+                <label>Liquor Target %</label>
+                <div class="cr-target-input"><input type="number" id="crLiquorTarget" step="0.01" value="15" oninput="BarStockCostReport.updatePreview()"></div>
+              </div>
+            </div>
           </div>
           <div>
-            <label>Wine Target %</label>
-            <div class="cr-target-input"><input type="number" id="crWineTarget" step="0.01" value="22" oninput="BarStockCostReport.updatePreview()"></div>
-          </div>
-          <div>
-            <label>Liquor Sales</label>
-            <div class="cr-invoice-input"><input type="number" id="crLiquorSales" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()"></div>
-          </div>
-          <div>
-            <label>Liquor Target %</label>
-            <div class="cr-target-input"><input type="number" id="crLiquorTarget" step="0.01" value="15" oninput="BarStockCostReport.updatePreview()"></div>
-          </div>
-        </div>
-
-        <div class="cr-sub-block-title">Same Period · Last Year</div>
-        <div class="cr-sales-grid">
-          <div>
-            <label>Wine Sales (LY)</label>
-            <div class="cr-invoice-input"><input type="number" id="crWineSalesLY" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()"></div>
-          </div>
-          <div>
-            <label>Liquor Sales (LY)</label>
-            <div class="cr-invoice-input"><input type="number" id="crLiquorSalesLY" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()"></div>
+            <div class="cr-sub-block-title">Same Period · Last Year</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div>
+                <label>Wine Sales (LY)</label>
+                <div class="cr-invoice-input"><input type="number" id="crWineSalesLY" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()"></div>
+              </div>
+              <div>
+                <label>Liquor Sales (LY)</label>
+                <div class="cr-invoice-input"><input type="number" id="crLiquorSalesLY" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
