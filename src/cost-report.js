@@ -820,17 +820,87 @@
       y += 8;
     }
 
-    const perfText = stripHtml(buildPerformanceNote(d, expectedWine, expectedLiquor));
-    if (perfText) {
+    // ── COMPARATIVA DE PERIODO EN PDF ────────────────────────
+    if (_compareReport) {
+      ensureSpace(80);
+      const prev = _compareReport;
+      const currWineCogs   = d.wineSales   > 0 ? (d.totalWine   / d.wineSales)   * 100 : 0;
+      const currLiquorCogs = d.liquorSales > 0 ? (d.totalLiquor / d.liquorSales) * 100 : 0;
+      const prevWineCogs   = prev.wineCogs   || 0;
+      const prevLiquorCogs = prev.liquorCogs || 0;
+      const wineCogsChg    = currWineCogs   - prevWineCogs;
+      const liquorCogsChg  = currLiquorCogs - prevLiquorCogs;
+      const wineVsTarget   = currWineCogs   - (d.wineTarget   || 22);
+      const liquorVsTarget = currLiquorCogs - (d.liquorTarget || 15);
+
+      const compBlockStart = y;
+      drawBanner('PERIOD COMPARISON');
+
+      const colW1 = tableWidth * 0.22;
+      const colW2 = tableWidth * 0.13;
+      const colW3 = tableWidth * 0.20;
+      const colW4 = tableWidth * 0.20;
+      const colW5 = tableWidth * 0.13;
+      const colW6 = tableWidth * 0.12;
+
+      pdf.autoTable({
+        startY: y,
+        head: [['Category', 'Target', `Prev COGS% (${formatPeriod(prev.periodFrom, prev.periodTo).split(' — ')[0]})`, 'Curr COGS%', 'Delta', 'Vs Target']],
+        body: [
+          ['Wine',   (d.wineTarget   || 22) + '%', prevWineCogs.toFixed(1)   + '%', currWineCogs.toFixed(1)   + '%', (wineCogsChg   > 0 ? '+' : '') + wineCogsChg.toFixed(1)   + '%', (wineVsTarget   > 0.1 ? '+' : '') + wineVsTarget.toFixed(1)   + '% vs target'],
+          ['Liquor', (d.liquorTarget || 15) + '%', prevLiquorCogs.toFixed(1) + '%', currLiquorCogs.toFixed(1) + '%', (liquorCogsChg > 0 ? '+' : '') + liquorCogsChg.toFixed(1) + '%', (liquorVsTarget > 0.1 ? '+' : '') + liquorVsTarget.toFixed(1) + '% vs target'],
+        ],
+        margin: { left: margin, right: margin }, theme: 'plain',
+        styles: TBL_STYLES, headStyles: TBL_HEAD,
+        columnStyles: {
+          0: { halign: 'left', fontStyle: 'bold', cellWidth: colW1 },
+          1: { halign: 'right', cellWidth: colW2, textColor: [148, 163, 184] },
+          2: { halign: 'right', cellWidth: colW3 },
+          3: { halign: 'right', cellWidth: colW4 },
+          4: { halign: 'right', cellWidth: colW5, fontStyle: 'bold',
+               textColor: wineCogsChg > 0 ? [220, 38, 38] : [22, 163, 74] },
+          5: { halign: 'right', cellWidth: colW6 }
+        },
+        didParseCell: (data) => {
+          if (data.section === 'body' && data.column.index === 4) {
+            const chg = data.row.index === 0 ? wineCogsChg : liquorCogsChg;
+            data.cell.styles.textColor = chg > 0 ? [220, 38, 38] : [22, 163, 74];
+          }
+          if (data.section === 'body' && data.column.index === 5) {
+            const vs = data.row.index === 0 ? wineVsTarget : liquorVsTarget;
+            data.cell.styles.textColor = vs > 0.1 ? [220, 38, 38] : [22, 163, 74];
+          }
+          if (data.section === 'head' && data.column.index > 0) data.cell.styles.halign = 'right';
+        },
+        didDrawCell: rowSeparators
+      });
+      y = pdf.lastAutoTable.finalY;
+      drawRoundedBlock(compBlockStart, y);
+      y += 12;
+    }
+
+    // Auto Insights — un insight por linea
+    const perfParts = buildPerformanceNote(d, expectedWine, expectedLiquor);
+    if (perfParts) {
       ensureSpace(80);
       y += 16;
-      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(13); pdf.setTextColor(30, 91, 138);
-      pdf.text('Auto Insights', margin, y); y += 16;
-      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(100, 116, 139);
-      pdf.text('PERFORMANCE VS EXPECTED', margin, y); y += 12;
-      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(10); pdf.setTextColor(15, 23, 42);
-      const lines = pdf.splitTextToSize(perfText, pageW - margin * 2);
-      pdf.text(lines, margin, y); y += lines.length * 13 + 14;
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(11); pdf.setTextColor(30, 91, 138);
+      pdf.text('Auto Insights', margin, y); y += 14;
+
+      // Separar insights — cada uno termina con punto seguido de espacio y mayuscula
+      const rawText = stripHtml(perfParts);
+      // Split solo en ". " seguido de mayuscula (evita partir numeros decimales)
+      const sentences = rawText.split(/\.\s+(?=[A-Z])/).filter(s => s.trim());
+
+      sentences.forEach(sentence => {
+        const trimmed = sentence.trim().replace(/\.+$/, '') + '.';
+        ensureSpace(30);
+        pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9); pdf.setTextColor(15, 23, 42);
+        const wrapped = pdf.splitTextToSize(trimmed, pageW - margin * 2);
+        pdf.text(wrapped, margin, y);
+        y += wrapped.length * 11 + 2;
+      });
+      y += 6;
     }
 
     if (d.notes && d.notes.trim()) {
