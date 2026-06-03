@@ -59,33 +59,33 @@
     const container = document.getElementById('crVendorsContainer');
     if (!container) return;
     container.innerHTML = '';
+    container.className = 'cr-vendor-grid';
     vendors.forEach((v, vIdx) => {
-      const block = document.createElement('div');
-      block.className = 'cr-vendor-block';
+      const card = document.createElement('div');
+      card.className = 'cr-vendor-card';
       const subtotalWine = v.invoices.reduce((s, i) => s + (parseFloat(i.wine) || 0), 0);
       const subtotalLiquor = v.invoices.reduce((s, i) => s + (parseFloat(i.liquor) || 0), 0);
-      block.innerHTML = `
-        <div class="cr-vendor-block-head">
+      card.innerHTML = `
+        <div class="cr-vendor-card-head">
           <div class="cr-vendor-tag">${escapeHtml(v.name)}</div>
-          <div class="cr-vendor-subtotal">
-            <span>Wine <strong>$${subtotalWine.toFixed(2)}</strong></span>
-            <span class="cr-sep">·</span>
-            <span>Liquor <strong>$${subtotalLiquor.toFixed(2)}</strong></span>
-          </div>
         </div>
-        <div class="cr-invoice-rows">
+        <div class="cr-vendor-card-subtotal">
+          <span class="cr-sub-wine">$${subtotalWine.toFixed(2)}</span>
+          <span class="cr-sep">·</span>
+          <span class="cr-sub-liquor">$${subtotalLiquor.toFixed(2)}</span>
+        </div>
+        <div class="cr-card-invoices">
           ${v.invoices.map((inv, iIdx) => `
-            <div class="cr-invoice-row">
-              <div class="cr-invoice-label">Invoice ${iIdx + 1}</div>
-              <div class="cr-invoice-input"><input type="number" step="0.01" placeholder="Wine" value="${inv.wine}" oninput="BarStockCostReport._updateInvoice(${vIdx}, ${iIdx}, 'wine', this.value)"></div>
-              <div class="cr-invoice-input"><input type="number" step="0.01" placeholder="Liquor" value="${inv.liquor}" oninput="BarStockCostReport._updateInvoice(${vIdx}, ${iIdx}, 'liquor', this.value)"></div>
-              ${v.invoices.length > 1 ? `<button class="cr-btn-remove" onclick="BarStockCostReport._removeInvoice(${vIdx}, ${iIdx})" title="Remove">×</button>` : '<div></div>'}
+            <div class="cr-card-invoice-row">
+              <div class="cr-card-input"><input type="number" step="0.01" placeholder="$ Wine" value="${inv.wine}" oninput="BarStockCostReport._updateInvoice(${vIdx}, ${iIdx}, 'wine', this.value)"></div>
+              <div class="cr-card-input"><input type="number" step="0.01" placeholder="$ Liquor" value="${inv.liquor}" oninput="BarStockCostReport._updateInvoice(${vIdx}, ${iIdx}, 'liquor', this.value)"></div>
+              ${v.invoices.length > 1 ? `<button class="cr-btn-remove" onclick="BarStockCostReport._removeInvoice(${vIdx}, ${iIdx})" title="Remove">×</button>` : ''}
             </div>
           `).join('')}
         </div>
-        <button class="cr-btn-add-invoice" onclick="BarStockCostReport._addInvoice(${vIdx})">+ Add invoice</button>
+        <button class="cr-card-add-btn" onclick="BarStockCostReport._addInvoice(${vIdx})">+ Add invoice</button>
       `;
-      container.appendChild(block);
+      container.appendChild(card);
     });
   }
 
