@@ -382,18 +382,104 @@
       container.innerHTML = '<div class="cr-history-empty">No saved reports yet. Save a report to see it here.</div>';
       return;
     }
-    container.innerHTML = '<div class="cr-history-list">' + reports.map(r => `
-      <div class="cr-history-item">
-        <div class="cr-history-item-info">
-          <div class="cr-history-item-period">${formatPeriod(r.periodFrom, r.periodTo)}</div>
-          <div class="cr-history-item-stats">Wine ${Math.round(r.wineCogs || 0)}% · Liquor ${Math.round(r.liquorCogs || 0)}% · Total ${fmtMoney(r.totalWine + r.totalLiquor)}</div>
-        </div>
-        <div class="cr-history-item-actions">
-          <button class="cr-btn-small" onclick="BarStockCostReport._loadReport('${r.id}')">Load</button>
-          <button class="cr-btn-small cr-danger" onclick="BarStockCostReport._deleteReport('${r.id}')">Delete</button>
-        </div>
-      </div>
-    `).join('') + '</div>';
+
+    // Construir mapa de reportes por año/mes/semana
+    const byYear = {};
+    reports.forEach(r => {
+      const year = r.periodFrom.slice(0, 4);
+      if (!byYear[year]) byYear[year] = {};
+      const month = r.periodFrom.slice(0, 7); // YYYY-MM
+      if (!byYear[year][month]) byYear[year][month] = [];
+      byYear[year][month].push(r);
+    });
+
+    const years = Object.keys(byYear).sort((a, b) => b - a);
+    const currentYear = years[0];
+    const multiYear = years.length > 1;
+
+    // Determinar color del dot segun COGS vs target
+    function dotColor(r) {
+      const wt = r.wineTarget || 22;
+      const lt = r.liquorTarget || 15;
+      const wOver = (r.wineCogs || 0) - wt;
+      const lOver = (r.liquorCogs || 0) - lt;
+      const maxOver = Math.max(wOver, lOver);
+      if (maxOver <= 0) return '#22c55e';
+      if (maxOver <= 3) return '#f59e0b';
+      return '#ef4444';
+    }
+
+    function vsTargetText(r) {
+      const wt = r.wineTarget || 22;
+      const lt = r.liquorTarget || 15;
+      const wOver = ((r.wineCogs || 0) - wt).toFixed(1);
+      const lOver = ((r.liquorCogs || 0) - lt).toFixed(1);
+      const maxOver = Math.max(parseFloat(wOver), parseFloat(lOver));
+      if (maxOver <= 0) return '<span style="color:#22c55e">on target</span>';
+      return '<span style="color:#ef4444">+' + maxOver.toFixed(1) + '% over</span>';
+    }
+
+    // Nombre de mes
+    function monthName(ym) {
+      const [y, m] = ym.split('-');
+      return new Date(y, m - 1, 1).toLocaleString('en-US', { month: 'short' });
+    }
+
+    // Generar los ultimos 12 meses del año seleccionado
+    function getLast12Months(year) {
+      const months = [];
+      const now = new Date();
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const ym = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        months.push(ym);
+      }
+      return months;
+    }
+
+    function renderHeatmap(year) {
+      const months = year === currentYear ? getLast12Months(year) : Object.keys(byYear[year] || {}).sort();
+      const yearData = byYear[year] || {};
+
+      const legendHtml = `
+        <div class="cr-heatmap-legend">
+          <span><span class="cr-heatmap-dot" style="background:#22c55e;"></span>On target</span>
+          <span><span class="cr-heatmap-dot" style="background:#f59e0b;"></span>Near target</span>
+          <span><span class="cr-heatmap-dot" style="background:#ef4444;"></span>Over target</span>
+          <span><span class="cr-heatmap-dot" style="background:var(--color-border-tertiary);"></span>No report</span>
+        </div>`;
+
+      const monthsHtml = months.map(ym => {
+        const reps = yearData[ym] || [];
+        const label = monthName(ym);
+        const weeksHtml = reps.length === 0
+          ? '<div class="cr-heatmap-empty-month">—</div>'
+          : reps.map(r => `
+            <div class="cr-heatmap-week" onclick="BarStockCostReport._showPopover(event, '${r.id}')">
+              <div class="cr-heatmap-dot" style="background:${dotColor(r)};"></div>
+              <span class="cr-heatmap-week-label">${r.periodFrom.slice(8)} – ${r.periodTo.slice(8)}</span>
+            </div>`).join('');
+        return `
+          <div class="cr-heatmap-month">
+            <div class="cr-heatmap-month-name">${label}</div>
+            <div class="cr-heatmap-weeks">${weeksHtml}</div>
+          </div>`;
+      }).join('');
+
+      return legendHtml + '<div class="cr-heatmap-grid">' + monthsHtml + '</div>';
+    }
+
+    // Tabs si hay multiples años
+    let tabsHtml = '';
+    if (multiYear) {
+      tabsHtml = '<div class="cr-heatmap-tabs">' + years.map(y =>
+        `<button class="cr-heatmap-tab ${y === currentYear ? 'active' : ''}" onclick="BarStockCostReport._switchYear('${y}')">${y}</button>`
+      ).join('') + '</div>';
+    }
+
+    container.innerHTML = tabsHtml + '<div id="crHeatmapBody">' + renderHeatmap(currentYear) + '</div>';
+    container._renderHeatmap = renderHeatmap;
+    container._byYear = byYear;
   }
 
   function formatPeriod(from, to) {
@@ -1196,6 +1282,67 @@
       </div>`;
   }
 
+  // ── HEATMAP HELPERS ─────────────────────────────────────
+  function switchYear(year) {
+    const container = document.getElementById('crHistoryContainer');
+    if (!container || !container._renderHeatmap) return;
+    document.querySelectorAll('.cr-heatmap-tab').forEach(t => t.classList.toggle('active', t.textContent === year));
+    document.getElementById('crHeatmapBody').innerHTML = container._renderHeatmap(year);
+  }
+
+  function showPopover(e, id) {
+    e.stopPropagation();
+    document.querySelectorAll('.cr-heatmap-popover').forEach(p => p.remove());
+
+    const r = _shownReports.find(x => String(x.id) === String(id));
+    if (!r) return;
+
+    const wt = r.wineTarget || 22;
+    const lt = r.liquorTarget || 15;
+    const maxOver = Math.max((r.wineCogs || 0) - wt, (r.liquorCogs || 0) - lt);
+    const vsTarget = maxOver <= 0
+      ? '<span style="color:#22c55e;">on target</span>'
+      : '<span style="color:#ef4444;">+' + maxOver.toFixed(1) + '% over</span>';
+
+    const pop = document.createElement('div');
+    pop.className = 'cr-heatmap-popover';
+    pop.innerHTML = `
+      <div class="cr-pop-period">${formatPeriod(r.periodFrom, r.periodTo)}</div>
+      <div class="cr-pop-stats">
+        <div class="cr-pop-stat"><span class="cr-pop-label">Wine COGS</span><span class="cr-pop-val" style="color:#38bdf8;">${Math.round(r.wineCogs || 0)}%</span></div>
+        <div class="cr-pop-stat"><span class="cr-pop-label">Liquor COGS</span><span class="cr-pop-val" style="color:#22c55e;">${Math.round(r.liquorCogs || 0)}%</span></div>
+        <div class="cr-pop-stat"><span class="cr-pop-label">Total spend</span><span class="cr-pop-val">${fmtMoney((r.totalWine || 0) + (r.totalLiquor || 0))}</span></div>
+        <div class="cr-pop-stat"><span class="cr-pop-label">Vs target</span><span class="cr-pop-val">${vsTarget}</span></div>
+      </div>
+      <div class="cr-pop-actions">
+        <button class="cr-pop-btn" onclick="BarStockCostReport._loadReport('${r.id}');document.querySelectorAll('.cr-heatmap-popover').forEach(p=>p.remove())">Load</button>
+        <button class="cr-pop-btn cr-pop-danger" onclick="BarStockCostReport._deleteReport('${r.id}')">Delete</button>
+      </div>`;
+
+    // Anclar al week element
+    const week = e.currentTarget;
+    week.style.position = 'relative';
+    week.appendChild(pop);
+    pop.style.position = 'absolute';
+    pop.style.top = '0';
+    pop.style.left = '110%';
+    pop.style.zIndex = '99999';
+
+    // Si se sale por la derecha, mostrar a la izquierda
+    requestAnimationFrame(() => {
+      const popRect = pop.getBoundingClientRect();
+      if (popRect.right > window.innerWidth - 10) {
+        pop.style.left = 'auto';
+        pop.style.right = '110%';
+      }
+    });
+
+    setTimeout(() => document.addEventListener('click', function close() {
+      document.querySelectorAll('.cr-heatmap-popover').forEach(p => p.remove());
+      document.removeEventListener('click', close);
+    }), 10);
+  }
+
   window.BarStockCostReport = {
     init,
     addCustomVendor,
@@ -1218,7 +1365,9 @@
     _addInvoice: addInvoice,
     _removeInvoice: removeInvoice,
     _loadReport: loadReport,
-    _deleteReport: deleteReport
+    _deleteReport: deleteReport,
+    _showPopover: showPopover,
+    _switchYear: switchYear
   };
 
   // Auto-init cuando el DOM esté listo
