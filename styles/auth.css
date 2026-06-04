@@ -63,7 +63,10 @@ body.auth-locked{
 
 /* 🔹 Branding */
 #authBrand{
-  text-align:center;
+  display:inline-flex;
+  align-items:baseline;
+  justify-content:center;
+  width:100%;
   font-size:34px;
   font-weight:700;
   letter-spacing:-.01em;
