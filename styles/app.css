@@ -2441,3 +2441,18 @@ body.light .bs-focus-card{
   .bs-focus-grid{grid-template-columns:repeat(2,1fr);}
   .bs-focus-mininav{grid-template-columns:repeat(3,1fr);}
 }
+
+/* Count Loading Overlay */
+.cl-logo{display:flex;align-items:baseline;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.cl-barstock{font-size:72px;font-weight:800;letter-spacing:-4px;color:#fff;line-height:1;animation:cl-leftShift 4s infinite ease-in-out}
+.cl-pro{font-size:30px;font-weight:800;letter-spacing:3px;color:rgba(255,255,255,0.4);line-height:1;animation:cl-rightShift 4s infinite ease-in-out}
+.cl-loader{width:28px;height:28px;margin:0 4px;position:relative}
+.cl-dot{position:absolute;left:50%;bottom:0;width:15px;height:15px;margin-left:-7px;border-radius:50%;background:#2FAEF3;transform-origin:center center;animation:cl-dotAnim 4s infinite ease-in-out}
+.cl-bottle{position:absolute;left:50%;bottom:0;width:28px;height:90px;margin-left:-14px;opacity:0;animation:cl-bottleAnim 4s infinite ease-in-out;transform-origin:center bottom}
+.cl-liquid{transform-origin:center bottom;animation:cl-fillAnim 4s infinite ease-in-out}
+.cl-phrase{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;font-weight:800;letter-spacing:4px;color:#2FAEF3;text-align:center;transition:opacity 0.3s ease;opacity:1;text-transform:uppercase}
+@keyframes cl-leftShift{0%,10%,92%,100%{transform:translateX(0)}22%,82%{transform:translateX(-20px)}}
+@keyframes cl-rightShift{0%,10%,92%,100%{transform:translateX(0)}22%,82%{transform:translateX(20px)}}
+@keyframes cl-dotAnim{0%,14%{opacity:1;transform:scale(1)}24%{opacity:1;transform:scale(.7,2.4)}32%,78%{opacity:0;transform:scale(.2,7)}88%{opacity:0}100%{opacity:1;transform:scale(1)}}
+@keyframes cl-bottleAnim{0%,24%{opacity:0;transform:scale(.15,.05)}34%{opacity:1;transform:scale(1)}74%{opacity:1;transform:scale(1)}86%{opacity:.15;transform:scale(.15,.05)}100%{opacity:0}}
+@keyframes cl-fillAnim{0%,40%{transform:scaleY(0)}68%{transform:scaleY(1)}100%{transform:scaleY(1)}}

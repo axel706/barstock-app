@@ -101,7 +101,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260603-150305</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260603-220121</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2432,6 +2432,7 @@ function closePreviewModal(){ document.getElementById('previewModalBg').classLis
 async function applyPendingImport(){
   if(!pendingImport) return;
   document.getElementById('previewModalBg').classList.add('hidden');
+  if(typeof showCountLoadingOverlay === 'function') showCountLoadingOverlay();
 
   try{
     if (!window.BarStockInventoryCloud || !window.BarStockNoMatchCloud) {
@@ -4334,6 +4335,83 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       <div id="emailOrderSuccessSub" style="font-size:13px;color:rgba(255,255,255,0.75);opacity:0;transform:translateY(8px);transition:opacity 0.3s ease 0.7s,transform 0.3s ease 0.7s;"></div>
     </div>
 
+
+<style>
+#countLoadingOverlay .cla-logo{display:flex;align-items:baseline;justify-content:center}
+#countLoadingOverlay .cla-bs{font-size:72px;font-weight:800;letter-spacing:-4px;color:#fff;line-height:1;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;animation:cla-leftShift 4s infinite ease-in-out}
+#countLoadingOverlay .cla-pro{font-size:30px;font-weight:800;letter-spacing:3px;color:rgba(255,255,255,0.4);line-height:1;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;animation:cla-rightShift 4s infinite ease-in-out}
+#countLoadingOverlay .cla-loader{width:28px;height:28px;margin:0 4px;position:relative}
+#countLoadingOverlay .cla-dot{position:absolute;left:50%;bottom:0;width:15px;height:15px;margin-left:-7px;border-radius:50%;background:#2FAEF3;transform-origin:center center;animation:cla-dotAnim 4s infinite ease-in-out}
+#countLoadingOverlay .cla-bottle{position:absolute;left:50%;bottom:0;width:28px;height:90px;margin-left:-14px;transform-origin:center bottom;animation:cla-bottleAnim 4s infinite ease-in-out}
+#countLoadingOverlay .cla-liquid{transform-origin:center bottom;animation:cla-fillAnim 4s infinite ease-in-out}
+#countLoadingOverlay .cla-phrase{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;font-weight:800;letter-spacing:4px;color:#2FAEF3;text-align:center;transition:opacity 0.3s ease;text-transform:uppercase}
+@keyframes cla-leftShift{0%,10%,92%,100%{transform:translateX(0)}22%,82%{transform:translateX(-20px)}}
+@keyframes cla-rightShift{0%,10%,92%,100%{transform:translateX(0)}22%,82%{transform:translateX(20px)}}
+@keyframes cla-dotAnim{0%,14%{opacity:1;transform:scale(1)}24%{opacity:1;transform:scale(.7,2.4)}32%,78%{opacity:0;transform:scale(.2,7)}88%{opacity:0}100%{opacity:1;transform:scale(1)}}
+@keyframes cla-bottleAnim{0%,24%{opacity:0;transform:scale(.15,.05)}34%{opacity:1;transform:scale(1)}74%{opacity:1;transform:scale(1)}86%{opacity:.15;transform:scale(.15,.05)}100%{opacity:0}}
+@keyframes cla-fillAnim{0%,40%{transform:scaleY(0)}68%{transform:scaleY(1)}100%{transform:scaleY(1)}}
+</style>
+<div id="countLoadingOverlay" style="position:fixed;inset:0;backdrop-filter:blur(20px) brightness(0.5);-webkit-backdrop-filter:blur(20px) brightness(0.5);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;visibility:hidden;opacity:0;pointer-events:none;transition:opacity 0.35s ease,visibility 0s linear 0.35s;z-index:30000;">
+  <div class="cla-logo">
+    <div class="cla-bs" id="cla-bs">BarStock</div>
+    <div class="cla-loader">
+      <div class="cla-dot" id="cla-dot"></div>
+      <div class="cla-bottle" id="cla-bottle">
+        <svg viewBox="0 0 34 110" width="34" height="110" overflow="visible">
+          <defs><clipPath id="cl-clip"><path d="M14 4 H20 V22 C20 28 23 32 27 38 C30 43 31 49 31 58 V98 C31 104 27 108 21 108 H13 C7 108 3 104 3 98 V58 C3 49 4 43 7 38 C11 32 14 28 14 22 Z"/></clipPath></defs>
+          <g clip-path="url(#cl-clip)"><rect class="cla-liquid" id="cla-liquid" x="0" y="0" width="34" height="110" fill="#2FAEF3"/></g>
+          <path d="M14 4 H20 V22 C20 28 23 32 27 38 C30 43 31 49 31 58 V98 C31 104 27 108 21 108 H13 C7 108 3 104 3 98 V58 C3 49 4 43 7 38 C11 32 14 28 14 22 Z" fill="none" stroke="#2FAEF3" stroke-width="3"/>
+        </svg>
+      </div>
+    </div>
+    <div class="cla-pro" id="cla-pro">PRO</div>
+  </div>
+  <div class="cla-phrase" id="cla-phrase"></div>
+</div>
+
+<script>
+(function(){
+  var phrases = [
+    'FILLING UP YOUR BOTTLES...',
+    'COUNTING EVERY LAST DROP...',
+    'MAKING SURE NOTHING\'S ON THE ROCKS...'
+  ];
+  var _clTimer = null;
+  var _clPhrase = null;
+  var _clInterval = null;
+
+  window.showCountLoadingOverlay = function(){
+    var el = document.getElementById('countLoadingOverlay');
+    if(!el) return;
+    var phraseEl = document.getElementById('cla-phrase');
+    var i = 0;
+    phraseEl.textContent = phrases[0];
+
+    clearInterval(_clInterval);
+    clearTimeout(_clTimer);
+
+    _clInterval = setInterval(function(){
+      i = (i + 1) % phrases.length;
+      phraseEl.style.opacity = '0';
+      setTimeout(function(){ phraseEl.textContent = phrases[i]; phraseEl.style.opacity = '1'; }, 300);
+    }, 1800);
+
+    el.style.visibility = 'visible';
+    el.style.opacity = '1';
+    el.style.pointerEvents = 'all';
+    el.style.transition = 'opacity 0.35s ease, visibility 0s linear 0s';
+
+    _clTimer = setTimeout(function(){
+      clearInterval(_clInterval);
+      el.style.opacity = '0';
+      el.style.pointerEvents = 'none';
+      el.style.visibility = 'hidden';
+      el.style.transition = 'opacity 0.35s ease, visibility 0s linear 0.35s';
+      if(typeof bsOpenSection === 'function') bsOpenSection('inventory');
+    }, 7000);
+  };
+})();
+</script>
 <div id="settingsModalBg" class="modalbg hidden">
   <div class="modal" style="width:min(560px,96vw)">
     <h3 style="margin-top:0" id="settingsTitle">Settings</h3>
