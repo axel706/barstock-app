@@ -316,20 +316,48 @@
         if (!weekMap.has(r.week_start)) weekMap.set(r.week_start, Number(r.used || 0));
       }
 
+      // Build ordered map per item per week
+      const orderedRes = await fetch(
+        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&is_event_week=eq.false&ordered=not.is.null&select=item_name,code,ordered,week_start`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      );
+      const orderedRows = await orderedRes.json();
+      const orderedByItem = new Map();
+      for (const r of orderedRows || []) {
+        const k = `${r.item_name}||${r.code || ''}`;
+        if (!orderedByItem.has(k)) orderedByItem.set(k, new Map());
+        orderedByItem.get(k).set(r.week_start, Number(r.ordered || 0));
+      }
+
       // Calculate adjustment per master item
       for (const row of master || []) {
         const k = `${row.item}||${row.code || ''}`;
         const weekMap = byItem.get(k);
+        const orderedMap = orderedByItem.get(k);
 
         if (!weekMap || weekMap.size < 4) {
           results.set(k, { status: 'observing', normalWeeks: weekMap?.size || 0 });
           continue;
         }
 
+        // Never ordered detection — suggested > 0 but ordered = 0 in all available weeks
+        const current = Number(row.suggested || 0);
+        if (current > 0 && orderedMap) {
+          const orderedValues = Array.from(orderedMap.values());
+          const totalOrdered = orderedValues.reduce((a, b) => a + b, 0);
+          if (orderedValues.length >= 4 && totalOrdered === 0) {
+            results.set(k, {
+              status: 'never_ordered',
+              normalWeeks: weekMap.size,
+              currentSuggested: current
+            });
+            continue;
+          }
+        }
+
         const usedValues = Array.from(weekMap.values());
         const avgUsed = usedValues.reduce((a, b) => a + b, 0) / usedValues.length;
         const suggestedOptimal = Math.ceil(avgUsed * 1.35);
-        const current = Number(row.suggested || 0);
         const delta = current - suggestedOptimal;
 
         let adjustment = 0;

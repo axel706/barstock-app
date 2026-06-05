@@ -2427,8 +2427,10 @@ body.light .bs-focus-card{
 .par-chip-up{background:#FAEEDA;color:#854F0B}
 .par-chip-ok{background:#EAF3DE;color:#3B6D11}
 .par-chip-observing{background:#F1EFE8;color:#5F5E5A}
+.par-chip-review{background:#E6F1FB;color:#0C447C}
 body.light .par-chip-down{background:#FCEBEB;color:#A32D2D}
 body.light .par-chip-up{background:#FAEEDA;color:#854F0B}
 body.light .par-chip-ok{background:#EAF3DE;color:#3B6D11}
 body.light .par-chip-observing{background:#F1EFE8;color:#5F5E5A}
+.par-chip-review{background:#E6F1FB;color:#0C447C}
 
