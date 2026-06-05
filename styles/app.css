@@ -2420,3 +2420,15 @@ body.light .bs-focus-card{
 @keyframes cl-dotAnim{0%,14%{opacity:1;transform:scale(1)}24%{opacity:1;transform:scale(.7,2.4)}32%,78%{opacity:0;transform:scale(.2,7)}88%{opacity:0}100%{opacity:1;transform:scale(1)}}
 @keyframes cl-bottleAnim{0%,24%{opacity:0;transform:scale(.15,.05)}34%{opacity:1;transform:scale(1)}74%{opacity:1;transform:scale(1)}86%{opacity:.15;transform:scale(.15,.05)}100%{opacity:0}}
 @keyframes cl-fillAnim{0%,40%{transform:scaleY(0)}68%{transform:scaleY(1)}100%{transform:scaleY(1)}}
+
+/* Par Intelligence chips */
+.par-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:0.03em;margin-left:6px;vertical-align:middle;cursor:default}
+.par-chip-down{background:#FCEBEB;color:#A32D2D}
+.par-chip-up{background:#FAEEDA;color:#854F0B}
+.par-chip-ok{background:#EAF3DE;color:#3B6D11}
+.par-chip-observing{background:#F1EFE8;color:#5F5E5A}
+body.light .par-chip-down{background:#FCEBEB;color:#A32D2D}
+body.light .par-chip-up{background:#FAEEDA;color:#854F0B}
+body.light .par-chip-ok{background:#EAF3DE;color:#3B6D11}
+body.light .par-chip-observing{background:#F1EFE8;color:#5F5E5A}
+

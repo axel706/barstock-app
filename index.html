@@ -101,7 +101,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260605-123243</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260605-125317</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -804,6 +804,7 @@ let currentInvoiceLinkIndex = null;
 let priceAliases = loadPriceAliases();
 let isPlacingOrder = false;
 let compareSelection = [];
+let parAdjustments = new Map();
 let currentHistoryDateEditId = null;
 let compareShowUnchanged = false;
 let lastFocusedElement = null;
@@ -2152,6 +2153,28 @@ function renderHistoryVendorTabs(){
   wrap.innerHTML = vendors.map(v => `<button class="${historyVendorTab===v?'active':''}" onclick="setHistoryVendorFilter('${v.replace(/'/g,"\'")}')">${v==='ALL' ? 'All Vendors' : v}</button>`).join('');
 }
 // Order history UI functions moved to src/order-history-ui.js
+async function refreshParAdjustments(){
+  if(!window.BarStockParIntelligence || !state.master.length) return;
+  parAdjustments = await window.BarStockParIntelligence.getPendingAdjustments(state.master);
+}
+
+function getParChipHtml(row){
+  if(!parAdjustments || !parAdjustments.size) return '';
+  const k = `${row.item}||${row.code || ''}`;
+  const par = parAdjustments.get(k);
+  if(!par) return '';
+  if(par.status === 'observing') return '';
+  if(par.adjustment === -1){
+    const tip = `Avg used: ${par.avgUsed}/wk · Optimal par: ${par.suggestedOptimal} · Current: ${par.currentSuggested}`;
+    return `<span class="par-chip par-chip-down" title="${tip}">PAR −1</span>`;
+  }
+  if(par.adjustment === 1){
+    const tip = `Avg used: ${par.avgUsed}/wk · Optimal par: ${par.suggestedOptimal} · Current: ${par.currentSuggested}`;
+    return `<span class="par-chip par-chip-up" title="${tip}">PAR +1</span>`;
+  }
+  return '<span class="par-chip par-chip-ok">PAR ✓</span>';
+}
+
 function render(){
   const q = normalizeName(document.getElementById('searchInput')?.value || '');
   const vendorFilter = document.getElementById('vendorFilter')?.value || 'ALL';
@@ -2160,7 +2183,7 @@ function render(){
   const filtered = state.master.filter(r => (!q || r.itemNorm.includes(q) || normalizeName(r.code).includes(q)) && (vendorFilter==='ALL' || r.vendor===vendorFilter));
   document.getElementById('inventoryBody').innerHTML = filtered.map(r => {
     const idx = state.master.findIndex(m => m.itemNorm===r.itemNorm && String(m.code||'')===String(r.code||''));
-    return `<tr><td>${escapeHtml(r.code)}</td><td>${escapeHtml(r.item)}</td><td>${badge(r.vendor)}</td><td>${fmt(r.onHand)}</td><td>${fmt(r.suggested)}</td><td>${fmt(r.toOrder)}</td><td>${fmtMoney(r.value)}</td><td><div class="rowactions"><button onclick="openEditModal(${idx})">Edit</button><button class="danger" onclick="quickZeroSuggested(${idx})">Zero Suggested</button></div></td></tr>`;
+    return `<tr><td>${escapeHtml(r.code)}</td><td>${escapeHtml(r.item)}${getParChipHtml(r)}</td><td>${badge(r.vendor)}</td><td>${fmt(r.onHand)}</td><td>${fmt(r.suggested)}</td><td>${fmt(r.toOrder)}</td><td>${fmtMoney(r.value)}</td><td><div class="rowactions"><button onclick="openEditModal(${idx})">Edit</button><button class="danger" onclick="quickZeroSuggested(${idx})">Zero Suggested</button></div></td></tr>`;
   }).join('') || `<tr><td colspan="8" class="muted">No inventory loaded.</td></tr>`;
 
   const vendors = getVendorsForFilter();
@@ -2181,7 +2204,7 @@ function render(){
     const finalCell = supportsManualFinalOrder(r.vendor)
       ? `<div class="rowactions ${overrideActive ? 'final-override' : ''}"><input type="number" min="0" step="1" value="${overrideActive ? escapeHtml(String(r.orderOverride)) : ''}" placeholder="Auto ${fmt(r.toOrder)}" style="width:110px" onchange="updateFinalOrder(${masterIndex}, this.value)"><button onclick="resetFinalOrder(${masterIndex})">Auto</button></div>`
       : `<span class="muted">Auto only</span>`;
-    return `<tr><td>${badge(r.vendor)}</td><td class="badgecell">${orderingBadgeCell(r)}</td><td>${escapeHtml(r.item)}</td><td>${fmt(r.onHand)}</td><td>${fmt(r.suggested)}</td><td class="toorder-col ${toOrderClass(r.toOrder)}">${fmt(r.toOrder)}</td><td>${finalCell}</td></tr>`;
+    return `<tr><td>${badge(r.vendor)}</td><td class="badgecell">${orderingBadgeCell(r)}</td><td>${escapeHtml(r.item)}${getParChipHtml(r)}</td><td>${fmt(r.onHand)}</td><td>${fmt(r.suggested)}</td><td class="toorder-col ${toOrderClass(r.toOrder)}">${fmt(r.toOrder)}</td><td>${finalCell}</td></tr>`;
   }).join('') || `<tr><td colspan="7" class="muted">No items to order.</td></tr>`;
   const totalBottles = vendRows.reduce((sum, r) => sum + parseNum(getEffectiveOrder(r)), 0);
   const editedCount = vendRows.filter(r => supportsManualFinalOrder(r.vendor) && r.orderOverride !== '' && r.orderOverride !== null && r.orderOverride !== undefined).length;
@@ -2357,6 +2380,7 @@ async function applyPendingImport(){
     await window.BarStockNoMatchCloud.replaceNoMatches(state.noMatches || []);
 
     setStatus(`Count imported: ${state.lastCountName}. Matches: ${importMatches}. No matches: ${state.noMatches.length}. Synced to cloud for the new weekly cycle.`);
+    refreshParAdjustments();
   } catch(err){
     console.error(err);
     setStatus(`Count imported locally, but cloud sync failed.`);
