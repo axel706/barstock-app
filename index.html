@@ -101,7 +101,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260605-125738</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260605-131055</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -154,12 +154,7 @@
       <div class="bs-focus-sub" id="fgSub-costReport">Track COGS vs benchmarks</div>
       <div class="bs-focus-badge" id="fgBadge-costReport"></div>
     </div>
-    <div class="bs-focus-card card" onclick="bsOpenSection('usage')">
-      <i class="ti ti-chart-dots bs-focus-icon" aria-hidden="true"></i>
-      <div class="bs-focus-title">Usage</div>
-      <div class="bs-focus-sub" id="fgSub-usage">Compare sales vs usage</div>
-      <div class="bs-focus-badge" id="fgBadge-usage"></div>
-    </div>
+
   </div>
 
   <div class="card section-card" id="inventorySection">
@@ -956,7 +951,7 @@ function setSectionCollapsed(sectionName, collapsed){
   saveSectionStates(states);
 }
 function initSectionToggles(){
-  ['inventory','vendor','history','noMatch','usage','costReport'].forEach(name => {
+  ['inventory','vendor','history','noMatch','costReport'].forEach(name => {
     const btn = document.getElementById(name + 'Toggle');
     const body = document.getElementById(name + 'SectionBody');
     if(!btn || !body) return;
@@ -965,7 +960,7 @@ function initSectionToggles(){
     });
   });
   const states = loadSectionStates();
-  ['inventory','vendor','history','noMatch','usage','costReport'].forEach(name => {
+  ['inventory','vendor','history','noMatch','costReport'].forEach(name => {
     setSectionCollapsed(name, !!states[name]);
   });
 }
@@ -3407,6 +3402,7 @@ document.getElementById('exportVendorCsvBtn').addEventListener('click', exportCu
 document.getElementById('exportVendorXlsxBtn').addEventListener('click', exportCurrentVendorXlsx);
 document.getElementById('exportVendorJpgBtn').addEventListener('click', ()=>exportCurrentVendorJpg().catch(err=>{alert('Could not export vendor JPG.'); setStatus('Error exporting vendor JPG.');}));
 document.getElementById('exportVendorLoopBtn').addEventListener('click', exportVendorLoopReady);
+document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 document.getElementById('resetOnHandBtn').addEventListener('click', resetOnHand);
 document.getElementById('resetBtn').addEventListener('click', resetMaster);
 document.getElementById('searchInput').addEventListener('input', render);
@@ -3904,7 +3900,6 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     {id:'history', icon:'ti-history', label:'History'},
     {id:'noMatch', icon:'ti-alert-circle', label:'No Match'},
     {id:'costReport', icon:'ti-chart-bar', label:'Costs'},
-    {id:'usage', icon:'ti-chart-dots', label:'Usage'},
   ];
   miniSections.forEach(s => {
     const el = document.createElement('div');
@@ -3938,7 +3933,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
   // Update nav tabs to use focus mode
   document.querySelectorAll('.bs-nav-tab').forEach((btn, i) => {
-    const sections = ['inventory','vendor','history','noMatch','costReport','usage'];
+    const sections = ['inventory','vendor','history','noMatch','costReport'];
     btn.onclick = () => bsOpenSection(sections[i]);
   });
 
