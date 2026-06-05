@@ -75,19 +75,44 @@
   }
 
   // ─── Parse sales CSV ─────────────────────────────────────────────
+  function parseCsvRow(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i+1] === '"') { current += '"'; i++; }
+        else inQuotes = !inQuotes;
+      } else if (ch === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+    result.push(current.trim());
+    return result;
+  }
+
   function parseSalesCsv(text) {
-    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    // Strip BOM if present
+    const clean = text.replace(/^\uFEFF/, '');
+    const lines = clean.split(/\r?\n/).filter(l => l.trim());
     if (!lines.length) return new Map();
-    const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
-    const itemIdx = headers.findIndex(h => h.includes('ITEM') || h.includes('PRODUCT') || h === 'NAME');
-    const soldIdx = headers.findIndex(h => h.includes('SOLD') || h.includes('QUANTITY') || h.includes('QTY') || h.includes('UNITS'));
-    if (itemIdx === -1 || soldIdx === -1) throw new Error('CSV must have Item/Product and Sold/Quantity columns.');
+    const headers = parseCsvRow(lines[0]).map(h => h.toUpperCase().replace(/['"]/g, ''));
+    const itemIdx = headers.findIndex(h => h === 'PRODUCT' || h.includes('ITEM') || h === 'NAME');
+    const soldIdx = headers.findIndex(h => h === 'SOLD UNITS' || h === 'SOLD' || h.includes('SOLD'));
+    const categoryIdx = headers.findIndex(h => h === 'CATEGORY');
+    if (itemIdx === -1 || soldIdx === -1) throw new Error('CSV must have Product and Sold Units columns.');
     const result = new Map();
     for (const line of lines.slice(1)) {
-      const cols = line.split(',');
-      const item = (cols[itemIdx] || '').trim();
-      const sold = parseFloat(cols[soldIdx]) || 0;
-      if (item) result.set(item.toUpperCase(), sold);
+      const cols = parseCsvRow(line);
+      // Skip Bar Consumables
+      if (categoryIdx >= 0 && (cols[categoryIdx] || '').toUpperCase().includes('BAR CONSUMABLE')) continue;
+      const item = (cols[itemIdx] || '').replace(/['"]/g, '').trim();
+      const sold = Math.round(parseFloat(cols[soldIdx] || 0) * 100) / 100;
+      if (item && sold >= 0) result.set(item.toUpperCase(), sold);
     }
     return result;
   }
@@ -101,6 +126,62 @@
       if (norm.includes(k) || k.includes(norm)) return v;
     }
     return null;
+  }
+
+
+  // ─── Save sales to Supabase ───────────────────────────────────────
+  async function saveSalesToSupabase(weekStart, salesMap, fileName) {
+    try {
+      const { url, key } = getConfig();
+      const locationId = await fetchLocationId();
+
+      // Delete existing sales for this week first
+      await fetch(
+        `${url}/rest/v1/theoretical_sales?location_id=eq.${locationId}&week_start=eq.${weekStart}`,
+        { method: 'DELETE', headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      );
+
+      // Insert new rows in chunks
+      const rows = Array.from(salesMap.entries()).map(([item_name, sold]) => ({
+        location_id: locationId,
+        week_start: weekStart,
+        item_name,
+        sold,
+        source_file: fileName || ''
+      }));
+
+      const chunkSize = 200;
+      for (let i = 0; i < rows.length; i += chunkSize) {
+        const chunk = rows.slice(i, i + chunkSize);
+        await fetch(`${url}/rest/v1/theoretical_sales`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
+          body: JSON.stringify(chunk)
+        });
+      }
+      console.log('[TheoreticalUsage] Sales saved:', rows.length, 'items for', weekStart);
+    } catch (err) {
+      console.warn('[TheoreticalUsage] saveSales failed:', err);
+    }
+  }
+
+  // ─── Load sales from Supabase ─────────────────────────────────────
+  async function loadSalesFromSupabase(weekStart) {
+    try {
+      const { url, key } = getConfig();
+      const locationId = await fetchLocationId();
+      const res = await fetch(
+        `${url}/rest/v1/theoretical_sales?location_id=eq.${locationId}&week_start=eq.${weekStart}&select=item_name,sold`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      );
+      const rows = await res.json();
+      const salesMap = new Map();
+      for (const r of rows || []) salesMap.set(r.item_name, Number(r.sold || 0));
+      return salesMap;
+    } catch (err) {
+      console.warn('[TheoreticalUsage] loadSales failed:', err);
+      return new Map();
+    }
   }
 
   // ─── Render week list ─────────────────────────────────────────────
@@ -148,6 +229,11 @@
     document.getElementById('tuWeekDetailView').classList.remove('hidden');
     document.getElementById('tuDetailWeekLabel').textContent = 'Week of ' + formatWeekLabel(weekStart);
     document.getElementById('tuDetailBody').innerHTML = '<tr><td colspan="9" class="muted" style="text-align:center;padding:20px">Loading...</td></tr>';
+    initCsvUpload();
+    if (!_salesData.has(weekStart)) {
+      const salesMap = await loadSalesFromSupabase(weekStart);
+      if (salesMap.size) _salesData.set(weekStart, salesMap);
+    }
     renderWeekDetail(weekStart);
   }
 
@@ -251,8 +337,9 @@
         const text = await f.text();
         const salesMap = parseSalesCsv(text);
         _salesData.set(_currentWeek.week_start, salesMap);
+        await saveSalesToSupabase(_currentWeek.week_start, salesMap, f.name);
         renderWeekDetail(_currentWeek.week_start);
-        if (typeof setStatus === 'function') setStatus(`Sales CSV loaded: ${salesMap.size} items matched for week of ${formatWeekLabel(_currentWeek.week_start)}.`);
+        if (typeof setStatus === 'function') setStatus(`Sales CSV loaded and saved: ${salesMap.size} items for week of ${formatWeekLabel(_currentWeek.week_start)}.`);
       } catch (err) {
         alert(err.message || String(err));
       }
