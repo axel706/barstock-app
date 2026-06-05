@@ -1,0 +1,168 @@
+(() => {
+  if (window.BarStockParIntelligence) return;
+
+  function getConfig() {
+    const config = window.BARSTOCK_CONFIG || {};
+    return {
+      url: config.SUPABASE_URL,
+      key: config.SUPABASE_KEY,
+      locationName: config.LOCATION_NAME || 'The Crown Tavern'
+    };
+  }
+
+  async function fetchLocationId() {
+    const { url, key, locationName } = getConfig();
+    const res = await fetch(
+      `${url}/rest/v1/locations?name=eq.${encodeURIComponent(locationName)}&select=id`,
+      { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+    );
+    const data = await res.json();
+    if (!data?.length) throw new Error('Location not found: ' + locationName);
+    return data[0].id;
+  }
+
+  function getWeekStart() {
+    const now = new Date();
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(now.setDate(diff));
+    return monday.toISOString().split('T')[0];
+  }
+
+  // ─── saveSnapshot ────────────────────────────────────────────────
+  // Called at END of applyPendingImport — opens a new cycle snapshot
+  async function saveSnapshot(master) {
+    try {
+      const { url, key } = getConfig();
+      const locationId = await fetchLocationId();
+      const weekStart = getWeekStart();
+
+      const rows = (master || []).map(r => ({
+        location_id: locationId,
+        week_start: weekStart,
+        item_name: r.item || '',
+        code: r.code || '',
+        vendor: r.vendor || '',
+        on_hand_start: Number(r.onHand || 0),
+        suggested_at_time: Number(r.suggested || 0),
+        ordered: null,
+        on_hand_end: null,
+        used: null,
+        is_event_week: false
+      }));
+
+      if (!rows.length) return;
+
+      const chunkSize = 200;
+      for (let i = 0; i < rows.length; i += chunkSize) {
+        const chunk = rows.slice(i, i + chunkSize);
+        const res = await fetch(`${url}/rest/v1/inventory_snapshots`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: key,
+            Authorization: `Bearer ${key}`,
+            Prefer: 'return=minimal'
+          },
+          body: JSON.stringify(chunk)
+        });
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error('Error saving snapshot: ' + txt);
+        }
+      }
+      console.log('[ParIntelligence] Snapshot saved:', rows.length, 'items', weekStart);
+    } catch (err) {
+      console.warn('[ParIntelligence] saveSnapshot failed:', err);
+    }
+  }
+
+  // ─── completeSnapshot ─────────────────────────────────────────────
+  // Called at START of applyPendingImport — closes previous cycle
+  async function completeSnapshot(master) {
+    try {
+      const { url, key } = getConfig();
+      const locationId = await fetchLocationId();
+      const weekStart = getWeekStart();
+
+      // Find open snapshots (on_hand_end is null) from previous weeks
+      const res = await fetch(
+        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&on_hand_end=is.null&week_start=neq.${weekStart}&select=id,item_name,code,on_hand_start,ordered`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      );
+      const openSnapshots = await res.json();
+      if (!openSnapshots?.length) return;
+
+      // Build lookup from current master onHand
+      const onHandMap = new Map();
+      for (const r of master || []) {
+        const key2 = `${(r.item || '').trim()}||${(r.code || '').trim()}`;
+        onHandMap.set(key2, Number(r.onHand || 0));
+      }
+
+      // Get historical avg used per item for event week detection
+      const histRes = await fetch(
+        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&used=not.is.null&is_event_week=eq.false&select=item_name,code,used`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      );
+      const histData = await histRes.json();
+      const avgUsedMap = new Map();
+      const usedAccum = new Map();
+      for (const row of histData || []) {
+        const k = `${row.item_name}||${row.code}`;
+        if (!usedAccum.has(k)) usedAccum.set(k, []);
+        usedAccum.get(k).push(Number(row.used || 0));
+      }
+      for (const [k, vals] of usedAccum) {
+        avgUsedMap.set(k, vals.reduce((a, b) => a + b, 0) / vals.length);
+      }
+
+      // Patch each open snapshot
+      for (const snap of openSnapshots) {
+        const k = `${snap.item_name}||${snap.code}`;
+        const onHandEnd = onHandMap.has(k) ? onHandMap.get(k) : null;
+        if (onHandEnd === null) continue;
+
+        const ordered = Number(snap.ordered || 0);
+        const onHandStart = Number(snap.on_hand_start || 0);
+        const used = onHandStart + ordered - onHandEnd;
+        const avgUsed = avgUsedMap.get(k) || null;
+        const isEventWeek = avgUsed !== null && used > avgUsed * 1.5;
+
+        await fetch(`${url}/rest/v1/inventory_snapshots?id=eq.${snap.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: key,
+            Authorization: `Bearer ${key}`,
+            Prefer: 'return=minimal'
+          },
+          body: JSON.stringify({
+            on_hand_end: onHandEnd,
+            used: used,
+            is_event_week: isEventWeek
+          })
+        });
+      }
+      console.log('[ParIntelligence] Snapshots completed:', openSnapshots.length, 'items');
+    } catch (err) {
+      console.warn('[ParIntelligence] completeSnapshot failed:', err);
+    }
+  }
+
+  // ─── runCycle ─────────────────────────────────────────────────────
+  // Single entry point called from applyPendingImport
+  // 1. completeSnapshot (close previous cycle)
+  // 2. saveSnapshot (open new cycle)
+  async function runCycle(master) {
+    await completeSnapshot(master);
+    await saveSnapshot(master);
+  }
+
+  window.BarStockParIntelligence = {
+    runCycle,
+    saveSnapshot,
+    completeSnapshot
+  };
+
+})();
