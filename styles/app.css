@@ -1238,13 +1238,7 @@
       to{opacity:1; transform:translateY(0) scale(1);}
     }
 
-    .item-with-suggestion{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      min-width:0;
-      flex-wrap:wrap;
-    }
+    
     .item-with-suggestion .item-text{
       min-width:0;
       overflow:hidden;
@@ -1253,52 +1247,14 @@
       display:block;
       max-width:100%;
     }
-    .suggestion-chip{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:4px 8px;
-      border-radius:999px;
-      font-size:11px;
-      font-weight:800;
-      line-height:1;
-      letter-spacing:.2px;
-      white-space:nowrap;
-      border:1px solid transparent;
-    }
-    .suggestion-low{
-      background:rgba(245,158,11,.16);
-      color:#fde68a;
-      border-color:rgba(245,158,11,.24);
-    }
-    .suggestion-high{
-      background:rgba(239,68,68,.16);
-      color:#fecaca;
-      border-color:rgba(239,68,68,.22);
-    }
-    .suggestion-skip{
-      background:rgba(56,189,248,.16);
-      color:#bae6fd;
-      border-color:rgba(56,189,248,.22);
-    }
-    body.light .suggestion-low{
-      background:rgba(245,158,11,.12);
-      color:#92400e;
-      border-color:rgba(245,158,11,.18);
-    }
-    body.light .suggestion-high{
-      background:rgba(239,68,68,.10);
-      color:#991b1b;
-      border-color:rgba(239,68,68,.16);
-    }
-    body.light .suggestion-skip{
-      background:rgba(56,189,248,.10);
-      color:#0369a1;
-      border-color:rgba(56,189,248,.16);
-    }
-    #smartSuggestionsSummary.hidden{
-      display:none !important;
-    }
+    
+    
+    
+    
+    body.light 
+    body.light 
+    body.light 
+    
 
     .quick-order-empty{
       color:var(--sub);

@@ -101,7 +101,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260603-224140</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260605-114254</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -120,7 +120,6 @@
       <button class="bs-nav-tab" onclick="bsScrollTo('historySection')">Order History</button>
       <button class="bs-nav-tab" onclick="bsScrollTo('noMatchSection')">No Match</button>
       <button class="bs-nav-tab" onclick="bsScrollTo('costReportSection')">Costs</button>
-      <button class="bs-nav-tab" onclick="bsScrollTo('usageSection')">Usage</button>
     </div>
   </div>
 
@@ -233,7 +232,6 @@
         <button id="quickOrderBtn" class="success ui-control">Quick Order</button>
         <input id="vendorSearchInput" placeholder="Filter current order" />
       </div>
-      <div id="smartSuggestionsSummary" class="notice hidden"></div>
       <div class="vendor-table-shell">
         <div class="tablewrap" id="vendorExportArea">
         <table>
@@ -481,43 +479,6 @@
     </div>
   </div>
 
-  <div class="card section-card" id="usageSection">
-    <div class="section-header-row">
-      <div style="flex:1 1 auto">
-        <div class="sectionhead">
-          <div>
-            <strong><span class="section-title">Theoretical Usage</span></strong>
-            <div class="small muted">Import sales usage files to compare sold quantities with expected product usage.</div>
-          </div>
-        </div>
-      </div>
-      <button id="usageToggle" class="section-toggle" title="Collapse or expand Theoretical Usage">−</button>
-    </div>
-    <div class="section-body" id="usageSectionBody">
-      <div class="inventory-controls-top">
-        <label class="filelbl">Import Liquor CSV <input type="file" id="usageLiquorFile" accept=".csv" /></label>
-        <label class="filelbl">Import Wine CSV <input type="file" id="usageWineFile" accept=".csv" /></label>
-        <button id="resetUsageBtn" class="danger">Reset</button>
-      </div>
-      <div class="inventory-controls-bottom">
-        <input id="usageSearchInput" placeholder="Filter current order" />
-      </div>
-      <div class="tablewrap">
-        <table>
-          <colgroup>
-            <col class="code-col">
-            <col class="item-col">
-            <col class="vendor-col">
-            <col class="sold-col">
-            <col class="usage-col">
-          </colgroup>
-          <thead><tr><th>CODE</th><th>ITEM</th><th>VENDOR</th><th>SOLD</th><th>USAGE</th></tr></thead>
-          <tbody id="usageBody"></tbody>
-        </table>
-      </div>
-      <div id="usageEmpty" class="small muted">No theoretical usage file loaded</div>
-    </div>
-  </div>
 
   <div class="status" id="statusBar">Ready.</div>
 </div>
@@ -826,9 +787,7 @@ const LEGACY_STORAGE_KEYS = ['crown_inventory_v13','crown_inventory_v15'];
 const LEGACY_ALIAS_KEYS = ['crown_inventory_aliases_v13','crown_inventory_aliases_v15'];
 const THEME_KEY = 'crown_inventory_theme';
 const VALUE_RESET_MIGRATION_KEY = 'crown_inventory_value_reset_v241';
-const USAGE_STORAGE_KEY = `crown_inventory_theoretical_usage_v1_${getActiveStorageSuffix()}`;
 const PRICE_ALIAS_KEY = `crown_inventory_price_aliases_v1_${getActiveStorageSuffix()}`;
-let usageData = [];
 const SECTION_STATE_KEY = `crown_inventory_section_visibility_${getActiveStorageSuffix()}`;
 let state = loadState();
 state.orderHistory = Array.isArray(state.orderHistory) ? state.orderHistory : [];
@@ -1834,65 +1793,7 @@ function getRecentRowQuantities(row, limit = 6){
   });
   return quantities;
 }
-function buildRowSuggestion(row){
-  const suggested = parseNum(row?.suggested);
-  const recentQty = getRecentRowQuantities(row, 6);
-  const recentQuick = getRecentQuickOrders(row, 6);
-  if(recentQuick.length >= 2){
-    const avgQuick = recentQuick.reduce((sum, qty) => sum + qty, 0) / recentQuick.length;
-    const recommended = Math.ceil((suggested + avgQuick) / 2);
-    if(avgQuick >= 2){
-      return { type:'low', label:`Quick orders +${fmt(avgQuick)} avg`, detail:`Consider ${Math.max(suggested+1, recommended)}` };
-    }
-  }
-  if(recentQty.length >= 2){
-    const avg = recentQty.reduce((sum, qty) => sum + qty, 0) / recentQty.length;
-    if(avg >= suggested + 1 && avg >= Math.max(2, suggested * 1.25)){
-      return { type:'low', label:'Suggested low' };
-    }
-    if(suggested >= 2 && avg <= suggested * 0.5){
-      return { type:'high', label:'Suggested high' };
-    }
-  }
-  const recentOrders = getRecentVendorOrders(row?.vendor, 3);
-  if(recentOrders.length >= 3){
-    const presentRecently = recentOrders.some(order => (order.items || []).some(item => rowOrderHistoryMatchesItem(item, row)));
-    if(!presentRecently && suggested > 0){
-      return { type:'skip', label:'Not in recent orders' };
-    }
-  }
-  return null;
-}
-function suggestionChipHtml(row){
-  const suggestion = buildRowSuggestion(row);
-  if(!suggestion) return '';
-  const klass = suggestion.type === 'low'
-    ? 'suggestion-low'
-    : suggestion.type === 'high'
-      ? 'suggestion-high'
-      : 'suggestion-skip';
-  const title = suggestion.detail ? `${suggestion.label} • ${suggestion.detail}` : suggestion.label;
-  return `<span class="suggestion-chip ${klass}" title="${escapeHtml(title)}">${escapeHtml(suggestion.label)}</span>`;
-}
-function renderSuggestionsSummary(rows){
-  const wrap = document.getElementById('smartSuggestionsSummary');
-  if(!wrap) return;
-  const suggestions = (rows || []).map(row => buildRowSuggestion(row)).filter(Boolean);
-  const low = suggestions.filter(s => s.type === 'low').length;
-  const high = suggestions.filter(s => s.type === 'high').length;
-  const skip = suggestions.filter(s => s.type === 'skip').length;
-  const parts = [];
-  if(low) parts.push(`${low} suggested low`);
-  if(high) parts.push(`${high} suggested high`);
-  if(skip) parts.push(`${skip} not in recent orders`);
-  if(!parts.length){
-    wrap.classList.add('hidden');
-    wrap.innerHTML = '';
-    return;
-  }
-  wrap.classList.remove('hidden');
-  wrap.innerHTML = `<strong>Smart Suggestions</strong> <span class="small">• ${parts.join(' • ')}</span>`;
-}
+
 
 function getRecentQuickOrders(row, limit = 6){
   const orders = getRecentVendorOrders(row?.vendor, limit).filter(order => !!order.quickOrder);
@@ -2280,9 +2181,8 @@ function render(){
     const finalCell = supportsManualFinalOrder(r.vendor)
       ? `<div class="rowactions ${overrideActive ? 'final-override' : ''}"><input type="number" min="0" step="1" value="${overrideActive ? escapeHtml(String(r.orderOverride)) : ''}" placeholder="Auto ${fmt(r.toOrder)}" style="width:110px" onchange="updateFinalOrder(${masterIndex}, this.value)"><button onclick="resetFinalOrder(${masterIndex})">Auto</button></div>`
       : `<span class="muted">Auto only</span>`;
-    return `<tr><td>${badge(r.vendor)}</td><td class="badgecell">${orderingBadgeCell(r)}</td><td><div class="item-with-suggestion"><span class="item-text">${escapeHtml(r.item)}</span>${suggestionChipHtml(r)}</div></td><td>${fmt(r.onHand)}</td><td>${fmt(r.suggested)}</td><td class="toorder-col ${toOrderClass(r.toOrder)}">${fmt(r.toOrder)}</td><td>${finalCell}</td></tr>`;
+    return `<tr><td>${badge(r.vendor)}</td><td class="badgecell">${orderingBadgeCell(r)}</td><td>${escapeHtml(r.item)}</td><td>${fmt(r.onHand)}</td><td>${fmt(r.suggested)}</td><td class="toorder-col ${toOrderClass(r.toOrder)}">${fmt(r.toOrder)}</td><td>${finalCell}</td></tr>`;
   }).join('') || `<tr><td colspan="7" class="muted">No items to order.</td></tr>`;
-  renderSuggestionsSummary(vendRows);
   const totalBottles = vendRows.reduce((sum, r) => sum + parseNum(getEffectiveOrder(r)), 0);
   const editedCount = vendRows.filter(r => supportsManualFinalOrder(r.vendor) && r.orderOverride !== '' && r.orderOverride !== null && r.orderOverride !== undefined).length;
   document.getElementById('vendorSummary').textContent = `Current list: ${vendRows.length} code${vendRows.length===1?'':'s'} | ${fmt(totalBottles)} bottle${Number(totalBottles)===1?'':'s'} | ${editedCount} edited`;
@@ -3269,7 +3169,6 @@ function exportBackup(){
     state: reconcileImportedState(state),
     aliases,
     priceAliases,
-    usageData,
     theme: document.body.classList.contains('light') ? 'light' : 'dark',
     sectionStates: loadSectionStates()
   };
@@ -3320,12 +3219,10 @@ async function importBackup(file){
   state = reconcileImportedState(data.state || data);
   aliases = (data.aliases && typeof data.aliases === 'object') ? data.aliases : {};
   priceAliases = (data.priceAliases && typeof data.priceAliases === 'object') ? data.priceAliases : loadPriceAliases();
-  usageData = Array.isArray(data.usageData) ? data.usageData : loadUsageData();
 
   saveState();
   saveAliases();
   savePriceAliases();
-  saveUsageData();
 
   if(data.theme){ applyTheme(data.theme); }
   if(data.sectionStates && typeof data.sectionStates === 'object'){ saveSectionStates(data.sectionStates); }
@@ -3380,26 +3277,9 @@ function fmt2(v){
   if(!Number.isFinite(n)) return String(v ?? '');
   return n.toFixed(2).replace(/\.00$/,'').replace(/(\.\d)0$/,'$1');
 }
-function usageVendorBadge(vendor){
-  const v = String(vendor || '').trim().toUpperCase();
-  if(v === 'NO MATCH' || !v) return `<span class="pill unknown">No match</span>`;
-  return badge(v);
-}
-function loadUsageData(){
-  try{
-    const raw = localStorage.getItem(USAGE_STORAGE_KEY);
-    if(!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  }catch(e){
-    return [];
-  }
-}
-function saveUsageData(){
-  try{
-    localStorage.setItem(USAGE_STORAGE_KEY, JSON.stringify(usageData));
-  }catch(e){}
-}
+
+
+
 function normalizeLooseName(s){
   return String(s || '')
     .toUpperCase()
@@ -3432,32 +3312,7 @@ function findUsageMatch(item, lookup){
   if(lookup.token.has(tokenized)) return lookup.token.get(tokenized);
   return null;
 }
-function renderUsage(){
-  const body = document.getElementById('usageBody');
-  const empty = document.getElementById('usageEmpty');
-  const q = normalizeName(document.getElementById('usageSearchInput')?.value || '');
-  if(!body || !empty) return;
-  if(!usageData.length){
-    body.innerHTML = '';
-    empty.style.display = 'block';
-    empty.textContent = 'No theoretical usage file loaded';
-    return;
-  }
-  const filtered = usageData.filter(r =>
-    !q ||
-    normalizeName(r.item).includes(q) ||
-    normalizeName(r.code).includes(q) ||
-    normalizeName(r.vendor).includes(q)
-  );
-  empty.style.display = filtered.length ? 'none' : 'block';
-  if(!filtered.length){
-    body.innerHTML = '';
-    empty.textContent = 'No matching theoretical usage rows';
-    return;
-  }
-  empty.textContent = 'No theoretical usage file loaded';
-  body.innerHTML = filtered.map(r => `<tr><td>${escapeHtml(r.code)}</td><td>${escapeHtml(r.item)}</td><td>${usageVendorBadge(r.vendor)}</td><td>${escapeHtml(fmt2(r.sold))}</td><td>${escapeHtml(fmt2(r.usage))}</td></tr>`).join('');
-}
+
 
 function parseCsvLine(line){
   const result = [];
@@ -3485,125 +3340,15 @@ function parseCsvLine(line){
 
 function normalizeHeader(s){ return String(s||'').trim().toUpperCase(); }
 
-function parseTheoreticalUsageCsv(text, type){
-  const lines = String(text||'').split(/\r?\n/).filter(line => line.trim() !== '');
-  if(!lines.length) return [];
-  const headers = parseCsvLine(lines[0]).map(normalizeHeader);
-  const categoryIndex = headers.indexOf('CATEGORY');
-  const productIndex = headers.indexOf('PRODUCT');
-  const soldIndex = headers.indexOf('SOLD UNITS');
-  const usedIndex = headers.indexOf('USED UNITS');
-  if(productIndex === -1 || soldIndex === -1 || usedIndex === -1){
-    throw new Error('The CSV must contain Product, Sold Units, and Used Units columns.');
-  }
-  const lookup = buildMasterLookupMaps();
-  return lines.slice(1).map(parseCsvLine).map(cols => {
-    const item = String(cols[productIndex]||'').trim();
-    const match = findUsageMatch(item, lookup);
-    return {
-      sourceType: String(type || '').trim().toUpperCase(),
-      category: categoryIndex >= 0 ? String(cols[categoryIndex]||'').trim() : '',
-      code: match ? String(match.code || '').trim() : 'No match',
-      item,
-      vendor: match ? String(match.vendor || '').trim() : 'No match',
-      sold: String(cols[soldIndex]||'').trim(),
-      usage: String(cols[usedIndex]||'').trim()
-    };
-  }).filter(r => r.item && normalizeHeader(r.category) !== 'BAR CONSUMABLES');
-}
+
 
 document.getElementById('masterFile').addEventListener('change', async e=>{ const f=e.target.files[0]; if(!f) return; try{ await loadMasterFile(f);} catch(err){ alert(err.message||String(err)); setStatus('Error loading master.'); } e.target.value='';});
 document.getElementById('countFile').addEventListener('change', async e=>{ const f=e.target.files[0]; if(!f) return; try{ await importCountFile(f);} catch(err){ alert(err.message||String(err)); setStatus('Error importing count.'); } e.target.value=''; const m=document.getElementById('importMenu'); if(m) m.classList.add('hidden');});
 document.getElementById('backupFile').addEventListener('change', async e=>{ const f=e.target.files[0]; if(!f) return; try{ await importBackup(f);} catch(err){ alert('Invalid backup file.'); } e.target.value=''; const m=document.getElementById('importMenu'); if(m) m.classList.add('hidden');});
-document.getElementById('usageLiquorFile').addEventListener('change', async e=>{
-  const f = e.target.files[0];
-  if(!f) return;
-  try{
-    const text = await f.text();
-    const wineRows = usageData.filter(r => String(r.sourceType || '').toUpperCase() === 'WINE');
-    const liquorRows = parseTheoreticalUsageCsv(text, 'Liquor');
-    usageData = [...liquorRows, ...wineRows];
-    saveUsageData();
-    renderUsage();
-    setStatus(`Theoretical Usage liquor imported: ${f.name}. ${liquorRows.length} liquor rows loaded.`);
-  }catch(err){
-    alert(err.message || String(err));
-    setStatus('Error importing Theoretical Usage liquor CSV.');
-  }
-  e.target.value = '';
-});
-document.getElementById('usageWineFile').addEventListener('change', async e=>{
-  const f = e.target.files[0];
-  if(!f) return;
-  try{
-    const text = await f.text();
-    const liquorRows = usageData.filter(r => String(r.sourceType || '').toUpperCase() === 'LIQUOR');
-    const wineRows = parseTheoreticalUsageCsv(text, 'Wine');
-    usageData = [...liquorRows, ...wineRows];
-    saveUsageData();
-    renderUsage();
-    setStatus(`Theoretical Usage wine imported: ${f.name}. ${wineRows.length} wine rows loaded.`);
-  }catch(err){
-    alert(err.message || String(err));
-    setStatus('Error importing Theoretical Usage wine CSV.');
-  }
-  e.target.value = '';
-});
-document.getElementById('resetUsageBtn').addEventListener('click', ()=>{
-  usageData = [];
-  document.getElementById('usageSearchInput').value = '';
-  saveUsageData();
-  renderUsage();
-  setStatus('Theoretical Usage reset.');
-});
-document.getElementById('usageSearchInput').addEventListener('input', renderUsage);
 
-const importMenuBtn=document.getElementById('importMenuBtn');
-const importMenu=document.getElementById('importMenu');
-const exportMenuBtn=document.getElementById('exportMenuBtn');
-const exportMenu=document.getElementById('exportMenu');
-const bsMoreBtn=document.getElementById('bsMoreBtn');
-const bsMoreMenu=document.getElementById('bsMoreMenu');
-function bsCloseAllMenus(){importMenu.classList.add('hidden');exportMenu.classList.add('hidden');bsMoreMenu.classList.add('hidden');}
-importMenuBtn.addEventListener('click',(e)=>{e.stopPropagation();const wasHidden=importMenu.classList.contains('hidden');bsCloseAllMenus();if(wasHidden)importMenu.classList.remove('hidden');});
-exportMenuBtn.addEventListener('click',(e)=>{e.stopPropagation();const wasHidden=exportMenu.classList.contains('hidden');bsCloseAllMenus();if(wasHidden)exportMenu.classList.remove('hidden');});
-bsMoreBtn.addEventListener('click',(e)=>{e.stopPropagation();const wasHidden=bsMoreMenu.classList.contains('hidden');bsCloseAllMenus();if(wasHidden)bsMoreMenu.classList.remove('hidden');});
-importMenu.addEventListener('click',(e)=>e.stopPropagation());
-exportMenu.addEventListener('click',(e)=>e.stopPropagation());
-bsMoreMenu.addEventListener('click',(e)=>e.stopPropagation());
-['exportMasterBtn','exportNoMatchBtn','backupBtn','exportWeeklyPdfBtn','exportWeeklyXlsxBtn'].forEach(id=>{document.getElementById(id).addEventListener('click',()=>exportMenu.classList.add('hidden'));});
-document.addEventListener('click',()=>bsCloseAllMenus());
 
-document.getElementById('exportMasterBtn').addEventListener('click', exportMaster);
-document.getElementById('exportNoMatchBtn').addEventListener('click', exportNoMatch);
-document.getElementById('exportWeeklyPdfBtn').addEventListener('click', ()=>exportWeeklyOrderPdf().catch(err=>{alert('Could not export Weekly Order PDF.'); setStatus('Error exporting Weekly Order PDF.');}));
-document.getElementById('exportWeeklyXlsxBtn').addEventListener('click', exportWeeklyOrderXlsx);
-document.getElementById('backupBtn').addEventListener('click', exportBackup);
 
-const vendorExportMenuBtn=document.getElementById('vendorExportMenuBtn');
-const vendorExportMenu=document.getElementById('vendorExportMenu');
-vendorExportMenuBtn.addEventListener('click',(e)=>{e.stopPropagation();vendorExportMenu.classList.toggle('hidden');});
-['exportVendorCsvBtn','exportVendorXlsxBtn','exportVendorJpgBtn','exportVendorLoopBtn'].forEach(id=>{document.getElementById(id).addEventListener('click',()=>vendorExportMenu.classList.add('hidden'));});
-document.addEventListener('click',(e)=>{if(!vendorExportMenu.classList.contains('hidden') && !vendorExportMenu.contains(e.target) && e.target!==vendorExportMenuBtn){vendorExportMenu.classList.add('hidden');}});
 
-document.getElementById('exportVendorCsvBtn').addEventListener('click', exportCurrentVendorCsv);
-document.getElementById('exportVendorXlsxBtn').addEventListener('click', exportCurrentVendorXlsx);
-document.getElementById('exportVendorJpgBtn').addEventListener('click', ()=>exportCurrentVendorJpg().catch(err=>{alert('Could not export vendor JPG.'); setStatus('Error exporting vendor JPG.');}));
-document.getElementById('exportVendorLoopBtn').addEventListener('click', exportVendorLoopReady);
-document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-document.getElementById('resetOnHandBtn').addEventListener('click', resetOnHand);
-document.getElementById('resetBtn').addEventListener('click', resetMaster);
-document.getElementById('searchInput').addEventListener('input', render);
-document.getElementById('vendorFilter').addEventListener('change', render);
-document.getElementById('vendorSearchInput').addEventListener('input', render);
-document.getElementById('placeOrderBtn').addEventListener('click', ()=>placeCurrentOrder().catch(err=>{console.error(err); alert('Could not place vendor order.'); setStatus('Error placing vendor order.');}));
-document.addEventListener('keydown', e => {
-  if(e.key !== 'Escape') return;
-  const invoiceModalOpen = !document.getElementById('invoiceScanModalBg').classList.contains('hidden');
-  const linkModalOpen = !document.getElementById('invoiceLinkModalBg').classList.contains('hidden');
-  if(linkModalOpen){ closeInvoiceLinkModal(); return; }
-  if(invoiceModalOpen){ closeInvoiceScanModal(); }
-});
 document.getElementById('invoiceScanModalBg').addEventListener('click', e => { if(e.target.id === 'invoiceScanModalBg') closeInvoiceScanModal(); });
 document.getElementById('invoiceLinkModalBg').addEventListener('click', e => { if(e.target.id === 'invoiceLinkModalBg') closeInvoiceLinkModal(); });
 document.getElementById('scanInvoiceBtn').addEventListener('click', openInvoiceScanModal);
@@ -3640,7 +3385,6 @@ reconcileLoadedMaster();
 resetLegacyValuesIfNeeded();
 saveState();
 applyTheme(loadTheme());
-usageData = loadUsageData();
 
 const historySearchInput = document.getElementById('historySearchInput');
 const historyVendorFilter = document.getElementById('historyVendorFilter');
@@ -3696,7 +3440,6 @@ if (typeof renderQuickOrderVendorTabs === 'function') {
   renderQuickOrderVendorTabs();
 }
 initSectionToggles();
-renderUsage();
 if(state.master.length){ setStatus(`Persistent master ready. ${state.master.length} items loaded from local storage. Excel-style TO ORDER rounding refreshed, and Final Order overrides are available for Southern, Breakthru, and Wine Merchant.`); }
 </script>
 
@@ -4034,7 +3777,6 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     { id: 'historySection', tab: 2 },
     { id: 'noMatchSection', tab: 3 },
     { id: 'costReportSection', tab: 4 },
-    { id: 'usageSection', tab: 5 },
   ];
 
   function updateActiveTab() {
