@@ -71,6 +71,11 @@
 
       await window.persistOrderToSupabase(order);
 
+      // Par Intelligence — update ordered qty in snapshot
+      if (window.BarStockParIntelligence) {
+        window.BarStockParIntelligence.updateSnapshotOrdered(order.items).catch(err => console.warn('[ParIntelligence] updateSnapshotOrdered failed:', err));
+      }
+
       if (window.BarStockLogger) {
         window.BarStockLogger.log('place_order_saved', {
           vendor: vendorAtStart,

@@ -159,10 +159,58 @@
     await saveSnapshot(master);
   }
 
+
+  // ─── updateSnapshotOrdered ────────────────────────────────────────
+  // Called after a vendor order is placed — adds ordered qty to snapshot
+  async function updateSnapshotOrdered(rows) {
+    try {
+      const { url, key } = getConfig();
+      const locationId = await fetchLocationId();
+      const weekStart = getWeekStart();
+
+      for (const row of rows || []) {
+        const itemName = (row.item || '').trim();
+        const code = (row.code || '').trim();
+        const qty = Number(row.finalOrder || 0);
+        if (!itemName || qty <= 0) continue;
+
+        // Find existing snapshot for this week + item
+        let filterUrl = `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&week_start=eq.${weekStart}&item_name=eq.${encodeURIComponent(itemName)}`;
+        if (code) filterUrl += `&code=eq.${encodeURIComponent(code)}`;
+        filterUrl += '&select=id,ordered';
+
+        const res = await fetch(filterUrl, {
+          headers: { apikey: key, Authorization: `Bearer ${key}` }
+        });
+        const snaps = await res.json();
+        if (!snaps?.length) continue;
+
+        const snap = snaps[0];
+        const currentOrdered = Number(snap.ordered || 0);
+        const newOrdered = currentOrdered + qty;
+
+        await fetch(`${url}/rest/v1/inventory_snapshots?id=eq.${snap.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: key,
+            Authorization: `Bearer ${key}`,
+            Prefer: 'return=minimal'
+          },
+          body: JSON.stringify({ ordered: newOrdered })
+        });
+      }
+      console.log('[ParIntelligence] ordered updated for', rows?.length, 'items');
+    } catch (err) {
+      console.warn('[ParIntelligence] updateSnapshotOrdered failed:', err);
+    }
+  }
+
   window.BarStockParIntelligence = {
     runCycle,
     saveSnapshot,
-    completeSnapshot
+    completeSnapshot,
+    updateSnapshotOrdered
   };
 
 })();
