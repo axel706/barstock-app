@@ -258,12 +258,110 @@
     }
   }
 
+
+  // ─── calculateParOptimal ─────────────────────────────────────────
+  // Returns optimal par and avg_used for a single item
+  async function calculateParOptimal(locationId, itemName, code) {
+    const { url, key } = getConfig();
+
+    let filterUrl = `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&item_name=eq.${encodeURIComponent(itemName)}&is_event_week=eq.false&used=not.is.null&select=used,week_start`;
+    if (code) filterUrl += `&code=eq.${encodeURIComponent(code)}`;
+
+    const res = await fetch(filterUrl, {
+      headers: { apikey: key, Authorization: `Bearer ${key}` }
+    });
+    const rows = await res.json();
+    if (!rows?.length) return null;
+
+    // Deduplicate by week_start — take first occurrence per week
+    const byWeek = new Map();
+    for (const r of rows) {
+      if (!byWeek.has(r.week_start)) byWeek.set(r.week_start, Number(r.used || 0));
+    }
+    const usedValues = Array.from(byWeek.values());
+    if (usedValues.length < 4) return { status: 'observing', normalWeeks: usedValues.length };
+
+    const avgUsed = usedValues.reduce((a, b) => a + b, 0) / usedValues.length;
+    const suggestedOptimal = Math.ceil(avgUsed * 1.35);
+
+    return {
+      status: 'active',
+      normalWeeks: usedValues.length,
+      avgUsed: Math.round(avgUsed * 10) / 10,
+      suggestedOptimal
+    };
+  }
+
+  // ─── getPendingAdjustments ────────────────────────────────────────
+  // Runs across all master items and returns par adjustment per item
+  async function getPendingAdjustments(master) {
+    try {
+      const locationId = await fetchLocationId();
+      const results = new Map();
+
+      // Batch fetch all normal snapshots for this location
+      const { url, key } = getConfig();
+      const res = await fetch(
+        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&is_event_week=eq.false&used=not.is.null&select=item_name,code,used,week_start`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      );
+      const allRows = await res.json();
+
+      // Group by item
+      const byItem = new Map();
+      for (const r of allRows || []) {
+        const k = `${r.item_name}||${r.code || ''}`;
+        if (!byItem.has(k)) byItem.set(k, new Map());
+        const weekMap = byItem.get(k);
+        if (!weekMap.has(r.week_start)) weekMap.set(r.week_start, Number(r.used || 0));
+      }
+
+      // Calculate adjustment per master item
+      for (const row of master || []) {
+        const k = `${row.item}||${row.code || ''}`;
+        const weekMap = byItem.get(k);
+
+        if (!weekMap || weekMap.size < 4) {
+          results.set(k, { status: 'observing', normalWeeks: weekMap?.size || 0 });
+          continue;
+        }
+
+        const usedValues = Array.from(weekMap.values());
+        const avgUsed = usedValues.reduce((a, b) => a + b, 0) / usedValues.length;
+        const suggestedOptimal = Math.ceil(avgUsed * 1.35);
+        const current = Number(row.suggested || 0);
+        const delta = current - suggestedOptimal;
+
+        let adjustment = 0;
+        if (delta > 1) adjustment = -1;
+        else if (delta < -1) adjustment = 1;
+
+        results.set(k, {
+          status: 'active',
+          normalWeeks: weekMap.size,
+          avgUsed: Math.round(avgUsed * 10) / 10,
+          suggestedOptimal,
+          currentSuggested: current,
+          delta,
+          adjustment
+        });
+      }
+
+      return results;
+    } catch (err) {
+      console.warn('[ParIntelligence] getPendingAdjustments failed:', err);
+      return new Map();
+    }
+  }
+
   window.BarStockParIntelligence = {
     runCycle,
     saveSnapshot,
     completeSnapshot,
     updateSnapshotOrdered,
-    reverseSnapshotOrdered
+    reverseSnapshotOrdered,
+    calculateParOptimal,
+    getPendingAdjustments
   };
 
 })();
