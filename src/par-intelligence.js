@@ -206,11 +206,64 @@
     }
   }
 
+
+  // ─── reverseSnapshotOrdered ───────────────────────────────────────
+  // Called when an order is deleted or reopened — subtracts ordered qty
+  async function reverseSnapshotOrdered(order) {
+    try {
+      const { url, key } = getConfig();
+      const locationId = await fetchLocationId();
+
+      // Use order date to find the right week
+      const orderDate = new Date(order.createdAt || order.date || Date.now());
+      const day = orderDate.getDay();
+      const diff = orderDate.getDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(orderDate.setDate(diff));
+      const weekStart = monday.toISOString().split('T')[0];
+
+      for (const row of order.items || []) {
+        const itemName = (row.item || '').trim();
+        const code = (row.code || '').trim();
+        const qty = Number(row.finalOrder || 0);
+        if (!itemName || qty <= 0) continue;
+
+        let filterUrl = `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&week_start=eq.${weekStart}&item_name=eq.${encodeURIComponent(itemName)}`;
+        if (code) filterUrl += `&code=eq.${encodeURIComponent(code)}`;
+        filterUrl += '&select=id,ordered';
+
+        const res = await fetch(filterUrl, {
+          headers: { apikey: key, Authorization: `Bearer ${key}` }
+        });
+        const snaps = await res.json();
+        if (!snaps?.length) continue;
+
+        const snap = snaps[0];
+        const currentOrdered = Number(snap.ordered || 0);
+        const newOrdered = Math.max(0, currentOrdered - qty);
+
+        await fetch(`${url}/rest/v1/inventory_snapshots?id=eq.${snap.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: key,
+            Authorization: `Bearer ${key}`,
+            Prefer: 'return=minimal'
+          },
+          body: JSON.stringify({ ordered: newOrdered })
+        });
+      }
+      console.log('[ParIntelligence] ordered reversed for order:', order.id);
+    } catch (err) {
+      console.warn('[ParIntelligence] reverseSnapshotOrdered failed:', err);
+    }
+  }
+
   window.BarStockParIntelligence = {
     runCycle,
     saveSnapshot,
     completeSnapshot,
-    updateSnapshotOrdered
+    updateSnapshotOrdered,
+    reverseSnapshotOrdered
   };
 
 })();

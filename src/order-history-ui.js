@@ -91,6 +91,12 @@
         throw new Error('Orders cloud delete helper not available');
       }
 
+      // Par Intelligence — reverse ordered qty
+      const deletedOrder = (state.orderHistory || []).find(o => o.id === id);
+      if (deletedOrder && window.BarStockParIntelligence) {
+        window.BarStockParIntelligence.reverseSnapshotOrdered(deletedOrder).catch(err => console.warn('[ParIntelligence] reverse failed:', err));
+      }
+
       state.orderHistory = (state.orderHistory||[]).filter(order => order.id !== id);
       compareSelection = compareSelection.filter(entryId => entryId !== id);
 
@@ -136,6 +142,11 @@
         await window.deleteOrderFromSupabase(id);
       } else {
         throw new Error('Orders cloud delete helper not available');
+      }
+
+      // Par Intelligence — reverse ordered qty
+      if (order && window.BarStockParIntelligence) {
+        window.BarStockParIntelligence.reverseSnapshotOrdered(order).catch(err => console.warn('[ParIntelligence] reverse failed:', err));
       }
 
       if (typeof window.loadOrdersFromCloud === 'function') {
