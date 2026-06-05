@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="styles/tables.css">
   <link rel="stylesheet" href="styles/buttons.css">
   <link rel="stylesheet" href="styles/app.css">
+  <link rel="stylesheet" href="styles/theoretical-usage.css">
 
   <link rel="stylesheet" href="styles/fixes.css">
   <link rel="stylesheet" href="styles/auth.css">
@@ -101,7 +102,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260605-131055</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260605-134017</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -120,6 +121,7 @@
       <button class="bs-nav-tab" onclick="bsScrollTo('historySection')">Order History</button>
       <button class="bs-nav-tab" onclick="bsScrollTo('noMatchSection')">No Match</button>
       <button class="bs-nav-tab" onclick="bsScrollTo('costReportSection')">Costs</button>
+      <button class="bs-nav-tab" onclick="bsScrollTo('theoreticalSection')">Usage</button>
     </div>
   </div>
 
@@ -153,6 +155,12 @@
       <div class="bs-focus-title">Costs</div>
       <div class="bs-focus-sub" id="fgSub-costReport">Track COGS vs benchmarks</div>
       <div class="bs-focus-badge" id="fgBadge-costReport"></div>
+    </div>
+    <div class="bs-focus-card card" onclick="bsOpenSection('theoretical')">
+      <i class="ti ti-chart-dots bs-focus-icon" aria-hidden="true"></i>
+      <div class="bs-focus-title">Usage</div>
+      <div class="bs-focus-sub" id="fgSub-theoretical">Compare sales vs usage</div>
+      <div class="bs-focus-badge" id="fgBadge-theoretical"></div>
     </div>
 
   </div>
@@ -474,6 +482,72 @@
     </div>
   </div>
 
+
+
+  <div class="card section-card" id="theoreticalSection">
+    <div class="section-header-row">
+      <div style="flex:1 1 auto">
+        <div class="sectionhead">
+          <div>
+            <strong><span class="section-title">Theoretical Usage</span></strong>
+            <div class="small muted">Weekly usage tracking, variance analysis and loss reports.</div>
+          </div>
+        </div>
+      </div>
+      <button id="theoreticalToggle" class="section-toggle" title="Collapse or expand Theoretical Usage">−</button>
+    </div>
+    <div class="section-body" id="theoreticalSectionBody">
+
+      <!-- Week list view -->
+      <div id="tuWeekListView">
+        <div class="tu-controls">
+          <span class="small muted" id="tuWeekCount">Loading weeks...</span>
+          <button class="bs-btn bs-btn-default" onclick="window.BarStockTheoreticalUsage.refresh()" style="margin-left:auto"><i class="ti ti-refresh" aria-hidden="true"></i> Refresh</button>
+        </div>
+        <div class="tu-week-list" id="tuWeekList"></div>
+        <div class="tu-empty hidden" id="tuWeekEmpty">No weekly data available yet. Load a count to start tracking.</div>
+      </div>
+
+      <!-- Week detail view -->
+      <div id="tuWeekDetailView" class="hidden">
+        <div class="tu-controls" style="margin-bottom:10px">
+          <button class="bs-btn bs-btn-default" onclick="window.BarStockTheoreticalUsage.showWeekList()"><i class="ti ti-arrow-left" aria-hidden="true"></i> All weeks</button>
+          <span id="tuDetailWeekLabel" style="font-size:14px;font-weight:700;color:var(--text)"></span>
+          <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+            <button class="tu-event-toggle" id="tuEventToggleBtn" onclick="window.BarStockTheoreticalUsage.toggleEventWeek()">Mark as event week</button>
+            <label class="tu-upload-btn"><i class="ti ti-upload" aria-hidden="true"></i> Upload Sales CSV<input type="file" id="tuSalesCsvFile" accept=".csv" style="display:none" /></label>
+            <button class="bs-btn bs-btn-default" id="tuGeneratePdfBtn" onclick="window.BarStockTheoreticalUsage.generatePdf()"><i class="ti ti-file-text" aria-hidden="true"></i> PDF</button>
+            <button class="bs-btn bs-btn-primary" id="tuSendEmailBtn" onclick="window.BarStockTheoreticalUsage.openEmailModal()"><i class="ti ti-mail" aria-hidden="true"></i> Email</button>
+          </div>
+        </div>
+
+        <!-- Summary metrics -->
+        <div class="tu-summary-grid" id="tuSummaryGrid"></div>
+
+        <!-- Items table -->
+        <div class="tablewrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Item</th>
+                <th>Vendor</th>
+                <th>Used</th>
+                <th>Sold</th>
+                <th>Variance</th>
+                <th>Variance%</th>
+                <th>Loss ($)</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tuDetailBody"></tbody>
+          </table>
+        </div>
+        <div class="tu-empty hidden" id="tuDetailEmpty">No data for this week.</div>
+      </div>
+
+    </div>
+  </div>
 
   <div class="status" id="statusBar">Ready.</div>
 </div>
@@ -951,7 +1025,7 @@ function setSectionCollapsed(sectionName, collapsed){
   saveSectionStates(states);
 }
 function initSectionToggles(){
-  ['inventory','vendor','history','noMatch','costReport'].forEach(name => {
+  ['inventory','vendor','history','noMatch','costReport','theoretical'].forEach(name => {
     const btn = document.getElementById(name + 'Toggle');
     const body = document.getElementById(name + 'SectionBody');
     if(!btn || !body) return;
@@ -960,7 +1034,7 @@ function initSectionToggles(){
     });
   });
   const states = loadSectionStates();
-  ['inventory','vendor','history','noMatch','costReport'].forEach(name => {
+  ['inventory','vendor','history','noMatch','costReport','theoretical'].forEach(name => {
     setSectionCollapsed(name, !!states[name]);
   });
 }
@@ -3516,6 +3590,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/inventory-realtime.js"></script>
 <script src="src/inventory-cloud.js?v=account-wjm-1"></script>
 <script src="src/par-intelligence.js"></script>
+<script src="src/theoretical-usage.js"></script>
 <script src="src/no-match-cloud.js"></script>
 
 
@@ -3900,6 +3975,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     {id:'history', icon:'ti-history', label:'History'},
     {id:'noMatch', icon:'ti-alert-circle', label:'No Match'},
     {id:'costReport', icon:'ti-chart-bar', label:'Costs'},
+    {id:'theoretical', icon:'ti-chart-dots', label:'Usage'},
   ];
   miniSections.forEach(s => {
     const el = document.createElement('div');
@@ -3933,7 +4009,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
   // Update nav tabs to use focus mode
   document.querySelectorAll('.bs-nav-tab').forEach((btn, i) => {
-    const sections = ['inventory','vendor','history','noMatch','costReport'];
+    const sections = ['inventory','vendor','history','noMatch','costReport','theoretical'];
     btn.onclick = () => bsOpenSection(sections[i]);
   });
 
