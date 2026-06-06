@@ -27,6 +27,7 @@
   <link rel="stylesheet" href="styles/buttons.css">
   <link rel="stylesheet" href="styles/app.css">
   <link rel="stylesheet" href="styles/theoretical-usage.css">
+  <link rel="stylesheet" href="styles/order-history.css">
 
   <link rel="stylesheet" href="styles/fixes.css">
   <link rel="stylesheet" href="styles/auth.css">
@@ -102,7 +103,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260606-124406</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260606-134016</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -277,18 +278,6 @@
       <button id="historyToggle" class="section-toggle" title="Collapse or expand Order History">−</button>
     </div>
     <div class="section-body" id="historySectionBody">
-      <div id="compareToolbar" class="compare-toolbar hidden">
-        <div id="compareStatus" class="compare-status">0 selected</div>
-        <button id="compareOrdersBtn" class="primary ui-control" disabled>Compare Orders</button>
-        <button id="clearCompareBtn" class="ui-control">Clear</button>
-      </div>
-      <div class="history-controls-top">
-        <div class="tabs history-vendor-tabs" id="historyVendorTabs"></div>
-      </div>
-      <div class="history-controls-bottom">
-        <input id="historySearchInput" class="ui-control" placeholder="Search orders..." />
-        <input id="historyDateFilter" class="ui-control" type="date" />
-      </div>
       <div id="historyList" class="history-list"></div>
     </div>
   </div>
@@ -2266,7 +2255,7 @@ function render(){
   const q = normalizeName(document.getElementById('searchInput')?.value || '');
   const vendorFilter = document.getElementById('vendorFilter')?.value || 'ALL';
   const inventoryVendors = getVendorsForFilter();
-  document.getElementById('inventoryVendorTabs').innerHTML = inventoryVendors.map(v => `<button class="${vendorFilter===v?'active':''}" onclick="setInventoryVendorFilter('${v.replace(/'/g,"\'")}')">${v==='ALL'?'ALL':v}</button>`).join('');
+  document.getElementById('inventoryVendorTabs').innerHTML = inventoryVendors.map(v => `<div class="oh-filter-chip ${vendorFilter===v?'active':''}" onclick="setInventoryVendorFilter('${v.replace(/'/g,"\'")}')">${v==='ALL'?'ALL':v}</div>`).join('');
   const filtered = state.master.filter(r => (!q || r.itemNorm.includes(q) || normalizeName(r.code).includes(q)) && (vendorFilter==='ALL' || r.vendor===vendorFilter));
   document.getElementById('inventoryBody').innerHTML = filtered.map(r => {
     const idx = state.master.findIndex(m => m.itemNorm===r.itemNorm && String(m.code||'')===String(r.code||''));
@@ -2274,7 +2263,7 @@ function render(){
   }).join('') || `<tr><td colspan="8" class="muted">No inventory loaded.</td></tr>`;
 
   const vendors = getVendorsForFilter();
-  document.getElementById('vendorTabs').innerHTML = vendors.map(v => `<button class="${activeVendorTab===v?'active':''}" onclick="setVendorTab('${v.replace(/'/g,"\'")}')">${v}</button>`).join('');
+  document.getElementById('vendorTabs').innerHTML = vendors.map(v => `<div class="oh-filter-chip ${activeVendorTab===v?'active':''}" onclick="setVendorTab('${v.replace(/'/g,"\'")}')">${v}</div>`).join('');
   const vendRows = getCurrentVendorRows();
   const vendorSectionBody = document.getElementById('vendorSectionBody');
   if(vendorSectionBody) vendorSectionBody.classList.toggle('compact-empty', vendRows.length === 0);
