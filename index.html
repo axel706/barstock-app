@@ -102,7 +102,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260606-104432</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260606-105205</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -684,6 +684,12 @@
         <thead><tr><th>VENDOR</th><th>CODES</th><th>BOTTLES</th></tr></thead>
         <tbody id="previewVendorBody"></tbody>
       </table>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:14px;padding:10px 12px;background:rgba(56,189,248,.06);border-radius:10px;border:1px solid rgba(56,189,248,.15)">
+      <i class="ti ti-calendar" style="color:#38bdf8;font-size:16px" aria-hidden="true"></i>
+      <span style="font-size:13px;font-weight:600;color:var(--text)">Cycle week start</span>
+      <input type="date" id="previewWeekStart" style="font-size:13px;padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:var(--card);color:var(--text);margin-left:4px">
+      <span class="small muted" id="previewWeekStartHint"></span>
     </div>
     <div class="toolbar" style="margin-top:16px;justify-content:flex-end">
       <button id="previewCancel">Cancel</button>
@@ -2428,6 +2434,18 @@ function showPreviewModal(){
     return {vendor:v, codes:rows.length, bottles:rows.reduce((sum, r) => sum + parseNum(r.toOrder), 0)};
   }).filter(r => r.codes>0 || r.bottles>0);
   document.getElementById('previewVendorBody').innerHTML = vendorRows.map(r => `<tr><td>${badge(r.vendor)}</td><td>${r.codes}</td><td>${fmt(r.bottles)}</td></tr>`).join('') || `<tr><td colspan="3" class="muted">No vendor orders would be created.</td></tr>`;
+  // Set default week start in selector
+  const weekInput = document.getElementById('previewWeekStart');
+  const weekHint = document.getElementById('previewWeekStartHint');
+  if (weekInput && window.BarStockParIntelligence) {
+    const defaultWeek = window.BarStockParIntelligence.getEffectiveWeekStart();
+    weekInput.value = defaultWeek;
+    const day = new Date().getDay();
+    if (weekHint) weekHint.textContent = day === 0 ? 'Sunday detected — defaulting to next Monday' : 'Defaulting to current Monday';
+    weekInput.addEventListener('change', () => {
+      window.BarStockParIntelligence.setWeekStartOverride(weekInput.value || null);
+    }, { once: false });
+  }
   document.getElementById('previewModalBg').classList.remove('hidden');
 }
 function closePreviewModal(){ document.getElementById('previewModalBg').classList.add('hidden'); pendingImport = null; }
@@ -2436,9 +2454,12 @@ async function applyPendingImport(){
   document.getElementById('previewModalBg').classList.add('hidden');
   if(typeof showCountLoadingOverlay === 'function') showCountLoadingOverlay();
 
-  // Par Intelligence — close previous cycle and open new one
+  // Par Intelligence — apply week override from selector, then run cycle
   if (window.BarStockParIntelligence) {
+    const weekInput = document.getElementById('previewWeekStart');
+    if (weekInput?.value) window.BarStockParIntelligence.setWeekStartOverride(weekInput.value);
     await window.BarStockParIntelligence.runCycle(pendingImport.previewMaster);
+    window.BarStockParIntelligence.setWeekStartOverride(null); // reset after use
   }
 
   try{

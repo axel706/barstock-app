@@ -21,12 +21,23 @@
     return data[0].id;
   }
 
-  function getWeekStart() {
-    const now = new Date();
+  function getWeekStart(date) {
+    const now = date ? new Date(date) : new Date();
     const day = now.getDay();
-    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-    const monday = new Date(now.setDate(diff));
+    // Sunday (0) → next Monday (+1), all other days → previous Monday
+    const diff = day === 0 ? 1 : (1 - day);
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + diff);
     return monday.toISOString().split('T')[0];
+  }
+
+  // Allow overriding the week start date from outside
+  let _weekStartOverride = null;
+  function getEffectiveWeekStart() {
+    return _weekStartOverride || getWeekStart();
+  }
+  function setWeekStartOverride(dateStr) {
+    _weekStartOverride = dateStr || null;
   }
 
   // ─── saveSnapshot ────────────────────────────────────────────────
@@ -36,7 +47,7 @@
     try {
       const { url, key } = getConfig();
       const locationId = await fetchLocationId();
-      const weekStart = getWeekStart();
+      const weekStart = getEffectiveWeekStart();
 
       // Fetch existing snapshots for this week
       const existingRes = await fetch(
@@ -110,7 +121,7 @@
     try {
       const { url, key } = getConfig();
       const locationId = await fetchLocationId();
-      const weekStart = getWeekStart();
+      const weekStart = getEffectiveWeekStart();
 
       // Find open snapshots (on_hand_end is null) from previous weeks
       const res = await fetch(
@@ -193,7 +204,7 @@
     try {
       const { url, key } = getConfig();
       const locationId = await fetchLocationId();
-      const weekStart = getWeekStart();
+      const weekStart = getEffectiveWeekStart();
 
       for (const row of rows || []) {
         const itemName = (row.item || '').trim();
@@ -418,7 +429,7 @@
     try {
       const { url, key } = getConfig();
       const locationId = await fetchLocationId();
-      const weekStart = getWeekStart();
+      const weekStart = getEffectiveWeekStart();
       const val = Number(newOnHand || 0);
 
       // 1. Update on_hand_start of current week
@@ -466,7 +477,9 @@
     reverseSnapshotOrdered,
     calculateParOptimal,
     getPendingAdjustments,
-    updateSnapshotOnHand
+    updateSnapshotOnHand,
+    setWeekStartOverride,
+    getEffectiveWeekStart
   };
 
 })();
