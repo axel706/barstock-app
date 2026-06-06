@@ -267,6 +267,8 @@
       const salesMap = await loadSalesFromSupabase(weekStart);
       if (salesMap.size) _salesData.set(weekStart, salesMap);
     }
+    _itemComments = await loadCommentsFromSupabase(weekStart);
+    _customNotes = await loadNotesFromSupabase(weekStart);
     renderWeekDetail(weekStart);
   }
 
@@ -346,6 +348,10 @@
           ? '<span style="font-size:10px;background:#FCEBEB;color:#A32D2D;padding:2px 6px;border-radius:4px;font-weight:600">Loss</span>'
           : '<span style="font-size:10px;background:#EAF3DE;color:#3B6D11;padding:2px 6px;border-radius:4px;font-weight:600">OK</span>';
 
+      const comment = _itemComments.get(r.item_name) || '';
+      const commentIcon = comment
+        ? `<button class="tu-comment-btn has-comment" onclick="window.BarStockTheoreticalUsage.openCommentModal('${r.item_name.replace(/'/g,"\'")}')" title="${comment.replace(/"/g,'&quot;')}"><i class="ti ti-message-circle" aria-hidden="true"></i></button>`
+        : `<button class="tu-comment-btn" onclick="window.BarStockTheoreticalUsage.openCommentModal('${r.item_name.replace(/'/g,"\'")}')" title="Add comment"><i class="ti ti-message-circle" aria-hidden="true"></i></button>`;
       return `<tr>
         <td>${r.code || ''}</td>
         <td style="font-weight:500">${r.item_name}</td>
@@ -356,6 +362,7 @@
         <td>${variancePctFmt}</td>
         <td>${lossFmt}</td>
         <td>${statusBadge}</td>
+        <td>${commentIcon}</td>
       </tr>`;
     }).join('') || '<tr><td colspan="9" class="muted" style="text-align:center;padding:20px">No items found.</td></tr>';
   }
@@ -393,6 +400,143 @@
   function initCsvUpload() {
     attachCsvListener('tuSalesCsvLiquor', 'Liquor');
     attachCsvListener('tuSalesCsvWine', 'Wine');
+  }
+
+
+  // ─── Comments & Notes ────────────────────────────────────────────
+  async function loadCommentsFromSupabase(weekStart) {
+    try {
+      const { url, key } = getConfig();
+      const locationId = await fetchLocationId();
+      const res = await fetch(
+        `${url}/rest/v1/theoretical_comments?location_id=eq.${locationId}&week_start=eq.${weekStart}&select=item_name,comment`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      );
+      const rows = await res.json();
+      const map = new Map();
+      for (const r of rows || []) map.set(r.item_name, r.comment);
+      return map;
+    } catch (err) {
+      console.warn('[TheoreticalUsage] loadComments failed:', err);
+      return new Map();
+    }
+  }
+
+  async function saveComment(weekStart, itemName, comment) {
+    try {
+      const { url, key } = getConfig();
+      const locationId = await fetchLocationId();
+
+      // Check if exists
+      const res = await fetch(
+        `${url}/rest/v1/theoretical_comments?location_id=eq.${locationId}&week_start=eq.${weekStart}&item_name=eq.${encodeURIComponent(itemName)}&select=id`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      );
+      const existing = await res.json();
+
+      if (existing?.length) {
+        await fetch(`${url}/rest/v1/theoretical_comments?id=eq.${existing[0].id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
+          body: JSON.stringify({ comment, updated_at: new Date().toISOString() })
+        });
+      } else {
+        await fetch(`${url}/rest/v1/theoretical_comments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
+          body: JSON.stringify({ location_id: locationId, week_start: weekStart, item_name: itemName, comment })
+        });
+      }
+      _itemComments.set(itemName, comment);
+    } catch (err) {
+      console.warn('[TheoreticalUsage] saveComment failed:', err);
+    }
+  }
+
+  async function loadNotesFromSupabase(weekStart) {
+    try {
+      const { url, key } = getConfig();
+      const locationId = await fetchLocationId();
+      const res = await fetch(
+        `${url}/rest/v1/theoretical_notes?location_id=eq.${locationId}&week_start=eq.${weekStart}&select=notes`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      );
+      const rows = await res.json();
+      return rows?.[0]?.notes || '';
+    } catch (err) {
+      console.warn('[TheoreticalUsage] loadNotes failed:', err);
+      return '';
+    }
+  }
+
+  async function saveNotes(weekStart, notes) {
+    try {
+      const { url, key } = getConfig();
+      const locationId = await fetchLocationId();
+      const res = await fetch(
+        `${url}/rest/v1/theoretical_notes?location_id=eq.${locationId}&week_start=eq.${weekStart}&select=id`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      );
+      const existing = await res.json();
+      if (existing?.length) {
+        await fetch(`${url}/rest/v1/theoretical_notes?id=eq.${existing[0].id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
+          body: JSON.stringify({ notes, updated_at: new Date().toISOString() })
+        });
+      } else {
+        await fetch(`${url}/rest/v1/theoretical_notes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
+          body: JSON.stringify({ location_id: locationId, week_start: weekStart, notes })
+        });
+      }
+      _customNotes = notes;
+    } catch (err) {
+      console.warn('[TheoreticalUsage] saveNotes failed:', err);
+    }
+  }
+
+  function openCommentModal(itemName) {
+    const modal = document.getElementById('tuCommentModal');
+    const input = document.getElementById('tuCommentInput');
+    const label = document.getElementById('tuCommentItemLabel');
+    if (!modal || !input) return;
+    label.textContent = itemName;
+    input.value = _itemComments.get(itemName) || '';
+    modal.classList.remove('hidden');
+    input.focus();
+    modal._currentItem = itemName;
+  }
+
+  async function saveCommentFromModal() {
+    const modal = document.getElementById('tuCommentModal');
+    const input = document.getElementById('tuCommentInput');
+    if (!modal || !input || !_currentWeek) return;
+    const itemName = modal._currentItem;
+    const comment = input.value.trim();
+    await saveComment(_currentWeek.week_start, itemName, comment);
+    modal.classList.add('hidden');
+    renderWeekDetail(_currentWeek.week_start);
+    if (typeof setStatus === 'function') setStatus('Comment saved.');
+  }
+
+  function openNotesModal() {
+    const modal = document.getElementById('tuNotesModal');
+    const input = document.getElementById('tuNotesInput');
+    if (!modal || !input) return;
+    input.value = _customNotes || '';
+    modal.classList.remove('hidden');
+    input.focus();
+  }
+
+  async function saveNotesFromModal() {
+    const modal = document.getElementById('tuNotesModal');
+    const input = document.getElementById('tuNotesInput');
+    if (!modal || !input || !_currentWeek) return;
+    await saveNotes(_currentWeek.week_start, input.value.trim());
+    modal.classList.add('hidden');
+    if (typeof setStatus === 'function') setStatus('Notes saved.');
   }
 
   // ─── Generate PDF ─────────────────────────────────────────────────
@@ -702,7 +846,11 @@
     generatePdf,
     openEmailModal,
     setSort,
-    resetSales: () => _currentWeek && resetSalesForWeek(_currentWeek.week_start)
+    resetSales: () => _currentWeek && resetSalesForWeek(_currentWeek.week_start),
+    openCommentModal,
+    saveCommentFromModal,
+    openNotesModal,
+    saveNotesFromModal
   };
 
 })();

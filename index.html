@@ -102,7 +102,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260606-122721</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260606-123751</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -522,6 +522,7 @@
               <option value="loss">Sort by Loss ($)</option>
               <option value="variance">Sort by Variance</option>
             </select>
+            <button class="bs-btn bs-btn-default" onclick="window.BarStockTheoreticalUsage.openNotesModal()"><i class="ti ti-notes" aria-hidden="true"></i> Notes</button>
             <button class="bs-btn bs-btn-default" id="tuGeneratePdfBtn" onclick="window.BarStockTheoreticalUsage.generatePdf()"><i class="ti ti-file-text" aria-hidden="true"></i> PDF</button>
             <button class="bs-btn bs-btn-primary" id="tuSendEmailBtn" onclick="window.BarStockTheoreticalUsage.openEmailModal()"><i class="ti ti-mail" aria-hidden="true"></i> Email</button>
           </div>
@@ -544,6 +545,7 @@
                 <th>Variance%</th>
                 <th>Loss ($)</th>
                 <th>Status</th>
+                <th></th>
               </tr>
             </thead>
             <tbody id="tuDetailBody"></tbody>
@@ -4332,6 +4334,33 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   };
 })();
 </script>
+
+<!-- Theoretical Usage — Comment Modal -->
+<div id="tuCommentModal" class="modalbg hidden">
+  <div class="modal" style="width:min(480px,96vw)">
+    <h3 style="margin-top:0">Item Comment</h3>
+    <div class="small muted" id="tuCommentItemLabel" style="margin-bottom:12px"></div>
+    <textarea id="tuCommentInput" style="width:100%;min-height:100px;resize:vertical;background:var(--muted);color:var(--text);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px;font-size:13px;font-family:inherit" placeholder="Add a note about this item..."></textarea>
+    <div class="toolbar" style="margin-top:12px;justify-content:flex-end">
+      <button onclick="document.getElementById('tuCommentModal').classList.add('hidden')">Cancel</button>
+      <button class="primary" onclick="window.BarStockTheoreticalUsage.saveCommentFromModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Theoretical Usage — Notes Modal -->
+<div id="tuNotesModal" class="modalbg hidden">
+  <div class="modal" style="width:min(560px,96vw)">
+    <h3 style="margin-top:0">Weekly Notes</h3>
+    <div class="small muted" style="margin-bottom:12px">These notes will appear in the PDF report.</div>
+    <textarea id="tuNotesInput" style="width:100%;min-height:160px;resize:vertical;background:var(--muted);color:var(--text);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px;font-size:13px;font-family:inherit" placeholder="Add observations, action items, or context for this week..."></textarea>
+    <div class="toolbar" style="margin-top:12px;justify-content:flex-end">
+      <button onclick="document.getElementById('tuNotesModal').classList.add('hidden')">Cancel</button>
+      <button class="primary" onclick="window.BarStockTheoreticalUsage.saveNotesFromModal()">Save</button>
+    </div>
+  </div>
+</div>
+
 <div id="settingsModalBg" class="modalbg hidden">
   <div class="modal" style="width:min(560px,96vw)">
     <h3 style="margin-top:0" id="settingsTitle">Settings</h3>

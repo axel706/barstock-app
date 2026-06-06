@@ -38,3 +38,7 @@ body.light .tu-metric{background:rgba(15,23,42,.04)}
 .tu-metric-val{font-size:22px;font-weight:700;color:var(--text);line-height:1.2}
 .tu-metric-lbl{font-size:11px;color:var(--sub);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em}
 .tu-empty{font-size:13px;color:var(--sub);padding:20px 0;text-align:center}
+
+.tu-comment-btn{background:transparent;border:none;cursor:pointer;color:var(--sub);padding:2px 4px;border-radius:4px;font-size:14px;opacity:0.4;transition:opacity .15s,color .15s}
+.tu-comment-btn:hover{opacity:1;color:var(--accent)}
+.tu-comment-btn.has-comment{opacity:1;color:var(--accent)}
