@@ -25,6 +25,8 @@
   let _weeks = [];
   let _salesData = new Map(); // week_start -> Map(item_name -> sold)
   let _sortMode = 'variance'; // 'loss' or 'variance'
+  let _itemComments = new Map(); // item_name -> comment string
+  let _customNotes = ''; // free text notes for current week
 
   // ─── Load weeks ──────────────────────────────────────────────────
   async function loadWeeks() {
@@ -398,6 +400,8 @@
     if (!_currentWeek) return;
     const rows = await loadWeekDetail(_currentWeek.week_start);
     const salesMap = _salesData.get(_currentWeek.week_start) || new Map();
+    const comments = _itemComments || new Map();
+    const customNotes = _customNotes || '';
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
     const pageW = pdf.internal.pageSize.getWidth();
@@ -405,102 +409,254 @@
     const margin = 36;
     let y = margin;
 
+    const NAVY = [15, 23, 42];
+    const BLUE = [56, 189, 248];
+    const WHITE = [248, 250, 252];
+    const GRAY = [100, 116, 139];
+    const RED = [168, 45, 45];
+    const GREEN = [29, 158, 117];
+    const ORANGE = [180, 83, 9];
+    const RED_BG = [254, 226, 226];
+    const GREEN_BG = [220, 252, 231];
+    const ORANGE_BG = [255, 237, 213];
+    const ALT_BG = [240, 246, 252];
+
     const location = (window.BARSTOCK_CONFIG?.LOCATION_NAME || 'The Crown Tavern').toUpperCase();
     const weekLabel = formatWeekLabel(_currentWeek.week_start);
 
-    // Header
+    // ── HEADER ────────────────────────────────────────────────────────
     const hdrH = y + 42;
-    pdf.setFillColor(15, 23, 42);
-    pdf.rect(0, 0, pageW, hdrH, 'F');
-    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(22); pdf.setTextColor(248, 250, 252);
+    pdf.setFillColor(...NAVY); pdf.rect(0, 0, pageW, hdrH, 'F');
+    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(22); pdf.setTextColor(...WHITE);
     pdf.text('BarStock', margin, y + 16);
     const bsW = pdf.getTextWidth('BarStock');
-    pdf.setFillColor(56, 189, 248);
-    pdf.circle(margin + bsW + 3.5, y + 13.5, 2.6, 'F');
-    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8); pdf.setTextColor(100, 116, 139);
+    pdf.setFillColor(...BLUE); pdf.circle(margin + bsW + 3.5, y + 13.5, 2.6, 'F');
+    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8); pdf.setTextColor(...GRAY);
     pdf.text('PRO', margin + bsW + 9, y + 16);
     const locW = pdf.getTextWidth(location) + 16;
-    pdf.setFillColor(56, 189, 248);
-    pdf.roundedRect(margin, y + 20, locW, 14, 7, 7, 'F');
-    pdf.setTextColor(15, 23, 42);
-    pdf.setFontSize(8);
+    pdf.setFillColor(...BLUE); pdf.roundedRect(margin, y + 20, locW, 14, 7, 7, 'F');
+    pdf.setTextColor(...NAVY); pdf.setFontSize(8);
     pdf.text(location, margin + locW / 2, y + 30, { align: 'center' });
-    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10); pdf.setTextColor(248, 250, 252);
+    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10); pdf.setTextColor(...WHITE);
     pdf.text('THEORETICAL USAGE', pageW - margin, y + 14, { align: 'right' });
     const wkW = pdf.getTextWidth(weekLabel) + 16;
-    pdf.setFillColor(56, 189, 248);
-    pdf.roundedRect(pageW - margin - wkW, y + 20, wkW, 14, 7, 7, 'F');
-    pdf.setTextColor(15, 23, 42); pdf.setFontSize(8);
+    pdf.setFillColor(...BLUE); pdf.roundedRect(pageW - margin - wkW, y + 20, wkW, 14, 7, 7, 'F');
+    pdf.setTextColor(...NAVY); pdf.setFontSize(8);
     pdf.text(weekLabel, pageW - margin - wkW / 2, y + 30, { align: 'center' });
     y = hdrH;
-    pdf.setFillColor(56, 189, 248);
-    pdf.rect(0, y, pageW, 3, 'F');
-    y += 20;
+    pdf.setFillColor(...BLUE); pdf.rect(0, y, pageW, 3, 'F');
+    y += 16;
 
-    // Enriched data
+    // ── ENRICH DATA ───────────────────────────────────────────────────
     const enriched = rows.map(r => {
       const used = r.used !== null ? Number(r.used) : null;
       const sold = salesMap.size ? matchSold(r.item_name, salesMap) : null;
       const variance = used !== null && sold !== null ? used - sold : null;
       const variancePct = variance !== null && sold > 0 ? (variance / sold) * 100 : null;
-      const loss = variance !== null ? variance * Number(r.value || 0) : null;
+      const loss = variance !== null && r.value ? variance * Number(r.value) : null;
       return { ...r, used, sold, variance, variancePct, loss };
-    }).sort((a, b) => {
-      if (a.loss === null && b.loss === null) return 0;
-      if (a.loss === null) return 1;
-      if (b.loss === null) return -1;
-      return b.loss - a.loss;
     });
 
-    const withLoss = enriched.filter(r => r.variance !== null && r.variance > 0);
+    const withVariance = enriched.filter(r => r.variance !== null).sort((a, b) => b.variance - a.variance);
+    const withLoss = withVariance.filter(r => r.variance > 0.05);
+    const noSalesData = enriched.filter(r => r.sold === null);
     const totalLoss = withLoss.reduce((s, r) => s + (r.loss || 0), 0);
-    const noSales = enriched.filter(r => r.used > 0 && r.sold === null);
-    const top6Loss = withLoss.slice(0, 6).reduce((s, r) => s + (r.loss || 0), 0);
-    const top6Pct = totalLoss > 0 ? Math.round((top6Loss / totalLoss) * 100) : 0;
+    const top10 = withLoss.slice(0, 10);
+    const top10Loss = top10.reduce((s, r) => s + (r.loss || 0), 0);
+    const top10Pct = totalLoss > 0 ? Math.round((top10Loss / totalLoss) * 100) : 0;
+    const lossItems = withLoss.length;
+    const totalItems = enriched.length;
 
-    // Summary table
-    pdf.autoTable({
-      startY: y,
-      margin: { left: margin, right: margin },
-      head: [['Metric', 'Value']],
-      body: [
-        ['Total Loss', `$${totalLoss.toFixed(2)}`],
-        ['Items analyzed', String(enriched.length)],
-        ['Items with 0 sold (used > 0)', String(noSales.length)],
-        ['Top 6 share of total loss', `~${top6Pct}%`],
-      ],
-      headStyles: { fillColor: [15, 23, 42], textColor: [248, 250, 252], fontStyle: 'bold', fontSize: 9 },
-      bodyStyles: { fontSize: 9 },
-      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 200 }, 1: { cellWidth: 150 } },
-      theme: 'grid',
+    // ── 3 CARDS (Cost Report style) ───────────────────────────────────
+    const cardH = 70;
+    const cardW = (pageW - margin * 2 - 16) / 3;
+    const cardDefs = [
+      {
+        label: 'TOTAL LOSS THIS WEEK',
+        main: `$${totalLoss.toFixed(2)}`,
+        sub: `${lossItems} items contributing to loss`,
+        mainColor: totalLoss > 0 ? RED : GREEN,
+        border: totalLoss > 0 ? [239, 68, 68] : [34, 197, 94]
+      },
+      {
+        label: 'ITEMS WITH LOSS',
+        main: `${lossItems} / ${totalItems}`,
+        sub: `${noSalesData.length} items missing sales data`,
+        mainColor: NAVY,
+        border: BLUE
+      },
+      {
+        label: 'TOP 10 SHARE OF LOSS',
+        main: `~${top10Pct}%`,
+        sub: top10Loss > 0 ? `$${top10Loss.toFixed(2)} of total loss` : 'No loss data available',
+        mainColor: NAVY,
+        border: BLUE
+      },
+    ];
+
+    cardDefs.forEach((card, i) => {
+      const cx = margin + i * (cardW + 8);
+      pdf.setDrawColor(...card.border); pdf.setLineWidth(0.8);
+      pdf.roundedRect(cx, y, cardW, cardH, 6, 6, 'S');
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(7); pdf.setTextColor(...GRAY);
+      pdf.text(card.label, cx + 10, y + 14);
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(16); pdf.setTextColor(...card.mainColor);
+      pdf.text(card.main, cx + 10, y + 36);
+      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7); pdf.setTextColor(...GRAY);
+      pdf.text(card.sub, cx + 10, y + 52);
     });
-    y = pdf.lastAutoTable.finalY + 16;
+    y += cardH + 14;
 
-    // Items table
-    const tableRows = enriched.map(r => [
+    // ── HELPERS ───────────────────────────────────────────────────────
+    function ensureSpace(needed) {
+      if (y > pageH - margin - needed) { pdf.addPage(); y = margin + 10; }
+    }
+    function drawBanner(text) {
+      pdf.setFillColor(...NAVY);
+      pdf.roundedRect(margin, y, pageW - margin * 2, 22, 4, 4, 'F');
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9); pdf.setTextColor(224, 242, 254);
+      pdf.text(text, pageW / 2, y + 15, { align: 'center' });
+      y += 22;
+    }
+    function drawRoundedBlock(startY, endY) {
+      pdf.setDrawColor(200, 215, 230); pdf.setLineWidth(0.8);
+      pdf.roundedRect(margin, startY, pageW - margin * 2, endY - startY, 6, 6, 'S');
+    }
+
+    // ── TOP 10 TABLE ──────────────────────────────────────────────────
+    ensureSpace(40);
+    let blockStart = y;
+    drawBanner('TOP 10 — HIGHEST VARIANCE');
+    const top10TableRows = top10.map(r => [
       r.item_name,
-      r.variance !== null ? (r.variance > 0 ? '+' : '') + r.variance.toFixed(2) : '—',
-      r.loss !== null && r.loss > 0 ? `$${r.loss.toFixed(2)}` : '—',
-      r.sold === null ? 'No sales data' : r.variance > 0.1 ? 'Potential loss' : 'OK'
+      r.used !== null ? r.used.toFixed(2) : '—',
+      r.sold !== null ? r.sold.toFixed(2) : '—',
+      (r.variance > 0 ? '+' : '') + r.variance.toFixed(2),
+      r.loss !== null && r.loss > 0 ? '$' + r.loss.toFixed(2) : '—',
+      comments.get(r.item_name) || ''
     ]);
 
     pdf.autoTable({
       startY: y,
       margin: { left: margin, right: margin },
-      head: [['Product', 'Variance Units', 'Loss ($)', 'Notes']],
-      body: tableRows,
-      headStyles: { fillColor: [15, 23, 42], textColor: [248, 250, 252], fontStyle: 'bold', fontSize: 9 },
-      bodyStyles: { fontSize: 8 },
-      columnStyles: { 0: { cellWidth: 200 }, 1: { halign: 'right', cellWidth: 80 }, 2: { halign: 'right', cellWidth: 80 } },
-      theme: 'grid',
+      head: [['Product', 'Used', 'Sold', 'Variance', 'Loss ($)', 'Comment']],
+      body: top10TableRows,
+      headStyles: { fillColor: [30, 41, 59], textColor: WHITE, fontStyle: 'bold', fontSize: 7, cellPadding: 4 },
+      bodyStyles: { fontSize: 7, textColor: NAVY, cellPadding: 4 },
+      alternateRowStyles: { fillColor: ALT_BG },
+      columnStyles: {
+        0: { cellWidth: 155 },
+        1: { halign: 'right', cellWidth: 38 },
+        2: { halign: 'right', cellWidth: 38 },
+        3: { halign: 'right', cellWidth: 48 },
+        4: { halign: 'right', cellWidth: 48 },
+        5: { cellWidth: 'auto' }
+      },
+      theme: 'plain',
       didParseCell: (data) => {
-        if (data.section === 'body' && data.column.index === 1) {
-          const val = parseFloat(data.cell.raw);
-          if (val > 0) data.cell.styles.textColor = [168, 45, 45];
-          else if (val < 0) data.cell.styles.textColor = [29, 158, 117];
+        if (data.section === 'body') {
+          if (data.column.index === 3) {
+            const val = parseFloat(data.cell.raw);
+            if (val > 0) { data.cell.styles.textColor = RED; data.cell.styles.fontStyle = 'bold'; }
+            else if (val < 0) { data.cell.styles.textColor = GREEN; data.cell.styles.fontStyle = 'bold'; }
+          }
+          if (data.column.index === 4 && data.cell.raw !== '—') {
+            data.cell.styles.textColor = RED; data.cell.styles.fontStyle = 'bold';
+          }
+        }
+      },
+      didDrawCell: (data) => {
+        if (data.section === 'body') {
+          pdf.setDrawColor(218, 228, 240); pdf.setLineWidth(0.3);
+          pdf.line(data.cell.x, data.cell.y + data.cell.height, data.cell.x + data.cell.width, data.cell.y + data.cell.height);
         }
       }
     });
+    y = pdf.lastAutoTable.finalY;
+    drawRoundedBlock(blockStart, y);
+    y += 12;
+
+    // -- POUR-IQ PATTERN REVIEW -------------------------------------------
+    ensureSpace(40);
+    const attention = withLoss.filter(r => r.variance > 1.0).slice(0, 5);
+    const stable = withVariance.filter(r => Math.abs(r.variance) <= 0.2).slice(0, 5);
+    const concerns = withLoss.filter(r => r.variance > 0.2 && r.variance <= 1.0).slice(0, 5);
+
+    if (attention.length || stable.length || concerns.length) {
+      const piqBody = [];
+      const piqMeta = [];
+
+      if (attention.length) {
+        piqBody.push(['Requires Attention', '', '', '']); piqMeta.push('subheader-red');
+        attention.forEach(r => { piqBody.push([r.item_name, r.vendor || '', '+' + r.variance.toFixed(2), 'Attention']); piqMeta.push('attention'); });
+      }
+      if (stable.length) {
+        piqBody.push(['Stable', '', '', '']); piqMeta.push('subheader-green');
+        stable.forEach(r => { piqBody.push([r.item_name, r.vendor || '', r.variance.toFixed(2), 'Stable']); piqMeta.push('stable'); });
+      }
+      if (concerns.length) {
+        piqBody.push(['New Concern', '', '', '']); piqMeta.push('subheader-orange');
+        concerns.forEach(r => { piqBody.push([r.item_name, r.vendor || '', '+' + r.variance.toFixed(2), 'Monitor']); piqMeta.push('concern'); });
+      }
+
+      const piqBlockStart = y;
+      drawBanner('POUR-IQ  PATTERN REVIEW');
+      pdf.autoTable({
+        startY: y,
+        margin: { left: margin, right: margin },
+        head: [['Product', 'Vendor', 'Variance', 'Status']],
+        body: piqBody,
+        headStyles: { fillColor: [30, 41, 59], textColor: WHITE, fontStyle: 'bold', fontSize: 7, cellPadding: 4 },
+        bodyStyles: { fontSize: 7, textColor: NAVY, cellPadding: 4 },
+        alternateRowStyles: { fillColor: [255,255,255] },
+        columnStyles: {
+          0: { cellWidth: 190 },
+          1: { cellWidth: 110 },
+          2: { halign: 'right', cellWidth: 60 },
+          3: { cellWidth: 'auto' }
+        },
+        theme: 'grid',
+        didParseCell: (data) => {
+          if (data.section !== 'body') return;
+          const type = piqMeta[data.row.index];
+          if (!type) return;
+          if (type.startsWith('subheader')) {
+            const bg = type === 'subheader-red' ? [254,235,235] : type === 'subheader-green' ? [235,252,240] : [255,245,230];
+            const col = type === 'subheader-red' ? RED : type === 'subheader-green' ? GREEN : ORANGE;
+            data.cell.styles.fillColor = bg;
+            data.cell.styles.textColor = col;
+            data.cell.styles.fontStyle = 'bold';
+          }
+          if (data.column.index === 2 && !type.startsWith('subheader')) {
+            const val = parseFloat(data.cell.raw);
+            if (val > 0) { data.cell.styles.textColor = RED; data.cell.styles.fontStyle = 'bold'; }
+            else if (val < 0) { data.cell.styles.textColor = GREEN; data.cell.styles.fontStyle = 'bold'; }
+          }
+          if (data.column.index === 3 && !type.startsWith('subheader')) {
+            if (type === 'attention') { data.cell.styles.textColor = RED; data.cell.styles.fontStyle = 'bold'; }
+            else if (type === 'stable') { data.cell.styles.textColor = GREEN; data.cell.styles.fontStyle = 'bold'; }
+            else { data.cell.styles.textColor = ORANGE; data.cell.styles.fontStyle = 'bold'; }
+          }
+        }
+      });
+      y = pdf.lastAutoTable.finalY;
+      drawRoundedBlock(piqBlockStart, y);
+      y += 12;
+    }
+
+    // ── NOTES (page 2) ────────────────────────────────────────────────
+    if (customNotes) {
+      pdf.addPage(); y = margin + 10;
+      pdf.autoTable({
+        startY: y,
+        margin: { left: margin, right: margin },
+        head: [['NOTES']],
+        body: [[customNotes]],
+        headStyles: { fillColor: NAVY, textColor: WHITE, fontStyle: 'bold', fontSize: 7, cellPadding: 5 },
+        bodyStyles: { fontSize: 8, textColor: NAVY, cellPadding: 8 },
+        theme: 'grid',
+      });
+    }
 
     pdf.save(`theoretical_usage_${_currentWeek.week_start}.pdf`);
     if (typeof setStatus === 'function') setStatus('Theoretical Usage PDF generated.');
