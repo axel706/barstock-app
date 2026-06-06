@@ -135,33 +135,63 @@
       const { url, key } = getConfig();
       const locationId = await fetchLocationId();
 
-      // Delete existing sales for this week first
+      // Fetch existing items for this week
+      const existingRes = await fetch(
+        `${url}/rest/v1/theoretical_sales?location_id=eq.${locationId}&week_start=eq.${weekStart}&select=id,item_name`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      );
+      const existing = await existingRes.json();
+      const existingMap = new Map((existing || []).map(r => [r.item_name, r.id]));
+
+      const toInsert = [];
+      const toUpdate = [];
+
+      for (const [item_name, sold] of salesMap.entries()) {
+        if (existingMap.has(item_name)) {
+          toUpdate.push({ id: existingMap.get(item_name), sold, source_file: fileName || '' });
+        } else {
+          toInsert.push({ location_id: locationId, week_start: weekStart, item_name, sold, source_file: fileName || '' });
+        }
+      }
+
+      // Insert new
+      const chunkSize = 200;
+      for (let i = 0; i < toInsert.length; i += chunkSize) {
+        await fetch(`${url}/rest/v1/theoretical_sales`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
+          body: JSON.stringify(toInsert.slice(i, i + chunkSize))
+        });
+      }
+
+      // Update existing
+      for (const r of toUpdate) {
+        await fetch(`${url}/rest/v1/theoretical_sales?id=eq.${r.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
+          body: JSON.stringify({ sold: r.sold, source_file: r.source_file })
+        });
+      }
+      console.log('[TheoreticalUsage] Sales upserted:', toInsert.length, 'new,', toUpdate.length, 'updated for', weekStart);
+    } catch (err) {
+      console.warn('[TheoreticalUsage] saveSales failed:', err);
+    }
+  }
+
+  async function resetSalesForWeek(weekStart) {
+    if (!confirm('Reset all sales data for this week?')) return;
+    try {
+      const { url, key } = getConfig();
+      const locationId = await fetchLocationId();
       await fetch(
         `${url}/rest/v1/theoretical_sales?location_id=eq.${locationId}&week_start=eq.${weekStart}`,
         { method: 'DELETE', headers: { apikey: key, Authorization: `Bearer ${key}` } }
       );
-
-      // Insert new rows in chunks
-      const rows = Array.from(salesMap.entries()).map(([item_name, sold]) => ({
-        location_id: locationId,
-        week_start: weekStart,
-        item_name,
-        sold,
-        source_file: fileName || ''
-      }));
-
-      const chunkSize = 200;
-      for (let i = 0; i < rows.length; i += chunkSize) {
-        const chunk = rows.slice(i, i + chunkSize);
-        await fetch(`${url}/rest/v1/theoretical_sales`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
-          body: JSON.stringify(chunk)
-        });
-      }
-      console.log('[TheoreticalUsage] Sales saved:', rows.length, 'items for', weekStart);
+      _salesData.delete(weekStart);
+      renderWeekDetail(weekStart);
+      if (typeof setStatus === 'function') setStatus('Sales data reset for this week.');
     } catch (err) {
-      console.warn('[TheoreticalUsage] saveSales failed:', err);
+      console.warn('[TheoreticalUsage] resetSales failed:', err);
     }
   }
 
@@ -327,24 +357,32 @@
   }
 
   // ─── Upload Sales CSV ─────────────────────────────────────────────
-  function initCsvUpload() {
-    const input = document.getElementById('tuSalesCsvFile');
-    if (!input) return;
+  function attachCsvListener(inputId, label) {
+    const input = document.getElementById(inputId);
+    if (!input || input._tuListenerAttached) return;
+    input._tuListenerAttached = true;
     input.addEventListener('change', async e => {
       const f = e.target.files[0];
       if (!f || !_currentWeek) return;
       try {
         const text = await f.text();
-        const salesMap = parseSalesCsv(text);
-        _salesData.set(_currentWeek.week_start, salesMap);
-        await saveSalesToSupabase(_currentWeek.week_start, salesMap, f.name);
+        const newSalesMap = parseSalesCsv(text);
+        const existing = _salesData.get(_currentWeek.week_start) || new Map();
+        const merged = new Map([...existing, ...newSalesMap]);
+        _salesData.set(_currentWeek.week_start, merged);
+        await saveSalesToSupabase(_currentWeek.week_start, newSalesMap, f.name);
         renderWeekDetail(_currentWeek.week_start);
-        if (typeof setStatus === 'function') setStatus(`Sales CSV loaded and saved: ${salesMap.size} items for week of ${formatWeekLabel(_currentWeek.week_start)}.`);
+        if (typeof setStatus === 'function') setStatus(`${label} CSV loaded: ${newSalesMap.size} items. Total: ${merged.size} for week of ${formatWeekLabel(_currentWeek.week_start)}.`);
       } catch (err) {
         alert(err.message || String(err));
       }
       e.target.value = '';
     });
+  }
+
+  function initCsvUpload() {
+    attachCsvListener('tuSalesCsvLiquor', 'Liquor');
+    attachCsvListener('tuSalesCsvWine', 'Wine');
   }
 
   // ─── Generate PDF ─────────────────────────────────────────────────
@@ -493,7 +531,8 @@
     showWeekList,
     toggleEventWeek,
     generatePdf,
-    openEmailModal
+    openEmailModal,
+    resetSales: () => _currentWeek && resetSalesForWeek(_currentWeek.week_start)
   };
 
 })();
