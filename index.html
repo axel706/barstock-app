@@ -102,7 +102,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260606-005948</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260606-104432</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -518,6 +518,10 @@
             <label class="bs-btn bs-btn-default" style="cursor:pointer"><i class="ti ti-upload" aria-hidden="true"></i> Liquor CSV<input type="file" id="tuSalesCsvLiquor" accept=".csv" style="display:none" /></label>
             <label class="bs-btn bs-btn-default" style="cursor:pointer"><i class="ti ti-upload" aria-hidden="true"></i> Wine CSV<input type="file" id="tuSalesCsvWine" accept=".csv" style="display:none" /></label>
             <button class="bs-btn danger" onclick="window.BarStockTheoreticalUsage.resetSales()" title="Reset sales data for this week"><i class="ti ti-trash" aria-hidden="true"></i> Reset Sales</button>
+            <select id="tuSortSelect" class="bs-btn bs-btn-default" style="cursor:pointer" onchange="window.BarStockTheoreticalUsage.setSort(this.value)">
+              <option value="loss">Sort by Loss ($)</option>
+              <option value="variance">Sort by Variance</option>
+            </select>
             <button class="bs-btn bs-btn-default" id="tuGeneratePdfBtn" onclick="window.BarStockTheoreticalUsage.generatePdf()"><i class="ti ti-file-text" aria-hidden="true"></i> PDF</button>
             <button class="bs-btn bs-btn-primary" id="tuSendEmailBtn" onclick="window.BarStockTheoreticalUsage.openEmailModal()"><i class="ti ti-mail" aria-hidden="true"></i> Email</button>
           </div>
@@ -2851,6 +2855,13 @@ async function saveEditedItem(){
     render();
     closeEditModal();
     setStatus(`Item '${item}' updated in cloud.`);
+
+    // Par Intelligence — update snapshot on_hand_start if onHand changed
+    if (window.BarStockParIntelligence && onHand !== row.onHand) {
+      window.BarStockParIntelligence.updateSnapshotOnHand(item, code, onHand).catch(err =>
+        console.warn('[ParIntelligence] updateSnapshotOnHand failed:', err)
+      );
+    }
   } catch(err){
     console.error(err);
     alert('Could not save item changes to cloud.\n\n' + (err.message || String(err)));

@@ -409,6 +409,55 @@
     }
   }
 
+
+  // ─── updateSnapshotOnHand ─────────────────────────────────────────
+  // Called when user manually edits onHand — corrects:
+  // 1. on_hand_start of current week snapshot
+  // 2. on_hand_end of previous week snapshot (and recalculates used)
+  async function updateSnapshotOnHand(itemName, code, newOnHand) {
+    try {
+      const { url, key } = getConfig();
+      const locationId = await fetchLocationId();
+      const weekStart = getWeekStart();
+      const val = Number(newOnHand || 0);
+
+      // 1. Update on_hand_start of current week
+      let currentUrl = `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&week_start=eq.${weekStart}&item_name=eq.${encodeURIComponent(itemName)}`;
+      if (code) currentUrl += `&code=eq.${encodeURIComponent(code)}`;
+      currentUrl += '&select=id';
+      const currentRes = await fetch(currentUrl, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+      const currentSnaps = await currentRes.json();
+      if (currentSnaps?.length) {
+        await fetch(`${url}/rest/v1/inventory_snapshots?id=eq.${currentSnaps[0].id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
+          body: JSON.stringify({ on_hand_start: val })
+        });
+      }
+
+      // 2. Update on_hand_end of previous week (week_start < current, on_hand_end not null)
+      let prevUrl = `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&week_start=lt.${weekStart}&item_name=eq.${encodeURIComponent(itemName)}&on_hand_end=not.is.null&select=id,on_hand_start,ordered&order=week_start.desc&limit=1`;
+      if (code) prevUrl += `&code=eq.${encodeURIComponent(code)}`;
+      const prevRes = await fetch(prevUrl, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+      const prevSnaps = await prevRes.json();
+      if (prevSnaps?.length) {
+        const prev = prevSnaps[0];
+        const ordered = Number(prev.ordered || 0);
+        const onHandStart = Number(prev.on_hand_start || 0);
+        const newUsed = onHandStart + ordered - val;
+        await fetch(`${url}/rest/v1/inventory_snapshots?id=eq.${prev.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
+          body: JSON.stringify({ on_hand_end: val, used: newUsed })
+        });
+      }
+
+      console.log('[ParIntelligence] onHand correction applied for:', itemName, val);
+    } catch (err) {
+      console.warn('[ParIntelligence] updateSnapshotOnHand failed:', err);
+    }
+  }
+
   window.BarStockParIntelligence = {
     runCycle,
     saveSnapshot,
@@ -416,7 +465,8 @@
     updateSnapshotOrdered,
     reverseSnapshotOrdered,
     calculateParOptimal,
-    getPendingAdjustments
+    getPendingAdjustments,
+    updateSnapshotOnHand
   };
 
 })();

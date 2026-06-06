@@ -24,6 +24,7 @@
   let _currentWeek = null;
   let _weeks = [];
   let _salesData = new Map(); // week_start -> Map(item_name -> sold)
+  let _sortMode = 'variance'; // 'loss' or 'variance'
 
   // ─── Load weeks ──────────────────────────────────────────────────
   async function loadWeeks() {
@@ -297,12 +298,19 @@
       return { ...r, used, sold, variance, variancePct, loss };
     });
 
-    // Sort by loss desc (most loss first), nulls last
+    // Sort based on _sortMode — no sales data always last
     enriched.sort((a, b) => {
-      if (a.loss === null && b.loss === null) return 0;
-      if (a.loss === null) return 1;
-      if (b.loss === null) return -1;
-      return b.loss - a.loss;
+      if (a.sold === null && b.sold !== null) return 1;
+      if (a.sold !== null && b.sold === null) return -1;
+      if (_sortMode === 'loss') {
+        const aVal = a.loss !== null ? a.loss : -999;
+        const bVal = b.loss !== null ? b.loss : -999;
+        return bVal - aVal;
+      } else {
+        const aVal = a.variance !== null ? a.variance : -999;
+        const bVal = b.variance !== null ? b.variance : -999;
+        return bVal - aVal;
+      }
     });
 
     // Summary metrics
@@ -525,6 +533,11 @@
 
   window.addEventListener('load', () => setTimeout(init, 2000));
 
+  function setSort(mode) {
+    _sortMode = mode || 'variance';
+    if (_currentWeek) renderWeekDetail(_currentWeek.week_start);
+  }
+
   window.BarStockTheoreticalUsage = {
     refresh,
     openWeek,
@@ -532,6 +545,7 @@
     toggleEventWeek,
     generatePdf,
     openEmailModal,
+    setSort,
     resetSales: () => _currentWeek && resetSalesForWeek(_currentWeek.week_start)
   };
 
