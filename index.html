@@ -102,7 +102,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260606-123751</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260606-124406</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2249,17 +2249,17 @@ function getParChipHtml(row){
   if(par.status === 'observing') return '';
   if(par.status === 'never_ordered'){
     const tip = `Suggested: ${par.currentSuggested} · Never ordered in ${par.normalWeeks} normal weeks · Review this item`;
-    return `<span class="par-chip par-chip-review" title="${tip}">Review</span>`;
+    return `<span class="par-chip par-chip-review" title="${tip}">Pour·IQ™ Review</span>`;
   }
   if(par.adjustment === -1){
     const tip = `Avg used: ${par.avgUsed}/wk · Optimal par: ${par.suggestedOptimal} · Current: ${par.currentSuggested}`;
-    return `<span class="par-chip par-chip-down" title="${tip}">PAR −1</span>`;
+    return `<span class="par-chip par-chip-down" title="${tip}">Pour·IQ™ −1</span>`;
   }
   if(par.adjustment === 1){
     const tip = `Avg used: ${par.avgUsed}/wk · Optimal par: ${par.suggestedOptimal} · Current: ${par.currentSuggested}`;
-    return `<span class="par-chip par-chip-up" title="${tip}">PAR +1</span>`;
+    return `<span class="par-chip par-chip-up" title="${tip}">Pour·IQ™ +1</span>`;
   }
-  return '<span class="par-chip par-chip-ok">PAR ✓</span>';
+  return '<span class="par-chip par-chip-ok">Pour·IQ™ ✓</span>';
 }
 
 function render(){
