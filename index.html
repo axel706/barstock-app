@@ -103,7 +103,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260606-134716</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260606-230235</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2443,30 +2443,38 @@ async function applyPendingImport(){
   document.getElementById('previewModalBg').classList.add('hidden');
   if(typeof showCountLoadingOverlay === 'function') showCountLoadingOverlay();
 
-  // Par Intelligence — apply week override from selector, then run cycle
-  if (window.BarStockParIntelligence) {
-    const weekInput = document.getElementById('previewWeekStart');
-    if (weekInput?.value) window.BarStockParIntelligence.setWeekStartOverride(weekInput.value);
-    await window.BarStockParIntelligence.runCycle(pendingImport.previewMaster);
-    window.BarStockParIntelligence.setWeekStartOverride(null); // reset after use
-  }
+  // Aplicar state localmente primero
+  const importMatches = pendingImport.matches || 0;
+  state.master = pendingImport.previewMaster.map(r => ({...r}));
+  state.noMatches = pendingImport.noMatches || [];
+  state.lastCountName = pendingImport.fileName;
+  state.lastUpdated = new Date().toISOString();
+  saveState();
+  render();
 
   try{
     if (!window.BarStockInventoryCloud || !window.BarStockNoMatchCloud) {
       throw new Error('Inventory / No Match cloud modules not available');
     }
 
-    // Aplicar el preview al state ANTES de sincronizar
-    const importMatches = pendingImport.matches || 0;
-    state.master = pendingImport.previewMaster.map(r => ({...r}));
-    state.noMatches = pendingImport.noMatches || [];
-    state.lastCountName = pendingImport.fileName;
-    state.lastUpdated = new Date().toISOString();
-    saveState();
-    render();
+    // Run all cloud operations in parallel
+    const cloudOps = [
+      window.BarStockInventoryCloud.replaceInventoryMaster(state.master || []),
+      window.BarStockNoMatchCloud.replaceNoMatches(state.noMatches || []),
+    ];
 
-    await window.BarStockInventoryCloud.replaceInventoryMaster(state.master || []);
-    await window.BarStockNoMatchCloud.replaceNoMatches(state.noMatches || []);
+    // Par Intelligence cycle in parallel
+    if (window.BarStockParIntelligence) {
+      const weekInput = document.getElementById('previewWeekStart');
+      if (weekInput?.value) window.BarStockParIntelligence.setWeekStartOverride(weekInput.value);
+      cloudOps.push(
+        window.BarStockParIntelligence.runCycle(pendingImport.previewMaster).then(() => {
+          window.BarStockParIntelligence.setWeekStartOverride(null);
+        })
+      );
+    }
+
+    await Promise.all(cloudOps);
 
     setStatus(`Count imported: ${state.lastCountName}. Matches: ${importMatches}. No matches: ${state.noMatches.length}. Synced to cloud for the new weekly cycle.`);
     refreshParAdjustments();
@@ -3551,6 +3559,11 @@ resetLegacyValuesIfNeeded();
 saveState();
 applyTheme(loadTheme());
 
+// Pour·IQ — load adjustments on startup if master available
+if (state.master && state.master.length > 0) {
+  setTimeout(() => refreshParAdjustments().catch(console.warn), 2500);
+}
+
 const historySearchInput = document.getElementById('historySearchInput');
 const historyVendorFilter = document.getElementById('historyVendorFilter');
 const historyDateFilter = document.getElementById('historyDateFilter');
@@ -4317,7 +4330,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       el.style.visibility = 'hidden';
       el.style.transition = 'opacity 0.35s ease, visibility 0s linear 0.35s';
       if(typeof bsOpenSection === 'function') bsOpenSection('inventory');
-    }, 7000);
+    }, 12000);
   };
 })();
 </script>

@@ -155,7 +155,8 @@
         avgUsedMap.set(k, vals.reduce((a, b) => a + b, 0) / vals.length);
       }
 
-      // Patch each open snapshot
+      // Patch all open snapshots in parallel
+      const patches = [];
       for (const snap of openSnapshots) {
         const k = `${snap.item_name}||${snap.code}`;
         const onHandEnd = onHandMap.has(k) ? onHandMap.get(k) : null;
@@ -167,7 +168,7 @@
         const avgUsed = avgUsedMap.get(k) || null;
         const isEventWeek = avgUsed !== null && used > avgUsed * 1.5;
 
-        await fetch(`${url}/rest/v1/inventory_snapshots?id=eq.${snap.id}`, {
+        patches.push(fetch(`${url}/rest/v1/inventory_snapshots?id=eq.${snap.id}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -180,9 +181,10 @@
             used: used,
             is_event_week: isEventWeek
           })
-        });
+        }));
       }
-      console.log('[ParIntelligence] Snapshots completed:', openSnapshots.length, 'items');
+      await Promise.all(patches);
+      console.log('[ParIntelligence] Snapshots completed:', patches.length, 'items (parallel)');
     } catch (err) {
       console.warn('[ParIntelligence] completeSnapshot failed:', err);
     }
