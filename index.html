@@ -103,7 +103,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260606-230235</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260606-232751</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -4357,6 +4357,26 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     <div class="toolbar" style="margin-top:12px;justify-content:flex-end">
       <button onclick="document.getElementById('tuNotesModal').classList.add('hidden')">Cancel</button>
       <button class="primary" onclick="window.BarStockTheoreticalUsage.saveNotesFromModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Order History — View Items Modal -->
+<div id="ohItemsModal" class="modalbg hidden">
+  <div class="modal" style="width:min(700px,96vw)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <h3 style="margin:0" id="ohItemsModalTitle">Order Items</h3>
+        <div class="small muted" id="ohItemsModalSub"></div>
+      </div>
+      <button onclick="document.getElementById('ohItemsModal').classList.add('hidden')" style="background:transparent;border:none;cursor:pointer;font-size:20px;color:var(--sub)"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="tablewrap" style="max-height:420px">
+      <table>
+        <thead><tr><th>Code</th><th>Item</th><th>Qty</th></tr></thead>
+        <tbody id="ohItemsModalBody"></tbody>
+      </table>
     </div>
   </div>
 </div>

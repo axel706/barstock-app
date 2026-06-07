@@ -262,17 +262,71 @@
     }
   }
 
+  function openOrderItemsModal(id) {
+    const order = (state.orderHistory || []).find(o => o.id === id);
+    if (!order) return;
+    const modal = document.getElementById('ohItemsModal');
+    const title = document.getElementById('ohItemsModalTitle');
+    const sub = document.getElementById('ohItemsModalSub');
+    const body = document.getElementById('ohItemsModalBody');
+    if (!modal || !body) return;
+    title.textContent = order.vendor + ' — ' + (order.poNumber || '');
+    sub.textContent = formatHistoryDate(order.createdAt) + ' · ' + order.items.length + ' items · ' + fmt(order.totalUnits) + ' btl';
+    body.innerHTML = order.items.map(item =>
+      '<tr><td>' + escapeHtml(item.code || '') + '</td><td>' + escapeHtml(item.item || '') + '</td><td style="font-weight:600;text-align:right">' + fmt(item.finalOrder) + '</td></tr>'
+    ).join('');
+    closeAllOhPopovers();
+    modal.classList.remove('hidden');
+  }
+
+  function closeAllOhPopovers() {
+    document.querySelectorAll('.oh-popover').forEach(p => p.remove());
+  }
+
   function toggleHcExpanded(id) {
-    const panel = document.getElementById('hcExpanded_' + id);
+    const existing = document.getElementById('ohPop_' + id);
+    if (existing) { existing.remove(); return; }
+    closeAllOhPopovers();
+
     const btn = document.getElementById('hcChevron_' + id);
-    if (!panel) return;
-    panel.classList.toggle('hidden');
-    if (btn) btn.innerHTML = panel.classList.contains('hidden')
-      ? '<i class="ti ti-dots" style="font-size:16px"></i>'
-      : '<i class="ti ti-x" style="font-size:16px"></i>';
+    if (!btn) return;
+    const order = (state.orderHistory || []).find(o => o.id === id);
+    if (!order) return;
+
+    const pop = document.createElement('div');
+    pop.id = 'ohPop_' + id;
+    pop.className = 'oh-popover';
+    const isSelected = compareSelection.includes(id);
+    pop.innerHTML = [
+      `<button class="oh-pop-btn" onclick="openOrderItemsModal('${id}')"><i class="ti ti-list-details"></i> View items</button>`,
+      `<button class="oh-pop-btn ${isSelected ? 'active' : ''}" onclick="toggleCompareSelection('${id}');closeAllOhPopovers()"><i class="ti ti-checkbox"></i> ${isSelected ? 'Selected' : 'Select'}</button>`,
+      `<button class="oh-pop-btn" onclick="compareWithPrevious('${id}');closeAllOhPopovers()"><i class="ti ti-arrows-diff"></i> Compare to previous</button>`,
+      `<button class="oh-pop-btn" onclick="openHistoryDateEdit('${id}');closeAllOhPopovers()"><i class="ti ti-calendar-edit"></i> Edit date</button>`,
+      `<button class="oh-pop-btn" onclick="reExportHistoryOrder('${id}');closeAllOhPopovers()"><i class="ti ti-download"></i> Re-export</button>`,
+    ].join('');
+
+    // Position relative to button
+    const rect = btn.getBoundingClientRect();
+    pop.style.position = 'fixed';
+    pop.style.top = (rect.bottom + 6) + 'px';
+    pop.style.right = (window.innerWidth - rect.right) + 'px';
+    pop.style.zIndex = '99999';
+    document.body.appendChild(pop);
+
+    // Close on outside click
+    setTimeout(() => {
+      document.addEventListener('click', function handler(e) {
+        if (!pop.contains(e.target) && e.target !== btn) {
+          pop.remove();
+          document.removeEventListener('click', handler);
+        }
+      });
+    }, 10);
   }
 
   window.renderOrderHistory     = renderOrderHistory;
+  window.openOrderItemsModal    = openOrderItemsModal;
+  window.closeAllOhPopovers     = closeAllOhPopovers;
   window.toggleHcExpanded       = toggleHcExpanded;
   window.toggleHistoryDetails   = toggleHistoryDetails;
   window.deleteHistoryOrder     = deleteHistoryOrder;

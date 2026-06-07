@@ -44,3 +44,12 @@ body.light .oh-load-btn{border-color:rgba(15,23,42,.15)}
 .oh-card-btn.danger:hover{background:rgba(239,68,68,.25)}
 body.light .oh-card-btn.primary{background:rgba(2,132,199,.1);color:#0284c7;border-color:rgba(2,132,199,.25)}
 body.light .oh-card-btn.danger{background:rgba(220,38,38,.1);color:#dc2626;border-color:rgba(220,38,38,.25)}
+
+/* Order History Popover */
+.oh-popover{background:var(--card);border:0.5px solid rgba(255,255,255,.12);border-radius:12px;padding:4px;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+body.light .oh-popover{border-color:rgba(15,23,42,.12);box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.oh-pop-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;background:transparent;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text);text-align:left;transition:background .15s}
+.oh-pop-btn:hover{background:rgba(255,255,255,.07)}
+body.light .oh-pop-btn:hover{background:rgba(15,23,42,.05)}
+.oh-pop-btn.active{color:#38bdf8}
+.oh-pop-btn i{font-size:15px;color:var(--sub);width:16px}
