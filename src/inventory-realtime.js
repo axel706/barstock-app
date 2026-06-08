@@ -64,6 +64,7 @@
       throw new Error('La respuesta de inventory_items no fue válida');
     }
 
+    if (!window.state) window.state = {};
     window.state.master = rows.map(r => {
       const onHand = Number(r.on_hand || 0);
       const suggested = Number(r.suggested || 0);
