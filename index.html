@@ -103,7 +103,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260608-000943</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260608-004423</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -884,6 +884,7 @@ const VALUE_RESET_MIGRATION_KEY = 'crown_inventory_value_reset_v241';
 const PRICE_ALIAS_KEY = `crown_inventory_price_aliases_v1_${getActiveStorageSuffix()}`;
 const SECTION_STATE_KEY = `crown_inventory_section_visibility_${getActiveStorageSuffix()}`;
 let state = loadState();
+window.state = state;
 state.orderHistory = Array.isArray(state.orderHistory) ? state.orderHistory : [];
 state.placedOrders = Array.isArray(state.placedOrders) ? state.placedOrders : [];
 let aliases = loadAliases();
