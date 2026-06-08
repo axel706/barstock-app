@@ -47,6 +47,7 @@
   }
 
   async function loadInventoryFromSupabase() {
+    console.log("[RT] loadInventoryFromSupabase called, importing:", window.__barstockImporting);
     if (window.__barstockImporting) return;
     const locationId = await fetchLocationId();
 
