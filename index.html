@@ -103,7 +103,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260606-232751</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260608-000156</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -123,6 +123,7 @@
       <button class="bs-nav-tab" onclick="bsScrollTo('noMatchSection')">No Match</button>
       <button class="bs-nav-tab" onclick="bsScrollTo('costReportSection')">Costs</button>
       <button class="bs-nav-tab" onclick="bsScrollTo('theoreticalSection')">Usage</button>
+      <button class="bs-nav-tab" onclick="bsScrollTo('pourIqSection')">Pour-IQ</button>
     </div>
   </div>
 
@@ -162,6 +163,12 @@
       <div class="bs-focus-title">Usage</div>
       <div class="bs-focus-sub" id="fgSub-theoretical">Compare sales vs usage</div>
       <div class="bs-focus-badge" id="fgBadge-theoretical"></div>
+    </div>
+    <div class="bs-focus-card card" onclick="bsOpenSection('pourIq')">
+      <i class="ti ti-brain bs-focus-icon" aria-hidden="true"></i>
+      <div class="bs-focus-title">Pour-IQ</div>
+      <div class="bs-focus-sub" id="fgSub-pourIq">Par level intelligence</div>
+      <div class="bs-focus-badge warn" id="fgBadge-pourIq"></div>
     </div>
 
   </div>
@@ -470,6 +477,23 @@
   </div>
 
 
+
+  <div class="card section-card" id="pourIqSection">
+    <div class="section-header-row">
+      <div style="flex:1 1 auto">
+        <div class="sectionhead">
+          <div>
+            <strong><span class="section-title">Pour-IQ&#x2122; &mdash; Par Intelligence</span></strong>
+            <div class="small muted">Par level optimization based on historical usage patterns.</div>
+          </div>
+        </div>
+      </div>
+      <button id="pourIqToggle" class="section-toggle" title="Collapse or expand Pour-IQ">&#x2212;</button>
+    </div>
+    <div class="section-body" id="pourIqSectionBody">
+      <div id="pourIqRoot"></div>
+    </div>
+  </div>
 
   <div class="card section-card" id="theoreticalSection">
     <div class="section-header-row">
@@ -2334,6 +2358,7 @@ async function loadMasterFile(file){
     console.error('Cloud sync failed', err);
     setStatus(`Master loaded locally, but cloud sync failed.`);
   }
+  if (typeof PourIqSection !== 'undefined') setTimeout(() => PourIqSection.refresh(), 500);
 }
 
 function findMatchIndex(rawName){
@@ -2477,7 +2502,7 @@ async function applyPendingImport(){
     await Promise.all(cloudOps);
 
     setStatus(`Count imported: ${state.lastCountName}. Matches: ${importMatches}. No matches: ${state.noMatches.length}. Synced to cloud for the new weekly cycle.`);
-    refreshParAdjustments();
+    refreshParAdjustments().then(() => { if (typeof PourIqSection !== 'undefined') PourIqSection.refresh(); });
   } catch(err){
     console.error(err);
     setStatus(`Count imported locally, but cloud sync failed.`);
@@ -3562,6 +3587,7 @@ applyTheme(loadTheme());
 // Pour·IQ — load adjustments on startup if master available
 if (state.master && state.master.length > 0) {
   setTimeout(() => refreshParAdjustments().catch(console.warn), 2500);
+  setTimeout(() => { if (typeof PourIqSection !== 'undefined') PourIqSection.refresh(); }, 3200);
 }
 
 const historySearchInput = document.getElementById('historySearchInput');
@@ -3626,6 +3652,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/inventory-realtime.js"></script>
 <script src="src/inventory-cloud.js?v=account-wjm-1"></script>
 <script src="src/par-intelligence.js"></script>
+<script src="src/par-intelligence-section.js"></script>
 <script src="src/theoretical-usage.js"></script>
 <script src="src/no-match-cloud.js"></script>
 
@@ -4012,6 +4039,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     {id:'noMatch', icon:'ti-alert-circle', label:'No Match'},
     {id:'costReport', icon:'ti-chart-bar', label:'Costs'},
     {id:'theoretical', icon:'ti-chart-dots', label:'Usage'},
+    {id:'pourIq', icon:'ti-brain', label:'Pour-IQ'},
   ];
   miniSections.forEach(s => {
     const el = document.createElement('div');
@@ -4043,9 +4071,17 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   setInterval(bsUpdateFocusGrid, 2000);
   window.addEventListener('load', bsUpdateFocusGrid);
 
+  window.bsUpdatePourIqBadge = function(overCount, underCount) {
+    const total = (overCount || 0) + (underCount || 0);
+    const badge = document.getElementById('fgBadge-pourIq');
+    const sub = document.getElementById('fgSub-pourIq');
+    if (badge) badge.textContent = total > 0 ? total + ' pending' : '';
+    if (sub) sub.textContent = total > 0 ? total + ' adjustments ready' : 'Par level intelligence';
+  };
+
   // Update nav tabs to use focus mode
   document.querySelectorAll('.bs-nav-tab').forEach((btn, i) => {
-    const sections = ['inventory','vendor','history','noMatch','costReport','theoretical'];
+    const sections = ['inventory','vendor','history','noMatch','costReport','theoretical','pourIq'];
     btn.onclick = () => bsOpenSection(sections[i]);
   });
 

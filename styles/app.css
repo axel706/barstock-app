@@ -2434,3 +2434,118 @@ body.light .par-chip-ok{background:#EAF3DE;color:#3B6D11}
 body.light .par-chip-observing{background:#F1EFE8;color:#5F5E5A}
 .par-chip-review{background:#E6F1FB;color:#0C447C}
 
+
+/* ── Pour-IQ Section ──────────────────────────────────────────────────────── */
+.piq-section { padding: 0.5rem 0 1rem; }
+
+.piq-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.piq-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 15px; font-weight: 500; color: var(--color-text-primary);
+}
+.piq-title .ti-brain { font-size: 18px; color: #378ADD; }
+
+.piq-pending-badge {
+  font-size: 11px; font-weight: 500; padding: 2px 8px;
+  border-radius: 99px; background: #FCEBEB; color: #A32D2D;
+  display: inline-flex; align-items: center;
+}
+.piq-apply-all-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 500; padding: 6px 14px;
+  border-radius: var(--border-radius-md);
+  border: 0.5px solid var(--color-border-secondary);
+  background: var(--color-background-primary);
+  color: var(--color-text-primary); cursor: pointer;
+}
+.piq-apply-all-btn:hover { background: var(--color-background-secondary); }
+
+/* Filter chips */
+.piq-filter-row {
+  display: flex; gap: 10px; margin-bottom: 1.25rem; flex-wrap: wrap;
+}
+.piq-filter-chip {
+  display: flex; flex-direction: column; align-items: flex-start;
+  padding: 10px 16px; border-radius: var(--border-radius-md);
+  border: 1.5px solid transparent;
+  background: var(--color-background-secondary);
+  cursor: pointer; min-width: 130px; transition: border-color 0.12s;
+}
+.piq-filter-chip:hover:not(.piq-chip-no-filter) { border-color: var(--color-border-secondary); }
+.piq-chip-no-filter { cursor: default; }
+
+.piq-chip-active-over  { border-color: #E24B4A !important; background: #FCEBEB !important; }
+.piq-chip-active-on    { border-color: #639922 !important; background: #EAF3DE !important; }
+.piq-chip-active-under { border-color: #EF9F27 !important; background: #FAEEDA !important; }
+
+.piq-chip-active-over  .piq-chip-value { color: #A32D2D; }
+.piq-chip-active-on    .piq-chip-value { color: #3B6D11; }
+.piq-chip-active-under .piq-chip-value { color: #854F0B; }
+.piq-chip-savings      .piq-chip-value { color: #0F6E56; }
+
+.piq-chip-label {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px;
+}
+.piq-chip-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.piq-chip-value { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+.piq-chip-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 1px; }
+
+/* Table */
+.piq-table-wrap { width: 100%; overflow-x: auto; }
+.piq-table {
+  width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed;
+}
+.piq-table th {
+  text-align: left; font-weight: 500; font-size: 12px;
+  color: var(--color-text-secondary); padding: 6px 10px;
+  border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap;
+}
+.piq-table td {
+  padding: 9px 10px; border-bottom: 0.5px solid var(--color-border-tertiary);
+  color: var(--color-text-primary); vertical-align: middle;
+}
+.piq-table tr:last-child td { border-bottom: none; }
+.piq-table tr:hover td { background: var(--color-background-secondary); }
+
+.piq-muted { color: var(--color-text-secondary); font-size: 12px; }
+
+/* Trend */
+.piq-trend { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 500; }
+.piq-trend .ti { font-size: 13px; }
+.piq-trend-up   { color: #A32D2D; }
+.piq-trend-down { color: #3B6D11; }
+.piq-trend-flat { color: #888780; }
+
+/* Pills */
+.piq-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 99px;
+}
+.piq-pill-red   { background: #FCEBEB; color: #A32D2D; }
+.piq-pill-amber { background: #FAEEDA; color: #854F0B; }
+.piq-pill-green { background: #EAF3DE; color: #3B6D11; }
+.piq-pill-gray  { background: #F1EFE8; color: #5F5E5A; }
+.piq-pill-blue  { background: #E6F1FB; color: #185FA5; }
+
+/* Action buttons */
+.piq-act-btn {
+  font-size: 12px; font-weight: 500; padding: 4px 10px;
+  border-radius: var(--border-radius-md);
+  border: 0.5px solid var(--color-border-secondary);
+  background: var(--color-background-primary);
+  color: var(--color-text-primary); cursor: pointer;
+}
+.piq-act-btn:hover { background: var(--color-background-secondary); }
+.piq-act-none { font-size: 12px; color: var(--color-text-tertiary); padding: 4px 10px; display: inline-block; }
+
+/* Empty state */
+.piq-empty {
+  text-align: center; padding: 2rem;
+  color: var(--color-text-secondary); font-size: 13px;
+}
+.piq-empty .ti { font-size: 24px; display: block; margin-bottom: 8px; }
+/* ── End Pour-IQ Section ──────────────────────────────────────────────────── */
