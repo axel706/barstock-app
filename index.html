@@ -103,7 +103,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260608-010510</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260608-010615</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2417,6 +2417,7 @@ async function importCountFile(file){
     if(resolved.status === 'unique'){
       const idx = resolved.index;
       const oldOnHand = previewMaster[idx].onHand;
+      if (rawItem.toLowerCase().includes('tito')) console.log('[DEBUG importCount] Tito idx:', idx, 'count:', count, 'item at idx:', previewMaster[idx].item);
       previewMaster[idx].onHand = count;
       previewMaster[idx].toOrder = computeToOrder(count, previewMaster[idx].suggested);
       matches++;
