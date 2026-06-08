@@ -47,6 +47,7 @@
   }
 
   async function loadInventoryFromSupabase() {
+    if (window.__barstockImporting) return;
     const locationId = await fetchLocationId();
 
     const res = await fetch(
