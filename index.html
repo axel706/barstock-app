@@ -103,7 +103,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260608-010012</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260608-010234</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2472,9 +2472,11 @@ async function applyPendingImport(){
   // Aplicar state localmente primero
   const importMatches = pendingImport.matches || 0;
   window.__barstockImporting = true;
+  console.log("[DEBUG] Titos in previewMaster BEFORE map:", pendingImport.previewMaster.find(r => r.item?.includes("Tito"))?.onHand);
+  console.log("[DEBUG] Titos in changes:", JSON.stringify(pendingImport.changes.find(r => r.item?.includes("Tito"))));
   state.master = pendingImport.previewMaster.map(r => ({...r}));
   window.state.master = state.master;
-  console.log("[DEBUG] Titos after assign:", state.master.find(r => r.item?.includes("Tito"))?.onHand, window.state.master.find(r => r.item?.includes("Tito"))?.onHand);
+  console.log("[DEBUG] Titos after assign:", state.master.find(r => r.item?.includes("Tito"))?.onHand);
   state.noMatches = pendingImport.noMatches || [];
   state.lastCountName = pendingImport.fileName;
   state.lastUpdated = new Date().toISOString();
