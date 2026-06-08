@@ -103,7 +103,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260608-010615</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260608-010923</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2395,6 +2395,7 @@ function resolveCountMatch(rawName){
 
 async function importCountFile(file){
   if(!state.master.length) throw new Error('Load a master first.');
+  window.__barstockImporting = true;
   const {rows} = await parseFile(file, false);
   const first = rows.find(r => Object.values(r).some(v => String(v).trim()!==''));
   if(!first) throw new Error('The weekly count file is empty.');
@@ -2432,6 +2433,7 @@ async function importCountFile(file){
     }
   }
   pendingImport = {fileName:file.name, previewMaster, noMatches:newNoMatches, changes, matches, ambiguousMatches};
+  window.__barstockImporting = false;
   showPreviewModal();
 }
 
