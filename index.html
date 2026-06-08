@@ -103,7 +103,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260608-005518</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260608-010012</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2474,6 +2474,7 @@ async function applyPendingImport(){
   window.__barstockImporting = true;
   state.master = pendingImport.previewMaster.map(r => ({...r}));
   window.state.master = state.master;
+  console.log("[DEBUG] Titos after assign:", state.master.find(r => r.item?.includes("Tito"))?.onHand, window.state.master.find(r => r.item?.includes("Tito"))?.onHand);
   state.noMatches = pendingImport.noMatches || [];
   state.lastCountName = pendingImport.fileName;
   state.lastUpdated = new Date().toISOString();
