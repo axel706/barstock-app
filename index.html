@@ -103,7 +103,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260608-010923</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260608-011202</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2405,7 +2405,11 @@ async function importCountFile(file){
   if(!countCol){
     throw new Error('Could not find the current Count column. The app will not use Prev Count as weekly inventory.');
   }
-  const previewMaster = state.master.map(r => ({...r}));
+  // Snapshot del master en el momento exacto del import — inmune a cambios del realtime
+  const masterSnapshot = state.master.map(r => ({...r}));
+  const previewMaster = masterSnapshot;
+  // Índice por itemNorm para match estable independiente del orden del array
+  const masterIndexByNorm = new Map(masterSnapshot.map((r, i) => [r.itemNorm, i]));
   const newNoMatches = [];
   const changes = [];
   let matches = 0;
@@ -2416,9 +2420,11 @@ async function importCountFile(file){
     const count = parseNum(row[countCol]);
     const resolved = resolveCountMatch(rawItem);
     if(resolved.status === 'unique'){
-      const idx = resolved.index;
+      // Usar el itemNorm del item resuelto para encontrar el índice en el snapshot
+      const resolvedItem = state.master[resolved.index];
+      const idx = masterIndexByNorm.get(resolvedItem?.itemNorm);
+      if(idx === undefined) { newNoMatches.push({rawItem, count, reason:'Snapshot index mismatch'}); continue; }
       const oldOnHand = previewMaster[idx].onHand;
-      if (rawItem.toLowerCase().includes('tito')) console.log('[DEBUG importCount] Tito idx:', idx, 'count:', count, 'item at idx:', previewMaster[idx].item);
       previewMaster[idx].onHand = count;
       previewMaster[idx].toOrder = computeToOrder(count, previewMaster[idx].suggested);
       matches++;
