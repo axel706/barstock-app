@@ -102,8 +102,26 @@
           <button id="exportCostReportsBtn" class="bs-dd-item" onclick="exportCostReportsBackup()"><i class="ti ti-chart-bar" aria-hidden="true"></i>Export cost reports</button>
         </div>
       </div>
+      <div class="bs-status-row" id="bsStatusRow">
+        <div class="bs-status-badge" id="bsStatusCycle">
+          <span class="bs-status-dot" id="bsStatusCycleDot"></span>
+          <span id="bsStatusCycleText">Loading...</span>
+        </div>
+        <div class="bs-status-badge" id="bsStatusItems" style="display:none;">
+          <i class="ti ti-package" aria-hidden="true"></i>
+          <span id="bsStatusItemsText"></span>
+        </div>
+        <div class="bs-status-badge" id="bsStatusPourIq" style="display:none;">
+          <i class="ti ti-brain" aria-hidden="true"></i>
+          <span id="bsStatusPourIqText"></span>
+        </div>
+        <div class="bs-status-badge" id="bsStatusRealtime" style="display:none;">
+          <span class="bs-status-dot" id="bsStatusRealtimeDot"></span>
+          <span id="bsStatusRealtimeText"></span>
+        </div>
+      </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260610-145851</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260610-180333</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -4226,6 +4244,86 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   }
   setInterval(bsUpdateFocusGrid, 2000);
   window.addEventListener('load', bsUpdateFocusGrid);
+
+  // ── Status row updater ─────────────────────────────────────────────────────
+  window.bsUpdateStatusRow = function() {
+    // Cycle + week
+    const cycleDot  = document.getElementById('bsStatusCycleDot');
+    const cycleText = document.getElementById('bsStatusCycleText');
+    const itemsBadge = document.getElementById('bsStatusItems');
+    const itemsText  = document.getElementById('bsStatusItemsText');
+    const pourIqBadge = document.getElementById('bsStatusPourIq');
+    const pourIqText  = document.getElementById('bsStatusPourIqText');
+    const rtBadge  = document.getElementById('bsStatusRealtime');
+    const rtDot    = document.getElementById('bsStatusRealtimeDot');
+    const rtText   = document.getElementById('bsStatusRealtimeText');
+
+    // Cycle status
+    if (cycleDot && cycleText) {
+      const weekStart = window.BarStockParIntelligence?.getEffectiveWeekStart?.() || null;
+      if (weekStart) {
+        const d = new Date(weekStart + 'T12:00:00');
+        const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        cycleDot.className = 'bs-status-dot bs-status-dot-green';
+        cycleText.textContent = 'Cycle open · ' + label;
+      } else {
+        cycleDot.className = 'bs-status-dot bs-status-dot-gray';
+        cycleText.textContent = 'No cycle open';
+      }
+    }
+
+    // Items
+    const itemCount = window.state?.master?.length || 0;
+    if (itemsBadge && itemsText) {
+      if (itemCount > 0) {
+        itemsText.textContent = itemCount + ' items';
+        itemsBadge.style.display = 'inline-flex';
+      } else {
+        itemsBadge.style.display = 'none';
+      }
+    }
+
+    // Pour-IQ status
+    if (pourIqBadge && pourIqText) {
+      const adjSize = window.parAdjustments?.size || 0;
+      if (adjSize > 0) {
+        const counts = { over: 0, under: 0, observing: 0 };
+        window.parAdjustments.forEach(v => {
+          if (v.status === 'observing') counts.observing++;
+          else if (v.adjustment > 0) counts.under++;
+          else if (v.adjustment < 0) counts.over++;
+        });
+        const pending = counts.over + counts.under;
+        if (pending > 0) {
+          pourIqText.textContent = 'Pour-IQ · ' + pending + ' pending';
+          pourIqBadge.querySelector('.ti').style.color = '#E24B4A';
+        } else if (counts.observing === adjSize) {
+          pourIqText.textContent = 'Pour-IQ building';
+          pourIqBadge.querySelector('.ti').style.color = '#EF9F27';
+        } else {
+          pourIqText.textContent = 'Pour-IQ on track';
+          pourIqBadge.querySelector('.ti').style.color = '#1D9E75';
+        }
+        pourIqBadge.style.display = 'inline-flex';
+      } else {
+        pourIqBadge.style.display = 'none';
+      }
+    }
+
+    // Realtime
+    if (rtBadge && rtDot && rtText) {
+      if (window.__barstockInventoryRealtimeBooted) {
+        rtDot.className = 'bs-status-dot bs-status-dot-green';
+        rtText.textContent = 'Realtime live';
+        rtBadge.style.display = 'inline-flex';
+      } else {
+        rtBadge.style.display = 'none';
+      }
+    }
+  };
+
+  setInterval(window.bsUpdateStatusRow, 3000);
+  window.addEventListener('load', () => setTimeout(window.bsUpdateStatusRow, 2000));
 
   window.bsUpdatePourIqBadge = function(overCount, underCount) {
     const total = (overCount || 0) + (underCount || 0);

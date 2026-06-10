@@ -2659,3 +2659,31 @@ body.light .piq-table tr:hover td { background: rgba(15,23,42,.05) !important; }
 .tu-trend-flat { color: #888780; }
 .tu-trend-up .ti, .tu-trend-down .ti, .tu-trend-flat .ti { font-size: 13px; }
 /* ── End Theoretical Usage trend arrows ────────────────────────────────────── */
+
+/* ── Status row ───────────────────────────────────────────────────────────── */
+.bs-status-row {
+  display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap;
+  flex: 1;
+}
+.bs-status-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 99px;
+  font-size: 12px; font-weight: 500;
+  color: var(--color-text-primary);
+  border: 1px solid rgba(0,0,0,.15);
+  background: rgba(255,255,255,.85);
+}
+body.dark .bs-status-badge, :root:not(.light) .bs-status-badge {
+  border-color: rgba(255,255,255,.18);
+  background: rgba(255,255,255,.08);
+  color: var(--color-text-primary);
+}
+.bs-status-badge .ti { font-size: 13px; }
+.bs-status-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+}
+.bs-status-dot-green  { background: #1D9E75; }
+.bs-status-dot-amber  { background: #EF9F27; }
+.bs-status-dot-red    { background: #E24B4A; }
+.bs-status-dot-gray   { background: #888780; }
+/* ── End Status row ───────────────────────────────────────────────────────── */
