@@ -60,56 +60,39 @@
         existingMap.set(`${r.item_name}||${r.code || ''}`, r.id);
       }
 
-      const toInsert = [];
-      const toUpdate = [];
+      // Build upsert payload for all items — all rows must have identical keys for PostgREST
+      const upsertRows = (master || []).map(r => ({
+        location_id: locationId,
+        week_start: weekStart,
+        item_name: r.item || '',
+        code: r.code || '',
+        vendor: r.vendor || '',
+        on_hand_start: Number(r.onHand || 0),
+        suggested_at_time: Number(r.suggested || 0),
+        ordered: null,
+        on_hand_end: null,
+        used: null,
+        is_event_week: false
+      }));
 
-      for (const r of master || []) {
-        const k = `${r.item || ''}||${r.code || ''}`;
-        const payload = {
-          on_hand_start: Number(r.onHand || 0),
-          suggested_at_time: Number(r.suggested || 0),
-        };
-        if (existingMap.has(k)) {
-          toUpdate.push({ id: existingMap.get(k), ...payload });
-        } else {
-          toInsert.push({
-            location_id: locationId,
-            week_start: weekStart,
-            item_name: r.item || '',
-            code: r.code || '',
-            vendor: r.vendor || '',
-            on_hand_start: payload.on_hand_start,
-            suggested_at_time: payload.suggested_at_time,
-            ordered: null,
-            on_hand_end: null,
-            used: null,
-            is_event_week: false
-          });
-        }
-      }
-
-      // Insert new items in chunks
+      // Upsert in chunks — constraint on (location_id, week_start, item_name) prevents duplicates
       const chunkSize = 200;
-      for (let i = 0; i < toInsert.length; i += chunkSize) {
-        const chunk = toInsert.slice(i, i + chunkSize);
+      for (let i = 0; i < upsertRows.length; i += chunkSize) {
+        const chunk = upsertRows.slice(i, i + chunkSize);
         const res = await fetch(`${url}/rest/v1/inventory_snapshots`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: key,
+            Authorization: `Bearer ${key}`,
+            Prefer: 'resolution=merge-duplicates,return=minimal'
+          },
           body: JSON.stringify(chunk)
         });
-        if (!res.ok) { const txt = await res.text(); throw new Error('Error inserting snapshot: ' + txt); }
+        if (!res.ok) { const txt = await res.text(); throw new Error('Error upserting snapshot: ' + txt); }
       }
 
-      // Update existing items individually
-      for (const r of toUpdate) {
-        await fetch(`${url}/rest/v1/inventory_snapshots?id=eq.${r.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
-          body: JSON.stringify({ on_hand_start: r.on_hand_start, suggested_at_time: r.suggested_at_time })
-        });
-      }
-
-      console.log('[ParIntelligence] Snapshot saved:', toInsert.length, 'new,', toUpdate.length, 'updated for', weekStart);
+      console.log('[ParIntelligence] Snapshot upserted:', upsertRows.length, 'items for', weekStart);
     } catch (err) {
       console.warn('[ParIntelligence] saveSnapshot failed:', err);
     }
