@@ -89,7 +89,7 @@
 
     // UPSERT de la orden principal
     const orderRes = await fetch(
-      `${window.BarStockOrdersConfig().url}/rest/v1/vendor_orders?on_conflict=app_order_id`,
+      `${window.BarStockOrdersConfig().url}/rest/v1/vendor_orders?on_conflict=app_order_id,location_id`,
       {
         method: 'POST',
         headers: {
