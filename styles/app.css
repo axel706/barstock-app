@@ -2549,3 +2549,21 @@ body.light .par-chip-observing{background:#F1EFE8;color:#5F5E5A}
 }
 .piq-empty .ti { font-size: 24px; display: block; margin-bottom: 8px; }
 /* ── End Pour-IQ Section ──────────────────────────────────────────────────── */
+
+/* ── Order History toolbar ────────────────────────────────────────────────── */
+.oh-toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+.oh-toolbar .bs-btn { display: inline-flex; align-items: center; gap: 6px; }
+.oh-toolbar .bs-btn-danger {
+  color: #A32D2D;
+}
+.oh-toolbar .bs-btn-danger:hover {
+  background: #FCEBEB;
+  border-color: #E24B4A;
+}
+/* ── End Order History toolbar ────────────────────────────────────────────── */

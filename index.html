@@ -103,7 +103,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260608-011202</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260610-122624</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -283,6 +283,18 @@
       <button id="historyToggle" class="section-toggle" title="Collapse or expand Order History">−</button>
     </div>
     <div class="section-body" id="historySectionBody">
+      <div class="oh-toolbar">
+        <button class="bs-btn bs-btn-default" id="ohExportBtn" title="Export order history to JSON">
+          <i class="ti ti-download" aria-hidden="true"></i> Export orders
+        </button>
+        <button class="bs-btn bs-btn-default" id="ohImportBtn" title="Import order history from JSON">
+          <i class="ti ti-upload" aria-hidden="true"></i> Import orders
+        </button>
+        <button class="bs-btn bs-btn-default bs-btn-danger" id="ohResetBtn" title="Delete all order history">
+          <i class="ti ti-trash" aria-hidden="true"></i> Reset orders
+        </button>
+        <input type="file" id="ohImportFile" accept="application/json" style="display:none;">
+      </div>
       <div id="historyList" class="history-list"></div>
     </div>
   </div>
@@ -2395,7 +2407,6 @@ function resolveCountMatch(rawName){
 
 async function importCountFile(file){
   if(!state.master.length) throw new Error('Load a master first.');
-  window.__barstockImporting = true;
   const {rows} = await parseFile(file, false);
   const first = rows.find(r => Object.values(r).some(v => String(v).trim()!==''));
   if(!first) throw new Error('The weekly count file is empty.');
@@ -2408,38 +2419,74 @@ async function importCountFile(file){
   // Snapshot del master en el momento exacto del import — inmune a cambios del realtime
   const masterSnapshot = state.master.map(r => ({...r}));
   const previewMaster = masterSnapshot;
-  // Índice por itemNorm para match estable independiente del orden del array
   const masterIndexByNorm = new Map(masterSnapshot.map((r, i) => [r.itemNorm, i]));
   const newNoMatches = [];
   const changes = [];
   let matches = 0;
   let ambiguousMatches = 0;
+
+  // Indices ya reclamados por un match exacto — protegidos contra colisiones difusas
+  const claimedIndices = new Set();
+
+  // Pre-parsear todas las filas y resolverlas para poder hacer dos pasadas
+  const parsedRows = [];
   for(const row of rows){
     const rawItem = String(row[itemCol] ?? '').trim();
     if(!rawItem) continue;
     const count = parseNum(row[countCol]);
     const resolved = resolveCountMatch(rawItem);
-    if(resolved.status === 'unique'){
-      // Usar el itemNorm del item resuelto para encontrar el índice en el snapshot
-      const resolvedItem = state.master[resolved.index];
+    parsedRows.push({rawItem, count, resolved});
+  }
+
+  // Helper que aplica el match a previewMaster
+  function applyMatch(rawItem, count, idx){
+    const oldOnHand = previewMaster[idx].onHand;
+    previewMaster[idx].onHand = count;
+    previewMaster[idx].toOrder = computeToOrder(count, previewMaster[idx].suggested);
+    matches++;
+    if(parseNum(oldOnHand) !== parseNum(count)){
+      changes.push({item: previewMaster[idx].item, oldOnHand, newOnHand: count, newToOrder: previewMaster[idx].toOrder, vendor: previewMaster[idx].vendor});
+    }
+  }
+
+  // Pasada 1 — solo matches exactos (status unique con how='exact')
+  // Nota: resolveCountMatch actual no expone 'how'. Detectamos exacto comparando itemNorm directo.
+  for(const p of parsedRows){
+    if(p.resolved.status !== 'unique') continue;
+    const resolvedItem = state.master[p.resolved.index];
+    const rawNorm = normalizeName(p.rawItem);
+    const aliased = aliases[rawNorm] || rawNorm;
+    const isExact = resolvedItem && resolvedItem.itemNorm === aliased;
+    if(!isExact) continue;
+    const idx = masterIndexByNorm.get(resolvedItem.itemNorm);
+    if(idx === undefined){ newNoMatches.push({rawItem: p.rawItem, count: p.count, reason: 'Snapshot index mismatch'}); continue; }
+    claimedIndices.add(idx);
+    applyMatch(p.rawItem, p.count, idx);
+    p._applied = true;
+  }
+
+  // Pasada 2 — includes y difuso, respetando indices ya reclamados
+  for(const p of parsedRows){
+    if(p._applied) continue;
+    if(p.resolved.status === 'unique'){
+      const resolvedItem = state.master[p.resolved.index];
       const idx = masterIndexByNorm.get(resolvedItem?.itemNorm);
-      if(idx === undefined) { newNoMatches.push({rawItem, count, reason:'Snapshot index mismatch'}); continue; }
-      const oldOnHand = previewMaster[idx].onHand;
-      previewMaster[idx].onHand = count;
-      previewMaster[idx].toOrder = computeToOrder(count, previewMaster[idx].suggested);
-      matches++;
-      if(parseNum(oldOnHand) !== parseNum(count)){
-        changes.push({item: previewMaster[idx].item, oldOnHand, newOnHand: count, newToOrder: previewMaster[idx].toOrder, vendor: previewMaster[idx].vendor});
+      if(idx === undefined){ newNoMatches.push({rawItem: p.rawItem, count: p.count, reason: 'Snapshot index mismatch'}); continue; }
+      if(claimedIndices.has(idx)){
+        // El índice ya fue reclamado por un match exacto — no pisar
+        newNoMatches.push({rawItem: p.rawItem, count: p.count, reason: 'Fuzzy match collided with exact match'});
+        continue;
       }
-    } else if(resolved.status === 'ambiguous'){
+      claimedIndices.add(idx);
+      applyMatch(p.rawItem, p.count, idx);
+    } else if(p.resolved.status === 'ambiguous'){
       ambiguousMatches++;
-      newNoMatches.push({rawItem, count, reason:'Duplicate match in master'});
+      newNoMatches.push({rawItem: p.rawItem, count: p.count, reason: 'Duplicate match in master'});
     } else {
-      newNoMatches.push({rawItem, count, reason:'No match found'});
+      newNoMatches.push({rawItem: p.rawItem, count: p.count, reason: 'No match found'});
     }
   }
   pendingImport = {fileName:file.name, previewMaster, noMatches:newNoMatches, changes, matches, ambiguousMatches};
-  window.__barstockImporting = false;
   showPreviewModal();
 }
 
@@ -2480,12 +2527,7 @@ async function applyPendingImport(){
 
   // Aplicar state localmente primero
   const importMatches = pendingImport.matches || 0;
-  window.__barstockImporting = true;
-  console.log("[DEBUG] Titos in previewMaster BEFORE map:", pendingImport.previewMaster.find(r => r.item?.includes("Tito"))?.onHand);
-  console.log("[DEBUG] Titos in changes:", JSON.stringify(pendingImport.changes.find(r => r.item?.includes("Tito"))));
   state.master = pendingImport.previewMaster.map(r => ({...r}));
-  window.state.master = state.master;
-  console.log("[DEBUG] Titos after assign:", state.master.find(r => r.item?.includes("Tito"))?.onHand);
   state.noMatches = pendingImport.noMatches || [];
   state.lastCountName = pendingImport.fileName;
   state.lastUpdated = new Date().toISOString();
@@ -2516,12 +2558,10 @@ async function applyPendingImport(){
 
     await Promise.all(cloudOps);
 
-    window.__barstockImporting = false;
     setStatus(`Count imported: ${state.lastCountName}. Matches: ${importMatches}. No matches: ${state.noMatches.length}. Synced to cloud for the new weekly cycle.`);
     refreshParAdjustments().then(() => { if (typeof PourIqSection !== 'undefined') PourIqSection.refresh(); });
   } catch(err){
     console.error(err);
-    window.__barstockImporting = false;
     setStatus(`Count imported locally, but cloud sync failed.`);
     alert('Count imported locally, but cloud sync failed.');
   }
@@ -3447,6 +3487,91 @@ async function importBackup(file){
   }
 }
 
+// ── Order History — export / import / reset (history only) ─────────────────
+function exportOrderHistory(){
+  const orderHistory = state.orderHistory || [];
+  if(!orderHistory.length){ alert('No order history to export.'); return; }
+  const payload = {
+    version: '1.0',
+    exportedAt: new Date().toISOString(),
+    location: window.BARSTOCK_CONFIG?.LOCATION_NAME || 'Unknown',
+    orderHistory
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const dateStr = new Date().toISOString().slice(0,10);
+  const locSlug = (payload.location || 'orders').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+  a.download = `${locSlug}-orders-${dateStr}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+  setStatus(`Exported ${orderHistory.length} orders.`);
+}
+
+async function importOrderHistory(file){
+  const text = await file.text();
+  const data = JSON.parse(text);
+  if(!data || typeof data !== 'object') throw new Error('Invalid order history file.');
+  const orderHistory = Array.isArray(data.orderHistory) ? data.orderHistory : null;
+  if(!orderHistory) throw new Error('File does not contain an orderHistory array.');
+  if(!confirm(`Import ${orderHistory.length} orders? This will REPLACE existing order history.`)) return;
+
+  state.orderHistory = orderHistory;
+  saveState();
+
+  try{
+    if(!window.BarStockOrdersCloud) throw new Error('Orders cloud module not available');
+    await window.BarStockOrdersCloud.replaceOrders(state.orderHistory || []);
+
+    // Ajustar weekly_reset_at al inicio del dia de la orden mas reciente
+    if(window.BarStockInventoryCloud && state.orderHistory.length){
+      const dates = state.orderHistory
+        .map(o => new Date(o.createdAt || o.date || 0).getTime())
+        .filter(n => Number.isFinite(n) && n > 0);
+      if(dates.length){
+        const mostRecent = new Date(Math.max(...dates));
+        const startOfDay = new Date(mostRecent.getFullYear(), mostRecent.getMonth(), mostRecent.getDate(), 0, 0, 1);
+        await window.BarStockInventoryCloud.touchWeeklyReset(startOfDay.toISOString());
+      }
+    }
+
+    if(window.rebuildPlacedOrdersFromHistory){
+      await window.rebuildPlacedOrdersFromHistory();
+    }
+    render();
+    setStatus(`Imported ${orderHistory.length} orders and synced to cloud.`);
+  } catch(err){
+    console.error(err);
+    render();
+    setStatus('Orders imported locally, but cloud sync failed.');
+    alert('Orders imported locally, but cloud sync failed.');
+  }
+}
+
+async function resetOrderHistory(){
+  const count = (state.orderHistory || []).length;
+  if(!count){ alert('Order history is already empty.'); return; }
+  if(!confirm(`This will permanently delete all ${count} orders. This cannot be undone. Continue?`)) return;
+
+  state.orderHistory = [];
+  state.placedOrders = [];
+  saveState();
+
+  try{
+    if(!window.BarStockOrdersCloud) throw new Error('Orders cloud module not available');
+    await window.BarStockOrdersCloud.deleteAllOrders();
+    render();
+    setStatus('Order history reset locally and in cloud.');
+  } catch(err){
+    console.error(err);
+    render();
+    setStatus('Order history reset locally, but cloud sync failed.');
+    alert('Order history reset locally, but cloud sync failed.');
+  }
+}
+
 function fmt2(v){
   const n = Number(String(v).replace(/,/g,''));
   if(!Number.isFinite(n)) return String(v ?? '');
@@ -3552,6 +3677,17 @@ document.getElementById('exportVendorLoopBtn').addEventListener('click', exportV
 document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 document.getElementById('resetOnHandBtn').addEventListener('click', resetOnHand);
 document.getElementById('resetBtn').addEventListener('click', resetMaster);
+
+document.getElementById('ohExportBtn').addEventListener('click', exportOrderHistory);
+document.getElementById('ohResetBtn').addEventListener('click', () => resetOrderHistory().catch(err => { console.error(err); alert(err.message || String(err)); }));
+document.getElementById('ohImportBtn').addEventListener('click', () => document.getElementById('ohImportFile').click());
+document.getElementById('ohImportFile').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  try { await importOrderHistory(f); }
+  catch(err){ alert(err.message || String(err)); setStatus('Error importing order history.'); }
+  e.target.value = '';
+});
 document.getElementById('searchInput').addEventListener('input', render);
 document.getElementById('vendorFilter').addEventListener('change', render);
 document.getElementById('vendorSearchInput').addEventListener('input', render);
