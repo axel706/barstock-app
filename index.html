@@ -121,7 +121,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260610-190350</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260610-194928</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -184,7 +184,7 @@
     </div>
     <div class="bs-focus-card card" onclick="bsOpenSection('pourIq')">
       <i class="ti ti-brain bs-focus-icon" aria-hidden="true"></i>
-      <div class="bs-focus-title">Pour-IQ</div>
+      <div class="bs-focus-title">Pour-IQ&#x2122;</div>
       <div class="bs-focus-sub" id="fgSub-pourIq">Par level intelligence</div>
       <div class="bs-focus-badge warn" id="fgBadge-pourIq"></div>
     </div>
@@ -4213,7 +4213,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     {id:'noMatch', icon:'ti-alert-circle', label:'No Match'},
     {id:'costReport', icon:'ti-chart-bar', label:'Costs'},
     {id:'theoretical', icon:'ti-chart-dots', label:'Usage'},
-    {id:'pourIq', icon:'ti-brain', label:'Pour-IQ'},
+    {id:'pourIq', icon:'ti-brain', label:'Pour-IQ™'},
   ];
   miniSections.forEach(s => {
     const el = document.createElement('div');
@@ -4295,13 +4295,13 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
         });
         const pending = counts.over + counts.under;
         if (pending > 0) {
-          pourIqText.textContent = 'Pour-IQ · ' + pending + ' pending';
+          pourIqText.textContent = 'Pour-IQ™ · ' + pending + ' pending';
           pourIqBadge.querySelector('.ti').style.color = '#E24B4A';
         } else if (counts.observing === adjSize) {
-          pourIqText.textContent = 'Pour-IQ building';
+          pourIqText.textContent = 'Pour-IQ™ building';
           pourIqBadge.querySelector('.ti').style.color = '#EF9F27';
         } else {
-          pourIqText.textContent = 'Pour-IQ on track';
+          pourIqText.textContent = 'Pour-IQ™ on track';
           pourIqBadge.querySelector('.ti').style.color = '#1D9E75';
         }
         pourIqBadge.style.display = 'inline-flex';
