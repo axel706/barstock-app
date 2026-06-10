@@ -79,13 +79,13 @@
       const chunkSize = 200;
       for (let i = 0; i < upsertRows.length; i += chunkSize) {
         const chunk = upsertRows.slice(i, i + chunkSize);
-        const res = await fetch(`${url}/rest/v1/inventory_snapshots`, {
+        const res = await fetch(`${url}/rest/v1/inventory_snapshots?on_conflict=location_id,week_start,item_name`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             apikey: key,
             Authorization: `Bearer ${key}`,
-            Prefer: 'resolution=merge-duplicates,return=minimal'
+            Prefer: 'resolution=merge-duplicates'
           },
           body: JSON.stringify(chunk)
         });
