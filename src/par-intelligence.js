@@ -387,6 +387,15 @@
         if (delta > 1) adjustment = -1;
         else if (delta < -1) adjustment = 1;
 
+        // Week-over-week trend — compare last two closed weeks
+        let trendDelta = null;
+        if (weekMap.size >= 2) {
+          const sortedWeeks = Array.from(weekMap.keys()).sort();
+          const lastWeek  = weekMap.get(sortedWeeks[sortedWeeks.length - 1]);
+          const prevWeek  = weekMap.get(sortedWeeks[sortedWeeks.length - 2]);
+          trendDelta = Math.round((lastWeek - prevWeek) * 10) / 10;
+        }
+
         results.set(k, {
           status: 'active',
           normalWeeks: weekMap.size,
@@ -394,7 +403,8 @@
           suggestedOptimal,
           currentSuggested: current,
           delta,
-          adjustment
+          adjustment,
+          trendDelta
         });
       }
 

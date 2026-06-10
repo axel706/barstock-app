@@ -15,6 +15,16 @@
     refresh,
   };
 
+  // ── Event hooks ────────────────────────────────────────────────────────────
+  // Refresh when inventory loads from Supabase (covers startup + realtime updates)
+  window.addEventListener('barstock:inventoryUpdated', () => {
+    if (typeof refreshParAdjustments === 'function') {
+      refreshParAdjustments().then(() => refresh()).catch(console.warn);
+    } else {
+      refresh();
+    }
+  });
+
   // ── Entry point ────────────────────────────────────────────────────────────
   function refresh() {
     if (!window.state || !window.state.master || !window.state.master.length) {
@@ -81,7 +91,7 @@
       status: piqStatus,
       optimal: par.suggestedOptimal,
       adjustment: par.adjustment,
-      trend: null,                      // week-over-week: fase futura
+      trend: par.trendDelta !== undefined ? par.trendDelta : null,
       avgUsed: par.avgUsed,
       weeksNormal: par.normalWeeks,
       currentSuggested: par.currentSuggested,
