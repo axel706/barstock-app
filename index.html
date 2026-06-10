@@ -103,7 +103,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260610-125204</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260610-140228</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2263,6 +2263,7 @@ function renderHistoryVendorTabs(){
 async function refreshParAdjustments(){
   if(!window.BarStockParIntelligence || !state.master.length) return;
   parAdjustments = await window.BarStockParIntelligence.getPendingAdjustments(state.master);
+  window.parAdjustments = parAdjustments;
 }
 
 function getParChipHtml(row){
