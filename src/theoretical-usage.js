@@ -581,8 +581,8 @@
   }
 
   // ─── Generate PDF ─────────────────────────────────────────────────
-  async function generatePdf() {
-    if (!_currentWeek) return;
+  async function generatePdf(returnBase64 = false) {
+    if (!_currentWeek) return null;
     const rows = await loadWeekDetail(_currentWeek.week_start);
     const salesMap = _salesData.get(_currentWeek.week_start) || new Map();
     const comments = _itemComments || new Map();
@@ -843,14 +843,17 @@
       });
     }
 
+    if (returnBase64) {
+      return pdf.output('datauristring').split(',')[1];
+    }
     pdf.save(`theoretical_usage_${_currentWeek.week_start}.pdf`);
     if (typeof setStatus === 'function') setStatus('Theoretical Usage PDF generated.');
   }
 
   // ─── Email modal ──────────────────────────────────────────────────
   function openEmailModal() {
-    if (typeof window.BarStockEmailCostReport !== 'undefined' && window.BarStockEmailCostReport.openModal) {
-      alert('Email for Theoretical Usage coming soon.');
+    if (window.BarStockEmailTheoretical) {
+      window.BarStockEmailTheoretical.openModal();
     } else {
       alert('Email module not available.');
     }

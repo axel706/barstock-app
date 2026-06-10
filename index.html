@@ -103,7 +103,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260610-142844</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260610-145310</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -547,7 +547,7 @@
             </select>
             <button class="bs-btn bs-btn-default" onclick="window.BarStockTheoreticalUsage.openNotesModal()"><i class="ti ti-notes" aria-hidden="true"></i> Notes</button>
             <button class="bs-btn bs-btn-default" id="tuGeneratePdfBtn" onclick="window.BarStockTheoreticalUsage.generatePdf()"><i class="ti ti-file-text" aria-hidden="true"></i> PDF</button>
-            <button class="bs-btn bs-btn-primary" id="tuSendEmailBtn" onclick="window.BarStockTheoreticalUsage.openEmailModal()"><i class="ti ti-mail" aria-hidden="true"></i> Email</button>
+            <button class="bs-btn bs-btn-primary" id="tuSendEmailBtn" onclick="window.BarStockEmailTheoretical.openModal()"><i class="ti ti-mail" aria-hidden="true"></i> Email</button>
           </div>
         </div>
 
@@ -3876,6 +3876,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/onboarding.js"></script>
     <script src="src/email-order.js?v=logo3"></script>
 <script src="src/email-cost-report.js"></script>
+<script src="src/email-theoretical.js"></script>
 <script src="src/vendor-defaults-cloud.js"></script>
 <script src="src/sender-profile-cloud.js"></script>
 <script src="src/settings-sender-profile.js"></script>
@@ -4399,6 +4400,35 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       <button class="ui-control primary" id="emailCostReportSendBtn" onclick="sendEmailCostReport()">Send Email</button>
     </div>
   </div>
+</div>
+
+<div id="emailTheoreticalModalBg" class="modalbg hidden">
+  <div class="modal" style="width:min(720px,96vw);max-height:92vh;overflow-y:auto;position:relative;">
+    <h3 style="margin-top:0">Email Theoretical Usage Report</h3>
+    <div class="small muted" style="margin-bottom:16px">Weekly usage variance and loss analysis</div>
+    <label style="display:block;margin-bottom:6px;font-weight:600">To <span class="muted small">(separate multiple with commas)</span></label>
+    <input id="emailTheoreticalTo" type="text" placeholder="manager@example.com, owner@example.com" style="width:100%;margin-bottom:12px">
+    <label style="display:block;margin-bottom:6px;font-weight:600">CC <span class="muted small">(optional, separate multiple with commas)</span></label>
+    <input id="emailTheoreticalCc" type="text" placeholder="accountant@example.com" style="width:100%;margin-bottom:16px">
+    <div style="margin-bottom:20px">
+      <label style="display:block;margin-bottom:6px;font-weight:600">Report preview (will be attached as PDF)</label>
+      <div id="emailTheoreticalPreview" style="border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:8px;background:rgba(255,255,255,.04);max-height:380px;overflow-y:auto;display:flex;align-items:center;justify-content:center;min-height:120px">
+        <div class="small muted">Generating preview...</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="ui-control" onclick="window.BarStockEmailTheoretical.closeModal()">Cancel</button>
+      <button class="ui-control primary" id="emailTheoreticalSendBtn" onclick="window.BarStockEmailTheoretical.sendEmail()">Send Email</button>
+    </div>
+  </div>
+</div>
+
+<div id="emailTheoreticalSuccessOverlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:30000;">
+  <div id="emailTheoreticalCheckCircle" style="width:72px;height:72px;border-radius:50%;background:#1D9E75;display:flex;align-items:center;justify-content:center;">
+    <svg id="emailTheoreticalCheckSvg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 9 17 20 7"/></svg>
+  </div>
+  <div id="emailTheoreticalSuccessMsg" style="font-size:20px;font-weight:600;color:#fff">Report sent!</div>
+  <div id="emailTheoreticalSuccessSub" style="font-size:14px;color:rgba(255,255,255,.7)"></div>
 </div>
 
 <div id="emailOrderModalBg" class="modalbg hidden">
