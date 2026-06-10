@@ -87,16 +87,25 @@
       created_at: order.createdAt || order.date || new Date().toISOString()
     };
 
-    // UPSERT de la orden principal
+    // DELETE existing order for this app_order_id + location_id, then INSERT fresh
+    const cfg = window.BarStockOrdersConfig();
+    await fetch(
+      `${cfg.url}/rest/v1/vendor_orders?app_order_id=eq.${encodeURIComponent(order.id)}&location_id=eq.${locationId}`,
+      {
+        method: 'DELETE',
+        headers: { apikey: cfg.key, Authorization: `Bearer ${cfg.key}` }
+      }
+    );
+
     const orderRes = await fetch(
-      `${window.BarStockOrdersConfig().url}/rest/v1/vendor_orders?on_conflict=app_order_id,location_id`,
+      `${cfg.url}/rest/v1/vendor_orders`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          apikey: window.BarStockOrdersConfig().key,
-          Authorization: `Bearer ${window.BarStockOrdersConfig().key}`,
-          Prefer: 'resolution=merge-duplicates,return=representation'
+          apikey: cfg.key,
+          Authorization: `Bearer ${cfg.key}`,
+          Prefer: 'return=representation'
         },
         body: JSON.stringify(vendorOrderPayload)
       }
