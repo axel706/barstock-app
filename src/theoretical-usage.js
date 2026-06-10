@@ -59,6 +59,25 @@
     return await res.json();
   }
 
+  async function loadPrevWeekDetail(weekStart) {
+    try {
+      const { url, key } = getConfig();
+      const locationId = await fetchLocationId();
+      const res = await fetch(
+        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&week_start=lt.${weekStart}&used=not.is.null&select=item_name,used&order=week_start.desc&limit=500`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      );
+      const all = await res.json();
+      // Keep only the most recent week's data per item
+      const seen = new Set();
+      const result = [];
+      for (const r of all || []) {
+        if (!seen.has(r.item_name)) { seen.add(r.item_name); result.push(r); }
+      }
+      return result;
+    } catch(e) { return []; }
+  }
+
   // ─── Toggle event week ───────────────────────────────────────────
   async function toggleEventWeek() {
     if (!_currentWeek) return;
@@ -273,7 +292,15 @@
   }
 
   async function renderWeekDetail(weekStart) {
-    const rows = await loadWeekDetail(weekStart);
+    const [rows, prevRows] = await Promise.all([
+      loadWeekDetail(weekStart),
+      loadPrevWeekDetail(weekStart)
+    ]);
+    // Build prev week used map: item_name -> used
+    const prevUsedMap = new Map();
+    for (const r of prevRows || []) {
+      if (r.used !== null) prevUsedMap.set(r.item_name, Number(r.used));
+    }
     const salesMap = _salesData.get(weekStart) || new Map();
     const body = document.getElementById('tuDetailBody');
     const empty = document.getElementById('tuDetailEmpty');
@@ -299,7 +326,9 @@
       const variance = used !== null && sold !== null ? used - sold : null;
       const variancePct = variance !== null && sold > 0 ? (variance / sold) * 100 : null;
       const loss = variance !== null ? variance * Number(r.value || 0) : null;
-      return { ...r, used, sold, variance, variancePct, loss };
+      const prevUsed = prevUsedMap.has(r.item_name) ? prevUsedMap.get(r.item_name) : null;
+      const trendDelta = used !== null && prevUsed !== null ? Math.round((used - prevUsed) * 10) / 10 : null;
+      return { ...r, used, sold, variance, variancePct, loss, trendDelta };
     });
 
     // Sort based on _sortMode — no sales data always last
@@ -348,6 +377,17 @@
           ? '<span style="font-size:10px;background:#FCEBEB;color:#A32D2D;padding:2px 6px;border-radius:4px;font-weight:600">Loss</span>'
           : '<span style="font-size:10px;background:#EAF3DE;color:#3B6D11;padding:2px 6px;border-radius:4px;font-weight:600">OK</span>';
 
+      // Trend cell
+      let trendFmt = '<span class="muted">—</span>';
+      if (r.trendDelta !== null) {
+        if (r.trendDelta > 0.2)
+          trendFmt = `<span class="tu-trend-up"><i class="ti ti-trending-up" aria-hidden="true"></i> +${r.trendDelta.toFixed(1)}</span>`;
+        else if (r.trendDelta < -0.2)
+          trendFmt = `<span class="tu-trend-down"><i class="ti ti-trending-down" aria-hidden="true"></i> ${r.trendDelta.toFixed(1)}</span>`;
+        else
+          trendFmt = `<span class="tu-trend-flat"><i class="ti ti-arrows-horizontal" aria-hidden="true"></i> ${r.trendDelta.toFixed(1)}</span>`;
+      }
+
       const comment = _itemComments.get(r.item_name) || '';
       const commentIcon = comment
         ? `<button class="tu-comment-btn has-comment" onclick="window.BarStockTheoreticalUsage.openCommentModal('${r.item_name.replace(/'/g,"\'")}')" title="${comment.replace(/"/g,'&quot;')}"><i class="ti ti-message-circle" aria-hidden="true"></i></button>`
@@ -361,10 +401,11 @@
         <td>${varianceFmt}</td>
         <td>${variancePctFmt}</td>
         <td>${lossFmt}</td>
+        <td>${trendFmt}</td>
         <td>${statusBadge}</td>
         <td>${commentIcon}</td>
       </tr>`;
-    }).join('') || '<tr><td colspan="9" class="muted" style="text-align:center;padding:20px">No items found.</td></tr>';
+    }).join('') || '<tr><td colspan="10" class="muted" style="text-align:center;padding:20px">No items found.</td></tr>';
   }
 
   function showWeekList() {

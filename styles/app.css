@@ -2648,3 +2648,14 @@ body.light .piq-table tr:hover td { background: rgba(15,23,42,.05) !important; }
   padding: 10px 14px; margin-bottom: 1rem;
 }
 .piq-baseline-msg .ti { font-size: 15px; flex-shrink: 0; }
+
+/* ── Theoretical Usage — trend arrows ─────────────────────────────────────── */
+.tu-trend-up, .tu-trend-down, .tu-trend-flat {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 12px; font-weight: 500;
+}
+.tu-trend-up   { color: #A32D2D; }
+.tu-trend-down { color: #3B6D11; }
+.tu-trend-flat { color: #888780; }
+.tu-trend-up .ti, .tu-trend-down .ti, .tu-trend-flat .ti { font-size: 13px; }
+/* ── End Theoretical Usage trend arrows ────────────────────────────────────── */
