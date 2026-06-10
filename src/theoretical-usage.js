@@ -883,6 +883,7 @@
   }
 
   window.BarStockTheoreticalUsage = {
+    get _currentWeek() { return _currentWeek; },
     refresh,
     openWeek,
     showWeekList,
