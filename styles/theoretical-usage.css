@@ -40,10 +40,19 @@ body.light .tu-metric-val{color:#0f172a}
 .tu-metric-lbl{font-size:11px;color:var(--sub);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em}
 body.light .tu-metric-lbl{color:#475569}
 .tu-empty{font-size:13px;color:var(--sub);padding:20px 0;text-align:center}
+.tu-mode-toggle{display:flex;background:var(--muted);border-radius:8px;padding:3px;gap:2px}
+.tu-mode-btn{padding:4px 12px;border-radius:6px;border:none;font-size:12px;font-weight:500;cursor:pointer;background:transparent;color:var(--sub);transition:all .15s;display:flex;align-items:center;gap:5px}
+.tu-mode-btn.active{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+body.light .tu-mode-btn.active{background:#fff;color:#0f172a}
 
 .tu-comment-btn{background:transparent;border:none;cursor:pointer;color:var(--sub);padding:2px 4px;border-radius:4px;font-size:14px;opacity:0.4;transition:opacity .15s,color .15s}
 .tu-comment-btn:hover{opacity:1;color:var(--accent)}
 .tu-comment-btn.has-comment{opacity:1;color:var(--accent)}
 .tu-comment-btn.tu-excl-active{opacity:1;color:#D85A30}
 .tu-comment-btn.tu-adj-active{opacity:1;color:#0ea5e9}
+.tu-excl-section{border:0.5px solid var(--border);border-radius:8px;overflow:hidden}
+.tu-excl-header{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-size:13px;font-weight:500;color:var(--sub);background:var(--muted)}
+.tu-excl-header:hover{color:var(--text)}
+.tu-excl-chevron{transition:transform .2s}
+.tu-excl-chevron.rotated{transform:rotate(180deg)}
 .tu-excluded-row td{opacity:.4}

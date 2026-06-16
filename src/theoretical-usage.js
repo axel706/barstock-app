@@ -27,6 +27,7 @@
   let _sortMode = 'variance'; // 'loss' or 'variance'
   let _vendorFilter = 'ALL';
   let _exclusions = new Set(); // 'item_name' keys for current week
+  let _reportMode = false;
   let _itemComments = new Map(); // item_name -> comment string
   let _customNotes = ''; // free text notes for current week
 
@@ -386,8 +387,10 @@
       `;
     }
 
-    renderVendorChips(enriched);
-    const displayed = _vendorFilter === 'ALL' ? enriched : enriched.filter(r => (r.vendor || 'UNKNOWN') === _vendorFilter);
+    // In report mode filter to included only; in review show all
+    const displayPool = _reportMode ? included : enriched;
+    renderVendorChips(displayPool);
+    const displayed = _vendorFilter === 'ALL' ? displayPool : displayPool.filter(r => (r.vendor || 'UNKNOWN') === _vendorFilter);
 
     body.innerHTML = displayed.map(r => {
       const hasAdj = r.on_hand_end_adjusted !== null && r.on_hand_end_adjusted !== undefined;
@@ -440,6 +443,29 @@
         <td>${excludeIcon}</td>
       </tr>`;
     }).join('') || '<tr><td colspan="11" class="muted" style="text-align:center;padding:20px">No items found.</td></tr>';
+
+    // Report mode — excluded section below table
+    const exclContainer = document.getElementById('tuExcludedSection');
+    if (exclContainer) {
+      if (_reportMode && excluded.length > 0) {
+        const exclLoss = excluded.filter(r => r.variance !== null && r.variance > 0).reduce((s, r) => s + (r.loss || 0), 0);
+        exclContainer.innerHTML = `
+          <div class="tu-excl-header" onclick="this.nextElementSibling.classList.toggle('hidden');this.querySelector('.tu-excl-chevron').classList.toggle('rotated')">
+            <span><i class="ti ti-eye-off" aria-hidden="true"></i> &nbsp;Excluded — not mapped in POS &nbsp;<span style="font-size:11px;background:var(--muted);color:var(--sub);padding:2px 8px;border-radius:4px;font-weight:600">${excluded.length} item${excluded.length!==1?'s':''} &middot; $${exclLoss.toFixed(2)}</span></span>
+            <i class="ti ti-chevron-down tu-excl-chevron" aria-hidden="true"></i>
+          </div>
+          <div class="hidden">
+            <table style="width:100%;font-size:12px;border-collapse:collapse">
+              <thead><tr style="background:var(--muted)"><th style="padding:6px 10px;text-align:left;font-size:10px;color:var(--sub);text-transform:uppercase">Item</th><th style="padding:6px 10px;text-align:left;font-size:10px;color:var(--sub);text-transform:uppercase">Vendor</th><th style="padding:6px 10px;font-size:10px;color:var(--sub);text-transform:uppercase">Variance</th><th style="padding:6px 10px;font-size:10px;color:var(--sub);text-transform:uppercase">Loss ($)</th></tr></thead>
+              <tbody>${excluded.map(r => `<tr style="border-top:0.5px solid var(--border)"><td style="padding:6px 10px;color:var(--sub)">${r.item_name}</td><td style="padding:6px 10px;color:var(--sub)">${r.vendor||''}</td><td style="padding:6px 10px;color:var(--sub)">${r.variance!==null?'+'+r.variance.toFixed(2):'—'}</td><td style="padding:6px 10px;color:var(--sub)">${r.loss!==null&&r.loss>0?'$'+r.loss.toFixed(2):'—'}</td></tr>`).join('')}</tbody>
+            </table>
+          </div>`;
+        exclContainer.classList.remove('hidden');
+      } else {
+        exclContainer.classList.add('hidden');
+        exclContainer.innerHTML = '';
+      }
+    }
   }
 
   async function loadExclusions(weekStart) {
@@ -472,6 +498,25 @@
       { method: 'DELETE', headers: { apikey: key, Authorization: `Bearer ${key}` } }
     );
     _exclusions.delete(itemName);
+  }
+
+  function setMode(mode) {
+    _reportMode = mode === 'report';
+    document.getElementById('tuModeReview').classList.toggle('active', !_reportMode);
+    document.getElementById('tuModeReport').classList.toggle('active', _reportMode);
+    const reviewTools = document.getElementById('tuReviewTools');
+    const reportTools = document.getElementById('tuReportTools');
+    const sharedTools = document.getElementById('tuSharedTools');
+    const vendorChips = document.getElementById('tuVendorChips');
+    if (reviewTools) reviewTools.style.display = _reportMode ? 'none' : 'flex';
+    if (reportTools) reportTools.style.display = _reportMode ? 'flex' : 'none';
+    if (sharedTools) sharedTools.style.display = _reportMode ? 'none' : 'flex';
+    if (vendorChips) vendorChips.style.display = _reportMode ? 'none' : 'flex';
+    if (_currentWeek) renderWeekDetail(_currentWeek.week_start);
+  }
+
+  async function publishReport() {
+    await window.BarStockEmailTheoretical.openModal();
   }
 
   async function saveOnHandAdjustment(weekStart, itemName, value) {
@@ -1016,6 +1061,8 @@
       document.getElementById('tuAdjModal').classList.add('hidden');
       await openWeek(_currentWeek.week_start);
     },
+    setMode,
+    publishReport,
     clearAdj: async () => {
       if (!_currentWeek) return;
       const input = document.getElementById('tuAdjInput');

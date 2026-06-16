@@ -121,7 +121,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260616-000744</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260616-001507</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -554,18 +554,30 @@
         <div class="tu-controls" style="margin-bottom:10px">
           <button class="bs-btn bs-btn-default" onclick="window.BarStockTheoreticalUsage.showWeekList()"><i class="ti ti-arrow-left" aria-hidden="true"></i> All weeks</button>
           <span id="tuDetailWeekLabel" style="font-size:14px;font-weight:700;color:var(--text)"></span>
+          <div class="tu-mode-toggle" id="tuModeToggle">
+            <button class="tu-mode-btn active" id="tuModeReview" onclick="window.BarStockTheoreticalUsage.setMode('review')"><i class="ti ti-pencil" aria-hidden="true"></i> Review</button>
+            <button class="tu-mode-btn" id="tuModeReport" onclick="window.BarStockTheoreticalUsage.setMode('report')"><i class="ti ti-file-description" aria-hidden="true"></i> Report</button>
+          </div>
           <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-            <button class="bs-btn bs-btn-default" id="tuEventToggleBtn" onclick="window.BarStockTheoreticalUsage.toggleEventWeek()"><i class="ti ti-calendar-event" aria-hidden="true"></i> Mark as event week</button>
-            <label class="bs-btn bs-btn-default" style="cursor:pointer"><i class="ti ti-upload" aria-hidden="true"></i> Liquor CSV<input type="file" id="tuSalesCsvLiquor" accept=".csv" style="display:none" /></label>
-            <label class="bs-btn bs-btn-default" style="cursor:pointer"><i class="ti ti-upload" aria-hidden="true"></i> Wine CSV<input type="file" id="tuSalesCsvWine" accept=".csv" style="display:none" /></label>
-            <button class="bs-btn danger" onclick="window.BarStockTheoreticalUsage.resetSales()" title="Reset sales data for this week"><i class="ti ti-trash" aria-hidden="true"></i> Reset Sales</button>
-            <select id="tuSortSelect" class="bs-btn bs-btn-default" style="cursor:pointer" onchange="window.BarStockTheoreticalUsage.setSort(this.value)">
-              <option value="loss">Sort by Loss ($)</option>
-              <option value="variance">Sort by Variance</option>
-            </select>
-            <button class="bs-btn bs-btn-default" onclick="window.BarStockTheoreticalUsage.openNotesModal()"><i class="ti ti-notes" aria-hidden="true"></i> Notes</button>
-            <button class="bs-btn bs-btn-default" id="tuGeneratePdfBtn" onclick="window.BarStockTheoreticalUsage.generatePdf()"><i class="ti ti-file-text" aria-hidden="true"></i> PDF</button>
-            <button class="bs-btn bs-btn-primary" id="tuSendEmailBtn" onclick="window.BarStockEmailTheoretical.openModal()"><i class="ti ti-mail" aria-hidden="true"></i> Email</button>
+            <span id="tuReviewTools" style="display:flex;gap:8px;align-items:center">
+              <button class="bs-btn bs-btn-default" id="tuEventToggleBtn" onclick="window.BarStockTheoreticalUsage.toggleEventWeek()"><i class="ti ti-calendar-event" aria-hidden="true"></i> Mark as event week</button>
+              <label class="bs-btn bs-btn-default" style="cursor:pointer"><i class="ti ti-upload" aria-hidden="true"></i> Liquor CSV<input type="file" id="tuSalesCsvLiquor" accept=".csv" style="display:none" /></label>
+              <label class="bs-btn bs-btn-default" style="cursor:pointer"><i class="ti ti-upload" aria-hidden="true"></i> Wine CSV<input type="file" id="tuSalesCsvWine" accept=".csv" style="display:none" /></label>
+              <button class="bs-btn danger" onclick="window.BarStockTheoreticalUsage.resetSales()" title="Reset sales data for this week"><i class="ti ti-trash" aria-hidden="true"></i> Reset Sales</button>
+              <select id="tuSortSelect" class="bs-btn bs-btn-default" style="cursor:pointer" onchange="window.BarStockTheoreticalUsage.setSort(this.value)">
+                <option value="loss">Sort by Loss ($)</option>
+                <option value="variance">Sort by Variance</option>
+              </select>
+              <button class="bs-btn bs-btn-default" onclick="window.BarStockTheoreticalUsage.openNotesModal()"><i class="ti ti-notes" aria-hidden="true"></i> Notes</button>
+            </span>
+            <span id="tuReportTools" style="display:none;gap:8px;align-items:center">
+              <button class="bs-btn bs-btn-default" id="tuGeneratePdfBtn" onclick="window.BarStockTheoreticalUsage.generatePdf()"><i class="ti ti-file-text" aria-hidden="true"></i> Preview PDF</button>
+              <button class="bs-btn bs-btn-primary" onclick="window.BarStockTheoreticalUsage.publishReport()"><i class="ti ti-send" aria-hidden="true"></i> Publish &amp; Send</button>
+            </span>
+            <span id="tuSharedTools" style="display:flex;gap:8px;align-items:center">
+              <button class="bs-btn bs-btn-default" id="tuGeneratePdfBtnReview" onclick="window.BarStockTheoreticalUsage.generatePdf()"><i class="ti ti-file-text" aria-hidden="true"></i> PDF</button>
+              <button class="bs-btn bs-btn-primary" id="tuSendEmailBtn" onclick="window.BarStockEmailTheoretical.openModal()"><i class="ti ti-mail" aria-hidden="true"></i> Email</button>
+            </span>
           </div>
         </div>
 
@@ -597,6 +609,7 @@
             <tbody id="tuDetailBody"></tbody>
           </table>
         </div>
+        <div id="tuExcludedSection" class="tu-excl-section hidden" style="margin-top:14px"></div>
         <div class="tu-empty hidden" id="tuDetailEmpty">No data for this week.</div>
       </div>
 
