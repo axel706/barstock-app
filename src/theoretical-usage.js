@@ -25,6 +25,7 @@
   let _weeks = [];
   let _salesData = new Map(); // week_start -> Map(item_name -> sold)
   let _sortMode = 'variance'; // 'loss' or 'variance'
+  let _vendorFilter = 'ALL';
   let _itemComments = new Map(); // item_name -> comment string
   let _customNotes = ''; // free text notes for current week
 
@@ -302,6 +303,15 @@
       if (r.used !== null) prevUsedMap.set(r.item_name, Number(r.used));
     }
     const salesMap = _salesData.get(weekStart) || new Map();
+
+    // Build value map from live master (window.state exposed since v2.3)
+    const valueMap = new Map();
+    if (window.state?.master) {
+      for (const r of window.state.master) {
+        if (r.item) valueMap.set(r.item, Number(r.value || 0));
+      }
+    }
+
     const body = document.getElementById('tuDetailBody');
     const empty = document.getElementById('tuDetailEmpty');
     const summaryGrid = document.getElementById('tuSummaryGrid');
@@ -325,7 +335,7 @@
       const sold = salesMap.size ? matchSold(r.item_name, salesMap) : null;
       const variance = used !== null && sold !== null ? used - sold : null;
       const variancePct = variance !== null && sold > 0 ? (variance / sold) * 100 : null;
-      const loss = variance !== null ? variance * Number(r.value || 0) : null;
+      const loss = variance !== null ? variance * (valueMap.get(r.item_name) || Number(r.value || 0)) : null;
       const prevUsed = prevUsedMap.has(r.item_name) ? prevUsedMap.get(r.item_name) : null;
       const trendDelta = used !== null && prevUsed !== null ? Math.round((used - prevUsed) * 10) / 10 : null;
       return { ...r, used, sold, variance, variancePct, loss, trendDelta };
@@ -360,7 +370,10 @@
       `;
     }
 
-    body.innerHTML = enriched.map(r => {
+    renderVendorChips(enriched);
+    const displayed = _vendorFilter === 'ALL' ? enriched : enriched.filter(r => (r.vendor || 'UNKNOWN') === _vendorFilter);
+
+    body.innerHTML = displayed.map(r => {
       const usedFmt = r.used !== null ? r.used.toFixed(2) : '—';
       const soldFmt = r.sold !== null ? r.sold.toFixed(2) : '<span class="muted">No data</span>';
       let varianceFmt = '—', variancePctFmt = '—', lossFmt = '—';
@@ -406,6 +419,15 @@
         <td>${commentIcon}</td>
       </tr>`;
     }).join('') || '<tr><td colspan="10" class="muted" style="text-align:center;padding:20px">No items found.</td></tr>';
+  }
+
+  function renderVendorChips(enriched) {
+    const container = document.getElementById('tuVendorChips');
+    if (!container) return;
+    const vendors = ['ALL', ...Array.from(new Set(enriched.map(r => r.vendor || 'UNKNOWN').filter(Boolean))).sort()];
+    container.innerHTML = vendors.map(v =>
+      `<div class="oh-filter-chip ${_vendorFilter === v ? 'active' : ''}" onclick="window.BarStockTheoreticalUsage.setVendorFilter('${v.replace(/'/g, "\'")}')">${v}</div>`
+    ).join('');
   }
 
   function showWeekList() {
@@ -895,7 +917,8 @@
     openCommentModal,
     saveCommentFromModal,
     openNotesModal,
-    saveNotesFromModal
+    saveNotesFromModal,
+    setVendorFilter: (v) => { _vendorFilter = v; if (_currentWeek) renderWeekDetail(_currentWeek.week_start); }
   };
 
 })();
