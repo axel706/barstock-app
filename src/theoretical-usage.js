@@ -333,7 +333,11 @@
     empty.classList.add('hidden');
 
     const enriched = rows.map(r => {
-      const used = r.used !== null ? Number(r.used) : null;
+      const onHandEndAdj = r.on_hand_end_adjusted !== null && r.on_hand_end_adjusted !== undefined ? Number(r.on_hand_end_adjusted) : null;
+      const usedRaw = r.used !== null ? Number(r.used) : null;
+      const used = onHandEndAdj !== null && r.on_hand_start !== null
+        ? Number(r.on_hand_start || 0) + Number(r.ordered || 0) - onHandEndAdj
+        : usedRaw;
       const sold = salesMap.size ? matchSold(r.item_name, salesMap) : null;
       const variance = used !== null && sold !== null ? used - sold : null;
       const variancePct = variance !== null && sold > 0 ? (variance / sold) * 100 : null;
@@ -386,7 +390,9 @@
     const displayed = _vendorFilter === 'ALL' ? enriched : enriched.filter(r => (r.vendor || 'UNKNOWN') === _vendorFilter);
 
     body.innerHTML = displayed.map(r => {
-      const usedFmt = r.used !== null ? r.used.toFixed(2) : '—';
+      const hasAdj = r.on_hand_end_adjusted !== null && r.on_hand_end_adjusted !== undefined;
+      const adjBtn = `<button class="tu-comment-btn${hasAdj ? ' tu-adj-active' : ''}" onclick="window.BarStockTheoreticalUsage.openAdjModal('${r.item_name.replace(/'/g, '&#39;')}', ${r.on_hand_end_adjusted !== null && r.on_hand_end_adjusted !== undefined ? r.on_hand_end_adjusted : r.on_hand_end ?? ''})" title="${hasAdj ? 'Adjusted — click to edit' : 'Adjust on hand end'}"><i class="ti ti-edit" aria-hidden="true"></i></button>`;
+      const usedFmt = (r.used !== null ? r.used.toFixed(2) : '—') + ' ' + adjBtn;
       const soldFmt = r.sold !== null ? r.sold.toFixed(2) : '<span class="muted">No data</span>';
       let varianceFmt = '—', variancePctFmt = '—', lossFmt = '—';
       let varianceClass = '';
@@ -466,6 +472,20 @@
       { method: 'DELETE', headers: { apikey: key, Authorization: `Bearer ${key}` } }
     );
     _exclusions.delete(itemName);
+  }
+
+  async function saveOnHandAdjustment(weekStart, itemName, value) {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+    const val = Number(value);
+    await fetch(
+      `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&week_start=eq.${weekStart}&item_name=eq.${encodeURIComponent(itemName)}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
+        body: JSON.stringify({ on_hand_end_adjusted: val })
+      }
+    );
   }
 
   function renderVendorChips(enriched) {
@@ -703,7 +723,11 @@
 
     // ── ENRICH DATA ───────────────────────────────────────────────────
     const enriched = rows.map(r => {
-      const used = r.used !== null ? Number(r.used) : null;
+      const onHandEndAdj = r.on_hand_end_adjusted !== null && r.on_hand_end_adjusted !== undefined ? Number(r.on_hand_end_adjusted) : null;
+      const usedRaw = r.used !== null ? Number(r.used) : null;
+      const used = onHandEndAdj !== null && r.on_hand_start !== null
+        ? Number(r.on_hand_start || 0) + Number(r.ordered || 0) - onHandEndAdj
+        : usedRaw;
       const sold = salesMap.size ? matchSold(r.item_name, salesMap) : null;
       const variance = used !== null && sold !== null ? used - sold : null;
       const variancePct = variance !== null && sold > 0 ? (variance / sold) * 100 : null;
@@ -975,6 +999,36 @@
         await saveExclusion(week, itemName);
       }
       renderWeekDetail(week);
+    },
+    openAdjModal: (itemName, currentVal) => {
+      document.getElementById('tuAdjModalItem').textContent = itemName;
+      document.getElementById('tuAdjInput').value = currentVal !== '' && currentVal !== null && currentVal !== undefined ? currentVal : '';
+      document.getElementById('tuAdjInput').dataset.item = itemName;
+      document.getElementById('tuAdjModal').classList.remove('hidden');
+    },
+    saveAdjFromModal: async () => {
+      if (!_currentWeek) return;
+      const input = document.getElementById('tuAdjInput');
+      const itemName = input.dataset.item;
+      const val = parseFloat(input.value);
+      if (isNaN(val) || val < 0) return;
+      await saveOnHandAdjustment(_currentWeek.week_start, itemName, val);
+      document.getElementById('tuAdjModal').classList.add('hidden');
+      await openWeek(_currentWeek.week_start);
+    },
+    clearAdj: async () => {
+      if (!_currentWeek) return;
+      const input = document.getElementById('tuAdjInput');
+      const itemName = input.dataset.item;
+      const { url, key } = getConfig();
+      const locationId = await fetchLocationId();
+      await fetch(
+        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&week_start=eq.${_currentWeek.week_start}&item_name=eq.${encodeURIComponent(itemName)}`,
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
+          body: JSON.stringify({ on_hand_end_adjusted: null }) }
+      );
+      document.getElementById('tuAdjModal').classList.add('hidden');
+      await openWeek(_currentWeek.week_start);
     }
   };
 

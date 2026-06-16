@@ -45,4 +45,5 @@ body.light .tu-metric-lbl{color:#475569}
 .tu-comment-btn:hover{opacity:1;color:var(--accent)}
 .tu-comment-btn.has-comment{opacity:1;color:var(--accent)}
 .tu-comment-btn.tu-excl-active{opacity:1;color:#D85A30}
+.tu-comment-btn.tu-adj-active{opacity:1;color:#0ea5e9}
 .tu-excluded-row td{opacity:.4}
