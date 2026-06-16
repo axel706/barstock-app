@@ -33,12 +33,16 @@ body.light .tu-detail-table td{border-bottom-color:rgba(15,23,42,.04)}
 .tu-variance-neg{color:#1D9E75;font-weight:700}
 .tu-variance-ok{color:var(--sub)}
 .tu-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
-.tu-metric{background:rgba(255,255,255,.04);border-radius:10px;padding:12px 14px}
-body.light .tu-metric{background:rgba(15,23,42,.04)}
+.tu-metric{background:rgba(255,255,255,.04);border-radius:10px;padding:12px 14px;border:1px solid rgba(255,255,255,.08)}
+body.light .tu-metric{background:rgba(255,255,255,.96);border-color:rgba(15,23,42,.08);box-shadow:0 4px 12px rgba(15,23,42,.08)}
 .tu-metric-val{font-size:22px;font-weight:700;color:var(--text);line-height:1.2}
+body.light .tu-metric-val{color:#0f172a}
 .tu-metric-lbl{font-size:11px;color:var(--sub);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em}
+body.light .tu-metric-lbl{color:#475569}
 .tu-empty{font-size:13px;color:var(--sub);padding:20px 0;text-align:center}
 
 .tu-comment-btn{background:transparent;border:none;cursor:pointer;color:var(--sub);padding:2px 4px;border-radius:4px;font-size:14px;opacity:0.4;transition:opacity .15s,color .15s}
 .tu-comment-btn:hover{opacity:1;color:var(--accent)}
 .tu-comment-btn.has-comment{opacity:1;color:var(--accent)}
+.tu-comment-btn.tu-excl-active{opacity:1;color:#D85A30}
+.tu-excluded-row td{opacity:.4}

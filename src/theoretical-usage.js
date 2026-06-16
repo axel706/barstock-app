@@ -26,6 +26,7 @@
   let _salesData = new Map(); // week_start -> Map(item_name -> sold)
   let _sortMode = 'variance'; // 'loss' or 'variance'
   let _vendorFilter = 'ALL';
+  let _exclusions = new Set(); // 'item_name' keys for current week
   let _itemComments = new Map(); // item_name -> comment string
   let _customNotes = ''; // free text notes for current week
 
@@ -289,6 +290,7 @@
     }
     _itemComments = await loadCommentsFromSupabase(weekStart);
     _customNotes = await loadNotesFromSupabase(weekStart);
+    await loadExclusions(weekStart);
     renderWeekDetail(weekStart);
   }
 
@@ -338,7 +340,8 @@
       const loss = variance !== null ? variance * (valueMap.get(r.item_name) || Number(r.value || 0)) : null;
       const prevUsed = prevUsedMap.has(r.item_name) ? prevUsedMap.get(r.item_name) : null;
       const trendDelta = used !== null && prevUsed !== null ? Math.round((used - prevUsed) * 10) / 10 : null;
-      return { ...r, used, sold, variance, variancePct, loss, trendDelta };
+      const isExcluded = _exclusions.has(r.item_name);
+      return { ...r, used, sold, variance, variancePct, loss, trendDelta, isExcluded };
     });
 
     // Sort based on _sortMode — no sales data always last
@@ -357,15 +360,24 @@
     });
 
     // Summary metrics
-    const withSales = enriched.filter(r => r.sold !== null);
-    const withLoss = enriched.filter(r => r.variance !== null && r.variance > 0);
+    const included = enriched.filter(r => !r.isExcluded);
+    const excluded = enriched.filter(r => r.isExcluded);
+    const withSales = included.filter(r => r.sold !== null);
+    const withLoss = included.filter(r => r.variance !== null && r.variance > 0);
+    const withGain = included.filter(r => r.variance !== null && r.variance < 0);
     const totalLoss = withLoss.reduce((s, r) => s + (r.loss || 0), 0);
-    const noSales = enriched.filter(r => r.used > 0 && r.sold === null);
+    const totalGain = withGain.reduce((s, r) => s + Math.abs(r.loss || 0), 0);
+    const netLoss = totalLoss - totalGain;
+    const excludedLoss = excluded.filter(r => r.variance !== null && r.variance > 0).reduce((s, r) => s + (r.loss || 0), 0);
+    const noSales = included.filter(r => r.used > 0 && r.sold === null);
 
     if (summaryGrid) {
       summaryGrid.innerHTML = `
-        <div class="tu-metric"><div class="tu-metric-lbl">Total Loss</div><div class="tu-metric-val" style="color:#D85A30">$${totalLoss.toFixed(2)}</div></div>
-        <div class="tu-metric"><div class="tu-metric-lbl">Items analyzed</div><div class="tu-metric-val">${withSales.length || enriched.length}</div></div>
+        <div class="tu-metric"><div class="tu-metric-lbl">Loss</div><div class="tu-metric-val" style="color:#D85A30">$${totalLoss.toFixed(2)}</div></div>
+        <div class="tu-metric"><div class="tu-metric-lbl">Gained</div><div class="tu-metric-val" style="color:#4ade80">$${totalGain.toFixed(2)}</div></div>
+        <div class="tu-metric"><div class="tu-metric-lbl">Net Loss</div><div class="tu-metric-val" style="color:${netLoss > 0 ? '#D85A30' : '#4ade80'}">${netLoss > 0 ? '+' : ''}$${netLoss.toFixed(2)}</div></div>
+        <div class="tu-metric"><div class="tu-metric-lbl">Excluded Loss</div><div class="tu-metric-val" style="color:#9ca3af">$${excludedLoss.toFixed(2)}</div></div>
+        <div class="tu-metric"><div class="tu-metric-lbl">Items analyzed</div><div class="tu-metric-val">${withSales.length || included.length}</div></div>
         <div class="tu-metric"><div class="tu-metric-lbl">No sales data</div><div class="tu-metric-val" style="color:#9ca3af">${noSales.length}</div></div>
       `;
     }
@@ -405,7 +417,9 @@
       const commentIcon = comment
         ? `<button class="tu-comment-btn has-comment" onclick="window.BarStockTheoreticalUsage.openCommentModal('${r.item_name.replace(/'/g,"\'")}')" title="${comment.replace(/"/g,'&quot;')}"><i class="ti ti-message-circle" aria-hidden="true"></i></button>`
         : `<button class="tu-comment-btn" onclick="window.BarStockTheoreticalUsage.openCommentModal('${r.item_name.replace(/'/g,"\'")}')" title="Add comment"><i class="ti ti-message-circle" aria-hidden="true"></i></button>`;
-      return `<tr>
+      const safeItemName = r.item_name.replace(/'/g, '&#39;');
+      const excludeIcon = `<button class="tu-comment-btn${r.isExcluded ? ' tu-excl-active' : ''}" onclick="window.BarStockTheoreticalUsage.toggleExclusion('${safeItemName}')" title="${r.isExcluded ? 'Excluded — click to re-include' : 'Exclude from report'}"><i class="ti ti-eye-off" aria-hidden="true"></i></button>`;
+      return `<tr class="${r.isExcluded ? 'tu-excluded-row' : ''}">
         <td>${r.code || ''}</td>
         <td style="font-weight:500">${r.item_name}</td>
         <td>${typeof badge === 'function' ? badge(r.vendor) : r.vendor}</td>
@@ -417,8 +431,41 @@
         <td>${trendFmt}</td>
         <td>${statusBadge}</td>
         <td>${commentIcon}</td>
+        <td>${excludeIcon}</td>
       </tr>`;
-    }).join('') || '<tr><td colspan="10" class="muted" style="text-align:center;padding:20px">No items found.</td></tr>';
+    }).join('') || '<tr><td colspan="11" class="muted" style="text-align:center;padding:20px">No items found.</td></tr>';
+  }
+
+  async function loadExclusions(weekStart) {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+    const res = await fetch(
+      `${url}/rest/v1/theoretical_exclusions?location_id=eq.${locationId}&week_start=eq.${weekStart}&select=item_name`,
+      { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+    );
+    const rows = await res.json();
+    _exclusions = new Set((rows || []).map(r => r.item_name));
+  }
+
+  async function saveExclusion(weekStart, itemName) {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+    await fetch(`${url}/rest/v1/theoretical_exclusions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'resolution=merge-duplicates' },
+      body: JSON.stringify({ location_id: locationId, week_start: weekStart, item_name: itemName, reason: 'Not mapped in POS' })
+    });
+    _exclusions.add(itemName);
+  }
+
+  async function removeExclusion(weekStart, itemName) {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+    await fetch(
+      `${url}/rest/v1/theoretical_exclusions?location_id=eq.${locationId}&week_start=eq.${weekStart}&item_name=eq.${encodeURIComponent(itemName)}`,
+      { method: 'DELETE', headers: { apikey: key, Authorization: `Bearer ${key}` } }
+    );
+    _exclusions.delete(itemName);
   }
 
   function renderVendorChips(enriched) {
@@ -918,7 +965,17 @@
     saveCommentFromModal,
     openNotesModal,
     saveNotesFromModal,
-    setVendorFilter: (v) => { _vendorFilter = v; if (_currentWeek) renderWeekDetail(_currentWeek.week_start); }
+    setVendorFilter: (v) => { _vendorFilter = v; if (_currentWeek) renderWeekDetail(_currentWeek.week_start); },
+    toggleExclusion: async (itemName) => {
+      if (!_currentWeek) return;
+      const week = _currentWeek.week_start;
+      if (_exclusions.has(itemName)) {
+        await removeExclusion(week, itemName);
+      } else {
+        await saveExclusion(week, itemName);
+      }
+      renderWeekDetail(week);
+    }
   };
 
 })();
