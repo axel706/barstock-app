@@ -121,7 +121,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260618-170741</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260618-171821</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2951,6 +2951,48 @@ async function saveCategoryFromModal() {
 }
 window.saveCategoryFromModal = saveCategoryFromModal;
 
+const CATEGORIES = ['', 'Vodka', 'Gin', 'Tequila & Mezcal', 'Whiskey & Bourbon', 'Rum', 'Brandy & Cognac', 'Liqueur', 'Wine', 'Beer & Cider', 'Non-Alcoholic'];
+
+function renderCategorySettings() {
+  const list = document.getElementById('catSettingsList');
+  if (!list || !state.master) return;
+  const q = (document.getElementById('catSettingsSearch')?.value || '').toLowerCase();
+  const filter = document.getElementById('catSettingsFilter')?.value || '';
+  const items = state.master.filter(r => {
+    if (q && !r.item.toLowerCase().includes(q)) return false;
+    if (filter === 'unassigned') return !r.category;
+    if (filter && filter !== 'unassigned') return r.category === filter;
+    return true;
+  });
+  list.innerHTML = items.map((r, i) => {
+    const idx = state.master.indexOf(r);
+    const opts = CATEGORIES.map(c => `<option value="${c}" ${r.category === c ? 'selected' : ''}>${c || '— none —'}</option>`).join('');
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:var(--muted)">
+      <span style="flex:1;font-size:12px;color:var(--text)">${escapeHtml(r.item)}</span>
+      <span style="font-size:11px;color:var(--sub);min-width:60px">${r.vendor || ''}</span>
+      <select style="background:var(--card);color:var(--text);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:3px 6px;font-size:12px" onchange="saveCategoryInline(${idx}, this.value)">${opts}</select>
+    </div>`;
+  }).join('') || '<div class="small muted" style="padding:10px">No items found.</div>';
+}
+window.renderCategorySettings = renderCategorySettings;
+
+async function saveCategoryInline(idx, category) {
+  const r = state.master[idx];
+  if (!r) return;
+  const url = window.BARSTOCK_CONFIG.SUPABASE_URL;
+  const key = window.BARSTOCK_CONFIG.SUPABASE_KEY;
+  const locRes = await fetch(`${url}/rest/v1/locations?name=eq.${encodeURIComponent(window.BARSTOCK_CONFIG.LOCATION_NAME)}&select=id`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+  const locData = await locRes.json();
+  const locationId = locData[0].id;
+  await fetch(`${url}/rest/v1/inventory_items?location_id=eq.${locationId}&item_name=eq.${encodeURIComponent(r.item)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
+    body: JSON.stringify({ category: category || null })
+  });
+  state.master[idx].category = category || null;
+}
+window.saveCategoryInline = saveCategoryInline;
+
 function quickZeroSuggested(index){
   const row = state.master[index];
   if(!row) return;
@@ -4541,6 +4583,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     const orig = window.showSettingsPanel;
     window.showSettingsPanel = function(panel) {
       if (panel === 'appearance') renderBgGrid();
+      if (panel === 'categories') setTimeout(renderCategorySettings, 50);
       if (orig) orig(panel);
     };
   });
@@ -4823,6 +4866,11 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
         <span class="settings-menu-desc">Background image for this location</span>
         <span class="settings-menu-arrow">›</span>
       </button>
+      <button class="settings-menu-item" onclick="showSettingsPanel('categories')">
+        <span class="settings-menu-label">Item Categories</span>
+        <span class="settings-menu-desc">Assign spirit categories for usage reports</span>
+        <span class="settings-menu-arrow">›</span>
+      </button>
     </div>
 
     <!-- PANEL: General -->
@@ -4946,6 +4994,31 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
         <button class="ui-control" onclick="closeSettingsModal()">Cancel</button>
         <button class="ui-control primary" id="vendorCodesSaveBtn" onclick="saveVendorCodes()">Save</button>
       </div>
+    </div>
+
+    <!-- PANEL: Item Categories -->
+    <div id="settingsPanel-categories" class="settings-panel hidden">
+      <button class="settings-back-btn" onclick="showSettingsPanel(null)">‹ Back</button>
+      <h4 style="margin:0 0 4px">Item Categories</h4>
+      <div class="small muted" style="margin-bottom:16px">Assign a spirit category to each item for usage reports. Categories are not shown in inventory tables.</div>
+      <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center">
+        <input id="catSettingsSearch" type="text" placeholder="Search items..." style="flex:1;background:var(--muted);color:var(--text);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:6px 10px;font-size:13px" oninput="renderCategorySettings()">
+        <select id="catSettingsFilter" style="background:var(--muted);color:var(--text);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:6px 10px;font-size:13px" onchange="renderCategorySettings()">
+          <option value="">All items</option>
+          <option value="unassigned">Unassigned only</option>
+          <option value="Vodka">Vodka</option>
+          <option value="Gin">Gin</option>
+          <option value="Tequila &amp; Mezcal">Tequila &amp; Mezcal</option>
+          <option value="Whiskey &amp; Bourbon">Whiskey &amp; Bourbon</option>
+          <option value="Rum">Rum</option>
+          <option value="Brandy &amp; Cognac">Brandy &amp; Cognac</option>
+          <option value="Liqueur">Liqueur</option>
+          <option value="Wine">Wine</option>
+          <option value="Beer &amp; Cider">Beer &amp; Cider</option>
+          <option value="Non-Alcoholic">Non-Alcoholic</option>
+        </select>
+      </div>
+      <div id="catSettingsList" style="display:flex;flex-direction:column;gap:4px;max-height:420px;overflow-y:auto"></div>
     </div>
 
   </div>
