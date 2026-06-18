@@ -50,7 +50,7 @@
     const locationId = await fetchLocationId();
 
     const res = await fetch(
-      `${BARSTOCK_RT_URL}/rest/v1/inventory_items?location_id=eq.${locationId}&select=code,item_name,vendor,on_hand,suggested,value`,
+      `${BARSTOCK_RT_URL}/rest/v1/inventory_items?location_id=eq.${locationId}&select=code,item_name,vendor,on_hand,suggested,value,category`,
       {
         headers: {
           apikey: BARSTOCK_RT_KEY,
@@ -75,6 +75,7 @@
         onHand,
         suggested,
         value: Number(r.value || 0),
+        category: r.category || null,
         toOrder: typeof computeToOrder === 'function' ? computeToOrder(onHand, suggested) : 0,
         orderOverride: ''
       };

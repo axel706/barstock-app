@@ -121,7 +121,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260616-001507</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260618-170741</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -848,6 +848,30 @@
     <div class="toolbar" style="margin-top:16px;justify-content:flex-end">
       <button id="historyDateEditCancel" type="button" onclick="closeHistoryDateEdit()">Cancel</button>
       <button id="historyDateEditSave" type="button" class="primary" onclick="saveHistoryDateEdit()">Save Date</button>
+    </div>
+  </div>
+</div>
+
+<div id="categoryModalBg" class="modalbg hidden">
+  <div class="modal" style="width:min(380px,96vw)">
+    <h3 style="margin-top:0">Assign Category</h3>
+    <div class="small muted" id="categoryModalItem" style="margin-bottom:12px"></div>
+    <select id="categoryModalSelect" style="width:100%;background:var(--muted);color:var(--text);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:16px">
+      <option value="">— No category —</option>
+      <option value="Vodka">Vodka</option>
+      <option value="Gin">Gin</option>
+      <option value="Tequila &amp; Mezcal">Tequila &amp; Mezcal</option>
+      <option value="Whiskey &amp; Bourbon">Whiskey &amp; Bourbon</option>
+      <option value="Rum">Rum</option>
+      <option value="Brandy &amp; Cognac">Brandy &amp; Cognac</option>
+      <option value="Liqueur">Liqueur</option>
+      <option value="Wine">Wine</option>
+      <option value="Beer &amp; Cider">Beer &amp; Cider</option>
+      <option value="Non-Alcoholic">Non-Alcoholic</option>
+    </select>
+    <div class="toolbar" style="justify-content:flex-end;gap:8px">
+      <button onclick="document.getElementById('categoryModalBg').classList.add('hidden')">Cancel</button>
+      <button class="primary" onclick="saveCategoryFromModal()">Save</button>
     </div>
   </div>
 </div>
@@ -2331,7 +2355,8 @@ function render(){
   const filtered = state.master.filter(r => (!q || r.itemNorm.includes(q) || normalizeName(r.code).includes(q)) && (vendorFilter==='ALL' || r.vendor===vendorFilter));
   document.getElementById('inventoryBody').innerHTML = filtered.map(r => {
     const idx = state.master.findIndex(m => m.itemNorm===r.itemNorm && String(m.code||'')===String(r.code||''));
-    return `<tr><td>${escapeHtml(r.code)}</td><td>${escapeHtml(r.item)}${getParChipHtml(r)}</td><td>${badge(r.vendor)}</td><td>${fmt(r.onHand)}</td><td>${fmt(r.suggested)}</td><td>${fmt(r.toOrder)}</td><td>${fmtMoney(r.value)}</td><td><div class="rowactions"><button onclick="openEditModal(${idx})">Edit</button><button class="danger" onclick="quickZeroSuggested(${idx})">Zero Suggested</button></div></td></tr>`;
+    const catIcon = `<button class="tu-comment-btn${r.category ? ' has-comment' : ''}" onclick="openCategoryModal(${idx})" title="${r.category ? 'Category: ' + r.category : 'Assign category'}"><i class="ti ti-tag" aria-hidden="true"></i></button>`;
+    return `<tr><td>${escapeHtml(r.code)}</td><td>${escapeHtml(r.item)}${getParChipHtml(r)}</td><td>${badge(r.vendor)}</td><td>${fmt(r.onHand)}</td><td>${fmt(r.suggested)}</td><td>${fmt(r.toOrder)}</td><td>${fmtMoney(r.value)}</td><td><div class="rowactions">${catIcon}<button onclick="openEditModal(${idx})">Edit</button><button class="danger" onclick="quickZeroSuggested(${idx})">Zero Suggested</button></div></td></tr>`;
   }).join('') || `<tr><td colspan="8" class="muted">No inventory loaded.</td></tr>`;
 
   const vendors = getVendorsForFilter();
@@ -2893,6 +2918,38 @@ function resetFinalOrder(index){
   setStatus(`Final order reset to automatic TO ORDER for '${row.item}'.`);
 }
 window.resetFinalOrder = resetFinalOrder;
+
+function openCategoryModal(idx) {
+  const r = state.master[idx];
+  if (!r) return;
+  document.getElementById('categoryModalItem').textContent = r.item + (r.vendor ? ' · ' + r.vendor : '');
+  document.getElementById('categoryModalSelect').value = r.category || '';
+  document.getElementById('categoryModalSelect').dataset.idx = idx;
+  document.getElementById('categoryModalBg').classList.remove('hidden');
+}
+window.openCategoryModal = openCategoryModal;
+
+async function saveCategoryFromModal() {
+  const sel = document.getElementById('categoryModalSelect');
+  const idx = parseInt(sel.dataset.idx);
+  const category = sel.value || null;
+  const r = state.master[idx];
+  if (!r) return;
+  const { url, key } = { url: window.BARSTOCK_CONFIG.SUPABASE_URL, key: window.BARSTOCK_CONFIG.SUPABASE_KEY };
+  const locationId = await (async () => {
+    const res = await fetch(`${url}/rest/v1/locations?name=eq.${encodeURIComponent(window.BARSTOCK_CONFIG.LOCATION_NAME)}&select=id`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+    const d = await res.json(); return d[0].id;
+  })();
+  await fetch(`${url}/rest/v1/inventory_items?location_id=eq.${locationId}&item_name=eq.${encodeURIComponent(r.item)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
+    body: JSON.stringify({ category })
+  });
+  state.master[idx].category = category;
+  document.getElementById('categoryModalBg').classList.add('hidden');
+  render();
+}
+window.saveCategoryFromModal = saveCategoryFromModal;
 
 function quickZeroSuggested(index){
   const row = state.master[index];
