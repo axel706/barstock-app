@@ -67,6 +67,7 @@
     state.master = rows.map(r => {
       const onHand = Number(r.on_hand || 0);
       const suggested = Number(r.suggested || 0);
+      const existing = (state.master || []).find(m => m.item === (r.item_name || '') && m.vendor === String(r.vendor || 'UNKNOWN').trim().toUpperCase());
       return {
         code: r.code || '',
         item: r.item_name || '',
@@ -77,7 +78,7 @@
         value: Number(r.value || 0),
         category: r.category || null,
         toOrder: typeof computeToOrder === 'function' ? computeToOrder(onHand, suggested) : 0,
-        orderOverride: ''
+        orderOverride: (existing && existing.orderOverride !== undefined) ? existing.orderOverride : ''
       };
     });
 
