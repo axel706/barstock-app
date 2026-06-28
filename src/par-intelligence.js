@@ -75,10 +75,18 @@
         is_event_week: false
       }));
 
+      // Deduplicate by item_name before upsert
+      const seenNames = new Set();
+      const dedupedRows = upsertRows.filter(r => {
+        if (seenNames.has(r.item_name)) return false;
+        seenNames.add(r.item_name);
+        return true;
+      });
+
       // Upsert in chunks — constraint on (location_id, week_start, item_name) prevents duplicates
       const chunkSize = 200;
-      for (let i = 0; i < upsertRows.length; i += chunkSize) {
-        const chunk = upsertRows.slice(i, i + chunkSize);
+      for (let i = 0; i < dedupedRows.length; i += chunkSize) {
+        const chunk = dedupedRows.slice(i, i + chunkSize);
         const res = await fetch(`${url}/rest/v1/inventory_snapshots?on_conflict=location_id,week_start,item_name`, {
           method: 'POST',
           headers: {
