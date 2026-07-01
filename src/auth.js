@@ -78,6 +78,18 @@
       const { error } = await authClient.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
+      // Notify login
+      fetch('https://barstock-app.vercel.app/api/notify-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          location: window.BARSTOCK_CONFIG?.LOCATION_NAME || 'Unknown',
+          userAgent: navigator.userAgent,
+          timestamp: new Date().toLocaleString()
+        })
+      }).catch(() => {});
+
       const locations = await window.BarStockLocationAccess.getAllowedLocations();
 
       if (locations.length > 1) {
