@@ -2688,3 +2688,7 @@ body.dark .bs-status-badge, :root:not(.light) .bs-status-badge {
 .bs-status-dot-red    { background: #E24B4A; }
 .bs-status-dot-gray   { background: #888780; }
 /* ── End Status row ───────────────────────────────────────────────────────── */
+
+#vendorExportArea.vendor-hidden .vendor-col { display: none; }
+#vendorExportArea.vendor-hidden thead tr th:first-child { display: none; }
+#vendorExportArea.vendor-hidden tbody tr td:first-child { display: none; }

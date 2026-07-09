@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260709-191327</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260709-193544</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2406,7 +2406,12 @@ function render(){
   document.getElementById('noMatchMetric').textContent = state.noMatches.length;
   document.getElementById('masterStatus').textContent = state.lastMasterName ? `Loaded: ${state.lastMasterName}` : 'No master loaded';
 }
-function setVendorTab(v){ activeVendorTab=v; render(); }
+function setVendorTab(v){
+  activeVendorTab=v;
+  render();
+  const area = document.getElementById('vendorExportArea');
+  if(area) area.classList.toggle('vendor-hidden', v !== 'ALL');
+}
 window.setVendorTab = setVendorTab;
 function setInventoryVendorFilter(v){ document.getElementById('vendorFilter').value = v; render(); }
 window.setInventoryVendorFilter = setInventoryVendorFilter;
