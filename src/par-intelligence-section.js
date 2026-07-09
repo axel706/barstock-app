@@ -178,6 +178,7 @@
     // Vendor filter chips
     const vendorRow = document.createElement('div');
     vendorRow.className = 'tabs';
+    vendorRow.style.marginBottom = '12px';
     vendorRow.id = 'piqVendorTabs';
     wrap.appendChild(vendorRow);
 
