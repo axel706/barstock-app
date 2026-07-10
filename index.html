@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260709-193544</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260710-132950</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -266,24 +266,33 @@
         <button id="quickOrderBtn" class="success ui-control">Quick Order</button>
         <input id="vendorSearchInput" placeholder="Filter current order" />
       </div>
-      <div class="vendor-table-shell">
-        <div class="tablewrap" id="vendorExportArea">
-        <table>
-          <colgroup>
-            <col class="vendor-col">
-            <col class="badge-col">
-            <col class="item-col">
-            <col class="onhand-col">
-            <col class="suggested-col">
-            <col class="toorder-col-width">
-            <col class="final-col">
-          </colgroup>
-          <thead><tr><th>VENDOR</th><th class="badgehead"></th><th>ITEM</th><th>ON HAND</th><th>SUGGESTED</th><th class="toorder-head">TO ORDER</th><th>FINAL ORDER</th></tr></thead>
-          <tbody id="vendorBody"></tbody>
-        </table>
+      <div class="vsp-layout">
+        <div class="vendor-table-shell">
+          <div class="tablewrap" id="vendorExportArea">
+          <table>
+            <colgroup>
+              <col class="vendor-col">
+              <col class="badge-col">
+              <col class="item-col">
+              <col class="onhand-col">
+              <col class="suggested-col">
+              <col class="toorder-col-width">
+              <col class="final-col">
+            </colgroup>
+            <thead><tr><th>VENDOR</th><th class="badgehead"></th><th>ITEM</th><th>ON HAND</th><th>SUGGESTED</th><th class="toorder-head">TO ORDER</th><th>FINAL ORDER</th></tr></thead>
+            <tbody id="vendorBody"></tbody>
+          </table>
+        </div>
+        </div>
+        <div class="vsp-panel" id="vspPanel">
+          <div class="vsp-panel-header">
+            <i class="ti ti-shopping-cart" style="font-size:22px;color:#38bdf8" aria-hidden="true"></i>
+            <span class="vsp-panel-title" id="vspPanelTitle">Order summary</span>
+          </div>
+          <div class="vsp-panel-body" id="vspPanelBody"></div>
+        </div>
       </div>
-      </div>
-      <div class="vendor-placebar hidden" id="placeOrderBar">
+      <div class="vendor-placebar hidden" id="placeOrderBar" style="display:none !important">
         <div class="vendor-subtotal" id="vendorSubtotalBox">
           <div>
             <div class="label">Order Subtotal</div>
@@ -2388,11 +2397,19 @@ function render(){
       ? `<div class="rowactions ${overrideActive ? 'final-override' : ''}"><input type="number" min="0" step="1" value="${overrideActive ? escapeHtml(String(r.orderOverride)) : ''}" placeholder="Auto ${fmt(r.toOrder)}" style="width:110px" onchange="updateFinalOrder(${masterIndex}, this.value)"><button onclick="resetFinalOrder(${masterIndex})">Auto</button></div>`
       : `<span class="muted">Auto only</span>`;
     return `<tr><td>${badge(r.vendor)}</td><td class="badgecell">${orderingBadgeCell(r)}</td><td>${escapeHtml(r.item)}${getParChipHtml(r)}</td><td>${fmt(r.onHand)}</td><td>${fmt(r.suggested)}</td><td class="toorder-col ${toOrderClass(r.toOrder)}">${fmt(r.toOrder)}</td><td>${finalCell}</td></tr>`;
-  }).join('') || `<tr><td colspan="7" class="muted">No items to order.</td></tr>`;
+  }).join('') || (() => {
+    const placedKey = 'vsp_placed_' + activeVendorTab;
+    const wasPlaced = sessionStorage.getItem(placedKey);
+    if (wasPlaced && activeVendorTab !== 'ALL') {
+      return `<tr><td colspan="6" style="text-align:center;padding:48px 0"><i class="ti ti-circle-check" style="font-size:36px;display:block;margin:0 auto 12px;color:#22c55e"></i><strong style="font-size:15px;color:var(--text);display:block;margin-bottom:6px">All items ordered</strong><span style="font-size:13px;color:var(--sub)">No pending items for this vendor.</span></td></tr>`;
+    }
+    return `<tr><td colspan="6" style="text-align:center;padding:48px 0;color:var(--sub)">No items to order.</td></tr>`;
+  })();
   const totalBottles = vendRows.reduce((sum, r) => sum + parseNum(getEffectiveOrder(r)), 0);
   const editedCount = vendRows.filter(r => supportsManualFinalOrder(r.vendor) && r.orderOverride !== '' && r.orderOverride !== null && r.orderOverride !== undefined).length;
   document.getElementById('vendorSummary').textContent = `Current list: ${vendRows.length} code${vendRows.length===1?'':'s'} | ${fmt(totalBottles)} bottle${Number(totalBottles)===1?'':'s'} | ${editedCount} edited`;
   window.renderOrderHistory && window.renderOrderHistory();
+  if(typeof renderVendorPanel === 'function') renderVendorPanel();
 
   document.getElementById('noMatchBody').innerHTML = state.noMatches.map((r,i)=>{
     const suggestion = bestMatch(r.rawItem);
@@ -2406,9 +2423,127 @@ function render(){
   document.getElementById('noMatchMetric').textContent = state.noMatches.length;
   document.getElementById('masterStatus').textContent = state.lastMasterName ? `Loaded: ${state.lastMasterName}` : 'No master loaded';
 }
+function renderVendorPanel() {
+  const panel = document.getElementById('vspPanel');
+  const title = document.getElementById('vspPanelTitle');
+  const body = document.getElementById('vspPanelBody');
+  if (!panel || !body) return;
+
+  const placedKey = 'vsp_placed_' + activeVendorTab;
+  const placedOrderId = sessionStorage.getItem(placedKey);
+  const isPending = placedOrderId === '__pending__';
+  const placedOrder = (placedOrderId && !isPending) ? (state.orderHistory || []).find(o => o.id === placedOrderId) : null;
+
+  if (activeVendorTab === 'ALL') {
+    if (title) title.textContent = 'Order summary';
+    const activeVendors = getActiveVendors().filter(v => v !== 'ALL' && v !== 'UNKNOWN');
+    const rows = activeVendors.map(v => {
+      const vRows = getOrderRowsForVendor(v);
+      const subtotal = computeOrderSubtotal(vRows);
+      if (!vRows.length) return '';
+      return `<div class="vsp-row"><span class="vsp-row-label">${v}</span><span class="vsp-row-value">${fmtMoney(subtotal)}</span></div>`;
+    }).filter(Boolean).join('');
+    const total = activeVendors.reduce((sum, v) => sum + computeOrderSubtotal(getOrderRowsForVendor(v)), 0);
+    body.innerHTML = rows + `<hr class="vsp-divider"><div class="vsp-total-label">Total</div><div class="vsp-total">${fmtMoney(total)}</div>`;
+    return;
+  }
+
+  if (title) title.textContent = activeVendorTab;
+
+  if (isPending || placedOrder) {
+    if (isPending && !placedOrder) {
+      body.innerHTML = `<div class='vsp-placed-state'><i class='ti ti-loader' style='font-size:28px;color:#38bdf8' aria-hidden='true'></i><div style='font-size:12px;color:var(--sub)'>Placing order...</div></div>`;
+      return;
+    }
+    const bottles = (placedOrder.items || []).reduce((s, r) => s + parseNum(r.finalOrder || 0), 0);
+    body.innerHTML = `
+      <div class="vsp-placed-state">
+        <i class="ti ti-circle-check" style="font-size:28px;color:#22c55e" aria-hidden="true"></i>
+        <div class="vsp-placed-label">Order placed</div>
+        <div style="font-size:12px;color:var(--sub)">${placedOrder.items?.length || 0} items · ${fmt(bottles)} btl · ${fmtMoney(placedOrder.subtotal)}</div>
+        <div class="vsp-placed-btns">
+          <button class="oh-card-btn primary" onclick="openEmailOrderModal('${placedOrder.id}')" title="Email order"><i class="ti ti-mail" style="font-size:14px"></i></button>
+          <button class="oh-card-btn" onclick="reopenHistoryOrder('${placedOrder.id}', this)" title="Re-open order"><i class="ti ti-refresh" style="font-size:14px"></i></button>
+          <button class="oh-card-btn danger" onclick="deleteHistoryOrder('${placedOrder.id}', this)" title="Delete order"><i class="ti ti-trash" style="font-size:14px"></i></button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const placeableRows = canPlaceOrder() ? getOrderRowsForVendor(activeVendorTab) : [];
+  const subtotal = computeOrderSubtotal(placeableRows);
+  const bottles = placeableRows.reduce((s, r) => s + parseNum(getEffectiveOrder(r)), 0);
+  const canPlace = canPlaceOrder() && placeableRows.length > 0;
+
+  // Last order for this vendor
+  const vendorOrders = (state.orderHistory || [])
+    .filter(o => o.vendor === activeVendorTab)
+    .sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const lastOrder = vendorOrders[0] || null;
+  const costDiff = lastOrder ? subtotal - (lastOrder.subtotal || 0) : null;
+  const diffSign = costDiff > 0 ? '+' : '';
+  const diffColor = costDiff > 0 ? '#ef4444' : costDiff < 0 ? '#22c55e' : 'var(--sub)';
+  const diffIcon = costDiff > 0 ? 'ti-trending-up' : costDiff < 0 ? 'ti-trending-down' : 'ti-minus';
+  const lastOrderHtml = lastOrder ? `
+    <div class="vsp-last-order">
+      <div class="vsp-row-label" style="margin-bottom:6px">Last order</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text)">${fmtMoney(lastOrder.subtotal || 0)}</div>
+      <div style="font-size:11px;color:var(--sub);margin-top:2px">${fmt(lastOrder.totalUnits || 0)} btl · ${new Date(lastOrder.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</div>
+      ${costDiff !== null ? `<div style="font-size:12px;font-weight:700;color:${diffColor};margin-top:6px;display:flex;align-items:center;gap:4px"><i class="ti ${diffIcon}" style="font-size:13px"></i>${diffSign}${fmtMoney(Math.abs(costDiff))} vs last order</div>` : ''}
+    </div>` : '';
+
+  body.innerHTML = `
+    <div class="vsp-center-content">
+      <div class="vsp-row"><span class="vsp-row-label">Items</span><span class="vsp-row-value">${placeableRows.length}</span></div>
+      <div class="vsp-row"><span class="vsp-row-label">Bottles</span><span class="vsp-row-value">${fmt(bottles)}</span></div>
+      ${lastOrderHtml}
+    </div>
+    <div class="vsp-bottom">
+      <div class="vsp-subtotal-row">
+        <span class="vsp-total-label">Subtotal</span>
+        <span class="vsp-total">${fmtMoney(subtotal)}</span>
+      </div>
+      ${canPlace ? `<button class="vsp-place-btn" id="vspPlaceBtn"><i class="ti ti-send" style="font-size:14px" aria-hidden="true"></i> Place &amp; send</button>` : ''}
+    </div>
+  `;
+
+  if (canPlace) {
+    const btn = document.getElementById('vspPlaceBtn');
+    if (btn) {
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ti ti-loader" style="font-size:14px" aria-hidden="true"></i> Placing...';
+        // Set pending state BEFORE placeCurrentOrder so render() sees it
+        sessionStorage.setItem('vsp_placed_' + activeVendorTab, '__pending__');
+        try {
+          await window.placeCurrentOrder();
+          const latest = (state.orderHistory || []).filter(o => o.vendor === activeVendorTab).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+          if (latest) {
+            sessionStorage.setItem('vsp_placed_' + activeVendorTab, latest.id);
+          }
+          renderVendorPanel();
+          setTimeout(() => {
+            if (typeof window.BarStockEmailOrder?.openModal === 'function') {
+              const ord = (state.orderHistory || []).filter(o => o.vendor === activeVendorTab).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+              if (ord) window.BarStockEmailOrder.openModal(ord.id);
+            }
+          }, 400);
+        } catch(err) {
+          console.error(err);
+          sessionStorage.removeItem('vsp_placed_' + activeVendorTab);
+          btn.disabled = false;
+          btn.innerHTML = '<i class="ti ti-send" style="font-size:14px"></i> Place & send';
+        }
+      });
+    }
+  }
+}
+window.renderVendorPanel = renderVendorPanel;
+
 function setVendorTab(v){
   activeVendorTab=v;
   render();
+  renderVendorPanel();
   const area = document.getElementById('vendorExportArea');
   if(area) area.classList.toggle('vendor-hidden', v !== 'ALL');
 }
@@ -4210,19 +4345,27 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   function setButtonBusy(btn, label){
     if (!btn) return;
     if (!btn.dataset.originalLabel) {
-      btn.dataset.originalLabel = btn.textContent;
+      btn.dataset.originalLabel = btn.innerHTML;
     }
     btn.disabled = true;
     btn.classList.add('btn-busy');
-    if (label) btn.textContent = label;
+    const icon = btn.querySelector('i');
+    if (icon) {
+      icon.style.animation = 'spin 0.8s linear infinite';
+    } else {
+      if (label) btn.textContent = label;
+    }
   }
 
   function clearButtonBusy(btn){
     if (!btn) return;
     btn.disabled = false;
     btn.classList.remove('btn-busy');
-    if (btn.dataset.originalLabel) {
-      btn.textContent = btn.dataset.originalLabel;
+    const icon = btn.querySelector('i');
+    if (icon) {
+      icon.style.animation = '';
+    } else if (btn.dataset.originalLabel) {
+      btn.innerHTML = btn.dataset.originalLabel;
     }
   }
 

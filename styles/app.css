@@ -2017,6 +2017,9 @@
     animation:barstockSpin .7s linear infinite;
     vertical-align:-2px;
   }
+  .btn-busy:has(i)::after{
+    display:none;
+  }
 
   @keyframes barstockSpin{
     to{ transform:rotate(360deg); }
@@ -2692,3 +2695,203 @@ body.dark .bs-status-badge, :root:not(.light) .bs-status-badge {
 #vendorExportArea.vendor-hidden .vendor-col { display: none; }
 #vendorExportArea.vendor-hidden thead tr th:first-child { display: none; }
 #vendorExportArea.vendor-hidden tbody tr td:first-child { display: none; }
+
+.vsp-layout {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+  width: 100%;
+}
+.vsp-layout .vendor-table-shell {
+  flex: 1;
+  min-width: 0;
+  max-width: calc(100% - 256px);
+  overflow: hidden;
+}
+.vsp-panel {
+  width: 240px;
+  flex-shrink: 0;
+  background: rgba(17,24,39,.86);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+body.light .vsp-panel {
+  background: rgba(255,255,255,.86);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-color: rgba(15,23,42,.08);
+  box-shadow: 0 8px 22px rgba(15,23,42,.08);
+}
+.vsp-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+body.light .vsp-panel-header {
+  border-bottom-color: rgba(15,23,42,.08);
+}
+.vsp-panel-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+.vsp-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.vsp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+.vsp-row-label {
+  color: var(--sub);
+  font-weight: 600;
+}
+.vsp-row-value {
+  color: var(--text);
+  font-weight: 700;
+}
+.vsp-divider {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,.08);
+  margin: 0;
+}
+body.light .vsp-divider {
+  border-top-color: rgba(15,23,42,.08);
+}
+.vsp-total {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+}
+.vsp-total-label {
+  font-size: 11px;
+  color: var(--sub);
+  margin-bottom: 4px;
+}
+.vsp-place-btn {
+  width: 100%;
+  padding: 11px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  background: #22c55e;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.vsp-place-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+.vsp-placed-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  padding: 4px 0;
+}
+.vsp-placed-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #22c55e;
+}
+.vsp-placed-btns {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.vsp-panel-header {
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+}
+.vsp-panel-body .vsp-row {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  font-size: 14px;
+}
+body.light .vsp-panel-body .vsp-row {
+  border-bottom-color: rgba(15,23,42,.06);
+}
+.vsp-total-label {
+  margin-top: 16px;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+.vsp-total {
+  font-size: 28px;
+  margin-bottom: 16px;
+}
+.vsp-place-btn {
+  margin-top: auto;
+  background: #22c55e !important;
+  color: #fff !important;
+}
+
+.vsp-panel-title {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  color: var(--text) !important;
+}
+.vsp-center-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+.vsp-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.vsp-subtotal-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.vsp-subtotal-row .vsp-total-label {
+  margin-top: 0;
+  margin-bottom: 2px;
+}
+.vsp-subtotal-row .vsp-total {
+  margin-bottom: 0;
+}
+.vsp-panel-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.vsp-last-order {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+body.light .vsp-last-order {
+  border-top-color: rgba(15,23,42,.08);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
