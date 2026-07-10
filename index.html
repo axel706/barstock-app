@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260710-132950</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260710-135338</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2736,6 +2736,8 @@ async function applyPendingImport(){
   if(!pendingImport) return;
   document.getElementById('previewModalBg').classList.add('hidden');
   if(typeof showCountLoadingOverlay === 'function') showCountLoadingOverlay();
+  // Clear vendor panel placed state on new count
+  Object.keys(sessionStorage).filter(k => k.startsWith('vsp_placed_')).forEach(k => sessionStorage.removeItem(k));
 
   // Aplicar state localmente primero
   const importMatches = pendingImport.matches || 0;
@@ -3601,6 +3603,8 @@ async function resetOnHand(){
     state.noMatches = [];
     state.placedOrders = [];
     compareSelection = [];
+    // Clear vendor panel placed state
+    Object.keys(sessionStorage).filter(k => k.startsWith('vsp_placed_')).forEach(k => sessionStorage.removeItem(k));
 
     saveState();
     render();
@@ -3843,6 +3847,7 @@ async function resetOrderHistory(){
 
   state.orderHistory = [];
   state.placedOrders = [];
+  Object.keys(sessionStorage).filter(k => k.startsWith('vsp_placed_')).forEach(k => sessionStorage.removeItem(k));
   saveState();
 
   try{
@@ -4934,7 +4939,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       el.style.pointerEvents = 'none';
       el.style.visibility = 'hidden';
       el.style.transition = 'opacity 0.35s ease, visibility 0s linear 0.35s';
-      if(typeof bsOpenSection === 'function') bsOpenSection('inventory');
+      if(typeof bsOpenSection === 'function') bsOpenSection('vendor');
     }, 12000);
   };
 })();
