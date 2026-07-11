@@ -70,8 +70,8 @@
     #vendorExportArea col.final-col{width:18%}
     #vendorExportArea th,#vendorExportArea td{font-size:14px;line-height:1.35;vertical-align:middle}
     #vendorExportArea .rowactions{display:flex;gap:8px;align-items:center;flex-wrap:nowrap}
-    #vendorExportArea .rowactions input{width:110px;min-width:110px}
-    #vendorExportArea .rowactions button{min-width:72px}
+    #vendorExportArea .rowactions input{width:80px;min-width:80px}
+    #vendorExportArea .rowactions button{min-width:52px;padding-left:8px;padding-right:8px}
     #vendorExportArea td:nth-child(3), #vendorExportArea th:nth-child(3){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     #vendorExportArea td.badgecell, #vendorExportArea th.badgehead{text-align:center;padding-left:6px;padding-right:6px}
     .verified-badge{
@@ -2895,3 +2895,5 @@ body.light .vsp-last-order {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+#vendorSummary { display: none !important; }
