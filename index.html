@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260710-232317</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260711-113301</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2492,10 +2492,29 @@ function renderVendorPanel() {
       ${costDiff !== null ? `<div style="font-size:12px;font-weight:700;color:${diffColor};margin-top:6px;display:flex;align-items:center;gap:4px"><i class="ti ${diffIcon}" style="font-size:13px"></i>${diffSign}${fmtMoney(Math.abs(costDiff))} vs last order</div>` : ''}
     </div>` : '';
 
+  // Excluded items (override === 0 but toOrder > 0)
+  const excludedItems = (state.master || []).filter(r =>
+    r.vendor === activeVendorTab &&
+    supportsManualFinalOrder(r.vendor) &&
+    r.orderOverride === 0 &&
+    r.toOrder > 0
+  );
+  const excludedHtml = excludedItems.length > 0 ? `
+    <div class="vsp-row" style="cursor:pointer" onclick="openExcludedModal('${activeVendorTab}')">
+      <span class="vsp-row-label" style="display:flex;align-items:center;gap:5px">
+        <i class="ti ti-eye-off" style="font-size:13px;color:#f59e0b"></i> Excluded
+      </span>
+      <span style="display:flex;align-items:center;gap:6px">
+        <span class="vsp-row-value" style="color:#f59e0b">${excludedItems.length}</span>
+        <i class="ti ti-chevron-right" style="font-size:12px;color:var(--sub)"></i>
+      </span>
+    </div>` : '';
+
   body.innerHTML = `
     <div class="vsp-center-content">
       <div class="vsp-row"><span class="vsp-row-label">Items</span><span class="vsp-row-value">${placeableRows.length}</span></div>
       <div class="vsp-row"><span class="vsp-row-label">Bottles</span><span class="vsp-row-value">${fmt(bottles)}</span></div>
+      ${excludedHtml}
       ${lastOrderHtml}
     </div>
     <div class="vsp-bottom">
@@ -3070,6 +3089,45 @@ function resetFinalOrder(index){
   setStatus(`Final order reset to automatic TO ORDER for '${row.item}'.`);
 }
 window.resetFinalOrder = resetFinalOrder;
+
+function openExcludedModal(vendor) {
+  const excluded = (state.master || []).filter(r =>
+    r.vendor === vendor &&
+    supportsManualFinalOrder(r.vendor) &&
+    r.orderOverride === 0 &&
+    r.toOrder > 0
+  );
+  const list = document.getElementById('excludedItemsList');
+  if (!list) return;
+  if (!excluded.length) {
+    list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--sub)">No excluded items.</div>';
+  } else {
+    list.innerHTML = excluded.map(r => {
+      const idx = state.master.findIndex(m => m.itemNorm === r.itemNorm && String(m.code||'') === String(r.code||''));
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface-1,rgba(255,255,255,.04));border-radius:10px;border:0.5px solid rgba(255,255,255,.08)">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">${escapeHtml(r.item)}</div>
+          <div style="font-size:11px;color:var(--sub);margin-top:2px">TO ORDER: ${fmt(r.toOrder)}</div>
+        </div>
+        <button onclick="restoreExcludedItem(${idx})" style="font-size:12px;font-weight:700;padding:6px 12px;border-radius:8px;background:#38bdf8;color:#0b1220;border:none;cursor:pointer">Restore</button>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('excludedItemsModalBg').classList.remove('hidden');
+}
+window.openExcludedModal = openExcludedModal;
+
+function closeExcludedModal() {
+  document.getElementById('excludedItemsModalBg').classList.add('hidden');
+}
+window.closeExcludedModal = closeExcludedModal;
+
+function restoreExcludedItem(index) {
+  resetFinalOrder(index);
+  const vendor = state.master[index]?.vendor;
+  if (vendor) openExcludedModal(vendor);
+}
+window.restoreExcludedItem = restoreExcludedItem;
 
 function openCategoryModal(idx) {
   const r = state.master[idx];
@@ -5198,5 +5256,15 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   </div>
 </div>
 
+<div id="excludedItemsModalBg" class="modalbg hidden" onclick="if(event.target===this)closeExcludedModal()">
+  <div class="modal" style="width:min(520px,96vw);max-height:80vh;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 style="margin:0;font-size:16px">Excluded items</h3>
+      <button onclick="closeExcludedModal()" style="background:none;border:none;color:var(--sub);font-size:20px;cursor:pointer;line-height:1">&times;</button>
+    </div>
+    <div style="font-size:12px;color:var(--sub);margin-bottom:14px">Items with a final order of 0. Click Restore to add them back.</div>
+    <div id="excludedItemsList" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</div>
 </body>
 </html>
