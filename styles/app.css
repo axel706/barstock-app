@@ -672,12 +672,7 @@
         radial-gradient(1000px 640px at 0% 0%, rgba(148,163,184,.08), transparent 54%),
         radial-gradient(860px 580px at 100% 12%, rgba(203,213,225,.08), transparent 48%) !important;
     }
-    body.light::after{
-      background:
-        linear-gradient(180deg, rgba(233,238,244,.42) 0%, rgba(229,235,241,.38) 48%, rgba(220,227,235,.46) 100%),
-        radial-gradient(1000px 640px at 0% 0%, rgba(148,163,184,.08), transparent 54%),
-        radial-gradient(860px 580px at 100% 12%, rgba(203,213,225,.08), transparent 48%);
-    }
+    body.light::after{ background: none; }
     body.light .hero{
       background:rgba(255,255,255,.42);
       border-color:rgba(255,255,255,.52);
