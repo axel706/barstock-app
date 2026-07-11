@@ -2221,8 +2221,10 @@ body.light .bs-dd-divider{background:rgba(0,0,0,0.07);}
   .bs-stat-tab:nth-last-child(-n+2){border-bottom:none;}
   .bs-stat-featured .bs-stat-value{font-size:22px;}
   .bs-stat-value{font-size:18px;}
-  .bs-header-line3{padding:8px 14px;flex-wrap:nowrap;overflow-x:auto;gap:6px;}
+  .bs-header-line3{padding:8px 14px;flex-wrap:wrap;gap:6px;}
   .bs-header-line3::-webkit-scrollbar{display:none;}
+  .bs-status-row{width:100%;order:10;overflow-x:auto;flex-wrap:nowrap;}
+  .bs-status-row::-webkit-scrollbar{display:none;}
   .bs-btn{padding:6px 10px;font-size:12px;white-space:nowrap;}
   .bs-build{display:none;}
 }
