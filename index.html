@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260711-121853</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260711-125525</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -3190,6 +3190,94 @@ function renderCategorySettings() {
 }
 window.renderCategorySettings = renderCategorySettings;
 
+// ── Copy Prices ──────────────────────────────────────────────────────────────
+async function initCopyPricesPanel() {
+  const { url, key } = window.BARSTOCK_CONFIG ? { url: window.BARSTOCK_CONFIG.SUPABASE_URL, key: window.BARSTOCK_CONFIG.SUPABASE_KEY } : {};
+  if (!url || !key) return;
+  const currentLocation = window.BARSTOCK_CONFIG.LOCATION_NAME;
+
+  // Load all locations
+  const res = await fetch(`${url}/rest/v1/locations?select=id,name`, {
+    headers: { apikey: key, Authorization: `Bearer ${key}` }
+  });
+  const locations = await res.json();
+
+  const select = document.getElementById('copyPricesSource');
+  if (!select) return;
+  select.innerHTML = '<option value="">Select a location...</option>' +
+    locations
+      .filter(l => l.name !== currentLocation)
+      .map(l => `<option value="${l.id}">${l.name}</option>`)
+      .join('');
+
+  select.onchange = async function() {
+    const preview = document.getElementById('copyPricesPreview');
+    const btn = document.getElementById('copyPricesBtn');
+    btn.disabled = true;
+    preview.textContent = '';
+    if (!this.value) return;
+
+    preview.textContent = 'Loading preview...';
+    const srcRes = await fetch(`${url}/rest/v1/inventory_items?location_id=eq.${this.value}&select=item_name,value`, {
+      headers: { apikey: key, Authorization: `Bearer ${key}` }
+    });
+    const srcItems = await srcRes.json();
+    const srcMap = new Map(srcItems.filter(r => Number(r.value) > 0).map(r => [r.item_name.toLowerCase().trim(), Number(r.value)]));
+
+    const currentItems = state.master || [];
+    const matches = currentItems.filter(r => srcMap.has(r.item.toLowerCase().trim()));
+    preview.innerHTML = `<strong style="color:var(--text)">${matches.length}</strong> items will be updated out of ${currentItems.length} in this location.`;
+    btn.disabled = matches.length === 0;
+    btn.dataset.srcLocationId = this.value;
+  };
+}
+window.initCopyPricesPanel = initCopyPricesPanel;
+
+async function executeCopyPrices() {
+  const { url, key } = window.BARSTOCK_CONFIG ? { url: window.BARSTOCK_CONFIG.SUPABASE_URL, key: window.BARSTOCK_CONFIG.SUPABASE_KEY } : {};
+  const btn = document.getElementById('copyPricesBtn');
+  const srcLocationId = btn.dataset.srcLocationId;
+  if (!srcLocationId) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Copying...';
+
+  const srcRes = await fetch(`${url}/rest/v1/inventory_items?location_id=eq.${srcLocationId}&select=item_name,value`, {
+    headers: { apikey: key, Authorization: `Bearer ${key}` }
+  });
+  const srcItems = await srcRes.json();
+  const srcMap = new Map(srcItems.filter(r => Number(r.value) > 0).map(r => [r.item_name.toLowerCase().trim(), Number(r.value)]));
+
+  const locationId = await (async () => {
+    const res = await fetch(`${url}/rest/v1/locations?name=eq.${encodeURIComponent(window.BARSTOCK_CONFIG.LOCATION_NAME)}&select=id`, {
+      headers: { apikey: key, Authorization: `Bearer ${key}` }
+    });
+    const data = await res.json();
+    return data[0]?.id;
+  })();
+
+  if (!locationId) { btn.textContent = 'Copy prices'; btn.disabled = false; return; }
+
+  let updated = 0;
+  for (const row of (state.master || [])) {
+    const price = srcMap.get(row.item.toLowerCase().trim());
+    if (!price) continue;
+    await fetch(`${url}/rest/v1/inventory_items?location_id=eq.${locationId}&item_name=eq.${encodeURIComponent(row.item)}`, {
+      method: 'PATCH',
+      headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ value: price })
+    });
+    row.value = price;
+    updated++;
+  }
+
+  saveState();
+  render();
+  btn.textContent = `✓ ${updated} prices copied`;
+  document.getElementById('copyPricesPreview').innerHTML = `<span style="color:#22c55e">Done — ${updated} item prices updated successfully.</span>`;
+}
+window.executeCopyPrices = executeCopyPrices;
+
 async function saveCategoryInline(itemName, category) {
   const r = state.master.find(m => m.item === itemName);
   if (!r) { console.warn('saveCategoryInline: item not found', itemName); return; }
@@ -4821,6 +4909,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       if (target) target.classList.remove('hidden');
       if (panel === 'appearance') renderBgGrid();
       if (panel === 'categories') setTimeout(renderCategorySettings, 50);
+      if (panel === 'copyPrices') setTimeout(initCopyPricesPanel, 50);
     };
   });
 
@@ -5107,6 +5196,11 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
         <span class="settings-menu-desc">Assign spirit categories for usage reports</span>
         <span class="settings-menu-arrow">›</span>
       </button>
+      <button class="settings-menu-item" onclick="showSettingsPanel('copyPrices')">
+        <span class="settings-menu-label">Copy Prices</span>
+        <span class="settings-menu-desc">Copy item prices from another location to this one</span>
+        <span class="settings-menu-arrow">›</span>
+      </button>
     </div>
 
     <!-- PANEL: General -->
@@ -5255,6 +5349,25 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
         </select>
       </div>
       <div id="catSettingsList" style="display:flex;flex-direction:column;gap:4px;max-height:420px;overflow-y:auto"></div>
+    </div>
+
+    <div id="settingsPanel-copyPrices" class="settings-panel hidden">
+      <button class="settings-back-btn" onclick="showSettingsPanel(null)">‹ Back</button>
+      <h4 style="margin:0 0 4px">Copy Prices</h4>
+      <div class="small muted" style="margin-bottom:16px">Copy item prices from another location to this one. Prices are matched by item name and will overwrite existing values.</div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">Source location</label>
+        <select id="copyPricesSource" style="width:100%;background:var(--muted);color:var(--text);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 10px;font-size:13px">
+          <option value="">Select a location...</option>
+        </select>
+      </div>
+      <div id="copyPricesPreview" style="margin-bottom:14px;font-size:13px;color:var(--sub)"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="ui-control" onclick="showSettingsPanel(null)">Cancel</button>
+        <button class="ui-control primary" id="copyPricesBtn" onclick="executeCopyPrices()" disabled>Copy prices</button>
+      </div>
+    </div>
+
     </div>
 
   </div>
