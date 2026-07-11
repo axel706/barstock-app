@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260711-113301</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260711-114610</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -285,8 +285,7 @@
         </div>
         </div>
         <div class="vsp-panel" id="vspPanel">
-          <div class="vsp-panel-header">
-            <i class="ti ti-shopping-cart" style="font-size:22px;color:#38bdf8" aria-hidden="true"></i>
+          <div class="vsp-panel-header" id="vspPanelHeader">
             <span class="vsp-panel-title" id="vspPanelTitle">Order summary</span>
           </div>
           <div class="vsp-panel-body" id="vspPanelBody"></div>
@@ -2448,7 +2447,12 @@ function renderVendorPanel() {
     return;
   }
 
-  if (title) title.textContent = activeVendorTab;
+  const header = document.getElementById('vspPanelHeader');
+  if (activeVendorTab === 'ALL') {
+    if (header) header.innerHTML = '<i class="ti ti-shopping-cart" style="font-size:22px;color:#38bdf8" aria-hidden="true"></i><span class="vsp-panel-title">Order summary</span>';
+  } else {
+    if (header) header.innerHTML = '<i class="ti ti-shopping-cart" style="font-size:18px;color:#38bdf8" aria-hidden="true"></i>' + badge(activeVendorTab);
+  }
 
   if (isPending || placedOrder) {
     if (isPending && !placedOrder) {

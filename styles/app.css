@@ -2897,3 +2897,25 @@ body.light .vsp-last-order {
 }
 
 #vendorSummary { display: none !important; }
+
+.vsp-panel-header .pill {
+  font-size: 14px !important;
+  padding: 6px 14px !important;
+}
+
+#vspPanelHeader {
+  justify-content: center !important;
+}
+
+#vspPanelHeader {
+  display: grid !important;
+  grid-template-columns: 28px 1fr !important;
+  align-items: center !important;
+  justify-content: unset !important;
+}
+#vspPanelHeader .pill {
+  justify-self: center;
+}
+#vspPanelHeader i {
+  font-size: 24px !important;
+}
