@@ -1138,6 +1138,7 @@
     };
 
     function renderList() {
+      if (!_calMonth) { container.innerHTML = ''; container._reports = []; if (applyBtn) applyBtn.style.display = 'none'; return; }
       const filtered = _calMonth
         ? (byMonth[_calMonth] || [])
         : reports.filter(r => r.periodFrom.startsWith(_calYear));
@@ -1166,6 +1167,7 @@
     // No mostrar lista hasta que se seleccione un mes
     container._reports = [];
     if (applyBtn) applyBtn.style.display = 'none';
+    window._crCalMonth = null;
     return;
 
     container.innerHTML = reports.map(r => `

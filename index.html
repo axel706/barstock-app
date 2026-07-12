@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260711-230521</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260712-113817</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -563,6 +563,10 @@
         <div class="tu-controls">
           <span class="small muted" id="tuWeekCount">Loading weeks...</span>
           <button class="bs-btn bs-btn-default" onclick="window.BarStockTheoreticalUsage.refresh()" style="margin-left:auto"><i class="ti ti-refresh" aria-hidden="true"></i> Refresh</button>
+        </div>
+        <div id="tuCalendar" style="margin-bottom:12px;display:none">
+          <div id="tuCalendarYears" style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap"></div>
+          <div id="tuCalendarMonths" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px"></div>
         </div>
         <div class="tu-week-list" id="tuWeekList"></div>
         <div class="tu-empty hidden" id="tuWeekEmpty">No weekly data available yet. Load a count to start tracking.</div>

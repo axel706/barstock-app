@@ -256,20 +256,80 @@
     empty.classList.add('hidden');
     if (count) count.textContent = `${_weeks.length} week${_weeks.length !== 1 ? 's' : ''} tracked`;
 
-    list.innerHTML = _weeks.map(w => {
-      const dotClass = w.is_event_week ? 'tu-dot-event' : 'tu-dot-normal';
-      const tagClass = w.is_event_week ? 'tu-tag-event' : 'tu-tag-normal';
-      const tagLabel = w.is_event_week ? 'Event week' : 'Normal';
-      const hasSales = _salesData.has(w.week_start);
-      return `<div class="tu-week-row" onclick="window.BarStockTheoreticalUsage.openWeek('${w.week_start}')">
-        <span class="tu-dot ${dotClass}"></span>
-        <span class="tu-week-label">${formatWeekLabel(w.week_start)}</span>
-        <span class="tu-week-tag ${tagClass}">${tagLabel}</span>
-        ${hasSales ? '<span class="tu-week-tag tu-tag-normal" style="background:#E1F5EE;color:#085041">Sales loaded</span>' : ''}
-        <span class="tu-week-meta">${w.itemCount} items</span>
-        <i class="ti ti-chevron-right" style="font-size:14px;color:var(--sub)" aria-hidden="true"></i>
-      </div>`;
-    }).join('');
+    // ── Calendar ──────────────────────────────────────────────────────
+    const calEl = document.getElementById('tuCalendar');
+    const calYearsEl = document.getElementById('tuCalendarYears');
+    const calMonthsEl = document.getElementById('tuCalendarMonths');
+
+    const byMonth = {};
+    _weeks.forEach(w => {
+      const ym = w.week_start.slice(0, 7);
+      if (!byMonth[ym]) byMonth[ym] = [];
+      byMonth[ym].push(w);
+    });
+    const byYear = {};
+    Object.keys(byMonth).forEach(ym => {
+      const y = ym.slice(0, 4);
+      if (!byYear[y]) byYear[y] = {};
+      byYear[y][ym] = byMonth[ym];
+    });
+    const years = Object.keys(byYear).sort((a, b) => b - a);
+
+    if (!window._tuCalYear || !byYear[window._tuCalYear]) window._tuCalYear = years[0];
+    if (!window._tuCalMonth) window._tuCalMonth = null;
+
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    function renderTuCalendar() {
+      if (!calEl || !calYearsEl || !calMonthsEl) return;
+      calEl.style.display = 'block';
+      const cy = window._tuCalYear;
+      const cm = window._tuCalMonth;
+
+      calYearsEl.innerHTML = years.map(y =>
+        `<button onclick="window._tuCalYear='${y}';window._tuCalMonth=null;window._renderTuCal()"
+          class="oh-filter-chip ${cy===y?'active':''}">${y}</button>`
+      ).join('');
+
+      calMonthsEl.innerHTML = monthNames.map((name, i) => {
+        const key = `${cy}-${String(i+1).padStart(2,'0')}`;
+        const has = !!(byYear[cy] && byYear[cy][key]);
+        const sel = cm === key;
+        return `<button onclick="if(${has}){window._tuCalMonth=${sel?'null':`'${key}'`};window._renderTuCal()}"
+          style="padding:10px 4px;border-radius:10px;font-size:13px;font-weight:700;cursor:${has?'pointer':'default'};
+          background:${sel?'#bfedff':has?'#dcfce7':'rgba(0,0,0,.04)'};
+          color:${sel?'#0369a1':has?'#15803d':'#94a3b8'};
+          border:1.5px solid ${sel?'#38bdf8':has?'#22c55e':'#e2e8f0'}">${name}</button>`;
+      }).join('');
+    }
+
+    window._renderTuCal = function() {
+      renderTuCalendar();
+      const cy = window._tuCalYear;
+      const cm = window._tuCalMonth;
+      const filtered = cm
+        ? (byMonth[cm] || [])
+        : _weeks.filter(w => w.week_start.startsWith(cy));
+      if (!cm) { list.innerHTML = ''; return; }
+      list.innerHTML = filtered.map(w => {
+        const dotClass = w.is_event_week ? 'tu-dot-event' : 'tu-dot-normal';
+        const tagClass = w.is_event_week ? 'tu-tag-event' : 'tu-tag-normal';
+        const tagLabel = w.is_event_week ? 'Event week' : 'Normal';
+        const hasSales = _salesData.has(w.week_start);
+        return `<div class="tu-week-row" onclick="window.BarStockTheoreticalUsage.openWeek('${w.week_start}')">
+          <span class="tu-dot ${dotClass}"></span>
+          <span class="tu-week-label">${formatWeekLabel(w.week_start)}</span>
+          <span class="tu-week-tag ${tagClass}">${tagLabel}</span>
+          ${hasSales ? '<span class="tu-week-tag tu-tag-normal" style="background:#E1F5EE;color:#085041">Sales loaded</span>' : ''}
+          <span class="tu-week-meta">${w.itemCount} items</span>
+          <i class="ti ti-chevron-right" style="font-size:14px;color:var(--sub)" aria-hidden="true"></i>
+        </div>`;
+      }).join('') || '<div class="small muted" style="padding:12px 0">No weeks for this period.</div>';
+    };
+
+    renderTuCalendar();
+    list.innerHTML = '';
+    window._tuCalMonth = null;
   }
 
   function formatWeekLabel(weekStart) {
