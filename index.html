@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260712-113817</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260712-123132</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -229,7 +229,7 @@
       </select>
       <div class="tablewrap">
         <table>
-          <thead><tr><th>CODE</th><th>ITEM</th><th>VENDOR</th><th>ON HAND</th><th>SUGGESTED</th><th>TO ORDER</th><th>VALUE</th><th>ACTIONS</th></tr></thead>
+          <thead><tr><th style="width:55px">CODE</th><th>ITEM</th><th style="width:100px">VENDOR</th><th style="width:72px">ON HAND</th><th style="width:68px;cursor:pointer;user-select:none" id="avgWkHeader" onclick="toggleAvgWkColumn()" title="Show/hide AVG/WK">AVG/WK</th><th style="width:78px">SUGGESTED</th><th style="width:72px">TO ORDER</th><th style="width:72px">VALUE</th><th>ACTIONS</th></tr></thead>
           <tbody id="inventoryBody"></tbody>
         </table>
       </div>
@@ -2379,11 +2379,27 @@ function render(){
   const inventoryVendors = getVendorsForFilter();
   document.getElementById('inventoryVendorTabs').innerHTML = inventoryVendors.map(v => `<div class="oh-filter-chip ${vendorFilter===v?'active':''}" onclick="setInventoryVendorFilter('${v.replace(/'/g,"\'")}')">${v==='ALL'?'ALL':v}</div>`).join('');
   const filtered = state.master.filter(r => (!q || r.itemNorm.includes(q) || normalizeName(r.code).includes(q)) && (vendorFilter==='ALL' || r.vendor===vendorFilter));
+  const invVendorActive = vendorFilter !== 'ALL';
+  // Toggle vendor column visibility
+  const invTable = document.querySelector('#inventorySection table');
+  if (invTable) {
+    const invHeader = invTable.querySelector('thead tr');
+    if (invHeader) {
+      const vendorTh = invHeader.querySelectorAll('th')[2];
+      if (vendorTh) vendorTh.style.display = invVendorActive ? 'none' : '';
+    }
+  }
+
   document.getElementById('inventoryBody').innerHTML = filtered.map(r => {
     const idx = state.master.findIndex(m => m.itemNorm===r.itemNorm && String(m.code||'')===String(r.code||''));
     const catIcon = `<button class="tu-comment-btn${r.category ? ' has-comment' : ''}" onclick="openCategoryModal(${idx})" title="${r.category ? 'Category: ' + r.category : 'Assign category'}"><i class="ti ti-tag" aria-hidden="true"></i></button>`;
-    return `<tr><td>${escapeHtml(r.code)}</td><td>${escapeHtml(r.item)}${getParChipHtml(r)}</td><td>${badge(r.vendor)}</td><td>${fmt(r.onHand)}</td><td>${fmt(r.suggested)}</td><td>${fmt(r.toOrder)}</td><td>${fmtMoney(r.value)}</td><td><div class="rowactions">${catIcon}<button onclick="openEditModal(${idx})">Edit</button><button class="danger" onclick="quickZeroSuggested(${idx})">Zero Suggested</button></div></td></tr>`;
-  }).join('') || `<tr><td colspan="8" class="muted">No inventory loaded.</td></tr>`;
+    const parKey = `${r.item}||${r.code || ''}`;
+    const parData = window.parAdjustments ? window.parAdjustments.get(parKey) : null;
+    const avgUsed = parData && parData.avgUsed !== null && parData.avgUsed !== undefined ? parData.avgUsed : null;
+    const avgCell = _avgWkHidden ? '<i class="ti ti-eye-off" aria-hidden="true" style="font-size:14px;color:#f59e0b;opacity:.7"></i>' : (avgUsed !== null ? `<span style="font-weight:600">${avgUsed}</span>` : '<i class="ti ti-brain" aria-hidden="true" style="font-size:15px;color:var(--sub);opacity:.5"></i>');
+    const vendorCell = invVendorActive ? '' : `<td>${badge(r.vendor)}</td>`;
+    return `<tr><td>${escapeHtml(r.code)}</td><td>${escapeHtml(r.item)}${getParChipHtml(r)}</td>${vendorCell}<td>${fmt(r.onHand)}</td><td style="text-align:center">${avgCell}</td><td>${fmt(r.suggested)}</td><td>${fmt(r.toOrder)}</td><td>${fmtMoney(r.value)}</td><td><div class="rowactions" style="flex-wrap:nowrap">${catIcon}<button onclick="openEditModal(${idx})" style="white-space:nowrap">Edit</button><button class="danger" onclick="quickZeroSuggested(${idx})" style="white-space:nowrap">Zero Suggested</button></div></td></tr>`;
+  }).join('') || `<tr><td colspan="9" class="muted">No inventory loaded.</td></tr>`;
 
   const vendors = getVendorsForFilter();
   document.getElementById('vendorTabs').innerHTML = vendors.map(v => `<div class="oh-filter-chip ${activeVendorTab===v?'active':''}" onclick="setVendorTab('${v.replace(/'/g,"\'")}')">${v}</div>`).join('');
@@ -3101,6 +3117,18 @@ function resetFinalOrder(index){
   setStatus(`Final order reset to automatic TO ORDER for '${row.item}'.`);
 }
 window.resetFinalOrder = resetFinalOrder;
+
+let _avgWkHidden = false;
+function toggleAvgWkColumn() {
+  _avgWkHidden = !_avgWkHidden;
+  const header = document.getElementById('avgWkHeader');
+  if (header) {
+    header.textContent = 'AVG/WK';
+    header.style.color = _avgWkHidden ? '#f59e0b' : '';
+  }
+  render();
+}
+window.toggleAvgWkColumn = toggleAvgWkColumn;
 
 function openExcludedModal(vendor) {
   const excluded = (state.master || []).filter(r =>
