@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260712-123132</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260712-134542</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -227,11 +227,16 @@
         <option value="WINE MERCHANT">WINE MERCHANT</option>
         <option value="UNKNOWN">UNKNOWN</option>
       </select>
-      <div class="tablewrap">
-        <table>
-          <thead><tr><th style="width:55px">CODE</th><th>ITEM</th><th style="width:100px">VENDOR</th><th style="width:72px">ON HAND</th><th style="width:68px;cursor:pointer;user-select:none" id="avgWkHeader" onclick="toggleAvgWkColumn()" title="Show/hide AVG/WK">AVG/WK</th><th style="width:78px">SUGGESTED</th><th style="width:72px">TO ORDER</th><th style="width:72px">VALUE</th><th>ACTIONS</th></tr></thead>
-          <tbody id="inventoryBody"></tbody>
-        </table>
+      <div class="inv-layout">
+        <div class="tablewrap" style="flex:1;min-width:0">
+          <table>
+            <thead><tr><th style="width:55px">CODE</th><th>ITEM</th><th style="width:100px">VENDOR</th><th style="width:72px">ON HAND</th><th style="width:68px;cursor:pointer;user-select:none" id="avgWkHeader" onclick="toggleAvgWkColumn()" title="Show/hide AVG/WK">AVG/WK</th><th style="width:78px">SUGGESTED</th><th style="width:72px">TO ORDER</th><th style="width:72px">VALUE</th></tr></thead>
+            <tbody id="inventoryBody"></tbody>
+          </table>
+        </div>
+        <div class="inv-item-panel" id="invItemPanel" style="display:none">
+          <div id="invPanelBody" style="display:flex;flex-direction:column;height:100%"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -2398,8 +2403,8 @@ function render(){
     const avgUsed = parData && parData.avgUsed !== null && parData.avgUsed !== undefined ? parData.avgUsed : null;
     const avgCell = _avgWkHidden ? '<i class="ti ti-eye-off" aria-hidden="true" style="font-size:14px;color:#f59e0b;opacity:.7"></i>' : (avgUsed !== null ? `<span style="font-weight:600">${avgUsed}</span>` : '<i class="ti ti-brain" aria-hidden="true" style="font-size:15px;color:var(--sub);opacity:.5"></i>');
     const vendorCell = invVendorActive ? '' : `<td>${badge(r.vendor)}</td>`;
-    return `<tr><td>${escapeHtml(r.code)}</td><td>${escapeHtml(r.item)}${getParChipHtml(r)}</td>${vendorCell}<td>${fmt(r.onHand)}</td><td style="text-align:center">${avgCell}</td><td>${fmt(r.suggested)}</td><td>${fmt(r.toOrder)}</td><td>${fmtMoney(r.value)}</td><td><div class="rowactions" style="flex-wrap:nowrap">${catIcon}<button onclick="openEditModal(${idx})" style="white-space:nowrap">Edit</button><button class="danger" onclick="quickZeroSuggested(${idx})" style="white-space:nowrap">Zero Suggested</button></div></td></tr>`;
-  }).join('') || `<tr><td colspan="9" class="muted">No inventory loaded.</td></tr>`;
+    return `<tr data-idx="${idx}" style="cursor:pointer" onclick="openInvPanel(${idx})">${vendorCell ? '<td>' + escapeHtml(r.code) + '</td>' : '<td>' + escapeHtml(r.code) + '</td>'}<td>${escapeHtml(r.item)}${getParChipHtml(r)}</td>${vendorCell}<td>${fmt(r.onHand)}</td><td style="text-align:center">${avgCell}</td><td>${fmt(r.suggested)}</td><td>${fmt(r.toOrder)}</td><td>${fmtMoney(r.value)}</td></tr>`;
+  }).join('') || `<tr><td colspan="8" class="muted">No inventory loaded.</td></tr>`;
 
   const vendors = getVendorsForFilter();
   document.getElementById('vendorTabs').innerHTML = vendors.map(v => `<div class="oh-filter-chip ${activeVendorTab===v?'active':''}" onclick="setVendorTab('${v.replace(/'/g,"\'")}')">${v}</div>`).join('');
@@ -3117,6 +3122,144 @@ function resetFinalOrder(index){
   setStatus(`Final order reset to automatic TO ORDER for '${row.item}'.`);
 }
 window.resetFinalOrder = resetFinalOrder;
+
+// ── Inventory Item Panel ─────────────────────────────────────────────────────
+let _invSelectedIdx = null;
+
+async function openInvPanel(idx) {
+  const panel = document.getElementById('invItemPanel');
+  const body = document.getElementById('invPanelBody');
+  if (!panel || !body) return;
+
+  // Toggle off if same item clicked
+  if (_invSelectedIdx === idx && panel.style.display !== 'none') {
+    panel.style.display = 'none';
+    _invSelectedIdx = null;
+    document.querySelectorAll('#inventoryBody tr').forEach(tr => tr.classList.remove('inv-row-selected'));
+    return;
+  }
+
+  // Highlight row
+  document.querySelectorAll('#inventoryBody tr').forEach(tr => tr.classList.remove('inv-row-selected'));
+  const rows = document.querySelectorAll('#inventoryBody tr');
+  if (rows[idx - (state.master.length - document.querySelectorAll('#inventoryBody tr').length)]) {
+    // highlight by data attribute instead
+  }
+  document.querySelectorAll('#inventoryBody tr').forEach((tr, i) => {
+    if (Number(tr.dataset.idx) === idx) tr.classList.add('inv-row-selected');
+  });
+
+  _invSelectedIdx = idx;
+  const r = state.master[idx];
+  if (!r) return;
+
+  panel.style.display = 'flex';
+  panel.style.flexDirection = 'column';
+  panel.style.gap = '12px';
+
+  const parKey = `${r.item}||${r.code || ''}`;
+  const parData = window.parAdjustments ? window.parAdjustments.get(parKey) : null;
+  const avgUsed = parData?.avgUsed ?? null;
+  const optimal = parData?.suggestedOptimal ?? null;
+  const adjustment = parData?.adjustment ?? 0;
+  const status = parData && parData.status === 'active' ? (adjustment < 0 ? 'over' : adjustment > 0 ? 'under' : 'on') : (parData?.status ?? null);
+  const trendDelta = parData?.trendDelta ?? null;
+  const normalWeeks = parData?.normalWeeks ?? 0;
+
+  // Pour-IQ status
+  const statusColor = status === 'over' ? '#ef4444' : status === 'under' ? '#f59e0b' : status === 'on' ? '#22c55e' : 'var(--sub)';
+  const statusLabel = status === 'over' ? 'Over par' : status === 'under' ? 'Under par' : status === 'on' ? 'On par' : 'Observing';
+
+  // Apply button logic — max ±2 per step
+  const canApply = optimal !== null && r.suggested !== optimal;
+  const applyTarget = optimal !== null ? (r.suggested > optimal ? Math.max(optimal, r.suggested - 2) : Math.min(optimal, r.suggested + 2)) : null;
+  const applyHint = canApply ? `Suggested: ${r.suggested} → ${applyTarget} (${applyTarget < r.suggested ? '-' : '+'}${Math.abs(applyTarget - r.suggested)} this step)` : '';
+
+  // Fetch last 4 weeks usage
+  let sparkData = [];
+  try {
+    const { url, key } = window.BARSTOCK_CONFIG ? { url: window.BARSTOCK_CONFIG.SUPABASE_URL, key: window.BARSTOCK_CONFIG.SUPABASE_KEY } : {};
+    const locRes = await fetch(`${url}/rest/v1/locations?name=eq.${encodeURIComponent(window.BARSTOCK_CONFIG.LOCATION_NAME)}&select=id`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+    const locData = await locRes.json();
+    const locationId = locData[0]?.id;
+    if (locationId) {
+      const snapRes = await fetch(`${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&item_name=eq.${encodeURIComponent(r.item)}&is_event_week=eq.false&used=not.is.null&order=week_start.desc&limit=4&select=week_start,used`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+      sparkData = await snapRes.json();
+      sparkData = sparkData.reverse();
+    }
+  } catch(e) {}
+
+  const maxUsed = Math.max(...sparkData.map(s => Number(s.used || 0)), 1);
+  const sparkHtml = sparkData.length ? `
+    <div>
+      <div class="inv-panel-section-label">LAST ${sparkData.length} WEEKS</div>
+      <div class="inv-sparkline">
+        ${sparkData.map(s => `<div class="inv-sparkbar" style="height:${Math.max(10, Math.round((Number(s.used||0)/maxUsed)*100))}%"></div>`).join('')}
+      </div>
+      <div class="inv-sparklabels">${sparkData.map(s => `<span>${Number(s.used||0).toFixed(1)}</span>`).join('')}</div>
+    </div>` : '';
+
+  body.innerHTML = `
+    <div class="inv-panel-header">
+      <div style="display:flex;align-items:center;gap:8px">${badge(r.vendor)}<div class="inv-panel-name-wrap"><span class="inv-panel-name">${escapeHtml(r.item)}</span></div></div>
+      <div class="inv-panel-meta" style="margin-top:4px;display:flex;align-items:center;gap:6px">${r.code ? 'Code: ' + escapeHtml(r.code) + ' · ' : ''}<button class="tu-comment-btn${r.category ? ' has-comment' : ''}" onclick="openCategoryModal(${idx});event.stopPropagation()" title="${r.category ? 'Category: ' + r.category : 'Assign category'}" style="font-size:11px;padding:2px 6px"><i class="ti ti-tag" aria-hidden="true"></i> ${r.category || 'No category'}</button></div>
+    </div>
+    <div class="inv-panel-section">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+        <div class="inv-panel-stat"><div class="inv-panel-stat-label">ON HAND</div><div class="inv-panel-stat-value">${fmt(r.onHand)}</div></div>
+        <div class="inv-panel-stat"><div class="inv-panel-stat-label">SUGGESTED</div><div class="inv-panel-stat-value">${fmt(r.suggested)}</div></div>
+        <div class="inv-panel-stat"><div class="inv-panel-stat-label">AVG/WK</div><div class="inv-panel-stat-value" style="color:#38bdf8">${avgUsed !== null ? avgUsed : '—'}</div></div>
+      </div>
+    </div>
+    <div class="inv-panel-section" style="flex:1">
+      <div class="inv-panel-row"><span class="inv-panel-row-label">Optimal par</span><span class="inv-panel-row-value" style="color:${optimal !== null ? '#22c55e' : 'var(--sub)'}">${optimal !== null ? optimal : '—'}</span></div>
+      <div class="inv-panel-row"><span class="inv-panel-row-label">Status</span><span class="inv-panel-row-value" style="color:${statusColor}">${statusLabel}</span></div>
+      <div class="inv-panel-row"><span class="inv-panel-row-label">Trend</span><span class="inv-panel-row-value" style="color:${trendDelta !== null ? (trendDelta >= 0 ? '#22c55e' : '#ef4444') : 'var(--sub)'}">${trendDelta !== null ? (trendDelta >= 0 ? '↑' : '↓') + ' ' + Math.abs(trendDelta) : '—'}</span></div>
+      <div class="inv-panel-row"><span class="inv-panel-row-label">Data</span><span class="inv-panel-row-value">${normalWeeks ? normalWeeks + ' wks' : '—'}</span></div>
+    </div>
+    ${sparkData.length ? `<div class="inv-panel-section" style="padding-bottom:0">
+      <div class="inv-panel-section-label">LAST ${sparkData.length} WEEKS</div>
+      <div class="inv-sparkline" style="height:22px">
+        ${sparkData.map(s => `<div class="inv-sparkbar" style="height:${Math.max(10, Math.round((Number(s.used||0)/maxUsed)*100))}%"></div>`).join('')}
+      </div>
+      <div class="inv-sparklabels">${sparkData.map(s => `<span>${Number(s.used||0).toFixed(1)}</span>`).join('')}</div>
+    </div>` : ''}
+    <div class="inv-panel-actions-section">
+      <div class="inv-panel-apply-slot">
+        ${canApply ? `<div class="inv-panel-apply-hint" style="margin-bottom:6px">${applyHint}</div><button class="inv-panel-apply-btn" onclick="applyInvPourIq(${idx},${applyTarget})">Apply Pour-IQ → ${applyTarget}</button>` : ''}
+      </div>
+      <div class="inv-panel-actions">
+        <button onclick="openEditModal(${idx})">Edit</button>
+        <button style="color:#ef4444" onclick="quickZeroSuggested(${idx})">Zero suggested</button>
+      </div>
+    </div>`;
+}
+window.openInvPanel = openInvPanel;
+
+async function applyInvPourIq(idx, target) {
+  const r = state.master[idx];
+  if (!r) return;
+  const { url, key } = window.BARSTOCK_CONFIG ? { url: window.BARSTOCK_CONFIG.SUPABASE_URL, key: window.BARSTOCK_CONFIG.SUPABASE_KEY } : {};
+  const locRes = await fetch(`${url}/rest/v1/locations?name=eq.${encodeURIComponent(window.BARSTOCK_CONFIG.LOCATION_NAME)}&select=id`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+  const locData = await locRes.json();
+  const locationId = locData[0]?.id;
+  if (!locationId) return;
+  await fetch(`${url}/rest/v1/inventory_items?location_id=eq.${locationId}&item_name=eq.${encodeURIComponent(r.item)}`, {
+    method: 'PATCH',
+    headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body: JSON.stringify({ suggested: target, par_adjusted_week: new Date().toISOString().slice(0,10) })
+  });
+  r.suggested = target;
+  r.toOrder = computeToOrder(r.onHand, target);
+  saveState();
+  // Store selected idx before render clears it
+  const _keepIdx = idx;
+  _invSelectedIdx = null; // reset so toggle doesn't close panel
+  render();
+  // Reopen panel after render
+  setTimeout(() => openInvPanel(_keepIdx), 50);
+}
+window.applyInvPourIq = applyInvPourIq;
 
 let _avgWkHidden = false;
 function toggleAvgWkColumn() {
