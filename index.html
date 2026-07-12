@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260711-125525</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260711-230118</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -387,6 +387,10 @@
           <h3 class="cr-subsection-title">Build from weekly reports <span class="small muted" style="font-weight:400;font-size:12px;">(optional)</span></h3>
         </div>
         <div style="font-size:13px;color:var(--text);margin-bottom:10px;opacity:0.8;">Select one or more weekly reports to automatically sum their invoices and sales into this monthly report.</div>
+        <div id="crCalendar" style="margin-bottom:12px">
+          <div id="crCalendarYears" style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap"></div>
+          <div id="crCalendarMonths" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px"></div>
+        </div>
         <div id="crMonthlyReportsList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;"></div>
         <button class="cr-btn-secondary" id="crMonthlyApplyBtn" onclick="BarStockCostReport.applyWeeklyReports()" style="display:none;">Apply selected reports</button>
       </div>

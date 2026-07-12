@@ -1086,6 +1086,88 @@
       return;
     }
 
+    // Build calendar
+    const byMonth = {};
+    reports.forEach(r => {
+      const ym = r.periodFrom.slice(0, 7);
+      if (!byMonth[ym]) byMonth[ym] = [];
+      byMonth[ym].push(r);
+    });
+    const byYear = {};
+    Object.keys(byMonth).forEach(ym => {
+      const y = ym.slice(0, 4);
+      if (!byYear[y]) byYear[y] = {};
+      byYear[y][ym] = byMonth[ym];
+    });
+    const years = Object.keys(byYear).sort((a, b) => b - a);
+    let _calYear = years[0];
+    let _calMonth = null;
+
+    const calYearsEl = document.getElementById('crCalendarYears');
+    const calMonthsEl = document.getElementById('crCalendarMonths');
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    function renderCalendar() {
+      if (!calYearsEl || !calMonthsEl) return;
+      calYearsEl.innerHTML = years.map(y =>
+        `<button onclick="window._crCalSelectYear('${y}')"
+          class="oh-filter-chip ${_calYear===y?'active':''}">${y}</button>`
+      ).join('');
+
+      calMonthsEl.innerHTML = monthNames.map((name, i) => {
+        const key = `${_calYear}-${String(i+1).padStart(2,'0')}`;
+        const has = !!(byYear[_calYear] && byYear[_calYear][key]);
+        const sel = _calMonth === key;
+        return `<button onclick="window._crCalSelectMonth('${key}',${has})"
+          style="padding:10px 4px;border-radius:10px;font-size:13px;font-weight:700;cursor:${has?'pointer':'default'};
+          background:${sel?'#bfedff':has?'#dcfce7':'rgba(0,0,0,.04)'};
+          color:${sel?'#0369a1':has?'#15803d':'#94a3b8'};
+          border:1.5px solid ${sel?'#38bdf8':has?'#22c55e':'#e2e8f0'};
+          transition:all .15s">${name}</button>`;
+      }).join('');
+    }
+
+    window._crCalSelectYear = function(y) {
+      _calYear = y; _calMonth = null;
+      renderCalendar(); renderList();
+    };
+    window._crCalSelectMonth = function(key, has) {
+      if (!has) return;
+      _calMonth = _calMonth === key ? null : key;
+      renderCalendar(); renderList();
+    };
+
+    function renderList() {
+      const filtered = _calMonth
+        ? (byMonth[_calMonth] || [])
+        : reports.filter(r => r.periodFrom.startsWith(_calYear));
+      container.innerHTML = filtered.map(r => `
+      <div class="cr-vendor-block" style="cursor:pointer;" onclick="BarStockCostReport.toggleWeeklySelectionEl('${r.id}', this)">
+        <div class="cr-vendor-block-head">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <input type="checkbox" id="chk_${r.id}" value="${r.id}" onchange="BarStockCostReport.toggleWeeklySelection('${r.id}', this.checked)" onclick="event.stopPropagation()" style="width:16px;height:16px;accent-color:#38bdf8;cursor:pointer;flex-shrink:0;">
+            <div class="cr-vendor-tag">${formatPeriod(r.periodFrom, r.periodTo)}</div>
+          </div>
+          <div class="cr-vendor-subtotal">
+            <span>Wine <strong>${Math.round(r.wineCogs||0)}%</strong></span>
+            <span class="cr-sep">·</span>
+            <span>Liquor <strong>${Math.round(r.liquorCogs||0)}%</strong></span>
+            <span class="cr-sep">·</span>
+            <span>Total <strong>${fmtMoney((r.totalWine||0)+(r.totalLiquor||0))}</strong></span>
+          </div>
+        </div>
+      </div>`).join('') || '<div style="font-size:13px;color:#94a3b8;padding:8px 0">No reports for this period.</div>';
+      container._reports = filtered;
+      if (applyBtn) applyBtn.style.display = 'none';
+      _selectedWeeklyIds.clear();
+    }
+
+    renderCalendar();
+    // No mostrar lista hasta que se seleccione un mes
+    container._reports = [];
+    if (applyBtn) applyBtn.style.display = 'none';
+    return;
+
     container.innerHTML = reports.map(r => `
       <div class="cr-vendor-block" style="cursor:pointer;" onclick="BarStockCostReport.toggleWeeklySelectionEl('${r.id}', this)">
         <div class="cr-vendor-block-head">
