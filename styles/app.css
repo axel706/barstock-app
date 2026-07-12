@@ -2972,7 +2972,7 @@ body.light .inv-panel-stat { background: rgba(15,23,42,.04); }
 .inv-sparkbar { flex: 1; background: #38bdf8; border-radius: 2px; }
 .inv-sparklabels { display: flex; justify-content: space-between; font-size: 10px; color: var(--sub); margin-top: 3px; }
 .inv-panel-apply-hint { font-size: 11px; color: var(--sub); text-align: center; }
-.inv-panel-apply-btn { width: 100%; padding: 9px; border-radius: 9px; font-size: 12px; font-weight: 700; cursor: pointer; background: #22c55e; color: #fff; border: none; }
+.inv-panel-apply-btn { width: 100%; padding: 9px; border-radius: 9px; font-size: 12px; font-weight: 700; cursor: pointer; background: #22c55e !important; color: #fff !important; border: none !important; }
 .inv-panel-apply-btn:disabled { opacity: .4; cursor: not-allowed; }
 .inv-panel-actions { display: flex; gap: 6px; }
 .inv-panel-actions button { flex: 1; padding: 7px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
