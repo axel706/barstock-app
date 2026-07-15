@@ -3,7 +3,7 @@
 .oh-filter-chip:hover{background:rgba(255,255,255,.06)}
 .oh-filter-chip.active{background:rgba(56,189,248,.15);color:#38bdf8;border-color:rgba(56,189,248,.35)}
 body.light .oh-filter-chip{border-color:rgba(15,23,42,.25);color:var(--text)}
-body.light .oh-filter-chip.active{background:rgba(2,132,199,.15);color:#0284c7;border-color:rgba(2,132,199,.5);font-weight:700}
+body.light .oh-filter-chip.active{background:#0284c7;color:#ffffff;border-color:#0284c7;font-weight:700}
 .oh-week-label{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--sub);margin:0 0 10px;padding-left:2px}
 .oh-card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
 .oh-card{background:rgba(17,24,39,.7);border:0.5px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;transition:border-color .15s}

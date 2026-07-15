@@ -3085,3 +3085,10 @@ body.light #focusModeOverlay table th,
 body.light #focusModeOverlay table td {
   color: #0f172a;
 }
+
+body.light .bs-focus-icon { color: #0369a1 !important; }
+body.light .bs-focus-badge { background: rgba(3,105,161,.15) !important; color: #0369a1 !important; }
+body.light .bs-focus-badge.warn { background: rgba(180,83,9,.15) !important; color: #b45309 !important; }
+body.light .bs-stat-value { color: #0f172a !important; }
+body.light .bs-stat-featured .bs-stat-value { color: #0369a1 !important; }
+body.light .bs-stat-alert .bs-stat-value { color: #b45309 !important; }
