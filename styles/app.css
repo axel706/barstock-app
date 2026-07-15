@@ -783,7 +783,7 @@
     .ui-control{
       height:52px !important;
       min-height:52px !important;
-      border-radius:12px !important;
+      border-radius:999px !important;
       font-size:14px !important;
       padding:0 16px !important;
       box-sizing:border-box !important;
@@ -1293,7 +1293,7 @@
       align-items:center;
       justify-content:center;
       text-align:center;
-      border-radius:12px !important;
+      border-radius:999px !important;
     }
     #quickOrderModalBg .modal{
       width:min(1120px,100%) !important;
@@ -2177,7 +2177,7 @@ body.light .bs-status-chip{border-color:rgba(0,0,0,0.07);}
 .bs-status-dot{width:6px;height:6px;border-radius:50%;background:var(--bad);flex-shrink:0;}
 .bs-status-dot.loaded{background:var(--good);}
 .bs-header-line3{display:flex;align-items:center;gap:8px;padding:10px 20px;position:relative;}
-.bs-btn{border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,0.1);display:inline-flex;align-items:center;gap:6px;font-family:inherit;line-height:1;}
+.bs-btn{border-radius:999px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,0.1);display:inline-flex;align-items:center;gap:6px;font-family:inherit;line-height:1;}
 body.light .bs-btn{border-color:rgba(0,0,0,0.1);}
 .bs-btn i{font-size:15px;}
 .bs-btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);}
@@ -3092,3 +3092,21 @@ body.light .bs-focus-badge.warn { background: rgba(180,83,9,.15) !important; col
 body.light .bs-stat-value { color: #0f172a !important; }
 body.light .bs-stat-featured .bs-stat-value { color: #0369a1 !important; }
 body.light .bs-stat-alert .bs-stat-value { color: #b45309 !important; }
+
+button:not(.oh-filter-chip):not(.piq-filter-chip):not(.section-toggle):not(.bs-icon-btn):not(.bs-logout-btn):not(.bs-btn):not(.bs-dd-item):not(.tu-comment-btn):not(.cr-btn-secondary):not(.inv-panel-apply-btn):not(.focus-max-btn):not(.vsp-place-btn):not(.vsp-email-btn):not(.vsp-delete-btn):not(.vsp-reopen-btn),
+label.filelbl:not(.bs-filelbl):not(.bs-btn) {
+  border-radius: 999px !important;
+}
+
+#vendorSearchInput,
+#inventorySearchInput,
+input[placeholder="Filter current order"] {
+  border-radius: 999px !important;
+}
+.success.ui-control {
+  border-radius: 999px !important;
+}
+
+#quickOrderBtn {
+  border-radius: 999px !important;
+}

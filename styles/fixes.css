@@ -79,7 +79,7 @@
       align-items:center;
       justify-content:center;
       text-align:center;
-      border-radius:12px !important;
+      border-radius:999px !important;
     }
     #quickOrderModalBg .modal{
       width:min(1120px,100%) !important;
