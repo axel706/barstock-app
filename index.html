@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260715-135210</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260715-142357</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -257,6 +257,11 @@
     <div class="section-body vendor-section-inner" id="vendorSectionBody">
       <div class="vendor-controls-top">
         <div class="tabs" id="vendorTabs"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;font-size:11px;color:var(--sub)">
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:rgba(239,68,68,.6);margin-right:4px"></span>Urgent (&lt;25% in stock)</span>
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:rgba(245,158,11,.6);margin-right:4px"></span>Low (25–60%)</span>
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2);margin-right:4px"></span>OK (&gt;60%)</span>
       </div>
       <div class="vendor-controls-bottom">
         <div class="toolbar-group vendor-export-wrap" style="position:relative">
@@ -1197,11 +1202,14 @@ function getEffectiveOrder(row){
   }
   return Math.max(0, parseNum(row.toOrder));
 }
-function toOrderClass(v){
-  const n = parseNum(v);
-  if(n >= 5) return 'toorder-high';
-  if(n >= 2) return 'toorder-mid';
-  return 'toorder-low';
+function toOrderClass(v, suggested, onHand){
+  const sug = parseNum(suggested);
+  const oh = parseNum(onHand);
+  if (sug <= 0) return 'toorder-low';
+  const ratio = oh / sug;
+  if (ratio <= 0.25) return 'toorder-high';  // less than 25% of suggested → urgent
+  if (ratio <= 0.60) return 'toorder-mid';   // 25-60% → medium
+  return 'toorder-low';                       // above 60% → not urgent
 }
 function vendorQuery(){
   return normalizeName(document.getElementById('vendorSearchInput')?.value || '');
@@ -2408,7 +2416,16 @@ function render(){
 
   const vendors = getVendorsForFilter();
   document.getElementById('vendorTabs').innerHTML = vendors.map(v => `<div class="oh-filter-chip ${activeVendorTab===v?'active':''}" onclick="setVendorTab('${v.replace(/'/g,"\'")}')">${v}</div>`).join('');
-  const vendRows = getCurrentVendorRows();
+  let vendRows = getCurrentVendorRows();
+  // Sort by urgency then by quantity to order descending
+  vendRows = vendRows.slice().sort((a, b) => {
+    const ratioA = parseNum(a.suggested) > 0 ? parseNum(a.onHand) / parseNum(a.suggested) : 1;
+    const ratioB = parseNum(b.suggested) > 0 ? parseNum(b.onHand) / parseNum(b.suggested) : 1;
+    const urgA = ratioA <= 0.25 ? 0 : ratioA <= 0.60 ? 1 : 2;
+    const urgB = ratioB <= 0.25 ? 0 : ratioB <= 0.60 ? 1 : 2;
+    if (urgA !== urgB) return urgA - urgB;
+    return parseNum(b.toOrder) - parseNum(a.toOrder);
+  });
   const vendorSectionBody = document.getElementById('vendorSectionBody');
   if(vendorSectionBody) vendorSectionBody.classList.toggle('compact-empty', vendRows.length === 0);
   const placeBar = document.getElementById('placeOrderBar');
@@ -2424,7 +2441,8 @@ function render(){
     const finalCell = supportsManualFinalOrder(r.vendor)
       ? `<div class="rowactions ${overrideActive ? 'final-override' : ''}"><input type="number" min="0" step="1" value="${overrideActive ? escapeHtml(String(r.orderOverride)) : ''}" placeholder="Auto ${fmt(r.toOrder)}" style="width:110px" onchange="updateFinalOrder(${masterIndex}, this.value)"><button onclick="resetFinalOrder(${masterIndex})">Auto</button></div>`
       : `<span class="muted">Auto only</span>`;
-    return `<tr><td>${badge(r.vendor)}</td><td class="badgecell">${orderingBadgeCell(r)}</td><td>${escapeHtml(r.item)}${getParChipHtml(r)}</td><td>${fmt(r.onHand)}</td><td>${fmt(r.suggested)}</td><td class="toorder-col ${toOrderClass(r.toOrder)}">${fmt(r.toOrder)}</td><td>${finalCell}</td></tr>`;
+    const toClass = toOrderClass(r.toOrder, r.suggested, r.onHand);
+    return `<tr><td>${badge(r.vendor)}</td><td class="badgecell">${orderingBadgeCell(r)}</td><td>${escapeHtml(r.item)}${getParChipHtml(r)}</td><td>${fmt(r.onHand)}</td><td>${fmt(r.suggested)}</td><td class="toorder-col" style="text-align:center"><span class="${toClass}" style="padding:3px 10px;border-radius:999px;display:inline-block">${fmt(r.toOrder)}</span></td><td>${finalCell}</td></tr>`;
   }).join('') || (() => {
     const placedKey = 'vsp_placed_' + activeVendorTab;
     const wasPlaced = sessionStorage.getItem(placedKey);

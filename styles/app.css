@@ -125,7 +125,7 @@
     body.light .toorder-low{background:rgba(15,23,42,.04)!important;color:#0f172a!important}
     body.light .toorder-mid{background:rgba(245,158,11,.16)!important;color:#92400e!important}
     body.light .toorder-high{background:rgba(239,68,68,.14)!important;color:#991b1b!important}
-    #vendorExportArea{overflow:auto; background:var(--card)}
+    #vendorExportArea{overflow:auto; background:transparent}
     #vendorExportArea table{border-collapse:separate;border-spacing:0}
     #vendorExportArea thead th{position:sticky;top:0;z-index:5;background:var(--card);background-clip:padding-box}
     #vendorExportArea th.toorder-head{background:linear-gradient(180deg,rgba(2,132,199,.38),rgba(17,24,39,1))!important}
@@ -3109,4 +3109,25 @@ input[placeholder="Filter current order"] {
 
 #quickOrderBtn {
   border-radius: 999px !important;
+}
+
+#inventorySection .tablewrap th,
+#inventorySection .tablewrap td {
+  text-align: center;
+}
+#inventorySection .tablewrap th:nth-child(1),
+#inventorySection .tablewrap td:nth-child(1),
+#inventorySection .tablewrap th:nth-child(2),
+#inventorySection .tablewrap td:nth-child(2) {
+  text-align: left;
+}
+#vendorExportArea th,
+#vendorExportArea td {
+  text-align: center;
+}
+#vendorExportArea th:nth-child(1),
+#vendorExportArea td:nth-child(1),
+#vendorExportArea th:nth-child(2),
+#vendorExportArea td:nth-child(2) {
+  text-align: left;
 }
