@@ -1,4 +1,4 @@
-    .hero{display:flex;justify-content:center;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:18px;padding:18px 20px;border-radius:18px;background:rgba(17,24,39,.86);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.08);box-shadow:0 8px 24px rgba(0,0,0,.28);position:relative;z-index:40;overflow:visible}
+    .hero{display:flex;justify-content:center;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:18px;padding:18px 20px;border-radius:18px;background:rgba(17,24,39,.86);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.08);box-shadow:0 8px 24px rgba(0,0,0,.28);position:relative;z-index:40;overflow:visible}
     .brand{display:flex;align-items:center;gap:16px;padding-left:60px !important}.hero > div:first-child{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;width:100%}.theme-toggle{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:#1f2937;color:#e5e7eb;border:1px solid rgba(255,255,255,.1);cursor:pointer}.theme-toggle:hover{border-color:rgba(56,189,248,.65)}body.light .theme-toggle{background:#ffffff;color:#0f172a;border-color:rgba(15,23,42,.12)}.theme-icon{font-size:20px;line-height:1}
     .toolbar-group{position:relative}
     .menu{position:absolute;top:calc(100% + 8px);right:0;min-width:220px;background:rgba(17,24,39,.98);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:8px;box-shadow:0 16px 30px rgba(0,0,0,.35);z-index:9999}
@@ -7,7 +7,7 @@
     .menu.hidden{display:none}
     h1{margin:0;font-size:32px;padding:0} h1 .brand-lockup{display:flex}.version-tag{color:#f8fafc;font-weight:800;text-shadow:0 1px 8px rgba(0,0,0,.35)} body.light .version-tag{color:#0f172a;text-shadow:0 1px 6px rgba(255,255,255,.35)}
     .sub{color:var(--sub)}
-    .card{background:rgba(17,24,39,.86);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+    .card{background:rgba(17,24,39,.86);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.28)}
     .metric{font-size:20px;font-weight:700;margin-top:2px}
     input,select{
       background:#0b1220;
@@ -534,8 +534,8 @@
       box-shadow:
         0 24px 60px rgba(2,6,23,.38),
         inset 0 1px 0 rgba(255,255,255,.10);
-      backdrop-filter: blur(20px) saturate(150%);
-      -webkit-backdrop-filter: blur(20px) saturate(150%);
+      backdrop-filter: blur(10px) saturate(150%);
+      -webkit-backdrop-filter: blur(10px) saturate(150%);
     }
     .card{
       background:rgba(15,23,42,.50);
@@ -543,13 +543,13 @@
       box-shadow:
         0 16px 38px rgba(2,6,23,.30),
         inset 0 1px 0 rgba(255,255,255,.08);
-      backdrop-filter: blur(18px) saturate(145%);
-      -webkit-backdrop-filter: blur(18px) saturate(145%);
+      backdrop-filter: blur(9px) saturate(145%);
+      -webkit-backdrop-filter: blur(9px) saturate(145%);
     }
     .tablewrap{
       background:rgba(2,6,23,.22);
-      backdrop-filter: blur(14px) saturate(135%);
-      -webkit-backdrop-filter: blur(14px) saturate(135%);
+      backdrop-filter: blur(7px) saturate(135%);
+      -webkit-backdrop-filter: blur(7px) saturate(135%);
       box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
     }
     .notice,
@@ -557,8 +557,8 @@
       background:rgba(56,189,248,.10) !important;
       border:1px solid rgba(125,211,252,.20) !important;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
-      backdrop-filter: blur(14px) saturate(135%);
-      -webkit-backdrop-filter: blur(14px) saturate(135%);
+      backdrop-filter: blur(7px) saturate(135%);
+      -webkit-backdrop-filter: blur(7px) saturate(135%);
     }
     button,.filelbl{
       background:rgba(31,41,55,.62);
@@ -566,8 +566,8 @@
       box-shadow:
         0 10px 24px rgba(2,6,23,.18),
         inset 0 1px 0 rgba(255,255,255,.07);
-      backdrop-filter: blur(12px) saturate(135%);
-      -webkit-backdrop-filter: blur(12px) saturate(135%);
+      backdrop-filter: blur(6px) saturate(135%);
+      -webkit-backdrop-filter: blur(6px) saturate(135%);
       transition: transform .12s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
     }
     button:hover,.filelbl:hover{
@@ -580,8 +580,8 @@
       background:rgba(11,18,32,.68);
       border:1px solid rgba(255,255,255,.12);
       box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
-      backdrop-filter: blur(10px) saturate(130%);
-      -webkit-backdrop-filter: blur(10px) saturate(130%);
+      backdrop-filter: blur(5px) saturate(130%);
+      -webkit-backdrop-filter: blur(5px) saturate(130%);
     }
     .menu{
       background:rgba(15,23,42,.84);
@@ -589,8 +589,8 @@
       box-shadow:
         0 22px 50px rgba(2,6,23,.42),
         inset 0 1px 0 rgba(255,255,255,.06);
-      backdrop-filter: blur(18px) saturate(150%);
-      -webkit-backdrop-filter: blur(18px) saturate(150%);
+      backdrop-filter: blur(9px) saturate(150%);
+      -webkit-backdrop-filter: blur(9px) saturate(150%);
     }
     .modal{
       position:relative;
@@ -600,13 +600,13 @@
       box-shadow:
         0 28px 70px rgba(2,6,23,.48),
         inset 0 1px 0 rgba(255,255,255,.08) !important;
-      backdrop-filter: blur(22px) saturate(155%);
-      -webkit-backdrop-filter: blur(22px) saturate(155%);
+      backdrop-filter: blur(11px) saturate(155%);
+      -webkit-backdrop-filter: blur(11px) saturate(155%);
     }
     .modalbg{
       background:rgba(15,23,42,.30);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
       z-index:20000;
     }
     body{
@@ -654,8 +654,8 @@
       box-shadow:
         0 22px 50px rgba(2,6,23,.34),
         inset 0 1px 0 rgba(255,255,255,.05) !important;
-      backdrop-filter: blur(26px) saturate(155%);
-      -webkit-backdrop-filter: blur(24px) saturate(150%);
+      backdrop-filter: blur(13px) saturate(155%);
+      -webkit-backdrop-filter: blur(12px) saturate(150%);
     }
     .card{
       background:rgba(15,23,42,.50) !important;
@@ -663,8 +663,8 @@
       box-shadow:
         0 18px 40px rgba(2,6,23,.26),
         inset 0 1px 0 rgba(255,255,255,.05) !important;
-      backdrop-filter: blur(22px) saturate(150%);
-      -webkit-backdrop-filter: blur(22px) saturate(150%);
+      backdrop-filter: blur(11px) saturate(150%);
+      -webkit-backdrop-filter: blur(11px) saturate(150%);
     }
     body.light{
       background:
@@ -679,8 +679,8 @@
       box-shadow:
         0 20px 45px rgba(15,23,42,.08),
         inset 0 1px 0 rgba(255,255,255,.68);
-      backdrop-filter: blur(24px) saturate(158%);
-      -webkit-backdrop-filter: blur(24px) saturate(158%);
+      backdrop-filter: blur(12px) saturate(158%);
+      -webkit-backdrop-filter: blur(12px) saturate(158%);
     }
     body.light .card{
       background:rgba(255,255,255,.44) !important;
@@ -688,14 +688,14 @@
       box-shadow:
         0 16px 34px rgba(15,23,42,.08),
         inset 0 1px 0 rgba(255,255,255,.72) !important;
-      backdrop-filter: blur(22px) saturate(152%);
-      -webkit-backdrop-filter: blur(22px) saturate(152%);
+      backdrop-filter: blur(11px) saturate(152%);
+      -webkit-backdrop-filter: blur(11px) saturate(152%);
     }
     body.light .tablewrap{
       background:rgba(255,255,255,.28) !important;
       border-color:rgba(255,255,255,.48) !important;
-      backdrop-filter: blur(18px) saturate(148%);
-      -webkit-backdrop-filter: blur(18px) saturate(148%);
+      backdrop-filter: blur(9px) saturate(148%);
+      -webkit-backdrop-filter: blur(9px) saturate(148%);
     }
     body.light .notice,
     body.light .vendor-summary{
@@ -710,8 +710,8 @@
       box-shadow:
         0 10px 24px rgba(15,23,42,.08),
         inset 0 1px 0 rgba(255,255,255,.85);
-      backdrop-filter: blur(14px) saturate(145%);
-      -webkit-backdrop-filter: blur(14px) saturate(145%);
+      backdrop-filter: blur(7px) saturate(145%);
+      -webkit-backdrop-filter: blur(7px) saturate(145%);
     }
     body.light button:hover,
     body.light .filelbl:hover{
@@ -733,8 +733,8 @@
       box-shadow:
         0 24px 52px rgba(15,23,42,.14),
         inset 0 1px 0 rgba(255,255,255,.92);
-      backdrop-filter: blur(22px) saturate(162%);
-      -webkit-backdrop-filter: blur(22px) saturate(162%);
+      backdrop-filter: blur(11px) saturate(162%);
+      -webkit-backdrop-filter: blur(11px) saturate(162%);
     }
     body.light .modal{
       background:rgba(255,255,255,.78) !important;
@@ -742,8 +742,8 @@
       box-shadow:
         0 28px 60px rgba(15,23,42,.16),
         inset 0 1px 0 rgba(255,255,255,.94) !important;
-      backdrop-filter: blur(26px) saturate(168%);
-      -webkit-backdrop-filter: blur(26px) saturate(168%);
+      backdrop-filter: blur(13px) saturate(168%);
+      -webkit-backdrop-filter: blur(13px) saturate(168%);
     }
 
     .vendor-section-inner{display:block;min-height:0}
@@ -828,8 +828,8 @@
       border:1px solid rgba(255,255,255,.10);
       color:var(--text);
       box-shadow:0 8px 22px rgba(0,0,0,.18);
-      backdrop-filter:blur(12px) saturate(135%);
-      -webkit-backdrop-filter:blur(12px) saturate(135%);
+      backdrop-filter:blur(6px) saturate(135%);
+      -webkit-backdrop-filter:blur(6px) saturate(135%);
     }
     body.light .compare-status{
       background:rgba(255,255,255,.50);
@@ -1083,8 +1083,8 @@
       background:rgba(255,255,255,.04);
       border:1px solid rgba(255,255,255,.10);
       box-shadow:0 8px 22px rgba(0,0,0,.18);
-      backdrop-filter:blur(12px) saturate(135%);
-      -webkit-backdrop-filter:blur(12px) saturate(135%);
+      backdrop-filter:blur(6px) saturate(135%);
+      -webkit-backdrop-filter:blur(6px) saturate(135%);
     }
     body.light .history-card .history-date-inline{
       background:rgba(255,255,255,.50);
@@ -1446,8 +1446,8 @@
       box-shadow:
         0 14px 28px rgba(15,23,42,.08),
         inset 0 1px 0 rgba(255,255,255,.88) !important;
-      backdrop-filter:blur(16px) saturate(145%) !important;
-      -webkit-backdrop-filter:blur(16px) saturate(145%) !important;
+      backdrop-filter:blur(8px) saturate(145%) !important;
+      -webkit-backdrop-filter:blur(8px) saturate(145%) !important;
     }
     body.light .hero h1{
       color:#0f172a !important;
@@ -2145,7 +2145,7 @@
 
 /* ===== BS HEADER ===== */
 .wrap{padding-left:2px !important;padding-right:2px !important;}
-.bs-header{background:rgba(17,24,39,.86);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.08);border-radius:0 0 18px 18px;padding:0;margin-bottom:60px;position:relative;z-index:40;box-shadow:0 8px 24px rgba(0,0,0,.28);}
+.bs-header{background:rgba(17,24,39,.86);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.08);border-radius:0 0 18px 18px;padding:0;margin-bottom:60px;position:relative;z-index:40;box-shadow:0 8px 24px rgba(0,0,0,.28);}
 body.light .bs-header{background:rgba(255,255,255,.96);border-color:rgba(15,23,42,.08);box-shadow:0 8px 22px rgba(15,23,42,.08);}
 
 .bs-header-line1{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.06);}
@@ -2303,7 +2303,7 @@ body.light .bs-header.collapsed::after{
 }
 .bs-focus-card{
   background:var(--card);
-  backdrop-filter:blur(8px);
+  backdrop-filter:blur(4px);
   border:1px solid var(--border);
   border-radius:16px;
   padding:20px;
@@ -2368,7 +2368,7 @@ body.light .bs-focus-card{
 .bs-focus-mode .bs-focus-mininav{display:grid;}
 .bs-focus-minicard{
   background:var(--card);
-  backdrop-filter:blur(8px);
+  backdrop-filter:blur(4px);
   border:1px solid var(--border);
   border-radius:12px;
   padding:10px 12px;
@@ -2393,7 +2393,7 @@ body.light .bs-focus-card{
   font-weight:700;
   width:fit-content;
   background:var(--card);
-  backdrop-filter:blur(8px);
+  backdrop-filter:blur(4px);
   border:1px solid var(--border);
   border-radius:20px;
   padding:8px 16px;
@@ -2719,8 +2719,8 @@ body.dark .bs-status-badge, :root:not(.light) .bs-status-badge {
 }
 body.light .vsp-panel {
   background: rgba(255,255,255,.86);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   border-color: rgba(15,23,42,.08);
   box-shadow: 0 8px 22px rgba(15,23,42,.08);
 }
@@ -3012,3 +3012,76 @@ body.light .inv-panel-section { border-top-color: rgba(15,23,42,.08); }
 .inv-panel-actions-section { margin-top: auto; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.08); flex-shrink: 0; }
 body.light .inv-panel-actions-section { border-top-color: rgba(15,23,42,.08); }
 .inv-panel-apply-slot { min-height: 36px; margin-bottom: 8px; }
+
+#focusModeOverlay {
+  background: linear-gradient(180deg,#0b1220,#111827);
+}
+body.light #focusModeOverlay {
+  background: linear-gradient(180deg,#f8fbff,#eaf2fb);
+}
+#focusModeBar {
+  background: rgba(17,24,39,.95);
+  border-bottom-color: rgba(255,255,255,.08);
+}
+body.light #focusModeBar {
+  background: rgba(255,255,255,.95);
+  border-bottom-color: rgba(15,23,42,.08);
+}
+body.light #focusModeLabel {
+  color: #0f172a;
+}
+body.light #focusModeContent .section-title,
+body.light #focusModeContent h2,
+body.light #focusModeContent h3,
+body.light #focusModeContent strong,
+body.light #focusModeContent .sectionhead {
+  color: #0f172a !important;
+}
+body.light #focusModeContent {
+  color: #0f172a;
+}
+body.light #focusModeContent .tablewrap {
+  border-color: rgba(15,23,42,.12) !important;
+  background: rgba(255,255,255,.96) !important;
+}
+body.light #focusModeContent th,
+body.light #focusModeContent td {
+  color: #0f172a !important;
+  border-color: rgba(15,23,42,.08) !important;
+}
+body.light #focusModeContent .muted,
+body.light #focusModeContent .small {
+  color: #475569 !important;
+}
+body.light #focusModeContent input,
+body.light #focusModeContent select {
+  background: #fff;
+  color: #0f172a;
+  border-color: rgba(15,23,42,.12);
+}
+body.light #focusModeContent button:not(.primary):not(.success):not(.danger):not(.piq-act-btn):not(.vsp-place-btn) {
+  background: #e8eef7;
+  color: #0f172a;
+  border-color: rgba(15,23,42,.12);
+}
+
+body.light #focusModeOverlay .card,
+body.light #focusModeOverlay .section-card {
+  background: rgba(255,255,255,.96) !important;
+  border-color: rgba(15,23,42,.08) !important;
+}
+body.light #focusModeOverlay .section-title,
+body.light #focusModeOverlay strong,
+body.light #focusModeOverlay h2,
+body.light #focusModeOverlay h3,
+body.light #focusModeOverlay h4 {
+  color: #0f172a !important;
+}
+body.light #focusModeOverlay .muted,
+body.light #focusModeOverlay .small {
+  color: #475569 !important;
+}
+body.light #focusModeOverlay table th,
+body.light #focusModeOverlay table td {
+  color: #0f172a;
+}

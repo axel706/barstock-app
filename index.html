@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260712-135013</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260714-220434</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -208,7 +208,7 @@
           </div>
         </div>
       </div>
-      <button id="inventoryToggle" class="section-toggle" title="Collapse or expand Inventory">−</button>
+      <button onclick="enterFocusMode('inventorySection','Inventory')" class="section-toggle" title="Focus mode" style="margin-right:4px"><i class="ti ti-maximize" aria-hidden="true" style="font-size:13px"></i></button><button id="inventoryToggle" class="section-toggle" title="Collapse or expand Inventory">−</button>
     </div>
     <div class="section-body" id="inventorySectionBody">
       <div class="inventory-controls-top">
@@ -252,7 +252,7 @@
           <div class="vendor-summary" id="vendorSummary">Current list: 0 codes | 0 bottles | 0 edited</div>
         </div>
       </div>
-      <button id="vendorToggle" class="section-toggle" title="Collapse or expand Ordering">−</button>
+      <button onclick="enterFocusMode('vendorSection','Ordering')" class="section-toggle" title="Focus mode" style="margin-right:4px"><i class="ti ti-maximize" aria-hidden="true" style="font-size:13px"></i></button><button id="vendorToggle" class="section-toggle" title="Collapse or expand Ordering">−</button>
     </div>
     <div class="section-body vendor-section-inner" id="vendorSectionBody">
       <div class="vendor-controls-top">
@@ -318,7 +318,7 @@
           </div>
         </div>
       </div>
-      <button id="historyToggle" class="section-toggle" title="Collapse or expand Order History">−</button>
+      <button onclick="enterFocusMode('historySection','Order History')" class="section-toggle" title="Focus mode" style="margin-right:4px"><i class="ti ti-maximize" aria-hidden="true" style="font-size:13px"></i></button><button id="historyToggle" class="section-toggle" title="Collapse or expand Order History">−</button>
     </div>
     <div class="section-body" id="historySectionBody">
       <div class="oh-toolbar">
@@ -347,7 +347,7 @@
           </div>
         </div>
       </div>
-      <button id="noMatchToggle" class="section-toggle" title="Collapse or expand No Match Report">−</button>
+      <button onclick="enterFocusMode('noMatchSection','No Match')" class="section-toggle" title="Focus mode" style="margin-right:4px"><i class="ti ti-maximize" aria-hidden="true" style="font-size:13px"></i></button><button id="noMatchToggle" class="section-toggle" title="Collapse or expand No Match Report">−</button>
     </div>
     <div class="section-body" id="noMatchSectionBody">
       <div class="tablewrap">
@@ -375,7 +375,7 @@
           </div>
         </div>
       </div>
-      <button id="costReportToggle" class="section-toggle" title="Collapse or expand Wine &amp; Liquor Cost">−</button>
+      <button onclick="enterFocusMode('costReportSection','Wine & Liquor Cost')" class="section-toggle" title="Focus mode" style="margin-right:4px"><i class="ti ti-maximize" aria-hidden="true" style="font-size:13px"></i></button><button id="costReportToggle" class="section-toggle" title="Collapse or expand Wine &amp; Liquor Cost">−</button>
     </div>
     <div class="section-body" id="costReportSectionBody">
 
@@ -542,7 +542,7 @@
           </div>
         </div>
       </div>
-      <button id="pourIqToggle" class="section-toggle" title="Collapse or expand Pour-IQ">&#x2212;</button>
+      <button onclick="enterFocusMode('pourIqSection','Pour-IQ')" class="section-toggle" title="Focus mode" style="margin-right:4px"><i class="ti ti-maximize" aria-hidden="true" style="font-size:13px"></i></button><button id="pourIqToggle" class="section-toggle" title="Collapse or expand Pour-IQ">&#x2212;</button>
     </div>
     <div class="section-body" id="pourIqSectionBody">
       <div id="pourIqRoot"></div>
@@ -559,7 +559,7 @@
           </div>
         </div>
       </div>
-      <button id="theoreticalToggle" class="section-toggle" title="Collapse or expand Theoretical Usage">−</button>
+      <button onclick="enterFocusMode('theoreticalSection','Theoretical Usage')" class="section-toggle" title="Focus mode" style="margin-right:4px"><i class="ti ti-maximize" aria-hidden="true" style="font-size:13px"></i></button><button id="theoreticalToggle" class="section-toggle" title="Collapse or expand Theoretical Usage">−</button>
     </div>
     <div class="section-body" id="theoreticalSectionBody">
 
@@ -3273,6 +3273,55 @@ function toggleAvgWkColumn() {
 }
 window.toggleAvgWkColumn = toggleAvgWkColumn;
 
+// ── Focus Mode ───────────────────────────────────────────────────────────────
+let _focusSectionId = null;
+let _focusSectionBody = null;
+let _focusSectionNext = null;
+let _focusSectionParent = null;
+
+function enterFocusMode(sectionId, label) {
+  const section = document.getElementById(sectionId);
+  if (!section) return;
+  _focusSectionId = sectionId;
+
+  const overlay = document.getElementById('focusModeOverlay');
+  const content = document.getElementById('focusModeContent');
+  const labelEl = document.getElementById('focusModeLabel');
+
+  const body = section.querySelector('.section-body');
+  if (!body) return;
+
+  // Save position so we can restore it exactly
+  _focusSectionBody = body;
+  _focusSectionParent = body.parentNode;
+  _focusSectionNext = body.nextSibling;
+
+  content.innerHTML = '';
+  content.appendChild(body);
+
+  if (labelEl) labelEl.textContent = label;
+  overlay.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  overlay.scrollTop = 0;
+}
+window.enterFocusMode = enterFocusMode;
+
+function exitFocusMode() {
+  const overlay = document.getElementById('focusModeOverlay');
+  if (_focusSectionBody && _focusSectionParent) {
+    // Reinsert at exact original position
+    _focusSectionParent.insertBefore(_focusSectionBody, _focusSectionNext);
+  }
+  overlay.style.display = 'none';
+  document.getElementById('focusModeContent').innerHTML = '';
+  document.body.style.overflow = '';
+  _focusSectionId = null;
+  _focusSectionBody = null;
+  _focusSectionNext = null;
+  _focusSectionParent = null;
+}
+window.exitFocusMode = exitFocusMode;
+
 function openExcludedModal(vendor) {
   const excluded = (state.master || []).filter(r =>
     r.vendor === vendor &&
@@ -5561,6 +5610,13 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     <div style="font-size:12px;color:var(--sub);margin-bottom:14px">Items with a final order of 0. Click Restore to add them back.</div>
     <div id="excludedItemsList" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px"></div>
   </div>
+</div>
+<div id="focusModeOverlay" style="display:none;position:fixed;inset:0;z-index:9000;overflow-y:auto">
+  <div id="focusModeBar" style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid rgba(255,255,255,.08);position:sticky;top:0;backdrop-filter:blur(4px);z-index:1">
+    <span id="focusModeLabel" style="font-size:15px;font-weight:700"></span>
+    <button onclick="exitFocusMode()" style="display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;background:rgba(56,189,248,.1);color:#38bdf8;border:0.5px solid rgba(56,189,248,.3);cursor:pointer"><i class="ti ti-minimize" aria-hidden="true" style="font-size:13px"></i> Exit focus</button>
+  </div>
+  <div id="focusModeContent" style="padding:16px 20px"></div>
 </div>
 </body>
 </html>
