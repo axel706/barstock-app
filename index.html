@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260715-123316</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260715-124523</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -208,7 +208,7 @@
           </div>
         </div>
       </div>
-      <button onclick="toggleFocusMode('inventorySection','Inventory')" class="section-toggle" title="Focus mode" style="margin-right:4px"><i class="ti ti-maximize" aria-hidden="true" style="font-size:13px"></i></button><button id="inventoryToggle" class="section-toggle" title="Collapse or expand Inventory">−</button>
+      <button onclick="toggleFocusMode('inventorySection','Inventory')" class="section-toggle focus-max-btn" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true" style="font-size:18px"></i></button>
     </div>
     <div class="section-body" id="inventorySectionBody">
       <div class="inventory-controls-top">
@@ -252,7 +252,7 @@
           <div class="vendor-summary" id="vendorSummary">Current list: 0 codes | 0 bottles | 0 edited</div>
         </div>
       </div>
-      <button onclick="toggleFocusMode('vendorSection','Ordering')" class="section-toggle" title="Focus mode" style="margin-right:4px"><i class="ti ti-maximize" aria-hidden="true" style="font-size:13px"></i></button><button id="vendorToggle" class="section-toggle" title="Collapse or expand Ordering">−</button>
+      <button onclick="toggleFocusMode('vendorSection','Ordering')" class="section-toggle focus-max-btn" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true" style="font-size:18px"></i></button>
     </div>
     <div class="section-body vendor-section-inner" id="vendorSectionBody">
       <div class="vendor-controls-top">
@@ -318,7 +318,7 @@
           </div>
         </div>
       </div>
-      <button onclick="toggleFocusMode('historySection','Order History')" class="section-toggle" title="Focus mode" style="margin-right:4px"><i class="ti ti-maximize" aria-hidden="true" style="font-size:13px"></i></button><button id="historyToggle" class="section-toggle" title="Collapse or expand Order History">−</button>
+      <button onclick="toggleFocusMode('historySection','Order History')" class="section-toggle focus-max-btn" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true" style="font-size:18px"></i></button>
     </div>
     <div class="section-body" id="historySectionBody">
       <div class="oh-toolbar">
@@ -347,7 +347,7 @@
           </div>
         </div>
       </div>
-      <button onclick="toggleFocusMode('noMatchSection','No Match')" class="section-toggle" title="Focus mode" style="margin-right:4px"><i class="ti ti-maximize" aria-hidden="true" style="font-size:13px"></i></button><button id="noMatchToggle" class="section-toggle" title="Collapse or expand No Match Report">−</button>
+      <button onclick="toggleFocusMode('noMatchSection','No Match')" class="section-toggle focus-max-btn" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true" style="font-size:18px"></i></button>
     </div>
     <div class="section-body" id="noMatchSectionBody">
       <div class="tablewrap">
@@ -375,7 +375,7 @@
           </div>
         </div>
       </div>
-      <button onclick="toggleFocusMode('costReportSection','Wine & Liquor Cost')" class="section-toggle" title="Focus mode" style="margin-right:4px"><i class="ti ti-maximize" aria-hidden="true" style="font-size:13px"></i></button><button id="costReportToggle" class="section-toggle" title="Collapse or expand Wine &amp; Liquor Cost">−</button>
+      <button onclick="toggleFocusMode('costReportSection','Wine & Liquor Cost')" class="section-toggle focus-max-btn" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true" style="font-size:18px"></i></button>
     </div>
     <div class="section-body" id="costReportSectionBody">
 
@@ -542,7 +542,7 @@
           </div>
         </div>
       </div>
-      <button onclick="toggleFocusMode('pourIqSection','Pour-IQ')" class="section-toggle" title="Focus mode" style="margin-right:4px"><i class="ti ti-maximize" aria-hidden="true" style="font-size:13px"></i></button><button id="pourIqToggle" class="section-toggle" title="Collapse or expand Pour-IQ">&#x2212;</button>
+      <button onclick="toggleFocusMode('pourIqSection','Pour-IQ')" class="section-toggle focus-max-btn" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true" style="font-size:18px"></i></button><button id="pourIqToggle" class="section-toggle" title="Collapse or expand Pour-IQ">&#x2212;</button>
     </div>
     <div class="section-body" id="pourIqSectionBody">
       <div id="pourIqRoot"></div>
@@ -559,7 +559,7 @@
           </div>
         </div>
       </div>
-      <button onclick="toggleFocusMode('theoreticalSection','Theoretical Usage')" class="section-toggle" title="Focus mode" style="margin-right:4px"><i class="ti ti-maximize" aria-hidden="true" style="font-size:13px"></i></button><button id="theoreticalToggle" class="section-toggle" title="Collapse or expand Theoretical Usage">−</button>
+      <button onclick="toggleFocusMode('theoreticalSection','Theoretical Usage')" class="section-toggle focus-max-btn" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true" style="font-size:18px"></i></button>
     </div>
     <div class="section-body" id="theoreticalSectionBody">
 
@@ -3321,11 +3321,14 @@ function enterFocusMode(sectionId, label) {
     });
   }
 
-  // Swap button to minimize
+  // Swap button to minimize — blue + inverted arrows
   const maxBtn = section.querySelector('.focus-max-btn');
   if (maxBtn) {
-    maxBtn.innerHTML = '<i class="ti ti-minimize" aria-hidden="true" style="font-size:13px"></i>';
+    maxBtn.innerHTML = '<i class="ti ti-viewport-wide" aria-hidden="true" style="font-size:16px;transform:scaleX(-1);display:inline-block"></i>';
     maxBtn.title = 'Exit focus mode';
+    maxBtn.style.background = '#0284c7';
+    maxBtn.style.borderColor = '#0284c7';
+    maxBtn.style.color = '#ffffff';
   }
 
   // Expand section to fill screen
@@ -3350,8 +3353,11 @@ function exitFocusMode() {
     section.style.margin = '';
     const btn = section.querySelector('.focus-max-btn');
     if (btn) {
-      btn.innerHTML = '<i class="ti ti-maximize" aria-hidden="true" style="font-size:13px"></i>';
+      btn.innerHTML = '<i class="ti ti-viewport-wide" aria-hidden="true" style="font-size:18px"></i>';
       btn.title = 'Focus mode';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
     }
   }
   const bsHeader = document.querySelector('.bs-header');
