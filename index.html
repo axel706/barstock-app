@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260715-142357</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260715-145944</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2442,7 +2442,7 @@ function render(){
       ? `<div class="rowactions ${overrideActive ? 'final-override' : ''}"><input type="number" min="0" step="1" value="${overrideActive ? escapeHtml(String(r.orderOverride)) : ''}" placeholder="Auto ${fmt(r.toOrder)}" style="width:110px" onchange="updateFinalOrder(${masterIndex}, this.value)"><button onclick="resetFinalOrder(${masterIndex})">Auto</button></div>`
       : `<span class="muted">Auto only</span>`;
     const toClass = toOrderClass(r.toOrder, r.suggested, r.onHand);
-    return `<tr><td>${badge(r.vendor)}</td><td class="badgecell">${orderingBadgeCell(r)}</td><td>${escapeHtml(r.item)}${getParChipHtml(r)}</td><td>${fmt(r.onHand)}</td><td>${fmt(r.suggested)}</td><td class="toorder-col" style="text-align:center"><span class="${toClass}" style="padding:3px 10px;border-radius:999px;display:inline-block">${fmt(r.toOrder)}</span></td><td>${finalCell}</td></tr>`;
+    return `<tr data-idx="${masterIndex}" style="cursor:pointer" onclick="openVendorItemPanel(${masterIndex})"><td>${badge(r.vendor)}</td><td class="badgecell">${orderingBadgeCell(r)}</td><td>${escapeHtml(r.item)}${getParChipHtml(r)}</td><td>${fmt(r.onHand)}</td><td>${fmt(r.suggested)}</td><td class="toorder-col" style="text-align:center"><span class="${toClass}" style="padding:3px 10px;border-radius:999px;display:inline-block">${fmt(r.toOrder)}</span></td><td>${finalCell}</td></tr>`;
   }).join('') || (() => {
     const placedKey = 'vsp_placed_' + activeVendorTab;
     const wasPlaced = sessionStorage.getItem(placedKey);
@@ -2470,6 +2470,8 @@ function render(){
   document.getElementById('masterStatus').textContent = state.lastMasterName ? `Loaded: ${state.lastMasterName}` : 'No master loaded';
 }
 function renderVendorPanel() {
+  const hdr = document.getElementById('vspPanelHeader');
+  if (hdr) hdr.classList.remove('item-selected');
   const panel = document.getElementById('vspPanel');
   const title = document.getElementById('vspPanelTitle');
   const body = document.getElementById('vspPanelBody');
@@ -3253,6 +3255,92 @@ async function openInvPanel(idx) {
     </div>`;
 }
 window.openInvPanel = openInvPanel;
+
+// ── Ordering Item Panel ──────────────────────────────────────────────────────
+let _vendorSelectedIdx = null;
+
+async function openVendorItemPanel(idx) {
+  // Toggle off if same item clicked → back to vendor summary
+  if (_vendorSelectedIdx === idx) {
+    _vendorSelectedIdx = null;
+    document.querySelectorAll('#vendorBody tr').forEach(tr => tr.classList.remove('inv-row-selected'));
+    renderVendorPanel();
+    return;
+  }
+  _vendorSelectedIdx = idx;
+  document.querySelectorAll('#vendorBody tr').forEach(tr => tr.classList.remove('inv-row-selected'));
+  document.querySelectorAll('#vendorBody tr').forEach(tr => { if (Number(tr.dataset.idx) === idx) tr.classList.add('inv-row-selected'); });
+
+  const r = state.master[idx];
+  if (!r) return;
+
+  const panel = document.getElementById('vspPanel');
+  const header = document.getElementById('vspPanelHeader');
+  const body = document.getElementById('vspPanelBody');
+  if (!panel || !body) return;
+
+  // Header — just the item name centered
+  if (header) {
+    const itemName = escapeHtml(r.item);
+    header.classList.add('item-selected');
+    header.innerHTML = '<div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13px;font-weight:700;color:var(--text);text-align:center">' + itemName + '</div>';
+  }
+
+  // Pour-IQ data
+  const parKey = `${r.item}||${r.code || ''}`;
+  const parData = window.parAdjustments ? window.parAdjustments.get(parKey) : null;
+  const avgUsed = parData?.avgUsed ?? null;
+  const optimal = parData?.suggestedOptimal ?? null;
+  const adjustment = parData?.adjustment ?? 0;
+  const status = parData && parData.status === 'active' ? (adjustment < 0 ? 'over' : adjustment > 0 ? 'under' : 'on') : (parData?.status ?? null);
+  const trendDelta = parData?.trendDelta ?? null;
+  const statusColor = status === 'over' ? '#ef4444' : status === 'under' ? '#f59e0b' : status === 'on' ? '#22c55e' : 'var(--sub)';
+  const statusLabel = status === 'over' ? 'Over par' : status === 'under' ? 'Under par' : status === 'on' ? 'On par' : 'Observing';
+
+  // Stock % pill
+  const ratio = parseNum(r.suggested) > 0 ? parseNum(r.onHand) / parseNum(r.suggested) : null;
+  const stockPct = ratio !== null ? Math.round(ratio * 100) : null;
+  const stockColor = ratio !== null ? (ratio <= 0.25 ? '#ef4444' : ratio <= 0.60 ? '#f59e0b' : '#22c55e') : 'var(--sub)';
+  const stockBg = ratio !== null ? (ratio <= 0.25 ? 'rgba(239,68,68,.15)' : ratio <= 0.60 ? 'rgba(245,158,11,.15)' : 'rgba(34,197,94,.15)') : 'rgba(255,255,255,.08)';
+  const stockPill = stockPct !== null ? `<span style="background:${stockBg};color:${stockColor};border:1px solid ${stockColor};border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700">${stockPct}% IN STOCK</span>` : '';
+
+  // Price calc
+  const unitPrice = parseNum(r.value) || 0;
+  const effectiveQty = r.orderOverride !== '' && r.orderOverride !== null && r.orderOverride !== undefined ? parseNum(r.orderOverride) : r.toOrder;
+  const orderCost = unitPrice * effectiveQty;
+
+  // Override controls
+  const masterIndex = idx;
+  const overrideActive = r.orderOverride !== '' && r.orderOverride !== null && r.orderOverride !== undefined;
+
+  body.innerHTML = `
+    <div class="inv-panel-section" style="border-top:none;padding-top:0">
+      ${stockPill ? `<div style="text-align:center;margin-bottom:8px">${stockPill}</div>` : ''}
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+        <div class="inv-panel-stat"><div class="inv-panel-stat-label">ON HAND</div><div class="inv-panel-stat-value">${fmt(r.onHand)}</div></div>
+        <div class="inv-panel-stat"><div class="inv-panel-stat-label">SUGGESTED</div><div class="inv-panel-stat-value">${fmt(r.suggested)}</div></div>
+        <div class="inv-panel-stat"><div class="inv-panel-stat-label">AVG/WK</div><div class="inv-panel-stat-value" style="color:#38bdf8">${avgUsed !== null ? avgUsed : '—'}</div></div>
+      </div>
+    </div>
+    <div class="inv-panel-section" style="flex:1">
+      <div class="inv-panel-row"><span class="inv-panel-row-label">Optimal par</span><span class="inv-panel-row-value" style="color:${optimal !== null ? '#22c55e' : 'var(--sub)'}">${optimal !== null ? optimal : '—'}</span></div>
+      <div class="inv-panel-row"><span class="inv-panel-row-label">Status</span><span class="inv-panel-row-value" style="color:${statusColor}">${statusLabel}</span></div>
+      <div class="inv-panel-row"><span class="inv-panel-row-label">Trend</span><span class="inv-panel-row-value" style="color:${trendDelta !== null ? (trendDelta >= 0 ? '#22c55e' : '#ef4444') : 'var(--sub)'}">${trendDelta !== null ? (trendDelta >= 0 ? '↑' : '↓') + ' ' + Math.abs(trendDelta) : '—'}</span></div>
+      <hr class="inv-panel-divider" style="margin:8px 0">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div class="inv-panel-stat" style="padding:12px 8px"><div class="inv-panel-stat-label">UNIT PRICE</div><div class="inv-panel-stat-value" style="font-size:18px">${fmtMoney(unitPrice)}</div></div>
+        <div class="inv-panel-stat" style="padding:12px 8px"><div class="inv-panel-stat-label">ORDER COST</div><div class="inv-panel-stat-value" style="font-size:18px;color:#38bdf8">${fmtMoney(orderCost)}</div></div>
+      </div>
+    </div>
+    <div class="inv-panel-actions-section">
+      <div style="font-size:11px;color:var(--sub);margin-bottom:6px">Final order qty</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <input type="number" min="0" step="1" value="${overrideActive ? escapeHtml(String(r.orderOverride)) : ''}" placeholder="Auto ${fmt(r.toOrder)}" style="flex:1;min-width:0;border-radius:8px;padding:6px 10px;font-size:13px;background:var(--muted);border:1px solid rgba(255,255,255,.1);color:var(--text)" onchange="updateFinalOrder(${masterIndex}, this.value);openVendorItemPanel(${masterIndex})">
+        <button onclick="resetFinalOrder(${masterIndex});_vendorSelectedIdx=null;openVendorItemPanel(${masterIndex})" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0">Auto</button>
+      </div>
+    </div>`;
+}
+window.openVendorItemPanel = openVendorItemPanel;
 
 async function applyInvPourIq(idx, target) {
   const r = state.master[idx];
