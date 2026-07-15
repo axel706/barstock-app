@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260715-134735</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260715-135210</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -4856,11 +4856,13 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
   // Active tab highlight
   const sections = [
-    { id: 'inventorySection', tab: 0 },
-    { id: 'vendorSection', tab: 1 },
-    { id: 'historySection', tab: 2 },
-    { id: 'noMatchSection', tab: 3 },
-    { id: 'costReportSection', tab: 4 },
+    { id: 'inventorySection', tab: 1 },
+    { id: 'vendorSection', tab: 2 },
+    { id: 'historySection', tab: 3 },
+    { id: 'noMatchSection', tab: 4 },
+    { id: 'costReportSection', tab: 5 },
+    { id: 'theoreticalSection', tab: 6 },
+    { id: 'pourIqSection', tab: 7 },
   ];
 
   function updateActiveTab() {
