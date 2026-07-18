@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260718-115806</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260718-121548</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2371,19 +2371,20 @@ function getParChipHtml(row){
   const par = parAdjustments.get(k);
   if(!par) return '';
   if(par.status === 'observing') return '';
+  const itemKey = encodeURIComponent(row.item + '||' + (row.code || ''));
   if(par.status === 'never_ordered'){
     const tip = `Suggested: ${par.currentSuggested} · Never ordered in ${par.normalWeeks} normal weeks · Review this item`;
-    return `<span class="par-chip par-chip-review" title="${tip}">Pour·IQ™ Review</span>`;
+    return `<span class="par-chip par-chip-review" title="${tip}" onclick="openItemInfoModalByKey(event,'${itemKey}')">Pour·IQ™ Review</span>`;
   }
   if(par.adjustment === -1){
     const tip = `Avg used: ${par.avgUsed}/wk · Optimal par: ${par.suggestedOptimal} · Current: ${par.currentSuggested}`;
-    return `<span class="par-chip par-chip-down" title="${tip}">Pour·IQ™ −1</span>`;
+    return `<span class="par-chip par-chip-down" title="${tip}" onclick="openItemInfoModalByKey(event,'${itemKey}')">Pour·IQ™ −1</span>`;
   }
   if(par.adjustment === 1){
     const tip = `Avg used: ${par.avgUsed}/wk · Optimal par: ${par.suggestedOptimal} · Current: ${par.currentSuggested}`;
-    return `<span class="par-chip par-chip-up" title="${tip}">Pour·IQ™ +1</span>`;
+    return `<span class="par-chip par-chip-up" title="${tip}" onclick="openItemInfoModalByKey(event,'${itemKey}')">Pour·IQ™ +1</span>`;
   }
-  return '<span class="par-chip par-chip-ok">Pour·IQ™ ✓</span>';
+  return `<span class="par-chip par-chip-ok" onclick="openItemInfoModalByKey(event,'${itemKey}')">Pour·IQ™ ✓</span>`;
 }
 
 function render(){
@@ -5808,6 +5809,174 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     <button onclick="exitFocusMode()" style="display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;background:rgba(56,189,248,.1);color:#38bdf8;border:0.5px solid rgba(56,189,248,.3);cursor:pointer"><i class="ti ti-minimize" aria-hidden="true" style="font-size:13px"></i> Exit focus</button>
   </div>
   <div id="focusModeContent" style="padding:16px 20px"></div>
+</div>
+
+<script>
+function openItemInfoModalByKey(event, itemKey) {
+  event.stopPropagation();
+  const decoded = decodeURIComponent(itemKey);
+  const parts = decoded.split('||');
+  const itemName = parts[0];
+  const idx = (state.master || []).findIndex(function(r) { return r.item === itemName; });
+  if (idx >= 0) openItemInfoModal(idx);
+}
+window.openItemInfoModalByKey = openItemInfoModalByKey;
+
+async function openItemInfoModal(idx) {
+  var r = state.master[idx];
+  if (!r) return;
+  var modal = document.getElementById('itemInfoModalBg');
+  var title = document.getElementById('itemInfoModalTitle');
+  var body = document.getElementById('itemInfoModalBody');
+  if (!modal || !title || !body) return;
+  title.textContent = r.item;
+  body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--sub)">Loading...</div>';
+  modal.classList.remove('hidden');
+
+  var parKey = r.item + '||' + (r.code || '');
+  var parData = window.parAdjustments ? window.parAdjustments.get(parKey) : null;
+  var avgUsed = parData && parData.avgUsed != null ? parData.avgUsed : null;
+  var optimal = parData && parData.suggestedOptimal != null ? parData.suggestedOptimal : null;
+  var adjustment = parData ? (parData.adjustment || 0) : 0;
+  var rawStatus = parData ? parData.status : null;
+  var status = rawStatus === 'active' ? (adjustment < 0 ? 'over' : adjustment > 0 ? 'under' : 'on') : (rawStatus || 'observing');
+  var trendDelta = parData && parData.trendDelta != null ? parData.trendDelta : null;
+  var normalWeeks = parData ? (parData.normalWeeks || 0) : 0;
+  var statusColor = status === 'over' ? '#ef4444' : status === 'under' ? '#f59e0b' : status === 'on' ? '#22c55e' : 'var(--sub)';
+  var statusLabel = status === 'over' ? 'Over par' : status === 'under' ? 'Under par' : status === 'on' ? 'On par' : 'Observing';
+  var ratio = parseNum(r.suggested) > 0 ? parseNum(r.onHand) / parseNum(r.suggested) : null;
+  var stockPct = ratio !== null ? Math.round(ratio * 100) : null;
+  var stockColor = ratio !== null ? (ratio <= 0.25 ? '#ef4444' : ratio <= 0.60 ? '#f59e0b' : '#22c55e') : 'var(--sub)';
+  var stockBg = ratio !== null ? (ratio <= 0.25 ? 'rgba(239,68,68,.15)' : ratio <= 0.60 ? 'rgba(245,158,11,.15)' : 'rgba(34,197,94,.15)') : 'rgba(255,255,255,.08)';
+  var daysRemaining = avgUsed > 0 ? Math.round(parseNum(r.onHand) / avgUsed * 7) : null;
+  var breakDate = daysRemaining !== null ? new Date(Date.now() + daysRemaining * 86400000).toLocaleDateString('en-US', {month:'short', day:'numeric'}) : null;
+
+  var snapshots = [], orderHistory = [];
+  try {
+    var cfg = window.BARSTOCK_CONFIG || {};
+    var url = cfg.SUPABASE_URL, key = cfg.SUPABASE_KEY;
+    var locRes = await fetch(url + '/rest/v1/locations?name=eq.' + encodeURIComponent(cfg.LOCATION_NAME) + '&select=id', { headers: { apikey: key, Authorization: 'Bearer ' + key } });
+    var locData = await locRes.json();
+    var locationId = locData[0] && locData[0].id;
+    if (locationId) {
+      var snapRes = await fetch(url + '/rest/v1/inventory_snapshots?location_id=eq.' + locationId + '&item_name=eq.' + encodeURIComponent(r.item) + '&order=week_start.desc&limit=12&select=week_start,used,ordered,on_hand_start,is_event_week', { headers: { apikey: key, Authorization: 'Bearer ' + key } });
+      snapshots = await snapRes.json();
+      var ordRes = await fetch(url + '/rest/v1/vendor_order_items?item_name=eq.' + encodeURIComponent(r.item) + '&order=created_at.desc&limit=10&select=quantity,unit_price,line_total', { headers: { apikey: key, Authorization: 'Bearer ' + key } });
+      orderHistory = await ordRes.json();
+    }
+  } catch(e) {}
+
+  var totalOrdered = orderHistory.reduce(function(s,o){ return s + (Number(o.quantity)||0); }, 0);
+  var avgOrdered = orderHistory.length ? (totalOrdered / orderHistory.length).toFixed(1) : null;
+  var totalSpent = orderHistory.reduce(function(s,o){ return s + (Number(o.line_total)||0); }, 0);
+  var avgWeeklySpend = normalWeeks > 0 && totalSpent > 0 ? (totalSpent / normalWeeks).toFixed(2) : null;
+  var usedValues = snapshots.filter(function(s){ return s.used != null; }).map(function(s){ return Number(s.used); });
+  var totalUsed = usedValues.reduce(function(a,b){ return a+b; }, 0);
+  var overUnder = totalOrdered - totalUsed;
+  var trendStr = trendDelta !== null ? ((trendDelta >= 0 ? '\u2191 +' : '\u2193 ') + trendDelta) : '\u2014';
+  var adjStr = adjustment !== 0 ? (adjustment > 0 ? '+' + adjustment : String(adjustment)) : '\u2014';
+  var trendCol = trendDelta !== null ? (trendDelta >= 0 ? '#22c55e' : '#ef4444') : 'var(--sub)';
+  var adjCol = adjustment !== 0 ? '#f59e0b' : 'var(--sub)';
+
+  var snapshotRows = snapshots.length ? snapshots.map(function(s) {
+    return '<tr><td style="padding:6px 8px;font-size:12px">' + s.week_start + '</td><td style="padding:6px 8px;font-size:12px;text-align:center">' + (s.on_hand_start != null ? s.on_hand_start : '\u2014') + '</td><td style="padding:6px 8px;font-size:12px;text-align:center">' + (s.ordered != null ? s.ordered : '\u2014') + '</td><td style="padding:6px 8px;font-size:12px;text-align:center">' + (s.used != null ? s.used : '\u2014') + '</td><td style="padding:6px 8px;font-size:12px;text-align:center">' + (s.is_event_week ? '\u26a1' : '') + '</td></tr>';
+  }).join('') : '<tr><td colspan="5" style="padding:12px;text-align:center;color:var(--sub);font-size:12px">No history</td></tr>';
+
+  var ms = 'background:var(--muted);border-radius:10px;padding:10px';
+  var ls = 'font-size:10px;color:var(--sub);margin-bottom:4px';
+  var vs = 'font-size:13px;font-weight:700';
+  var bs = 'font-size:18px;font-weight:800';
+
+  body.innerHTML =
+    '<div id="itemAICard" style="background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.2);border-radius:12px;padding:14px;margin-bottom:16px">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><i class="ti ti-brain" style="font-size:16px;color:#38bdf8"></i><span style="font-size:12px;font-weight:700;color:#38bdf8;letter-spacing:.4px">AI ANALYSIS</span></div>' +
+      '<div id="itemAnalysisText" style="font-size:13px;color:var(--sub);line-height:1.6">Analyzing...</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">' +
+      '<div style="' + ms + '"><div style="' + ls + '">VENDOR</div><div style="' + vs + '">' + escapeHtml(r.vendor) + '</div></div>' +
+      '<div style="' + ms + '"><div style="' + ls + '">CODE</div><div style="' + vs + '">' + escapeHtml(r.code || '\u2014') + '</div></div>' +
+      '<div style="' + ms + '"><div style="' + ls + '">CATEGORY</div><div style="' + vs + '">' + escapeHtml(r.category || 'No category') + '</div></div>' +
+      '<div style="' + ms + '"><div style="' + ls + '">UNIT PRICE</div><div style="' + vs + '">' + fmtMoney(r.value) + '</div></div>' +
+    '</div>' +
+    '<div style="font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.5px;margin-bottom:8px">STOCK</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:' + (daysRemaining !== null ? '8' : '16') + 'px">' +
+      '<div style="' + ms + ';text-align:center"><div style="' + ls + '">ON HAND</div><div style="' + bs + '">' + fmt(r.onHand) + '</div></div>' +
+      '<div style="' + ms + ';text-align:center"><div style="' + ls + '">SUGGESTED</div><div style="' + bs + '">' + fmt(r.suggested) + '</div></div>' +
+      '<div style="' + ms + ';text-align:center"><div style="' + ls + '">TO ORDER</div><div style="' + bs + '">' + fmt(r.toOrder) + '</div></div>' +
+      '<div style="background:' + stockBg + ';border-radius:10px;padding:10px;text-align:center;border:1px solid ' + stockColor + '"><div style="' + ls + '">IN STOCK</div><div style="' + bs + ';color:' + stockColor + '">' + (stockPct !== null ? stockPct + '%' : '\u2014') + '</div></div>' +
+    '</div>' +
+    (daysRemaining !== null ? '<div style="' + ms + ';margin-bottom:16px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:var(--sub)">Estimated stockout</span><span style="font-size:13px;font-weight:700;color:' + (daysRemaining <= 7 ? '#ef4444' : daysRemaining <= 14 ? '#f59e0b' : '#22c55e') + '">' + daysRemaining + ' days (~' + breakDate + ')</span></div>' : '') +
+    '<div style="font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.5px;margin-bottom:8px">POUR-IQ</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">' +
+      '<div style="' + ms + ';text-align:center"><div style="' + ls + '">AVG/WK</div><div style="' + bs + ';color:#38bdf8">' + (avgUsed !== null ? avgUsed : '\u2014') + '</div></div>' +
+      '<div style="' + ms + ';text-align:center"><div style="' + ls + '">OPTIMAL PAR</div><div style="' + bs + ';color:#22c55e">' + (optimal !== null ? optimal : '\u2014') + '</div></div>' +
+      '<div style="' + ms + ';text-align:center"><div style="' + ls + '">DATA</div><div style="' + bs + '">' + (normalWeeks || '\u2014') + '</div></div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">' +
+      '<div style="' + ms + ';text-align:center"><div style="' + ls + '">STATUS</div><div style="font-size:14px;font-weight:800;color:' + statusColor + '">' + statusLabel + '</div></div>' +
+      '<div style="' + ms + ';text-align:center"><div style="' + ls + '">TREND</div><div style="font-size:14px;font-weight:800;color:' + trendCol + '">' + trendStr + '</div></div>' +
+      '<div style="' + ms + ';text-align:center"><div style="' + ls + '">ADJUSTMENT</div><div style="font-size:14px;font-weight:800;color:' + adjCol + '">' + adjStr + '</div></div>' +
+    '</div>' +
+    '<div style="font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.5px;margin-bottom:8px">ORDER HISTORY</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:' + (avgWeeklySpend ? '8' : '16') + 'px">' +
+      '<div style="' + ms + ';text-align:center"><div style="' + ls + '">TOTAL ORDERED</div><div style="' + bs + '">' + totalOrdered + ' btl</div></div>' +
+      '<div style="' + ms + ';text-align:center"><div style="' + ls + '">AVG PER ORDER</div><div style="' + bs + '">' + (avgOrdered || '\u2014') + '</div></div>' +
+      '<div style="' + ms + ';text-align:center"><div style="' + ls + '">OVER/UNDER</div><div style="font-size:14px;font-weight:800;color:' + (overUnder > 0 ? '#f59e0b' : overUnder < 0 ? '#ef4444' : '#22c55e') + '">' + (overUnder > 0 ? '+' : '') + overUnder.toFixed(1) + ' btl</div></div>' +
+    '</div>' +
+    (avgWeeklySpend ? '<div style="' + ms + ';margin-bottom:16px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:var(--sub)">Avg weekly spend</span><span style="font-size:13px;font-weight:700">$' + avgWeeklySpend + '</span></div>' : '') +
+    '<div style="font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.5px;margin-bottom:8px">WEEKLY HISTORY</div>' +
+    '<div style="border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.08)">' +
+      '<table style="width:100%;border-collapse:collapse">' +
+        '<thead><tr style="background:rgba(255,255,255,.04)">' +
+          '<th style="padding:6px 8px;font-size:11px;font-weight:700;color:var(--sub);text-align:left">WEEK</th>' +
+          '<th style="padding:6px 8px;font-size:11px;font-weight:700;color:var(--sub);text-align:center">ON HAND</th>' +
+          '<th style="padding:6px 8px;font-size:11px;font-weight:700;color:var(--sub);text-align:center">ORDERED</th>' +
+          '<th style="padding:6px 8px;font-size:11px;font-weight:700;color:var(--sub);text-align:center">USED</th>' +
+          '<th style="padding:6px 8px;font-size:11px;font-weight:700;color:var(--sub);text-align:center">EVENT</th>' +
+        '</tr></thead>' +
+        '<tbody>' + snapshotRows + '</tbody>' +
+      '</table>' +
+    '</div>';
+
+  var days = daysRemaining;
+  var stockWindow = '';
+  if (days != null) {
+    if (days < 7) stockWindow = 'CRITICAL: less than 7 days of stock remaining.';
+    else if (days <= 10) stockWindow = 'OPTIMAL: 7-10 days of stock (ideal range).';
+    else if (days <= 14) stockWindow = 'EXCESS: 10-14 days of stock (slightly over).';
+    else stockWindow = 'OVERSTOCK: more than 14 days of stock remaining.';
+  }
+
+  fetch('/api/weekly-briefing', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      mode: 'item', item: r.item, vendor: r.vendor, unitPrice: r.value,
+      onHand: r.onHand, suggested: r.suggested, toOrder: r.toOrder,
+      stockPct: stockPct, daysRemaining: daysRemaining, avgUsed: avgUsed,
+      optimal: optimal, statusLabel: statusLabel, trendStr: trendStr,
+      normalWeeks: normalWeeks, orderCount: orderHistory.length,
+      totalOrdered: totalOrdered, avgOrdered: avgOrdered, overUnder: overUnder
+    })
+  }).then(function(res){ return res.json(); }).then(function(data) {
+    var el = document.getElementById('itemAnalysisText');
+    if (el && data.ok && data.text) el.textContent = data.text;
+    else if (el) el.textContent = 'Analysis unavailable.';
+  }).catch(function() {
+    var el = document.getElementById('itemAnalysisText');
+    if (el) el.textContent = 'Analysis unavailable.';
+  });
+}
+window.openItemInfoModal = openItemInfoModal;
+</script>
+<div id="itemInfoModalBg" class="modalbg hidden" onclick="if(event.target===this)document.getElementById('itemInfoModalBg').classList.add('hidden')">
+  <div class="modal" style="width:min(560px,96vw);max-height:85vh;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 id="itemInfoModalTitle" style="margin:0;font-size:16px"></h3>
+      <button onclick="document.getElementById('itemInfoModalBg').classList.add('hidden')" style="background:none;border:none;color:var(--sub);font-size:20px;cursor:pointer">&times;</button>
+    </div>
+    <div id="itemInfoModalBody" style="overflow-y:auto;flex:1"></div>
+  </div>
 </div>
 </body>
 </html>
