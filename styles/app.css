@@ -3135,3 +3135,7 @@ input[placeholder="Filter current order"] {
 #vspPanelHeader.item-selected {
   grid-template-columns: 1fr !important;
 }
+
+#vendorExportArea td:nth-child(3) {
+  text-align: left !important;
+}
