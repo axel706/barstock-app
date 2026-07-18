@@ -95,6 +95,17 @@
       )).join('');
       select.value = activeName;
 
+      // Fix double-click issue — trigger mousedown on select when chip is clicked
+      if (locChip) {
+        locChip.onclick = function(e) {
+          e.stopPropagation();
+          var evt = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+          select.dispatchEvent(evt);
+          select.focus();
+          select.click();
+        };
+      }
+
       select.onchange = () => {
         setActiveLocationName(select.value);
         window.location.reload();
