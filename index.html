@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260719-125649</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260719-130226</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2501,9 +2501,9 @@ function renderVendorPanel() {
 
   const header = document.getElementById('vspPanelHeader');
   if (activeVendorTab === 'ALL') {
-    if (header) header.innerHTML = '<i class="ti ti-shopping-cart" style="font-size:22px;color:#38bdf8" aria-hidden="true"></i><span class="vsp-panel-title">Order summary</span>';
+    if (header) header.innerHTML = '<i class="ti ti-shopping-cart" style="font-size:22px;color:#38bdf8" aria-hidden="true"></i><span class="vsp-panel-title">Order summary</span>' + '<button id="orderAnalysisBtn" onclick="openOrderAnalysisModal()" title="AI order analysis" style="background:none;border:1px solid rgba(255,255,255,.12);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-left:auto;flex-shrink:0"><i class=\"ti ti-brain\" style=\"font-size:14px;color:#f59e0b\" aria-hidden=\"true\"></i></button>';
   } else {
-    if (header) header.innerHTML = '<i class="ti ti-shopping-cart" style="font-size:18px;color:#38bdf8" aria-hidden="true"></i>' + badge(activeVendorTab);
+    if (header) header.innerHTML = '<i class="ti ti-shopping-cart" style="font-size:18px;color:#38bdf8" aria-hidden="true"></i>' + badge(activeVendorTab) + '<button id="orderAnalysisBtn" onclick="openOrderAnalysisModal()" title="AI order analysis" style="background:none;border:1px solid rgba(255,255,255,.12);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-left:auto;flex-shrink:0"><i class=\"ti ti-brain\" style=\"font-size:14px;color:#f59e0b\" aria-hidden=\"true\"></i></button>';
   }
 
   if (isPending || placedOrder) {
