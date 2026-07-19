@@ -2917,7 +2917,7 @@ body.light .vsp-last-order {
 
 #vspPanelHeader {
   display: grid !important;
-  grid-template-columns: 28px 1fr !important;
+  grid-template-columns: 28px 1fr 28px !important;
   align-items: center !important;
   justify-content: unset !important;
 }
