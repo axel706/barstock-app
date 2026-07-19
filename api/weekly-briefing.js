@@ -102,15 +102,12 @@ module.exports = async function handler(req, res) {
     if (body.mode === 'order-analysis') {
       if (!body.orderPrompt) return res.status(400).json({ ok: false, error: 'Missing orderPrompt' });
 
-      // Reframe the prompt to be conservative and avoid repeating individual suggestions
-      const prompt = body.orderPrompt + '\n\nCRITICAL INSTRUCTIONS:\n' +
-        '- The manager has already seen individual Pour-IQ suggestions and CHOSE to ignore them — do NOT repeat those same suggestions\n' +
-        '- Your job is to find SOFTER, more conservative middle-ground adjustments (never more than -1 from the current order quantity per item)\n' +
-        '- Think of it as: if they ordered 10 and Pour-IQ said 6, you suggest 9 — not 6\n' +
-        '- Focus on the ORDER AS A WHOLE, not item by item summaries\n' +
-        '- Always end with: "Adjusting these items brings your order from $[original] to $[adjusted], a saving of $[amount] ([%]%)"\n' +
-        '- If no conservative adjustments make sense, say the order looks balanced and give a one-line overall assessment\n' +
-        '- Max 180 words, plain English, professional tone';
+      const prompt = body.orderPrompt + '\n\nHOW TO WRITE THIS:\n' +
+        'Write like an experienced bar manager talking to a colleague — conversational, direct, human. No markdown, no asterisks, no bullet points, no numbered lists, no headers. Just plain flowing sentences.\n\n' +
+        'The manager already knows the individual product suggestions and decided to keep the order as-is. Your job is to look at the order as a whole and suggest ONE conservative nudge if it makes sense — something softer than what Pour-IQ already said. Never suggest more than -1 unit per item from what they are currently ordering.\n\n' +
+        'Structure: 2-3 sentences max describing the overall order picture, then if adjustments make sense mention them naturally in the flow of the text (not as a list), then close with the total savings in dollar terms and percentage. If the order looks fine, just say so briefly.\n\n' +
+        'Example tone: "Overall this is a solid order, though Kentucky Tavern and White Haven are both sitting high given their recent trends — trimming one unit each would drop the total from $467 to $453, saving you about $14 (3%) without risking any stockouts."\n\n' +
+        'Max 120 words. No formatting whatsoever.';
 
       const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
