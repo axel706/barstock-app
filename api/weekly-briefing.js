@@ -100,8 +100,17 @@ module.exports = async function handler(req, res) {
 
     // Item analysis mode
     if (body.mode === 'order-analysis') {
-      const prompt = body.orderPrompt;
-      if (!prompt) return res.status(400).json({ ok: false, error: 'Missing orderPrompt' });
+      if (!body.orderPrompt) return res.status(400).json({ ok: false, error: 'Missing orderPrompt' });
+
+      // Reframe the prompt to be conservative and avoid repeating individual suggestions
+      const prompt = body.orderPrompt + '\n\nCRITICAL INSTRUCTIONS:\n' +
+        '- The manager has already seen individual Pour-IQ suggestions and CHOSE to ignore them — do NOT repeat those same suggestions\n' +
+        '- Your job is to find SOFTER, more conservative middle-ground adjustments (never more than -1 from the current order quantity per item)\n' +
+        '- Think of it as: if they ordered 10 and Pour-IQ said 6, you suggest 9 — not 6\n' +
+        '- Focus on the ORDER AS A WHOLE, not item by item summaries\n' +
+        '- Always end with: "Adjusting these items brings your order from $[original] to $[adjusted], a saving of $[amount] ([%]%)"\n' +
+        '- If no conservative adjustments make sense, say the order looks balanced and give a one-line overall assessment\n' +
+        '- Max 180 words, plain English, professional tone';
 
       const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
