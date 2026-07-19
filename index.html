@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260718-122631</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260719-125649</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -296,7 +296,9 @@
         </div>
         <div class="vsp-panel" id="vspPanel">
           <div class="vsp-panel-header" id="vspPanelHeader">
+            <i class="ti ti-shopping-cart" style="font-size:22px;color:#38bdf8" aria-hidden="true"></i>
             <span class="vsp-panel-title" id="vspPanelTitle">Order summary</span>
+            <button id="orderAnalysisBtn" onclick="openOrderAnalysisModal()" title="AI order analysis" style="background:none;border:1px solid rgba(255,255,255,.12);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-left:auto;flex-shrink:0;transition:border-color .15s"><i class="ti ti-brain" style="font-size:14px;color:#f59e0b" aria-hidden="true"></i></button>
           </div>
           <div class="vsp-panel-body" id="vspPanelBody"></div>
         </div>
@@ -5976,6 +5978,103 @@ window.openItemInfoModal = openItemInfoModal;
       <button onclick="document.getElementById('itemInfoModalBg').classList.add('hidden')" style="background:none;border:none;color:var(--sub);font-size:20px;cursor:pointer">&times;</button>
     </div>
     <div id="itemInfoModalBody" style="overflow-y:auto;flex:1"></div>
+  </div>
+</div>
+<script>
+async function openOrderAnalysisModal() {
+  var modal = document.getElementById('orderAnalysisModalBg');
+  var body = document.getElementById('orderAnalysisBody');
+  if (!modal || !body) return;
+  modal.classList.remove('hidden');
+  body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--sub)"><i class="ti ti-brain" style="font-size:32px;color:#f59e0b;display:block;margin-bottom:12px;animation:spin .8s linear infinite"></i>Analyzing your order...</div>';
+
+  var rows = typeof getOrderRowsForVendor === 'function' ? getOrderRowsForVendor(activeVendorTab === 'ALL' ? null : activeVendorTab) : [];
+  if (!rows || !rows.length) {
+    body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--sub)">No items in current order.</div>';
+    return;
+  }
+
+  var items = rows.map(function(r) {
+    var parKey = r.item + '||' + (r.code || '');
+    var par = window.parAdjustments ? window.parAdjustments.get(parKey) : null;
+    var avgUsed = par && par.avgUsed != null ? par.avgUsed : null;
+    var optimal = par && par.suggestedOptimal != null ? par.suggestedOptimal : null;
+    var adj = par ? (par.adjustment || 0) : 0;
+    var rawStatus = par ? par.status : null;
+    var status = rawStatus === 'active' ? (adj < 0 ? 'over' : adj > 0 ? 'under' : 'on par') : (rawStatus || 'observing');
+    var trend = par && par.trendDelta != null ? par.trendDelta : null;
+    var qty = r.orderOverride !== '' && r.orderOverride !== null && r.orderOverride !== undefined ? parseNum(r.orderOverride) : r.toOrder;
+    var unitPrice = parseNum(r.value) || 0;
+    var onHand = parseNum(r.onHand) || 0;
+    var daysAfterOrder = avgUsed > 0 ? Math.round((onHand + qty) / avgUsed * 7) : null;
+    return { item: r.item, vendor: r.vendor, qty: qty, unitPrice: unitPrice,
+      lineTotal: qty * unitPrice, onHand: onHand, avgUsed: avgUsed,
+      optimal: optimal, status: status, trend: trend, daysAfterOrder: daysAfterOrder };
+  });
+
+  var totalCost = items.reduce(function(s,i){ return s + i.lineTotal; }, 0);
+  var vendorLabel = activeVendorTab === 'ALL' ? 'all vendors' : activeVendorTab;
+
+  var prompt = 'You are a purchasing advisor for a bar with weekly order cycles. The optimal stock window is 7-10 days post-delivery.\n\n' +
+    'Analyze this order for ' + vendorLabel + ' (total: $' + totalCost.toFixed(2) + ', ' + items.length + ' items) and suggest quantity adjustments that reduce cost while keeping all products above 7 days of stock.\n\n' +
+    'Rules:\n' +
+    '- Identify ALL items worth adjusting, not just 2-3\n' +
+    '- Prioritize by trend: declining trend = reduce more aggressively\n' +
+    '- Rising trend = do not reduce even if overstocked\n' +
+    '- Only suggest reductions that keep days-of-stock >= 7 post-delivery\n' +
+    '- For each adjustment: state new quantity, dollar impact, and reason in one line\n' +
+    '- End with total net savings across all adjustments\n' +
+    '- Skip items that are already well-balanced\n' +
+    '- Direct professional tone, no fluff, max 200 words\n\n' +
+    'ORDER ITEMS:\n' +
+    items.map(function(i) {
+      return '- ' + i.item +
+        ' | Ordering: ' + i.qty + ' @ $' + i.unitPrice.toFixed(2) + ' = $' + i.lineTotal.toFixed(2) +
+        ' | On hand: ' + i.onHand +
+        ' | Avg/wk: ' + (i.avgUsed !== null ? i.avgUsed : 'N/A') +
+        ' | Optimal: ' + (i.optimal !== null ? i.optimal : 'N/A') +
+        ' | Status: ' + i.status +
+        ' | Trend: ' + (i.trend !== null ? (i.trend >= 0 ? '+' : '') + i.trend : 'N/A') +
+        ' | Days after delivery: ' + (i.daysAfterOrder !== null ? i.daysAfterOrder : 'N/A');
+    }).join('\n');
+
+  try {
+    var res = await fetch('/api/weekly-briefing', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'order-analysis', orderPrompt: prompt })
+    });
+    var data = await res.json();
+    if (data.ok && data.text) {
+      body.innerHTML =
+        '<div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:16px;margin-bottom:16px">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">' +
+            '<i class="ti ti-brain" style="font-size:15px;color:#f59e0b"></i>' +
+            '<span style="font-size:11px;font-weight:700;color:#f59e0b;letter-spacing:.4px">ORDER ANALYSIS - ' + vendorLabel.toUpperCase() + '</span>' +
+          '</div>' +
+          '<div style="font-size:13px;color:var(--sub);line-height:1.75;white-space:pre-line">' + data.text + '</div>' +
+        '</div>' +
+        '<div style="font-size:12px;color:var(--sub);text-align:center">Current total: <strong style="color:var(--text)">$' + totalCost.toFixed(2) + '</strong> - ' + items.length + ' items</div>';
+    } else {
+      body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--sub)">Analysis unavailable.</div>';
+    }
+  } catch(e) {
+    body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--sub)">Analysis unavailable.</div>';
+  }
+}
+window.openOrderAnalysisModal = openOrderAnalysisModal;
+</script>
+
+<div id="orderAnalysisModalBg" class="modalbg hidden" onclick="if(event.target===this)document.getElementById('orderAnalysisModalBg').classList.add('hidden')">
+  <div class="modal" style="width:min(580px,96vw);max-height:85vh;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <i class="ti ti-brain" style="font-size:18px;color:#f59e0b"></i>
+        <h3 style="margin:0;font-size:16px">Order Analysis</h3>
+      </div>
+      <button onclick="document.getElementById('orderAnalysisModalBg').classList.add('hidden')" style="background:none;border:none;color:var(--sub);font-size:20px;cursor:pointer">&times;</button>
+    </div>
+    <div id="orderAnalysisBody" style="overflow-y:auto;flex:1"></div>
   </div>
 </div>
 </body>

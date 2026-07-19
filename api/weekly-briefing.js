@@ -99,6 +99,21 @@ module.exports = async function handler(req, res) {
     const body = req.body || {};
 
     // Item analysis mode
+    if (body.mode === 'order-analysis') {
+      const prompt = body.orderPrompt;
+      if (!prompt) return res.status(400).json({ ok: false, error: 'Missing orderPrompt' });
+
+      const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 400, messages: [{ role: 'user', content: prompt }] })
+      });
+      if (!anthropicRes.ok) return res.status(502).json({ ok: false, error: 'Anthropic API error' });
+      const data = await anthropicRes.json();
+      const text = (data.content || []).map(b => b.text || '').join('');
+      return res.status(200).json({ ok: true, text });
+    }
+
     if (body.mode === 'item') {
       const d = body;
 
