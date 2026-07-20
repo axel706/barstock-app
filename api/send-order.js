@@ -37,21 +37,29 @@ module.exports = async function handler(req, res) {
 <div style="max-width:620px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06)">
 
   <!-- HEADER -->
-  <div style="background:#0b1220;padding:28px 36px;display:flex;align-items:center;gap:0">
-    <span style="font-size:22px;font-weight:800;letter-spacing:-0.03em;color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">BarStock</span><div style="width:7px;height:7px;border-radius:50%;background:#38bdf8;display:inline-block;margin:0 1px 4px;flex-shrink:0"></div><span style="font-size:9px;font-weight:700;color:#475569;letter-spacing:0.1em;text-transform:uppercase;margin-left:5px;align-self:center">PRO</span>
-    <span style="margin-left:auto;font-size:13px;color:#475569;font-weight:500">${escapeHtml(loc)}</span>
+  <div style="background:#0b1220;padding:24px 36px">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="vertical-align:middle">
+          <span style="font-size:22px;font-weight:800;letter-spacing:-0.03em;color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;vertical-align:middle">BarStock</span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#38bdf8;margin:0 1px 3px;vertical-align:middle"></span><span style="font-size:9px;font-weight:700;color:#475569;letter-spacing:0.1em;text-transform:uppercase;margin-left:4px;vertical-align:middle">PRO</span>
+        </td>
+        <td style="text-align:right;vertical-align:middle">
+          <span style="font-size:13px;color:#475569;font-weight:500">${escapeHtml(loc)}</span>
+        </td>
+      </tr>
+    </table>
   </div>
 
   <!-- BODY -->
   <div style="padding:36px">
     <p style="margin:0 0 20px;font-size:15px;color:#0f172a">Hi there,</p>
-    <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.7">Please find attached the purchase order from <strong style="color:#0f172a">${escapeHtml(loc)}</strong> for <strong style="color:#0f172a">${escapeHtml(vendor)}</strong>. The full order details are in the PDF attached to this email.</p>
-    <p style="margin:0 0 28px;font-size:15px;color:#374151;line-height:1.7">Please confirm receipt and let us know the expected delivery date at your earliest convenience.</p>
+    <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.75">Hope you're having a great day. Attached you'll find our purchase order for <strong style="color:#0f172a">${escapeHtml(vendor)}</strong> — please take a look when you get a chance and let us know the expected delivery date.</p>
+    <p style="margin:0 0 28px;font-size:15px;color:#374151;line-height:1.75">If anything looks off or you have any questions, feel free to reply directly to this email and we'll sort it out.</p>
 
     <!-- DIVIDER -->
     <hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 24px">
 
-    <p style="margin:0;font-size:15px;color:#0f172a">Thank you,<br><strong>${escapeHtml(senderName || loc)}</strong></p>
+    <p style="margin:0;font-size:15px;color:#0f172a">Thanks,<br><strong>${escapeHtml(senderName || loc)}</strong></p>
   </div>
 
   <!-- FOOTER -->
