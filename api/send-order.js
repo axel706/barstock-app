@@ -33,16 +33,34 @@ module.exports = async function handler(req, res) {
 
     const escapeHtml = s => String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-    const htmlBody = `<!DOCTYPE html><html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0f172a;line-height:1.6;max-width:680px;margin:0 auto;padding:20px">
-<p>Hello there,</p>
-<p>This email confirms a new order request from <strong>${escapeHtml(loc)}</strong>.<br>
-The details for <strong>${escapeHtml(vendor)}</strong> are summarized below and attached as a PDF document.</p>
-<p>Kindly confirm receipt and expected delivery date at your earliest convenience.</p>
-<p>If you have any questions or need clarification about this order, please reply directly to this email.</p>
-<p>Thank you,<br>
-${escapeHtml(senderName || loc + ' Team')}</p>
-<hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0">
-<p style="color:#94a3b8;font-size:12px">Sent via BarStock Pro<br>Automated ordering system</p>
+    const htmlBody = `<!DOCTYPE html><html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0f172a;line-height:1.6;margin:0;padding:0;background:#f8fafc">
+<div style="max-width:620px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06)">
+
+  <!-- HEADER -->
+  <div style="background:#0b1220;padding:28px 36px;display:flex;align-items:center;gap:0">
+    <span style="font-size:22px;font-weight:800;letter-spacing:-0.03em;color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">BarStock</span><div style="width:7px;height:7px;border-radius:50%;background:#38bdf8;display:inline-block;margin:0 1px 4px;flex-shrink:0"></div><span style="font-size:9px;font-weight:700;color:#475569;letter-spacing:0.1em;text-transform:uppercase;margin-left:5px;align-self:center">PRO</span>
+    <span style="margin-left:auto;font-size:13px;color:#475569;font-weight:500">${escapeHtml(loc)}</span>
+  </div>
+
+  <!-- BODY -->
+  <div style="padding:36px">
+    <p style="margin:0 0 20px;font-size:15px;color:#0f172a">Hi there,</p>
+    <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.7">Please find attached the purchase order from <strong style="color:#0f172a">${escapeHtml(loc)}</strong> for <strong style="color:#0f172a">${escapeHtml(vendor)}</strong>. The full order details are in the PDF attached to this email.</p>
+    <p style="margin:0 0 28px;font-size:15px;color:#374151;line-height:1.7">Please confirm receipt and let us know the expected delivery date at your earliest convenience.</p>
+
+    <!-- DIVIDER -->
+    <hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 24px">
+
+    <p style="margin:0;font-size:15px;color:#0f172a">Thank you,<br><strong>${escapeHtml(senderName || loc)}</strong></p>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:16px 36px;display:flex;align-items:center;justify-content:space-between">
+    <span style="font-size:11px;color:#94a3b8">Sent via BarStock Pro · Automated ordering system</span>
+    <span style="font-size:11px;color:#94a3b8">${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>
+  </div>
+
+</div>
 </body></html>`;
 
     const payload = {
