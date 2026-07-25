@@ -61,9 +61,10 @@ module.exports = async function handler(req, res) {
   </div>
 
   <!-- FOOTER -->
-  <div style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:16px 36px;display:flex;align-items:center;justify-content:space-between">
-    <span style="font-size:11px;color:#94a3b8">Sent via BarStock Pro · Automated ordering system</span>
-    <span style="font-size:11px;color:#94a3b8">${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>
+  <div style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 36px;text-align:center">
+    <p style="margin:0 0 12px;font-size:11px;color:#94a3b8">Sent via BarStock Pro · Automated ordering system</p>
+    <p style="margin:0 0 12px;font-size:12px;color:#64748b">Get control of your bar's inventory.</p>
+    <a href="https://barstockpro.com" style="display:inline-block;background:#0b1220;color:#38bdf8;font-size:12px;font-weight:700;padding:8px 20px;border-radius:999px;text-decoration:none;letter-spacing:0.03em">barstockpro.com</a>
   </div>
 
 </div>
