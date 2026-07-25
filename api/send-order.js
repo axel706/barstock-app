@@ -40,7 +40,7 @@ module.exports = async function handler(req, res) {
   <div style="background:#0b1220;padding:24px 36px">
     <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
       <td style="vertical-align:baseline">
-        <span style="font-size:22px;font-weight:800;letter-spacing:-0.03em;color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">BarStock<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#38bdf8;margin:0 2px 2px"></span><span style="font-size:9px;font-weight:700;color:#475569;letter-spacing:0.1em;text-transform:uppercase;margin-left:3px">PRO</span></span>
+        <span style="font-size:22px;font-weight:800;letter-spacing:-0.03em;color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">BarStock<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#38bdf8;margin:0 2px;vertical-align:middle"></span><span style="font-size:9px;font-weight:700;color:#475569;letter-spacing:0.1em;text-transform:uppercase;margin-left:3px;vertical-align:middle">PRO</span></span>
       </td>
       <td style="text-align:right;vertical-align:middle">
         <span style="font-size:13px;color:#475569;font-weight:500">${escapeHtml(loc)}</span>
