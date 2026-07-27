@@ -95,7 +95,8 @@ module.exports = async function handler(req, res) {
 
   <!-- FOOTER -->
   <div style="background:#f8fafc;border-top:3px solid #0b1220;padding:20px 36px;text-align:center">
-    <p style="margin:0 0 14px;font-size:12px;color:#64748b">Sent via BarStock Pro — Theoretical Usage Reporting.</p>
+    <p style="margin:0 0 12px;font-size:11px;color:#94a3b8">Sent via BarStock Pro · Theoretical Usage Reporting</p>
+    <p style="margin:0 0 14px;font-size:12px;color:#64748b">Get control of your bar's inventory.</p>
     <a href="https://barstockpro.com" style="display:inline-block;background:#0b1220;color:#38bdf8;font-size:12px;font-weight:700;padding:10px 22px;border-radius:999px;text-decoration:none;letter-spacing:0.03em">barstockpro.com</a>
   </div>
 
