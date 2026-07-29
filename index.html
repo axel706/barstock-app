@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260727-163440</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260728-214931</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -149,6 +149,7 @@
       <button class="bs-nav-tab" onclick="bsScrollTo('costReportSection')">Costs</button>
       <button class="bs-nav-tab" onclick="bsScrollTo('theoreticalSection')">Usage</button>
       <button class="bs-nav-tab" onclick="bsScrollTo('pourIqSection')">Pour-IQ</button>
+      <button class="bs-nav-tab" id="bsAdminNavTab" style="display:none;" onclick="bsScrollTo('adminSection')">Admin</button>
     </div>
   </div>
 
@@ -553,6 +554,23 @@
     </div>
     <div class="section-body" id="pourIqSectionBody">
       <div id="pourIqRoot"></div>
+    </div>
+  </div>
+
+  <div class="card section-card" id="adminSection">
+    <div class="section-header-row">
+      <div style="flex:1 1 auto">
+        <div class="sectionhead">
+          <div>
+            <strong><span class="section-title">Admin</span></strong>
+            <div class="small muted">Approve sign up requests and manage locations.</div>
+          </div>
+        </div>
+      </div>
+      <button onclick="toggleFocusMode('adminSection','Admin')" class="section-toggle focus-max-btn" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true" style="font-size:18px"></i></button><button id="adminToggle" class="section-toggle" title="Collapse or expand Admin">&#x2212;</button>
+    </div>
+    <div class="section-body" id="adminSectionBody">
+      <div id="adminRoot"></div>
     </div>
   </div>
 
@@ -4920,8 +4938,11 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
 <div id="authOverlay">
   <div id="authCard">
-    <div id="authBrand">BarStock<span style="color:#38bdf8;">.</span><span style="font-size:14px;font-weight:700;color:#64748b;vertical-align:baseline;margin-left:2px;letter-spacing:0.08em;text-transform:uppercase;">PRO</span></div>
-    <h2>Welcome back</h2>
+    <div id="authCardHeader">
+      <span style="font-size:22px;font-weight:800;color:#fff;">BarStock</span><span id="authBrandDot"></span><span style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:0.1em;text-transform:uppercase;margin-left:3px;">PRO</span>
+    </div>
+    <div id="authCardBody">
+    <h2 id="authTitle">Welcome back</h2>
     <div id="authSub">Access your inventory and ordering workspace.</div>
 
     <label class="auth-label" for="authEmail">Email</label>
@@ -4929,9 +4950,50 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       <input id="authEmail" type="email" placeholder="Enter your email">
     </div>
 
-    <label class="auth-label" for="authPassword">Password</label>
-    <div class="auth-field">
-      <input id="authPassword" type="password" placeholder="Enter your password">
+    <div id="authSignupFields" style="display:none;">
+      <div class="auth-grid-2">
+        <div>
+          <label class="auth-label" for="authFirstName">First name</label>
+          <div class="auth-field">
+            <input id="authFirstName" type="text" placeholder="First name">
+          </div>
+        </div>
+        <div>
+          <label class="auth-label" for="authLastName">Last name</label>
+          <div class="auth-field">
+            <input id="authLastName" type="text" placeholder="Last name">
+          </div>
+        </div>
+        <div>
+          <label class="auth-label" for="authBusinessName">Business name</label>
+          <div class="auth-field">
+            <input id="authBusinessName" type="text" placeholder="Bar or restaurant name">
+          </div>
+        </div>
+        <div>
+          <label class="auth-label" for="authPhone">Phone</label>
+          <div class="auth-field">
+            <input id="authPhone" type="tel" placeholder="Phone number">
+          </div>
+        </div>
+      </div>
+
+      <label class="auth-label" for="authAddress">Address</label>
+      <div class="auth-field">
+        <input id="authAddress" type="text" placeholder="Enter the business address">
+      </div>
+
+      <label class="auth-label" for="authMessage">Message</label>
+      <div class="auth-field">
+        <textarea id="authMessage" rows="2" placeholder="Tell us a bit about your request"></textarea>
+      </div>
+    </div>
+
+    <div id="authPasswordGroup">
+      <label class="auth-label" for="authPassword">Password</label>
+      <div class="auth-field">
+        <input id="authPassword" type="password" placeholder="Enter your password">
+      </div>
     </div>
 
     <div id="authForgot">Forgot password?</div>
@@ -4945,12 +5007,14 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
     <button id="authLoginBtn">Login</button>
 
-    <div id="authFoot">Don’t have an account? <span>Sign up</span></div>
+    <div id="authFoot"><span id="authFootLead">Don’t have an account?</span> <span id="authFootAction">Sign up</span></div>
     <div id="authMsg"></div>
+    </div>
   </div>
 </div>
 
 <script src="src/auth.js"></script>
+<script src="src/admin-panel.js"></script>
 <script>
 (function(){
   // Scroll to section
@@ -4972,6 +5036,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     { id: 'costReportSection', tab: 5 },
     { id: 'theoreticalSection', tab: 6 },
     { id: 'pourIqSection', tab: 7 },
+    { id: 'adminSection', tab: 8 },
   ];
 
   function updateActiveTab() {
@@ -5167,7 +5232,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
   // Update nav tabs to use focus mode
   document.querySelectorAll('.bs-nav-tab').forEach((btn, i) => {
-    const sections = ['inventory','vendor','history','noMatch','costReport','theoretical','pourIq'];
+    const sections = ['inventory','vendor','history','noMatch','costReport','theoretical','pourIq','admin'];
     btn.onclick = () => bsOpenSection(sections[i]);
   });
 

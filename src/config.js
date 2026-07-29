@@ -4,6 +4,8 @@ window.BARSTOCK_CONFIG = window.BARSTOCK_CONFIG || {
 
   ACCOUNT_ID: 'wjm-hospitality',
 
+  ADMIN_EMAIL: 'axeltorressalgado@icloud.com',
+
   LOCATION_NAME: 'The Crown Tavern',
 
   BACKEND_URL: 'https://barstock-app.vercel.app'

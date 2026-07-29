@@ -2,15 +2,15 @@ body.auth-locked{
   overflow:hidden !important;
 }
 
-/* 🔹 Overlay con blur del fondo */
 #authOverlay{
   position:fixed;
   inset:0;
   z-index:999999;
   display:none;
-  align-items:center;
+  align-items:flex-start;
   justify-content:center;
-  padding:28px;
+  padding:40px 28px;
+  overflow-y:auto;
   background:rgba(2,6,23,.34);
   backdrop-filter:blur(26px) saturate(150%) brightness(.82);
   -webkit-backdrop-filter:blur(26px) saturate(150%) brightness(.82);
@@ -20,88 +20,67 @@ body.auth-locked{
   display:flex !important;
 }
 
-/* 🔹 Card glass premium */
+/* Card — light frosted glass matching app cards */
 #authCard{
-  width:min(460px,92vw);
-  padding:42px 38px 34px;
-  border-radius:26px;
-
-  background:
-    linear-gradient(145deg, rgba(255,255,255,.16), rgba(255,255,255,.05)),
-    linear-gradient(180deg, rgba(15,23,42,.70), rgba(2,6,23,.58));
-
-  border:1px solid rgba(255,255,255,.10);
-
-  box-shadow:
-    0 16px 38px rgba(2,6,23,.30),
-    inset 0 1px 0 rgba(255,255,255,.08);
-
-  backdrop-filter:blur(18px) saturate(145%);
-  -webkit-backdrop-filter:blur(18px) saturate(145%);
-
-  position:relative;
+  width:min(480px,92vw);
+  border-radius:20px;
   overflow:hidden;
+  background:rgba(255,255,255,.82);
+  border:1px solid rgba(255,255,255,.55);
+  box-shadow:0 20px 50px rgba(2,6,23,.35);
+  backdrop-filter:blur(28px) saturate(160%);
+  -webkit-backdrop-filter:blur(28px) saturate(160%);
 }
 
-/* glow sutil */
-#authCard::before{
-  content:'';
-  position:absolute;
-  inset:0;
-  border-radius:26px;
-  background:
-    radial-gradient(circle at 22% 0%, rgba(96,165,250,.24), transparent 38%),
-    linear-gradient(120deg, rgba(255,255,255,.16), transparent 45%);
-  opacity:.95;
-  pointer-events:none;
+.auth-grid-2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0 12px;
 }
 
-#authCard > *{
-  position:relative;
-  z-index:1;
+#authCardHeader{
+  background:#0b1220;
+  padding:22px 32px 18px;
+  text-align:center;
 }
 
-/* 🔹 Branding */
-#authBrand{
-  display:inline-flex;
-  align-items:baseline;
-  justify-content:center;
-  width:100%;
-  font-size:34px;
-  font-weight:700;
-  letter-spacing:-.01em;
-  color:#ffffff;
-  margin-bottom:18px;
-  font-family:"Manrope",-apple-system,sans-serif;
+#authBrandDot{
+  display:inline-block;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#38bdf8;
+  margin:0 2px;
+  vertical-align:-1px;
 }
 
-/* 🔹 Title */
+#authCardBody{
+  padding:26px 32px 30px;
+}
+
 #authCard h2{
   text-align:center;
-  font-size:30px;
-  font-weight:900;
-  color:#ffffff;
-  margin-bottom:8px;
+  font-size:19px;
+  font-weight:700;
+  color:#0f172a;
+  margin-bottom:4px;
 }
 
-/* 🔹 Subtitle */
 #authSub{
   text-align:center;
-  color:rgba(248,250,252,.92);
-  font-size:14px;
-  margin-bottom:26px;
+  color:#475569;
+  font-size:13px;
+  margin-bottom:22px;
 }
 
-/* 🔹 Labels */
 .auth-label{
   display:block;
-  font-size:13px;
+  font-size:12px;
   font-weight:700;
-  color:#ffffff;
+  color:#1e293b;
   margin:0 0 6px 2px;
 }
 
-/* 🔹 Inputs */
 .auth-field{
   margin-bottom:16px;
 }
@@ -109,84 +88,104 @@ body.auth-locked{
 .auth-field input,
 .auth-field select{
   width:100%;
-  height:52px;
-  padding:0 16px;
-  border-radius:12px;
+  height:44px;
+  padding:0 14px;
+  border-radius:10px;
 
-  background:rgba(2,6,23,.50);
-  border:1px solid rgba(255,255,255,.26);
+  background:rgba(255,255,255,.6);
+  border:1px solid rgba(15,23,42,.14);
 
-  color:#ffffff;
-  font-size:15px;
-  font-weight:700;
+  color:#0f172a;
+  font-size:14px;
+  font-weight:600;
 
   transition:all .2s ease;
 }
 
-/* placeholder */
-.auth-field input::placeholder{
-  color:rgba(248,250,252,.72);
+.auth-field textarea{
+  width:100%;
+  padding:12px 14px;
+  border-radius:10px;
+
+  background:rgba(255,255,255,.6);
+  border:1px solid rgba(15,23,42,.14);
+
+  color:#0f172a;
+  font-size:14px;
+  font-weight:600;
+  font-family:inherit;
+  resize:vertical;
+
+  transition:all .2s ease;
 }
 
-/* focus */
+.auth-field textarea::placeholder{
+  color:#64748b;
+}
+
+.auth-field textarea:focus{
+  border-color:rgba(14,165,233,.55);
+  box-shadow:0 0 0 3px rgba(56,189,248,.18);
+  background:rgba(255,255,255,.85);
+  outline:none;
+}
+
+.auth-field input::placeholder{
+  color:#64748b;
+}
+
 .auth-field input:focus,
 .auth-field select:focus{
-  border-color:rgba(125,211,252,.85);
-  box-shadow:0 0 0 4px rgba(56,189,248,.18);
-  background:rgba(2,6,23,.68);
+  border-color:rgba(14,165,233,.55);
+  box-shadow:0 0 0 3px rgba(56,189,248,.18);
+  background:rgba(255,255,255,.85);
+  outline:none;
 }
 
-/* 🔹 Forgot password */
 #authForgot{
-  font-size:13px;
-  color:#3b82f6;
+  font-size:12px;
+  color:#0369a1;
+  font-weight:600;
   margin-bottom:18px;
   cursor:pointer;
 }
 
-/* 🔹 Button */
 #authLoginBtn{
   width:100%;
-  height:52px;
+  height:44px;
   border:none;
-  border-radius:12px;
+  border-radius:999px;
 
-  background:linear-gradient(
-    135deg,
-    #3b82f6,
-    #2563eb
-  );
+  background:linear-gradient(135deg,#0284c7,#0ea5e9);
 
   color:#fff;
-  font-size:16px;
-  font-weight:800;
+  font-size:14px;
+  font-weight:700;
 
   cursor:pointer;
   transition:all .2s ease;
 
-  box-shadow:0 12px 30px rgba(37,99,235,.35);
+  box-shadow:0 8px 20px rgba(2,132,199,.35);
 }
 
 #authLoginBtn:hover{
   transform:translateY(-1px);
-  box-shadow:0 18px 40px rgba(37,99,235,.45);
+  box-shadow:0 12px 26px rgba(2,132,199,.42);
 }
 
-/* 🔹 Footer */
 #authFoot{
-  margin-top:20px;
+  margin-top:16px;
   text-align:center;
-  font-size:13px;
-  color:rgba(248,250,252,.86);
+  font-size:12px;
+  color:#475569;
 }
 
 #authFoot span{
-  color:#3b82f6;
+  color:#0369a1;
   font-weight:700;
   cursor:pointer;
 }
 
-/* 🔹 Logout btn */
 #authLogoutBtn{
   display:none;
 
@@ -208,52 +207,26 @@ body.auth-locked{
   margin-left:8px !important;
 }
 
-/* Auth card matches app dark glass material */
-#authOverlay #authCard{
-  background:rgba(15,23,42,.72) !important;
-  border:1px solid rgba(148,163,184,.22) !important;
-  box-shadow:0 18px 60px rgba(0,0,0,.35) !important;
-  backdrop-filter:blur(14px) !important;
-  -webkit-backdrop-filter:blur(14px) !important;
+/* Auth message chip */
+#authMsg{
+  text-align:center;
+  font-size:13px;
+  font-weight:600;
+  color:#0369a1;
+  background:rgba(56,189,248,.14);
+  border:1px solid rgba(56,189,248,.32);
+  border-radius:10px;
+  transition:all .15s ease;
 }
 
-#authOverlay #authCard h1,
-#authOverlay #authCard h2,
-#authOverlay .auth-title,
-#authOverlay .auth-label{
-  color:#f8fafc !important;
+#authMsg:empty{
+  margin:0;
+  padding:0;
+  border:none;
+  background:none;
 }
 
-#authOverlay #authCard p,
-#authOverlay .auth-subtitle{
-  color:rgba(226,232,240,.78) !important;
-}
-
-#authOverlay .auth-field{
-  background:rgba(15,23,42,.52) !important;
-  border:1px solid rgba(148,163,184,.30) !important;
-}
-
-#authOverlay .auth-field input,
-#authOverlay .auth-field select{
-  color:#f8fafc !important;
-}
-
-#authOverlay .auth-field input::placeholder{
-  color:rgba(203,213,225,.68) !important;
-}
-
-#authOverlay .auth-field:focus-within{
-  border-color:rgba(56,189,248,.70) !important;
-  box-shadow:0 0 0 3px rgba(14,165,233,.14) !important;
-}
-
-#authOverlay #authLoginBtn{
-  background:linear-gradient(135deg,#0284c7,#0ea5e9) !important;
-  color:#fff !important;
-}
-
-#authOverlay #authForgot,
-#authOverlay #authSignup{
-  color:#38bdf8 !important;
+#authMsg:not(:empty){
+  margin-top:16px;
+  padding:10px 14px;
 }
