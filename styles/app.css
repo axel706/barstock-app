@@ -637,6 +637,7 @@
     }
     #bgLayer.active{z-index:-1;}
     body.has-custom-bg::before{display:none;}
+    body.has-custom-bg::after{background:none;}
     body::after{
       content:'';
       position:fixed;
