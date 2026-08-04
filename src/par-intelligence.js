@@ -31,6 +31,36 @@
     return monday.toISOString().split('T')[0];
   }
 
+  // ─── fetchAllSnapshotRows ────────────────────────────────────────
+  // Supabase corta cualquier respuesta REST en un maximo de filas (1000).
+  // inventory_snapshots crece con productos x semanas, asi que en locaciones
+  // con historial la respuesta llegaba truncada y muchos productos parecian
+  // tener solo 1-3 semanas de datos cuando en realidad tenian 6 u 8.
+  // Aqui se pagina explicitamente hasta que la nube deje de devolver filas,
+  // ordenando por id para que la paginacion sea estable.
+  async function fetchAllSnapshotRows(baseUrl) {
+    const { key } = getConfig();
+    const PAGE_SIZE = 1000;
+    const MAX_PAGES = 100; // tope de seguridad
+    const out = [];
+
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const offset = page * PAGE_SIZE;
+      const sep = baseUrl.includes('?') ? '&' : '?';
+      const res = await fetch(
+        `${baseUrl}${sep}order=id.asc&limit=${PAGE_SIZE}&offset=${offset}`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      );
+      const rows = await res.json();
+      if (!Array.isArray(rows)) break;
+
+      out.push(...rows);
+      if (rows.length < PAGE_SIZE) break; // pagina incompleta = ya no hay mas
+    }
+
+    return out;
+  }
+
   // Allow overriding the week start date from outside
   let _weekStartOverride = null;
   function getEffectiveWeekStart() {
@@ -115,11 +145,9 @@
       const weekStart = getEffectiveWeekStart();
 
       // Find open snapshots (on_hand_end is null) from previous weeks
-      const res = await fetch(
-        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&on_hand_end=is.null&week_start=neq.${weekStart}&select=id,item_name,code,on_hand_start,ordered`,
-        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      const openSnapshots = await fetchAllSnapshotRows(
+        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&on_hand_end=is.null&week_start=neq.${weekStart}&select=id,item_name,code,on_hand_start,ordered`
       );
-      const openSnapshots = await res.json();
       if (!openSnapshots?.length) return;
 
       // Build lookup from current master onHand
@@ -129,12 +157,12 @@
         onHandMap.set(key2, Number(r.onHand || 0));
       }
 
-      // Get historical avg used per item for event week detection
-      const histRes = await fetch(
-        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&used=not.is.null&is_event_week=eq.false&select=item_name,code,used`,
-        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      // Get historical avg used per item for event week detection.
+      // Paginado: si este promedio se calcula con datos truncados, semanas
+      // normales se marcan como "evento" y quedan excluidas de Pour-IQ.
+      const histData = await fetchAllSnapshotRows(
+        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&used=not.is.null&is_event_week=eq.false&select=id,item_name,code,used`
       );
-      const histData = await histRes.json();
       const avgUsedMap = new Map();
       const usedAccum = new Map();
       for (const row of histData || []) {
@@ -330,13 +358,13 @@
       const locationId = await fetchLocationId();
       const results = new Map();
 
-      // Batch fetch all normal snapshots for this location
+      // Batch fetch all normal snapshots for this location (paginado: ver
+      // fetchAllSnapshotRows — sin esto la respuesta se corta en 1000 filas
+      // y los productos aparecen con menos semanas de las que realmente tienen)
       const { url, key } = getConfig();
-      const res = await fetch(
-        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&is_event_week=eq.false&used=not.is.null&select=item_name,code,used,week_start`,
-        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      const allRows = await fetchAllSnapshotRows(
+        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&is_event_week=eq.false&used=not.is.null&select=id,item_name,code,used,week_start`
       );
-      const allRows = await res.json();
 
       // Group by item
       const byItem = new Map();
@@ -347,12 +375,10 @@
         if (!weekMap.has(r.week_start)) weekMap.set(r.week_start, Number(r.used || 0));
       }
 
-      // Build ordered map per item per week
-      const orderedRes = await fetch(
-        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&is_event_week=eq.false&ordered=not.is.null&select=item_name,code,ordered,week_start`,
-        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      // Build ordered map per item per week (paginado por el mismo motivo)
+      const orderedRows = await fetchAllSnapshotRows(
+        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&is_event_week=eq.false&ordered=not.is.null&select=id,item_name,code,ordered,week_start`
       );
-      const orderedRows = await orderedRes.json();
       const orderedByItem = new Map();
       for (const r of orderedRows || []) {
         const k = `${r.item_name}||${r.code || ''}`;
