@@ -34,6 +34,31 @@
     if (overlay) overlay.classList.remove('show');
   }
 
+  // ─── Cierre de sesion por inactividad ────────────────────────────
+  // Tras 30 minutos sin actividad del usuario se cierra la sesion sola.
+  // Cualquier movimiento de mouse, tecla, scroll, toque o click reinicia
+  // la cuenta. El watcher se arranca una sola vez, ya autenticado.
+  const INACTIVITY_LIMIT_MS = 30 * 60 * 1000;
+  let inactivityTimer = null;
+  let inactivityWatcherStarted = false;
+
+  function resetInactivityTimer(){
+    if (inactivityTimer) clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(() => {
+      console.log('[Auth] Sesion cerrada por inactividad');
+      logout();
+    }, INACTIVITY_LIMIT_MS);
+  }
+
+  function startInactivityWatcher(){
+    if (inactivityWatcherStarted) return;
+    inactivityWatcherStarted = true;
+    ['mousemove','mousedown','keydown','scroll','touchstart','click'].forEach(evt => {
+      document.addEventListener(evt, resetInactivityTimer, { passive: true });
+    });
+    resetInactivityTimer();
+  }
+
   async function checkAuth(){
     try{
       if (!window.supabase) throw new Error('Supabase JS not loaded');
@@ -54,6 +79,7 @@
         }
       }
 
+      startInactivityWatcher();
       hideOverlay();
       return true;
     } catch(err){
