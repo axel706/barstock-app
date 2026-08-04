@@ -705,6 +705,9 @@
     ));
   }
 
+  let _introTimer = null;
+  let _introPlaying = false;
+
   window.PourIqSection._openQueue = function() {
     _queue = queueCandidates();
     _queueIdx = 0;
@@ -713,10 +716,128 @@
       return;
     }
     document.addEventListener('keydown', queueKeys);
-    renderQueue();
+    renderQueueIntro();
   };
 
+  // ── Intro ──────────────────────────────────────────────────────────
+  // Dos martinis brindan: uno viene muy lleno y otro muy vacio, y ambos
+  // encuentran la misma linea. Es lo que hace Pour-IQ, contado sin jerga.
+  // Se puede saltar con un click; si no, corre completa (3.1s).
+  function renderQueueIntro() {
+    let el = document.getElementById('piqQueueOverlay');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'piqQueueOverlay';
+      el.className = 'piq-queue-overlay';
+      document.body.appendChild(el);
+    }
+
+    const n = _queue.length;
+
+    // La copa se dibuja una sola vez y se reusa: el <use> evita repetir
+    // 6 elementos identicos. Cada copa solo cambia su relleno y sus olivas.
+    const glass = (side) => `
+      <g clip-path="url(#piqCone${side})">
+        <rect id="piqFill${side}" x="-24" width="48" height="34" fill="#38bdf8" opacity=".5"
+              y="${side === 'L' ? -58 : -44}"/>
+        <ellipse id="piqSurf${side}" cx="0" ry="2.2" fill="#7dd3fc" opacity=".8"
+                 cy="${side === 'L' ? -58 : -44}" rx="${side === 'L' ? 18.4 : 9.2}"/>
+      </g>
+      <line x1="${side === 'L' ? -11 : 11}" y1="-70" x2="${side === 'L' ? 12 : -12}" y2="-38"
+            stroke="currentColor" stroke-width="1.1" opacity=".75"/>
+      <circle cx="${side === 'L' ? 3.3 : -3.3}" cy="-50.2" r="4.2" fill="#7d8c3a"/>
+      <circle cx="${side === 'L' ? 4.5 : -2.1}" cy="-50.8" r="1.5" fill="#c94f3d"/>
+      <circle cx="${side === 'L' ? 7.4 : -7.4}" cy="-44.4" r="4.2" fill="#8a9a44"/>
+      <circle cx="${side === 'L' ? 8.6 : -6.2}" cy="-45" r="1.5" fill="#c94f3d"/>
+      <path d="M-21 -62 L21 -62 L0 -30 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M-15.5 -59.5 L-3 -43" fill="none" stroke="currentColor" stroke-width="1" opacity=".4"/>
+      <line x1="0" y1="-30" x2="0" y2="-4" stroke="currentColor" stroke-width="1.6"/>
+      <ellipse cx="0" cy="-3" rx="12.5" ry="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/>`;
+
+    el.innerHTML = `
+      <div class="piq-queue-card piq-intro-card" id="piqIntroCard">
+        <svg width="250" height="134" viewBox="0 0 250 134" aria-hidden="true" class="piq-intro-svg">
+          <defs>
+            <clipPath id="piqConeL"><path d="M-21 -62 L21 -62 L0 -30 Z"/></clipPath>
+            <clipPath id="piqConeR"><path d="M-21 -62 L21 -62 L0 -30 Z"/></clipPath>
+          </defs>
+          <g id="piqGlassL" transform="translate(70,114) rotate(14)">${glass('L')}</g>
+          <g id="piqGlassR" transform="translate(180,114) rotate(-14)">${glass('R')}</g>
+          <line id="piqTargetLine" x1="70" y1="63" x2="180" y2="63"
+                stroke="currentColor" stroke-width="1.4" stroke-dasharray="3 3" opacity="0"/>
+        </svg>
+
+        <div class="piq-intro-beats">
+          <div class="piq-intro-beat" id="piqBeat1">One pours too much. One not enough.</div>
+          <div class="piq-intro-beat" id="piqBeat2">
+            <div class="piq-intro-num">${n}</div>
+            <div class="piq-intro-cap">decision${n === 1 ? '' : 's'} to level up</div>
+          </div>
+          <div class="piq-intro-beat piq-intro-final" id="piqBeat3">Let's make some pour decisions</div>
+        </div>
+      </div>`;
+
+    // Click en cualquier parte adelanta
+    el.onclick = () => { clearTimeout(_introTimer); el.onclick = null; renderQueue(); };
+
+    const L  = document.getElementById('piqGlassL');
+    const R  = document.getElementById('piqGlassR');
+    const fL = document.getElementById('piqFillL');
+    const fR = document.getElementById('piqFillR');
+    const sL = document.getElementById('piqSurfL');
+    const sR = document.getElementById('piqSurfR');
+    const tl = document.getElementById('piqTargetLine');
+
+    const EASE = 'cubic-bezier(.22,1,.36,1)';
+
+    // 1. Se acercan en diagonal, con niveles distintos
+    setTimeout(() => {
+      L.style.transition = R.style.transition = `transform .46s ${EASE}`;
+      L.setAttribute('transform', 'translate(88,114) rotate(14)');
+      R.setAttribute('transform', 'translate(162,114) rotate(-14)');
+    }, 80);
+
+    // 2. Chocan
+    setTimeout(() => { L.style.animation = R.style.animation = 'piqClink .26s'; }, 520);
+
+    // 3. Se enderezan
+    setTimeout(() => {
+      L.style.transition = R.style.transition = `transform .6s ${EASE}`;
+      L.setAttribute('transform', 'translate(96,114) rotate(0)');
+      R.setAttribute('transform', 'translate(154,114) rotate(0)');
+    }, 880);
+
+    // 4. Aparece la linea objetivo
+    setTimeout(() => { tl.style.transition = 'opacity .35s'; tl.style.opacity = '1'; }, 1560);
+
+    // 5. Ambos niveles se encuentran en ella. La elipse de la superficie
+    //    tambien cambia de ancho: el cono es mas angosto abajo.
+    setTimeout(() => {
+      const ty = `y .85s ${EASE}`;
+      const ts = `cy .85s ${EASE}, rx .85s ${EASE}`;
+      fL.style.transition = fR.style.transition = ty;
+      sL.style.transition = sR.style.transition = ts;
+      fL.setAttribute('y', -51);  fR.setAttribute('y', -51);
+      sL.setAttribute('cy', -51); sL.setAttribute('rx', 13.8);
+      sR.setAttribute('cy', -51); sR.setAttribute('rx', 13.8);
+    }, 1760);
+
+    beat('piqBeat1', 700, 1000);
+    beat('piqBeat2', 1800, 700);
+    beat('piqBeat3', 2650, 0);
+
+    _introTimer = setTimeout(() => { el.onclick = null; renderQueue(); }, 3600);
+  }
+
+  function beat(id, at, hold) {
+    const e = document.getElementById(id);
+    if (!e) return;
+    e.style.animation = `piqBeatIn .3s cubic-bezier(.22,1,.36,1) ${at}ms forwards`
+      + (hold ? `, piqBeatOut .26s ease ${at + hold}ms forwards` : '');
+  }
+
   window.PourIqSection._closeQueue = function() {
+    clearTimeout(_introTimer);
     document.removeEventListener('keydown', queueKeys);
     const el = document.getElementById('piqQueueOverlay');
     if (el) el.remove();

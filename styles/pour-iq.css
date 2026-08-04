@@ -297,6 +297,82 @@ body.light .piq-queue-skip:hover{ background: rgba(15,23,42,.04); }
 .piq-queue-close:hover{ background: rgba(255,255,255,.08); color: var(--text); }
 body.light .piq-queue-close:hover{ background: rgba(15,23,42,.06); }
 
+/* ---------- Intro de la cola ---------- */
+
+/* El rebote del choque va en translateY porque el transform del grupo
+   (translate + rotate) lo maneja el JS via atributo, no via CSS: si la
+   animacion tocara transform aqui, pisaria la inclinacion de las copas. */
+@keyframes piqClink{
+  0%,100%{ transform: translateY(0); }
+  35%    { transform: translateY(-1.5px); }
+  70%    { transform: translateY(1px); }
+}
+@keyframes piqBeatIn{
+  from{ opacity:0; transform:translateY(9px); }
+  to  { opacity:1; transform:none; }
+}
+@keyframes piqBeatOut{ to{ opacity:0; } }
+
+.piq-intro-card{
+  min-height: 268px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* El trazo de los vasos hereda el color del texto para funcionar
+   igual en claro y oscuro sin duplicar reglas */
+.piq-intro-svg{
+  color: rgba(255,255,255,.34);
+  margin-bottom: 6px;
+}
+body.light .piq-intro-svg{ color: rgba(15,23,42,.28); }
+
+.piq-intro-beats{
+  position: relative;
+  width: 100%;
+  height: 52px;
+}
+.piq-intro-beat{
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--sub);
+  text-align: center;
+  padding: 0 8px;
+}
+.piq-intro-num{
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  color: #38bdf8;
+}
+body.light .piq-intro-num{ color: #0284c7; }
+.piq-intro-cap{
+  font-size: 11px;
+  color: var(--sub);
+  margin-top: 3px;
+}
+.piq-intro-final{
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Con movimiento reducido no hay show: se va directo a la frase */
+@media (prefers-reduced-motion: reduce){
+  .piq-intro-svg{ display: none; }
+  .piq-intro-beat{ animation: none !important; }
+  .piq-intro-final{ opacity: 1 !important; }
+}
+
 .piq-queue-done{
   font-size: 40px;
   color: #22c55e;
