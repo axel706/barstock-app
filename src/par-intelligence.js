@@ -157,22 +157,21 @@
         onHandMap.set(key2, Number(r.onHand || 0));
       }
 
-      // Get historical avg used per item for event week detection.
-      // Paginado: si este promedio se calcula con datos truncados, semanas
-      // normales se marcan como "evento" y quedan excluidas de Pour-IQ.
-      const histData = await fetchAllSnapshotRows(
-        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&used=not.is.null&is_event_week=eq.false&select=id,item_name,code,used`
-      );
-      const avgUsedMap = new Map();
-      const usedAccum = new Map();
-      for (const row of histData || []) {
-        const k = `${row.item_name}||${row.code}`;
-        if (!usedAccum.has(k)) usedAccum.set(k, []);
-        usedAccum.get(k).push(Number(row.used || 0));
-      }
-      for (const [k, vals] of usedAccum) {
-        avgUsedMap.set(k, vals.reduce((a, b) => a + b, 0) / vals.length);
-      }
+      // NOTA: aqui existia una deteccion automatica de "semana de evento".
+      // Se elimino a proposito. Marcaba producto por producto comparando el
+      // uso contra el promedio historico x1.5, pero ese promedio excluia las
+      // semanas ya marcadas, asi que se congelaba: una vez que un producto
+      // empezaba a marcarse, el punto de referencia nunca subia y TODAS las
+      // semanas siguientes se marcaban tambien. Un producto que simplemente
+      // vendia mas cada semana terminaba con todo su historial descartado y
+      // Pour-IQ nunca se activaba.
+      //
+      // Ademas chocaba con el modelo real: en Theoretical Usage la semana de
+      // evento se marca a mano y aplica a la SEMANA COMPLETA, no a productos
+      // sueltos. Esa es ahora la unica forma de marcarlas.
+      //
+      // Por eso este PATCH ya no escribe is_event_week: cerrar la semana no
+      // debe tocar una marca que puso (o no puso) Axel.
 
       // Patch all open snapshots in parallel
       const patches = [];
@@ -184,8 +183,6 @@
         const ordered = Number(snap.ordered || 0);
         const onHandStart = Number(snap.on_hand_start || 0);
         const used = onHandStart + ordered - onHandEnd;
-        const avgUsed = avgUsedMap.get(k) || null;
-        const isEventWeek = avgUsed !== null && used > avgUsed * 1.5;
 
         patches.push(fetch(`${url}/rest/v1/inventory_snapshots?id=eq.${snap.id}`, {
           method: 'PATCH',
@@ -197,8 +194,7 @@
           },
           body: JSON.stringify({
             on_hand_end: onHandEnd,
-            used: used,
-            is_event_week: isEventWeek
+            used: used
           })
         }));
       }
