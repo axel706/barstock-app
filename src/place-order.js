@@ -94,6 +94,27 @@
         throw new Error('loadOrdersFromCloud unavailable');
       }
 
+      // Salvaguarda: si por alguna razon la relectura desde cloud trajo
+      // esta orden con menos items de los que acabamos de guardar
+      // exitosamente, usamos los datos locales que sabemos correctos
+      // en vez de mostrar una orden incompleta.
+      if (Array.isArray(state.orderHistory)) {
+        const idx = state.orderHistory.findIndex(o => o.id === order.id);
+        const reloaded = idx >= 0 ? state.orderHistory[idx] : null;
+        const reloadedCount = reloaded && Array.isArray(reloaded.items) ? reloaded.items.length : 0;
+        if (reloadedCount < rows.length) {
+          console.warn(`Order ${order.id}: cloud reload returned ${reloadedCount} items, expected ${rows.length}. Using local data.`);
+          if (idx >= 0) {
+            state.orderHistory[idx] = { ...reloaded, items: order.items };
+          } else {
+            state.orderHistory.unshift(order);
+          }
+          if (typeof saveState === 'function') saveState();
+          if (typeof render === 'function') render();
+          if (typeof renderVendorPanel === 'function') renderVendorPanel();
+        }
+      }
+
       if (typeof setStatus === 'function') {
         if (validationWarnings.length) {
           setStatus(`${vendorAtStart} order placed with warnings.`);
