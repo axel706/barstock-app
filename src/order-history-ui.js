@@ -112,7 +112,23 @@
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     if (!filtered.length) {
-      wrap.innerHTML = `<div class="oh-empty">No orders found.</div>`;
+      // Distinguir "todavia no has ordenado nada" de "este vendor no tiene
+      // ordenes": son situaciones distintas y el usuario hace cosas distintas.
+      if (window.BarStockEmpty) {
+        wrap.innerHTML = (vendorFilter !== 'ALL' && history.length)
+          ? window.BarStockEmpty.block({
+              icon: 'ti-filter-off',
+              title: 'No orders for this vendor',
+              text: 'Switch to All Vendors to see the rest of your history.'
+            })
+          : window.BarStockEmpty.block({
+              icon: 'ti-receipt',
+              title: 'No orders yet',
+              text: 'Orders you place will show up here.'
+            });
+      } else {
+        wrap.innerHTML = `<div class="oh-empty">No orders found.</div>`;
+      }
       renderCompareToolbar();
       return;
     }

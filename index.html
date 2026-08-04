@@ -35,6 +35,7 @@
   <link rel="stylesheet" href="styles/motion.css?v=motion1">
   <link rel="stylesheet" href="styles/skeleton.css?v=skel1">
   <link rel="stylesheet" href="styles/toast.css?v=toast1">
+  <link rel="stylesheet" href="styles/empty-state.css?v=empty1">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -131,7 +132,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260804-152032</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260804-153106</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2450,7 +2451,24 @@ function render(){
     const avgCell = _avgWkHidden ? '<i class="ti ti-eye-off" aria-hidden="true" style="font-size:14px;color:#f59e0b;opacity:.7"></i>' : (avgUsed !== null ? `<span style="font-weight:600">${avgUsed}</span>` : '<i class="ti ti-brain" aria-hidden="true" style="font-size:15px;color:var(--sub);opacity:.5"></i>');
     const vendorCell = invVendorActive ? '' : `<td>${badge(r.vendor)}</td>`;
     return `<tr data-idx="${idx}" style="cursor:pointer" onclick="openInvPanel(${idx})">${vendorCell ? '<td>' + escapeHtml(r.code) + '</td>' : '<td>' + escapeHtml(r.code) + '</td>'}<td>${escapeHtml(r.item)}${getParChipHtml(r)}</td>${vendorCell}<td>${fmt(r.onHand)}</td><td style="text-align:center">${avgCell}</td><td>${fmt(r.suggested)}</td><td>${fmt(r.toOrder)}</td><td>${fmtMoney(r.value)}</td></tr>`;
-  }).join('') || `<tr><td colspan="8" class="muted">No inventory loaded.</td></tr>`;
+  }).join('') || (() => {
+    if (!window.BarStockEmpty) return `<tr><td colspan="8" class="muted">No inventory loaded.</td></tr>`;
+    // Dos situaciones que antes se veian identicas: no tener inventario
+    // (usuario nuevo) o que el filtro no encontro nada (usuario buscando).
+    const filtering = !!q || vendorFilter !== 'ALL';
+    if (state.master.length && filtering) {
+      return window.BarStockEmpty.row(8, {
+        icon: 'ti-search-off',
+        title: 'No matches',
+        text: 'Nothing here matches your search or vendor filter.'
+      });
+    }
+    return window.BarStockEmpty.row(8, {
+      icon: 'ti-package',
+      title: 'No inventory yet',
+      text: 'Import a count to start tracking your items.'
+    });
+  })();
 
   const vendors = getVendorsForFilter();
   document.getElementById('vendorTabs').innerHTML = vendors.map(v => `<div class="oh-filter-chip ${activeVendorTab===v?'active':''}" onclick="setVendorTab('${escapeJsAttr(v)}')">${v}</div>`).join('');
@@ -2487,6 +2505,13 @@ function render(){
     if (wasPlaced && activeVendorTab !== 'ALL') {
       return `<tr><td colspan="6" style="text-align:center;padding:48px 0"><i class="ti ti-circle-check" style="font-size:36px;display:block;margin:0 auto 12px;color:#22c55e"></i><strong style="font-size:15px;color:var(--text);display:block;margin-bottom:6px">All items ordered</strong><span style="font-size:13px;color:var(--sub)">No pending items for this vendor.</span></td></tr>`;
     }
+    if (window.BarStockEmpty) {
+      return window.BarStockEmpty.row(6, {
+        icon: 'ti-shopping-cart-off',
+        title: 'Nothing to order',
+        text: 'Every item for this vendor is above its par level.'
+      });
+    }
     return `<tr><td colspan="6" style="text-align:center;padding:48px 0;color:var(--sub)">No items to order.</td></tr>`;
   })();
   const totalBottles = vendRows.reduce((sum, r) => sum + parseNum(getEffectiveOrder(r)), 0);
@@ -2500,7 +2525,16 @@ function render(){
     const suggestionHtml = suggestion ? `${escapeHtml(suggestion.row.item)} <span class="small muted">(${Math.round(suggestion.score*100)}% match)</span>` : `<span class="muted">No suggestion</span>`;
     const quick = suggestion ? `<button onclick="openLinkModal(${i}, ${suggestion.index})">Link Suggested</button>` : '';
     return `<tr><td>${escapeHtml(r.rawItem)}</td><td>${fmt(r.count)}</td><td>${suggestionHtml}</td><td><div class="rowactions"><button class="success" onclick="openNoMatchModal(${i})">Create Item</button><button onclick="openLinkModal(${i})">Link Existing</button>${quick}<button onclick="ignoreNoMatch(${i})">Ignore</button></div></td></tr>`;
-  }).join('') || `<tr><td colspan="4" class="muted">No no-matches right now. Nice.</td></tr>`;
+  }).join('') || (window.BarStockEmpty
+    // Cero no-matches es una BUENA noticia, no un vacio. Por eso va en
+    // verde y con check, no en gris como si algo faltara.
+    ? window.BarStockEmpty.row(4, {
+        icon: 'ti-circle-check',
+        tone: 'good',
+        title: 'Everything matched',
+        text: 'Every item in your last count was recognized.'
+      })
+    : `<tr><td colspan="4" class="muted">No no-matches right now. Nice.</td></tr>`);
 
   document.getElementById('itemsMetric').textContent = state.master.length;
   document.getElementById('toOrderMetric').textContent = state.master.filter(r=>r.toOrder>0).length;
@@ -4681,6 +4715,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/settings-vendor-codes.js"></script>
 <script src="src/skeleton.js"></script>
 <script src="src/toast.js"></script>
+<script src="src/empty-state.js"></script>
 <script src="src/inventory-realtime.js"></script>
 <script src="src/inventory-cloud.js?v=account-wjm-1"></script>
 <script src="src/par-intelligence.js"></script>

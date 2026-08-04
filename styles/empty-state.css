@@ -1,0 +1,60 @@
+/* ============================================================
+   BarStock Pro — Estados vacios (Fase 4)
+   ------------------------------------------------------------
+   Toma como base el unico estado vacio que ya estaba bien hecho
+   en la app ("All items ordered") y lo vuelve el estandar.
+   ============================================================ */
+
+.bs-empty{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 44px 20px;
+  gap: 6px;
+}
+
+.bs-empty > i{
+  font-size: 34px;
+  margin-bottom: 6px;
+  opacity: .85;
+}
+
+.bs-empty-title{
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.bs-empty-text{
+  font-size: 13px;
+  color: var(--sub);
+  max-width: 340px;
+  line-height: 1.5;
+}
+
+.bs-empty-action{
+  margin-top: 12px;
+}
+
+/* Dentro de tablas: la celda no debe heredar bordes ni hover de fila */
+tr.bs-empty-row{
+  pointer-events: none;
+}
+tr.bs-empty-row td{
+  padding: 0;
+  background: none;
+}
+tr.bs-empty-row .bs-empty-action{
+  pointer-events: auto;
+}
+
+/* En contenedores chicos (paneles laterales) se compacta */
+.vsp-panel-body .bs-empty,
+.oh-empty .bs-empty{
+  padding: 28px 12px;
+}
+.vsp-panel-body .bs-empty > i{
+  font-size: 28px;
+}

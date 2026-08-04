@@ -1157,7 +1157,13 @@
             <span>Total <strong>${fmtMoney((r.totalWine||0)+(r.totalLiquor||0))}</strong></span>
           </div>
         </div>
-      </div>`).join('') || '<div style="font-size:13px;color:#94a3b8;padding:8px 0">No reports for this period.</div>';
+      </div>`).join('') || (window.BarStockEmpty
+        ? window.BarStockEmpty.block({
+            icon: 'ti-calendar-off',
+            title: 'No reports for this period',
+            text: 'Pick another month, or import a cost report for these weeks.'
+          })
+        : '<div style="font-size:13px;color:#94a3b8;padding:8px 0">No reports for this period.</div>');
       container._reports = filtered;
       if (applyBtn) applyBtn.style.display = 'none';
       _selectedWeeklyIds.clear();
