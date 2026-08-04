@@ -128,6 +128,70 @@
     return true;
   }
 
+  // ─── setOrderOverride ────────────────────────────────────────────
+  // Guarda (o limpia) el "Final Order" manual de un articulo en la nube.
+  // Antes esto solo vivia en el navegador, asi que se perdia al cambiar de
+  // navegador y cada vez que el inventario se recargaba desde la nube.
+  // value === '' | null  => limpia el override (vuelve a automatico)
+  async function setOrderOverride({ code, item, value }) {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+
+    const clean = (value === '' || value === null || value === undefined)
+      ? null
+      : Math.max(0, Number(value) || 0);
+
+    let patchUrl = `${url}/rest/v1/inventory_items?location_id=eq.${locationId}&item_name=eq.${encodeURIComponent(item || '')}`;
+    if (code) patchUrl += `&code=eq.${encodeURIComponent(code)}`;
+
+    const res = await fetch(patchUrl, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        Prefer: 'return=minimal'
+      },
+      body: JSON.stringify({ order_override: clean })
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error('Error saving order_override: ' + txt);
+    }
+
+    return true;
+  }
+
+  // ─── clearAllOrderOverrides ──────────────────────────────────────
+  // Se llama al importar un conteo nuevo y al hacer Reset on hand:
+  // cada ciclo semanal arranca limpio.
+  async function clearAllOrderOverrides() {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+
+    const res = await fetch(
+      `${url}/rest/v1/inventory_items?location_id=eq.${locationId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: key,
+          Authorization: `Bearer ${key}`,
+          Prefer: 'return=minimal'
+        },
+        body: JSON.stringify({ order_override: null })
+      }
+    );
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error('Error clearing order_override: ' + txt);
+    }
+
+    return true;
+  }
+
   async function resetOnHandForItems(items) {
     const { url, key } = getConfig();
     const locationId = await fetchLocationId();
@@ -254,6 +318,8 @@
     patchInventoryItem,
     deleteInventoryItem,
     resetOnHandForItems,
+    setOrderOverride,
+    clearAllOrderOverrides,
     touchWeeklyReset,
     deleteAllInventoryItems,
     replaceInventoryMaster

@@ -50,7 +50,7 @@
     const locationId = await fetchLocationId();
 
     const res = await fetch(
-      `${BARSTOCK_RT_URL}/rest/v1/inventory_items?location_id=eq.${locationId}&select=code,item_name,vendor,on_hand,suggested,value,category`,
+      `${BARSTOCK_RT_URL}/rest/v1/inventory_items?location_id=eq.${locationId}&select=code,item_name,vendor,on_hand,suggested,value,category,order_override`,
       {
         headers: {
           apikey: BARSTOCK_RT_KEY,
@@ -67,7 +67,13 @@
     state.master = rows.map(r => {
       const onHand = Number(r.on_hand || 0);
       const suggested = Number(r.suggested || 0);
-      const existing = (state.master || []).find(m => m.item === (r.item_name || '') && m.vendor === String(r.vendor || 'UNKNOWN').trim().toUpperCase());
+      // El override ahora viene de la nube. Antes se intentaba "rescatar" del
+      // state.master en memoria comparando nombre + vendor con igualdad exacta
+      // de texto y sin usar el codigo; cualquier diferencia minima, o dos
+      // articulos con el mismo nombre, hacia que se perdiera en silencio.
+      const override = (r.order_override === null || r.order_override === undefined)
+        ? ''
+        : Math.max(0, Number(r.order_override) || 0);
       return {
         code: r.code || '',
         item: r.item_name || '',
@@ -78,7 +84,7 @@
         value: Number(r.value || 0),
         category: r.category || null,
         toOrder: typeof computeToOrder === 'function' ? computeToOrder(onHand, suggested) : 0,
-        orderOverride: (existing && existing.orderOverride !== undefined) ? existing.orderOverride : ''
+        orderOverride: override
       };
     });
 

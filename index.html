@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260804-142711</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260804-144050</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -3140,6 +3140,21 @@ async function saveNewInventoryItem(){
 }
 window.saveNewInventoryItem = saveNewInventoryItem;
 
+// Guarda el override en la nube. Se hace en segundo plano para no frenar la
+// UI, pero si falla hay que avisar: si solo queda en el navegador se pierde
+// en la siguiente recarga, que es justo el bug que esto viene a arreglar.
+function persistOrderOverride(row){
+  if(!row || !window.BarStockInventoryCloud?.setOrderOverride) return;
+  window.BarStockInventoryCloud.setOrderOverride({
+    code: row.code,
+    item: row.item,
+    value: row.orderOverride
+  }).catch(err => {
+    console.error('No se pudo guardar el override en la nube', err);
+    setStatus(`Warning: '${row.item}' final order saved locally only.`);
+  });
+}
+
 function updateFinalOrder(index, value){
   const row = state.master[index];
   if(!row || !supportsManualFinalOrder(row.vendor)) return;
@@ -3149,6 +3164,7 @@ function updateFinalOrder(index, value){
     row.orderOverride = Math.max(0, parseNum(value));
   }
   saveState();
+  persistOrderOverride(row);
   render();
   setStatus(`Final order updated for '${row.item}'.`);
 }
@@ -3158,6 +3174,7 @@ function resetFinalOrder(index){
   if(!row) return;
   row.orderOverride = '';
   saveState();
+  persistOrderOverride(row);
   render();
   setStatus(`Final order reset to automatic TO ORDER for '${row.item}'.`);
 }
@@ -4141,6 +4158,8 @@ async function resetOnHand(){
     }
 
     await window.BarStockInventoryCloud.resetOnHandForItems(state.master);
+    // Los overrides tambien viven en la nube, hay que limpiarlos ahi.
+    await window.BarStockInventoryCloud.clearAllOrderOverrides();
     await window.BarStockInventoryCloud.touchWeeklyReset();
 
     // 4. limpiar local solo si cloud salió bien
