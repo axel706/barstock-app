@@ -1,0 +1,127 @@
+/* ============================================================
+   BarStock Pro — Capa de movimiento (Fase 1)
+   ------------------------------------------------------------
+   Se carga AL FINAL, despues de todos los demas estilos, para
+   que gane sin tener que usar !important en todo.
+
+   Antes el movimiento estaba disperso: app.css definia
+   --motion-* y modalRise, y mas abajo volvia a definir lo mismo
+   como --dur-* y v30ModalIn, pisandose entre si. Aqui se unifica
+   en un solo juego de valores.
+
+   Reglas del sistema:
+   - Una sola curva para todo (--bs-ease). La consistencia es lo
+     que hace que se sienta producto y no efectos sueltos.
+   - Tres duraciones, nunca mas de 340ms.
+   - Nada rebota, nada gira, nada llama la atencion sobre si mismo.
+   ============================================================ */
+
+:root{
+  --bs-ease: cubic-bezier(.22, 1, .36, 1);
+  --bs-dur-fast: .16s;
+  --bs-dur-med: .24s;
+  --bs-dur-slow: .34s;
+}
+
+/* ---------- Entradas ---------- */
+
+@keyframes bsRise{
+  from{ opacity:0; transform:translateY(10px); }
+  to  { opacity:1; transform:none; }
+}
+
+@keyframes bsSlideIn{
+  from{ opacity:0; transform:translateX(18px); }
+  to  { opacity:1; transform:none; }
+}
+
+@keyframes bsPop{
+  from{ opacity:0; transform:translateY(8px) scale(.98); }
+  to  { opacity:1; transform:none; }
+}
+
+/* Cambio de seccion — lo que mas se siente, se ve todo el dia */
+.card.section-card.bs-active-section{
+  animation: bsRise var(--bs-dur-slow) var(--bs-ease);
+}
+
+/* Panel lateral de vendor: sus hijos se recrean en cada render,
+   asi que la animacion corre sola cada vez que cambia el contenido */
+.vsp-panel-body > *{
+  animation: bsSlideIn var(--bs-dur-med) var(--bs-ease);
+}
+
+/* Modales — regla unica que reemplaza las dos versiones duplicadas */
+.modalbg:not(.hidden) .modal{
+  animation: bsPop var(--bs-dur-med) var(--bs-ease);
+}
+
+/* El fondo oscuro tambien entra, si no el modal aparece sobre un salto */
+.modalbg:not(.hidden){
+  animation: bsFadeOnly var(--bs-dur-fast) var(--bs-ease);
+}
+@keyframes bsFadeOnly{
+  from{ opacity:0; }
+  to  { opacity:1; }
+}
+
+/* ---------- Respuesta al mouse ---------- */
+
+/* Filas de tabla: solo color, sin transform. Mover filas rompe
+   los bordes de la tabla y se siente inestable con listas largas. */
+tbody tr{
+  transition: background-color var(--bs-dur-fast) var(--bs-ease);
+}
+
+/* Botones: hundido casi imperceptible al presionar. Es el detalle
+   que hace que un boton se sienta fisico. */
+button{
+  transition: transform var(--bs-dur-fast) var(--bs-ease),
+              background-color var(--bs-dur-fast) var(--bs-ease),
+              border-color var(--bs-dur-fast) var(--bs-ease),
+              opacity var(--bs-dur-fast) var(--bs-ease);
+}
+button:active:not(:disabled){
+  transform: scale(.975);
+}
+
+/* Tabs de navegacion */
+.bs-nav-tab{
+  transition: background-color var(--bs-dur-fast) var(--bs-ease),
+              color var(--bs-dur-fast) var(--bs-ease);
+}
+
+/* Chips de vendor y pills clickeables */
+.vendor-chip,
+.oh-filter-chip,
+.oh-card-btn{
+  transition: background-color var(--bs-dur-fast) var(--bs-ease),
+              border-color var(--bs-dur-fast) var(--bs-ease),
+              color var(--bs-dur-fast) var(--bs-ease),
+              transform var(--bs-dur-fast) var(--bs-ease);
+}
+.oh-card-btn:active:not(:disabled){
+  transform: scale(.94);
+}
+
+/* Inputs: el foco aparece en vez de saltar */
+input, select, textarea{
+  transition: border-color var(--bs-dur-fast) var(--bs-ease),
+              background-color var(--bs-dur-fast) var(--bs-ease);
+}
+
+/* ---------- Accesibilidad ---------- */
+
+/* Si el sistema pide menos movimiento, se apaga todo.
+   No es opcional: hay gente a la que el movimiento le provoca
+   mareo, y macOS/iOS tienen ese ajuste. */
+@media (prefers-reduced-motion: reduce){
+  *,
+  *::before,
+  *::after{
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
