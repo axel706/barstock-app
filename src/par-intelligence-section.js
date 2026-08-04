@@ -134,6 +134,53 @@
     return counts;
   }
 
+  // ── Metricas de impacto ────────────────────────────────────────────────────
+
+  function unitValue(item) {
+    return parseFloat(item.value) || 0;
+  }
+
+  // Dinero que libera (o cuesta) el paso de ESTA semana. Como el ajuste es
+  // siempre de 1, es el valor unitario.
+  function weeklyImpact(item) {
+    return Math.abs(item._piq.adjustment || 0) * unitValue(item);
+  }
+
+  // Pasos que faltan para llegar al rango objetivo. La regla existente solo
+  // mueve cuando la diferencia pasa de 1, asi que el destino real es
+  // distancia 1, no 0: por eso es |delta| - 1.
+  function stepsRemaining(item) {
+    const { currentSuggested, optimal } = item._piq;
+    if (optimal == null || currentSuggested == null) return 0;
+    return Math.max(0, Math.abs(currentSuggested - optimal) - 1);
+  }
+
+  // Dinero total todavia atrapado, sumando todos los pasos que faltan.
+  // Es el horizonte: cuanto queda por recuperar si sigues cada semana.
+  function getTotalOpportunity() {
+    return _items.reduce((sum, it) => {
+      if (it._piq.status !== 'over' && it._piq.status !== 'adjusted') return sum;
+      const { currentSuggested, optimal } = it._piq;
+      if (optimal == null || currentSuggested == null) return sum;
+      if (currentSuggested <= optimal) return sum;
+      return sum + (currentSuggested - optimal - 1) * unitValue(it);
+    }, 0);
+  }
+
+  // Dias de existencia que quedan al ritmo de consumo actual.
+  // Esto es lo accionable para un articulo bajo par: "+1" no dice nada,
+  // "te quedan 4 dias" si.
+  function daysLeft(item) {
+    const avg = item._piq.avgUsed;
+    const onHand = parseFloat(item.onHand);
+    if (!avg || avg <= 0 || !isFinite(onHand)) return null;
+    return Math.floor((onHand / avg) * 7);
+  }
+
+  function fmtMoneyShort(n) {
+    return '$' + Math.round(n).toLocaleString();
+  }
+
   function getEstimatedSavings() {
     return _items
       .filter(it => it._piq.status === 'over')
@@ -148,7 +195,10 @@
   function buildSection() {
     const counts = getCounts();
     const savings = getEstimatedSavings();
+    const opportunity = getTotalOpportunity();
     const pending = counts.over + counts.under;
+    // Cuantas semanas faltan para que el articulo mas desviado converja
+    const maxSteps = _items.reduce((m, it) => Math.max(m, stepsRemaining(it)), 0);
 
     const wrap = document.createElement('div');
     wrap.className = 'piq-section';
@@ -164,9 +214,14 @@
           ${pending} pending
         </span>
       </div>
-      <button class="piq-apply-all-btn" id="piqApplyAllBtn" onclick="PourIqSection._applyAll()">
-        <i class="ti ti-checks" aria-hidden="true"></i> Apply all pending
-      </button>`;
+      <div class="piq-header-actions">
+        <button class="piq-queue-btn" id="piqQueueBtn" onclick="PourIqSection._openQueue()">
+          <i class="ti ti-cards" aria-hidden="true"></i> Review one by one
+        </button>
+        <button class="piq-apply-all-btn" id="piqApplyAllBtn" onclick="PourIqSection._applyAll()">
+          <i class="ti ti-checks" aria-hidden="true"></i> Apply all pending
+        </button>
+      </div>`;
     wrap.appendChild(header);
 
     // Filter chips
@@ -189,9 +244,9 @@
         <div class="piq-chip-sub">raise suggested</div>
       </div>
       <div class="piq-filter-chip piq-chip-savings piq-chip-no-filter" id="piqChip-savings">
-        <div class="piq-chip-label"><span class="piq-chip-dot" style="background:#1D9E75"></span>Est. savings</div>
-        <div class="piq-chip-value" id="piqVal-savings">$${savings.toFixed(0)}</div>
-        <div class="piq-chip-sub">if over par applied</div>
+        <div class="piq-chip-label"><span class="piq-chip-dot" style="background:#1D9E75"></span>Frees up this week</div>
+        <div class="piq-chip-value" id="piqVal-savings">${fmtMoneyShort(savings)}</div>
+        <div class="piq-chip-sub">${fmtMoneyShort(opportunity)} total &middot; ${maxSteps} wk${maxSteps === 1 ? '' : 's'} to go</div>
       </div>
       ${counts.adjusted > 0 ? `
       <div class="piq-filter-chip piq-chip-adjusted" id="piqChip-adjusted" onclick="PourIqSection._setFilter('adjusted')" role="button" tabindex="0">
@@ -232,14 +287,14 @@
     tableWrap.innerHTML = `
       <table class="piq-table">
         <colgroup>
-          <col style="width:23%"><col style="width:13%"><col style="width:9%">
-          <col style="width:9%"><col style="width:9%"><col style="width:8%">
-          <col style="width:13%"><col style="width:8%"><col style="width:10%">
+          <col style="width:26%"><col style="width:13%"><col style="width:17%">
+          <col style="width:9%"><col style="width:8%"><col style="width:11%">
+          <col style="width:8%"><col style="width:8%">
         </colgroup>
         <thead>
           <tr>
-            <th>Item</th><th>Vendor</th><th>Suggested</th><th>Optimal</th>
-            <th>Avg/wk</th><th>Weeks</th><th>Trend</th><th>Adjustment</th><th>Action</th>
+            <th>Item</th><th>Vendor</th><th>Par &rarr; target</th>
+            <th>Avg/wk</th><th>Weeks</th><th>Impact</th><th>Adjustment</th><th>Action</th>
           </tr>
         </thead>
         <tbody id="piqTableBody"></tbody>
@@ -259,12 +314,27 @@
   }
 
   function sortItems(items) {
+    const order = { under: 0, over: 1, adjusted: 2, on: 3, review: 4, observing: 5 };
     return [...items].sort((a, b) => {
-      const order = { over: 0, under: 1, adjusted: 2, on: 3, review: 4, observing: 5 };
-      const os = order[a._piq.status] ?? 5;
-      const ob = order[b._piq.status] ?? 5;
+      const os = order[a._piq.status] ?? 9;
+      const ob = order[b._piq.status] ?? 9;
       if (os !== ob) return os - ob;
-      return Math.abs(b._piq.adjustment) - Math.abs(a._piq.adjustment);
+
+      // Bajo par: primero lo que se acaba antes. Quedarse sin producto
+      // cuesta ventas, y 4 dias es mas urgente que 20.
+      if (a._piq.status === 'under') {
+        const da = daysLeft(a), db = daysLeft(b);
+        if (da === null && db === null) return 0;
+        if (da === null) return 1;
+        if (db === null) return -1;
+        return da - db;
+      }
+
+      // Sobre par: primero lo que mas dinero libera. Un ajuste en algo de
+      // $62 la botella no vale lo mismo que uno de $8, y antes se ordenaban
+      // por magnitud del ajuste, que siempre es 1 y por lo tanto no ordenaba
+      // nada.
+      return weeklyImpact(b) - weeklyImpact(a);
     });
   }
 
@@ -281,14 +351,55 @@
     tr.innerHTML = `
       <td style="font-weight:500">${escHtml(item.item || item.name || '')}</td>
       <td class="piq-muted">${escHtml(item.vendor || '')}</td>
-      <td>${suggested}</td>
-      <td>${optimal ?? '—'}</td>
+      <td>${buildTargetCell(item)}</td>
       <td>${avgUsedStr}</td>
       <td>${weeksStr}</td>
-      <td>${buildTrendCell(trend)}</td>
+      <td>${buildImpactCell(item)}</td>
       <td>${buildAdjustmentChip(status, adjustment)}</td>
       <td>${buildActionCell(item, status, adjustment)}</td>`;
     return tr;
+  }
+
+  // "16 → 9" con barra de avance y semanas restantes. Sin esto, un articulo
+  // a una semana de llegar y otro a siete se ven identicos: ambos dicen -1.
+  function buildTargetCell(item) {
+    const { currentSuggested, optimal, status } = item._piq;
+    if (optimal == null || currentSuggested == null) {
+      return `<span class="piq-muted">${currentSuggested ?? '—'}</span>`;
+    }
+
+    const steps = stepsRemaining(item);
+    const gap = Math.abs(currentSuggested - optimal);
+    // Avance sobre la distancia original conocida; si ya llego, barra llena
+    const pct = gap <= 1 ? 100 : Math.round(((1 / gap) * 100));
+    const color = status === 'under' ? '#EF9F27' : '#1D9E75';
+
+    return `<div class="piq-target">
+      <div class="piq-target-nums">${currentSuggested} <span class="piq-muted">&rarr;</span> <strong>${optimal}</strong></div>
+      <div class="piq-target-bar"><div class="piq-target-fill" style="width:${pct}%;background:${color}"></div></div>
+      <div class="piq-target-sub">${steps === 0 ? 'last step' : steps + ' wk' + (steps === 1 ? '' : 's') + ' to go'}</div>
+    </div>`;
+  }
+
+  // Para los que sobran: dinero. Para los que faltan: dias de existencia.
+  // Son problemas distintos y se miden distinto.
+  function buildImpactCell(item) {
+    const { status } = item._piq;
+
+    if (status === 'under') {
+      const d = daysLeft(item);
+      if (d === null) return '<span class="piq-muted">—</span>';
+      const cls = d <= 5 ? 'piq-days-crit' : d <= 10 ? 'piq-days-warn' : 'piq-days-ok';
+      return `<span class="piq-days ${cls}">${d} day${d === 1 ? '' : 's'}</span>`;
+    }
+
+    if (status === 'over' || status === 'adjusted') {
+      const v = weeklyImpact(item);
+      if (!v) return '<span class="piq-muted">—</span>';
+      return `<span class="piq-impact">${fmtMoneyShort(v)}</span>`;
+    }
+
+    return '<span class="piq-muted">—</span>';
   }
 
   function buildTrendCell(delta) {
@@ -549,6 +660,129 @@
       par.delta = newDelta;
       par.adjustment = newAdjustment;
     }
+  }
+
+  // ── Modo cola: un articulo a la vez ────────────────────────────────────────
+  // Para despachar 44 pendientes sin leer una tabla. Respeta el filtro de
+  // vendor activo, igual que Apply all.
+
+  let _queue = [];
+  let _queueIdx = 0;
+
+  function queueCandidates() {
+    return sortItems(_items.filter(it =>
+      (it._piq.status === 'over' || it._piq.status === 'under') &&
+      (_activeVendor === 'ALL' || it.vendor === _activeVendor)
+    ));
+  }
+
+  window.PourIqSection._openQueue = function() {
+    _queue = queueCandidates();
+    _queueIdx = 0;
+    if (!_queue.length) {
+      if (typeof setStatus === 'function') setStatus('Nothing pending to review.');
+      return;
+    }
+    document.addEventListener('keydown', queueKeys);
+    renderQueue();
+  };
+
+  window.PourIqSection._closeQueue = function() {
+    document.removeEventListener('keydown', queueKeys);
+    const el = document.getElementById('piqQueueOverlay');
+    if (el) el.remove();
+    refresh();
+  };
+
+  window.PourIqSection._queueSkip = function() {
+    _queueIdx++;
+    renderQueue();
+  };
+
+  window.PourIqSection._queueApply = async function() {
+    const item = _queue[_queueIdx];
+    if (!item) return;
+    try {
+      await applyAdjustment(item);
+      if (typeof saveState === 'function') saveState();
+      if (typeof render === 'function') render();
+    } catch (err) {
+      console.error('[PourIqSection] queue apply error', err);
+      if (typeof setStatus === 'function') setStatus(`Could not update par for '${item.item}'.`);
+    }
+    _queueIdx++;
+    renderQueue();
+  };
+
+  function queueKeys(e) {
+    if (e.key === 'Escape')      { e.preventDefault(); window.PourIqSection._closeQueue(); }
+    else if (e.key === 'ArrowRight' || e.key === 's') { e.preventDefault(); window.PourIqSection._queueSkip(); }
+    else if (e.key === 'Enter')  { e.preventDefault(); window.PourIqSection._queueApply(); }
+  }
+
+  function renderQueue() {
+    let el = document.getElementById('piqQueueOverlay');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'piqQueueOverlay';
+      el.className = 'piq-queue-overlay';
+      document.body.appendChild(el);
+    }
+
+    const item = _queue[_queueIdx];
+
+    // Se acabaron
+    if (!item) {
+      const done = _queueIdx;
+      el.innerHTML = `
+        <div class="piq-queue-card">
+          <i class="ti ti-circle-check piq-queue-done" aria-hidden="true"></i>
+          <div class="piq-queue-title">Review complete</div>
+          <div class="piq-queue-sub">${done} item${done === 1 ? '' : 's'} reviewed</div>
+          <div class="piq-queue-btns">
+            <button class="piq-queue-primary" onclick="PourIqSection._closeQueue()">Done</button>
+          </div>
+        </div>`;
+      return;
+    }
+
+    const { currentSuggested, optimal, avgUsed, status, adjustment } = item._piq;
+    const target = currentSuggested + adjustment;
+    const steps = stepsRemaining(item);
+    const d = status === 'under' ? daysLeft(item) : null;
+
+    const impact = status === 'under'
+      ? (d !== null ? `${d} day${d === 1 ? '' : 's'} of stock left` : 'Running low')
+      : `Frees ${fmtMoneyShort(weeklyImpact(item))} this week`;
+
+    el.innerHTML = `
+      <div class="piq-queue-card">
+        <div class="piq-queue-count">${_queueIdx + 1} of ${_queue.length}</div>
+
+        <div class="piq-queue-item">${escHtml(item.item || '')}</div>
+        <div class="piq-queue-vendor">${escHtml(item.vendor || '')} &middot; ${fmtMoneyShort(unitValue(item))} per unit</div>
+
+        <div class="piq-queue-stats">
+          <div><div class="piq-queue-sl">Par now</div><div class="piq-queue-sv">${currentSuggested}</div></div>
+          <div><div class="piq-queue-sl">Uses/wk</div><div class="piq-queue-sv">${avgUsed != null ? avgUsed.toFixed(1) : '—'}</div></div>
+          <div><div class="piq-queue-sl">Target</div><div class="piq-queue-sv piq-queue-target">${optimal ?? '—'}</div></div>
+        </div>
+
+        <div class="piq-queue-impact ${status === 'under' ? 'piq-queue-warn' : ''}">${impact}</div>
+        <div class="piq-queue-sub">${steps === 0 ? 'Last step to target' : steps + ' more week' + (steps === 1 ? '' : 's') + ' after this one'}</div>
+
+        <div class="piq-queue-btns">
+          <button class="piq-queue-skip" onclick="PourIqSection._queueSkip()">Skip</button>
+          <button class="piq-queue-primary" onclick="PourIqSection._queueApply()">
+            ${adjustment > 0 ? 'Raise' : 'Lower'} to ${target}
+          </button>
+        </div>
+
+        <div class="piq-queue-hint">Enter to apply &middot; &rarr; to skip &middot; Esc to close</div>
+        <button class="piq-queue-close" onclick="PourIqSection._closeQueue()" aria-label="Close">
+          <i class="ti ti-x" aria-hidden="true"></i>
+        </button>
+      </div>`;
   }
 
   // ── Focus grid badge ───────────────────────────────────────────────────────

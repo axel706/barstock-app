@@ -1,0 +1,268 @@
+/* ============================================================
+   BarStock Pro — Pour-IQ rediseñado
+   ------------------------------------------------------------
+   Archivo aparte para no tocar los estilos piq-* que ya viven
+   en app.css. Se carga despues, asi que gana donde hace falta.
+   ============================================================ */
+
+/* ---------- Acciones del header ---------- */
+
+.piq-header-actions{
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.piq-queue-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid rgba(56,189,248,.35);
+  color: #7dd3fc;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+.piq-queue-btn:hover{
+  background: rgba(56,189,248,.10);
+  border-color: rgba(56,189,248,.55);
+}
+body.light .piq-queue-btn{
+  border-color: rgba(14,165,233,.40);
+  color: #0369a1;
+}
+body.light .piq-queue-btn:hover{
+  background: rgba(14,165,233,.08);
+}
+
+/* ---------- Chip de "ajustado esta semana" ---------- */
+
+.piq-chip-active-adjusted{
+  border-color: rgba(56,189,248,.55) !important;
+  background: rgba(56,189,248,.10) !important;
+}
+
+/* ---------- Columna "Par → target" ---------- */
+
+.piq-target{
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.piq-target-nums{
+  font-size: 13px;
+  white-space: nowrap;
+}
+.piq-target-bar{
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(148,163,184,.22);
+  overflow: hidden;
+}
+.piq-target-fill{
+  height: 100%;
+  border-radius: 2px;
+}
+.piq-target-sub{
+  font-size: 10px;
+  color: var(--sub);
+  white-space: nowrap;
+}
+
+/* ---------- Columna de impacto ---------- */
+
+.piq-impact{
+  font-weight: 600;
+  color: #4ade80;
+}
+body.light .piq-impact{ color: #15803d; }
+
+.piq-days{
+  font-weight: 600;
+  white-space: nowrap;
+}
+.piq-days-crit{ color: #f87171; }
+.piq-days-warn{ color: #fbbf24; }
+.piq-days-ok  { color: var(--sub); }
+body.light .piq-days-crit{ color: #b91c1c; }
+body.light .piq-days-warn{ color: #b45309; }
+
+/* ---------- Modo cola ---------- */
+
+.piq-queue-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 45000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(2, 6, 23, .62);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: piqQueueBgIn .2s cubic-bezier(.22,1,.36,1);
+}
+@keyframes piqQueueBgIn{ from{opacity:0} to{opacity:1} }
+
+.piq-queue-card{
+  position: relative;
+  width: min(420px, 100%);
+  background: var(--card, #0f172a);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 18px;
+  padding: 28px 26px 20px;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(0,0,0,.45);
+  animation: piqQueueIn .26s cubic-bezier(.22,1,.36,1);
+}
+@keyframes piqQueueIn{
+  from{ opacity:0; transform:translateY(12px) scale(.97); }
+  to  { opacity:1; transform:none; }
+}
+body.light .piq-queue-card{
+  background: #ffffff;
+  border-color: rgba(15,23,42,.10);
+  box-shadow: 0 24px 60px rgba(15,23,42,.20);
+}
+
+.piq-queue-count{
+  font-size: 11px;
+  color: var(--sub);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.piq-queue-item{
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text);
+}
+.piq-queue-vendor{
+  font-size: 12px;
+  color: var(--sub);
+  margin-top: 3px;
+  margin-bottom: 18px;
+}
+
+.piq-queue-stats{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.piq-queue-sl{
+  font-size: 10px;
+  color: var(--sub);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: 2px;
+}
+.piq-queue-sv{
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+.piq-queue-target{ color: #4ade80; }
+body.light .piq-queue-target{ color: #15803d; }
+
+.piq-queue-impact{
+  font-size: 14px;
+  font-weight: 600;
+  color: #4ade80;
+}
+body.light .piq-queue-impact{ color: #15803d; }
+.piq-queue-warn{ color: #fbbf24; }
+body.light .piq-queue-warn{ color: #b45309; }
+
+.piq-queue-sub{
+  font-size: 12px;
+  color: var(--sub);
+  margin-top: 4px;
+}
+
+.piq-queue-btns{
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+.piq-queue-skip,
+.piq-queue-primary{
+  flex: 1;
+  border-radius: 999px;
+  padding: 11px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,.14);
+  background: transparent;
+  color: var(--text);
+}
+.piq-queue-skip:hover{ background: rgba(255,255,255,.06); }
+.piq-queue-primary{
+  background: #38bdf8;
+  border-color: #38bdf8;
+  color: #04263a;
+}
+.piq-queue-primary:hover{ background: #7dd3fc; border-color: #7dd3fc; }
+body.light .piq-queue-skip{
+  border-color: rgba(15,23,42,.16);
+}
+body.light .piq-queue-skip:hover{ background: rgba(15,23,42,.04); }
+
+.piq-queue-hint{
+  font-size: 10px;
+  color: var(--sub);
+  margin-top: 14px;
+  opacity: .8;
+}
+
+.piq-queue-close{
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--sub);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+.piq-queue-close:hover{ background: rgba(255,255,255,.08); color: var(--text); }
+body.light .piq-queue-close:hover{ background: rgba(15,23,42,.06); }
+
+.piq-queue-done{
+  font-size: 40px;
+  color: #22c55e;
+  display: block;
+  margin-bottom: 10px;
+}
+.piq-queue-title{
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+@media (max-width: 640px){
+  .piq-queue-card{ padding: 24px 18px 16px; }
+  .piq-queue-sv{ font-size: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .piq-queue-overlay,
+  .piq-queue-card{ animation: none; }
+}
