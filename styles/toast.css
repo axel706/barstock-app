@@ -1,0 +1,119 @@
+/* ============================================================
+   BarStock Pro — Avisos flotantes (Fase 3)
+   ------------------------------------------------------------
+   Reemplazan el texto gris del statusBar. Aparecen abajo a la
+   derecha, se leen, y se van solos a los 4 segundos.
+
+   Abajo a la derecha y no arriba al centro: arriba taparia el
+   header y el switcher de locacion, que se usan todo el tiempo.
+   ============================================================ */
+
+#bsToastContainer{
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 40000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  pointer-events: none;
+  max-width: min(400px, calc(100vw - 40px));
+}
+
+@keyframes bsToastIn{
+  from{ opacity:0; transform:translateY(14px); }
+  to  { opacity:1; transform:none; }
+}
+@keyframes bsToastOut{
+  from{ opacity:1; transform:none; }
+  to  { opacity:0; transform:translateY(8px); }
+}
+@keyframes bsToastDraw{
+  to{ stroke-dashoffset:0; }
+}
+
+.bs-toast{
+  pointer-events: auto;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+  background: rgba(15, 23, 42, .82);
+  border: 1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  box-shadow: 0 10px 28px rgba(0,0,0,.30);
+  animation: bsToastIn .3s cubic-bezier(.22, 1, .36, 1);
+  max-width: 100%;
+}
+
+.bs-toast-out{
+  animation: bsToastOut .26s cubic-bezier(.22, 1, .36, 1) forwards;
+}
+
+.bs-toast-msg{
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.bs-toast-ic{
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* El check se dibuja en vez de aparecer. Es medio segundo que hace
+   que un guardado se sienta confirmado y no solo anunciado. */
+.bs-toast-ok .bs-toast-ic path{
+  animation: bsToastDraw .42s cubic-bezier(.65, 0, .35, 1) .12s forwards;
+}
+
+/* Tonos: hoy un error y un exito se ven identicos de grises */
+.bs-toast-ok    { color:#4ade80; }
+.bs-toast-warn  { color:#fbbf24; }
+.bs-toast-error { color:#f87171; }
+.bs-toast-info  { color:#7dd3fc; }
+
+/* El texto siempre legible; solo el icono lleva el color del tono */
+.bs-toast .bs-toast-msg{ color: rgba(255,255,255,.94); }
+
+/* ---------- Modo claro ---------- */
+body.light .bs-toast{
+  background: rgba(255, 255, 255, .88);
+  border-color: rgba(15, 23, 42, .10);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, .14);
+}
+body.light .bs-toast .bs-toast-msg{ color: #0f172a; }
+body.light .bs-toast-ok    { color:#15803d; }
+body.light .bs-toast-warn  { color:#b45309; }
+body.light .bs-toast-error { color:#b91c1c; }
+body.light .bs-toast-info  { color:#0369a1; }
+
+/* ---------- Movil ---------- */
+@media (max-width: 640px){
+  #bsToastContainer{
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    align-items: stretch;
+    max-width: none;
+  }
+}
+
+/* ---------- Accesibilidad ---------- */
+@media (prefers-reduced-motion: reduce){
+  .bs-toast,
+  .bs-toast-out,
+  .bs-toast-ok .bs-toast-ic path{
+    animation: none;
+  }
+  .bs-toast-ok .bs-toast-ic path{ stroke-dashoffset: 0; }
+}
