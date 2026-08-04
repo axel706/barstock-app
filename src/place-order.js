@@ -110,6 +110,12 @@
             state.orderHistory.unshift(order);
           }
           if (typeof saveState === 'function') saveState();
+          // state.placedOrders se construyo dentro de loadOrdersFromCloud()
+          // usando la orden todavia incompleta; hay que rearmarlo con los
+          // items ya corregidos para que la tabla de Ordering los oculte.
+          if (typeof window.rebuildPlacedOrdersFromHistory === 'function') {
+            await window.rebuildPlacedOrdersFromHistory();
+          }
           if (typeof render === 'function') render();
           if (typeof renderVendorPanel === 'function') renderVendorPanel();
         }
@@ -167,12 +173,15 @@
         }, 7000);
       }
 
+      return order;
+
     } catch (err) {
       console.error(err);
       alert('Order was NOT saved to cloud.');
       if (typeof setStatus === 'function') {
         setStatus('Order failed because cloud save failed.');
       }
+      return null;
     } finally {
       if (typeof isPlacingOrder !== 'undefined') isPlacingOrder = false;
       if (placeBtn) {

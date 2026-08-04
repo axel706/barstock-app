@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260804-125656</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260804-132900</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2609,16 +2609,15 @@ function renderVendorPanel() {
         // Set pending state BEFORE placeCurrentOrder so render() sees it
         sessionStorage.setItem('vsp_placed_' + activeVendorTab, '__pending__');
         try {
-          await window.placeCurrentOrder();
-          const latest = (state.orderHistory || []).filter(o => o.vendor === activeVendorTab).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
-          if (latest) {
-            sessionStorage.setItem('vsp_placed_' + activeVendorTab, latest.id);
+          const placed = await window.placeCurrentOrder();
+          if (!placed || !placed.id) {
+            throw new Error('placeCurrentOrder did not return a placed order');
           }
+          sessionStorage.setItem('vsp_placed_' + activeVendorTab, placed.id);
           renderVendorPanel();
           setTimeout(() => {
             if (typeof window.BarStockEmailOrder?.openModal === 'function') {
-              const ord = (state.orderHistory || []).filter(o => o.vendor === activeVendorTab).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
-              if (ord) window.BarStockEmailOrder.openModal(ord.id);
+              window.BarStockEmailOrder.openModal(placed.id);
             }
           }, 400);
         } catch(err) {
