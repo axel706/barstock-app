@@ -131,7 +131,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260804-151059</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260804-152032</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2000,6 +2000,17 @@ function fmt(v){ return Number.isInteger(v) ? String(v) : Number(v).toFixed(2).r
 function fmtMoney(v){ return '$' + parseNum(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 
+// Escapa un texto para meterlo dentro de comillas simples en un onclick.
+// Ojo: NO sirve la entidad &#39; aqui. El navegador la convierte a apostrofo
+// ANTES de que JavaScript lea el atributo, asi que el string se corta igual.
+// Hay que escapar a nivel de JavaScript, con barra invertida.
+// La barra invertida va primero, si no se escaparia a si misma dos veces.
+function escapeJsAttr(s){
+  return String(s ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'");
+}
+
 function rowOrderHistoryMatchesItem(orderItem, row){
   const codeA = String(orderItem?.code || '').trim();
   const codeB = String(row?.code || '').trim();
@@ -2379,7 +2390,7 @@ function renderHistoryVendorTabs(){
   const wrap = safeEl('historyVendorTabs');
   if(!wrap) return;
   const vendors = getVendorsForFilter();
-  wrap.innerHTML = vendors.map(v => `<button class="${historyVendorTab===v?'active':''}" onclick="setHistoryVendorFilter('${v.replace(/'/g,"\'")}')">${v==='ALL' ? 'All Vendors' : v}</button>`).join('');
+  wrap.innerHTML = vendors.map(v => `<button class="${historyVendorTab===v?'active':''}" onclick="setHistoryVendorFilter('${escapeJsAttr(v)}')">${v==='ALL' ? 'All Vendors' : v}</button>`).join('');
 }
 // Order history UI functions moved to src/order-history-ui.js
 async function refreshParAdjustments(){
@@ -2394,7 +2405,10 @@ function getParChipHtml(row){
   const par = parAdjustments.get(k);
   if(!par) return '';
   if(par.status === 'observing') return '';
-  const itemKey = encodeURIComponent(row.item + '||' + (row.code || ''));
+  // encodeURIComponent NO escapa el apostrofo, y este valor va dentro de
+  // comillas simples en el onclick. Sin el %27, un nombre como "Angel's
+  // Envy" corta el atributo a la mitad y el chip deja de responder.
+  const itemKey = encodeURIComponent(row.item + '||' + (row.code || '')).replace(/'/g, '%27');
   if(par.status === 'never_ordered'){
     const tip = `Suggested: ${par.currentSuggested} · Never ordered in ${par.normalWeeks} normal weeks · Review this item`;
     return `<span class="par-chip par-chip-review" title="${tip}" onclick="openItemInfoModalByKey(event,'${itemKey}')">Pour·IQ™ Review</span>`;
@@ -2414,7 +2428,7 @@ function render(){
   const q = normalizeName(document.getElementById('searchInput')?.value || '');
   const vendorFilter = document.getElementById('vendorFilter')?.value || 'ALL';
   const inventoryVendors = getVendorsForFilter();
-  document.getElementById('inventoryVendorTabs').innerHTML = inventoryVendors.map(v => `<div class="oh-filter-chip ${vendorFilter===v?'active':''}" onclick="setInventoryVendorFilter('${v.replace(/'/g,"\'")}')">${v==='ALL'?'ALL':v}</div>`).join('');
+  document.getElementById('inventoryVendorTabs').innerHTML = inventoryVendors.map(v => `<div class="oh-filter-chip ${vendorFilter===v?'active':''}" onclick="setInventoryVendorFilter('${escapeJsAttr(v)}')">${v==='ALL'?'ALL':v}</div>`).join('');
   const filtered = state.master.filter(r => (!q || r.itemNorm.includes(q) || normalizeName(r.code).includes(q)) && (vendorFilter==='ALL' || r.vendor===vendorFilter));
   const invVendorActive = vendorFilter !== 'ALL';
   // Toggle vendor column visibility
@@ -2439,7 +2453,7 @@ function render(){
   }).join('') || `<tr><td colspan="8" class="muted">No inventory loaded.</td></tr>`;
 
   const vendors = getVendorsForFilter();
-  document.getElementById('vendorTabs').innerHTML = vendors.map(v => `<div class="oh-filter-chip ${activeVendorTab===v?'active':''}" onclick="setVendorTab('${v.replace(/'/g,"\'")}')">${v}</div>`).join('');
+  document.getElementById('vendorTabs').innerHTML = vendors.map(v => `<div class="oh-filter-chip ${activeVendorTab===v?'active':''}" onclick="setVendorTab('${escapeJsAttr(v)}')">${v}</div>`).join('');
   let vendRows = getCurrentVendorRows();
   // Sort by urgency then by quantity to order descending
   vendRows = vendRows.slice().sort((a, b) => {
