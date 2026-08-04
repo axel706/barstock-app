@@ -358,17 +358,40 @@
       // fetchAllSnapshotRows — sin esto la respuesta se corta en 1000 filas
       // y los productos aparecen con menos semanas de las que realmente tienen)
       const { url, key } = getConfig();
+      // on_hand_end se trae para detectar quiebres: una semana que cerro en
+      // cero es una semana en la que te quedaste sin producto.
       const allRows = await fetchAllSnapshotRows(
-        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&is_event_week=eq.false&used=not.is.null&select=id,item_name,code,used,week_start`
+        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&is_event_week=eq.false&used=not.is.null&select=id,item_name,code,used,week_start,on_hand_end`
       );
 
       // Group by item
       const byItem = new Map();
+      const stockoutsByItem = new Map();
       for (const r of allRows || []) {
         const k = `${r.item_name}||${r.code || ''}`;
         if (!byItem.has(k)) byItem.set(k, new Map());
         const weekMap = byItem.get(k);
         if (!weekMap.has(r.week_start)) weekMap.set(r.week_start, Number(r.used || 0));
+
+        if (r.on_hand_end !== null && Number(r.on_hand_end) <= 0) {
+          if (!stockoutsByItem.has(k)) stockoutsByItem.set(k, new Set());
+          stockoutsByItem.get(k).add(r.week_start);
+        }
+      }
+
+      // ── Ventas reales, para comparar contra el uso ──────────────────
+      // Si consistentemente USAS mas de lo que VENDES, ahi hay servicio de
+      // mas, merma o robo. El dato ya existe en theoretical_sales pero
+      // nunca se habia cruzado con las decisiones de par.
+      const salesRows = await fetchAllSnapshotRows(
+        `${url}/rest/v1/theoretical_sales?location_id=eq.${locationId}&select=id,item_name,sold,week_start`
+      );
+      const soldByName = new Map();
+      for (const r of salesRows || []) {
+        const n = String(r.item_name || '').trim().toUpperCase();
+        if (!n) continue;
+        if (!soldByName.has(n)) soldByName.set(n, new Map());
+        soldByName.get(n).set(r.week_start, Number(r.sold || 0));
       }
 
       // Build ordered map per item per week (paginado por el mismo motivo)
@@ -410,8 +433,56 @@
 
         const usedValues = Array.from(weekMap.values());
         const avgUsed = usedValues.reduce((a, b) => a + b, 0) / usedValues.length;
-        const suggestedOptimal = Math.ceil(avgUsed * 1.35);
+
+        // ── Que tan predecible es este producto ──────────────────────
+        // Dos articulos pueden promediar 5 y comportarse distinto: uno
+        // vende 5,5,5,5 y otro 1,9,2,8. El segundo te deja tirado en las
+        // semanas altas si le pones el mismo par. La desviacion mide eso.
+        const variance = usedValues.reduce((s, v) => s + Math.pow(v - avgUsed, 2), 0) / usedValues.length;
+        const stdDev = Math.sqrt(variance);
+        // Coeficiente de variacion: desviacion relativa al promedio, para
+        // poder comparar un producto de 0.5/sem con uno de 20/sem.
+        const cv = avgUsed > 0 ? stdDev / avgUsed : 0;
+
+        const stockoutWeeks = stockoutsByItem.get(k)?.size || 0;
+
+        // ── Par optimo ───────────────────────────────────────────────
+        // Base: la formula de siempre, avg x 1.35.
+        // Colchon de seguridad: avg + 1.28 desviaciones cubre ~90% de las
+        // semanas. Se toma el MAYOR de los dos, nunca el menor, para que
+        // esto solo pueda subir el par de lo erratico y jamas recortar el
+        // de lo estable. Asi no puede causar quiebres nuevos.
+        const basePar = avgUsed * 1.35;
+        const safetyPar = avgUsed + (1.28 * stdDev);
+        let optimalRaw = Math.max(basePar, safetyPar);
+
+        // Si el producto YA se acabo en semanas pasadas, el promedio esta
+        // sesgado hacia abajo: no puedes vender lo que no tienes. El uso
+        // registrado es menor que la demanda real, asi que se compensa.
+        if (stockoutWeeks > 0) {
+          optimalRaw *= (1 + Math.min(0.30, stockoutWeeks * 0.08));
+        }
+
+        const suggestedOptimal = Math.ceil(optimalRaw);
         const delta = current - suggestedOptimal;
+
+        // ── Uso contra venta ─────────────────────────────────────────
+        // Solo cuenta las semanas donde hay dato de ventas Y de uso.
+        const soldMap = soldByName.get(String(row.item || '').trim().toUpperCase());
+        let usedTotal = 0, soldTotal = 0, matchedWeeks = 0;
+        if (soldMap) {
+          for (const [wk, usedVal] of weekMap) {
+            if (!soldMap.has(wk)) continue;
+            usedTotal += usedVal;
+            soldTotal += soldMap.get(wk);
+            matchedWeeks++;
+          }
+        }
+        // Cuanto se fue sin venderse, en porcentaje. Se pide un minimo de
+        // 3 semanas y algo de volumen para no gritar por ruido.
+        const shrinkPct = (matchedWeeks >= 3 && usedTotal > 2 && soldTotal >= 0)
+          ? ((usedTotal - soldTotal) / usedTotal)
+          : null;
 
         let adjustment = 0;
         if (delta > 1) adjustment = -1;
@@ -434,7 +505,21 @@
           currentSuggested: current,
           delta,
           adjustment,
-          trendDelta
+          trendDelta,
+          // Señales nuevas
+          stdDev: Math.round(stdDev * 10) / 10,
+          cv: Math.round(cv * 100) / 100,
+          // Erratico a partir de 60% de variacion relativa: por debajo de
+          // eso el promedio predice razonablemente bien.
+          // El piso de 1/semana evita marcar como "erratico" un producto
+          // que simplemente casi no se vende: 0,1,0,0,1,0 da 141% de
+          // variacion pero no hay nada que gestionar ahi.
+          erratic: cv >= 0.6 && avgUsed >= 1,
+          stockoutWeeks,
+          // El colchon de seguridad mando sobre la formula base
+          safetyDriven: safetyPar > basePar,
+          shrinkPct: shrinkPct !== null ? Math.round(shrinkPct * 100) / 100 : null,
+          shrinkWeeks: matchedWeeks
         });
       }
 

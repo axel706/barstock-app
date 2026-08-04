@@ -121,6 +121,13 @@
       avgUsed: par.avgUsed,
       weeksNormal: par.normalWeeks,
       currentSuggested: par.currentSuggested,
+      // Señales de salud
+      erratic: !!par.erratic,
+      cv: par.cv ?? null,
+      stockoutWeeks: par.stockoutWeeks || 0,
+      safetyDriven: !!par.safetyDriven,
+      shrinkPct: par.shrinkPct ?? null,
+      shrinkWeeks: par.shrinkWeeks || 0,
     };
   }
 
@@ -349,7 +356,7 @@
     tr.dataset.status = status;
     tr.dataset.vendor = item.vendor || '';
     tr.innerHTML = `
-      <td style="font-weight:500">${escHtml(item.item || item.name || '')}</td>
+      <td style="font-weight:500">${escHtml(item.item || item.name || '')}${buildSignals(item)}</td>
       <td class="piq-muted">${escHtml(item.vendor || '')}</td>
       <td>${buildTargetCell(item)}</td>
       <td>${avgUsedStr}</td>
@@ -358,6 +365,28 @@
       <td>${buildAdjustmentChip(status, adjustment)}</td>
       <td>${buildActionCell(item, status, adjustment)}</td>`;
     return tr;
+  }
+
+  // Señales de salud junto al nombre. Solo aparecen cuando hay algo que
+  // decir: una fila sin problemas no lleva ninguna.
+  function buildSignals(item) {
+    const p = item._piq;
+    const out = [];
+
+    if (p.stockoutWeeks > 0) {
+      out.push(`<span class="piq-sig piq-sig-out" title="Se quedo sin existencia en ${p.stockoutWeeks} de las ultimas ${p.weeksNormal} semanas. El promedio de uso subestima la demanda real: no puedes vender lo que no tienes, asi que el par sugerido ya viene compensado.">Ran out ${p.stockoutWeeks}&times;</span>`);
+    }
+
+    if (p.erratic) {
+      out.push(`<span class="piq-sig piq-sig-var" title="Consumo irregular (varia ${Math.round((p.cv || 0) * 100)}% respecto a su promedio). El par lleva un colchon mas grande para cubrir las semanas altas.">Erratic</span>`);
+    }
+
+    // Solo se muestra si es material: por debajo de 15% es ruido de conteo
+    if (p.shrinkPct !== null && p.shrinkPct >= 0.15) {
+      out.push(`<span class="piq-sig piq-sig-shrink" title="En ${p.shrinkWeeks} semanas con datos de venta, salio ${Math.round(p.shrinkPct * 100)}% mas producto del que se vendio. Puede ser servicio de mas, merma o mal conteo.">${Math.round(p.shrinkPct * 100)}% unsold</span>`);
+    }
+
+    return out.length ? `<span class="piq-sigs">${out.join('')}</span>` : '';
   }
 
   // "16 → 9" con barra de avance y semanas restantes. Sin esto, un articulo
@@ -714,6 +743,27 @@
     renderQueue();
   };
 
+  // En la cola si hay espacio para explicar POR QUE, no solo el numero.
+  // Es la diferencia entre obedecer y entender.
+  function buildQueueReasons(item) {
+    const p = item._piq;
+    const out = [];
+
+    if (p.stockoutWeeks > 0) {
+      out.push(`<div class="piq-qr piq-qr-out"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Ran out ${p.stockoutWeeks} of ${p.weeksNormal} weeks &mdash; real demand is likely higher than measured</div>`);
+    }
+    if (p.erratic) {
+      out.push(`<div class="piq-qr"><i class="ti ti-wave-saw-tool" aria-hidden="true"></i> Irregular use (&plusmn;${Math.round((p.cv || 0) * 100)}%) &mdash; target includes a bigger buffer</div>`);
+    } else if (p.safetyDriven) {
+      out.push(`<div class="piq-qr"><i class="ti ti-shield-check" aria-hidden="true"></i> Target raised to cover high weeks</div>`);
+    }
+    if (p.shrinkPct !== null && p.shrinkPct >= 0.15) {
+      out.push(`<div class="piq-qr piq-qr-shrink"><i class="ti ti-alert-circle" aria-hidden="true"></i> ${Math.round(p.shrinkPct * 100)}% poured but not sold over ${p.shrinkWeeks} weeks</div>`);
+    }
+
+    return out.length ? `<div class="piq-qreasons">${out.join('')}</div>` : '';
+  }
+
   function queueKeys(e) {
     if (e.key === 'Escape')      { e.preventDefault(); window.PourIqSection._closeQueue(); }
     else if (e.key === 'ArrowRight' || e.key === 's') { e.preventDefault(); window.PourIqSection._queueSkip(); }
@@ -770,6 +820,7 @@
 
         <div class="piq-queue-impact ${status === 'under' ? 'piq-queue-warn' : ''}">${impact}</div>
         <div class="piq-queue-sub">${steps === 0 ? 'Last step to target' : steps + ' more week' + (steps === 1 ? '' : 's') + ' after this one'}</div>
+        ${buildQueueReasons(item)}
 
         <div class="piq-queue-btns">
           <button class="piq-queue-skip" onclick="PourIqSection._queueSkip()">Skip</button>
