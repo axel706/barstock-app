@@ -41,14 +41,9 @@ module.exports = async function handler(req, res) {
     const subject = `Wine & Liquor Cost Report — ${periodFrom} to ${periodTo}`;
     const safeFilename = filename || `cost_report_${periodFrom}_to_${periodTo}.pdf`;
 
-    const vendorRows = (byVendor || []).map(v =>
-      `<tr style="border-bottom:1px solid #e2e8f0">
-        <td style="padding:8px 12px">${escapeHtml(v.name)}</td>
-        <td style="padding:8px 12px;text-align:right">${fmt(v.wine)}</td>
-        <td style="padding:8px 12px;text-align:right">${fmt(v.liquor)}</td>
-        <td style="padding:8px 12px;text-align:right;font-weight:600">${fmt((v.wine || 0) + (v.liquor || 0))}</td>
-      </tr>`
-    ).join('');
+    // El desglose por vendor se quito del email a peticion de Axel.
+    // Sigue estando en el PDF adjunto, que se arma del lado del cliente
+    // y no pasa por aqui.
 
     const htmlBody = `<!DOCTYPE html><html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0f172a;line-height:1.6;margin:0;padding:0;background:#f8fafc">
 <div style="max-width:620px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06)">
@@ -97,19 +92,6 @@ module.exports = async function handler(req, res) {
     </tr>
   </tbody>
 </table>
-
-${vendorRows ? `<p style="font-weight:600;margin-bottom:8px">Vendor-level invoice breakdown:</p>
-<table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:14px">
-  <thead>
-    <tr style="background:#f1f5fb">
-      <th style="padding:10px 12px;text-align:left;color:#1e3a5f">Vendor</th>
-      <th style="padding:10px 12px;text-align:right;color:#1e3a5f">Wine</th>
-      <th style="padding:10px 12px;text-align:right;color:#1e3a5f">Liquor</th>
-      <th style="padding:10px 12px;text-align:right;color:#1e3a5f">Total</th>
-    </tr>
-  </thead>
-  <tbody>${vendorRows}</tbody>
-</table>` : ''}
 
 ${notes ? `<p><strong>Notes:</strong> ${escapeHtml(notes)}</p>` : ''}
 
