@@ -60,7 +60,7 @@
     const locationId = await fetchLocationId();
 
     const res = await fetch(
-      `${BARSTOCK_RT_URL}/rest/v1/inventory_items?location_id=eq.${locationId}&select=code,item_name,vendor,on_hand,suggested,value,category,order_override`,
+      `${BARSTOCK_RT_URL}/rest/v1/inventory_items?location_id=eq.${locationId}&select=code,item_name,vendor,on_hand,suggested,value,category,order_override,par_adjusted_week`,
       {
         headers: {
           apikey: BARSTOCK_RT_KEY,
@@ -93,6 +93,10 @@
         suggested,
         value: Number(r.value || 0),
         category: r.category || null,
+        // Semana en que Pour-IQ ya ajusto este articulo. Se escribia desde
+        // hace tiempo pero nunca se leia, por eso los articulos ajustados
+        // reaparecian como pendientes de inmediato.
+        parAdjustedWeek: r.par_adjusted_week || null,
         toOrder: typeof computeToOrder === 'function' ? computeToOrder(onHand, suggested) : 0,
         orderOverride: override
       };

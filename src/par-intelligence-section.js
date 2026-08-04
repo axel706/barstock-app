@@ -67,6 +67,25 @@
     });
   }
 
+  // ¿Este articulo ya se ajusto en el ciclo semanal actual?
+  // La regla de negocio es un paso por semana: una vez movido, se queda
+  // quieto hasta el siguiente ciclo aunque todavia no llegue al optimo.
+  function wasAdjustedThisWeek(item) {
+    const adjusted = item.parAdjustedWeek;
+    if (!adjusted) return false;
+
+    let weekStart = null;
+    try {
+      if (window.BarStockParIntelligence?.getEffectiveWeekStart) {
+        weekStart = window.BarStockParIntelligence.getEffectiveWeekStart();
+      }
+    } catch (e) { /* sin semana de referencia, no se bloquea nada */ }
+
+    if (!weekStart) return false;
+    // Ambas son 'YYYY-MM-DD', asi que comparar como texto es correcto
+    return String(adjusted) >= String(weekStart);
+  }
+
   function resolvePiq(item, par) {
     if (!par) {
       return { status: 'observing', optimal: null, adjustment: 0, trend: null,
@@ -86,7 +105,14 @@
     }
 
     // status === 'active'
-    const piqStatus = par.adjustment > 0 ? 'under' : par.adjustment < 0 ? 'over' : 'on';
+    let piqStatus = par.adjustment > 0 ? 'under' : par.adjustment < 0 ? 'over' : 'on';
+
+    // Ya se movio esta semana: sale de pendientes hasta el proximo ciclo.
+    // Se conserva el optimo y la distancia para poder mostrar cuanto falta.
+    if (piqStatus !== 'on' && wasAdjustedThisWeek(item)) {
+      piqStatus = 'adjusted';
+    }
+
     return {
       status: piqStatus,
       optimal: par.suggestedOptimal,
@@ -100,7 +126,7 @@
 
   // ── Metrics ────────────────────────────────────────────────────────────────
   function getCounts() {
-    const counts = { over: 0, on: 0, under: 0, observing: 0, review: 0 };
+    const counts = { over: 0, on: 0, under: 0, observing: 0, review: 0, adjusted: 0 };
     _items.forEach(it => {
       const s = it._piq.status;
       if (counts[s] !== undefined) counts[s]++;
@@ -167,6 +193,12 @@
         <div class="piq-chip-value" id="piqVal-savings">$${savings.toFixed(0)}</div>
         <div class="piq-chip-sub">if over par applied</div>
       </div>
+      ${counts.adjusted > 0 ? `
+      <div class="piq-filter-chip piq-chip-adjusted" id="piqChip-adjusted" onclick="PourIqSection._setFilter('adjusted')" role="button" tabindex="0">
+        <div class="piq-chip-label"><span class="piq-chip-dot" style="background:#38bdf8"></span>Adjusted</div>
+        <div class="piq-chip-value" id="piqVal-adjusted">${counts.adjusted}</div>
+        <div class="piq-chip-sub">done this week</div>
+      </div>` : ''}
       ${counts.observing > 0 ? `
       <div class="piq-filter-chip piq-chip-observing" id="piqChip-observing" onclick="PourIqSection._setFilter('observing')" role="button" tabindex="0">
         <div class="piq-chip-label"><span class="piq-chip-dot" style="background:#888780"></span>Observing</div>
@@ -228,7 +260,7 @@
 
   function sortItems(items) {
     return [...items].sort((a, b) => {
-      const order = { over: 0, under: 1, on: 2, review: 3, observing: 4 };
+      const order = { over: 0, under: 1, adjusted: 2, on: 3, review: 4, observing: 5 };
       const os = order[a._piq.status] ?? 5;
       const ob = order[b._piq.status] ?? 5;
       if (os !== ob) return os - ob;
@@ -270,6 +302,7 @@
     if (status === 'over')      return '<span class="piq-pill piq-pill-red">&minus;1</span>';
     if (status === 'under')     return '<span class="piq-pill piq-pill-amber">+1</span>';
     if (status === 'on')        return '<span class="piq-pill piq-pill-green">&#x2713;</span>';
+    if (status === 'adjusted')  return '<span class="piq-pill piq-pill-blue">Done this week</span>';
     if (status === 'observing') return '<span class="piq-pill piq-pill-gray">Observing</span>';
     if (status === 'review')    return '<span class="piq-pill piq-pill-blue">Review</span>';
     return '—';
@@ -319,11 +352,11 @@
 
   function applyFilter(f) {
     // Chip active states
-    ['over','on','under','savings','observing'].forEach(k => {
+    ['over','on','under','savings','observing','adjusted'].forEach(k => {
       const el = document.getElementById('piqChip-' + k);
       if (!el) return;
-      el.classList.remove('piq-chip-active-over','piq-chip-active-on','piq-chip-active-under','piq-chip-active-observing');
-      if (k === f) el.classList.add(k === 'observing' ? 'piq-chip-active-observing' : 'piq-chip-active-' + f);
+      el.classList.remove('piq-chip-active-over','piq-chip-active-on','piq-chip-active-under','piq-chip-active-observing','piq-chip-active-adjusted');
+      if (k === f) el.classList.add('piq-chip-active-' + f);
     });
 
     renderVendorTabs();
@@ -372,6 +405,7 @@
   window.PourIqSection._applyAll = async function() {
     // Respeta el filtro de vendor activo: si estas viendo BREAKTHRU,
     // "Apply all" no debe tocar los demas vendors a tus espaldas.
+    // 'adjusted' queda fuera a proposito: ya uso su paso de esta semana.
     const actionable = _items.filter(it =>
       (it._piq.status === 'over' || it._piq.status === 'under') &&
       (_activeVendor === 'ALL' || it.vendor === _activeVendor)
@@ -470,10 +504,23 @@
       throw new Error(`No se pudo guardar '${item.item}': ${txt}`);
     }
 
+    const adjustedWeek = new Date().toISOString().slice(0, 10);
+
+    // La distancia al optimo se recalcula, no se pone en cero. Bajar de 16
+    // a 15 no te deja "on par" cuando el optimo es 9: te deja a 6 de
+    // distancia y sin pasos disponibles hasta la proxima semana.
+    // Misma regla que par-intelligence.js: solo se mueve si la diferencia
+    // pasa de 1.
+    const optimal = item._piq.optimal;
+    const newDelta = (optimal != null) ? (newSuggested - optimal) : 0;
+    const newAdjustment = newDelta > 1 ? -1 : newDelta < -1 ? 1 : 0;
+
     // Solo despues de confirmar que la nube acepto, se actualiza lo local
     item._piq.currentSuggested = newSuggested;
-    item._piq.adjustment = 0;
-    item._piq.status = 'on';
+    item._piq.adjustment = newAdjustment;
+    // 'adjusted', no 'on': ya gasto su paso de esta semana
+    item._piq.status = newAdjustment === 0 ? 'on' : 'adjusted';
+    item.parAdjustedWeek = adjustedWeek;
     item.suggested = newSuggested;
     if (typeof computeToOrder === 'function') {
       item.toOrder = computeToOrder(item.onHand, newSuggested);
@@ -487,16 +534,20 @@
     );
     if (target) {
       target.suggested = newSuggested;
+      target.parAdjustedWeek = adjustedWeek;
       if (typeof computeToOrder === 'function') {
         target.toOrder = computeToOrder(target.onHand, newSuggested);
       }
     }
 
+    // El mapa global es la fuente de la que refresh() reconstruye todo,
+    // asi que tiene que quedar con la distancia real, no en cero.
     const k = `${item.item}||${item.code || ''}`;
     if (window.parAdjustments && window.parAdjustments.has(k)) {
       const par = window.parAdjustments.get(k);
       par.currentSuggested = newSuggested;
-      par.adjustment = 0;
+      par.delta = newDelta;
+      par.adjustment = newAdjustment;
     }
   }
 
