@@ -131,6 +131,63 @@ body.light .bs-nav-tab:active:not(.active){
               0 0 5px rgba(14, 165, 233, .26);
 }
 
+/* ---------- Tarjetas del menu principal ---------- */
+
+/* Ya tenian hover (la orilla azul y una subida de 2px), pero sobre la foto
+   de fondo era casi invisible. El glow las despega del fondo sea cual sea
+   la imagen que tengas puesta. */
+
+.bs-focus-card{
+  transition: border-color var(--bs-dur-fast) var(--bs-ease),
+              transform var(--bs-dur-fast) var(--bs-ease),
+              box-shadow var(--bs-dur-fast) var(--bs-ease),
+              background-color var(--bs-dur-fast) var(--bs-ease);
+}
+
+.bs-focus-card:hover{
+  border-color: rgba(56, 189, 248, .55);
+  transform: translateY(-3px);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, .30),
+              0 0 26px rgba(56, 189, 248, .28),
+              0 10px 30px rgba(0, 0, 0, .32);
+}
+
+/* El icono se enciende junto con la tarjeta */
+.bs-focus-card .bs-focus-icon{
+  transition: color var(--bs-dur-fast) var(--bs-ease),
+              transform var(--bs-dur-fast) var(--bs-ease);
+}
+.bs-focus-card:hover .bs-focus-icon{
+  color: #7dd3fc;
+  transform: scale(1.06);
+}
+
+/* Al presionar baja de vuelta: se siente como un boton fisico */
+.bs-focus-card:active{
+  transform: translateY(-1px) scale(.995);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, .40),
+              0 0 14px rgba(56, 189, 248, .30),
+              0 4px 14px rgba(0, 0, 0, .28);
+}
+
+/* Modo claro: menos halo, azul mas profundo */
+body.light .bs-focus-card:hover{
+  border-color: rgba(14, 165, 233, .50);
+  box-shadow: 0 0 0 1px rgba(14, 165, 233, .26),
+              0 0 20px rgba(14, 165, 233, .18),
+              0 10px 26px rgba(15, 23, 42, .14);
+}
+body.light .bs-focus-card:hover .bs-focus-icon{
+  color: #0284c7;
+}
+
+.bs-focus-card:focus-visible{
+  outline: none;
+  border-color: rgba(56, 189, 248, .65);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, .50),
+              0 0 22px rgba(56, 189, 248, .26);
+}
+
 /* Teclado: quien navega con Tab merece la misma pista visual */
 .bs-nav-tab:focus-visible{
   outline: none;
