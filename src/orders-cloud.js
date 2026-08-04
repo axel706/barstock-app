@@ -284,13 +284,24 @@
       const orders = await ordersRes.json();
       if (!Array.isArray(orders)) throw new Error('Invalid vendor_orders response');
 
-      // Filtrar items solo por los app_order_ids de esta locación
-      // Se piden en lotes para que la URL nunca se vuelva demasiado larga
-      // (con historiales grandes, una sola URL con todos los IDs se corta y
-      // deja ordenes con items faltantes aunque los datos si existan en la nube)
+      // Filtrar items solo por los app_order_ids de esta locación.
+      //
+      // CAUSA RAIZ del bug de "orden con 0 items": Supabase corta cualquier
+      // respuesta REST en un maximo de filas (1000 por defecto). En locaciones
+      // con historial grande el total de vendor_order_items supera ese tope y
+      // la respuesta llegaba truncada: unas ordenes se quedaban sin items y la
+      // que caia justo en el corte llegaba a la mitad. Los datos en la nube
+      // siempre estuvieron completos; lo que fallaba era la lectura.
+      //
+      // Por eso aqui se pagina explicitamente con limit/offset y un orden
+      // estable, pidiendo pagina tras pagina hasta que la nube deje de
+      // devolver filas. Asi el numero de items nunca depende del tamaño
+      // del historial.
       const orderIds = orders.map(o => o.app_order_id).filter(Boolean);
       let items = [];
-      const ORDER_IDS_BATCH_SIZE = 100;
+      const ORDER_IDS_BATCH_SIZE = 50;
+      const PAGE_SIZE = 1000;
+      const MAX_PAGES = 200; // tope de seguridad, evita bucles infinitos
 
       if (orderIds.length > 0) {
         const batches = [];
@@ -300,18 +311,33 @@
 
         const batchResults = await Promise.all(batches.map(async (batch) => {
           const idsParam = batch.map(id => `"${id}"`).join(',');
-          const itemsRes = await fetch(
-            `${window.BarStockOrdersConfig().url}/rest/v1/vendor_order_items?app_order_id=in.(${idsParam})&select=app_order_id,code,item_name,vendor,quantity,unit_price`,
-            {
-              headers: {
-                apikey: window.BarStockOrdersConfig().key,
-                Authorization: `Bearer ${window.BarStockOrdersConfig().key}`
+          const collected = [];
+
+          for (let page = 0; page < MAX_PAGES; page++) {
+            const offset = page * PAGE_SIZE;
+            const itemsRes = await fetch(
+              `${window.BarStockOrdersConfig().url}/rest/v1/vendor_order_items` +
+              `?app_order_id=in.(${idsParam})` +
+              `&select=app_order_id,code,item_name,vendor,quantity,unit_price` +
+              `&order=app_order_id.asc,item_name.asc,code.asc` +
+              `&limit=${PAGE_SIZE}&offset=${offset}`,
+              {
+                headers: {
+                  apikey: window.BarStockOrdersConfig().key,
+                  Authorization: `Bearer ${window.BarStockOrdersConfig().key}`
+                }
               }
-            }
-          );
-          const batchItems = await itemsRes.json();
-          if (!Array.isArray(batchItems)) throw new Error('Invalid vendor_order_items response');
-          return batchItems;
+            );
+            const pageItems = await itemsRes.json();
+            if (!Array.isArray(pageItems)) throw new Error('Invalid vendor_order_items response');
+
+            collected.push(...pageItems);
+
+            // pagina incompleta = ya no hay mas filas
+            if (pageItems.length < PAGE_SIZE) break;
+          }
+
+          return collected;
         }));
 
         items = batchResults.flat();

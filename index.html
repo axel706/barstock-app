@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260804-132900</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260804-134043</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -4659,10 +4659,14 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
   if (!window.BarStockEvents) return;
 
-  BarStockEvents.on('inventoryUpdated', () => {
+  BarStockEvents.on('inventoryUpdated', async () => {
     try {
+      // Hay que ESPERAR la reconstruccion antes de redibujar. Si se redibuja
+      // primero, la tabla se pinta con la lista de ordenados vieja y los
+      // articulos ya ordenados reaparecen como si nunca se hubiera colocado
+      // la orden (y no hay un segundo redibujado que lo corrija).
       if (typeof rebuildPlacedOrdersFromHistory === 'function') {
-        rebuildPlacedOrdersFromHistory();
+        await rebuildPlacedOrdersFromHistory();
       }
 
       if (window.BarStockQuickOrder && typeof window.BarStockQuickOrder.refreshProducts === 'function') {
@@ -4689,10 +4693,11 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
   if (!window.BarStockEvents) return;
 
-  BarStockEvents.on('ordersUpdated', () => {
+  BarStockEvents.on('ordersUpdated', async () => {
     try {
+      // Mismo motivo que en inventoryUpdated: esperar antes de redibujar.
       if (typeof rebuildPlacedOrdersFromHistory === 'function') {
-        rebuildPlacedOrdersFromHistory();
+        await rebuildPlacedOrdersFromHistory();
       }
 
       if (typeof render === 'function') render();
