@@ -1,0 +1,74 @@
+/* ============================================================
+   BarStock Pro — Estados de carga (Fase 2)
+   ------------------------------------------------------------
+   El principio: nunca mostrar un vacio. Mientras llegan los datos
+   se muestra la FORMA de lo que viene, no una pantalla en blanco
+   ni un "Loading..." suelto.
+
+   El brillo que recorre las barras es lo que comunica "esto esta
+   trabajando". Sin el, un esqueleto quieto parece la app rota.
+   ============================================================ */
+
+@keyframes bsShimmer{
+  0%  { background-position: -420px 0; }
+  100%{ background-position:  420px 0; }
+}
+
+/* Barra base. Hereda los colores del tema para que funcione
+   igual en claro y oscuro sin duplicar reglas. */
+.bs-skel{
+  display:block;
+  border-radius:6px;
+  background-color: var(--muted);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0px,
+    rgba(255,255,255,.07) 120px,
+    transparent 240px
+  );
+  background-size: 840px 100%;
+  background-repeat: no-repeat;
+  animation: bsShimmer 1.2s linear infinite;
+}
+
+body.light .bs-skel{
+  background-image: linear-gradient(
+    90deg,
+    transparent 0px,
+    rgba(255,255,255,.75) 120px,
+    transparent 240px
+  );
+}
+
+/* Anchos variados: un esqueleto con todas las barras iguales
+   se ve artificial. Los nombres de producto no miden lo mismo. */
+.bs-skel-w1{ width:82%; }
+.bs-skel-w2{ width:64%; }
+.bs-skel-w3{ width:73%; }
+.bs-skel-w4{ width:55%; }
+
+.bs-skel-line{ height:12px; }
+.bs-skel-pill{ height:20px; width:46px; border-radius:999px; }
+
+/* Filas de tabla en carga: sin hover ni cursor, no son clickeables */
+tr.bs-skel-row td{
+  padding-top:14px;
+  padding-bottom:14px;
+}
+tr.bs-skel-row{
+  pointer-events:none;
+}
+
+/* Bloque de esqueleto dentro de paneles y modales */
+.bs-skel-block{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:4px 0;
+}
+
+/* Si el sistema pide menos movimiento, el brillo se detiene pero
+   las barras siguen visibles: la informacion no se pierde. */
+@media (prefers-reduced-motion: reduce){
+  .bs-skel{ animation:none; }
+}

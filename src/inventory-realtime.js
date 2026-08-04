@@ -47,6 +47,16 @@
   }
 
   async function loadInventoryFromSupabase() {
+    // Esqueleto solo cuando no hay NADA que mostrar todavia (primer login,
+    // navegador nuevo, cambio de locacion). En las recargas de realtime ya
+    // hay datos en pantalla, y parpadear esqueletos encima seria peor que
+    // no hacer nada. El render() normal los sobreescribe al llegar los datos.
+    const isFirstLoad = !Array.isArray(state.master) || state.master.length === 0;
+    if (isFirstLoad && window.BarStockSkeleton) {
+      window.BarStockSkeleton.tableRows('inventoryBody', 8, 7);
+      window.BarStockSkeleton.tableRows('vendorBody', 7, 5);
+    }
+
     const locationId = await fetchLocationId();
 
     const res = await fetch(
@@ -139,6 +149,12 @@
       enableInventoryRealtime().catch(err => {
         console.error(err);
         setRealtimeStatus('Error conectando inventory realtime');
+        // Si la carga fallo, el esqueleto se quedaria latiendo para siempre
+        // y pareceria que la app esta colgada. Mejor decir que paso.
+        if (window.BarStockSkeleton && (!Array.isArray(state.master) || !state.master.length)) {
+          window.BarStockSkeleton.error('inventoryBody', 8, 'No se pudo cargar el inventario. Recarga la pagina.');
+          window.BarStockSkeleton.error('vendorBody', 7, 'No se pudo cargar el inventario. Recarga la pagina.');
+        }
       });
     }, 600);
   });

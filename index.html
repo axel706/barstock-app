@@ -33,6 +33,7 @@
   <link rel="stylesheet" href="styles/auth.css">
   <link rel="stylesheet" href="styles/cost-report.css?v=heatmap1">
   <link rel="stylesheet" href="styles/motion.css?v=motion1">
+  <link rel="stylesheet" href="styles/skeleton.css?v=skel1">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -129,7 +130,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260804-145631</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260804-150454</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -4663,6 +4664,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
 <script src="src/vendor-mapping-cloud.js"></script>
 <script src="src/settings-vendor-codes.js"></script>
+<script src="src/skeleton.js"></script>
 <script src="src/inventory-realtime.js"></script>
 <script src="src/inventory-cloud.js?v=account-wjm-1"></script>
 <script src="src/par-intelligence.js"></script>
@@ -5921,7 +5923,11 @@ async function openItemInfoModal(idx) {
   var body = document.getElementById('itemInfoModalBody');
   if (!modal || !title || !body) return;
   title.textContent = r.item;
-  body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--sub)">Loading...</div>';
+  if (window.BarStockSkeleton) {
+    window.BarStockSkeleton.block('itemInfoModalBody', 5);
+  } else {
+    body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--sub)">Loading...</div>';
+  }
   modal.classList.remove('hidden');
 
   var parKey = r.item + '||' + (r.code || '');
