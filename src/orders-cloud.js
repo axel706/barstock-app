@@ -285,22 +285,36 @@
       if (!Array.isArray(orders)) throw new Error('Invalid vendor_orders response');
 
       // Filtrar items solo por los app_order_ids de esta locación
+      // Se piden en lotes para que la URL nunca se vuelva demasiado larga
+      // (con historiales grandes, una sola URL con todos los IDs se corta y
+      // deja ordenes con items faltantes aunque los datos si existan en la nube)
       const orderIds = orders.map(o => o.app_order_id).filter(Boolean);
       let items = [];
+      const ORDER_IDS_BATCH_SIZE = 100;
 
       if (orderIds.length > 0) {
-        const idsParam = orderIds.map(id => `"${id}"`).join(',');
-        const itemsRes = await fetch(
-          `${window.BarStockOrdersConfig().url}/rest/v1/vendor_order_items?app_order_id=in.(${idsParam})&select=app_order_id,code,item_name,vendor,quantity,unit_price`,
-          {
-            headers: {
-              apikey: window.BarStockOrdersConfig().key,
-              Authorization: `Bearer ${window.BarStockOrdersConfig().key}`
+        const batches = [];
+        for (let i = 0; i < orderIds.length; i += ORDER_IDS_BATCH_SIZE) {
+          batches.push(orderIds.slice(i, i + ORDER_IDS_BATCH_SIZE));
+        }
+
+        const batchResults = await Promise.all(batches.map(async (batch) => {
+          const idsParam = batch.map(id => `"${id}"`).join(',');
+          const itemsRes = await fetch(
+            `${window.BarStockOrdersConfig().url}/rest/v1/vendor_order_items?app_order_id=in.(${idsParam})&select=app_order_id,code,item_name,vendor,quantity,unit_price`,
+            {
+              headers: {
+                apikey: window.BarStockOrdersConfig().key,
+                Authorization: `Bearer ${window.BarStockOrdersConfig().key}`
+              }
             }
-          }
-        );
-        items = await itemsRes.json();
-        if (!Array.isArray(items)) throw new Error('Invalid vendor_order_items response');
+          );
+          const batchItems = await itemsRes.json();
+          if (!Array.isArray(batchItems)) throw new Error('Invalid vendor_order_items response');
+          return batchItems;
+        }));
+
+        items = batchResults.flat();
       }
 
       const itemsByOrder = {};
