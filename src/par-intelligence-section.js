@@ -275,10 +275,19 @@
     return '—';
   }
 
+  // Clave nombre+codigo. Antes se usaba `item.id || item.code`, pero id no
+  // existe y muchos articulos tienen el codigo vacio: con codigo vacio el
+  // find() devolvia el primero de la lista y el ajuste se aplicaba al
+  // articulo equivocado.
+  // El %27 es porque encodeURIComponent NO escapa el apostrofo y esto va
+  // dentro de comillas simples en el onclick.
+  function itemKeyFor(item) {
+    return encodeURIComponent(`${item.item || ''}||${item.code || ''}`).replace(/'/g, '%27');
+  }
+
   function buildActionCell(item, status, adjustment) {
     if (status === 'over' || status === 'under') {
-      const id = escHtml(item.id || item.code || '');
-      return `<button class="piq-act-btn" onclick="PourIqSection._applyOne('${id}')">Apply</button>`;
+      return `<button class="piq-act-btn" onclick="PourIqSection._applyOne('${itemKeyFor(item)}')">Apply</button>`;
     }
     return '<span class="piq-act-none">—</span>';
   }
@@ -289,7 +298,9 @@
     if (!el) return;
     const vendors = ['ALL', ...Array.from(new Set(_items.map(it => it.vendor).filter(Boolean))).sort()];
     el.innerHTML = vendors.map(v =>
-      `<div class="oh-filter-chip ${_activeVendor === v ? 'active' : ''}" onclick="PourIqSection._setVendor('${v.replace(/'/g, "\'")}')">${v}</div>`
+      // El escape viejo era un no-op: en JS "\'" es simplemente "'".
+      // Hay que escapar con barra invertida real.
+      `<div class="oh-filter-chip ${_activeVendor === v ? 'active' : ''}" onclick="PourIqSection._setVendor('${String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}')">${escHtml(v)}</div>`
     ).join('');
   }
 
@@ -337,45 +348,155 @@
   }
 
   // ── Apply ──────────────────────────────────────────────────────────────────
-  window.PourIqSection._applyOne = async function(itemId) {
-    const item = _items.find(it => (it.id || it.code) == itemId);
+  window.PourIqSection._applyOne = async function(itemKey) {
+    const decoded = decodeURIComponent(itemKey);
+    const item = _items.find(it => `${it.item || ''}||${it.code || ''}` === decoded);
     if (!item) return;
-    await applyAdjustment(item);
-    await refresh();
-  };
 
-  window.PourIqSection._applyAll = async function() {
-    const actionable = _items.filter(it =>
-      it._piq.status === 'over' || it._piq.status === 'under'
-    );
-    if (actionable.length === 0) return;
-    const confirmed = confirm(`Apply ${actionable.length} par adjustment${actionable.length > 1 ? 's' : ''}?`);
-    if (!confirmed) return;
-    await Promise.all(actionable.map(applyAdjustment));
-    await refresh();
-  };
-
-  async function applyAdjustment(item) {
-    const { currentSuggested, adjustment } = item._piq;
-    if (adjustment === 0) return;
-    const newSuggested = currentSuggested + adjustment;
     try {
-      await window.supabase
-        .from('inventory_items')
-        .update({ suggested: newSuggested })
-        .eq('id', item.id);
-      item._piq.currentSuggested = newSuggested;
-      item._piq.adjustment = 0;
-      item._piq.status = 'on';
-      if (item.suggested !== undefined) item.suggested = newSuggested;
-      const k = `${item.item}||${item.code || ''}`;
-      if (window.parAdjustments && window.parAdjustments.has(k)) {
-        const par = window.parAdjustments.get(k);
-        par.currentSuggested = newSuggested;
-        par.adjustment = 0;
+      await applyAdjustment(item);
+      if (typeof saveState === 'function') saveState();
+      if (typeof render === 'function') render();
+      if (typeof setStatus === 'function') {
+        setStatus(`Par updated for '${item.item}' → ${item._piq.currentSuggested}`);
       }
     } catch (err) {
       console.error('[PourIqSection] applyAdjustment error', err);
+      if (typeof setStatus === 'function') {
+        setStatus(`Could not update par for '${item.item}'.`);
+      }
+    }
+    refresh();
+  };
+
+  window.PourIqSection._applyAll = async function() {
+    // Respeta el filtro de vendor activo: si estas viendo BREAKTHRU,
+    // "Apply all" no debe tocar los demas vendors a tus espaldas.
+    const actionable = _items.filter(it =>
+      (it._piq.status === 'over' || it._piq.status === 'under') &&
+      (_activeVendor === 'ALL' || it.vendor === _activeVendor)
+    );
+    if (actionable.length === 0) return;
+
+    const scope = _activeVendor === 'ALL' ? '' : ` for ${_activeVendor}`;
+    if (!confirm(`Apply ${actionable.length} par adjustment${actionable.length > 1 ? 's' : ''}${scope}?`)) return;
+
+    // En serie, no en paralelo: 44 PATCH simultaneos a Supabase se
+    // estrangulan entre si y algunos fallan en silencio.
+    let ok = 0;
+    const failed = [];
+    for (const item of actionable) {
+      try {
+        await applyAdjustment(item);
+        ok++;
+      } catch (err) {
+        console.error('[PourIqSection] applyAdjustment error', err);
+        failed.push(item.item);
+      }
+    }
+
+    if (typeof saveState === 'function') saveState();
+    if (typeof render === 'function') render();
+
+    if (typeof setStatus === 'function') {
+      setStatus(failed.length
+        ? `${ok} par adjustments applied. ${failed.length} failed: ${failed.slice(0, 3).join(', ')}${failed.length > 3 ? '…' : ''}`
+        : `${ok} par adjustment${ok > 1 ? 's' : ''} applied${scope}.`);
+    }
+
+    refresh();
+  };
+
+  // Cache del location_id: sin esto cada Apply del "Apply all" haria su
+  // propia consulta de locacion, 44 veces seguidas para nada.
+  let _locationIdCache = null;
+
+  async function getLocationId() {
+    if (_locationIdCache) return _locationIdCache;
+    const cfg = window.BARSTOCK_CONFIG || {};
+    const res = await fetch(
+      `${cfg.SUPABASE_URL}/rest/v1/locations?name=eq.${encodeURIComponent(cfg.LOCATION_NAME)}&select=id`,
+      { headers: { apikey: cfg.SUPABASE_KEY, Authorization: `Bearer ${cfg.SUPABASE_KEY}` } }
+    );
+    const data = await res.json();
+    const id = Array.isArray(data) && data[0] ? data[0].id : null;
+    if (!id) throw new Error('Location not found: ' + cfg.LOCATION_NAME);
+    _locationIdCache = id;
+    return id;
+  }
+
+  // Esta funcion estaba rota desde siempre y fallaba en silencio:
+  // usaba window.supabase.from(...) — pero window.supabase es la libreria,
+  // no un cliente conectado, y no tiene .from() — y filtraba por item.id,
+  // un campo que los objetos de state.master nunca han tenido.
+  // El try/catch se tragaba el error, asi que Apply no hacia nada y los
+  // pendientes nunca bajaban.
+  //
+  // Ahora usa el mismo patron que applyInvPourIq() en index.html, que es
+  // el que si funciona: PATCH por location_id + item_name via REST.
+  async function applyAdjustment(item) {
+    const { currentSuggested, adjustment } = item._piq;
+    if (adjustment === 0) return;
+
+    const newSuggested = currentSuggested + adjustment;
+    const cfg = window.BARSTOCK_CONFIG || {};
+
+    const locationId = await getLocationId();
+
+    let url = `${cfg.SUPABASE_URL}/rest/v1/inventory_items` +
+              `?location_id=eq.${locationId}` +
+              `&item_name=eq.${encodeURIComponent(item.item || '')}`;
+    // El codigo desambigua cuando dos articulos comparten nombre
+    if (item.code) url += `&code=eq.${encodeURIComponent(item.code)}`;
+
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        apikey: cfg.SUPABASE_KEY,
+        Authorization: `Bearer ${cfg.SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal'
+      },
+      body: JSON.stringify({
+        suggested: newSuggested,
+        // Igual que applyInvPourIq: marca la semana en que se ajusto,
+        // que es lo que evita re-ajustar el mismo item dos veces.
+        par_adjusted_week: new Date().toISOString().slice(0, 10)
+      })
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`No se pudo guardar '${item.item}': ${txt}`);
+    }
+
+    // Solo despues de confirmar que la nube acepto, se actualiza lo local
+    item._piq.currentSuggested = newSuggested;
+    item._piq.adjustment = 0;
+    item._piq.status = 'on';
+    item.suggested = newSuggested;
+    if (typeof computeToOrder === 'function') {
+      item.toOrder = computeToOrder(item.onHand, newSuggested);
+    }
+
+    // state.master es el objeto real que pinta el resto de la app.
+    // _items son copias ({...item}), asi que hay que tocar el original.
+    const master = (window.state && window.state.master) || [];
+    const target = master.find(m =>
+      m.item === item.item && String(m.code || '') === String(item.code || '')
+    );
+    if (target) {
+      target.suggested = newSuggested;
+      if (typeof computeToOrder === 'function') {
+        target.toOrder = computeToOrder(target.onHand, newSuggested);
+      }
+    }
+
+    const k = `${item.item}||${item.code || ''}`;
+    if (window.parAdjustments && window.parAdjustments.has(k)) {
+      const par = window.parAdjustments.get(k);
+      par.currentSuggested = newSuggested;
+      par.adjustment = 0;
     }
   }
 
