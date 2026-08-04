@@ -85,10 +85,61 @@ button:active:not(:disabled){
   transform: scale(.975);
 }
 
-/* Tabs de navegacion */
+/* ---------- Tabs de navegacion ---------- */
+
+/* Antes el hover y el tab activo se veian identicos (mismo fondo, mismo
+   color), asi que no podias distinguir donde estabas parado de donde ibas
+   a entrar. Ahora el glow significa una sola cosa: "vas a seleccionar
+   este". El activo se queda solido, sin glow. */
+
 .bs-nav-tab{
+  position: relative;
   transition: background-color var(--bs-dur-fast) var(--bs-ease),
-              color var(--bs-dur-fast) var(--bs-ease);
+              color var(--bs-dur-fast) var(--bs-ease),
+              box-shadow var(--bs-dur-fast) var(--bs-ease);
+}
+
+.bs-nav-tab:hover:not(.active){
+  background: rgba(56, 189, 248, .10);
+  color: #7dd3fc;
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, .38),
+              0 0 16px rgba(56, 189, 248, .26);
+}
+
+/* El activo no brilla: ya llegaste, no hay nada que anticipar */
+.bs-nav-tab.active{
+  box-shadow: none;
+}
+
+/* Al presionar, el glow se contrae. Da la sensacion de que el click
+   "aterrizo" en vez de que la pagina cambio sola. */
+.bs-nav-tab:active:not(.active){
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, .45),
+              0 0 6px rgba(56, 189, 248, .30);
+}
+
+/* Modo claro: el mismo glow sobre fondo blanco se ve lavado y sucio.
+   Se usa un azul mas profundo y menos difuminado. */
+body.light .bs-nav-tab:hover:not(.active){
+  background: rgba(14, 165, 233, .09);
+  color: #0369a1;
+  box-shadow: 0 0 0 1px rgba(14, 165, 233, .40),
+              0 0 12px rgba(14, 165, 233, .20);
+}
+body.light .bs-nav-tab:active:not(.active){
+  box-shadow: 0 0 0 1px rgba(14, 165, 233, .50),
+              0 0 5px rgba(14, 165, 233, .26);
+}
+
+/* Teclado: quien navega con Tab merece la misma pista visual */
+.bs-nav-tab:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, .55),
+              0 0 16px rgba(56, 189, 248, .28);
+}
+body.light .bs-nav-tab:focus-visible{
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, .55),
+              0 0 12px rgba(14, 165, 233, .22);
 }
 
 /* Chips de vendor y pills clickeables */
