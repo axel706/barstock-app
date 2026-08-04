@@ -272,17 +272,38 @@
       const location = await getOrdersLocationId();
       const locationId = location.id;
 
-      const ordersRes = await fetch(
-        `${window.BarStockOrdersConfig().url}/rest/v1/vendor_orders?location_id=eq.${locationId}&select=app_order_id,vendor,created_at,export_type,filename,total_units,subtotal,po_number&order=created_at.desc`,
-        {
-          headers: {
-            apikey: window.BarStockOrdersConfig().key,
-            Authorization: `Bearer ${window.BarStockOrdersConfig().key}`
-          }
+      // Paginado por el mismo motivo que vendor_order_items: Supabase corta
+      // toda respuesta REST en 1000 filas. Sin esto, al pasar de 1000 ordenes
+      // las mas viejas desaparecerian del historial sin aviso.
+      // El desempate por app_order_id evita que una fila se repita o se salte
+      // cuando varias ordenes comparten el mismo created_at.
+      const orders = [];
+      {
+        const PAGE_SIZE = 1000;
+        const MAX_PAGES = 100; // tope de seguridad
+
+        for (let page = 0; page < MAX_PAGES; page++) {
+          const offset = page * PAGE_SIZE;
+          const ordersRes = await fetch(
+            `${window.BarStockOrdersConfig().url}/rest/v1/vendor_orders` +
+            `?location_id=eq.${locationId}` +
+            `&select=app_order_id,vendor,created_at,export_type,filename,total_units,subtotal,po_number` +
+            `&order=created_at.desc,app_order_id.asc` +
+            `&limit=${PAGE_SIZE}&offset=${offset}`,
+            {
+              headers: {
+                apikey: window.BarStockOrdersConfig().key,
+                Authorization: `Bearer ${window.BarStockOrdersConfig().key}`
+              }
+            }
+          );
+          const pageOrders = await ordersRes.json();
+          if (!Array.isArray(pageOrders)) throw new Error('Invalid vendor_orders response');
+
+          orders.push(...pageOrders);
+          if (pageOrders.length < PAGE_SIZE) break; // pagina incompleta = no hay mas
         }
-      );
-      const orders = await ordersRes.json();
-      if (!Array.isArray(orders)) throw new Error('Invalid vendor_orders response');
+      }
 
       // Filtrar items solo por los app_order_ids de esta locación.
       //
