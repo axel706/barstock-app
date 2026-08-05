@@ -31,7 +31,7 @@
 
   <link rel="stylesheet" href="styles/fixes.css">
   <link rel="stylesheet" href="styles/auth.css">
-  <link rel="stylesheet" href="styles/cost-report.css?v=steps6">
+  <link rel="stylesheet" href="styles/cost-report.css?v=steps7">
   <link rel="stylesheet" href="styles/motion.css?v=motion3">
   <link rel="stylesheet" href="styles/skeleton.css?v=skel1">
   <link rel="stylesheet" href="styles/toast.css?v=toast1">
@@ -133,7 +133,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260804-211319</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260804-212314</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -446,41 +446,94 @@
       <div class="cr-subsection" data-cr-step="3">
         <div class="cr-subsection-header"><h3 class="cr-subsection-title">Sales &amp; Targets</h3></div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
-          <div>
-            <div class="cr-sub-block-title" id="crThisPeriodLabel">This Week</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <!-- Una tarjeta por categoria. Los seis inputs son los MISMOS de
+             siempre (crWineSales, crWineTarget, crLiquorSales,
+             crLiquorTarget, crWineSalesLY, crLiquorSalesLY): solo cambio
+             donde viven. getValues() sigue leyendo exactamente lo mismo.
+             Los targets se esconden detras de "edit" porque casi nunca
+             cambian; lo que gana espacio es el resultado. -->
+        <div class="cr-cat-grid">
+
+          <div class="cr-cat" id="crCatWine">
+            <div class="cr-cat-head">
+              <i class="ti ti-bottle" aria-hidden="true"></i>
+              <span class="cr-cat-name">Wine</span>
+              <span class="cr-cat-flag" id="crWineFlag"></span>
+            </div>
+
+            <div class="cr-cat-cost">
+              <span><i class="ti ti-receipt" aria-hidden="true"></i> Cost captured</span>
+              <strong id="crWineCostEcho">$0.00</strong>
+            </div>
+
+            <label class="cr-cat-label" for="crWineSales">Sales this period</label>
+            <div class="cr-cat-input"><span>$</span>
+              <input type="number" id="crWineSales" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()">
+            </div>
+
+            <div class="cr-cat-ly">
               <div>
-                <label>Wine Sales</label>
-                <div class="cr-invoice-input"><input type="number" id="crWineSales" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()"></div>
+                <label class="cr-cat-label" for="crWineSalesLY">Same period last year</label>
+                <div class="cr-cat-input sm"><span>$</span>
+                  <input type="number" id="crWineSalesLY" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()">
+                </div>
               </div>
-              <div>
-                <label>Wine Target %</label>
-                <div class="cr-target-input"><input type="number" id="crWineTarget" step="0.01" value="22" oninput="BarStockCostReport.updatePreview()"></div>
+              <span class="cr-cat-delta" id="crWineDelta"></span>
+            </div>
+
+            <div class="cr-cat-result">
+              <div class="cr-cat-cogs" id="crWineCogsBig">—</div>
+              <div class="cr-cat-target">
+                COGS &middot; target <strong id="crWineTargetEcho">22</strong>%
+                <button type="button" class="cr-cat-edit" onclick="BarStockCostSteps.toggleTarget('wine')">edit</button>
               </div>
-              <div>
-                <label>Liquor Sales</label>
-                <div class="cr-invoice-input"><input type="number" id="crLiquorSales" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()"></div>
+              <div class="cr-cat-input sm cr-target-row" id="crWineTargetRow" style="display:none">
+                <input type="number" id="crWineTarget" step="0.01" value="22" oninput="BarStockCostReport.updatePreview()"><span>%</span>
               </div>
-              <div>
-                <label>Liquor Target %</label>
-                <div class="cr-target-input"><input type="number" id="crLiquorTarget" step="0.01" value="15" oninput="BarStockCostReport.updatePreview()"></div>
-              </div>
+              <div class="cr-cat-gap" id="crWineGap"></div>
             </div>
           </div>
-          <div>
-            <div class="cr-sub-block-title">Same Period · Last Year</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+
+          <div class="cr-cat" id="crCatLiquor">
+            <div class="cr-cat-head">
+              <i class="ti ti-glass-full" aria-hidden="true"></i>
+              <span class="cr-cat-name">Liquor</span>
+              <span class="cr-cat-flag" id="crLiquorFlag"></span>
+            </div>
+
+            <div class="cr-cat-cost">
+              <span><i class="ti ti-receipt" aria-hidden="true"></i> Cost captured</span>
+              <strong id="crLiquorCostEcho">$0.00</strong>
+            </div>
+
+            <label class="cr-cat-label" for="crLiquorSales">Sales this period</label>
+            <div class="cr-cat-input"><span>$</span>
+              <input type="number" id="crLiquorSales" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()">
+            </div>
+
+            <div class="cr-cat-ly">
               <div>
-                <label>Wine Sales (LY)</label>
-                <div class="cr-invoice-input"><input type="number" id="crWineSalesLY" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()"></div>
+                <label class="cr-cat-label" for="crLiquorSalesLY">Same period last year</label>
+                <div class="cr-cat-input sm"><span>$</span>
+                  <input type="number" id="crLiquorSalesLY" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()">
+                </div>
               </div>
-              <div>
-                <label>Liquor Sales (LY)</label>
-                <div class="cr-invoice-input"><input type="number" id="crLiquorSalesLY" step="0.01" placeholder="0.00" oninput="BarStockCostReport.updatePreview()"></div>
+              <span class="cr-cat-delta" id="crLiquorDelta"></span>
+            </div>
+
+            <div class="cr-cat-result">
+              <div class="cr-cat-cogs" id="crLiquorCogsBig">—</div>
+              <div class="cr-cat-target">
+                COGS &middot; target <strong id="crLiquorTargetEcho">15</strong>%
+                <button type="button" class="cr-cat-edit" onclick="BarStockCostSteps.toggleTarget('liquor')">edit</button>
               </div>
+              <div class="cr-cat-input sm cr-target-row" id="crLiquorTargetRow" style="display:none">
+                <input type="number" id="crLiquorTarget" step="0.01" value="15" oninput="BarStockCostReport.updatePreview()"><span>%</span>
+              </div>
+              <div class="cr-cat-gap" id="crLiquorGap"></div>
             </div>
           </div>
+
         </div>
       </div>
 

@@ -395,6 +395,191 @@ body.light .cr-recent-row:hover{ background: rgba(15,23,42,.04); }
   padding: 8px;
 }
 
+/* ---------- Paso 3: una tarjeta por categoria ---------- */
+
+.cr-cat-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 820px){
+  .cr-cat-grid{ grid-template-columns: minmax(0, 1fr); }
+}
+
+.cr-cat{
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(148,163,184,.20);
+  border-radius: 16px;
+  padding: 15px 16px;
+}
+body.light .cr-cat{
+  background: rgba(15,23,42,.03);
+  border-color: rgba(15,23,42,.14);
+}
+
+.cr-cat-head{
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 11px;
+}
+.cr-cat-head > i{ font-size: 17px; color: #38bdf8; }
+.cr-cat-name{ font-weight: 800; font-size: 14px; }
+.cr-cat-flag{ margin-left: auto; }
+
+.cr-flag{
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+.cr-flag i{ font-size: 11px; }
+.cr-flag-ok,
+.cr-flag-near{ background: rgba(34,197,94,.16); color:#4ade80; }
+.cr-flag-over{ background: rgba(248,113,113,.16); color:#f87171; }
+body.light .cr-flag-ok,
+body.light .cr-flag-near{ background: rgba(21,128,61,.12); color:#15803d; }
+body.light .cr-flag-over{ background: rgba(185,28,28,.10); color:#b91c1c; }
+
+/* Eco del costo que ya se capturo en el paso 2 */
+.cr-cat-cost{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--sub);
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  margin-bottom: 12px;
+}
+.cr-cat-cost i{ font-size: 13px; margin-right: 4px; }
+.cr-cat-cost strong{ color: var(--text); font-weight: 700; }
+body.light .cr-cat-cost{ border-bottom-color: rgba(15,23,42,.10); }
+
+.cr-cat-label{
+  display: block;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--sub);
+  margin-bottom: 4px;
+}
+
+.cr-cat-input{
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 9px;
+  padding: 0 11px;
+  transition: border-color .16s cubic-bezier(.22,1,.36,1);
+}
+.cr-cat-input:focus-within{ border-color: rgba(56,189,248,.55); }
+.cr-cat-input > span{ font-size: 13px; color: var(--sub); flex-shrink: 0; }
+.cr-cat-input input{
+  flex: 1;
+  min-width: 0;
+  background: none !important;
+  border: none !important;
+  outline: none;
+  padding: 10px 0 !important;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  font-family: inherit;
+}
+.cr-cat-input.sm input{ padding: 7px 0 !important; font-size: 13px; font-weight: 600; }
+body.light .cr-cat-input{
+  background: rgba(255,255,255,.70);
+  border-color: rgba(15,23,42,.12);
+}
+
+/* Año pasado, en segundo plano */
+.cr-cat-ly{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: end;
+  margin-top: 9px;
+}
+.cr-delta{
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  margin-bottom: 7px;
+}
+.cr-delta i{ font-size: 11px; }
+.cr-delta-up  { background: rgba(34,197,94,.16);  color:#4ade80; }
+.cr-delta-down{ background: rgba(248,113,113,.16); color:#f87171; }
+.cr-delta-none{ background: rgba(148,163,184,.14); color: var(--sub); }
+body.light .cr-delta-up  { background: rgba(21,128,61,.12); color:#15803d; }
+body.light .cr-delta-down{ background: rgba(185,28,28,.10); color:#b91c1c; }
+
+/* El resultado, que es lo que importa */
+.cr-cat-result{
+  text-align: center;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+body.light .cr-cat-result{ border-top-color: rgba(15,23,42,.10); }
+
+.cr-cat-cogs{
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--sub);
+}
+.cr-cogs-ok,
+.cr-cogs-near{ color:#4ade80; }
+.cr-cogs-over{ color:#f87171; }
+body.light .cr-cogs-ok,
+body.light .cr-cogs-near{ color:#15803d; }
+body.light .cr-cogs-over{ color:#b91c1c; }
+
+.cr-cat-target{
+  font-size: 11px;
+  color: var(--sub);
+  margin-top: 6px;
+}
+.cr-cat-target strong{ color: var(--text); font-weight: 700; }
+
+.cr-cat-edit{
+  background: none !important;
+  border: none !important;
+  padding: 0 0 0 4px !important;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  color: #7dd3fc;
+  cursor: pointer;
+}
+.cr-cat-edit:hover{ text-decoration: underline; }
+body.light .cr-cat-edit{ color:#0369a1; }
+
+.cr-target-row{
+  margin: 7px auto 0;
+  max-width: 120px;
+}
+
+.cr-cat-gap{
+  font-size: 11px;
+  margin-top: 4px;
+  color: var(--sub);
+}
+.cr-gap-over{ color:#f87171; }
+body.light .cr-gap-over{ color:#b91c1c; }
+
 /* ---------- Grid de vendors: 3 por fila ---------- */
 /* Antes era auto-fill con minimo 220px, asi que el numero de columnas
    dependia del ancho y cambiaba solo. Fijo en 3 para que con 5 vendors

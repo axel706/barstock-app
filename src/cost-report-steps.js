@@ -190,11 +190,96 @@
     renderPeriodStep();
   }
 
+  // ── Paso 3: tarjetas por categoria ─────────────────────────────────
+  // Para cuando llegas aqui el costo ya se capturo en el paso 2, asi que
+  // el COGS se puede mostrar en cuanto escribes las ventas. Antes ese
+  // resultado no aparecia hasta el paso 4.
+
+  function setText(id, txt) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = txt;
+  }
+
+  function renderSalesStep() {
+    const api = window.BarStockCostReport;
+    if (!api?.getValues) return;
+    if (!document.getElementById('crWineCogsBig')) return;
+
+    let v;
+    try { v = api.getValues(); } catch (e) { return; }
+
+    [
+      { key: 'Wine',   cost: v.totalWine,   sales: v.wineSales,   ly: v.wineSalesLY,   target: v.wineTarget },
+      { key: 'Liquor', cost: v.totalLiquor, sales: v.liquorSales, ly: v.liquorSalesLY, target: v.liquorTarget }
+    ].forEach(c => {
+      setText(`cr${c.key}CostEcho`, money(c.cost) === '$0' ? '$0.00' : money(c.cost));
+      setText(`cr${c.key}TargetEcho`, String(c.target || 0));
+
+      const cogs = c.sales > 0 ? (c.cost / c.sales) * 100 : null;
+      setText(`cr${c.key}CogsBig`, cogs === null ? '—' : pct(cogs));
+
+      const big = document.getElementById(`cr${c.key}CogsBig`);
+      const flag = document.getElementById(`cr${c.key}Flag`);
+      const gap  = document.getElementById(`cr${c.key}Gap`);
+
+      if (cogs === null) {
+        if (big)  big.className = 'cr-cat-cogs';
+        if (flag) flag.innerHTML = '';
+        if (gap)  gap.textContent = '';
+      } else {
+        const diff = cogs - (c.target || 0);
+        // Rebasar el target por menos de 2 puntos no es lo mismo que
+        // rebasarlo por trece. Si todo lo que se pasa sale rojo, el color
+        // deja de significar algo.
+        const state = diff <= 0 ? 'ok' : diff <= 2 ? 'near' : 'over';
+
+        if (big) big.className = 'cr-cat-cogs cr-cogs-' + state;
+        if (flag) {
+          const label = state === 'ok' ? 'on target' : state === 'near' ? 'near target' : 'over target';
+          const icon  = state === 'over' ? 'ti-arrow-up-right' : 'ti-check';
+          flag.innerHTML = `<span class="cr-flag cr-flag-${state}"><i class="ti ${icon}" aria-hidden="true"></i>${label}</span>`;
+        }
+        if (gap) {
+          gap.textContent = `${Math.abs(diff).toFixed(1)} points ${diff > 0 ? 'over' : 'under'}`;
+          gap.className = 'cr-cat-gap cr-gap-' + state;
+        }
+      }
+
+      // Comparacion contra el año pasado
+      const d = document.getElementById(`cr${c.key}Delta`);
+      if (d) {
+        if (!c.ly || c.ly <= 0) {
+          d.innerHTML = '<span class="cr-delta cr-delta-none">no data</span>';
+        } else if (!c.sales) {
+          d.innerHTML = '';
+        } else {
+          const change = ((c.sales - c.ly) / c.ly) * 100;
+          const up = change >= 0;
+          d.innerHTML = `<span class="cr-delta cr-delta-${up ? 'up' : 'down'}">
+            <i class="ti ti-trending-${up ? 'up' : 'down'}" aria-hidden="true"></i>${up ? '+' : ''}${change.toFixed(1)}%</span>`;
+        }
+      }
+    });
+  }
+
+  function toggleTarget(cat) {
+    const id = cat === 'wine' ? 'crWineTargetRow' : 'crLiquorTargetRow';
+    const el = document.getElementById(id);
+    if (!el) return;
+    const open = el.style.display !== 'none';
+    el.style.display = open ? 'none' : 'flex';
+    if (!open) el.querySelector('input')?.focus();
+  }
+
   // ── Panel lateral ──────────────────────────────────────────────────
   // Lee de getValues(), la MISMA fuente que usa el preview y el PDF.
   // Aqui no se calcula nada nuevo: si un numero difiere del paso 4, es
   // que algo cambio en getValues, no que haya dos verdades.
   function renderPanel() {
+    // updatePreview() llama aqui en cada tecla, asi que este es el punto
+    // natural para refrescar tambien las tarjetas del paso 3.
+    try { renderSalesStep(); } catch (e) { console.warn('cost sales step', e); }
+
     const el = document.getElementById('crSidePanel');
     if (!el) return;
 
@@ -369,9 +454,11 @@
     go: show,
     renderPanel,
     renderPeriodStep,
+    renderSalesStep,
     pickPeriod,
     toggleCustomRange,
     onDateEdited,
+    toggleTarget,
     next: () => show(_current + 1),
     back: () => show(_current - 1),
     current: () => _current,
