@@ -3328,3 +3328,69 @@ body.light .bs-fs-sub{ color: #64748b; }
   .bs-focus-card{ flex-direction: column !important; align-items: center !important; }
   .bs-focus-stats{ justify-content: center; }
 }
+
+/* ============================================================
+   Correccion: el cristal de la tarjeta, igual al del header
+   ------------------------------------------------------------
+   Antes subi la opacidad de la tarjeta para ganar contraste y
+   quedaron lechosas. El cristal debe ser el MISMO que el header:
+   blur(4px) y el fondo del header.
+
+   El contraste se gana en el CONTENIDO — titulo, descripcion y
+   mini-cards — no aguando el vidrio.
+   ============================================================ */
+
+.bs-focus-card{
+  background: rgba(17,24,39,.86) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.28) !important;
+}
+.bs-focus-card:hover{
+  background: rgba(17,24,39,.92) !important;
+  border-color: rgba(56,189,248,.55) !important;
+}
+
+body.light .bs-focus-card{
+  background: rgba(255,255,255,.96) !important;
+  border-color: rgba(15,23,42,.08) !important;
+  box-shadow: 0 8px 22px rgba(15,23,42,.08) !important;
+}
+body.light .bs-focus-card:hover{
+  background: #ffffff !important;
+  border-color: rgba(2,132,199,.55) !important;
+}
+
+/* ---- Contraste, ahora si, en el contenido ---- */
+
+.bs-focus-head .bs-focus-title{
+  color: #f8fafc;
+  font-weight: 800;
+}
+body.light .bs-focus-head .bs-focus-title{ color: #0f172a; }
+
+.bs-focus-card .bs-focus-sub{
+  color: #94a3b8;
+}
+body.light .bs-focus-card .bs-focus-sub{ color: #64748b; }
+
+/* Las mini-cards se despegan del fondo de la tarjeta, que es lo que
+   antes se perdia: eran casi del mismo tono que su contenedor. */
+.bs-fs-card{
+  background: rgba(255,255,255,.07) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+}
+body.light .bs-fs-card{
+  background: #f1f5f9 !important;
+  border-color: rgba(15,23,42,.14) !important;
+}
+
+.bs-fs-label{ color: #94a3b8 !important; font-weight: 700; }
+body.light .bs-fs-label{ color: #475569 !important; }
+
+.bs-fs-value{ color: #f8fafc; }
+body.light .bs-fs-value{ color: #0f172a; }
+
+.bs-fs-sub{ color: #94a3b8 !important; }
+body.light .bs-fs-sub{ color: #64748b !important; }
