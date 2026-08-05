@@ -3226,3 +3226,105 @@ body.light .bs-fs-card{
   .bs-focus-stats{ justify-content: flex-start; }
   .bs-fs-card{ flex: 1; }
 }
+
+/* ============================================================
+   Tarjetas de la pantalla principal — version centrada
+   ------------------------------------------------------------
+   Icono y titulo en una sola linea arriba, descripcion debajo,
+   y las mini-cards como contenido. Todo centrado.
+
+   Sobre el contraste: NO se toca el backdrop-filter, el blur se
+   queda exactamente igual. Lo que sube es la opacidad del fondo
+   y el peso del borde, que es lo que separa la tarjeta de la
+   foto sin quitarle el efecto de cristal.
+   ============================================================ */
+
+.bs-focus-card{
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center;
+  gap: 0 !important;
+  padding: 18px 16px !important;
+  background: rgba(15,23,42,.62) !important;
+  border: 1px solid rgba(255,255,255,.16) !important;
+  box-shadow:
+    0 10px 26px rgba(2,6,23,.30),
+    inset 0 1px 0 rgba(255,255,255,.07) !important;
+}
+.bs-focus-card:hover{
+  background: rgba(15,23,42,.70) !important;
+}
+
+body.light .bs-focus-card{
+  background: rgba(255,255,255,.80) !important;
+  border-color: rgba(15,23,42,.16) !important;
+  box-shadow:
+    0 10px 26px rgba(15,23,42,.14),
+    inset 0 1px 0 rgba(255,255,255,.60) !important;
+}
+body.light .bs-focus-card:hover{
+  background: rgba(255,255,255,.90) !important;
+}
+
+/* Encabezado: icono y titulo en la misma linea */
+.bs-focus-head{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin-bottom: 4px;
+}
+.bs-focus-head .bs-focus-icon{
+  margin-bottom: 0 !important;
+  font-size: 21px !important;
+  display: inline-block !important;
+}
+.bs-focus-head .bs-focus-title{
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.bs-focus-card .bs-focus-sub{
+  font-size: 12px;
+  color: var(--sub);
+  margin-bottom: 13px;
+}
+body.light .bs-focus-card .bs-focus-sub{ color: #475569; }
+
+/* Mini-cards como contenido, centradas y del mismo ancho */
+.bs-focus-stats{
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.bs-focus-stats:empty{ display: none; }
+.bs-focus-stats .bs-fs-card{
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 132px;
+}
+
+/* Mas contraste dentro de las mini-cards */
+.bs-fs-card{
+  background: rgba(255,255,255,.09) !important;
+  border: 1px solid rgba(255,255,255,.13) !important;
+  border-radius: 11px;
+  padding: 10px 8px !important;
+}
+body.light .bs-fs-card{
+  background: #ffffff !important;
+  border-color: rgba(15,23,42,.16) !important;
+}
+.bs-fs-label{ color: var(--sub); }
+body.light .bs-fs-label{ color: #64748b; }
+.bs-fs-value{ font-size: 21px; }
+body.light .bs-fs-sub{ color: #64748b; }
+
+@media (max-width: 1150px){
+  .bs-focus-card{ flex-direction: column !important; align-items: center !important; }
+  .bs-focus-stats{ justify-content: center; }
+}

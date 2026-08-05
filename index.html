@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/tables.css">
   <link rel="stylesheet" href="styles/buttons.css">
-  <link rel="stylesheet" href="styles/app.css?v=focusstats">
+  <link rel="stylesheet" href="styles/app.css?v=focuscards2">
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/order-history.css">
 
@@ -133,7 +133,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260804-231134</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260804-231518</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -160,59 +160,59 @@
 
   <div id="bsFocusGrid" class="bs-focus-grid">
     <div class="bs-focus-card card" onclick="bsOpenSection('inventory')">
-      <div class="bs-focus-main">
+      <div class="bs-focus-head">
         <i class="ti ti-package bs-focus-icon" aria-hidden="true"></i>
         <div class="bs-focus-title">Inventory</div>
-        <div class="bs-focus-sub" id="fgSub-inventory">Loading...</div>
       </div>
+      <div class="bs-focus-sub" id="fgSub-inventory">Loading...</div>
       <div class="bs-focus-stats" id="fgStats-inventory"></div>
     </div>
     <div class="bs-focus-card card" onclick="bsOpenSection('vendor')">
-      <div class="bs-focus-main">
+      <div class="bs-focus-head">
         <i class="ti ti-shopping-cart bs-focus-icon" aria-hidden="true"></i>
         <div class="bs-focus-title">Ordering</div>
-        <div class="bs-focus-sub" id="fgSub-vendor">Review active orders</div>
       </div>
+      <div class="bs-focus-sub" id="fgSub-vendor">Review active orders</div>
       <div class="bs-focus-stats" id="fgStats-vendor"></div>
     </div>
     <div class="bs-focus-card card" onclick="bsOpenSection('history')">
-      <div class="bs-focus-main">
+      <div class="bs-focus-head">
         <i class="ti ti-history bs-focus-icon" aria-hidden="true"></i>
         <div class="bs-focus-title">Order History</div>
-        <div class="bs-focus-sub" id="fgSub-history">Previously placed orders</div>
       </div>
+      <div class="bs-focus-sub" id="fgSub-history">Previously placed orders</div>
       <div class="bs-focus-stats" id="fgStats-history"></div>
     </div>
     <div class="bs-focus-card card" onclick="bsOpenSection('noMatch')">
-      <div class="bs-focus-main">
+      <div class="bs-focus-head">
         <i class="ti ti-alert-circle bs-focus-icon" aria-hidden="true"></i>
         <div class="bs-focus-title">No Match</div>
-        <div class="bs-focus-sub" id="fgSub-noMatch">Items needing review</div>
       </div>
+      <div class="bs-focus-sub" id="fgSub-noMatch">Items needing review</div>
       <div class="bs-focus-stats" id="fgStats-noMatch"></div>
     </div>
     <div class="bs-focus-card card" onclick="bsOpenSection('costReport')">
-      <div class="bs-focus-main">
+      <div class="bs-focus-head">
         <i class="ti ti-chart-bar bs-focus-icon" aria-hidden="true"></i>
         <div class="bs-focus-title">Costs</div>
-        <div class="bs-focus-sub" id="fgSub-costReport">Track COGS vs benchmarks</div>
       </div>
+      <div class="bs-focus-sub" id="fgSub-costReport">Track COGS vs benchmarks</div>
       <div class="bs-focus-stats" id="fgStats-costReport"></div>
     </div>
     <div class="bs-focus-card card" onclick="bsOpenSection('theoretical')">
-      <div class="bs-focus-main">
+      <div class="bs-focus-head">
         <i class="ti ti-chart-dots bs-focus-icon" aria-hidden="true"></i>
         <div class="bs-focus-title">Usage</div>
-        <div class="bs-focus-sub" id="fgSub-theoretical">Compare sales vs usage</div>
       </div>
+      <div class="bs-focus-sub" id="fgSub-theoretical">Compare sales vs usage</div>
       <div class="bs-focus-stats" id="fgStats-theoretical"></div>
     </div>
     <div class="bs-focus-card card" onclick="bsOpenSection('pourIq')">
-      <div class="bs-focus-main">
+      <div class="bs-focus-head">
         <i class="ti ti-brain bs-focus-icon" aria-hidden="true"></i>
         <div class="bs-focus-title">Pour-IQ&#x2122;</div>
-        <div class="bs-focus-sub" id="fgSub-pourIq">Par level intelligence</div>
       </div>
+      <div class="bs-focus-sub" id="fgSub-pourIq">Par level intelligence</div>
       <div class="bs-focus-stats" id="fgStats-pourIq"></div>
     </div>
 
