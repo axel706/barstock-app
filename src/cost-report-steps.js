@@ -520,8 +520,8 @@
 
       <div class="cr-side-gap"></div>
 
-      ${line('ti-bottle',   'Wine cost',   money(v.totalWine))}
-      ${line('ti-glass-full','Liquor cost', money(v.totalLiquor))}
+      ${line('ti-glass-full', 'Wine cost',   money(v.totalWine))}
+      ${line('ti-bottle',     'Liquor cost', money(v.totalLiquor))}
       ${line('ti-cash-banknote', 'Sales',  money(totalSales))}
 
       <div class="cr-mini-grid">

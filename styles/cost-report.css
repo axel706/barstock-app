@@ -1684,3 +1684,59 @@ body.light .cr-saved-flag{
   border-color: rgba(21,128,61,.30);
   color: #15803d;
 }
+
+/* ============================================================
+   Panel — evitar que los elementos delgados se aplasten
+   ------------------------------------------------------------
+   .cr-side es flex column con alto fijo. Cuando el contenido
+   pasa de 460px, los hijos se encogen (flex-shrink vale 1 por
+   defecto) y los mas delgados desaparecen: justo la linea de
+   1px y la barra de 7px. Por eso "no aparecian" aunque
+   estuvieran en el DOM con su color puesto.
+   ============================================================ */
+
+.cr-side > *{ flex-shrink: 0; }
+.cr-side-spacer{ flex: 1 1 auto; }
+
+/* ============================================================
+   Pasos completados — palomita con peso
+   ------------------------------------------------------------
+   Antes el circulo iba con verde al 20% de opacidad y el icono
+   en un verde claro: se leia como un chip apagado mas. Ahora el
+   circulo es verde SOLIDO con la palomita en oscuro, que es el
+   contraste mas alto posible, y el chip lleva un borde verde
+   tenue para que el paso completo se distinga de un vistazo.
+   ============================================================ */
+
+.cr-step-chip.done{
+  border-color: rgba(34,197,94,.45);
+  color: var(--text);
+}
+.cr-step-chip.done:hover{
+  border-color: rgba(34,197,94,.70);
+  background: rgba(34,197,94,.08);
+}
+
+.cr-step-chip.done .cr-step-num{
+  background: #22c55e !important;
+  color: #04240f !important;
+  box-shadow: 0 0 0 2px rgba(34,197,94,.22);
+}
+.cr-step-chip.done .cr-step-num i{
+  font-size: 13px;
+  font-weight: 700;
+  stroke-width: 3;
+}
+
+body.light .cr-step-chip.done{
+  border-color: rgba(21,128,61,.40);
+}
+body.light .cr-step-chip.done:hover{
+  border-color: rgba(21,128,61,.65);
+  background: rgba(21,128,61,.07);
+}
+body.light .cr-step-chip.done .cr-step-num{
+  background: #15803d !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 2px rgba(21,128,61,.18);
+}
