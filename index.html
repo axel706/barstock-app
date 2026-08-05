@@ -133,7 +133,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260804-212314</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260804-214524</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -545,6 +545,24 @@
       <div class="cr-subsection" data-cr-step="4">
         <div class="cr-subsection-header"><h3 class="cr-subsection-title">Report Preview</h3></div>
 
+        <!-- Pestañas internas. Las cuatro tablas de siempre siguen abajo,
+             intactas y con sus mismos ids; solo se muestran de una en una.
+             La primera pestaña son los hallazgos, que se generan a partir
+             de esas mismas cifras. -->
+        <div class="cr-rev-tabs" id="crReviewTabs">
+          <button type="button" class="cr-rev-tab active" data-rev="findings" onclick="BarStockCostSteps.reviewTab('findings')">
+            <i class="ti ti-bulb" aria-hidden="true"></i> Findings
+          </button>
+          <button type="button" class="cr-rev-tab" data-rev="purchases" onclick="BarStockCostSteps.reviewTab('purchases')">Purchases</button>
+          <button type="button" class="cr-rev-tab" data-rev="benchmark" onclick="BarStockCostSteps.reviewTab('benchmark')">Benchmark</button>
+          <button type="button" class="cr-rev-tab" data-rev="yoy" onclick="BarStockCostSteps.reviewTab('yoy')">Year over year</button>
+        </div>
+
+        <div class="cr-rev-pane" data-rev-pane="findings">
+          <div id="crFindings"></div>
+        </div>
+
+        <div class="cr-rev-pane" data-rev-pane="purchases" style="display:none">
         <div class="cr-preview-banner">Purchases Overview</div>
         <div class="cr-preview-table-wrapper">
           <table class="cr-preview-table" id="crPurchasesTable">
@@ -554,6 +572,10 @@
           </table>
         </div>
 
+        <div id="crVendorShare" class="cr-share"></div>
+        </div><!-- /pane purchases -->
+
+        <div class="cr-rev-pane" data-rev-pane="benchmark" style="display:none">
         <div class="cr-preview-banner">Cost Benchmark Comparison</div>
         <div class="cr-preview-table-wrapper">
           <table class="cr-preview-table">
@@ -575,6 +597,9 @@
           </table>
         </div>
 
+        </div><!-- /pane benchmark -->
+
+        <div class="cr-rev-pane" data-rev-pane="yoy" style="display:none">
         <div class="cr-preview-banner">Year-over-Year Comparison</div>
         <div class="cr-preview-table-wrapper">
           <table class="cr-preview-table">
@@ -586,6 +611,7 @@
         </div>
 
         <div id="crSmartNotes"></div>
+        </div><!-- /pane yoy -->
 
       </div>
 

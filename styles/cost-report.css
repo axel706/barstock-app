@@ -395,6 +395,123 @@ body.light .cr-recent-row:hover{ background: rgba(15,23,42,.04); }
   padding: 8px;
 }
 
+/* ---------- Paso 4: pestañas y hallazgos ---------- */
+
+.cr-rev-tabs{
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.cr-rev-tab{
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 6px 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: transparent;
+  color: var(--sub);
+  cursor: pointer;
+  transition: background-color .16s cubic-bezier(.22,1,.36,1),
+              border-color .16s cubic-bezier(.22,1,.36,1),
+              color .16s cubic-bezier(.22,1,.36,1);
+}
+.cr-rev-tab i{ font-size: 14px; }
+.cr-rev-tab:hover{ border-color: rgba(56,189,248,.40); color: var(--text); }
+.cr-rev-tab.active{
+  background: rgba(56,189,248,.12);
+  border-color: rgba(56,189,248,.55);
+  color: #7dd3fc;
+}
+body.light .cr-rev-tab{ border-color: rgba(15,23,42,.12); }
+body.light .cr-rev-tab.active{
+  background: rgba(14,165,233,.10);
+  border-color: rgba(14,165,233,.45);
+  color: #0369a1;
+}
+
+/* Hallazgos */
+.cr-find{
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  background: rgba(255,255,255,.04);
+  border-radius: 12px;
+  padding: 12px 13px;
+  margin-bottom: 8px;
+}
+body.light .cr-find{ background: rgba(15,23,42,.03); }
+
+.cr-find-ic{
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 16px;
+}
+.cr-find-good{ background: rgba(34,197,94,.16);  color:#4ade80; }
+.cr-find-bad { background: rgba(248,113,113,.16); color:#f87171; }
+.cr-find-warn{ background: rgba(251,191,36,.16);  color:#fbbf24; }
+.cr-find-info{ background: rgba(56,189,248,.16);  color:#7dd3fc; }
+.cr-find-mute{ background: rgba(148,163,184,.14); color: var(--sub); }
+body.light .cr-find-good{ background: rgba(21,128,61,.12); color:#15803d; }
+body.light .cr-find-bad { background: rgba(185,28,28,.10); color:#b91c1c; }
+body.light .cr-find-warn{ background: rgba(180,83,9,.10);  color:#b45309; }
+body.light .cr-find-info{ background: rgba(3,105,161,.10); color:#0369a1; }
+
+.cr-find-t{ font-size: 13px; font-weight: 700; line-height: 1.35; }
+.cr-find-s{ font-size: 11.5px; color: var(--sub); margin-top: 3px; line-height: 1.45; }
+.cr-find-empty{
+  font-size: 12.5px;
+  color: var(--sub);
+  text-align: center;
+  padding: 28px 12px;
+}
+
+/* Reparto del gasto por vendor */
+.cr-share{ margin-top: 18px; }
+.cr-share-head{
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--sub);
+  margin-bottom: 9px;
+}
+.cr-share-row{
+  display: grid;
+  grid-template-columns: 118px minmax(0, 1fr) 46px;
+  gap: 9px;
+  align-items: center;
+  font-size: 11.5px;
+  margin-bottom: 7px;
+}
+.cr-share-row.zero{ opacity: .4; }
+.cr-share-name{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cr-share-bar{
+  height: 20px;
+  border-radius: 5px;
+  background: rgba(255,255,255,.06);
+  overflow: hidden;
+  display: block;
+}
+.cr-share-bar i{
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+  background: #38bdf8;
+  transition: width .35s cubic-bezier(.22,1,.36,1);
+}
+.cr-share-val{ text-align: right; font-weight: 700; }
+body.light .cr-share-bar{ background: rgba(15,23,42,.07); }
+
 /* ---------- Paso 3: una tarjeta por categoria ---------- */
 
 .cr-cat-grid{

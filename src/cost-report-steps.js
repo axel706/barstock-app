@@ -271,6 +271,135 @@
     if (!open) el.querySelector('input')?.focus();
   }
 
+  // ── Paso 4: hallazgos ──────────────────────────────────────────────
+  // Cada tabla, resumida en la frase que ibas a buscar dentro de ella.
+  // Todo sale de getValues(); no hay una segunda fuente de verdad.
+
+  function findingCard(tone, icon, title, sub) {
+    return `
+      <div class="cr-find">
+        <span class="cr-find-ic cr-find-${tone}"><i class="ti ${icon}" aria-hidden="true"></i></span>
+        <div>
+          <div class="cr-find-t">${title}</div>
+          ${sub ? `<div class="cr-find-s">${sub}</div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  function renderFindings() {
+    const el = document.getElementById('crFindings');
+    if (!el) return;
+
+    const api = window.BarStockCostReport;
+    if (!api?.getValues) return;
+
+    let v;
+    try { v = api.getValues(); } catch (e) { return; }
+
+    const out = [];
+
+    // 1. Cada categoria contra su target
+    [
+      { name: 'Wine',   cost: v.totalWine,   sales: v.wineSales,   target: v.wineTarget },
+      { name: 'Liquor', cost: v.totalLiquor, sales: v.liquorSales, target: v.liquorTarget }
+    ].forEach(c => {
+      if (!c.sales) return;
+      const cogs = (c.cost / c.sales) * 100;
+      const diff = cogs - (c.target || 0);
+      const expected = c.sales * ((c.target || 0) / 100);
+      const money$ = Math.abs(expected - c.cost);
+
+      if (diff > 2) {
+        out.push(findingCard('bad', 'ti-trending-up',
+          `${c.name} came in ${diff.toFixed(1)} points over target`,
+          `${pct(cogs)} against a ${pct(c.target)} target — ${money(money$)} more than expected`));
+      } else if (diff > 0) {
+        out.push(findingCard('warn', 'ti-minus',
+          `${c.name} landed just above target`,
+          `${pct(cogs)} against ${pct(c.target)} — ${money(money$)} over, within a couple of points`));
+      } else {
+        out.push(findingCard('good', 'ti-trending-down',
+          `${c.name} came in ${Math.abs(diff).toFixed(1)} points under target`,
+          `${pct(cogs)} against a ${pct(c.target)} target — ${money(money$)} less than expected`));
+      }
+    });
+
+    // 2. Contra el año pasado
+    const salesNow = v.wineSales + v.liquorSales;
+    const salesLY  = v.wineSalesLY + v.liquorSalesLY;
+    if (salesLY > 0 && salesNow > 0) {
+      const change = ((salesNow - salesLY) / salesLY) * 100;
+      const up = change >= 0;
+      out.push(findingCard(up ? 'info' : 'warn',
+        up ? 'ti-arrow-up-right' : 'ti-arrow-down-right',
+        `Sales ${up ? 'up' : 'down'} ${Math.abs(change).toFixed(1)}% versus last year`,
+        `${money(salesNow)} this period against ${money(salesLY)} — ${money(Math.abs(salesNow - salesLY))} ${up ? 'more' : 'less'}`));
+    }
+
+    // 3. Concentracion por vendor. Este dato no existe en ninguna tabla
+    //    actual, pero sale de lo que ya capturaste y es accionable.
+    const byV = (v.byVendor || []).map(x => ({ name: x.name, total: (x.wine || 0) + (x.liquor || 0) }));
+    const grand = byV.reduce((s, x) => s + x.total, 0);
+    if (grand > 0) {
+      const top = byV.slice().sort((a, b) => b.total - a.total)[0];
+      const share = (top.total / grand) * 100;
+      if (share >= 60 && byV.filter(x => x.total > 0).length > 1) {
+        out.push(findingCard('warn', 'ti-alert-triangle',
+          `One vendor carried ${share.toFixed(0)}% of spend`,
+          `${escHtml(top.name)} at ${money(top.total)} of ${money(grand)} — worth a second quote`));
+      }
+    }
+
+    // 4. Vendors sin capturar. Hoy son filas de ceros que se ignoran;
+    //    como hallazgo te hacen confirmar que no falto una factura.
+    const empty = byV.filter(x => x.total === 0).map(x => x.name);
+    if (empty.length && grand > 0) {
+      out.push(findingCard('mute', 'ti-receipt-off',
+        `${empty.length} vendor${empty.length === 1 ? '' : 's'} with no invoices`,
+        `${empty.map(escHtml).join(', ')} — confirm nothing is missing`));
+    }
+
+    el.innerHTML = out.length
+      ? out.join('')
+      : '<div class="cr-find-empty">Capture purchases and sales to see findings here.</div>';
+
+    renderVendorShare(byV, grand);
+  }
+
+  // Barras de reparto: quien se llevo el dinero, sin leer filas de ceros
+  function renderVendorShare(byV, grand) {
+    const el = document.getElementById('crVendorShare');
+    if (!el) return;
+
+    if (!grand) { el.innerHTML = ''; return; }
+
+    const rows = byV.slice().sort((a, b) => b.total - a.total);
+    el.innerHTML = '<div class="cr-share-head">Share of spend</div>' + rows.map(r => {
+      const p = (r.total / grand) * 100;
+      return `
+        <div class="cr-share-row${r.total === 0 ? ' zero' : ''}">
+          <span class="cr-share-name">${escHtml(r.name)}</span>
+          <span class="cr-share-bar"><i style="width:${p}%"></i></span>
+          <span class="cr-share-val">${p.toFixed(0)}%</span>
+        </div>`;
+    }).join('');
+  }
+
+  function escHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function reviewTab(name) {
+    document.querySelectorAll('[data-rev-pane]').forEach(p => {
+      p.style.display = p.dataset.revPane === name ? '' : 'none';
+    });
+    document.querySelectorAll('.cr-rev-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.rev === name);
+    });
+  }
+
   // ── Panel lateral ──────────────────────────────────────────────────
   // Lee de getValues(), la MISMA fuente que usa el preview y el PDF.
   // Aqui no se calcula nada nuevo: si un numero difiere del paso 4, es
@@ -279,6 +408,7 @@
     // updatePreview() llama aqui en cada tecla, asi que este es el punto
     // natural para refrescar tambien las tarjetas del paso 3.
     try { renderSalesStep(); } catch (e) { console.warn('cost sales step', e); }
+    try { renderFindings(); }  catch (e) { console.warn('cost findings', e); }
 
     const el = document.getElementById('crSidePanel');
     if (!el) return;
@@ -459,6 +589,8 @@
     toggleCustomRange,
     onDateEdited,
     toggleTarget,
+    reviewTab,
+    renderFindings,
     next: () => show(_current + 1),
     back: () => show(_current - 1),
     current: () => _current,
