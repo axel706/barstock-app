@@ -1871,3 +1871,61 @@ body.light .cr-step-chip.done .cr-step-num{
   flex: 0 0 auto;
 }
 .cr-mini-grid{ margin-top: 0 !important; }
+
+/* ============================================================
+   Panel — ritmo uniforme, el sobrante lo absorben las mini-cards
+   ------------------------------------------------------------
+   Repartir el espacio libre COMO HUECOS deja separaciones
+   desiguales que se leen como error: un vacio grande entre la
+   barra y los importes no comunica nada.
+
+   Enfoque correcto: separacion IGUAL entre todos los grupos, y
+   el espacio que sobra se lo lleva un solo elemento que puede
+   crecer sin verse raro — las mini-cards. Una mini-card mas
+   alta se ve intencional; un hueco de 40px no.
+   ============================================================ */
+
+.cr-side{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: flex-start !important;
+}
+
+.cr-side-top{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+/* El separador aporta su propia division; sin margenes extra */
+.cr-side-top .cr-side-sep{ margin: 2px 0 !important; }
+
+.cr-side-body{
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start !important;
+  gap: 14px;
+  min-height: 0;
+  padding: 0 !important;
+}
+
+.cr-side-progress-block,
+.cr-side-amounts{
+  flex: 0 0 auto;
+}
+
+/* Este es el que crece */
+.cr-mini-grid{
+  flex: 1 1 auto;
+  min-height: 86px;
+}
+.cr-mini{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 6px !important;
+}
+
+.cr-side-actions{ flex: 0 0 auto; }
