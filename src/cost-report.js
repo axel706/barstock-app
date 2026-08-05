@@ -1057,6 +1057,10 @@
       if (notes) notes.placeholder = "Add comments about this month's performance, anomalies, special events...";
       if (monthlySection) { monthlySection.style.display = 'block'; loadMonthlyReportsList(); }
     }
+
+    // El bloque mensual se acaba de mostrar/ocultar por modo, pero tambien
+    // pertenece al paso 1. Sin esto aparecería aunque estes en otro paso.
+    if (window.BarStockCostSteps?.refresh) window.BarStockCostSteps.refresh();
   }
 
   function getPeriodMode() { return _periodMode; }

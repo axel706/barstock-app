@@ -31,7 +31,7 @@
 
   <link rel="stylesheet" href="styles/fixes.css">
   <link rel="stylesheet" href="styles/auth.css">
-  <link rel="stylesheet" href="styles/cost-report.css?v=heatmap1">
+  <link rel="stylesheet" href="styles/cost-report.css?v=steps1">
   <link rel="stylesheet" href="styles/motion.css?v=motion3">
   <link rel="stylesheet" href="styles/skeleton.css?v=skel1">
   <link rel="stylesheet" href="styles/toast.css?v=toast1">
@@ -133,7 +133,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260804-195817</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260804-200811</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -392,7 +392,9 @@
     </div>
     <div class="section-body" id="costReportSectionBody">
 
-      <div class="cr-subsection">
+      <div class="cr-stepper" id="crStepper"></div>
+
+      <div class="cr-subsection" data-cr-step="1">
         <div class="cr-subsection-header"><h3 class="cr-subsection-title">Reporting Period</h3></div>
         <div class="cr-period-grid">
           <div><label>From</label><input type="date" id="crPeriodFrom"></div>
@@ -400,7 +402,7 @@
         </div>
       </div>
 
-      <div class="cr-subsection" id="crMonthlyBuildSection" style="display:none;">
+      <div class="cr-subsection" id="crMonthlyBuildSection" data-cr-step="1" style="display:none;">
         <div class="cr-subsection-header" style="margin-bottom:10px;">
           <h3 class="cr-subsection-title">Build from weekly reports <span class="small muted" style="font-weight:400;font-size:12px;">(optional)</span></h3>
         </div>
@@ -413,7 +415,7 @@
         <button class="cr-btn-secondary" id="crMonthlyApplyBtn" onclick="BarStockCostReport.applyWeeklyReports()" style="display:none;">Apply selected reports</button>
       </div>
 
-      <div class="cr-subsection">
+      <div class="cr-subsection" data-cr-step="2">
         <div class="cr-subsection-header">
           <h3 class="cr-subsection-title">Purchases by Vendor</h3>
           <button class="cr-btn-secondary" onclick="BarStockCostReport.addCustomVendor()">+ Add custom vendor</button>
@@ -421,7 +423,7 @@
         <div class="cr-vendor-list" id="crVendorsContainer"></div>
       </div>
 
-      <div class="cr-subsection">
+      <div class="cr-subsection" data-cr-step="3">
         <div class="cr-subsection-header"><h3 class="cr-subsection-title">Sales &amp; Targets</h3></div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
@@ -462,12 +464,12 @@
         </div>
       </div>
 
-      <div class="cr-subsection">
-        <div class="cr-subsection-header"><h3 class="cr-subsection-title">Notes (optional, manual)</h3></div>
+      <div class="cr-subsection" data-cr-step="3">
+        <div class="cr-subsection-header"><h3 class="cr-subsection-title">Notes (optional)</h3></div>
         <textarea id="crNotes" placeholder="Add comments about this week's performance, anomalies, special events..."></textarea>
       </div>
 
-      <div class="cr-subsection">
+      <div class="cr-subsection" data-cr-step="4">
         <div class="cr-subsection-header"><h3 class="cr-subsection-title">Report Preview</h3></div>
 
         <div class="cr-preview-banner">Purchases Overview</div>
@@ -526,7 +528,7 @@
         </div>
       </div>
 
-      <div class="cr-subsection">
+      <div class="cr-subsection" data-cr-step="4">
         <div class="cr-actions-row">
           <button class="cr-btn-ghost" onclick="BarStockCostReport.resetForm()">Reset</button>
           <button class="cr-btn-success" onclick="BarStockCostReport.saveReport()">Save Report</button>
@@ -535,9 +537,19 @@
         </div>
       </div>
 
-      <div class="cr-subsection">
+      <div class="cr-subsection" data-cr-step="5">
         <div class="cr-subsection-header"><h3 class="cr-subsection-title">Saved Reports</h3></div>
         <div id="crHistoryContainer"></div>
+      </div>
+
+      <div class="cr-step-footer" id="crStepFooter">
+        <button class="cr-step-back" id="crStepBack" onclick="BarStockCostSteps.back()">
+          <i class="ti ti-arrow-left" aria-hidden="true"></i> Back
+        </button>
+        <div class="cr-step-dots" id="crStepDots"></div>
+        <button class="cr-step-next" id="crStepNext" onclick="BarStockCostSteps.next()">
+          Next <i class="ti ti-arrow-right" aria-hidden="true"></i>
+        </button>
       </div>
 
     </div>
@@ -4804,6 +4816,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/quick-order.js"></script>
 <script src="src/cost-report-cloud.js"></script>
 <script src="src/cost-report.js"></script>
+<script src="src/cost-report-steps.js"></script>
 
 <!-- BARSTOCK ORDERS REALTIME CLEAN START -->
 <script>
