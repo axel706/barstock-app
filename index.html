@@ -31,7 +31,7 @@
 
   <link rel="stylesheet" href="styles/fixes.css">
   <link rel="stylesheet" href="styles/auth.css">
-  <link rel="stylesheet" href="styles/cost-report.css?v=steps3">
+  <link rel="stylesheet" href="styles/cost-report.css?v=steps4">
   <link rel="stylesheet" href="styles/motion.css?v=motion3">
   <link rel="stylesheet" href="styles/skeleton.css?v=skel1">
   <link rel="stylesheet" href="styles/toast.css?v=toast1">
@@ -133,7 +133,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260804-204044</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260804-205127</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -399,11 +399,26 @@
       <div class="cr-main-scroll">
 
       <div class="cr-subsection" data-cr-step="1">
-        <div class="cr-subsection-header"><h3 class="cr-subsection-title">Reporting Period</h3></div>
-        <div class="cr-period-grid">
-          <div><label>From</label><input type="date" id="crPeriodFrom"></div>
-          <div><label>To</label><input type="date" id="crPeriodTo"></div>
+        <div class="cr-subsection-header"><h3 class="cr-subsection-title" id="crPeriodQuestion">Which week are you reporting?</h3></div>
+
+        <!-- Tarjetas con los periodos ya calculados. Las pinta
+             BarStockCostSteps.renderPeriodStep() -->
+        <div id="crPeriodCards" class="cr-period-cards"></div>
+
+        <button type="button" class="cr-custom-toggle" id="crCustomToggle"
+                onclick="BarStockCostSteps.toggleCustomRange()">
+          <i class="ti ti-calendar-plus" aria-hidden="true"></i> Custom range
+        </button>
+
+        <!-- Los inputs de siempre. Se conservan intactos porque getValues()
+             lee crPeriodFrom y crPeriodTo; las tarjetas solo los rellenan. -->
+        <div class="cr-period-grid" id="crCustomRange" style="display:none">
+          <div><label>From</label><input type="date" id="crPeriodFrom" onchange="BarStockCostSteps.onDateEdited()"></div>
+          <div><label>To</label><input type="date" id="crPeriodTo" onchange="BarStockCostSteps.onDateEdited()"></div>
         </div>
+
+        <div class="cr-recent-head">Recent periods</div>
+        <div id="crRecentPeriods" class="cr-recent-list"></div>
       </div>
 
       <div class="cr-subsection" id="crMonthlyBuildSection" data-cr-step="1" style="display:none;">

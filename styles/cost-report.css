@@ -81,17 +81,20 @@ body.light .cr-step-chip.done .cr-step-num{ background: rgba(21,128,61,.14); col
   align-items: start;
 }
 
-/* Fondo SOLIDO, no translucido. Sobre la foto de fondo con blur, un
-   contenedor casi transparente hacia que las tablas no se leyeran como
-   tablas. Mismo tratamiento que .tablewrap en Inventory y Ordering. */
+/* Mismo cristal que las .card de la app: blur 11px y 50% de opacidad.
+   El problema antes no era el blur sino la opacidad — los contenedores
+   iban al 2% y la foto de fondo se comia las tablas. Al 50% el blur se
+   nota y el contenido se lee. */
 .cr-main{
   height: 460px;
   display: flex;
   flex-direction: column;
-  background: var(--card);
-  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(15,23,42,.50);
+  border: 1px solid rgba(255,255,255,.10);
   border-radius: 14px;
   overflow: hidden;
+  backdrop-filter: blur(11px) saturate(150%);
+  -webkit-backdrop-filter: blur(11px) saturate(150%);
 }
 .cr-main-scroll{
   flex: 1;
@@ -99,8 +102,8 @@ body.light .cr-step-chip.done .cr-step-num{ background: rgba(21,128,61,.14); col
   padding: 16px 16px 4px;
 }
 body.light .cr-main{
-  background: var(--card);
-  border-color: rgba(15,23,42,.12);
+  background: rgba(255,255,255,.44);
+  border-color: rgba(15,23,42,.10);
 }
 
 /* Dentro del contenedor los bloques ya no necesitan su margen grande */
@@ -128,15 +131,17 @@ body.light .cr-step-footer{ border-top-color: rgba(15,23,42,.08); }
   height: 460px;
   display: flex;
   flex-direction: column;
-  background: var(--card);
-  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(15,23,42,.50);
+  border: 1px solid rgba(255,255,255,.10);
   border-radius: 14px;
   padding: 14px;
   overflow-y: auto;
+  backdrop-filter: blur(11px) saturate(150%);
+  -webkit-backdrop-filter: blur(11px) saturate(150%);
 }
 body.light .cr-side{
-  background: var(--card);
-  border-color: rgba(15,23,42,.12);
+  background: rgba(255,255,255,.44);
+  border-color: rgba(15,23,42,.10);
 }
 
 .cr-side-head{
@@ -267,6 +272,122 @@ body.light .cr-act-second:hover{ background: rgba(15,23,42,.04); }
   .cr-layout{ grid-template-columns: minmax(0, 1fr); }
   .cr-side{ height: auto; }
   .cr-side-spacer{ min-height: 14px; }
+}
+
+/* ---------- Paso 1: tarjetas de periodo ---------- */
+
+.cr-period-cards{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.cr-pcard{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  text-align: left;
+  padding: 13px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.03);
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color .16s cubic-bezier(.22,1,.36,1),
+              background-color .16s cubic-bezier(.22,1,.36,1),
+              transform .16s cubic-bezier(.22,1,.36,1);
+}
+.cr-pcard:hover{
+  border-color: rgba(56,189,248,.45);
+  background: rgba(56,189,248,.06);
+}
+.cr-pcard:active{ transform: scale(.985); }
+.cr-pcard.on{
+  border-color: #38bdf8;
+  background: rgba(56,189,248,.12);
+}
+body.light .cr-pcard{
+  border-color: rgba(15,23,42,.12);
+  background: rgba(15,23,42,.02);
+}
+body.light .cr-pcard.on{
+  border-color: #0284c7;
+  background: rgba(14,165,233,.10);
+}
+
+.cr-pcard-label{
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+.cr-pcard-dates{
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.cr-pbadge{
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+}
+.cr-pbadge i{ font-size: 10px; }
+.cr-pbadge-ok{ background: rgba(34,197,94,.16); color:#4ade80; }
+.cr-pbadge-mute{ background: rgba(148,163,184,.14); color: var(--sub); }
+body.light .cr-pbadge-ok{ background: rgba(21,128,61,.12); color:#15803d; }
+
+.cr-custom-toggle{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #7dd3fc;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+  margin-bottom: 6px;
+}
+.cr-custom-toggle:hover{ text-decoration: underline; }
+.cr-custom-toggle.open i{ transform: rotate(45deg); }
+.cr-custom-toggle i{ font-size: 14px; transition: transform .16s ease; }
+body.light .cr-custom-toggle{ color:#0369a1; }
+
+.cr-recent-head{
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--sub);
+  margin: 16px 0 6px;
+}
+.cr-recent-list{ display: flex; flex-direction: column; }
+.cr-recent-row{
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 8px;
+  font-size: 12px;
+  padding: 7px 8px;
+  border-radius: 7px;
+}
+.cr-recent-row:hover{ background: rgba(255,255,255,.04); }
+body.light .cr-recent-row:hover{ background: rgba(15,23,42,.04); }
+.cr-recent-val{ color: var(--sub); text-align: right; }
+.cr-recent-empty{
+  font-size: 12px;
+  color: var(--sub);
+  padding: 8px;
 }
 
 /* ---------- Tablas con el estilo de la app ---------- */

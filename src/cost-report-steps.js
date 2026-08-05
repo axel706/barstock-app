@@ -31,6 +31,165 @@
     return (Number(n) || 0).toFixed(1) + '%';
   }
 
+  // ── Paso 1: elegir el periodo ──────────────────────────────────────
+  // El ciclo es semanal y casi siempre reportas la semana pasada. Pedir
+  // dos fechas escritas es la peor forma de decir eso. Aqui se ofrecen
+  // los tres periodos candidatos ya calculados; las fechas manuales
+  // quedan detras de "Custom range" para el caso raro.
+  //
+  // Los inputs crPeriodFrom / crPeriodTo NO desaparecen: las tarjetas
+  // solo los rellenan. Todo lo que lee el periodo sigue leyendo de ahi.
+
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function iso(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  function short(d) {
+    return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+  }
+
+  function mondayOf(date) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    const day = d.getDay();           // 0 = domingo
+    d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+    return d;
+  }
+
+  function addDays(d, n) {
+    const x = new Date(d);
+    x.setDate(x.getDate() + n);
+    return x;
+  }
+
+  // Los tres candidatos, segun el modo activo
+  function candidates() {
+    const monthly = window.BarStockCostReport?.getPeriodMode?.() === 'monthly';
+    const now = new Date();
+
+    if (monthly) {
+      return [0, 1, 2].map(back => {
+        const from = new Date(now.getFullYear(), now.getMonth() - back, 1);
+        const to   = new Date(now.getFullYear(), now.getMonth() - back + 1, 0);
+        return {
+          label: back === 0 ? 'This month' : back === 1 ? 'Last month' : 'Two months ago',
+          from, to, current: back === 0
+        };
+      });
+    }
+
+    const thisMon = mondayOf(now);
+    return [0, 1, 2].map(back => {
+      const from = addDays(thisMon, -7 * back);
+      return {
+        label: back === 0 ? 'This week' : back === 1 ? 'Last week' : 'Two weeks ago',
+        from, to: addDays(from, 6), current: back === 0
+      };
+    });
+  }
+
+  let _savedPeriods = [];   // [{from,to,wineCogs,liquorCogs}]
+
+  async function loadSavedPeriods() {
+    try {
+      if (!window.BarStockCostReportCloud?.listReports) return;
+      const rows = await window.BarStockCostReportCloud.listReports();
+      _savedPeriods = (rows || []).map(r => ({
+        from: r.period_from || r.periodFrom || '',
+        to:   r.period_to   || r.periodTo   || '',
+        wineCogs:   Number(r.wine_cogs   ?? r.wineCogs   ?? 0),
+        liquorCogs: Number(r.liquor_cogs ?? r.liquorCogs ?? 0)
+      })).filter(r => r.from);
+    } catch (e) {
+      _savedPeriods = [];
+    }
+  }
+
+  function alreadyReported(fromIso) {
+    return _savedPeriods.some(r => r.from === fromIso);
+  }
+
+  function renderPeriodStep() {
+    const wrap = document.getElementById('crPeriodCards');
+    if (!wrap) return;
+
+    const monthly = window.BarStockCostReport?.getPeriodMode?.() === 'monthly';
+    const q = document.getElementById('crPeriodQuestion');
+    if (q) q.textContent = monthly ? 'Which month are you reporting?' : 'Which week are you reporting?';
+
+    const fromEl = document.getElementById('crPeriodFrom');
+    const selected = fromEl ? fromEl.value : '';
+
+    wrap.innerHTML = candidates().map(c => {
+      const f = iso(c.from), t = iso(c.to);
+      const on = selected === f;
+      const done = alreadyReported(f);
+
+      // La semana en curso todavia no termina: reportarla da datos parciales
+      const badge = c.current
+        ? '<span class="cr-pbadge cr-pbadge-mute">In progress</span>'
+        : done
+          ? '<span class="cr-pbadge cr-pbadge-ok"><i class="ti ti-check" aria-hidden="true"></i> Reported</span>'
+          : '<span class="cr-pbadge cr-pbadge-mute">Not reported</span>';
+
+      return `
+        <button type="button" class="cr-pcard${on ? ' on' : ''}"
+                onclick="BarStockCostSteps.pickPeriod('${f}','${t}')">
+          <span class="cr-pcard-label">${c.label}</span>
+          <span class="cr-pcard-dates">${short(c.from)}&ndash;${short(c.to)}</span>
+          ${badge}
+        </button>`;
+    }).join('');
+
+    renderRecent();
+  }
+
+  function renderRecent() {
+    const el = document.getElementById('crRecentPeriods');
+    if (!el) return;
+
+    if (!_savedPeriods.length) {
+      el.innerHTML = '<div class="cr-recent-empty">No saved reports yet.</div>';
+      return;
+    }
+
+    el.innerHTML = _savedPeriods.slice(0, 5).map(r => {
+      const total = (r.wineCogs + r.liquorCogs) / 2;
+      return `
+        <div class="cr-recent-row">
+          <span>${r.from.slice(5)} &rarr; ${r.to ? r.to.slice(5) : '—'}</span>
+          <span class="cr-recent-val">Wine ${r.wineCogs.toFixed(1)}%</span>
+          <span class="cr-recent-val">Liquor ${r.liquorCogs.toFixed(1)}%</span>
+        </div>`;
+    }).join('');
+  }
+
+  function pickPeriod(from, to) {
+    const f = document.getElementById('crPeriodFrom');
+    const t = document.getElementById('crPeriodTo');
+    if (f) f.value = from;
+    if (t) t.value = to;
+    if (window.BarStockCostReport?.updatePreview) window.BarStockCostReport.updatePreview();
+    renderPeriodStep();
+  }
+
+  function toggleCustomRange() {
+    const el = document.getElementById('crCustomRange');
+    const btn = document.getElementById('crCustomToggle');
+    if (!el) return;
+    const open = el.style.display !== 'none';
+    el.style.display = open ? 'none' : '';
+    if (btn) btn.classList.toggle('open', !open);
+  }
+
+  // Si escribe fechas a mano, ninguna tarjeta deberia seguir marcada
+  function onDateEdited() {
+    if (window.BarStockCostReport?.updatePreview) window.BarStockCostReport.updatePreview();
+    renderPeriodStep();
+  }
+
   // ── Panel lateral ──────────────────────────────────────────────────
   // Lee de getValues(), la MISMA fuente que usa el preview y el PDF.
   // Aqui no se calcula nada nuevo: si un numero difiere del paso 4, es
@@ -147,6 +306,7 @@
     renderStepper();
     renderFooter();
     renderPanel();
+    if (n === 1) renderPeriodStep();
 
     // Al cambiar de paso el contenido cambia de alto; volver arriba evita
     // quedar mirando el vacio a media pagina.
@@ -208,6 +368,10 @@
   window.BarStockCostSteps = {
     go: show,
     renderPanel,
+    renderPeriodStep,
+    pickPeriod,
+    toggleCustomRange,
+    onDateEdited,
     next: () => show(_current + 1),
     back: () => show(_current - 1),
     current: () => _current,
@@ -223,6 +387,12 @@
     // cost-report.js. No se envuelve aqui: las llamadas internas del modulo
     // no pasan por window.BarStockCostReport y se saltarian el wrapper.
     show(1);
+
+    // Las etiquetas "Reported" necesitan la lista de reportes guardados.
+    // Se pide despues de pintar para no retrasar la primera vista.
+    loadSavedPeriods().then(() => {
+      if (_current === 1) renderPeriodStep();
+    });
   }
 
   if (document.readyState === 'complete') boot();
