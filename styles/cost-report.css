@@ -1618,3 +1618,69 @@ body.light .cr-act-reset:hover{
 
 /* Los importes tambien respiran un poco mas */
 .cr-side-row{ padding: 5px 0; font-size: 12.5px; }
+
+/* ============================================================
+   Panel — separadores visibles y aviso de guardado
+   ------------------------------------------------------------
+   La linea y la barra SI estaban, pero a 1px al 14% y 4px de
+   alto no se notaban. Aqui suben de peso lo suficiente para
+   que cumplan su trabajo: marcar donde termina el encabezado.
+   ============================================================ */
+
+.cr-side-title{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.cr-side-title i{ font-size: 17px; color: #38bdf8; }
+body.light .cr-side-title i{ color:#0284c7; }
+
+.cr-side-sep{
+  height: 1px !important;
+  background: rgba(255,255,255,.16) !important;
+  margin: 12px 0 !important;
+}
+body.light .cr-side-sep{ background: rgba(15,23,42,.20) !important; }
+
+/* La barra con su etiqueta al lado y el porcentaje a la derecha */
+.cr-progress-row{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.cr-progress-cap{ font-size: 11px; color: var(--sub); }
+.cr-progress-pct{ font-size: 11px; font-weight: 800; color: #38bdf8; }
+body.light .cr-progress-pct{ color:#0284c7; }
+
+.cr-side-progress{
+  height: 7px !important;
+  border-radius: 4px !important;
+  background: rgba(255,255,255,.12) !important;
+  margin-bottom: 0 !important;
+}
+.cr-side-progress > div{ border-radius: 4px; }
+body.light .cr-side-progress{ background: rgba(15,23,42,.14) !important; }
+
+/* Aviso de reporte guardado */
+.cr-saved-flag{
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 9px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: rgba(34,197,94,.14);
+  border: 1px solid rgba(34,197,94,.32);
+  color: #4ade80;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.cr-saved-flag i{ font-size: 15px; }
+body.light .cr-saved-flag{
+  background: rgba(21,128,61,.10);
+  border-color: rgba(21,128,61,.30);
+  color: #15803d;
+}

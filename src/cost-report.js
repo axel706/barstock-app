@@ -349,7 +349,12 @@
       try {
         await window.BarStockCostReportCloud.saveReport(report);
         await renderHistory();
-        alert('Report saved to cloud.');
+        // Avisar a la UI de pasos: el reporte esta completo. Antes el paso 4
+        // no se marcaba al guardar, solo al brincar a Saved, que no es lo
+        // mismo — te podias ir con el reporte sin guardar y verlo palomeado.
+        if (window.BarStockCostSteps?.markSaved) {
+          window.BarStockCostSteps.markSaved(d.periodFrom, d.periodTo);
+        }
         return;
       } catch (e) {
         console.error('Cloud save failed, falling back to local', e);
@@ -364,7 +369,9 @@
     if (reports.length > 24) reports.shift();
     localStorage.setItem(storageKey(), JSON.stringify(reports));
     await renderHistory();
-    alert('Report saved locally (cloud unavailable).');
+    if (window.BarStockCostSteps?.markSaved) {
+      window.BarStockCostSteps.markSaved(d.periodFrom, d.periodTo, true);
+    }
   }
 
   // Normaliza un registro del cloud (snake_case) al formato de la UI (camelCase)

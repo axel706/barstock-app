@@ -22,6 +22,25 @@
 
   let _current = 1;
 
+  // Periodo del ultimo reporte guardado, como "from|to". Sirve para dos
+  // cosas: palomear el paso Review y mostrar el aviso en el panel.
+  // Se guarda el periodo, no un simple true, para que al cambiar de semana
+  // el aviso desaparezca solo — ese otro reporte no esta guardado.
+  let _savedFor = null;
+  let _savedLocal = false;
+
+  function markSaved(from, to, local) {
+    _savedFor = `${from}|${to}`;
+    _savedLocal = !!local;
+    renderStepper();
+    renderPanel();
+    // Refrescar los badges "Reported" de las tarjetas de periodo
+    loadSavedPeriods().then(() => { if (_current === 1) renderPeriodStep(); });
+    if (typeof setStatus === 'function') {
+      setStatus(local ? 'Cost report saved locally.' : 'Cost report saved to cloud.');
+    }
+  }
+
   function money(n) {
     const v = Number(n) || 0;
     return '$' + Math.round(v).toLocaleString();
@@ -475,16 +494,29 @@
         </div>`;
     };
 
+    // ¿Este periodo exacto ya se guardo? Se compara contra lo que quedo
+    // marcado al presionar Save, no contra el paso en que estas.
+    const savedNow = _savedFor && _savedFor === `${v.periodFrom}|${v.periodTo}`;
+
     el.innerHTML = `
-      <div class="cr-side-title">Summary</div>
+      <div class="cr-side-title"><i class="ti ti-clipboard-data" aria-hidden="true"></i> Summary</div>
 
       ${line('ti-calendar-event', 'Period',
              v.periodFrom && v.periodTo ? `${v.periodFrom.slice(5)} → ${v.periodTo.slice(5)}` : '—')}
 
+      ${savedNow ? `
+      <div class="cr-saved-flag">
+        <i class="ti ti-circle-check" aria-hidden="true"></i>
+        <span>Report saved${_savedLocal ? ' locally' : ''}</span>
+      </div>` : ''}
+
       <div class="cr-side-sep"></div>
 
+      <div class="cr-progress-row">
+        <span class="cr-progress-cap">${filled} of ${total} vendors captured</span>
+        <span class="cr-progress-pct">${progress}%</span>
+      </div>
       <div class="cr-side-progress"><div style="width:${progress}%"></div></div>
-      <div class="cr-side-progress-cap">${filled} of ${total} vendors captured</div>
 
       <div class="cr-side-gap"></div>
 
@@ -554,9 +586,20 @@
     }
   }
 
+  function currentPeriodKey() {
+    const f = document.getElementById('crPeriodFrom');
+    const t = document.getElementById('crPeriodTo');
+    return `${f ? f.value : ''}|${t ? t.value : ''}`;
+  }
+
   function chip(s, isSaved) {
     const active = s.n === _current;
-    const done = !isSaved && s.n < _current;
+    // Review solo se palomea cuando el reporte se guardo de verdad, no por
+    // haber pasado de largo. Los demas pasos si van por posicion.
+    const done = !isSaved && (
+      s.n === 4 ? (_savedFor && _savedFor === currentPeriodKey())
+                : s.n < _current
+    );
     return `
       <button class="cr-step-chip${active ? ' active' : ''}${done ? ' done' : ''}${isSaved ? ' saved' : ''}"
               onclick="BarStockCostSteps.go(${s.n})"
@@ -614,6 +657,7 @@
     toggleTarget,
     reviewTab,
     renderFindings,
+    markSaved,
     next: () => show(_current + 1),
     back: () => show(_current - 1),
     current: () => _current,
