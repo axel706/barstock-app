@@ -1740,3 +1740,56 @@ body.light .cr-step-chip.done .cr-step-num{
   color: #ffffff !important;
   box-shadow: 0 0 0 2px rgba(21,128,61,.18);
 }
+
+/* ============================================================
+   Panel — ajustar para que TODO quepa sin scroll
+   ------------------------------------------------------------
+   El panel mide 460px fijos. Con el aviso de guardado, las
+   mini-cards grandes y los cuatro botones, el contenido se
+   pasaba y aparecia scroll.
+
+   Aqui se recortan los espacios muertos — margenes, relleno,
+   separaciones — sin quitar informacion ni encoger las cifras
+   al punto de que dejen de leerse.
+   ============================================================ */
+
+.cr-side{ padding: 12px !important; }
+
+.cr-side-title{
+  font-size: 14px !important;
+  margin-bottom: 8px !important;
+}
+.cr-side-title i{ font-size: 16px !important; }
+
+.cr-side-row{ padding: 2px 0 !important; font-size: 12px !important; }
+
+.cr-side-sep{ margin: 9px 0 !important; }
+
+.cr-side-gap{ height: 8px !important; }
+
+.cr-progress-row{ margin-bottom: 5px !important; }
+.cr-progress-cap,
+.cr-progress-pct{ font-size: 10.5px !important; }
+
+.cr-side-progress{ height: 6px !important; }
+
+/* Mini-cards: siguen siendo las grandes, solo con menos relleno */
+.cr-mini-grid{ margin-top: 11px !important; gap: 8px !important; }
+.cr-mini{ padding: 10px 6px !important; }
+.cr-mini-label{ margin-bottom: 3px !important; }
+.cr-mini-value{ font-size: 24px !important; }
+.cr-mini-sub{ margin-top: 2px !important; }
+
+.cr-saved-flag{
+  margin-top: 7px !important;
+  padding: 7px 9px !important;
+  font-size: 11px !important;
+}
+
+.cr-side-spacer{ min-height: 4px !important; }
+
+/* Botones: un pelin mas bajos, mismo peso visual */
+.cr-act-pdf{ padding: 10px !important; font-size: 13px !important; }
+.cr-act-save,
+.cr-act-email{ padding: 8px 6px !important; font-size: 11.5px !important; }
+.cr-act-reset{ padding: 6px !important; margin-top: 7px !important; }
