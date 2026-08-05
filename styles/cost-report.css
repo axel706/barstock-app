@@ -69,16 +69,202 @@ body.light .cr-step-chip.active{
 body.light .cr-step-num{ background: rgba(15,23,42,.06); }
 body.light .cr-step-chip.done .cr-step-num{ background: rgba(21,128,61,.14); color:#15803d; }
 
+/* ---------- Dos columnas de alto fijo ---------- */
+/* El alto NO depende del contenido: un paso con dos campos y otro con
+   veinte filas miden lo mismo. Si sobra, queda aire; si falta, scroll
+   interno. Asi el panel lateral nunca "salta" al cambiar de paso. */
+
+.cr-layout{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 246px;
+  gap: 14px;
+  align-items: start;
+}
+
+.cr-main{
+  height: 460px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255,255,255,.02);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.cr-main-scroll{
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 16px 4px;
+}
+body.light .cr-main{
+  background: rgba(15,23,42,.02);
+  border-color: rgba(15,23,42,.08);
+}
+
+/* Dentro del contenedor los bloques ya no necesitan su margen grande */
+.cr-main-scroll .cr-subsection{ margin-bottom: 0; }
+
 .cr-step-footer{
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 20px;
-  padding-top: 16px;
+  padding: 11px 14px;
   border-top: 1px solid rgba(255,255,255,.07);
+  flex-shrink: 0;
 }
 body.light .cr-step-footer{ border-top-color: rgba(15,23,42,.08); }
+
+.cr-step-pos{
+  font-size: 11px;
+  color: var(--sub);
+}
+
+/* ---------- Panel lateral ---------- */
+
+.cr-side{
+  height: 460px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255,255,255,.02);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 14px;
+  padding: 14px;
+  overflow-y: auto;
+}
+body.light .cr-side{
+  background: rgba(15,23,42,.02);
+  border-color: rgba(15,23,42,.08);
+}
+
+.cr-side-head{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--sub);
+  margin-bottom: 10px;
+}
+.cr-side-head i{ font-size: 13px; }
+
+.cr-side-row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 12px;
+}
+.cr-side-label{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--sub);
+  min-width: 0;
+}
+.cr-side-label i{ font-size: 13px; opacity: .8; flex-shrink: 0; }
+.cr-side-value{ font-weight: 700; white-space: nowrap; }
+
+.cr-side-sep{
+  height: 1px;
+  background: rgba(255,255,255,.07);
+  margin: 9px 0;
+}
+body.light .cr-side-sep{ background: rgba(15,23,42,.08); }
+
+.cr-side-total{ text-align: center; padding: 2px 0 8px; }
+.cr-side-total-num{ font-size: 26px; font-weight: 800; line-height: 1.05; }
+.cr-side-total-cap{ font-size: 10px; color: var(--sub); margin-top: 2px; }
+
+.cr-side-progress{
+  height: 4px;
+  border-radius: 3px;
+  background: rgba(255,255,255,.08);
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+.cr-side-progress > div{
+  height: 100%;
+  background: #38bdf8;
+  border-radius: 3px;
+  transition: width .35s cubic-bezier(.22,1,.36,1);
+}
+body.light .cr-side-progress{ background: rgba(15,23,42,.08); }
+.cr-side-progress-cap{
+  font-size: 10px;
+  color: var(--sub);
+  text-align: center;
+}
+
+/* Empuja los botones al fondo del panel */
+.cr-side-spacer{ flex: 1; min-height: 12px; }
+
+/* ---------- Acciones, con pesos distintos ---------- */
+/* No son una lista de botones iguales: el principal manda, los dos
+   secundarios comparten renglon, y Reset queda como texto tenue. */
+
+.cr-act{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  border-radius: 10px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color .16s cubic-bezier(.22,1,.36,1),
+              border-color .16s cubic-bezier(.22,1,.36,1),
+              transform .16s cubic-bezier(.22,1,.36,1);
+}
+.cr-act:active{ transform: scale(.975); }
+.cr-act i{ font-size: 15px; }
+
+.cr-act-primary{
+  padding: 11px;
+  font-size: 13.5px;
+  font-weight: 700;
+  border: none;
+  background: #38bdf8;
+  color: #04263a;
+}
+.cr-act-primary:hover{ background: #7dd3fc; }
+
+.cr-act-pair{ display: flex; gap: 6px; margin-top: 6px; }
+.cr-act-pair .cr-act{ width: 50%; }
+
+.cr-act-second{
+  padding: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(255,255,255,.14);
+  background: transparent;
+  color: var(--text);
+}
+.cr-act-second:hover{ background: rgba(255,255,255,.06); }
+.cr-act-second i{ font-size: 14px; }
+body.light .cr-act-second{ border-color: rgba(15,23,42,.14); }
+body.light .cr-act-second:hover{ background: rgba(15,23,42,.04); }
+
+.cr-act-ghost{
+  padding: 7px;
+  font-size: 11.5px;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  color: var(--sub);
+  margin-top: 8px;
+}
+.cr-act-ghost:hover{ color: #f87171; }
+.cr-act-ghost i{ font-size: 13px; }
+
+/* ---------- Angosto: el panel pasa abajo ---------- */
+@media (max-width: 900px){
+  .cr-layout{ grid-template-columns: minmax(0, 1fr); }
+  .cr-side{ height: auto; }
+  .cr-side-spacer{ min-height: 14px; }
+}
 
 .cr-step-back,
 .cr-step-next{

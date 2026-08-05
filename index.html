@@ -31,7 +31,7 @@
 
   <link rel="stylesheet" href="styles/fixes.css">
   <link rel="stylesheet" href="styles/auth.css">
-  <link rel="stylesheet" href="styles/cost-report.css?v=steps1">
+  <link rel="stylesheet" href="styles/cost-report.css?v=steps2">
   <link rel="stylesheet" href="styles/motion.css?v=motion3">
   <link rel="stylesheet" href="styles/skeleton.css?v=skel1">
   <link rel="stylesheet" href="styles/toast.css?v=toast1">
@@ -133,7 +133,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260804-200811</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260804-202942</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -394,6 +394,10 @@
 
       <div class="cr-stepper" id="crStepper"></div>
 
+      <div class="cr-layout">
+      <div class="cr-main">
+      <div class="cr-main-scroll">
+
       <div class="cr-subsection" data-cr-step="1">
         <div class="cr-subsection-header"><h3 class="cr-subsection-title">Reporting Period</h3></div>
         <div class="cr-period-grid">
@@ -542,15 +546,22 @@
         <div id="crHistoryContainer"></div>
       </div>
 
+      </div><!-- /cr-main-scroll -->
+
       <div class="cr-step-footer" id="crStepFooter">
         <button class="cr-step-back" id="crStepBack" onclick="BarStockCostSteps.back()">
-          <i class="ti ti-arrow-left" aria-hidden="true"></i> Back
+          <i class="ti ti-arrow-left" aria-hidden="true"></i> <span id="crStepBackLabel">Back</span>
         </button>
-        <div class="cr-step-dots" id="crStepDots"></div>
+        <span class="cr-step-pos" id="crStepPos"></span>
         <button class="cr-step-next" id="crStepNext" onclick="BarStockCostSteps.next()">
-          Next <i class="ti ti-arrow-right" aria-hidden="true"></i>
+          <span id="crStepNextLabel">Next</span> <i class="ti ti-arrow-right" aria-hidden="true"></i>
         </button>
       </div>
+
+      </div><!-- /cr-main -->
+
+      <aside class="cr-side" id="crSidePanel"></aside>
+      </div><!-- /cr-layout -->
 
     </div>
   </div>
