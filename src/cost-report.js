@@ -1489,6 +1489,10 @@
     generatePdfBase64: () => generatePdf(false),
     getValues,
     updatePreview,
+    // Se expone para que el paso 1 lea los reportes guardados con la MISMA
+    // conversion. El COGS no es una columna: se calcula de total/ventas,
+    // asi que leerlo por nombre de columna devuelve cero.
+    normalizeCloudReport,
     setPeriodMode,
     getPeriodMode,
     toggleCompareSelector,

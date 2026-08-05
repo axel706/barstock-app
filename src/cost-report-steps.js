@@ -96,12 +96,29 @@
     try {
       if (!window.BarStockCostReportCloud?.listReports) return;
       const rows = await window.BarStockCostReportCloud.listReports();
-      _savedPeriods = (rows || []).map(r => ({
-        from: r.period_from || r.periodFrom || '',
-        to:   r.period_to   || r.periodTo   || '',
-        wineCogs:   Number(r.wine_cogs   ?? r.wineCogs   ?? 0),
-        liquorCogs: Number(r.liquor_cogs ?? r.liquorCogs ?? 0)
-      })).filter(r => r.from);
+
+      // El COGS no viene como columna: se calcula de total/ventas. Por eso
+      // se usa normalizeCloudReport, la misma conversion que usa el resto
+      // del modulo, en vez de leer un nombre de columna que no existe.
+      const norm = window.BarStockCostReport?.normalizeCloudReport;
+
+      _savedPeriods = (rows || []).map(r => {
+        const n = norm ? norm(r) : null;
+        if (n) {
+          return { from: n.periodFrom || '', to: n.periodTo || '',
+                   wineCogs: n.wineCogs || 0, liquorCogs: n.liquorCogs || 0 };
+        }
+        // Respaldo por si el modulo aun no expone la conversion
+        const ws = Number(r.wine_sales) || 0, ls = Number(r.liquor_sales) || 0;
+        return {
+          from: r.period_from || '', to: r.period_to || '',
+          wineCogs:   ws > 0 ? ((Number(r.total_wine)   || 0) / ws) * 100 : 0,
+          liquorCogs: ls > 0 ? ((Number(r.total_liquor) || 0) / ls) * 100 : 0
+        };
+      }).filter(r => r.from);
+
+      // Mas reciente primero
+      _savedPeriods.sort((a, b) => String(b.from).localeCompare(String(a.from)));
     } catch (e) {
       _savedPeriods = [];
     }
