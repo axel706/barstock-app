@@ -87,6 +87,18 @@
       `;
       container.appendChild(card);
     });
+
+    // Ultima celda del grid: agregar vendor. Antes era un boton suelto en
+    // el encabezado, lejos de las tarjetas que iba a crear. Como celda,
+    // ocupa el hueco que deja el grid y se lee como "aqui va uno mas".
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'cr-vendor-card cr-vendor-add';
+    add.onclick = () => addCustomVendor();
+    add.innerHTML = `
+      <i class="ti ti-plus" aria-hidden="true"></i>
+      <span>Add custom vendor</span>`;
+    container.appendChild(add);
   }
 
   function updateInvoice(vIdx, iIdx, field, value) {
