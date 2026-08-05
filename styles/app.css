@@ -3154,3 +3154,75 @@ input[placeholder="Filter current order"] {
 #vendorExportArea td:nth-child(3) {
   text-align: left !important;
 }
+
+/* ============================================================
+   Mini-cards de la pantalla principal
+   ------------------------------------------------------------
+   La rejilla NO cambia: siguen siendo las mismas 4 + 3 tarjetas.
+   Lo unico distinto es el reparto DENTRO de cada tarjeta: icono,
+   titulo y descripcion a la izquierda, y las cifras ocupando el
+   hueco que antes quedaba vacio a la derecha.
+   ============================================================ */
+
+.bs-focus-card{
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.bs-focus-main{
+  flex: 1;
+  min-width: 0;
+}
+
+.bs-focus-stats{
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+/* Sin datos todavia: el hueco no debe dejar un borde flotando */
+.bs-focus-stats:empty{ display: none; }
+
+.bs-fs-card{
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 10px;
+  padding: 9px 12px;
+  text-align: center;
+  min-width: 78px;
+}
+body.light .bs-fs-card{
+  background: rgba(15,23,42,.04);
+  border-color: rgba(15,23,42,.10);
+}
+
+.bs-fs-label{
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--sub);
+  white-space: nowrap;
+}
+.bs-fs-value{
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.15;
+  margin-top: 2px;
+  color: var(--text);
+  white-space: nowrap;
+}
+.bs-fs-sub{
+  font-size: 8.5px;
+  color: var(--sub);
+  margin-top: 1px;
+  white-space: nowrap;
+}
+
+/* En pantallas angostas las cifras pasan debajo del texto en vez de
+   estrujar el titulo de la tarjeta */
+@media (max-width: 1150px){
+  .bs-focus-card{ flex-direction: column; align-items: stretch; gap: 10px; }
+  .bs-focus-stats{ justify-content: flex-start; }
+  .bs-fs-card{ flex: 1; }
+}
