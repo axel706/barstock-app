@@ -207,6 +207,7 @@
 
   window.BarStockCostSteps = {
     go: show,
+    renderPanel,
     next: () => show(_current + 1),
     back: () => show(_current - 1),
     current: () => _current,
@@ -218,20 +219,9 @@
   function boot() {
     if (!document.querySelector('[data-cr-step]')) return;
 
-    // Cada input del formulario ya llama a updatePreview(). En vez de
-    // enganchar 20 listeners, se envuelve esa funcion: cuando el preview
-    // se recalcula, el panel tambien. Asi nunca se desincronizan.
-    const api = window.BarStockCostReport;
-    if (api && typeof api.updatePreview === 'function' && !api.__panelHooked) {
-      const original = api.updatePreview;
-      api.updatePreview = function () {
-        const out = original.apply(this, arguments);
-        try { renderPanel(); } catch (e) { console.warn('cost panel', e); }
-        return out;
-      };
-      api.__panelHooked = true;
-    }
-
+    // El refresco del panel lo dispara updatePreview() desde dentro de
+    // cost-report.js. No se envuelve aqui: las llamadas internas del modulo
+    // no pasan por window.BarStockCostReport y se saltarian el wrapper.
     show(1);
   }
 

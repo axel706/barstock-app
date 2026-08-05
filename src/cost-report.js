@@ -198,6 +198,14 @@
     `;
 
     renderSmartNotes(d, expectedWine, expectedLiquor, expectedWineLY, expectedLiquorLY);
+
+    // El panel lateral se refresca desde AQUI, no envolviendo la funcion
+    // desde fuera: updateInvoice() llama a updatePreview() internamente y
+    // esa llamada nunca pasa por window.BarStockCostReport, asi que un
+    // wrapper externo se la saltaba (los invoices no actualizaban el panel).
+    if (window.BarStockCostSteps?.renderPanel) {
+      try { window.BarStockCostSteps.renderPanel(); } catch (e) { console.warn('cost panel', e); }
+    }
   }
 
   function diffPill(diff, kind) {
@@ -1295,7 +1303,7 @@
     const isOpen = wrap.style.display !== 'none';
     if (isOpen) {
       wrap.style.display = 'none';
-      btn.textContent = '+ Select report to compare';
+      if (btn) btn.textContent = '+ Select report to compare';
       _compareReport = null;
       document.getElementById('crComparePreview').innerHTML = '';
       return;
@@ -1318,7 +1326,7 @@
       select.appendChild(opt);
     });
     wrap.style.display = 'block';
-    btn.textContent = '− Hide selector';
+    if (btn) btn.textContent = '− Hide selector';
     wrap._reports = reports;
   }
 

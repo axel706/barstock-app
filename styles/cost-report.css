@@ -81,12 +81,15 @@ body.light .cr-step-chip.done .cr-step-num{ background: rgba(21,128,61,.14); col
   align-items: start;
 }
 
+/* Fondo SOLIDO, no translucido. Sobre la foto de fondo con blur, un
+   contenedor casi transparente hacia que las tablas no se leyeran como
+   tablas. Mismo tratamiento que .tablewrap en Inventory y Ordering. */
 .cr-main{
   height: 460px;
   display: flex;
   flex-direction: column;
-  background: rgba(255,255,255,.02);
-  border: 1px solid rgba(255,255,255,.07);
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,.08);
   border-radius: 14px;
   overflow: hidden;
 }
@@ -96,8 +99,8 @@ body.light .cr-step-chip.done .cr-step-num{ background: rgba(21,128,61,.14); col
   padding: 16px 16px 4px;
 }
 body.light .cr-main{
-  background: rgba(15,23,42,.02);
-  border-color: rgba(15,23,42,.08);
+  background: var(--card);
+  border-color: rgba(15,23,42,.12);
 }
 
 /* Dentro del contenedor los bloques ya no necesitan su margen grande */
@@ -125,15 +128,15 @@ body.light .cr-step-footer{ border-top-color: rgba(15,23,42,.08); }
   height: 460px;
   display: flex;
   flex-direction: column;
-  background: rgba(255,255,255,.02);
-  border: 1px solid rgba(255,255,255,.07);
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,.08);
   border-radius: 14px;
   padding: 14px;
   overflow-y: auto;
 }
 body.light .cr-side{
-  background: rgba(15,23,42,.02);
-  border-color: rgba(15,23,42,.08);
+  background: var(--card);
+  border-color: rgba(15,23,42,.12);
 }
 
 .cr-side-head{
@@ -264,6 +267,55 @@ body.light .cr-act-second:hover{ background: rgba(15,23,42,.04); }
   .cr-layout{ grid-template-columns: minmax(0, 1fr); }
   .cr-side{ height: auto; }
   .cr-side-spacer{ min-height: 14px; }
+}
+
+/* ---------- Tablas con el estilo de la app ---------- */
+/* Estaban pintadas como hoja de papel: fondo blanco fijo y texto navy.
+   Sobre el contenedor oscuro se veian como un parche. Ahora heredan los
+   colores del tema, como las tablas de Inventory y Ordering. */
+
+.cr-preview-table-wrapper{
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.08);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+}
+body.light .cr-preview-table-wrapper{ border-color: rgba(15,23,42,.12); }
+
+.cr-preview-table thead th{
+  background: var(--muted);
+  color: var(--text);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.cr-preview-table tbody td{
+  color: var(--text);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.cr-preview-table tbody tr:nth-child(even) td{
+  background: rgba(255,255,255,.025);
+}
+.cr-preview-table tfoot td{
+  background: var(--muted);
+  color: var(--text);
+}
+
+body.light .cr-preview-table thead th,
+body.light .cr-preview-table tbody td{ border-bottom-color: rgba(15,23,42,.10); }
+body.light .cr-preview-table tbody tr:nth-child(even) td{ background: rgba(15,23,42,.025); }
+
+/* Banner de cada tabla */
+.cr-preview-banner{
+  border-radius: 12px 12px 0 0;
+}
+
+/* Bloques de vendor */
+.cr-vendor-block{
+  background: rgba(255,255,255,.03);
+  border-color: rgba(255,255,255,.08);
+}
+body.light .cr-vendor-block{
+  background: rgba(15,23,42,.02);
+  border-color: rgba(15,23,42,.10);
 }
 
 .cr-step-back,
