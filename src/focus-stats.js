@@ -81,6 +81,11 @@
     put('inventory',
       card('To order', toOrder, 'of ' + master.length, toOrder > 0 ? '#38bdf8' : '') +
       card('Critical', critical, 'under 25%', critical > 0 ? '#f87171' : ''));
+
+    // La descripcion la llenaba bsUpdateFocusGrid leyendo el contador del
+    // header, que ya no existe. Ahora sale directo del estado.
+    const sub = document.getElementById('fgSub-inventory');
+    if (sub) sub.textContent = master.length + ' items loaded';
   }
 
   // ── Ordering ───────────────────────────────────────────────────────

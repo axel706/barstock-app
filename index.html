@@ -75,24 +75,6 @@
         <button id="authLogoutBtn" class="bs-logout-btn" type="button"><i class="ti ti-logout" aria-hidden="true"></i>Logout</button>
       </div>
     </div>
-    <div class="bs-header-line2">
-      <div class="bs-stat-tab bs-stat-featured">
-        <span class="bs-stat-label">Items to order</span>
-        <span class="bs-stat-value" id="toOrderMetric">0</span>
-      </div>
-      <div class="bs-stat-tab">
-        <span class="bs-stat-label">Items in master</span>
-        <span class="bs-stat-value" id="itemsMetric">0</span>
-      </div>
-      <div class="bs-stat-tab bs-stat-alert">
-        <span class="bs-stat-label">No matches</span>
-        <span class="bs-stat-value" id="noMatchMetric">0</span>
-      </div>
-      <div class="bs-stat-tab">
-        <span class="bs-stat-label">Master status</span>
-        <div class="bs-status-chip"><span class="bs-status-dot" id="bsStatusDot"></span><span id="masterStatus">No master loaded</span></div>
-      </div>
-    </div>
     <div class="bs-header-line3">
       <label class="bs-btn bs-btn-primary bs-filelbl"><i class="ti ti-cloud-download" aria-hidden="true"></i>Load master<input type="file" id="masterFile" accept=".xlsx,.xls,.csv" /></label>
       <div class="bs-toolbar-group">
@@ -119,13 +101,9 @@
           <span class="bs-status-dot" id="bsStatusCycleDot"></span>
           <span id="bsStatusCycleText">Loading...</span>
         </div>
-        <div class="bs-status-badge" id="bsStatusItems" style="display:none;">
-          <i class="ti ti-package" aria-hidden="true"></i>
-          <span id="bsStatusItemsText"></span>
-        </div>
-        <div class="bs-status-badge" id="bsStatusPourIq" style="display:none;">
-          <i class="ti ti-brain" aria-hidden="true"></i>
-          <span id="bsStatusPourIqText"></span>
+        <div class="bs-status-badge" id="bsStatusMaster">
+          <span class="bs-status-dot" id="bsStatusDot"></span>
+          <span id="masterStatus">No master loaded</span>
         </div>
         <div class="bs-status-badge" id="bsStatusRealtime" style="display:none;">
           <span class="bs-status-dot" id="bsStatusRealtimeDot"></span>
@@ -133,7 +111,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260804-232756</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260804-233605</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2668,10 +2646,14 @@ function render(){
       })
     : `<tr><td colspan="4" class="muted">No no-matches right now. Nice.</td></tr>`);
 
-  document.getElementById('itemsMetric').textContent = state.master.length;
-  document.getElementById('toOrderMetric').textContent = state.master.filter(r=>r.toOrder>0).length;
-  document.getElementById('noMatchMetric').textContent = state.noMatches.length;
-  document.getElementById('masterStatus').textContent = state.lastMasterName ? `Loaded: ${state.lastMasterName}` : 'No master loaded';
+  // Los contadores de la segunda linea del header se eliminaron: esa info
+  // ahora vive en las mini-cards de la pantalla principal. Se escribe con
+  // guarda por si algun dia vuelven; sin la guarda, render() reventaba.
+  const _setMetric = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  _setMetric('itemsMetric', state.master.length);
+  _setMetric('toOrderMetric', state.master.filter(r=>r.toOrder>0).length);
+  _setMetric('noMatchMetric', state.noMatches.length);
+  _setMetric('masterStatus', state.lastMasterName ? `Loaded: ${state.lastMasterName}` : 'No master loaded');
 }
 function renderVendorPanel() {
   const hdr = document.getElementById('vspPanelHeader');
