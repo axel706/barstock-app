@@ -3104,7 +3104,7 @@ body.light .bs-stat-value { color: #0f172a !important; }
 body.light .bs-stat-featured .bs-stat-value { color: #0369a1 !important; }
 body.light .bs-stat-alert .bs-stat-value { color: #b45309 !important; }
 
-button:not(.oh-filter-chip):not(.piq-filter-chip):not(.section-toggle):not(.bs-icon-btn):not(.bs-logout-btn):not(.bs-btn):not(.bs-dd-item):not(.tu-comment-btn):not(.cr-btn-secondary):not(.inv-panel-apply-btn):not(.focus-max-btn):not(.vsp-place-btn):not(.vsp-email-btn):not(.vsp-delete-btn):not(.vsp-reopen-btn),
+button:not(.oh-filter-chip):not(.piq-filter-chip):not(.section-toggle):not(.bs-icon-btn):not(.bs-logout-btn):not(.bs-btn):not(.bs-dd-item):not(.tu-comment-btn):not(.cr-btn-secondary):not(.inv-panel-apply-btn):not(.focus-max-btn):not(.vsp-place-btn):not(.vsp-email-btn):not(.vsp-delete-btn):not(.vsp-reopen-btn):not(.cr-pcard):not(.cr-vendor-add),
 label.filelbl:not(.bs-filelbl):not(.bs-btn) {
   border-radius: 999px !important;
 }
