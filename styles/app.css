@@ -3393,3 +3393,38 @@ body.light .bs-focus-head .bs-focus-title{ color: #0f172a; }
 
 .bs-focus-card .bs-focus-sub{ color: rgba(255,255,255,.68); }
 body.light .bs-focus-card .bs-focus-sub{ color: #475569; }
+
+/* Boton dentro de una tarjeta principal: cuando no hay dato que mostrar,
+   invita a generarlo en vez de ensenar ceros. */
+.bs-fs-cta{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: 11px;
+  border: 1px dashed rgba(56,189,248,.45);
+  background: rgba(56,189,248,.10);
+  color: #7dd3fc;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color .16s cubic-bezier(.22,1,.36,1),
+              border-color .16s cubic-bezier(.22,1,.36,1);
+}
+.bs-fs-cta i{ font-size: 16px; }
+.bs-fs-cta:hover{
+  background: rgba(56,189,248,.18);
+  border-color: rgba(56,189,248,.75);
+}
+body.light .bs-fs-cta{
+  border-color: rgba(2,132,199,.45);
+  background: rgba(2,132,199,.08);
+  color: #0369a1;
+}
+body.light .bs-fs-cta:hover{
+  background: rgba(2,132,199,.14);
+  border-color: rgba(2,132,199,.70);
+}

@@ -177,52 +177,80 @@
   }
 
   // ── Costs ──────────────────────────────────────────────────────────
-  // El unico que pide la nube. Se lee una vez y se cachea; mientras tanto
-  // muestra esqueleto en vez de dejar el hueco vacio.
+  // Muestra el COGS de wine y liquor de la SEMANA PASADA en concreto, no
+  // del ultimo reporte que exista. Si esa semana no se reporto, en vez de
+  // dos ceros — que no dicen nada — sale un boton que invita a hacerlo.
   let _costsCache = null;
   let _costsAsked = false;
 
+  function lastWeekStart() {
+    const d = currentCycleStart();
+    d.setDate(d.getDate() - 7);
+    return d;
+  }
+
+  function isoDate(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
   function costs() {
-    if (_costsCache) {
-      const { cogs, target, from } = _costsCache;
-      if (cogs === null) return put('costReport', card('Reports', '—', 'none saved'));
-      return put('costReport',
-        card('Last COGS', cogs.toFixed(1) + '%', 'target ' + target.toFixed(1) + '%',
-             cogs > target ? '#f87171' : '#4ade80') +
-        card('Reported', from ? from.slice(5) : '—', 'period start'));
+    if (!_costsCache) {
+      if (!_costsAsked) {
+        _costsAsked = true;
+        put('costReport', skeleton() + skeleton());
+        loadCosts();
+      }
+      return;
     }
 
-    if (!_costsAsked) {
-      _costsAsked = true;
-      put('costReport', skeleton() + skeleton());
-      loadCosts();
+    const r = _costsCache.report;
+
+    if (!r) {
+      const from = isoDate(lastWeekStart());
+      const to = isoDate(new Date(lastWeekStart().getTime() + 6 * 864e5));
+      put('costReport', `
+        <button type="button" class="bs-fs-cta"
+                onclick="event.stopPropagation();BarStockFocusStats.startLastWeek('${from}','${to}')">
+          <i class="ti ti-file-plus" aria-hidden="true"></i>
+          <span>Report last week</span>
+        </button>`);
+      const sub = document.getElementById('fgSub-costReport');
+      if (sub) sub.textContent = 'No report for last week';
+      return;
     }
+
+    const wc = r.wineSales   > 0 ? (r.totalWine   / r.wineSales)   * 100 : null;
+    const lc = r.liquorSales > 0 ? (r.totalLiquor / r.liquorSales) * 100 : null;
+
+    put('costReport',
+      card('Wine COGS',
+           wc === null ? '—' : wc.toFixed(1) + '%',
+           'target ' + (r.wineTarget || 0).toFixed(0) + '%',
+           wc === null ? '' : (wc > r.wineTarget ? '#f87171' : '#4ade80')) +
+      card('Liquor COGS',
+           lc === null ? '—' : lc.toFixed(1) + '%',
+           'target ' + (r.liquorTarget || 0).toFixed(0) + '%',
+           lc === null ? '' : (lc > r.liquorTarget ? '#f87171' : '#4ade80')));
+
+    const sub = document.getElementById('fgSub-costReport');
+    if (sub) sub.textContent = 'Last week · ' + String(r.periodFrom || '').slice(5);
   }
 
   async function loadCosts() {
     try {
-      if (!window.BarStockCostReportCloud?.listReports) {
-        _costsCache = { cogs: null }; return;
-      }
+      if (!window.BarStockCostReportCloud?.listReports) { _costsCache = { report: null }; return; }
+
       const rows = await window.BarStockCostReportCloud.listReports();
       const norm = window.BarStockCostReport?.normalizeCloudReport;
       const list = (rows || []).map(r => (norm ? norm(r) : null)).filter(Boolean);
-      if (!list.length) { _costsCache = { cogs: null }; return; }
 
-      list.sort((a, b) => String(b.periodFrom).localeCompare(String(a.periodFrom)));
-      const r = list[0];
-
-      const cost  = (r.totalWine || 0) + (r.totalLiquor || 0);
-      const sales = (r.wineSales || 0) + (r.liquorSales || 0);
-      const cogs  = sales > 0 ? (cost / sales) * 100 : 0;
-      const target = sales > 0
-        ? (((r.wineTarget || 0) * (r.wineSales || 0)) + ((r.liquorTarget || 0) * (r.liquorSales || 0))) / sales
-        : 0;
-
-      _costsCache = { cogs, target, from: r.periodFrom };
+      // Solo el reporte que empieza el lunes pasado. Un reporte de hace
+      // tres semanas no responde "como me fue la semana pasada".
+      const target = isoDate(lastWeekStart());
+      _costsCache = { report: list.find(r => r.periodFrom === target) || null };
     } catch (e) {
       console.warn('[FocusStats] costs', e);
-      _costsCache = { cogs: null };
+      _costsCache = { report: null };
     } finally {
       costs();
     }
@@ -238,7 +266,18 @@
     try { costs();     } catch (e) {}
   }
 
-  window.BarStockFocusStats = { refresh, reloadCosts: () => { _costsCache = null; _costsAsked = false; costs(); } };
+  window.BarStockFocusStats = {
+    refresh,
+    reloadCosts: () => { _costsCache = null; _costsAsked = false; costs(); },
+    // Abre Costs con la semana pasada ya seleccionada
+    startLastWeek: (from, to) => {
+      if (typeof bsOpenSection === 'function') bsOpenSection('costReport');
+      setTimeout(() => {
+        if (window.BarStockCostSteps?.pickPeriod) window.BarStockCostSteps.pickPeriod(from, to);
+        if (window.BarStockCostSteps?.go) window.BarStockCostSteps.go(2);
+      }, 120);
+    }
+  };
 
   // Mismo ritmo que el actualizador de la rejilla que ya existia
   window.addEventListener('load', () => {
