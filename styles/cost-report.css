@@ -1316,3 +1316,128 @@ body.light .cr-section textarea { background: rgba(255,255,255,.7); color:#0f172
   .cr-actions-row { justify-content: stretch; }
   .cr-actions-row button { flex: 1; }
 }
+
+/* ============================================================
+   MODO CLARO — contraste
+   ------------------------------------------------------------
+   Va al final del archivo a proposito: cierra sobre todas las
+   reglas anteriores en vez de parchar quince por separado.
+
+   El problema era que los contenedores iban al 44% de blanco y
+   las tarjetas de adentro al 3% de azul oscuro. Sobre una foto
+   clara, ambos terminaban del mismo tono y nada se separaba.
+
+   La regla aqui es simple: contenedor gris claro, tarjetas de
+   adentro BLANCAS con borde visible. La jerarquia se ve sola.
+   ============================================================ */
+
+body.light .cr-main,
+body.light .cr-side{
+  background: rgba(255,255,255,.78) !important;
+  border-color: rgba(15,23,42,.14) !important;
+}
+
+/* Tarjetas: blanco solido sobre el contenedor gris */
+body.light .cr-pcard,
+body.light .cr-vendor-card,
+body.light .cr-vendor-add,
+body.light .cr-cat,
+body.light .cr-find{
+  background: #ffffff !important;
+  border: 1px solid rgba(15,23,42,.16) !important;
+}
+
+body.light .cr-pcard:hover,
+body.light .cr-vendor-add:hover{
+  border-color: rgba(2,132,199,.55) !important;
+  background: #f0f9ff !important;
+}
+body.light .cr-pcard.on{
+  border-color: #0284c7 !important;
+  background: #e0f2fe !important;
+}
+
+/* Los hallazgos no llevan borde completo: se separan por sombra,
+   si no la lista de cinco tarjetas se ve como una reja. */
+body.light .cr-find{
+  border: 1px solid rgba(15,23,42,.10) !important;
+  box-shadow: 0 1px 3px rgba(15,23,42,.06);
+}
+
+/* Campos: blancos con borde nitido, no translucidos */
+body.light .cr-cat-input{
+  background: #ffffff !important;
+  border-color: rgba(15,23,42,.20) !important;
+}
+body.light .cr-cat-input:focus-within{
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 0 3px rgba(2,132,199,.12);
+}
+body.light .cr-cat-input input{ color: #0f172a; }
+body.light .cr-cat-input input::placeholder{ color: #94a3b8; }
+
+/* Textos secundarios: #475569 sobre blanco se lee bien, pero los
+   micro-labels en mayusculas necesitan un punto mas de peso */
+body.light .cr-cat-label,
+body.light .cr-side-head,
+body.light .cr-share-head,
+body.light .cr-recent-head,
+body.light .cr-pcard-label{
+  color: #64748b;
+}
+body.light .cr-cat-cost,
+body.light .cr-find-s,
+body.light .cr-side-label,
+body.light .cr-cat-target,
+body.light .cr-cat-gap{
+  color: #475569;
+}
+body.light .cr-find-t,
+body.light .cr-cat-name,
+body.light .cr-pcard-dates,
+body.light .cr-side-value{
+  color: #0f172a;
+}
+
+/* Separadores visibles */
+body.light .cr-cat-cost,
+body.light .cr-cat-result{
+  border-color: rgba(15,23,42,.14) !important;
+}
+body.light .cr-side-sep{ background: rgba(15,23,42,.14); }
+body.light .cr-step-footer{ border-top-color: rgba(15,23,42,.14) !important; }
+
+/* Chips y pestañas */
+body.light .cr-step-chip,
+body.light .cr-rev-tab{
+  background: #ffffff;
+  border-color: rgba(15,23,42,.18);
+  color: #475569;
+}
+body.light .cr-step-chip.active,
+body.light .cr-rev-tab.active{
+  background: #e0f2fe;
+  border-color: #0284c7;
+  color: #075985;
+}
+body.light .cr-step-num{ background: rgba(15,23,42,.08); color:#475569; }
+
+/* Barras y progreso */
+body.light .cr-share-bar{ background: rgba(15,23,42,.10); }
+body.light .cr-share-bar i{ background:#0284c7; }
+body.light .cr-side-progress{ background: rgba(15,23,42,.10); }
+body.light .cr-side-progress > div{ background:#0284c7; }
+
+/* Acciones del panel */
+body.light .cr-act-primary{ background:#0284c7; color:#ffffff; }
+body.light .cr-act-primary:hover{ background:#0369a1; }
+body.light .cr-act-second{
+  background:#ffffff;
+  border-color: rgba(15,23,42,.20);
+  color:#0f172a;
+}
+body.light .cr-act-second:hover{ background:#f1f5f9; }
+
+/* Filas recientes */
+body.light .cr-recent-row:hover{ background: rgba(15,23,42,.05); }
+body.light .cr-recent-val{ color:#475569; }
