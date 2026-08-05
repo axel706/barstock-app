@@ -128,18 +128,26 @@
     renderVendors();
   }
 
+  // Sumar decimales en punto flotante produce cosas como
+  // 1506.199999999999. Eso se guardaba tal cual en el reporte y despues
+  // reaparecia en el campo al cargarlo. Como son importes de dinero,
+  // se redondea a dos decimales en cuanto se suma.
+  function money2(n) {
+    return Math.round((Number(n) || 0) * 100) / 100;
+  }
+
   function getValues() {
     const num = id => parseFloat((document.getElementById(id) || {}).value) || 0;
     const str = id => ((document.getElementById(id) || {}).value) || '';
     const byVendor = vendors.map(v => ({
       name: v.name,
-      wine: v.invoices.reduce((s, i) => s + (parseFloat(i.wine) || 0), 0),
-      liquor: v.invoices.reduce((s, i) => s + (parseFloat(i.liquor) || 0), 0)
+      wine: money2(v.invoices.reduce((s, i) => s + (parseFloat(i.wine) || 0), 0)),
+      liquor: money2(v.invoices.reduce((s, i) => s + (parseFloat(i.liquor) || 0), 0))
     }));
     return {
       byVendor,
-      totalWine: byVendor.reduce((s, v) => s + v.wine, 0),
-      totalLiquor: byVendor.reduce((s, v) => s + v.liquor, 0),
+      totalWine: money2(byVendor.reduce((s, v) => s + v.wine, 0)),
+      totalLiquor: money2(byVendor.reduce((s, v) => s + v.liquor, 0)),
       wineSales: num('crWineSales'),
       liquorSales: num('crLiquorSales'),
       wineTarget: num('crWineTarget'),
@@ -536,9 +544,11 @@
     setV('crWineSalesLY', r.wineSalesLY || '');
     setV('crLiquorSalesLY', r.liquorSalesLY || '');
     setV('crNotes', r.notes || '');
+    // Los reportes viejos ya quedaron guardados con decimales sucios, asi
+    // que tambien se limpia al leer, no solo al calcular.
     vendors = r.vendors.map(v => ({
       name: v.name,
-      invoices: [{ wine: v.wine.toString(), liquor: v.liquor.toString() }]
+      invoices: [{ wine: String(money2(v.wine)), liquor: String(money2(v.liquor)) }]
     }));
     // Restaurar weekly cogs data si el reporte tiene multiples invoices
     _weeklyCogsData = r.weeklyCogsData || [];

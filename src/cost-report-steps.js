@@ -486,13 +486,14 @@
         <i class="ti ti-file-type-pdf" aria-hidden="true"></i> Generate PDF
       </button>
 
-      <button class="cr-act cr-act-email" onclick="openEmailCostReportModal()">
-        <i class="ti ti-mail" aria-hidden="true"></i> Email report
-      </button>
-
-      <button class="cr-act cr-act-save" onclick="BarStockCostReport.saveReport()">
-        <i class="ti ti-device-floppy" aria-hidden="true"></i> Save report
-      </button>
+      <div class="cr-act-pair">
+        <button class="cr-act cr-act-save" onclick="BarStockCostReport.saveReport()">
+          <i class="ti ti-device-floppy" aria-hidden="true"></i> Save
+        </button>
+        <button class="cr-act cr-act-email" onclick="openEmailCostReportModal()">
+          <i class="ti ti-mail" aria-hidden="true"></i> Email
+        </button>
+      </div>
 
       <button class="cr-act cr-act-reset" onclick="BarStockCostReport.resetForm()">
         <i class="ti ti-rotate-2" aria-hidden="true"></i> Reset

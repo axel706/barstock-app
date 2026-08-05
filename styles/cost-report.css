@@ -1572,3 +1572,49 @@ body.light .cr-act-reset:hover{
   background: rgba(185,28,28,.08);
   border-color: rgba(185,28,28,.30);
 }
+
+/* ============================================================
+   Panel — correcciones de layout
+   ------------------------------------------------------------
+   Los botones vuelven a su forma original: PDF ancho arriba,
+   Save y Email compartiendo renglon, Reset abajo. Solo cambian
+   los colores, no la disposicion.
+
+   Y las mini-cards crecen para ocupar el espacio que sobraba
+   entre los importes y los botones.
+   ============================================================ */
+
+.cr-act-pair{ display: flex; gap: 6px; margin-top: 6px; }
+.cr-act-pair .cr-act{ width: 50%; margin-top: 0; }
+
+.cr-act-save,
+.cr-act-email{
+  padding: 10px 6px;
+  font-size: 12px;
+}
+.cr-act-save i,
+.cr-act-email i{ font-size: 14px; }
+
+/* Mini-cards mas grandes: llenan el hueco y el numero se lee de lejos */
+.cr-mini-grid{
+  margin-top: 16px;
+  gap: 9px;
+}
+.cr-mini{
+  padding: 14px 8px;
+}
+.cr-mini-label{
+  font-size: 9.5px;
+  margin-bottom: 6px;
+}
+.cr-mini-value{
+  font-size: 27px;
+  letter-spacing: -0.02em;
+}
+.cr-mini-sub{
+  font-size: 9.5px;
+  margin-top: 4px;
+}
+
+/* Los importes tambien respiran un poco mas */
+.cr-side-row{ padding: 5px 0; font-size: 12.5px; }
