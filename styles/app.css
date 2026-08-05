@@ -2313,23 +2313,15 @@ body.light .bs-header.collapsed::after{
   margin-bottom:16px;
 }
 .bs-focus-card{
-  background:var(--card);
-  backdrop-filter:blur(4px);
-  border:1px solid var(--border);
   border-radius:16px;
   padding:20px;
   cursor:pointer;
   transition:border-color .15s ease, transform .15s ease;
-  box-shadow:0 4px 16px rgba(0,0,0,.2);
 }
 .bs-focus-card:hover{
-  border-color:rgba(56,189,248,.4);
   transform:translateY(-2px);
 }
-body.light .bs-focus-card{
-  background:rgba(255,255,255,.96);
-  border-color:rgba(15,23,42,.08);
-}
+
 .bs-focus-icon{
   font-size:24px;
   color:var(--accent);
@@ -3222,7 +3214,11 @@ body.light .bs-fs-card{
 /* En pantallas angostas las cifras pasan debajo del texto en vez de
    estrujar el titulo de la tarjeta */
 @media (max-width: 1150px){
-  .bs-focus-card{ flex-direction: column; align-items: stretch; gap: 10px; }
+  .bs-focus-card{
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
   .bs-focus-stats{ justify-content: flex-start; }
   .bs-fs-card{ flex: 1; }
 }
@@ -3246,26 +3242,11 @@ body.light .bs-fs-card{
   text-align: center;
   gap: 0 !important;
   padding: 18px 16px !important;
-  background: rgba(15,23,42,.62) !important;
-  border: 1px solid rgba(255,255,255,.16) !important;
-  box-shadow:
-    0 10px 26px rgba(2,6,23,.30),
-    inset 0 1px 0 rgba(255,255,255,.07) !important;
-}
-.bs-focus-card:hover{
-  background: rgba(15,23,42,.70) !important;
 }
 
-body.light .bs-focus-card{
-  background: rgba(255,255,255,.80) !important;
-  border-color: rgba(15,23,42,.16) !important;
-  box-shadow:
-    0 10px 26px rgba(15,23,42,.14),
-    inset 0 1px 0 rgba(255,255,255,.60) !important;
-}
-body.light .bs-focus-card:hover{
-  background: rgba(255,255,255,.90) !important;
-}
+
+
+
 
 /* Encabezado: icono y titulo en la misma linea */
 .bs-focus-head{
@@ -3325,7 +3306,10 @@ body.light .bs-fs-label{ color: #64748b; }
 body.light .bs-fs-sub{ color: #64748b; }
 
 @media (max-width: 1150px){
-  .bs-focus-card{ flex-direction: column !important; align-items: center !important; }
+  .bs-focus-card{
+  flex-direction: column !important;
+  align-items: center !important;
+}
   .bs-focus-stats{ justify-content: center; }
 }
 
@@ -3340,27 +3324,11 @@ body.light .bs-fs-sub{ color: #64748b; }
    mini-cards — no aguando el vidrio.
    ============================================================ */
 
-.bs-focus-card{
-  background: rgba(17,24,39,.86) !important;
-  backdrop-filter: blur(4px) !important;
-  -webkit-backdrop-filter: blur(4px) !important;
-  border: 1px solid rgba(255,255,255,.08) !important;
-  box-shadow: 0 8px 24px rgba(0,0,0,.28) !important;
-}
-.bs-focus-card:hover{
-  background: rgba(17,24,39,.92) !important;
-  border-color: rgba(56,189,248,.55) !important;
-}
 
-body.light .bs-focus-card{
-  background: rgba(255,255,255,.96) !important;
-  border-color: rgba(15,23,42,.08) !important;
-  box-shadow: 0 8px 22px rgba(15,23,42,.08) !important;
-}
-body.light .bs-focus-card:hover{
-  background: #ffffff !important;
-  border-color: rgba(2,132,199,.55) !important;
-}
+
+
+
+
 
 /* ---- Contraste, ahora si, en el contenido ---- */
 
@@ -3394,3 +3362,34 @@ body.light .bs-fs-value{ color: #0f172a; }
 
 .bs-fs-sub{ color: #94a3b8 !important; }
 body.light .bs-fs-sub{ color: #64748b !important; }
+
+/* ============================================================
+   Contraste del CONTENIDO de las tarjetas principales
+   ------------------------------------------------------------
+   La tarjeta NO lleva fondo propio: hereda el cristal de .card,
+   igual que el resto de la app. Lo que se marca es lo de adentro.
+   ============================================================ */
+
+.bs-fs-card{
+  background: rgba(255,255,255,.12) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+}
+body.light .bs-fs-card{
+  background: rgba(255,255,255,.72) !important;
+  border-color: rgba(15,23,42,.14) !important;
+}
+
+.bs-fs-label{ color: rgba(255,255,255,.72) !important; }
+body.light .bs-fs-label{ color: #475569 !important; }
+
+.bs-fs-value{ color: #ffffff; }
+body.light .bs-fs-value{ color: #0f172a; }
+
+.bs-fs-sub{ color: rgba(255,255,255,.60) !important; }
+body.light .bs-fs-sub{ color: #64748b !important; }
+
+.bs-focus-head .bs-focus-title{ color: #ffffff; }
+body.light .bs-focus-head .bs-focus-title{ color: #0f172a; }
+
+.bs-focus-card .bs-focus-sub{ color: rgba(255,255,255,.68); }
+body.light .bs-focus-card .bs-focus-sub{ color: #475569; }
