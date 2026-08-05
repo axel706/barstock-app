@@ -1819,3 +1819,55 @@ body.light .cr-step-chip.done .cr-step-num{
 
 /* El separador flexible ya no hace falta */
 .cr-side-spacer{ display: none !important; }
+
+/* ============================================================
+   Panel — reparto real del espacio
+   ------------------------------------------------------------
+   Con space-between sobre tres bloques, TODO el sobrante caia
+   en dos huecos grandes y adentro de cada bloque las cosas
+   seguian apretadas.
+
+   Ahora: encabezado arriba y acciones abajo, ambos con su
+   tamaño natural. El bloque de en medio CRECE para ocupar lo
+   que sobre y reparte ese espacio entre sus propios elementos.
+   Asi el aire queda donde se necesita, no amontonado.
+   ============================================================ */
+
+.cr-side{
+  justify-content: flex-start !important;
+}
+
+.cr-side-top,
+.cr-side-actions{
+  flex: 0 0 auto;
+}
+
+.cr-side-body{
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 0;
+  padding: 4px 0;
+}
+
+/* El respiro fijo ya no hace falta: lo aporta el reparto */
+.cr-side-gap{ display: none !important; }
+
+/* Los importes se agrupan para que el reparto los trate como
+   un bloque y no los separe entre si */
+.cr-side-amounts{ flex: 0 0 auto; }
+
+/* Mini-cards mas altas: absorben parte del sobrante y el numero
+   se lee mejor de lejos */
+.cr-mini{ padding: 14px 6px !important; }
+.cr-mini-value{ font-size: 26px !important; }
+
+/* Los tres grupos del cuerpo no se estiran: conservan su alto y el
+   espacio sobrante queda repartido entre ellos por igual. */
+.cr-side-progress-block,
+.cr-side-amounts,
+.cr-mini-grid{
+  flex: 0 0 auto;
+}
+.cr-mini-grid{ margin-top: 0 !important; }

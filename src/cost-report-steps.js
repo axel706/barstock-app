@@ -515,17 +515,21 @@
       </div><!-- /top -->
 
       <div class="cr-side-body">
+      <div class="cr-side-progress-block">
       <div class="cr-progress-row">
         <span class="cr-progress-cap">${filled} of ${total} vendors captured</span>
         <span class="cr-progress-pct">${progress}%</span>
       </div>
       <div class="cr-side-progress"><div style="width:${progress}%"></div></div>
+      </div>
 
       <div class="cr-side-gap"></div>
 
-      ${line('ti-glass-full', 'Wine cost',   money(v.totalWine))}
-      ${line('ti-bottle',     'Liquor cost', money(v.totalLiquor))}
-      ${line('ti-cash-banknote', 'Sales',  money(totalSales))}
+      <div class="cr-side-amounts">
+        ${line('ti-glass-full', 'Wine cost',   money(v.totalWine))}
+        ${line('ti-bottle',     'Liquor cost', money(v.totalLiquor))}
+        ${line('ti-cash-banknote', 'Sales',  money(totalSales))}
+      </div>
 
       <div class="cr-mini-grid">
         ${mini('Wine COGS',   v.wineSales,   wineCogs,   v.wineTarget)}
