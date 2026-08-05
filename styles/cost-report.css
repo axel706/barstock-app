@@ -1793,3 +1793,29 @@ body.light .cr-step-chip.done .cr-step-num{
 .cr-act-save,
 .cr-act-email{ padding: 8px 6px !important; font-size: 11.5px !important; }
 .cr-act-reset{ padding: 6px !important; margin-top: 7px !important; }
+
+/* ============================================================
+   Panel — repartir el sobrante en vez de acumularlo abajo
+   ------------------------------------------------------------
+   Antes habia un separador flexible antes de los botones, asi
+   que TODO el espacio libre se juntaba en un solo hueco entre
+   las mini-cards y las acciones.
+
+   Ahora el contenido va en tres bloques y el sobrante se
+   reparte entre ellos por igual. Sigue sin haber scroll: los
+   bloques no crecen, solo se separan mas.
+   ============================================================ */
+
+.cr-side{
+  justify-content: space-between;
+}
+
+.cr-side-top,
+.cr-side-body,
+.cr-side-actions{
+  flex-shrink: 0;
+  width: 100%;
+}
+
+/* El separador flexible ya no hace falta */
+.cr-side-spacer{ display: none !important; }

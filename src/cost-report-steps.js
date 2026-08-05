@@ -499,6 +499,7 @@
     const savedNow = _savedFor && _savedFor === `${v.periodFrom}|${v.periodTo}`;
 
     el.innerHTML = `
+      <div class="cr-side-top">
       <div class="cr-side-title"><i class="ti ti-clipboard-data" aria-hidden="true"></i> Summary</div>
 
       ${line('ti-calendar-event', 'Period',
@@ -511,7 +512,9 @@
       </div>` : ''}
 
       <div class="cr-side-sep"></div>
+      </div><!-- /top -->
 
+      <div class="cr-side-body">
       <div class="cr-progress-row">
         <span class="cr-progress-cap">${filled} of ${total} vendors captured</span>
         <span class="cr-progress-pct">${progress}%</span>
@@ -529,8 +532,9 @@
         ${mini('Liquor COGS', v.liquorSales, liquorCogs, v.liquorTarget)}
       </div>
 
-      <div class="cr-side-spacer"></div>
+      </div><!-- /body -->
 
+      <div class="cr-side-actions">
       <button class="cr-act cr-act-pdf" onclick="BarStockCostReport.generatePdf()">
         <i class="ti ti-file-type-pdf" aria-hidden="true"></i> Generate PDF
       </button>
@@ -546,7 +550,8 @@
 
       <button class="cr-act cr-act-reset" onclick="BarStockCostReport.resetForm()">
         <i class="ti ti-rotate-2" aria-hidden="true"></i> Reset
-      </button>`;
+      </button>
+      </div><!-- /actions -->`;
   }
 
   function blocks() {
