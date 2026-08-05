@@ -1441,3 +1441,134 @@ body.light .cr-act-second:hover{ background:#f1f5f9; }
 /* Filas recientes */
 body.light .cr-recent-row:hover{ background: rgba(15,23,42,.05); }
 body.light .cr-recent-val{ color:#475569; }
+
+/* ============================================================
+   PANEL LATERAL — estructura y acciones con color
+   ============================================================ */
+
+.cr-side-title{
+  font-size: 15px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--text);
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+body.light .cr-side-title{ color:#0f172a; }
+
+/* Respiro entre la barra de progreso y los importes */
+.cr-side-gap{ height: 14px; }
+
+/* Mini-cards de COGS, con el formato de las de Ordering e Inventory */
+.cr-mini-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 13px;
+}
+.cr-mini{
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 11px;
+  padding: 9px 8px;
+  text-align: center;
+}
+.cr-mini-label{
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--sub);
+  margin-bottom: 3px;
+}
+.cr-mini-value{
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.05;
+}
+.cr-mini-sub{
+  font-size: 9px;
+  color: var(--sub);
+  margin-top: 2px;
+}
+body.light .cr-mini{
+  background: #ffffff;
+  border-color: rgba(15,23,42,.16);
+}
+
+/* ---------- Acciones con color ---------- */
+/* Solo PDF y Email van solidos. Save queda con contorno y Reset como
+   texto rojo tenue: si los cuatro fueran bloques de color, ninguno
+   destacaria y Reset — que es el unico destructivo — competiria con
+   las acciones que si quieres que uses. */
+
+.cr-act-pdf,
+.cr-act-email,
+.cr-act-save,
+.cr-act-reset{
+  width: 100%;
+  margin-top: 6px;
+}
+
+.cr-act-pdf{
+  padding: 11px;
+  font-size: 13.5px;
+  font-weight: 700;
+  border: none;
+  background: #38bdf8;
+  color: #04263a;
+  margin-top: 0;
+}
+.cr-act-pdf:hover{ background: #7dd3fc; }
+
+.cr-act-email{
+  padding: 9px;
+  font-size: 12.5px;
+  font-weight: 700;
+  border: none;
+  background: #22c55e;
+  color: #052e16;
+}
+.cr-act-email:hover{ background: #4ade80; }
+
+.cr-act-save{
+  padding: 9px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border: 1px solid rgba(255,255,255,.16);
+  background: transparent;
+  color: var(--text);
+}
+.cr-act-save:hover{ background: rgba(255,255,255,.07); }
+
+.cr-act-reset{
+  padding: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #f87171;
+  margin-top: 10px;
+}
+.cr-act-reset:hover{
+  background: rgba(248,113,113,.10);
+  border-color: rgba(248,113,113,.35);
+}
+
+/* Modo claro: mismos roles, tonos mas profundos para que contrasten
+   contra el panel blanco */
+body.light .cr-act-pdf{ background:#0284c7; color:#ffffff; }
+body.light .cr-act-pdf:hover{ background:#0369a1; }
+body.light .cr-act-email{ background:#15803d; color:#ffffff; }
+body.light .cr-act-email:hover{ background:#166534; }
+body.light .cr-act-save{
+  background:#ffffff;
+  border-color: rgba(15,23,42,.20);
+  color:#0f172a;
+}
+body.light .cr-act-save:hover{ background:#f1f5f9; }
+body.light .cr-act-reset{ color:#b91c1c; }
+body.light .cr-act-reset:hover{
+  background: rgba(185,28,28,.08);
+  border-color: rgba(185,28,28,.30);
+}

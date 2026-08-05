@@ -445,51 +445,56 @@
         <span class="cr-side-value"${color ? ` style="color:${color}"` : ''}>${value}</span>
       </div>`;
 
+    // Mini-card de COGS, con el mismo formato que las de Ordering e
+    // Inventory: etiqueta chica arriba, numero grande abajo.
+    const mini = (label, sales, cogs, target) => {
+      const has = sales > 0;
+      const color = !has ? 'var(--sub)' : (cogs > target ? '#f87171' : '#4ade80');
+      return `
+        <div class="cr-mini">
+          <div class="cr-mini-label">${label}</div>
+          <div class="cr-mini-value" style="color:${color}">${has ? pct(cogs) : '—'}</div>
+          <div class="cr-mini-sub">target ${pct(target)}</div>
+        </div>`;
+    };
+
     el.innerHTML = `
-      <div class="cr-side-head"><i class="ti ti-report-analytics" aria-hidden="true"></i> Summary</div>
+      <div class="cr-side-title">Summary</div>
 
       ${line('ti-calendar-event', 'Period',
              v.periodFrom && v.periodTo ? `${v.periodFrom.slice(5)} → ${v.periodTo.slice(5)}` : '—')}
 
       <div class="cr-side-sep"></div>
 
+      <div class="cr-side-progress"><div style="width:${progress}%"></div></div>
+      <div class="cr-side-progress-cap">${filled} of ${total} vendors captured</div>
+
+      <div class="cr-side-gap"></div>
+
       ${line('ti-bottle',   'Wine cost',   money(v.totalWine))}
       ${line('ti-glass-full','Liquor cost', money(v.totalLiquor))}
       ${line('ti-cash-banknote', 'Sales',  money(totalSales))}
 
-      <div class="cr-side-sep"></div>
-
-      ${line('ti-percentage', 'Wine COGS', v.wineSales ? pct(wineCogs) : '—',
-             v.wineSales ? (wineCogs > v.wineTarget ? '#f87171' : '#4ade80') : '')}
-      ${line('ti-percentage', 'Liquor COGS', v.liquorSales ? pct(liquorCogs) : '—',
-             v.liquorSales ? (liquorCogs > v.liquorTarget ? '#f87171' : '#4ade80') : '')}
-
-      <div class="cr-side-sep"></div>
-
-      <div class="cr-side-total">
-        <div class="cr-side-total-num" style="color:${cogsColor}">${totalSales ? pct(totalCogs) : '—'}</div>
-        <div class="cr-side-total-cap">total COGS${totalTarget ? ` · target ${pct(totalTarget)}` : ''}</div>
+      <div class="cr-mini-grid">
+        ${mini('Wine COGS',   v.wineSales,   wineCogs,   v.wineTarget)}
+        ${mini('Liquor COGS', v.liquorSales, liquorCogs, v.liquorTarget)}
       </div>
-
-      <div class="cr-side-progress"><div style="width:${progress}%"></div></div>
-      <div class="cr-side-progress-cap">${filled} of ${total} vendors captured</div>
 
       <div class="cr-side-spacer"></div>
 
-      <button class="cr-act cr-act-primary" onclick="BarStockCostReport.generatePdf()">
+      <button class="cr-act cr-act-pdf" onclick="BarStockCostReport.generatePdf()">
         <i class="ti ti-file-type-pdf" aria-hidden="true"></i> Generate PDF
       </button>
 
-      <div class="cr-act-pair">
-        <button class="cr-act cr-act-second" onclick="BarStockCostReport.saveReport()">
-          <i class="ti ti-device-floppy" aria-hidden="true"></i> Save
-        </button>
-        <button class="cr-act cr-act-second" onclick="openEmailCostReportModal()">
-          <i class="ti ti-mail" aria-hidden="true"></i> Email
-        </button>
-      </div>
+      <button class="cr-act cr-act-email" onclick="openEmailCostReportModal()">
+        <i class="ti ti-mail" aria-hidden="true"></i> Email report
+      </button>
 
-      <button class="cr-act cr-act-ghost" onclick="BarStockCostReport.resetForm()">
+      <button class="cr-act cr-act-save" onclick="BarStockCostReport.saveReport()">
+        <i class="ti ti-device-floppy" aria-hidden="true"></i> Save report
+      </button>
+
+      <button class="cr-act cr-act-reset" onclick="BarStockCostReport.resetForm()">
         <i class="ti ti-rotate-2" aria-hidden="true"></i> Reset
       </button>`;
   }
