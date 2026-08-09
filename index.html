@@ -111,7 +111,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260805-000416</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260809-115625</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -4764,7 +4764,16 @@ applyTheme(loadTheme());
 
 // Pour·IQ — load adjustments on startup if master available
 if (state.master && state.master.length > 0) {
-  setTimeout(() => refreshParAdjustments().catch(console.warn), 2500);
+  // Los ajustes de par llegan 2.5s despues del primer dibujado, y nadie
+  // volvia a dibujar. La tabla de Ordering se quedaba con la version que
+  // se pinto cuando parAdjustments todavia estaba vacio, asi que los
+  // chips de Pour-IQ no salian nunca — parecia falta de datos cuando en
+  // realidad eran 258 ajustes cargados y una pantalla vieja.
+  setTimeout(() => {
+    refreshParAdjustments()
+      .then(() => { if (typeof render === 'function') render(); })
+      .catch(console.warn);
+  }, 2500);
   setTimeout(() => { if (typeof PourIqSection !== 'undefined') PourIqSection.refresh(); }, 3200);
 }
 
