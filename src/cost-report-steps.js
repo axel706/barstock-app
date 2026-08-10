@@ -29,8 +29,40 @@
   let _savedFor = null;
   let _savedLocal = false;
 
+  // Huella de lo que se guardo. El periodo solo no alcanza para el aviso
+  // del panel: si guardas y despues capturas otro vendor, el periodo
+  // sigue siendo el mismo pero el reporte en la nube ya no corresponde a
+  // lo que hay en pantalla, y hace falta guardar de nuevo.
+  //
+  // Navegar a un paso anterior sin cambiar nada NO invalida nada: la
+  // huella se calcula del contenido, no de donde estas parado.
+  //
+  // money2 ya redondea cada vendor, asi que dos lecturas iguales dan la
+  // misma cadena y no hay decimales fantasma que la muevan sola.
+  let _savedSnapshot = null;
+
+  function snapshotKey(v) {
+    if (!v) return null;
+    const vendors = (v.byVendor || [])
+      .map(x => `${x.name}:${x.wine}:${x.liquor}`)
+      .join(',');
+    return [
+      v.periodFrom, v.periodTo, vendors,
+      v.wineSales, v.liquorSales,
+      v.wineTarget, v.liquorTarget
+    ].join('|');
+  }
+
+  function currentSnapshot() {
+    try {
+      const api = window.BarStockCostReport;
+      return api ? snapshotKey(api.getValues()) : null;
+    } catch (e) { return null; }
+  }
+
   function markSaved(from, to, local) {
     _savedFor = `${from}|${to}`;
+    _savedSnapshot = currentSnapshot();
     _savedLocal = !!local;
     renderStepper();
     renderPanel();
@@ -494,9 +526,10 @@
         </div>`;
     };
 
-    // ¿Este periodo exacto ya se guardo? Se compara contra lo que quedo
-    // marcado al presionar Save, no contra el paso en que estas.
-    const savedNow = _savedFor && _savedFor === `${v.periodFrom}|${v.periodTo}`;
+    // ¿Lo que hay en pantalla es exactamente lo que se guardo? Se compara
+    // el contenido, no el periodo ni el paso: captura un vendor mas y el
+    // aviso se va, porque ese cambio todavia no esta guardado.
+    const savedNow = !!_savedSnapshot && _savedSnapshot === snapshotKey(v);
 
     el.innerHTML = `
       <div class="cr-side-top">
@@ -505,23 +538,22 @@
       ${line('ti-calendar-event', 'Period',
              v.periodFrom && v.periodTo ? `${v.periodFrom.slice(5)} → ${v.periodTo.slice(5)}` : '—')}
 
-      ${savedNow ? `
-      <div class="cr-saved-flag">
-        <i class="ti ti-circle-check" aria-hidden="true"></i>
-        <span>Report saved${_savedLocal ? ' locally' : ''}</span>
-      </div>` : ''}
-
       <div class="cr-side-sep"></div>
       </div><!-- /top -->
 
       <div class="cr-side-body">
+      ${savedNow ? `
+      <div class="cr-saved-flag">
+        <i class="ti ti-circle-check" aria-hidden="true"></i>
+        <span>Report saved${_savedLocal ? ' locally' : ''}</span>
+      </div>` : `
       <div class="cr-side-progress-block">
       <div class="cr-progress-row">
         <span class="cr-progress-cap">${filled} of ${total} vendors captured</span>
         <span class="cr-progress-pct">${progress}%</span>
       </div>
       <div class="cr-side-progress"><div style="width:${progress}%"></div></div>
-      </div>
+      </div>`}
 
       <div class="cr-side-gap"></div>
 
