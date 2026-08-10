@@ -87,13 +87,20 @@
       if (adminCard && isAdmin) {
         adminCard.classList.add('bs-admin-card');
         adminCard.onclick = () => { if (typeof bsOpenSection === 'function') bsOpenSection('admin'); };
+        // Misma estructura centrada que el estado publico. Las otras siete
+        // tarjetas llenan su alto con las mini-cards de datos en vivo;
+        // esta no tiene datos que mostrar, asi que alineada arriba se veia
+        // como si le faltara algo. Centrada se ve terminada.
         adminCard.innerHTML =
-          '<div class="bs-focus-head">' +
-            '<i class="ti ti-shield-lock bs-focus-icon" aria-hidden="true"></i>' +
-            '<div class="bs-focus-title">Admin</div>' +
-          '</div>' +
-          '<div class="bs-focus-sub" id="fgSub-admin">Users and access</div>' +
-          '<div class="bs-focus-stats" id="fgStats-admin"></div>';
+          '<div class="bs-soon">' +
+            '<div class="bs-soon-icons">' +
+              '<i class="ti ti-users" aria-hidden="true"></i>' +
+              '<i class="ti ti-shield-lock" aria-hidden="true"></i>' +
+              '<i class="ti ti-key" aria-hidden="true"></i>' +
+            '</div>' +
+            '<div class="bs-soon-title">Admin</div>' +
+            '<div class="bs-soon-sub">Users and access</div>' +
+          '</div>';
       }
 
       if (isAdmin && window.BarStockAdmin?.render) {

@@ -6,7 +6,14 @@
    El centrado necesita flex:1 porque .bs-focus-card es una columna flex
    con display:flex !important — sin eso el contenido se pega arriba.
 */
+/* Sin acceso no hay click, y tampoco el levante del hover: una tarjeta
+   que reacciona invita a tocarla y no lleva a ningun lado. */
 #bsAdminFocusCard:not(.bs-admin-card) { cursor: default; }
+#bsAdminFocusCard:not(.bs-admin-card):hover { transform: none; }
+
+/* La version del admin si es un boton: mantiene su color al pasar encima */
+#bsAdminFocusCard.bs-admin-card .bs-soon-icons i:nth-child(2) { opacity: .9; }
+#bsAdminFocusCard.bs-admin-card .bs-soon-title { opacity: 1; }
 
 .bs-soon {
   flex: 1;
