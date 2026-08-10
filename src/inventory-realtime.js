@@ -115,6 +115,41 @@
     setRealtimeStatus(`Inventory cloud cargado: ${state.master.length} items`);
   }
 
+  // ── Freno para rafagas de realtime ──────────────────────────────────
+  //
+  // Postgres emite un evento POR FILA. Un "reset on hand" o un conteo
+  // nuevo son un solo PATCH masivo, pero llegan como 258 eventos, y antes
+  // cada uno disparaba una recarga completa del inventario mas render().
+  // Con clearAllOrderOverrides() encima, pasaban de 500 redibujados en
+  // pocos segundos: el panel parpadeaba y los clicks no entraban porque
+  // el innerHTML se reemplazaba justo cuando soltabas el dedo.
+  //
+  // Se juntan en una sola recarga 500ms despues del ULTIMO evento. Si
+  // llegan mas mientras una recarga esta en vuelo, se encola una sola,
+  // no una por evento.
+  const RELOAD_DEBOUNCE_MS = 500;
+  let reloadTimer = null;
+  let reloadInFlight = false;
+  let reloadPending = false;
+
+  function scheduleReload() {
+    clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(runReload, RELOAD_DEBOUNCE_MS);
+  }
+
+  async function runReload() {
+    if (reloadInFlight) { reloadPending = true; return; }
+    reloadInFlight = true;
+    try {
+      await loadInventoryFromSupabase();
+    } catch (err) {
+      console.warn('recarga de inventario fallida', err);
+    } finally {
+      reloadInFlight = false;
+      if (reloadPending) { reloadPending = false; scheduleReload(); }
+    }
+  }
+
   async function enableInventoryRealtime() {
     await ensureSupabaseSdk();
 
@@ -135,8 +170,8 @@
           schema: 'public',
           table: 'inventory_items'
         },
-        async () => {
-          await loadInventoryFromSupabase();
+        () => {
+          scheduleReload();
         }
       )
       .subscribe((status) => {
