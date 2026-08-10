@@ -112,7 +112,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260810-154310</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260810-154742</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -193,6 +193,18 @@
       </div>
       <div class="bs-focus-sub" id="fgSub-pourIq">Par level intelligence</div>
       <div class="bs-focus-stats" id="fgStats-pourIq"></div>
+    </div>
+
+    <!-- Octava tarjeta. Oculta de entrada y solo la muestra auth.js cuando
+         el correo coincide con ADMIN_EMAIL, igual que la pestana Admin.
+         Ocultarla es comodidad: quien manda es api/admin.js. -->
+    <div class="bs-focus-card card" id="bsAdminFocusCard" style="display:none" onclick="bsOpenSection('admin')">
+      <div class="bs-focus-head">
+        <i class="ti ti-shield-lock bs-focus-icon" aria-hidden="true"></i>
+        <div class="bs-focus-title">Admin</div>
+      </div>
+      <div class="bs-focus-sub" id="fgSub-admin">Users and access</div>
+      <div class="bs-focus-stats" id="fgStats-admin"></div>
     </div>
 
   </div>
@@ -5314,10 +5326,16 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     {id:'costReport', icon:'ti-chart-bar', label:'Costs'},
     {id:'theoretical', icon:'ti-chart-dots', label:'Usage'},
     {id:'pourIq', icon:'ti-brain', label:'Pour-IQ™'},
+    // Admin lleva id de elemento para que auth.js pueda mostrarlo. Nace
+    // oculto: si no, aparece un instante antes de que se resuelva quien
+    // inicio sesion.
+    {id:'admin', icon:'ti-shield-lock', label:'Admin', el:'bsAdminMiniCard', hidden:true},
   ];
   miniSections.forEach(s => {
     const el = document.createElement('div');
     el.className = 'bs-focus-minicard';
+    if (s.el) el.id = s.el;
+    if (s.hidden) el.style.display = 'none';
     el.innerHTML = `<i class="ti ${s.icon}" aria-hidden="true"></i><span class="bs-focus-minicard-title">${s.label}</span>`;
     el.onclick = () => bsOpenSection(s.id);
     bsMiniNav.appendChild(el);

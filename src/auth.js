@@ -70,13 +70,17 @@
         return false;
       }
 
-      const adminTab = document.getElementById('bsAdminNavTab');
-      if (adminTab) {
-        const isAdmin = data.user.email === window.BARSTOCK_CONFIG?.ADMIN_EMAIL;
-        adminTab.style.display = isAdmin ? '' : 'none';
-        if (isAdmin && window.BarStockAdmin?.render) {
-          window.BarStockAdmin.render();
-        }
+      // Admin se revela en tres lugares a la vez: la pestana de la barra,
+      // la tarjeta del menu principal y el acceso rapido del modo foco.
+      // Van juntos a proposito — antes solo se mostraba la pestana y la
+      // seccion quedaba inalcanzable desde el menu.
+      const isAdmin = data.user.email === window.BARSTOCK_CONFIG?.ADMIN_EMAIL;
+      ['bsAdminNavTab', 'bsAdminFocusCard', 'bsAdminMiniCard'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = isAdmin ? '' : 'none';
+      });
+      if (isAdmin && window.BarStockAdmin?.render) {
+        window.BarStockAdmin.render();
       }
 
       startInactivityWatcher();
