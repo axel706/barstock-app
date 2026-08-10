@@ -1,3 +1,55 @@
+/* ── Octava tarjeta del menu, en su estado "en camino" ───────────────
+   Es lo que ve cualquier usuario que no sea el admin. No es un hueco ni
+   un error: anuncia que hay mas por venir, y de paso mantiene la
+   cuadricula pareja en 4+4.
+
+   El centrado necesita flex:1 porque .bs-focus-card es una columna flex
+   con display:flex !important — sin eso el contenido se pega arriba.
+*/
+#bsAdminFocusCard:not(.bs-admin-card) { cursor: default; }
+
+.bs-soon {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 7px;
+  padding: 4px 0;
+}
+
+.bs-soon-icons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+.bs-soon-icons i {
+  font-size: 19px;
+  color: var(--sub);
+  opacity: .5;
+}
+/* Un guino de jerarquia: el de en medio pesa un poco mas, asi el grupo
+   se lee como un conjunto y no como tres iconos sueltos. */
+.bs-soon-icons i:nth-child(2) {
+  font-size: 23px;
+  opacity: .75;
+  color: #38bdf8;
+}
+
+.bs-soon-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  opacity: .85;
+}
+.bs-soon-sub {
+  font-size: 12px;
+  color: var(--sub);
+  line-height: 1.4;
+}
+
 /* ── Panel de administracion ─────────────────────────────────────────
    Cuatro pestanas dentro de la seccion Admin. Reusa el lenguaje visual
    del resto de la app en vez de traer el del HTML suelto: mismos

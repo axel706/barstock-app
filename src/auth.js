@@ -70,15 +70,32 @@
         return false;
       }
 
-      // Admin se revela en tres lugares a la vez: la pestana de la barra,
-      // la tarjeta del menu principal y el acceso rapido del modo foco.
-      // Van juntos a proposito — antes solo se mostraba la pestana y la
-      // seccion quedaba inalcanzable desde el menu.
       const isAdmin = data.user.email === window.BARSTOCK_CONFIG?.ADMIN_EMAIL;
-      ['bsAdminNavTab', 'bsAdminFocusCard', 'bsAdminMiniCard'].forEach(id => {
+
+      // La pestana de la barra y el acceso del modo foco si se ocultan con
+      // display: sus clases no llevan !important y el estilo en linea manda.
+      ['bsAdminNavTab', 'bsAdminMiniCard'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = isAdmin ? '' : 'none';
       });
+
+      // La tarjeta del menu no se oculta, se TRANSFORMA. Dos razones:
+      // .bs-focus-card trae display:flex !important y le gana a cualquier
+      // display en linea, y una tarjeta menos deja un hueco en la
+      // cuadricula. Para los demas usuarios anuncia lo que viene.
+      const adminCard = document.getElementById('bsAdminFocusCard');
+      if (adminCard && isAdmin) {
+        adminCard.classList.add('bs-admin-card');
+        adminCard.onclick = () => { if (typeof bsOpenSection === 'function') bsOpenSection('admin'); };
+        adminCard.innerHTML =
+          '<div class="bs-focus-head">' +
+            '<i class="ti ti-shield-lock bs-focus-icon" aria-hidden="true"></i>' +
+            '<div class="bs-focus-title">Admin</div>' +
+          '</div>' +
+          '<div class="bs-focus-sub" id="fgSub-admin">Users and access</div>' +
+          '<div class="bs-focus-stats" id="fgStats-admin"></div>';
+      }
+
       if (isAdmin && window.BarStockAdmin?.render) {
         window.BarStockAdmin.render();
       }

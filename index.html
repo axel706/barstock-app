@@ -37,7 +37,7 @@
   <link rel="stylesheet" href="styles/toast.css?v=toast1">
   <link rel="stylesheet" href="styles/empty-state.css?v=empty1">
   <link rel="stylesheet" href="styles/pour-iq.css?v=piq1">
-  <link rel="stylesheet" href="styles/admin.css?v=adm1">
+  <link rel="stylesheet" href="styles/admin.css?v=adm2">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -112,7 +112,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260810-154742</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260810-160656</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -195,16 +195,23 @@
       <div class="bs-focus-stats" id="fgStats-pourIq"></div>
     </div>
 
-    <!-- Octava tarjeta. Oculta de entrada y solo la muestra auth.js cuando
-         el correo coincide con ADMIN_EMAIL, igual que la pestana Admin.
-         Ocultarla es comodidad: quien manda es api/admin.js. -->
-    <div class="bs-focus-card card" id="bsAdminFocusCard" style="display:none" onclick="bsOpenSection('admin')">
-      <div class="bs-focus-head">
-        <i class="ti ti-shield-lock bs-focus-icon" aria-hidden="true"></i>
-        <div class="bs-focus-title">Admin</div>
+    <!-- Octava tarjeta. Lo que ves aqui es lo que ve TODO el mundo; para
+         el admin, auth.js la reemplaza por el acceso a la seccion.
+         Se hace en este orden a proposito: si auth.js fallara, todos ven
+         "mas en camino" y nadie ve Admin. Al reves, un error dejaria la
+         puerta a la vista.
+         Ocultarla con display:none no servia: .bs-focus-card trae
+         display:flex !important en app.css y le gana al estilo en linea. -->
+    <div class="bs-focus-card card" id="bsAdminFocusCard">
+      <div class="bs-soon">
+        <div class="bs-soon-icons">
+          <i class="ti ti-sparkles" aria-hidden="true"></i>
+          <i class="ti ti-tools" aria-hidden="true"></i>
+          <i class="ti ti-rocket" aria-hidden="true"></i>
+        </div>
+        <div class="bs-soon-title">More on the way</div>
+        <div class="bs-soon-sub">New features in the works</div>
       </div>
-      <div class="bs-focus-sub" id="fgSub-admin">Users and access</div>
-      <div class="bs-focus-stats" id="fgStats-admin"></div>
     </div>
 
   </div>
@@ -5229,7 +5236,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 </div>
 
 <script src="src/auth.js"></script>
-<script src="src/admin-panel.js?v=adm1"></script>
+<script src="src/admin-panel.js?v=adm2"></script>
 <script>
 (function(){
   // Scroll to section
