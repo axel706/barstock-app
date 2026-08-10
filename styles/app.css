@@ -131,7 +131,17 @@
     #vendorExportArea th.toorder-head{background:linear-gradient(180deg,rgba(2,132,199,.38),rgba(17,24,39,1))!important}
     body.light #vendorExportArea th.toorder-head{background:linear-gradient(180deg,rgba(2,132,199,.18),rgba(248,251,255,1))!important;color:#0f172a!important}
 
-    #vendorExportArea{max-height:440px}
+    /* Filas de relleno: mantienen el rayado hasta abajo sin fingir que
+       hay datos. No reciben hover ni cursor — no son filas de verdad. */
+    #vendorExportArea tr.vendor-pad{pointer-events:none}
+    #vendorExportArea tr.vendor-pad td{border-bottom:1px solid rgba(255,255,255,.08)}
+    body.light #vendorExportArea tr.vendor-pad td{border-bottom-color:rgba(15,23,42,.08)}
+
+    /* ALTURA FIJA, no maxima. Con max-height la tabla se encogia cuando
+       habia pocas filas, y el panel lateral se encogia con ella porque
+       .vsp-layout los estira a la misma altura. El hueco que sobra lo
+       rellena padVendorRows() con filas vacias del mismo alto. */
+    #vendorExportArea{height:440px}
     #vendorExportArea table{table-layout:fixed;width:100%;border-collapse:collapse}
 
     body.light .notice{background:rgba(14,165,233,.08)!important;border-color:rgba(14,165,233,.18)!important;color:#0f172a!important}
@@ -748,9 +758,13 @@
     }
 
     .vendor-section-inner{display:block;min-height:0}
+    /* compact-empty encogia la tabla cuando no habia nada que ordenar.
+       Eso es justo lo que no debe pasar: una tabla que cambia de tamano
+       segun su contenido hace saltar la pantalla, y despues de colocar
+       una orden desaparecia y solo quedaba el encabezado. La altura se
+       mantiene y el vacio se comunica con un mensaje dentro. */
     .vendor-section-inner.compact-empty{min-height:auto}
     .vendor-section-inner.compact-empty .vendor-table-shell{flex:0 0 auto}
-    .vendor-section-inner.compact-empty #vendorExportArea{max-height:none;height:auto}
     .vendor-table-shell{min-height:0;flex:0 0 auto;height:auto}
     .vendor-placebar{position:sticky;bottom:0;z-index:8;display:flex;justify-content:flex-end;align-items:center;gap:12px;padding-top:14px;margin-top:14px;background:transparent;backdrop-filter:none}
     body.light .vendor-placebar{background:transparent;}

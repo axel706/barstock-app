@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/tables.css">
   <link rel="stylesheet" href="styles/buttons.css">
-  <link rel="stylesheet" href="styles/app.css?v=focuscards5">
+  <link rel="stylesheet" href="styles/app.css?v=focuscards6">
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/order-history.css">
 
@@ -112,7 +112,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260810-161347</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260810-162907</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2633,10 +2633,12 @@ function render(){
     const placedKey = 'vsp_placed_' + activeVendorTab;
     const wasPlaced = sessionStorage.getItem(placedKey);
     if (wasPlaced && activeVendorTab !== 'ALL') {
-      return `<tr><td colspan="6" style="text-align:center;padding:48px 0"><i class="ti ti-circle-check" style="font-size:36px;display:block;margin:0 auto 12px;color:#22c55e"></i><strong style="font-size:15px;color:var(--text);display:block;margin-bottom:6px">All items ordered</strong><span style="font-size:13px;color:var(--sub)">No pending items for this vendor.</span></td></tr>`;
+      // colspan 7, no 6: la tabla tiene siete columnas y con seis el
+      // mensaje quedaba descentrado, empujado hacia la izquierda.
+      return `<tr><td colspan="7" style="text-align:center;padding:48px 0"><i class="ti ti-circle-check" style="font-size:36px;display:block;margin:0 auto 12px;color:#22c55e"></i><strong style="font-size:15px;color:var(--text);display:block;margin-bottom:6px">All items ordered</strong><span style="font-size:13px;color:var(--sub)">No pending items for this vendor.</span></td></tr>`;
     }
     if (window.BarStockEmpty) {
-      return window.BarStockEmpty.row(6, {
+      return window.BarStockEmpty.row(7, {
         icon: 'ti-shopping-cart-off',
         title: 'Nothing to order',
         text: 'Every item for this vendor is above its par level.'
@@ -2649,6 +2651,7 @@ function render(){
   document.getElementById('vendorSummary').textContent = `Current list: ${vendRows.length} code${vendRows.length===1?'':'s'} | ${fmt(totalBottles)} bottle${Number(totalBottles)===1?'':'s'} | ${editedCount} edited`;
   window.renderOrderHistory && window.renderOrderHistory();
   if(typeof renderVendorPanel === 'function') renderVendorPanel();
+  padVendorRows();
 
   document.getElementById('noMatchBody').innerHTML = state.noMatches.map((r,i)=>{
     const suggestion = bestMatch(r.rawItem);
@@ -2675,6 +2678,64 @@ function render(){
   _setMetric('noMatchMetric', state.noMatches.length);
   _setMetric('masterStatus', state.lastMasterName ? `Loaded: ${state.lastMasterName}` : 'No master loaded');
 }
+// ── Altura constante de la tabla de Ordering ─────────────────────────
+//
+// La tabla y el panel lateral deben medir siempre lo mismo, sin importar
+// cuantas filas haya. El contenedor ya tiene altura fija; esto rellena lo
+// que sobre con filas vacias del MISMO alto que las reales, para que el
+// rayado siga hasta abajo en vez de dejar un bloque liso.
+//
+// El alto de fila se MIDE en pantalla en lugar de fijarlo: depende del
+// input y el boton que van dentro, y cambia con el zoom del navegador.
+// Un numero fijo se desalinea en cuanto algo de eso se mueve.
+function padVendorRows() {
+  const wrap  = document.getElementById('vendorExportArea');
+  const tbody = document.getElementById('vendorBody');
+  if (!wrap || !tbody) return;
+  const table = wrap.querySelector('table');
+  if (!table) return;
+
+  // Se mide despues de que el navegador acomode la tabla; antes, las
+  // alturas todavia son cero.
+  requestAnimationFrame(() => {
+    tbody.querySelectorAll('tr.vendor-pad').forEach(tr => tr.remove());
+
+    const cols = table.querySelectorAll('thead th').length || 7;
+    const real = Array.from(tbody.children).filter(tr => !tr.classList.contains('vendor-pad'));
+    if (!real.length) return;
+
+    // Una sola fila significa el estado vacio ("nada que ordenar"): en vez
+    // de rellenar debajo, esa fila se estira y el mensaje queda centrado.
+    const isEmptyState = real.length === 1 && real[0].querySelector('td[colspan]');
+    if (isEmptyState) {
+      const cell = real[0].querySelector('td[colspan]');
+      if (cell) cell.style.height = Math.max(0, wrap.clientHeight - table.tHead.offsetHeight) + 'px';
+      return;
+    }
+
+    const rowH = real[0].offsetHeight;
+    if (!rowH) return;
+
+    const free = wrap.clientHeight - table.offsetHeight;
+    const n = Math.floor(free / rowH);
+    if (n < 1) return;
+
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < n; i++) {
+      const tr = document.createElement('tr');
+      tr.className = 'vendor-pad';
+      tr.setAttribute('aria-hidden', 'true');
+      tr.style.height = rowH + 'px';
+      const td = document.createElement('td');
+      td.colSpan = cols;
+      tr.appendChild(td);
+      frag.appendChild(tr);
+    }
+    tbody.appendChild(frag);
+  });
+}
+window.padVendorRows = padVendorRows;
+
 function renderVendorPanel() {
   const hdr = document.getElementById('vspPanelHeader');
   if (hdr) hdr.classList.remove('item-selected');
