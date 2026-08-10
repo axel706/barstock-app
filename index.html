@@ -112,7 +112,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260810-162907</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260810-165344</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2860,7 +2860,14 @@ function renderVendorPanel() {
             throw new Error('placeCurrentOrder did not return a placed order');
           }
           sessionStorage.setItem('vsp_placed_' + activeVendorTab, placed.id);
-          renderVendorPanel();
+          // render() y no renderVendorPanel(): hay que redibujar la TABLA,
+          // no solo el panel. Sin esto las filas recien ordenadas se
+          // quedaban en pantalla y el mensaje de "All items ordered" no
+          // aparecia nunca — el codigo estaba, pero nada lo ejecutaba.
+          // El render() de place-order.js no cubre este caso: vive dentro
+          // de la rama que corrige una orden incompleta.
+          // render() termina llamando a renderVendorPanel() y padVendorRows().
+          render();
           setTimeout(() => {
             if (typeof window.BarStockEmailOrder?.openModal === 'function') {
               window.BarStockEmailOrder.openModal(placed.id);
