@@ -1,11 +1,35 @@
 (() => {
-  async function getClient(){
-    return window.BarStockAuth.getAuthClient();
-  }
+  // ── Panel de administracion ──────────────────────────────────────────
+  //
+  // Cuatro pestanas: solicitudes de registro, crear usuario, editar
+  // accesos y borrar usuario.
+  //
+  // Esto venia de un HTML suelto que llevaba la llave service_role
+  // escrita en el navegador. Aqui NO hay ninguna llave: todo pasa por
+  // /api/admin, que corre en el servidor, guarda la llave en una variable
+  // de entorno y rechaza a cualquiera que no sea ADMIN_EMAIL.
+  //
+  // Que esta seccion este oculta en el menu es comodidad, no seguridad.
+  // La seguridad esta en el servidor, y sigue ahi aunque alguien escriba
+  // BarStockAdmin.render() en la consola.
 
-  async function callAdmin(action, params){
+  const TABS = [
+    { id: 'requests', label: 'Requests',    icon: 'ti-inbox' },
+    { id: 'create',   label: 'Create user', icon: 'ti-user-plus' },
+    { id: 'access',   label: 'Edit access', icon: 'ti-key' },
+    { id: 'delete',   label: 'Delete user', icon: 'ti-user-minus' }
+  ];
+
+  let _tab = 'requests';
+  let _locations = [];
+  let _newSel = new Set();     // ubicaciones marcadas al crear
+  let _editUser = null;        // usuario cargado en "Editar accesos"
+  let _editSel = new Set();
+  let _delUser = null;         // usuario cargado en "Borrar"
+
+  async function callAdmin(action, params) {
     params = params || {};
-    const client = await getClient();
+    const client = await window.BarStockAuth.getAuthClient();
     const { data: sessionData } = await client.auth.getSession();
     const token = sessionData?.session?.access_token;
     const res = await fetch('/api/admin', {
@@ -16,122 +40,362 @@
     return res.json();
   }
 
-  function escapeHtml(s){
-    return String(s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'
+    }[c]));
   }
 
-  async function render(){
-    const root = document.getElementById('adminRoot');
-    if (!root) return;
-    root.innerHTML = '<div class="small muted">Loading...</div>';
+  function msg(id, text, kind) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (!text) { el.className = 'adm-msg'; el.textContent = ''; return; }
+    el.className = 'adm-msg ' + (kind || 'info');
+    el.textContent = text;
+  }
 
-    const [reqRes, locRes] = await Promise.all([
-      callAdmin('list'),
-      callAdmin('listLocations')
-    ]);
+  function root() { return document.getElementById('adminRoot'); }
 
-    if (!reqRes.ok) {
-      root.innerHTML = '<div class="small muted">' + escapeHtml(reqRes.error || 'Error loading requests') + '</div>';
-      return;
-    }
+  // ── Barra de pestanas ────────────────────────────────────────────────
+  function tabBar() {
+    return `<div class="adm-tabs">${TABS.map(t => `
+      <button class="adm-tab${_tab === t.id ? ' active' : ''}" data-tab="${t.id}">
+        <i class="ti ${t.icon}" aria-hidden="true"></i>${t.label}
+      </button>`).join('')}</div>`;
+  }
 
-    const locations = locRes.ok ? (locRes.locations || []) : [];
+  // Cuadricula de ubicaciones reutilizada por crear y editar
+  function locGrid(selected, handler) {
+    if (!_locations.length) return '<div class="adm-empty">No locations yet.</div>';
+    return `<div class="adm-loc-grid">${_locations.map(l => `
+      <button class="adm-loc${selected.has(l.id) ? ' on' : ''}" data-loc="${esc(l.id)}" data-handler="${handler}">
+        <i class="ti ${selected.has(l.id) ? 'ti-check' : 'ti-map-pin'}" aria-hidden="true"></i>
+        <span>${esc(l.name)}</span>
+      </button>`).join('')}</div>`;
+  }
+
+  function roleSelect(id, value) {
+    return `<select id="${id}" class="adm-input">
+      <option value="staff"${value === 'staff' ? ' selected' : ''}>Staff</option>
+      <option value="manager"${value === 'manager' ? ' selected' : ''}>Manager</option>
+    </select>`;
+  }
+
+  // ── Pestana 1: solicitudes ───────────────────────────────────────────
+  async function viewRequests(el) {
+    el.innerHTML = '<div class="adm-empty">Loading…</div>';
+    const reqRes = await callAdmin('list');
+    if (!reqRes.ok) { el.innerHTML = `<div class="adm-empty">${esc(reqRes.error || 'Error loading requests')}</div>`; return; }
+
     const requests = reqRes.requests || [];
-
-    const requestsHtml = requests.length ? requests.map(r => `
-        <div class="admin-request-row" data-id="${r.id}" style="padding:14px 0;border-bottom:1px solid #e2e8f0">
-          <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;margin-bottom:6px">
-            <div style="font-weight:600">${escapeHtml(r.first_name)} ${escapeHtml(r.last_name)} — ${escapeHtml(r.business_name)}</div>
-            <div class="small muted">${new Date(r.created_at).toLocaleString()}</div>
-          </div>
-          <div class="small muted" style="margin-bottom:10px;line-height:1.6">
-            ${escapeHtml(r.email)}${r.phone ? ' · ' + escapeHtml(r.phone) : ''}${r.address ? '<br>' + escapeHtml(r.address) : ''}
-            ${r.message ? '<br><em>' + escapeHtml(r.message) + '</em>' : ''}
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <select class="admin-location-select" style="min-width:160px">
-              ${locations.map(l => `<option value="${l.id}">${escapeHtml(l.name)}</option>`).join('')}
-            </select>
-            <select class="admin-role-select">
-              <option value="staff">Staff</option>
-              <option value="manager">Manager</option>
-            </select>
-            <button class="admin-approve-btn" data-id="${r.id}">Approve</button>
-            <button class="admin-deny-btn" data-id="${r.id}">Deny</button>
-          </div>
+    const rows = requests.length ? requests.map(r => `
+      <div class="adm-req" data-id="${esc(r.id)}">
+        <div class="adm-req-head">
+          <strong>${esc(r.first_name)} ${esc(r.last_name)}${r.business_name ? ' — ' + esc(r.business_name) : ''}</strong>
+          <span class="adm-dim">${new Date(r.created_at).toLocaleDateString()}</span>
         </div>
-      `).join('') : '<div class="small muted">No pending requests.</div>';
-
-    root.innerHTML = `
-      <div style="margin-bottom:20px">
-        <div style="font-weight:600;margin-bottom:8px">Pending sign ups</div>
-        ${requestsHtml}
-      </div>
-      <div>
-        <div style="font-weight:600;margin-bottom:8px">Create location</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <input id="adminNewLocationName" type="text" placeholder="Location name" style="flex:1 1 220px">
-          <button id="adminCreateLocationBtn">Create</button>
+        <div class="adm-dim adm-req-meta">
+          ${esc(r.email)}${r.phone ? ' · ' + esc(r.phone) : ''}
+          ${r.address ? '<br>' + esc(r.address) : ''}
+          ${r.message ? '<br><em>' + esc(r.message) + '</em>' : ''}
         </div>
-        <div id="adminLocationMsg" class="small muted" style="margin-top:6px"></div>
-      </div>
-    `;
+        <div class="adm-req-actions">
+          <select class="adm-input adm-req-loc">
+            ${_locations.map(l => `<option value="${esc(l.id)}">${esc(l.name)}</option>`).join('')}
+          </select>
+          <select class="adm-input adm-req-role">
+            <option value="staff">Staff</option>
+            <option value="manager">Manager</option>
+          </select>
+          <button class="adm-btn ok adm-approve" data-id="${esc(r.id)}">Approve</button>
+          <button class="adm-btn ghost adm-deny" data-id="${esc(r.id)}">Deny</button>
+        </div>
+      </div>`).join('')
+      : '<div class="adm-empty"><i class="ti ti-circle-check"></i> No pending requests.</div>';
 
-    root.querySelectorAll('.admin-approve-btn').forEach(btn => {
-      btn.onclick = async () => {
-        const row = btn.closest('.admin-request-row');
-        const locationId = row.querySelector('.admin-location-select')?.value;
-        const role = row.querySelector('.admin-role-select')?.value;
-        if (!locationId) return;
-        btn.disabled = true;
-        btn.textContent = 'Approving...';
-        const result = await callAdmin('approve', { requestId: btn.dataset.id, locationId, role });
-        if (result.ok) {
-          render();
-        } else {
-          btn.disabled = false;
-          btn.textContent = 'Approve';
-          alert(result.error || 'Could not approve');
-        }
-      };
+    el.innerHTML = `
+      <div class="adm-block">
+        <div class="adm-label">Pending sign ups</div>
+        ${rows}
+      </div>
+      <div class="adm-block">
+        <div class="adm-label">Create location</div>
+        <div class="adm-row">
+          <input id="admNewLoc" class="adm-input" type="text" placeholder="Location name">
+          <button class="adm-btn" id="admCreateLoc">Create</button>
+        </div>
+        <div id="admLocMsg" class="adm-msg"></div>
+      </div>`;
+
+    el.querySelectorAll('.adm-approve').forEach(b => b.onclick = async () => {
+      const row = b.closest('.adm-req');
+      const locationId = row.querySelector('.adm-req-loc')?.value;
+      const role = row.querySelector('.adm-req-role')?.value;
+      if (!locationId) return;
+      b.disabled = true; b.textContent = 'Approving…';
+      const r = await callAdmin('approve', { requestId: b.dataset.id, locationId, role });
+      if (r.ok) render(); else { b.disabled = false; b.textContent = 'Approve'; alert(r.error || 'Could not approve'); }
     });
 
-    root.querySelectorAll('.admin-deny-btn').forEach(btn => {
-      btn.onclick = async () => {
-        btn.disabled = true;
-        btn.textContent = 'Denying...';
-        const result = await callAdmin('deny', { requestId: btn.dataset.id });
-        if (result.ok) {
-          render();
-        } else {
-          btn.disabled = false;
-          btn.textContent = 'Deny';
-          alert(result.error || 'Could not deny');
-        }
-      };
+    el.querySelectorAll('.adm-deny').forEach(b => b.onclick = async () => {
+      b.disabled = true; b.textContent = 'Denying…';
+      const r = await callAdmin('deny', { requestId: b.dataset.id });
+      if (r.ok) render(); else { b.disabled = false; b.textContent = 'Deny'; alert(r.error || 'Could not deny'); }
     });
 
-    const createBtn = document.getElementById('adminCreateLocationBtn');
-    if (createBtn) {
-      createBtn.onclick = async () => {
-        const input = document.getElementById('adminNewLocationName');
-        const msg = document.getElementById('adminLocationMsg');
-        const name = input?.value?.trim();
-        if (!name) { if (msg) msg.textContent = 'Enter a location name.'; return; }
-        createBtn.disabled = true;
-        createBtn.textContent = 'Creating...';
-        const result = await callAdmin('createLocation', { name });
-        createBtn.disabled = false;
-        createBtn.textContent = 'Create';
-        if (result.ok) {
-          if (input) input.value = '';
-          if (msg) msg.textContent = 'Location created.';
-          render();
-        } else {
-          if (msg) msg.textContent = result.error || 'Could not create location.';
-        }
-      };
-    }
+    const cl = document.getElementById('admCreateLoc');
+    if (cl) cl.onclick = async () => {
+      const input = document.getElementById('admNewLoc');
+      const name = input?.value?.trim();
+      if (!name) { msg('admLocMsg', 'Enter a location name.', 'error'); return; }
+      cl.disabled = true; cl.textContent = 'Creating…';
+      const r = await callAdmin('createLocation', { name });
+      cl.disabled = false; cl.textContent = 'Create';
+      if (r.ok) { await loadLocations(); render(); }
+      else msg('admLocMsg', r.error || 'Could not create location.', 'error');
+    };
+  }
+
+  // ── Pestana 2: crear usuario ─────────────────────────────────────────
+  function viewCreate(el) {
+    el.innerHTML = `
+      <div class="adm-block">
+        <div class="adm-label">New user</div>
+        <div class="adm-grid2">
+          <input id="admFirst" class="adm-input" type="text" placeholder="First name">
+          <input id="admLast"  class="adm-input" type="text" placeholder="Last name">
+        </div>
+        <input id="admEmail" class="adm-input" type="email" placeholder="Email" autocomplete="off">
+        <input id="admPass"  class="adm-input" type="text" placeholder="Password (8+ characters)" autocomplete="off">
+        <div class="adm-hint">The password is shown in clear text on purpose — you have to pass it to the person. Have them change it after the first sign in.</div>
+      </div>
+
+      <div class="adm-block">
+        <div class="adm-label">Access</div>
+        ${locGrid(_newSel, 'new')}
+        <div class="adm-row" style="margin-top:10px">
+          <span class="adm-dim">Role</span>
+          ${roleSelect('admRole', 'staff')}
+        </div>
+      </div>
+
+      <button class="adm-btn ok wide" id="admCreateUser">
+        <i class="ti ti-user-plus" aria-hidden="true"></i> Create user &amp; assign access
+      </button>
+      <div id="admCreateMsg" class="adm-msg"></div>`;
+
+    document.getElementById('admCreateUser').onclick = async () => {
+      const btn = document.getElementById('admCreateUser');
+      const email = document.getElementById('admEmail').value.trim();
+      const password = document.getElementById('admPass').value;
+      const firstName = document.getElementById('admFirst').value.trim();
+      const lastName = document.getElementById('admLast').value.trim();
+      const role = document.getElementById('admRole').value;
+
+      if (!firstName) return msg('admCreateMsg', 'Enter a first name.', 'error');
+      if (!email.includes('@')) return msg('admCreateMsg', 'Enter a valid email.', 'error');
+      if (password.length < 8) return msg('admCreateMsg', 'Password must be at least 8 characters.', 'error');
+      if (!_newSel.size) return msg('admCreateMsg', 'Select at least one location.', 'error');
+
+      btn.disabled = true; msg('admCreateMsg', 'Creating…', 'info');
+      const r = await callAdmin('createUser', {
+        email, password, firstName, lastName,
+        locationIds: Array.from(_newSel), role
+      });
+      btn.disabled = false;
+
+      if (r.ok) {
+        const names = _locations.filter(l => _newSel.has(l.id)).map(l => l.name).join(', ');
+        _newSel.clear();
+        render();
+        msg('admCreateMsg', `User created: ${firstName} ${lastName} (${email}) — ${names}`, 'success');
+      } else {
+        msg('admCreateMsg', r.error || 'Could not create user.', 'error');
+      }
+    };
+  }
+
+  // ── Pestana 3: editar accesos ────────────────────────────────────────
+  function viewAccess(el) {
+    el.innerHTML = `
+      <div class="adm-block">
+        <div class="adm-label">Find user</div>
+        <div class="adm-row">
+          <input id="admFindEmail" class="adm-input" type="email" placeholder="Email" autocomplete="off">
+          <button class="adm-btn" id="admFindBtn">Search</button>
+        </div>
+        <div id="admFindMsg" class="adm-msg"></div>
+      </div>
+      <div id="admEditBody"></div>`;
+
+    const run = async () => {
+      const email = document.getElementById('admFindEmail').value.trim();
+      if (!email) return msg('admFindMsg', 'Enter an email.', 'error');
+      msg('admFindMsg', 'Searching…', 'info');
+      const r = await callAdmin('findUser', { email });
+      if (!r.ok) return msg('admFindMsg', r.error || 'Search failed.', 'error');
+      if (!r.user) { _editUser = null; document.getElementById('admEditBody').innerHTML = ''; return msg('admFindMsg', 'No user with that email.', 'error'); }
+      msg('admFindMsg', '', '');
+      _editUser = r.user;
+      _editSel = new Set(r.user.access.map(a => a.locationId));
+      drawEdit();
+    };
+
+    document.getElementById('admFindBtn').onclick = run;
+    document.getElementById('admFindEmail').onkeydown = e => { if (e.key === 'Enter') run(); };
+    if (_editUser) drawEdit();
+  }
+
+  function drawEdit() {
+    const body = document.getElementById('admEditBody');
+    if (!body || !_editUser) return;
+    const currentRole = _editUser.access[0]?.role || 'staff';
+    body.innerHTML = `
+      <div class="adm-user">
+        <div>
+          <div class="adm-user-name">${esc(_editUser.name || '—')}</div>
+          <div class="adm-dim">${esc(_editUser.email)}</div>
+        </div>
+        <div class="adm-dim adm-user-meta">
+          ${_editUser.lastSignIn ? 'Last sign in ' + new Date(_editUser.lastSignIn).toLocaleDateString() : 'Never signed in'}
+        </div>
+      </div>
+      <div class="adm-block">
+        <div class="adm-label">Locations</div>
+        ${locGrid(_editSel, 'edit')}
+        <div class="adm-row" style="margin-top:10px">
+          <span class="adm-dim">Role</span>
+          ${roleSelect('admEditRole', currentRole)}
+        </div>
+      </div>
+      <button class="adm-btn ok wide" id="admSaveAccess"><i class="ti ti-device-floppy" aria-hidden="true"></i> Save access</button>
+      <div id="admSaveMsg" class="adm-msg"></div>`;
+
+    document.getElementById('admSaveAccess').onclick = async () => {
+      const btn = document.getElementById('admSaveAccess');
+      btn.disabled = true; msg('admSaveMsg', 'Saving…', 'info');
+      const r = await callAdmin('setAccess', {
+        userId: _editUser.id,
+        locationIds: Array.from(_editSel),
+        role: document.getElementById('admEditRole').value
+      });
+      btn.disabled = false;
+      if (r.ok) {
+        msg('admSaveMsg', _editSel.size
+          ? `Access updated — ${_editSel.size} location${_editSel.size === 1 ? '' : 's'}.`
+          : 'All access removed. This user can sign in but will see nothing.', 'success');
+      } else {
+        msg('admSaveMsg', r.error || 'Could not save.', 'error');
+      }
+    };
+  }
+
+  // ── Pestana 4: borrar usuario ────────────────────────────────────────
+  function viewDelete(el) {
+    el.innerHTML = `
+      <div class="adm-block">
+        <div class="adm-label">Find user</div>
+        <div class="adm-row">
+          <input id="admDelEmail" class="adm-input" type="email" placeholder="Email" autocomplete="off">
+          <button class="adm-btn" id="admDelFind">Search</button>
+        </div>
+        <div id="admDelMsg" class="adm-msg"></div>
+      </div>
+      <div id="admDelBody"></div>`;
+
+    const run = async () => {
+      const email = document.getElementById('admDelEmail').value.trim();
+      if (!email) return msg('admDelMsg', 'Enter an email.', 'error');
+      msg('admDelMsg', 'Searching…', 'info');
+      const r = await callAdmin('findUser', { email });
+      if (!r.ok) return msg('admDelMsg', r.error || 'Search failed.', 'error');
+      if (!r.user) { _delUser = null; document.getElementById('admDelBody').innerHTML = ''; return msg('admDelMsg', 'No user with that email.', 'error'); }
+      msg('admDelMsg', '', '');
+      _delUser = r.user;
+      drawDelete();
+    };
+
+    document.getElementById('admDelFind').onclick = run;
+    document.getElementById('admDelEmail').onkeydown = e => { if (e.key === 'Enter') run(); };
+    if (_delUser) drawDelete();
+  }
+
+  function drawDelete() {
+    const body = document.getElementById('admDelBody');
+    if (!body || !_delUser) return;
+    const locs = _delUser.access.map(a => a.name).join(', ') || 'none';
+
+    body.innerHTML = `
+      <div class="adm-user">
+        <div>
+          <div class="adm-user-name">${esc(_delUser.name || '—')}</div>
+          <div class="adm-dim">${esc(_delUser.email)}</div>
+        </div>
+      </div>
+      <div class="adm-danger">
+        <div class="adm-danger-head"><i class="ti ti-alert-triangle" aria-hidden="true"></i> This cannot be undone</div>
+        <div class="adm-dim">Deletes the account and its access to ${esc(locs)}. Counts and orders already recorded stay — they belong to the location, not the person.</div>
+        <div class="adm-row" style="margin-top:12px">
+          <input id="admDelConfirm" class="adm-input" type="text" placeholder="Type ${esc(_delUser.email)} to confirm" autocomplete="off">
+          <button class="adm-btn danger" id="admDelGo">Delete</button>
+        </div>
+        <div id="admDelResult" class="adm-msg"></div>
+      </div>`;
+
+    document.getElementById('admDelGo').onclick = async () => {
+      const typed = document.getElementById('admDelConfirm').value.trim().toLowerCase();
+      if (typed !== String(_delUser.email).toLowerCase()) {
+        return msg('admDelResult', 'The email does not match. Type it exactly to confirm.', 'error');
+      }
+      const btn = document.getElementById('admDelGo');
+      btn.disabled = true; msg('admDelResult', 'Deleting…', 'info');
+      const gone = _delUser.email;
+      const r = await callAdmin('deleteUser', { userId: _delUser.id, email: _delUser.email });
+      if (r.ok) {
+        _delUser = null;
+        render();
+        msg('admDelMsg', `User ${gone} deleted.`, 'success');
+      } else {
+        btn.disabled = false;
+        msg('admDelResult', r.error || 'Could not delete.', 'error');
+      }
+    };
+  }
+
+  // ── Armado ───────────────────────────────────────────────────────────
+  async function loadLocations() {
+    const r = await callAdmin('listLocations');
+    _locations = r.ok ? (r.locations || []) : [];
+  }
+
+  async function render() {
+    const el = root();
+    if (!el) return;
+    if (!_locations.length) await loadLocations();
+
+    el.innerHTML = tabBar() + '<div id="admBody"></div>';
+
+    el.querySelectorAll('.adm-tab').forEach(b => b.onclick = () => {
+      _tab = b.dataset.tab;
+      render();
+    });
+
+    const body = document.getElementById('admBody');
+    if (_tab === 'requests')    await viewRequests(body);
+    else if (_tab === 'create')  viewCreate(body);
+    else if (_tab === 'access')  viewAccess(body);
+    else                         viewDelete(body);
+
+    // Las ubicaciones se marcan con delegacion: el contenido se redibuja
+    // completo en cada cambio y los manejadores directos se perderian.
+    el.querySelectorAll('.adm-loc').forEach(b => b.onclick = () => {
+      const id = b.dataset.loc;
+      const set = b.dataset.handler === 'new' ? _newSel : _editSel;
+      if (set.has(id)) set.delete(id); else set.add(id);
+      b.classList.toggle('on', set.has(id));
+      const ic = b.querySelector('i');
+      if (ic) ic.className = 'ti ' + (set.has(id) ? 'ti-check' : 'ti-map-pin');
+    });
   }
 
   window.BarStockAdmin = { render };

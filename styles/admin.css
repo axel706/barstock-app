@@ -1,0 +1,205 @@
+/* ── Panel de administracion ─────────────────────────────────────────
+   Cuatro pestanas dentro de la seccion Admin. Reusa el lenguaje visual
+   del resto de la app en vez de traer el del HTML suelto: mismos
+   redondeos, mismos grises, mismo tamano de letra.
+*/
+
+.adm-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+body.light .adm-tabs { border-bottom-color: rgba(15,23,42,.08); }
+
+.adm-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px !important;
+  border-radius: 999px !important;
+  font-size: 13px !important;
+  font-weight: 700;
+  cursor: pointer;
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  color: var(--sub) !important;
+}
+.adm-tab i { font-size: 15px; }
+.adm-tab:hover { background: rgba(255,255,255,.06) !important; color: var(--text) !important; }
+.adm-tab.active {
+  background: #38bdf8 !important;
+  border-color: #38bdf8 !important;
+  color: #04283a !important;
+}
+body.light .adm-tab { border-color: rgba(15,23,42,.14) !important; }
+
+.adm-block { margin-bottom: 22px; }
+
+.adm-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  color: var(--sub);
+  margin-bottom: 10px;
+}
+
+.adm-dim { font-size: 12px; color: var(--sub); line-height: 1.5; }
+
+.adm-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.adm-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+
+.adm-input {
+  flex: 1 1 200px;
+  min-width: 0;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  background: var(--muted);
+  border: 1px solid rgba(255,255,255,.10);
+  color: var(--text);
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+.adm-row .adm-input { margin-bottom: 0; }
+body.light .adm-input { border-color: rgba(15,23,42,.14); }
+
+.adm-hint {
+  font-size: 11px;
+  color: var(--sub);
+  line-height: 1.5;
+  margin-top: 2px;
+}
+
+.adm-btn {
+  padding: 10px 16px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.adm-btn.wide { width: 100%; justify-content: center; }
+.adm-btn.ok     { background: #22c55e !important; border-color: #22c55e !important; color: #04240f !important; }
+.adm-btn.ghost  { background: transparent !important; }
+.adm-btn.danger { background: #ef4444 !important; border-color: #ef4444 !important; color: #fff !important; }
+.adm-btn:disabled { opacity: .55; cursor: default; }
+
+/* ── Ubicaciones ─────────────────────────────────────────────────── */
+.adm-loc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+.adm-loc {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 12px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  background: var(--muted) !important;
+  border: 1px solid rgba(255,255,255,.10) !important;
+  color: var(--text) !important;
+}
+.adm-loc i { font-size: 15px; color: var(--sub); flex-shrink: 0; }
+.adm-loc span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-loc:hover { border-color: rgba(56,189,248,.45) !important; }
+.adm-loc.on {
+  background: rgba(56,189,248,.14) !important;
+  border-color: rgba(56,189,248,.55) !important;
+}
+.adm-loc.on i { color: #38bdf8; }
+
+/* ── Solicitudes ─────────────────────────────────────────────────── */
+.adm-req {
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+body.light .adm-req { border-bottom-color: rgba(15,23,42,.07); }
+.adm-req:last-child { border-bottom: none; }
+.adm-req-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+.adm-req-meta { margin-bottom: 10px; }
+.adm-req-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.adm-req-actions .adm-input { flex: 0 1 170px; margin-bottom: 0; }
+
+/* ── Tarjeta de usuario ──────────────────────────────────────────── */
+.adm-user {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--muted);
+  border: 1px solid rgba(255,255,255,.08);
+  margin-bottom: 18px;
+}
+body.light .adm-user { border-color: rgba(15,23,42,.10); }
+.adm-user-name { font-size: 15px; font-weight: 800; color: var(--text); }
+.adm-user-meta { text-align: right; }
+
+/* ── Zona peligrosa ──────────────────────────────────────────────── */
+.adm-danger {
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(239,68,68,.07);
+  border: 1px solid rgba(239,68,68,.28);
+}
+.adm-danger-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #ef4444;
+  margin-bottom: 6px;
+}
+.adm-danger-head i { font-size: 16px; }
+
+/* ── Mensajes ────────────────────────────────────────────────────── */
+.adm-msg {
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 8px;
+  min-height: 0;
+}
+.adm-msg:empty { margin-top: 0; }
+.adm-msg.info    { color: var(--sub); }
+.adm-msg.success { color: #22c55e; }
+.adm-msg.error   { color: #ef4444; }
+
+.adm-empty {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 18px 0;
+  font-size: 13px;
+  color: var(--sub);
+}
+.adm-empty i { font-size: 16px; }
+
+@media (max-width: 640px) {
+  .adm-grid2 { grid-template-columns: 1fr; }
+  .adm-loc-grid { grid-template-columns: 1fr; }
+  .adm-req-actions .adm-input { flex: 1 1 100%; }
+}
