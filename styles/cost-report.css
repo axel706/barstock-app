@@ -1929,3 +1929,23 @@ body.light .cr-step-chip.done .cr-step-num{
 }
 
 .cr-side-actions{ flex: 0 0 auto; }
+
+/* ============================================================
+   Panel — el cuerpo no se encoge por debajo de su contenido
+   ------------------------------------------------------------
+   .cr-side > * ya ponia flex-shrink:0 en los hijos directos,
+   pero la regla de arriba se lo devolvia al cuerpo con el
+   "flex: 1 1 auto" — el 1 de en medio es shrink.
+
+   Con el aviso de "Report saved" el bloque superior crece unos
+   30px. El panel mide 460px fijos, asi que alguien tiene que
+   ceder, y el unico que podia era el cuerpo. Se encogia, pero
+   sus hijos no: las cifras y las mini-cards se salian de su
+   caja y se montaban sobre los botones.
+
+   Ahora crece pero no se encoge. Si el contenido no cabe, el
+   panel hace scroll — para eso tiene overflow-y:auto — en vez
+   de encimar cosas. Un scroll corto se entiende; texto encima
+   de un boton parece que la app se rompio.
+   ============================================================ */
+.cr-side-body{ flex: 1 0 auto; }
