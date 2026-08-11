@@ -2708,6 +2708,14 @@ body.dark .bs-status-badge, :root:not(.light) .bs-status-badge {
 /* ── End Status row ───────────────────────────────────────────────────────── */
 
 #vendorExportArea.vendor-hidden .vendor-col { display: none; }
+/* Los anchos del colgroup son porcentajes y suman 100 con la columna
+   VENDOR incluida. Al ocultarla se iba su 11% y las columnas quedaban
+   sumando 89: la tabla seguia midiendo el 100% del contenedor, pero sus
+   columnas terminaban antes y dejaban una franja muerta a la derecha,
+   con el encabezado cortado en el mismo punto.
+   El 11% se le devuelve a ITEM, que es la que mas agradece el espacio:
+   5 + 45 + 10 + 10 + 12 + 18 = 100. */
+#vendorExportArea.vendor-hidden col.item-col { width: 45%; }
 #vendorExportArea.vendor-hidden thead tr th:first-child { display: none; }
 /* El :not([colspan]) es lo que salva a las filas que ocupan todo el
    ancho. Una celda con colspan no es la columna de vendor — es el
