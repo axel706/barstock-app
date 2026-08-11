@@ -2709,7 +2709,12 @@ body.dark .bs-status-badge, :root:not(.light) .bs-status-badge {
 
 #vendorExportArea.vendor-hidden .vendor-col { display: none; }
 #vendorExportArea.vendor-hidden thead tr th:first-child { display: none; }
-#vendorExportArea.vendor-hidden tbody tr td:first-child { display: none; }
+/* El :not([colspan]) es lo que salva a las filas que ocupan todo el
+   ancho. Una celda con colspan no es la columna de vendor — es el
+   mensaje de "nada que ordenar" o una fila de relleno. Sin esta guarda
+   se ocultaba su UNICA celda, y el mensaje quedaba en el DOM pero
+   invisible: la tabla se veia vacia sin explicar por que. */
+#vendorExportArea.vendor-hidden tbody tr td:first-child:not([colspan]) { display: none; }
 
 .vsp-layout {
   display: flex;
