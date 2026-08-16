@@ -32,14 +32,49 @@
   let _customNotes = ''; // free text notes for current week
 
   // ─── Load weeks ──────────────────────────────────────────────────
+  // ─── Paginacion ──────────────────────────────────────────────────
+  //
+  // Supabase corta TODA respuesta en 1000 filas, y inventory_snapshots
+  // guarda una fila por articulo por semana. Con 258 articulos eso son
+  // 3.9 semanas: por eso Usage mostraba 4 ciclos habiendo 9.
+  //
+  // Lo peor no era el corte sino que se encogia solo. Cada producto
+  // nuevo en el maestro quitaba historia sin avisar — con 150 articulos
+  // se veian 6 semanas, con 258 se ven menos de 4.
+  //
+  // El orden se recibe como parametro porque no todas las consultas lo
+  // usan igual: loadPrevWeekDetail DEPENDE de que venga por semana
+  // descendente para quedarse con el registro mas reciente de cada
+  // articulo. Y siempre se ordena por una clave unica por fila, o al
+  // paginar se repiten o se saltan registros entre paginas.
+  async function fetchAllSnapshots(baseUrl, order) {
+    const { key } = getConfig();
+    const PAGE = 1000;
+    const MAX_PAGES = 50;
+    const out = [];
+
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const sep = baseUrl.includes('?') ? '&' : '?';
+      const res = await fetch(
+        `${baseUrl}${sep}order=${order}&limit=${PAGE}&offset=${page * PAGE}`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      );
+      const rows = await res.json();
+      if (!Array.isArray(rows)) break;
+      out.push(...rows);
+      if (rows.length < PAGE) break;
+    }
+    return out;
+  }
+
   async function loadWeeks() {
     const { url, key } = getConfig();
     const locationId = await fetchLocationId();
-    const res = await fetch(
-      `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&select=week_start,is_event_week&order=week_start.desc`,
-      { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+    // El orden aqui da igual: se agrupa en un Map y se ordena abajo.
+    const rows = await fetchAllSnapshots(
+      `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&select=week_start,is_event_week`,
+      'id.asc'
     );
-    const rows = await res.json();
     const weekMap = new Map();
     for (const r of rows || []) {
       if (!weekMap.has(r.week_start)) {
@@ -55,22 +90,31 @@
   async function loadWeekDetail(weekStart) {
     const { url, key } = getConfig();
     const locationId = await fetchLocationId();
-    const res = await fetch(
-      `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&week_start=eq.${weekStart}&select=*&order=item_name.asc`,
-      { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+    // Una sola semana son ~258 filas hoy, por debajo del corte. Se pagina
+    // igual: el dia que el maestro pase de 1000 articulos, esto se
+    // truncaria en silencio y los numeros saldrian mal sin sintoma.
+    return await fetchAllSnapshots(
+      `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&week_start=eq.${weekStart}&select=*`,
+      'item_name.asc'
     );
-    return await res.json();
   }
 
   async function loadPrevWeekDetail(weekStart) {
     try {
       const { url, key } = getConfig();
       const locationId = await fetchLocationId();
-      const res = await fetch(
-        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&week_start=lt.${weekStart}&used=not.is.null&select=item_name,used&order=week_start.desc&limit=500`,
-        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      // Antes pedia 500 filas fijas. Con 258 articulos eso cubria menos
+      // de dos semanas, asi que un producto que no se conto la semana
+      // pasada se quedaba sin valor previo — y no habia aviso, la
+      // comparacion simplemente no aparecia.
+      //
+      // El orden lleva item_name como segunda clave para que sea unico
+      // por fila; con solo week_start.desc, dos filas de la misma semana
+      // pueden intercambiarse entre paginas y perderse.
+      const all = await fetchAllSnapshots(
+        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&week_start=lt.${weekStart}&used=not.is.null&select=item_name,used`,
+        'week_start.desc,item_name.asc'
       );
-      const all = await res.json();
       // Keep only the most recent week's data per item
       const seen = new Set();
       const result = [];
