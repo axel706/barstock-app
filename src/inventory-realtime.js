@@ -46,6 +46,9 @@
     return data[0].id;
   }
 
+  // Huella de la ultima carga, para no redibujar cuando nada cambio
+  let _lastStamp = null;
+
   async function loadInventoryFromSupabase() {
     // Esqueleto solo cuando no hay NADA que mostrar todavia (primer login,
     // navegador nuevo, cambio de locacion). En las recargas de realtime ya
@@ -73,6 +76,23 @@
     if (!Array.isArray(rows)) {
       throw new Error('La respuesta de inventory_items no fue válida');
     }
+
+    // Si lo que llego es identico a lo que ya hay en pantalla, no se toca
+    // nada. Reconstruir state.master y redibujar con los MISMOS datos no
+    // cambia un pixel de contenido, pero si reemplaza el DOM: el panel
+    // lateral parpadea y un campo a medio escribir pierde el foco.
+    //
+    // La huella incluye lo que se dibuja. Si cambia algo de verdad, cambia
+    // la cadena y la recarga sigue su curso.
+    const stamp = rows.map(r => [
+      r.code, r.item_name, r.vendor, r.on_hand, r.suggested,
+      r.value, r.order_override, r.par_adjusted_week
+    ].join('')).sort().join('');
+
+    if (stamp === _lastStamp && Array.isArray(state.master) && state.master.length) {
+      return;
+    }
+    _lastStamp = stamp;
 
     state.master = rows.map(r => {
       const onHand = Number(r.on_hand || 0);
@@ -161,6 +181,12 @@
       try { await window.__barstockInventoryRealtimeChannel.unsubscribe(); } catch (e) {}
     }
 
+    // El canal escuchaba TODA la tabla inventory_items, sin filtrar. Con
+    // varias locaciones en la misma cuenta, cualquier cambio en cualquier
+    // otra —Crown Tavern, otra pestana, otro usuario— disparaba una
+    // recarga completa aqui. De ahi el parpadeo cada 10 o 15 segundos.
+    const rtLocationId = await fetchLocationId();
+
     window.__barstockInventoryRealtimeChannel = rtClient
       .channel('barstock-inventory-master-live')
       .on(
@@ -168,7 +194,8 @@
         {
           event: '*',
           schema: 'public',
-          table: 'inventory_items'
+          table: 'inventory_items',
+          filter: `location_id=eq.${rtLocationId}`
         },
         () => {
           scheduleReload();
