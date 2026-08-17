@@ -112,7 +112,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260817-113037</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260817-182217</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2154,30 +2154,8 @@ function getRecentVendorOrders(vendor, limit = 6){
     .sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     .slice(0, limit);
 }
-function getRecentRowQuantities(row, limit = 6){
-  const orders = getRecentVendorOrders(row?.vendor, limit);
-  const quantities = [];
-  orders.forEach(order => {
-    const match = (order.items || []).find(item => rowOrderHistoryMatchesItem(item, row));
-    if(match && parseNum(match.finalOrder) > 0){
-      quantities.push(parseNum(match.finalOrder));
-    }
-  });
-  return quantities;
-}
 
 
-function getRecentQuickOrders(row, limit = 6){
-  const orders = getRecentVendorOrders(row?.vendor, limit).filter(order => !!order.quickOrder);
-  const quantities = [];
-  orders.forEach(order => {
-    const match = (order.items || []).find(item => rowOrderHistoryMatchesItem(item, row));
-    if(match && parseNum(match.finalOrder) > 0){
-      quantities.push(parseNum(match.finalOrder));
-    }
-  });
-  return quantities;
-}
 
 function getCurrentVendorRows(){
   const q = vendorQuery();
@@ -2204,16 +2182,6 @@ function canPlaceOrder(){ return getActiveVendors().includes(activeVendorTab) &&
 function formatHistoryGroupDate(ts){
   try{return new Date(ts).toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});}catch{return 'Unknown Date';}
 }
-function normalizeHistoryDateInput(ts){
-  try{
-    const d = new Date(ts);
-    if(Number.isNaN(d.getTime())) return '';
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,'0');
-    const day = String(d.getDate()).padStart(2,'0');
-    return `${y}-${m}-${day}`;
-  }catch{return '';}
-}
 function formatHistoryDate(ts){
   try{return new Date(ts).toLocaleString(undefined,{year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});}catch{return ts;}
 }
@@ -2237,9 +2205,6 @@ function effectiveFinalOrder(row){
   return getEffectiveOrder(row);
 }
 
-function orderingVisibleRows(rows){
-  return (rows || []).filter(row => effectiveFinalOrder(row) > 0);
-}
 
 function computeOrderSubtotal(rows){
   return (rows || []).reduce((sum, row) => {
@@ -2931,10 +2896,6 @@ async function loadMasterFile(file){
   if (typeof PourIqSection !== 'undefined') setTimeout(() => PourIqSection.refresh(), 500);
 }
 
-function findMatchIndex(rawName){
-  const resolved = resolveCountMatch(rawName);
-  return resolved.status === 'unique' ? resolved.index : -1;
-}
 
 function resolveCountMatch(rawName){
   const rawNorm = normalizeName(rawName);
@@ -4125,18 +4086,6 @@ function weeklyOrderVendorOrder(){
   return getVendorsWithUnknown();
 }
 
-function quickLogoHeaderHtml(titleText, subtitleText=''){
-  const subtitleHtml = subtitleText ? `<div style="font-size:12px;opacity:.72;margin-top:2px">${escapeHtml(subtitleText)}</div>` : '';
-  return `
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-      <div style="display:flex;flex-direction:column;justify-content:center;">
-        <div style="font-size:28px;font-weight:800;letter-spacing:-0.03em;line-height:1;display:inline-flex;align-items:baseline;">BarStock<span style="display:inline-flex;width:8px;height:8px;min-width:8px;min-height:8px;border-radius:50%;background:#3b82f6;margin:0 2px 4px 1px;align-self:flex-end;"></span><span style="font-size:12px;font-weight:700;color:#64748b;margin-left:5px;letter-spacing:0.08em;text-transform:uppercase;">Pro</span></div>
-        <div style="font-size:13px;font-weight:700;opacity:.82;margin-top:4px">${escapeHtml(titleText || '')}</div>
-        ${subtitleHtml}
-      </div>
-    </div>
-  `;
-}
 
 function vendorSoftColor(vendor){
   const map = {
@@ -4367,33 +4316,6 @@ function exportMaster(){
   const rows = state.master.map(r => ({CODE:r.code, ITEM:r.item, 'ON HAND':r.onHand, SUGGESTED:r.suggested, 'TO ORDER':r.toOrder, VALUE:r.value, 'FINAL ORDER OVERRIDE': r.orderOverride==='' ? '' : r.orderOverride, VENDOR:r.vendor}));
   exportCsv('crown_master_updated.csv', rows);
   setStatus('Updated master exported.');
-}
-function exportLoop(){
-  const rows = state.master
-    .filter(r => r.vendor === 'LOOP' && /^\d+$/.test(String(r.code || '').trim()))
-    .map(r => {
-      const qty = Math.max(0, parseNum(getEffectiveOrder(r)));
-      return {
-        catRefId: String(r.code).trim(),
-        Quantity: qty
-      };
-    })
-    .filter(r => r.Quantity > 0);
-
-  if(!rows.length){
-    alert('No LOOP items to export.');
-    return;
-  }
-
-  const ws = XLSX.utils.json_to_sheet(rows, {header:['catRefId','Quantity']});
-  const csv = XLSX.utils.sheet_to_csv(ws);
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'loop_upload.csv';
-  a.click();
-  URL.revokeObjectURL(a.href);
-  setStatus('Loop upload-ready CSV exported.');
 }
 function exportNoMatch(){
   const rows = state.noMatches.map(r => ({ITEM:r.rawItem, COUNT:r.count}));
@@ -4685,11 +4607,6 @@ async function resetOrderHistory(){
   }
 }
 
-function fmt2(v){
-  const n = Number(String(v).replace(/,/g,''));
-  if(!Number.isFinite(n)) return String(v ?? '');
-  return n.toFixed(2).replace(/\.00$/,'').replace(/(\.\d)0$/,'$1');
-}
 
 
 
@@ -4707,51 +4624,9 @@ function tokenKey(s){
     .sort()
     .join(' ');
 }
-function buildMasterLookupMaps(){
-  const exact = new Map();
-  const token = new Map();
-  for(const m of state.master){
-    const exactKey = normalizeName(m.item);
-    if(exactKey && !exact.has(exactKey)) exact.set(exactKey, m);
-    const tokenized = tokenKey(m.item);
-    if(tokenized && !token.has(tokenized)) token.set(tokenized, m);
-  }
-  return { exact, token };
-}
-function findUsageMatch(item, lookup){
-  const exactKey = normalizeName(item);
-  if(lookup.exact.has(exactKey)) return lookup.exact.get(exactKey);
-  const tokenized = tokenKey(item);
-  if(lookup.token.has(tokenized)) return lookup.token.get(tokenized);
-  return null;
-}
 
 
-function parseCsvLine(line){
-  const result = [];
-  let current = '';
-  let inQuotes = false;
-  for(let i=0;i<line.length;i++){
-    const ch = line[i];
-    if(ch === '"'){
-      if(inQuotes && line[i+1] === '"'){
-        current += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if(ch === ',' && !inQuotes){
-      result.push(current);
-      current = '';
-    } else {
-      current += ch;
-    }
-  }
-  result.push(current);
-  return result;
-}
 
-function normalizeHeader(s){ return String(s||'').trim().toUpperCase(); }
 
 
 

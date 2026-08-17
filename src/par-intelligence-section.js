@@ -431,12 +431,6 @@
     return '<span class="piq-muted">—</span>';
   }
 
-  function buildTrendCell(delta) {
-    if (delta === null || delta === undefined) return '<span class="piq-muted">—</span>';
-    if (delta > 0.2)  return `<span class="piq-trend piq-trend-up"><i class="ti ti-trending-up" aria-hidden="true"></i> +${delta.toFixed(1)}</span>`;
-    if (delta < -0.2) return `<span class="piq-trend piq-trend-down"><i class="ti ti-trending-down" aria-hidden="true"></i> ${delta.toFixed(1)}</span>`;
-    return `<span class="piq-trend piq-trend-flat"><i class="ti ti-arrows-horizontal" aria-hidden="true"></i> ${delta.toFixed(1)}</span>`;
-  }
 
   function buildAdjustmentChip(status, adjustment) {
     if (status === 'over')      return '<span class="piq-pill piq-pill-red">&minus;1</span>';

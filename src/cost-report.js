@@ -433,26 +433,7 @@
     const multiYear = years.length > 1;
 
     // Determinar color del dot segun COGS vs target
-    function dotColor(r) {
-      const wt = r.wineTarget || 22;
-      const lt = r.liquorTarget || 15;
-      const wOver = (r.wineCogs || 0) - wt;
-      const lOver = (r.liquorCogs || 0) - lt;
-      const maxOver = Math.max(wOver, lOver);
-      if (maxOver <= 0) return '#22c55e';
-      if (maxOver <= 3) return '#f59e0b';
-      return '#ef4444';
-    }
 
-    function vsTargetText(r) {
-      const wt = r.wineTarget || 22;
-      const lt = r.liquorTarget || 15;
-      const wOver = ((r.wineCogs || 0) - wt).toFixed(1);
-      const lOver = ((r.liquorCogs || 0) - lt).toFixed(1);
-      const maxOver = Math.max(parseFloat(wOver), parseFloat(lOver));
-      if (maxOver <= 0) return '<span style="color:#22c55e">on target</span>';
-      return '<span style="color:#ef4444">+' + maxOver.toFixed(1) + '% over</span>';
-    }
 
     // Nombre de mes
     function monthName(ym) {
