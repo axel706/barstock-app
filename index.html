@@ -79,11 +79,13 @@
     </div>
     <div class="bs-header-line3">
       <button id="cycleBtn" class="cyc-btn" type="button"></button>
-      <label class="bs-btn bs-btn-primary bs-filelbl"><i class="ti ti-cloud-download" aria-hidden="true"></i>Load master<input type="file" id="masterFile" accept=".xlsx,.xls,.csv" /></label>
+      <!-- El selector del conteo salio del menu Import: ahora lo abre el
+           paso 2 del boton de ciclo. El input sigue aqui, oculto, porque
+           es quien recibe el archivo. -->
+      <input type="file" id="countFile" accept=".xlsx,.xls,.csv" style="display:none;" />
       <div class="bs-toolbar-group">
         <button id="importMenuBtn" class="bs-btn bs-btn-default"><i class="ti ti-file-import" aria-hidden="true"></i>Import <i class="ti ti-chevron-down" style="font-size:12px" aria-hidden="true"></i></button>
         <div id="importMenu" class="bs-dropdown hidden">
-          <label class="bs-dd-item bs-dd-filelbl"><i class="ti ti-table-import" aria-hidden="true"></i>Import weekly count<input type="file" id="countFile" accept=".xlsx,.xls,.csv" style="display:none;" /></label>
           <label class="bs-dd-item bs-dd-filelbl"><i class="ti ti-archive" aria-hidden="true"></i>Import backup<input type="file" id="backupFile" accept=".json" style="display:none;" /></label>
           <label class="bs-dd-item bs-dd-filelbl"><i class="ti ti-chart-bar" aria-hidden="true"></i>Import cost reports<input type="file" id="costReportsImportFile" accept=".json" style="display:none;" onchange="importCostReportsBackup(this)" /></label>
         </div>
@@ -114,11 +116,11 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260817-192244</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260817-194134</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
-          <button id="resetOnHandBtn" class="bs-dd-item"><i class="ti ti-refresh" aria-hidden="true"></i>Reset on hand</button>
+          <label class="bs-dd-item bs-dd-filelbl"><i class="ti ti-cloud-download" aria-hidden="true"></i>Load master<input type="file" id="masterFile" accept=".xlsx,.xls,.csv" style="display:none;" /></label>
           <div class="bs-dd-divider"></div>
           <button id="resetBtn" class="bs-dd-item bs-dd-danger"><i class="ti ti-trash" aria-hidden="true"></i>Reset master</button>
         </div>
@@ -4665,7 +4667,12 @@ document.getElementById('exportVendorXlsxBtn').addEventListener('click', exportC
 document.getElementById('exportVendorJpgBtn').addEventListener('click', ()=>exportCurrentVendorJpg().catch(err=>{alert('Could not export vendor JPG.'); setStatus('Error exporting vendor JPG.');}));
 document.getElementById('exportVendorLoopBtn').addEventListener('click', exportVendorLoopReady);
 document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-document.getElementById('resetOnHandBtn').addEventListener('click', resetOnHand);
+// Reset on hand salio del menu de los tres puntitos: ahora es el paso 1
+// del boton de ciclo. La guarda evita que el bloque entero reviente si
+// el boton no existe — sin ella, un getElementById en null tumba todo el
+// script que viene despues.
+const _resetOnHandBtn = document.getElementById('resetOnHandBtn');
+if (_resetOnHandBtn) _resetOnHandBtn.addEventListener('click', resetOnHand);
 document.getElementById('resetBtn').addEventListener('click', resetMaster);
 
 document.getElementById('ohExportBtn').addEventListener('click', exportOrderHistory);
@@ -4683,7 +4690,7 @@ document.getElementById('vendorFilter').addEventListener('change', render);
 document.getElementById('vendorSearchInput').addEventListener('input', render);
 document.getElementById('placeOrderBtn').addEventListener('click', ()=>placeCurrentOrder().catch(err=>{console.error(err); alert('Could not place vendor order.'); setStatus('Error placing vendor order.');}));
 
-document.getElementById('masterFile').addEventListener('change', async e=>{ const f=e.target.files[0]; if(!f) return; try{ await loadMasterFile(f);} catch(err){ alert(err.message||String(err)); setStatus('Error loading master.'); } e.target.value='';});
+document.getElementById('masterFile').addEventListener('change', async e=>{ const f=e.target.files[0]; if(!f) return; bsCloseAllMenus(); try{ await loadMasterFile(f);} catch(err){ alert(err.message||String(err)); setStatus('Error loading master.'); } e.target.value='';});
 document.getElementById('countFile').addEventListener('change', async e=>{ const f=e.target.files[0]; if(!f) return; try{ await importCountFile(f);} catch(err){ alert(err.message||String(err)); setStatus('Error importing count.'); } e.target.value=''; const m=document.getElementById('importMenu'); if(m) m.classList.add('hidden');});
 document.getElementById('backupFile').addEventListener('change', async e=>{ const f=e.target.files[0]; if(!f) return; try{ await importBackup(f);} catch(err){ alert('Invalid backup file.'); } e.target.value=''; const m=document.getElementById('importMenu'); if(m) m.classList.add('hidden');});
 
@@ -4811,7 +4818,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/par-intelligence-section.js"></script>
 <script src="src/theoretical-usage.js?v=pag1"></script>
 <script src="src/no-match-cloud.js"></script>
-<script src="src/weekly-cycle.js?v=cyc1"></script>
+<script src="src/weekly-cycle.js?v=cyc2"></script>
 
 
 <!-- BARSTOCK EVENT LISTENERS START -->
