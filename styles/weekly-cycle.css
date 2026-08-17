@@ -1,0 +1,98 @@
+/* ── Botón del ciclo semanal ─────────────────────────────────────────
+   El avance lo comunica el NÚMERO, no el color. Así el rojo queda libre
+   para significar una sola cosa: este click destruye algo.
+   Un semáforo rojo→naranja→verde como barra de progreso enseña a leer
+   el rojo como "siguiente", que es justo lo contrario de lo que hace
+   falta en el paso que borra el inventario.
+*/
+
+.cyc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 16px !important;
+  min-height: 40px;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: background .15s ease, border-color .15s ease;
+}
+.cyc-btn:disabled { cursor: default; }
+
+.cyc-num {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.cyc-btn i { font-size: 16px; flex-shrink: 0; }
+
+/* Paso 1 — el único que borra */
+.cyc-step1 {
+  background: #dc2626 !important;
+  border: 1px solid #dc2626 !important;
+  color: #fff5f5 !important;
+}
+.cyc-step1:hover { background: #b91c1c !important; }
+.cyc-step1 .cyc-num { background: rgba(255,255,255,.24); color: #fff5f5; }
+
+/* Paso 2 — carga un archivo, no destruye nada */
+.cyc-step2 {
+  background: transparent !important;
+  border: 1px solid rgba(56,189,248,.55) !important;
+  color: var(--text) !important;
+}
+.cyc-step2:hover { background: rgba(56,189,248,.10) !important; }
+.cyc-step2 .cyc-num { background: rgba(56,189,248,.18); color: #38bdf8; }
+
+/* Completado — es un estado, no una acción: contorno, no relleno */
+.cyc-done {
+  background: transparent !important;
+  border: 1px solid rgba(34,197,94,.55) !important;
+  color: #22c55e !important;
+}
+.cyc-done:hover { background: rgba(34,197,94,.10) !important; }
+/* Única pista de que todavía responde */
+.cyc-again { opacity: .45; margin-left: 2px; }
+.cyc-done:hover .cyc-again { opacity: .9; }
+
+/* Confirmación de reinicio */
+.cyc-confirm {
+  background: #dc2626 !important;
+  border: 1px solid #dc2626 !important;
+  color: #fff5f5 !important;
+}
+.cyc-bar {
+  position: absolute;
+  left: 0; bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: rgba(255,255,255,.18);
+}
+.cyc-bar-fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: rgba(255,255,255,.65);
+}
+
+/* Mientras se consulta la nube */
+.cyc-loading {
+  background: transparent !important;
+  border: 1px solid var(--border, rgba(255,255,255,.12)) !important;
+  color: var(--sub) !important;
+}
+.cyc-loading .cyc-num { background: rgba(255,255,255,.08); color: var(--sub); }
+
+body.light .cyc-step2 { border-color: rgba(2,132,199,.55) !important; }
+body.light .cyc-done  { border-color: rgba(21,128,61,.55) !important; color: #15803d !important; }

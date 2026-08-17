@@ -38,6 +38,7 @@
   <link rel="stylesheet" href="styles/empty-state.css?v=empty1">
   <link rel="stylesheet" href="styles/pour-iq.css?v=piq1">
   <link rel="stylesheet" href="styles/admin.css?v=adm3">
+  <link rel="stylesheet" href="styles/weekly-cycle.css?v=cyc1">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -77,6 +78,7 @@
       </div>
     </div>
     <div class="bs-header-line3">
+      <button id="cycleBtn" class="cyc-btn" type="button"></button>
       <label class="bs-btn bs-btn-primary bs-filelbl"><i class="ti ti-cloud-download" aria-hidden="true"></i>Load master<input type="file" id="masterFile" accept=".xlsx,.xls,.csv" /></label>
       <div class="bs-toolbar-group">
         <button id="importMenuBtn" class="bs-btn bs-btn-default"><i class="ti ti-file-import" aria-hidden="true"></i>Import <i class="ti ti-chevron-down" style="font-size:12px" aria-hidden="true"></i></button>
@@ -112,7 +114,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260817-182217</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260817-192244</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -4809,6 +4811,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/par-intelligence-section.js"></script>
 <script src="src/theoretical-usage.js?v=pag1"></script>
 <script src="src/no-match-cloud.js"></script>
+<script src="src/weekly-cycle.js?v=cyc1"></script>
 
 
 <!-- BARSTOCK EVENT LISTENERS START -->
