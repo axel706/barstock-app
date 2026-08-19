@@ -3464,3 +3464,35 @@ body.light .bs-fs-cta:hover{
   background: rgba(2,132,199,.14);
   border-color: rgba(2,132,199,.70);
 }
+
+/* ============================================================
+   MODO CLARO — tinta sobre el vidrio
+   ------------------------------------------------------------
+   Al bajar el tinte de la tarjeta de 44% a 21%, la foto del bar
+   pasa a través con mucha más fuerza. Los títulos aguantan
+   porque son oscuros y gruesos; el texto secundario en gris
+   medio se perdió por completo.
+
+   El arreglo va en la TINTA, no en el vidrio: subir el tinte de
+   vuelta desharía el efecto que se buscaba.
+
+   --sub se redefine DENTRO de .card en vez de globalmente. Así
+   solo se oscurece el texto que está sobre vidrio; el que vive
+   sobre superficies blancas normales conserva su gris suave y
+   no se ve pesado.
+   ============================================================ */
+
+body.light .card{
+  --sub: #1e293b;
+}
+
+/* Estos llevan el color escrito a mano y no leen la variable */
+body.light .bs-focus-card .bs-focus-sub{ color:#1e293b !important; }
+body.light .card .section-sub,
+body.light .card .muted,
+body.light .card .small.muted{ color:#1e293b !important; }
+
+/* Las etiquetas de las mini-cards son las más chicas de todas:
+   necesitan un punto más de peso, no solo de color. */
+body.light .bs-focus-stat-label,
+body.light .cr-mini-label{ color:#334155 !important; font-weight:700; }
