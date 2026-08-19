@@ -704,10 +704,10 @@
        el tinte. */
     body.light .card{
       background:rgba(255,255,255,.21) !important;
-      border-color:rgba(255,255,255,.66) !important;
+      border-color:rgba(255,255,255,.40) !important;
       box-shadow:
         0 16px 34px rgba(15,23,42,.10),
-        inset 0 1px 0 rgba(255,255,255,.80) !important;
+        inset 0 1px 0 rgba(255,255,255,.42) !important;
       backdrop-filter: blur(16px) saturate(152%);
       -webkit-backdrop-filter: blur(16px) saturate(152%);
     }
