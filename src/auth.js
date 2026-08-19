@@ -74,7 +74,7 @@
 
       // La pestana de la barra y el acceso del modo foco si se ocultan con
       // display: sus clases no llevan !important y el estilo en linea manda.
-      ['bsAdminNavTab', 'bsAdminMiniCard'].forEach(id => {
+      ['bsAdminNavTab', 'bsAdminMiniCard', 'restoreBackupBtn'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = isAdmin ? '' : 'none';
       });

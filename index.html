@@ -116,11 +116,12 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260817-194134</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260818-215533</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
           <label class="bs-dd-item bs-dd-filelbl"><i class="ti ti-cloud-download" aria-hidden="true"></i>Load master<input type="file" id="masterFile" accept=".xlsx,.xls,.csv" style="display:none;" /></label>
+          <button id="restoreBackupBtn" class="bs-dd-item" style="display:none"><i class="ti ti-history" aria-hidden="true"></i>Restore backup</button>
           <div class="bs-dd-divider"></div>
           <button id="resetBtn" class="bs-dd-item bs-dd-danger"><i class="ti ti-trash" aria-hidden="true"></i>Reset master</button>
         </div>
@@ -1506,6 +1507,9 @@ async function reapplyVendorMapping(){
   // Sincronizar al cloud si hubo cambios
   if (changed > 0 && window.BarStockInventoryCloud) {
     try {
+      // Reasignar proveedores borra y reinserta la tabla completa. La
+      // intencion no es destructiva, el efecto si.
+      if (window.BarStockBackup) await window.BarStockBackup.snapshot('vendor-remap');
       await window.BarStockInventoryCloud.replaceInventoryMaster(state.master || []);
     } catch (e) {
       console.error('Could not sync re-applied vendors to cloud', e);
@@ -2866,6 +2870,10 @@ function setInventoryVendorFilter(v){ document.getElementById('vendorFilter').va
 window.setInventoryVendorFilter = setInventoryVendorFilter;
 
 async function loadMasterFile(file){
+  // Respaldo ANTES de leer el archivo siquiera. replaceInventoryMaster
+  // borra todo el inventario de la locacion y lo reinserta; si algo sale
+  // mal a partir de aqui, esta copia es la unica vuelta atras.
+  if (window.BarStockBackup) await window.BarStockBackup.snapshot('load-master');
   const {rows,sheetName} = await parseFile(file, true);
   const master = materializeMaster(rows);
   if(!master.length) throw new Error('Could not read items from the master file.');
@@ -3052,6 +3060,10 @@ async function applyPendingImport(){
   // Aplicar state localmente primero
   const importMatches = pendingImport.matches || 0;
   state.master = pendingImport.previewMaster.map(r => ({...r}));
+  // Cargar el conteo equivocado es un error facil y sin sintoma: los
+  // numeros quedan mal pero la app se ve normal. Con esto se deshace.
+  if (window.BarStockBackup) await window.BarStockBackup.snapshot('import-count');
+
   state.noMatches = pendingImport.noMatches || [];
   state.lastCountName = pendingImport.fileName;
   state.lastUpdated = new Date().toISOString();
@@ -3930,10 +3942,13 @@ async function saveCategoryInline(itemName, category) {
 }
 window.saveCategoryInline = saveCategoryInline;
 
-function quickZeroSuggested(index){
+async function quickZeroSuggested(index){
   const row = state.master[index];
   if(!row) return;
   if(!confirm(`Set SUGGESTED to 0 for '${row.item}'? This will remove it from vendor orders until you change it again.`)) return;
+  // Cambia un solo articulo, pero para guardarlo reemplaza la tabla
+  // entera. Es el mismo camino destructivo con otro disparador.
+  if (window.BarStockBackup) await window.BarStockBackup.snapshot('zero-suggested');
   row.suggested = 0;
   row.toOrder = computeToOrder(row.onHand, 0);
   if(row.orderOverride !== '' && row.orderOverride !== null && row.orderOverride !== undefined) row.orderOverride = '';
@@ -4331,6 +4346,10 @@ async function resetOnHand(){
   if(!state.master.length) return;
   if(!confirm('Reset all ON HAND values to 0?')) return;
 
+  // El respaldo va despues de confirmar y antes de tocar la nube: no
+  // tiene sentido guardar una copia si el usuario cancela.
+  if (window.BarStockBackup) await window.BarStockBackup.snapshot('reset-on-hand');
+
   try{
     if (!window.BarStockInventoryCloud) {
       throw new Error('Inventory cloud module not available');
@@ -4436,6 +4455,9 @@ function exportBackup(){
 async function resetMaster(){
   if(!confirm('This will erase the persistent master stored in the app. Continue?')) return;
 
+  // El mas destructivo de todos: borra el inventario entero sin reemplazo.
+  if (window.BarStockBackup) await window.BarStockBackup.snapshot('reset-master');
+
   try{
     if (!window.BarStockInventoryCloud) {
       throw new Error('Inventory cloud module not available');
@@ -4482,6 +4504,10 @@ async function importBackup(file){
 
   render();
   initSectionToggles();
+
+  // Importar un respaldo tambien reemplaza todo: si el archivo es el
+  // equivocado, esta copia es la vuelta atras.
+  if (window.BarStockBackup) await window.BarStockBackup.snapshot('import-backup');
 
   // Sync inventory master to Supabase after backup import
   try{
@@ -4673,6 +4699,12 @@ document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 // script que viene despues.
 const _resetOnHandBtn = document.getElementById('resetOnHandBtn');
 if (_resetOnHandBtn) _resetOnHandBtn.addEventListener('click', resetOnHand);
+
+const _restoreBtn = document.getElementById('restoreBackupBtn');
+if (_restoreBtn) _restoreBtn.addEventListener('click', () => {
+  bsCloseAllMenus();
+  if (window.BarStockBackup) window.BarStockBackup.openRestore();
+});
 document.getElementById('resetBtn').addEventListener('click', resetMaster);
 
 document.getElementById('ohExportBtn').addEventListener('click', exportOrderHistory);
@@ -4818,6 +4850,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/par-intelligence-section.js"></script>
 <script src="src/theoretical-usage.js?v=pag1"></script>
 <script src="src/no-match-cloud.js"></script>
+<script src="src/inventory-backup.js?v=bk1"></script>
 <script src="src/weekly-cycle.js?v=cyc2"></script>
 
 
