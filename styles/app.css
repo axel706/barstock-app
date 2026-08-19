@@ -693,14 +693,23 @@
       backdrop-filter: blur(12px) saturate(158%);
       -webkit-backdrop-filter: blur(12px) saturate(158%);
     }
+    /* Vidrio del modo claro. Antes: blur 11px con 44% de blanco — poco
+       desenfoque y mucho velo, que se lee como plastico lechoso.
+       Ahora: mas desenfoque y menos tinte, asi la foto de fondo llega
+       como manchas de color en vez de una capa blanca.
+
+       Con solo 21% de blanco el borde tiene que trabajar mas: es lo que
+       hace que la tarjeta se lea como un objeto y no como una mancha.
+       Por eso el borde y el brillo interior suben en vez de bajar con
+       el tinte. */
     body.light .card{
-      background:rgba(255,255,255,.44) !important;
-      border-color:rgba(255,255,255,.58) !important;
+      background:rgba(255,255,255,.21) !important;
+      border-color:rgba(255,255,255,.66) !important;
       box-shadow:
-        0 16px 34px rgba(15,23,42,.08),
-        inset 0 1px 0 rgba(255,255,255,.72) !important;
-      backdrop-filter: blur(11px) saturate(152%);
-      -webkit-backdrop-filter: blur(11px) saturate(152%);
+        0 16px 34px rgba(15,23,42,.10),
+        inset 0 1px 0 rgba(255,255,255,.80) !important;
+      backdrop-filter: blur(16px) saturate(152%);
+      -webkit-backdrop-filter: blur(16px) saturate(152%);
     }
     body.light .tablewrap{
       background:rgba(255,255,255,.28) !important;
