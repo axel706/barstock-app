@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/tables.css">
   <link rel="stylesheet" href="styles/buttons.css">
-  <link rel="stylesheet" href="styles/app.css?v=logo1">
+  <link rel="stylesheet" href="styles/app.css?v=logo2">
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/order-history.css">
 
@@ -116,7 +116,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260820-165550</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260820-165857</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -4850,6 +4850,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/par-intelligence-section.js"></script>
 <script src="src/theoretical-usage.js?v=pag1"></script>
 <script src="src/no-match-cloud.js"></script>
+<script src="src/typeface.js?v=tf1"></script>
 <script src="src/inventory-backup.js?v=bk1"></script>
 <script src="src/weekly-cycle.js?v=cyc2"></script>
 
@@ -5997,6 +5998,11 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     <!-- PANEL: Appearance -->
     <div id="settingsPanel-appearance" class="settings-panel hidden">
       <button class="settings-back-btn" onclick="showSettingsPanel(null)">‹ Back</button>
+
+      <h4 style="margin:0 0 4px">Typeface</h4>
+      <div class="small muted" style="margin-bottom:14px">Changes the app text. The logo always stays in Manrope.</div>
+      <div id="fontGrid" style="display:flex;flex-direction:column;gap:8px;margin-bottom:26px"></div>
+
       <h4 style="margin:0 0 4px">Background</h4>
       <div class="small muted" style="margin-bottom:16px">Choose a background image for this location</div>
       <div id="bgGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;"></div>
