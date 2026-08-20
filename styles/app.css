@@ -3523,3 +3523,31 @@ body.light .cr-mini-label{ color:#334155 !important; font-weight:700; }
 .bs-font-name{font-size:12px;font-weight:700;}
 .bs-font-note{font-size:11px;color:var(--sub);}
 body.light .bs-font-opt{border-color:rgba(15,23,42,.14) !important;}
+
+/* ── Asignacion automatica de categorias ────────────────────────── */
+.ac-modal{width:min(680px,100%);max-height:82vh;display:flex;flex-direction:column;}
+.ac-head{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:800;margin-bottom:14px;}
+.ac-head i{font-size:20px;color:#38bdf8;}
+#acBody{display:flex;flex-direction:column;min-height:0;flex:1;}
+.ac-status{display:flex;align-items:center;gap:9px;padding:30px 0;font-size:14px;color:var(--sub);}
+.ac-status i{font-size:18px;color:#38bdf8;}
+.ac-sum{font-size:14px;margin-bottom:4px;}
+.ac-sum strong{color:#38bdf8;}
+.ac-ai{color:#a78bfa;}
+.ac-hint{font-size:12px;color:var(--sub);margin-bottom:14px;line-height:1.5;}
+/* La lista es lo unico que crece; sin min-height:0 empuja los botones fuera */
+.ac-list{flex:1;min-height:0;overflow-y:auto;margin:0 -4px;padding:0 4px;}
+.ac-row{display:flex;align-items:center;gap:10px;padding:8px 0;
+        border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;}
+body.light .ac-row{border-bottom-color:rgba(15,23,42,.06);}
+.ac-row input[type=checkbox]{flex:0 0 auto;width:16px;height:16px;cursor:pointer;}
+.ac-name{flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ac-row select{flex:0 0 168px;font-size:12px;padding:5px 8px;border-radius:8px;
+               background:var(--muted);color:var(--text);border:1px solid rgba(255,255,255,.10);}
+/* Las de IA se marcan: son las que conviene mirar dos veces */
+.ac-row.ai .ac-name::after{content:'looked up';margin-left:8px;font-size:10px;
+  color:#a78bfa;background:rgba(167,139,250,.14);padding:2px 7px;border-radius:999px;}
+.ac-actions{display:flex;gap:10px;justify-content:flex-end;padding-top:16px;flex-shrink:0;}
+.ac-btn{padding:9px 18px !important;border-radius:9px !important;font-size:13px !important;
+        font-weight:700;cursor:pointer;}
+.ac-btn.go{background:#22c55e !important;border-color:#22c55e !important;color:#04240f !important;}

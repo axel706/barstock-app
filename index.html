@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/tables.css">
   <link rel="stylesheet" href="styles/buttons.css">
-  <link rel="stylesheet" href="styles/app.css?v=logo2">
+  <link rel="stylesheet" href="styles/app.css?v=cat1">
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/order-history.css">
 
@@ -116,7 +116,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260820-171607</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260820-173458</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -231,6 +231,7 @@
           </div>
         </div>
       </div>
+      <button onclick="BarStockAutoCategory && BarStockAutoCategory.run()" class="section-toggle" title="Assign categories automatically"><i class="ti ti-tags" aria-hidden="true" style="font-size:18px"></i></button>
       <button onclick="toggleFocusMode('inventorySection','Inventory')" class="section-toggle focus-max-btn" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true" style="font-size:18px"></i></button>
     </div>
     <div class="section-body" id="inventorySectionBody">
@@ -4851,6 +4852,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/theoretical-usage.js?v=pag1"></script>
 <script src="src/no-match-cloud.js"></script>
 <script src="src/typeface.js?v=tf1"></script>
+<script src="src/auto-category.js?v=cat1"></script>
 <script src="src/inventory-backup.js?v=bk1"></script>
 <script src="src/weekly-cycle.js?v=cyc2"></script>
 
