@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/tables.css">
   <link rel="stylesheet" href="styles/buttons.css">
-  <link rel="stylesheet" href="styles/app.css?v=iv1">
+  <link rel="stylesheet" href="styles/app.css?v=sp1">
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/order-history.css">
 
@@ -116,7 +116,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260820-181427</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260820-181927</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -352,6 +352,10 @@
       <button onclick="toggleFocusMode('historySection','Order History')" class="section-toggle focus-max-btn" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true" style="font-size:18px"></i></button>
     </div>
     <div class="section-body" id="historySectionBody">
+      <!-- Gasto por categoria. Vive en Order History y no en Costs porque
+           sale de las ordenes colocadas, que es de lo que trata esta
+           seccion. Costs son las facturas capturadas a mano: otra fuente. -->
+      <div id="spendByCat" class="sp-wrap"></div>
       <div class="oh-toolbar">
         <button class="bs-btn bs-btn-default" id="ohExportBtn" title="Export order history to JSON">
           <i class="ti ti-upload" aria-hidden="true"></i> Export orders
@@ -2242,6 +2246,7 @@ function clearCompareSelection(){
   compareSelection = [];
   renderCompareToolbar();
   window.renderOrderHistory && window.renderOrderHistory();
+  window.BarStockSpend && window.BarStockSpend.render();
 }
 function toggleCompareSelection(id){
   if(compareSelection.includes(id)){
@@ -2255,6 +2260,7 @@ function toggleCompareSelection(id){
   }
   renderCompareToolbar();
   window.renderOrderHistory && window.renderOrderHistory();
+  window.BarStockSpend && window.BarStockSpend.render();
 }
 function renderCompareToolbar(){
   const toolbar = document.getElementById('compareToolbar');
@@ -2482,6 +2488,7 @@ function saveHistoryDateEdit(){
   saveState();
   closeHistoryDateEdit();
   window.renderOrderHistory && window.renderOrderHistory();
+  window.BarStockSpend && window.BarStockSpend.render();
   renderCompareToolbar();
   setStatus('Order date updated.');
 }
@@ -2490,6 +2497,7 @@ function setHistoryVendorFilter(vendor){
   historyVendorTab = String(vendor || 'ALL').toUpperCase();
   renderHistoryVendorTabs();
   window.renderOrderHistory && window.renderOrderHistory();
+  window.BarStockSpend && window.BarStockSpend.render();
 }
 function renderHistoryVendorTabs(){
   const wrap = safeEl('historyVendorTabs');
@@ -2624,6 +2632,7 @@ function render(){
   const editedCount = vendRows.filter(r => supportsManualFinalOrder(r.vendor) && r.orderOverride !== '' && r.orderOverride !== null && r.orderOverride !== undefined).length;
   document.getElementById('vendorSummary').textContent = `Current list: ${vendRows.length} code${vendRows.length===1?'':'s'} | ${fmt(totalBottles)} bottle${Number(totalBottles)===1?'':'s'} | ${editedCount} edited`;
   window.renderOrderHistory && window.renderOrderHistory();
+  window.BarStockSpend && window.BarStockSpend.render();
   if(typeof renderVendorPanel === 'function') renderVendorPanel();
   padVendorRows();
   // El resumen del anaquel se refresca con los datos, pero no pisa el
@@ -4861,6 +4870,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/typeface.js?v=tf1"></script>
 <script src="src/auto-category.js?v=cat1"></script>
 <script src="src/inventory-value.js?v=iv1"></script>
+<script src="src/spend-by-category.js?v=sp1"></script>
 <script src="src/inventory-backup.js?v=bk1"></script>
 <script src="src/weekly-cycle.js?v=cyc2"></script>
 
@@ -4916,6 +4926,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
       if (typeof render === 'function') render();
       if (typeof renderOrderHistory === 'function') window.renderOrderHistory && window.renderOrderHistory();
+  window.BarStockSpend && window.BarStockSpend.render();
       if (typeof renderCompareToolbar === 'function') renderCompareToolbar();
     } catch (e) {
       console.warn('ordersUpdated listener failed', e);

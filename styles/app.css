@@ -3572,3 +3572,39 @@ body.light .iv-sub{border-bottom-color:rgba(15,23,42,.08);}
 .iv-bar{height:4px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;}
 body.light .iv-bar{background:rgba(15,23,42,.07);}
 .iv-bar span{display:block;height:100%;border-radius:999px;}
+
+/* ── Gasto por categoria (Order History) ────────────────────────── */
+.sp-wrap{margin-bottom:18px;}
+.sp-label{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--sub);}
+.sp-total{font-size:30px;font-weight:800;line-height:1.05;color:var(--text);margin-top:2px;}
+.sp-total-trend{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;margin-top:4px;}
+.sp-total-trend i{font-size:14px;}
+/* Gastar mas no es malo por si mismo, gastar menos tampoco es bueno por
+   si mismo. Por eso la tendencia va en gris y no en rojo o verde: informa,
+   no juzga. El rojo y el verde de esta app significan otra cosa. */
+.sp-total-trend.up,.sp-total-trend.down{color:var(--sub);}
+.sp-legend{display:flex;gap:14px;margin:14px 0 10px;font-size:10.5px;color:var(--sub);}
+.sp-legend span{display:inline-flex;align-items:center;gap:5px;}
+.sp-key{width:14px;height:5px;border-radius:999px;display:inline-block;}
+.sp-key.now{background:#38bdf8;} .sp-key.prev{background:rgba(255,255,255,.22);}
+body.light .sp-key.prev{background:rgba(15,23,42,.20);}
+.sp-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px 20px;}
+.sp-row{min-width:0;}
+.sp-top{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
+.sp-dot{width:7px;height:7px;min-width:7px;border-radius:50%;flex-shrink:0;}
+.sp-name{flex:1;min-width:0;font-size:12px;color:var(--text);
+         overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sp-amt{font-size:12px;font-weight:800;color:var(--text);flex-shrink:0;}
+/* Dos barras apiladas: la de arriba esta semana, la de abajo la anterior.
+   Comparar longitudes es mas rapido que comparar dos numeros. */
+.sp-bars{display:flex;flex-direction:column;gap:2px;}
+.sp-bar{display:block;height:5px;border-radius:999px;min-width:2px;}
+.sp-bar.prev{background:rgba(255,255,255,.18);}
+body.light .sp-bar.prev{background:rgba(15,23,42,.16);}
+.sp-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:5px;}
+.sp-trend{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--sub);}
+.sp-trend i{font-size:12px;}
+.sp-trend.new{color:#38bdf8;}
+.sp-prev{font-size:10px;color:var(--sub);opacity:.75;}
+.sp-empty{display:flex;align-items:center;gap:8px;padding:18px 0;font-size:13px;color:var(--sub);}
+.sp-empty i{font-size:18px;}
