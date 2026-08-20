@@ -1585,6 +1585,10 @@
     }
 
     .brand-logo-type{
+      /* El logo NO hereda la tipografia de la app. Antes si lo hacia, y en
+         cuanto exista el selector de tipografia el logo cambiaria con ella.
+         Manrope es parte de la marca, no del tema. */
+      font-family:"Manrope",-apple-system,BlinkMacSystemFont,sans-serif;
       font-size:46px;
       font-weight:800;
       letter-spacing:-0.03em;
@@ -1605,6 +1609,7 @@
       align-self:flex-end;
     }
     .brand-logo-pro{
+      font-family:"Manrope",-apple-system,BlinkMacSystemFont,sans-serif;
       font-size:17px;
       font-weight:700;
       color:#64748b;
