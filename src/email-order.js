@@ -256,6 +256,22 @@
         return Math.max(18, lines.length * 14 + 6);
       });
       const boxH = 26 + rowHeights.reduce((a, b) => a + b, 0);
+
+      // El bloque se dibujaba donde quedara la tabla, sin preguntar si
+      // cabia. La tabla si revisa el espacio antes de cada fila, pero
+      // reserva solo lo del pie — no lo de este bloque, que viene despues.
+      // Con la tabla terminando cerca del fondo, el bloque invadia el pie
+      // y "Special instructions" salia por debajo de el, casi fuera de la
+      // hoja. Paso el 17 de agosto con una orden de 20 articulos.
+      //
+      // FOOTER_ZONE es la franja intocable: la linea del pie va en H-36 y
+      // su texto en H-22, mas un respiro.
+      const FOOTER_ZONE = 52;
+      if (y + boxH + FOOTER_ZONE > H) {
+        pdf.addPage();
+        y = margin + 16;
+      }
+
       roundRect(margin, y, contentW, boxH, 6, [248, 250, 252], [226, 232, 240]);
       pdf.setFont(f, 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(148, 163, 184);
       txt('DELIVERY & TERMS', margin + 12, y + 16);
