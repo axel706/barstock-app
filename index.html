@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/tables.css">
   <link rel="stylesheet" href="styles/buttons.css">
-  <link rel="stylesheet" href="styles/app.css?v=cat1">
+  <link rel="stylesheet" href="styles/app.css?v=iv1">
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/order-history.css">
 
@@ -116,7 +116,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260820-174521</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260820-181427</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -258,7 +258,7 @@
             <tbody id="inventoryBody"></tbody>
           </table>
         </div>
-        <div class="inv-item-panel" id="invItemPanel" style="display:none">
+        <div class="inv-item-panel" id="invItemPanel">
           <div id="invPanelBody" style="display:flex;flex-direction:column;height:100%"></div>
         </div>
       </div>
@@ -2626,6 +2626,11 @@ function render(){
   window.renderOrderHistory && window.renderOrderHistory();
   if(typeof renderVendorPanel === 'function') renderVendorPanel();
   padVendorRows();
+  // El resumen del anaquel se refresca con los datos, pero no pisa el
+  // detalle de un articulo si hay uno abierto.
+  if (window.BarStockInventoryValue && _invSelectedIdx === null) {
+    window.BarStockInventoryValue.render();
+  }
 
   document.getElementById('noMatchBody').innerHTML = state.noMatches.map((r,i)=>{
     const suggestion = bestMatch(r.rawItem);
@@ -3420,10 +3425,12 @@ async function openInvPanel(idx) {
   if (!panel || !body) return;
 
   // Toggle off if same item clicked
-  if (_invSelectedIdx === idx && panel.style.display !== 'none') {
-    panel.style.display = 'none';
+  // Al deseleccionar se vuelve al resumen del anaquel, no se esconde el
+  // panel. Antes desaparecia y la tabla saltaba de ancho a cada click.
+  if (_invSelectedIdx === idx) {
     _invSelectedIdx = null;
     document.querySelectorAll('#inventoryBody tr').forEach(tr => tr.classList.remove('inv-row-selected'));
+    if (window.BarStockInventoryValue) window.BarStockInventoryValue.render();
     return;
   }
 
@@ -4853,6 +4860,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/no-match-cloud.js"></script>
 <script src="src/typeface.js?v=tf1"></script>
 <script src="src/auto-category.js?v=cat1"></script>
+<script src="src/inventory-value.js?v=iv1"></script>
 <script src="src/inventory-backup.js?v=bk1"></script>
 <script src="src/weekly-cycle.js?v=cyc2"></script>
 

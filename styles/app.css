@@ -3551,3 +3551,24 @@ body.light .ac-row{border-bottom-color:rgba(15,23,42,.06);}
 .ac-btn{padding:9px 18px !important;border-radius:9px !important;font-size:13px !important;
         font-weight:700;cursor:pointer;}
 .ac-btn.go{background:#22c55e !important;border-color:#22c55e !important;color:#04240f !important;}
+
+/* ── Dinero en el anaquel (panel de Inventory) ──────────────────── */
+.iv-head{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;
+         color:var(--sub);margin-bottom:8px;}
+.iv-total{font-size:26px;font-weight:800;line-height:1.05;color:var(--text);}
+.iv-sub{font-size:10.5px;color:var(--sub);line-height:1.45;margin-top:3px;
+        padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.08);}
+body.light .iv-sub{border-bottom-color:rgba(15,23,42,.08);}
+/* Unico elemento que crece; sin min-height:0 empuja el panel */
+.iv-list{flex:1;min-height:0;overflow-y:auto;margin-top:10px;padding-right:2px;}
+.iv-list::-webkit-scrollbar{width:4px;}
+.iv-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:999px;}
+.iv-row{margin-bottom:9px;}
+.iv-row-top{display:flex;align-items:center;gap:6px;margin-bottom:3px;}
+.iv-dot{width:7px;height:7px;min-width:7px;border-radius:50%;flex-shrink:0;}
+.iv-name{flex:1;min-width:0;font-size:11px;color:var(--text);
+         overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.iv-val{font-size:11px;font-weight:700;color:var(--text);flex-shrink:0;}
+.iv-bar{height:4px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;}
+body.light .iv-bar{background:rgba(15,23,42,.07);}
+.iv-bar span{display:block;height:100%;border-radius:999px;}
