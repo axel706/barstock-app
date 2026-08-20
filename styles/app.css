@@ -3574,37 +3574,56 @@ body.light .iv-bar{background:rgba(15,23,42,.07);}
 .iv-bar span{display:block;height:100%;border-radius:999px;}
 
 /* ── Gasto por categoria (Order History) ────────────────────────── */
-.sp-wrap{margin-bottom:18px;}
+.sp-wrap{margin-bottom:20px;}
 .sp-label{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--sub);}
 .sp-total{font-size:30px;font-weight:800;line-height:1.05;color:var(--text);margin-top:2px;}
 .sp-total-trend{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;margin-top:4px;}
 .sp-total-trend i{font-size:14px;}
 /* Gastar mas no es malo por si mismo, gastar menos tampoco es bueno por
-   si mismo. Por eso la tendencia va en gris y no en rojo o verde: informa,
-   no juzga. El rojo y el verde de esta app significan otra cosa. */
+   si mismo. La tendencia informa, no juzga. Y en esta app el rojo y el
+   verde ya significan otra cosa. */
 .sp-total-trend.up,.sp-total-trend.down{color:var(--sub);}
+
 .sp-legend{display:flex;gap:14px;margin:14px 0 10px;font-size:10.5px;color:var(--sub);}
 .sp-legend span{display:inline-flex;align-items:center;gap:5px;}
 .sp-key{width:14px;height:5px;border-radius:999px;display:inline-block;}
 .sp-key.now{background:#38bdf8;} .sp-key.prev{background:rgba(255,255,255,.22);}
 body.light .sp-key.prev{background:rgba(15,23,42,.20);}
-.sp-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px 20px;}
-.sp-row{min-width:0;}
-.sp-top{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
-.sp-dot{width:7px;height:7px;min-width:7px;border-radius:50%;flex-shrink:0;}
-.sp-name{flex:1;min-width:0;font-size:12px;color:var(--text);
+
+/* Cada categoria es una TARJETA. Sin borde, cinco columnas de cifras y
+   barras se leen como una sola mancha: no se ve donde acaba una y
+   empieza la siguiente. El contorno hace el trabajo que el espacio en
+   blanco no alcanza a hacer con este nivel de densidad. */
+.sp-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;}
+.sp-row{
+  min-width:0;
+  padding:12px 14px;
+  border-radius:12px;
+  background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.09);
+}
+body.light .sp-row{background:rgba(15,23,42,.03);border-color:rgba(15,23,42,.10);}
+
+.sp-top{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.sp-dot{width:8px;height:8px;min-width:8px;border-radius:50%;flex-shrink:0;}
+.sp-name{flex:1;min-width:0;font-size:12px;font-weight:600;color:var(--text);
          overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.sp-amt{font-size:12px;font-weight:800;color:var(--text);flex-shrink:0;}
-/* Dos barras apiladas: la de arriba esta semana, la de abajo la anterior.
-   Comparar longitudes es mas rapido que comparar dos numeros. */
-.sp-bars{display:flex;flex-direction:column;gap:2px;}
-.sp-bar{display:block;height:5px;border-radius:999px;min-width:2px;}
+.sp-amt{font-size:15px;font-weight:800;color:var(--text);flex-shrink:0;}
+
+/* Dos barras apiladas: arriba esta semana, abajo la anterior. Comparar
+   longitudes es mas rapido que comparar dos numeros. */
+.sp-bars{display:flex;flex-direction:column;gap:3px;}
+.sp-bar{display:block;height:6px;border-radius:999px;min-width:3px;}
 .sp-bar.prev{background:rgba(255,255,255,.18);}
 body.light .sp-bar.prev{background:rgba(15,23,42,.16);}
-.sp-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:5px;}
-.sp-trend{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--sub);}
+
+.sp-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;
+         margin-top:9px;padding-top:8px;border-top:1px solid rgba(255,255,255,.07);}
+body.light .sp-foot{border-top-color:rgba(15,23,42,.07);}
+.sp-trend{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--sub);}
 .sp-trend i{font-size:12px;}
 .sp-trend.new{color:#38bdf8;}
-.sp-prev{font-size:10px;color:var(--sub);opacity:.75;}
+.sp-prev{font-size:10.5px;color:var(--sub);opacity:.7;}
+
 .sp-empty{display:flex;align-items:center;gap:8px;padding:18px 0;font-size:13px;color:var(--sub);}
 .sp-empty i{font-size:18px;}
