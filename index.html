@@ -116,7 +116,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260820-213515</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260820-214233</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5883,6 +5883,15 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
     <!-- MENU -->
     <div id="settingsMenu"></div>
+
+    <!-- PANEL: General -->
+    <div id="settingsPanel-general" class="settings-panel hidden">
+      <button class="settings-back" onclick="backToSettingsMenu()">‹ Back</button>
+      <div style="margin:14px 0 20px">
+        <label style="display:block;margin-bottom:6px;font-weight:600">Reply-to email <span class="muted small">(optional)</span></label>
+        <input id="settingsReplyToEmail" type="email" placeholder="manager@example.com" style="width:100%;margin-bottom:6px">
+        <div class="small muted">When a vendor replies to an order email, the reply will go to this address. If empty, replies go to the user who sent the order.</div>
+      </div>
       <div style="margin:14px 0 20px">
         <label style="display:block;margin-bottom:6px;font-weight:600">Cost report recipients <span class="muted small">(optional, separate multiple with commas)</span></label>
         <input id="settingsReportRecipients" type="text" placeholder="owner@bar.com, accountant@bar.com" style="width:100%;margin-bottom:6px">
