@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/tables.css">
   <link rel="stylesheet" href="styles/buttons.css">
-  <link rel="stylesheet" href="styles/app.css?v=sp2">
+  <link rel="stylesheet" href="styles/app.css?v=sh1">
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/order-history.css">
 
@@ -116,7 +116,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260820-182404</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260820-213515</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -4871,6 +4871,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/auto-category.js?v=cat1"></script>
 <script src="src/inventory-value.js?v=iv1"></script>
 <script src="src/spend-by-category.js?v=sp1"></script>
+<script src="src/settings-home.js?v=sh1"></script>
 <script src="src/inventory-backup.js?v=bk1"></script>
 <script src="src/weekly-cycle.js?v=cyc2"></script>
 
@@ -5610,13 +5611,14 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     loadSavedBackground();
     window.showSettingsPanel = function(panel) {
       const menu = document.getElementById('settingsMenu');
-      const panelIds = ['general', 'vendorCodes', 'orderDefaults', 'senderProfile', 'appearance', 'categories'];
+      const panelIds = ['general', 'vendorCodes', 'orderDefaults', 'senderProfile', 'appearance', 'categories', 'copyPrices'];
       panelIds.forEach(p => {
         const el = document.getElementById('settingsPanel-' + p);
         if (el) el.classList.add('hidden');
       });
       if (panel === null) {
         if (menu) menu.classList.remove('hidden');
+        if (window.BarStockSettingsHome) window.BarStockSettingsHome.render();
         return;
       }
       if (menu) menu.classList.add('hidden');
@@ -5880,52 +5882,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     <div class="small muted" style="margin-bottom:16px" id="settingsSubtitle">Configuration for this location</div>
 
     <!-- MENU -->
-    <div id="settingsMenu">
-      <button class="settings-menu-item" onclick="showSettingsPanel('general')">
-        <span class="settings-menu-label">General</span>
-        <span class="settings-menu-desc">Reply-to email for vendor orders</span>
-        <span class="settings-menu-arrow">›</span>
-      </button>
-      <button class="settings-menu-item" onclick="showSettingsPanel('vendorCodes')">
-        <span class="settings-menu-label">Vendor Codes</span>
-        <span class="settings-menu-desc">Map product codes to vendors when loading a master</span>
-        <span class="settings-menu-arrow">›</span>
-      </button>
-      <button class="settings-menu-item" onclick="showSettingsPanel('orderDefaults')">
-        <span class="settings-menu-label">Order Defaults</span>
-        <span class="settings-menu-desc">Delivery info and vendor details per vendor</span>
-        <span class="settings-menu-arrow">›</span>
-      </button>
-      <button class="settings-menu-item" onclick="showSettingsPanel('senderProfile')">
-        <span class="settings-menu-label">Sender Profile</span>
-        <span class="settings-menu-desc">Your name, email and phone shown on purchase orders</span>
-        <span class="settings-menu-arrow">›</span>
-      </button>
-      <button class="settings-menu-item" onclick="showSettingsPanel('appearance')">
-        <span class="settings-menu-label">Appearance</span>
-        <span class="settings-menu-desc">Background image for this location</span>
-        <span class="settings-menu-arrow">›</span>
-      </button>
-      <button class="settings-menu-item" onclick="showSettingsPanel('categories')">
-        <span class="settings-menu-label">Item Categories</span>
-        <span class="settings-menu-desc">Assign spirit categories for usage reports</span>
-        <span class="settings-menu-arrow">›</span>
-      </button>
-      <button class="settings-menu-item" onclick="showSettingsPanel('copyPrices')">
-        <span class="settings-menu-label">Copy Prices</span>
-        <span class="settings-menu-desc">Copy item prices from another location to this one</span>
-        <span class="settings-menu-arrow">›</span>
-      </button>
-    </div>
-
-    <!-- PANEL: General -->
-    <div id="settingsPanel-general" class="settings-panel hidden">
-      <button class="settings-back" onclick="backToSettingsMenu()">‹ Back</button>
-      <div style="margin:14px 0 20px">
-        <label style="display:block;margin-bottom:6px;font-weight:600">Reply-to email <span class="muted small">(optional)</span></label>
-        <input id="settingsReplyToEmail" type="email" placeholder="manager@example.com" style="width:100%;margin-bottom:6px">
-        <div class="small muted">When a vendor replies to an order email, the reply will go to this address. If empty, replies go to the user who sent the order.</div>
-      </div>
+    <div id="settingsMenu"></div>
       <div style="margin:14px 0 20px">
         <label style="display:block;margin-bottom:6px;font-weight:600">Cost report recipients <span class="muted small">(optional, separate multiple with commas)</span></label>
         <input id="settingsReportRecipients" type="text" placeholder="owner@bar.com, accountant@bar.com" style="width:100%;margin-bottom:6px">

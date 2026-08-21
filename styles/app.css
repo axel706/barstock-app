@@ -3627,3 +3627,34 @@ body.light .sp-foot{border-top-color:rgba(15,23,42,.07);}
 
 .sp-empty{display:flex;align-items:center;gap:8px;padding:18px 0;font-size:13px;color:var(--sub);}
 .sp-empty i{font-size:18px;}
+
+/* ── Portada de Ajustes: mosaico por grupos ─────────────────────── */
+.sh-group-title{
+  font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;
+  color:var(--sub);margin:0 0 8px;
+}
+.sh-group-title:not(:first-child){margin-top:18px;}
+.sh-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+.sh-tile{
+  display:flex !important;flex-direction:column;align-items:center;justify-content:flex-start;
+  gap:5px;text-align:center;cursor:pointer;
+  padding:14px 9px !important;border-radius:12px !important;
+  /* El color lo pone cada grupo. No es decoracion: al entrar buscando
+     algo, el color lleva a la zona antes de que se lea el texto. */
+  background:color-mix(in srgb, var(--sh-color) 9%, transparent) !important;
+  border:1px solid color-mix(in srgb, var(--sh-color) 30%, transparent) !important;
+  transition:transform .12s ease, border-color .12s ease;
+}
+.sh-tile:hover{
+  transform:translateY(-2px);
+  border-color:color-mix(in srgb, var(--sh-color) 60%, transparent) !important;
+}
+.sh-tile:active{transform:translateY(0);}
+.sh-tile > i{font-size:22px;color:var(--sh-color);}
+.sh-name{font-size:12px;font-weight:700;color:var(--text);line-height:1.2;}
+/* El valor actual puede ser largo: se parte en dos lineas y ahi para */
+.sh-val{
+  font-size:10px;color:var(--sub);line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+@media (max-width:520px){ .sh-grid{grid-template-columns:repeat(2,1fr);} }

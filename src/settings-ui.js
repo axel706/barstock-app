@@ -10,6 +10,11 @@
     if (menu) menu.classList.remove('hidden');
     document.querySelectorAll('.settings-panel').forEach(p => p.classList.add('hidden'));
 
+    // La portada se redibuja en cada apertura: sus subtitulos llevan
+    // datos que cambian - categorias asignadas, destinatarios, tipografia.
+    // Dibujarla una sola vez la dejaria mintiendo a la segunda visita.
+    if (window.BarStockSettingsHome) window.BarStockSettingsHome.render();
+
     modal.classList.remove('hidden');
 
     // Pre-cargar el reply-to en background (para que su panel ya lo tenga)
