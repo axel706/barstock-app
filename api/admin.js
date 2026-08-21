@@ -279,6 +279,45 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
+    // ── Configuración global ───────────────────────────────────────────
+    //
+    // Va aquí y no en un endpoint nuevo por una razón práctica: Vercel
+    // Hobby permite 12 funciones y estamos en 11. Un archivo más y el
+    // despliegue vuelve a fallar, como paso el 20 de agosto.
+    //
+    // La escritura queda cubierta por la verificación de ADMIN_EMAIL de
+    // arriba. La LECTURA no pasa por aquí: el navegador lee la tabla
+    // directamente con la llave publica, porque la pantalla de entrada
+    // necesita el fondo antes de que exista una sesion.
+    if (action === 'setConfig') {
+      if (!isAdmin) return res.status(403).json({ ok: false, error: 'Only the admin can change this' });
+      const { key, value } = req.body || {};
+      if (!key) return res.status(400).json({ ok: false, error: 'Missing key' });
+
+      const ALLOWED = ['login_bg'];
+      if (!ALLOWED.includes(key)) {
+        return res.status(400).json({ ok: false, error: 'That key is not configurable' });
+      }
+      // La tabla es de lectura publica. Un limite de tamano evita que se
+      // convierta en almacen de imagenes por accidente.
+      if (value && String(value).length > 900000) {
+        return res.status(400).json({ ok: false, error: 'That image is too large' });
+      }
+
+      if (value === null || value === '' || value === undefined) {
+        const { error } = await supabase.from('app_config').delete().eq('key', key);
+        if (error) throw error;
+        return res.status(200).json({ ok: true, cleared: true });
+      }
+
+      const { error } = await supabase
+        .from('app_config')
+        .upsert({ key, value: String(value), updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      if (error) throw error;
+
+      return res.status(200).json({ ok: true });
+    }
+
     return res.status(400).json({ ok: false, error: "Unknown action" });
   } catch (err) {
     console.error('admin endpoint error:', err);

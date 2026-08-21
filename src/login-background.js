@@ -3,55 +3,94 @@
 
   // ── Fondo de la pantalla de entrada ──────────────────────────────────
   //
-  // Se guarda en localStorage y no en la nube, y no es una limitación
-  // sino la única opción: en el login todavía no hay sesión, así que la
-  // app no puede preguntarle nada a Supabase. Lo que se vea ahí tiene
-  // que estar ya en el navegador.
+  // Es GLOBAL: uno solo para todas las locaciones y todos los
+  // dispositivos. Eso descarta localStorage como origen — ahí cada
+  // navegador tendría el suyo.
   //
-  // Consecuencia a tener presente: es por dispositivo. En un navegador
-  // nuevo sale el de fábrica hasta que lo elijas otra vez.
+  // Pero tiene una exigencia rara: se pinta antes de iniciar sesión, así
+  // que quien lo lee no está autenticado. Por eso vive en app_config,
+  // una tabla con lectura pública y escritura reservada al admin.
   //
-  // Las imágenes subidas se guardan reescaladas y en JPEG. Sin eso, una
-  // foto de teléfono de 6 MB en base64 revienta el límite de
-  // localStorage — y cuando revienta, se lleva por delante el resto de
-  // lo guardado, no solo la imagen.
+  // localStorage sigue en juego, pero como CACHÉ: se pinta al instante
+  // con lo último que se vio y luego se refresca desde la nube. Sin eso,
+  // cada entrada empezaría con el fondo de fábrica durante el medio
+  // segundo que tarda la consulta.
 
-  const KEY = 'bs_login_bg';
+  const CACHE = 'bs_login_bg_cache';
+  const KEY = 'login_bg';
   const MAX_W = 1920;
   const QUALITY = 0.82;
 
   const PRESETS = [
-    { id: 'crown-lounge', label: 'Crown Lounge', src: 'assets/backgrounds/crown-lounge.jpg' },
-    { id: 'crown-dining', label: 'Crown Dining', src: 'assets/backgrounds/crown-dining.jpg' },
+    { id: 'crown-lounge', label: 'Crown Lounge',    src: 'assets/backgrounds/crown-lounge.jpg' },
+    { id: 'crown-dining', label: 'Crown Dining',    src: 'assets/backgrounds/crown-dining.jpg' },
     { id: 'wills-bills',  label: "Will's & Bill's", src: 'assets/backgrounds/wills-bills.jpg' },
-    { id: 'jockey-bar',   label: 'The Jockey',   src: 'assets/backgrounds/jockey-bar.jpg' },
-    { id: 'midnight',     label: 'Medianoche',   src: 'assets/backgrounds/midnight.svg' }
+    { id: 'jockey-bar',   label: 'The Jockey',      src: 'assets/backgrounds/jockey-bar.jpg' },
+    { id: 'midnight',     label: 'Medianoche',      src: 'assets/backgrounds/midnight.svg' }
   ];
 
-  function get() { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } }
+  let _current = '';
 
-  function apply(src) {
-    const v = src !== undefined ? src : get();
+  function cfg() {
+    const c = window.BARSTOCK_CONFIG || {};
+    return { url: c.SUPABASE_URL, key: c.SUPABASE_KEY };
+  }
+
+  function paintBg(src) {
     const root = document.documentElement;
-    if (v) root.style.setProperty('--login-bg', `url("${v.replace(/"/g, '\\"')}")`);
+    if (src) root.style.setProperty('--login-bg', `url("${String(src).replace(/"/g, '\\"')}")`);
     else root.style.removeProperty('--login-bg');
   }
 
-  function save(src) {
+  // 1. Pintar de inmediato con la caché
+  try {
+    _current = localStorage.getItem(CACHE) || '';
+    if (_current) paintBg(_current);
+  } catch (e) {}
+
+  // 2. Traer el valor real. Sin sesión, con la llave pública: la tabla
+  //    tiene política de lectura abierta justamente para esto.
+  async function refresh() {
+    const { url, key } = cfg();
+    if (!url || !key) return _current;
     try {
-      if (src) localStorage.setItem(KEY, src);
-      else localStorage.removeItem(KEY);
+      const res = await fetch(
+        `${url}/rest/v1/app_config?key=eq.${KEY}&select=value`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      );
+      const rows = await res.json();
+      const v = Array.isArray(rows) && rows[0] ? (rows[0].value || '') : '';
+      if (v !== _current) {
+        _current = v;
+        paintBg(v);
+        try { v ? localStorage.setItem(CACHE, v) : localStorage.removeItem(CACHE); } catch (e) {}
+      }
+      return v;
     } catch (e) {
-      alert('Could not save the image — it may be too large for this browser.');
-      return false;
+      console.warn('[login bg] no se pudo leer, se queda la cache', e);
+      return _current;
     }
-    apply(src || '');
+  }
+  refresh();
+
+  async function save(src) {
+    const client = await window.BarStockAuth.getAuthClient();
+    const { data } = await client.auth.getSession();
+    const res = await fetch('/api/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json',
+                 'Authorization': 'Bearer ' + (data?.session?.access_token || '') },
+      body: JSON.stringify({ action: 'setConfig', key: KEY, value: src || '' })
+    });
+    const out = await res.json();
+    if (!out.ok) { alert(out.error || 'Could not save the background.'); return false; }
+    _current = src || '';
+    paintBg(_current);
+    try { _current ? localStorage.setItem(CACHE, _current) : localStorage.removeItem(CACHE); } catch (e) {}
     render();
     return true;
   }
 
-  // Reescala antes de guardar. Una foto de teléfono son varios megas y
-  // en base64 crece otro tercio; guardarla tal cual llena el almacén.
   function shrink(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -78,10 +117,28 @@
       ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
   }
 
+  // El ajuste solo aparece para el admin y estando en The Crown Tavern.
+  // Lo primero es lo que de verdad protege: el valor es global y lo ven
+  // todos, asi que no puede cambiarlo cualquiera. Lo segundo es para que
+  // viva en un solo sitio y no se busque en cuatro.
+  function canEdit() {
+    const c = window.BARSTOCK_CONFIG || {};
+    const isCrown = (c.LOCATION_NAME || '') === 'The Crown Tavern';
+    const email = window.__bsUserEmail || '';
+    return isCrown && email && email === c.ADMIN_EMAIL;
+  }
+
   function render() {
     const host = document.getElementById('loginBgPicker');
     if (!host) return;
-    const cur = get();
+
+    if (!canEdit()) {
+      host.innerHTML = `<div class="lb-note">The sign-in background is shared by every location.
+        It is managed from The Crown Tavern by the account admin.</div>`;
+      return;
+    }
+
+    const cur = _current;
     const isCustom = cur && !PRESETS.some(p => p.src === cur);
 
     host.innerHTML = `
@@ -105,7 +162,7 @@
                value="${isCustom && /^https?:/.test(cur) ? esc(cur) : ''}">
         <button type="button" class="ui-control" id="lbUrlApply">Use link</button>
       </div>
-      <div class="lb-note">Saved on this device only — the sign-in screen loads before there is any session to read from.</div>
+      <div class="lb-note">Applies to every location and every device.</div>
       ${cur ? '<button type="button" class="lb-reset" id="lbReset">Back to default</button>' : ''}`;
 
     host.querySelectorAll('[data-src]').forEach(b => b.onclick = () => save(b.dataset.src));
@@ -115,13 +172,12 @@
     file.onchange = async e => {
       const f = e.target.files[0];
       if (!f) return;
-      try { save(await shrink(f)); }
+      try { await save(await shrink(f)); }
       catch (err) { alert(err.message || 'Could not use that image.'); }
       e.target.value = '';
     };
 
-    const urlBtn = document.getElementById('lbUrlApply');
-    urlBtn.onclick = () => {
+    document.getElementById('lbUrlApply').onclick = () => {
       const u = document.getElementById('lbUrl').value.trim();
       if (!u) return;
       if (!/^https?:\/\//i.test(u)) { alert('The link must start with http or https.'); return; }
@@ -132,9 +188,5 @@
     if (reset) reset.onclick = () => save('');
   }
 
-  // Se aplica de inmediato, antes de que se dibuje el overlay. Si se
-  // esperara al DOM, se vería un parpadeo del fondo de fábrica.
-  apply();
-
-  window.BarStockLoginBg = { apply, render, get };
+  window.BarStockLoginBg = { render, refresh, get: () => _current };
 })();

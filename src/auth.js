@@ -70,6 +70,10 @@
         return false;
       }
 
+      // El correo se publica para que otros modulos sepan quien entro sin
+      // volver a preguntarle a Supabase. Lo usa el selector del fondo de
+      // entrada, que solo debe verlo el admin.
+      window.__bsUserEmail = data.user.email || '';
       const isAdmin = data.user.email === window.BARSTOCK_CONFIG?.ADMIN_EMAIL;
 
       // La pestana de la barra y el acceso del modo foco si se ocultan con
