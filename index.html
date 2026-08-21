@@ -19,13 +19,14 @@
 <script src="src/settings-ui.js"></script>
 <script src="src/logger.js"></script>
 <script src="src/order-validator.js"></script>
+<script src="src/login-background.js?v=lb1"></script>
 
   <link rel="stylesheet" href="styles/theme.css">
   <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/tables.css">
   <link rel="stylesheet" href="styles/buttons.css">
-  <link rel="stylesheet" href="styles/app.css?v=sh2">
+  <link rel="stylesheet" href="styles/app.css?v=lb1">
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/order-history.css">
 
@@ -116,7 +117,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260820-215418</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260820-222029</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5624,7 +5625,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       if (menu) menu.classList.add('hidden');
       const target = document.getElementById('settingsPanel-' + panel);
       if (target) target.classList.remove('hidden');
-      if (panel === 'appearance') renderBgGrid();
+      if (panel === 'appearance') { renderBgGrid(); if (window.BarStockLoginBg) window.BarStockLoginBg.render(); }
       if (panel === 'categories') setTimeout(renderCategorySettings, 50);
       if (panel === 'copyPrices') setTimeout(initCopyPricesPanel, 50);
 
@@ -6016,6 +6017,12 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       <div style="margin-top:16px;">
         <button id="bgRemoveBtn" class="btn-sm" style="color:var(--bad);background:transparent;border:1px solid var(--bad);border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;">Remove background</button>
       </div>
+      <div style="margin-top:26px;padding-top:20px;border-top:1px solid rgba(255,255,255,.08)">
+        <h4 style="margin:0 0 4px">Sign-in screen</h4>
+        <div class="small muted" style="margin-bottom:14px">The background behind the login form.</div>
+        <div id="loginBgPicker"></div>
+      </div>
+
       <div style="margin-top:16px">
         <div style="font-size:13px;font-weight:600;margin-bottom:6px">Custom image URL</div>
         <div style="font-size:12px;color:var(--sub);margin-bottom:8px">Paste any image URL (e.g. from Unsplash)</div>

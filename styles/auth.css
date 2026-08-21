@@ -11,7 +11,11 @@ body.auth-locked{
   justify-content:center;
   padding:40px 28px;
   overflow-y:auto;
-  background:url('https://images.unsplash.com/photo-1542647636-7d50df307e6a?q=80&w=1615&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+  /* La imagen viaja en una variable para que el selector de Ajustes la
+     cambie sin tocar CSS. El valor por defecto es un archivo local: antes
+     era un enlace directo a Unsplash, o sea que la pantalla de entrada
+     dependia de que un servidor ajeno respondiera. */
+  background-image:var(--login-bg, url('assets/backgrounds/crown-lounge.jpg'));
   background-size:cover;
   background-position:center;
   background-attachment:fixed;
