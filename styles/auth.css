@@ -15,10 +15,19 @@ body.auth-locked{
      cambie sin tocar CSS. El valor por defecto es un archivo local: antes
      era un enlace directo a Unsplash, o sea que la pantalla de entrada
      dependia de que un servidor ajeno respondiera. */
+  /* El color va PRIMERO y es opaco. Si la imagen tarda, falla o el
+     navegador la ignora, detras del login sigue habiendo una pared
+     solida y no la aplicacion. En un iPad se veia el inventario a
+     traves de la pantalla de entrada. */
+  background-color:#0b1220;
   background-image:var(--login-bg, url('assets/backgrounds/crown-lounge.jpg'));
   background-size:cover;
   background-position:center;
-  background-attachment:fixed;
+  background-repeat:no-repeat;
+  /* Nada de background-attachment:fixed. Safari en iOS lo ignora desde
+     siempre y en el proceso deja de pintar el fondo entero. El overlay
+     ya es position:fixed y cubre la ventana, asi que el efecto visual
+     es el mismo sin el fallo. */
 }
 
 #authOverlay.show{
