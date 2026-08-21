@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/tables.css">
   <link rel="stylesheet" href="styles/buttons.css">
-  <link rel="stylesheet" href="styles/app.css?v=sh1">
+  <link rel="stylesheet" href="styles/app.css?v=sh2">
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/order-history.css">
 
@@ -116,7 +116,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260820-214233</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260820-215045</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -4871,7 +4871,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/auto-category.js?v=cat1"></script>
 <script src="src/inventory-value.js?v=iv1"></script>
 <script src="src/spend-by-category.js?v=sp1"></script>
-<script src="src/settings-home.js?v=sh1"></script>
+<script src="src/settings-home.js?v=sh2"></script>
 <script src="src/inventory-backup.js?v=bk1"></script>
 <script src="src/weekly-cycle.js?v=cyc2"></script>
 
@@ -5939,8 +5939,12 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     <div id="settingsPanel-orderDefaults" class="settings-panel hidden">
       <button class="settings-back" onclick="backToSettingsMenu()">‹ Back</button>
       <div style="margin:14px 0 12px">
-        <div class="small muted" style="margin-bottom:12px">Delivery info and vendor details saved per vendor. Used automatically when generating order PDFs.</div>
-        <div id="orderDefaultsVendorTabs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"></div>
+        <div class="small muted" style="margin-bottom:10px">Each vendor keeps its own delivery details. Pick one to edit.</div>
+        <div id="orderDefaultsVendorTabs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+        <!-- Sin esta linea el formulario no dice de quien es. Las pestanas
+             estaban, pero se leian como filtro y no como "estas editando
+             esto", asi que uno llena campos sin saber a donde van. -->
+        <div id="orderDefaultsWho" class="od-who"></div>
         <div id="orderDefaultsForm" style="display:flex;flex-direction:column;gap:12px">
           <div style="margin-bottom:12px">
             <label style="display:block;margin-bottom:4px;font-size:12px;font-weight:600">Vendor email <span class="muted small">(pre-filled when emailing orders)</span></label>

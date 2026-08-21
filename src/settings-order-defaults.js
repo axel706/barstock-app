@@ -22,6 +22,12 @@
     if (!_activeVendor || !vendors.includes(_activeVendor)) {
       _activeVendor = vendors[0];
     }
+    const who = document.getElementById('orderDefaultsWho');
+    if (who) {
+      who.innerHTML = _activeVendor
+        ? `Editing <strong>${_activeVendor}</strong> — these details print on this vendor's orders only.`
+        : '';
+    }
     container.innerHTML = vendors.map(v => {
       const active = v === _activeVendor;
       return `<button

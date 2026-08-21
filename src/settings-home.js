@@ -22,7 +22,7 @@
       color: '#38bdf8',
       tiles: [
         { id: 'senderProfile', icon: 'ti-user-circle',    name: 'Sender',      fallback: 'Who signs the order' },
-        { id: 'orderDefaults', icon: 'ti-truck-delivery', name: 'Delivery',    fallback: 'Window and address' },
+        { id: 'orderDefaults', icon: 'ti-truck-delivery', name: 'Delivery',    fallback: 'Set per vendor' },
         { id: 'general',       icon: 'ti-mail',           name: 'Recipients',  fallback: 'Reply-to and reports' }
       ]
     },
@@ -63,6 +63,11 @@
     if (rec && rec.value.trim()) {
       const n = rec.value.split(/[,;]/).map(s => s.trim()).filter(Boolean).length;
       v.general = `${n} recipient${n === 1 ? '' : 's'}`;
+    }
+
+    if (typeof getActiveVendors === 'function') {
+      const n = getActiveVendors().filter(v => v !== 'UNKNOWN').length;
+      if (n) v.orderDefaults = `${n} vendors, each its own`;
     }
 
     if (window.BarStockTypeface) {
