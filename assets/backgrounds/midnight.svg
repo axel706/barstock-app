@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" width="1600" height="1000">
+  <!-- Campo oscuro con manchas grandes y difusas. Pensado para que un
+       panel translucido encima se lea como vidrio: hacen falta formas
+       reconocibles detras, y una foto con detalle fino no sirve porque
+       al desenfocarse no queda nada que reconocer. -->
+  <defs>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="150" />
+    </filter>
+    <filter id="softer" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="190" />
+    </filter>
+    <radialGradient id="vig" cx="50%" cy="42%" r="78%">
+      <stop offset="55%" stop-color="#000000" stop-opacity="0" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.55" />
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="#080d18" />
+  <g filter="url(#soft)">
+    <circle cx="240"  cy="180"  r="330" fill="#1d4ed8" opacity="0.85" />
+    <circle cx="1340" cy="300"  r="300" fill="#38bdf8" opacity="0.42" />
+    <circle cx="760"  cy="880"  r="360" fill="#6d28d9" opacity="0.80" />
+  </g>
+  <g filter="url(#softer)">
+    <circle cx="1180" cy="820"  r="280" fill="#0ea5e9" opacity="0.30" />
+    <circle cx="60"   cy="700"  r="260" fill="#4c1d95" opacity="0.55" />
+  </g>
+  <rect width="1600" height="1000" fill="url(#vig)" />
+</svg>

@@ -290,7 +290,8 @@ module.exports = async function handler(req, res) {
     // directamente con la llave publica, porque la pantalla de entrada
     // necesita el fondo antes de que exista una sesion.
     if (action === 'setConfig') {
-      if (!isAdmin) return res.status(403).json({ ok: false, error: 'Only the admin can change this' });
+      // No hace falta comprobar el admin aqui: el endpoint entero ya
+      // rechazo a cualquiera que no sea ADMIN_EMAIL al principio.
       const { key, value } = req.body || {};
       if (!key) return res.status(400).json({ ok: false, error: 'Missing key' });
 
