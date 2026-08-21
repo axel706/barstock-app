@@ -116,7 +116,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260820-215045</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260820-215418</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5627,7 +5627,23 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       if (panel === 'appearance') renderBgGrid();
       if (panel === 'categories') setTimeout(renderCategorySettings, 50);
       if (panel === 'copyPrices') setTimeout(initCopyPricesPanel, 50);
+
+      // Registro de ganchos. Antes cada modulo se apropiaba de
+      // showSettingsPanel: vendor-codes lo definia, order-defaults lo
+      // envolvia, y esta linea de aqui los sobrescribia a los dos al
+      // dispararse el evento load. La carga de Order Defaults nunca
+      // llegaba a correr y su formulario salia vacio, sin pestanas.
+      //
+      // Ahora hay un solo dueno de la funcion y los modulos se apuntan
+      // en la lista.
+      const hook = (window.__settingsHooks || {})[panel];
+      if (typeof hook === 'function') { try { hook(); } catch (e) { console.warn('settings hook', panel, e); } }
     };
+
+    // Volver al menu siempre pasa por aqui, para que la portada se
+    // redibuje. Antes lo dueno era vendor-codes, que no sabe del mosaico
+    // y devolvia a un menu vacio.
+    window.backToSettingsMenu = function() { window.showSettingsPanel(null); };
   });
 
   window.BarStockBackground = { loadSavedBackground, renderBgGrid };

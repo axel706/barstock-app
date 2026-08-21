@@ -106,8 +106,10 @@
   }
 
   // API global
-  window.showSettingsPanel = showPanel;
-  window.backToSettingsMenu = backToMenu;
+  // Ya NO se apropia de showSettingsPanel ni de backToSettingsMenu: el
+  // index es el unico dueno y aqui solo se registra el gancho.
+  window.__settingsHooks = window.__settingsHooks || {};
+  window.__settingsHooks.vendorCodes = loadVendorCodes;
   window.addVendorCodeRow = addRow;
   window.saveVendorCodes = save;
 

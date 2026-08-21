@@ -118,11 +118,11 @@
     }
   }
 
-  const _origShowPanel = window.showSettingsPanel;
-  window.showSettingsPanel = function(name) {
-    if (_origShowPanel) _origShowPanel(name);
-    if (name === 'orderDefaults') load();
-  };
+  // Antes envolvia showSettingsPanel, pero el index lo reasignaba
+  // despues y este envoltorio se perdia: load() no corria nunca y el
+  // formulario salia vacio.
+  window.__settingsHooks = window.__settingsHooks || {};
+  window.__settingsHooks.orderDefaults = load;
 
   window.saveOrderDefaults = save;
 

@@ -38,12 +38,11 @@
     }
   }
 
-  // Enganchar al showSettingsPanel existente
-  const _orig = window.showSettingsPanel;
-  window.showSettingsPanel = function(name) {
-    if (_orig) _orig(name);
-    if (name === 'senderProfile') load();
-  };
+  // Mismo caso que order-defaults: envolver showSettingsPanel no servia
+  // porque el index lo reasigna despues, en el evento load, y el
+  // envoltorio se perdia. Se registra el gancho y ya.
+  window.__settingsHooks = window.__settingsHooks || {};
+  window.__settingsHooks.senderProfile = load;
 
   window.saveSenderProfile = save;
   window.BarStockSenderProfileUi = { active: true, load };
