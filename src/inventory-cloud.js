@@ -277,6 +277,13 @@
 
     await deleteAllInventoryItems();
 
+    // Esta funcion BORRA y reinserta la tabla entera, asi que todo lo que
+    // no aparezca aqui se pierde. category faltaba, y por eso las
+    // categorias asignadas desaparecian en cada import del conteo.
+    //
+    // order_override y par_adjusted_week NO se conservan, y es
+    // intencional: un conteo nuevo abre la semana desde cero. Un articulo
+    // que la semana pasada se dejo en cero puede necesitarse esta.
     const rows = (masterRows || []).map(r => ({
       location_id: locationId,
       code: r.code || '',
@@ -284,7 +291,8 @@
       vendor: r.vendor || '',
       suggested: Number(r.suggested || 0),
       on_hand: Number(r.onHand || 0),
-      value: Number(r.value || 0)
+      value: Number(r.value || 0),
+      category: r.category || null
     }));
 
     const chunkSize = 200;
