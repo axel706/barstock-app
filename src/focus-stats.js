@@ -184,8 +184,25 @@
   let _costsCache = null;
   let _costsAsked = false;
 
+  // Este SÍ es calendario, y a proposito. Los cost reports se guardan por
+  // periodo de lunes a domingo — periodFrom es literalmente un lunes — asi
+  // que buscar "el reporte de la semana pasada" exige la fecha del lunes
+  // anterior, no el ciclo de ordenes.
+  //
+  // Antes reusaba currentCycleStart(), que desaparecio al mover el ciclo a
+  // BarStockCycle. La llamada quedo apuntando a una funcion inexistente,
+  // loadCosts reventaba, y la tarjeta se quedaba en esqueleto para
+  // siempre sin decir por que.
+  function lastCalendarMonday() {
+    const d = new Date();
+    const day = d.getDay();
+    d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
   function lastWeekStart() {
-    const d = currentCycleStart();
+    const d = lastCalendarMonday();
     d.setDate(d.getDate() - 7);
     return d;
   }

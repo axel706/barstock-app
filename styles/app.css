@@ -3698,3 +3698,33 @@ body.light .sp-foot{border-top-color:rgba(15,23,42,.07);}
   color:var(--sub) !important;font-size:12px !important;padding:6px 12px !important;
   border-radius:8px !important;cursor:pointer;
 }
+
+/* ── Centrar la fila de estado con la ventana ───────────────────── */
+/*
+   Antes iba con flex:1 dentro de la linea, asi que se centraba en el
+   ESPACIO SOBRANTE y no en la ventana. El grupo izquierdo — boton de
+   ciclo, Import y Export — es mucho mas ancho que el derecho, asi que
+   ese centro caia claramente a la derecha y no coincidia con el chip de
+   locacion de la linea de arriba.
+
+   Sacandola del flujo y anclandola al 50% queda alineada con el chip.
+   Solo por encima de 640px: mas abajo la fila pasa a ocupar su propio
+   renglon completo y esto estorbaria.
+*/
+@media (min-width: 641px) {
+  .bs-header-line3 { position: relative; }
+  .bs-header-line3 > #bsStatusRow {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    flex: 0 0 auto;
+    width: max-content;
+    max-width: 44%;
+    /* Al estar encima, sin esto se comeria clicks de los menus que
+       quedan debajo. Los chips no son interactivos, asi que no pierde
+       nada. */
+    pointer-events: none;
+  }
+  /* Sin el flex:1 de la fila, lo de la derecha se venia hacia el centro */
+  .bs-header-line3 > #buildBadge { margin-left: auto; }
+}
