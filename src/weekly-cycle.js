@@ -172,7 +172,16 @@
   async function refresh() {
     cancelGrace();
     try {
-      _resetAt = await readResetAt();
+      // Se apoya en BarStockCycle para no hacer dos consultas de lo
+      // mismo y, sobre todo, para que el boton y el resto de la app
+      // nunca discrepen sobre cuando empezo el ciclo.
+      if (window.BarStockCycle) {
+        await window.BarStockCycle.load();
+        const d = window.BarStockCycle.startedAt();
+        _resetAt = d ? d.toISOString() : null;
+      } else {
+        _resetAt = await readResetAt();
+      }
     } catch (e) {
       console.warn('weekly cycle: no se pudo leer weekly_reset_at', e);
       _resetAt = null;

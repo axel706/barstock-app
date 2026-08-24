@@ -17,28 +17,13 @@
     return '$' + Math.round(v).toLocaleString();
   }
 
-  // isCurrentCycle vive dentro del modulo de Order History y no es global,
-  // asi que se replica aqui con la misma regla: la semana corre de lunes a
-  // domingo. Si algun dia se expone, se puede borrar esto y usar aquella.
-  function currentCycleStart() {
-    const now = new Date();
-    const day = now.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    const monday = new Date(now);
-    monday.setDate(now.getDate() + diff);
-    monday.setHours(0, 0, 0, 0);
-    return monday;
-  }
-
+  // Antes habia aqui una copia de la regla de calendario de Order
+  // History, y ni siquiera coincidian: en domingo una saltaba al lunes
+  // siguiente y esta retrocedia al anterior. Las dos se van; el ciclo lo
+  // define weekly_reset_at en un solo sitio.
   function inCurrentCycle(createdAt) {
-    if (!createdAt) return false;
-    const d = new Date(createdAt);
-    if (isNaN(d)) return false;
-    const monday = currentCycleStart();
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    sunday.setHours(23, 59, 59, 999);
-    return d >= monday && d <= sunday;
+    if (window.BarStockCycle) return window.BarStockCycle.contains(createdAt);
+    return true;
   }
 
   function card(label, value, sub, color) {

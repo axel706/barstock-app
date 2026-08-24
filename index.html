@@ -117,7 +117,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260820-224242</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260823-230601</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -4392,6 +4392,9 @@ async function resetOnHand(){
     Object.keys(sessionStorage).filter(k => k.startsWith('vsp_placed_')).forEach(k => sessionStorage.removeItem(k));
 
     saveState();
+    // touchWeeklyReset acaba de mover la frontera del ciclo. Sin releerla,
+    // Order History y las mini-cards siguen contando con la anterior.
+    if (window.BarStockCycle) await window.BarStockCycle.load();
     render();
     setStatus('All ON HAND values reset to 0 locally and in cloud.');
   } catch(err){
@@ -4859,6 +4862,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/vendor-mapping-cloud.js"></script>
 <script src="src/settings-vendor-codes.js"></script>
 <script src="src/skeleton.js"></script>
+<script src="src/cycle.js?v=cy1"></script>
 <script src="src/focus-stats.js"></script>
 <script src="src/toast.js"></script>
 <script src="src/empty-state.js"></script>

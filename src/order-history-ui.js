@@ -4,26 +4,13 @@
 
   let _showPrevious = false;
 
-  function getCurrentWeekStart() {
-    if (window.BarStockParIntelligence?.getEffectiveWeekStart) {
-      return window.BarStockParIntelligence.getEffectiveWeekStart();
-    }
-    const now = new Date();
-    const day = now.getDay();
-    const diff = day === 0 ? 1 : (1 - day);
-    const monday = new Date(now);
-    monday.setDate(now.getDate() + diff);
-    return monday.toISOString().split('T')[0];
-  }
-
+  // El ciclo lo define weekly_reset_at, no el calendario. La version
+  // anterior tomaba la semana de lunes a domingo, asi que un ciclo
+  // abierto en domingo seguia contando las ordenes del lunes anterior:
+  // ambas fechas caen en la misma semana.
   function isCurrentCycle(createdAt) {
-    const weekStart = getCurrentWeekStart();
-    const orderDate = new Date(createdAt);
-    const monday = new Date(weekStart + 'T00:00:00');
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    sunday.setHours(23, 59, 59);
-    return orderDate >= monday && orderDate <= sunday;
+    if (window.BarStockCycle) return window.BarStockCycle.contains(createdAt);
+    return true;
   }
 
   function vendorBadgeHtml(vendor) {
