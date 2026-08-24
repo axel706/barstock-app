@@ -3712,6 +3712,19 @@ body.light .sp-foot{border-top-color:rgba(15,23,42,.07);}
    renglon completo y esto estorbaria.
 */
 @media (min-width: 641px) {
+  /* El chip de locacion iba entre dos espaciadores flexibles, o sea que
+     se centraba en el hueco entre el logo y los controles. Como esos dos
+     no miden lo mismo, su centro estaba corrido — y cualquier cosa que
+     alineara al 50% real nunca iba a coincidir con el.
+     Los dos van al 50% de verdad: asi coinciden por construccion y dejan
+     de depender de cuanto mida el logo. */
+  .bs-header-line1 { position: relative; }
+  .bs-header-line1 > .bs-loc-wrap {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
   .bs-header-line3 { position: relative; }
   .bs-header-line3 > #bsStatusRow {
     position: absolute;
