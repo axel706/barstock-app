@@ -53,7 +53,16 @@
     const master = (window.state && state.master) || [];
     if (!master.length) return put('inventory', '');
 
-    const toOrder = master.filter(r => (parseNum(r.toOrder) || 0) > 0).length;
+    // "To order" es lo que FALTA por pedir, no lo que la app sugirió al
+    // empezar. Antes contaba todo artículo con toOrder > 0 y se quedaba
+    // clavado en la misma cifra toda la semana: colocabas la orden de
+    // LOOP con 35 artículos y el número no se movía.
+    //
+    // Un artículo con override 0 SÍ sigue contando. Ponerlo en cero es
+    // saltárselo esta semana, no resolverlo — y en la tarjeta hay que
+    // seguir viéndolo como pendiente.
+    const placed = (r) => (typeof isRowPlaced === 'function') && isRowPlaced(r);
+    const toOrder = master.filter(r => (parseNum(r.toOrder) || 0) > 0 && !placed(r)).length;
 
     // Critico: menos del 25% de su par en existencia. Es el mismo umbral
     // que ya usa el semaforo de Ordering.
@@ -63,8 +72,15 @@
       return (parseNum(r.onHand) || 0) / sug <= 0.25;
     }).length;
 
+    // El subtitulo pasa de "of 260" a "of 67 flagged". Con la cifra
+    // bajando conforme se colocan ordenes, saber contra que baja es lo
+    // que la vuelve legible: 32 de 67 dice que vas a mitad de camino,
+    // 32 de 260 no dice nada.
+    const flagged = master.filter(r => (parseNum(r.toOrder) || 0) > 0).length;
+    const toOrderSub = flagged === toOrder ? 'of ' + master.length : 'of ' + flagged + ' flagged';
+
     put('inventory',
-      card('To order', toOrder, 'of ' + master.length, toOrder > 0 ? '#38bdf8' : '') +
+      card('To order', toOrder, toOrderSub, toOrder > 0 ? '#38bdf8' : '') +
       card('Critical', critical, 'under 25%', critical > 0 ? '#f87171' : ''));
 
     // La descripcion la llenaba bsUpdateFocusGrid leyendo el contador del
