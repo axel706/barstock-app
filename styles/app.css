@@ -3723,6 +3723,9 @@ body.light .sp-foot{border-top-color:rgba(15,23,42,.07);}
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
+    /* Un elemento absoluto tambien sirve de referencia para el <select>
+       que va encima del chip, asi que no se pierde nada al dejar de ser
+       relative. */
   }
 
   .bs-header-line3 { position: relative; }
