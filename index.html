@@ -103,10 +103,6 @@
         </div>
       </div>
       <div class="bs-status-row" id="bsStatusRow">
-        <div class="bs-status-badge" id="bsStatusCycle">
-          <span class="bs-status-dot" id="bsStatusCycleDot"></span>
-          <span id="bsStatusCycleText">Loading...</span>
-        </div>
         <div class="bs-status-badge" id="bsStatusMaster">
           <span class="bs-status-dot" id="bsStatusDot"></span>
           <span id="masterStatus">No master loaded</span>
@@ -117,7 +113,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260823-231514</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260823-232306</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5387,8 +5383,6 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   // ── Status row updater ─────────────────────────────────────────────────────
   window.bsUpdateStatusRow = function() {
     // Cycle + week
-    const cycleDot  = document.getElementById('bsStatusCycleDot');
-    const cycleText = document.getElementById('bsStatusCycleText');
     const itemsBadge = document.getElementById('bsStatusItems');
     const itemsText  = document.getElementById('bsStatusItemsText');
     const pourIqBadge = document.getElementById('bsStatusPourIq');
@@ -5397,19 +5391,10 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     const rtDot    = document.getElementById('bsStatusRealtimeDot');
     const rtText   = document.getElementById('bsStatusRealtimeText');
 
-    // Cycle status
-    if (cycleDot && cycleText) {
-      const weekStart = window.BarStockParIntelligence?.getEffectiveWeekStart?.() || null;
-      if (weekStart) {
-        const d = new Date(weekStart + 'T12:00:00');
-        const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        cycleDot.className = 'bs-status-dot bs-status-dot-green';
-        cycleText.textContent = 'Cycle open · ' + label;
-      } else {
-        cycleDot.className = 'bs-status-dot bs-status-dot-gray';
-        cycleText.textContent = 'No cycle open';
-      }
-    }
+    // El chip de "Cycle open" se elimino. Leia getEffectiveWeekStart() de
+    // Pour-IQ, que es su propia semana de calculo y no el ciclo del
+    // negocio: por eso decia una fecha y el boton otra. El boton ya lo
+    // dice, y lo dice bien.
 
     // Items
     const itemCount = window.state?.master?.length || 0;
