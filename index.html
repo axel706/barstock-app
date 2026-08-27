@@ -64,7 +64,16 @@
 <div class="wrap">
   <div class="bs-header card">
     <div class="bs-header-line1">
-      <div class="brand-logo-type" id="headerLogo">BarStock<span class="brand-logo-dot" style="display:inline-flex;width:10px;height:10px;min-width:10px;min-height:10px;border-radius:50%;background:#38bdf8;margin:0 2px 6px 1px;align-self:flex-end;"></span><span class="brand-logo-pro">PRO</span></div>
+      <!-- Punto en em, nunca en px: el brandbook define el logo en multiplos
+           de S (el tamano de la palabra), asi que en px solo es correcto al
+           tamano para el que se escribio. En 10px absolutos sobre un logo de
+           15px del telefono el punto salia 3 veces mas grande de lo debido.
+           Diametro 0.22 S, hueco izquierdo 0.022 S, derecho 0.043 S.
+           align-self:baseline y sin margen inferior: en una caja inline-flex
+           vacia la linea base ES el borde inferior del margen, asi que el
+           punto se apoya exactamente en la linea base sin depender de las
+           metricas de la fuente. Antes era flex-end mas 6px a ojo. -->
+      <div class="brand-logo-type" id="headerLogo">BarStock<span class="brand-logo-dot" style="display:inline-flex;width:.22em;height:.22em;min-width:.22em;min-height:.22em;border-radius:50%;background:#38bdf8;margin:0 .043em 0 .022em;align-self:baseline;"></span><span class="brand-logo-pro">PRO</span></div>
       <div class="bs-spacer"></div>
       <div class="bs-loc-wrap">
         <div class="bs-loc-chip" id="bsLocChip">
@@ -116,7 +125,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260827-134000</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260827-134512</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">

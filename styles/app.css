@@ -1597,23 +1597,32 @@
       align-items:baseline;
       color:inherit;
     }
+    /* Todo en em, en multiplos de S como manda el brandbook. Escrito en px
+       el logo solo es correcto al tamano para el que se escribio: a S=46
+       cuadraba, y a los 15px del telefono el punto salia 3 veces grande. */
     .brand-logo-dot{
       display:inline-flex;
-      width:10px;
-      height:10px;
-      min-width:10px;
-      min-height:10px;
+      width:.22em;              /* diametro 0.22 S */
+      height:.22em;
+      min-width:.22em;          /* sin esto, un contenedor estrecho lo aplasta en ovalo */
+      min-height:.22em;
       border-radius:50%;
-      background:#3b82f6;
-      margin:0 2px 6px 1px;
-      align-self:flex-end;
+      /* Era #3b82f6, que el propio brandbook lista como EL error a evitar:
+         "Is the dot exactly #38BDF8, and not #3B82F6?". Solo se salvaba
+         porque el style en linea del index pisaba este valor. */
+      background:#38bdf8;
+      margin:0 .043em 0 .022em; /* derecha 0.043 S, izquierda 0.022 S */
+      align-self:baseline;      /* borde inferior apoyado en la linea base */
     }
     .brand-logo-pro{
       font-family:"Manrope",-apple-system,BlinkMacSystemFont,sans-serif;
-      font-size:17px;
+      font-size:.37em;          /* 0.37 S */
       font-weight:700;
       color:#64748b;
-      margin-left:7px;
+      /* El brandbook pide el borde izquierdo de PRO a 0.43 S del final de la
+         palabra. Descontando punto y huecos quedan 0.145 S, y como este
+         margen se mide contra el propio tamano de PRO: 0.145 / 0.37. */
+      margin-left:.392em;
       letter-spacing:0.08em;
       text-transform:uppercase;
     }
@@ -2242,8 +2251,12 @@ body.light .bs-dd-divider{background:rgba(0,0,0,0.07);}
 @media(max-width:640px){
   input[type='date']{width:100% !important;max-width:100% !important;box-sizing:border-box !important;min-width:0 !important;}
   .bs-header-line1{padding:10px 14px;gap:6px;}
-  #headerLogo{font-size:15px !important;}
-  .brand-logo-pro{font-size:9px !important;}
+  /* 20px es el minimo que fija el brandbook para pantalla: "below this the
+     dot is under 4.4 px and reads as an artefact". Estaba en 15.
+     El font-size:9px que habia aqui para PRO se elimina: PRO es 0.37 S y
+     ahora escala solo. Sobre un logo de 15px aquellos 9px eran 0.60 S,
+     casi el doble de lo que marca la espec — por eso PRO se veia enorme. */
+  #headerLogo{font-size:20px !important;}
   .bs-loc-chip{font-size:11px;padding:4px 8px;gap:5px;}
   .bs-header-controls{gap:4px;}
   .bs-icon-btn{width:28px;height:28px;}
