@@ -154,24 +154,72 @@
      dice. Suggested se deduce de las otras dos. */
   .col-sugg     { display: none; }
 
-  /* El campo de Final Order trae width:110px en linea, y en linea gana
-     al CSS. Con el boton Auto al lado no cabe en lo que queda de fila.
-     Este es el segundo y ultimo !important del archivo, y por el mismo
-     motivo que el primero: el original no deja otra via. */
-  .rowactions input { width: 62px !important; }
-  .rowactions       { gap: 4px; }
-  .rowactions button{ padding: 4px 8px; font-size: 11px; }
-
   /* Los estados vacios abarcan colspan 7 y 8. El navegador lo recorta
      solo al haber menos columnas, pero dejarlo explicito centra bien
      el mensaje en vez de dejarlo corrido a la izquierda. */
   #inventoryBody td[colspan],
   #vendorBody    td[colspan] { text-align: center; }
 
-  /* Sin los anchos fijos del escritorio, ITEM se queda con el sobrante
-     y los numeros con lo justo. */
-  .col-item   { width: auto; }
-  .col-onhand,
-  .col-toorder{ width: 64px; }
+
+  /* ── 5 · Anchos, con table-layout:fixed de por medio ──────────────
+     #vendorExportArea table lleva table-layout:fixed. Bajo ese
+     algoritmo el CONTENIDO NO INFLUYE en el ancho: mandan los anchos
+     declarados, y las columnas que no declaran ninguno se reparten el
+     sobrante EN PARTES IGUALES.
+
+     Ese fue el error del intento anterior. Declare onhand y toorder y
+     deje ITEM, la insignia y FINAL ORDER sin declarar, asi que ITEM se
+     llevo un tercio de lo que quedaba — unos 23px — y solo cabia la
+     primera letra. Con este algoritmo hay que declarar TODAS o
+     ninguna.
+
+     En porcentajes a proposito: la tabla es width:100%, asi que el
+     reparto sale igual en un iPhone SE que en un Pro Max, sin tener
+     que adivinar el ancho util. ITEM es la unica sin declarar, y por
+     eso se queda con todo el resto: es el dato que identifica la
+     fila y merece el sobrante, no una porcion igual. */
+  #vendorExportArea .badgecell,
+  #vendorExportArea .badgehead { width: 30px; }
+  #vendorExportArea .col-onhand  { width: 13%; }
+  #vendorExportArea .col-toorder { width: 15%; }
+  #vendorExportArea .col-final   { width: 22%; }
+
+  /* El relleno de 10px por lado son 20px por columna que salen del
+     texto. A 5px se recuperan 50px de ancho util en cinco columnas,
+     que es un tercio de lo que acaba midiendo ITEM. */
+  #vendorExportArea th,
+  #vendorExportArea td { padding: 8px 5px; }
+
+  /* El nombre completo importa mas que la altura de la fila: que
+     envuelva en dos lineas en vez de cortarse con puntos suspensivos.
+     Lleva el prefijo del id porque la regla original que pone nowrap
+     tambien lo lleva (app.css:75) y sin el no habria forma de ganarle. */
+  #vendorExportArea td.col-item {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.25;
+  }
+
+  /* Input y boton Auto en vertical. En horizontal la columna no baja
+     de 80 + 52 + gap, y esos 140px salian del nombre del articulo.
+     Apilados, la columna mide lo que mida el input. */
+  #vendorExportArea .rowactions {
+    flex-direction: column;
+    align-items: stretch;
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+  /* min-width le gana a width por mucho !important que lleve el width.
+     Habia que atacar el min-width, no el ancho. */
+  #vendorExportArea .rowactions input {
+    width: 100%;
+    min-width: 0;
+  }
+  #vendorExportArea .rowactions button {
+    min-width: 0;
+    padding: 3px 4px;
+    font-size: 10px;
+  }
 
 }
