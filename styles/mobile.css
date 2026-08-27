@@ -222,4 +222,59 @@
     font-size: 10px;
   }
 
+
+  /* ── 6 · Pantalla de entrada ──────────────────────────────────────
+     auth.css tampoco tenia ni una media query. El #authCard es un
+     panel partido en dos en horizontal, y el lado de la marca son
+     220px FIJOS con flex-shrink:0. Las cuentas en 390px:
+
+       390 - 56 (relleno del overlay)      = 334 de tarjeta
+       334 - 220 (marca)                   = 114 de formulario
+       114 -  72 (relleno del cuerpo)      =  42 de campo util
+
+     42px. Por eso no se podia escribir el correo.
+
+     En vertical la marca deja de competir por el ancho y pasa a
+     ocupar solo su altura. */
+  #authOverlay { padding: 24px 14px; }
+  #authCard    { width: 100%; flex-direction: column; }
+
+  #authCardBrand {
+    flex: 0 0 auto;
+    padding: 22px 16px;
+  }
+
+  /* Los dos paneles se unian por el centro quitando el borde que se
+     tocaba: la marca sin borde derecho y el cuerpo sin izquierdo. Al
+     girar a vertical los lados que se tocan son otros, asi que hay que
+     devolver los verticales y quitar los horizontales.
+
+     Se toca STYLE y WIDTH pero nunca COLOR: el color del borde lo
+     ponen dos reglas distintas segun el tema (auth.css lo define para
+     oscuro y body.light lo redefine). Sin nombrarlo, cada tema
+     conserva el suyo y esto sigue funcionando en claro y en oscuro. */
+  #authCardBrand {
+    border-right-style: solid;
+    border-right-width: 1px;
+    border-bottom-style: none;
+  }
+  #authCardBody {
+    border-left-style: solid;
+    border-left-width: 1px;
+    border-top-style: none;
+    padding: 24px 20px;
+  }
+
+  /* Dos columnas en 300px no son dos columnas. */
+  .auth-grid-2 { grid-template-columns: 1fr; }
+
+  /* El paso 1 de este archivo NO llegaba aqui: la regla generica es
+     `input` (0,0,1) y `.auth-field input` es (0,2,1), asi que ganaba
+     los 14px y Safari seguia acercando la pantalla justo al escribir
+     el correo. Con la misma especificidad y cargando despues, gana
+     esta. */
+  .auth-field input,
+  .auth-field select,
+  .auth-field textarea { font-size: 16px; }
+
 }
