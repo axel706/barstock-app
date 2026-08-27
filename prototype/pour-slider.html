@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BarStock · prototipo de conteo por nivel</title>
+
+<!--
+  ════════════════════════════════════════════════════════════════════
+  PROTOTIPO. No forma parte de la aplicacion.
+
+  Vive suelto en /prototype/ y no lo carga ni lo referencia nadie. No
+  toca index.html, ni la base de datos, ni ningun modulo de src/. Se
+  puede borrar de un tiron sin consecuencias, que es justamente el
+  punto: sirve para decidir si el gesto convence ANTES de construir la
+  infraestructura que lo sostendria.
+
+  Lo que se responde aqui es una sola pregunta: ¿deslizar el nivel
+  sobre la botella da un numero mejor que contar por decimas a ojo?
+
+  ── La idea central ────────────────────────────────────────────────
+
+  El deslizador no mide liquido, mide ALTURA. Convertir altura en
+  volumen depende de la forma de la botella, y por eso el dibujo no es
+  decoracion:
+
+    volumen(h) = ∫₀ʰ A(y) dy        A = area de la seccion a esa altura
+
+  En una botella recta el area es constante y la integral es lineal:
+  medio alto es medio contenido. En un Burdeos el hombro se cierra
+  arriba, asi que los ultimos centimetros valen mucho menos volumen que
+  los primeros. Contar por decimas de ALTURA en una botella con hombro
+  es exactamente el error que esto viene a corregir.
+
+  ── La decision de diseño que importa ──────────────────────────────
+
+  El dibujo y el calculo salen del MISMO perfil. No hay una silueta
+  para enseñar y unos numeros para calcular: la linea que se ve es la
+  que se integra. Si algun dia una forma esta mal, se ve a simple vista
+  en vez de esconderse en el resultado.
+
+  ── Por que la seccion puede ser circular aunque la botella no lo sea ─
+
+  Lo que se muestra al final es una FRACCION: volumen(h) / volumen(lleno).
+  Si la seccion real es un rectangulo en vez de un circulo, su area es
+  k·r² con k constante, y esa k aparece arriba y abajo de la division.
+  Se cancela. Solo importaria si la forma de la seccion cambiara con la
+  altura, cosa que en botellas no pasa. Por eso una petaca cuadrada se
+  calcula bien con este mismo modelo.
+  ════════════════════════════════════════════════════════════════════
+-->
+
+<style>
+  :root{
+    --bg:#0b1220;
+    --card:rgba(17,24,39,.72);
+    --line:rgba(255,255,255,.10);
+    --text:#f1f5f9;
+    --sub:#94a3b8;
+    --accent:#38bdf8;
+    --warn:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:18px 14px calc(28px + env(safe-area-inset-bottom));
+    max-width:520px;
+    margin:0 auto;
+  }
+
+  .lab{
+    font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--warn);font-weight:800;margin-bottom:14px;
+    display:flex;align-items:center;gap:7px;
+  }
+  .lab::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--warn)}
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:16px;
+    margin-bottom:14px;
+  }
+
+  label.fld{display:block;font-size:11px;color:var(--sub);font-weight:700;
+    letter-spacing:.04em;text-transform:uppercase;margin:0 0 6px 2px}
+  select,input{
+    width:100%;height:44px;padding:0 12px;border-radius:10px;
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);
+    color:var(--text);font-size:16px;font-weight:600;font-family:inherit;
+  }
+  .row{display:flex;gap:10px}
+  .row > div{flex:1;min-width:0}
+
+  /* ── Zona de la botella ── */
+  .stage{
+    position:relative;
+    height:340px;
+    margin:6px 0 2px;
+    touch-action:none;          /* sin esto iOS desplaza la pagina al arrastrar */
+    user-select:none;
+    -webkit-user-select:none;
+  }
+  .stage svg{display:block;width:100%;height:100%}
+
+  .grab{
+    position:absolute;left:0;right:0;height:44px;margin-top:-22px;
+    display:flex;align-items:center;pointer-events:none;
+  }
+  .grab .bar{
+    flex:1;height:3px;background:var(--text);border-radius:2px;opacity:.9;
+  }
+  .grab .knob{
+    position:absolute;left:50%;transform:translateX(-50%);
+    width:56px;height:26px;border-radius:13px;
+    background:#0f172a;border:1px solid rgba(255,255,255,.28);
+    display:flex;align-items:center;justify-content:center;gap:3px;
+    box-shadow:0 4px 14px rgba(0,0,0,.45);
+  }
+  .knob i{display:block;width:14px;height:2px;background:var(--sub);border-radius:1px}
+
+  /* ── Lectura ── */
+  .read{display:flex;align-items:baseline;gap:10px;margin-top:4px}
+  .big{font-size:42px;font-weight:800;line-height:1;letter-spacing:-.02em}
+  .unit{font-size:13px;color:var(--sub);font-weight:700}
+  .ml{font-size:13px;color:var(--sub);margin-top:4px}
+
+  .cmp{
+    margin-top:14px;padding-top:12px;border-top:1px solid var(--line);
+    font-size:12px;color:var(--sub);line-height:1.5;
+  }
+  .cmp b{color:var(--text)}
+  .cmp .delta{color:var(--warn);font-weight:800}
+
+  .seg{display:flex;background:rgba(255,255,255,.06);border-radius:10px;padding:3px;margin-bottom:14px}
+  .seg button{
+    flex:1;height:36px;border:none;border-radius:8px;background:transparent;
+    color:var(--sub);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;
+  }
+  .seg button.on{background:rgba(56,189,248,.18);color:var(--accent)}
+
+  .pad{display:none}
+  .pad.on{display:block}
+  .stagewrap.off{display:none}
+
+  .note{font-size:11px;color:var(--sub);line-height:1.55;margin-top:10px}
+</style>
+</head>
+<body>
+
+<div class="lab">Prototipo · no es la app</div>
+
+<div class="card">
+  <div class="row" style="margin-bottom:12px">
+    <div>
+      <label class="fld" for="arch">Forma</label>
+      <select id="arch"></select>
+    </div>
+    <div style="flex:0 0 116px">
+      <label class="fld" for="size">Tamaño</label>
+      <select id="size">
+        <option value="750">750 ml</option>
+        <option value="1000">1 L</option>
+        <option value="1750">1.75 L</option>
+        <option value="375">375 ml</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="seg">
+    <button id="mSlider" class="on" type="button">Deslizador</button>
+    <button id="mPad" type="button">Teclado</button>
+  </div>
+
+  <div class="stagewrap" id="stagewrap">
+    <div class="stage" id="stage">
+      <svg id="svg" viewBox="0 0 200 340" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="grab" id="grab">
+        <div class="bar"></div>
+        <div class="knob"><i></i><i></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pad" id="padwrap">
+    <label class="fld" for="padval">Botellas (decimales)</label>
+    <input id="padval" type="number" inputmode="decimal" step="0.05" min="0" value="0.50">
+  </div>
+
+  <div class="read">
+    <span class="big" id="frac">0.00</span>
+    <span class="unit">botellas</span>
+  </div>
+  <div class="ml" id="ml">— ml</div>
+
+  <div class="cmp" id="cmp"></div>
+</div>
+
+<div class="card">
+  <div class="note" id="explain"></div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ── Perfiles ───────────────────────────────────────────────────────
+  // Cada arquetipo es una lista de puntos (y, r) normalizados: y va de 0
+  // en la base a 1 en la boca, r es el radio relativo (1 = la parte mas
+  // ancha). De aqui sale TANTO el dibujo COMO la integral.
+  //
+  // yFull es la altura a la que se queda el liquido en una botella
+  // llena. No es 1: por encima queda el cuello y el aire. Es el punto
+  // que define el 100%, y por eso vive junto al perfil y no aparte.
+  const ARCH = {
+    bordeaux: {
+      name: 'Vino · Burdeos',
+      yFull: 0.74,
+      p: [[0,.98],[.05,1],[.55,1],[.62,.98],[.68,.55],[.72,.30],[.75,.27],[.97,.27],[1,.30]]
+    },
+    burgundy: {
+      name: 'Vino · Borgoña',
+      yFull: 0.80,
+      p: [[0,.98],[.04,1],[.42,1],[.55,.92],[.68,.62],[.78,.34],[.84,.28],[.97,.28],[1,.31]]
+    },
+    champagne: {
+      name: 'Champán / espumoso',
+      yFull: 0.82,
+      p: [[0,.95],[.05,1],[.45,1],[.58,.94],[.70,.66],[.80,.36],[.86,.30],[.97,.30],[1,.34]]
+    },
+    whiskey: {
+      name: 'Whisky / bourbon',
+      yFull: 0.78,
+      p: [[0,.97],[.04,1],[.60,1],[.66,.96],[.72,.62],[.76,.34],[.80,.30],[.97,.30],[1,.33]]
+    },
+    vodka: {
+      name: 'Vodka · alta y recta',
+      yFull: 0.80,
+      p: [[0,.97],[.04,1],[.58,1],[.64,.95],[.74,.60],[.82,.32],[.86,.28],[.97,.28],[1,.31]]
+    },
+    tequila: {
+      name: 'Tequila · cuerpo ancho',
+      yFull: 0.66,
+      p: [[0,.96],[.05,1],[.42,1],[.48,.94],[.56,.60],[.62,.33],[.66,.29],[.97,.29],[1,.32]]
+    },
+    liqueur: {
+      name: 'Licor · baja y ancha',
+      yFull: 0.76,
+      p: [[0,.95],[.06,1],[.50,1],[.58,.92],[.68,.58],[.74,.33],[.78,.30],[.97,.30],[1,.33]]
+    },
+    cylinder: {
+      name: 'Cilindro recto (control)',
+      yFull: 0.90,
+      p: [[0,1],[1,1]]
+    }
+  };
+
+  // ── Geometria ──────────────────────────────────────────────────────
+
+  // Radio a una altura dada, interpolando entre los puntos del perfil.
+  function radiusAt(prof, y) {
+    const p = prof.p;
+    if (y <= p[0][0]) return p[0][1];
+    if (y >= p[p.length - 1][0]) return p[p.length - 1][1];
+    for (let i = 1; i < p.length; i++) {
+      if (y <= p[i][0]) {
+        const [y0, r0] = p[i - 1], [y1, r1] = p[i];
+        const t = (y1 - y0) === 0 ? 0 : (y - y0) / (y1 - y0);
+        return r0 + (r1 - r0) * t;
+      }
+    }
+    return p[p.length - 1][1];
+  }
+
+  // Volumen acumulado de la base hasta y, por Simpson sobre N tramos.
+  // El area se toma como r² (sin el π): cualquier constante multiplicativa
+  // se cancela al dividir volumen(h)/volumen(lleno), que es lo unico que
+  // se muestra. Esa es la razon de que una petaca cuadrada tambien salga
+  // bien con este modelo.
+  const N = 600;
+  function volumeTo(prof, y) {
+    if (y <= 0) return 0;
+    const h = y / N;
+    let s = 0;
+    for (let i = 0; i < N; i++) {
+      const a = i * h, b = a + h, m = (a + b) / 2;
+      const fa = radiusAt(prof, a) ** 2;
+      const fm = radiusAt(prof, m) ** 2;
+      const fb = radiusAt(prof, b) ** 2;
+      s += (h / 6) * (fa + 4 * fm + fb);   // Simpson
+    }
+    return s;
+  }
+
+  // ── Dibujo ─────────────────────────────────────────────────────────
+  // La silueta se construye recorriendo el perfil por la derecha y
+  // volviendo por la izquierda en espejo. Mismo array que la integral.
+  const VB = { w: 200, h: 340, pad: 14 };
+
+  function buildPath(prof) {
+    const cx = VB.w / 2;
+    const usableH = VB.h - VB.pad * 2;
+    const maxR = VB.w * 0.30;
+    const pts = [];
+    for (let i = 0; i <= 120; i++) {
+      const y = i / 120;
+      pts.push([y, radiusAt(prof, y)]);
+    }
+    const X = (r) => cx + r * maxR;
+    const Y = (y) => VB.h - VB.pad - y * usableH;
+
+    let d = `M ${X(pts[0][1])} ${Y(pts[0][0])}`;
+    for (const [y, r] of pts) d += ` L ${X(r)} ${Y(y)}`;
+    for (let i = pts.length - 1; i >= 0; i--) {
+      const [y, r] = pts[i];
+      d += ` L ${cx - r * maxR} ${Y(y)}`;
+    }
+    return d + ' Z';
+  }
+
+  function yToPx(y) {
+    const usableH = VB.h - VB.pad * 2;
+    return VB.h - VB.pad - y * usableH;
+  }
+
+  // ── Estado ─────────────────────────────────────────────────────────
+  let archKey = 'whiskey';
+  let level = 0.40;          // altura normalizada del liquido
+  let mode = 'slider';
+
+  const $ = (id) => document.getElementById(id);
+  const svg = $('svg');
+
+  function prof() { return ARCH[archKey]; }
+
+  function render() {
+    const P = prof();
+    const path = buildPath(P);
+    const yFullPx = yToPx(P.yFull);
+    const yLvlPx = yToPx(Math.min(level, 1));
+
+    svg.innerHTML = `
+      <defs>
+        <clipPath id="body"><path d="${path}"/></clipPath>
+        <linearGradient id="liq" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#38bdf8" stop-opacity=".55"/>
+          <stop offset="100%" stop-color="#0ea5e9" stop-opacity=".85"/>
+        </linearGradient>
+      </defs>
+      <path d="${path}" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.30)" stroke-width="1.5"/>
+      <g clip-path="url(#body)">
+        <rect x="0" y="${yLvlPx}" width="${VB.w}" height="${VB.h - yLvlPx}" fill="url(#liq)"/>
+      </g>
+      <line x1="18" y1="${yFullPx}" x2="${VB.w - 18}" y2="${yFullPx}"
+            stroke="rgba(255,255,255,.35)" stroke-width="1" stroke-dasharray="3 4"/>
+      <text x="${VB.w - 16}" y="${yFullPx - 6}" text-anchor="end"
+            fill="rgba(255,255,255,.45)" font-size="9" font-family="inherit"
+            letter-spacing="1">LLENA</text>
+    `;
+
+    // La barra de agarre se posiciona en pixeles reales del contenedor,
+    // no del viewBox: el svg escala y los dos sistemas no coinciden.
+    const stage = $('stage');
+    const rect = svg.getBoundingClientRect();
+    const scale = rect.height / VB.h;
+    const offset = (stage.clientHeight - rect.height) / 2;
+    $('grab').style.top = (offset + yLvlPx * scale) + 'px';
+
+    readout();
+  }
+
+  function readout() {
+    const P = prof();
+    const full = volumeTo(P, P.yFull);
+    const now = volumeTo(P, Math.min(level, P.yFull));
+    const frac = full > 0 ? now / full : 0;
+
+    // El metodo de toda la vida: décimas de ALTURA, ignorando la forma.
+    const lineal = Math.min(level, P.yFull) / P.yFull;
+
+    const nominal = Number($('size').value);
+    $('frac').textContent = frac.toFixed(2);
+    $('ml').textContent = Math.round(frac * nominal) + ' ml de ' + nominal;
+
+    const diffPts = (lineal - frac) * 100;
+    const diffMl = Math.round((lineal - frac) * nominal);
+    const same = Math.abs(diffPts) < 0.6;
+
+    $('cmp').innerHTML = same
+      ? `Contando por décimas de altura saldría <b>${lineal.toFixed(2)}</b>. Aquí coincide, porque en esta zona la botella es recta.`
+      : `Contando por décimas de altura saldría <b>${lineal.toFixed(2)}</b>, `
+        + `<span class="delta">${diffPts > 0 ? '+' : ''}${diffPts.toFixed(1)} puntos</span> `
+        + `(${diffMl > 0 ? '+' : ''}${diffMl} ml) respecto a lo que hay de verdad.`;
+
+    explain();
+  }
+
+  function explain() {
+    const P = prof();
+    const worst = worstCase(P);
+    $('explain').innerHTML =
+      `<b style="color:var(--text)">${P.name}.</b> El liquido lleno llega al `
+      + `${Math.round(P.yFull * 100)}% de la altura; por encima queda cuello y aire, `
+      + `y por eso ese punto es el 100% y no la boca.<br><br>`
+      + `En esta forma, el error maximo de contar por décimas de altura es de `
+      + `<b style="color:var(--warn)">${worst.pts.toFixed(1)} puntos</b> `
+      + `(${worst.ml} ml sobre 750), y ocurre con la botella al `
+      + `${Math.round(worst.at * 100)}% de su altura util. `
+      + (worst.pts < 1
+          ? `Practicamente recta: aqui el deslizador no aporta precision sobre el metodo de siempre.`
+          : `Ahi es donde el hombro hace que la altura mienta.`);
+  }
+
+  // Recorre la botella buscando donde mas se separan el metodo lineal y
+  // el real. Es el numero que dice si para ESTA forma vale la pena.
+  function worstCase(P) {
+    const full = volumeTo(P, P.yFull);
+    let best = { pts: 0, ml: 0, at: 0 };
+    for (let i = 1; i < 100; i++) {
+      const t = i / 100;
+      const y = t * P.yFull;
+      const real = volumeTo(P, y) / full;
+      const d = Math.abs(t - real) * 100;
+      if (d > best.pts) best = { pts: d, ml: Math.round(Math.abs(t - real) * 750), at: t };
+    }
+    return best;
+  }
+
+  // ── Interaccion ────────────────────────────────────────────────────
+  function setFromPointer(clientY) {
+    const rect = svg.getBoundingClientRect();
+    const usable = (VB.h - VB.pad * 2) * (rect.height / VB.h);
+    const base = rect.bottom - VB.pad * (rect.height / VB.h);
+    let y = (base - clientY) / usable;
+    level = Math.max(0, Math.min(prof().yFull, y));
+    render();
+  }
+
+  const stage = $('stage');
+  let dragging = false;
+  stage.addEventListener('pointerdown', (e) => {
+    dragging = true;
+    stage.setPointerCapture(e.pointerId);
+    setFromPointer(e.clientY);
+  });
+  stage.addEventListener('pointermove', (e) => { if (dragging) setFromPointer(e.clientY); });
+  stage.addEventListener('pointerup',   () => { dragging = false; });
+  stage.addEventListener('pointercancel',() => { dragging = false; });
+
+  // ── Controles ──────────────────────────────────────────────────────
+  const sel = $('arch');
+  Object.entries(ARCH).forEach(([k, v]) => {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = v.name;
+    if (k === archKey) o.selected = true;
+    sel.appendChild(o);
+  });
+  sel.addEventListener('change', () => {
+    archKey = sel.value;
+    level = Math.min(level, ARCH[archKey].yFull);
+    render();
+  });
+  $('size').addEventListener('change', readout);
+
+  $('mSlider').addEventListener('click', () => {
+    mode = 'slider';
+    $('mSlider').classList.add('on'); $('mPad').classList.remove('on');
+    $('stagewrap').classList.remove('off'); $('padwrap').classList.remove('on');
+    render();
+  });
+  $('mPad').addEventListener('click', () => {
+    mode = 'pad';
+    $('mPad').classList.add('on'); $('mSlider').classList.remove('on');
+    $('stagewrap').classList.add('off'); $('padwrap').classList.add('on');
+  });
+
+  // El teclado va al reves: se escribe la fraccion y se despeja la altura
+  // que le corresponde, buscandola sobre la misma integral.
+  $('padval').addEventListener('input', () => {
+    const target = Math.max(0, Math.min(1, Number($('padval').value) || 0));
+    const P = prof();
+    const full = volumeTo(P, P.yFull);
+    let lo = 0, hi = P.yFull;
+    for (let i = 0; i < 40; i++) {
+      const mid = (lo + hi) / 2;
+      if (volumeTo(P, mid) / full < target) lo = mid; else hi = mid;
+    }
+    level = (lo + hi) / 2;
+    $('frac').textContent = target.toFixed(2);
+    $('ml').textContent = Math.round(target * Number($('size').value)) + ' ml de ' + $('size').value;
+  });
+
+  window.addEventListener('resize', render);
+  render();
+
+  // Expuesto solo para poder comprobar la matematica desde la consola.
+  window.__proto = { ARCH, volumeTo, radiusAt, worstCase };
+})();
+</script>
+</body>
+</html>
