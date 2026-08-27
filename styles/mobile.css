@@ -1,0 +1,113 @@
+/* ═══════════════════════════════════════════════════════════════════
+   TELEFONO — todo lo que aplica por debajo de 640px
+   ═══════════════════════════════════════════════════════════════════
+
+   Este archivo no puede afectar al escritorio ni al iPad, y no por
+   cuidado al editarlo: TODO su contenido vive dentro de una sola
+   @media (max-width: 640px), y un navegador que no cumple esa
+   condicion ni siquiera lee lo de dentro. El iPad en vertical mide
+   768px y en horizontal 1024, asi que nunca entra aqui. Esa fue
+   justamente la razon de que la app se sintiera bien en iPad y mal en
+   iPhone: la unica consulta movil del proyecto estaba en 640px, el
+   iPad jamas la activaba y el iPhone siempre.
+
+   Se carga EL ULTIMO de todas las hojas a proposito. Asi gana los
+   empates de especificidad por orden de aparicion y no hace falta
+   !important para sobrescribir a app.css o cost-report.css. La unica
+   excepcion esta marcada abajo, y es porque el original ya traia
+   !important.
+
+   Regla de mantenimiento: aqui NO se edita nada de otros archivos.
+   Solo se agregan reglas. Si algo se ve mal en telefono, la
+   correccion va aqui dentro; nunca se toca la regla original, que es
+   la que sirve al escritorio.
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 640px) {
+
+  /* ── 1 · El zoom de Safari al enfocar un campo ────────────────────
+     iOS acerca la pantalla automaticamente cuando enfocas un campo
+     cuya letra mide menos de 16px, y despues NO vuelve solo: hay que
+     pellizcar para regresar. Contando cuarenta articulos son cuarenta
+     saltos de pantalla.
+
+     16px es el umbral exacto de Safari, no una preferencia de diseno.
+     Un pixel menos y el zoom vuelve.
+
+     La regla generica va primero porque tambien cubre un caso que no
+     se ve en el CSS: un <input> sin font-size declarado NO hereda el
+     del padre, usa el del navegador, que ronda los 13px. Es decir,
+     habia campos disparando el zoom sin que ninguna regla lo
+     confesara. Debajo van los que si tienen tamano propio, uno por
+     uno, porque su especificidad le gana a la generica. */
+  input,
+  select,
+  textarea            { font-size: 16px; }
+
+  #vendorSearchInput  { font-size: 16px; }
+  .scan-toolbar select{ font-size: 16px; }
+  .ac-row select      { font-size: 16px; }
+  .lb-url input       { font-size: 16px; }
+  .cr-card-input input{ font-size: 16px; }
+
+  /* Este es un <select> real de 12px con opacity:0 encima del chip de
+     locacion. Es invisible, asi que subirlo a 16 no cambia nada de lo
+     que se ve — pero si evita el zoom, porque Safari mira el campo
+     que enfocas, no si se ve o no. */
+  .bs-loc-select      { font-size: 16px; }
+
+  /* El unico !important del archivo: el original tambien lo trae
+     (cost-report.css:613) y sin el no habria forma de ganarle. */
+  .cr-cat-input.sm input { font-size: 16px !important; }
+
+
+  /* ── 2 · Los paneles laterales se apilan ──────────────────────────
+     Los tres paneles miden 240-246px fijos con flex-shrink:0, y la
+     tabla de al lado esta limitada a calc(100% - 256px). En una
+     pantalla de 390px eso deja 134px para la tabla: un tercio del
+     ancho para la columna que importa, y dos tercios para el resumen.
+
+     En columna el reparto desaparece: cada bloque toma el ancho
+     completo. Las alturas fijas tambien se sueltan, porque apiladas
+     se suman — 440 + 460 dejarian la pantalla llena de vacio antes de
+     llegar al contenido. */
+
+  /* Ordering */
+  .vsp-layout                     { flex-direction: column; }
+  .vsp-layout .vendor-table-shell { max-width: none; }
+  .vsp-panel {
+    width: auto;
+    padding: 14px;
+    /* El resumen sube por encima de la tabla. Es lo que dice cuanto
+       llevas por proveedor, y decide si sigues o mandas la orden: en
+       vertical, debajo de una tabla larga no se ve nunca. */
+    order: -1;
+  }
+
+  /* Inventory */
+  .inv-layout                    { flex-direction: column; }
+  .inv-layout > .tablewrap       { width: 100%; }
+  .inv-layout .inv-item-panel,
+  .inv-item-panel {
+    width: auto;
+    height: auto;
+    /* En escritorio va pegado al hacer scroll (sticky, top 80px). En
+       columna eso lo dejaria flotando sobre la tabla. */
+    position: static;
+    align-self: auto;
+    /* Con altura fija recortaba lo que sobraba; con altura automatica
+       recortaria contenido real. */
+    overflow: visible;
+    order: -1;
+  }
+
+  /* Cost Report */
+  .cr-layout { grid-template-columns: minmax(0, 1fr); }
+  .cr-main,
+  .cr-side   { height: auto; }
+  /* Con altura automatica el scroll interno sobra: que la pagina
+     entera se desplace. Dos areas de scroll anidadas en un telefono
+     son una trampa — el dedo nunca sabe cual va a mover. */
+  .cr-main-scroll { overflow-y: visible; }
+
+}
