@@ -191,12 +191,45 @@
   #vendorExportArea .badgecell,
   #vendorExportArea .badgehead { display: none; }
 
-  /* Las tres numericas al mismo ancho. ON HAND no necesita mas que TO
-     ORDER: las tres llevan uno o dos digitos. FINAL ORDER pide un
-     poco mas porque dentro va el campo de escritura. */
+  /* Y aqui estaba el fallo del intento anterior. La tabla tiene un
+     <colgroup>, y bajo table-layout:fixed los <col> MANDAN sobre los
+     anchos declarados en las celdas. Los porcentajes que puse en los
+     <td> nunca entraron en juego.
+
+     Peor: al ocultar VENDOR y la insignia con display:none esas
+     columnas dejan de existir, y las que quedan se corren a las
+     posiciones 1..4 heredando anchos que no son suyos:
+
+       ITEM     <- vendor-col  11%
+       ON HAND  <- badge-col    5%
+       TO ORDER <- item-col    34%   <- la gigante de la captura
+       FINAL    <- onhand-col  10%
+
+     Medido en pantalla: 22.7 / 9.1 / 68.3%. Predicho por esta
+     hipotesis: 22.0 / 10.0 / 68.0%. Es esto.
+
+     La solucion no es afinar porcentajes, es dejar UN solo sistema al
+     mando. Se neutraliza el colgroup y se pasa a table-layout:auto,
+     que reparte por contenido: ITEM tiene con diferencia el texto mas
+     largo, asi que se queda con el sobrante sin que nadie se lo
+     asigne. Ademas sigue siendo correcto si algun dia se anade o se
+     quita una columna, cosa que con anchos fijos no pasaba.
+
+     El selector lleva [class] para empatar en especificidad con
+     `#vendorExportArea col.vendor-col` (1,1,1); cargando despues,
+     gana. La segunda linea hace lo mismo con la variante
+     .vendor-hidden, que es (1,2,1). */
+  #vendorExportArea col[class],
+  #vendorExportArea.vendor-hidden col[class] { width: auto; }
+  #vendorExportArea table { table-layout: auto; }
+
+  /* Con reparto por contenido estos anchos son sugerencias, no
+     imposiciones: el navegador los respeta mientras el contenido
+     quepa. Sirven para que las numericas no se estiren mas de lo que
+     necesitan uno o dos digitos, y todo lo demas caiga en ITEM. */
   #vendorExportArea .col-onhand,
-  #vendorExportArea .col-toorder { width: 17%; }
-  #vendorExportArea .col-final   { width: 20%; }
+  #vendorExportArea .col-toorder { width: 52px; }
+  #vendorExportArea .col-final   { width: 78px; }
 
   /* El relleno de 10px por lado son 20px por columna que salen del
      texto. A 5px se recuperan 50px de ancho util en cinco columnas,
