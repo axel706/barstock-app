@@ -178,11 +178,25 @@
      que adivinar el ancho util. ITEM es la unica sin declarar, y por
      eso se queda con todo el resto: es el dato que identifica la
      fila y merece el sobrante, no una porcion igual. */
+     Pero antes que nada: la tabla estaba forzada a 720px de ancho
+     DENTRO de la propia media query de telefono (app.css:1989, y
+     duplicado en fixes.css:674). Con eso no habia porcentaje que
+     valiera — la tabla medía 720px en una pantalla de 390 y el scroll
+     lateral era inevitable. Ese min-width era el scroll. */
+  #vendorExportArea table,
+  .history-items table { min-width: 0; }
+
+  /* La insignia del precio se va. Es una columna entera para un icono
+     que en escritorio sale gratis y aqui cuesta ~55px del nombre. */
   #vendorExportArea .badgecell,
-  #vendorExportArea .badgehead { width: 30px; }
-  #vendorExportArea .col-onhand  { width: 13%; }
-  #vendorExportArea .col-toorder { width: 15%; }
-  #vendorExportArea .col-final   { width: 22%; }
+  #vendorExportArea .badgehead { display: none; }
+
+  /* Las tres numericas al mismo ancho. ON HAND no necesita mas que TO
+     ORDER: las tres llevan uno o dos digitos. FINAL ORDER pide un
+     poco mas porque dentro va el campo de escritura. */
+  #vendorExportArea .col-onhand,
+  #vendorExportArea .col-toorder { width: 17%; }
+  #vendorExportArea .col-final   { width: 20%; }
 
   /* El relleno de 10px por lado son 20px por columna que salen del
      texto. A 5px se recuperan 50px de ancho util en cinco columnas,
