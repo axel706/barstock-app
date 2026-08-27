@@ -1,0 +1,151 @@
+/* ── Panel de escaneo ──────────────────────────────────────────────────
+   Pensado para telefono en vertical y para una mano que ademas esta
+   sujetando botellas: nada por debajo de 44px de alto.
+
+   z-index 99999, justo por DEBAJO del overlay de entrada (999999). Si
+   la sesion caduca mientras alguien cuenta, la pantalla de login tiene
+   que quedar por encima y no debajo de la camara. */
+
+.sc-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: none;
+  flex-direction: column;
+  background: #0b1220;
+  color: #f1f5f9;
+  font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.sc-overlay.on{ display: flex; }
+
+/* Sin esto, arrastrar sobre el visor desplaza la pagina de detras */
+body.sc-locked{ overflow: hidden !important; }
+
+.sc-top{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: calc(10px + env(safe-area-inset-top)) 14px 10px;
+  flex-shrink: 0;
+}
+.sc-x{
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.14);
+  color: #f1f5f9;
+  font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.sc-lab{
+  font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  color: #f59e0b; font-weight: 800;
+}
+.sc-n{
+  margin-left: auto;
+  font-size: 15px; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Visor ── */
+.sc-stage{
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: #000;
+  overflow: hidden;
+}
+.sc-stage video{
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sc-guide{
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+/* El recuadro no recorta nada: la libreria mira el fotograma entero.
+   Esta para que la persona sepa donde apuntar, que en la practica es
+   lo que mas acelera la lectura. */
+.sc-guide > i{
+  display: block;
+  width: 76%; height: 30%;
+  border: 2px solid #38bdf8;
+  border-radius: 12px;
+  box-shadow: 0 0 0 2000px rgba(0,0,0,.34);
+}
+.sc-timer{
+  position: absolute; top: 10px; right: 12px;
+  font-size: 13px; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,.9);
+}
+
+/* ── Panel inferior ── */
+.sc-panel{
+  flex-shrink: 0;
+  padding: 12px 14px 16px;
+  border-top: 1px solid rgba(255,255,255,.10);
+}
+.sc-diag{ font-size: 12px; color: #94a3b8; margin-bottom: 10px; line-height: 1.5; }
+.sc-diag .sc-ok{ color: #22c55e; }
+.sc-diag .sc-bad{ color: #ef4444; font-weight: 700; }
+
+.sc-hit:empty{ display: none; }
+.sc-found, .sc-new{
+  border-radius: 12px;
+  padding: 11px 13px;
+  margin-bottom: 10px;
+}
+.sc-found{ background: rgba(34,197,94,.14); border: 1px solid rgba(34,197,94,.40); }
+.sc-new  { background: rgba(245,158,11,.13); border: 1px solid rgba(245,158,11,.38); }
+.sc-code{
+  font-size: 19px; font-weight: 800; letter-spacing: .04em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.sc-item{ font-size: 13px; font-weight: 700; margin-top: 3px; }
+.sc-meta{ font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+.sc-stats{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.sc-stats > div{
+  background: rgba(255,255,255,.05);
+  border-radius: 10px;
+  padding: 9px 4px;
+  text-align: center;
+}
+.sc-stats b{
+  display: block;
+  font-size: 19px; font-weight: 800; line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.sc-stats span{
+  font-size: 9px; letter-spacing: .07em; text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.sc-ghost{
+  width: 100%; height: 44px;
+  border-radius: 12px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.20);
+  color: #f1f5f9;
+  font-family: inherit; font-size: 14px; font-weight: 700;
+  cursor: pointer;
+}
+.sc-note{ font-size: 11px; color: #94a3b8; text-align: center; margin-top: 9px; }
+
+/* En horizontal la camara se lleva casi todo y el panel se aprieta */
+@media (max-height: 520px) {
+  .sc-stats{ display: none; }
+  .sc-panel{ padding: 8px 12px 10px; }
+}

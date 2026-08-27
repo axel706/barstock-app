@@ -40,6 +40,7 @@
   <link rel="stylesheet" href="styles/pour-iq.css?v=piq1">
   <link rel="stylesheet" href="styles/admin.css?v=adm3">
   <link rel="stylesheet" href="styles/weekly-cycle.css?v=cyc1">
+  <link rel="stylesheet" href="styles/scan-count.css?v=scan1">
   <!-- Siempre al final: solo contiene @media (max-width:640px) y necesita
        ganar los empates de especificidad por orden de carga. -->
   <link rel="stylesheet" href="styles/mobile.css?v=mob1">
@@ -125,7 +126,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260827-140415</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260827-173308</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -249,6 +250,10 @@
         <div class="inventory-tools">
           <button id="addInventoryItemBtn">Add New Item</button>
           <button id="scanInvoiceBtn" class="primary">Scan Price Invoice</button>
+          <!-- Prueba de la camara para el conteo por escaneo. Oculto por
+               defecto y solo se muestra al admin: todavia no es una
+               funcion, es una medicion, y no debe verlo el staff. -->
+          <button id="takeInventoryBtn" type="button" style="display:none"><i class="ti ti-scan" aria-hidden="true" style="font-size:15px;vertical-align:-2px;margin-right:5px"></i>Take inventory</button>
           <input id="searchInput" placeholder="Filter current order" style="margin-left:auto;max-width:240px" />
         </div>
       </div>
@@ -4895,6 +4900,31 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/settings-home.js?v=sh2"></script>
 <script src="src/inventory-backup.js?v=bk1"></script>
 <script src="src/weekly-cycle.js?v=cyc2"></script>
+<script src="src/scan-count.js?v=scan1"></script>
+<script>
+  // Puerta del boton de escaneo. Solo el admin lo ve, porque esto todavia
+  // no es una funcion terminada sino una medicion, y un boton a medias en
+  // manos del staff genera preguntas que no toca contestar aun.
+  //
+  // Se reintenta porque __bsUserEmail lo pone auth.js cuando termina de
+  // validar la sesion, y ese momento no esta garantizado antes que esto.
+  (() => {
+    const btn = document.getElementById('takeInventoryBtn');
+    if (!btn) return;
+    let tries = 0;
+    const check = () => {
+      const email = window.__bsUserEmail || '';
+      const admin = window.BARSTOCK_CONFIG?.ADMIN_EMAIL;
+      if (email && admin && email === admin) {
+        btn.style.display = '';
+        btn.onclick = () => window.BarStockScanCount && window.BarStockScanCount.open();
+        return;
+      }
+      if (++tries < 20) setTimeout(check, 500);
+    };
+    check();
+  })();
+</script>
 
 
 <!-- BARSTOCK EVENT LISTENERS START -->
