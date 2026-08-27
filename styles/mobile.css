@@ -110,4 +110,68 @@
      son una trampa — el dedo nunca sabe cual va a mover. */
   .cr-main-scroll { overflow-y: visible; }
 
+
+  /* ── 3 · Order History ────────────────────────────────────────────
+     No era un problema de tablas: el historial ya son tarjetas. La
+     rejilla estaba escrita a mano en repeat(3,1fr) y el archivo
+     order-history.css no tiene ni una media query, asi que en un
+     telefono metia tres tarjetas en 390px — 117px cada una para un
+     importe a 20px, la insignia del PO y dos botones de 34px. */
+  .oh-card-grid { grid-template-columns: 1fr; }
+
+  /* Los filtros son muchos y ya vienen con flex-wrap, pero apretados.
+     Un poco menos de relleno y caben en dos lineas en vez de cuatro. */
+  .oh-filter-chip { padding: 7px 13px; }
+
+  /* La fila de vista previa mete meta + hora + acciones en una linea.
+     Que la hora y los botones bajen en vez de aplastar el nombre. */
+  .oh-prev-row  { flex-wrap: wrap; }
+  .oh-prev-time { margin-left: 0; }
+
+
+  /* ── 4 · Columnas de las tablas ───────────────────────────────────
+     Se esconden por NOMBRE de clase, nunca por posicion. En Inventory
+     la posicion no es fiable: al filtrar por proveedor la celda de
+     VENDOR no se oculta, se deja de generar, y la fila pasa de ocho
+     celdas a siete. Un :nth-child(4) seria ON HAND con filtro y
+     VENDOR sin el — escondiendo la columna equivocada la mitad del
+     tiempo. Por eso el HTML lleva clases col-* desde ahora.
+
+     Nada de esto pierde informacion: en Inventory el registro
+     completo esta en el panel de detalle, que en telefono quedo
+     encima de la tabla. Se toca la fila y ahi esta todo. */
+
+  /* Inventory: quedan ITEM, ON HAND y TO ORDER */
+  .col-code,
+  .col-vendor,
+  .col-avg,
+  .col-value    { display: none; }
+
+  /* Ordering es mas conservador a proposito: aqui NO hay panel por
+     articulo, solo el resumen por proveedor. On hand es el contexto
+     con el que decides cuanto pedir, asi que se queda. Vendor sobra
+     porque la tabla ya viene agrupada y el encabezado de seccion lo
+     dice. Suggested se deduce de las otras dos. */
+  .col-sugg     { display: none; }
+
+  /* El campo de Final Order trae width:110px en linea, y en linea gana
+     al CSS. Con el boton Auto al lado no cabe en lo que queda de fila.
+     Este es el segundo y ultimo !important del archivo, y por el mismo
+     motivo que el primero: el original no deja otra via. */
+  .rowactions input { width: 62px !important; }
+  .rowactions       { gap: 4px; }
+  .rowactions button{ padding: 4px 8px; font-size: 11px; }
+
+  /* Los estados vacios abarcan colspan 7 y 8. El navegador lo recorta
+     solo al haber menos columnas, pero dejarlo explicito centra bien
+     el mensaje en vez de dejarlo corrido a la izquierda. */
+  #inventoryBody td[colspan],
+  #vendorBody    td[colspan] { text-align: center; }
+
+  /* Sin los anchos fijos del escritorio, ITEM se queda con el sobrante
+     y los numeros con lo justo. */
+  .col-item   { width: auto; }
+  .col-onhand,
+  .col-toorder{ width: 64px; }
+
 }

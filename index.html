@@ -116,7 +116,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260827-131439</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260827-132728</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -254,7 +254,7 @@
       <div class="inv-layout">
         <div class="tablewrap" style="flex:1;min-width:0">
           <table>
-            <thead><tr><th style="width:55px">CODE</th><th>ITEM</th><th style="width:100px">VENDOR</th><th style="width:72px">ON HAND</th><th style="width:68px;cursor:pointer;user-select:none" id="avgWkHeader" onclick="toggleAvgWkColumn()" title="Show/hide AVG/WK">AVG/WK</th><th style="width:78px">SUGGESTED</th><th style="width:72px">TO ORDER</th><th style="width:72px">VALUE</th></tr></thead>
+            <thead><tr><th class="col-code" style="width:55px">CODE</th><th class="col-item">ITEM</th><th class="col-vendor" style="width:100px">VENDOR</th><th class="col-onhand" style="width:72px">ON HAND</th><th class="col-avg" style="width:68px;cursor:pointer;user-select:none" id="avgWkHeader" onclick="toggleAvgWkColumn()" title="Show/hide AVG/WK">AVG/WK</th><th class="col-sugg" style="width:78px">SUGGESTED</th><th class="col-toorder" style="width:72px">TO ORDER</th><th class="col-value" style="width:72px">VALUE</th></tr></thead>
             <tbody id="inventoryBody"></tbody>
           </table>
         </div>
@@ -313,7 +313,7 @@
               <col class="toorder-col-width">
               <col class="final-col">
             </colgroup>
-            <thead><tr><th>VENDOR</th><th class="badgehead"></th><th>ITEM</th><th>ON HAND</th><th>SUGGESTED</th><th class="toorder-head">TO ORDER</th><th>FINAL ORDER</th></tr></thead>
+            <thead><tr><th class="col-vendor">VENDOR</th><th class="badgehead"></th><th class="col-item">ITEM</th><th class="col-onhand">ON HAND</th><th class="col-sugg">SUGGESTED</th><th class="toorder-head col-toorder">TO ORDER</th><th class="col-final">FINAL ORDER</th></tr></thead>
             <tbody id="vendorBody"></tbody>
           </table>
         </div>
@@ -2561,8 +2561,16 @@ function render(){
     const parData = window.parAdjustments ? window.parAdjustments.get(parKey) : null;
     const avgUsed = parData && parData.avgUsed !== null && parData.avgUsed !== undefined ? parData.avgUsed : null;
     const avgCell = _avgWkHidden ? '<i class="ti ti-eye-off" aria-hidden="true" style="font-size:14px;color:#f59e0b;opacity:.7"></i>' : (avgUsed !== null ? `<span style="font-weight:600">${avgUsed}</span>` : '<i class="ti ti-brain" aria-hidden="true" style="font-size:15px;color:var(--sub);opacity:.5"></i>');
-    const vendorCell = invVendorActive ? '' : `<td>${badge(r.vendor)}</td>`;
-    return `<tr data-idx="${idx}" style="cursor:pointer" onclick="openInvPanel(${idx})">${vendorCell ? '<td>' + escapeHtml(r.code) + '</td>' : '<td>' + escapeHtml(r.code) + '</td>'}<td>${escapeHtml(r.item)}${getParChipHtml(r)}</td>${vendorCell}<td>${fmt(r.onHand)}</td><td style="text-align:center">${avgCell}</td><td>${fmt(r.suggested)}</td><td>${fmt(r.toOrder)}</td><td>${fmtMoney(r.value)}</td></tr>`;
+    const vendorCell = invVendorActive ? '' : `<td class="col-vendor">${badge(r.vendor)}</td>`;
+    // Las clases col-* existen para que el telefono pueda esconder
+    // columnas por NOMBRE y no por posicion. La posicion aqui no es
+    // fiable: con un filtro de proveedor activo, vendorCell queda vacio
+    // y la fila pasa de ocho celdas a siete, asi que la cuarta celda es
+    // ON HAND unas veces y VENDOR otras. Un nth-child escondería la
+    // columna equivocada segun el filtro. Por nombre no hay ambiguedad.
+    // Ninguna hoja de escritorio define estas clases: solo las usa
+    // mobile.css dentro de su media query.
+    return `<tr data-idx="${idx}" style="cursor:pointer" onclick="openInvPanel(${idx})"><td class="col-code">${escapeHtml(r.code)}</td><td class="col-item">${escapeHtml(r.item)}${getParChipHtml(r)}</td>${vendorCell}<td class="col-onhand">${fmt(r.onHand)}</td><td class="col-avg" style="text-align:center">${avgCell}</td><td class="col-sugg">${fmt(r.suggested)}</td><td class="col-toorder">${fmt(r.toOrder)}</td><td class="col-value">${fmtMoney(r.value)}</td></tr>`;
   }).join('') || (() => {
     if (!window.BarStockEmpty) return `<tr><td colspan="8" class="muted">No inventory loaded.</td></tr>`;
     // Dos situaciones que antes se veian identicas: no tener inventario
@@ -2610,7 +2618,7 @@ function render(){
       ? `<div class="rowactions ${overrideActive ? 'final-override' : ''}"><input type="number" min="0" step="1" value="${overrideActive ? escapeHtml(String(r.orderOverride)) : ''}" placeholder="Auto ${fmt(r.toOrder)}" style="width:110px" onchange="updateFinalOrder(${masterIndex}, this.value)"><button onclick="resetFinalOrder(${masterIndex})">Auto</button></div>`
       : `<span class="muted">Auto only</span>`;
     const toClass = toOrderClass(r.toOrder, r.suggested, r.onHand);
-    return `<tr data-idx="${masterIndex}" style="cursor:pointer" onclick="openVendorItemPanel(${masterIndex})"><td>${badge(r.vendor)}</td><td class="badgecell">${orderingBadgeCell(r)}</td><td>${escapeHtml(r.item)}${getParChipHtml(r)}</td><td>${fmt(r.onHand)}</td><td>${fmt(r.suggested)}</td><td class="toorder-col" style="text-align:center"><span class="${toClass}" style="padding:3px 10px;border-radius:999px;display:inline-block">${fmt(r.toOrder)}</span></td><td>${finalCell}</td></tr>`;
+    return `<tr data-idx="${masterIndex}" style="cursor:pointer" onclick="openVendorItemPanel(${masterIndex})"><td class="col-vendor">${badge(r.vendor)}</td><td class="badgecell">${orderingBadgeCell(r)}</td><td class="col-item">${escapeHtml(r.item)}${getParChipHtml(r)}</td><td class="col-onhand">${fmt(r.onHand)}</td><td class="col-sugg">${fmt(r.suggested)}</td><td class="toorder-col col-toorder" style="text-align:center"><span class="${toClass}" style="padding:3px 10px;border-radius:999px;display:inline-block">${fmt(r.toOrder)}</span></td><td class="col-final">${finalCell}</td></tr>`;
   }).join('') || (() => {
     const placedKey = 'vsp_placed_' + activeVendorTab;
     const wasPlaced = sessionStorage.getItem(placedKey);
