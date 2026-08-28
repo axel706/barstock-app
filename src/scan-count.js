@@ -1,12 +1,19 @@
 (() => {
   if (window.BarStockScanCount) return;
 
-  // ── Conteo por escaneo · PRUEBA DE LA CAMARA ─────────────────────────
+  // ── Conteo por escaneo · lectura y aprendizaje de codigos ────────────
   //
-  // Esto NO es todavia la funcion de conteo. Es la pieza de riesgo del
-  // diseño, dentro de la app para poder probarla en el entorno real.
-  // Lee codigos y MIDE cuanto tarda cada botella. No toca el inventario:
-  // no escribe nada, ni en la nube ni en local.
+  // Esto NO es todavia la funcion de conteo: no ajusta cantidades ni
+  // toca inventory_items. Lo que si hace es APRENDER, y por eso ya no es
+  // solo una prueba.
+  //
+  // Escribe en UNA tabla: item_barcodes. Cuando aparece un codigo que
+  // nadie ha enseñado, se para y pregunta de que articulo es; la
+  // respuesta queda guardada para siempre y para todas las locaciones.
+  // Cada escaneo durante las pruebas deja valor permanente en vez de
+  // tirarse a la basura.
+  //
+  // El inventario sigue sin tocarse.
   //
   // ── Lo que se aprendio en la primera prueba ─────────────────────────
   //
@@ -66,6 +73,8 @@
   let rotCanvas = null;
   let rotCtx = null;
   let audio = null;
+  let learned = new Map();   // upc -> { item_name, code }
+  let pausedFor = null;      // upc a la espera de que alguien diga que es
 
   const $ = (id) => document.getElementById(id);
   const fmt = (ms) => (ms / 1000).toFixed(1) + ' s';
@@ -108,11 +117,28 @@
           <button class="sc-ghost" id="scTorch" type="button">Linterna</button>
           <button class="sc-ghost" id="scReset" type="button">Reiniciar</button>
         </div>
-        <div class="sc-note">No toca el inventario. Solo lee y mide.</div>
+        <div class="sc-note">No toca el inventario. Solo aprende códigos.</div>
+      </div>
+
+      <div class="sc-assign" id="scAssign">
+        <div class="sc-assign-head">
+          <div>
+            <div class="sc-assign-t">¿Qué artículo es?</div>
+            <div class="sc-code" id="scAssignCode"></div>
+          </div>
+          <button class="sc-x" id="scAssignX" type="button" aria-label="Omitir">
+            <i class="ti ti-x" aria-hidden="true"></i>
+          </button>
+        </div>
+        <input id="scAssignSearch" type="text" placeholder="Buscar por nombre" autocomplete="off">
+        <div class="sc-picks" id="scPicks"></div>
+        <div class="sc-note">Se guarda una vez y vale para todas las locaciones.</div>
       </div>`;
     document.body.appendChild(el);
 
     $('scClose').addEventListener('click', close);
+    $('scAssignX').addEventListener('click', closeAssign);
+    $('scAssignSearch').addEventListener('input', (e) => renderPicks(e.target.value));
     $('scReset').addEventListener('click', () => {
       times = []; lastCode = ''; frames = 0;
       clearTimeout(markTimer);
@@ -128,6 +154,143 @@
 
   function mark() { tStart = performance.now(); }
 
+  // ── Códigos aprendidos ──────────────────────────────────────────────
+  //
+  // inventory_items.code guarda el codigo del PROVEEDOR, que no tiene
+  // nada que ver con el UPC impreso en la botella. Asi que escanear no
+  // encuentra nada, y la unica salida es que el sistema aprenda la
+  // correspondencia preguntando una vez por codigo.
+  //
+  // La tabla va por CUENTA: una botella de Casamigos es la misma en
+  // todos los bares, asi que enseñarla en uno la deja enseñada en todos.
+
+  function cfg() {
+    const c = window.BARSTOCK_CONFIG || {};
+    return { url: c.SUPABASE_URL, key: c.SUPABASE_KEY, account: c.ACCOUNT_ID || 'wjm-hospitality' };
+  }
+
+  async function loadLearned() {
+    const { url, key, account } = cfg();
+    if (!url || !key) return;
+    try {
+      const res = await fetch(
+        `${url}/rest/v1/item_barcodes?account_id=eq.${encodeURIComponent(account)}&select=upc,item_name,code`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      );
+      const rows = await res.json();
+      learned = new Map();
+      if (Array.isArray(rows)) rows.forEach(r => learned.set(String(r.upc), r));
+    } catch (e) {
+      // Sin la lista, todo codigo se vera como nuevo. Molesto, pero no
+      // rompe nada: peor seria no dejar escanear.
+      learned = new Map();
+      console.warn('scan: no se pudieron leer los codigos aprendidos', e);
+    }
+  }
+
+  // Primero lo aprendido; si no, se prueba contra el codigo de proveedor
+  // por si en alguna locacion coincidieran de casualidad.
+  function resolve(upc) {
+    const master = (window.state && state.master) || [];
+    const rec = learned.get(String(upc));
+    if (rec) {
+      const m = master.find(r => r.item === rec.item_name);
+      return { item: rec.item_name, row: m || null };
+    }
+    const byCode = master.find(r => String(r.code || '') === String(upc));
+    return byCode ? { item: byCode.item, row: byCode } : null;
+  }
+
+  // ── Preguntar de qué artículo es ────────────────────────────────────
+  function askAssign(upc) {
+    pausedFor = upc;
+    running = false;              // no tiene sentido decodificar mientras elige
+    clearTimeout(loopId);
+
+    const box = $('scAssign');
+    box.classList.add('on');
+    $('scAssignCode').textContent = upc;
+    $('scAssignSearch').value = '';
+    renderPicks('');
+    setTimeout(() => $('scAssignSearch').focus(), 50);
+  }
+
+  function renderPicks(q) {
+    const master = (window.state && state.master) || [];
+    const needle = String(q || '').trim().toLowerCase();
+    // Sin busqueda se muestran los primeros; con 300 articulos, pintarlos
+    // todos en cada tecla haria que escribir se sintiera pastoso.
+    const list = (needle
+      ? master.filter(r => String(r.item || '').toLowerCase().includes(needle))
+      : master).slice(0, 30);
+
+    $('scPicks').innerHTML = list.length
+      ? list.map(r => `<button type="button" class="sc-pick" data-item="${esc(r.item)}" data-code="${esc(r.code || '')}">
+           <span>${esc(r.item)}</span>
+           <small>${esc(r.vendor || '')}${r.code ? ' · ' + esc(r.code) : ''}</small>
+         </button>`).join('')
+      : '<div class="sc-empty">Ningún artículo coincide</div>';
+
+    $('scPicks').querySelectorAll('.sc-pick').forEach(b => {
+      b.onclick = () => saveAssignment(pausedFor, b.dataset.item, b.dataset.code);
+    });
+  }
+
+  async function saveAssignment(upc, itemName, code) {
+    const { url, key, account } = cfg();
+    const box = $('scAssign');
+    $('scPicks').innerHTML = '<div class="sc-empty">Guardando…</div>';
+
+    try {
+      // upsert sobre (account_id, upc): si alguien reasigna un codigo mal
+      // puesto, se corrige en vez de fallar por el indice unico.
+      const res = await fetch(
+        `${url}/rest/v1/item_barcodes?on_conflict=account_id,upc`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: key,
+            Authorization: `Bearer ${key}`,
+            Prefer: 'resolution=merge-duplicates,return=minimal'
+          },
+          body: JSON.stringify([{
+            account_id: account,
+            upc: String(upc),
+            item_name: itemName,
+            code: code || null,
+            created_by: window.__bsUserEmail || null
+          }])
+        }
+      );
+      if (!res.ok) throw new Error(await res.text());
+
+      learned.set(String(upc), { upc, item_name: itemName, code });
+      $('scHit').innerHTML =
+        `<div class="sc-found">
+           <div class="sc-code">${esc(upc)}</div>
+           <div class="sc-item">${esc(itemName)}</div>
+           <div class="sc-meta">aprendido · vale para todas las locaciones</div>
+         </div>`;
+      closeAssign();
+    } catch (e) {
+      // No se cierra el panel: el codigo sigue en pantalla y se puede
+      // reintentar sin volver a escanear la botella.
+      $('scPicks').innerHTML =
+        `<div class="sc-empty sc-bad">No se pudo guardar. Reintenta.</div>`;
+      setTimeout(() => renderPicks($('scAssignSearch').value), 1800);
+      console.warn('scan: fallo al guardar el codigo', e);
+    }
+  }
+
+  function closeAssign() {
+    $('scAssign').classList.remove('on');
+    pausedFor = null;
+    running = true;
+    mark();
+    tick();
+  }
+
   function onHit(text, format) {
     const now = performance.now();
     if (text === lastCode && (now - lastAt) < REPEAT_MS) { lastAt = now; return; }
@@ -136,21 +299,30 @@
     lastCode = text; lastAt = now;
     times.push(ms);
 
-    // Se espera que casi ningun codigo aparezca: el campo `code` guarda
-    // el codigo del proveedor, no el UPC de la botella. Verlo en pantalla
-    // es la demostracion de por que hace falta la tabla que los asocie.
-    const master = (window.state && state.master) || [];
-    const hit = master.find(r => String(r.code || '') === String(text));
-
-    $('scHit').innerHTML =
-      `<div class="${hit ? 'sc-found' : 'sc-new'}">
-         <div class="sc-code">${esc(text)}</div>
-         <div class="sc-item">${hit ? esc(hit.item) : 'Sin asignar a ningún artículo'}</div>
-         <div class="sc-meta">${esc(format)} · ${fmt(ms)}</div>
-       </div>`;
-
     feedback();
     stats();
+
+    const found = resolve(text);
+    if (found) {
+      $('scHit').innerHTML =
+        `<div class="sc-found">
+           <div class="sc-code">${esc(text)}</div>
+           <div class="sc-item">${esc(found.item)}</div>
+           <div class="sc-meta">${esc(format)} · ${fmt(ms)}</div>
+         </div>`;
+    } else {
+      // Codigo que nadie ha enseñado todavia. Se para el bucle y se
+      // pregunta: es la unica forma de que la app aprenda, y cada
+      // respuesta vale para siempre y para todas las locaciones.
+      $('scHit').innerHTML =
+        `<div class="sc-new">
+           <div class="sc-code">${esc(text)}</div>
+           <div class="sc-item">Código nuevo</div>
+           <div class="sc-meta">${esc(format)} · ${fmt(ms)}</div>
+         </div>`;
+      askAssign(text);
+      return;
+    }
 
     // El cronometro de la siguiente botella NO arranca aqui, arranca
     // cuando termina la ventana de bloqueo. Si arrancara ya, midiendo
@@ -311,6 +483,7 @@
     $('scOverlay').classList.add('on');
     document.body.classList.add('sc-locked');
     times = []; lastCode = ''; frames = 0; stats();
+    loadLearned();   // sin await: que la camara no espere a la red
 
     if (!window.isSecureContext) return diag('La conexión no es segura, la cámara no arranca.', 'sc-bad');
     if (!navigator.mediaDevices?.getUserMedia) return diag('Este navegador no da acceso a la cámara.', 'sc-bad');
@@ -416,6 +589,9 @@
     // encendida gastando bateria con el panel ya cerrado.
     if (stream) stream.getTracks().forEach(t => t.stop());
     stream = null;
+    pausedFor = null;
+    const a = $('scAssign');
+    if (a) a.classList.remove('on');
     const o = $('scOverlay');
     if (o) o.classList.remove('on');
     document.body.classList.remove('sc-locked');

@@ -167,6 +167,75 @@ body.sc-locked{ overflow: hidden !important; }
 }
 .sc-stage.sc-flash::after{ opacity: .35; transition: none; }
 
+/* ── Panel de "¿qué artículo es?" ──────────────────────────────────────
+   Tapa la pantalla entera mientras se elige. La camara se para debajo:
+   no tiene sentido seguir decodificando mientras alguien busca en una
+   lista, y ademas asi no se cuela otra lectura por encima. */
+.sc-assign{
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  flex-direction: column;
+  background: #0b1220;
+  padding: calc(12px + env(safe-area-inset-top)) 14px 14px;
+}
+.sc-assign.on{ display: flex; }
+
+.sc-assign-head{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.sc-assign-t{ font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+
+.sc-assign input{
+  width: 100%;
+  height: 46px;
+  padding: 0 13px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.20);
+  color: #f1f5f9;
+  font-family: inherit;
+  /* 16px exactos: por debajo, Safari acerca la pantalla al enfocar y no
+     vuelve solo. En mitad de un conteo eso es insufrible. */
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.sc-picks{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.sc-pick{
+  display: block;
+  width: 100%;
+  text-align: left;
+  /* 52px de alto: se elige con el pulgar y con una botella en la otra
+     mano. Una lista compacta aqui provocaria asignaciones equivocadas,
+     que es el error mas caro de todos porque queda guardado. */
+  min-height: 52px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.10);
+  color: #f1f5f9;
+  font-family: inherit;
+  cursor: pointer;
+}
+.sc-pick > span{ display: block; font-size: 14px; font-weight: 700; }
+.sc-pick > small{ display: block; font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+.sc-empty{ font-size: 13px; color: #94a3b8; text-align: center; padding: 20px 0; }
+.sc-empty.sc-bad{ color: #ef4444; font-weight: 700; }
+
 /* En horizontal la camara se lleva casi todo y el panel se aprieta */
 @media (max-height: 520px) {
   .sc-stats{ display: none; }
