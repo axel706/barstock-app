@@ -39,8 +39,14 @@
   // Fraccion del fotograma que ocupa el recuadro guia. Tiene que
   // coincidir con .sc-guide > i en el CSS, o se decodificaria una zona
   // distinta de la que la persona esta apuntando.
-  const CROP_W = 0.76;
-  const CROP_H = 0.30;
+  //
+  // Casi cuadrado, y no una banda ancha, porque MUCHAS BOTELLAS LLEVAN
+  // EL CODIGO EN VERTICAL. Una botella abierta no se puede voltear ni
+  // inclinar, asi que el lector tiene que apañarselas con el codigo tal
+  // como esta. En una banda baja un codigo vertical ni siquiera cabe
+  // entero dentro del recorte.
+  const CROP_W = 0.80;
+  const CROP_H = 0.52;
 
   let ZX = null;
   let coreReader = null;
@@ -56,6 +62,8 @@
   let hudTimer = null;
   let canvas = null;
   let ctx = null;
+  let rotCanvas = null;
+  let rotCtx = null;
   let audio = null;
 
   const $ = (id) => document.getElementById(id);
@@ -192,6 +200,45 @@
     if ($('scMax')) $('scMax').textContent = fmt(s[s.length - 1]);
   }
 
+  // ── Decodificar un lienzo ───────────────────────────────────────────
+  async function tryDecode(cv) {
+    try {
+      if (nativeDetector) {
+        const found = await nativeDetector.detect(cv);
+        if (found && found.length) return { text: found[0].rawValue, format: found[0].format || 'nativo' };
+        return null;
+      }
+      const src = new ZX.HTMLCanvasElementLuminanceSource(cv);
+      const bmp = new ZX.BinaryBitmap(new ZX.HybridBinarizer(src));
+      const res = coreReader.decode(bmp);
+      if (!res) return null;
+      const f = res.getBarcodeFormat?.();
+      return { text: res.getText(), format: (ZX.BarcodeFormat && ZX.BarcodeFormat[f]) || 'código' };
+    } catch (e) {
+      // NotFoundException en cada intento sin codigo es el caso normal.
+      // Cualquier otro error tampoco debe matar el bucle.
+      return null;
+    } finally {
+      // El lector conserva estado entre llamadas y con el tiempo empieza
+      // a fallar lecturas validas.
+      if (coreReader && coreReader.reset) coreReader.reset();
+    }
+  }
+
+  // Gira el recorte un cuarto de vuelta. El lienzo girado se reutiliza
+  // entre fotogramas: crear uno nuevo ocho veces por segundo daria
+  // trabajo al recolector de basura en mitad del escaneo.
+  function rotate90(src, w, h) {
+    if (!rotCanvas) { rotCanvas = document.createElement('canvas'); rotCtx = rotCanvas.getContext('2d'); }
+    if (rotCanvas.width !== h || rotCanvas.height !== w) { rotCanvas.width = h; rotCanvas.height = w; }
+    rotCtx.save();
+    rotCtx.translate(h / 2, w / 2);
+    rotCtx.rotate(Math.PI / 2);
+    rotCtx.drawImage(src, -w / 2, -h / 2);
+    rotCtx.restore();
+    return rotCanvas;
+  }
+
   // ── El bucle ────────────────────────────────────────────────────────
   async function tick() {
     if (!running) return;
@@ -230,27 +277,19 @@
       ctx.drawImage(vid, sx, sy, sw, sh, 0, 0, sw, sh);
 
       frames++;
-      try {
-        if (nativeDetector) {
-          const found = await nativeDetector.detect(canvas);
-          if (found && found.length) onHit(found[0].rawValue, found[0].format || 'nativo');
-        } else {
-          const src = new ZX.HTMLCanvasElementLuminanceSource(canvas);
-          const bmp = new ZX.BinaryBitmap(new ZX.HybridBinarizer(src));
-          const res = coreReader.decode(bmp);
-          if (res) {
-            const f = res.getBarcodeFormat?.();
-            onHit(res.getText(), (ZX.BarcodeFormat && ZX.BarcodeFormat[f]) || 'código');
-          }
-        }
-      } catch (e) {
-        // NotFoundException en cada fotograma sin codigo es el caso
-        // normal y no se registra. Cualquier otro error tampoco debe
-        // matar el bucle: el siguiente fotograma puede ir bien.
-      }
-      // El lector de ZXing conserva estado entre llamadas y con el
-      // tiempo empieza a fallar lecturas validas.
-      if (coreReader && coreReader.reset) coreReader.reset();
+
+      // Primero tal cual. Si no hay nada, se gira el recorte 90 grados y
+      // se vuelve a intentar: los lectores 1D barren lineas
+      // HORIZONTALES, asi que un codigo vertical es invisible para ellos
+      // por muy nitido que este. Girar la imagen es la unica forma de
+      // que lo vean, y es lo que hay que hacer porque la botella abierta
+      // no se puede girar.
+      //
+      // El segundo intento solo ocurre cuando el primero falla, asi que
+      // un codigo horizontal no paga nada por esto.
+      let out = await tryDecode(canvas);
+      if (!out) out = await tryDecode(rotate90(canvas, sw, sh));
+      if (out) onHit(out.text, out.format);
     }
 
     loopId = setTimeout(tick, 1000 / FPS);
