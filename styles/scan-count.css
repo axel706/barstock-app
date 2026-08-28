@@ -133,16 +133,34 @@ body.sc-locked{ overflow: hidden !important; }
   color: #94a3b8;
 }
 
+/* Los dos botones en fila. Apilados a lo ancho completo comian la
+   altura del visor, que es lo unico que de verdad importa aqui. */
+.sc-btns{ display: flex; gap: 8px; }
 .sc-ghost{
-  width: 100%; height: 44px;
+  flex: 1;
+  min-width: 0;
+  height: 44px;
   border-radius: 12px;
   background: transparent;
   border: 1px solid rgba(255,255,255,.20);
   color: #f1f5f9;
   font-family: inherit; font-size: 14px; font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
 }
-.sc-note{ font-size: 11px; color: #94a3b8; text-align: center; margin-top: 9px; }
+.sc-note{ font-size: 11px; color: #94a3b8; text-align: center; margin-top: 8px; }
+
+/* Destello al leer. En iOS no hay vibracion posible desde la web, asi
+   que el aviso es este mas el pitido. */
+.sc-stage::after{
+  content: "";
+  position: absolute; inset: 0;
+  background: #22c55e;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+}
+.sc-stage.sc-flash::after{ opacity: .35; transition: none; }
 
 /* En horizontal la camara se lleva casi todo y el panel se aprieta */
 @media (max-height: 520px) {

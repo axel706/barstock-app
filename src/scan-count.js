@@ -56,6 +56,7 @@
   let hudTimer = null;
   let canvas = null;
   let ctx = null;
+  let audio = null;
 
   const $ = (id) => document.getElementById(id);
   const fmt = (ms) => (ms / 1000).toFixed(1) + ' s';
@@ -94,8 +95,10 @@
           <div><b id="scTot">0</b><span>botellas</span></div>
           <div><b id="scFrames">0</b><span>analizados</span></div>
         </div>
-        <button class="sc-ghost" id="scTorch" type="button">Linterna</button>
-        <button class="sc-ghost" id="scReset" type="button">Reiniciar medición</button>
+        <div class="sc-btns">
+          <button class="sc-ghost" id="scTorch" type="button">Linterna</button>
+          <button class="sc-ghost" id="scReset" type="button">Reiniciar</button>
+        </div>
         <div class="sc-note">No toca el inventario. Solo lee y mide.</div>
       </div>`;
     document.body.appendChild(el);
@@ -136,9 +139,40 @@
          <div class="sc-meta">${esc(format)} · ${fmt(ms)}</div>
        </div>`;
 
-    if (navigator.vibrate) navigator.vibrate(40);
+    feedback();
     stats();
     mark();
+  }
+
+  // ── Aviso de lectura ────────────────────────────────────────────────
+  // navigator.vibrate NO existe en Safari de iOS. No es que falle: la
+  // API no esta, asi que en un iPhone no hay vibracion posible desde la
+  // web. Se avisa con un pitido y un destello.
+  //
+  // El pitido es ademas mejor aviso que la vibracion para esto: mientras
+  // escaneas estas mirando la botella, no la pantalla. Es lo que hace
+  // cualquier lector de supermercado.
+  function feedback() {
+    try {
+      if (audio) {
+        const o = audio.createOscillator();
+        const g = audio.createGain();
+        o.type = 'sine';
+        o.frequency.value = 880;
+        g.gain.setValueAtTime(0.0001, audio.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.25, audio.currentTime + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.10);
+        o.connect(g); g.connect(audio.destination);
+        o.start(); o.stop(audio.currentTime + 0.11);
+      }
+    } catch (e) {}
+
+    const st = $('scStage');
+    if (st) {
+      st.classList.add('sc-flash');
+      setTimeout(() => st.classList.remove('sc-flash'), 180);
+    }
+    if (navigator.vibrate) navigator.vibrate(40);   // Android sí lo tiene
   }
 
   function stats() {
@@ -165,8 +199,25 @@
 
     if (vid && vid.videoWidth) {
       const vw = vid.videoWidth, vh = vid.videoHeight;
-      const sw = Math.round(vw * CROP_W);
-      const sh = Math.round(vh * CROP_H);
+
+      // El recuadro azul esta dibujado sobre el ELEMENTO, y el elemento
+      // muestra el video recortado por object-fit:cover. Calcular el
+      // recorte sobre las dimensiones del video da una zona distinta de
+      // la que la persona esta apuntando: con una camara vertical de
+      // 1080x1920 salia una region alta y estrecha en vez de la banda
+      // ancha y baja que se ve. Funcionaba por casualidad, porque el
+      // recorte era mas grande y acababa incluyendo el codigo.
+      //
+      // cover escala por el lado que mas haga falta y recorta el resto,
+      // asi que la parte visible del video mide ew/escala por eh/escala.
+      const ew = vid.clientWidth || vw;
+      const eh = vid.clientHeight || vh;
+      const scale = Math.max(ew / vw, eh / vh);
+      const visW = ew / scale;
+      const visH = eh / scale;
+
+      const sw = Math.round(visW * CROP_W);
+      const sh = Math.round(visH * CROP_H);
       const sx = Math.round((vw - sw) / 2);
       const sy = Math.round((vh - sh) / 2);
 
@@ -216,6 +267,15 @@
     if (!navigator.mediaDevices?.getUserMedia) return diag('Este navegador no da acceso a la cámara.', 'sc-bad');
 
     if (!canvas) { canvas = document.createElement('canvas'); ctx = canvas.getContext('2d', { willReadFrequently: true }); }
+
+    // El audio se crea AQUI y no al leer el primer codigo: iOS solo deja
+    // arrancar un AudioContext dentro de un gesto del usuario, y abrir
+    // este panel es un toque. Creado mas tarde nacería suspendido y no
+    // sonaria nunca.
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) { audio = audio || new AC(); if (audio.state === 'suspended') audio.resume(); }
+    } catch (e) { audio = null; }
 
     // Lector nativo si existe: va en codigo compilado y no hay libreria
     // en JavaScript que se le acerque.
