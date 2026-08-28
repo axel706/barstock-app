@@ -341,6 +341,19 @@
            <div class="sc-item">${esc(found.item)}</div>
            <div class="sc-meta">${esc(format)} · ${fmt(ms)}</div>
          </div>`;
+
+      // Se para la camara y se abre el panel del articulo. Seguir
+      // decodificando por detras solo puede colar otra lectura encima de
+      // la que se esta contando.
+      if (found.row && window.BarStockCountPanel) {
+        running = false;
+        clearTimeout(loopId);
+        window.BarStockCountPanel.open(found.row, () => {
+          running = true;
+          mark();
+          tick();
+        });
+      }
     } else {
       // Codigo que nadie ha enseñado todavia. Se para el bucle y se
       // pregunta: es la unica forma de que la app aprenda, y cada

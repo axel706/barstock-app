@@ -1,0 +1,169 @@
+/* ── Panel del artículo ────────────────────────────────────────────────
+   Se abre encima del escáner, así que va por encima de .sc-overlay
+   (99999) y por debajo de la pantalla de entrada (999999): si la sesión
+   caduca mientras alguien cuenta, el login manda.
+
+   Todo dimensionado para una mano. La otra sostiene una botella. */
+
+.cp-panel{
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: none;
+  flex-direction: column;
+  background: #0b1220;
+  color: #f1f5f9;
+  font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.cp-panel.on{ display: flex; }
+
+.cp-head{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: calc(10px + env(safe-area-inset-top)) 14px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.09);
+  flex-shrink: 0;
+}
+.cp-title{ min-width: 0; }
+.cp-name{
+  font-size: 17px; font-weight: 800; line-height: 1.2;
+  /* Dos líneas y luego corta. Un nombre larguísimo no puede empujar el
+     deslizador fuera de la pantalla. */
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.cp-sub{ font-size: 12px; color: #94a3b8; margin-top: 3px; }
+.cp-again{ color: #f59e0b; }
+
+.cp-body{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px;
+}
+.cp-block{ margin-bottom: 18px; }
+.cp-label{
+  font-size: 11px; letter-spacing: .07em; text-transform: uppercase;
+  color: #94a3b8; font-weight: 800; margin-bottom: 8px;
+}
+
+/* ── Selladas ── */
+.cp-step{ display: flex; align-items: center; gap: 12px; }
+.cp-step button{
+  /* 64px. Se toca con el pulgar, a veces con guantes de bodega y con
+     prisa. Un botón pequeño aquí se traduce en conteos equivocados. */
+  width: 64px; height: 64px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.18);
+  color: #f1f5f9;
+  font-family: inherit; font-size: 28px; font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+.cp-step button:active{ background: rgba(56,189,248,.20); }
+.cp-num{
+  flex: 1;
+  text-align: center;
+  font-size: 40px; font-weight: 800; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Abiertas ── */
+.cp-open{ margin-bottom: 10px; }
+.cp-stage{
+  position: relative;
+  height: 230px;
+  touch-action: none;        /* sin esto iOS desplaza la página al arrastrar */
+  user-select: none;
+  -webkit-user-select: none;
+}
+.cp-stage svg{ display: block; width: 100%; height: 100%; }
+
+.cp-line{
+  position: absolute; left: 0; right: 0;
+  height: 44px; margin-top: -22px;
+  display: flex; align-items: center;
+  pointer-events: none;
+}
+.cp-line > span{
+  flex: 1; height: 3px; background: #f1f5f9; border-radius: 2px;
+}
+.cp-line > i{
+  position: absolute; left: 50%; transform: translateX(-50%);
+  width: 54px; height: 26px; border-radius: 13px;
+  background: #0f172a; border: 1px solid rgba(255,255,255,.30);
+}
+
+.cp-read{ text-align: center; margin-top: 4px; }
+.cp-read b{ font-size: 34px; font-weight: 800; line-height: 1; display: block; }
+.cp-read small{ font-size: 12px; color: #94a3b8; display: block; margin-top: 4px; }
+
+.cp-none{
+  font-size: 13px; color: #94a3b8; text-align: center;
+  padding: 26px 10px; line-height: 1.5;
+}
+
+.cp-opens{ margin: 10px 0 0; }
+.cp-openrow{
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; margin-bottom: 6px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.10);
+  cursor: pointer;
+}
+.cp-openrow.on{ border-color: rgba(56,189,248,.55); background: rgba(56,189,248,.10); }
+.cp-openrow > span{ font-size: 13px; color: #94a3b8; }
+.cp-openrow > b{ margin-left: auto; font-size: 15px; font-variant-numeric: tabular-nums; }
+.cp-openrow button{
+  width: 36px; height: 36px; flex-shrink: 0;
+  border-radius: 9px; background: transparent;
+  border: 1px solid rgba(255,255,255,.14);
+  color: #94a3b8; font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.cp-add{
+  width: 100%; height: 46px; margin-top: 10px;
+  border-radius: 12px;
+  background: transparent;
+  border: 1px dashed rgba(56,189,248,.45);
+  color: #38bdf8;
+  font-family: inherit; font-size: 14px; font-weight: 700;
+  cursor: pointer;
+}
+
+/* ── Pie ── */
+.cp-foot{
+  flex-shrink: 0;
+  padding: 12px 14px 14px;
+  border-top: 1px solid rgba(255,255,255,.09);
+}
+.cp-total{
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.cp-total span{ font-size: 13px; color: #94a3b8; }
+.cp-total b{ font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.cp-next{
+  width: 100%; height: 58px;
+  border-radius: 14px; border: none;
+  background: #38bdf8; color: #04263a;
+  font-family: inherit; font-size: 18px; font-weight: 800;
+  cursor: pointer;
+}
+.cp-next:active{ background: #0ea5e9; }
+
+/* Con el teclado abierto o en horizontal, la botella se lleva demasiado */
+@media (max-height: 620px) {
+  .cp-stage{ height: 165px; }
+  .cp-read b{ font-size: 27px; }
+  .cp-step button{ width: 56px; height: 56px; }
+  .cp-num{ font-size: 32px; }
+}
