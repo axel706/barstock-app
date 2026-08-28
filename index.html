@@ -126,7 +126,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260828-132046</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260828-132807</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -242,6 +242,7 @@
         </div>
       </div>
       <button onclick="BarStockAutoCategory && BarStockAutoCategory.run()" class="section-toggle" title="Assign categories automatically"><i class="ti ti-tags" aria-hidden="true" style="font-size:18px"></i></button>
+        <button onclick="BarStockBottleAssign && BarStockBottleAssign.run()" class="section-toggle" title="Assign bottle shapes and sizes"><i class="ti ti-bottle" aria-hidden="true"></i></button>
       <button onclick="toggleFocusMode('inventorySection','Inventory')" class="section-toggle focus-max-btn" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true" style="font-size:18px"></i></button>
     </div>
     <div class="section-body" id="inventorySectionBody">
@@ -4895,6 +4896,8 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/no-match-cloud.js"></script>
 <script src="src/typeface.js?v=tf1"></script>
 <script src="src/auto-category.js?v=cat1"></script>
+<script src="src/bottle-profiles.js?v=btl1"></script>
+<script src="src/bottle-assign.js?v=btl1"></script>
 <script src="src/inventory-value.js?v=iv1"></script>
 <script src="src/spend-by-category.js?v=sp1"></script>
 <script src="src/settings-home.js?v=sh2"></script>
