@@ -122,6 +122,15 @@
   }
 
   // ── La botella ───────────────────────────────────────────────────────
+  //
+  // El SVG NO lleva colores. Van por clase y se definen en el CSS, que es
+  // el unico sitio donde el modo claro puede alcanzarlos.
+  //
+  // Estaban escritos aqui dentro —rgba(255,255,255,.32) para el
+  // contorno— y en modo claro eso es blanco sobre fondo claro: la
+  // botella no existia hasta que el liquido azul, que si tenia color
+  // propio, empezaba a subir. Un color dentro de un SVG generado por
+  // JavaScript es un color que el tema no puede cambiar.
   const VB = { w: 200, h: 260, pad: 12 };
 
   function bottlePath(key) {
@@ -153,13 +162,13 @@
       <div class="cp-stage" id="cpStage">
         <svg viewBox="0 0 ${VB.w} ${VB.h}" preserveAspectRatio="xMidYMid meet">
           <defs><clipPath id="cpClip"><path d="${bottlePath(key)}"/></clipPath></defs>
-          <path d="${bottlePath(key)}" fill="rgba(255,255,255,.05)"
-                stroke="rgba(255,255,255,.32)" stroke-width="1.5"/>
+          <path class="cp-glass" d="${bottlePath(key)}" stroke-width="2"/>
           <g clip-path="url(#cpClip)">
-            <rect x="0" y="${yToPx(y)}" width="${VB.w}" height="${VB.h}" fill="#38bdf8" opacity=".38"/>
+            <rect class="cp-liquid" x="0" y="${yToPx(y)}" width="${VB.w}" height="${VB.h}"/>
           </g>
-          <line x1="14" y1="${yToPx(prof.yFull)}" x2="${VB.w - 14}" y2="${yToPx(prof.yFull)}"
-                stroke="rgba(255,255,255,.30)" stroke-width="1" stroke-dasharray="3 4"/>
+          <line class="cp-fullline" x1="14" y1="${yToPx(prof.yFull)}"
+                x2="${VB.w - 14}" y2="${yToPx(prof.yFull)}"
+                stroke-width="1" stroke-dasharray="3 4"/>
         </svg>
         <div class="cp-line" id="cpLine"><span></span><i></i></div>
       </div>

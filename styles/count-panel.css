@@ -381,3 +381,23 @@ body.light .cf-ok{
 body.light .cp-hint{
   background: #fef3c7; border-color: #f59e0b; color: #78350f;
 }
+
+/* ── Colores de la botella ─────────────────────────────────────────────
+   Aquí y no dentro del SVG. Escritos en el marcado que genera el
+   JavaScript, el modo claro no puede alcanzarlos: el contorno era blanco
+   translúcido y sobre fondo claro sencillamente no existía. */
+.cp-glass{
+  fill: rgba(255,255,255,.05);
+  stroke: rgba(255,255,255,.34);
+}
+.cp-liquid{ fill: #38bdf8; opacity: .38; }
+.cp-fullline{ stroke: rgba(255,255,255,.30); }
+
+body.light .cp-glass{
+  /* Más contraste que en oscuro, no el mismo valor invertido: sobre
+     blanco hace falta más trazo para que la silueta se lea. */
+  fill: rgba(15,23,42,.035);
+  stroke: rgba(15,23,42,.55);
+}
+body.light .cp-liquid{ fill: #0284c7; opacity: .30; }
+body.light .cp-fullline{ stroke: rgba(15,23,42,.35); }
