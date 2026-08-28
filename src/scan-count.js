@@ -41,6 +41,8 @@
   let lastAt = 0;
   let times = [];
   let hudTimer = null;
+  let frames = 0;           // intentos de decodificacion, encuentren o no
+  let framesTimer = null;
 
   const $ = (id) => document.getElementById(id);
   const fmt = (ms) => (ms / 1000).toFixed(1) + ' s';
@@ -80,6 +82,7 @@
           <div><b id="scMed">—</b><span>mediana</span></div>
           <div><b id="scMax">—</b><span>la peor</span></div>
           <div><b id="scTot">0</b><span>botellas</span></div>
+          <div><b id="scFrames">0</b><span>analizados</span></div>
         </div>
         <button class="sc-ghost" id="scReset" type="button">Reiniciar medición</button>
         <div class="sc-note">No toca el inventario. Solo lee y mide.</div>
@@ -206,8 +209,6 @@
     diag('Cámara ' + (s.width || '?') + '×' + (s.height || '?') + ' · apunta al código', 'sc-ok');
 
     const vid = $('scVid');
-    vid.srcObject = stream;
-    await vid.play().catch(() => {});
 
     running = true;
     mark();
@@ -215,18 +216,73 @@
       if (running && $('scTimer')) $('scTimer').textContent = fmt(performance.now() - tStart);
     }, 100);
 
-    reader.decodeFromVideoElement(vid, (result) => {
-      if (!running || !result) return;
-      onHit(result.getText(), result.getBarcodeFormat?.() ?? 'código');
-      // Los fallos de "no encontrado" llegan en cada fotograma sin
-      // codigo. Son el caso normal y no se registran a proposito.
-    });
+    // El callback se dispara en CADA intento, encuentre o no. Contarlo
+    // separa los dos fallos que desde fuera se ven igual: si `frames` se
+    // queda en 0 el bucle no arranco; si sube y no hay lecturas, arranca
+    // pero no reconoce el codigo. Sin este numero, "no pasa nada" no se
+    // puede diagnosticar desde un telefono.
+    frames = 0;
+    const onFrame = (result) => {
+      frames++;
+      if (!running) return;
+      if (result) {
+        const f = result.getBarcodeFormat?.();
+        onHit(result.getText(), (ZX.BarcodeFormat && ZX.BarcodeFormat[f]) || 'código');
+      }
+    };
+
+    // decodeFromVideoElement da por hecho que el elemento es suyo y
+    // espera un evento de carga que, con un srcObject ya asignado y
+    // reproduciendose, no vuelve a dispararse: el bucle nunca empieza.
+    // decodeFromStream es la via pensada para un MediaStream existente,
+    // que es lo que hace falta aqui para poder pedir la camara trasera.
+    //
+    // Se prueban por orden y se dice cual entro, porque el nombre de la
+    // funcion cambia entre versiones de la libreria y desde el telefono
+    // no hay forma de averiguarlo de otro modo.
+    let via = '';
+    try {
+      if (typeof reader.decodeFromStream === 'function') {
+        via = 'decodeFromStream';
+        await reader.decodeFromStream(stream, vid, onFrame);
+      } else if (typeof reader.decodeFromVideoDevice === 'function') {
+        via = 'decodeFromVideoDevice';
+        stream.getTracks().forEach(t => t.stop());   // ZXing abre la suya
+        stream = null;
+        await reader.decodeFromVideoDevice(null, vid, onFrame);
+      } else {
+        via = 'decodeFromVideoElement';
+        vid.srcObject = stream;
+        await vid.play().catch(() => {});
+        await reader.decodeFromVideoElement(vid, onFrame);
+      }
+    } catch (e) {
+      return diag('El lector no arrancó (' + esc(via) + '): ' + esc(e.message), 'sc-bad');
+    }
+
+    diag('Leyendo con ' + via + ' · apunta al código', 'sc-ok');
+
+    // Vigilante: si a los tres segundos no se ha analizado ni un
+    // fotograma, el bucle esta muerto aunque la camara se vea bien.
+    setTimeout(() => {
+      if (running && frames === 0) {
+        diag('La cámara va pero el lector no analiza fotogramas (vía ' + esc(via) + ').', 'sc-bad');
+      }
+    }, 3000);
+
+    if (framesTimer) clearInterval(framesTimer);
+    framesTimer = setInterval(() => {
+      const el = $('scFrames');
+      if (el) el.textContent = frames;
+    }, 400);
   }
 
   function close() {
     running = false;
     clearInterval(hudTimer);
+    clearInterval(framesTimer);
     hudTimer = null;
+    framesTimer = null;
     try { if (reader) reader.reset(); } catch (e) {}
     // Soltar las pistas es obligatorio: sin esto la luz de la camara se
     // queda encendida y el telefono sigue gastando bateria con el panel
