@@ -4,45 +4,58 @@
   // ── Conteo por escaneo · PRUEBA DE LA CAMARA ─────────────────────────
   //
   // Esto NO es todavia la funcion de conteo. Es la pieza de riesgo del
-  // diseño, metida dentro de la app para poder probarla en el entorno
-  // real: mismo navegador, misma sesion, mismo telefono.
+  // diseño, dentro de la app para poder probarla en el entorno real.
+  // Lee codigos y MIDE cuanto tarda cada botella. No toca el inventario:
+  // no escribe nada, ni en la nube ni en local.
   //
-  // Lo que hace: abre la camara, lee codigos UPC/EAN y MIDE cuanto tarda
-  // cada botella. Lo que NO hace: tocar el inventario. No escribe nada,
-  // ni en la nube ni en local. Se puede abrir y cerrar sin consecuencias.
+  // ── Lo que se aprendio en la primera prueba ─────────────────────────
   //
-  // El numero que decide el diseño es la MEDIANA de segundos por botella.
-  // Con 300 articulos, entre 1.5 y 4 segundos hay veinte minutos de
-  // diferencia por conteo.
+  // Con decodeFromStream el bucle corria a 27 intentos por segundo y no
+  // leia ni un codigo. Esa velocidad ERA el sintoma: 27 fps decodificando
+  // 1280x720 en un telefono es imposible, asi que la libreria estaba
+  // analizando un lienzo mucho mas pequeño. Y un UPC tiene barras de
+  // fracciones de milimetro: al reducir la imagen se funden en un gris
+  // uniforme. Legible para el ojo en la pantalla, ilegible para el
+  // decodificador.
   //
-  // ── Por que ZXing ───────────────────────────────────────────────────
+  // Por eso aqui NO se usa el ayudante de la libreria. Se hace a mano:
   //
-  // Safari de iOS no tiene BarcodeDetector, asi que no hay lector nativo
-  // y hay que decodificar en JavaScript sobre los fotogramas del video.
-  // Esa es justamente la incognita que esta prueba resuelve.
+  //   1. Se recorta la banda del recuadro guia
+  //   2. Se copia al lienzo A TAMAÑO NATIVO, sin reducir ni un pixel
+  //   3. Se decodifica ese recorte
   //
-  // La libreria se importa DE FORMA PEREZOSA, solo al abrir el panel. Son
-  // unos cuantos cientos de kilobytes que nadie deberia descargar por
-  // entrar a Inventory a mirar un precio.
+  // Menos intentos por segundo, pero cada uno sobre una imagen que de
+  // verdad contiene las barras. Es el intercambio correcto: no sirve de
+  // nada analizar treinta veces por segundo algo que no se puede leer.
   //
-  // Y se carga como modulo ES por el endpoint /+esm de jsdelivr: el
-  // paquete 0.21.3 no publica carpeta umd, asi que la ruta clasica
-  // /umd/index.min.js da 404 y no deja ningun global.
+  // Y si el navegador trae lector nativo (BarcodeDetector), se usa ese y
+  // no ZXing: va en codigo compilado y es mucho mejor. Safari no lo ha
+  // tenido historicamente, pero se comprueba en vez de darlo por hecho.
 
   const CDN = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/+esm';
   const REPEAT_MS = 2500;   // relecturas del mismo codigo = un solo intento
+  const FPS = 8;            // intentos por segundo sobre el recorte grande
+
+  // Fraccion del fotograma que ocupa el recuadro guia. Tiene que
+  // coincidir con .sc-guide > i en el CSS, o se decodificaria una zona
+  // distinta de la que la persona esta apuntando.
+  const CROP_W = 0.76;
+  const CROP_H = 0.30;
 
   let ZX = null;
-  let reader = null;
+  let coreReader = null;
+  let nativeDetector = null;
   let stream = null;
   let running = false;
+  let loopId = null;
   let tStart = 0;
   let lastCode = '';
   let lastAt = 0;
   let times = [];
+  let frames = 0;
   let hudTimer = null;
-  let frames = 0;           // intentos de decodificacion, encuentren o no
-  let framesTimer = null;
+  let canvas = null;
+  let ctx = null;
 
   const $ = (id) => document.getElementById(id);
   const fmt = (ms) => (ms / 1000).toFixed(1) + ' s';
@@ -52,9 +65,6 @@
       ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
   }
 
-  // ── El panel se construye al vuelo ──────────────────────────────────
-  // No vive en index.html a proposito: es una prueba, y no tiene por que
-  // engordar un monolito de 6400 lineas mientras se decide si sigue.
   function build() {
     if ($('scOverlay')) return;
     const el = document.createElement('div');
@@ -84,6 +94,7 @@
           <div><b id="scTot">0</b><span>botellas</span></div>
           <div><b id="scFrames">0</b><span>analizados</span></div>
         </div>
+        <button class="sc-ghost" id="scTorch" type="button">Linterna</button>
         <button class="sc-ghost" id="scReset" type="button">Reiniciar medición</button>
         <div class="sc-note">No toca el inventario. Solo lee y mide.</div>
       </div>`;
@@ -91,7 +102,7 @@
 
     $('scClose').addEventListener('click', close);
     $('scReset').addEventListener('click', () => {
-      times = []; lastCode = '';
+      times = []; lastCode = ''; frames = 0;
       $('scHit').innerHTML = '';
       stats(); mark();
     });
@@ -104,39 +115,28 @@
 
   function mark() { tStart = performance.now(); }
 
-  // ── Lectura ─────────────────────────────────────────────────────────
   function onHit(text, format) {
     const now = performance.now();
-
-    // ZXing dispara varias veces sobre la misma etiqueta mientras siga
-    // encuadrada. Sin esta ventana, la medicion saldria absurdamente
-    // optimista: contaria como "botella nueva" cada fotograma acertado.
     if (text === lastCode && (now - lastAt) < REPEAT_MS) { lastAt = now; return; }
 
     const ms = now - tStart;
     lastCode = text; lastAt = now;
     times.push(ms);
 
-    // Se busca el codigo en el inventario cargado. Se espera que NO
-    // aparezca casi nunca: el campo `code` guarda el codigo del
-    // proveedor, no el UPC impreso en la botella. Verlo en pantalla es
-    // la demostracion de por que hace falta la tabla que asocie los dos.
+    // Se espera que casi ningun codigo aparezca: el campo `code` guarda
+    // el codigo del proveedor, no el UPC de la botella. Verlo en pantalla
+    // es la demostracion de por que hace falta la tabla que los asocie.
     const master = (window.state && state.master) || [];
     const hit = master.find(r => String(r.code || '') === String(text));
 
-    $('scHit').innerHTML = hit
-      ? `<div class="sc-found">
-           <div class="sc-code">${esc(text)}</div>
-           <div class="sc-item">${esc(hit.item)}</div>
-           <div class="sc-meta">${esc(format)} · ${fmt(ms)}</div>
-         </div>`
-      : `<div class="sc-new">
-           <div class="sc-code">${esc(text)}</div>
-           <div class="sc-item">Sin asignar a ningún artículo</div>
-           <div class="sc-meta">${esc(format)} · ${fmt(ms)}</div>
-         </div>`;
+    $('scHit').innerHTML =
+      `<div class="${hit ? 'sc-found' : 'sc-new'}">
+         <div class="sc-code">${esc(text)}</div>
+         <div class="sc-item">${hit ? esc(hit.item) : 'Sin asignar a ningún artículo'}</div>
+         <div class="sc-meta">${esc(format)} · ${fmt(ms)}</div>
+       </div>`;
 
-    if (navigator.vibrate) navigator.vibrate(35);
+    if (navigator.vibrate) navigator.vibrate(40);
     stats();
     mark();
   }
@@ -145,6 +145,7 @@
     const n = times.length;
     if ($('scTot')) $('scTot').textContent = n;
     if ($('scN')) $('scN').textContent = n;
+    if ($('scFrames')) $('scFrames').textContent = frames;
     if (!n) {
       if ($('scMed')) $('scMed').textContent = '—';
       if ($('scMax')) $('scMax').textContent = '—';
@@ -157,47 +158,102 @@
     if ($('scMax')) $('scMax').textContent = fmt(s[s.length - 1]);
   }
 
+  // ── El bucle ────────────────────────────────────────────────────────
+  async function tick() {
+    if (!running) return;
+    const vid = $('scVid');
+
+    if (vid && vid.videoWidth) {
+      const vw = vid.videoWidth, vh = vid.videoHeight;
+      const sw = Math.round(vw * CROP_W);
+      const sh = Math.round(vh * CROP_H);
+      const sx = Math.round((vw - sw) / 2);
+      const sy = Math.round((vh - sh) / 2);
+
+      if (canvas.width !== sw || canvas.height !== sh) {
+        canvas.width = sw; canvas.height = sh;
+        diag('Recorte de ' + sw + '×' + sh + ' px · apunta al código', 'sc-ok');
+      }
+      // 1:1. El recorte se copia a tamaño nativo: reducir aqui es
+      // exactamente el error que hacia ilegibles las barras.
+      ctx.drawImage(vid, sx, sy, sw, sh, 0, 0, sw, sh);
+
+      frames++;
+      try {
+        if (nativeDetector) {
+          const found = await nativeDetector.detect(canvas);
+          if (found && found.length) onHit(found[0].rawValue, found[0].format || 'nativo');
+        } else {
+          const src = new ZX.HTMLCanvasElementLuminanceSource(canvas);
+          const bmp = new ZX.BinaryBitmap(new ZX.HybridBinarizer(src));
+          const res = coreReader.decode(bmp);
+          if (res) {
+            const f = res.getBarcodeFormat?.();
+            onHit(res.getText(), (ZX.BarcodeFormat && ZX.BarcodeFormat[f]) || 'código');
+          }
+        }
+      } catch (e) {
+        // NotFoundException en cada fotograma sin codigo es el caso
+        // normal y no se registra. Cualquier otro error tampoco debe
+        // matar el bucle: el siguiente fotograma puede ir bien.
+      }
+      // El lector de ZXing conserva estado entre llamadas y con el
+      // tiempo empieza a fallar lecturas validas.
+      if (coreReader && coreReader.reset) coreReader.reset();
+    }
+
+    loopId = setTimeout(tick, 1000 / FPS);
+  }
+
   // ── Abrir y cerrar ──────────────────────────────────────────────────
   async function open() {
     build();
     $('scOverlay').classList.add('on');
     document.body.classList.add('sc-locked');
-    times = []; lastCode = ''; stats();
+    times = []; lastCode = ''; frames = 0; stats();
 
-    if (!window.isSecureContext) {
-      return diag('La conexión no es segura, la cámara no puede arrancar.', 'sc-bad');
-    }
-    if (!navigator.mediaDevices?.getUserMedia) {
-      return diag('Este navegador no da acceso a la cámara.', 'sc-bad');
-    }
+    if (!window.isSecureContext) return diag('La conexión no es segura, la cámara no arranca.', 'sc-bad');
+    if (!navigator.mediaDevices?.getUserMedia) return diag('Este navegador no da acceso a la cámara.', 'sc-bad');
 
-    diag('Cargando el lector…');
-    if (!ZX) {
+    if (!canvas) { canvas = document.createElement('canvas'); ctx = canvas.getContext('2d', { willReadFrequently: true }); }
+
+    // Lector nativo si existe: va en codigo compilado y no hay libreria
+    // en JavaScript que se le acerque.
+    if ('BarcodeDetector' in window) {
       try {
-        ZX = await import(/* webpackIgnore: true */ CDN);
-      } catch (e) {
-        return diag('No se pudo cargar el lector: ' + esc(e.message), 'sc-bad');
+        nativeDetector = new window.BarcodeDetector({ formats: ['upc_a','upc_e','ean_13','ean_8'] });
+      } catch (e) { nativeDetector = null; }
+    }
+
+    if (!nativeDetector) {
+      diag('Cargando el lector…');
+      if (!ZX) {
+        try { ZX = await import(/* webpackIgnore: true */ CDN); }
+        catch (e) { return diag('No se pudo cargar el lector: ' + esc(e.message), 'sc-bad'); }
+      }
+      if (!coreReader) {
+        // Restringir los formatos no es cosmetico: sin esto se prueba
+        // tambien QR, Code128 y PDF417 en cada intento.
+        const F = ZX.BarcodeFormat;
+        const hints = new Map();
+        hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS, [F.UPC_A, F.UPC_E, F.EAN_13, F.EAN_8]);
+        hints.set(ZX.DecodeHintType.TRY_HARDER, true);
+        coreReader = new ZX.MultiFormatReader();
+        coreReader.setHints(hints);
       }
     }
 
-    if (!reader) {
-      // Restringir los formatos a los de producto no es cosmetico: sin
-      // esto la libreria prueba tambien QR, Code128, PDF417 y demas en
-      // cada fotograma, y el escaneo se vuelve notablemente mas lento.
-      const F = ZX.BarcodeFormat;
-      const hints = new Map();
-      hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS,
-                [F.UPC_A, F.UPC_E, F.EAN_13, F.EAN_8]);
-      hints.set(ZX.DecodeHintType.TRY_HARDER, true);
-      reader = new ZX.BrowserMultiFormatReader(hints, 300);
-    }
-
     try {
-      // facingMode environment = camara trasera. Sin pedirlo, un iPhone
-      // abre la frontal y no hay nada que escanear.
+      // Resolucion alta y enfoque continuo. En un UPC las barras miden
+      // fracciones de milimetro: sin resolucion y sin foco no hay nada
+      // que decodificar por mucho que se vea bien en la pantalla.
       stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' },
-                 width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: {
+          facingMode: { ideal: 'environment' },
+          width:  { ideal: 1920 },
+          height: { ideal: 1080 },
+          advanced: [{ focusMode: 'continuous' }]
+        },
         audio: false
       });
     } catch (e) {
@@ -205,88 +261,49 @@
     }
 
     const track = stream.getVideoTracks()[0];
-    const s = track.getSettings ? track.getSettings() : {};
-    diag('Cámara ' + (s.width || '?') + '×' + (s.height || '?') + ' · apunta al código', 'sc-ok');
+    const st = track.getSettings ? track.getSettings() : {};
 
     const vid = $('scVid');
+    vid.srcObject = stream;
+    await vid.play().catch(() => {});
+
+    diag((nativeDetector ? 'Lector nativo' : 'ZXing') + ' · cámara ' +
+         (st.width || '?') + '×' + (st.height || '?'), 'sc-ok');
 
     running = true;
     mark();
     hudTimer = setInterval(() => {
       if (running && $('scTimer')) $('scTimer').textContent = fmt(performance.now() - tStart);
-    }, 100);
+      stats();
+    }, 200);
+    tick();
 
-    // El callback se dispara en CADA intento, encuentre o no. Contarlo
-    // separa los dos fallos que desde fuera se ven igual: si `frames` se
-    // queda en 0 el bucle no arranco; si sube y no hay lecturas, arranca
-    // pero no reconoce el codigo. Sin este numero, "no pasa nada" no se
-    // puede diagnosticar desde un telefono.
-    frames = 0;
-    const onFrame = (result) => {
-      frames++;
-      if (!running) return;
-      if (result) {
-        const f = result.getBarcodeFormat?.();
-        onHit(result.getText(), (ZX.BarcodeFormat && ZX.BarcodeFormat[f]) || 'código');
-      }
-    };
-
-    // decodeFromVideoElement da por hecho que el elemento es suyo y
-    // espera un evento de carga que, con un srcObject ya asignado y
-    // reproduciendose, no vuelve a dispararse: el bucle nunca empieza.
-    // decodeFromStream es la via pensada para un MediaStream existente,
-    // que es lo que hace falta aqui para poder pedir la camara trasera.
-    //
-    // Se prueban por orden y se dice cual entro, porque el nombre de la
-    // funcion cambia entre versiones de la libreria y desde el telefono
-    // no hay forma de averiguarlo de otro modo.
-    let via = '';
-    try {
-      if (typeof reader.decodeFromStream === 'function') {
-        via = 'decodeFromStream';
-        await reader.decodeFromStream(stream, vid, onFrame);
-      } else if (typeof reader.decodeFromVideoDevice === 'function') {
-        via = 'decodeFromVideoDevice';
-        stream.getTracks().forEach(t => t.stop());   // ZXing abre la suya
-        stream = null;
-        await reader.decodeFromVideoDevice(null, vid, onFrame);
-      } else {
-        via = 'decodeFromVideoElement';
-        vid.srcObject = stream;
-        await vid.play().catch(() => {});
-        await reader.decodeFromVideoElement(vid, onFrame);
-      }
-    } catch (e) {
-      return diag('El lector no arrancó (' + esc(via) + '): ' + esc(e.message), 'sc-bad');
+    // La linterna cambia mucho las cosas en una bodega. El soporte en
+    // iOS es irregular, asi que se ofrece y si falla se dice.
+    const caps = track.getCapabilities ? track.getCapabilities() : {};
+    const tb = $('scTorch');
+    if (!('torch' in caps)) {
+      tb.disabled = true;
+      tb.textContent = 'Linterna no disponible';
+    } else {
+      let on = false;
+      tb.onclick = async () => {
+        on = !on;
+        try {
+          await track.applyConstraints({ advanced: [{ torch: on }] });
+          tb.textContent = on ? 'Apagar linterna' : 'Linterna';
+        } catch (e) { tb.disabled = true; tb.textContent = 'Linterna no disponible'; }
+      };
     }
-
-    diag('Leyendo con ' + via + ' · apunta al código', 'sc-ok');
-
-    // Vigilante: si a los tres segundos no se ha analizado ni un
-    // fotograma, el bucle esta muerto aunque la camara se vea bien.
-    setTimeout(() => {
-      if (running && frames === 0) {
-        diag('La cámara va pero el lector no analiza fotogramas (vía ' + esc(via) + ').', 'sc-bad');
-      }
-    }, 3000);
-
-    if (framesTimer) clearInterval(framesTimer);
-    framesTimer = setInterval(() => {
-      const el = $('scFrames');
-      if (el) el.textContent = frames;
-    }, 400);
   }
 
   function close() {
     running = false;
+    clearTimeout(loopId);
     clearInterval(hudTimer);
-    clearInterval(framesTimer);
-    hudTimer = null;
-    framesTimer = null;
-    try { if (reader) reader.reset(); } catch (e) {}
-    // Soltar las pistas es obligatorio: sin esto la luz de la camara se
-    // queda encendida y el telefono sigue gastando bateria con el panel
-    // ya cerrado.
+    loopId = null; hudTimer = null;
+    // Soltar las pistas es obligatorio: sin esto la camara se queda
+    // encendida gastando bateria con el panel ya cerrado.
     if (stream) stream.getTracks().forEach(t => t.stop());
     stream = null;
     const o = $('scOverlay');
