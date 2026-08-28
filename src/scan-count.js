@@ -60,6 +60,7 @@
   let times = [];
   let frames = 0;
   let hudTimer = null;
+  let markTimer = null;
   let canvas = null;
   let ctx = null;
   let rotCanvas = null;
@@ -114,6 +115,7 @@
     $('scClose').addEventListener('click', close);
     $('scReset').addEventListener('click', () => {
       times = []; lastCode = ''; frames = 0;
+      clearTimeout(markTimer);
       $('scHit').innerHTML = '';
       stats(); mark();
     });
@@ -149,7 +151,15 @@
 
     feedback();
     stats();
-    mark();
+
+    // El cronometro de la siguiente botella NO arranca aqui, arranca
+    // cuando termina la ventana de bloqueo. Si arrancara ya, midiendo
+    // con la misma botella repetida cada lectura llevaria dentro los
+    // 2.5 s de espera obligatoria, y la mediana saldria inflada por el
+    // propio instrumento. Con botellas distintas da igual; con una sola,
+    // era la diferencia entre 5.8 s y 3.3 s.
+    clearTimeout(markTimer);
+    markTimer = setTimeout(mark, REPEAT_MS);
   }
 
   // ── Aviso de lectura ────────────────────────────────────────────────
@@ -399,8 +409,9 @@
   function close() {
     running = false;
     clearTimeout(loopId);
+    clearTimeout(markTimer);
     clearInterval(hudTimer);
-    loopId = null; hudTimer = null;
+    loopId = null; hudTimer = null; markTimer = null;
     // Soltar las pistas es obligatorio: sin esto la camara se queda
     // encendida gastando bateria con el panel ya cerrado.
     if (stream) stream.getTracks().forEach(t => t.stop());
