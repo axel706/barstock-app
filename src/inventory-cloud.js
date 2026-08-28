@@ -281,9 +281,20 @@
     // no aparezca aqui se pierde. category faltaba, y por eso las
     // categorias asignadas desaparecian en cada import del conteo.
     //
+    // bottle_size_ml y bottle_shape se conservan por el mismo motivo:
+    // describen la BOTELLA, no el conteo. Un Casamigos de 750 ml sigue
+    // siendo de 750 ml la semana que viene, y volver a asignarlos cada
+    // lunes seria tirar a la basura el trabajo de clasificar 300
+    // articulos.
+    //
     // order_override y par_adjusted_week NO se conservan, y es
     // intencional: un conteo nuevo abre la semana desde cero. Un articulo
     // que la semana pasada se dejo en cero puede necesitarse esta.
+    //
+    // Regla para quien añada una columna a inventory_items: si describe
+    // el ARTICULO, va en esta lista. Si describe el CONTEO de esta
+    // semana, no. Olvidarlo no da ningun error — el dato simplemente
+    // desaparece cada lunes.
     const rows = (masterRows || []).map(r => ({
       location_id: locationId,
       code: r.code || '',
@@ -292,7 +303,9 @@
       suggested: Number(r.suggested || 0),
       on_hand: Number(r.onHand || 0),
       value: Number(r.value || 0),
-      category: r.category || null
+      category: r.category || null,
+      bottle_size_ml: r.bottleSizeMl || null,
+      bottle_shape: r.bottleShape || null
     }));
 
     const chunkSize = 200;

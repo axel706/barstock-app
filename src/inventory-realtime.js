@@ -63,7 +63,7 @@
     const locationId = await fetchLocationId();
 
     const res = await fetch(
-      `${BARSTOCK_RT_URL}/rest/v1/inventory_items?location_id=eq.${locationId}&select=code,item_name,vendor,on_hand,suggested,value,category,order_override,par_adjusted_week`,
+      `${BARSTOCK_RT_URL}/rest/v1/inventory_items?location_id=eq.${locationId}&select=code,item_name,vendor,on_hand,suggested,value,category,order_override,par_adjusted_week,bottle_size_ml,bottle_shape`,
       {
         headers: {
           apikey: BARSTOCK_RT_KEY,
@@ -86,7 +86,11 @@
     // la cadena y la recarga sigue su curso.
     const stamp = rows.map(r => [
       r.code, r.item_name, r.vendor, r.on_hand, r.suggested,
-      r.value, r.order_override, r.par_adjusted_week
+      r.value, r.order_override, r.par_adjusted_week,
+      // Sin estos dos, asignar forma y tamaño no cambiaria la huella y
+      // la recarga se saltaria entera: state.master se quedaria con los
+      // valores viejos hasta recargar la pagina a mano.
+      r.bottle_size_ml, r.bottle_shape
     ].join('')).sort().join('');
 
     if (stamp === _lastStamp && Array.isArray(state.master) && state.master.length) {
@@ -113,6 +117,11 @@
         suggested,
         value: Number(r.value || 0),
         category: r.category || null,
+        // Describen la BOTELLA, no el conteo. Se leen aqui y se reescriben
+        // en replaceInventoryMaster para que el import semanal no los
+        // borre, igual que category.
+        bottleSizeMl: r.bottle_size_ml || null,
+        bottleShape: r.bottle_shape || null,
         // Semana en que Pour-IQ ya ajusto este articulo. Se escribia desde
         // hace tiempo pero nunca se leia, por eso los articulos ajustados
         // reaparecian como pendientes de inmediato.
