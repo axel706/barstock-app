@@ -91,10 +91,10 @@
     el.className = 'sc-overlay';
     el.innerHTML = `
       <div class="sc-top">
-        <button class="sc-x" id="scClose" type="button" aria-label="Cerrar">
+        <button class="sc-x" id="scClose" type="button" aria-label="Close">
           <i class="ti ti-x" aria-hidden="true"></i>
         </button>
-        <span class="sc-lab">Prueba de escaneo</span>
+        <span class="sc-lab">Scan</span>
         <span class="sc-n" id="scN">0</span>
       </div>
 
@@ -108,31 +108,31 @@
         <div class="sc-diag" id="scDiag"></div>
         <div class="sc-hit" id="scHit"></div>
         <div class="sc-stats">
-          <div><b id="scMed">—</b><span>mediana</span></div>
-          <div><b id="scMax">—</b><span>la peor</span></div>
-          <div><b id="scTot">0</b><span>botellas</span></div>
-          <div><b id="scFrames">0</b><span>analizados</span></div>
+          <div><b id="scMed">—</b><span>median</span></div>
+          <div><b id="scMax">—</b><span>worst</span></div>
+          <div><b id="scTot">0</b><span>bottles</span></div>
+          <div><b id="scFrames">0</b><span>frames</span></div>
         </div>
         <div class="sc-btns">
-          <button class="sc-ghost" id="scTorch" type="button">Linterna</button>
-          <button class="sc-ghost" id="scReset" type="button">Reiniciar</button>
+          <button class="sc-ghost" id="scTorch" type="button">Flashlight</button>
+          <button class="sc-ghost" id="scReset" type="button">Reset</button>
         </div>
-        <div class="sc-note">No toca el inventario. Solo aprende códigos.</div>
+        <div class="sc-note">Doesn't change inventory. Learns codes only.</div>
       </div>
 
       <div class="sc-assign" id="scAssign">
         <div class="sc-assign-head">
           <div>
-            <div class="sc-assign-t">¿Qué artículo es?</div>
+            <div class="sc-assign-t">Which item is this?</div>
             <div class="sc-code" id="scAssignCode"></div>
           </div>
-          <button class="sc-x" id="scAssignX" type="button" aria-label="Omitir">
+          <button class="sc-x" id="scAssignX" type="button" aria-label="Skip">
             <i class="ti ti-x" aria-hidden="true"></i>
           </button>
         </div>
-        <input id="scAssignSearch" type="text" placeholder="Buscar por nombre" autocomplete="off">
+        <input id="scAssignSearch" type="text" placeholder="Search by name" autocomplete="off">
         <div class="sc-picks" id="scPicks"></div>
-        <div class="sc-note">Se guarda una vez y vale para todas las locaciones.</div>
+        <div class="sc-note">Saved once. Works across every location.</div>
       </div>`;
     document.body.appendChild(el);
 
@@ -218,18 +218,41 @@
   function renderPicks(q) {
     const master = (window.state && state.master) || [];
     const needle = String(q || '').trim().toLowerCase();
-    // Sin busqueda se muestran los primeros; con 300 articulos, pintarlos
-    // todos en cada tecla haria que escribir se sintiera pastoso.
-    const list = (needle
-      ? master.filter(r => String(r.item || '').toLowerCase().includes(needle))
-      : master).slice(0, 30);
 
-    $('scPicks').innerHTML = list.length
-      ? list.map(r => `<button type="button" class="sc-pick" data-item="${esc(r.item)}" data-code="${esc(r.code || '')}">
-           <span>${esc(r.item)}</span>
-           <small>${esc(r.vendor || '')}${r.code ? ' · ' + esc(r.code) : ''}</small>
-         </button>`).join('')
-      : '<div class="sc-empty">Ningún artículo coincide</div>';
+    // Ordenado por nombre. Antes salian los primeros 30 en el orden que
+    // trajera la nube, que para quien busca es orden aleatorio: la lista
+    // no servia ni para leerla ni para descartarla.
+    let list = master.slice().sort((a, b) =>
+      String(a.item || '').localeCompare(String(b.item || '')));
+
+    if (needle) {
+      // Las palabras se buscan por separado, asi "casa blanco" encuentra
+      // "Casamigos Tequila Blanco". Escribiendo con una mano y en un
+      // almacen, exigir el orden exacto es exigir demasiado.
+      const words = needle.split(/\s+/).filter(Boolean);
+      list = list.filter(r => {
+        const hay = (String(r.item || '') + ' ' + String(r.vendor || '')).toLowerCase();
+        return words.every(w => hay.includes(w));
+      });
+    }
+
+    const shown = list.slice(0, 60);
+    const head = needle
+      ? `${list.length} match${list.length === 1 ? '' : 'es'}`
+      : `${master.length} items · type to narrow`;
+
+    $('scPicks').innerHTML =
+      `<div class="sc-picks-head">${head}</div>` +
+      (shown.length
+        ? shown.map(r => `
+            <button type="button" class="sc-pick" data-item="${esc(r.item)}" data-code="${esc(r.code || '')}">
+              <span>${esc(r.item)}</span>
+              <small>${esc(r.vendor || '')}${r.code ? ' · ' + esc(r.code) : ''}</small>
+            </button>`).join('')
+        : '<div class="sc-empty">No items match</div>') +
+      (list.length > shown.length
+        ? `<div class="sc-empty">${list.length - shown.length} more · keep typing</div>`
+        : '');
 
     $('scPicks').querySelectorAll('.sc-pick').forEach(b => {
       b.onclick = () => saveAssignment(pausedFor, b.dataset.item, b.dataset.code);
@@ -239,7 +262,7 @@
   async function saveAssignment(upc, itemName, code) {
     const { url, key, account } = cfg();
     const box = $('scAssign');
-    $('scPicks').innerHTML = '<div class="sc-empty">Guardando…</div>';
+    $('scPicks').innerHTML = '<div class="sc-empty">Saving…</div>';
 
     try {
       // upsert sobre (account_id, upc): si alguien reasigna un codigo mal
@@ -263,22 +286,30 @@
           }])
         }
       );
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) throw new Error(res.status + ' · ' + (await res.text()).slice(0, 180));
 
       learned.set(String(upc), { upc, item_name: itemName, code });
       $('scHit').innerHTML =
         `<div class="sc-found">
            <div class="sc-code">${esc(upc)}</div>
            <div class="sc-item">${esc(itemName)}</div>
-           <div class="sc-meta">aprendido · vale para todas las locaciones</div>
+           <div class="sc-meta">learned · works across every location</div>
          </div>`;
       closeAssign();
     } catch (e) {
       // No se cierra el panel: el codigo sigue en pantalla y se puede
       // reintentar sin volver a escanear la botella.
+      //
+      // Y se enseña el error DE VERDAD, no un "no se pudo guardar". Un
+      // 401 o un 42501 dicen que falta una politica en la tabla; un
+      // fallo de red dice otra cosa. En un telefono no hay consola, asi
+      // que si el mensaje no sale aqui, no sale en ningun sitio.
       $('scPicks').innerHTML =
-        `<div class="sc-empty sc-bad">No se pudo guardar. Reintenta.</div>`;
-      setTimeout(() => renderPicks($('scAssignSearch').value), 1800);
+        `<div class="sc-empty sc-bad">Could not save</div>
+         <div class="sc-err">${esc(e.message)}</div>
+         <button type="button" class="sc-ghost" id="scRetry">Try again</button>`;
+      const rb = $('scRetry');
+      if (rb) rb.onclick = () => saveAssignment(upc, itemName, code);
       console.warn('scan: fallo al guardar el codigo', e);
     }
   }
@@ -317,7 +348,7 @@
       $('scHit').innerHTML =
         `<div class="sc-new">
            <div class="sc-code">${esc(text)}</div>
-           <div class="sc-item">Código nuevo</div>
+           <div class="sc-item">New code</div>
            <div class="sc-meta">${esc(format)} · ${fmt(ms)}</div>
          </div>`;
       askAssign(text);
@@ -395,7 +426,7 @@
       const res = coreReader.decode(bmp);
       if (!res) return null;
       const f = res.getBarcodeFormat?.();
-      return { text: res.getText(), format: (ZX.BarcodeFormat && ZX.BarcodeFormat[f]) || 'código' };
+      return { text: res.getText(), format: (ZX.BarcodeFormat && ZX.BarcodeFormat[f]) || 'barcode' };
     } catch (e) {
       // NotFoundException en cada intento sin codigo es el caso normal.
       // Cualquier otro error tampoco debe matar el bucle.
@@ -452,7 +483,7 @@
 
       if (canvas.width !== sw || canvas.height !== sh) {
         canvas.width = sw; canvas.height = sh;
-        diag('Recorte de ' + sw + '×' + sh + ' px · apunta al código', 'sc-ok');
+        diag('Crop ' + sw + '×' + sh + ' px · aim at the barcode', 'sc-ok');
       }
       // 1:1. El recorte se copia a tamaño nativo: reducir aqui es
       // exactamente el error que hacia ilegibles las barras.
@@ -485,8 +516,8 @@
     times = []; lastCode = ''; frames = 0; stats();
     loadLearned();   // sin await: que la camara no espere a la red
 
-    if (!window.isSecureContext) return diag('La conexión no es segura, la cámara no arranca.', 'sc-bad');
-    if (!navigator.mediaDevices?.getUserMedia) return diag('Este navegador no da acceso a la cámara.', 'sc-bad');
+    if (!window.isSecureContext) return diag('Connection is not secure, the camera cannot start.', 'sc-bad');
+    if (!navigator.mediaDevices?.getUserMedia) return diag('This browser gives no camera access.', 'sc-bad');
 
     if (!canvas) { canvas = document.createElement('canvas'); ctx = canvas.getContext('2d', { willReadFrequently: true }); }
 
@@ -508,10 +539,10 @@
     }
 
     if (!nativeDetector) {
-      diag('Cargando el lector…');
+      diag('Loading reader…');
       if (!ZX) {
         try { ZX = await import(/* webpackIgnore: true */ CDN); }
-        catch (e) { return diag('No se pudo cargar el lector: ' + esc(e.message), 'sc-bad'); }
+        catch (e) { return diag('Could not load the reader: ' + esc(e.message), 'sc-bad'); }
       }
       if (!coreReader) {
         // Restringir los formatos no es cosmetico: sin esto se prueba
@@ -539,7 +570,7 @@
         audio: false
       });
     } catch (e) {
-      return diag('Sin permiso de cámara (' + esc(e.name) + '). Actívalo en los ajustes de Safari.', 'sc-bad');
+      return diag('No camera permission (' + esc(e.name) + '). Enable it in Safari settings.', 'sc-bad');
     }
 
     const track = stream.getVideoTracks()[0];
@@ -549,7 +580,7 @@
     vid.srcObject = stream;
     await vid.play().catch(() => {});
 
-    diag((nativeDetector ? 'Lector nativo' : 'ZXing') + ' · cámara ' +
+    diag((nativeDetector ? 'Native reader' : 'ZXing') + ' · camera ' +
          (st.width || '?') + '×' + (st.height || '?'), 'sc-ok');
 
     running = true;
@@ -566,15 +597,15 @@
     const tb = $('scTorch');
     if (!('torch' in caps)) {
       tb.disabled = true;
-      tb.textContent = 'Linterna no disponible';
+      tb.textContent = 'No flashlight';
     } else {
       let on = false;
       tb.onclick = async () => {
         on = !on;
         try {
           await track.applyConstraints({ advanced: [{ torch: on }] });
-          tb.textContent = on ? 'Apagar linterna' : 'Linterna';
-        } catch (e) { tb.disabled = true; tb.textContent = 'Linterna no disponible'; }
+          tb.textContent = on ? 'Turn off' : 'Flashlight';
+        } catch (e) { tb.disabled = true; tb.textContent = 'No flashlight'; }
       };
     }
   }
