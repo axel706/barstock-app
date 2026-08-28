@@ -83,13 +83,7 @@ body.sc-locked{ overflow: hidden !important; }
   border-radius: 12px;
   box-shadow: 0 0 0 2000px rgba(0,0,0,.34);
 }
-.sc-timer{
-  position: absolute; top: 10px; right: 12px;
-  font-size: 13px; font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: #fff;
-  text-shadow: 0 1px 4px rgba(0,0,0,.9);
-}
+
 
 /* ── Panel inferior ── */
 .sc-panel{
@@ -116,27 +110,10 @@ body.sc-locked{ overflow: hidden !important; }
 .sc-item{ font-size: 13px; font-weight: 700; margin-top: 3px; }
 .sc-meta{ font-size: 11px; color: #94a3b8; margin-top: 2px; }
 
-.sc-stats{
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-  margin-bottom: 10px;
-}
-.sc-stats > div{
-  background: rgba(255,255,255,.05);
-  border-radius: 10px;
-  padding: 9px 4px;
-  text-align: center;
-}
-.sc-stats b{
-  display: block;
-  font-size: 19px; font-weight: 800; line-height: 1.15;
-  font-variant-numeric: tabular-nums;
-}
-.sc-stats span{
-  font-size: 9px; letter-spacing: .07em; text-transform: uppercase;
-  color: #94a3b8;
-}
+
+
+
+
 
 /* Los dos botones en fila. Apilados a lo ancho completo comian la
    altura del visor, que es lo unico que de verdad importa aqui. */
@@ -184,17 +161,39 @@ body.sc-locked{ overflow: hidden !important; }
 
 .sc-assign-head{
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   gap: 12px;
   margin-bottom: 12px;
 }
-.sc-assign-t{ font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+.sc-assign-t{ font-size: 17px; font-weight: 800; }
 
+/* El código en su propia insignia. Antes iba debajo del título, en gris
+   pequeño, y era el dato que confirma que estás asignando lo correcto. */
+.sc-assign-code{
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  color: #38bdf8;
+  background: rgba(56,189,248,.12);
+  border: 1px solid rgba(56,189,248,.30);
+  border-radius: 10px;
+  padding: 9px 12px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.sc-search{ position: relative; margin-bottom: 12px; }
+.sc-search > i{
+  position: absolute;
+  left: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 18px; color: #94a3b8;
+  pointer-events: none;
+}
 .sc-assign input{
   width: 100%;
-  height: 46px;
-  padding: 0 13px;
+  height: 50px;
+  padding: 0 13px 0 40px;
   border-radius: 12px;
   background: rgba(255,255,255,.08);
   border: 1px solid rgba(255,255,255,.20);
@@ -204,7 +203,6 @@ body.sc-locked{ overflow: hidden !important; }
      vuelve solo. En mitad de un conteo eso es insufrible. */
   font-size: 16px;
   font-weight: 600;
-  margin-bottom: 10px;
 }
 
 .sc-picks{
@@ -229,30 +227,80 @@ body.sc-locked{ overflow: hidden !important; }
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 .sc-pick{
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   width: 100%;
   text-align: left;
-  /* 52px de alto: se elige con el pulgar y con una botella en la otra
-     mano. Una lista compacta aqui provocaria asignaciones equivocadas,
-     que es el error mas caro de todos porque queda guardado. */
-  min-height: 52px;
-  padding: 8px 12px;
-  margin-bottom: 6px;
-  border-radius: 10px;
+  /* 56px de alto: se elige con el pulgar y con una botella en la otra
+     mano. Una lista compacta aqui provoca asignaciones equivocadas, que
+     es el error mas caro porque queda guardado. */
+  min-height: 56px;
+  padding: 10px 13px;
+  margin-bottom: 7px;
+  border-radius: 12px;
   background: rgba(255,255,255,.05);
-  border: 1px solid rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.12);
   color: #f1f5f9;
   font-family: inherit;
   cursor: pointer;
 }
-.sc-pick > span{ display: block; font-size: 14px; font-weight: 700; }
-.sc-pick > small{ display: block; font-size: 11px; color: #94a3b8; margin-top: 2px; }
+.sc-pick:active{ background: rgba(56,189,248,.16); border-color: rgba(56,189,248,.45); }
+.sc-pick-name{
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.sc-pick-meta{
+  display: flex; align-items: center; gap: 8px;
+  flex-shrink: 0;
+}
+.sc-pick-meta em{
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  color: #94a3b8;
+  background: rgba(255,255,255,.07);
+  border-radius: 5px;
+  padding: 3px 6px;
+}
+/* Los que ya tienen código aprendido llevan la marca y van al final de
+   la lista: si escaneas algo desconocido, casi seguro no es uno de esos. */
+.sc-pick-meta > i{ font-size: 15px; color: #38bdf8; opacity: .55; }
 
 .sc-empty{ font-size: 13px; color: #94a3b8; text-align: center; padding: 20px 0; }
 .sc-empty.sc-bad{ color: #ef4444; font-weight: 700; }
 
 /* En horizontal la camara se lleva casi todo y el panel se aprieta */
 @media (max-height: 520px) {
-  .sc-stats{ display: none; }
   .sc-panel{ padding: 8px 12px 10px; }
 }
+
+/* ── Modo claro ─────────────────────────────────────────────────────────
+   El visor de la cámara se queda oscuro siempre: es vídeo, y un marco
+   claro alrededor solo resta contraste a lo que hay que leer. Lo que sí
+   cambia es todo lo demás. */
+body.light .sc-assign{ background: #eef2f8; }
+body.light .sc-assign-t{ color: #0f172a; }
+body.light .sc-assign input{
+  background: #ffffff;
+  border-color: rgba(15,23,42,.14);
+  color: #0f172a;
+}
+body.light .sc-assign-code{
+  background: rgba(2,132,199,.10);
+  border-color: rgba(2,132,199,.30);
+  color: #0369a1;
+}
+body.light .sc-pick{
+  background: #ffffff;
+  border-color: rgba(15,23,42,.10);
+  color: #0f172a;
+}
+body.light .sc-pick-meta em{ background: rgba(15,23,42,.06); color: #475569; }
+body.light .sc-picks-head,
+body.light .sc-empty,
+body.light .sc-err{ color: #475569; }

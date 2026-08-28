@@ -69,6 +69,23 @@
       p: [[0,1],[1,1]]
     },
 
+    // El respaldo cuando un articulo todavia no tiene forma asignada.
+    //
+    // Antes ese papel lo hacia 'cylinder', y fue un error: el cilindro es
+    // la forma de CONTROL del banco de pruebas, un rectangulo perfecto
+    // con el que se comprobo que la integral reproducia el metodo lineal.
+    // Como valor por defecto dibujaba un cuadrado y no una botella, que
+    // es exactamente lo que se veia en pantalla.
+    //
+    // Esta es una botella de verdad, de hombros medios. No es exacta para
+    // ningun producto concreto —para eso esta la asignacion— pero se
+    // parece a una botella y su error es mucho menor que el de un
+    // rectangulo.
+    generic: {
+      name: 'Generic bottle', pourable: true, yFull: 0.78,
+      p: [[0,.97],[.04,1],[.56,1],[.63,.96],[.71,.58],[.78,.32],[.83,.29],[.97,.29],[1,.32]]
+    },
+
     // No todo se cuenta por nivel. Una cerveza, una lata o un refresco se
     // cuentan enteros, y enseñarles un deslizador seria pedirle a alguien
     // que estime la fraccion de algo que nunca esta a medias. La pantalla

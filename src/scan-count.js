@@ -115,17 +115,17 @@
 
       <div class="sc-assign" id="scAssign">
         <div class="sc-assign-head">
-          <div>
-            <div class="sc-assign-t">Which item is this?</div>
-            <div class="sc-code" id="scAssignCode"></div>
-          </div>
-          <button class="sc-x" id="scAssignX" type="button" aria-label="Skip">
-            <i class="ti ti-x" aria-hidden="true"></i>
+          <button class="sc-x" id="scAssignX" type="button" aria-label="Back">
+            <i class="ti ti-arrow-left" aria-hidden="true"></i>
           </button>
+          <div class="sc-assign-t">Which item is this?</div>
         </div>
-        <input id="scAssignSearch" type="text" placeholder="Search by name" autocomplete="off">
+        <div class="sc-assign-code" id="scAssignCode"></div>
+        <div class="sc-search">
+          <i class="ti ti-search" aria-hidden="true"></i>
+          <input id="scAssignSearch" type="text" placeholder="Search by name" autocomplete="off">
+        </div>
         <div class="sc-picks" id="scPicks"></div>
-        <div class="sc-note">Saved once. Works across every location.</div>
       </div>`;
     document.body.appendChild(el);
 
@@ -212,6 +212,7 @@
     $('scAssignCode').textContent = upc || 'no barcode';
     $('scAssign').querySelector('.sc-assign-t').textContent =
       upc ? 'Which item is this?' : 'Find the item';
+    $('scAssignCode').style.display = upc ? '' : 'none';
     $('scAssignSearch').value = '';
     renderPicks('');
     setTimeout(() => $('scAssignSearch').focus(), 50);
@@ -238,6 +239,13 @@
       });
     }
 
+    // Los articulos que aun no tienen ningun codigo aprendido van
+    // primero. Si estas escaneando algo desconocido, lo mas probable es
+    // que sea uno de esos; los que ya tienen codigo suelen aparecer solos
+    // al escanearlos.
+    const conCodigo = new Set(Array.from(learned.values()).map(v => v.item_name));
+    list.sort((a, b) => (conCodigo.has(a.item) ? 1 : 0) - (conCodigo.has(b.item) ? 1 : 0));
+
     const shown = list.slice(0, 60);
     const head = needle
       ? `${list.length} match${list.length === 1 ? '' : 'es'}`
@@ -248,8 +256,11 @@
       (shown.length
         ? shown.map(r => `
             <button type="button" class="sc-pick" data-item="${esc(r.item)}" data-code="${esc(r.code || '')}">
-              <span>${esc(r.item)}</span>
-              <small>${esc(r.vendor || '')}${r.code ? ' · ' + esc(r.code) : ''}</small>
+              <span class="sc-pick-name">${esc(r.item)}</span>
+              <span class="sc-pick-meta">
+                ${r.vendor ? `<em>${esc(r.vendor)}</em>` : ''}
+                ${conCodigo.has(r.item) ? '<i class="ti ti-barcode" aria-hidden="true"></i>' : ''}
+              </span>
             </button>`).join('')
         : '<div class="sc-empty">No items match</div>') +
       (list.length > shown.length

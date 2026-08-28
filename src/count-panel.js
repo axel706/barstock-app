@@ -41,9 +41,16 @@
       ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
   }
 
+  // Sin forma asignada se cae a 'generic', que es una botella. Antes se
+  // caia a 'cylinder', que es un rectangulo perfecto: la forma de control
+  // del banco de pruebas. Por eso el deslizador salia cuadrado.
   function shapeOf(row) {
     const k = row && row.bottleShape;
-    return (P() && P().get(k)) ? k : 'cylinder';
+    return (P() && P().get(k)) ? k : 'generic';
+  }
+
+  function shapeIsSet(row) {
+    return !!(row && row.bottleShape && P() && P().get(row.bottleShape));
   }
 
   function pourable(row) {
@@ -159,7 +166,10 @@
       <div class="cp-read">
         <b>${frac.toFixed(2)}</b>
         <small>${ml} ml of ${_row.bottleSizeMl || 750} · drag the line</small>
-      </div>`;
+      </div>
+      ${shapeIsSet(_row) ? '' :
+        `<div class="cp-hint">Bottle shape not set — using a generic one.
+          Run <b>Assign bottle shapes</b> in Inventory for an exact reading.</div>`}`;
 
     positionLine(y);
     bindDrag();

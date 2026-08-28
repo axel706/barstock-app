@@ -277,3 +277,107 @@
   font-family: inherit; font-size: 15px; font-weight: 800;
   cursor: pointer;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   Estilo de la app
+   ══════════════════════════════════════════════════════════════════════
+
+   Estas pantallas nacieron con fondo plano y sin modo claro. La app
+   tiene 223 reglas body.light y estas tenían cero, así que en claro se
+   veían como una aplicación distinta metida dentro de la otra.
+
+   Los bloques pasan a ser tarjetas con borde, como .card. El fondo del
+   panel se queda opaco a propósito: son pantallas de trabajo a una mano
+   y el cristal translúcido sobre una cámara resta legibilidad. */
+
+.cp-block,
+.cp-sealed{
+  background: rgba(17,24,39,.86);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  padding: 14px;
+  margin: 0 0 12px;
+}
+.cp-sealed{ margin: 0 14px 12px; }
+.cp-body{ padding: 14px 14px 2px; }
+
+/* El pie deja de ser una línea suelta y pasa a leerse como un bloque */
+.cp-foot{
+  background: rgba(17,24,39,.94);
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+.cp-hint{
+  margin-top: 10px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: rgba(245,158,11,.13);
+  border: 1px solid rgba(245,158,11,.34);
+  color: #fbbf24;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.cp-hint b{ font-weight: 800; }
+
+/* ── Modo claro ───────────────────────────────────────────────────── */
+body.light .cp-panel,
+body.light .cf-panel{ background: #eef2f8; color: #0f172a; }
+
+body.light .cp-block,
+body.light .cp-sealed,
+body.light .cp-foot{
+  background: rgba(255,255,255,.96);
+  border-color: rgba(15,23,42,.08);
+}
+body.light .cp-head,
+body.light .cf-head{ border-bottom-color: rgba(15,23,42,.10); }
+body.light .cp-foot{ border-top-color: rgba(15,23,42,.10); }
+
+body.light .cp-sub,
+body.light .cp-label,
+body.light .cp-read small,
+body.light .cp-openrow > span,
+body.light .cp-total span,
+body.light .cf-note,
+body.light .cf-label,
+body.light .cf-status,
+body.light .cf-empty,
+body.light .cf-err{ color: #475569; }
+
+body.light .cp-step button{
+  background: #e8eef7;
+  border-color: rgba(15,23,42,.12);
+  color: #0f172a;
+}
+body.light .cp-openrow{
+  background: rgba(15,23,42,.03);
+  border-color: rgba(15,23,42,.10);
+}
+body.light .cp-openrow button{ border-color: rgba(15,23,42,.14); color: #475569; }
+body.light .cp-line > span{ background: #0f172a; }
+body.light .cp-line > i{ background: #ffffff; border-color: rgba(15,23,42,.25); }
+
+body.light .cf-opt{
+  background: #ffffff;
+  border-color: rgba(15,23,42,.12);
+  color: #0f172a;
+}
+body.light .cf-ghost{ background: #e8eef7; border-color: rgba(15,23,42,.12); color: #0f172a; }
+body.light .sc-finish{ background: rgba(2,132,199,.12); color: #0284c7; }
+
+/* En claro, el azul de la app es más oscuro para que el texto blanco
+   encima siga leyéndose. */
+body.light .cp-next,
+body.light .cf-go{ background: #0284c7; color: #ffffff; }
+
+/* Los avisos, con el contraste que pedía la app y no el de un tema
+   oscuro sobre fondo claro. */
+body.light .cf-warn{
+  background: #fef3c7; border-color: #f59e0b; color: #78350f;
+}
+body.light .cf-ok{
+  background: #dcfce7; border-color: #22c55e; color: #14532d;
+}
+body.light .cp-hint{
+  background: #fef3c7; border-color: #f59e0b; color: #78350f;
+}
