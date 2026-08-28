@@ -95,29 +95,22 @@
           <i class="ti ti-x" aria-hidden="true"></i>
         </button>
         <span class="sc-lab">Scan</span>
-        <span class="sc-n" id="scN">0</span>
+        <span class="sc-n" id="scN">0 counted</span>
       </div>
 
       <div class="sc-stage" id="scStage">
         <video id="scVid" playsinline muted autoplay></video>
         <div class="sc-guide"><i></i></div>
-        <div class="sc-timer" id="scTimer">0.0 s</div>
       </div>
 
       <div class="sc-panel">
         <div class="sc-diag" id="scDiag"></div>
         <div class="sc-hit" id="scHit"></div>
-        <div class="sc-stats">
-          <div><b id="scMed">—</b><span>median</span></div>
-          <div><b id="scMax">—</b><span>worst</span></div>
-          <div><b id="scTot">0</b><span>bottles</span></div>
-          <div><b id="scFrames">0</b><span>frames</span></div>
-        </div>
         <div class="sc-btns">
           <button class="sc-ghost" id="scTorch" type="button">Flashlight</button>
-          <button class="sc-ghost" id="scReset" type="button">Reset</button>
+          <button class="sc-ghost" id="scFind" type="button">Find by name</button>
         </div>
-        <div class="sc-note">Doesn't change inventory. Learns codes only.</div>
+        <button class="sc-finish" id="scFinish" type="button">Finish count</button>
       </div>
 
       <div class="sc-assign" id="scAssign">
@@ -139,12 +132,16 @@
     $('scClose').addEventListener('click', close);
     $('scAssignX').addEventListener('click', closeAssign);
     $('scAssignSearch').addEventListener('input', (e) => renderPicks(e.target.value));
-    $('scReset').addEventListener('click', () => {
-      times = []; lastCode = ''; frames = 0;
-      clearTimeout(markTimer);
-      $('scHit').innerHTML = '';
-      stats(); mark();
+    $('scFinish').addEventListener('click', () => {
+      if (window.BarStockCountFinish) {
+        running = false;
+        clearTimeout(loopId);
+        window.BarStockCountFinish.open(() => { running = true; mark(); tick(); }, close);
+      }
     });
+    // Etiqueta rota, botella rellenable o destileria pequeña sin codigo:
+    // sin esta salida el conteo se para en seco.
+    $('scFind').addEventListener('click', () => askAssign(null));
   }
 
   function diag(html, cls) {
@@ -202,6 +199,9 @@
   }
 
   // ── Preguntar de qué artículo es ────────────────────────────────────
+  // upc === null significa "buscar a mano": no hay codigo que aprender,
+  // solo hay que llegar al articulo. Pasa mas de lo que parece — etiqueta
+  // rota, botella rellenable, destileria que no imprime codigo.
   function askAssign(upc) {
     pausedFor = upc;
     running = false;              // no tiene sentido decodificar mientras elige
@@ -209,7 +209,9 @@
 
     const box = $('scAssign');
     box.classList.add('on');
-    $('scAssignCode').textContent = upc;
+    $('scAssignCode').textContent = upc || 'no barcode';
+    $('scAssign').querySelector('.sc-assign-t').textContent =
+      upc ? 'Which item is this?' : 'Find the item';
     $('scAssignSearch').value = '';
     renderPicks('');
     setTimeout(() => $('scAssignSearch').focus(), 50);
@@ -261,7 +263,10 @@
 
   async function saveAssignment(upc, itemName, code) {
     const { url, key, account } = cfg();
-    const box = $('scAssign');
+
+    // Sin codigo no hay nada que aprender: se va directo a contar.
+    if (!upc) { closeAssign(); toCount(itemName); return; }
+
     $('scPicks').innerHTML = '<div class="sc-empty">Saving…</div>';
 
     try {
@@ -296,6 +301,7 @@
            <div class="sc-meta">learned · works across every location</div>
          </div>`;
       closeAssign();
+      toCount(itemName);
     } catch (e) {
       // No se cierra el panel: el codigo sigue en pantalla y se puede
       // reintentar sin volver a escanear la botella.
@@ -312,6 +318,17 @@
       if (rb) rb.onclick = () => saveAssignment(upc, itemName, code);
       console.warn('scan: fallo al guardar el codigo', e);
     }
+  }
+
+  // Puente al panel de conteo. Identificar un articulo sin poder contarlo
+  // dejaria el flujo a medias justo en el paso que importa.
+  function toCount(itemName) {
+    const master = (window.state && state.master) || [];
+    const row = master.find(r => r.item === itemName);
+    if (!row || !window.BarStockCountPanel) return;
+    running = false;
+    clearTimeout(loopId);
+    window.BarStockCountPanel.open(row, () => { running = true; mark(); tick(); stats(); });
   }
 
   function closeAssign() {
@@ -409,21 +426,12 @@
     if (navigator.vibrate) navigator.vibrate(40);   // Android sí lo tiene
   }
 
+  // Ya no se miden tiempos: eso era el banco de pruebas y sirvio para
+  // decidir que el escaneo era viable. Lo unico que necesita ver quien
+  // cuenta es cuantos articulos lleva.
   function stats() {
-    const n = times.length;
-    if ($('scTot')) $('scTot').textContent = n;
-    if ($('scN')) $('scN').textContent = n;
-    if ($('scFrames')) $('scFrames').textContent = frames;
-    if (!n) {
-      if ($('scMed')) $('scMed').textContent = '—';
-      if ($('scMax')) $('scMax').textContent = '—';
-      return;
-    }
-    const s = [...times].sort((a, b) => a - b);
-    const med = s.length % 2 ? s[(s.length - 1) / 2]
-                             : (s[s.length / 2 - 1] + s[s.length / 2]) / 2;
-    if ($('scMed')) $('scMed').textContent = fmt(med);
-    if ($('scMax')) $('scMax').textContent = fmt(s[s.length - 1]);
+    const n = window.BarStockCountSession ? window.BarStockCountSession.size() : 0;
+    if ($('scN')) $('scN').textContent = n + ' counted';
   }
 
   // ── Decodificar un lienzo ───────────────────────────────────────────

@@ -138,6 +138,15 @@
   cursor: pointer;
 }
 
+/* Las selladas viven fuera del área que hace scroll, pegadas al pie.
+   Estaban arriba del todo, que es justo donde el pulgar no llega
+   sujetando el teléfono con una mano. */
+.cp-sealed{
+  flex-shrink: 0;
+  padding: 10px 14px 0;
+}
+.cp-sealed .cp-label{ margin-bottom: 6px; }
+
 /* ── Pie ── */
 .cp-foot{
   flex-shrink: 0;
@@ -166,4 +175,105 @@
   .cp-read b{ font-size: 27px; }
   .cp-step button{ width: 56px; height: 56px; }
   .cp-num{ font-size: 32px; }
+}
+
+/* ── Cerrar el conteo ──────────────────────────────────────────────────
+   Encima de todo lo del conteo. Es la pantalla que escribe, así que
+   ninguna otra debe poder taparla mientras se decide. */
+.cf-panel{
+  position: fixed;
+  inset: 0;
+  z-index: 100001;
+  display: none;
+  flex-direction: column;
+  background: #0b1220;
+  color: #f1f5f9;
+  font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.cf-panel.on{ display: flex; }
+
+.cf-head{
+  display: flex; align-items: center; gap: 12px;
+  padding: calc(10px + env(safe-area-inset-top)) 14px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.09);
+  flex-shrink: 0;
+}
+.cf-title{ font-size: 16px; font-weight: 800; }
+
+.cf-body{
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 18px 14px 14px;
+}
+
+.cf-count{ font-size: 20px; font-weight: 700; margin-bottom: 14px; }
+.cf-count b{ font-size: 30px; font-weight: 800; }
+
+.cf-warn{
+  background: rgba(245,158,11,.14);
+  border: 1px solid rgba(245,158,11,.40);
+  color: #fbbf24;
+  border-radius: 12px; padding: 12px 13px;
+  font-size: 13px; line-height: 1.5; margin-bottom: 16px;
+}
+.cf-ok{
+  background: rgba(34,197,94,.13);
+  border: 1px solid rgba(34,197,94,.38);
+  color: #4ade80;
+  border-radius: 12px; padding: 12px 13px;
+  font-size: 13px; margin-bottom: 16px;
+}
+.cf-err{
+  font-size: 11px; color: #94a3b8; margin-bottom: 14px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  word-break: break-word;
+}
+.cf-empty{ font-size: 15px; color: #94a3b8; text-align: center; padding: 30px 0; }
+
+.cf-label{
+  font-size: 11px; letter-spacing: .07em; text-transform: uppercase;
+  color: #94a3b8; font-weight: 800; margin-bottom: 8px;
+}
+
+/* La opción marcada de salida es la que NO destruye nada. Quien pulsa
+   sin leer se lleva la segura. */
+.cf-opt{
+  display: block; width: 100%; text-align: left;
+  padding: 13px; margin-bottom: 8px;
+  border-radius: 12px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.14);
+  color: #f1f5f9; font-family: inherit; cursor: pointer;
+}
+.cf-opt.on{ border: 2px solid #38bdf8; background: rgba(56,189,248,.10); }
+.cf-opt b{ display: block; font-size: 15px; font-weight: 700; }
+.cf-opt small{ display: block; font-size: 12px; color: #94a3b8; margin-top: 3px; }
+
+.cf-ghost{
+  width: 100%; height: 48px; margin: 14px 0 8px;
+  border-radius: 12px; background: transparent;
+  border: 1px solid rgba(255,255,255,.20);
+  color: #f1f5f9; font-family: inherit; font-size: 15px; font-weight: 700;
+  cursor: pointer;
+}
+.cf-go{
+  width: 100%; height: 54px;
+  border-radius: 13px; border: none;
+  background: #38bdf8; color: #04263a;
+  font-family: inherit; font-size: 16px; font-weight: 800;
+  cursor: pointer;
+}
+.cf-note{ font-size: 11px; color: #94a3b8; text-align: center; margin-top: 10px; line-height: 1.5; }
+.cf-status{ font-size: 15px; color: #94a3b8; text-align: center; padding: 40px 0; }
+.cf-done{ font-size: 54px; color: #22c55e; text-align: center; margin-bottom: 6px; }
+
+/* Botón de finalizar, en la pantalla de escaneo */
+.sc-finish{
+  width: 100%; height: 48px; margin-top: 8px;
+  border-radius: 12px; border: none;
+  background: rgba(56,189,248,.16);
+  color: #38bdf8;
+  font-family: inherit; font-size: 15px; font-weight: 800;
+  cursor: pointer;
 }

@@ -73,22 +73,22 @@
       </div>
 
       <div class="cp-body">
-        <div class="cp-block">
-          <div class="cp-label">Sealed bottles</div>
-          <div class="cp-step">
-            <button type="button" id="cpMinus" aria-label="One less">−</button>
-            <div class="cp-num" id="cpSealed">0</div>
-            <button type="button" id="cpPlus" aria-label="One more">+</button>
-          </div>
-        </div>
-
         <div class="cp-block" id="cpOpenBlock">
-          <div class="cp-label">Open bottles</div>
+          <div class="cp-label">Open bottle</div>
           <div class="cp-open" id="cpOpen"></div>
           <div class="cp-opens" id="cpOpens"></div>
           <button type="button" class="cp-add" id="cpAdd">
             <i class="ti ti-plus" aria-hidden="true"></i> Add another open bottle
           </button>
+        </div>
+      </div>
+
+      <div class="cp-sealed">
+        <div class="cp-label">Sealed bottles</div>
+        <div class="cp-step">
+          <button type="button" id="cpMinus" aria-label="One less">−</button>
+          <div class="cp-num" id="cpSealed">0</div>
+          <button type="button" id="cpPlus" aria-label="One more">+</button>
         </div>
       </div>
 
@@ -135,10 +135,6 @@
     const host = $('cpOpen');
     if (!host) return;
 
-    if (_active < 0 || !_opens.length) {
-      host.innerHTML = `<div class="cp-none">No open bottle. Add one if there is a partial.</div>`;
-      return;
-    }
 
     const key = shapeOf(_row);
     const prof = P().get(key);
@@ -233,7 +229,8 @@
     host.querySelectorAll('[data-del]').forEach(b => {
       b.onclick = () => {
         _opens.splice(Number(b.dataset.del), 1);
-        _active = Math.min(_active, _opens.length - 1);
+        if (!_opens.length) _opens = [0];
+        _active = Math.max(0, Math.min(_active, _opens.length - 1));
         paintAll();
       };
     });
@@ -261,11 +258,17 @@
     if (prev) {
       _sealed = Number(prev.sealed) || 0;
       _opens = (prev.opens || []).slice();
-      if (_opens.length) _active = 0;
     } else {
       _sealed = 0;
       _opens = [];
     }
+    // Siempre hay una abierta en pantalla, aunque valga cero. Un
+    // deslizador que aparece solo despues de pulsar un boton obliga a
+    // decidir antes de mirar, y lo natural es mirar la botella y ajustar.
+    // Una abierta en cero no se guarda: el filtro de la sesion la
+    // descarta, asi que no tocarla equivale a decir que no hay parcial.
+    if (!_opens.length) _opens = [0];
+    _active = 0;
 
     const size = row.bottleSizeMl ? row.bottleSizeMl + ' ml' : 'size not set';
     const was = (row.onHand === 0 || row.onHand) ? ' · was ' + row.onHand : '';
