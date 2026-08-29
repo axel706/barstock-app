@@ -230,6 +230,125 @@ Reply with JSON only, no prose:
   });
 }
 
+// ── Silueta leyendo la FOTO ────────────────────────────────────────────
+//
+// Aqui el modelo no recuerda: MIRA. Se le manda la foto que acaba de
+// tomar la persona y se le pide que lea los bordes de la botella.
+//
+// Y no se le pide una silueta abstracta, se le piden COORDENADAS: a
+// dieciseis alturas, donde esta el borde izquierdo y el derecho como
+// fraccion del ancho de la imagen. Es una tarea de percepcion, que es lo
+// que un modelo de vision hace bien, en vez de una de memoria, que es
+// donde se inventa cosas. La conversion a perfil se hace aqui.
+//
+// Esto sustituye al umbral por color que habia antes en el navegador.
+// Aquel fallaba por dos motivos: promediaba las cuatro esquinas en un
+// solo color de fondo —y en una foto real las de arriba son pared y las
+// de abajo son estante—, y sobre todo no puede con el vidrio
+// transparente, que opticamente ES el fondo. Un Tito's contra una pared
+// clara no tiene borde que umbralizar.
+async function photoMode(res, image, name) {
+  if (!image || typeof image !== 'string') {
+    return res.status(400).json({ ok: false, error: 'Missing image' });
+  }
+  const m = image.match(/^data:image\/(jpeg|jpg|png|webp);base64,(.+)$/);
+  if (!m) return res.status(400).json({ ok: false, error: 'Image must be a base64 data URL' });
+
+  const mediaType = 'image/' + (m[1] === 'jpg' ? 'jpeg' : m[1]);
+  const b64 = m[2];
+  if (b64.length > 6_000_000) {
+    return res.status(400).json({ ok: false, error: 'Image too large' });
+  }
+
+  const prompt =
+`This photo shows a bottle${name ? ' of ' + name : ''}. Read its outline.
+
+Give me, as fractions of the image dimensions:
+- "bottom": the y of the very base of the bottle where it meets the surface
+- "top": the y of the top of the cap or mouth
+- "edges": exactly 16 pairs [left, right], the x of the bottle's left and right edge, sampled at 16 evenly spaced heights from "bottom" up to "top". The first pair is at the base, the last at the top.
+- "yFull": if the bottle is unopened or you can clearly see the liquid line, the y of that liquid surface. If you cannot see it, use null.
+- "ok": false if the photo does not show a single bottle clearly enough to trace, true otherwise.
+
+y is measured from the TOP of the image (0) to the bottom (1). x from left (0) to right (1).
+
+Read the GLASS, not the label. On a clear bottle the glass edge is visible against the background as a bright rim, a dark line or a change in what is behind it — follow that, not the edge of the paper label, which is narrower than the bottle.
+
+Include the cap in top. Follow the real curve: the shoulder of a bottle is a curve, so consecutive pairs across it should change gradually, not jump.
+
+Reply with JSON only, no prose:
+{"ok": true, "bottom": 0.93, "top": 0.11, "yFull": 0.34, "edges": [[0.31,0.69],[0.31,0.69], ... 16 pairs ...]}`;
+
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: ANTHROPIC_MODEL,
+      max_tokens: 2000,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: mediaType, data: b64 } },
+          { type: 'text', text: prompt }
+        ]
+      }]
+    })
+  });
+
+  if (!r.ok) {
+    const t = await r.text();
+    console.error('categorize/photo: anthropic error', t);
+    return res.status(502).json({ ok: false, error: 'Model request failed' });
+  }
+
+  const data = await r.json();
+  const text = (data.content || []).map(c => c.text || '').join('');
+  const jm = text.match(/\{[\s\S]*\}/);
+  if (!jm) return res.status(200).json({ ok: false, error: 'No JSON in reply' });
+
+  let v;
+  try { v = JSON.parse(jm[0]); }
+  catch (e) { return res.status(200).json({ ok: false, error: 'Unparseable reply' }); }
+
+  if (v.ok === false) {
+    return res.status(200).json({ ok: false, error: 'Could not see a single clear bottle' });
+  }
+
+  const top = Number(v.top), bottom = Number(v.bottom);
+  if (!isFinite(top) || !isFinite(bottom) || !(bottom > top)) {
+    return res.status(200).json({ ok: false, error: 'Bad top/bottom' });
+  }
+  if (!Array.isArray(v.edges) || v.edges.length < 6) {
+    return res.status(200).json({ ok: false, error: 'Not enough edge samples' });
+  }
+
+  // Se devuelven las coordenadas TAL CUAL, sin convertirlas todavia a
+  // perfil. El navegador las pinta sobre la foto como tiradores que la
+  // persona puede arrastrar: asi lo que se guarda es siempre lo que se
+  // ha visto encima del vidrio, no lo que dijo el modelo.
+  const edges = [];
+  for (const e of v.edges) {
+    if (!Array.isArray(e) || e.length !== 2) continue;
+    const l = Number(e[0]), rr = Number(e[1]);
+    if (!isFinite(l) || !isFinite(rr) || rr <= l) continue;
+    edges.push([Math.max(0, Math.min(1, l)), Math.max(0, Math.min(1, rr))]);
+  }
+  if (edges.length < 6) return res.status(200).json({ ok: false, error: 'Edges unusable' });
+
+  const yFull = Number(v.yFull);
+  return res.status(200).json({
+    ok: true,
+    top: Math.max(0, Math.min(1, top)),
+    bottom: Math.max(0, Math.min(1, bottom)),
+    edges,
+    yFull: (isFinite(yFull) && yFull > top && yFull < bottom) ? yFull : null
+  });
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -266,6 +385,9 @@ module.exports = async function handler(req, res) {
     }
     if (mode === 'silhouette') {
       return await silhouetteMode(res, names);
+    }
+    if (mode === 'photo') {
+      return await photoMode(res, req.body.image, req.body.name);
     }
 
     const cats = Array.isArray(categories) && categories.length ? categories : [
