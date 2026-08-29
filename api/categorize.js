@@ -101,6 +101,135 @@ Reply with JSON only, no prose, in this shape:
   return res.status(200).json({ ok: true, map, asked: names.length, answered: Object.keys(map).length });
 }
 
+// ── Silueta propia de cada producto ────────────────────────────────────
+//
+// Devuelve la GEOMETRIA de la botella de ese producto concreto, no el
+// nombre de una familia. La de Patron no es la de Casamigos aunque las
+// dos sean tequila, y esa diferencia son unos 16 ml en un cuarto de
+// botella.
+//
+// El perfil se dibuja Y se calcula. Es deliberado: asi una forma
+// equivocada se ve a simple vista en la parrilla de revision, en vez de
+// esconderse dentro de un numero que parece correcto.
+async function silhouetteMode(res, names) {
+  if (names.length > 40) {
+    return res.status(400).json({ ok: false, error: 'Too many names for silhouettes' });
+  }
+
+  const prompt =
+`You are describing the SHAPE of specific bottles, so an app can turn a liquid level into a volume.
+
+For each product, give the bottle's profile as a list of [y, r] points:
+- y is height from 0 at the base to 1 at the mouth
+- r is the radius at that height, relative to the widest part (widest point = 1)
+- points ordered from base to mouth, starting at y = 0 and ending at y = 1
+- use 8 to 14 points. Spend most of them on the shoulder, where the curve actually is: a bottle described with 3 points looks like a box.
+
+Also give yFull: the height the liquid reaches in a full unopened bottle. Never 1 — above it sit the neck and the air. Typically 0.65 to 0.85.
+
+Describe the ACTUAL bottle of that specific product. Patron is short and round with a stubby neck and a wide flat base. Jack Daniel's is square shouldered and flat sided. Grey Goose is tall, straight and narrow. Disaronno is a squat rectangular decanter. Crown Royal has rounded shoulders and a long tapering neck. These differences change the volume at a given height by up to 15 percent.
+
+Rules:
+- If you do not know what that specific bottle looks like, OMIT it. An omission falls back to a family shape, which is fine. An invented profile is not: it gives a number that looks precise and is wrong, and nobody re-checks a filled-in value.
+- Do not answer from the category. "It is a tequila so probably like this" is exactly what to omit.
+
+Products:
+${names.map(n => '- ' + n).join('\n')}
+
+Reply with JSON only, no prose:
+{"Product name exactly as given": {"yFull": 0.72, "p": [[0,0.95],[0.04,1],[0.38,1],[0.46,0.97],[0.55,0.78],[0.63,0.5],[0.69,0.34],[0.74,0.29],[0.92,0.29],[1,0.33]]}, ...}`;
+
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: ANTHROPIC_MODEL,
+      max_tokens: 8000,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+
+  if (!r.ok) {
+    const t = await r.text();
+    console.error('categorize/silhouette: anthropic error', t);
+    return res.status(502).json({ ok: false, error: 'Model request failed' });
+  }
+
+  const data = await r.json();
+  const text = (data.content || []).map(c => c.text || '').join('');
+  const m = text.match(/\{[\s\S]*\}/);
+  if (!m) return res.status(200).json({ ok: true, map: {}, asked: names.length, answered: 0, note: 'no json in reply' });
+
+  let parsed;
+  try { parsed = JSON.parse(m[0]); }
+  catch (e) { return res.status(200).json({ ok: true, map: {}, asked: names.length, answered: 0, note: 'unparseable json' }); }
+
+  // Se valida en el servidor porque este perfil acaba en la base de datos
+  // y de ahi en el calculo del inventario: un punto desordenado daria una
+  // integral sin sentido y sin error visible.
+  //
+  // Pero se NORMALIZA antes de rechazar. Exigir que el primer punto sea
+  // exactamente 0, el ultimo exactamente 1 y que algun radio llegue a 1
+  // descartaria botellas perfectamente razonables que empiezan en 0.02 o
+  // cuyo radio maximo es 0.94. Como lo que se usa es una FRACCION de
+  // volumen, escalar todos los radios por igual no cambia el resultado:
+  // normalizar sale gratis y rechazar sale caro.
+  const asked = new Set(names);
+  const map = {};
+  const rejected = [];
+
+  for (const [k, v] of Object.entries(parsed)) {
+    if (!asked.has(k)) continue;
+    if (!v || typeof v !== 'object' || !Array.isArray(v.p)) { rejected.push([k, 'no points']); continue; }
+
+    const yFull = Number(v.yFull);
+    if (!(yFull > 0.4 && yFull < 0.97)) { rejected.push([k, 'yFull=' + v.yFull]); continue; }
+    if (v.p.length < 4 || v.p.length > 24) { rejected.push([k, v.p.length + ' points']); continue; }
+
+    let bad = null, lastY = -1, maxR = 0;
+    const pts = [];
+    for (const q of v.p) {
+      if (!Array.isArray(q) || q.length !== 2) { bad = 'malformed point'; break; }
+      const y = Number(q[0]), rr = Number(q[1]);
+      if (!isFinite(y) || !isFinite(rr)) { bad = 'not a number'; break; }
+      if (y < 0 || y > 1) { bad = 'y out of range'; break; }
+      if (rr <= 0) { bad = 'radius <= 0'; break; }
+      if (y < lastY) { bad = 'out of order'; break; }
+      lastY = y;
+      if (rr > maxR) maxR = rr;
+      pts.push([y, rr]);
+    }
+    if (bad) { rejected.push([k, bad]); continue; }
+    if (pts.length < 4 || maxR <= 0) { rejected.push([k, 'too few points']); continue; }
+
+    // Extremos a 0 y 1, radios escalados para que el maximo sea 1.
+    // Ninguna de las dos cosas altera la forma.
+    pts[0][0] = 0;
+    pts[pts.length - 1][0] = 1;
+    for (const q of pts) q[1] = q[1] / maxR;
+
+    map[k] = { yFull, p: pts };
+  }
+
+  // Se devuelve POR QUE fallo cada uno. Sin esto, un cero en pantalla no
+  // distingue "el modelo no conocia estas botellas" de "mi validacion las
+  // rechazo todas", y esas dos cosas piden arreglos opuestos.
+  const omitted = names.filter(n => !map[n] && !rejected.some(x => x[0] === n));
+
+  return res.status(200).json({
+    ok: true, map,
+    asked: names.length,
+    answered: Object.keys(map).length,
+    rejected: rejected.length,
+    omitted: omitted.length,
+    why: rejected.slice(0, 5)
+  });
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -134,6 +263,9 @@ module.exports = async function handler(req, res) {
     // las listas permitidas antes de devolver nada.
     if (mode === 'bottle') {
       return await bottleMode(res, names, shapes, sizes);
+    }
+    if (mode === 'silhouette') {
+      return await silhouetteMode(res, names);
     }
 
     const cats = Array.isArray(categories) && categories.length ? categories : [

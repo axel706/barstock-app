@@ -105,8 +105,18 @@
 
   // Las siluetas se piden en lotes de 20. Cada perfil son diez pares de
   // numeros, asi que 300 articulos de golpe no caben en una respuesta.
+  // Se acumula POR QUE fallo cada lote. La vez anterior salio "0 got their
+  // own bottle drawn" y ese cero no distinguia tres causas muy distintas:
+  // que el endpoint no respondiera, que el modelo omitiera todo, o que la
+  // validacion lo rechazara todo. Resulto ser la primera —el modo
+  // silhouette no estaba desplegado— y no habia forma de saberlo desde la
+  // pantalla.
+  let _diag = { answered: 0, rejected: 0, omitted: 0, failed: 0, why: [] };
+
   async function silhouettes(rows) {
     const out = {};
+    _diag = { answered: 0, rejected: 0, omitted: 0, failed: 0, why: [] };
+
     for (let i = 0; i < rows.length; i += 20) {
       const lote = rows.slice(i, i + 20);
       body(`<div class="ac-status"><i class="ti ti-loader" aria-hidden="true"></i> Drawing bottles ${i + 1}–${Math.min(i + 20, rows.length)} of ${rows.length}…</div>`);
@@ -116,11 +126,28 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ mode: 'silhouette', names: lote.map(r => r.item) })
         });
+        if (!res.ok) {
+          _diag.failed += lote.length;
+          if (_diag.why.length < 3) _diag.why.push('HTTP ' + res.status);
+          continue;
+        }
         const data = await res.json();
-        if (data && data.ok && data.map) Object.assign(out, data.map);
+        if (data && data.ok && data.map) {
+          Object.assign(out, data.map);
+          _diag.answered += Number(data.answered || 0);
+          _diag.rejected += Number(data.rejected || 0);
+          _diag.omitted  += Number(data.omitted  || 0);
+          if (Array.isArray(data.why)) {
+            data.why.forEach(w => { if (_diag.why.length < 3) _diag.why.push(w[1]); });
+          }
+        } else {
+          _diag.failed += lote.length;
+        }
       } catch (e) {
         // Un lote que falla no debe tumbar los demas: los que si
         // llegaron valen, y el resto se queda con su arquetipo.
+        _diag.failed += lote.length;
+        if (_diag.why.length < 3) _diag.why.push(e.message || 'network');
         console.warn('[botellas] lote de siluetas fallo', e);
       }
     }
@@ -236,6 +263,13 @@
         ${withShape.length} item${withShape.length === 1 ? '' : 's'}${without.length ? ` · ${without.length} left blank` : ''}.
         <b>${conSilueta}</b> got their own bottle drawn; the rest keep a family shape.
         Uncheck anything that does not look like that product's bottle.
+        ${(_diag.omitted || _diag.rejected || _diag.failed) ? `
+          <div class="ac-diag">
+            ${_diag.omitted ? `${_diag.omitted} the model didn't recognise` : ''}
+            ${_diag.rejected ? ` · ${_diag.rejected} rejected as malformed` : ''}
+            ${_diag.failed ? ` · ${_diag.failed} failed to reach the server` : ''}
+            ${_diag.why.length ? `<br><span>${esc(_diag.why.join(' · '))}</span>` : ''}
+          </div>` : ''}
       </div>
       <div class="ac-grid">
         ${withShape.map((r, i) => `

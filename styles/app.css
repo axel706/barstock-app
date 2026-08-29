@@ -3800,3 +3800,17 @@ body.light .sp-foot{border-top-color:rgba(15,23,42,.07);}
 body.light .ac-cell{ background: rgba(15,23,42,.02); border-color: rgba(15,23,42,.10); }
 body.light .ac-cell.own{ border-color: rgba(2,132,199,.40); background: rgba(2,132,199,.06); }
 body.light .ac-sil path{ fill: rgba(15,23,42,.03); stroke: rgba(15,23,42,.55); }
+
+/* El desglose de por qué una silueta no salió. Sin esto, un cero en la
+   pantalla no distingue "el modelo no la conocía" de "el servidor no
+   respondió", y esas dos cosas piden arreglos opuestos. */
+.ac-diag{
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,.09);
+  font-size: 11px;
+  color: var(--sub);
+  line-height: 1.5;
+}
+.ac-diag span{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; }
+body.light .ac-diag{ border-top-color: rgba(15,23,42,.10); }
