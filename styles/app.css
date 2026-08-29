@@ -3757,3 +3757,46 @@ body.light .sp-foot{border-top-color:rgba(15,23,42,.07);}
   /* Sin el flex:1 de la fila, lo de la derecha se venia hacia el centro */
   .bs-header-line3 > #buildBadge { margin-left: auto; }
 }
+
+/* ── Parrilla de revisión de siluetas ──────────────────────────────────
+   Se revisan botellas dibujadas, no nombres de formas. Un desplegable
+   que dice "tequila" no permite detectar nada; una silueta al lado del
+   nombre del producto sí: "esa no es la botella de Patrón" se ve de un
+   vistazo, y es justo el error que hay que cazar antes de guardar. */
+.ac-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 10px;
+  max-height: 52vh;
+  overflow-y: auto;
+  padding: 4px 2px;
+  margin-bottom: 12px;
+}
+.ac-cell{
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.03);
+  cursor: pointer;
+}
+/* Las que traen silueta propia se distinguen de las que usan la forma de
+   su familia: son las que de verdad hay que mirar. */
+.ac-cell.own{ border-color: rgba(56,189,248,.40); background: rgba(56,189,248,.06); }
+.ac-cell input{ position: absolute; top: 7px; left: 7px; width: 18px; height: 18px; }
+.ac-cell:has(input:not(:checked)){ opacity: .40; }
+.ac-sil{ width: 46px; height: 70px; }
+.ac-sil path{ fill: rgba(255,255,255,.06); stroke: rgba(255,255,255,.45); stroke-width: 1.6; }
+.ac-cell-name{
+  font-size: 11px; font-weight: 700; text-align: center; line-height: 1.25;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.ac-cell-sub{ font-size: 9px; color: var(--sub); text-align: center; }
+
+body.light .ac-cell{ background: rgba(15,23,42,.02); border-color: rgba(15,23,42,.10); }
+body.light .ac-cell.own{ border-color: rgba(2,132,199,.40); background: rgba(2,132,199,.06); }
+body.light .ac-sil path{ fill: rgba(15,23,42,.03); stroke: rgba(15,23,42,.55); }

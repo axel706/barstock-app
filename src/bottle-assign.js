@@ -103,6 +103,30 @@
     }
   }
 
+  // Las siluetas se piden en lotes de 20. Cada perfil son diez pares de
+  // numeros, asi que 300 articulos de golpe no caben en una respuesta.
+  async function silhouettes(rows) {
+    const out = {};
+    for (let i = 0; i < rows.length; i += 20) {
+      const lote = rows.slice(i, i + 20);
+      body(`<div class="ac-status"><i class="ti ti-loader" aria-hidden="true"></i> Drawing bottles ${i + 1}–${Math.min(i + 20, rows.length)} of ${rows.length}…</div>`);
+      try {
+        const res = await fetch('/api/categorize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: 'silhouette', names: lote.map(r => r.item) })
+        });
+        const data = await res.json();
+        if (data && data.ok && data.map) Object.assign(out, data.map);
+      } catch (e) {
+        // Un lote que falla no debe tumbar los demas: los que si
+        // llegaron valen, y el resto se queda con su arquetipo.
+        console.warn('[botellas] lote de siluetas fallo', e);
+      }
+    }
+    return out;
+  }
+
   // ── Ejecutar ─────────────────────────────────────────────────────────
   async function run() {
     const master = (window.state && state.master) || [];
@@ -144,6 +168,20 @@
       });
     }
 
+    // Ahora la silueta concreta de cada producto. La forma del arquetipo
+    // se queda como respaldo de los que la IA no reconozca.
+    const conForma = _rows.filter(r => r.shape && r.shape !== 'none');
+    if (conForma.length) {
+      const sil = await silhouettes(conForma);
+      const V = window.BarStockBottleProfiles;
+      conForma.forEach(r => {
+        const prof = sil[r.item];
+        // Se valida tambien aqui, ademas de en el servidor. Este perfil
+        // acaba calculando inventario.
+        if (prof && V && V.isValidProfile(prof)) r.profile = prof;
+      });
+    }
+
     review();
   }
 
@@ -163,18 +201,33 @@
     const sizeOpts = (sel) => SIZES.map(s =>
       `<option value="${s}"${Number(s) === Number(sel) ? ' selected' : ''}>${s} ml</option>`).join('');
 
+    const V = window.BarStockBottleProfiles;
+    const conSilueta = withShape.filter(r => r.profile).length;
+
+    // La revision es VISUAL. Revisar un desplegable con nombres de formas
+    // no dice nada; ver la silueta dibujada al lado del producto si: "esa
+    // no es la botella de Patron" se detecta de un vistazo, y es
+    // exactamente el error que hay que cazar antes de guardar.
+    const svg = (r) => {
+      const key = r.profile || r.shape || 'generic';
+      return `<svg viewBox="0 0 60 90" class="ac-sil" aria-hidden="true">
+        <path d="${V.pathFor(key, 60, 90, 5)}"/>
+      </svg>`;
+    };
+
     body(`
       <div class="ac-sum">
         ${withShape.length} resolved${without.length ? ` · ${without.length} left blank` : ''}.
-        Uncheck anything that looks wrong — a wrong shape is worse than none.
+        <b>${conSilueta}</b> got their own bottle drawn; the rest use a family shape.
+        Uncheck anything that does not look like that product's bottle.
       </div>
-      <div class="ac-list">
+      <div class="ac-grid">
         ${withShape.map((r, i) => `
-          <label class="ac-row${r.src === 'ai' ? ' ai' : ''}">
+          <label class="ac-cell${r.profile ? ' own' : ''}">
             <input type="checkbox" data-i="${i}" ${r.on ? 'checked' : ''}>
-            <span class="ac-name">${esc(r.item)}</span>
-            <select data-shape="${i}">${opts(r.shape)}</select>
-            <select data-size="${i}">${sizeOpts(r.size || 750)}</select>
+            ${svg(r)}
+            <span class="ac-cell-name">${esc(r.item)}</span>
+            <span class="ac-cell-sub">${r.profile ? 'own shape' : esc((shapes[r.shape] || {}).name || r.shape)} · ${r.size || 750} ml</span>
           </label>`).join('')}
       </div>
       <div class="ac-foot">
@@ -185,12 +238,6 @@
     const el = document.getElementById('baBody');
     el.querySelectorAll('input[type=checkbox]').forEach(c => {
       c.onchange = () => { withShape[Number(c.dataset.i)].on = c.checked; };
-    });
-    el.querySelectorAll('select[data-shape]').forEach(s => {
-      s.onchange = () => { withShape[Number(s.dataset.shape)].shape = s.value; };
-    });
-    el.querySelectorAll('select[data-size]').forEach(s => {
-      s.onchange = () => { withShape[Number(s.dataset.size)].size = Number(s.value); };
     });
     el.querySelector('.ac-cancel').onclick = close;
     el.querySelector('.ac-ok').onclick = () => apply(withShape);
@@ -230,14 +277,19 @@
             },
             body: JSON.stringify({
               bottle_shape: r.shape,
-              bottle_size_ml: r.shape === 'none' ? null : (r.size || 750)
+              bottle_size_ml: r.shape === 'none' ? null : (r.size || 750),
+              bottle_profile: r.profile || null
             })
           });
           if (!res.ok) throw new Error(await res.text());
           // Se refleja en memoria para que la pantalla no mienta hasta la
           // siguiente recarga.
           const row = ((window.state && state.master) || []).find(m => m.item === r.item);
-          if (row) { row.bottleShape = r.shape; row.bottleSizeMl = r.shape === 'none' ? null : (r.size || 750); }
+          if (row) {
+            row.bottleShape = r.shape;
+            row.bottleSizeMl = r.shape === 'none' ? null : (r.size || 750);
+            row.bottleProfile = r.profile || null;
+          }
           done++;
         } catch (e) { failed++; console.warn('[botellas] fallo', r.item, e); }
       }));

@@ -44,12 +44,20 @@
   // Sin forma asignada se cae a 'generic', que es una botella. Antes se
   // caia a 'cylinder', que es un rectangulo perfecto: la forma de control
   // del banco de pruebas. Por eso el deslizador salia cuadrado.
+  // El perfil PROPIO del producto manda sobre el arquetipo de su familia:
+  // la botella de Patron no es la de Casamigos aunque las dos sean
+  // tequila. Si no hay perfil propio, se cae al arquetipo, y si tampoco,
+  // a generic.
   function shapeOf(row) {
+    if (row && row.bottleProfile && P() && P().isValidProfile(row.bottleProfile)) {
+      return row.bottleProfile;
+    }
     const k = row && row.bottleShape;
     return (P() && P().get(k)) ? k : 'generic';
   }
 
   function shapeIsSet(row) {
+    if (row && row.bottleProfile) return true;
     return !!(row && row.bottleShape && P() && P().get(row.bottleShape));
   }
 
@@ -133,16 +141,10 @@
   // JavaScript es un color que el tema no puede cambiar.
   const VB = { w: 200, h: 260, pad: 12 };
 
+  // El trazado vive en bottle-profiles y lo comparten el panel y la
+  // parrilla de revision: la silueta que apruebas es la misma que cuenta.
   function bottlePath(key) {
-    const cx = VB.w / 2, usable = VB.h - VB.pad * 2, maxR = VB.w * 0.30;
-    const X = (r) => cx + r * maxR;
-    const Y = (y) => VB.h - VB.pad - y * usable;
-    const pts = [];
-    for (let i = 0; i <= 100; i++) pts.push([i / 100, P().radiusAt(key, i / 100)]);
-    let d = `M ${X(pts[0][1])} ${Y(pts[0][0])}`;
-    for (const [y, r] of pts) d += ` L ${X(r)} ${Y(y)}`;
-    for (let i = pts.length - 1; i >= 0; i--) d += ` L ${cx - pts[i][1] * maxR} ${Y(pts[i][0])}`;
-    return d + ' Z';
+    return P().pathFor(key, VB.w, VB.h, VB.pad);
   }
 
   function yToPx(y) { return VB.h - VB.pad - y * (VB.h - VB.pad * 2); }
