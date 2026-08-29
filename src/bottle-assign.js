@@ -138,16 +138,32 @@
     open();
     body(`<div class="ac-status"><i class="ti ti-loader" aria-hidden="true"></i> Reading names…</div>`);
 
-    // Solo lo que no tiene ya forma. Reasignar lo que alguien reviso a
-    // mano seria pisarle el trabajo.
-    const pending = master.filter(r => !r.bottleShape);
+    // Pendiente es lo que le falta ALGO, no solo lo que no tiene forma.
+    //
+    // El filtro original era `!r.bottleShape`, y se escribio cuando la
+    // forma era lo unico que existia. Al añadir las siluetas propias, una
+    // segunda pasada decia "no hay nada que resolver" aunque ningun
+    // articulo tuviera silueta: ya todos tenian forma de familia.
+    //
+    // Lo que se cuenta entero (none) se excluye a proposito: no lleva
+    // deslizador, asi que dibujarle una botella no sirve de nada.
+    const pending = master.filter(r =>
+      !r.bottleShape || (r.bottleShape !== 'none' && !r.bottleProfile));
+
     if (!pending.length) {
-      body(`<div class="ac-status">Every item already has a bottle shape.</div>`);
-      setTimeout(close, 1600);
+      body(`<div class="ac-status">Every item already has its bottle and its own silhouette.</div>`);
+      setTimeout(close, 2200);
       return;
     }
 
     _rows = pending.map(r => {
+      // La forma que ya tenia se RESPETA. Volver a deducirla pisaria
+      // cualquier correccion hecha a mano en la pasada anterior.
+      if (r.bottleShape) {
+        return { item: r.item, code: r.code || '', category: r.category || null,
+                 shape: r.bottleShape, size: r.bottleSizeMl || 750,
+                 src: 'kept', on: true };
+      }
       const g = byRules(r);
       return { item: r.item, code: r.code || '', category: r.category || null,
                shape: g.shape, size: g.size, src: g.src, on: !!g.shape };
@@ -217,8 +233,8 @@
 
     body(`
       <div class="ac-sum">
-        ${withShape.length} resolved${without.length ? ` · ${without.length} left blank` : ''}.
-        <b>${conSilueta}</b> got their own bottle drawn; the rest use a family shape.
+        ${withShape.length} item${withShape.length === 1 ? '' : 's'}${without.length ? ` · ${without.length} left blank` : ''}.
+        <b>${conSilueta}</b> got their own bottle drawn; the rest keep a family shape.
         Uncheck anything that does not look like that product's bottle.
       </div>
       <div class="ac-grid">
