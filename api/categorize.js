@@ -363,6 +363,15 @@ module.exports = async function handler(req, res) {
     }
 
     const { names, categories, mode, shapes, sizes } = req.body || {};
+
+    // El modo foto NO manda `names`: manda una imagen y un nombre suelto.
+    // Esta comprobacion estaba ANTES del reparto por modo, asi que
+    // rechazaba la peticion con "Missing names" sin llegar a mirar la
+    // foto. El camino entero de vision no se llego a ejecutar nunca.
+    if (mode === 'photo') {
+      return await photoMode(res, req.body.image, req.body.name);
+    }
+
     if (!Array.isArray(names) || !names.length) {
       return res.status(400).json({ ok: false, error: 'Missing names' });
     }
@@ -385,9 +394,6 @@ module.exports = async function handler(req, res) {
     }
     if (mode === 'silhouette') {
       return await silhouetteMode(res, names);
-    }
-    if (mode === 'photo') {
-      return await photoMode(res, req.body.image, req.body.name);
     }
 
     const cats = Array.isArray(categories) && categories.length ? categories : [

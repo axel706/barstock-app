@@ -193,14 +193,19 @@
     fr.readAsDataURL(file);
   }
 
+  // Punto de partida del modo manual: los nueve puntos en LINEA RECTA a
+  // media altura de la imagen.
+  //
+  // Antes arrancaban sobre el arquetipo de la familia, y salia un
+  // poligono con forma de rombo repartido por la foto: ni se parecia a
+  // una botella ni se entendia que habia que arrastrarlo. Una columna
+  // recta dice sola lo que hay que hacer — llevar cada punto al borde
+  // del vidrio— y de paso no finge una precision que no tiene.
   function seedFromArchetype() {
     const fam = P().get(_row && _row.bottleShape) || P().get('generic');
-    _top = 0.10; _bottom = 0.94; _cx = 0.5;
+    _top = 0.14; _bottom = 0.92; _cx = 0.5;
     _yFull = fam.yFull;
-    _hs = [];
-    for (let i = 0; i < HANDLES; i++) {
-      _hs.push(P().radiusAt(_row && _row.bottleShape || 'generic', i / (HANDLES - 1)) * 0.20);
-    }
+    _hs = new Array(HANDLES).fill(0.15);
     if ($('btFullVal')) $('btFullVal').textContent = Math.round(_yFull * 100) + '%';
   }
 
