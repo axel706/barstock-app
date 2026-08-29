@@ -178,9 +178,18 @@
         <b>${frac.toFixed(2)}</b>
         <small>${ml} ml of ${_row.bottleSizeMl || 750} · drag the line</small>
       </div>
+      <button type="button" class="cp-trace" id="cpTrace">
+        <i class="ti ti-camera" aria-hidden="true"></i>
+        ${_row.bottleProfile ? 'Retrace from a photo' : 'Trace this bottle from a photo'}
+      </button>
       ${shapeIsSet(_row) ? '' :
-        `<div class="cp-hint">Bottle shape not set — using a generic one.
-          Run <b>Assign bottle shapes</b> in Inventory for an exact reading.</div>`}`;
+        `<div class="cp-hint">Bottle shape not set — using a generic one.</div>`}`;
+
+    const tb = $('cpTrace');
+    if (tb) tb.onclick = () => {
+      if (!window.BarStockBottleTrace) return;
+      window.BarStockBottleTrace.open(_row, () => paintAll());
+    };
 
     positionLine(y);
     bindDrag();

@@ -1,0 +1,104 @@
+/* ── Trazado de silueta desde una foto ─────────────────────────────────
+   Encima del panel de conteo, porque se abre desde ahí. */
+.bt-panel{
+  position: fixed; inset: 0; z-index: 100002;
+  display: none; flex-direction: column;
+  background: #0b1220; color: #f1f5f9;
+  font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bt-panel.on{ display: flex; }
+
+.bt-head{
+  display: flex; align-items: center; gap: 12px;
+  padding: calc(10px + env(safe-area-inset-top)) 14px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.09);
+  flex-shrink: 0;
+}
+.bt-title{ font-size: 16px; font-weight: 800; }
+.bt-name{ font-size: 12px; color: #94a3b8; margin-top: 2px; }
+
+.bt-body{
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  padding: 14px; display: flex; flex-direction: column; gap: 12px;
+}
+.bt-hint{
+  font-size: 12px; color: #94a3b8; line-height: 1.55;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 12px; padding: 12px 13px;
+}
+.bt-bad{
+  font-size: 12px; line-height: 1.55;
+  background: rgba(245,158,11,.13);
+  border: 1px solid rgba(245,158,11,.38);
+  color: #fbbf24;
+  border-radius: 12px; padding: 12px 13px;
+}
+
+/* La foto y el trazo, superpuestos y del mismo tamaño. Es lo que hace
+   verificable el resultado: si la línea no sigue el vidrio, se ve. */
+.bt-stage{
+  position: relative;
+  width: 100%;
+  max-height: 46vh;
+  aspect-ratio: 200 / 260;
+  margin: 0 auto;
+  touch-action: none;
+  user-select: none; -webkit-user-select: none;
+}
+.bt-stage canvas{
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+}
+.bt-stage svg{
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+}
+.bt-outline{
+  fill: rgba(56,189,248,.16);
+  stroke: #38bdf8;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.bt-full{
+  stroke: #f8fafc; stroke-width: 2; stroke-dasharray: 5 4;
+  vector-effect: non-scaling-stroke;
+}
+.bt-fullgrab{
+  position: absolute; left: 0; right: 0; height: 40px; margin-top: -20px;
+  pointer-events: none;
+}
+
+.bt-foot{
+  flex-shrink: 0; padding: 12px 14px 14px;
+  border-top: 1px solid rgba(255,255,255,.09);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.bt-file{
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  height: 50px; border-radius: 12px;
+  background: rgba(56,189,248,.15); color: #38bdf8;
+  font-size: 15px; font-weight: 800; cursor: pointer;
+}
+.bt-file input{ display: none; }
+.bt-slider{ display: flex; align-items: center; gap: 10px; font-size: 12px; color: #94a3b8; }
+.bt-slider span{ flex-shrink: 0; }
+.bt-slider input{ flex: 1; }
+.bt-save{
+  height: 54px; border-radius: 13px; border: none;
+  background: #38bdf8; color: #04263a;
+  font-family: inherit; font-size: 16px; font-weight: 800; cursor: pointer;
+}
+.bt-save:disabled{ opacity: .4; }
+
+body.light .bt-panel{ background: #eef2f8; color: #0f172a; }
+body.light .bt-head{ border-bottom-color: rgba(15,23,42,.10); }
+body.light .bt-foot{ border-top-color: rgba(15,23,42,.10); }
+body.light .bt-hint{ background: #ffffff; border-color: rgba(15,23,42,.10); color: #475569; }
+body.light .bt-name, body.light .bt-slider{ color: #475569; }
+body.light .bt-full{ stroke: #0f172a; }
+body.light .bt-save{ background: #0284c7; color: #ffffff; }
+body.light .bt-file{ background: rgba(2,132,199,.12); color: #0284c7; }
