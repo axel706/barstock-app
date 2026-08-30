@@ -76,21 +76,37 @@
     const okProf = prof && P().isValidProfile(prof);
     $('btSave').disabled = !okProf;
 
+    // CANVAS, no <img>.
+    //
+    // En iOS una imagen de verdad en el DOM arrastra comportamientos del
+    // sistema que no se pueden desactivar por completo: mantener pulsado
+    // abre el menu de guardar, y arrastrar la arrastra a ella. Contra eso
+    // no se gana con touch-action ni con user-select.
+    //
+    // Un canvas pinta exactamente lo mismo y Safari no lo trata como
+    // imagen, asi que el problema desaparece de raiz en vez de taparse.
     host.innerHTML = `
       <div class="bt-stage" id="btStage">
-        <img src="${_dataUrl}" id="btImg" alt="">
+        <canvas id="btCanvas"></canvas>
         <svg id="btSvg" preserveAspectRatio="none"></svg>
       </div>
-      <div class="bt-tip">Drag the dots onto the glass. The line is where a full bottle sits.</div>`;
+      <div class="bt-tip">Drag the dots onto the edge of the bottle.</div>`;
 
-    const img = $('btImg');
-    if (img.complete) drawOverlay(); else img.onload = drawOverlay;
+    const im = new Image();
+    im.onload = () => {
+      const cv = $('btCanvas');
+      if (!cv) return;
+      cv.width = im.width; cv.height = im.height;
+      cv.getContext('2d').drawImage(im, 0, 0);
+      drawOverlay();
+    };
+    im.src = _dataUrl;
   }
 
   function drawOverlay() {
-    const stage = $('btStage'), svg = $('btSvg'), img = $('btImg');
-    if (!stage || !svg || !img) return;
-    _imgW = img.clientWidth; _imgH = img.clientHeight;
+    const stage = $('btStage'), svg = $('btSvg'), cv = $('btCanvas');
+    if (!stage || !svg || !cv) return;
+    _imgW = cv.clientWidth; _imgH = cv.clientHeight;
     svg.setAttribute('viewBox', `0 0 ${_imgW} ${_imgH}`);
     svg.setAttribute('width', _imgW);
     svg.setAttribute('height', _imgH);
@@ -109,7 +125,8 @@
       <path d="${d}" class="bt-outline"/>
       <line x1="0" y1="${Y(_yFullImg())}" x2="${_imgW}" y2="${Y(_yFullImg())}" class="bt-full"/>
       ${_hs.map((r, i) => `
-        <circle cx="${X(_cx + r)}" cy="${Y(yAt(i))}" r="11" class="bt-dot" data-i="${i}"/>
+        <circle cx="${X(_cx + r)}" cy="${Y(yAt(i))}" r="26" class="bt-halo"/>
+        <circle cx="${X(_cx + r)}" cy="${Y(yAt(i))}" r="12" class="bt-dot" data-i="${i}"/>
       `).join('')}`;
   }
 
@@ -121,49 +138,61 @@
     const stage = $('btStage');
     if (!stage) return;
 
-    const pt = (e) => {
-      const r = $('btImg').getBoundingClientRect();
-      return { fx: (e.clientX - r.left) / r.width, fy: (e.clientY - r.top) / r.height };
-    };
+    // Las medidas van en PIXELES de pantalla, no en fracciones de 0 a 1.
+    //
+    // Antes se comparaba en fracciones, pero la foto es mucho mas alta
+    // que ancha: 0.12 en vertical son muchos mas pixeles que 0.12 en
+    // horizontal. Eso deformaba que punto se agarraba, y arriba —donde
+    // los puntos quedan mas juntos en pantalla— fallaba casi siempre.
+    const rect = () => $('btCanvas').getBoundingClientRect();
+
+    const yAtPx = (i, r) => r.top + (
+      (_bottom + (_top - _bottom) * (i / (HANDLES - 1))) * r.height);
+    const xAtPx = (i, r) => r.left + (_cx + _hs[i]) * r.width;
 
     stage.addEventListener('pointerdown', (e) => {
       if (!_hs.length) return;
-      const { fx, fy } = pt(e);
-      const yAt = (i) => _bottom + (_top - _bottom) * (i / (HANDLES - 1));
+      e.preventDefault();
+      const r = rect();
 
-      // ¿Se agarró un tirador o la línea de lleno? Gana lo más cercano,
-      // porque con el dedo no se acierta a un punto exacto.
       let best = -1, bd = 1e9;
       for (let i = 0; i < HANDLES; i++) {
-        const dx = fx - (_cx + _hs[i]), dy = fy - yAt(i);
-        const dd = dx * dx + dy * dy;
+        const dx = e.clientX - xAtPx(i, r);
+        const dy = e.clientY - yAtPx(i, r);
+        const dd = Math.hypot(dx, dy);
         if (dd < bd) { bd = dd; best = i; }
       }
-      const dFull = Math.abs(fy - _yFullImg());
+      const dFull = Math.abs(e.clientY -
+        (r.top + (_bottom + (_top - _bottom) * _yFull) * r.height));
 
-      if (dFull < 0.035 && dFull * dFull < bd) { _drag = -2; }
-      else if (Math.sqrt(bd) < 0.12) { _drag = best; }
+      // 60 px de radio de agarre: un dedo mide eso. Y el punto gana a la
+      // linea salvo que la linea este claramente mas cerca.
+      if (bd < 60) _drag = best;
+      else if (dFull < 40) _drag = -2;
       else return;
 
       stage.setPointerCapture(e.pointerId);
       move(e);
-    });
+    }, { passive: false });
 
     const move = (e) => {
       if (_drag === -1) return;
-      const { fx, fy } = pt(e);
+      e.preventDefault();
+      const r = rect();
       if (_drag === -2) {
-        const t = (fy - _bottom) / (_top - _bottom);
+        const t = ((e.clientY - r.top) / r.height - _bottom) / (_top - _bottom);
         _yFull = Math.max(0.4, Math.min(0.96, t));
         $('btFullVal').textContent = Math.round(_yFull * 100) + '%';
       } else {
+        const fx = (e.clientX - r.left) / r.width;
         _hs[_drag] = Math.max(0.01, Math.min(0.48, Math.abs(fx - _cx)));
       }
       drawOverlay();
-      $('btSave').disabled = !(profile() && P().isValidProfile(profile()));
+      const pr = profile();
+      $('btSave').disabled = !(pr && P().isValidProfile(pr));
     };
 
-    stage.addEventListener('pointermove', move);
+    stage.addEventListener('pointermove', move, { passive: false });
     stage.addEventListener('pointerup', () => { _drag = -1; });
     stage.addEventListener('pointercancel', () => { _drag = -1; });
   }
@@ -327,7 +356,7 @@
     $('btBack').onclick = () => close(false);
     $('btSave').onclick = save;
     $('btFile').onchange = (e) => { if (e.target.files && e.target.files[0]) loadFile(e.target.files[0]); };
-    window.addEventListener('resize', () => { if ($('btPanel').classList.contains('on')) drawOverlay(); });
+    window.addEventListener('resize', () => { if ($('btPanel') && $('btPanel').classList.contains('on')) drawOverlay(); });
   }
 
   function open(row, onDone) {

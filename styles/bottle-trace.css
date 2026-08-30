@@ -41,19 +41,37 @@
 /* La foto a tamaño natural, con el trazo y los tiradores encima. Lo que
    se guarda es lo que queda AQUI, no lo que dijo el modelo: por eso los
    puntos se arrastran. */
+/* La foto y los puntos, superpuestos.
+
+   touch-action:none en TODOS los hijos, no solo en el contenedor: iOS
+   mira el elemento que recibe el toque, no a su padre. Y
+   -webkit-touch-callout:none mata el menu de "guardar imagen" que
+   aparecia al mantener pulsado.
+
+   El canvas ademas lleva pointer-events:none, asi que todos los toques
+   llegan al contenedor y solo hay un sitio que los gestiona. */
 .bt-stage{
   position: relative;
   width: 100%;
   touch-action: none;
+  -webkit-touch-callout: none;
   user-select: none; -webkit-user-select: none;
   line-height: 0;
 }
-.bt-stage img{
+.bt-stage *{
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.bt-stage canvas{
   width: 100%;
-  max-height: 52vh;
+  max-height: 50vh;
   object-fit: contain;
   border-radius: 12px;
   display: block;
+  pointer-events: none;
+  -webkit-user-drag: none;
 }
 .bt-stage svg{
   position: absolute;
@@ -79,6 +97,9 @@
   stroke-width: 2.5;
   vector-effect: non-scaling-stroke;
 }
+/* Halo transparente alrededor de cada punto: el area de agarre es de 60
+   px en el codigo, y esto lo hace visible sin ensuciar el dibujo. */
+.bt-halo{ fill: rgba(56,189,248,.12); }
 .bt-tip{
   font-size: 11px; color: #94a3b8; text-align: center;
   margin-top: 8px; line-height: 1.5;
