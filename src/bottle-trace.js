@@ -94,10 +94,23 @@
 
     const im = new Image();
     im.onload = () => {
-      const cv = $('btCanvas');
-      if (!cv) return;
+      const cv = $('btCanvas'), stage = $('btStage');
+      if (!cv || !stage) return;
+
       cv.width = im.width; cv.height = im.height;
       cv.getContext('2d').drawImage(im, 0, 0);
+
+      // El elemento se dimensiona A MANO para que mida exactamente lo que
+      // mide la foto. Con object-fit el navegador encajaba la imagen
+      // dentro de una caja mayor y dejaba margenes vacios, pero
+      // getBoundingClientRect devuelve la caja, no la imagen: cada
+      // coordenada salia desplazada. Aqui caja e imagen son lo mismo.
+      const maxW = stage.parentElement.clientWidth;
+      const maxH = Math.round(window.innerHeight * 0.46);
+      const scale = Math.min(maxW / im.width, maxH / im.height);
+      cv.style.width  = Math.round(im.width * scale) + 'px';
+      cv.style.height = Math.round(im.height * scale) + 'px';
+
       drawOverlay();
     };
     im.src = _dataUrl;
