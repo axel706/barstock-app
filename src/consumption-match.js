@@ -38,11 +38,23 @@
   // Se apartan del cálculo y se cuentan DENTRO DE SU CATEGORÍA, no todos
   // juntos: así se ve de qué categoría desconfiar.
   //
-  // ── Tres niveles, no una lista ──────────────────────────────────────
+  // ── Una tabla, tres niveles ─────────────────────────────────────────
   //
-  // Gráfica → tabla de categorías → artículos de una categoría → el
-  // desglose de un artículo. Todo colapsado salvo lo que abres. Con 258
-  // artículos, enseñarlos de golpe no es información: es un muro.
+  //   ciclos  →  categorías de ese ciclo  →  artículos de esa categoría
+  //
+  // Es siempre la MISMA tabla cambiando de contenido, con el panel
+  // lateral de Inventory al lado. No hay listas apiladas: con 258
+  // artículos, enseñarlos de golpe no es información, es un muro.
+  //
+  // ── Aquí no se usa <button> ─────────────────────────────────────────
+  //
+  // app.css:3153 impone `border-radius:999px !important` a todo `button`
+  // salvo una lista de excepciones nominal. Una barra de gráfica hecha
+  // con <button> salía dentro de una cápsula blanca. Se puede añadir una
+  // clase más a esa lista, pero la lista ya tiene veintiún nombres y
+  // crece cada vez que alguien tropieza. Los elementos pinchables de
+  // este módulo son divs con role="button", que además heredan cero
+  // estilo global.
 
   const $ = (id) => document.getElementById(id);
 
@@ -52,6 +64,8 @@
   }
 
   const money = (n) => '$' + Math.round(Math.abs(n)).toLocaleString();
+  const money2 = (n) => '$' + Math.abs(n).toFixed(2);
+
   // Un decimal SIEMPRE, no solo por debajo de diez.
   //
   // Antes se redondeaba a entero a partir de 10 y el desglose salia
@@ -60,8 +74,10 @@
   // sitio donde el usuario la puede comprobar.
   const btl = (n) => Math.abs(n).toFixed(1).replace(/\.0$/, '');
   const btlSigned = (n) => (n > 0 ? '+' : n < 0 ? '−' : '') + btl(n);
-  const weekLabel = (w) => w
-    ? new Date(w + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dayLabel = (w) => w
+    ? MONTHS[+w.slice(5, 7) - 1] + ' ' + (+w.slice(8, 10))
     : '';
 
   // La categoría vive en state.master, y las filas de Usage vienen de
@@ -69,9 +85,12 @@
   // spend-by-category. Efecto secundario conocido: si recategorizas un
   // artículo, las semanas pasadas se recolocan tambien — es preferible a
   // congelar la categoría en cada instantánea.
-  function categoryOf(itemName) {
+  function masterOf(itemName) {
     const master = (window.state && state.master) || [];
-    const hit = master.find(m => m.item === itemName);
+    return master.find(m => m.item === itemName) || null;
+  }
+  function categoryOf(itemName) {
+    const hit = masterOf(itemName);
     return (hit && hit.category) || null;
   }
 
@@ -108,6 +127,8 @@
         // propio total, y el primero que sume a mano deja de fiarse.
         g.items.push({
           item: r.item_name,
+          code: r.code || '',
+          vendor: r.vendor || '',
           used: Number(r.used) || 0,
           sold: Number(r.sold) || 0,
           bottles: Number(r.variance),
@@ -126,12 +147,57 @@
     return Array.from(out.values()).sort((a, b) => b.loss - a.loss);
   }
 
-  // ── Estado de la vista ───────────────────────────────────────────────
-  let _week = null;      // ciclo elegido a mano; null = el ultimo cerrado
-  let _cycle = null;     // { week, rows, weeks }
-  let _groups = [];
-  let _openCat = -1;     // una categoria abierta a la vez
-  let _openItem = -1;
+  const totalOf = (groups) => groups.reduce((s, g) => s + Math.max(0, g.loss), 0);
+
+  // ── Estado ───────────────────────────────────────────────────────────
+  let _view = 'cycles';   // cycles | cats | items
+  let _weeks = [];        // todas las semanas, de Usage
+  let _week = null;       // ciclo abierto
+  let _groups = [];       // categorias del ciclo abierto
+  let _cat = -1;
+  let _item = -1;
+  let _year = null;
+  let _month = null;      // null = todo el año
+  let _busy = false;
+
+  // Lo ya calculado no se vuelve a pedir. Cada ciclo son dos consultas
+  // paginadas a la nube; volver atrás en la navegación no debería costar
+  // una recarga.
+  const _cache = new Map();   // week_start -> { groups, total }
+
+  // ── Calendario ───────────────────────────────────────────────────────
+  //
+  // Mismo gesto que la lista de semanas de Usage —año arriba, meses
+  // debajo— pero sin su comportamiento de arrancar en blanco: aquí, sin
+  // mes elegido, se ven todos los ciclos del año. Un calendario que no
+  // muestra nada hasta que aciertas el mes correcto parece roto.
+  function calendar(closed) {
+    const years = [...new Set(closed.map(w => w.week_start.slice(0, 4)))].sort().reverse();
+    if (!years.length) return '';
+    if (!_year || !years.includes(_year)) _year = years[0];
+
+    const monthsWith = new Set(
+      closed.filter(w => w.week_start.startsWith(_year)).map(w => +w.week_start.slice(5, 7) - 1));
+
+    const yrs = years.length > 1 ? `
+      <div class="cm-years">
+        ${years.map(y => `
+          <span class="cm-chip ${y === _year ? 'active' : ''}" role="button" tabindex="0"
+                onclick="window.BarStockConsumptionMatch.setYear('${y}')">${y}</span>`).join('')}
+      </div>` : '';
+
+    return `
+      ${yrs}
+      <div class="cm-months">
+        ${MONTHS.map((m, i) => {
+          const has = monthsWith.has(i);
+          const on = _month === i;
+          return `<span class="cm-mon ${has ? '' : 'off'} ${on ? 'active' : ''}"
+                        ${has ? `role="button" tabindex="0" onclick="window.BarStockConsumptionMatch.setMonth(${i})"` : ''}
+                  >${m}</span>`;
+        }).join('')}
+      </div>`;
+  }
 
   // ── Gráfica ──────────────────────────────────────────────────────────
   //
@@ -140,12 +206,12 @@
   // El SVG anterior tenia viewBox 320x150 y se estiraba a todo el ancho
   // del contenedor: en un monitor el texto de los ejes salia a 40px de
   // alto porque escala con el dibujo. Un div escala su caja y deja la
-  // tipografia donde estaba, que es justo lo que se quiere aqui.
+  // tipografia donde estaba.
   //
   // La altura util es 100% menos la banda de la etiqueta, y ese mismo
   // descuento se aplica a las lineas de referencia, para que el 50% de
   // la rejilla y el 50% de una barra caigan en el mismo pixel.
-  const LBL = 22;
+  const LBL = 20;
 
   function chart(groups) {
     // Solo las categorias que tienen con que comparar. Una barra ambar
@@ -157,10 +223,10 @@
 
     const max = Math.max(...idx.map(i => Math.max(groups[i].sold, groups[i].used)), 1);
 
-    // La rejilla es HERMANA del carril que hace scroll, no hija.
-    // Dentro de un contenedor con overflow, un absolute con right:0 se
-    // ancla al borde visible y se arrastra con el scroll: las lineas se
-    // despegaban de las barras al deslizar en el movil.
+    // La rejilla es HERMANA del carril que hace scroll, no hija. Dentro
+    // de un contenedor con overflow, un absolute con right:0 se ancla al
+    // borde visible y se arrastra con el scroll: las lineas se despegaban
+    // de las barras al deslizar en el movil.
     const grid = [0, 0.5, 1].map(f => `
       <div class="cm-gline" style="bottom:calc(${LBL}px + ${f} * (100% - ${LBL}px))"></div>
       <div class="cm-glbl"  style="bottom:calc(${LBL}px + ${f} * (100% - ${LBL}px))">${Math.round(max * f)}</div>
@@ -170,17 +236,16 @@
       const g = groups[i];
       const hS = Math.max(1.5, (g.sold / max) * 100);
       const hU = Math.max(1.5, (g.used / max) * 100);
-      const short = g.cat.split(/[\s&]/)[0];
       return `
-        <button class="cm-col ${i === _openCat ? 'active' : ''}" type="button"
-                onclick="window.BarStockConsumptionMatch.toggleCat(${i})"
-                title="${esc(g.cat)} · ${btl(g.sold)} sold, ${btl(g.used)} poured">
+        <div class="cm-col ${i === _cat ? 'active' : ''}" role="button" tabindex="0"
+             onclick="window.BarStockConsumptionMatch.openCat(${i})"
+             title="${esc(g.cat)} · ${btl(g.sold)} sold, ${btl(g.used)} poured, ${money(g.loss)}">
           <div class="cm-bars">
             <span class="cm-b cm-b-sold" style="height:${hS}%"></span>
             <span class="cm-b cm-b-used" style="height:${hU}%"></span>
           </div>
-          <span class="cm-xlabel">${esc(short)}</span>
-        </button>`;
+          <span class="cm-xlabel">${esc(g.cat.split(/[\s&]/)[0])}</span>
+        </div>`;
     }).join('');
 
     return `
@@ -195,187 +260,351 @@
       </div>`;
   }
 
-  // ── Fila de detalle de un artículo ───────────────────────────────────
-  //
-  // La resta escrita entera. "Perdiste 1.2 botellas" no convence a nadie
-  // sin los dos numeros de los que sale.
-  function itemDetail(it) {
-    const bad = it.bottles > 0.05;
-    return `
-      <div class="cm-eq">
-        <div class="cm-eq-part">
-          <b>${btl(it.used)}</b><span>poured</span>
-        </div>
-        <span class="cm-eq-op">−</span>
-        <div class="cm-eq-part">
-          <b>${btl(it.sold)}</b><span>sold</span>
-        </div>
-        <span class="cm-eq-op">=</span>
-        <div class="cm-eq-part cm-eq-res ${bad ? 'bad' : 'good'}">
-          <b>${btlSigned(it.bottles)}</b><span>bottle${btl(it.bottles) === '1' ? '' : 's'}</span>
-        </div>
-        <span class="cm-eq-op">=</span>
-        <div class="cm-eq-part cm-eq-res ${bad ? 'bad' : 'good'}">
-          <b>${it.money < 0 ? '+' : ''}${money(it.money)}</b><span>at cost</span>
-        </div>
+  // ── Nivel 1 · los ciclos ─────────────────────────────────────────────
+  function cycleTable() {
+    const closed = _weeks.filter(w => w.hasUsage);
+    if (!closed.length) {
+      return `<div class="cm-empty">
+        <b>No closed cycle yet.</b><br>
+        A cycle closes by itself when you import the next count — that is
+        what fills in what was used.
       </div>`;
-  }
-
-  // ── Sub-tabla de artículos de una categoría ──────────────────────────
-  function itemRows(g, ci) {
-    if (!g.items.length) {
-      return `<div class="cm-sub-empty">No comparable items in this category.</div>`;
     }
+
+    const shown = closed.filter(w =>
+      w.week_start.startsWith(_year) &&
+      (_month === null || +w.week_start.slice(5, 7) - 1 === _month));
+
+    const rows = shown.map(w => {
+      const c = _cache.get(w.week_start);
+      const on = w.week_start === _week;
+      return `
+        <tr class="cm-row ${on ? 'sel' : ''}"
+            onclick="window.BarStockConsumptionMatch.openCycle('${w.week_start}')">
+          <td class="cm-c1"><i class="ti ti-calendar-week cm-ri" aria-hidden="true"></i> Week of ${esc(dayLabel(w.week_start))}</td>
+          <td class="num">${w.itemCount || '—'}</td>
+          <td class="num">${c ? c.groups.filter(g => g.withSales).length : '—'}</td>
+          <td class="num money">${c ? `<b>${money(c.total)}</b>` : '<span class="muted">tap to open</span>'}</td>
+        </tr>`;
+    }).join('') || `<tr><td colspan="4" class="cm-none">No cycles in this month.</td></tr>`;
+
     return `
-      <table class="cm-subtable">
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th class="num cm-c-used">Poured</th>
-            <th class="num cm-c-sold">Sold</th>
-            <th class="num">Bottles</th>
-            <th class="num">At cost</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${g.items.map((it, ii) => {
-            const open = ci === _openCat && ii === _openItem;
-            const bad = it.bottles > 0.05;
-            const cls = bad ? 'bad' : it.bottles < -0.05 ? 'good' : '';
-            return `
-              <tr class="cm-irow ${open ? 'open' : ''}"
-                  onclick="window.BarStockConsumptionMatch.toggleItem(event, ${ci}, ${ii})">
-                <td class="cm-iname">
-                  <i class="ti ti-chevron-right cm-chev" aria-hidden="true"></i>
-                  ${esc(it.item)}
-                </td>
-                <td class="num cm-c-used">${btl(it.used)}</td>
-                <td class="num cm-c-sold">${btl(it.sold)}</td>
-                <td class="num ${cls}">${btlSigned(it.bottles)}</td>
-                <td class="num ${cls}"><b>${it.money < 0 ? '+' : ''}${money(it.money)}</b></td>
-              </tr>
-              ${open ? `<tr class="cm-idetail"><td colspan="5">${itemDetail(it)}</td></tr>` : ''}`;
-          }).join('')}
-        </tbody>
+      <table class="cm-table">
+        <colgroup><col><col style="width:88px"><col style="width:104px"><col style="width:124px"></colgroup>
+        <thead><tr>
+          <th>Cycle</th><th class="num">Items</th><th class="num">Categories</th><th class="num">At cost</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
       </table>`;
   }
 
-  // ── Tabla de categorías ──────────────────────────────────────────────
-  function table(groups) {
-    if (!groups.length) return '';
-
-    const rows = groups.map((g, i) => {
-      const open = i === _openCat;
-
+  // ── Nivel 2 · las categorías ─────────────────────────────────────────
+  function catTable() {
+    const rows = _groups.map((g, i) => {
       // Una categoria ENTERA sin datos de venta no es una nota al pie:
       // casi siempre significa que falta un archivo. Las ventas llegan en
       // dos ficheros separados, vino y licor, asi que olvidar uno deja
       // mudas todas sus categorias de golpe.
       if (!g.withSales) {
         return `
-          <tr class="cm-crow cm-crow-warn">
-            <td class="cm-cname">
-              <i class="ti ti-alert-triangle cm-warn-i" aria-hidden="true"></i>
-              ${esc(g.cat)}
-              <span class="cm-tag">no sales file</span>
+          <tr class="cm-row cm-row-warn">
+            <td class="cm-c1">
+              <i class="ti ti-alert-triangle cm-ri warn" aria-hidden="true"></i>
+              ${esc(g.cat)} <span class="cm-tag">no sales file</span>
             </td>
-            <td class="num muted" colspan="3">${g.noSales} item${g.noSales === 1 ? '' : 's'} uncomparable</td>
+            <td class="num muted cm-c-sold">—</td>
+            <td class="num muted cm-c-used">—</td>
+            <td class="num muted">${g.noSales} item${g.noSales === 1 ? '' : 's'}</td>
             <td class="num muted">—</td>
           </tr>`;
       }
-
       const diff = g.used - g.sold;
       const cls = diff > 0.05 ? 'bad' : diff < -0.05 ? 'good' : '';
       return `
-        <tr id="cmRow${i}" class="cm-crow ${open ? 'open' : ''}"
-            onclick="window.BarStockConsumptionMatch.toggleCat(${i})">
-          <td class="cm-cname">
-            <i class="ti ti-chevron-right cm-chev" aria-hidden="true"></i>
+        <tr class="cm-row ${i === _cat ? 'sel' : ''}"
+            onclick="window.BarStockConsumptionMatch.openCat(${i})">
+          <td class="cm-c1">
+            <i class="ti ti-chevron-right cm-ri" aria-hidden="true"></i>
             ${esc(g.cat)}
             ${g.noSales ? `<span class="cm-tag">${g.noSales} w/o sales</span>` : ''}
           </td>
           <td class="num cm-c-sold">${btl(g.sold)}</td>
           <td class="num cm-c-used">${btl(g.used)}</td>
           <td class="num ${cls}">${btlSigned(diff)}</td>
-          <td class="num ${cls}"><b>${g.loss < 0 ? '+' : ''}${money(g.loss)}</b></td>
-        </tr>
-        ${open ? `<tr class="cm-cdetail"><td colspan="5">${itemRows(g, i)}</td></tr>` : ''}`;
+          <td class="num money ${cls}"><b>${g.loss < 0 ? '+' : ''}${money(g.loss)}</b></td>
+        </tr>`;
     }).join('');
 
     return `
-      <div class="tablewrap cm-wrap">
-        <table class="cm-table">
-          <thead>
-            <tr>
-              <th>Category</th>
-              <th class="num cm-c-sold">Sold</th>
-              <th class="num cm-c-used">Poured</th>
-              <th class="num">Bottles</th>
-              <th class="num">At cost</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
+      <table class="cm-table">
+        <colgroup><col><col style="width:78px"><col style="width:82px"><col style="width:86px"><col style="width:104px"></colgroup>
+        <thead><tr>
+          <th>Category</th>
+          <th class="num cm-c-sold">Sold</th>
+          <th class="num cm-c-used">Poured</th>
+          <th class="num">Bottles</th>
+          <th class="num">At cost</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  // ── Nivel 3 · los artículos ──────────────────────────────────────────
+  function itemTable() {
+    const g = _groups[_cat];
+    if (!g) return '';
+    if (!g.items.length) {
+      return `<div class="cm-empty">No comparable items in ${esc(g.cat)}.</div>`;
+    }
+    const rows = g.items.map((it, i) => {
+      const cls = it.bottles > 0.05 ? 'bad' : it.bottles < -0.05 ? 'good' : '';
+      return `
+        <tr class="cm-row ${i === _item ? 'sel' : ''}"
+            onclick="window.BarStockConsumptionMatch.openItem(${i})">
+          <td class="cm-c1">${esc(it.item)}</td>
+          <td class="num cm-c-used">${btl(it.used)}</td>
+          <td class="num cm-c-sold">${btl(it.sold)}</td>
+          <td class="num ${cls}">${btlSigned(it.bottles)}</td>
+          <td class="num money ${cls}"><b>${it.money < 0 ? '+' : ''}${money(it.money)}</b></td>
+        </tr>`;
+    }).join('');
+
+    return `
+      <table class="cm-table">
+        <colgroup><col><col style="width:78px"><col style="width:78px"><col style="width:86px"><col style="width:104px"></colgroup>
+        <thead><tr>
+          <th>Item</th>
+          <th class="num cm-c-used">Poured</th>
+          <th class="num cm-c-sold">Sold</th>
+          <th class="num">Bottles</th>
+          <th class="num">At cost</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  // ── Panel lateral ────────────────────────────────────────────────────
+  //
+  // Se reutilizan tal cual las clases .inv-item-panel y .inv-panel-* de
+  // Inventory. Copiarlas con otro nombre habría dado un panel que se
+  // parece al de Inventory hoy y deja de parecerse en cuanto alguien
+  // retoque uno de los dos.
+  function panel() {
+    const stat = (label, value, color) =>
+      `<div class="inv-panel-stat">
+         <div class="inv-panel-stat-label">${label}</div>
+         <div class="inv-panel-stat-value"${color ? ` style="color:${color}"` : ''}>${value}</div>
+       </div>`;
+    const row = (label, value, color) =>
+      `<div class="inv-panel-row">
+         <span class="inv-panel-row-label">${label}</span>
+         <span class="inv-panel-row-value"${color ? ` style="color:${color}"` : ''}>${value}</span>
+       </div>`;
+
+    // Nivel 3 con artículo elegido: el desglose completo
+    if (_view === 'items' && _cat >= 0 && _item >= 0) {
+      const g = _groups[_cat];
+      const it = g.items[_item];
+      const m = masterOf(it.item);
+      const unit = it.bottles ? it.money / it.bottles : (m ? Number(m.value || 0) : 0);
+      const bad = it.bottles > 0.05;
+      const col = bad ? '#ef4444' : it.bottles < -0.05 ? '#22c55e' : 'var(--text)';
+      const pct = it.sold > 0 ? (it.bottles / it.sold) * 100 : null;
+
+      return `
+        <div class="inv-panel-header">
+          <div class="inv-panel-name-wrap"><span class="inv-panel-name">${esc(it.item)}</span></div>
+          <div class="inv-panel-meta">${esc(g.cat)}${it.code ? ' · ' + esc(it.code) : ''}</div>
+        </div>
+        <div class="inv-panel-section">
+          <div class="inv-panel-grid">
+            ${stat('POURED', btl(it.used))}
+            ${stat('SOLD', btl(it.sold))}
+            ${stat(bad ? 'BOTTLES LOST' : 'BOTTLES OVER', btlSigned(it.bottles), col)}
+            ${stat('AT COST', (it.money < 0 ? '+' : '') + money(it.money), col)}
+          </div>
+        </div>
+        <div class="inv-panel-section" style="flex:1">
+          <div class="inv-panel-section-label">THE SUM</div>
+          ${row('Poured', btl(it.used))}
+          ${row('Sold', '− ' + btl(it.sold))}
+          ${row(bad ? 'Unaccounted' : 'Over-sold', btlSigned(it.bottles), col)}
+          ${row('Bottle cost', money2(unit))}
+          ${row('At cost', (it.money < 0 ? '+' : '') + money2(it.money), col)}
+          ${pct !== null ? row('Vs sales', (pct > 0 ? '+' : '') + pct.toFixed(0) + '%', col) : ''}
+        </div>
+        <div class="inv-panel-actions-section">
+          <div class="cm-panel-note">
+            ${bad
+              ? 'Poured more than the POS sold. Over-pouring, spillage, comps not rung in, or a miscount.'
+              : 'Sold more than was poured. Usually a miscount, not a gain — liquor does not appear on its own.'}
+          </div>
+        </div>`;
+    }
+
+    // Nivel 3 sin artículo: resumen de la categoría
+    if (_view === 'items' && _cat >= 0) {
+      const g = _groups[_cat];
+      const diff = g.used - g.sold;
+      const col = diff > 0.05 ? '#ef4444' : diff < -0.05 ? '#22c55e' : 'var(--text)';
+      return `
+        <div class="inv-panel-header">
+          <div class="inv-panel-name-wrap"><span class="inv-panel-name">${esc(g.cat)}</span></div>
+          <div class="inv-panel-meta">Week of ${esc(dayLabel(_week))}</div>
+        </div>
+        <div class="inv-panel-section">
+          <div class="inv-panel-grid">
+            ${stat('SOLD', btl(g.sold))}
+            ${stat('POURED', btl(g.used))}
+            ${stat('BOTTLES', btlSigned(diff), col)}
+            ${stat('AT COST', (g.loss < 0 ? '+' : '') + money(g.loss), col)}
+          </div>
+        </div>
+        <div class="inv-panel-section" style="flex:1">
+          ${row('Items compared', g.withSales)}
+          ${row('Without sales', g.noSales || '—')}
+          ${row('Losing items', g.items.filter(i => i.bottles > 0.05).length)}
+        </div>
+        <div class="inv-panel-actions-section">
+          <div class="cm-panel-note">Pick an item to see its numbers.</div>
+        </div>`;
+    }
+
+    // Nivel 2: resumen del ciclo
+    if (_view === 'cats') {
+      const total = totalOf(_groups);
+      const noSales = _groups.reduce((s, g) => s + g.noSales, 0);
+      const worst = _groups.find(g => g.withSales && g.loss > 0);
+      return `
+        <div class="inv-panel-header">
+          <div class="inv-panel-name-wrap"><span class="inv-panel-name">Week of ${esc(dayLabel(_week))}</span></div>
+          <div class="inv-panel-meta">Closed cycle</div>
+        </div>
+        <div class="inv-panel-section">
+          <div class="inv-panel-grid">
+            ${stat('AT COST', money(total), '#ef4444')}
+            ${stat('CATEGORIES', _groups.filter(g => g.withSales).length)}
+            ${stat('ITEMS', _groups.reduce((s, g) => s + g.withSales, 0))}
+            ${stat('NO SALES', noSales || '—')}
+          </div>
+        </div>
+        <div class="inv-panel-section" style="flex:1">
+          <div class="inv-panel-section-label">WORST CATEGORY</div>
+          ${worst
+            ? row(worst.cat, money(worst.loss), '#ef4444')
+            : `<div class="cm-panel-note">Nothing over-poured this cycle.</div>`}
+        </div>
+        <div class="inv-panel-actions-section">
+          <div class="cm-panel-note">Pick a category to see its items.</div>
+        </div>`;
+    }
+
+    // Nivel 1
+    const closed = _weeks.filter(w => w.hasUsage).length;
+    return `
+      <div class="inv-panel-header">
+        <div class="inv-panel-name-wrap"><span class="inv-panel-name">Cycles</span></div>
+        <div class="inv-panel-meta">${closed} closed</div>
+      </div>
+      <div class="inv-panel-section" style="flex:1">
+        <div class="cm-panel-note">
+          A cycle closes when the next count is imported — that is what
+          fills in what was used. Pick one to compare it against the sales
+          files.
+        </div>
       </div>`;
+  }
+
+  // ── Migas ────────────────────────────────────────────────────────────
+  function crumbs() {
+    const c = [`<span class="cm-crumb ${_view === 'cycles' ? 'now' : ''}"
+                      ${_view === 'cycles' ? '' : 'role="button" tabindex="0" onclick="window.BarStockConsumptionMatch.goCycles()"'}
+                >Cycles</span>`];
+    if (_week) {
+      c.push(`<i class="ti ti-chevron-right cm-crumb-sep" aria-hidden="true"></i>`);
+      c.push(`<span class="cm-crumb ${_view === 'cats' ? 'now' : ''}"
+                    ${_view === 'cats' ? '' : 'role="button" tabindex="0" onclick="window.BarStockConsumptionMatch.goCats()"'}
+              >Week of ${esc(dayLabel(_week))}</span>`);
+    }
+    if (_view === 'items' && _cat >= 0) {
+      c.push(`<i class="ti ti-chevron-right cm-crumb-sep" aria-hidden="true"></i>`);
+      c.push(`<span class="cm-crumb now">${esc(_groups[_cat].cat)}</span>`);
+    }
+    return `<div class="cm-crumbs">${c.join('')}</div>`;
   }
 
   // ── Pintado ──────────────────────────────────────────────────────────
   function paint() {
     const host = $('cmBody');
-    if (!host || !_cycle) return;
+    if (!host) return;
 
-    const totalLoss = _groups.reduce((s, g) => s + Math.max(0, g.loss), 0);
-    const noSalesTotal = _groups.reduce((s, g) => s + g.noSales, 0);
-    const anySales = _groups.some(g => g.withSales > 0);
-    const closed = (_cycle.weeks || []).filter(w => w.hasUsage);
+    let head = '', body = '';
 
-    // Los ciclos cerrados, para poder mirar atras. Solo cerrados: el que
-    // esta corriendo no tiene con que comparar.
-    const picker = closed.length > 1 ? `
-      <div class="cm-weeks">
-        ${closed.slice(0, 8).map(w => `
-          <button type="button" class="oh-filter-chip ${w.week_start === _cycle.week ? 'active' : ''}"
-                  onclick="window.BarStockConsumptionMatch.setWeek('${w.week_start}')">
-            ${esc(weekLabel(w.week_start))}
-          </button>`).join('')}
-      </div>` : '';
-
-    // Sin NINGUNA venta en todo el ciclo no hay nada que comparar, y la
-    // causa casi siempre es la misma: los ficheros se subieron estando
-    // abierta otra semana. Se dice donde, no solo que falta.
-    const banner = !anySales ? `
-      <div class="cm-banner">
-        <i class="ti ti-alert-triangle" aria-hidden="true"></i>
-        <div>
-          <b>No sales data for this cycle.</b>
-          The files go in <b>Usage → week of ${esc(weekLabel(_cycle.week))}</b>,
-          and there are two of them: liquor and wine. Loading them into a
-          different week leaves this screen empty.
+    if (_view === 'cycles') {
+      head = calendar(_weeks.filter(w => w.hasUsage));
+      body = cycleTable();
+    } else {
+      // Dentro de una categoría el número grande es el de ESA categoría.
+      // Dejar el del ciclo entero mientras la tabla enseña solo Vodka
+      // invita a sumar dos cosas distintas.
+      const inCat = _view === 'items' && _cat >= 0;
+      const total = inCat ? Math.max(0, _groups[_cat].loss) : totalOf(_groups);
+      const sub = inCat
+        ? `poured beyond sales in ${esc(_groups[_cat].cat)}, at cost`
+        : 'poured beyond sales, at cost';
+      const anySales = _groups.some(g => g.withSales > 0);
+      // Sin NINGUNA venta en todo el ciclo no hay nada que comparar, y la
+      // causa casi siempre es la misma: los ficheros se subieron estando
+      // abierta otra semana. Se dice donde, no solo que falta.
+      head = `
+        <div class="cm-total">
+          <b>${money(total)}</b>
+          <span>${sub}</span>
         </div>
-      </div>` : '';
+        ${anySales ? chart(_groups) : `
+          <div class="cm-banner">
+            <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+            <div><b>No sales data for this cycle.</b>
+              The files go in <b>Usage → week of ${esc(dayLabel(_week))}</b>,
+              and there are two of them: liquor and wine. Loading them into
+              a different week leaves this screen empty.</div>
+          </div>`}`;
+      body = _view === 'cats' ? catTable() : itemTable();
+    }
 
     host.innerHTML = `
-      <div class="cm-panel">
-        <div class="cm-head">
-          <div class="cm-total">
-            <b>${money(totalLoss)}</b>
-            <span>poured beyond sales, at cost</span>
-          </div>
-          <span class="cm-week">Closed cycle · ${esc(weekLabel(_cycle.week))}</span>
+      ${crumbs()}
+      <div class="cm-headzone">${head}</div>
+      <div class="cm-layout">
+        <div class="tablewrap cm-wrap">${body}</div>
+        <div class="inv-item-panel cm-side">
+          <div class="cm-side-body">${panel()}</div>
         </div>
-        ${picker}
-        ${chart(_groups)}
-      </div>
-      ${banner}
-      ${anySales ? table(_groups) : ''}
-      ${anySales && noSalesTotal ? `
-        <div class="cm-foot">
-          ${noSalesTotal} item${noSalesTotal === 1 ? '' : 's'} had no line in the sales
-          files and were left out of every total.
-        </div>` : ''}`;
+      </div>`;
   }
 
-  // ── Render ───────────────────────────────────────────────────────────
+  // ── Carga ────────────────────────────────────────────────────────────
+  async function ensureCycle(week) {
+    if (_cache.has(week)) {
+      const c = _cache.get(week);
+      _groups = c.groups;
+      return true;
+    }
+    const TU = window.BarStockTheoreticalUsage;
+    _busy = true;
+    try {
+      const cycle = await TU.loadCycle(week);
+      _groups = group(cycle.rows || []);
+      _cache.set(week, { groups: _groups, total: totalOf(_groups) });
+      return true;
+    } catch (e) {
+      console.warn('[consumption] no se pudo leer el ciclo', e);
+      return false;
+    } finally {
+      _busy = false;
+    }
+  }
+
   async function render() {
     const host = $('cmBody');
     if (!host) return;
@@ -386,68 +615,58 @@
       return;
     }
 
-    host.innerHTML = `<div class="cm-empty">Reading the last closed cycle…</div>`;
-
-    // ── Que semana se lee ──────────────────────────────────────────────
-    //
-    // El ULTIMO CICLO CERRADO, nunca el que esta corriendo.
-    //
-    // Al importar un conteo, runCycle() hace dos cosas: cierra la semana
-    // anterior —le escribe on_hand_end y used— y abre una nueva con used
-    // en null. La semana mas reciente por tanto SIEMPRE esta vacia. Esta
-    // pantalla pedia esa, no encontraba nada, y remataba pidiendo cargar
-    // un conteo que ya estaba cargado.
+    host.innerHTML = `<div class="cm-empty">Reading the cycle list…</div>`;
     try {
-      _cycle = await TU.loadCycle(_week);
+      const cycle = await TU.loadCycle();      // sin argumento: el último cerrado
+      _weeks = cycle.weeks || [];
+      if (cycle.week) {
+        const g = group(cycle.rows || []);
+        _cache.set(cycle.week, { groups: g, total: totalOf(g) });
+      }
     } catch (e) {
-      console.warn('[consumption] no se pudo leer el ciclo', e);
-      host.innerHTML = `<div class="cm-empty">Could not read the cycle. Try again.</div>`;
+      console.warn('[consumption] no se pudo leer la lista de ciclos', e);
+      host.innerHTML = `<div class="cm-empty">Could not read the cycles. Try again.</div>`;
       return;
     }
 
-    if (!_cycle.week || !_cycle.rows.length) {
-      host.innerHTML = `
-        <div class="cm-empty">
-          <b>No closed cycle yet.</b><br>
-          A cycle closes by itself when you import the next count — that is
-          what fills in what was used. Nothing to load here.
-        </div>`;
-      return;
+    // Se entra por la lista de ciclos, con el último ya calculado detrás
+    // —una sola consulta— para que su fila no salga vacía.
+    _view = 'cycles'; _week = null; _groups = []; _cat = -1; _item = -1;
+    _month = null; _year = null;
+    paint();
+  }
+
+  // ── Navegación ───────────────────────────────────────────────────────
+  async function openCycle(week) {
+    if (_busy) return;
+    const host = $('cmBody');
+    if (!_cache.has(week) && host) {
+      const wrap = host.querySelector('.cm-wrap');
+      if (wrap) wrap.innerHTML = `<div class="cm-empty">Reading week of ${esc(dayLabel(week))}…</div>`;
     }
-
-    _groups = group(_cycle.rows);
-    _openCat = -1;
-    _openItem = -1;
+    if (!await ensureCycle(week)) return;
+    _week = week; _view = 'cats'; _cat = -1; _item = -1;
     paint();
   }
 
-  function toggleCat(i) {
-    // Acordeon exclusivo. Con diez categorias abiertas a la vez esto
-    // vuelve a ser la lista infinita que se queria evitar.
-    _openCat = (_openCat === i) ? -1 : i;
-    _openItem = -1;
-    paint();
-    if (_openCat === i) {
-      const el = $('cmRow' + i);
-      if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    }
-  }
-
-  function toggleItem(ev, ci, ii) {
-    // Sin esto el click en la fila del articulo burbujea hasta la fila de
-    // la categoria y la cierra en el mismo gesto.
-    if (ev && ev.stopPropagation) ev.stopPropagation();
-    _openCat = ci;
-    _openItem = (_openItem === ii) ? -1 : ii;
+  function openCat(i) {
+    _cat = i; _item = -1; _view = 'items';
     paint();
   }
 
-  function setWeek(w) {
-    _week = w || null;
-    render();
+  function openItem(i) {
+    _item = (_item === i) ? -1 : i;
+    paint();
   }
+
+  function goCycles() { _view = 'cycles'; _cat = -1; _item = -1; paint(); }
+  function goCats()   { _view = 'cats';   _cat = -1; _item = -1; paint(); }
+  function setYear(y) { _year = y; _month = null; paint(); }
+  function setMonth(m){ _month = (_month === m) ? null : m; paint(); }
 
   window.BarStockConsumptionMatch = {
-    render, paint, setWeek, toggleCat, toggleItem, group
+    render, paint, group,
+    openCycle, openCat, openItem,
+    goCycles, goCats, setYear, setMonth
   };
 })();
