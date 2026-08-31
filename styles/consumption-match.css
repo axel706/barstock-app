@@ -195,6 +195,119 @@
 }
 .cm-none{ text-align: center; color: var(--sub); padding: 22px 10px; font-size: 13px; }
 
+/* ── Selección de artículos ───────────────────────────────────────────
+   Tres estados y hay que distinguirlos de un vistazo: vacía (no elegido),
+   azul (marcado, aún sin enviar) y verde (ya dentro del reporte). Con dos
+   estados no se sabría si "Send to report" ya se pulsó.                */
+.cm-table th.cm-pick, .cm-table td.cm-pick{
+  width: 38px; padding-left: 12px; padding-right: 0;
+  cursor: pointer; text-align: left;
+}
+.cm-box{
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 5px;
+  border: 1.5px solid rgba(255,255,255,.28);
+  transition: all var(--dur-fast, .16s) ease;
+}
+.cm-box i{ font-size: 12px; opacity: 0; color: #0b1220; }
+.cm-box.on{ background: #38bdf8; border-color: #38bdf8; }
+.cm-box.on i{ opacity: 1; }
+.cm-box.done{ background: #22c55e; border-color: #22c55e; }
+.cm-box.done i{ opacity: 1; }
+.cm-pick:hover .cm-box{ border-color: #38bdf8; }
+/* La fila que ya está en el reporte lleva un filo verde a la izquierda:
+   el tick solo se ve si miras la casilla, y hace falta saberlo mientras
+   se recorre la columna de dinero. */
+.cm-row.inrep td:first-child{ box-shadow: inset 3px 0 0 #22c55e; }
+
+/* ── Barra de acción ── */
+.cm-actionbar{
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  margin-bottom: 12px; padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(56,189,248,.10);
+  border: 1px solid rgba(56,189,248,.28);
+}
+.cm-btn{
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 999px;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: all var(--dur-fast, .16s) ease;
+  white-space: nowrap;
+}
+.cm-btn i{ font-size: 14px; }
+.cm-btn.primary{ background: linear-gradient(90deg,#0284c7,#38bdf8); color: #fff; }
+.cm-btn.primary:hover{ filter: brightness(1.08); }
+.cm-btn.ghost{
+  border: 1px solid rgba(255,255,255,.18); color: var(--sub);
+}
+.cm-btn.ghost:hover{ border-color: #38bdf8; color: var(--text); }
+.cm-btn.danger{ border: 1px solid rgba(239,68,68,.4); color: #ef4444; }
+
+/* ── Vista del reporte ── */
+.cmr-bar{
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  margin-bottom: 14px; padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.045);
+  border: 1px solid rgba(255,255,255,.10);
+}
+.cmr-check{
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--sub); cursor: pointer; user-select: none;
+}
+/* app.css da a todo `input` fondo oscuro, borde y 10px de padding. En un
+   checkbox eso lo deforma en un rectángulo grande, así que aquí se
+   revierte a la casilla nativa. */
+.cmr-check input[type="checkbox"]{
+  width: 15px; height: 15px; padding: 0; margin: 0;
+  background: transparent; border: 0; border-radius: 0;
+  accent-color: #38bdf8;
+}
+.cmr-spacer{ flex: 1; }
+.cmr-act{
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.18);
+  font-size: 13px; font-weight: 600; color: var(--sub);
+  cursor: pointer; white-space: nowrap;
+  transition: all var(--dur-fast, .16s) ease;
+}
+.cmr-act:hover{ border-color: #38bdf8; color: var(--text); }
+.cmr-act.danger{ border-color: rgba(239,68,68,.35); color: #ef4444; }
+.cmr-act.danger:hover{ border-color: #ef4444; }
+
+.cmr-block{ margin-bottom: 18px; }
+.cmr-blockhead{
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 10px 12px; border-radius: 10px 10px 0 0;
+  background: rgba(15,23,42,.55);
+  border: 1px solid rgba(255,255,255,.10); border-bottom: 0;
+}
+.cmr-cat{ font-size: 14px; font-weight: 800; }
+.cmr-catmoney{ font-size: 15px; font-weight: 800; color: #ef4444; }
+.cmr-table{ border: 1px solid rgba(255,255,255,.10); border-top: 0; }
+.cmr-table thead th{ background: rgba(15,23,42,.4); }
+
+/* La nota es un campo que no parece un campo hasta que lo tocas: una
+   caja de texto vacía por artículo convertiría la lista en un
+   formulario. */
+.cmr-note textarea{
+  width: 100%; resize: vertical; min-height: 30px;
+  background: transparent; border: 1px dashed rgba(255,255,255,.14);
+  border-radius: 8px; padding: 6px 9px;
+  font-size: 12px; font-style: italic; color: var(--sub);
+  font-family: inherit;
+}
+.cmr-note textarea:focus{
+  outline: none; border-style: solid; border-color: #38bdf8;
+  background: rgba(255,255,255,.05); color: var(--text);
+}
+.cmr-note.has textarea{ border-style: solid; border-color: rgba(255,255,255,.18); color: var(--text); }
+.cmr-blockhead + .cmr-note{ padding: 8px 12px; background: rgba(15,23,42,.35);
+  border-left: 1px solid rgba(255,255,255,.10); border-right: 1px solid rgba(255,255,255,.10); }
+.cmr-noterow > td{ padding: 0 10px 8px 10px !important; border-bottom: 1px solid rgba(255,255,255,.08); }
+
 /* ── Avisos y vacíos ── */
 .cm-banner{
   display: flex; gap: 10px; align-items: flex-start;
@@ -233,6 +346,22 @@ body.light .cm-row:hover{ background: rgba(15,23,42,.04); }
 body.light .cm-row.sel{ background: rgba(2,132,199,.10); }
 body.light .cm-row-warn:hover{ background: transparent; }
 
+body.light .cm-box{ border-color: rgba(15,23,42,.28); }
+body.light .cm-box i{ color: #ffffff; }
+body.light .cm-btn.ghost{ border-color: rgba(15,23,42,.20); }
+body.light .cmr-bar{ background: rgba(255,255,255,.55); border-color: rgba(15,23,42,.10); }
+body.light .cmr-act{ border-color: rgba(15,23,42,.20); }
+body.light .cmr-blockhead{ background: rgba(15,23,42,.05); border-color: rgba(15,23,42,.12); }
+body.light .cmr-table{ border-color: rgba(15,23,42,.12); }
+body.light .cmr-table thead th{ background: #f8fbff; }
+body.light .cmr-blockhead + .cmr-note{
+  background: rgba(15,23,42,.03);
+  border-left-color: rgba(15,23,42,.12); border-right-color: rgba(15,23,42,.12);
+}
+body.light .cmr-note textarea{ border-color: rgba(15,23,42,.18); }
+body.light .cmr-note textarea:focus{ background: rgba(255,255,255,.9); }
+body.light .cmr-noterow > td{ border-bottom-color: rgba(15,23,42,.10); }
+
 /* ── iPhone ───────────────────────────────────────────────────────────
    El panel deja de ir al lado y pasa debajo, como hace .inv-layout en
    mobile.css. De la tabla se van las dos columnas de origen y quedan las
@@ -262,4 +391,12 @@ body.light .cm-row-warn:hover{ background: transparent; }
      En móvil se anula el colgroup entero y la tabla se reparte sola. */
   .cm-table{ table-layout: auto; }
   .cm-table col{ width: auto !important; }
+
+  /* En el reporte las columnas no se ocultan solas: los interruptores de
+     arriba ya deciden cuáles se ven, y esconder por CSS lo que el usuario
+     acaba de encender sería contradecirle. Se le da scroll lateral y
+     que él quite Poured o Sold si le estorban. */
+  .cmr-block{ overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .cmr-bar{ gap: 8px; }
+  .cmr-act{ padding: 7px 11px; font-size: 12px; }
 }

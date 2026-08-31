@@ -28,7 +28,7 @@
   <link rel="stylesheet" href="styles/buttons.css">
   <link rel="stylesheet" href="styles/app.css?v=hdr5">
   <link rel="stylesheet" href="styles/theoretical-usage.css">
-  <link rel="stylesheet" href="styles/consumption-match.css?v=cm4">
+  <link rel="stylesheet" href="styles/consumption-match.css?v=cm5">
   <link rel="stylesheet" href="styles/order-history.css">
 
   <link rel="stylesheet" href="styles/fixes.css">
@@ -129,7 +129,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260831-153210</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260831-155646</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -4921,7 +4921,8 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/inventory-cloud.js?v=account-wjm-1"></script>
 <script src="src/par-intelligence.js"></script>
 <script src="src/par-intelligence-section.js"></script>
-<script src="src/consumption-match.js?v=cm4"></script>
+<script src="src/consumption-match.js?v=cm5"></script>
+<script src="src/consumption-report.js?v=rep1"></script>
 <script src="src/theoretical-usage.js?v=cyc1"></script>
 <script src="src/no-match-cloud.js"></script>
 <script src="src/typeface.js?v=tf1"></script>
@@ -5759,6 +5760,25 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     <div style="display:flex;gap:10px;justify-content:flex-end">
       <button class="ui-control" onclick="closeEmailCostReportModal()">Cancel</button>
       <button class="ui-control primary" id="emailCostReportSendBtn" onclick="sendEmailCostReport()">Send Email</button>
+    </div>
+  </div>
+</div>
+
+<!-- Envio del reporte de Consumption Match. Mismo esqueleto que el de
+     Theoretical Usage, con ids propios: compartirlos habria hecho que
+     abrir uno rellenara los campos del otro. -->
+<div id="cmEmailModalBg" class="modalbg hidden">
+  <div class="modal" style="width:min(560px,96vw);max-height:92vh;overflow-y:auto;position:relative;">
+    <h3 style="margin-top:0">Email Consumption Match Report</h3>
+    <div class="small muted" style="margin-bottom:16px">Selected items only, at cost</div>
+    <div id="cmEmailSummary" class="small" style="margin-bottom:16px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.05)"></div>
+    <label style="display:block;margin-bottom:6px;font-weight:600">To <span class="muted small">(separate multiple with commas)</span></label>
+    <input id="cmEmailTo" type="text" placeholder="manager@example.com, owner@example.com" style="width:100%;margin-bottom:12px">
+    <label style="display:block;margin-bottom:6px;font-weight:600">CC <span class="muted small">(optional)</span></label>
+    <input id="cmEmailCc" type="text" placeholder="accountant@example.com" style="width:100%;margin-bottom:18px">
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="ui-control" onclick="window.BarStockConsumptionReport.closeEmail()">Cancel</button>
+      <button class="ui-control primary" id="cmEmailSendBtn" onclick="window.BarStockConsumptionReport.sendEmail()">Send</button>
     </div>
   </div>
 </div>

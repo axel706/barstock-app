@@ -356,11 +356,23 @@
     if (!g.items.length) {
       return `<div class="cm-empty">No comparable items in ${esc(g.cat)}.</div>`;
     }
+    const RP = window.BarStockConsumptionReport;
+
+    // Una casilla por artículo. El click en ella NO abre el panel: son
+    // dos gestos distintos sobre la misma fila y mezclarlos haría que
+    // marcar veinte artículos abriera y cerrara el panel veinte veces.
     const rows = g.items.map((it, i) => {
       const cls = it.bottles > 0.05 ? 'bad' : it.bottles < -0.05 ? 'good' : '';
+      const inRep = RP && RP.isPicked(it.item);
+      const pend = RP && RP.isPending(it.item);
       return `
-        <tr class="cm-row ${i === _item ? 'sel' : ''}"
+        <tr class="cm-row ${i === _item ? 'sel' : ''} ${inRep ? 'inrep' : ''}"
             onclick="window.BarStockConsumptionMatch.openItem(${i})">
+          <td class="cm-pick" onclick="window.BarStockConsumptionMatch.pick(event, '${esc(it.item).replace(/'/g, '&#39;')}')">
+            <span class="cm-box ${pend ? 'on' : ''} ${inRep ? 'done' : ''}">
+              <i class="ti ti-check" aria-hidden="true"></i>
+            </span>
+          </td>
           <td class="cm-c1">${esc(it.item)}</td>
           <td class="num cm-c-used">${btl(it.used)}</td>
           <td class="num cm-c-sold">${btl(it.sold)}</td>
@@ -369,10 +381,15 @@
         </tr>`;
     }).join('');
 
+    const allPending = g.items.every(it => RP && (RP.isPending(it.item) || RP.isPicked(it.item)));
+
     return `
       <table class="cm-table">
-        <colgroup><col><col style="width:78px"><col style="width:78px"><col style="width:86px"><col style="width:104px"></colgroup>
+        <colgroup><col style="width:38px"><col><col style="width:78px"><col style="width:78px"><col style="width:86px"><col style="width:104px"></colgroup>
         <thead><tr>
+          <th class="cm-pick" onclick="window.BarStockConsumptionMatch.pickAll(event, ${allPending})">
+            <span class="cm-box ${allPending ? 'on' : ''}"><i class="ti ti-check" aria-hidden="true"></i></span>
+          </th>
           <th>Item</th>
           <th class="num cm-c-used">Poured</th>
           <th class="num cm-c-sold">Sold</th>
@@ -530,13 +547,58 @@
       c.push(`<i class="ti ti-chevron-right cm-crumb-sep" aria-hidden="true"></i>`);
       c.push(`<span class="cm-crumb now">${esc(_groups[_cat].cat)}</span>`);
     }
+    if (_view === 'report') {
+      c.push(`<i class="ti ti-chevron-right cm-crumb-sep" aria-hidden="true"></i>`);
+      c.push(`<span class="cm-crumb now">Report</span>`);
+    }
     return `<div class="cm-crumbs">${c.join('')}</div>`;
+  }
+
+  // ── Barra de selección ───────────────────────────────────────────────
+  //
+  // "Send to report" solo existe cuando hay algo marcado, y "View report"
+  // solo cuando hay algo dentro. Botones permanentemente apagados
+  // enseñan a ignorar la barra entera.
+  function actionBar() {
+    const RP = window.BarStockConsumptionReport;
+    if (!RP) return '';
+    const pend = RP.pendingCount();
+    const inRep = RP.pickedCount();
+    if (!pend && !inRep) return '';
+
+    return `
+      <div class="cm-actionbar">
+        ${pend ? `
+          <span class="cm-btn primary" role="button" tabindex="0"
+                onclick="window.BarStockConsumptionMatch.sendToReport()">
+            <i class="ti ti-plus" aria-hidden="true"></i>
+            Send to report (${pend})
+          </span>
+          <span class="cm-btn ghost" role="button" tabindex="0"
+                onclick="window.BarStockConsumptionMatch.clearPending()">Cancel</span>
+        ` : ''}
+        ${inRep ? `
+          <span class="cm-btn ${pend ? 'ghost' : 'primary'}" role="button" tabindex="0"
+                onclick="window.BarStockConsumptionMatch.goReport()">
+            <i class="ti ti-file-text" aria-hidden="true"></i>
+            View report (${inRep})
+          </span>` : ''}
+      </div>`;
   }
 
   // ── Pintado ──────────────────────────────────────────────────────────
   function paint() {
     const host = $('cmBody');
     if (!host) return;
+
+    // El reporte ocupa el ancho entero: no hay panel lateral porque no
+    // hay nada que seleccionar, y sus tablas necesitan sitio.
+    if (_view === 'report') {
+      host.innerHTML = `
+        ${crumbs()}
+        <div class="cm-report">${window.BarStockConsumptionReport.view(_groups)}</div>`;
+      return;
+    }
 
     let head = '', body = '';
 
@@ -574,6 +636,7 @@
 
     host.innerHTML = `
       ${crumbs()}
+      ${actionBar()}
       <div class="cm-headzone">${head}</div>
       <div class="cm-layout">
         <div class="tablewrap cm-wrap">${body}</div>
@@ -646,6 +709,17 @@
     }
     if (!await ensureCycle(week)) return;
     _week = week; _view = 'cats'; _cat = -1; _item = -1;
+
+    // La selección y las notas son de ESTE ciclo. Cambiar de semana sin
+    // recargarlas mezclaría en un mismo reporte artículos de periodos
+    // distintos y daría un total que no corresponde a ninguno.
+    const RP = window.BarStockConsumptionReport;
+    if (RP) {
+      RP.load(week);
+      paint();                       // pintar ya, sin esperar a la nube
+      RP.loadNotes(week).then(paint);
+      return;
+    }
     paint();
   }
 
@@ -661,12 +735,68 @@
 
   function goCycles() { _view = 'cycles'; _cat = -1; _item = -1; paint(); }
   function goCats()   { _view = 'cats';   _cat = -1; _item = -1; paint(); }
+  function goReport() { _view = 'report'; _item = -1; paint(); }
   function setYear(y) { _year = y; _month = null; paint(); }
   function setMonth(m){ _month = (_month === m) ? null : m; paint(); }
+
+  // ── Selección ────────────────────────────────────────────────────────
+  //
+  // La casilla no debe abrir el panel del artículo: son dos gestos sobre
+  // la misma fila, y marcar veinte artículos abriría y cerraría el panel
+  // veinte veces.
+  function pick(ev, name) {
+    if (ev && ev.stopPropagation) ev.stopPropagation();
+    const RP = window.BarStockConsumptionReport;
+    if (!RP) return;
+    if (RP.isPicked(name)) {
+      // Ya está dentro: la casilla lo saca. Sin esto, quitar un artículo
+      // del reporte obligaría a vaciarlo entero y volver a empezar.
+      RP.removeItem(name);
+    } else {
+      RP.togglePending(name);
+    }
+    paint();
+  }
+
+  function pickAll(ev, allOn) {
+    if (ev && ev.stopPropagation) ev.stopPropagation();
+    const RP = window.BarStockConsumptionReport;
+    const g = _groups[_cat];
+    if (!RP || !g) return;
+    for (const it of g.items) {
+      const on = RP.isPending(it.item) || RP.isPicked(it.item);
+      if (allOn && on) { RP.isPicked(it.item) ? RP.removeItem(it.item) : RP.togglePending(it.item); }
+      else if (!allOn && !on) { RP.togglePending(it.item); }
+    }
+    paint();
+  }
+
+  function sendToReport() {
+    const RP = window.BarStockConsumptionReport;
+    if (!RP) return;
+    const n = RP.pendingCount();
+    RP.commit();
+    if (typeof setStatus === 'function') {
+      setStatus(`${n} item${n === 1 ? '' : 's'} added to the report.`);
+    }
+    paint();
+  }
+
+  function clearPending() {
+    const RP = window.BarStockConsumptionReport;
+    if (!RP) return;
+    for (const n of [...RP.pending]) RP.togglePending(n);
+    paint();
+  }
 
   window.BarStockConsumptionMatch = {
     render, paint, group,
     openCycle, openCat, openItem,
-    goCycles, goCats, setYear, setMonth
+    goCycles, goCats, goReport, setYear, setMonth,
+    pick, pickAll, sendToReport, clearPending,
+    // El reporte necesita los grupos del ciclo abierto para recalcular
+    // sus totales con solo los artículos elegidos.
+    groups: () => _groups,
+    week: () => _week
   };
 })();
