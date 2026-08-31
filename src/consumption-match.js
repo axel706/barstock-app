@@ -14,7 +14,8 @@
   //   variance = used − sold          (botellas de más)
   //   loss     = variance × value     (a coste)
   //
-  // Esta pantalla los lee de BarStockTheoreticalUsage.rows y los agrupa.
+  // Esta pantalla los pide con BarStockTheoreticalUsage.loadCycle() —que
+  // los calcula sin pintar nada— y los agrupa.
   // Repetir la fórmula aquí habría permitido que dos pantallas dieran
   // cifras distintas del mismo dinero, que es exactamente el tipo de
   // fallo que más veces ha mordido a este proyecto.
@@ -235,67 +236,116 @@
       </div>`;
   }
 
+  const weekLabel = (w) => w
+    ? new Date(w + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    : '';
+
+  // Ciclo elegido a mano. null = el ultimo cerrado.
+  let _week = null;
+
   // ── Render ───────────────────────────────────────────────────────────
   async function render() {
     const host = $('cmBody');
     if (!host) return;
 
     const TU = window.BarStockTheoreticalUsage;
-    if (!TU) {
+    if (!TU || !TU.loadCycle) {
       host.innerHTML = `<div class="cm-empty">Usage is not loaded.</div>`;
       return;
     }
 
-    host.innerHTML = `<div class="cm-empty">Reading this cycle…</div>`;
+    host.innerHTML = `<div class="cm-empty">Reading the last closed cycle…</div>`;
 
-    // Los datos se piden a Usage, que es quien sabe calcularlos. Si aun
-    // no ha abierto ninguna semana, se le pide que abra la mas reciente.
+    // ── Que semana se lee ──────────────────────────────────────────────
+    //
+    // El ULTIMO CICLO CERRADO, nunca el que esta corriendo.
+    //
+    // Al importar un conteo, runCycle() hace dos cosas: cierra la semana
+    // anterior —le escribe on_hand_end y used— y abre una nueva con used
+    // en null. La semana mas reciente por tanto SIEMPRE esta vacia. Esta
+    // pantalla pedia esa, no encontraba nada, y remataba pidiendo cargar
+    // un conteo que ya estaba cargado.
+    //
+    // Tampoco se llama ya a openWeek(): eso ademas de calcular escondia
+    // y mostraba paneles de la pantalla de Usage. Una vista no debe mover
+    // otra solo para leer un numero.
+    let cycle;
     try {
-      if (!TU.rows || !TU.rows.length) {
-        await TU.refresh();
-        const weeks = TU.weeks || [];
-        if (weeks.length) await TU.openWeek(weeks[0].week_start);
-      }
+      cycle = await TU.loadCycle(_week);
     } catch (e) {
-      console.warn('[consumption] no se pudo leer la semana', e);
+      console.warn('[consumption] no se pudo leer el ciclo', e);
+      host.innerHTML = `<div class="cm-empty">Could not read the cycle. Try again.</div>`;
+      return;
     }
 
-    const rows = (TU.rows || []).slice();
-    if (!rows.length) {
+    const closed = (cycle.weeks || []).filter(w => w.hasUsage);
+
+    if (!cycle.week || !cycle.rows.length) {
       host.innerHTML = `
         <div class="cm-empty">
-          No cycle data yet. Load a count and a sales file in Usage first.
+          <b>No closed cycle yet.</b><br>
+          A cycle closes by itself when you import the next count — that is
+          what fills in what was used. Nothing to load here.
         </div>`;
       return;
     }
 
+    const rows = cycle.rows;
     const groups = group(rows);
     const totalLoss = groups.reduce((s, g) => s + Math.max(0, g.loss), 0);
     const noSalesTotal = groups.reduce((s, g) => s + g.noSales, 0);
+    const anySales = groups.some(g => g.withSales > 0);
 
-    const wk = TU.rowsWeek || '';
-    const label = wk ? new Date(wk + 'T00:00:00')
-      .toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
+    // Los ciclos cerrados, para poder mirar atras. Solo cerrados: los
+    // abiertos no tienen con que comparar.
+    const picker = closed.length > 1 ? `
+      <div class="cm-weeks">
+        ${closed.slice(0, 8).map(w => `
+          <button class="oh-filter-chip ${w.week_start === cycle.week ? 'active' : ''}"
+                  onclick="window.BarStockConsumptionMatch.setWeek('${w.week_start}')">
+            ${esc(weekLabel(w.week_start))}
+          </button>`).join('')}
+      </div>` : '';
+
+    // Sin NINGUNA venta en todo el ciclo no hay nada que comparar, y la
+    // causa casi siempre es la misma: los ficheros se subieron estando
+    // abierta otra semana. Se dice donde, no solo que falta.
+    const banner = !anySales ? `
+      <div class="cm-card cm-card-warn">
+        <div class="cm-card-head">
+          <span class="cm-cat">No sales data for this cycle</span>
+        </div>
+        <div class="cm-card-sub">
+          Nothing can be compared until the sales files are loaded.
+          They go in <b>Usage → week of ${esc(weekLabel(cycle.week))}</b>,
+          and there are two of them: liquor and wine. Loading them into a
+          different week leaves this screen empty.
+        </div>
+      </div>` : '';
 
     host.innerHTML = `
       <div class="cm-top">
         <div class="cm-top-head">
           <span>Consumption match</span>
-          ${label ? `<span class="cm-week">Cycle · ${esc(label)}</span>` : ''}
+          <span class="cm-week">Closed cycle · ${esc(weekLabel(cycle.week))}</span>
         </div>
         <div class="cm-total">
           <b>${money(totalLoss)}</b>
           <span>poured beyond sales, at cost</span>
         </div>
         ${chart(groups)}
+        ${picker}
       </div>
-      ${groups.map(card).join('')}
-      ${noSalesTotal ? `
+      ${banner}
+      ${anySales ? groups.map(card).join('') : ''}
+      ${anySales && noSalesTotal ? `
         <div class="cm-foot">
           ${noSalesTotal} item${noSalesTotal === 1 ? '' : 's'} across all categories
           had no sales data and were left out of every total.
         </div>` : ''}`;
   }
 
-  window.BarStockConsumptionMatch = { render, group, CATS };
+  function setWeek(w) { _week = w || null; render(); }
+
+  window.BarStockConsumptionMatch = { render, setWeek, group, CATS };
 })();

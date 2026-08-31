@@ -30,8 +30,6 @@
   let _reportMode = false;
   let _itemComments = new Map(); // item_name -> comment string
   let _customNotes = ''; // free text notes for current week
-  let _lastEnriched = [];      // filas calculadas de la ultima semana abierta
-  let _lastWeekStart = null;
 
   // ─── Load weeks ──────────────────────────────────────────────────
   // ─── Paginacion ──────────────────────────────────────────────────
@@ -69,20 +67,31 @@
     return out;
   }
 
+  // ─── Ciclo abierto contra ciclo cerrado ──────────────────────────
+  //
+  // runCycle() hace dos cosas al importar un conteo: CIERRA la semana
+  // anterior —le escribe on_hand_end y used— y ABRE una nueva con
+  // used en null. Asi que la semana mas reciente NUNCA tiene datos:
+  // es la que esta corriendo ahora mismo.
+  //
+  // Por eso cada semana lleva `hasUsage`. Cualquier vista que quiera
+  // "el ultimo ciclo" quiere el ultimo con hasUsage, no el primero de
+  // la lista.
   async function loadWeeks() {
     const { url, key } = getConfig();
     const locationId = await fetchLocationId();
     // El orden aqui da igual: se agrupa en un Map y se ordena abajo.
     const rows = await fetchAllSnapshots(
-      `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&select=week_start,is_event_week`,
+      `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&select=week_start,is_event_week,used`,
       'id.asc'
     );
     const weekMap = new Map();
     for (const r of rows || []) {
       if (!weekMap.has(r.week_start)) {
-        weekMap.set(r.week_start, { week_start: r.week_start, is_event_week: r.is_event_week, itemCount: 0 });
+        weekMap.set(r.week_start, { week_start: r.week_start, is_event_week: r.is_event_week, itemCount: 0, hasUsage: false });
       }
       weekMap.get(r.week_start).itemCount++;
+      if (r.used !== null && r.used !== undefined) weekMap.get(r.week_start).hasUsage = true;
     }
     _weeks = Array.from(weekMap.values()).sort((a, b) => b.week_start.localeCompare(a.week_start));
     return _weeks;
@@ -361,7 +370,9 @@
         const dotClass = w.is_event_week ? 'tu-dot-event' : 'tu-dot-normal';
         const tagClass = w.is_event_week ? 'tu-tag-event' : 'tu-tag-normal';
         const tagLabel = w.is_event_week ? 'Event week' : 'Normal';
-        const hasSales = _salesData.has(w.week_start);
+        // .size, no .has(): desde que se cachean tambien las semanas sin
+        // ventas, tener la clave ya no significa tener datos.
+        const hasSales = (_salesData.get(w.week_start) || new Map()).size > 0;
         return `<div class="tu-week-row" onclick="window.BarStockTheoreticalUsage.openWeek('${w.week_start}')">
           <span class="tu-dot ${dotClass}"></span>
           <span class="tu-week-label">${formatWeekLabel(w.week_start)}</span>
@@ -391,27 +402,49 @@
     document.getElementById('tuDetailWeekLabel').textContent = 'Week of ' + formatWeekLabel(weekStart);
     document.getElementById('tuDetailBody').innerHTML = '<tr><td colspan="9" class="muted" style="text-align:center;padding:20px">Loading...</td></tr>';
     initCsvUpload();
-    if (!_salesData.has(weekStart)) {
-      const salesMap = await loadSalesFromSupabase(weekStart);
-      if (salesMap.size) _salesData.set(weekStart, salesMap);
-    }
+    // Las ventas ya no se cargan aqui: lo hace computeWeek, que es quien
+    // las necesita. Hacerlo en los dos sitios pedia el fichero dos veces.
     _itemComments = await loadCommentsFromSupabase(weekStart);
     _customNotes = await loadNotesFromSupabase(weekStart);
     await loadExclusions(weekStart);
     renderWeekDetail(weekStart);
   }
 
-  async function renderWeekDetail(weekStart) {
+  // ─── computeWeek ─────────────────────────────────────────────────
+  //
+  // La formula de used, sold, variance y loss vive AQUI y en ningun
+  // otro sitio. Devuelve las filas de una semana ya calculadas y
+  // ordenadas, SIN TOCAR EL DOM, para que otras vistas —hoy
+  // Consumption Match— puedan pedir un ciclo sin abrir la pantalla de
+  // Usage ni depender de que el usuario haya entrado antes.
+  //
+  // Antes esto vivia dentro de renderWeekDetail y la unica forma de
+  // conseguir las cifras era pintar la tabla. Eso obligaba a llamar a
+  // openWeek() desde fuera, que ademas esconde y muestra paneles: una
+  // vista movia la pantalla de otra solo para leer un numero.
+  async function computeWeek(weekStart, exclusions) {
     const [rows, prevRows] = await Promise.all([
       loadWeekDetail(weekStart),
       loadPrevWeekDetail(weekStart)
     ]);
+    if (!rows?.length) return [];
+
     // Build prev week used map: item_name -> used
     const prevUsedMap = new Map();
     for (const r of prevRows || []) {
       if (r.used !== null) prevUsedMap.set(r.item_name, Number(r.used));
     }
+
+    // Las ventas se cargan desde la nube si no estan ya en memoria: una
+    // vista que no ha pasado por openWeek no tiene nada cacheado.
+    // Se cachea tambien el resultado vacio: sin eso, una semana sin
+    // ventas volvia a preguntar a la nube en cada reordenacion de la
+    // tabla y nunca acertaba.
+    if (!_salesData.has(weekStart)) {
+      _salesData.set(weekStart, await loadSalesFromSupabase(weekStart));
+    }
     const salesMap = _salesData.get(weekStart) || new Map();
+    const excl = exclusions || new Set();
 
     // Build value map from live master (window.state exposed since v2.3)
     const valueMap = new Map();
@@ -420,24 +453,6 @@
         if (r.item) valueMap.set(r.item, Number(r.value || 0));
       }
     }
-
-    const body = document.getElementById('tuDetailBody');
-    const empty = document.getElementById('tuDetailEmpty');
-    const summaryGrid = document.getElementById('tuSummaryGrid');
-    const eventBtn = document.getElementById('tuEventToggleBtn');
-
-    if (eventBtn) {
-      eventBtn.textContent = _currentWeek.is_event_week ? 'Unmark event week' : 'Mark as event week';
-      eventBtn.style.borderColor = _currentWeek.is_event_week ? 'rgba(239,159,39,0.6)' : '';
-      eventBtn.style.color = _currentWeek.is_event_week ? '#EF9F27' : '';
-    }
-
-    if (!rows?.length) {
-      body.innerHTML = '';
-      empty.classList.remove('hidden');
-      return;
-    }
-    empty.classList.add('hidden');
 
     const enriched = rows.map(r => {
       const onHandEndAdj = r.on_hand_end_adjusted !== null && r.on_hand_end_adjusted !== undefined ? Number(r.on_hand_end_adjusted) : null;
@@ -451,7 +466,7 @@
       const loss = variance !== null ? variance * (valueMap.get(r.item_name) || Number(r.value || 0)) : null;
       const prevUsed = prevUsedMap.has(r.item_name) ? prevUsedMap.get(r.item_name) : null;
       const trendDelta = used !== null && prevUsed !== null ? Math.round((used - prevUsed) * 10) / 10 : null;
-      const isExcluded = _exclusions.has(r.item_name);
+      const isExcluded = excl.has(r.item_name);
       return { ...r, used, sold, variance, variancePct, loss, trendDelta, isExcluded };
     });
 
@@ -470,13 +485,43 @@
       }
     });
 
-    // Se cachean las filas YA CALCULADAS para que otras vistas —hoy
-    // Consumption Match— no repitan la formula de used, variance y loss.
-    // Duplicarla significaria que dos pantallas pueden dar cifras
-    // distintas del mismo dinero, y en este proyecto la duplicacion ya
-    // ha sido la fuente de bastantes fallos.
-    _lastEnriched = enriched;
-    _lastWeekStart = weekStart;
+    return enriched;
+  }
+
+  // ─── loadCycle ───────────────────────────────────────────────────
+  //
+  // Punto de entrada para otras vistas. Sin argumento devuelve el
+  // ULTIMO CICLO CERRADO, que es el que tiene numeros — no la semana
+  // en curso, que acaba de abrirse vacia.
+  async function loadCycle(weekStart) {
+    if (!_weeks.length) await loadWeeks();
+    const target = weekStart || (_weeks.find(w => w.hasUsage) || {}).week_start || null;
+    if (!target) return { week: null, rows: [], weeks: _weeks };
+    const excl = await fetchExclusions(target);
+    const rows = await computeWeek(target, excl);
+    return { week: target, rows, weeks: _weeks };
+  }
+
+  async function renderWeekDetail(weekStart) {
+    const enriched = await computeWeek(weekStart, _exclusions);
+
+    const body = document.getElementById('tuDetailBody');
+    const empty = document.getElementById('tuDetailEmpty');
+    const summaryGrid = document.getElementById('tuSummaryGrid');
+    const eventBtn = document.getElementById('tuEventToggleBtn');
+
+    if (eventBtn) {
+      eventBtn.textContent = _currentWeek.is_event_week ? 'Unmark event week' : 'Mark as event week';
+      eventBtn.style.borderColor = _currentWeek.is_event_week ? 'rgba(239,159,39,0.6)' : '';
+      eventBtn.style.color = _currentWeek.is_event_week ? '#EF9F27' : '';
+    }
+
+    if (!enriched.length) {
+      body.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
 
     // Summary metrics
     const included = enriched.filter(r => !r.isExcluded);
@@ -582,15 +627,27 @@
     }
   }
 
+  // Devuelve el conjunto sin tocar el estado global, para que computeWeek
+  // pueda pedir las exclusiones de una semana que no es la que esta
+  // abierta en pantalla.
+  async function fetchExclusions(weekStart) {
+    try {
+      const { url, key } = getConfig();
+      const locationId = await fetchLocationId();
+      const res = await fetch(
+        `${url}/rest/v1/theoretical_exclusions?location_id=eq.${locationId}&week_start=eq.${weekStart}&select=item_name`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      );
+      const rows = await res.json();
+      return new Set((rows || []).map(r => r.item_name));
+    } catch (err) {
+      console.warn('[TheoreticalUsage] loadExclusions failed:', err);
+      return new Set();
+    }
+  }
+
   async function loadExclusions(weekStart) {
-    const { url, key } = getConfig();
-    const locationId = await fetchLocationId();
-    const res = await fetch(
-      `${url}/rest/v1/theoretical_exclusions?location_id=eq.${locationId}&week_start=eq.${weekStart}&select=item_name`,
-      { headers: { apikey: key, Authorization: `Bearer ${key}` } }
-    );
-    const rows = await res.json();
-    _exclusions = new Set((rows || []).map(r => r.item_name));
+    _exclusions = await fetchExclusions(weekStart);
   }
 
   async function saveExclusion(weekStart, itemName) {
@@ -1136,11 +1193,14 @@
 
   window.BarStockTheoreticalUsage = {
     get _currentWeek() { return _currentWeek; },
-    // Lectura para otras vistas. Devuelve las filas tal cual se
-    // calcularon aqui: mismo used, misma variance, mismo loss.
-    get rows() { return _lastEnriched; },
-    get rowsWeek() { return _lastWeekStart; },
     get weeks() { return _weeks; },
+    // La ultima semana CERRADA. La primera de la lista es la que esta
+    // corriendo y no tiene numeros todavia.
+    get lastClosedWeek() { return (_weeks.find(w => w.hasUsage) || null); },
+    // Lectura para otras vistas: mismo used, misma variance, mismo loss,
+    // sin pintar nada.
+    loadCycle,
+    computeWeek,
     refresh,
     openWeek,
     showWeekList,

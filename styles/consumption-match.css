@@ -88,7 +88,20 @@ i.cm-bar-used{ background: #f59e0b; }
 .cm-note b{ color: var(--text); }
 .cm-note i{ font-size: 14px; vertical-align: -2px; margin-right: 4px; }
 
+/* Selector de ciclo. Solo aparece con mas de un ciclo cerrado, asi que
+   en una locacion nueva no ocupa sitio. Scroll horizontal en vez de
+   salto de linea: con ocho fechas dos filas de chips empujaban la
+   grafica fuera de la pantalla en el iPhone. */
+.cm-weeks{
+  display: flex; gap: 6px; margin-top: 12px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.cm-weeks::-webkit-scrollbar{ display: none; }
+.cm-weeks .oh-filter-chip{ flex: 0 0 auto; white-space: nowrap; }
+
 .cm-empty{ font-size: 14px; color: var(--sub); text-align: center; padding: 30px 10px; line-height: 1.6; }
+.cm-empty b{ color: var(--text); }
 .cm-foot{ font-size: 11px; color: var(--sub); text-align: center; padding: 6px 10px 2px; line-height: 1.5; }
 
 /* ── Modo claro ── */
