@@ -1,97 +1,38 @@
 /* ── Consumption Match ─────────────────────────────────────────────────
+
    Colores con el significado que ya tienen en la app: ámbar el líquido,
-   rojo el dinero, verde lo que no es pérdida. */
+   rojo el dinero, verde lo que no es pérdida.
 
-.cm-top{
-  background: rgba(17,24,39,.86);
-  border: 1px solid rgba(255,255,255,.08);
+   El vidrio es el mismo de .card en app.css —translúcido con blur y un
+   filo interior claro— pero un escalón más suave, porque este panel vive
+   DENTRO de una .card y dos capas del mismo vidrio se leen como plástico.
+   Por eso aquí el fondo es un velo de blanco sobre lo que ya hay, no una
+   superficie opaca propia.                                             */
+
+.cm-panel{
+  background: rgba(255,255,255,.045);
+  border: 1px solid rgba(255,255,255,.10);
   border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 12px;
+  padding: 16px 16px 12px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(6px) saturate(130%);
+  -webkit-backdrop-filter: blur(6px) saturate(130%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
 }
-.cm-top-head{
-  display: flex; justify-content: space-between; align-items: baseline;
-  font-size: 15px; font-weight: 800; margin-bottom: 4px;
-}
-.cm-week{ font-size: 12px; font-weight: 600; color: var(--sub); }
 
-.cm-total{ display: flex; align-items: baseline; gap: 8px; margin-bottom: 14px; }
-.cm-total b{ font-size: 32px; font-weight: 800; color: #ef4444; line-height: 1; }
+.cm-head{
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 12px; flex-wrap: wrap;
+}
+.cm-week{ font-size: 12px; font-weight: 600; color: var(--sub); white-space: nowrap; }
+
+.cm-total{ display: flex; align-items: baseline; gap: 8px; }
+.cm-total b{ font-size: 30px; font-weight: 800; color: #ef4444; line-height: 1.05; }
 .cm-total span{ font-size: 13px; color: var(--sub); }
 
-/* ── Gráfica ── */
-.cm-chart{ display: block; width: 100%; height: auto; }
-.cm-grid{ stroke: rgba(255,255,255,.10); stroke-dasharray: 2 3; }
-.cm-axisline{ stroke: rgba(255,255,255,.22); }
-.cm-axis{ font-size: 9px; fill: var(--sub); }
-.cm-bar-sold{ fill: #22c55e; }
-.cm-bar-used{ fill: #f59e0b; }
-
-.cm-legend{
-  display: flex; gap: 14px; justify-content: center;
-  margin-top: 6px; font-size: 11px; color: var(--sub);
-}
-.cm-key{
-  display: inline-block; width: 8px; height: 8px;
-  border-radius: 2px; margin-right: 5px;
-}
-/* En SVG el color va en fill; en un <i> de HTML hace falta background */
-i.cm-bar-sold{ background: #22c55e; }
-i.cm-bar-used{ background: #f59e0b; }
-
-/* ── Tarjeta de categoría ── */
-.cm-card{
-  background: rgba(17,24,39,.86);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 12px;
-}
-.cm-card-head{
-  display: flex; justify-content: space-between; align-items: baseline;
-}
-.cm-cat{ font-size: 16px; font-weight: 800; }
-.cm-cat-money{ font-size: 20px; font-weight: 800; color: var(--sub); }
-.cm-cat-money.bad{ color: #ef4444; }
-.cm-cat-money.good{ color: #22c55e; }
-.cm-card-sub{
-  font-size: 13px; color: var(--sub); line-height: 1.5; margin-top: 6px;
-}
-.cm-card-sub b{ color: var(--text); }
-
-/* ── El artículo, como una ecuación ──
-   Las dos cifras del mismo tamaño y el signo igual en medio: lo que se
-   quiere leer no es "1.2" ni "$34" sino que una COSA es la otra. */
-.cm-items{ margin-top: 14px; border-top: 1px solid rgba(255,255,255,.08); }
-.cm-item{ padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
-.cm-item:last-child{ border-bottom: none; }
-.cm-item-name{ font-size: 14px; font-weight: 700; margin-bottom: 8px; }
-
-.cm-eq{ display: flex; align-items: center; gap: 10px; }
-.cm-eqsign{ font-size: 18px; color: var(--sub); flex-shrink: 0; }
-.cm-chip{
-  flex: 1; min-width: 0;
-  border-radius: 10px; padding: 9px 10px; text-align: center;
-}
-.cm-chip b{ display: block; font-size: 20px; font-weight: 800; line-height: 1.1; }
-.cm-chip span{ display: block; font-size: 11px; margin-top: 2px; }
-.cm-chip-btl{ background: rgba(245,158,11,.14); }
-.cm-chip-btl b, .cm-chip-btl span{ color: #fbbf24; }
-.cm-chip-money{ background: rgba(239,68,68,.14); }
-.cm-chip-money b, .cm-chip-money span{ color: #f87171; }
-
-.cm-note{
-  margin-top: 12px; padding: 10px 12px;
-  border-radius: 10px; background: rgba(255,255,255,.04);
-  font-size: 12px; color: var(--sub); line-height: 1.5;
-}
-.cm-note b{ color: var(--text); }
-.cm-note i{ font-size: 14px; vertical-align: -2px; margin-right: 4px; }
-
-/* Selector de ciclo. Solo aparece con mas de un ciclo cerrado, asi que
-   en una locacion nueva no ocupa sitio. Scroll horizontal en vez de
-   salto de linea: con ocho fechas dos filas de chips empujaban la
-   grafica fuera de la pantalla en el iPhone. */
+/* ── Selector de ciclo ──
+   Scroll horizontal en vez de salto de línea: con ocho fechas, dos filas
+   de chips empujaban la gráfica fuera de la pantalla en el iPhone. */
 .cm-weeks{
   display: flex; gap: 6px; margin-top: 12px;
   overflow-x: auto; -webkit-overflow-scrolling: touch;
@@ -100,35 +41,261 @@ i.cm-bar-used{ background: #f59e0b; }
 .cm-weeks::-webkit-scrollbar{ display: none; }
 .cm-weeks .oh-filter-chip{ flex: 0 0 auto; white-space: nowrap; }
 
+/* ── Gráfica ──────────────────────────────────────────────────────────
+   Barras en HTML. La versión anterior era un SVG con viewBox fijo que se
+   estiraba a todo el ancho: el texto de los ejes escalaba con el dibujo
+   y en un monitor salía a 40px de alto. Un div escala su caja y deja la
+   tipografía donde estaba.
+
+   22px es la banda de la etiqueta inferior. Se descuenta igual en la
+   altura de las barras y en las líneas de referencia, así el 50% de la
+   rejilla y el 50% de una barra caen en el mismo píxel.                */
+.cm-chart{
+  position: relative;
+  height: 190px;
+  margin-top: 14px;
+  padding-left: 36px;
+}
+/* El carril que se desplaza. La rejilla queda fuera de él a propósito:
+   dentro de un contenedor con overflow, un absolute con right:0 se ancla
+   al borde visible y viaja con el scroll, así que las líneas se
+   despegaban de las barras al deslizar. */
+.cm-plot{
+  height: 100%;
+  display: flex; align-items: stretch; gap: 4px;
+  overflow-x: auto; overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  position: relative; z-index: 1;
+}
+.cm-plot::-webkit-scrollbar{ display: none; }
+
+.cm-gline{
+  position: absolute; left: 36px; right: 0; z-index: 0;
+  border-top: 1px dashed rgba(255,255,255,.14);
+  pointer-events: none;
+}
+.cm-glbl{
+  position: absolute; left: 0; width: 30px; z-index: 0;
+  transform: translateY(50%);
+  text-align: right;
+  font-size: 10px; font-weight: 600; color: var(--sub);
+  pointer-events: none;
+}
+
+.cm-col{
+  flex: 1 0 44px;
+  display: flex; flex-direction: column;
+  background: transparent; border: 0; padding: 0;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  transition: background var(--dur-fast, .16s) ease;
+}
+.cm-col:hover{ background: rgba(255,255,255,.06); }
+.cm-col.active{ background: rgba(56,189,248,.14); }
+
+.cm-bars{
+  height: calc(100% - 22px);
+  display: flex; align-items: flex-end; justify-content: center; gap: 3px;
+}
+.cm-b{
+  width: 15px; max-width: 30%;
+  border-radius: 3px 3px 0 0;
+  display: block;
+}
+.cm-b-sold{ background: #22c55e; }
+.cm-b-used{ background: #f59e0b; }
+
+.cm-xlabel{
+  height: 22px; line-height: 22px;
+  font-size: 11px; font-weight: 600; color: var(--sub);
+  text-align: center;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 0 2px;
+}
+
+.cm-legend{
+  display: flex; gap: 16px; align-items: center;
+  margin-top: 10px; font-size: 11px; color: var(--sub);
+}
+.cm-key{
+  display: inline-block; width: 9px; height: 9px;
+  border-radius: 2px; margin-right: 5px; vertical-align: -1px;
+}
+.cm-legend-tip{ margin-left: auto; opacity: .75; font-style: italic; }
+
+/* ── Tabla de categorías ─────────────────────────────────────────────
+   Mismas medidas que las tablas de Usage: 14px, celdas de 10px, cabecera
+   pegada arriba. table-layout automático a propósito — el fijo con
+   colgroup ya costó una tarde en Ordering cuando ocultar una columna
+   corría el resto una posición.                                        */
+.cm-wrap{ max-height: 520px; }
+
+.cm-table{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.cm-table th, .cm-table td{
+  padding: 10px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  text-align: left;
+}
+.cm-table thead th{
+  position: sticky; top: 0; z-index: 1;
+  background: #111827;
+  font-size: 10px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--sub); font-weight: 700;
+}
+.cm-table .num{ text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cm-table .bad{ color: #ef4444; }
+.cm-table .good{ color: #22c55e; }
+
+.cm-crow{ cursor: pointer; transition: background var(--dur-fast, .16s) ease; }
+.cm-crow:hover{ background: rgba(255,255,255,.045); }
+.cm-crow.open{ background: rgba(56,189,248,.10); }
+.cm-cname{ font-weight: 700; }
+
+.cm-chev{
+  font-size: 13px; color: var(--sub);
+  margin-right: 6px; vertical-align: -1px;
+  transition: transform var(--dur-fast, .16s) ease;
+  display: inline-block;
+}
+.cm-crow.open .cm-chev, .cm-irow.open .cm-chev{ transform: rotate(90deg); }
+
+.cm-crow-warn{ cursor: default; }
+.cm-crow-warn:hover{ background: transparent; }
+.cm-warn-i{ color: #f59e0b; margin-right: 6px; vertical-align: -1px; }
+.cm-tag{
+  display: inline-block; margin-left: 8px;
+  padding: 2px 7px; border-radius: 999px;
+  background: rgba(245,158,11,.16); color: #f59e0b;
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+}
+
+/* ── Artículos de una categoría ── */
+.cm-cdetail > td{ padding: 0 !important; background: rgba(0,0,0,.14); }
+
+.cm-subtable{ width: 100%; border-collapse: collapse; font-size: 13px; }
+.cm-subtable th, .cm-subtable td{
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  text-align: left;
+}
+.cm-subtable th{
+  font-size: 10px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--sub); font-weight: 700;
+}
+.cm-subtable .num{ text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cm-subtable .bad{ color: #ef4444; }
+.cm-subtable .good{ color: #22c55e; }
+.cm-subtable tr:last-child td{ border-bottom: 0; }
+
+.cm-irow{ cursor: pointer; }
+.cm-irow:hover{ background: rgba(255,255,255,.04); }
+.cm-irow.open{ background: rgba(56,189,248,.08); }
+.cm-iname{ padding-left: 22px !important; }
+
+.cm-sub-empty{ padding: 14px; font-size: 12px; color: var(--sub); }
+
+/* ── El desglose de un artículo ──
+   La resta escrita entera. "Perdiste 1.2 botellas" no convence a nadie
+   sin los dos números de los que sale. */
+.cm-idetail > td{ padding: 0 !important; }
+.cm-eq{
+  display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap;
+  padding: 12px 14px 12px 32px;
+  background: rgba(0,0,0,.18);
+}
+.cm-eq-part{
+  display: flex; flex-direction: column; gap: 1px;
+  padding: 7px 12px; border-radius: 10px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  min-width: 74px;
+}
+.cm-eq-part b{ font-size: 17px; font-weight: 800; line-height: 1.1; }
+.cm-eq-part span{ font-size: 10px; color: var(--sub); text-transform: uppercase; letter-spacing: .03em; }
+.cm-eq-op{ align-self: center; font-size: 15px; font-weight: 700; color: var(--sub); }
+.cm-eq-res.bad{ background: rgba(239,68,68,.14); border-color: rgba(239,68,68,.32); }
+.cm-eq-res.bad b{ color: #ef4444; }
+.cm-eq-res.good{ background: rgba(34,197,94,.12); border-color: rgba(34,197,94,.30); }
+.cm-eq-res.good b{ color: #22c55e; }
+
+/* ── Avisos y vacíos ── */
+.cm-banner{
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 14px; margin-bottom: 14px;
+  border-radius: 14px;
+  background: rgba(245,158,11,.10);
+  border: 1px solid rgba(245,158,11,.30);
+  font-size: 13px; color: var(--sub); line-height: 1.55;
+}
+.cm-banner i{ font-size: 17px; color: #f59e0b; flex: 0 0 auto; margin-top: 1px; }
+.cm-banner b{ color: var(--text); }
+
 .cm-empty{ font-size: 14px; color: var(--sub); text-align: center; padding: 30px 10px; line-height: 1.6; }
 .cm-empty b{ color: var(--text); }
-.cm-foot{ font-size: 11px; color: var(--sub); text-align: center; padding: 6px 10px 2px; line-height: 1.5; }
+.cm-foot{ font-size: 11px; color: var(--sub); text-align: center; padding: 10px; line-height: 1.5; }
 
-/* ── Modo claro ── */
-body.light .cm-top,
-body.light .cm-card{
-  background: rgba(255,255,255,.96);
-  border-color: rgba(15,23,42,.08);
+/* ── Modo claro ───────────────────────────────────────────────────────
+   Mismo vidrio, invertido: velo blanco más presente porque el fondo
+   claro no da contraste por sí solo, y los bordes en tinta en vez de en
+   blanco. Sin esto los separadores de tabla desaparecían — el mismo
+   fallo que ya pasó con el contorno de la botella. */
+body.light .cm-panel{
+  background: rgba(255,255,255,.46);
+  border-color: rgba(255,255,255,.60);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.70);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
 }
-body.light .cm-grid{ stroke: rgba(15,23,42,.12); }
-body.light .cm-axisline{ stroke: rgba(15,23,42,.28); }
-body.light .cm-total b{ color: #dc2626; }
-body.light .cm-cat-money.bad{ color: #dc2626; }
-body.light .cm-cat-money.good{ color: #16a34a; }
-body.light .cm-items{ border-top-color: rgba(15,23,42,.10); }
-body.light .cm-item{ border-bottom-color: rgba(15,23,42,.07); }
-body.light .cm-chip-btl{ background: #fef3c7; }
-body.light .cm-chip-btl b, body.light .cm-chip-btl span{ color: #92400e; }
-body.light .cm-chip-money{ background: #fee2e2; }
-body.light .cm-chip-money b, body.light .cm-chip-money span{ color: #991b1b; }
-body.light .cm-note{ background: rgba(15,23,42,.04); }
+body.light .cm-gline{ border-top-color: rgba(15,23,42,.14); }
 
-/* Una categoría entera sin ventas: casi siempre falta un archivo. Se
-   marca en ámbar, no en rojo — no es una pérdida, es un dato ausente. */
-.cm-card-warn{
-  border-color: rgba(245,158,11,.40);
-  background: rgba(245,158,11,.07);
+body.light .cm-col:hover{ background: rgba(15,23,42,.05); }
+body.light .cm-col.active{ background: rgba(2,132,199,.12); }
+
+body.light .cm-table th, body.light .cm-table td{
+  border-bottom-color: rgba(15,23,42,.12);
 }
-.cm-card-warn .cm-card-sub b{ color: #fbbf24; }
-body.light .cm-card-warn{ background: #fffbeb; border-color: #f59e0b; }
-body.light .cm-card-warn .cm-card-sub b{ color: #92400e; }
+body.light .cm-table thead th{
+  background: #f8fbff;
+  color: #475569;
+}
+body.light .cm-crow:hover{ background: rgba(15,23,42,.04); }
+body.light .cm-crow.open{ background: rgba(2,132,199,.10); }
+body.light .cm-crow-warn:hover{ background: transparent; }
+
+body.light .cm-cdetail > td{ background: rgba(15,23,42,.04); }
+body.light .cm-subtable th, body.light .cm-subtable td{
+  border-bottom-color: rgba(15,23,42,.09);
+}
+body.light .cm-irow:hover{ background: rgba(15,23,42,.04); }
+body.light .cm-irow.open{ background: rgba(2,132,199,.08); }
+
+body.light .cm-eq{ background: rgba(15,23,42,.05); }
+body.light .cm-eq-part{
+  background: rgba(255,255,255,.75);
+  border-color: rgba(15,23,42,.10);
+}
+
+/* ── iPhone ───────────────────────────────────────────────────────────
+   Las dos columnas de origen se van y quedan las tres que importan: qué
+   es, cuánto se perdió, cuánto cuesta. Poured y Sold no desaparecen del
+   todo — siguen en el desglose del artículo, que es donde se leen.
+
+   Se ocultan por CLASE, no por nth-child. La fila de aviso de una
+   categoría sin ventas usa colspan, así que sus celdas no van en las
+   mismas posiciones: por posición se habría borrado el mensaje entero.
+   Es el mismo fallo que costó una tarde en Ordering.                  */
+@media (max-width: 640px){
+  .cm-total b{ font-size: 26px; }
+  .cm-chart{ height: 168px; }
+  .cm-table{ font-size: 13px; }
+  .cm-table th, .cm-table td{ padding: 9px 8px; }
+  .cm-c-sold, .cm-c-used{ display: none; }
+  .cm-eq{ padding: 12px; gap: 6px; }
+  .cm-eq-part{ min-width: 62px; padding: 6px 9px; }
+  .cm-eq-part b{ font-size: 15px; }
+}

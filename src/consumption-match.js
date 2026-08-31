@@ -15,10 +15,10 @@
   //   loss     = variance × value     (a coste)
   //
   // Esta pantalla los pide con BarStockTheoreticalUsage.loadCycle() —que
-  // los calcula sin pintar nada— y los agrupa.
-  // Repetir la fórmula aquí habría permitido que dos pantallas dieran
-  // cifras distintas del mismo dinero, que es exactamente el tipo de
-  // fallo que más veces ha mordido a este proyecto.
+  // los calcula sin pintar nada— y los agrupa. Repetir la fórmula aquí
+  // habría permitido que dos pantallas dieran cifras distintas del mismo
+  // dinero, que es exactamente el tipo de fallo que más veces ha mordido
+  // a este proyecto.
   //
   // ── El dinero es COSTE, no precio de barra ──────────────────────────
   //
@@ -37,9 +37,12 @@
   //
   // Se apartan del cálculo y se cuentan DENTRO DE SU CATEGORÍA, no todos
   // juntos: así se ve de qué categoría desconfiar.
-
-  const CATS = ['Vodka','Gin','Tequila & Mezcal','Whiskey & Bourbon','Rum',
-                'Brandy & Cognac','Liqueur','Wine','Beer & Cider','Non-Alcoholic'];
+  //
+  // ── Tres niveles, no una lista ──────────────────────────────────────
+  //
+  // Gráfica → tabla de categorías → artículos de una categoría → el
+  // desglose de un artículo. Todo colapsado salvo lo que abres. Con 258
+  // artículos, enseñarlos de golpe no es información: es un muro.
 
   const $ = (id) => document.getElementById(id);
 
@@ -49,10 +52,17 @@
   }
 
   const money = (n) => '$' + Math.round(Math.abs(n)).toLocaleString();
-  const btl = (n) => {
-    const v = Math.abs(n);
-    return (v < 10 ? v.toFixed(1) : Math.round(v).toString()).replace(/\.0$/, '');
-  };
+  // Un decimal SIEMPRE, no solo por debajo de diez.
+  //
+  // Antes se redondeaba a entero a partir de 10 y el desglose salia
+  // "31 − 26 = +4.8": tres numeros correctos que juntos parecen un error
+  // de la app. A un decimal la resta cuadra a la vista, que es el unico
+  // sitio donde el usuario la puede comprobar.
+  const btl = (n) => Math.abs(n).toFixed(1).replace(/\.0$/, '');
+  const btlSigned = (n) => (n > 0 ? '+' : n < 0 ? '−' : '') + btl(n);
+  const weekLabel = (w) => w
+    ? new Date(w + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    : '';
 
   // La categoría vive en state.master, y las filas de Usage vienen de
   // inventory_snapshots. Se unen por nombre, igual que en
@@ -71,7 +81,7 @@
     const ensure = (c) => {
       if (!out.has(c)) out.set(c, {
         cat: c, sold: 0, used: 0, loss: 0, items: [],
-        noSales: 0, withSales: 0, uncategorised: false
+        noSales: 0, withSales: 0
       });
       return out.get(c);
     };
@@ -80,7 +90,6 @@
       if (r.isExcluded) continue;                 // Usage ya las descartó
       const cat = categoryOf(r.item_name) || 'Uncategorised';
       const g = ensure(cat);
-      if (cat === 'Uncategorised') g.uncategorised = true;
 
       // Sin venta con la que comparar no entra en ningun total: solo se
       // cuenta, y en su propia categoria.
@@ -94,13 +103,16 @@
       g.used += Number(r.used) || 0;
       if (r.variance !== null && r.variance !== undefined) {
         g.loss += Number(r.loss) || 0;
-        if (r.variance > 0) {
-          g.items.push({
-            item: r.item_name,
-            bottles: Number(r.variance),
-            money: Number(r.loss) || 0
-          });
-        }
+        // Se guardan TODOS los comparables, no solo los que pierden. Una
+        // tabla que esconde las varianzas negativas no cuadra con su
+        // propio total, y el primero que sume a mano deja de fiarse.
+        g.items.push({
+          item: r.item_name,
+          used: Number(r.used) || 0,
+          sold: Number(r.sold) || 0,
+          bottles: Number(r.variance),
+          money: Number(r.loss) || 0
+        });
       }
     }
 
@@ -114,134 +126,254 @@
     return Array.from(out.values()).sort((a, b) => b.loss - a.loss);
   }
 
+  // ── Estado de la vista ───────────────────────────────────────────────
+  let _week = null;      // ciclo elegido a mano; null = el ultimo cerrado
+  let _cycle = null;     // { week, rows, weeks }
+  let _groups = [];
+  let _openCat = -1;     // una categoria abierta a la vez
+  let _openItem = -1;
+
   // ── Gráfica ──────────────────────────────────────────────────────────
   //
-  // SVG a mano. El proyecto no carga ninguna librería de gráficas y no
-  // hace falta añadir una para diez barras dobles.
+  // Barras en HTML, no en SVG.
+  //
+  // El SVG anterior tenia viewBox 320x150 y se estiraba a todo el ancho
+  // del contenedor: en un monitor el texto de los ejes salia a 40px de
+  // alto porque escala con el dibujo. Un div escala su caja y deja la
+  // tipografia donde estaba, que es justo lo que se quiere aqui.
+  //
+  // La altura util es 100% menos la banda de la etiqueta, y ese mismo
+  // descuento se aplica a las lineas de referencia, para que el 50% de
+  // la rejilla y el 50% de una barra caigan en el mismo pixel.
+  const LBL = 22;
+
   function chart(groups) {
     // Solo las categorias que tienen con que comparar. Una barra ambar
     // sola, sin su verde al lado, se lee como perdida del 100% cuando en
     // realidad significa que falta el archivo de ventas de esa familia.
-    const data = groups.filter(g => g.withSales > 0 && (g.sold > 0 || g.used > 0)).slice(0, 8);
-    if (!data.length) return '';
+    const idx = groups.map((g, i) => i)
+      .filter(i => groups[i].withSales > 0 && (groups[i].sold > 0 || groups[i].used > 0));
+    if (!idx.length) return '';
 
-    const W = 320, H = 150, base = 122, top = 10;
-    const max = Math.max(...data.map(g => Math.max(g.sold, g.used)), 1);
-    const slot = (W - 34) / data.length;
-    const bw = Math.min(17, slot / 2.6);
+    const max = Math.max(...idx.map(i => Math.max(groups[i].sold, groups[i].used)), 1);
 
-    const bars = data.map((g, i) => {
-      const x = 34 + i * slot + (slot - bw * 2 - 2) / 2;
-      const hS = Math.max(1, (g.sold / max) * (base - top));
-      const hU = Math.max(1, (g.used / max) * (base - top));
-      const label = g.cat.split(' ')[0].slice(0, 8);
+    // La rejilla es HERMANA del carril que hace scroll, no hija.
+    // Dentro de un contenedor con overflow, un absolute con right:0 se
+    // ancla al borde visible y se arrastra con el scroll: las lineas se
+    // despegaban de las barras al deslizar en el movil.
+    const grid = [0, 0.5, 1].map(f => `
+      <div class="cm-gline" style="bottom:calc(${LBL}px + ${f} * (100% - ${LBL}px))"></div>
+      <div class="cm-glbl"  style="bottom:calc(${LBL}px + ${f} * (100% - ${LBL}px))">${Math.round(max * f)}</div>
+    `).join('');
+
+    const cols = idx.map(i => {
+      const g = groups[i];
+      const hS = Math.max(1.5, (g.sold / max) * 100);
+      const hU = Math.max(1.5, (g.used / max) * 100);
+      const short = g.cat.split(/[\s&]/)[0];
       return `
-        <rect x="${x}" y="${base - hS}" width="${bw}" height="${hS}" rx="2" class="cm-bar-sold"/>
-        <rect x="${x + bw + 2}" y="${base - hU}" width="${bw}" height="${hU}" rx="2" class="cm-bar-used"/>
-        <text x="${x + bw + 1}" y="${base + 14}" text-anchor="middle" class="cm-axis">${esc(label)}</text>`;
-    }).join('');
-
-    const grid = [0, 0.5, 1].map(f => {
-      const y = base - f * (base - top);
-      return `<line x1="34" y1="${y}" x2="${W - 5}" y2="${y}" class="cm-grid"/>
-              <text x="29" y="${y + 3}" text-anchor="end" class="cm-axis">${Math.round(max * f)}</text>`;
+        <button class="cm-col ${i === _openCat ? 'active' : ''}" type="button"
+                onclick="window.BarStockConsumptionMatch.toggleCat(${i})"
+                title="${esc(g.cat)} · ${btl(g.sold)} sold, ${btl(g.used)} poured">
+          <div class="cm-bars">
+            <span class="cm-b cm-b-sold" style="height:${hS}%"></span>
+            <span class="cm-b cm-b-used" style="height:${hU}%"></span>
+          </div>
+          <span class="cm-xlabel">${esc(short)}</span>
+        </button>`;
     }).join('');
 
     return `
-      <svg viewBox="0 0 ${W} ${H}" class="cm-chart" role="img"
-           aria-label="Vendido contra servido por categoría">
-        <title>Sold versus poured by category</title>
+      <div class="cm-chart">
         ${grid}
-        <line x1="34" y1="${base}" x2="${W - 5}" y2="${base}" class="cm-axisline"/>
-        ${bars}
-      </svg>
+        <div class="cm-plot">${cols}</div>
+      </div>
       <div class="cm-legend">
-        <span><i class="cm-key cm-bar-sold"></i>Sold</span>
-        <span><i class="cm-key cm-bar-used"></i>Poured</span>
+        <span><i class="cm-key cm-b-sold"></i>Sold</span>
+        <span><i class="cm-key cm-b-used"></i>Poured</span>
+        <span class="cm-legend-tip">Tap a category</span>
       </div>`;
   }
 
-  // ── Tarjeta de categoría ─────────────────────────────────────────────
-  function card(g) {
-    // Una categoria ENTERA sin datos de venta no es una nota al pie: casi
-    // siempre significa que falta un archivo. Las ventas llegan en dos
-    // ficheros separados, vino y licor, asi que olvidar uno deja mudas
-    // todas sus categorias de golpe.
-    if (!g.withSales && g.noSales) {
-      return `
-        <div class="cm-card cm-card-warn">
-          <div class="cm-card-head">
-            <span class="cm-cat">${esc(g.cat)}</span>
-            <span class="cm-cat-money">—</span>
-          </div>
-          <div class="cm-card-sub">
-            <b>No sales data</b> for any of the ${g.noSales}
-            item${g.noSales === 1 ? '' : 's'} in this category, so nothing here
-            can be compared. Sales arrive in two files, wine and liquor —
-            check that both were loaded for this cycle.
-          </div>
-        </div>`;
+  // ── Fila de detalle de un artículo ───────────────────────────────────
+  //
+  // La resta escrita entera. "Perdiste 1.2 botellas" no convence a nadie
+  // sin los dos numeros de los que sale.
+  function itemDetail(it) {
+    const bad = it.bottles > 0.05;
+    return `
+      <div class="cm-eq">
+        <div class="cm-eq-part">
+          <b>${btl(it.used)}</b><span>poured</span>
+        </div>
+        <span class="cm-eq-op">−</span>
+        <div class="cm-eq-part">
+          <b>${btl(it.sold)}</b><span>sold</span>
+        </div>
+        <span class="cm-eq-op">=</span>
+        <div class="cm-eq-part cm-eq-res ${bad ? 'bad' : 'good'}">
+          <b>${btlSigned(it.bottles)}</b><span>bottle${btl(it.bottles) === '1' ? '' : 's'}</span>
+        </div>
+        <span class="cm-eq-op">=</span>
+        <div class="cm-eq-part cm-eq-res ${bad ? 'bad' : 'good'}">
+          <b>${it.money < 0 ? '+' : ''}${money(it.money)}</b><span>at cost</span>
+        </div>
+      </div>`;
+  }
+
+  // ── Sub-tabla de artículos de una categoría ──────────────────────────
+  function itemRows(g, ci) {
+    if (!g.items.length) {
+      return `<div class="cm-sub-empty">No comparable items in this category.</div>`;
     }
+    return `
+      <table class="cm-subtable">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th class="num cm-c-used">Poured</th>
+            <th class="num cm-c-sold">Sold</th>
+            <th class="num">Bottles</th>
+            <th class="num">At cost</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${g.items.map((it, ii) => {
+            const open = ci === _openCat && ii === _openItem;
+            const bad = it.bottles > 0.05;
+            const cls = bad ? 'bad' : it.bottles < -0.05 ? 'good' : '';
+            return `
+              <tr class="cm-irow ${open ? 'open' : ''}"
+                  onclick="window.BarStockConsumptionMatch.toggleItem(event, ${ci}, ${ii})">
+                <td class="cm-iname">
+                  <i class="ti ti-chevron-right cm-chev" aria-hidden="true"></i>
+                  ${esc(it.item)}
+                </td>
+                <td class="num cm-c-used">${btl(it.used)}</td>
+                <td class="num cm-c-sold">${btl(it.sold)}</td>
+                <td class="num ${cls}">${btlSigned(it.bottles)}</td>
+                <td class="num ${cls}"><b>${it.money < 0 ? '+' : ''}${money(it.money)}</b></td>
+              </tr>
+              ${open ? `<tr class="cm-idetail"><td colspan="5">${itemDetail(it)}</td></tr>` : ''}`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  }
 
-    const diff = g.used - g.sold;
-    const over = diff > 0.05;
-    const under = diff < -0.05;
+  // ── Tabla de categorías ──────────────────────────────────────────────
+  function table(groups) {
+    if (!groups.length) return '';
 
-    const head = over
-      ? `Poured <b>${btl(diff)} bottle${btl(diff) === '1' ? '' : 's'}</b> more than sold.
-         ${btl(g.sold)} sold, ${btl(g.used)} poured.`
-      : under
-        // Una varianza negativa casi nunca es una ganancia: el licor no
-        // aparece solo. Decirlo evita que la primera vez que salga en
-        // verde alguien crea que gano dinero.
-        ? `Sold <b>${btl(diff)} bottle${btl(diff) === '1' ? '' : 's'}</b> more than poured.
-           Usually a miscount, not a gain.`
-        : `Sales and pours match.`;
+    const rows = groups.map((g, i) => {
+      const open = i === _openCat;
 
-    const items = g.items.length ? `
-      <div class="cm-items">
-        ${g.items.map(it => `
-          <div class="cm-item">
-            <div class="cm-item-name">${esc(it.item)}</div>
-            <div class="cm-eq">
-              <div class="cm-chip cm-chip-btl">
-                <b>${btl(it.bottles)}</b><span>bottle${btl(it.bottles) === '1' ? '' : 's'} lost</span>
-              </div>
-              <span class="cm-eqsign">=</span>
-              <div class="cm-chip cm-chip-money">
-                <b>${money(it.money)}</b><span>at cost</span>
-              </div>
-            </div>
-          </div>`).join('')}
-      </div>` : '';
+      // Una categoria ENTERA sin datos de venta no es una nota al pie:
+      // casi siempre significa que falta un archivo. Las ventas llegan en
+      // dos ficheros separados, vino y licor, asi que olvidar uno deja
+      // mudas todas sus categorias de golpe.
+      if (!g.withSales) {
+        return `
+          <tr class="cm-crow cm-crow-warn">
+            <td class="cm-cname">
+              <i class="ti ti-alert-triangle cm-warn-i" aria-hidden="true"></i>
+              ${esc(g.cat)}
+              <span class="cm-tag">no sales file</span>
+            </td>
+            <td class="num muted" colspan="3">${g.noSales} item${g.noSales === 1 ? '' : 's'} uncomparable</td>
+            <td class="num muted">—</td>
+          </tr>`;
+      }
 
-    const noSales = g.noSales ? `
-      <div class="cm-note">
-        <i class="ti ti-info-circle" aria-hidden="true"></i>
-        <b>${g.noSales}</b> item${g.noSales === 1 ? '' : 's'} in ${esc(g.cat)}
-        had no sales data. Not counted above.
-      </div>` : '';
+      const diff = g.used - g.sold;
+      const cls = diff > 0.05 ? 'bad' : diff < -0.05 ? 'good' : '';
+      return `
+        <tr id="cmRow${i}" class="cm-crow ${open ? 'open' : ''}"
+            onclick="window.BarStockConsumptionMatch.toggleCat(${i})">
+          <td class="cm-cname">
+            <i class="ti ti-chevron-right cm-chev" aria-hidden="true"></i>
+            ${esc(g.cat)}
+            ${g.noSales ? `<span class="cm-tag">${g.noSales} w/o sales</span>` : ''}
+          </td>
+          <td class="num cm-c-sold">${btl(g.sold)}</td>
+          <td class="num cm-c-used">${btl(g.used)}</td>
+          <td class="num ${cls}">${btlSigned(diff)}</td>
+          <td class="num ${cls}"><b>${g.loss < 0 ? '+' : ''}${money(g.loss)}</b></td>
+        </tr>
+        ${open ? `<tr class="cm-cdetail"><td colspan="5">${itemRows(g, i)}</td></tr>` : ''}`;
+    }).join('');
 
     return `
-      <div class="cm-card">
-        <div class="cm-card-head">
-          <span class="cm-cat">${esc(g.cat)}</span>
-          <span class="cm-cat-money ${over ? 'bad' : under ? 'good' : ''}">
-            ${over ? '' : under ? '+' : ''}${money(g.loss)}
-          </span>
-        </div>
-        <div class="cm-card-sub">${head}</div>
-        ${items}
-        ${noSales}
+      <div class="tablewrap cm-wrap">
+        <table class="cm-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th class="num cm-c-sold">Sold</th>
+              <th class="num cm-c-used">Poured</th>
+              <th class="num">Bottles</th>
+              <th class="num">At cost</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
       </div>`;
   }
 
-  const weekLabel = (w) => w
-    ? new Date(w + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-    : '';
+  // ── Pintado ──────────────────────────────────────────────────────────
+  function paint() {
+    const host = $('cmBody');
+    if (!host || !_cycle) return;
 
-  // Ciclo elegido a mano. null = el ultimo cerrado.
-  let _week = null;
+    const totalLoss = _groups.reduce((s, g) => s + Math.max(0, g.loss), 0);
+    const noSalesTotal = _groups.reduce((s, g) => s + g.noSales, 0);
+    const anySales = _groups.some(g => g.withSales > 0);
+    const closed = (_cycle.weeks || []).filter(w => w.hasUsage);
+
+    // Los ciclos cerrados, para poder mirar atras. Solo cerrados: el que
+    // esta corriendo no tiene con que comparar.
+    const picker = closed.length > 1 ? `
+      <div class="cm-weeks">
+        ${closed.slice(0, 8).map(w => `
+          <button type="button" class="oh-filter-chip ${w.week_start === _cycle.week ? 'active' : ''}"
+                  onclick="window.BarStockConsumptionMatch.setWeek('${w.week_start}')">
+            ${esc(weekLabel(w.week_start))}
+          </button>`).join('')}
+      </div>` : '';
+
+    // Sin NINGUNA venta en todo el ciclo no hay nada que comparar, y la
+    // causa casi siempre es la misma: los ficheros se subieron estando
+    // abierta otra semana. Se dice donde, no solo que falta.
+    const banner = !anySales ? `
+      <div class="cm-banner">
+        <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+        <div>
+          <b>No sales data for this cycle.</b>
+          The files go in <b>Usage → week of ${esc(weekLabel(_cycle.week))}</b>,
+          and there are two of them: liquor and wine. Loading them into a
+          different week leaves this screen empty.
+        </div>
+      </div>` : '';
+
+    host.innerHTML = `
+      <div class="cm-panel">
+        <div class="cm-head">
+          <div class="cm-total">
+            <b>${money(totalLoss)}</b>
+            <span>poured beyond sales, at cost</span>
+          </div>
+          <span class="cm-week">Closed cycle · ${esc(weekLabel(_cycle.week))}</span>
+        </div>
+        ${picker}
+        ${chart(_groups)}
+      </div>
+      ${banner}
+      ${anySales ? table(_groups) : ''}
+      ${anySales && noSalesTotal ? `
+        <div class="cm-foot">
+          ${noSalesTotal} item${noSalesTotal === 1 ? '' : 's'} had no line in the sales
+          files and were left out of every total.
+        </div>` : ''}`;
+  }
 
   // ── Render ───────────────────────────────────────────────────────────
   async function render() {
@@ -265,22 +397,15 @@
     // en null. La semana mas reciente por tanto SIEMPRE esta vacia. Esta
     // pantalla pedia esa, no encontraba nada, y remataba pidiendo cargar
     // un conteo que ya estaba cargado.
-    //
-    // Tampoco se llama ya a openWeek(): eso ademas de calcular escondia
-    // y mostraba paneles de la pantalla de Usage. Una vista no debe mover
-    // otra solo para leer un numero.
-    let cycle;
     try {
-      cycle = await TU.loadCycle(_week);
+      _cycle = await TU.loadCycle(_week);
     } catch (e) {
       console.warn('[consumption] no se pudo leer el ciclo', e);
       host.innerHTML = `<div class="cm-empty">Could not read the cycle. Try again.</div>`;
       return;
     }
 
-    const closed = (cycle.weeks || []).filter(w => w.hasUsage);
-
-    if (!cycle.week || !cycle.rows.length) {
+    if (!_cycle.week || !_cycle.rows.length) {
       host.innerHTML = `
         <div class="cm-empty">
           <b>No closed cycle yet.</b><br>
@@ -290,62 +415,39 @@
       return;
     }
 
-    const rows = cycle.rows;
-    const groups = group(rows);
-    const totalLoss = groups.reduce((s, g) => s + Math.max(0, g.loss), 0);
-    const noSalesTotal = groups.reduce((s, g) => s + g.noSales, 0);
-    const anySales = groups.some(g => g.withSales > 0);
-
-    // Los ciclos cerrados, para poder mirar atras. Solo cerrados: los
-    // abiertos no tienen con que comparar.
-    const picker = closed.length > 1 ? `
-      <div class="cm-weeks">
-        ${closed.slice(0, 8).map(w => `
-          <button class="oh-filter-chip ${w.week_start === cycle.week ? 'active' : ''}"
-                  onclick="window.BarStockConsumptionMatch.setWeek('${w.week_start}')">
-            ${esc(weekLabel(w.week_start))}
-          </button>`).join('')}
-      </div>` : '';
-
-    // Sin NINGUNA venta en todo el ciclo no hay nada que comparar, y la
-    // causa casi siempre es la misma: los ficheros se subieron estando
-    // abierta otra semana. Se dice donde, no solo que falta.
-    const banner = !anySales ? `
-      <div class="cm-card cm-card-warn">
-        <div class="cm-card-head">
-          <span class="cm-cat">No sales data for this cycle</span>
-        </div>
-        <div class="cm-card-sub">
-          Nothing can be compared until the sales files are loaded.
-          They go in <b>Usage → week of ${esc(weekLabel(cycle.week))}</b>,
-          and there are two of them: liquor and wine. Loading them into a
-          different week leaves this screen empty.
-        </div>
-      </div>` : '';
-
-    host.innerHTML = `
-      <div class="cm-top">
-        <div class="cm-top-head">
-          <span>Consumption match</span>
-          <span class="cm-week">Closed cycle · ${esc(weekLabel(cycle.week))}</span>
-        </div>
-        <div class="cm-total">
-          <b>${money(totalLoss)}</b>
-          <span>poured beyond sales, at cost</span>
-        </div>
-        ${chart(groups)}
-        ${picker}
-      </div>
-      ${banner}
-      ${anySales ? groups.map(card).join('') : ''}
-      ${anySales && noSalesTotal ? `
-        <div class="cm-foot">
-          ${noSalesTotal} item${noSalesTotal === 1 ? '' : 's'} across all categories
-          had no sales data and were left out of every total.
-        </div>` : ''}`;
+    _groups = group(_cycle.rows);
+    _openCat = -1;
+    _openItem = -1;
+    paint();
   }
 
-  function setWeek(w) { _week = w || null; render(); }
+  function toggleCat(i) {
+    // Acordeon exclusivo. Con diez categorias abiertas a la vez esto
+    // vuelve a ser la lista infinita que se queria evitar.
+    _openCat = (_openCat === i) ? -1 : i;
+    _openItem = -1;
+    paint();
+    if (_openCat === i) {
+      const el = $('cmRow' + i);
+      if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }
 
-  window.BarStockConsumptionMatch = { render, setWeek, group, CATS };
+  function toggleItem(ev, ci, ii) {
+    // Sin esto el click en la fila del articulo burbujea hasta la fila de
+    // la categoria y la cierra en el mismo gesto.
+    if (ev && ev.stopPropagation) ev.stopPropagation();
+    _openCat = ci;
+    _openItem = (_openItem === ii) ? -1 : ii;
+    paint();
+  }
+
+  function setWeek(w) {
+    _week = w || null;
+    render();
+  }
+
+  window.BarStockConsumptionMatch = {
+    render, paint, setWeek, toggleCat, toggleItem, group
+  };
 })();
