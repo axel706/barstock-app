@@ -30,6 +30,8 @@
   let _reportMode = false;
   let _itemComments = new Map(); // item_name -> comment string
   let _customNotes = ''; // free text notes for current week
+  let _lastEnriched = [];      // filas calculadas de la ultima semana abierta
+  let _lastWeekStart = null;
 
   // ─── Load weeks ──────────────────────────────────────────────────
   // ─── Paginacion ──────────────────────────────────────────────────
@@ -467,6 +469,14 @@
         return bVal - aVal;
       }
     });
+
+    // Se cachean las filas YA CALCULADAS para que otras vistas —hoy
+    // Consumption Match— no repitan la formula de used, variance y loss.
+    // Duplicarla significaria que dos pantallas pueden dar cifras
+    // distintas del mismo dinero, y en este proyecto la duplicacion ya
+    // ha sido la fuente de bastantes fallos.
+    _lastEnriched = enriched;
+    _lastWeekStart = weekStart;
 
     // Summary metrics
     const included = enriched.filter(r => !r.isExcluded);
@@ -1126,6 +1136,11 @@
 
   window.BarStockTheoreticalUsage = {
     get _currentWeek() { return _currentWeek; },
+    // Lectura para otras vistas. Devuelve las filas tal cual se
+    // calcularon aqui: mismo used, misma variance, mismo loss.
+    get rows() { return _lastEnriched; },
+    get rowsWeek() { return _lastWeekStart; },
+    get weeks() { return _weeks; },
     refresh,
     openWeek,
     showWeekList,

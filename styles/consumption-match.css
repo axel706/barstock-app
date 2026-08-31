@@ -1,0 +1,111 @@
+/* ── Consumption Match ─────────────────────────────────────────────────
+   Colores con el significado que ya tienen en la app: ámbar el líquido,
+   rojo el dinero, verde lo que no es pérdida. */
+
+.cm-top{
+  background: rgba(17,24,39,.86);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.cm-top-head{
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 15px; font-weight: 800; margin-bottom: 4px;
+}
+.cm-week{ font-size: 12px; font-weight: 600; color: var(--sub); }
+
+.cm-total{ display: flex; align-items: baseline; gap: 8px; margin-bottom: 14px; }
+.cm-total b{ font-size: 32px; font-weight: 800; color: #ef4444; line-height: 1; }
+.cm-total span{ font-size: 13px; color: var(--sub); }
+
+/* ── Gráfica ── */
+.cm-chart{ display: block; width: 100%; height: auto; }
+.cm-grid{ stroke: rgba(255,255,255,.10); stroke-dasharray: 2 3; }
+.cm-axisline{ stroke: rgba(255,255,255,.22); }
+.cm-axis{ font-size: 9px; fill: var(--sub); }
+.cm-bar-sold{ fill: #22c55e; }
+.cm-bar-used{ fill: #f59e0b; }
+
+.cm-legend{
+  display: flex; gap: 14px; justify-content: center;
+  margin-top: 6px; font-size: 11px; color: var(--sub);
+}
+.cm-key{
+  display: inline-block; width: 8px; height: 8px;
+  border-radius: 2px; margin-right: 5px;
+}
+/* En SVG el color va en fill; en un <i> de HTML hace falta background */
+i.cm-bar-sold{ background: #22c55e; }
+i.cm-bar-used{ background: #f59e0b; }
+
+/* ── Tarjeta de categoría ── */
+.cm-card{
+  background: rgba(17,24,39,.86);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.cm-card-head{
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.cm-cat{ font-size: 16px; font-weight: 800; }
+.cm-cat-money{ font-size: 20px; font-weight: 800; color: var(--sub); }
+.cm-cat-money.bad{ color: #ef4444; }
+.cm-cat-money.good{ color: #22c55e; }
+.cm-card-sub{
+  font-size: 13px; color: var(--sub); line-height: 1.5; margin-top: 6px;
+}
+.cm-card-sub b{ color: var(--text); }
+
+/* ── El artículo, como una ecuación ──
+   Las dos cifras del mismo tamaño y el signo igual en medio: lo que se
+   quiere leer no es "1.2" ni "$34" sino que una COSA es la otra. */
+.cm-items{ margin-top: 14px; border-top: 1px solid rgba(255,255,255,.08); }
+.cm-item{ padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+.cm-item:last-child{ border-bottom: none; }
+.cm-item-name{ font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+
+.cm-eq{ display: flex; align-items: center; gap: 10px; }
+.cm-eqsign{ font-size: 18px; color: var(--sub); flex-shrink: 0; }
+.cm-chip{
+  flex: 1; min-width: 0;
+  border-radius: 10px; padding: 9px 10px; text-align: center;
+}
+.cm-chip b{ display: block; font-size: 20px; font-weight: 800; line-height: 1.1; }
+.cm-chip span{ display: block; font-size: 11px; margin-top: 2px; }
+.cm-chip-btl{ background: rgba(245,158,11,.14); }
+.cm-chip-btl b, .cm-chip-btl span{ color: #fbbf24; }
+.cm-chip-money{ background: rgba(239,68,68,.14); }
+.cm-chip-money b, .cm-chip-money span{ color: #f87171; }
+
+.cm-note{
+  margin-top: 12px; padding: 10px 12px;
+  border-radius: 10px; background: rgba(255,255,255,.04);
+  font-size: 12px; color: var(--sub); line-height: 1.5;
+}
+.cm-note b{ color: var(--text); }
+.cm-note i{ font-size: 14px; vertical-align: -2px; margin-right: 4px; }
+
+.cm-empty{ font-size: 14px; color: var(--sub); text-align: center; padding: 30px 10px; line-height: 1.6; }
+.cm-foot{ font-size: 11px; color: var(--sub); text-align: center; padding: 6px 10px 2px; line-height: 1.5; }
+
+/* ── Modo claro ── */
+body.light .cm-top,
+body.light .cm-card{
+  background: rgba(255,255,255,.96);
+  border-color: rgba(15,23,42,.08);
+}
+body.light .cm-grid{ stroke: rgba(15,23,42,.12); }
+body.light .cm-axisline{ stroke: rgba(15,23,42,.28); }
+body.light .cm-total b{ color: #dc2626; }
+body.light .cm-cat-money.bad{ color: #dc2626; }
+body.light .cm-cat-money.good{ color: #16a34a; }
+body.light .cm-items{ border-top-color: rgba(15,23,42,.10); }
+body.light .cm-item{ border-bottom-color: rgba(15,23,42,.07); }
+body.light .cm-chip-btl{ background: #fef3c7; }
+body.light .cm-chip-btl b, body.light .cm-chip-btl span{ color: #92400e; }
+body.light .cm-chip-money{ background: #fee2e2; }
+body.light .cm-chip-money b, body.light .cm-chip-money span{ color: #991b1b; }
+body.light .cm-note{ background: rgba(15,23,42,.04); }

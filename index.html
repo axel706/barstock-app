@@ -28,6 +28,7 @@
   <link rel="stylesheet" href="styles/buttons.css">
   <link rel="stylesheet" href="styles/app.css?v=hdr5">
   <link rel="stylesheet" href="styles/theoretical-usage.css">
+  <link rel="stylesheet" href="styles/consumption-match.css?v=cm1">
   <link rel="stylesheet" href="styles/order-history.css">
 
   <link rel="stylesheet" href="styles/fixes.css">
@@ -128,7 +129,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260830-093532</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260831-144547</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -202,6 +203,14 @@
       </div>
       <div class="bs-focus-sub" id="fgSub-theoretical">Compare sales vs usage</div>
       <div class="bs-focus-stats" id="fgStats-theoretical"></div>
+    </div>
+    <div class="bs-focus-card card" onclick="bsOpenSection('consumption'); if (window.BarStockConsumptionMatch) BarStockConsumptionMatch.render();">
+      <div class="bs-focus-head">
+        <i class="ti ti-scale bs-focus-icon" aria-hidden="true"></i>
+        <div class="bs-focus-title">Consumption Match</div>
+      </div>
+      <div class="bs-focus-sub" id="fgSub-consumption">Loss by category</div>
+      <div class="bs-focus-stats" id="fgStats-consumption"></div>
     </div>
     <div class="bs-focus-card card" onclick="bsOpenSection('pourIq')">
       <div class="bs-focus-head">
@@ -732,6 +741,24 @@
     </div>
     <div class="section-body" id="adminSectionBody">
       <div id="adminRoot"></div>
+    </div>
+  </div>
+
+  <div class="card section-card" id="consumptionSection">
+    <div class="section-header-row">
+      <div style="flex:1 1 auto">
+        <div class="sectionhead">
+          <div>
+            <strong><span class="section-title">Consumption Match</span></strong>
+            <div class="small muted">What was sold against what was actually poured, by category.</div>
+          </div>
+        </div>
+      </div>
+      <button onclick="BarStockConsumptionMatch && BarStockConsumptionMatch.render()" class="section-toggle" title="Refresh"><i class="ti ti-refresh" aria-hidden="true"></i></button>
+      <button onclick="toggleFocusMode('consumptionSection','Consumption Match')" class="section-toggle focus-max-btn" data-label="Consumption Match" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true"></i></button>
+    </div>
+    <div class="section-body" id="consumptionSectionBody">
+      <div id="cmBody"></div>
     </div>
   </div>
 
@@ -4894,6 +4921,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/inventory-cloud.js?v=account-wjm-1"></script>
 <script src="src/par-intelligence.js"></script>
 <script src="src/par-intelligence-section.js"></script>
+<script src="src/consumption-match.js?v=cm1"></script>
 <script src="src/theoretical-usage.js?v=pag1"></script>
 <script src="src/no-match-cloud.js"></script>
 <script src="src/typeface.js?v=tf1"></script>
@@ -5367,6 +5395,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
         'inventory': 'inventorySection', 'vendor': 'vendorSection',
         'history': 'historySection', 'noMatch': 'noMatchSection',
         'costReport': 'costReportSection', 'theoretical': 'theoreticalSection',
+          'consumption': 'consumptionSection',
         'pourIq': 'pourIqSection'
       };
       const newId = nameToId[name];
@@ -5401,6 +5430,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     {id:'noMatch', icon:'ti-alert-circle', label:'No Match'},
     {id:'costReport', icon:'ti-chart-bar', label:'Costs'},
     {id:'theoretical', icon:'ti-chart-dots', label:'Usage'},
+    {id:'consumption', icon:'ti-scale', label:'Match'},
     {id:'pourIq', icon:'ti-brain', label:'Pour-IQ™'},
     // Admin lleva id de elemento para que auth.js pueda mostrarlo. Nace
     // oculto: si no, aparece un instante antes de que se resuelva quien
@@ -5413,7 +5443,16 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     if (s.el) el.id = s.el;
     if (s.hidden) el.style.display = 'none';
     el.innerHTML = `<i class="ti ${s.icon}" aria-hidden="true"></i><span class="bs-focus-minicard-title">${s.label}</span>`;
-    el.onclick = () => bsOpenSection(s.id);
+    el.onclick = () => {
+      bsOpenSection(s.id);
+      // Se dibuja al entrar, y de forma explicita. Envolver bsOpenSection
+      // habria sido mas corto, pero este proyecto ya tuvo cuatro modulos
+      // peleandose por sobrescribir una funcion compartida, y ganaba el
+      // ultimo en cargar.
+      if (s.id === 'consumption' && window.BarStockConsumptionMatch) {
+        window.BarStockConsumptionMatch.render();
+      }
+    };
     bsMiniNav.appendChild(el);
   });
 
