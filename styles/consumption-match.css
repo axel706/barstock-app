@@ -109,3 +109,13 @@ body.light .cm-chip-btl b, body.light .cm-chip-btl span{ color: #92400e; }
 body.light .cm-chip-money{ background: #fee2e2; }
 body.light .cm-chip-money b, body.light .cm-chip-money span{ color: #991b1b; }
 body.light .cm-note{ background: rgba(15,23,42,.04); }
+
+/* Una categoría entera sin ventas: casi siempre falta un archivo. Se
+   marca en ámbar, no en rojo — no es una pérdida, es un dato ausente. */
+.cm-card-warn{
+  border-color: rgba(245,158,11,.40);
+  background: rgba(245,158,11,.07);
+}
+.cm-card-warn .cm-card-sub b{ color: #fbbf24; }
+body.light .cm-card-warn{ background: #fffbeb; border-color: #f59e0b; }
+body.light .cm-card-warn .cm-card-sub b{ color: #92400e; }

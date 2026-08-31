@@ -69,7 +69,8 @@
     const out = new Map();
     const ensure = (c) => {
       if (!out.has(c)) out.set(c, {
-        cat: c, sold: 0, used: 0, loss: 0, items: [], noSales: 0, uncategorised: false
+        cat: c, sold: 0, used: 0, loss: 0, items: [],
+        noSales: 0, withSales: 0, uncategorised: false
       });
       return out.get(c);
     };
@@ -87,6 +88,7 @@
         continue;
       }
 
+      g.withSales++;
       g.sold += Number(r.sold) || 0;
       g.used += Number(r.used) || 0;
       if (r.variance !== null && r.variance !== undefined) {
@@ -116,7 +118,10 @@
   // SVG a mano. El proyecto no carga ninguna librería de gráficas y no
   // hace falta añadir una para diez barras dobles.
   function chart(groups) {
-    const data = groups.filter(g => g.sold > 0 || g.used > 0).slice(0, 8);
+    // Solo las categorias que tienen con que comparar. Una barra ambar
+    // sola, sin su verde al lado, se lee como perdida del 100% cuando en
+    // realidad significa que falta el archivo de ventas de esa familia.
+    const data = groups.filter(g => g.withSales > 0 && (g.sold > 0 || g.used > 0)).slice(0, 8);
     if (!data.length) return '';
 
     const W = 320, H = 150, base = 122, top = 10;
@@ -157,6 +162,26 @@
 
   // ── Tarjeta de categoría ─────────────────────────────────────────────
   function card(g) {
+    // Una categoria ENTERA sin datos de venta no es una nota al pie: casi
+    // siempre significa que falta un archivo. Las ventas llegan en dos
+    // ficheros separados, vino y licor, asi que olvidar uno deja mudas
+    // todas sus categorias de golpe.
+    if (!g.withSales && g.noSales) {
+      return `
+        <div class="cm-card cm-card-warn">
+          <div class="cm-card-head">
+            <span class="cm-cat">${esc(g.cat)}</span>
+            <span class="cm-cat-money">—</span>
+          </div>
+          <div class="cm-card-sub">
+            <b>No sales data</b> for any of the ${g.noSales}
+            item${g.noSales === 1 ? '' : 's'} in this category, so nothing here
+            can be compared. Sales arrive in two files, wine and liquor —
+            check that both were loaded for this cycle.
+          </div>
+        </div>`;
+    }
+
     const diff = g.used - g.sold;
     const over = diff > 0.05;
     const under = diff < -0.05;
