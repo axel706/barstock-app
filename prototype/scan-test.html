@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BarStock · prueba de escaneo</title>
+
+<!--
+  ════════════════════════════════════════════════════════════════════
+  PRUEBA DE ESCANEO. No forma parte de la aplicacion.
+
+  Suelto en /prototype/. No lo referencia nadie, no toca la base de
+  datos, no lee ni escribe nada. Se borra sin consecuencias.
+
+  ── Que se decide aqui ─────────────────────────────────────────────
+
+  Es la unica pieza del conteo por escaneo que puede tumbar el diseño
+  entero. Todo lo demas —el deslizador, los contadores, la pantalla de
+  finalizar— es codigo convencional que se sabe que funciona. Esto no:
+  depende de la camara de un iPhone concreto, de la luz que haya en la
+  bodega y de una etiqueta curva sobre vidrio.
+
+  Por eso esta pagina no dice "funciona" o "no funciona": MIDE. El
+  numero que importa es la mediana de segundos por botella. Con 300
+  articulos, la diferencia entre 1.5 y 4 segundos son veinte minutos.
+
+  ── Por que ZXing y no la API del navegador ────────────────────────
+
+  BarcodeDetector no existe en Safari de iOS, asi que no hay lector
+  nativo. ZXing es una libreria JavaScript que decodifica sobre los
+  fotogramas del video.
+
+  Se le restringen los formatos a UPC-A, UPC-E, EAN-13 y EAN-8, que es
+  lo que llevan las botellas. No es un detalle menor: sin restringir,
+  la libreria prueba tambien QR, Code128, PDF417 y demas en cada
+  fotograma, y el escaneo se vuelve notablemente mas lento.
+
+  ── Diagnostico en pantalla ────────────────────────────────────────
+
+  Todo lo que normalmente iria a la consola se pinta aqui. En un
+  iPhone, en una bodega, no hay devtools que abrir: si algo falla y la
+  pagina no lo cuenta, no hay forma de saber que paso.
+  ════════════════════════════════════════════════════════════════════
+-->
+
+<style>
+  :root{
+    --bg:#0b1220; --card:rgba(17,24,39,.75); --line:rgba(255,255,255,.10);
+    --text:#f1f5f9; --sub:#94a3b8; --accent:#38bdf8;
+    --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg)}
+  body{
+    color:var(--text);
+    font-family:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:16px 14px calc(24px + env(safe-area-inset-bottom));
+    max-width:560px;margin:0 auto;
+  }
+  .lab{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--warn);
+    font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+  .lab::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--warn)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:14px;margin-bottom:12px}
+
+  h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);
+    font-weight:800;margin:0 0 10px}
+
+  .diag div{display:flex;justify-content:space-between;gap:10px;font-size:13px;
+    padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+  .diag div:last-child{border-bottom:none}
+  .diag span:first-child{color:var(--sub)}
+  .ok{color:var(--ok);font-weight:700}
+  .bad{color:var(--bad);font-weight:700}
+  .warn{color:var(--warn);font-weight:700}
+
+  button{
+    width:100%;height:56px;border:none;border-radius:12px;
+    background:var(--accent);color:#04263a;font-family:inherit;
+    font-size:17px;font-weight:800;cursor:pointer;
+  }
+  button.ghost{background:transparent;border:1px solid rgba(255,255,255,.22);
+    color:var(--text);height:46px;font-size:14px;font-weight:700}
+  button:disabled{opacity:.45}
+
+  .stage{position:relative;border-radius:14px;overflow:hidden;background:#000;
+    aspect-ratio:3/4;display:none}
+  .stage.on{display:block}
+  video{width:100%;height:100%;object-fit:cover;display:block}
+  .guide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    pointer-events:none}
+  .guide i{display:block;width:74%;height:32%;border:2px solid var(--accent);
+    border-radius:12px;box-shadow:0 0 0 2000px rgba(0,0,0,.35)}
+  .hud{position:absolute;left:0;right:0;top:0;padding:10px 12px;font-size:13px;
+    font-weight:700;display:flex;justify-content:space-between;
+    color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9)}
+
+  .hit{margin-top:10px;padding:12px;border-radius:12px;background:rgba(34,197,94,.14);
+    border:1px solid rgba(34,197,94,.4);display:none}
+  .hit.on{display:block}
+  .hit .code{font-size:22px;font-weight:800;letter-spacing:.04em;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .hit .meta{font-size:12px;color:var(--sub);margin-top:3px}
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+  .stat{background:rgba(255,255,255,.05);border-radius:10px;padding:10px;text-align:center}
+  .stat b{display:block;font-size:22px;font-weight:800;line-height:1.1}
+  .stat span{font-size:10px;color:var(--sub);letter-spacing:.06em;text-transform:uppercase}
+
+  .log{max-height:210px;overflow-y:auto;font-size:12px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .log div{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);
+    display:flex;justify-content:space-between;gap:8px}
+  .log .t{color:var(--sub);flex-shrink:0}
+  .note{font-size:11px;color:var(--sub);line-height:1.55;margin-top:8px}
+</style>
+</head>
+<body>
+
+<div class="lab">Prueba · no es la app</div>
+
+<div class="card">
+  <h2>Diagnóstico</h2>
+  <div class="diag" id="diag"></div>
+</div>
+
+<div class="card">
+  <button id="start">Iniciar cámara</button>
+  <div class="stage" id="stage">
+    <video id="vid" playsinline muted autoplay></video>
+    <div class="guide"><i></i></div>
+    <div class="hud"><span id="hudTime">0.0 s</span><span id="hudN">0 leídos</span></div>
+  </div>
+  <div class="hit" id="hit">
+    <div class="code" id="hitCode">—</div>
+    <div class="meta" id="hitMeta"></div>
+  </div>
+  <div id="controls" style="display:none;margin-top:10px">
+    <button class="ghost" id="torch" style="margin-bottom:8px">Linterna</button>
+    <button class="ghost" id="stop">Detener</button>
+  </div>
+  <div class="note">Escanea botellas de verdad, en el sitio donde vas a contar y con la luz que haya. El número que decide es la mediana.</div>
+</div>
+
+<div class="card">
+  <h2>Medición</h2>
+  <div class="stats">
+    <div class="stat"><b id="sN">0</b><span>botellas</span></div>
+    <div class="stat"><b id="sMed">—</b><span>mediana</span></div>
+    <div class="stat"><b id="sMax">—</b><span>la peor</span></div>
+  </div>
+  <button class="ghost" id="reset">Reiniciar medición</button>
+  <div class="log" id="log"></div>
+</div>
+
+<script type="module">
+  'use strict';
+
+  // La libreria se carga como MODULO, no como <script src>. El paquete
+  // 0.21.3 solo publica carpetas esm/ y cjs/: no existe una version UMD
+  // que deje un ZXing global, asi que la ruta clasica /umd/index.min.js
+  // devuelve 404 y el global sale indefinido.
+  //
+  // El sufijo /+esm es de jsdelivr, que arma el modulo sobre la marcha.
+  // Se usa jsdelivr y no otro CDN porque la app ya carga de ahi otras
+  // siete cosas: un dominio menos que confiar.
+  //
+  // La importacion va dentro de un try: si el CDN falla o cambia la
+  // ruta, la pagina lo dice en pantalla en vez de quedarse muda.
+  //
+  // Todo va dentro de una funcion asincrona y no suelto en el modulo,
+  // porque `return` en el nivel superior de un modulo es error de
+  // sintaxis, y hay varias salidas tempranas mas abajo.
+
+(async () => {
+  const $ = (id) => document.getElementById(id);
+
+  // ── Diagnostico ────────────────────────────────────────────────────
+  // Se pinta en pantalla porque en un iPhone no hay consola que abrir.
+  const rows = [];
+  function diag(label, value, cls) {
+    rows.push({ label, value, cls });
+    $('diag').innerHTML = rows.map(r =>
+      `<div><span>${r.label}</span><span class="${r.cls || ''}">${r.value}</span></div>`).join('');
+  }
+
+  const secure = window.isSecureContext;
+  diag('Conexión segura', secure ? 'sí' : 'NO — la cámara no arrancará', secure ? 'ok' : 'bad');
+  diag('API de cámara', navigator.mediaDevices?.getUserMedia ? 'disponible' : 'ausente',
+       navigator.mediaDevices?.getUserMedia ? 'ok' : 'bad');
+  // Este es el motivo de que exista esta prueba: sin lector nativo hay
+  // que decodificar en JavaScript, y eso es lo que puede salir lento.
+  diag('Lector nativo del navegador', 'BarcodeDetector' in window ? 'sí' : 'no (se usa ZXing)',
+       'BarcodeDetector' in window ? 'ok' : 'warn');
+  diag('Librería ZXing', 'cargando…', 'warn');
+
+  let ZXing = null;
+  try {
+    ZXing = await import('https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/+esm');
+    rows[rows.length - 1] = { label: 'Librería ZXing', value: 'cargada', cls: 'ok' };
+  } catch (e) {
+    rows[rows.length - 1] = { label: 'Librería ZXing', value: 'no cargó — ' + e.message, cls: 'bad' };
+  }
+  $('diag').innerHTML = rows.map(r =>
+    `<div><span>${r.label}</span><span class="${r.cls || ''}">${r.value}</span></div>`).join('');
+
+  if (!secure || !ZXing || !navigator.mediaDevices?.getUserMedia) {
+    $('start').disabled = true;
+    $('start').textContent = 'No se puede iniciar';
+    return;
+  }
+
+  // ── Lector ─────────────────────────────────────────────────────────
+  // Restringir los formatos a los de producto es la diferencia entre
+  // leer rapido y hacer trabajar de mas a cada fotograma.
+  const F = ZXing.BarcodeFormat;
+  const hints = new Map();
+  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,
+            [F.UPC_A, F.UPC_E, F.EAN_13, F.EAN_8]);
+  hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+
+  const reader = new ZXing.BrowserMultiFormatReader(hints, 300);
+
+  let stream = null;
+  let running = false;
+  let tStart = 0;         // cuando empezo la busqueda de ESTA botella
+  let lastCode = '';
+  let lastAt = 0;
+  let times = [];
+  let hudTimer = null;
+
+  function fmt(ms) { return (ms / 1000).toFixed(1) + ' s'; }
+
+  function newTarget() {
+    tStart = performance.now();
+  }
+
+  function onHit(text, format) {
+    const now = performance.now();
+
+    // ZXing dispara varias veces sobre la misma etiqueta. Un mismo
+    // codigo dentro de 2.5 s se considera el mismo intento, no una
+    // botella nueva, o la medicion saldria absurdamente optimista.
+    if (text === lastCode && (now - lastAt) < 2500) { lastAt = now; return; }
+
+    const ms = now - tStart;
+    lastCode = text; lastAt = now;
+    times.push(ms);
+
+    $('hit').classList.add('on');
+    $('hitCode').textContent = text;
+    $('hitMeta').textContent = format + ' · ' + fmt(ms);
+
+    const el = document.createElement('div');
+    el.innerHTML = `<span>${text}</span><span class="t">${fmt(ms)}</span>`;
+    $('log').prepend(el);
+
+    if (navigator.vibrate) navigator.vibrate(35);
+    stats();
+    newTarget();   // el cronometro de la siguiente botella empieza ya
+  }
+
+  function stats() {
+    const n = times.length;
+    $('sN').textContent = n;
+    $('hudN').textContent = n + ' leídos';
+    if (!n) { $('sMed').textContent = '—'; $('sMax').textContent = '—'; return; }
+    const s = [...times].sort((a, b) => a - b);
+    const med = s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2;
+    $('sMed').textContent = fmt(med);
+    $('sMax').textContent = fmt(s[s.length - 1]);
+  }
+
+  async function start() {
+    $('start').style.display = 'none';
+    $('stage').classList.add('on');
+    $('controls').style.display = 'block';
+    running = true;
+
+    try {
+      // facingMode environment = camara trasera. Sin esto un iPhone
+      // abre la frontal y no hay nada que escanear.
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' },
+                 width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false
+      });
+    } catch (e) {
+      diag('Permiso de cámara', 'denegado — ' + e.name, 'bad');
+      $('stage').classList.remove('on');
+      return;
+    }
+
+    const track = stream.getVideoTracks()[0];
+    const s = track.getSettings ? track.getSettings() : {};
+    diag('Cámara', (s.width || '?') + '×' + (s.height || '?'), 'ok');
+
+    const vid = $('vid');
+    vid.srcObject = stream;
+    await vid.play().catch(() => {});
+
+    newTarget();
+    hudTimer = setInterval(() => {
+      if (running) $('hudTime').textContent = fmt(performance.now() - tStart);
+    }, 100);
+
+    reader.decodeFromVideoElement(vid, (result, err) => {
+      if (!running) return;
+      if (result) onHit(result.getText(), result.getBarcodeFormat?.() ?? 'código');
+      // Los errores de "no encontrado" son el caso normal: llegan en
+      // cada fotograma sin codigo. No se registran a proposito.
+    });
+
+    // La linterna cambia mucho las cosas en una bodega, pero el soporte
+    // en iOS es irregular. Se ofrece y si falla se dice, sin romper nada.
+    const caps = track.getCapabilities ? track.getCapabilities() : {};
+    if (!('torch' in caps)) {
+      $('torch').disabled = true;
+      $('torch').textContent = 'Linterna no disponible';
+    } else {
+      let on = false;
+      $('torch').onclick = async () => {
+        on = !on;
+        try {
+          await track.applyConstraints({ advanced: [{ torch: on }] });
+          $('torch').textContent = on ? 'Apagar linterna' : 'Linterna';
+        } catch (e) {
+          $('torch').disabled = true;
+          $('torch').textContent = 'Linterna no disponible';
+        }
+      };
+    }
+  }
+
+  function stop() {
+    running = false;
+    clearInterval(hudTimer);
+    try { reader.reset(); } catch (e) {}
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    stream = null;
+    $('stage').classList.remove('on');
+    $('controls').style.display = 'none';
+    $('start').style.display = 'block';
+    $('start').textContent = 'Reanudar cámara';
+  }
+
+  $('start').onclick = start;
+  $('stop').onclick = stop;
+  $('reset').onclick = () => {
+    times = []; lastCode = '';
+    $('log').innerHTML = '';
+    $('hit').classList.remove('on');
+    stats(); newTarget();
+  };
+
+  window.addEventListener('pagehide', stop);
+  stats();
+})();
+</script>
+</body>
+</html>
