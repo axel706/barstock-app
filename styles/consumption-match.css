@@ -153,8 +153,35 @@
 .cm-layout{ display: flex; gap: 14px; align-items: stretch; width: 100%; }
 .cm-layout > .cm-wrap{ flex: 1; min-width: 0; max-height: 440px; }
 .cm-side{ height: 440px; align-self: flex-start; }
-.cm-side-body{ display: flex; flex-direction: column; height: 100%; overflow: auto; }
-.cm-panel-note{ font-size: 11px; color: var(--sub); line-height: 1.55; }
+
+/* ── El panel no hace scroll ──────────────────────────────────────────
+   Con `overflow:auto` el botón de abajo quedaba fuera de la vista y
+   había que arrastrar para llegar a él; en un panel de altura fija eso
+   es una acción escondida, no una lista larga.
+
+   Ahora: la columna es rígida arriba y abajo, y solo el bloque del medio
+   —.cm-flex— puede encogerse. El botón vive en .inv-panel-actions-section,
+   que ya lleva margin-top:auto, así que se queda pegado al fondo pase lo
+   que pase. Si algún día el contenido creciera, se recorta lo del medio
+   y no la acción.
+
+   El contenido se recortó además para que no haga falta: el bloque "THE
+   SUM" repetía los cuatro números que ya dan las mini cards justo
+   encima.                                                              */
+.cm-side-body{ display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+.cm-flex{ flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.cm-side .inv-panel-actions-section{ flex: 0 0 auto; }
+.cm-side .inv-panel-header,
+.cm-side .inv-panel-section:not(.cm-flex){ flex: 0 0 auto; }
+
+/* Un punto menos de cuerpo en las cifras y algo menos de aire: son
+   cuatro tarjetas en 240px de ancho y cada píxel cuenta. */
+.cm-side .inv-panel-stat{ padding: 5px 6px; }
+.cm-side .inv-panel-stat-value{ font-size: 16px; }
+.cm-side .inv-panel-section{ padding-top: 10px; padding-bottom: 10px; }
+.cm-side .inv-panel-name{ font-size: 13px; }
+
+.cm-panel-note{ font-size: 11px; color: var(--sub); line-height: 1.5; margin-top: 8px; }
 
 .cm-table{
   width: 100%;
@@ -353,9 +380,9 @@
 /* De dónde salió la cifra de ventas, en el panel */
 .cm-origin{
   display: flex; align-items: center; gap: 6px;
-  margin: 8px 0; font-size: 11px; color: var(--sub);
+  margin: 0 0 8px; font-size: 11px; color: var(--sub);
 }
-.cm-fixbtn{ width: 100%; justify-content: center; }
+.cm-fixbtn{ width: 100%; justify-content: center; padding: 8px 12px; }
 
 /* ── Diálogo de corrección ── */
 .sf-dot{

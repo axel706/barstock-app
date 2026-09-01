@@ -511,24 +511,18 @@
             ${stat(bad ? 'COST LOST' : 'COST GAINED', money(it.money), col)}
           </div>
         </div>
-        <div class="inv-panel-section" style="flex:1">
-          <div class="inv-panel-section-label">THE SUM</div>
-          ${row('Poured', btl(it.used))}
-          ${row('Sold', btl(it.sold))}
-          <hr class="inv-panel-divider" style="margin:6px 0">
-          ${row(bad ? 'Bottles lost' : 'Bottles gained', btl(it.bottles), col)}
+        <div class="inv-panel-section cm-flex">
           ${row('Bottle cost', money2(unit))}
-          ${row(bad ? 'Cost lost' : 'Cost gained', money2(it.money), col)}
           ${pct !== null
             ? row('Vs sales', Math.abs(pct).toFixed(0) + '% ' + (pct > 0 ? 'lost' : 'gained'), col)
             : ''}
-        </div>
-        <div class="inv-panel-actions-section">
           <div class="cm-panel-note">
             ${bad
-              ? 'Poured more than the POS sold. Over-pouring, spillage, comps not rung in, or a miscount.'
-              : 'Sold more than was poured. Usually a miscount, not a gain — liquor does not appear on its own.'}
+              ? 'Over-pour, spillage, comps not rung in, or a miscount.'
+              : 'Usually a miscount — liquor does not appear on its own.'}
           </div>
+        </div>
+        <div class="inv-panel-actions-section">
           ${origin(it)}
           <span class="cm-btn ghost cm-fixbtn" role="button" tabindex="0"
                 onclick="window.BarStockConsumptionMatch.fixSales()">
@@ -555,10 +549,10 @@
             ${stat(diff > 0.05 ? 'COST LOST' : 'COST GAINED', money(g.loss), col)}
           </div>
         </div>
-        <div class="inv-panel-section" style="flex:1">
+        <div class="inv-panel-section cm-flex">
           ${row('Items compared', g.withSales)}
-          ${row('Without sales', g.noSales || '—')}
           ${row('Losing items', g.items.filter(i => i.bottles > 0.05).length)}
+          ${g.noSales ? row('No sales line', g.noSales, '#f59e0b') : ''}
         </div>
         <div class="inv-panel-actions-section">
           <div class="cm-panel-note">Pick an item to see its numbers.</div>
@@ -583,7 +577,7 @@
             ${stat('NO SALES', noSales || '—')}
           </div>
         </div>
-        <div class="inv-panel-section" style="flex:1">
+        <div class="inv-panel-section cm-flex">
           <div class="inv-panel-section-label">WORST CATEGORY</div>
           ${worst
             ? row(worst.cat, money(worst.loss), '#ef4444')
@@ -601,7 +595,7 @@
         <div class="inv-panel-name-wrap"><span class="inv-panel-name">Cycles</span></div>
         <div class="inv-panel-meta">${closed} closed</div>
       </div>
-      <div class="inv-panel-section" style="flex:1">
+      <div class="inv-panel-section cm-flex">
         <div class="cm-panel-note">
           A cycle closes when the next count is imported — that is what
           fills in what was used. Pick one to compare it against the sales
