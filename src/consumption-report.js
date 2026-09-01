@@ -473,10 +473,20 @@
         y += 10 + lines.length * 10;
       }
 
-      const head = ['Item'];
-      if (_showPoured) head.push('Poured');
-      if (_showSold) head.push('Sold');
-      head.push('Bottles', 'Cost');
+      // ── La alineación va EN CADA CELDA de la cabecera ─────────────
+      //
+      // No en columnStyles: autoTable descarta columnStyles para el head
+      // —jspdf.plugin.autotable.js:1598, `sectionName === 'body' ?
+      // columnStyles : {}`— así que los títulos se quedaban a la
+      // izquierda mientras las cifras iban a la derecha, y cada columna
+      // parecía desfasada respecto a su título. headStyles tampoco sirve:
+      // es global a toda la fila y la primera columna sí va a la
+      // izquierda.
+      const R = (t) => ({ content: t, styles: { halign: 'right' } });
+      const head = [{ content: 'Item', styles: { halign: 'left' } }];
+      if (_showPoured) head.push(R('Poured'));
+      if (_showSold) head.push(R('Sold'));
+      head.push(R('Bottles'), R('Cost'));
 
       const nCols = head.length;
       const body = [];
