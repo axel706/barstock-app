@@ -79,6 +79,26 @@
   let _showSold = true;
   let _showPoured = true;
 
+  // ── A quién va dirigida esta copia ───────────────────────────────────
+  //
+  // 'management' lo ve todo. 'staff' no ve el dinero.
+  //
+  // Es un interruptor de AUDIENCIA y no una casilla suelta "ocultar
+  // coste" a propósito: enviar por error la copia con dinero al equipo
+  // de barra no se deshace, y una casilla más entre las otras dos se
+  // olvida. Al elegir audiencia, la pregunta que se hace uno antes de
+  // exportar es "¿para quién es esto?", que es la correcta.
+  //
+  // Y ocultar no es tachar una columna. Sin el dinero, el orden de las
+  // filas —que hoy lo decide el dinero— parecería arbitrario, el titular
+  // se quedaría sin cifra y las tarjetas del PDF con un hueco. En modo
+  // staff el documento se reconstruye alrededor de las BOTELLAS: ordena
+  // por botellas, titula en botellas y rellena las tarjetas con métricas
+  // que no son dinero. Tiene que parecer un informe pensado así, no uno
+  // al que le han quitado una columna a última hora.
+  let _audience = 'management';
+  const money$ = () => _audience === 'management';
+
   const key = () => `bs.cmreport.${cfg().loc}.${_week || 'none'}`;
 
   function load(week) {
@@ -90,6 +110,8 @@
       _picked = new Set(Array.isArray(d?.items) ? d.items : []);
       _showSold = d?.showSold !== false;
       _showPoured = d?.showPoured !== false;
+      // Por defecto management: quien abre el reporte es quien manda.
+      _audience = d?.audience === 'staff' ? 'staff' : 'management';
     } catch (e) {
       _picked = new Set();
     }
@@ -98,7 +120,8 @@
   function save() {
     try {
       localStorage.setItem(key(), JSON.stringify({
-        items: [..._picked], showSold: _showSold, showPoured: _showPoured
+        items: [..._picked], showSold: _showSold, showPoured: _showPoured,
+        audience: _audience
       }));
     } catch (e) { /* modo privado de Safari: se pierde, no se rompe */ }
   }
@@ -179,10 +202,34 @@
         items,
         sold: items.reduce((s, i) => s + i.sold, 0),
         used: items.reduce((s, i) => s + i.used, 0),
-        loss: items.reduce((s, i) => s + i.money, 0)
+        loss: items.reduce((s, i) => s + i.money, 0),
+        bottles: items.reduce((s, i) => s + Math.max(0, i.bottles), 0)
       });
     }
-    return out.sort((a, b) => b.loss - a.loss);
+
+    // El orden sigue a la columna que SE VE. Ordenar por dinero un
+    // documento donde el dinero está oculto deja una lista que sube y
+    // baja sin motivo aparente, y eso es exactamente lo que delata que se
+    // ha quitado algo.
+    const by = money$()
+      ? (a, b) => b.loss - a.loss
+      : (a, b) => b.bottles - a.bottles;
+    for (const g of out) {
+      g.items = g.items.slice().sort(money$()
+        ? (a, b) => b.money - a.money
+        : (a, b) => b.bottles - a.bottles);
+    }
+    return out.sort(by);
+  }
+
+  // El titular del informe: dinero para management, botellas para staff.
+  function headline(sel) {
+    if (money$()) {
+      return { big: money(sel.reduce((s, g) => s + Math.max(0, g.loss), 0)),
+               sub: 'poured beyond sales, at cost' };
+    }
+    const b = sel.reduce((s, g) => s + g.bottles, 0);
+    return { big: btl(b), sub: `bottle${btl(b) === '1' ? '' : 's'} poured beyond sales` };
   }
 
   // ── Gráfica del reporte ──────────────────────────────────────────────
@@ -224,10 +271,11 @@
       </div>`;
     }
 
-    const total = sel.reduce((s, g) => s + Math.max(0, g.loss), 0);
     const count = sel.reduce((s, g) => s + g.items.length, 0);
+    const h = headline(sel);
+    const $$ = money$();
 
-    const cols = 1 + (_showPoured ? 1 : 0) + (_showSold ? 1 : 0) + 2;
+    const cols = 1 + (_showPoured ? 1 : 0) + (_showSold ? 1 : 0) + 1 + ($$ ? 1 : 0);
 
     const blocks = sel.map(g => {
       const note = _notes.get('category:' + g.cat) || '';
@@ -235,7 +283,8 @@
       <div class="cmr-block">
         <div class="cmr-blockhead">
           <span class="cmr-cat">${esc(g.cat)}</span>
-          <span class="cmr-catmoney">${money(g.loss)}</span>
+          <span class="cmr-catmoney">${$$ ? money(g.loss)
+            : btl(g.bottles) + ' bottle' + (btl(g.bottles) === '1' ? '' : 's')}</span>
         </div>
         <div class="cmr-note ${note ? 'has' : ''}">
           <textarea rows="1" placeholder="Note for ${esc(g.cat)}…"
@@ -248,7 +297,7 @@
             ${_showPoured ? '<th class="num">Poured</th>' : ''}
             ${_showSold ? '<th class="num">Sold</th>' : ''}
             <th class="num">Bottles</th>
-            <th class="num">Cost</th>
+            ${$$ ? '<th class="num">Cost</th>' : ''}
           </tr></thead>
           <tbody>
             ${g.items.map(it => {
@@ -260,7 +309,7 @@
                   ${_showPoured ? `<td class="num">${btl(it.used)}</td>` : ''}
                   ${_showSold ? `<td class="num">${btl(it.sold)}</td>` : ''}
                   <td class="num">${gapCell(it.bottles)}</td>
-                  <td class="num money ${cls}"><b>${money(it.money)}</b></td>
+                  ${$$ ? `<td class="num money ${cls}"><b>${money(it.money)}</b></td>` : ''}
                 </tr>
                 <tr class="cmr-noterow">
                   <td colspan="${cols}">
@@ -279,6 +328,12 @@
 
     return `
       <div class="cmr-bar">
+        <div class="cmr-aud" title="Who is this copy for">
+          <span class="cmr-audopt ${$$ ? 'on' : ''}" role="button" tabindex="0"
+                onclick="window.BarStockConsumptionReport.setAudience('management')">Management</span>
+          <span class="cmr-audopt ${$$ ? '' : 'on'}" role="button" tabindex="0"
+                onclick="window.BarStockConsumptionReport.setAudience('staff')">Staff</span>
+        </div>
         <label class="cmr-check">
           <input type="checkbox" ${_showPoured ? 'checked' : ''}
                  onchange="window.BarStockConsumptionReport.toggleCol('poured')"> Show poured
@@ -304,11 +359,18 @@
 
       <div class="cm-headzone">
         <div class="cm-total">
-          <b>${money(total)}</b>
-          <span>across ${count} item${count === 1 ? '' : 's'} in ${sel.length} categor${sel.length === 1 ? 'y' : 'ies'}, at cost</span>
+          <b>${h.big}</b>
+          <span>${h.sub} · ${count} item${count === 1 ? '' : 's'} in
+            ${sel.length} categor${sel.length === 1 ? 'y' : 'ies'}</span>
         </div>
         ${chart(sel)}
       </div>
+
+      ${$$ ? '' : `
+        <div class="cmr-staffnote">
+          <i class="ti ti-eye-off" aria-hidden="true"></i>
+          Staff copy — cost figures are left out of the screen and the PDF.
+        </div>`}
 
       ${blocks}`;
   }
@@ -339,8 +401,11 @@
     let y = margin + 10;
 
     const location = (cfg().loc || 'BarStock').toUpperCase();
+    const $$ = money$();
     const total = sel.reduce((s, g) => s + Math.max(0, g.loss), 0);
     const count = sel.reduce((s, g) => s + g.items.length, 0);
+    const bottles = sel.reduce((s, g) => s + g.bottles, 0);
+    const worst = sel[0];   // ya viene ordenado por lo que se ve
 
     function ensureSpace(need) { if (y > pageH - margin - need) { pdf.addPage(); y = margin + 10; } }
     function drawBanner(text) {
@@ -386,13 +451,26 @@
 
     // ── Tres píldoras ──
     const cardH = 78, cardW = (tableW - 16) / 3;
-    [
-      { label: 'POURED BEYOND SALES', main: money(total), sub: 'at cost', color: RED },
-      { label: 'ITEMS IN THIS REPORT', main: String(count), sub: `${sel.length} categor${sel.length === 1 ? 'y' : 'ies'}`, color: NAVY },
-      { label: 'BOTTLES LOST',
-        main: btl(sel.reduce((s, g) => s + g.items.reduce((a, i) => a + Math.max(0, i.bottles), 0), 0)),
-        sub: 'poured beyond what sold', color: NAVY }
-    ].forEach((c, i) => {
+    // Tres tarjetas siempre. En la copia de staff la primera pasa a ser
+    // las botellas y la tercera se rellena con la categoría de mayor
+    // desvío: dejar dos tarjetas y un hueco es justo lo que delata que
+    // se ha quitado algo.
+    const pills = $$
+      ? [
+          { label: 'POURED BEYOND SALES', main: money(total), sub: 'at cost', color: RED },
+          { label: 'ITEMS IN THIS REPORT', main: String(count),
+            sub: `${sel.length} categor${sel.length === 1 ? 'y' : 'ies'}`, color: NAVY },
+          { label: 'BOTTLES LOST', main: btl(bottles), sub: 'poured beyond what sold', color: NAVY }
+        ]
+      : [
+          { label: 'POURED BEYOND SALES', main: btl(bottles) + ' btl',
+            sub: 'more than the POS sold', color: RED },
+          { label: 'ITEMS IN THIS REPORT', main: String(count),
+            sub: `${sel.length} categor${sel.length === 1 ? 'y' : 'ies'}`, color: NAVY },
+          { label: 'BIGGEST GAP', main: worst ? worst.cat.split(/[\s&]/)[0] : '—',
+            sub: worst ? btl(worst.bottles) + ' bottles' : '', color: NAVY }
+        ];
+    pills.forEach((c, i) => {
       const x = margin + i * (cardW + 8);
       pdf.setFillColor(240, 249, 255); pdf.roundedRect(x, y, cardW, cardH, 8, 8, 'F');
       pdf.setDrawColor(...BLUE); pdf.setLineWidth(0.8); pdf.roundedRect(x, y, cardW, cardH, 8, 8, 'S');
@@ -463,7 +541,8 @@
     for (const g of sel) {
       ensureSpace(90);
       const blockStart = y;
-      drawBanner(`${g.cat.toUpperCase()}  —  ${money(g.loss)}`);
+      drawBanner(`${g.cat.toUpperCase()}  —  ${$$ ? money(g.loss)
+        : btl(g.bottles) + ' BOTTLE' + (btl(g.bottles) === '1' ? '' : 'S')}`);
 
       const catNote = _notes.get('category:' + g.cat) || '';
       if (catNote) {
@@ -486,7 +565,8 @@
       const head = [{ content: 'Item', styles: { halign: 'left' } }];
       if (_showPoured) head.push(R('Poured'));
       if (_showSold) head.push(R('Sold'));
-      head.push(R('Bottles'), R('Cost'));
+      head.push(R('Bottles'));
+      if ($$) head.push(R('Cost'));
 
       const nCols = head.length;
       const body = [];
@@ -495,7 +575,8 @@
         const r = [it.item];
         if (_showPoured) r.push(btl(it.used));
         if (_showSold) r.push(btl(it.sold));
-        r.push(gapText(it.bottles), money2(it.money));
+        r.push(gapText(it.bottles));
+        if ($$) r.push(money2(it.money));
         body.push(r);
 
         const n = _notes.get('item:' + it.item);
@@ -514,6 +595,9 @@
         }
       }
 
+      // La primera columna es 'auto', así que al quitar la de dinero el
+      // nombre del artículo absorbe esos 62pt en vez de dejar un margen
+      // blanco a la derecha.
       const colStyles = { 0: { halign: 'left', cellWidth: 'auto' } };
       for (let i = 1; i < nCols; i++) colStyles[i] = { halign: 'right', cellWidth: 62 };
 
@@ -564,8 +648,9 @@
     const foot = pdf.splitTextToSize(
       '"Lost" means more was poured than the POS sold; "gained" means the opposite, which is almost ' +
       'always a miscount rather than a real gain. "Poured" is opening stock plus deliveries minus the ' +
-      'closing count. Figures are at cost, not menu price: this is the value of the stock, not lost ' +
-      'revenue. Items with no line in the sales files are excluded from every total, and only the ' +
+      'closing count. ' +
+      ($$ ? 'Figures are at cost, not menu price: this is the value of the stock, not lost revenue. ' : '') +
+      'Items with no line in the sales files are excluded from every total, and only the ' +
       'items selected for this report are included.',
       tableW);
     pdf.text(foot, margin, y + 8);
@@ -577,7 +662,7 @@
     const groups = window.BarStockConsumptionMatch?.groups?.() || [];
     const pdf = buildPdf(groups);
     if (!pdf) return;
-    pdf.save(`consumption_match_${_week}.pdf`);
+    pdf.save(`consumption_match_${_week}${money$() ? '' : '_staff'}.pdf`);
     if (typeof setStatus === 'function') setStatus('Consumption Match PDF generated.');
   }
 
@@ -605,8 +690,18 @@
       const sel = picked(groups);
       const total = sel.reduce((s, g) => s + Math.max(0, g.loss), 0);
       const count = sel.reduce((s, g) => s + g.items.length, 0);
-      sum.innerHTML = `<b>${money(total)}</b> across ${count} item${count === 1 ? '' : 's'}
-        in ${sel.length} categor${sel.length === 1 ? 'y' : 'ies'} · week of ${esc(longLabel(_week))}`;
+      const bottles = sel.reduce((s, g) => s + g.bottles, 0);
+      // Se recuerda la audiencia AQUÍ, en el último paso antes de que
+      // salga: enviar la copia con dinero al equipo de barra no se
+      // deshace.
+      sum.innerHTML = `
+        <b>${money$() ? money(total) : btl(bottles) + ' bottles'}</b>
+        across ${count} item${count === 1 ? '' : 's'} in
+        ${sel.length} categor${sel.length === 1 ? 'y' : 'ies'} ·
+        week of ${esc(longLabel(_week))}
+        <div class="cmr-audtag ${money$() ? 'mgmt' : 'staff'}">
+          ${money$() ? 'Management copy · includes cost' : 'Staff copy · no cost figures'}
+        </div>`;
     }
     bg.classList.remove('hidden');
   }
@@ -645,7 +740,8 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to, cc,
-          reportTitle: 'Consumption Match Report',
+          reportTitle: money$() ? 'Consumption Match Report'
+                                : 'Consumption Match Report (staff copy)',
           locationName: cfg().loc,
           weekStart: _week,
           totalLoss: sel.reduce((s, g) => s + Math.max(0, g.loss), 0),
@@ -653,7 +749,7 @@
           noSalesCount: 0,
           senderName, senderEmail,
           pdfBase64,
-          filename: `consumption_match_${_week}.pdf`
+          filename: `consumption_match_${_week}${money$() ? '' : '_staff'}.pdf`
         })
       });
       const data = await res.json();
@@ -671,6 +767,12 @@
   }
 
   // ── API ──────────────────────────────────────────────────────────────
+  function setAudience(a) {
+    _audience = (a === 'staff') ? 'staff' : 'management';
+    save();
+    window.BarStockConsumptionMatch?.paint();
+  }
+
   function toggleCol(which) {
     if (which === 'sold') _showSold = !_showSold; else _showPoured = !_showPoured;
     save();
@@ -692,7 +794,8 @@
   window.BarStockConsumptionReport = {
     load, loadNotes, save, view, picked,
     exportPdf, openEmail, closeEmail, sendEmail,
-    toggleCol, setNote, clearAll,
+    toggleCol, setAudience, setNote, clearAll,
+    get audience() { return _audience; },
     // Estado que consulta Consumption Match para pintar las casillas
     get picked_() { return _picked; },
     get pending() { return _pending; },
