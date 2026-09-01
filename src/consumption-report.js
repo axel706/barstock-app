@@ -288,7 +288,8 @@
         </div>
         <div class="cmr-note ${note ? 'has' : ''}">
           <textarea rows="1" placeholder="Note for ${esc(g.cat)}…"
-            onchange="window.BarStockConsumptionReport.setNote('category','${esc(g.cat).replace(/'/g, '&#39;')}', this.value)"
+            data-ref="${esc(g.cat)}"
+            onchange="window.BarStockConsumptionReport.setNote('category', this.dataset.ref, this.value)"
           >${esc(note)}</textarea>
         </div>
         <table class="cm-table cmr-table">
@@ -315,7 +316,8 @@
                   <td colspan="${cols}">
                     <div class="cmr-note ${n ? 'has' : ''}">
                       <textarea rows="1" placeholder="Note for ${esc(it.item)}…"
-                        onchange="window.BarStockConsumptionReport.setNote('item','${esc(it.item).replace(/'/g, '&#39;')}', this.value)"
+                        data-ref="${esc(it.item)}"
+                        onchange="window.BarStockConsumptionReport.setNote('item', this.dataset.ref, this.value)"
                       >${esc(n)}</textarea>
                     </div>
                   </td>

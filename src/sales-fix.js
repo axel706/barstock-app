@@ -105,7 +105,8 @@
       return `
         <div class="sf-line ${linked ? 'on' : ''} ${l.free ? 'free' : ''}"
              role="button" tabindex="0"
-             onclick="window.BarStockSalesFix.toggleLine('${esc(l.pos).replace(/'/g, '&#39;')}')">
+             data-pos="${esc(l.pos)}"
+             onclick="window.BarStockSalesFix.toggleLine(this.dataset.pos)">
           <span class="sf-check"><i class="ti ti-check" aria-hidden="true"></i></span>
           <span class="sf-pos">${esc(l.pos)}</span>
           ${other ? `<span class="sf-taken">now: ${esc(other)}</span>` : ''}

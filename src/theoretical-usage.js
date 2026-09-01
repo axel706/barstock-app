@@ -197,6 +197,22 @@
     return result;
   }
 
+  // ─── Escapar para un atributo HTML ────────────────────────────────
+  //
+  // Los nombres viajaban DENTRO de un onclick: onclick="fn('Tito&#39;s')".
+  // El navegador decodifica la entidad antes de interpretar el JS, así
+  // que ejecutaba fn('Tito's') y lanzaba un error de sintaxis: cualquier
+  // producto con apóstrofo tenía sus botones muertos. Y la otra variante
+  // del proyecto, .replace(/'/g,"\'"), no escapaba nada en absoluto:
+  // "\'" es solo una comilla.
+  //
+  // Ahora el nombre va en un data-* y el handler lo lee de this.dataset.
+  // Ahí el escapado sí funciona y no hay dos capas de intérprete.
+  function attr(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, c =>
+      ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+  }
+
   function normItem(s) { return String(s || '').toUpperCase().replace(/\s+/g, ' ').trim(); }
 
   // ─── De dónde salen las ventas de un artículo ─────────────────────
@@ -542,7 +558,7 @@
         // .size, no .has(): desde que se cachean tambien las semanas sin
         // ventas, tener la clave ya no significa tener datos.
         const hasSales = (_salesData.get(w.week_start) || new Map()).size > 0;
-        return `<div class="tu-week-row" onclick="window.BarStockTheoreticalUsage.openWeek('${w.week_start}')">
+        return `<div class="tu-week-row" data-week="${attr(w.week_start)}" onclick="window.BarStockTheoreticalUsage.openWeek(this.dataset.week)">
           <span class="tu-dot ${dotClass}"></span>
           <span class="tu-week-label">${formatWeekLabel(w.week_start)}</span>
           <span class="tu-week-tag ${tagClass}">${tagLabel}</span>
@@ -743,7 +759,8 @@
 
     body.innerHTML = displayed.map(r => {
       const hasAdj = r.on_hand_end_adjusted !== null && r.on_hand_end_adjusted !== undefined;
-      const adjBtn = `<button class="tu-comment-btn${hasAdj ? ' tu-adj-active' : ''}" onclick="window.BarStockTheoreticalUsage.openAdjModal('${r.item_name.replace(/'/g, '&#39;')}', ${r.on_hand_end_adjusted !== null && r.on_hand_end_adjusted !== undefined ? r.on_hand_end_adjusted : r.on_hand_end ?? ''})" title="${hasAdj ? 'Adjusted — click to edit' : 'Adjust on hand end'}"><i class="ti ti-edit" aria-hidden="true"></i></button>`;
+      const adjVal = r.on_hand_end_adjusted !== null && r.on_hand_end_adjusted !== undefined ? r.on_hand_end_adjusted : (r.on_hand_end ?? '');
+      const adjBtn = `<button class="tu-comment-btn${hasAdj ? ' tu-adj-active' : ''}" data-item="${attr(r.item_name)}" data-val="${attr(adjVal)}" onclick="window.BarStockTheoreticalUsage.openAdjModal(this.dataset.item, this.dataset.val)" title="${hasAdj ? 'Adjusted — click to edit' : 'Adjust on hand end'}"><i class="ti ti-edit" aria-hidden="true"></i></button>`;
       const usedFmt = (r.used !== null ? r.used.toFixed(2) : '—') + ' ' + adjBtn;
       // La celda de ventas se puede corregir. El icono cambia de color
       // según de dónde salga la cifra: ámbar cuando la emparejó el
@@ -757,7 +774,7 @@
                     : r.soldSrc === 'alias-empty' ? 'Linked, but that line is not in this file'
                     : r.sold === null ? 'No sales data — link the POS line or type it'
                     : 'Matched by exact name';
-      const sfBtn = `<button class="tu-comment-btn${sfCls}" title="${sfTitle}" onclick="window.BarStockTheoreticalUsage.fixSales('${r.item_name.replace(/'/g, '&#39;')}');event.stopPropagation()"><i class="ti ti-pencil" aria-hidden="true"></i></button>`;
+      const sfBtn = `<button class="tu-comment-btn${sfCls}" title="${sfTitle}" data-item="${attr(r.item_name)}" onclick="event.stopPropagation();window.BarStockTheoreticalUsage.fixSales(this.dataset.item)"><i class="ti ti-pencil" aria-hidden="true"></i></button>`;
       const soldFmt = (r.sold !== null ? r.sold.toFixed(2) : '<span class="muted">No data</span>') + ' ' + sfBtn;
       let varianceFmt = '—', variancePctFmt = '—', lossFmt = '—';
       let varianceClass = '';
@@ -786,10 +803,9 @@
 
       const comment = _itemComments.get(r.item_name) || '';
       const commentIcon = comment
-        ? `<button class="tu-comment-btn has-comment" onclick="window.BarStockTheoreticalUsage.openCommentModal('${r.item_name.replace(/'/g,"\'")}')" title="${comment.replace(/"/g,'&quot;')}"><i class="ti ti-message-circle" aria-hidden="true"></i></button>`
-        : `<button class="tu-comment-btn" onclick="window.BarStockTheoreticalUsage.openCommentModal('${r.item_name.replace(/'/g,"\'")}')" title="Add comment"><i class="ti ti-message-circle" aria-hidden="true"></i></button>`;
-      const safeItemName = r.item_name.replace(/'/g, '&#39;');
-      const excludeIcon = `<button class="tu-comment-btn${r.isExcluded ? ' tu-excl-active' : ''}" onclick="window.BarStockTheoreticalUsage.toggleExclusion('${safeItemName}')" title="${r.isExcluded ? 'Excluded — click to re-include' : 'Exclude from report'}"><i class="ti ti-eye-off" aria-hidden="true"></i></button>`;
+        ? `<button class="tu-comment-btn has-comment" data-item="${attr(r.item_name)}" onclick="window.BarStockTheoreticalUsage.openCommentModal(this.dataset.item)" title="${attr(comment)}"><i class="ti ti-message-circle" aria-hidden="true"></i></button>`
+        : `<button class="tu-comment-btn" data-item="${attr(r.item_name)}" onclick="window.BarStockTheoreticalUsage.openCommentModal(this.dataset.item)" title="Add comment"><i class="ti ti-message-circle" aria-hidden="true"></i></button>`;
+      const excludeIcon = `<button class="tu-comment-btn${r.isExcluded ? ' tu-excl-active' : ''}" data-item="${attr(r.item_name)}" onclick="window.BarStockTheoreticalUsage.toggleExclusion(this.dataset.item)" title="${r.isExcluded ? 'Excluded — click to re-include' : 'Exclude from report'}"><i class="ti ti-eye-off" aria-hidden="true"></i></button>`;
       return `<tr class="${r.isExcluded ? 'tu-excluded-row' : ''}">
         <td>${r.code || ''}</td>
         <td style="font-weight:500">${r.item_name}</td>
@@ -912,7 +928,7 @@
     if (!container) return;
     const vendors = ['ALL', ...Array.from(new Set(enriched.map(r => r.vendor || 'UNKNOWN').filter(Boolean))).sort()];
     container.innerHTML = vendors.map(v =>
-      `<div class="oh-filter-chip ${_vendorFilter === v ? 'active' : ''}" onclick="window.BarStockTheoreticalUsage.setVendorFilter('${v.replace(/'/g, "\'")}')">${v}</div>`
+      `<div class="oh-filter-chip ${_vendorFilter === v ? 'active' : ''}" data-vendor="${attr(v)}" onclick="window.BarStockTheoreticalUsage.setVendorFilter(this.dataset.vendor)">${attr(v)}</div>`
     ).join('');
   }
 

@@ -197,6 +197,10 @@
   let _groups = [];       // categorias del ciclo abierto
   let _cat = -1;
   let _item = -1;
+  // Los sin emparejar viven en otra lista, así que llevan su propio
+  // índice. Reutilizar _item habría hecho que el número 2 significara
+  // dos artículos distintos según de dónde vinieras.
+  let _unItem = -1;
   let _year = null;
   let _month = null;      // null = todo el año
   let _busy = false;
@@ -409,7 +413,8 @@
       return `
         <tr class="cm-row ${i === _item ? 'sel' : ''} ${inRep ? 'inrep' : ''}"
             onclick="window.BarStockConsumptionMatch.openItem(${i})">
-          <td class="cm-pick" onclick="window.BarStockConsumptionMatch.pick(event, '${esc(it.item).replace(/'/g, '&#39;')}')">
+          <td class="cm-pick" data-item="${esc(it.item)}"
+              onclick="window.BarStockConsumptionMatch.pick(event, this.dataset.item)">
             <span class="cm-box ${pend ? 'on' : ''} ${inRep ? 'done' : ''}">
               <i class="ti ti-check" aria-hidden="true"></i>
             </span>
@@ -438,16 +443,17 @@
           <span class="cm-sechead-sub">Not counted anywhere. Link the POS line or type the number.</span>
         </td>
       </tr>
-      ${g.unmatched.map(u => `
-        <tr class="cm-row cm-row-un">
+      ${g.unmatched.map((u, ui) => `
+        <tr class="cm-row cm-row-un ${ui === _unItem ? 'sel' : ''}"
+            onclick="window.BarStockConsumptionMatch.openUnmatched(${ui})">
           <td class="cm-pick"></td>
           <td class="cm-c1">${esc(u.item)}</td>
           <td class="num cm-c-used">${btl(u.used)}</td>
           <td class="num cm-c-sold muted">—</td>
           <td class="num muted">—</td>
           <td class="num">
-            <span class="cm-fixlink" role="button" tabindex="0"
-                  onclick="window.BarStockConsumptionMatch.fixUnmatched('${esc(u.item).replace(/'/g, '&#39;')}')">
+            <span class="cm-fixlink" role="button" tabindex="0" data-item="${esc(u.item)}"
+                  onclick="event.stopPropagation();window.BarStockConsumptionMatch.fixUnmatched(this.dataset.item)">
               <i class="ti ti-pencil" aria-hidden="true"></i> Fix
             </span>
           </td>
@@ -487,6 +493,50 @@
          <span class="inv-panel-row-label">${label}</span>
          <span class="inv-panel-row-value"${color ? ` style="color:${color}"` : ''}>${value}</span>
        </div>`;
+
+    // Nivel 3 con un artículo SIN VENTA elegido.
+    //
+    // Tiene panel propio y no el de siempre: aquí no hay variance ni
+    // pérdida que enseñar, y rellenar las tarjetas con guiones sería
+    // fingir un cálculo que no existe. Lo único accionable es corregir
+    // la venta, así que el panel va de eso.
+    if (_view === 'items' && _cat >= 0 && _unItem >= 0) {
+      const g = _groups[_cat];
+      const u = g.unmatched[_unItem];
+      if (u) {
+        const m = masterOf(u.item);
+        const cost = m ? Number(m.value || 0) : 0;
+        return `
+          <div class="inv-panel-header">
+            <div class="inv-panel-name-wrap"><span class="inv-panel-name">${esc(u.item)}</span></div>
+            <div class="inv-panel-meta">${esc(g.cat)}${u.code ? ' · ' + esc(u.code) : ''}</div>
+          </div>
+          <div class="inv-panel-section">
+            <div class="inv-panel-grid">
+              ${stat('POURED', btl(u.used))}
+              ${stat('SOLD', '—', 'var(--sub)')}
+              ${stat('BOTTLES', '—', 'var(--sub)')}
+              ${stat('AT COST', '—', 'var(--sub)')}
+            </div>
+          </div>
+          <div class="inv-panel-section cm-flex">
+            ${cost ? row('Bottle cost', money2(cost)) : ''}
+            ${row('If none sold', money(u.used * cost), '#f59e0b')}
+            <div class="cm-panel-note">
+              No line in the sales file matches this item, so nothing here
+              counts. Link the POS line or type the number.
+            </div>
+          </div>
+          <div class="inv-panel-actions-section">
+            ${origin(u)}
+            <span class="cm-btn ghost cm-fixbtn" role="button" tabindex="0"
+                  data-item="${esc(u.item)}"
+                  onclick="window.BarStockConsumptionMatch.fixUnmatched(this.dataset.item)">
+              <i class="ti ti-pencil" aria-hidden="true"></i> Fix sales
+            </span>
+          </div>`;
+      }
+    }
 
     // Nivel 3 con artículo elegido: el desglose completo
     if (_view === 'items' && _cat >= 0 && _item >= 0) {
@@ -794,7 +844,7 @@
       if (wrap) wrap.innerHTML = `<div class="cm-empty">Reading week of ${esc(dayLabel(week))}…</div>`;
     }
     if (!await ensureCycle(week)) return;
-    _week = week; _view = 'cats'; _cat = -1; _item = -1;
+    _week = week; _view = 'cats'; _cat = -1; _item = -1; _unItem = -1;
 
     // La selección y las notas son de ESTE ciclo. Cambiar de semana sin
     // recargarlas mezclaría en un mismo reporte artículos de periodos
@@ -810,12 +860,19 @@
   }
 
   function openCat(i) {
-    _cat = i; _item = -1; _view = 'items';
+    _cat = i; _item = -1; _unItem = -1; _view = 'items';
     paint();
   }
 
   function openItem(i) {
     _item = (_item === i) ? -1 : i;
+    _unItem = -1;
+    paint();
+  }
+
+  function openUnmatched(i) {
+    _unItem = (_unItem === i) ? -1 : i;
+    _item = -1;
     paint();
   }
 
@@ -860,8 +917,8 @@
     });
   }
 
-  function goCycles() { _view = 'cycles'; _cat = -1; _item = -1; paint(); }
-  function goCats()   { _view = 'cats';   _cat = -1; _item = -1; paint(); }
+  function goCycles() { _view = 'cycles'; _cat = -1; _item = -1; _unItem = -1; paint(); }
+  function goCats()   { _view = 'cats';   _cat = -1; _item = -1; _unItem = -1; paint(); }
   function goReport() { _view = 'report'; _item = -1; paint(); }
   function setYear(y) { _year = y; _month = null; paint(); }
   function setMonth(m){ _month = (_month === m) ? null : m; paint(); }
@@ -918,7 +975,7 @@
 
   window.BarStockConsumptionMatch = {
     render, paint, group,
-    openCycle, openCat, openItem,
+    openCycle, openCat, openItem, openUnmatched,
     goCycles, goCats, goReport, setYear, setMonth,
     pick, pickAll, sendToReport, clearPending, fixSales, fixUnmatched,
     // El reporte necesita los grupos del ciclo abierto para recalcular
