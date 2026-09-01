@@ -643,17 +643,24 @@
     }
 
     // ── Pie: qué significa este número ──
-    ensureSpace(56);
-    pdf.setFont('helvetica', 'italic'); pdf.setFontSize(7.5); pdf.setTextColor(...GRAY);
-    const foot = pdf.splitTextToSize(
-      '"Lost" means more was poured than the POS sold; "gained" means the opposite, which is almost ' +
-      'always a miscount rather than a real gain. "Poured" is opening stock plus deliveries minus the ' +
-      'closing count. ' +
-      ($$ ? 'Figures are at cost, not menu price: this is the value of the stock, not lost revenue. ' : '') +
-      'Items with no line in the sales files are excluded from every total, and only the ' +
-      'items selected for this report are included.',
-      tableW);
-    pdf.text(foot, margin, y + 8);
+    //
+    // Solo en la copia de management. En la de staff la nota explicaba
+    // cómo se calcula la cifra y qué es un "gained", que es material de
+    // quien revisa el método, no de quien lo recibe. Y una nota al pie en
+    // un documento del que se ha quitado una columna invita justo a la
+    // pregunta que no toca.
+    if ($$) {
+      ensureSpace(56);
+      pdf.setFont('helvetica', 'italic'); pdf.setFontSize(7.5); pdf.setTextColor(...GRAY);
+      const foot = pdf.splitTextToSize(
+        '"Lost" means more was poured than the POS sold; "gained" means the opposite, which is almost ' +
+        'always a miscount rather than a real gain. "Poured" is opening stock plus deliveries minus the ' +
+        'closing count. Figures are at cost, not menu price: this is the value of the stock, not lost ' +
+        'revenue. Items with no line in the sales files are excluded from every total, and only the ' +
+        'items selected for this report are included.',
+        tableW);
+      pdf.text(foot, margin, y + 8);
+    }
 
     return pdf;
   }
