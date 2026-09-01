@@ -199,13 +199,182 @@
 
   function normItem(s) { return String(s || '').toUpperCase().replace(/\s+/g, ' ').trim(); }
 
-  function matchSold(itemName, salesMap) {
-    const norm = normItem(itemName);
-    if (salesMap.has(norm)) return salesMap.get(norm);
-    for (const [k, v] of salesMap) {
-      if (norm.includes(k) || k.includes(norm)) return v;
+  // ─── De dónde salen las ventas de un artículo ─────────────────────
+  //
+  // Tres orígenes, en orden de autoridad. El primero que responde gana:
+  //
+  //   1. override  — alguien escribió la cifra a mano para esta semana
+  //   2. alias     — alguien dijo qué línea(s) del POS son este artículo
+  //   3. fichero   — emparejado por nombre, exacto y luego aproximado
+  //
+  // El orden importa y no es arbitrario: una persona que mira un ticket
+  // sabe más que un fichero, y un enlace declarado a mano sabe más que
+  // adivinar por parecido de texto.
+  //
+  // El emparejado aproximado se queda EL ÚLTIMO y a propósito: "Aviary
+  // Cabernet Sauvignon 2021" contra una línea "CABERNET" da positivo y
+  // manda las ventas de otro vino a este. Sigue ahí porque acierta la
+  // mayoría de las veces y quitarlo dejaría medio inventario sin datos,
+  // pero cualquier cosa declarada explícitamente pasa por delante.
+  //
+  // Devuelve { sold, src } y no un número suelto: la pantalla necesita
+  // poder decir de dónde salió la cifra. Un número corregido a mano que
+  // parece importado es exactamente el tipo de cosa que hace desconfiar
+  // de un informe entero.
+  //
+  // `keys` son las líneas del fichero que este artículo se ha llevado.
+  // Sin eso no se puede saber qué líneas quedan libres, que es justo lo
+  // que hay que enseñar para poder enlazar una.
+  function soldFor(itemName, salesMap, aliases, overrides) {
+    if (overrides && overrides.has(itemName)) {
+      return { sold: Number(overrides.get(itemName).sold), src: 'manual', keys: [] };
     }
-    return null;
+
+    // Varias líneas del POS pueden apuntar al mismo artículo —el mismo
+    // vino por copa y por botella— y entonces se SUMAN. Quedarse con la
+    // primera perdería la mitad de las ventas sin decir nada.
+    if (aliases && aliases.has(itemName)) {
+      let total = 0; const keys = [];
+      for (const pos of aliases.get(itemName)) {
+        if (salesMap.has(pos)) { total += Number(salesMap.get(pos)) || 0; keys.push(pos); }
+      }
+      // Con enlaces declarados pero ninguno presente en el fichero, la
+      // respuesta correcta es cero ventas, no "sin datos": sabemos qué
+      // buscar y no está, así que no se vendió.
+      if (aliases.get(itemName).length) {
+        return { sold: total, src: keys.length ? 'alias' : 'alias-empty', keys };
+      }
+    }
+
+    const norm = normItem(itemName);
+    if (salesMap.has(norm)) return { sold: salesMap.get(norm), src: 'exact', keys: [norm] };
+    for (const [k, v] of salesMap) {
+      if (norm.includes(k) || k.includes(norm)) return { sold: v, src: 'fuzzy', keys: [k] };
+    }
+    return { sold: null, src: 'none', keys: [] };
+  }
+
+  // ─── Qué líneas del fichero no se ha llevado nadie ────────────────
+  //
+  // Son las candidatas a enlazar. Si un vino no aparece en el informe,
+  // su venta está casi siempre en esta lista, con otro nombre.
+  //
+  // Se marcan también las que reclama más de un artículo: eso solo pasa
+  // con el emparejado aproximado y significa que una de las dos cifras
+  // está mal.
+  async function salesLines(weekStart) {
+    if (!_salesData.has(weekStart)) {
+      _salesData.set(weekStart, await loadSalesFromSupabase(weekStart));
+    }
+    const salesMap = _salesData.get(weekStart) || new Map();
+    if (_aliasWeek !== weekStart) {
+      const c = await loadCorrections(weekStart);
+      _aliases = c.aliases; _overrides = c.overrides; _aliasWeek = weekStart;
+    }
+
+    const master = (window.state && window.state.master) || [];
+    const takenBy = new Map();     // pos_name -> [item, ...]
+    for (const m of master) {
+      if (!m.item) continue;
+      const s = soldFor(m.item, salesMap, _aliases, _overrides);
+      for (const k of s.keys) {
+        if (!takenBy.has(k)) takenBy.set(k, []);
+        takenBy.get(k).push(m.item);
+      }
+    }
+
+    const out = [];
+    for (const [pos, sold] of salesMap) {
+      const by = takenBy.get(pos) || [];
+      out.push({ pos, sold: Number(sold) || 0, takenBy: by, free: by.length === 0 });
+    }
+    // Las libres primero, y dentro de cada grupo las de más ventas: una
+    // línea con 40 unidades sin dueño es mucho más urgente que una de 0.5.
+    return out.sort((a, b) => (a.free === b.free) ? b.sold - a.sold : (a.free ? -1 : 1));
+  }
+
+  // Se conserva para el PDF de Usage, que la llama por su cuenta.
+  function matchSold(itemName, salesMap) {
+    return soldFor(itemName, salesMap, null, null).sold;
+  }
+
+  // ─── Correcciones guardadas ───────────────────────────────────────
+  // Las filas de la semana que hay en pantalla. El diálogo de corrección
+  // necesita saber de dónde salió la cifra actual del artículo, y
+  // recalcular el ciclo entero solo para eso sería absurdo.
+  let _lastRows = [];
+  let _aliases = new Map();     // item_name -> [pos_name, ...]
+  let _overrides = new Map();   // item_name -> { sold, reason }
+  let _aliasWeek = null;
+
+  async function loadCorrections(weekStart) {
+    const { url, key } = getConfig();
+    const out = { aliases: new Map(), overrides: new Map() };
+    try {
+      const locationId = await fetchLocationId();
+      const [ar, or_] = await Promise.all([
+        fetch(`${url}/rest/v1/sales_aliases?location_id=eq.${locationId}&select=pos_name,item_name`,
+          { headers: { apikey: key, Authorization: `Bearer ${key}` } }),
+        fetch(`${url}/rest/v1/sales_overrides?location_id=eq.${locationId}&week_start=eq.${weekStart}&select=item_name,sold,reason`,
+          { headers: { apikey: key, Authorization: `Bearer ${key}` } })
+      ]);
+      for (const r of (await ar.json()) || []) {
+        if (!out.aliases.has(r.item_name)) out.aliases.set(r.item_name, []);
+        out.aliases.get(r.item_name).push(r.pos_name);
+      }
+      for (const r of (await or_.json()) || []) {
+        out.overrides.set(r.item_name, { sold: Number(r.sold), reason: r.reason || '' });
+      }
+    } catch (err) {
+      // Sin correcciones se sigue calculando como antes. Que falle la
+      // nube no debe dejar la pantalla en blanco.
+      console.warn('[TheoreticalUsage] loadCorrections failed:', err);
+    }
+    return out;
+  }
+
+  // ─── Guardar correcciones ─────────────────────────────────────────
+  async function saveAlias(itemName, posName) {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+    await fetch(`${url}/rest/v1/sales_aliases?on_conflict=location_id,pos_name`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`,
+                 Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ location_id: locationId, pos_name: normItem(posName), item_name: itemName })
+    });
+    _aliasWeek = null;   // invalidar la caché
+  }
+
+  async function removeAlias(posName) {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+    await fetch(`${url}/rest/v1/sales_aliases?location_id=eq.${locationId}&pos_name=eq.${encodeURIComponent(normItem(posName))}`,
+      { method: 'DELETE', headers: { apikey: key, Authorization: `Bearer ${key}` } });
+    _aliasWeek = null;
+  }
+
+  async function saveOverride(weekStart, itemName, sold, reason) {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+    await fetch(`${url}/rest/v1/sales_overrides?on_conflict=location_id,week_start,item_name`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`,
+                 Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({
+        location_id: locationId, week_start: weekStart, item_name: itemName,
+        sold: Number(sold), reason: reason || '', updated_at: new Date().toISOString()
+      })
+    });
+    _aliasWeek = null;
+  }
+
+  async function removeOverride(weekStart, itemName) {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+    await fetch(`${url}/rest/v1/sales_overrides?location_id=eq.${locationId}&week_start=eq.${weekStart}&item_name=eq.${encodeURIComponent(itemName)}`,
+      { method: 'DELETE', headers: { apikey: key, Authorization: `Bearer ${key}` } });
+    _aliasWeek = null;
   }
 
 
@@ -446,6 +615,16 @@
     const salesMap = _salesData.get(weekStart) || new Map();
     const excl = exclusions || new Set();
 
+    // Las correcciones se piden una vez por semana y se cachean: esta
+    // función se llama en cada reordenación de la tabla y en cada cambio
+    // de filtro.
+    if (_aliasWeek !== weekStart) {
+      const c = await loadCorrections(weekStart);
+      _aliases = c.aliases;
+      _overrides = c.overrides;
+      _aliasWeek = weekStart;
+    }
+
     // Build value map from live master (window.state exposed since v2.3)
     const valueMap = new Map();
     if (window.state?.master) {
@@ -460,14 +639,24 @@
       const used = onHandEndAdj !== null && r.on_hand_start !== null
         ? Number(r.on_hand_start || 0) + Number(r.ordered || 0) - onHandEndAdj
         : usedRaw;
-      const sold = salesMap.size ? matchSold(r.item_name, salesMap) : null;
+      // Un override vale aunque no se haya cargado ningún fichero: es
+      // justamente el caso de una venta que el POS nunca registró.
+      const s = (salesMap.size || _overrides.size)
+        ? soldFor(r.item_name, salesMap, _aliases, _overrides)
+        : { sold: null, src: 'none' };
+      const sold = s.sold;
       const variance = used !== null && sold !== null ? used - sold : null;
       const variancePct = variance !== null && sold > 0 ? (variance / sold) * 100 : null;
       const loss = variance !== null ? variance * (valueMap.get(r.item_name) || Number(r.value || 0)) : null;
       const prevUsed = prevUsedMap.has(r.item_name) ? prevUsedMap.get(r.item_name) : null;
       const trendDelta = used !== null && prevUsed !== null ? Math.round((used - prevUsed) * 10) / 10 : null;
       const isExcluded = excl.has(r.item_name);
-      return { ...r, used, sold, variance, variancePct, loss, trendDelta, isExcluded };
+      return {
+        ...r, used, sold, variance, variancePct, loss, trendDelta, isExcluded,
+        soldSrc: s.src,
+        soldNote: _overrides.get(r.item_name)?.reason || '',
+        posNames: _aliases.get(r.item_name) || []
+      };
     });
 
     // Sort based on _sortMode — no sales data always last
@@ -504,6 +693,7 @@
 
   async function renderWeekDetail(weekStart) {
     const enriched = await computeWeek(weekStart, _exclusions);
+    _lastRows = enriched;
 
     const body = document.getElementById('tuDetailBody');
     const empty = document.getElementById('tuDetailEmpty');
@@ -555,7 +745,20 @@
       const hasAdj = r.on_hand_end_adjusted !== null && r.on_hand_end_adjusted !== undefined;
       const adjBtn = `<button class="tu-comment-btn${hasAdj ? ' tu-adj-active' : ''}" onclick="window.BarStockTheoreticalUsage.openAdjModal('${r.item_name.replace(/'/g, '&#39;')}', ${r.on_hand_end_adjusted !== null && r.on_hand_end_adjusted !== undefined ? r.on_hand_end_adjusted : r.on_hand_end ?? ''})" title="${hasAdj ? 'Adjusted — click to edit' : 'Adjust on hand end'}"><i class="ti ti-edit" aria-hidden="true"></i></button>`;
       const usedFmt = (r.used !== null ? r.used.toFixed(2) : '—') + ' ' + adjBtn;
-      const soldFmt = r.sold !== null ? r.sold.toFixed(2) : '<span class="muted">No data</span>';
+      // La celda de ventas se puede corregir. El icono cambia de color
+      // según de dónde salga la cifra: ámbar cuando la emparejó el
+      // parecido de texto —que es donde vive el error— o cuando la
+      // escribió una persona.
+      const sfCls = (r.soldSrc === 'fuzzy' || r.soldSrc === 'alias-empty') ? ' tu-adj-active'
+                  : r.soldSrc === 'manual' ? ' has-comment' : '';
+      const sfTitle = r.soldSrc === 'manual' ? 'Typed in by hand — click to change'
+                    : r.soldSrc === 'fuzzy' ? 'Matched by approximate name — check it'
+                    : r.soldSrc === 'alias' ? 'From linked POS lines'
+                    : r.soldSrc === 'alias-empty' ? 'Linked, but that line is not in this file'
+                    : r.sold === null ? 'No sales data — link the POS line or type it'
+                    : 'Matched by exact name';
+      const sfBtn = `<button class="tu-comment-btn${sfCls}" title="${sfTitle}" onclick="window.BarStockTheoreticalUsage.fixSales('${r.item_name.replace(/'/g, '&#39;')}');event.stopPropagation()"><i class="ti ti-pencil" aria-hidden="true"></i></button>`;
+      const soldFmt = (r.sold !== null ? r.sold.toFixed(2) : '<span class="muted">No data</span>') + ' ' + sfBtn;
       let varianceFmt = '—', variancePctFmt = '—', lossFmt = '—';
       let varianceClass = '';
       if (r.variance !== null) {
@@ -1201,6 +1404,22 @@
     // sin pintar nada.
     loadCycle,
     computeWeek,
+    // ── Corregir las ventas de un artículo ──
+    // Viven aquí, junto a la fórmula, para que las dos pantallas que las
+    // usan no puedan discrepar sobre qué gana a qué.
+    salesLines,
+    saveAlias, removeAlias, saveOverride, removeOverride,
+    aliasesFor: (item) => _aliases.get(item) || [],
+    overrideFor: (item) => _overrides.get(item) || null,
+    // Abre el diálogo desde la tabla de Usage y repinta al cerrarlo. La
+    // caché de correcciones ya la invalida cada guardado, así que el
+    // repintado recalcula con lo nuevo.
+    fixSales: (itemName) => {
+      if (!window.BarStockSalesFix || !_currentWeek) return;
+      const row = _lastRows.find(r => r.item_name === itemName) || null;
+      window.BarStockSalesFix.open(itemName, _currentWeek.week_start, row,
+        () => renderWeekDetail(_currentWeek.week_start));
+    },
     refresh,
     openWeek,
     showWeekList,

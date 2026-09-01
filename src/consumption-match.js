@@ -119,7 +119,7 @@
     const out = new Map();
     const ensure = (c) => {
       if (!out.has(c)) out.set(c, {
-        cat: c, sold: 0, used: 0, loss: 0, items: [],
+        cat: c, sold: 0, used: 0, loss: 0, items: [], unmatched: [],
         noSales: 0, withSales: 0
       });
       return out.get(c);
@@ -133,7 +133,19 @@
       // Sin venta con la que comparar no entra en ningun total: solo se
       // cuenta, y en su propia categoria.
       if (r.sold === null || r.sold === undefined) {
-        if (Number(r.used || 0) > 0) g.noSales++;
+        // Fuera de los totales, pero NO fuera de la vista. Son
+        // precisamente los que hay que arreglar: el vino que el POS
+        // registra con otro nombre acaba aquí. Esconderlos dejaba el
+        // problema sin sitio desde donde tocarlo.
+        if (Number(r.used || 0) > 0) {
+          g.noSales++;
+          g.unmatched.push({
+            item: r.item_name,
+            code: r.code || '',
+            used: Number(r.used) || 0,
+            soldSrc: r.soldSrc || 'none'
+          });
+        }
         continue;
       }
 
@@ -152,7 +164,11 @@
           used: Number(r.used) || 0,
           sold: Number(r.sold) || 0,
           bottles: Number(r.variance),
-          money: Number(r.loss) || 0
+          money: Number(r.loss) || 0,
+          // De dónde salió `sold`. Viaja hasta aquí porque el panel lo
+          // enseña y el diálogo de corrección lo necesita.
+          soldSrc: r.soldSrc || 'none',
+          soldNote: r.soldNote || ''
         });
       }
     }
@@ -160,7 +176,12 @@
     // Dentro de cada categoria, por DINERO y no por botellas: una botella
     // de un producto caro pesa mas que tres de uno barato, y ordenar por
     // litros esconde donde esta la perdida.
-    for (const g of out.values()) g.items.sort((a, b) => b.money - a.money);
+    for (const g of out.values()) {
+      g.items.sort((a, b) => b.money - a.money);
+      // Los sin emparejar, por consumo: el que más se sirvió es el que
+      // más dinero está escondiendo.
+      g.unmatched.sort((a, b) => b.used - a.used);
+    }
 
     // Y las categorias, por perdida. Las que no pierden nada caen al
     // final solas, sin necesidad de filtrarlas.
@@ -373,7 +394,7 @@
   function itemTable() {
     const g = _groups[_cat];
     if (!g) return '';
-    if (!g.items.length) {
+    if (!g.items.length && !g.unmatched.length) {
       return `<div class="cm-empty">No comparable items in ${esc(g.cat)}.</div>`;
     }
     const RP = window.BarStockConsumptionReport;
@@ -401,7 +422,36 @@
         </tr>`;
     }).join('');
 
-    const allPending = g.items.every(it => RP && (RP.isPending(it.item) || RP.isPicked(it.item)));
+    const allPending = g.items.length &&
+      g.items.every(it => RP && (RP.isPending(it.item) || RP.isPicked(it.item)));
+
+    // ── Los que no encontraron su venta ──
+    //
+    // Van al final, aparte y en ámbar, porque no cuentan en ningún total:
+    // sumarlos daría una pérdida del 100% que no es real. Pero cada uno
+    // lleva su botón de corregir, que es lo único que los saca de aquí.
+    const unmatched = g.unmatched.length ? `
+      <tr class="cm-sechead">
+        <td colspan="6">
+          <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+          ${g.unmatched.length} item${g.unmatched.length === 1 ? '' : 's'} with no sales line
+          <span class="cm-sechead-sub">Not counted anywhere. Link the POS line or type the number.</span>
+        </td>
+      </tr>
+      ${g.unmatched.map(u => `
+        <tr class="cm-row cm-row-un">
+          <td class="cm-pick"></td>
+          <td class="cm-c1">${esc(u.item)}</td>
+          <td class="num cm-c-used">${btl(u.used)}</td>
+          <td class="num cm-c-sold muted">—</td>
+          <td class="num muted">—</td>
+          <td class="num">
+            <span class="cm-fixlink" role="button" tabindex="0"
+                  onclick="window.BarStockConsumptionMatch.fixUnmatched('${esc(u.item).replace(/'/g, '&#39;')}')">
+              <i class="ti ti-pencil" aria-hidden="true"></i> Fix
+            </span>
+          </td>
+        </tr>`).join('')}` : '';
 
     return `
       <table class="cm-table">
@@ -416,7 +466,7 @@
           <th class="num">Bottles</th>
           <th class="num">At cost</th>
         </tr></thead>
-        <tbody>${rows}</tbody>
+        <tbody>${rows}${unmatched}</tbody>
       </table>`;
   }
 
@@ -479,6 +529,11 @@
               ? 'Poured more than the POS sold. Over-pouring, spillage, comps not rung in, or a miscount.'
               : 'Sold more than was poured. Usually a miscount, not a gain — liquor does not appear on its own.'}
           </div>
+          ${origin(it)}
+          <span class="cm-btn ghost cm-fixbtn" role="button" tabindex="0"
+                onclick="window.BarStockConsumptionMatch.fixSales()">
+            <i class="ti ti-pencil" aria-hidden="true"></i> Fix sales
+          </span>
         </div>`;
     }
 
@@ -553,6 +608,20 @@
           files.
         </div>
       </div>`;
+  }
+
+  // ── De dónde salió la cifra de ventas ────────────────────────────────
+  //
+  // Se dice siempre, no solo cuando es rara. Una cifra emparejada por
+  // parecido de texto y una escrita a mano se leen idénticas en la tabla,
+  // y son cosas muy distintas a la hora de creerse una pérdida.
+  function origin(it) {
+    const SF = window.BarStockSalesFix;
+    if (!SF || !it) return '';
+    const o = SF.origin(it);
+    return `<div class="cm-origin ${o.cls}">
+      <span class="sf-dot ${o.cls}"></span>${esc(o.txt)}
+    </div>`;
   }
 
   // ── Migas ────────────────────────────────────────────────────────────
@@ -756,6 +825,47 @@
     paint();
   }
 
+  // ── Corregir las ventas del artículo abierto ────────────────────────
+  //
+  // Al cerrar el diálogo se tira la copia cacheada de ESTE ciclo y se
+  // recalcula. Sin eso, la pantalla seguiría enseñando la pérdida vieja
+  // y el usuario pensaría que la corrección no se guardó.
+  async function fixSales() {
+    if (!window.BarStockSalesFix || _cat < 0 || _item < 0) return;
+    const it = _groups[_cat].items[_item];
+    const catName = _groups[_cat].cat;
+    const itemName = it.item;
+
+    window.BarStockSalesFix.open(itemName, _week, it, async () => {
+      _cache.delete(_week);
+      if (!await ensureCycle(_week)) return;
+      // Los índices se recalculan por NOMBRE: corregir unas ventas cambia
+      // la pérdida, y con ella el orden de categorías y artículos. Guardar
+      // el número de fila habría dejado abierto otro producto.
+      _cat = _groups.findIndex(g => g.cat === catName);
+      _item = _cat >= 0 ? _groups[_cat].items.findIndex(x => x.item === itemName) : -1;
+      if (_cat < 0) { _view = 'cats'; _item = -1; }
+      paint();
+    });
+  }
+
+  // Los sin emparejar no tienen fila en _groups[].items, así que se abren
+  // por nombre. Al arreglarlos suelen salir de la lista ámbar y aparecer
+  // arriba con su pérdida, que es exactamente el objetivo.
+  function fixUnmatched(itemName) {
+    if (!window.BarStockSalesFix) return;
+    const catName = _groups[_cat] ? _groups[_cat].cat : null;
+    const u = (_groups[_cat]?.unmatched || []).find(x => x.item === itemName);
+    window.BarStockSalesFix.open(itemName, _week, u || null, async () => {
+      _cache.delete(_week);
+      if (!await ensureCycle(_week)) return;
+      _cat = _groups.findIndex(g => g.cat === catName);
+      _item = -1;
+      if (_cat < 0) _view = 'cats';
+      paint();
+    });
+  }
+
   function goCycles() { _view = 'cycles'; _cat = -1; _item = -1; paint(); }
   function goCats()   { _view = 'cats';   _cat = -1; _item = -1; paint(); }
   function goReport() { _view = 'report'; _item = -1; paint(); }
@@ -816,7 +926,7 @@
     render, paint, group,
     openCycle, openCat, openItem,
     goCycles, goCats, goReport, setYear, setMonth,
-    pick, pickAll, sendToReport, clearPending,
+    pick, pickAll, sendToReport, clearPending, fixSales, fixUnmatched,
     // El reporte necesita los grupos del ciclo abierto para recalcular
     // sus totales con solo los artículos elegidos.
     groups: () => _groups,
