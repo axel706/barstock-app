@@ -73,7 +73,27 @@
   // de la app. A un decimal la resta cuadra a la vista, que es el unico
   // sitio donde el usuario la puede comprobar.
   const btl = (n) => Math.abs(n).toFixed(1).replace(/\.0$/, '');
-  const btlSigned = (n) => (n > 0 ? '+' : n < 0 ? '−' : '') + btl(n);
+  // ── Pérdida o ganancia, con palabras ─────────────────────────────────
+  //
+  // Antes esto era "+37.8" y "−9.8", y el signo significaba lo contrario
+  // de lo que parece: el MÁS es la pérdida —se sirvió de más respecto a
+  // lo vendido— y el MENOS es la ganancia aparente. Nadie lee eso bien a
+  // la primera, y menos quien recibe el PDF sin haber usado la app.
+  //
+  // "Ganancia" va entre comillas a propósito en el texto de ayuda: el
+  // licor no aparece solo, así que casi siempre es un error de conteo.
+  // Pero es la palabra que usa el negocio y forzar otra sería peor.
+  function gap(n) {
+    if (Math.abs(n) <= 0.05) return { num: btl(n), word: 'even', cls: '' };
+    return n > 0
+      ? { num: btl(n), word: 'lost',   cls: 'bad'  }
+      : { num: btl(n), word: 'gained', cls: 'good' };
+  }
+  const gapCell = (n) => {
+    const g = gap(n);
+    return `<span class="cm-gap ${g.cls}">${g.num}<em>${g.word}</em></span>`;
+  };
+  const gapText = (n) => { const g = gap(n); return `${g.num} ${g.word}`; };
 
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const dayLabel = (w) => w
@@ -330,8 +350,8 @@
           </td>
           <td class="num cm-c-sold">${btl(g.sold)}</td>
           <td class="num cm-c-used">${btl(g.used)}</td>
-          <td class="num ${cls}">${btlSigned(diff)}</td>
-          <td class="num money ${cls}"><b>${g.loss < 0 ? '+' : ''}${money(g.loss)}</b></td>
+          <td class="num">${gapCell(diff)}</td>
+          <td class="num money ${cls}"><b>${money(g.loss)}</b></td>
         </tr>`;
     }).join('');
 
@@ -376,8 +396,8 @@
           <td class="cm-c1">${esc(it.item)}</td>
           <td class="num cm-c-used">${btl(it.used)}</td>
           <td class="num cm-c-sold">${btl(it.sold)}</td>
-          <td class="num ${cls}">${btlSigned(it.bottles)}</td>
-          <td class="num money ${cls}"><b>${it.money < 0 ? '+' : ''}${money(it.money)}</b></td>
+          <td class="num">${gapCell(it.bottles)}</td>
+          <td class="num money ${cls}"><b>${money(it.money)}</b></td>
         </tr>`;
     }).join('');
 
@@ -437,18 +457,21 @@
           <div class="inv-panel-grid">
             ${stat('POURED', btl(it.used))}
             ${stat('SOLD', btl(it.sold))}
-            ${stat(bad ? 'BOTTLES LOST' : 'BOTTLES OVER', btlSigned(it.bottles), col)}
-            ${stat('AT COST', (it.money < 0 ? '+' : '') + money(it.money), col)}
+            ${stat(bad ? 'BOTTLES LOST' : 'BOTTLES GAINED', btl(it.bottles), col)}
+            ${stat(bad ? 'COST LOST' : 'COST GAINED', money(it.money), col)}
           </div>
         </div>
         <div class="inv-panel-section" style="flex:1">
           <div class="inv-panel-section-label">THE SUM</div>
           ${row('Poured', btl(it.used))}
-          ${row('Sold', '− ' + btl(it.sold))}
-          ${row(bad ? 'Unaccounted' : 'Over-sold', btlSigned(it.bottles), col)}
+          ${row('Sold', btl(it.sold))}
+          <hr class="inv-panel-divider" style="margin:6px 0">
+          ${row(bad ? 'Bottles lost' : 'Bottles gained', btl(it.bottles), col)}
           ${row('Bottle cost', money2(unit))}
-          ${row('At cost', (it.money < 0 ? '+' : '') + money2(it.money), col)}
-          ${pct !== null ? row('Vs sales', (pct > 0 ? '+' : '') + pct.toFixed(0) + '%', col) : ''}
+          ${row(bad ? 'Cost lost' : 'Cost gained', money2(it.money), col)}
+          ${pct !== null
+            ? row('Vs sales', Math.abs(pct).toFixed(0) + '% ' + (pct > 0 ? 'lost' : 'gained'), col)
+            : ''}
         </div>
         <div class="inv-panel-actions-section">
           <div class="cm-panel-note">
@@ -473,8 +496,8 @@
           <div class="inv-panel-grid">
             ${stat('SOLD', btl(g.sold))}
             ${stat('POURED', btl(g.used))}
-            ${stat('BOTTLES', btlSigned(diff), col)}
-            ${stat('AT COST', (g.loss < 0 ? '+' : '') + money(g.loss), col)}
+            ${stat(diff > 0.05 ? 'BOTTLES LOST' : 'BOTTLES GAINED', btl(diff), col)}
+            ${stat(diff > 0.05 ? 'COST LOST' : 'COST GAINED', money(g.loss), col)}
           </div>
         </div>
         <div class="inv-panel-section" style="flex:1">

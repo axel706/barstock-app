@@ -177,6 +177,19 @@
 .cm-table .money b{ font-weight: 800; }
 .cm-table .bad{ color: #ef4444; }
 .cm-table .good{ color: #22c55e; }
+/* ── Pérdida o ganancia ──
+   El número y la palabra, no un signo. Antes era "+37.8", y el más
+   significaba lo contrario de lo que parece: servir de más ES la
+   pérdida. La palabra va en minúscula y algo apagada para que el número
+   siga siendo lo que se lee al recorrer la columna. */
+.cm-gap{ display: inline-flex; align-items: baseline; gap: 5px; justify-content: flex-end; }
+.cm-gap em{
+  font-style: normal; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .03em; opacity: .8;
+}
+.cm-gap.bad{ color: #ef4444; }
+.cm-gap.good{ color: #22c55e; }
+
 .cm-c1{ font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cm-ri{ font-size: 13px; color: var(--sub); margin-right: 6px; vertical-align: -1px; }
 .cm-ri.warn{ color: #f59e0b; }

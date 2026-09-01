@@ -40,7 +40,21 @@
   const money  = (n) => '$' + Math.round(Math.abs(n)).toLocaleString();
   const money2 = (n) => '$' + Math.abs(n).toFixed(2);
   const btl    = (n) => Math.abs(n).toFixed(1).replace(/\.0$/, '');
-  const btlSigned = (n) => (n > 0 ? '+' : n < 0 ? '−' : '') + btl(n);
+  // Pérdida o ganancia con palabras, no con signos. El "+" significaba
+  // lo contrario de lo que parece —servir de más ES la pérdida— y en un
+  // PDF que lee alguien que nunca ha abierto la app eso no se salva con
+  // una leyenda al pie.
+  function gap(n) {
+    if (Math.abs(n) <= 0.05) return { num: btl(n), word: 'even', cls: '' };
+    return n > 0
+      ? { num: btl(n), word: 'lost',   cls: 'bad'  }
+      : { num: btl(n), word: 'gained', cls: 'good' };
+  }
+  const gapCell = (n) => {
+    const g = gap(n);
+    return `<span class="cm-gap ${g.cls}">${g.num}<em>${g.word}</em></span>`;
+  };
+  const gapText = (n) => { const g = gap(n); return `${g.num} ${g.word}`; };
 
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const dayLabel = (w) => w ? MONTHS[+w.slice(5, 7) - 1] + ' ' + (+w.slice(8, 10)) : '';
@@ -234,7 +248,7 @@
             ${_showPoured ? '<th class="num">Poured</th>' : ''}
             ${_showSold ? '<th class="num">Sold</th>' : ''}
             <th class="num">Bottles</th>
-            <th class="num">At cost</th>
+            <th class="num">Cost</th>
           </tr></thead>
           <tbody>
             ${g.items.map(it => {
@@ -245,8 +259,8 @@
                   <td class="cm-c1">${esc(it.item)}</td>
                   ${_showPoured ? `<td class="num">${btl(it.used)}</td>` : ''}
                   ${_showSold ? `<td class="num">${btl(it.sold)}</td>` : ''}
-                  <td class="num ${cls}">${btlSigned(it.bottles)}</td>
-                  <td class="num money ${cls}"><b>${it.money < 0 ? '+' : ''}${money(it.money)}</b></td>
+                  <td class="num">${gapCell(it.bottles)}</td>
+                  <td class="num money ${cls}"><b>${money(it.money)}</b></td>
                 </tr>
                 <tr class="cmr-noterow">
                   <td colspan="${cols}">
@@ -375,9 +389,9 @@
     [
       { label: 'POURED BEYOND SALES', main: money(total), sub: 'at cost', color: RED },
       { label: 'ITEMS IN THIS REPORT', main: String(count), sub: `${sel.length} categor${sel.length === 1 ? 'y' : 'ies'}`, color: NAVY },
-      { label: 'BOTTLES UNACCOUNTED',
+      { label: 'BOTTLES LOST',
         main: btl(sel.reduce((s, g) => s + g.items.reduce((a, i) => a + Math.max(0, i.bottles), 0), 0)),
-        sub: 'poured with no sale', color: NAVY }
+        sub: 'poured beyond what sold', color: NAVY }
     ].forEach((c, i) => {
       const x = margin + i * (cardW + 8);
       pdf.setFillColor(240, 249, 255); pdf.roundedRect(x, y, cardW, cardH, 8, 8, 'F');
@@ -462,7 +476,7 @@
       const head = ['Item'];
       if (_showPoured) head.push('Poured');
       if (_showSold) head.push('Sold');
-      head.push('Bottles', 'At cost');
+      head.push('Bottles', 'Cost');
 
       const nCols = head.length;
       const body = [];
@@ -471,7 +485,7 @@
         const r = [it.item];
         if (_showPoured) r.push(btl(it.used));
         if (_showSold) r.push(btl(it.sold));
-        r.push(btlSigned(it.bottles), money2(it.money));
+        r.push(gapText(it.bottles), money2(it.money));
         body.push(r);
 
         const n = _notes.get('item:' + it.item);
@@ -508,11 +522,15 @@
           // La nota ya trae su estilo y su colSpan de la definición; aquí
           // solo hay que no pintarla de rojo como si fuera una cifra.
           if (noteRows.includes(data.row.index)) return;
+          // El color se decide por la PALABRA de la columna de botellas,
+          // no por el signo del número: ya no hay signo, y el importe es
+          // siempre positivo. Se lee la celda de botellas de la misma
+          // fila para que las dos vayan del mismo color.
           if (data.column.index === nCols - 2 || data.column.index === nCols - 1) {
-            const v = parseFloat(String(data.cell.raw).replace(/[^0-9.\-−]/g, '').replace('−', '-'));
-            if (String(data.cell.raw).startsWith('+') || v > 0) {
+            const gapCellText = String(data.row.raw?.[nCols - 2] ?? '');
+            if (gapCellText.includes('lost')) {
               data.cell.styles.textColor = RED; data.cell.styles.fontStyle = 'bold';
-            } else if (String(data.cell.raw).startsWith('−')) {
+            } else if (gapCellText.includes('gained')) {
               data.cell.styles.textColor = GREEN; data.cell.styles.fontStyle = 'bold';
             }
           }
@@ -534,9 +552,11 @@
     ensureSpace(56);
     pdf.setFont('helvetica', 'italic'); pdf.setFontSize(7.5); pdf.setTextColor(...GRAY);
     const foot = pdf.splitTextToSize(
-      'Figures are at cost, not menu price: this is the value of the stock, not lost revenue. ' +
-      '"Poured" is opening stock plus deliveries minus closing count. Items with no line in the ' +
-      'sales files are excluded from every total. Only the items selected for this report are included.',
+      '"Lost" means more was poured than the POS sold; "gained" means the opposite, which is almost ' +
+      'always a miscount rather than a real gain. "Poured" is opening stock plus deliveries minus the ' +
+      'closing count. Figures are at cost, not menu price: this is the value of the stock, not lost ' +
+      'revenue. Items with no line in the sales files are excluded from every total, and only the ' +
+      'items selected for this report are included.',
       tableW);
     pdf.text(foot, margin, y + 8);
 
