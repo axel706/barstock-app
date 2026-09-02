@@ -234,7 +234,7 @@
 
   // ── Gráfica del reporte ──────────────────────────────────────────────
   const LBL = 20;
-  function chart(sel) {
+  function chart(sel, head) {
     const data = sel.filter(g => g.sold > 0 || g.used > 0);
     if (!data.length) return '';
     const max = Math.max(...data.map(g => Math.max(g.sold, g.used)), 1);
@@ -257,7 +257,9 @@
     return `
       <div class="cm-chartwrap">
         <div class="cm-charthead">
-          <span class="cm-charttitle">Sold vs poured · selected items</span>
+          <span class="cm-total">
+            <b>${head.big}</b><span>${head.sub}</span>
+          </span>
           <span class="cm-legend">
             <span><i class="cm-key cm-b-sold"></i>Sold</span>
             <span><i class="cm-key cm-b-used"></i>Poured</span>
@@ -368,12 +370,11 @@
       </div>
 
       <div class="cm-headzone">
-        <div class="cm-total">
-          <b>${h.big}</b>
-          <span>${h.sub} · ${count} item${count === 1 ? '' : 's'} in
-            ${sel.length} categor${sel.length === 1 ? 'y' : 'ies'}</span>
-        </div>
-        ${chart(sel)}
+        ${chart(sel, {
+          big: h.big,
+          sub: `${h.sub} · ${count} item${count === 1 ? '' : 's'} in
+                ${sel.length} categor${sel.length === 1 ? 'y' : 'ies'}`
+        })}
       </div>
 
       ${$$ ? '' : `

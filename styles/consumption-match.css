@@ -40,23 +40,35 @@
 .bs-cmspark-b.sold{ background: #22c55e; }
 .bs-cmspark-b.used{ background: #f59e0b; }
 
-/* ── Migas ── */
-.cm-crumbs{
-  display: flex; align-items: center; gap: 6px;
-  flex-wrap: wrap; margin-bottom: 12px;
-  font-size: 13px;
+/* ── Navegación de la sección ─────────────────────────────────────────
+
+   Las migas usan los MISMOS valores que .bs-nav-tab, los chips de la
+   barra de arriba: 13px, peso 600, padding 5px 12px, radio 20px, y
+   var(--muted) de fondo al pasar por encima o cuando están activas.
+
+   Antes eran texto gris con una pastilla azul suelta, y no se leían como
+   navegación sino como contenido flotando. Hacen el mismo trabajo que
+   esos chips, así que se ven igual.
+
+   Y navegar va a la izquierda, actuar a la derecha, en la misma fila. La
+   caja de acciones anterior era un marco de ancho completo alrededor de
+   un solo botón: noventa por ciento de aire con borde azul.            */
+.cm-navbar{
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap; margin-bottom: 12px;
 }
+.cm-crumbs{ display: flex; align-items: center; gap: 2px; flex-wrap: wrap; }
 .cm-crumb{
-  padding: 4px 10px; border-radius: 999px;
-  color: var(--sub); font-weight: 600;
-  cursor: pointer;
-  transition: background var(--dur-fast, .16s) ease, color var(--dur-fast, .16s) ease;
+  font-size: 13px; font-weight: 600; color: var(--sub);
+  padding: 5px 12px; border-radius: 20px;
+  cursor: pointer; white-space: nowrap;
+  transition: background .15s ease, color .15s ease;
 }
-.cm-crumb:hover{ background: rgba(255,255,255,.07); color: var(--text); }
-.cm-crumb.now{
-  background: rgba(56,189,248,.16); color: #38bdf8; cursor: default;
-}
-.cm-crumb-sep{ font-size: 12px; color: var(--sub); opacity: .6; }
+.cm-crumb:hover{ background: var(--muted); color: var(--text); }
+.cm-crumb.now{ background: var(--muted); color: var(--text); cursor: default; }
+.cm-crumb-sep{ font-size: 12px; color: var(--sub); opacity: .45; margin: 0 2px; }
+
+.cm-actions{ display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
 /* ── Calendario ──
    Mismo gesto que la lista de semanas de Usage: año arriba, meses
@@ -91,11 +103,18 @@
 .cm-mon.off{ opacity: .3; cursor: default; }
 .cm-mon.off:hover{ border-color: rgba(255,255,255,.12); color: var(--sub); }
 
-/* ── Cabecera del ciclo ── */
+/* ── Cabecera del ciclo ──
+   El total vive en la cabecera del marco de la gráfica. Baja de 30 a 24
+   porque ya no compite por atención desde una banda propia: está dentro
+   de la caja que lo desglosa. */
 .cm-headzone{ margin-bottom: 14px; }
-.cm-total{ display: flex; align-items: baseline; gap: 8px; }
-.cm-total b{ font-size: 30px; font-weight: 800; color: #ef4444; line-height: 1.05; }
-.cm-total span{ font-size: 13px; color: var(--sub); }
+.cm-total{ display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.cm-total b{ font-size: 24px; font-weight: 800; color: #ef4444; line-height: 1.05; }
+.cm-total span{ font-size: 12px; color: var(--sub); }
+/* Sin gráfica no hay marco donde meterlo. */
+.cm-total-loose{ margin-bottom: 12px; }
+.cm-total-loose b{ font-size: 30px; }
+.cm-total-loose span{ font-size: 13px; }
 
 /* ── Gráfica ──────────────────────────────────────────────────────────
    Barras en HTML. La versión anterior era un SVG con viewBox fijo que se
@@ -115,18 +134,13 @@
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 14px;
   overflow: hidden;
-  margin-top: 12px;
 }
 .cm-charthead{
   display: flex; align-items: center; justify-content: space-between;
   gap: 12px; flex-wrap: wrap;
-  padding: 8px 12px;
+  padding: 10px 14px;
   background: #111827;
   border-bottom: 1px solid rgba(255,255,255,.08);
-}
-.cm-charttitle{
-  font-size: 10px; letter-spacing: .04em; text-transform: uppercase;
-  color: var(--sub); font-weight: 700;
 }
 .cm-chartbody{ padding: 10px 12px 8px; }
 
@@ -314,13 +328,6 @@
 .cm-row.inrep td:first-child{ box-shadow: inset 3px 0 0 #22c55e; }
 
 /* ── Barra de acción ── */
-.cm-actionbar{
-  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
-  margin-bottom: 12px; padding: 10px 12px;
-  border-radius: 12px;
-  background: rgba(56,189,248,.10);
-  border: 1px solid rgba(56,189,248,.28);
-}
 .cm-btn{
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 16px; border-radius: 999px;
@@ -550,8 +557,6 @@
    Los bordes pasan a tinta. Sin esto los separadores de tabla y los
    marcos del calendario desaparecen sobre el fondo claro — el mismo
    fallo que ya se pagó con el contorno de la botella.                 */
-body.light .cm-crumb:hover{ background: rgba(15,23,42,.06); }
-body.light .cm-crumb.now{ background: rgba(2,132,199,.12); color: #0369a1; }
 
 body.light .cm-chip{ border-color: rgba(15,23,42,.18); }
 body.light .cm-chip.active{ background: rgba(2,132,199,.12); border-color: #0284c7; color: #0369a1; }
@@ -620,7 +625,11 @@ body.light .cmr-noterow > td{ border-bottom-color: rgba(15,23,42,.10); }
      tener la misma decisión escrita en dos sitios que van a divergir. */
   .cm-total b{ font-size: 26px; }
   .cm-chart{ height: 140px; }
+  .cm-navbar{ align-items: stretch; gap: 8px; }
+  .cm-actions{ width: 100%; }
+  .cm-actions .cm-btn{ flex: 1; justify-content: center; }
   .cm-charthead{ gap: 6px; padding: 8px 10px; }
+  .cm-total b{ font-size: 21px; }
   .cm-chartbody{ padding: 8px 10px 6px; }
   .cm-months{ grid-template-columns: repeat(6, 1fr); }
   .cm-table{ font-size: 13px; }

@@ -258,7 +258,7 @@
   // la rejilla y el 50% de una barra caigan en el mismo pixel.
   const LBL = 20;
 
-  function chart(groups) {
+  function chart(groups, head) {
     // Solo las categorias que tienen con que comparar. Una barra ambar
     // sola, sin su verde al lado, se lee como perdida del 100% cuando en
     // realidad significa que falta el archivo de ventas de esa familia.
@@ -303,10 +303,19 @@
     //
     // La leyenda sube a esa cabecera, que es donde una tabla pone los
     // nombres de sus columnas.
+    // El TOTAL vive en la cabecera del marco, no suelto encima.
+    //
+    // Antes eran tres bandas apiladas —migas, una caja con un botón, y el
+    // número— y el dato principal quedaba flotando entre dos elementos de
+    // interfaz. Aquí el número está donde está su gráfica: la cabecera lo
+    // presenta y las barras lo desglosan. Una banda menos y una relación
+    // más.
     return `
       <div class="cm-chartwrap">
         <div class="cm-charthead">
-          <span class="cm-charttitle">Sold vs poured by category</span>
+          <span class="cm-total">
+            <b>${money(head.big)}</b><span>${head.sub}</span>
+          </span>
           <span class="cm-legend">
             <span><i class="cm-key cm-b-sold"></i>Sold</span>
             <span><i class="cm-key cm-b-used"></i>Poured</span>
@@ -686,25 +695,45 @@
   }
 
   // ── Migas ────────────────────────────────────────────────────────────
+  // ── Migas ────────────────────────────────────────────────────────────
+  //
+  // Mismo lenguaje que los chips de arriba —.bs-nav-tab: 13px, peso 600,
+  // radio 20px, fondo var(--muted) al pasar por encima— porque hacen el
+  // mismo trabajo. Antes eran texto gris con una pastilla azul suelta y
+  // no se leían como navegación sino como contenido flotando.
+  //
+  // La primera lleva la flecha de .bs-back-btn: en esta app "←" ya
+  // significa subir un nivel.
   function crumbs() {
-    const c = [`<span class="cm-crumb ${_view === 'cycles' ? 'now' : ''}"
-                      ${_view === 'cycles' ? '' : 'role="button" tabindex="0" onclick="window.BarStockConsumptionMatch.goCycles()"'}
-                >Cycles</span>`];
+    const at = (v) => _view === v;
+    const c = [];
+
+    c.push(`<span class="cm-crumb ${at('cycles') ? 'now' : ''}"
+                  ${at('cycles') ? '' : 'role="button" tabindex="0" onclick="window.BarStockConsumptionMatch.goCycles()"'}
+            >${at('cycles') ? '' : '← '}Cycles</span>`);
+
     if (_week) {
       c.push(`<i class="ti ti-chevron-right cm-crumb-sep" aria-hidden="true"></i>`);
-      c.push(`<span class="cm-crumb ${_view === 'cats' ? 'now' : ''}"
-                    ${_view === 'cats' ? '' : 'role="button" tabindex="0" onclick="window.BarStockConsumptionMatch.goCats()"'}
+      c.push(`<span class="cm-crumb ${at('cats') ? 'now' : ''}"
+                    ${at('cats') ? '' : 'role="button" tabindex="0" onclick="window.BarStockConsumptionMatch.goCats()"'}
               >Week of ${esc(dayLabel(_week))}</span>`);
     }
-    if (_view === 'items' && _cat >= 0) {
+    if (at('items') && _cat >= 0) {
       c.push(`<i class="ti ti-chevron-right cm-crumb-sep" aria-hidden="true"></i>`);
       c.push(`<span class="cm-crumb now">${esc(_groups[_cat].cat)}</span>`);
     }
-    if (_view === 'report') {
+    if (at('report')) {
       c.push(`<i class="ti ti-chevron-right cm-crumb-sep" aria-hidden="true"></i>`);
       c.push(`<span class="cm-crumb now">Report</span>`);
     }
-    return `<div class="cm-crumbs">${c.join('')}</div>`;
+
+    // Navegar a la izquierda, actuar a la derecha, en la MISMA fila. La
+    // caja de acciones que había antes era un marco de ancho completo
+    // alrededor de un botón: noventa por ciento de aire con borde.
+    return `<div class="cm-navbar">
+      <div class="cm-crumbs">${c.join('')}</div>
+      ${actionBar()}
+    </div>`;
   }
 
   // ── Barra de selección ───────────────────────────────────────────────
@@ -720,7 +749,7 @@
     if (!pend && !inRep) return '';
 
     return `
-      <div class="cm-actionbar">
+      <div class="cm-actions">
         ${pend ? `
           <span class="cm-btn primary" role="button" tabindex="0"
                 onclick="window.BarStockConsumptionMatch.sendToReport()">
@@ -771,25 +800,29 @@
       // Sin NINGUNA venta en todo el ciclo no hay nada que comparar, y la
       // causa casi siempre es la misma: los ficheros se subieron estando
       // abierta otra semana. Se dice donde, no solo que falta.
-      head = `
-        <div class="cm-total">
-          <b>${money(total)}</b>
-          <span>${sub}</span>
-        </div>
-        ${anySales ? chart(_groups) : `
+      //
+      // Con gráfica, el total va en su cabecera. Sin gráfica no hay marco
+      // donde meterlo, así que sale suelto encima del aviso — que es
+      // exactamente el caso en el que el número vale cero y lo que
+      // importa es el aviso.
+      head = anySales
+        ? chart(_groups, { big: total, sub })
+        : `
+          <div class="cm-total cm-total-loose">
+            <b>${money(total)}</b><span>${sub}</span>
+          </div>
           <div class="cm-banner">
             <i class="ti ti-alert-triangle" aria-hidden="true"></i>
             <div><b>No sales data for this cycle.</b>
               The files go in <b>Usage → week of ${esc(dayLabel(_week))}</b>,
               and there are two of them: liquor and wine. Loading them into
               a different week leaves this screen empty.</div>
-          </div>`}`;
+          </div>`;
       body = _view === 'cats' ? catTable() : itemTable();
     }
 
     host.innerHTML = `
       ${crumbs()}
-      ${actionBar()}
       <div class="cm-headzone">${head}</div>
       <div class="cm-layout">
         <div class="tablewrap cm-wrap">${body}</div>
