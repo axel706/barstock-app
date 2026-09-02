@@ -28,7 +28,7 @@
   <link rel="stylesheet" href="styles/buttons.css">
   <link rel="stylesheet" href="styles/app.css?v=hdr5">
   <link rel="stylesheet" href="styles/theoretical-usage.css">
-  <link rel="stylesheet" href="styles/consumption-match.css?v=cm10">
+  <link rel="stylesheet" href="styles/consumption-match.css?v=cm11">
   <link rel="stylesheet" href="styles/order-history.css">
 
   <link rel="stylesheet" href="styles/fixes.css">
@@ -129,7 +129,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260831-235435</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260901-213659</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -206,7 +206,7 @@
     </div>
     <div class="bs-focus-card card" onclick="bsOpenSection('consumption'); if (window.BarStockConsumptionMatch) BarStockConsumptionMatch.render();">
       <div class="bs-focus-head">
-        <i class="ti ti-scale bs-focus-icon" aria-hidden="true"></i>
+        <i class="ti ti-chart-histogram bs-focus-icon" aria-hidden="true"></i>
         <div class="bs-focus-title">Consumption Match</div>
       </div>
       <div class="bs-focus-sub" id="fgSub-consumption">Loss by category</div>
@@ -4914,7 +4914,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/settings-vendor-codes.js"></script>
 <script src="src/skeleton.js"></script>
 <script src="src/cycle.js?v=cy1"></script>
-<script src="src/focus-stats.js"></script>
+<script src="src/focus-stats.js?v=cm1"></script>
 <script src="src/toast.js"></script>
 <script src="src/empty-state.js"></script>
 <script src="src/inventory-realtime.js?v=rt2"></script>
@@ -5432,7 +5432,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     {id:'noMatch', icon:'ti-alert-circle', label:'No Match'},
     {id:'costReport', icon:'ti-chart-bar', label:'Costs'},
     {id:'theoretical', icon:'ti-chart-dots', label:'Usage'},
-    {id:'consumption', icon:'ti-scale', label:'Match'},
+    {id:'consumption', icon:'ti-chart-histogram', label:'Match'},
     {id:'pourIq', icon:'ti-brain', label:'Pour-IQ™'},
     // Admin lleva id de elemento para que auth.js pueda mostrarlo. Nace
     // oculto: si no, aparece un instante antes de que se resuelva quien

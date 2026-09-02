@@ -274,6 +274,87 @@
     }
   }
 
+  // ── Consumption Match ──────────────────────────────────────────────
+  //
+  // Una sola mini-card, y dentro las barras en vez de un número.
+  //
+  // Las demás tarjetas resumen con dos cifras porque tienen dos cifras
+  // que resumir. Aquí lo que importa es la FORMA: si el ámbar asoma por
+  // encima del verde en una categoría, ahí se sirvió de más. Dos números
+  // —"$1,801" y "8 categorías"— no dicen en cuál.
+  //
+  // Pide a la nube, como Costs, con esqueleto mientras llega. Es el
+  // último ciclo cerrado, el mismo que abre la sección.
+  let _cmCache = null;
+  let _cmAsked = false;
+
+  function consumption() {
+    if (!_cmCache) {
+      if (!_cmAsked) { _cmAsked = true; put('consumption', skeleton()); loadConsumption(); }
+      return;
+    }
+    const { groups, week, total } = _cmCache;
+    const sub = document.getElementById('fgSub-consumption');
+
+    if (!groups || !groups.length) {
+      put('consumption', '');
+      if (sub) sub.textContent = 'No closed cycle yet';
+      return;
+    }
+
+    // Hasta ocho: con más, cada par de barras baja de tres píxeles y deja
+    // de leerse como comparación.
+    const data = groups.slice(0, 8);
+    const max = Math.max(...data.map(g => Math.max(g.sold, g.used)), 1);
+
+    const bars = data.map(g => {
+      const hS = Math.max(6, (g.sold / max) * 100);
+      const hU = Math.max(6, (g.used / max) * 100);
+      // El título nativo es lo que convierte la forma en dato concreto
+      // sin gastar sitio en etiquetas que no cabrían.
+      return `<span class="bs-cmspark-cat" title="${g.cat}: ${g.sold.toFixed(1)} sold, ${g.used.toFixed(1)} poured">
+                <i class="bs-cmspark-b sold" style="height:${hS}%"></i>
+                <i class="bs-cmspark-b used" style="height:${hU}%"></i>
+              </span>`;
+    }).join('');
+
+    put('consumption', `
+      <div class="bs-fs-card bs-fs-wide">
+        <div class="bs-fs-label">Sold vs poured</div>
+        <div class="bs-cmspark">${bars}</div>
+        <div class="bs-fs-sub">${fmtMoney(total)} poured beyond sales</div>
+      </div>`);
+
+    if (sub && week) {
+      sub.textContent = 'Cycle · ' + String(week).slice(5).replace('-', '‑');
+    }
+  }
+
+  async function loadConsumption() {
+    try {
+      const TU = window.BarStockTheoreticalUsage;
+      const CM = window.BarStockConsumptionMatch;
+      if (!TU?.loadCycle || !CM?.group) { _cmCache = { groups: [] }; return; }
+
+      const cycle = await TU.loadCycle();
+      // Se agrupa con la MISMA función que la sección. Repetir el
+      // agrupado aquí habría dejado la portada y el detalle discrepando
+      // sin que nadie lo notara hasta que las cifras no cuadraran.
+      const groups = CM.group(cycle.rows || [])
+        .filter(g => g.withSales > 0 && (g.sold > 0 || g.used > 0));
+      _cmCache = {
+        groups,
+        week: cycle.week,
+        total: groups.reduce((s, g) => s + Math.max(0, g.loss), 0)
+      };
+    } catch (e) {
+      console.warn('[FocusStats] consumption', e);
+      _cmCache = { groups: [] };
+    } finally {
+      consumption();
+    }
+  }
+
   function refresh() {
     try { inventory(); } catch (e) {}
     try { ordering();  } catch (e) {}
@@ -282,11 +363,15 @@
     try { pourIq();    } catch (e) {}
     try { usage();     } catch (e) {}
     try { costs();     } catch (e) {}
+    try { consumption(); } catch (e) {}
   }
 
   window.BarStockFocusStats = {
     refresh,
     reloadCosts: () => { _costsCache = null; _costsAsked = false; costs(); },
+    // La portada se queda con la cifra vieja tras corregir unas ventas
+    // si nadie la invalida.
+    reloadConsumption: () => { _cmCache = null; _cmAsked = false; consumption(); },
     // Abre Costs con la semana pasada ya seleccionada
     startLastWeek: (from, to) => {
       if (typeof bsOpenSection === 'function') bsOpenSection('costReport');

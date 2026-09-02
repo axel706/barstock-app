@@ -11,6 +11,35 @@
    Colores con el significado que ya tienen en la app: ámbar el líquido,
    verde lo vendido, rojo el dinero perdido.                            */
 
+/* ── Mini-gráfica de la pantalla principal ────────────────────────────
+
+   La tarjeta de Consumption Match no resume con dos cifras como las
+   demás, porque lo que importa aquí es la FORMA: si el ámbar asoma por
+   encima del verde en una categoría, ahí se sirvió de más. "$1,801" y
+   "8 categorías" no dicen en cuál.
+
+   Va en una sola mini-card ancha. Las otras se reparten el sitio entre
+   dos de 132px; esta se lo queda entero, que es lo que necesitan ocho
+   pares de barras para seguir siendo legibles.                        */
+.bs-focus-stats .bs-fs-card.bs-fs-wide{
+  max-width: none;
+  flex: 1 1 100%;
+}
+.bs-cmspark{
+  display: flex; align-items: flex-end; justify-content: center;
+  gap: 7px; height: 34px; margin: 7px 0 5px;
+}
+.bs-cmspark-cat{
+  display: flex; align-items: flex-end; gap: 2px;
+  height: 100%; flex: 0 1 26px;
+}
+.bs-cmspark-b{
+  display: block; width: 5px; border-radius: 2px 2px 0 0;
+  min-height: 2px;
+}
+.bs-cmspark-b.sold{ background: #22c55e; }
+.bs-cmspark-b.used{ background: #f59e0b; }
+
 /* ── Migas ── */
 .cm-crumbs{
   display: flex; align-items: center; gap: 6px;
