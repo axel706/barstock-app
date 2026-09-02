@@ -929,7 +929,12 @@
     body.innerHTML = displayed.map(r => {
       const hasAdj = r.on_hand_end_adjusted !== null && r.on_hand_end_adjusted !== undefined;
       const adjVal = r.on_hand_end_adjusted !== null && r.on_hand_end_adjusted !== undefined ? r.on_hand_end_adjusted : (r.on_hand_end ?? '');
-      const adjBtn = `<button class="tu-comment-btn${hasAdj ? ' tu-adj-active' : ''}" data-item="${attr(r.item_name)}" data-val="${attr(adjVal)}" onclick="window.BarStockTheoreticalUsage.openAdjModal(this.dataset.item, this.dataset.val)" title="${hasAdj ? 'Adjusted — click to edit' : 'Adjust on hand end'}"><i class="ti ti-edit" aria-hidden="true"></i></button>`;
+      // Abre el MISMO diálogo que Consumption Match. El modal viejo
+      // escribía el ajuste sin enseñar qué se movía ni pedir un motivo, y
+      // esto ahora toca el stock de verdad: dos formas distintas de mover
+      // el inventario, una con red y otra sin ella, es como se llega a
+      // una cifra que nadie sabe justificar.
+      const adjBtn = `<button class="tu-comment-btn${hasAdj ? ' tu-adj-active' : ''}" data-item="${attr(r.item_name)}" data-code="${attr(r.code || '')}" onclick="event.stopPropagation();window.BarStockTheoreticalUsage.fixCount(this.dataset.item, this.dataset.code)" title="${hasAdj ? 'Count corrected — click to change' : 'Fix the closing count'}"><i class="ti ti-edit" aria-hidden="true"></i></button>`;
       const usedFmt = (r.used !== null ? r.used.toFixed(2) : '—') + ' ' + adjBtn;
       // La celda de ventas se puede corregir. El icono cambia de color
       // según de dónde salga la cifra: ámbar cuando la emparejó el
@@ -1592,6 +1597,14 @@
     salesLines,
     saveAlias, removeAlias, saveOverride, removeOverride,
     savePourFix, previewPourFix,
+    // Desde la tabla de Usage, con el mismo diálogo que Consumption
+    // Match. Al cerrarlo se repinta: la corrección cambia el used, y con
+    // él la varianza, la pérdida y el orden de la tabla.
+    fixCount: (itemName, code) => {
+      if (!window.BarStockCountFix || !_currentWeek) return;
+      window.BarStockCountFix.open(itemName, code || '', _currentWeek.week_start,
+        () => renderWeekDetail(_currentWeek.week_start));
+    },
     aliasesFor: (item) => _aliases.get(item) || [],
     overrideFor: (item) => _overrides.get(item) || null,
     // Abre el diálogo desde la tabla de Usage y repinta al cerrarlo. La
