@@ -253,11 +253,19 @@
         <span class="cm-xlabel">${esc(g.cat.split(/[\s&]/)[0])}</span>
       </div>`).join('');
 
+    // Mismo marco que en la sección: borde, radio y cabecera de tabla.
     return `
-      <div class="cm-chart">${grid}<div class="cm-plot">${cols}</div></div>
-      <div class="cm-legend">
-        <span><i class="cm-key cm-b-sold"></i>Sold</span>
-        <span><i class="cm-key cm-b-used"></i>Poured</span>
+      <div class="cm-chartwrap">
+        <div class="cm-charthead">
+          <span class="cm-charttitle">Sold vs poured · selected items</span>
+          <span class="cm-legend">
+            <span><i class="cm-key cm-b-sold"></i>Sold</span>
+            <span><i class="cm-key cm-b-used"></i>Poured</span>
+          </span>
+        </div>
+        <div class="cm-chartbody">
+          <div class="cm-chart">${grid}<div class="cm-plot">${cols}</div></div>
+        </div>
       </div>`;
   }
 

@@ -105,10 +105,34 @@
    20px es la banda de la etiqueta inferior. Se descuenta igual en la
    altura de las barras y en las líneas de referencia, así el 50% de la
    rejilla y el 50% de una barra caen en el mismo píxel.                */
+/* ── El marco de la gráfica ───────────────────────────────────────────
+   Las mismas medidas que .tablewrap: borde de 1px, radio 14px. Y una
+   cabecera con el tratamiento de un thead —fondo propio, 10px en
+   mayúsculas, letterspacing— porque en esta app todo lo que muestra
+   datos vive dentro de una caja con cabecera, y la gráfica era lo único
+   que flotaba suelto sobre el fondo. */
+.cm-chartwrap{
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+.cm-charthead{
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+  padding: 8px 12px;
+  background: #111827;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.cm-charttitle{
+  font-size: 10px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--sub); font-weight: 700;
+}
+.cm-chartbody{ padding: 10px 12px 8px; }
+
 .cm-chart{
   position: relative;
   height: 150px;
-  margin-top: 12px;
   padding-left: 34px;
 }
 /* El carril que se desplaza. La rejilla queda fuera de él a propósito:
@@ -168,14 +192,14 @@
 }
 
 .cm-legend{
-  display: flex; gap: 16px; align-items: center;
-  margin-top: 8px; font-size: 11px; color: var(--sub);
+  display: flex; gap: 14px; align-items: center;
+  font-size: 11px; color: var(--sub);
 }
 .cm-key{
   display: inline-block; width: 9px; height: 9px;
   border-radius: 2px; margin-right: 5px; vertical-align: -1px;
 }
-.cm-legend-tip{ margin-left: auto; opacity: .75; font-style: italic; }
+.cm-legend-tip{ opacity: .75; font-style: italic; }
 
 /* ── Tabla + panel, como Inventory ───────────────────────────────────
    Las mismas medidas: tabla flexible, panel de 240px, 440px de alto. */
@@ -535,6 +559,12 @@ body.light .cm-mon{ border-color: rgba(15,23,42,.14); }
 body.light .cm-mon.active{ background: rgba(2,132,199,.14); border-color: #0284c7; color: #0369a1; }
 body.light .cm-mon.off:hover{ border-color: rgba(15,23,42,.14); }
 
+body.light .cm-chartwrap{ border-color: rgba(15,23,42,.12); }
+body.light .cm-charthead{
+  background: #f8fbff;
+  border-bottom-color: rgba(15,23,42,.12);
+  color: #475569;
+}
 body.light .cm-gline{ border-top-color: rgba(15,23,42,.14); }
 body.light .cm-col:hover{ background: rgba(15,23,42,.05); }
 body.light .cm-col.active{ background: rgba(2,132,199,.12); }
@@ -590,6 +620,8 @@ body.light .cmr-noterow > td{ border-bottom-color: rgba(15,23,42,.10); }
      tener la misma decisión escrita en dos sitios que van a divergir. */
   .cm-total b{ font-size: 26px; }
   .cm-chart{ height: 140px; }
+  .cm-charthead{ gap: 6px; padding: 8px 10px; }
+  .cm-chartbody{ padding: 8px 10px 6px; }
   .cm-months{ grid-template-columns: repeat(6, 1fr); }
   .cm-table{ font-size: 13px; }
   .cm-table th, .cm-table td{ padding: 9px 8px; }

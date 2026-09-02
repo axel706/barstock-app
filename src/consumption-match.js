@@ -293,15 +293,32 @@
         </div>`;
     }).join('');
 
+    // ── La gráfica va DENTRO de un marco, como las tablas ────────────
+    //
+    // Mismo borde, mismo radio y una cabecera con el tratamiento de un
+    // thead. Suelta sobre el fondo parecía flotar encima de la pantalla
+    // en vez de formar parte de ella: en esta app todo lo que muestra
+    // datos vive dentro de una caja con cabecera, y la gráfica era lo
+    // único que no.
+    //
+    // La leyenda sube a esa cabecera, que es donde una tabla pone los
+    // nombres de sus columnas.
     return `
-      <div class="cm-chart">
-        ${grid}
-        <div class="cm-plot">${cols}</div>
-      </div>
-      <div class="cm-legend">
-        <span><i class="cm-key cm-b-sold"></i>Sold</span>
-        <span><i class="cm-key cm-b-used"></i>Poured</span>
-        <span class="cm-legend-tip">Tap a category</span>
+      <div class="cm-chartwrap">
+        <div class="cm-charthead">
+          <span class="cm-charttitle">Sold vs poured by category</span>
+          <span class="cm-legend">
+            <span><i class="cm-key cm-b-sold"></i>Sold</span>
+            <span><i class="cm-key cm-b-used"></i>Poured</span>
+            <span class="cm-legend-tip">Tap a category</span>
+          </span>
+        </div>
+        <div class="cm-chartbody">
+          <div class="cm-chart">
+            ${grid}
+            <div class="cm-plot">${cols}</div>
+          </div>
+        </div>
       </div>`;
   }
 
