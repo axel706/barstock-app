@@ -205,6 +205,29 @@
     }
   }
 
+
+  // ─── El used que vale ─────────────────────────────────────────────
+  //
+  // Si alguien corrigió el conteo de cierre, la resta buena es la que
+  // sale del valor corregido, no la columna `used` tal cual.
+  //
+  // Hasta ahora esto no se miraba aquí: el lápiz de Usage escribía
+  // on_hand_end_adjusted y solo lo aplicaban Usage y Consumption Match,
+  // así que el par óptimo, Pour-IQ y la tarjeta de la portada seguían
+  // calculando con el número sin corregir. Dos verdades sobre el mismo
+  // consumo, y ninguna forma de saber cuál estabas mirando.
+  //
+  // Las correcciones nuevas ya reescriben `used`, así que esto no haría
+  // falta para ellas; sigue aquí por las viejas, hechas antes de que esa
+  // propagación existiera.
+  function usedOf(r) {
+    const adj = r.on_hand_end_adjusted;
+    if (adj !== null && adj !== undefined && r.on_hand_start !== null && r.on_hand_start !== undefined) {
+      return Number(r.on_hand_start || 0) + Number(r.ordered || 0) - Number(adj);
+    }
+    return Number(r.used || 0);
+  }
+
   // ─── runCycle ─────────────────────────────────────────────────────
   // Single entry point called from applyPendingImport
   // 1. completeSnapshot (close previous cycle)
@@ -319,7 +342,7 @@
   async function calculateParOptimal(locationId, itemName, code) {
     const { url, key } = getConfig();
 
-    let filterUrl = `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&item_name=eq.${encodeURIComponent(itemName)}&is_event_week=eq.false&used=not.is.null&select=used,week_start`;
+    let filterUrl = `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&item_name=eq.${encodeURIComponent(itemName)}&is_event_week=eq.false&used=not.is.null&select=used,week_start,on_hand_start,ordered,on_hand_end_adjusted`;
     if (code) filterUrl += `&code=eq.${encodeURIComponent(code)}`;
 
     const res = await fetch(filterUrl, {
@@ -331,7 +354,7 @@
     // Deduplicate by week_start — take first occurrence per week
     const byWeek = new Map();
     for (const r of rows) {
-      if (!byWeek.has(r.week_start)) byWeek.set(r.week_start, Number(r.used || 0));
+      if (!byWeek.has(r.week_start)) byWeek.set(r.week_start, usedOf(r));
     }
     const usedValues = Array.from(byWeek.values());
     if (usedValues.length < 4) return { status: 'observing', normalWeeks: usedValues.length };
@@ -361,7 +384,7 @@
       // on_hand_end se trae para detectar quiebres: una semana que cerro en
       // cero es una semana en la que te quedaste sin producto.
       const allRows = await fetchAllSnapshotRows(
-        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&is_event_week=eq.false&used=not.is.null&select=id,item_name,code,used,week_start,on_hand_end`
+        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&is_event_week=eq.false&used=not.is.null&select=id,item_name,code,used,week_start,on_hand_end,on_hand_start,ordered,on_hand_end_adjusted`
       );
 
       // Group by item
@@ -371,9 +394,15 @@
         const k = `${r.item_name}||${r.code || ''}`;
         if (!byItem.has(k)) byItem.set(k, new Map());
         const weekMap = byItem.get(k);
-        if (!weekMap.has(r.week_start)) weekMap.set(r.week_start, Number(r.used || 0));
+        if (!weekMap.has(r.week_start)) weekMap.set(r.week_start, usedOf(r));
 
-        if (r.on_hand_end !== null && Number(r.on_hand_end) <= 0) {
+        // El quiebre se mide contra el cierre CORREGIDO: una semana que
+        // parecia haber acabado en cero puede no haberlo hecho, y contarla
+        // como quiebre infla el par optimo hasta un 30%.
+        const endReal = (r.on_hand_end_adjusted !== null && r.on_hand_end_adjusted !== undefined)
+          ? Number(r.on_hand_end_adjusted)
+          : (r.on_hand_end !== null ? Number(r.on_hand_end) : null);
+        if (endReal !== null && endReal <= 0) {
           if (!stockoutsByItem.has(k)) stockoutsByItem.set(k, new Set());
           stockoutsByItem.get(k).add(r.week_start);
         }

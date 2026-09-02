@@ -28,7 +28,7 @@
   <link rel="stylesheet" href="styles/buttons.css">
   <link rel="stylesheet" href="styles/app.css?v=hdr5">
   <link rel="stylesheet" href="styles/theoretical-usage.css">
-  <link rel="stylesheet" href="styles/consumption-match.css?v=cm13">
+  <link rel="stylesheet" href="styles/consumption-match.css?v=cm14">
   <link rel="stylesheet" href="styles/order-history.css">
 
   <link rel="stylesheet" href="styles/fixes.css">
@@ -129,7 +129,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260901-221431</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260901-224950</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -3539,8 +3539,18 @@ async function openInvPanel(idx) {
     const locData = await locRes.json();
     const locationId = locData[0]?.id;
     if (locationId) {
-      const snapRes = await fetch(`${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&item_name=eq.${encodeURIComponent(r.item)}&is_event_week=eq.false&used=not.is.null&order=week_start.desc&limit=4&select=week_start,used`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+      const snapRes = await fetch(`${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&item_name=eq.${encodeURIComponent(r.item)}&is_event_week=eq.false&used=not.is.null&order=week_start.desc&limit=4&select=week_start,used,on_hand_start,ordered,on_hand_end_adjusted`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
       sparkData = await snapRes.json();
+      // La barrita usa el consumo CORREGIDO si alguien arreglo el conteo
+      // de esa semana. Si no, esta grafica contaria una historia y Usage
+      // otra sobre el mismo producto.
+      sparkData = sparkData.map(x => {
+        const adj = x.on_hand_end_adjusted;
+        const used = (adj !== null && adj !== undefined && x.on_hand_start !== null)
+          ? Number(x.on_hand_start || 0) + Number(x.ordered || 0) - Number(adj)
+          : Number(x.used || 0);
+        return { ...x, used };
+      });
       sparkData = sparkData.reverse();
     }
   } catch(e) {}
@@ -4914,17 +4924,18 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/settings-vendor-codes.js"></script>
 <script src="src/skeleton.js"></script>
 <script src="src/cycle.js?v=cy1"></script>
-<script src="src/focus-stats.js?v=cm1"></script>
+<script src="src/focus-stats.js?v=cm2"></script>
 <script src="src/toast.js"></script>
 <script src="src/empty-state.js"></script>
 <script src="src/inventory-realtime.js?v=rt2"></script>
 <script src="src/inventory-cloud.js?v=account-wjm-1"></script>
-<script src="src/par-intelligence.js"></script>
+<script src="src/par-intelligence.js?v=adj1"></script>
 <script src="src/par-intelligence-section.js"></script>
-<script src="src/consumption-match.js?v=cm12"></script>
+<script src="src/consumption-match.js?v=cm13"></script>
 <script src="src/consumption-report.js?v=rep8"></script>
 <script src="src/sales-fix.js?v=sf2"></script>
-<script src="src/theoretical-usage.js?v=fix2"></script>
+<script src="src/count-fix.js?v=cf1"></script>
+<script src="src/theoretical-usage.js?v=fix3"></script>
 <script src="src/no-match-cloud.js"></script>
 <script src="src/typeface.js?v=tf1"></script>
 <script src="src/auto-category.js?v=cat1"></script>
@@ -5772,6 +5783,40 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
      Usage y Consumption Match: dos dialogos distintos para lo mismo
      habrian sido la via mas rapida a que las dos pantallas dejaran de
      coincidir. -->
+<!-- Corregir el conteo de cierre. Separado del de ventas a proposito:
+     este toca el INVENTARIO, y mezclar las dos correcciones en un mismo
+     dialogo haria facil aplicar la mecanica equivocada. -->
+<div id="cfModalBg" class="modalbg hidden">
+  <div class="modal" style="width:min(560px,96vw);max-height:92vh;overflow-y:auto">
+    <h3 style="margin-top:0">Fix the count</h3>
+    <div class="sf-head">
+      <div class="sf-item" id="cfItem"></div>
+      <div class="sf-origin" id="cfWeek"></div>
+    </div>
+
+    <div class="sf-section">
+      <div class="sf-label">What was really on the shelf</div>
+      <div class="sf-help">
+        The count said <b id="cfCounted">&mdash;</b>. Enter what was actually
+        there and the poured figure works itself out &mdash; it is a
+        subtraction, not a number you can type.
+      </div>
+      <div class="sf-numrow">
+        <input id="cfActual" type="number" step="0.1" min="0" placeholder="Bottles"
+               oninput="window.BarStockCountFix.preview()">
+        <input id="cfReason" type="text" placeholder="Why (kept with the figure)">
+      </div>
+    </div>
+
+    <div class="cf-preview" id="cfPreview"></div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+      <button class="ui-control" onclick="window.BarStockCountFix.close()">Cancel</button>
+      <button class="ui-control primary" id="cfSaveBtn" onclick="window.BarStockCountFix.save()">Apply</button>
+    </div>
+  </div>
+</div>
+
 <div id="sfModalBg" class="modalbg hidden">
   <div class="modal" style="width:min(620px,96vw);max-height:92vh;overflow-y:auto">
     <h3 style="margin-top:0">Fix sales</h3>

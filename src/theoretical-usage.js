@@ -385,6 +385,175 @@
     _aliasWeek = null;
   }
 
+  // ─── Corregir el conteo de cierre ─────────────────────────────────
+  //
+  // El caso real: al contar se saltaron unos artículos que sí estaban en
+  // la estantería. No es que el poured esté mal por sí mismo — es que el
+  // conteo lo está, y el poured es una resta que lo arrastra.
+  //
+  //   poured = stock inicial + recibido − stock final
+  //
+  // Subir el stock final baja el poured. Y ese mismo número es el stock
+  // inicial de la semana siguiente y el on-hand que se ve hoy. Escribirlo
+  // en un solo sitio dejaría la app con dos verdades, que es exactamente
+  // lo que ya pasaba con el lápiz antiguo: ajustaba el cierre y solo lo
+  // veían Usage y Consumption Match.
+  //
+  // Aquí se escribe en los cuatro sitios, en este orden:
+  //
+  //   1. el ciclo corregido      on_hand_end_adjusted + used
+  //   2. el ciclo siguiente      on_hand_start (y su used, si ya cerró)
+  //   3. el inventario vivo      solo si el siguiente es el ciclo abierto
+  //   4. count_corrections       lo contado, lo real y el motivo
+  //
+  // `on_hand_end` NO se toca: guarda lo que dijo el conteo. La diferencia
+  // entre las dos columnas es la medida de cuánto fiarse de esa semana.
+  async function savePourFix(weekStart, itemName, code, actualEnd, reason) {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+    const val = Number(actualEnd);
+    const out = { used: null, prevUsed: null, stock: null, live: false, nextWeek: null };
+
+    // ── 1. El ciclo corregido ──
+    const r0 = await fetch(
+      `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&week_start=eq.${weekStart}` +
+      `&item_name=eq.${encodeURIComponent(itemName)}&select=id,on_hand_start,ordered,on_hand_end,on_hand_end_adjusted,used`,
+      { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+    const snaps = await r0.json();
+    if (!snaps?.length) throw new Error('That item has no snapshot for this cycle.');
+    const s = snaps[0];
+
+    const newUsed = Number(s.on_hand_start || 0) + Number(s.ordered || 0) - val;
+    out.prevUsed = s.on_hand_end_adjusted !== null && s.on_hand_end_adjusted !== undefined
+      ? Number(s.on_hand_start || 0) + Number(s.ordered || 0) - Number(s.on_hand_end_adjusted)
+      : (s.used !== null ? Number(s.used) : null);
+    out.used = newUsed;
+
+    await fetch(`${url}/rest/v1/inventory_snapshots?id=eq.${s.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
+      body: JSON.stringify({ on_hand_end_adjusted: val, used: newUsed })
+    });
+
+    // ── 2. El ciclo siguiente ──
+    //
+    // Solo el inmediatamente posterior. Si hubiera más ciclos cerrados
+    // después, sus restas también cambiarían en cascada; la interfaz
+    // avisa de eso antes de guardar en vez de reescribir meses de
+    // histórico sin que nadie lo haya pedido.
+    const rn = await fetch(
+      `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&week_start=gt.${weekStart}` +
+      `&item_name=eq.${encodeURIComponent(itemName)}&select=id,week_start,on_hand_start,ordered,on_hand_end,on_hand_end_adjusted,used` +
+      `&order=week_start.asc&limit=1`,
+      { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+    const nexts = await rn.json();
+
+    if (nexts?.length) {
+      const n = nexts[0];
+      out.nextWeek = n.week_start;
+      const patch = { on_hand_start: val };
+
+      // Si ese ciclo ya cerró, su propia resta cambia. Si sigue abierto,
+      // used es null y así se queda: se calculará al cerrarlo.
+      const nEnd = n.on_hand_end_adjusted !== null && n.on_hand_end_adjusted !== undefined
+        ? Number(n.on_hand_end_adjusted) : (n.on_hand_end !== null ? Number(n.on_hand_end) : null);
+      if (nEnd !== null) patch.used = val + Number(n.ordered || 0) - nEnd;
+
+      await fetch(`${url}/rest/v1/inventory_snapshots?id=eq.${n.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
+        body: JSON.stringify(patch)
+      });
+
+      // ── 3. El inventario vivo ──
+      //
+      // Solo si el ciclo siguiente es el que está corriendo: entonces su
+      // stock inicial es literalmente el on-hand de hoy. Si el ajuste es
+      // de hace tres meses, el stock actual no tiene nada que ver.
+      const openWeek = window.BarStockParIntelligence?.getEffectiveWeekStart?.();
+      if (nEnd === null && openWeek && n.week_start === openWeek) {
+        out.live = true;
+        out.stock = val;
+        await applyLiveStock(itemName, code, val);
+      }
+    }
+
+    // ── 4. El registro ──
+    await fetch(`${url}/rest/v1/count_corrections?on_conflict=location_id,week_start,item_name`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`,
+                 Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({
+        location_id: locationId, week_start: weekStart, item_name: itemName,
+        counted: s.on_hand_end, actual: val, reason: reason || '',
+        updated_at: new Date().toISOString()
+      })
+    });
+
+    _aliasWeek = null;   // invalidar la caché de correcciones
+    return out;
+  }
+
+  // El on-hand vivo se escribe por la MISMA ruta que la edición manual de
+  // Inventory —nube, estado local, repintado— para que no haya dos formas
+  // de mover el mismo número con resultados distintos.
+  async function applyLiveStock(itemName, code, val) {
+    const master = (window.state && window.state.master) || [];
+    const i = master.findIndex(m => m.item === itemName);
+    if (i < 0) return;
+    const row = master[i];
+
+    if (window.BarStockInventoryCloud?.patchInventoryItem) {
+      await window.BarStockInventoryCloud.patchInventoryItem({
+        oldCode: row.code, oldItem: row.item,
+        code: row.code, item: row.item, vendor: row.vendor,
+        onHand: val, suggested: row.suggested, value: row.value
+      });
+    }
+    row.onHand = val;
+    if (typeof window.saveState === 'function') window.saveState();
+    if (typeof window.render === 'function') window.render();
+    // La portada lee de parAdjustments, que se reconstruye aparte.
+    window.BarStockFocusStats?.refresh?.();
+  }
+
+  // Qué pasaría si se guardara. Lo usa el diálogo para enseñarlo ANTES.
+  async function previewPourFix(weekStart, itemName, actualEnd) {
+    const { url, key } = getConfig();
+    const locationId = await fetchLocationId();
+    const val = Number(actualEnd);
+
+    const [r0, rn] = await Promise.all([
+      fetch(`${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&week_start=eq.${weekStart}` +
+            `&item_name=eq.${encodeURIComponent(itemName)}&select=on_hand_start,ordered,on_hand_end,on_hand_end_adjusted,used`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } }),
+      fetch(`${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&week_start=gt.${weekStart}` +
+            `&item_name=eq.${encodeURIComponent(itemName)}&select=week_start,on_hand_end,used&order=week_start.asc`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } })
+    ]);
+    const s = (await r0.json())?.[0];
+    const after = (await rn.json()) || [];
+    if (!s) return null;
+
+    const start = Number(s.on_hand_start || 0), ord = Number(s.ordered || 0);
+    const curEnd = s.on_hand_end_adjusted !== null && s.on_hand_end_adjusted !== undefined
+      ? Number(s.on_hand_end_adjusted) : Number(s.on_hand_end || 0);
+    const openWeek = window.BarStockParIntelligence?.getEffectiveWeekStart?.();
+
+    return {
+      counted: s.on_hand_end,
+      curEnd,
+      newEnd: val,
+      curUsed: start + ord - curEnd,
+      newUsed: start + ord - val,
+      start, ordered: ord,
+      // Ciclos cerrados posteriores al que se corrige: sus restas también
+      // cambiarían y esto NO los toca.
+      closedAfter: after.filter(w => w.used !== null && w.week_start !== openWeek).length,
+      touchesLive: !!(after.length && after[0].week_start === openWeek)
+    };
+  }
+
   async function removeOverride(weekStart, itemName) {
     const { url, key } = getConfig();
     const locationId = await fetchLocationId();
@@ -909,18 +1078,15 @@
     await window.BarStockEmailTheoretical.openModal();
   }
 
+  // El lápiz de la columna USED pasa por la MISMA ruta que la corrección
+  // de conteo. Antes escribía on_hand_end_adjusted y nada más: el ajuste
+  // lo veían Usage y Consumption Match, pero el par óptimo, Pour-IQ, la
+  // portada y el stock seguían con el número viejo. Dos caminos para
+  // mover el mismo número es como se llega a dos verdades.
   async function saveOnHandAdjustment(weekStart, itemName, value) {
-    const { url, key } = getConfig();
-    const locationId = await fetchLocationId();
-    const val = Number(value);
-    await fetch(
-      `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&week_start=eq.${weekStart}&item_name=eq.${encodeURIComponent(itemName)}`,
-      {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
-        body: JSON.stringify({ on_hand_end_adjusted: val })
-      }
-    );
+    const row = _lastRows.find(r => r.item_name === itemName);
+    await savePourFix(weekStart, itemName, row?.code || '', Number(value),
+                      'Adjusted from the Usage table');
   }
 
   function renderVendorChips(enriched) {
@@ -1425,6 +1591,7 @@
     // usan no puedan discrepar sobre qué gana a qué.
     salesLines,
     saveAlias, removeAlias, saveOverride, removeOverride,
+    savePourFix, previewPourFix,
     aliasesFor: (item) => _aliases.get(item) || [],
     overrideFor: (item) => _overrides.get(item) || null,
     // Abre el diálogo desde la tabla de Usage y repinta al cerrarlo. La

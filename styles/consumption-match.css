@@ -476,7 +476,50 @@
   display: flex; align-items: center; gap: 6px;
   margin: 0 0 8px; font-size: 11px; color: var(--sub);
 }
-.cm-fixbtn{ width: 100%; justify-content: center; padding: 8px 12px; }
+.cm-fixrow{ display: flex; gap: 6px; }
+.cm-fixbtn{ flex: 1; justify-content: center; padding: 8px 10px; }
+
+/* ── Corregir el conteo: la vista previa ──────────────────────────────
+   Este diálogo cambia el inventario, no solo una comparación. Enseñar
+   qué se va a mover antes de moverlo es la diferencia entre una cifra
+   en la que se confía y una que nadie sabe de dónde salió. */
+.cf-preview{
+  margin-top: 14px; padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.10);
+}
+.cf-hint{ font-size: 12px; color: var(--sub); }
+.cf-sum{
+  font-size: 12px; color: var(--sub); line-height: 1.6;
+  padding-bottom: 10px; margin-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+}
+.cf-sum b{ color: var(--text); }
+.cf-row{
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; margin-bottom: 6px;
+}
+.cf-lbl{ flex: 1; color: var(--sub); }
+.cf-from{ color: var(--sub); text-decoration: line-through; opacity: .7; }
+.cf-arr{ font-size: 13px; color: var(--sub); opacity: .6; }
+.cf-to{ font-weight: 800; min-width: 44px; text-align: right; }
+.cf-to.good{ color: #22c55e; }
+.cf-to.bad{ color: #ef4444; }
+.cf-also{
+  font-size: 11px; color: var(--sub); line-height: 1.55; margin-top: 8px;
+}
+.cf-also b{ color: var(--text); }
+.cf-warn, .cf-bad{
+  display: flex; gap: 8px; align-items: flex-start;
+  margin-top: 10px; padding: 9px 11px; border-radius: 10px;
+  font-size: 12px; line-height: 1.5;
+}
+.cf-warn{ background: rgba(245,158,11,.10); border: 1px solid rgba(245,158,11,.30); color: var(--sub); }
+.cf-warn i{ color: #f59e0b; font-size: 15px; flex: 0 0 auto; }
+.cf-warn b{ color: var(--text); }
+.cf-bad{ background: rgba(239,68,68,.10); border: 1px solid rgba(239,68,68,.30); color: var(--sub); }
+.cf-bad i{ color: #ef4444; font-size: 15px; flex: 0 0 auto; }
 
 /* ── Diálogo de corrección ── */
 .sf-dot{
@@ -587,6 +630,8 @@ body.light .sf-lines{ border-color: rgba(15,23,42,.14); }
 body.light .sf-line{ border-bottom-color: rgba(15,23,42,.08); }
 body.light .sf-line:hover{ background: rgba(15,23,42,.04); }
 body.light .sf-check{ border-color: rgba(15,23,42,.28); }
+body.light .cf-preview{ background: rgba(15,23,42,.04); border-color: rgba(15,23,42,.12); }
+body.light .cf-sum{ border-bottom-color: rgba(15,23,42,.10); }
 body.light .sf-check i{ color: #ffffff; }
 
 body.light .cm-box{ border-color: rgba(15,23,42,.28); }

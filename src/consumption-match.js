@@ -555,11 +555,17 @@
           </div>
           <div class="inv-panel-actions-section">
             ${origin(u)}
-            <span class="cm-btn ghost cm-fixbtn" role="button" tabindex="0"
-                  data-item="${esc(u.item)}"
-                  onclick="window.BarStockConsumptionMatch.fixUnmatched(this.dataset.item)">
-              <i class="ti ti-pencil" aria-hidden="true"></i> Fix sales
-            </span>
+            <div class="cm-fixrow">
+              <span class="cm-btn ghost cm-fixbtn" role="button" tabindex="0"
+                    data-item="${esc(u.item)}"
+                    onclick="window.BarStockConsumptionMatch.fixUnmatched(this.dataset.item)">
+                <i class="ti ti-pencil" aria-hidden="true"></i> Sales
+              </span>
+              <span class="cm-btn ghost cm-fixbtn" role="button" tabindex="0"
+                    onclick="window.BarStockConsumptionMatch.fixCount()">
+                <i class="ti ti-package" aria-hidden="true"></i> Count
+              </span>
+            </div>
           </div>`;
       }
     }
@@ -600,10 +606,16 @@
         </div>
         <div class="inv-panel-actions-section">
           ${origin(it)}
-          <span class="cm-btn ghost cm-fixbtn" role="button" tabindex="0"
-                onclick="window.BarStockConsumptionMatch.fixSales()">
-            <i class="ti ti-pencil" aria-hidden="true"></i> Fix sales
-          </span>
+          <div class="cm-fixrow">
+            <span class="cm-btn ghost cm-fixbtn" role="button" tabindex="0"
+                  onclick="window.BarStockConsumptionMatch.fixSales()">
+              <i class="ti ti-pencil" aria-hidden="true"></i> Sales
+            </span>
+            <span class="cm-btn ghost cm-fixbtn" role="button" tabindex="0"
+                  onclick="window.BarStockConsumptionMatch.fixCount()">
+              <i class="ti ti-package" aria-hidden="true"></i> Count
+            </span>
+          </div>
         </div>`;
     }
 
@@ -967,6 +979,31 @@
     });
   }
 
+  // ── Corregir el conteo del artículo abierto ─────────────────────────
+  //
+  // Al cerrar, se tira el ciclo cacheado y se recalcula: la corrección
+  // cambia el poured, y con él la pérdida, el orden de la tabla y la
+  // gráfica. Dejar la pantalla con las cifras viejas haría pensar que no
+  // se guardó.
+  async function fixCount() {
+    if (!window.BarStockCountFix || _cat < 0) return;
+    const g = _groups[_cat];
+    const it = _item >= 0 ? g.items[_item] : (_unItem >= 0 ? g.unmatched[_unItem] : null);
+    if (!it) return;
+    const catName = g.cat, itemName = it.item;
+
+    window.BarStockCountFix.open(itemName, it.code || '', _week, async () => {
+      _cache.delete(_week);
+      if (!await ensureCycle(_week)) return;
+      _cat = _groups.findIndex(x => x.cat === catName);
+      _item = _cat >= 0 ? _groups[_cat].items.findIndex(x => x.item === itemName) : -1;
+      _unItem = _cat >= 0 && _item < 0
+        ? _groups[_cat].unmatched.findIndex(x => x.item === itemName) : -1;
+      if (_cat < 0) { _view = 'cats'; _item = -1; _unItem = -1; }
+      paint();
+    });
+  }
+
   function goCycles() { _view = 'cycles'; _cat = -1; _item = -1; _unItem = -1; paint(); }
   function goCats()   { _view = 'cats';   _cat = -1; _item = -1; _unItem = -1; paint(); }
   function goReport() { _view = 'report'; _item = -1; paint(); }
@@ -1027,7 +1064,7 @@
     render, paint, group,
     openCycle, openCat, openItem, openUnmatched,
     goCycles, goCats, goReport, setYear, setMonth,
-    pick, pickAll, sendToReport, clearPending, fixSales, fixUnmatched,
+    pick, pickAll, sendToReport, clearPending, fixSales, fixUnmatched, fixCount,
     // El reporte necesita los grupos del ciclo abierto para recalcular
     // sus totales con solo los artículos elegidos.
     groups: () => _groups,
