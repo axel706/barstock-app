@@ -145,18 +145,6 @@
       const { error } = await authClient.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
-      // Notify login
-      fetch('https://barstock-app.vercel.app/api/notify-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          location: window.BARSTOCK_CONFIG?.LOCATION_NAME || 'Unknown',
-          userAgent: navigator.userAgent,
-          timestamp: new Date().toLocaleString()
-        })
-      }).catch(() => {});
-
       const locations = await window.BarStockLocationAccess.getAllowedLocations();
 
       if (locations.length === 0) {
@@ -166,11 +154,12 @@
       }
 
       if (locations.length > 1) {
-        showLocationSelector(locations);
+        showLocationSelector(locations, email);
         return;
       }
 
       window.BarStockLocationAccess.setActiveLocationName(locations[0].name);
+      notifyLogin(email, locations[0]);
 
       hideOverlay();
       location.reload();
@@ -185,7 +174,35 @@
     }
   }
 
-  function showLocationSelector(locations){
+  // ── El aviso de que alguien ha entrado ───────────────────────────────
+  //
+  // Se manda DESPUÉS de saber en qué locación se ha entrado, no al
+  // validar la contraseña. Antes salía justo tras el `signInWithPassword`,
+  // cuando la locación todavía era la que quedó guardada de la última
+  // vez: el correo llegaba diciendo "Wills and Bills" mientras la persona
+  // acababa de abrir The Crown Tavern.
+  //
+  // `keepalive` porque la línea siguiente es un `location.reload()`. Sin
+  // él, el navegador cancela las peticiones en vuelo al descargar la
+  // página y el aviso se pierde: no fallaría, sencillamente no llegaría.
+  function notifyLogin(email, loc){
+    try {
+      fetch('https://barstock-app.vercel.app/api/notify-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({
+          email,
+          location: loc?.name || 'Unknown',
+          locationId: loc?.locationId || null,
+          userAgent: navigator.userAgent,
+          timestamp: new Date().toISOString()
+        })
+      }).catch(() => {});
+    } catch (e) { /* el aviso nunca puede impedir entrar */ }
+  }
+
+  function showLocationSelector(locations, email){
     const step = document.getElementById('authLocationStep');
     const select = document.getElementById('authLocationSelect');
     const btn = document.getElementById('authLoginBtn');
@@ -204,6 +221,7 @@
     btn.onclick = () => {
       const selected = select.value;
       window.BarStockLocationAccess.setActiveLocationName(selected);
+      notifyLogin(email, locations.find(l => l.name === selected));
       hideOverlay();
       location.reload();
     };
@@ -386,6 +404,39 @@
     }
   }
 
+  // ── Llegar desde el botón del correo de seguridad ────────────────────
+  //
+  // El aviso de inicio de sesión lleva un "Change password" que apunta
+  // aquí con ?reset=1&email=... Esto NO manda el correo de recuperación:
+  // abre la pantalla de recuperación con la dirección ya escrita y espera
+  // a que alguien pulse.
+  //
+  // La diferencia importa. Los antivirus de correo corporativo visitan
+  // todos los enlaces que reciben para comprobar si son peligrosos, y lo
+  // hacen antes de que el destinatario abra el mensaje. Si visitar este
+  // enlace disparase el restablecimiento, se dispararía él solo cada vez.
+  //
+  // La dirección se borra de la barra en cuanto se ha usado: no tiene
+  // por qué quedarse en el historial ni en lo que se copia y pega.
+  function openedFromResetLink(){
+    let p;
+    try { p = new URLSearchParams(location.search); } catch (e) { return false; }
+    if (p.get('reset') !== '1') return false;
+
+    const email = p.get('email') || '';
+    showOverlay();
+    setAuthMode('forgot');
+
+    const field = document.getElementById('authEmail');
+    if (field && email) field.value = email;
+
+    const msg = document.getElementById('authMsg');
+    if (msg) msg.textContent = 'Send yourself a reset link to secure your account.';
+
+    try { history.replaceState(null, '', location.pathname); } catch (e) {}
+    return true;
+  }
+
   function handlePrimaryAction(){
     if (authMode === 'login') return login();
     if (authMode === 'signup') return signUp();
@@ -422,6 +473,8 @@
     }
     if (forgot) forgot.onclick = () => setAuthMode('forgot');
     if (footAction) footAction.onclick = handleFootAction;
+
+    if (openedFromResetLink()) return;
 
     setTimeout(checkAuth, 100);
   });
