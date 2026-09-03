@@ -1,5 +1,5 @@
 const { Resend } = require('resend');
-const { shell, facts, heading } = require('../lib/email-shell');
+const { shell, facts, badge } = require('../lib/email-shell');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -25,9 +25,14 @@ module.exports = async function handler(req, res) {
     // horaria mentalmente cada vez que llega uno de estos.
     const when = (() => {
       try {
-        return new Date(timestamp || Date.now()).toLocaleString('en-US', {
-          dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/New_York'
-        }) + ' ET';
+        const d = new Date(timestamp || Date.now());
+        const opt = { timeZone: 'America/New_York' };
+        const hoy = new Date().toLocaleDateString('en-US', opt) === d.toLocaleDateString('en-US', opt);
+        const hora = d.toLocaleTimeString('en-US',
+          Object.assign({ hour: 'numeric', minute: '2-digit' }, opt));
+        if (hoy) return `Today at ${hora} ET`;
+        return d.toLocaleString('en-US',
+          Object.assign({ dateStyle: 'medium', timeStyle: 'short' }, opt)) + ' ET';
       } catch (e) { return timestamp || new Date().toISOString(); }
     })();
 
@@ -45,11 +50,19 @@ module.exports = async function handler(req, res) {
       return br ? `${os} · ${br}` : os;
     })();
 
+    // El nombre de pila, si se puede sacar del correo. "Hey Axel" es un
+    // saludo; "Hey axel@wjmhospitality.com" es un robot fingiendo.
+    const who = (() => {
+      const local = String(email || '').split('@')[0].split(/[._-]/)[0];
+      return local ? local.charAt(0).toUpperCase() + local.slice(1) : '';
+    })();
+
     const body =
-      heading('New login', 'Someone just signed in to BarStock Pro.') +
+      badge('👋', who ? `Hey ${who}` : 'Hey there',
+            `Someone just opened the bar. It was you, from your ${device.split(' · ')[0]}.`) +
       facts([
-        ['User', email],
-        ['Location', location || 'Unknown'],
+        ['Who', email],
+        ['Where', location || 'Unknown'],
         ['When', when],
         ['Device', device]
       ]) +
