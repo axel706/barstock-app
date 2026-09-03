@@ -765,6 +765,26 @@
           totalLoss: sel.reduce((s, g) => s + Math.max(0, g.loss), 0),
           itemsAnalyzed: sel.reduce((s, g) => s + g.items.length, 0),
           noSalesCount: 0,
+
+          // ── El resumen que va en el cuerpo del correo ──────────────
+          //
+          // En botellas y no en dinero, a propósito: así la misma tabla
+          // sirve para la copia de dirección y para la de barra, y no
+          // hay manera de que una cifra en dólares se cuele en el correo
+          // del staff por un descuido de aquí.
+          //
+          // Y el resultado en palabras —"4.8 lost", "0.7 gained"— porque
+          // un signo delante de un número no dice de qué lado está la
+          // pérdida.
+          summaryHead: ['Category', 'Poured', 'Sold', 'Result'],
+          summaryRows: sel.map(g => {
+            const d = g.used - g.sold;
+            const r = Math.abs(d) <= 0.05
+              ? { v: 'even' }
+              : { v: btl(d) + (d > 0 ? ' lost' : ' gained'),
+                  bold: true, color: d > 0 ? '#D85A30' : '#1D9E75' };
+            return [g.cat, btl(g.used), btl(g.sold), r];
+          }),
           senderName, senderEmail,
           pdfBase64,
           filename: `consumption_match_${_week}${money$() ? '' : '_staff'}.pdf`

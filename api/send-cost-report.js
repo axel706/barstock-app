@@ -1,5 +1,5 @@
 const { Resend } = require('resend');
-const { shell } = require('../lib/email-shell');
+const { shell, badge, table, attachment, signoff, callout } = require('../lib/email-shell');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -46,46 +46,33 @@ module.exports = async function handler(req, res) {
     // Sigue estando en el PDF adjunto, que se arma del lado del cliente
     // y no pasa por aqui.
 
+    // ── El COGS por encima del objetivo se marca ──────────────────────
+    //
+    // En una tabla de cinco columnas de cifras, la única que importa de
+    // verdad es si el porcentaje real superó al objetivo. En rojo se ve
+    // sin leer la fila entera.
+    const cogsCell = (real, target) => ({
+      v: fmtPct(real),
+      bold: true,
+      color: (Number(real) || 0) > (Number(target) || 0) ? '#D85A30' : '#1D9E75'
+    });
+
     const htmlBody = shell({
   right: loc,
   footer: 'Wine & Liquor Cost Reporting',
-  body: `
-    <p style="margin:0 0 20px;font-size:15px;color:#0f172a">Hello,</p>
-    <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.75">Please find attached the <strong style="color:#0f172a">Wine &amp; Liquor Cost Performance Report</strong> for <strong style="color:#0f172a">${escapeHtml(periodFrom)}</strong> through <strong style="color:#0f172a">${escapeHtml(periodTo)}</strong>. A summary is included below for quick reference.</p>
-
-<table style="width:100%;border-collapse:collapse;margin:24px 0;font-size:14px">
-  <thead>
-    <tr style="background:#f1f5fb">
-      <th style="padding:10px 12px;text-align:left;color:#1e3a5f">Category</th>
-      <th style="padding:10px 12px;text-align:right;color:#1e3a5f">Cost</th>
-      <th style="padding:10px 12px;text-align:right;color:#1e3a5f">Sales</th>
-      <th style="padding:10px 12px;text-align:right;color:#1e3a5f">COGS%</th>
-      <th style="padding:10px 12px;text-align:right;color:#1e3a5f">Target%</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr style="border-bottom:1px solid #e2e8f0">
-      <td style="padding:8px 12px;font-weight:600">Wine</td>
-      <td style="padding:8px 12px;text-align:right">${fmt(totalWine)}</td>
-      <td style="padding:8px 12px;text-align:right">${fmt(wineSales)}</td>
-      <td style="padding:8px 12px;text-align:right;font-weight:600">${fmtPct(wineCogs)}</td>
-      <td style="padding:8px 12px;text-align:right">${fmtPct(wineTarget)}</td>
-    </tr>
-    <tr style="border-bottom:1px solid #e2e8f0">
-      <td style="padding:8px 12px;font-weight:600">Liquor</td>
-      <td style="padding:8px 12px;text-align:right">${fmt(totalLiquor)}</td>
-      <td style="padding:8px 12px;text-align:right">${fmt(liquorSales)}</td>
-      <td style="padding:8px 12px;text-align:right;font-weight:600">${fmtPct(liquorCogs)}</td>
-      <td style="padding:8px 12px;text-align:right">${fmtPct(liquorTarget)}</td>
-    </tr>
-  </tbody>
-</table>
-
-${notes ? `<p><strong>Notes:</strong> ${escapeHtml(notes)}</p>` : ''}
-
-<p style="margin:0 0 28px;font-size:15px;color:#374151;line-height:1.75">If you have any questions about the figures, feel free to reply to this email.</p>
-    <hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 24px">
-    <p style="margin:0;font-size:15px;color:#0f172a">Thank you,<br><strong>${escapeHtml(senderName || loc)}</strong></p>`
+  body:
+    badge('🍷', 'Cost report is ready', `${periodFrom} – ${periodTo}`, '#f3e8ff') +
+    table(
+      ['Category', 'Cost', 'Sales', 'COGS%', 'Target%'],
+      [
+        ['Wine',   fmt(totalWine),   fmt(wineSales),   cogsCell(wineCogs, wineTarget),     fmtPct(wineTarget)],
+        ['Liquor', fmt(totalLiquor), fmt(liquorSales), cogsCell(liquorCogs, liquorTarget), fmtPct(liquorTarget)]
+      ]
+    ) +
+    (notes ? callout('<b>Notes</b><br>' + escapeHtml(notes)) : '') +
+    (pdfBase64 ? attachment(safeFilename, 'Full breakdown by vendor and category') : '') +
+    `<p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.75">Questions about any of the figures? Just reply to this email.</p>` +
+    signoff(senderName || loc)
 });
 
     const payload = {

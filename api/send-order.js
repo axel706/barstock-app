@@ -1,5 +1,5 @@
 const { Resend } = require('resend');
-const { shell } = require('../lib/email-shell');
+const { shell, badge, attachment, signoff } = require('../lib/email-shell');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -34,18 +34,38 @@ module.exports = async function handler(req, res) {
 
     const escapeHtml = s => String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
+    // ── Cuántos productos y cuántas unidades ──────────────────────────
+    //
+    // Va en el encabezado y no en una ficha aparte: es lo primero que
+    // mira quien recibe un pedido, y repetirlo abajo solo alarga.
+    const nProd = items.length;
+    const nUnits = Number(totalUnits) || items.reduce((s, i) => s + (Number(i?.finalOrder) || 0), 0);
+    const resumen = `${nProd} product${nProd === 1 ? '' : 's'}`
+      + (nUnits ? ` · ${nUnits} unit${nUnits === 1 ? '' : 's'}` : '');
+
+    // ── El único correo que sale de la empresa ────────────────────────
+    //
+    // Los otros cuatro los lee gente que usa la aplicación. Este lo abre
+    // un comercial que no sabe qué es BarStock, en un Outlook
+    // corporativo, entre cuarenta pedidos más. De ahí la caja y no un
+    // carrito: un carrito sugiere que alguien está comprando en una web;
+    // una caja es lo que este señor tiene que preparar.
+    //
+    // El texto es el que ya se enviaba, palabra por palabra. Solo se ha
+    // quitado "for ${vendor}" de la primera frase, porque el titular ya
+    // lo dice dos líneas más arriba y quedaba dicho dos veces.
     const htmlBody = shell({
   right: loc,
   footer: 'Automated ordering system',
-  body: `
-    <p style="margin:0 0 20px;font-size:15px;color:#0f172a">Hello there,</p>
-    <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.75">This email confirms a new order request from <strong style="color:#0f172a">${escapeHtml(loc)}</strong>. The details for <strong style="color:#0f172a">${escapeHtml(vendor)}</strong> are attached as a PDF document for your review.</p>
-    <p style="margin:0 0 28px;font-size:15px;color:#374151;line-height:1.75">Kindly confirm receipt and expected delivery date at your earliest convenience. If you have any questions, feel free to reply directly to this email.</p>
-
-    <!-- DIVIDER -->
-    <hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 24px">
-
-    <p style="margin:0;font-size:15px;color:#0f172a">Thank you,<br><strong>${escapeHtml(senderName || loc)}</strong></p>`
+  body:
+    badge('📦', `New order for ${vendor}`, resumen) +
+    `<p style="margin:0 0 20px;font-size:15px;color:#0f172a">Hello,</p>
+    <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.75">This email confirms a new order request from <strong style="color:#0f172a">${escapeHtml(loc)}</strong>. The details are attached as a PDF document for your review.</p>` +
+    // La fila del adjunto solo si de verdad hay adjunto: anunciar un PDF
+    // que no viaja sería peor que no anunciarlo.
+    (pdfBase64 ? attachment(safeFilename, 'The full order, item by item') : '') +
+    `<p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.75">Kindly confirm receipt and expected delivery date at your earliest convenience. If you have any questions, feel free to reply directly to this email.</p>` +
+    signoff(senderName || loc)
 });
 
     const payload = {

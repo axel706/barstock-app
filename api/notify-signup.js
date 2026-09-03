@@ -1,5 +1,5 @@
 const { Resend } = require('resend');
-const { shell, facts, heading, callout } = require('../lib/email-shell');
+const { shell, facts, badge, callout } = require('../lib/email-shell');
 const { createClient } = require('@supabase/supabase-js');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -49,8 +49,14 @@ module.exports = async function handler(req, res) {
 
     const name = [firstName, lastName].filter(Boolean).join(' ');
 
+    // El titular dice quién y de dónde, que es lo que decide si esto se
+    // mira ahora o después. "Someone is waiting for access" no distingue
+    // una solicitud de otra cuando llegan tres seguidas.
+    const quien = [name, businessName].filter(Boolean).join(', from ')
+      || email || 'Someone new';
+
     const body =
-      heading('New sign up request', 'Someone is waiting for access.') +
+      badge('🙋', 'Someone wants in', quien, '#fef3c7') +
       facts([
         ['Name', name],
         ['Business', businessName],
@@ -63,7 +69,7 @@ module.exports = async function handler(req, res) {
         ? callout('<b>Their message</b><br>' + String(message).replace(/[&<>"]/g, c =>
             ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])))
         : '') +
-      `<p style="margin:0;font-size:13px;color:#64748b">Approve or deny from the <b>Admin</b> panel in BarStock Pro.</p>`;
+      `<p style="margin:0;font-size:13px;color:#64748b;text-align:center">Approve or deny from the <b>Admin</b> panel in BarStock Pro.</p>`;
 
     await resend.emails.send({
       from: 'BarStock Pro <noreply@barstockpro.com>',
