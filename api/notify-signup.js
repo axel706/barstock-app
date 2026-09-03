@@ -1,4 +1,5 @@
 const { Resend } = require('resend');
+const { shell, facts, heading, callout } = require('../lib/email-shell');
 const { createClient } = require('@supabase/supabase-js');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -39,25 +40,40 @@ module.exports = async function handler(req, res) {
 
     if (insertError) throw insertError;
 
-    const escapeHtml = s => String(s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    // Este correo pide una acción: hay alguien esperando aprobación. Por
+    // eso el mensaje del solicitante va destacado y el recordatorio de
+    // dónde se aprueba va al final, no perdido entre los datos.
+    const when = new Date().toLocaleString('en-US', {
+      dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/New_York'
+    }) + ' ET';
+
+    const name = [firstName, lastName].filter(Boolean).join(' ');
+
+    const body =
+      heading('New sign up request', 'Someone is waiting for access.') +
+      facts([
+        ['Name', name],
+        ['Business', businessName],
+        ['Email', email],
+        ['Phone', phone],
+        ['Address', address],
+        ['When', when]
+      ]) +
+      (message
+        ? callout('<b>Their message</b><br>' + String(message).replace(/[&<>"]/g, c =>
+            ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])))
+        : '') +
+      `<p style="margin:0;font-size:13px;color:#64748b">Approve or deny from the <b>Admin</b> panel in BarStock Pro.</p>`;
 
     await resend.emails.send({
       from: 'BarStock Pro <noreply@barstockpro.com>',
       to: 'axeltorressalgado@icloud.com',
       subject: `New sign up request — ${businessName || email}`,
-      html: `<!DOCTYPE html><html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0f172a;line-height:1.6;max-width:680px;margin:0 auto;padding:20px">
-<p><strong>New sign up request</strong></p>
-<p>
-<strong>Name:</strong> ${escapeHtml(firstName)} ${escapeHtml(lastName)}<br>
-<strong>Business:</strong> ${escapeHtml(businessName)}<br>
-<strong>Email:</strong> ${escapeHtml(email)}<br>
-<strong>Phone:</strong> ${escapeHtml(phone) || '—'}<br>
-<strong>Address:</strong> ${escapeHtml(address) || '—'}<br>
-<strong>Time:</strong> ${new Date().toISOString()}
-</p>
-<p><strong>Message:</strong><br>${escapeHtml(message) || '—'}</p>
-<p style="color:#64748b;font-size:13px">Approve or deny this request from the Admin panel in BarStock Pro.</p>
-</body></html>`
+      html: shell({
+        right: 'Access request',
+        footer: 'Account requests',
+        body
+      })
     });
 
     return res.status(200).json({ ok: true });

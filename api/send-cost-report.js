@@ -1,4 +1,5 @@
 const { Resend } = require('resend');
+const { shell } = require('../lib/email-shell');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -45,23 +46,10 @@ module.exports = async function handler(req, res) {
     // Sigue estando en el PDF adjunto, que se arma del lado del cliente
     // y no pasa por aqui.
 
-    const htmlBody = `<!DOCTYPE html><html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0f172a;line-height:1.6;margin:0;padding:0;background:#f8fafc">
-<div style="max-width:620px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06)">
-
-  <!-- HEADER -->
-  <div style="background:#0b1220;padding:24px 36px">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-      <td style="vertical-align:baseline">
-        <span style="font-size:22px;font-weight:800;letter-spacing:-0.03em;color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">BarStock</span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#38bdf8;margin:0 2px;vertical-align:-1px"></span><span style="font-size:9px;font-weight:700;color:#475569;letter-spacing:0.1em;text-transform:uppercase;margin-left:3px">PRO</span>
-      </td>
-      <td style="text-align:right;vertical-align:middle">
-        <span style="font-size:13px;color:#475569;font-weight:500">${escapeHtml(loc)}</span>
-      </td>
-    </tr></table>
-  </div>
-
-  <!-- BODY -->
-  <div style="padding:36px">
+    const htmlBody = shell({
+  right: loc,
+  footer: 'Wine & Liquor Cost Reporting',
+  body: `
     <p style="margin:0 0 20px;font-size:15px;color:#0f172a">Hello,</p>
     <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.75">Please find attached the <strong style="color:#0f172a">Wine &amp; Liquor Cost Performance Report</strong> for <strong style="color:#0f172a">${escapeHtml(periodFrom)}</strong> through <strong style="color:#0f172a">${escapeHtml(periodTo)}</strong>. A summary is included below for quick reference.</p>
 
@@ -97,18 +85,8 @@ ${notes ? `<p><strong>Notes:</strong> ${escapeHtml(notes)}</p>` : ''}
 
 <p style="margin:0 0 28px;font-size:15px;color:#374151;line-height:1.75">If you have any questions about the figures, feel free to reply to this email.</p>
     <hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 24px">
-    <p style="margin:0;font-size:15px;color:#0f172a">Thank you,<br><strong>${escapeHtml(senderName || loc)}</strong></p>
-  </div>
-
-  <!-- FOOTER -->
-  <div style="background:#f8fafc;border-top:3px solid #0b1220;padding:20px 36px;text-align:center">
-    <p style="margin:0 0 12px;font-size:11px;color:#94a3b8">Sent via BarStock Pro · Wine &amp; Liquor Cost Reporting</p>
-    <p style="margin:0 0 14px;font-size:12px;color:#64748b">Get control of your bar's inventory.</p>
-    <a href="https://barstockpro.com" style="display:inline-block;background:#0b1220;color:#38bdf8;font-size:12px;font-weight:700;padding:10px 22px;border-radius:999px;text-decoration:none;letter-spacing:0.03em">barstockpro.com</a>
-  </div>
-
-</div>
-</body></html>`;
+    <p style="margin:0;font-size:15px;color:#0f172a">Thank you,<br><strong>${escapeHtml(senderName || loc)}</strong></p>`
+});
 
     const payload = {
       from: `${loc} <reports@barstockpro.com>`,
