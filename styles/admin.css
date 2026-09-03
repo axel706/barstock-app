@@ -262,3 +262,25 @@ body.light .adm-user { border-color: rgba(15,23,42,.10); }
   .adm-loc-grid { grid-template-columns: 1fr; }
   .adm-req-actions .adm-input { flex: 1 1 100%; }
 }
+
+/* ── Vaciar la locación ───────────────────────────────────────────────
+   La lista de lo que hay dentro, antes de borrarlo. Se enseña para que
+   el número deje de ser abstracto: "3.357 conteos" pesa más que "todo". */
+.adm-wipe-grid{
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 6px; margin-top: 12px;
+}
+.adm-wipe-row{
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 7px 11px; border-radius: 9px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  font-size: 12px;
+}
+.adm-wipe-t{ color: var(--sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-wipe-n{ font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+body.light .adm-wipe-row{
+  background: rgba(15,23,42,.04);
+  border-color: rgba(15,23,42,.10);
+}

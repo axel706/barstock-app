@@ -17,7 +17,8 @@
     { id: 'requests', label: 'Requests',    icon: 'ti-inbox' },
     { id: 'create',   label: 'Create user', icon: 'ti-user-plus' },
     { id: 'access',   label: 'Edit access', icon: 'ti-key' },
-    { id: 'delete',   label: 'Delete user', icon: 'ti-user-minus' }
+    { id: 'delete',   label: 'Delete user', icon: 'ti-user-minus' },
+    { id: 'wipe',     label: 'Wipe data',   icon: 'ti-eraser' }
   ];
 
   let _tab = 'requests';
@@ -363,6 +364,157 @@
   }
 
   // ── Armado ───────────────────────────────────────────────────────────
+
+  // ── Vaciar la locación activa ────────────────────────────────────────
+  //
+  // Sin selector de locaciones a propósito. Actúa sobre la que está
+  // abierta y nada más: un desplegable aquí sería la forma más fácil de
+  // vaciar la equivocada, y esto no tiene deshacer.
+  //
+  // Tres cierres antes de borrar: se ve qué hay dentro, se descarga una
+  // copia, y hay que escribir el nombre exacto de la locación.
+  let _wipeSurvey = null;
+  let _wipeSaved = false;
+
+  function activeLoc() {
+    const name = (window.BARSTOCK_CONFIG || {}).LOCATION_NAME || '';
+    return _locations.find(l => l.name === name) || null;
+  }
+
+  async function viewWipe(el) {
+    const W = window.BarStockWipeLocation;
+    const loc = activeLoc();
+
+    if (!W) {
+      el.innerHTML = `<div class="adm-empty">The wipe module is not loaded.</div>`;
+      return;
+    }
+    if (!loc) {
+      el.innerHTML = `<div class="adm-empty">
+        Could not identify the open location. Switch location from the header and come back.
+      </div>`;
+      return;
+    }
+
+    el.innerHTML = `
+      <div class="adm-block">
+        <div class="adm-label">Open location</div>
+        <div class="adm-user">
+          <div>
+            <div class="adm-user-name">${esc(loc.name)}</div>
+            <div class="adm-dim">Only this one is touched. Every other location is left alone.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="adm-block">
+        <div class="adm-row">
+          <button class="adm-btn" id="admWipeScan">See what is inside</button>
+        </div>
+        <div id="admWipeMsg" class="adm-msg"></div>
+        <div id="admWipeList"></div>
+      </div>
+
+      <div id="admWipeBody"></div>`;
+
+    document.getElementById('admWipeScan').onclick = async () => {
+      msg('admWipeMsg', 'Reading…', 'info');
+      _wipeSurvey = await W.survey(loc.id);
+      msg('admWipeMsg', '', '');
+      drawWipe(loc);
+    };
+
+    if (_wipeSurvey) drawWipe(loc);
+  }
+
+  function drawWipe(loc) {
+    const list = document.getElementById('admWipeList');
+    const body = document.getElementById('admWipeBody');
+    if (!list || !body || !_wipeSurvey) return;
+
+    const withRows = _wipeSurvey.filter(r => r.n === null || r.n > 0);
+    const total = _wipeSurvey.reduce((s, r) => s + (r.n || 0), 0);
+
+    list.innerHTML = `
+      <div class="adm-wipe-grid">
+        ${withRows.map(r => `
+          <div class="adm-wipe-row">
+            <span class="adm-wipe-t">${esc(r.table)}</span>
+            <span class="adm-wipe-n">${r.n === null ? esc(r.note || '—') : r.n.toLocaleString()}</span>
+          </div>`).join('') || '<div class="adm-dim">Nothing stored for this location.</div>'}
+      </div>`;
+
+    body.innerHTML = `
+      <div class="adm-danger">
+        <div class="adm-danger-head">
+          <i class="ti ti-alert-triangle" aria-hidden="true"></i> This cannot be undone
+        </div>
+        <div class="adm-dim">
+          Erases the master, counts, orders, sales, reports, backups and corrections
+          of <b>${esc(loc.name)}</b> — about ${total.toLocaleString()} records. The location
+          itself stays, so user access is not lost. Download the copy first: if you skip
+          it there is no way back.
+        </div>
+
+        <div class="adm-row" style="margin-top:12px">
+          <button class="adm-btn" id="admWipeSave">
+            <i class="ti ti-download" aria-hidden="true"></i> Download a copy
+          </button>
+          <span id="admWipeSavedTag" class="adm-dim">${_wipeSaved ? 'Copy downloaded' : 'Not downloaded yet'}</span>
+        </div>
+
+        <div class="adm-row" style="margin-top:12px">
+          <input id="admWipeConfirm" class="adm-input" type="text"
+                 placeholder="Type ${esc(loc.name)} to confirm" autocomplete="off">
+          <button class="adm-btn danger" id="admWipeGo" ${_wipeSaved ? '' : 'disabled'}>Erase everything</button>
+        </div>
+        <div id="admWipeGoMsg" class="adm-msg"></div>
+      </div>`;
+
+    const W = window.BarStockWipeLocation;
+
+    document.getElementById('admWipeSave').onclick = async (ev) => {
+      const btn = ev.currentTarget;
+      btn.disabled = true; btn.textContent = 'Preparing…';
+      try {
+        const n = await W.download(loc);
+        _wipeSaved = true;
+        msg('admWipeGoMsg', `Copy downloaded — ${n.toLocaleString()} records.`, 'info');
+        drawWipe(loc);
+      } catch (e) {
+        msg('admWipeGoMsg', 'Could not build the copy: ' + (e.message || e), 'error');
+        btn.disabled = false; btn.textContent = 'Download a copy';
+      }
+    };
+
+    document.getElementById('admWipeGo').onclick = async (ev) => {
+      const typed = document.getElementById('admWipeConfirm').value.trim();
+      if (typed !== loc.name) {
+        return msg('admWipeGoMsg', 'The name does not match. Type it exactly as shown.', 'error');
+      }
+      if (!_wipeSaved) {
+        return msg('admWipeGoMsg', 'Download the copy first.', 'error');
+      }
+      const btn = ev.currentTarget;
+      btn.disabled = true;
+
+      const done = await W.wipe(loc, (t) => msg('admWipeGoMsg', 'Erasing ' + t + '…', 'info'));
+      W.wipeLocal();
+
+      const failed = done.filter(d => !d.ok);
+      if (failed.length) {
+        msg('admWipeGoMsg',
+          `Done with ${failed.length} table(s) refused: ${failed.map(f => f.table).join(', ')}. ` +
+          `They may not exist yet, or their rules do not allow deleting.`, 'error');
+      } else {
+        msg('admWipeGoMsg', `${esc(loc.name)} is empty. Reload the page.`, 'info');
+      }
+      _wipeSurvey = await W.survey(loc.id);
+      _wipeSaved = false;
+      drawWipe(loc);
+    };
+  }
+
   async function loadLocations() {
     const r = await callAdmin('listLocations');
     _locations = r.ok ? (r.locations || []) : [];
@@ -384,7 +536,8 @@
     if (_tab === 'requests')    await viewRequests(body);
     else if (_tab === 'create')  viewCreate(body);
     else if (_tab === 'access')  viewAccess(body);
-    else                         viewDelete(body);
+    else if (_tab === 'delete')  viewDelete(body);
+    else                    await viewWipe(body);
 
     // Las ubicaciones se marcan con delegacion: el contenido se redibuja
     // completo en cada cambio y los manejadores directos se perderian.
