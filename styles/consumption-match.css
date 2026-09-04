@@ -733,11 +733,41 @@ body.light .cm-row.sel{ background: rgba(2,132,199,.10); }
    que no pasaba. */
 body.light .cm-row-warn:hover{ background: rgba(245,158,11,.07); }
 
-/* El aviso de ventas y la semana de evento en claro. Los fondos
-   translúcidos sobre oscuro se vuelven casi blancos sobre claro: hay
-   que subir la opacidad para que el bloque siga leyéndose como bloque. */
-body.light .cm-step{ background: rgba(15,23,42,.045); }
+/* ── El aviso de ventas en modo claro ─────────────────────────────────
+   El ámbar #f59e0b es para fondo oscuro. Sobre claro, y encima con la
+   foto del bar asomando por el cristal de la tarjeta, el texto se queda
+   sin contraste: se lee sobre botellas, no sobre un aviso.
+
+   Dos cambios. El ámbar del texto baja a #92400e, que es el que ya usa
+   toda la app en claro —.breakthru, .status-review, .toorder-mid—. Y el
+   fondo deja de ser translúcido: un aviso que dice que las cifras no
+   son de fiar tiene que tapar lo que hay detrás, no dejarlo pasar. */
+body.light .cm-sales.warn{
+  background: #fffbeb;
+  border-color: #fcd34d;
+}
+body.light .cm-sales-head{ color: #92400e; }
+body.light .cm-sales-sub{ color: #78350f; }
+body.light .cm-sales-sub b{ color: #451a03; }
+
+body.light .cm-step{
+  background: #ffffff;
+  border: 1px solid rgba(146,64,14,.16);
+}
+body.light .cm-step-n.todo{ background: rgba(146,64,14,.14); color: #92400e; }
+body.light .cm-step-n.done{ background: rgba(21,128,61,.14); color: #15803d; }
+body.light .cm-step-l{ color: #451a03; }
+body.light .cm-step-f{ color: #92400e; }
+body.light .cm-step-rp{ color: #92400e; }
+
 body.light .cm-sales.ok{ background: rgba(15,23,42,.035); border-color: rgba(15,23,42,.12); }
+
+/* La etiqueta nunca tuvo versión clara: usaba el mismo #f59e0b en los
+   dos modos, y en claro sobre blanco se leía como un borrón. */
+body.light .cm-tag{ background: #fef3c7; color: #92400e; }
+body.light .cm-ri.warn{ color: #b45309; }
+body.light .cm-row-warn .cm-c1{ color: #78350f; }
+
 body.light .cm-evt{ background: rgba(15,23,42,.045); border-color: rgba(15,23,42,.14); }
 body.light .cm-evt.on{ background: rgba(168,85,247,.10); border-color: rgba(168,85,247,.45); }
 body.light .cm-evt.on .cm-evt-l{ color: #7e22ce; }
