@@ -122,7 +122,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260903-223924</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260903-224723</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5252,24 +5252,25 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
   // ── Que pastilla se enciende ──────────────────────────────────────
   //
-  // Se lee de data-section, no de un array de indices. El array que
-  // habia aqui numeraba las pastillas desde 1 cuando el DOM las cuenta
-  // desde 0, y ademas conservaba un hueco de una pastilla ya retirada:
-  // Pour-IQ y Admin apuntaban a posiciones que no existen y no se
-  // encendian nunca. Un fallo silencioso, porque una pestana que no se
-  // resalta no parece rota, solo parece que no estas ahi.
+  // La seccion abierta lleva .bs-active-section. Eso es todo: se
+  // pregunta cual la tiene y se enciende su pastilla.
+  //
+  // Antes esto se decidia MIDIENDO donde caia cada seccion en la
+  // pantalla, como si se pudiera bajar por todas de una en una. Pero
+  // app.css:2402 esconde todas las .section-card sin condicion y solo
+  // enseña la activa, asi que las demas median top: 0 — y cero siempre
+  // pasa la prueba de "esta por encima de la cabecera". Ganaba la ultima
+  // pastilla oculta de la fila: estando en Admin se encendia Pour-IQ, y
+  // estando en cualquier otra se encendia Admin.
+  //
+  // Ademas solo se recalculaba al hacer scroll. Entrar en una seccion
+  // corta, sin barra de desplazamiento, dejaba encendida la anterior.
   function updateActiveTab() {
-    const header = document.querySelector('.bs-header');
-    if (!header) return;
-    const headerH = header.offsetHeight;
-    const tabs = [...document.querySelectorAll('.bs-nav-tab')];
-
-    let active = tabs[0] || null;
-    for (const btn of tabs) {
-      const el = document.getElementById(btn.dataset.section + 'Section');
-      if (el && el.getBoundingClientRect().top <= headerH + 32) active = btn;
-    }
-    tabs.forEach(btn => btn.classList.toggle('active', btn === active));
+    const open = document.querySelector('.card.section-card.bs-active-section');
+    document.querySelectorAll('.bs-nav-tab').forEach(btn => {
+      btn.classList.toggle('active',
+        !!open && open.id === btn.dataset.section + 'Section');
+    });
   }
 
   // Collapse on scroll
@@ -5290,6 +5291,8 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     if (name === 'consumption' && window.BarStockConsumptionMatch) {
       window.BarStockConsumptionMatch.render();
     }
+
+    updateActiveTab();
     if (typeof setSectionCollapsed === 'function') setSectionCollapsed(name, false);
     const backBtn = document.getElementById('bsNavBackBtn');
     if (backBtn) { backBtn.style.display = 'inline-flex'; backBtn.onclick = bsCloseSection; }
@@ -5321,6 +5324,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     document.querySelectorAll('.card.section-card').forEach(el => el.classList.remove('bs-active-section'));
     const backBtn = document.getElementById('bsNavBackBtn');
     if (backBtn) backBtn.style.display = 'none';
+    updateActiveTab();   // en la portada no hay seccion abierta: ninguna encendida
     window.scrollTo({top:0, behavior:'smooth'});
   };
 
