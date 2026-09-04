@@ -1,58 +1,20 @@
-/* Theoretical Usage Section */
-.tu-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
-.tu-week-list{display:flex;flex-direction:column;gap:0}
-.tu-week-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid rgba(255,255,255,.06);cursor:pointer;transition:background .15s}
-.tu-week-row:last-child{border-bottom:none}
-.tu-week-row:hover{background:rgba(255,255,255,.03);border-radius:8px}
-body.light .tu-week-row{border-bottom-color:rgba(15,23,42,.08)}
-body.light .tu-week-row:hover{background:rgba(15,23,42,.03)}
-.tu-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.tu-dot-normal{background:#378ADD}
-.tu-dot-event{background:#EF9F27}
-.tu-dot-nodata{background:#B4B2A9}
-.tu-week-label{font-size:13px;font-weight:600;color:var(--text);min-width:90px}
-.tu-week-tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px}
-.tu-tag-normal{background:#E6F1FB;color:#0C447C}
-.tu-tag-event{background:#FAEEDA;color:#633806}
-.tu-tag-nodata{background:#F1EFE8;color:#5F5E5A}
-.tu-week-meta{font-size:12px;color:var(--sub);margin-left:auto}
-.tu-event-toggle{font-size:11px;padding:2px 8px;border-radius:4px;border:0.5px solid rgba(255,255,255,.15);background:transparent;color:var(--sub);cursor:pointer;margin-left:8px}
-body.light .tu-event-toggle{border-color:rgba(15,23,42,.15)}
-.tu-event-toggle:hover{background:rgba(255,255,255,.08)}
-.tu-upload-btn{font-size:11px;padding:2px 8px;border-radius:4px;border:0.5px solid rgba(56,189,248,.4);background:transparent;color:#38bdf8;cursor:pointer}
-.tu-upload-btn:hover{background:rgba(56,189,248,.08)}
-.tu-week-detail{display:none;padding:10px 0 10px 20px}
-.tu-week-detail.open{display:block}
-.tu-detail-table{width:100%;border-collapse:collapse;font-size:12px}
-.tu-detail-table th{font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--sub);padding:5px 8px;border-bottom:0.5px solid rgba(255,255,255,.08);text-align:left}
-body.light .tu-detail-table th{border-bottom-color:rgba(15,23,42,.08)}
-.tu-detail-table td{padding:5px 8px;border-bottom:0.5px solid rgba(255,255,255,.04);color:var(--text)}
-body.light .tu-detail-table td{border-bottom-color:rgba(15,23,42,.04)}
-.tu-detail-table tr:last-child td{border-bottom:none}
-.tu-variance-pos{color:#D85A30;font-weight:700}
-.tu-variance-neg{color:#1D9E75;font-weight:700}
-.tu-variance-ok{color:var(--sub)}
-.tu-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
-.tu-metric{background:rgba(255,255,255,.04);border-radius:10px;padding:12px 14px;border:1px solid rgba(255,255,255,.08)}
-body.light .tu-metric{background:rgba(255,255,255,.96);border-color:rgba(15,23,42,.08);box-shadow:0 4px 12px rgba(15,23,42,.08)}
-.tu-metric-val{font-size:22px;font-weight:700;color:var(--text);line-height:1.2}
-body.light .tu-metric-val{color:#0f172a}
-.tu-metric-lbl{font-size:11px;color:var(--sub);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em}
-body.light .tu-metric-lbl{color:#475569}
-.tu-empty{font-size:13px;color:var(--sub);padding:20px 0;text-align:center}
-.tu-mode-toggle{display:flex;background:var(--muted);border-radius:8px;padding:3px;gap:2px}
-.tu-mode-btn{padding:4px 12px;border-radius:6px;border:none;font-size:12px;font-weight:500;cursor:pointer;background:transparent;color:var(--sub);transition:all .15s;display:flex;align-items:center;gap:5px}
-.tu-mode-btn.active{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.15)}
-body.light .tu-mode-btn.active{background:#fff;color:#0f172a}
+/* ── Lo que sobrevivió a Theoretical Usage ────────────────────────────
+   Esta hoja vestía una pantalla que ya no existe: la lista de semanas,
+   la tabla de detalle, las tres tarjetas de métricas y el conmutador
+   Review/Report. Consumption Match hace ese trabajo mejor y con su
+   propio CSS.
+
+   Queda una sola cosa, y no es de aquí: `.tu-comment-btn` es el botón
+   de icono plano —transparente, gris, que se enciende al pasar por
+   encima— y lo usa la etiqueta de categoría de INVENTARIO. Nació aquí y
+   se copió allí, así que borrar el archivo entero habría dejado ese
+   botón sin estilo, en una pantalla que nadie estaba tocando.
+
+   El nombre se conserva a propósito. Renombrarlo obligaría a tocar
+   app.css, donde está inscrito en la lista de excepciones de la regla
+   `border-radius:999px !important` que se aplica a todo <button>; un
+   fallo ahí devuelve las cápsulas blancas que ya costaron una tarde. */
 
 .tu-comment-btn{background:transparent;border:none;cursor:pointer;color:var(--sub);padding:2px 4px;border-radius:4px;font-size:14px;opacity:0.4;transition:opacity .15s,color .15s}
 .tu-comment-btn:hover{opacity:1;color:var(--accent)}
 .tu-comment-btn.has-comment{opacity:1;color:var(--accent)}
-.tu-comment-btn.tu-excl-active{opacity:1;color:#D85A30}
-.tu-comment-btn.tu-adj-active{opacity:1;color:#0ea5e9}
-.tu-excl-section{border:0.5px solid var(--border);border-radius:8px;overflow:hidden}
-.tu-excl-header{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-size:13px;font-weight:500;color:var(--sub);background:var(--muted)}
-.tu-excl-header:hover{color:var(--text)}
-.tu-excl-chevron{transition:transform .2s}
-.tu-excl-chevron.rotated{transform:rotate(180deg)}
-.tu-excluded-row td{opacity:.4}

@@ -210,6 +210,12 @@
   // una recarga.
   const _cache = new Map();   // week_start -> { groups, total }
 
+  // Qué archivos de ventas tiene el ciclo abierto: { liquor, wine,
+  // legacy, total }. Se rellena al abrirlo y se vacía al cargar uno.
+  let _sales = null;
+  let _uploading = '';        // 'liquor' | 'wine' mientras sube
+  let _excl = new Set();      // artículos excluidos del ciclo abierto
+
   // ── Calendario ───────────────────────────────────────────────────────
   //
   // Mismo gesto que la lista de semanas de Usage —año arriba, meses
@@ -349,10 +355,15 @@
     const rows = shown.map(w => {
       const c = _cache.get(w.week_start);
       const on = w.week_start === _week;
+      // La marca se pone dentro del ciclo, pero se VE desde fuera. El
+      // sentido de marcar Nochevieja es poder mirar el año y entender por
+      // qué esa semana se sale de la gráfica; escondida dentro no
+      // explicaría nada.
+      const evt = !!w.is_event_week;
       return `
-        <tr class="cm-row ${on ? 'sel' : ''}"
+        <tr class="cm-row ${on ? 'sel' : ''} ${evt ? 'cm-row-evt' : ''}"
             onclick="window.BarStockConsumptionMatch.openCycle('${w.week_start}')">
-          <td class="cm-c1"><i class="ti ti-calendar-week cm-ri" aria-hidden="true"></i> Week of ${esc(dayLabel(w.week_start))}</td>
+          <td class="cm-c1"><i class="ti ti-calendar-week cm-ri${evt ? ' evt' : ''}" aria-hidden="true"></i> Week of ${esc(dayLabel(w.week_start))}${evt ? ' <span class="cm-evt-tag">EVENT</span>' : ''}</td>
           <td class="num">${w.itemCount || '—'}</td>
           <td class="num">${c ? c.groups.filter(g => g.withSales).length : '—'}</td>
           <td class="num money">${c ? `<b>${money(c.total)}</b>` : '<span class="muted">tap to open</span>'}</td>
@@ -377,14 +388,18 @@
       // dos ficheros separados, vino y licor, asi que olvidar uno deja
       // mudas todas sus categorias de golpe.
       if (!g.withSales) {
+        // Se abre igual que las demás. Antes no: la fila no llevaba
+        // onclick y los artículos que estaban esperando un dato quedaban
+        // fuera de alcance justo cuando eran los únicos accionables.
         return `
-          <tr class="cm-row cm-row-warn">
+          <tr class="cm-row cm-row-warn"
+              onclick="window.BarStockConsumptionMatch.openCat(${i})">
             <td class="cm-c1">
               <i class="ti ti-alert-triangle cm-ri warn" aria-hidden="true"></i>
-              ${esc(g.cat)} <span class="cm-tag">no sales file</span>
+              ${esc(g.cat)} <span class="cm-tag">waiting for sales</span>
             </td>
             <td class="num muted cm-c-sold">—</td>
-            <td class="num muted cm-c-used">—</td>
+            <td class="num cm-c-used">${btl(g.unmatched.reduce((s, u) => s + u.used, 0))}</td>
             <td class="num muted">${g.noSales} item${g.noSales === 1 ? '' : 's'}</td>
             <td class="num muted">—</td>
           </tr>`;
@@ -565,6 +580,7 @@
                     onclick="window.BarStockConsumptionMatch.fixCount()">
                 <i class="ti ti-package" aria-hidden="true"></i> Count
               </span>
+              ${exclBtn(u.item)}
             </div>
           </div>`;
       }
@@ -615,6 +631,7 @@
                   onclick="window.BarStockConsumptionMatch.fixCount()">
               <i class="ti ti-package" aria-hidden="true"></i> Count
             </span>
+            ${exclBtn(it.item)}
           </div>
         </div>`;
     }
@@ -652,10 +669,11 @@
       const total = totalOf(_groups);
       const noSales = _groups.reduce((s, g) => s + g.noSales, 0);
       const worst = _groups.find(g => g.withSales && g.loss > 0);
+      const isEvt = !!window.BarStockTheoreticalUsage?.isEventWeek?.(_week);
       return `
         <div class="inv-panel-header">
           <div class="inv-panel-name-wrap"><span class="inv-panel-name">Week of ${esc(dayLabel(_week))}</span></div>
-          <div class="inv-panel-meta">Closed cycle</div>
+          <div class="inv-panel-meta">Closed cycle${isEvt ? ' · <span class="cm-evt-tag">Event week</span>' : ''}</div>
         </div>
         <div class="inv-panel-section">
           <div class="inv-panel-grid">
@@ -672,7 +690,7 @@
             : `<div class="cm-panel-note">Nothing over-poured this cycle.</div>`}
         </div>
         <div class="inv-panel-actions-section">
-          <div class="cm-panel-note">Pick a category to see its items.</div>
+          ${eventToggle()}
         </div>`;
     }
 
@@ -748,6 +766,240 @@
     </div>`;
   }
 
+  // ── Excluir un artículo del ciclo ────────────────────────────────────
+  //
+  // Vivía en la pantalla de Usage y era el único sitio desde donde se
+  // podía tocar. Sin traerlo, todo lo ya excluido habría desaparecido de
+  // esta pantalla para siempre y sin aviso: `group()` los salta en
+  // silencio, así que ni siquiera se notaría que faltan.
+  //
+  // Sirve para lo que el bar no vende — la botella de detrás de la barra
+  // que solo se usa para cocinar, el regalo del proveedor— y que si no
+  // aparece cada semana como una pérdida que nadie va a explicar.
+  function exclBtn(item) {
+    const on = _excl.has(item);
+    return `<span class="cm-btn ghost cm-fixbtn ${on ? 'cm-excl-on' : ''}" role="button" tabindex="0"
+                  data-item="${esc(item)}"
+                  title="${on ? 'Excluded from this cycle — click to bring it back' : 'Exclude from this cycle'}"
+                  onclick="window.BarStockConsumptionMatch.toggleExcl(this.dataset.item)">
+      <i class="ti ti-eye-off" aria-hidden="true"></i> ${on ? 'Excluded' : 'Exclude'}
+    </span>`;
+  }
+
+  async function toggleExcl(item) {
+    const TU = window.BarStockTheoreticalUsage;
+    if (!TU?.toggleItemExclusion || !_week || !item) return;
+    const week = _week;
+    const now = await TU.toggleItemExclusion(week, item);
+    if (_week !== week) return;
+    if (now) _excl.add(item); else _excl.delete(item);
+
+    // Excluir cambia QUÉ entra en el cálculo, no solo cómo se ve: el
+    // ciclo entero se recalcula. Al volver, el artículo excluido ya no
+    // está en ninguna lista, así que el panel sube a la categoría.
+    _cache.delete(week);
+    if (!await ensureCycle(week)) return;
+    const cat = _cat >= 0 ? _groups[_cat]?.cat : null;
+    _cat = cat ? _groups.findIndex(g => g.cat === cat) : -1;
+    _item = -1; _unItem = -1;
+    if (_cat < 0) _view = 'cats';
+    if (typeof setStatus === 'function') {
+      setStatus(now ? `${item} excluded from this cycle.` : `${item} is back in this cycle.`);
+    }
+    paint();
+  }
+
+  // ── Semana de evento ─────────────────────────────────────────────────
+  //
+  // No es una etiqueta: `par-intelligence` excluye estas semanas al
+  // calcular los pares. Una Nochevieja contada como una semana normal
+  // sube el par de medio bar durante meses, y el error no se ve en
+  // ninguna pantalla — solo en pedidos demasiado grandes.
+  //
+  // El interruptor vive en el panel del ciclo porque describe el ciclo
+  // entero. En la fila de migas chocaría con "Send to report", y un
+  // interruptor por fila en una lista de cincuenta semanas es ruido
+  // dentro de otra cosa clickeable.
+  function eventToggle() {
+    const TU = window.BarStockTheoreticalUsage;
+    const on = !!TU?.isEventWeek?.(_week);
+    return `
+      <div class="cm-evt ${on ? 'on' : ''}" role="button" tabindex="0"
+           onclick="window.BarStockConsumptionMatch.toggleEvent()">
+        <i class="ti ti-calendar-event" aria-hidden="true"></i>
+        <span class="cm-evt-l">Event week</span>
+        <span class="cm-evt-sw"><i></i></span>
+      </div>
+      <p class="cm-panel-note">${on
+        ? 'Excluded from par calculations.'
+        : 'Holidays and private parties skew the pars. Mark the week and it stops counting toward them.'}</p>`;
+  }
+
+  async function toggleEvent() {
+    const TU = window.BarStockTheoreticalUsage;
+    if (!TU?.setEventWeek || !_week) return;
+    const week = _week;
+    const next = !TU.isEventWeek(week);
+    const ok = await TU.setEventWeek(week, next);
+    if (!ok) { alert('Could not save that. Try again.'); return; }
+    // La lista de ciclos enseña la marca, así que se repinta también.
+    const w = _weeks.find(x => x.week_start === week);
+    if (w) w.is_event_week = next;
+    if (typeof setStatus === 'function') {
+      setStatus(next ? 'Marked as an event week.' : 'No longer an event week.');
+    }
+    paint();
+  }
+
+  // ── El aviso de ventas ───────────────────────────────────────────────
+  //
+  // Las ventas de un ciclo llegan en DOS archivos —licor y vino— y salen
+  // de informes distintos del POS. Antes se cargaban desde una pantalla
+  // aparte, contra "la semana que tuvieras abierta allí", y el fallo caro
+  // era subirlos con otra semana abierta: las ventas acababan en el ciclo
+  // equivocado y aquí no aparecía nada, sin explicación.
+  //
+  // Ahora la carga vive DENTRO del ciclo. No hay semana que elegir: es
+  // esta, la que estás mirando.
+  //
+  // ── Por qué es un aviso y no una barra de herramientas ───────────────
+  //
+  // Porque no es una herramienta que se usa cuando apetece: es el estado
+  // del ciclo. Sin el archivo, cada artículo se lee como pérdida total
+  // —no como dato que falta— y eso parece un problema de inventario. El
+  // aviso existe para que nadie mire esas cifras creyéndolas.
+  //
+  // Los ciclos anteriores a la migración 009 tienen ventas sin tipo
+  // (`legacy`). A esos no se les monta el aviso: dirían que falta un
+  // archivo que en realidad está, y son datos que ya nadie va a tocar.
+  function salesAlert() {
+    if (!_sales) return '';
+    const { liquor, wine, legacy, total } = _sales;
+
+    // Cargado antes de que existiera el tipo: se dice lo que se sabe y
+    // no se inventa lo que no.
+    if (legacy > 0 && !liquor && !wine) {
+      return `<div class="cm-sales ok">
+        <i class="ti ti-check cm-sales-ico" aria-hidden="true"></i>
+        <span class="cm-sales-line">Sales loaded · ${legacy} item${legacy === 1 ? '' : 's'}</span>
+        ${replaceBtns()}
+      </div>`;
+    }
+
+    const done = (k) => !!_sales[k];
+    const both = done('liquor') && done('wine');
+
+    if (both) {
+      const f = [liquor.file, wine.file].filter(Boolean).map(esc).join(', ');
+      return `<div class="cm-sales ok">
+        <i class="ti ti-check cm-sales-ico" aria-hidden="true"></i>
+        <span class="cm-sales-line">Liquor and wine loaded${f ? ' · ' + f : ''}</span>
+        ${replaceBtns()}
+      </div>`;
+    }
+
+    const none = !done('liquor') && !done('wine') && !total;
+    const title = none
+      ? 'Sold is missing for this cycle'
+      : `${done('liquor') ? 'Wine' : 'Liquor'} sales are still missing`;
+    const text = none
+      ? `<b>Poured</b> is calculated from your counts and is correct.
+         <b>Sold</b> comes from the POS files — until you load them, every
+         item reads as a total loss.`
+      : `${done('liquor') ? 'Liquor' : 'Wine'} is complete.
+         ${done('liquor') ? 'Wine' : 'Liquor'} items will read as a total
+         loss until you load their file.`;
+
+    return `<div class="cm-sales warn">
+      <div class="cm-sales-head">
+        <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+        <span>${esc(title)}</span>
+      </div>
+      <p class="cm-sales-sub">${text}</p>
+      ${step('liquor', 'Liquor sales', 1)}
+      ${step('wine', 'Wine sales', 2)}
+    </div>`;
+  }
+
+  function step(kind, label, n) {
+    const s = _sales && _sales[kind];
+    const busy = _uploading === kind;
+    if (s) {
+      return `<div class="cm-step">
+        <span class="cm-step-n done"><i class="ti ti-check" aria-hidden="true"></i></span>
+        <span class="cm-step-l">${esc(label)}
+          <span class="cm-step-f">${esc(s.file || 'loaded')} · ${s.lines} line${s.lines === 1 ? '' : 's'}</span>
+        </span>
+        <span class="cm-step-rp" role="button" tabindex="0"
+              onclick="window.BarStockConsumptionMatch.pickFile('${kind}')">Replace</span>
+      </div>`;
+    }
+    return `<div class="cm-step">
+      <span class="cm-step-n todo">${n}</span>
+      <span class="cm-step-l">${esc(label)}</span>
+      <span class="cm-btn primary cm-step-btn ${busy ? 'busy' : ''}" role="button" tabindex="0"
+            onclick="window.BarStockConsumptionMatch.pickFile('${kind}')">
+        ${busy ? 'Loading…' : 'Load CSV'}
+      </span>
+    </div>`;
+  }
+
+  function replaceBtns() {
+    return `<span class="cm-sales-rp">
+      <span role="button" tabindex="0" onclick="window.BarStockConsumptionMatch.pickFile('liquor')">Liquor</span>
+      <span role="button" tabindex="0" onclick="window.BarStockConsumptionMatch.pickFile('wine')">Wine</span>
+    </span>`;
+  }
+
+  // ── Elegir el archivo ────────────────────────────────────────────────
+  //
+  // Un <input type="file"> creado al vuelo y no uno fijo en el HTML: el
+  // fijo hay que vaciarlo a mano después de cada uso, porque si eliges el
+  // mismo archivo dos veces seguidas el navegador no dispara `change` —
+  // el valor no ha cambiado— y el segundo intento no hace nada sin decir
+  // por qué. Uno nuevo cada vez no tiene ese problema.
+  function pickFile(kind) {
+    if (!_week || _uploading) return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv,text/csv';
+    input.style.display = 'none';
+    input.addEventListener('change', async () => {
+      const f = input.files && input.files[0];
+      input.remove();
+      if (f) await loadSalesFile(kind, f);
+    });
+    document.body.appendChild(input);
+    input.click();
+  }
+
+  async function loadSalesFile(kind, file) {
+    const TU = window.BarStockTheoreticalUsage;
+    if (!TU?.uploadSales || !_week) return;
+
+    const week = _week;          // se fija AQUÍ: la carga tarda, y si
+    _uploading = kind;           // alguien navega mientras tanto, el
+    paint();                     // archivo debe ir al ciclo que eligió.
+
+    try {
+      const r = await TU.uploadSales(week, file, kind);
+      // El ciclo se recalcula entero: las ventas nuevas cambian el sold,
+      // y con él la varianza, la pérdida y el orden de la tabla.
+      _cache.delete(week);
+      _sales = await TU.salesStatus(week);
+      if (_week === week) await ensureCycle(week);
+      if (typeof setStatus === 'function') {
+        setStatus(`${kind === 'wine' ? 'Wine' : 'Liquor'} sales loaded: ${r.items} items.`);
+      }
+    } catch (err) {
+      console.error('[consumption] carga de ventas', err);
+      alert(err.message || String(err));
+    } finally {
+      _uploading = '';
+      paint();
+    }
+  }
+
   // ── Barra de selección ───────────────────────────────────────────────
   //
   // "Send to report" solo existe cuando hay algo marcado, y "View report"
@@ -809,27 +1061,22 @@
         ? `poured beyond sales in ${esc(_groups[_cat].cat)}, at cost`
         : 'poured beyond sales, at cost';
       const anySales = _groups.some(g => g.withSales > 0);
-      // Sin NINGUNA venta en todo el ciclo no hay nada que comparar, y la
-      // causa casi siempre es la misma: los ficheros se subieron estando
-      // abierta otra semana. Se dice donde, no solo que falta.
+      // Sin NINGUNA venta no hay gráfica que pintar: dos barras a cero no
+      // son una comparación. En su lugar manda el aviso, que es lo único
+      // accionable, y el total sale suelto encima — vale cero de todas
+      // formas.
       //
-      // Con gráfica, el total va en su cabecera. Sin gráfica no hay marco
-      // donde meterlo, así que sale suelto encima del aviso — que es
-      // exactamente el caso en el que el número vale cero y lo que
-      // importa es el aviso.
+      // El aviso solo en el nivel del ciclo. Dentro de una categoría ya
+      // se ha visto arriba, y repetirlo en cada nivel lo convierte en
+      // ruido que se aprende a saltar.
+      const aviso = _view === 'cats' ? salesAlert() : '';
       head = anySales
-        ? chart(_groups, { big: total, sub })
+        ? aviso + chart(_groups, { big: total, sub })
         : `
           <div class="cm-total cm-total-loose">
             <b>${money(total)}</b><span>${sub}</span>
           </div>
-          <div class="cm-banner">
-            <i class="ti ti-alert-triangle" aria-hidden="true"></i>
-            <div><b>No sales data for this cycle.</b>
-              The files go in <b>Usage → week of ${esc(dayLabel(_week))}</b>,
-              and there are two of them: liquor and wine. Loading them into
-              a different week leaves this screen empty.</div>
-          </div>`;
+          ${aviso}`;
       body = _view === 'cats' ? catTable() : itemTable();
     }
 
@@ -907,6 +1154,24 @@
     }
     if (!await ensureCycle(week)) return;
     _week = week; _view = 'cats'; _cat = -1; _item = -1; _unItem = -1;
+
+    // Qué archivos de ventas tiene, y qué artículos están excluidos. Las
+    // dos cosas son de ESTE ciclo y las dos se piden en paralelo: son dos
+    // viajes a la nube que no dependen el uno del otro, y encadenarlos
+    // solo sumaría esperas.
+    //
+    // Si alguna falla no se aborta la apertura del ciclo: se abre sin
+    // aviso y sin marcas de exclusión, que es mucho mejor que no abrirse.
+    _sales = null; _excl = new Set();
+    const TU = window.BarStockTheoreticalUsage;
+    Promise.all([
+      TU?.salesStatus ? TU.salesStatus(week).catch(() => null) : null,
+      TU?.exclusionsFor ? TU.exclusionsFor(week).catch(() => new Set()) : new Set()
+    ]).then(([s, e]) => {
+      if (_week !== week) return;    // ya se cambió de ciclo mientras tanto
+      _sales = s; _excl = e || new Set();
+      paint();
+    });
 
     // La selección y las notas son de ESTE ciclo. Cambiar de semana sin
     // recargarlas mezclaría en un mismo reporte artículos de periodos
@@ -1065,6 +1330,7 @@
     openCycle, openCat, openItem, openUnmatched,
     goCycles, goCats, goReport, setYear, setMonth,
     pick, pickAll, sendToReport, clearPending, fixSales, fixUnmatched, fixCount,
+    pickFile, toggleExcl, toggleEvent,
     // El reporte necesita los grupos del ciclo abierto para recalcular
     // sus totales con solo los artículos elegidos.
     groups: () => _groups,

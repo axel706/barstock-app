@@ -155,27 +155,15 @@
   }
 
   // ── Usage ──────────────────────────────────────────────────────────
-  // Sale del mismo mapa de Pour-IQ, que ya trae el cruce de uso contra
-  // venta. Cero llamadas extra a la nube.
-  function usage() {
-    const map = window.parAdjustments;
-    if (!map || !map.size) return put('theoretical', '');
-
-    let sum = 0, n = 0, weeks = 0;
-    map.forEach(par => {
-      if (par.normalWeeks) weeks = Math.max(weeks, par.normalWeeks);
-      if (par.shrinkPct !== null && par.shrinkPct !== undefined) { sum += par.shrinkPct; n++; }
-    });
-
-    if (!n) {
-      return put('theoretical', card('Weeks', weeks || '—', 'of data'));
-    }
-
-    const avg = (sum / n) * 100;
-    put('theoretical',
-      card('Unsold', avg.toFixed(1) + '%', 'poured, not sold', avg >= 15 ? '#f87171' : avg >= 8 ? '#fbbf24' : '#4ade80') +
-      card('Weeks', weeks || '—', 'of data'));
-  }
+  //
+  // Retirada con su tarjeta. Enseñaba el porcentaje de merma medio y las
+  // semanas de historia en la portada de Theoretical Usage; esa pantalla
+  // ya no existe y `fgStats-theoretical` tampoco.
+  //
+  // No se sustituye por nada: Consumption Match tiene su propia tarjeta,
+  // con la gráfica del ciclo, y las dos decían lo mismo con cifras
+  // distintas. Dos números que miden lo mismo y no coinciden es peor que
+  // uno solo.
 
   // ── Costs ──────────────────────────────────────────────────────────
   // Muestra el COGS de wine y liquor de la SEMANA PASADA en concreto, no
@@ -361,7 +349,7 @@
     try { history();   } catch (e) {}
     try { noMatch();   } catch (e) {}
     try { pourIq();    } catch (e) {}
-    try { usage();     } catch (e) {}
+
     try { costs();     } catch (e) {}
     try { consumption(); } catch (e) {}
   }

@@ -596,6 +596,113 @@
 .cm-empty{ font-size: 14px; color: var(--sub); text-align: center; padding: 30px 10px; line-height: 1.6; }
 .cm-empty b{ color: var(--text); }
 
+/* ── El aviso de ventas ───────────────────────────────────────────────
+   Dos estados con peso muy distinto a propósito. Cuando falta un
+   archivo ocupa: las cifras de debajo no son de fiar y hay que
+   estorbar. Cuando está todo, es una línea gris que solo dice de dónde
+   salieron los números.
+
+   Va ANTES de la gráfica, no después: un aviso bajo el contenido que
+   invalida se lee cuando ya te has creído las cifras.               */
+.cm-sales{ border-radius: 14px; margin: 0 0 12px; }
+
+.cm-sales.warn{
+  padding: 15px 17px;
+  background: rgba(245,158,11,.10);
+  border: 1px solid rgba(245,158,11,.30);
+}
+.cm-sales-head{
+  display: flex; align-items: center; gap: 8px;
+  font-size: 14px; font-weight: 700; color: #f59e0b; margin-bottom: 5px;
+}
+.cm-sales-head i{ font-size: 16px; }
+.cm-sales-sub{
+  margin: 0 0 13px; font-size: 13px; color: var(--sub); line-height: 1.6;
+}
+.cm-sales-sub b{ color: var(--text); }
+
+.cm-sales.ok{
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: rgba(148,163,184,.07);
+  border: 1px solid rgba(148,163,184,.16);
+  font-size: 12px; color: var(--sub);
+}
+.cm-sales-ico{ font-size: 14px; color: #22c55e; flex: 0 0 auto; }
+.cm-sales-line{ flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cm-sales-rp{ display: flex; gap: 10px; flex: 0 0 auto; }
+.cm-sales-rp span{ font-size: 11px; color: var(--sub); cursor: pointer; }
+.cm-sales-rp span:hover{ color: #38bdf8; }
+
+/* ── Los pasos ── */
+.cm-step{
+  display: flex; align-items: center; gap: 11px;
+  padding: 9px 12px; margin-bottom: 7px;
+  border-radius: 10px;
+  background: rgba(2,6,23,.28);
+}
+.cm-step:last-child{ margin-bottom: 0; }
+.cm-step-n{
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; flex: 0 0 auto;
+}
+.cm-step-n.todo{ background: rgba(245,158,11,.20); color: #f59e0b; }
+.cm-step-n.done{ background: rgba(34,197,94,.20); color: #4ade80; }
+.cm-step-n.done i{ font-size: 12px; }
+.cm-step-l{ flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: var(--text); }
+.cm-step-f{
+  display: block; margin-top: 1px;
+  font-size: 11px; font-weight: 400; color: var(--sub);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cm-step-btn{ padding: 7px 15px; font-size: 12px; border-radius: 8px; flex: 0 0 auto; }
+.cm-step-btn.busy{ opacity: .6; pointer-events: none; }
+.cm-step-rp{ font-size: 11px; color: var(--sub); cursor: pointer; flex: 0 0 auto; }
+.cm-step-rp:hover{ color: #38bdf8; }
+
+/* ── Semana de evento ─────────────────────────────────────────────────
+   Morado y no ámbar: el ámbar de esta pantalla ya significa "falta un
+   dato", y una semana de evento no es un problema — es una nota. */
+.cm-evt{
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 11px; border-radius: 10px; cursor: pointer;
+  background: rgba(148,163,184,.07);
+  border: 1px solid rgba(148,163,184,.14);
+  transition: all var(--dur-fast, .16s) ease;
+}
+.cm-evt i{ font-size: 14px; color: var(--sub); }
+.cm-evt-l{ flex: 1; font-size: 12px; font-weight: 600; color: var(--sub); }
+.cm-evt-sw{
+  width: 32px; height: 18px; border-radius: 9px; flex: 0 0 auto;
+  background: rgba(148,163,184,.25); position: relative;
+  transition: background var(--dur-fast, .16s) ease;
+}
+.cm-evt-sw i{
+  position: absolute; top: 2px; left: 2px;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #fff; transition: left var(--dur-fast, .16s) ease;
+}
+.cm-evt.on{ background: rgba(168,85,247,.13); border-color: rgba(168,85,247,.40); }
+.cm-evt.on i{ color: #c084fc; }
+.cm-evt.on .cm-evt-l{ color: #e9d5ff; }
+.cm-evt.on .cm-evt-sw{ background: #a855f7; }
+.cm-evt.on .cm-evt-sw i{ left: 16px; }
+
+.cm-evt-tag{
+  font-size: 9px; font-weight: 800; letter-spacing: .05em;
+  color: #c084fc; padding: 1px 5px; border-radius: 4px;
+  background: rgba(168,85,247,.15);
+}
+.cm-row-evt td:first-child{ box-shadow: inset 3px 0 0 #a855f7; }
+.cm-ri.evt{ color: #a855f7; }
+
+/* Excluido: el botón queda encendido para que se lea como un estado y
+   no como algo que se puede volver a pulsar sin consecuencia. */
+.cm-btn.cm-excl-on{
+  border-color: rgba(168,85,247,.45); color: #c084fc;
+}
+
 /* ── Modo claro ───────────────────────────────────────────────────────
    Los bordes pasan a tinta. Sin esto los separadores de tabla y los
    marcos del calendario desaparecen sobre el fondo claro — el mismo
@@ -621,7 +728,22 @@ body.light .cm-table th, body.light .cm-table td{ border-bottom-color: rgba(15,2
 body.light .cm-table thead th{ background: #f8fbff; color: #475569; }
 body.light .cm-row:hover{ background: rgba(15,23,42,.04); }
 body.light .cm-row.sel{ background: rgba(2,132,199,.10); }
-body.light .cm-row-warn:hover{ background: transparent; }
+/* Ahora la fila sin ventas SÍ se abre, así que responde al ratón como
+   las demás. Antes no llevaba onclick y el hover habría prometido algo
+   que no pasaba. */
+body.light .cm-row-warn:hover{ background: rgba(245,158,11,.07); }
+
+/* El aviso de ventas y la semana de evento en claro. Los fondos
+   translúcidos sobre oscuro se vuelven casi blancos sobre claro: hay
+   que subir la opacidad para que el bloque siga leyéndose como bloque. */
+body.light .cm-step{ background: rgba(15,23,42,.045); }
+body.light .cm-sales.ok{ background: rgba(15,23,42,.035); border-color: rgba(15,23,42,.12); }
+body.light .cm-evt{ background: rgba(15,23,42,.045); border-color: rgba(15,23,42,.14); }
+body.light .cm-evt.on{ background: rgba(168,85,247,.10); border-color: rgba(168,85,247,.45); }
+body.light .cm-evt.on .cm-evt-l{ color: #7e22ce; }
+body.light .cm-evt.on i{ color: #9333ea; }
+body.light .cm-evt-tag{ color: #7e22ce; background: rgba(168,85,247,.14); }
+body.light .cm-btn.cm-excl-on{ color: #7e22ce; border-color: rgba(168,85,247,.45); }
 
 body.light .cm-sechead > td{ background: rgba(245,158,11,.12); }
 body.light .cm-row-un:hover{ background: rgba(245,158,11,.07); }
