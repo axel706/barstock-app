@@ -122,7 +122,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260903-223155</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260903-223924</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -137,13 +137,18 @@
     <div id="locationBadge" style="display:none;"></div>
     <div class="bs-header-line4" id="bsNavTabs">
       <button class="bs-back-btn" id="bsNavBackBtn" style="display:none;">← Overview</button>
-      <button class="bs-nav-tab" onclick="bsScrollTo('inventorySection')">Inventory</button>
-      <button class="bs-nav-tab" onclick="bsScrollTo('vendorSection')">Ordering</button>
-      <button class="bs-nav-tab" onclick="bsScrollTo('historySection')">Order History</button>
-      <button class="bs-nav-tab" onclick="bsScrollTo('noMatchSection')">No Match</button>
-      <button class="bs-nav-tab" onclick="bsScrollTo('costReportSection')">Costs</button>
-      <button class="bs-nav-tab" onclick="bsScrollTo('pourIqSection')">Pour-IQ</button>
-      <button class="bs-nav-tab" id="bsAdminNavTab" style="display:none;" onclick="bsScrollTo('adminSection')">Admin</button>
+      <!-- data-section es la unica lista. Antes habia tres arrays en JS
+           numerando estas pastillas por su POSICION, y bastaba anadir o
+           quitar una para que todas las siguientes apuntaran a la
+           seccion equivocada. Ahora cada boton dice a donde va. -->
+      <button class="bs-nav-tab" data-section="inventory">Inventory</button>
+      <button class="bs-nav-tab" data-section="vendor">Ordering</button>
+      <button class="bs-nav-tab" data-section="history">Order History</button>
+      <button class="bs-nav-tab" data-section="noMatch">No Match</button>
+      <button class="bs-nav-tab" data-section="costReport">Costs</button>
+      <button class="bs-nav-tab" data-section="consumption">Match</button>
+      <button class="bs-nav-tab" data-section="pourIq">Pour-IQ</button>
+      <button class="bs-nav-tab" id="bsAdminNavTab" style="display:none;" data-section="admin">Admin</button>
     </div>
   </div>
 
@@ -5245,30 +5250,26 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     window.scrollTo({ top, behavior: 'smooth' });
   };
 
-  // Active tab highlight
-  const sections = [
-    { id: 'inventorySection', tab: 1 },
-    { id: 'vendorSection', tab: 2 },
-    { id: 'historySection', tab: 3 },
-    { id: 'noMatchSection', tab: 4 },
-    { id: 'costReportSection', tab: 5 },
-    { id: 'pourIqSection', tab: 7 },
-    { id: 'adminSection', tab: 8 },
-  ];
-
+  // ── Que pastilla se enciende ──────────────────────────────────────
+  //
+  // Se lee de data-section, no de un array de indices. El array que
+  // habia aqui numeraba las pastillas desde 1 cuando el DOM las cuenta
+  // desde 0, y ademas conservaba un hueco de una pastilla ya retirada:
+  // Pour-IQ y Admin apuntaban a posiciones que no existen y no se
+  // encendian nunca. Un fallo silencioso, porque una pestana que no se
+  // resalta no parece rota, solo parece que no estas ahi.
   function updateActiveTab() {
     const header = document.querySelector('.bs-header');
     if (!header) return;
     const headerH = header.offsetHeight;
-    let active = 0;
-    sections.forEach(({ id, tab }) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      if (el.getBoundingClientRect().top <= headerH + 32) active = tab;
-    });
-    document.querySelectorAll('.bs-nav-tab').forEach((btn, i) => {
-      btn.classList.toggle('active', i === active);
-    });
+    const tabs = [...document.querySelectorAll('.bs-nav-tab')];
+
+    let active = tabs[0] || null;
+    for (const btn of tabs) {
+      const el = document.getElementById(btn.dataset.section + 'Section');
+      if (el && el.getBoundingClientRect().top <= headerH + 32) active = btn;
+    }
+    tabs.forEach(btn => btn.classList.toggle('active', btn === active));
   }
 
   // Collapse on scroll
@@ -5281,6 +5282,13 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     if (target) {
       target.classList.add('bs-active-section');
       target.appendChild(bsMiniNav);
+    }
+
+    // Consumption Match nace vacio y se pinta al entrar. Estaba escrito
+    // en el onclick de su tarjeta de portada, asi que llegar por la
+    // pastilla del header abria una seccion en blanco.
+    if (name === 'consumption' && window.BarStockConsumptionMatch) {
+      window.BarStockConsumptionMatch.render();
     }
     if (typeof setSectionCollapsed === 'function') setSectionCollapsed(name, false);
     const backBtn = document.getElementById('bsNavBackBtn');
@@ -5452,10 +5460,9 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     if (sub) sub.textContent = total > 0 ? total + ' adjustments ready' : 'Par level intelligence';
   };
 
-  // Update nav tabs to use focus mode
-  document.querySelectorAll('.bs-nav-tab').forEach((btn, i) => {
-    const sections = ['inventory','vendor','history','noMatch','costReport','pourIq','admin'];
-    btn.onclick = () => bsOpenSection(sections[i]);
+  // Cada pastilla ya sabe a donde va: la posicion no decide nada.
+  document.querySelectorAll('.bs-nav-tab').forEach(btn => {
+    btn.onclick = () => bsOpenSection(btn.dataset.section);
   });
 
   window.addEventListener('scroll', () => {
