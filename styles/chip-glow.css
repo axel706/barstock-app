@@ -1,0 +1,102 @@
+/* ── El resplandor de las pastillas de filtro ─────────────────────────
+   Vendors en Inventory y Ordering, vendors y años en Order History,
+   estados en Pour-IQ, las pestañas del header y los años de Consumption
+   Match. Todas son lo mismo: una fila de cosas parecidas entre las que
+   hay que elegir una, y en una fila de doce el resplandor dice cuál vas
+   a pulsar antes de pulsarla.
+
+   src/chip-glow.js escribe --gx y --gy con la posición del cursor
+   dentro de la pastilla. Todo lo demás se decide aquí.
+
+   ── La clase .bs-chip-glow ───────────────────────────────────────────
+   La pone ese mismo archivo en <html>, y solo cuando hay puntero de
+   verdad y el sistema no pide menos movimiento. Sin ella no se aplica
+   nada de esto: en un móvil el dedo tapa la pastilla y el resplandor
+   llegaría después de tocar, cuando ya no sirve.
+
+   Va en <html> y no en <body>, así que el modo claro se escribe
+   `html.bs-chip-glow body.light` y no al revés — body es hijo de html,
+   no al contrario.                                                    */
+
+.bs-chip-glow .oh-filter-chip:not(.active),
+.bs-chip-glow .bs-nav-tab:not(.active),
+.bs-chip-glow .cm-chip:not(.active){
+  position: relative;
+  /* El gradiente llega al borde y la pastilla es redonda: sin recortar,
+     la luz se saldría por las esquinas y el redondeo dejaría de leerse. */
+  overflow: hidden;
+}
+
+/* ── La luz ────────────────────────────────────────────────────────────
+   Un ::after y no un box-shadow: la sombra solo sale del borde entero y
+   por igual, y lo que se busca es un punto que se mueve por dentro.
+
+   ::after y no ::before, y por encima y no por detrás. Detrás parecía lo
+   correcto —la luz debajo del texto— pero las pastillas activas tienen
+   fondo propio, opaco en modo claro, y el resplandor habría quedado
+   tapado justo donde más se miraba. Por encima funciona en todas.
+
+   El valor por defecto de --gx/--gy es 50%: si el JS no ha escrito nada
+   todavía —el primer fotograma tras entrar— la luz nace en el centro y
+   no en la esquina.                                                   */
+.bs-chip-glow .oh-filter-chip:not(.active)::after,
+.bs-chip-glow .bs-nav-tab:not(.active)::after,
+.bs-chip-glow .cm-chip:not(.active)::after{
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;        /* no puede robarle el clic a la pastilla */
+  border-radius: inherit;
+  background: radial-gradient(
+    58px circle at var(--gx, 50%) var(--gy, 50%),
+    rgba(56,189,248,.26),
+    rgba(56,189,248,.08) 45%,
+    transparent 72%
+  );
+  opacity: 0;
+  /* Se desvanece la OPACIDAD; la posición no lleva transición. Si la
+     llevara, la luz iría siempre por detrás del cursor y el efecto
+     pasaría de seguir al puntero a perseguirlo con retraso. */
+  transition: opacity .22s ease;
+}
+
+.bs-chip-glow .oh-filter-chip:not(.active):hover::after,
+.bs-chip-glow .bs-nav-tab:not(.active):hover::after,
+.bs-chip-glow .cm-chip:not(.active):hover::after{ opacity: 1; }
+
+/* ── La pastilla ya elegida no se enciende ─────────────────────────────
+   No es un olvido. Ya es la más ruidosa de la fila; añadirle luz la
+   haría competir consigo misma, y el resplandor existe para señalar a
+   dónde vas, no dónde ya estás.                                      */
+
+/* El borde acompaña. Sin esto la luz flota dentro de una pastilla que no
+   reacciona y se lee como un fallo de pintado. */
+.bs-chip-glow .oh-filter-chip{
+  transition: border-color .22s ease, color .22s ease, background .22s ease;
+}
+.bs-chip-glow .oh-filter-chip:not(.active):hover{
+  border-color: rgba(56,189,248,.55);
+  color: var(--text);
+}
+
+/* Lo que pedía: que las del header se comporten igual que las de filtro.
+   Ya cambiaban de fondo al pasar por encima; ahora además se encienden. */
+.bs-chip-glow .bs-nav-tab:not(.active):hover{ color: var(--text); }
+
+/* ── Modo claro ────────────────────────────────────────────────────────
+   El mismo azul translúcido sobre blanco casi no se ve: el fondo ya es
+   claro y el resplandor no tiene contra qué destacar. Baja el tono a un
+   azul más saturado y sube la opacidad.                              */
+html.bs-chip-glow body.light .oh-filter-chip:not(.active)::after,
+html.bs-chip-glow body.light .bs-nav-tab:not(.active)::after,
+html.bs-chip-glow body.light .cm-chip:not(.active)::after{
+  background: radial-gradient(
+    58px circle at var(--gx, 50%) var(--gy, 50%),
+    rgba(2,132,199,.22),
+    rgba(2,132,199,.07) 45%,
+    transparent 72%
+  );
+}
+html.bs-chip-glow body.light .oh-filter-chip:not(.active):hover{
+  border-color: rgba(2,132,199,.50);
+}
