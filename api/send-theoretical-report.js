@@ -1,5 +1,6 @@
 const { Resend } = require('resend');
 const { shell, badge, table, attachment, signoff } = require('../lib/email-shell');
+const { NOREPLY } = require('../lib/inboxes');
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 module.exports = async function handler(req, res) {
@@ -102,13 +103,30 @@ module.exports = async function handler(req, res) {
     const msgPayload = {
       from: senderEmail && senderName
         ? `${senderName} <${senderEmail}>`
-        : 'BarStock Pro <no-reply@barstockpro.com>',
+        // Era 'no-reply@' con guion, la unica de toda la app escrita asi.
+        // Resend verifica el DOMINIO y no la direccion, asi que nunca
+        // fallo: simplemente habia dos remitentes distintos para lo
+        // mismo, y ninguna pantalla lo delataba.
+        : NOREPLY,
       to: toList,
       subject,
       html: htmlBody,
     };
     if (ccList.length) msgPayload.cc = ccList;
-    if (replyTo) msgPayload.reply_to = replyTo;
+
+    // ── Era `reply_to` y el SDK lo ignoraba ──────────────────────────
+    //
+    // El SDK de Resend recibe `replyTo` en camelCase y es ÉL quien lo
+    // traduce a `reply_to` al hablar con la API — se ve en su propio
+    // código: `reply_to: email.replyTo`. Escribir `reply_to` aquí ponía
+    // una propiedad que el SDK no mira, así que este informe salía sin
+    // reply-to desde siempre. No fallaba nada: el correo se enviaba, y
+    // responder simplemente iba a parar al remitente.
+    //
+    // Y como abajo, si la locación no configuró reply-to se cae a su
+    // propio perfil, nunca a una dirección global.
+    const responder = replyTo || senderEmail || null;
+    if (responder) msgPayload.replyTo = responder;
     if (pdfBase64) {
       msgPayload.attachments = [{
         filename: safeFilename,

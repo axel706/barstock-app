@@ -84,8 +84,17 @@ module.exports = async function handler(req, res) {
 
     if (ccList.length) payload.cc = ccList;
     if (senderEmail) payload.bcc = [senderEmail];
-    if (senderEmail) payload.bcc = [senderEmail];
-    if (replyTo) payload.replyTo = replyTo;
+    // Si la locación no configuró un reply-to, se cae al correo de su
+    // perfil. NO a una dirección global: `orders@barstockpro.com` no
+    // tiene buzón, y aunque lo tuviera, en una app multi-locación
+    // recogería las respuestas de los proveedores de todos los clientes
+    // en la misma bandeja. La respuesta de un proveedor pertenece a la
+    // locación que hizo el pedido.
+    //
+    // Sin esto, un `replyTo` vacío dejaba al proveedor contestando a una
+    // dirección muerta: él ve su correo enviado, y nadie lo recibe.
+    const responder = replyTo || senderEmail || null;
+    if (responder) payload.replyTo = responder;
 
     if (pdfBase64) {
       payload.attachments = [{
