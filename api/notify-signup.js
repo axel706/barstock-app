@@ -1,5 +1,6 @@
 const { Resend } = require('resend');
 const { shell, facts, badge, callout } = require('../lib/email-shell');
+const { ALERTS, NOREPLY } = require('../lib/inboxes');
 const { createClient } = require('@supabase/supabase-js');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -72,8 +73,8 @@ module.exports = async function handler(req, res) {
       `<p style="margin:0;font-size:13px;color:#64748b;text-align:center">Approve or deny from the <b>Admin</b> panel in BarStock Pro.</p>`;
 
     await resend.emails.send({
-      from: 'BarStock Pro <noreply@barstockpro.com>',
-      to: 'axeltorressalgado@icloud.com',
+      from: NOREPLY,
+      to: ALERTS,
       subject: `New sign up request — ${businessName || email}`,
       html: shell({
         right: 'Access request',

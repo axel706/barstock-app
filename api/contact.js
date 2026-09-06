@@ -1,5 +1,6 @@
 const { Resend } = require('resend');
 const { shell, facts, badge, callout, escapeHtml } = require('../lib/email-shell');
+const { LEADS, HELLO, NOREPLY } = require('../lib/inboxes');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -28,8 +29,6 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // existente, como ya hace Consumption Match con el informe de Usage.
 // Los archivos de lib/ no cuentan, que es por lo que el marco de correo
 // vive ahí.
-
-const ADMIN = 'axeltorressalgado@icloud.com';
 
 // La landing y la app son dos despliegues distintos, así que esto es una
 // petición entre orígenes. Se listan los que pueden llamar en vez de
@@ -95,8 +94,8 @@ module.exports = async function handler(req, res) {
       `<p style="margin:0;font-size:13px;color:#64748b;text-align:center">Hit reply to answer them directly.</p>`;
 
     await resend.emails.send({
-      from: 'BarStock Pro <noreply@barstockpro.com>',
-      to: ADMIN,
+      from: NOREPLY,
+      to: LEADS,
       // Contestar es pulsar Responder. Sin esto habría que copiar la
       // dirección del cuerpo del correo, que es justo la fricción que
       // hace que un contacto se quede sin contestar hasta mañana.
@@ -125,9 +124,9 @@ module.exports = async function handler(req, res) {
        <p style="margin:0;font-size:15px;color:#0f172a">Talk soon,<br><strong>The BarStock Pro team</strong></p>`;
 
     await resend.emails.send({
-      from: 'BarStock Pro <hello@barstockpro.com>',
+      from: HELLO,
       to: email,
-      replyTo: ADMIN,
+      replyTo: LEADS,
       subject: 'We got your request — BarStock Pro',
       html: shell({ right: 'BarStock Pro', footer: 'Thanks for reaching out', body: userBody })
     });

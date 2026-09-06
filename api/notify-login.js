@@ -1,5 +1,6 @@
 const { Resend } = require('resend');
 const { shell, facts, badge, action, escapeHtml } = require('../lib/email-shell');
+const { ALERTS, NOREPLY } = require('../lib/inboxes');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -21,7 +22,10 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // anterior a la arroba —"Hey Axeltorressalgado"—. El nombre de verdad
 // está en `sender_profile`, que es de donde se saca ahora.
 
-const ADMIN = 'axeltorressalgado@icloud.com';
+// La copia de vigilancia va al buzón de operación, no al personal. Estos
+// llegan en CADA inicio de sesión, y mezclados con los leads del
+// formulario acaban sepultando lo que sí hay que contestar.
+const ADMIN = ALERTS;
 const APP = 'https://barstock-app.vercel.app';
 
 // ── Por qué solo hay un botón ────────────────────────────────────────
@@ -109,7 +113,7 @@ module.exports = async function handler(req, res) {
       }</p>`;
 
     await resend.emails.send({
-      from: 'BarStock Pro <noreply@barstockpro.com>',
+      from: NOREPLY,
       to: ADMIN,
       subject: `Login — ${email}`,
       html: shell({ right: donde, footer: 'Security notification', body: adminBody })
@@ -142,7 +146,7 @@ module.exports = async function handler(req, res) {
         );
 
       await resend.emails.send({
-        from: 'BarStock Pro <noreply@barstockpro.com>',
+        from: NOREPLY,
         to: destino,
         subject: `You signed in to ${donde}`,
         html: shell({ right: donde, footer: 'Security notification', body: userBody })
