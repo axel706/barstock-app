@@ -258,7 +258,7 @@
     if (!order) return;
     if (order.exportType === 'loop_csv') {
       exportLoopCsvFromRows(order.items, order.filename || 'loop_upload.csv');
-      setStatus(`LOOP upload-ready CSV re-exported from Order History.`);
+      setStatus(`LOOP upload-ready CSV re-exported from History.`);
     } else {
       await exportVendorJpgFromRows(order.vendor, order.items, order.filename || `vendor_order_${String(order.vendor||'').toLowerCase().replace(/\s+/g,'_')}.jpg`);
       setStatus(`Vendor JPG re-exported for ${order.vendor}.`);

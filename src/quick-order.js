@@ -261,7 +261,7 @@
           warningEl.remove();
         }, 7000);
       } else {
-        setStatus('Quick Order saved to Order History and synced to cloud.');
+        setStatus('Quick Order saved to History and synced to cloud.');
       }
 
       if (window.BarStockLogger) {

@@ -122,7 +122,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260907-224605</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260907-225502</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -142,11 +142,11 @@
            quitar una para que todas las siguientes apuntaran a la
            seccion equivocada. Ahora cada boton dice a donde va. -->
       <button class="bs-nav-tab" data-section="inventory">Inventory</button>
-      <button class="bs-nav-tab" data-section="vendor">Ordering</button>
-      <button class="bs-nav-tab" data-section="history">Order History</button>
-      <button class="bs-nav-tab" data-section="noMatch">No Match</button>
+      <button class="bs-nav-tab" data-section="vendor">Orders</button>
+      <button class="bs-nav-tab" data-section="history">History</button>
+      <button class="bs-nav-tab" data-section="noMatch">Unmatched</button>
       <button class="bs-nav-tab" data-section="costReport">Costs</button>
-      <button class="bs-nav-tab" data-section="consumption">Match</button>
+      <button class="bs-nav-tab" data-section="consumption">Variance</button>
       <button class="bs-nav-tab" data-section="pourIq">Pour-IQ</button>
       <button class="bs-nav-tab" id="bsAdminNavTab" style="display:none;" data-section="admin">Admin</button>
     </div>
@@ -164,7 +164,7 @@
     <div class="bs-focus-card card" onclick="bsOpenSection('vendor')">
       <div class="bs-focus-head">
         <i class="ti ti-shopping-cart bs-focus-icon" aria-hidden="true"></i>
-        <div class="bs-focus-title">Ordering</div>
+        <div class="bs-focus-title">Orders</div>
       </div>
       <div class="bs-focus-sub" id="fgSub-vendor">Review active orders</div>
       <div class="bs-focus-stats" id="fgStats-vendor"></div>
@@ -172,7 +172,7 @@
     <div class="bs-focus-card card" onclick="bsOpenSection('history')">
       <div class="bs-focus-head">
         <i class="ti ti-history bs-focus-icon" aria-hidden="true"></i>
-        <div class="bs-focus-title">Order History</div>
+        <div class="bs-focus-title">History</div>
       </div>
       <div class="bs-focus-sub" id="fgSub-history">Previously placed orders</div>
       <div class="bs-focus-stats" id="fgStats-history"></div>
@@ -180,7 +180,7 @@
     <div class="bs-focus-card card" onclick="bsOpenSection('noMatch')">
       <div class="bs-focus-head">
         <i class="ti ti-alert-circle bs-focus-icon" aria-hidden="true"></i>
-        <div class="bs-focus-title">No Match</div>
+        <div class="bs-focus-title">Unmatched</div>
       </div>
       <div class="bs-focus-sub" id="fgSub-noMatch">Items needing review</div>
       <div class="bs-focus-stats" id="fgStats-noMatch"></div>
@@ -196,7 +196,7 @@
     <div class="bs-focus-card card" onclick="bsOpenSection('consumption'); if (window.BarStockConsumptionMatch) BarStockConsumptionMatch.render();">
       <div class="bs-focus-head">
         <i class="ti ti-chart-histogram bs-focus-icon" aria-hidden="true"></i>
-        <div class="bs-focus-title">Consumption Match</div>
+        <div class="bs-focus-title">Variance</div>
       </div>
       <div class="bs-focus-sub" id="fgSub-consumption">Loss by category</div>
       <div class="bs-focus-stats" id="fgStats-consumption"></div>
@@ -285,13 +285,13 @@
       <div style="flex:1 1 auto">
         <div class="sectionhead vendor-header-row">
           <div>
-            <strong><span class="section-title">Ordering</span></strong>
+            <strong><span class="section-title">Orders</span></strong>
             <div class="small muted">Review active orders by vendor, adjust final quantities, and place orders.</div>
           </div>
           <div class="vendor-summary" id="vendorSummary">Current list: 0 codes | 0 bottles | 0 edited</div>
         </div>
       </div>
-      <button onclick="toggleFocusMode('vendorSection','Ordering')" class="section-toggle focus-max-btn" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true" style="font-size:18px"></i></button>
+      <button onclick="toggleFocusMode('vendorSection','Orders')" class="section-toggle focus-max-btn" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true" style="font-size:18px"></i></button>
     </div>
     <div class="section-body vendor-section-inner" id="vendorSectionBody">
       <div class="vendor-controls-top">
@@ -359,12 +359,12 @@
       <div style="flex:1 1 auto">
         <div class="sectionhead">
           <div>
-            <strong><span class="section-title">Order History</span></strong>
+            <strong><span class="section-title">History</span></strong>
             <div class="small muted">Browse previously placed orders, filter them, and export or reopen them when needed.</div>
           </div>
         </div>
       </div>
-      <button onclick="toggleFocusMode('historySection','Order History')" class="section-toggle focus-max-btn" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true" style="font-size:18px"></i></button>
+      <button onclick="toggleFocusMode('historySection','History')" class="section-toggle focus-max-btn" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true" style="font-size:18px"></i></button>
     </div>
     <div class="section-body" id="historySectionBody">
       <!-- Gasto por categoria. Vive en Order History y no en Costs porque
@@ -392,12 +392,12 @@
       <div style="flex:1 1 auto">
         <div class="sectionhead">
           <div>
-            <strong><span class="section-title">No Match Report</span></strong>
+            <strong><span class="section-title">Unmatched</span></strong>
             <div class="small muted">Resolve unmatched count items by linking them or creating new inventory records.</div>
           </div>
         </div>
       </div>
-      <button onclick="toggleFocusMode('noMatchSection','No Match')" class="section-toggle focus-max-btn" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true" style="font-size:18px"></i></button>
+      <button onclick="toggleFocusMode('noMatchSection','Unmatched')" class="section-toggle focus-max-btn" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true" style="font-size:18px"></i></button>
     </div>
     <div class="section-body" id="noMatchSectionBody">
       <div class="tablewrap">
@@ -415,7 +415,7 @@
         <div class="sectionhead">
           <div>
             <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-              <strong><span class="section-title">Wine &amp; Liquor Cost</span></strong>
+              <strong><span class="section-title">Costs</span></strong>
               <div id="crPeriodToggle" style="display:flex;align-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:2px;gap:2px;">
                 <button id="crToggleWeekly" onclick="BarStockCostReport.setPeriodMode('weekly')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:18px;border:none;cursor:pointer;background:#38bdf8;color:#0f172a;font-family:inherit;transition:all 0.18s ease;">Weekly</button>
                 <button id="crToggleMonthly" onclick="BarStockCostReport.setPeriodMode('monthly')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:18px;border:none;cursor:pointer;background:transparent;color:#94a3b8;font-family:inherit;transition:all 0.18s ease;">Monthly</button>
@@ -738,13 +738,13 @@
       <div style="flex:1 1 auto">
         <div class="sectionhead">
           <div>
-            <strong><span class="section-title">Consumption Match</span></strong>
+            <strong><span class="section-title">Variance</span></strong>
             <div class="small muted">What was sold against what was actually poured, by category.</div>
           </div>
         </div>
       </div>
       <button onclick="BarStockConsumptionMatch && BarStockConsumptionMatch.render()" class="section-toggle" title="Refresh"><i class="ti ti-refresh" aria-hidden="true"></i></button>
-      <button onclick="toggleFocusMode('consumptionSection','Consumption Match')" class="section-toggle focus-max-btn" data-label="Consumption Match" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true"></i></button>
+      <button onclick="toggleFocusMode('consumptionSection','Variance')" class="section-toggle focus-max-btn" data-label="Variance" title="Focus mode"><i class="ti ti-viewport-wide" aria-hidden="true"></i></button>
     </div>
     <div class="section-body" id="consumptionSectionBody">
       <div id="cmBody"></div>
@@ -756,7 +756,7 @@
 
 <div id="modalBg" class="modalbg hidden">
   <div class="modal">
-    <h3 style="margin-top:0">Create Item from No Match</h3>
+    <h3 style="margin-top:0">Create Item from Unmatched</h3>
     <div class="formgrid">
       <div class="full"><label>Item name<br><input id="nmName" style="width:100%"></label></div>
       <div><label>Code<br><input id="nmCode" style="width:100%"></label></div>
@@ -839,7 +839,7 @@
 
 <div id="linkModalBg" class="modalbg hidden">
   <div class="modal">
-    <h3 style="margin-top:0">Link No Match to Existing Item</h3>
+    <h3 style="margin-top:0">Link Unmatched to Existing Item</h3>
     <div class="small muted" id="linkRawLabel" style="margin-bottom:12px"></div>
     <div class="formgrid">
       <div class="full"><label>Search existing item<br><input id="linkSearch" style="width:100%" placeholder="Type part of the item name"></label></div>
@@ -1014,7 +1014,7 @@
 <div id="quickOrderModalBg" class="modalbg hidden">
   <div class="modal">
     <h3 style="margin-top:0">Quick Order</h3>
-    <div class="small muted" style="margin-bottom:12px">Add all extra items from a store run, then save them together into Order History.</div>
+    <div class="small muted" style="margin-bottom:12px">Add all extra items from a store run, then save them together into History.</div>
     <div class="quick-order-shell">
       <div class="quick-order-card">
         <div class="quick-order-top">
@@ -2980,7 +2980,7 @@ async function importCountFile(file){
 
 function showPreviewModal(){
   if(!pendingImport) return;
-  const ambiguityNote = pendingImport.ambiguousMatches ? ` | Duplicate matches sent to No Match: ${pendingImport.ambiguousMatches}` : '';
+  const ambiguityNote = pendingImport.ambiguousMatches ? ` | Duplicate lines sent to Unmatched: ${pendingImport.ambiguousMatches}` : '';
   document.getElementById('previewLabel').textContent = `File: ${pendingImport.fileName}${ambiguityNote}`;
   document.getElementById('previewMatchesMetric').textContent = pendingImport.matches;
   document.getElementById('previewNoMatchesMetric').textContent = pendingImport.noMatches.length;
@@ -3151,8 +3151,8 @@ async function saveNoMatchLink(){
     setStatus(`Linked '${nm.rawItem}' to '${target.item}' and synced to cloud.`);
   } catch(err){
     console.error(err);
-    alert('Could not save No Match link to cloud.');
-    setStatus('Error saving No Match link.');
+    alert('Could not save the Unmatched link to the cloud.');
+    setStatus('Error saving the Unmatched link.');
   }
 }
 
@@ -3178,7 +3178,7 @@ async function ignoreNoMatch(index){
     setStatus('No match ignored.');
   } catch(err){
     console.error(err);
-    alert('Could not ignore No Match in cloud.');
+    alert('Could not ignore that Unmatched line in the cloud.');
     setStatus('Error ignoring No Match.');
   }
 }
@@ -5335,11 +5335,11 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   bsMiniNav.className = 'bs-focus-mininav';
   const miniSections = [
     {id:'inventory', icon:'ti-package', label:'Inventory'},
-    {id:'vendor', icon:'ti-shopping-cart', label:'Ordering'},
+    {id:'vendor', icon:'ti-shopping-cart', label:'Orders'},
     {id:'history', icon:'ti-history', label:'History'},
-    {id:'noMatch', icon:'ti-alert-circle', label:'No Match'},
+    {id:'noMatch', icon:'ti-alert-circle', label:'Unmatched'},
     {id:'costReport', icon:'ti-chart-bar', label:'Costs'},
-    {id:'consumption', icon:'ti-chart-histogram', label:'Match'},
+    {id:'consumption', icon:'ti-chart-histogram', label:'Variance'},
     {id:'pourIq', icon:'ti-brain', label:'Pour-IQ™'},
     // Admin lleva id de elemento para que auth.js pueda mostrarlo. Nace
     // oculto: si no, aparece un instante antes de que se resuelva quien
@@ -5755,7 +5755,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
 <div id="cmEmailModalBg" class="modalbg hidden">
   <div class="modal" style="width:min(560px,96vw);max-height:92vh;overflow-y:auto;position:relative;">
-    <h3 style="margin-top:0">Email Consumption Match Report</h3>
+    <h3 style="margin-top:0">Email Variance Report</h3>
     <div class="small muted" style="margin-bottom:16px">Selected items only, at cost</div>
     <div id="cmEmailSummary" class="small" style="margin-bottom:16px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.05)"></div>
     <label style="display:block;margin-bottom:6px;font-weight:600">To <span class="muted small">(separate multiple with commas)</span></label>

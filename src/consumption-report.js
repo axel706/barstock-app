@@ -681,7 +681,7 @@
     const pdf = buildPdf(groups);
     if (!pdf) return;
     pdf.save(`consumption_match_${_week}${money$() ? '' : '_staff'}.pdf`);
-    if (typeof setStatus === 'function') setStatus('Consumption Match PDF generated.');
+    if (typeof setStatus === 'function') setStatus('Variance PDF generated.');
   }
 
   // ── Email ────────────────────────────────────────────────────────────
@@ -758,8 +758,8 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to, cc,
-          reportTitle: money$() ? 'Consumption Match Report'
-                                : 'Consumption Match Report (staff copy)',
+          reportTitle: money$() ? 'Variance Report'
+                                : 'Variance Report (staff copy)',
           locationName: cfg().loc,
           weekStart: _week,
           totalLoss: sel.reduce((s, g) => s + Math.max(0, g.loss), 0),
@@ -794,7 +794,7 @@
       if (!data.ok) throw new Error(data.error || 'Unknown error');
 
       closeEmail();
-      if (typeof setStatus === 'function') setStatus('Consumption Match report emailed.');
+      if (typeof setStatus === 'function') setStatus('Variance report emailed.');
       alert('Report sent to ' + to);
     } catch (err) {
       console.error('[cmreport]', err);
