@@ -145,6 +145,12 @@
         if (window.BarStockParIntelligence) {
           await window.BarStockParIntelligence.runCycle(master);
         }
+        // runCycle acaba de CERRAR la semana anterior y abrir una nueva,
+        // asi que la lista de semanas que tenga cargada Consumption Match
+        // ya no dice la verdad. Sin esto, el ciclo que se acaba de cerrar
+        // no aparece hasta recargar la pagina entera.
+        window.BarStockTheoreticalUsage?.invalidateWeeks?.();
+        window.BarStockConsumptionMatch?.reset?.();
       } catch (e) {
         console.warn('conteo: el ciclo de Par Intelligence fallo', e);
       }

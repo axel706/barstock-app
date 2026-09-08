@@ -1125,7 +1125,9 @@
 
     host.innerHTML = `<div class="cm-empty">Reading the cycle list…</div>`;
     try {
-      const cycle = await TU.loadCycle();      // sin argumento: el último cerrado
+      // `true` = lista de semanas fresca. Entrar en la seccion es
+      // justo cuando hay que enterarse de un ciclo recien cerrado.
+      const cycle = await TU.loadCycle(null, true);   // el último cerrado
       _weeks = cycle.weeks || [];
       if (cycle.week) {
         const g = group(cycle.rows || []);
@@ -1325,8 +1327,16 @@
     paint();
   }
 
+  // Tirar todo lo cacheado. Lo llama el cierre de un conteo: las semanas
+  // cambiaron y los grupos calculados de cada ciclo tambien.
+  function reset() {
+    _cache.clear();
+    _weeks = []; _groups = []; _week = null; _sales = null; _excl = new Set();
+    _view = 'cycles'; _cat = -1; _item = -1; _unItem = -1;
+  }
+
   window.BarStockConsumptionMatch = {
-    render, paint, group,
+    render, paint, group, reset,
     openCycle, openCat, openItem, openUnmatched,
     goCycles, goCats, goReport, setYear, setMonth,
     pick, pickAll, sendToReport, clearPending, fixSales, fixUnmatched, fixCount,

@@ -824,8 +824,16 @@
   // Punto de entrada para otras vistas. Sin argumento devuelve el
   // ULTIMO CICLO CERRADO, que es el que tiene numeros — no la semana
   // en curso, que acaba de abrirse vacia.
-  async function loadCycle(weekStart) {
-    if (!_weeks.length) await loadWeeks();
+  // `fresco` fuerza a volver a pedir la lista de semanas. Sin él, la
+  // lista se cargaba UNA vez por sesión de navegador y no se refrescaba
+  // nunca: importabas el conteo que cierra un ciclo y ese ciclo no
+  // aparecía en Consumption Match hasta recargar la página entera.
+  //
+  // Y no fallaba nada visible, que es lo peor. La semana sencillamente no
+  // estaba, y la conclusión natural de quien la busca es que se perdió el
+  // conteo.
+  async function loadCycle(weekStart, fresco) {
+    if (fresco || !_weeks.length) await loadWeeks();
     const target = weekStart || (_weeks.find(w => w.hasUsage) || {}).week_start || null;
     if (!target) return { week: null, rows: [], weeks: _weeks };
     const excl = await fetchExclusions(target);
@@ -940,6 +948,11 @@
     // ── La fórmula ──
     loadCycle,
     computeWeek,
+
+    // Tira la lista de semanas para que la próxima consulta la vuelva a
+    // pedir. La llama quien acaba de cerrar un ciclo: importar un conteo
+    // cambia qué semanas existen y cuáles tienen números.
+    invalidateWeeks: () => { _weeks = []; },
 
     // ── Corregir las ventas de un artículo ──
     // Viven junto a la fórmula para que las pantallas que las usan no
