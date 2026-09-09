@@ -2,6 +2,27 @@ body.auth-locked{
   overflow:hidden !important;
 }
 
+/* ── Lo que tapa la aplicación no es el overlay ───────────────────────
+   El overlay está en la línea 5166 del documento y el contenido de la
+   app empieza en la 66. El navegador pinta según va leyendo, así que
+   durante esas cinco mil líneas la aplicación ya está en pantalla y el
+   overlay TODAVÍA NO EXISTE: no hay nada que tapar con qué.
+   Cuando el analizador llega abajo, aparece de golpe.
+   Ese era el segundo que se veía, y por eso pasaba de forma
+   intermitente — depende de lo rápido que llegue el HTML.
+
+   Mover el overlay arriba no lo arregla del todo: seguiría dependiendo
+   de que el navegador haya llegado a él. Lo que sí lo arregla es que el
+   contenido nazca oculto por una regla que ya está en el <head> cuando
+   se pinta el primer píxel del <body>.
+
+   `visibility` y no `display`: display:none obliga a recalcular la
+   maquetación entera al revelarla y provoca un salto. Con visibility el
+   navegador ya midió y colocó todo; solo deja de dibujarlo.           */
+body.auth-locked > *:not(#authOverlay){
+  visibility:hidden !important;
+}
+
 /* ── Cerrado por defecto ──────────────────────────────────────────────
    Esto era `display:none` y solo se abria cuando showOverlay() anadia
    .show — o sea, DESPUES de que Supabase contestara que no hay sesion.
