@@ -15,11 +15,20 @@
     return authClient;
   }
 
+  // ── La pantalla de entrada está puesta de entrada ────────────────
+  //
+  // Antes nacía oculta y se mostraba al confirmar que NO había sesión.
+  // Como esa confirmación es un viaje a Supabase, durante medio segundo
+  // largo se veía la aplicación entera antes de que apareciera el login.
+  //
+  // Ahora el CSS la pinta desde el primer fotograma y estas dos
+  // funciones solo ponen y quitan la clase que la aparta. Mostrarla no
+  // es "abrirla": es dejarla donde ya estaba.
   function showOverlay(){
     document.body.classList.add('auth-locked');
     document.body.style.pointerEvents = '';
     const overlay = document.getElementById('authOverlay');
-    if (overlay) overlay.classList.add('show');
+    if (overlay) overlay.classList.remove('auth-ok');
   }
 
   function hideOverlay(){
@@ -31,7 +40,7 @@
     document.body.classList.remove('auth-locked');
     document.body.style.pointerEvents = '';
     const overlay = document.getElementById('authOverlay');
-    if (overlay) overlay.classList.remove('show');
+    if (overlay) overlay.classList.add('auth-ok');
   }
 
   // ─── Cierre de sesion por inactividad ────────────────────────────

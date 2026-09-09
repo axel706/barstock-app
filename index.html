@@ -54,7 +54,12 @@
 #emailCostReportCheckSvg polyline,#emailOrderCheckSvg polyline{stroke-dasharray:30;stroke-dashoffset:30;transition:stroke-dashoffset 0.35s ease 0.45s;}
 </style>
 </head>
-<body>
+<!-- auth-locked de salida: la pantalla de entrada esta puesta desde
+     el primer fotograma y el body no hace scroll por detras. auth.js
+     quita esta clase solo cuando la sesion resulta valida. Antes se
+     anadia DESPUES de preguntarle a Supabase, y en ese medio segundo
+     se veia la aplicacion entera. -->
+<body class="auth-locked">
 
 
 <div id="bgLayer"></div>
@@ -122,7 +127,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260907-225502</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260908-215209</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">

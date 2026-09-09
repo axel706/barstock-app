@@ -2,11 +2,22 @@ body.auth-locked{
   overflow:hidden !important;
 }
 
+/* ── Cerrado por defecto ──────────────────────────────────────────────
+   Esto era `display:none` y solo se abria cuando showOverlay() anadia
+   .show — o sea, DESPUES de que Supabase contestara que no hay sesion.
+   Ese viaje tarda medio segundo largo, y en ese hueco la aplicacion
+   entera estaba a la vista de cualquiera que abriera la direccion.
+
+   Ahora el orden esta al derecho: la pantalla de entrada se pinta con el
+   HTML, antes de que corra un solo byte de JavaScript, y solo se aparta
+   cuando la sesion resulta valida. Si el JavaScript no llega a
+   ejecutarse, se queda puesta — que es el lado correcto por el que
+   fallar.                                                            */
 #authOverlay{
   position:fixed;
   inset:0;
   z-index:999999;
-  display:none;
+  display:flex;
   align-items:center;
   justify-content:center;
   padding:40px 28px;
@@ -30,8 +41,10 @@ body.auth-locked{
      es el mismo sin el fallo. */
 }
 
-#authOverlay.show{
-  display:flex !important;
+/* La unica forma de apartarla: que auth.js haya comprobado la sesion y
+   le ponga esta clase. No hay ninguna otra regla que la oculte. */
+#authOverlay.auth-ok{
+  display:none !important;
 }
 
 /* Card — split panel, exact same glass as app .card */
