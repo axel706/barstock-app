@@ -181,13 +181,7 @@
   // BarStockCycle. La llamada quedo apuntando a una funcion inexistente,
   // loadCosts reventaba, y la tarjeta se quedaba en esqueleto para
   // siempre sin decir por que.
-  function lastCalendarMonday() {
-    const d = new Date();
-    const day = d.getDay();
-    d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }
+  function lastCalendarMonday() { return window.BarStockWeek.weekOf(); }
 
   function lastWeekStart() {
     const d = lastCalendarMonday();

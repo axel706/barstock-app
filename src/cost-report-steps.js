@@ -101,13 +101,9 @@
     return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
   }
 
-  function mondayOf(date) {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    const day = d.getDay();           // 0 = domingo
-    d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
-    return d;
-  }
+  // Clasifica una fecha pasada, asi que weekOf: un domingo pertenece a
+  // la semana que empezo el lunes anterior.
+  function mondayOf(date) { return window.BarStockWeek.weekOf(date); }
 
   function addDays(d, n) {
     const x = new Date(d);

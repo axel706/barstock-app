@@ -127,7 +127,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260916-192701</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260916-193731</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -4881,13 +4881,14 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/vendor-mapping-cloud.js"></script>
 <script src="src/settings-vendor-codes.js"></script>
 <script src="src/skeleton.js"></script>
+<script src="src/week.js?v=wk1"></script>
 <script src="src/cycle.js?v=cy1"></script>
-<script src="src/focus-stats.js?v=cm2"></script>
+<script src="src/focus-stats.js?v=cm3"></script>
 <script src="src/toast.js"></script>
 <script src="src/empty-state.js"></script>
 <script src="src/inventory-realtime.js?v=rt2"></script>
 <script src="src/inventory-cloud.js?v=account-wjm-1"></script>
-<script src="src/par-intelligence.js?v=adj1"></script>
+<script src="src/par-intelligence.js?v=adj2"></script>
 <script src="src/par-intelligence-section.js"></script>
 <script src="src/consumption-match.js?v=cm13"></script>
 <script src="src/consumption-report.js?v=rep8"></script>
@@ -4902,15 +4903,15 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/bottle-assign.js?v=btl6"></script>
 <script src="src/bottle-picker.js?v=btl6"></script>
 <script src="src/inventory-value.js?v=iv1"></script>
-<script src="src/spend-by-category.js?v=sp1"></script>
+<script src="src/spend-by-category.js?v=sp2"></script>
 <script src="src/settings-home.js?v=sh2"></script>
 <script src="src/inventory-backup.js?v=bk1"></script>
-<script src="src/weekly-cycle.js?v=cyc3"></script>
+<script src="src/weekly-cycle.js?v=cyc4"></script>
 <script src="src/count-session.js?v=cnt10"></script>
 <script src="src/count-panel.js?v=cnt7"></script>
 <script src="src/count-resume.js?v=cnt8"></script>
 <script src="src/count-insight.js?v=cnt9"></script>
-<script src="src/count-finish.js?v=cnt10"></script>
+<script src="src/count-finish.js?v=cnt11"></script>
 <script src="src/scan-count.js?v=scan5"></script>
 <script>
   // Aqui habia una puerta: el boton de escaneo solo lo veia el admin,
@@ -4931,10 +4932,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
       const C = window.BarStockCycle;
       const d = C && typeof C.startedAt === 'function' ? C.startedAt() : null;
-      const lunes = new Date();
-      const dia = lunes.getDay();
-      lunes.setDate(lunes.getDate() - (dia === 0 ? 6 : dia - 1));
-      lunes.setHours(0, 0, 0, 0);
+      const lunes = window.BarStockWeek.weekOf();
 
       const yaEmpezado = window.BarStockCountSession?.exists?.();
       const cicloAbierto = d && d >= lunes;
@@ -5034,7 +5032,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/quick-order.js"></script>
 <script src="src/cost-report-cloud.js"></script>
 <script src="src/cost-report.js"></script>
-<script src="src/cost-report-steps.js?v=snap1"></script>
+<script src="src/cost-report-steps.js?v=snap2"></script>
 
 <!-- BARSTOCK ORDERS REALTIME CLEAN START -->
 <script>

@@ -21,14 +21,13 @@
     return data[0].id;
   }
 
+  // La semana que ABRE una accion hecha hoy. Delega en BarStockWeek: la
+  // formula vivia aqui duplicada en seis sitios de la app, y la version
+  // de aqui ademas formateaba con toISOString(), que en zona horaria
+  // negativa convertia cualquier hora de tarde en el dia siguiente. En
+  // Chicago, cerrar un conteo a las 19:00 escribia week_start de martes.
   function getWeekStart(date) {
-    const now = date ? new Date(date) : new Date();
-    const day = now.getDay();
-    // Sunday (0) → next Monday (+1), all other days → previous Monday
-    const diff = day === 0 ? 1 : (1 - day);
-    const monday = new Date(now);
-    monday.setDate(now.getDate() + diff);
-    return monday.toISOString().split('T')[0];
+    return window.BarStockWeek.cycleWeekKey(date);
   }
 
   // ─── fetchAllSnapshotRows ────────────────────────────────────────
@@ -292,12 +291,15 @@
       const { url, key } = getConfig();
       const locationId = await fetchLocationId();
 
-      // Use order date to find the right week
+      // La MISMA semana a la que updateSnapshotOrdered escribio. Aqui
+      // habia otra formula, la de "a que semana pertenece esta fecha",
+      // mientras que al colocar la orden se usaba "que ciclo abre". Las
+      // dos coinciden salvo en domingo: una orden puesta un domingo se
+      // sumaba a la semana siguiente y al borrarla se restaba de la
+      // anterior. La cantidad pedida se quedaba inflada en una semana y
+      // en negativo en la otra, y `used` sale de ahi.
       const orderDate = new Date(order.createdAt || order.date || Date.now());
-      const day = orderDate.getDay();
-      const diff = orderDate.getDate() - day + (day === 0 ? -6 : 1);
-      const monday = new Date(orderDate.setDate(diff));
-      const weekStart = monday.toISOString().split('T')[0];
+      const weekStart = window.BarStockWeek.cycleWeekKey(orderDate);
 
       for (const row of order.items || []) {
         const itemName = (row.item || '').trim();

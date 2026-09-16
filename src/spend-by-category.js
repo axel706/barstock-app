@@ -40,13 +40,7 @@
   }
 
   // Lunes de la semana que contiene esa fecha
-  function mondayOf(d) {
-    const x = new Date(d);
-    const day = x.getDay();
-    x.setDate(x.getDate() - (day === 0 ? 6 : day - 1));
-    x.setHours(0, 0, 0, 0);
-    return x;
-  }
+  function mondayOf(d) { return window.BarStockWeek.weekOf(d); }
 
   function catOf(itemName) {
     const master = (window.state && state.master) || [];

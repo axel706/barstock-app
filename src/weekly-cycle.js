@@ -53,15 +53,10 @@
     return { url: c.SUPABASE_URL, key: c.SUPABASE_KEY, account: c.ACCOUNT_ID, name: c.LOCATION_NAME };
   }
 
-  // Lunes 00:00 más reciente, en hora local
-  function lastMonday() {
-    const d = new Date();
-    const day = d.getDay();               // 0 domingo … 6 sábado
-    const back = (day === 0) ? 6 : day - 1;
-    d.setDate(d.getDate() - back);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }
+  // La semana a la que pertenece hoy. El boton pregunta "¿el reset es de
+  // esta semana?", que es una pregunta sobre pertenencia, no sobre qué
+  // ciclo se abre: por eso weekOf y no cycleWeekFor.
+  function lastMonday() { return window.BarStockWeek.weekOf(); }
 
   async function readResetAt() {
     const { url, key, account, name } = cfg();

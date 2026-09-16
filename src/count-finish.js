@@ -314,20 +314,10 @@
       const locationId = await window.BarStockParIntelligence.fetchLocationId();
       if (!locationId) return false;
 
-      // EXACTAMENTE el mismo lunes que usa par-intelligence para nombrar
-      // la semana, incluido su tratamiento del domingo: domingo cuenta
-      // como el lunes SIGUIENTE, no el anterior.
-      //
-      // Lo escribí al revés la primera vez y solo se habría notado los
-      // domingos, consultando la semana equivocada y volviendo a cerrar
-      // un ciclo ya cerrado. Cualquier fórmula propia aquí es una forma
-      // de que las dos se separen; esta copia la de quien escribe las
-      // filas, que es la que manda.
-      const now = new Date();
-      const day = now.getDay();
-      const monday = new Date(now);
-      monday.setDate(now.getDate() + (day === 0 ? 1 : 1 - day));
-      const weekStart = monday.toISOString().split('T')[0];
+      // La semana que este conteo abriria. Misma funcion que usa
+      // par-intelligence para escribir las filas, no una copia: escrita
+      // aparte solo habria hecho falta un domingo para separarse.
+      const weekStart = window.BarStockWeek.cycleWeekKey();
 
       const res = await fetch(
         `${c.SUPABASE_URL}/rest/v1/inventory_snapshots` +
