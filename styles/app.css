@@ -3820,7 +3820,23 @@ body.light .ac-diag{ border-top-color: rgba(15,23,42,.10); }
    porque es la misma tarea: mirar botellas dibujadas y decidir. Lo que
    cambia es que aquí se elige UNA en vez de aprobar muchas, así que la
    marca de selección es el borde de la celda y no una casilla. */
-.bp-modal{ width:min(720px,100%); }
+/* Este modal se abre DESDE el panel de conteo, que es una pantalla
+   completa con z-index 100000. Los demás modales viven en 20000 y les
+   sobra, porque se abren sobre la aplicación normal. Este no: con 20000
+   se pintaba debajo del panel y solo aparecía al salir del conteo, que es
+   exactamente el viaje que este botón existía para evitar. */
+#bpModalBg{ z-index:100010; }
+
+.bp-modal{
+  width:min(720px,100%);
+  /* En un iPhone el panel de conteo ocupa toda la pantalla y el modal se
+     abre encima: si crece más que la ventana, el botón de Guardar queda
+     fuera y no hay forma de llegar a él. */
+  max-height:calc(100vh - 32px);
+  max-height:calc(100dvh - 32px);
+  display:flex; flex-direction:column;
+}
+#bpBody{ display:flex; flex-direction:column; min-height:0; overflow-y:auto; }
 .bp-item{ font-weight:700; }
 .bp-grid{ max-height:46vh; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); }
 .bp-cell{ user-select:none; transition:border-color .12s ease, background .12s ease; }
