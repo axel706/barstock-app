@@ -185,7 +185,28 @@
         Prefer: 'return=minimal'
       },
       body: JSON.stringify({ counting_since: valor })
-    }).catch(e => console.warn('conteo: no se pudo avisar a la nube', e));
+    })
+      // `.catch()` a secas solo ve fallos de RED. Una respuesta 400 —que
+      // es lo que devuelve PostgREST si la columna no existe porque la
+      // migración no se corrió— llega como respuesta correcta y se caía
+      // en el vacío: la señal no se escribía, el botón nunca decía
+      // "Counting", y no había ni una línea en consola que lo explicara.
+      .then(async (res) => {
+        if (res.ok) {
+          // El botón del ciclo vive de esta señal. Sin avisarle, se
+          // entera la próxima vez que alguien recargue la página.
+          window.BarStockWeeklyCycle?.refresh?.();
+          return;
+        }
+        const t = await res.text().catch(() => '');
+        console.warn('conteo: la nube rechazo counting_since (' + res.status + ')', t);
+        if (/counting_since/.test(t)) {
+          console.warn(
+            'conteo: falta la columna. Corre la migracion 011:\n' +
+            '  alter table public.locations add column if not exists counting_since timestamptz;');
+        }
+      })
+      .catch(e => console.warn('conteo: no se pudo avisar a la nube', e));
   }
 
   // ── Escribir ─────────────────────────────────────────────────────────

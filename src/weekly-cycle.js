@@ -84,7 +84,19 @@
         { headers: { apikey: key, Authorization: `Bearer ${key}` } }
       );
       const rows = await res.json();
-      return Array.isArray(rows) && rows[0] ? rows[0].counting_since : null;
+      // Si la columna no existe, PostgREST responde 400 con un objeto de
+      // error, no con un array. Antes eso se trataba como "no hay conteo"
+      // sin decir nada, que es el peor resultado posible: el boton se
+      // comporta bien a medias y no hay pista de por que.
+      if (!Array.isArray(rows)) {
+        if (rows && /counting_since/.test(JSON.stringify(rows))) {
+          console.warn(
+            'weekly cycle: falta la columna counting_since. Corre la migracion 011:\n' +
+            '  alter table public.locations add column if not exists counting_since timestamptz;');
+        }
+        return null;
+      }
+      return rows[0] ? rows[0].counting_since : null;
     } catch (e) {
       // Sin red no se sabe si hay conteo ajeno. Se devuelve null y el
       // botón se comporta como antes: es el lado por el que conviene

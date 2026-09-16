@@ -87,6 +87,10 @@
         // debe poder dispararse desde un botón mal cableado.
         s.clear((window.BARSTOCK_CONFIG || {}).LOCATION_NAME || '');
         refresh();
+        // clear() apaga counting_since, asi que el boton del ciclo tiene
+        // que volver a mirar: si no, sigue diciendo "Counting" sobre un
+        // conteo que ya no existe.
+        window.BarStockWeeklyCycle?.refresh?.();
         if (typeof window.setStatus === 'function') window.setStatus('Count discarded.');
       } catch (e) {
         console.warn('[conteo] no se pudo descartar', e);

@@ -180,11 +180,10 @@
     // que hacia falta para que alguien se atreva a retomarlo.
     $('scPause').addEventListener('click', () => {
       if (window.BarStockCountSession) window.BarStockCountSession.pause();
-      close();
+      close();   // close() ya refresca la barra y el boton del ciclo
       if (typeof window.setStatus === 'function') {
         window.setStatus('Count paused. Pick it up from the banner on the main screen.');
       }
-      if (window.BarStockCountResume) window.BarStockCountResume.refresh();
     });
   }
 
@@ -771,10 +770,13 @@
     const o = $('scOverlay');
     if (o) { o.classList.remove('on'); o.classList.remove('sheet-up'); }
     document.body.classList.remove('sc-locked');
-    // La barra de "conteo en curso" tiene que aparecer al salir, se haya
-    // pulsado Pausar o la X. Salir sin pausar tambien deja un conteo a
-    // medias, y era el caso que se perdia de vista.
+    // Las DOS cosas que muestran que hay un conteo a medias: la barra de
+    // Inventory y el boton del ciclo. Al boton no lo avisaba nadie —no
+    // habia una sola llamada a BarStockWeeklyCycle.refresh() fuera de su
+    // propio archivo— asi que se quedaba diciendo "Load the count" con un
+    // conteo ya empezado, hasta que alguien recargaba la pagina.
     if (window.BarStockCountResume) window.BarStockCountResume.refresh();
+    if (window.BarStockWeeklyCycle) window.BarStockWeeklyCycle.refresh();
   }
 
   window.addEventListener('pagehide', close);
