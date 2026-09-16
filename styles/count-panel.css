@@ -526,3 +526,65 @@ body.light .cf-miss-row{ border-color: rgba(15,23,42,.08); }
 body.light .cr-bar{ background: rgba(2,132,199,.07); border-color: rgba(2,132,199,.28); }
 body.light .cr-prog{ background: rgba(15,23,42,.10); }
 body.light .cr-drop{ border-color: rgba(15,23,42,.14); }
+
+/* ── Avisos antes de cerrar ────────────────────────────────────────────
+   Van arriba del todo porque cambian la decision que viene despues: si
+   faltan nueve productos de alta rotacion, "poner a cero" deja de ser
+   razonable. Ninguno bloquea el cierre — un aviso que se equivoca y
+   ademas bloquea se aprende a saltar, y a partir de ahi deja de leerse. */
+.cf-ins-load{
+  font-size: 12px; color: var(--sub);
+  padding: 10px 0 14px;
+  display: flex; align-items: center; gap: 7px;
+}
+.cf-ins-load i{ animation: cf-spin 1s linear infinite; }
+@keyframes cf-spin{ to{ transform: rotate(360deg) } }
+@media (prefers-reduced-motion: reduce){ .cf-ins-load i{ animation: none } }
+
+.cf-ins{ border-radius: 12px; padding: 12px 13px; margin-bottom: 11px; }
+.cf-ins-a{ background: rgba(245,158,11,.09); border: 1px solid rgba(245,158,11,.35); }
+.cf-ins-b{ background: rgba(239,68,68,.09);  border: 1px solid rgba(239,68,68,.35); }
+.cf-ins-t{
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 800; margin-bottom: 9px;
+}
+.cf-ins-a .cf-ins-t{ color: #fbbf24; }
+.cf-ins-b .cf-ins-t{ color: #f87171; }
+
+.cf-ins-row{
+  display: flex; align-items: baseline; gap: 10px;
+  width: 100%;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  font-size: 13px; text-align: left;
+  background: none; border-left: none; border-right: none; border-top: none;
+  color: inherit;
+}
+.cf-ins-row small{ margin-left: auto; color: var(--sub); font-size: 11px; flex-shrink: 0; }
+.cf-ins-row small b{ color: #f87171; font-weight: 800; }
+.cf-ins-btn{ cursor: pointer; }
+.cf-ins-btn i{ color: var(--sub); font-size: 15px; flex-shrink: 0; }
+.cf-ins-btn:active{ opacity: .6; }
+
+.cf-ins-act{
+  width: 100%; margin-top: 9px;
+  padding: 9px; border-radius: 10px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.14);
+  color: #e2e8f0; font-size: 12px; font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.cf-ins-note{
+  font-size: 11px; color: var(--sub); line-height: 1.5;
+  margin-top: 10px; padding-top: 9px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+body.light .cf-ins-a{ background: rgba(245,158,11,.10); border-color: rgba(180,83,9,.35); }
+body.light .cf-ins-a .cf-ins-t{ color: #92400e; }
+body.light .cf-ins-b{ background: rgba(239,68,68,.08); border-color: rgba(185,28,28,.32); }
+body.light .cf-ins-b .cf-ins-t{ color: #991b1b; }
+body.light .cf-ins-row{ border-color: rgba(15,23,42,.08); }
+body.light .cf-ins-row small b{ color: #b91c1c; }
+body.light .cf-ins-act{ background: rgba(15,23,42,.04); border-color: rgba(15,23,42,.12); color: #334155; }

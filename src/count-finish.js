@@ -73,6 +73,12 @@
     $('cfBody').innerHTML = `
       <div class="cf-count"><b>${s.counted}</b> of ${s.total} items counted</div>
 
+      <!-- Los avisos van AQUÍ, antes de la pregunta de qué hacer con los
+           no contados, porque cambian esa respuesta: si faltan nueve de
+           alta rotación, "poner a cero" deja de ser razonable. Se llenan
+           solos cuando el historial termina de leerse. -->
+      <div id="cfInsight"></div>
+
       ${s.missing ? `
         <div class="cf-warn">
           ${s.missing} item${s.missing === 1 ? '' : 's'} never scanned.
@@ -93,11 +99,15 @@
         </div>
 
         <div class="cf-label">What about those ${s.missing}?</div>
-        <button class="cf-opt on" type="button" data-mode="keep">
+        <!-- La marca sale de _mode y no esta fija en 'keep'. render() se
+             vuelve a llamar despues de recontar desde un aviso, y con la
+             clase escrita a mano la pantalla decia 'dejarlos como estaban'
+             mientras la variable seguia en 'zero'. -->
+        <button class="cf-opt${_mode === 'keep' ? ' on' : ''}" type="button" data-mode="keep">
           <b>Leave them as they were</b>
           <small>Keeps their previous count</small>
         </button>
-        <button class="cf-opt" type="button" data-mode="zero">
+        <button class="cf-opt${_mode === 'zero' ? ' on' : ''}" type="button" data-mode="zero">
           <b>Set them to zero</b>
           <small>Only if you counted absolutely everything</small>
         </button>
@@ -130,6 +140,105 @@
       };
       $('cfSearch').oninput = (e) => paintMissing(e.target.value);
     }
+
+    paintInsight();
+  }
+
+  // ── Los avisos ───────────────────────────────────────────────────────
+  //
+  // Van en segundo plano a propósito. Leer el historial es una consulta a
+  // la nube, y la pantalla de cierre tiene que abrirse al instante: nadie
+  // debe esperar a la red para poder pulsar "Keep scanning". Si la
+  // consulta tarda o falla, esto simplemente no aparece y todo lo demás
+  // funciona igual.
+  async function paintInsight() {
+    const host = $('cfInsight');
+    if (!host || !window.BarStockCountInsight) return;
+
+    host.innerHTML = `<div class="cf-ins-load">
+      <i class="ti ti-loader" aria-hidden="true"></i> Checking against your history…</div>`;
+
+    let r;
+    try { r = await window.BarStockCountInsight.analizar(); }
+    catch (e) { console.warn('[conteo] avisos no disponibles', e); host.innerHTML = ''; return; }
+
+    // El panel pudo cerrarse mientras se leía el historial.
+    if (!$('cfInsight')) return;
+    if (!r.listo || (!r.faltan.length && !r.raros.length)) {
+      $('cfInsight').innerHTML = '';
+      return;
+    }
+
+    const n1 = r.faltan.length, n2 = r.raros.length;
+    const TOPE = 4;   // en pantalla; el resto se abre
+
+    $('cfInsight').innerHTML = `
+      ${n1 ? `
+        <div class="cf-ins cf-ins-a">
+          <div class="cf-ins-t">
+            <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+            ${n1} of the missing move every week
+          </div>
+          <div id="cfMoveList">
+            ${r.faltan.slice(0, TOPE).map(x => `
+              <div class="cf-ins-row">
+                <span>${esc(x.item)}</span>
+                <small>${x.semanal.toFixed(1)} / week</small>
+              </div>`).join('')}
+          </div>
+          ${n1 > TOPE ? `<button class="cf-ins-act" id="cfMoveMore" type="button">See all ${n1}</button>` : ''}
+          <button class="cf-ins-act" id="cfMoveGo" type="button">
+            <i class="ti ti-scan" aria-hidden="true"></i> Go count them
+          </button>
+        </div>` : ''}
+
+      ${n2 ? `
+        <div class="cf-ins cf-ins-b">
+          <div class="cf-ins-t">
+            <i class="ti ti-help-circle" aria-hidden="true"></i>
+            ${n2} count${n2 === 1 ? '' : 's'} don't look right
+          </div>
+          ${r.raros.map((x, i) => `
+            <button class="cf-ins-row cf-ins-btn" type="button" data-raro="${i}">
+              <span>${esc(x.item)}</span>
+              <small><b>counted ${x.contado}</b> · expected ${x.esperado}</small>
+              <i class="ti ti-chevron-right" aria-hidden="true"></i>
+            </button>`).join('')}
+          <div class="cf-ins-note">
+            Tap one to count it again. It may also be stock that arrived
+            without the order being recorded — the number would be right
+            and this warning wrong.
+          </div>
+        </div>` : ''}`;
+
+    if ($('cfMoveMore')) {
+      $('cfMoveMore').onclick = () => {
+        $('cfMoveList').innerHTML = r.faltan.map(x => `
+          <div class="cf-ins-row">
+            <span>${esc(x.item)}</span>
+            <small>${x.semanal.toFixed(1)} / week</small>
+          </div>`).join('');
+        $('cfMoveMore').remove();
+      };
+    }
+    if ($('cfMoveGo')) $('cfMoveGo').onclick = () => close(true);
+
+    // Tocar uno abre SU panel de conteo, con lo que ya se había puesto.
+    // Al volver se recalcula: si el número dejó de ser raro, el aviso
+    // desaparece solo y no hay que acordarse de nada.
+    $('cfInsight').querySelectorAll('[data-raro]').forEach(b => {
+      b.onclick = () => {
+        const x = r.raros[Number(b.dataset.raro)];
+        const row = ((window.state && window.state.master) || []).find(m => m.item === x.item);
+        if (!row || !window.BarStockCountPanel) return;
+        window.BarStockCountPanel.open(row, () => {
+          // render() y no solo paintInsight(): recontar cambia el total
+          // de arriba y la lista de faltantes, no solo los avisos. El
+          // historial no se relee — sigue en cache.
+          render();
+        });
+      };
+    });
   }
 
   // ── Los que faltan ───────────────────────────────────────────────────
