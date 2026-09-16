@@ -33,6 +33,7 @@
   let _active = -1;        // índice de la abierta que está editando
   let _onNext = null;
   let _dragging = false;
+  let _again = false;      // si este artículo ya se contó en esta sesión
 
   const $ = (id) => document.getElementById(id);
 
@@ -41,23 +42,39 @@
       ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
   }
 
+  // ── Qué botella se dibuja ────────────────────────────────────────────
+  //
+  // La familia (whiskey, bordeaux…) más el TAMAÑO. No son dos datos
+  // sueltos: el cuello de una botella es una pieza normalizada de unos
+  // 29 mm, la misma en un botellín y en un garrafón, así que cuanto más
+  // ancho el cuerpo, más fino se ve el cuello en proporción. La forma
+  // sale de combinar los dos.
+  //
   // Sin forma asignada se cae a 'generic', que es una botella. Antes se
-  // caia a 'cylinder', que es un rectangulo perfecto: la forma de control
-  // del banco de pruebas. Por eso el deslizador salia cuadrado.
-  // El perfil PROPIO del producto manda sobre el arquetipo de su familia:
-  // la botella de Patron no es la de Casamigos aunque las dos sean
-  // tequila. Si no hay perfil propio, se cae al arquetipo, y si tampoco,
-  // a generic.
+  // caía a 'cylinder', que es un rectángulo perfecto: la forma de control
+  // del banco de pruebas. Por eso el deslizador salía cuadrado.
+  //
+  // Aquí vivía también el perfil PROPIO del producto, trazado desde una
+  // foto. Se retiró: prometía la botella exacta de cada marca y entregaba
+  // un contorno aproximado que había que corregir a mano producto por
+  // producto. Doscientas sesenta veces. Una familia bien medida acierta
+  // más que un trazado a ojo, y no cuesta trabajo a nadie.
   function shapeOf(row) {
-    if (row && row.bottleProfile && P() && P().isValidProfile(row.bottleProfile)) {
-      return row.bottleProfile;
-    }
     const k = row && row.bottleShape;
     return (P() && P().get(k)) ? k : 'generic';
   }
 
+  function sizeOf(row) {
+    return Number(row && row.bottleSizeMl) || 750;
+  }
+
+  // El perfil ya ajustado al formato. Es lo que se dibuja y lo que se
+  // integra: una sola geometría, como siempre.
+  function profileOf(row) {
+    return (P() && P().forSize) ? P().forSize(shapeOf(row), sizeOf(row)) : shapeOf(row);
+  }
+
   function shapeIsSet(row) {
-    if (row && row.bottleProfile) return true;
     return !!(row && row.bottleShape && P() && P().get(row.bottleShape));
   }
 
@@ -68,6 +85,17 @@
 
   function total() {
     return _sealed + _opens.reduce((a, b) => a + b, 0);
+  }
+
+  // La línea bajo el nombre. Estaba escrita dentro de open(), y al poder
+  // cambiar la silueta sin cerrar el panel había que poder rehacerla: si
+  // se cambia el tamaño de 750 a 1000, la cabecera tiene que decirlo sin
+  // esperar a la siguiente apertura.
+  function subText(row, again) {
+    const size = row.bottleSizeMl ? row.bottleSizeMl + ' ml' : 'size not set';
+    const was = (row.onHand === 0 || row.onHand) ? ' · was ' + row.onHand : '';
+    return esc(size) + esc(was) +
+      (again ? ' · <b class="cp-again">already counted</b>' : '');
   }
 
   // ── Estructura ───────────────────────────────────────────────────────
@@ -147,18 +175,25 @@
     return P().pathFor(key, VB.w, VB.h, VB.pad);
   }
 
-  function yToPx(y) { return VB.h - VB.pad - y * (VB.h - VB.pad * 2); }
+  // El encuadre sale de bottle-profiles, no de aquí. Ahora que cada forma
+  // tiene su propia esbeltez, la botella ya no ocupa siempre el mismo
+  // rectángulo, y una fórmula local se habría separado del dibujo en
+  // cuanto alguna silueta necesitara reducirse para caber.
+  function yToPx(key, y) { return P().yToPx(key, y, VB.w, VB.h, VB.pad); }
 
   function paintBottle() {
     const host = $('cpOpen');
     if (!host) return;
 
 
-    const key = shapeOf(_row);
-    const prof = P().get(key);
+    // `key` es aquí un perfil YA ajustado al formato, no una clave. Todas
+    // las funciones de BottleProfiles aceptan lo uno o lo otro, así que
+    // el dibujo y la integral siguen saliendo de la misma geometría.
+    const key = profileOf(_row);
+    const prof = P().profOf(key);
     const frac = _opens[_active];
     const y = P().heightFor(key, frac);
-    const ml = Math.round(frac * (_row.bottleSizeMl || 750));
+    const ml = Math.round(frac * sizeOf(_row));
 
     host.innerHTML = `
       <div class="cp-stage" id="cpStage">
@@ -166,10 +201,10 @@
           <defs><clipPath id="cpClip"><path d="${bottlePath(key)}"/></clipPath></defs>
           <path class="cp-glass" d="${bottlePath(key)}" stroke-width="2"/>
           <g clip-path="url(#cpClip)">
-            <rect class="cp-liquid" x="0" y="${yToPx(y)}" width="${VB.w}" height="${VB.h}"/>
+            <rect class="cp-liquid" x="0" y="${yToPx(key, y)}" width="${VB.w}" height="${VB.h}"/>
           </g>
-          <line class="cp-fullline" x1="14" y1="${yToPx(prof.yFull)}"
-                x2="${VB.w - 14}" y2="${yToPx(prof.yFull)}"
+          <line class="cp-fullline" x1="14" y1="${yToPx(key, prof.yFull)}"
+                x2="${VB.w - 14}" y2="${yToPx(key, prof.yFull)}"
                 stroke-width="1" stroke-dasharray="3 4"/>
         </svg>
         <div class="cp-line" id="cpLine"><span></span><i></i></div>
@@ -178,21 +213,44 @@
         <b>${frac.toFixed(2)}</b>
         <small>${ml} ml of ${_row.bottleSizeMl || 750} · drag the line</small>
       </div>
-      <button type="button" class="cp-trace" id="cpTrace">
-        <i class="ti ti-camera" aria-hidden="true"></i>
-        ${_row.bottleProfile ? 'Retrace from a photo' : 'Trace this bottle from a photo'}
-      </button>
       ${shapeIsSet(_row) ? '' :
-        `<div class="cp-hint">Bottle shape not set — using a generic one.</div>`}`;
-
-    const tb = $('cpTrace');
-    if (tb) tb.onclick = () => {
-      if (!window.BarStockBottleTrace) return;
-      window.BarStockBottleTrace.open(_row, () => paintAll());
-    };
+        `<div class="cp-hint">Bottle shape not set — using a generic one.</div>`}
+      <button type="button" class="cp-shape" id="cpShape">
+        <i class="ti ti-bottle" aria-hidden="true"></i>
+        ${shapeIsSet(_row) ? 'Not this bottle?' : 'Pick the bottle'}
+      </button>`;
 
     positionLine(y);
     bindDrag();
+    bindShape();
+  }
+
+  // ── Cambiar la silueta desde aquí ────────────────────────────────────
+  //
+  // El momento en que se descubre que la forma está mal es escaneando y
+  // viendo el dibujo, no antes. Obligar a salir del conteo, buscar el
+  // artículo en Inventory, editarlo y volver a escanear es suficiente
+  // fricción para que nadie lo corrija nunca, y entonces el número sale
+  // mal cada semana.
+  //
+  // La fracción NO se recalcula al cambiar de forma, a propósito. Lo que
+  // se guardó es "esta botella está al 40%", y eso lo dijo una persona
+  // mirando el vidrio; sigue siendo verdad con la silueta nueva. Lo que
+  // cambia es a qué ALTURA se dibuja esa misma fracción, que es
+  // precisamente lo que se estaba corrigiendo.
+  function bindShape() {
+    const b = $('cpShape');
+    if (!b) return;
+    b.onclick = () => {
+      if (!window.BarStockBottlePicker) return;
+      window.BarStockBottlePicker.open(_row, () => {
+        $('cpSub').innerHTML = subText(_row, _again);
+        // Cerveza y latas no llevan deslizador. Si la forma nueva es
+        // 'none' hay que esconder el bloque entero, no solo redibujarlo.
+        $('cpOpenBlock').style.display = pourable(_row) ? '' : 'none';
+        paintAll();
+      });
+    };
   }
 
   function positionLine(y) {
@@ -202,7 +260,7 @@
     const r = svg.getBoundingClientRect();
     const scale = r.height / VB.h;
     const offset = (stage.clientHeight - r.height) / 2;
-    line.style.top = (offset + yToPx(y) * scale) + 'px';
+    line.style.top = (offset + yToPx(profileOf(_row), y) * scale) + 'px';
   }
 
   function bindDrag() {
@@ -212,10 +270,14 @@
       const svg = stage.querySelector('svg');
       const r = svg.getBoundingClientRect();
       const scale = r.height / VB.h;
-      const usable = (VB.h - VB.pad * 2) * scale;
-      const base = r.bottom - VB.pad * scale;
-      const key = shapeOf(_row);
-      const prof = P().get(key);
+      const key = profileOf(_row);
+      const prof = P().profOf(key);
+      // El mismo encuadre que dibuja la botella, no una copia. Con
+      // esbelteces distintas por forma, calcularlo aparte era garantizar
+      // que algún día el dedo y el vidrio dejaran de coincidir.
+      const box = P().boxFor(key, VB.w, VB.h, VB.pad);
+      const usable = box.usable * scale;
+      const base = r.top + box.base * scale;
       let y = (base - clientY) / usable;
       y = Math.max(0, Math.min(prof.yFull, y));
       _opens[_active] = P().fractionAt(key, y);
@@ -285,6 +347,7 @@
     // en vez de empezar de cero. Reescanear un artículo pasa, y perder lo
     // que ya se había contado sería el peor castigo posible por hacerlo.
     const prev = S().get(row.item);
+    _again = !!prev;
     if (prev) {
       _sealed = Number(prev.sealed) || 0;
       _opens = (prev.opens || []).slice();
@@ -300,11 +363,8 @@
     if (!_opens.length) _opens = [0];
     _active = 0;
 
-    const size = row.bottleSizeMl ? row.bottleSizeMl + ' ml' : 'size not set';
-    const was = (row.onHand === 0 || row.onHand) ? ' · was ' + row.onHand : '';
     $('cpName').textContent = row.item || '';
-    $('cpSub').innerHTML = esc(size) + esc(was) +
-      (prev ? ' · <b class="cp-again">already counted</b>' : '');
+    $('cpSub').innerHTML = subText(row, _again);
 
     // Cerveza, latas y mixers no se cuentan por nivel. Enseñar un
     // deslizador ahi seria pedir que se estime la fraccion de algo que

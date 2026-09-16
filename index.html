@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/tables.css">
   <link rel="stylesheet" href="styles/buttons.css">
-  <link rel="stylesheet" href="styles/app.css?v=hdr5">
+  <link rel="stylesheet" href="styles/app.css?v=sil1">
   <link rel="stylesheet" href="styles/consumption-match.css?v=cm14">
   <link rel="stylesheet" href="styles/order-history.css">
 
@@ -127,7 +127,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260908-220120</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260916-153251</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -831,6 +831,20 @@
       <div><label>Suggested<br><input id="editSuggested" type="number" step="0.01" style="width:100%"></label></div>
       <div><label>Value<br><input id="editValue" type="number" step="0.01" min="0" style="width:100%" placeholder="0.00"></label></div>
       <div><label>Final Order Override<br><input id="editFinalOrder" type="number" step="1" min="0" style="width:100%" placeholder="Leave blank for auto"></label></div>
+      <!-- La silueta no se edita con un desplegable a propósito. Un menú
+           que dice "apothecary_squat" no permite comprobar nada; la
+           botella dibujada sí. Se abre el mismo selector que el panel de
+           conteo, así que no hay dos parrillas que mantener. -->
+      <div class="full"><label>Bottle shape<br>
+        <div class="edit-shape" id="editShapeRow">
+          <div id="editShapeSil"></div>
+          <div class="edit-shape-txt">
+            <b id="editShapeName">—</b>
+            <span id="editShapeSub"></span>
+          </div>
+          <button type="button" id="editShapeBtn">Change</button>
+        </div>
+      </label></div>
     </div>
     <div class="toolbar" style="margin-top:16px;justify-content:space-between">
       <button id="editDelete" class="danger">Delete Item</button>
@@ -3953,9 +3967,44 @@ function openEditModal(index){
   document.getElementById('editSuggested').value = row.suggested ?? 0;
   document.getElementById('editValue').value = row.value ?? 0;
   document.getElementById('editFinalOrder').value = (row.orderOverride!=='' && row.orderOverride!==undefined && row.orderOverride!==null) ? row.orderOverride : '';
+  paintEditShape(row);
   document.getElementById('editModalBg').classList.remove('hidden');
 }
 window.openEditModal = openEditModal;
+
+// La fila de silueta del modal de edición. Se dibuja la forma que de
+// verdad se va a usar al contar —incluida la sustitución por tamaño, que
+// convierte un vino de 1.5 L en una magnum— para que lo que se ve aquí y
+// lo que sale en el conteo no puedan discrepar.
+function paintEditShape(row){
+  const V = window.BarStockBottleProfiles;
+  const sil  = document.getElementById('editShapeSil');
+  const name = document.getElementById('editShapeName');
+  const sub  = document.getElementById('editShapeSub');
+  if(!V || !sil) return;
+
+  const puesta = row && row.bottleShape;
+  const key = puesta ? V.forSize(row.bottleShape, row.bottleSizeMl) : 'generic';
+  const prof = V.get(key);
+
+  sil.innerHTML = `<svg viewBox="0 0 40 56" aria-hidden="true"><path d="${V.pathFor(key,40,56,3)}"/></svg>`;
+  name.textContent = puesta ? prof.name : 'Not set';
+  sub.textContent = puesta
+    ? `${row.bottleSizeMl || 750} ml · ${prof.asp} : 1`
+    : 'Counting will use a generic bottle';
+}
+window.paintEditShape = paintEditShape;
+
+document.getElementById('editShapeBtn').addEventListener('click', () => {
+  if(currentEditIndex===null || currentEditIndex===undefined) return;
+  const row = state.master[currentEditIndex];
+  if(!row || !window.BarStockBottlePicker) return;
+  // El selector guarda por su cuenta y muta la fila. Al volver solo hay
+  // que repintar: si aquí se recogiera el valor para guardarlo con el
+  // resto del formulario, cancelar el modal desharía un cambio que ya
+  // está en la base de datos.
+  window.BarStockBottlePicker.open(row, () => paintEditShape(row));
+});
 function closeEditModal(){
   document.getElementById('editModalBg').classList.add('hidden');
   currentEditIndex = null;
@@ -3981,7 +4030,14 @@ async function saveEditedItem(){
   if(vendor==='UNKNOWN' && code) vendor = inferVendor(code);
 
   const itemNorm = normalizeName(item);
+  // Se parte de la fila ANTERIOR y se pisan solo los campos del
+  // formulario. Antes se construía un objeto desde cero, y eso borraba de
+  // memoria todo lo que el formulario no toca: la categoría, la silueta y
+  // el tamaño de botella. No daba error —la base de datos los conservaba—
+  // pero hasta recargar la página el conteo de ese artículo volvía a
+  // dibujar la botella genérica.
   const updatedRow = {
+    ...row,
     code,
     item,
     itemNorm,
@@ -4836,15 +4892,16 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/no-match-cloud.js"></script>
 <script src="src/typeface.js?v=tf1"></script>
 <script src="src/auto-category.js?v=cat1"></script>
-<script src="src/bottle-profiles.js?v=btl3"></script>
-<script src="src/bottle-assign.js?v=btl5"></script>
+<script src="src/bottle-profiles.js?v=btl6"></script>
+<script src="src/bottle-assign.js?v=btl6"></script>
+<script src="src/bottle-picker.js?v=btl6"></script>
 <script src="src/inventory-value.js?v=iv1"></script>
 <script src="src/spend-by-category.js?v=sp1"></script>
 <script src="src/settings-home.js?v=sh2"></script>
 <script src="src/inventory-backup.js?v=bk1"></script>
 <script src="src/weekly-cycle.js?v=cyc2"></script>
 <script src="src/count-session.js?v=cnt1"></script>
-<script src="src/count-panel.js?v=cnt6"></script>
+<script src="src/count-panel.js?v=cnt7"></script>
 <script src="src/count-finish.js?v=cnt1"></script>
 <script src="src/scan-count.js?v=scan4"></script>
 <script>

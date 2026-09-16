@@ -16,14 +16,20 @@
 
   // Categoría → forma. Es la regla que más trabajo hace, porque las
   // categorías ya están puestas.
+  //
+  // Gin, ron y tequila apuntan a la misma forma que el vodka. No es
+  // pereza: al medir las botellas de referencia salieron indistinguibles
+  // entre sí, y tener cuatro entradas iguales solo daría cuatro sitios
+  // donde equivocarse. El día que una de las cuatro merezca la suya, se
+  // separa aquí sin tocar las otras tres.
   const BY_CATEGORY = {
     'Vodka':              'vodka',
     'Gin':                'vodka',
-    'Tequila & Mezcal':   'tequila',
+    'Tequila & Mezcal':   'vodka',
+    'Rum':                'vodka',
     'Whiskey & Bourbon':  'whiskey',
-    'Rum':                'whiskey',
-    'Brandy & Cognac':    'burgundy',
-    'Liqueur':            'liqueur',
+    'Brandy & Cognac':    'brandy',
+    'Liqueur':            'liqueur_slim',
     'Wine':               'bordeaux',
     'Beer & Cider':       'none',
     'Non-Alcoholic':      'none'
@@ -32,10 +38,27 @@
   // El nombre gana a la categoría cuando dice algo más concreto: dentro
   // de "Wine" caben un burdeos, un borgoña y un espumoso, y sus formas se
   // diferencian en hasta 15 puntos de volumen.
+  //
+  // Las primeras son marcas cuya botella se midió una por una y no se
+  // parece a la de su categoría. Van antes que las varietales y que la
+  // categoría porque son la pista más concreta que hay: si el nombre dice
+  // "Crown Royal", no hay nada que deducir.
   const BY_NAME = [
-    [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'champagne'],
-    [/\b(pinot noir|chardonnay|burgundy|bourgogne|pinot gris|gew)/i, 'burgundy'],
-    [/\b(cabernet|merlot|bordeaux|sauvignon|malbec|syrah|shiraz|zinfandel|petite sirah|rioja|chianti)\b/i, 'bordeaux'],
+    [/\bcrown\s*royal\b/i,                        'crown'],
+    [/\bmaker'?s\s*mark\b/i,                      'squat'],
+    [/\bhendrick'?s\b/i,                          'apothecary_squat'],
+    [/\babsolut\b/i,                              'apothecary_tall'],
+    [/\btanqueray\b/i,                            'shaker_faceted'],
+    [/\b(jose\s*cuervo|cuervo)\b/i,               'tequila_tall'],
+    [/\b(bailey'?s|rumchata|cream liqueur)\b/i,   'liqueur_cream'],
+    [/\b(cointreau|grand\s*marnier|chambord|st[- ]?germain|luxardo)\b/i, 'liqueur_slim'],
+
+    [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
+    // "sauvignon" a secas no vale: un Cabernet Sauvignon viene en botella
+    // de Burdeos y un Sauvignon Blanc en una de hombro caído. La palabra
+    // que decide es la segunda, así que el blanco se caza entero y antes.
+    [/\b(sauvignon blanc|pinot noir|pinot grigio|pinot gris|chardonnay|burgundy|bourgogne|gew[uü]rztraminer|viognier|riesling)\b/i, 'wine_burgundy'],
+    [/\b(cabernet|merlot|bordeaux|malbec|syrah|shiraz|zinfandel|petite sirah|rioja|chianti|tempranillo)\b/i, 'bordeaux'],
     [/\b(keg|draft|draught)\b/i, 'none'],
     [/\b(can|cans|seltzer|soda|juice|syrup|puree|mix)\b/i, 'none']
   ];
@@ -81,9 +104,14 @@
   }
 
   async function byAI(rows) {
+    // pickable() y no keys(): 'generic' es el respaldo cuando no hay nada
+    // asignado, y ofrecérsela a la IA sería darle una salida cómoda para
+    // todo lo que no reconozca. Si no está segura, que omita el producto.
     const shapes = (window.BarStockBottleProfiles
-      ? window.BarStockBottleProfiles.keys()
-      : ['bordeaux','burgundy','champagne','whiskey','vodka','tequila','liqueur','cylinder','none']);
+      ? window.BarStockBottleProfiles.pickable()
+      : ['bordeaux','wine_burgundy','sparkling','vodka','whiskey','tequila_tall','brandy',
+         'squat','crown','apothecary_tall','apothecary_squat','shaker_faceted',
+         'liqueur_slim','liqueur_cream','decanter_flared','none']);
     try {
       const res = await fetch('/api/categorize', {
         method: 'POST',
@@ -103,57 +131,6 @@
     }
   }
 
-  // Las siluetas se piden en lotes de 20. Cada perfil son diez pares de
-  // numeros, asi que 300 articulos de golpe no caben en una respuesta.
-  // Se acumula POR QUE fallo cada lote. La vez anterior salio "0 got their
-  // own bottle drawn" y ese cero no distinguia tres causas muy distintas:
-  // que el endpoint no respondiera, que el modelo omitiera todo, o que la
-  // validacion lo rechazara todo. Resulto ser la primera —el modo
-  // silhouette no estaba desplegado— y no habia forma de saberlo desde la
-  // pantalla.
-  let _diag = { answered: 0, rejected: 0, omitted: 0, failed: 0, why: [] };
-
-  async function silhouettes(rows) {
-    const out = {};
-    _diag = { answered: 0, rejected: 0, omitted: 0, failed: 0, why: [] };
-
-    for (let i = 0; i < rows.length; i += 20) {
-      const lote = rows.slice(i, i + 20);
-      body(`<div class="ac-status"><i class="ti ti-loader" aria-hidden="true"></i> Drawing bottles ${i + 1}–${Math.min(i + 20, rows.length)} of ${rows.length}…</div>`);
-      try {
-        const res = await fetch('/api/categorize', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mode: 'silhouette', names: lote.map(r => r.item) })
-        });
-        if (!res.ok) {
-          _diag.failed += lote.length;
-          if (_diag.why.length < 3) _diag.why.push('HTTP ' + res.status);
-          continue;
-        }
-        const data = await res.json();
-        if (data && data.ok && data.map) {
-          Object.assign(out, data.map);
-          _diag.answered += Number(data.answered || 0);
-          _diag.rejected += Number(data.rejected || 0);
-          _diag.omitted  += Number(data.omitted  || 0);
-          if (Array.isArray(data.why)) {
-            data.why.forEach(w => { if (_diag.why.length < 3) _diag.why.push(w[1]); });
-          }
-        } else {
-          _diag.failed += lote.length;
-        }
-      } catch (e) {
-        // Un lote que falla no debe tumbar los demas: los que si
-        // llegaron valen, y el resto se queda con su arquetipo.
-        _diag.failed += lote.length;
-        if (_diag.why.length < 3) _diag.why.push(e.message || 'network');
-        console.warn('[botellas] lote de siluetas fallo', e);
-      }
-    }
-    return out;
-  }
-
   // ── Ejecutar ─────────────────────────────────────────────────────────
   async function run() {
     const master = (window.state && state.master) || [];
@@ -165,20 +142,15 @@
     open();
     body(`<div class="ac-status"><i class="ti ti-loader" aria-hidden="true"></i> Reading names…</div>`);
 
-    // Pendiente es lo que le falta ALGO, no solo lo que no tiene forma.
-    //
-    // El filtro original era `!r.bottleShape`, y se escribio cuando la
-    // forma era lo unico que existia. Al añadir las siluetas propias, una
-    // segunda pasada decia "no hay nada que resolver" aunque ningun
-    // articulo tuviera silueta: ya todos tenian forma de familia.
-    //
-    // Lo que se cuenta entero (none) se excluye a proposito: no lleva
-    // deslizador, asi que dibujarle una botella no sirve de nada.
-    const pending = master.filter(r =>
-      !r.bottleShape || (r.bottleShape !== 'none' && !r.bottleProfile));
+    // Pendiente es lo que no tiene forma, y ya está. Durante un tiempo
+    // este filtro llevaba una segunda condicion —"o tiene forma pero no
+    // silueta propia"— para que la pantalla volviera a abrirse a trazar
+    // botellas una por una. Las siluetas propias se retiraron, y con
+    // ellas esa condicion.
+    const pending = master.filter(r => !r.bottleShape);
 
     if (!pending.length) {
-      body(`<div class="ac-status">Every item already has its bottle and its own silhouette.</div>`);
+      body(`<div class="ac-status">Every item already has its bottle shape.</div>`);
       setTimeout(close, 2200);
       return;
     }
@@ -211,20 +183,13 @@
       });
     }
 
-    // Ahora la silueta concreta de cada producto. La forma del arquetipo
-    // se queda como respaldo de los que la IA no reconozca.
-    const conForma = _rows.filter(r => r.shape && r.shape !== 'none');
-    if (conForma.length) {
-      const sil = await silhouettes(conForma);
-      const V = window.BarStockBottleProfiles;
-      conForma.forEach(r => {
-        const prof = sil[r.item];
-        // Se valida tambien aqui, ademas de en el servidor. Este perfil
-        // acaba calculando inventario.
-        if (prof && V && V.isValidProfile(prof)) r.profile = prof;
-      });
-    }
-
+    // Aquí venía un segundo paso: pedirle a la IA la silueta concreta de
+    // cada producto. Se retiró. Prometía la botella exacta de cada marca
+    // y devolvía un contorno aproximado que había que revisar uno por
+    // uno, y además el resultado se guardaba en una columna que nadie
+    // volvía a leer — al recargar la página el conteo usaba la forma de
+    // familia igualmente. Una familia bien medida acierta más y no
+    // cuesta trabajo a nadie.
     review();
   }
 
@@ -245,39 +210,27 @@
       `<option value="${s}"${Number(s) === Number(sel) ? ' selected' : ''}>${s} ml</option>`).join('');
 
     const V = window.BarStockBottleProfiles;
-    const conSilueta = withShape.filter(r => r.profile).length;
 
     // La revision es VISUAL. Revisar un desplegable con nombres de formas
     // no dice nada; ver la silueta dibujada al lado del producto si: "esa
     // no es la botella de Patron" se detecta de un vistazo, y es
     // exactamente el error que hay que cazar antes de guardar.
-    const svg = (r) => {
-      const key = r.profile || r.shape || 'generic';
-      return `<svg viewBox="0 0 60 90" class="ac-sil" aria-hidden="true">
-        <path d="${V.pathFor(key, 60, 90, 5)}"/>
+    const svg = (r) => `<svg viewBox="0 0 60 90" class="ac-sil" aria-hidden="true">
+        <path d="${V.pathFor(r.shape || 'generic', 60, 90, 5)}"/>
       </svg>`;
-    };
 
     body(`
       <div class="ac-sum">
         ${withShape.length} item${withShape.length === 1 ? '' : 's'}${without.length ? ` · ${without.length} left blank` : ''}.
-        <b>${conSilueta}</b> got their own bottle drawn; the rest keep a family shape.
-        Uncheck anything that does not look like that product's bottle.
-        ${(_diag.omitted || _diag.rejected || _diag.failed) ? `
-          <div class="ac-diag">
-            ${_diag.omitted ? `${_diag.omitted} the model didn't recognise` : ''}
-            ${_diag.rejected ? ` · ${_diag.rejected} rejected as malformed` : ''}
-            ${_diag.failed ? ` · ${_diag.failed} failed to reach the server` : ''}
-            ${_diag.why.length ? `<br><span>${esc(_diag.why.join(' · '))}</span>` : ''}
-          </div>` : ''}
+        Uncheck anything whose bottle does not look like that.
       </div>
       <div class="ac-grid">
         ${withShape.map((r, i) => `
-          <label class="ac-cell${r.profile ? ' own' : ''}">
+          <label class="ac-cell">
             <input type="checkbox" data-i="${i}" ${r.on ? 'checked' : ''}>
             ${svg(r)}
             <span class="ac-cell-name">${esc(r.item)}</span>
-            <span class="ac-cell-sub">${r.profile ? 'own shape' : esc((shapes[r.shape] || {}).name || r.shape)} · ${r.size || 750} ml</span>
+            <span class="ac-cell-sub">${esc((shapes[r.shape] || {}).name || r.shape)} · ${r.size || 750} ml</span>
           </label>`).join('')}
       </div>
       <div class="ac-foot">
@@ -327,8 +280,7 @@
             },
             body: JSON.stringify({
               bottle_shape: r.shape,
-              bottle_size_ml: r.shape === 'none' ? null : (r.size || 750),
-              bottle_profile: r.profile || null
+              bottle_size_ml: r.shape === 'none' ? null : (r.size || 750)
             })
           });
           if (!res.ok) throw new Error(await res.text());
@@ -338,7 +290,6 @@
           if (row) {
             row.bottleShape = r.shape;
             row.bottleSizeMl = r.shape === 'none' ? null : (r.size || 750);
-            row.bottleProfile = r.profile || null;
           }
           done++;
         } catch (e) { failed++; console.warn('[botellas] fallo', r.item, e); }

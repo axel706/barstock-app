@@ -3814,3 +3814,70 @@ body.light .ac-sil path{ fill: rgba(15,23,42,.03); stroke: rgba(15,23,42,.55); }
 }
 .ac-diag span{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; }
 body.light .ac-diag{ border-top-color: rgba(15,23,42,.10); }
+
+/* ── Selector de silueta por producto ──────────────────────────────────
+   Reaprovecha la parrilla de la revisión por lote (.ac-grid / .ac-cell)
+   porque es la misma tarea: mirar botellas dibujadas y decidir. Lo que
+   cambia es que aquí se elige UNA en vez de aprobar muchas, así que la
+   marca de selección es el borde de la celda y no una casilla. */
+.bp-modal{ width:min(720px,100%); }
+.bp-item{ font-weight:700; }
+.bp-grid{ max-height:46vh; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); }
+.bp-cell{ user-select:none; transition:border-color .12s ease, background .12s ease; }
+.bp-cell:hover{ border-color:rgba(56,189,248,.35); }
+.bp-cell.on{
+  border-color:rgba(56,189,248,.85);
+  background:rgba(56,189,248,.10);
+  box-shadow:0 0 0 1px rgba(56,189,248,.45) inset;
+}
+.bp-cell.on .bp-sil path{ stroke:#38bdf8; fill:rgba(56,189,248,.14); }
+.bp-sil{ width:52px; height:68px; }
+
+/* `none` no es una forma, es apagar el deslizador. Se dibuja como una
+   caja y no como una botella para que no parezca una opción más de la
+   fila: quien la elige está diciendo "esto se cuenta entero". */
+.bp-nonebox{
+  width:52px; height:68px; display:flex; align-items:center; justify-content:center;
+  border:1px dashed rgba(255,255,255,.28); border-radius:8px; font-size:24px; color:var(--sub);
+}
+.bp-cell.on .bp-nonebox{ border-color:#38bdf8; color:#38bdf8; }
+
+.bp-sizes-label{ font-size:11px; color:var(--sub); margin:0 0 6px 2px; }
+.bp-sizes{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+.bp-size{
+  padding:5px 10px; border-radius:999px; font-size:12px; font-weight:700; cursor:pointer;
+  border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.04); color:inherit;
+}
+.bp-size.on{ border-color:rgba(56,189,248,.8); background:rgba(56,189,248,.14); color:#38bdf8; }
+
+body.light .bp-nonebox{ border-color:rgba(15,23,42,.22); }
+body.light .bp-size{ border-color:rgba(15,23,42,.14); background:rgba(15,23,42,.03); }
+body.light .bp-cell.on{ border-color:rgba(2,132,199,.85); background:rgba(2,132,199,.08); }
+body.light .bp-cell.on .bp-sil path{ stroke:#0284c7; fill:rgba(2,132,199,.12); }
+body.light .bp-size.on{ border-color:rgba(2,132,199,.8); background:rgba(2,132,199,.12); color:#0284c7; }
+
+/* Fila de silueta dentro del modal de edición. */
+.edit-shape{
+  display:flex; align-items:center; gap:12px;
+  padding:10px 12px; border-radius:12px;
+  border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.03);
+}
+.edit-shape svg{ width:34px; height:46px; flex:0 0 auto; }
+.edit-shape svg path{ fill:rgba(255,255,255,.06); stroke:rgba(255,255,255,.45); stroke-width:1.6; }
+.edit-shape-txt{ flex:1; min-width:0; }
+.edit-shape-txt b{ display:block; font-size:13px; }
+.edit-shape-txt span{ font-size:11px; color:var(--sub); }
+body.light .edit-shape{ background:rgba(15,23,42,.02); border-color:rgba(15,23,42,.10); }
+body.light .edit-shape svg path{ fill:rgba(15,23,42,.03); stroke:rgba(15,23,42,.55); }
+
+/* Botón de cambiar forma dentro del panel de conteo. Va pegado a la
+   botella y no en la cabecera porque el momento en que se descubre que la
+   silueta está mal es mirándola, no antes. */
+.cp-shape{
+  display:inline-flex; align-items:center; gap:6px;
+  margin-top:8px; padding:5px 12px; border-radius:999px;
+  font-size:12px; font-weight:700; cursor:pointer;
+  border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.05); color:inherit;
+}
+.cp-shape:active{ transform:translateY(1px); }
+body.light .cp-shape{ border-color:rgba(15,23,42,.14); background:rgba(15,23,42,.03); }
