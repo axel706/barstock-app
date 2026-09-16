@@ -86,6 +86,9 @@ body.sc-locked{ overflow: hidden !important; }
 
 
 /* ── Panel inferior ── */
+/* .sc-panel se sustituyo por .sc-sheet, que es lo mismo pero puede
+   subirse para enseñar lo que falta. Se deja la regla porque el panel de
+   asignacion todavia la usa de contenedor. */
 .sc-panel{
   flex-shrink: 0;
   padding: 12px 14px 16px;
@@ -274,9 +277,12 @@ body.sc-locked{ overflow: hidden !important; }
 .sc-empty{ font-size: 13px; color: #94a3b8; text-align: center; padding: 20px 0; }
 .sc-empty.sc-bad{ color: #ef4444; font-weight: 700; }
 
-/* En horizontal la camara se lleva casi todo y el panel se aprieta */
+/* En horizontal la camara se lleva casi todo y la hoja se aprieta */
 @media (max-height: 520px) {
   .sc-panel{ padding: 8px 12px 10px; }
+  .sc-sheet{ padding: 0 12px 10px; max-height: 54vh; }
+  .sc-grab{ height: 20px; }
+  .sc-prog b{ font-size: 21px; }
 }
 
 /* ── Modo claro ─────────────────────────────────────────────────────────
@@ -304,3 +310,88 @@ body.light .sc-pick-meta em{ background: rgba(15,23,42,.06); color: #475569; }
 body.light .sc-picks-head,
 body.light .sc-empty,
 body.light .sc-err{ color: #475569; }
+
+/* ── Progreso y hoja ───────────────────────────────────────────────────
+   La cabecera decia "84 counted", sin denominador. En un inventario de
+   trescientos articulos ese numero no dice si vas por la mitad o por el
+   final, que es lo unico que quiere saber quien esta contando. Ahora
+   lleva el total y una barra. */
+.sc-bar{
+  flex-shrink: 0;
+  height: 4px;
+  background: rgba(255,255,255,.10);
+}
+.sc-bar i{
+  display: block; height: 100%; width: 0;
+  background: #38bdf8;
+  transition: width .25s ease;
+}
+
+/* La hoja. Abajo deja ver la camara entera; subida tapa el visor y
+   enseña lo que falta. La camara sigue encendida detras a proposito: si
+   se apagara al consultar la lista, cada vuelta costaria el arranque de
+   la camara, que en un telefono es casi un segundo. */
+.sc-sheet{
+  flex-shrink: 0;
+  padding: 0 14px 16px;
+  border-top: 1px solid rgba(255,255,255,.10);
+  background: #0f1729;
+  border-radius: 16px 16px 0 0;
+  max-height: 42vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  transition: max-height .22s ease;
+}
+.sc-overlay.sheet-up .sc-sheet{ max-height: 78vh; }
+
+/* Area de agarre generosa: se pulsa con el pulgar de la mano que ademas
+   sujeta una botella. La barrita que se ve es pequeña, la zona que
+   responde no. */
+.sc-grab{
+  display: flex; align-items: center; justify-content: center;
+  height: 26px; margin: 0 -14px; cursor: pointer;
+}
+.sc-grab i{
+  display: block; width: 36px; height: 4px; border-radius: 9px;
+  background: rgba(255,255,255,.28);
+  transition: background .15s ease;
+}
+.sc-grab:active i{ background: rgba(255,255,255,.5); }
+
+.sc-sheet-head{
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 10px;
+}
+.sc-prog{ display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.sc-prog b{ font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.sc-prog span{ font-size: 12px; color: #94a3b8; }
+
+.sc-pause{
+  margin-left: auto; flex-shrink: 0;
+  height: 36px; padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.18);
+  color: #e2e8f0;
+  font-size: 13px; font-weight: 700;
+  display: inline-flex; align-items: center; gap: 6px;
+  cursor: pointer;
+}
+
+/* Lo que falta. Solo con la hoja subida: mientras se escanea estorba, y
+   con la hoja abajo no cabria de todas formas. */
+.sc-left{ display: none; margin: 4px 0 12px; }
+.sc-overlay.sheet-up .sc-left{ display: block; }
+.sc-left-cat{
+  font-size: 11px; font-weight: 800; letter-spacing: .06em;
+  text-transform: uppercase; color: #64748b;
+  margin: 12px 0 4px;
+}
+.sc-left-row{
+  font-size: 13px; padding: 7px 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.sc-left-more, .sc-left-done{
+  font-size: 12px; color: #94a3b8; padding: 10px 0 0;
+}
+.sc-left-done{ color: #22c55e; font-weight: 700; }

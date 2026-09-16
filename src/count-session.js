@@ -95,6 +95,71 @@
 
   function startedAt() { return data().startedAt; }
 
+  // ── Pausar ───────────────────────────────────────────────────────────
+  //
+  // Pausar no guarda nada: la sesión ya vivía en el dispositivo y cerrar
+  // el escáner nunca perdió un dato. Lo que faltaba era DECIRLO. Un
+  // conteo a medias sin marca es indistinguible de uno olvidado, y sin
+  // saber cuál es, lo prudente es no tocarlo — así que nadie lo retoma y
+  // se acaba recontando todo.
+  //
+  // `pausedAt` es esa marca. Sirve para que la barra de la pantalla
+  // principal pueda decir "pausado hace 40 minutos" en vez de limitarse a
+  // "hay algo a medias".
+  function pause() {
+    const d = data();
+    d.pausedAt = new Date().toISOString();
+    save();
+    return d.pausedAt;
+  }
+
+  function resume() {
+    const d = data();
+    delete d.pausedAt;
+    save();
+  }
+
+  function isPaused() { return !!data().pausedAt; }
+  function pausedAt() { return data().pausedAt || null; }
+
+  // Hay sesión si se contó algo. Una sesión recién creada, sin un solo
+  // artículo, no cuenta: ofrecer "retomar" un conteo vacío es ofrecer
+  // nada, y ensucia la pantalla principal cada vez que alguien abre el
+  // escáner y lo cierra sin escanear.
+  function exists() { return size() > 0; }
+
+  // ── Progreso ─────────────────────────────────────────────────────────
+  //
+  // Lo que necesita la barra de arriba y la hoja del escáner. Es
+  // summary() sin la lista de nombres, que en 300 artículos son varios
+  // kilobytes que nadie va a mirar mientras escanea.
+  function progress() {
+    // window.state.master y no state.master: esta funcion la llama la
+    // barra de la pantalla principal, que puede correr antes de que el
+    // script grande declare la global. Con la forma corta eso era un
+    // ReferenceError que se llevaba por delante toda la barra.
+    const master = (window.state && window.state.master) || [];
+    const counted = size();
+    const total = master.length;
+    return {
+      counted,
+      total,
+      missing: Math.max(0, total - counted),
+      pct: total ? Math.round((counted / total) * 100) : 0,
+      startedAt: startedAt(),
+      pausedAt: pausedAt()
+    };
+  }
+
+  // Los artículos que faltan, con su categoría, para poder agruparlos.
+  // Sin el nombre concreto, "faltan 177" no le dice a nadie a qué estante
+  // volver.
+  function missingRows() {
+    const master = (window.state && window.state.master) || [];
+    const counted = new Set(countedItems());
+    return master.filter(r => !counted.has(r.item));
+  }
+
   // ── Escribir ─────────────────────────────────────────────────────────
   function set(item, sealed, opens) {
     const d = data();
@@ -130,7 +195,7 @@
 
   // ── Resumen para la pantalla de cierre ──────────────────────────────
   function summary() {
-    const master = (window.state && state.master) || [];
+    const master = (window.state && window.state.master) || [];
     const counted = new Set(countedItems());
     const missing = master.filter(r => !counted.has(r.item));
     return {
@@ -144,6 +209,7 @@
 
   window.BarStockCountSession = {
     load, save, get, has, set, remove, clear,
-    totalFor, countedItems, size, startedAt, summary
+    totalFor, countedItems, size, startedAt, summary,
+    pause, resume, isPaused, pausedAt, exists, progress, missingRows
   };
 })();

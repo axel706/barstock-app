@@ -79,6 +79,19 @@
           Closing replaces the on hand for this whole location.
         </div>
 
+        <!-- Cuantas faltan ya se decia. Cuales no, y era el dato que
+             convierte el aviso en algo accionable: "faltan 177" solo
+             asusta, pero "faltan doce de Vodka" manda a alguien a un
+             estante concreto. -->
+        <button class="cf-toggle" id="cfToggle" type="button">
+          <i class="ti ti-chevron-down" aria-hidden="true"></i>
+          <span>See which ones</span>
+        </button>
+        <div class="cf-missing" id="cfMissing" hidden>
+          <input type="text" id="cfSearch" placeholder="Search the missing" autocomplete="off">
+          <div id="cfMissingList"></div>
+        </div>
+
         <div class="cf-label">What about those ${s.missing}?</div>
         <button class="cf-opt on" type="button" data-mode="keep">
           <b>Leave them as they were</b>
@@ -104,6 +117,57 @@
     });
     $('cfMore').onclick = () => close(true);
     $('cfGo').onclick = commit;
+
+    if ($('cfToggle')) {
+      $('cfToggle').onclick = () => {
+        const box = $('cfMissing');
+        const abierto = !box.hidden;
+        box.hidden = abierto;
+        $('cfToggle').classList.toggle('on', !abierto);
+        $('cfToggle').querySelector('span').textContent =
+          abierto ? 'See which ones' : 'Hide the list';
+        if (!abierto) { paintMissing(''); $('cfSearch').focus(); }
+      };
+      $('cfSearch').oninput = (e) => paintMissing(e.target.value);
+    }
+  }
+
+  // ── Los que faltan ───────────────────────────────────────────────────
+  //
+  // Agrupados por categoría porque así está la barra: el vodka en un
+  // sitio, el vino en otro. Una lista alfabética de 177 nombres obliga a
+  // recorrer el local entero; agrupada, dice a qué estantes volver.
+  //
+  // Con buscador, porque el otro uso de esta lista es comprobar UNO: "¿le
+  // di al Tito's?". Y ese caso es tan frecuente como el de repasarla
+  // entera.
+  function paintMissing(q) {
+    const host = $('cfMissingList');
+    if (!host) return;
+
+    const filtro = String(q || '').trim().toLowerCase();
+    let filas = S().missingRows();
+    if (filtro) filas = filas.filter(r => String(r.item || '').toLowerCase().includes(filtro));
+
+    if (!filas.length) {
+      host.innerHTML = `<div class="cf-empty">${filtro ? 'Nothing matches' : 'Nothing missing'}</div>`;
+      return;
+    }
+
+    const porCat = {};
+    for (const r of filas) {
+      const c = r.category || 'Uncategorised';
+      (porCat[c] = porCat[c] || []).push(r);
+    }
+
+    host.innerHTML = Object.keys(porCat).sort().map(cat => `
+      <div class="cf-cat">${esc(cat)} · ${porCat[cat].length}</div>
+      ${porCat[cat].map(r => `
+        <div class="cf-miss-row">
+          <span>${esc(r.item)}</span>
+          <small>was ${r.onHand ?? 0}</small>
+        </div>`).join('')}
+    `).join('');
   }
 
   // ── Escribir ─────────────────────────────────────────────────────────

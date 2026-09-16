@@ -410,3 +410,119 @@ body.light .cp-fullline{ stroke: rgba(15,23,42,.35); }
   font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
 }
 body.light .cp-trace{ border-color: rgba(15,23,42,.20); color: #475569; }
+
+/* ── Los que faltan, en la pantalla de cierre ──────────────────────────
+   Cuantas faltaban ya se decia. Cuales no, y es el dato que convierte el
+   aviso en algo que se puede hacer: "faltan 177" solo asusta; "faltan
+   doce de Vodka" manda a alguien a un estante concreto. */
+.cf-toggle{
+  width: 100%;
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 14px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.12);
+  color: #cbd5e1;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer;
+}
+.cf-toggle i{ transition: transform .18s ease; font-size: 16px; }
+.cf-toggle.on i{ transform: rotate(180deg); }
+
+.cf-missing{ margin-bottom: 14px; }
+.cf-missing input{
+  width: 100%; height: 42px; padding: 0 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.14);
+  color: #f1f5f9; font-size: 15px;
+  margin-bottom: 8px;
+}
+.cf-missing input::placeholder{ color: #64748b; }
+
+/* Tope de altura con scroll propio: sin esto, ciento setenta filas
+   empujan los botones de cerrar el conteo fuera de la pantalla, y esos
+   son los que no pueden quedar fuera de alcance. */
+#cfMissingList{ max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; }
+
+.cf-cat{
+  font-size: 11px; font-weight: 800; letter-spacing: .06em;
+  text-transform: uppercase; color: #64748b;
+  margin: 12px 0 2px;
+}
+.cf-miss-row{
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  font-size: 13px;
+}
+.cf-miss-row small{ margin-left: auto; color: #94a3b8; font-size: 11px; flex-shrink: 0; }
+.cf-empty{ font-size: 13px; color: #94a3b8; padding: 16px 0; text-align: center; }
+
+body.light .cf-toggle{ background: rgba(15,23,42,.04); border-color: rgba(15,23,42,.12); color: #334155; }
+body.light .cf-missing input{ background: #fff; border-color: rgba(15,23,42,.14); color: #0f172a; }
+body.light .cf-miss-row{ border-color: rgba(15,23,42,.08); }
+
+/* ── Barra de conteo en curso ──────────────────────────────────────────
+   Va en la pantalla de Inventory, encima de los controles, porque es
+   donde un conteo empieza y donde termina. Vacia no ocupa nada: el
+   contenedor solo existe cuando hay una sesion a medias. */
+.cr-bar{
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: rgba(56,189,248,.08);
+  border: 1px solid rgba(56,189,248,.28);
+}
+/* Un punto que late. Es la unica animacion de la barra y esta ahi por un
+   motivo concreto: distinguir de un vistazo "hay algo vivo aqui" de una
+   tarjeta informativa mas, que es como se leia sin el. */
+.cr-dot{
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #38bdf8; flex-shrink: 0;
+  animation: cr-pulse 2s ease-in-out infinite;
+}
+@keyframes cr-pulse{ 0%,100%{ opacity:1 } 50%{ opacity:.35 } }
+@media (prefers-reduced-motion: reduce){ .cr-dot{ animation: none } }
+
+.cr-txt{ min-width: 0; flex: 1; }
+.cr-txt b{ display: block; font-size: 13px; font-weight: 800; }
+.cr-txt span{ display: block; font-size: 12px; color: var(--sub); }
+
+.cr-prog{
+  width: 90px; height: 5px; flex-shrink: 0;
+  border-radius: 9px; overflow: hidden;
+  background: rgba(255,255,255,.12);
+}
+.cr-prog i{ display: block; height: 100%; background: #38bdf8; }
+
+.cr-go{
+  flex-shrink: 0;
+  height: 36px; padding: 0 16px;
+  border-radius: 999px;
+  background: #0ea5e9; border: none; color: #04283b;
+  font-size: 13px; font-weight: 800; cursor: pointer;
+}
+.cr-drop{
+  flex-shrink: 0;
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.16);
+  color: var(--sub); font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.cr-drop:hover{ color: #ef4444; border-color: rgba(239,68,68,.45); }
+
+/* En telefono la barra de progreso sobra: el texto ya dice 84 de 261, y
+   el espacio hace falta para que Resume no se quede sin sitio. */
+@media (max-width: 640px){
+  .cr-prog{ display: none; }
+  .cr-bar{ gap: 9px; padding: 10px 12px; }
+}
+
+body.light .cr-bar{ background: rgba(2,132,199,.07); border-color: rgba(2,132,199,.28); }
+body.light .cr-prog{ background: rgba(15,23,42,.10); }
+body.light .cr-drop{ border-color: rgba(15,23,42,.14); }

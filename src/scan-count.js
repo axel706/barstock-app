@@ -94,18 +94,44 @@
         <button class="sc-x" id="scClose" type="button" aria-label="Close">
           <i class="ti ti-x" aria-hidden="true"></i>
         </button>
-        <span class="sc-lab">Scan</span>
-        <span class="sc-n" id="scN">0 counted</span>
+        <span class="sc-lab">Count</span>
+        <span class="sc-n" id="scN">0 / 0</span>
       </div>
+
+      <div class="sc-bar"><i id="scBar"></i></div>
 
       <div class="sc-stage" id="scStage">
         <video id="scVid" playsinline muted autoplay></video>
         <div class="sc-guide"><i></i></div>
       </div>
 
-      <div class="sc-panel">
+      <!-- ── La hoja ──────────────────────────────────────────────────
+           Se arrastra hacia arriba para ver qué falta y hacia abajo para
+           seguir escaneando. La alternativa era una pantalla aparte con
+           la lista, y esa es justo la que nadie abre a mitad de conteo:
+           obliga a parar la cámara, mirar, y volver a arrancarla. Aquí la
+           cámara no se apaga en ningún momento. -->
+      <div class="sc-sheet" id="scSheet">
+        <div class="sc-grab" id="scGrab" role="button" tabindex="0"
+             aria-label="Show what is left"><i></i></div>
+
+        <div class="sc-sheet-head">
+          <div class="sc-prog">
+            <b id="scProgN">0</b>
+            <span id="scProgTxt">of 0 · 0 left</span>
+          </div>
+          <button class="sc-pause" id="scPause" type="button">
+            <i class="ti ti-player-pause" aria-hidden="true"></i> Pause
+          </button>
+        </div>
+
         <div class="sc-diag" id="scDiag"></div>
         <div class="sc-hit" id="scHit"></div>
+
+        <!-- Solo se ve con la hoja subida. Mientras se escanea estorba, y
+             en 300 artículos es una lista que no cabe. -->
+        <div class="sc-left" id="scLeft"></div>
+
         <div class="sc-btns">
           <button class="sc-ghost" id="scTorch" type="button">Flashlight</button>
           <button class="sc-ghost" id="scFind" type="button">Find by name</button>
@@ -142,6 +168,71 @@
     // Etiqueta rota, botella rellenable o destileria pequeña sin codigo:
     // sin esta salida el conteo se para en seco.
     $('scFind').addEventListener('click', () => askAssign(null));
+
+    $('scGrab').addEventListener('click', toggleSheet);
+    $('scGrab').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSheet(); }
+    });
+
+    // Pausar cierra el escaner y deja la marca. No borra nada: la sesion
+    // ya vivia en el dispositivo. Lo que cambia es que la pantalla
+    // principal va a poder decir que hay un conteo a medias, que es lo
+    // que hacia falta para que alguien se atreva a retomarlo.
+    $('scPause').addEventListener('click', () => {
+      if (window.BarStockCountSession) window.BarStockCountSession.pause();
+      close();
+      if (typeof window.setStatus === 'function') {
+        window.setStatus('Count paused. Pick it up from the banner on the main screen.');
+      }
+      if (window.BarStockCountResume) window.BarStockCountResume.refresh();
+    });
+  }
+
+  // ── Subir y bajar la hoja ────────────────────────────────────────────
+  //
+  // La camara NO se para al subir la hoja. Se hizo a proposito: si al
+  // mirar la lista se apagara el visor, volver a escanear costaria el
+  // arranque de la camara cada vez, que en un telefono es casi un
+  // segundo. Se queda encendida detras.
+  function toggleSheet() {
+    const el = $('scOverlay');
+    if (!el) return;
+    const abierta = el.classList.toggle('sheet-up');
+    if (abierta) paintLeft();
+  }
+
+  // Lo que falta por contar. Se cortan a cuarenta: la lista completa son
+  // trescientas filas que nadie recorre con el pulgar, y lo util es ver
+  // el siguiente estante, no el inventario entero. El resto se dice en
+  // una linea al final.
+  function paintLeft() {
+    const host = $('scLeft');
+    const S = window.BarStockCountSession;
+    if (!host || !S) return;
+
+    const faltan = S.missingRows();
+    if (!faltan.length) {
+      host.innerHTML = `<div class="sc-left-done">
+        <i class="ti ti-check" aria-hidden="true"></i> Everything counted.</div>`;
+      return;
+    }
+
+    const porCat = {};
+    for (const r of faltan) {
+      const c = r.category || 'Uncategorised';
+      (porCat[c] = porCat[c] || []).push(r);
+    }
+
+    let n = 0;
+    const bloques = Object.keys(porCat).sort().map(cat => {
+      const filas = porCat[cat].filter(() => n++ < 40);
+      if (!filas.length) return '';
+      return `<div class="sc-left-cat">${esc(cat)} · ${porCat[cat].length}</div>` +
+        filas.map(r => `<div class="sc-left-row">${esc(r.item)}</div>`).join('');
+    }).join('');
+
+    host.innerHTML = bloques +
+      (faltan.length > 40 ? `<div class="sc-left-more">${faltan.length - 40} more</div>` : '');
   }
 
   function diag(html, cls) {
@@ -441,8 +532,21 @@
   // decidir que el escaneo era viable. Lo unico que necesita ver quien
   // cuenta es cuantos articulos lleva.
   function stats() {
-    const n = window.BarStockCountSession ? window.BarStockCountSession.size() : 0;
-    if ($('scN')) $('scN').textContent = n + ' counted';
+    const S = window.BarStockCountSession;
+    if (!S) return;
+    const p = S.progress();
+
+    // El denominador es el dato que faltaba. "84 counted" no dice si vas
+    // por la mitad o por el final; "84 / 261" si, y es la diferencia
+    // entre saber cuanto queda y no saberlo.
+    if ($('scN')) $('scN').textContent = `${p.counted} / ${p.total}`;
+    if ($('scBar')) $('scBar').style.width = p.pct + '%';
+    if ($('scProgN')) $('scProgN').textContent = p.counted;
+    if ($('scProgTxt')) {
+      $('scProgTxt').textContent =
+        `of ${p.total} · ${p.missing} left`;
+    }
+    if ($('scOverlay') && $('scOverlay').classList.contains('sheet-up')) paintLeft();
   }
 
   // ── Decodificar un lienzo ───────────────────────────────────────────
@@ -544,7 +648,14 @@
   async function open() {
     build();
     $('scOverlay').classList.add('on');
+    // Se abre SIEMPRE con la hoja abajo, aunque la vez anterior se
+    // cerrara subida. Quien abre el escaner viene a escanear; empezar con
+    // la lista tapando el visor seria empezar por el paso equivocado.
+    $('scOverlay').classList.remove('sheet-up');
     document.body.classList.add('sc-locked');
+    // Abrir el escaner es retomar: si venia pausado deja de estarlo, y la
+    // barra de la pantalla principal se entera al cerrar.
+    if (window.BarStockCountSession) window.BarStockCountSession.resume();
     times = []; lastCode = ''; frames = 0; stats();
     loadLearned();   // sin await: que la camara no espere a la red
 
@@ -617,10 +728,12 @@
 
     running = true;
     mark();
-    hudTimer = setInterval(() => {
-      if (running && $('scTimer')) $('scTimer').textContent = fmt(performance.now() - tStart);
-      stats();
-    }, 200);
+    // Cinco veces por segundo bastaba cuando esto tambien pintaba un
+    // cronometro por fotograma. Ese cronometro era del banco de pruebas y
+    // se retiro hace tiempo: quedaba la llamada a un #scTimer que ya no
+    // existe en ningun sitio. Ahora solo se refresca el contador, y dos
+    // veces por segundo sobra para un numero que sube de uno en uno.
+    hudTimer = setInterval(stats, 500);
     tick();
 
     // La linterna cambia mucho las cosas en una bodega. El soporte en
@@ -656,8 +769,12 @@
     const a = $('scAssign');
     if (a) a.classList.remove('on');
     const o = $('scOverlay');
-    if (o) o.classList.remove('on');
+    if (o) { o.classList.remove('on'); o.classList.remove('sheet-up'); }
     document.body.classList.remove('sc-locked');
+    // La barra de "conteo en curso" tiene que aparecer al salir, se haya
+    // pulsado Pausar o la X. Salir sin pausar tambien deja un conteo a
+    // medias, y era el caso que se perdia de vista.
+    if (window.BarStockCountResume) window.BarStockCountResume.refresh();
   }
 
   window.addEventListener('pagehide', close);
