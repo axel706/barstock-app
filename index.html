@@ -39,9 +39,9 @@
   <link rel="stylesheet" href="styles/empty-state.css?v=empty1">
   <link rel="stylesheet" href="styles/pour-iq.css?v=piq1">
   <link rel="stylesheet" href="styles/admin.css?v=adm3">
-  <link rel="stylesheet" href="styles/weekly-cycle.css?v=cyc1">
+  <link rel="stylesheet" href="styles/weekly-cycle.css?v=cyc3">
   <link rel="stylesheet" href="styles/scan-count.css?v=scan5">
-  <link rel="stylesheet" href="styles/count-panel.css?v=cnt9">
+  <link rel="stylesheet" href="styles/count-panel.css?v=cnt10">
   <!-- Siempre al final: solo contiene @media (max-width:640px) y necesita
        ganar los empates de especificidad por orden de carga. -->
   <link rel="stylesheet" href="styles/theoretical-usage.css">
@@ -127,7 +127,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260916-160309</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260916-192701</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -261,9 +261,10 @@
         <div class="inventory-tools">
           <button id="addInventoryItemBtn">Add New Item</button>
           <button id="scanInvoiceBtn" class="primary">Scan Price Invoice</button>
-          <!-- Prueba de la camara para el conteo por escaneo. Oculto por
-               defecto y solo se muestra al admin: todavia no es una
-               funcion, es una medicion, y no debe verlo el staff. -->
+          <!-- Atajo al mismo sitio al que lleva el paso 2 del ciclo. Ya
+               no esta oculto tras el candado de admin: mientras lo
+               estuvo, nadie del staff podia contar, que es precisamente
+               para quien se hizo. -->
           <button id="takeInventoryBtn" type="button" style="display:none"><i class="ti ti-scan" aria-hidden="true" style="font-size:15px;vertical-align:-2px;margin-right:5px"></i>Take inventory</button>
           <input id="searchInput" placeholder="Filter current order" style="margin-left:auto;max-width:240px" />
         </div>
@@ -4904,35 +4905,52 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/spend-by-category.js?v=sp1"></script>
 <script src="src/settings-home.js?v=sh2"></script>
 <script src="src/inventory-backup.js?v=bk1"></script>
-<script src="src/weekly-cycle.js?v=cyc2"></script>
-<script src="src/count-session.js?v=cnt8"></script>
+<script src="src/weekly-cycle.js?v=cyc3"></script>
+<script src="src/count-session.js?v=cnt10"></script>
 <script src="src/count-panel.js?v=cnt7"></script>
 <script src="src/count-resume.js?v=cnt8"></script>
 <script src="src/count-insight.js?v=cnt9"></script>
-<script src="src/count-finish.js?v=cnt9"></script>
+<script src="src/count-finish.js?v=cnt10"></script>
 <script src="src/scan-count.js?v=scan5"></script>
 <script>
-  // Puerta del boton de escaneo. Solo el admin lo ve, porque esto todavia
-  // no es una funcion terminada sino una medicion, y un boton a medias en
-  // manos del staff genera preguntas que no toca contestar aun.
+  // Aqui habia una puerta: el boton de escaneo solo lo veia el admin,
+  // "porque esto todavia no es una funcion terminada sino una medicion".
+  // Ya lo es, y mientras la puerta estuviera puesta nadie del staff podia
+  // contar — que es precisamente para quien se hizo.
   //
-  // Se reintenta porque __bsUserEmail lo pone auth.js cuando termina de
-  // validar la sesion, y ese momento no esta garantizado antes que esto.
+  // El boton es un atajo al mismo sitio al que lleva el paso 2 del ciclo.
+  // Y comprueba lo mismo que comprueba aquel: contar sin haber reseteado
+  // el on hand mezcla lo de esta semana con lo de la anterior, y el
+  // resultado parece correcto porque los numeros existen.
   (() => {
     const btn = document.getElementById('takeInventoryBtn');
     if (!btn) return;
-    let tries = 0;
-    const check = () => {
-      const email = window.__bsUserEmail || '';
-      const admin = window.BARSTOCK_CONFIG?.ADMIN_EMAIL;
-      if (email && admin && email === admin) {
-        btn.style.display = '';
-        btn.onclick = () => window.BarStockScanCount && window.BarStockScanCount.open();
-        return;
+    btn.style.display = '';
+    btn.onclick = () => {
+      if (!window.BarStockScanCount) return;
+
+      const C = window.BarStockCycle;
+      const d = C && typeof C.startedAt === 'function' ? C.startedAt() : null;
+      const lunes = new Date();
+      const dia = lunes.getDay();
+      lunes.setDate(lunes.getDate() - (dia === 0 ? 6 : dia - 1));
+      lunes.setHours(0, 0, 0, 0);
+
+      const yaEmpezado = window.BarStockCountSession?.exists?.();
+      const cicloAbierto = d && d >= lunes;
+
+      // Retomar un conteo ya empezado no necesita aviso: el reset, si
+      // hacia falta, ya se hizo cuando se empezo.
+      if (!cicloAbierto && !yaEmpezado) {
+        const ok = confirm(
+          'The cycle for this week has not been started.\n\n' +
+          'Counting now mixes this week with last week\'s numbers. ' +
+          'Use the cycle button to start a new cycle first.\n\n' +
+          'Press OK to count anyway.');
+        if (!ok) return;
       }
-      if (++tries < 20) setTimeout(check, 500);
+      window.BarStockScanCount.open();
     };
-    check();
   })();
 </script>
 

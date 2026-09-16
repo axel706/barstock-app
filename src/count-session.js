@@ -160,9 +160,43 @@
     return master.filter(r => !counted.has(r.item));
   }
 
+  // ── La señal compartida ──────────────────────────────────────────────
+  //
+  // El conteo vive en este teléfono, y eso está bien. Lo que no puede
+  // vivir solo aquí es el HECHO de que hay uno abierto: el botón del
+  // ciclo lo lee de la nube, y con la señal en un único dispositivo, el
+  // iPad decía "Start new cycle" y ponía el on hand a cero en mitad del
+  // conteo de otra persona.
+  //
+  // `locations.counting_since` es esa señal. No guarda el conteo, solo
+  // que existe y desde cuándo. Se escribe sin esperar respuesta y sin
+  // romper nada si falla: quedarse sin red no puede impedir contar.
+  function marcarNube(valor) {
+    const c = window.BARSTOCK_CONFIG || {};
+    if (!c.SUPABASE_URL || !c.SUPABASE_KEY || !c.LOCATION_NAME) return;
+    const u = `${c.SUPABASE_URL}/rest/v1/locations` +
+      `?account_id=eq.${encodeURIComponent(c.ACCOUNT_ID || '')}` +
+      `&name=eq.${encodeURIComponent(c.LOCATION_NAME)}`;
+    fetch(u, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: c.SUPABASE_KEY, Authorization: `Bearer ${c.SUPABASE_KEY}`,
+        Prefer: 'return=minimal'
+      },
+      body: JSON.stringify({ counting_since: valor })
+    }).catch(e => console.warn('conteo: no se pudo avisar a la nube', e));
+  }
+
   // ── Escribir ─────────────────────────────────────────────────────────
   function set(item, sealed, opens) {
     const d = data();
+
+    // La señal se enciende con el PRIMER artículo, no al abrir el
+    // escáner. Abrir la cámara, mirar y salir sin escanear nada no es un
+    // conteo, y dejaría el ciclo bloqueado por un gesto que no hizo nada.
+    const primero = !Object.keys(d.items).length;
+
     d.items[item] = {
       sealed: Math.max(0, Number(sealed) || 0),
       opens: (opens || [])
@@ -172,6 +206,7 @@
         .filter(n => n > 0)
     };
     save();
+    if (primero) marcarNube(d.startedAt);
     return d.items[item];
   }
 
@@ -191,6 +226,10 @@
     }
     _data = blank();
     save();
+    // Se apaga la señal compartida: el resto de dispositivos tiene que
+    // dejar de ver "contando" en cuanto este conteo deja de existir, sea
+    // porque se cerró o porque se descartó.
+    marcarNube(null);
   }
 
   // ── Resumen para la pantalla de cierre ──────────────────────────────

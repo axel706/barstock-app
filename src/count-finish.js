@@ -62,6 +62,10 @@
   function render() {
     const s = S().summary();
 
+    // Si todos los no contados ya estan en cero, es que se venia de un
+    // reset y no hay nada que preguntar.
+    const desdeCero = S().missingRows().every(r => Number(r.onHand || 0) === 0);
+
     if (!s.counted) {
       $('cfBody').innerHTML = `
         <div class="cf-empty">Nothing counted yet.</div>
@@ -98,19 +102,31 @@
           <div id="cfMissingList"></div>
         </div>
 
-        <div class="cf-label">What about those ${s.missing}?</div>
-        <!-- La marca sale de _mode y no esta fija en 'keep'. render() se
-             vuelve a llamar despues de recontar desde un aviso, y con la
-             clase escrita a mano la pantalla decia 'dejarlos como estaban'
-             mientras la variable seguia en 'zero'. -->
-        <button class="cf-opt${_mode === 'keep' ? ' on' : ''}" type="button" data-mode="keep">
-          <b>Leave them as they were</b>
-          <small>Keeps their previous count</small>
-        </button>
-        <button class="cf-opt${_mode === 'zero' ? ' on' : ''}" type="button" data-mode="zero">
-          <b>Set them to zero</b>
-          <small>Only if you counted absolutely everything</small>
-        </button>
+        ${desdeCero ? `
+          <!-- Viniendo de "Start new cycle" todo esta en cero, asi que
+               "dejarlos como estaban" y "ponerlos a cero" hacen lo mismo.
+               Ofrecer las dos era ofrecer una eleccion que no existe, y
+               una eleccion falsa es peor que ninguna: hace dudar. Aqui se
+               dice lo que va a pasar y ya. -->
+          <div class="cf-label cf-label-plain">
+            Those ${s.missing} stay at zero. The cycle was reset before you
+            started, so anything not counted has nothing recorded.
+          </div>
+        ` : `
+          <div class="cf-label">What about those ${s.missing}?</div>
+          <!-- La marca sale de _mode y no esta fija en 'keep'. render() se
+               vuelve a llamar despues de recontar desde un aviso, y con la
+               clase escrita a mano la pantalla decia 'dejarlos como estaban'
+               mientras la variable seguia en 'zero'. -->
+          <button class="cf-opt${_mode === 'keep' ? ' on' : ''}" type="button" data-mode="keep">
+            <b>Leave them as they were</b>
+            <small>Keeps their previous count</small>
+          </button>
+          <button class="cf-opt${_mode === 'zero' ? ' on' : ''}" type="button" data-mode="zero">
+            <b>Set them to zero</b>
+            <small>Only if you counted absolutely everything</small>
+          </button>
+        `}
       ` : `
         <div class="cf-ok">Every item was counted.</div>
       `}
@@ -279,6 +295,84 @@
     `).join('');
   }
 
+  // ── ¿Ya corrió el ciclo esta semana? ─────────────────────────────────
+  //
+  // La pregunta NO es "¿hubo reset esta semana?". Ese fue mi primer
+  // intento y estaba mal de una forma que rompía el caso normal: el paso
+  // 1 del botón resetea y escribe `weekly_reset_at = ahora`, así que al
+  // terminar el primer conteo del lunes la respuesta habría sido "sí, ya
+  // hay ciclo" y `runCycle` no habría corrido nunca. La semana anterior
+  // se quedaba sin cerrar.
+  //
+  // La pregunta correcta es si ya existe un snapshot para la semana en
+  // curso, que es exactamente lo que `saveSnapshot` crea al abrir ciclo.
+  // Si lo hay, este es el segundo conteo y solo debe corregir números.
+  async function cicloYaCorrio() {
+    const c = window.BARSTOCK_CONFIG || {};
+    if (!c.SUPABASE_URL || !c.SUPABASE_KEY || !window.BarStockParIntelligence) return false;
+    try {
+      const locationId = await window.BarStockParIntelligence.fetchLocationId();
+      if (!locationId) return false;
+
+      // EXACTAMENTE el mismo lunes que usa par-intelligence para nombrar
+      // la semana, incluido su tratamiento del domingo: domingo cuenta
+      // como el lunes SIGUIENTE, no el anterior.
+      //
+      // Lo escribí al revés la primera vez y solo se habría notado los
+      // domingos, consultando la semana equivocada y volviendo a cerrar
+      // un ciclo ya cerrado. Cualquier fórmula propia aquí es una forma
+      // de que las dos se separen; esta copia la de quien escribe las
+      // filas, que es la que manda.
+      const now = new Date();
+      const day = now.getDay();
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + (day === 0 ? 1 : 1 - day));
+      const weekStart = monday.toISOString().split('T')[0];
+
+      const res = await fetch(
+        `${c.SUPABASE_URL}/rest/v1/inventory_snapshots` +
+        `?location_id=eq.${locationId}&week_start=eq.${weekStart}&select=id&limit=1`,
+        { headers: { apikey: c.SUPABASE_KEY, Authorization: `Bearer ${c.SUPABASE_KEY}` } });
+      const rows = await res.json();
+      return Array.isArray(rows) && rows.length > 0;
+    } catch (e) {
+      // Sin poder comprobarlo, se corre el ciclo. Es el lado por el que
+      // conviene fallar: no cerrar una semana pierde el dato de consumo
+      // para siempre, mientras que cerrarla de más deja un ciclo raro que
+      // se ve y se puede arreglar.
+      console.warn('conteo: no se pudo comprobar si el ciclo ya corrio', e);
+      return false;
+    }
+  }
+
+  // Contar ES abrir el ciclo. Antes escanear no tocaba `weekly_reset_at`,
+  // así que después de un conteo completo el botón seguía ofreciendo
+  // "Start new cycle" y pulsarlo borraba el trabajo recién hecho.
+  async function marcarCicloAbierto() {
+    const c = window.BARSTOCK_CONFIG || {};
+    if (!c.SUPABASE_URL || !c.SUPABASE_KEY || !c.LOCATION_NAME) return;
+    try {
+      await fetch(
+        `${c.SUPABASE_URL}/rest/v1/locations` +
+        `?account_id=eq.${encodeURIComponent(c.ACCOUNT_ID || '')}` +
+        `&name=eq.${encodeURIComponent(c.LOCATION_NAME)}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: c.SUPABASE_KEY, Authorization: `Bearer ${c.SUPABASE_KEY}`,
+            Prefer: 'return=minimal'
+          },
+          body: JSON.stringify({ weekly_reset_at: new Date().toISOString() })
+        });
+      if (window.BarStockCycle && typeof window.BarStockCycle.invalidate === 'function') {
+        window.BarStockCycle.invalidate();
+      }
+    } catch (e) {
+      console.warn('conteo: no se pudo marcar el ciclo como abierto', e);
+    }
+  }
+
   // ── Escribir ─────────────────────────────────────────────────────────
   async function commit() {
     const s = S().summary();
@@ -311,12 +405,24 @@
       $('cfBody').innerHTML = `<div class="cf-status">Saving to the cloud…</div>`;
       await window.BarStockInventoryCloud.replaceInventoryMaster(master);
 
-      // El ciclo semanal, igual que al importar un archivo. Si falla, el
-      // conteo ya esta guardado y eso es lo que no se puede perder: se
-      // avisa y se sigue.
+      // ── El ciclo ─────────────────────────────────────────────────────
+      //
+      // El PRIMER conteo de la semana cierra el ciclo anterior y abre
+      // uno nuevo, igual que al importar un archivo. Los siguientes NO.
+      //
+      // Esa distincion importa: un reconteo del jueves que volviera a
+      // cerrar y abrir partiria la semana en dos ciclos, el consumo se
+      // repartiria entre los dos y los promedios dejarian de ser
+      // comparables con los de las semanas enteras. Un segundo conteo
+      // corrige numeros; no empieza una semana nueva.
+      //
+      // Si falla, el conteo ya esta guardado y eso es lo que no se puede
+      // perder: se avisa y se sigue.
+      const yaHayCiclo = await cicloYaCorrio();
       try {
-        if (window.BarStockParIntelligence) {
+        if (window.BarStockParIntelligence && !yaHayCiclo) {
           await window.BarStockParIntelligence.runCycle(master);
+          await marcarCicloAbierto();
         }
         // runCycle acaba de CERRAR la semana anterior y abrir una nueva,
         // asi que la lista de semanas que tenga cargada Consumption Match
@@ -336,14 +442,56 @@
       if (typeof saveState === 'function') saveState();
       if (typeof render === 'function') render();
 
+      // ── Y ahora qué ──────────────────────────────────────────────────
+      //
+      // Contar no es el final de nada: se cuenta para decidir qué pedir.
+      // Antes esta pantalla decía "listo" y te devolvía a donde estabas,
+      // y los dos pasos siguientes —revisar la orden y subir las ventas
+      // de la semana— había que ir a buscarlos a dos sitios distintos.
+      //
+      // El aviso de la primera semana está porque sin historial no hay
+      // par, no hay sugerido y mis dos avisos se callan por diseño. Sin
+      // decirlo, la primera vez parece que algo está roto.
+      const primeraVez = !window.BarStockCountInsight ||
+        !(await window.BarStockCountInsight.analizar(true).then(r => r.listo).catch(() => false));
+
       $('cfBody').innerHTML = `
         <div class="cf-done"><i class="ti ti-circle-check" aria-hidden="true"></i></div>
         <div class="cf-count">Count closed</div>
         <div class="cf-note">${s.counted} items updated${
           s.missing ? (_mode === 'zero' ? `, ${s.missing} set to zero` : `, ${s.missing} left as they were`) : ''
-        }.</div>
-        <button class="cf-go" id="cfEnd" type="button">Done</button>`;
+        }${yaHayCiclo ? '. The cycle was already open, so this corrected the numbers without starting a new week' : ''}.</div>
+
+        ${primeraVez ? `
+          <div class="cf-first">
+            This is your first closed week here. From the next one on, the
+            app will flag what is missing that you actually use, and any
+            count that does not match your history.
+          </div>` : ''}
+
+        <div class="cf-next-t">What now</div>
+        <button class="cf-next" id="cfGoOrder" type="button">
+          <i class="ti ti-shopping-cart" aria-hidden="true"></i>
+          <span><b>Check the order</b><small>Suggested amounts are already updated</small></span>
+          <i class="ti ti-chevron-right" aria-hidden="true"></i>
+        </button>
+        <button class="cf-next" id="cfGoSales" type="button">
+          <i class="ti ti-file-upload" aria-hidden="true"></i>
+          <span><b>Upload this week's sales</b><small>Needed for Variance to compare</small></span>
+          <i class="ti ti-chevron-right" aria-hidden="true"></i>
+        </button>
+
+        <button class="cf-ghost" id="cfEnd" type="button">Not now</button>`;
+
+      // bsOpenSection es la misma función que usan las pastillas del
+      // encabezado: una sola forma de navegar, no una segunda inventada
+      // aquí que mañana se quede atrás cuando cambien las secciones.
+      const irA = (s) => {
+        if (typeof window.bsOpenSection === 'function') window.bsOpenSection(s);
+      };
       $('cfEnd').onclick = () => close(false);
+      $('cfGoOrder').onclick = () => { close(false); irA('vendor'); };
+      $('cfGoSales').onclick = () => { close(false); irA('consumption'); };
 
       if (typeof setStatus === 'function') setStatus(`Count closed · ${s.counted} items updated.`);
 

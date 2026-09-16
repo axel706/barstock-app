@@ -588,3 +588,69 @@ body.light .cf-ins-b .cf-ins-t{ color: #991b1b; }
 body.light .cf-ins-row{ border-color: rgba(15,23,42,.08); }
 body.light .cf-ins-row small b{ color: #b91c1c; }
 body.light .cf-ins-act{ background: rgba(15,23,42,.04); border-color: rgba(15,23,42,.12); color: #334155; }
+
+/* ── Y ahora que ───────────────────────────────────────────────────────
+   Contar no es el final de nada: se cuenta para decidir que pedir. Esta
+   pantalla decia "listo" y te devolvia a donde estabas, y los dos pasos
+   siguientes habia que ir a buscarlos a dos sitios distintos. */
+.cf-next-t{
+  font-size: 11px; font-weight: 800; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--sub);
+  margin: 22px 0 8px;
+}
+.cf-next{
+  width: 100%;
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 14px; margin-bottom: 8px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.12);
+  color: inherit; text-align: left; cursor: pointer;
+}
+.cf-next > i:first-child{ font-size: 20px; color: #38bdf8; flex-shrink: 0; }
+.cf-next > i:last-child{ font-size: 16px; color: var(--sub); margin-left: auto; flex-shrink: 0; }
+.cf-next span{ min-width: 0; }
+.cf-next b{ display: block; font-size: 13px; font-weight: 800; }
+.cf-next small{ display: block; font-size: 11px; color: var(--sub); }
+
+/* La primera semana no hay historial, asi que no hay par, no hay
+   sugerido y los dos avisos se callan por diseño. Sin decirlo, parece
+   que algo esta roto. */
+.cf-first{
+  font-size: 12px; line-height: 1.55;
+  padding: 11px 13px; margin-top: 14px;
+  border-radius: 12px;
+  background: rgba(56,189,248,.08);
+  border: 1px solid rgba(56,189,248,.28);
+  color: #bae6fd;
+}
+.cf-label-plain{ font-weight: 400; color: var(--sub); line-height: 1.55; }
+
+body.light .cf-next{ background: rgba(15,23,42,.03); border-color: rgba(15,23,42,.10); }
+body.light .cf-first{ background: rgba(2,132,199,.07); border-color: rgba(2,132,199,.26); color: #075985; }
+
+/* ── La bifurcacion del paso 2 ─────────────────────────────────────────
+   Un dialogo y no dos botones permanentes en la cabecera: la pregunta
+   solo tiene sentido una vez por semana, y dos botones fijos dejarian
+   siempre uno de los dos sin usar ocupando sitio. */
+.cyc-pick{ width: min(440px, 100%); }
+.cyc-pick h3{ margin: 0 0 14px; font-size: 16px; }
+.cyc-pick-opt{
+  width: 100%;
+  display: flex; align-items: center; gap: 13px;
+  padding: 14px; margin-bottom: 9px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.14);
+  color: inherit; text-align: left; cursor: pointer;
+}
+.cyc-pick-opt:hover{ border-color: rgba(56,189,248,.5); }
+.cyc-pick-opt > i{ font-size: 22px; color: #38bdf8; flex-shrink: 0; }
+.cyc-pick-opt b{ display: block; font-size: 14px; font-weight: 800; }
+.cyc-pick-opt small{ display: block; font-size: 12px; color: var(--sub); margin-top: 2px; }
+.cyc-pick-x{
+  width: 100%; margin-top: 4px; padding: 9px;
+  border-radius: 10px; background: none; border: none;
+  color: var(--sub); font-size: 13px; cursor: pointer;
+}
+body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,23,42,.12); }

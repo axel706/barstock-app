@@ -96,3 +96,24 @@
 
 body.light .cyc-step2 { border-color: rgba(2,132,199,.55) !important; }
 body.light .cyc-done  { border-color: rgba(21,128,61,.55) !important; color: #15803d !important; }
+
+/* El cuarto estado: hay un conteo abierto. Gana sobre los demas, asi que
+   se distingue a la vista: mientras esto se ve, ni resetear ni importar
+   son opciones — las dos pisarian el trabajo en marcha. */
+.cyc-btn.cyc-counting{
+  background: rgba(56,189,248,.12);
+  border-color: rgba(56,189,248,.45);
+  color: #7dd3fc;
+}
+.cyc-btn.cyc-counting i{ animation: cyc-rec 2s ease-in-out infinite; }
+@keyframes cyc-rec{ 0%,100%{ opacity:1 } 50%{ opacity:.35 } }
+@media (prefers-reduced-motion: reduce){ .cyc-btn.cyc-counting i{ animation: none } }
+
+/* A los tres dias deja de ser "en curso" y pasa a ser un problema. El
+   conteo NO se borra solo: solo cambia lo que el boton dice de el. */
+.cyc-btn.cyc-counting[title*="three days"]{
+  background: rgba(245,158,11,.12);
+  border-color: rgba(245,158,11,.45);
+  color: #fbbf24;
+}
+body.light .cyc-btn.cyc-counting{ background: rgba(2,132,199,.09); border-color: rgba(2,132,199,.4); color: #0369a1; }

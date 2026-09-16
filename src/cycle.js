@@ -63,6 +63,12 @@
   function startedAt() { return _startedAt; }
   function isLoaded()  { return _loaded; }
 
+  // Cerrar un conteo abre el ciclo, así que esta caché deja de decir la
+  // verdad en ese instante. Sin invalidarla, el resto de la app seguiría
+  // creyendo que el ciclo empezó la semana pasada hasta la siguiente
+  // recarga de página.
+  function invalidate() { _loaded = false; _startedAt = null; }
+
   // ¿Esta fecha pertenece al ciclo abierto?
   //
   // El ciclo no tiene final: va desde el último reset hasta ahora. Poner
@@ -89,5 +95,5 @@
 
   load();
 
-  window.BarStockCycle = { load, startedAt, contains, label, isLoaded };
+  window.BarStockCycle = { load, startedAt, contains, label, isLoaded, invalidate };
 })();
