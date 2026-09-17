@@ -98,14 +98,36 @@ body.sc-locked{ overflow: hidden !important; }
 .sc-diag .sc-ok{ color: #22c55e; }
 .sc-diag .sc-bad{ color: #ef4444; font-weight: 700; }
 
+/* ── La marca de lo ultimo leido ───────────────────────────────────────
+   Flota sobre la camara, no debajo. Mientras escaneas estas mirando el
+   visor: poner la confirmacion fuera de el obliga a bajar la vista para
+   algo que dura dos segundos.
+
+   Y se va sola. Antes se quedaba puesta hasta la siguiente lectura, asi
+   que a mitad de conteo lo que se leia ahi podia ser de tres botellas
+   atras y no habia forma de saberlo. */
+.sc-hit{
+  position: absolute;
+  left: 12px; right: 12px; bottom: 12px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity .18s ease, transform .18s ease;
+  pointer-events: none;
+}
+.sc-hit.on{ opacity: 1; transform: none; pointer-events: auto; }
 .sc-hit:empty{ display: none; }
+
 .sc-found, .sc-new{
   border-radius: 12px;
   padding: 11px 13px;
-  margin-bottom: 10px;
+  /* Opaco de verdad: esto va encima de video, y un fondo translucido
+     sobre imagen en movimiento es ilegible. */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: pointer;
 }
-.sc-found{ background: rgba(34,197,94,.14); border: 1px solid rgba(34,197,94,.40); }
-.sc-new  { background: rgba(245,158,11,.13); border: 1px solid rgba(245,158,11,.38); }
+.sc-found{ background: rgba(6,42,24,.82); border: 1px solid rgba(34,197,94,.55); }
+.sc-new  { background: rgba(48,30,4,.85);  border: 1px solid rgba(245,158,11,.55); }
 .sc-code{
   font-size: 19px; font-weight: 800; letter-spacing: .04em;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -382,6 +404,14 @@ body.light .sc-err{ color: #475569; }
    con la hoja abajo no cabria de todas formas. */
 .sc-left{ display: none; margin: 4px 0 12px; }
 .sc-overlay.sheet-up .sc-left{ display: block; }
+
+/* Con la hoja abajo solo hacen falta el progreso y terminar. La linterna
+   y la busqueda por nombre son salidas de emergencia, y el diagnostico es
+   del banco de pruebas: los tres se consultan mirando la pantalla, que es
+   justo lo que se hace con la hoja subida. */
+.sc-sheet .sc-btns, .sc-sheet .sc-diag{ display: none; }
+.sc-overlay.sheet-up .sc-sheet .sc-btns{ display: flex; }
+.sc-overlay.sheet-up .sc-sheet .sc-diag{ display: block; }
 .sc-left-cat{
   font-size: 11px; font-weight: 800; letter-spacing: .06em;
   text-transform: uppercase; color: #64748b;
@@ -395,3 +425,18 @@ body.light .sc-err{ color: #475569; }
   font-size: 12px; color: #94a3b8; padding: 10px 0 0;
 }
 .sc-left-done{ color: #22c55e; font-weight: 700; }
+
+/* El buscador es lo primero que hay que tocar, asi que se ve como tal.
+   En iPhone el teclado no puede subir solo cuando este panel lo abre un
+   escaneo —Safari solo lo permite dentro de un gesto— y lo unico que
+   queda es que el campo no admita duda sobre donde hay que pulsar. */
+.sc-assign .sc-search{ margin-bottom: 14px; }
+.sc-assign input{
+  border-color: rgba(56,189,248,.45);
+  background: rgba(56,189,248,.07);
+}
+.sc-assign input:focus{
+  border-color: rgba(56,189,248,.85);
+  box-shadow: 0 0 0 3px rgba(56,189,248,.18);
+  outline: none;
+}

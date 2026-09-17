@@ -34,6 +34,7 @@
   let _onNext = null;
   let _dragging = false;
   let _again = false;      // si este artículo ya se contó en esta sesión
+  let _upc = null;         // el código que abrió este panel, si vino de un escaneo
 
   const $ = (id) => document.getElementById(id);
 
@@ -115,24 +116,45 @@
         </div>
       </div>
 
+      <!-- ── La botella manda ────────────────────────────────────────
+           Esta pantalla se abre una vez por artículo: en un conteo
+           completo, 261 veces. Antes tenía tres etiquetas —"Open bottle",
+           "Sealed bottles", "Total"— y a la décima botella esas palabras
+           ya no informan, solo ocupan. Ahora la silueta se lleva todo el
+           alto que sobra y la cifra vive justo debajo, que es donde va a
+           estar mirando el ojo después de arrastrar la línea. -->
       <div class="cp-body">
         <div class="cp-block" id="cpOpenBlock">
-          <div class="cp-label">Open bottle</div>
           <div class="cp-open" id="cpOpen"></div>
           <div class="cp-opens" id="cpOpens"></div>
-          <button type="button" class="cp-add" id="cpAdd">
-            <i class="ti ti-plus" aria-hidden="true"></i> Add another open bottle
-          </button>
+          <div class="cp-chips">
+            <button type="button" class="cp-chip" id="cpAdd">
+              <i class="ti ti-plus" aria-hidden="true"></i> another open
+            </button>
+            <button type="button" class="cp-chip" id="cpShape">
+              not this bottle?
+            </button>
+          </div>
         </div>
       </div>
 
       <div class="cp-sealed">
-        <div class="cp-label">Sealed bottles</div>
+        <span class="cp-sealed-lab">Sealed</span>
         <div class="cp-step">
           <button type="button" id="cpMinus" aria-label="One less">−</button>
           <div class="cp-num" id="cpSealed">0</div>
           <button type="button" id="cpPlus" aria-label="One more">+</button>
         </div>
+      </div>
+
+      <!-- El código que trajo hasta aquí, y la salida si está mal. Va
+           abajo y pequeño a propósito: casi nunca hace falta, pero cuando
+           hace falta no hay ningún otro sitio donde buscarlo. Hoy, un
+           código mal aprendido no tenía arreglo desde ninguna pantalla. -->
+      <div class="cp-upc" id="cpUpc" hidden>
+        <i class="ti ti-barcode" aria-hidden="true"></i>
+        <span id="cpUpcTxt"></span>
+        <button type="button" id="cpUpcFix">wrong product?</button>
       </div>
 
       <div class="cp-foot">
@@ -154,6 +176,29 @@
       _opens.push(0.5);
       _active = _opens.length - 1;
       paintAll();
+    };
+    // El botón de la silueta vive ya en la estructura y no se vuelve a
+    // crear en cada repintado: antes se generaba dentro del HTML de la
+    // botella, así que cada arrastre lo destruía y lo rehacía.
+    $('cpShape').onclick = () => {
+      if (!window.BarStockBottlePicker || !_row) return;
+      window.BarStockBottlePicker.open(_row, () => {
+        $('cpSub').innerHTML = subText(_row, _again);
+        $('cpOpenBlock').style.display = pourable(_row) ? '' : 'none';
+        paintAll();
+      });
+    };
+    $('cpUpcFix').onclick = () => {
+      if (!_upc || !window.BarStockBarcodeFix || !_row) return;
+      window.BarStockBarcodeFix.open(_upc, _row, (nuevoRow) => {
+        // El código apunta ya a otro producto. Si además se movió lo
+        // contado, este panel está mirando un artículo que ya no es el
+        // que se estaba contando: se cierra y se vuelve al escáner.
+        finish(false);
+        if (nuevoRow && window.BarStockCountPanel) {
+          setTimeout(() => open(nuevoRow, _onNext, null), 60);
+        }
+      });
     };
   }
 
@@ -211,47 +256,26 @@
       </div>
       <div class="cp-read">
         <b>${frac.toFixed(2)}</b>
-        <small>${ml} ml of ${_row.bottleSizeMl || 750} · drag the line</small>
+        <small>${ml} ml · drag the line</small>
       </div>
       ${shapeIsSet(_row) ? '' :
-        `<div class="cp-hint">Bottle shape not set — using a generic one.</div>`}
-      <button type="button" class="cp-shape" id="cpShape">
-        <i class="ti ti-bottle" aria-hidden="true"></i>
-        ${shapeIsSet(_row) ? 'Not this bottle?' : 'Pick the bottle'}
-      </button>`;
+        `<div class="cp-hint">Bottle shape not set — using a generic one.</div>`}`;
 
     positionLine(y);
     bindDrag();
-    bindShape();
   }
 
-  // ── Cambiar la silueta desde aquí ────────────────────────────────────
+  // ── Cambiar la silueta ───────────────────────────────────────────────
   //
-  // El momento en que se descubre que la forma está mal es escaneando y
-  // viendo el dibujo, no antes. Obligar a salir del conteo, buscar el
-  // artículo en Inventory, editarlo y volver a escanear es suficiente
-  // fricción para que nadie lo corrija nunca, y entonces el número sale
-  // mal cada semana.
+  // El botón vive en la estructura (cpShape) y se conecta una sola vez en
+  // build(). El momento en que se descubre que la forma está mal es
+  // escaneando y viendo el dibujo, no antes.
   //
   // La fracción NO se recalcula al cambiar de forma, a propósito. Lo que
   // se guardó es "esta botella está al 40%", y eso lo dijo una persona
   // mirando el vidrio; sigue siendo verdad con la silueta nueva. Lo que
   // cambia es a qué ALTURA se dibuja esa misma fracción, que es
   // precisamente lo que se estaba corrigiendo.
-  function bindShape() {
-    const b = $('cpShape');
-    if (!b) return;
-    b.onclick = () => {
-      if (!window.BarStockBottlePicker) return;
-      window.BarStockBottlePicker.open(_row, () => {
-        $('cpSub').innerHTML = subText(_row, _again);
-        // Cerveza y latas no llevan deslizador. Si la forma nueva es
-        // 'none' hay que esconder el bloque entero, no solo redibujarlo.
-        $('cpOpenBlock').style.display = pourable(_row) ? '' : 'none';
-        paintAll();
-      });
-    };
-  }
 
   function positionLine(y) {
     const stage = $('cpStage'), line = $('cpLine');
@@ -337,10 +361,11 @@
   function paintAll() { paintBottle(); paintNums(); }
 
   // ── Abrir y cerrar ───────────────────────────────────────────────────
-  function open(row, onNext) {
+  function open(row, onNext, upc) {
     build();
     _row = row;
     _onNext = onNext || null;
+    _upc = upc || null;
     _active = -1;
 
     // Si este artículo ya se contó en esta sesión, se recupera tal cual
@@ -366,6 +391,11 @@
     $('cpName').textContent = row.item || '';
     $('cpSub').innerHTML = subText(row, _again);
 
+    // La fila del código solo existe si se llegó aquí escaneando. Buscar
+    // el artículo por nombre no deja código que corregir.
+    $('cpUpc').hidden = !_upc;
+    if (_upc) $('cpUpcTxt').textContent = _upc;
+
     // Cerveza, latas y mixers no se cuentan por nivel. Enseñar un
     // deslizador ahi seria pedir que se estime la fraccion de algo que
     // nunca esta a medias.
@@ -381,14 +411,14 @@
     }
     $('cpPanel').classList.remove('on');
     const cb = _onNext;
-    _row = null; _onNext = null;
+    _row = null; _onNext = null; _upc = null;
     if (cb) cb(save);
   }
 
   function close() {
     const el = $('cpPanel');
     if (el) el.classList.remove('on');
-    _row = null; _onNext = null;
+    _row = null; _onNext = null; _upc = null;
   }
 
   window.addEventListener('resize', () => { if ($('cpPanel')?.classList.contains('on')) paintBottle(); });

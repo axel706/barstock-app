@@ -5,10 +5,18 @@
 
    Todo dimensionado para una mano. La otra sostiene una botella. */
 
+/* ── La pila de capas del conteo ───────────────────────────────────────
+   escaner 99999 · cierre 100001 · articulo 100003 · codigo 100004
+
+   El articulo va POR ENCIMA del cierre y no por debajo, aunque el cierre
+   se abra despues. El motivo es que el aviso de "este conteo no cuadra"
+   abre el panel del articulo desde dentro de la pantalla de cierre: con
+   el articulo en 100000 se pintaba debajo y el boton no hacia nada
+   visible. Mismo fallo que tuvo el selector de siluetas. */
 .cp-panel{
   position: fixed;
   inset: 0;
-  z-index: 100000;
+  z-index: 100003;
   display: none;
   flex-direction: column;
   background: #0b1220;
@@ -654,3 +662,156 @@ body.light .cf-first{ background: rgba(2,132,199,.07); border-color: rgba(2,132,
   color: var(--sub); font-size: 13px; cursor: pointer;
 }
 body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,23,42,.12); }
+
+/* ── Panel del articulo · la botella manda ─────────────────────────────
+   Esta pantalla se abre una vez por articulo: 261 veces en un conteo
+   completo. Tenia tres etiquetas —"Open bottle", "Sealed bottles",
+   "Total"— y a la decima botella esas palabras ya no informan, solo
+   ocupan. Ahora la silueta se lleva el alto que sobra. */
+.cp-body{ display: flex; flex-direction: column; min-height: 0; }
+#cpOpenBlock{ display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.cp-open{ flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.cp-stage{ flex: 1; min-height: 0; }
+
+/* La cifra, centrada DEBAJO de la botella. Al costado obligaba a mover
+   la vista en diagonal justo despues de arrastrar la linea; debajo cae
+   donde el ojo ya esta. */
+.cp-read{
+  text-align: center;
+  padding: 8px 0 2px;
+}
+.cp-read b{
+  display: block;
+  font-size: 30px; font-weight: 800; line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.cp-read small{ display: block; font-size: 12px; color: #94a3b8; margin-top: 2px; }
+
+/* Las dos salidas, como pastillas discretas. No son acciones del conteo:
+   son "esto no es lo que creia". */
+.cp-chips{ display: flex; gap: 6px; justify-content: center; margin: 8px 0 4px; flex-wrap: wrap; }
+.cp-chip{
+  padding: 6px 13px; border-radius: 999px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.14);
+  color: #cbd5e1; font-size: 12px; font-weight: 700;
+  font-family: inherit; cursor: pointer;
+}
+.cp-chip:active{ transform: translateY(1px); }
+
+/* Selladas en una fila, no en un bloque con titulo. Es un contador. */
+.cp-sealed{
+  display: flex; align-items: center; gap: 12px;
+  flex-shrink: 0;
+  margin: 0 14px 10px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.10);
+}
+.cp-sealed-lab{ font-size: 13px; color: #94a3b8; }
+.cp-sealed .cp-step{ margin-left: auto; }
+
+/* El codigo que trajo hasta aqui. Abajo y pequeño: casi nunca hace
+   falta, pero cuando hace falta no hay ningun otro sitio donde buscarlo.
+   Un codigo mal aprendido no tenia arreglo desde ninguna pantalla. */
+.cp-upc{
+  display: flex; align-items: center; gap: 6px;
+  flex-shrink: 0;
+  margin: 0 14px 10px;
+  font-size: 11px; color: #64748b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.cp-upc[hidden]{ display: none; }
+.cp-upc > i{ font-size: 14px; }
+.cp-upc button{
+  margin-left: auto; flex-shrink: 0;
+  background: none; border: none; padding: 4px 2px;
+  color: #fbbf24; font-family: inherit; font-size: 11px;
+  text-decoration: underline; cursor: pointer;
+}
+
+/* ── Corregir un codigo mal asignado ───────────────────────────────────
+   Pantalla completa y por encima del panel del articulo (100003), que a
+   su vez esta sobre el cierre y sobre el escaner. Se abre desde dentro
+   de un conteo, asi que tiene que tapar todo lo que hay debajo. */
+.bf-bg{
+  position: fixed; inset: 0; z-index: 100004;
+  background: #0b1220; color: #f1f5f9;
+  display: flex; flex-direction: column;
+  font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bf-bg.hidden{ display: none; }
+.bf-panel{ display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.bf-head{
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  padding: calc(12px + env(safe-area-inset-top)) 14px 12px;
+  font-size: 17px; font-weight: 800;
+  border-bottom: 1px solid rgba(255,255,255,.09);
+}
+.bf-body{ flex: 1; min-height: 0; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; }
+
+.bf-warn{
+  background: rgba(245,158,11,.10); border: 1px solid rgba(245,158,11,.35);
+  color: #fbbf24; border-radius: 12px; padding: 11px 13px;
+  font-size: 13px; line-height: 1.55; margin-bottom: 12px;
+}
+.bf-ok{
+  background: rgba(56,189,248,.09); border: 1px solid rgba(56,189,248,.32);
+  color: #bae6fd; border-radius: 12px; padding: 11px 13px;
+  font-size: 13px; line-height: 1.55; margin-bottom: 12px;
+}
+
+.bf-search{ position: relative; margin-bottom: 12px; flex-shrink: 0; }
+.bf-search > i{
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 18px; color: #94a3b8; pointer-events: none;
+}
+.bf-search input{
+  width: 100%; height: 50px; padding: 0 13px 0 40px;
+  border-radius: 12px;
+  background: rgba(56,189,248,.07);
+  border: 1px solid rgba(56,189,248,.45);
+  color: #f1f5f9; font-family: inherit;
+  /* 16px exactos o Safari acerca la pantalla al enfocar */
+  font-size: 16px; font-weight: 600;
+}
+
+.bf-list{ flex: 1; min-height: 0; overflow-y: auto; margin-bottom: 12px; }
+.bf-row{
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 13px 4px; background: none; border: none;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  color: inherit; font-family: inherit; font-size: 15px; font-weight: 600;
+  text-align: left; cursor: pointer;
+}
+.bf-row:disabled{ opacity: .4; cursor: default; }
+.bf-row small{ margin-left: auto; font-size: 11px; color: #94a3b8; font-weight: 700; flex-shrink: 0; }
+.bf-empty{ font-size: 13px; color: #94a3b8; text-align: center; padding: 24px 0; }
+
+.bf-card{
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.10);
+  border-radius: 12px; padding: 12px 13px; margin-bottom: 10px;
+}
+.bf-lab{ font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: #64748b; }
+.bf-big{ font-size: 23px; font-weight: 800; margin-top: 4px; }
+.bf-big span{ font-size: 12px; font-weight: 600; color: #94a3b8; margin-left: 5px; }
+.bf-sub{ font-size: 12px; color: #94a3b8; margin-top: 4px; }
+.bf-note{ font-size: 12px; color: #94a3b8; line-height: 1.55; margin-bottom: 12px; }
+
+.bf-go, .bf-forget{
+  width: 100%; height: 50px; border-radius: 14px;
+  font-family: inherit; font-size: 15px; font-weight: 800; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.bf-go{ background: #0ea5e9; border: none; color: #04283b; margin-bottom: 8px; }
+.bf-forget{
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.16);
+  color: #cbd5e1; margin-top: auto;
+}
+.bf-foot{ font-size: 11px; color: #64748b; text-align: center; margin-top: 12px; line-height: 1.5; }
+.bf-status{ font-size: 14px; color: #94a3b8; text-align: center; padding: 30px 0; }
+.bf-status.bf-bad{ color: #ef4444; font-weight: 700; }
+.bf-err{ font-size: 11px; color: #94a3b8; text-align: center; word-break: break-word; margin-bottom: 14px; }

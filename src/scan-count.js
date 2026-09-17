@@ -103,6 +103,12 @@
       <div class="sc-stage" id="scStage">
         <video id="scVid" playsinline muted autoplay></video>
         <div class="sc-guide"><i></i></div>
+        <!-- Lo ultimo leido flota AQUI, sobre la camara, y no abajo en la
+             hoja. Mientras escaneas estas mirando el visor; poner la
+             confirmacion fuera de el obliga a bajar la vista para algo
+             que dura dos segundos. Y es tocable: el caso de "se abrio el
+             producto equivocado" se resuelve sin salir de la pantalla. -->
+        <div class="sc-hit" id="scHit"></div>
       </div>
 
       <!-- ── La hoja ──────────────────────────────────────────────────
@@ -125,17 +131,24 @@
           </button>
         </div>
 
-        <div class="sc-diag" id="scDiag"></div>
-        <div class="sc-hit" id="scHit"></div>
-
         <!-- Solo se ve con la hoja subida. Mientras se escanea estorba, y
-             en 300 artículos es una lista que no cabe. -->
+             en 300 artículos es una lista que no cabe. Con ella salen
+             tambien los botones secundarios y el diagnostico: con la hoja
+             abajo, lo unico que hace falta es el progreso y terminar. -->
         <div class="sc-left" id="scLeft"></div>
 
         <div class="sc-btns">
           <button class="sc-ghost" id="scTorch" type="button">Flashlight</button>
           <button class="sc-ghost" id="scFind" type="button">Find by name</button>
         </div>
+
+        <!-- El diagnostico era del banco de pruebas: "Native reader ·
+             camera 1280x720" no le dice nada a quien cuenta y ocupaba el
+             sitio de lo que si importa. Sigue existiendo, pero solo se ve
+             con la hoja subida, que es cuando alguien esta mirando la
+             pantalla en vez de las botellas. -->
+        <div class="sc-diag" id="scDiag"></div>
+
         <button class="sc-finish" id="scFinish" type="button">Finish count</button>
       </div>
 
@@ -305,7 +318,26 @@
     $('scAssignCode').style.display = upc ? '' : 'none';
     $('scAssignSearch').value = '';
     renderPicks('');
-    setTimeout(() => $('scAssignSearch').focus(), 50);
+
+    // ── El teclado y el límite de iOS ─────────────────────────────────
+    //
+    // La idea era que el teclado subiera solo al entrar aquí, para que
+    // escribir tres letras fuera lo único que hiciera falta. Se consigue
+    // a medias, y conviene saber por qué.
+    //
+    // Safari en iOS solo abre el teclado si el `.focus()` ocurre DENTRO
+    // de un gesto de la persona. Cuando este panel lo abre el botón
+    // "Find by name", eso se cumple y el teclado sube. Cuando lo abre un
+    // código desconocido —que es el caso frecuente— no hay gesto: lo
+    // disparó la cámara. Ahí el campo queda enfocado pero el teclado no
+    // aparece hasta que alguien lo toca.
+    //
+    // No hay forma de forzarlo desde la web. En Android y en escritorio
+    // sí sube siempre. Lo que sí se puede es que el campo sea lo primero
+    // y lo más grande, que es lo que hace el CSS.
+    const input = $('scAssignSearch');
+    try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); }
+    setTimeout(() => { try { input.focus({ preventScroll: true }); } catch (e) {} }, 60);
   }
 
   function renderPicks(q) {
@@ -395,14 +427,12 @@
       if (!res.ok) throw new Error(res.status + ' · ' + (await res.text()).slice(0, 180));
 
       learned.set(String(upc), { upc, item_name: itemName, code });
-      $('scHit').innerHTML =
-        `<div class="sc-found">
-           <div class="sc-code">${esc(upc)}</div>
-           <div class="sc-item">${esc(itemName)}</div>
-           <div class="sc-meta">learned · works across every location</div>
-         </div>`;
+      hit(`<div class="sc-found" data-upc="${esc(upc)}">
+             <div class="sc-item">${esc(itemName)}</div>
+             <div class="sc-meta">learned · tap if this is the wrong bottle</div>
+           </div>`);
       closeAssign();
-      toCount(itemName);
+      toCount(itemName, upc);
     } catch (e) {
       // No se cierra el panel: el codigo sigue en pantalla y se puede
       // reintentar sin volver a escanear la botella.
@@ -423,13 +453,13 @@
 
   // Puente al panel de conteo. Identificar un articulo sin poder contarlo
   // dejaria el flujo a medias justo en el paso que importa.
-  function toCount(itemName) {
+  function toCount(itemName, upc) {
     const master = (window.state && state.master) || [];
     const row = master.find(r => r.item === itemName);
     if (!row || !window.BarStockCountPanel) return;
     running = false;
     clearTimeout(loopId);
-    window.BarStockCountPanel.open(row, () => { running = true; mark(); tick(); stats(); });
+    window.BarStockCountPanel.open(row, () => { running = true; mark(); tick(); stats(); }, upc);
   }
 
   function closeAssign() {
@@ -453,12 +483,13 @@
 
     const found = resolve(text);
     if (found) {
-      $('scHit').innerHTML =
-        `<div class="sc-found">
-           <div class="sc-code">${esc(text)}</div>
-           <div class="sc-item">${esc(found.item)}</div>
-           <div class="sc-meta">${esc(format)} · ${fmt(ms)}</div>
-         </div>`;
+      // Sin el codigo crudo ni el formato ni el tiempo: eso era del banco
+      // de pruebas. Lo que hace falta saber es QUE botella se leyo, y que
+      // si no es esa hay salida.
+      hit(`<div class="sc-found" data-upc="${esc(text)}">
+             <div class="sc-item">${esc(found.item)}</div>
+             <div class="sc-meta">counted · tap if this is the wrong bottle</div>
+           </div>`);
 
       // Se para la camara y se abre el panel del articulo. Seguir
       // decodificando por detras solo puede colar otra lectura encima de
@@ -470,18 +501,16 @@
           running = true;
           mark();
           tick();
-        });
+        }, text);   // el upc viaja: el panel ofrece corregirlo si esta mal
       }
     } else {
       // Codigo que nadie ha enseñado todavia. Se para el bucle y se
       // pregunta: es la unica forma de que la app aprenda, y cada
       // respuesta vale para siempre y para todas las locaciones.
-      $('scHit').innerHTML =
-        `<div class="sc-new">
-           <div class="sc-code">${esc(text)}</div>
-           <div class="sc-item">New code</div>
-           <div class="sc-meta">${esc(format)} · ${fmt(ms)}</div>
-         </div>`;
+      hit(`<div class="sc-new">
+             <div class="sc-code">${esc(text)}</div>
+             <div class="sc-item">New code</div>
+           </div>`);
       askAssign(text);
       return;
     }
@@ -494,6 +523,40 @@
     // era la diferencia entre 5.8 s y 3.3 s.
     clearTimeout(markTimer);
     markTimer = setTimeout(mark, REPEAT_MS);
+  }
+
+  // ── La marca de lo ultimo leido ─────────────────────────────────────
+  //
+  // Flota sobre la camara y se va sola a los cuatro segundos. Antes vivia
+  // en la hoja de abajo y se quedaba puesta hasta la siguiente lectura,
+  // asi que a mitad de conteo lo que se leia ahi podia ser de tres
+  // botellas atras.
+  //
+  // Tocarla abre el panel de ese articulo otra vez. Es la salida del caso
+  // mas molesto: escaneas, se abre el producto equivocado porque el
+  // codigo esta mal aprendido, y cierras sin darte cuenta hasta un
+  // segundo despues.
+  let hitTimer = null;
+  function hit(html) {
+    const el = $('scHit');
+    if (!el) return;
+    el.innerHTML = html;
+    el.classList.add('on');
+    clearTimeout(hitTimer);
+    hitTimer = setTimeout(() => el.classList.remove('on'), 4000);
+
+    const card = el.querySelector('[data-upc]');
+    if (card) {
+      card.onclick = () => {
+        const upc = card.dataset.upc;
+        const f = resolve(upc);
+        if (!f || !f.row || !window.BarStockCountPanel) return;
+        running = false;
+        clearTimeout(loopId);
+        el.classList.remove('on');
+        window.BarStockCountPanel.open(f.row, () => { running = true; mark(); tick(); }, upc);
+      };
+    }
   }
 
   // ── Aviso de lectura ────────────────────────────────────────────────
@@ -781,5 +844,20 @@
 
   window.addEventListener('pagehide', close);
 
-  window.BarStockScanCount = { open, close };
+  // El mapa de codigos aprendidos vive en memoria y se carga una vez al
+  // abrir el escaner. Cuando alguien corrige un codigo desde otra
+  // pantalla, esta copia se queda con el valor viejo y el siguiente
+  // escaneo abriria otra vez el producto equivocado, ya corregido en la
+  // nube. Esto la pone al dia sin volver a pedir las 300 filas.
+  function forget(upc, row) {
+    const k = String(upc);
+    if (row) learned.set(k, { upc: k, item_name: row.item, code: row.code || '' });
+    else learned.delete(k);
+    // Y se suelta el bloqueo de repeticion: acabas de cambiar lo que
+    // significa ese codigo, asi que volver a leerlo dentro de los 2.5 s
+    // de la ventana tiene que funcionar.
+    if (lastCode === k) { lastCode = ''; lastAt = 0; }
+  }
+
+  window.BarStockScanCount = { open, close, forget };
 })();
