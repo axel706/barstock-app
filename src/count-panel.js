@@ -257,6 +257,9 @@
         <div class="cp-line" id="cpLine"><span></span><i></i></div>
       </div>
       <div class="cp-read">
+        ${_opens.length > 1
+          ? `<span class="cp-which">Bottle ${_active + 1} of ${_opens.length}</span>`
+          : ''}
         <b>${frac.toFixed(2)}</b>
         <small>${ml} ml · drag the line</small>
       </div>
@@ -320,38 +323,50 @@
     stage.addEventListener('pointercancel', () => { _dragging = false; });
   }
 
-  // ── Lista de abiertas ────────────────────────────────────────────────
+  // ── Varias botellas abiertas ─────────────────────────────────────────
+  //
+  // Aquí había una LISTA: una fila por botella abierta, con su número y
+  // su papelera. Crecía hacia abajo, y como el alto de la pantalla es fijo
+  // ese espacio salía de la botella: con dos abiertas la silueta ya se
+  // encogía y la línea de arrastre se quedaba FUERA del vidrio, encima
+  // del número. Con cuatro habría sido un sello.
+  //
+  // La interfaz no puede cambiar según cuántas botellas haya. Ahora es
+  // siempre la misma —una botella, su deslizador, su cifra— y lo único
+  // que se añade es una fila de pastillas numeradas que dice en cuál
+  // estás. Una sola línea, ocupe lo que ocupe la barra.
+  //
+  // Con una sola abierta no aparece nada: no hay entre qué elegir.
   function paintOpens() {
     const host = $('cpOpens');
     if (!host) return;
     if (_opens.length < 2) { host.innerHTML = ''; return; }
 
-    // La lista solo aparece con dos o más. Con una sola, el deslizador ya
-    // lo dice todo y una fila repitiendo el mismo número sobra.
-    host.innerHTML = _opens.map((f, i) => `
-      <div class="cp-openrow${i === _active ? ' on' : ''}" data-i="${i}">
-        <span>Bottle ${i + 1}</span>
-        <b>${f.toFixed(2)}</b>
-        <button type="button" data-del="${i}" aria-label="Remove">
+    host.innerHTML = `
+      <div class="cp-pager" role="tablist" aria-label="Open bottles">
+        ${_opens.map((f, i) => `
+          <button type="button" class="cp-pg${i === _active ? ' on' : ''}"
+                  role="tab" aria-selected="${i === _active}" data-i="${i}">
+            ${i + 1}
+          </button>`).join('')}
+        <button type="button" class="cp-pg-del" id="cpDelOpen"
+                aria-label="Remove bottle ${_active + 1}">
           <i class="ti ti-trash" aria-hidden="true"></i>
         </button>
-      </div>`).join('');
+      </div>`;
 
-    host.querySelectorAll('.cp-openrow').forEach(el => {
-      el.onclick = (e) => {
-        if (e.target.closest('[data-del]')) return;
-        _active = Number(el.dataset.i);
-        paintAll();
-      };
+    host.querySelectorAll('.cp-pg').forEach(el => {
+      el.onclick = () => { _active = Number(el.dataset.i); paintAll(); };
     });
-    host.querySelectorAll('[data-del]').forEach(b => {
-      b.onclick = () => {
-        _opens.splice(Number(b.dataset.del), 1);
-        if (!_opens.length) _opens = [0];
-        _active = Math.max(0, Math.min(_active, _opens.length - 1));
-        paintAll();
-      };
-    });
+    // La papelera borra la ACTIVA, no una cualquiera. Con una papelera por
+    // fila era fácil borrar la de al lado sin querer; con una sola, lo que
+    // se borra es lo que estás mirando.
+    $('cpDelOpen').onclick = () => {
+      _opens.splice(_active, 1);
+      if (!_opens.length) _opens = [0];
+      _active = Math.max(0, Math.min(_active, _opens.length - 1));
+      paintAll();
+    };
   }
 
   function paintNums() {

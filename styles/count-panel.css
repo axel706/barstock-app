@@ -116,26 +116,13 @@
   padding: 26px 10px; line-height: 1.5;
 }
 
-.cp-opens{ margin: 10px 0 0; }
-.cp-openrow{
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 12px; margin-bottom: 6px;
-  border-radius: 10px;
-  background: rgba(255,255,255,.04);
-  border: 1px solid rgba(255,255,255,.10);
-  cursor: pointer;
-}
-.cp-openrow.on{ border-color: rgba(56,189,248,.55); background: rgba(56,189,248,.10); }
-.cp-openrow > span{ font-size: 13px; color: #94a3b8; }
-.cp-openrow > b{ margin-left: auto; font-size: 15px; font-variant-numeric: tabular-nums; }
-.cp-openrow button{
-  width: 36px; height: 36px; flex-shrink: 0;
-  border-radius: 9px; background: transparent;
-  border: 1px solid rgba(255,255,255,.14);
-  color: #94a3b8; font-size: 16px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-}
+/* .cp-openrow era la lista de una fila por botella abierta. La
+   sustituyen las pastillas numeradas (.cp-pager, mas abajo): crecia
+   hacia abajo y ese alto salia de la botella. */
+.cp-opens{ margin: 6px 0 0; }
 
+/* .cp-add se sustituyo por la pastilla "+ another open" en .cp-chips.
+   Se deja por si algun estilo heredado la busca. */
 .cp-add{
   width: 100%; height: 46px; margin-top: 10px;
   border-radius: 12px;
@@ -344,7 +331,6 @@ body.light .cp-foot{ border-top-color: rgba(15,23,42,.10); }
 body.light .cp-sub,
 body.light .cp-label,
 body.light .cp-read small,
-body.light .cp-openrow > span,
 body.light .cp-total span,
 body.light .cf-note,
 body.light .cf-label,
@@ -357,11 +343,6 @@ body.light .cp-step button{
   border-color: rgba(15,23,42,.12);
   color: #0f172a;
 }
-body.light .cp-openrow{
-  background: rgba(15,23,42,.03);
-  border-color: rgba(15,23,42,.10);
-}
-body.light .cp-openrow button{ border-color: rgba(15,23,42,.14); color: #475569; }
 body.light .cp-line > span{ background: #0f172a; }
 body.light .cp-line > i{ background: #ffffff; border-color: rgba(15,23,42,.25); }
 
@@ -848,3 +829,75 @@ body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,
    pero pueden no caber con el teclado abierto en un telefono pequeño.
    Como el cuerpo ya no scrollea, se les da scroll a ellos. */
 .bf-body.bf-scroll{ overflow-y: auto; }
+
+
+/* ── Varias botellas abiertas ──────────────────────────────────────────
+   Antes esto era una LISTA, una fila por botella. Crecia hacia abajo y
+   ese alto salia de la botella: con dos abiertas la silueta ya se
+   encogia y la linea de arrastre se quedaba fuera del vidrio. Con cuatro
+   habria sido un sello.
+
+   Ahora es UNA fila, siempre la misma altura, tenga dos botellas o diez.
+   Se desplaza en horizontal si no caben. */
+.cp-pager{
+  display: flex; align-items: center; gap: 6px;
+  flex-shrink: 0;
+  margin: 2px 14px 0;
+  padding-bottom: 2px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.cp-pager::-webkit-scrollbar{ display: none; }
+
+.cp-pg{
+  flex-shrink: 0;
+  min-width: 38px; height: 38px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.14);
+  color: #cbd5e1;
+  font-family: inherit; font-size: 15px; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.cp-pg.on{
+  background: rgba(56,189,248,.16);
+  border-color: rgba(56,189,248,.8);
+  color: #7dd3fc;
+}
+/* La papelera borra la ACTIVA. Con una por fila era facil borrar la de al
+   lado sin querer; con una sola, lo que se borra es lo que estas mirando. */
+.cp-pg-del{
+  flex-shrink: 0;
+  margin-left: auto;
+  width: 38px; height: 38px;
+  border-radius: 12px;
+  background: none;
+  border: 1px solid rgba(255,255,255,.14);
+  color: #94a3b8; font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.cp-pg-del:hover{ color: #ef4444; border-color: rgba(239,68,68,.45); }
+
+/* Cual estas mirando, encima de la cifra. */
+.cp-which{
+  display: block;
+  font-size: 11px; font-weight: 800;
+  letter-spacing: .06em; text-transform: uppercase;
+  color: #7dd3fc;
+  margin-bottom: 2px;
+}
+
+/* ── El alto de la botella no se negocia ───────────────────────────────
+   La causa de fondo del fallo no era la lista, sino que todo lo de abajo
+   podia robarle alto al visor sin tope. Con esto, la silueta tiene un
+   minimo por debajo del cual no baja: si algo no cabe, desborda y se
+   nota, en vez de comerse en silencio la unica parte que hay que mirar. */
+.cp-stage{ min-height: 190px; }
+.cp-read, .cp-chips, .cp-opens, .cp-hint{ flex-shrink: 0; }
+
+body.light .cp-pg{ background: rgba(15,23,42,.04); border-color: rgba(15,23,42,.12); color: #334155; }
+body.light .cp-pg.on{ background: rgba(2,132,199,.12); border-color: rgba(2,132,199,.7); color: #0369a1; }
+body.light .cp-pg-del{ border-color: rgba(15,23,42,.12); }
+body.light .cp-which{ color: #0369a1; }
