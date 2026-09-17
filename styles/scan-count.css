@@ -405,12 +405,16 @@ body.light .sc-err{ color: #475569; }
 .sc-left{ display: none; margin: 4px 0 12px; }
 .sc-overlay.sheet-up .sc-left{ display: block; }
 
-/* Con la hoja abajo solo hacen falta el progreso y terminar. La linterna
-   y la busqueda por nombre son salidas de emergencia, y el diagnostico es
-   del banco de pruebas: los tres se consultan mirando la pantalla, que es
-   justo lo que se hace con la hoja subida. */
-.sc-sheet .sc-btns, .sc-sheet .sc-diag{ display: none; }
-.sc-overlay.sheet-up .sc-sheet .sc-btns{ display: flex; }
+/* La linterna y la busqueda por nombre SE QUEDAN con la hoja abajo. Las
+   escondi junto al diagnostico y fue un error de criterio: no son lo
+   mismo. "Find by name" es la salida cuando una botella no tiene codigo
+   —etiqueta rota, botella rellenable, destileria pequeña— y ese caso
+   aparece escaneando, no consultando. Sin ella ahi, el conteo se para en
+   seco y hay que descubrir que la respuesta estaba subiendo una hoja.
+
+   El diagnostico si se esconde: "Native reader · camera 1280x720" es del
+   banco de pruebas y no le dice nada a quien cuenta. */
+.sc-sheet .sc-diag{ display: none; }
 .sc-overlay.sheet-up .sc-sheet .sc-diag{ display: block; }
 .sc-left-cat{
   font-size: 11px; font-weight: 800; letter-spacing: .06em;

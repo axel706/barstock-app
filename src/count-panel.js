@@ -138,8 +138,10 @@
         </div>
       </div>
 
+      <!-- Sin etiqueta. Dos botones, un numero y nada mas: lo que hace
+           es evidente y la palabra "Sealed" solo restaba alto a la
+           botella, que es lo unico que de verdad hay que mirar. -->
       <div class="cp-sealed">
-        <span class="cp-sealed-lab">Sealed</span>
         <div class="cp-step">
           <button type="button" id="cpMinus" aria-label="One less">−</button>
           <div class="cp-num" id="cpSealed">0</div>

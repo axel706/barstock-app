@@ -116,14 +116,14 @@
     const destino = master.find(r => r.item === itemName);
     if (!destino) return;
 
-    body(`<div class="bf-status"><i class="ti ti-loader" aria-hidden="true"></i> Saving…</div>`);
+    body(`<div class="bf-status"><i class="ti ti-loader" aria-hidden="true"></i> Saving…</div>`, true);
     try {
       await escribir(destino.item, destino.code || '');
       window.BarStockScanCount?.forget?.(_upc, destino);
     } catch (e) {
       body(`<div class="bf-status bf-bad">Could not save the change.</div>
             <div class="bf-err">${esc(e.message || String(e))}</div>
-            <button type="button" class="bf-forget" id="bfBack">Back</button>`);
+            <button type="button" class="bf-forget" id="bfBack">Back</button>`, true);
       $('bfBack').onclick = paintStep1;
       return;
     }
@@ -169,7 +169,7 @@
       </button>
       <div class="bf-foot">
         Only what you counted in this session moves. Nothing already closed is touched.
-      </div>`);
+      </div>`, true);
 
     $('bfMove').onclick = () => mover(destino, prev);
     $('bfLeave').onclick = () => cerrar(destino);
@@ -201,7 +201,7 @@
       `The next time this bottle is scanned, the app will ask what it is again. ` +
       `Nothing you counted is touched.`)) return;
 
-    body(`<div class="bf-status"><i class="ti ti-loader" aria-hidden="true"></i> Removing…</div>`);
+    body(`<div class="bf-status"><i class="ti ti-loader" aria-hidden="true"></i> Removing…</div>`, true);
     const { url, key } = cfg();
     try {
       const res = await fetch(
@@ -213,7 +213,7 @@
     } catch (e) {
       body(`<div class="bf-status bf-bad">Could not remove it.</div>
             <div class="bf-err">${esc(e.message || String(e))}</div>
-            <button type="button" class="bf-forget" id="bfBack">Back</button>`);
+            <button type="button" class="bf-forget" id="bfBack">Back</button>`, true);
       $('bfBack').onclick = paintStep1;
       return;
     }
@@ -259,9 +259,18 @@
     $('bfX').onclick = () => cerrar(null);
   }
 
-  function body(html) {
+  // `scroll` = este paso NO lleva lista, asi que el cuerpo entero es el
+  // que scrollea. Con lista, el unico scroller es la lista: dos regiones
+  // de scroll anidadas se rompen en cuanto el teclado recorta el
+  // viewport, y las filas se comprimen unas sobre otras.
+  //
+  // Va como clase y no con :has() en CSS porque Safari no lo soportó
+  // hasta hace poco y esto corre en iPhones de bodega.
+  function body(html, scroll) {
     const el = $('bfBody');
-    if (el) el.innerHTML = html;
+    if (!el) return;
+    el.innerHTML = html;
+    el.classList.toggle('bf-scroll', !!scroll);
   }
 
   window.BarStockBarcodeFix = { open };
