@@ -273,13 +273,31 @@
     const { url, key, account } = cfg();
     if (!url || !key) return;
     try {
-      const res = await fetch(
-        `${url}/rest/v1/item_barcodes?account_id=eq.${encodeURIComponent(account)}&select=upc,item_name,code`,
-        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
-      );
-      const rows = await res.json();
+      // ── Paginado ──────────────────────────────────────────────────────
+      //
+      // Esto era una sola consulta sin limite, y PostgREST corta cualquier
+      // respuesta en un maximo de filas —mil por defecto— EN SILENCIO:
+      // devuelve un array valido y mas corto. Hoy no molesta porque hay
+      // unos cientos de codigos, pero al pasar de mil los del final
+      // dejarian de reconocerse y la app volveria a preguntar "¿que
+      // articulo es?" por botellas que ya habia aprendido. Sin error, sin
+      // pista, y con la respuesta guardandose otra vez encima.
+      //
+      // Es el mismo fallo que ya mordio en inventory_snapshots, donde
+      // productos con ocho semanas de historial parecian tener tres.
+      const PAGE = 1000;
       learned = new Map();
-      if (Array.isArray(rows)) rows.forEach(r => learned.set(String(r.upc), r));
+      for (let p = 0; p < 50; p++) {
+        const res = await fetch(
+          `${url}/rest/v1/item_barcodes?account_id=eq.${encodeURIComponent(account)}` +
+          `&select=upc,item_name,code&order=upc.asc&limit=${PAGE}&offset=${p * PAGE}`,
+          { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+        );
+        const rows = await res.json();
+        if (!Array.isArray(rows)) break;
+        rows.forEach(r => learned.set(String(r.upc), r));
+        if (rows.length < PAGE) break;
+      }
     } catch (e) {
       // Sin la lista, todo codigo se vera como nuevo. Molesto, pero no
       // rompe nada: peor seria no dejar escanear.

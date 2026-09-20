@@ -57,20 +57,38 @@
       const { url, key, account } = cfg();
       if (!url || !key) { _map = {}; return _map; }
       try {
-        const res = await fetch(
-          `${url}/rest/v1/item_shapes?account_id=eq.${encodeURIComponent(account)}` +
-          `&select=item_name,code,bottle_shape,bottle_size_ml&limit=5000`,
-          { headers: { apikey: key, Authorization: `Bearer ${key}` } });
-        const rows = await res.json();
-        if (!Array.isArray(rows)) {
-          // Tabla que todavía no existe: PostgREST devuelve un objeto de
-          // error, no un array. Se dice qué falta en vez de comportarse
-          // como si no hubiera nada asignado, que es indistinguible.
-          if (rows && /item_shapes/.test(JSON.stringify(rows))) {
-            console.warn('[siluetas] falta la tabla item_shapes. Corre la migracion 012.');
+        // ── Paginado, no `limit` a ojo ────────────────────────────────
+        //
+        // PostgREST corta cualquier respuesta en un maximo de filas —mil
+        // por defecto— y lo hace EN SILENCIO: devuelve un array valido y
+        // mas corto. Un `limit=5000` no salva de eso, porque el tope del
+        // servidor manda sobre el del cliente.
+        //
+        // Este mismo fallo ya mordio una vez en este proyecto: las
+        // consultas de inventory_snapshots llegaban truncadas y muchos
+        // productos parecian tener tres semanas de historial cuando
+        // tenian ocho. Aqui se traduciria en siluetas que desaparecen
+        // para los productos del final del alfabeto.
+        const PAGE = 1000;
+        const rows = [];
+        for (let p = 0; p < 50; p++) {
+          const res = await fetch(
+            `${url}/rest/v1/item_shapes?account_id=eq.${encodeURIComponent(account)}` +
+            `&select=item_name,code,bottle_shape,bottle_size_ml` +
+            `&order=item_name.asc&limit=${PAGE}&offset=${p * PAGE}`,
+            { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+          const lote = await res.json();
+          if (!Array.isArray(lote)) {
+            // Tabla que todavía no existe: PostgREST devuelve un objeto de
+            // error, no un array. Se dice qué falta en vez de comportarse
+            // como si no hubiera nada asignado, que es indistinguible.
+            if (lote && /item_shapes/.test(JSON.stringify(lote))) {
+              console.warn('[siluetas] falta la tabla item_shapes. Corre la migracion 012.');
+            }
+            break;
           }
-          _map = {};
-          return _map;
+          rows.push(...lote);
+          if (lote.length < PAGE) break;   // pagina incompleta = no hay mas
         }
         const m = {};
         for (const r of rows) {
@@ -169,15 +187,63 @@
     return true;
   }
 
-  // Varios de golpe, para el asignador por lote. De cinco en cinco por el
-  // mismo motivo que el resto: en serie tarda una eternidad con 300
-  // articulos y todas a la vez Supabase las rechaza.
+  // ── Varios de golpe ──────────────────────────────────────────────────
+  //
+  // UNA peticion con todas las filas, no una por articulo. PostgREST
+  // acepta un array en el upsert, asi que 300 productos son 300 filas en
+  // un solo POST en vez de 300 viajes de ida y vuelta.
+  //
+  // Lo escribi primero de cinco en cinco, copiando el patron del resto
+  // del proyecto. Ahi tiene sentido porque cada articulo necesita su
+  // propio PATCH con su propio filtro; aqui no: es la misma tabla, la
+  // misma clave y el mismo tipo de fila. Sesenta tandas de cinco contra
+  // una peticion es la diferencia entre medio minuto y medio segundo.
+  //
+  // Se trocea de todas formas: un cuerpo con miles de filas puede pasarse
+  // del limite de tamaño de peticion, y 500 es holgado por los dos lados.
   async function saveMany(items) {
+    const { url, key, account } = cfg();
+    if (!url || !key || !items || !items.length) return 0;
+
+    const ahora = new Date().toISOString();
+    const quien = window.__bsUserEmail || null;
+    const filas = items.filter(x => x && x.item).map(x => ({
+      account_id: account,
+      item_name: x.item,
+      code: x.code || null,
+      bottle_shape: x.shape || null,
+      bottle_size_ml: x.size || null,
+      updated_at: ahora,
+      updated_by: quien
+    }));
+
     let ok = 0;
-    for (let i = 0; i < items.length; i += 5) {
-      const lote = items.slice(i, i + 5);
-      const res = await Promise.all(lote.map(x => save(x.item, x.code, x.shape, x.size)));
-      ok += res.filter(Boolean).length;
+    const LOTE = 500;
+    for (let i = 0; i < filas.length; i += LOTE) {
+      const trozo = filas.slice(i, i + LOTE);
+      try {
+        const res = await fetch(`${url}/rest/v1/item_shapes?on_conflict=account_id,item_name`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: key, Authorization: `Bearer ${key}`,
+            Prefer: 'resolution=merge-duplicates,return=minimal'
+          },
+          body: JSON.stringify(trozo)
+        });
+        if (!res.ok) {
+          const t = await res.text().catch(() => '');
+          console.warn('[siluetas] lote rechazado (' + res.status + ')', t.slice(0, 200));
+          continue;
+        }
+        ok += trozo.length;
+        if (!_map) _map = {};
+        for (const f of trozo) {
+          _map[f.item_name] = { shape: f.bottle_shape, size: f.bottle_size_ml };
+        }
+      } catch (e) {
+        console.warn('[siluetas] no se pudo guardar el lote', e);
+      }
     }
     return ok;
   }
