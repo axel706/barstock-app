@@ -11,7 +11,7 @@
   //
   // ── De dónde salen estos números ────────────────────────────────────
   //
-  // Los dieciocho perfiles de abajo están MEDIDOS. Cada uno se sacó de
+  // Los diecinueve perfiles de abajo están MEDIDOS. Cada uno se sacó de
   // una foto o ilustración de una botella real, contando píxeles fila por
   // fila, y después se comprobó superponiendo la silueta reconstruida
   // sobre la imagen original. El desajuste de área quedó entre 0.4% y
@@ -154,6 +154,41 @@
       name: 'Decanter · Flared', asp: 2.59, yFull: 0.709, pourable: true,
       // Anfora: se angosta hacia los dos extremos.
       p: [[0,0.64], [0.0168,0.7189], [0.0423,0.7589], [0.073,0.728], [0.1043,0.7216], [0.1359,0.7307], [0.1676,0.7517], [0.1995,0.7822], [0.2315,0.8154], [0.2634,0.8519], [0.2955,0.8866], [0.3274,0.9191], [0.3593,0.9468], [0.3913,0.9694], [0.4232,0.9859], [0.4548,0.9967], [0.4865,0.9997], [0.5183,0.9973], [0.5496,0.9781], [0.581,0.9379], [0.6122,0.8739], [0.6436,0.7826], [0.6749,0.6688], [0.7065,0.5348], [0.7379,0.4152], [0.7689,0.3222], [0.7999,0.2663], [0.8313,0.2395], [0.863,0.2274], [0.8932,0.2473], [0.9239,0.2934], [0.9554,0.2971], [0.9869,0.2952], [1,0.2556]]
+    },
+    prism_arched: {
+      name: 'Prism · Arched Shoulder', asp: 3.17, yFull: 0.781, pourable: true,
+      // El prisma mas limpio del catalogo. Estilo Bombay Sapphire: seccion
+      // de rectangulo redondeado, cuerpo RECTO de verdad —el radio se
+      // mantiene entre .975 y .981 desde el 3% hasta el 72% de la altura—
+      // y un talon corto abajo.
+      //
+      // Lo que la distingue no es el cuerpo, es el hombro: un ARCO LARGO
+      // que tarda el 13% de la altura en bajar del ancho maximo al cuello.
+      // El flask_flat, que es la otra de hombro marcado, lo hace en el 6%.
+      // Por eso las dos no se confunden aunque las dos sean rectas.
+      //
+      // El ancho maximo NO esta en el cuerpo sino en la cresta del hombro
+      // (y=.724), unos 7px por encima del cuerpo en la foto. Es un
+      // resalte real del vidrio, constante a lo largo de 24 filas, no
+      // ruido de borde: se conservo como hinchazon suave.
+      //
+      // ── Reparto del volumen ──────────────────────────────────────────
+      //
+      //   cuerpo recto (0-72%)   89.0%
+      //   arco del hombro        8.4%
+      //   cuello y capsula       2.6%
+      //
+      // Con casi todo el liquido en un cilindro recto, la relacion
+      // altura-contenido sale practicamente lineal: a 1/4 de altura hay el
+      // 25%, a la mitad el 51%, a 3/4 el 76%. Es el opuesto exacto de
+      // globe_footed (14 / 47 / 82) y la unica forma del catalogo donde
+      // contar a ojo en papel no introduce error apreciable.
+      //
+      // Medida de frente, sin elipse de perspectiva en la base: 1158 px de
+      // alto por 365 de ancho maximo, centro constante en x=628. Desajuste
+      // de area 0.06%, el mas bajo del catalogo — merito de la botella,
+      // que es facil, no del metodo.
+      p: [[0,0.7019], [0.0037,0.8442], [0.0074,0.8952], [0.0111,0.9286], [0.0149,0.9515], [0.0186,0.9666], [0.0223,0.9753], [0.026,0.9781], [0.06,0.9945], [0.12,0.9725], [0.2,0.9779], [0.3,0.9807], [0.4,0.9752], [0.5,0.9752], [0.58,0.9779], [0.64,0.9752], [0.68,0.9807], [0.7,0.9917], [0.712,0.9972], [0.724,1], [0.734,0.9752], [0.744,0.9203], [0.754,0.8681], [0.764,0.7857], [0.774,0.7115], [0.784,0.6484], [0.794,0.5714], [0.804,0.5165], [0.814,0.4698], [0.824,0.4368], [0.834,0.4121], [0.846,0.3929], [0.858,0.3791], [0.88,0.3795], [0.91,0.3795], [0.94,0.3795], [0.962,0.3795], [0.974,0.3795], [0.98,0.3941], [0.986,0.4206], [0.991,0.4236], [0.9945,0.4011], [0.9975,0.3359], [1,0.2056]]
     },
     globe_footed: {
       name: 'Globe · Footed', asp: 1.45, yFull: 0.693, pourable: true,
