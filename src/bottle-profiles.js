@@ -11,7 +11,7 @@
   //
   // ── De dónde salen estos números ────────────────────────────────────
   //
-  // Los diecisiete perfiles de abajo están MEDIDOS. Cada uno se sacó de
+  // Los dieciocho perfiles de abajo están MEDIDOS. Cada uno se sacó de
   // una foto o ilustración de una botella real, contando píxeles fila por
   // fila, y después se comprobó superponiendo la silueta reconstruida
   // sobre la imagen original. El desajuste de área quedó entre 0.4% y
@@ -154,6 +154,44 @@
       name: 'Decanter · Flared', asp: 2.59, yFull: 0.709, pourable: true,
       // Anfora: se angosta hacia los dos extremos.
       p: [[0,0.64], [0.0168,0.7189], [0.0423,0.7589], [0.073,0.728], [0.1043,0.7216], [0.1359,0.7307], [0.1676,0.7517], [0.1995,0.7822], [0.2315,0.8154], [0.2634,0.8519], [0.2955,0.8866], [0.3274,0.9191], [0.3593,0.9468], [0.3913,0.9694], [0.4232,0.9859], [0.4548,0.9967], [0.4865,0.9997], [0.5183,0.9973], [0.5496,0.9781], [0.581,0.9379], [0.6122,0.8739], [0.6436,0.7826], [0.6749,0.6688], [0.7065,0.5348], [0.7379,0.4152], [0.7689,0.3222], [0.7999,0.2663], [0.8313,0.2395], [0.863,0.2274], [0.8932,0.2473], [0.9239,0.2934], [0.9554,0.2971], [0.9869,0.2952], [1,0.2556]]
+    },
+    globe_footed: {
+      name: 'Globe · Footed', asp: 1.45, yFull: 0.693, pourable: true,
+      // La MAS ANCHA del catalogo, y por bastante: 1.45 contra el 1.77 de
+      // crown. Estilo Chambord — esfera sobre plinto de vidrio, con
+      // corona cilindrica arriba.
+      //
+      // No es una curva, son cuatro piezas pegadas:
+      //
+      //   0.00 - 0.03   filete del talon, sube de golpe a r=.564
+      //   0.03 - 0.08   plinto RECTO (r constante)
+      //   0.08 - 0.71   la esfera, maxima entre .28 y .46
+      //   0.71 - 0.99   corona cilindrica (r=.289 constante)
+      //   0.99 - 1.00   tapa redondeada
+      //
+      // Las dos uniones —plinto a esfera y esfera a corona— llevan filete
+      // de coseno. El vidrio real tiene ahi esquinas vivas; la regla 3 de
+      // arriba dice que no entran.
+      //
+      // ── Por que esta importa mas que las otras ────────────────────────
+      //
+      // El 90% del liquido esta en la esfera: el plinto y la corona se
+      // reparten un 5% cada uno. Eso hace que la relacion altura-contenido
+      // sea la mas torcida del catalogo, en forma de S:
+      //
+      //   a 1/4 de la altura del liquido hay el 14% del contenido
+      //   a la mitad                          el 47%
+      //   a 3/4                               el 82%
+      //
+      // O sea: una botella que se ve a la cuarta parte esta casi vacia, y
+      // una que se ve a tres cuartos esta casi llena. En una botella recta
+      // esos numeros serian 25, 50 y 75, y estimar a ojo sale bien. Aqui
+      // el error de contar por decimas en una hoja de papel es del doble
+      // que en cualquier otra forma del catalogo.
+      //
+      // Desajuste de area 0.8%. Al reducir de 63 puntos medidos a 39, la
+      // fraccion de volumen se movio 0.11% como maximo.
+      p: [[0,0.34], [0.0037,0.4484], [0.0075,0.4882], [0.0113,0.5149], [0.0151,0.534], [0.0226,0.5569], [0.0302,0.564], [0.0553,0.564], [0.0804,0.564], [0.0965,0.5961], [0.1126,0.6281], [0.1553,0.7797], [0.1981,0.88], [0.2408,0.9502], [0.2836,0.996], [0.3263,0.9976], [0.369,0.9976], [0.4119,0.9942], [0.4546,0.9951], [0.4973,0.952], [0.5401,0.8854], [0.5828,0.7941], [0.6256,0.6586], [0.6683,0.4466], [0.6774,0.3794], [0.6864,0.3192], [0.6955,0.2831], [0.7065,0.2656], [0.7146,0.2721], [0.7226,0.2798], [0.7307,0.2863], [0.7387,0.289], [0.8342,0.289], [0.9347,0.289], [0.9869,0.289], [0.9952,0.286], [0.9981,0.279], [0.9996,0.2711], [1,0.2631]]
     },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del
