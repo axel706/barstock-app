@@ -11,7 +11,7 @@
   //
   // ── De dónde salen estos números ────────────────────────────────────
   //
-  // Los dieciséis perfiles de abajo están MEDIDOS. Cada uno se sacó de
+  // Los diecisiete perfiles de abajo están MEDIDOS. Cada uno se sacó de
   // una foto o ilustración de una botella real, contando píxeles fila por
   // fila, y después se comprobó superponiendo la silueta reconstruida
   // sobre la imagen original. El desajuste de área quedó entre 0.4% y
@@ -102,6 +102,23 @@
       name: 'Squat · Wide Shoulder', asp: 2.31, yFull: 0.745, pourable: true,
       // Ensancha hacia arriba. Estilo Makers.
       p: [[0,0.615], [0.014,0.7726], [0.042,0.8183], [0.072,0.866], [0.1033,0.88], [0.1341,0.89], [0.1648,0.9], [0.1955,0.91], [0.2262,0.92], [0.257,0.93], [0.2877,0.94], [0.3185,0.9598], [0.3507,0.96], [0.3825,0.9817], [0.4141,0.9988], [0.4455,0.9822], [0.4768,0.9224], [0.505,0.7926], [0.535,0.5578], [0.5638,0.4163], [0.5933,0.3898], [0.6254,0.3875], [0.6579,0.3789], [0.6905,0.3693], [0.723,0.3589], [0.7556,0.3479], [0.7882,0.3368], [0.8208,0.3259], [0.8533,0.3155], [0.8859,0.3061], [0.9184,0.2981], [0.951,0.2915], [0.9802,0.2837], [1,0.2517]]
+    },
+    flask_flat: {
+      name: 'Flask · Flat Shoulder', asp: 2.28, yFull: 0.697, pourable: true,
+      // Petaca con hombro de ESTANTE: pierde el 61% del ancho en el 6%
+      // de la altura, entre el 66% y el 73%. Estilo Knob Creek.
+      //
+      // Es la unica cuyo hombro NO sale de una formula. Se probo primero
+      // con el smootherstep de las demas y salio mal: una curva simetrica
+      // empieza a caer demasiado pronto, y esta botella aguanta el ancho
+      // hasta el ultimo momento y luego se desploma. El desajuste bajo de
+      // 1.8% a 0.9% al poner ahi la curva medida punto por punto.
+      //
+      // Comparte esbeltez (2.28) con apothecary_squat y casi con squat
+      // (2.31), pero de cerca no se parecen: esta ensancha hacia arriba y
+      // corta en seco, la de Hendrick's es recta con hombro redondo, y la
+      // de Maker's ensancha con un hombro de curva larga.
+      p: [[0,0.3], [0.0111,0.7147], [0.0351,0.9294], [0.0622,0.9609], [0.0905,0.9523], [0.1189,0.9515], [0.1474,0.95], [0.1758,0.9437], [0.2044,0.9437], [0.2328,0.9479], [0.2613,0.9573], [0.2899,0.9626], [0.3184,0.9672], [0.3469,0.9673], [0.3754,0.9711], [0.4039,0.9711], [0.4325,0.9711], [0.461,0.9738], [0.4895,0.975], [0.5181,0.975], [0.5465,0.9789], [0.5751,0.9789], [0.6037,0.9789], [0.632,0.9834], [0.6601,0.9978], [0.6867,0.951], [0.7101,0.7022], [0.7292,0.3444], [0.7553,0.2643], [0.7831,0.2547], [0.8102,0.2782], [0.8382,0.2837], [0.8666,0.2858], [0.8951,0.2819], [0.9236,0.274], [0.9521,0.2679], [0.9785,0.2391], [1,0.1865]]
     },
     crown: {
       name: 'Decanter · Crown style', asp: 1.77, yFull: 0.692, pourable: true,
