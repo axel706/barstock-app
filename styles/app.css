@@ -3838,7 +3838,36 @@ body.light .ac-diag{ border-top-color: rgba(15,23,42,.10); }
 }
 #bpBody{ display:flex; flex-direction:column; min-height:0; overflow-y:auto; }
 .bp-item{ font-weight:700; }
-.bp-grid{ max-height:46vh; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); }
+/* UNA sola región que se desplaza, no dos anidadas.
+   .ac-grid trae `max-height:52vh; overflow-y:auto` de la revisión por
+   lote, donde vive suelta dentro de la página y funciona. Aquí no: el
+   padre #bpBody también se desplaza, y dos áreas anidadas en iOS se
+   pelean el gesto — se arrastra y lo que se mueve es la de fuera,
+   mientras la de dentro no llega nunca al final. Con diecisiete siluetas
+   se notaba poco porque casi cabían; con veinte, las últimas filas eran
+   inalcanzables y parecía que las siluetas nuevas no se habían añadido.
+   Es el mismo fallo que la lista de "producto equivocado". */
+.bp-grid{
+  max-height:none;
+  overflow:visible;
+  grid-template-columns:repeat(auto-fill,minmax(96px,1fr));
+}
+/* Con la parrilla suelta, Guardar quedaría al final de veinte siluetas y
+   habría que recorrerlas todas para llegar. Se ancla abajo: se elige una
+   forma y el botón ya está ahí. Solo en este modal — la revisión por lote
+   sigue con su parrilla acotada y su pie al final, que allí sí se ve. */
+.bp-modal .ac-foot{
+  position:sticky;
+  bottom:0;
+  padding:10px 0 2px;
+  margin-top:auto;
+  background:#0f172a;                /* el mismo fondo de .modal */
+  box-shadow:0 -10px 14px -8px rgba(0,0,0,.45);
+}
+body.light .bp-modal .ac-foot{
+  background:#ffffff;
+  box-shadow:0 -10px 14px -8px rgba(15,23,42,.14);
+}
 .bp-cell{ user-select:none; transition:border-color .12s ease, background .12s ease; }
 .bp-cell:hover{ border-color:rgba(56,189,248,.35); }
 .bp-cell.on{

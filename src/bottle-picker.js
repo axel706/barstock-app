@@ -34,11 +34,11 @@
 
   // ── Dibujo ───────────────────────────────────────────────────────────
   //
-  // La caja es la MISMA para las diecisiete y eso es el punto: lo que se
-  // fija es la altura, así que lo único que cambia entre una celda y otra
-  // es la silueta. Si cada una se dibujara a su tamaño, elegir sería
-  // comparar botellas grandes contra botellas chicas en vez de formas
-  // contra formas.
+  // La caja es la MISMA para todas y eso es el punto: lo que se fija es la
+  // altura, así que lo único que cambia entre una celda y otra es la
+  // silueta. Si cada una se dibujara a su tamaño, elegir sería comparar
+  // botellas grandes contra botellas chicas en vez de formas contra
+  // formas.
   const VB = { w: 74, h: 96, pad: 5 };
 
   function sil(key) {
@@ -46,10 +46,34 @@
       <path d="${P().pathFor(key, VB.w, VB.h, VB.pad)}"/></svg>`;
   }
 
+  // ── El orden de la parrilla: de gorda a flaca ────────────────────────
+  //
+  // `pickable()` devuelve las claves en el orden en que están escritas en
+  // bottle-profiles.js, o sea el orden en que se fueron midiendo. Eso
+  // servía con siete formas y dejó de servir: cada silueta nueva se
+  // añadía al FINAL, la parrilla crecía hacia abajo, y las últimas
+  // quedaban fuera de la primera pantalla. La queja fue literal —"no veo
+  // estas últimas 2 botellas"— y el orden cronológico era la mitad del
+  // motivo.
+  //
+  // Ordenar por esbeltez pone juntas las que se parecen, que es como se
+  // busca de verdad: quien tiene delante una botella gorda mira arriba y
+  // quien tiene una flaca mira abajo, sin recorrer las veinte. Y una
+  // silueta nueva ya no aterriza al final, sino entre sus parecidas.
+  //
+  // `none` va aparte y al final: no es una botella, es apagar el
+  // deslizador.
+  function ordenadas(V) {
+    return V.pickable()
+      .filter(k => k !== 'none')
+      .sort((a, b) => (V.get(a).asp || 99) - (V.get(b).asp || 99))
+      .concat(V.pickable().includes('none') ? ['none'] : []);
+  }
+
   // ── Pintar ───────────────────────────────────────────────────────────
   function paint() {
     const V = P();
-    const keys = V.pickable();
+    const keys = ordenadas(V);
 
     const cells = keys.map(k => {
       const prof = V.get(k);
