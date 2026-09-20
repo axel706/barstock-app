@@ -155,6 +155,15 @@
       return;
     }
 
+    // Y al mapa GLOBAL, que es lo que hace que la forma valga en las dos
+    // barras. Sin esto, arreglar la silueta de un Beefeater en The Crown
+    // no servía de nada en Will's & Bill's, aunque el código de barras sí
+    // se reconociera: la forma vivía en la fila de inventario, que es por
+    // locación. Va después del PATCH local y sin bloquear el cierre.
+    if (window.BarStockItemShapes) {
+      window.BarStockItemShapes.save(_row.item, _row.code || '', _shape, nuevoSize);
+    }
+
     // Se muta la fila que ya está en memoria en vez de sustituirla. La
     // pantalla de conteo puede tener una referencia a este mismo objeto
     // abierta en ese momento; si se reemplazara, seguiría dibujando la

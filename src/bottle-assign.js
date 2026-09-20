@@ -142,11 +142,13 @@
     open();
     body(`<div class="ac-status"><i class="ti ti-loader" aria-hidden="true"></i> Reading names…</div>`);
 
-    // Pendiente es lo que no tiene forma, y ya está. Durante un tiempo
-    // este filtro llevaba una segunda condicion —"o tiene forma pero no
-    // silueta propia"— para que la pantalla volviera a abrirse a trazar
-    // botellas una por una. Las siluetas propias se retiraron, y con
-    // ellas esa condicion.
+    // Pendiente es lo que no tiene forma NI aqui ni en el mapa global. Un
+    // articulo cuya silueta se asigno en la otra barra ya esta resuelto, y
+    // volver a ofrecerlo seria pedir que se decida dos veces lo mismo.
+    if (window.BarStockItemShapes) {
+      await window.BarStockItemShapes.load();
+      window.BarStockItemShapes.applyTo(master);
+    }
     const pending = master.filter(r => !r.bottleShape);
 
     if (!pending.length) {
@@ -295,6 +297,22 @@
         } catch (e) { failed++; console.warn('[botellas] fallo', r.item, e); }
       }));
       body(`<div class="ac-status"><i class="ti ti-loader" aria-hidden="true"></i> Saving ${done + failed} of ${chosen.length}…</div>`);
+    }
+
+    // ── Y al mapa GLOBAL ──────────────────────────────────────────────
+    //
+    // Lo de arriba escribe la fila de inventario de ESTA locacion. Sin
+    // esto, asignar 260 siluetas en The Crown dejaba Will's & Bill's
+    // igual de vacia, aunque los codigos de barras si se compartieran.
+    //
+    // Va despues y no en la misma peticion porque son dos tablas con
+    // claves distintas: una por locacion, otra por cuenta.
+    if (window.BarStockItemShapes) {
+      body(`<div class="ac-status"><i class="ti ti-loader" aria-hidden="true"></i> Sharing across locations…</div>`);
+      await window.BarStockItemShapes.saveMany(chosen.map(r => ({
+        item: r.item, code: r.code || '', shape: r.shape,
+        size: r.shape === 'none' ? null : (r.size || 750)
+      })));
     }
 
     close();

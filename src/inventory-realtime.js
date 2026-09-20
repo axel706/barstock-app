@@ -131,6 +131,22 @@
       };
     });
 
+    // ── La silueta viene del mapa GLOBAL ──────────────────────────────
+    //
+    // `bottle_shape` en la fila de inventario es una copia por locacion.
+    // La verdad esta en `item_shapes`, que es de la cuenta entera, igual
+    // que los codigos de barras aprendidos: una botella escaneada y
+    // asignada en The Crown tiene que dibujarse igual en Will's & Bill's.
+    //
+    // Va sin await para no retrasar el primer pintado: la fila local ya
+    // trae una forma con la que dibujar, y cuando el mapa llega se
+    // corrige y se vuelve a pintar.
+    if (window.BarStockItemShapes) {
+      window.BarStockItemShapes.hydrate(state.master).then(n => {
+        if (n && typeof render === 'function') render();
+      });
+    }
+
     if (typeof saveState === 'function') saveState();
     if (typeof render === 'function') render();
 
