@@ -8,7 +8,7 @@
   //   1 · Start new cycle    resetea el on hand (pide confirmación)
   //   2 · Load the count      bifurca: archivo o contar con el teléfono
   //   ⏺ · Counting            solo en la rama del teléfono, hasta cerrar
-  //   ✓ · Cycle open          hecho, hasta el lunes siguiente
+  //   ✓ · Cycle open          hecho, hasta que SE PIDA otro
   //
   // ── Por qué el reset va antes de la bifurcación ─────────────────────
   //
@@ -35,9 +35,33 @@
   //   locations.weekly_reset_at  → cuándo se abrió el ciclo
   //   algún artículo con on_hand > 0 → ya se importó el conteo
   //
-  // La frontera es el LUNES: Axel cuenta los lunes. Con la frontera en
-  // domingo, un conteo hecho en sábado hacía brincar el botón al paso 1
-  // a la medianoche siguiente.
+  // ── El ciclo NO caduca solo ─────────────────────────────────────────
+  //
+  // Este botón trató el ciclo como semanal durante mucho tiempo: si el
+  // reset era anterior al lunes en curso, volvía al paso 1. Estaba mal, y
+  // costó dos intentos entenderlo.
+  //
+  // El primero fue mover la frontera de domingo a lunes. El segundo fue
+  // comparar con cycleWeekFor en vez de weekOf, para que un conteo del
+  // domingo por la noche sobreviviera a la medianoche. Los dos parchearon
+  // un día concreto y dejaron intacta la premisa equivocada: que el
+  // calendario cierra el ciclo. Con el segundo parche, un ciclo abierto
+  // un viernes seguía muriendo solo el lunes.
+  //
+  // Un ciclo abierto está abierto hasta que se pida otro. Lo cierra el
+  // siguiente conteo, no la medianoche del domingo. `src/cycle.js` ya lo
+  // decía en su propio comentario —"el ciclo no tiene final: va desde el
+  // último reset hasta ahora"— y este botón lo contradecía.
+  //
+  // El LUNES sigue mandando donde de verdad importa: `week_start` de los
+  // snapshots es de lunes a lunes, porque el consumo y los pares se miden
+  // por semana. Son dos preguntas distintas y aquí se confundían:
+  //
+  //   ¿a qué semana pertenece este dato?  → weekOf / cycleWeekFor, lunes
+  //   ¿hay un ciclo abierto?              → weekly_reset_at, sin calendario
+  //
+  // Lo único que queda del calendario aquí es el AVISO: pasada una
+  // semana el botón se pone ámbar y lo dice. Avisar, no reiniciar.
 
   const GRACE_MS = 4000;   // ventana para confirmar el reinicio
   const ABANDONO_MS = 3 * 24 * 60 * 60 * 1000;   // a los 3 días deja de ser "en curso"
@@ -53,33 +77,34 @@
     return { url: c.SUPABASE_URL, key: c.SUPABASE_KEY, account: c.ACCOUNT_ID, name: c.LOCATION_NAME };
   }
 
-  // La semana a la que pertenece hoy. El boton pregunta "¿el reset es de
-  // esta semana?", que es una pregunta sobre pertenencia, no sobre qué
-  // ciclo se abre: por eso weekOf y no cycleWeekFor.
-  // ¿El ciclo que abrió ese sello sigue siendo el de esta semana?
+  // ── Antigüedad del ciclo ─────────────────────────────────────────────
   //
-  // No se compara la fecha cruda contra el lunes en curso, y ese fue el
-  // fallo: `weekly_reset_at` guarda el INSTANTE en que se abrió el ciclo,
-  // pero el ciclo que abre no es el de ese instante. Contar un domingo a
-  // las 21:12 abre la semana del lunes siguiente —es lo que hace el
-  // snapshot, con cycleWeekKey()— y sin embargo el sello cae tres horas
-  // antes de la frontera.
-  //
-  // Comparando en crudo, el lunes por la mañana el boton decia "Start new
-  // cycle" sobre un ciclo recien abierto, ofreciendo poner a cero el
-  // conteo de la noche anterior. Las dos mitades del mismo cierre se
-  // contradecian por 2 h 48 min.
-  //
-  // Solo se rompia contando en DOMINGO: de lunes a sabado el sello cae
-  // dentro de su propia semana y weekOf da lo mismo que cycleWeekFor. El
-  // domingo por la noche es justo cuando se cuenta un bar.
-  //
-  // Las dos funciones ya existian en week.js, una para cada pregunta.
-  // Aqui hay que hacer las dos: cycleWeekFor para saber que ciclo abrio
-  // el sello, weekOf para saber en que semana estamos.
-  function cicloVigente(opened) {
-    const W = window.BarStockWeek;
-    return W.cycleWeekFor(opened).getTime() >= W.weekOf().getTime();
+  // Lo único que aquí sigue mirando el calendario, y solo para AVISAR.
+  // Pasados siete días el botón se pone ámbar y lo dice; no reinicia nada
+  // ni cambia de estado. Reiniciar sigue siendo un click con su
+  // confirmación, igual que siempre.
+  const VIEJO_MS = 7 * 24 * 60 * 60 * 1000;
+
+  function edadCiclo() {
+    if (!_resetAt) return null;
+    const t = new Date(_resetAt).getTime();
+    if (!isFinite(t)) return null;
+    return Date.now() - t;
+  }
+
+  function cicloViejo() {
+    const ms = edadCiclo();
+    return ms !== null && ms > VIEJO_MS;
+  }
+
+  // "3 weeks", "9 days". En semanas a partir de catorce días: a las tres
+  // semanas "21 days" se lee como un número y "3 weeks" como un descuido,
+  // que es justo lo que hay que transmitir.
+  function cuantoLleva(ms) {
+    const d = Math.floor(ms / 86400000);
+    if (d < 14) return d + (d === 1 ? ' day' : ' days');
+    const w = Math.round(d / 7);
+    return w + (w === 1 ? ' week' : ' weeks');
   }
 
   async function readResetAt() {
@@ -167,8 +192,19 @@
     if (_countingSince) return 'counting';
     if (_resetAt === null) return 'step1';
     const opened = new Date(_resetAt);
-    if (isNaN(opened.getTime()) || !cicloVigente(opened)) return 'step1';
+    // Un sello ilegible es lo mismo que no tener ninguno. Lo que YA NO se
+    // pregunta es de qué semana es: mientras exista, hay ciclo abierto.
+    if (isNaN(opened.getTime())) return 'step1';
     return countLoaded() ? 'done' : 'step2';
+  }
+
+  // Todo lo que entra aquí lo genera la propia app —una fecha formateada,
+  // un número de días—, pero se arma HTML con concatenación y eso no
+  // conviene dejarlo suelto: el día que alguien meta el nombre de la
+  // locación en uno de estos mensajes, ya está cubierto.
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, c =>
+      ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
   }
 
   function fmtDate(iso) {
@@ -217,11 +253,46 @@
       return;
     }
     if (_state === 'done') {
+      const abierto = 'Cycle open' + (_resetAt ? ' · ' + fmtDate(_resetAt) : '');
+      const ms = edadCiclo();
+
+      // Ciclo normal: verde y quieto. Es un estado, no una alarma.
+      if (!cicloViejo()) {
+        btn.innerHTML =
+          '<i class="ti ti-circle-check" aria-hidden="true"></i>' +
+          '<span>' + esc(abierto) + '</span>' +
+          '<i class="ti ti-refresh cyc-again" aria-hidden="true"></i>';
+        btn.title = 'Click to restart the cycle';
+        return;
+      }
+
+      // Pasada una semana, los tres mensajes en rotación. Van APILADOS en
+      // una ventana de una línea que se desplaza: los tres existen en el
+      // DOM todo el tiempo, así que el lector de pantalla los lee juntos
+      // y no depende del instante en que mire.
+      //
+      // El ancho se fija al mensaje más largo. Si no, el botón cambiaría
+      // de tamaño cada tres segundos y arrastraría consigo la barra
+      // superior entera, que es el tipo de movimiento que molesta sin
+      // aportar. Se mide con el texto más largo de los tres, no a ojo.
+      const msgs = [abierto, 'Open for ' + cuantoLleva(ms), 'Tap to restart'];
+      const ancho = msgs.reduce((a, b) => (b.length > a.length ? b : a), '');
+
+      btn.classList.add('cyc-stale');
       btn.innerHTML =
-        '<i class="ti ti-circle-check" aria-hidden="true"></i>' +
-        '<span>Cycle open' + (_resetAt ? ' · ' + fmtDate(_resetAt) : '') + '</span>' +
+        '<i class="ti ti-alert-triangle cyc-stale-ico" aria-hidden="true"></i>' +
+        '<span class="cyc-roll">' +
+          // El espaciador no se ve: solo reserva el ancho para que nada salte.
+          '<span class="cyc-roll-w" aria-hidden="true">' + esc(ancho) + '</span>' +
+          '<span class="cyc-roll-t">' +
+            msgs.map(m => '<span>' + esc(m) + '</span>').join('') +
+            // El primero repetido al final para que el salto de vuelta
+            // caiga en un fotograma idéntico y no se vea.
+            '<span>' + esc(msgs[0]) + '</span>' +
+          '</span>' +
+        '</span>' +
         '<i class="ti ti-refresh cyc-again" aria-hidden="true"></i>';
-      btn.title = 'Click to restart the cycle';
+      btn.title = 'Open for ' + cuantoLleva(ms) + '. Click to restart the cycle.';
       return;
     }
     // confirm

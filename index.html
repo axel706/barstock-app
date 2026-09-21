@@ -39,7 +39,7 @@
   <link rel="stylesheet" href="styles/empty-state.css?v=empty1">
   <link rel="stylesheet" href="styles/pour-iq.css?v=piq1">
   <link rel="stylesheet" href="styles/admin.css?v=adm3">
-  <link rel="stylesheet" href="styles/weekly-cycle.css?v=cyc3">
+  <link rel="stylesheet" href="styles/weekly-cycle.css?v=cyc4">
   <link rel="stylesheet" href="styles/scan-count.css?v=scan8">
   <link rel="stylesheet" href="styles/count-panel.css?v=cnt15">
   <!-- Siempre al final: solo contiene @media (max-width:640px) y necesita
@@ -127,7 +127,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260921-005656</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260921-095100</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -3072,8 +3072,10 @@ async function applyPendingImport(){
   if(!pendingImport) return;
   document.getElementById('previewModalBg').classList.add('hidden');
   if(typeof showCountLoadingOverlay === 'function') showCountLoadingOverlay();
-  // Clear vendor panel placed state on new count
-  Object.keys(sessionStorage).filter(k => k.startsWith('vsp_placed_')).forEach(k => sessionStorage.removeItem(k));
+  // Camino 2 de 3 para abrir ciclo: cargar el conteo desde un archivo.
+  // Misma rutina que el botón y que el cierre de conteo; ver
+  // src/cycle-open.js.
+  window.BarStockCycleOpen?.prepare?.();
 
   // Aplicar state localmente primero
   const importMatches = pendingImport.matches || 0;
@@ -4440,10 +4442,10 @@ async function resetOnHand(){
       orderOverride: ''
     }));
     state.noMatches = [];
-    state.placedOrders = [];
     compareSelection = [];
-    // Clear vendor panel placed state
-    Object.keys(sessionStorage).filter(k => k.startsWith('vsp_placed_')).forEach(k => sessionStorage.removeItem(k));
+    // Camino 1 de 3 para abrir ciclo. La limpieza vive en un solo sitio
+    // para que los tres caminos hagan lo mismo; ver src/cycle-open.js.
+    window.BarStockCycleOpen?.prepare?.();
 
     saveState();
     // touchWeeklyReset acaba de mover la frontera del ciclo. Sin releerla,
@@ -4696,7 +4698,10 @@ async function resetOrderHistory(){
 
   state.orderHistory = [];
   state.placedOrders = [];
-  Object.keys(sessionStorage).filter(k => k.startsWith('vsp_placed_')).forEach(k => sessionStorage.removeItem(k));
+  // Borrar el historial no abre ciclo, pero deja las mismas banderas
+  // apuntando a ordenes que ya no existen. Se reusa la misma rutina para
+  // no tener dos definiciones de "limpiar el panel".
+  window.BarStockCycleOpen?.limpiarPanelOrdenes?.();
   saveState();
 
   try{
@@ -4918,6 +4923,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/skeleton.js"></script>
 <script src="src/week.js?v=wk1"></script>
 <script src="src/cycle.js?v=cy1"></script>
+<script src="src/cycle-open.js?v=cyo1"></script>
 <script src="src/focus-stats.js?v=cm3"></script>
 <script src="src/toast.js"></script>
 <script src="src/empty-state.js"></script>
@@ -4942,13 +4948,13 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/spend-by-category.js?v=sp2"></script>
 <script src="src/settings-home.js?v=sh2"></script>
 <script src="src/inventory-backup.js?v=bk1"></script>
-<script src="src/weekly-cycle.js?v=cyc6"></script>
+<script src="src/weekly-cycle.js?v=cyc7"></script>
 <script src="src/count-session.js?v=cnt12"></script>
 <script src="src/count-panel.js?v=cnt15"></script>
 <script src="src/barcode-fix.js?v=bf2"></script>
 <script src="src/count-resume.js?v=cnt12"></script>
 <script src="src/count-insight.js?v=cnt9"></script>
-<script src="src/count-finish.js?v=cnt11"></script>
+<script src="src/count-finish.js?v=cnt12"></script>
 <script src="src/scan-count.js?v=scan8"></script>
 <script>
   // Aqui habia una puerta: el boton de escaneo solo lo veia el admin,

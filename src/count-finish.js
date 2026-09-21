@@ -411,6 +411,17 @@
       const yaHayCiclo = await cicloYaCorrio();
       try {
         if (window.BarStockParIntelligence && !yaHayCiclo) {
+          // Camino 3 de 3 para abrir ciclo, y el que llegó tarde: este
+          // paso faltaba, y por eso el panel lateral de órdenes se
+          // quedaba clavado en la orden de la semana anterior. Ahora la
+          // rutina es la misma que la del botón y la del archivo; ver
+          // src/cycle-open.js.
+          //
+          // resetLocal en false: aquí `state.placedOrders` se reconstruye
+          // desde el historial contra la frontera nueva, unas líneas más
+          // abajo, así que vaciarlo antes sería trabajo tirado.
+          window.BarStockCycleOpen?.prepare?.({ resetLocal: false });
+
           await window.BarStockParIntelligence.runCycle(master);
           await marcarCicloAbierto();
         }
@@ -428,6 +439,18 @@
       // bien. Vaciarla antes y fallar al guardar seria perder el conteo
       // entero sin forma de recuperarlo.
       S().clear((window.BARSTOCK_CONFIG || {}).LOCATION_NAME || '');
+
+      // `weekly_reset_at` acaba de moverse: hay que releerla y repintar
+      // el boton del ciclo. Sin esto el boton seguia ofreciendo "Load the
+      // count" con el conteo ya cerrado, hasta recargar la pagina.
+      await window.BarStockCycleOpen?.settle?.();
+
+      // Y reconstruir que filas cuentan como ya pedidas, ahora contra la
+      // frontera NUEVA. Es lo que hace que la pantalla de ordenes arranque
+      // limpia en vez de arrastrar las marcas del ciclo anterior.
+      if (typeof window.rebuildPlacedOrdersFromHistory === 'function') {
+        await window.rebuildPlacedOrdersFromHistory();
+      }
 
       if (typeof saveState === 'function') saveState();
       if (typeof render === 'function') render();

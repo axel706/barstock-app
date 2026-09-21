@@ -66,6 +66,66 @@
 .cyc-again { opacity: .45; margin-left: 2px; }
 .cyc-done:hover .cyc-again { opacity: .9; }
 
+/* ── Ciclo abierto hace más de una semana ────────────────────────────
+   Un ciclo no caduca solo: lo cierra el siguiente conteo, no el
+   calendario. Pero uno abierto hace tres semanas casi siempre es un
+   olvido, y callárselo tampoco ayuda. Así que se AVISA: ámbar y los
+   tres mensajes en rotación. No cambia de estado ni reinicia nada;
+   reiniciar sigue siendo un click con su confirmación. */
+.cyc-stale {
+  border-color: rgba(245,158,11,.60) !important;
+  color: #f59e0b !important;
+}
+.cyc-stale:hover { background: rgba(245,158,11,.10) !important; }
+.cyc-stale:hover .cyc-again { opacity: .9; }
+
+/* El triángulo late despacio. Es lo único que se mueve cuando el texto
+   está quieto entre giro y giro. */
+.cyc-stale-ico { animation: cycStaleGlow 2.4s ease-in-out infinite; }
+@keyframes cycStaleGlow { 0%, 100% { opacity: .5 } 50% { opacity: 1 } }
+
+/* La ventana: alto de una línea, y los tres mensajes apilados dentro
+   desplazándose. El espaciador invisible lleva el texto más largo de los
+   tres y es quien fija el ancho — sin él, el botón cambiaría de tamaño
+   cada tres segundos y arrastraría la barra superior entera. */
+.cyc-roll {
+  position: relative;
+  display: inline-block;
+  height: 1.3em;
+  overflow: hidden;
+  vertical-align: middle;
+}
+.cyc-roll-w { visibility: hidden; display: block; height: 1.3em; line-height: 1.3em; }
+.cyc-roll-t {
+  position: absolute;
+  inset: 0;
+  animation: cycRoll 9s infinite;
+}
+.cyc-roll-t > span {
+  display: block;
+  height: 1.3em;
+  line-height: 1.3em;
+  white-space: nowrap;
+}
+
+/* Tres segundos quieto por mensaje y medio segundo de transición. El
+   cuarto tramo es el primer mensaje repetido, así que el salto de vuelta
+   a cero cae en un fotograma idéntico y no se ve. */
+@keyframes cycRoll {
+  0%,    27.7% { transform: translateY(0) }
+  33.3%, 61.1% { transform: translateY(-1.3em) }
+  66.6%, 94.4% { transform: translateY(-2.6em) }
+  100%         { transform: translateY(-3.9em) }
+}
+
+/* Con movimiento reducido no hay giro: se queda en "Cycle open · fecha",
+   que es el mensaje que más información lleva. El ámbar y el título del
+   botón siguen dando el aviso, así que no se pierde nada. */
+@media (prefers-reduced-motion: reduce) {
+  .cyc-roll-t { animation: none; }
+  .cyc-stale-ico { animation: none; opacity: .85; }
+}
+
 /* Confirmación de reinicio */
 .cyc-confirm {
   background: #dc2626 !important;
