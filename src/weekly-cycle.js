@@ -56,7 +56,31 @@
   // La semana a la que pertenece hoy. El boton pregunta "¿el reset es de
   // esta semana?", que es una pregunta sobre pertenencia, no sobre qué
   // ciclo se abre: por eso weekOf y no cycleWeekFor.
-  function lastMonday() { return window.BarStockWeek.weekOf(); }
+  // ¿El ciclo que abrió ese sello sigue siendo el de esta semana?
+  //
+  // No se compara la fecha cruda contra el lunes en curso, y ese fue el
+  // fallo: `weekly_reset_at` guarda el INSTANTE en que se abrió el ciclo,
+  // pero el ciclo que abre no es el de ese instante. Contar un domingo a
+  // las 21:12 abre la semana del lunes siguiente —es lo que hace el
+  // snapshot, con cycleWeekKey()— y sin embargo el sello cae tres horas
+  // antes de la frontera.
+  //
+  // Comparando en crudo, el lunes por la mañana el boton decia "Start new
+  // cycle" sobre un ciclo recien abierto, ofreciendo poner a cero el
+  // conteo de la noche anterior. Las dos mitades del mismo cierre se
+  // contradecian por 2 h 48 min.
+  //
+  // Solo se rompia contando en DOMINGO: de lunes a sabado el sello cae
+  // dentro de su propia semana y weekOf da lo mismo que cycleWeekFor. El
+  // domingo por la noche es justo cuando se cuenta un bar.
+  //
+  // Las dos funciones ya existian en week.js, una para cada pregunta.
+  // Aqui hay que hacer las dos: cycleWeekFor para saber que ciclo abrio
+  // el sello, weekOf para saber en que semana estamos.
+  function cicloVigente(opened) {
+    const W = window.BarStockWeek;
+    return W.cycleWeekFor(opened).getTime() >= W.weekOf().getTime();
+  }
 
   async function readResetAt() {
     const { url, key, account, name } = cfg();
@@ -143,7 +167,7 @@
     if (_countingSince) return 'counting';
     if (_resetAt === null) return 'step1';
     const opened = new Date(_resetAt);
-    if (isNaN(opened.getTime()) || opened < lastMonday()) return 'step1';
+    if (isNaN(opened.getTime()) || !cicloVigente(opened)) return 'step1';
     return countLoaded() ? 'done' : 'step2';
   }
 

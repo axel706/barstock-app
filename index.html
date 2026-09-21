@@ -127,7 +127,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20260920-195715</span>
+        <span class="bs-build" id="buildBadge">BUILD-20260921-005656</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2143,6 +2143,43 @@ function getCurrentVendorRows(){
 function vendorLabel(){ return activeVendorTab==='ALL' ? 'All Vendors' : activeVendorTab; }
 function placedKeyForRow(row){ return `${String(row.vendor||'').toUpperCase()}||${normalizeName(row.code)}||${normalizeName(row.item)}`; }
 function isRowPlaced(row){ return Array.isArray(state.placedOrders) && state.placedOrders.includes(placedKeyForRow(row)); }
+
+// ── "Orden colocada" en el panel lateral: comprobarlo, no creerlo ──────
+//
+// `vsp_placed_<proveedor>` es una bandera en el sessionStorage del
+// navegador que se escribe al colocar una orden. El problema es de quien
+// la borra: lo hacen el import de un conteo por archivo, el reset de on
+// hand y el vaciado del historial — pero NO el cierre de un conteo desde
+// el telefono, que se anadio despues y no heredo esa limpieza.
+//
+// Y aunque la heredara no bastaria: sessionStorage es de un navegador.
+// Contar en el telefono jamas podria limpiar la bandera de la laptop.
+//
+// El resultado era que el panel se quedaba clavado en la orden de la
+// semana pasada mientras la tabla pedia productos del ciclo nuevo. Sin
+// salida limpia: el unico boton a mano era "reabrir", que carga esa orden
+// vieja sobre la actual.
+//
+// Asi que la bandera deja de ser la verdad y pasa a ser una pista que hay
+// que verificar: se busca la orden y se pregunta si cae dentro del ciclo
+// abierto. `BarStockCycle.contains()` ya responde eso y es lo mismo que
+// usan el historial y rebuildPlacedOrdersFromHistory, asi que las tres
+// vistas no pueden discrepar. Si la orden es de antes, la bandera es
+// basura y se tira.
+function placedOrderThisCycle(vendor){
+  const k = 'vsp_placed_' + vendor;
+  const id = sessionStorage.getItem(k);
+  if (!id) return null;
+  if (id === '__pending__') return '__pending__';
+  const o = (state.orderHistory || []).find(x => x.id === id);
+  // Sin BarStockCycle cargado, contains() no se puede preguntar y se
+  // deja pasar: es como se comportaba antes, y equivocarse aqui solo
+  // ensena un panel de mas, no borra nada.
+  const fuera = o && window.BarStockCycle &&
+                !window.BarStockCycle.contains(o.createdAt || o.date);
+  if (!o || fuera) { sessionStorage.removeItem(k); return null; }
+  return o;
+}
 function getOrderRowsForVendor(vendor){
   return state.master.filter(r => {
     const effective = getEffectiveOrder(r);
@@ -2580,8 +2617,7 @@ function render(){
     const toClass = toOrderClass(r.toOrder, r.suggested, r.onHand);
     return `<tr data-idx="${masterIndex}" style="cursor:pointer" onclick="openVendorItemPanel(${masterIndex})"><td class="col-vendor">${badge(r.vendor)}</td><td class="badgecell">${orderingBadgeCell(r)}</td><td class="col-item">${escapeHtml(r.item)}${getParChipHtml(r)}</td><td class="col-onhand">${fmt(r.onHand)}</td><td class="col-sugg">${fmt(r.suggested)}</td><td class="toorder-col col-toorder" style="text-align:center"><span class="${toClass}" style="padding:3px 10px;border-radius:999px;display:inline-block">${fmt(r.toOrder)}</span></td><td class="col-final">${finalCell}</td></tr>`;
   }).join('') || (() => {
-    const placedKey = 'vsp_placed_' + activeVendorTab;
-    const wasPlaced = sessionStorage.getItem(placedKey);
+    const wasPlaced = placedOrderThisCycle(activeVendorTab);
     if (wasPlaced && activeVendorTab !== 'ALL') {
       // colspan 7, no 6: la tabla tiene siete columnas y con seis el
       // mensaje quedaba descentrado, empujado hacia la izquierda.
@@ -2700,10 +2736,9 @@ function renderVendorPanel() {
   const body = document.getElementById('vspPanelBody');
   if (!panel || !body) return;
 
-  const placedKey = 'vsp_placed_' + activeVendorTab;
-  const placedOrderId = sessionStorage.getItem(placedKey);
-  const isPending = placedOrderId === '__pending__';
-  const placedOrder = (placedOrderId && !isPending) ? (state.orderHistory || []).find(o => o.id === placedOrderId) : null;
+  const placed = placedOrderThisCycle(activeVendorTab);
+  const isPending = placed === '__pending__';
+  const placedOrder = isPending ? null : placed;
 
   if (activeVendorTab === 'ALL') {
     if (title) title.textContent = 'Order summary';
@@ -4907,7 +4942,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/spend-by-category.js?v=sp2"></script>
 <script src="src/settings-home.js?v=sh2"></script>
 <script src="src/inventory-backup.js?v=bk1"></script>
-<script src="src/weekly-cycle.js?v=cyc5"></script>
+<script src="src/weekly-cycle.js?v=cyc6"></script>
 <script src="src/count-session.js?v=cnt12"></script>
 <script src="src/count-panel.js?v=cnt15"></script>
 <script src="src/barcode-fix.js?v=bf2"></script>
