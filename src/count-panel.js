@@ -27,14 +27,38 @@
   const S = () => window.BarStockCountSession;
   const P = () => window.BarStockBottleProfiles;
 
+  // ── Sumar, no reemplazar ─────────────────────────────────────────────
+  //
+  // El panel edita UNA pasada, nunca el acumulado. Reescanear un producto
+  // abre una pasada nueva en blanco y lo ya contado se queda intacto
+  // detrás, porque no es un campo.
+  //
+  // Antes el panel cargaba el acumulado como valores editables y la
+  // pantalla del segundo escaneo era idéntica a la del primero. Contando
+  // Tito's de verdad: 0.5 abierta y 1 sellada en el closet, y al escanear
+  // en la barra el panel abrió con esos mismos números. Lo natural fue
+  // ajustar el 0.5 a 0.7 —la botella que se tenía delante— y con eso se
+  // borró la del closet. 3.7 donde iban 4.2.
+  //
+  // Dos modos, y se distinguen a la vista porque hacen lo contrario:
+  //
+  //   sumar     `_editIdx === null`   Next AÑADE una pasada
+  //   corregir  `_editIdx === 0,1…`   Save REEMPLAZA esa pasada
+  //
+  // A corregir solo se llega desde la hoja de detalle, a propósito y
+  // sabiendo lo que se toca.
+
   let _row = null;         // artículo de state.master
   let _sealed = 0;
-  let _opens = [];         // fracciones, 0..1
+  let _opens = [];         // fracciones, 0..1 — de ESTA pasada
   let _active = -1;        // índice de la abierta que está editando
   let _onNext = null;
   let _dragging = false;
   let _again = false;      // si este artículo ya se contó en esta sesión
   let _upc = null;         // el código que abrió este panel, si vino de un escaneo
+  let _editIdx = null;     // null = sumando; un número = corrigiendo esa pasada
+  let _banked = 0;         // lo ya guardado en pasadas anteriores
+  let _sheet = false;      // la hoja de detalle está abierta
 
   const $ = (id) => document.getElementById(id);
 
@@ -92,12 +116,44 @@
   // cambiar la silueta sin cerrar el panel había que poder rehacerla: si
   // se cambia el tamaño de 750 a 1000, la cabecera tiene que decirlo sin
   // esperar a la siguiente apertura.
-  function subText(row, again) {
+  function subText(row) {
     const size = row.bottleSizeMl ? row.bottleSizeMl + ' ml' : 'size not set';
     const was = (row.onHand === 0 || row.onHand) ? ' · was ' + row.onHand : '';
-    return esc(size) + esc(was) +
-      (again ? ' · <b class="cp-again">already counted</b>' : '');
+    // "already counted" decía que había algo detrás pero no cuánto ni
+    // qué se iba a hacer con ello. El número de pasada sí: dice que esta
+    // es la tercera vez que aparece el producto y que se está sumando.
+    let tail = '';
+    if (_editIdx !== null) {
+      tail = ' · <b class="cp-fixing">fixing pass ' + (_editIdx + 1) + '</b>';
+    } else if (_again) {
+      tail = ' · <b class="cp-again">pass ' + (passes().length + 1) + '</b>';
+    }
+    return esc(size) + esc(was) + tail;
   }
+
+  function passes() { return (S().passesOf && S().passesOf(_row ? _row.item : '')) || []; }
+
+  // Lo que suma una pasada suelta.
+  function passTotal(p) {
+    return (Number(p.sealed) || 0) +
+           (p.opens || []).reduce((a, b) => a + (Number(b) || 0), 0);
+  }
+
+  // "1 sealed + 1 open (0.5)". Si no hay abiertas se omite esa mitad, y
+  // al revés: escribir "0 open" por simetría es ruido.
+  function passDetail(p) {
+    const partes = [];
+    const sl = Number(p.sealed) || 0;
+    if (sl) partes.push(sl + (sl === 1 ? ' sealed' : ' sealed'));
+    const op = p.opens || [];
+    if (op.length) {
+      partes.push(op.length + (op.length === 1 ? ' open' : ' open') +
+        ' (' + op.map(f => f.toFixed(2)).join(', ') + ')');
+    }
+    return partes.join(' + ') || 'nothing';
+  }
+
+  function fmtNum(n) { return n.toFixed(2).replace(/\.?0+$/, '') || '0'; }
 
   // ── Estructura ───────────────────────────────────────────────────────
   function build() {
@@ -159,14 +215,33 @@
         <button type="button" id="cpUpcFix">wrong product?</button>
       </div>
 
+      <!-- El total es ahora un BOTÓN, y es la única puerta a lo ya
+           contado. Si reescanear suma, tiene que haber una forma de
+           corregir; sin ella cambiaríamos perder conteo por duplicarlo,
+           que es peor porque infla sin avisar. -->
       <div class="cp-foot">
-        <div class="cp-total">
+        <button type="button" class="cp-total" id="cpTotalBtn">
           <span>Total</span>
           <b id="cpTotal">0</b>
-        </div>
-        <button type="button" class="cp-next" id="cpNext">
-          Next <i class="ti ti-arrow-right" aria-hidden="true"></i>
+          <small id="cpPasses"></small>
         </button>
+        <button type="button" class="cp-next" id="cpNext">
+          <span id="cpNextTxt">Next</span> <i class="ti ti-arrow-right" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <!-- La hoja de detalle. Vive dentro del panel y no en un modal
+           aparte porque no es otra pantalla: es mirar debajo de la cifra
+           que ya estás viendo. -->
+      <div class="cp-sheet" id="cpSheet" hidden>
+        <div class="cp-sheet-in">
+          <div class="cp-grab"></div>
+          <div class="cp-sheet-t" id="cpSheetT">How this adds up</div>
+          <div class="cp-sheet-s">Tap a pass to fix it</div>
+          <div id="cpPassList"></div>
+          <div class="cp-sheet-sum"><span>Total</span><b id="cpSheetTotal">0</b></div>
+          <button type="button" class="cp-sheet-x" id="cpSheetX">Done</button>
+        </div>
       </div>`;
     document.body.appendChild(el);
 
@@ -175,17 +250,26 @@
     $('cpMinus').onclick = () => { _sealed = Math.max(0, _sealed - 1); paintNums(); };
     $('cpPlus').onclick  = () => { _sealed++; paintNums(); };
     $('cpAdd').onclick   = () => {
-      _opens.push(0.5);
+      // En CERO, no en 0.5. Media botella era un valor que nadie había
+      // mirado todavía y que se guardaba solo con tocar el botón; si
+      // además coincidía con la anterior, parecía que la pantalla había
+      // arrastrado el dato de la botella pasada. Vacía obliga a arrastrar,
+      // que es el gesto que de verdad mide.
+      _opens.push(0);
       _active = _opens.length - 1;
       paintAll();
     };
+
+    $('cpTotalBtn').onclick = () => { if (passes().length) openSheet(); };
+    $('cpSheetX').onclick   = () => closeSheet();
+    $('cpSheet').onclick    = (e) => { if (e.target === $('cpSheet')) closeSheet(); };
     // El botón de la silueta vive ya en la estructura y no se vuelve a
     // crear en cada repintado: antes se generaba dentro del HTML de la
     // botella, así que cada arrastre lo destruía y lo rehacía.
     $('cpShape').onclick = () => {
       if (!window.BarStockBottlePicker || !_row) return;
       window.BarStockBottlePicker.open(_row, () => {
-        $('cpSub').innerHTML = subText(_row, _again);
+        $('cpSub').innerHTML = subText(_row);
         $('cpOpenBlock').style.display = pourable(_row) ? '' : 'none';
         paintAll();
       });
@@ -228,6 +312,27 @@
   // cuanto alguna silueta necesitara reducirse para caber.
   function yToPx(key, y) { return P().yToPx(key, y, VB.w, VB.h, VB.pad); }
 
+  // La etiqueta encima de la cifra. Tiene que decir dos cosas distintas
+  // segun el modo, porque son las que evitan el error original:
+  //
+  //   corrigiendo  de que pasada guardada salio lo que hay en pantalla
+  //   sumando      que esta botella es nueva y no la que ya estaba
+  //
+  // Con una sola abierta y sin nada contado antes no dice nada: no hay
+  // ambiguedad que deshacer y la etiqueta solo quitaria alto.
+  function whichLabel() {
+    const varias = _opens.length > 1;
+    if (_editIdx !== null) {
+      return `<span class="cp-which cp-which-fix">Pass ${_editIdx + 1}` +
+             (varias ? ` · bottle ${_active + 1} of ${_opens.length}` : '') + `</span>`;
+    }
+    if (varias) {
+      return `<span class="cp-which">Bottle ${_active + 1} of ${_opens.length}</span>`;
+    }
+    if (_again) return `<span class="cp-which">New bottle</span>`;
+    return '';
+  }
+
   function paintBottle() {
     const host = $('cpOpen');
     if (!host) return;
@@ -257,9 +362,7 @@
         <div class="cp-line" id="cpLine"><span></span><i></i></div>
       </div>
       <div class="cp-read">
-        ${_opens.length > 1
-          ? `<span class="cp-which">Bottle ${_active + 1} of ${_opens.length}</span>`
-          : ''}
+        ${whichLabel()}
         <b>${frac.toFixed(2)}</b>
         <small>${ml} ml · drag the line</small>
       </div>
@@ -371,11 +474,144 @@
 
   function paintNums() {
     if ($('cpSealed')) $('cpSealed').textContent = _sealed;
-    if ($('cpTotal'))  $('cpTotal').textContent = total().toFixed(2).replace(/\.00$/, '');
+
+    // El total de la pantalla es el del ARTÍCULO, no el de esta pasada:
+    // es la cifra que acabará en el inventario y la que hay que poder
+    // contrastar con el estante. Corrigiendo, lo guardado se cuenta sin
+    // la pasada que se está tocando, porque esta la reemplaza.
+    const otras = passes().reduce(
+      (a, p, i) => a + (i === _editIdx ? 0 : passTotal(p)), 0);
+    _banked = otras;
+    const gran = otras + total();
+
+    if ($('cpTotal')) $('cpTotal').textContent = fmtNum(gran);
+
+    const sub = $('cpPasses');
+    if (sub) {
+      const n = passes().length;
+      if (_editIdx !== null) {
+        sub.textContent = 'replaces ' + fmtNum(passTotal(passes()[_editIdx] || { sealed: 0, opens: [] }));
+        sub.className = 'cp-fix';
+      } else if (n) {
+        sub.textContent = n + (n === 1 ? ' pass · view' : ' passes · view');
+        sub.className = '';
+      } else {
+        sub.textContent = '';
+        sub.className = '';
+      }
+    }
+
+    const btn = $('cpTotalBtn');
+    if (btn) btn.disabled = !passes().length;
+
+    const nxt = $('cpNextTxt');
+    if (nxt) nxt.textContent = _editIdx === null ? 'Next' : 'Save';
+    const nb = $('cpNext');
+    if (nb) nb.classList.toggle('cp-next-fix', _editIdx !== null);
+
     paintOpens();
+    if (_sheet) paintSheet();
   }
 
-  function paintAll() { paintBottle(); paintNums(); }
+  // ── La hoja: de dónde sale el total ──────────────────────────────────
+  function openSheet()  { _sheet = true;  $('cpSheet').hidden = false; paintSheet(); }
+  function closeSheet() { _sheet = false; $('cpSheet').hidden = true; }
+
+  function paintSheet() {
+    const host = $('cpPassList');
+    if (!host) return;
+    const ps = passes();
+
+    host.innerHTML = ps.map((p, i) => `
+      <div class="cp-pass${i === _editIdx ? ' on' : ''}">
+        <div class="cp-pass-n">${i + 1}</div>
+        <div class="cp-pass-d">
+          <b>${esc(fmtNum(passTotal(p)))}</b>
+          <span>${esc(passDetail(p))}</span>
+        </div>
+        <button type="button" class="cp-pass-b" data-fix="${i}" aria-label="Fix pass ${i + 1}">
+          <i class="ti ti-pencil" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="cp-pass-b cp-pass-del" data-del="${i}" aria-label="Delete pass ${i + 1}">
+          <i class="ti ti-trash" aria-hidden="true"></i>
+        </button>
+      </div>`).join('');
+
+    const t = $('cpSheetTotal');
+    if (t) t.textContent = fmtNum(ps.reduce((a, p) => a + passTotal(p), 0));
+
+    host.querySelectorAll('[data-fix]').forEach(b => {
+      b.onclick = () => fixPass(Number(b.dataset.fix));
+    });
+    host.querySelectorAll('[data-del]').forEach(b => {
+      b.onclick = () => delPass(Number(b.dataset.del));
+    });
+  }
+
+  // Cargar una pasada guardada para corregirla. Lo que está en pantalla
+  // sin guardar se descarta: mezclar una pasada nueva a medias con la
+  // corrección de otra sería justo la confusión que esto viene a quitar.
+  function fixPass(i) {
+    const p = passes()[i];
+    if (!p) return;
+    _editIdx = i;
+    _sealed = Number(p.sealed) || 0;
+    _opens = (p.opens || []).slice();
+    if (!_opens.length) _opens = [0];
+    _active = 0;
+    closeSheet();
+    $('cpSub').innerHTML = subText(_row);
+    $('cpPanel').classList.add('cp-fixing-on');
+    paintAll();
+  }
+
+  function delPass(i) {
+    const p = passes()[i];
+    if (!p) return;
+    if (!confirm('Delete pass ' + (i + 1) + ' (' + fmtNum(passTotal(p)) + ')?')) return;
+
+    S().removePass(_row.item, i);
+
+    // Borrada la última, el artículo deja de estar contado: vuelve a la
+    // lista de faltantes del cierre. No contado y contado en cero no son
+    // lo mismo, y confundirlos esconde justo lo que hay que revisar.
+    if (!passes().length) { _again = false; closeSheet(); }
+
+    // Si se borró la que se estaba corrigiendo, o una de antes, el índice
+    // que se guardaba ya apunta a otra fila. Se sale del modo corregir en
+    // vez de arriesgarse a reemplazar la equivocada.
+    if (_editIdx !== null && i <= _editIdx) sumarNuevo();
+
+    $('cpSub').innerHTML = subText(_row);
+    paintAll();
+  }
+
+  // Volver al modo sumar, con la pasada en blanco.
+  function sumarNuevo() {
+    _editIdx = null;
+    _sealed = 0;
+    _opens = [0];
+    _active = 0;
+    $('cpPanel').classList.remove('cp-fixing-on');
+  }
+
+  // ── El orden importa, y este era el bug de la línea ──────────────────
+  //
+  // paintBottle() termina llamando a positionLine(), que MIDE el layout
+  // con getBoundingClientRect para colocar la línea de arrastre. Después
+  // corría paintNums() → paintOpens(), y al pasar de una abierta a dos la
+  // fila de pastillas aparece POR PRIMERA VEZ y empuja todo hacia arriba.
+  //
+  // O sea: la línea se colocaba midiendo un layout que dejaba de existir
+  // una fracción de segundo después. Quedaba descolgada del vidrio hasta
+  // el siguiente arrastre, que es cuando se volvía a medir.
+  //
+  // Ahora los números van primero —son los que cambian el alto— y la
+  // línea se coloca al final, sobre el layout definitivo.
+  function paintAll() {
+    paintNums();
+    paintBottle();
+  }
 
   // ── Abrir y cerrar ───────────────────────────────────────────────────
   function open(row, onNext, upc) {
@@ -385,18 +621,21 @@
     _upc = upc || null;
     _active = -1;
 
-    // Si este artículo ya se contó en esta sesión, se recupera tal cual
-    // en vez de empezar de cero. Reescanear un artículo pasa, y perder lo
-    // que ya se había contado sería el peor castigo posible por hacerlo.
-    const prev = S().get(row.item);
-    _again = !!prev;
-    if (prev) {
-      _sealed = Number(prev.sealed) || 0;
-      _opens = (prev.opens || []).slice();
-    } else {
-      _sealed = 0;
-      _opens = [];
-    }
+    // El panel SIEMPRE abre en blanco, haya o no conteo previo. Lo ya
+    // contado se conserva —está en sus pasadas— pero no se carga aquí: se
+    // mira tocando el total, y se corrige desde ahí.
+    //
+    // Cargarlo como valores editables era el bug: la pantalla del segundo
+    // escaneo salía idéntica a la del primero, con el 0.5 del closet
+    // puesto, y ajustarlo a la botella que se tenía delante borraba la
+    // otra sin decir nada.
+    _again = !!S().get(row.item);
+    _editIdx = null;
+    _sealed = 0;
+    _opens = [];
+    _sheet = false;
+    if ($('cpSheet')) $('cpSheet').hidden = true;
+    $('cpPanel').classList.remove('cp-fixing-on');
     // Siempre hay una abierta en pantalla, aunque valga cero. Un
     // deslizador que aparece solo despues de pulsar un boton obliga a
     // decidir antes de mirar, y lo natural es mirar la botella y ajustar.
@@ -406,7 +645,7 @@
     _active = 0;
 
     $('cpName').textContent = row.item || '';
-    $('cpSub').innerHTML = subText(row, _again);
+    $('cpSub').innerHTML = subText(row);
 
     // La fila del código solo existe si se llegó aquí escaneando. Buscar
     // el artículo por nombre no deja código que corregir.
@@ -424,18 +663,29 @@
 
   function finish(save) {
     if (save && _row) {
-      S().set(_row.item, _sealed, _opens);
+      if (_editIdx !== null) {
+        // Corrigiendo: esta pasada sustituye a la que se cargó. Si quedó
+        // en cero, replacePass la borra, que es lo que significa vaciarla.
+        S().replacePass(_row.item, _editIdx, _sealed, _opens);
+      } else {
+        // Sumando: se añade. Una pasada sin nada no deja rastro, así que
+        // abrir un producto, mirarlo y dar Next no lo marca como contado.
+        S().addPass(_row.item, _sealed, _opens);
+      }
     }
+    closeSheet();
     $('cpPanel').classList.remove('on');
+    $('cpPanel').classList.remove('cp-fixing-on');
     const cb = _onNext;
-    _row = null; _onNext = null; _upc = null;
+    _row = null; _onNext = null; _upc = null; _editIdx = null;
     if (cb) cb(save);
   }
 
   function close() {
     const el = $('cpPanel');
-    if (el) el.classList.remove('on');
-    _row = null; _onNext = null; _upc = null;
+    if (el) { el.classList.remove('on'); el.classList.remove('cp-fixing-on'); }
+    closeSheet();
+    _row = null; _onNext = null; _upc = null; _editIdx = null;
   }
 
   window.addEventListener('resize', () => { if ($('cpPanel')?.classList.contains('on')) paintBottle(); });

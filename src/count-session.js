@@ -23,12 +23,29 @@
   //
   // ── Cómo se guarda cada artículo ────────────────────────────────────
   //
-  //   { sealed: 3, opens: [0.62, 0.30] }
+  //   { passes: [ { sealed: 1, opens: [0.5], at: "…" },
+  //               { sealed: 2, opens: [0.7], at: "…" } ] }
   //
-  // Las abiertas van en una lista y no sumadas, a propósito: si alguien
-  // se equivoca en la segunda botella, puede borrar esa sin rehacer la
-  // primera. Guardado como 0.92 no habría forma de deshacer solo una
-  // parte.
+  // Una PASADA es un escaneo. El mismo producto aparece en el closet, en
+  // la barra y en la cava, y cada sitio es una pasada distinta que se
+  // SUMA a las anteriores.
+  //
+  // Antes esto era un solo `{ sealed, opens }` por artículo y `set()` lo
+  // reemplazaba entero. Eso costó un conteo real: 0.5 abierta + 1 sellada
+  // en el closet, y al reescanear en la barra el panel abría con esos
+  // mismos valores puestos, sin decir que eran memoria. Lo natural fue
+  // ajustar el 0.5 a 0.7 —la botella que se tenía delante— y con eso se
+  // borró la del closet. Quedó 3.7 donde iban 4.2. Y no falla a gritos:
+  // da un número plausible.
+  //
+  // Guardando las pasadas por separado, lo ya contado deja de ser un
+  // campo editable y pasa a ser historia. El panel abre en modo sumar y
+  // corregir es un gesto aparte y visible.
+  //
+  // Las abiertas siguen en lista y no sumadas dentro de cada pasada, por
+  // el mismo motivo de siempre: equivocarse en la segunda botella no debe
+  // obligar a rehacer la primera. Guardado como 0.92 no habría forma de
+  // deshacer solo una parte.
 
   const PREFIX = 'bs_count_';
 
@@ -50,6 +67,11 @@
       const raw = localStorage.getItem(_key);
       _data = raw ? JSON.parse(raw) : blank();
       if (!_data || typeof _data !== 'object' || !_data.items) _data = blank();
+      // Si venía del formato viejo, se convierte y se vuelve a escribir
+      // ya migrado: así solo se paga una vez y no en cada consulta.
+      if (migrar(_data)) {
+        try { localStorage.setItem(_key, JSON.stringify(_data)); } catch (e2) {}
+      }
     } catch (e) {
       // Un JSON corrupto no puede impedir contar. Se empieza de cero y
       // se avisa por consola, que es lo único que se puede hacer.
@@ -75,9 +97,48 @@
   function data() { if (!_data) load(); return _data; }
 
   // ── Consultar ────────────────────────────────────────────────────────
+  //
+  // Devuelve la entrada con `sealed` y `opens` YA SUMADOS de todas las
+  // pasadas, además de las pasadas en crudo. Los dos primeros existen
+  // porque barcode-fix y el cierre los leen así desde antes de que
+  // existieran las pasadas, y no tienen por qué enterarse del cambio.
   function get(item) {
-    const d = data();
-    return d.items[item] || null;
+    const e = data().items[item];
+    if (!e) return null;
+    const passes = e.passes || [];
+    return {
+      passes,
+      sealed: passes.reduce((a, p) => a + (Number(p.sealed) || 0), 0),
+      opens:  passes.reduce((a, p) => a.concat(p.opens || []), [])
+    };
+  }
+
+  function passesOf(item) {
+    const e = data().items[item];
+    return (e && e.passes) || [];
+  }
+
+  // ── Del formato viejo al de pasadas ──────────────────────────────────
+  //
+  // Una sesión a medias en el teléfono está en el formato de antes:
+  // `{ sealed, opens }` suelto. Se envuelve como una pasada única, que es
+  // exactamente lo que era. Sin esto, actualizar la app en mitad de un
+  // conteo lo tiraría a la basura.
+  function migrar(d) {
+    let tocado = false;
+    for (const k of Object.keys(d.items || {})) {
+      const e = d.items[k];
+      if (!e || Array.isArray(e.passes)) continue;
+      d.items[k] = {
+        passes: [{
+          sealed: Number(e.sealed) || 0,
+          opens: Array.isArray(e.opens) ? e.opens.slice() : [],
+          at: d.startedAt || new Date().toISOString()
+        }]
+      };
+      tocado = true;
+    }
+    return tocado;
   }
 
   function has(item) { return !!get(item); }
@@ -210,24 +271,87 @@
   }
 
   // ── Escribir ─────────────────────────────────────────────────────────
-  function set(item, sealed, opens) {
-    const d = data();
-
-    // La señal se enciende con el PRIMER artículo, no al abrir el
-    // escáner. Abrir la cámara, mirar y salir sin escanear nada no es un
-    // conteo, y dejaría el ciclo bloqueado por un gesto que no hizo nada.
-    const primero = !Object.keys(d.items).length;
-
-    d.items[item] = {
+  // Una pasada limpia: selladas no negativas, abiertas entre 0 y 1, y
+  // fuera las abiertas en cero — una botella vacía no se cuenta, no está.
+  function limpiarPasada(sealed, opens) {
+    return {
       sealed: Math.max(0, Number(sealed) || 0),
       opens: (opens || [])
         .map(n => Math.max(0, Math.min(1, Number(n) || 0)))
-        // Una abierta a cero es una botella vacía, y una botella vacía no
-        // se cuenta: no está.
-        .filter(n => n > 0)
+        .filter(n => n > 0),
+      at: new Date().toISOString()
     };
+  }
+
+  // Una pasada sin nada dentro no es una pasada. Escanear un producto,
+  // mirarlo y no tocar nada no debe dejar rastro ni contarlo como visto.
+  function vacia(p) { return !p.sealed && !p.opens.length; }
+
+  // La señal de "hay un conteo en curso" se enciende con el PRIMER
+  // artículo, no al abrir el escáner. Abrir la cámara, mirar y salir sin
+  // escanear nada no es un conteo, y dejaría el ciclo bloqueado por un
+  // gesto que no hizo nada.
+  function avisarSiPrimero(d, habia) {
+    if (!habia && Object.keys(d.items).length) marcarNube(d.startedAt);
+  }
+
+  // ── Sumar una pasada ─────────────────────────────────────────────────
+  //
+  // Lo que hace el panel al dar Next. NO reemplaza: si el artículo ya
+  // tenía pasadas, esta se añade al final y el total sube.
+  function addPass(item, sealed, opens) {
+    const d = data();
+    const habia = !!Object.keys(d.items).length;
+    const p = limpiarPasada(sealed, opens);
+    if (vacia(p)) return null;
+
+    if (!d.items[item]) d.items[item] = { passes: [] };
+    d.items[item].passes.push(p);
     save();
-    if (primero) marcarNube(d.startedAt);
+    avisarSiPrimero(d, habia);
+    return p;
+  }
+
+  // ── Corregir una pasada ──────────────────────────────────────────────
+  //
+  // El único camino por el que algo ya guardado cambia de valor, y se
+  // llega a él a propósito desde la hoja de detalle. Dejarla vacía es
+  // borrarla: es lo que significa poner todo a cero.
+  function replacePass(item, idx, sealed, opens) {
+    const e = data().items[item];
+    if (!e || !e.passes[idx]) return false;
+    const p = limpiarPasada(sealed, opens);
+    if (vacia(p)) return removePass(item, idx);
+    e.passes[idx] = p;
+    save();
+    return true;
+  }
+
+  // Borrar la última pasada de un artículo lo devuelve a NO CONTADO, no a
+  // cero. No son lo mismo: no contado vuelve a la lista de faltantes del
+  // cierre, que es donde tiene que aparecer para que alguien lo mire.
+  function removePass(item, idx) {
+    const e = data().items[item];
+    if (!e || !e.passes[idx]) return false;
+    e.passes.splice(idx, 1);
+    if (!e.passes.length) delete data().items[item];
+    save();
+    return true;
+  }
+
+  // ── Reemplazar el artículo entero por una sola pasada ────────────────
+  //
+  // Queda para barcode-fix, que mueve lo contado de un producto a otro y
+  // llega con los totales ya sumados en la mano. Es la única llamada que
+  // sigue teniendo sentido como reemplazo, y por eso no se borró.
+  function set(item, sealed, opens) {
+    const d = data();
+    const habia = !!Object.keys(d.items).length;
+    const p = limpiarPasada(sealed, opens);
+    if (vacia(p)) { delete d.items[item]; save(); return null; }
+    d.items[item] = { passes: [p] };
+    save();
+    avisarSiPrimero(d, habia);
     return d.items[item];
   }
 
@@ -269,6 +393,7 @@
 
   window.BarStockCountSession = {
     load, save, get, has, set, remove, clear,
+    passesOf, addPass, replacePass, removePass,
     totalFor, countedItems, size, startedAt, summary,
     pause, resume, isPaused, pausedAt, exists, progress, missingRows
   };
