@@ -154,32 +154,52 @@
    toca la cifra y se abre el desglose. Sin ella, cambiar el bug de
    perder conteo por el de duplicarlo sería peor — inflar no se nota. */
 .cp-total{
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: baseline;
-  gap: 2px 10px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
   width: 100%;
+  min-height: 60px;
   margin-bottom: 10px;
   padding: 0;
   background: none;
-  border: none;
+  border: 1px solid transparent;
+  border-radius: 13px;
   font-family: inherit;
   text-align: left;
   color: inherit;
   cursor: pointer;
 }
 .cp-total:disabled{ cursor: default; }
-.cp-total span{ font-size: 13px; color: #94a3b8; }
+.cp-total-l{ display: flex; align-items: baseline; gap: 10px; }
+.cp-total-l > span{ font-size: 13px; color: #94a3b8; }
 .cp-total b{ font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
-/* La línea de "2 passes · view" ocupa las dos columnas, debajo. */
-.cp-total small{
-  grid-column: 1 / -1;
-  font-size: 11px;
-  color: #38bdf8;
-  letter-spacing: .01em;
+
+/* Con pasadas detrás deja de ser una etiqueta y se vuelve una PUERTA.
+   El botón ya ocupaba toda la fila desde el principio, pero nada lo
+   decía: el ojo iba al texto de 11 px de abajo y el dedo apuntaba ahí.
+   Borde, fondo propio y una flecha que promete destino. */
+.cp-total-on{
+  border-color: rgba(56,189,248,.30);
+  background: rgba(56,189,248,.07);
+  padding: 0 13px;
 }
-.cp-total small:empty{ display: none; }
-.cp-total small.cp-fix{ color: #f59e0b; }
+.cp-total-on:active{ background: rgba(56,189,248,.14); }
+.cp-total-fix{ padding: 0 13px; }
+
+.cp-total-go{
+  margin-left: auto;
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12.5px; font-weight: 800;
+  color: #38bdf8;
+}
+.cp-total-go:empty{ display: none; }
+.cp-chev{
+  width: 26px; height: 26px; border-radius: 50%;
+  background: rgba(56,189,248,.16);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+}
+.cp-total-go .cp-fix{ color: #f59e0b; font-weight: 800; }
 
 /* ── Modo corregir ───────────────────────────────────────────────────
    El único estado donde el botón REEMPLAZA en vez de sumar. Se pinta
@@ -967,18 +987,26 @@ body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,
 
 .cp-pg{
   flex-shrink: 0;
+  /* Centrado de verdad. Antes era un <button> sin flex: el número era
+     texto suelto dentro y quedaba alto, descolgado del círculo. */
+  display: flex; align-items: center; justify-content: center;
   min-width: 38px; height: 38px;
   border-radius: 999px;
-  background: rgba(255,255,255,.06);
+  /* Sin relleno. Con dos o tres pastillas juntas, el gris de cada una se
+     leía como una barra continua detrás de los números. La activa se
+     distingue con el borde, que ya basta. */
+  background: transparent;
   border: 1px solid rgba(255,255,255,.14);
   color: #cbd5e1;
   font-family: inherit; font-size: 15px; font-weight: 800;
   font-variant-numeric: tabular-nums;
+  line-height: 1;
   cursor: pointer;
 }
 .cp-pg.on{
-  background: rgba(56,189,248,.16);
-  border-color: rgba(56,189,248,.8);
+  background: rgba(56,189,248,.10);
+  border-color: #38bdf8;
+  border-width: 2px;
   color: #7dd3fc;
 }
 /* La papelera borra la ACTIVA. Con una por fila era facil borrar la de al
@@ -1012,7 +1040,11 @@ body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,
 .cp-stage{ min-height: 190px; }
 .cp-read, .cp-chips, .cp-opens, .cp-hint{ flex-shrink: 0; }
 
-body.light .cp-pg{ background: rgba(15,23,42,.04); border-color: rgba(15,23,42,.12); color: #334155; }
-body.light .cp-pg.on{ background: rgba(2,132,199,.12); border-color: rgba(2,132,199,.7); color: #0369a1; }
+body.light .cp-pg{ background: transparent; border-color: rgba(15,23,42,.14); color: #475569; }
+body.light .cp-pg.on{ background: rgba(2,132,199,.08); border-color: #0284c7; color: #0369a1; }
+body.light .cp-total-on{ border-color: rgba(2,132,199,.28); background: rgba(2,132,199,.05); }
+body.light .cp-total-on:active{ background: rgba(2,132,199,.11); }
+body.light .cp-total-go{ color: #0369a1; }
+body.light .cp-chev{ background: rgba(2,132,199,.14); color: #0369a1; }
 body.light .cp-pg-del{ border-color: rgba(15,23,42,.12); }
 body.light .cp-which{ color: #0369a1; }

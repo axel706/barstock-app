@@ -221,9 +221,8 @@
            que es peor porque infla sin avisar. -->
       <div class="cp-foot">
         <button type="button" class="cp-total" id="cpTotalBtn">
-          <span>Total</span>
-          <b id="cpTotal">0</b>
-          <small id="cpPasses"></small>
+          <span class="cp-total-l"><span>Total</span><b id="cpTotal">0</b></span>
+          <span class="cp-total-go" id="cpPasses"></span>
         </button>
         <button type="button" class="cp-next" id="cpNext">
           <span id="cpNextTxt">Next</span> <i class="ti ti-arrow-right" aria-hidden="true"></i>
@@ -261,7 +260,11 @@
     };
 
     $('cpTotalBtn').onclick = () => { if (passes().length) openSheet(); };
-    $('cpSheetX').onclick   = () => closeSheet();
+    $('cpSheetX').onclick   = () => {
+      if (_editIdx !== null) { sumarNuevo(); $('cpSub').innerHTML = subText(_row); }
+      closeSheet();
+      paintAll();
+    };
     $('cpSheet').onclick    = (e) => { if (e.target === $('cpSheet')) closeSheet(); };
     // El botón de la silueta vive ya en la estructura y no se vuelve a
     // crear en cada repintado: antes se generaba dentro del HTML de la
@@ -486,23 +489,46 @@
 
     if ($('cpTotal')) $('cpTotal').textContent = fmtNum(gran);
 
+    // ── El total como puerta ───────────────────────────────────────────
+    //
+    // Era una etiqueta de 11 px pegada debajo de la cifra, y aunque el
+    // botón ya ocupaba toda la fila, nada lo decía: el ojo iba al texto
+    // chico y el dedo apuntaba ahí. Ahora la fila entera se ve tocable
+    // —borde, fondo propio y una flecha que promete destino— y solo
+    // cuando hay pasadas detrás que mirar.
     const sub = $('cpPasses');
+    const btn = $('cpTotalBtn');
+    const n = passes().length;
+
     if (sub) {
-      const n = passes().length;
       if (_editIdx !== null) {
-        sub.textContent = 'replaces ' + fmtNum(passTotal(passes()[_editIdx] || { sealed: 0, opens: [] }));
-        sub.className = 'cp-fix';
+        sub.innerHTML = '<span class="cp-fix">replaces ' +
+          esc(fmtNum(passTotal(passes()[_editIdx] || { sealed: 0, opens: [] }))) + '</span>';
       } else if (n) {
-        sub.textContent = n + (n === 1 ? ' pass · view' : ' passes · view');
-        sub.className = '';
+        sub.innerHTML = '<span>' + n + (n === 1 ? ' pass' : ' passes') + '</span>' +
+          '<i class="ti ti-chevron-right cp-chev" aria-hidden="true"></i>';
       } else {
-        sub.textContent = '';
-        sub.className = '';
+        sub.innerHTML = '';
       }
     }
 
-    const btn = $('cpTotalBtn');
-    if (btn) btn.disabled = !passes().length;
+    if (btn) {
+      // Sin pasadas previas —la mayoría de los escaneos— se queda como el
+      // total de siempre: ni borde ni flecha ni nada que tocar.
+      //
+      // Corrigiendo SÍ se puede tocar, aunque no lleve flecha. Es la
+      // única salida: entrar a corregir por error dejaba atrapado entre
+      // Save y abandonar el panel entero.
+      const hay = n > 0;
+      btn.disabled = !hay;
+      btn.classList.toggle('cp-total-on', hay && _editIdx === null);
+      btn.classList.toggle('cp-total-fix', _editIdx !== null);
+      btn.setAttribute('aria-label', !hay
+        ? 'Total ' + fmtNum(otras + total())
+        : _editIdx !== null
+          ? 'Total ' + fmtNum(otras + total()) + '. Fixing pass ' + (_editIdx + 1)
+          : 'Total ' + fmtNum(otras + total()) + '. View ' + n + (n === 1 ? ' pass' : ' passes'));
+    }
 
     const nxt = $('cpNextTxt');
     if (nxt) nxt.textContent = _editIdx === null ? 'Next' : 'Save';
@@ -539,6 +565,16 @@
 
     const t = $('cpSheetTotal');
     if (t) t.textContent = fmtNum(ps.reduce((a, p) => a + passTotal(p), 0));
+
+    // Corrigiendo, el botón de la hoja deja de ser "ya vi" y pasa a ser
+    // la marcha atrás. Sin esto, tocar el lápiz equivocado no tenía
+    // deshacer: o guardabas encima o te salías del artículo entero.
+    const x = $('cpSheetX');
+    if (x) x.textContent = _editIdx !== null ? 'Cancel fix' : 'Done';
+    const st = $('cpSheetT');
+    if (st) st.textContent = _editIdx !== null
+      ? 'Fixing pass ' + (_editIdx + 1)
+      : 'How this adds up';
 
     host.querySelectorAll('[data-fix]').forEach(b => {
       b.onclick = () => fixPass(Number(b.dataset.fix));
