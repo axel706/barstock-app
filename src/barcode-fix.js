@@ -42,7 +42,7 @@
 
   function cfg() {
     const c = window.BARSTOCK_CONFIG || {};
-    return { url: c.SUPABASE_URL, key: c.SUPABASE_KEY };
+    return { url: c.SUPABASE_URL, key: c.SUPABASE_KEY, account: c.ACCOUNT_ID || '' };
   }
 
   // ── Elegir el producto correcto ──────────────────────────────────────
@@ -94,19 +94,41 @@
 
   // ── Guardar el cambio ────────────────────────────────────────────────
   async function escribir(itemName, code) {
-    const { url, key } = cfg();
+    const { url, key, account } = cfg();
     if (!url || !key) throw new Error('No cloud config');
 
-    // upsert sobre el upc: la tabla lo tiene como clave, asi que esto
-    // reescribe la fila que ya existe en vez de crear una segunda.
-    const res = await fetch(`${url}/rest/v1/item_barcodes?on_conflict=upc`, {
+    // ── La misma escritura que hace el aprendizaje, no una parecida ────
+    //
+    // Esto estaba escrito aparte y se separo en dos puntos, los dos
+    // fatales:
+    //
+    //   on_conflict=upc    La clave unica de la tabla es (account_id,
+    //                      upc), no upc a secas. PostgREST no encuentra
+    //                      indice que case con ese ON CONFLICT y
+    //                      responde 42P10. O sea que reasignar un codigo
+    //                      mal puesto fallaba SIEMPRE.
+    //
+    //   sin account_id     Aunque el upsert hubiera pasado, la fila
+    //                      quedaba sin cuenta, y loadLearned filtra por
+    //                      account_id: el codigo corregido no lo habria
+    //                      encontrado nadie.
+    //
+    // Es el mismo upsert que scan-count.js usa al aprender un codigo. La
+    // copia divergio porque se escribio dos veces en vez de una.
+    const res = await fetch(`${url}/rest/v1/item_barcodes?on_conflict=account_id,upc`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         apikey: key, Authorization: `Bearer ${key}`,
         Prefer: 'resolution=merge-duplicates,return=minimal'
       },
-      body: JSON.stringify([{ upc: String(_upc), item_name: itemName, code: code || null }])
+      body: JSON.stringify([{
+        account_id: account,
+        upc: String(_upc),
+        item_name: itemName,
+        code: code || null,
+        created_by: window.__bsUserEmail || null
+      }])
     });
     if (!res.ok) throw new Error(res.status + ' · ' + (await res.text()).slice(0, 180));
   }
@@ -178,15 +200,27 @@
   // ── Mover el conteo ──────────────────────────────────────────────────
   function mover(destino, prev) {
     const s = S();
-    const yaTenia = s.get(destino.item);
 
-    // Sumar, no reemplazar. Las selladas se suman; las abiertas se
-    // concatenan en vez de sumarse, porque cada una es una botella
-    // distinta y borrar una no debe obligar a rehacer la otra.
-    const sealed = (Number(yaTenia && yaTenia.sealed) || 0) + (Number(prev.sealed) || 0);
-    const opens = ((yaTenia && yaTenia.opens) || []).concat(prev.opens || []);
-
-    s.set(destino.item, sealed, opens);
+    // ── Las pasadas viajan enteras ─────────────────────────────────────
+    //
+    // Sumar y no reemplazar: eso ya estaba bien. Lo que cambia es CÓMO.
+    //
+    // Antes esto sumaba las selladas y concatenaba las abiertas en un
+    // solo `set()`. Con el modelo de pasadas eso aplastaba la historia:
+    // el destino podía tener dos pasadas —el closet y la barra— y salía
+    // con una sola, sumada. El desglose dejaba de poder corregirse por
+    // partes, que es justo para lo que existe.
+    //
+    // Ahora cada pasada del producto equivocado se añade como pasada al
+    // destino. Lo que se contó en tres sitios sigue siendo tres líneas.
+    const pasadas = (prev && prev.passes) || [];
+    if (pasadas.length) {
+      pasadas.forEach(p => s.addPass(destino.item, p.sealed, p.opens));
+    } else {
+      // Sin pasadas —una sesión vieja ya migrada no debería llegar aquí,
+      // pero si llega— se mueve lo que haya como una sola.
+      s.addPass(destino.item, prev.sealed, prev.opens);
+    }
     s.remove(_rowActual.item);
 
     if (typeof window.setStatus === 'function') {
