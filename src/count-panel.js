@@ -124,9 +124,9 @@
     // es la tercera vez que aparece el producto y que se está sumando.
     let tail = '';
     if (_editIdx !== null) {
-      tail = ' · <b class="cp-fixing">fixing pass ' + (_editIdx + 1) + '</b>';
+      tail = ' · <b class="cp-fixing">fixing scan ' + (_editIdx + 1) + '</b>';
     } else if (_again) {
-      tail = ' · <b class="cp-again">pass ' + (passes().length + 1) + '</b>';
+      tail = ' · <b class="cp-again">scan ' + (passes().length + 1) + '</b>';
     }
     return esc(size) + esc(was) + tail;
   }
@@ -236,7 +236,7 @@
         <div class="cp-sheet-in">
           <div class="cp-grab"></div>
           <div class="cp-sheet-t" id="cpSheetT">How this adds up</div>
-          <div class="cp-sheet-s">Tap a pass to fix it</div>
+          <div class="cp-sheet-s">Tap a scan to fix it</div>
           <div id="cpPassList"></div>
           <div class="cp-sheet-sum"><span>Total</span><b id="cpSheetTotal">0</b></div>
           <button type="button" class="cp-sheet-x" id="cpSheetX">Done</button>
@@ -326,7 +326,7 @@
   function whichLabel() {
     const varias = _opens.length > 1;
     if (_editIdx !== null) {
-      return `<span class="cp-which cp-which-fix">Pass ${_editIdx + 1}` +
+      return `<span class="cp-which cp-which-fix">Scan ${_editIdx + 1}` +
              (varias ? ` · bottle ${_active + 1} of ${_opens.length}` : '') + `</span>`;
     }
     if (varias) {
@@ -505,7 +505,7 @@
         sub.innerHTML = '<span class="cp-fix">replaces ' +
           esc(fmtNum(passTotal(passes()[_editIdx] || { sealed: 0, opens: [] }))) + '</span>';
       } else if (n) {
-        sub.innerHTML = '<span>' + n + (n === 1 ? ' pass' : ' passes') + '</span>' +
+        sub.innerHTML = '<span>' + n + (n === 1 ? ' scan' : ' scans') + '</span>' +
           '<i class="ti ti-chevron-right cp-chev" aria-hidden="true"></i>';
       } else {
         sub.innerHTML = '';
@@ -526,8 +526,8 @@
       btn.setAttribute('aria-label', !hay
         ? 'Total ' + fmtNum(otras + total())
         : _editIdx !== null
-          ? 'Total ' + fmtNum(otras + total()) + '. Fixing pass ' + (_editIdx + 1)
-          : 'Total ' + fmtNum(otras + total()) + '. View ' + n + (n === 1 ? ' pass' : ' passes'));
+          ? 'Total ' + fmtNum(otras + total()) + '. Fixing scan ' + (_editIdx + 1)
+          : 'Total ' + fmtNum(otras + total()) + '. View ' + n + (n === 1 ? ' scan' : ' scans'));
     }
 
     const nxt = $('cpNextTxt');
@@ -555,10 +555,10 @@
           <b>${esc(fmtNum(passTotal(p)))}</b>
           <span>${esc(passDetail(p))}</span>
         </div>
-        <button type="button" class="cp-pass-b" data-fix="${i}" aria-label="Fix pass ${i + 1}">
+        <button type="button" class="cp-pass-b" data-fix="${i}" aria-label="Fix scan ${i + 1}">
           <i class="ti ti-pencil" aria-hidden="true"></i>
         </button>
-        <button type="button" class="cp-pass-b cp-pass-del" data-del="${i}" aria-label="Delete pass ${i + 1}">
+        <button type="button" class="cp-pass-b cp-pass-del" data-del="${i}" aria-label="Delete scan ${i + 1}">
           <i class="ti ti-trash" aria-hidden="true"></i>
         </button>
       </div>`).join('');
@@ -573,7 +573,7 @@
     if (x) x.textContent = _editIdx !== null ? 'Cancel fix' : 'Done';
     const st = $('cpSheetT');
     if (st) st.textContent = _editIdx !== null
-      ? 'Fixing pass ' + (_editIdx + 1)
+      ? 'Fixing scan ' + (_editIdx + 1)
       : 'How this adds up';
 
     host.querySelectorAll('[data-fix]').forEach(b => {
@@ -604,7 +604,7 @@
   function delPass(i) {
     const p = passes()[i];
     if (!p) return;
-    if (!confirm('Delete pass ' + (i + 1) + ' (' + fmtNum(passTotal(p)) + ')?')) return;
+    if (!confirm('Delete scan ' + (i + 1) + ' (' + fmtNum(passTotal(p)) + ')?')) return;
 
     S().removePass(_row.item, i);
 
