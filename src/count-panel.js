@@ -200,7 +200,19 @@
       <div class="cp-sealed">
         <div class="cp-step">
           <button type="button" id="cpMinus" aria-label="One less">−</button>
-          <div class="cp-num" id="cpSealed">0</div>
+          <!-- ── El contador se escribe, no solo se pulsa ─────────────
+               Con el vodka de la casa son 20 y pico de botellas
+               selladas, o sea 20 y pico de toques al +. Es un <input>
+               desde el principio pero sin nada que lo delate: sin borde,
+               sin fondo, con la misma tipografía y tamaño que tenía el
+               número. En reposo es indistinguible; al tocarlo sale el
+               teclado numérico.
+               inputmode numeric y no type=number: el segundo trae
+               flechitas en escritorio y en iOS acepta 'e' y signos. -->
+          <input class="cp-num" id="cpSealed" type="text"
+                 inputmode="numeric" pattern="[0-9]*"
+                 autocomplete="off" autocorrect="off" spellcheck="false"
+                 aria-label="Sealed bottles" value="0">
           <button type="button" id="cpPlus" aria-label="One more">+</button>
         </div>
       </div>
@@ -248,6 +260,46 @@
     $('cpNext').onclick  = () => finish(true);
     $('cpMinus').onclick = () => { _sealed = Math.max(0, _sealed - 1); paintNums(); };
     $('cpPlus').onclick  = () => { _sealed++; paintNums(); };
+
+    // ── Escribir el contador ───────────────────────────────────────────
+    const sealedEl = $('cpSealed');
+
+    // Al enfocar se selecciona todo, para que teclear 24 REEMPLACE y no
+    // deje 024. Es el gesto que se espera: toco, escribo, listo.
+    sealedEl.onfocus = () => {
+      try { sealedEl.select(); } catch (e) {}
+      // El teclado del iPhone tapa la mitad baja, y el contador vive
+      // justo encima del pie. Sin esto se escribe a ciegas.
+      setTimeout(() => {
+        try { sealedEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+      }, 250);
+    };
+
+    // El tope se aplica al CAMPO, no solo al valor guardado. Puesto solo
+    // en `_sealed`, se veia 999999 mientras el total decia 9999 —dos
+    // cifras distintas en la misma pantalla— y ademas el blur volvia a
+    // leer del campo y se saltaba el limite.
+    const TOPE = 9999;
+
+    sealedEl.oninput = () => {
+      // Solo dígitos. El teclado numérico de iOS deja colar guiones y
+      // comas segun el idioma, y un NaN aqui se guardaria como conteo.
+      let limpio = sealedEl.value.replace(/[^0-9]/g, '');
+      if (limpio && Number(limpio) > TOPE) limpio = String(TOPE);
+      if (limpio !== sealedEl.value) sealedEl.value = limpio;
+      _sealed = Number(limpio) || 0;
+      // No se repinta el campo mientras se escribe —eso movería el
+      // cursor—, solo lo que depende de el.
+      paintTotales();
+    };
+
+    // Vacío es cero, no "sin valor". Y Enter cierra el teclado en vez de
+    // no hacer nada, que en un móvil es lo único que se puede esperar.
+    sealedEl.onblur = () => {
+      _sealed = Math.max(0, Math.min(TOPE, Number(sealedEl.value) || 0));
+      paintNums();
+    };
+    sealedEl.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); sealedEl.blur(); } };
     $('cpAdd').onclick   = () => {
       // En CERO, no en 0.5. Media botella era un valor que nadie había
       // mirado todavía y que se guardaba solo con tocar el botón; si
@@ -476,8 +528,20 @@
   }
 
   function paintNums() {
-    if ($('cpSealed')) $('cpSealed').textContent = _sealed;
+    const se = $('cpSealed');
+    // No se toca el campo mientras tiene el foco: reescribir su valor
+    // manda el cursor al final y hace imposible corregir un dígito.
+    if (se && document.activeElement !== se) se.value = String(_sealed);
 
+    paintTotales();
+    paintOpens();
+    if (_sheet) paintSheet();
+  }
+
+  // Solo el pie: el total y lo que cuelga de el. Se separo de paintNums
+  // porque al TECLEAR en el contador hay que refrescar la cifra pero no
+  // el campo que se esta escribiendo.
+  function paintTotales() {
     // El total de la pantalla es el del ARTÍCULO, no el de esta pasada:
     // es la cifra que acabará en el inventario y la que hay que poder
     // contrastar con el estante. Corrigiendo, lo guardado se cuenta sin
@@ -534,9 +598,6 @@
     if (nxt) nxt.textContent = _editIdx === null ? 'Next' : 'Save';
     const nb = $('cpNext');
     if (nb) nb.classList.toggle('cp-next-fix', _editIdx !== null);
-
-    paintOpens();
-    if (_sheet) paintSheet();
   }
 
   // ── La hoja: de dónde sale el total ──────────────────────────────────

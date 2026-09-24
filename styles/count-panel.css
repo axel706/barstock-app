@@ -74,11 +74,48 @@
   cursor: pointer;
 }
 .cp-step button:active{ background: rgba(56,189,248,.20); }
+/* ── El contador de selladas se escribe ──────────────────────────────
+   Es un <input>, pero en reposo tiene que ser indistinguible del numero
+   suelto que habia antes: sin borde, sin fondo, misma tipografia y mismo
+   tamaño. Con el vodka de la casa son 20 y pico de toques al +, y eso
+   era el motivo del cambio; un campo con pinta de formulario en una
+   pantalla que se ve 260 veces habria sido peor remedio.
+
+   Los 40px importan por una razon aparte: Safari hace zoom al enfocar
+   cualquier campo por debajo de 16px, y ese zoom no se deshace solo. */
 .cp-num{
   flex: 1;
+  min-width: 0;
   text-align: center;
+  font-family: inherit;
   font-size: 40px; font-weight: 800; line-height: 1;
   font-variant-numeric: tabular-nums;
+  color: inherit;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  padding: 4px 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+/* Solo al escribir se comporta como campo. */
+.cp-num:focus{
+  outline: none;
+  background: rgba(56,189,248,.10);
+  box-shadow: inset 0 -2px 0 #38bdf8;
+  color: #7dd3fc;
+}
+body.light .cp-num:focus{
+  background: rgba(2,132,199,.08);
+  box-shadow: inset 0 -2px 0 #0284c7;
+  color: #0369a1;
+}
+/* Corrigiendo una pasada, el campo sigue la misma clave ambar que el
+   resto de la pantalla. */
+.cp-fixing-on .cp-num:focus{
+  background: rgba(245,158,11,.12);
+  box-shadow: inset 0 -2px 0 #f59e0b;
+  color: #f59e0b;
 }
 
 /* ── Abiertas ── */
