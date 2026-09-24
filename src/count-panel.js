@@ -209,7 +209,7 @@
                teclado numérico.
                inputmode numeric y no type=number: el segundo trae
                flechitas en escritorio y en iOS acepta 'e' y signos. -->
-          <input class="cp-num" id="cpSealed" type="text"
+          <input class="cp-num" id="cpSealed" type="text" size="3"
                  inputmode="numeric" pattern="[0-9]*"
                  autocomplete="off" autocorrect="off" spellcheck="false"
                  aria-label="Sealed bottles" value="0">

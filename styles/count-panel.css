@@ -62,7 +62,10 @@
 .cp-step{ display: flex; align-items: center; gap: 12px; }
 .cp-step button{
   /* 64px. Se toca con el pulgar, a veces con guantes de bodega y con
-     prisa. Un botón pequeño aquí se traduce en conteos equivocados. */
+     prisa. Un botón pequeño aquí se traduce en conteos equivocados.
+     flex 0 0 64px y no solo width: con flex-basis explicito no hay
+     forma de que el campo de al lado les robe sitio. */
+  flex: 0 0 64px;
   width: 64px; height: 64px;
   flex-shrink: 0;
   border-radius: 16px;
@@ -84,8 +87,20 @@
    Los 40px importan por una razon aparte: Safari hace zoom al enfocar
    cualquier campo por debajo de 16px, y ese zoom no se deshace solo. */
 .cp-num{
-  flex: 1;
+  /* ── Por que hay tres declaraciones de ancho y no una ───────────────
+     Un <input> trae size=20 de fabrica: pide unos 20 caracteres de
+     ancho, y a 40px de tipografia eso pasa de 400px. Safari IGNORA
+     flex-shrink en los campos de formulario aunque el flex-basis sea 0,
+     asi que el campo se quedaba con su ancho intrinseco y empujaba el −
+     y el + fuera de la pantalla. Se veia como si los botones hubieran
+     desaparecido.
+     flex-basis 0 + min-width 0 + width 100% cierran las tres vias por
+     las que ese ancho puede colarse. El size=3 del HTML es el cinturon:
+     aunque todo lo demas fallara, el minimo bajaria a tres digitos. */
+  flex: 1 1 0%;
+  width: 100%;
   min-width: 0;
+  box-sizing: border-box;
   text-align: center;
   font-family: inherit;
   font-size: 40px; font-weight: 800; line-height: 1;
@@ -340,7 +355,7 @@ body.light .cp-sheet-x{ border-color: rgba(15,23,42,.16); color: #0f172a; }
 @media (max-height: 620px) {
   .cp-stage{ height: 165px; }
   .cp-read b{ font-size: 27px; }
-  .cp-step button{ width: 56px; height: 56px; }
+  .cp-step button{ flex-basis: 56px; width: 56px; height: 56px; }
   .cp-num{ font-size: 32px; }
 }
 
