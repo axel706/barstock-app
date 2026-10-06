@@ -380,7 +380,21 @@
       const counted = new Set(S().countedItems());
       master.forEach(r => {
         if (counted.has(r.item)) {
-          r.onHand = S().totalFor(r.item);
+          // ── De mililitros a botellas ─────────────────────────────────
+          //
+          // El conteo se suma en ml porque un 750 y un litro no se pueden
+          // sumar de otra forma. Aqui se convierte a la unidad en la que
+          // vive el inventario: botellas del tamaño que se ORDENA, que es
+          // lo que significa bottle_size_ml.
+          //
+          // 1.5 de 750 mas 1.5 de litro son 2,625 ml. Antes se guardaban
+          // como 3.0 botellas; en botellas de litro son 2.625. El error
+          // iba en contra: menos inventario del que hay, y el par pedia
+          // de mas.
+          //
+          // Sin tamaño declarado se cae a 750, que es lo que ya suponia
+          // el resto de la app al dibujar.
+          r.onHand = S().bottlesFor(r.item, Number(r.bottleSizeMl) || 750);
         } else if (_mode === 'zero') {
           r.onHand = 0;
         }

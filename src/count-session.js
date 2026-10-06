@@ -23,12 +23,28 @@
   //
   // ── Cómo se guarda cada artículo ────────────────────────────────────
   //
-  //   { passes: [ { sealed: 1, opens: [0.5], at: "…" },
-  //               { sealed: 2, opens: [0.7], at: "…" } ] }
+  //   { passes: [ { sealed: 1, opens: [0.5], sizeMl: 1000, at: "…" },
+  //               { sealed: 2, opens: [0.7], sizeMl: 750,  at: "…" } ] }
   //
   // Una PASADA es un escaneo. El mismo producto aparece en el closet, en
   // la barra y en la cava, y cada sitio es una pasada distinta que se
   // SUMA a las anteriores.
+  //
+  // ── Y cada pasada lleva su TAMAÑO ───────────────────────────────────
+  //
+  // Un producto se compra en un formato, pero en el estante puede haber
+  // otro: se acabó el Hendrick's de litro, alguien fue a la tienda y
+  // trajo uno de 750. Ese 750 tiene su propio código de barras.
+  //
+  // Sin el tamaño en la pasada, las dos botellas se sumaban como
+  // iguales: 1.5 de 750 más 1.5 de litro daban 3.0. Son 2,625 ml, o sea
+  // 2.625 botellas de litro. El error iba EN CONTRA: enseñaba menos
+  // inventario del que hay, y el par pedía de más.
+  //
+  // Por eso el total de un artículo se calcula en MILILITROS, que es la
+  // única unidad en la que un 750 y un litro se pueden sumar. Convertir
+  // a botellas es cosa de quien pregunta, porque solo él sabe cuál es la
+  // botella que se ordena.
   //
   // Antes esto era un solo `{ sealed, opens }` por artículo y `set()` lo
   // reemplazaba entero. Eso costó un conteo real: 0.5 abierta + 1 sellada
@@ -118,6 +134,30 @@
     return (e && e.passes) || [];
   }
 
+  // Mililitros de una pasada. `sizeMl` puede faltar en las pasadas
+  // guardadas antes de este cambio: ahí se usa el tamaño que pase quien
+  // pregunta, que es el del producto, y sale el mismo número de antes.
+  function mlDePasada(p, porDefecto) {
+    const size = Number(p.sizeMl) || Number(porDefecto) || 0;
+    const abiertas = (p.opens || []).reduce((a, b) => a + (Number(b) || 0), 0);
+    return ((Number(p.sealed) || 0) + abiertas) * size;
+  }
+
+  // El total de un artículo, en mililitros. Es la cifra honesta: suma
+  // formatos distintos sin mentir. `porDefecto` es el tamaño del
+  // producto, para las pasadas que no traigan el suyo.
+  function mlFor(item, porDefecto) {
+    return passesOf(item).reduce((a, p) => a + mlDePasada(p, porDefecto), 0);
+  }
+
+  // En botellas del tamaño que se ORDENA. Hay que pasarlo: la sesión no
+  // sabe qué compra el bar, y adivinarlo es como empezó todo esto.
+  function bottlesFor(item, ordenSize) {
+    const size = Number(ordenSize) || 0;
+    if (!size) return 0;
+    return mlFor(item, size) / size;
+  }
+
   // ── Del formato viejo al de pasadas ──────────────────────────────────
   //
   // Una sesión a medias en el teléfono está en el formato de antes:
@@ -143,13 +183,15 @@
 
   function has(item) { return !!get(item); }
 
-  // Total de un artículo: selladas enteras más la suma de las abiertas.
-  function totalFor(item) {
-    const e = get(item);
-    if (!e) return 0;
-    const opens = (e.opens || []).reduce((a, b) => a + (Number(b) || 0), 0);
-    return (Number(e.sealed) || 0) + opens;
-  }
+  // `totalFor` ya no existe, y se borró en vez de dejarla funcionando.
+  //
+  // Sumaba selladas y fracciones sin mirar el tamaño, que es exactamente
+  // el bug. Dejarla habría sido peor que quitarla: quien no se enterara
+  // del cambio seguiría recibiendo un número plausible y equivocado.
+  // Ahora da error, que se ve enseguida.
+  //
+  //   mlFor(item, porDefecto)      mililitros, la cifra honesta
+  //   bottlesFor(item, ordenSize)  botellas del tamaño que se ordena
 
   function countedItems() { return Object.keys(data().items); }
   function size() { return countedItems().length; }
@@ -273,14 +315,19 @@
   // ── Escribir ─────────────────────────────────────────────────────────
   // Una pasada limpia: selladas no negativas, abiertas entre 0 y 1, y
   // fuera las abiertas en cero — una botella vacía no se cuenta, no está.
-  function limpiarPasada(sealed, opens) {
-    return {
+  function limpiarPasada(sealed, opens, sizeMl) {
+    const p = {
       sealed: Math.max(0, Number(sealed) || 0),
       opens: (opens || [])
         .map(n => Math.max(0, Math.min(1, Number(n) || 0)))
         .filter(n => n > 0),
       at: new Date().toISOString()
     };
+    // Solo se guarda si se sabe. Un cero o un null aquí significan "usa
+    // el del producto", que es lo correcto cuando se contó por nombre.
+    const s = Number(sizeMl);
+    if (s > 0) p.sizeMl = s;
+    return p;
   }
 
   // Una pasada sin nada dentro no es una pasada. Escanear un producto,
@@ -299,10 +346,10 @@
   //
   // Lo que hace el panel al dar Next. NO reemplaza: si el artículo ya
   // tenía pasadas, esta se añade al final y el total sube.
-  function addPass(item, sealed, opens) {
+  function addPass(item, sealed, opens, sizeMl) {
     const d = data();
     const habia = !!Object.keys(d.items).length;
-    const p = limpiarPasada(sealed, opens);
+    const p = limpiarPasada(sealed, opens, sizeMl);
     if (vacia(p)) return null;
 
     if (!d.items[item]) d.items[item] = { passes: [] };
@@ -317,10 +364,10 @@
   // El único camino por el que algo ya guardado cambia de valor, y se
   // llega a él a propósito desde la hoja de detalle. Dejarla vacía es
   // borrarla: es lo que significa poner todo a cero.
-  function replacePass(item, idx, sealed, opens) {
+  function replacePass(item, idx, sealed, opens, sizeMl) {
     const e = data().items[item];
     if (!e || !e.passes[idx]) return false;
-    const p = limpiarPasada(sealed, opens);
+    const p = limpiarPasada(sealed, opens, sizeMl);
     if (vacia(p)) return removePass(item, idx);
     e.passes[idx] = p;
     save();
@@ -344,10 +391,10 @@
   // Queda para barcode-fix, que mueve lo contado de un producto a otro y
   // llega con los totales ya sumados en la mano. Es la única llamada que
   // sigue teniendo sentido como reemplazo, y por eso no se borró.
-  function set(item, sealed, opens) {
+  function set(item, sealed, opens, sizeMl) {
     const d = data();
     const habia = !!Object.keys(d.items).length;
-    const p = limpiarPasada(sealed, opens);
+    const p = limpiarPasada(sealed, opens, sizeMl);
     if (vacia(p)) { delete d.items[item]; save(); return null; }
     d.items[item] = { passes: [p] };
     save();
@@ -394,7 +441,7 @@
   window.BarStockCountSession = {
     load, save, get, has, set, remove, clear,
     passesOf, addPass, replacePass, removePass,
-    totalFor, countedItems, size, startedAt, summary,
+    mlFor, bottlesFor, countedItems, size, startedAt, summary,
     pause, resume, isPaused, pausedAt, exists, progress, missingRows
   };
 })();

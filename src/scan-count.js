@@ -290,7 +290,7 @@
       for (let p = 0; p < 50; p++) {
         const res = await fetch(
           `${url}/rest/v1/item_barcodes?account_id=eq.${encodeURIComponent(account)}` +
-          `&select=upc,item_name,code&order=upc.asc&limit=${PAGE}&offset=${p * PAGE}`,
+          `&select=upc,item_name,code,size_ml&order=upc.asc&limit=${PAGE}&offset=${p * PAGE}`,
           { headers: { apikey: key, Authorization: `Bearer ${key}` } }
         );
         const rows = await res.json();
@@ -313,10 +313,14 @@
     const rec = learned.get(String(upc));
     if (rec) {
       const m = master.find(r => r.item === rec.item_name);
-      return { item: rec.item_name, row: m || null };
+      // El tamaño del CODIGO, no el del producto. Un Hendrick's de 750
+      // comprado de emergencia tiene su propio codigo y su propio
+      // tamaño, aunque el que se ordene sea el litro. Null significa
+      // "nadie lo ha dicho": ahi manda el del producto.
+      return { item: rec.item_name, row: m || null, sizeMl: Number(rec.size_ml) || null };
     }
     const byCode = master.find(r => String(r.code || '') === String(upc));
-    return byCode ? { item: byCode.item, row: byCode } : null;
+    return byCode ? { item: byCode.item, row: byCode, sizeMl: null } : null;
   }
 
   // ── Preguntar de qué artículo es ────────────────────────────────────
@@ -444,7 +448,7 @@
       );
       if (!res.ok) throw new Error(res.status + ' · ' + (await res.text()).slice(0, 180));
 
-      learned.set(String(upc), { upc, item_name: itemName, code });
+      learned.set(String(upc), { upc, item_name: itemName, code, size_ml: null });
       hit(`<div class="sc-found" data-upc="${esc(upc)}">
              <div class="sc-item">${esc(itemName)}</div>
              <div class="sc-meta">learned · tap if this is the wrong bottle</div>
@@ -471,13 +475,16 @@
 
   // Puente al panel de conteo. Identificar un articulo sin poder contarlo
   // dejaria el flujo a medias justo en el paso que importa.
-  function toCount(itemName, upc) {
+  function toCount(itemName, upc, sizeMl) {
     const master = (window.state && state.master) || [];
     const row = master.find(r => r.item === itemName);
     if (!row || !window.BarStockCountPanel) return;
     running = false;
     clearTimeout(loopId);
-    window.BarStockCountPanel.open(row, () => { running = true; mark(); tick(); stats(); }, upc);
+    // El cuarto argumento es el tamaño de ESTE codigo. Sin el, el panel
+    // usa el del producto, que es lo correcto al contar por nombre.
+    window.BarStockCountPanel.open(
+      row, () => { running = true; mark(); tick(); stats(); }, upc, sizeMl || null);
   }
 
   function closeAssign() {
@@ -519,7 +526,8 @@
           running = true;
           mark();
           tick();
-        }, text);   // el upc viaja: el panel ofrece corregirlo si esta mal
+        }, text, found.sizeMl);   // el upc viaja —el panel ofrece corregirlo
+                                  //  si esta mal— y con el su tamaño
       }
     } else {
       // Codigo que nadie ha enseñado todavia. Se para el bucle y se
@@ -572,7 +580,8 @@
         running = false;
         clearTimeout(loopId);
         el.classList.remove('on');
-        window.BarStockCountPanel.open(f.row, () => { running = true; mark(); tick(); }, upc);
+        window.BarStockCountPanel.open(
+          f.row, () => { running = true; mark(); tick(); }, upc, f.sizeMl);
       };
     }
   }

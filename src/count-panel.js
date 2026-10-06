@@ -57,6 +57,17 @@
   let _again = false;      // si este artículo ya se contó en esta sesión
   let _upc = null;         // el código que abrió este panel, si vino de un escaneo
   let _editIdx = null;     // null = sumando; un número = corrigiendo esa pasada
+  // ── El tamaño de ESTA pasada ──────────────────────────────────────
+  //
+  // Un producto se ordena en un formato, pero en el estante puede haber
+  // otro: se acabó el Hendrick's de litro y alguien trajo uno de 750 de
+  // la tienda. Ese 750 tiene su propio código de barras y su propio
+  // tamaño, y escanearlo tiene que contar 750 ml, no un litro.
+  //
+  // null = no vino del código, así que manda el del producto. Es lo que
+  // pasa al contar por nombre, y es lo correcto.
+  let _sizeMl = null;
+  let _sizeAbrio = null;   // el del codigo que abrio el panel
   let _banked = 0;         // lo ya guardado en pasadas anteriores
   let _sheet = false;      // la hoja de detalle está abierta
 
@@ -89,8 +100,24 @@
     return (P() && P().get(k)) ? k : 'generic';
   }
 
+  // El tamaño que se está contando AHORA. El del código gana sobre el
+  // del producto: es el que de verdad tiene la botella en la mano.
   function sizeOf(row) {
+    return Number(_sizeMl) || Number(row && row.bottleSizeMl) || 750;
+  }
+
+  // El que se ORDENA, que es la unidad del inventario. No cambia aunque
+  // se esté contando otro formato.
+  function sizeOrden(row) {
     return Number(row && row.bottleSizeMl) || 750;
+  }
+
+  // "1 L", "750 ml". El litro se escribe así porque "1000 ml" obliga a
+  // contar ceros en una pantalla que se mira de reojo.
+  function fmtSize(ml) {
+    const n = Number(ml) || 0;
+    if (!n) return '';
+    return n >= 1000 && n % 1000 === 0 ? (n / 1000) + ' L' : n + ' ml';
   }
 
   // El perfil ya ajustado al formato. Es lo que se dibuja y lo que se
@@ -117,7 +144,14 @@
   // se cambia el tamaño de 750 a 1000, la cabecera tiene que decirlo sin
   // esperar a la siguiente apertura.
   function subText(row) {
-    const size = row.bottleSizeMl ? row.bottleSizeMl + ' ml' : 'size not set';
+    // Se enseña el tamaño que se esta CONTANDO, y si no es el que se
+    // ordena se marca: es la señal de que esta pasada vale distinto que
+    // las demas.
+    const esOtro = sizeOf(row) !== sizeOrden(row);
+    const size = row.bottleSizeMl || _sizeMl
+      ? (esOtro ? '<b class="cp-otro">' + esc(fmtSize(sizeOf(row))) + '</b>'
+                : esc(fmtSize(sizeOf(row))))
+      : 'size not set';
     const was = (row.onHand === 0 || row.onHand) ? ' · was ' + row.onHand : '';
     // "already counted" decía que había algo detrás pero no cuánto ni
     // qué se iba a hacer con ello. El número de pasada sí: dice que esta
@@ -128,15 +162,29 @@
     } else if (_again) {
       tail = ' · <b class="cp-again">scan ' + (passes().length + 1) + '</b>';
     }
-    return esc(size) + esc(was) + tail;
+    return size + esc(was) + tail;
   }
 
   function passes() { return (S().passesOf && S().passesOf(_row ? _row.item : '')) || []; }
 
-  // Lo que suma una pasada suelta.
+  // Botellas de ESA pasada, en su propio tamaño. No se pueden sumar
+  // entre pasadas de formatos distintos: para eso estan los ml.
   function passTotal(p) {
     return (Number(p.sealed) || 0) +
            (p.opens || []).reduce((a, b) => a + (Number(b) || 0), 0);
+  }
+
+  function passSize(p) { return Number(p.sizeMl) || sizeOrden(_row); }
+  function passMl(p)   { return passTotal(p) * passSize(p); }
+
+  // Mililitros de todo lo guardado, excepto la pasada que se este
+  // corrigiendo —esa la reemplaza lo que hay en pantalla—.
+  function mlGuardados() {
+    return passes().reduce((a, p, i) => a + (i === _editIdx ? 0 : passMl(p)), 0);
+  }
+
+  function fmtMl(ml) {
+    return Math.round(ml).toLocaleString('en-US') + ' ml';
   }
 
   // "1 sealed + 1 open (0.5)". Si no hay abiertas se omite esa mitad, y
@@ -233,7 +281,8 @@
            que es peor porque infla sin avisar. -->
       <div class="cp-foot">
         <button type="button" class="cp-total" id="cpTotalBtn">
-          <span class="cp-total-l"><span>Total</span><b id="cpTotal">0</b></span>
+          <span class="cp-total-l"><span>Total</span><b id="cpTotal">0</b>
+            <small class="cp-ml" id="cpMl"></small></span>
           <span class="cp-total-go" id="cpPasses"></span>
         </button>
         <button type="button" class="cp-next" id="cpNext">
@@ -250,7 +299,8 @@
           <div class="cp-sheet-t" id="cpSheetT">How this adds up</div>
           <div class="cp-sheet-s">Tap a scan to fix it</div>
           <div id="cpPassList"></div>
-          <div class="cp-sheet-sum"><span>Total</span><b id="cpSheetTotal">0</b></div>
+          <div class="cp-sheet-sum"><span>Total</span>
+            <small class="cp-ml" id="cpSheetMl"></small><b id="cpSheetTotal">0</b></div>
           <button type="button" class="cp-sheet-x" id="cpSheetX">Done</button>
         </div>
       </div>`;
@@ -546,12 +596,26 @@
     // es la cifra que acabará en el inventario y la que hay que poder
     // contrastar con el estante. Corrigiendo, lo guardado se cuenta sin
     // la pasada que se está tocando, porque esta la reemplaza.
-    const otras = passes().reduce(
-      (a, p, i) => a + (i === _editIdx ? 0 : passTotal(p)), 0);
-    _banked = otras;
-    const gran = otras + total();
+    // ── Se suma en mililitros, se enseña en botellas ──────────────────
+    //
+    // Es la unica forma de juntar formatos distintos sin mentir. 1.5 de
+    // 750 mas 1.5 de litro son 2,625 ml; en botellas de litro —las que
+    // se ordenan— 2.625, no 3. El numero grande va en la unidad del
+    // inventario y los ml quedan debajo, que es donde se comprueba.
+    const orden = sizeOrden(_row);
+    const mlOtras = mlGuardados();
+    const mlAhora = total() * sizeOf(_row);
+    const mlGran  = mlOtras + mlAhora;
+    const gran    = orden ? mlGran / orden : 0;
+    _banked = orden ? mlOtras / orden : 0;
 
     if ($('cpTotal')) $('cpTotal').textContent = fmtNum(gran);
+
+    // Los ml solo aparecen cuando hay mas de un formato en juego. Con
+    // todo del mismo tamaño no aportan nada y solo roban sitio.
+    const mezcla = passes().some(p => passSize(p) !== orden) || sizeOf(_row) !== orden;
+    const mlEl = $('cpMl');
+    if (mlEl) mlEl.textContent = (mezcla && mlGran) ? fmtMl(mlGran) : '';
 
     // ── El total como puerta ───────────────────────────────────────────
     //
@@ -588,10 +652,10 @@
       btn.classList.toggle('cp-total-on', hay && _editIdx === null);
       btn.classList.toggle('cp-total-fix', _editIdx !== null);
       btn.setAttribute('aria-label', !hay
-        ? 'Total ' + fmtNum(otras + total())
+        ? 'Total ' + fmtNum(gran)
         : _editIdx !== null
-          ? 'Total ' + fmtNum(otras + total()) + '. Fixing scan ' + (_editIdx + 1)
-          : 'Total ' + fmtNum(otras + total()) + '. View ' + n + (n === 1 ? ' scan' : ' scans'));
+          ? 'Total ' + fmtNum(gran) + '. Fixing scan ' + (_editIdx + 1)
+          : 'Total ' + fmtNum(gran) + '. View ' + n + (n === 1 ? ' scan' : ' scans'));
     }
 
     const nxt = $('cpNextTxt');
@@ -616,6 +680,9 @@
           <b>${esc(fmtNum(passTotal(p)))}</b>
           <span>${esc(passDetail(p))}</span>
         </div>
+        ${passSize(p) !== sizeOrden(_row)
+          ? `<span class="cp-pass-sz cp-otro">${esc(fmtSize(passSize(p)))}</span>`
+          : `<span class="cp-pass-sz">${esc(fmtSize(passSize(p)))}</span>`}
         <button type="button" class="cp-pass-b" data-fix="${i}" aria-label="Fix scan ${i + 1}">
           <i class="ti ti-pencil" aria-hidden="true"></i>
         </button>
@@ -625,7 +692,11 @@
       </div>`).join('');
 
     const t = $('cpSheetTotal');
-    if (t) t.textContent = fmtNum(ps.reduce((a, p) => a + passTotal(p), 0));
+    const orden = sizeOrden(_row);
+    const mlT = ps.reduce((a, p) => a + passMl(p), 0);
+    if (t) t.textContent = fmtNum(orden ? mlT / orden : 0);
+    const tm = $('cpSheetMl');
+    if (tm) tm.textContent = ps.some(p => passSize(p) !== orden) ? fmtMl(mlT) : '';
 
     // Corrigiendo, el botón de la hoja deja de ser "ya vi" y pasa a ser
     // la marcha atrás. Sin esto, tocar el lápiz equivocado no tenía
@@ -654,6 +725,10 @@
     _editIdx = i;
     _sealed = Number(p.sealed) || 0;
     _opens = (p.opens || []).slice();
+    // Se recupera el tamaño con el que se conto, no el del producto: si
+    // esa pasada fue de un 750 de emergencia, corregirla sigue siendo
+    // sobre un 750.
+    _sizeMl = Number(p.sizeMl) || null;
     if (!_opens.length) _opens = [0];
     _active = 0;
     closeSheet();
@@ -689,6 +764,10 @@
     _sealed = 0;
     _opens = [0];
     _active = 0;
+    // Al salir de corregir se vuelve al tamaño con el que se abrio el
+    // panel —el del codigo escaneado—, no al de la pasada que se estaba
+    // tocando.
+    _sizeMl = _sizeAbrio;
     $('cpPanel').classList.remove('cp-fixing-on');
   }
 
@@ -711,11 +790,14 @@
   }
 
   // ── Abrir y cerrar ───────────────────────────────────────────────────
-  function open(row, onNext, upc) {
+  function open(row, onNext, upc, sizeMl) {
     build();
     _row = row;
     _onNext = onNext || null;
     _upc = upc || null;
+    // El tamaño del codigo escaneado. Sin el manda el del producto.
+    _sizeMl = Number(sizeMl) || null;
+    _sizeAbrio = _sizeMl;
     _active = -1;
 
     // El panel SIEMPRE abre en blanco, haya o no conteo previo. Lo ya
@@ -763,18 +845,18 @@
       if (_editIdx !== null) {
         // Corrigiendo: esta pasada sustituye a la que se cargó. Si quedó
         // en cero, replacePass la borra, que es lo que significa vaciarla.
-        S().replacePass(_row.item, _editIdx, _sealed, _opens);
+        S().replacePass(_row.item, _editIdx, _sealed, _opens, _sizeMl);
       } else {
         // Sumando: se añade. Una pasada sin nada no deja rastro, así que
         // abrir un producto, mirarlo y dar Next no lo marca como contado.
-        S().addPass(_row.item, _sealed, _opens);
+        S().addPass(_row.item, _sealed, _opens, _sizeMl);
       }
     }
     closeSheet();
     $('cpPanel').classList.remove('on');
     $('cpPanel').classList.remove('cp-fixing-on');
     const cb = _onNext;
-    _row = null; _onNext = null; _upc = null; _editIdx = null;
+    _row = null; _onNext = null; _upc = null; _editIdx = null; _sizeMl = null;
     if (cb) cb(save);
   }
 
@@ -782,7 +864,7 @@
     const el = $('cpPanel');
     if (el) { el.classList.remove('on'); el.classList.remove('cp-fixing-on'); }
     closeSheet();
-    _row = null; _onNext = null; _upc = null; _editIdx = null;
+    _row = null; _onNext = null; _upc = null; _editIdx = null; _sizeMl = null;
   }
 
   window.addEventListener('resize', () => { if ($('cpPanel')?.classList.contains('on')) paintBottle(); });

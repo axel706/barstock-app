@@ -159,7 +159,7 @@
   }
 
   function paintStep2(destino, prev) {
-    const total = S().totalFor(_rowActual.item);
+    const total = S().bottlesFor(_rowActual.item, Number(_rowActual.bottleSizeMl) || 750);
     const sell = Number(prev.sealed) || 0;
     const abiertas = (prev.opens || []);
     const yaTenia = S().get(destino.item);
@@ -179,7 +179,7 @@
       ${yaTenia ? `
         <div class="bf-note">
           ${esc(destino.item)} already has
-          ${S().totalFor(destino.item).toFixed(2).replace(/\.00$/, '')} counted.
+          ${S().bottlesFor(destino.item, Number(destino.bottleSizeMl) || 750).toFixed(2).replace(/\.00$/, '')} counted.
           Moving adds to it — the same as if you had scanned both.
         </div>` : ''}
 

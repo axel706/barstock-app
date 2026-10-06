@@ -164,12 +164,20 @@
     if (!S) return [];
     const out = [];
 
+    // El historial esta en botellas del tamaño que se ordena, asi que lo
+    // contado tiene que venir en la misma unidad o la comparacion no
+    // significa nada. El tamaño sale de la fila del inventario.
+    const tamaños = {};
+    for (const r of (window.state && window.state.master) || []) {
+      tamaños[r.item] = Number(r.bottleSizeMl) || 750;
+    }
+
     for (const item of S.countedItems()) {
       const h = hist[item];
       if (!h || h.semanas < MIN_SEMANAS || !h.abierto) continue;
 
       const esperado = Math.max(0, h.abierto.inicio + h.abierto.pedido - h.semanal);
-      const contado = S.totalFor(item);
+      const contado = S.bottlesFor(item, tamaños[item] || 750);
       const dif = Math.abs(contado - esperado);
 
       if (dif < DESVIO_ABS) continue;
