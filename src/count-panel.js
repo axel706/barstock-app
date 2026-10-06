@@ -112,12 +112,14 @@
     return Number(row && row.bottleSizeMl) || 750;
   }
 
-  // "1 L", "750 ml". El litro se escribe así porque "1000 ml" obliga a
-  // contar ceros en una pantalla que se mira de reojo.
+  // "1 L", "1.5 L", "1.75 L", "750 ml". Cualquier cosa de un litro para
+  // arriba se escribe en litros: "1500 ml" obliga a contar ceros en una
+  // pantalla que se mira de reojo, y 1.5 L es como se llama la botella.
   function fmtSize(ml) {
     const n = Number(ml) || 0;
     if (!n) return '';
-    return n >= 1000 && n % 1000 === 0 ? (n / 1000) + ' L' : n + ' ml';
+    if (n < 1000) return n + ' ml';
+    return Number((n / 1000).toFixed(2)) + ' L';
   }
 
   // El perfil ya ajustado al formato. Es lo que se dibuja y lo que se

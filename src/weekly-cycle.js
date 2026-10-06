@@ -69,6 +69,8 @@
   let _state = 'loading';  // loading | step1 | step2 | counting | done | confirm
   let _resetAt = null;
   let _countingSince = null;
+  let _countingTouched = null;   // ultima vez que alguien conto algo
+  let _countingPaused = null;    // cuando se pauso, a proposito
   let _graceTimer = null;
   let _rafId = null;
 
@@ -129,7 +131,7 @@
     try {
       const res = await fetch(
         `${url}/rest/v1/locations?account_id=eq.${encodeURIComponent(account)}` +
-        `&name=eq.${encodeURIComponent(name)}&select=counting_since`,
+        `&name=eq.${encodeURIComponent(name)}&select=counting_since,counting_touched_at,counting_paused_at`,
         { headers: { apikey: key, Authorization: `Bearer ${key}` } }
       );
       const rows = await res.json();
@@ -138,14 +140,21 @@
       // sin decir nada, que es el peor resultado posible: el boton se
       // comporta bien a medias y no hay pista de por que.
       if (!Array.isArray(rows)) {
-        if (rows && /counting_since/.test(JSON.stringify(rows))) {
+        const t = JSON.stringify(rows);
+        if (/counting_touched_at|counting_paused_at/.test(t)) {
+          console.warn(
+            'weekly cycle: faltan columnas. Corre la migracion 014:\n' +
+            '  alter table public.locations\n' +
+            '    add column if not exists counting_touched_at timestamptz,\n' +
+            '    add column if not exists counting_paused_at  timestamptz;');
+        } else if (/counting_since/.test(t)) {
           console.warn(
             'weekly cycle: falta la columna counting_since. Corre la migracion 011:\n' +
             '  alter table public.locations add column if not exists counting_since timestamptz;');
         }
         return null;
       }
-      return rows[0] ? rows[0].counting_since : null;
+      return rows[0] || null;
     } catch (e) {
       // Sin red no se sabe si hay conteo ajeno. Se devuelve null y el
       // botón se comporta como antes: es el lado por el que conviene
@@ -161,8 +170,33 @@
     return Date.now() - t;
   }
 
+  // ── ¿Pausado, o abandonado? ──────────────────────────────────────────
+  //
+  // Pausar es deliberado; abandonar es olvidar. Un conteo que alguien
+  // dejó a propósito no se ofrece para reclamar, lleve lo que lleve.
+  function pausado() { return !!_countingPaused; }
+
+  // Desde la última vez que alguien contó algo, no desde que empezó.
+  //
+  // Esa confusión era el bug: el botón decía "Count abandoned · 138 of
+  // 260" sobre un conteo de esa misma semana, porque miraba
+  // `counting_since` —cuándo arrancó— y habían pasado tres días. Un
+  // conteo de 260 artículos repartidos en varias barras no se hace de
+  // una sentada.
+  //
+  // Sin la marca de actividad —una sesión abierta antes de la migración
+  // 014— se cae a la de inicio, que es como se comportaba antes.
+  function quietoDesdeHace() {
+    const ref = _countingTouched || _countingSince;
+    if (!ref) return null;
+    const t = new Date(ref).getTime();
+    if (!isFinite(t)) return null;
+    return Date.now() - t;
+  }
+
   function abandonado() {
-    const ms = contandoDesdeHace();
+    if (pausado()) return false;
+    const ms = quietoDesdeHace();
     return ms !== null && ms > ABANDONO_MS;
   }
 
@@ -236,20 +270,32 @@
       return;
     }
     if (_state === 'counting') {
-      const ms = contandoDesdeHace();
       const n = (window.BarStockCountSession && window.BarStockCountSession.size()) || 0;
       const total = ((window.state && window.state.master) || []).length;
       const viejo = abandonado();
+      const pau = pausado();
+
       // El progreso solo se sabe en el telefono que cuenta. En los demas
-      // se dice que hay un conteo y desde cuando, que es justo lo que
-      // necesitan para no pisarlo.
+      // se dice cuanto lleva quieto, que es justo lo que necesitan para
+      // decidir si lo pisan.
+      const ms = quietoDesdeHace();
       const cuanto = n ? (n + (total ? ' of ' + total : '')) : (ms !== null ? hace(ms) + ' ago' : '');
+
+      // Tres estados, no dos. Pausado es deliberado y no se parece en
+      // nada a abandonado, que es olvidado: uno se retoma cuando toque y
+      // el otro hay que decidir si se tira.
+      const icono = pau ? 'player-pause' : viejo ? 'alert-triangle' : 'player-record';
+      const texto = pau ? 'Paused' : viejo ? 'Count abandoned' : 'Counting';
+
+      btn.classList.toggle('cyc-paused', pau);
       btn.innerHTML =
-        '<i class="ti ti-' + (viejo ? 'alert-triangle' : 'player-record') + '" aria-hidden="true"></i>' +
-        '<span>' + (viejo ? 'Count abandoned' : 'Counting') + (cuanto ? ' · ' + cuanto : '') + '</span>';
-      btn.title = viejo
-        ? 'Started over three days ago. Pick it up or discard it.'
-        : 'A count is open. Tap to pick it up.';
+        '<i class="ti ti-' + icono + '" aria-hidden="true"></i>' +
+        '<span>' + texto + (cuanto ? ' · ' + cuanto : '') + '</span>';
+      btn.title = pau
+        ? 'Paused' + (ms !== null ? ' ' + hace(ms) + ' ago' : '') + '. Tap to pick it up.'
+        : viejo
+          ? 'Nobody has touched this in over three days. Pick it up or discard it.'
+          : 'A count is open. Tap to pick it up.';
       return;
     }
     if (_state === 'done') {
@@ -346,7 +392,7 @@
       // si: tira el trabajo y no hay deshacer.
       if (abandonado()) {
         const ok = confirm(
-          'This count was started over three days ago.\n\n' +
+          'Nobody has touched this count in over three days.\n\n' +
           'Pick it up, or press Cancel to discard it.');
         if (!ok) {
           try {
@@ -446,7 +492,10 @@
 
   async function refresh() {
     cancelGrace();
-    _countingSince = await readCountingSince();
+    const sig = await readCountingSince();
+    _countingSince  = sig ? sig.counting_since : null;
+    _countingTouched = sig ? sig.counting_touched_at : null;
+    _countingPaused  = sig ? sig.counting_paused_at : null;
     try {
       // Se apoya en BarStockCycle para no hacer dos consultas de lo
       // mismo y, sobre todo, para que el boton y el resto de la app

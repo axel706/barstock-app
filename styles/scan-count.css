@@ -444,3 +444,68 @@ body.light .sc-err{ color: #475569; }
   box-shadow: 0 0 0 3px rgba(56,189,248,.18);
   outline: none;
 }
+
+/* ── El paso del tamaño ───────────────────────────────────────────────
+   Aparece solo al asignar un codigo a un producto que YA tiene otro.
+   Esa es exactamente la situacion del 750 de emergencia: se acabo el
+   litro, alguien fue a la tienda, y esa botella trae otro codigo.
+
+   Con el primer codigo de un producto no sale: no hay nada que elegir,
+   y preguntarlo seria un toque de mas en el caso que pasa siempre. */
+.sc-sz-item{
+  padding: 11px 13px;
+  border-radius: 12px;
+  border: 1px solid rgba(56,189,248,.35);
+  background: rgba(56,189,248,.07);
+  margin-bottom: 12px;
+}
+.sc-sz-item b{ display: block; font-size: 15px; font-weight: 700; }
+.sc-sz-item span{ display: block; font-size: 11.5px; color: #94a3b8; margin-top: 2px; }
+
+.sc-sizes{
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 10px;
+}
+.sc-sz{
+  /* 44px de alto: se elige con el pulgar y con la botella en la otra
+     mano, igual que la lista de productos. */
+  min-height: 44px;
+  padding: 0 15px;
+  display: flex; align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: transparent;
+  color: #cbd5e1;
+  font-family: inherit; font-size: 14px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.sc-sz.on{
+  border-color: #38bdf8; border-width: 2px;
+  background: rgba(56,189,248,.10);
+  color: #7dd3fc;
+}
+
+/* Dice en palabras lo que la pastilla marcada significa. Elegir un
+   tamaño distinto del que se ordena cambia como cuenta esa botella, y
+   eso tiene que leerse antes de guardar, no descubrirse despues. */
+.sc-sz-note{
+  font-size: 12px; line-height: 1.5;
+  color: #94a3b8;
+  margin-bottom: 14px;
+}
+
+.sc-go{
+  width: 100%; min-height: 54px;
+  border-radius: 14px; border: none;
+  background: #38bdf8; color: #04263a;
+  font-family: inherit; font-size: 16px; font-weight: 800;
+  cursor: pointer;
+}
+.sc-go:active{ background: #0ea5e9; }
+
+body.light .sc-sz{ border-color: rgba(15,23,42,.16); color: #475569; }
+body.light .sc-sz.on{ border-color: #0284c7; background: rgba(2,132,199,.08); color: #0369a1; }
+body.light .sc-sz-item{ border-color: rgba(2,132,199,.30); background: rgba(2,132,199,.05); }
+body.light .sc-sz-item span,
+body.light .sc-sz-note{ color: #64748b; }

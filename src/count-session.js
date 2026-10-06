@@ -99,6 +99,7 @@
 
   function save() {
     if (!_key) load();
+    _data.updatedAt = new Date().toISOString();
     try {
       localStorage.setItem(_key, JSON.stringify(_data));
     } catch (e) {
@@ -107,7 +108,27 @@
       console.warn('conteo: no se pudo guardar la sesion', e);
       return false;
     }
+    tocarNube();
     return true;
+  }
+
+  // ── Avisar a los demás dispositivos de que esto sigue vivo ───────────
+  //
+  // Una petición POR BOTELLA serían 260 en un conteo, y ninguna aporta
+  // nada que la anterior no dijera ya. Con un aviso cada dos minutos
+  // basta de sobra: lo que se decide con esta marca es si han pasado
+  // TRES DÍAS sin tocarla.
+  //
+  // No se espera la respuesta a propósito. Contar no puede quedarse
+  // esperando a la red en un almacén donde la señal va y viene.
+  const TOQUE_MS = 2 * 60 * 1000;
+  let _ultimoToque = 0;
+
+  function tocarNube(forzar) {
+    const ahora = Date.now();
+    if (!forzar && ahora - _ultimoToque < TOQUE_MS) return;
+    _ultimoToque = ahora;
+    marcarNube(undefined, { counting_touched_at: new Date().toISOString() });
   }
 
   function data() { if (!_data) load(); return _data; }
@@ -213,6 +234,13 @@
     const d = data();
     d.pausedAt = new Date().toISOString();
     save();
+    // A la nube sin esperar los dos minutos: pausar es justo el momento
+    // en que los demás dispositivos tienen que enterarse, porque es lo
+    // que impide que llamen abandonado a esto.
+    marcarNube(undefined, {
+      counting_paused_at: d.pausedAt,
+      counting_touched_at: d.pausedAt
+    });
     return d.pausedAt;
   }
 
@@ -220,9 +248,16 @@
     const d = data();
     delete d.pausedAt;
     save();
+    marcarNube(undefined, {
+      counting_paused_at: null,
+      counting_touched_at: new Date().toISOString()
+    });
   }
 
   function isPaused() { return !!data().pausedAt; }
+
+  // Última escritura de la sesión. Es lo que decide si se abandonó.
+  function updatedAt() { return data().updatedAt || data().startedAt || null; }
   function pausedAt() { return data().pausedAt || null; }
 
   // Hay sesión si se contó algo. Una sesión recién creada, sin un solo
@@ -274,7 +309,21 @@
   // `locations.counting_since` es esa señal. No guarda el conteo, solo
   // que existe y desde cuándo. Se escribe sin esperar respuesta y sin
   // romper nada si falla: quedarse sin red no puede impedir contar.
-  function marcarNube(valor) {
+  // ── Tres marcas en la nube, no una ───────────────────────────────────
+  //
+  //   counting_since      cuándo empezó      → "lleva 7 días"
+  //   counting_touched_at sigue vivo         → decide si se abandonó
+  //   counting_paused_at  se dejó a propósito → nunca es "abandonado"
+  //
+  // Antes solo existía la primera, y el botón del ciclo llamaba
+  // abandonado a cualquier conteo de más de tres días aunque se hubieran
+  // contado 138 productos por el camino. Un conteo de 260 artículos en
+  // varias barras no se hace de una sentada: la pregunta no es cuánto
+  // lleva abierto sino cuánto lleva sin que nadie lo toque.
+  //
+  // Y `pausedAt` vivía solo en el teléfono que contaba, así que el iPad
+  // de la barra veía un conteo quieto y lo daba por perdido.
+  function marcarNube(valor, extra) {
     const c = window.BARSTOCK_CONFIG || {};
     if (!c.SUPABASE_URL || !c.SUPABASE_KEY || !c.LOCATION_NAME) return;
     const u = `${c.SUPABASE_URL}/rest/v1/locations` +
@@ -287,7 +336,12 @@
         apikey: c.SUPABASE_KEY, Authorization: `Bearer ${c.SUPABASE_KEY}`,
         Prefer: 'return=minimal'
       },
-      body: JSON.stringify({ counting_since: valor })
+      body: JSON.stringify(
+        // `valor` undefined = no se toca counting_since. Solo lo escribe
+        // el primer artículo de la sesión; los demás avisos mueven las
+        // otras marcas y dejar la primera intacta es lo que permite
+        // seguir diciendo desde cuándo lleva abierto.
+        Object.assign(valor === undefined ? {} : { counting_since: valor }, extra || {}))
     })
       // `.catch()` a secas solo ve fallos de RED. Una respuesta 400 —que
       // es lo que devuelve PostgREST si la columna no existe porque la
@@ -307,6 +361,13 @@
           console.warn(
             'conteo: falta la columna. Corre la migracion 011:\n' +
             '  alter table public.locations add column if not exists counting_since timestamptz;');
+        }
+        if (/counting_touched_at|counting_paused_at/.test(t)) {
+          console.warn(
+            'conteo: faltan columnas. Corre la migracion 014:\n' +
+            '  alter table public.locations\n' +
+            '    add column if not exists counting_touched_at timestamptz,\n' +
+            '    add column if not exists counting_paused_at  timestamptz;');
         }
       })
       .catch(e => console.warn('conteo: no se pudo avisar a la nube', e));
@@ -418,10 +479,10 @@
     }
     _data = blank();
     save();
-    // Se apaga la señal compartida: el resto de dispositivos tiene que
-    // dejar de ver "contando" en cuanto este conteo deja de existir, sea
-    // porque se cerró o porque se descartó.
-    marcarNube(null);
+    // Se apagan las TRES señales. Dejar counting_paused_at colgando
+    // habría hecho que el siguiente conteo naciera pausado a ojos de los
+    // demás dispositivos.
+    marcarNube(null, { counting_touched_at: null, counting_paused_at: null });
   }
 
   // ── Resumen para la pantalla de cierre ──────────────────────────────
@@ -442,6 +503,7 @@
     load, save, get, has, set, remove, clear,
     passesOf, addPass, replacePass, removePass,
     mlFor, bottlesFor, countedItems, size, startedAt, summary,
-    pause, resume, isPaused, pausedAt, exists, progress, missingRows
+    pause, resume, isPaused, pausedAt, exists, progress, missingRows,
+    updatedAt
   };
 })();

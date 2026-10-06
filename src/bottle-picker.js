@@ -103,7 +103,12 @@
 
       <div class="ac-grid bp-grid">${cells}</div>
 
-      <div class="bp-sizes-label">Tamaño del envase (ml)</div>
+      <!-- "Size you order" y no "bottle size": desde que un codigo de
+           barras lleva su propio tamaño hay DOS en juego, y confundirlos
+           sale caro. Este es el del producto —la botella que se le pide
+           al proveedor— y es el divisor del que sale el on hand; el otro
+           es el de la botella concreta que se escaneo. -->
+      <div class="bp-sizes-label">Size you order</div>
       <div class="bp-sizes">${sizeChips}</div>
 
       <div class="ac-foot">
@@ -144,7 +149,7 @@
     const nada = (_shape === 'none');
     const nuevoSize = nada ? null : _size;
 
-    body(`<div class="ac-status"><i class="ti ti-loader" aria-hidden="true"></i> Guardando…</div>`);
+    body(`<div class="ac-status"><i class="ti ti-loader" aria-hidden="true"></i> Saving…</div>`);
 
     const c = window.BARSTOCK_CONFIG || {};
     const url = c.SUPABASE_URL, key = c.SUPABASE_KEY;
@@ -152,7 +157,7 @@
     let locationId = null;
     try { locationId = await window.BarStockInventoryCloud.fetchLocationId(); }
     catch (e) {
-      body(`<div class="ac-status">No se pudo alcanzar la base de datos.</div>`);
+      body(`<div class="ac-status">Could not reach the database.</div>`);
       setTimeout(paint, 1800);
       return;
     }

@@ -177,3 +177,18 @@ body.light .cyc-done  { border-color: rgba(21,128,61,.55) !important; color: #15
   color: #fbbf24;
 }
 body.light .cyc-btn.cyc-counting{ background: rgba(2,132,199,.09); border-color: rgba(2,132,199,.4); color: #0369a1; }
+
+/* ── Pausado ─────────────────────────────────────────────────────────
+   Pausar es deliberado; abandonar es olvidar. El boton decia "Count
+   abandoned" sobre un conteo que alguien habia dejado a proposito, y
+   ademas lo medía desde que EMPEZO en vez de desde la ultima vez que se
+   toco: con 138 de 260 contados esa semana, lo llamaba perdido.
+
+   Azul y no ambar: no hay nada que decidir ni que arreglar. Hay un
+   conteo esperando, y se retoma cuando toque. */
+.cyc-paused{
+  border-color: rgba(56,189,248,.55) !important;
+  color: #38bdf8 !important;
+}
+.cyc-paused:hover{ background: rgba(56,189,248,.10) !important; }
+body.light .cyc-paused{ border-color: rgba(2,132,199,.50) !important; color: #0369a1 !important; }

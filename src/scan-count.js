@@ -160,7 +160,7 @@
           <div class="sc-assign-t">Which item is this?</div>
         </div>
         <div class="sc-assign-code" id="scAssignCode"></div>
-        <div class="sc-search">
+        <div class="sc-search" id="scAssignFind">
           <i class="ti ti-search" aria-hidden="true"></i>
           <input id="scAssignSearch" type="text" placeholder="Search by name" autocomplete="off">
         </div>
@@ -168,8 +168,29 @@
       </div>`;
     document.body.appendChild(el);
 
-    $('scClose').addEventListener('click', close);
-    $('scAssignX').addEventListener('click', closeAssign);
+    // ── Salir del escaner PAUSA ────────────────────────────────────────
+    //
+    // Antes solo pausaba el boton Pause. Cerrar con la X no dejaba marca,
+    // asi que el gesto natural de "ya, lo dejo aqui" no quedaba
+    // registrado: la sesion seguia viva pero sin decir que estaba en
+    // pausa, y a los tres dias el boton del ciclo la llamaba abandonada
+    // en todos los dispositivos.
+    //
+    // Pausar no destruye nada —la sesion ya sobrevivia de todas formas—,
+    // lo unico que cambia es que la app lo admite.
+    $('scClose').addEventListener('click', () => {
+      if (window.BarStockCountSession?.exists?.()) {
+        window.BarStockCountSession.pause();
+      }
+      close();
+    });
+    // Desde el paso del tamaño, atras vuelve a la lista de productos.
+    // Cerrarlo entero obligaria a volver a escanear la botella solo por
+    // haberse equivocado de articulo.
+    $('scAssignX').addEventListener('click', () => {
+      if (_enTamano) { volverALista(); return; }
+      closeAssign();
+    });
     $('scAssignSearch').addEventListener('input', (e) => renderPicks(e.target.value));
     $('scFinish').addEventListener('click', () => {
       if (window.BarStockCountFinish) {
@@ -334,6 +355,9 @@
 
     const box = $('scAssign');
     box.classList.add('on');
+    _enTamano = false;
+    const find0 = $('scAssignFind');
+    if (find0) find0.style.display = '';
     $('scAssignCode').textContent = upc || 'no barcode';
     $('scAssign').querySelector('.sc-assign-t').textContent =
       upc ? 'Which item is this?' : 'Find the item';
@@ -412,11 +436,100 @@
         : '');
 
     $('scPicks').querySelectorAll('.sc-pick').forEach(b => {
-      b.onclick = () => saveAssignment(pausedFor, b.dataset.item, b.dataset.code);
+      b.onclick = () => elegido(pausedFor, b.dataset.item, b.dataset.code);
     });
   }
 
-  async function saveAssignment(upc, itemName, code) {
+  // ── ¿Hay que preguntar de qué tamaño es este código? ─────────────────
+  //
+  // Solo si el producto YA tiene otro código. Esa es exactamente la
+  // situación del 750 de emergencia: se acabó el Hendrick's de litro,
+  // alguien fue a la tienda, y esa botella trae otro código.
+  //
+  // Con el primer código no hay nada que elegir —el producto tiene un
+  // solo tamaño conocido, el que se ordena— y preguntarlo sería un toque
+  // de más en el caso que pasa casi siempre.
+  // Si se esta en el paso del tamaño. Mientras lo este, la busqueda se
+  // esconde: escribir ahi repintaria la lista encima de las pastillas.
+  let _enTamano = false;
+
+  function volverALista() {
+    _enTamano = false;
+    const f = $('scAssignFind');
+    if (f) f.style.display = '';
+    $('scAssign').querySelector('.sc-assign-t').textContent =
+      pausedFor ? 'Which item is this?' : 'Find the item';
+    renderPicks($('scAssignSearch').value || '');
+  }
+
+  function cuantosCodigos(itemName) {
+    let n = 0;
+    learned.forEach(r => { if (r && r.item_name === itemName) n++; });
+    return n;
+  }
+
+  function elegido(upc, itemName, code) {
+    if (!upc || cuantosCodigos(itemName) === 0) {
+      return saveAssignment(upc, itemName, code, null);
+    }
+    preguntarTamano(upc, itemName, code);
+  }
+
+  // ── El paso del tamaño ───────────────────────────────────────────────
+  //
+  // Viene con el tamaño que se ORDENA ya marcado, que es lo que acertará
+  // casi siempre: un toque en "Save and count" y listo. Las demás
+  // pastillas están ahí para el caso raro.
+  function preguntarTamano(upc, itemName, code) {
+    const master = (window.state && state.master) || [];
+    const row = master.find(r => r.item === itemName);
+    const orden = Number(row && row.bottleSizeMl) || 750;
+    const yaHay = cuantosCodigos(itemName);
+    let elegida = orden;
+
+    const SIZES = [50, 187, 200, 250, 330, 355, 375, 473, 500, 700, 750, 1000, 1500, 1750, 3000];
+    const lista = SIZES.includes(orden) ? SIZES : SIZES.concat([orden]).sort((a, b) => a - b);
+    // Misma regla que el panel de conteo: de un litro para arriba, en
+    // litros. 1500 ml es 1.5 L, que es como se llama la botella.
+    const fmt = (ml) => ml < 1000 ? ml + ' ml' : Number((ml / 1000).toFixed(2)) + ' L';
+
+    _enTamano = true;
+    const find = $('scAssignFind');
+    if (find) find.style.display = 'none';
+    $('scAssign').querySelector('.sc-assign-t').textContent = 'What size is this one?';
+
+    function pinta() {
+      $('scPicks').innerHTML =
+        `<div class="sc-sz-item">
+           <b>${esc(itemName)}</b>
+           <span>already has ${yaHay} barcode${yaHay === 1 ? '' : 's'} · you order ${esc(fmt(orden))}</span>
+         </div>
+         <div class="sc-sizes">
+           ${lista.map(ml => `
+             <button type="button" class="sc-sz${ml === elegida ? ' on' : ''}" data-ml="${ml}">
+               ${esc(fmt(ml))}
+             </button>`).join('')}
+         </div>
+         <div class="sc-sz-note">
+           ${elegida === orden
+             ? 'Same as what you order.'
+             : 'This bottle is a different size — it will count as ' + esc(fmt(elegida)) + '.'}
+         </div>
+         <button type="button" class="sc-go" id="scSzOk">Save and count</button>`;
+
+      $('scPicks').querySelectorAll('.sc-sz').forEach(b => {
+        b.onclick = () => { elegida = Number(b.dataset.ml); pinta(); };
+      });
+      // Se guarda null cuando coincide con el del producto: null significa
+      // "el del producto", asi que si mañana cambia el formato que se
+      // ordena, este codigo lo sigue. Fijarlo seria congelarlo.
+      $('scSzOk').onclick = () =>
+        saveAssignment(upc, itemName, code, elegida === orden ? null : elegida);
+    }
+    pinta();
+  }
+
+  async function saveAssignment(upc, itemName, code, sizeMl) {
     const { url, key, account } = cfg();
 
     // Sin codigo no hay nada que aprender: se va directo a contar.
@@ -442,19 +555,20 @@
             upc: String(upc),
             item_name: itemName,
             code: code || null,
+            size_ml: sizeMl || null,
             created_by: window.__bsUserEmail || null
           }])
         }
       );
       if (!res.ok) throw new Error(res.status + ' · ' + (await res.text()).slice(0, 180));
 
-      learned.set(String(upc), { upc, item_name: itemName, code, size_ml: null });
+      learned.set(String(upc), { upc, item_name: itemName, code, size_ml: sizeMl || null });
       hit(`<div class="sc-found" data-upc="${esc(upc)}">
              <div class="sc-item">${esc(itemName)}</div>
              <div class="sc-meta">learned · tap if this is the wrong bottle</div>
            </div>`);
       closeAssign();
-      toCount(itemName, upc);
+      toCount(itemName, upc, sizeMl || null);
     } catch (e) {
       // No se cierra el panel: el codigo sigue en pantalla y se puede
       // reintentar sin volver a escanear la botella.
@@ -468,7 +582,9 @@
          <div class="sc-err">${esc(e.message)}</div>
          <button type="button" class="sc-ghost" id="scRetry">Try again</button>`;
       const rb = $('scRetry');
-      if (rb) rb.onclick = () => saveAssignment(upc, itemName, code);
+      // El tamaño viaja en el reintento. Sin el, volver a pulsar tras un
+      // fallo de red guardaria el codigo sin formato y en silencio.
+      if (rb) rb.onclick = () => saveAssignment(upc, itemName, code, sizeMl);
       console.warn('scan: fallo al guardar el codigo', e);
     }
   }
@@ -489,6 +605,7 @@
 
   function closeAssign() {
     $('scAssign').classList.remove('on');
+    _enTamano = false;
     pausedFor = null;
     running = true;
     mark();
@@ -886,5 +1003,8 @@
     if (lastCode === k) { lastCode = ''; lastAt = 0; }
   }
 
-  window.BarStockScanCount = { open, close, forget };
+  window.BarStockScanCount = { open, close, forget,
+    // Solo para tools/test-count.js: deja empezar en el paso de asignar
+    // sin tener que simular una camara.
+    __askAssign: askAssign };
 })();
