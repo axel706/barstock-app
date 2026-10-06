@@ -245,6 +245,40 @@ body.light .cp-num:focus{
   color: #38bdf8;
 }
 .cp-total-go:empty{ display: none; }
+
+/* ── Formatos mezclados ──────────────────────────────────────────────
+   Un producto se ordena en un formato, pero en el estante puede haber
+   otro: se acabo el litro y alguien trajo un 750 de la tienda. Ese 750
+   cuenta 750 ml, no un litro.
+
+   Lo que NO es el tamaño que se ordena va marcado. No es decoracion:
+   es el aviso de que esa pasada vale distinto que las demas, y de que
+   el total no es una suma de botellas sino de mililitros. */
+.cp-otro{ color: #f59e0b !important; font-weight: 800; }
+body.light .cp-otro{ color: #b45309 !important; }
+
+/* Los mililitros, debajo de la cifra grande. Solo aparecen cuando hay
+   mas de un formato: con todo del mismo tamaño no aportan nada. */
+.cp-ml{
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+.cp-ml:empty{ display: none; }
+body.light .cp-ml{ color: #64748b; }
+
+/* El tamaño de cada pasada, en el desglose. */
+.cp-pass-sz{
+  flex: 0 0 auto;
+  font-size: 10.5px; font-weight: 800;
+  padding: 3px 8px; border-radius: 20px;
+  background: rgba(148,163,184,.18); color: #cbd5e1;
+  white-space: nowrap;
+}
+body.light .cp-pass-sz{ background: rgba(15,23,42,.07); color: #475569; }
+.cp-pass-sz.cp-otro{ background: rgba(245,158,11,.16); }
 .cp-chev{
   width: 26px; height: 26px; border-radius: 50%;
   background: rgba(56,189,248,.16);
