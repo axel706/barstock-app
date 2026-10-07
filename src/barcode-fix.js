@@ -34,6 +34,10 @@
   let _upc = null;
   let _rowActual = null;
   let _onDone = null;
+  // El tamaño que tiene guardado ESTE codigo. Null significa "el del
+  // producto", que es lo que pasa con todos los codigos aprendidos antes
+  // de que los codigos llevaran tamaño.
+  let _sizeMl = null;
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, c =>
@@ -70,26 +74,126 @@
     });
   }
 
-  function paintStep1() {
-    body(`
-      <div class="bf-warn">
-        <b>${esc(_upc)}</b> is saved as
-        <b>${esc(_rowActual ? _rowActual.item : '—')}</b>.
-        Picking another one replaces it everywhere, for every location.
-      </div>
-      <div class="bf-search">
-        <i class="ti ti-search" aria-hidden="true"></i>
-        <input type="text" id="bfSearch" placeholder="Search by name" autocomplete="off">
-      </div>
-      <div class="bf-list" id="bfList"></div>
-      <button type="button" class="bf-forget" id="bfForget">
-        <i class="ti ti-trash" aria-hidden="true"></i> Forget this barcode
-      </button>`);
+  const SIZES = [50, 187, 200, 250, 330, 355, 375, 473, 500, 700, 750, 1000, 1500, 1750, 3000];
 
-    $('bfSearch').oninput = (e) => paintPick(e.target.value);
-    $('bfForget').onclick = olvidar;
-    paintPick('');
-    try { $('bfSearch').focus({ preventScroll: true }); } catch (e) {}
+  function fmtSize(ml) {
+    const n = Number(ml) || 0;
+    if (!n) return '';
+    return n < 1000 ? n + ' ml' : Number((n / 1000).toFixed(2)) + ' L';
+  }
+
+  // El tamaño con el que cuenta hoy este codigo: el suyo si lo tiene, y
+  // si no el del producto, que es lo que significa un null.
+  function sizeOrden() { return Number(_rowActual && _rowActual.bottleSizeMl) || 750; }
+  function sizeHoy()   { return Number(_sizeMl) || sizeOrden(); }
+
+  // ── Tres salidas, y la nueva va primero ──────────────────────────────
+  //
+  // "Otro producto" y "olvidar el codigo" ya existian. Lo que no tenia
+  // salida era el caso mas probable: el producto esta bien y lo que esta
+  // mal es el TAMAÑO.
+  //
+  // Pasa con todos los codigos aprendidos antes de que los codigos
+  // llevaran tamaño: cuentan como la botella que se ordena, aunque sean
+  // el 750 que alguien trajo de la tienda.
+  function paintStep1() {
+    let elegida = sizeHoy();
+    const orden = sizeOrden();
+    const lista = SIZES.includes(orden) ? SIZES : SIZES.concat([orden]).sort((a, b) => a - b);
+
+    function pinta() {
+      body(`
+        <div class="bf-warn">
+          <b>${esc(_upc)}</b> is saved as
+          <b>${esc(_rowActual ? _rowActual.item : '—')}</b>,
+          counted as <b>${esc(fmtSize(sizeHoy()))}</b>.
+        </div>
+
+        <div class="bf-opt${elegida !== sizeHoy() ? ' on' : ''}">
+          <b>Right product, wrong size</b>
+          <span>This bottle is not the one you order (${esc(fmtSize(orden))})</span>
+          <div class="bf-sizes">
+            ${lista.map(ml => `
+              <button type="button" class="bf-sz${ml === elegida ? ' on' : ''}" data-ml="${ml}">
+                ${esc(fmtSize(ml))}
+              </button>`).join('')}
+          </div>
+          <button type="button" class="bf-go" id="bfSaveSize"
+                  ${elegida === sizeHoy() ? 'disabled' : ''}>
+            ${elegida === sizeHoy() ? 'Pick a different size' : 'Save size'}
+          </button>
+          <div class="bf-sz-note">
+            Bottles already counted under this barcode keep the size they
+            were counted with. This only changes what comes next.
+          </div>
+        </div>
+
+        <div class="bf-opt">
+          <b>It&apos;s another product</b>
+          <span>Replaces it everywhere, for every location</span>
+          <div class="bf-search">
+            <i class="ti ti-search" aria-hidden="true"></i>
+            <input type="text" id="bfSearch" placeholder="Search by name" autocomplete="off">
+          </div>
+          <div class="bf-list" id="bfList"></div>
+        </div>
+
+        <button type="button" class="bf-forget" id="bfForget">
+          <i class="ti ti-trash" aria-hidden="true"></i> Forget this barcode
+        </button>`);
+
+      $('bfBody').querySelectorAll('.bf-sz').forEach(b => {
+        b.onclick = () => { elegida = Number(b.dataset.ml); pinta(); };
+      });
+      $('bfSaveSize').onclick = () => guardarTamano(elegida);
+      $('bfSearch').oninput = (e) => paintPick(e.target.value);
+      $('bfForget').onclick = olvidar;
+      paintPick('');
+    }
+    pinta();
+  }
+
+  // ── Guardar solo el tamaño ───────────────────────────────────────────
+  //
+  // No toca a que producto apunta el codigo. Y si el tamaño elegido es el
+  // que se ordena se guarda null, igual que al aprender uno nuevo: null
+  // sigue al producto, un numero lo congela.
+  async function guardarTamano(ml) {
+    const { url, key, account } = cfg();
+    const valor = (Number(ml) === sizeOrden()) ? null : Number(ml);
+
+    body(`<div class="bf-status"><i class="ti ti-loader" aria-hidden="true"></i> Saving…</div>`, true);
+    try {
+      const res = await fetch(`${url}/rest/v1/item_barcodes?on_conflict=account_id,upc`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: key, Authorization: `Bearer ${key}`,
+          Prefer: 'resolution=merge-duplicates,return=minimal'
+        },
+        body: JSON.stringify([{
+          account_id: account,
+          upc: String(_upc),
+          item_name: _rowActual ? _rowActual.item : null,
+          code: (_rowActual && _rowActual.code) || null,
+          size_ml: valor
+        }])
+      });
+      if (!res.ok) throw new Error(res.status + ' · ' + (await res.text()).slice(0, 180));
+    } catch (e) {
+      body(`<div class="bf-status bf-bad">Could not save the size.</div>
+            <div class="bf-err">${esc(e.message || String(e))}</div>
+            <button type="button" class="bf-forget" id="bfBack">Back</button>`, true);
+      $('bfBack').onclick = paintStep1;
+      return;
+    }
+
+    _sizeMl = valor;
+    window.BarStockScanCount?.setLearnedSize?.(_upc, valor);
+    if (typeof window.setStatus === 'function') {
+      window.setStatus(`Barcode now counts as ${fmtSize(Number(ml))}.`);
+    }
+    cerrar(_rowActual);
   }
 
   // ── Guardar el cambio ────────────────────────────────────────────────
@@ -255,11 +359,13 @@
   }
 
   // ── Abrir y cerrar ───────────────────────────────────────────────────
-  function open(upc, rowActual, onDone) {
+  function open(upc, rowActual, onDone, sizeMl) {
     if (!upc) return;
     _upc = String(upc);
     _rowActual = rowActual || null;
     _onDone = onDone || null;
+    _sizeMl = Number(sizeMl) ||
+      (window.BarStockScanCount?.learnedSize?.(upc)) || null;
     build();
     $('bfBg').classList.remove('hidden');
     paintStep1();
@@ -269,7 +375,7 @@
     const bg = $('bfBg');
     if (bg) bg.classList.add('hidden');
     const cb = _onDone;
-    _upc = null; _rowActual = null; _onDone = null;
+    _upc = null; _rowActual = null; _onDone = null; _sizeMl = null;
     if (typeof window.render === 'function') window.render();
     if (cb) cb(destino || null);
   }

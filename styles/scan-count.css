@@ -509,3 +509,56 @@ body.light .sc-sz.on{ border-color: #0284c7; background: rgba(2,132,199,.08); co
 body.light .sc-sz-item{ border-color: rgba(2,132,199,.30); background: rgba(2,132,199,.05); }
 body.light .sc-sz-item span,
 body.light .sc-sz-note{ color: #64748b; }
+
+/* ── "Wrong product?" · tres salidas ──────────────────────────────────
+   Reasignar el producto y olvidar el codigo ya existian. Lo que no tenia
+   salida era el caso mas probable: el producto esta bien y lo que esta
+   mal es el TAMANO. Le pasa a todos los codigos aprendidos antes de que
+   los codigos llevaran tamano — cuentan como la botella que se ordena,
+   aunque sean el 750 que alguien trajo de la tienda. */
+.bf-opt{
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 13px;
+  padding: 12px 13px;
+  margin-bottom: 10px;
+}
+.bf-opt.on{ border-color: rgba(56,189,248,.45); background: rgba(56,189,248,.06); }
+.bf-opt > b{ display: block; font-size: 14px; font-weight: 700; }
+.bf-opt > span{ display: block; font-size: 11.5px; color: #94a3b8; margin-top: 2px; }
+
+.bf-sizes{ display: flex; flex-wrap: wrap; gap: 7px; margin: 11px 0 10px; }
+.bf-sz{
+  /* 44px, como la lista de productos: se elige con el pulgar y con la
+     botella en la otra mano. */
+  min-height: 44px; padding: 0 14px;
+  display: flex; align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: transparent; color: #cbd5e1;
+  font-family: inherit; font-size: 14px; font-weight: 700;
+  font-variant-numeric: tabular-nums; cursor: pointer;
+}
+.bf-sz.on{ border-color: #38bdf8; border-width: 2px;
+           background: rgba(56,189,248,.10); color: #7dd3fc; }
+
+.bf-go{
+  width: 100%; min-height: 48px;
+  border-radius: 12px; border: none;
+  background: #38bdf8; color: #04263a;
+  font-family: inherit; font-size: 15px; font-weight: 800; cursor: pointer;
+}
+.bf-go:disabled{ background: rgba(255,255,255,.08); color: #64748b; cursor: default; }
+.bf-go:not(:disabled):active{ background: #0ea5e9; }
+
+/* Cambiar el tamano NO recalcula lo ya contado: cada pasada guardo el
+   suyo al escanear. Decirlo aqui evita que alguien lo descubra despues
+   mirando un total que no cuadra. */
+.bf-sz-note{ font-size: 11px; line-height: 1.5; color: #64748b; margin-top: 9px; }
+
+body.light .bf-opt{ border-color: rgba(15,23,42,.14); }
+body.light .bf-opt.on{ border-color: rgba(2,132,199,.40); background: rgba(2,132,199,.05); }
+body.light .bf-opt > span,
+body.light .bf-sz-note{ color: #64748b; }
+body.light .bf-sz{ border-color: rgba(15,23,42,.16); color: #475569; }
+body.light .bf-sz.on{ border-color: #0284c7; background: rgba(2,132,199,.08); color: #0369a1; }
+body.light .bf-go:disabled{ background: rgba(15,23,42,.06); color: #94a3b8; }

@@ -248,6 +248,64 @@ console.log('\npreguntar el tamaño solo cuando puede cambiar');
      $$('scAssign').querySelector('.sc-assign-t').textContent, 'Which item is this?');
   ok('y no cierra el panel', $$('scAssign').classList.contains('on'));
 
+  // ── 11 · Corregir el tamaño de un código YA aprendido ───────────────
+  //
+  // Los códigos de antes de este cambio no tienen tamaño, así que cuentan
+  // como la botella que se ordena. "Wrong product?" es el único sitio
+  // desde donde se pueden arreglar.
+  console.log('\ncorregir el tamaño de un código aprendido');
+  {
+    const dom2 = new JSDOM('<!doctype html><html><body></body></html>',
+                           { pretendToBeVisual: true, url: 'https://x.test/' });
+    const w4 = dom2.window;
+    global.window = w4; global.document = w4.document; global.localStorage = w4.localStorage;
+    w4.BARSTOCK_CONFIG = { ACCOUNT_ID: 'acct', LOCATION_NAME: 'Test',
+                           SUPABASE_URL: 'https://s.test', SUPABASE_KEY: 'k' };
+    let env = null;
+    global.fetch = w4.fetch = async (u, o) => {
+      if (o && o.method === 'POST') env = JSON.parse(o.body)[0];
+      return { ok: true, status: 200, json: async () => [], text: async () => '' };
+    };
+    const HEN = { item: "Hendrick's Gin", code: 'HEN', bottleSizeMl: 1000,
+                  bottleShape: 'vodka', onHand: 0 };
+    w4.state = { master: [HEN] };
+    w4.eval('var state = window.state');
+    for (const f of ['bottle-profiles.js', 'count-session.js', 'count-panel.js', 'barcode-fix.js']) {
+      new w4.Function(fs.readFileSync(path.join(RAIZ, 'src', f), 'utf8'))();
+    }
+    let puesto = null;
+    w4.BarStockScanCount = { learnedSize: () => null,
+                             setLearnedSize: (u, m) => { puesto = [u, m]; } };
+    const BF = w4.BarStockBarcodeFix;
+    const $$ = (id) => w4.document.getElementById(id);
+    const chips = () => [...w4.document.querySelectorAll('.bf-sz')];
+
+    BF.open('0886', HEN, () => {}, null);
+    ok('dice con qué tamaño cuenta hoy',
+       $$('bfBody').querySelector('.bf-warn').textContent.includes('1 L'));
+    eq('viene marcado el del producto',
+       chips().find(c => c.classList.contains('on')).textContent.trim(), '1 L');
+    ok('no deja guardar sin cambiar nada', $$('bfSaveSize').disabled);
+    eq('siguen las otras dos salidas',
+       [...w4.document.querySelectorAll('.bf-opt > b')].length, 2);
+    ok('y la de olvidar', !!$$('bfForget'));
+
+    chips().find(c => c.dataset.ml === '750').click();
+    ok('al elegir otro, deja guardar', !$$('bfSaveSize').disabled);
+    $$('bfSaveSize').click();
+    await new Promise(r => setTimeout(r, 30));
+    eq('guarda el tamaño', env.size_ml, 750);
+    eq('y no cambia el producto', env.item_name, "Hendrick's Gin");
+    eq('avisa al mapa del escáner', JSON.stringify(puesto), JSON.stringify(['0886', 750]));
+
+    env = null;
+    BF.open('0886', HEN, () => {}, 750);
+    chips().find(c => c.dataset.ml === '1000').click();
+    $$('bfSaveSize').click();
+    await new Promise(r => setTimeout(r, 30));
+    eq('volver al que ordenas guarda null', env.size_ml, null);
+  }
+
   console.log('\n' + (falla ? falla + ' FALLO(S)' : 'todo bien') + '   ·   ' + pasa + ' comprobaciones');
   process.exit(falla ? 1 : 0);
 })();

@@ -1030,15 +1030,38 @@
   // nube. Esto la pone al dia sin volver a pedir las 300 filas.
   function forget(upc, row) {
     const k = String(upc);
-    if (row) learned.set(k, { upc: k, item_name: row.item, code: row.code || '' });
-    else learned.delete(k);
+    if (row) {
+      // El tamaño del codigo se conserva: reasignar a que PRODUCTO apunta
+      // no cambia de que tamaño es la botella. Antes se reconstruia la
+      // entrada sin el y el codigo volvia a contar como el del producto.
+      const antes = learned.get(k);
+      learned.set(k, {
+        upc: k, item_name: row.item, code: row.code || '',
+        size_ml: antes ? (antes.size_ml || null) : null
+      });
+    } else learned.delete(k);
     // Y se suelta el bloqueo de repeticion: acabas de cambiar lo que
     // significa ese codigo, asi que volver a leerlo dentro de los 2.5 s
     // de la ventana tiene que funcionar.
     if (lastCode === k) { lastCode = ''; lastAt = 0; }
   }
 
-  window.BarStockScanCount = { open, close, forget,
+  // El tamaño que tiene guardado un codigo, y como cambiarlo. Lo usa la
+  // pantalla de "wrong product?": un codigo aprendido antes de que los
+  // codigos llevaran tamaño no tiene forma de corregirse sin esto.
+  function learnedSize(upc) {
+    const r = learned.get(String(upc));
+    return r ? (Number(r.size_ml) || null) : null;
+  }
+
+  function setLearnedSize(upc, ml) {
+    const k = String(upc);
+    const r = learned.get(k);
+    if (r) r.size_ml = Number(ml) || null;
+    if (lastCode === k) { lastCode = ''; lastAt = 0; }
+  }
+
+  window.BarStockScanCount = { open, close, forget, learnedSize, setLearnedSize,
     // Solo para tools/test-count.js: deja empezar en el paso de asignar
     // sin tener que simular una camara.
     __askAssign: askAssign };

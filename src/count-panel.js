@@ -383,6 +383,8 @@
     };
     $('cpUpcFix').onclick = () => {
       if (!_upc || !window.BarStockBarcodeFix || !_row) return;
+      // El cuarto argumento es el tamaño de ESTE codigo, para que la
+      // pantalla pueda ofrecer corregirlo y no solo reasignar el producto.
       window.BarStockBarcodeFix.open(_upc, _row, (nuevoRow) => {
         // El código apunta ya a otro producto. Si además se movió lo
         // contado, este panel está mirando un artículo que ya no es el
@@ -391,7 +393,7 @@
         if (nuevoRow && window.BarStockCountPanel) {
           setTimeout(() => open(nuevoRow, _onNext, null), 60);
         }
-      });
+      }, _sizeMl);
     };
   }
 
