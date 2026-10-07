@@ -194,9 +194,8 @@
     $('scAssignSearch').addEventListener('input', (e) => renderPicks(e.target.value));
     $('scFinish').addEventListener('click', () => {
       if (window.BarStockCountFinish) {
-        running = false;
-        clearTimeout(loopId);
-        window.BarStockCountFinish.open(() => { running = true; mark(); tick(); }, close);
+        stopLoop();
+        window.BarStockCountFinish.open(() => { mark(); startLoop(); }, close);
       }
     });
     // Etiqueta rota, botella rellenable o destileria pequeña sin codigo:
@@ -350,8 +349,7 @@
   // rota, botella rellenable, destileria que no imprime codigo.
   function askAssign(upc) {
     pausedFor = upc;
-    running = false;              // no tiene sentido decodificar mientras elige
-    clearTimeout(loopId);
+    stopLoop();                   // no tiene sentido decodificar mientras elige
 
     const box = $('scAssign');
     box.classList.add('on');
@@ -595,21 +593,19 @@
     const master = (window.state && state.master) || [];
     const row = master.find(r => r.item === itemName);
     if (!row || !window.BarStockCountPanel) return;
-    running = false;
-    clearTimeout(loopId);
+    stopLoop();
     // El cuarto argumento es el tamaño de ESTE codigo. Sin el, el panel
     // usa el del producto, que es lo correcto al contar por nombre.
     window.BarStockCountPanel.open(
-      row, () => { running = true; mark(); tick(); stats(); }, upc, sizeMl || null);
+      row, () => { mark(); startLoop(); stats(); }, upc, sizeMl || null);
   }
 
   function closeAssign() {
     $('scAssign').classList.remove('on');
     _enTamano = false;
     pausedFor = null;
-    running = true;
     mark();
-    tick();
+    startLoop();
   }
 
   function onHit(text, format) {
@@ -637,12 +633,10 @@
       // decodificando por detras solo puede colar otra lectura encima de
       // la que se esta contando.
       if (found.row && window.BarStockCountPanel) {
-        running = false;
-        clearTimeout(loopId);
+        stopLoop();
         window.BarStockCountPanel.open(found.row, () => {
-          running = true;
           mark();
-          tick();
+          startLoop();
         }, text, found.sizeMl);   // el upc viaja —el panel ofrece corregirlo
                                   //  si esta mal— y con el su tamaño
       }
@@ -694,11 +688,10 @@
         const upc = card.dataset.upc;
         const f = resolve(upc);
         if (!f || !f.row || !window.BarStockCountPanel) return;
-        running = false;
-        clearTimeout(loopId);
+        stopLoop();
         el.classList.remove('on');
         window.BarStockCountPanel.open(
-          f.row, () => { running = true; mark(); tick(); }, upc, f.sizeMl);
+          f.row, () => { mark(); startLoop(); }, upc, f.sizeMl);
       };
     }
   }
@@ -795,8 +788,46 @@
   }
 
   // ── El bucle ────────────────────────────────────────────────────────
-  async function tick() {
-    if (!running) return;
+  // ── Un solo bucle de decodificacion, y solo uno ──────────────────────
+  //
+  // `tick` tiene dos `await` entre la comprobacion de `running` y el
+  // `setTimeout` del final. En ese hueco cabe un escaneo entero:
+  //
+  //   1. tick() arranca y se queda esperando al decodificador
+  //   2. se lee un codigo → toCount() → running = false, clearTimeout
+  //   3. el await termina, la ejecucion sigue al final y agenda otro
+  //      tick SIN mirar que running ya es false
+  //   4. se cierra el panel del articulo → el callback llama tick()
+  //      otra vez → ya van DOS bucles
+  //
+  // Un bucle de mas por cada botella. A las cien, cien bucles capturando
+  // fotogramas y corriendo dos decodificaciones cada uno — por eso la
+  // interfaz se arrastraba justo a partir de ahi. Y `clearTimeout(loopId)`
+  // solo cancelaba el ultimo: los huerfanos no los apuntaba nadie.
+  //
+  // La generacion lo cierra por construccion. Arrancar el bucle sube el
+  // contador, y cualquier tick que vuelva de un await con una generacion
+  // vieja se muere en vez de reagendarse. No hace falta acertar con los
+  // clearTimeout.
+  let gen = 0;
+
+  function startLoop() {
+    running = true;
+    clearTimeout(loopId);
+    loopId = null;
+    gen++;
+    tick(gen);
+  }
+
+  function stopLoop() {
+    running = false;
+    gen++;              // invalida cualquier tick en vuelo
+    clearTimeout(loopId);
+    loopId = null;
+  }
+
+  async function tick(mine) {
+    if (!running || mine !== gen) return;
     const vid = $('scVid');
 
     if (vid && vid.videoWidth) {
@@ -847,7 +878,10 @@
       if (out) onHit(out.text, out.format);
     }
 
-    loopId = setTimeout(tick, 1000 / FPS);
+    // Se vuelve a comprobar DESPUES de los await: entre el principio de
+    // esta funcion y esta linea el escaner pudo pararse.
+    if (!running || mine !== gen) return;
+    loopId = setTimeout(() => tick(mine), 1000 / FPS);
   }
 
   // ── Abrir y cerrar ──────────────────────────────────────────────────
@@ -932,7 +966,6 @@
     diag((nativeDetector ? 'Native reader' : 'ZXing') + ' · camera ' +
          (st.width || '?') + '×' + (st.height || '?'), 'sc-ok');
 
-    running = true;
     mark();
     // Cinco veces por segundo bastaba cuando esto tambien pintaba un
     // cronometro por fotograma. Ese cronometro era del banco de pruebas y
@@ -940,7 +973,7 @@
     // existe en ningun sitio. Ahora solo se refresca el contador, y dos
     // veces por segundo sobra para un numero que sube de uno en uno.
     hudTimer = setInterval(stats, 500);
-    tick();
+    startLoop();
 
     // La linterna cambia mucho las cosas en una bodega. El soporte en
     // iOS es irregular, asi que se ofrece y si falla se dice.
@@ -962,11 +995,13 @@
   }
 
   function close() {
-    running = false;
-    clearTimeout(loopId);
+    // stopLoop y no `running = false` a secas: sube la generacion, asi
+    // que un tick que vuelva de su await con el escaner ya cerrado se
+    // muere en vez de reagendarse contra una camara apagada.
+    stopLoop();
     clearTimeout(markTimer);
     clearInterval(hudTimer);
-    loopId = null; hudTimer = null; markTimer = null;
+    hudTimer = null; markTimer = null;
     // Soltar las pistas es obligatorio: sin esto la camara se queda
     // encendida gastando bateria con el panel ya cerrado.
     if (stream) stream.getTracks().forEach(t => t.stop());
