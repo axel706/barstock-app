@@ -1,0 +1,94 @@
+/* ── Entro mercancia sin orden ────────────────────────────────────────
+   El consumo sale de "lo que habia + lo que entro - lo que queda", y lo
+   que entro solo se llenaba colocando la orden desde la app. Una compra
+   en la tienda salia como consumo que nunca ocurrio — y ese numero entra
+   en el promedio del par, asi que el producto que mas se acaba acaba con
+   el par mas bajo. */
+.si-modal{ width: min(420px, 100%); }
+
+.si-head{
+  display: flex; align-items: center; gap: 9px;
+  font-size: 16px; font-weight: 800;
+  margin-bottom: 14px;
+}
+.si-head i{ font-size: 20px; color: #38bdf8; }
+
+.si-item{ font-size: 17px; font-weight: 700; line-height: 1.25; }
+.si-meta{ font-size: 12px; color: var(--sub); margin-top: 3px; }
+
+.si-step{
+  display: flex; align-items: center; justify-content: center; gap: 18px;
+  margin: 20px 0 6px;
+}
+.si-step button{
+  /* 60px: se pulsa con el pulgar y a veces varias veces seguidas. */
+  width: 60px; height: 60px; flex: 0 0 60px;
+  border-radius: 15px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+  color: var(--text);
+  font-family: inherit; font-size: 26px; font-weight: 700; line-height: 1;
+  cursor: pointer;
+}
+.si-step button:active{ background: rgba(56,189,248,.20); }
+
+/* Mismo criterio que el contador de selladas: campo desde el principio
+   pero sin pinta de campo, y 36px para que Safari no haga zoom al
+   enfocarlo (cualquier cosa por debajo de 16px lo dispara). */
+.si-num{
+  flex: 1 1 0%;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  text-align: center;
+  font-family: inherit;
+  font-size: 36px; font-weight: 800; line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+  background: transparent;
+  border: none; border-radius: 10px;
+  padding: 4px 0;
+  -webkit-appearance: none; appearance: none;
+}
+.si-num:focus{
+  outline: none;
+  background: rgba(56,189,248,.10);
+  box-shadow: inset 0 -2px 0 #38bdf8;
+}
+
+.si-note{
+  font-size: 12px; line-height: 1.6;
+  color: var(--sub);
+  background: rgba(56,189,248,.07);
+  border: 1px solid rgba(56,189,248,.22);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 14px 0 16px;
+}
+.si-note b{ color: var(--text); }
+
+.si-status{
+  text-align: center; padding: 26px 10px;
+  font-size: 14px; color: var(--sub);
+}
+.si-bad{ color: #f87171; }
+
+.si-foot{ display: flex; gap: 10px; }
+.si-cancel, .si-go{
+  flex: 1; min-height: 50px;
+  border-radius: 12px;
+  font-family: inherit; font-size: 15px; font-weight: 800;
+  cursor: pointer;
+}
+.si-cancel{
+  background: transparent; color: var(--text);
+  border: 1px solid rgba(255,255,255,.16);
+}
+.si-go{
+  background: #38bdf8; color: #04263a; border: none;
+}
+.si-go:active{ background: #0ea5e9; }
+
+body.light .si-step button{ background: #e8eef7; border-color: rgba(15,23,42,.12); }
+body.light .si-cancel{ border-color: rgba(15,23,42,.16); }
+body.light .si-note{ background: rgba(2,132,199,.05); border-color: rgba(2,132,199,.22); }

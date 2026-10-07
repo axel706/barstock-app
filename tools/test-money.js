@@ -25,6 +25,11 @@ const fs = require('fs');
 
 const RAIZ = path.join(__dirname, '..');
 
+// jsdom puede estar en el proyecto o fuera; se busca donde este.
+let JSDOM_PATH = 'jsdom';
+try { require.resolve('jsdom'); }
+catch (e) { JSDOM_PATH = '/tmp/node_modules/jsdom'; }
+
 let pasa = 0, falla = 0;
 function ok(n, c, d) {
   if (c) { pasa++; console.log('  ok   ' + n); }
@@ -256,6 +261,55 @@ console.log('\nel par · cuanto pedir');
     const r2 = await P2.calculateParOptimal('loc-1', 'Gin', '');
     eq('una semana negativa cuenta como cero, no resta', r2.avgUsed, 4);
     eq('y el par no se desploma', r2.suggestedOptimal, 6);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 3 · ENTRO SIN ORDEN · la compra de la tienda
+  // ═══════════════════════════════════════════════════════════════════
+  //
+  // Si se acaba algo un viernes y alguien va por seis botellas, la app no
+  // se entera y la resta cuenta esas seis como consumo que nunca ocurrio.
+  console.log('\nentro sin orden · la compra de la tienda');
+  {
+    const { JSDOM } = require(JSDOM_PATH);
+    const dom = new JSDOM('<!doctype html><html><body></body></html>',
+                          { pretendToBeVisual: true, url: 'https://x.test/' });
+    const w = dom.window;
+    global.window = w; global.document = w.document;
+    w.BARSTOCK_CONFIG = { ACCOUNT_ID: 'a', LOCATION_NAME: 'Test',
+                          SUPABASE_URL: 'https://s.test', SUPABASE_KEY: 'k' };
+    let snaps = [{ id: 's1', ordered: 2 }], patch = null;
+    global.fetch = w.fetch = async (u, o) => {
+      if (o && o.method === 'PATCH') { patch = JSON.parse(o.body); return { ok: true, status: 200, text: async () => '' }; }
+      if (u.includes('locations')) return { ok: true, json: async () => [{ id: 'loc-1' }] };
+      if (u.includes('inventory_snapshots')) return { ok: true, json: async () => snaps };
+      return { ok: true, json: async () => [] };
+    };
+    w.setStatus = () => {};
+    for (const f of ['week.js', 'par-intelligence.js', 'stock-in.js']) {
+      new w.Function(fs.readFileSync(path.join(RAIZ, 'src', f), 'utf8'))();
+    }
+    const SI = w.BarStockStockIn;
+    const $$ = (id) => w.document.getElementById(id);
+    const ROW = { item: "Bentley's Triple Sec", code: 'BTS', onHand: 14.43 };
+
+    SI.open(ROW, () => {});
+    const q = $$('siQty');
+    q.value = '6'; q.dispatchEvent(new w.Event('input'));
+    $$('siOk').click();
+    await new Promise(r => setTimeout(r, 40));
+    eq('suma a lo que ya habia entrado esta semana', patch.ordered, 8);  // 2 + 6
+    ok('y NO toca el on hand', !('on_hand' in patch),
+       'el on hand sale de contar; subirlo aqui lo contaria dos veces');
+
+    // Sin ciclo abierto no hay donde anotarlo, y callarse dejaria al
+    // usuario creyendo que quedo guardado.
+    snaps = []; patch = null;
+    SI.open(ROW, () => {});
+    $$('siOk').click();
+    await new Promise(r => setTimeout(r, 40));
+    ok('sin semana abierta lo dice y no guarda nada',
+       patch === null && /No open week/.test($$('siBody').textContent));
   }
 
   console.log('\n' + (falla ? falla + ' FALLO(S)' : 'todo bien') + '   ·   ' + pasa + ' comprobaciones');
