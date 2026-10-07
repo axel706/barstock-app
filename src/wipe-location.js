@@ -74,18 +74,38 @@
       const res = await fetch(`${url}/rest/v1/${table}?${col}=eq.${id}&select=*`, {
         headers: Object.assign({ Prefer: 'count=exact', Range: '0-0' }, headers())
       });
-      if (!res.ok) return null;
+      if (!res.ok) {
+        console.warn('[wipe] no se pudo contar ' + table + ' (' + res.status + ')');
+        return null;
+      }
       const cr = res.headers.get('content-range');   // "0-0/123"
       return cr ? Number(cr.split('/')[1]) : null;
-    } catch (e) { return null; }
+    } catch (e) {
+      // Null aqui significa "no se pudo contar", no "hay cero filas", y
+      // esto se enseña justo antes de borrar una locacion entera. Si se
+      // calla, alguien confirma el vaciado mirando un conteo que nunca
+      // llego.
+      console.warn('[wipe] no se pudo contar ' + table, e);
+      return null;
+    }
   }
 
   async function rows(table, col, id) {
     const { SUPABASE_URL: url } = cfg();
     try {
       const res = await fetch(`${url}/rest/v1/${table}?${col}=eq.${id}&select=*`, { headers: headers() });
-      return res.ok ? (await res.json()) : null;
-    } catch (e) { return null; }
+      if (!res.ok) {
+        console.warn('[wipe] no se pudieron leer las filas de ' + table + ' (' + res.status + ')');
+        return null;
+      }
+      return await res.json();
+    } catch (e) {
+      // Estas filas son el RESPALDO que se guarda antes de vaciar. Un
+      // null silencioso aqui es vaciar sin copia de seguridad, que es el
+      // peor fallo posible de este modulo.
+      console.warn('[wipe] no se pudieron leer las filas de ' + table, e);
+      return null;
+    }
   }
 
   // Las líneas de orden no llevan location_id: cuelgan de la orden.

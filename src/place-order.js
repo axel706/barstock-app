@@ -195,7 +195,11 @@
   }
 
   window.placeCurrentOrder = placeCurrentOrderCloudFirst;
-  try { placeCurrentOrder = placeCurrentOrderCloudFirst; } catch (e) {}
+  // Si esto falla, colocar una orden se queda con la version que NO pasa
+  // por la nube: la orden se guarda solo en el dispositivo y nadie lo
+  // sabe hasta que falta en otro.
+  try { placeCurrentOrder = placeCurrentOrderCloudFirst; }
+  catch (e) { console.warn('[orden] no se pudo enganchar la version cloud-first', e); }
 
   function bindCleanPlaceOrderHandler() {
     const oldBtn = document.getElementById('placeOrderBtn');

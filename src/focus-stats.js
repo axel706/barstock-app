@@ -337,15 +337,16 @@
     }
   }
 
+  // Cada tarjeta va aislada para que una rota no se lleve a las demas.
+  // Pero callarse el motivo convierte una tarjeta rota en una tarjeta
+  // vacia, y una tarjeta vacia parece un bar sin datos. Se aisla igual y
+  // se dice cual fallo.
   function refresh() {
-    try { inventory(); } catch (e) {}
-    try { ordering();  } catch (e) {}
-    try { history();   } catch (e) {}
-    try { noMatch();   } catch (e) {}
-    try { pourIq();    } catch (e) {}
-
-    try { costs();     } catch (e) {}
-    try { consumption(); } catch (e) {}
+    const partes = { inventory, ordering, history, noMatch, pourIq, costs, consumption };
+    for (const [nombre, fn] of Object.entries(partes)) {
+      try { fn(); }
+      catch (e) { console.warn('[focus] la tarjeta "' + nombre + '" fallo', e); }
+    }
   }
 
   window.BarStockFocusStats = {

@@ -127,7 +127,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261007-144751</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261007-145318</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -3506,7 +3506,12 @@ async function openInvPanel(idx) {
       });
       sparkData = sparkData.reverse();
     }
-  } catch(e) {}
+  } catch(e) {
+    // Sin esto, la grafica de las ultimas semanas sale vacia y parece un
+    // producto sin historial. Es el mismo disfraz de siempre: un fallo
+    // con pinta de dato.
+    console.warn('panel del articulo: no se pudo leer el consumo semanal', e);
+  }
 
   const maxUsed = Math.max(...sparkData.map(s => Number(s.used || 0)), 1);
   const sparkHtml = sparkData.length ? `
@@ -4158,7 +4163,11 @@ async function deleteEditedItem(){
 
     // opcional: recargar desde cloud si el loader existe
     if(typeof loadInventoryFromSupabase === 'function'){
-      try { await loadInventoryFromSupabase(); } catch(e) {}
+      // Si esto falla, la pantalla se queda enseñando el inventario de
+      // antes del borrado y nadie se entera: el mensaje de exito sale
+      // igual. Se avisa aunque no se bloquee.
+      try { await loadInventoryFromSupabase(); }
+      catch(e) { console.warn('no se pudo recargar el inventario tras borrar', e); }
     }
 
     setStatus(`Item '${item}' deleted from Inventory and cloud.`);
@@ -4924,7 +4933,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/week.js?v=wk1"></script>
 <script src="src/cycle.js?v=cy1"></script>
 <script src="src/cycle-open.js?v=cyo1"></script>
-<script src="src/focus-stats.js?v=cm3"></script>
+<script src="src/focus-stats.js?v=cm4"></script>
 <script src="src/toast.js"></script>
 <script src="src/empty-state.js"></script>
 <script src="src/inventory-realtime.js?v=rt2"></script>
@@ -4935,7 +4944,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/consumption-report.js?v=rep8"></script>
 <script src="src/sales-fix.js?v=sf2"></script>
 <script src="src/count-fix.js?v=cf1"></script>
-<script src="src/theoretical-usage.js?v=fix4"></script>
+<script src="src/theoretical-usage.js?v=fix5"></script>
 <script src="src/chip-glow.js"></script>
 <script src="src/no-match-cloud.js"></script>
 <script src="src/typeface.js?v=tf1"></script>
@@ -4948,7 +4957,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/spend-by-category.js?v=sp2"></script>
 <script src="src/settings-home.js?v=sh2"></script>
 <script src="src/inventory-backup.js?v=bk1"></script>
-<script src="src/weekly-cycle.js?v=cyc8"></script>
+<script src="src/weekly-cycle.js?v=cyc9"></script>
 <script src="src/count-session.js?v=cnt15"></script>
 <script src="src/count-panel.js?v=cnt21"></script>
 <script src="src/barcode-fix.js?v=bf4"></script>
@@ -5071,7 +5080,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/settings-sender-profile.js"></script>
 <script src="src/settings-order-defaults.js"></script>
 
-<script src="src/place-order.js"></script>
+<script src="src/place-order.js?v=po2"></script>
 <script src="src/quick-order.js"></script>
 <script src="src/cost-report-cloud.js"></script>
 <script src="src/cost-report.js"></script>
@@ -5364,7 +5373,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 </div>
 
 <script src="src/auth.js?v=gate1"></script>
-<script src="src/wipe-location.js?v=wipe1"></script>
+<script src="src/wipe-location.js?v=wipe2"></script>
 <script src="src/admin-panel.js?v=wipe1"></script>
 <script>
 (function(){
@@ -6317,7 +6326,9 @@ async function openItemInfoModal(idx) {
       var ordRes = await fetch(url + '/rest/v1/vendor_order_items?item_name=eq.' + encodeURIComponent(r.item) + '&order=created_at.desc&limit=10&select=quantity,unit_price,line_total', { headers: { apikey: key, Authorization: 'Bearer ' + key } });
       orderHistory = await ordRes.json();
     }
-  } catch(e) {}
+  } catch(e) {
+    console.warn('panel del articulo: no se pudieron leer snapshots u ordenes', e);
+  }
 
   var totalOrdered = orderHistory.reduce(function(s,o){ return s + (Number(o.quantity)||0); }, 0);
   var avgOrdered = orderHistory.length ? (totalOrdered / orderHistory.length).toFixed(1) : null;

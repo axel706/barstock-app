@@ -159,6 +159,9 @@
       // Sin red no se sabe si hay conteo ajeno. Se devuelve null y el
       // botón se comporta como antes: es el lado por el que conviene
       // fallar, porque el otro bloquearía el ciclo sin poder comprobarlo.
+      // Pero se dice: este mismo catch se tragó durante dias un fallo que
+      // dejaba el boton con el estado viejo tras cerrar el escaner.
+      console.warn('weekly cycle: no se pudo leer el estado del conteo', e);
       return null;
     }
   }

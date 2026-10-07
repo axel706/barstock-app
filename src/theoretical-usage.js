@@ -133,7 +133,14 @@
         if (!seen.has(r.item_name)) { seen.add(r.item_name); result.push(r); }
       }
       return result;
-    } catch(e) { return []; }
+    } catch(e) {
+      // Una lista vacia aqui se lee como "no hay consumo", que es un dato
+      // plausible y falso. Es la misma forma del fallo que tuvo el
+      // historial del conteo: diecisiete semanas invisibles porque un
+      // catch devolvia vacio sin decir nada.
+      console.warn('[usage] no se pudo leer el consumo', e);
+      return [];
+    }
   }
 
   // ─── Semana de evento ────────────────────────────────────────────
