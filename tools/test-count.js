@@ -169,5 +169,86 @@ S.clear('Test');
 S.addPass('Viejo', 1, [0.5], null);
 casi('usan el tamaño del producto', S.bottlesFor('Viejo', 750), 1.5, 1e-9);
 
-console.log('\n' + (falla ? falla + ' FALLO(S)' : 'todo bien') + '   ·   ' + pasa + ' comprobaciones');
-process.exit(falla ? 1 : 0);
+// ── 9 · Como se escriben los tamaños ─────────────────────────────────
+console.log('\nformato de los tamaños');
+{
+  const w2 = montar();
+  const CPx = w2.BarStockCountPanel;
+  // fmtSize no esta expuesto, asi que se comprueba por lo que se ve.
+  const prod = (ml) => ({ item: 'X', bottleSizeMl: ml, bottleShape: 'vodka', onHand: 0 });
+  const sub = (ml) => {
+    w2.state = { master: [prod(ml)] };
+    CPx.open(prod(ml), () => {}, null, null);
+    return w2.document.getElementById('cpSub').textContent.split(' · ')[0];
+  };
+  eq('750 ml', sub(750), '750 ml');
+  eq('un litro se escribe 1 L', sub(1000), '1 L');
+  eq('la magnum, 1.5 L y no 1500 ml', sub(1500), '1.5 L');
+  eq('el handle, 1.75 L', sub(1750), '1.75 L');
+  eq('la mini sigue en ml', sub(50), '50 ml');
+}
+
+// ── 10 · Preguntar el tamaño al asignar un código nuevo ──────────────
+//
+// Solo cuando el producto YA tiene otro código: esa es la situación del
+// 750 de emergencia. Con el primero no hay nada que elegir.
+console.log('\npreguntar el tamaño solo cuando puede cambiar');
+(async () => {
+  const dom = new JSDOM('<!doctype html><html><body></body></html>',
+                        { pretendToBeVisual: true, url: 'https://x.test/' });
+  const w3 = dom.window;
+  global.window = w3; global.document = w3.document; global.localStorage = w3.localStorage;
+  w3.BARSTOCK_CONFIG = { ACCOUNT_ID: 'acct', LOCATION_NAME: 'Test',
+                         SUPABASE_URL: 'https://s.test', SUPABASE_KEY: 'k' };
+  let enviado = null;
+  global.fetch = w3.fetch = async (u, o) => {
+    if (o && o.method === 'POST') enviado = JSON.parse(o.body)[0];
+    return { ok: true, status: 200, json: async () => [], text: async () => '' };
+  };
+  w3.state = { master: [{ item: 'Campari', code: 'CAM', bottleSizeMl: 750,
+                          bottleShape: 'vodka', onHand: 0, vendor: 'LOOP' }] };
+  w3.eval('var state = window.state');
+  for (const f of ['bottle-profiles.js', 'count-session.js', 'count-panel.js', 'scan-count.js']) {
+    new w3.Function(fs.readFileSync(path.join(RAIZ, 'src', f), 'utf8'))();
+  }
+  const SC = w3.BarStockScanCount;
+  const $$ = (id) => w3.document.getElementById(id);
+  const esperar = () => new Promise(r => setTimeout(r, 30));
+  const elegir = (n) => [...w3.document.querySelectorAll('.sc-pick')]
+    .find(x => x.dataset.item === n).click();
+
+  await SC.open();
+
+  SC.__askAssign('0111'); elegir('Campari'); await esperar();
+  eq('el primer código no pregunta', enviado.size_ml, null);
+
+  enviado = null;
+  SC.__askAssign('0222'); elegir('Campari'); await esperar();
+  eq('el segundo sí pregunta',
+     $$('scAssign').querySelector('.sc-assign-t').textContent, 'What size is this one?');
+  eq('y esconde la búsqueda', $$('scAssignFind').style.display, 'none');
+  eq('viene marcado el que se ordena',
+     [...w3.document.querySelectorAll('.sc-sz')].find(c => c.classList.contains('on'))
+       .textContent.trim(), '750 ml');
+
+  [...w3.document.querySelectorAll('.sc-sz')].find(c => c.dataset.ml === '1500').click();
+  ok('avisa de que es otro tamaño',
+     $$('scPicks').querySelector('.sc-sz-note').textContent.includes('1.5 L'));
+  $$('scSzOk').click(); await esperar();
+  eq('guarda el tamaño elegido', enviado.size_ml, 1500);
+
+  enviado = null;
+  SC.__askAssign('0333'); elegir('Campari'); await esperar();
+  $$('scSzOk').click(); await esperar();
+  eq('si coincide con el que ordenas, se guarda null', enviado.size_ml, null);
+
+  SC.__askAssign('0444'); elegir('Campari'); await esperar();
+  $$('scAssignX').click();
+  eq('atrás vuelve a la lista',
+     $$('scAssign').querySelector('.sc-assign-t').textContent, 'Which item is this?');
+  ok('y no cierra el panel', $$('scAssign').classList.contains('on'));
+
+  console.log('\n' + (falla ? falla + ' FALLO(S)' : 'todo bien') + '   ·   ' + pasa + ' comprobaciones');
+  process.exit(falla ? 1 : 0);
+})();
+

@@ -75,10 +75,19 @@
     const { url, key } = cfg();
     if (!url || !key || !window.BarStockParIntelligence) return {};
 
+    // Un fallo aqui dejaba el historial vacio y la pantalla de cierre
+    // decia "esta es tu primera semana" — con diecisiete semanas en la
+    // base. El catch mudo convertia un error de programacion en un bar
+    // recien abierto, que es el mismo mensaje y problemas opuestos.
     let locationId;
+    if (typeof window.BarStockParIntelligence.fetchLocationId !== 'function') {
+      console.warn('[conteo] BarStockParIntelligence no expone fetchLocationId; ' +
+                   'sin historial no hay avisos y el cierre dira que es la primera semana.');
+      return {};
+    }
     try { locationId = await window.BarStockParIntelligence.fetchLocationId(); }
-    catch (e) { return {}; }
-    if (!locationId) return {};
+    catch (e) { console.warn('[conteo] no se pudo resolver la locacion', e); return {}; }
+    if (!locationId) { console.warn('[conteo] locacion sin id'); return {}; }
 
     // is_event_week=false: una semana de evento no dice nada del consumo
     // normal, y meterla en la mediana sube el listón para todo el año.
@@ -93,13 +102,31 @@
         const res = await fetch(`${base}&order=id.asc&limit=${PAGE}&offset=${p * PAGE}`,
           { headers: { apikey: key, Authorization: `Bearer ${key}` } });
         const rows = await res.json();
-        if (!Array.isArray(rows)) break;
+        // ── Una respuesta que no es un array es un ERROR, no "no hay datos"
+        //
+        // PostgREST devuelve un objeto de error ante una columna que no
+        // existe, una politica que bloquea o un filtro mal escrito. Esto
+        // rompia el bucle en silencio, devolvia el historial vacio, y la
+        // pantalla de cierre concluia "esta es tu primera semana".
+        //
+        // Costo tres semanas de conteos sin que nadie pudiera saber que
+        // algo fallaba: diecisiete semanas de historial y el mismo
+        // mensaje de bienvenida cada vez.
+        if (!Array.isArray(rows)) {
+          console.warn('[conteo] el historial no devolvio filas (HTTP ' + res.status + ')',
+                       JSON.stringify(rows).slice(0, 300));
+          break;
+        }
         filas = filas.concat(rows);
         if (rows.length < PAGE) break;
       }
     } catch (e) {
       console.warn('[conteo] no se pudo leer el historial', e);
       return {};
+    }
+    if (!filas.length) {
+      console.warn('[conteo] el historial vino vacio para location_id=' + locationId +
+                   '. Sin el, la pantalla de cierre dira que es la primera semana.');
     }
 
     const porItem = {};
@@ -204,8 +231,18 @@
   // enseña nada, ni siquiera un aviso vacío diciendo que no hay avisos.
   async function analizar(force) {
     const hist = await historial(force);
-    const conHistoria = Object.values(hist).filter(h => h.semanas >= MIN_SEMANAS).length;
-    if (!conHistoria) return { listo: false, faltan: [], raros: [] };
+    const items = Object.values(hist);
+    const conHistoria = items.filter(h => h.semanas >= MIN_SEMANAS).length;
+    if (!conHistoria) {
+      // Se dice por que, con numeros. "No hay historia" a secas no
+      // distingue entre un bar nuevo y una consulta rota, y son dos
+      // problemas opuestos: uno se arregla contando y el otro no.
+      const masSemanas = items.reduce((a, h) => Math.max(a, h.semanas || 0), 0);
+      console.warn('[conteo] sin historia suficiente · ' + items.length +
+        ' productos leidos, el que mas tiene llega a ' + masSemanas +
+        ' semana(s) cerrada(s), hacen falta ' + MIN_SEMANAS + '.');
+      return { listo: false, faltan: [], raros: [] };
+    }
     return {
       listo: true,
       faltan: faltantesQueImportan(hist),

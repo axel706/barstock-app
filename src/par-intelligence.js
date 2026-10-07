@@ -611,6 +611,12 @@
   }
 
   window.BarStockParIntelligence = {
+    // Faltaba, y dos modulos la llamaban: count-insight para leer el
+    // historial y count-finish para saber si el ciclo ya habia corrido.
+    // Los dos envolvian la llamada en try/catch, asi que el TypeError se
+    // tragaba en silencio y cada uno se degradaba de una forma distinta
+    // —y ninguna ruidosa— durante semanas.
+    fetchLocationId,
     runCycle,
     saveSnapshot,
     completeSnapshot,

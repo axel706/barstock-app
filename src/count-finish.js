@@ -326,11 +326,19 @@
       const rows = await res.json();
       return Array.isArray(rows) && rows.length > 0;
     } catch (e) {
-      // Sin poder comprobarlo, se corre el ciclo. Es el lado por el que
-      // conviene fallar: no cerrar una semana pierde el dato de consumo
-      // para siempre, mientras que cerrarla de más deja un ciclo raro que
-      // se ve y se puede arreglar.
-      console.warn('conteo: no se pudo comprobar si el ciclo ya corrio', e);
+      // Esto llevaba semanas fallando en silencio porque
+      // fetchLocationId no estaba exportada: el TypeError caia aqui,
+      // devolvia false, y el ciclo corria en CADA cierre. O sea que un
+      // recuento del jueves movia `weekly_reset_at` al jueves y
+      // reescribia el snapshot de la semana, que es justo lo que esta
+      // funcion existe para impedir.
+      //
+      // Sin poder comprobarlo se corre el ciclo igual: es el lado por el
+      // que conviene fallar, porque no cerrar una semana pierde el dato
+      // de consumo para siempre, mientras que cerrarla de más deja un
+      // ciclo raro que se ve y se puede arreglar. Pero se dice.
+      console.warn('conteo: no se pudo comprobar si el ciclo ya corrio; ' +
+                   'se correra de nuevo', e);
       return false;
     }
   }
@@ -479,8 +487,23 @@
       // El aviso de la primera semana está porque sin historial no hay
       // par, no hay sugerido y mis dos avisos se callan por diseño. Sin
       // decirlo, la primera vez parece que algo está roto.
-      const primeraVez = !window.BarStockCountInsight ||
-        !(await window.BarStockCountInsight.analizar(true).then(r => r.listo).catch(() => false));
+      // El `.catch(() => false)` de antes se tragaba cualquier error y lo
+      // convertia en "primera semana". Un fallo de red, una columna que
+      // falta o un bug en el analisis salian todos como el mismo mensaje
+      // de bienvenida, indistinguibles de un bar que de verdad acaba de
+      // empezar. Ahora el error se ve.
+      let primeraVez = true;
+      if (window.BarStockCountInsight) {
+        try {
+          const r = await window.BarStockCountInsight.analizar(true);
+          primeraVez = !r.listo;
+        } catch (e) {
+          console.warn('[conteo] el analisis del historial fallo; se enseña el ' +
+                       'mensaje de primera semana sin que lo sea', e);
+        }
+      } else {
+        console.warn('[conteo] BarStockCountInsight no esta cargado');
+      }
 
       $('cfBody').innerHTML = `
         <div class="cf-done"><i class="ti ti-circle-check" aria-hidden="true"></i></div>
