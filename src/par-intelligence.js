@@ -219,6 +219,22 @@
   // Las correcciones nuevas ya reescriben `used`, así que esto no haría
   // falta para ellas; sigue aquí por las viejas, hechas antes de que esa
   // propagación existiera.
+  // ── Un consumo negativo no significa nada ────────────────────────────
+  //
+  // used = lo que habia + lo que entro − lo que queda. Si al final hay
+  // MAS de lo que debia, la resta sale negativa: pasa con una entrega que
+  // nadie registro como orden, o con un traslado desde otra barra.
+  //
+  // El numero se guarda tal cual en el snapshot, que es lo honesto: esa
+  // discrepancia existio y esconderla seria perder la pista. Pero no
+  // puede entrar en el PROMEDIO del par, porque nadie des-bebe: una
+  // semana de −5 tira la media hacia abajo y la semana siguiente se pide
+  // de menos.
+  //
+  // count-insight ya lo acotaba con Math.max(0, ...) para sus avisos.
+  // Aqui no, y aqui es donde se decide cuanto comprar.
+  function usedParaPromedio(r) { return Math.max(0, usedOf(r)); }
+
   function usedOf(r) {
     const adj = r.on_hand_end_adjusted;
     if (adj !== null && adj !== undefined && r.on_hand_start !== null && r.on_hand_start !== undefined) {
@@ -356,7 +372,7 @@
     // Deduplicate by week_start — take first occurrence per week
     const byWeek = new Map();
     for (const r of rows) {
-      if (!byWeek.has(r.week_start)) byWeek.set(r.week_start, usedOf(r));
+      if (!byWeek.has(r.week_start)) byWeek.set(r.week_start, usedParaPromedio(r));
     }
     const usedValues = Array.from(byWeek.values());
     if (usedValues.length < 4) return { status: 'observing', normalWeeks: usedValues.length };
@@ -396,7 +412,7 @@
         const k = `${r.item_name}||${r.code || ''}`;
         if (!byItem.has(k)) byItem.set(k, new Map());
         const weekMap = byItem.get(k);
-        if (!weekMap.has(r.week_start)) weekMap.set(r.week_start, usedOf(r));
+        if (!weekMap.has(r.week_start)) weekMap.set(r.week_start, usedParaPromedio(r));
 
         // El quiebre se mide contra el cierre CORREGIDO: una semana que
         // parecia haber acabado en cero puede no haberlo hecho, y contarla
