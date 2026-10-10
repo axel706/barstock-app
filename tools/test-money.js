@@ -25,10 +25,12 @@ const fs = require('fs');
 
 const RAIZ = path.join(__dirname, '..');
 
-// jsdom puede estar en el proyecto o fuera; se busca donde este.
-let JSDOM_PATH = 'jsdom';
-try { require.resolve('jsdom'); }
-catch (e) { JSDOM_PATH = '/tmp/node_modules/jsdom'; }
+const JSDOM_PATH = 'jsdom';
+try { require.resolve(JSDOM_PATH); }
+catch (e) {
+  console.error('\nFalta jsdom. Una vez:\n\n  npm install\n\nY despues:  npm test\n');
+  process.exit(2);
+}
 
 let pasa = 0, falla = 0;
 function ok(n, c, d) {

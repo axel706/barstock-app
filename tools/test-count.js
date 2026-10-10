@@ -26,8 +26,8 @@ const fs = require('fs');
 let JSDOM;
 try { ({ JSDOM } = require('jsdom')); }
 catch (e) {
-  try { ({ JSDOM } = require('/tmp/node_modules/jsdom')); }
-  catch (e2) { console.error('Falta jsdom:  npm i jsdom'); process.exit(2); }
+  console.error('\nFalta jsdom. Una vez:\n\n  npm install\n\nY despues:  npm test\n');
+  process.exit(2);
 }
 
 const RAIZ = path.join(__dirname, '..');
