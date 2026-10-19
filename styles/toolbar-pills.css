@@ -1,10 +1,14 @@
 /* ── Botones colapsados de la barra de ordenes ──────────────────────────
  *
- * Tres botones que en reposo son un circulo con su icono y al pasar el
+ * Dos botones que en reposo son un circulo con su icono y al pasar el
  * mouse crecen a la derecha y sacan la etiqueta.
  *
- * Por que la base vive aqui y no repetida en cada sitio: son tres
- * botones con el mismo gesto. Copiar la animacion tres veces garantiza
+ * Quick Order se quedo fuera a proposito: tres circulos iguales seguidos
+ * son una adivinanza, y de los tres es el unico que no actua sobre la
+ * orden que estas viendo, sino que abre una aparte.
+ *
+ * Por que la base vive aqui y no repetida en cada sitio: son dos
+ * botones con el mismo gesto, y pronto pueden ser mas. Copiar la animacion tres veces garantiza
  * que un dia uno de ellos crezca distinto que los otros dos y nadie se
  * entere hasta verlo.
  *
@@ -69,9 +73,7 @@
 .tb-pill--export:hover,
 .tb-pill--export:focus-visible { background: #0ea5e9; }
 
-.tb-pill--quick  { --tb-open: 186px; background: #064e2b; color: #bbf7d0; }
-.tb-pill--quick:hover,
-.tb-pill--quick:focus-visible { background: #066738; }
+/* Quick Order NO se colapsa, a proposito. Ver index.html. */
 
 /* Deshabilitado: se queda en su sitio y explica por que, en vez de
  * desaparecer y dejar un hueco en la barra. */
@@ -97,14 +99,6 @@
 .vendor-controls-bottom .vendor-export-wrap.tb-wrap #vendorExportMenuBtn:focus-visible {
   width: var(--tb-open, 158px);
 }
-.vendor-controls-bottom #quickOrderBtn.tb-pill {
-  min-width: 0;
-  width: 52px;
-}
-.vendor-controls-bottom #quickOrderBtn.tb-pill:hover,
-.vendor-controls-bottom #quickOrderBtn.tb-pill:focus-visible {
-  width: var(--tb-open, 186px);
-}
 
 /* ── Telefono ─────────────────────────────────────────────────────── */
 /* No hay hover que valga: abiertos y a lo ancho, como estaban antes. */
@@ -117,7 +111,5 @@
 
   .vendor-controls-bottom .vendor-export-wrap.tb-wrap { width: 100%; }
   .vendor-controls-bottom .vendor-export-wrap.tb-wrap #vendorExportMenuBtn,
-  .vendor-controls-bottom .vendor-export-wrap.tb-wrap #vendorExportMenuBtn:hover,
-  .vendor-controls-bottom #quickOrderBtn.tb-pill,
-  .vendor-controls-bottom #quickOrderBtn.tb-pill:hover { width: 100%; }
+  .vendor-controls-bottom .vendor-export-wrap.tb-wrap #vendorExportMenuBtn:hover { width: 100%; }
 }

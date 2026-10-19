@@ -43,7 +43,7 @@
   <link rel="stylesheet" href="styles/scan-count.css?v=scan10">
   <link rel="stylesheet" href="styles/count-panel.css?v=cnt20">
   <link rel="stylesheet" href="styles/stock-in.css?v=si1">
-  <link rel="stylesheet" href="styles/toolbar-pills.css?v=pill1">
+  <link rel="stylesheet" href="styles/toolbar-pills.css?v=pill2">
   <link rel="stylesheet" href="styles/add-to-order.css?v=ato2">
   <!-- Siempre al final: solo contiene @media (max-width:640px) y necesita
        ganar los empates de especificidad por orden de carga. -->
@@ -130,7 +130,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261019-153256</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261019-154035</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -328,7 +328,11 @@
             <button id="exportVendorLoopBtn">Export LOOP (Upload Ready)</button>
           </div>
         </div>
-        <button id="quickOrderBtn" class="tb-pill tb-pill--quick ui-control" aria-label="Quick order"><i class="ti ti-bolt" aria-hidden="true"></i><span class="tb-label">Quick Order</span></button>
+        <!-- Quick Order no se colapsa. Add product y Export actuan sobre la
+             orden que tienes delante; este abre una orden aparte, asi que
+             darle la misma pinta que a los otros dos invita a confundirlos.
+             Y tres circulos seguidos sin texto son una adivinanza. -->
+        <button id="quickOrderBtn" class="success ui-control"><i class="ti ti-bolt" aria-hidden="true" style="font-size:18px;margin-right:7px;vertical-align:-2px"></i>Quick Order</button>
         <input id="vendorSearchInput" placeholder="Filter current order" />
       </div>
       <div class="vsp-layout">
