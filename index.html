@@ -128,7 +128,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261019-145234</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261019-150443</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -6340,7 +6340,7 @@ async function openItemInfoModal(idx) {
     var locData = await locRes.json();
     var locationId = locData[0] && locData[0].id;
     if (locationId) {
-      var snapRes = await fetch(url + '/rest/v1/inventory_snapshots?location_id=eq.' + locationId + '&item_name=eq.' + encodeURIComponent(r.item) + '&order=week_start.desc&limit=12&select=week_start,used,ordered,on_hand_start,is_event_week', { headers: { apikey: key, Authorization: 'Bearer ' + key } });
+      var snapRes = await fetch(url + '/rest/v1/inventory_snapshots?location_id=eq.' + locationId + '&item_name=eq.' + encodeURIComponent(r.item) + '&order=week_start.desc&select=week_start,used,ordered,on_hand_start,on_hand_end_adjusted,is_event_week', { headers: { apikey: key, Authorization: 'Bearer ' + key } });
       snapshots = await snapRes.json();
       var ordRes = await fetch(url + '/rest/v1/vendor_order_items?item_name=eq.' + encodeURIComponent(r.item) + '&order=created_at.desc&limit=10&select=quantity,unit_price,line_total', { headers: { apikey: key, Authorization: 'Bearer ' + key } });
       orderHistory = await ordRes.json();
@@ -6353,7 +6353,10 @@ async function openItemInfoModal(idx) {
   var avgOrdered = orderHistory.length ? (totalOrdered / orderHistory.length).toFixed(1) : null;
   var totalSpent = orderHistory.reduce(function(s,o){ return s + (Number(o.line_total)||0); }, 0);
   var avgWeeklySpend = normalWeeks > 0 && totalSpent > 0 ? (totalSpent / normalWeeks).toFixed(2) : null;
-  var usedValues = snapshots.filter(function(s){ return s.used != null; }).map(function(s){ return Number(s.used); });
+  // OVER/UNDER compara contra las ultimas 10 ORDENES, asi que el consumo
+  // tiene que mirar una ventana parecida. Ahora que snapshots trae todas
+  // las semanas, sin este recorte el numero se iria creciendo solo.
+  var usedValues = snapshots.filter(function(s){ return s.used != null; }).slice(0, 12).map(function(s){ return Number(s.used); });
   var totalUsed = usedValues.reduce(function(a,b){ return a+b; }, 0);
   var overUnder = totalOrdered - totalUsed;
   var trendStr = trendDelta !== null ? ((trendDelta >= 0 ? '\u2191 +' : '\u2193 ') + trendDelta) : '\u2014';
@@ -6361,9 +6364,76 @@ async function openItemInfoModal(idx) {
   var trendCol = trendDelta !== null ? (trendDelta >= 0 ? '#22c55e' : '#ef4444') : 'var(--sub)';
   var adjCol = adjustment !== 0 ? '#f59e0b' : 'var(--sub)';
 
+  // ── La tabla de semanas ────────────────────────────────────────────
+  //
+  // Tres cosas que esta tabla hacia mal:
+  //
+  //   1. limit=12. Decia "WEEKLY HISTORY" y enseñaba doce semanas. Si
+  //      llevas 30 contando, las otras 18 tambien pesan en el par y no
+  //      habia forma de verlas.
+  //   2. Imprimia el float crudo: 4.636591192628965. El redondeo nuevo
+  //      solo afecta lo que se GUARDA de hoy en adelante; lo que ya
+  //      esta en la base sigue con sus quince decimales, asi que hay
+  //      que redondear tambien al pintar.
+  //   3. Mostraba `used` tal cual, pero el par usa el consumo CORREGIDO
+  //      cuando alguien arreglo el conteo de esa semana. Dos numeros
+  //      distintos para el mismo producto en dos pantallas.
+  //
+  // La columna WEIGHT es la respuesta a "¿cuantas semanas alimentan el
+  // promedio?": todas, pero no por igual.
+
+  function d2(n) {
+    if (n === null || n === undefined || n === '') return '\u2014';
+    var x = Number(n);
+    if (!isFinite(x)) return '\u2014';
+    return (Math.round(x * 100) / 100).toFixed(2).replace(/\.00$/, '').replace(/(\.[1-9])0$/, '$1');
+  }
+
+  function usedReal(s) {
+    var adj = s.on_hand_end_adjusted;
+    if (adj !== null && adj !== undefined && s.on_hand_start !== null && s.on_hand_start !== undefined) {
+      return Number(s.on_hand_start || 0) + Number(s.ordered || 0) - Number(adj);
+    }
+    return s.used != null ? Number(s.used) : null;
+  }
+
+  // Los mismos pesos que usa ewmaStats: la semana mas vieja arranca la
+  // serie y las siguientes la corrigen con alpha. Solo cuentan las
+  // semanas que el par mira: con consumo y sin marca de evento.
+  var ALPHA_UI = 0.3;
+  var cuentan = snapshots.filter(function(s) {
+    return !s.is_event_week && usedReal(s) !== null;
+  }).slice().reverse();
+  var vistas = {}, serie = [];
+  for (var ci = 0; ci < cuentan.length; ci++) {
+    if (!vistas[cuentan[ci].week_start]) { vistas[cuentan[ci].week_start] = true; serie.push(cuentan[ci].week_start); }
+  }
+  var pesoDe = {};
+  for (var pi = 0; pi < serie.length; pi++) {
+    pesoDe[serie[pi]] = pi === 0
+      ? Math.pow(1 - ALPHA_UI, serie.length - 1)
+      : ALPHA_UI * Math.pow(1 - ALPHA_UI, serie.length - 1 - pi);
+  }
+
   var snapshotRows = snapshots.length ? snapshots.map(function(s) {
-    return '<tr><td style="padding:6px 8px;font-size:12px">' + s.week_start + '</td><td style="padding:6px 8px;font-size:12px;text-align:center">' + (s.on_hand_start != null ? s.on_hand_start : '\u2014') + '</td><td style="padding:6px 8px;font-size:12px;text-align:center">' + (s.ordered != null ? s.ordered : '\u2014') + '</td><td style="padding:6px 8px;font-size:12px;text-align:center">' + (s.used != null ? s.used : '\u2014') + '</td><td style="padding:6px 8px;font-size:12px;text-align:center">' + (s.is_event_week ? '\u26a1' : '') + '</td></tr>';
-  }).join('') : '<tr><td colspan="5" style="padding:12px;text-align:center;color:var(--sub);font-size:12px">No history</td></tr>';
+    var u = usedReal(s);
+    var neg = u !== null && u < 0;
+    var w = pesoDe[s.week_start];
+    var wTxt = w ? (w * 100).toFixed(1) + '%' : '\u2014';
+    var wCol = w && w >= 0.10 ? '#38bdf8' : 'var(--sub)';
+    return '<tr><td style="padding:6px 8px;font-size:12px">' + s.week_start + '</td>' +
+      '<td style="padding:6px 8px;font-size:12px;text-align:center">' + d2(s.on_hand_start) + '</td>' +
+      '<td style="padding:6px 8px;font-size:12px;text-align:center">' + (s.ordered != null ? d2(s.ordered) : '\u2014') + '</td>' +
+      '<td style="padding:6px 8px;font-size:12px;text-align:center' + (neg ? ';color:#ef4444' : '') + '">' + d2(u) + '</td>' +
+      '<td style="padding:6px 8px;font-size:12px;text-align:center;color:' + wCol + '">' + wTxt + '</td>' +
+      '<td style="padding:6px 8px;font-size:12px;text-align:center">' + (s.is_event_week ? '\u26a1' : '') + '</td></tr>';
+  }).join('') : '<tr><td colspan="6" style="padding:12px;text-align:center;color:var(--sub);font-size:12px">No history</td></tr>';
+
+  var pesoUlt5 = serie.slice(-5).reduce(function(a, w) { return a + (pesoDe[w] || 0); }, 0);
+  var notaPeso = serie.length
+    ? serie.length + ' week' + (serie.length === 1 ? '' : 's') + ' feed the average' +
+      (serie.length > 5 ? ' \u00b7 the last 5 are ' + Math.round(pesoUlt5 * 100) + '% of it' : '')
+    : '';
 
   var ms = 'background:var(--muted);border-radius:10px;padding:10px';
   var ls = 'font-size:10px;color:var(--sub);margin-bottom:4px';
@@ -6407,7 +6477,8 @@ async function openItemInfoModal(idx) {
       '<div style="' + ms + ';text-align:center"><div style="' + ls + '">OVER/UNDER</div><div style="font-size:14px;font-weight:800;color:' + (overUnder > 0 ? '#f59e0b' : overUnder < 0 ? '#ef4444' : '#22c55e') + '">' + (overUnder > 0 ? '+' : '') + overUnder.toFixed(1) + ' btl</div></div>' +
     '</div>' +
     (avgWeeklySpend ? '<div style="' + ms + ';margin-bottom:16px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:var(--sub)">Avg weekly spend</span><span style="font-size:13px;font-weight:700">$' + avgWeeklySpend + '</span></div>' : '') +
-    '<div style="font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.5px;margin-bottom:8px">WEEKLY HISTORY</div>' +
+    '<div style="font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.5px;margin-bottom:2px">WEEKLY HISTORY</div>' +
+    (notaPeso ? '<div style="font-size:11px;color:var(--sub);margin-bottom:8px;opacity:.8">' + notaPeso + '</div>' : '<div style="margin-bottom:8px"></div>') +
     '<div style="border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.08)">' +
       '<table style="width:100%;border-collapse:collapse">' +
         '<thead><tr style="background:rgba(255,255,255,.04)">' +
@@ -6415,6 +6486,7 @@ async function openItemInfoModal(idx) {
           '<th style="padding:6px 8px;font-size:11px;font-weight:700;color:var(--sub);text-align:center">ON HAND</th>' +
           '<th style="padding:6px 8px;font-size:11px;font-weight:700;color:var(--sub);text-align:center">ORDERED</th>' +
           '<th style="padding:6px 8px;font-size:11px;font-weight:700;color:var(--sub);text-align:center">USED</th>' +
+          '<th style="padding:6px 8px;font-size:11px;font-weight:700;color:var(--sub);text-align:center">WEIGHT</th>' +
           '<th style="padding:6px 8px;font-size:11px;font-weight:700;color:var(--sub);text-align:center">EVENT</th>' +
         '</tr></thead>' +
         '<tbody>' + snapshotRows + '</tbody>' +
