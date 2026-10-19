@@ -7,7 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "node tools/test-count.js && node tools/test-money.js"
+    "test": "node tools/test-count.js && node tools/test-money.js && node tools/test-order-add.js"
   },
   "repository": {
     "type": "git",

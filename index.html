@@ -43,6 +43,7 @@
   <link rel="stylesheet" href="styles/scan-count.css?v=scan10">
   <link rel="stylesheet" href="styles/count-panel.css?v=cnt20">
   <link rel="stylesheet" href="styles/stock-in.css?v=si1">
+  <link rel="stylesheet" href="styles/add-to-order.css?v=ato1">
   <!-- Siempre al final: solo contiene @media (max-width:640px) y necesita
        ganar los empates de especificidad por orden de carga. -->
   <link rel="stylesheet" href="styles/theoretical-usage.css">
@@ -128,7 +129,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261019-150443</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261019-152501</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -315,6 +316,8 @@
         <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2);margin-right:4px"></span>OK (&gt;60%)</span>
       </div>
       <div class="vendor-controls-bottom">
+        <button type="button" id="addToOrderBtn" class="ato-btn" disabled
+                aria-label="Add a product to this order"><i class="ti ti-plus" aria-hidden="true"></i><span class="ato-label">Add product</span></button>
         <div class="toolbar-group vendor-export-wrap" style="position:relative">
           <button id="vendorExportMenuBtn" class="primary">Export ▾</button>
           <div id="vendorExportMenu" class="menu hidden">
@@ -2142,6 +2145,7 @@ function getCurrentVendorRows(){
   });
 }
 function vendorLabel(){ return activeVendorTab==='ALL' ? 'All Vendors' : activeVendorTab; }
+window.getActiveVendorTab = function(){ return activeVendorTab; };
 function placedKeyForRow(row){ return `${String(row.vendor||'').toUpperCase()}||${normalizeName(row.code)}||${normalizeName(row.item)}`; }
 function isRowPlaced(row){ return Array.isArray(state.placedOrders) && state.placedOrders.includes(placedKeyForRow(row)); }
 
@@ -2881,6 +2885,7 @@ function setVendorTab(v){
   activeVendorTab=v;
   render();
   renderVendorPanel();
+  if (window.BarStockAddToOrder) window.BarStockAddToOrder.sync();
   const area = document.getElementById('vendorExportArea');
   if(area) area.classList.toggle('vendor-hidden', v !== 'ALL');
 }
@@ -4980,6 +4985,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/count-panel.js?v=cnt22"></script>
 <script src="src/barcode-fix.js?v=bf5"></script>
 <script src="src/stock-in.js?v=si1"></script>
+<script src="src/add-to-order.js?v=ato1"></script>
 <script src="src/count-resume.js?v=cnt12"></script>
 <script src="src/count-insight.js?v=cnt12"></script>
 <script src="src/count-finish.js?v=cnt15"></script>
