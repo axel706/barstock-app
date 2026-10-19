@@ -761,17 +761,58 @@ body.light .cr-drop{ border-color: rgba(15,23,42,.14); }
 .cf-ins-a .cf-ins-t{ color: #fbbf24; }
 .cf-ins-b .cf-ins-t{ color: #f87171; }
 
+/* ── La fila del aviso ──────────────────────────────────────────────
+ *
+ * Era un flex en una linea: nombre, numeros empujados con margin-left
+ * auto, y la flecha. En el telefono no cabe. "Canyon Oaks Cabernet
+ * Sauvignon 1.5L" se parte en dos lineas y "counted 0.48 · expected
+ * 12.95" queda pegado a la flecha, sin aire y dificil de leer.
+ *
+ * Con grid el nombre y los numeros van en filas distintas de la misma
+ * columna, y la flecha ocupa las dos de alto en la columna de al lado.
+ * Asi el nombre puede ser tan largo como quiera sin aplastar nada.
+ */
 .cf-ins-row{
-  display: flex; align-items: baseline; gap: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 10px; row-gap: 2px;
   width: 100%;
-  padding: 7px 0;
+  padding: 9px 0;
   border-bottom: 1px solid rgba(255,255,255,.08);
   font-size: 13px; text-align: left;
   background: none; border-left: none; border-right: none; border-top: none;
   color: inherit;
 }
-.cf-ins-row small{ margin-left: auto; color: var(--sub); font-size: 11px; flex-shrink: 0; }
+.cf-ins-row > .cf-ins-name,
+.cf-ins-row > span:first-child{
+  grid-column: 1; grid-row: 1;
+  min-width: 0;
+  line-height: 1.35;
+}
+.cf-ins-row small{
+  grid-column: 1; grid-row: 2;
+  color: var(--sub); font-size: 11.5px;
+  /* Tabulares: los numeros de todas las filas quedan alineados en
+   * vertical aunque sean 0.48 y 12.95. */
+  font-variant-numeric: tabular-nums;
+}
 .cf-ins-row small b{ color: #f87171; font-weight: 800; }
+/* El separador " · " se perdia entre los dos numeros. Un punto con aire
+ * propio distingue lo contado de lo esperado de un vistazo. */
+.cf-ins-exp::before{
+  content: "·";
+  margin: 0 5px;
+  opacity: .5;
+}
+.cf-ins-row > i{ grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+
+/* El aviso 1 tiene una sola linea de dato y no es un boton: ahi el
+ * nombre y el "x / week" si caben al lado. */
+.cf-ins-a .cf-ins-row{
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.cf-ins-a .cf-ins-row small{ grid-column: 2; grid-row: 1; text-align: right; }
 .cf-ins-btn{ cursor: pointer; }
 .cf-ins-btn i{ color: var(--sub); font-size: 15px; flex-shrink: 0; }
 .cf-ins-btn:active{ opacity: .6; }

@@ -186,6 +186,14 @@
     }
 
     const n1 = r.faltan.length, n2 = r.raros.length;
+
+    // Antes se restaba una semana fija. Ahora se resta lo que el ciclo
+    // lleve abierto, asi que el aviso tiene que decir cual fue, o el
+    // numero no se puede comprobar a mano.
+    const sc = r.semanasCiclo;
+    const ventana = !sc || Math.abs(sc - 1) < 0.15
+      ? 'a week'
+      : (sc < 1 ? Math.round(sc * 7) + ' days' : sc.toFixed(1) + ' weeks');
     const TOPE = 4;   // en pantalla; el resto se abre
 
     $('cfInsight').innerHTML = `
@@ -216,11 +224,13 @@
           </div>
           ${r.raros.map((x, i) => `
             <button class="cf-ins-row cf-ins-btn" type="button" data-raro="${i}">
-              <span>${esc(x.item)}</span>
-              <small><b>counted ${x.contado}</b> · expected ${x.esperado}</small>
+              <span class="cf-ins-name">${esc(x.item)}</span>
+              <small><b>counted ${x.contado}</b> <span class="cf-ins-exp">expected ${x.esperado}</span></small>
               <i class="ti ti-chevron-right" aria-hidden="true"></i>
             </button>`).join('')}
           <div class="cf-ins-note">
+            Expected = what was on hand when the cycle opened, plus what came
+            in, minus ${ventana} of typical use.
             Tap one to count it again. It may also be stock that arrived
             without the order being recorded — the number would be right
             and this warning wrong.

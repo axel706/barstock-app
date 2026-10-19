@@ -43,14 +43,24 @@
     return { url: c.SUPABASE_URL, key: c.SUPABASE_KEY };
   }
 
-  // La mediana y no la media: una semana de fiesta con el triple de
-  // consumo arrastra un promedio de ocho semanas lo suficiente para que
-  // el resto del año parezca anómalo. La mediana la ignora.
-  function mediana(nums) {
-    if (!nums.length) return 0;
-    const a = nums.slice().sort((x, y) => x - y);
-    const m = Math.floor(a.length / 2);
-    return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+  // ── "Lo normal" se define UNA vez ────────────────────────────────────
+  //
+  // Aqui habia una mediana y en par-intelligence un promedio ponderado.
+  // Dos ideas distintas de lo tipico en la misma app: el par podia haber
+  // visto que un producto despego y esta pantalla seguir esperando lo de
+  // siempre, sin que nada avisara de la discrepancia.
+  //
+  // La mediana estaba aqui para que una semana de fiesta no arrastrara el
+  // promedio. Pero las semanas de evento ya se excluyen en la consulta
+  // (is_event_week=eq.false), que era el motivo real. Lo que queda a
+  // cambio es que esto ya se entera cuando un producto cambia de ritmo.
+  function tipico(porSemana) {
+    const P = window.BarStockParIntelligence;
+    if (P && typeof P.ewmaStats === 'function') return P.ewmaStats(porSemana).avg;
+    // Sin el modulo del par no hay ponderado; la media plana es peor pero
+    // es un numero honesto, no un cero que parezca "no consume nada".
+    const v = Array.from(porSemana.values());
+    return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0;
   }
 
   // Misma corrección que usa par-intelligence: una fila vieja puede tener
@@ -133,20 +143,25 @@
     for (const r of filas) {
       const k = r.item_name;
       if (!k) continue;
-      const e = porItem[k] || (porItem[k] = { usos: [], semanas: new Set(), abierto: null });
+      // Un Map por semana, no un array suelto: la consulta pide
+      // order=id.asc y el id es un UUID, asi que las filas llegan en
+      // orden ALEATORIO. A una mediana le da igual; a un promedio
+      // ponderado le cambia el resultado entero, y sin dar ningun error.
+      const e = porItem[k] || (porItem[k] = { porSemana: new Map(), abierto: null });
 
       // Una semana solo cuenta una vez aunque haya filas repetidas.
-      if (r.on_hand_end !== null && r.on_hand_end !== undefined && !e.semanas.has(r.week_start)) {
-        e.semanas.add(r.week_start);
-        e.usos.push(Math.max(0, usedOf(r)));
+      if (r.on_hand_end !== null && r.on_hand_end !== undefined && !e.porSemana.has(r.week_start)) {
+        e.porSemana.set(r.week_start, Math.max(0, usedOf(r)));
       }
 
       // El ciclo abierto es el que no tiene cierre. De ahí sale lo que
-      // deberíamos encontrar al contar.
+      // deberíamos encontrar al contar. `desde` es la clave: un ciclo
+      // abierto no dura necesariamente una semana.
       if (r.on_hand_end === null || r.on_hand_end === undefined) {
         e.abierto = {
           inicio: Number(r.on_hand_start || 0),
-          pedido: Number(r.ordered || 0)
+          pedido: Number(r.ordered || 0),
+          desde: r.week_start || null
         };
       }
     }
@@ -154,8 +169,8 @@
     const out = {};
     for (const [k, e] of Object.entries(porItem)) {
       out[k] = {
-        semanal: mediana(e.usos),
-        semanas: e.usos.length,
+        semanal: tipico(e.porSemana),
+        semanas: e.porSemana.size,
         abierto: e.abierto
       };
     }
@@ -186,6 +201,30 @@
   // que pasa de 0.5 a 2 botellas salta siempre aunque la diferencia sean
   // botella y media. Solo con la absoluta, no salta nada en los que se
   // mueven mucho.
+  // ── Cuanto lleva abierto el ciclo ────────────────────────────────────
+  //
+  // Esto era un 1 implicito: se restaba SIEMPRE una semana de consumo,
+  // durase lo que durase el ciclo. Desde que los ciclos se quedan
+  // abiertos hasta que el usuario dice lo contrario, un ciclo de dos
+  // semanas producia un esperado inflado al doble y toda la lista salia
+  // como "contaste de menos".
+  //
+  // El suelo en 1 es porque un ciclo de tres dias no deberia esperar
+  // medio consumo: el conteo se hace al final, con la semana ya corrida.
+  // El techo en 8 es para que una fila abierta y olvidada hace meses no
+  // lleve el esperado a cero y convierta cada producto en una alarma.
+  const SEMANAS_MIN = 1;
+  const SEMANAS_MAX = 8;
+
+  function semanasAbierto(abierto) {
+    if (!abierto || !abierto.desde) return SEMANAS_MIN;
+    const t = Date.parse(abierto.desde + 'T00:00:00');
+    if (!isFinite(t)) return SEMANAS_MIN;
+    const sem = (Date.now() - t) / (7 * 86400000);
+    if (!isFinite(sem)) return SEMANAS_MIN;
+    return Math.min(SEMANAS_MAX, Math.max(SEMANAS_MIN, sem));
+  }
+
   function conteosRaros(hist) {
     const S = window.BarStockCountSession;
     if (!S) return [];
@@ -203,7 +242,8 @@
       const h = hist[item];
       if (!h || h.semanas < MIN_SEMANAS || !h.abierto) continue;
 
-      const esperado = Math.max(0, h.abierto.inicio + h.abierto.pedido - h.semanal);
+      const semanas = semanasAbierto(h.abierto);
+      const esperado = Math.max(0, h.abierto.inicio + h.abierto.pedido - h.semanal * semanas);
       const contado = S.bottlesFor(item, tamaños[item] || 750);
       const dif = Math.abs(contado - esperado);
 
@@ -219,6 +259,7 @@
         contado: Math.round(contado * 100) / 100,
         esperado: Math.round(esperado * 100) / 100,
         semanal: Math.round(h.semanal * 100) / 100,
+        semanas: Math.round(semanas * 10) / 10,
         dif: Math.round(dif * 100) / 100
       });
     }
@@ -243,10 +284,16 @@
         ' semana(s) cerrada(s), hacen falta ' + MIN_SEMANAS + '.');
       return { listo: false, faltan: [], raros: [] };
     }
+    const raros = conteosRaros(hist);
     return {
       listo: true,
       faltan: faltantesQueImportan(hist),
-      raros: conteosRaros(hist)
+      raros,
+      // Todos los productos comparten el mismo ciclo abierto, asi que la
+      // ventana es una sola. Se saca de la lista para que la pantalla
+      // pueda decir "menos 2.3 semanas" en vez de dejarlo a la
+      // imaginacion del que lee el aviso.
+      semanasCiclo: raros.length ? raros[0].semanas : null
     };
   }
 

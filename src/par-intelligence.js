@@ -715,6 +715,9 @@
     updateSnapshotOrdered,
     reverseSnapshotOrdered,
     calculateParOptimal,
+    // Lo exporta para que count-insight calcule "lo normal" con la MISMA
+    // definicion que el par. Teniamos dos: aqui ponderado, alla mediana.
+    ewmaStats,
     getPendingAdjustments,
     updateSnapshotOnHand,
     setWeekStartOverride,
