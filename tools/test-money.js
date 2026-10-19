@@ -89,10 +89,17 @@ const LOC = [{ id: 'loc-1' }];
 // La cuenta es: promedio del consumo semanal x 1.35, redondeado hacia
 // arriba. El 1.35 es el colchon: pedir justo el promedio deja sin stock
 // la mitad de las semanas, porque la mitad estan por encima.
+//
+// El promedio NO es plano: es ponderado (EWMA, alpha 0.3), asi que la
+// semana pasada pesa mas que la de hace dos meses. Por eso los numeros
+// de aqui abajo no son la media aritmetica.
 console.log('\nel par · cuanto pedir');
 (async () => {
   {
-    // used: 4, 6, 5, 5  →  promedio 5  →  5 x 1.35 = 6.75  →  7
+    // used: 4, 6, 5, 5
+    //   media plana  5
+    //   ponderada    4.8   (la ultima semana pesa; la primera ya casi no)
+    //   4.8 x 1.35 = 6.48  →  7
     const P = montar([
       ['locations', LOC],
       ['inventory_snapshots', [
@@ -103,8 +110,9 @@ console.log('\nel par · cuanto pedir');
       ]]
     ]);
     const r = await P.calculateParOptimal('loc-1', "Tito's", '');
-    eq('promedio 5 → par 7', r.suggestedOptimal, 7);
-    eq('y lo dice', r.avgUsed, 5);
+    eq('promedio 4.8 → par 7', r.suggestedOptimal, 7);
+    eq('y lo dice', r.avgUsed, 4.8);
+    eq('y guarda la media plana como referencia', r.avgHistorical, 5);
     eq('activo con cuatro semanas', r.status, 'active');
   }
 
@@ -139,7 +147,7 @@ console.log('\nel par · cuanto pedir');
       ]]
     ]);
     const r = await P.calculateParOptimal('loc-1', "Tito's", '');
-    eq('la semana repetida no cuenta dos veces', r.avgUsed, 5);
+    eq('la semana repetida no cuenta dos veces', r.avgUsed, 4.8);
   }
 
   {
@@ -246,11 +254,15 @@ console.log('\nel par · cuanto pedir');
     // semana negativa tira la media hacia abajo: la semana siguiente se
     // pediria de menos por una entrega que alguien olvido apuntar.
     //
-    //   semanas: −5, 6, 5, 5   →   acotado: 0, 6, 5, 5   →   media 4
-    //   4 x 1.35 = 5.4  →  6
+    //   semanas: −5, 6, 5, 5   →   acotado: 0, 6, 5, 5
+    //   ponderada 3.4  →  par 5
     //
-    // Sin acotar la media seria 2.75 y el par 4: dos botellas menos cada
-    // semana por un apunte que falto una vez.
+    // Sin acotar, la ponderada seria 1.7 y el par 3: dos botellas menos
+    // cada semana por un apunte que falto una vez.
+    //
+    // El 3.4 queda por debajo de la media plana acotada (4) porque con
+    // solo cuatro semanas el arranque todavia pesa, y el arranque aqui
+    // es el cero. Se corrige solo en cuanto entran mas semanas.
     const P2 = montar([
       ['locations', LOC],
       ['inventory_snapshots', [
@@ -261,8 +273,8 @@ console.log('\nel par · cuanto pedir');
       ]]
     ]);
     const r2 = await P2.calculateParOptimal('loc-1', 'Gin', '');
-    eq('una semana negativa cuenta como cero, no resta', r2.avgUsed, 4);
-    eq('y el par no se desploma', r2.suggestedOptimal, 6);
+    eq('una semana negativa cuenta como cero, no resta', r2.avgUsed, 3.4);
+    eq('y el par no se desploma', r2.suggestedOptimal, 5);
   }
 
   // ═══════════════════════════════════════════════════════════════════

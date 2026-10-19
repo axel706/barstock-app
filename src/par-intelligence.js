@@ -96,7 +96,7 @@
         item_name: r.item || '',
         code: r.code || '',
         vendor: r.vendor || '',
-        on_hand_start: Number(r.onHand || 0),
+        on_hand_start: dec2(r.onHand),
         suggested_at_time: Number(r.suggested || 0),
         ordered: null,
         on_hand_end: null,
@@ -192,8 +192,8 @@
             Prefer: 'return=minimal'
           },
           body: JSON.stringify({
-            on_hand_end: onHandEnd,
-            used: used
+            on_hand_end: dec2(onHandEnd),
+            used: dec2(used)
           })
         }));
       }
@@ -234,6 +234,69 @@
   // count-insight ya lo acotaba con Math.max(0, ...) para sus avisos.
   // Aqui no, y aqui es donde se decide cuanto comprar.
   function usedParaPromedio(r) { return Math.max(0, usedOf(r)); }
+
+  // ── Dos decimales, y no doce ─────────────────────────────────────────
+  //
+  // El on hand sale de dividir mililitros entre el tamaño de la botella,
+  // asi que arrastra toda la cola binaria: 12.345857864. Dos decimales
+  // son el 1% de una botella —unos 7 ml en una de 750— y el deslizador
+  // no se lee con esa precision ni de lejos. Lo demas es ruido que
+  // ensucia cada pantalla donde aparece.
+  function dec2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
+
+  // ── El promedio pondera lo reciente ──────────────────────────────────
+  //
+  // Antes era la media de TODAS las semanas con el mismo peso, y por eso
+  // un producto que despegaba tardaba meses en reflejarse: diez semanas
+  // de 0.5 pesaban mas que dos de 6. El Casa Noble marcaba 0.5/sem con
+  // cinco botellas semanales saliendo por la puerta.
+  //
+  // ALPHA sale de medirlo, no de elegirlo a ojo. En el historial real de
+  // The Crown —87 productos, 1021 semanas, tools/backtest-par.js— se
+  // probaron la media de siempre, ventanas de 4 y 8 semanas, y alfas de
+  // 0.2 a 0.5. Resultado por tipo de producto, en quiebres:
+  //
+  //                      despega    estable    se apaga
+  //     media de todo     16.8%      9.7%       6.3%
+  //     ultimas 4         15.5%     13.1%       8.9%   ← la peor
+  //     ewma 0.2          14.2%      9.4%       4.1%
+  //     ewma 0.3          12.9%      9.4%       4.8%   ← esta
+  //     ewma 0.5          10.3%      9.7%       6.6%
+  //
+  // 0.3 gana a la media de siempre en los TRES grupos. Los alfas altos
+  // son mejores en lo que despega pero peores en todo lo demas, y los
+  // bajos al reves; 0.3 es donde deja de haber que elegir.
+  //
+  // La ventana de 4 semanas, que era la idea intuitiva, resulto peor que
+  // no hacer nada: 126 quiebres contra 101.
+  const ALPHA = 0.3;
+
+  // ── El orden importa, y casi se me pasa ──────────────────────────────
+  //
+  // fetchAllSnapshotRows pide `order=id.asc`, y el id es un UUID: o sea
+  // orden ALEATORIO. Para una media plana da igual. Para una ponderada
+  // es todo — con las semanas desordenadas, "la mas reciente" seria una
+  // cualquiera y el ponderado no significaria nada.
+  //
+  // No daria ningun error. Solo numeros plausibles y sin sentido, que es
+  // exactamente la clase de fallo que este proyecto ya conoce.
+  //
+  // Devuelve media y desviacion con el MISMO peso. Si solo se ponderara
+  // la media, las dos mitades de la formula del par —avg x 1.35 contra
+  // avg + 1.28 desviaciones— hablarian de epocas distintas.
+  function ewmaStats(weekMap) {
+    const semanas = Array.from(weekMap.keys()).sort();   // por fecha, no por id
+    if (!semanas.length) return { avg: 0, stdDev: 0, n: 0 };
+
+    let m = weekMap.get(semanas[0]), v = 0;
+    for (let i = 1; i < semanas.length; i++) {
+      const x = weekMap.get(semanas[i]);
+      const d = x - m;
+      m = ALPHA * x + (1 - ALPHA) * m;
+      v = ALPHA * d * d + (1 - ALPHA) * v;
+    }
+    return { avg: m, stdDev: Math.sqrt(v), n: semanas.length };
+  }
 
   function usedOf(r) {
     const adj = r.on_hand_end_adjusted;
@@ -377,13 +440,19 @@
     const usedValues = Array.from(byWeek.values());
     if (usedValues.length < 4) return { status: 'observing', normalWeeks: usedValues.length };
 
-    const avgUsed = usedValues.reduce((a, b) => a + b, 0) / usedValues.length;
+    const { avg: avgUsed } = ewmaStats(byWeek);
     const suggestedOptimal = Math.ceil(avgUsed * 1.35);
+
+    // El historico plano se conserva para poder DECIR cuanto cambio la
+    // cosa: "5.5/sem, frente a 0.8 historico" explica el par nuevo mucho
+    // mejor que el par nuevo solo.
+    const avgHist = usedValues.reduce((a, b) => a + b, 0) / usedValues.length;
 
     return {
       status: 'active',
       normalWeeks: usedValues.length,
       avgUsed: Math.round(avgUsed * 10) / 10,
+      avgHistorical: Math.round(avgHist * 10) / 10,
       suggestedOptimal
     };
   }
@@ -479,14 +548,20 @@
         }
 
         const usedValues = Array.from(weekMap.values());
-        const avgUsed = usedValues.reduce((a, b) => a + b, 0) / usedValues.length;
 
         // ── Que tan predecible es este producto ──────────────────────
         // Dos articulos pueden promediar 5 y comportarse distinto: uno
         // vende 5,5,5,5 y otro 1,9,2,8. El segundo te deja tirado en las
         // semanas altas si le pones el mismo par. La desviacion mide eso.
-        const variance = usedValues.reduce((s, v) => s + Math.pow(v - avgUsed, 2), 0) / usedValues.length;
-        const stdDev = Math.sqrt(variance);
+        //
+        // Las dos salen ponderadas y del mismo sitio, para que no midan
+        // epocas distintas.
+        const { avg: avgUsed, stdDev } = ewmaStats(weekMap);
+
+        // La media plana se guarda como contexto, no como alternativa:
+        // es lo que permite decir "subio de 0.8 a 5.5" en vez de soltar
+        // dos numeros y que alguien decida.
+        const avgHistorical = usedValues.reduce((a, b) => a + b, 0) / usedValues.length;
         // Coeficiente de variacion: desviacion relativa al promedio, para
         // poder comparar un producto de 0.5/sem con uno de 20/sem.
         const cv = avgUsed > 0 ? stdDev / avgUsed : 0;
@@ -548,6 +623,7 @@
           status: 'active',
           normalWeeks: weekMap.size,
           avgUsed: Math.round(avgUsed * 10) / 10,
+          avgHistorical: Math.round(avgHistorical * 10) / 10,
           suggestedOptimal,
           currentSuggested: current,
           delta,
