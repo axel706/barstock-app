@@ -1,67 +1,9 @@
-/* ── Agregar un producto a la orden en curso ────────────────────────────
+/* ── Agregar un producto a la orden en curso: el panel ──────────────────
  *
- * El boton vive en la barra de la pantalla de ordenes, a la izquierda de
- * Export. En reposo es un circulo; al pasar el mouse crece a la derecha y
- * saca la etiqueta.
- *
- * Crece SOLO hacia la derecha (`margin-right:auto` no, sino el orden del
- * flex y un width que cambia): si creciera centrado, Export se recorreria
- * y el usuario acabaria dando clic donde ya no esta el boton.
- *
- * El ancho se anima, no el `display` de la etiqueta: con display la
- * transicion no corre y el texto aparece de golpe.
+ * El boton NO esta aqui. Comparte gesto con Export y Quick Order, asi
+ * que vive en toolbar-pills.css como .tb-pill--add. Tenerlo duplicado
+ * garantizaba que un dia creciera distinto que los otros dos.
  */
-
-.ato-btn {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 0;
-  height: 52px;
-  width: 52px;
-  padding: 0;
-  border: none;
-  border-radius: 26px;
-  background: #22c55e;
-  color: #06301a;
-  cursor: pointer;
-  overflow: hidden;
-  white-space: nowrap;
-  transition: width .18s ease, background .18s ease;
-}
-
-.ato-btn i {
-  flex: 0 0 52px;
-  font-size: 24px;
-  text-align: center;
-  line-height: 1;
-}
-
-.ato-btn .ato-label {
-  font-size: 14px;
-  font-weight: 700;
-  opacity: 0;
-  padding-right: 20px;
-  transition: opacity .12s ease;
-}
-
-.ato-btn:hover,
-.ato-btn:focus-visible {
-  width: 182px;
-  background: #16a34a;
-}
-
-.ato-btn:hover .ato-label,
-.ato-btn:focus-visible .ato-label { opacity: 1; }
-
-/* Deshabilitado = pestaña ALL o UNKNOWN. Se queda en su sitio y explica
- * por que, en vez de desaparecer y dejar un hueco en la barra. */
-.ato-btn[disabled] {
-  background: rgba(148, 163, 184, .25);
-  color: var(--sub);
-  cursor: not-allowed;
-}
-.ato-btn[disabled]:hover { width: 52px; background: rgba(148, 163, 184, .25); }
 
 /* ── El panel ─────────────────────────────────────────────────────── */
 
@@ -71,6 +13,9 @@
   border: 1px solid rgba(255, 255, 255, .1);
   border-radius: 14px;
   padding: 16px;
+  margin: auto 0;
+  max-height: calc(100vh - 36px);
+  overflow: auto;
 }
 body.light .ato-modal { border-color: rgba(15, 23, 42, .1); }
 
@@ -173,9 +118,3 @@ body.light .ato-row:hover { background: rgba(15, 23, 42, .04); }
 .ato-note { font-size: 10.5px; color: var(--sub); margin-top: 11px; line-height: 1.5; }
 .ato-bad  { color: #ef4444; font-weight: 700; }
 
-@media (max-width: 480px) {
-  .ato-btn { width: 100%; border-radius: 12px; }
-  .ato-btn:hover, .ato-btn:focus-visible { width: 100%; }
-  .ato-btn .ato-label { opacity: 1; }
-  .ato-btn i { flex: 0 0 44px; }
-}

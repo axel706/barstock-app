@@ -1,0 +1,123 @@
+/* ── Botones colapsados de la barra de ordenes ──────────────────────────
+ *
+ * Tres botones que en reposo son un circulo con su icono y al pasar el
+ * mouse crecen a la derecha y sacan la etiqueta.
+ *
+ * Por que la base vive aqui y no repetida en cada sitio: son tres
+ * botones con el mismo gesto. Copiar la animacion tres veces garantiza
+ * que un dia uno de ellos crezca distinto que los otros dos y nadie se
+ * entere hasta verlo.
+ *
+ * Reglas del gesto:
+ *
+ *   · Crece SOLO hacia la derecha. Si creciera centrado, los botones de
+ *     al lado se recorrerian y acabarias dando clic donde ya no esta el
+ *     que querias.
+ *   · Se anima el ancho, no el display de la etiqueta. Con display la
+ *     transicion no corre y el texto aparece de golpe.
+ *   · :focus-visible hace lo mismo que :hover, para que el teclado vea
+ *     lo mismo que el raton.
+ *   · En el telefono no hay hover: ahi se quedan abiertos y a lo ancho.
+ */
+
+.tb-pill {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 52px;
+  width: 52px;
+  padding: 0;
+  border: none;
+  border-radius: 26px;
+  overflow: hidden;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: width .18s ease, background .18s ease;
+}
+
+.tb-pill i {
+  flex: 0 0 52px;
+  font-size: 23px;
+  text-align: center;
+  line-height: 1;
+}
+
+.tb-pill .tb-label {
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0;
+  padding-right: 20px;
+  transition: opacity .12s ease;
+}
+
+.tb-pill:hover .tb-label,
+.tb-pill:focus-visible .tb-label { opacity: 1; }
+
+/* El ancho abierto lo pone cada boton segun lo que diga su etiqueta.
+ * Una medida comun dejaria a uno apretado o a otro con un hueco. */
+.tb-pill:hover,
+.tb-pill:focus-visible { width: var(--tb-open, 180px); }
+
+/* ── Variantes ────────────────────────────────────────────────────── */
+
+.tb-pill--add    { --tb-open: 182px; background: #22c55e; color: #06301a; }
+.tb-pill--add:hover,
+.tb-pill--add:focus-visible { background: #16a34a; }
+
+.tb-pill--export { --tb-open: 158px; background: #38bdf8; color: #04283d; }
+.tb-pill--export:hover,
+.tb-pill--export:focus-visible { background: #0ea5e9; }
+
+.tb-pill--quick  { --tb-open: 186px; background: #064e2b; color: #bbf7d0; }
+.tb-pill--quick:hover,
+.tb-pill--quick:focus-visible { background: #066738; }
+
+/* Deshabilitado: se queda en su sitio y explica por que, en vez de
+ * desaparecer y dejar un hueco en la barra. */
+.tb-pill[disabled] {
+  background: rgba(148, 163, 184, .25);
+  color: var(--sub);
+  cursor: not-allowed;
+}
+.tb-pill[disabled]:hover,
+.tb-pill[disabled]:focus-visible { width: 52px; background: rgba(148, 163, 184, .25); }
+
+/* app.css le da 220px fijos al envoltorio de Export y a Quick Order.
+ * Sin esto el circulo sale estirado. */
+.vendor-controls-bottom .vendor-export-wrap.tb-wrap {
+  width: auto;
+  min-width: 0;
+}
+.vendor-controls-bottom .vendor-export-wrap.tb-wrap #vendorExportMenuBtn {
+  width: 52px;
+  min-height: 52px;
+}
+.vendor-controls-bottom .vendor-export-wrap.tb-wrap #vendorExportMenuBtn:hover,
+.vendor-controls-bottom .vendor-export-wrap.tb-wrap #vendorExportMenuBtn:focus-visible {
+  width: var(--tb-open, 158px);
+}
+.vendor-controls-bottom #quickOrderBtn.tb-pill {
+  min-width: 0;
+  width: 52px;
+}
+.vendor-controls-bottom #quickOrderBtn.tb-pill:hover,
+.vendor-controls-bottom #quickOrderBtn.tb-pill:focus-visible {
+  width: var(--tb-open, 186px);
+}
+
+/* ── Telefono ─────────────────────────────────────────────────────── */
+/* No hay hover que valga: abiertos y a lo ancho, como estaban antes. */
+
+@media (max-width: 480px) {
+  .tb-pill { width: 100%; border-radius: 12px; justify-content: center; }
+  .tb-pill:hover, .tb-pill:focus-visible { width: 100%; }
+  .tb-pill .tb-label { opacity: 1; }
+  .tb-pill i { flex: 0 0 44px; }
+
+  .vendor-controls-bottom .vendor-export-wrap.tb-wrap { width: 100%; }
+  .vendor-controls-bottom .vendor-export-wrap.tb-wrap #vendorExportMenuBtn,
+  .vendor-controls-bottom .vendor-export-wrap.tb-wrap #vendorExportMenuBtn:hover,
+  .vendor-controls-bottom #quickOrderBtn.tb-pill,
+  .vendor-controls-bottom #quickOrderBtn.tb-pill:hover { width: 100%; }
+}

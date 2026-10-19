@@ -43,8 +43,8 @@ const eq = (n, got, esp) =>
 function montar(opts) {
   const o = opts || {};
   const dom = new JSDOM(`<!DOCTYPE html><body>
-    <button type="button" id="addToOrderBtn" class="ato-btn" disabled>
-      <i class="ti ti-plus"></i><span class="ato-label">Add product</span>
+    <button type="button" id="addToOrderBtn" class="tb-pill tb-pill--add" disabled>
+      <i class="ti ti-plus"></i><span class="tb-label">Add product</span>
     </button>
   </body>`, { url: 'https://x.test' });
 

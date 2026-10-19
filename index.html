@@ -43,7 +43,8 @@
   <link rel="stylesheet" href="styles/scan-count.css?v=scan10">
   <link rel="stylesheet" href="styles/count-panel.css?v=cnt20">
   <link rel="stylesheet" href="styles/stock-in.css?v=si1">
-  <link rel="stylesheet" href="styles/add-to-order.css?v=ato1">
+  <link rel="stylesheet" href="styles/toolbar-pills.css?v=pill1">
+  <link rel="stylesheet" href="styles/add-to-order.css?v=ato2">
   <!-- Siempre al final: solo contiene @media (max-width:640px) y necesita
        ganar los empates de especificidad por orden de carga. -->
   <link rel="stylesheet" href="styles/theoretical-usage.css">
@@ -129,7 +130,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261019-152501</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261019-153256</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -316,10 +317,10 @@
         <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2);margin-right:4px"></span>OK (&gt;60%)</span>
       </div>
       <div class="vendor-controls-bottom">
-        <button type="button" id="addToOrderBtn" class="ato-btn" disabled
-                aria-label="Add a product to this order"><i class="ti ti-plus" aria-hidden="true"></i><span class="ato-label">Add product</span></button>
-        <div class="toolbar-group vendor-export-wrap" style="position:relative">
-          <button id="vendorExportMenuBtn" class="primary">Export ▾</button>
+        <button type="button" id="addToOrderBtn" class="tb-pill tb-pill--add" disabled
+                aria-label="Add a product to this order"><i class="ti ti-plus" aria-hidden="true"></i><span class="tb-label">Add product</span></button>
+        <div class="toolbar-group vendor-export-wrap tb-wrap" style="position:relative">
+          <button id="vendorExportMenuBtn" class="tb-pill tb-pill--export" aria-label="Export this order"><i class="ti ti-file-export" aria-hidden="true"></i><span class="tb-label">Export ▾</span></button>
           <div id="vendorExportMenu" class="menu hidden">
             <button id="exportVendorCsvBtn">Export CSV</button>
             <button id="exportVendorXlsxBtn">Export XLSX</button>
@@ -327,7 +328,7 @@
             <button id="exportVendorLoopBtn">Export LOOP (Upload Ready)</button>
           </div>
         </div>
-        <button id="quickOrderBtn" class="success ui-control">Quick Order</button>
+        <button id="quickOrderBtn" class="tb-pill tb-pill--quick ui-control" aria-label="Quick order"><i class="ti ti-bolt" aria-hidden="true"></i><span class="tb-label">Quick Order</span></button>
         <input id="vendorSearchInput" placeholder="Filter current order" />
       </div>
       <div class="vsp-layout">
@@ -4985,7 +4986,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/count-panel.js?v=cnt22"></script>
 <script src="src/barcode-fix.js?v=bf5"></script>
 <script src="src/stock-in.js?v=si1"></script>
-<script src="src/add-to-order.js?v=ato1"></script>
+<script src="src/add-to-order.js?v=ato2"></script>
 <script src="src/count-resume.js?v=cnt12"></script>
 <script src="src/count-insight.js?v=cnt12"></script>
 <script src="src/count-finish.js?v=cnt15"></script>

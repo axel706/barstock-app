@@ -67,7 +67,7 @@
     btn.title = ok
       ? `Add a product to the ${v} order`
       : 'Pick a vendor tab first — this only works on an order you can place.';
-    const lbl = btn.querySelector('.ato-label');
+    const lbl = btn.querySelector('.tb-label');
     if (lbl) lbl.textContent = ok ? 'Add product' : 'Pick a vendor';
   }
 
