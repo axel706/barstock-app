@@ -132,8 +132,62 @@
 }
 .bs-header-line3 .tb-pill--hdr .tb-label { font-size: 13px; padding-right: 14px; }
 
-.tb-pill--import { --tb-open: 112px; }
-.tb-pill--exporth { --tb-open: 112px; }
+/* ── Color ───────────────────────────────────────────────────────────
+ *
+ * En gris no se distinguian entre si ni del resto del encabezado: dos
+ * circulos planos con un icono de archivo cada uno.
+ *
+ * Se tiñen en vez de rellenarse. Un relleno solido de 34px al lado del
+ * boton de ciclo y las insignias de estado —que son texto de 13px sobre
+ * fondo apenas visible— los convertiria en lo mas pesado del encabezado,
+ * que no es lo que son. El fondo va al 14%, y el color de verdad esta en
+ * el icono y el texto.
+ *
+ * Export usa el mismo azul cielo que el Export de la pantalla de
+ * ordenes. Es el mismo verbo, no hay razon para que sean de dos colores.
+ * Import se lleva el violeta para que no se confundan de un vistazo.
+ *
+ * Los dos llevan !important porque .bs-btn-default fija background y
+ * color, y es la clase que les da el borde y el tema. Quitarsela para
+ * ganar la especificidad habria costado mas de lo que arregla.
+ */
+.tb-pill--import {
+  --tb-open: 112px;
+  background: rgba(167, 139, 250, .14) !important;
+  color: #c4b5fd !important;
+  border-color: rgba(167, 139, 250, .32) !important;
+}
+.tb-pill--import:hover,
+.tb-pill--import:focus-visible,
+.tb-pill--import.tb-open { background: rgba(167, 139, 250, .24) !important; }
+
+.tb-pill--exporth {
+  --tb-open: 112px;
+  background: rgba(56, 189, 248, .14) !important;
+  color: #7dd3fc !important;
+  border-color: rgba(56, 189, 248, .32) !important;
+}
+.tb-pill--exporth:hover,
+.tb-pill--exporth:focus-visible,
+.tb-pill--exporth.tb-open { background: rgba(56, 189, 248, .24) !important; }
+
+/* En claro el mismo tono se pierde contra el blanco: el texto baja dos
+ * pasos de la rampa y el fondo sube un poco. */
+body.light .tb-pill--import {
+  background: rgba(124, 58, 237, .10) !important;
+  color: #6d28d9 !important;
+  border-color: rgba(124, 58, 237, .28) !important;
+}
+body.light .tb-pill--import:hover,
+body.light .tb-pill--import.tb-open { background: rgba(124, 58, 237, .18) !important; }
+
+body.light .tb-pill--exporth {
+  background: rgba(2, 132, 199, .10) !important;
+  color: #0369a1 !important;
+  border-color: rgba(2, 132, 199, .28) !important;
+}
+body.light .tb-pill--exporth:hover,
+body.light .tb-pill--exporth.tb-open { background: rgba(2, 132, 199, .18) !important; }
 
 /* ── Telefono ─────────────────────────────────────────────────────── */
 /* No hay hover que valga: abiertos y a lo ancho, como estaban antes. */
