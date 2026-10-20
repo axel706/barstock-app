@@ -43,7 +43,7 @@
   <link rel="stylesheet" href="styles/scan-count.css?v=scan10">
   <link rel="stylesheet" href="styles/count-panel.css?v=cnt21">
   <link rel="stylesheet" href="styles/stock-in.css?v=si1">
-  <link rel="stylesheet" href="styles/toolbar-pills.css?v=pill2">
+  <link rel="stylesheet" href="styles/toolbar-pills.css?v=pill3">
   <link rel="stylesheet" href="styles/add-to-order.css?v=ato2">
   <!-- Siempre al final: solo contiene @media (max-width:640px) y necesita
        ganar los empates de especificidad por orden de carga. -->
@@ -102,14 +102,14 @@
            es quien recibe el archivo. -->
       <input type="file" id="countFile" accept=".xlsx,.xls,.csv" style="display:none;" />
       <div class="bs-toolbar-group">
-        <button id="importMenuBtn" class="bs-btn bs-btn-default"><i class="ti ti-file-import" aria-hidden="true"></i>Import <i class="ti ti-chevron-down" style="font-size:12px" aria-hidden="true"></i></button>
+        <button id="importMenuBtn" class="bs-btn bs-btn-default tb-pill tb-pill--hdr tb-pill--import" aria-label="Import"><i class="ti ti-file-import" aria-hidden="true"></i><span class="tb-label">Import <i class="ti ti-chevron-down" aria-hidden="true"></i></span></button>
         <div id="importMenu" class="bs-dropdown hidden">
           <label class="bs-dd-item bs-dd-filelbl"><i class="ti ti-archive" aria-hidden="true"></i>Import backup<input type="file" id="backupFile" accept=".json" style="display:none;" /></label>
           <label class="bs-dd-item bs-dd-filelbl"><i class="ti ti-chart-bar" aria-hidden="true"></i>Import cost reports<input type="file" id="costReportsImportFile" accept=".json" style="display:none;" onchange="importCostReportsBackup(this)" /></label>
         </div>
       </div>
       <div class="bs-toolbar-group">
-        <button id="exportMenuBtn" class="bs-btn bs-btn-default"><i class="ti ti-file-export" aria-hidden="true"></i>Export <i class="ti ti-chevron-down" style="font-size:12px" aria-hidden="true"></i></button>
+        <button id="exportMenuBtn" class="bs-btn bs-btn-default tb-pill tb-pill--hdr tb-pill--exporth" aria-label="Export"><i class="ti ti-file-export" aria-hidden="true"></i><span class="tb-label">Export <i class="ti ti-chevron-down" aria-hidden="true"></i></span></button>
         <div id="exportMenu" class="bs-dropdown hidden">
           <button id="exportMasterBtn" class="bs-dd-item"><i class="ti ti-table-export" aria-hidden="true"></i>Export master CSV</button>
           <button id="exportNoMatchBtn" class="bs-dd-item"><i class="ti ti-file-x" aria-hidden="true"></i>Export no match CSV</button>
@@ -130,7 +130,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261019-160759</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261020-145429</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -4783,9 +4783,18 @@ const exportMenuBtn=document.getElementById('exportMenuBtn');
 const exportMenu=document.getElementById('exportMenu');
 const bsMoreBtn=document.getElementById('bsMoreBtn');
 const bsMoreMenu=document.getElementById('bsMoreMenu');
-function bsCloseAllMenus(){importMenu.classList.add('hidden');exportMenu.classList.add('hidden');bsMoreMenu.classList.add('hidden');}
-importMenuBtn.addEventListener('click',(e)=>{e.stopPropagation();const wasHidden=importMenu.classList.contains('hidden');bsCloseAllMenus();if(wasHidden)importMenu.classList.remove('hidden');});
-exportMenuBtn.addEventListener('click',(e)=>{e.stopPropagation();const wasHidden=exportMenu.classList.contains('hidden');bsCloseAllMenus();if(wasHidden)exportMenu.classList.remove('hidden');});
+// Import y Export son pildoras colapsadas: en reposo son un circulo y se
+// abren al pasar el mouse. Con el menu desplegado hay que mantenerlas
+// abiertas a la fuerza, porque en cuanto el raton baja al menu el boton
+// deja de estar en :hover y se cerraria de golpe dejando un desplegable
+// de 210px colgando de un circulo.
+function bsSyncPill(btn, abierto){ if(btn) btn.classList.toggle('tb-open', !!abierto); }
+function bsCloseAllMenus(){
+  importMenu.classList.add('hidden');exportMenu.classList.add('hidden');bsMoreMenu.classList.add('hidden');
+  bsSyncPill(importMenuBtn,false);bsSyncPill(exportMenuBtn,false);
+}
+importMenuBtn.addEventListener('click',(e)=>{e.stopPropagation();const wasHidden=importMenu.classList.contains('hidden');bsCloseAllMenus();if(wasHidden){importMenu.classList.remove('hidden');bsSyncPill(importMenuBtn,true);}});
+exportMenuBtn.addEventListener('click',(e)=>{e.stopPropagation();const wasHidden=exportMenu.classList.contains('hidden');bsCloseAllMenus();if(wasHidden){exportMenu.classList.remove('hidden');bsSyncPill(exportMenuBtn,true);}});
 bsMoreBtn.addEventListener('click',(e)=>{e.stopPropagation();const wasHidden=bsMoreMenu.classList.contains('hidden');bsCloseAllMenus();if(wasHidden)bsMoreMenu.classList.remove('hidden');});
 importMenu.addEventListener('click',(e)=>e.stopPropagation());
 exportMenu.addEventListener('click',(e)=>e.stopPropagation());

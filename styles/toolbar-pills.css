@@ -25,43 +25,58 @@
  */
 
 .tb-pill {
+  /* --tb-size manda: el circulo es cuadrado y el radio es la mitad, asi
+   * que cambiando una sola medida sale la version del encabezado sin
+   * duplicar la animacion. */
+  --tb-size: 52px;
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 0;
-  height: 52px;
-  width: 52px;
+  height: var(--tb-size);
+  width: var(--tb-size);
   padding: 0;
   border: none;
-  border-radius: 26px;
+  border-radius: calc(var(--tb-size) / 2);
   overflow: hidden;
   white-space: nowrap;
   cursor: pointer;
   transition: width .18s ease, background .18s ease;
 }
 
-.tb-pill i {
-  flex: 0 0 52px;
-  font-size: 23px;
+/* Solo el PRIMER icono es el del circulo. Import y Export llevan ademas
+ * un chevron al final, y si entrara por esta regla ocuparia otro ancho
+ * completo y empujaria la etiqueta fuera. */
+.tb-pill > i:first-child {
+  flex: 0 0 var(--tb-size);
+  font-size: calc(var(--tb-size) * .44);
   text-align: center;
   line-height: 1;
 }
 
 .tb-pill .tb-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: 14px;
   font-weight: 700;
   opacity: 0;
   padding-right: 20px;
   transition: opacity .12s ease;
 }
+.tb-pill .tb-label i { font-size: 12px; }
 
 .tb-pill:hover .tb-label,
-.tb-pill:focus-visible .tb-label { opacity: 1; }
+.tb-pill:focus-visible .tb-label,
+.tb-pill.tb-open .tb-label { opacity: 1; }
 
 /* El ancho abierto lo pone cada boton segun lo que diga su etiqueta.
  * Una medida comun dejaria a uno apretado o a otro con un hueco. */
+/* .tb-open la pone el JS mientras el desplegable esta abierto: sin ella
+ * el boton se cierra en cuanto el raton baja al menu. */
 .tb-pill:hover,
-.tb-pill:focus-visible { width: var(--tb-open, 180px); }
+.tb-pill:focus-visible,
+.tb-pill.tb-open { width: var(--tb-open, 180px); }
 
 /* ── Variantes ────────────────────────────────────────────────────── */
 
@@ -83,7 +98,7 @@
   cursor: not-allowed;
 }
 .tb-pill[disabled]:hover,
-.tb-pill[disabled]:focus-visible { width: 52px; background: rgba(148, 163, 184, .25); }
+.tb-pill[disabled]:focus-visible { width: var(--tb-size); background: rgba(148, 163, 184, .25); }
 
 /* app.css le da 220px fijos al envoltorio de Export y a Quick Order.
  * Sin esto el circulo sale estirado. */
@@ -100,6 +115,26 @@
   width: var(--tb-open, 158px);
 }
 
+/* ── El encabezado ────────────────────────────────────────────────── */
+/*
+ * Import y Export del header. Mismo gesto, otra talla: aqui conviven con
+ * el boton de ciclo y las insignias de estado, que son de 13px. Un
+ * circulo de 52px al lado de eso no seria el mismo boton mas redondo,
+ * seria otra escala.
+ *
+ * Conservan .bs-btn para heredar el color y el borde del tema. Lo unico
+ * que se les quita es el padding, que pelea con el ancho animado.
+ */
+.bs-header-line3 .tb-pill--hdr {
+  --tb-size: 34px;
+  padding: 0;
+  gap: 0;
+}
+.bs-header-line3 .tb-pill--hdr .tb-label { font-size: 13px; padding-right: 14px; }
+
+.tb-pill--import { --tb-open: 112px; }
+.tb-pill--exporth { --tb-open: 112px; }
+
 /* ── Telefono ─────────────────────────────────────────────────────── */
 /* No hay hover que valga: abiertos y a lo ancho, como estaban antes. */
 
@@ -107,7 +142,13 @@
   .tb-pill { width: 100%; border-radius: 12px; justify-content: center; }
   .tb-pill:hover, .tb-pill:focus-visible { width: 100%; }
   .tb-pill .tb-label { opacity: 1; }
-  .tb-pill i { flex: 0 0 44px; }
+  .tb-pill > i:first-child { flex: 0 0 44px; }
+
+  /* En el encabezado no se estiran al 100%: comparten renglon con el
+   * boton de ciclo y las insignias. Se quedan a su ancho abierto. */
+  .bs-header-line3 .tb-pill--hdr,
+  .bs-header-line3 .tb-pill--hdr:hover { width: var(--tb-open); border-radius: 999px; }
+  .bs-header-line3 .tb-pill--hdr > i:first-child { flex: 0 0 var(--tb-size); }
 
   .vendor-controls-bottom .vendor-export-wrap.tb-wrap { width: 100%; }
   .vendor-controls-bottom .vendor-export-wrap.tb-wrap #vendorExportMenuBtn,
