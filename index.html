@@ -130,7 +130,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261020-145958</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261020-224535</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -1130,6 +1130,7 @@ state.orderHistory = Array.isArray(state.orderHistory) ? state.orderHistory : []
 state.placedOrders = Array.isArray(state.placedOrders) ? state.placedOrders : [];
 let aliases = loadAliases();
 let activeVendorTab = 'ALL';
+let invVendorFilter = 'ALL';   // el filtro de la pantalla de inventario
 let currentNoMatchIndex = null;
 let currentLinkMasterIndex = null;
 let currentEditIndex = null;
@@ -1427,6 +1428,10 @@ async function hydrateVendorMappings(){
   }
   // Redibujar tabs que dependen del mapeo (pueden haberse dibujado antes de cargar)
   try {
+    // Los <select> tambien: hasta ahora solo se redibujaban los chips, y
+    // de ahi venia que un proveedor nuevo saliera en las pestañas pero no
+    // en ningun desplegable.
+    if (typeof fillAllVendorSelects === 'function') fillAllVendorSelects();
     if (typeof render === 'function') render();
     if (typeof renderHistoryVendorTabs === 'function') renderHistoryVendorTabs();
   } catch (e) { console.warn('Re-render after mapping load failed', e); }
@@ -1458,6 +1463,56 @@ function getVendorsWithUnknown(){
 function getVendorsForFilter(){
   return ['ALL', ...getVendorsWithUnknown()];
 }
+// ── Los <select> de proveedor se llenan solos ────────────────────────
+//
+// Habia CINCO listas de proveedores escritas a mano en el HTML —el
+// filtro de inventario, nuevo articulo, editar articulo, el de "no
+// match" y el del escaner de facturas— con los cuatro de siempre. La
+// lista de verdad vive en `vendor_mappings` desde hace tiempo, y los
+// chips de las pestañas ya salian de ahi. Los <select> no.
+//
+// Por eso un proveedor nuevo se veia en las pestañas y no existia en
+// ningun desplegable.
+//
+// Y el fallo no avisaba de ninguna forma: asignar `select.value` a algo
+// que no esta entre sus <option> no lanza error, simplemente no hace
+// nada. El filtro se quedaba donde estaba y el chip se pintaba activo
+// igual.
+//
+// ── Por que se conserva el valor actual aunque ya no este en la lista ─
+//
+// Si un articulo es de un proveedor que se quito del mapeo y su <option>
+// no existe, el navegador deja el select en la PRIMERA opcion. Abrir
+// "editar" y guardar sin tocar nada le cambiaria el proveedor al
+// articulo en silencio. Ese valor se añade al final marcado, para que se
+// vea que esta fuera de la lista en vez de desaparecer.
+function fillVendorSelect(id, opts) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const o = opts || {};
+  const previo = el.value;
+  const lista = o.conAll ? getVendorsForFilter() : getVendorsWithUnknown();
+  const quiero = o.valor !== undefined && o.valor !== null && o.valor !== ''
+    ? String(o.valor).toUpperCase() : previo;
+
+  const html = lista.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v === 'ALL' ? 'All Vendors' : v)}</option>`);
+  if (quiero && !lista.includes(quiero)) {
+    html.push(`<option value="${escapeHtml(quiero)}">${escapeHtml(quiero)} (not in vendor list)</option>`);
+  }
+  el.innerHTML = html.join('');
+  if (quiero && Array.from(el.options).some(x => x.value === quiero)) el.value = quiero;
+}
+window.fillVendorSelect = fillVendorSelect;
+
+function fillAllVendorSelects() {
+  fillVendorSelect('vendorFilter', { conAll: true, valor: invVendorFilter });
+  fillVendorSelect('newItemVendor');
+  fillVendorSelect('editVendor');
+  fillVendorSelect('nmVendor');
+  fillVendorSelect('invoiceVendorSelect');
+}
+window.fillAllVendorSelects = fillAllVendorSelects;
+
 window.getActiveVendors = getActiveVendors;
 window.getVendorsWithUnknown = getVendorsWithUnknown;
 window.getVendorsForFilter = getVendorsForFilter;
@@ -1963,6 +2018,7 @@ function restoreFocus(){
   }
 }
 function openInvoiceScanModal(){
+  fillVendorSelect('invoiceVendorSelect');
   rememberFocus();
   document.getElementById('invoiceScanModalBg').classList.remove('hidden');
   document.getElementById('invoiceScanStatus').textContent = 'Ready.';
@@ -2546,7 +2602,7 @@ function getParChipHtml(row){
 
 function render(){
   const q = normalizeName(document.getElementById('searchInput')?.value || '');
-  const vendorFilter = document.getElementById('vendorFilter')?.value || 'ALL';
+  const vendorFilter = invVendorFilter || 'ALL';
   const inventoryVendors = getVendorsForFilter();
   document.getElementById('inventoryVendorTabs').innerHTML = inventoryVendors.map(v => `<div class="oh-filter-chip ${vendorFilter===v?'active':''}" onclick="setInventoryVendorFilter('${escapeJsAttr(v)}')">${v==='ALL'?'ALL':v}</div>`).join('');
   const filtered = state.master.filter(r => (!q || r.itemNorm.includes(q) || normalizeName(r.code).includes(q)) && (vendorFilter==='ALL' || r.vendor===vendorFilter));
@@ -2895,7 +2951,20 @@ function setVendorTab(v){
   if(area) area.classList.toggle('vendor-hidden', v !== 'ALL');
 }
 window.setVendorTab = setVendorTab;
-function setInventoryVendorFilter(v){ document.getElementById('vendorFilter').value = v; render(); }
+// El filtro vive en una variable, no en el value de un <select> oculto.
+// Guardarlo ahi significaba que el filtro solo podia valer lo que
+// alguien hubiera escrito a mano en el HTML, y fallaba sin ruido para
+// cualquier otra cosa. El <select> se mantiene sincronizado porque hay
+// un listener de 'change' colgado de el.
+function setInventoryVendorFilter(v){
+  invVendorFilter = String(v || 'ALL');
+  const el = document.getElementById('vendorFilter');
+  if (el) {
+    if (!Array.from(el.options).some(o => o.value === invVendorFilter)) fillVendorSelect('vendorFilter', { conAll: true, valor: invVendorFilter });
+    el.value = invVendorFilter;
+  }
+  render();
+}
 window.setInventoryVendorFilter = setInventoryVendorFilter;
 
 async function loadMasterFile(file){
@@ -3139,7 +3208,7 @@ function openNoMatchModal(index){
   const nm = state.noMatches[index];
   document.getElementById('nmName').value = nm.rawItem;
   document.getElementById('nmCode').value = '';
-  document.getElementById('nmVendor').value = 'UNKNOWN';
+  fillVendorSelect('nmVendor', { valor: 'UNKNOWN' });
   document.getElementById('nmOnHand').value = nm.count;
   document.getElementById('nmSuggested').value = '';
   document.getElementById('modalBg').classList.remove('hidden');
@@ -3318,6 +3387,7 @@ async function saveNoMatchAsItem(){
 }
 
 function openNewItemModal(){
+  fillVendorSelect('newItemVendor', { valor: 'UNKNOWN' });
   const codeEl = document.getElementById('newItemCode');
   const vendorEl = document.getElementById('newItemVendor');
   const nameEl = document.getElementById('newItemName');
@@ -4038,7 +4108,10 @@ function openEditModal(index){
   currentEditIndex = index;
   document.getElementById('editCode').value = row.code || '';
   document.getElementById('editName').value = row.item || '';
-  document.getElementById('editVendor').value = row.vendor || 'UNKNOWN';
+  // Llenar antes de asignar: si la <option> no existe, el value no prende
+  // y el select se queda en la primera opcion. Guardar sin tocar nada le
+  // cambiaria el proveedor al articulo sin que nadie lo pidiera.
+  fillVendorSelect('editVendor', { valor: row.vendor || 'UNKNOWN' });
   document.getElementById('editOnHand').value = row.onHand ?? 0;
   document.getElementById('editSuggested').value = row.suggested ?? 0;
   document.getElementById('editValue').value = row.value ?? 0;
@@ -4844,7 +4917,7 @@ document.getElementById('ohImportFile').addEventListener('change', async e => {
   e.target.value = '';
 });
 document.getElementById('searchInput').addEventListener('input', render);
-document.getElementById('vendorFilter').addEventListener('change', render);
+document.getElementById('vendorFilter').addEventListener('change', (e) => { invVendorFilter = e.target.value || 'ALL'; render(); });
 document.getElementById('vendorSearchInput').addEventListener('input', render);
 document.getElementById('placeOrderBtn').addEventListener('click', ()=>placeCurrentOrder().catch(err=>{console.error(err); alert('Could not place vendor order.'); setStatus('Error placing vendor order.');}));
 
