@@ -3926,3 +3926,64 @@ body.light .edit-shape svg path{ fill:rgba(15,23,42,.03); stroke:rgba(15,23,42,.
 }
 .cp-shape:active{ transform:translateY(1px); }
 body.light .cp-shape{ border-color:rgba(15,23,42,.14); background:rgba(15,23,42,.03); }
+
+/* ── Ajustes · Zonas ─────────────────────────────────────────────────
+ *
+ * Lista editable con orden, porque el orden es el de los chips del
+ * escaner y durante un conteo ese chip se toca cientos de veces.
+ */
+.zs-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.zs-ord { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
+.zs-ord button {
+  width: 26px; height: 18px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--muted); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 6px; color: var(--sub); cursor: pointer; font-size: 12px;
+}
+.zs-ord button[disabled] { opacity: .3; cursor: default; }
+body.light .zs-ord button { border-color: rgba(15,23,42,.12); }
+
+/* 16px: Safari hace zoom en cualquier campo por debajo de eso. */
+.zs-name { flex: 1; min-width: 0; font-size: 16px; padding: 8px 10px; border-radius: 8px; }
+
+.zs-del {
+  flex: 0 0 auto; width: 34px; height: 34px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: 1px solid rgba(239,68,68,.3);
+  border-radius: 8px; color: #f87171; cursor: pointer;
+}
+
+.zs-empty {
+  font-size: 13px; color: var(--sub); line-height: 1.6;
+  padding: 16px; text-align: center;
+  border: 1px dashed rgba(255,255,255,.14); border-radius: 12px;
+}
+body.light .zs-empty { border-color: rgba(15,23,42,.14); }
+
+.zs-actions { display: flex; gap: 8px; margin-top: 14px; }
+.zs-actions button { flex: 1; padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.zs-actions button[disabled] { opacity: .45; cursor: default; }
+
+.zs-note { font-size: 12px; color: var(--sub); margin-top: 10px; min-height: 16px; }
+.zs-note.zs-bad { color: #f87171; font-weight: 700; }
+
+/* ── Donde esta la botella ───────────────────────────────────────────
+ *
+ * El reparto por zona del ultimo conteo, en los paneles de articulo.
+ */
+.zw { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.08); }
+body.light .zw { border-top-color: rgba(15,23,42,.08); }
+
+.zw-row { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; padding: 3px 0; }
+.zw-z { flex: 1; min-width: 0; color: var(--sub); }
+.zw-n { font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* Una zona en cero se enseña, no se esconde: "no hay en el closet" es
+ * justo la respuesta que alguien vino a buscar. */
+.zw-zero { opacity: .45; }
+
+.zw-at { font-size: 10.5px; color: var(--sub); margin-top: 6px; }
+/* Pasada una semana el dato es una pista, no un hecho. */
+.zw-at.zw-old { color: #fbbf24; }
+
+.zw-wait { font-size: 11px; color: var(--sub); margin-top: 10px; opacity: .7; }

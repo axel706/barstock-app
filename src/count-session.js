@@ -129,6 +129,13 @@
     if (!forzar && ahora - _ultimoToque < TOQUE_MS) return;
     _ultimoToque = ahora;
     marcarNube(undefined, { counting_touched_at: new Date().toISOString() });
+    // El reparto por zona viaja en el mismo pulso. Esperar al cierre
+    // dejaria sin respuesta las preguntas de "¿hay o no hay?" que llegan
+    // el mismo dia del conteo. Sin await y con su propio catch: que el
+    // reparto falle no puede tocar el conteo.
+    if (window.BarStockZones && window.BarStockZones.activas()) {
+      Promise.resolve(window.BarStockZones.sincronizar()).catch(() => {});
+    }
   }
 
   function data() { if (!_data) load(); return _data; }
@@ -177,6 +184,42 @@
     const size = Number(ordenSize) || 0;
     if (!size) return 0;
     return mlFor(item, size) / size;
+  }
+
+  // ── El reparto por zona ──────────────────────────────────────────────
+  //
+  // Mismo criterio que bottlesFor: se suma en mililitros y se divide al
+  // final. Sumar botellas por zona y luego juntarlas volveria a mezclar
+  // formatos, que es el fallo que costo el conteo del 3.7.
+  //
+  // Las pasadas sin zona van a '' y la pantalla las enseña como "sin
+  // zona". No se reparten entre las demas ni se tiran: inventarles un
+  // sitio seria peor que admitir que no se sabe.
+  //
+  // La suma de las zonas da SIEMPRE bottlesFor. Es la propiedad que hay
+  // que proteger: si no cuadra, el desglose contradice al total en la
+  // misma pantalla.
+  function bottlesByZone(item, ordenSize) {
+    const size = Number(ordenSize) || 0;
+    const out = {};
+    if (!size) return out;
+    for (const p of passesOf(item)) {
+      const z = p.zona || '';
+      out[z] = (out[z] || 0) + mlDePasada(p, size) / size;
+    }
+    return out;
+  }
+
+  // Todas las zonas que aparecen en este conteo, hayan sido
+  // configuradas o no. Una zona que se quito de ajustes a mitad del
+  // conteo sigue teniendo botellas contadas, y esconderlas seria perder
+  // parte del inventario sin avisar.
+  function zonesUsed() {
+    const set = new Set();
+    for (const k of Object.keys(data().items || {})) {
+      for (const p of passesOf(k)) if (p.zona) set.add(p.zona);
+    }
+    return Array.from(set);
   }
 
   // ── Del formato viejo al de pasadas ──────────────────────────────────
@@ -385,7 +428,7 @@
   // ── Escribir ─────────────────────────────────────────────────────────
   // Una pasada limpia: selladas no negativas, abiertas entre 0 y 1, y
   // fuera las abiertas en cero — una botella vacía no se cuenta, no está.
-  function limpiarPasada(sealed, opens, sizeMl) {
+  function limpiarPasada(sealed, opens, sizeMl, zona) {
     const p = {
       sealed: Math.max(0, Number(sealed) || 0),
       opens: (opens || [])
@@ -397,6 +440,15 @@
     // el del producto", que es lo correcto cuando se contó por nombre.
     const s = Number(sizeMl);
     if (s > 0) p.sizeMl = s;
+    // La zona donde se escaneó. Una pasada YA ERA "lo que conté en un
+    // sitio en un momento", asi que la zona no cambia el modelo: pone
+    // nombre a algo que la pasada ya significaba.
+    //
+    // Si no hay zonas configuradas no se guarda nada y el campo no
+    // existe, igual que sizeMl. Una pasada sin zona no es un error, es
+    // un conteo de los de siempre.
+    const z = String(zona || '').trim();
+    if (z) p.zona = z;
     return p;
   }
 
@@ -416,10 +468,10 @@
   //
   // Lo que hace el panel al dar Next. NO reemplaza: si el artículo ya
   // tenía pasadas, esta se añade al final y el total sube.
-  function addPass(item, sealed, opens, sizeMl) {
+  function addPass(item, sealed, opens, sizeMl, zona) {
     const d = data();
     const habia = !!Object.keys(d.items).length;
-    const p = limpiarPasada(sealed, opens, sizeMl);
+    const p = limpiarPasada(sealed, opens, sizeMl, zona);
     if (vacia(p)) return null;
 
     if (!d.items[item]) d.items[item] = { passes: [] };
@@ -434,10 +486,13 @@
   // El único camino por el que algo ya guardado cambia de valor, y se
   // llega a él a propósito desde la hoja de detalle. Dejarla vacía es
   // borrarla: es lo que significa poner todo a cero.
-  function replacePass(item, idx, sealed, opens, sizeMl) {
+  function replacePass(item, idx, sealed, opens, sizeMl, zona) {
     const e = data().items[item];
     if (!e || !e.passes[idx]) return false;
-    const p = limpiarPasada(sealed, opens, sizeMl);
+    // Sin zona explicita se conserva la que tenia. Corregir el numero de
+    // botellas de una pasada no deberia moverla de sitio.
+    const z = zona === undefined ? e.passes[idx].zona : zona;
+    const p = limpiarPasada(sealed, opens, sizeMl, z);
     if (vacia(p)) return removePass(item, idx);
     e.passes[idx] = p;
     save();
@@ -513,6 +568,7 @@
     passesOf, addPass, replacePass, removePass,
     mlFor, bottlesFor, countedItems, size, startedAt, summary,
     pause, resume, isPaused, pausedAt, exists, progress, missingRows,
+    bottlesByZone, zonesUsed,
     updatedAt
   };
 })();

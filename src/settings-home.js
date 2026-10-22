@@ -36,6 +36,13 @@
       ]
     },
     {
+      title: 'Counting',
+      color: '#f59e0b',
+      tiles: [
+        { id: 'zones', icon: 'ti-map-pin', name: 'Zones', fallback: 'Where the bottles are' }
+      ]
+    },
+    {
       title: 'Appearance',
       color: '#22d3ee',
       tiles: [
@@ -70,6 +77,13 @@
       if (n) v.orderDefaults = `${n} vendors, each its own`;
     }
 
+    // Si la lista ya se cargo se enseña; si no, el fallback. No se pide
+    // aqui: esta funcion es la rapida y una consulta la volveria lenta.
+    if (window.BarStockZones) {
+      const z = window.BarStockZones.lista();
+      if (z.length) v.zones = z.slice(0, 3).join(' \u00b7 ') + (z.length > 3 ? ' +' + (z.length - 3) : '');
+    }
+
     if (window.BarStockTypeface) {
       const f = window.BarStockTypeface.FONTS.find(x => x.id === window.BarStockTypeface.current());
       if (f) v.appearance = f.name;
@@ -83,6 +97,14 @@
   // consultando la nube es peor que una con subtítulos genéricos.
   async function slowValues() {
     const out = {};
+    try {
+      if (window.BarStockZones) {
+        const z = await window.BarStockZones.cargar();
+        out.zones = z.length
+          ? z.slice(0, 3).join(' \u00b7 ') + (z.length > 3 ? ' +' + (z.length - 3) : '')
+          : 'Off \u00b7 counting as usual';
+      }
+    } catch (e) {}
     try {
       if (window.BarStockSenderProfile?.getProfile) {
         const p = await window.BarStockSenderProfile.getProfile();

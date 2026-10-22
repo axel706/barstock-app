@@ -84,6 +84,24 @@
       ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
   }
 
+  // ── Pintar los chips de zona ─────────────────────────────────────────
+  function pintarZonas() {
+    const host = $('scZones');
+    const Z = window.BarStockZones;
+    if (!host) return;
+    if (!Z || !Z.activas()) { host.innerHTML = ''; host.classList.add('hidden'); return; }
+
+    const act = Z.paraPasada();
+    host.classList.remove('hidden');
+    host.innerHTML = Z.lista().map(z =>
+      `<button type="button" class="sc-zone${z === act ? ' on' : ''}" data-z="${esc(z)}"
+               aria-pressed="${z === act}">${esc(z)}</button>`).join('');
+
+    host.querySelectorAll('.sc-zone').forEach(b => {
+      b.onclick = () => { Z.setActiva(b.dataset.z); pintarZonas(); };
+    });
+  }
+
   function build() {
     if ($('scOverlay')) return;
     const el = document.createElement('div');
@@ -99,6 +117,16 @@
       </div>
 
       <div class="sc-bar"><i id="scBar"></i></div>
+
+      <!-- ── Las zonas ────────────────────────────────────────────────
+           Arriba del todo y siempre visibles, no en un menu. Si se te
+           olvida cambiarla, todo lo que escanees cae en la zona
+           equivocada y el desglose miente SIN DAR NINGUN ERROR: el total
+           sigue bien, solo esta mal repartido. Un ajuste que falla en
+           silencio tiene que estar donde no se pueda ignorar.
+
+           Vacio y sin ocupar sitio si no hay zonas configuradas. -->
+      <div class="sc-zones" id="scZones" role="group" aria-label="Zone"></div>
 
       <div class="sc-stage" id="scStage">
         <video id="scVid" playsinline muted autoplay></video>
@@ -898,6 +926,14 @@
     if (window.BarStockCountSession) window.BarStockCountSession.resume();
     times = []; lastCode = ''; frames = 0; stats();
     loadLearned();   // sin await: que la camara no espere a la red
+
+    // Las zonas igual: se pintan vacias y aparecen cuando llega la
+    // lista. Esperarlas retrasaria el arranque de la camara por una tira
+    // de chips.
+    pintarZonas();
+    if (window.BarStockZones) {
+      window.BarStockZones.cargar().then(pintarZonas).catch(() => {});
+    }
 
     if (!window.isSecureContext) return diag('Connection is not secure, the camera cannot start.', 'sc-bad');
     if (!navigator.mediaDevices?.getUserMedia) return diag('This browser gives no camera access.', 'sc-bad');

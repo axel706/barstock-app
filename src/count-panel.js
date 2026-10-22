@@ -853,7 +853,10 @@
       } else {
         // Sumando: se añade. Una pasada sin nada no deja rastro, así que
         // abrir un producto, mirarlo y dar Next no lo marca como contado.
-        S().addPass(_row.item, _sealed, _opens, _sizeMl);
+        // La zona activa del escaner. Vacia si la funcion esta apagada,
+        // y entonces la pasada se guarda sin zona, como siempre.
+        const Z = window.BarStockZones;
+        S().addPass(_row.item, _sealed, _opens, _sizeMl, Z ? Z.paraPasada() : '');
       }
     }
     closeSheet();

@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/tables.css">
   <link rel="stylesheet" href="styles/buttons.css">
-  <link rel="stylesheet" href="styles/app.css?v=sil3">
+  <link rel="stylesheet" href="styles/app.css?v=sil4">
   <link rel="stylesheet" href="styles/consumption-match.css?v=cm14">
   <link rel="stylesheet" href="styles/order-history.css">
 
@@ -40,7 +40,7 @@
   <link rel="stylesheet" href="styles/pour-iq.css?v=piq1">
   <link rel="stylesheet" href="styles/admin.css?v=adm3">
   <link rel="stylesheet" href="styles/weekly-cycle.css?v=cyc5">
-  <link rel="stylesheet" href="styles/scan-count.css?v=scan10">
+  <link rel="stylesheet" href="styles/scan-count.css?v=scan11">
   <link rel="stylesheet" href="styles/count-panel.css?v=cnt21">
   <link rel="stylesheet" href="styles/stock-in.css?v=si1">
   <link rel="stylesheet" href="styles/toolbar-pills.css?v=pill5">
@@ -130,7 +130,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261022-135723</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261022-142719</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -3579,6 +3579,9 @@ async function openInvPanel(idx) {
   const parKey = `${r.item}||${r.code || ''}`;
   const parData = window.parAdjustments ? window.parAdjustments.get(parKey) : null;
   const avgUsed = parData?.avgUsed ?? null;
+  // Un id distinto por panel: los dos pueden existir en el DOM a la vez
+  // y con el mismo id getElementById llenaria siempre el primero.
+  const zonaHost = 'zw-' + Math.random().toString(36).slice(2, 9);
   const optimal = parData?.suggestedOptimal ?? null;
   const adjustment = parData?.adjustment ?? 0;
   const status = parData && parData.status === 'active' ? (adjustment < 0 ? 'over' : adjustment > 0 ? 'under' : 'on') : (parData?.status ?? null);
@@ -3644,6 +3647,9 @@ async function openInvPanel(idx) {
         <div class="inv-panel-stat"><div class="inv-panel-stat-label">SUGGESTED</div><div class="inv-panel-stat-value">${fmt(r.suggested)}</div></div>
         <div class="inv-panel-stat"><div class="inv-panel-stat-label">AVG/WK</div><div class="inv-panel-stat-value" style="color:#38bdf8">${avgUsed !== null ? avgUsed : '—'}</div></div>
       </div>
+      <!-- Donde esta. Vacio si no hay zonas configuradas. Se rellena
+           despues, sin bloquear el panel: es una consulta mas. -->
+      <div id="${zonaHost}"></div>
     </div>
     <div class="inv-panel-section" style="flex:1">
       <div class="inv-panel-row"><span class="inv-panel-row-label">Optimal par</span><span class="inv-panel-row-value" style="color:${optimal !== null ? '#22c55e' : 'var(--sub)'}">${optimal !== null ? optimal : '—'}</span></div>
@@ -3672,6 +3678,10 @@ async function openInvPanel(idx) {
         <button style="color:#ef4444" onclick="quickZeroSuggested(${idx})">Zero suggested</button>
       </div>
     </div>`;
+
+  // Despues de pintar: el reparto por zona llega cuando llegue. No se
+  // espera porque el panel ya tiene todo lo demas listo.
+  if (window.BarStockZones) window.BarStockZones.pintarEn(zonaHost, r.item);
 }
 window.openInvPanel = openInvPanel;
 
@@ -3721,6 +3731,9 @@ async function openVendorItemPanel(idx) {
   const parKey = `${r.item}||${r.code || ''}`;
   const parData = window.parAdjustments ? window.parAdjustments.get(parKey) : null;
   const avgUsed = parData?.avgUsed ?? null;
+  // Un id distinto por panel: los dos pueden existir en el DOM a la vez
+  // y con el mismo id getElementById llenaria siempre el primero.
+  const zonaHost = 'zw-' + Math.random().toString(36).slice(2, 9);
   const optimal = parData?.suggestedOptimal ?? null;
   const adjustment = parData?.adjustment ?? 0;
   const status = parData && parData.status === 'active' ? (adjustment < 0 ? 'over' : adjustment > 0 ? 'under' : 'on') : (parData?.status ?? null);
@@ -3752,6 +3765,9 @@ async function openVendorItemPanel(idx) {
         <div class="inv-panel-stat"><div class="inv-panel-stat-label">SUGGESTED</div><div class="inv-panel-stat-value">${fmt(r.suggested)}</div></div>
         <div class="inv-panel-stat"><div class="inv-panel-stat-label">AVG/WK</div><div class="inv-panel-stat-value" style="color:#38bdf8">${avgUsed !== null ? avgUsed : '—'}</div></div>
       </div>
+      <!-- Donde esta. Vacio si no hay zonas configuradas. Se rellena
+           despues, sin bloquear el panel: es una consulta mas. -->
+      <div id="${zonaHost}"></div>
     </div>
     <div class="inv-panel-section" style="flex:1">
       <div class="inv-panel-row"><span class="inv-panel-row-label">Optimal par</span><span class="inv-panel-row-value" style="color:${optimal !== null ? '#22c55e' : 'var(--sub)'}">${optimal !== null ? optimal : '—'}</span></div>
@@ -3770,6 +3786,8 @@ async function openVendorItemPanel(idx) {
         <button onclick="resetFinalOrder(${masterIndex});_vendorSelectedIdx=null;openVendorItemPanel(${masterIndex})" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0">Auto</button>
       </div>
     </div>`;
+
+  if (window.BarStockZones) window.BarStockZones.pintarEn(zonaHost, r.item);
 }
 window.openVendorItemPanel = openVendorItemPanel;
 
@@ -5097,16 +5115,18 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/settings-home.js?v=sh2"></script>
 <script src="src/inventory-backup.js?v=bk1"></script>
 <script src="src/weekly-cycle.js?v=cyc9"></script>
-<script src="src/count-session.js?v=cnt16"></script>
-<script src="src/count-panel.js?v=cnt22"></script>
+<script src="src/count-session.js?v=cnt17"></script>
+<script src="src/count-panel.js?v=cnt23"></script>
 <script src="src/barcode-fix.js?v=bf5"></script>
 <script src="src/stock-in.js?v=si1"></script>
 <script src="src/add-to-order.js?v=ato2"></script>
 <script src="src/dormant-items.js?v=dorm1"></script>
+<script src="src/zones.js?v=zon1"></script>
+<script src="src/settings-zones.js?v=zon1"></script>
 <script src="src/count-resume.js?v=cnt12"></script>
 <script src="src/count-insight.js?v=cnt13"></script>
 <script src="src/count-finish.js?v=cnt16"></script>
-<script src="src/scan-count.js?v=scan13"></script>
+<script src="src/scan-count.js?v=scan14"></script>
 <script>
   // Aqui habia una puerta: el boton de escaneo solo lo veia el admin,
   // "porque esto todavia no es una funcion terminada sino una medicion".
@@ -5886,7 +5906,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     loadSavedBackground();
     window.showSettingsPanel = function(panel) {
       const menu = document.getElementById('settingsMenu');
-      const panelIds = ['general', 'vendorCodes', 'orderDefaults', 'senderProfile', 'appearance', 'categories', 'copyPrices'];
+      const panelIds = ['general', 'vendorCodes', 'orderDefaults', 'senderProfile', 'appearance', 'categories', 'copyPrices', 'zones'];
       panelIds.forEach(p => {
         const el = document.getElementById('settingsPanel-' + p);
         if (el) el.classList.add('hidden');
@@ -6369,6 +6389,24 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
         </select>
       </div>
       <div id="catSettingsList" style="display:flex;flex-direction:column;gap:4px;max-height:420px;overflow-y:auto"></div>
+    </div>
+
+    <div id="settingsPanel-zones" class="settings-panel hidden">
+      <button class="settings-back-btn" onclick="showSettingsPanel(null)">‹ Back</button>
+      <h4 style="margin:0 0 4px">Zones</h4>
+      <div class="small muted" style="margin-bottom:16px">
+        Where the bottles are: main bar, closet, wine cellar. While scanning you
+        pick a zone and everything you scan goes there, so later you can see
+        <b>where</b> a bottle is without being at the restaurant.
+        The order here is the order of the chips in the scanner.
+        No zones means counting works exactly as it does today.
+      </div>
+      <div id="zonesList"></div>
+      <div class="zs-actions">
+        <button type="button" id="zonesAdd" class="ui-control"><i class="ti ti-plus" aria-hidden="true"></i> Add zone</button>
+        <button type="button" id="zonesSave" class="success ui-control" disabled>Save zones</button>
+      </div>
+      <div id="zonesNote" class="zs-note"></div>
     </div>
 
     <div id="settingsPanel-copyPrices" class="settings-panel hidden">

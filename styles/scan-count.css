@@ -562,3 +562,48 @@ body.light .bf-sz-note{ color: #64748b; }
 body.light .bf-sz{ border-color: rgba(15,23,42,.16); color: #475569; }
 body.light .bf-sz.on{ border-color: #0284c7; background: rgba(2,132,199,.08); color: #0369a1; }
 body.light .bf-go:disabled{ background: rgba(15,23,42,.06); color: #94a3b8; }
+
+/* ── Los chips de zona ──────────────────────────────────────────────── */
+/*
+ * Entre la barra de progreso y el visor. Siempre visibles mientras se
+ * escanea, nunca detras de un menu: si se te olvida cambiar de zona,
+ * todo cae en la equivocada y el desglose miente sin dar ningun error
+ * —el total sigue correcto, solo esta mal repartido—. Un ajuste que
+ * falla en silencio tiene que estorbar.
+ *
+ * Scroll horizontal y no salto de linea: con cinco zonas, envolver
+ * empujaria el visor hacia abajo y robaria la mitad de la camara.
+ */
+.sc-zones {
+  display: flex;
+  gap: 7px;
+  padding: 9px 12px 3px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.sc-zones::-webkit-scrollbar { display: none; }
+.sc-zones.hidden { display: none; }
+
+.sc-zone {
+  flex: 0 0 auto;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .16);
+  background: rgba(255, 255, 255, .06);
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* La activa en ambar y no en gris claro: es el unico elemento de esta
+ * pantalla que cambia el SIGNIFICADO de lo que escaneas. */
+.sc-zone.on {
+  background: rgba(245, 158, 11, .18);
+  border-color: rgba(245, 158, 11, .55);
+  color: #fbbf24;
+}
