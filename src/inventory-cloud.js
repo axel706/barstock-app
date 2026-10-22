@@ -295,6 +295,16 @@
     // el ARTICULO, va en esta lista. Si describe el CONTEO de esta
     // semana, no. Olvidarlo no da ningun error — el dato simplemente
     // desaparece cada lunes.
+    //
+    // created_at se olvido exactamente asi. La columna tiene default
+    // now(), y como esta funcion BORRA y reinserta, cada import le ponia
+    // la fecha de hoy a los 270 articulos: todos "creados" el mismo
+    // lunes, al mismo microsegundo. El campo decia cuando corrio el
+    // ultimo conteo, no cuando entro el producto.
+    //
+    // Nadie lo noto porque nadie lo leia. En cuanto BarStockDormant
+    // empezo a usarlo para la gracia de los recien creados, el inventario
+    // entero quedo recien creado y no se escondia nada.
     const rows = (masterRows || []).map(r => ({
       location_id: locationId,
       code: r.code || '',
@@ -305,7 +315,11 @@
       value: Number(r.value || 0),
       category: r.category || null,
       bottle_size_ml: r.bottleSizeMl || null,
-      bottle_shape: r.bottleShape || null
+      bottle_shape: r.bottleShape || null,
+      // Sin esto el default now() lo vuelve a poner en hoy. Si la fila
+      // no trae fecha —articulo nuevo de este import— se deja fuera y
+      // que el default haga su trabajo, que ahi si es correcto.
+      ...(r.createdAt ? { created_at: r.createdAt } : {})
     }));
 
     const chunkSize = 200;
