@@ -100,6 +100,30 @@
     host.querySelectorAll('.sc-zone').forEach(b => {
       b.onclick = () => { Z.setActiva(b.dataset.z); pintarZonas(); };
     });
+
+    centrarZona();
+  }
+
+  // La activa siempre al centro. Con cinco o seis zonas la tira no cabe,
+  // y dejarla donde caiga obliga a buscar con el dedo cual esta
+  // encendida justo cuando tienes la otra mano ocupada con una botella.
+  //
+  // `behavior:'smooth'` solo despues del primer pintado: al abrir el
+  // escaner no hay nada que animar y el desplazamiento se veria como un
+  // tiron.
+  let _zonasPintadas = false;
+  function centrarZona() {
+    const host = $('scZones');
+    if (!host) return;
+    const on = host.querySelector('.sc-zone.on');
+    if (!on) return;
+    const x = on.offsetLeft - (host.clientWidth - on.offsetWidth) / 2;
+    try {
+      host.scrollTo({ left: Math.max(0, x), behavior: _zonasPintadas ? 'smooth' : 'auto' });
+    } catch (e) {
+      host.scrollLeft = Math.max(0, x);
+    }
+    _zonasPintadas = true;
   }
 
   function build() {

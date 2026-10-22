@@ -37,6 +37,24 @@
 alter table public.locations
   add column if not exists zones text[] not null default '{}';
 
+-- ── La zona por defecto ─────────────────────────────────────────────
+--
+-- Con la que arranca CADA conteo nuevo. No es simplemente "la primera
+-- de la lista": el orden de los chips lo manda la frecuencia de uso
+-- durante el conteo, y por donde se empieza a contar puede ser otra
+-- cosa. Son dos preguntas distintas y merecen dos campos.
+--
+-- Se vuelve a la de por defecto al EMPEZAR un conteo, no al abrir el
+-- escaner: dentro de un mismo conteo la zona se queda donde la dejaste,
+-- que es lo que hace que no haya que tocarla en cada escaneo.
+
+alter table public.locations
+  add column if not exists default_zone text;
+
+comment on column public.locations.default_zone is
+  'Zona con la que arranca cada conteo nuevo. Distinta del orden de '
+  'zones: ese es por frecuencia de uso, esta es por donde se empieza.';
+
 comment on column public.locations.zones is
   'Zonas fisicas de la locacion (main bar, closet, wine cellar). El '
   'orden es el de los chips del escaner. Vacio = la funcion esta '

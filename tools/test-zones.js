@@ -218,6 +218,60 @@ console.log('\nguardar la lista');
      w.BarStockZones.paraPasada(), 'Closet');
 }
 
+console.log('\nla zona pegajosa y la de arranque');
+{
+  const w = montar(['Main bar', 'Closet', 'Wine cellar']);
+  w.__defecto = 'Closet';
+  // La columna default_zone viene en la misma fila de locations.
+  w.fetch = global.fetch = async (u, o) => {
+    w.__req.push({ u: String(u), m: (o && o.method) || 'GET', b: o && o.body ? JSON.parse(o.body) : null });
+    if (String(u).includes('/locations')) {
+      if (o && o.method === 'PATCH') return { ok: true, status: 204, json: async () => [], text: async () => '' };
+      return { ok: true, status: 200, json: async () => [{ zones: ['Main bar', 'Closet', 'Wine cellar'], default_zone: 'Closet' }] };
+    }
+    return { ok: true, status: 200, json: async () => [], text: async () => '' };
+  };
+  const Z = w.BarStockZones;
+  await Z.cargar(true);
+  const S = w.BarStockCountSession;
+
+  eq('la zona de arranque sale de ajustes, no es la primera de la lista',
+     Z.porDefecto(), 'Closet');
+
+  Z.reiniciar();
+  eq('un conteo nuevo arranca ahi', Z.paraPasada(), 'Closet');
+
+  // Lo que pidio Axel: cambias una vez y todo lo demas va ahi.
+  Z.setActiva('Wine cellar');
+  S.addPass('A', 1, [], 750, Z.paraPasada());
+  S.addPass('B', 1, [], 750, Z.paraPasada());
+  S.addPass('C', 1, [], 750, Z.paraPasada());
+  eq('cambiar de zona una vez vale para todo lo que sigue',
+     ['A', 'B', 'C'].map(i => S.passesOf(i)[0].zona),
+     ['Wine cellar', 'Wine cellar', 'Wine cellar']);
+
+  // Y NO se arrastra a la semana siguiente.
+  S.clear('T');
+  eq('al empezar otro conteo vuelve a la de arranque', Z.paraPasada(), 'Closet');
+}
+
+console.log('\nla zona de arranque que ya no existe');
+{
+  const w = montar([]);
+  w.fetch = global.fetch = async (u, o) => {
+    if (String(u).includes('/locations')) {
+      if (o && o.method === 'PATCH') return { ok: true, status: 204, json: async () => [], text: async () => '' };
+      return { ok: true, status: 200, json: async () => [{ zones: ['Main bar', 'Closet'], default_zone: 'Borrada' }] };
+    }
+    return { ok: true, status: 200, json: async () => [], text: async () => '' };
+  };
+  await w.BarStockZones.cargar(true);
+  eq('la primera hace de suplente', w.BarStockZones.porDefecto(), 'Main bar');
+  w.BarStockZones.reiniciar();
+  ok('y un conteo nuevo no arranca sin zona', w.BarStockZones.paraPasada() === 'Main bar',
+     'sin esto las primeras botellas se pierden de sitio');
+}
+
 console.log('\n' + (falla ? falla + ' FALLO(S)' : 'todo bien') + '   ·   ' + pasa + ' comprobaciones');
 process.exit(falla ? 1 : 0);
 })();

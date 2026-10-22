@@ -35,6 +35,7 @@
   const LS = 'bs_zone_';
 
   let _zonas = null;      // array o null si no se ha cargado
+  let _porDefecto = '';   // con cual arranca cada conteo nuevo
   let _cargando = null;
 
   function cfg() {
@@ -64,7 +65,7 @@
       if (!url || !key || !loc) return [];
       try {
         const res = await fetch(
-          `${url}/rest/v1/locations?name=eq.${encodeURIComponent(loc)}&select=zones`,
+          `${url}/rest/v1/locations?name=eq.${encodeURIComponent(loc)}&select=zones,default_zone`,
           { headers: { apikey: key, Authorization: `Bearer ${key}` } });
         const filas = await res.json();
 
@@ -79,6 +80,12 @@
         }
         const z = (filas[0] && filas[0].zones) || [];
         _zonas = Array.isArray(z) ? z.filter(x => String(x || '').trim()) : [];
+        const d = String((filas[0] && filas[0].default_zone) || '').trim();
+        // Si la zona por defecto se borro de la lista, la primera hace
+        // de suplente. Dejarla apuntando a nada haria que cada conteo
+        // nuevo empezara sin zona y las primeras botellas se perdieran
+        // de sitio.
+        _porDefecto = _zonas.includes(d) ? d : (_zonas[0] || '');
         return _zonas;
       } catch (e) {
         console.warn('[zonas] no se pudo leer la lista', e);
@@ -94,8 +101,9 @@
 
   function lista() { return _zonas || []; }
   function activas() { return lista().length > 0; }
+  function porDefecto() { return _porDefecto; }
 
-  async function guardarLista(zonas) {
+  async function guardarLista(zonas, zonaDefecto) {
     const { url, key, loc } = cfg();
     if (!url || !key || !loc) throw new Error('No cloud connection.');
 
@@ -113,6 +121,9 @@
       limpias.push(t);
     }
 
+    const pedida = String(zonaDefecto || '').trim();
+    const def = limpias.includes(pedida) ? pedida : (limpias[0] || null);
+
     const res = await fetch(
       `${url}/rest/v1/locations?name=eq.${encodeURIComponent(loc)}`,
       {
@@ -121,16 +132,17 @@
           'Content-Type': 'application/json',
           apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal'
         },
-        body: JSON.stringify({ zones: limpias })
+        body: JSON.stringify({ zones: limpias, default_zone: def })
       });
     if (!res.ok) throw new Error(res.status + ' · ' + (await res.text()).slice(0, 180));
 
     _zonas = limpias;
+    _porDefecto = def || '';
 
     // Si la zona que tenias seleccionada ya no existe, se suelta. Dejarla
     // puesta haria que las siguientes pasadas fueran a una zona que no
     // sale en ningun sitio.
-    if (!limpias.includes(activa())) setActiva(limpias[0] || '');
+    if (!limpias.includes(activa())) setActiva(_porDefecto);
     return limpias;
   }
 
@@ -321,11 +333,22 @@
       '</div>';
   }
 
-  function invalidate() { _zonas = null; }
+  // ── Al empezar un conteo nuevo ───────────────────────────────────────
+  //
+  // Se vuelve a la zona por defecto. DENTRO de un conteo la zona se
+  // queda donde la dejaste —ese es justo el punto, no tocarla en cada
+  // escaneo—, pero arrastrarla hasta la semana siguiente significa
+  // empezar el conteo del lunes en el wine cellar porque ahi acabaste el
+  // anterior, y las primeras botellas acaban en el sitio equivocado.
+  function reiniciar() {
+    setActiva(_porDefecto);
+  }
+
+  function invalidate() { _zonas = null; _porDefecto = ''; }
 
   window.BarStockZones = {
     cargar, lista, activas, guardarLista,
-    activa, setActiva, paraPasada,
+    activa, setActiva, paraPasada, porDefecto, reiniciar,
     sincronizar, donde, pintarEn, invalidate
   };
 })();

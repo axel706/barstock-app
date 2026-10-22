@@ -3987,3 +3987,16 @@ body.light .zw { border-top-color: rgba(15,23,42,.08); }
 .zw-at.zw-old { color: #fbbf24; }
 
 .zw-wait { font-size: 11px; color: var(--sub); margin-top: 10px; opacity: .7; }
+
+/* La estrella marca la zona de arranque de cada conteo. Separada del
+ * orden a proposito: el orden manda los chips del escaner y se decide
+ * por frecuencia de uso; esto dice por donde se empieza a contar. */
+.zs-star {
+  flex: 0 0 auto; width: 34px; height: 34px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: 1px solid rgba(255,255,255,.12);
+  border-radius: 8px; color: var(--sub); cursor: pointer;
+}
+.zs-star.on { border-color: rgba(245,158,11,.55); color: #fbbf24; background: rgba(245,158,11,.12); }
+body.light .zs-star { border-color: rgba(15,23,42,.12); }
+body.light .zs-star.on { color: #b45309; }

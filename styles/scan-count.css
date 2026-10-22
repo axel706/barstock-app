@@ -571,33 +571,58 @@ body.light .bf-go:disabled{ background: rgba(15,23,42,.06); color: #94a3b8; }
  * —el total sigue correcto, solo esta mal repartido—. Un ajuste que
  * falla en silencio tiene que estorbar.
  *
- * Scroll horizontal y no salto de linea: con cinco zonas, envolver
- * empujaria el visor hacia abajo y robaria la mitad de la camara.
+ * ── Por que el texto no cabia ───────────────────────────────────────
+ *
+ * El chip se dimensionaba con padding y heredaba el line-height del
+ * contenedor, que en esta pantalla es mas alto que 1. El resultado: una
+ * pastilla mas baja que su propio texto, con "Main Bar" cortado arriba y
+ * abajo. Ahora la altura es fija y el texto se centra con flex, que no
+ * depende de lo que herede.
+ *
+ * ── El carrusel ────────────────────────────────────────────────────
+ *
+ * La zona activa siempre queda centrada y las demas se revelan
+ * deslizando. Con cinco o seis zonas la tira no cabe, y dejar la activa
+ * donde caiga obliga a buscar con el dedo cual esta encendida justo
+ * cuando tienes la otra mano ocupada con una botella.
+ *
+ * El padding lateral del 50% es lo que permite que la PRIMERA y la
+ * ULTIMA tambien puedan quedar al centro. Sin el, el scroll se acaba
+ * antes y esas dos nunca llegan al medio.
  */
 .sc-zones {
   display: flex;
-  gap: 7px;
-  padding: 9px 12px 3px;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 50% 6px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  scroll-snap-type: x mandatory;
 }
 .sc-zones::-webkit-scrollbar { display: none; }
 .sc-zones.hidden { display: none; }
 
 .sc-zone {
   flex: 0 0 auto;
-  padding: 7px 14px;
-  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, .16);
   background: rgba(255, 255, 255, .06);
   color: #94a3b8;
-  font-size: 13px;
-  font-weight: 700;
   font-family: inherit;
-  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
   white-space: nowrap;
+  cursor: pointer;
+  scroll-snap-align: center;
   -webkit-tap-highlight-color: transparent;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
 }
 
 /* La activa en ambar y no en gris claro: es el unico elemento de esta

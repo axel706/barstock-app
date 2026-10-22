@@ -543,6 +543,10 @@
     }
     _data = blank();
     save();
+    // Conteo nuevo, zona de arranque. Dentro de un conteo la zona se
+    // queda donde la dejaste; arrastrarla a la semana siguiente haria
+    // empezar el lunes en el wine cellar porque ahi acabaste el viernes.
+    if (window.BarStockZones) window.BarStockZones.reiniciar();
     // Se apagan las TRES señales. Dejar counting_paused_at colgando
     // habría hecho que el siguiente conteo naciera pausado a ojos de los
     // demás dispositivos.
