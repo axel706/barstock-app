@@ -63,7 +63,7 @@
     const locationId = await fetchLocationId();
 
     const res = await fetch(
-      `${BARSTOCK_RT_URL}/rest/v1/inventory_items?location_id=eq.${locationId}&select=code,item_name,vendor,on_hand,suggested,value,category,order_override,par_adjusted_week,bottle_size_ml,bottle_shape`,
+      `${BARSTOCK_RT_URL}/rest/v1/inventory_items?location_id=eq.${locationId}&select=code,item_name,vendor,on_hand,suggested,value,category,order_override,par_adjusted_week,bottle_size_ml,bottle_shape,created_at`,
       {
         headers: {
           apikey: BARSTOCK_RT_KEY,
@@ -126,6 +126,10 @@
         // hace tiempo pero nunca se leia, por eso los articulos ajustados
         // reaparecian como pendientes de inmediato.
         parAdjustedWeek: r.par_adjusted_week || null,
+        // Para la gracia de los recien creados en BarStockDormant: un
+        // articulo dado de alta hoy no tiene stock ni par y se
+        // escondería en el acto sin esto.
+        createdAt: r.created_at || null,
         toOrder: typeof computeToOrder === 'function' ? computeToOrder(onHand, suggested) : 0,
         orderOverride: override
       };
@@ -141,6 +145,16 @@
     // Va sin await para no retrasar el primer pintado: la fila local ya
     // trae una forma con la que dibujar, y cuando el mapa llega se
     // corrige y se vuelve a pintar.
+    // Igual que las siluetas: sin await. La lista se pinta entera y
+    // cuando llega la actividad se vuelve a pintar ya con lo quieto
+    // escondido. Al reves —esperando— la pantalla se quedaria en blanco
+    // por una consulta que solo decide que NO mostrar.
+    if (window.BarStockDormant) {
+      window.BarStockDormant.cargar().then(m => {
+        if (m && typeof render === 'function') render();
+      }).catch(() => {});
+    }
+
     if (window.BarStockItemShapes) {
       window.BarStockItemShapes.hydrate(state.master).then(n => {
         if (n && typeof render === 'function') render();

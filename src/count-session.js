@@ -295,7 +295,16 @@
   function missingRows() {
     const master = (window.state && window.state.master) || [];
     const counted = new Set(countedItems());
-    return master.filter(r => !counted.has(r.item));
+    // Un articulo escondido —sin stock, sin par y sin moverse en ocho
+    // semanas— no se conto porque no hay nada que contar. Meterlo en
+    // "faltan 75" convierte el aviso en ruido y entierra los que si
+    // importan. Si BarStockDormant no cargo, `oculto` devuelve false
+    // para todo y esto se comporta como antes.
+    // `estaQuieto` y no `oculto`: `oculto` responde a si el usuario pulso
+    // "Showing all" en la pantalla de inventario, y ese boton no tiene
+    // por que cambiar de que te avisa el cierre de un conteo.
+    const D = window.BarStockDormant;
+    return master.filter(r => !counted.has(r.item) && !(D && D.estaQuieto(r)));
   }
 
   // ── La señal compartida ──────────────────────────────────────────────

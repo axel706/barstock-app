@@ -43,7 +43,7 @@
   <link rel="stylesheet" href="styles/scan-count.css?v=scan10">
   <link rel="stylesheet" href="styles/count-panel.css?v=cnt21">
   <link rel="stylesheet" href="styles/stock-in.css?v=si1">
-  <link rel="stylesheet" href="styles/toolbar-pills.css?v=pill4">
+  <link rel="stylesheet" href="styles/toolbar-pills.css?v=pill5">
   <link rel="stylesheet" href="styles/add-to-order.css?v=ato2">
   <!-- Siempre al final: solo contiene @media (max-width:640px) y necesita
        ganar los empates de especificidad por orden de carga. -->
@@ -130,7 +130,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261020-224535</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261022-134349</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2604,8 +2604,29 @@ function render(){
   const q = normalizeName(document.getElementById('searchInput')?.value || '');
   const vendorFilter = invVendorFilter || 'ALL';
   const inventoryVendors = getVendorsForFilter();
-  document.getElementById('inventoryVendorTabs').innerHTML = inventoryVendors.map(v => `<div class="oh-filter-chip ${vendorFilter===v?'active':''}" onclick="setInventoryVendorFilter('${escapeJsAttr(v)}')">${v==='ALL'?'ALL':v}</div>`).join('');
-  const filtered = state.master.filter(r => (!q || r.itemNorm.includes(q) || normalizeName(r.code).includes(q)) && (vendorFilter==='ALL' || r.vendor===vendorFilter));
+  // ── Lo quieto no se pinta ──────────────────────────────────────────
+  //
+  // Sin stock, sin par, sin movimiento en 8 semanas y ya no es nuevo.
+  // Ver src/dormant-items.js. Si la vista item_activity no cargo, la
+  // funcion devuelve false para todo y aqui no se esconde nada: el fallo
+  // tiene que verse como "se ve todo", nunca como "desaparecio medio
+  // inventario".
+  const D = window.BarStockDormant;
+  const visibles = state.master.filter(r => !(D && D.oculto(r)));
+  const nEscondidos = D ? D.cuantos(state.master) : 0;
+
+  // El chip de los escondidos va al final de la fila de proveedores, no
+  // en un menu de ajustes: esconder cosas sin decirlo, y sin una forma
+  // obvia de deshacerlo, es como se pierde la confianza en una lista.
+  const chipQuietos = (D && D.listo() && (nEscondidos > 0 || D.mostrandoTodo()))
+    ? `<div class="oh-filter-chip dorm-chip ${D.mostrandoTodo() ? 'active' : ''}" onclick="toggleDormant()" title="Items with no stock, no par and no movement in ${D.SEMANAS_QUIETO} weeks"><i class="ti ti-${D.mostrandoTodo() ? 'eye' : 'eye-off'}" aria-hidden="true"></i> ${D.mostrandoTodo() ? 'Showing all' : nEscondidos + ' hidden'}</div>`
+    : '';
+  document.getElementById('inventoryVendorTabs').innerHTML = inventoryVendors.map(v => `<div class="oh-filter-chip ${vendorFilter===v?'active':''}" onclick="setInventoryVendorFilter('${escapeJsAttr(v)}')">${v==='ALL'?'ALL':v}</div>`).join('') + chipQuietos;
+  // El buscador mira el master COMPLETO. Buscar algo por su nombre y que
+  // no salga porque esta escondido seria el peor momento posible para
+  // esconderlo: buscarlo es la prueba de que lo quieres.
+  const base = q ? state.master : visibles;
+  const filtered = base.filter(r => (!q || r.itemNorm.includes(q) || normalizeName(r.code).includes(q)) && (vendorFilter==='ALL' || r.vendor===vendorFilter));
   const invVendorActive = vendorFilter !== 'ALL';
   // Toggle vendor column visibility
   const invTable = document.querySelector('#inventorySection table');
@@ -2956,6 +2977,14 @@ window.setVendorTab = setVendorTab;
 // alguien hubiera escrito a mano en el HTML, y fallaba sin ruido para
 // cualquier otra cosa. El <select> se mantiene sincronizado porque hay
 // un listener de 'change' colgado de el.
+function toggleDormant(){
+  const D = window.BarStockDormant;
+  if (!D) return;
+  D.verTodo(!D.mostrandoTodo());
+  render();
+}
+window.toggleDormant = toggleDormant;
+
 function setInventoryVendorFilter(v){
   invVendorFilter = String(v || 'ALL');
   const el = document.getElementById('vendorFilter');
@@ -5046,7 +5075,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/focus-stats.js?v=cm4"></script>
 <script src="src/toast.js"></script>
 <script src="src/empty-state.js"></script>
-<script src="src/inventory-realtime.js?v=rt2"></script>
+<script src="src/inventory-realtime.js?v=rt3"></script>
 <script src="src/inventory-cloud.js?v=account-wjm-1"></script>
 <script src="src/par-intelligence.js?v=adj6"></script>
 <script src="src/par-intelligence-section.js"></script>
@@ -5068,11 +5097,12 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/settings-home.js?v=sh2"></script>
 <script src="src/inventory-backup.js?v=bk1"></script>
 <script src="src/weekly-cycle.js?v=cyc9"></script>
-<script src="src/count-session.js?v=cnt15"></script>
+<script src="src/count-session.js?v=cnt16"></script>
 <script src="src/count-panel.js?v=cnt22"></script>
 <script src="src/barcode-fix.js?v=bf5"></script>
 <script src="src/stock-in.js?v=si1"></script>
 <script src="src/add-to-order.js?v=ato2"></script>
+<script src="src/dormant-items.js?v=dorm1"></script>
 <script src="src/count-resume.js?v=cnt12"></script>
 <script src="src/count-insight.js?v=cnt13"></script>
 <script src="src/count-finish.js?v=cnt16"></script>
