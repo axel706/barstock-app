@@ -101,29 +101,82 @@
       b.onclick = () => { Z.setActiva(b.dataset.z); pintarZonas(); };
     });
 
-    centrarZona();
+    engancharScroll();
+    centrarZona(true);
   }
 
-  // La activa siempre al centro. Con cinco o seis zonas la tira no cabe,
-  // y dejarla donde caiga obliga a buscar con el dedo cual esta
-  // encendida justo cuando tienes la otra mano ocupada con una botella.
+  // ── El carrusel de zonas ─────────────────────────────────────────────
   //
-  // `behavior:'smooth'` solo despues del primer pintado: al abrir el
-  // escaner no hay nada que animar y el desplazamiento se veria como un
-  // tiron.
+  // Se comporta como un selector, no como una tira que se puede dejar a
+  // medias: lo que queda en el centro ES la zona activa. Deslizar
+  // selecciona.
+  //
+  // Antes el scroll era libre y la seleccion solo cambiaba al tocar, asi
+  // que la tira se quedaba donde la soltaras y la zona encendida podia
+  // acabar fuera de la pantalla. Con una mano ocupada por una botella,
+  // tener que buscar cual esta encendida es justo lo que no puede pasar.
+  //
+  // `_centrando` evita el bucle: centrar la zona es un scroll, y ese
+  // scroll volveria a disparar la deteccion.
   let _zonasPintadas = false;
-  function centrarZona() {
+  let _centrando = false;
+  let _tScroll = null;
+
+  function centrarZona(suave) {
     const host = $('scZones');
     if (!host) return;
     const on = host.querySelector('.sc-zone.on');
-    if (!on) return;
+    // clientWidth es 0 mientras el panel todavia no tiene layout —al
+    // abrir el escaner— y la cuenta saldria negativa, dejando la tira al
+    // principio con la zona activa cortada. Ese era el fallo de "se
+    // cortan al abrir la camara".
+    if (!on || !host.clientWidth) return;
+
     const x = on.offsetLeft - (host.clientWidth - on.offsetWidth) / 2;
+    _centrando = true;
     try {
-      host.scrollTo({ left: Math.max(0, x), behavior: _zonasPintadas ? 'smooth' : 'auto' });
+      host.scrollTo({ left: Math.max(0, x), behavior: suave && _zonasPintadas ? 'smooth' : 'auto' });
     } catch (e) {
       host.scrollLeft = Math.max(0, x);
     }
+    // El scroll suave sigue corriendo despues de esta linea, asi que la
+    // bandera se suelta con holgura.
+    clearTimeout(centrarZona._t);
+    centrarZona._t = setTimeout(() => { _centrando = false; }, suave ? 420 : 60);
     _zonasPintadas = true;
+  }
+
+  // Al soltar el dedo: la que quedo mas cerca del centro gana.
+  function zonaDelCentro() {
+    const host = $('scZones');
+    if (!host) return null;
+    const centro = host.scrollLeft + host.clientWidth / 2;
+    let mejor = null, dist = Infinity;
+    host.querySelectorAll('.sc-zone').forEach(el => {
+      const c = el.offsetLeft + el.offsetWidth / 2;
+      const d = Math.abs(c - centro);
+      if (d < dist) { dist = d; mejor = el; }
+    });
+    return mejor;
+  }
+
+  function engancharScroll() {
+    const host = $('scZones');
+    if (!host || host._eng) return;
+    host._eng = true;
+    host.addEventListener('scroll', () => {
+      if (_centrando) return;
+      clearTimeout(_tScroll);
+      // 110 ms despues del ultimo evento de scroll se da por soltado.
+      // Safari no dispara 'scrollend' de forma fiable todavia.
+      _tScroll = setTimeout(() => {
+        const el = zonaDelCentro();
+        const Z = window.BarStockZones;
+        if (!el || !Z) return;
+        if (el.dataset.z !== Z.paraPasada()) { Z.setActiva(el.dataset.z); pintarZonas(); }
+        else centrarZona(true);
+      }, 110);
+    }, { passive: true });
   }
 
   function build() {
@@ -956,7 +1009,15 @@
     // de chips.
     pintarZonas();
     if (window.BarStockZones) {
-      window.BarStockZones.cargar().then(pintarZonas).catch(() => {});
+      window.BarStockZones.cargar().then(() => {
+        pintarZonas();
+        // Otra vez en el siguiente fotograma: al llegar aqui el panel
+        // puede seguir animando su apertura y clientWidth todavia no es
+        // el definitivo. Sin esta segunda pasada la tira arranca al
+        // principio y la zona activa sale cortada.
+        requestAnimationFrame(() => centrarZona(false));
+        setTimeout(() => centrarZona(false), 260);
+      }).catch(() => {});
     }
 
     if (!window.isSecureContext) return diag('Connection is not secure, the camera cannot start.', 'sc-bad');

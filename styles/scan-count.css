@@ -594,11 +594,19 @@ body.light .bf-go:disabled{ background: rgba(15,23,42,.06); color: #94a3b8; }
   display: flex;
   align-items: center;
   gap: 8px;
+  /* El 50% lateral es lo que permite que la PRIMERA y la ULTIMA zona
+   * tambien puedan quedar al centro. Sin el, el scroll se acaba antes y
+   * esas dos nunca llegan al medio: la primera arranca pegada al borde
+   * izquierdo y se ve cortada. */
   padding: 10px 50% 6px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  scroll-snap-type: x mandatory;
+  /* `proximity` y no `mandatory`: con mandatory, Safari pelea contra el
+   * scroll programatico del centrado y la tira da un tiron al abrir. El
+   * enganche fino lo hace el JS al soltar el dedo. */
+  scroll-snap-type: x proximity;
+  scroll-behavior: smooth;
 }
 .sc-zones::-webkit-scrollbar { display: none; }
 .sc-zones.hidden { display: none; }
@@ -621,6 +629,9 @@ body.light .bf-go:disabled{ background: rgba(15,23,42,.06); color: #94a3b8; }
   white-space: nowrap;
   cursor: pointer;
   scroll-snap-align: center;
+  /* Sin esto, un chip a medio camino del centro se puede quedar ahi
+   * cuando el dedo lo suelta justo en el limite. */
+  scroll-snap-stop: always;
   -webkit-tap-highlight-color: transparent;
   transition: background .15s ease, border-color .15s ease, color .15s ease;
 }
