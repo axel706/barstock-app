@@ -159,13 +159,6 @@
       window.BarStockZones.cargar().catch(() => {});
     }
 
-    // El Home del telefono se pinta antes de que llegue el inventario.
-    // Sin este aviso se queda con los huecos puestos hasta que cambias
-    // de pestaña y vuelves.
-    if (window.BarStockMobileHome) {
-      try { window.BarStockMobileHome.refresh(); } catch (e) {}
-    }
-
     if (window.BarStockDormant) {
       window.BarStockDormant.cargar().then(m => {
         if (m && typeof render === 'function') render();

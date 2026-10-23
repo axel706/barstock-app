@@ -136,20 +136,11 @@
 
   // ── Dinero ───────────────────────────────────────────────────────────
 
-  // Devuelve null —y la tarjeta pone "…"— mientras no haya nada que
-  // sumar. Un "$0 en el estante" con 260 articulos no es un cero, es
-  // una pantalla que se pinto antes de que llegaran los datos, y de
-  // esos ceros ya nos comimos uno que duro diecisiete semanas.
   function enElEstante() {
     const master = (window.state && window.state.master) || [];
     if (!master.length) return null;
-    let v = 0, conPrecio = 0;
-    for (const r of master) {
-      const p = Number(r.value) || 0;
-      if (p > 0) conPrecio++;
-      v += (Number(r.onHand) || 0) * p;
-    }
-    if (!conPrecio) return null;
+    let v = 0;
+    for (const r of master) v += (Number(r.onHand) || 0) * (Number(r.value) || 0);
     return { total: v, n: master.length };
   }
 
@@ -248,9 +239,6 @@
       }
       const r = window.BarStockSpend.compute();
       if (!r || !r.now) { el.textContent = '—'; return; }
-      // Sin historial de ordenes cargado, cero es "todavia no se" y no
-      // "no gastaste nada esta semana".
-      if (!r.now.total && !r.prev.total) { el.textContent = '…'; return; }
       el.textContent = money(r.now.total);
       if (d && r.totalDelta != null && r.totalPct !== null) {
         const up = r.totalDelta >= 0;
@@ -263,15 +251,7 @@
     }
   }
 
-  // Lo llama quien termina de cargar datos: el Home se pinta antes de
-  // que lleguen el inventario y las ordenes, y sin esto se queda con
-  // los huecos puestos hasta que cambias de pestaña y vuelves.
-  function refresh() {
-    const host = document.querySelector('.m-screen[data-screen="home"]');
-    if (host && host.classList.contains('on')) render(host);
-  }
-
-  window.BarStockMobileHome = { render, refresh };
+  window.BarStockMobileHome = { render };
 
   function registrar() {
     if (!window.BarStockMobile) return;
