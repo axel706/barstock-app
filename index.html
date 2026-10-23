@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/tables.css">
   <link rel="stylesheet" href="styles/buttons.css">
-  <link rel="stylesheet" href="styles/app.css?v=sil12">
+  <link rel="stylesheet" href="styles/app.css?v=sil13">
   <link rel="stylesheet" href="styles/consumption-match.css?v=cm14">
   <link rel="stylesheet" href="styles/order-history.css">
 
@@ -130,7 +130,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261023-123322</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261023-124005</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -288,7 +288,12 @@
           </table>
         </div>
         <div class="inv-item-panel" id="invItemPanel">
-          <div id="invPanelBody" style="display:flex;flex-direction:column;height:100%"></div>
+          <!-- El layout va ENTERO en app.css (#invPanelBody). Aqui habia
+               un style="display:flex" en linea, y un estilo en linea le
+               gana a cualquier regla del CSS: la rejilla de filas fijas
+               que se escribio alla nunca llego a aplicarse, y el panel
+               siguio repartiendo el sobrante como flex. -->
+          <div id="invPanelBody"></div>
         </div>
       </div>
     </div>

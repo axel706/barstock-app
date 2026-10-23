@@ -3020,14 +3020,19 @@ body.light .vsp-last-order {
  * Con la rejilla cada seccion tiene su fila y su alto, SIEMPRE el
  * mismo:
  *
- *     52  cabecera      nombre, codigo, categoria
- *     62  stats         on hand / suggested / avg-wk
- *     50  zonas         el reparto, o "not counted by zone yet"
- *    104  datos         optimal par / status / trend / data
- *     54  grafica       las ultimas semanas, o el aviso de que no hay
- *     94  botones       Edit / Received / Zero suggested
+ *     48  cabecera      nombre, codigo, categoria
+ *     60  stats         on hand / suggested / avg-wk
+ *     46  zonas         el reparto, o "not counted by zone yet"
+ *     92  datos         optimal par / status / trend / data
+ *     52  grafica       las ultimas semanas, o el aviso de que no hay
+ *     78  botones       Edit / Received / Zero suggested
  *    ───
- *    416  = 440 del panel menos 24 de relleno
+ *    376  + 5 separaciones de 8  =  416, que son los 440 del panel
+ *                                   menos 24 de relleno
+ *
+ * Las separaciones son del propio grid (row-gap) y no padding de cada
+ * seccion: asi el aire entre bloques es el mismo siempre, lo ponga
+ * quien lo ponga, y no depende de que cada seccion se acuerde.
  *
  * Si una seccion no tiene nada que enseñar, su espacio sigue ahi y lo
  * de abajo no se mueve. Si tiene de mas, se recorta DENTRO de su fila y
@@ -3041,19 +3046,33 @@ body.light .vsp-last-order {
  */
 #invPanelBody {
   display: grid;
-  grid-template-rows: 52px 62px 50px 104px 54px 94px;
+  grid-template-rows: 48px 60px 46px 92px 52px 78px;
+  row-gap: 8px;
+  height: 100%;
   min-height: 0;
 }
 
 /* overflow hidden en TODAS: es lo que convierte "empujar a los de
- * abajo" en "recortarse dentro de lo suyo". */
-#invPanelBody > * { min-height: 0; overflow: hidden; }
+ * abajo" en "recortarse dentro de lo suyo".
+ *
+ * box-sizing border-box para que el borde superior de cada seccion
+ * cuente DENTRO de su fila. Sin eso, cuatro bordes de 1px suman 4px que
+ * la rejilla no tiene, y el ultimo bloque vuelve a salirse. */
+#invPanelBody > * { min-height: 0; overflow: hidden; box-sizing: border-box; }
 
-/* Sin padding vertical propio: el alto lo manda la fila, y un padding
- * encima de una altura fija solo quita sitio al contenido. */
+/* Sin padding vertical propio: el aire lo pone el row-gap del grid, y
+ * un padding encima de una altura fija solo le quita sitio al
+ * contenido. Los separadores siguen siendo los bordes de cada seccion. */
 #invPanelBody > .inv-panel-section { padding: 8px 0 0; }
-#invPanelBody > .inv-panel-header { padding-bottom: 0; }
+#invPanelBody > .inv-panel-header { padding-bottom: 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+body.light #invPanelBody > .inv-panel-header { border-bottom-color: rgba(15,23,42,.08); }
 #invPanelBody > .inv-panel-actions-section { margin-top: 0; padding-top: 8px; }
+
+/* Cada seccion alinea su contenido arriba y reparte lo suyo, para que
+ * un bloque con dos lineas no quede flotando en medio de su fila. */
+#invPanelBody > .inv-panel-section { display: flex; flex-direction: column; justify-content: flex-start; }
+#invPanelBody > .ip-rows { justify-content: space-between; padding-bottom: 2px; }
+#invPanelBody > .inv-panel-actions-section { display: flex; flex-direction: column; justify-content: flex-end; }
 
 .ip-none { font-size: 11px; color: var(--sub); opacity: .7; }
 
