@@ -136,26 +136,21 @@
 
   // ── Dinero ───────────────────────────────────────────────────────────
 
-  // El valor del estante sale de BarStockInventoryValue.compute(), que
-  // es quien ya lo calcula para la pantalla de inventario. Sumarlo
-  // aparte aqui seria permitir que dos pantallas dieran cifras
-  // distintas del mismo dinero — el fallo que mas veces ha mordido a
-  // este proyecto.
-  //
   // Devuelve null —y la tarjeta pone "…"— mientras no haya nada que
   // sumar. Un "$0 en el estante" con 260 articulos no es un cero, es
-  // una pantalla pintada antes de que llegaran los datos, y de esos
-  // ceros ya nos comimos uno que duro diecisiete semanas.
+  // una pantalla que se pinto antes de que llegaran los datos, y de
+  // esos ceros ya nos comimos uno que duro diecisiete semanas.
   function enElEstante() {
-    const V = window.BarStockInventoryValue;
-    if (!V || typeof V.compute !== 'function') return null;
-    let d;
-    try { d = V.compute(); } catch (e) { return null; }
-    if (!d || !d.items) return null;
-    // Con todos los articulos sin precio el total es cero de verdad,
-    // pero no es una cifra util: es "falta cargar los precios".
-    if (!d.total && d.noPrice >= d.items) return null;
-    return { total: d.total, n: d.items, sinPrecio: d.noPrice };
+    const master = (window.state && window.state.master) || [];
+    if (!master.length) return null;
+    let v = 0, conPrecio = 0;
+    for (const r of master) {
+      const p = Number(r.value) || 0;
+      if (p > 0) conPrecio++;
+      v += (Number(r.onHand) || 0) * p;
+    }
+    if (!conPrecio) return null;
+    return { total: v, n: master.length };
   }
 
   // ── Pintar ───────────────────────────────────────────────────────────
@@ -213,9 +208,7 @@
         <div class="m-money-c">
           <span>On the shelf</span>
           <b>${est ? money(est.total) : '…'}</b>
-          <small>${est
-            ? est.n + ' items' + (est.sinPrecio ? ' · ' + est.sinPrecio + ' with no price' : '')
-            : '&nbsp;'}</small>
+          <small>${est ? est.n + ' items' : '&nbsp;'}</small>
         </div>
       </div>`;
 
