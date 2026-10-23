@@ -4213,56 +4213,6 @@ body.light .zs-empty { border-color: rgba(15,23,42,.14); }
 body.light #invPanelBody .inv-panel-name { color: #0369a1; }
 #invPanelBody .inv-panel-meta { flex-wrap: wrap; row-gap: 4px; }
 
-/* ── Las pastillas de color detras de los botones ───────────────────
- *
- * Los botones son cristal: difuminan lo que tienen detras. Para que ese
- * efecto luzca hace falta algo de color AHI DETRAS, no encima — pintar
- * el boton mataria el cristal.
- *
- * Por eso cada boton va envuelto en un <span>: la pastilla es el
- * ::before del envoltorio, un hermano que se pinta antes. Un ::before
- * del propio boton no serviria, porque backdrop-filter crea contexto de
- * apilado y un hijo nunca queda por detras del fondo de su padre.
- *
- * 3px mas chica por cada lado y con el mismo radio, para que el color
- * se asome como un halo y no como un relleno.
- *
- * Los colores dicen que hace cada boton: Edit es neutro-informativo,
- * Received suma mercancia, Zero suggested borra lo que vas a pedir.
- */
-.ip-btn {
-  position: relative;
-  flex: 1;
-  min-width: 0;
-  display: flex;
-}
-.ip-btn::before {
-  content: '';
-  position: absolute;
-  inset: 3px;
-  border-radius: 6px;
-  z-index: 0;
-}
-.ip-btn > button {
-  position: relative;
-  z-index: 1;
-  flex: 1;
-  min-width: 0;
-}
-
-.ip-btn-edit::before { background: rgba(56, 189, 248, .55); }
-.ip-btn-recv::before { background: rgba(34, 197, 94, .55); }
-.ip-btn-zero::before { background: rgba(239, 68, 68, .55); }
-
-/* El texto sobre el halo: el cristal lo aclara, asi que el tono fuerte
- * de cada familia es el unico que aguanta en los dos temas. */
-.ip-btn-edit > button { color: #0b4a6f; font-weight: 800; }
-.ip-btn-recv > button { color: #06301a; font-weight: 800; }
-.ip-btn-zero > button { color: #5b1111; font-weight: 800; }
-
-body.light .ip-btn-edit::before { background: rgba(56, 189, 248, .40); }
-body.light .ip-btn-recv::before { background: rgba(34, 197, 94, .40); }
-body.light .ip-btn-zero::before { background: rgba(239, 68, 68, .38); }
 
 
 /* Por que no hay boton de Pour-IQ. Un hueco en blanco donde a veces hay

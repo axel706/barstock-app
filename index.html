@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/tables.css">
   <link rel="stylesheet" href="styles/buttons.css">
-  <link rel="stylesheet" href="styles/app.css?v=sil17">
+  <link rel="stylesheet" href="styles/app.css?v=sil18">
   <link rel="stylesheet" href="styles/consumption-match.css?v=cm14">
   <link rel="stylesheet" href="styles/order-history.css">
 
@@ -130,7 +130,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261023-131135</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261023-131247</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -3694,20 +3694,14 @@ async function openInvPanel(idx) {
                 : 'Suggested already matches the optimal par of ' + optimal + '.'
             }</div>`}
       </div>
-      <!-- Cada boton va envuelto para poder ponerle una pastilla de
-           color DETRAS. El cristal del boton difumina lo que tiene
-           detras, asi que el color tiene que ser un hermano por debajo:
-           un ::before del propio boton no sirve, porque backdrop-filter
-           crea contexto de apilado y un hijo nunca queda detras del
-           fondo de su padre. -->
       <div class="inv-panel-actions">
-        <span class="ip-btn ip-btn-edit"><button onclick="openEditModal(${idx})">Edit</button></span>
+        <button onclick="openEditModal(${idx})">Edit</button>
         <!-- El consumo sale de "lo que habia + lo que entro - lo que
              queda", y lo que entro solo se llenaba colocando la orden
              desde la app. Una compra en la tienda salia como consumo que
              nunca ocurrio, y ese numero entra en el promedio del par. -->
-        <span class="ip-btn ip-btn-recv"><button onclick="openStockIn(${idx})">Received</button></span>
-        <span class="ip-btn ip-btn-zero"><button onclick="quickZeroSuggested(${idx})">Zero suggested</button></span>
+        <button onclick="openStockIn(${idx})">Received</button>
+        <button style="color:#ef4444" onclick="quickZeroSuggested(${idx})">Zero suggested</button>
       </div>
     </div>`;
 
