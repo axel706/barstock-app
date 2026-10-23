@@ -3145,10 +3145,14 @@ body.light .vsp-last-order {
   display: flex; align-items: center; justify-content: center;
 }
 #invPanelBody > .ip-zones { justify-content: center; }
-#invPanelBody .zw-wait { min-height: 32px; }
+#invPanelBody .zw-wait { min-height: 40px; }
 
-/* El bloque de zonas mide lo mismo con reparto que con mensaje. */
-#invPanelBody .zw { height: 32px; justify-content: center; }
+/* El bloque de zonas mide lo mismo con reparto que con mensaje.
+ *
+ * 40 y no 32: el rotulo WHERE y la tira de zonas suman 36 con sus
+ * interlineados reales, y con 32 la fila de numeros salia cortada por
+ * abajo. Medido sobre el caso con datos, que es el alto. */
+#invPanelBody .zw { height: 40px; justify-content: center; }
 
 .ip-none { font-size: 11px; color: var(--sub); opacity: .7; }
 
@@ -4259,3 +4263,15 @@ body.light #invPanelBody .inv-panel-name { color: #0369a1; }
 body.light .ip-btn-edit::before { background: rgba(56, 189, 248, .40); }
 body.light .ip-btn-recv::before { background: rgba(34, 197, 94, .40); }
 body.light .ip-btn-zero::before { background: rgba(239, 68, 68, .38); }
+
+
+/* Por que no hay boton de Pour-IQ. Un hueco en blanco donde a veces hay
+ * un boton se lee como algo que no cargo, y manda a buscar un fallo que
+ * no existe. */
+.ip-noapply {
+  font-size: 11px;
+  color: var(--sub);
+  line-height: 1.4;
+  text-align: center;
+  opacity: .85;
+}
