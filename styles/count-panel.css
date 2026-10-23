@@ -1224,3 +1224,38 @@ body.light .cp-pass-z { color: #b45309; }
 body.light .cf-zones { background: rgba(245,158,11,.10); border-color: rgba(180,83,9,.32); }
 body.light .cf-zones-t { color: #92400e; }
 body.light .cf-zones-r { border-bottom-color: rgba(15,23,42,.08); }
+
+/* ── La marca del conteo anterior ───────────────────────────────────
+ *
+ * Donde quedo ESTA botella la vez pasada. Punteada y en gris: es una
+ * referencia, como la marca de nivel de un tanque, no un control. No se
+ * arrastra y no se puede confundir con la linea del dedo, que es
+ * continua y del color del liquido.
+ *
+ * Se dibuja un poco mas ancha que la linea de "lleno" para que no se
+ * lean como lo mismo.
+ */
+.cp-lastline {
+  stroke: #94a3b8;
+  opacity: .85;
+  pointer-events: none;
+}
+body.light .cp-lastline { stroke: #64748b; }
+
+/* La comparacion debajo del numero. */
+.cp-read .cp-last,
+.cp-read .cp-same {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-style: normal;
+  color: var(--sub);
+}
+.cp-read .cp-same { color: #4ade80; font-weight: 700; }
+.cp-read .cp-same i { font-size: 12px; vertical-align: -1px; }
+body.light .cp-read .cp-same { color: #15803d; }
+
+.cp-read .cp-up   { color: #4ade80; font-weight: 800; }
+.cp-read .cp-down { color: #f87171; font-weight: 800; }
+body.light .cp-read .cp-up   { color: #15803d; }
+body.light .cp-read .cp-down { color: #b91c1c; }

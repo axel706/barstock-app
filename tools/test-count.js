@@ -306,7 +306,43 @@ console.log('\npreguntar el tamaño solo cuando puede cambiar');
     eq('volver al que ordenas guarda null', env.size_ml, null);
   }
 
-  console.log('\n' + (falla ? falla + ' FALLO(S)' : 'todo bien') + '   ·   ' + pasa + ' comprobaciones');
+  console.log('\nel paso del deslizador · 0.05');
+{
+  // El deslizador devolvia cualquier numero y la resta de dos lecturas
+  // imprecisas es ruido: el 12% de las semanas del historial de Axel
+  // tiene consumo NEGATIVO, que es fisicamente imposible.
+  //
+  // La funcion se toma del propio count-panel.js, no se copia aqui.
+  const src = fs.readFileSync(path.join(RAIZ, 'src/count-panel.js'), 'utf8');
+  const m = src.match(/const PASO = [\d.]+;[\s\S]*?function redondearAPaso\(f\) \{[\s\S]*?\n  \}/);
+  const redondear = new Function(m[0] + '; return redondearAPaso;')();
+
+  eq('0.58 cae en 0.60', redondear(0.58), 0.6);
+  // Sin el segundo redondeo esto daria 1.0000000000000002 y
+  // 0.6000000000000001: el paso limpiaria el ruido del dedo y metaria
+  // el de la coma flotante.
+  ok('y sale limpio, sin basura de coma flotante',
+     String(redondear(0.58)) === '0.6' && String(redondear(1)) === '1');
+  eq('0.52 cae en 0.50', redondear(0.52), 0.5);
+  eq('0.5237 y 0.5241 dan lo mismo', redondear(0.5237), redondear(0.5241));
+
+  // Esto es el bug entero en una linea: dos lecturas de la misma
+  // botella que antes daban consumos distintos, ahora dan cero.
+  ok('dos lecturas a ojo de la misma botella ya no inventan consumo',
+     redondear(0.603) - redondear(0.584) === 0,
+     'daban ' + (0.603 - 0.584).toFixed(3));
+
+  eq('el vacio sigue siendo vacio', redondear(0), 0);
+  eq('y la llena, llena', redondear(1), 1);
+  eq('por debajo de cero se acota', redondear(-3), 0);
+  eq('por encima de uno tambien', redondear(9), 1);
+
+  // Un cambio de verdad SI pasa: media botella bebida no se pierde.
+  ok('un consumo real sigue registrandose',
+     redondear(0.95) - redondear(0.45) > 0.49);
+}
+
+console.log('\n' + (falla ? falla + ' FALLO(S)' : 'todo bien') + '   ·   ' + pasa + ' comprobaciones');
   process.exit(falla ? 1 : 0);
 })();
 

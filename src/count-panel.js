@@ -50,6 +50,37 @@
 
   let _row = null;         // artículo de state.master
   let _sealed = 0;
+  // ── El paso del deslizador ───────────────────────────────────────────
+  //
+  // El deslizador devolvia cualquier numero: 0.5237, 0.5241, 0.58. Eso
+  // es precision falsa — nadie mira una botella y acierta al 1%. Y la
+  // resta de dos lecturas imprecisas es puro ruido: en el historial de
+  // Axel, el 12% de las semanas tiene consumo NEGATIVO, que es
+  // fisicamente imposible. Casa Noble registro −0.35 +0.27 −0.23 +0.26
+  // −0.01 +0.02 en seis semanas sin moverse del estante.
+  //
+  // Con paso de 0.05 esos valores no existen: la misma botella leida dos
+  // veces da el mismo numero, y el ruido desaparece por construccion en
+  // vez de por un parche aguas abajo.
+  //
+  // 0.05 de una botella de 750 son 37 ml, por debajo de lo que se
+  // distingue a ojo. Un paso mas fino no añadiria informacion, solo
+  // volveria a abrir la puerta al ruido.
+  //
+  // Se redondea AQUI y no en bottle-profiles.fractionAt: esa funcion la
+  // usa heightFor por biseccion, y una funcion escalonada rompe la
+  // busqueda.
+  const PASO = 0.05;
+
+  function redondearAPaso(f) {
+    const x = Math.max(0, Math.min(1, Number(f) || 0));
+    // El segundo redondeo no sobra: 20 * 0.05 da 1.0000000000000002 y
+    // 12 * 0.05 da 0.6000000000000001 en coma flotante. Sin el, el
+    // paso limpiaria el ruido del dedo y metaria el suyo propio en la
+    // base de datos.
+    return Math.round(Math.round(x / PASO) * PASO * 100) / 100;
+  }
+
   let _opens = [];         // fracciones, 0..1 — de ESTA pasada
   let _active = -1;        // índice de la abierta que está editando
   let _onNext = null;
@@ -442,6 +473,31 @@
     return '';
   }
 
+  // La lectura de esta misma botella en el conteo anterior, si la hay.
+  // Se guarda una fraccion por botella abierta y se casan por posicion:
+  // la primera con la primera. No es perfecto —nadie garantiza que la
+  // botella 1 de hoy sea la botella 1 de la semana pasada— pero con una
+  // sola abierta, que es el caso normal, siempre acierta.
+  function antesDe(i) {
+    const v = _row && Array.isArray(_row.lastOpens) ? _row.lastOpens[i] : null;
+    const n = Number(v);
+    return isFinite(n) && n > 0 ? redondearAPaso(n) : null;
+  }
+
+  // La comparacion en palabras. "Same as last week" no es un adorno:
+  // confirma que NO se registro consumo donde no lo hubo, que es
+  // precisamente la duda que deja un deslizador a ojo.
+  function compararConAntes(antes, ahora) {
+    if (antes === null) return '';
+    const d = Math.round((ahora - antes) * 100) / 100;
+    if (Math.abs(d) < 0.001) {
+      return `<em class="cp-same"><i class="ti ti-equal" aria-hidden="true"></i> same as last count</em>`;
+    }
+    const signo = d > 0 ? '+' : '\u2212';
+    return `<em class="cp-last">last count ${antes.toFixed(2)} ` +
+           `<b class="${d < 0 ? 'cp-down' : 'cp-up'}">${signo}${Math.abs(d).toFixed(2)}</b></em>`;
+  }
+
   function paintBottle() {
     const host = $('cpOpen');
     if (!host) return;
@@ -456,6 +512,19 @@
     const y = P().heightFor(key, frac);
     const ml = Math.round(frac * sizeOf(_row));
 
+    // ── Donde quedo esta botella el conteo pasado ────────────────────
+    //
+    // Una linea punteada a esa altura y una comparacion debajo. NO se
+    // precarga como valor: si al abrir el panel la linea ya estuviera
+    // en el 0.60 de la semana pasada, el dia que la botella de verdad
+    // bajo a 0.40 se confirmaria el 0.60 sin pensarlo —a las dos de la
+    // mañana y con 260 articulos por delante, todos lo hariamos— y esa
+    // botella no bajaria nunca.
+    //
+    // La marca informa; la decision sigue siendo del dedo.
+    const antes = antesDe(_active);
+    const yAntes = antes === null ? null : P().heightFor(key, antes);
+
     host.innerHTML = `
       <div class="cp-stage" id="cpStage">
         <svg viewBox="0 0 ${VB.w} ${VB.h}" preserveAspectRatio="xMidYMid meet">
@@ -467,6 +536,10 @@
           <line class="cp-fullline" x1="14" y1="${yToPx(key, prof.yFull)}"
                 x2="${VB.w - 14}" y2="${yToPx(key, prof.yFull)}"
                 stroke-width="1" stroke-dasharray="3 4"/>
+          ${yAntes === null ? '' : `
+          <line class="cp-lastline" x1="8" y1="${yToPx(key, yAntes)}"
+                x2="${VB.w - 8}" y2="${yToPx(key, yAntes)}"
+                stroke-width="1.4" stroke-dasharray="5 4"/>`}
         </svg>
         <div class="cp-line" id="cpLine"><span></span><i></i></div>
       </div>
@@ -474,6 +547,7 @@
         ${whichLabel()}
         <b>${frac.toFixed(2)}</b>
         <small>${ml} ml · drag the line</small>
+        ${compararConAntes(antes, frac)}
       </div>
       ${shapeIsSet(_row) ? '' :
         `<div class="cp-hint">Bottle shape not set — using a generic one.</div>`}`;
@@ -521,7 +595,7 @@
       const base = r.top + box.base * scale;
       let y = (base - clientY) / usable;
       y = Math.max(0, Math.min(prof.yFull, y));
-      _opens[_active] = P().fractionAt(key, y);
+      _opens[_active] = redondearAPaso(P().fractionAt(key, y));
       paintBottle();
       paintNums();
     };

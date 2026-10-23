@@ -63,7 +63,7 @@
     const locationId = await fetchLocationId();
 
     const res = await fetch(
-      `${BARSTOCK_RT_URL}/rest/v1/inventory_items?location_id=eq.${locationId}&select=code,item_name,vendor,on_hand,suggested,value,category,order_override,par_adjusted_week,bottle_size_ml,bottle_shape,created_at`,
+      `${BARSTOCK_RT_URL}/rest/v1/inventory_items?location_id=eq.${locationId}&select=code,item_name,vendor,on_hand,suggested,value,category,order_override,par_adjusted_week,bottle_size_ml,bottle_shape,created_at,last_opens`,
       {
         headers: {
           apikey: BARSTOCK_RT_KEY,
@@ -130,6 +130,9 @@
         // articulo dado de alta hoy no tiene stock ni par y se
         // escondería en el acto sin esto.
         createdAt: r.created_at || null,
+        // Como quedaron las abiertas en el ultimo conteo. Referencia
+        // para el siguiente, no dato de calculo.
+        lastOpens: Array.isArray(r.last_opens) ? r.last_opens.map(Number) : null,
         toOrder: typeof computeToOrder === 'function' ? computeToOrder(onHand, suggested) : 0,
         orderOverride: override
       };

@@ -480,6 +480,15 @@
           // Sin tamaño declarado se cae a 750, que es lo que ya suponia
           // el resto de la app al dibujar.
           r.onHand = S().bottlesFor(r.item, Number(r.bottleSizeMl) || 750);
+
+          // Las fracciones de las abiertas, para poder enseñarlas como
+          // referencia en el siguiente conteo. No entran en ningun
+          // calculo: solo sirven para que quien cuenta vea donde quedo
+          // la botella la vez pasada, en vez de empezar de cero y
+          // registrar un consumo que no ocurrio.
+          r.lastOpens = S().passesOf(r.item)
+            .reduce((a, p) => a.concat(p.opens || []), [])
+            .filter(x => x > 0);
         } else if (_mode === 'zero') {
           r.onHand = 0;
         }

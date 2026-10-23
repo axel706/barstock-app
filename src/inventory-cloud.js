@@ -319,7 +319,11 @@
       // Sin esto el default now() lo vuelve a poner en hoy. Si la fila
       // no trae fecha —articulo nuevo de este import— se deja fuera y
       // que el default haga su trabajo, que ahi si es correcto.
-      ...(r.createdAt ? { created_at: r.createdAt } : {})
+      ...(r.createdAt ? { created_at: r.createdAt } : {}),
+      // Describe el ARTICULO —como quedaron sus botellas abiertas en el
+      // ultimo conteo—, asi que va en la lista. Fuera de ella se
+      // perderia en cada import, sin dar ningun error.
+      last_opens: Array.isArray(r.lastOpens) && r.lastOpens.length ? r.lastOpens : null
     }));
 
     const chunkSize = 200;
