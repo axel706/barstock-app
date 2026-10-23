@@ -32,6 +32,33 @@
    */
   body.m-on > .wrap { display: none; }
 
+  /* ── Reset de los botones de la app movil ───────────────────────
+   *
+   * Aqui estaba el otro fallo. Casi todo lo que se toca en estas
+   * pantallas es un <button>, y app.css le da a `button` un fondo, un
+   * borde, una sombra y su propio backdrop-filter. Peor: `body.light
+   * button` tiene mas especificidad —una clase y un elemento— que
+   * `.m-searchbar`, que es solo una clase. O sea que los estilos
+   * globales ganaban y mis tarjetas salian grises opacas con texto
+   * oscuro, mientras las que son <div> se veian bien.
+   *
+   * Por eso este bloque va PRIMERO y con `body.m-shell` delante: pone
+   * todos los botones a cero y deja que las reglas de abajo manden.
+   */
+  body.m-shell .m-screens button,
+  body.m-shell .m-tabs button {
+    background: none;
+    border: none;
+    box-shadow: none;
+    color: inherit;
+    font-family: inherit;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transform: none;
+  }
+  body.m-shell .m-screens button:hover,
+  body.m-shell .m-tabs button:hover { transform: none; box-shadow: none; }
+
   /* ── El velo ────────────────────────────────────────────────────
    *
    * Aqui estaba el fallo de legibilidad. Las tarjetas usaban los
@@ -80,7 +107,7 @@
   .m-loc { font-size: 11px; color: #9aa7b8; }
   .m-day { font-size: 22px; font-weight: 800; letter-spacing: -.3px; color: #f1f5f9; }
 
-  .m-ico {
+  body.m-shell .m-ico {
     width: 34px; height: 34px; padding: 0; flex: 0 0 34px;
     display: flex; align-items: center; justify-content: center;
     border-radius: 50%; border: none; cursor: pointer;
@@ -91,7 +118,7 @@
   /* Nunca cambia de sitio. Es lo más frecuente que se hace con el
    * teléfono y tiene que ser memoria muscular. */
 
-  .m-searchbar {
+  body.m-shell .m-searchbar {
     display: flex; align-items: center; gap: 9px; width: 100%;
     padding: 11px 13px; margin-bottom: 12px;
     border-radius: 13px; cursor: pointer; text-align: left;
@@ -100,18 +127,18 @@
     border: 1px solid rgba(255,255,255,.18);
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   }
-  .m-searchbar.on { border-color: rgba(56,189,248,.45); }
-  .m-searchbar > i:first-child { font-size: 17px; color: #38bdf8; }
+  body.m-shell .m-searchbar.on { border-color: rgba(56,189,248,.45); }
+  body.m-shell .m-searchbar > i:first-child { font-size: 17px; color: #38bdf8; }
 
   /* 16px obligatorio: Safari hace zoom en cualquier campo por debajo, y
    * el zoom a media búsqueda descoloca la pantalla entera. */
-  .m-searchbar input {
+  body.m-shell .m-searchbar input {
     flex: 1; min-width: 0; font-size: 16px; padding: 0;
     background: none; border: none; color: #f1f5f9;
     -webkit-appearance: none;
   }
   .m-searchbar input:focus { outline: none; }
-  .m-searchbar button {
+  body.m-shell .m-searchbar button {
     flex: 0 0 auto; background: none; border: none; padding: 2px;
     color: #9aa7b8; font-size: 15px; cursor: pointer;
   }
@@ -121,7 +148,7 @@
 
   /* ── Tarjetas de cristal ────────────────────────────────────────── */
 
-  .m-card {
+  body.m-shell .m-card {
     display: block; width: 100%; text-align: left;
     background: rgba(255,255,255,.11);
     border: 1px solid rgba(255,255,255,.17);
@@ -150,7 +177,7 @@
   .m-bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,.12); margin-top: 11px; overflow: hidden; }
   .m-bar i { display: block; height: 100%; background: #22c55e; border-radius: 2px; }
 
-  .m-now-go {
+  body.m-shell .m-now-go {
     width: 100%; margin-top: 11px; padding: 11px; border: none;
     border-radius: 11px; font-size: 13.5px; font-weight: 800; cursor: pointer;
     background: rgba(255,255,255,.14); color: #f1f5f9;
@@ -160,7 +187,7 @@
 
   /* ── Listas ─────────────────────────────────────────────────────── */
 
-  .m-item {
+  body.m-shell .m-item {
     display: flex; align-items: center; gap: 10px; width: 100%;
     padding: 11px 12px; margin-bottom: 6px; text-align: left;
     border-radius: 13px; cursor: pointer;
@@ -169,7 +196,7 @@
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     color: #f1f5f9; -webkit-tap-highlight-color: transparent;
   }
-  .m-item > i:first-child { font-size: 17px; flex: 0 0 17px; color: #9aa7b8; }
+  body.m-shell .m-item > i:first-child { font-size: 17px; flex: 0 0 17px; color: #9aa7b8; }
   .m-item-t { flex: 1; min-width: 0; font-size: 13px; line-height: 1.25; }
   .m-item-t small { display: block; font-size: 10.5px; color: #9aa7b8; margin-top: 2px; }
   .m-item b { font-size: 15px; font-weight: 800; }
@@ -177,7 +204,7 @@
 
   /* ── Resultados de búsqueda ─────────────────────────────────────── */
 
-  .m-res { display: flex; align-items: center; gap: 11px; }
+  body.m-shell .m-res { display: flex; align-items: center; gap: 11px; }
   .m-res-l { flex: 1; min-width: 0; }
   .m-res-n {
     display: block; font-size: 13px; color: #f1f5f9;
@@ -197,7 +224,7 @@
 
   /* ── Ficha ──────────────────────────────────────────────────────── */
 
-  .m-back {
+  body.m-shell .m-back {
     display: inline-flex; align-items: center; gap: 4px;
     background: none; border: none; padding: 10px 2px;
     font-size: 13px; color: #9aa7b8; cursor: pointer;
@@ -220,7 +247,7 @@
   .m-soft { color: #9aa7b8; font-weight: 400; font-size: 11.5px; }
 
   .m-acts { display: flex; gap: 8px; margin-top: 4px; }
-  .m-act {
+  body.m-shell .m-act {
     flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
     padding: 13px; border-radius: 13px; font-size: 13px; font-weight: 800;
     cursor: pointer; color: #f1f5f9;
@@ -267,14 +294,14 @@
     box-shadow: 0 10px 28px rgba(15,23,42,.14);
   }
 
-  .m-tab {
+  body.m-shell .m-tab {
     position: relative; flex: 1; height: 38px; padding: 0; border: none;
     display: flex; align-items: center; justify-content: center;
     border-radius: 19px; background: none; cursor: pointer;
     color: #9aa7b8; font-size: 20px;
     -webkit-tap-highlight-color: transparent;
   }
-  .m-tab.on { background: rgba(255,255,255,.12); color: #f1f5f9; }
+  body.m-shell .m-tab.on { background: rgba(255,255,255,.12); color: #f1f5f9; }
 
   .m-dot {
     position: absolute; top: 6px; right: 22%;
@@ -283,7 +310,7 @@
 
   /* Escanear es la acción principal del teléfono y por eso vive fuera
    * de la barra: no compite con la navegación. */
-  .m-fab {
+  body.m-shell .m-fab {
     flex: 0 0 50px; width: 50px; height: 50px; padding: 0; border: none;
     display: flex; align-items: center; justify-content: center;
     border-radius: 50%; cursor: pointer;
