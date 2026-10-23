@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/tables.css">
   <link rel="stylesheet" href="styles/buttons.css">
-  <link rel="stylesheet" href="styles/app.css?v=sil15">
+  <link rel="stylesheet" href="styles/app.css?v=sil16">
   <link rel="stylesheet" href="styles/consumption-match.css?v=cm14">
   <link rel="stylesheet" href="styles/order-history.css">
 
@@ -130,7 +130,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261023-125833</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261023-130648</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -3643,8 +3643,11 @@ async function openInvPanel(idx) {
 
   body.innerHTML = `
     <div class="inv-panel-header">
-      <div style="display:flex;align-items:center;gap:8px">${badge(r.vendor)}<div class="inv-panel-name-wrap"><span class="inv-panel-name">${escapeHtml(r.item)}</span></div></div>
-      <div class="inv-panel-meta" style="margin-top:4px;display:flex;align-items:center;gap:6px">${r.code ? 'Code: ' + escapeHtml(r.code) + ' · ' : ''}<button class="tu-comment-btn${r.category ? ' has-comment' : ''}" onclick="openCategoryModal(${idx});event.stopPropagation()" title="${r.category ? 'Category: ' + r.category : 'Assign category'}" style="font-size:11px;padding:2px 6px"><i class="ti ti-tag" aria-hidden="true"></i> ${r.category || 'No category'}</button></div>
+      <!-- Sin la pastilla del proveedor: el titulo de este panel es el
+           PRODUCTO. El proveedor ya esta en su columna de la tabla y
+           aqui solo competia con el nombre por el poco ancho que hay. -->
+      <div class="inv-panel-name-wrap"><span class="inv-panel-name">${escapeHtml(r.item)}</span></div>
+      <div class="inv-panel-meta" style="margin-top:4px;display:flex;align-items:center;gap:6px">${badge(r.vendor)}${r.code ? '<span>' + escapeHtml(r.code) + '</span>' : ''}<button class="tu-comment-btn${r.category ? ' has-comment' : ''}" onclick="openCategoryModal(${idx});event.stopPropagation()" title="${r.category ? 'Category: ' + r.category : 'Assign category'}" style="font-size:11px;padding:2px 6px"><i class="ti ti-tag" aria-hidden="true"></i> ${r.category || 'No category'}</button></div>
     </div>
     <div class="inv-panel-section ip-stats">
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
@@ -3682,14 +3685,20 @@ async function openInvPanel(idx) {
       <div class="inv-panel-apply-slot">
         ${canApply ? `<div class="inv-panel-apply-hint" style="margin-bottom:6px">${applyHint}</div><button class="inv-panel-apply-btn" onclick="applyInvPourIq(${idx},${applyTarget})">Apply Pour-IQ → ${applyTarget}</button>` : ''}
       </div>
+      <!-- Cada boton va envuelto para poder ponerle una pastilla de
+           color DETRAS. El cristal del boton difumina lo que tiene
+           detras, asi que el color tiene que ser un hermano por debajo:
+           un ::before del propio boton no sirve, porque backdrop-filter
+           crea contexto de apilado y un hijo nunca queda detras del
+           fondo de su padre. -->
       <div class="inv-panel-actions">
-        <button onclick="openEditModal(${idx})">Edit</button>
+        <span class="ip-btn ip-btn-edit"><button onclick="openEditModal(${idx})">Edit</button></span>
         <!-- El consumo sale de "lo que habia + lo que entro - lo que
              queda", y lo que entro solo se llenaba colocando la orden
              desde la app. Una compra en la tienda salia como consumo que
              nunca ocurrio, y ese numero entra en el promedio del par. -->
-        <button onclick="openStockIn(${idx})">Received</button>
-        <button style="color:#ef4444" onclick="quickZeroSuggested(${idx})">Zero suggested</button>
+        <span class="ip-btn ip-btn-recv"><button onclick="openStockIn(${idx})">Received</button></span>
+        <span class="ip-btn ip-btn-zero"><button onclick="quickZeroSuggested(${idx})">Zero suggested</button></span>
       </div>
     </div>`;
 
