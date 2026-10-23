@@ -3011,15 +3011,26 @@ body.light .vsp-last-order {
 
 /* ── Lo que cede cuando no cabe ─────────────────────────────────────
  *
- * Con la altura FIJA, algo tiene que encogerse. Antes no se encogia
- * nada —todo llevaba flex-shrink:0— asi que lo ultimo del panel, que
- * son los botones, se salia del recuadro y desaparecia sin aviso.
+ * OJO con la estructura, que es donde me equivoque: el panel tiene UN
+ * solo hijo, #invPanelBody, y dentro de ese van la cabecera, las
+ * secciones y los botones. Las reglas escritas contra
+ * `.inv-item-panel > .inv-panel-section` no casaban con nada.
+ *
+ *   .inv-item-panel          alto fijo 440, overflow hidden
+ *     └ #invPanelBody        flex column, height:100% (inline en el HTML)
+ *         ├ .inv-panel-header
+ *         ├ .inv-panel-section  ×3
+ *         └ .inv-panel-actions-section
+ *
+ * Con la altura FIJA algo tiene que encogerse. Antes no se encogia
+ * nada —todo lleva flex-shrink:0— asi que lo ultimo, los botones, se
+ * salia del recuadro y desaparecia sin aviso.
  *
  * El orden de sacrificio es deliberado:
  *
  *   1. la grafica de las ultimas semanas   es ilustracion
- *   2. la lista de Optimal par / Status…   son datos, pero se leen en
- *                                          el modal del producto
+ *   2. la lista de Optimal par / Status…   son datos, pero estan en el
+ *                                          modal del producto
  *   3. los botones                         NUNCA
  *
  * Un panel con un dato cortado se entiende. Uno sin botones parece
@@ -3028,23 +3039,21 @@ body.light .vsp-last-order {
  * min-height:0 es imprescindible: un elemento flex no baja de su
  * contenido sin eso, y flex-shrink no sirve de nada.
  */
-.inv-item-panel > .inv-panel-section,
-.inv-item-panel > div:not(.inv-panel-header):not(.inv-panel-actions-section) {
+#invPanelBody { min-height: 0; }
+
+#invPanelBody > .inv-panel-section {
   min-height: 0;
-}
-.inv-item-panel > .inv-panel-section[style*="flex:1"],
-.inv-item-panel > .inv-panel-section[style*="flex: 1"] {
   flex-shrink: 1;
   overflow: hidden;
 }
-/* La grafica es la primera en ceder: mejor perder la ilustracion que
- * un numero. */
-.inv-item-panel > .inv-panel-section:has(.inv-sparkline) {
-  flex-shrink: 2;
-  overflow: hidden;
-}
-/* Los botones no ceden nunca y se quedan pegados abajo. */
-.inv-item-panel > .inv-panel-actions-section { flex-shrink: 0; margin-top: auto; }
+/* La grafica cede primero: mejor perder la ilustracion que un numero. */
+#invPanelBody > .inv-panel-section:has(.inv-sparkline) { flex-shrink: 3; }
+/* La cabecera y los botones no ceden nunca, y los botones se quedan
+ * pegados abajo. */
+#invPanelBody > .inv-panel-header,
+#invPanelBody > .inv-panel-actions-section { flex-shrink: 0; min-height: 0; }
+#invPanelBody > .inv-panel-actions-section { margin-top: auto; }
+
 .inv-item-panel {
   width: 240px;
   flex-shrink: 0;
