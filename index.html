@@ -41,7 +41,7 @@
   <link rel="stylesheet" href="styles/admin.css?v=adm3">
   <link rel="stylesheet" href="styles/weekly-cycle.css?v=cyc5">
   <link rel="stylesheet" href="styles/scan-count.css?v=scan13">
-  <link rel="stylesheet" href="styles/count-panel.css?v=cnt21">
+  <link rel="stylesheet" href="styles/count-panel.css?v=cnt23">
   <link rel="stylesheet" href="styles/stock-in.css?v=si1">
   <link rel="stylesheet" href="styles/toolbar-pills.css?v=pill5">
   <link rel="stylesheet" href="styles/add-to-order.css?v=ato2">
@@ -130,7 +130,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261022-144750</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261023-114735</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5116,16 +5116,16 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/inventory-backup.js?v=bk1"></script>
 <script src="src/weekly-cycle.js?v=cyc9"></script>
 <script src="src/count-session.js?v=cnt18"></script>
-<script src="src/count-panel.js?v=cnt23"></script>
+<script src="src/count-panel.js?v=cnt24"></script>
 <script src="src/barcode-fix.js?v=bf5"></script>
 <script src="src/stock-in.js?v=si1"></script>
 <script src="src/add-to-order.js?v=ato2"></script>
 <script src="src/dormant-items.js?v=dorm1"></script>
-<script src="src/zones.js?v=zon2"></script>
+<script src="src/zones.js?v=zon3"></script>
 <script src="src/settings-zones.js?v=zon2"></script>
 <script src="src/count-resume.js?v=cnt12"></script>
 <script src="src/count-insight.js?v=cnt13"></script>
-<script src="src/count-finish.js?v=cnt16"></script>
+<script src="src/count-finish.js?v=cnt17"></script>
 <script src="src/scan-count.js?v=scan16"></script>
 <script>
   // Aqui habia una puerta: el boton de escaneo solo lo veia el admin,
@@ -6598,6 +6598,7 @@ async function openItemInfoModal(idx) {
       (serie.length > 5 ? ' \u00b7 the last 5 are ' + Math.round(pesoUlt5 * 100) + '% of it' : '')
     : '';
 
+  var zonaHostModal = 'zwm-' + Math.random().toString(36).slice(2, 9);
   var ms = 'background:var(--muted);border-radius:10px;padding:10px';
   var ls = 'font-size:10px;color:var(--sub);margin-bottom:4px';
   var vs = 'font-size:13px;font-weight:700';
@@ -6633,6 +6634,10 @@ async function openItemInfoModal(idx) {
       '<div style="' + ms + ';text-align:center"><div style="' + ls + '">TREND</div><div style="font-size:14px;font-weight:800;color:' + trendCol + '">' + trendStr + '</div></div>' +
       '<div style="' + ms + ';text-align:center"><div style="' + ls + '">ADJUSTMENT</div><div style="font-size:14px;font-weight:800;color:' + adjCol + '">' + adjStr + '</div></div>' +
     '</div>' +
+    // Donde estan las botellas. Vacio si no hay zonas configuradas. Va
+    // ARRIBA del historial de ordenes a proposito: es la pregunta que se
+    // hace con el telefono en la mano y alguien esperando respuesta.
+    '<div id="' + zonaHostModal + '"></div>' +
     '<div style="font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.5px;margin-bottom:8px">ORDER HISTORY</div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:' + (avgWeeklySpend ? '8' : '16') + 'px">' +
       '<div style="' + ms + ';text-align:center"><div style="' + ls + '">TOTAL ORDERED</div><div style="' + bs + '">' + totalOrdered + ' btl</div></div>' +
@@ -6655,6 +6660,8 @@ async function openItemInfoModal(idx) {
         '<tbody>' + snapshotRows + '</tbody>' +
       '</table>' +
     '</div>';
+
+  if (window.BarStockZones) window.BarStockZones.pintarEn(zonaHostModal, r.item, true);
 
   var days = daysRemaining;
   var stockWindow = '';

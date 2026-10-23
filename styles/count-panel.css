@@ -1175,3 +1175,52 @@ body.light .cp-total-go{ color: #0369a1; }
 body.light .cp-chev{ background: rgba(2,132,199,.14); color: #0369a1; }
 body.light .cp-pg-del{ border-color: rgba(15,23,42,.12); }
 body.light .cp-which{ color: #0369a1; }
+
+/* La zona de cada pasada, en el desglose.
+ *
+ * Es la unica confirmacion de que la zona se pego al escaneo. Sin ella,
+ * la primera vez que alguien quiera comprobarlo tiene que abrir el
+ * inspector de Safari conectado por cable, que es tanto como decir que
+ * no se puede comprobar. */
+.cp-pass-z {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fbbf24;
+}
+.cp-pass-z i { font-size: 12px; }
+body.light .cp-pass-z { color: #b45309; }
+
+/* ── El reparto por zona en la pantalla de cierre ─────────────────── */
+.cf-zones {
+  background: rgba(245, 158, 11, .07);
+  border: 1px solid rgba(245, 158, 11, .28);
+  border-radius: 14px;
+  padding: 12px 13px;
+  margin-bottom: 12px;
+}
+.cf-zones-t {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; font-weight: 800; color: #fbbf24; margin-bottom: 8px;
+}
+.cf-zones-r {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 13px; padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.cf-zones-r b { font-variant-numeric: tabular-nums; }
+.cf-zones-r:last-of-type { border-bottom: none; }
+
+/* Lo escaneado sin zona se enseña aparte y no se reparte entre las
+ * demas: inventarle un sitio seria peor que admitir que no se sabe. */
+.cf-zones-no { color: var(--sub); }
+
+.cf-zones-s { font-size: 11px; color: var(--sub); margin-top: 9px; }
+.cf-zones-s.cf-zones-bad { color: #f87171; font-weight: 700; }
+
+body.light .cf-zones { background: rgba(245,158,11,.10); border-color: rgba(180,83,9,.32); }
+body.light .cf-zones-t { color: #92400e; }
+body.light .cf-zones-r { border-bottom-color: rgba(15,23,42,.08); }

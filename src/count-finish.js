@@ -59,6 +59,63 @@
     render();
   }
 
+  // ── El reparto por zona ──────────────────────────────────────────────
+  //
+  // Dos cosas, y la segunda importa mas: cuanto hay en cada sitio, y si
+  // eso llego a la nube. Se fuerza la subida al abrir esta pantalla en
+  // vez de confiar en el pulso de dos minutos, porque este es el momento
+  // en que alguien esta mirando y puede hacer algo si falla.
+  async function pintarZonas() {
+    const host = $('cfZonas');
+    const Z = window.BarStockZones;
+    if (!host) return;
+    if (!Z || !Z.activas()) { host.innerHTML = ''; return; }
+
+    const tam = {};
+    for (const r of (window.state && window.state.master) || []) {
+      tam[r.item] = Number(r.bottleSizeMl) || 750;
+    }
+
+    const totales = {};
+    let sinZona = 0;
+    for (const item of S().countedItems()) {
+      const porZona = S().bottlesByZone(item, tam[item] || 750);
+      for (const [z, n] of Object.entries(porZona)) {
+        if (!z) { sinZona += n; continue; }
+        totales[z] = (totales[z] || 0) + n;
+      }
+    }
+
+    const filas = Object.entries(totales).sort((a, b) => b[1] - a[1]);
+    if (!filas.length && !sinZona) { host.innerHTML = ''; return; }
+
+    const n = (x) => String(Math.round(x * 100) / 100);
+    host.innerHTML = `
+      <div class="cf-zones">
+        <div class="cf-zones-t"><i class="ti ti-map-pin" aria-hidden="true"></i> By zone</div>
+        ${filas.map(([z, v]) => `
+          <div class="cf-zones-r"><span>${esc(z)}</span><b>${n(v)}</b></div>`).join('')}
+        ${sinZona ? `
+          <div class="cf-zones-r cf-zones-no">
+            <span>No zone</span><b>${n(sinZona)}</b>
+          </div>` : ''}
+        <div class="cf-zones-s" id="cfZonasSync">Saving…</div>
+      </div>`;
+
+    const est = $('cfZonasSync');
+    try {
+      const subidas = await Z.sincronizar();
+      if (est) est.textContent = subidas
+        ? 'Saved \u00b7 you can look this up from your phone.'
+        : 'Nothing to save.';
+    } catch (e) {
+      if (est) {
+        est.textContent = 'Could not save the zone breakdown. The count itself is fine.';
+        est.className = 'cf-zones-s cf-zones-bad';
+      }
+    }
+  }
+
   function render() {
     const s = S().summary();
 
@@ -76,6 +133,13 @@
 
     $('cfBody').innerHTML = `
       <div class="cf-count"><b>${s.counted}</b> of ${s.total} items counted</div>
+
+      <!-- El reparto por zona y, sobre todo, si llego a guardarse.
+           Antes un fallo al subirlo solo dejaba un aviso en una consola
+           que nadie mira, y la funcion entera vale por una cosa: que el
+           dato este ahi cuando preguntes desde fuera del restaurante.
+           Fallar en silencio es el peor comportamiento posible para eso. -->
+      <div id="cfZonas"></div>
 
       <!-- Los avisos van AQUÍ, antes de la pregunta de qué hacer con los
            no contados, porque cambian esa respuesta: si faltan nueve de
@@ -158,6 +222,9 @@
     }
 
     paintInsight();
+    // Igual que los avisos: en segundo plano. Nadie debe esperar a la red
+    // para poder pulsar "Keep scanning".
+    pintarZonas().catch(e => console.warn('[zonas] resumen de cierre', e));
   }
 
   // ── Los avisos ───────────────────────────────────────────────────────

@@ -683,6 +683,7 @@
         <div class="cp-pass-d">
           <b>${esc(fmtNum(passTotal(p)))}</b>
           <span>${esc(passDetail(p))}</span>
+          ${p.zona ? `<span class="cp-pass-z"><i class="ti ti-map-pin" aria-hidden="true"></i>${esc(p.zona)}</span>` : ''}
         </div>
         ${passSize(p) !== sizeOrden(_row)
           ? `<span class="cp-pass-sz cp-otro">${esc(fmtSize(passSize(p)))}</span>`
