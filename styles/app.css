@@ -2985,10 +2985,33 @@ body.light .vsp-last-order {
   flex: 1;
   min-width: 0;
 }
+/* ── El alto del panel del articulo ─────────────────────────────────
+ *
+ * Estaba clavado en 440px con overflow:hidden, y TODO lo de dentro con
+ * flex-shrink:0. Resultado: cualquier bloque nuevo empujaba los botones
+ * de abajo fuera del recuadro y se recortaban sin dejar rastro. Paso con
+ * el reparto por zona, pero habria pasado con lo siguiente que se
+ * añadiera.
+ *
+ * `align-self: stretch` lo hace exactamente igual de alto que la tabla
+ * de al lado, que es la regla que pidio Axel: ni scroll, ni mas largo
+ * que la tabla. El 440 se queda como suelo por si la tabla sale muy
+ * corta.
+ *
+ * Y el de abajo es un cinturon de seguridad: si aun asi no cabe, lo que
+ * cede es la lista de Optimal par / Status / Trend / Data, no los
+ * botones. Un panel con un dato cortado se entiende; uno sin botones
+ * parece roto.
+ */
 .inv-layout .inv-item-panel {
-  height: 440px;
+  align-self: stretch;
+  min-height: 440px;
   overflow: hidden;
-  align-self: flex-start;
+}
+.inv-layout .inv-item-panel > .inv-panel-section[style*="flex:1"],
+.inv-layout .inv-item-panel > .inv-panel-section[style*="flex: 1"] {
+  min-height: 0;
+  flex-shrink: 1;
   overflow: hidden;
 }
 .inv-item-panel {
