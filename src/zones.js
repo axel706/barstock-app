@@ -308,22 +308,39 @@
     return String(Math.round((Number(n) || 0) * 100) / 100);
   }
 
-  async function pintarEn(hostId, itemName) {
+  // `titulo` lo pide el modal grande: ahi no hay un panel que encuadre
+  // el bloque y sin encabezado parece un desglose suelto. En los paneles
+  // laterales sobra, porque van pegados a los datos del articulo.
+  async function pintarEn(hostId, itemName, titulo) {
     const host = document.getElementById(hostId);
     if (!host) return;
-    if (!activas()) { host.innerHTML = ''; return; }
 
-    host.innerHTML = '<div class="zw-wait">Looking…</div>';
+    // Cargar la lista si todavia no esta. Antes se comprobaba activas()
+    // a secas, y en una pestaña donde nadie habia abierto el escaner ni
+    // Ajustes la lista seguia sin cargar: activas() decia que no hay
+    // zonas y el bloque se dibujaba VACIO. No fallaba, no avisaba, no se
+    // veia. Exactamente el modo de fallo que mas cuesta encontrar.
+    if (_zonas === null) { try { await cargar(); } catch (e) {} }
+    if (!activas()) { host.innerHTML = ''; return; }
+    const cab = titulo
+      ? '<div style="font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.5px;margin-bottom:8px">WHERE IT IS</div>'
+      : '';
+
+    host.innerHTML = cab + '<div class="zw-wait">Looking…</div>';
     const d = await donde(itemName);
 
+    // Hay zonas configuradas pero este producto no tiene reparto: se
+    // dice. Un hueco en blanco no distingue "no se ha contado por zona"
+    // de "la funcion no esta puesta", y son dos cosas distintas con dos
+    // soluciones distintas.
     if (!d || !d.zonas.length) {
-      host.innerHTML = '<div class="zw-wait">Not counted by zone yet.</div>';
+      host.innerHTML = cab + '<div class="zw-wait">Not counted by zone yet.</div>';
       return;
     }
 
     const c = cuando(d.at);
-    host.innerHTML =
-      '<div class="zw">' +
+    host.innerHTML = cab +
+      '<div class="zw"' + (titulo ? ' style="border-top:none;margin-top:0;padding-top:0"' : '') + '>' +
         d.zonas.map(z =>
           `<div class="zw-row${z.botellas <= 0 ? ' zw-zero' : ''}">
              <span class="zw-z">${esc(z.zona)}</span>

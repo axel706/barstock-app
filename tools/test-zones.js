@@ -218,6 +218,23 @@ console.log('\nguardar la lista');
      w.BarStockZones.paraPasada(), 'Closet');
 }
 
+console.log('\nel panel de una pestaña que no abrio el escaner');
+{
+  // Este era el fallo: la lista solo se cargaba al abrir el escaner o
+  // Ajustes. En una pestaña donde no se habia abierto ninguno de los
+  // dos, activas() decia que no y el bloque se dibujaba vacio. Ni
+  // fallaba, ni avisaba, ni se veia.
+  const w = montar(['Main bar']);
+  w.__zonasDevueltas = [{ zone: 'Main bar', bottles: 3, counted_at: new Date().toISOString() }];
+
+  eq('la lista arranca sin cargar', w.BarStockZones.lista(), []);
+
+  await w.BarStockZones.pintarEn('h', 'Vodka');
+  const html = w.document.getElementById('h').innerHTML;
+  ok('pintarEn carga la lista por su cuenta y pinta', /Main bar/.test(html) && /3/.test(html),
+     'dio: ' + html.slice(0, 120));
+}
+
 console.log('\nla zona pegajosa y la de arranque');
 {
   const w = montar(['Main bar', 'Closet', 'Wine cellar']);

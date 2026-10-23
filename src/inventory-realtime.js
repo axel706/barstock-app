@@ -149,6 +149,13 @@
     // cuando llega la actividad se vuelve a pintar ya con lo quieto
     // escondido. Al reves —esperando— la pantalla se quedaria en blanco
     // por una consulta que solo decide que NO mostrar.
+    // La lista de zonas, de una vez y para toda la pagina. Sin esto solo
+    // se cargaba al abrir el escaner o Ajustes, y los paneles de
+    // articulo de una pestaña recien abierta creian que no habia zonas.
+    if (window.BarStockZones) {
+      window.BarStockZones.cargar().catch(() => {});
+    }
+
     if (window.BarStockDormant) {
       window.BarStockDormant.cargar().then(m => {
         if (m && typeof render === 'function') render();
