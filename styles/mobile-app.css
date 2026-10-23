@@ -21,16 +21,6 @@
   }
 
   /* ── Las pantallas propias ──────────────────────────────────────── */
-  /*
-   * Mientras hay una pantalla propia abierta, la pagina de siempre se
-   * esconde. #mScreens cuelga del body, asi que sin esto el Home nuevo
-   * se dibujaba DEBAJO del viejo en vez de sustituirlo.
-   *
-   * La regla vive aqui dentro —y no como un style inline desde el JS—
-   * para que en escritorio sea imposible que algo esconda la app,
-   * aunque el modulo se ejecute por error.
-   */
-  body.m-on > .wrap { display: none; }
 
   .m-screens { padding: 0 12px; }
   .m-screens.hidden { display: none; }

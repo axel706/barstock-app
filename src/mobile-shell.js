@@ -101,7 +101,6 @@
     _activa = null;
     _montado = false;
     document.body.classList.remove('m-shell');
-    document.body.classList.remove('m-on');
     // Las pantallas propias se quedan sin dibujar; las secciones del
     // escritorio nunca se tocaron, asi que no hay nada que restaurar.
   }
@@ -192,14 +191,6 @@
     }
 
     _host.classList.remove('hidden');
-    // La pagina de siempre se esconde: el contenedor de las pantallas
-    // propias cuelga del body, asi que sin esto el Home nuevo se
-    // dibujaba DEBAJO del viejo en vez de sustituirlo.
-    //
-    // Se hace con una clase en el body y la regla vive en la media
-    // query, no con un style inline: asi en escritorio es imposible
-    // que algo esconda la app aunque este modulo se ejecute por error.
-    document.body.classList.add('m-on');
     Array.from(_host.children).forEach(c => c.classList.toggle('on', c === caja));
     if (typeof p.show === 'function') {
       try { p.show(caja); } catch (e) { console.warn('[movil] show ' + id, e); }
@@ -211,7 +202,6 @@
 
   function ocultarPropias() {
     if (_host) _host.classList.add('hidden');
-    document.body.classList.remove('m-on');
   }
 
   // ── Arranque ─────────────────────────────────────────────────────────
