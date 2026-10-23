@@ -190,7 +190,9 @@ console.log('\nla fecha del dato');
   html = w.document.getElementById('h').innerHTML;
   ok('uno de hace nueve dias se marca como viejo', /zw-old/.test(html),
      'a esas alturas es una pista, no un hecho');
-  ok('y siempre dice cuantos dias', /9 days ago/.test(html));
+  // Abreviado a '9d ago': esa linea comparte un panel donde cada pixel
+  // de alto se lo quita a los botones de abajo.
+  ok('y siempre dice cuantos dias', /9d ago/.test(html));
 
   // Una zona en cero no se esconde: "no hay en el closet" es justo la
   // respuesta que alguien vino a buscar.

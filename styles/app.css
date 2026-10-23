@@ -3970,33 +3970,59 @@ body.light .zs-empty { border-color: rgba(15,23,42,.14); }
 /* ── Donde esta la botella ───────────────────────────────────────────
  *
  * El reparto por zona del ultimo conteo, en los paneles de articulo.
+ *
+ * En COLUMNAS y no en lista: una fila por zona crecia hacia abajo y
+ * empujaba fuera del panel los botones de Edit / Received / Zero
+ * suggested. Ese panel no hace scroll y no puede ser mas alto que la
+ * tabla de al lado, asi que su alto es un presupuesto cerrado y lo que
+ * gaste este bloque se lo quita a otra cosa.
+ *
+ * Asi son tres renglones fijos, haya dos zonas o siete, y si no caben a
+ * lo ancho se deslizan de lado.
  */
 .zw { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.08); }
 body.light .zw { border-top-color: rgba(15,23,42,.08); }
 
-.zw-row { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; padding: 3px 0; }
-.zw-z { flex: 1; min-width: 0; color: var(--sub); }
-.zw-n { font-weight: 800; font-variant-numeric: tabular-nums; }
+.zw-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.zw-strip::-webkit-scrollbar { display: none; }
+
+.zw-t {
+  flex: 1 0 auto;
+  min-width: 54px;
+  max-width: 92px;
+  background: rgba(255,255,255,.04);
+  border-radius: 8px;
+  padding: 6px 7px;
+  text-align: center;
+}
+body.light .zw-t { background: rgba(15,23,42,.04); }
+
+.zw-n { font-size: 15px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+
+/* El nombre se corta con puntos suspensivos en vez de envolver: una
+ * zona con nombre largo añadiria un renglon a TODAS las columnas. */
+.zw-z {
+  font-size: 9.5px;
+  color: var(--sub);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Una zona en cero se enseña, no se esconde: "no hay en el closet" es
  * justo la respuesta que alguien vino a buscar. */
 .zw-zero { opacity: .45; }
 
-.zw-at { font-size: 10.5px; color: var(--sub); margin-top: 6px; }
+.zw-at { font-size: 10px; color: var(--sub); margin-top: 5px; text-align: center; }
 /* Pasada una semana el dato es una pista, no un hecho. */
 .zw-at.zw-old { color: #fbbf24; }
 
 .zw-wait { font-size: 11px; color: var(--sub); margin-top: 10px; opacity: .7; }
-
-/* La estrella marca la zona de arranque de cada conteo. Separada del
- * orden a proposito: el orden manda los chips del escaner y se decide
- * por frecuencia de uso; esto dice por donde se empieza a contar. */
-.zs-star {
-  flex: 0 0 auto; width: 34px; height: 34px; padding: 0;
-  display: flex; align-items: center; justify-content: center;
-  background: none; border: 1px solid rgba(255,255,255,.12);
-  border-radius: 8px; color: var(--sub); cursor: pointer;
-}
-.zs-star.on { border-color: rgba(245,158,11,.55); color: #fbbf24; background: rgba(245,158,11,.12); }
-body.light .zs-star { border-color: rgba(15,23,42,.12); }
-body.light .zs-star.on { color: #b45309; }

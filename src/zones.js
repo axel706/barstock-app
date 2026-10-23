@@ -294,14 +294,17 @@
       ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
   }
 
+  // Corto a proposito: esta linea comparte un panel donde cada pixel de
+  // alto se lo quita a los botones de abajo. Dice lo justo —cuando— sin
+  // gastar dos renglones en decirlo bonito.
   function cuando(iso) {
     const t = Date.parse(iso || '');
     if (!isFinite(t)) return { txt: '', viejo: false };
     const dias = Math.floor((Date.now() - t) / 86400000);
-    const f = new Date(t).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
     if (dias <= 0) return { txt: 'counted today', viejo: false };
     if (dias === 1) return { txt: 'counted yesterday', viejo: false };
-    return { txt: 'counted ' + f + ' \u00b7 ' + dias + ' days ago', viejo: dias >= 7 };
+    const f = new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return { txt: 'counted ' + f + ' \u00b7 ' + dias + 'd ago', viejo: dias >= 7 };
   }
 
   function fmt(n) {
@@ -339,13 +342,25 @@
     }
 
     const c = cuando(d.at);
+    // ── Columnas, no lista ──────────────────────────────────────────
+    //
+    // Una fila por zona crecia hacia abajo y empujaba fuera del panel
+    // los botones de Edit / Received / Zero suggested. Ese panel no
+    // puede hacer scroll ni ser mas alto que la tabla de al lado, asi
+    // que el alto es un presupuesto cerrado: lo que gaste esto se lo
+    // quita a otra cosa.
+    //
+    // En columnas son tres renglones fijos pase lo que pase el numero
+    // de zonas, y si no caben se deslizan de lado.
     host.innerHTML = cab +
       '<div class="zw"' + (titulo ? ' style="border-top:none;margin-top:0;padding-top:0"' : '') + '>' +
-        d.zonas.map(z =>
-          `<div class="zw-row${z.botellas <= 0 ? ' zw-zero' : ''}">
-             <span class="zw-z">${esc(z.zona)}</span>
-             <span class="zw-n">${fmt(z.botellas)}</span>
-           </div>`).join('') +
+        '<div class="zw-strip">' +
+          d.zonas.map(z =>
+            `<div class="zw-t${z.botellas <= 0 ? ' zw-zero' : ''}">
+               <div class="zw-n">${fmt(z.botellas)}</div>
+               <div class="zw-z" title="${esc(z.zona)}">${esc(z.zona)}</div>
+             </div>`).join('') +
+        '</div>' +
         `<div class="zw-at${c.viejo ? ' zw-old' : ''}">${esc(c.txt)}</div>` +
       '</div>';
   }
