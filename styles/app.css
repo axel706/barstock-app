@@ -2981,9 +2981,15 @@ body.light .vsp-last-order {
   align-items: stretch;
   width: 100%;
 }
+/* 500 y no el max-height global de 440: la tabla y el panel de esta
+ * pantalla tienen que medir lo mismo, y 440 se quedaba corto para lo
+ * que el panel necesita enseñar. Va scoped a .inv-layout porque
+ * .tablewrap es una clase que usan todas las secciones. */
 .inv-layout > .tablewrap {
   flex: 1;
   min-width: 0;
+  height: 500px;
+  max-height: 500px;
 }
 /* ── El alto del panel del articulo ─────────────────────────────────
  *
@@ -3004,7 +3010,7 @@ body.light .vsp-last-order {
  * parece roto.
  */
 .inv-layout .inv-item-panel {
-  height: 440px;
+  height: 500px;
   align-self: flex-start;
   overflow: hidden;
 }
@@ -3020,15 +3026,26 @@ body.light .vsp-last-order {
  * Con la rejilla cada seccion tiene su fila y su alto, SIEMPRE el
  * mismo:
  *
- *     48  cabecera      nombre, codigo, categoria
- *     60  stats         on hand / suggested / avg-wk
- *     46  zonas         el reparto, o "not counted by zone yet"
- *     92  datos         optimal par / status / trend / data
- *     52  grafica       las ultimas semanas, o el aviso de que no hay
- *     78  botones       Edit / Received / Zero suggested
+ *     64  cabecera      nombre a DOS lineas, codigo y categoria
+ *     56  stats         on hand / suggested / avg-wk
+ *     48  zonas         el reparto, o "not counted by zone yet"
+ *     96  datos         optimal par / status / trend / data
+ *     64  grafica       las ultimas semanas, o el aviso de que no hay
+ *    108  botones       Apply Pour-IQ (cuando lo hay) + los tres de abajo
  *    ───
- *    376  + 5 separaciones de 8  =  416, que son los 440 del panel
+ *    436  + 5 separaciones de 8  =  476, que son los 500 del panel
  *                                   menos 24 de relleno
+ *
+ * Cada fila esta medida por su PEOR caso, no por el habitual:
+ *
+ *   · la cabecera, con un nombre que ocupa dos lineas
+ *   · los botones, con el de Apply Pour-IQ presente ADEMAS de los tres
+ *     de siempre. Ese boton solo aparece cuando hay un par que aplicar,
+ *     y darle a la fila el alto del caso sin el fue el error: el boton
+ *     existia y se encimaba con los otros.
+ *
+ * Dimensionar por el caso habitual es lo que produce un panel que se
+ * ve bien casi siempre y se rompe justo cuando hay algo que hacer.
  *
  * Las separaciones son del propio grid (row-gap) y no padding de cada
  * seccion: asi el aire entre bloques es el mismo siempre, lo ponga
@@ -3046,7 +3063,7 @@ body.light .vsp-last-order {
  */
 #invPanelBody {
   display: grid;
-  grid-template-rows: 48px 60px 46px 92px 52px 78px;
+  grid-template-rows: 64px 56px 48px 96px 64px 108px;
   row-gap: 8px;
   height: 100%;
   min-height: 0;

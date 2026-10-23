@@ -86,7 +86,11 @@
 
   /* Inventory */
   .inv-layout                    { flex-direction: column; }
-  .inv-layout > .tablewrap       { width: 100%; }
+  /* Los 500px fijos son para que tabla y panel midan lo mismo cuando
+     van lado a lado. En columna no hay nada que igualar, y fijar la
+     altura de la tabla aqui le pondria un scroll dentro de la pagina,
+     que es el peor gesto en un telefono. */
+  .inv-layout > .tablewrap       { width: 100%; height: auto; max-height: none; }
   .inv-layout .inv-item-panel,
   .inv-item-panel {
     width: auto;
@@ -100,6 +104,16 @@
     overflow: visible;
     order: -1;
   }
+
+  /* Y la rejilla de filas fijas tampoco: existe para que las secciones
+     no se muevan dentro de un alto cerrado. En el telefono el panel
+     crece lo que necesite, asi que las filas se dimensionan solas. */
+  #invPanelBody {
+    grid-template-rows: none;
+    grid-auto-rows: min-content;
+    height: auto;
+  }
+  #invPanelBody > * { overflow: visible; }
 
   /* Cost Report */
   .cr-layout { grid-template-columns: minmax(0, 1fr); }
