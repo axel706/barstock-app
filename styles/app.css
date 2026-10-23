@@ -3026,26 +3026,28 @@ body.light .vsp-last-order {
  * Con la rejilla cada seccion tiene su fila y su alto, SIEMPRE el
  * mismo:
  *
- *     64  cabecera      nombre a DOS lineas, codigo y categoria
- *     56  stats         on hand / suggested / avg-wk
- *     48  zonas         el reparto, o "not counted by zone yet"
- *     96  datos         optimal par / status / trend / data
- *     64  grafica       las ultimas semanas, o el aviso de que no hay
- *    108  botones       Apply Pour-IQ (cuando lo hay) + los tres de abajo
- *    ───
- *    436  + 5 separaciones de 8  =  476, que son los 500 del panel
- *                                   menos 24 de relleno
+ * ── Las alturas NO se escriben aqui ─────────────────────────────────
  *
- * Cada fila esta medida por su PEOR caso, no por el habitual:
+ * Tres intentos poniendo seis numeros a ojo, y en los tres se corto
+ * algo: siempre hay una seccion a la que le calcule mal unos pixeles.
+ * El problema no eran los numeros, era el metodo.
  *
- *   · la cabecera, con un nombre que ocupa dos lineas
- *   · los botones, con el de Apply Pour-IQ presente ADEMAS de los tres
- *     de siempre. Ese boton solo aparece cuando hay un par que aplicar,
- *     y darle a la fila el alto del caso sin el fue el error: el boton
- *     existia y se encimaba con los otros.
+ * Ahora al reves: lo que se fija es el alto del CONTENIDO de cada
+ * seccion, de forma que su altura natural sea la misma siempre, haya
+ * datos o no. La rejilla se dimensiona sola con `auto` y no hay nada
+ * que adivinar.
  *
- * Dimensionar por el caso habitual es lo que produce un panel que se
- * ve bien casi siempre y se rompe justo cuando hay algo que hacer.
+ *   cabecera   nombre recortado a 2 lineas de alto fijo + meta
+ *   stats      tres tarjetas de 44
+ *   zonas      bloque de 32, igual con reparto que con mensaje
+ *   datos      cuatro renglones de 19
+ *   grafica    rotulo + barras de 22 + etiquetas, igual si no hay datos
+ *   botones    hueco de Apply SIEMPRE reservado + los tres de abajo
+ *
+ * La ultima fila es 1fr: se queda con lo que sobre y ancla los botones
+ * abajo. Si algun dia el contenido crece de mas, ese sobrante se come
+ * primero y solo despues se recorta algo — en vez de que lo ultimo del
+ * panel desaparezca sin aviso.
  *
  * Las separaciones son del propio grid (row-gap) y no padding de cada
  * seccion: asi el aire entre bloques es el mismo siempre, lo ponga
@@ -3063,7 +3065,10 @@ body.light .vsp-last-order {
  */
 #invPanelBody {
   display: grid;
-  grid-template-rows: 64px 56px 48px 96px 64px 108px;
+  /* Las cinco primeras se dimensionan SOLAS por su contenido, que es de
+   * alto constante (ver mas abajo). La ultima se queda con lo que
+   * sobre y ancla los botones al fondo. */
+  grid-template-rows: auto auto auto auto auto 1fr;
   row-gap: 8px;
   height: 100%;
   min-height: 0;
@@ -3085,11 +3090,61 @@ body.light .vsp-last-order {
 body.light #invPanelBody > .inv-panel-header { border-bottom-color: rgba(15,23,42,.08); }
 #invPanelBody > .inv-panel-actions-section { margin-top: 0; padding-top: 8px; }
 
-/* Cada seccion alinea su contenido arriba y reparte lo suyo, para que
- * un bloque con dos lineas no quede flotando en medio de su fila. */
 #invPanelBody > .inv-panel-section { display: flex; flex-direction: column; justify-content: flex-start; }
-#invPanelBody > .ip-rows { justify-content: space-between; padding-bottom: 2px; }
 #invPanelBody > .inv-panel-actions-section { display: flex; flex-direction: column; justify-content: flex-end; }
+
+/* ── Alturas de contenido, que son las que de verdad mandan ───────── */
+
+/* Las tarjetas, con alto propio: antes dependian de su padding y del
+ * tamaño de la cifra, y se recortaban por abajo al no caber. */
+#invPanelBody .inv-panel-stat {
+  height: 44px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 0 6px;
+}
+#invPanelBody .inv-panel-stat-label { margin-bottom: 2px; }
+
+/* Nombre a dos lineas como maximo y SIEMPRE el alto de dos: un nombre
+ * corto deja un hueco, pero ninguno empuja al resto. */
+#invPanelBody .inv-panel-name-wrap {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 38px;
+  line-height: 19px;
+}
+
+/* La grafica: rotulo, barras y etiquetas con alto cerrado, se dibujen
+ * una barra o veinte. */
+#invPanelBody .ip-spark .inv-sparkline { height: 22px; }
+#invPanelBody .ip-spark .inv-sparklabels { height: 13px; overflow: hidden; }
+/* 38 para igualar barras (22) + separacion (3) + etiquetas (13): la
+ * seccion mide lo mismo haya grafica o no. */
+#invPanelBody .ip-spark .ip-none { height: 38px; }
+
+/* El hueco de Apply Pour-IQ se reserva SIEMPRE, este o no el boton. Es
+ * lo que evita que al aparecer empuje a los tres de abajo. */
+#invPanelBody .inv-panel-apply-slot {
+  height: 52px;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  margin-bottom: 6px;
+}
+#invPanelBody .inv-panel-apply-btn { padding: 7px; }
+#invPanelBody .inv-panel-actions button { padding: 8px 6px; }
+
+/* Cualquier mensaje de "no hay nada" va centrado en su seccion, en
+ * vertical y en horizontal: pegado a una esquina parece un error de
+ * pintado, no una respuesta. */
+#invPanelBody .zw-wait,
+#invPanelBody .ip-none {
+  width: 100%;
+  text-align: center;
+  display: flex; align-items: center; justify-content: center;
+}
+#invPanelBody > .ip-zones { justify-content: center; }
+#invPanelBody .zw-wait { min-height: 32px; }
+
+/* El bloque de zonas mide lo mismo con reparto que con mensaje. */
+#invPanelBody .zw { height: 32px; justify-content: center; }
 
 .ip-none { font-size: 11px; color: var(--sub); opacity: .7; }
 
