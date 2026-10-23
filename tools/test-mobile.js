@@ -113,9 +113,13 @@ console.log('\nnavegar');
   M.ir('home');
   eq('la pantalla activa es la que se pidio', M.activa(), 'home');
   eq('se monta una sola vez', montadas, 1);
+  // Sin esto, la pantalla nueva se dibujaba DEBAJO de la de siempre en
+  // vez de sustituirla: #mScreens cuelga del body.
+  ok('la pagina de siempre se esconde', w.document.body.classList.contains('m-on'));
 
   M.ir('inv');
   eq('una pestaña de seccion usa bsOpenSection', w.__abiertas, ['inventory']);
+  ok('y la pagina de siempre vuelve a verse', !w.document.body.classList.contains('m-on'));
   ok('y esconde las pantallas propias',
      w.document.getElementById('mScreens').classList.contains('hidden'));
 
