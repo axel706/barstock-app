@@ -318,13 +318,23 @@
     const host = document.getElementById(hostId);
     if (!host) return;
 
+    // Esta seccion ocupa una fila fija de la rejilla del panel, asi que
+    // nunca se queda en blanco: si la funcion esta apagada lo dice, en
+    // vez de dejar un hueco que parece un fallo de pintado.
+    const vacio = (txt) => { host.innerHTML = (titulo ? '' : '') + '<div class="zw-wait">' + txt + '</div>'; };
+
     // Cargar la lista si todavia no esta. Antes se comprobaba activas()
     // a secas, y en una pestaña donde nadie habia abierto el escaner ni
     // Ajustes la lista seguia sin cargar: activas() decia que no hay
     // zonas y el bloque se dibujaba VACIO. No fallaba, no avisaba, no se
     // veia. Exactamente el modo de fallo que mas cuesta encontrar.
     if (_zonas === null) { try { await cargar(); } catch (e) {} }
-    if (!activas()) { host.innerHTML = ''; return; }
+    if (!activas()) {
+      // En el modal no hay fila que rellenar: ahi si se deja vacio.
+      if (titulo) host.innerHTML = '';
+      else vacio('Zones are off. Turn them on in Settings.');
+      return;
+    }
     const cab = titulo
       ? '<div style="font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.5px;margin-bottom:8px">WHERE IT IS</div>'
       : '';
@@ -352,16 +362,22 @@
     //
     // En columnas son tres renglones fijos pase lo que pase el numero
     // de zonas, y si no caben se deslizan de lado.
+    // La fecha va EN LA MISMA LINEA que el rotulo, no debajo: ahorra un
+    // renglon en una fila de alto fijo y la empareja visualmente con los
+    // demas rotulos de seccion del panel.
     host.innerHTML = cab +
-      '<div class="zw"' + (titulo ? ' style="border-top:none;margin-top:0;padding-top:0"' : '') + '>' +
+      '<div class="zw">' +
+        '<div class="zw-head">' +
+          '<span class="zw-lab">WHERE</span>' +
+          `<span class="zw-at${c.viejo ? ' zw-old' : ''}">${esc(c.txt)}</span>` +
+        '</div>' +
         '<div class="zw-strip">' +
           d.zonas.map(z =>
             `<div class="zw-t${z.botellas <= 0 ? ' zw-zero' : ''}">
-               <div class="zw-n">${fmt(z.botellas)}</div>
-               <div class="zw-z" title="${esc(z.zona)}">${esc(z.zona)}</div>
+               <span class="zw-n">${fmt(z.botellas)}</span>
+               <span class="zw-z" title="${esc(z.zona)}">${esc(z.zona)}</span>
              </div>`).join('') +
         '</div>' +
-        `<div class="zw-at${c.viejo ? ' zw-old' : ''}">${esc(c.txt)}</div>` +
       '</div>';
   }
 

@@ -3009,50 +3009,54 @@ body.light .vsp-last-order {
   overflow: hidden;
 }
 
-/* ── Lo que cede cuando no cabe ─────────────────────────────────────
+/* ── El panel del articulo es una REJILLA de filas fijas ────────────
  *
- * OJO con la estructura, que es donde me equivoque: el panel tiene UN
- * solo hijo, #invPanelBody, y dentro de ese van la cabecera, las
- * secciones y los botones. Las reglas escritas contra
- * `.inv-item-panel > .inv-panel-section` no casaban con nada.
+ * Y no un flex, que fue mi error repetido. Un flex reparte el sobrante:
+ * una seccion sin contenido cede su sitio y las de abajo suben, y una
+ * con mucho contenido empuja a las de abajo fuera del recuadro. El
+ * resultado es un panel que cambia de forma segun el producto que
+ * selecciones, y que a veces se come sus propios botones.
  *
- *   .inv-item-panel          alto fijo 440, overflow hidden
- *     └ #invPanelBody        flex column, height:100% (inline en el HTML)
- *         ├ .inv-panel-header
- *         ├ .inv-panel-section  ×3
- *         └ .inv-panel-actions-section
+ * Con la rejilla cada seccion tiene su fila y su alto, SIEMPRE el
+ * mismo:
  *
- * Con la altura FIJA algo tiene que encogerse. Antes no se encogia
- * nada —todo lleva flex-shrink:0— asi que lo ultimo, los botones, se
- * salia del recuadro y desaparecia sin aviso.
+ *     52  cabecera      nombre, codigo, categoria
+ *     62  stats         on hand / suggested / avg-wk
+ *     50  zonas         el reparto, o "not counted by zone yet"
+ *    104  datos         optimal par / status / trend / data
+ *     54  grafica       las ultimas semanas, o el aviso de que no hay
+ *     94  botones       Edit / Received / Zero suggested
+ *    ───
+ *    416  = 440 del panel menos 24 de relleno
  *
- * El orden de sacrificio es deliberado:
+ * Si una seccion no tiene nada que enseñar, su espacio sigue ahi y lo
+ * de abajo no se mueve. Si tiene de mas, se recorta DENTRO de su fila y
+ * no invade a nadie. Esa es la regla entera.
  *
- *   1. la grafica de las ultimas semanas   es ilustracion
- *   2. la lista de Optimal par / Status…   son datos, pero estan en el
- *                                          modal del producto
- *   3. los botones                         NUNCA
+ * Al tocar estos numeros hay que mantener la suma en 416, o el ultimo
+ * bloque —los botones— se vuelve a salir.
  *
- * Un panel con un dato cortado se entiende. Uno sin botones parece
- * roto, y encima no hay forma de saber que faltan.
- *
- * min-height:0 es imprescindible: un elemento flex no baja de su
- * contenido sin eso, y flex-shrink no sirve de nada.
+ * La estructura, que tambien me costo una vuelta: el panel tiene UN
+ * solo hijo, #invPanelBody, y la rejilla va en el.
  */
-#invPanelBody { min-height: 0; }
-
-#invPanelBody > .inv-panel-section {
+#invPanelBody {
+  display: grid;
+  grid-template-rows: 52px 62px 50px 104px 54px 94px;
   min-height: 0;
-  flex-shrink: 1;
-  overflow: hidden;
 }
-/* La grafica cede primero: mejor perder la ilustracion que un numero. */
-#invPanelBody > .inv-panel-section:has(.inv-sparkline) { flex-shrink: 3; }
-/* La cabecera y los botones no ceden nunca, y los botones se quedan
- * pegados abajo. */
-#invPanelBody > .inv-panel-header,
-#invPanelBody > .inv-panel-actions-section { flex-shrink: 0; min-height: 0; }
-#invPanelBody > .inv-panel-actions-section { margin-top: auto; }
+
+/* overflow hidden en TODAS: es lo que convierte "empujar a los de
+ * abajo" en "recortarse dentro de lo suyo". */
+#invPanelBody > * { min-height: 0; overflow: hidden; }
+
+/* Sin padding vertical propio: el alto lo manda la fila, y un padding
+ * encima de una altura fija solo quita sitio al contenido. */
+#invPanelBody > .inv-panel-section { padding: 8px 0 0; }
+#invPanelBody > .inv-panel-header { padding-bottom: 0; }
+#invPanelBody > .inv-panel-actions-section { margin-top: 0; padding-top: 8px; }
+
+.ip-none { font-size: 11px; color: var(--sub); opacity: .7; }
+
 
 .inv-item-panel {
   width: 240px;
@@ -4032,52 +4036,55 @@ body.light .zs-empty { border-color: rgba(15,23,42,.14); }
 
 /* ── Donde esta la botella ───────────────────────────────────────────
  *
- * El reparto por zona del ultimo conteo, en los paneles de articulo.
+ * El reparto por zona del ultimo conteo.
  *
- * En COLUMNAS y no en lista: una fila por zona crecia hacia abajo y
- * empujaba fuera del panel los botones de Edit / Received / Zero
- * suggested. Ese panel no hace scroll y no puede ser mas alto que la
- * tabla de al lado, asi que su alto es un presupuesto cerrado y lo que
- * gaste este bloque se lo quita a otra cosa.
+ * ── Por que NO se parece a las mini-cards de arriba ─────────────────
  *
- * Asi son tres renglones fijos, haya dos zonas o siete, y si no caben a
- * lo ancho se deslizan de lado.
+ * On hand, suggested y avg/wk son titulares: lo primero que se mira.
+ * El reparto por zona es un desglose de UNO de ellos. Con el mismo
+ * fondo, la misma forma y un numero casi del mismo tamaño, los dos
+ * grupos pedian la misma atencion y el panel perdia su jerarquia.
+ *
+ * Asi que aqui: sin recuadro, numero mas chico y en peso normal, y un
+ * rotulo WHERE como el de las demas secciones del panel. Se lee como lo
+ * que es, un detalle, y se sigue entendiendo de un golpe.
+ *
+ * En COLUMNAS y no en lista porque esta fila mide 50px fijos: una fila
+ * por zona creceria hacia abajo y se recortaria.
  */
-/* Sin borde ni separacion propia: las columnas ya se leen como una
- * segunda fila de la rejilla de ON HAND / SUGGESTED / AVG. El borde y
- * el relleno que las separaban costaban ~25px de un panel cuyo alto es
- * fijo, y ese alto se lo quitaban a los botones. */
-.zw { margin-top: 6px; }
+.zw { display: flex; flex-direction: column; gap: 5px; }
+
+.zw-head { display: flex; align-items: baseline; gap: 8px; }
+.zw-lab { font-size: 10px; color: var(--sub); letter-spacing: .4px; }
+.zw-at { margin-left: auto; font-size: 10px; color: var(--sub); }
+/* Pasada una semana el dato es una pista, no un hecho. */
+.zw-at.zw-old { color: #fbbf24; }
 
 .zw-strip {
   display: flex;
-  gap: 6px;
+  gap: 10px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding-bottom: 2px;
 }
 .zw-strip::-webkit-scrollbar { display: none; }
 
+/* Sin fondo ni borde: es lo que lo baja de titular a detalle. */
 .zw-t {
-  flex: 1 0 auto;
-  min-width: 54px;
-  max-width: 92px;
-  background: rgba(255,255,255,.04);
-  border-radius: 8px;
-  padding: 5px 7px;
-  text-align: center;
+  flex: 0 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
 }
-body.light .zw-t { background: rgba(15,23,42,.04); }
 
-.zw-n { font-size: 14px; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.zw-n { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
-/* El nombre se corta con puntos suspensivos en vez de envolver: una
- * zona con nombre largo añadiria un renglon a TODAS las columnas. */
+/* El nombre se corta con puntos suspensivos: uno largo empujaria a los
+ * demas fuera de la fila. */
 .zw-z {
-  font-size: 9.5px;
+  font-size: 10.5px;
   color: var(--sub);
-  margin-top: 2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4087,8 +4094,5 @@ body.light .zw-t { background: rgba(15,23,42,.04); }
  * justo la respuesta que alguien vino a buscar. */
 .zw-zero { opacity: .45; }
 
-.zw-at { font-size: 10px; color: var(--sub); margin-top: 4px; text-align: center; }
-/* Pasada una semana el dato es una pista, no un hecho. */
-.zw-at.zw-old { color: #fbbf24; }
+.zw-wait { font-size: 11px; color: var(--sub); opacity: .7; }
 
-.zw-wait { font-size: 11px; color: var(--sub); margin-top: 10px; opacity: .7; }

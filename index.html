@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/tables.css">
   <link rel="stylesheet" href="styles/buttons.css">
-  <link rel="stylesheet" href="styles/app.css?v=sil10">
+  <link rel="stylesheet" href="styles/app.css?v=sil12">
   <link rel="stylesheet" href="styles/consumption-match.css?v=cm14">
   <link rel="stylesheet" href="styles/order-history.css">
 
@@ -130,7 +130,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261023-122024</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261023-123322</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -3641,29 +3641,38 @@ async function openInvPanel(idx) {
       <div style="display:flex;align-items:center;gap:8px">${badge(r.vendor)}<div class="inv-panel-name-wrap"><span class="inv-panel-name">${escapeHtml(r.item)}</span></div></div>
       <div class="inv-panel-meta" style="margin-top:4px;display:flex;align-items:center;gap:6px">${r.code ? 'Code: ' + escapeHtml(r.code) + ' · ' : ''}<button class="tu-comment-btn${r.category ? ' has-comment' : ''}" onclick="openCategoryModal(${idx});event.stopPropagation()" title="${r.category ? 'Category: ' + r.category : 'Assign category'}" style="font-size:11px;padding:2px 6px"><i class="ti ti-tag" aria-hidden="true"></i> ${r.category || 'No category'}</button></div>
     </div>
-    <div class="inv-panel-section">
+    <div class="inv-panel-section ip-stats">
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
         <div class="inv-panel-stat"><div class="inv-panel-stat-label">ON HAND</div><div class="inv-panel-stat-value">${fmt(r.onHand)}</div></div>
         <div class="inv-panel-stat"><div class="inv-panel-stat-label">SUGGESTED</div><div class="inv-panel-stat-value">${fmt(r.suggested)}</div></div>
         <div class="inv-panel-stat"><div class="inv-panel-stat-label">AVG/WK</div><div class="inv-panel-stat-value" style="color:#38bdf8">${avgUsed !== null ? avgUsed : '—'}</div></div>
       </div>
-      <!-- Donde esta. Vacio si no hay zonas configuradas. Se rellena
-           despues, sin bloquear el panel: es una consulta mas. -->
-      <div id="${zonaHost}"></div>
     </div>
-    <div class="inv-panel-section" style="flex:1">
+    <!-- Donde esta. Seccion PROPIA y SIEMPRE presente, aunque no haya
+         zonas o este producto no se haya contado por zona: su espacio en
+         la rejilla no depende de si hay algo que poner. Si desapareciera,
+         todo lo de abajo subiria y el panel cambiaria de forma segun el
+         producto que selecciones. -->
+    <div class="inv-panel-section ip-zones" id="${zonaHost}"></div>
+    <div class="inv-panel-section ip-rows">
       <div class="inv-panel-row"><span class="inv-panel-row-label">Optimal par</span><span class="inv-panel-row-value" style="color:${optimal !== null ? '#22c55e' : 'var(--sub)'}">${optimal !== null ? optimal : '—'}</span></div>
       <div class="inv-panel-row"><span class="inv-panel-row-label">Status</span><span class="inv-panel-row-value" style="color:${statusColor}">${statusLabel}</span></div>
       <div class="inv-panel-row"><span class="inv-panel-row-label">Trend</span><span class="inv-panel-row-value" style="color:${trendDelta !== null ? (trendDelta >= 0 ? '#22c55e' : '#ef4444') : 'var(--sub)'}">${trendDelta !== null ? (trendDelta >= 0 ? '↑' : '↓') + ' ' + Math.abs(trendDelta) : '—'}</span></div>
       <div class="inv-panel-row"><span class="inv-panel-row-label">Data</span><span class="inv-panel-row-value">${normalWeeks ? normalWeeks + ' wks' : '—'}</span></div>
     </div>
-    ${sparkData.length ? `<div class="inv-panel-section" style="padding-bottom:0">
-      <div class="inv-panel-section-label">LAST ${sparkData.length} WEEKS</div>
-      <div class="inv-sparkline" style="height:22px">
-        ${sparkData.map(s => `<div class="inv-sparkbar" style="height:${Math.max(10, Math.round((Number(s.used||0)/maxUsed)*100))}%"></div>`).join('')}
-      </div>
-      <div class="inv-sparklabels">${sparkData.map(s => `<span>${Number(s.used||0).toFixed(1)}</span>`).join('')}</div>
-    </div>` : ''}
+    <!-- La grafica tambien va siempre, con o sin datos, por el mismo
+         motivo: una fila de la rejilla que a veces existe y a veces no
+         es una fila que mueve todo lo de abajo. -->
+    <div class="inv-panel-section ip-spark">
+      ${sparkData.length ? `
+        <div class="inv-panel-section-label">LAST ${sparkData.length} WEEKS</div>
+        <div class="inv-sparkline" style="height:22px">
+          ${sparkData.map(s => `<div class="inv-sparkbar" style="height:${Math.max(10, Math.round((Number(s.used||0)/maxUsed)*100))}%"></div>`).join('')}
+        </div>
+        <div class="inv-sparklabels">${sparkData.map(s => `<span>${Number(s.used||0).toFixed(1)}</span>`).join('')}</div>`
+      : `<div class="inv-panel-section-label">LAST WEEKS</div>
+         <div class="ip-none">No weekly history yet.</div>`}
+    </div>
     <div class="inv-panel-actions-section">
       <div class="inv-panel-apply-slot">
         ${canApply ? `<div class="inv-panel-apply-hint" style="margin-bottom:6px">${applyHint}</div><button class="inv-panel-apply-btn" onclick="applyInvPourIq(${idx},${applyTarget})">Apply Pour-IQ → ${applyTarget}</button>` : ''}
@@ -5121,7 +5130,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/stock-in.js?v=si1"></script>
 <script src="src/add-to-order.js?v=ato2"></script>
 <script src="src/dormant-items.js?v=dorm1"></script>
-<script src="src/zones.js?v=zon5"></script>
+<script src="src/zones.js?v=zon7"></script>
 <script src="src/settings-zones.js?v=zon2"></script>
 <script src="src/count-resume.js?v=cnt12"></script>
 <script src="src/count-insight.js?v=cnt13"></script>
