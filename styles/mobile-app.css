@@ -42,12 +42,11 @@
    * globales ganaban y mis tarjetas salian grises opacas con texto
    * oscuro, mientras las que son <div> se veian bien.
    *
-   * El reset va envuelto en :where(), que NO suma especificidad: asi
-   * vale lo mismo que un `button` suelto y cualquier regla de las de
-   * abajo le gana. Escrito sin :where() pasaba lo contrario — el reset
-   * le ganaba a mis propias tarjetas y las dejaba sin fondo.
+   * Por eso este bloque va PRIMERO y con `body.m-shell` delante: pone
+   * todos los botones a cero y deja que las reglas de abajo manden.
    */
-  :where(body.m-shell) :where(.m-screens, .m-tabs) :where(button) {
+  body.m-shell .m-screens button,
+  body.m-shell .m-tabs button {
     background: none;
     border: none;
     box-shadow: none;
@@ -57,9 +56,8 @@
     -webkit-backdrop-filter: none;
     transform: none;
   }
-  :where(body.m-shell) :where(.m-screens, .m-tabs) :where(button):hover {
-    transform: none; box-shadow: none;
-  }
+  body.m-shell .m-screens button:hover,
+  body.m-shell .m-tabs button:hover { transform: none; box-shadow: none; }
 
   /* ── El velo ────────────────────────────────────────────────────
    *
@@ -69,12 +67,10 @@
    * En tema claro salian blancas translucidas sobre una barra oscura
    * —gris medio— con texto oscuro encima. Ilegible, y no por poco.
    *
-   * Un velo SUAVE encima de la foto —no un telon— y las tarjetas en
-   * cristal oscuro, de la misma familia que el .card del escritorio.
-   * La foto se sigue viendo, que es el fondo de la app; lo que ya no
-   * pasa es que compita con el texto.
-   *
-   * Un velo opaco tampoco servia: dejaba de parecer la app.
+   * Un velo oscuro detras de todo y texto claro siempre, como las
+   * tarjetas de iOS sobre un fondo de pantalla. El cristal se sigue
+   * viendo porque el velo no es opaco: la foto se adivina, pero ya no
+   * compite con el texto.
    *
    * Por eso en este archivo no hay ni una regla de body.light: el
    * contraste no puede depender del tema cuando el fondo no lo sigue.
@@ -82,7 +78,9 @@
   .m-screens::before {
     content: '';
     position: fixed; inset: 0; z-index: -1;
-    background: linear-gradient(180deg, rgba(6,11,22,.42), rgba(6,11,22,.68));
+    background: linear-gradient(180deg, rgba(6,11,22,.86), rgba(6,11,22,.93));
+    backdrop-filter: blur(22px) saturate(120%);
+    -webkit-backdrop-filter: blur(22px) saturate(120%);
   }
 
   .m-screens { padding: 0 12px; position: relative; }
@@ -113,7 +111,7 @@
     width: 34px; height: 34px; padding: 0; flex: 0 0 34px;
     display: flex; align-items: center; justify-content: center;
     border-radius: 50%; border: none; cursor: pointer;
-    background: rgba(17,24,39,.62); color: #cbd5e1;
+    background: rgba(255,255,255,.07); color: #9aa7b8;
   }
 
   /* ── La barra de búsqueda ───────────────────────────────────────── */
@@ -125,8 +123,8 @@
     padding: 11px 13px; margin-bottom: 12px;
     border-radius: 13px; cursor: pointer; text-align: left;
     font-size: 15px; color: #9aa7b8;
-    background: rgba(17,24,39,.70);
-    border: 1px solid rgba(255,255,255,.16);
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.18);
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   }
   body.m-shell .m-searchbar.on { border-color: rgba(56,189,248,.45); }
@@ -152,8 +150,8 @@
 
   body.m-shell .m-card {
     display: block; width: 100%; text-align: left;
-    background: rgba(17,24,39,.66);
-    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.11);
+    border: 1px solid rgba(255,255,255,.17);
     border-radius: 14px; margin-bottom: 8px; padding: 12px 13px;
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
     color: #f1f5f9; cursor: pointer;
@@ -168,7 +166,7 @@
   }
   .m-now-verde { background: rgba(34,197,94,.12);  border: 1px solid rgba(34,197,94,.34); }
   .m-now-azul  { background: rgba(56,189,248,.12); border: 1px solid rgba(56,189,248,.34); }
-  .m-now-calma { background: rgba(17,24,39,.62); border: 1px solid rgba(255,255,255,.12); }
+  .m-now-calma { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); }
 
   .m-now-lab { font-size: 10px; letter-spacing: .5px; color: #9aa7b8; margin-bottom: 5px; }
   .m-now-verde .m-now-lab { color: #4ade80; }
@@ -182,7 +180,7 @@
   body.m-shell .m-now-go {
     width: 100%; margin-top: 11px; padding: 11px; border: none;
     border-radius: 11px; font-size: 13.5px; font-weight: 800; cursor: pointer;
-    background: rgba(255,255,255,.16); color: #f1f5f9;
+    background: rgba(255,255,255,.14); color: #f1f5f9;
   }
   .m-now-verde .m-now-go { background: #22c55e; color: #06301a; }
   .m-now-azul  .m-now-go { background: #38bdf8; color: #04283d; }
@@ -193,8 +191,8 @@
     display: flex; align-items: center; gap: 10px; width: 100%;
     padding: 11px 12px; margin-bottom: 6px; text-align: left;
     border-radius: 13px; cursor: pointer;
-    background: rgba(17,24,39,.62);
-    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.09);
+    border: 1px solid rgba(255,255,255,.15);
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     color: #f1f5f9; -webkit-tap-highlight-color: transparent;
   }
@@ -206,8 +204,6 @@
 
   /* ── Resultados de búsqueda ─────────────────────────────────────── */
 
-  /* .m-res va SIEMPRE junto a .m-card, de donde saca el cristal. Aqui
-   * solo se coloca el contenido. */
   body.m-shell .m-res { display: flex; align-items: center; gap: 11px; }
   .m-res-l { flex: 1; min-width: 0; }
   .m-res-n {
@@ -255,16 +251,16 @@
     flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
     padding: 13px; border-radius: 13px; font-size: 13px; font-weight: 800;
     cursor: pointer; color: #f1f5f9;
-    background: rgba(17,24,39,.70);
-    border: 1px solid rgba(255,255,255,.16);
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.18);
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   }
 
   .m-money { display: flex; gap: 9px; }
   .m-money-c {
     flex: 1; border-radius: 13px; padding: 11px;
-    background: rgba(17,24,39,.62);
-    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.09);
+    border: 1px solid rgba(255,255,255,.15);
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   }
   .m-money-c span { display: block; font-size: 10px; color: #9aa7b8; }
@@ -287,8 +283,8 @@
 
   .m-tabs-bar {
     flex: 1; display: flex; padding: 5px; border-radius: 22px;
-    background: rgba(17,24,39,.80);
-    border: 1px solid rgba(255,255,255,.16);
+    background: rgba(17,24,39,.72);
+    border: 1px solid rgba(255,255,255,.12);
     backdrop-filter: blur(18px) saturate(140%);
     -webkit-backdrop-filter: blur(18px) saturate(140%);
     box-shadow: 0 10px 28px rgba(0,0,0,.34);
