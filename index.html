@@ -2,8 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- viewport-fit=cover: la app pinta hasta el borde en iPhone y el
+       hueco de la muesca y de la barra de gestos se recupera con
+       env(safe-area-inset-*) en mobile-app.css. Sin esto el standalone
+       deja dos franjas negras.
+       NO se pone maximum-scale ni user-scalable=no: eso mata tambien el
+       pinch, y hay quien lo necesita para leer. El zoom por doble toque
+       —el que de verdad molesta contando botellas— se quita con
+       touch-action: manipulation, que no toca el pinch. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>BarStock Pro</title>
+
+  <!-- ── Que se comporte como app ──────────────────────────────────────
+       Al agregarla a la pantalla de inicio se abre SIN la barra de
+       direcciones ni la de Safari abajo. En iOS manda la meta de apple;
+       en Android manda el manifest. Por eso van las dos. -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="BarStock">
+  <!-- black-translucent y no 'black': con translucent el contenido sube
+       detras de la hora y la bateria, y ahi es donde entra el inset de
+       arriba. -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -131,7 +154,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261024-141621</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261024-143624</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">

@@ -36,6 +36,35 @@
     transform: none; box-shadow: none;
   }
 
+  /* ── Que no se sienta una web ───────────────────────────────────── */
+  /*
+   * Tres cosas delatan a una web metida en el telefono: el doble toque
+   * que hace zoom, el rebote elastico al llegar al final, y el texto
+   * que se selecciona solo al mantener el dedo en un boton.
+   *
+   * 1. touch-action: manipulation quita el retardo de 300ms y el zoom
+   *    por doble toque. NO quita el pinch: eso sigue funcionando, y
+   *    sigue haciendo falta para quien necesite agrandar. Por eso no se
+   *    usa user-scalable=no en el viewport, que lo mataria todo.
+   *
+   * 2. overscroll-behavior: none en el body quita el rebote y, de paso,
+   *    el "tirar para recargar" de Chrome en Android — que contando
+   *    botellas se dispara solo y te borra la pantalla a medias.
+   *
+   * 3. La seleccion se quita SOLO en los controles. Los numeros y los
+   *    nombres de producto se siguen pudiendo copiar: es lo que hace
+   *    falta para pegarle un nombre a un proveedor por mensaje.
+   */
+  body.m-shell {
+    touch-action: manipulation;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  :where(body.m-shell) :where(.m-screens, .m-tabs) :where(button, .m-tab, .m-fab, .m-pill, .m-dot) {
+    -webkit-user-select: none; user-select: none;
+    -webkit-touch-callout: none;
+  }
+
   /* ── El lienzo ──────────────────────────────────────────────────── */
 
   body.m-shell {
@@ -64,6 +93,10 @@
 
   .m-body { padding: 0 13px; }
 
+  /* Buscar no lleva banda, pero su encabezado tambien tiene que
+   * esquivar la barra de estado cuando la app va instalada. */
+  .m-head { padding-top: calc(10px + env(safe-area-inset-top, 0px)); }
+
   /* ── La banda ───────────────────────────────────────────────────── */
   /*
    * Superficie propia y MÁS CLARA que el contenido. Al revés de lo
@@ -77,9 +110,13 @@
    */
   .m-band {
     position: relative;
-    height: 52px;
+    /* Instalada, la barra de estado de iOS se pinta ENCIMA (status-bar
+     * black-translucent). El inset es 0 en el navegador y ~47px en
+     * standalone, asi que la misma regla vale para los dos. */
+    height: calc(52px + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
     display: flex; align-items: center; justify-content: center;
-    padding: 0 12px;
+    padding-left: 12px; padding-right: 12px;
     background: linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.07));
     border-bottom: 1px solid rgba(255,255,255,.16);
     box-shadow: 0 8px 22px rgba(0,0,0,.22);
