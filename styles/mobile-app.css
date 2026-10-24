@@ -1,0 +1,351 @@
+/* ── La app móvil ─────────────────────────────────────────────────────
+ *
+ * TODO lo de este archivo vive dentro de la media query. En escritorio
+ * no se aplica ni una regla: la app de arriba de 640px funciona y lleva
+ * meses afinándose, y un archivo nuevo que pueda tocarla es un riesgo
+ * que no hace falta correr.
+ *
+ * ── Dos cosas que ya costaron un intento entero ──────────────────────
+ *
+ * 1. Aquí NO se usan las variables del tema. Estas tarjetas no flotan
+ *    sobre el fondo del tema, flotan sobre una FOTO que además eliges
+ *    tú. En modo claro salían blancas translúcidas sobre una barra
+ *    oscura —gris medio con texto oscuro encima— e ilegibles. Los
+ *    colores van escritos, y por eso no hay ni una regla de body.light.
+ *
+ * 2. Casi todo lo tocable es un <button>, y app.css le da a `button`
+ *    fondo, borde, sombra y blur propio. Peor: `body.light button`
+ *    tiene más especificidad que `.m-searchbar`. El reset de abajo va
+ *    envuelto en :where(), que no suma especificidad, para que valga lo
+ *    mismo que un `button` suelto y cualquier regla de este archivo le
+ *    gane. Escrito sin :where() el reset le ganaba a mis propias
+ *    tarjetas y las dejaba sin fondo.
+ */
+
+@media (max-width: 640px) {
+
+  /* ── Reset de botones ───────────────────────────────────────────── */
+
+  :where(body.m-shell) :where(.m-screens, .m-tabs) :where(button) {
+    background: none; border: none; box-shadow: none;
+    color: inherit; font-family: inherit; padding: 0;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+    transform: none;
+  }
+  :where(body.m-shell) :where(.m-screens, .m-tabs) :where(button):hover {
+    transform: none; box-shadow: none;
+  }
+
+  /* ── El lienzo ──────────────────────────────────────────────────── */
+
+  body.m-shell {
+    padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* La foto de la app sigue debajo; encima va un blur a pantalla
+   * completa con un velo SUAVE. Un velo opaco también se probó: deja de
+   * parecer la app. */
+  .m-screens::before {
+    content: '';
+    position: fixed; inset: 0; z-index: -1;
+    backdrop-filter: blur(26px) saturate(125%);
+    -webkit-backdrop-filter: blur(26px) saturate(125%);
+    background: linear-gradient(180deg, rgba(8,13,22,.28), rgba(8,13,22,.60));
+  }
+
+  .m-screens { position: relative; }
+  .m-screens.hidden { display: none; }
+  .m-screen { display: none; }
+  .m-screen.on { display: block; }
+
+  /* Mientras hay pantalla propia, la de siempre se esconde: #mScreens
+   * cuelga del body y si no, la nueva se dibuja DEBAJO de la vieja. */
+  body.m-on > .wrap { display: none; }
+
+  .m-body { padding: 0 13px; }
+
+  /* ── La banda ───────────────────────────────────────────────────── */
+  /*
+   * Superficie propia y MÁS CLARA que el contenido. Al revés de lo
+   * normal, a propósito: sobre una foto oscura una banda más oscura se
+   * confunde con el fondo; más clara se despega y el logo canta.
+   *
+   * El logo va centrado en el eje de la pantalla y los botones flotan
+   * encima. Flotando y no en un flex de tres columnas, porque con tres
+   * columnas el logo se descentra el día que se añada o se quite un
+   * icono.
+   */
+  .m-band {
+    position: relative;
+    height: 52px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 12px;
+    background: linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.07));
+    border-bottom: 1px solid rgba(255,255,255,.16);
+    box-shadow: 0 8px 22px rgba(0,0,0,.22);
+  }
+  .m-logo {
+    font-size: 21px; font-weight: 800; color: #fff;
+    letter-spacing: -.6px; display: inline-flex; align-items: baseline;
+  }
+  .m-logo i { color: #38bdf8; font-style: normal; }
+  .m-logo em {
+    font-style: normal; font-size: 8.5px; font-weight: 700;
+    letter-spacing: 1.4px; color: #a9bacd; margin-left: 4px;
+  }
+  .m-band-ico {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    display: flex; gap: 6px;
+  }
+  body.m-shell .m-ico {
+    width: 33px; height: 33px; flex: 0 0 33px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; cursor: pointer; font-size: 15px;
+    background: rgba(255,255,255,.13);
+    border: 1px solid rgba(255,255,255,.20);
+    color: #eaf2fb;
+  }
+
+  /* ── Día y locación ─────────────────────────────────────────────── */
+  /* Juntos son el título de la PANTALLA, no el de la app. */
+
+  .m-daterow {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 9px; padding: 14px 0 13px;
+  }
+  .m-day { font-size: 25px; font-weight: 800; color: #fff; letter-spacing: -.5px; line-height: 1; }
+
+  /* Sólida y opaca: es lo único opaco de la pantalla, así que resalta
+   * por ser distinta y no por ser más brillante. Y deja el azul libre
+   * para la acción, que es la tarjeta y su botón. */
+  body.m-shell .m-pill,
+  .m-pill-solo {
+    display: inline-flex; align-items: center; gap: 7px;
+    max-width: 190px; padding: 9px 13px; border-radius: 999px;
+    cursor: pointer; font-size: 12.5px; font-weight: 700; color: #fff;
+    background: #0b1220;
+    border: 1px solid rgba(255,255,255,.26);
+    box-shadow: 0 4px 14px rgba(0,0,0,.40);
+  }
+  .m-pill-solo { cursor: default; }
+  .m-pill-t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-pill > .ti { font-size: 13px; color: #cbd5e1; }
+  .m-dot {
+    width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%;
+    background: #22c55e; font-style: normal;
+    box-shadow: 0 0 0 3px rgba(34,197,94,.20);
+  }
+
+  /* ── Buscar ─────────────────────────────────────────────────────── */
+  /* Nunca cambia de sitio: es lo más frecuente y tiene que ser memoria
+   * muscular. */
+
+  body.m-shell .m-searchbar {
+    display: flex; align-items: center; gap: 9px; width: 100%;
+    padding: 12px 13px; border-radius: 16px; cursor: pointer;
+    text-align: left; font-size: 14.5px; color: #9fb0c4;
+    background: rgba(255,255,255,.11);
+    border: 1px solid rgba(255,255,255,.15);
+  }
+  .m-searchbar > i:first-child { font-size: 17px; color: #7dd3fc; }
+  /* 16px obligatorio en el campo real: Safari hace zoom por debajo, y
+   * el zoom a media búsqueda descoloca la pantalla entera. */
+  body.m-shell .m-searchbar input {
+    flex: 1; min-width: 0; font-size: 16px; padding: 0;
+    background: none; border: none; color: #f1f5f9; -webkit-appearance: none;
+  }
+  body.m-shell .m-searchbar input:focus { outline: none; }
+
+  /* ── El carrusel ────────────────────────────────────────────────── */
+  /*
+   * Una tarjeta por asunto. La siguiente se asoma por el borde: ese
+   * trozo visible es la única pista de que hay más, y sin él nadie
+   * desliza.
+   *
+   * scroll-snap y no un transform calculado a mano: el dedo manda, y el
+   * navegador ya sabe frenar donde toca.
+   */
+  .m-railwrap { padding-top: 13px; }
+  .m-rail {
+    display: flex; gap: 9px;
+    padding: 0 13px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .m-rail::-webkit-scrollbar { display: none; }
+  .m-rail > .m-hero {
+    flex: 0 0 calc(100% - 38px);
+    scroll-snap-align: start;
+  }
+
+  .m-hero {
+    display: flex; gap: 10px; padding: 13px;
+    border-radius: 20px; box-sizing: border-box;
+  }
+  .m-hero-l { flex: 1; min-width: 0; }
+  .m-hero-r {
+    width: 82px; flex: 0 0 82px; text-align: right;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .m-hero-k { font-size: 9.5px; letter-spacing: .4px; text-transform: uppercase; color: #7dd3fc; }
+  .m-hero-t { font-size: 19px; font-weight: 800; color: #fff; letter-spacing: -.4px; margin-top: 3px; }
+  .m-hero-s { font-size: 10px; color: #b6c6d8; margin-top: 4px; }
+  .m-hero-list { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+  .m-hero-list span { font-size: 10px; color: #b6c6d8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-hero-list b { color: #fff; font-weight: 700; }
+  .m-hero-amt { font-size: 17px; font-weight: 800; color: #fff; letter-spacing: -.4px; }
+  .m-hero-vs { font-size: 8.5px; color: #9fb0c4; }
+  .m-prog { height: 4px; border-radius: 2px; background: rgba(255,255,255,.14); margin-top: 9px; overflow: hidden; }
+  .m-prog i { display: block; height: 100%; background: #22c55e; border-radius: 2px; }
+
+  body.m-shell .m-hero-b {
+    margin-top: 10px; padding: 8px 15px; border-radius: 11px;
+    font-size: 12px; font-weight: 800; cursor: pointer;
+    background: rgba(255,255,255,.16); color: #fff;
+  }
+
+  .m-hero-green { background: linear-gradient(135deg, rgba(34,197,94,.24), rgba(34,197,94,.09)); border: 1px solid rgba(134,239,172,.32); }
+  .m-hero-blue  { background: linear-gradient(135deg, rgba(56,189,248,.26), rgba(56,189,248,.10)); border: 1px solid rgba(125,211,252,.34); }
+  .m-hero-amber { background: linear-gradient(135deg, rgba(245,158,11,.24), rgba(245,158,11,.09)); border: 1px solid rgba(252,211,77,.32); }
+  .m-hero-red   { background: linear-gradient(135deg, rgba(239,68,68,.24), rgba(239,68,68,.09)); border: 1px solid rgba(252,165,165,.32); }
+  .m-hero-calm  { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.14); }
+
+  .m-hero-green .m-hero-k { color: #86efac; }
+  .m-hero-amber .m-hero-k { color: #fcd34d; }
+  .m-hero-red   .m-hero-k { color: #fca5a5; }
+  .m-hero-calm  .m-hero-k { color: #9fb0c4; }
+
+  body.m-shell .m-hero-green .m-hero-b { background: #22c55e; color: #06301a; }
+  body.m-shell .m-hero-blue  .m-hero-b { background: #38bdf8; color: #04283d; }
+  body.m-shell .m-hero-amber .m-hero-b { background: #f59e0b; color: #3d2305; }
+  body.m-shell .m-hero-red   .m-hero-b { background: #ef4444; color: #fff; }
+
+  .m-dots { display: flex; justify-content: center; gap: 5px; padding: 10px 0 0; }
+  .m-dots i { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,.26); transition: width .18s ease; }
+  /* La activa es una barrita y no un punto, para saber cuál es sin
+   * tener que contar. */
+  .m-dots i.on { width: 16px; border-radius: 3px; background: #7dd3fc; }
+
+  /* ── Secciones ──────────────────────────────────────────────────── */
+
+  .m-sechead { display: flex; align-items: baseline; justify-content: space-between; margin: 18px 2px 8px; }
+  .m-sec { font-size: 15.5px; font-weight: 800; color: #fff; letter-spacing: -.2px; }
+  body.m-shell .m-seclink { font-size: 11.5px; color: #7dd3fc; font-weight: 700; cursor: pointer; }
+
+  .m-feed { display: flex; flex-direction: column; gap: 7px; }
+
+  /* ── Top movers ─────────────────────────────────────────────────── */
+
+  body.m-shell .m-mv {
+    display: flex; align-items: center; gap: 9px; width: 100%;
+    position: relative; overflow: hidden; cursor: pointer;
+    padding: 11px 12px; border-radius: 15px; text-align: left;
+    background: rgba(255,255,255,.09);
+    border: 1px solid rgba(255,255,255,.12);
+    color: #eef4fb;
+  }
+  /* La barra es el fondo, no un elemento aparte: así el renglón sigue
+   * midiendo lo mismo con barra o sin ella. */
+  .m-mv-bar { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(56,189,248,.16); }
+  .m-mv-t { position: relative; z-index: 1; flex: 1; min-width: 0; font-size: 12.5px; line-height: 1.3; }
+  .m-mv-t small { display: block; font-size: 10px; color: #9fb0c4; margin-top: 2px; }
+  .m-mv-v { position: relative; z-index: 1; text-align: right; flex: 0 0 auto; }
+  .m-mv-v b { display: block; font-size: 14.5px; font-weight: 800; color: #fff; line-height: 1; }
+  .m-mv-v small { display: block; font-size: 8.5px; color: #9fb0c4; margin-top: 2px; }
+
+  /* ── Despegó / se apagó ─────────────────────────────────────────── */
+  /*
+   * Dos columnas y no una lista: pesan la mitad y, sobre todo, no se
+   * confunden con Top movers, que está justo encima y también es una
+   * lista de productos con números.
+   *
+   * Sin título propio: el rótulo de cada columna ya dice qué es.
+   */
+  .m-cols { display: flex; gap: 8px; margin-top: 14px; }
+  .m-col { flex: 1; min-width: 0; padding: 11px 12px; border-radius: 15px; }
+  .m-col-up { background: rgba(74,222,128,.12); border: 1px solid rgba(134,239,172,.26); }
+  .m-col-dn { background: rgba(248,113,113,.12); border: 1px solid rgba(252,165,165,.26); }
+  .m-col-k { display: flex; align-items: center; gap: 5px; font-size: 10px; letter-spacing: .3px; font-weight: 700; margin-bottom: 8px; }
+  .m-col-up .m-col-k { color: #86efac; }
+  .m-col-dn .m-col-k { color: #fca5a5; }
+  .m-col-r { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: 11.5px; color: #cfd8e3; padding: 3px 0; }
+  .m-col-r span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m-col-r b { color: #fff; font-weight: 800; font-size: 12px; flex: 0 0 auto; }
+  /* Una columna vacía conserva su sitio: si desapareciera, la otra
+   * ocuparía todo el ancho y el bloque cambiaría de forma cada semana. */
+  .m-col-none { opacity: .45; }
+
+  /* ── Dinero ─────────────────────────────────────────────────────── */
+
+  .m-pair { display: flex; gap: 8px; margin-top: 14px; }
+  .m-stat { flex: 1; min-width: 0; padding: 12px; border-radius: 17px;
+    background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.12); }
+  .m-stat-k { display: block; font-size: 10px; color: #9fb0c4; }
+  .m-stat-v { display: block; font-size: 19px; font-weight: 800; color: #fff; letter-spacing: -.4px; margin-top: 2px; }
+  .m-stat-d { display: block; font-size: 9.5px; color: #9fb0c4; margin-top: 2px; }
+  /* Gastar MÁS no es una buena noticia: el verde iría al revés. */
+  .m-up { color: #fca5a5; }
+  .m-down { color: #86efac; }
+
+  /* ── La barra de pestañas ───────────────────────────────────────── */
+  /* Flotante y con su área segura. Pegada al borde, en un iPhone la
+   * franja del gesto de inicio se come la mitad de los botones. */
+
+  .m-tabs {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 9000;
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+    pointer-events: none;
+  }
+  .m-tabs > * { pointer-events: auto; }
+
+  .m-tabs-bar {
+    flex: 1; display: flex; padding: 5px; border-radius: 24px;
+    background: rgba(10,16,26,.76);
+    border: 1px solid rgba(255,255,255,.14);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    box-shadow: 0 10px 28px rgba(0,0,0,.34);
+  }
+  body.m-shell .m-tab {
+    position: relative; flex: 1; height: 36px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 18px; color: #8fa1b5; font-size: 18px;
+  }
+  body.m-shell .m-tab.on { background: rgba(255,255,255,.14); color: #fff; }
+  .m-dot-badge, .m-tab .m-dot {
+    position: absolute; top: 5px; right: 22%;
+    width: 6px; height: 6px; border-radius: 50%; background: #f59e0b; box-shadow: none;
+  }
+
+  /* Escanear vive FUERA de la barra: es la acción principal del
+   * teléfono y no compite con la navegación. */
+  body.m-shell .m-fab {
+    flex: 0 0 48px; width: 48px; height: 48px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; font-size: 22px;
+    background: #22c55e; color: #06301a;
+    box-shadow: 0 10px 26px rgba(34,197,94,.36);
+  }
+  body.m-shell .m-fab:active { transform: scale(.94); }
+
+  /* ── Mensajes y listas sueltas ──────────────────────────────────── */
+
+  .m-lab { font-size: 10px; color: #9fb0c4; letter-spacing: .5px; margin: 16px 2px 8px; }
+  .m-cnt { font-size: 10px; color: #9fb0c4; letter-spacing: .3px; margin: 10px 4px 8px; }
+  .m-empty { font-size: 13px; color: #9fb0c4; text-align: center; padding: 28px 16px; line-height: 1.6; }
+
+  body.m-shell .m-item {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 11px 12px; margin-bottom: 6px; text-align: left; cursor: pointer;
+    border-radius: 13px; color: #f1f5f9;
+    background: rgba(255,255,255,.09);
+    border: 1px solid rgba(255,255,255,.12);
+  }
+  .m-item > i:first-child { font-size: 16px; color: #9fb0c4; flex: 0 0 16px; }
+  .m-item-t { flex: 1; min-width: 0; font-size: 13px; line-height: 1.25; }
+  .m-item-t small { display: block; font-size: 10px; color: #9fb0c4; margin-top: 2px; }
+  .m-chev { font-size: 15px; color: #9fb0c4; opacity: .6; flex: 0 0 auto; }
+}

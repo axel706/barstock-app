@@ -557,5 +557,11 @@
     boot();
   }
 
-  window.BarStockWeeklyCycle = { refresh, onDataChanged };
+  window.BarStockWeeklyCycle = {
+    refresh, onDataChanged,
+    // Lo pide el Home del telefono para avisar de un ciclo que lleva
+    // demasiado abierto. Ese aviso ya existia aqui dentro, pero solo se
+    // veia en el boton del encabezado de escritorio.
+    edadCiclo, cicloViejo
+  };
 })();

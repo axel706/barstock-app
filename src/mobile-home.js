@@ -1,0 +1,464 @@
+(() => {
+  if (window.BarStockMobileHome) return;
+
+  // ── Home del teléfono ────────────────────────────────────────────────
+  //
+  //   banda        logo centrado, modo claro/oscuro y ajustes
+  //   fecha        el día y la locación, que juntos dicen dónde y cuándo
+  //   buscar       siempre en el mismo sitio, nunca se mueve
+  //   carrusel     lo de ahora mismo, una tarjeta por asunto
+  //   top movers   qué se mueve más
+  //   despegó/se apagó   qué CAMBIÓ respecto a su propia historia
+  //   dinero       gastado esta semana y lo que hay en el estante
+  //
+  // ── No calcula nada nuevo ────────────────────────────────────────────
+  //
+  // Todos estos números salen de módulos que ya existen: el gasto de
+  // BarStockSpend, el valor del estante de BarStockInventoryValue, el
+  // consumo de parAdjustments. Volver a sumarlos aquí sería permitir que
+  // dos pantallas dieran cifras distintas del mismo dinero, que es el
+  // fallo que más veces ha mordido a este proyecto.
+  //
+  // ── Y nada dice cero mientras no se sabe ─────────────────────────────
+  //
+  // Cada hueco arranca en "…" y se rellena cuando su dato llega. Ya nos
+  // costó caro tres veces: un historial que no cargaba se leía como
+  // "esta es tu primera semana", y así estuvo diecisiete semanas.
+
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  const money = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('en-US');
+  const n1 = (n) => String(Math.round((Number(n) || 0) * 10) / 10);
+
+  // Cuatro semanas es el mismo listón que usa Pour-IQ para dejar de
+  // "observar". Por debajo, el promedio ponderado y el plano son casi el
+  // mismo número y decir que algo "cambió" no significaría nada.
+  const SEMANAS_MIN = 4;
+
+  function cfgNombre() {
+    return (window.BARSTOCK_CONFIG || {}).LOCATION_NAME || '';
+  }
+
+  function hoy() {
+    return new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  }
+
+  function master() { return (window.state && window.state.master) || []; }
+
+  // Todos los artículos con su ficha de par, que es donde viven el
+  // consumo ponderado y el histórico.
+  function conPar() {
+    const m = window.parAdjustments;
+    if (!m || !m.size) return [];
+    const out = [];
+    for (const r of master()) {
+      const p = m.get(r.item + '||' + (r.code || ''));
+      if (p && p.status === 'active') out.push({ r, p });
+    }
+    return out;
+  }
+
+  // ── El carrusel ──────────────────────────────────────────────────────
+  //
+  // Una tarjeta por asunto, no una sola que elige. Antes se quedaba con
+  // el proveedor de más dinero y escondía los demás en silencio: un
+  // lunes con tres proveedores pendientes sólo veías uno.
+  //
+  // El orden es por urgencia, y lo que tiene fecha límite va primero.
+
+  function tarjetas() {
+    const t = [];
+    const S = window.BarStockCountSession;
+
+    // 1 · Conteo a medias. Gana a todo: hay trabajo empezado que se
+    // pierde si nadie lo cierra.
+    if (S && S.exists && S.exists()) {
+      const pr = S.progress ? S.progress() : null;
+      const n = pr ? pr.counted : (S.size ? S.size() : 0);
+      const tot = pr ? pr.total : 0;
+      const pct = tot ? Math.round((n / tot) * 100) : 0;
+      const zona = window.BarStockZones && window.BarStockZones.activas()
+        ? window.BarStockZones.paraPasada() : '';
+      t.push({
+        tono: 'green',
+        k: S.isPaused && S.isPaused() ? 'Count paused' : 'Count in progress',
+        tt: n + ' of ' + tot,
+        sub: zona ? 'Last scan in ' + zona : '',
+        barra: pct,
+        amt: pct + '%',
+        vs: (tot - n) + ' left',
+        btn: 'Keep counting',
+        go: () => { if (window.BarStockScanCount) window.BarStockScanCount.open(); }
+      });
+    }
+
+    // 2 · Ciclo abierto demasiado tiempo. El aviso existe en el boton
+    // del encabezado de escritorio, pero ahi nadie lo ve.
+    const W = window.BarStockWeeklyCycle;
+    if (W && typeof W.edadCiclo === 'function') {
+      const ms = W.edadCiclo();
+      const dias = ms ? Math.floor(ms / 86400000) : 0;
+      if (dias > 7) {
+        t.push({
+          tono: 'amber',
+          k: 'Cycle open ' + dias + ' days',
+          tt: 'Still open',
+          sub: 'Usage keeps adding up until you close it',
+          amt: dias + 'd',
+          vs: 'usual is 7',
+          btn: 'Close the cycle',
+          go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('inventory'); }
+        });
+      }
+    }
+
+    // 3 · Ordenes sin colocar, TODAS.
+    if (typeof window.getActiveVendors === 'function' &&
+        typeof window.getOrderRowsForVendor === 'function' &&
+        typeof window.computeOrderSubtotal === 'function') {
+      const v = [];
+      let total = 0;
+      for (const nombre of window.getActiveVendors()) {
+        if (nombre === 'UNKNOWN') continue;
+        const filas = window.getOrderRowsForVendor(nombre);
+        if (!filas.length) continue;
+        const sub = window.computeOrderSubtotal(filas);
+        total += sub;
+        v.push({ nombre, sub });
+      }
+      if (v.length) {
+        v.sort((a, b) => b.sub - a.sub);
+        t.push({
+          tono: 'blue',
+          k: 'Orders waiting',
+          tt: v.length + (v.length === 1 ? ' vendor' : ' vendors'),
+          lista: v.slice(0, 3).map(x => '<b>' + esc(x.nombre) + '</b> ' + money(x.sub)),
+          amt: money(total),
+          vs: '',
+          btn: v.length === 1 ? 'Review the order' : 'Review orders',
+          go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('orders'); }
+        });
+      }
+    }
+
+    // 4 · Se acaba antes que lo demas. Sale de cruzar lo que hay con el
+    // consumo ponderado; hasta ahora no estaba en ninguna pantalla.
+    const pronto = conPar()
+      .map(({ r, p }) => {
+        const avg = Number(p.avgUsed) || 0;
+        if (avg <= 0 || (p.normalWeeks || 0) < SEMANAS_MIN) return null;
+        const dias = Math.round((Number(r.onHand) || 0) / avg * 7);
+        return dias <= 7 ? { item: r.item, dias } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.dias - b.dias);
+
+    if (pronto.length) {
+      t.push({
+        tono: 'red',
+        k: 'Running out first',
+        tt: pronto.length + (pronto.length === 1 ? ' product' : ' products'),
+        lista: pronto.slice(0, 3).map(x =>
+          '<b>' + esc(x.item.slice(0, 18)) + '</b> ' + x.dias + (x.dias === 1 ? ' day' : ' days')),
+        amt: String(pronto.length),
+        vs: 'within a week',
+        btn: 'See them',
+        go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('inventory'); }
+      });
+    }
+
+    // 5 · Nada pendiente. Solo cuando no hay ninguna otra.
+    if (!t.length) {
+      t.push({
+        tono: 'calm',
+        k: 'All clear',
+        tt: 'Nothing waiting',
+        sub: 'No open count and no orders to place',
+        amt: String(master().length || '…'),
+        vs: 'items tracked',
+        btn: 'Start a count',
+        go: () => { if (window.BarStockScanCount) window.BarStockScanCount.open(); }
+      });
+    }
+
+    return t;
+  }
+
+  function pintarTarjeta(c, i) {
+    return `
+      <article class="m-hero m-hero-${c.tono}" data-hero="${i}">
+        <div class="m-hero-l">
+          <div class="m-hero-k">${esc(c.k)}</div>
+          <div class="m-hero-t">${esc(c.tt)}</div>
+          ${c.barra !== undefined ? `<div class="m-prog"><i style="width:${c.barra}%"></i></div>` : ''}
+          ${c.sub ? `<div class="m-hero-s">${esc(c.sub)}</div>` : ''}
+          ${c.lista ? `<div class="m-hero-list">${c.lista.map(x => '<span>' + x + '</span>').join('')}</div>` : ''}
+          <button type="button" class="m-hero-b" data-go="${i}">${esc(c.btn)}</button>
+        </div>
+        <div class="m-hero-r">
+          <div class="m-hero-amt">${esc(c.amt)}</div>
+          ${c.vs ? `<div class="m-hero-vs">${esc(c.vs)}</div>` : ''}
+        </div>
+      </article>`;
+  }
+
+  // ── Top movers ───────────────────────────────────────────────────────
+
+  function movers() {
+    return conPar()
+      .map(({ r, p }) => ({ item: r.item, vendor: r.vendor, avg: Number(p.avgUsed) || 0 }))
+      .filter(x => x.avg > 0)
+      .sort((a, b) => b.avg - a.avg)
+      .slice(0, 3);
+  }
+
+  // ── Qué cambió ───────────────────────────────────────────────────────
+  //
+  // El ponderado contra el histórico plano. Los dos los calcula
+  // par-intelligence desde que el promedio del par pasó a ser ponderado:
+  // esta pantalla sólo los compara.
+  function cambios() {
+    const arriba = [], abajo = [];
+    for (const { r, p } of conPar()) {
+      if ((p.normalWeeks || 0) < SEMANAS_MIN) continue;
+      const hoy_ = Number(p.avgUsed) || 0;
+      const antes = Number(p.avgHistorical) || 0;
+      if (antes <= 0.2 && hoy_ <= 0.2) continue;   // ruido, no cambio
+
+      if (antes > 0.2 && hoy_ >= antes * 1.5) {
+        const x = hoy_ / antes;
+        arriba.push({ item: r.item, dato: x >= 3 ? Math.round(x) + '×' : '+' + Math.round((x - 1) * 100) + '%', orden: x });
+      } else if (antes > 0.5 && hoy_ <= antes * 0.4) {
+        abajo.push({ item: r.item, dato: hoy_ < 0.05 ? '0' : n1(hoy_), orden: antes - hoy_ });
+      }
+    }
+    arriba.sort((a, b) => b.orden - a.orden);
+    abajo.sort((a, b) => b.orden - a.orden);
+    return { arriba: arriba.slice(0, 2), abajo: abajo.slice(0, 2) };
+  }
+
+  // ── Dinero ───────────────────────────────────────────────────────────
+
+  function gasto() {
+    const S = window.BarStockSpend;
+    if (!S || typeof S.compute !== 'function') return null;
+    try {
+      const d = S.compute();
+      if (!d || !d.now) return null;
+      // Las dos semanas en cero es la firma de "todavia no se", no de
+      // "no gastaste nada".
+      if (!d.now.total && !d.prev.total) return null;
+      return { total: d.now.total, delta: d.totalDelta };
+    } catch (e) { return null; }
+  }
+
+  function estante() {
+    const V = window.BarStockInventoryValue;
+    if (!V || typeof V.compute !== 'function') return null;
+    try {
+      const d = V.compute();
+      if (!d || !d.items) return null;
+      if (!d.total && d.noPrice >= d.items) return null;
+      return { total: d.total, n: d.items, sin: d.noPrice };
+    } catch (e) { return null; }
+  }
+
+  // ── Pintar ───────────────────────────────────────────────────────────
+
+  function render(host) {
+    if (!host) return;
+
+    const cards = tarjetas();
+    const mov = movers();
+    const ch = cambios();
+    const g = gasto();
+    const e = estante();
+    const max = mov.length ? mov[0].avg : 0;
+
+    host.innerHTML = `
+      <header class="m-band">
+        <span class="m-logo">BarStock<i>.</i><em>PRO</em></span>
+        <span class="m-band-ico">
+          <button type="button" class="m-ico" id="mhTheme" aria-label="Light or dark">
+            <i class="ti ti-moon" aria-hidden="true"></i></button>
+          <button type="button" class="m-ico" id="mhSet" aria-label="Settings">
+            <i class="ti ti-settings" aria-hidden="true"></i></button>
+        </span>
+      </header>
+
+      <div class="m-body">
+        <div class="m-daterow">
+          <span class="m-day">${esc(hoy())}</span>
+          ${pildora()}
+        </div>
+
+        <button type="button" class="m-searchbar" id="mhSearch">
+          <i class="ti ti-search" aria-hidden="true"></i>
+          <span>Do we have…</span>
+        </button>
+      </div>
+
+      <div class="m-railwrap"><div class="m-rail" id="mhRail">
+        ${cards.map(pintarTarjeta).join('')}
+      </div></div>
+      ${cards.length > 1
+        ? `<div class="m-dots" id="mhDots">${cards.map((_, i) =>
+            `<i class="${i === 0 ? 'on' : ''}"></i>`).join('')}</div>`
+        : ''}
+
+      <div class="m-body">
+        ${mov.length ? `
+          <div class="m-sechead">
+            <span class="m-sec">Top movers</span>
+            <button type="button" class="m-seclink" id="mhAllMov">See all</button>
+          </div>
+          <div class="m-feed">
+            ${mov.map(x => `
+              <button type="button" class="m-mv" data-item="${esc(x.item)}">
+                <span class="m-mv-bar" style="width:${Math.round(x.avg / max * 100)}%"></span>
+                <span class="m-mv-t">${esc(x.item)}<small>${esc(x.vendor || '')}</small></span>
+                <span class="m-mv-v"><b>${n1(x.avg)}</b><small>btl/wk</small></span>
+              </button>`).join('')}
+          </div>` : ''}
+
+        ${(ch.arriba.length || ch.abajo.length) ? `
+          <div class="m-cols">
+            <div class="m-col m-col-up">
+              <div class="m-col-k"><i class="ti ti-trending-up" aria-hidden="true"></i> Took off</div>
+              ${ch.arriba.length
+                ? ch.arriba.map(x => `<div class="m-col-r"><span>${esc(x.item)}</span><b>${esc(x.dato)}</b></div>`).join('')
+                : '<div class="m-col-r m-col-none"><span>Nothing</span><b>—</b></div>'}
+            </div>
+            <div class="m-col m-col-dn">
+              <div class="m-col-k"><i class="ti ti-trending-down" aria-hidden="true"></i> Went quiet</div>
+              ${ch.abajo.length
+                ? ch.abajo.map(x => `<div class="m-col-r"><span>${esc(x.item)}</span><b>${esc(x.dato)}</b></div>`).join('')
+                : '<div class="m-col-r m-col-none"><span>Nothing</span><b>—</b></div>'}
+            </div>
+          </div>` : ''}
+
+        <div class="m-pair">
+          <div class="m-stat">
+            <span class="m-stat-k">Spent this week</span>
+            <b class="m-stat-v">${g ? money(g.total) : '…'}</b>
+            <small class="m-stat-d ${g && g.delta >= 0 ? 'm-up' : 'm-down'}">${
+              g ? (g.delta >= 0 ? '↗ +' : '↘ −') + money(Math.abs(g.delta)).slice(1) : '&nbsp;'
+            }</small>
+          </div>
+          <div class="m-stat">
+            <span class="m-stat-k">On the shelf</span>
+            <b class="m-stat-v">${e ? money(e.total) : '…'}</b>
+            <small class="m-stat-d">${e
+              ? e.n + ' items' + (e.sin ? ' · ' + e.sin + ' no price' : '')
+              : '&nbsp;'}</small>
+          </div>
+        </div>
+      </div>`;
+
+    enganchar(host, cards);
+  }
+
+  // Con UNA sola locacion no es un boton, es una etiqueta: un control
+  // que no hace nada es peor que no tener control.
+  function pildora() {
+    const nombre = esc(cfgNombre());
+    const L = window.BarStockLocationAccess;
+    let varias = false;
+    try {
+      const l = L && L.getAllowedLocations ? L.getAllowedLocations() : null;
+      varias = Array.isArray(l) && l.length > 1;
+    } catch (e) {}
+
+    if (!varias) return `<span class="m-pill m-pill-solo"><i class="m-dot"></i>${nombre}</span>`;
+    return `<button type="button" class="m-pill" id="mhLoc">
+              <i class="m-dot"></i><span class="m-pill-t">${nombre}</span>
+              <i class="ti ti-chevron-down" aria-hidden="true"></i>
+            </button>`;
+  }
+
+  function enganchar(host, cards) {
+    const set = host.querySelector('#mhSet');
+    if (set) set.onclick = () => { if (typeof window.openSettings === 'function') window.openSettings(); };
+
+    const th = host.querySelector('#mhTheme');
+    if (th) th.onclick = () => {
+      // El mismo interruptor del escritorio, no una copia.
+      if (typeof window.toggleTheme === 'function') window.toggleTheme();
+      else document.body.classList.toggle('light');
+    };
+
+    const loc = host.querySelector('#mhLoc');
+    if (loc) loc.onclick = () => {
+      // El selector que ya existe en el encabezado. Rehacerlo aqui
+      // seria tener dos formas de cambiar de locacion, y la segunda
+      // siempre se queda atras.
+      const sel = document.getElementById('headerLocationSelect');
+      if (sel && typeof sel.showPicker === 'function') { try { sel.showPicker(); return; } catch (e) {} }
+      if (sel) { sel.focus(); sel.click(); }
+    };
+
+    const bus = host.querySelector('#mhSearch');
+    if (bus) bus.onclick = () => window.BarStockMobile.ir('search');
+
+    host.querySelectorAll('[data-go]').forEach(b => {
+      const c = cards[Number(b.dataset.go)];
+      if (c && c.go) b.onclick = (ev) => { ev.stopPropagation(); c.go(); };
+    });
+
+    host.querySelectorAll('[data-item]').forEach(b => {
+      b.onclick = () => {
+        if (window.BarStockMobileSearch && window.BarStockMobileSearch.abrirItem) {
+          window.BarStockMobileSearch.abrirItem(b.dataset.item);
+        }
+      };
+    });
+
+    const all = host.querySelector('#mhAllMov');
+    if (all) all.onclick = () => window.BarStockMobile.ir('inventory');
+
+    puntos(host);
+  }
+
+  // Los puntos siguen al dedo. Es la unica confirmacion de cuantas
+  // tarjetas hay y en cual estas; sin ellos, el asomo de la siguiente
+  // dice que hay mas pero no cuantas.
+  function puntos(host) {
+    const rail = host.querySelector('#mhRail');
+    const dots = host.querySelector('#mhDots');
+    if (!rail || !dots) return;
+    rail.addEventListener('scroll', () => {
+      const hijos = Array.from(rail.children);
+      if (!hijos.length) return;
+      const centro = rail.scrollLeft + rail.clientWidth / 2;
+      let mejor = 0, dist = Infinity;
+      hijos.forEach((c, i) => {
+        const d = Math.abs((c.offsetLeft + c.offsetWidth / 2) - centro);
+        if (d < dist) { dist = d; mejor = i; }
+      });
+      Array.from(dots.children).forEach((d, i) => d.classList.toggle('on', i === mejor));
+    }, { passive: true });
+  }
+
+  // Lo llama quien termina de cargar datos: el Home se pinta antes de
+  // que lleguen el inventario y las ordenes, y sin esto se queda con los
+  // huecos puestos hasta que cambias de pestaña y vuelves.
+  function refresh() {
+    const host = document.querySelector('.m-screen[data-screen="home"]');
+    if (host && host.classList.contains('on')) render(host);
+  }
+
+  window.BarStockMobileHome = { render, refresh };
+
+  function registrar() {
+    if (!window.BarStockMobile) return;
+    window.BarStockMobile.register({
+      id: 'home', icon: 'ti-home', label: 'Home', tab: true, orden: 10,
+      mount: render,
+      show: render   // se repinta al entrar: el estado del ciclo cambia
+    });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', registrar);
+  else registrar();
+})();
