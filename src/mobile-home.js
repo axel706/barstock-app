@@ -359,22 +359,97 @@
     enganchar(host, cards);
   }
 
-  // Con UNA sola locacion no es un boton, es una etiqueta: un control
+  // ── La píldora de locación ───────────────────────────────────────────
+  //
+  // Con UNA sola locación no es un botón, es una etiqueta: un control
   // que no hace nada es peor que no tener control.
+  //
+  // Dos cosas que lo tenían muerto:
+  //
+  // 1. getAllowedLocations() es ASYNC. Se le estaba preguntando
+  //    Array.isArray() a una promesa, que nunca es un array, así que
+  //    siempre salía la etiqueta y jamás el botón. Una promesa no se
+  //    queja de que la trates como un array — por eso no había error en
+  //    consola y parecía "que no servía".
+  //
+  // 2. Aunque hubiera salido el botón, abría el <select> del encabezado
+  //    de escritorio, y ese vive dentro de .wrap, que con body.m-on está
+  //    en display:none. Un <select> dentro de algo oculto no se puede
+  //    enfocar ni abrir. Por eso aquí la lista se pinta propia.
+  //
+  // El CAMBIO sí reusa lo de siempre: setActiveLocationName + recargar,
+  // exactamente lo que hace el escritorio. Lo que no se duplica es la
+  // decisión de qué significa cambiar de locación.
+
+  let _locs = null;       // null = todavia no se sabe; [] = no hay
+  let _pidiendo = false;
+
+  function cargarLocs() {
+    if (_locs !== null || _pidiendo) return;
+    const L = window.BarStockLocationAccess;
+    if (!L || !L.getAllowedLocations) { _locs = []; return; }
+    _pidiendo = true;
+    Promise.resolve()
+      .then(() => L.getAllowedLocations())
+      .then(l => {
+        _locs = Array.isArray(l) ? l : [];
+        // Sólo se repinta si cambia algo de lo que se ve: con una sola
+        // locación la etiqueta ya estaba bien y repintar movería el
+        // carrusel de sitio sin motivo.
+        if (_locs.length > 1) refresh();
+      })
+      .catch(() => { _locs = []; })
+      .then(() => { _pidiendo = false; });
+  }
+
   function pildora() {
     const nombre = esc(cfgNombre());
-    const L = window.BarStockLocationAccess;
-    let varias = false;
-    try {
-      const l = L && L.getAllowedLocations ? L.getAllowedLocations() : null;
-      varias = Array.isArray(l) && l.length > 1;
-    } catch (e) {}
+    cargarLocs();
 
+    const varias = Array.isArray(_locs) && _locs.length > 1;
     if (!varias) return `<span class="m-pill m-pill-solo"><i class="m-dot"></i>${nombre}</span>`;
+
     return `<button type="button" class="m-pill" id="mhLoc">
               <i class="m-dot"></i><span class="m-pill-t">${nombre}</span>
               <i class="ti ti-chevron-down" aria-hidden="true"></i>
             </button>`;
+  }
+
+  function abrirLocs() {
+    if (!Array.isArray(_locs) || _locs.length < 2) return;
+    const activa = cfgNombre();
+
+    const hoja = document.createElement('div');
+    hoja.className = 'm-sheet';
+    hoja.innerHTML = `
+      <div class="m-sheet-bg"></div>
+      <div class="m-sheet-box" role="dialog" aria-label="Choose location">
+        <div class="m-sheet-grip"></div>
+        <div class="m-sheet-t">Location</div>
+        ${_locs.map(l => `
+          <button type="button" class="m-sheet-op${l.name === activa ? ' on' : ''}"
+                  data-loc="${esc(l.name)}">
+            <span>${esc(l.name)}</span>
+            ${l.name === activa ? '<i class="ti ti-check" aria-hidden="true"></i>' : ''}
+          </button>`).join('')}
+      </div>`;
+    document.body.appendChild(hoja);
+
+    const cerrar = () => hoja.remove();
+    hoja.querySelector('.m-sheet-bg').onclick = cerrar;
+
+    hoja.querySelectorAll('.m-sheet-op').forEach(b => {
+      b.onclick = () => {
+        const n = b.dataset.loc;
+        if (n === activa) return cerrar();
+        const L = window.BarStockLocationAccess;
+        if (!L || !L.setActiveLocationName) return cerrar();
+        L.setActiveLocationName(n);
+        // Recargar y no repintar: media app lleva la locación metida en
+        // sus consultas y su caché. Es lo mismo que hace el escritorio.
+        window.location.reload();
+      };
+    });
   }
 
   function enganchar(host, cards) {
@@ -389,14 +464,7 @@
     };
 
     const loc = host.querySelector('#mhLoc');
-    if (loc) loc.onclick = () => {
-      // El selector que ya existe en el encabezado. Rehacerlo aqui
-      // seria tener dos formas de cambiar de locacion, y la segunda
-      // siempre se queda atras.
-      const sel = document.getElementById('headerLocationSelect');
-      if (sel && typeof sel.showPicker === 'function') { try { sel.showPicker(); return; } catch (e) {} }
-      if (sel) { sel.focus(); sel.click(); }
-    };
+    if (loc) loc.onclick = abrirLocs;
 
     const bus = host.querySelector('#mhSearch');
     if (bus) bus.onclick = () => window.BarStockMobile.ir('search');

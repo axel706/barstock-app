@@ -26,13 +26,13 @@
 
   /* ── Reset de botones ───────────────────────────────────────────── */
 
-  :where(body.m-shell) :where(.m-screens, .m-tabs) :where(button) {
+  :where(body.m-shell) :where(.m-screens, .m-tabs, .m-sheet) :where(button) {
     background: none; border: none; box-shadow: none;
     color: inherit; font-family: inherit; padding: 0;
     backdrop-filter: none; -webkit-backdrop-filter: none;
     transform: none;
   }
-  :where(body.m-shell) :where(.m-screens, .m-tabs) :where(button):hover {
+  :where(body.m-shell) :where(.m-screens, .m-tabs, .m-sheet) :where(button):hover {
     transform: none; box-shadow: none;
   }
 
@@ -60,7 +60,7 @@
     overscroll-behavior: none;
     -webkit-tap-highlight-color: transparent;
   }
-  :where(body.m-shell) :where(.m-screens, .m-tabs) :where(button, .m-tab, .m-fab, .m-pill, .m-dot) {
+  :where(body.m-shell) :where(.m-screens, .m-tabs, .m-sheet) :where(button, .m-tab, .m-fab, .m-pill, .m-dot) {
     -webkit-user-select: none; user-select: none;
     -webkit-touch-callout: none;
   }
@@ -165,6 +165,51 @@
     box-shadow: 0 4px 14px rgba(0,0,0,.40);
   }
   .m-pill-solo { cursor: default; }
+
+  /* ── La hoja de locaciones ──────────────────────────────────────── */
+  /* Sube desde abajo porque ahí está el pulgar. Oscura y sólida por lo
+   * de siempre: flota sobre una foto, no sobre el tema. */
+  .m-sheet { position: fixed; inset: 0; z-index: 9500; }
+  .m-sheet-bg {
+    position: absolute; inset: 0;
+    background: rgba(5,9,16,.58);
+    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  }
+  .m-sheet-box {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: #0b1220;
+    border-top: 1px solid rgba(255,255,255,.14);
+    border-radius: 18px 18px 0 0;
+    padding: 9px 13px calc(16px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -14px 40px rgba(0,0,0,.52);
+    animation: mSheetUp .18s ease-out;
+  }
+  @keyframes mSheetUp { from { transform: translateY(100%); } to { transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .m-sheet-box { animation: none; } }
+
+  .m-sheet-grip {
+    width: 38px; height: 4px; border-radius: 999px; margin: 0 auto 12px;
+    background: rgba(255,255,255,.26);
+  }
+  .m-sheet-t {
+    font-size: 11px; font-weight: 800; letter-spacing: .9px;
+    text-transform: uppercase; color: #94a3b8; padding: 0 4px 8px;
+  }
+  body.m-shell .m-sheet-op {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; gap: 10px;
+    padding: 14px 13px; margin-bottom: 7px;
+    border-radius: 12px; text-align: left;
+    font-size: 15px; font-weight: 600; color: #e2e8f0;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.10);
+  }
+  body.m-shell .m-sheet-op.on {
+    color: #fff;
+    background: rgba(56,189,248,.16);
+    border-color: rgba(56,189,248,.44);
+  }
+  .m-sheet-op .ti { color: #38bdf8; font-size: 17px; }
   .m-pill-t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .m-pill > .ti { font-size: 13px; color: #cbd5e1; }
   .m-dot {

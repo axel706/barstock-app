@@ -109,6 +109,8 @@ console.log('\nnavegar');
   let vistas = 0;
   M.register({ id: 'home', tab: true, orden: 10, mount() { montadas++; }, show() { vistas++; } });
   M.register({ id: 'inv',  tab: true, orden: 20, seccion: 'inventory' });
+  // Registrar Home ya entro en el solo, asi que aqui empieza en 1.
+  eq('al registrar Home ya se entro', vistas, 1);
 
   M.ir('home');
   eq('la pantalla activa es la que se pidio', M.activa(), 'home');
@@ -125,10 +127,48 @@ console.log('\nnavegar');
 
   M.ir('home');
   eq('volver no vuelve a montar', montadas, 1);
-  eq('pero si vuelve a enseñar', vistas, 2);
+  eq('pero si vuelve a enseñar', vistas, 3);
   ok('y cierra la seccion del escritorio antes de pintar', w.__cerradas >= 1);
   ok('la pantalla vuelve a verse',
      !w.document.getElementById('mScreens').classList.contains('hidden'));
+}
+
+console.log('\nse entra por Home sin tocar nada');
+{
+  // El fallo real: el armazon y las pantallas cuelgan los dos de
+  // DOMContentLoaded y el <script> del armazon va PRIMERO, asi que al
+  // montar todavia no hay ningun 'home'. Antes se comprobaba una sola
+  // vez ahi y se quedaba viendose la pagina de escritorio hasta que
+  // tocabas el icono de la casa.
+  const w = montar(true);
+  eq('al montar, sin Home registrado, no hay pantalla', w.BarStockMobile.activa(), null);
+
+  let montadas = 0;
+  w.BarStockMobile.register({ id: 'home', tab: true, orden: 10, mount() { montadas++; } });
+  eq('registrar Home despues entra solo', w.BarStockMobile.activa(), 'home');
+  eq('y lo monta', montadas, 1);
+  ok('y esconde la pagina de siempre', w.document.body.classList.contains('m-on'));
+
+  // Entrar es UNA vez. Si cada registro posterior volviera a Home,
+  // registrar Buscar te sacaria de donde estuvieras.
+  w.BarStockMobile.register({ id: 'search', tab: true, orden: 20, mount() {} });
+  w.BarStockMobile.ir('search');
+  w.BarStockMobile.register({ id: 'otra', tab: true, orden: 30, mount() {} });
+  eq('un registro posterior no te devuelve a Home', w.BarStockMobile.activa(), 'search');
+}
+
+console.log('\nuna seccion ya abierta manda sobre Home');
+{
+  const w = montar(true);
+  // Alguien llega con una seccion abierta: un enlace, una recarga a
+  // media faena. Cambiarle la pantalla es peor que no tener Home.
+  const c = w.document.createElement('div');
+  c.className = 'card section-card bs-active-section';
+  w.document.body.appendChild(c);
+
+  w.BarStockMobile.register({ id: 'home', tab: true, orden: 10, mount() {} });
+  eq('no se le roba la pantalla', w.BarStockMobile.activa(), null);
+  ok('y la pagina de siempre sigue a la vista', !w.document.body.classList.contains('m-on'));
 }
 
 console.log('\nlo que no debe tumbar nada');

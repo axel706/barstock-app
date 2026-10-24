@@ -41,6 +41,7 @@
   const _pant = new Map();   // id -> definicion
   let _activa = null;
   let _montado = false;
+  let _entrado = false;      // ¿ya se decidió por dónde se entra?
   let _host = null;          // contenedor de las pantallas propias
   let _barra = null;
 
@@ -56,7 +57,7 @@
   function register(def) {
     if (!def || !def.id) return;
     _pant.set(def.id, Object.assign({ tab: false, orden: 100 }, def));
-    if (_montado) pintarBarra();
+    if (_montado) { pintarBarra(); entrada(); }
   }
 
   function tabs() {
@@ -84,13 +85,34 @@
     document.body.classList.add('m-shell');
     _montado = true;
     pintarBarra();
+    entrada();
+  }
 
-    // Se entra por Home. Si alguien llega con una sección ya abierta
-    // —un enlace, una recarga a media faena— se respeta: cambiarle la
-    // pantalla a alguien que estaba en algo es peor que no tener Home.
+  // ── Por dónde se entra ───────────────────────────────────────────────
+  //
+  // Se entra por Home. Si alguien llega con una sección ya abierta —un
+  // enlace, una recarga a media faena— se respeta: cambiarle la pantalla
+  // a alguien que estaba en algo es peor que no tener Home.
+  //
+  // Esto NO puede decidirse una sola vez al montar. El armazón y las
+  // pantallas cuelgan los dos de DOMContentLoaded, y el <script> del
+  // armazón va primero, así que al montar todavía no hay ningún 'home'
+  // registrado: la comprobación salía que no, no se entraba a ninguna
+  // parte, y se quedaba viéndose la página de escritorio hasta que
+  // tocabas el icono de la casa. Por eso se reintenta cada vez que algo
+  // se registra, y _entrado garantiza que ocurra una vez y no más.
+  function entrada() {
+    if (!_montado || _entrado) return;
+
     const abierta = document.querySelector('.card.section-card.bs-active-section');
-    if (!abierta && _pant.has('home')) ir('home');
-    else marcarActiva(null);
+    if (abierta) { _entrado = true; marcarActiva(null); return; }
+
+    // Todavía sin Home: no es un fallo, es que su script aún no corrió.
+    // Se vuelve por aquí en cuanto se registre.
+    if (!_pant.has('home')) return;
+
+    _entrado = true;
+    ir('home');
   }
 
   function desmontar() {
@@ -100,6 +122,7 @@
     _host = _barra = null;
     _activa = null;
     _montado = false;
+    _entrado = false;
     document.body.classList.remove('m-shell');
     document.body.classList.remove('m-on');
     // Las pantallas propias se quedan sin dibujar; las secciones del
