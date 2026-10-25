@@ -169,16 +169,20 @@
       if (pedir > 0) meta.push('order ' + n2(pedir));
 
       return `
+        <!-- La cifra es su propia columna, centrada en el alto del
+             renglón. Antes vivía en la primera línea junto al nombre y
+             quedaba colgada arriba: es el dato que se viene a mirar y
+             parecía una nota al margen. -->
         <button type="button" class="m-inv" data-i="${i}">
-          <span class="m-inv-top">
+          <span class="m-inv-l">
             <span class="m-inv-n">${esc(r.item)}</span>
-            <span class="m-inv-v">
-              <b style="color:${s.c}">${n2(r.onHand)}</b><i>/${num(r.suggested) > 0 ? n2(r.suggested) : '—'}</i>
+            <span class="m-inv-meta">
+              ${f.map(x => `<em class="m-flag m-flag-${TONO[x]}">${x}</em>`).join('')}
+              ${meta.length ? `<span>${meta.join(' · ')}</span>` : ''}
             </span>
           </span>
-          <span class="m-inv-meta">
-            ${f.map(x => `<em class="m-flag m-flag-${TONO[x]}">${x}</em>`).join('')}
-            ${meta.length ? `<span>${meta.join(' · ')}</span>` : ''}
+          <span class="m-inv-v">
+            <b style="color:${s.c}">${n2(r.onHand)}</b><i>/${num(r.suggested) > 0 ? n2(r.suggested) : '—'}</i>
           </span>
           ${s.pct !== null ? `<span class="m-inv-bar" style="width:${s.pct}%;background:${s.c}"></span>` : ''}
         </button>`;
