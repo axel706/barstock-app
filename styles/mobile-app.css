@@ -30,31 +30,39 @@
 @media (max-width: 640px) {
 
   /* ── Reset de botones ───────────────────────────────────────────── */
-
-  /* `body.m-shell` SIN :where(), y el resto con él. Eso deja el reset
-   * en (0,1,1): empata con `body.light button` de app.css y gana por
-   * ir después, y pierde contra cualquier `body.m-shell .loquesea` de
-   * este archivo, que es como se declara todo lo que sí se pinta.
+  /*
+   * `body.m-shell` SIN :where(), y el resto con él. Eso deja el reset
+   * en (0,1,1): gana a `body.light button` de app.css por ir después,
+   * y pierde contra cualquier `body.m-shell .loquesea` de este
+   * archivo, que es como se declara todo lo que sí se pinta. Envuelto
+   * entero en :where() valía CERO y hasta un `button {}` suelto le
+   * ganaba: de ahí salían las pastillas de fondo en "See all" y en
+   * "Back to results".
    *
-   * Envuelto entero en :where() valía CERO, así que hasta un `button {}`
-   * suelto le ganaba y app.css le ponía fondo, borde y sombra de botón
-   * a todo lo que yo no hubiera redeclarado a mano. De ahí salían las
-   * pastillas de fondo en "See all", en los renglones de Top movers y
-   * en "Back to results" — tres síntomas, una causa. */
-  /* ── Y el `!important` de app.css ────────────────────────────────
+   * ── El radio es otra pelea, y más sucia ──────────────────────────
    *
-   * app.css le pone `border-radius: 999px !important` a TODO <button>.
-   * Un !important no se vence con especificidad, solo con otro
-   * !important, así que todas las tarjetas de este archivo que son
-   * botones salían con forma de pastilla aunque pidieran 15px — los
-   * renglones de inventario, los resultados de Buscar, la lista de
-   * More. Por eso el radio va forzado aquí y en cada regla propia que
-   * pone uno. Es feo y es la única forma; otros dos archivos del
-   * proyecto tienen el mismo comentario.
+   * app.css tiene:
    *
-   * Si algún día se quita el !important de app.css, estos se pueden
-   * quitar todos de golpe. */
-  body.m-shell :where(.m-screens, .m-tabs, .m-sheet) :where(button) {
+   *   button:not(.oh-filter-chip):not(.piq-filter-chip):not(.section-toggle)
+   *   { border-radius: 999px !important }
+   *
+   * Cada :not() cuenta como una clase, así que pesa (0,3,1) — MÁS que
+   * un `body.m-shell .m-inv`, que pesa (0,2,1). Con los dos marcados
+   * !important gana el más específico, y por eso toda tarjeta de este
+   * archivo que sea un <button> salía con forma de pastilla aunque
+   * pidiera 15px: inventario, resultados de Buscar, la lista de More.
+   * Poner !important no bastaba; hay que PASARLE en especificidad.
+   *
+   * De ahí los dos añadidos en cada regla con radio: la clase repetida
+   * sube a (0,3,1) —que empata— y el `html` delante desempata por
+   * número de elementos, (0,3,2). Se desempata en el selector y no por
+   * el orden de los <link>, que es lo que se rompe el día que alguien
+   * los reordene sin saber nada de esto.
+   *
+   * El día que se quite ese !important de app.css, el apaño se borra
+   * de golpe: busca `html body.m-shell.m-shell`.
+   */
+  html body.m-shell.m-shell :where(.m-screens, .m-tabs, .m-sheet) :where(button) {
     background: none; border: none; box-shadow: none;
     color: inherit; font-family: inherit; padding: 0;
     border-radius: 0 !important;
@@ -209,7 +217,7 @@
     bottom: 0; height: 52px;
     display: flex; align-items: center; gap: 6px;
   }
-  body.m-shell .m-ico {
+  html body.m-shell.m-shell .m-ico {
     width: 33px; height: 33px; flex: 0 0 33px;
     display: flex; align-items: center; justify-content: center;
     border-radius: 50% !important; cursor: pointer; font-size: 15px;
@@ -226,12 +234,8 @@
     gap: 9px; padding: 14px 0 13px;
   }
   .m-day { font-size: 25px; font-weight: 800; color: #fff; letter-spacing: -.5px; line-height: 1; }
-
-  /* Sólida y opaca: es lo único opaco de la pantalla, así que resalta
-   * por ser distinta y no por ser más brillante. Y deja el azul libre
-   * para la acción, que es la tarjeta y su botón. */
-  body.m-shell .m-pill,
-  .m-pill-solo {
+  html body.m-shell.m-shell .m-pill,
+  html body.m-shell.m-shell .m-pill-solo {
     display: inline-flex; align-items: center; gap: 7px;
     max-width: 190px; padding: 9px 13px; border-radius: 999px !important;
     cursor: pointer; font-size: 12.5px; font-weight: 700; color: #fff;
@@ -250,27 +254,26 @@
     background: rgba(5,9,16,.58);
     backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
   }
-  .m-sheet-box {
+  html body.m-shell.m-shell .m-sheet-box {
     position: absolute; left: 0; right: 0; bottom: 0;
     background: #0b1220;
     border-top: 1px solid rgba(255,255,255,.14);
-    border-radius: 18px 18px 0 0;
+    border-radius: 18px 18px 0 0 !important;
     padding: 9px 13px calc(16px + env(safe-area-inset-bottom, 0px));
     box-shadow: 0 -14px 40px rgba(0,0,0,.52);
     animation: mSheetUp .18s ease-out;
   }
   @keyframes mSheetUp { from { transform: translateY(100%); } to { transform: none; } }
   @media (prefers-reduced-motion: reduce) { .m-sheet-box { animation: none; } }
-
-  .m-sheet-grip {
-    width: 38px; height: 4px; border-radius: 999px; margin: 0 auto 12px;
+  html body.m-shell.m-shell .m-sheet-grip {
+    width: 38px; height: 4px; border-radius: 999px !important; margin: 0 auto 12px;
     background: rgba(255,255,255,.26);
   }
   .m-sheet-t {
     font-size: 11px; font-weight: 800; letter-spacing: .9px;
     text-transform: uppercase; color: #94a3b8; padding: 0 4px 8px;
   }
-  body.m-shell .m-sheet-op {
+  html body.m-shell.m-shell .m-sheet-op {
     display: flex; align-items: center; justify-content: space-between;
     width: 100%; gap: 10px;
     padding: 14px 13px; margin-bottom: 7px;
@@ -287,17 +290,12 @@
   .m-sheet-op .ti { color: #38bdf8; font-size: 17px; }
   .m-pill-t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .m-pill > .ti { font-size: 13px; color: #cbd5e1; }
-  .m-dot {
-    width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%;
+  html body.m-shell.m-shell .m-dot {
+    width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50% !important;
     background: #22c55e; font-style: normal;
     box-shadow: 0 0 0 3px rgba(34,197,94,.20);
   }
-
-  /* ── Buscar ─────────────────────────────────────────────────────── */
-  /* Nunca cambia de sitio: es lo más frecuente y tiene que ser memoria
-   * muscular. */
-
-  body.m-shell .m-searchbar {
+  html body.m-shell.m-shell .m-searchbar {
     display: flex; align-items: center; gap: 9px; width: 100%;
     padding: 12px 13px; border-radius: 16px !important; cursor: pointer;
     text-align: left; font-size: 14.5px; color: #9fb0c4;
@@ -321,9 +319,7 @@
     border-color: rgba(255,255,255,.22);
     margin-bottom: 2px;
   }
-  /* La X era un círculo oscuro del tamaño de un botón de verdad y
-   * pesaba más que el propio texto que iba a borrar. */
-  body.m-shell .m-searchbar > button {
+  html body.m-shell.m-shell .m-searchbar > button {
     flex: 0 0 24px; width: 24px; height: 24px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     border-radius: 50% !important; font-size: 13px; color: #cbd5e1;
@@ -364,10 +360,9 @@
     flex: 0 0 calc(100% - 38px);
     scroll-snap-align: start;
   }
-
-  .m-hero {
+  html body.m-shell.m-shell .m-hero {
     display: flex; gap: 10px; padding: 13px;
-    border-radius: 20px; box-sizing: border-box;
+    border-radius: 20px !important; box-sizing: border-box;
   }
   /* Columna: el texto crece y el botón se queda abajo, a la misma
    * altura en todas las tarjetas del carril. */
@@ -385,14 +380,11 @@
   .m-hero-list b { color: #fff; font-weight: 700; }
   .m-hero-amt { font-size: 17px; font-weight: 800; color: #fff; letter-spacing: -.4px; }
   .m-hero-vs { font-size: 8.5px; color: #9fb0c4; }
-  .m-prog { height: 4px; border-radius: 2px; background: rgba(255,255,255,.14); margin-top: 9px; overflow: hidden; }
-  .m-prog i { display: block; height: 100%; background: #22c55e; border-radius: 2px; }
+  html body.m-shell.m-shell .m-prog { height: 4px; border-radius: 2px !important; background: rgba(255,255,255,.14); margin-top: 9px; overflow: hidden; }
+  html body.m-shell.m-shell .m-prog i { display: block; height: 100%; background: #22c55e; border-radius: 2px !important; }
 
   .m-hero-acts { display: flex; align-items: center; gap: 7px; margin-top: 10px; }
-
-  /* Pequeño, sin color y al lado del grande. Tirar trabajo no debe ser
-   * más fácil de pulsar que seguirlo. */
-  body.m-shell .m-hero-x {
+  html body.m-shell.m-shell .m-hero-x {
     flex: 0 0 32px; width: 32px; height: 32px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     border-radius: 50% !important; font-size: 15px; color: #e8c3c3;
@@ -400,8 +392,7 @@
     border: 1px solid rgba(255,255,255,.18);
   }
   body.m-shell .m-hero-x:active { background: rgba(248,113,113,.26); }
-
-  body.m-shell .m-hero-b {
+  html body.m-shell.m-shell .m-hero-b {
     align-self: center;
     padding: 8px 15px; border-radius: 11px !important;
     font-size: 12px; font-weight: 800; cursor: pointer;
@@ -430,10 +421,8 @@
   body.m-shell .m-hero-red   .m-hero-b { background: #ef4444; color: #fff; }
 
   .m-dots { display: flex; justify-content: center; gap: 5px; padding: 10px 0 0; }
-  .m-dots i { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,.26); transition: width .18s ease; }
-  /* La activa es una barrita y no un punto, para saber cuál es sin
-   * tener que contar. */
-  .m-dots i.on { width: 16px; border-radius: 3px; background: #7dd3fc; }
+  html body.m-shell.m-shell .m-dots i { width: 5px; height: 5px; border-radius: 50% !important; background: rgba(255,255,255,.26); transition: width .18s ease; }
+  html body.m-shell.m-shell .m-dots i.on { width: 16px; border-radius: 3px !important; background: #7dd3fc; }
 
   /* ── Secciones ──────────────────────────────────────────────────── */
 
@@ -442,24 +431,9 @@
   body.m-shell .m-seclink { font-size: 11.5px; color: #7dd3fc; font-weight: 700; cursor: pointer; }
 
   .m-feed { display: flex; flex-direction: column; gap: 7px; }
-
-  /* ── Top movers ─────────────────────────────────────────────────── */
-  /*
-   * Una sola tarjeta de vidrio, igual que las del carrusel: un héroe
-   * arriba y los demás como renglones debajo.
-   *
-   * Lo que había antes eran tres tarjetas sueltas con una barra de
-   * fondo detrás del texto. La barra no se leía como barra —parecía un
-   * rectángulo gris mal pintado— y tres productos de 270 no dicen
-   * gran cosa. Ahora son cinco y el bloque ocupa menos.
-   *
-   * La tendencia vive aquí dentro y no en un bloque aparte: que algo
-   * se mueva mucho no es noticia si siempre se movió mucho.
-   */
-
-  .m-mvcard {
+  html body.m-shell.m-shell .m-mvcard {
     margin-top: 16px; padding: 14px;
-    border-radius: 19px;
+    border-radius: 19px !important;
     background: linear-gradient(135deg, rgba(56,189,248,.18), rgba(56,189,248,.05));
     border: 1px solid rgba(125,211,252,.24);
   }
@@ -478,9 +452,9 @@
   /* La tendencia del héroe se va a la derecha del todo; la de los
    * renglones va pegada a su número. */
   .m-mv1-n .m-tr { margin-left: auto; }
-  .m-tr {
+  html body.m-shell.m-shell .m-tr {
     display: inline-flex; align-items: center; gap: 3px; flex: 0 0 auto;
-    padding: 3px 7px; border-radius: 999px;
+    padding: 3px 7px; border-radius: 999px !important;
     font-size: 10px; font-weight: 700; letter-spacing: .1px;
     color: #9fb0c4; background: rgba(255,255,255,.08);
   }
@@ -505,12 +479,7 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .m-mvr b { font-size: 12.5px; font-weight: 800; color: #eef4fb; flex: 0 0 38px; text-align: right; }
-
-  /* Una línea al pie, no un fondo detrás del texto. Ésa fue la queja
-   * del formato anterior: la barra como fondo parecía un rectángulo
-   * gris mal pintado. Al pie se lee como lo que es — cuánto de lo que
-   * se mueve el primero se mueve éste. */
-  .m-mvr-bar {
+  html body.m-shell.m-shell .m-mvr-bar {
     position: absolute; left: 15px; bottom: 2px; height: 2px;
     border-radius: 999px !important; background: rgba(125,211,252,.55);
   }
@@ -528,7 +497,7 @@
    * Sin título propio: el rótulo de cada columna ya dice qué es.
    */
   .m-cols { display: flex; gap: 8px; margin-top: 14px; }
-  .m-col { flex: 1; min-width: 0; padding: 11px 12px; border-radius: 15px; }
+  html body.m-shell.m-shell .m-col { flex: 1; min-width: 0; padding: 11px 12px; border-radius: 15px !important; }
   .m-col-up { background: rgba(74,222,128,.12); border: 1px solid rgba(134,239,172,.26); }
   .m-col-dn { background: rgba(248,113,113,.12); border: 1px solid rgba(252,165,165,.26); }
   .m-col-k { display: flex; align-items: center; gap: 5px; font-size: 10px; letter-spacing: .3px; font-weight: 700; margin-bottom: 8px; }
@@ -544,7 +513,7 @@
   /* ── Dinero ─────────────────────────────────────────────────────── */
 
   .m-pair { display: flex; gap: 8px; margin-top: 14px; }
-  .m-stat { flex: 1; min-width: 0; padding: 12px; border-radius: 17px;
+  html body.m-shell.m-shell .m-stat { flex: 1; min-width: 0; padding: 12px; border-radius: 17px !important;
     background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.12); }
   .m-stat-k { display: block; font-size: 10px; color: #9fb0c4; }
   .m-stat-v { display: block; font-size: 19px; font-weight: 800; color: #fff; letter-spacing: -.4px; margin-top: 2px; }
@@ -564,8 +533,7 @@
     pointer-events: none;
   }
   .m-tabs > * { pointer-events: auto; }
-
-  .m-tabs-bar {
+  html body.m-shell.m-shell .m-tabs-bar {
     flex: 1; display: flex; padding: 5px; border-radius: 24px !important;
     background: rgba(10,16,26,.76);
     border: 1px solid rgba(255,255,255,.14);
@@ -573,23 +541,18 @@
     -webkit-backdrop-filter: blur(18px) saturate(140%);
     box-shadow: 0 10px 28px rgba(0,0,0,.34);
   }
-  body.m-shell .m-tab {
+  html body.m-shell.m-shell .m-tab {
     position: relative; flex: 1; height: 36px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     border-radius: 18px !important; color: #8fa1b5; font-size: 18px;
   }
   body.m-shell .m-tab.on { background: rgba(255,255,255,.14); color: #fff; }
-  .m-dot-badge, .m-tab .m-dot {
+  html body.m-shell.m-shell .m-dot-badge,
+  html body.m-shell.m-shell .m-tab .m-dot {
     position: absolute; top: 5px; right: 22%;
-    width: 6px; height: 6px; border-radius: 50%; background: #f59e0b; box-shadow: none;
+    width: 6px; height: 6px; border-radius: 50% !important; background: #f59e0b; box-shadow: none;
   }
-
-  /* Escanear vive FUERA de la barra: es la acción principal del
-   * teléfono y no compite con la navegación. */
-  /* Más grande que las pestañas a propósito: es la acción, no un sitio
-   * al que ir. El aro tenue lo separa de la barra sin añadir otro
-   * color — cuatro pixeles de diferencia no se leen como jerarquía. */
-  body.m-shell .m-fab {
+  html body.m-shell.m-shell .m-fab {
     flex: 0 0 56px; width: 56px; height: 56px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     border-radius: 50% !important; font-size: 26px;
@@ -615,8 +578,7 @@
   .m-screen[data-screen="search"].ficha #msFicha { display: block; }
   .m-screen[data-screen="search"].ficha #msList,
   .m-screen[data-screen="search"].ficha #msCount { display: none; }
-
-  body.m-shell .m-res {
+  html body.m-shell.m-shell .m-res {
     display: flex; align-items: center; gap: 9px; width: 100%;
     padding: 12px; margin-bottom: 7px; border-radius: 15px !important;
     text-align: left; cursor: pointer; color: #eef4fb;
@@ -649,9 +611,8 @@
     font-size: 12.5px; font-weight: 600; color: #7dd3fc; cursor: pointer;
   }
   .m-back .ti { font-size: 15px; }
-
-  body.m-shell .m-fic {
-    display: block; padding: 16px; border-radius: 18px;
+  html body.m-shell.m-shell .m-fic {
+    display: block; padding: 16px; border-radius: 18px !important;
     background: rgba(255,255,255,.13);
     border: 1px solid rgba(255,255,255,.17);
   }
@@ -670,11 +631,8 @@
   .m-fic-big span { font-size: 12px; color: #9fb0c4; }
   #msZonas { font-size: 11px; color: #9fb0c4; line-height: 1.5; margin-top: 9px; }
   #msZonas:empty { display: none; }
-
-  /* Pares etiqueta / valor. El valor a la derecha y en negrita: se lee
-   * la columna de la derecha sola, sin ir leyendo los rótulos. */
-  body.m-shell .m-rows {
-    display: block; margin-top: 9px; padding: 2px 15px; border-radius: 16px;
+  html body.m-shell.m-shell .m-rows {
+    display: block; margin-top: 9px; padding: 2px 15px; border-radius: 16px !important;
     background: rgba(255,255,255,.10);
     border: 1px solid rgba(255,255,255,.14);
   }
@@ -691,7 +649,7 @@
   /* Añadir pesa más que recibir: una es la que se hace diez veces al
    * día y la otra cuando llega el camión. Antes eran gemelas. */
   .m-acts { display: flex; gap: 8px; margin-top: 11px; }
-  body.m-shell .m-act {
+  html body.m-shell.m-shell .m-act {
     flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
     padding: 13px 8px; border-radius: 999px !important; cursor: pointer;
     font-size: 13px; font-weight: 700; color: #eaf2fb;
@@ -714,35 +672,30 @@
 
   .m-inv-bar2 { display: flex; gap: 7px; margin-bottom: 11px; }
   .m-inv-bar2 .m-searchbar { flex: 1; min-width: 0; margin-bottom: 0; }
-  body.m-shell .m-adj {
+  html body.m-shell.m-shell .m-adj {
     flex: 0 0 44px; width: 44px; cursor: pointer; position: relative;
     display: flex; align-items: center; justify-content: center;
     border-radius: 16px !important; font-size: 17px; color: #eaf2fb;
     background: rgba(255,255,255,.11);
     border: 1px solid rgba(255,255,255,.15);
   }
-  /* El punto avisa de que hay un filtro puesto. Sin él, una lista
-   * filtrada y una lista corta se ven igual, y ahí es donde alguien
-   * concluye que le faltan productos. */
-  body.m-shell .m-adj.on::after {
+  html body.m-shell.m-shell .m-adj.on::after {
     content: ''; position: absolute; top: 9px; right: 10px;
     width: 6px; height: 6px; border-radius: 50% !important; background: #f59e0b;
   }
-
-  .m-seg {
-    display: flex; padding: 4px; border-radius: 15px; margin-bottom: 13px;
+  html body.m-shell.m-shell .m-seg {
+    display: flex; padding: 4px; border-radius: 15px !important; margin-bottom: 13px;
     background: rgba(0,0,0,.26);
     border: 1px solid rgba(255,255,255,.10);
   }
-  body.m-shell .m-seg button {
+  html body.m-shell.m-shell .m-seg button {
     flex: 1; padding: 9px 4px; border-radius: 11px !important; cursor: pointer;
     font-size: 12px; color: #9fb0c4; text-align: center;
   }
   body.m-shell .m-seg button.on { background: rgba(255,255,255,.14); color: #fff; font-weight: 700; }
   .m-seg button b { font-weight: 800; color: #7f93a8; margin-left: 2px; }
   .m-seg button.on b { color: #fcd34d; }
-
-  body.m-shell .m-inv {
+  html body.m-shell.m-shell .m-inv {
     position: relative; overflow: hidden; width: 100%;
     display: block; text-align: left; cursor: pointer;
     padding: 11px 12px 13px; margin-bottom: 7px; border-radius: 15px !important;
@@ -762,9 +715,8 @@
     display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
     margin-top: 5px; font-size: 10px; color: #9fb0c4;
   }
-  /* La etiqueta es el motivo por el que ese renglón está arriba. */
-  .m-flag {
-    font-style: normal; padding: 2px 6px; border-radius: 5px;
+  html body.m-shell.m-shell .m-flag {
+    font-style: normal; padding: 2px 6px; border-radius: 5px !important;
     font-size: 9px; font-weight: 700;
   }
   .m-flag-red   { background: rgba(239,68,68,.18);  color: #fca5a5; }
@@ -776,7 +728,7 @@
   /* ── El cajón de filtros y la hoja de producto ──────────────────── */
 
   .m-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
-  body.m-shell .m-chip {
+  html body.m-shell.m-shell .m-chip {
     padding: 8px 12px; border-radius: 999px !important; cursor: pointer;
     font-size: 11.5px; color: #b6c6d8;
     background: rgba(255,255,255,.07);
@@ -794,21 +746,21 @@
   .m-edit { max-height: 86vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
   .m-step { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-  body.m-shell .m-step button {
+  html body.m-shell.m-shell .m-step button {
     flex: 0 0 42px; height: 42px; cursor: pointer; border-radius: 12px !important;
     font-size: 19px; color: #eaf2fb;
     background: rgba(255,255,255,.10);
     border: 1px solid rgba(255,255,255,.15);
   }
-  body.m-shell .m-step input,
-  body.m-shell .m-money input {
+  html body.m-shell.m-shell .m-step input,
+  html body.m-shell.m-shell .m-money input {
     /* 16px obligatorio: por debajo Safari hace zoom al enfocar y
      * descoloca la hoja entera. */
     flex: 1; min-width: 0; height: 42px; font-size: 16px; font-weight: 700;
     text-align: center; color: #fff; -webkit-appearance: none;
     background: rgba(255,255,255,.10);
     border: 1px solid rgba(255,255,255,.15);
-    border-radius: 12px;
+    border-radius: 12px !important;
   }
   .m-step input::-webkit-outer-spin-button,
   .m-step input::-webkit-inner-spin-button,
@@ -818,16 +770,14 @@
   .m-money { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
   .m-money > span { font-size: 16px; font-weight: 800; color: #9fb0c4; flex: 0 0 auto; }
   body.m-shell .m-money input { text-align: left; padding: 0 12px; }
-
-  body.m-shell .m-iqline {
+  html body.m-shell.m-shell .m-iqline {
     display: flex; align-items: center; gap: 6px; cursor: pointer;
     margin: 8px 0 2px; padding: 8px 11px; border-radius: 10px !important;
     font-size: 11px; font-weight: 700; color: #7dd3fc;
     background: rgba(56,189,248,.12);
     border: 1px solid rgba(56,189,248,.26);
   }
-
-  body.m-shell .m-next {
+  html body.m-shell.m-shell .m-next {
     display: flex; align-items: center; justify-content: center; gap: 7px;
     width: 100%; margin-top: 9px; padding: 11px; border-radius: 999px !important;
     font-size: 12px; font-weight: 700; color: #9fb0c4;
@@ -854,8 +804,7 @@
 
   .m-screen[data-screen="cycle"] { padding: 14px 13px 0; }
   .m-cyc-t { color: #fff; font-size: 19px; font-weight: 800; letter-spacing: -.4px; margin: 2px 2px 11px; }
-
-  body.m-shell .m-cyc-h { display: block; padding: 14px; border-radius: 17px; }
+  html body.m-shell.m-shell .m-cyc-h { display: block; padding: 14px; border-radius: 17px !important; }
   .m-cyc-wait  { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.13); }
   .m-cyc-green { background: rgba(99,153,34,.16);  border: 1px solid rgba(151,196,89,.42); }
   .m-cyc-amber { background: rgba(186,117,23,.18); border: 1px solid rgba(239,159,39,.46); }
@@ -873,13 +822,12 @@
 
   .m-cyc-n { color: #fff; font-size: 18px; font-weight: 800; letter-spacing: -.3px; margin: 5px 0 4px; }
   .m-cyc-d { font-size: 12px; color: #c3d0de; line-height: 1.5; }
-  .m-cyc-bar {
-    height: 5px; border-radius: 999px; margin: 8px 0 7px;
+  html body.m-shell.m-shell .m-cyc-bar {
+    height: 5px; border-radius: 999px !important; margin: 8px 0 7px;
     background: rgba(255,255,255,.15); overflow: hidden;
   }
-  .m-cyc-bar > span { display: block; height: 5px; border-radius: 999px; background: #ef9f27; }
-
-  body.m-shell .m-cyc-go {
+  html body.m-shell.m-shell .m-cyc-bar > span { display: block; height: 5px; border-radius: 999px !important; background: #ef9f27; }
+  html body.m-shell.m-shell .m-cyc-go {
     display: block; width: 100%; margin-top: 12px;
     padding: 11px; border-radius: 999px !important; text-align: center;
     font-size: 14px; font-weight: 800; color: #0b1220;
@@ -895,8 +843,8 @@
   .m-cyc-steps { margin: 14px 2px 0; }
   .m-cyc-s { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; opacity: .45; }
   .m-cyc-s.on, .m-cyc-s.next { opacity: 1; }
-  .m-cyc-sn {
-    width: 20px; height: 20px; flex: 0 0 20px; border-radius: 50%;
+  html body.m-shell.m-shell .m-cyc-sn {
+    width: 20px; height: 20px; flex: 0 0 20px; border-radius: 50% !important;
     display: flex; align-items: center; justify-content: center;
     font-size: 10.5px; font-weight: 800;
     color: #9fb0c4; border: 1px solid #9fb0c4;
@@ -905,9 +853,7 @@
   .m-cyc-s.next .m-cyc-sn { color: #85b7eb; border-color: #85b7eb; }
   .m-cyc-st { font-size: 13px; color: #e8eef6; line-height: 1.3; }
   .m-cyc-st small { display: block; font-size: 11px; color: #9fb0c4; margin-top: 2px; }
-
-  /* Separado y en rojo. No es un paso más: no hay deshacer. */
-  body.m-shell .m-cyc-reset {
+  html body.m-shell.m-shell .m-cyc-reset {
     display: flex; align-items: center; justify-content: center; gap: 7px;
     width: 100%; margin-top: 22px; padding: 11px; border-radius: 999px !important;
     font-size: 13px; font-weight: 700; color: #fca5a5;
@@ -921,8 +867,7 @@
   .m-lab { font-size: 10px; color: #9fb0c4; letter-spacing: .5px; margin: 16px 2px 8px; }
   .m-cnt { font-size: 10px; color: #9fb0c4; letter-spacing: .3px; margin: 10px 4px 8px; }
   .m-empty { font-size: 13px; color: #9fb0c4; text-align: center; padding: 28px 16px; line-height: 1.6; }
-
-  body.m-shell .m-item {
+  html body.m-shell.m-shell .m-item {
     display: flex; align-items: center; gap: 10px; width: 100%;
     padding: 11px 12px; margin-bottom: 6px; text-align: left; cursor: pointer;
     border-radius: 13px !important; color: #f1f5f9;
