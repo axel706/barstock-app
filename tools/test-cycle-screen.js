@@ -64,8 +64,10 @@ function pintar(cycle, extra) {
     cuantoLleva: (ms) => Math.round(ms / 86400000) + ' days',
     fmtDate: () => 'Oct 20',
     accion: () => w.__hecho.push('accion'),
-    reiniciar: () => w.__hecho.push('reiniciar')
+    reiniciar: () => w.__hecho.push('reiniciar'),
+    descartarConteo: () => w.__hecho.push('descartar')
   }, cycle);
+  w.confirm = () => (extra && extra.confirma === false ? false : true);
 
   if (extra && extra.contados != null) {
     w.BarStockCountSession = {
@@ -146,6 +148,32 @@ console.log('\nreiniciar');
   const { w, host } = pintar({ estado: () => 'done', resetAt: () => '2026-10-20T00:00:00Z' });
   host.querySelector('#mcReset').click();
   eq('y usa el reinicio de siempre', w.__hecho, ['reiniciar']);
+}
+
+console.log('\ndescartar el conteo');
+{
+  // Antes esto solo se podia hacer por accidente: era el "Cancel" del
+  // aviso que sale a los tres dias de abandono. Para tirar un conteo
+  // pausado a proposito —empezaste mal, contaste la zona equivocada—
+  // habia que esperar tres dias a que la app preguntara.
+  const c = pintar({ estado: () => 'counting', resetAt: () => '2026-10-20T00:00:00Z',
+                     pausado: () => true }, { contados: 112 });
+  ok('contando, se puede descartar', !!c.host.querySelector('#mcDrop'));
+  ok('y dice cuantas botellas se van', /112 bottles counted/i.test(c.host.textContent));
+  // Lo que lo hace seguro: tirar el conteo NO tira la semana.
+  ok('deja claro que el ciclo sigue abierto', /cycle stays open/i.test(c.host.textContent));
+  ok('y no se mezcla con reiniciar el ciclo', !c.host.querySelector('#mcReset'));
+
+  c.host.querySelector('#mcDrop').click();
+  eq('usa el descarte de weekly-cycle', c.w.__hecho, ['descartar']);
+
+  const no = pintar({ estado: () => 'counting', resetAt: () => '2026-10-20T00:00:00Z' },
+                    { contados: 112, confirma: false });
+  no.host.querySelector('#mcDrop').click();
+  eq('y si dices que no, no pasa nada', no.w.__hecho, []);
+
+  const d = pintar({ estado: () => 'done', resetAt: () => '2026-10-20T00:00:00Z' });
+  ok('sin conteo abierto no hay nada que descartar', !d.host.querySelector('#mcDrop'));
 }
 
 console.log('\nlos tres pasos se pintan siempre');

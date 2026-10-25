@@ -208,7 +208,17 @@
           </div>`).join('')}
       </div>
 
-      ${st === 'done' || st === 'counting' ? `
+      ${st === 'counting' ? `
+        <button type="button" class="m-cyc-reset" id="mcDrop">
+          <i class="ti ti-trash" aria-hidden="true"></i> Discard this count
+        </button>
+        <div class="m-cyc-warn">
+          Throws away the ${esc(String(contados(st)))} bottles counted so far.
+          The cycle stays open, so you can start counting again.
+        </div>
+      ` : ''}
+
+      ${st === 'done' ? `
         <button type="button" class="m-cyc-reset" id="mcReset">
           <i class="ti ti-refresh" aria-hidden="true"></i> Restart the cycle
         </button>
@@ -222,6 +232,26 @@
 
     const re = host.querySelector('#mcReset');
     if (re) re.onclick = () => { const w = W(); if (w && w.reiniciar) w.reiniciar(); };
+
+    const dr = host.querySelector('#mcDrop');
+    if (dr) dr.onclick = () => {
+      // Se dice el número. "¿Descartar el conteo?" no deja decidir;
+      // "vas a tirar 112 botellas contadas" sí.
+      const n = contados(estado());
+      const ok = window.confirm(
+        'Discard this count?\n\n' +
+        n + ' bottle' + (n === 1 ? '' : 's') + ' counted so far will be thrown away. ' +
+        'This cannot be undone.\n\nThe cycle stays open.');
+      if (!ok) return;
+      const w = W();
+      if (w && w.descartarConteo) w.descartarConteo();
+    };
+  }
+
+  function contados(st) {
+    if (st !== 'counting') return 0;
+    const ses = S();
+    try { return (ses && ses.size) ? ses.size() : 0; } catch (e) { return 0; }
   }
 
   function refresh() {

@@ -574,6 +574,36 @@
     await refresh();
   }
 
+  // ── Tirar el conteo ──────────────────────────────────────────────────
+  //
+  // Hasta ahora esto sólo se podía hacer por accidente: era el "Cancel"
+  // del aviso que sale cuando un conteo lleva tres días abandonado. O
+  // sea que para descartar un conteo pausado a propósito —el caso
+  // normal: empezaste mal, o contaste la zona equivocada— había que
+  // esperar tres días a que la app te preguntara.
+  //
+  // El ciclo NO se toca: se tira el conteo, no la semana. El on hand ya
+  // está a cero desde el paso 1 y ahí se queda, listo para volver a
+  // empezar. Esa distinción es justo la que hace que esto sea seguro y
+  // reiniciar el ciclo no lo sea.
+  async function descartarConteo() {
+    try {
+      if (window.BarStockCountSession && window.BarStockCountSession.clear) {
+        window.BarStockCountSession.clear(cfg().name || '');
+      }
+    } catch (e) {
+      // El conteo vive en OTRO telefono: aqui no hay sesion que vaciar,
+      // solo hay que apagar la señal compartida.
+    }
+    // Siempre, no solo en el catch: la señal esta en la nube y si se
+    // queda encendida el iPad seguira diciendo "Counting" para siempre.
+    await apagarSenal();
+    await refresh();
+    if (window.BarStockCountResume && window.BarStockCountResume.refresh) {
+      window.BarStockCountResume.refresh();
+    }
+  }
+
   window.BarStockWeeklyCycle = {
     refresh, onDataChanged,
     // Lo pide el Home del telefono para avisar de un ciclo que lleva
@@ -590,6 +620,6 @@
     resetAt: () => _resetAt,
     pausado, abandonado, quietoDesdeHace, hace, cuantoLleva, fmtDate,
     accion: onClick,
-    reiniciar
+    reiniciar, descartarConteo
   };
 })();
