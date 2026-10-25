@@ -122,7 +122,18 @@
         amt: pct + '%',
         vs: tot ? (tot - n) + ' left' : '',
         btn: viejo ? 'Pick it up' : 'Keep counting',
-        go: () => { if (window.BarStockScanCount) window.BarStockScanCount.open(); }
+        go: () => { if (window.BarStockScanCount) window.BarStockScanCount.open(); },
+
+        // El bote. Va aquí y no sólo en la pantalla del ciclo porque es
+        // la pareja de "seguir contando": cuando miras un conteo a
+        // medias las dos únicas salidas son retomarlo o tirarlo, y
+        // tener una a un toque y la otra a dos las desequilibra.
+        //
+        // Pequeño, sin color y al lado: tirar trabajo nunca debe ser
+        // más fácil de pulsar que seguirlo.
+        ico2: 'trash',
+        ico2t: 'Discard this count',
+        go2: () => descartar(n)
       };
     }
 
@@ -143,6 +154,19 @@
       btn: 'Open cycle',
       go: irAlCiclo
     };
+  }
+
+  // El mismo descarte que la pantalla del ciclo: tira el conteo, deja
+  // la semana abierta. Y dice el número — "¿descartar el conteo?" no
+  // deja decidir nada, "vas a tirar 112 botellas contadas" sí.
+  function descartar(n) {
+    const ok = window.confirm(
+      'Discard this count?\n\n' +
+      n + ' bottle' + (n === 1 ? '' : 's') + ' counted so far will be thrown away. ' +
+      'This cannot be undone.\n\nThe cycle stays open.');
+    if (!ok) return;
+    const W = window.BarStockWeeklyCycle;
+    if (W && W.descartarConteo) W.descartarConteo();
   }
 
   function tarjetas() {
@@ -228,7 +252,13 @@
             ${c.sub ? `<div class="m-hero-s">${esc(c.sub)}</div>` : ''}
             ${c.lista ? `<div class="m-hero-list">${c.lista.map(x => '<span>' + x + '</span>').join('')}</div>` : ''}
           </div>
-          <button type="button" class="m-hero-b" data-go="${i}">${esc(c.btn)}</button>
+          <div class="m-hero-acts">
+            <button type="button" class="m-hero-b" data-go="${i}">${esc(c.btn)}</button>
+            ${c.ico2 ? `<button type="button" class="m-hero-x" data-go2="${i}"
+                                aria-label="${esc(c.ico2t || '')}">
+                          <i class="ti ti-${esc(c.ico2)}" aria-hidden="true"></i>
+                        </button>` : ''}
+          </div>
         </div>
         <div class="m-hero-r">
           <div class="m-hero-amt">${esc(c.amt)}</div>
@@ -543,6 +573,11 @@
     host.querySelectorAll('[data-go]').forEach(b => {
       const c = cards[Number(b.dataset.go)];
       if (c && c.go) b.onclick = (ev) => { ev.stopPropagation(); c.go(); };
+    });
+
+    host.querySelectorAll('[data-go2]').forEach(b => {
+      const c = cards[Number(b.dataset.go2)];
+      if (c && c.go2) b.onclick = (ev) => { ev.stopPropagation(); c.go2(); };
     });
 
     host.querySelectorAll('[data-item]').forEach(b => {
