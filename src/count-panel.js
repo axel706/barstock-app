@@ -540,8 +540,27 @@
           <line class="cp-lastline" x1="8" y1="${yToPx(key, yAntes)}"
                 x2="${VB.w - 8}" y2="${yToPx(key, yAntes)}"
                 stroke-width="1.4" stroke-dasharray="5 4"/>`}
+
+          <!-- ── La línea de arrastre, DENTRO del SVG ──────────────
+               Era un div colocado a mano: se leía el alto del visor
+               con getBoundingClientRect y se le daba un top en
+               píxeles. Eso falla de dos maneras y las dos se veían:
+               si se mide antes de que el visor sepa su alto —al abrir
+               desde el escáner— no se escribe nada y el div se queda
+               en su posición estática, la misma para cualquier
+               botella; y si se mide bien pero el layout cambia
+               después, queda descolgada hasta el siguiente arrastre.
+               La pista estaba a la vista: la punteada del conteo
+               anterior SIEMPRE caía bien, y esa ya vivía aquí dentro.
+               Aquí no hay nada que medir. La línea está en las mismas
+               coordenadas que el vidrio, así que no pueden separarse.
+               -->
+          <line class="cp-dragline" x1="0" y1="${yToPx(key, y)}"
+                x2="${VB.w}" y2="${yToPx(key, y)}"
+                stroke-width="3" vector-effect="non-scaling-stroke"/>
+          <rect class="cp-grip" x="${(VB.w - 42) / 2}" y="${yToPx(key, y) - 10}"
+                width="42" height="20" rx="10"/>
         </svg>
-        <div class="cp-line" id="cpLine"><span></span><i></i></div>
       </div>
       <div class="cp-read">
         ${whichLabel()}
@@ -552,46 +571,9 @@
       ${shapeIsSet(_row) ? '' :
         `<div class="cp-hint">Bottle shape not set — using a generic one.</div>`}`;
 
-    positionLine(y);
-    // Y otra vez en el frame siguiente, cuando el navegador ya repartió
-    // el alto. Al abrir el panel desde el escáner, positionLine mide un
-    // layout que todavía se está asentando: el visor es flex:1 y no
-    // sabe su alto hasta que el resto del panel ocupa el suyo.
-    // window. y con respaldo: este archivo tambien se carga en el
-    // banco de pruebas, donde no hay animacion de frames.
-    const frame = (window.requestAnimationFrame || ((f) => setTimeout(f, 16)));
-    frame(() => positionLine(y));
-    vigilarAlto(y);
     bindDrag();
   }
 
-  // ── La línea sigue al visor, pase lo que pase ────────────────────────
-  //
-  // Medir dos veces tapa el caso de siempre, pero no todos: la fuente
-  // Manrope puede cargar después y cambiar el alto de los textos, y lo
-  // que mide el visor es lo que sobra. Cualquier cosa que mueva ese
-  // reparto deja la línea colgada del vidrio hasta el primer arrastre,
-  // que es cuando se vuelve a medir.
-  //
-  // Con un observador la línea se recoloca sola cada vez que el visor
-  // cambia de tamaño, venga de donde venga el cambio. Es un observador
-  // por panel, no por pintada: se crea una vez y se le actualiza la
-  // altura que tiene que respetar.
-  let _ro = null, _yActual = 0;
-
-  function vigilarAlto(y) {
-    _yActual = y;
-    const stage = $('cpStage');
-    const RO = window.ResizeObserver;
-    if (!stage || !RO) return;
-    if (_ro) return;
-    _ro = new RO(() => positionLine(_yActual));
-    _ro.observe(stage);
-  }
-
-  function dejarDeVigilar() {
-    if (_ro) { try { _ro.disconnect(); } catch (e) {} _ro = null; }
-  }
 
   // ── Cambiar la silueta ───────────────────────────────────────────────
   //
@@ -605,38 +587,18 @@
   // cambia es a qué ALTURA se dibuja esa misma fracción, que es
   // precisamente lo que se estaba corrigiendo.
 
-  // ── Dónde cae la línea, de verdad ────────────────────────────────────
+  // ── Del dedo a la fracción ───────────────────────────────────────────
   //
-  // El SVG se dibuja con preserveAspectRatio por defecto: el contenido
-  // se encaja DENTRO del hueco y se centra. Si el hueco es más ancho de
-  // lo que pide la relación de la caja, sobra alto arriba y abajo.
-  //
-  // La cuenta de antes daba por hecho que eso no pasaba nunca:
-  // `scale = alto / 260` y sin restar el margen. Con el visor estirado
-  // —`.cp-stage` es flex:1 y se queda con lo que sobre— la escala salía
-  // de más y la línea aparecía por encima del fondo de la botella con
-  // el valor en cero.
-  //
-  // Ahora la escala es la que el navegador usa de verdad, min() de las
-  // dos, y el margen sobrante se suma. Es la misma cuenta que hace
-  // bindDrag, y las dos tienen que coincidir o el dedo y el vidrio
-  // dejan de ir juntos.
+  // Esto sí mide, y aquí sí se puede: un arrastre sólo existe cuando
+  // el layout ya existe. La escala es la que usa el navegador de
+  // verdad —min() de las dos— y se resta el margen que deja al
+  // encajar el dibujo; dar por hecho que el SVG llena el alto exacto
+  // descuadraba el dedo con el vidrio en visores muy altos.
   function encuadre(svg) {
     const r = svg.getBoundingClientRect();
     if (!r.height || !r.width) return null;
     const escala = Math.min(r.width / VB.w, r.height / VB.h);
     return { r, escala, sobraY: (r.height - VB.h * escala) / 2 };
-  }
-
-  function positionLine(y) {
-    const stage = $('cpStage'), line = $('cpLine');
-    if (!stage || !line) return;
-    const svg = stage.querySelector('svg');
-    if (!svg) return;
-    const e = encuadre(svg);
-    if (!e) return;   // todavia sin layout: se repite en el frame siguiente
-    const arriba = e.r.top - stage.getBoundingClientRect().top;
-    line.style.top = (arriba + e.sobraY + yToPx(profileOf(_row), y) * e.escala) + 'px';
   }
 
   function bindDrag() {
@@ -911,19 +873,16 @@
     $('cpPanel').classList.remove('cp-fixing-on');
   }
 
-  // ── El orden importa, y este era el bug de la línea ──────────────────
+  // ── El orden importa ─────────────────────────────────────────────────
   //
-  // paintBottle() termina llamando a positionLine(), que MIDE el layout
-  // con getBoundingClientRect para colocar la línea de arrastre. Después
-  // corría paintNums() → paintOpens(), y al pasar de una abierta a dos la
-  // fila de pastillas aparece POR PRIMERA VEZ y empuja todo hacia arriba.
+  // Los números primero porque son los que cambian el alto: al pasar de
+  // una botella abierta a dos, la fila de pastillas aparece por primera
+  // vez y empuja todo.
   //
-  // O sea: la línea se colocaba midiendo un layout que dejaba de existir
-  // una fracción de segundo después. Quedaba descolgada del vidrio hasta
-  // el siguiente arrastre, que es cuando se volvía a medir.
-  //
-  // Ahora los números van primero —son los que cambian el alto— y la
-  // línea se coloca al final, sobre el layout definitivo.
+  // Esto se escribió cuando la línea de arrastre se colocaba midiendo
+  // el layout, y medirlo antes de ese empujón la dejaba descolgada del
+  // vidrio. Ya no mide nada —vive dentro del SVG— así que el orden ya
+  // no es crítico; se deja porque sigue siendo el correcto.
   function paintAll() {
     paintNums();
     paintBottle();
@@ -1007,7 +966,6 @@
     const el = $('cpPanel');
     if (el) { el.classList.remove('on'); el.classList.remove('cp-fixing-on'); }
     closeSheet();
-    dejarDeVigilar();
     _row = null; _onNext = null; _upc = null; _editIdx = null; _sizeMl = null;
   }
 

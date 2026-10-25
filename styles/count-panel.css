@@ -144,20 +144,13 @@ body.light .cp-num:focus{
 }
 .cp-stage svg{ display: block; width: 100%; height: 100%; }
 
-.cp-line{
-  position: absolute; left: 0; right: 0;
-  height: 44px; margin-top: -22px;
-  display: flex; align-items: center;
-  pointer-events: none;
-}
-.cp-line > span{
-  flex: 1; height: 3px; background: #f1f5f9; border-radius: 2px;
-}
-.cp-line > i{
-  position: absolute; left: 50%; transform: translateX(-50%);
-  width: 54px; height: 26px; border-radius: 13px;
-  background: #0f172a; border: 1px solid rgba(255,255,255,.30);
-}
+/* La línea de arrastre vive DENTRO del SVG, en las mismas coordenadas
+   que el vidrio. Antes era un div colocado con getBoundingClientRect y
+   se descolgaba cuando el alto del visor no estaba repartido todavía.
+   non-scaling-stroke en el marcado: el grosor se mantiene en 3px sea
+   cual sea la escala del dibujo. */
+.cp-dragline{ stroke: #f1f5f9; }
+.cp-grip{ fill: #0f172a; stroke: rgba(255,255,255,.30); stroke-width: 1; vector-effect: non-scaling-stroke; }
 
 .cp-read{ text-align: center; margin-top: 4px; }
 .cp-read b{ font-size: 34px; font-weight: 800; line-height: 1; display: block; }
@@ -564,8 +557,8 @@ body.light .cp-step button{
   border-color: rgba(15,23,42,.12);
   color: #0f172a;
 }
-body.light .cp-line > span{ background: #0f172a; }
-body.light .cp-line > i{ background: #ffffff; border-color: rgba(15,23,42,.25); }
+body.light .cp-dragline{ stroke: #0f172a; }
+body.light .cp-grip{ fill: #ffffff; stroke: rgba(15,23,42,.25); }
 
 body.light .cf-opt{
   background: #ffffff;
