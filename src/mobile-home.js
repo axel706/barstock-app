@@ -67,51 +67,86 @@
   //
   // El orden es por urgencia, y lo que tiene fecha límite va primero.
 
-  function tarjetas() {
-    const t = [];
-    const S = window.BarStockCountSession;
+  // ── El ciclo, siempre la primera ─────────────────────────────────────
+  //
+  // Antes eran dos tarjetas sueltas —conteo a medias y ciclo demasiado
+  // viejo— y sólo aparecían cuando pasaba algo. El resto del tiempo, que
+  // es casi siempre, el Home no decía en qué estado estaba la semana.
+  //
+  // Ahora es UNA tarjeta que está siempre y cambia de color y de texto
+  // con el estado. El estado se le pregunta a weekly-cycle, igual que
+  // hace la pantalla del ciclo: aquí no se deduce nada.
+  function tarjetaCiclo() {
+    const W = window.BarStockWeeklyCycle;
+    const irAlCiclo = () => { if (window.BarStockMobile) window.BarStockMobile.ir('cycle'); };
 
-    // 1 · Conteo a medias. Gana a todo: hay trabajo empezado que se
-    // pierde si nadie lo cierra.
-    if (S && S.exists && S.exists()) {
-      const pr = S.progress ? S.progress() : null;
-      const n = pr ? pr.counted : (S.size ? S.size() : 0);
+    const st = (W && W.estado) ? W.estado() : 'loading';
+
+    if (st === 'loading') {
+      return { tono: 'calm', k: 'Cycle', tt: '…', sub: 'Checking the cycle',
+               amt: '…', vs: '', btn: 'Open cycle', go: irAlCiclo };
+    }
+
+    if (st === 'step1') {
+      return { tono: 'calm', k: 'No cycle yet', tt: 'Start the week',
+               sub: 'Sets on hand to zero so the count starts clean',
+               amt: '1', vs: 'of 3', btn: 'Open cycle', go: irAlCiclo };
+    }
+
+    const fecha = (W && W.resetAt && W.fmtDate && W.resetAt()) ? W.fmtDate(W.resetAt()) : '';
+
+    if (st === 'step2') {
+      return { tono: 'blue', k: 'Cycle open' + (fecha ? ' · ' + fecha : ''),
+               tt: 'Load the count', sub: 'From a file, or count with your phone',
+               amt: '2', vs: 'of 3', btn: 'Open cycle', go: irAlCiclo };
+    }
+
+    if (st === 'counting') {
+      const S = window.BarStockCountSession;
+      const pr = (S && S.progress) ? S.progress() : null;
+      const n = pr ? pr.counted : ((S && S.size) ? S.size() : 0);
       const tot = pr ? pr.total : 0;
       const pct = tot ? Math.round((n / tot) * 100) : 0;
-      const zona = window.BarStockZones && window.BarStockZones.activas()
+
+      const pau = !!(W && W.pausado && W.pausado());
+      const viejo = !!(W && W.abandonado && W.abandonado());
+      const zona = (window.BarStockZones && window.BarStockZones.activas())
         ? window.BarStockZones.paraPasada() : '';
-      t.push({
-        tono: 'green',
-        k: S.isPaused && S.isPaused() ? 'Count paused' : 'Count in progress',
-        tt: n + ' of ' + tot,
-        sub: zona ? 'Last scan in ' + zona : '',
+
+      return {
+        tono: viejo ? 'red' : 'amber',
+        k: pau ? 'Count paused' : viejo ? 'Count abandoned' : 'Counting',
+        tt: tot ? n + ' of ' + tot : String(n),
+        sub: viejo ? 'Untouched for three days' : (zona ? 'Last scan in ' + zona : ''),
         barra: pct,
         amt: pct + '%',
-        vs: (tot - n) + ' left',
-        btn: 'Keep counting',
+        vs: tot ? (tot - n) + ' left' : '',
+        btn: viejo ? 'Pick it up' : 'Keep counting',
         go: () => { if (window.BarStockScanCount) window.BarStockScanCount.open(); }
-      });
+      };
     }
 
-    // 2 · Ciclo abierto demasiado tiempo. El aviso existe en el boton
-    // del encabezado de escritorio, pero ahi nadie lo ve.
-    const W = window.BarStockWeeklyCycle;
-    if (W && typeof W.edadCiclo === 'function') {
-      const ms = W.edadCiclo();
-      const dias = ms ? Math.floor(ms / 86400000) : 0;
-      if (dias > 7) {
-        t.push({
-          tono: 'amber',
-          k: 'Cycle open ' + dias + ' days',
-          tt: 'Still open',
-          sub: 'Usage keeps adding up until you close it',
-          amt: dias + 'd',
-          vs: 'usual is 7',
-          btn: 'Close the cycle',
-          go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('inventory'); }
-        });
-      }
-    }
+    // done
+    const ms = (W && W.edadCiclo) ? W.edadCiclo() : null;
+    const dias = ms ? Math.floor(ms / 86400000) : 0;
+    const viejo = !!(W && W.cicloViejo && W.cicloViejo());
+
+    return {
+      tono: viejo ? 'amber' : 'teal',
+      k: 'Cycle open',
+      tt: fecha ? 'Since ' + fecha : 'Open',
+      sub: viejo
+        ? 'Usage keeps adding up until you restart'
+        : 'Counted ' + master().length + ' items',
+      amt: dias + 'd',
+      vs: 'usual is 7',
+      btn: 'Open cycle',
+      go: irAlCiclo
+    };
+  }
+
+  function tarjetas() {
+    const t = [tarjetaCiclo()];
 
     // 3 · Ordenes sin colocar, TODAS.
     if (typeof window.getActiveVendors === 'function' &&
@@ -168,19 +203,11 @@
       });
     }
 
-    // 5 · Nada pendiente. Solo cuando no hay ninguna otra.
-    if (!t.length) {
-      t.push({
-        tono: 'calm',
-        k: 'All clear',
-        tt: 'Nothing waiting',
-        sub: 'No open count and no orders to place',
-        amt: String(master().length || '…'),
-        vs: 'items tracked',
-        btn: 'Start a count',
-        go: () => { if (window.BarStockScanCount) window.BarStockScanCount.open(); }
-      });
-    }
+    // Ya no hay tarjeta de "All clear": la del ciclo está siempre, y
+    // cuando no hay nada pendiente ella misma es el "todo en orden"
+    // —dice desde cuándo está abierto y cuántos artículos se contaron—.
+    // Una tarjeta que sólo sirve para decir que no hay tarjetas era un
+    // hueco ocupado.
 
     return t;
   }
@@ -205,12 +232,44 @@
 
   // ── Top movers ───────────────────────────────────────────────────────
 
+  // Cinco y no tres. Tres eran los que cabían con el formato viejo, no
+  // los que hacen falta: de 270 productos, tres es una anécdota.
+  const CUANTOS_MOVERS = 5;
+
   function movers() {
     return conPar()
-      .map(({ r, p }) => ({ item: r.item, vendor: r.vendor, avg: Number(p.avgUsed) || 0 }))
+      .map(({ r, p }) => ({
+        item: r.item,
+        vendor: r.vendor,
+        avg: Number(p.avgUsed) || 0,
+        // La tendencia contra su PROPIA historia, el mismo par de
+        // números que alimenta Took off / Went quiet. Aquí dice algo
+        // más útil: que un producto se mueva mucho no es noticia si
+        // siempre se movió mucho.
+        pct: tendencia(p)
+      }))
       .filter(x => x.avg > 0)
       .sort((a, b) => b.avg - a.avg)
-      .slice(0, 3);
+      .slice(0, CUANTOS_MOVERS);
+  }
+
+  // null = no se sabe todavía. Con menos de SEMANAS_MIN de historia el
+  // ponderado y el plano son casi el mismo número, y decir "subió un
+  // 4%" ahí sería ruido con aspecto de dato.
+  function tendencia(p) {
+    if (!p || (p.normalWeeks || 0) < SEMANAS_MIN) return null;
+    const hoy_ = Number(p.avgUsed) || 0;
+    const antes = Number(p.avgHistorical) || 0;
+    if (antes <= 0.2) return null;
+    const d = Math.round((hoy_ / antes - 1) * 100);
+    return Math.abs(d) < 8 ? 0 : d;   // por debajo de 8% es la misma semana
+  }
+
+  function flecha(pct) {
+    if (pct === null) return '';
+    if (pct === 0) return '<span class="m-tr">steady</span>';
+    return '<span class="m-tr ' + (pct > 0 ? 'up' : 'dn') + '">' +
+           (pct > 0 ? '↑' : '↓') + ' ' + Math.abs(pct) + '%</span>';
   }
 
   // ── Qué cambió ───────────────────────────────────────────────────────
@@ -274,7 +333,6 @@
     const ch = cambios();
     const g = gasto();
     const e = estante();
-    const max = mov.length ? mov[0].avg : 0;
 
     host.innerHTML = `
       <div class="m-body">
@@ -299,17 +357,29 @@
 
       <div class="m-body">
         ${mov.length ? `
-          <div class="m-sechead">
-            <span class="m-sec">Top movers</span>
-            <button type="button" class="m-seclink" id="mhAllMov">See all</button>
-          </div>
-          <div class="m-feed">
-            ${mov.map(x => `
-              <button type="button" class="m-mv" data-item="${esc(x.item)}">
-                <span class="m-mv-bar" style="width:${Math.round(x.avg / max * 100)}%"></span>
-                <span class="m-mv-t">${esc(x.item)}<small>${esc(x.vendor || '')}</small></span>
-                <span class="m-mv-v"><b>${n1(x.avg)}</b><small>btl/wk</small></span>
-              </button>`).join('')}
+          <div class="m-mvcard">
+            <div class="m-mvcard-h">
+              <span class="m-hero-k">Top movers</span>
+              <button type="button" class="m-seclink" id="mhAllMov">See all</button>
+            </div>
+
+            <button type="button" class="m-mv1" data-item="${esc(mov[0].item)}">
+              <span class="m-mv1-n">
+                <b>${n1(mov[0].avg)}</b><small>btl/wk</small>
+                ${flecha(mov[0].pct)}
+              </span>
+              <span class="m-mv1-t">${esc(mov[0].item)}</span>
+              <span class="m-mv1-s">${esc(mov[0].vendor || '')}</span>
+            </button>
+
+            ${mov.length > 1 ? `<div class="m-mvcard-rows">
+              ${mov.slice(1).map(x => `
+                <button type="button" class="m-mvr" data-item="${esc(x.item)}">
+                  <span class="m-mvr-t">${esc(x.item)}</span>
+                  ${flecha(x.pct)}
+                  <b>${n1(x.avg)}</b>
+                </button>`).join('')}
+            </div>` : ''}
           </div>` : ''}
 
         ${(ch.arriba.length || ch.abajo.length) ? `

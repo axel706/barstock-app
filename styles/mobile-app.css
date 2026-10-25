@@ -371,9 +371,14 @@
   .m-hero-blue  { background: linear-gradient(135deg, rgba(56,189,248,.26), rgba(56,189,248,.10)); border: 1px solid rgba(125,211,252,.34); }
   .m-hero-amber { background: linear-gradient(135deg, rgba(245,158,11,.24), rgba(245,158,11,.09)); border: 1px solid rgba(252,211,77,.32); }
   .m-hero-red   { background: linear-gradient(135deg, rgba(239,68,68,.24), rgba(239,68,68,.09)); border: 1px solid rgba(252,165,165,.32); }
+  /* Verde azulado y no verde para el ciclo abierto: el verde ya es
+   * "hay algo empezado" (el conteo) y "despegó". Un estado tranquilo
+   * no debe vestirse igual que una acción en marcha. */
+  .m-hero-teal  { background: linear-gradient(135deg, rgba(45,212,191,.26), rgba(45,212,191,.09)); border: 1px solid rgba(94,234,212,.34); }
   .m-hero-calm  { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.14); }
 
   .m-hero-green .m-hero-k { color: #86efac; }
+  .m-hero-teal  .m-hero-k { color: #5eead4; }
   .m-hero-amber .m-hero-k { color: #fcd34d; }
   .m-hero-red   .m-hero-k { color: #fca5a5; }
   .m-hero-calm  .m-hero-k { color: #9fb0c4; }
@@ -398,23 +403,54 @@
   .m-feed { display: flex; flex-direction: column; gap: 7px; }
 
   /* ── Top movers ─────────────────────────────────────────────────── */
+  /*
+   * Una sola tarjeta de vidrio, igual que las del carrusel: un héroe
+   * arriba y los demás como renglones debajo.
+   *
+   * Lo que había antes eran tres tarjetas sueltas con una barra de
+   * fondo detrás del texto. La barra no se leía como barra —parecía un
+   * rectángulo gris mal pintado— y tres productos de 270 no dicen
+   * gran cosa. Ahora son cinco y el bloque ocupa menos.
+   *
+   * La tendencia vive aquí dentro y no en un bloque aparte: que algo
+   * se mueva mucho no es noticia si siempre se movió mucho.
+   */
 
-  body.m-shell .m-mv {
-    display: flex; align-items: center; gap: 9px; width: 100%;
-    position: relative; overflow: hidden; cursor: pointer;
-    padding: 11px 12px; border-radius: 15px; text-align: left;
-    background: rgba(255,255,255,.09);
-    border: 1px solid rgba(255,255,255,.12);
-    color: #eef4fb;
+  .m-mvcard {
+    margin-top: 16px; padding: 14px;
+    border-radius: 19px;
+    background: linear-gradient(135deg, rgba(56,189,248,.18), rgba(56,189,248,.05));
+    border: 1px solid rgba(125,211,252,.24);
   }
-  /* La barra es el fondo, no un elemento aparte: así el renglón sigue
-   * midiendo lo mismo con barra o sin ella. */
-  .m-mv-bar { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(56,189,248,.16); }
-  .m-mv-t { position: relative; z-index: 1; flex: 1; min-width: 0; font-size: 12.5px; line-height: 1.3; }
-  .m-mv-t small { display: block; font-size: 10px; color: #9fb0c4; margin-top: 2px; }
-  .m-mv-v { position: relative; z-index: 1; text-align: right; flex: 0 0 auto; }
-  .m-mv-v b { display: block; font-size: 14.5px; font-weight: 800; color: #fff; line-height: 1; }
-  .m-mv-v small { display: block; font-size: 8.5px; color: #9fb0c4; margin-top: 2px; }
+  .m-mvcard-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+
+  body.m-shell .m-mv1 {
+    display: block; width: 100%; text-align: left; cursor: pointer;
+    padding: 5px 0 0;
+  }
+  .m-mv1-n { display: flex; align-items: baseline; gap: 6px; }
+  .m-mv1-n b { font-size: 27px; font-weight: 800; color: #fff; letter-spacing: -.9px; line-height: 1; }
+  .m-mv1-n small { font-size: 9.5px; color: #9fb0c4; }
+  .m-mv1-t { display: block; font-size: 12.5px; color: #dbe6f2; line-height: 1.3; margin-top: 5px; }
+  .m-mv1-s { display: block; font-size: 9px; color: #9fb0c4; margin-top: 2px; letter-spacing: .3px; }
+
+  /* La tendencia del héroe se va a la derecha del todo; la de los
+   * renglones va pegada a su número. */
+  .m-mv1-n .m-tr { margin-left: auto; }
+  .m-tr { font-size: 10.5px; font-weight: 700; color: #9fb0c4; flex: 0 0 auto; }
+  .m-tr.up { color: #4ade80; }
+  .m-tr.dn { color: #f87171; }
+
+  .m-mvcard-rows { margin-top: 11px; border-top: 1px solid rgba(255,255,255,.12); padding-top: 2px; }
+  body.m-shell .m-mvr {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 9px;
+    width: 100%; padding: 8px 0; text-align: left; cursor: pointer;
+  }
+  .m-mvr-t {
+    flex: 1; min-width: 0; font-size: 11.5px; color: #b6c6d8;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .m-mvr b { font-size: 12.5px; font-weight: 800; color: #eef4fb; flex: 0 0 38px; text-align: right; }
 
   /* ── Despegó / se apagó ─────────────────────────────────────────── */
   /*
