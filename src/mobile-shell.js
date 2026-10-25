@@ -85,9 +85,10 @@
     _banda.className = 'm-band';
     _banda.innerHTML =
       '<span class="m-logo">BarStock<i>.</i><em>PRO</em></span>' +
+      // Sin boton de luna: en el telefono el modo claro no existe (ver
+      // la cabecera de mobile-app.css). Un boton que no hace nada es
+      // peor que no tener boton.
       '<span class="m-band-ico">' +
-        '<button type="button" class="m-ico" id="mTheme" aria-label="Light or dark">' +
-          '<i class="ti ti-moon" aria-hidden="true"></i></button>' +
         '<button type="button" class="m-ico" id="mSet" aria-label="Settings">' +
           '<i class="ti ti-settings" aria-hidden="true"></i></button>' +
       '</span>';
@@ -95,12 +96,6 @@
     // (body.auth-locked > *) también la tapa, como a todo lo demás.
     document.body.insertBefore(_banda, document.body.firstChild);
 
-    const th = _banda.querySelector('#mTheme');
-    if (th) th.onclick = () => {
-      // El mismo interruptor del escritorio, no una copia.
-      if (typeof window.toggleTheme === 'function') window.toggleTheme();
-      else document.body.classList.toggle('light');
-    };
     const st = _banda.querySelector('#mSet');
     if (st) st.onclick = () => {
       // openSettingsModal, no openSettings. Lo segundo no existe y

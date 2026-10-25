@@ -97,15 +97,13 @@ console.log('\nla banda es del armazon, no del Home');
   // la pintaba el Home, al entrar a Buscar o a Inventario desaparecia.
   ok('existe sin que ninguna pantalla se haya registrado', !!b);
   ok('con el logo', !!b && !!b.querySelector('.m-logo'));
-  ok('y los dos botones', !!b && b.querySelectorAll('.m-ico').length === 2);
+  ok('y su boton de ajustes', !!b && b.querySelectorAll('.m-ico').length === 1);
+  // Sin boton de luna: en el telefono no hay modo claro, y un boton
+  // que no hace nada es peor que no tener boton.
+  ok('y ningun boton de tema', !w.document.getElementById('mTheme'));
   // Primera del body para que body.auth-locked > * tambien la tape: el
   // encabezado no puede quedar flotando sobre la pantalla de entrada.
   eq('va la primera del body', w.document.body.firstElementChild.id, 'mBand');
-
-  let tema = 0;
-  w.toggleTheme = () => { tema++; };
-  w.document.getElementById('mTheme').click();
-  eq('el tema usa el interruptor de siempre', tema, 1);
 
   let ajustes = 0;
   w.openSettingsModal = () => { ajustes++; };
