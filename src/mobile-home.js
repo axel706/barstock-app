@@ -481,22 +481,8 @@
             </div>` : ''}
           </div>` : ''}
 
-        ${(ch.arriba.length || ch.abajo.length) ? `
-          <div class="m-cols">
-            <div class="m-col m-col-up">
-              <div class="m-col-k"><i class="ti ti-trending-up" aria-hidden="true"></i> Took off</div>
-              ${ch.arriba.length
-                ? ch.arriba.map(x => `<div class="m-col-r"><span>${esc(x.item)}</span><b>${esc(x.dato)}</b></div>`).join('')
-                : '<div class="m-col-r m-col-none"><span>Nothing</span><b>—</b></div>'}
-            </div>
-            <div class="m-col m-col-dn">
-              <div class="m-col-k"><i class="ti ti-trending-down" aria-hidden="true"></i> Went quiet</div>
-              ${ch.abajo.length
-                ? ch.abajo.map(x => `<div class="m-col-r"><span>${esc(x.item)}</span><b>${esc(x.dato)}</b></div>`).join('')
-                : '<div class="m-col-r m-col-none"><span>Nothing</span><b>—</b></div>'}
-            </div>
-          </div>` : ''}
-
+        <!-- El dinero va antes que "despegó / se apagó": es lo que
+             se mira a diario, y lo otro es contexto de la semana. -->
         <div class="m-pair">
           <div class="m-stat">
             <span class="m-stat-k">Spent this week</span>
@@ -513,6 +499,22 @@
               : '&nbsp;'}</small>
           </div>
         </div>
+
+        ${(ch.arriba.length || ch.abajo.length) ? `
+          <div class="m-cols">
+            <div class="m-col m-col-up">
+              <div class="m-col-k"><i class="ti ti-trending-up" aria-hidden="true"></i> Took off</div>
+              ${ch.arriba.length
+                ? ch.arriba.map(x => `<div class="m-col-r"><span>${esc(x.item)}</span><b>${esc(x.dato)}</b></div>`).join('')
+                : '<div class="m-col-r m-col-none"><span>Nothing</span><b>—</b></div>'}
+            </div>
+            <div class="m-col m-col-dn">
+              <div class="m-col-k"><i class="ti ti-trending-down" aria-hidden="true"></i> Went quiet</div>
+              ${ch.abajo.length
+                ? ch.abajo.map(x => `<div class="m-col-r"><span>${esc(x.item)}</span><b>${esc(x.dato)}</b></div>`).join('')
+                : '<div class="m-col-r m-col-none"><span>Nothing</span><b>—</b></div>'}
+            </div>
+          </div>` : ''}
       </div>`;
 
     enganchar(host, cards);

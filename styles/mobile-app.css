@@ -347,7 +347,7 @@
   .m-pill-solo {
     display: inline-flex; align-items: center; gap: 7px;
     max-width: 190px; padding: 9px 13px; border-radius: 999px;
-    cursor: pointer; font-size: 12.5px; font-weight: 700; color: #fff;
+    cursor: pointer; font-size: 13.5px; font-weight: 700; color: #fff;
     background: #0b1220;
     border: 1px solid rgba(255,255,255,.26);
     box-shadow: 0 4px 14px rgba(0,0,0,.40);
@@ -413,7 +413,7 @@
   body.m-shell .m-searchbar {
     display: flex; align-items: center; gap: 9px; width: 100%;
     padding: 12px 13px; border-radius: 16px; cursor: pointer;
-    text-align: left; font-size: 14.5px; color: #9fb0c4;
+    text-align: left; font-size: 15.5px; color: #a9bacd;
     background: rgba(255,255,255,.11);
     border: 1px solid rgba(255,255,255,.15);
   }
@@ -454,28 +454,27 @@
    * navegador ya sabe frenar donde toca.
    */
   .m-railwrap { padding-top: 13px; }
+  /* La tarjeta activa va CENTRADA, con la anterior y la siguiente
+   * asomando por los dos lados. Antes se alineaba al principio: la
+   * primera quedaba pegada al borde izquierdo y sólo se asomaba la de
+   * la derecha, que se lee como "esto empieza aquí" en vez de como
+   * "hay más a los dos lados".
+   *
+   * El relleno lateral es la mitad de lo que le sobra a la tarjeta
+   * (60/2): así la primera y la última también quedan centradas al
+   * encajar, sin necesidad de espaciadores falsos. */
   .m-rail {
     display: flex; gap: 9px;
-    padding: 0 13px;
+    padding: 0 30px;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
-    /* Sin esto el carril nace pegado al borde izquierdo y el padding de
-     * arriba no sirve de nada. `scroll-snap-align: start` alinea la
-     * tarjeta con el principio del CONTENEDOR DE SCROLL, que es el borde
-     * de la caja de padding, no el del contenido — así que al arrancar,
-     * con snap obligatorio, el navegador desplaza esos 13px para
-     * cumplirlo. scroll-padding le dice dónde está de verdad el
-     * principio. Sólo se nota con dos o más tarjetas: con una no hay
-     * desbordamiento, no hay scroll, y no hay nada que encajar — por eso
-     * la primera pantalla se veía bien y la de después no. */
-    scroll-padding-left: 13px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
   .m-rail::-webkit-scrollbar { display: none; }
   .m-rail > .m-hero {
-    flex: 0 0 calc(100% - 38px);
-    scroll-snap-align: start;
+    flex: 0 0 calc(100% - 60px);
+    scroll-snap-align: center;
   }
 
   .m-hero {
@@ -490,14 +489,14 @@
     width: 82px; flex: 0 0 82px; text-align: right;
     display: flex; flex-direction: column; justify-content: space-between;
   }
-  .m-hero-k { font-size: 9.5px; letter-spacing: .4px; text-transform: uppercase; color: #7dd3fc; }
-  .m-hero-t { font-size: 19px; font-weight: 800; color: #fff; letter-spacing: -.4px; margin-top: 3px; }
-  .m-hero-s { font-size: 10px; color: #b6c6d8; margin-top: 4px; }
-  .m-hero-list { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
-  .m-hero-list span { font-size: 10px; color: #b6c6d8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-hero-k { font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #7dd3fc; }
+  .m-hero-t { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -.5px; margin-top: 4px; }
+  .m-hero-s { font-size: 12.5px; color: #c3d2e2; margin-top: 6px; line-height: 1.4; }
+  .m-hero-list { display: flex; flex-direction: column; gap: 3px; margin-top: 7px; }
+  .m-hero-list span { font-size: 12.5px; color: #c3d2e2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .m-hero-list b { color: #fff; font-weight: 700; }
-  .m-hero-amt { font-size: 17px; font-weight: 800; color: #fff; letter-spacing: -.4px; }
-  .m-hero-vs { font-size: 8.5px; color: #9fb0c4; }
+  .m-hero-amt { font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -.5px; }
+  .m-hero-vs { font-size: 11px; color: #a9bacd; }
   .m-prog { height: 4px; border-radius: 2px; background: rgba(255,255,255,.14); margin-top: 9px; overflow: hidden; }
   .m-prog i { display: block; height: 100%; background: #22c55e; border-radius: 2px; }
 
@@ -516,8 +515,8 @@
 
   body.m-shell .m-hero-b {
     align-self: center;
-    padding: 8px 15px; border-radius: 11px;
-    font-size: 12px; font-weight: 800; cursor: pointer;
+    padding: 10px 18px; border-radius: 12px;
+    font-size: 14px; font-weight: 800; cursor: pointer;
     background: rgba(255,255,255,.16); color: #fff;
   }
   /* El segundo camino, cuando de verdad hay dos (importar un archivo
@@ -525,17 +524,18 @@
    * vez al mes. */
   body.m-shell .m-hero-b2 {
     align-self: center;
-    padding: 8px 13px; border-radius: 11px;
-    font-size: 11.5px; font-weight: 700; cursor: pointer;
+    padding: 10px 15px; border-radius: 12px;
+    font-size: 13px; font-weight: 700; cursor: pointer;
     color: #dbe6f2;
     background: rgba(0,0,0,.20);
     border: 1px solid rgba(255,255,255,.18);
   }
   /* Reiniciar el ciclo es la única acción de la app sin deshacer, y es
-   * la principal de su tarjeta. Se viste de lo que es. */
+   * la principal de su tarjeta. Rojo sólido, igual que el "See them"
+   * de la tarjeta roja: translúcido se leía como secundario, y no lo
+   * es — es la acción de esa tarjeta. */
   body.m-shell .m-hero-b-peligro {
-    background: rgba(248,113,113,.18); color: #fecaca;
-    border: 1px solid rgba(248,113,113,.42);
+    background: #ef4444; color: #fff; border: none;
   }
 
   .m-hero-green { background: linear-gradient(135deg, rgba(34,197,94,.24), rgba(34,197,94,.09)); border: 1px solid rgba(134,239,172,.32); }
@@ -568,8 +568,8 @@
   /* ── Secciones ──────────────────────────────────────────────────── */
 
   .m-sechead { display: flex; align-items: baseline; justify-content: space-between; margin: 18px 2px 8px; }
-  .m-sec { font-size: 15.5px; font-weight: 800; color: #fff; letter-spacing: -.2px; }
-  body.m-shell .m-seclink { font-size: 11.5px; color: #7dd3fc; font-weight: 700; cursor: pointer; }
+  .m-sec { font-size: 17px; font-weight: 800; color: #fff; letter-spacing: -.2px; }
+  body.m-shell .m-seclink { font-size: 13px; color: #7dd3fc; font-weight: 700; cursor: pointer; }
 
   .m-feed { display: flex; flex-direction: column; gap: 7px; }
 
@@ -600,10 +600,10 @@
     padding: 5px 0 0;
   }
   .m-mv1-n { display: flex; align-items: baseline; gap: 6px; }
-  .m-mv1-n b { font-size: 27px; font-weight: 800; color: #fff; letter-spacing: -.9px; line-height: 1; }
-  .m-mv1-n small { font-size: 9.5px; color: #9fb0c4; }
-  .m-mv1-t { display: block; font-size: 12.5px; color: #dbe6f2; line-height: 1.3; margin-top: 5px; }
-  .m-mv1-s { display: block; font-size: 9px; color: #9fb0c4; margin-top: 2px; letter-spacing: .3px; }
+  .m-mv1-n b { font-size: 29px; font-weight: 800; color: #fff; letter-spacing: -.9px; line-height: 1; }
+  .m-mv1-n small { font-size: 11.5px; color: #a9bacd; }
+  .m-mv1-t { display: block; font-size: 14.5px; font-weight: 600; color: #e8eef6; line-height: 1.3; margin-top: 6px; }
+  .m-mv1-s { display: block; font-size: 11px; color: #a9bacd; margin-top: 3px; letter-spacing: .3px; }
 
   /* La tendencia del héroe se va a la derecha del todo; la de los
    * renglones va pegada a su número. */
@@ -611,8 +611,8 @@
   .m-tr {
     display: inline-flex; align-items: center; gap: 3px; flex: 0 0 auto;
     padding: 3px 7px; border-radius: 999px;
-    font-size: 10px; font-weight: 700; letter-spacing: .1px;
-    color: #9fb0c4; background: rgba(255,255,255,.08);
+    font-size: 11.5px; font-weight: 700; letter-spacing: .1px;
+    color: #a9bacd; background: rgba(255,255,255,.08);
   }
   .m-tr .ti { font-size: 11px; }
   .m-tr.up { color: #4ade80; background: rgba(74,222,128,.14); }
@@ -622,19 +622,19 @@
   body.m-shell .m-mvr {
     position: relative; overflow: hidden;
     display: flex; align-items: center; gap: 9px;
-    width: 100%; padding: 9px 0 11px; text-align: left; cursor: pointer;
+    width: 100%; padding: 8px 0 10px; text-align: left; cursor: pointer;
   }
   /* El puesto. Con cinco renglones el orden ya no se lee solo, y un
    * número pesa menos que otra barra. */
   .m-mvr-i {
-    flex: 0 0 15px; font-size: 9.5px; font-weight: 800;
-    color: #7f93a8; text-align: center;
+    flex: 0 0 16px; font-size: 11px; font-weight: 800;
+    color: #8ea3b8; text-align: center;
   }
   .m-mvr-t {
-    flex: 1; min-width: 0; font-size: 11.5px; color: #b6c6d8;
+    flex: 1; min-width: 0; font-size: 13.5px; font-weight: 500; color: #ccd8e6;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .m-mvr b { font-size: 12.5px; font-weight: 800; color: #eef4fb; flex: 0 0 38px; text-align: right; }
+  .m-mvr b { font-size: 14.5px; font-weight: 800; color: #fff; flex: 0 0 42px; text-align: right; }
 
   /* Una línea al pie, no un fondo detrás del texto. Ésa fue la queja
    * del formato anterior: la barra como fondo parecía un rectángulo
@@ -658,15 +658,15 @@
    * Sin título propio: el rótulo de cada columna ya dice qué es.
    */
   .m-cols { display: flex; gap: 8px; margin-top: 14px; }
-  .m-col { flex: 1; min-width: 0; padding: 11px 12px; border-radius: 15px; }
+  .m-col { flex: 1; min-width: 0; padding: 12px 13px; border-radius: 15px; }
   .m-col-up { background: rgba(74,222,128,.12); border: 1px solid rgba(134,239,172,.26); }
   .m-col-dn { background: rgba(248,113,113,.12); border: 1px solid rgba(252,165,165,.26); }
-  .m-col-k { display: flex; align-items: center; gap: 5px; font-size: 10px; letter-spacing: .3px; font-weight: 700; margin-bottom: 8px; }
+  .m-col-k { display: flex; align-items: center; gap: 5px; font-size: 11.5px; letter-spacing: .3px; font-weight: 700; margin-bottom: 9px; }
   .m-col-up .m-col-k { color: #86efac; }
   .m-col-dn .m-col-k { color: #fca5a5; }
-  .m-col-r { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: 11.5px; color: #cfd8e3; padding: 3px 0; }
+  .m-col-r { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: 13px; color: #d7e0ea; padding: 4px 0; }
   .m-col-r span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .m-col-r b { color: #fff; font-weight: 800; font-size: 12px; flex: 0 0 auto; }
+  .m-col-r b { color: #fff; font-weight: 800; font-size: 13.5px; flex: 0 0 auto; }
   /* Una columna vacía conserva su sitio: si desapareciera, la otra
    * ocuparía todo el ancho y el bloque cambiaría de forma cada semana. */
   .m-col-none { opacity: .45; }
@@ -674,11 +674,11 @@
   /* ── Dinero ─────────────────────────────────────────────────────── */
 
   .m-pair { display: flex; gap: 8px; margin-top: 14px; }
-  .m-stat { flex: 1; min-width: 0; padding: 12px; border-radius: 17px;
+  .m-stat { flex: 1; min-width: 0; padding: 14px 13px; border-radius: 17px;
     background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.12); }
-  .m-stat-k { display: block; font-size: 10px; color: #9fb0c4; }
-  .m-stat-v { display: block; font-size: 19px; font-weight: 800; color: #fff; letter-spacing: -.4px; margin-top: 2px; }
-  .m-stat-d { display: block; font-size: 9.5px; color: #9fb0c4; margin-top: 2px; }
+  .m-stat-k { display: block; font-size: 12px; font-weight: 500; color: #a9bacd; }
+  .m-stat-v { display: block; font-size: 23px; font-weight: 800; color: #fff; letter-spacing: -.6px; margin-top: 3px; }
+  .m-stat-d { display: block; font-size: 11px; color: #a9bacd; margin-top: 3px; }
   /* Gastar MÁS no es una buena noticia: el verde iría al revés. */
   .m-up { color: #fca5a5; }
   .m-down { color: #86efac; }
@@ -807,14 +807,14 @@
   }
   .m-res-l { flex: 1; min-width: 0; }
   .m-res-n {
-    display: block; font-size: 13px; line-height: 1.3; color: #eef4fb;
+    display: block; font-size: 14.5px; font-weight: 600; line-height: 1.3; color: #eef4fb;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .m-res-s { display: block; font-size: 10px; color: #9fb0c4; margin-top: 2px; }
+  .m-res-s { display: block; font-size: 11.5px; color: #a9bacd; margin-top: 3px; }
   .m-res-s b { color: #cbd5e1; font-weight: 700; }
   .m-res-r { text-align: right; flex: 0 0 auto; }
-  .m-res-r b { display: block; font-size: 16px; font-weight: 800; line-height: 1; }
-  .m-res-r small { display: block; font-size: 8.5px; color: #9fb0c4; margin-top: 3px; }
+  .m-res-r b { display: block; font-size: 17.5px; font-weight: 800; line-height: 1; }
+  .m-res-r small { display: block; font-size: 10.5px; color: #a9bacd; margin-top: 3px; }
 
   /* ── La ficha ───────────────────────────────────────────────────── */
 
@@ -868,7 +868,7 @@
   .m-row-end, .m-row:last-child { border-bottom: none; }
   .m-row b { font-size: 14px; font-weight: 800; color: #fff; text-align: right; }
   .m-soft { font-weight: 400; font-size: 11px; color: #9fb0c4; }
-  .m-iq { font-weight: 700; font-size: 10.5px; color: #7dd3fc; }
+  .m-iq { font-weight: 700; font-size: 11.5px; color: #7dd3fc; }
 
   /* Añadir pesa más que recibir: una es la que se hace diez veces al
    * día y la otra cuando llega el camión. Antes eran gemelas. */
@@ -933,21 +933,21 @@
   }
   .m-inv-top { display: flex; align-items: baseline; gap: 9px; }
   .m-inv-n {
-    flex: 1; min-width: 0; font-size: 12.5px; color: #eef4fb;
+    flex: 1; min-width: 0; font-size: 14px; font-weight: 500; color: #eef4fb;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .m-inv-v { flex: 0 0 auto; }
-  .m-inv-v b { font-size: 15px; font-weight: 800; }
-  .m-inv-v i { font-style: normal; font-size: 11px; color: #9fb0c4; }
+  .m-inv-v b { font-size: 16.5px; font-weight: 800; }
+  .m-inv-v i { font-style: normal; font-size: 12.5px; color: #a9bacd; }
 
   .m-inv-meta {
     display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
-    margin-top: 5px; font-size: 10px; color: #9fb0c4;
+    margin-top: 6px; font-size: 11.5px; color: #a9bacd;
   }
   /* La etiqueta es el motivo por el que ese renglón está arriba. */
   .m-flag {
     font-style: normal; padding: 2px 6px; border-radius: 5px;
-    font-size: 9px; font-weight: 700;
+    font-size: 10.5px; font-weight: 700;
   }
   .m-flag-red   { background: rgba(239,68,68,.18);  color: #fca5a5; }
   .m-flag-amber { background: rgba(245,158,11,.20); color: #fcd34d; }
@@ -970,7 +970,7 @@
   }
 
   .m-edit-n { color: #fff; font-size: 16px; font-weight: 800; line-height: 1.25; letter-spacing: -.2px; }
-  .m-edit-s { color: #9fb0c4; font-size: 10.5px; margin: 4px 0 4px; }
+  .m-edit-s { color: #a9bacd; font-size: 11.5px; margin: 4px 0 4px; }
   /* La hoja puede pasarse de alto con muchos proveedores. Se hace ella
    * la que rueda, no la pantalla de detrás. */
   .m-edit { max-height: 86vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
@@ -1045,7 +1045,7 @@
   .m-cyc-teal  { background: rgba(29,158,117,.16); border: 1px solid rgba(93,202,165,.42); }
 
   .m-cyc-k {
-    font-size: 10.5px; font-weight: 800; letter-spacing: .8px;
+    font-size: 11.5px; font-weight: 800; letter-spacing: .8px;
     text-transform: uppercase; color: #cbd5e1;
   }
   .m-cyc-green .m-cyc-k { color: #c0dd97; }
@@ -1054,7 +1054,7 @@
   .m-cyc-teal  .m-cyc-k { color: #9fe1cb; }
 
   .m-cyc-n { color: #fff; font-size: 18px; font-weight: 800; letter-spacing: -.3px; margin: 5px 0 4px; }
-  .m-cyc-d { font-size: 12px; color: #c3d0de; line-height: 1.5; }
+  .m-cyc-d { font-size: 13px; color: #ccd8e6; line-height: 1.5; }
   .m-cyc-bar {
     height: 5px; border-radius: 999px; margin: 8px 0 7px;
     background: rgba(255,255,255,.15); overflow: hidden;
@@ -1085,8 +1085,8 @@
   }
   .m-cyc-s.on .m-cyc-sn { background: #97c459; border-color: #97c459; color: #173404; font-size: 12px; }
   .m-cyc-s.next .m-cyc-sn { color: #85b7eb; border-color: #85b7eb; }
-  .m-cyc-st { font-size: 13px; color: #e8eef6; line-height: 1.3; }
-  .m-cyc-st small { display: block; font-size: 11px; color: #9fb0c4; margin-top: 2px; }
+  .m-cyc-st { font-size: 14px; color: #e8eef6; line-height: 1.3; }
+  .m-cyc-st small { display: block; font-size: 12px; color: #a9bacd; margin-top: 3px; }
 
   /* Separado y en rojo. No es un paso más: no hay deshacer. */
   body.m-shell .m-cyc-reset {
@@ -1100,9 +1100,9 @@
 
   /* ── Mensajes y listas sueltas ──────────────────────────────────── */
 
-  .m-lab { font-size: 10px; color: #9fb0c4; letter-spacing: .5px; margin: 16px 2px 8px; }
-  .m-cnt { font-size: 10px; color: #9fb0c4; letter-spacing: .3px; margin: 10px 4px 8px; }
-  .m-empty { font-size: 13px; color: #9fb0c4; text-align: center; padding: 28px 16px; line-height: 1.6; }
+  .m-lab { font-size: 11.5px; font-weight: 500; color: #a9bacd; letter-spacing: .5px; margin: 16px 2px 8px; }
+  .m-cnt { font-size: 11.5px; color: #a9bacd; letter-spacing: .3px; margin: 10px 4px 8px; }
+  .m-empty { font-size: 14px; color: #a9bacd; text-align: center; padding: 28px 16px; line-height: 1.6; }
 
   body.m-shell .m-item {
     display: flex; align-items: center; gap: 10px; width: 100%;
@@ -1112,8 +1112,8 @@
     border: 1px solid rgba(255,255,255,.12);
   }
   .m-item > i:first-child { font-size: 16px; color: #9fb0c4; flex: 0 0 16px; }
-  .m-item-t { flex: 1; min-width: 0; font-size: 13px; line-height: 1.25; }
-  .m-item-t small { display: block; font-size: 10px; color: #9fb0c4; margin-top: 2px; }
+  .m-item-t { flex: 1; min-width: 0; font-size: 14.5px; font-weight: 500; line-height: 1.25; }
+  .m-item-t small { display: block; font-size: 11.5px; color: #a9bacd; margin-top: 3px; }
   .m-chev { font-size: 15px; color: #9fb0c4; opacity: .6; flex: 0 0 auto; }
 
   /* Salir: separado y en rojo. No es una sección más de la lista. */
