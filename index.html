@@ -154,7 +154,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261025-120110</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261025-120509</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -3578,6 +3578,11 @@ function updateFinalOrder(index, value){
   saveState();
   persistOrderOverride(row);
   render();
+  // Y la pantalla de ordenes del telefono, que mira estas mismas filas.
+  // Va aqui y no en cada sitio que llama: el dialogo de añadir, el
+  // panel del escritorio y los botones de la propia pantalla pasan
+  // todos por aqui.
+  if (window.BarStockMobileOrders?.refresh) window.BarStockMobileOrders.refresh();
   setStatus(`Final order updated for '${row.item}'.`);
 }
 window.updateFinalOrder = updateFinalOrder;
@@ -3588,6 +3593,7 @@ function resetFinalOrder(index){
   saveState();
   persistOrderOverride(row);
   render();
+  if (window.BarStockMobileOrders?.refresh) window.BarStockMobileOrders.refresh();
   setStatus(`Final order reset to automatic TO ORDER for '${row.item}'.`);
 }
 window.resetFinalOrder = resetFinalOrder;
@@ -5247,7 +5253,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/count-panel.js?v=cnt25"></script>
 <script src="src/barcode-fix.js?v=bf5"></script>
 <script src="src/stock-in.js?v=si1"></script>
-<script src="src/add-to-order.js?v=ato2"></script>
+<script src="src/add-to-order.js?v=ato3"></script>
 <script src="src/dormant-items.js?v=dorm1"></script>
 <script src="src/zones.js?v=zon7"></script>
 <script src="src/settings-zones.js?v=zon2"></script>
@@ -5264,10 +5270,10 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
      nada de esto se monta arriba de 640px. -->
 <script src="src/mobile-shell.js?v=m10"></script>
 <script src="src/mobile-home.js?v=m17"></script>
-<script src="src/mobile-search.js?v=m4"></script>
+<script src="src/mobile-search.js?v=m5"></script>
 <script src="src/mobile-cycle.js?v=m5"></script>
 <script src="src/mobile-inventory.js?v=m2"></script>
-<script src="src/mobile-orders.js?v=m3"></script>
+<script src="src/mobile-orders.js?v=m4"></script>
 <script src="src/mobile-tabs.js?v=m7"></script>
 <script src="src/count-resume.js?v=cnt12"></script>
 <script src="src/count-insight.js?v=cnt13"></script>

@@ -208,7 +208,12 @@
 
     const add = caja.querySelector('#msAdd');
     if (add) add.onclick = () => {
-      if (window.BarStockAddToOrder) window.BarStockAddToOrder.open();
+      // Con el proveedor del propio producto: sin el, el dialogo mira
+      // la pestaña del escritorio y se cierra sin abrir nada.
+      if (!window.BarStockAddToOrder) return;
+      if (!window.BarStockAddToOrder.open(r.vendor)) {
+        window.alert('This vendor does not take manual order lines.');
+      }
     };
     const recv = caja.querySelector('#msRecv');
     if (recv) recv.onclick = () => {

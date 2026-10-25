@@ -76,6 +76,16 @@ function pantalla(extra) {
 
   w.isRowPlaced = () => false;
 
+  w.__abierto = [];
+  w.BarStockAddToOrder = { open(v) {
+    // El de verdad: sin proveedor mira la pestaña del escritorio, y
+    // devuelve false si no sirve.
+    const quien = v || (w.getActiveVendorTab ? w.getActiveVendorTab() : '');
+    if (!quien || !w.supportsManualFinalOrder(quien)) return false;
+    w.__abierto.push(String(quien).toUpperCase());
+    return true;
+  } };
+
   w.__guardados = [];
   w.updateFinalOrder = (i, v) => {
     w.__guardados.push({ i, v });
@@ -258,6 +268,24 @@ console.log('\nel aviso de que esto no coloca');
   ok('en el resumen', /from desktop or iPad/i.test(host.textContent));
   abrir(host, 'LOOP');
   ok('y en el detalle', /from desktop or iPad/i.test(host.textContent));
+}
+
+console.log('\nañadir un producto');
+{
+  const { w, host } = pantalla();
+  abrir(host, 'LOOP');
+  host.querySelector('#moAdd').click();
+  // Se le pasa el proveedor en el que estas. Sin el, el dialogo mira
+  // la pestaña del escritorio —que aqui no significa nada— y se
+  // cerraba solo: eso era "el boton no sirve".
+  eq('abre para el proveedor en el que estas', w.__abierto, ['LOOP']);
+
+  const { host: h2 } = pantalla();
+  abrir(h2, 'PEQUENO');
+  // Añadir una linea ES poner una cantidad a mano. En un proveedor sin
+  // ajuste manual el dialogo no podria guardar nada, asi que no hay
+  // boton en vez de un boton que no abre.
+  ok('sin ajuste manual no hay boton', !h2.querySelector('#moAdd'));
 }
 
 console.log('\nal volver se entra por el resumen');

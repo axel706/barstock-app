@@ -165,9 +165,13 @@
         Review and adjust here. Place the order from desktop or iPad.
       </div>
 
-      <button type="button" class="m-ord-add" id="moAdd">
-        <i class="ti ti-plus" aria-hidden="true"></i> Add a product
-      </button>
+      <!-- Sólo si este proveedor admite ajuste manual: añadir una
+           línea ES poner una cantidad a mano, así que en los demás el
+           botón abriría un diálogo que no puede guardar nada. -->
+      ${hay('supportsManualFinalOrder') && window.supportsManualFinalOrder(v.nombre) ? `
+        <button type="button" class="m-ord-add" id="moAdd">
+          <i class="ti ti-plus" aria-hidden="true"></i> Add a product
+        </button>` : ''}
 
       <div id="moList">${v.filas.map(linea).join('')}</div>
 
@@ -190,7 +194,9 @@
     host.querySelector('#moBack').onclick = () => { _vendor = null; pintar(host); };
     const add = host.querySelector('#moAdd');
     if (add) add.onclick = () => {
-      if (window.BarStockAddToOrder) window.BarStockAddToOrder.open();
+      // Se le pasa el proveedor. Sin él, el diálogo mira la pestaña
+      // del escritorio —que aquí no significa nada— y se cierra solo.
+      if (window.BarStockAddToOrder) window.BarStockAddToOrder.open(v.nombre);
     };
     host.querySelectorAll('[data-volver]').forEach(b => {
       b.onclick = () => {

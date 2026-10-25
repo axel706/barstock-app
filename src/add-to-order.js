@@ -46,7 +46,20 @@
   // index.html declara activeVendorTab con `let`, asi que no esta en
   // window. Lee por el getter en vez de por una copia: una copia se
   // desincroniza en cuanto alguien cambie la pestaña por otro camino.
+  // ── De qué proveedor es la orden ─────────────────────────────────────
+  //
+  // Por defecto, la pestaña abierta en el escritorio. Pero el teléfono
+  // tiene su propia pantalla de órdenes y ahí esa pestaña no significa
+  // nada: estás dentro de SOUTHERN y el escritorio sigue en ALL, así
+  // que open() se salía sin abrir nada y sin decir por qué.
+  //
+  // Por eso open() acepta el proveedor. Se guarda mientras el diálogo
+  // está abierto porque las otras cuatro llamadas a vendorActivo()
+  // —pintar, filtrar, validar al guardar— tienen que ver el mismo.
+  let _forzado = null;
+
   function vendorActivo() {
+    if (_forzado) return _forzado;
     const f = window.getActiveVendorTab;
     return String((typeof f === 'function' ? f() : '') || '').toUpperCase();
   }
@@ -278,15 +291,22 @@
     const bg = $('atoBg');
     if (bg) bg.classList.add('hidden');
     _sel = null; _qty = 1; _q = '';
+    // Se suelta al cerrar: si se quedara puesto, el boton del
+    // escritorio añadiría al proveedor que se miró en el telefono.
+    _forzado = null;
   }
 
-  function open() {
+  // `vendor` es opcional. Sin el, se usa la pestaña del escritorio,
+  // que es como lo llama el boton de la barra de siempre.
+  function open(vendor) {
+    _forzado = vendor ? String(vendor).toUpperCase() : null;
     const v = vendorActivo();
-    if (!v || v === 'ALL' || v === 'UNKNOWN' || !vendorSirve(v)) return;
+    if (!v || v === 'ALL' || v === 'UNKNOWN' || !vendorSirve(v)) { _forzado = null; return false; }
     build();
     _sel = null; _qty = 1; _q = '';
     $('atoBg').classList.remove('hidden');
     paint();
+    return true;
   }
 
   function init() {
