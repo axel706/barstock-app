@@ -516,15 +516,70 @@
     if (host && host.classList.contains('on')) render(host);
   }
 
+  // ── Esperar a que lleguen los datos ──────────────────────────────────
+  //
+  // Esto apareció al arreglar la entrada por Home. Antes el Home no se
+  // pintaba hasta que tocabas la casa, y para entonces ya había cargado
+  // todo; ahora se pinta al arrancar, con el inventario y Pour·IQ aún en
+  // camino, y se quedaba con media pantalla hasta que la tocabas.
+  //
+  // Se vigila una FIRMA de lo que el Home necesita en vez de engancharse
+  // a un evento. No hay ninguno que diga "ya está todo": los que hay son
+  // de cambios en vivo, y la carga inicial pasa por varios caminos
+  // asíncronos distintos. Engancharse a uno sería arreglar el camino que
+  // probé hoy y dejar rotos los otros.
+  //
+  // Se apaga solo: en cuanto la firma se queda quieta un rato, o a los
+  // VIGILA_MAX, deja de mirar. Un intervalo eterno en el móvil es
+  // batería que se va sin que nadie lo pida.
+
+  const VIGILA_CADA = 400;
+  const VIGILA_MAX = 25000;
+  const QUIETO_BASTA = 6;        // 6 vueltas sin cambio = ya cargó
+
+  let _reloj = null, _firma = null, _quieto = 0, _desde = 0;
+
+  function firma() {
+    const m = (window.state && window.state.master) || [];
+    const p = window.parAdjustments;
+    const g = gasto(), v = estante();
+    return [
+      m.length,
+      p && p.size ? p.size : 0,
+      g ? g.total : '-',
+      v ? v.total : '-'
+    ].join('|');
+  }
+
+  function vigilar() {
+    if (_reloj) return;
+    _firma = firma(); _quieto = 0; _desde = Date.now();
+    _reloj = setInterval(() => {
+      const f = firma();
+      if (f !== _firma) { _firma = f; _quieto = 0; refresh(); }
+      else _quieto++;
+      if (_quieto >= QUIETO_BASTA || Date.now() - _desde > VIGILA_MAX) {
+        clearInterval(_reloj); _reloj = null;
+      }
+    }, VIGILA_CADA);
+  }
+
   window.BarStockMobileHome = { render, refresh };
 
   function registrar() {
     if (!window.BarStockMobile) return;
     window.BarStockMobile.register({
       id: 'home', icon: 'ti-home', label: 'Home', tab: true, orden: 10,
-      mount: render,
-      show: render   // se repinta al entrar: el estado del ciclo cambia
+      mount(host) { render(host); vigilar(); },
+      show(host) { render(host); vigilar(); }   // el estado del ciclo cambia
     });
+
+    // Y lo que cambie en vivo despues, por su evento de siempre.
+    const E = window.BarStockEvents;
+    if (E && E.on) {
+      E.on('inventoryUpdated', refresh);
+      E.on('ordersUpdated', refresh);
+    }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', registrar);

@@ -264,6 +264,16 @@
     padding: 0 13px;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
+    /* Sin esto el carril nace pegado al borde izquierdo y el padding de
+     * arriba no sirve de nada. `scroll-snap-align: start` alinea la
+     * tarjeta con el principio del CONTENEDOR DE SCROLL, que es el borde
+     * de la caja de padding, no el del contenido — así que al arrancar,
+     * con snap obligatorio, el navegador desplaza esos 13px para
+     * cumplirlo. scroll-padding le dice dónde está de verdad el
+     * principio. Sólo se nota con dos o más tarjetas: con una no hay
+     * desbordamiento, no hay scroll, y no hay nada que encajar — por eso
+     * la primera pantalla se veía bien y la de después no. */
+    scroll-padding-left: 13px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
