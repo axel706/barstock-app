@@ -524,6 +524,26 @@
         : ''}
 
       <div class="m-body">
+        <!-- El dinero primero: es lo único de esta pantalla que se
+             mira todos los días sin buscar nada. Top movers y lo demás
+             son contexto de la semana. -->
+        <div class="m-pair">
+          <div class="m-stat">
+            <span class="m-stat-k">Spent this week</span>
+            <b class="m-stat-v">${g ? money(g.total) : '…'}</b>
+            <small class="m-stat-d ${g && g.delta >= 0 ? 'm-up' : 'm-down'}">${
+              g ? (g.delta >= 0 ? '↗ +' : '↘ −') + money(Math.abs(g.delta)).slice(1) : '&nbsp;'
+            }</small>
+          </div>
+          <div class="m-stat">
+            <span class="m-stat-k">On the shelf</span>
+            <b class="m-stat-v">${e ? money(e.total) : '…'}</b>
+            <small class="m-stat-d">${e
+              ? e.n + ' items' + (e.sin ? ' · ' + e.sin + ' no price' : '')
+              : '&nbsp;'}</small>
+          </div>
+        </div>
+
         ${mov.length ? `
           <div class="m-mvcard">
             <div class="m-mvcard-h">
@@ -554,25 +574,6 @@
                 </button>`).join('')}
             </div>` : ''}
           </div>` : ''}
-
-        <!-- El dinero va antes que "despegó / se apagó": es lo que
-             se mira a diario, y lo otro es contexto de la semana. -->
-        <div class="m-pair">
-          <div class="m-stat">
-            <span class="m-stat-k">Spent this week</span>
-            <b class="m-stat-v">${g ? money(g.total) : '…'}</b>
-            <small class="m-stat-d ${g && g.delta >= 0 ? 'm-up' : 'm-down'}">${
-              g ? (g.delta >= 0 ? '↗ +' : '↘ −') + money(Math.abs(g.delta)).slice(1) : '&nbsp;'
-            }</small>
-          </div>
-          <div class="m-stat">
-            <span class="m-stat-k">On the shelf</span>
-            <b class="m-stat-v">${e ? money(e.total) : '…'}</b>
-            <small class="m-stat-d">${e
-              ? e.n + ' items' + (e.sin ? ' · ' + e.sin + ' no price' : '')
-              : '&nbsp;'}</small>
-          </div>
-        </div>
 
         ${(ch.arriba.length || ch.abajo.length) ? `
           <div class="m-cols">
