@@ -154,6 +154,102 @@
     }
   }
 
+  // ── La botella ───────────────────────────────────────────────────────
+  //
+  // La silueta real del producto, con la forma que tenga asignada, y
+  // llena hasta donde está. El cálculo no es nuevo: heightFor es el
+  // mismo que mueve el deslizador del conteo, así que lo que se dibuja
+  // aquí y lo que se ve al contar no pueden discrepar.
+  //
+  // La botella dibujada es la PARCIAL. Con 1.96 hay una entera y una a
+  // la mitad larga; dibujar una sola llena al 96% sería mentira si no
+  // se dice que además hay otra. De ahí el "+1 full" de debajo.
+
+  const BOT = { w: 52, h: 116, pad: 4 };
+
+  function silueta(r, color) {
+    const V = window.BarStockBottleProfiles;
+    if (!V || !V.pathFor) return '';
+
+    const key = (r.bottleShape && V.forSize)
+      ? V.forSize(r.bottleShape, r.bottleSizeMl) : 'generic';
+
+    let d = '';
+    try { d = V.pathFor(key, BOT.w, BOT.h, BOT.pad); } catch (e) { return ''; }
+    if (!d) return '';
+
+    const oh = Number(r.onHand) || 0;
+    const enteras = Math.floor(oh + 1e-9);
+    // Una botella justa es una botella llena, no una vacía: con 2.0 la
+    // parte decimal es cero y sin esto se dibujaría al vacío.
+    let frac = oh - enteras;
+    if (frac <= 0 && oh > 0) frac = 1;
+
+    // Cuántas enteras hay ADEMÁS de la dibujada. Con 1.96 se dibuja la
+    // de 0.96 y sobra una; con 2 justas se dibuja una llena y sobra
+    // otra. Sin esta cuenta, dos botellas se veían como una.
+    const otras = Math.max(0, oh > enteras ? enteras : enteras - 1);
+
+    let yPx = BOT.h - BOT.pad;
+    if (frac > 0) {
+      try { yPx = V.yToPx(key, V.heightFor(key, frac), BOT.w, BOT.h, BOT.pad); }
+      catch (e) {}
+    }
+
+    const id = 'ms' + Math.random().toString(36).slice(2, 8);
+    return `
+      <div class="m-bot">
+        <svg viewBox="0 0 ${BOT.w} ${BOT.h}" width="${BOT.w}" height="${BOT.h}" aria-hidden="true">
+          <defs>
+            <clipPath id="${id}"><rect x="0" y="${yPx}" width="${BOT.w}" height="${BOT.h}"/></clipPath>
+          </defs>
+          <path d="${d}" fill="rgba(0,0,0,.22)" stroke="rgba(255,255,255,.38)" stroke-width="1.6"/>
+          ${frac > 0 ? `<g clip-path="url(#${id})">
+            <path d="${d}" fill="${color}" opacity=".78"/></g>` : ''}
+          <path d="${d}" fill="none" stroke="rgba(255,255,255,.38)" stroke-width="1.6"/>
+        </svg>
+        ${otras >= 1 ? `<small>+${otras} full</small>` : ''}
+      </div>`;
+  }
+
+  // ── Dónde están ──────────────────────────────────────────────────────
+  //
+  // Sólo si las zonas están encendidas. Con la función apagada no se
+  // dice nada: "Zones are off, turn them on in Settings" es un ajuste
+  // metido en una ficha de producto, y en el teléfono estorba más de
+  // lo que informa.
+
+  async function pintarZonas(caja, item) {
+    const el = caja.querySelector('#msZonas');
+    const Z = window.BarStockZones;
+    if (!el || !Z) return;
+
+    try { if (!Z.lista().length) await Z.cargar(); } catch (e) {}
+    if (!Z.activas || !Z.activas()) return;
+
+    el.innerHTML = '<div class="m-zon"><span class="m-zon-k">Where it is</span>' +
+                   '<span class="m-zon-wait">Looking…</span></div>';
+    let d = null;
+    try { d = await Z.donde(item); } catch (e) {}
+
+    if (!d || !d.zonas || !d.zonas.length) {
+      // Hay zonas puestas pero este producto no se ha repartido. No es
+      // lo mismo que no tener zonas, y se dice.
+      el.innerHTML = '<div class="m-zon"><span class="m-zon-k">Where it is</span>' +
+                     '<span class="m-zon-wait">Not counted by zone yet</span></div>';
+      return;
+    }
+
+    el.innerHTML =
+      '<div class="m-zon"><span class="m-zon-k">Where it is</span>' +
+      '<div class="m-zon-s">' +
+        d.zonas.map(z => `
+          <span class="m-zon-t${Number(z.botellas) > 0 ? '' : ' cero'}">
+            <b>${n2(z.botellas)}</b>${esc(z.zona)}
+          </span>`).join('') +
+      '</div></div>';
+  }
+
   // ── Ficha ────────────────────────────────────────────────────────────
 
   function ficha(host, idx) {
@@ -171,35 +267,56 @@
     const fiable = avg !== null && avg > 0 && semanas >= SEMANAS_PARA_FIAR;
     const dias = fiable ? Math.round((Number(r.onHand) || 0) / avg * 7) : null;
 
+    // "1 days" era un fallo que llevaba ahi desde el principio.
+    const cuantos = (n, u) => n + ' ' + u + (n === 1 ? '' : 's');
+
+    // La tarjeta se tiñe segun como este el producto: lo primero que
+    // se ve desde lejos es el color, no el numero.
+    const par18 = n2(r.suggested);
+    const aviso = Number(r.onHand) <= 0
+      ? 'Out of stock'
+      : dias !== null ? 'Runs out in ' + cuantos(dias, 'day')
+      : (Number(r.suggested) > 0 && Number(r.onHand) / Number(r.suggested) <= 0.25
+          ? 'Running low' : '');
+
     const caja = host.querySelector('#msFicha');
     caja.innerHTML = `
-      <button type="button" class="m-back" id="msBack">
+      <button type="button" class="m-back m-back-gde" id="msBack">
         <i class="ti ti-chevron-left" aria-hidden="true"></i> Back to results
       </button>
 
-      <div class="m-card m-fic">
-        <div class="m-fic-n">${esc(r.item)}</div>
-        <div class="m-fic-s">${esc(r.vendor || '')}${r.code ? ' · ' + esc(r.code) : ''}${r.category ? ' · ' + esc(r.category) : ''}</div>
-        <div class="m-fic-big">
-          <b style="color:${k.c}">${n2(r.onHand)}</b>
-          <span>bottles on hand</span>
+      <div class="m-fic m-fic-${esc(k.t === 'out of stock' ? 'mal' : k.t === 'running low' ? 'ojo' : 'bien')}">
+        ${silueta(r, k.c)}
+        <div class="m-fic-d">
+          <div class="m-fic-n">${esc(r.item)}</div>
+          <div class="m-fic-s">${esc(r.vendor || '')}${r.category ? ' · ' + esc(r.category) : ''}${
+            r.bottleSizeMl ? ' · ' + esc(String(r.bottleSizeMl)) + ' ml' : ''}</div>
+          <div class="m-fic-big">
+            <b style="color:${k.c}">${n2(r.onHand)}</b>
+            <span>${Number(r.suggested) > 0 ? 'of ' + par18 : 'on hand'}</span>
+          </div>
+          ${aviso ? `<div class="m-fic-av" style="color:${k.c}">${esc(aviso)}</div>` : ''}
         </div>
-        <div id="msZonas"></div>
       </div>
 
+      <div id="msZonas"></div>
+
       <div class="m-card m-rows">
-        <div class="m-row"><span>Uses per week</span><b style="color:#38bdf8">${avg !== null ? avg : '—'}</b></div>
-        <div class="m-row"><span>Lasts about</span><b>${
-          dias !== null ? dias + ' days'
-            : `<span class="m-soft">needs ${SEMANAS_PARA_FIAR} weeks · has ${semanas}</span>`
-        }</b></div>
-        <div class="m-row"><span>Par</span><b>${n2(r.suggested)}${
+        <div class="m-row">
+          <span><i class="ti ti-trending-up" aria-hidden="true"></i> Uses per week</span>
+          <b>${avg !== null ? avg : '—'}</b></div>
+        <div class="m-row">
+          <span><i class="ti ti-brain" aria-hidden="true"></i> Par</span>
+          <b>${par18}${
           par && par.suggestedOptimal != null && par.suggestedOptimal !== Number(r.suggested)
             ? ' <span class="m-iq">· Pour·IQ says ' + par.suggestedOptimal + '</span>' : ''
         }</b></div>
-        <div class="m-row m-row-end"><span>Unit price</span><b>${
-          Number(r.value) > 0 ? '$' + Number(r.value).toFixed(2) : '—'
-        }</b></div>
+        <div class="m-row m-row-end">
+          <span><i class="ti ti-tag" aria-hidden="true"></i> Unit price</span>
+          <b>${Number(r.value) > 0 ? '$' + Number(r.value).toFixed(2) : '—'}</b></div>
+        ${dias === null ? `<div class="m-row m-row-end">
+          <span><i class="ti ti-hourglass" aria-hidden="true"></i> Lasts about</span>
+          <b><span class="m-soft">needs ${SEMANAS_PARA_FIAR} weeks · has ${semanas}</span></b></div>` : ''}
       </div>
 
       <div class="m-acts">
@@ -224,14 +341,10 @@
       if (window.BarStockStockIn) window.BarStockStockIn.open(r, () => ficha(host, idx));
     };
 
-    pintarZonasFicha(caja, r.item);
+    pintarZonas(caja, r.item);
   }
 
-  async function pintarZonasFicha(caja, item) {
-    const Z = window.BarStockZones;
-    if (!Z || !caja.querySelector('#msZonas')) return;
-    try { await Z.pintarEn('msZonas', item); } catch (e) {}
-  }
+
 
   // ── La pantalla ──────────────────────────────────────────────────────
 

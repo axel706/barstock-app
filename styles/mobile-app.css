@@ -929,26 +929,69 @@
   }
   .m-back-gde .ti { font-size: 19px; }
 
-  body.m-shell .m-fic {
-    display: block; padding: 16px; border-radius: 18px;
-    background: rgba(255,255,255,.13);
-    border: 1px solid rgba(255,255,255,.17);
+  /* ── La ficha ───────────────────────────────────────────────────
+   *
+   * La silueta a la izquierda y los datos a la derecha, y la tarjeta
+   * entera teñida según cómo esté el producto: lo primero que se ve
+   * desde lejos es el color, no el número.
+   *
+   * La botella es la del propio producto —su forma asignada— y está
+   * llena hasta el nivel contado. El cálculo es el mismo que mueve el
+   * deslizador del conteo, así que lo que se dibuja aquí y lo que se
+   * ve al contar no pueden discrepar.
+   */
+  .m-fic {
+    display: flex; align-items: center; gap: 14px;
+    padding: 15px; border-radius: 18px;
   }
-  .m-fic-n { color: #fff; font-size: 18px; font-weight: 800; letter-spacing: -.3px; line-height: 1.25; }
-  .m-fic-s { font-size: 11px; color: #9fb0c4; margin-top: 5px; letter-spacing: .2px; }
+  .m-fic-bien { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.17); }
+  .m-fic-ojo  { background: linear-gradient(135deg, rgba(245,158,11,.20), rgba(245,158,11,.06));
+                border: 1px solid rgba(252,211,77,.32); }
+  .m-fic-mal  { background: linear-gradient(135deg, rgba(239,68,68,.20), rgba(239,68,68,.06));
+                border: 1px solid rgba(248,113,113,.32); }
 
-  /* El número manda y la unidad lo acompaña en la misma línea base.
-   * Antes la unidad caía suelta a media altura y la línea de zonas se
-   * le pegaba debajo sin aire. */
-  .m-fic-big {
-    display: flex; align-items: baseline; gap: 9px;
-    margin-top: 14px; padding-top: 13px;
-    border-top: 1px solid rgba(255,255,255,.10);
-  }
-  .m-fic-big b { font-size: 36px; font-weight: 800; letter-spacing: -1.2px; line-height: .9; }
-  .m-fic-big span { font-size: 12px; color: #9fb0c4; }
-  #msZonas { font-size: 11px; color: #9fb0c4; line-height: 1.5; margin-top: 9px; }
+  .m-bot { flex: 0 0 52px; text-align: center; }
+  .m-bot svg { display: block; }
+  .m-bot small { display: block; font-size: 10px; color: #c3d2e2; margin-top: 5px; }
+
+  .m-fic-d { flex: 1; min-width: 0; }
+  .m-fic-n { color: #fff; font-size: 17px; font-weight: 800; letter-spacing: -.3px; line-height: 1.22; }
+  .m-fic-s { font-size: 11.5px; color: #c3d2e2; margin-top: 5px; letter-spacing: .2px; }
+  .m-fic-big { display: flex; align-items: baseline; gap: 6px; margin-top: 12px; }
+  .m-fic-big b { font-size: 29px; font-weight: 800; letter-spacing: -1px; line-height: .9; }
+  .m-fic-big span { font-size: 12px; color: #c3d2e2; }
+  .m-fic-av { font-size: 12.5px; font-weight: 700; margin-top: 4px; }
+
+  /* ── Dónde están ────────────────────────────────────────────────
+   * Sólo sale con las zonas encendidas. Con la función apagada no se
+   * dice nada: eso es un ajuste, no un dato del producto. */
   #msZonas:empty { display: none; }
+  .m-zon {
+    margin-top: 9px; padding: 11px 13px; border-radius: 15px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+  }
+  .m-zon-k {
+    display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .6px;
+    text-transform: uppercase; color: #a9bacd; margin-bottom: 8px;
+  }
+  .m-zon-wait { font-size: 12.5px; color: #a9bacd; }
+  /* En tira horizontal: con seis zonas, una por renglón empujaría los
+   * botones fuera de la pantalla. */
+  .m-zon-s {
+    display: flex; gap: 7px; overflow-x: auto;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .m-zon-s::-webkit-scrollbar { display: none; }
+  .m-zon-t {
+    flex: 0 0 auto; display: inline-flex; align-items: baseline; gap: 5px;
+    padding: 7px 11px; border-radius: 999px;
+    font-size: 11.5px; color: #c3d2e2; white-space: nowrap;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.14);
+  }
+  .m-zon-t b { font-size: 14px; font-weight: 800; color: #fff; }
+  .m-zon-t.cero { opacity: .5; }
 
   /* Pares etiqueta / valor. El valor a la derecha y en negrita: se lee
    * la columna de la derecha sola, sin ir leyendo los rótulos. */
@@ -958,10 +1001,12 @@
     border: 1px solid rgba(255,255,255,.14);
   }
   .m-row {
-    display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
     padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.09);
-    font-size: 12.5px; color: #9fb0c4;
+    font-size: 13.5px; color: #c3d2e2;
   }
+  .m-row > span { display: inline-flex; align-items: center; gap: 8px; }
+  .m-row .ti { font-size: 16px; color: #7dd3fc; }
   .m-row-end, .m-row:last-child { border-bottom: none; }
   .m-row b { font-size: 14px; font-weight: 800; color: #fff; text-align: right; }
   .m-soft { font-weight: 400; font-size: 11px; color: #9fb0c4; }
@@ -1515,6 +1560,7 @@
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ord-add { border-radius: 999px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ord-x { border-radius: 50% !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ord-volver { border-radius: 999px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-zon-t { border-radius: 999px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ord-q button { border-radius: 11px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ord-q input { border-radius: 11px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ord-undo { border-radius: 0 !important; }
