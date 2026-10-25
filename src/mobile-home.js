@@ -288,6 +288,19 @@
     };
   }
 
+  // Proveedores con alguna línea ya colocada en este ciclo. Es lo que
+  // distingue "ya se pidió todo" de "nunca hizo falta pedir nada".
+  function colocados() {
+    if (typeof window.isRowPlaced !== 'function') return [];
+    const s = new Set();
+    for (const r of master()) {
+      const v = String(r.vendor || '').toUpperCase();
+      if (!v || v === 'UNKNOWN') continue;
+      try { if (window.isRowPlaced(r)) s.add(v); } catch (e) {}
+    }
+    return Array.from(s);
+  }
+
   function tarjetas() {
     const t = [tarjetaBienvenida(), tarjetaCiclo()];
 
@@ -317,6 +330,30 @@
           btn: v.length === 1 ? 'Review the order' : 'Review orders',
           go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('orders'); }
         });
+      } else {
+        // ── Y cuando ya no queda ninguna ─────────────────────────────
+        //
+        // La tarjeta desaparecía, y desaparecer no dice nada: no se
+        // distingue de "nunca hubo órdenes". Colocarlas todas es el
+        // final de la semana de trabajo y merece decirse.
+        //
+        // state.placedOrders se reconstruye desde el historial EN LA
+        // NUBE contra la fecha del ciclo, así que el teléfono se
+        // entera de una orden colocada en el escritorio.
+        const puestos = colocados();
+        if (puestos.length) {
+          t.push({
+            tono: 'teal',
+            k: 'Orders placed',
+            tt: 'You are up to date',
+            sub: 'Nothing waiting. New lines show up when a count drops something below par.',
+            icoR: 'circle-check',
+            vs: puestos.length + (puestos.length === 1 ? ' vendor' : ' vendors'),
+            amt: '',
+            btn: 'See orders',
+            go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('orders'); }
+          });
+        }
       }
     }
 

@@ -536,7 +536,13 @@
   .m-prog { height: 4px; border-radius: 2px; background: rgba(255,255,255,.14); margin-top: 9px; overflow: hidden; }
   .m-prog i { display: block; height: 100%; background: #22c55e; border-radius: 2px; }
 
-  .m-hero-acts { display: flex; align-items: center; gap: 7px; margin-top: 10px; }
+  /* A la derecha: la columna de la izquierda es texto alineado a la
+   * izquierda y los botones ahí abajo quedaban flotando en medio de
+   * la tarjeta. Pegados a la derecha cierran el bloque. */
+  .m-hero-acts {
+    display: flex; align-items: center; justify-content: flex-end;
+    gap: 7px; margin-top: 10px;
+  }
 
   /* Pequeño, sin color y al lado del grande. Tirar trabajo no debe ser
    * más fácil de pulsar que seguirlo. */
@@ -555,7 +561,7 @@
    * en medio se vería el desajuste. */
   .m-hero-pista {
     display: inline-flex; align-items: center; gap: 6px;
-    margin-top: 14px; align-self: flex-start;
+    margin-top: 14px; align-self: flex-end;
     font-size: 14px; font-weight: 600; color: #5eead4;
   }
   .m-hero-pista .ti { font-size: 16px; }
