@@ -342,6 +342,17 @@
       id: 'orders', icon: 'ti-shopping-cart', label: 'Orders',
       tab: true, orden: 40,
       mount: pintar,
+      // Repinta donde estés: si estás dentro de LOOP y alguien cambia
+      // una cantidad en el ordenador, cambia la cifra, no la pantalla.
+      refrescar: pintar,
+      // Deslizar desde el borde vuelve al resumen. Sin proveedor
+      // abierto no hay a dónde volver, y se contesta que no para que
+      // el gesto ni se arme.
+      atras(host, hacerlo) {
+        if (!_vendor) return false;
+        if (hacerlo) { _vendor = null; pintar(host); }
+        return true;
+      },
       // Al volver se arranca siempre en el resumen: entrar a Órdenes y
       // caer dentro del proveedor que miraste ayer es desorientador.
       show(host) { _vendor = null; pintar(host); }

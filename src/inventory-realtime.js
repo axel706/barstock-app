@@ -259,6 +259,12 @@
 
   window.enableInventoryRealtime = enableInventoryRealtime;
 
+  // Volver a leer el inventario a mano. Lo usa el "tirar para recargar"
+  // del telefono: el tiempo real cubre lo normal, pero con la pantalla
+  // apagada o sin cobertura un rato se pierden eventos, y tirar hacia
+  // abajo es el gesto con el que todo el mundo pide "mira otra vez".
+  window.BarStockInventoryRealtime = { recargar: loadInventoryFromSupabase };
+
   window.addEventListener('load', () => {
     setTimeout(() => {
       enableInventoryRealtime().catch(err => {

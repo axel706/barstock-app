@@ -898,15 +898,11 @@
     window.BarStockMobile.register({
       id: 'home', icon: 'ti-home', label: 'Home', tab: true, orden: 10,
       mount(host) { render(host, true); vigilar(); },
-      show(host) { render(host, true); vigilar(); }   // el estado del ciclo cambia
+      show(host) { render(host, true); vigilar(); },  // el estado del ciclo cambia
+      // Un cambio hecho en el escritorio repinta, pero SIN mover el
+      // carrusel: estás mirando una tarjeta y no se te cambia debajo.
+      refrescar(host) { render(host, false); }
     });
-
-    // Y lo que cambie en vivo despues, por su evento de siempre.
-    const E = window.BarStockEvents;
-    if (E && E.on) {
-      E.on('inventoryUpdated', refresh);
-      E.on('ordersUpdated', refresh);
-    }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', registrar);

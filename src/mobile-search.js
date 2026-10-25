@@ -40,6 +40,8 @@
   const SEMANAS_PARA_FIAR = 4;
 
   let _q = '';
+  // Qué ficha está abierta, para poder repintarla sin cerrarla.
+  let _ficha = -1;
 
   function master() { return (window.state && window.state.master) || []; }
 
@@ -255,6 +257,7 @@
   function ficha(host, idx) {
     const r = master()[idx];
     if (!r) return;
+    _ficha = idx;
     const par = parDe(r);
     const k = tono(r);
 
@@ -374,6 +377,7 @@
 
   function show(host) {
     host.classList.remove('ficha');
+    _ficha = -1;
     pintarLista(host);
 
     // ── El foco va SIN setTimeout ──────────────────────────────────
@@ -412,7 +416,19 @@
       // campo enorme dos dedos más arriba era un hueco desperdiciado en
       // la única barra que no se puede hacer más larga.
       id: 'search', icon: 'ti-search', label: 'Search', tab: false, orden: 20,
-      mount, show
+      mount, show,
+      // Sin tocar dónde estás: en la lista repinta la lista, y con una
+      // ficha abierta repinta ESA ficha. show() te sacaría de ella.
+      refrescar(host) {
+        if (host.classList.contains('ficha')) { if (_ficha >= 0) ficha(host, _ficha); }
+        else pintarLista(host);
+      },
+      // De la ficha a los resultados. En la lista no hay vuelta atrás.
+      atras(host, hacerlo) {
+        if (!host.classList.contains('ficha')) return false;
+        if (hacerlo) { host.classList.remove('ficha'); _ficha = -1; }
+        return true;
+      }
     });
   }
 

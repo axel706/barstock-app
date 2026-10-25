@@ -1214,6 +1214,35 @@
   @keyframes bsToastIn { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
   @keyframes bsToastOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-8px); } }
 
+  /* ── Tirar para recargar ────────────────────────────────────────── */
+  /* Una rueda que baja con el dedo y gira mientras se consulta. Va
+   * fija y por encima de la banda: el gesto empieza arriba del todo y
+   * la respuesta tiene que estar donde está mirando el dedo. */
+  .m-pull {
+    position: fixed; top: calc(6px + env(safe-area-inset-top, 0px));
+    left: 50%; z-index: 9200;
+    width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px; color: #9fb0c4;
+    background: rgba(11,18,32,.88);
+    border: 1px solid rgba(255,255,255,.16);
+    box-shadow: 0 6px 18px rgba(0,0,0,.34);
+    transform: translate(-50%, -60px);
+    opacity: 0; pointer-events: none;
+    transition: opacity .15s ease;
+  }
+  .m-pull.on { opacity: 1; }
+  /* Azul cuando ya has bajado lo suficiente: el aviso de que soltar
+   * ahora sí hace algo. */
+  .m-pull.listo { color: #7dd3fc; border-color: rgba(125,211,252,.46); }
+  .m-pull.girando {
+    opacity: 1; color: #7dd3fc;
+    transform: translate(-50%, 54px);
+    animation: mGira .8s linear infinite;
+  }
+  @keyframes mGira { to { transform: translate(-50%, 54px) rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .m-pull.girando { animation: none; } }
+
   /* ── Órdenes ────────────────────────────────────────────────────── */
 
   .m-screen[data-screen="orders"] { padding: 14px 13px 0; }

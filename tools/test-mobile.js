@@ -52,6 +52,14 @@ function montar(movil) {
   w.scrollTo = () => {};
   w.CSS = { escape: (s) => String(s).replace(/[^a-zA-Z0-9_-]/g, '\\$&') };
 
+  // El bus de eventos de la app, tal cual: el armazon se suscribe a el
+  // para el tiempo real.
+  w.BarStockEvents = {
+    _h: {},
+    on(n, f) { (this._h[n] = this._h[n] || []).push(f); },
+    emit(n, d) { (this._h[n] || []).forEach(f => f(d || {})); }
+  };
+
   w.__abiertas = [];
   w.bsOpenSection = (n) => w.__abiertas.push(n);
   w.__cerradas = 0;
@@ -213,6 +221,36 @@ console.log('\nlo que no debe tumbar nada');
   M.ir('rota');
   eq('una pantalla que revienta al montarse no tumba el armazon', M.activa(), 'rota');
   ok('y la barra sigue ahi', !!w.document.getElementById('mTabs'));
+}
+
+console.log('\nel tiempo real llega a la pantalla que esta delante');
+{
+  // Del telefono al escritorio ya funcionaba porque el escritorio se
+  // repinta con su render(). Al reves no: cada pantalla se pintaba al
+  // entrar y ahi se quedaba.
+  const w = montar(true);
+  let refrescos = [];
+  w.BarStockMobile.register({ id: 'home', tab: true, orden: 10, mount() {},
+    refrescar() { refrescos.push('home'); } });
+  w.BarStockMobile.register({ id: 'ord', tab: true, orden: 20, mount() {},
+    refrescar() { refrescos.push('ord'); } });
+
+  w.BarStockEvents.emit('inventoryUpdated', {});
+  eq('refresca la que esta delante', refrescos, ['home']);
+
+  w.BarStockMobile.ir('ord');
+  refrescos = [];
+  w.BarStockEvents.emit('ordersUpdated', {});
+  // Y SOLO esa: repintar las que no se ven es trabajo tirado, y en una
+  // de ellas podria moverse algo debajo del dedo al volver.
+  eq('y solo esa', refrescos, ['ord']);
+
+  // Una pantalla sin refrescar no revienta nada.
+  w.BarStockMobile.register({ id: 'simple', tab: true, orden: 30, mount() {} });
+  w.BarStockMobile.ir('simple');
+  refrescos = [];
+  w.BarStockEvents.emit('inventoryUpdated', {});
+  eq('sin refrescar, no pasa nada', refrescos, []);
 }
 
 console.log('\nel pellizco no amplia');

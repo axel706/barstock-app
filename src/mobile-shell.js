@@ -133,6 +133,7 @@
     _montado = true;
     bloquearZoom(true);
     vigilarTeclado(true);
+    gestos(true);
     pintarBarra();
     entrada();
   }
@@ -230,6 +231,7 @@
     _entrado = false;
     bloquearZoom(false);
     vigilarTeclado(false);
+    gestos(false);
     document.body.classList.remove('m-shell');
     document.body.classList.remove('m-on');
     // Las pantallas propias se quedan sin dibujar; las secciones del
@@ -373,6 +375,186 @@
     window.scrollTo({ top: 0 });
   }
 
+  // ── Tiempo real ──────────────────────────────────────────────────────
+  //
+  // Del teléfono al escritorio funcionaba porque el escritorio se
+  // repinta con su propio render(). Al revés no: cada pantalla del
+  // teléfono se pintaba al entrar y ahí se quedaba, así que un cambio
+  // hecho en el ordenador no se veía hasta salir y volver.
+  //
+  // Se suscribe AQUÍ y no en cada módulo. Son los mismos dos eventos
+  // para todos, y repetir la suscripción en cinco sitios es garantizar
+  // que la sexta pantalla que se escriba se olvide de hacerlo.
+  //
+  // Cada pantalla decide QUÉ significa refrescarse con `refrescar`. No
+  // se llama a `show` porque algunas lo usan para volver a su estado
+  // inicial —Buscar te sacaría de la ficha abierta— y refrescar no
+  // puede mover a nadie de donde está.
+  function refrescarActiva() {
+    if (!_montado || !_activa || !_host) return;
+    const p = _pant.get(_activa);
+    if (!p || typeof p.refrescar !== 'function') return;
+    const caja = Array.from(_host.children).find(c => c.dataset.screen === _activa);
+    if (!caja || !caja.classList.contains('on')) return;
+    try { p.refrescar(caja); } catch (e) { console.warn('[movil] refrescar ' + _activa, e); }
+  }
+
+  function escucharNube() {
+    const E = window.BarStockEvents;
+    if (!E || !E.on) return;
+    E.on('inventoryUpdated', refrescarActiva);
+    E.on('ordersUpdated', refrescarActiva);
+  }
+
+  // ── Gestos ───────────────────────────────────────────────────────────
+  //
+  // Dos, los que cualquiera da por hecho en un teléfono:
+  //
+  //   Tirar hacia abajo    vuelve a leer la nube. El tiempo real cubre
+  //                        lo normal, pero con la pantalla apagada o
+  //                        sin cobertura un rato se pierden eventos, y
+  //                        éste es el gesto con el que todo el mundo
+  //                        pide "mira otra vez".
+  //   Deslizar desde el    vuelve a la pantalla anterior, pero sólo
+  //   borde izquierdo      donde hay una: dentro de un proveedor, o en
+  //                        la ficha de un producto.
+  //
+  // Van con eventos táctiles y no con una librería: son veinte líneas
+  // y una librería aquí es un kilobyte y una dependencia por un gesto.
+
+  const TIRON = 72;        // cuánto hay que bajar para que cuente
+  const TOPE_TIRON = 110;  // y hasta dónde estira, para que no sea un chicle
+  const BORDE = 30;        // la franja desde la que se desliza para volver
+  const VOLVER = 64;       // cuánto hay que recorrer
+
+  let _t = null;
+
+  function arribaDelTodo() {
+    return (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
+  }
+
+  function cinta() {
+    let el = document.getElementById('mPull');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'mPull';
+      el.className = 'm-pull';
+      el.innerHTML = '<i class="ti ti-refresh" aria-hidden="true"></i>';
+      document.body.appendChild(el);
+    }
+    return el;
+  }
+
+  function alTocar(e) {
+    if (!e.touches || e.touches.length !== 1) { _t = null; return; }
+    const t = e.touches[0];
+    _t = {
+      x: t.clientX, y: t.clientY,
+      // Sólo cuenta como tirón si se empieza con la página arriba del
+      // todo. Si no, tirar hacia abajo es desplazarse, no recargar.
+      puedeTirar: arribaDelTodo(),
+      puedeVolver: t.clientX <= BORDE && !!atrasDe(),
+      haciendo: null
+    };
+  }
+
+  function alMover(e) {
+    if (!_t || !e.touches || e.touches.length !== 1) return;
+    const t = e.touches[0];
+    const dx = t.clientX - _t.x, dy = t.clientY - _t.y;
+
+    // El primer movimiento decide qué gesto es y ya no cambia. Sin
+    // esto, un dedo que baja en diagonal dispara los dos.
+    if (!_t.haciendo) {
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+      if (_t.puedeVolver && dx > Math.abs(dy)) _t.haciendo = 'volver';
+      else if (_t.puedeTirar && dy > Math.abs(dx)) _t.haciendo = 'tirar';
+      else _t.haciendo = 'nada';
+    }
+
+    if (_t.haciendo === 'tirar') {
+      e.preventDefault();
+      const d = Math.min(TOPE_TIRON, dy * 0.55);
+      const c = cinta();
+      c.classList.add('on');
+      c.style.transform = 'translate(-50%, ' + d + 'px) rotate(' + (d * 3) + 'deg)';
+      c.classList.toggle('listo', d >= TIRON * 0.55);
+    } else if (_t.haciendo === 'volver') {
+      e.preventDefault();
+    }
+  }
+
+  function alSoltar() {
+    if (!_t) return;
+    const hacia = _t.haciendo, t = _t;
+    _t = null;
+
+    if (hacia === 'tirar') {
+      const c = cinta();
+      const listo = c.classList.contains('listo');
+      c.classList.remove('on', 'listo');
+      c.style.transform = '';
+      if (listo) recargar();
+    }
+  }
+
+  function alSoltarVolver(e) {
+    if (!_t || _t.haciendo !== 'volver') return;
+    const t = (e.changedTouches && e.changedTouches[0]) || null;
+    if (t && t.clientX - _t.x >= VOLVER) {
+      const f = atrasDe();
+      if (f) { try { f(); } catch (err) {} }
+    }
+  }
+
+  // La pantalla activa decide si tiene a dónde volver. Si no lo tiene,
+  // el gesto ni se arma: deslizar y que no pase nada es peor que no
+  // tener gesto.
+  function atrasDe() {
+    if (!_montado || !_activa || !_host) return null;
+    const p = _pant.get(_activa);
+    if (!p || typeof p.atras !== 'function') return null;
+    const caja = Array.from(_host.children).find(c => c.dataset.screen === _activa);
+    if (!caja || !caja.classList.contains('on')) return null;
+    return p.atras(caja) ? () => p.atras(caja, true) : null;
+  }
+
+  let _recargando = false;
+
+  async function recargar() {
+    if (_recargando) return;
+    _recargando = true;
+    const c = cinta();
+    c.classList.add('girando');
+    try {
+      // Las mismas dos cargas que usa el arranque, no unas propias.
+      const t = [];
+      if (window.BarStockInventoryRealtime && window.BarStockInventoryRealtime.recargar) {
+        t.push(window.BarStockInventoryRealtime.recargar());
+      }
+      if (typeof window.loadOrdersFromCloud === 'function') t.push(window.loadOrdersFromCloud());
+      await Promise.all(t);
+      if (window.BarStockWeeklyCycle && window.BarStockWeeklyCycle.refresh) {
+        await window.BarStockWeeklyCycle.refresh();
+      }
+    } catch (e) {
+      console.warn('[movil] recargar', e);
+    } finally {
+      c.classList.remove('girando');
+      _recargando = false;
+      refrescarActiva();
+    }
+  }
+
+  function gestos(si) {
+    const m = si ? 'addEventListener' : 'removeEventListener';
+    document[m]('touchstart', alTocar, { passive: true });
+    document[m]('touchmove', alMover, { passive: false });
+    document[m]('touchend', alSoltarVolver, { passive: true });
+    document[m]('touchend', alSoltar, { passive: true });
+    document[m]('touchcancel', alSoltar, { passive: true });
+  }
+
   function ocultarPropias() {
     if (_host) _host.classList.add('hidden');
     document.body.classList.remove('m-on');
@@ -388,6 +570,7 @@
   }
 
   function init() {
+    escucharNube();
     sincronizar();
     try {
       window.matchMedia('(max-width: ' + ANCHO + 'px)').addEventListener('change', sincronizar);
@@ -403,7 +586,7 @@
   }
 
   window.BarStockMobile = {
-    register, ir, refrescarBadges,
+    register, ir, refrescarBadges, refrescarActiva,
     esMovil, montado: () => _montado, activa: () => _activa,
     ANCHO
   };

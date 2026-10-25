@@ -437,7 +437,10 @@
     window.BarStockMobile.register({
       id: 'inventory', icon: 'ti-package', label: 'Inventory',
       tab: true, orden: 30,
-      mount, show
+      mount, show,
+      // show() reajusta el total y repinta; los filtros y la búsqueda
+      // viven en el módulo, así que un refresco no los pierde.
+      refrescar: show
     });
   }
 
