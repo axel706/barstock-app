@@ -141,12 +141,20 @@
    * Va en el body y no en .m-screens a propósito: las pantallas
    * propias se esconden al entrar a una sección del escritorio, y con
    * el velo ahí dentro la foto se quedaba cruda en esas pantallas.
+   *
+   * El que se queda es el OSCURO, el que app.css tenía en el
+   * `background` del body — el mismo degradado y los mismos tintes,
+   * copiados tal cual. El mío era más suave y sobre una foto clara el
+   * texto blanco se perdía; esto es contraste, no gusto.
    */
   body.m-shell { background: none !important; }
   body.m-shell::after {
     backdrop-filter: blur(26px) saturate(125%);
     -webkit-backdrop-filter: blur(26px) saturate(125%);
-    background: linear-gradient(180deg, rgba(8,13,22,.28), rgba(8,13,22,.60)) !important;
+    background:
+      linear-gradient(180deg, rgba(8,12,19,.62) 0%, rgba(10,15,24,.70) 52%, rgba(8,12,19,.78) 100%),
+      radial-gradient(1100px 720px at 0% 0%, rgba(56,189,248,.07), transparent 52%),
+      radial-gradient(900px 620px at 100% 10%, rgba(168,85,247,.06), transparent 48%) !important;
   }
 
   .m-screens { position: relative; }
