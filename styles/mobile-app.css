@@ -1022,6 +1022,14 @@
   .m-item-t small { display: block; font-size: 10px; color: #9fb0c4; margin-top: 2px; }
   .m-chev { font-size: 15px; color: #9fb0c4; opacity: .6; flex: 0 0 auto; }
 
+  /* TEMPORAL: la lectura de diagnostico del hueco bajo la barra. */
+  .m-diag {
+    margin: 18px 0 0; padding: 10px 12px; border-radius: 10px;
+    font: 11px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap;
+    color: #9fe1cb; background: rgba(0,0,0,.42);
+    border: 1px solid rgba(255,255,255,.14);
+  }
+
 
   /* Salir: separado y en rojo. No es una sección más de la lista. */
   .m-list-end { margin-top: 22px; }

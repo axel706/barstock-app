@@ -53,7 +53,14 @@
           <i class="ti ti-logout" aria-hidden="true"></i>
           <span class="m-item-t">Log out</span>
         </button>
-      </div>`;
+      </div>
+
+      <!-- TEMPORAL. Mide la geometría real del teléfono para entender
+           por qué queda hueco bajo la barra. Se quita en cuanto se
+           sepa; no vale adivinar tres veces seguidas. -->
+      <pre class="m-diag" id="mDiag"></pre>`;
+
+    diagnostico(host);
 
     host.querySelectorAll('[data-sec]').forEach(b => {
       b.onclick = () => {
@@ -77,6 +84,43 @@
       const A = window.BarStockAuth;
       if (A && typeof A.logout === 'function') A.logout();
     };
+  }
+
+  // ── TEMPORAL ─────────────────────────────────────────────────────────
+  //
+  // Hay un hueco oscuro bajo la barra de pestañas que aparece sólo con
+  // poco contenido. Hay tres explicaciones posibles y desde fuera del
+  // teléfono no se distinguen: que viewport-fit=cover no aplique, que
+  // la caja de los elementos fijos excluya la franja del gesto, o que
+  // la barra no esté fija en absoluto. Cada una se arregla distinto.
+  // Esto mide las tres de una vez. Se borra en cuanto se sepa.
+  function diagnostico(host) {
+    const el = host.querySelector('#mDiag');
+    if (!el) return;
+
+    const probe = document.createElement('div');
+    probe.style.cssText =
+      'position:fixed;left:0;bottom:0;width:1px;height:env(safe-area-inset-bottom,0px);';
+    document.body.appendChild(probe);
+    const insetAbajo = probe.getBoundingClientRect().height;
+    probe.style.height = 'env(safe-area-inset-top,0px)';
+    const insetArriba = probe.getBoundingClientRect().height;
+    probe.remove();
+
+    const tabs = document.getElementById('mTabs');
+    const r = tabs ? tabs.getBoundingClientRect() : null;
+    const cs = tabs ? getComputedStyle(tabs) : null;
+
+    el.textContent = [
+      'standalone ' + (window.navigator.standalone === true),
+      'innerH ' + window.innerHeight + '  screenH ' + window.screen.height,
+      'visualH ' + (window.visualViewport ? Math.round(window.visualViewport.height) : '-'),
+      'inset arriba ' + insetArriba + '  abajo ' + insetAbajo,
+      'body alto ' + Math.round(document.body.getBoundingClientRect().height),
+      'tabs position ' + (cs ? cs.position : '-'),
+      'tabs top ' + (r ? Math.round(r.top) : '-') + '  bottom ' + (r ? Math.round(r.bottom) : '-'),
+      'hueco bajo tabs ' + (r ? Math.round(window.innerHeight - r.bottom) : '-')
+    ].join('\n');
   }
 
   function registrar() {
