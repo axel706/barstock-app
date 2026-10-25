@@ -690,6 +690,148 @@
   .m-act .ti { font-size: 16px; color: #7dd3fc; }
   .m-act:first-child .ti { color: #04283d; }
 
+  /* ── Inventario ─────────────────────────────────────────────────── */
+
+  .m-screen[data-screen="inventory"] { padding: 14px 13px 0; }
+
+  .m-inv-h { display: flex; align-items: baseline; justify-content: space-between; margin: 0 2px 11px; }
+  .m-inv-t { color: #fff; font-size: 19px; font-weight: 800; letter-spacing: -.4px; }
+  .m-inv-c { font-size: 11px; color: #9fb0c4; }
+
+  .m-inv-bar2 { display: flex; gap: 7px; margin-bottom: 11px; }
+  .m-inv-bar2 .m-searchbar { flex: 1; min-width: 0; margin-bottom: 0; }
+  body.m-shell .m-adj {
+    flex: 0 0 44px; width: 44px; cursor: pointer; position: relative;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 16px; font-size: 17px; color: #eaf2fb;
+    background: rgba(255,255,255,.11);
+    border: 1px solid rgba(255,255,255,.15);
+  }
+  /* El punto avisa de que hay un filtro puesto. Sin él, una lista
+   * filtrada y una lista corta se ven igual, y ahí es donde alguien
+   * concluye que le faltan productos. */
+  body.m-shell .m-adj.on::after {
+    content: ''; position: absolute; top: 9px; right: 10px;
+    width: 6px; height: 6px; border-radius: 50%; background: #f59e0b;
+  }
+
+  .m-seg {
+    display: flex; padding: 4px; border-radius: 15px; margin-bottom: 13px;
+    background: rgba(0,0,0,.26);
+    border: 1px solid rgba(255,255,255,.10);
+  }
+  body.m-shell .m-seg button {
+    flex: 1; padding: 9px 4px; border-radius: 11px; cursor: pointer;
+    font-size: 12px; color: #9fb0c4; text-align: center;
+  }
+  body.m-shell .m-seg button.on { background: rgba(255,255,255,.14); color: #fff; font-weight: 700; }
+  .m-seg button b { font-weight: 800; color: #7f93a8; margin-left: 2px; }
+  .m-seg button.on b { color: #fcd34d; }
+
+  body.m-shell .m-inv {
+    position: relative; overflow: hidden; width: 100%;
+    display: block; text-align: left; cursor: pointer;
+    padding: 11px 12px 13px; margin-bottom: 7px; border-radius: 15px;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.14);
+  }
+  .m-inv-top { display: flex; align-items: baseline; gap: 9px; }
+  .m-inv-n {
+    flex: 1; min-width: 0; font-size: 12.5px; color: #eef4fb;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .m-inv-v { flex: 0 0 auto; }
+  .m-inv-v b { font-size: 15px; font-weight: 800; }
+  .m-inv-v i { font-style: normal; font-size: 11px; color: #9fb0c4; }
+
+  .m-inv-meta {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+    margin-top: 5px; font-size: 10px; color: #9fb0c4;
+  }
+  /* La etiqueta es el motivo por el que ese renglón está arriba. */
+  .m-flag {
+    font-style: normal; padding: 2px 6px; border-radius: 5px;
+    font-size: 9px; font-weight: 700;
+  }
+  .m-flag-red   { background: rgba(239,68,68,.18);  color: #fca5a5; }
+  .m-flag-amber { background: rgba(245,158,11,.20); color: #fcd34d; }
+  .m-flag-gris  { background: rgba(148,163,184,.20); color: #cbd5e1; }
+
+  .m-inv-bar { position: absolute; left: 0; bottom: 0; height: 2px; }
+
+  /* ── El cajón de filtros y la hoja de producto ──────────────────── */
+
+  .m-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  body.m-shell .m-chip {
+    padding: 8px 12px; border-radius: 999px; cursor: pointer;
+    font-size: 11.5px; color: #b6c6d8;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.12);
+  }
+  body.m-shell .m-chip.on {
+    color: #04283d; font-weight: 700;
+    background: #7dd3fc; border-color: #7dd3fc;
+  }
+
+  .m-edit-n { color: #fff; font-size: 16px; font-weight: 800; line-height: 1.25; letter-spacing: -.2px; }
+  .m-edit-s { color: #9fb0c4; font-size: 10.5px; margin: 4px 0 4px; }
+  /* La hoja puede pasarse de alto con muchos proveedores. Se hace ella
+   * la que rueda, no la pantalla de detrás. */
+  .m-edit { max-height: 86vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+  .m-step { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  body.m-shell .m-step button {
+    flex: 0 0 42px; height: 42px; cursor: pointer; border-radius: 12px;
+    font-size: 19px; color: #eaf2fb;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.15);
+  }
+  body.m-shell .m-step input,
+  body.m-shell .m-money input {
+    /* 16px obligatorio: por debajo Safari hace zoom al enfocar y
+     * descoloca la hoja entera. */
+    flex: 1; min-width: 0; height: 42px; font-size: 16px; font-weight: 700;
+    text-align: center; color: #fff; -webkit-appearance: none;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 12px;
+  }
+  .m-step input::-webkit-outer-spin-button,
+  .m-step input::-webkit-inner-spin-button,
+  .m-money input::-webkit-outer-spin-button,
+  .m-money input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+  .m-money { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .m-money > span { font-size: 16px; font-weight: 800; color: #9fb0c4; flex: 0 0 auto; }
+  body.m-shell .m-money input { text-align: left; padding: 0 12px; }
+
+  body.m-shell .m-iqline {
+    display: flex; align-items: center; gap: 6px; cursor: pointer;
+    margin: 8px 0 2px; padding: 8px 11px; border-radius: 10px;
+    font-size: 11px; font-weight: 700; color: #7dd3fc;
+    background: rgba(56,189,248,.12);
+    border: 1px solid rgba(56,189,248,.26);
+  }
+
+  body.m-shell .m-next {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    width: 100%; margin-top: 9px; padding: 11px; border-radius: 999px;
+    font-size: 12px; font-weight: 700; color: #9fb0c4;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.12);
+  }
+  body.m-shell .m-next:disabled { opacity: .5; }
+
+  /* En la hoja de producto, Guardar es el azul. */
+  .m-edit .m-acts { margin-top: 16px; }
+  body.m-shell .m-edit .m-act:first-child {
+    background: rgba(255,255,255,.11); border-color: rgba(255,255,255,.17); color: #eaf2fb;
+  }
+  body.m-shell .m-edit .m-act:last-child {
+    background: #38bdf8; border-color: #38bdf8; color: #04283d;
+  }
+  body.m-shell .m-edit .m-act:disabled { opacity: .55; }
+
   /* ── El ciclo ───────────────────────────────────────────────────── */
   /* Cada estado tiene su color y el color es la mitad del mensaje:
    * verde hay algo que empezar, ámbar algo a medias, rojo algo

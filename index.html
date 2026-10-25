@@ -73,7 +73,7 @@
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/chip-glow.css">
   <link rel="stylesheet" href="styles/mobile.css?v=mob2">
-  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp13">
+  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp14">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -154,7 +154,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261025-001736</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261025-003452</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -4333,6 +4333,61 @@ async function saveEditedItem(){
     setStatus('Error saving item changes to cloud.');
   }
 }
+
+// ── Guardar sólo proveedor, par y precio ─────────────────────────────
+//
+// La hoja de producto del teléfono. Es una función aparte de
+// saveEditedItem a propósito, y la diferencia importa: aquél RENOMBRA
+// —toca code, item, itemNorm y los alias— y eso arrastra consigo medio
+// sistema. Éste no cambia la identidad del artículo ni el on hand, así
+// que no hay alias que arreglar ni snapshot que actualizar.
+//
+// Lo que sí comparten es el único camino que escribe en la nube,
+// patchInventoryItem, que es lo que no puede haber por duplicado.
+//
+// El on hand se pasa tal cual está: en el teléfono es de sólo lectura y
+// sale del escáner o de recibir mercancía. Un inventario donde cualquier
+// pantalla puede escribir la existencia es un inventario del que no te
+// puedes fiar.
+async function bsSaveItemFields(idx, campos){
+  const row = state.master[idx];
+  if(!row) return false;
+
+  const vendor    = campos.vendor !== undefined ? campos.vendor : (row.vendor || 'UNKNOWN');
+  const suggested = campos.suggested !== undefined ? parseNum(campos.suggested) : parseNum(row.suggested);
+  const value     = campos.value !== undefined ? Math.max(0, parseNum(campos.value)) : parseNum(row.value);
+  const onHand    = parseNum(row.onHand);
+
+  try{
+    setStatus(`Saving '${row.item}' to cloud...`);
+    if(!window.BarStockInventoryCloud) throw new Error('Inventory cloud module not available');
+
+    await window.BarStockInventoryCloud.patchInventoryItem({
+      oldCode: row.code || '',
+      oldItem: row.item || '',
+      code: row.code || '',
+      item: row.item || '',
+      vendor, onHand, suggested, value
+    });
+
+    state.master[idx] = {
+      ...row,
+      vendor, suggested, value,
+      toOrder: computeToOrder(onHand, suggested)
+    };
+    saveState();
+    render();
+    setStatus(`Item '${row.item}' updated in cloud.`);
+    return true;
+  } catch(err){
+    console.error(err);
+    alert('Could not save item changes to cloud.\n\n' + (err.message || String(err)));
+    setStatus('Error saving item changes to cloud.');
+    return false;
+  }
+}
+window.bsSaveItemFields = bsSaveItemFields;
+window.getVendorsWithUnknown = window.getVendorsWithUnknown || getVendorsWithUnknown;
 async function deleteEditedItem(){
   if(currentEditIndex===null || currentEditIndex===undefined) return;
 
@@ -5188,7 +5243,8 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/mobile-home.js?v=m9"></script>
 <script src="src/mobile-search.js?v=m3"></script>
 <script src="src/mobile-cycle.js?v=m2"></script>
-<script src="src/mobile-tabs.js?v=m2"></script>
+<script src="src/mobile-inventory.js?v=m1"></script>
+<script src="src/mobile-tabs.js?v=m3"></script>
 <script src="src/count-resume.js?v=cnt12"></script>
 <script src="src/count-insight.js?v=cnt13"></script>
 <script src="src/count-finish.js?v=cnt18"></script>

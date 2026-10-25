@@ -82,7 +82,11 @@
   function registrar() {
     const M = window.BarStockMobile;
     if (!M) return;
-    M.register({ id: 'inventory', icon: 'ti-package',       label: 'Inventory', tab: true, orden: 30, seccion: 'inventory' });
+    // Inventory ya NO apunta a la seccion del escritorio: tiene
+    // pantalla propia en mobile-inventory.js. Si ese archivo no cargara,
+    // esta pestaña no existe y es mejor asi — una pestaña que abre una
+    // tabla de ocho columnas en un telefono no es un respaldo, es un
+    // callejon.
     M.register({ id: 'orders',    icon: 'ti-shopping-cart', label: 'Orders',    tab: true, orden: 40, seccion: 'vendor' });
     M.register({ id: 'more',      icon: 'ti-dots',          label: 'More',      tab: true, orden: 50, mount: montarMas });
   }
