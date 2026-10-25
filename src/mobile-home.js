@@ -255,8 +255,37 @@
     if (W && W.descartarConteo) W.descartarConteo();
   }
 
+  // ── La bienvenida ────────────────────────────────────────────────────
+  //
+  // Primera y siempre. Dice lo único que alguien nuevo necesita saber
+  // antes de tocar nada: que este teléfono es para CONTAR, y que
+  // colocar órdenes y lo demás vive en el escritorio. Escrito como un
+  // reparto deliberado y no como una disculpa — "esto vive allí" en vez
+  // de "esto no se puede aquí" — porque es lo segundo lo que suena a
+  // versión recortada.
+  //
+  // No lleva botón: lo que pide es un gesto, no un toque, y un botón
+  // que dice "desliza" es una contradicción. La pista se queda abajo,
+  // a la altura de los botones de las otras tarjetas, porque todas las
+  // del carril miden lo mismo.
+  //
+  // Es FIJA. Si algún día estorba, quitarla es devolver false aquí:
+  //   if (yaCerroUnCiclo()) return null;
+  function tarjetaBienvenida() {
+    return {
+      tono: 'teal',
+      k: 'Welcome to BarStock',
+      tt: 'Good to have you',
+      sub: 'Scanning bottles is what this does best. Look up stock and ' +
+           'orders too — place them from desktop or iPad.',
+      pista: 'Swipe to discover more',
+      icoR: 'scan',
+      amt: '', vs: '', btn: ''
+    };
+  }
+
   function tarjetas() {
-    const t = [tarjetaCiclo()];
+    const t = [tarjetaBienvenida(), tarjetaCiclo()];
 
     // 3 · Ordenes sin colocar, TODAS.
     if (typeof window.getActiveVendors === 'function' &&
@@ -338,6 +367,8 @@
             ${c.sub ? `<div class="m-hero-s">${esc(c.sub)}</div>` : ''}
             ${c.lista ? `<div class="m-hero-list">${c.lista.map(x => '<span>' + x + '</span>').join('')}</div>` : ''}
           </div>
+          ${c.pista ? `<div class="m-hero-pista">${esc(c.pista)}
+            <i class="ti ti-chevron-right" aria-hidden="true"></i></div>` : ''}
           <div class="m-hero-acts">
             ${c.btn ? `<button type="button" class="m-hero-b${c.btnTono ? ' m-hero-b-' + esc(c.btnTono) : ''}"
                                data-go="${i}">${esc(c.btn)}</button>` : ''}
@@ -349,7 +380,9 @@
           </div>
         </div>
         <div class="m-hero-r">
-          <div class="m-hero-amt">${esc(c.amt)}</div>
+          ${c.icoR
+            ? `<i class="ti ti-${esc(c.icoR)} m-hero-ir" aria-hidden="true"></i>`
+            : `<div class="m-hero-amt">${esc(c.amt)}</div>`}
           ${c.vs ? `<div class="m-hero-vs">${esc(c.vs)}</div>` : ''}
         </div>
       </article>`;

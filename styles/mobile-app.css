@@ -531,6 +531,18 @@
   }
   body.m-shell .m-hero-x:active { background: rgba(248,113,113,.26); }
 
+  /* La pista de la bienvenida. No es un botón: lo que pide es un
+   * gesto. Va abajo del todo, a la altura de los botones de las otras
+   * tarjetas, porque todas las del carril miden lo mismo y si flotara
+   * en medio se vería el desajuste. */
+  .m-hero-pista {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 12px; align-self: flex-start;
+    font-size: 12.5px; font-weight: 600; color: #5eead4;
+  }
+  .m-hero-pista .ti { font-size: 15px; }
+  .m-hero-ir { font-size: 26px; color: #5eead4; }
+
   body.m-shell .m-hero-b {
     align-self: center;
     padding: 10px 18px; border-radius: 12px;
@@ -726,7 +738,7 @@
 
   /* El hueco donde se apoya el círculo. 4px más ancho que él por cada
    * lado: sin ese aire la barra parece cortada, no partida. */
-  .m-tabs-hole { flex: 0 0 64px; }
+  .m-tabs-hole { flex: 0 0 68px; }
 
   /* ── El suelo ─────────────────────────────────────────────────────
    *
@@ -758,7 +770,7 @@
   body.m-kb.m-shell { padding-bottom: 24px; }
 
   .m-tabs-bar {
-    display: flex; padding: 5px; border-radius: 24px;
+    display: flex; padding: 6px; border-radius: 27px;
     background: rgba(10,16,26,.76);
     border: 1px solid rgba(255,255,255,.14);
     backdrop-filter: blur(18px) saturate(140%);
@@ -766,9 +778,9 @@
     box-shadow: 0 10px 28px rgba(0,0,0,.34);
   }
   body.m-shell .m-tab {
-    position: relative; flex: 1; height: 36px; cursor: pointer;
+    position: relative; flex: 1; height: 40px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 18px; color: #8fa1b5; font-size: 18px;
+    border-radius: 20px; color: #9bb0c6; font-size: 21px;
   }
   body.m-shell .m-tab.on { background: rgba(255,255,255,.14); color: #fff; }
   .m-dot-badge, .m-tab .m-dot {
@@ -782,17 +794,17 @@
    * al que ir. El aro tenue lo separa de la barra sin añadir otro
    * color — cuatro pixeles de diferencia no se leen como jerarquía. */
   /* Centrado y encima de la barra. El `bottom` sale de la cuenta, no
-   * del ojo: la barra va de (inset) a (inset+46), su centro está en
-   * inset+23, y el círculo mide 56 — así que su suelo cae 5px por
+   * del ojo: la barra va de (inset) a (inset+52), su centro está en
+   * inset+26, y el círculo mide 60 — así que su suelo cae 4px por
    * debajo del de la barra. Si cambia el alto de la barra, cambia
    * aquí. */
   body.m-shell .m-fab {
     position: absolute; left: 50%;
-    bottom: calc(env(safe-area-inset-bottom, 0px) - 5px);
+    bottom: calc(env(safe-area-inset-bottom, 0px) - 4px);
     transform: translateX(-50%);
-    width: 56px; height: 56px; cursor: pointer;
+    width: 60px; height: 60px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 50%; font-size: 26px;
+    border-radius: 50%; font-size: 28px;
     background: #22c55e; color: #06301a;
     box-shadow: 0 0 0 4px rgba(34,197,94,.14), 0 12px 30px rgba(34,197,94,.42);
   }
