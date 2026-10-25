@@ -41,9 +41,23 @@
    * a todo lo que yo no hubiera redeclarado a mano. De ahí salían las
    * pastillas de fondo en "See all", en los renglones de Top movers y
    * en "Back to results" — tres síntomas, una causa. */
+  /* ── Y el `!important` de app.css ────────────────────────────────
+   *
+   * app.css le pone `border-radius: 999px !important` a TODO <button>.
+   * Un !important no se vence con especificidad, solo con otro
+   * !important, así que todas las tarjetas de este archivo que son
+   * botones salían con forma de pastilla aunque pidieran 15px — los
+   * renglones de inventario, los resultados de Buscar, la lista de
+   * More. Por eso el radio va forzado aquí y en cada regla propia que
+   * pone uno. Es feo y es la única forma; otros dos archivos del
+   * proyecto tienen el mismo comentario.
+   *
+   * Si algún día se quita el !important de app.css, estos se pueden
+   * quitar todos de golpe. */
   body.m-shell :where(.m-screens, .m-tabs, .m-sheet) :where(button) {
     background: none; border: none; box-shadow: none;
     color: inherit; font-family: inherit; padding: 0;
+    border-radius: 0 !important;
     backdrop-filter: none; -webkit-backdrop-filter: none;
     transform: none;
   }
@@ -198,7 +212,7 @@
   body.m-shell .m-ico {
     width: 33px; height: 33px; flex: 0 0 33px;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 50%; cursor: pointer; font-size: 15px;
+    border-radius: 50% !important; cursor: pointer; font-size: 15px;
     background: rgba(255,255,255,.13);
     border: 1px solid rgba(255,255,255,.20);
     color: #eaf2fb;
@@ -219,7 +233,7 @@
   body.m-shell .m-pill,
   .m-pill-solo {
     display: inline-flex; align-items: center; gap: 7px;
-    max-width: 190px; padding: 9px 13px; border-radius: 999px;
+    max-width: 190px; padding: 9px 13px; border-radius: 999px !important;
     cursor: pointer; font-size: 12.5px; font-weight: 700; color: #fff;
     background: #0b1220;
     border: 1px solid rgba(255,255,255,.26);
@@ -260,7 +274,7 @@
     display: flex; align-items: center; justify-content: space-between;
     width: 100%; gap: 10px;
     padding: 14px 13px; margin-bottom: 7px;
-    border-radius: 12px; text-align: left;
+    border-radius: 12px !important; text-align: left;
     font-size: 15px; font-weight: 600; color: #e2e8f0;
     background: rgba(255,255,255,.06);
     border: 1px solid rgba(255,255,255,.10);
@@ -285,7 +299,7 @@
 
   body.m-shell .m-searchbar {
     display: flex; align-items: center; gap: 9px; width: 100%;
-    padding: 12px 13px; border-radius: 16px; cursor: pointer;
+    padding: 12px 13px; border-radius: 16px !important; cursor: pointer;
     text-align: left; font-size: 14.5px; color: #9fb0c4;
     background: rgba(255,255,255,.11);
     border: 1px solid rgba(255,255,255,.15);
@@ -312,7 +326,7 @@
   body.m-shell .m-searchbar > button {
     flex: 0 0 24px; width: 24px; height: 24px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 50%; font-size: 13px; color: #cbd5e1;
+    border-radius: 50% !important; font-size: 13px; color: #cbd5e1;
     background: rgba(255,255,255,.12); border: none;
   }
   body.m-shell .m-searchbar > button:active { background: rgba(255,255,255,.22); }
@@ -381,7 +395,7 @@
   body.m-shell .m-hero-x {
     flex: 0 0 32px; width: 32px; height: 32px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 50%; font-size: 15px; color: #e8c3c3;
+    border-radius: 50% !important; font-size: 15px; color: #e8c3c3;
     background: rgba(0,0,0,.20);
     border: 1px solid rgba(255,255,255,.18);
   }
@@ -389,7 +403,7 @@
 
   body.m-shell .m-hero-b {
     align-self: center;
-    padding: 8px 15px; border-radius: 11px;
+    padding: 8px 15px; border-radius: 11px !important;
     font-size: 12px; font-weight: 800; cursor: pointer;
     background: rgba(255,255,255,.16); color: #fff;
   }
@@ -498,7 +512,7 @@
    * se mueve el primero se mueve éste. */
   .m-mvr-bar {
     position: absolute; left: 15px; bottom: 2px; height: 2px;
-    border-radius: 999px; background: rgba(125,211,252,.55);
+    border-radius: 999px !important; background: rgba(125,211,252,.55);
   }
 
   .m-mvcard-h .m-hero-k { display: inline-flex; align-items: center; gap: 5px; }
@@ -552,7 +566,7 @@
   .m-tabs > * { pointer-events: auto; }
 
   .m-tabs-bar {
-    flex: 1; display: flex; padding: 5px; border-radius: 24px;
+    flex: 1; display: flex; padding: 5px; border-radius: 24px !important;
     background: rgba(10,16,26,.76);
     border: 1px solid rgba(255,255,255,.14);
     backdrop-filter: blur(18px) saturate(140%);
@@ -562,7 +576,7 @@
   body.m-shell .m-tab {
     position: relative; flex: 1; height: 36px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 18px; color: #8fa1b5; font-size: 18px;
+    border-radius: 18px !important; color: #8fa1b5; font-size: 18px;
   }
   body.m-shell .m-tab.on { background: rgba(255,255,255,.14); color: #fff; }
   .m-dot-badge, .m-tab .m-dot {
@@ -578,7 +592,7 @@
   body.m-shell .m-fab {
     flex: 0 0 56px; width: 56px; height: 56px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 50%; font-size: 26px;
+    border-radius: 50% !important; font-size: 26px;
     background: #22c55e; color: #06301a;
     box-shadow: 0 0 0 4px rgba(34,197,94,.14), 0 12px 30px rgba(34,197,94,.42);
   }
@@ -604,7 +618,7 @@
 
   body.m-shell .m-res {
     display: flex; align-items: center; gap: 9px; width: 100%;
-    padding: 12px; margin-bottom: 7px; border-radius: 15px;
+    padding: 12px; margin-bottom: 7px; border-radius: 15px !important;
     text-align: left; cursor: pointer; color: #eef4fb;
     background: rgba(255,255,255,.11);
     border: 1px solid rgba(255,255,255,.15);
@@ -679,7 +693,7 @@
   .m-acts { display: flex; gap: 8px; margin-top: 11px; }
   body.m-shell .m-act {
     flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 13px 8px; border-radius: 999px; cursor: pointer;
+    padding: 13px 8px; border-radius: 999px !important; cursor: pointer;
     font-size: 13px; font-weight: 700; color: #eaf2fb;
     background: rgba(255,255,255,.11);
     border: 1px solid rgba(255,255,255,.17);
@@ -703,7 +717,7 @@
   body.m-shell .m-adj {
     flex: 0 0 44px; width: 44px; cursor: pointer; position: relative;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 16px; font-size: 17px; color: #eaf2fb;
+    border-radius: 16px !important; font-size: 17px; color: #eaf2fb;
     background: rgba(255,255,255,.11);
     border: 1px solid rgba(255,255,255,.15);
   }
@@ -712,7 +726,7 @@
    * concluye que le faltan productos. */
   body.m-shell .m-adj.on::after {
     content: ''; position: absolute; top: 9px; right: 10px;
-    width: 6px; height: 6px; border-radius: 50%; background: #f59e0b;
+    width: 6px; height: 6px; border-radius: 50% !important; background: #f59e0b;
   }
 
   .m-seg {
@@ -721,7 +735,7 @@
     border: 1px solid rgba(255,255,255,.10);
   }
   body.m-shell .m-seg button {
-    flex: 1; padding: 9px 4px; border-radius: 11px; cursor: pointer;
+    flex: 1; padding: 9px 4px; border-radius: 11px !important; cursor: pointer;
     font-size: 12px; color: #9fb0c4; text-align: center;
   }
   body.m-shell .m-seg button.on { background: rgba(255,255,255,.14); color: #fff; font-weight: 700; }
@@ -731,7 +745,7 @@
   body.m-shell .m-inv {
     position: relative; overflow: hidden; width: 100%;
     display: block; text-align: left; cursor: pointer;
-    padding: 11px 12px 13px; margin-bottom: 7px; border-radius: 15px;
+    padding: 11px 12px 13px; margin-bottom: 7px; border-radius: 15px !important;
     background: rgba(255,255,255,.10);
     border: 1px solid rgba(255,255,255,.14);
   }
@@ -763,7 +777,7 @@
 
   .m-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
   body.m-shell .m-chip {
-    padding: 8px 12px; border-radius: 999px; cursor: pointer;
+    padding: 8px 12px; border-radius: 999px !important; cursor: pointer;
     font-size: 11.5px; color: #b6c6d8;
     background: rgba(255,255,255,.07);
     border: 1px solid rgba(255,255,255,.12);
@@ -781,7 +795,7 @@
 
   .m-step { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
   body.m-shell .m-step button {
-    flex: 0 0 42px; height: 42px; cursor: pointer; border-radius: 12px;
+    flex: 0 0 42px; height: 42px; cursor: pointer; border-radius: 12px !important;
     font-size: 19px; color: #eaf2fb;
     background: rgba(255,255,255,.10);
     border: 1px solid rgba(255,255,255,.15);
@@ -807,7 +821,7 @@
 
   body.m-shell .m-iqline {
     display: flex; align-items: center; gap: 6px; cursor: pointer;
-    margin: 8px 0 2px; padding: 8px 11px; border-radius: 10px;
+    margin: 8px 0 2px; padding: 8px 11px; border-radius: 10px !important;
     font-size: 11px; font-weight: 700; color: #7dd3fc;
     background: rgba(56,189,248,.12);
     border: 1px solid rgba(56,189,248,.26);
@@ -815,7 +829,7 @@
 
   body.m-shell .m-next {
     display: flex; align-items: center; justify-content: center; gap: 7px;
-    width: 100%; margin-top: 9px; padding: 11px; border-radius: 999px;
+    width: 100%; margin-top: 9px; padding: 11px; border-radius: 999px !important;
     font-size: 12px; font-weight: 700; color: #9fb0c4;
     background: rgba(255,255,255,.06);
     border: 1px solid rgba(255,255,255,.12);
@@ -867,7 +881,7 @@
 
   body.m-shell .m-cyc-go {
     display: block; width: 100%; margin-top: 12px;
-    padding: 11px; border-radius: 999px; text-align: center;
+    padding: 11px; border-radius: 999px !important; text-align: center;
     font-size: 14px; font-weight: 800; color: #0b1220;
     background: #e2e8f0;
   }
@@ -895,7 +909,7 @@
   /* Separado y en rojo. No es un paso más: no hay deshacer. */
   body.m-shell .m-cyc-reset {
     display: flex; align-items: center; justify-content: center; gap: 7px;
-    width: 100%; margin-top: 22px; padding: 11px; border-radius: 999px;
+    width: 100%; margin-top: 22px; padding: 11px; border-radius: 999px !important;
     font-size: 13px; font-weight: 700; color: #fca5a5;
     background: rgba(248,113,113,.10);
     border: 1px solid rgba(248,113,113,.30);
@@ -911,7 +925,7 @@
   body.m-shell .m-item {
     display: flex; align-items: center; gap: 10px; width: 100%;
     padding: 11px 12px; margin-bottom: 6px; text-align: left; cursor: pointer;
-    border-radius: 13px; color: #f1f5f9;
+    border-radius: 13px !important; color: #f1f5f9;
     background: rgba(255,255,255,.09);
     border: 1px solid rgba(255,255,255,.12);
   }
