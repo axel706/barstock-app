@@ -26,11 +26,9 @@
     ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
 
   function montarMas(host) {
+    // Sin encabezado propio: el logo lo pinta el armazón, fijo y en
+    // todas las pantallas.
     host.innerHTML = `
-      <header class="m-head">
-        <span class="m-logo">BarStock<i>.</i></span>
-        <span class="m-loc">${esc((window.BARSTOCK_CONFIG || {}).LOCATION_NAME || '')}</span>
-      </header>
       <div class="m-lab">EVERYTHING ELSE</div>
       <div class="m-list">
         ${MAS.map(m => `
@@ -44,6 +42,17 @@
           <span class="m-item-t">Settings</span>
           <i class="ti ti-chevron-right m-chev" aria-hidden="true"></i>
         </button>
+      </div>
+
+      <!-- Salir vive aquí porque el botón del escritorio está dentro de
+           .wrap, y .wrap se esconde mientras hay pantalla propia: desde
+           el teléfono no había ninguna forma de cerrar sesión.
+           Separado del resto y en rojo: no es una sección más. -->
+      <div class="m-list m-list-end">
+        <button type="button" class="m-item m-item-out" id="mMoreOut">
+          <i class="ti ti-logout" aria-hidden="true"></i>
+          <span class="m-item-t">Log out</span>
+        </button>
       </div>`;
 
     host.querySelectorAll('[data-sec]').forEach(b => {
@@ -55,7 +64,19 @@
       };
     });
     const set = host.querySelector('#mMoreSet');
-    if (set) set.onclick = () => { if (typeof window.openSettings === 'function') window.openSettings(); };
+    if (set) set.onclick = () => {
+      if (typeof window.openSettingsModal === 'function') window.openSettingsModal();
+    };
+
+    const out = host.querySelector('#mMoreOut');
+    if (out) out.onclick = () => {
+      // Se pregunta: cerrar sesión por un roce del pulgar, con un conteo
+      // a medias, es de las pocas cosas de esta app que cuestan trabajo
+      // de verdad deshacer.
+      if (!window.confirm('Log out of BarStock?')) return;
+      const A = window.BarStockAuth;
+      if (A && typeof A.logout === 'function') A.logout();
+    };
   }
 
   function registrar() {

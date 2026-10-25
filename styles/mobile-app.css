@@ -99,10 +99,12 @@
 
   /* Buscar no lleva banda, pero su encabezado tambien tiene que
    * esquivar la barra de estado cuando la app va instalada. */
-  /* Buscar no usa .m-body: sus hijos cuelgan de la pantalla. El hueco
-   * de arriba ya lo da el padding del body por la banda fija; aquí sólo
-   * los márgenes propios. */
-  .m-screen[data-screen="search"] { padding: 14px 13px 0; }
+  /* Buscar y More no usan .m-body: sus hijos cuelgan de la pantalla, y
+   * sin esto el contenido iba pegado a los dos bordes. El hueco de
+   * arriba lo da el padding del body por la banda fija; aquí sólo los
+   * márgenes propios. */
+  .m-screen[data-screen="search"],
+  .m-screen[data-screen="more"] { padding: 14px 13px 0; }
 
   /* ── La banda ───────────────────────────────────────────────────── */
   /*
@@ -475,4 +477,14 @@
   .m-item-t { flex: 1; min-width: 0; font-size: 13px; line-height: 1.25; }
   .m-item-t small { display: block; font-size: 10px; color: #9fb0c4; margin-top: 2px; }
   .m-chev { font-size: 15px; color: #9fb0c4; opacity: .6; flex: 0 0 auto; }
+
+  /* Salir: separado y en rojo. No es una sección más de la lista. */
+  .m-list-end { margin-top: 22px; }
+  body.m-shell .m-item-out {
+    justify-content: center; color: #fca5a5;
+    background: rgba(248,113,113,.10);
+    border-color: rgba(248,113,113,.28);
+  }
+  .m-item-out > i:first-child { color: #fca5a5; flex: 0 0 auto; }
+  .m-item-out .m-item-t { flex: 0 0 auto; font-weight: 600; }
 }

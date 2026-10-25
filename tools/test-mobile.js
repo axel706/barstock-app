@@ -108,7 +108,7 @@ console.log('\nla banda es del armazon, no del Home');
   eq('el tema usa el interruptor de siempre', tema, 1);
 
   let ajustes = 0;
-  w.openSettings = () => { ajustes++; };
+  w.openSettingsModal = () => { ajustes++; };
   w.document.getElementById('mSet').click();
   eq('y los ajustes la pantalla de siempre', ajustes, 1);
 

@@ -103,7 +103,11 @@
     };
     const st = _banda.querySelector('#mSet');
     if (st) st.onclick = () => {
-      if (typeof window.openSettings === 'function') window.openSettings();
+      // openSettingsModal, no openSettings. Lo segundo no existe y
+      // nunca existió: el botón llevaba todo este tiempo llamando a
+      // undefined dentro de un `typeof`, que es la forma más silenciosa
+      // que hay de no hacer nada.
+      if (typeof window.openSettingsModal === 'function') window.openSettingsModal();
     };
   }
 
