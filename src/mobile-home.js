@@ -173,9 +173,14 @@
 
       return {
         // Con un conteo a medias, ESTA es la tarjeta que tiene que
-        // estar delante al abrir el Home: o lo retomas, o al menos
-        // ves que quedó abierto. La bienvenida puede esperar.
-        foco: true,
+        // estar delante: o lo retomas, o al menos ves que quedó
+        // abierto. La bienvenida puede esperar.
+        //
+        // La marca es un nombre y no un sí/pelado porque lo que
+        // dispara el movimiento es que CAMBIE: pausar y reanudar no
+        // vuelven a tirar del carrusel, pero que aparezca un conteo
+        // donde no había, sí.
+        foco: 'conteo',
         tono: viejo ? 'red' : 'amber',
         k: pau ? 'Count paused' : viejo ? 'Count abandoned' : 'Counting',
         tt: tot ? n + ' of ' + tot : String(n),
@@ -643,8 +648,23 @@
       </div>`;
 
     enganchar(host, cards);
-    if (irAlFoco) alFoco(host, cards);
+
+    // Se mueve al entrar a la pantalla, y también cuando el foco es
+    // NUEVO aunque sea un simple refresco. Ese segundo caso es el que
+    // faltaba: al cerrar el escáner no se entra al Home —ya estabas en
+    // él— así que sólo se refresca, y el conteo recién pausado se
+    // quedaba detrás de la bienvenida.
+    //
+    // Comparando el nombre del foco y no un sí/no, un repintado
+    // cualquiera mientras cuentas no vuelve a tirar del carrusel.
+    const foco = (cards.find(c => c && c.foco) || {}).foco || null;
+    const nuevo = foco && foco !== _focoAnterior;
+    _focoAnterior = foco;
+    if (irAlFoco || nuevo) alFoco(host, cards);
   }
+
+  // Qué tenía el foco la última vez que se pintó. null = nada.
+  let _focoAnterior = null;
 
   // ── Dónde arranca el carrusel ────────────────────────────────────────
   //
