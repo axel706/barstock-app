@@ -9,9 +9,13 @@
  *
  * 1. Aquí NO se usan las variables del tema. Estas tarjetas no flotan
  *    sobre el fondo del tema, flotan sobre una FOTO que además eliges
- *    tú. En modo claro salían blancas translúcidas sobre una barra
- *    oscura —gris medio con texto oscuro encima— e ilegibles. Los
- *    colores van escritos, y por eso no hay ni una regla de body.light.
+ *    tú, así que el claro del escritorio heredado tal cual salía
+ *    ilegible: blancas translúcidas sobre una barra oscura, con texto
+ *    oscuro encima. Los colores van escritos uno a uno, y el modo
+ *    claro es un bloque propio al final del archivo — no el del
+ *    escritorio. Lo que de verdad lo hace posible es que ahí el VELO
+ *    sobre la foto se invierte: en oscuro la oscurece, en claro la
+ *    aclara. Sin eso, ningún color de texto salva la pantalla.
  *
  * 2. Casi todo lo tocable es un <button>, y app.css le da a `button`
  *    fondo, borde, sombra y blur propio. Peor: `body.light button`
@@ -460,6 +464,87 @@
   }
   body.m-shell .m-fab:active { transform: scale(.94); }
 
+  /* ── Buscar ─────────────────────────────────────────────────────── */
+  /*
+   * Esto se perdió entero al reescribir el archivo para el Home
+   * aprobado: las clases de Buscar se quedaron sin una sola regla y la
+   * pantalla salía en HTML crudo, con la ficha encima de la lista.
+   *
+   * Mismo lenguaje que Top movers del Home a propósito: una fila es una
+   * fila en toda la app. Lo único que cambia es qué número va a la
+   * derecha.
+   */
+
+  /* Lista y ficha son dos niveles, no dos cosas a la vez. Sin esto se
+   * pintaban una debajo de la otra. */
+  .m-screen[data-screen="search"] #msFicha { display: none; }
+  .m-screen[data-screen="search"].ficha #msFicha { display: block; }
+  .m-screen[data-screen="search"].ficha #msList,
+  .m-screen[data-screen="search"].ficha #msCount { display: none; }
+
+  body.m-shell .m-res {
+    display: flex; align-items: center; gap: 9px; width: 100%;
+    padding: 11px 12px; margin-bottom: 7px; border-radius: 15px;
+    text-align: left; cursor: pointer; color: #eef4fb;
+    background: rgba(255,255,255,.09);
+    border: 1px solid rgba(255,255,255,.12);
+  }
+  .m-res-l { flex: 1; min-width: 0; }
+  .m-res-n {
+    display: block; font-size: 13px; line-height: 1.3; color: #eef4fb;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .m-res-s { display: block; font-size: 10px; color: #9fb0c4; margin-top: 2px; }
+  .m-res-s b { color: #cbd5e1; font-weight: 700; }
+  .m-res-r { text-align: right; flex: 0 0 auto; }
+  .m-res-r b { display: block; font-size: 16px; font-weight: 800; line-height: 1; }
+  .m-res-r small { display: block; font-size: 8.5px; color: #9fb0c4; margin-top: 3px; }
+
+  /* ── La ficha ───────────────────────────────────────────────────── */
+
+  body.m-shell .m-back {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 7px 2px 11px; font-size: 12.5px; color: #7dd3fc; cursor: pointer;
+  }
+
+  body.m-shell .m-fic {
+    display: block; padding: 15px 14px; border-radius: 18px;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.14);
+  }
+  .m-fic-n { color: #fff; font-size: 17px; font-weight: 800; letter-spacing: -.3px; line-height: 1.25; }
+  .m-fic-s { font-size: 11px; color: #9fb0c4; margin-top: 4px; }
+  .m-fic-big { display: flex; align-items: baseline; gap: 8px; margin-top: 12px; }
+  .m-fic-big b { font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+  .m-fic-big span { font-size: 11.5px; color: #9fb0c4; }
+
+  /* Pares etiqueta / valor. El valor a la derecha y en negrita: se lee
+   * la columna de la derecha sola, sin ir leyendo los rótulos. */
+  body.m-shell .m-rows {
+    display: block; margin-top: 10px; padding: 3px 14px; border-radius: 16px;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.11);
+  }
+  .m-row {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+    padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,.08);
+    font-size: 12.5px; color: #9fb0c4;
+  }
+  .m-row-end, .m-row:last-child { border-bottom: none; }
+  .m-row b { font-size: 13.5px; font-weight: 800; color: #eef4fb; text-align: right; }
+  .m-soft { font-weight: 400; font-size: 11px; color: #9fb0c4; }
+  .m-iq { font-weight: 700; font-size: 10.5px; color: #7dd3fc; }
+
+  .m-acts { display: flex; gap: 8px; margin-top: 12px; }
+  body.m-shell .m-act {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 12px 8px; border-radius: 999px; cursor: pointer;
+    font-size: 12.5px; font-weight: 700; color: #eaf2fb;
+    background: rgba(255,255,255,.11);
+    border: 1px solid rgba(255,255,255,.17);
+  }
+  .m-act .ti { font-size: 15px; color: #7dd3fc; }
+
   /* ── El ciclo ───────────────────────────────────────────────────── */
   /* Cada estado tiene su color y el color es la mitad del mensaje:
    * verde hay algo que empezar, ámbar algo a medias, rojo algo
@@ -547,6 +632,232 @@
   .m-item-t { flex: 1; min-width: 0; font-size: 13px; line-height: 1.25; }
   .m-item-t small { display: block; font-size: 10px; color: #9fb0c4; margin-top: 2px; }
   .m-chev { font-size: 15px; color: #9fb0c4; opacity: .6; flex: 0 0 auto; }
+
+  /* ══ Modo claro ═══════════════════════════════════════════════════
+   *
+   * Durante un tiempo esto no existió y el botón de la luna no hacía
+   * nada en el teléfono. La razón era real: aquí el fondo no es el del
+   * tema, es una FOTO que eliges tú. Al heredar el claro del
+   * escritorio salían tarjetas blancas translúcidas sobre una barra
+   * oscura, con texto oscuro encima, e ilegibles. Lo tapé escribiendo
+   * los colores a mano, y el botón se quedó sin nada que cambiar.
+   *
+   * Lo que faltaba no eran los colores: era el VELO. En oscuro el velo
+   * oscurece la foto para que el texto claro se lea; en claro tiene
+   * que aclararla, y bastante más, porque la foto puede ser oscura y
+   * el texto pasa a ser negro. Ésa es la regla de la que cuelga todo
+   * lo demás de este bloque.
+   *
+   * ── Por qué va como anulación y no con variables ──────────────────
+   *
+   * Pasar las ~560 líneas de arriba a variables tocaba cada regla del
+   * diseño oscuro, que está aprobado y probado en el teléfono. Esto se
+   * puede leer entero de una vez y borrar de una vez. Si el claro se
+   * queda, el momento de unificar es cuando los dos estén asentados.
+   *
+   * La píldora de locación NO está aquí a propósito: sigue siendo
+   * oscura sólida con texto blanco en los dos modos. Resalta por ser
+   * la única cosa distinta de la pantalla, y eso vale igual sobre
+   * claro que sobre oscuro.
+   */
+
+  /* El velo. Todo lo demás depende de esto. */
+  body.m-shell.light .m-screens::before {
+    background: linear-gradient(180deg, rgba(248,250,252,.84), rgba(224,233,244,.93));
+  }
+
+  body.m-shell.light .m-band {
+    background: linear-gradient(180deg, rgba(255,255,255,.84), rgba(255,255,255,.74)), rgba(248,250,252,.70);
+    border-bottom-color: rgba(15,23,42,.12);
+    box-shadow: 0 6px 18px rgba(15,23,42,.10);
+  }
+  body.m-shell.light .m-logo { color: #0f172a; }
+  body.m-shell.light .m-logo i { color: #0284c7; }
+  body.m-shell.light .m-logo em { color: #64748b; }
+  body.m-shell.light .m-ico {
+    background: rgba(15,23,42,.07);
+    border-color: rgba(15,23,42,.14);
+    color: #334155;
+  }
+
+  body.m-shell.light .m-day { color: #0f172a; }
+
+  body.m-shell.light .m-searchbar {
+    background: rgba(255,255,255,.86);
+    border-color: rgba(15,23,42,.12);
+    color: #64748b;
+  }
+  body.m-shell.light .m-searchbar > i:first-child { color: #0284c7; }
+  body.m-shell.light .m-searchbar input { color: #0f172a; }
+
+  /* La hoja de locaciones */
+  body.m-shell.light .m-sheet-bg { background: rgba(15,23,42,.34); }
+  body.m-shell.light .m-sheet-box {
+    background: #ffffff;
+    border-top-color: rgba(15,23,42,.12);
+    box-shadow: 0 -14px 40px rgba(15,23,42,.22);
+  }
+  body.m-shell.light .m-sheet-grip { background: rgba(15,23,42,.20); }
+  body.m-shell.light .m-sheet-t { color: #64748b; }
+  body.m-shell.light .m-sheet-op {
+    color: #1e293b;
+    background: rgba(15,23,42,.045);
+    border-color: rgba(15,23,42,.10);
+  }
+  body.m-shell.light .m-sheet-op.on {
+    color: #0f172a;
+    background: rgba(2,132,199,.12);
+    border-color: rgba(2,132,199,.40);
+  }
+  body.m-shell.light .m-sheet-op .ti { color: #0284c7; }
+
+  /* El carrusel. Los botones de color NO se tocan: son sólidos y
+   * saturados, y ya se leen igual sobre claro que sobre oscuro. */
+  body.m-shell.light .m-hero-t,
+  body.m-shell.light .m-hero-amt,
+  body.m-shell.light .m-hero-list b { color: #0f172a; }
+  body.m-shell.light .m-hero-s,
+  body.m-shell.light .m-hero-list span { color: #475569; }
+  body.m-shell.light .m-hero-vs { color: #64748b; }
+  body.m-shell.light .m-hero-k { color: #0369a1; }
+  body.m-shell.light .m-prog { background: rgba(15,23,42,.12); }
+  body.m-shell.light .m-hero-b { background: rgba(15,23,42,.10); color: #0f172a; }
+
+  body.m-shell.light .m-hero-green { background: rgba(34,197,94,.16);  border-color: rgba(21,128,61,.30); }
+  body.m-shell.light .m-hero-blue  { background: rgba(56,189,248,.18); border-color: rgba(3,105,161,.30); }
+  body.m-shell.light .m-hero-amber { background: rgba(245,158,11,.18); border-color: rgba(180,83,9,.30); }
+  body.m-shell.light .m-hero-red   { background: rgba(239,68,68,.14);  border-color: rgba(185,28,28,.28); }
+  body.m-shell.light .m-hero-calm  { background: rgba(255,255,255,.80); border-color: rgba(15,23,42,.12); }
+
+  body.m-shell.light .m-hero-green .m-hero-k { color: #15803d; }
+  body.m-shell.light .m-hero-amber .m-hero-k { color: #b45309; }
+  body.m-shell.light .m-hero-red   .m-hero-k { color: #b91c1c; }
+  body.m-shell.light .m-hero-calm  .m-hero-k { color: #64748b; }
+
+  body.m-shell.light .m-dots i { background: rgba(15,23,42,.20); }
+  body.m-shell.light .m-dots i.on { background: #0284c7; }
+
+  /* Secciones y Top movers */
+  body.m-shell.light .m-sec { color: #0f172a; }
+  body.m-shell.light .m-seclink { color: #0284c7; }
+  body.m-shell.light .m-mv {
+    background: rgba(255,255,255,.84);
+    border-color: rgba(15,23,42,.11);
+    color: #1e293b;
+  }
+  body.m-shell.light .m-mv-bar { background: rgba(56,189,248,.22); }
+  body.m-shell.light .m-mv-t small,
+  body.m-shell.light .m-mv-v small { color: #64748b; }
+  body.m-shell.light .m-mv-v b { color: #0f172a; }
+
+  /* Despegó / se apagó */
+  body.m-shell.light .m-col-up { background: rgba(34,197,94,.14); border-color: rgba(21,128,61,.26); }
+  body.m-shell.light .m-col-dn { background: rgba(239,68,68,.12); border-color: rgba(185,28,28,.24); }
+  body.m-shell.light .m-col-up .m-col-k { color: #15803d; }
+  body.m-shell.light .m-col-dn .m-col-k { color: #b91c1c; }
+  body.m-shell.light .m-col-r { color: #475569; }
+  body.m-shell.light .m-col-r b { color: #0f172a; }
+
+  /* Dinero. El rojo y el verde siguen al revés de lo normal a
+   * propósito: gastar MÁS no es una buena noticia. */
+  body.m-shell.light .m-stat {
+    background: rgba(255,255,255,.84);
+    border-color: rgba(15,23,42,.11);
+  }
+  body.m-shell.light .m-stat-k,
+  body.m-shell.light .m-stat-d { color: #64748b; }
+  body.m-shell.light .m-stat-v { color: #0f172a; }
+  body.m-shell.light .m-up { color: #b91c1c; }
+  body.m-shell.light .m-down { color: #15803d; }
+
+  /* La barra de pestañas */
+  body.m-shell.light .m-tabs-bar {
+    background: rgba(255,255,255,.88);
+    border-color: rgba(15,23,42,.11);
+    box-shadow: 0 10px 28px rgba(15,23,42,.16);
+  }
+  body.m-shell.light .m-tab { color: #64748b; }
+  body.m-shell.light .m-tab.on { background: rgba(15,23,42,.09); color: #0f172a; }
+
+  /* Buscar */
+  body.m-shell.light .m-res {
+    background: rgba(255,255,255,.84);
+    border-color: rgba(15,23,42,.11);
+    color: #1e293b;
+  }
+  body.m-shell.light .m-res-n { color: #0f172a; }
+  body.m-shell.light .m-res-s { color: #64748b; }
+  body.m-shell.light .m-res-s b { color: #334155; }
+  body.m-shell.light .m-res-r small { color: #64748b; }
+  body.m-shell.light .m-back { color: #0284c7; }
+  body.m-shell.light .m-fic {
+    background: rgba(255,255,255,.88);
+    border-color: rgba(15,23,42,.11);
+  }
+  body.m-shell.light .m-fic-n { color: #0f172a; }
+  body.m-shell.light .m-fic-s,
+  body.m-shell.light .m-fic-big span { color: #64748b; }
+  body.m-shell.light .m-rows {
+    background: rgba(255,255,255,.78);
+    border-color: rgba(15,23,42,.10);
+  }
+  body.m-shell.light .m-row { color: #64748b; border-bottom-color: rgba(15,23,42,.09); }
+  body.m-shell.light .m-row b { color: #0f172a; }
+  body.m-shell.light .m-soft { color: #64748b; }
+  body.m-shell.light .m-iq { color: #0284c7; }
+  body.m-shell.light .m-act {
+    background: rgba(255,255,255,.88);
+    border-color: rgba(15,23,42,.13);
+    color: #1e293b;
+  }
+  body.m-shell.light .m-act .ti { color: #0284c7; }
+
+  /* El ciclo */
+  body.m-shell.light .m-cyc-t,
+  body.m-shell.light .m-cyc-n { color: #0f172a; }
+  body.m-shell.light .m-cyc-d { color: #475569; }
+  body.m-shell.light .m-cyc-wait  { background: rgba(255,255,255,.80); border-color: rgba(15,23,42,.11); }
+  body.m-shell.light .m-cyc-green { background: rgba(34,197,94,.15);  border-color: rgba(21,128,61,.28); }
+  body.m-shell.light .m-cyc-amber { background: rgba(245,158,11,.17); border-color: rgba(180,83,9,.30); }
+  body.m-shell.light .m-cyc-red   { background: rgba(239,68,68,.13);  border-color: rgba(185,28,28,.26); }
+  body.m-shell.light .m-cyc-teal  { background: rgba(20,184,166,.15); border-color: rgba(15,118,110,.28); }
+  body.m-shell.light .m-cyc-k { color: #475569; }
+  body.m-shell.light .m-cyc-green .m-cyc-k { color: #15803d; }
+  body.m-shell.light .m-cyc-amber .m-cyc-k { color: #b45309; }
+  body.m-shell.light .m-cyc-red   .m-cyc-k { color: #b91c1c; }
+  body.m-shell.light .m-cyc-teal  .m-cyc-k { color: #0f766e; }
+  body.m-shell.light .m-cyc-bar { background: rgba(15,23,42,.12); }
+  body.m-shell.light .m-cyc-go { background: #0f172a; color: #fff; }
+  body.m-shell.light .m-cyc-sn { color: #64748b; border-color: #94a3b8; }
+  body.m-shell.light .m-cyc-s.on .m-cyc-sn { background: #16a34a; border-color: #16a34a; color: #fff; }
+  body.m-shell.light .m-cyc-s.next .m-cyc-sn { color: #0369a1; border-color: #0369a1; }
+  body.m-shell.light .m-cyc-st { color: #1e293b; }
+  body.m-shell.light .m-cyc-st small { color: #64748b; }
+  body.m-shell.light .m-cyc-reset {
+    color: #b91c1c;
+    background: rgba(239,68,68,.09);
+    border-color: rgba(185,28,28,.26);
+  }
+  body.m-shell.light .m-cyc-warn { color: #64748b; }
+
+  /* More, y los mensajes sueltos */
+  body.m-shell.light .m-lab,
+  body.m-shell.light .m-cnt,
+  body.m-shell.light .m-empty,
+  body.m-shell.light .m-chev { color: #64748b; }
+  body.m-shell.light .m-item {
+    color: #1e293b;
+    background: rgba(255,255,255,.84);
+    border-color: rgba(15,23,42,.11);
+  }
+  body.m-shell.light .m-item > i:first-child,
+  body.m-shell.light .m-item-t small { color: #64748b; }
+  body.m-shell.light .m-item-out {
+    color: #b91c1c;
+    background: rgba(239,68,68,.09);
+    border-color: rgba(185,28,28,.26);
+  }
+  body.m-shell.light .m-item-out > i:first-child { color: #b91c1c; }
 
   /* Salir: separado y en rojo. No es una sección más de la lista. */
   .m-list-end { margin-top: 22px; }
