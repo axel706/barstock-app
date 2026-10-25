@@ -121,15 +121,32 @@
     padding-bottom: calc(94px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* La foto de la app sigue debajo; encima va un blur a pantalla
-   * completa con un velo SUAVE. Un velo opaco también se probó: deja de
-   * parecer la app. */
-  .m-screens::before {
-    content: '';
-    position: fixed; inset: 0; z-index: -1;
+  /* ── UN solo velo ───────────────────────────────────────────────── */
+  /*
+   * app.css ya apila tres capas sobre la foto: `body::before` (o
+   * #bgLayer) la pinta, `body::after` le echa un degradado oscuro, y
+   * el `background` del propio body echa OTRO. El mío iba encima: velo
+   * sobre velo sobre velo.
+   *
+   * Y el del body es además el que dejaba la franja: un `background`
+   * pinta la caja del elemento, así que acaba donde acaba el
+   * contenido. Con poco contenido, de ahí para abajo sólo quedaban los
+   * velos fijos y se veía un escalón de color justo debajo de la barra
+   * de pestañas.
+   *
+   * Aquí se apaga el del body y se aprovecha `body::after` —que ya es
+   * fijo y cubre la pantalla entera— como el único velo, con el blur
+   * dentro. Una capa menos y ningún escalón.
+   *
+   * Va en el body y no en .m-screens a propósito: las pantallas
+   * propias se esconden al entrar a una sección del escritorio, y con
+   * el velo ahí dentro la foto se quedaba cruda en esas pantallas.
+   */
+  body.m-shell { background: none !important; }
+  body.m-shell::after {
     backdrop-filter: blur(26px) saturate(125%);
     -webkit-backdrop-filter: blur(26px) saturate(125%);
-    background: linear-gradient(180deg, rgba(8,13,22,.28), rgba(8,13,22,.60));
+    background: linear-gradient(180deg, rgba(8,13,22,.28), rgba(8,13,22,.60)) !important;
   }
 
   .m-screens { position: relative; }
@@ -169,10 +186,10 @@
    * incluidas las secciones del escritorio — por eso la pinta el
    * armazón y no el Home.
    *
-   * Lleva desenfoque PROPIO. El velo de .m-screens::before va a
-   * z-index -1, o sea detrás del contenido; la banda está delante, así
-   * que sin un blur suyo se leería el texto pasando por debajo. Y
-   * debajo del blanco translúcido va una base oscura: sólo con el
+   * Lleva desenfoque PROPIO. El velo vive en body::after, a z-index
+   * -1, o sea detrás del contenido; la banda está delante, así que sin
+   * un blur suyo se leería el texto pasando por debajo. Y debajo del
+   * blanco translúcido va una base oscura: sólo con el
    * blanco, el texto claro que pasa por debajo sigue fantasmeando.
    *
    * Instalada, la barra de estado de iOS se pinta encima (status-bar
@@ -593,6 +610,13 @@
   /* El hueco donde se apoya el círculo. 4px más ancho que él por cada
    * lado: sin ese aire la barra parece cortada, no partida. */
   .m-tabs-hole { flex: 0 0 64px; }
+
+  /* Con el teclado abierto la barra se va. En iOS un elemento fijo se
+   * pega al borde de la ventana VISIBLE, y al abrirse el teclado esa
+   * ventana encoge: la barra subía con ella y dejaba un escalón
+   * debajo. Mientras escribes no vas a cambiar de pestaña. */
+  body.m-kb .m-tabs { display: none; }
+  body.m-kb.m-shell { padding-bottom: 24px; }
 
   .m-tabs-bar {
     display: flex; padding: 5px; border-radius: 24px;

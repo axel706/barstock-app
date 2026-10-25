@@ -125,6 +125,7 @@
     document.body.classList.add('m-shell');
     _montado = true;
     bloquearZoom(true);
+    vigilarTeclado(true);
     pintarBarra();
     entrada();
   }
@@ -176,11 +177,39 @@
   function sinPellizco(e) { e.preventDefault(); }
   function sinDosDedos(e) { if (e.touches && e.touches.length > 1) e.preventDefault(); }
 
+  // ── Con el teclado abierto, la barra estorba ─────────────────────────
+  //
+  // En iOS un elemento fijo se queda pegado al borde de la ventana
+  // VISIBLE, y al abrirse el teclado esa ventana encoge: la barra sube
+  // con ella y deja un escalón debajo. Pelear contra eso es pelear
+  // contra el sistema.
+  //
+  // Se esconde y ya. Mientras escribes no vas a cambiar de pestaña, y
+  // la pantalla gana cinco centímetros justo cuando menos tiene.
+  function conTeclado(si) {
+    document.body.classList.toggle('m-kb', si);
+  }
+  function alEnfocar(e) {
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) conTeclado(true);
+  }
+  function alSalir(e) {
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) conTeclado(false);
+  }
+
   function bloquearZoom(si) {
     const m = si ? 'addEventListener' : 'removeEventListener';
     ['gesturestart', 'gesturechange', 'gestureend'].forEach(ev =>
       document[m](ev, sinPellizco, { passive: false }));
     document[m]('touchmove', sinDosDedos, { passive: false });
+  }
+
+  function vigilarTeclado(si) {
+    const m = si ? 'addEventListener' : 'removeEventListener';
+    document[m]('focusin', alEnfocar);
+    document[m]('focusout', alSalir);
+    if (!si) conTeclado(false);
   }
 
   function desmontar() {
@@ -193,6 +222,7 @@
     _montado = false;
     _entrado = false;
     bloquearZoom(false);
+    vigilarTeclado(false);
     document.body.classList.remove('m-shell');
     document.body.classList.remove('m-on');
     // Las pantallas propias se quedan sin dibujar; las secciones del
