@@ -275,7 +275,12 @@
   function registrar() {
     if (!window.BarStockMobile) return;
     window.BarStockMobile.register({
-      id: 'search', icon: 'ti-search', label: 'Search', tab: true, orden: 20,
+      // Sin pestaña propia: su sitio lo ocupa el ciclo. Buscar no se
+      // pierde — es lo primero del Home, grande y fijo, que es desde
+      // donde se entra de verdad. Una pestaña para algo que ya tiene un
+      // campo enorme dos dedos más arriba era un hueco desperdiciado en
+      // la única barra que no se puede hacer más larga.
+      id: 'search', icon: 'ti-search', label: 'Search', tab: false, orden: 20,
       mount, show
     });
   }

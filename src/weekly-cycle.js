@@ -252,6 +252,14 @@
 
   // ── Dibujado ───────────────────────────────────────────────────────
   function paint() {
+    // La pantalla del ciclo del telefono mira el mismo estado, asi que
+    // se entera por aqui. Va ANTES del return de abajo: el boton de
+    // escritorio puede no estar en el DOM, y salirse sin avisar dejaria
+    // la pantalla del telefono congelada en el estado de hace un rato.
+    if (window.BarStockMobileCycle && window.BarStockMobileCycle.refresh) {
+      try { window.BarStockMobileCycle.refresh(); } catch (e) {}
+    }
+
     const btn = document.getElementById('cycleBtn');
     if (!btn) return;
 
@@ -557,11 +565,31 @@
     boot();
   }
 
+  // Reiniciar desde el telefono. El boton de escritorio lo hace en dos
+  // toques (done -> confirm -> step1) porque es una tira estrecha donde
+  // no cabe una pregunta; en el telefono hay sitio para preguntarlo de
+  // frente, y resetOnHand ya pide su propia confirmacion.
+  async function reiniciar() {
+    if (typeof resetOnHand === 'function') await resetOnHand();
+    await refresh();
+  }
+
   window.BarStockWeeklyCycle = {
     refresh, onDataChanged,
     // Lo pide el Home del telefono para avisar de un ciclo que lleva
     // demasiado abierto. Ese aviso ya existia aqui dentro, pero solo se
     // veia en el boton del encabezado de escritorio.
-    edadCiclo, cicloViejo
+    edadCiclo, cicloViejo,
+    // ── Lo que necesita la pantalla del ciclo en el telefono ──────────
+    //
+    // Se exponen LECTURAS del estado y la MISMA accion, no una copia de
+    // la maquina de estados. El paso se deduce del estado real (ver el
+    // comentario de arriba del archivo); dos sitios deduciendolo por su
+    // cuenta es la forma segura de que un dia digan cosas distintas.
+    estado: () => _state,
+    resetAt: () => _resetAt,
+    pausado, abandonado, quietoDesdeHace, hace, cuantoLleva, fmtDate,
+    accion: onClick,
+    reiniciar
   };
 })();

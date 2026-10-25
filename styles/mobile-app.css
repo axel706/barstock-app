@@ -460,6 +460,76 @@
   }
   body.m-shell .m-fab:active { transform: scale(.94); }
 
+  /* ── El ciclo ───────────────────────────────────────────────────── */
+  /* Cada estado tiene su color y el color es la mitad del mensaje:
+   * verde hay algo que empezar, ámbar algo a medias, rojo algo
+   * olvidado, verde azulado todo en orden. Escritos, no del tema: esto
+   * flota sobre una foto. */
+
+  .m-screen[data-screen="cycle"] { padding: 14px 13px 0; }
+  .m-cyc-t { color: #fff; font-size: 19px; font-weight: 800; letter-spacing: -.4px; margin: 2px 2px 11px; }
+
+  body.m-shell .m-cyc-h { display: block; padding: 14px; border-radius: 17px; }
+  .m-cyc-wait  { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.13); }
+  .m-cyc-green { background: rgba(99,153,34,.16);  border: 1px solid rgba(151,196,89,.42); }
+  .m-cyc-amber { background: rgba(186,117,23,.18); border: 1px solid rgba(239,159,39,.46); }
+  .m-cyc-red   { background: rgba(226,75,74,.16);  border: 1px solid rgba(240,149,149,.44); }
+  .m-cyc-teal  { background: rgba(29,158,117,.16); border: 1px solid rgba(93,202,165,.42); }
+
+  .m-cyc-k {
+    font-size: 10.5px; font-weight: 800; letter-spacing: .8px;
+    text-transform: uppercase; color: #cbd5e1;
+  }
+  .m-cyc-green .m-cyc-k { color: #c0dd97; }
+  .m-cyc-amber .m-cyc-k { color: #fac775; }
+  .m-cyc-red   .m-cyc-k { color: #f7c1c1; }
+  .m-cyc-teal  .m-cyc-k { color: #9fe1cb; }
+
+  .m-cyc-n { color: #fff; font-size: 18px; font-weight: 800; letter-spacing: -.3px; margin: 5px 0 4px; }
+  .m-cyc-d { font-size: 12px; color: #c3d0de; line-height: 1.5; }
+  .m-cyc-bar {
+    height: 5px; border-radius: 999px; margin: 8px 0 7px;
+    background: rgba(255,255,255,.15); overflow: hidden;
+  }
+  .m-cyc-bar > span { display: block; height: 5px; border-radius: 999px; background: #ef9f27; }
+
+  body.m-shell .m-cyc-go {
+    display: block; width: 100%; margin-top: 12px;
+    padding: 11px; border-radius: 999px; text-align: center;
+    font-size: 14px; font-weight: 800; color: #0b1220;
+    background: #e2e8f0;
+  }
+  .m-cyc-green .m-cyc-go { background: #97c459; color: #173404; }
+  .m-cyc-amber .m-cyc-go { background: #ef9f27; color: #412402; }
+  .m-cyc-red   .m-cyc-go { background: #f09595; color: #501313; }
+
+  /* Los tres pasos, siempre los tres. Medio tachado es lo que te dice
+   * de un vistazo cuánto falta; un paso que aparece y desaparece según
+   * el estado no deja aprenderse la rutina. */
+  .m-cyc-steps { margin: 14px 2px 0; }
+  .m-cyc-s { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; opacity: .45; }
+  .m-cyc-s.on, .m-cyc-s.next { opacity: 1; }
+  .m-cyc-sn {
+    width: 20px; height: 20px; flex: 0 0 20px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10.5px; font-weight: 800;
+    color: #9fb0c4; border: 1px solid #9fb0c4;
+  }
+  .m-cyc-s.on .m-cyc-sn { background: #97c459; border-color: #97c459; color: #173404; font-size: 12px; }
+  .m-cyc-s.next .m-cyc-sn { color: #85b7eb; border-color: #85b7eb; }
+  .m-cyc-st { font-size: 13px; color: #e8eef6; line-height: 1.3; }
+  .m-cyc-st small { display: block; font-size: 11px; color: #9fb0c4; margin-top: 2px; }
+
+  /* Separado y en rojo. No es un paso más: no hay deshacer. */
+  body.m-shell .m-cyc-reset {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    width: 100%; margin-top: 22px; padding: 11px; border-radius: 999px;
+    font-size: 13px; font-weight: 700; color: #fca5a5;
+    background: rgba(248,113,113,.10);
+    border: 1px solid rgba(248,113,113,.30);
+  }
+  .m-cyc-warn { font-size: 11px; color: #9fb0c4; text-align: center; margin-top: 7px; line-height: 1.5; }
+
   /* ── Mensajes y listas sueltas ──────────────────────────────────── */
 
   .m-lab { font-size: 10px; color: #9fb0c4; letter-spacing: .5px; margin: 16px 2px 8px; }
