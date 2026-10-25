@@ -83,7 +83,14 @@
     _banda = document.createElement('header');
     _banda.id = 'mBand';
     _banda.className = 'm-band';
+    // La escalera del desenfoque progresivo. Seis capas vacías: cada
+    // una desenfoca más que la anterior y la CSS la recorta a su
+    // franja con una máscara. Van primero en el DOM para que el logo y
+    // los botones queden por encima.
     _banda.innerHTML =
+      '<span class="m-blur" aria-hidden="true">' +
+        '<i></i><i></i><i></i><i></i><i></i><i></i>' +
+      '</span>' +
       '<span class="m-logo">BarStock<i>.</i><em>PRO</em></span>' +
       // Sin boton de luna: en el telefono el modo claro no existe (ver
       // la cabecera de mobile-app.css). Un boton que no hace nada es

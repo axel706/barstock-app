@@ -224,23 +224,83 @@
    * black-translucent). El inset es 0 en el navegador y ~47px en
    * standalone, así que la misma regla vale para los dos.
    */
+  /* ── Desenfoque progresivo, no una barra ────────────────────────
+   *
+   * Antes esto era una franja sólida con su blur y su línea inferior:
+   * un bloque pegado encima del contenido, con un borde que cortaba
+   * la foto en seco.
+   *
+   * CSS no sabe hacer un `backdrop-filter` en degradado, así que se
+   * construye: seis capas superpuestas, cada una con más desenfoque
+   * que la anterior y recortada a su franja con una máscara. El
+   * resultado es nítido abajo y muy borroso arriba, sin ninguna
+   * frontera: el contenido se va deshaciendo según sube.
+   *
+   * Las capas no llevan color; el contraste del logo lo pone el
+   * degradado de abajo, que también se desvanece. Así no hay línea en
+   * ningún sitio.
+   *
+   * La banda NO puede tener backdrop-filter propio: crearía su propia
+   * raíz de fondo y las seis capas pasarían a desenfocar el resultado
+   * de la banda en vez de la página. De ahí que sólo lleve color.
+   */
   .m-band {
     position: fixed; top: 0; left: 0; right: 0; z-index: 9100;
     height: calc(52px + env(safe-area-inset-top, 0px));
     padding-top: env(safe-area-inset-top, 0px);
     display: flex; align-items: center; justify-content: center;
     padding-left: 12px; padding-right: 12px;
-    background:
-      linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.07)),
-      rgba(9,14,24,.72);
-    backdrop-filter: blur(22px) saturate(130%);
-    -webkit-backdrop-filter: blur(22px) saturate(130%);
-    border-bottom: 1px solid rgba(255,255,255,.16);
-    box-shadow: 0 8px 22px rgba(0,0,0,.26);
+    background: linear-gradient(to top,
+      rgba(8,12,19,0) 0%,
+      rgba(8,12,19,.34) 38%,
+      rgba(8,12,19,.62) 72%,
+      rgba(8,12,19,.74) 100%);
   }
+
+  .m-blur { position: absolute; inset: 0; pointer-events: none; }
+  .m-blur > i { position: absolute; inset: 0; display: block; }
+
+  /* Seis franjas de abajo arriba. Cada máscara se solapa con la
+   * siguiente para que el salto entre niveles no se vea. */
+  .m-blur > i:nth-child(1) {
+    backdrop-filter: blur(1px); -webkit-backdrop-filter: blur(1px);
+    -webkit-mask-image: linear-gradient(to top, #000 0%, #000 17%, transparent 34%);
+            mask-image: linear-gradient(to top, #000 0%, #000 17%, transparent 34%);
+  }
+  .m-blur > i:nth-child(2) {
+    backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+    -webkit-mask-image: linear-gradient(to top, transparent 0%, #000 17%, #000 34%, transparent 51%);
+            mask-image: linear-gradient(to top, transparent 0%, #000 17%, #000 34%, transparent 51%);
+  }
+  .m-blur > i:nth-child(3) {
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    -webkit-mask-image: linear-gradient(to top, transparent 17%, #000 34%, #000 51%, transparent 68%);
+            mask-image: linear-gradient(to top, transparent 17%, #000 34%, #000 51%, transparent 68%);
+  }
+  .m-blur > i:nth-child(4) {
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    -webkit-mask-image: linear-gradient(to top, transparent 34%, #000 51%, #000 68%, transparent 85%);
+            mask-image: linear-gradient(to top, transparent 34%, #000 51%, #000 68%, transparent 85%);
+  }
+  .m-blur > i:nth-child(5) {
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    -webkit-mask-image: linear-gradient(to top, transparent 51%, #000 68%, #000 85%, transparent 100%);
+            mask-image: linear-gradient(to top, transparent 51%, #000 68%, #000 85%, transparent 100%);
+  }
+  .m-blur > i:nth-child(6) {
+    backdrop-filter: blur(22px) saturate(130%); -webkit-backdrop-filter: blur(22px) saturate(130%);
+    -webkit-mask-image: linear-gradient(to top, transparent 68%, #000 85%, #000 100%);
+            mask-image: linear-gradient(to top, transparent 68%, #000 85%, #000 100%);
+  }
+  /* Por encima de la escalera: las capas son absolutas y, sin esto, el
+   * logo —que es un hijo normal del flex— se pintaría por debajo y
+   * saldría él mismo desenfocado. La sombra es por lo mismo que el
+   * degradado: el fondo de aquí arriba es una foto cualquiera. */
   .m-logo {
+    position: relative; z-index: 1;
     font-size: 21px; font-weight: 800; color: #fff;
     letter-spacing: -.6px; display: inline-flex; align-items: baseline;
+    text-shadow: 0 1px 10px rgba(0,0,0,.45);
   }
   .m-logo i { color: #38bdf8; font-style: normal; }
   .m-logo em {
@@ -258,7 +318,7 @@
    * Se ancla al suelo en vez de al techo: abajo no hay inset que
    * valga, así que es la referencia que no cambia. */
   .m-band-ico {
-    position: absolute; right: 12px;
+    position: absolute; right: 12px; z-index: 1;
     bottom: 0; height: 52px;
     display: flex; align-items: center; gap: 6px;
   }
