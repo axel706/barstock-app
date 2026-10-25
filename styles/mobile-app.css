@@ -338,7 +338,15 @@
     display: flex; align-items: center; justify-content: space-between;
     gap: 9px; padding: 14px 0 13px;
   }
-  .m-day { font-size: 25px; font-weight: 800; color: #fff; letter-spacing: -.5px; line-height: 1; }
+  /* "Hello Alejandro" es más largo que "Sunday", así que el saludo se
+   * encoge antes que la píldora de locación y se corta con puntos.
+   * Sin esto, un nombre largo empujaba la píldora fuera. */
+  .m-day {
+    flex: 1 1 auto; min-width: 0;
+    font-size: 25px; font-weight: 800; color: #fff;
+    letter-spacing: -.5px; line-height: 1.1;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
 
   /* Sólida y opaca: es lo único opaco de la pantalla, así que resalta
    * por ser distinta y no por ser más brillante. Y deja el azul libre
@@ -346,6 +354,7 @@
   body.m-shell .m-pill,
   .m-pill-solo {
     display: inline-flex; align-items: center; gap: 7px;
+    flex: 0 1 auto;
     max-width: 190px; padding: 9px 13px; border-radius: 999px;
     cursor: pointer; font-size: 13.5px; font-weight: 700; color: #fff;
     background: #0b1220;
@@ -460,12 +469,21 @@
    * la derecha, que se lee como "esto empieza aquí" en vez de como
    * "hay más a los dos lados".
    *
-   * El relleno lateral es la mitad de lo que le sobra a la tarjeta
-   * (60/2): así la primera y la última también quedan centradas al
-   * encajar, sin necesidad de espaciadores falsos. */
+   * La tarjeta mide 100% de la CAJA DE CONTENIDO del carril, que ya
+   * es el ancho menos el relleno. Así, al encajar, cae exactamente
+   * sobre esa caja: centrada, con el relleno de cada lado enseñando
+   * la vecina. Y vale igual para la primera y la última, sin
+   * espaciadores falsos.
+   *
+   * El intento anterior ponía `calc(100% - 60px)` y ahí estaba el
+   * fallo: ese 100% ya era la caja de contenido —el ancho menos los
+   * 60 del relleno— así que restaba los 60 dos veces. La tarjeta
+   * salía 60px más estrecha de lo que la cuenta suponía y sólo
+   * parecía centrada la de en medio, que es la única que el navegador
+   * sí podía desplazar hasta el centro. */
   .m-rail {
     display: flex; gap: 9px;
-    padding: 0 30px;
+    padding: 0 20px;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
@@ -473,7 +491,7 @@
   }
   .m-rail::-webkit-scrollbar { display: none; }
   .m-rail > .m-hero {
-    flex: 0 0 calc(100% - 60px);
+    flex: 0 0 100%;
     scroll-snap-align: center;
   }
 

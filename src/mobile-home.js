@@ -44,6 +44,43 @@
     return new Date().toLocaleDateString('en-US', { weekday: 'long' });
   }
 
+  // ── El saludo ────────────────────────────────────────────────────────
+  //
+  // El nombre sale del perfil de remitente de Ajustes, que es el único
+  // sitio donde esta app sabe cómo se llama quien la usa. Vive en la
+  // nube, así que se pide una vez y se guarda: el Home se repinta
+  // muchas veces y no va a consultar la base de datos en cada una.
+  //
+  // Mientras no se sabe —o si no hay nombre puesto— se enseña el día
+  // de la semana, que es lo que había. Un "Hello" a secas o un
+  // "Hello undefined" es peor que una fecha.
+  let _nombre = null;        // null = sin saber; '' = no hay
+  let _pidiendoNombre = false;
+
+  function soloNombre(n) {
+    return String(n || '').trim().split(/\s+/)[0] || '';
+  }
+
+  function cargarNombre() {
+    if (_nombre !== null || _pidiendoNombre) return;
+    const S = window.BarStockSenderProfile;
+    if (!S || !S.getProfile) { _nombre = ''; return; }
+    _pidiendoNombre = true;
+    Promise.resolve()
+      .then(() => S.getProfile())
+      .then(p => {
+        _nombre = soloNombre(p && p.name);
+        if (_nombre) refresh();
+      })
+      .catch(() => { _nombre = ''; })
+      .then(() => { _pidiendoNombre = false; });
+  }
+
+  function saludo() {
+    cargarNombre();
+    return _nombre ? 'Hello ' + _nombre : hoy();
+  }
+
   function master() { return (window.state && window.state.master) || []; }
 
   // Todos los artículos con su ficha de par, que es donde viven el
@@ -431,7 +468,7 @@
     host.innerHTML = `
       <div class="m-body">
         <div class="m-daterow">
-          <span class="m-day">${esc(hoy())}</span>
+          <span class="m-day">${esc(saludo())}</span>
           ${pildora()}
         </div>
 
