@@ -180,7 +180,25 @@
   .m-screens { position: relative; }
   .m-screens.hidden { display: none; }
   .m-screen { display: none; }
-  .m-screen.on { display: block; }
+
+  /* Alto mínimo: que el contenido llegue siempre hasta debajo de la
+   * barra de pestañas. Con una pantalla corta —cuatro proveedores, un
+   * mensaje de vacío— la página acababa por encima de la barra y
+   * debajo sólo quedaba fondo, que es lo que se lee como que la barra
+   * se ha subido.
+   *
+   * No arregla la causa, que es que el documento se puede desplazar y
+   * iOS mueve los elementos fijos con el rebote. Eso pide que el
+   * documento no ruede y que ruede el contenedor, y es un cambio de
+   * armazón. Esto tapa el síntoma mientras tanto, y lo tapa bien.
+   *
+   * 100dvh y no 100vh: en iOS, vh cuenta la barra del navegador aunque
+   * no esté, y de ahí salen cien píxeles de más. */
+  .m-screen.on {
+    display: block;
+    min-height: calc(100vh - 200px);
+    min-height: calc(100dvh - 200px);
+  }
 
   /* Mientras hay pantalla propia, la de siempre se esconde: #mScreens
    * cuelga del body y si no, la nueva se dibuja DEBAJO de la vieja. */
@@ -1327,9 +1345,15 @@
   /* Un hueco en blanco con una línea pequeña en medio se lee como que
    * algo falló. Con icono, título y una explicación se lee como un
    * estado, que es lo que es. */
+  /* Centrado en el hueco que queda, no colgando del título. Un mensaje
+   * pegado arriba con media pantalla vacía debajo parece el principio
+   * de una lista que no cargó. */
   .m-nada {
     display: flex; flex-direction: column; align-items: center;
-    text-align: center; padding: 56px 26px 40px;
+    justify-content: center; text-align: center;
+    min-height: calc(100vh - 290px);
+    min-height: calc(100dvh - 290px);
+    padding: 20px 26px 60px;
   }
   .m-nada-i {
     width: 62px; height: 62px; border-radius: 50%; margin-bottom: 18px;
