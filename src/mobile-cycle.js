@@ -267,7 +267,46 @@
     return 0;
   }
 
-  window.BarStockMobileCycle = { render, refresh };
+  // ── ¿Tiene sentido escanear ahora mismo? ─────────────────────────────
+  //
+  // El círculo verde de la barra no siempre debe invitar. Contar sólo
+  // tiene sentido con el ciclo abierto y el conteo sin cargar:
+  //
+  //   step1    no hay ciclo. Escanear antes de poner el on hand a cero
+  //            mezcla el conteo nuevo con las existencias viejas, que
+  //            es precisamente el error que el paso 1 existe para
+  //            evitar.
+  //   step2    es su momento. Verde.
+  //   counting hay uno a medias. Verde, para retomarlo.
+  //   done     la semana ya está contada. Escanear encima empezaría un
+  //            conteo que ningún paso espera.
+  //
+  // Lo contesta este módulo y no el armazón porque el armazón no sabe
+  // —ni debe saber— qué es un ciclo. Si este archivo no cargara, el
+  // armazón deja el botón encendido: más vale un botón de más que
+  // bloquear la acción principal del teléfono por un script que faltó.
+  function escaneo() {
+    const st = estado();
+    if (st === 'step2' || st === 'counting') return { activo: true };
+
+    if (st === 'loading') {
+      return { activo: false, motivo: 'Still checking the cycle. One moment.' };
+    }
+    if (st === 'step1') {
+      return {
+        activo: false,
+        motivo: 'Start the cycle first.\n\nIt sets on hand to zero so the ' +
+                'count starts clean. Open the cycle?'
+      };
+    }
+    return {
+      activo: false,
+      motivo: 'This week is already counted.\n\nRestart the cycle to count ' +
+              'again — it sets every on hand back to zero. Open the cycle?'
+    };
+  }
+
+  window.BarStockMobileCycle = { render, refresh, escaneo };
 
   function registrar() {
     if (!window.BarStockMobile) return;

@@ -269,7 +269,8 @@
         '<span class="m-tabs-hole" aria-hidden="true"></span>' +
         lista.slice(mitad).map(boton).join('') +
       '</div>' +
-      '<button type="button" class="m-fab" id="mFab" aria-label="Scan and count">' +
+      '<button type="button" class="m-fab' + (escaneo().activo ? '' : ' off') + '"' +
+              ' id="mFab" aria-label="Scan and count">' +
         '<i class="ti ti-scan" aria-hidden="true"></i>' +
       '</button>';
 
@@ -279,11 +280,29 @@
 
     const fab = _barra.querySelector('#mFab');
     if (fab) fab.onclick = () => {
+      // Apagado no es inerte: explica POR QUÉ y ofrece el camino. Un
+      // boton que no hace nada al tocarlo se lee como roto.
+      const e = escaneo();
+      if (!e.activo) {
+        if (e.motivo && window.confirm(e.motivo)) ir('cycle');
+        return;
+      }
       // El escaner es el mismo de siempre. Esta app no reimplementa el
       // conteo: es lo que mejor funciona y lo que mas ha costado.
       if (window.BarStockScanCount && window.BarStockScanCount.open) window.BarStockScanCount.open();
       else if (typeof window.openScanCount === 'function') window.openScanCount();
     };
+  }
+
+  // Lo contesta mobile-cycle, que es quien sabe qué es un ciclo. Si ese
+  // archivo no cargara, el botón se queda encendido: más vale un botón
+  // de más que bloquear la acción principal del teléfono porque faltó
+  // un script.
+  function escaneo() {
+    const C = window.BarStockMobileCycle;
+    if (!C || typeof C.escaneo !== 'function') return { activo: true };
+    try { return C.escaneo() || { activo: true }; }
+    catch (e) { return { activo: true }; }
   }
 
   function marcarActiva(id) {

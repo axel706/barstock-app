@@ -200,6 +200,29 @@ console.log('\npausado y abandonado no se parecen');
   eq('y el boton cambia', boton(a.host), 'Pick it up');
 }
 
+console.log('\ncuando el circulo verde debe invitar');
+{
+  // El boton de escanear sale de aqui, no del armazon: el armazon no
+  // sabe —ni debe saber— que es un ciclo.
+  const casos = [
+    ['step1',    false, /Start the cycle first/i],
+    ['step2',    true,  null],
+    ['counting', true,  null],
+    ['done',     false, /already counted/i],
+    ['loading',  false, /checking/i]
+  ];
+  for (const [st, activo, texto] of casos) {
+    const { w } = pintar({ estado: () => st, resetAt: () => '2026-10-20T00:00:00Z' },
+                         { contados: 20 });
+    const e = w.BarStockMobileCycle.escaneo();
+    eq('en ' + st + (activo ? ' se puede escanear' : ' NO se puede'), !!e.activo, activo);
+    if (texto) ok('y dice por que en ' + st, texto.test(e.motivo || ''));
+  }
+  // El de step1 es el que importa: escanear antes de poner el on hand a
+  // cero mezcla el conteo nuevo con las existencias viejas, que es
+  // justo el error que el paso 1 existe para evitar.
+}
+
 console.log('\nsin datos no se miente');
 {
   // Se entra antes de que weekly-cycle conteste. Decir "Start a new

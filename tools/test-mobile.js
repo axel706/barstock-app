@@ -277,6 +277,50 @@ console.log('\nel boton de escanear');
   w.BarStockMobile.register({ id: 'home', tab: true, mount() {} });
   w.document.getElementById('mFab').click();
   eq('abre el escaner que ya existe, no una copia', abierto, 1);
+  // Sin mobile-cycle cargado el boton se queda encendido: mas vale uno
+  // de mas que bloquear la accion principal porque falto un script.
+  ok('sin saber del ciclo, encendido', !w.document.getElementById('mFab').classList.contains('off'));
+}
+
+console.log('\nel escaner se apaga cuando contar no toca');
+{
+  const w = montar(true);
+  let abierto = 0, ido = [];
+  w.BarStockScanCount = { open() { abierto++; } };
+  w.BarStockMobileCycle = { escaneo: () => ({ activo: false, motivo: 'Start the cycle first. Open it?' }) };
+  w.confirm = () => true;
+  w.BarStockMobile.register({ id: 'home', tab: true, orden: 10, mount() {} });
+  w.BarStockMobile.register({ id: 'cycle', tab: false, mount() { ido.push('cycle'); } });
+  w.BarStockMobile.refrescarBadges();
+
+  const fab = w.document.getElementById('mFab');
+  ok('sale apagado', fab.classList.contains('off'));
+  fab.click();
+  eq('y no abre el escaner', abierto, 0);
+  // Apagado no es inerte: explica por que y lleva al sitio donde se
+  // arregla. Un boton que no hace nada al tocarlo se lee como roto.
+  eq('lleva al ciclo si dices que si', ido, ['cycle']);
+
+  const no = montar(true);
+  no.BarStockScanCount = { open() {} };
+  no.BarStockMobileCycle = { escaneo: () => ({ activo: false, motivo: 'x' }) };
+  no.confirm = () => false;
+  no.BarStockMobile.register({ id: 'home', tab: true, orden: 10, mount() {} });
+  let fue = 0;
+  no.BarStockMobile.register({ id: 'cycle', tab: false, mount() { fue++; } });
+  no.BarStockMobile.refrescarBadges();
+  no.document.getElementById('mFab').click();
+  eq('y si dices que no, no pasa nada', fue, 0);
+
+  const si = montar(true);
+  let abre = 0;
+  si.BarStockScanCount = { open() { abre++; } };
+  si.BarStockMobileCycle = { escaneo: () => ({ activo: true }) };
+  si.BarStockMobile.register({ id: 'home', tab: true, mount() {} });
+  si.BarStockMobile.refrescarBadges();
+  ok('con el ciclo listo, encendido', !si.document.getElementById('mFab').classList.contains('off'));
+  si.document.getElementById('mFab').click();
+  eq('y escanea', abre, 1);
 }
 
 console.log('\n' + (falla ? falla + ' FALLO(S)' : 'todo bien') + '   ·   ' + pasa + ' comprobaciones');

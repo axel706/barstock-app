@@ -817,6 +817,17 @@
   }
   body.m-shell .m-fab:active { transform: translateX(-50%) scale(.94); }
 
+  /* Apagado cuando contar no toca. Sin verde y sin halo: el color es
+   * una invitación y aquí no hay nada a lo que invitar. Se queda
+   * visible y pulsable porque al tocarlo explica por qué — un botón
+   * que desaparece deja al usuario buscándolo. */
+  body.m-shell .m-fab.off {
+    background: rgba(255,255,255,.10);
+    color: #8fa1b5;
+    box-shadow: none;
+    border: 1px solid rgba(255,255,255,.16);
+  }
+
   /* ── Buscar ─────────────────────────────────────────────────────── */
   /*
    * Esto se perdió entero al reescribir el archivo para el Home
