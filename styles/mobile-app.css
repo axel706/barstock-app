@@ -627,10 +627,21 @@
   /* Flotante y con su área segura. Pegada al borde, en un iPhone la
    * franja del gesto de inicio se come la mitad de los botones. */
 
+  /* Abajo sólo la franja del gesto de inicio, nada más.
+   *
+   * Tenía 12px extra de margen. Medido en el teléfono, la barra
+   * siempre estuvo fija y pegada al borde —`hueco bajo tabs 0`— pero
+   * esos 12 más los 34 del gesto son 46px vacíos bajo la pastilla.
+   * Con contenido detrás pasan desapercibidos porque el contenido se
+   * ve por ahí; sin contenido se leen como que la barra se ha subido.
+   * No se había subido: le sobraba suelo.
+   *
+   * Los 34 del gesto se quedan porque son del sistema: ahí no se
+   * ponen controles en ninguna app. */
   .m-tabs {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 9000;
     display: block;
-    padding: 9px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+    padding: 9px 12px env(safe-area-inset-bottom, 0px);
     pointer-events: none;
   }
   .m-tabs > * { pointer-events: auto; }
@@ -656,7 +667,7 @@
    * cortarse en una línea. */
   .m-tabs::before {
     content: ''; position: absolute; left: 0; right: 0; bottom: 0;
-    height: calc(34px + env(safe-area-inset-bottom, 0px));
+    height: calc(16px + env(safe-area-inset-bottom, 0px));
     background: linear-gradient(180deg, rgba(8,12,19,0) 0%, rgba(8,12,19,.72) 55%, rgba(8,12,19,.92) 100%);
     pointer-events: none;
   }
@@ -693,12 +704,13 @@
    * al que ir. El aro tenue lo separa de la barra sin añadir otro
    * color — cuatro pixeles de diferencia no se leen como jerarquía. */
   /* Centrado y encima de la barra. El `bottom` sale de la cuenta, no
-   * del ojo: la barra va de (12+inset) a (12+inset+46), su centro está
-   * en 35+inset, y el círculo mide 56 — así que su suelo cae en
-   * 7+inset. Si cambia el alto de la barra, cambia aquí. */
+   * del ojo: la barra va de (inset) a (inset+46), su centro está en
+   * inset+23, y el círculo mide 56 — así que su suelo cae 5px por
+   * debajo del de la barra. Si cambia el alto de la barra, cambia
+   * aquí. */
   body.m-shell .m-fab {
     position: absolute; left: 50%;
-    bottom: calc(7px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(env(safe-area-inset-bottom, 0px) - 5px);
     transform: translateX(-50%);
     width: 56px; height: 56px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
@@ -1043,15 +1055,6 @@
   .m-item-t { flex: 1; min-width: 0; font-size: 13px; line-height: 1.25; }
   .m-item-t small { display: block; font-size: 10px; color: #9fb0c4; margin-top: 2px; }
   .m-chev { font-size: 15px; color: #9fb0c4; opacity: .6; flex: 0 0 auto; }
-
-  /* TEMPORAL: la lectura de diagnostico del hueco bajo la barra. */
-  .m-diag {
-    margin: 18px 0 0; padding: 10px 12px; border-radius: 10px;
-    font: 11px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap;
-    color: #9fe1cb; background: rgba(0,0,0,.42);
-    border: 1px solid rgba(255,255,255,.14);
-  }
-
 
   /* Salir: separado y en rojo. No es una sección más de la lista. */
   .m-list-end { margin-top: 22px; }

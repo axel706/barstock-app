@@ -54,13 +54,7 @@
           <span class="m-item-t">Log out</span>
         </button>
       </div>
-
-      <!-- TEMPORAL. Mide la geometría real del teléfono para entender
-           por qué queda hueco bajo la barra. Se quita en cuanto se
-           sepa; no vale adivinar tres veces seguidas. -->
-      <pre class="m-diag" id="mDiag"></pre>`;
-
-    diagnostico(host);
+`;
 
     host.querySelectorAll('[data-sec]').forEach(b => {
       b.onclick = () => {
@@ -94,54 +88,6 @@
   // la caja de los elementos fijos excluya la franja del gesto, o que
   // la barra no esté fija en absoluto. Cada una se arregla distinto.
   // Esto mide las tres de una vez. Se borra en cuanto se sepa.
-  const despues = (prop) => {
-    try { return getComputedStyle(document.body, '::after')[prop] || '-'; }
-    catch (e) { return '?'; }
-  };
-  const quienHayEn = (y) => {
-    try {
-      const e = document.elementFromPoint(Math.round(window.innerWidth / 2), y);
-      if (!e) return 'nada';
-      return e.tagName.toLowerCase() +
-             (e.id ? '#' + e.id : '') +
-             (e.className && typeof e.className === 'string'
-               ? '.' + e.className.trim().split(/\s+/).slice(0, 2).join('.') : '');
-    } catch (e) { return '?'; }
-  };
-
-  function diagnostico(host) {
-    const el = host.querySelector('#mDiag');
-    if (!el) return;
-
-    const probe = document.createElement('div');
-    probe.style.cssText =
-      'position:fixed;left:0;bottom:0;width:1px;height:env(safe-area-inset-bottom,0px);';
-    document.body.appendChild(probe);
-    const insetAbajo = probe.getBoundingClientRect().height;
-    probe.style.height = 'env(safe-area-inset-top,0px)';
-    const insetArriba = probe.getBoundingClientRect().height;
-    probe.remove();
-
-    const tabs = document.getElementById('mTabs');
-    const r = tabs ? tabs.getBoundingClientRect() : null;
-    const cs = tabs ? getComputedStyle(tabs) : null;
-
-    el.textContent = [
-      'standalone ' + (window.navigator.standalone === true),
-      'innerH ' + window.innerHeight + '  screenH ' + window.screen.height,
-      'visualH ' + (window.visualViewport ? Math.round(window.visualViewport.height) : '-'),
-      'inset arriba ' + insetArriba + '  abajo ' + insetAbajo,
-      'body alto ' + Math.round(document.body.getBoundingClientRect().height),
-      'tabs position ' + (cs ? cs.position : '-'),
-      'tabs top ' + (r ? Math.round(r.top) : '-') + '  bottom ' + (r ? Math.round(r.bottom) : '-'),
-      'hueco bajo tabs ' + (r ? Math.round(window.innerHeight - r.bottom) : '-'),
-      // Lo que falta por saber: si el velo de body::after se esta
-      // estirando de verdad, y que elemento pinta el ultimo pixel.
-      'velo pos ' + despues('position') + '  bottom ' + despues('bottom'),
-      'abajo del todo: ' + quienHayEn(window.innerHeight - 4)
-    ].join('\n');
-  }
-
   function registrar() {
     const M = window.BarStockMobile;
     if (!M) return;
