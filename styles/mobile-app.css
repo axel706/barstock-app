@@ -639,6 +639,28 @@
    * lado: sin ese aire la barra parece cortada, no partida. */
   .m-tabs-hole { flex: 0 0 64px; }
 
+  /* ── El suelo ─────────────────────────────────────────────────────
+   *
+   * La barra flota, así que entre ella y el borde físico quedan sus
+   * 12px de margen más los 34 del gesto de inicio. Con contenido
+   * detrás no se nota —el contenido pasa por debajo— pero con poco
+   * contenido ahí no hay nada y asomaba el fondo plano.
+   *
+   * Medido en el teléfono: la barra SÍ está fija y SÍ llega a 956 de
+   * 956. O sea que el problema nunca fue la barra, era que las capas
+   * de fondo no pintan esos últimos 34px.
+   *
+   * Esto lo cubre desde la propia barra, que es el único elemento del
+   * que sé con certeza que llega al borde. Un degradado y no un color
+   * sólido para que al pasar contenido por debajo se funda en vez de
+   * cortarse en una línea. */
+  .m-tabs::before {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0;
+    height: calc(34px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(180deg, rgba(8,12,19,0) 0%, rgba(8,12,19,.72) 55%, rgba(8,12,19,.92) 100%);
+    pointer-events: none;
+  }
+
   /* Con el teclado abierto la barra se va. En iOS un elemento fijo se
    * pega al borde de la ventana VISIBLE, y al abrirse el teclado esa
    * ventana encoge: la barra subía con ella y dejaba un escalón

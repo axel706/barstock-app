@@ -94,6 +94,21 @@
   // la caja de los elementos fijos excluya la franja del gesto, o que
   // la barra no esté fija en absoluto. Cada una se arregla distinto.
   // Esto mide las tres de una vez. Se borra en cuanto se sepa.
+  const despues = (prop) => {
+    try { return getComputedStyle(document.body, '::after')[prop] || '-'; }
+    catch (e) { return '?'; }
+  };
+  const quienHayEn = (y) => {
+    try {
+      const e = document.elementFromPoint(Math.round(window.innerWidth / 2), y);
+      if (!e) return 'nada';
+      return e.tagName.toLowerCase() +
+             (e.id ? '#' + e.id : '') +
+             (e.className && typeof e.className === 'string'
+               ? '.' + e.className.trim().split(/\s+/).slice(0, 2).join('.') : '');
+    } catch (e) { return '?'; }
+  };
+
   function diagnostico(host) {
     const el = host.querySelector('#mDiag');
     if (!el) return;
@@ -119,7 +134,11 @@
       'body alto ' + Math.round(document.body.getBoundingClientRect().height),
       'tabs position ' + (cs ? cs.position : '-'),
       'tabs top ' + (r ? Math.round(r.top) : '-') + '  bottom ' + (r ? Math.round(r.bottom) : '-'),
-      'hueco bajo tabs ' + (r ? Math.round(window.innerHeight - r.bottom) : '-')
+      'hueco bajo tabs ' + (r ? Math.round(window.innerHeight - r.bottom) : '-'),
+      // Lo que falta por saber: si el velo de body::after se esta
+      // estirando de verdad, y que elemento pinta el ultimo pixel.
+      'velo pos ' + despues('position') + '  bottom ' + despues('bottom'),
+      'abajo del todo: ' + quienHayEn(window.innerHeight - 4)
     ].join('\n');
   }
 
