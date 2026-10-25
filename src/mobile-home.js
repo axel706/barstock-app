@@ -82,23 +82,44 @@
 
     const st = (W && W.estado) ? W.estado() : 'loading';
 
+    // Sin botón mientras no se sabe. Ofrecer una acción antes de saber
+    // en qué paso estás es ofrecer la equivocada.
     if (st === 'loading') {
       return { tono: 'calm', k: 'Cycle', tt: '…', sub: 'Checking the cycle',
-               amt: '…', vs: '', btn: 'Open cycle', go: irAlCiclo };
+               amt: '…', vs: '', btn: '' };
     }
 
     if (st === 'step1') {
-      return { tono: 'calm', k: 'No cycle yet', tt: 'Start the week',
-               sub: 'Sets on hand to zero so the count starts clean',
-               amt: '1', vs: 'of 3', btn: 'Open cycle', go: irAlCiclo };
+      return {
+        tono: 'calm', k: 'No cycle yet', tt: 'Start the week',
+        sub: 'Sets on hand to zero so the count starts clean',
+        amt: '1', vs: 'of 3',
+        btn: 'Start new cycle',
+        // La misma función del botón del escritorio: en el paso 1 llama
+        // a resetOnHand, que pide su propia confirmación.
+        go: () => { const w = window.BarStockWeeklyCycle; if (w && w.accion) w.accion(); },
+        ico: 'list-details', icot: 'Cycle detail', go3: irAlCiclo
+      };
     }
 
     const fecha = (W && W.resetAt && W.fmtDate && W.resetAt()) ? W.fmtDate(W.resetAt()) : '';
 
+    // Dos salidas de verdad, no un botón que abre un menú que ofrece
+    // dos salidas. En el escritorio hay un modal de por medio porque
+    // ahí el ciclo es UN botón que no puede ofrecer dos cosas; aquí
+    // hay sitio, así que se ofrecen las dos y se ahorra el modal.
     if (st === 'step2') {
-      return { tono: 'blue', k: 'Cycle open' + (fecha ? ' · ' + fecha : ''),
-               tt: 'Load the count', sub: 'From a file, or count with your phone',
-               amt: '2', vs: 'of 3', btn: 'Open cycle', go: irAlCiclo };
+      return {
+        tono: 'blue', k: 'Cycle open' + (fecha ? ' · ' + fecha : ''),
+        tt: 'Load the count', sub: 'Scan the bottles, or import the sheet',
+        amt: '2', vs: 'of 3',
+        btn: 'Count now',
+        go: () => { if (window.BarStockScanCount) window.BarStockScanCount.open(); },
+        btn2: 'Import a file',
+        // El mismo <input type=file> de siempre, el que usa el modal
+        // del escritorio. No hay un segundo camino de importación.
+        go2: () => { const f = document.getElementById('countFile'); if (f) f.click(); }
+      };
     }
 
     if (st === 'counting') {
@@ -131,9 +152,9 @@
         //
         // Pequeño, sin color y al lado: tirar trabajo nunca debe ser
         // más fácil de pulsar que seguirlo.
-        ico2: 'trash',
-        ico2t: 'Discard this count',
-        go2: () => descartar(n)
+        ico: 'trash',
+        icot: 'Discard this count',
+        go3: () => descartar(n)
       };
     }
 
@@ -151,15 +172,21 @@
         : 'Counted ' + master().length + ' items',
       amt: dias + 'd',
       vs: 'usual is 7',
-      btn: 'Open cycle',
-      go: irAlCiclo,
 
-      // Reiniciar vive AQUÍ y en ningún otro sitio. Estaba también en
+      // Con el ciclo cerrado la única acción que queda es abrir el
+      // siguiente, así que eso es lo que dice el botón. "Open cycle"
+      // ahí no significaba nada: el ciclo YA está abierto.
+      //
+      // Reiniciar vive aquí y en ningún otro sitio. Estaba también en
       // la pantalla del ciclo, y dos caminos para lo único de esta app
       // que pone todo el inventario a cero es uno de más.
-      ico2: 'refresh',
-      ico2t: 'Restart the cycle',
-      go2: reiniciar
+      btn: 'Restart cycle',
+      btnTono: 'peligro',
+      go: reiniciar,
+
+      ico: 'list-details',
+      icot: 'Cycle detail',
+      go3: irAlCiclo
     };
   }
 
@@ -275,11 +302,13 @@
             ${c.lista ? `<div class="m-hero-list">${c.lista.map(x => '<span>' + x + '</span>').join('')}</div>` : ''}
           </div>
           <div class="m-hero-acts">
-            <button type="button" class="m-hero-b" data-go="${i}">${esc(c.btn)}</button>
-            ${c.ico2 ? `<button type="button" class="m-hero-x" data-go2="${i}"
-                                aria-label="${esc(c.ico2t || '')}">
-                          <i class="ti ti-${esc(c.ico2)}" aria-hidden="true"></i>
-                        </button>` : ''}
+            ${c.btn ? `<button type="button" class="m-hero-b${c.btnTono ? ' m-hero-b-' + esc(c.btnTono) : ''}"
+                               data-go="${i}">${esc(c.btn)}</button>` : ''}
+            ${c.btn2 ? `<button type="button" class="m-hero-b2" data-go2="${i}">${esc(c.btn2)}</button>` : ''}
+            ${c.ico ? `<button type="button" class="m-hero-x" data-go3="${i}"
+                               aria-label="${esc(c.icot || '')}">
+                         <i class="ti ti-${esc(c.ico)}" aria-hidden="true"></i>
+                       </button>` : ''}
           </div>
         </div>
         <div class="m-hero-r">
@@ -604,6 +633,11 @@
     host.querySelectorAll('[data-go2]').forEach(b => {
       const c = cards[Number(b.dataset.go2)];
       if (c && c.go2) b.onclick = (ev) => { ev.stopPropagation(); c.go2(); };
+    });
+
+    host.querySelectorAll('[data-go3]').forEach(b => {
+      const c = cards[Number(b.dataset.go3)];
+      if (c && c.go3) b.onclick = (ev) => { ev.stopPropagation(); c.go3(); };
     });
 
     host.querySelectorAll('[data-item]').forEach(b => {

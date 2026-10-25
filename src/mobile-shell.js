@@ -176,17 +176,32 @@
     if (!_barra) return;
     const lista = tabs();
 
+    const boton = (p) => {
+      const n = typeof p.badge === 'function' ? (p.badge() || 0) : 0;
+      return `<button type="button" class="m-tab${_activa === p.id ? ' on' : ''}"
+                      data-m="${esc(p.id)}" role="tab"
+                      aria-selected="${_activa === p.id}" aria-label="${esc(p.label || p.id)}">
+                <i class="ti ${esc(p.icon || 'ti-point')}" aria-hidden="true"></i>
+                ${n ? '<span class="m-dot"></span>' : ''}
+              </button>`;
+    };
+
+    // ── El escáner va en el CENTRO ──────────────────────────────────
+    //
+    // Antes colgaba del extremo derecho, fuera de la barra. Es la
+    // acción más frecuente del teléfono y estaba en la esquina peor
+    // alcanzable del pulgar derecho; en el centro llega cualquiera.
+    //
+    // La barra se parte por la mitad y deja un hueco: el círculo se
+    // apoya encima y la barra parece salir de él hacia los lados. El
+    // corte sale de cuántas pestañas haya, no de una lista a mano.
+    const mitad = Math.ceil(lista.length / 2);
+
     _barra.innerHTML =
       '<div class="m-tabs-bar">' +
-        lista.map(p => {
-          const n = typeof p.badge === 'function' ? (p.badge() || 0) : 0;
-          return `<button type="button" class="m-tab${_activa === p.id ? ' on' : ''}"
-                          data-m="${esc(p.id)}" role="tab"
-                          aria-selected="${_activa === p.id}" aria-label="${esc(p.label || p.id)}">
-                    <i class="ti ${esc(p.icon || 'ti-point')}" aria-hidden="true"></i>
-                    ${n ? '<span class="m-dot"></span>' : ''}
-                  </button>`;
-        }).join('') +
+        lista.slice(0, mitad).map(boton).join('') +
+        '<span class="m-tabs-hole" aria-hidden="true"></span>' +
+        lista.slice(mitad).map(boton).join('') +
       '</div>' +
       '<button type="button" class="m-fab" id="mFab" aria-label="Scan and count">' +
         '<i class="ti ti-scan" aria-hidden="true"></i>' +

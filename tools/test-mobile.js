@@ -215,6 +215,31 @@ console.log('\nlo que no debe tumbar nada');
   ok('y la barra sigue ahi', !!w.document.getElementById('mTabs'));
 }
 
+console.log('\nel escaner va en el centro de la barra');
+{
+  const w = montar(true);
+  const M = w.BarStockMobile;
+  M.register({ id: 'home', tab: true, orden: 10, mount() {} });
+  M.register({ id: 'inv',  tab: true, orden: 20, mount() {} });
+  M.register({ id: 'ord',  tab: true, orden: 30, mount() {} });
+  M.register({ id: 'more', tab: true, orden: 40, mount() {} });
+
+  const barra = w.document.querySelector('.m-tabs-bar');
+  const hijos = Array.from(barra.children).map(c =>
+    c.classList.contains('m-tabs-hole') ? 'HUECO' : c.dataset.m);
+  // El corte sale de cuantas pestañas haya, no de una lista a mano.
+  eq('dos a cada lado del hueco', hijos, ['home', 'inv', 'HUECO', 'ord', 'more']);
+
+  // Con impares, la de mas va a la izquierda: se lee de izquierda a
+  // derecha y Home tiene que quedar en el extremo.
+  const w2 = montar(true);
+  ['a', 'b', 'c'].forEach((id, i) =>
+    w2.BarStockMobile.register({ id, tab: true, orden: i * 10, mount() {} }));
+  const h2 = Array.from(w2.document.querySelector('.m-tabs-bar').children).map(c =>
+    c.classList.contains('m-tabs-hole') ? 'HUECO' : c.dataset.m);
+  eq('con tres, dos y una', h2, ['a', 'b', 'HUECO', 'c']);
+}
+
 console.log('\nel boton de escanear');
 {
   const w = montar(true);

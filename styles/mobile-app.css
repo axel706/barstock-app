@@ -415,6 +415,23 @@
     font-size: 12px; font-weight: 800; cursor: pointer;
     background: rgba(255,255,255,.16); color: #fff;
   }
+  /* El segundo camino, cuando de verdad hay dos (importar un archivo
+   * frente a escanear). Pesa menos a propósito: es el que se usa una
+   * vez al mes. */
+  body.m-shell .m-hero-b2 {
+    align-self: center;
+    padding: 8px 13px; border-radius: 11px;
+    font-size: 11.5px; font-weight: 700; cursor: pointer;
+    color: #dbe6f2;
+    background: rgba(0,0,0,.20);
+    border: 1px solid rgba(255,255,255,.18);
+  }
+  /* Reiniciar el ciclo es la única acción de la app sin deshacer, y es
+   * la principal de su tarjeta. Se viste de lo que es. */
+  body.m-shell .m-hero-b-peligro {
+    background: rgba(248,113,113,.18); color: #fecaca;
+    border: 1px solid rgba(248,113,113,.42);
+  }
 
   .m-hero-green { background: linear-gradient(135deg, rgba(34,197,94,.24), rgba(34,197,94,.09)); border: 1px solid rgba(134,239,172,.32); }
   .m-hero-blue  { background: linear-gradient(135deg, rgba(56,189,248,.26), rgba(56,189,248,.10)); border: 1px solid rgba(125,211,252,.34); }
@@ -567,14 +584,18 @@
 
   .m-tabs {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 9000;
-    display: flex; align-items: center; gap: 8px;
+    display: block;
     padding: 9px 12px calc(12px + env(safe-area-inset-bottom, 0px));
     pointer-events: none;
   }
   .m-tabs > * { pointer-events: auto; }
 
+  /* El hueco donde se apoya el círculo. 4px más ancho que él por cada
+   * lado: sin ese aire la barra parece cortada, no partida. */
+  .m-tabs-hole { flex: 0 0 64px; }
+
   .m-tabs-bar {
-    flex: 1; display: flex; padding: 5px; border-radius: 24px;
+    display: flex; padding: 5px; border-radius: 24px;
     background: rgba(10,16,26,.76);
     border: 1px solid rgba(255,255,255,.14);
     backdrop-filter: blur(18px) saturate(140%);
@@ -597,14 +618,21 @@
   /* Más grande que las pestañas a propósito: es la acción, no un sitio
    * al que ir. El aro tenue lo separa de la barra sin añadir otro
    * color — cuatro pixeles de diferencia no se leen como jerarquía. */
+  /* Centrado y encima de la barra. El `bottom` sale de la cuenta, no
+   * del ojo: la barra va de (12+inset) a (12+inset+46), su centro está
+   * en 35+inset, y el círculo mide 56 — así que su suelo cae en
+   * 7+inset. Si cambia el alto de la barra, cambia aquí. */
   body.m-shell .m-fab {
-    flex: 0 0 56px; width: 56px; height: 56px; cursor: pointer;
+    position: absolute; left: 50%;
+    bottom: calc(7px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    width: 56px; height: 56px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     border-radius: 50%; font-size: 26px;
     background: #22c55e; color: #06301a;
     box-shadow: 0 0 0 4px rgba(34,197,94,.14), 0 12px 30px rgba(34,197,94,.42);
   }
-  body.m-shell .m-fab:active { transform: scale(.94); }
+  body.m-shell .m-fab:active { transform: translateX(-50%) scale(.94); }
 
   /* ── Buscar ─────────────────────────────────────────────────────── */
   /*
@@ -999,6 +1027,7 @@
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-searchbar>button { border-radius: 50% !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hero-x { border-radius: 50% !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hero-b { border-radius: 11px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hero-b2 { border-radius: 11px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-mvr-bar { border-radius: 999px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-tabs-bar { border-radius: 24px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-tab { border-radius: 18px !important; }

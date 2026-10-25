@@ -272,8 +272,12 @@
   function registrar() {
     if (!window.BarStockMobile) return;
     window.BarStockMobile.register({
+      // Sin pestaña propia. Todas las acciones del ciclo viven en su
+      // tarjeta del Home —empezar, contar, seguir, descartar,
+      // reiniciar— así que una pestaña sólo para el detalle no vale un
+      // hueco en la barra. Se entra desde el icono de la tarjeta.
       id: 'cycle', icon: 'ti-rotate-clockwise', label: 'Cycle',
-      tab: true, orden: 20,
+      tab: false, orden: 20,
       mount: render, show: render,
       badge: aviso
     });
