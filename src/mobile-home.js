@@ -172,6 +172,10 @@
         ? window.BarStockZones.paraPasada() : '';
 
       return {
+        // Con un conteo a medias, ESTA es la tarjeta que tiene que
+        // estar delante al abrir el Home: o lo retomas, o al menos
+        // ves que quedó abierto. La bienvenida puede esperar.
+        foco: true,
         tono: viejo ? 'red' : 'amber',
         k: pau ? 'Count paused' : viejo ? 'Count abandoned' : 'Counting',
         tt: tot ? n + ' of ' + tot : String(n),
@@ -539,7 +543,7 @@
 
   // ── Pintar ───────────────────────────────────────────────────────────
 
-  function render(host) {
+  function render(host, irAlFoco) {
     if (!host) return;
 
     const cards = tarjetas();
@@ -639,6 +643,32 @@
       </div>`;
 
     enganchar(host, cards);
+    if (irAlFoco) alFoco(host, cards);
+  }
+
+  // ── Dónde arranca el carrusel ────────────────────────────────────────
+  //
+  // Normalmente en la primera, que es la bienvenida. Pero si hay un
+  // conteo a medias, arranca en la del ciclo: con el trabajo empezado,
+  // lo último que hace falta es un saludo delante.
+  //
+  // Sólo al ENTRAR a la pantalla, no en cada repintado. El Home se
+  // repinta varias veces mientras cargan los datos, y mover el carril
+  // debajo del dedo de alguien que está deslizando es peor que
+  // empezar en la tarjeta equivocada.
+  function alFoco(host, cards) {
+    const i = cards.findIndex(c => c && c.foco);
+    if (i <= 0) return;
+    const rail = host.querySelector('#mhRail');
+    const dots = host.querySelector('#mhDots');
+    const caja = rail && rail.children[i];
+    if (!rail || !caja) return;
+
+    // scrollLeft a mano y no scrollIntoView: éste último desplaza
+    // también la PÁGINA para enseñar el carril, y al entrar al Home
+    // eso se ve como un salto.
+    rail.scrollLeft = caja.offsetLeft + caja.offsetWidth / 2 - rail.clientWidth / 2;
+    if (dots) Array.from(dots.children).forEach((d, j) => d.classList.toggle('on', j === i));
   }
 
   // ── La píldora de locación ───────────────────────────────────────────
@@ -867,8 +897,8 @@
     if (!window.BarStockMobile) return;
     window.BarStockMobile.register({
       id: 'home', icon: 'ti-home', label: 'Home', tab: true, orden: 10,
-      mount(host) { render(host); vigilar(); },
-      show(host) { render(host); vigilar(); }   // el estado del ciclo cambia
+      mount(host) { render(host, true); vigilar(); },
+      show(host) { render(host, true); vigilar(); }   // el estado del ciclo cambia
     });
 
     // Y lo que cambie en vivo despues, por su evento de siempre.
