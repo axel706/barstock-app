@@ -252,11 +252,20 @@
 
   function show(host) {
     host.classList.remove('ficha');
-    const inp = host.querySelector('#msInput');
-    // El teclado se abre solo: se entra aqui para escribir, no para
-    // mirar. Un toque menos en la accion mas frecuente del telefono.
-    if (inp) setTimeout(() => { try { inp.focus(); } catch (e) {} }, 60);
     pintarLista(host);
+
+    // ── El foco va SIN setTimeout ──────────────────────────────────
+    //
+    // iOS sólo abre el teclado si el focus() ocurre dentro del gesto
+    // que lo pidió. Con un setTimeout de 60ms el gesto ya terminó, así
+    // que el teclado no salía: el primer toque entraba en Buscar sin
+    // teclado y hacía falta un segundo toque sobre el campo.
+    //
+    // Esto funciona porque `ir()` es síncrono de principio a fin —monta
+    // la pantalla y llama a show() dentro del mismo click—, así que
+    // aquí seguimos dentro del gesto.
+    const inp = host.querySelector('#msInput');
+    if (inp) { try { inp.focus(); } catch (e) {} }
   }
 
   // Lo llama el Home al tocar un producto de Top movers: se entra a

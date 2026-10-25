@@ -124,6 +124,7 @@
 
     document.body.classList.add('m-shell');
     _montado = true;
+    bloquearZoom(true);
     pintarBarra();
     entrada();
   }
@@ -155,6 +156,33 @@
     ir('home');
   }
 
+  // ── Nada de pellizcar para ampliar ───────────────────────────────────
+  //
+  // `touch-action: manipulation` ya mata el zoom del doble toque, pero
+  // NO el del pellizco, y con el pellizco la app se mueve de sitio y
+  // deja de parecer una app.
+  //
+  // No se hace con `user-scalable=no` en el viewport a propósito: esa
+  // meta es global y le quitaría el zoom también al iPad, que ve la
+  // tabla del escritorio y ahí sí hace falta. Esto va en JavaScript y
+  // sólo mientras el armazón está montado.
+  //
+  // Dos frentes porque son dos navegadores: `gesturestart` y compañía
+  // son de Safari, y el `touchmove` con dos dedos es para Chrome en
+  // Android, que no dispara los otros.
+  //
+  // Lo pagamos en accesibilidad: quien necesite agrandar para leer ya
+  // no puede. Es una decisión, no un descuido.
+  function sinPellizco(e) { e.preventDefault(); }
+  function sinDosDedos(e) { if (e.touches && e.touches.length > 1) e.preventDefault(); }
+
+  function bloquearZoom(si) {
+    const m = si ? 'addEventListener' : 'removeEventListener';
+    ['gesturestart', 'gesturechange', 'gestureend'].forEach(ev =>
+      document[m](ev, sinPellizco, { passive: false }));
+    document[m]('touchmove', sinDosDedos, { passive: false });
+  }
+
   function desmontar() {
     if (!_montado) return;
     if (_host) _host.remove();
@@ -164,6 +192,7 @@
     _activa = null;
     _montado = false;
     _entrado = false;
+    bloquearZoom(false);
     document.body.classList.remove('m-shell');
     document.body.classList.remove('m-on');
     // Las pantallas propias se quedan sin dibujar; las secciones del

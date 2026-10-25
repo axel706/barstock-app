@@ -215,6 +215,35 @@ console.log('\nlo que no debe tumbar nada');
   ok('y la barra sigue ahi', !!w.document.getElementById('mTabs'));
 }
 
+console.log('\nel pellizco no amplia');
+{
+  // Se vigila con JavaScript y no con user-scalable=no en el viewport:
+  // esa meta es global y le quitaria el zoom tambien al iPad, que ve la
+  // tabla del escritorio y ahi si hace falta.
+  const w = montar(true);
+  let bloqueados = [];
+  const ev = new w.Event('gesturestart', { cancelable: true });
+  w.document.dispatchEvent(ev);
+  ok('se bloquea el pellizco de Safari', ev.defaultPrevented);
+
+  // Un dedo es desplazarse, y eso NO se toca.
+  const uno = new w.Event('touchmove', { cancelable: true });
+  uno.touches = [{}];
+  w.document.dispatchEvent(uno);
+  ok('con un dedo se sigue pudiendo desplazar', !uno.defaultPrevented);
+
+  const dos = new w.Event('touchmove', { cancelable: true });
+  dos.touches = [{}, {}];
+  w.document.dispatchEvent(dos);
+  ok('con dos dedos no', dos.defaultPrevented);
+
+  // Y al crecer la ventana se sueltan: en escritorio esto no existe.
+  const d = montar(false);
+  const ev2 = new d.Event('gesturestart', { cancelable: true });
+  d.document.dispatchEvent(ev2);
+  ok('en escritorio no se bloquea nada', !ev2.defaultPrevented);
+}
+
 console.log('\nel escaner va en el centro de la barra');
 {
   const w = montar(true);
