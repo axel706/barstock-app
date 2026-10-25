@@ -298,14 +298,14 @@
    * degradado: el fondo de aquí arriba es una foto cualquiera. */
   .m-logo {
     position: relative; z-index: 1;
-    font-size: 21px; font-weight: 800; color: #fff;
-    letter-spacing: -.6px; display: inline-flex; align-items: baseline;
-    text-shadow: 0 1px 10px rgba(0,0,0,.45);
+    font-size: 23px; font-weight: 800; color: #fff;
+    letter-spacing: -.65px; display: inline-flex; align-items: baseline;
+    text-shadow: 0 1px 12px rgba(0,0,0,.55);
   }
   .m-logo i { color: #38bdf8; font-style: normal; }
   .m-logo em {
-    font-style: normal; font-size: 8.5px; font-weight: 700;
-    letter-spacing: 1.4px; color: #a9bacd; margin-left: 4px;
+    font-style: normal; font-size: 9.5px; font-weight: 700;
+    letter-spacing: 1.5px; color: #b6c6d8; margin-left: 5px;
   }
   /* Centrados en la FRANJA DE ABAJO, la de los 52px, no en la banda
    * entera. Con `top: 50%` el 50% se medía sobre la altura total
