@@ -250,6 +250,16 @@ console.log('\nlo que nunca se iba a pedir no cuenta como excluido');
      !/Nunca/.test(host.querySelector('.m-ord-fuera').textContent));
 }
 
+console.log('\nel aviso de que esto no coloca');
+{
+  // En las DOS pantallas. Si solo estuviera en el detalle, alguien que
+  // entra, mira los totales y se va nunca se entera.
+  const { host } = pantalla();
+  ok('en el resumen', /from desktop or iPad/i.test(host.textContent));
+  abrir(host, 'LOOP');
+  ok('y en el detalle', /from desktop or iPad/i.test(host.textContent));
+}
+
 console.log('\nal volver se entra por el resumen');
 {
   const { host, def } = pantalla();

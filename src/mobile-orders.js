@@ -91,6 +91,14 @@
       <div class="m-inv-t">Orders</div>
       <div class="m-ord-gran">${money(total)}
         <span>across ${vs.length} vendor${vs.length === 1 ? '' : 's'}</span></div>
+
+      <!-- También aquí, no sólo dentro de un proveedor: si sólo
+           estuviera en el detalle, alguien que entra, mira los totales
+           y se va nunca se entera de que esto no coloca nada. -->
+      <div class="m-ord-nota">
+        <i class="ti ti-device-desktop" aria-hidden="true"></i>
+        Review and adjust here. Place orders from desktop or iPad.
+      </div>
       ${vs.map((v, i) => `
         <button type="button" class="m-ordv${v.sinPrecio ? ' aviso' : ''}" data-v="${i}">
           <span class="m-ordv-l">
@@ -138,7 +146,7 @@
     // un pedido es mirar las primeras líneas, así que el orden ES la
     // información.
     host.innerHTML = `
-      <button type="button" class="m-back" id="moBack">
+      <button type="button" class="m-back m-back-gde" id="moBack">
         <i class="ti ti-chevron-left" aria-hidden="true"></i> All orders
       </button>
 

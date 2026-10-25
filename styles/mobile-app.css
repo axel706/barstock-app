@@ -880,6 +880,16 @@
   }
   .m-back .ti { font-size: 15px; }
 
+  /* Volver atrás con el pulgar, no con la uña. El blanco de 44px es lo
+   * mínimo que recomienda Apple, y el de antes rondaba los 26. El
+   * relleno negativo a la izquierda lo mantiene alineado con el
+   * margen de la pantalla aunque el blanco se salga de él. */
+  body.m-shell .m-back-gde {
+    margin: 0 0 10px -10px; padding: 11px 10px;
+    font-size: 15px; font-weight: 700;
+  }
+  .m-back-gde .ti { font-size: 19px; }
+
   body.m-shell .m-fic {
     display: block; padding: 16px; border-radius: 18px;
     background: rgba(255,255,255,.13);
