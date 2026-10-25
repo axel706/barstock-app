@@ -273,7 +273,9 @@
   //   if (yaCerroUnCiclo()) return null;
   function tarjetaBienvenida() {
     return {
-      tono: 'teal',
+      // Verde y no el verde azulado del ciclo: eran vecinas y las dos
+      // del mismo color, así que deslizar de una a otra no se notaba.
+      tono: 'verde',
       // Esta tarjeta no tiene columna de cifras ni botón, así que el
       // texto se queda con el ancho entero y puede ser más grande.
       ancha: true,

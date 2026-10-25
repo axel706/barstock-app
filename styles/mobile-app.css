@@ -607,6 +607,17 @@
   .m-hero-blue  { background: linear-gradient(135deg, rgba(56,189,248,.26), rgba(56,189,248,.10)); border: 1px solid rgba(125,211,252,.34); }
   .m-hero-amber { background: linear-gradient(135deg, rgba(245,158,11,.24), rgba(245,158,11,.09)); border: 1px solid rgba(252,211,77,.32); }
   .m-hero-red   { background: linear-gradient(135deg, rgba(239,68,68,.24), rgba(239,68,68,.09)); border: 1px solid rgba(252,165,165,.32); }
+  /* El verde vivo es de la bienvenida y de nadie más. Está al lado de
+   * la del ciclo, que es verde azulado, y con el mismo tono las dos
+   * deslizar de una a otra no se notaba. */
+  .m-hero-verde {
+    background: linear-gradient(135deg, rgba(34,197,94,.34), rgba(34,197,94,.11));
+    border: 1px solid rgba(74,222,128,.46);
+  }
+  .m-hero-verde .m-hero-k { color: #86efac; }
+  .m-hero-verde .m-hero-pista { color: #4ade80; }
+  .m-hero-verde .m-hero-ir { color: #4ade80; }
+
   /* Verde azulado y no verde para el ciclo abierto: el verde ya es
    * "hay algo empezado" (el conteo) y "despegó". Un estado tranquilo
    * no debe vestirse igual que una acción en marcha. */
@@ -1113,6 +1124,39 @@
     background: #38bdf8; border-color: #38bdf8; color: #04283d;
   }
   body.m-shell .m-edit .m-act:disabled { opacity: .55; }
+
+  /* ── Los avisos flotantes ───────────────────────────────────────── */
+  /*
+   * En escritorio van abajo a la derecha, y ahí está bien: no estorban
+   * a nada. En el teléfono ese sitio es exactamente donde está la
+   * barra de pestañas y el botón de escanear, así que tres avisos
+   * apilados tapaban la navegación entera justo al arrancar, que es
+   * cuando más salen.
+   *
+   * Se van arriba, debajo de la banda, en una sola línea. Arriba no
+   * tapan nada que se toque: la banda es fija y los avisos pasan por
+   * debajo de ella.
+   */
+  #bsToastContainer {
+    right: 10px; left: 10px; bottom: auto;
+    top: calc(56px + env(safe-area-inset-top, 0px));
+    align-items: stretch;
+    max-width: none;
+  }
+  .bs-toast {
+    padding: 9px 12px; border-radius: 13px;
+    font-size: 12.5px; line-height: 1.35;
+    /* Una línea y a otra cosa. El texto completo del aviso casi
+     * siempre cabe, y cuando no, lo que importa está al principio. */
+    align-items: center;
+  }
+  .bs-toast .bs-toast-msg {
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  /* Entran desde arriba, no desde abajo: si no, parecen venir del
+   * sitio donde ya no están. */
+  @keyframes bsToastIn { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+  @keyframes bsToastOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-8px); } }
 
   /* ── Órdenes ────────────────────────────────────────────────────── */
 
