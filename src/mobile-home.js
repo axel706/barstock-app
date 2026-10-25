@@ -78,7 +78,7 @@
 
   function saludo() {
     cargarNombre();
-    return _nombre ? 'Hello ' + _nombre : hoy();
+    return _nombre ? 'Hello, ' + _nombre : hoy();
   }
 
   function master() { return (window.state && window.state.master) || []; }
@@ -274,10 +274,14 @@
   function tarjetaBienvenida() {
     return {
       tono: 'teal',
+      // Esta tarjeta no tiene columna de cifras ni botón, así que el
+      // texto se queda con el ancho entero y puede ser más grande.
+      ancha: true,
       k: 'Welcome to BarStock',
       tt: 'Good to have you',
-      sub: 'Scanning bottles is what this does best. Look up stock and ' +
-           'orders too — place them from desktop or iPad.',
+      sub: 'Scanning bottles is what this app does best. Look up stock, ' +
+           'see what is running out and review orders too — placing them, ' +
+           'and the deeper reports, live on desktop or iPad.',
       pista: 'Swipe to discover more',
       icoR: 'scan',
       amt: '', vs: '', btn: ''
@@ -353,7 +357,7 @@
 
   function pintarTarjeta(c, i) {
     return `
-      <article class="m-hero m-hero-${c.tono}" data-hero="${i}">
+      <article class="m-hero m-hero-${c.tono}${c.ancha ? ' m-hero-ancha' : ''}" data-hero="${i}">
         <div class="m-hero-l">
           <!-- El texto va envuelto para que crezca él y empuje el botón
                al suelo de la tarjeta. Sin esto el botón se pegaba al

@@ -537,11 +537,18 @@
    * en medio se vería el desajuste. */
   .m-hero-pista {
     display: inline-flex; align-items: center; gap: 6px;
-    margin-top: 12px; align-self: flex-start;
-    font-size: 12.5px; font-weight: 600; color: #5eead4;
+    margin-top: 14px; align-self: flex-start;
+    font-size: 14px; font-weight: 600; color: #5eead4;
   }
-  .m-hero-pista .ti { font-size: 15px; }
+  .m-hero-pista .ti { font-size: 16px; }
   .m-hero-ir { font-size: 26px; color: #5eead4; }
+
+  /* La tarjeta de bienvenida no tiene columna de cifras ni botón: es
+   * sólo texto. Así que la columna derecha se encoge al icono y el
+   * texto crece, que es lo que se pedía de ella. */
+  .m-hero-ancha .m-hero-r { width: 30px; flex: 0 0 30px; }
+  .m-hero-ancha .m-hero-s { font-size: 14px; line-height: 1.45; margin-top: 8px; }
+  .m-hero-ancha .m-hero-t { font-size: 24px; }
 
   body.m-shell .m-hero-b {
     align-self: center;
@@ -921,7 +928,7 @@
   .m-screen[data-screen="inventory"] { padding: 14px 13px 0; }
 
   .m-inv-h { display: flex; align-items: baseline; justify-content: space-between; margin: 0 2px 11px; }
-  .m-inv-t { color: #fff; font-size: 19px; font-weight: 800; letter-spacing: -.4px; }
+  .m-inv-t { color: #fff; font-size: 25px; font-weight: 800; letter-spacing: -.5px; line-height: 1.1; }
   .m-inv-c { font-size: 11px; color: #9fb0c4; }
 
   .m-inv-bar2 { display: flex; gap: 7px; margin-bottom: 11px; }
@@ -1065,7 +1072,7 @@
    * flota sobre una foto. */
 
   .m-screen[data-screen="cycle"] { padding: 14px 13px 0; }
-  .m-cyc-t { color: #fff; font-size: 19px; font-weight: 800; letter-spacing: -.4px; margin: 2px 2px 11px; }
+  .m-cyc-t { color: #fff; font-size: 25px; font-weight: 800; letter-spacing: -.5px; line-height: 1.1; margin: 2px 2px 13px; }
 
   body.m-shell .m-cyc-h { display: block; padding: 14px; border-radius: 17px; }
   .m-cyc-wait  { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.13); }
