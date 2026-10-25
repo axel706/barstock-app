@@ -216,11 +216,18 @@
     return `
       <article class="m-hero m-hero-${c.tono}" data-hero="${i}">
         <div class="m-hero-l">
-          <div class="m-hero-k">${esc(c.k)}</div>
-          <div class="m-hero-t">${esc(c.tt)}</div>
-          ${c.barra !== undefined ? `<div class="m-prog"><i style="width:${c.barra}%"></i></div>` : ''}
-          ${c.sub ? `<div class="m-hero-s">${esc(c.sub)}</div>` : ''}
-          ${c.lista ? `<div class="m-hero-list">${c.lista.map(x => '<span>' + x + '</span>').join('')}</div>` : ''}
+          <!-- El texto va envuelto para que crezca él y empuje el botón
+               al suelo de la tarjeta. Sin esto el botón se pegaba al
+               final del texto, y como cada tarjeta tiene un número
+               distinto de líneas, los botones quedaban a alturas
+               distintas y se veía al deslizar. -->
+          <div class="m-hero-txt">
+            <div class="m-hero-k">${esc(c.k)}</div>
+            <div class="m-hero-t">${esc(c.tt)}</div>
+            ${c.barra !== undefined ? `<div class="m-prog"><i style="width:${c.barra}%"></i></div>` : ''}
+            ${c.sub ? `<div class="m-hero-s">${esc(c.sub)}</div>` : ''}
+            ${c.lista ? `<div class="m-hero-list">${c.lista.map(x => '<span>' + x + '</span>').join('')}</div>` : ''}
+          </div>
           <button type="button" class="m-hero-b" data-go="${i}">${esc(c.btn)}</button>
         </div>
         <div class="m-hero-r">
