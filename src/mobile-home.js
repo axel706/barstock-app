@@ -152,8 +152,30 @@
       amt: dias + 'd',
       vs: 'usual is 7',
       btn: 'Open cycle',
-      go: irAlCiclo
+      go: irAlCiclo,
+
+      // Reiniciar vive AQUÍ y en ningún otro sitio. Estaba también en
+      // la pantalla del ciclo, y dos caminos para lo único de esta app
+      // que pone todo el inventario a cero es uno de más.
+      ico2: 'refresh',
+      ico2t: 'Restart the cycle',
+      go2: reiniciar
     };
+  }
+
+  // Pregunta antes, y dice lo que de verdad va a pasar. "¿Reiniciar el
+  // ciclo?" no significa nada; "los 270 vuelven a cero" sí. Luego
+  // resetOnHand vuelve a preguntar por su cuenta, y está bien: es la
+  // única acción de la app sin deshacer.
+  function reiniciar() {
+    const n = master().length;
+    const ok = window.confirm(
+      'Restart the cycle?\n\n' +
+      'On hand goes back to zero for all ' + n + ' items, and a new week starts. ' +
+      'This cannot be undone.');
+    if (!ok) return;
+    const W = window.BarStockWeeklyCycle;
+    if (W && W.reiniciar) W.reiniciar();
   }
 
   // El mismo descarte que la pantalla del ciclo: tira el conteo, deja

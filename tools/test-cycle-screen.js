@@ -133,21 +133,16 @@ console.log('\nla accion es la del escritorio, no una copia');
   eq('el boton llama a la misma funcion', w.__hecho, ['accion']);
 }
 
-console.log('\nreiniciar');
+console.log('\nreiniciar el ciclo NO esta en esta pantalla');
 {
-  const a = pintar({ estado: () => 'step1' });
-  ok('no aparece sin ciclo abierto', !a.host.querySelector('#mcReset'));
-
-  const b = pintar({ estado: () => 'step2', resetAt: () => '2026-10-20T00:00:00Z' });
-  ok('ni con el ciclo recien abierto y sin contar', !b.host.querySelector('#mcReset'));
-
-  const c = pintar({ estado: () => 'done', resetAt: () => '2026-10-20T00:00:00Z' });
-  ok('si con el conteo hecho', !!c.host.querySelector('#mcReset'));
-  ok('y avisa de lo que hace', /back to zero/i.test(c.host.textContent));
-
-  const { w, host } = pintar({ estado: () => 'done', resetAt: () => '2026-10-20T00:00:00Z' });
-  host.querySelector('#mcReset').click();
-  eq('y usa el reinicio de siempre', w.__hecho, ['reiniciar']);
+  // Vive en la tarjeta del Home, con el resto de acciones del ciclo.
+  // Tenerlo en los dos sitios era dos caminos para lo unico de esta
+  // app que pone todo el inventario a cero.
+  for (const st of ['step1', 'step2', 'counting', 'done']) {
+    const { host } = pintar({ estado: () => st, resetAt: () => '2026-10-20T00:00:00Z' },
+                            { contados: 112 });
+    ok('en ' + st + ' no hay boton de reiniciar', !host.querySelector('#mcReset'));
+  }
 }
 
 console.log('\ndescartar el conteo');

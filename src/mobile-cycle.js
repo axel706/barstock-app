@@ -218,20 +218,16 @@
         </div>
       ` : ''}
 
-      ${st === 'done' ? `
-        <button type="button" class="m-cyc-reset" id="mcReset">
-          <i class="ti ti-refresh" aria-hidden="true"></i> Restart the cycle
-        </button>
-        <div class="m-cyc-warn">Sets every on hand back to zero. It asks again first.</div>
-      ` : ''}`;
+      <!-- Reiniciar el ciclo NO vive aquí: vive en la tarjeta del Home,
+           junto al resto de acciones del ciclo. Tenerlo en los dos
+           sitios era dos caminos para lo único de esta app que borra
+           el inventario entero. -->`;
 
     const go = host.querySelector('#mcGo');
     // La MISMA accion del boton de escritorio. Reimplementarla aqui
     // seria tener dos caminos para poner el inventario a cero.
     if (go) go.onclick = () => { const w = W(); if (w && w.accion) w.accion(); };
 
-    const re = host.querySelector('#mcReset');
-    if (re) re.onclick = () => { const w = W(); if (w && w.reiniciar) w.reiniciar(); };
 
     const dr = host.querySelector('#mcDrop');
     if (dr) dr.onclick = () => {
