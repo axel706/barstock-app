@@ -104,14 +104,14 @@
 
   /* ── El lienzo ──────────────────────────────────────────────────── */
 
-  /* La franja blanca de abajo. Apareció con viewport-fit=cover: la app
-   * pasó a pintar hasta el borde físico, y la tira del gesto de inicio
-   * queda FUERA del body. El fondo degradado vive en el body, así que
-   * ahí abajo no pintaba nadie y se veía el blanco del <html>.
+  /* La franja de abajo. El fondo del <html> es lo último que se ve si
+   * alguna capa no llega al borde físico, así que se pone del color
+   * del final del velo en vez del blanco de fábrica. Es la red, no la
+   * solución: la solución es estirar las capas, más abajo.
    *
    * :has() y no un `html` suelto para no tocar el escritorio estrecho
    * por accidente: esto sólo vale cuando el armazón móvil está puesto. */
-  html:has(body.m-shell) { background: #0b1220; }
+  html:has(body.m-shell) { background: #080c13; }
 
   /* El hueco de la banda fija. Va en el body y no en las pantallas
    * propias para que también lo respete la página de siempre cuando
@@ -147,6 +147,26 @@
    * copiados tal cual. El mío era más suave y sobre una foto clara el
    * texto blanco se perdía; esto es contraste, no gusto.
    */
+  /* ── Las capas se pasan de largo por abajo ──────────────────────
+   *
+   * La foto y el velo son `position: fixed; inset: 0`, y su caja de
+   * referencia es el viewport. El problema es cuál: si
+   * `viewport-fit=cover` no acaba de aplicarse —y en una app ya
+   * añadida a la pantalla de inicio pasa—, ese viewport EXCLUYE la
+   * franja del gesto de inicio. Las capas acaban justo encima de ella
+   * y abajo asoma el color plano del <html>: la barra no se sube, es
+   * el fondo el que se acaba antes.
+   *
+   * Estirarlas 140px por debajo lo arregla en los dos casos: si la
+   * caja ya llegaba al borde físico, lo que sobra queda fuera de la
+   * pantalla y no se ve; si no llegaba, lo tapa. No hay que acertar
+   * cuál de los dos es, que es justo lo que no podía comprobar desde
+   * aquí.
+   */
+  body.m-shell::before,
+  body.m-shell::after,
+  body.m-shell > #bgLayer { bottom: -140px; }
+
   body.m-shell { background: none !important; }
   body.m-shell::after {
     backdrop-filter: blur(26px) saturate(125%);
