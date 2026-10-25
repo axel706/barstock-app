@@ -31,13 +31,23 @@
 
   /* ── Reset de botones ───────────────────────────────────────────── */
 
-  :where(body.m-shell) :where(.m-screens, .m-tabs, .m-sheet) :where(button) {
+  /* `body.m-shell` SIN :where(), y el resto con él. Eso deja el reset
+   * en (0,1,1): empata con `body.light button` de app.css y gana por
+   * ir después, y pierde contra cualquier `body.m-shell .loquesea` de
+   * este archivo, que es como se declara todo lo que sí se pinta.
+   *
+   * Envuelto entero en :where() valía CERO, así que hasta un `button {}`
+   * suelto le ganaba y app.css le ponía fondo, borde y sombra de botón
+   * a todo lo que yo no hubiera redeclarado a mano. De ahí salían las
+   * pastillas de fondo en "See all", en los renglones de Top movers y
+   * en "Back to results" — tres síntomas, una causa. */
+  body.m-shell :where(.m-screens, .m-tabs, .m-sheet) :where(button) {
     background: none; border: none; box-shadow: none;
     color: inherit; font-family: inherit; padding: 0;
     backdrop-filter: none; -webkit-backdrop-filter: none;
     transform: none;
   }
-  :where(body.m-shell) :where(.m-screens, .m-tabs, .m-sheet) :where(button):hover {
+  body.m-shell :where(.m-screens, .m-tabs, .m-sheet) :where(button):hover {
     transform: none; box-shadow: none;
   }
 
@@ -437,20 +447,46 @@
   /* La tendencia del héroe se va a la derecha del todo; la de los
    * renglones va pegada a su número. */
   .m-mv1-n .m-tr { margin-left: auto; }
-  .m-tr { font-size: 10.5px; font-weight: 700; color: #9fb0c4; flex: 0 0 auto; }
-  .m-tr.up { color: #4ade80; }
-  .m-tr.dn { color: #f87171; }
+  .m-tr {
+    display: inline-flex; align-items: center; gap: 3px; flex: 0 0 auto;
+    padding: 3px 7px; border-radius: 999px;
+    font-size: 10px; font-weight: 700; letter-spacing: .1px;
+    color: #9fb0c4; background: rgba(255,255,255,.08);
+  }
+  .m-tr .ti { font-size: 11px; }
+  .m-tr.up { color: #4ade80; background: rgba(74,222,128,.14); }
+  .m-tr.dn { color: #f87171; background: rgba(248,113,113,.14); }
 
-  .m-mvcard-rows { margin-top: 11px; border-top: 1px solid rgba(255,255,255,.12); padding-top: 2px; }
+  .m-mvcard-rows { margin-top: 11px; border-top: 1px solid rgba(255,255,255,.12); padding-top: 3px; }
   body.m-shell .m-mvr {
-    display: flex; align-items: baseline; justify-content: space-between; gap: 9px;
-    width: 100%; padding: 8px 0; text-align: left; cursor: pointer;
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; gap: 9px;
+    width: 100%; padding: 9px 0 11px; text-align: left; cursor: pointer;
+  }
+  /* El puesto. Con cinco renglones el orden ya no se lee solo, y un
+   * número pesa menos que otra barra. */
+  .m-mvr-i {
+    flex: 0 0 15px; font-size: 9.5px; font-weight: 800;
+    color: #7f93a8; text-align: center;
   }
   .m-mvr-t {
     flex: 1; min-width: 0; font-size: 11.5px; color: #b6c6d8;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .m-mvr b { font-size: 12.5px; font-weight: 800; color: #eef4fb; flex: 0 0 38px; text-align: right; }
+
+  /* Una línea al pie, no un fondo detrás del texto. Ésa fue la queja
+   * del formato anterior: la barra como fondo parecía un rectángulo
+   * gris mal pintado. Al pie se lee como lo que es — cuánto de lo que
+   * se mueve el primero se mueve éste. */
+  .m-mvr-bar {
+    position: absolute; left: 15px; bottom: 2px; height: 2px;
+    border-radius: 999px; background: rgba(125,211,252,.55);
+  }
+
+  .m-mvcard-h .m-hero-k { display: inline-flex; align-items: center; gap: 5px; }
+  .m-mvcard-h .m-hero-k .ti { font-size: 12px; }
+  .m-seclink .ti { font-size: 13px; vertical-align: -2px; }
 
   /* ── Despegó / se apagó ─────────────────────────────────────────── */
   /*

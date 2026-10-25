@@ -265,11 +265,17 @@
     return Math.abs(d) < 8 ? 0 : d;   // por debajo de 8% es la misma semana
   }
 
+  // Pastilla con icono y no texto suelto: a 10px una flecha dibujada se
+  // lee de un vistazo y un "↑" tipografico se confunde con una comilla.
   function flecha(pct) {
     if (pct === null) return '';
-    if (pct === 0) return '<span class="m-tr">steady</span>';
-    return '<span class="m-tr ' + (pct > 0 ? 'up' : 'dn') + '">' +
-           (pct > 0 ? '↑' : '↓') + ' ' + Math.abs(pct) + '%</span>';
+    if (pct === 0) {
+      return '<span class="m-tr"><i class="ti ti-minus" aria-hidden="true"></i>steady</span>';
+    }
+    const arriba = pct > 0;
+    return '<span class="m-tr ' + (arriba ? 'up' : 'dn') + '">' +
+           '<i class="ti ti-' + (arriba ? 'trending-up' : 'trending-down') + '" aria-hidden="true"></i>' +
+           Math.abs(pct) + '%</span>';
   }
 
   // ── Qué cambió ───────────────────────────────────────────────────────
@@ -359,8 +365,10 @@
         ${mov.length ? `
           <div class="m-mvcard">
             <div class="m-mvcard-h">
-              <span class="m-hero-k">Top movers</span>
-              <button type="button" class="m-seclink" id="mhAllMov">See all</button>
+              <span class="m-hero-k"><i class="ti ti-flame" aria-hidden="true"></i> Top movers</span>
+              <button type="button" class="m-seclink" id="mhAllMov">
+                See all <i class="ti ti-chevron-right" aria-hidden="true"></i>
+              </button>
             </div>
 
             <button type="button" class="m-mv1" data-item="${esc(mov[0].item)}">
@@ -373,11 +381,14 @@
             </button>
 
             ${mov.length > 1 ? `<div class="m-mvcard-rows">
-              ${mov.slice(1).map(x => `
+              ${mov.slice(1).map((x, i) => `
                 <button type="button" class="m-mvr" data-item="${esc(x.item)}">
+                  <span class="m-mvr-i">${i + 2}</span>
                   <span class="m-mvr-t">${esc(x.item)}</span>
                   ${flecha(x.pct)}
                   <b>${n1(x.avg)}</b>
+                  <span class="m-mvr-bar" style="width:${
+                    Math.round((x.avg / mov[0].avg) * 100)}%"></span>
                 </button>`).join('')}
             </div>` : ''}
           </div>` : ''}
