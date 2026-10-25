@@ -1076,6 +1076,119 @@
   }
   body.m-shell .m-edit .m-act:disabled { opacity: .55; }
 
+  /* ── Órdenes ────────────────────────────────────────────────────── */
+
+  .m-screen[data-screen="orders"] { padding: 14px 13px 0; }
+
+  .m-ord-h { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .m-ord-tot {
+    text-align: right; color: #fff; font-size: 21px; font-weight: 800;
+    letter-spacing: -.5px; line-height: 1.1;
+  }
+  .m-ord-tot small { display: block; font-size: 11.5px; font-weight: 400; color: #a9bacd; margin-top: 3px; }
+  .m-ord-sub { font-size: 12.5px; color: #a9bacd; margin: 4px 2px 14px; }
+
+  /* Un proveedor del resumen. El ámbar no es decoración: un pedido sin
+   * precios no es un pedido barato, es uno que no sabes cuánto cuesta. */
+  body.m-shell .m-ordv {
+    display: flex; align-items: center; gap: 11px; width: 100%;
+    padding: 14px 13px; margin-bottom: 8px; border-radius: 15px;
+    text-align: left; cursor: pointer;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.14);
+  }
+  body.m-shell .m-ordv.aviso {
+    background: rgba(245,158,11,.12);
+    border-color: rgba(252,211,77,.26);
+  }
+  .m-ordv-l { flex: 1; min-width: 0; }
+  .m-ordv-n {
+    display: block; font-size: 15px; font-weight: 600; color: #eef4fb;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .m-ordv-l small { display: block; font-size: 12px; color: #a9bacd; margin-top: 3px; }
+  .m-ordv.aviso .m-ordv-l small { color: #fcd34d; }
+  .m-ordv > b { font-size: 17px; font-weight: 800; color: #fff; flex: 0 0 auto; }
+  .m-ordv.aviso > b { color: #fcd34d; }
+
+  /* ── Una línea del pedido ───────────────────────────────────────── */
+
+  .m-ord-l {
+    padding: 12px; margin-bottom: 8px; border-radius: 15px;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.14);
+  }
+  .m-ord-l.editada   { border-color: rgba(56,189,248,.34); }
+  .m-ord-l.sinprecio { background: rgba(245,158,11,.11); border-color: rgba(252,211,77,.26); }
+  .m-ord-l.mal       { background: rgba(239,68,68,.12);  border-color: rgba(248,113,113,.38); }
+
+  .m-ord-l-top { display: flex; align-items: baseline; gap: 8px; }
+  .m-ord-l-n {
+    flex: 1; min-width: 0; font-size: 14px; font-weight: 600; color: #eef4fb;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .m-ord-l-s { font-size: 11.5px; color: #a9bacd; margin-top: 4px; }
+
+  .m-ord-out { font-size: 11.5px; font-weight: 700; color: #f87171; flex: 0 0 auto; }
+  .m-ord-sin { font-size: 11.5px; font-weight: 700; color: #fcd34d; flex: 0 0 auto; }
+  .m-ord-ed  { font-size: 11.5px; font-weight: 700; color: #7dd3fc; flex: 0 0 auto; }
+  .m-ord-mal { font-size: 11.5px; font-weight: 700; color: #fca5a5; flex: 0 0 auto; }
+
+  .m-ord-q { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  body.m-shell .m-ord-q button {
+    flex: 0 0 38px; height: 38px; cursor: pointer; border-radius: 11px;
+    font-size: 18px; color: #eaf2fb;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.15);
+  }
+  /* 16px obligatorio: por debajo Safari hace zoom al enfocar. */
+  body.m-shell .m-ord-q input {
+    flex: 1; min-width: 0; height: 38px; font-size: 16px; font-weight: 700;
+    text-align: center; color: #fff; -webkit-appearance: none;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 11px;
+  }
+  .m-ord-l.editada .m-ord-q input {
+    background: rgba(56,189,248,.16); border-color: rgba(56,189,248,.44);
+  }
+  .m-ord-q input::-webkit-outer-spin-button,
+  .m-ord-q input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .m-ord-l-t { flex: 0 0 58px; text-align: right; font-size: 14px; font-weight: 800; color: #fff; }
+
+  body.m-shell .m-ord-undo {
+    margin-top: 8px; font-size: 11.5px; color: #7dd3fc; cursor: pointer; text-align: left;
+  }
+  .m-ord-undo b { font-weight: 800; }
+
+  /* Proveedor sin ajuste manual: se enseña la cantidad y se dice por
+   * qué no se puede tocar, en vez de un botón que no responde. */
+  .m-ord-auto { display: flex; align-items: center; gap: 9px; margin-top: 10px; }
+  .m-ord-auto > b { font-size: 17px; font-weight: 800; color: #fff; }
+  .m-ord-auto > span:not(.m-ord-l-t) { flex: 1; min-width: 0; font-size: 11px; color: #a9bacd; line-height: 1.3; }
+
+  body.m-shell .m-ord-add {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    width: 100%; margin: 4px 0 14px; padding: 13px; border-radius: 999px;
+    cursor: pointer; font-size: 13.5px; font-weight: 700; color: #dbe6f2;
+    background: rgba(255,255,255,.09);
+    border: 1px solid rgba(255,255,255,.15);
+  }
+
+  /* El pie NO es fijo. Lo fue en la maqueta, pero una barra pegada
+   * abajo con la de pestañas justo debajo son dos barras apiladas
+   * comiéndose un tercio de la pantalla. Va al final del todo: se
+   * llega a él al terminar de repasar, que es cuando importa. */
+  .m-ord-pie {
+    padding: 13px 14px; margin-bottom: 6px; border-radius: 16px;
+    background: rgba(11,18,32,.80);
+    border: 1px solid rgba(255,255,255,.16);
+  }
+  .m-ord-pie-r { display: flex; align-items: center; justify-content: space-between; }
+  .m-ord-pie-r span { font-size: 12.5px; color: #a9bacd; }
+  .m-ord-pie-r b { font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -.5px; }
+  .m-ord-pie small { display: block; font-size: 11.5px; color: #a9bacd; margin-top: 5px; }
+
   /* ── El ciclo ───────────────────────────────────────────────────── */
   /* Cada estado tiene su color y el color es la mitad del mensaje:
    * verde hay algo que empezar, ámbar algo a medias, rojo algo
@@ -1233,6 +1346,11 @@
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-seg { border-radius: 15px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-seg button { border-radius: 11px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-inv { border-radius: 15px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ordv { border-radius: 15px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ord-add { border-radius: 999px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ord-q button { border-radius: 11px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ord-q input { border-radius: 11px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ord-undo { border-radius: 0 !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-chip { border-radius: 999px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-step button { border-radius: 12px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-step input { border-radius: 12px !important; }

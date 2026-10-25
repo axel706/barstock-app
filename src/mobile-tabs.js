@@ -96,7 +96,8 @@
     // esta pestaña no existe y es mejor asi — una pestaña que abre una
     // tabla de ocho columnas en un telefono no es un respaldo, es un
     // callejon.
-    M.register({ id: 'orders',    icon: 'ti-shopping-cart', label: 'Orders',    tab: true, orden: 40, seccion: 'vendor' });
+    // Orders tampoco apunta ya a la seccion del escritorio: tiene
+    // pantalla propia en mobile-orders.js.
     M.register({ id: 'more',      icon: 'ti-dots',          label: 'More',      tab: true, orden: 50, mount: montarMas });
   }
 
