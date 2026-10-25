@@ -656,20 +656,47 @@
   // repinta varias veces mientras cargan los datos, y mover el carril
   // debajo del dedo de alguien que está deslizando es peor que
   // empezar en la tarjeta equivocada.
+  //
+  // ── Y se espera a que el carril mida algo ────────────────────────────
+  //
+  // El primer intento colocaba el scroll justo después de escribir el
+  // HTML, cuando las tarjetas todavía no tienen ancho: offsetLeft y
+  // clientWidth valían cero, la cuenta daba cero, y el carril se
+  // quedaba donde estaba. No fallaba, no avisaba — simplemente no
+  // pasaba nada. Es el mismo modo de fallo que la línea del conteo.
+  //
+  // Por eso se reintenta por fotogramas hasta que el carril tiene
+  // ancho, con un tope para no quedarse dando vueltas si la pantalla
+  // nunca llega a verse.
   function alFoco(host, cards) {
     const i = cards.findIndex(c => c && c.foco);
     if (i <= 0) return;
-    const rail = host.querySelector('#mhRail');
-    const dots = host.querySelector('#mhDots');
-    const caja = rail && rail.children[i];
-    if (!rail || !caja) return;
 
-    // scrollLeft a mano y no scrollIntoView: éste último desplaza
-    // también la PÁGINA para enseñar el carril, y al entrar al Home
-    // eso se ve como un salto.
-    rail.scrollLeft = caja.offsetLeft + caja.offsetWidth / 2 - rail.clientWidth / 2;
-    if (dots) Array.from(dots.children).forEach((d, j) => d.classList.toggle('on', j === i));
+    const frame = window.requestAnimationFrame || ((f) => setTimeout(f, 16));
+    let intentos = 0;
+
+    const colocar = () => {
+      const rail = host.querySelector('#mhRail');
+      const caja = rail && rail.children[i];
+      if (!rail || !caja) return;
+
+      if (!rail.clientWidth || !caja.offsetWidth) {
+        if (++intentos < 20) frame(colocar);
+        return;
+      }
+
+      // scrollLeft a mano y no scrollIntoView: éste último desplaza
+      // también la PÁGINA para enseñar el carril, y al entrar al Home
+      // eso se ve como un salto.
+      rail.scrollLeft = caja.offsetLeft + caja.offsetWidth / 2 - rail.clientWidth / 2;
+
+      const dots = host.querySelector('#mhDots');
+      if (dots) Array.from(dots.children).forEach((d, j) => d.classList.toggle('on', j === i));
+    };
+
+    colocar();
   }
+
 
   // ── La píldora de locación ───────────────────────────────────────────
   //
