@@ -84,12 +84,13 @@
       return;
     }
 
+    // Apilado y no en dos columnas: "Orders" y "$590" uno al lado del
+    // otro se peleaban por el ancho y la línea de abajo se metía
+    // debajo del título.
     host.innerHTML = `
-      <div class="m-ord-h">
-        <span class="m-inv-t">Orders</span>
-        <div class="m-ord-tot">${money(total)}
-          <small>across ${vs.length} vendor${vs.length === 1 ? '' : 's'}</small></div>
-      </div>
+      <div class="m-inv-t">Orders</div>
+      <div class="m-ord-gran">${money(total)}
+        <span>across ${vs.length} vendor${vs.length === 1 ? '' : 's'}</span></div>
       ${vs.map((v, i) => `
         <button type="button" class="m-ordv${v.sinPrecio ? ' aviso' : ''}" data-v="${i}">
           <span class="m-ordv-l">
@@ -108,9 +109,30 @@
 
   // ── Detalle ──────────────────────────────────────────────────────────
 
+  // ── Lo que dejaste fuera ─────────────────────────────────────────────
+  //
+  // No hace falta una columna nueva: excluir YA era poner la cantidad a
+  // cero. getOrderRowsForVendor filtra por cantidad efectiva mayor que
+  // cero, así que bajar a 0 borraba la línea de la lista — sin decirlo
+  // y sin vuelta atrás salvo volver a añadirla a mano.
+  //
+  // Excluido es, exactamente: este proveedor, cantidad puesta a cero A
+  // MANO, y el automático quería pedir algo. Lo último es lo que
+  // distingue "dije que no" de "nunca hizo falta": sin ese filtro, la
+  // lista se llenaría de los doscientos artículos que no tocaba pedir.
+  function excluidas(vendor) {
+    if (!hay('isRowPlaced')) return master().filter(() => false);
+    return master().filter(r =>
+      r.vendor === vendor &&
+      Number(r.orderOverride) === 0 && r.orderOverride !== '' && r.orderOverride !== null &&
+      num(r.toOrder) > 0 &&
+      !window.isRowPlaced(r));
+  }
+
   function pintarDetalle(host) {
     const v = proveedores().find(x => x.nombre === _vendor);
     if (!v) { _vendor = null; return pintarResumen(host); }
+    const fuera = excluidas(v.nombre);
 
     // El mismo orden que el escritorio: lo más urgente arriba. Repasar
     // un pedido es mirar las primeras líneas, así que el orden ES la
@@ -122,30 +144,53 @@
 
       <div class="m-ord-h">
         <span class="m-inv-t">${esc(v.nombre)}</span>
-        <div class="m-ord-tot">${money(v.total)}</div>
+        <div class="m-ord-tot">${money(v.total)}
+          <small>${v.filas.length} line${v.filas.length === 1 ? '' : 's'}${
+            v.sinPrecio ? ' · ' + v.sinPrecio + ' without price' : ''}</small></div>
       </div>
-      <div class="m-ord-sub">${v.filas.length} line${v.filas.length === 1 ? '' : 's'}${
-        v.sinPrecio ? ' · ' + v.sinPrecio + ' without price' : ' · all priced'}</div>
 
-      <div id="moList">${v.filas.map(linea).join('')}</div>
+      <!-- Arriba y no al final: que no se pueda colocar desde aquí es
+           lo primero que hay que saber, no la conclusión a la que se
+           llega después de repasar doce líneas. -->
+      <div class="m-ord-nota">
+        <i class="ti ti-device-desktop" aria-hidden="true"></i>
+        Review and adjust here. Place the order from desktop or iPad.
+      </div>
 
       <button type="button" class="m-ord-add" id="moAdd">
         <i class="ti ti-plus" aria-hidden="true"></i> Add a product
       </button>
 
-      <div class="m-ord-pie">
-        <div class="m-ord-pie-r">
-          <span>${v.filas.length} line${v.filas.length === 1 ? '' : 's'}</span>
-          <b>${money(v.total)}</b>
-        </div>
-        <small>Place this order from desktop or iPad</small>
-      </div>`;
+      <div id="moList">${v.filas.map(linea).join('')}</div>
+
+      ${fuera.length ? `
+        <div class="m-ord-fuera">
+          <div class="m-ord-fuera-h">
+            Left out of this order · ${fuera.length}
+          </div>
+          ${fuera.map(r => {
+            const i = master().indexOf(r);
+            return `
+              <div class="m-ord-fl">
+                <span class="m-ord-fl-n">${esc(r.item)}</span>
+                <small>auto wanted ${n2(r.toOrder)}</small>
+                <button type="button" class="m-ord-volver" data-volver="${i}">Bring back</button>
+              </div>`;
+          }).join('')}
+        </div>` : ''}`;
 
     host.querySelector('#moBack').onclick = () => { _vendor = null; pintar(host); };
     const add = host.querySelector('#moAdd');
     if (add) add.onclick = () => {
       if (window.BarStockAddToOrder) window.BarStockAddToOrder.open();
     };
+    host.querySelectorAll('[data-volver]').forEach(b => {
+      b.onclick = () => {
+        // Vuelve a automático, no a la cantidad que tuviera antes: el
+        // automático se recalcula con lo que hay hoy en el estante.
+        if (hay('resetFinalOrder')) { window.resetFinalOrder(Number(b.dataset.volver)); pintar(host); }
+      };
+    });
     enganchar(host);
   }
 
@@ -171,6 +216,10 @@
         <div class="m-ord-l-top">
           <span class="m-ord-l-n">${esc(r.item)}</span>
           ${marca}
+          ${ajustable(r) ? `<button type="button" class="m-ord-x" data-fuera="${i}"
+                                    aria-label="Leave out of this order">
+                              <i class="ti ti-x" aria-hidden="true"></i>
+                            </button>` : ''}
         </div>
         <div class="m-ord-l-s">${n2(r.onHand)} of ${n2(r.suggested)} on hand${
           conPrecio ? ' · ' + money(precio) + ' each'
@@ -207,6 +256,11 @@
         window.updateFinalOrder(i, valor);
         pintar(host);
       };
+
+      // Excluir es poner la cantidad a cero: lo mismo que ya hacía
+      // bajar con el botón, pero dicho y con sitio al que va.
+      const fuera = caja.querySelector('[data-fuera]');
+      if (fuera) fuera.onclick = () => guardar(0);
 
       caja.querySelectorAll('[data-q]').forEach(b => {
         b.onclick = () => {
