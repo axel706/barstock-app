@@ -77,10 +77,25 @@
     const total = vs.reduce((s, v) => s + v.total, 0);
 
     if (!vs.length) {
+      // Dos vacíos distintos, y conviene no confundirlos: "todavía no
+      // has contado" es una tarea pendiente, y "no hace falta pedir
+      // nada" es una buena noticia. El mensaje de antes servía para
+      // los dos y no decía ninguno.
+      const W = window.BarStockWeeklyCycle;
+      const st = (W && W.estado) ? W.estado() : 'loading';
+      const contado = st === 'done';
+
       host.innerHTML = `
-        <div class="m-inv-h"><span class="m-inv-t">Orders</span></div>
-        <div class="m-empty">Nothing to order right now.<br>
-          <small>Lines appear here once a count is in.</small></div>`;
+        <div class="m-inv-t">Orders</div>
+        <div class="m-nada">
+          <span class="m-nada-i${contado ? ' bien' : ''}">
+            <i class="ti ti-${contado ? 'circle-check' : 'scan'}" aria-hidden="true"></i>
+          </span>
+          <b>${contado ? 'Nothing to order' : 'No count yet'}</b>
+          <small>${contado
+            ? 'Every product is at or above its par. Order lines show up here when something drops below.'
+            : 'Count the bottles and the order lines appear here, grouped by vendor.'}</small>
+        </div>`;
       return;
     }
 

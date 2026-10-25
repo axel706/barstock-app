@@ -1320,7 +1320,37 @@
 
   .m-lab { font-size: 11.5px; font-weight: 500; color: #a9bacd; letter-spacing: .5px; margin: 16px 2px 8px; }
   .m-cnt { font-size: 11.5px; color: #a9bacd; letter-spacing: .3px; margin: 10px 4px 8px; }
-  .m-empty { font-size: 14px; color: #a9bacd; text-align: center; padding: 28px 16px; line-height: 1.6; }
+  .m-empty { font-size: 14px; color: #a9bacd; text-align: center; padding: 34px 20px; line-height: 1.6; }
+  .m-empty small { font-size: 13px; }
+
+  /* ── Pantalla vacía ─────────────────────────────────────────────── */
+  /* Un hueco en blanco con una línea pequeña en medio se lee como que
+   * algo falló. Con icono, título y una explicación se lee como un
+   * estado, que es lo que es. */
+  .m-nada {
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; padding: 56px 26px 40px;
+  }
+  .m-nada-i {
+    width: 62px; height: 62px; border-radius: 50%; margin-bottom: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 27px; color: #9fb0c4;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.13);
+  }
+  /* Verde sólo cuando el vacío es una buena noticia. */
+  .m-nada-i.bien {
+    color: #4ade80;
+    background: rgba(74,222,128,.12);
+    border-color: rgba(74,222,128,.28);
+  }
+  .m-nada b {
+    font-size: 19px; font-weight: 800; color: #fff; letter-spacing: -.3px;
+  }
+  .m-nada small {
+    display: block; font-size: 13.5px; color: #a9bacd;
+    line-height: 1.55; margin-top: 8px; max-width: 290px;
+  }
 
   body.m-shell .m-item {
     display: flex; align-items: center; gap: 10px; width: 100%;

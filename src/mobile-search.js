@@ -97,8 +97,12 @@
     if (cnt) cnt.textContent = res.length ? res.length + ' match' + (res.length === 1 ? '' : 'es') : '';
 
     if (!res.length) {
-      caja.innerHTML = `<div class="m-empty">Nothing called “${esc(_q)}”.<br>
-        <small>If it is on the shelf, it is not in the inventory yet.</small></div>`;
+      caja.innerHTML = `
+        <div class="m-nada">
+          <span class="m-nada-i"><i class="ti ti-search-off" aria-hidden="true"></i></span>
+          <b>Nothing called “${esc(_q)}”</b>
+          <small>If it is on the shelf, it is not in the inventory yet.</small>
+        </div>`;
       return;
     }
 

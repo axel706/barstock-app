@@ -137,11 +137,20 @@
 
     const filas = visibles();
     if (!filas.length) {
-      caja.innerHTML = master().length
-        ? `<div class="m-empty">${_solo === 'fix'
-             ? 'Nothing left to fix here.<br><small>Switch to Everything to see the rest.</small>'
-             : 'Nothing matches those filters.'}</div>`
-        : '<div class="m-empty">No inventory yet.<br><small>Import a count to start.</small></div>';
+      const nada = (ico, bien, t, s) => `
+        <div class="m-nada">
+          <span class="m-nada-i${bien ? ' bien' : ''}"><i class="ti ti-${ico}" aria-hidden="true"></i></span>
+          <b>${t}</b><small>${s}</small>
+        </div>`;
+
+      caja.innerHTML = !master().length
+        ? nada('package', false, 'No inventory yet',
+               'Import a count or scan the shelf, and every product shows up here.')
+        : _solo === 'fix'
+          ? nada('circle-check', true, 'Nothing left to fix',
+                 'Every product has a vendor, a price and a par. Switch to Everything to see the rest.')
+          : nada('search-off', false, 'Nothing matches',
+                 'No product fits the filter and the search together.');
       return;
     }
 

@@ -288,6 +288,26 @@ console.log('\nañadir un producto');
   ok('sin ajuste manual no hay boton', !h2.querySelector('#moAdd'));
 }
 
+console.log('\nla pantalla vacia dice CUAL de los dos vacios es');
+{
+  // "Todavia no has contado" es una tarea pendiente y "no hace falta
+  // pedir nada" es una buena noticia. El mensaje de antes servia para
+  // los dos y no decia ninguno.
+  const sinContar = pantalla();
+  sinContar.w.state.master.forEach(r => { r.toOrder = 0; r.orderOverride = ''; });
+  sinContar.w.BarStockWeeklyCycle = { estado: () => 'step2' };
+  sinContar.def.show(sinContar.host);
+  ok('sin conteo lo dice', /No count yet/i.test(sinContar.host.textContent));
+  ok('y no celebra nada', !sinContar.host.querySelector('.m-nada-i.bien'));
+
+  const contado = pantalla();
+  contado.w.state.master.forEach(r => { r.toOrder = 0; r.orderOverride = ''; });
+  contado.w.BarStockWeeklyCycle = { estado: () => 'done' };
+  contado.def.show(contado.host);
+  ok('contado y sin nada que pedir, lo dice', /Nothing to order/i.test(contado.host.textContent));
+  ok('y ahi si se celebra', !!contado.host.querySelector('.m-nada-i.bien'));
+}
+
 console.log('\nal volver se entra por el resumen');
 {
   const { host, def } = pantalla();
