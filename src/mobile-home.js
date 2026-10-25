@@ -529,6 +529,10 @@
 
     const hoja = document.createElement('div');
     hoja.className = 'm-sheet';
+    // El id no es decoracion: las reglas de esta hoja se apoyan en el
+    // para ganarle en especificidad al radio de app.css. Ver la
+    // cabecera de mobile-app.css.
+    hoja.id = 'mSheet';
     hoja.innerHTML = `
       <div class="m-sheet-bg"></div>
       <div class="m-sheet-box" role="dialog" aria-label="Choose location">

@@ -213,6 +213,10 @@
 
     const hoja_ = document.createElement('div');
     hoja_.className = 'm-sheet';
+    // El id no es decoracion: las reglas de esta hoja se apoyan en el
+    // para ganarle en especificidad al radio de app.css. Ver la
+    // cabecera de mobile-app.css.
+    hoja_.id = 'mSheet';
     hoja_.innerHTML = `
       <div class="m-sheet-bg"></div>
       <div class="m-sheet-box" role="dialog" aria-label="Filters">
@@ -277,6 +281,10 @@
 
     const h = document.createElement('div');
     h.className = 'm-sheet';
+    // El id no es decoracion: las reglas de esta hoja se apoyan en el
+    // para ganarle en especificidad al radio de app.css. Ver la
+    // cabecera de mobile-app.css.
+    h.id = 'mSheet';
     h.innerHTML = `
       <div class="m-sheet-bg"></div>
       <div class="m-sheet-box m-edit" role="dialog" aria-label="Edit item">
