@@ -228,11 +228,8 @@
 
   function mount(host) {
     host.innerHTML = `
-      <header class="m-head">
-        <span class="m-logo">BarStock<i>.</i></span>
-        <span class="m-loc">${esc((window.BARSTOCK_CONFIG || {}).LOCATION_NAME || '')}</span>
-      </header>
-
+      <!-- Sin encabezado propio: el logo lo pinta el armazón, fijo y en
+           todas las pantallas. Dos logos era uno de más. -->
       <div class="m-searchbar on">
         <i class="ti ti-search" aria-hidden="true"></i>
         <input id="msInput" type="search" inputmode="search" autocomplete="off"

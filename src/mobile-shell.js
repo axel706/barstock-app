@@ -44,6 +44,7 @@
   let _entrado = false;      // ¿ya se decidió por dónde se entra?
   let _host = null;          // contenedor de las pantallas propias
   let _barra = null;
+  let _banda = null;         // el encabezado fijo, común a todas
 
   const esMovil = () => window.matchMedia('(max-width: ' + ANCHO + 'px)').matches;
 
@@ -68,8 +69,48 @@
 
   // ── Montaje ──────────────────────────────────────────────────────────
 
+  // ── La banda ─────────────────────────────────────────────────────────
+  //
+  // Vive aquí y no en el Home porque tiene que estar en TODAS las
+  // pantallas, también en las que son secciones del escritorio. Mientras
+  // la pintaba el Home sólo existía en el Home, y al entrar a Buscar o a
+  // Inventario desaparecía.
+  //
+  // Va fija: el contenido pasa por debajo. Por eso lleva su propio
+  // desenfoque — el velo de .m-screens está detrás del contenido, no
+  // delante, así que sin esto se leería el texto a través de la banda.
+  function montarBanda() {
+    _banda = document.createElement('header');
+    _banda.id = 'mBand';
+    _banda.className = 'm-band';
+    _banda.innerHTML =
+      '<span class="m-logo">BarStock<i>.</i><em>PRO</em></span>' +
+      '<span class="m-band-ico">' +
+        '<button type="button" class="m-ico" id="mTheme" aria-label="Light or dark">' +
+          '<i class="ti ti-moon" aria-hidden="true"></i></button>' +
+        '<button type="button" class="m-ico" id="mSet" aria-label="Settings">' +
+          '<i class="ti ti-settings" aria-hidden="true"></i></button>' +
+      '</span>';
+    // Al principio del body: así el bloqueo de la pantalla de entrada
+    // (body.auth-locked > *) también la tapa, como a todo lo demás.
+    document.body.insertBefore(_banda, document.body.firstChild);
+
+    const th = _banda.querySelector('#mTheme');
+    if (th) th.onclick = () => {
+      // El mismo interruptor del escritorio, no una copia.
+      if (typeof window.toggleTheme === 'function') window.toggleTheme();
+      else document.body.classList.toggle('light');
+    };
+    const st = _banda.querySelector('#mSet');
+    if (st) st.onclick = () => {
+      if (typeof window.openSettings === 'function') window.openSettings();
+    };
+  }
+
   function montar() {
     if (_montado || !esMovil()) return;
+
+    montarBanda();
 
     _host = document.createElement('div');
     _host.id = 'mScreens';
@@ -119,7 +160,8 @@
     if (!_montado) return;
     if (_host) _host.remove();
     if (_barra) _barra.remove();
-    _host = _barra = null;
+    if (_banda) _banda.remove();
+    _host = _barra = _banda = null;
     _activa = null;
     _montado = false;
     _entrado = false;

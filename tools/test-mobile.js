@@ -71,6 +71,7 @@ console.log('\nen escritorio no existe');
 {
   const w = montar(false);
   ok('no se monta la barra', !w.document.getElementById('mTabs'));
+  ok('ni la banda', !w.document.getElementById('mBand'));
   ok('ni el contenedor de pantallas', !w.document.getElementById('mScreens'));
   ok('ni se marca el body', !w.document.body.classList.contains('m-shell'));
 
@@ -86,6 +87,36 @@ console.log('\nen el telefono');
   const w = montar(true);
   ok('se monta la barra', !!w.document.getElementById('mTabs'));
   ok('y el body queda marcado', w.document.body.classList.contains('m-shell'));
+}
+
+console.log('\nla banda es del armazon, no del Home');
+{
+  const w = montar(true);
+  const b = w.document.getElementById('mBand');
+  // Vive aqui porque tiene que verse en TODAS las pantallas. Mientras
+  // la pintaba el Home, al entrar a Buscar o a Inventario desaparecia.
+  ok('existe sin que ninguna pantalla se haya registrado', !!b);
+  ok('con el logo', !!b && !!b.querySelector('.m-logo'));
+  ok('y los dos botones', !!b && b.querySelectorAll('.m-ico').length === 2);
+  // Primera del body para que body.auth-locked > * tambien la tape: el
+  // encabezado no puede quedar flotando sobre la pantalla de entrada.
+  eq('va la primera del body', w.document.body.firstElementChild.id, 'mBand');
+
+  let tema = 0;
+  w.toggleTheme = () => { tema++; };
+  w.document.getElementById('mTheme').click();
+  eq('el tema usa el interruptor de siempre', tema, 1);
+
+  let ajustes = 0;
+  w.openSettings = () => { ajustes++; };
+  w.document.getElementById('mSet').click();
+  eq('y los ajustes la pantalla de siempre', ajustes, 1);
+
+  // Sigue estando al entrar a una seccion del escritorio: ahi es donde
+  // mas se notaba que faltaba.
+  w.BarStockMobile.register({ id: 'inv', tab: true, seccion: 'inventory' });
+  w.BarStockMobile.ir('inv');
+  ok('y sigue ahi dentro de una seccion', !!w.document.getElementById('mBand'));
 }
 
 console.log('\nla barra sale de lo registrado');

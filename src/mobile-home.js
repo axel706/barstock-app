@@ -277,16 +277,6 @@
     const max = mov.length ? mov[0].avg : 0;
 
     host.innerHTML = `
-      <header class="m-band">
-        <span class="m-logo">BarStock<i>.</i><em>PRO</em></span>
-        <span class="m-band-ico">
-          <button type="button" class="m-ico" id="mhTheme" aria-label="Light or dark">
-            <i class="ti ti-moon" aria-hidden="true"></i></button>
-          <button type="button" class="m-ico" id="mhSet" aria-label="Settings">
-            <i class="ti ti-settings" aria-hidden="true"></i></button>
-        </span>
-      </header>
-
       <div class="m-body">
         <div class="m-daterow">
           <span class="m-day">${esc(hoy())}</span>
@@ -453,15 +443,8 @@
   }
 
   function enganchar(host, cards) {
-    const set = host.querySelector('#mhSet');
-    if (set) set.onclick = () => { if (typeof window.openSettings === 'function') window.openSettings(); };
-
-    const th = host.querySelector('#mhTheme');
-    if (th) th.onclick = () => {
-      // El mismo interruptor del escritorio, no una copia.
-      if (typeof window.toggleTheme === 'function') window.toggleTheme();
-      else document.body.classList.toggle('light');
-    };
+    // El logo y los dos botones ya no viven aquí: son del armazón, para
+    // que estén también en Buscar y en las secciones del escritorio.
 
     const loc = host.querySelector('#mhLoc');
     if (loc) loc.onclick = abrirLocs;
