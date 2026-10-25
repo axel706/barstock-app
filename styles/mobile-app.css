@@ -513,18 +513,16 @@
     scroll-snap-align: center;
   }
 
+  /* Columna: arriba texto y cifra, abajo una fila entera para el pie
+   * y los botones. El texto crece y empuja esa fila al suelo, así que
+   * los botones quedan a la misma altura en todas las tarjetas. */
   .m-hero {
-    display: flex; gap: 10px; padding: 13px;
+    display: flex; flex-direction: column; padding: 13px;
     border-radius: 20px; box-sizing: border-box;
   }
-  /* Columna: el texto crece y el botón se queda abajo, a la misma
-   * altura en todas las tarjetas del carril. */
-  .m-hero-l { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-  .m-hero-txt { flex: 1 1 auto; }
-  .m-hero-r {
-    width: 82px; flex: 0 0 82px; text-align: right;
-    display: flex; flex-direction: column; justify-content: space-between;
-  }
+  .m-hero-top { display: flex; gap: 10px; flex: 1 1 auto; min-height: 0; }
+  .m-hero-txt { flex: 1; min-width: 0; }
+  .m-hero-r { width: 82px; flex: 0 0 82px; text-align: right; }
   .m-hero-k { font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #7dd3fc; }
   .m-hero-t { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -.5px; margin-top: 4px; }
   .m-hero-s { font-size: 12.5px; color: #c3d2e2; margin-top: 6px; line-height: 1.4; }
@@ -539,10 +537,15 @@
   /* A la derecha: la columna de la izquierda es texto alineado a la
    * izquierda y los botones ahí abajo quedaban flotando en medio de
    * la tarjeta. Pegados a la derecha cierran el bloque. */
+  /* El pie a la izquierda y los botones a la derecha, los dos en la
+   * misma fila y ocupando la tarjeta entera. `margin-right: auto` en
+   * el pie empuja todo lo demás contra el borde derecho; si no hay
+   * pie, los botones siguen a la derecha por el justify-content. */
   .m-hero-acts {
     display: flex; align-items: center; justify-content: flex-end;
-    gap: 7px; margin-top: 10px;
+    gap: 8px; margin-top: 10px;
   }
+  .m-hero-acts .m-hero-vs { margin-right: auto; text-align: left; }
 
   /* Pequeño, sin color y al lado del grande. Tirar trabajo no debe ser
    * más fácil de pulsar que seguirlo. */
@@ -561,7 +564,7 @@
    * en medio se vería el desajuste. */
   .m-hero-pista {
     display: inline-flex; align-items: center; gap: 6px;
-    margin-top: 14px; align-self: flex-end;
+    margin-left: auto;
     font-size: 14px; font-weight: 600; color: #5eead4;
   }
   .m-hero-pista .ti { font-size: 16px; }
@@ -571,6 +574,7 @@
    * sólo texto. Así que la columna derecha se encoge al icono y el
    * texto crece, que es lo que se pedía de ella. */
   .m-hero-ancha .m-hero-r { width: 30px; flex: 0 0 30px; }
+  .m-hero-ancha .m-hero-acts { margin-top: 14px; }
   .m-hero-ancha .m-hero-s { font-size: 14px; line-height: 1.45; margin-top: 8px; }
   .m-hero-ancha .m-hero-t { font-size: 24px; }
 

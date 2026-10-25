@@ -395,12 +395,18 @@
   function pintarTarjeta(c, i) {
     return `
       <article class="m-hero m-hero-${c.tono}${c.ancha ? ' m-hero-ancha' : ''}" data-hero="${i}">
-        <div class="m-hero-l">
-          <!-- El texto va envuelto para que crezca él y empuje el botón
-               al suelo de la tarjeta. Sin esto el botón se pegaba al
-               final del texto, y como cada tarjeta tiene un número
-               distinto de líneas, los botones quedaban a alturas
-               distintas y se veía al deslizar. -->
+        <!-- Arriba el texto y la cifra, en dos columnas. Abajo, una
+             fila entera para la pie de página y los botones.
+             Antes todo colgaba de la columna izquierda, así que los
+             botones se alineaban al borde de ESA columna y les
+             faltaban los 82px de la de cifras para llegar al borde de
+             la tarjeta. -->
+        <div class="m-hero-top">
+          <!-- El texto crece y empuja la fila de abajo al suelo de la
+               tarjeta. Sin esto los botones se pegaban al final del
+               texto, y como cada tarjeta tiene un número distinto de
+               líneas, quedaban a alturas distintas y se veía al
+               deslizar. -->
           <div class="m-hero-txt">
             <div class="m-hero-k">${esc(c.k)}</div>
             <div class="m-hero-t">${esc(c.tt)}</div>
@@ -408,23 +414,24 @@
             ${c.sub ? `<div class="m-hero-s">${esc(c.sub)}</div>` : ''}
             ${c.lista ? `<div class="m-hero-list">${c.lista.map(x => '<span>' + x + '</span>').join('')}</div>` : ''}
           </div>
-          ${c.pista ? `<div class="m-hero-pista">${esc(c.pista)}
-            <i class="ti ti-chevron-right" aria-hidden="true"></i></div>` : ''}
-          <div class="m-hero-acts">
-            ${c.btn ? `<button type="button" class="m-hero-b${c.btnTono ? ' m-hero-b-' + esc(c.btnTono) : ''}"
-                               data-go="${i}">${esc(c.btn)}</button>` : ''}
-            ${c.btn2 ? `<button type="button" class="m-hero-b2" data-go2="${i}">${esc(c.btn2)}</button>` : ''}
-            ${c.ico ? `<button type="button" class="m-hero-x" data-go3="${i}"
-                               aria-label="${esc(c.icot || '')}">
-                         <i class="ti ti-${esc(c.ico)}" aria-hidden="true"></i>
-                       </button>` : ''}
+          <div class="m-hero-r">
+            ${c.icoR
+              ? `<i class="ti ti-${esc(c.icoR)} m-hero-ir" aria-hidden="true"></i>`
+              : (c.amt ? `<div class="m-hero-amt">${esc(c.amt)}</div>` : '')}
           </div>
         </div>
-        <div class="m-hero-r">
-          ${c.icoR
-            ? `<i class="ti ti-${esc(c.icoR)} m-hero-ir" aria-hidden="true"></i>`
-            : `<div class="m-hero-amt">${esc(c.amt)}</div>`}
-          ${c.vs ? `<div class="m-hero-vs">${esc(c.vs)}</div>` : ''}
+
+        <div class="m-hero-acts">
+          ${c.vs ? `<span class="m-hero-vs">${esc(c.vs)}</span>` : ''}
+          ${c.pista ? `<span class="m-hero-pista">${esc(c.pista)}
+            <i class="ti ti-chevron-right" aria-hidden="true"></i></span>` : ''}
+          ${c.btn ? `<button type="button" class="m-hero-b${c.btnTono ? ' m-hero-b-' + esc(c.btnTono) : ''}"
+                             data-go="${i}">${esc(c.btn)}</button>` : ''}
+          ${c.btn2 ? `<button type="button" class="m-hero-b2" data-go2="${i}">${esc(c.btn2)}</button>` : ''}
+          ${c.ico ? `<button type="button" class="m-hero-x" data-go3="${i}"
+                             aria-label="${esc(c.icot || '')}">
+                       <i class="ti ti-${esc(c.ico)}" aria-hidden="true"></i>
+                     </button>` : ''}
         </div>
       </article>`;
   }
