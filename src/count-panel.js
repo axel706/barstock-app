@@ -553,7 +553,44 @@
         `<div class="cp-hint">Bottle shape not set — using a generic one.</div>`}`;
 
     positionLine(y);
+    // Y otra vez en el frame siguiente, cuando el navegador ya repartió
+    // el alto. Al abrir el panel desde el escáner, positionLine mide un
+    // layout que todavía se está asentando: el visor es flex:1 y no
+    // sabe su alto hasta que el resto del panel ocupa el suyo.
+    // window. y con respaldo: este archivo tambien se carga en el
+    // banco de pruebas, donde no hay animacion de frames.
+    const frame = (window.requestAnimationFrame || ((f) => setTimeout(f, 16)));
+    frame(() => positionLine(y));
+    vigilarAlto(y);
     bindDrag();
+  }
+
+  // ── La línea sigue al visor, pase lo que pase ────────────────────────
+  //
+  // Medir dos veces tapa el caso de siempre, pero no todos: la fuente
+  // Manrope puede cargar después y cambiar el alto de los textos, y lo
+  // que mide el visor es lo que sobra. Cualquier cosa que mueva ese
+  // reparto deja la línea colgada del vidrio hasta el primer arrastre,
+  // que es cuando se vuelve a medir.
+  //
+  // Con un observador la línea se recoloca sola cada vez que el visor
+  // cambia de tamaño, venga de donde venga el cambio. Es un observador
+  // por panel, no por pintada: se crea una vez y se le actualiza la
+  // altura que tiene que respetar.
+  let _ro = null, _yActual = 0;
+
+  function vigilarAlto(y) {
+    _yActual = y;
+    const stage = $('cpStage');
+    const RO = window.ResizeObserver;
+    if (!stage || !RO) return;
+    if (_ro) return;
+    _ro = new RO(() => positionLine(_yActual));
+    _ro.observe(stage);
+  }
+
+  function dejarDeVigilar() {
+    if (_ro) { try { _ro.disconnect(); } catch (e) {} _ro = null; }
   }
 
   // ── Cambiar la silueta ───────────────────────────────────────────────
@@ -568,14 +605,38 @@
   // cambia es a qué ALTURA se dibuja esa misma fracción, que es
   // precisamente lo que se estaba corrigiendo.
 
+  // ── Dónde cae la línea, de verdad ────────────────────────────────────
+  //
+  // El SVG se dibuja con preserveAspectRatio por defecto: el contenido
+  // se encaja DENTRO del hueco y se centra. Si el hueco es más ancho de
+  // lo que pide la relación de la caja, sobra alto arriba y abajo.
+  //
+  // La cuenta de antes daba por hecho que eso no pasaba nunca:
+  // `scale = alto / 260` y sin restar el margen. Con el visor estirado
+  // —`.cp-stage` es flex:1 y se queda con lo que sobre— la escala salía
+  // de más y la línea aparecía por encima del fondo de la botella con
+  // el valor en cero.
+  //
+  // Ahora la escala es la que el navegador usa de verdad, min() de las
+  // dos, y el margen sobrante se suma. Es la misma cuenta que hace
+  // bindDrag, y las dos tienen que coincidir o el dedo y el vidrio
+  // dejan de ir juntos.
+  function encuadre(svg) {
+    const r = svg.getBoundingClientRect();
+    if (!r.height || !r.width) return null;
+    const escala = Math.min(r.width / VB.w, r.height / VB.h);
+    return { r, escala, sobraY: (r.height - VB.h * escala) / 2 };
+  }
+
   function positionLine(y) {
     const stage = $('cpStage'), line = $('cpLine');
     if (!stage || !line) return;
     const svg = stage.querySelector('svg');
-    const r = svg.getBoundingClientRect();
-    const scale = r.height / VB.h;
-    const offset = (stage.clientHeight - r.height) / 2;
-    line.style.top = (offset + yToPx(profileOf(_row), y) * scale) + 'px';
+    if (!svg) return;
+    const e = encuadre(svg);
+    if (!e) return;   // todavia sin layout: se repite en el frame siguiente
+    const arriba = e.r.top - stage.getBoundingClientRect().top;
+    line.style.top = (arriba + e.sobraY + yToPx(profileOf(_row), y) * e.escala) + 'px';
   }
 
   function bindDrag() {
@@ -583,16 +644,16 @@
     if (!stage) return;
     const move = (clientY) => {
       const svg = stage.querySelector('svg');
-      const r = svg.getBoundingClientRect();
-      const scale = r.height / VB.h;
+      const e = encuadre(svg);
+      if (!e) return;
       const key = profileOf(_row);
       const prof = P().profOf(key);
       // El mismo encuadre que dibuja la botella, no una copia. Con
       // esbelteces distintas por forma, calcularlo aparte era garantizar
       // que algún día el dedo y el vidrio dejaran de coincidir.
       const box = P().boxFor(key, VB.w, VB.h, VB.pad);
-      const usable = box.usable * scale;
-      const base = r.top + box.base * scale;
+      const usable = box.usable * e.escala;
+      const base = e.r.top + e.sobraY + box.base * e.escala;
       let y = (base - clientY) / usable;
       y = Math.max(0, Math.min(prof.yFull, y));
       _opens[_active] = redondearAPaso(P().fractionAt(key, y));
@@ -946,9 +1007,12 @@
     const el = $('cpPanel');
     if (el) { el.classList.remove('on'); el.classList.remove('cp-fixing-on'); }
     closeSheet();
+    dejarDeVigilar();
     _row = null; _onNext = null; _upc = null; _editIdx = null; _sizeMl = null;
   }
 
+  // Ya lo cubre el observador del visor, pero esto repinta la silueta
+  // entera —no sólo la línea— y hace falta al girar el teléfono.
   window.addEventListener('resize', () => { if ($('cpPanel')?.classList.contains('on')) paintBottle(); });
 
   window.BarStockCountPanel = { open, close };
