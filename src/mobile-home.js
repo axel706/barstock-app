@@ -526,11 +526,19 @@
     const m = (window.state && window.state.master) || [];
     const p = window.parAdjustments;
     const g = gasto(), v = estante();
+    const S = window.BarStockCountSession;
+    let c = '-';
+    try {
+      if (S && S.exists && S.exists()) {
+        c = (S.size ? S.size() : 0) + (S.isPaused && S.isPaused() ? 'p' : '');
+      }
+    } catch (e) {}
     return [
       m.length,
       p && p.size ? p.size : 0,
       g ? g.total : '-',
-      v ? v.total : '-'
+      v ? v.total : '-',
+      c
     ].join('|');
   }
 

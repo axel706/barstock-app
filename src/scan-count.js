@@ -1140,6 +1140,11 @@
     // conteo ya empezado, hasta que alguien recargaba la pagina.
     if (window.BarStockCountResume) window.BarStockCountResume.refresh();
     if (window.BarStockWeeklyCycle) window.BarStockWeeklyCycle.refresh();
+    // Y la TERCERA, que llego despues: el Home del telefono. Su tarjeta
+    // de "conteo a medias" solo se pinta al entrar a la pantalla, y
+    // cerrar el escaner no es entrar: quedaba debajo, con lo que habia
+    // antes de contar. Mismo fallo que el de arriba, otro sitio.
+    if (window.BarStockMobileHome) window.BarStockMobileHome.refresh();
   }
 
   window.addEventListener('pagehide', close);
