@@ -394,6 +394,17 @@
       });
     }
 
+    // ── La que importa va primera ────────────────────────────────
+    //
+    // Con un conteo a medias, su tarjeta se pone delante de la
+    // bienvenida. Antes se dejaba en su sitio y se desplazaba el
+    // carril hasta ella, lo cual dependía de medir anchos que al
+    // pintar todavía no existen y de distinguir "entrar" de
+    // "refrescar". Cambiar el ORDEN no depende de nada: la primera
+    // tarjeta es la primera y ya está.
+    const iFoco = t.findIndex(c => c && c.foco);
+    if (iFoco > 0) t.unshift(t.splice(iFoco, 1)[0]);
+
     // Ya no hay tarjeta de "All clear": la del ciclo está siempre, y
     // cuando no hay nada pendiente ella misma es el "todo en orden"
     // —dice desde cuándo está abierto y cuántos artículos se contaron—.
@@ -548,7 +559,7 @@
 
   // ── Pintar ───────────────────────────────────────────────────────────
 
-  function render(host, irAlFoco) {
+  function render(host) {
     if (!host) return;
 
     const cards = tarjetas();
@@ -649,73 +660,8 @@
 
     enganchar(host, cards);
 
-    // Se mueve al entrar a la pantalla, y también cuando el foco es
-    // NUEVO aunque sea un simple refresco. Ese segundo caso es el que
-    // faltaba: al cerrar el escáner no se entra al Home —ya estabas en
-    // él— así que sólo se refresca, y el conteo recién pausado se
-    // quedaba detrás de la bienvenida.
-    //
-    // Comparando el nombre del foco y no un sí/no, un repintado
-    // cualquiera mientras cuentas no vuelve a tirar del carrusel.
-    const foco = (cards.find(c => c && c.foco) || {}).foco || null;
-    const nuevo = foco && foco !== _focoAnterior;
-    _focoAnterior = foco;
-    if (irAlFoco || nuevo) alFoco(host, cards);
   }
 
-  // Qué tenía el foco la última vez que se pintó. null = nada.
-  let _focoAnterior = null;
-
-  // ── Dónde arranca el carrusel ────────────────────────────────────────
-  //
-  // Normalmente en la primera, que es la bienvenida. Pero si hay un
-  // conteo a medias, arranca en la del ciclo: con el trabajo empezado,
-  // lo último que hace falta es un saludo delante.
-  //
-  // Sólo al ENTRAR a la pantalla, no en cada repintado. El Home se
-  // repinta varias veces mientras cargan los datos, y mover el carril
-  // debajo del dedo de alguien que está deslizando es peor que
-  // empezar en la tarjeta equivocada.
-  //
-  // ── Y se espera a que el carril mida algo ────────────────────────────
-  //
-  // El primer intento colocaba el scroll justo después de escribir el
-  // HTML, cuando las tarjetas todavía no tienen ancho: offsetLeft y
-  // clientWidth valían cero, la cuenta daba cero, y el carril se
-  // quedaba donde estaba. No fallaba, no avisaba — simplemente no
-  // pasaba nada. Es el mismo modo de fallo que la línea del conteo.
-  //
-  // Por eso se reintenta por fotogramas hasta que el carril tiene
-  // ancho, con un tope para no quedarse dando vueltas si la pantalla
-  // nunca llega a verse.
-  function alFoco(host, cards) {
-    const i = cards.findIndex(c => c && c.foco);
-    if (i <= 0) return;
-
-    const frame = window.requestAnimationFrame || ((f) => setTimeout(f, 16));
-    let intentos = 0;
-
-    const colocar = () => {
-      const rail = host.querySelector('#mhRail');
-      const caja = rail && rail.children[i];
-      if (!rail || !caja) return;
-
-      if (!rail.clientWidth || !caja.offsetWidth) {
-        if (++intentos < 20) frame(colocar);
-        return;
-      }
-
-      // scrollLeft a mano y no scrollIntoView: éste último desplaza
-      // también la PÁGINA para enseñar el carril, y al entrar al Home
-      // eso se ve como un salto.
-      rail.scrollLeft = caja.offsetLeft + caja.offsetWidth / 2 - rail.clientWidth / 2;
-
-      const dots = host.querySelector('#mhDots');
-      if (dots) Array.from(dots.children).forEach((d, j) => d.classList.toggle('on', j === i));
-    };
-
-    colocar();
-  }
 
 
   // ── La píldora de locación ───────────────────────────────────────────
@@ -944,11 +890,9 @@
     if (!window.BarStockMobile) return;
     window.BarStockMobile.register({
       id: 'home', icon: 'ti-home', label: 'Home', tab: true, orden: 10,
-      mount(host) { render(host, true); vigilar(); },
-      show(host) { render(host, true); vigilar(); },  // el estado del ciclo cambia
-      // Un cambio hecho en el escritorio repinta, pero SIN mover el
-      // carrusel: estás mirando una tarjeta y no se te cambia debajo.
-      refrescar(host) { render(host, false); }
+      mount(host) { render(host); vigilar(); },
+      show(host) { render(host); vigilar(); },  // el estado del ciclo cambia
+      refrescar(host) { render(host); }
     });
   }
 
