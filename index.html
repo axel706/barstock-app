@@ -154,7 +154,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261025-095241</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261025-095607</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -3254,6 +3254,19 @@ async function applyPendingImport(){
 
     setStatus(`Count imported: ${state.lastCountName}. Matches: ${importMatches}. No matches: ${state.noMatches.length}. Synced to cloud for the new weekly cycle.`);
     refreshParAdjustments().then(() => { if (typeof PourIqSection !== 'undefined') PourIqSection.refresh(); });
+
+    // ── Avisar al ciclo ──────────────────────────────────────────────
+    //
+    // Importar un conteo ES lo que cierra el paso 2: a partir de aquí
+    // hay artículos con on hand y el estado pasa a "ciclo abierto".
+    // Pero el botón del ciclo deduce su paso leyendo ese estado, y
+    // nadie le decía que mirara otra vez — así que se quedaba
+    // ofreciendo "Load the count" con el conteo ya cargado, hasta que
+    // alguien recargaba la página.
+    //
+    // Es el mismo fallo que ya estaba documentado en scan-count.js
+    // para el escáner. Aquí faltaba.
+    if (window.BarStockWeeklyCycle) window.BarStockWeeklyCycle.refresh();
   } catch(err){
     console.error(err);
     setStatus(`Count imported locally, but cloud sync failed.`);
@@ -5219,7 +5232,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/spend-by-category.js?v=sp2"></script>
 <script src="src/settings-home.js?v=sh2"></script>
 <script src="src/inventory-backup.js?v=bk1"></script>
-<script src="src/weekly-cycle.js?v=cyc12"></script>
+<script src="src/weekly-cycle.js?v=cyc13"></script>
 <script src="src/count-session.js?v=cnt18"></script>
 <script src="src/count-panel.js?v=cnt25"></script>
 <script src="src/barcode-fix.js?v=bf5"></script>

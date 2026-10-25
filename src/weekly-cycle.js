@@ -252,12 +252,16 @@
 
   // ── Dibujado ───────────────────────────────────────────────────────
   function paint() {
-    // La pantalla del ciclo del telefono mira el mismo estado, asi que
-    // se entera por aqui. Va ANTES del return de abajo: el boton de
+    // Lo que mira el mismo estado en el telefono: la pantalla del ciclo
+    // y, sobre todo, su tarjeta del Home, que es donde viven ya todas
+    // las acciones. Van ANTES del return de abajo: el boton de
     // escritorio puede no estar en el DOM, y salirse sin avisar dejaria
-    // la pantalla del telefono congelada en el estado de hace un rato.
+    // las dos congeladas en el estado de hace un rato.
     if (window.BarStockMobileCycle && window.BarStockMobileCycle.refresh) {
       try { window.BarStockMobileCycle.refresh(); } catch (e) {}
+    }
+    if (window.BarStockMobileHome && window.BarStockMobileHome.refresh) {
+      try { window.BarStockMobileHome.refresh(); } catch (e) {}
     }
 
     const btn = document.getElementById('cycleBtn');
