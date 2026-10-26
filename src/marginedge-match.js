@@ -46,10 +46,22 @@
   let _otros = null;   // el resto del catálogo, sólo para el buscador
   let _diag = null;
   let _vinculos = new Map();
+
+  // ── Por qué las filas recién tocadas no se van ──────────────────
+  //
+  // Al elegir el primer producto la fila cambia de estado y, con el
+  // filtro por pestaña, desaparecía al instante. Para añadir el segundo
+  // —el mismo vino en 1.5 L, pongamos— había que cambiar de pestaña y
+  // volver a buscarla. Nadie descubre así que se puede.
+  //
+  // Lo que tocas en esta visita se queda a la vista hasta que cambias
+  // de pestaña o vuelves a entrar.
+  let _reciente = new Set();
+  let _dueno = new Map();
+  let _porId = new Map();
   let _idf = null;
   let _filas = null;
   let _tab = 'revisar';
-  let _busy = false;
   let _buscando = null;   // idx de la fila con el buscador abierto
 
   function esc(s) {
@@ -286,15 +298,32 @@
     }
 
     _vinculos = new Map();
+    _dueno = new Map();
     for (const v of todas) {
       const k = (v.code || '') + '||' + (v.item_name || '');
       if (!_vinculos.has(k)) _vinculos.set(k, []);
       _vinculos.get(k).push(String(v.product_id));
+      // Quién tiene ya ese producto. La clave de la tabla es el
+      // producto, así que asignarlo a otro artículo se lo quita al
+      // primero — y eso no puede pasar sin que se vea.
+      _dueno.set(String(v.product_id), { clave: k, nombre: v.item_name || '' });
     }
     return todas.length;
   }
 
   async function vincular(fila, productId) {
+    const id = String(productId);
+    const ya = _dueno.get(id);
+
+    // Un producto pertenece a un solo artículo. Si ya es de otro, esto
+    // se lo quita: hay que decirlo antes, no después.
+    if (ya && ya.clave !== clave(fila.row)) {
+      const sigue = window.confirm(
+        '"' + (_porId.get(id)?.name || id) + '" is already matched to "' + ya.nombre +
+        '".\n\nMatching it here will remove it from there. Continue?');
+      if (!sigue) return 'cancelado';
+    }
+
     const { url, key } = cfg();
     const locId = await locationId();
     if (!url || !key || !locId) return false;
@@ -315,7 +344,20 @@
     });
     if (!r.ok) return false;
 
-    if (!fila.enlaces.includes(String(productId))) fila.enlaces.push(String(productId));
+    if (!fila.enlaces.includes(id)) fila.enlaces.push(id);
+    _dueno.set(id, { clave: clave(fila.row), nombre: fila.row.item || '' });
+
+    // Si se lo quitamos a otra fila de esta misma sesión, hay que
+    // reflejarlo ahí también o la pantalla mentiría hasta recargar.
+    if (ya && ya.clave !== clave(fila.row)) {
+      const otra = _filas && _filas.find(f => clave(f.row) === ya.clave);
+      if (otra) {
+        otra.enlaces = otra.enlaces.filter(x => x !== id);
+        otra.productos = otra.productos.filter(p => p && String(p.id) !== id);
+        if (!otra.enlaces.length) otra.estado = 'huerfano';
+        _reciente.add(otra.idx);
+      }
+    }
     return true;
   }
 
@@ -344,7 +386,8 @@
   function calcular() {
     construirIdf(_prods.map(p => p.name));
     const master = (window.state && state.master) || [];
-    const porId = new Map(_prods.concat(_otros).map(p => [String(p.id), p]));
+    _porId = new Map(_prods.concat(_otros).map(p => [String(p.id), p]));
+    const porId = _porId;
 
     _filas = master.map((r, idx) => {
       const enlaces = (_vinculos.get(clave(r)) || []).slice();
@@ -470,11 +513,11 @@
         '</div>';
 
       cab.querySelectorAll('[data-tab]').forEach(b => {
-        b.onclick = () => { _tab = b.dataset.tab; _buscando = null; pintar(); };
+        b.onclick = () => { _tab = b.dataset.tab; _buscando = null; _reciente.clear(); pintar(); };
       });
     }
 
-    const visibles = _filas.filter(f => f.estado === _tab);
+    const visibles = _filas.filter(f => f.estado === _tab || _reciente.has(f.idx));
 
     host.innerHTML = visibles.length
       ? visibles.map(pintarFila).join('')
@@ -529,16 +572,25 @@
     return _filas.find(f => f.idx === Number(caja.dataset.idx)) || null;
   }
 
+  // ── Un candado por elemento, no uno global ────────────────────────
+  //
+  // Antes había un `_busy` único: mientras un guardado estaba en vuelo,
+  // cualquier otro clic se descartaba EN SILENCIO. Yendo rápido por la
+  // lista se perdían emparejados sin que nada lo dijera, y la fila se
+  // redibujaba justo después como si hubiera pasado algo.
+  //
+  // Las filas son independientes, así que pueden guardarse a la vez.
   async function elegir(el) {
-    if (_busy) return;
+    if (el.dataset.saving === '1') return;
     const fila = filaDe(el);
     if (!fila) return;
 
-    _busy = true;
+    el.dataset.saving = '1';
     el.classList.add('saving');
     const ok = await vincular(fila, el.dataset.pick);
-    _busy = false;
+    el.dataset.saving = '';
 
+    if (ok === 'cancelado') { el.classList.remove('saving'); return; }
     if (!ok) {
       el.classList.remove('saving');
       if (window.setStatus) setStatus('Could not save the match.');
@@ -549,20 +601,21 @@
     if (p && !fila.productos.some(x => x && String(x.id) === String(p.id))) fila.productos.push(p);
 
     fila.estado = 'hecho';
+    _reciente.add(fila.idx);
     _buscando = null;
     pintar();
   }
 
   async function quitar(el) {
-    if (_busy) return;
+    if (el.dataset.saving === '1') return;
     const fila = filaDe(el);
     if (!fila) return;
 
-    _busy = true;
+    el.dataset.saving = '1';
     el.closest('.mem-cand').classList.add('saving');
     const id = el.dataset.drop;
     const ok = await desvincular(fila, id);
-    _busy = false;
+    el.dataset.saving = '';
 
     if (!ok) {
       el.closest('.mem-cand').classList.remove('saving');
@@ -571,6 +624,8 @@
     }
 
     fila.productos = fila.productos.filter(p => p && String(p.id) !== String(id));
+    _dueno.delete(String(id));
+    _reciente.add(fila.idx);
 
     // Sin vínculos vuelve a la cola: se recalculan sus candidatos para
     // que puedas elegir otro sin buscarlo a mano.
@@ -600,6 +655,7 @@
     if (host) host.innerHTML = '<div class="mem-empty">Reading the MarginEdge catalog…</div>';
     _buscando = null;
     _tab = 'revisar';
+    _reciente.clear();
 
     try {
       const info = await traerCatalogo();
