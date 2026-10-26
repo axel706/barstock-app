@@ -294,8 +294,22 @@
   // (`deleteInventoryItem` borra por nombre, sin más). Un identificador
   // de verdad sería mejor, pero no lo hay, y dos no funcionan mejor que
   // uno cuando el segundo es inestable.
+  //
+  // Y normalizar en serio, no sólo espacios y mayúsculas. "Bailey's
+  // Irish Cream" seguía sin encontrarse a sí mismo porque el apóstrofe
+  // recto (') y el tipográfico (') son caracteres distintos que se
+  // dibujan casi igual. Dos nombres que una persona lee como el mismo
+  // tienen que dar la misma clave, así que fuera signos y acentos.
   function norm(x) {
-    return String(x == null ? '' : x).trim().toUpperCase().replace(/\s+/g, ' ');
+    return String(x == null ? '' : x)
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')  // acentos
+      .toUpperCase()
+      // Los apóstrofes se BORRAN, no se cambian por espacio: si no,
+      // "Bailey's" quedaría como "BAILEY S" y seguiría sin coincidir
+      // con "Baileys", que es como lo escribe medio mundo.
+      .replace(/['‘’´`]/g, '')
+      .replace(/[^A-Z0-9]+/g, ' ')   // comas, guiones, puntos, todo
+      .trim();
   }
   function clave(r) { return norm(r.item); }
 
@@ -335,9 +349,18 @@
     // Un producto pertenece a un solo artículo. Si ya es de otro, esto
     // se lo quita: hay que decirlo antes, no después.
     if (ya && ya.clave !== clave(fila.row)) {
+      // Si las dos claves se ven iguales pero no lo son, el aviso tiene
+      // que enseñarlas. Un "ya está emparejado a sí mismo" sin más datos
+      // costó varias rondas de adivinar.
+      const mia = clave(fila.row);
+      const detalle = norm(ya.nombre) === mia
+        ? '\n\n(Same name, different key — this is a bug. Stored: "' +
+          ya.clave + '" · computed: "' + mia + '")'
+        : '';
+
       const sigue = window.confirm(
         '"' + (_porId.get(id)?.name || id) + '" is already matched to "' + ya.nombre +
-        '".\n\nMatching it here will remove it from there. Continue?');
+        '".\n\nMatching it here will remove it from there. Continue?' + detalle);
       if (!sigue) return 'cancelado';
     }
 

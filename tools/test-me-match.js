@@ -100,6 +100,18 @@ prueba('mayúsculas y minúsculas son lo mismo',
 prueba('dos artículos distintos no colisionan',
   K({ item: 'TITOS 750' }) !== K({ item: 'TITOS 1.75' }));
 
+// El que costó la tarde: el apóstrofe recto y el tipográfico se dibujan
+// casi igual y son caracteres distintos. Si la tabla guarda uno y el
+// inventario tiene el otro, el artículo no se encuentra a sí mismo.
+prueba('el apóstrofe tipográfico y el recto son el mismo nombre',
+  K({ item: "Bailey\u2019s Irish Cream" }) === K({ item: "Bailey's Irish Cream" }));
+prueba('y sin apóstrofe también',
+  K({ item: 'Baileys Irish Cream' }) === K({ item: "Bailey's Irish Cream" }));
+prueba('los acentos no separan',
+  K({ item: 'Jose Cuervo' }) === K({ item: 'Jos\u00e9 Cuervo' }));
+prueba('los guiones tampoco',
+  K({ item: 'Grey-Goose' }) === K({ item: 'Grey Goose' }));
+
 console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
   '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
