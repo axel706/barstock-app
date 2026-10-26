@@ -43,6 +43,13 @@
       ]
     },
     {
+      title: 'Connections',
+      color: '#34d399',
+      tiles: [
+        { id: 'integrations', icon: 'ti-plug-connected', name: 'MarginEdge', fallback: 'Test the connection' }
+      ]
+    },
+    {
       title: 'Appearance',
       color: '#22d3ee',
       tiles: [

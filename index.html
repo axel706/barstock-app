@@ -154,7 +154,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261026-101943</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261026-151343</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5257,6 +5257,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/dormant-items.js?v=dorm1"></script>
 <script src="src/zones.js?v=zon7"></script>
 <script src="src/settings-zones.js?v=zon2"></script>
+<script src="src/settings-integrations.js?v=int1"></script>
 
 <!-- ── La app movil ─────────────────────────────────────────────────
      mobile-shell  el armazon: barra de pestañas, boton de escanear y
@@ -6058,7 +6059,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     loadSavedBackground();
     window.showSettingsPanel = function(panel) {
       const menu = document.getElementById('settingsMenu');
-      const panelIds = ['general', 'vendorCodes', 'orderDefaults', 'senderProfile', 'appearance', 'categories', 'copyPrices', 'zones'];
+      const panelIds = ['general', 'vendorCodes', 'orderDefaults', 'senderProfile', 'appearance', 'categories', 'copyPrices', 'zones', 'integrations'];
       panelIds.forEach(p => {
         const el = document.getElementById('settingsPanel-' + p);
         if (el) el.classList.add('hidden');
@@ -6561,6 +6562,21 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
         <button type="button" id="zonesSave" class="success ui-control" disabled>Save zones</button>
       </div>
       <div id="zonesNote" class="zs-note"></div>
+    </div>
+
+    <div id="settingsPanel-integrations" class="settings-panel hidden">
+      <button class="settings-back-btn" onclick="showSettingsPanel(null)">‹ Back</button>
+      <h4 style="margin:0 0 4px">Integrations</h4>
+      <div class="small muted" style="margin-bottom:16px">
+        MarginEdge ya sabe qué compras y a qué precio. Aquí sólo
+        <b>preguntamos y miramos</b>: nada de lo que salga abajo se guarda
+        en tu inventario. Empieza por <b>Restaurantes</b> para ver qué ve
+        la clave, elige el tuyo, y luego prueba el resto.
+      </div>
+      <div id="meEstado" class="small" style="margin-bottom:12px"></div>
+      <div id="meBotones" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+      <div id="meUnits"></div>
+      <div id="meSalida" style="margin-top:16px"></div>
     </div>
 
     <div id="settingsPanel-copyPrices" class="settings-panel hidden">
