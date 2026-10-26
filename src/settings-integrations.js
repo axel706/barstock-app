@@ -38,7 +38,8 @@
     { id: 'categories', nombre: 'Categorías',   nota: 'Cómo los agrupa' },
     { id: 'invoices',   nombre: 'Facturas',     nota: 'Cabeceras del rango' },
     { id: 'invoice',    nombre: 'Una factura',  nota: 'Por dentro, con sus líneas' },
-    { id: 'packaging',  nombre: 'Empaques',     nota: 'Qué es una unidad' }
+    { id: 'packaging',  nombre: 'Empaques',     nota: 'Qué es una unidad' },
+    { id: 'find',       nombre: 'Buscar producto', nota: 'Crudo, sin filtros' }
   ];
 
   function esc(s) {
@@ -231,6 +232,8 @@
       '<input type="date" id="meHasta" value="' + iso(hoy) + '">' +
       '<input type="text" id="meOrderId" placeholder="orderId" ' +
       'style="width:120px" title="Para el botón Una factura">' +
+      '<input type="text" id="meBuscar" placeholder="find a product…" ' +
+      'style="width:190px" title="Para el botón Buscar producto">' +
       '</div>';
   }
 
@@ -287,7 +290,16 @@
         ? '<div class="small" style="margin-bottom:10px">Campos: <b>' + esc(campos) + '</b></div>'
         : '') +
       bloque('Valores por campo', res.resumen) +
-      bloque('Ejemplos', res.muestra != null ? res.muestra : res.crudo);
+      // La búsqueda cruda tiene su propia forma: lo que importa es el
+      // registro entero y qué dice la lista de categorías de cada id
+      // que trae, no un resumen de valores.
+      (res.hits
+        ? '<div class="small" style="margin:10px 0">' +
+            '<b>' + (res.hits.length) + '</b> coincidencias entre ' + (res.vistos || 0) +
+            ' productos recorridos · ' + (res.totalCategorias || 0) + ' categorías conocidas' +
+            (res.nextPage ? ' · <b>quedaron páginas sin recorrer</b>' : ' · catálogo completo') +
+          '</div>' + bloque('Lo que hay', res.hits)
+        : bloque('Ejemplos', res.muestra != null ? res.muestra : res.crudo));
   }
 
   async function correr(action) {
@@ -300,6 +312,10 @@
       const u = unidad();
       if (u && action !== 'units') params.restaurantUnitId = u;
       if (action === 'invoices') Object.assign(params, rango());
+      if (action === 'find') {
+        const el = document.getElementById('meBuscar');
+        params.q = (el && el.value || '').trim();
+      }
       if (action === 'invoice') {
         const el = document.getElementById('meOrderId');
         params.orderId = (el && el.value || '').trim();

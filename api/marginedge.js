@@ -453,6 +453,75 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    // ── Buscar un producto concreto, sin filtros de por medio ──────
+    //
+    // Villa Brici se pide cada semana, está en MarginEdge, y no
+    // aparecía al emparejar. Con el filtro de categorías de por medio
+    // hay tres explicaciones posibles y ninguna forma de distinguirlas:
+    // que no esté en `/products`, que el recorrido de páginas se quede
+    // corto, o que su categoría no se reconozca.
+    //
+    // Esto recorre el catálogo crudo buscando un texto y devuelve el
+    // registro TAL CUAL, más qué dice la lista de categorías sobre cada
+    // `categoryId` que traiga. Una respuesta, no una hipótesis.
+    if (action === 'find') {
+      const u = (params || {}).restaurantUnitId;
+      const q = String((params || {}).q || '').trim().toUpperCase();
+      if (!u) return res.status(400).json({ ok: false, error: 'Falta restaurantUnitId.' });
+      if (q.length < 2) return res.status(400).json({ ok: false, error: 'Escribe al menos dos letras.' });
+
+      let todas = (params || {}).todas;
+      if (!todas || typeof todas !== 'object') {
+        const cats = await traerTodo('/categories', { restaurantUnitId: u }, apiKey);
+        if (cats.error) return res.status(200).json({ ok: false, error: cats.error });
+        todas = {};
+        for (const c of cats.lista) todas[String(c.categoryId)] = c.categoryType || 'OTHER';
+      }
+
+      const limite = Date.now() + PRESUPUESTO_MS;
+      let cursor = (params || {}).nextPage || null;
+      let vistos = 0, paginas = 0;
+      const hits = [];
+
+      do {
+        const p = { restaurantUnitId: u };
+        if (cursor) p.nextPage = cursor;
+
+        const r = await pedir(construirUrl('/products', p), apiKey);
+        if (!r.ok) {
+          return res.status(200).json({
+            ok: false, action, hits, vistos, nextPage: cursor, todas,
+            error: '/products → ' + r.status + ' ' + (r.cuerpo?.message || r.texto || '')
+          });
+        }
+
+        const trozo = sacarLista(r.cuerpo);
+        if (!trozo || !trozo.length) { cursor = null; break; }
+        vistos += trozo.length;
+        paginas++;
+
+        for (const prod of trozo) {
+          if (!String(prod.productName || '').toUpperCase().includes(q)) continue;
+          hits.push({
+            crudo: prod,
+            categorias: (Array.isArray(prod.categories) ? prod.categories : []).map(c => ({
+              categoryId: String(c.categoryId),
+              conocida: Object.prototype.hasOwnProperty.call(todas, String(c.categoryId)),
+              tipo: todas[String(c.categoryId)] || null
+            }))
+          });
+        }
+
+        cursor = r.cuerpo?.nextPage || null;
+      } while (cursor && Date.now() < limite && paginas < MAX_PAGINAS);
+
+      return res.status(200).json({
+        ok: true, action, q, hits, vistos, paginas, todas,
+        totalCategorias: Object.keys(todas).length,
+        nextPage: cursor
+      });
+    }
+
     const candidatas = RUTAS[action];
     if (!candidatas) {
       return res.status(400).json({
