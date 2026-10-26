@@ -577,12 +577,27 @@
                                       : 'Search MarginEdge')) +
         '</div>';
 
+    // Cuando TODO lo sugerido ya es de otro artículo, elegir cualquiera
+    // se lo quita a alguien y el otro vuelve a la cola: el bucle. Casi
+    // siempre significa que el producto bueno existe pero no está entre
+    // las tres sugerencias, así que lo que hay que decir es "búscalo",
+    // no "elige uno de estos".
+    const todosTomados = !hecho && f.candidatos.length &&
+      f.candidatos.every(p => tomadoPor(p, r));
+
+    const nota = todosTomados
+      ? '<div class="mem-note">Every suggestion here already belongs to another ' +
+        'item of yours, and a product can only belong to one. If this item really ' +
+        'is in MarginEdge, search for its own product above instead of taking one ' +
+        'of these \u2014 otherwise the two items keep stealing it from each other.</div>'
+      : '';
+
     return '<div class="mem-row" data-idx="' + f.idx + '">' +
       '<div class="mem-mine"><b>' + esc(r.item) + '</b><span>' +
         esc([r.category || 'No category', r.vendor || 'No vendor',
              (Number(r.onHand) || 0) + ' on hand'].join(' · ')) +
       '</span></div>' +
-      '<div class="mem-cands">' + cuerpo + buscador + '</div></div>';
+      '<div class="mem-cands">' + cuerpo + nota + buscador + '</div></div>';
   }
 
   function tab(id, texto, n) {
