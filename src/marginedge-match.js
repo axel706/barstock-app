@@ -204,20 +204,43 @@
   // pausas— y aquí se lee esa copia en una sola consulta. Instantáneo y
   // sin límite que lo corte a la mitad.
 
+  // ── PostgREST corta a 1000 filas ───────────────────────────────────
+  //
+  // Y no avisa: devuelve mil y parece que eso es todo lo que hay. El
+  // sync había guardado más de diez mil productos y esta pantalla veía
+  // mil, ordenados por tipo — BEER y FOOD—, así que LIQUOR y WINE
+  // simplemente no existían para la app. Horas buscando por qué Tito's
+  // no estaba en el catálogo, y estaba.
+  //
+  // Se lee por tramos hasta que una página venga corta.
+  const PAGINA = 1000;
+  const MAX_FILAS = 60000;
+
+  async function leerTodas(url, key, locId) {
+    let todas = [];
+    for (let desde = 0; desde < MAX_FILAS; desde += PAGINA) {
+      const r = await fetch(
+        `${url}/rest/v1/marginedge_products?location_id=eq.${locId}` +
+        `&select=product_id,name,type,price,unit&order=product_id.asc` +
+        `&limit=${PAGINA}&offset=${desde}`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+
+      if (!r.ok) throw new Error('Could not read the saved catalog: ' + (await r.text()));
+      const trozo = await r.json();
+      if (!Array.isArray(trozo)) throw new Error('Unexpected response.');
+      todas = todas.concat(trozo);
+      if (trozo.length < PAGINA) break;
+    }
+    return todas;
+  }
+
   async function traerCatalogo() {
     const { url, key } = cfg();
     const P = window.BarStockParIntelligence;
     const locId = P && P.fetchLocationId ? await P.fetchLocationId() : null;
     if (!url || !key || !locId) throw new Error('No location.');
 
-    const r = await fetch(
-      `${url}/rest/v1/marginedge_products?location_id=eq.${locId}` +
-      `&select=product_id,name,type,price,unit&order=name.asc`,
-      { headers: { apikey: key, Authorization: `Bearer ${key}` } });
-
-    if (!r.ok) throw new Error('Could not read the saved catalog: ' + (await r.text()));
-    const filas = await r.json();
-    if (!Array.isArray(filas)) throw new Error('Unexpected response.');
+    const filas = await leerTodas(url, key, locId);
 
     const todo = filas.map(f => ({
       id: String(f.product_id), name: f.name || '',
@@ -525,5 +548,5 @@
     }
   }
 
-  window.BarStockMarginEdgeMatch = { abrir, _puntuar: puntuar, _tamanoDe: tamanoDe };
+  window.BarStockMarginEdgeMatch = { abrir, leerTodas, _puntuar: puntuar, _tamanoDe: tamanoDe };
 })();

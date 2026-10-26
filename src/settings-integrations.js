@@ -342,13 +342,12 @@
       const id = await locationId();
       if (!url || !key || !id) { el.innerHTML = '<div class="small">No location.</div>'; return; }
 
-      const r = await fetch(
-        `${url}/rest/v1/marginedge_products?location_id=eq.${id}` +
-        `&select=product_id,name,type,price,unit&order=type.asc,name.asc`,
-        { headers: { apikey: key, Authorization: `Bearer ${key}` } });
-
-      const filas = await r.json();
-      if (!Array.isArray(filas)) { el.innerHTML = '<div class="small">' + esc(JSON.stringify(filas)) + '</div>'; return; }
+      // Por tramos: PostgREST corta a 1000 filas sin decirlo, y leer
+      // sólo las mil primeras fue justo lo que hizo creer que el
+      // catálogo no tenía ni licores ni vinos.
+      const M = window.BarStockMarginEdgeMatch;
+      if (!M || !M.leerTodas) { el.innerHTML = '<div class="small">Match module not loaded.</div>'; return; }
+      const filas = await M.leerTodas(url, key, id);
 
       const porTipo = {};
       for (const f of filas) {
