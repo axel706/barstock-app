@@ -485,11 +485,15 @@
         '<button type="button" id="meSync" class="ui-control">Sync catalog</button>' +
         '<button type="button" id="meSyncInv" class="ui-control">Sync invoices</button>' +
         '<button type="button" id="meIrMatch" class="success ui-control">Match products →</button>' +
+        '<button type="button" id="meIrCompras" class="ui-control">What came in →</button>' +
         '<span id="meSyncNota" class="small muted"></span>' +
       '</div>';
 
     const b = document.getElementById('meIrMatch');
     if (b) b.onclick = () => window.showSettingsPanel('meMatch');
+
+    const c = document.getElementById('meIrCompras');
+    if (c) c.onclick = () => window.showSettingsPanel('mePurchases');
 
     const s = document.getElementById('meSync');
     if (s) s.onclick = () => sincronizar().catch(mostrarFallo);

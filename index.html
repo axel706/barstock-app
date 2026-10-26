@@ -59,7 +59,7 @@
   <link rel="stylesheet" href="styles/motion.css?v=motion3">
   <link rel="stylesheet" href="styles/skeleton.css?v=skel1">
   <link rel="stylesheet" href="styles/toast.css?v=toast1">
-  <link rel="stylesheet" href="styles/marginedge-match.css?v=mem7">
+  <link rel="stylesheet" href="styles/marginedge-match.css?v=mem8">
   <link rel="stylesheet" href="styles/empty-state.css?v=empty1">
   <link rel="stylesheet" href="styles/pour-iq.css?v=piq1">
   <link rel="stylesheet" href="styles/admin.css?v=adm3">
@@ -155,7 +155,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261026-194536</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261026-195358</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5260,6 +5260,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/settings-zones.js?v=zon2"></script>
 <script src="src/settings-integrations.js?v=int18"></script>
 <script src="src/marginedge-match.js?v=mem16"></script>
+<script src="src/marginedge-purchases.js?v=mep1"></script>
 
 <!-- ── La app movil ─────────────────────────────────────────────────
      mobile-shell  el armazon: barra de pestañas, boton de escanear y
@@ -6061,7 +6062,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     loadSavedBackground();
     window.showSettingsPanel = function(panel) {
       const menu = document.getElementById('settingsMenu');
-      const panelIds = ['general', 'vendorCodes', 'orderDefaults', 'senderProfile', 'appearance', 'categories', 'copyPrices', 'zones', 'integrations', 'meMatch'];
+      const panelIds = ['general', 'vendorCodes', 'orderDefaults', 'senderProfile', 'appearance', 'categories', 'copyPrices', 'zones', 'integrations', 'meMatch', 'mePurchases'];
       panelIds.forEach(p => {
         const el = document.getElementById('settingsPanel-' + p);
         if (el) el.classList.add('hidden');
@@ -6581,6 +6582,18 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       <div id="meUnits"></div>
       <div id="meAccion"></div>
       <div id="meSalida" style="margin-top:16px"></div>
+    </div>
+
+    <div id="settingsPanel-mePurchases" class="settings-panel hidden">
+      <button class="settings-back-btn" onclick="showSettingsPanel('integrations')">‹ Integrations</button>
+      <h4 style="margin:0 0 4px">What came in</h4>
+      <div class="small muted" style="margin-bottom:16px">
+        The saved MarginEdge invoices, crossed with the products you matched,
+        grouped by item on your shelf. Nothing here is written to your inventory:
+        this is the preview before it is.
+      </div>
+      <div id="mepFechas"></div>
+      <div id="mepBody"></div>
     </div>
 
     <div id="settingsPanel-meMatch" class="settings-panel hidden">
