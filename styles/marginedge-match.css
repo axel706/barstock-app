@@ -115,3 +115,12 @@ body.light .mem-warn { color: #92400e; }
   color: #b91c1c; }
 .mem-x:hover { background: rgba(185,28,28,.2); }
 body.light .mem-x { color: #991b1b; }
+
+/* El fallo, en la fila donde pasó. Un aviso flotante que desaparece a
+   los cuatro segundos no sirve recorriendo doscientas filas: cuando lo
+   lees, ya no sabes de cuál era. */
+.mem-err { margin-top: 8px; padding: 9px 12px; border-radius: 9px;
+  font-size: 11.5px; line-height: 1.5; word-break: break-word;
+  background: rgba(185,28,28,.1); border: 1px solid rgba(185,28,28,.3);
+  color: #b91c1c; }
+body.light .mem-err { color: #991b1b; }

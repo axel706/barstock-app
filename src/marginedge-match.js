@@ -59,6 +59,7 @@
   let _reciente = new Set();
   let _dueno = new Map();
   let _porId = new Map();
+  let _ultimoFallo = '';
   let _idf = null;
   let _filas = null;
   let _tab = 'revisar';
@@ -280,7 +281,11 @@
   // Al revés no: un producto de MarginEdge pertenece a un solo artículo
   // tuyo. Por eso la clave de la tabla es el producto.
 
-  function clave(r) { return (r.code || '') + '||' + (r.item || ''); }
+  // La clave del artículo. Se normaliza igual en los dos lados —aquí y
+  // al leer la tabla— porque si no coinciden, la app cree que cada
+  // producto pertenece a otro artículo y empieza a "robárselo" a nadie.
+  function norm(x) { return String(x == null ? '' : x).trim(); }
+  function clave(r) { return norm(r.code) + '||' + norm(r.item); }
 
   async function leerVinculos(url, key, locId) {
     let todas = [];
@@ -300,7 +305,7 @@
     _vinculos = new Map();
     _dueno = new Map();
     for (const v of todas) {
-      const k = (v.code || '') + '||' + (v.item_name || '');
+      const k = norm(v.code) + '||' + norm(v.item_name);
       if (!_vinculos.has(k)) _vinculos.set(k, []);
       _vinculos.get(k).push(String(v.product_id));
       // Quién tiene ya ese producto. La clave de la tabla es el
@@ -328,21 +333,41 @@
     const locId = await locationId();
     if (!url || !key || !locId) return false;
 
-    const r = await fetch(`${url}/rest/v1/marginedge_links`, {
+    // ── El upsert, verificado ──────────────────────────────────────
+    //
+    // `on_conflict` va en la URL: PostgREST lo necesita explícito para
+    // que `resolution=merge-duplicates` haga lo que dice. Sin él, una
+    // segunda asignación del mismo producto puede fallar en silencio.
+    //
+    // Y se pide `return=representation` a propósito: la respuesta trae
+    // la fila escrita, así que podemos COMPROBAR que se guardó en vez
+    // de confiar en que un 2xx significa lo que creemos. Esa confianza
+    // es lo que hizo perder emparejados sin que nada lo dijera.
+    const r = await fetch(
+      `${url}/rest/v1/marginedge_links?on_conflict=location_id,product_id`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         apikey: key, Authorization: `Bearer ${key}`,
-        Prefer: 'resolution=merge-duplicates,return=minimal'
+        Prefer: 'resolution=merge-duplicates,return=representation'
       },
       body: JSON.stringify({
         location_id: locId,
-        product_id: String(productId),
+        product_id: id,
         code: fila.row.code || '',
         item_name: fila.row.item || ''
       })
     });
-    if (!r.ok) return false;
+
+    const cuerpo = await r.text();
+    if (!r.ok) { _ultimoFallo = 'HTTP ' + r.status + ' · ' + cuerpo; return false; }
+
+    let escrito = null;
+    try { escrito = JSON.parse(cuerpo); } catch (e) {}
+    if (!Array.isArray(escrito) || !escrito.length) {
+      _ultimoFallo = 'El servidor aceptó pero no devolvió la fila: ' + cuerpo;
+      return false;
+    }
 
     if (!fila.enlaces.includes(id)) fila.enlaces.push(id);
     _dueno.set(id, { clave: clave(fila.row), nombre: fila.row.item || '' });
@@ -370,7 +395,7 @@
       `${url}/rest/v1/marginedge_links?location_id=eq.${locId}` +
       `&product_id=eq.${encodeURIComponent(productId)}`,
       { method: 'DELETE', headers: { apikey: key, Authorization: `Bearer ${key}` } });
-    if (!r.ok) return false;
+    if (!r.ok) { _ultimoFallo = 'HTTP ' + r.status + ' · ' + (await r.text()); return false; }
 
     fila.enlaces = fila.enlaces.filter(x => x !== String(productId));
     return true;
@@ -593,7 +618,7 @@
     if (ok === 'cancelado') { el.classList.remove('saving'); return; }
     if (!ok) {
       el.classList.remove('saving');
-      if (window.setStatus) setStatus('Could not save the match.');
+      fallo(el, 'Could not save this match. ' + _ultimoFallo);
       return;
     }
 
@@ -604,6 +629,22 @@
     _reciente.add(fila.idx);
     _buscando = null;
     pintar();
+  }
+
+  // Un fallo al guardar tiene que verse en la fila donde pasó. Un
+  // aviso flotante que se va a los cuatro segundos no sirve cuando
+  // estás recorriendo doscientas filas.
+  function fallo(el, texto) {
+    console.error('[marginedge]', texto);
+    const caja = el.closest('.mem-row');
+    if (!caja) return;
+    let box = caja.querySelector('.mem-err');
+    if (!box) {
+      box = document.createElement('div');
+      box.className = 'mem-err';
+      caja.appendChild(box);
+    }
+    box.textContent = texto;
   }
 
   async function quitar(el) {
@@ -619,7 +660,7 @@
 
     if (!ok) {
       el.closest('.mem-cand').classList.remove('saving');
-      if (window.setStatus) setStatus('Could not remove the match.');
+      fallo(el, 'Could not remove this match. ' + _ultimoFallo);
       return;
     }
 
