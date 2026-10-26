@@ -59,6 +59,7 @@
   <link rel="stylesheet" href="styles/motion.css?v=motion3">
   <link rel="stylesheet" href="styles/skeleton.css?v=skel1">
   <link rel="stylesheet" href="styles/toast.css?v=toast1">
+  <link rel="stylesheet" href="styles/marginedge-match.css?v=mem1">
   <link rel="stylesheet" href="styles/empty-state.css?v=empty1">
   <link rel="stylesheet" href="styles/pour-iq.css?v=piq1">
   <link rel="stylesheet" href="styles/admin.css?v=adm3">
@@ -154,7 +155,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261026-162213</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261026-163004</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -3040,7 +3041,11 @@ async function loadMasterFile(file){
     if(!prev) return row;
     const preservedValue = clampNonNegative(prev.value);
     const preservedOverride = (prev.orderOverride === '' || prev.orderOverride === null || prev.orderOverride === undefined) ? '' : clampNonNegative(prev.orderOverride);
-    return { ...row, value: preservedValue, orderOverride: preservedOverride };
+    // El emparejado con MarginEdge sobrevive al archivo maestro: el
+    // Excel semanal no sabe nada de MarginEdge, asi que si no se arrastra
+    // aqui, cada import deja el inventario sin emparejar otra vez.
+    return { ...row, value: preservedValue, orderOverride: preservedOverride,
+             marginedgeId: prev.marginedgeId || null };
   });
   state.noMatches = [];
   state.lastMasterName = `${file.name} [${sheetName}]`;
@@ -5257,7 +5262,8 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/dormant-items.js?v=dorm1"></script>
 <script src="src/zones.js?v=zon7"></script>
 <script src="src/settings-zones.js?v=zon2"></script>
-<script src="src/settings-integrations.js?v=int8"></script>
+<script src="src/settings-integrations.js?v=int9"></script>
+<script src="src/marginedge-match.js?v=mem1"></script>
 
 <!-- ── La app movil ─────────────────────────────────────────────────
      mobile-shell  el armazon: barra de pestañas, boton de escanear y
@@ -6059,7 +6065,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     loadSavedBackground();
     window.showSettingsPanel = function(panel) {
       const menu = document.getElementById('settingsMenu');
-      const panelIds = ['general', 'vendorCodes', 'orderDefaults', 'senderProfile', 'appearance', 'categories', 'copyPrices', 'zones', 'integrations'];
+      const panelIds = ['general', 'vendorCodes', 'orderDefaults', 'senderProfile', 'appearance', 'categories', 'copyPrices', 'zones', 'integrations', 'meMatch'];
       panelIds.forEach(p => {
         const el = document.getElementById('settingsPanel-' + p);
         if (el) el.classList.add('hidden');
@@ -6577,7 +6583,23 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       <div id="meFechas" style="margin-bottom:12px"></div>
       <div id="meBotones" style="display:flex;gap:8px;flex-wrap:wrap"></div>
       <div id="meUnits"></div>
+      <div id="meAccion"></div>
       <div id="meSalida" style="margin-top:16px"></div>
+    </div>
+
+    <div id="settingsPanel-meMatch" class="settings-panel hidden">
+      <button class="settings-back-btn" onclick="showSettingsPanel('integrations')">‹ Integrations</button>
+      <h4 style="margin:0 0 4px">Match products</h4>
+      <div class="small muted" style="margin-bottom:16px">
+        Only the 13 beverage categories come through, so you won't see food or
+        paper goods here. You do this once: from then on the link is by ID and
+        survives a rename on either side.
+      </div>
+      <div id="memHead"></div>
+      <div id="memBody"></div>
+      <div class="small muted" style="margin-top:14px">
+        Each choice saves as you make it. Close and come back whenever — nothing is lost.
+      </div>
     </div>
 
     <div id="settingsPanel-copyPrices" class="settings-panel hidden">

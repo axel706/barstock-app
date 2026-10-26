@@ -134,6 +134,33 @@ async function pedir(url, apiKey) {
   };
 }
 
+// Las 13 categorías de bebida de las 94 que tiene el restaurante. Todo
+// lo demás —comida, químicos, desechables, nómina— se queda fuera.
+const TIPOS_BEBIDA = ['BEER', 'LIQUOR', 'WINE', 'NA_BEVERAGES'];
+
+// Recorre todas las páginas de una ruta y devuelve la lista entera.
+async function traerTodo(ruta, params, apiKey) {
+  let lista = [];
+  let cursor = null;
+  let paginas = 0;
+
+  do {
+    const p = cursor ? Object.assign({}, params, { nextPage: cursor }) : params;
+    const r = await pedir(construirUrl(ruta, p), apiKey);
+    if (!r.ok) {
+      return { error: ruta + ' → ' + r.status + ' ' +
+        (r.cuerpo?.message || r.texto || ''), lista, incompleto: true };
+    }
+    const trozo = sacarLista(r.cuerpo);
+    if (!trozo || !trozo.length) break;
+    lista = lista.concat(trozo);
+    cursor = r.cuerpo?.nextPage || null;
+    paginas++;
+  } while (cursor && paginas < MAX_PAGINAS);
+
+  return { lista, incompleto: !!cursor };
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -187,6 +214,58 @@ module.exports = async function handler(req, res) {
     }
 
     const { action, params } = req.body || {};
+
+    // ── El catálogo de bebida, ya resuelto ─────────────────────────
+    //
+    // La pantalla de emparejar necesita TODOS los productos de bebida,
+    // no una muestra. Pedirlos en crudo serían varios miles de líneas
+    // con campos que no usa, y el cruce con categorías habría que
+    // hacerlo en el navegador.
+    //
+    // Se hace aquí: dos recorridos, el filtro por categoryType, y sale
+    // una lista corta con lo justo para decidir.
+    if (action === 'catalog') {
+      const u = (params || {}).restaurantUnitId;
+      if (!u) return res.status(400).json({ ok: false, error: 'Falta restaurantUnitId.' });
+
+      const cats = await traerTodo('/categories', { restaurantUnitId: u }, apiKey);
+      if (cats.error) return res.status(200).json({ ok: false, error: cats.error });
+
+      const porId = new Map();
+      for (const c of cats.lista) porId.set(String(c.categoryId), c);
+
+      const prods = await traerTodo('/products', { restaurantUnitId: u }, apiKey);
+      if (prods.error) return res.status(200).json({ ok: false, error: prods.error });
+
+      const bebida = [];
+      for (const p of prods.lista) {
+        const cs = Array.isArray(p.categories) ? p.categories : [];
+        let tipo = '';
+        for (const c of cs) {
+          const def = porId.get(String(c.categoryId));
+          if (def && TIPOS_BEBIDA.includes(def.categoryType)) { tipo = def.categoryType; break; }
+        }
+        if (!tipo) continue;
+        bebida.push({
+          id: String(p.companyConceptProductId),
+          name: p.productName || '',
+          type: tipo,
+          price: p.latestPrice != null ? p.latestPrice : null,
+          unit: p.reportByUnit || ''
+        });
+      }
+
+      return res.status(200).json({
+        ok: true,
+        action,
+        total: bebida.length,
+        deCatalogo: prods.lista.length,
+        categorias: cats.lista.length,
+        incompleto: prods.incompleto || cats.incompleto,
+        productos: bebida
+      });
+    }
+
     const candidatas = RUTAS[action];
     if (!candidatas) {
       return res.status(400).json({

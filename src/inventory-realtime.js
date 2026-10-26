@@ -63,7 +63,7 @@
     const locationId = await fetchLocationId();
 
     const res = await fetch(
-      `${BARSTOCK_RT_URL}/rest/v1/inventory_items?location_id=eq.${locationId}&select=code,item_name,vendor,on_hand,suggested,value,category,order_override,par_adjusted_week,bottle_size_ml,bottle_shape,created_at,last_opens`,
+      `${BARSTOCK_RT_URL}/rest/v1/inventory_items?location_id=eq.${locationId}&select=code,item_name,vendor,on_hand,suggested,value,category,order_override,par_adjusted_week,bottle_size_ml,bottle_shape,created_at,last_opens,marginedge_id`,
       {
         headers: {
           apikey: BARSTOCK_RT_KEY,
@@ -90,7 +90,11 @@
       // Sin estos dos, asignar forma y tamaño no cambiaria la huella y
       // la recarga se saltaria entera: state.master se quedaria con los
       // valores viejos hasta recargar la pagina a mano.
-      r.bottle_size_ml, r.bottle_shape
+      r.bottle_size_ml, r.bottle_shape,
+      // Mismo motivo: emparejar con MarginEdge no cambia ningun otro
+      // campo, asi que sin esto la huella no se moveria y la pantalla
+      // seguiria diciendo "sin emparejar" hasta recargar a mano.
+      r.marginedge_id
     ].join('')).sort().join('');
 
     if (stamp === _lastStamp && Array.isArray(state.master) && state.master.length) {
@@ -122,6 +126,10 @@
         // borre, igual que category.
         bottleSizeMl: r.bottle_size_ml || null,
         bottleShape: r.bottle_shape || null,
+        // El producto equivalente en MarginEdge (companyConceptProductId).
+        // Describe el ARTICULO, no el conteo, asi que viaja con el en
+        // replaceInventoryMaster y se conserva en el import semanal.
+        marginedgeId: r.marginedge_id || null,
         // Semana en que Pour-IQ ya ajusto este articulo. Se escribia desde
         // hace tiempo pero nunca se leia, por eso los articulos ajustados
         // reaparecian como pendientes de inmediato.

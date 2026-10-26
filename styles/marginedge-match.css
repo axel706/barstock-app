@@ -1,0 +1,60 @@
+/* Emparejar el inventario con el catálogo de MarginEdge.
+   Pantalla de escritorio: dos columnas enfrentadas y filas anchas. En el
+   móvil no se ofrece (el grupo Connections no se pinta allí). */
+
+.mem-bar { height: 8px; border-radius: 5px; background: rgba(255,255,255,.07);
+  overflow: hidden; display: flex; margin-bottom: 8px; }
+.mem-bar i { display: block; height: 8px; }
+
+.mem-leg { display: flex; gap: 16px; font-size: 11.5px; color: #94a3b8; margin-bottom: 16px; }
+.mem-leg b { color: var(--text, #e2e8f0); }
+.mem-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  margin-right: 5px; }
+
+.mem-chips { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.mem-chip { padding: 8px 15px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.12); font-size: 12.5px; font-weight: 700;
+  color: #94a3b8; background: transparent; cursor: pointer; }
+.mem-chip.on { background: #38bdf8; color: #0b1220; border-color: #38bdf8; }
+
+.mem-row { display: flex; gap: 16px; padding: 14px 4px; align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,.055); }
+.mem-row:last-child { border-bottom: none; }
+
+.mem-mine { width: 250px; flex: 0 0 auto; }
+.mem-mine b { font-size: 14px; font-weight: 800; display: block; letter-spacing: -.01em; }
+.mem-mine span { font-size: 11.5px; color: #64748b; display: block; margin-top: 3px; }
+
+.mem-arrow { color: #334155; font-size: 16px; flex: 0 0 auto; }
+
+.mem-cands { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+.mem-cand { display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+  border: 1px solid rgba(255,255,255,.1); border-radius: 10px;
+  background: rgba(255,255,255,.025); font-size: 13px; cursor: pointer;
+  transition: border-color .14s ease, background .14s ease; }
+.mem-cand:hover { border-color: rgba(56,189,248,.45); }
+.mem-cand.pick { border-color: #38bdf8; background: rgba(56,189,248,.1); }
+.mem-cand.none { color: #64748b; font-size: 12px; }
+.mem-cand.saving { opacity: .5; pointer-events: none; }
+
+.mem-ck { width: 15px; height: 15px; border-radius: 50%; flex: 0 0 auto;
+  border: 1.5px solid rgba(255,255,255,.25); display: flex;
+  align-items: center; justify-content: center; font-size: 10px;
+  font-weight: 900; font-style: normal; }
+.mem-cand.pick .mem-ck { background: #38bdf8; border-color: #38bdf8; color: #0b1220; }
+
+.mem-meta { margin-left: auto; font-size: 11px; color: #64748b; white-space: nowrap; }
+
+.mem-conf { font-size: 10.5px; font-weight: 800; border-radius: 999px;
+  padding: 2px 7px; white-space: nowrap; margin-left: 8px; }
+.mem-conf.hi { background: rgba(52,211,153,.16); color: #6ee7b7; }
+.mem-conf.mid { background: rgba(245,158,11,.16); color: #fcd34d; }
+
+.mem-type { font-size: 10.5px; color: #64748b; }
+
+.mem-empty { padding: 28px 4px; color: #64748b; font-size: 13px; }
+
+body.light .mem-mine b { color: #0f172a; }
+body.light .mem-cand { background: rgba(15,23,42,.03); border-color: rgba(15,23,42,.1); }
+body.light .mem-cand.pick { background: rgba(56,189,248,.14); border-color: #0284c7; }

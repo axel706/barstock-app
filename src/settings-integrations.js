@@ -339,10 +339,27 @@
 
     pintarFechas();
     pintarEstado();
-    cargarUnidad().then(() => pintarEstado());
+    pintarAccion();
+    cargarUnidad().then(() => { pintarEstado(); pintarAccion(); });
   }
 
-  window.BarStockIntegrations = { render, correr };
+  // El botón de emparejar sólo aparece cuando hay restaurante elegido:
+  // sin él la pantalla no sabría qué catálogo pedir.
+  function pintarAccion() {
+    const cont = document.getElementById('meAccion');
+    if (!cont) return;
+    if (!unidad()) { cont.innerHTML = ''; return; }
+    cont.innerHTML = '<button type="button" id="meIrMatch" class="success ui-control" ' +
+      'style="margin-top:14px">Match products →</button>';
+    const b = document.getElementById('meIrMatch');
+    if (b) b.onclick = () => window.showSettingsPanel('meMatch');
+  }
+
+  window.__settingsHooks.meMatch = () => {
+    if (window.BarStockMarginEdgeMatch) window.BarStockMarginEdgeMatch.abrir(unidad());
+  };
+
+  window.BarStockIntegrations = { render, correr, unidad };
 
   // El index es el único dueño de showSettingsPanel; los módulos se
   // apuntan aquí en vez de envolverla.
