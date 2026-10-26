@@ -48,11 +48,46 @@
     return (hit && hit.category) || null;
   }
 
-  // Suma por categoría de las órdenes cuya semana empieza en `monday`
-  function spendForWeek(monday) {
+  // ── El periodo es el CICLO, no la semana del calendario ─────────────
+  //
+  // Esto contaba de lunes a domingo. El síntoma: terminabas el conteo
+  // un miércoles, reiniciabas el ciclo, y la cifra seguía incluyendo
+  // las órdenes del lunes anterior hasta que daban las doce de la
+  // noche del domingo.
+  //
+  // Es exactamente el fallo que documenta la cabecera de cycle.js para
+  // otras tres pantallas: tres definiciones distintas de "esta semana"
+  // conviviendo, y una sola correcta —weekly_reset_at—. Ésta era la
+  // cuarta que faltaba por convertir.
+  //
+  // El ciclo anterior no se guarda en ningún sitio, así que para
+  // comparar se usan los siete días previos al arranque de este. Es
+  // una aproximación y por eso el rótulo dice "before this cycle" y no
+  // "last cycle": un ciclo de diez días se compara con siete.
+  const DIA = 24 * 3600 * 1000;
+
+  function arranqueCiclo() {
+    const C = window.BarStockCycle;
+    if (!C || !C.startedAt) return null;
+    try { return C.startedAt() || null; } catch (e) { return null; }
+  }
+
+  function ventanas() {
+    const ini = arranqueCiclo();
+    // Sin ciclo cargado todavía, el lunes de siempre: más vale la cifra
+    // de antes un segundo que un cero que parece un dato.
+    if (!ini) {
+      const lun = mondayOf(new Date());
+      return { ahora: [lun.getTime(), lun.getTime() + 7 * DIA],
+               antes: [lun.getTime() - 7 * DIA, lun.getTime()] };
+    }
+    const t = ini.getTime();
+    return { ahora: [t, Date.now() + DIA], antes: [t - 7 * DIA, t] };
+  }
+
+  // Suma por categoría de las órdenes dentro de [start, end)
+  function spendEntre(start, end) {
     const orders = (window.state && state.orderHistory) || [];
-    const start = monday.getTime();
-    const end = start + 7 * 24 * 3600 * 1000;
     const byCat = new Map();
     let total = 0, lines = 0;
 
@@ -74,12 +109,9 @@
   }
 
   function compute() {
-    const thisMon = mondayOf(new Date());
-    const prevMon = new Date(thisMon);
-    prevMon.setDate(prevMon.getDate() - 7);
-
-    const now = spendForWeek(thisMon);
-    const prev = spendForWeek(prevMon);
+    const v = ventanas();
+    const now = spendEntre(v.ahora[0], v.ahora[1]);
+    const prev = spendEntre(v.antes[0], v.antes[1]);
 
     const names = new Set([...now.byCat.keys(), ...prev.byCat.keys()]);
     const cats = Array.from(names).map(name => {
@@ -94,12 +126,12 @@
     const totalDelta = now.total - prev.total;
     const totalPct = prev.total > 0 ? (totalDelta / prev.total) * 100 : null;
 
-    return { now, prev, cats, totalDelta, totalPct, weekStart: thisMon };
+    return { now, prev, cats, totalDelta, totalPct, weekStart: new Date(v.ahora[0]) };
   }
 
   function trendHtml(c) {
     if (c.now === 0 && c.prev > 0) {
-      return `<span class="sp-trend down">nothing this week</span>`;
+      return `<span class="sp-trend down">nothing this cycle</span>`;
     }
     if (c.pctChange === null) {
       return `<span class="sp-trend new">new</span>`;
@@ -120,7 +152,7 @@
 
     if (!d.now.lines && !d.prev.lines) {
       el.innerHTML = `<div class="sp-empty"><i class="ti ti-receipt-off" aria-hidden="true"></i>
-        No orders placed this week or last.</div>`;
+        No orders placed this cycle or before it.</div>`;
       return;
     }
 
@@ -141,7 +173,7 @@
           </div>
           <div class="sp-foot">
             ${trendHtml(c)}
-            <span class="sp-prev">last week ${money(c.prev)}</span>
+            <span class="sp-prev">before ${money(c.prev)}</span>
           </div>
         </div>`;
     }).join('');
@@ -150,19 +182,19 @@
     const totalTrend = d.totalPct === null ? ''
       : `<span class="sp-total-trend ${up ? 'up' : 'down'}">
            <i class="ti ti-${up ? 'trending-up' : 'trending-down'}" aria-hidden="true"></i>
-           ${up ? '+' : ''}${money(Math.abs(d.totalDelta))} vs last week</span>`;
+           ${up ? '+' : ''}${money(Math.abs(d.totalDelta))} vs before this cycle</span>`;
 
     el.innerHTML = `
       <div class="sp-head">
         <div>
-          <div class="sp-label">Spent this week</div>
+          <div class="sp-label">Spent this cycle</div>
           <div class="sp-total">${money(d.now.total)}</div>
           ${totalTrend}
         </div>
       </div>
       <div class="sp-legend">
-        <span><span class="sp-key now"></span> this week</span>
-        <span><span class="sp-key prev"></span> last week</span>
+        <span><span class="sp-key now"></span> this cycle</span>
+        <span><span class="sp-key prev"></span> before it</span>
       </div>
       <div class="sp-list">${rows}</div>`;
   }

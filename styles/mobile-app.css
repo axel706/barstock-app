@@ -750,7 +750,11 @@
   /* ── Dinero ─────────────────────────────────────────────────────── */
 
   .m-pair { display: flex; gap: 8px; margin-top: 14px; }
+  /* Alineado a la derecha: las dos tarjetas quedan con sus cifras en
+   * el mismo borde y se comparan de un vistazo, en vez de empezar cada
+   * una donde acabe su rótulo. */
   .m-stat { flex: 1; min-width: 0; padding: 14px 13px; border-radius: 17px;
+    text-align: right;
     background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.12); }
   .m-stat-k { display: block; font-size: 12px; font-weight: 500; color: #a9bacd; }
   .m-stat-v { display: block; font-size: 23px; font-weight: 800; color: #fff; letter-spacing: -.6px; margin-top: 3px; }

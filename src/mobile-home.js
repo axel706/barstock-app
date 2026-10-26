@@ -595,7 +595,7 @@
              son contexto de la semana. -->
         <div class="m-pair">
           <div class="m-stat">
-            <span class="m-stat-k">Spent this week</span>
+            <span class="m-stat-k">Spent this cycle</span>
             <b class="m-stat-v">${g ? money(g.total) : '…'}</b>
             <small class="m-stat-d ${g && g.delta >= 0 ? 'm-up' : 'm-down'}">${
               g ? (g.delta >= 0 ? '↗ +' : '↘ −') + money(Math.abs(g.delta)).slice(1) : '&nbsp;'
