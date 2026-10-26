@@ -71,11 +71,40 @@
   // el catálogo completo son varios miles de productos con campos que
   // esta pantalla no usa, y no tiene sentido traerlos al navegador para
   // tirar el 95 %.
-  async function traerCatalogo(unitId) {
-    const r = await llamar('catalog', { restaurantUnitId: unitId });
-    if (!r.ok) throw new Error(r.error || 'Could not read the catalog');
-    _prods = r.productos || [];
-    return { bebida: _prods.length, deCatalogo: r.deCatalogo, incompleto: r.incompleto };
+  // Llega por tramos: MarginEdge limita las peticiones por clave y el
+  // plan corta las funciones a los diez segundos, así que el servidor
+  // devuelve lo que le cabe y un cursor para seguir. Se dan vueltas
+  // hasta que no haya cursor, enseñando el avance — un catálogo de
+  // miles de productos tarda, y una pantalla quieta parece colgada.
+  const MAX_VUELTAS = 30;
+
+  async function traerCatalogo(unitId, avisar) {
+    _prods = [];
+    let cursor = null, tipos = null, vistos = 0, vueltas = 0;
+
+    do {
+      const r = await llamar('catalog', {
+        restaurantUnitId: unitId,
+        nextPage: cursor || undefined,
+        tipos: tipos || undefined
+      });
+
+      if (r.productos) _prods = _prods.concat(r.productos);
+      vistos += r.vistos || 0;
+      if (r.tipos) tipos = r.tipos;
+
+      if (!r.ok && !_prods.length) throw new Error(r.error || 'Could not read the catalog');
+
+      // Un error a media faena no tira lo ya recogido, pero sí hay que
+      // decirlo: emparejar contra medio catálogo da falsos "sin pareja".
+      if (r.error) return { bebida: _prods.length, vistos, incompleto: true, error: r.error };
+
+      cursor = r.nextPage || null;
+      vueltas++;
+      if (avisar) avisar(_prods.length, vistos);
+    } while (cursor && vueltas < MAX_VUELTAS);
+
+    return { bebida: _prods.length, vistos, incompleto: !!cursor };
   }
 
   // ── Calcular el trabajo ────────────────────────────────────────────
@@ -270,7 +299,16 @@
     if (host) host.innerHTML = '<div class="mem-empty">Reading the MarginEdge catalog…</div>';
 
     try {
-      const info = await traerCatalogo(unitId);
+      const info = await traerCatalogo(unitId, (n, v) => {
+        if (host) host.innerHTML = '<div class="mem-empty">Reading the MarginEdge catalog… ' +
+          '<b>' + n + '</b> beverage products so far, out of ' + v + ' scanned.</div>';
+      });
+
+      if (info.incompleto && window.setStatus) {
+        setStatus('Only part of the catalog came through: ' + (info.error || 'rate limited') +
+                  '. Some items may show as unmatched.');
+      }
+
       if (!info.bebida) {
         if (host) host.innerHTML = '<div class="mem-empty">No beverage products came back. ' +
           'Check the restaurant is the right one in Integrations.</div>';

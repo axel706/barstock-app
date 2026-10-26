@@ -53,6 +53,9 @@ const PARAMS_OK = ['restaurantUnitId', 'startDate', 'endDate', 'nextPage', 'limi
 const LIMITE_MUESTRA = 3;      // objetos completos de ejemplo
 const LIMITE_CRUDO   = 20000;  // caracteres del cuerpo que devolvemos
 const MAX_PAGINAS    = 25;     // tope de seguridad al seguir nextPage
+// Hobby corta a los 10 s. Se deja margen para la última petición en
+// vuelo y para serializar la respuesta.
+const PRESUPUESTO_MS = 6500;
 const MAX_DISTINTOS  = 40;     // más allá de esto, el campo es texto libre
 
 // ── Por qué un resumen y no una muestra ──────────────────────────────
@@ -116,11 +119,34 @@ function sacarLista(cuerpo) {
   return null;
 }
 
+const dormir = ms => new Promise(r => setTimeout(r, ms));
+
+// ── El 429 ───────────────────────────────────────────────────────────
+//
+// MarginEdge limita las peticiones por clave y no publica el número.
+// Recorrer páginas una detrás de otra lo dispara enseguida.
+//
+// Se reintenta con esperas crecientes, respetando `Retry-After` si lo
+// manda. Tres intentos y se rinde: insistir más no arregla un límite,
+// sólo consume el presupuesto de tiempo de la función.
+const REINTENTOS = 3;
+const ESPERA_BASE = 700;
+
 async function pedir(url, apiKey) {
-  const r = await fetch(url, {
-    method: 'GET',
-    headers: { 'x-api-key': apiKey, 'Accept': 'application/json' }
-  });
+  let r;
+
+  for (let intento = 0; intento <= REINTENTOS; intento++) {
+    r = await fetch(url, {
+      method: 'GET',
+      headers: { 'x-api-key': apiKey, 'Accept': 'application/json' }
+    });
+
+    if (r.status !== 429 || intento === REINTENTOS) break;
+
+    const cabecera = Number(r.headers.get('retry-after'));
+    await dormir(cabecera > 0 ? Math.min(cabecera * 1000, 4000)
+                              : ESPERA_BASE * Math.pow(2, intento));
+  }
 
   const texto = await r.text();
   let cuerpo = null;
@@ -224,45 +250,83 @@ module.exports = async function handler(req, res) {
     //
     // Se hace aquí: dos recorridos, el filtro por categoryType, y sale
     // una lista corta con lo justo para decidir.
+    // ── El catálogo, por tramos ───────────────────────────────────
+    //
+    // Dos límites se juntan aquí: MarginEdge throttlea por clave, y el
+    // plan Hobby corta las funciones a los diez segundos. El catálogo
+    // entero son miles de productos a cien por página, así que traerlo
+    // de una sentada no cabe ni con reintentos.
+    //
+    // Se devuelve lo que quepa en un presupuesto de tiempo, junto con
+    // el cursor para seguir. El navegador vuelve a llamar hasta que no
+    // haya cursor y va enseñando el avance. Más vueltas, pero ninguna
+    // se queda a medias.
     if (action === 'catalog') {
       const u = (params || {}).restaurantUnitId;
       if (!u) return res.status(400).json({ ok: false, error: 'Falta restaurantUnitId.' });
 
-      const cats = await traerTodo('/categories', { restaurantUnitId: u }, apiKey);
-      if (cats.error) return res.status(200).json({ ok: false, error: cats.error });
-
-      const porId = new Map();
-      for (const c of cats.lista) porId.set(String(c.categoryId), c);
-
-      const prods = await traerTodo('/products', { restaurantUnitId: u }, apiKey);
-      if (prods.error) return res.status(200).json({ ok: false, error: prods.error });
-
-      const bebida = [];
-      for (const p of prods.lista) {
-        const cs = Array.isArray(p.categories) ? p.categories : [];
-        let tipo = '';
-        for (const c of cs) {
-          const def = porId.get(String(c.categoryId));
-          if (def && TIPOS_BEBIDA.includes(def.categoryType)) { tipo = def.categoryType; break; }
+      // Los tipos de categoría sólo se resuelven en la primera llamada;
+      // después viajan de ida y vuelta para no volver a pedirlos.
+      let tipos = (params || {}).tipos;
+      if (!tipos || typeof tipos !== 'object') {
+        const cats = await traerTodo('/categories', { restaurantUnitId: u }, apiKey);
+        if (cats.error) return res.status(200).json({ ok: false, error: cats.error });
+        tipos = {};
+        for (const c of cats.lista) {
+          if (TIPOS_BEBIDA.includes(c.categoryType)) tipos[String(c.categoryId)] = c.categoryType;
         }
-        if (!tipo) continue;
-        bebida.push({
-          id: String(p.companyConceptProductId),
-          name: p.productName || '',
-          type: tipo,
-          price: p.latestPrice != null ? p.latestPrice : null,
-          unit: p.reportByUnit || ''
-        });
       }
 
+      const limite = Date.now() + PRESUPUESTO_MS;
+      const bebida = [];
+      let cursor = (params || {}).nextPage || null;
+      let vistos = 0;
+      let paginas = 0;
+
+      do {
+        const p = { restaurantUnitId: u };
+        if (cursor) p.nextPage = cursor;
+
+        const r = await pedir(construirUrl('/products', p), apiKey);
+        if (!r.ok) {
+          // Lo recogido hasta aquí sirve igual: el navegador se queda
+          // con ello y puede reintentar desde el cursor.
+          return res.status(200).json({
+            ok: bebida.length > 0,
+            action, tipos, productos: bebida, vistos, nextPage: cursor,
+            error: '/products → ' + r.status + ' ' + (r.cuerpo?.message || r.texto || '')
+          });
+        }
+
+        const trozo = sacarLista(r.cuerpo);
+        if (!trozo || !trozo.length) { cursor = null; break; }
+        vistos += trozo.length;
+        paginas++;
+
+        for (const prod of trozo) {
+          const cs = Array.isArray(prod.categories) ? prod.categories : [];
+          let tipo = '';
+          for (const c of cs) {
+            const t = tipos[String(c.categoryId)];
+            if (t) { tipo = t; break; }
+          }
+          if (!tipo) continue;
+          bebida.push({
+            id: String(prod.companyConceptProductId),
+            name: prod.productName || '',
+            type: tipo,
+            price: prod.latestPrice != null ? prod.latestPrice : null,
+            unit: prod.reportByUnit || ''
+          });
+        }
+
+        cursor = r.cuerpo?.nextPage || null;
+      } while (cursor && Date.now() < limite && paginas < MAX_PAGINAS);
+
       return res.status(200).json({
-        ok: true,
-        action,
-        total: bebida.length,
-        deCatalogo: prods.lista.length,
-        categorias: cats.lista.length,
-        incompleto: prods.incompleto || cats.incompleto,
-        productos: bebida
+        ok: true, action, tipos,
+        productos: bebida, vistos, paginas,
+        nextPage: cursor   // null = se acabó
       });
     }
 
