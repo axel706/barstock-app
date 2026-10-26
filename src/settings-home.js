@@ -45,6 +45,7 @@
     {
       title: 'Connections',
       color: '#34d399',
+      soloEscritorio: true,
       tiles: [
         { id: 'integrations', icon: 'ti-plug-connected', name: 'MarginEdge', fallback: 'Test the connection' }
       ]
@@ -126,7 +127,15 @@
     const menu = document.getElementById('settingsMenu');
     if (!menu) return;
 
-    menu.innerHTML = GROUPS.map(g => `
+    // Emparejar catálogos es trabajo de escritorio: tablas anchas, dos
+    // columnas enfrentadas y un rato largo de decisiones. En el teléfono
+    // no se puede hacer bien, así que ni se ofrece. Un grupo entero fuera
+    // y no una baldosa deshabilitada: una puerta que no lleva a ningún
+    // sitio es peor que no tener puerta.
+    const grupos = GROUPS.filter(g =>
+      !(g.soloEscritorio && window.BarStockMobileShell?.esMovil?.()));
+
+    menu.innerHTML = grupos.map(g => `
       <div class="sh-group-title">${esc(g.title)}</div>
       <div class="sh-grid">
         ${g.tiles.map(t => `

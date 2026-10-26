@@ -145,6 +145,16 @@ hay que registrar y avisar cuando una pasada quede incompleta.
 4. **Sync programado.** Cron de Vercel por la noche + botón de "sincronizar
    ahora". Registro de la última sincronización.
 
+## Dónde vive esto
+
+**Sólo escritorio.** Emparejar catálogos y definir empaques son tablas anchas,
+dos columnas enfrentadas y un rato largo de decisiones: en el teléfono no se
+hace bien. El grupo "Connections" de la portada de Ajustes lleva
+`soloEscritorio: true` y no se pinta cuando el shell móvil está montado.
+
+Lo que sí llega al móvil es el **resultado**: cuando las facturas entren solas,
+Consumption Match y el coste de mercancía se llenan igual en las dos versiones.
+
 ## SQL que hay que correr (fase 2, no antes)
 
     alter table inventory_items add column if not exists marginedge_id text;
