@@ -1,60 +1,97 @@
 /* Emparejar el inventario con el catálogo de MarginEdge.
-   Pantalla de escritorio: dos columnas enfrentadas y filas anchas. En el
-   móvil no se ofrece (el grupo Connections no se pinta allí). */
 
-.mem-bar { height: 8px; border-radius: 5px; background: rgba(255,255,255,.07);
-  overflow: hidden; display: flex; margin-bottom: 8px; }
+   Vive DENTRO del modal de Ajustes, que mide unos 770 px. La primera
+   versión se diseñó a 1060 y enfrentaba dos columnas: los nombres se
+   partían en cuatro líneas y el precio quedaba cortado. Aquí cada fila
+   es de ancho completo y apilada — tu artículo arriba, los candidatos
+   debajo— que es lo único que cabe bien en ese ancho. */
+
+.mem-bar { height: 8px; border-radius: 5px; background: rgba(127,140,160,.22);
+  overflow: hidden; display: flex; margin-bottom: 9px; }
 .mem-bar i { display: block; height: 8px; }
 
-.mem-leg { display: flex; gap: 16px; font-size: 11.5px; color: #94a3b8; margin-bottom: 16px; }
-.mem-leg b { color: var(--text, #e2e8f0); }
+.mem-leg { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px;
+  color: var(--muted, #64748b); margin-bottom: 16px; }
+.mem-leg b { color: var(--text, #e2e8f0); font-weight: 800; }
 .mem-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-  margin-right: 5px; }
+  margin-right: 6px; }
 
-.mem-chips { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
-.mem-chip { padding: 8px 15px; border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.12); font-size: 12.5px; font-weight: 700;
-  color: #94a3b8; background: transparent; cursor: pointer; }
-.mem-chip.on { background: #38bdf8; color: #0b1220; border-color: #38bdf8; }
+.mem-chips { display: flex; gap: 7px; margin-bottom: 6px; flex-wrap: wrap; }
+.mem-chip { padding: 8px 14px; border-radius: 999px;
+  border: 1px solid rgba(127,140,160,.35); font-size: 12.5px; font-weight: 700;
+  color: var(--muted, #94a3b8); background: transparent; cursor: pointer; }
+.mem-chip.on { background: #0284c7; color: #fff; border-color: #0284c7; }
 
-.mem-row { display: flex; gap: 16px; padding: 14px 4px; align-items: center;
-  border-bottom: 1px solid rgba(255,255,255,.055); }
+.mem-row { padding: 14px 0 15px; border-bottom: 1px solid rgba(127,140,160,.2); }
 .mem-row:last-child { border-bottom: none; }
 
-.mem-mine { width: 250px; flex: 0 0 auto; }
-.mem-mine b { font-size: 14px; font-weight: 800; display: block; letter-spacing: -.01em; }
-.mem-mine span { font-size: 11.5px; color: #64748b; display: block; margin-top: 3px; }
+/* Tu artículo. Es el ancla de la fila, así que va a tamaño de lectura
+   normal y con contraste pleno; lo de MarginEdge es la respuesta. */
+.mem-mine b { font-size: 14.5px; font-weight: 800; display: block;
+  letter-spacing: -.01em; color: var(--text, #e2e8f0); }
+.mem-mine span { font-size: 11.5px; color: var(--muted, #64748b);
+  display: block; margin-top: 2px; }
 
-.mem-arrow { color: #334155; font-size: 16px; flex: 0 0 auto; }
-
-.mem-cands { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.mem-cands { display: flex; flex-direction: column; gap: 6px; margin-top: 9px; }
 
 .mem-cand { display: flex; align-items: center; gap: 10px; padding: 9px 12px;
-  border: 1px solid rgba(255,255,255,.1); border-radius: 10px;
-  background: rgba(255,255,255,.025); font-size: 13px; cursor: pointer;
+  border: 1px solid rgba(127,140,160,.3); border-radius: 10px;
+  background: rgba(127,140,160,.07); cursor: pointer; min-width: 0;
   transition: border-color .14s ease, background .14s ease; }
-.mem-cand:hover { border-color: rgba(56,189,248,.45); }
-.mem-cand.pick { border-color: #38bdf8; background: rgba(56,189,248,.1); }
-.mem-cand.none { color: #64748b; font-size: 12px; }
-.mem-cand.saving { opacity: .5; pointer-events: none; }
+.mem-cand:hover { border-color: rgba(2,132,199,.6); }
+.mem-cand.pick { border-color: #0284c7; background: rgba(56,189,248,.16); }
+.mem-cand.saving { opacity: .45; pointer-events: none; }
 
-.mem-ck { width: 15px; height: 15px; border-radius: 50%; flex: 0 0 auto;
-  border: 1.5px solid rgba(255,255,255,.25); display: flex;
+/* Nombre y datos en dos líneas dentro de la misma pastilla: en 770 px no
+   caben uno al lado del otro sin cortar el precio. */
+.mem-txt { min-width: 0; flex: 1; }
+.mem-txt b { display: block; font-size: 13px; font-weight: 700;
+  color: var(--text, #e2e8f0); white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; }
+.mem-txt span { display: block; font-size: 11px; color: var(--muted, #64748b);
+  margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.mem-cand.none { color: var(--muted, #64748b); font-size: 12.5px;
+  font-weight: 700; background: transparent; }
+.mem-cand.none:hover { border-color: rgba(127,140,160,.55); }
+
+.mem-ck { width: 16px; height: 16px; border-radius: 50%; flex: 0 0 auto;
+  border: 1.5px solid rgba(127,140,160,.6); display: flex;
   align-items: center; justify-content: center; font-size: 10px;
   font-weight: 900; font-style: normal; }
-.mem-cand.pick .mem-ck { background: #38bdf8; border-color: #38bdf8; color: #0b1220; }
+.mem-cand.pick .mem-ck { background: #0284c7; border-color: #0284c7; color: #fff; }
 
-.mem-meta { margin-left: auto; font-size: 11px; color: #64748b; white-space: nowrap; }
+.mem-conf { font-size: 10px; font-weight: 800; border-radius: 999px;
+  padding: 3px 8px; white-space: nowrap; flex: 0 0 auto;
+  text-transform: uppercase; letter-spacing: .04em; }
+.mem-conf.hi { background: rgba(16,185,129,.18); color: #047857; }
+.mem-conf.mid { background: rgba(217,119,6,.18); color: #b45309; }
 
-.mem-conf { font-size: 10.5px; font-weight: 800; border-radius: 999px;
-  padding: 2px 7px; white-space: nowrap; margin-left: 8px; }
-.mem-conf.hi { background: rgba(52,211,153,.16); color: #6ee7b7; }
-.mem-conf.mid { background: rgba(245,158,11,.16); color: #fcd34d; }
+/* Buscador. Aparece sólo cuando lo pides: una caja de texto en cada una
+   de 270 filas convierte la pantalla en un formulario. */
+.mem-find { display: flex; gap: 7px; margin-top: 6px; }
+.mem-find input { flex: 1; font-size: 13px; padding: 8px 11px; border-radius: 9px; }
+.mem-hits { display: flex; flex-direction: column; gap: 5px; margin-top: 5px; }
+.mem-hits .mem-cand { padding: 7px 11px; }
 
-.mem-type { font-size: 10.5px; color: #64748b; }
+.mem-empty { padding: 26px 2px; color: var(--muted, #64748b); font-size: 13px; }
+.mem-empty b { color: var(--text, #e2e8f0); }
 
-.mem-empty { padding: 28px 4px; color: #64748b; font-size: 13px; }
-
-body.light .mem-mine b { color: #0f172a; }
-body.light .mem-cand { background: rgba(15,23,42,.03); border-color: rgba(15,23,42,.1); }
-body.light .mem-cand.pick { background: rgba(56,189,248,.14); border-color: #0284c7; }
+/* El tema claro no es un retoque: es el que usa Axel a diario. Los grises
+   de tema oscuro sobre panel claro se leían lavados. */
+body.light .mem-leg b,
+body.light .mem-mine b,
+body.light .mem-txt b,
+body.light .mem-empty b { color: #0f172a; }
+body.light .mem-leg,
+body.light .mem-mine span,
+body.light .mem-txt span,
+body.light .mem-cand.none,
+body.light .mem-empty { color: #475569; }
+body.light .mem-cand { background: rgba(15,23,42,.035); border-color: rgba(15,23,42,.14); }
+body.light .mem-cand.pick { background: rgba(2,132,199,.12); border-color: #0284c7; }
+body.light .mem-chip { color: #475569; border-color: rgba(15,23,42,.18); }
+body.light .mem-chip.on { color: #fff; }
+body.light .mem-ck { border-color: rgba(15,23,42,.3); }
+body.light .mem-conf.hi { background: rgba(16,185,129,.16); color: #065f46; }
+body.light .mem-conf.mid { background: rgba(217,119,6,.16); color: #92400e; }

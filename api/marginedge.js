@@ -330,6 +330,99 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    // ── Qué compras de verdad ─────────────────────────────────────
+    //
+    // El catálogo entero son miles de productos de los que compras unos
+    // cientos. Para emparejar, el resto es ruido: una botella de tu
+    // estante no puede ser un producto que nunca has pedido.
+    //
+    // Sale de las líneas de factura, y eso son dos vueltas: `/orders`
+    // da las cabeceras y cada `/orders/{id}` sus líneas. Con 300
+    // facturas al mes no caben en una llamada, así que el trabajo se
+    // reparte igual que el catálogo: el navegador pide las cabeceras,
+    // y luego va mandando tandas de ids.
+    if (action === 'purchases') {
+      const u = (params || {}).restaurantUnitId;
+      if (!u) return res.status(400).json({ ok: false, error: 'Falta restaurantUnitId.' });
+
+      const limite = Date.now() + PRESUPUESTO_MS;
+      const ids = (params || {}).orderIds;
+
+      // Fase 1 · las cabeceras
+      if (!Array.isArray(ids)) {
+        const base = {
+          restaurantUnitId: u,
+          startDate: (params || {}).startDate,
+          endDate: (params || {}).endDate
+        };
+        let cursor = (params || {}).nextPage || null;
+        const cabeceras = [];
+        let paginas = 0;
+
+        do {
+          const p = cursor ? Object.assign({}, base, { nextPage: cursor }) : base;
+          const r = await pedir(construirUrl('/orders', p), apiKey);
+          if (!r.ok) {
+            return res.status(200).json({
+              ok: cabeceras.length > 0, action, fase: 'headers',
+              pedidos: cabeceras, nextPage: cursor,
+              error: '/orders → ' + r.status + ' ' + (r.cuerpo?.message || r.texto || '')
+            });
+          }
+          const trozo = sacarLista(r.cuerpo);
+          if (!trozo || !trozo.length) { cursor = null; break; }
+          paginas++;
+
+          for (const o of trozo) {
+            // Sólo las cerradas. Una pendiente de aprobar todavía puede
+            // cambiar de cantidad o de precio.
+            if (o.status !== 'CLOSED' && o.status !== 'COMPLETED') continue;
+            cabeceras.push({
+              id: String(o.orderId),
+              vendor: o.vendorName || '',
+              date: o.invoiceDate || o.createdDate || null
+            });
+          }
+          cursor = r.cuerpo?.nextPage || null;
+        } while (cursor && Date.now() < limite && paginas < MAX_PAGINAS);
+
+        return res.status(200).json({
+          ok: true, action, fase: 'headers', pedidos: cabeceras, nextPage: cursor
+        });
+      }
+
+      // Fase 2 · las líneas, por tandas
+      const lineas = [];
+      let hechos = 0;
+
+      for (const id of ids) {
+        if (Date.now() >= limite) break;
+        if (!/^\d+$/.test(String(id))) { hechos++; continue; }
+
+        const r = await pedir(construirUrl('/orders/' + id, {}), apiKey);
+        hechos++;
+        if (!r.ok) continue;
+
+        const trozo = sacarLista(r.cuerpo) || [];
+        for (const l of trozo) {
+          if (!l || !l.companyConceptProductId) continue;
+          lineas.push({
+            product: String(l.companyConceptProductId),
+            vendorName: l.vendorItemName || '',
+            code: l.vendorItemCode || '',
+            packaging: l.packagingId != null ? String(l.packagingId) : '',
+            unitPrice: l.unitPrice != null ? l.unitPrice : null,
+            qty: l.quantity != null ? l.quantity : null
+          });
+        }
+      }
+
+      return res.status(200).json({
+        ok: true, action, fase: 'lines',
+        lineas, hechos, pendientes: ids.slice(hechos)
+      });
+    }
+
     const candidatas = RUTAS[action];
     if (!candidatas) {
       return res.status(400).json({
