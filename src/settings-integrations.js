@@ -591,33 +591,63 @@
     const meta = {};
     for (const p of faltan) meta[p.id] = p;
 
-    let hechas = 0, lineas = 0;
-    for (let i = 0; i < faltan.length; i += TANDA) {
-      const tanda = faltan.slice(i, i + TANDA).map(p => p.id);
+    // Se recorre por posición y no con un for clásico: una tanda puede
+    // quedarse a medias por el presupuesto de tiempo del servidor, y
+    // entonces hay que volver a por lo que faltó, no saltárselo.
+    let hechas = 0, lineas = 0, fallidas = 0, primerFallo = '';
+    let pos = 0;
+
+    while (pos < faltan.length) {
+      const tanda = faltan.slice(pos, pos + TANDA).map(p => p.id);
       const r = await llamar('sync-invoices', {
         restaurantUnitId: u, locationId: id, orderIds: tanda, meta
       });
 
-      hechas += (r.hechos || 0);
+      const n = r.hechos || 0;
+      hechas += n;
       lineas += (r.lineas || 0);
+
+      for (const f of (r.fallidos || [])) {
+        fallidas++;
+        if (!primerFallo) primerFallo = 'HTTP ' + f.status + ' ' + (f.mensaje || '');
+      }
 
       if (r.error) {
         if (el) el.innerHTML = '<div class="small" style="color:#b45309">' +
-          'Paused after ' + hechas + ' of ' + faltan.length + ' invoices: ' + esc(r.error) +
+          'Paused after <b>' + hechas + '</b> of ' + faltan.length + ' invoices (' +
+          lineas + ' lines saved): ' + esc(r.error) +
           '<br>Press <b>Sync invoices</b> again — the ones already saved are skipped.</div>';
         return;
       }
 
-      // Una tanda puede quedarse a medias por el presupuesto de tiempo
-      // del servidor; lo que falte vuelve en la siguiente vuelta.
-      if (r.pendientes && r.pendientes.length) i -= (TANDA - (r.hechos || 0));
+      // Sin avance no hay bucle que valga: parar y decirlo es mejor que
+      // dar vueltas eternamente sin guardar nada.
+      if (!n) {
+        if (el) el.innerHTML = '<div class="small" style="color:#b91c1c">' +
+          'Stopped: the server processed none of the batch. ' + esc(primerFallo) + '</div>';
+        return;
+      }
 
+      pos += n;
       paso('Saving invoice lines… <b>' + hechas + '</b> of ' + faltan.length +
-           ' invoices, ' + lineas + ' lines.');
+           ' invoices, ' + lineas + ' lines' +
+           (fallidas ? ', ' + fallidas + ' failed' : '') + '.');
     }
 
-    if (el) el.innerHTML = '<div class="small" style="color:#15803d;font-weight:700">' +
-      'Invoices saved · ' + hechas + ' new invoices, ' + lineas + ' lines.</div>';
+    // Procesar facturas y no guardar ni una línea no es un éxito, por
+    // mucho que no haya saltado ningún error: hay que decirlo.
+    const tono = lineas ? '#15803d' : '#b91c1c';
+    if (el) el.innerHTML = '<div class="small" style="color:' + tono + ';font-weight:700">' +
+      hechas + ' invoices processed · <b>' + lineas + '</b> lines saved' +
+      (fallidas ? ' · ' + fallidas + ' failed' : '') + '</div>' +
+      (fallidas && primerFallo
+        ? '<div class="small muted" style="margin-top:5px">First failure: ' +
+          esc(primerFallo) + '</div>'
+        : '') +
+      (!lineas
+        ? '<div class="small" style="margin-top:5px">No lines means every detail ' +
+          'request failed. Nothing was saved.</div>'
+        : '');
     notaSync();
   }
 

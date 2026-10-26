@@ -673,7 +673,31 @@ module.exports = async function handler(req, res) {
         if (!/^\d+$/.test(String(id))) continue;
 
         const r = await pedir(construirUrl('/orders/' + id, {}), apiKey);
-        if (!r.ok) { fallidos.push({ id, status: r.status }); continue; }
+
+        if (!r.ok) {
+          fallidos.push({ id, status: r.status,
+                          mensaje: r.cuerpo?.message || r.texto || '' });
+
+          // ── El `continue` que se comía la pausa ────────────────
+          //
+          // Antes esto saltaba directo a la siguiente factura, y la
+          // pausa quedaba más abajo. O sea que justo cuando MarginEdge
+          // nos estaba frenando, le pedíamos MÁS RÁPIDO: 293 facturas
+          // se quemaron en cascada y no se guardó una sola línea.
+          //
+          // Ante un 429 no tiene sentido seguir: se para, se dice
+          // cuántas quedan, y el siguiente intento continúa por ahí.
+          if (r.status === 429) {
+            return res.status(200).json({
+              ok: false, action, fase: 'lines', hechos, lineas, fallidos,
+              pendientes: ids.slice(hechos),
+              error: 'MarginEdge rate limit (429). Paused \u2014 press again to carry on.'
+            });
+          }
+
+          await dormir(PAUSA_PAGINA_MS);
+          continue;
+        }
 
         const trozo = sacarLista(r.cuerpo) || [];
         const m = meta[id] || {};
