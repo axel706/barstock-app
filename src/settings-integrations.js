@@ -112,6 +112,11 @@
       el.innerHTML =
         '<div style="color:#fca5a5;font-weight:700;margin-bottom:6px">No funcionó</div>' +
         '<div class="small" style="margin-bottom:8px">' + esc(res.error || 'Error desconocido') + '</div>' +
+        (res.diagnostico
+          ? '<pre style="font-size:11px;line-height:1.5;background:rgba(0,0,0,.25);padding:12px;' +
+            'border-radius:10px;white-space:pre-wrap;margin-bottom:8px">' +
+            esc(JSON.stringify(res.diagnostico, null, 2)) + '</pre>'
+          : '') +
         '<div class="small muted">' + esc(intentos) + '</div>';
       return;
     }

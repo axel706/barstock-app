@@ -87,16 +87,10 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const apiKey = process.env.MARGINEDGE_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({
-        ok: false,
-        error: 'Falta MARGINEDGE_API_KEY. Está en Vercel → Settings → Environments, y hace falta redesplegar después de guardarla.'
-      });
-    }
-
-    // Sesión válida de la app. Esto devuelve lo que se compra y a qué
-    // precio: no puede quedar abierto a cualquiera que sepa la URL.
+    // Sesión válida de la app, ANTES que nada. Esto devuelve lo que se
+    // compra y a qué precio, y además el diagnóstico de abajo lista
+    // nombres de variables de entorno: ni una cosa ni la otra puede
+    // quedar abierta a quien conozca la URL.
     const token = (req.headers.authorization || '').replace('Bearer ', '');
     if (!token) return res.status(401).json({ ok: false, error: 'Missing token' });
 
@@ -107,6 +101,31 @@ module.exports = async function handler(req, res) {
     const { data: userData, error: userError } = await supabase.auth.getUser(token);
     if (userError || !userData?.user) {
       return res.status(401).json({ ok: false, error: 'Invalid session' });
+    }
+
+    // ── Por qué este diagnóstico ───────────────────────────────────
+    //
+    // "Falta la clave" tiene al menos cuatro causas distintas: el
+    // nombre no coincide, se guardó en otro proyecto, se guardó en un
+    // entorno que este despliegue no usa, o se guardó después del
+    // último despliegue. Sin saber cuál es, se arregla a ciegas.
+    //
+    // Se devuelven NOMBRES de variables, nunca valores. Y sólo a una
+    // sesión válida.
+    const apiKey = process.env.MARGINEDGE_API_KEY;
+    if (!apiKey) {
+      const parecidos = Object.keys(process.env).filter(k => /margin|edge/i.test(k));
+      return res.status(200).json({
+        ok: false,
+        error: 'La función no ve MARGINEDGE_API_KEY en este despliegue.',
+        diagnostico: {
+          variablesParecidas: parecidos.length ? parecidos : 'ninguna',
+          otrasClavesPresentes: ['ANTHROPIC_API_KEY', 'RESEND_API_KEY', 'SUPABASE_URL']
+            .filter(k => !!process.env[k]),
+          entorno: process.env.VERCEL_ENV || 'desconocido',
+          totalVariables: Object.keys(process.env).length
+        }
+      });
     }
 
     const { action, params } = req.body || {};
