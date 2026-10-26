@@ -323,12 +323,7 @@
       // Describe el ARTICULO —como quedaron sus botellas abiertas en el
       // ultimo conteo—, asi que va en la lista. Fuera de ella se
       // perderia en cada import, sin dar ningun error.
-      last_opens: Array.isArray(r.lastOpens) && r.lastOpens.length ? r.lastOpens : null,
-      // El producto equivalente en MarginEdge. Describe el ARTICULO, no
-      // el conteo, asi que va en esta lista: fuera de ella, el import
-      // del lunes borraria el emparejado entero sin dar un solo error y
-      // habria que volver a hacerlo a mano cada semana.
-      marginedge_id: r.marginedgeId || null
+      last_opens: Array.isArray(r.lastOpens) && r.lastOpens.length ? r.lastOpens : null
     }));
 
     const chunkSize = 200;

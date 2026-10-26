@@ -45,6 +45,7 @@
   let _prods = null;   // los de categoría de bebida
   let _otros = null;   // el resto del catálogo, sólo para el buscador
   let _diag = null;
+  let _vinculos = new Map();
   let _idf = null;
   let _filas = null;
   let _tab = 'revisar';
@@ -257,17 +258,101 @@
     return { bebida: _prods.length, otros: _otros.length, total: todo.length };
   }
 
+  // ── Los vínculos ──────────────────────────────────────────────────
+  //
+  // Un artículo tuyo puede tener VARIOS productos de MarginEdge: el
+  // mismo vino de la casa en 750 ml y en 1.5 L, o el mismo producto a
+  // dos proveedores con fichas distintas. Todas esas compras caen en la
+  // misma botella del estante.
+  //
+  // Al revés no: un producto de MarginEdge pertenece a un solo artículo
+  // tuyo. Por eso la clave de la tabla es el producto.
+
+  function clave(r) { return (r.code || '') + '||' + (r.item || ''); }
+
+  async function leerVinculos(url, key, locId) {
+    let todas = [];
+    for (let desde = 0; desde < MAX_FILAS; desde += PAGINA) {
+      const r = await fetch(
+        `${url}/rest/v1/marginedge_links?location_id=eq.${locId}` +
+        `&select=product_id,code,item_name&order=product_id.asc` +
+        `&limit=${PAGINA}&offset=${desde}`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+      if (!r.ok) throw new Error('Could not read the matches: ' + (await r.text()));
+      const trozo = await r.json();
+      if (!Array.isArray(trozo)) break;
+      todas = todas.concat(trozo);
+      if (trozo.length < PAGINA) break;
+    }
+
+    _vinculos = new Map();
+    for (const v of todas) {
+      const k = (v.code || '') + '||' + (v.item_name || '');
+      if (!_vinculos.has(k)) _vinculos.set(k, []);
+      _vinculos.get(k).push(String(v.product_id));
+    }
+    return todas.length;
+  }
+
+  async function vincular(fila, productId) {
+    const { url, key } = cfg();
+    const locId = await locationId();
+    if (!url || !key || !locId) return false;
+
+    const r = await fetch(`${url}/rest/v1/marginedge_links`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: key, Authorization: `Bearer ${key}`,
+        Prefer: 'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify({
+        location_id: locId,
+        product_id: String(productId),
+        code: fila.row.code || '',
+        item_name: fila.row.item || ''
+      })
+    });
+    if (!r.ok) return false;
+
+    if (!fila.enlaces.includes(String(productId))) fila.enlaces.push(String(productId));
+    return true;
+  }
+
+  async function desvincular(fila, productId) {
+    const { url, key } = cfg();
+    const locId = await locationId();
+    if (!url || !key || !locId) return false;
+
+    const r = await fetch(
+      `${url}/rest/v1/marginedge_links?location_id=eq.${locId}` +
+      `&product_id=eq.${encodeURIComponent(productId)}`,
+      { method: 'DELETE', headers: { apikey: key, Authorization: `Bearer ${key}` } });
+    if (!r.ok) return false;
+
+    fila.enlaces = fila.enlaces.filter(x => x !== String(productId));
+    return true;
+  }
+
+  async function locationId() {
+    const P = window.BarStockParIntelligence;
+    return P && P.fetchLocationId ? await P.fetchLocationId() : null;
+  }
+
   // ── Calcular el trabajo ────────────────────────────────────────────
 
   function calcular() {
     construirIdf(_prods.map(p => p.name));
     const master = (window.state && state.master) || [];
+    const porId = new Map(_prods.concat(_otros).map(p => [String(p.id), p]));
 
     _filas = master.map((r, idx) => {
-      if (r.marginedgeId) {
-        const ya = _prods.find(p => String(p.id) === String(r.marginedgeId));
-        return { idx, row: r, estado: 'hecho', elegido: String(r.marginedgeId),
-                 candidatos: ya ? [ya] : [], puntos: [] };
+      const enlaces = (_vinculos.get(clave(r)) || []).slice();
+
+      if (enlaces.length) {
+        return { idx, row: r, estado: 'hecho', enlaces,
+                 productos: enlaces.map(id => porId.get(id)).filter(Boolean),
+                 candidatos: [], puntos: [] };
       }
 
       const fam = familiaDe(r.category);
@@ -281,91 +366,68 @@
         .sort((a, b) => b.s - a.s)
         .slice(0, MAX_CANDIDATOS);
 
-      if (!puntuados.length) {
-        return { idx, row: r, estado: 'huerfano', elegido: null, candidatos: [], puntos: [] };
-      }
-
-      // Seguro sólo si el primero es muy bueno Y el segundo no se le
-      // acerca: dos candidatos empatados son justo donde una decisión
-      // automática se equivoca.
-      const [p1, p2] = puntuados;
-      const claro = p1.s >= SEGURO && (!p2 || p1.s - p2.s > 0.12);
-
       return {
-        idx, row: r,
-        estado: claro ? 'auto' : 'revisar',
-        elegido: claro ? String(p1.p.id) : null,
+        idx, row: r, enlaces: [], productos: [],
+        estado: puntuados.length ? 'revisar' : 'huerfano',
         candidatos: puntuados.map(x => x.p),
         puntos: puntuados.map(x => x.s)
       };
     });
   }
 
-  // ── Guardar ────────────────────────────────────────────────────────
-
-  async function guardar(fila, productId) {
-    const { url, key } = cfg();
-    const P = window.BarStockParIntelligence;
-    const locId = P && P.fetchLocationId ? await P.fetchLocationId() : null;
-    if (!url || !key || !locId) return false;
-
-    const r = await fetch(
-      `${url}/rest/v1/inventory_items?location_id=eq.${locId}` +
-      `&code=eq.${encodeURIComponent(fila.row.code || '')}` +
-      `&item_name=eq.${encodeURIComponent(fila.row.item || '')}`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: key, Authorization: `Bearer ${key}`,
-          Prefer: 'return=minimal'
-        },
-        body: JSON.stringify({ marginedge_id: productId || null })
-      });
-
-    if (!r.ok) return false;
-
-    fila.row.marginedgeId = productId || null;
-    if (window.state && state.master && state.master[fila.idx]) {
-      state.master[fila.idx].marginedgeId = productId || null;
-    }
-    return true;
-  }
-
   // ── Pintar ─────────────────────────────────────────────────────────
 
   function cuentas() {
-    const c = { hecho: 0, auto: 0, revisar: 0, huerfano: 0 };
+    const c = { hecho: 0, revisar: 0, huerfano: 0 };
     for (const f of _filas || []) c[f.estado]++;
     return c;
   }
 
-  function pastilla(p, sel, s) {
+  function meta(p) {
+    return [p.type, p.price != null ? p.price + ' ' + (p.unit || '') : '']
+      .filter(Boolean).join(' · ');
+  }
+
+  // Candidato por confirmar
+  function pastilla(p, s) {
     const etiqueta = s != null && s >= MINIMO
       ? '<span class="mem-conf ' + (s >= SEGURO ? 'hi' : 'mid') + '">' +
         (s >= SEGURO ? 'near certain' : 'might be') + '</span>'
       : '';
-    const meta = [p.type, p.price != null ? p.price + ' ' + (p.unit || '') : '']
-      .filter(Boolean).join(' · ');
-
-    return '<div class="mem-cand' + (sel ? ' pick' : '') + '" data-pick="' + esc(p.id) + '">' +
-      '<i class="mem-ck">' + (sel ? '✓' : '') + '</i>' +
-      '<div class="mem-txt"><b>' + esc(p.name) + '</b><span>' + esc(meta) + '</span></div>' +
+    return '<div class="mem-cand" data-pick="' + esc(p.id) + '">' +
+      '<i class="mem-ck"></i>' +
+      '<div class="mem-txt"><b>' + esc(p.name) + '</b><span>' + esc(meta(p)) + '</span></div>' +
       etiqueta + '</div>';
+  }
+
+  // Vínculo ya hecho. Lleva su propio botón de quitar: sin él, un
+  // emparejado equivocado no había forma de deshacerlo.
+  function enlace(p, id) {
+    const nombre = p ? p.name : '(not in the saved catalog)';
+    const sub = p ? meta(p) : 'id ' + id;
+    return '<div class="mem-cand pick">' +
+      '<i class="mem-ck">✓</i>' +
+      '<div class="mem-txt"><b>' + esc(nombre) + '</b><span>' + esc(sub) + '</span></div>' +
+      '<button type="button" class="mem-x" data-drop="' + esc(id) + '" ' +
+      'title="Remove this match">Remove</button></div>';
   }
 
   function pintarFila(f) {
     const r = f.row;
-    const cands = f.candidatos
-      .map((p, i) => pastilla(p, String(f.elegido || '') === String(p.id), (f.puntos || [])[i]))
-      .join('');
+    const hecho = f.estado === 'hecho';
+
+    const cuerpo = hecho
+      ? f.enlaces.map((id, i) => enlace(f.productos[i], id)).join('')
+      : f.candidatos.map((p, i) => pastilla(p, (f.puntos || [])[i])).join('');
 
     const buscador = _buscando === f.idx
       ? '<div class="mem-find"><input type="text" class="ui-control" data-q="' + f.idx +
         '" placeholder="Type part of the name…" autocomplete="off"></div>' +
         '<div class="mem-hits" data-hits="' + f.idx + '"></div>'
       : '<div class="mem-cand none" data-find="' + f.idx + '">' +
-        (f.candidatos.length ? 'None of these · search MarginEdge' : 'Search MarginEdge') +
+        (hecho ? 'Add another MarginEdge product'
+               : (f.candidatos.length ? 'None of these · search MarginEdge'
+                                      : 'Search MarginEdge')) +
         '</div>';
 
     return '<div class="mem-row" data-idx="' + f.idx + '">' +
@@ -373,30 +435,12 @@
         esc([r.category || 'No category', r.vendor || 'No vendor',
              (Number(r.onHand) || 0) + ' on hand'].join(' · ')) +
       '</span></div>' +
-      '<div class="mem-cands">' + cands + buscador + '</div></div>';
+      '<div class="mem-cands">' + cuerpo + buscador + '</div></div>';
   }
 
   function tab(id, texto, n) {
     return '<button type="button" class="mem-chip' + (_tab === id ? ' on' : '') +
       '" data-tab="' + id + '">' + esc(texto) + ' · ' + n + '</button>';
-  }
-
-  // El filtro de categorías es la pieza que más silenciosamente puede
-  // fallar: si descarta de más, los productos desaparecen y la pantalla
-  // dice "no match" como si no existieran. Cuando hay señales de que no
-  // está reconociendo las categorías, se dice en voz alta.
-  function aviso() {
-    if (!_diag) return '';
-    const d = _diag;
-    if (!d.desconocidas && !d.sinCategoria) return '';
-    return '<div class="mem-warn">' +
-      '<b>Heads up — the category filter may be dropping products.</b> ' +
-      esc(String(d.desconocidas)) + ' products point at a category that is not in ' +
-      'the category list' +
-      (d.muestraIds.length ? ' (e.g. ' + esc(d.muestraIds.slice(0, 3).join(', ')) + ')' : '') +
-      (d.sinCategoria ? ', and ' + esc(String(d.sinCategoria)) + ' have no category at all' : '') +
-      '. Search still looks at the whole catalog, ' + esc(String((_otros || []).length)) +
-      ' more products included, so you can find them by hand.</div>';
   }
 
   function pintar() {
@@ -405,34 +449,32 @@
 
     const c = cuentas();
     const total = _filas.length || 1;
-    const hechos = c.hecho + c.auto;
 
     const cab = document.getElementById('memHead');
     if (cab) {
       cab.innerHTML =
         '<div class="mem-bar">' +
-          '<i style="width:' + (hechos / total * 100) + '%;background:#10b981"></i>' +
+          '<i style="width:' + (c.hecho / total * 100) + '%;background:#10b981"></i>' +
           '<i style="width:' + (c.revisar / total * 100) + '%;background:#f59e0b"></i>' +
           '<i style="width:' + (c.huerfano / total * 100) + '%;background:#94a3b8"></i>' +
         '</div>' +
         '<div class="mem-leg">' +
-          '<span><i class="mem-dot" style="background:#10b981"></i><b>' + hechos + '</b> matched</span>' +
+          '<span><i class="mem-dot" style="background:#10b981"></i><b>' + c.hecho + '</b> matched</span>' +
           '<span><i class="mem-dot" style="background:#f59e0b"></i><b>' + c.revisar + '</b> need your eye</span>' +
           '<span><i class="mem-dot" style="background:#94a3b8"></i><b>' + c.huerfano + '</b> no match found</span>' +
         '</div>' +
         '<div class="mem-chips">' +
           tab('revisar', 'Need your eye', c.revisar) +
-          tab('auto', 'Matched', hechos) +
+          tab('hecho', 'Matched', c.hecho) +
           tab('huerfano', 'No match', c.huerfano) +
-        '</div>' + aviso();
+        '</div>';
 
       cab.querySelectorAll('[data-tab]').forEach(b => {
         b.onclick = () => { _tab = b.dataset.tab; _buscando = null; pintar(); };
       });
     }
 
-    const visibles = _filas.filter(f =>
-      _tab === 'auto' ? (f.estado === 'auto' || f.estado === 'hecho') : f.estado === _tab);
+    const visibles = _filas.filter(f => f.estado === _tab);
 
     host.innerHTML = visibles.length
       ? visibles.map(pintarFila).join('')
@@ -457,11 +499,13 @@
     });
 
     host.querySelectorAll('[data-pick]').forEach(el => { el.onclick = () => elegir(el); });
+    host.querySelectorAll('[data-drop]').forEach(el => { el.onclick = () => quitar(el); });
   }
 
   // El buscador no puntúa: busca lo que escribes, literal. Es la salida
-  // de emergencia cuando el algoritmo no ha acertado, así que meterle
-  // el mismo criterio que ya falló no tendría sentido.
+  // cuando el algoritmo no acertó, así que aplicarle el mismo criterio
+  // que ya falló no tendría sentido. Y mira TODO el catálogo, no sólo
+  // las categorías de bebida.
   function buscar(host, idx, q) {
     const cont = host.querySelector('[data-hits="' + idx + '"]');
     if (!cont) return;
@@ -469,29 +513,30 @@
     const t = String(q || '').trim().toUpperCase();
     if (t.length < 2) { cont.innerHTML = ''; return; }
 
-    // Busca en TODO el catálogo, no sólo en lo que el filtro de
-    // categorías dejó pasar. Si el filtro se equivoca, esta es la única
-    // forma de encontrar un producto que sí existe.
     const hits = _prods.concat(_otros)
       .filter(p => p.name.toUpperCase().includes(t)).slice(0, MAX_HITS);
+
     cont.innerHTML = hits.length
-      ? hits.map(p => pastilla(p, false, null)).join('')
+      ? hits.map(p => pastilla(p, null)).join('')
       : '<div class="mem-empty" style="padding:10px 2px">Nothing matches that.</div>';
 
     cont.querySelectorAll('[data-pick]').forEach(el => { el.onclick = () => elegir(el); });
   }
 
+  function filaDe(el) {
+    const caja = el.closest('.mem-row');
+    if (!caja) return null;
+    return _filas.find(f => f.idx === Number(caja.dataset.idx)) || null;
+  }
+
   async function elegir(el) {
     if (_busy) return;
-    const caja = el.closest('.mem-row');
-    if (!caja) return;
-    const fila = _filas.find(f => f.idx === Number(caja.dataset.idx));
+    const fila = filaDe(el);
     if (!fila) return;
 
     _busy = true;
     el.classList.add('saving');
-    const id = el.dataset.pick || null;
-    const ok = await guardar(fila, id);
+    const ok = await vincular(fila, el.dataset.pick);
     _busy = false;
 
     if (!ok) {
@@ -500,16 +545,51 @@
       return;
     }
 
-    // Lo elegido a mano entra en la lista de candidatos para que la
-    // pastilla marcada se vea al repintar.
-    if (id && !fila.candidatos.some(p => String(p.id) === String(id))) {
-      const p = _prods.find(x => String(x.id) === String(id));
-      if (p) { fila.candidatos = [p]; fila.puntos = []; }
+    const p = _prods.concat(_otros).find(x => String(x.id) === String(el.dataset.pick));
+    if (p && !fila.productos.some(x => x && String(x.id) === String(p.id))) fila.productos.push(p);
+
+    fila.estado = 'hecho';
+    _buscando = null;
+    pintar();
+  }
+
+  async function quitar(el) {
+    if (_busy) return;
+    const fila = filaDe(el);
+    if (!fila) return;
+
+    _busy = true;
+    el.closest('.mem-cand').classList.add('saving');
+    const id = el.dataset.drop;
+    const ok = await desvincular(fila, id);
+    _busy = false;
+
+    if (!ok) {
+      el.closest('.mem-cand').classList.remove('saving');
+      if (window.setStatus) setStatus('Could not remove the match.');
+      return;
     }
 
-    fila.elegido = id;
-    fila.estado = id ? 'hecho' : 'huerfano';
-    _buscando = null;
+    fila.productos = fila.productos.filter(p => p && String(p.id) !== String(id));
+
+    // Sin vínculos vuelve a la cola: se recalculan sus candidatos para
+    // que puedas elegir otro sin buscarlo a mano.
+    if (!fila.enlaces.length) {
+      const fam = familiaDe(fila.row.category);
+      const puntuados = _prods
+        .map(p => {
+          let s = puntuar(fila.row.item, p.name);
+          if (fam && p.type) s *= (p.type === fam ? 1.06 : 0.80);
+          return { p, s: Math.min(1, s) };
+        })
+        .filter(x => x.s >= MINIMO)
+        .sort((a, b) => b.s - a.s)
+        .slice(0, MAX_CANDIDATOS);
+      fila.candidatos = puntuados.map(x => x.p);
+      fila.puntos = puntuados.map(x => x.s);
+      fila.estado = puntuados.length ? 'revisar' : 'huerfano';
+    }
+
     pintar();
   }
 
@@ -523,6 +603,7 @@
 
     try {
       const info = await traerCatalogo();
+      await leerVinculos(cfg().url, cfg().key, await locationId());
 
       // Sin copia del catálogo no hay nada que emparejar, y conviene
       // decirlo con el remedio al lado en vez de dejar la lista vacía.

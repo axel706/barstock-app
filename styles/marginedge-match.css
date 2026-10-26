@@ -105,3 +105,13 @@ body.light .mem-conf.mid { background: rgba(217,119,6,.16); color: #92400e; }
   color: #b45309; }
 .mem-warn b { display: block; margin-bottom: 3px; }
 body.light .mem-warn { color: #92400e; }
+
+/* Quitar un vínculo. Vive dentro de la pastilla del emparejado hecho:
+   un emparejado equivocado tiene que poder deshacerse ahí mismo, no en
+   otra pantalla. */
+.mem-x { flex: 0 0 auto; font-size: 10.5px; font-weight: 800; cursor: pointer;
+  border-radius: 999px; padding: 4px 10px; letter-spacing: .03em;
+  border: 1px solid rgba(185,28,28,.35); background: rgba(185,28,28,.1);
+  color: #b91c1c; }
+.mem-x:hover { background: rgba(185,28,28,.2); }
+body.light .mem-x { color: #991b1b; }
