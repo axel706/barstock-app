@@ -32,7 +32,7 @@
                          // mala es peor que ninguna, porque se confirma
                          // por inercia lo que ya viene marcado
   const MAX_CANDIDATOS = 3;
-  const MAX_VUELTAS = 30;
+  const MAX_VUELTAS = 60;
   const MAX_HITS = 8;
 
   // Palabras que no distinguen nada. Se quitan antes de comparar para

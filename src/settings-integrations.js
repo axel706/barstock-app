@@ -329,6 +329,50 @@
     el.innerHTML = '<div class="small muted">Asking MarginEdge…</div>';
     try { el.scrollIntoView({ block: 'nearest' }); } catch (e) {}
 
+    // ── La búsqueda no cabe en una llamada ─────────────────────────
+    //
+    // El catálogo pasa de 1254 productos y la función se corta a los
+    // pocos segundos. La primera versión hacía una sola llamada y
+    // devolvía "0 coincidencias" habiendo mirado sólo el principio:
+    // una respuesta en falso, que es peor que un error.
+    //
+    // Aquí se dan vueltas hasta llegar al final, enseñando el avance.
+    if (action === 'find') {
+      const campo = document.getElementById('meBuscar');
+      const q = (campo && campo.value || '').trim();
+      if (q.length < 2) { el.innerHTML = '<div class="small">Write at least two letters.</div>'; return; }
+
+      const u = unidad();
+      let cursor = null, todas = null, vistos = 0, vueltas = 0;
+      const hits = [];
+
+      do {
+        const r = await llamar('find', {
+          restaurantUnitId: u, q,
+          nextPage: cursor || undefined,
+          todas: todas || undefined
+        });
+
+        if (r.hits) hits.push(...r.hits);
+        vistos += r.vistos || 0;
+        if (r.todas) todas = r.todas;
+
+        if (!r.ok && !hits.length) { pintarResultado('find', r); return; }
+
+        cursor = r.nextPage || null;
+        vueltas++;
+        el.innerHTML = '<div class="small muted">Searching… ' + vistos +
+          ' products so far, ' + hits.length + ' found.</div>';
+      } while (cursor && vueltas < 40);
+
+      pintarResultado('find', {
+        ok: true, hits, vistos,
+        totalCategorias: todas ? Object.keys(todas).length : 0,
+        nextPage: cursor, intentos: []
+      });
+      return;
+    }
+
     let res;
     try {
       const params = {};
