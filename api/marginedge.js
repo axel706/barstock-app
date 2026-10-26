@@ -36,6 +36,48 @@ const PARAMS_OK = ['restaurantUnitId', 'startDate', 'endDate', 'nextPage', 'limi
 
 const LIMITE_MUESTRA = 3;      // objetos completos de ejemplo
 const LIMITE_CRUDO   = 20000;  // caracteres del cuerpo que devolvemos
+const MAX_PAGINAS    = 25;     // tope de seguridad al seguir nextPage
+const MAX_DISTINTOS  = 40;     // más allá de esto, el campo es texto libre
+
+// ── Por qué un resumen y no una muestra ──────────────────────────────
+//
+// Tres filas de ejemplo no dicen qué valores puede tomar un campo, y
+// justo eso es lo que hay que saber antes de construir nada:
+// `categoryType` decide qué categorías son de bebida, y `reportByUnit`
+// decide si `latestPrice` es el precio de la botella o el de la caja.
+// Equivocarse en el segundo mete un coste falso en el inventario, que
+// es el tipo de error que no se nota hasta que la cifra de pérdida deja
+// de cuadrar meses después.
+//
+// Así que para cada campo escalar con pocos valores distintos se
+// devuelve la lista con su frecuencia. Si tiene muchos, es texto libre
+// y sólo se dice cuántos hay.
+function resumir(lista) {
+  const conteo = {};
+
+  for (const fila of lista) {
+    if (!fila || typeof fila !== 'object') continue;
+    for (const [k, v] of Object.entries(fila)) {
+      if (v !== null && typeof v === 'object') continue;  // arrays y objetos, fuera
+      const clave = v === null ? '(null)' : String(v);
+      (conteo[k] = conteo[k] || {});
+      conteo[k][clave] = (conteo[k][clave] || 0) + 1;
+    }
+  }
+
+  const out = {};
+  for (const [campo, valores] of Object.entries(conteo)) {
+    const distintos = Object.keys(valores).length;
+    if (distintos > MAX_DISTINTOS) {
+      out[campo] = distintos + ' valores distintos (texto libre)';
+    } else {
+      out[campo] = Object.fromEntries(
+        Object.entries(valores).sort((a, b) => b[1] - a[1])
+      );
+    }
+  }
+  return out;
+}
 
 function construirUrl(ruta, params) {
   const u = new URL(BASE + ruta);
@@ -169,19 +211,38 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      const lista = sacarLista(r.cuerpo);
+      let lista = sacarLista(r.cuerpo);
+
+      // Seguir las páginas. La primera página de 100 no sirve para saber
+      // qué valores existen: los de bebida pueden estar en la cuarta.
+      let paginas = 1;
+      let cursor = r.cuerpo?.nextPage || null;
+      while (cursor && lista && paginas < MAX_PAGINAS) {
+        const sig = await pedir(
+          construirUrl(ruta, Object.assign({}, params || {}, { nextPage: cursor })),
+          apiKey);
+        if (!sig.ok) break;
+        const trozo = sacarLista(sig.cuerpo);
+        if (!trozo || !trozo.length) break;
+        lista = lista.concat(trozo);
+        cursor = sig.cuerpo?.nextPage || null;
+        paginas++;
+      }
+
       return res.status(200).json({
         ok: true,
         action,
         ruta,
         status: r.status,
         total: lista ? lista.length : null,
+        paginas,
+        incompleto: !!cursor,
         campos: lista && lista.length && typeof lista[0] === 'object'
           ? Object.keys(lista[0])
           : null,
+        resumen: lista ? resumir(lista) : null,
         muestra: lista ? lista.slice(0, LIMITE_MUESTRA) : null,
-        nextPage: r.cuerpo?.nextPage || null,
-        crudo: JSON.stringify(r.cuerpo).slice(0, LIMITE_CRUDO),
+        crudo: lista ? null : JSON.stringify(r.cuerpo).slice(0, LIMITE_CRUDO),
         intentos
       });
     }

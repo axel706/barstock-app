@@ -204,6 +204,15 @@
       (aviso ? '<div style="color:#fca5a5;margin-top:6px">' + esc(aviso) + '</div>' : '');
   }
 
+  function bloque(titulo, dato) {
+    if (dato == null) return '';
+    return '<div class="small" style="margin:12px 0 5px;font-weight:700">' + esc(titulo) + '</div>' +
+      '<pre style="max-height:300px;overflow:auto;font-size:11px;line-height:1.5;' +
+      'background:rgba(0,0,0,.25);padding:12px;border-radius:10px;white-space:pre-wrap;' +
+      'word-break:break-word">' +
+      esc(typeof dato === 'string' ? dato : JSON.stringify(dato, null, 2)) + '</pre>';
+  }
+
   function pintarResultado(action, res) {
     const el = document.getElementById('meSalida');
     if (!el) return;
@@ -233,17 +242,15 @@
       '</div>' +
       '<div class="small muted" style="margin-bottom:10px">' +
         'Ruta buena: <b>' + esc(res.ruta) + '</b>' +
-        (res.nextPage ? ' · hay más páginas' : '') +
+        (res.paginas > 1 ? ' · ' + res.paginas + ' páginas' : '') +
+        (res.incompleto ? ' · <b>cortado por el tope</b>' : '') +
         (intentos ? '<br>' + esc(intentos) : '') +
       '</div>' +
       (campos
         ? '<div class="small" style="margin-bottom:10px">Campos: <b>' + esc(campos) + '</b></div>'
         : '') +
-      '<pre style="max-height:320px;overflow:auto;font-size:11px;line-height:1.5;' +
-        'background:rgba(0,0,0,.25);padding:12px;border-radius:10px;white-space:pre-wrap;' +
-        'word-break:break-word">' +
-        esc(JSON.stringify(res.muestra != null ? res.muestra : res.crudo, null, 2)) +
-      '</pre>';
+      bloque('Valores por campo', res.resumen) +
+      bloque('Ejemplos', res.muestra != null ? res.muestra : res.crudo);
   }
 
   async function correr(action) {
