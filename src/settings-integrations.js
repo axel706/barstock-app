@@ -204,6 +204,38 @@
       (aviso ? '<div style="color:#fca5a5;margin-top:6px">' + esc(aviso) + '</div>' : '');
   }
 
+  // ── Fechas ───────────────────────────────────────────────────────
+  //
+  // `/orders` no admite que no se le diga un rango: contesta 400. Se
+  // arranca con los últimos 30 días, que es bastante para ver la forma
+  // de una factura sin pedirle a la API medio año de historia.
+
+  function iso(d) { return d.toISOString().slice(0, 10); }
+
+  function pintarFechas() {
+    const cont = document.getElementById('meFechas');
+    if (!cont || cont.dataset.listo === '1') return;
+
+    const hoy = new Date();
+    const hace30 = new Date(hoy.getTime() - 30 * 86400000);
+
+    cont.dataset.listo = '1';
+    cont.innerHTML =
+      '<div class="small muted" style="margin-bottom:6px">' +
+      'Rango para Facturas. Los demás botones lo ignoran.</div>' +
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+      '<input type="date" id="meDesde" value="' + iso(hace30) + '">' +
+      '<span class="small muted">a</span>' +
+      '<input type="date" id="meHasta" value="' + iso(hoy) + '">' +
+      '</div>';
+  }
+
+  function rango() {
+    const d = document.getElementById('meDesde');
+    const h = document.getElementById('meHasta');
+    return { startDate: d && d.value, endDate: h && h.value };
+  }
+
   function bloque(titulo, dato) {
     if (dato == null) return '';
     return '<div class="small" style="margin:12px 0 5px;font-weight:700">' + esc(titulo) + '</div>' +
@@ -262,6 +294,7 @@
       const params = {};
       const u = unidad();
       if (u && action !== 'units') params.restaurantUnitId = u;
+      if (action === 'invoices') Object.assign(params, rango());
       res = await llamar(action, params);
     } catch (e) {
       res = { ok: false, error: String(e && e.message || e) };
@@ -287,6 +320,7 @@
       b.onclick = () => correr(b.dataset.me);
     });
 
+    pintarFechas();
     pintarEstado();
     cargarUnidad().then(() => pintarEstado());
   }
