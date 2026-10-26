@@ -54,18 +54,77 @@ artículo. Se empareja una vez, a mano, y nunca más. Ese es el premio real.
 
 # MarginEdge
 
-## Lo que se sabe de la API
-
-Pendiente de verificar contra el portal de desarrollador (lo de abajo viene de
-perfiles de terceros, no de la documentación oficial):
+## La API, verificada contra la real (26 oct 2026)
 
 - Base: `https://api.marginedge.com/public`
 - Auth: cabecera `x-api-key`
-- **Sólo lectura (GET).** Imposible dañar datos en MarginEdge desde aquí.
-- Paginación por cursor opaco: parámetro y campo `nextPage`
-- APIs publicadas: Orders (facturas y pedidos), Products, Categories, Vendors,
-  Restaurant Units
-- Rate limits no publicados; los aplica AWS API Gateway por clave
+- Sólo lectura (GET). Imposible dañar datos en MarginEdge desde aquí.
+- Paginación por cursor `nextPage`, 100 registros por página.
+- **Una ruta que no existe contesta `403 Missing Authentication Token`, no
+  404.** Es AWS API Gateway no confirmando qué rutas tiene. El mensaje suena
+  a problema de credenciales y no lo es.
+
+### Rutas que existen
+
+| Ruta | Devuelve |
+|---|---|
+| `/restaurantUnits` | `id`, `name` |
+| `/categories` | `categoryId`, `categoryName`, `categoryType`, `accountingCode` |
+| `/products` | `companyConceptProductId`, `centralProductId`, `productName`, `categories[{categoryId, percentAllocation}]`, `itemCount`, `taxExempt`, `reportByUnit`, `latestPrice` |
+| `/vendors` | `vendorId`, `centralVendorId`, `vendorName`, `vendorAccounts[{vendorAccountNumber}]` |
+| `/orders?startDate&endDate` | Cabeceras: `orderId`, `createdDate`, `vendorId`, `vendorName`, `customerNumber`, `invoiceNumber`, `invoiceDate`, `paymentAccount`, `status`, `orderTotal` |
+| `/orders/{orderId}` | Líneas: `vendorItemCode`, `vendorItemName`, `companyConceptProductId`, `categoryId`, `packagingId`, `unitPrice`, `quantity`, `linePrice` |
+
+`/orders` exige `startDate` y `endDate`; sin ellos, 400.
+
+### Rutas que NO existen
+
+`/packaging`, `/packagings`, `/vendorItems`, `/vendors/items`, `/units`.
+
+### El filtro de bebida
+
+`categoryType` en The Crown Tavern reparte así las 94 categorías:
+
+    OTHER 59 · LABOR 14 · FOOD 8 · BEER 7 · LIQUOR 4 · NA_BEVERAGES 1 · WINE 1
+
+**13 categorías de bebida.** Un producto entra si alguna de sus
+`categories[].categoryId` es de tipo BEER, LIQUOR, WINE o NA_BEVERAGES. Así el
+catálogo del restaurante entero (incluye comida, químicos y desechables —
+el primer producto que salió fue film de cocina) se reduce a la barra.
+
+### El ancla
+
+`companyConceptProductId` aparece **en el catálogo y en las líneas de
+factura**. Un solo emparejado sirve para las dos cosas.
+
+### Lo que no resuelve la API: el empaque
+
+Una línea dice `quantity: 6` y `packagingId: 12345`, y no hay forma de
+preguntar qué es ese empaque. Seis botellas y seis cajas de doce son el mismo
+número en pantalla y un error de 1200 % en el inventario. El total en dinero
+cuadra con la factura igual, así que el fallo no se delata solo.
+
+Se resuelve preguntando una vez por empaque y recordando la respuesta, con una
+propuesta calculada de `unitPrice ÷ latestPrice`. Ver paso 2.
+
+### Decisiones tomadas con los datos reales delante
+
+- **Sólo facturas cerradas.** De 308 en 30 días: 266 `CLOSED`, 29
+  `PENDING_APPROVAL`, el resto en revisión. Una pendiente todavía puede
+  cambiar de cantidad o precio, y un precio provisional metido en el coste de
+  mercancía no lo vuelve a mirar nadie.
+- **Fecha: `invoiceDate`, y `createdDate` cuando venga nula** (12 de 308 lo
+  están). Hay una factura fechada en abril: sin esta regla aterrizaría en un
+  ciclo cerrado hace medio año.
+- **Filtrar por producto, no por proveedor.** Los 53 proveedores incluyen
+  mayoristas que traen comida y bebida en la misma factura.
+
+### Un cabo suelto
+
+`/vendors` cortó el recorrido a las 4 páginas con el cursor aún activo. Con 53
+proveedores no debería paginar tanto. Cuando la sincronización sea automática,
+un recorrido que para a la mitad son facturas que no entran, y en silencio:
+hay que registrar y avisar cuando una pasada quede incompleta.
 
 ## Variables de entorno en Vercel
 
