@@ -220,13 +220,27 @@ module.exports = async function handler(req, res) {
         continue;
       }
 
-      intentos.push({ ruta, status: r.status });
+      intentos.push({
+        ruta,
+        status: r.status,
+        mensaje: r.cuerpo?.message || r.cuerpo?.Message || undefined
+      });
 
-      // 404 significa "esta ruta no existe", así que seguimos probando.
-      // Cualquier otra cosa —200, 401, 403, 500— es una respuesta de
-      // verdad y hay que enseñarla, no esconderla tras el siguiente
-      // intento.
-      if (r.status === 404) continue;
+      // Qué significa "esta ruta no existe" aquí.
+      //
+      // Lo esperable sería un 404. Pero detrás hay un AWS API Gateway, y
+      // a una ruta que no tiene configurada contesta **403 con "Missing
+      // Authentication Token"**. El mensaje suena a problema de
+      // credenciales y no lo es: es su manera de no confirmar qué rutas
+      // existen. Tratarlo como un error real hacía que el sondeo parara
+      // en la primera candidata y no probara el resto.
+      //
+      // Un 403 con cualquier OTRO mensaje sí es un permiso de verdad y
+      // hay que enseñarlo.
+      const noExiste = r.status === 404 ||
+        (r.status === 403 && /missing authentication token/i.test(
+          r.cuerpo?.message || r.cuerpo?.Message || r.texto || ''));
+      if (noExiste) continue;
 
       if (!r.ok) {
         return res.status(200).json({

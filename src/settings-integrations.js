@@ -254,7 +254,8 @@
     if (!el) return;
 
     const intentos = (res.intentos || [])
-      .map(i => i.ruta + ' → ' + (i.status != null ? i.status : i.error))
+      .map(i => i.ruta + ' → ' + (i.status != null ? i.status : i.error) +
+                (i.mensaje ? ' (' + i.mensaje + ')' : ''))
       .join('  ·  ');
 
     if (!res.ok) {
