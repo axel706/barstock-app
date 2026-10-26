@@ -37,7 +37,8 @@
     { id: 'products',   nombre: 'Productos',    nota: 'El catálogo' },
     { id: 'categories', nombre: 'Categorías',   nota: 'Cómo los agrupa' },
     { id: 'invoices',   nombre: 'Facturas',     nota: 'Cabeceras del rango' },
-    { id: 'invoice',    nombre: 'Una factura',  nota: 'Por dentro, con sus líneas' }
+    { id: 'invoice',    nombre: 'Una factura',  nota: 'Por dentro, con sus líneas' },
+    { id: 'packaging',  nombre: 'Empaques',     nota: 'Qué es una unidad' }
   ];
 
   function esc(s) {

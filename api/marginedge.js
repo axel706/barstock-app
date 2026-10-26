@@ -32,7 +32,17 @@ const RUTAS = {
   // líneas —qué producto y cuántos— tienen que estar en otro sitio, y
   // son las que de verdad alimentan el cálculo de consumo. El `{id}` se
   // sustituye por el orderId.
-  invoice:    ['/orders/{id}', '/orders/{id}/items', '/orders/{id}/lineItems', '/orders/{id}/products']
+  invoice:    ['/orders/{id}', '/orders/{id}/items', '/orders/{id}/lineItems', '/orders/{id}/products'],
+
+  // ── La pregunta de las unidades ────────────────────────────────────
+  //
+  // Una línea de factura dice `quantity: 6` y `packagingId: 12345`. Seis
+  // ¿botellas, cajas de doce, barriles? Sin esa tabla, "recibido" entra
+  // con el número equivocado y el consumo calculado queda mal sin que
+  // nada avise: el total en dinero sí cuadra con la factura, así que el
+  // error pasa desapercibido hasta que la varianza deja de tener
+  // sentido meses después.
+  packaging:  ['/packaging', '/packagings', '/vendorItems', '/vendors/items', '/units']
 };
 
 // Sólo estos parámetros pasan del navegador a MarginEdge. Una lista
