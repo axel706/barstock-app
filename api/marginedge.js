@@ -587,6 +587,143 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    // ── Copiar las facturas, en dos fases ──────────────────────────
+    //
+    // `/orders` da cabeceras y cada `/orders/{id}` sus líneas: una
+    // llamada por factura, con ~300 facturas al mes y un límite de dos
+    // peticiones por segundo. No cabe en una llamada ni de lejos.
+    //
+    // Fase 1 · el navegador pide las cabeceras del rango.
+    // Fase 2 · le manda al servidor tandas de ids y éste guarda las
+    //          líneas. El navegador ya ha descartado las que tiene.
+    //
+    // Ser capaz de saltarse lo ya guardado es lo que hace que esto
+    // sirva también de sincronización nocturna: la segunda pasada sólo
+    // trae lo nuevo.
+    if (action === 'sync-invoices') {
+      const u = (params || {}).restaurantUnitId;
+      const locationId = (params || {}).locationId;
+      if (!u) return res.status(400).json({ ok: false, error: 'Falta restaurantUnitId.' });
+      if (!locationId) return res.status(400).json({ ok: false, error: 'Falta locationId.' });
+
+      const limite = Date.now() + PRESUPUESTO_MS;
+      const ids = (params || {}).orderIds;
+
+      // ── Fase 1 · cabeceras ──────────────────────────────────────
+      if (!Array.isArray(ids)) {
+        const base = {
+          restaurantUnitId: u,
+          startDate: (params || {}).startDate,
+          endDate: (params || {}).endDate
+        };
+        let cursor = (params || {}).nextPage || null;
+        const pedidos = [];
+        let paginas = 0, descartadas = 0;
+
+        do {
+          const p = cursor ? Object.assign({}, base, { nextPage: cursor }) : base;
+          const r = await pedir(construirUrl('/orders', p), apiKey);
+          if (!r.ok) {
+            return res.status(200).json({
+              ok: pedidos.length > 0, action, fase: 'headers', pedidos, nextPage: cursor,
+              error: '/orders → ' + r.status + ' ' + (r.cuerpo?.message || r.texto || '')
+            });
+          }
+
+          const trozo = sacarLista(r.cuerpo);
+          if (!trozo || !trozo.length) { cursor = null; break; }
+          paginas++;
+
+          for (const o of trozo) {
+            // Sólo las cerradas. Una pendiente de aprobar todavía puede
+            // cambiar de cantidad o de precio, y un importe provisional
+            // metido en el coste de mercancía no lo revisa nadie.
+            if (o.status !== 'CLOSED' && o.status !== 'COMPLETED') { descartadas++; continue; }
+            pedidos.push({
+              id: String(o.orderId),
+              vendor: o.vendorName || '',
+              invoiceNumber: o.invoiceNumber || '',
+              status: o.status || '',
+              // `invoiceDate` viene nula en algunas; sin este respaldo,
+              // esas facturas no tendrían fecha con la que asignarlas a
+              // un ciclo. Hay una fechada medio año atrás, así que la
+              // fecha importa.
+              date: o.invoiceDate || o.createdDate || null,
+              createdDate: o.createdDate || null
+            });
+          }
+
+          cursor = r.cuerpo?.nextPage || null;
+          if (cursor && Date.now() < limite) await dormir(PAUSA_PAGINA_MS);
+        } while (cursor && Date.now() < limite && paginas < MAX_PAGINAS);
+
+        return res.status(200).json({
+          ok: true, action, fase: 'headers', pedidos, descartadas, nextPage: cursor
+        });
+      }
+
+      // ── Fase 2 · líneas ─────────────────────────────────────────
+      const meta = (params || {}).meta || {};
+      let hechos = 0, lineas = 0;
+      const fallidos = [];
+
+      for (const id of ids) {
+        if (Date.now() >= limite) break;
+        hechos++;
+        if (!/^\d+$/.test(String(id))) continue;
+
+        const r = await pedir(construirUrl('/orders/' + id, {}), apiKey);
+        if (!r.ok) { fallidos.push({ id, status: r.status }); continue; }
+
+        const trozo = sacarLista(r.cuerpo) || [];
+        const m = meta[id] || {};
+        const filas = trozo.map((l, i) => ({
+          location_id: locationId,
+          order_id: String(id),
+          line_no: i,
+          invoice_date: m.date || null,
+          created_date: m.createdDate || null,
+          vendor_name: m.vendor || null,
+          invoice_number: m.invoiceNumber || null,
+          status: m.status || null,
+          product_id: l.companyConceptProductId != null ? String(l.companyConceptProductId) : null,
+          vendor_item_name: l.vendorItemName || null,
+          vendor_item_code: l.vendorItemCode || null,
+          packaging_id: l.packagingId != null ? String(l.packagingId) : null,
+          unit_price: l.unitPrice != null ? l.unitPrice : null,
+          quantity: l.quantity != null ? l.quantity : null,
+          line_price: l.linePrice != null ? l.linePrice : null
+        }));
+
+        if (filas.length) {
+          const { error } = await supabase
+            .from('marginedge_invoice_lines')
+            .upsert(filas, { onConflict: 'location_id,order_id,line_no' });
+          if (error) {
+            return res.status(200).json({
+              ok: false, action, fase: 'lines', hechos, lineas,
+              pendientes: ids.slice(hechos),
+              error: 'Supabase: ' + error.message
+            });
+          }
+          lineas += filas.length;
+        }
+
+        if (Date.now() < limite) await dormir(PAUSA_PAGINA_MS);
+      }
+
+      const pendientes = ids.slice(hechos);
+      if (!pendientes.length) {
+        await supabase.from('location_settings')
+          .update({ marginedge_invoices_synced_at: new Date().toISOString() })
+          .eq('location_id', locationId);
+      }
+
+      return res.status(200).json({
+        ok: true, action, fase: 'lines', hechos, lineas, fallidos, pendientes
+      });
+    }
+
     // ── Buscar un producto concreto, sin filtros de por medio ──────
     //
     // Villa Brici se pide cada semana, está en MarginEdge, y no

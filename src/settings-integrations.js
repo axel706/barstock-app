@@ -483,6 +483,7 @@
     cont.innerHTML =
       '<div style="display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap">' +
         '<button type="button" id="meSync" class="ui-control">Sync catalog</button>' +
+        '<button type="button" id="meSyncInv" class="ui-control">Sync invoices</button>' +
         '<button type="button" id="meIrMatch" class="success ui-control">Match products →</button>' +
         '<span id="meSyncNota" class="small muted"></span>' +
       '</div>';
@@ -492,6 +493,9 @@
 
     const s = document.getElementById('meSync');
     if (s) s.onclick = () => sincronizar().catch(mostrarFallo);
+
+    const si = document.getElementById('meSyncInv');
+    if (si) si.onclick = () => sincronizarFacturas().catch(mostrarFallo);
 
     notaSync();
   }
@@ -513,6 +517,104 @@
       el.textContent = t ? 'Last full sync ' + new Date(t).toLocaleString()
                          : 'Never finished a full sync';
     } catch (e) {}
+  }
+
+  // ── Copiar las facturas ──────────────────────────────────────────
+  //
+  // Dos fases: primero las cabeceras del rango, luego las líneas de
+  // cada una. Antes de pedir líneas se mira qué facturas ya están
+  // guardadas y se saltan — eso es lo que hace que la segunda pasada
+  // traiga sólo lo nuevo, y lo que permitirá el sync nocturno.
+  const TANDA = 12;
+
+  async function idsGuardados(url, key, locId) {
+    const vistos = new Set();
+    for (let desde = 0; desde < 60000; desde += 1000) {
+      const r = await fetch(
+        `${url}/rest/v1/marginedge_invoice_lines?location_id=eq.${locId}` +
+        `&select=order_id&order=order_id.asc&limit=1000&offset=${desde}`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+      if (!r.ok) break;
+      const filas = await r.json();
+      if (!Array.isArray(filas) || !filas.length) break;
+      for (const f of filas) vistos.add(String(f.order_id));
+      if (filas.length < 1000) break;
+    }
+    return vistos;
+  }
+
+  async function sincronizarFacturas() {
+    const el = document.getElementById('meSalida');
+    const u = unidad();
+    const id = await locationId();
+    const { url, key } = cfg();
+    if (!u) { if (el) el.innerHTML = '<div class="small">Pick a restaurant first.</div>'; return; }
+    if (!id) { if (el) el.innerHTML = '<div class="small">No location.</div>'; return; }
+
+    const { startDate, endDate } = rango();
+    const paso = t => { if (el) el.innerHTML = '<div class="small muted">' + t + '</div>'; };
+
+    paso('Reading invoice headers…');
+
+    let cursor = null, vueltas = 0;
+    let pedidos = [];
+    do {
+      const r = await llamar('sync-invoices', {
+        restaurantUnitId: u, locationId: id, startDate, endDate,
+        nextPage: cursor || undefined
+      });
+      if (r.pedidos) pedidos = pedidos.concat(r.pedidos);
+      if (r.error) {
+        if (el) el.innerHTML = '<div class="small" style="color:#b45309">' +
+          'Stopped reading headers after ' + pedidos.length + ': ' + esc(r.error) + '</div>';
+        return;
+      }
+      cursor = r.nextPage || null;
+      vueltas++;
+      paso('Reading invoice headers… <b>' + pedidos.length + '</b> closed invoices so far.');
+    } while (cursor && vueltas < 40);
+
+    const ya = await idsGuardados(url, key, id);
+    const faltan = pedidos.filter(p => !ya.has(String(p.id)));
+
+    if (!faltan.length) {
+      if (el) el.innerHTML = '<div class="small" style="color:#15803d;font-weight:700">' +
+        'Up to date · ' + pedidos.length + ' invoices in range, nothing new.</div>';
+      notaSync();
+      return;
+    }
+
+    const meta = {};
+    for (const p of faltan) meta[p.id] = p;
+
+    let hechas = 0, lineas = 0;
+    for (let i = 0; i < faltan.length; i += TANDA) {
+      const tanda = faltan.slice(i, i + TANDA).map(p => p.id);
+      const r = await llamar('sync-invoices', {
+        restaurantUnitId: u, locationId: id, orderIds: tanda, meta
+      });
+
+      hechas += (r.hechos || 0);
+      lineas += (r.lineas || 0);
+
+      if (r.error) {
+        if (el) el.innerHTML = '<div class="small" style="color:#b45309">' +
+          'Paused after ' + hechas + ' of ' + faltan.length + ' invoices: ' + esc(r.error) +
+          '<br>Press <b>Sync invoices</b> again — the ones already saved are skipped.</div>';
+        return;
+      }
+
+      // Una tanda puede quedarse a medias por el presupuesto de tiempo
+      // del servidor; lo que falte vuelve en la siguiente vuelta.
+      if (r.pendientes && r.pendientes.length) i -= (TANDA - (r.hechos || 0));
+
+      paso('Saving invoice lines… <b>' + hechas + '</b> of ' + faltan.length +
+           ' invoices, ' + lineas + ' lines.');
+    }
+
+    if (el) el.innerHTML = '<div class="small" style="color:#15803d;font-weight:700">' +
+      'Invoices saved · ' + hechas + ' new invoices, ' + lineas + ' lines.</div>';
+    notaSync();
   }
 
   // ── Copiar el catálogo ───────────────────────────────────────────
