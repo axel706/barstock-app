@@ -281,11 +281,23 @@
   // Al revés no: un producto de MarginEdge pertenece a un solo artículo
   // tuyo. Por eso la clave de la tabla es el producto.
 
-  // La clave del artículo. Se normaliza igual en los dos lados —aquí y
-  // al leer la tabla— porque si no coinciden, la app cree que cada
-  // producto pertenece a otro artículo y empieza a "robárselo" a nadie.
-  function norm(x) { return String(x == null ? '' : x).trim(); }
-  function clave(r) { return norm(r.code) + '||' + norm(r.item); }
+  // ── La clave del artículo es el NOMBRE, y sólo el nombre ─────────
+  //
+  // Primero usé `code + item_name`. El `code` es un código de proveedor:
+  // puede venir vacío, cambiar, o no ser el mismo en la tabla que en el
+  // inventario en memoria. Cuando no coincidía, el vínculo existía en la
+  // base pero la pantalla no lo encontraba, así que pedía emparejar lo
+  // ya emparejado — y al asignarlo otra vez, el aviso decía que el
+  // artículo se lo estaba robando a sí mismo.
+  //
+  // El nombre es lo que la app usa como identidad en todas partes
+  // (`deleteInventoryItem` borra por nombre, sin más). Un identificador
+  // de verdad sería mejor, pero no lo hay, y dos no funcionan mejor que
+  // uno cuando el segundo es inestable.
+  function norm(x) {
+    return String(x == null ? '' : x).trim().toUpperCase().replace(/\s+/g, ' ');
+  }
+  function clave(r) { return norm(r.item); }
 
   async function leerVinculos(url, key, locId) {
     let todas = [];
@@ -305,7 +317,7 @@
     _vinculos = new Map();
     _dueno = new Map();
     for (const v of todas) {
-      const k = norm(v.code) + '||' + norm(v.item_name);
+      const k = norm(v.item_name);
       if (!_vinculos.has(k)) _vinculos.set(k, []);
       _vinculos.get(k).push(String(v.product_id));
       // Quién tiene ya ese producto. La clave de la tabla es el
@@ -726,5 +738,5 @@
     }
   }
 
-  window.BarStockMarginEdgeMatch = { abrir, leerTodas, _puntuar: puntuar, _tamanoDe: tamanoDe };
+  window.BarStockMarginEdgeMatch = { abrir, leerTodas, _clave: clave, _puntuar: puntuar, _tamanoDe: tamanoDe };
 })();

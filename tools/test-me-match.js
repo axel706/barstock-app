@@ -74,6 +74,32 @@ prueba('registra el gancho de meMatch',
   typeof (dom.window.__settingsHooks || {}).meMatch === 'function');
 prueba('marginedge-match se define', !!M && typeof M.abrir === 'function');
 
+// ── La clave del artículo ────────────────────────────────────────────
+//
+// El fallo que más caro salió: la clave se construía con `code +
+// item_name`, el código de proveedor no coincidía entre la tabla y el
+// inventario en memoria, y el vínculo guardado no se volvía a
+// encontrar. La pantalla pedía emparejar lo ya emparejado y, al
+// hacerlo, avisaba de que el artículo se lo robaba a sí mismo.
+//
+// Lo que hay que garantizar es que escribir y leer dan la misma clave.
+grupo('la clave del artículo sobrevive a la ida y vuelta');
+
+const K = M._clave;
+
+prueba('el mismo nombre da la misma clave',
+  K({ item: "Bailey's Irish Cream" }) === K({ item: "Bailey's Irish Cream" }));
+prueba('el código de proveedor no influye',
+  K({ item: 'TITOS 1.75', code: 'ABC' }) === K({ item: 'TITOS 1.75', code: '' }));
+prueba('ni que falte el código',
+  K({ item: 'TITOS 1.75' }) === K({ item: 'TITOS 1.75', code: null }));
+prueba('los espacios de más no cuentan',
+  K({ item: '  Grey  Goose 750 ' }) === K({ item: 'Grey Goose 750' }));
+prueba('mayúsculas y minúsculas son lo mismo',
+  K({ item: 'grey goose' }) === K({ item: 'GREY GOOSE' }));
+prueba('dos artículos distintos no colisionan',
+  K({ item: 'TITOS 750' }) !== K({ item: 'TITOS 1.75' }));
+
 console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
   '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
