@@ -196,11 +196,12 @@
   // página y el aviso se pierde: no fallaría, sencillamente no llegaría.
   function notifyLogin(email, loc){
     try {
-      fetch('https://barstock-app.vercel.app/api/notify-login', {
+      fetch('https://barstock-app.vercel.app/api/notify?type=login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         keepalive: true,
         body: JSON.stringify({
+          type: 'login',
           email,
           location: loc?.name || 'Unknown',
           locationId: loc?.locationId || null,
@@ -350,10 +351,11 @@
 
       const userId = data?.user?.id;
       if (userId) {
-        fetch('/api/notify-signup', {
+        fetch('/api/notify?type=signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            type: 'signup',
             email, userId, firstName, lastName, businessName, address, phone, message
           })
         }).catch(() => {});
