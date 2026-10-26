@@ -489,8 +489,28 @@ module.exports = async function handler(req, res) {
       }
 
       const limite = Date.now() + PRESUPUESTO_MS;
-      let cursor = (params || {}).nextPage || null;
       let guardados = 0, paginas = 0;
+
+      // ── El cursor vive en la base, no en el navegador ───────────
+      //
+      // Cuando lo llevaba el navegador, un 429 a media copia hacía que
+      // el siguiente intento empezara por la primera página: re-leía lo
+      // mismo, volvía a chocar con el límite, y el catálogo nunca
+      // pasaba de los primeros mil y pico productos. Eso explicaba que
+      // ni Tito's ni ningún Pinot Grigio aparecieran: están más allá,
+      // y nunca llegamos.
+      //
+      // Guardado aquí, cada intento continúa. Avanza aunque haga falta
+      // pulsar cinco veces.
+      let cursor = (params || {}).nextPage || null;
+      if (!cursor && !(params || {}).reiniciar) {
+        const { data } = await supabase
+          .from('location_settings')
+          .select('marginedge_sync_cursor')
+          .eq('location_id', locationId)
+          .maybeSingle();
+        cursor = data?.marginedge_sync_cursor || null;
+      }
 
       do {
         const p = { restaurantUnitId: u };
@@ -498,8 +518,13 @@ module.exports = async function handler(req, res) {
 
         const r = await pedir(construirUrl('/products', p), apiKey);
         if (!r.ok) {
+          // Se apunta dónde íbamos ANTES de rendirse. Sin esto, el
+          // siguiente intento vuelve al principio y no avanza nunca.
+          await supabase.from('location_settings')
+            .update({ marginedge_sync_cursor: cursor })
+            .eq('location_id', locationId);
           return res.status(200).json({
-            ok: guardados > 0, action, tipos, guardados, nextPage: cursor,
+            ok: guardados > 0, action, tipos, guardados, nextPage: cursor, reanudable: true,
             error: '/products → ' + r.status + ' ' + (r.cuerpo?.message || r.texto || '')
           });
         }
@@ -548,14 +573,17 @@ module.exports = async function handler(req, res) {
         if (cursor && Date.now() < limite) await dormir(PAUSA_PAGINA_MS);
       } while (cursor && Date.now() < limite && paginas < MAX_PAGINAS);
 
-      if (!cursor) {
-        await supabase.from('location_settings')
-          .update({ marginedge_synced_at: new Date().toISOString() })
-          .eq('location_id', locationId);
-      }
+      // Al terminar se borra el cursor; si no, se apunta dónde vamos.
+      // Las dos ramas importan: sin la segunda, una pausa por tiempo
+      // agotado también haría empezar de cero al siguiente intento.
+      await supabase.from('location_settings')
+        .update(cursor
+          ? { marginedge_sync_cursor: cursor }
+          : { marginedge_sync_cursor: null, marginedge_synced_at: new Date().toISOString() })
+        .eq('location_id', locationId);
 
       return res.status(200).json({
-        ok: true, action, tipos, guardados, paginas, nextPage: cursor
+        ok: true, action, tipos, guardados, paginas, nextPage: cursor, reanudable: !!cursor
       });
     }
 

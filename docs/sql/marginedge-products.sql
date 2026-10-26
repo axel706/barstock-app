@@ -34,3 +34,12 @@ create policy marginedge_products_all on marginedge_products
 -- Cuándo se sincronizó por última vez, por locación.
 alter table location_settings
   add column if not exists marginedge_synced_at timestamptz;
+
+-- Dónde se quedó la última copia.
+--
+-- El cursor vivía en el navegador: si el sync se cortaba por un 429,
+-- volver a pulsar empezaba desde la primera página, re-leía lo mismo,
+-- volvía a chocar con el límite y nunca pasaba del principio del
+-- catálogo. Guardarlo aquí es lo que garantiza que cada intento avance.
+alter table location_settings
+  add column if not exists marginedge_sync_cursor text;

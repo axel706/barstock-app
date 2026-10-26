@@ -511,7 +511,8 @@
         { headers: { apikey: key, Authorization: `Bearer ${key}` } });
       const f = await r.json();
       const t = f?.[0]?.marginedge_synced_at;
-      el.textContent = t ? 'Last synced ' + new Date(t).toLocaleString() : 'Never synced';
+      el.textContent = t ? 'Last full sync ' + new Date(t).toLocaleString()
+                         : 'Never finished a full sync';
     } catch (e) {}
   }
 
@@ -540,10 +541,13 @@
       total += r.guardados || 0;
       if (r.tipos) tipos = r.tipos;
 
+      // Un corte no es el final: el servidor dejó apuntado dónde iba,
+      // así que volver a pulsar continúa en vez de empezar de cero.
       if (r.error) {
         if (el) el.innerHTML = '<div class="small" style="color:#b45309">' +
-          'Stopped after ' + total + ' products: ' + esc(r.error) +
-          '<br>Press Sync catalog again to carry on.</div>';
+          'Paused after <b>' + total + '</b> products this run: ' + esc(r.error) +
+          '<br>Press <b>Sync catalog</b> again — it picks up where it stopped.</div>';
+        notaSync();
         return;
       }
 
