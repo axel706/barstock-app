@@ -55,6 +55,25 @@ prueba('idéntico da de lleno',
   pts('Grey Goose 750ml', 'Grey Goose 750ml') > 0.9);
 prueba('vacío no revienta', pts('', 'Algo') === 0);
 
+// ── Que los módulos carguen ──────────────────────────────────────────
+//
+// Un error al cargar un IIFE no se nota donde se escribió. Un día el
+// gancho de meMatch se puso antes de crear `window.__settingsHooks`:
+// reventó el módulo entero y el síntoma fue que NINGÚN botón del panel
+// de integraciones respondía. Media hora buscando en el sitio
+// equivocado.
+grupo('los módulos cargan y se registran');
+
+new Function(fs.readFileSync(
+  path.join(__dirname, '..', 'src', 'settings-integrations.js'), 'utf8'))();
+
+prueba('settings-integrations se define', !!dom.window.BarStockIntegrations);
+prueba('registra el gancho de integrations',
+  typeof (dom.window.__settingsHooks || {}).integrations === 'function');
+prueba('registra el gancho de meMatch',
+  typeof (dom.window.__settingsHooks || {}).meMatch === 'function');
+prueba('marginedge-match se define', !!M && typeof M.abrir === 'function');
+
 console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
   '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);

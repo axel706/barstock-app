@@ -371,14 +371,19 @@
     if (b) b.onclick = () => window.showSettingsPanel('meMatch');
   }
 
-  window.__settingsHooks.meMatch = () => {
-    if (window.BarStockMarginEdgeMatch) window.BarStockMarginEdgeMatch.abrir(unidad());
-  };
-
   window.BarStockIntegrations = { render, correr, unidad };
 
   // El index es el único dueño de showSettingsPanel; los módulos se
   // apuntan aquí en vez de envolverla.
+  //
+  // Este objeto se crea ANTES de usarlo. Parece obvio y no lo fue: el
+  // gancho de meMatch se escribió unas líneas más arriba, reventó el
+  // IIFE entero al cargar, y el síntoma no fue "no abre el emparejado"
+  // sino que ningún botón del panel respondía, porque el módulo nunca
+  // llegaba a definirse.
   window.__settingsHooks = window.__settingsHooks || {};
   window.__settingsHooks.integrations = render;
+  window.__settingsHooks.meMatch = () => {
+    if (window.BarStockMarginEdgeMatch) window.BarStockMarginEdgeMatch.abrir(unidad());
+  };
 })();
