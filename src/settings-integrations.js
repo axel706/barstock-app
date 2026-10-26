@@ -243,6 +243,18 @@
     return { startDate: d && d.value, endDate: h && h.value };
   }
 
+  function mostrarFallo(e) {
+    console.error('[marginedge]', e);
+    const el = document.getElementById('meSalida');
+    const txt = (e && (e.stack || e.message)) || String(e);
+    if (el) {
+      el.innerHTML = '<div style="color:#b91c1c;font-weight:700;margin-bottom:6px">' +
+        'Something broke in the browser</div><pre style="font-size:11px;' +
+        'white-space:pre-wrap;background:rgba(0,0,0,.08);padding:11px;' +
+        'border-radius:9px">' + esc(txt) + '</pre>';
+    }
+  }
+
   function bloque(titulo, dato) {
     if (dato == null) return '';
     return '<div class="small" style="margin:12px 0 5px;font-weight:700">' + esc(titulo) + '</div>' +
@@ -304,7 +316,18 @@
 
   async function correr(action) {
     const el = document.getElementById('meSalida');
-    if (el) el.innerHTML = '<div class="small muted">Preguntando a MarginEdge…</div>';
+
+    // Si el div de salida no existe, el panel no está montado y
+    // cualquier cosa que haga aquí se pierde sin ruido. Es exactamente
+    // el fallo que parece "el botón no hace nada".
+    if (!el) {
+      if (window.setStatus) setStatus('Integrations: no output area on the page.');
+      console.error('[marginedge] falta #meSalida');
+      return;
+    }
+
+    el.innerHTML = '<div class="small muted">Asking MarginEdge…</div>';
+    try { el.scrollIntoView({ block: 'nearest' }); } catch (e) {}
 
     let res;
     try {
@@ -349,8 +372,16 @@
       '<span class="small muted" style="font-size:11px">' + esc(a.nota) + '</span>' +
       '</button>').join('');
 
+    // Un fallo dentro del manejador se traga el clic y el botón parece
+    // muerto. Se enseña en pantalla: en este panel, que está para
+    // diagnosticar, un error invisible es lo peor que puede pasar.
     cont.querySelectorAll('[data-me]').forEach(b => {
-      b.onclick = () => correr(b.dataset.me);
+      b.onclick = () => {
+        try {
+          const p = correr(b.dataset.me);
+          if (p && p.catch) p.catch(mostrarFallo);
+        } catch (e) { mostrarFallo(e); }
+      };
     });
 
     pintarFechas();
