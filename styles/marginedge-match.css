@@ -95,3 +95,13 @@ body.light .mem-chip.on { color: #fff; }
 body.light .mem-ck { border-color: rgba(15,23,42,.3); }
 body.light .mem-conf.hi { background: rgba(16,185,129,.16); color: #065f46; }
 body.light .mem-conf.mid { background: rgba(217,119,6,.16); color: #92400e; }
+
+/* Aviso de que el filtro de categorías puede estar descartando de más.
+   Va en amarillo y no en rojo: no es un error, es una sospecha que el
+   usuario tiene que poder confirmar mirando. */
+.mem-warn { margin: 10px 0 2px; padding: 11px 13px; border-radius: 10px;
+  font-size: 12px; line-height: 1.55;
+  background: rgba(217,119,6,.12); border: 1px solid rgba(217,119,6,.32);
+  color: #b45309; }
+.mem-warn b { display: block; margin-bottom: 3px; }
+body.light .mem-warn { color: #92400e; }

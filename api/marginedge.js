@@ -267,15 +267,21 @@ module.exports = async function handler(req, res) {
 
       // Los tipos de categoría sólo se resuelven en la primera llamada;
       // después viajan de ida y vuelta para no volver a pedirlos.
-      let tipos = (params || {}).tipos;
-      if (!tipos || typeof tipos !== 'object') {
+      let tipos = (params || {}).tipos;   // sólo las de bebida
+      let todas = (params || {}).todas;   // todas, para saber si una id es conocida
+      if (!tipos || typeof tipos !== 'object' || !todas || typeof todas !== 'object') {
         const cats = await traerTodo('/categories', { restaurantUnitId: u }, apiKey);
         if (cats.error) return res.status(200).json({ ok: false, error: cats.error });
-        tipos = {};
+        tipos = {}; todas = {};
         for (const c of cats.lista) {
+          todas[String(c.categoryId)] = c.categoryType || 'OTHER';
           if (TIPOS_BEBIDA.includes(c.categoryType)) tipos[String(c.categoryId)] = c.categoryType;
         }
       }
+
+      const otros = [];
+      let sinCategoria = 0, desconocidas = 0;
+      const muestraIds = [];
 
       const limite = Date.now() + PRESUPUESTO_MS;
       const bebida = [];
@@ -293,7 +299,8 @@ module.exports = async function handler(req, res) {
           // con ello y puede reintentar desde el cursor.
           return res.status(200).json({
             ok: bebida.length > 0,
-            action, tipos, productos: bebida, vistos, nextPage: cursor,
+            action, tipos, todas, productos: bebida, otros, vistos, nextPage: cursor,
+            sinCategoria, desconocidas, muestraIds,
             error: '/products → ' + r.status + ' ' + (r.cuerpo?.message || r.texto || '')
           });
         }
@@ -306,26 +313,49 @@ module.exports = async function handler(req, res) {
         for (const prod of trozo) {
           const cs = Array.isArray(prod.categories) ? prod.categories : [];
           let tipo = '';
+          let conocida = false;
           for (const c of cs) {
-            const t = tipos[String(c.categoryId)];
+            const id = String(c.categoryId);
+            if (todas[id]) conocida = true;
+            const t = tipos[id];
             if (t) { tipo = t; break; }
           }
-          if (!tipo) continue;
-          bebida.push({
+
+          // ── Por qué se cuenta esto ──────────────────────────────
+          //
+          // Los `categoryId` de /categories iban por 1048, 1049, 1050
+          // y el primer producto traía 45847. Si los identificadores
+          // de producto no existen en la lista de categorías, el
+          // filtro no está separando bebida de comida: está tirando
+          // todo lo que no reconoce, y productos que sí tienes —Villa
+          // Brici, por ejemplo— desaparecen sin dejar rastro.
+          //
+          // Contar los desconocidos convierte esa sospecha en un dato.
+          if (!cs.length) sinCategoria++;
+          else if (!conocida) {
+            desconocidas++;
+            if (muestraIds.length < 6) muestraIds.push(String(cs[0].categoryId));
+          }
+
+          // `sinFiltro` lleva el catálogo entero para que el buscador
+          // a mano no dependa de que el filtro esté bien.
+          const slim = {
             id: String(prod.companyConceptProductId),
             name: prod.productName || '',
             type: tipo,
             price: prod.latestPrice != null ? prod.latestPrice : null,
             unit: prod.reportByUnit || ''
-          });
+          };
+          if (tipo) bebida.push(slim); else otros.push(slim);
         }
 
         cursor = r.cuerpo?.nextPage || null;
       } while (cursor && Date.now() < limite && paginas < MAX_PAGINAS);
 
       return res.status(200).json({
-        ok: true, action, tipos,
-        productos: bebida, vistos, paginas,
+        ok: true, action, tipos, todas,
+        productos: bebida, otros, vistos, paginas,
+        sinCategoria, desconocidas, muestraIds,
         nextPage: cursor   // null = se acabó
       });
     }

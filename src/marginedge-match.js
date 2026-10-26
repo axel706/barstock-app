@@ -40,7 +40,9 @@
   const RUIDO = new Set(['THE','AND','OF','A','BOTTLE','BTL','BOT','CASE','CS',
     'EA','EACH','PACK','PK','CAN','CANS','NR','LN','LOOSE','PREMIUM','BRAND']);
 
-  let _prods = null;
+  let _prods = null;   // los de categoría de bebida
+  let _otros = null;   // el resto del catálogo, sólo para el buscador
+  let _diag = null;
   let _idf = null;
   let _filas = null;
   let _tab = 'revisar';
@@ -193,20 +195,34 @@
 
   async function traerCatalogo(unitId, avisar) {
     _prods = [];
-    let cursor = null, tipos = null, vistos = 0, vueltas = 0;
+    _otros = [];
+    _diag = { sinCategoria: 0, desconocidas: 0, muestraIds: [] };
+    let cursor = null, tipos = null, todas = null, vistos = 0, vueltas = 0;
 
     do {
       const r = await llamar('catalog', {
         restaurantUnitId: unitId,
         nextPage: cursor || undefined,
-        tipos: tipos || undefined
+        tipos: tipos || undefined,
+        todas: todas || undefined
       });
 
       if (r.productos) _prods = _prods.concat(r.productos);
+      // El resto del catálogo se guarda igual: el buscador a mano no
+      // puede depender de que el filtro de categorías esté bien.
+      if (r.otros) _otros = _otros.concat(r.otros);
       vistos += r.vistos || 0;
+      _diag.sinCategoria += r.sinCategoria || 0;
+      _diag.desconocidas += r.desconocidas || 0;
+      for (const id of (r.muestraIds || [])) {
+        if (_diag.muestraIds.length < 6) _diag.muestraIds.push(id);
+      }
       if (r.tipos) tipos = r.tipos;
+      if (r.todas) todas = r.todas;
 
-      if (!r.ok && !_prods.length) throw new Error(r.error || 'Could not read the catalog');
+      if (!r.ok && !_prods.length && !_otros.length) {
+        throw new Error(r.error || 'Could not read the catalog');
+      }
 
       // Un error a media faena no tira lo ya recogido, pero hay que
       // decirlo: emparejar contra medio catálogo da falsos "sin pareja"
@@ -218,7 +234,7 @@
       if (avisar) avisar(_prods.length, vistos);
     } while (cursor && vueltas < MAX_VUELTAS);
 
-    return { bebida: _prods.length, vistos, incompleto: !!cursor };
+    return { bebida: _prods.length, otros: _otros.length, vistos, incompleto: !!cursor };
   }
 
   // ── Calcular el trabajo ────────────────────────────────────────────
@@ -345,6 +361,24 @@
       '" data-tab="' + id + '">' + esc(texto) + ' · ' + n + '</button>';
   }
 
+  // El filtro de categorías es la pieza que más silenciosamente puede
+  // fallar: si descarta de más, los productos desaparecen y la pantalla
+  // dice "no match" como si no existieran. Cuando hay señales de que no
+  // está reconociendo las categorías, se dice en voz alta.
+  function aviso() {
+    if (!_diag) return '';
+    const d = _diag;
+    if (!d.desconocidas && !d.sinCategoria) return '';
+    return '<div class="mem-warn">' +
+      '<b>Heads up — the category filter may be dropping products.</b> ' +
+      esc(String(d.desconocidas)) + ' products point at a category that is not in ' +
+      'the category list' +
+      (d.muestraIds.length ? ' (e.g. ' + esc(d.muestraIds.slice(0, 3).join(', ')) + ')' : '') +
+      (d.sinCategoria ? ', and ' + esc(String(d.sinCategoria)) + ' have no category at all' : '') +
+      '. Search still looks at the whole catalog, ' + esc(String((_otros || []).length)) +
+      ' more products included, so you can find them by hand.</div>';
+  }
+
   function pintar() {
     const host = document.getElementById('memBody');
     if (!host) return;
@@ -370,7 +404,7 @@
           tab('revisar', 'Need your eye', c.revisar) +
           tab('auto', 'Matched', hechos) +
           tab('huerfano', 'No match', c.huerfano) +
-        '</div>';
+        '</div>' + aviso();
 
       cab.querySelectorAll('[data-tab]').forEach(b => {
         b.onclick = () => { _tab = b.dataset.tab; _buscando = null; pintar(); };
@@ -415,7 +449,11 @@
     const t = String(q || '').trim().toUpperCase();
     if (t.length < 2) { cont.innerHTML = ''; return; }
 
-    const hits = _prods.filter(p => p.name.toUpperCase().includes(t)).slice(0, MAX_HITS);
+    // Busca en TODO el catálogo, no sólo en lo que el filtro de
+    // categorías dejó pasar. Si el filtro se equivoca, esta es la única
+    // forma de encontrar un producto que sí existe.
+    const hits = _prods.concat(_otros)
+      .filter(p => p.name.toUpperCase().includes(t)).slice(0, MAX_HITS);
     cont.innerHTML = hits.length
       ? hits.map(p => pastilla(p, false, null)).join('')
       : '<div class="mem-empty" style="padding:10px 2px">Nothing matches that.</div>';
