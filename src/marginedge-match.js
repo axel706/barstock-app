@@ -37,6 +37,8 @@
 
   // Palabras que no distinguen nada. Se quitan antes de comparar para
   // que no inflen el parecido entre dos productos sin relación.
+  const BEBIDA = ['BEER','LIQUOR','WINE','NA_BEVERAGES'];
+
   const RUIDO = new Set(['THE','AND','OF','A','BOTTLE','BTL','BOT','CASE','CS',
     'EA','EACH','PACK','PK','CAN','CANS','NR','LN','LOOSE','PREMIUM','BRAND']);
 
@@ -191,50 +193,45 @@
     return 'LIQUOR';
   }
 
-  // ── Traer el catálogo ──────────────────────────────────────────────
+  // ── El catálogo sale de Supabase, no de MarginEdge ────────────────
+  //
+  // MarginEdge limita a un par de peticiones por segundo y el catálogo
+  // pasa de los miles de productos: leerlo en vivo cada vez que se abre
+  // esta pantalla daba 429 siempre. No era un problema de reintentos,
+  // era la pregunta mal hecha.
+  //
+  // Ahora se copia una vez a `marginedge_products` —despacio, con
+  // pausas— y aquí se lee esa copia en una sola consulta. Instantáneo y
+  // sin límite que lo corte a la mitad.
 
-  async function traerCatalogo(unitId, avisar) {
-    _prods = [];
-    _otros = [];
-    _diag = { sinCategoria: 0, desconocidas: 0, muestraIds: [] };
-    let cursor = null, tipos = null, todas = null, vistos = 0, vueltas = 0;
+  async function traerCatalogo() {
+    const { url, key } = cfg();
+    const P = window.BarStockParIntelligence;
+    const locId = P && P.fetchLocationId ? await P.fetchLocationId() : null;
+    if (!url || !key || !locId) throw new Error('No location.');
 
-    do {
-      const r = await llamar('catalog', {
-        restaurantUnitId: unitId,
-        nextPage: cursor || undefined,
-        tipos: tipos || undefined,
-        todas: todas || undefined
-      });
+    const r = await fetch(
+      `${url}/rest/v1/marginedge_products?location_id=eq.${locId}` +
+      `&select=product_id,name,type,price,unit&order=name.asc`,
+      { headers: { apikey: key, Authorization: `Bearer ${key}` } });
 
-      if (r.productos) _prods = _prods.concat(r.productos);
-      // El resto del catálogo se guarda igual: el buscador a mano no
-      // puede depender de que el filtro de categorías esté bien.
-      if (r.otros) _otros = _otros.concat(r.otros);
-      vistos += r.vistos || 0;
-      _diag.sinCategoria += r.sinCategoria || 0;
-      _diag.desconocidas += r.desconocidas || 0;
-      for (const id of (r.muestraIds || [])) {
-        if (_diag.muestraIds.length < 6) _diag.muestraIds.push(id);
-      }
-      if (r.tipos) tipos = r.tipos;
-      if (r.todas) todas = r.todas;
+    if (!r.ok) throw new Error('Could not read the saved catalog: ' + (await r.text()));
+    const filas = await r.json();
+    if (!Array.isArray(filas)) throw new Error('Unexpected response.');
 
-      if (!r.ok && !_prods.length && !_otros.length) {
-        throw new Error(r.error || 'Could not read the catalog');
-      }
+    const todo = filas.map(f => ({
+      id: String(f.product_id), name: f.name || '',
+      type: f.type || '', price: f.price, unit: f.unit || ''
+    }));
 
-      // Un error a media faena no tira lo ya recogido, pero hay que
-      // decirlo: emparejar contra medio catálogo da falsos "sin pareja"
-      // y eso lleva a dar de alta productos que ya existen.
-      if (r.error) return { bebida: _prods.length, vistos, incompleto: true, error: r.error };
+    // Se emparejan primero los de categoría de bebida; el resto queda
+    // disponible para el buscador, porque el filtro de categorías ya
+    // demostró que puede dejar fuera vinos que sí existen.
+    _prods = todo.filter(p => BEBIDA.includes(p.type));
+    _otros = todo.filter(p => !BEBIDA.includes(p.type));
+    _diag = null;
 
-      cursor = r.nextPage || null;
-      vueltas++;
-      if (avisar) avisar(_prods.length, vistos);
-    } while (cursor && vueltas < MAX_VUELTAS);
-
-    return { bebida: _prods.length, otros: _otros.length, vistos, incompleto: !!cursor };
+    return { bebida: _prods.length, otros: _otros.length, total: todo.length };
   }
 
   // ── Calcular el trabajo ────────────────────────────────────────────
@@ -502,20 +499,23 @@
     _tab = 'revisar';
 
     try {
-      const info = await traerCatalogo(unitId, (n, v) => {
-        if (host) host.innerHTML = '<div class="mem-empty">Reading the MarginEdge catalog… ' +
-          '<b>' + n + '</b> beverage products so far, out of ' + v + ' scanned.</div>';
-      });
+      const info = await traerCatalogo();
 
-      if (info.incompleto && window.setStatus) {
-        setStatus('Only part of the catalog came through: ' + (info.error || 'rate limited') +
-                  '. Some items may show as unmatched.');
+      // Sin copia del catálogo no hay nada que emparejar, y conviene
+      // decirlo con el remedio al lado en vez de dejar la lista vacía.
+      if (!info.total) {
+        if (host) host.innerHTML = '<div class="mem-empty">' +
+          '<b>No catalog saved yet.</b><br>Go back to Integrations and press ' +
+          '<b>Sync catalog</b>. It copies the MarginEdge catalog here once, ' +
+          'slowly enough not to hit their rate limit. After that this screen ' +
+          'opens instantly.</div>';
+        return;
       }
 
       if (!info.bebida) {
-        if (host) host.innerHTML = '<div class="mem-empty">No beverage products came back. ' +
-          'Check the restaurant is the right one in Integrations.</div>';
-        return;
+        if (host) host.innerHTML = '<div class="mem-empty">' + info.total +
+          ' products saved, but none are in a beverage category. ' +
+          'Search still looks at all of them.</div>';
       }
 
       calcular();

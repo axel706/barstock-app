@@ -440,10 +440,81 @@
     const cont = document.getElementById('meAccion');
     if (!cont) return;
     if (!unidad()) { cont.innerHTML = ''; return; }
-    cont.innerHTML = '<button type="button" id="meIrMatch" class="success ui-control" ' +
-      'style="margin-top:14px">Match products →</button>';
+    cont.innerHTML =
+      '<div style="display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap">' +
+        '<button type="button" id="meSync" class="ui-control">Sync catalog</button>' +
+        '<button type="button" id="meIrMatch" class="success ui-control">Match products →</button>' +
+        '<span id="meSyncNota" class="small muted"></span>' +
+      '</div>';
+
     const b = document.getElementById('meIrMatch');
     if (b) b.onclick = () => window.showSettingsPanel('meMatch');
+
+    const s = document.getElementById('meSync');
+    if (s) s.onclick = () => sincronizar().catch(mostrarFallo);
+
+    notaSync();
+  }
+
+  // Cuándo se copió el catálogo por última vez. Un dato que se llena
+  // solo pide poder saber cuándo se llenó.
+  async function notaSync() {
+    const el = document.getElementById('meSyncNota');
+    if (!el) return;
+    const { url, key } = cfg();
+    const id = await locationId();
+    if (!url || !key || !id) return;
+    try {
+      const r = await fetch(
+        `${url}/rest/v1/location_settings?location_id=eq.${id}&select=marginedge_synced_at`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+      const f = await r.json();
+      const t = f?.[0]?.marginedge_synced_at;
+      el.textContent = t ? 'Last synced ' + new Date(t).toLocaleString() : 'Never synced';
+    } catch (e) {}
+  }
+
+  // ── Copiar el catálogo ───────────────────────────────────────────
+  //
+  // Da tantas vueltas como haga falta: el servidor trae lo que le cabe
+  // en su presupuesto de tiempo, con pausas entre páginas para no
+  // disparar el 429, y devuelve el cursor. Son miles de productos, así
+  // que tarda — por eso el contador.
+  async function sincronizar() {
+    const el = document.getElementById('meSalida');
+    const u = unidad();
+    const id = await locationId();
+    if (!u) { if (el) el.innerHTML = '<div class="small">Pick a restaurant first.</div>'; return; }
+    if (!id) { if (el) el.innerHTML = '<div class="small">No location.</div>'; return; }
+
+    let cursor = null, tipos = null, total = 0, vueltas = 0;
+
+    do {
+      const r = await llamar('sync-catalog', {
+        restaurantUnitId: u, locationId: id,
+        nextPage: cursor || undefined,
+        tipos: tipos || undefined
+      });
+
+      total += r.guardados || 0;
+      if (r.tipos) tipos = r.tipos;
+
+      if (r.error) {
+        if (el) el.innerHTML = '<div class="small" style="color:#b45309">' +
+          'Stopped after ' + total + ' products: ' + esc(r.error) +
+          '<br>Press Sync catalog again to carry on.</div>';
+        return;
+      }
+
+      cursor = r.nextPage || null;
+      vueltas++;
+      if (el) el.innerHTML = '<div class="small muted">Copying the catalog… <b>' +
+        total + '</b> products saved.</div>';
+    } while (cursor && vueltas < 80);
+
+    if (el) el.innerHTML = '<div class="small" style="color:#15803d;font-weight:700">' +
+      'Catalog saved · ' + total + ' products.</div>';
+    notaSync();
   }
 
   window.BarStockIntegrations = { render, correr, unidad };

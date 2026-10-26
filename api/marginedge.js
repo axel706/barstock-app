@@ -56,6 +56,11 @@ const MAX_PAGINAS    = 25;     // tope de seguridad al seguir nextPage
 // Hobby corta a los 10 s. Se deja margen para la última petición en
 // vuelo y para serializar la respuesta.
 const PRESUPUESTO_MS = 6500;
+// Pausa entre páginas al copiar el catálogo. Trece páginas seguidas en
+// seis segundos —unas dos por segundo— bastaron para que MarginEdge
+// devolviera 429. Ir más despacio no es una concesión: es la única
+// forma de llegar al final.
+const PAUSA_PAGINA_MS = 650;
 const MAX_DISTINTOS  = 40;     // más allá de esto, el campo es texto libre
 
 // ── Por qué un resumen y no una muestra ──────────────────────────────
@@ -450,6 +455,107 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({
         ok: true, action, fase: 'lines',
         lineas, hechos, pendientes: ids.slice(hechos)
+      });
+    }
+
+    // ── Traer el catálogo a Supabase, por tramos ───────────────────
+    //
+    // MarginEdge limita a un par de peticiones por segundo y el
+    // catálogo pasa de los miles de productos. Leerlo en vivo cada vez
+    // que se abre la pantalla de emparejar daba 429 sin remedio: no es
+    // un problema de reintentos, es que la pregunta estaba mal hecha.
+    //
+    // Se copia una vez a `marginedge_products` y la pantalla trabaja
+    // contra esa tabla. Aquí se escribe un tramo por llamada, con pausa
+    // entre páginas para no pisar el límite, y se devuelve el cursor
+    // para que el navegador siga.
+    //
+    // Se guardan TODOS los productos, no sólo los de bebida. El filtro
+    // por categoría ya falló una vez y dejó fuera vinos que sí existen;
+    // guardarlo todo cuesta unas miles de filas y evita tener que
+    // volver a MarginEdge si el criterio cambia.
+    if (action === 'sync-catalog') {
+      const u = (params || {}).restaurantUnitId;
+      const locationId = (params || {}).locationId;
+      if (!u) return res.status(400).json({ ok: false, error: 'Falta restaurantUnitId.' });
+      if (!locationId) return res.status(400).json({ ok: false, error: 'Falta locationId.' });
+
+      let tipos = (params || {}).tipos;
+      if (!tipos || typeof tipos !== 'object') {
+        const cats = await traerTodo('/categories', { restaurantUnitId: u }, apiKey);
+        if (cats.error) return res.status(200).json({ ok: false, error: cats.error });
+        tipos = {};
+        for (const c of cats.lista) tipos[String(c.categoryId)] = c.categoryType || 'OTHER';
+      }
+
+      const limite = Date.now() + PRESUPUESTO_MS;
+      let cursor = (params || {}).nextPage || null;
+      let guardados = 0, paginas = 0;
+
+      do {
+        const p = { restaurantUnitId: u };
+        if (cursor) p.nextPage = cursor;
+
+        const r = await pedir(construirUrl('/products', p), apiKey);
+        if (!r.ok) {
+          return res.status(200).json({
+            ok: guardados > 0, action, tipos, guardados, nextPage: cursor,
+            error: '/products → ' + r.status + ' ' + (r.cuerpo?.message || r.texto || '')
+          });
+        }
+
+        const trozo = sacarLista(r.cuerpo);
+        if (!trozo || !trozo.length) { cursor = null; break; }
+        paginas++;
+
+        const filas = trozo.map(prod => {
+          const cs = Array.isArray(prod.categories) ? prod.categories : [];
+          const catId = cs.length ? String(cs[0].categoryId) : null;
+          let tipo = '';
+          for (const c of cs) {
+            const t = tipos[String(c.categoryId)];
+            if (t && TIPOS_BEBIDA.includes(t)) { tipo = t; break; }
+          }
+          if (!tipo && catId) tipo = tipos[catId] || '';
+          return {
+            location_id: locationId,
+            product_id: String(prod.companyConceptProductId),
+            name: prod.productName || '',
+            type: tipo,
+            category_id: catId,
+            price: prod.latestPrice != null ? prod.latestPrice : null,
+            unit: prod.reportByUnit || '',
+            updated_at: new Date().toISOString()
+          };
+        }).filter(f => f.product_id && f.product_id !== 'undefined');
+
+        if (filas.length) {
+          const { error } = await supabase
+            .from('marginedge_products')
+            .upsert(filas, { onConflict: 'location_id,product_id' });
+          if (error) {
+            return res.status(200).json({
+              ok: false, action, tipos, guardados, nextPage: cursor,
+              error: 'Supabase: ' + error.message
+            });
+          }
+          guardados += filas.length;
+        }
+
+        cursor = r.cuerpo?.nextPage || null;
+
+        // La pausa es el punto del asunto. Sin ella volvemos al 429.
+        if (cursor && Date.now() < limite) await dormir(PAUSA_PAGINA_MS);
+      } while (cursor && Date.now() < limite && paginas < MAX_PAGINAS);
+
+      if (!cursor) {
+        await supabase.from('location_settings')
+          .update({ marginedge_synced_at: new Date().toISOString() })
+          .eq('location_id', locationId);
+      }
+
+      return res.status(200).json({
+        ok: true, action, tipos, guardados, paginas, nextPage: cursor
       });
     }
 
