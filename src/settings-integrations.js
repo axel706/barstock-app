@@ -36,7 +36,8 @@
     { id: 'vendors',    nombre: 'Proveedores',  nota: 'Con quién compras' },
     { id: 'products',   nombre: 'Productos',    nota: 'El catálogo' },
     { id: 'categories', nombre: 'Categorías',   nota: 'Cómo los agrupa' },
-    { id: 'invoices',   nombre: 'Facturas',     nota: 'Qué entró y a qué precio' }
+    { id: 'invoices',   nombre: 'Facturas',     nota: 'Cabeceras del rango' },
+    { id: 'invoice',    nombre: 'Una factura',  nota: 'Por dentro, con sus líneas' }
   ];
 
   function esc(s) {
@@ -227,6 +228,8 @@
       '<input type="date" id="meDesde" value="' + iso(hace30) + '">' +
       '<span class="small muted">a</span>' +
       '<input type="date" id="meHasta" value="' + iso(hoy) + '">' +
+      '<input type="text" id="meOrderId" placeholder="orderId" ' +
+      'style="width:120px" title="Para el botón Una factura">' +
       '</div>';
   }
 
@@ -295,6 +298,10 @@
       const u = unidad();
       if (u && action !== 'units') params.restaurantUnitId = u;
       if (action === 'invoices') Object.assign(params, rango());
+      if (action === 'invoice') {
+        const el = document.getElementById('meOrderId');
+        params.orderId = (el && el.value || '').trim();
+      }
       res = await llamar(action, params);
     } catch (e) {
       res = { ok: false, error: String(e && e.message || e) };
@@ -303,6 +310,14 @@
     pintarResultado(action, res);
 
     if (action === 'units' && res.ok) pintarUnidades(res.muestra || []);
+
+    // Rellenar el orderId con la primera factura que salga, para no
+    // tener que copiarlo a mano del bloque de ejemplos.
+    if (action === 'invoices' && res.ok) {
+      const id = res.muestra?.[0]?.orderId;
+      const el = document.getElementById('meOrderId');
+      if (id && el && !el.value.trim()) el.value = id;
+    }
   }
 
   function render() {

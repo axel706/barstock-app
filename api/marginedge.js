@@ -26,7 +26,13 @@ const RUTAS = {
   categories: ['/categories'],
   vendors:    ['/vendors'],
   products:   ['/products'],
-  invoices:   ['/orders', '/invoices']
+  invoices:   ['/orders', '/invoices'],
+
+  // `/orders` devuelve cabeceras: proveedor, número, fecha, total. Las
+  // líneas —qué producto y cuántos— tienen que estar en otro sitio, y
+  // son las que de verdad alimentan el cálculo de consumo. El `{id}` se
+  // sustituye por el orderId.
+  invoice:    ['/orders/{id}', '/orders/{id}/items', '/orders/{id}/lineItems', '/orders/{id}/products']
 };
 
 // Sólo estos parámetros pasan del navegador a MarginEdge. Una lista
@@ -180,9 +186,21 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    // El id va en la RUTA, no en la query, así que no puede pasar por
+    // la lista blanca de parámetros. Sólo dígitos: lo que viaja en una
+    // URL que lleva credencial no se construye con texto sin mirar.
+    let rutas = candidatas;
+    if (candidatas.some(r => r.includes('{id}'))) {
+      const id = String((params || {}).orderId || '');
+      if (!/^\d+$/.test(id)) {
+        return res.status(400).json({ ok: false, error: 'Hace falta un orderId numérico.' });
+      }
+      rutas = candidatas.map(r => r.replace('{id}', id));
+    }
+
     const intentos = [];
 
-    for (const ruta of candidatas) {
+    for (const ruta of rutas) {
       const url = construirUrl(ruta, params || {});
       let r;
       try {
@@ -242,7 +260,11 @@ module.exports = async function handler(req, res) {
           : null,
         resumen: lista ? resumir(lista) : null,
         muestra: lista ? lista.slice(0, LIMITE_MUESTRA) : null,
-        crudo: lista ? null : JSON.stringify(r.cuerpo).slice(0, LIMITE_CRUDO),
+        // Para una factura suelta el objeto entero importa: `sacarLista`
+        // devolvería sólo el array de líneas y perderíamos la cabecera.
+        crudo: (!lista || action === 'invoice')
+          ? JSON.stringify(r.cuerpo).slice(0, LIMITE_CRUDO)
+          : null,
         intentos
       });
     }
