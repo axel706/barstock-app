@@ -39,7 +39,8 @@
     { id: 'invoices',   nombre: 'Facturas',     nota: 'Cabeceras del rango' },
     { id: 'invoice',    nombre: 'Una factura',  nota: 'Por dentro, con sus líneas' },
     { id: 'packaging',  nombre: 'Empaques',     nota: 'Qué es una unidad' },
-    { id: 'find',       nombre: 'Buscar producto', nota: 'Crudo, sin filtros' }
+    { id: 'find',       nombre: 'Buscar producto', nota: 'Crudo, sin filtros' },
+    { id: 'guardado',   nombre: 'Qué hay guardado', nota: 'La copia local, en bruto' }
   ];
 
   function esc(s) {
@@ -328,6 +329,46 @@
 
     el.innerHTML = '<div class="small muted">Asking MarginEdge…</div>';
     try { el.scrollIntoView({ block: 'nearest' }); } catch (e) {}
+
+    // ── Qué hay realmente en la copia ──────────────────────────────
+    //
+    // "Tito's no está en mi catálogo" puede significar tres cosas muy
+    // distintas: que la copia esté vacía, que el catálogo guarde otros
+    // nombres de los que el usuario reconoce, o que sí esté y la
+    // búsqueda falle. Enseñar una muestra real de nombres las separa de
+    // un vistazo, y es más rápido que seguir buscando a ciegas.
+    if (action === 'guardado') {
+      const { url, key } = cfg();
+      const id = await locationId();
+      if (!url || !key || !id) { el.innerHTML = '<div class="small">No location.</div>'; return; }
+
+      const r = await fetch(
+        `${url}/rest/v1/marginedge_products?location_id=eq.${id}` +
+        `&select=product_id,name,type,price,unit&order=type.asc,name.asc`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+
+      const filas = await r.json();
+      if (!Array.isArray(filas)) { el.innerHTML = '<div class="small">' + esc(JSON.stringify(filas)) + '</div>'; return; }
+
+      const porTipo = {};
+      for (const f of filas) {
+        const t = f.type || '(sin tipo)';
+        (porTipo[t] = porTipo[t] || []).push(f.name || '(sin nombre)');
+      }
+
+      const resumen = {};
+      const muestras = {};
+      for (const [t, nombres] of Object.entries(porTipo)) {
+        resumen[t] = nombres.length;
+        muestras[t] = nombres.slice(0, 12);
+      }
+
+      pintarResultado('guardado', {
+        ok: true, ruta: 'marginedge_products (Supabase)',
+        total: filas.length, resumen, muestra: muestras, intentos: []
+      });
+      return;
+    }
 
     // ── La búsqueda no cabe en una llamada ─────────────────────────
     //

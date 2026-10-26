@@ -572,7 +572,12 @@ module.exports = async function handler(req, res) {
     // `categoryId` que traiga. Una respuesta, no una hipótesis.
     if (action === 'find') {
       const u = (params || {}).restaurantUnitId;
-      const q = String((params || {}).q || '').trim().toUpperCase();
+      // Sin quitar apóstrofes y signos, buscar "tito's" no encuentra
+      // "Titos Handmade Vodka" y parece que el producto no existe.
+      const limpia = t => String(t || '').toUpperCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^A-Z0-9]+/g, '');
+      const q = limpia((params || {}).q);
       if (!u) return res.status(400).json({ ok: false, error: 'Falta restaurantUnitId.' });
       if (q.length < 2) return res.status(400).json({ ok: false, error: 'Escribe al menos dos letras.' });
 
@@ -607,7 +612,7 @@ module.exports = async function handler(req, res) {
         paginas++;
 
         for (const prod of trozo) {
-          if (!String(prod.productName || '').toUpperCase().includes(q)) continue;
+          if (!limpia(prod.productName).includes(q)) continue;
           hits.push({
             crudo: prod,
             categorias: (Array.isArray(prod.categories) ? prod.categories : []).map(c => ({
