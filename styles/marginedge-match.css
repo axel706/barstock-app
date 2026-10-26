@@ -124,3 +124,12 @@ body.light .mem-x { color: #991b1b; }
   background: rgba(185,28,28,.1); border: 1px solid rgba(185,28,28,.3);
   color: #b91c1c; }
 body.light .mem-err { color: #991b1b; }
+
+/* Candidato que ya pertenece a otro artículo. Se puede elegir —a veces
+   el dueño actual es el equivocado— pero tiene que verse que elegirlo
+   se lo quita a alguien. Sin esta señal, dos artículos parecidos
+   entran en bucle robándoselo el uno al otro. */
+.mem-cand.taken { opacity: .62; border-style: dashed; }
+.mem-conf.taken { background: rgba(100,116,139,.2); color: #475569;
+  text-transform: none; letter-spacing: 0; }
+body.light .mem-conf.taken { color: #334155; }

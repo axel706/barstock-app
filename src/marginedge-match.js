@@ -441,6 +441,50 @@
     return P && P.fetchLocationId ? await P.fetchLocationId() : null;
   }
 
+  // ── De quién es ya un producto ─────────────────────────────────────
+  //
+  // Un producto pertenece a UN artículo. Si la pantalla no lo dice, dos
+  // artículos parecidos —"Smith Hook Cabernet" y "Smith & Hook Reserve
+  // Cabernet"— se pelean por el mismo y entran en bucle: se lo quitan
+  // el uno al otro sin que nada avance.
+  function tomadoPor(p, r) {
+    const d = _dueno.get(String(p.id));
+    return (d && d.clave !== clave(r)) ? d.nombre : null;
+  }
+
+  // ── Los candidatos de un artículo ──────────────────────────────────
+  //
+  // Dos reglas que faltaban:
+  //
+  //   1. El nombre exacto gana. "Smith Hook Cabernet Sauvignon" tiene
+  //      un producto que se llama igual, y aun así salía segundo detrás
+  //      de "Smith & Hook Reserve". Un empate que no debería existir.
+  //
+  //   2. Lo que ya tiene dueño va al final. Sigue estando —a veces el
+  //      dueño actual es el equivocado— pero deja de ser la primera
+  //      opción, y en pantalla dice de quién es.
+  function candidatosDe(r) {
+    const fam = familiaDe(r.category);
+    const mio = norm(r.item);
+
+    return _prods
+      .map(p => {
+        if (norm(p.name) === mio) return { p, s: 1, exacto: true };
+        let s = puntuar(r.item, p.name);
+        if (fam && p.type) s *= (p.type === fam ? 1.06 : 0.80);
+        return { p, s: Math.min(1, s), exacto: false };
+      })
+      .filter(x => x.s >= MINIMO)
+      .sort((a, b) => {
+        const ta = tomadoPor(a.p, r) ? 1 : 0;
+        const tb = tomadoPor(b.p, r) ? 1 : 0;
+        if (ta !== tb) return ta - tb;
+        if (a.exacto !== b.exacto) return a.exacto ? -1 : 1;
+        return b.s - a.s;
+      })
+      .slice(0, MAX_CANDIDATOS);
+  }
+
   // ── Calcular el trabajo ────────────────────────────────────────────
 
   function calcular() {
@@ -458,16 +502,7 @@
                  candidatos: [], puntos: [] };
       }
 
-      const fam = familiaDe(r.category);
-      const puntuados = _prods
-        .map(p => {
-          let s = puntuar(r.item, p.name);
-          if (fam && p.type) s *= (p.type === fam ? 1.06 : 0.80);
-          return { p, s: Math.min(1, s) };
-        })
-        .filter(x => x.s >= MINIMO)
-        .sort((a, b) => b.s - a.s)
-        .slice(0, MAX_CANDIDATOS);
+      const puntuados = candidatosDe(r);
 
       return {
         idx, row: r, enlaces: [], productos: [],
@@ -492,12 +527,21 @@
   }
 
   // Candidato por confirmar
-  function pastilla(p, s) {
-    const etiqueta = s != null && s >= MINIMO
-      ? '<span class="mem-conf ' + (s >= SEGURO ? 'hi' : 'mid') + '">' +
-        (s >= SEGURO ? 'near certain' : 'might be') + '</span>'
-      : '';
-    return '<div class="mem-cand" data-pick="' + esc(p.id) + '">' +
+  function pastilla(p, s, r) {
+    // Si ya es de otro artículo, eso importa más que la nota de
+    // confianza: elegirlo se lo quita al otro, y sin decirlo se entra
+    // en el bucle de quitárselo mutuamente.
+    const dueno = r ? tomadoPor(p, r) : null;
+
+    const etiqueta = dueno
+      ? '<span class="mem-conf taken">matched to ' + esc(dueno) + '</span>'
+      : (s != null && s >= MINIMO
+          ? '<span class="mem-conf ' + (s >= SEGURO ? 'hi' : 'mid') + '">' +
+            (s >= SEGURO ? 'near certain' : 'might be') + '</span>'
+          : '');
+
+    return '<div class="mem-cand' + (dueno ? ' taken' : '') +
+      '" data-pick="' + esc(p.id) + '">' +
       '<i class="mem-ck"></i>' +
       '<div class="mem-txt"><b>' + esc(p.name) + '</b><span>' + esc(meta(p)) + '</span></div>' +
       etiqueta + '</div>';
@@ -521,7 +565,7 @@
 
     const cuerpo = hecho
       ? f.enlaces.map((id, i) => enlace(f.productos[i], id)).join('')
-      : f.candidatos.map((p, i) => pastilla(p, (f.puntos || [])[i])).join('');
+      : f.candidatos.map((p, i) => pastilla(p, (f.puntos || [])[i], r)).join('');
 
     const buscador = _buscando === f.idx
       ? '<div class="mem-find"><input type="text" class="ui-control" data-q="' + f.idx +
@@ -616,11 +660,12 @@
     const t = String(q || '').trim().toUpperCase();
     if (t.length < 2) { cont.innerHTML = ''; return; }
 
+    const fila = _filas.find(f => f.idx === idx);
     const hits = _prods.concat(_otros)
       .filter(p => p.name.toUpperCase().includes(t)).slice(0, MAX_HITS);
 
     cont.innerHTML = hits.length
-      ? hits.map(p => pastilla(p, null)).join('')
+      ? hits.map(p => pastilla(p, null, fila && fila.row)).join('')
       : '<div class="mem-empty" style="padding:10px 2px">Nothing matches that.</div>';
 
     cont.querySelectorAll('[data-pick]').forEach(el => { el.onclick = () => elegir(el); });
@@ -706,16 +751,7 @@
     // Sin vínculos vuelve a la cola: se recalculan sus candidatos para
     // que puedas elegir otro sin buscarlo a mano.
     if (!fila.enlaces.length) {
-      const fam = familiaDe(fila.row.category);
-      const puntuados = _prods
-        .map(p => {
-          let s = puntuar(fila.row.item, p.name);
-          if (fam && p.type) s *= (p.type === fam ? 1.06 : 0.80);
-          return { p, s: Math.min(1, s) };
-        })
-        .filter(x => x.s >= MINIMO)
-        .sort((a, b) => b.s - a.s)
-        .slice(0, MAX_CANDIDATOS);
+      const puntuados = candidatosDe(fila.row);
       fila.candidatos = puntuados.map(x => x.p);
       fila.puntos = puntuados.map(x => x.s);
       fila.estado = puntuados.length ? 'revisar' : 'huerfano';
