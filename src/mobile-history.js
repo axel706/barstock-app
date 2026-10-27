@@ -24,6 +24,9 @@
 
   let _orden = null;     // la orden abierta, si hay
   let _filtro = 'all';   // all | short | waiting
+  // Meses abiertos. Arranca vacío y el más reciente se abre solo: con
+  // ciento y pico órdenes, desplegarlo todo es una lista infinita.
+  let _abiertos = null;
   let _datos = null;     // { ciclos: [...], porOrden: Map }
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c =>
@@ -57,6 +60,15 @@
       if (t.length < PAGINA) break;
     }
     return todas;
+  }
+
+  function mesDe(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return { id: 'x', txt: 'Undated' };
+    return {
+      id: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'),
+      txt: d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+    };
   }
 
   function dia(iso) {
@@ -220,16 +232,16 @@
     // orden no puede vivir diciendo que gastaste 1.422 si llegaron
     // 1.208.
     const importe = o.estado === 'waiting' ? o.pedidoDinero : o.recibidoDinero;
-    return '<button type="button" class="m-hrow" data-o="' + i + '">' +
-      '<span class="m-hrow-l">' +
-        '<span class="m-hrow-v">' + esc(o.vendor) + '</span>' +
-        '<span class="m-hrow-m">' +
-          (o.po ? 'PO ' + esc(o.po) + ' · ' : '') + esc(dia(o.fecha)) +
+    return '<button type="button" class="m-hcard" data-o="' + i + '">' +
+      '<span class="m-hcard-l">' +
+        '<span class="m-hcard-v">' + esc(o.vendor) + '</span>' +
+        '<span class="m-hcard-m">' +
+          (o.po ? esc(o.po) + ' · ' : '') + esc(dia(o.fecha)) +
           ' · ' + o.items.length + ' item' + (o.items.length === 1 ? '' : 's') +
         '</span>' +
       '</span>' +
-      '<span class="m-hrow-r">' +
-        '<span class="m-hrow-a">' + money(importe) + '</span>' +
+      '<span class="m-hcard-r">' +
+        '<span class="m-hcard-a">' + money(importe) + '</span>' +
         etiqueta(o) +
       '</span></button>';
   }
@@ -239,23 +251,11 @@
 
     if (!todas.length) {
       host.innerHTML = '<div class="m-inv-t">Order history</div>' +
-        '<div class="m-nada"><span class="m-nada-i"></span>' +
-        '<div class="m-nada-t">No orders yet</div>' +
-        '<div class="m-nada-d">Orders you place show up here with what ' +
-        'actually arrived against them.</div></div>';
+        '<div class="m-hsub">Orders you place show up here with what ' +
+        'actually arrived against them.</div>';
       return;
     }
 
-    // Dos grupos: el ciclo abierto y el resto. Con dos ciclos de
-    // historia, partirlo más es inventar estructura.
-    const abiertas = todas.filter(o => o.ciclo && o.ciclo.id === 'abierto');
-    const viejas = todas.filter(o => !o.ciclo || o.ciclo.id !== 'abierto');
-
-    const gastoAbierto = abiertas.reduce((s, o) =>
-      s + (o.estado === 'waiting' ? o.pedidoDinero : o.recibidoDinero), 0);
-
-    // Los filtros son los tres estados que importan. "Over" no tiene
-    // pastilla propia: pasa poco y, cuando pasa, ya se ve en la fila.
     const cuenta = {
       all: todas.length,
       short: todas.filter(o => o.estado === 'short').length,
@@ -266,31 +266,79 @@
       '" data-f="' + id + '">' + txt + ' · ' + cuenta[id] + '</button>';
 
     const pasa = o => _filtro === 'all' || o.estado === _filtro;
-    const fAb = abiertas.filter(pasa);
-    const fVi = viejas.filter(pasa);
+    const visibles = todas.filter(pasa);
+
+    const importe = o => o.estado === 'waiting' ? o.pedidoDinero : o.recibidoDinero;
+
+    // El ciclo abierto va suelto arriba: es lo que está pasando ahora y
+    // no debería esconderse detrás de un mes.
+    const abiertas = visibles.filter(o => o.ciclo && o.ciclo.id === 'abierto');
+    const resto = visibles.filter(o => !o.ciclo || o.ciclo.id !== 'abierto');
+
+    // ── El resto, por mes y plegado ────────────────────────────────
+    //
+    // Con ciento y pico órdenes una lista continua no se puede leer ni
+    // recorrer. Por mes y cerrados, salvo el más reciente: así la
+    // pantalla cabe de un vistazo y bajar a marzo son dos toques, no
+    // treinta segundos de scroll.
+    const meses = [];
+    const porMes = new Map();
+    for (const o of resto) {
+      const m = mesDe(o.fecha);
+      if (!porMes.has(m.id)) { porMes.set(m.id, { ...m, ordenes: [] }); meses.push(m.id); }
+      porMes.get(m.id).ordenes.push(o);
+    }
+    if (_abiertos === null) {
+      _abiertos = new Set(meses.length ? [meses[0]] : []);
+    }
 
     let html = '<div class="m-inv-t">Order history</div>' +
       '<div class="m-hsub">What you sent, and what actually arrived.</div>' +
       '<div class="m-hchips">' + chip('all', 'All') + chip('short', 'Short') +
         chip('waiting', 'Waiting') + '</div>';
 
-    if (fAb.length) {
-      html += '<div class="m-lab">This cycle · ' + money(gastoAbierto) + '</div>' +
-              '<div class="m-hlist">' + fAb.map(o =>
-                fila(o, todas.indexOf(o))).join('') + '</div>';
+    if (abiertas.length) {
+      const gasto = abiertas.reduce((t, o) => t + importe(o), 0);
+      html += '<div class="m-lab">This cycle · ' + money(gasto) + '</div>' +
+              abiertas.map(o => fila(o, todas.indexOf(o))).join('');
     }
-    if (fVi.length) {
-      html += '<div class="m-lab">Earlier</div>' +
-              '<div class="m-hlist">' + fVi.map(o =>
-                fila(o, todas.indexOf(o))).join('') + '</div>';
+
+    for (const id of meses) {
+      const m = porMes.get(id);
+      const abierto = _abiertos.has(id);
+      const gasto = m.ordenes.reduce((t, o) => t + importe(o), 0);
+      const cortos = m.ordenes.filter(o => o.estado === 'short').length;
+
+      html +=
+        '<button type="button" class="m-hmes' + (abierto ? ' on' : '') +
+          '" data-m="' + esc(id) + '">' +
+          '<i class="ti ti-chevron-right m-hmes-v" aria-hidden="true"></i>' +
+          '<span class="m-hmes-t">' + esc(m.txt) + '</span>' +
+          '<span class="m-hmes-m">' + m.ordenes.length + ' · ' + money(gasto) +
+            (cortos ? ' · ' + cortos + ' short' : '') +
+          '</span>' +
+        '</button>' +
+        (abierto
+          ? '<div class="m-hmes-c">' +
+            m.ordenes.map(o => fila(o, todas.indexOf(o))).join('') + '</div>'
+          : '');
     }
-    if (!fAb.length && !fVi.length) {
+
+    if (!abiertas.length && !meses.length) {
       html += '<div class="m-empty">Nothing with that status.</div>';
     }
 
     host.innerHTML = html;
+
     host.querySelectorAll('[data-f]').forEach(b => {
       b.onclick = () => { _filtro = b.dataset.f; pintarLista(host); };
+    });
+    host.querySelectorAll('[data-m]').forEach(b => {
+      b.onclick = () => {
+        const id = b.dataset.m;
+        if (_abiertos.has(id)) _abiertos.delete(id); else _abiertos.add(id);
+        pintarLista(host);
+      };
     });
     host.querySelectorAll('[data-o]').forEach(b => {
       b.onclick = () => { _orden = todas[Number(b.dataset.o)]; pintar(host); };

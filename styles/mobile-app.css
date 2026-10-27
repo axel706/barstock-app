@@ -1722,33 +1722,46 @@
    * el estado va a la derecha de cada fila, a la altura del dinero: son
    * las dos cosas que se miran de un vistazo.
    */
+  /* Cada orden es su propia tarjeta, con aire entre medias — igual
+   * que las filas de Inventory. En lista continua, con ciento y pico
+   * órdenes, no se distingue dónde acaba una y empieza la siguiente. */
+  body.m-shell .m-hcard {
+    width: 100%; display: flex; align-items: center; gap: 11px;
+    text-align: left; cursor: pointer;
+    padding: 13px 14px; margin-bottom: 7px; border-radius: 15px;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.14);
+  }
+  body.m-shell .m-hcard:active { background: rgba(255,255,255,.15); }
+  .m-hcard-l { flex: 1; min-width: 0; }
+  .m-hcard-v {
+    display: block; font-size: 14px; font-weight: 500; color: #eef4fb;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .m-hcard-m { display: block; font-size: 11.5px; color: #93a5b8; margin-top: 3px; }
+  .m-hcard-r { flex: 0 0 auto; text-align: right; }
+  .m-hcard-a { display: block; font-size: 15px; font-weight: 800; color: #fff; }
+
+  /* Cabecera de mes, plegable. */
+  body.m-shell .m-hmes {
+    width: 100%; display: flex; align-items: center; gap: 9px;
+    text-align: left; padding: 11px 4px 9px; margin-top: 10px;
+    color: #c8d6e5;
+  }
+  .m-hmes-v { font-size: 15px; color: #7b8a9e; transition: transform .18s ease; }
+  body.m-shell .m-hmes.on .m-hmes-v { transform: rotate(90deg); }
+  .m-hmes-t { font-size: 14px; font-weight: 700; color: #eef4fb;
+    text-transform: capitalize; }
+  .m-hmes-m { margin-left: auto; font-size: 11.5px; color: #93a5b8; }
+  .m-hmes-c { padding-top: 2px; }
+
+  /* En el DETALLE sí es una lista continua: son las líneas de UNA
+   * orden, y separarlas en tarjetas las haría parecer independientes. */
   .m-hlist {
     background: rgba(255,255,255,.04);
     border: 1px solid rgba(255,255,255,.08);
     border-radius: 16px; overflow: hidden; margin-bottom: 18px;
   }
-
-  .m-hrow {
-    width: 100%; display: flex; align-items: flex-start; gap: 12px;
-    padding: 13px 15px; text-align: left; background: transparent;
-    border: none; border-bottom: 1px solid rgba(255,255,255,.055);
-  }
-  .m-hrow:last-child { border-bottom: none; }
-  .m-hrow:active { background: rgba(255,255,255,.05); }
-  .m-hrow-l { flex: 1; min-width: 0; }
-  .m-hrow-v { display: block; font-size: 14.5px; font-weight: 700;
-    color: #e8edf5; letter-spacing: -.01em; }
-  .m-hrow-m { display: block; font-size: 11.5px; color: #7b8a9e; margin-top: 3px; }
-  .m-hrow-r { flex: 0 0 auto; text-align: right; }
-  .m-hrow-a { display: block; font-size: 14.5px; font-weight: 700; color: #e8edf5; }
-
-  .m-hs { display: inline-block; margin-top: 5px; padding: 4px 8px;
-    border-radius: 999px; font-size: 10px; font-weight: 800;
-    letter-spacing: .02em; white-space: nowrap; }
-  .m-hs-bien   { background: rgba(16,185,129,.18);  color: #6ee7b7; }
-  .m-hs-corto  { background: rgba(217,119,6,.22);   color: #fcd34d; }
-  .m-hs-sobra  { background: rgba(56,189,248,.18);  color: #7dd3fc; }
-  .m-hs-espera { background: rgba(100,116,139,.24); color: #9fb0c4; }
 
   /* Línea del detalle. Lo que cuadra en gris y lo que no en ámbar: si
    * todo llegó bien la pantalla es aburrida, y eso es correcto. */
