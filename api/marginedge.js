@@ -434,7 +434,7 @@ module.exports = async function handler(req, res) {
         if (Date.now() >= limite) break;
         if (!/^\d+$/.test(String(id))) { hechos++; continue; }
 
-        const r = await pedir(construirUrl('/orders/' + id, {}), apiKey);
+        const r = await pedir(construirUrl('/orders/' + id, { restaurantUnitId: u }), apiKey);
         hechos++;
         if (!r.ok) continue;
 
@@ -672,7 +672,10 @@ module.exports = async function handler(req, res) {
         hechos++;
         if (!/^\d+$/.test(String(id))) continue;
 
-        const r = await pedir(construirUrl('/orders/' + id, {}), apiKey);
+        // `/orders/{id}` exige restaurantUnitId igual que `/orders`.
+        // Llamarlo sin él devuelve 400 en todas y cada una: 293
+        // facturas "procesadas" y cero líneas guardadas.
+        const r = await pedir(construirUrl('/orders/' + id, { restaurantUnitId: u }), apiKey);
 
         if (!r.ok) {
           fallidos.push({ id, status: r.status,
