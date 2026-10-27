@@ -171,6 +171,28 @@
       const zona = (window.BarStockZones && window.BarStockZones.activas())
         ? window.BarStockZones.paraPasada() : '';
 
+      // ── Cuando queda poco, se dice QUÉ queda ──────────────────
+      //
+      // "259 left" no manda a nadie a ningún estante. Pero al final
+      // del conteo, con cinco o seis pendientes, los nombres sí: o
+      // vuelves a por ellos, o compruebas que de verdad no hay.
+      //
+      // Antes no tenía sentido enseñarlos porque la lista incluía los
+      // UNKNOWN y nunca bajaba de cien. Ahora que el progreso sólo
+      // cuenta lo que se pide, el final del conteo llega de verdad.
+      const UMBRAL = 12;
+      const MUESTRA = 4;
+      let faltan = '';
+      if (tot && (tot - n) > 0 && (tot - n) <= UMBRAL && S && S.missingRows) {
+        let q = [];
+        try { q = S.missingRows().map(r => r.item).filter(Boolean); } catch (e) {}
+        if (q.length) {
+          const resto = q.length - MUESTRA;
+          faltan = 'Still to count: ' + q.slice(0, MUESTRA).join(', ') +
+                   (resto > 0 ? ' +' + resto : '');
+        }
+      }
+
       return {
         // Con un conteo a medias, ESTA es la tarjeta que tiene que
         // estar delante: o lo retomas, o al menos ves que quedó
@@ -184,7 +206,8 @@
         tono: viejo ? 'red' : 'amber',
         k: pau ? 'Count paused' : viejo ? 'Count abandoned' : 'Counting',
         tt: tot ? n + ' of ' + tot : String(n),
-        sub: viejo ? 'Untouched for three days' : (zona ? 'Last scan in ' + zona : ''),
+        sub: viejo ? 'Untouched for three days'
+             : (faltan || (zona ? 'Last scan in ' + zona : '')),
         barra: pct,
         amt: pct + '%',
         vs: tot ? (tot - n) + ' left' : '',

@@ -314,14 +314,37 @@
   // Lo que necesita la barra de arriba y la hoja del escáner. Es
   // summary() sin la lista de nombres, que en 300 artículos son varios
   // kilobytes que nadie va a mirar mientras escanea.
+  // ── Qué entra en el progreso ─────────────────────────────────────────
+  //
+  // Sólo lo que se va a pedir. Con los 260 artículos del maestro la
+  // barra nunca llegaba al 100 %: los UNKNOWN no se cuentan porque no
+  // se piden, así que el conteo terminaba al 85 % y el dato dejaba de
+  // significar nada.
+  //
+  // Contando sólo lo pedible, llegar al 95 % y parar dice algo útil: o
+  // falta contar cinco cosas, o esas cinco no hay en el estante. Las
+  // dos respuestas valen; "nunca llegas al 100" no vale ninguna.
+  //
+  // Los dormidos siguen fuera por lo de siempre: un artículo sin stock,
+  // sin par y quieto ocho semanas no se contó porque no había nada que
+  // contar.
+  function pedible(r) {
+    const v = String((r && r.vendor) || '').trim().toUpperCase();
+    if (!v || v === 'UNKNOWN') return false;
+    const D = window.BarStockDormant;
+    return !(D && D.estaQuieto && D.estaQuieto(r));
+  }
+
   function progress() {
     // window.state.master y no state.master: esta funcion la llama la
     // barra de la pantalla principal, que puede correr antes de que el
     // script grande declare la global. Con la forma corta eso era un
     // ReferenceError que se llevaba por delante toda la barra.
     const master = (window.state && window.state.master) || [];
-    const counted = size();
-    const total = master.length;
+    const hechos = new Set(countedItems());
+    const lista = master.filter(pedible);
+    const total = lista.length;
+    const counted = lista.filter(r => hechos.has(r.item)).length;
     return {
       counted,
       total,
@@ -346,8 +369,10 @@
     // `estaQuieto` y no `oculto`: `oculto` responde a si el usuario pulso
     // "Showing all" en la pantalla de inventario, y ese boton no tiene
     // por que cambiar de que te avisa el cierre de un conteo.
-    const D = window.BarStockDormant;
-    return master.filter(r => !counted.has(r.item) && !(D && D.estaQuieto(r)));
+    // Mismo criterio que la barra: si el progreso no cuenta los
+    // UNKNOWN, la lista de lo que falta tampoco puede nombrarlos. Dos
+    // criterios distintos darían "quedan 3" y una lista de diez.
+    return master.filter(r => !counted.has(r.item) && pedible(r));
   }
 
   // ── La señal compartida ──────────────────────────────────────────────
