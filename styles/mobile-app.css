@@ -213,7 +213,8 @@
    * arriba lo da el padding del body por la banda fija; aquí sólo los
    * márgenes propios. */
   .m-screen[data-screen="search"],
-  .m-screen[data-screen="more"] { padding: 14px 13px 0; }
+  .m-screen[data-screen="more"],
+  .m-screen[data-screen="orderHistory"] { padding: 14px 13px 0; }
 
   /* ── La banda ───────────────────────────────────────────────────── */
   /*
@@ -1778,3 +1779,19 @@
     padding: 7px 2px; font-size: 13px; color: #7b8a9e;
   }
   .m-htot b { font-size: 16px; font-weight: 800; color: #e8edf5; }
+
+  /* Subtítulo de pantalla. Texto suelto, no caja: `.m-ord-nota` lleva
+   * borde y fondo, y como subtítulo parecía un aviso. */
+  .m-hsub { font-size: 13px; color: #9fb0c4; line-height: 1.5;
+    margin: 4px 2px 14px; }
+
+  .m-hchips { display: flex; gap: 7px; margin-bottom: 4px; flex-wrap: wrap; }
+  body.m-shell .m-hchip {
+    font-size: 12px; font-weight: 700; padding: 8px 13px;
+    border-radius: 999px; color: #9fb0c4;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.13);
+  }
+  body.m-shell .m-hchip.on {
+    background: #0284c7; border-color: #0284c7; color: #fff;
+  }

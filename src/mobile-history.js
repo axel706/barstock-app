@@ -23,6 +23,7 @@
   const MAX_ORDENES = 300;
 
   let _orden = null;     // la orden abierta, si hay
+  let _filtro = 'all';   // all | short | waiting
   let _datos = null;     // { ciclos: [...], porOrden: Map }
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c =>
@@ -253,21 +254,44 @@
     const gastoAbierto = abiertas.reduce((s, o) =>
       s + (o.estado === 'waiting' ? o.pedidoDinero : o.recibidoDinero), 0);
 
-    let html = '<div class="m-inv-t">Order history</div>' +
-      '<div class="m-ord-nota">What you sent, and what actually arrived.</div>';
+    // Los filtros son los tres estados que importan. "Over" no tiene
+    // pastilla propia: pasa poco y, cuando pasa, ya se ve en la fila.
+    const cuenta = {
+      all: todas.length,
+      short: todas.filter(o => o.estado === 'short').length,
+      waiting: todas.filter(o => o.estado === 'waiting').length
+    };
+    const chip = (id, txt) =>
+      '<button type="button" class="m-hchip' + (_filtro === id ? ' on' : '') +
+      '" data-f="' + id + '">' + txt + ' · ' + cuenta[id] + '</button>';
 
-    if (abiertas.length) {
+    const pasa = o => _filtro === 'all' || o.estado === _filtro;
+    const fAb = abiertas.filter(pasa);
+    const fVi = viejas.filter(pasa);
+
+    let html = '<div class="m-inv-t">Order history</div>' +
+      '<div class="m-hsub">What you sent, and what actually arrived.</div>' +
+      '<div class="m-hchips">' + chip('all', 'All') + chip('short', 'Short') +
+        chip('waiting', 'Waiting') + '</div>';
+
+    if (fAb.length) {
       html += '<div class="m-lab">This cycle · ' + money(gastoAbierto) + '</div>' +
-              '<div class="m-hlist">' + abiertas.map((o) =>
+              '<div class="m-hlist">' + fAb.map(o =>
                 fila(o, todas.indexOf(o))).join('') + '</div>';
     }
-    if (viejas.length) {
+    if (fVi.length) {
       html += '<div class="m-lab">Earlier</div>' +
-              '<div class="m-hlist">' + viejas.map((o) =>
+              '<div class="m-hlist">' + fVi.map(o =>
                 fila(o, todas.indexOf(o))).join('') + '</div>';
+    }
+    if (!fAb.length && !fVi.length) {
+      html += '<div class="m-empty">Nothing with that status.</div>';
     }
 
     host.innerHTML = html;
+    host.querySelectorAll('[data-f]').forEach(b => {
+      b.onclick = () => { _filtro = b.dataset.f; pintarLista(host); };
+    });
     host.querySelectorAll('[data-o]').forEach(b => {
       b.onclick = () => { _orden = todas[Number(b.dataset.o)]; pintar(host); };
     });
@@ -294,12 +318,10 @@
       '<button type="button" class="m-back m-back-gde" id="mhBack">' +
         '<i class="ti ti-chevron-left" aria-hidden="true"></i> Order history</button>' +
 
-      '<div class="m-ord-h">' +
-        '<span class="m-inv-t">' + esc(o.vendor) + '</span>' +
-        '<div class="m-ord-nota">' +
-          (o.po ? 'PO ' + esc(o.po) + ' · ' : '') + 'sent ' + esc(dia(o.fecha)) +
-          (o.factura ? ' · invoice ' + esc(o.factura) : '') +
-        '</div>' +
+      '<div class="m-inv-t">' + esc(o.vendor) + '</div>' +
+      '<div class="m-hsub">' +
+        (o.po ? 'PO ' + esc(o.po) + ' · ' : '') + 'sent ' + esc(dia(o.fecha)) +
+        (o.factura ? ' · invoice ' + esc(o.factura) : '') +
       '</div>' +
 
       '<div class="m-hlist">' + lineas + '</div>' +
@@ -330,13 +352,13 @@
 
   async function montar(host) {
     host.innerHTML = '<div class="m-inv-t">Order history</div>' +
-                     '<div class="m-ord-nota">Reading orders…</div>';
+                     '<div class="m-hsub">Reading orders…</div>';
     try {
       await cargar();
       pintar(host);
     } catch (e) {
       host.innerHTML = '<div class="m-inv-t">Order history</div>' +
-        '<div class="m-ord-nota">' + esc(String(e.message || e)) + '</div>';
+        '<div class="m-hsub">' + esc(String(e.message || e)) + '</div>';
     }
   }
 
