@@ -1714,6 +1714,12 @@
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-cyc-go { border-radius: 999px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-cyc-reset { border-radius: 999px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-item { border-radius: 13px !important; }
+  /* Historial. Sin esto, `app.css` les pone 999px y las tarjetas de
+   * orden salen con forma de píldora: el mismo problema del resto de
+   * la lista, sólo que estas clases son nuevas. */
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hcard { border-radius: 15px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hchip { border-radius: 999px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hmes { border-radius: 0 !important; }
 }
 
   /* ── Historial de órdenes ──────────────────────────────────────────
@@ -1754,6 +1760,16 @@
     text-transform: capitalize; }
   .m-hmes-m { margin-left: auto; font-size: 11.5px; color: #93a5b8; }
   .m-hmes-c { padding-top: 2px; }
+
+  /* La pastilla de estado. Es lo primero que se mira después del
+   * dinero, así que el color tiene que decirlo antes que el texto. */
+  .m-hs { display: inline-block; margin-top: 5px; padding: 4px 9px;
+    border-radius: 999px; font-size: 10px; font-weight: 800;
+    letter-spacing: .02em; white-space: nowrap; }
+  .m-hs-bien   { background: rgba(16,185,129,.20);  color: #6ee7b7; }
+  .m-hs-corto  { background: rgba(217,119,6,.24);   color: #fcd34d; }
+  .m-hs-sobra  { background: rgba(56,189,248,.20);  color: #7dd3fc; }
+  .m-hs-espera { background: rgba(100,116,139,.26); color: #9fb0c4; }
 
   /* En el DETALLE sí es una lista continua: son las líneas de UNA
    * orden, y separarlas en tarjetas las haría parecer independientes. */
@@ -1808,3 +1824,7 @@
   body.m-shell .m-hchip.on {
     background: #0284c7; border-color: #0284c7; color: #fff;
   }
+
+  /* El buscador del historial. Reusa la barra del resto de la app; lo
+   * único propio es el aire de debajo. */
+  .m-hfind { margin: 0 0 12px; }

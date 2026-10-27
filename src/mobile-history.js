@@ -27,6 +27,7 @@
   // Meses abiertos. Arranca vacío y el más reciente se abre solo: con
   // ciento y pico órdenes, desplegarlo todo es una lista infinita.
   let _abiertos = null;
+  let _busca = '';
   let _datos = null;     // { ciclos: [...], porOrden: Map }
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c =>
@@ -256,16 +257,37 @@
       return;
     }
 
+    // Las cuentas de las pastillas respetan la búsqueda: con "titos"
+    // escrito, "Short · 3" son tres órdenes de Tito's, no tres del
+    // total. Un contador que ignora el filtro de al lado miente.
+    const enBusca = todas.filter(o => {
+      if (!_busca.trim()) return true;
+      const t = _busca.trim().toUpperCase();
+      return String(o.vendor).toUpperCase().includes(t) ||
+             o.items.some(i => String(i.item).toUpperCase().includes(t));
+    });
     const cuenta = {
-      all: todas.length,
-      short: todas.filter(o => o.estado === 'short').length,
-      waiting: todas.filter(o => o.estado === 'waiting').length
+      all: enBusca.length,
+      short: enBusca.filter(o => o.estado === 'short').length,
+      waiting: enBusca.filter(o => o.estado === 'waiting').length
     };
     const chip = (id, txt) =>
       '<button type="button" class="m-hchip' + (_filtro === id ? ' on' : '') +
       '" data-f="' + id + '">' + txt + ' · ' + cuenta[id] + '</button>';
 
-    const pasa = o => _filtro === 'all' || o.estado === _filtro;
+    // ── Buscar por proveedor O por producto ───────────────────────
+    //
+    // Lo segundo es lo que de verdad usas: "¿cuándo pedí Tito's y
+    // cuánto llegó?". Buscar sólo por proveedor obligaría a abrir
+    // órdenes una por una hasta dar con la que lo lleva.
+    const q = _busca.trim().toUpperCase();
+    const coincide = o => {
+      if (!q) return true;
+      if (String(o.vendor).toUpperCase().includes(q)) return true;
+      return o.items.some(i => String(i.item).toUpperCase().includes(q));
+    };
+
+    const pasa = o => (_filtro === 'all' || o.estado === _filtro) && coincide(o);
     const visibles = todas.filter(pasa);
 
     const importe = o => o.estado === 'waiting' ? o.pedidoDinero : o.recibidoDinero;
@@ -294,6 +316,11 @@
 
     let html = '<div class="m-inv-t">Order history</div>' +
       '<div class="m-hsub">What you sent, and what actually arrived.</div>' +
+      '<label class="m-searchbar m-hfind">' +
+        '<i class="ti ti-search" aria-hidden="true"></i>' +
+        '<input type="search" id="mhQ" placeholder="Vendor or product\u2026" ' +
+          'autocomplete="off" value="' + esc(_busca) + '">' +
+      '</label>' +
       '<div class="m-hchips">' + chip('all', 'All') + chip('short', 'Short') +
         chip('waiting', 'Waiting') + '</div>';
 
@@ -325,10 +352,27 @@
     }
 
     if (!abiertas.length && !meses.length) {
-      html += '<div class="m-empty">Nothing with that status.</div>';
+      html += '<div class="m-empty">' +
+        (q ? 'No order has that vendor or product.' : 'Nothing with that status.') +
+        '</div>';
     }
 
     host.innerHTML = html;
+
+    // Buscar abre todos los meses: si lo que buscas está en marzo, no
+    // sirve de nada que marzo siga plegado.
+    const inp = host.querySelector('#mhQ');
+    if (inp) {
+      inp.oninput = () => {
+        _busca = inp.value;
+        // Al borrar la búsqueda se vuelve al estado de siempre: sólo
+        // el mes más reciente abierto.
+        if (_busca.trim()) _abiertos = new Set(meses); else _abiertos = null;
+        pintarLista(host);
+        const n = host.querySelector('#mhQ');
+        if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); }
+      };
+    }
 
     host.querySelectorAll('[data-f]').forEach(b => {
       b.onclick = () => { _filtro = b.dataset.f; pintarLista(host); };
