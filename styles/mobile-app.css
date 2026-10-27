@@ -1714,3 +1714,67 @@
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-cyc-reset { border-radius: 999px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-item { border-radius: 13px !important; }
 }
+
+  /* ── Historial de órdenes ──────────────────────────────────────────
+   *
+   * La pregunta que contesta no es "qué pedí" sino "me llegó". Por eso
+   * el estado va a la derecha de cada fila, a la altura del dinero: son
+   * las dos cosas que se miran de un vistazo.
+   */
+  .m-hlist {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px; overflow: hidden; margin-bottom: 18px;
+  }
+
+  .m-hrow {
+    width: 100%; display: flex; align-items: flex-start; gap: 12px;
+    padding: 13px 15px; text-align: left; background: transparent;
+    border: none; border-bottom: 1px solid rgba(255,255,255,.055);
+  }
+  .m-hrow:last-child { border-bottom: none; }
+  .m-hrow:active { background: rgba(255,255,255,.05); }
+  .m-hrow-l { flex: 1; min-width: 0; }
+  .m-hrow-v { display: block; font-size: 14.5px; font-weight: 700;
+    color: #e8edf5; letter-spacing: -.01em; }
+  .m-hrow-m { display: block; font-size: 11.5px; color: #7b8a9e; margin-top: 3px; }
+  .m-hrow-r { flex: 0 0 auto; text-align: right; }
+  .m-hrow-a { display: block; font-size: 14.5px; font-weight: 700; color: #e8edf5; }
+
+  .m-hs { display: inline-block; margin-top: 5px; padding: 4px 8px;
+    border-radius: 999px; font-size: 10px; font-weight: 800;
+    letter-spacing: .02em; white-space: nowrap; }
+  .m-hs-bien   { background: rgba(16,185,129,.18);  color: #6ee7b7; }
+  .m-hs-corto  { background: rgba(217,119,6,.22);   color: #fcd34d; }
+  .m-hs-sobra  { background: rgba(56,189,248,.18);  color: #7dd3fc; }
+  .m-hs-espera { background: rgba(100,116,139,.24); color: #9fb0c4; }
+
+  /* Línea del detalle. Lo que cuadra en gris y lo que no en ámbar: si
+   * todo llegó bien la pantalla es aburrida, y eso es correcto. */
+  .m-hln {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 15px; border-bottom: 1px solid rgba(255,255,255,.05);
+  }
+  .m-hln:last-child { border-bottom: none; }
+  .m-hln-n { flex: 1; min-width: 0; font-size: 13px; color: #cbd5e1;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m-hln-q { flex: 0 0 auto; font-size: 13.5px; font-weight: 700; color: #e8edf5; }
+  .m-hln-q em { font-style: normal; font-weight: 400; color: #64748b; margin: 0 5px; }
+  .m-hln.mal .m-hln-q { color: #fcd34d; }
+
+  .m-hnote {
+    margin: 0 0 16px; padding: 12px 14px; border-radius: 13px;
+    font-size: 12.5px; line-height: 1.55;
+    background: rgba(217,119,6,.1); border: 1px solid rgba(217,119,6,.28);
+    color: #fcd34d;
+  }
+  .m-hnote.espera {
+    background: rgba(100,116,139,.14); border-color: rgba(148,163,184,.26);
+    color: #9fb0c4;
+  }
+
+  .m-htot {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 7px 2px; font-size: 13px; color: #7b8a9e;
+  }
+  .m-htot b { font-size: 16px; font-weight: 800; color: #e8edf5; }

@@ -15,7 +15,6 @@
   // ningun otro sitio.
 
   const MAS = [
-    { id: 'history',     icon: 'ti-history',       label: 'History' },
     { id: 'noMatch',     icon: 'ti-alert-circle',  label: 'Unmatched' },
     { id: 'costReport',  icon: 'ti-chart-bar',     label: 'Costs' },
     { id: 'consumption', icon: 'ti-chart-area',    label: 'Variance' },
@@ -31,6 +30,11 @@
     host.innerHTML = `
       <div class="m-lab">EVERYTHING ELSE</div>
       <div class="m-list">
+        <button type="button" class="m-item" id="mMoreHist">
+          <i class="ti ti-history" aria-hidden="true"></i>
+          <span class="m-item-t">History</span>
+          <i class="ti ti-chevron-right m-chev" aria-hidden="true"></i>
+        </button>
         ${MAS.map(m => `
           <button type="button" class="m-item" data-sec="${esc(m.id)}">
             <i class="ti ${esc(m.icon)}" aria-hidden="true"></i>
@@ -55,6 +59,14 @@
         </button>
       </div>
 `;
+
+    // History tiene pantalla propia en el teléfono: la del escritorio
+    // es una tabla que en un móvil no se puede leer. Va aparte de MAS
+    // porque no abre una sección, abre una pantalla del armazón.
+    const his = host.querySelector('#mMoreHist');
+    if (his) his.onclick = () => {
+      if (window.BarStockMobile) window.BarStockMobile.ir('orderHistory');
+    };
 
     host.querySelectorAll('[data-sec]').forEach(b => {
       b.onclick = () => {
