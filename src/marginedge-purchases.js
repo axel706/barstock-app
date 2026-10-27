@@ -216,12 +216,13 @@
   //
   // No escribe nada. Sólo mira y avisa.
 
-  async function leerOrdenes(url, key, locId, desdeISO) {
+  async function leerOrdenes(url, key, locId, desdeISO, hastaISO) {
     const cab = { apikey: key, Authorization: `Bearer ${key}` };
 
     const r = await fetch(
       `${url}/rest/v1/vendor_orders?location_id=eq.${locId}` +
-      `&created_at=gte.${desdeISO}&select=id,vendor,po_number,created_at&limit=500`,
+      `&created_at=gte.${desdeISO}&created_at=lte.${hastaISO}` +
+      `&select=id,vendor,po_number,created_at&limit=500`,
       { headers: cab });
     if (!r.ok) throw new Error(await r.text());
     const ordenes = await r.json();
@@ -248,29 +249,46 @@
     return String(fecha).slice(0, 10) === iso;
   }
 
-  async function conciliar() {
+  // ── La ventana es la misma para los dos lados ──────────────────────
+  //
+  // La primera versión comparaba las facturas del ciclo abierto contra
+  // las órdenes del ciclo abierto, mientras "What came in" usaba las
+  // fechas de arriba. Con el ciclo arrancado el 25 y una factura del
+  // 22, una pantalla decía "llegaron 24" y la otra "no llegó nada".
+  // Las dos tenían razón en su ventana, y juntas parecían un fallo.
+  //
+  // Ahora manda el rango que elige el usuario, y la pantalla dice cuál
+  // está mirando.
+  async function conciliar(desde, hasta) {
     const { url, key } = cfg();
     const locId = await locationId();
-    const C = window.BarStockCycle;
     if (!url || !key || !locId) throw new Error('No location.');
-    if (!C || !C.startedAt || !C.startedAt()) throw new Error('No open cycle. Start one first.');
+    if (!desde) throw new Error('Pick a start date first.');
 
-    const ini = C.startedAt();
-    const desdeFecha = new Date(ini.getTime() - ini.getTimezoneOffset() * 60000)
-      .toISOString().slice(0, 10);
+    // Las órdenes se filtran por el MISMO rango. created_at es una
+    // marca de tiempo, así que el final del rango incluye todo su día.
+    const finISO = hasta ? hasta + 'T23:59:59' : new Date().toISOString();
+    const { items: pedidos } = await leerOrdenes(url, key, locId, desde + 'T00:00:00', finISO);
 
-    const [{ items: pedidos }] = await Promise.all([
-      leerOrdenes(url, key, locId, ini.toISOString())
-    ]);
+    await cargar(desde, hasta);
 
-    // Las líneas de factura del ciclo, ya agrupadas por artículo.
-    await cargar(desdeFecha, null);
-
-    // Las del día del reinicio van aparte.
-    const dudosas = await leerTodo(url, key,
-      `marginedge_invoice_lines?location_id=eq.${locId}` +
-      `&invoice_date=eq.${desdeFecha}&select=vendor_item_name,vendor_name,quantity,invoice_number` +
-      `&order=order_id.asc`);
+    // Sólo tiene sentido avisar de la costura si el reinicio del ciclo
+    // cae DENTRO del rango que se está mirando.
+    const C = window.BarStockCycle;
+    const ini = C && C.startedAt && C.startedAt();
+    let dudosas = [];
+    let diaReinicio = null;
+    if (ini) {
+      const iso = new Date(ini.getTime() - ini.getTimezoneOffset() * 60000)
+        .toISOString().slice(0, 10);
+      if (iso >= desde && (!hasta || iso <= hasta)) {
+        diaReinicio = iso;
+        dudosas = await leerTodo(url, key,
+          `marginedge_invoice_lines?location_id=eq.${locId}` +
+          `&invoice_date=eq.${iso}&select=vendor_item_name,vendor_name,quantity,invoice_number` +
+          `&order=order_id.asc`);
+      }
+    }
 
     const porItem = new Map();
     for (const p of pedidos) {
@@ -293,7 +311,7 @@
       return r;
     }).sort((a, b) => Math.abs(b.dif) - Math.abs(a.dif));
 
-    return { desde: desdeFecha, filas, dudosas };
+    return { desde, hasta, filas, dudosas, diaReinicio };
   }
 
   function pintarConciliacion(res) {
@@ -311,6 +329,10 @@
     };
 
     host.innerHTML =
+      '<div class="mem-note" style="margin-bottom:12px">Orders placed and invoices ' +
+      'received between <b>' + esc(res.desde) + '</b> and <b>' +
+      esc(res.hasta || 'today') + '</b>. Both sides use this same window \u2014 change ' +
+      'the dates above to move it.</div>' +
       '<div class="mem-leg" style="margin-bottom:14px">' +
         '<span><b>' + n('cuadra') + '</b> match</span>' +
         '<span><b>' + n('falta') + '</b> short</span>' +
@@ -321,7 +343,7 @@
 
       (res.dudosas.length
         ? '<div class="mem-note"><b>' + res.dudosas.length + ' invoice lines are dated ' +
-          esc(res.desde) + ', the day the cycle restarted.</b> Invoices carry a date but no ' +
+          esc(res.diaReinicio) + ', the day the cycle restarted.</b> Invoices carry a date but no ' +
           'time, so there is no way to tell whether those arrived before the count — ' +
           'already inside on hand — or after it. They are left out of the figures below ' +
           'for you to decide.</div>'
@@ -349,8 +371,10 @@
   async function verConciliacion() {
     const host = document.getElementById('mepBody');
     if (host) host.innerHTML = '<div class="mem-empty">Comparing orders against invoices…</div>';
+    const d = document.getElementById('mepDesde');
+    const h = document.getElementById('mepHasta');
     try {
-      pintarConciliacion(await conciliar());
+      pintarConciliacion(await conciliar(d && d.value, h && h.value));
     } catch (e) {
       if (host) host.innerHTML = '<div class="mem-empty">' + esc(String(e.message || e)) + '</div>';
     }
