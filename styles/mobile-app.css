@@ -1209,11 +1209,18 @@
    * texto entero sigue en la lista que se abre al tocar.
    */
   .m-band-slot {
-    position: absolute; left: 12px; bottom: 0; z-index: 2;
-    height: 52px; max-width: 46vw;
+    position: absolute; left: 12px; bottom: 0; z-index: 3;
+    height: 52px;
+    /* Hasta donde empiezan los botones de la derecha. El logo se
+     * aparta mientras hay burbuja, así que no hay que reservarle
+     * sitio: reservárselo dejaba setenta píxeles y no cabía nada. */
+    max-width: calc(100vw - 72px);
     display: flex; align-items: center;
     pointer-events: none;
   }
+
+  .m-logo { transition: opacity .22s ease; }
+  .m-band.m-band-bub .m-logo { opacity: 0; }
 
   .m-bub {
     display: inline-flex; align-items: center; gap: 5px;

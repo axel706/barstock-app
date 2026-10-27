@@ -157,12 +157,30 @@
     slot.innerHTML = '';
     const b = burbuja(t.tone, t.text);
     slot.appendChild(b);
+
+    // ── El logo se aparta ──────────────────────────────────────────
+    //
+    // El logo va centrado y empieza a menos de cien píxeles del borde,
+    // así que al hueco le quedaban unos setenta: no cabía ni "Orders
+    // loaded" sin montarse encima. En vez de recortar los mensajes
+    // hasta que no digan nada, el logo se desvanece mientras hay una
+    // burbuja y vuelve cuando se va. Dura dos segundos y se lee como
+    // intencionado.
+    const banda = document.getElementById('mBand');
+    if (banda) banda.classList.add('m-band-bub');
+
     raf(() => b.classList.add('on'));
 
     const espera = _cola.length > 1 ? ENTRADA_RAPIDA : ENTRADA;
     setTimeout(() => {
       b.classList.remove('on');
-      setTimeout(() => { if (b.parentNode) b.remove(); siguiente(); }, SALIDA);
+      setTimeout(() => {
+        if (b.parentNode) b.remove();
+        // Sólo se devuelve el logo si no viene otra detrás: si no,
+        // parpadearía entre burbuja y burbuja.
+        if (!_cola.length && banda) banda.classList.remove('m-band-bub');
+        siguiente();
+      }, SALIDA);
     }, espera);
   }
 
@@ -171,6 +189,9 @@
     const slot = hueco();
     if (!slot) return;
     slot.innerHTML = '';
+    // La pastilla que se queda es corta y sí convive con el logo.
+    const banda = document.getElementById('mBand');
+    if (banda) banda.classList.remove('m-band-bub');
     if (!_pendientes.length) return;
 
     const n = _pendientes.length;
