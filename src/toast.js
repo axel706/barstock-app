@@ -95,10 +95,17 @@
   let _enCurso = false;
   let _pendientes = [];
 
+  // ── Por qué NO se comprueba que la banda exista ──────────────────
+  //
+  // Los tres avisos del arranque —conexión, órdenes, inventario— se
+  // disparan antes de que el shell monte la banda. Si se exigía
+  // `#mBand`, esos justo se iban al contenedor flotante: los únicos
+  // que molestan, y los únicos que seguían saliendo como antes.
+  //
+  // Basta el ancho de pantalla. Si la banda aún no está, la cola
+  // espera a que aparezca.
   function enMovil() {
-    const S = window.BarStockMobileShell;
-    return !!(S && typeof S.esMovil === 'function' && S.esMovil() &&
-              document.getElementById('mBand'));
+    return window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
   }
 
   function hueco() {
@@ -127,11 +134,21 @@
     return b;
   }
 
-  function siguiente() {
-    const slot = hueco();
-    if (!slot) { _cola = []; _enCurso = false; return; }
+  let _esperas = 0;
+  const MAX_ESPERAS = 40;   // ~12 s esperando a que monte la banda
 
-    if (!_cola.length) { _enCurso = false; resumen(); return; }
+  function siguiente() {
+    if (!_cola.length) { _enCurso = false; _esperas = 0; resumen(); return; }
+
+    const slot = hueco();
+    if (!slot) {
+      // La banda todavía no está. No se tira el aviso: se espera.
+      if (_esperas++ > MAX_ESPERAS) { _cola = []; _enCurso = false; return; }
+      _enCurso = true;
+      setTimeout(siguiente, 300);
+      return;
+    }
+    _esperas = 0;
 
     _enCurso = true;
     const t = _cola.shift();
