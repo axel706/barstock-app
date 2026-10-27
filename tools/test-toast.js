@@ -56,10 +56,10 @@ const esperar = ms => new Promise(r => setTimeout(r, ms));
   w.BarStockToast.show('Could not save the match');
   await esperar(2700);
   const s2 = w.document.querySelector('#mBand .m-band-slot');
-  prueba('queda una pastilla al vaciarse la cola',
-    !!s2 && /needs? you/.test(s2.textContent));
-  prueba('y se puede tocar',
-    !!s2 && !!s2.querySelector('.m-bub-tap'));
+  const nota = w.document.querySelector('#mBand .m-band-note');
+  prueba('el hueco central queda vacío', !!s2 && s2.children.length === 0);
+  prueba('y a la izquierda queda el botón de aviso',
+    !!nota && !!nota.querySelector('.m-ico-alert'));
 
   grupo('en escritorio sigue el comportamiento de siempre');
   const w3 = entorno(false);

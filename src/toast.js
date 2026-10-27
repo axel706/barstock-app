@@ -108,17 +108,26 @@
     return window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
   }
 
-  function hueco() {
+  // Dos sitios distintos y a propósito:
+  //
+  //   el hueco  — centrado, donde vive el logo. Las burbujas pasan por
+  //               ahí porque es el único sitio con ancho de verdad.
+  //   la marca  — a la izquierda, del tamaño del botón de ajustes. Ahí
+  //               se queda lo que no debe desaparecer.
+  function contenedor(clase) {
     const banda = document.getElementById('mBand');
     if (!banda) return null;
-    let slot = banda.querySelector('.m-band-slot');
-    if (!slot) {
-      slot = document.createElement('span');
-      slot.className = 'm-band-slot';
-      banda.appendChild(slot);
+    let el = banda.querySelector('.' + clase);
+    if (!el) {
+      el = document.createElement('span');
+      el.className = clase;
+      banda.appendChild(el);
     }
-    return slot;
+    return el;
   }
+
+  function hueco() { return contenedor('m-band-slot'); }
+  function marca() { return contenedor('m-band-note'); }
 
   function burbuja(tone, texto, clase) {
     const b = document.createElement('span');
@@ -185,21 +194,29 @@
   }
 
   // Lo que queda cuando la cola termina.
+  // Lo que queda cuando la cola termina: un botón redondo a la
+  // izquierda, de la misma forma que el de ajustes. No tapa el logo y
+  // se queda hasta que lo tocas.
   function resumen() {
     const slot = hueco();
-    if (!slot) return;
-    slot.innerHTML = '';
-    // La pastilla que se queda es corta y sí convive con el logo.
+    const nota = marca();
+    if (slot) slot.innerHTML = '';
     const banda = document.getElementById('mBand');
     if (banda) banda.classList.remove('m-band-bub');
+    if (!nota) return;
+
+    nota.innerHTML = '';
     if (!_pendientes.length) return;
 
     const n = _pendientes.length;
-    const b = burbuja('error', n + (n === 1 ? ' needs you' : ' need you'), 'm-bub-tap');
-    b.setAttribute('role', 'button');
-    b.setAttribute('tabindex', '0');
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'm-ico m-ico-alert';
+    b.setAttribute('aria-label', n + (n === 1 ? ' notice' : ' notices'));
+    b.innerHTML = '<i class="ti ti-bell" aria-hidden="true"></i>' +
+                  (n > 1 ? '<em class="m-ico-n">' + n + '</em>' : '');
     b.onclick = abrirLista;
-    slot.appendChild(b);
+    nota.appendChild(b);
     raf(() => b.classList.add('on'));
   }
 
@@ -220,6 +237,17 @@
       cerrarLista();
       resumen();
     };
+    // Tocar fuera también la cierra: un panel que sólo se va con su
+    // botón se queda abierto estorbando.
+    setTimeout(() => {
+      const fuera = e => {
+        if (!caja.contains(e.target) && !e.target.closest('.m-ico-alert')) {
+          cerrarLista();
+          document.removeEventListener('pointerdown', fuera, true);
+        }
+      };
+      document.addEventListener('pointerdown', fuera, true);
+    }, 0);
     document.body.appendChild(caja);
     raf(() => caja.classList.add('on'));
   }
