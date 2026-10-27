@@ -180,23 +180,36 @@
     try { d = V.pathFor(key, BOT.w, BOT.h, BOT.pad); } catch (e) { return ''; }
     if (!d) return '';
 
+    // ── La botella es un medidor, no una botella ───────────────────
+    //
+    // Antes dibujaba la parte decimal del on hand —de 7.3 pintaba el
+    // 0.3— y debajo ponía "+7 full". Eso contesta "cómo está la
+    // botella abierta", que no es lo que se mira al buscar un
+    // producto: lo que importa es cuánto queda contra lo que debería
+    // haber.
+    //
+    // Ahora el PAR es la botella llena y el on hand marca el nivel.
+    // 7.3 de un par de 18 sale a poco menos de la mitad; 30 de 36 sale
+    // casi llena; 2 de 2, llena del todo.
+    //
+    // El nivel es lineal, no por volumen. `heightFor` convierte
+    // volumen de líquido en altura teniendo en cuenta el hombro, y eso
+    // es correcto para una botella de verdad: aquí falsearía el
+    // medidor, porque la mitad del par se dibujaría por debajo de la
+    // mitad de la altura.
+    //
+    // Sin par no hay contra qué medir, así que la botella se queda
+    // vacía. No se escribe nada: el par ya está en la ficha, y un
+    // texto de más en el icono es ruido.
     const oh = Number(r.onHand) || 0;
-    const enteras = Math.floor(oh + 1e-9);
-    // Una botella justa es una botella llena, no una vacía: con 2.0 la
-    // parte decimal es cero y sin esto se dibujaría al vacío.
-    let frac = oh - enteras;
-    if (frac <= 0 && oh > 0) frac = 1;
-
-    // Cuántas enteras hay ADEMÁS de la dibujada. Con 1.96 se dibuja la
-    // de 0.96 y sobra una; con 2 justas se dibuja una llena y sobra
-    // otra. Sin esta cuenta, dos botellas se veían como una.
-    const otras = Math.max(0, oh > enteras ? enteras : enteras - 1);
+    const par = Number(r.suggested) || 0;
+    const ratio = par > 0 ? Math.max(0, Math.min(1, oh / par)) : null;
 
     let yPx = BOT.h - BOT.pad;
-    if (frac > 0) {
-      try { yPx = V.yToPx(key, V.heightFor(key, frac), BOT.w, BOT.h, BOT.pad); }
-      catch (e) {}
+    if (ratio !== null && ratio > 0) {
+      try { yPx = V.yToPx(key, ratio, BOT.w, BOT.h, BOT.pad); } catch (e) {}
     }
+    const frac = ratio || 0;
 
     const id = 'ms' + Math.random().toString(36).slice(2, 8);
     return `
@@ -210,7 +223,6 @@
             <path d="${d}" fill="${color}" opacity=".78"/></g>` : ''}
           <path d="${d}" fill="none" stroke="rgba(255,255,255,.38)" stroke-width="1.6"/>
         </svg>
-        ${otras >= 1 ? `<small>+${otras} full</small>` : ''}
       </div>`;
   }
 

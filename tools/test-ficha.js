@@ -91,44 +91,50 @@ const rectoClip = (host) => {
 
 async function main() {
 
-console.log('\nla botella dice cuántas hay');
+console.log('\nla botella es un medidor contra el par');
 {
-  // 1.96 -> se dibuja la de 0.96 y sobra UNA entera.
-  const a = abrir({ onHand: 1.96 });
-  ok('con 1.96 avisa de la entera que sobra', /\+1 full/.test(a.host.textContent));
+  // Antes dibujaba la parte decimal del on hand y debajo escribía
+  // "+N full". Eso contesta cómo está la botella abierta, que no es lo
+  // que se mira al buscar un producto. Ahora el par es la botella
+  // llena y el on hand marca el nivel.
+  const a = abrir({ onHand: 1.96, par: 18 });
+  ok('ya no se cuentan botellas enteras aparte', !/full/.test(a.host.textContent));
 
-  // 2 justas -> se dibuja una llena y sobra OTRA. Antes este caso
-  // enseñaba una botella y nada mas: dos se veian como una.
-  const b = abrir({ onHand: 2 });
-  ok('con 2 justas también', /\+1 full/.test(b.host.textContent));
-
-  const c = abrir({ onHand: 1 });
-  ok('con 1 no sobra ninguna', !/full/.test(c.host.textContent));
-
-  const d = abrir({ onHand: 0.5 });
-  ok('con media tampoco', !/full/.test(d.host.textContent));
-
-  const e = abrir({ onHand: 5.3 });
-  ok('con 5.3 sobran cinco', /\+5 full/.test(e.host.textContent));
+  const b = abrir({ onHand: 5.3, par: 18 });
+  ok('tampoco con decimales', !/full/.test(b.host.textContent));
 }
 
-console.log('\ny la dibuja al nivel que es');
+console.log('\ny el nivel es on hand contra par');
 {
-  // El recorte marca la superficie del liquido: cuanto MAS lleno,
-  // mas arriba empieza, o sea menor y.
-  const lleno = rectoClip(abrir({ onHand: 1 }).host);
-  const medio = rectoClip(abrir({ onHand: 0.5 }).host);
-  const poco  = rectoClip(abrir({ onHand: 0.1 }).host);
-  ok('llena empieza más arriba que media', lleno < medio, lleno + ' vs ' + medio);
-  ok('y media más arriba que casi vacía', medio < poco, medio + ' vs ' + poco);
+  // El recorte marca la superficie: cuanto MÁS lleno, más arriba
+  // empieza, o sea menor y.
+  const lleno = rectoClip(abrir({ onHand: 18, par: 18 }).host);
+  const medio = rectoClip(abrir({ onHand: 9,  par: 18 }).host);
+  const poco  = rectoClip(abrir({ onHand: 2,  par: 18 }).host);
+  ok('al par, lleno del todo', lleno < medio, lleno + ' vs ' + medio);
+  ok('a la mitad del par, a media altura', medio < poco, medio + ' vs ' + poco);
 
-  // Una botella justa esta LLENA. La parte decimal de 2.0 es cero y
-  // sin corregirlo se dibujaba al vacio.
-  eq('2.0 se dibuja igual que 1.0', rectoClip(abrir({ onHand: 2 }).host), lleno);
+  // Lo que el par cambia: el mismo on hand con otro par se dibuja
+  // distinto. Antes 7.3 se veía igual tuviera par 18 o par 2.
+  const parAlto = rectoClip(abrir({ onHand: 7.3, par: 18 }).host);
+  const parBajo = rectoClip(abrir({ onHand: 7.3, par: 8 }).host);
+  ok('el mismo stock con par menor se ve más lleno', parBajo < parAlto,
+     parBajo + ' vs ' + parAlto);
 
-  const vacia = abrir({ onHand: 0 });
+  // 2 de 2 es lleno, igual que 18 de 18.
+  eq('2 de 2 llena igual que 18 de 18',
+     rectoClip(abrir({ onHand: 2, par: 2 }).host), lleno);
+
+  // Por encima del par no se desborda.
+  eq('pasarse del par no desborda',
+     rectoClip(abrir({ onHand: 40, par: 18 }).host), lleno);
+
+  const vacia = abrir({ onHand: 0, par: 18 });
   ok('en cero no se pinta líquido', !vacia.host.querySelector('.m-bot g[clip-path]'));
   ok('pero la botella sigue ahí', !!vacia.host.querySelector('.m-bot svg path'));
+
+  const sinPar = abrir({ onHand: 5, par: 0 });
+  ok('sin par no hay medidor', !sinPar.host.querySelector('.m-bot g[clip-path]'));
 }
 
 console.log('\nsin forma asignada no se rompe');
