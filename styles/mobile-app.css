@@ -1196,6 +1196,76 @@
    * tapan nada que se toque: la banda es fija y los avisos pasan por
    * debajo de ella.
    */
+  /* ── Burbujas en la banda ──────────────────────────────────────
+   *
+   * Los avisos ya no flotan sobre el contenido: viven en el hueco
+   * libre a la izquierda del logo, de una en una. El contenedor
+   * flotante sigue existiendo para el escritorio y por si la banda no
+   * está montada todavía.
+   *
+   * El ancho está limitado a la mitad de la pantalla porque el logo
+   * va centrado: pasarse de ahí los pisaría. Los mensajes son cortos
+   * a propósito; el que no quepa se corta y, si era importante, el
+   * texto entero sigue en la lista que se abre al tocar.
+   */
+  .m-band-slot {
+    position: absolute; left: 12px; bottom: 0; z-index: 2;
+    height: 52px; max-width: 46vw;
+    display: flex; align-items: center;
+    pointer-events: none;
+  }
+
+  .m-bub {
+    display: inline-flex; align-items: center; gap: 5px;
+    height: 25px; padding: 0 10px; border-radius: 999px;
+    font-size: 11.5px; font-weight: 600; line-height: 1;
+    white-space: nowrap; overflow: hidden; max-width: 100%;
+    border: 1px solid transparent;
+    opacity: 0; transform: translateY(5px) scale(.94);
+    transition: opacity .2s ease, transform .22s cubic-bezier(.22,.61,.36,1);
+  }
+  .m-bub.on { opacity: 1; transform: none; }
+  .m-bub > span {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .m-bub > i { font-size: 13px; flex: 0 0 auto; }
+
+  .m-bub-info  { background: rgba(56,189,248,.18);  color: #7dd3fc;
+                 border-color: rgba(56,189,248,.26); }
+  .m-bub-ok    { background: rgba(16,185,129,.20);  color: #6ee7b7;
+                 border-color: rgba(16,185,129,.28); }
+  .m-bub-warn  { background: rgba(245,158,11,.20);  color: #fcd34d;
+                 border-color: rgba(245,158,11,.30); }
+  .m-bub-error { background: rgba(248,113,113,.20); color: #fca5a5;
+                 border-color: rgba(248,113,113,.32); }
+
+  /* La que se queda. Es la única que se puede tocar. */
+  .m-bub-tap { pointer-events: auto; cursor: pointer; }
+  .m-bub-tap:active { transform: scale(.96); }
+
+  .m-bub-list {
+    position: fixed; z-index: 9200;
+    left: 12px; right: 12px;
+    top: calc(58px + env(safe-area-inset-top, 0px));
+    background: rgba(17,26,46,.96);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 14px; padding: 10px;
+    box-shadow: 0 18px 40px rgba(0,0,0,.5);
+    opacity: 0; transform: translateY(-6px);
+    transition: opacity .18s ease, transform .2s ease;
+  }
+  .m-bub-list.on { opacity: 1; transform: none; }
+  .m-bub-row {
+    font-size: 12.5px; line-height: 1.45; padding: 7px 9px;
+    border-radius: 9px; margin-bottom: 6px;
+  }
+  .m-bub-clear {
+    width: 100%; border-radius: 10px; padding: 8px;
+    font-size: 12.5px; font-weight: 700;
+    background: rgba(255,255,255,.08); color: #cbd5e1;
+    border: 1px solid rgba(255,255,255,.14);
+  }
+
   #bsToastContainer {
     right: 10px; left: 10px; bottom: auto;
     top: calc(56px + env(safe-area-inset-top, 0px));

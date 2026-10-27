@@ -179,7 +179,7 @@
       if (typeof saveState === 'function') saveState();
       if (typeof render === 'function') render();
       if (typeof setStatus === 'function') {
-        setStatus(`No Match loaded from cloud: ${state.noMatches.length}`);
+        setStatus(`${state.noMatches.length} unmatched items loaded`);
       }
     } catch (err) {
       console.error(err);

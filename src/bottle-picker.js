@@ -208,7 +208,7 @@
     close();
     if (typeof window.render === 'function') window.render();
     if (typeof window.setStatus === 'function') {
-      window.setStatus(`Silueta de '${_row ? _row.item : ''}' actualizada.`);
+      window.setStatus(`Bottle shape updated for ${_row ? _row.item : ''}`);
     }
     if (cb) cb(_shape, nuevoSize);
   }

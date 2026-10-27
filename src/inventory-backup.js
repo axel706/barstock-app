@@ -94,7 +94,7 @@
     if (typeof setStatus === 'function') setStatus('Restaurando inventario…');
     const out = await restore(chosen.id);
     if (out && out.ok) {
-      if (typeof setStatus === 'function') setStatus(`Inventario restaurado: ${out.restored} artículos.`);
+      if (typeof setStatus === 'function') setStatus(`Inventory restored · ${out.restored} items`);
       if (typeof loadInventoryFromSupabase === 'function') await loadInventoryFromSupabase();
       if (typeof render === 'function') render();
       alert(`Restaurado. ${out.restored} artículos.`);

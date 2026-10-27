@@ -410,7 +410,7 @@
         if (typeof renderCompareToolbar === 'function') renderCompareToolbar();
       }
 
-      if (typeof setStatus === 'function') setStatus('Orders loaded from cloud.');
+      if (typeof setStatus === 'function') setStatus('Orders loaded');
     } catch (err) {
       console.error('loadOrdersFromCloud failed', err);
       if (typeof setStatus === 'function') setStatus('Could not load orders from cloud.');

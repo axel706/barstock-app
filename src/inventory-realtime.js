@@ -181,7 +181,7 @@
       });
     }
 
-    setRealtimeStatus(`Inventory cloud cargado: ${state.master.length} items`);
+    setRealtimeStatus(`Inventory loaded · ${state.master.length} items`);
   }
 
   // ── Freno para rafagas de realtime ──────────────────────────────────
@@ -252,7 +252,7 @@
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          setRealtimeStatus('Inventory realtime conectado');
+          setRealtimeStatus('Live updates on');
         }
       });
   }
@@ -269,7 +269,7 @@
     setTimeout(() => {
       enableInventoryRealtime().catch(err => {
         console.error(err);
-        setRealtimeStatus('Error conectando inventory realtime');
+        setRealtimeStatus('Live updates unavailable');
         // Si la carga fallo, el esqueleto se quedaria latiendo para siempre
         // y pareceria que la app esta colgada. Mejor decir que paso.
         if (window.BarStockSkeleton && (!Array.isArray(state.master) || !state.master.length)) {

@@ -70,12 +70,144 @@
     setTimeout(() => el.remove(), 260);
   }
 
+  // ── En el teléfono, burbujas en la cabecera ─────────────────────
+  //
+  // Los avisos flotantes tapaban media pantalla al arrancar: tres o
+  // cuatro apilados sobre el contenido. En la banda hay un hueco libre
+  // a la izquierda del logo, y ahí caben de una en una.
+  //
+  // Una cada vez, en cola. Entra, se queda un momento, se va, y pasa la
+  // siguiente. Cuando la cola se vacía, lo informativo desaparece sin
+  // dejar rastro; lo que era un error o un aviso deja una pastilla que
+  // se puede tocar — un fallo no debe esfumarse porque pasaron cuatro
+  // segundos.
+
+  // `requestAnimationFrame` a secas no existe fuera del navegador, y
+  // los tests cargan este módulo en jsdom. Se pide por `window`, como
+  // el resto del proyecto.
+  const raf = f => (window.requestAnimationFrame || (g => setTimeout(g, 16)))(f);
+
+  const ENTRADA = 2200;   // cuánto se queda cada burbuja
+  const ENTRADA_RAPIDA = 1500;  // con cola larga, más cortas
+  const SALIDA = 260;
+
+  let _cola = [];
+  let _enCurso = false;
+  let _pendientes = [];
+
+  function enMovil() {
+    const S = window.BarStockMobileShell;
+    return !!(S && typeof S.esMovil === 'function' && S.esMovil() &&
+              document.getElementById('mBand'));
+  }
+
+  function hueco() {
+    const banda = document.getElementById('mBand');
+    if (!banda) return null;
+    let slot = banda.querySelector('.m-band-slot');
+    if (!slot) {
+      slot = document.createElement('span');
+      slot.className = 'm-band-slot';
+      banda.appendChild(slot);
+    }
+    return slot;
+  }
+
+  function burbuja(tone, texto, clase) {
+    const b = document.createElement('span');
+    b.className = 'm-bub m-bub-' + tone + (clase ? ' ' + clase : '');
+    const i = document.createElement('i');
+    i.className = 'ti ' + (tone === 'ok' ? 'ti-check'
+                        : tone === 'error' ? 'ti-alert-triangle'
+                        : tone === 'warn' ? 'ti-alert-circle' : 'ti-info-circle');
+    i.setAttribute('aria-hidden', 'true');
+    const t = document.createElement('span');
+    t.textContent = texto;
+    b.appendChild(i); b.appendChild(t);
+    return b;
+  }
+
+  function siguiente() {
+    const slot = hueco();
+    if (!slot) { _cola = []; _enCurso = false; return; }
+
+    if (!_cola.length) { _enCurso = false; resumen(); return; }
+
+    _enCurso = true;
+    const t = _cola.shift();
+    if (t.tone === 'error' || t.tone === 'warn') _pendientes.push(t);
+
+    slot.innerHTML = '';
+    const b = burbuja(t.tone, t.text);
+    slot.appendChild(b);
+    raf(() => b.classList.add('on'));
+
+    const espera = _cola.length > 1 ? ENTRADA_RAPIDA : ENTRADA;
+    setTimeout(() => {
+      b.classList.remove('on');
+      setTimeout(() => { if (b.parentNode) b.remove(); siguiente(); }, SALIDA);
+    }, espera);
+  }
+
+  // Lo que queda cuando la cola termina.
+  function resumen() {
+    const slot = hueco();
+    if (!slot) return;
+    slot.innerHTML = '';
+    if (!_pendientes.length) return;
+
+    const n = _pendientes.length;
+    const b = burbuja('error', n + (n === 1 ? ' needs you' : ' need you'), 'm-bub-tap');
+    b.setAttribute('role', 'button');
+    b.setAttribute('tabindex', '0');
+    b.onclick = abrirLista;
+    slot.appendChild(b);
+    raf(() => b.classList.add('on'));
+  }
+
+  function abrirLista() {
+    cerrarLista();
+    const caja = document.createElement('div');
+    caja.id = 'mBubList';
+    caja.className = 'm-bub-list';
+    caja.innerHTML =
+      _pendientes.map(p =>
+        '<div class="m-bub-row m-bub-' + p.tone + '"></div>').join('') +
+      '<button type="button" class="m-bub-clear">Dismiss</button>';
+    Array.from(caja.querySelectorAll('.m-bub-row')).forEach((row, i) => {
+      row.textContent = _pendientes[i].text;
+    });
+    caja.querySelector('.m-bub-clear').onclick = () => {
+      _pendientes = [];
+      cerrarLista();
+      resumen();
+    };
+    document.body.appendChild(caja);
+    raf(() => caja.classList.add('on'));
+  }
+
+  function cerrarLista() {
+    const v = document.getElementById('mBubList');
+    if (v) v.remove();
+  }
+
+  function encolar(text, tone) {
+    // Mismo mensaje repetido seguido: no se apila.
+    const ultimo = _cola[_cola.length - 1];
+    if (ultimo && ultimo.text === text) return;
+    _cola.push({ text, tone });
+    if (!_enCurso) siguiente();
+  }
+
   function show(msg, opts) {
     const text = String(msg == null ? '' : msg).trim();
     if (!text) return;
 
+    const tono = (opts && opts.tone) || toneFor(text);
+    if (enMovil()) { encolar(text, tono); return; }
+
     const root = ensureContainer();
-    const tone = (opts && opts.tone) || toneFor(text);
+    const tone = tono;
 
     // Si el mismo mensaje ya esta en pantalla, reiniciar su tiempo en vez
     // de apilar duplicados. render() puede disparar el mismo status varias
