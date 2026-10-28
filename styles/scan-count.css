@@ -35,18 +35,18 @@ body.sc-locked{ overflow: hidden !important; }
   background: rgba(255,255,255,.08);
   border: 1px solid rgba(255,255,255,.14);
   color: #f1f5f9;
-  font-size: 20px;
+  font-size: var(--m-title);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
 }
 .sc-lab{
-  font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  font-size: var(--m-meta); letter-spacing: .14em; text-transform: uppercase;
   color: #f59e0b; font-weight: 800;
 }
 .sc-n{
   margin-left: auto;
-  font-size: 15px; font-weight: 800;
+  font-size: var(--m-body); font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 
@@ -94,7 +94,7 @@ body.sc-locked{ overflow: hidden !important; }
   padding: 12px 14px 16px;
   border-top: 1px solid rgba(255,255,255,.10);
 }
-.sc-diag{ font-size: 12px; color: #94a3b8; margin-bottom: 10px; line-height: 1.5; }
+.sc-diag{ font-size: var(--m-small); color: #94a3b8; margin-bottom: 10px; line-height: 1.5; }
 .sc-diag .sc-ok{ color: #22c55e; }
 .sc-diag .sc-bad{ color: #ef4444; font-weight: 700; }
 
@@ -129,11 +129,11 @@ body.sc-locked{ overflow: hidden !important; }
 .sc-found{ background: rgba(6,42,24,.82); border: 1px solid rgba(34,197,94,.55); }
 .sc-new  { background: rgba(48,30,4,.85);  border: 1px solid rgba(245,158,11,.55); }
 .sc-code{
-  font-size: 19px; font-weight: 800; letter-spacing: .04em;
+  font-size: var(--m-title); font-weight: 800; letter-spacing: .04em;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
-.sc-item{ font-size: 13px; font-weight: 700; margin-top: 3px; }
-.sc-meta{ font-size: 11px; color: #94a3b8; margin-top: 2px; }
+.sc-item{ font-size: var(--m-small); font-weight: 700; margin-top: 3px; }
+.sc-meta{ font-size: var(--m-meta); color: #94a3b8; margin-top: 2px; }
 
 
 
@@ -151,11 +151,11 @@ body.sc-locked{ overflow: hidden !important; }
   background: transparent;
   border: 1px solid rgba(255,255,255,.20);
   color: #f1f5f9;
-  font-family: inherit; font-size: 14px; font-weight: 700;
+  font-family: inherit; font-size: var(--m-body); font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
 }
-.sc-note{ font-size: 11px; color: #94a3b8; text-align: center; margin-top: 8px; }
+.sc-note{ font-size: var(--m-meta); color: #94a3b8; text-align: center; margin-top: 8px; }
 
 /* Destello al leer. En iOS no hay vibracion posible desde la web, asi
    que el aviso es este mas el pitido. */
@@ -190,13 +190,13 @@ body.sc-locked{ overflow: hidden !important; }
   gap: 12px;
   margin-bottom: 12px;
 }
-.sc-assign-t{ font-size: 17px; font-weight: 800; }
+.sc-assign-t{ font-size: var(--m-strong); font-weight: 800; }
 
 /* El código en su propia insignia. Antes iba debajo del título, en gris
    pequeño, y era el dato que confirma que estás asignando lo correcto. */
 .sc-assign-code{
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 15px;
+  font-size: var(--m-body);
   font-weight: 700;
   letter-spacing: .06em;
   color: #38bdf8;
@@ -212,7 +212,7 @@ body.sc-locked{ overflow: hidden !important; }
 .sc-search > i{
   position: absolute;
   left: 12px; top: 50%; transform: translateY(-50%);
-  font-size: 18px; color: #94a3b8;
+  font-size: var(--m-title); color: #94a3b8;
   pointer-events: none;
 }
 .sc-assign input{
@@ -226,7 +226,7 @@ body.sc-locked{ overflow: hidden !important; }
   font-family: inherit;
   /* 16px exactos: por debajo, Safari acerca la pantalla al enfocar y no
      vuelve solo. En mitad de un conteo eso es insufrible. */
-  font-size: 16px;
+  font-size: var(--m-strong);
   font-weight: 600;
 }
 
@@ -237,14 +237,14 @@ body.sc-locked{ overflow: hidden !important; }
   -webkit-overflow-scrolling: touch;
 }
 .sc-picks-head{
-  font-size: 11px;
+  font-size: var(--m-meta);
   letter-spacing: .06em;
   text-transform: uppercase;
   color: #94a3b8;
   padding: 2px 2px 8px;
 }
 .sc-err{
-  font-size: 11px;
+  font-size: var(--m-meta);
   color: #94a3b8;
   text-align: center;
   padding: 0 4px 12px;
@@ -274,7 +274,7 @@ body.sc-locked{ overflow: hidden !important; }
 .sc-pick-name{
   flex: 1;
   min-width: 0;
-  font-size: 15px;
+  font-size: var(--m-body);
   font-weight: 700;
   line-height: 1.3;
 }
@@ -284,7 +284,7 @@ body.sc-locked{ overflow: hidden !important; }
 }
 .sc-pick-meta em{
   font-style: normal;
-  font-size: 10px;
+  font-size: var(--m-meta);
   font-weight: 800;
   letter-spacing: .05em;
   color: #94a3b8;
@@ -294,9 +294,9 @@ body.sc-locked{ overflow: hidden !important; }
 }
 /* Los que ya tienen código aprendido llevan la marca y van al final de
    la lista: si escaneas algo desconocido, casi seguro no es uno de esos. */
-.sc-pick-meta > i{ font-size: 15px; color: #38bdf8; opacity: .55; }
+.sc-pick-meta > i{ font-size: var(--m-body); color: #38bdf8; opacity: .55; }
 
-.sc-empty{ font-size: 13px; color: #94a3b8; text-align: center; padding: 20px 0; }
+.sc-empty{ font-size: var(--m-small); color: #94a3b8; text-align: center; padding: 20px 0; }
 .sc-empty.sc-bad{ color: #ef4444; font-weight: 700; }
 
 /* En horizontal la camara se lleva casi todo y la hoja se aprieta */
@@ -304,7 +304,7 @@ body.sc-locked{ overflow: hidden !important; }
   .sc-panel{ padding: 8px 12px 10px; }
   .sc-sheet{ padding: 0 12px 10px; max-height: 54vh; }
   .sc-grab{ height: 20px; }
-  .sc-prog b{ font-size: 21px; }
+  .sc-prog b{ font-size: var(--m-head); }
 }
 
 /* ── Modo claro ─────────────────────────────────────────────────────────
@@ -385,8 +385,8 @@ body.light .sc-err{ color: #475569; }
   margin-bottom: 10px;
 }
 .sc-prog{ display: flex; align-items: baseline; gap: 6px; min-width: 0; }
-.sc-prog b{ font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
-.sc-prog span{ font-size: 12px; color: #94a3b8; }
+.sc-prog b{ font-size: var(--m-screen); font-weight: 800; font-variant-numeric: tabular-nums; }
+.sc-prog span{ font-size: var(--m-small); color: #94a3b8; }
 
 .sc-pause{
   margin-left: auto; flex-shrink: 0;
@@ -395,7 +395,7 @@ body.light .sc-err{ color: #475569; }
   background: rgba(255,255,255,.07);
   border: 1px solid rgba(255,255,255,.18);
   color: #e2e8f0;
-  font-size: 13px; font-weight: 700;
+  font-size: var(--m-small); font-weight: 700;
   display: inline-flex; align-items: center; gap: 6px;
   cursor: pointer;
 }
@@ -417,16 +417,16 @@ body.light .sc-err{ color: #475569; }
 .sc-sheet .sc-diag{ display: none; }
 .sc-overlay.sheet-up .sc-sheet .sc-diag{ display: block; }
 .sc-left-cat{
-  font-size: 11px; font-weight: 800; letter-spacing: .06em;
+  font-size: var(--m-meta); font-weight: 800; letter-spacing: .06em;
   text-transform: uppercase; color: #64748b;
   margin: 12px 0 4px;
 }
 .sc-left-row{
-  font-size: 13px; padding: 7px 0;
+  font-size: var(--m-small); padding: 7px 0;
   border-bottom: 1px solid rgba(255,255,255,.06);
 }
 .sc-left-more, .sc-left-done{
-  font-size: 12px; color: #94a3b8; padding: 10px 0 0;
+  font-size: var(--m-small); color: #94a3b8; padding: 10px 0 0;
 }
 .sc-left-done{ color: #22c55e; font-weight: 700; }
 
@@ -459,8 +459,8 @@ body.light .sc-err{ color: #475569; }
   background: rgba(56,189,248,.07);
   margin-bottom: 12px;
 }
-.sc-sz-item b{ display: block; font-size: 15px; font-weight: 700; }
-.sc-sz-item span{ display: block; font-size: 11.5px; color: #94a3b8; margin-top: 2px; }
+.sc-sz-item b{ display: block; font-size: var(--m-body); font-weight: 700; }
+.sc-sz-item span{ display: block; font-size: var(--m-meta); color: #94a3b8; margin-top: 2px; }
 
 .sc-sizes{
   display: flex; flex-wrap: wrap; gap: 8px;
@@ -476,7 +476,7 @@ body.light .sc-err{ color: #475569; }
   border: 1px solid rgba(255,255,255,.14);
   background: transparent;
   color: #cbd5e1;
-  font-family: inherit; font-size: 14px; font-weight: 700;
+  font-family: inherit; font-size: var(--m-body); font-weight: 700;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
 }
@@ -490,7 +490,7 @@ body.light .sc-err{ color: #475569; }
    tamaño distinto del que se ordena cambia como cuenta esa botella, y
    eso tiene que leerse antes de guardar, no descubrirse despues. */
 .sc-sz-note{
-  font-size: 12px; line-height: 1.5;
+  font-size: var(--m-small); line-height: 1.5;
   color: #94a3b8;
   margin-bottom: 14px;
 }
@@ -499,7 +499,7 @@ body.light .sc-err{ color: #475569; }
   width: 100%; min-height: 54px;
   border-radius: 14px; border: none;
   background: #38bdf8; color: #04263a;
-  font-family: inherit; font-size: 16px; font-weight: 800;
+  font-family: inherit; font-size: var(--m-strong); font-weight: 800;
   cursor: pointer;
 }
 .sc-go:active{ background: #0ea5e9; }
@@ -523,8 +523,8 @@ body.light .sc-sz-note{ color: #64748b; }
   margin-bottom: 10px;
 }
 .bf-opt.on{ border-color: rgba(56,189,248,.45); background: rgba(56,189,248,.06); }
-.bf-opt > b{ display: block; font-size: 14px; font-weight: 700; }
-.bf-opt > span{ display: block; font-size: 11.5px; color: #94a3b8; margin-top: 2px; }
+.bf-opt > b{ display: block; font-size: var(--m-body); font-weight: 700; }
+.bf-opt > span{ display: block; font-size: var(--m-meta); color: #94a3b8; margin-top: 2px; }
 
 .bf-sizes{ display: flex; flex-wrap: wrap; gap: 7px; margin: 11px 0 10px; }
 .bf-sz{
@@ -535,7 +535,7 @@ body.light .sc-sz-note{ color: #64748b; }
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,.14);
   background: transparent; color: #cbd5e1;
-  font-family: inherit; font-size: 14px; font-weight: 700;
+  font-family: inherit; font-size: var(--m-body); font-weight: 700;
   font-variant-numeric: tabular-nums; cursor: pointer;
 }
 .bf-sz.on{ border-color: #38bdf8; border-width: 2px;
@@ -545,7 +545,7 @@ body.light .sc-sz-note{ color: #64748b; }
   width: 100%; min-height: 48px;
   border-radius: 12px; border: none;
   background: #38bdf8; color: #04263a;
-  font-family: inherit; font-size: 15px; font-weight: 800; cursor: pointer;
+  font-family: inherit; font-size: var(--m-body); font-weight: 800; cursor: pointer;
 }
 .bf-go:disabled{ background: rgba(255,255,255,.08); color: #64748b; cursor: default; }
 .bf-go:not(:disabled):active{ background: #0ea5e9; }
@@ -553,7 +553,7 @@ body.light .sc-sz-note{ color: #64748b; }
 /* Cambiar el tamano NO recalcula lo ya contado: cada pasada guardo el
    suyo al escanear. Decirlo aqui evita que alguien lo descubra despues
    mirando un total que no cuadra. */
-.bf-sz-note{ font-size: 11px; line-height: 1.5; color: #64748b; margin-top: 9px; }
+.bf-sz-note{ font-size: var(--m-meta); line-height: 1.5; color: #64748b; margin-top: 9px; }
 
 body.light .bf-opt{ border-color: rgba(15,23,42,.14); }
 body.light .bf-opt.on{ border-color: rgba(2,132,199,.40); background: rgba(2,132,199,.05); }
@@ -623,7 +623,7 @@ body.light .bf-go:disabled{ background: rgba(15,23,42,.06); color: #94a3b8; }
   background: rgba(255, 255, 255, .06);
   color: #94a3b8;
   font-family: inherit;
-  font-size: 14px;
+  font-size: var(--m-body);
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;

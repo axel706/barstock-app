@@ -10,8 +10,14 @@
 
 const fs = require('fs');
 const path = require('path');
-const css = fs.readFileSync(
-  path.join(__dirname, '..', 'styles', 'mobile-app.css'), 'utf8');
+// Las hojas que el teléfono llega a ver. Las de las secciones de
+// escritorio —cost-report, consumption-match, pour-iq, order-history,
+// admin— quedan fuera porque en el móvil ni se abren.
+const HOJAS = ['mobile-app', 'mobile', 'count-panel', 'scan-count',
+               'add-to-order', 'stock-in', 'auth', 'empty-state', 'toast'];
+const leer = n => fs.readFileSync(
+  path.join(__dirname, '..', 'styles', n + '.css'), 'utf8');
+const css = leer('mobile-app');
 
 let ok = 0, mal = 0;
 function prueba(n, c, extra) {
@@ -24,10 +30,15 @@ function grupo(t) { console.log('\n' + t); }
 // paso; se quitan antes de buscar.
 const limpio = css.replace(/\/\*[\s\S]*?\*\//g, '');
 
-grupo('ningún tamaño suelto, salvo el logo');
-// El logo es la única excepción y es deliberada: ver más abajo.
-const sueltos = (limpio.match(/font-size:\s*[0-9.]+px/g) || []);
-prueba('una sola declaración en px', sueltos.length === 1, sueltos.join(', '));
+grupo('ningún tamaño suelto en lo que ve el teléfono');
+// Las únicas excepciones son los dos wordmarks, y son deliberadas: si
+// entran en la escala, subir "Text size" deforma la marca.
+for (const h of HOJAS) {
+  const txt = leer(h).replace(/\/\*[\s\S]*?\*\//g, '');
+  const px = txt.match(/font-size:\s*[0-9.]+px/g) || [];
+  const esperado = (h === 'mobile-app' || h === 'auth') ? 1 : 0;
+  prueba(h + '.css', px.length === esperado, px.join(', '));
+}
 
 grupo('la escala existe y cuelga de una sola base');
 for (const t of ['meta', 'small', 'eyebrow', 'body', 'strong', 'head', 'title',
@@ -50,8 +61,13 @@ prueba('el punto en em', /\.m-logo \.m-logo-dot[^{]*\{[^}]*width:\s*\.22em/s.tes
 // cuelgan de él en em— y una preferencia de lectura acaba deformando
 // la marca.
 const logo = (limpio.match(/\.m-logo \{[^}]*\}/s) || [''])[0];
-prueba('el wordmark no escala con el texto',
+prueba('el wordmark de la banda no escala',
   /font-size:\s*23px/.test(logo), logo.replace(/\s+/g, ' ').slice(0, 80));
+
+const auth = leer('auth').replace(/\/\*[\s\S]*?\*\//g, '');
+const logoAuth = (auth.match(/\.auth-brand-type\{[^}]*\}/s) || [''])[0];
+prueba('ni el del login', /font-size:\s*28px/.test(logoAuth),
+  logoAuth.replace(/\s+/g, ' ').slice(0, 80));
 
 console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
   '   ·   ' + (ok + mal) + ' comprobaciones');

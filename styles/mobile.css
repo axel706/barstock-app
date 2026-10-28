@@ -42,23 +42,23 @@
      uno, porque su especificidad le gana a la generica. */
   input,
   select,
-  textarea            { font-size: 16px; }
+  textarea            { font-size: var(--m-strong); }
 
-  #vendorSearchInput  { font-size: 16px; }
-  .scan-toolbar select{ font-size: 16px; }
-  .ac-row select      { font-size: 16px; }
-  .lb-url input       { font-size: 16px; }
-  .cr-card-input input{ font-size: 16px; }
+  #vendorSearchInput  { font-size: var(--m-strong); }
+  .scan-toolbar select{ font-size: var(--m-strong); }
+  .ac-row select      { font-size: var(--m-strong); }
+  .lb-url input       { font-size: var(--m-strong); }
+  .cr-card-input input{ font-size: var(--m-strong); }
 
   /* Este es un <select> real de 12px con opacity:0 encima del chip de
      locacion. Es invisible, asi que subirlo a 16 no cambia nada de lo
      que se ve — pero si evita el zoom, porque Safari mira el campo
      que enfocas, no si se ve o no. */
-  .bs-loc-select      { font-size: 16px; }
+  .bs-loc-select      { font-size: var(--m-strong); }
 
   /* El unico !important del archivo: el original tambien lo trae
      (cost-report.css:613) y sin el no habria forma de ganarle. */
-  .cr-cat-input.sm input { font-size: 16px !important; }
+  .cr-cat-input.sm input { font-size: var(--m-strong) !important; }
 
 
   /* ── 2 · Los paneles laterales se apilan ──────────────────────────
@@ -280,7 +280,7 @@
   #vendorExportArea .rowactions button {
     min-width: 0;
     padding: 3px 4px;
-    font-size: 10px;
+    font-size: var(--m-meta);
   }
 
 
@@ -336,6 +336,6 @@
      esta. */
   .auth-field input,
   .auth-field select,
-  .auth-field textarea { font-size: 16px; }
+  .auth-field textarea { font-size: var(--m-strong); }
 
 }

@@ -23,14 +23,14 @@ body.light .ato-modal { border-color: rgba(15, 23, 42, .1); }
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--m-small);
   font-weight: 800;
   margin-bottom: 12px;
 }
-.ato-head i { font-size: 17px; color: #22c55e; }
+.ato-head i { font-size: var(--m-strong); color: #22c55e; }
 .ato-vendor {
   margin-left: auto;
-  font-size: 11px;
+  font-size: var(--m-meta);
   font-weight: 700;
   padding: 2px 9px;
   border-radius: 10px;
@@ -43,7 +43,7 @@ body.light .ato-modal { border-color: rgba(15, 23, 42, .1); }
 .ato-search {
   width: 100%;
   box-sizing: border-box;
-  font-size: 16px;
+  font-size: var(--m-strong);
   padding: 9px 11px;
   border-radius: 9px;
 }
@@ -77,27 +77,27 @@ body.light .ato-row:hover { background: rgba(15, 23, 42, .04); }
 .ato-row.off { opacity: .45; cursor: not-allowed; }
 .ato-row.off:hover { background: none; }
 
-.ato-name { font-size: 12.5px; font-weight: 600; }
-.ato-sub  { font-size: 10.5px; color: var(--sub); margin-top: 1px; }
-.ato-flag { font-size: 10px; color: #f59e0b; font-weight: 700; }
-.ato-pick { font-size: 11px; font-weight: 700; color: #22c55e; }
+.ato-name { font-size: var(--m-small); font-weight: 600; }
+.ato-sub  { font-size: var(--m-meta); color: var(--sub); margin-top: 1px; }
+.ato-flag { font-size: var(--m-meta); color: #f59e0b; font-weight: 700; }
+.ato-pick { font-size: var(--m-meta); font-weight: 700; color: #22c55e; }
 
-.ato-empty { padding: 18px 10px; text-align: center; font-size: 12px; color: var(--sub); }
+.ato-empty { padding: 18px 10px; text-align: center; font-size: var(--m-small); color: var(--sub); }
 
 .ato-foot { display: flex; align-items: center; gap: 10px; margin-top: 13px; }
-.ato-foot .ato-qty-label { font-size: 12px; color: var(--sub); }
+.ato-foot .ato-qty-label { font-size: var(--m-small); color: var(--sub); }
 
 .ato-step { display: flex; align-items: center; gap: 6px; }
 .ato-step button {
   width: 32px; height: 32px; padding: 0;
   border-radius: 8px;
-  font-size: 17px; line-height: 1;
+  font-size: var(--m-strong); line-height: 1;
   cursor: pointer;
 }
 .ato-step input {
   width: 54px; height: 32px; padding: 0;
   text-align: center;
-  font-size: 16px;
+  font-size: var(--m-strong);
   border-radius: 8px;
 }
 
@@ -106,15 +106,15 @@ body.light .ato-row:hover { background: rgba(15, 23, 42, .04); }
   background: #22c55e !important;
   color: #06301a !important;
   border: none !important;
-  font-size: 13px; font-weight: 800;
+  font-size: var(--m-small); font-weight: 800;
   padding: 9px 18px;
   border-radius: 9px;
   cursor: pointer;
 }
 .ato-add[disabled] { opacity: .4; cursor: not-allowed; }
 
-.ato-cancel { font-size: 12px; padding: 9px 14px; border-radius: 9px; cursor: pointer; }
+.ato-cancel { font-size: var(--m-small); padding: 9px 14px; border-radius: 9px; cursor: pointer; }
 
-.ato-note { font-size: 10.5px; color: var(--sub); margin-top: 11px; line-height: 1.5; }
+.ato-note { font-size: var(--m-meta); color: var(--sub); margin-top: 11px; line-height: 1.5; }
 .ato-bad  { color: #ef4444; font-weight: 700; }
 

@@ -8,13 +8,13 @@
 
 .si-head{
   display: flex; align-items: center; gap: 9px;
-  font-size: 16px; font-weight: 800;
+  font-size: var(--m-strong); font-weight: 800;
   margin-bottom: 14px;
 }
-.si-head i{ font-size: 20px; color: #38bdf8; }
+.si-head i{ font-size: var(--m-title); color: #38bdf8; }
 
-.si-item{ font-size: 17px; font-weight: 700; line-height: 1.25; }
-.si-meta{ font-size: 12px; color: var(--sub); margin-top: 3px; }
+.si-item{ font-size: var(--m-strong); font-weight: 700; line-height: 1.25; }
+.si-meta{ font-size: var(--m-small); color: var(--sub); margin-top: 3px; }
 
 .si-step{
   display: flex; align-items: center; justify-content: center; gap: 18px;
@@ -27,7 +27,7 @@
   border: 1px solid rgba(255,255,255,.18);
   background: rgba(255,255,255,.06);
   color: var(--text);
-  font-family: inherit; font-size: 26px; font-weight: 700; line-height: 1;
+  font-family: inherit; font-size: var(--m-screen); font-weight: 700; line-height: 1;
   cursor: pointer;
 }
 .si-step button:active{ background: rgba(56,189,248,.20); }
@@ -42,7 +42,7 @@
   box-sizing: border-box;
   text-align: center;
   font-family: inherit;
-  font-size: 36px; font-weight: 800; line-height: 1;
+  font-size: var(--m-figure); font-weight: 800; line-height: 1;
   font-variant-numeric: tabular-nums;
   color: inherit;
   background: transparent;
@@ -57,7 +57,7 @@
 }
 
 .si-note{
-  font-size: 12px; line-height: 1.6;
+  font-size: var(--m-small); line-height: 1.6;
   color: var(--sub);
   background: rgba(56,189,248,.07);
   border: 1px solid rgba(56,189,248,.22);
@@ -69,7 +69,7 @@
 
 .si-status{
   text-align: center; padding: 26px 10px;
-  font-size: 14px; color: var(--sub);
+  font-size: var(--m-body); color: var(--sub);
 }
 .si-bad{ color: #f87171; }
 
@@ -77,7 +77,7 @@
 .si-cancel, .si-go{
   flex: 1; min-height: 50px;
   border-radius: 12px;
-  font-family: inherit; font-size: 15px; font-weight: 800;
+  font-family: inherit; font-size: var(--m-body); font-weight: 800;
   cursor: pointer;
 }
 .si-cancel{

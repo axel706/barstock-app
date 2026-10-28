@@ -104,6 +104,9 @@ body.light #authCardBrand{
 }
 
 .auth-brand-type{
+  /* Fuera de la escala, como el de la banda: el punto y el sufijo
+     cuelgan de este cuerpo en em, asi que meterlo en la escala
+     haria que una preferencia de lectura deformase la marca. */
   font-size:28px;
   font-weight:800;
   letter-spacing:-0.03em;
@@ -170,7 +173,7 @@ body.light #authCardBody{
 
 #authCard h2{
   text-align:center;
-  font-size:19px;
+  font-size: var(--m-title);
   font-weight:700;
   color:#f8fafc;
   margin-bottom:4px;
@@ -179,13 +182,13 @@ body.light #authCardBody{
 #authSub{
   text-align:center;
   color:#cbd5e1;
-  font-size:13px;
+  font-size: var(--m-small);
   margin-bottom:22px;
 }
 
 .auth-label{
   display:block;
-  font-size:12px;
+  font-size: var(--m-small);
   font-weight:700;
   color:#e2e8f0;
   margin:0 0 6px 2px;
@@ -206,7 +209,7 @@ body.light #authCardBody{
   border:1px solid rgba(255,255,255,.24);
 
   color:#f8fafc;
-  font-size:14px;
+  font-size: var(--m-body);
   font-weight:600;
 
   transition:all .2s ease;
@@ -221,7 +224,7 @@ body.light #authCardBody{
   border:1px solid rgba(255,255,255,.24);
 
   color:#f8fafc;
-  font-size:14px;
+  font-size: var(--m-body);
   font-weight:600;
   font-family:inherit;
   resize:vertical;
@@ -253,7 +256,7 @@ body.light #authCardBody{
 }
 
 #authForgot{
-  font-size:12px;
+  font-size: var(--m-small);
   color:#38bdf8;
   font-weight:600;
   margin-bottom:18px;
@@ -269,7 +272,7 @@ body.light #authCardBody{
   background:linear-gradient(135deg,#0284c7,#0ea5e9);
 
   color:#fff;
-  font-size:14px;
+  font-size: var(--m-body);
   font-weight:700;
 
   cursor:pointer;
@@ -286,7 +289,7 @@ body.light #authCardBody{
 #authFoot{
   margin-top:16px;
   text-align:center;
-  font-size:12px;
+  font-size: var(--m-small);
   color:#cbd5e1;
 }
 
@@ -320,7 +323,7 @@ body.light #authCardBody{
 /* Auth message chip */
 #authMsg{
   text-align:center;
-  font-size:13px;
+  font-size: var(--m-small);
   font-weight:600;
   color:#7dd3fc;
   background:rgba(56,189,248,.16);

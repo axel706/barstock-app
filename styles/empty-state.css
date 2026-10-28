@@ -16,19 +16,19 @@
 }
 
 .bs-empty > i{
-  font-size: 34px;
+  font-size: var(--m-figure);
   margin-bottom: 6px;
   opacity: .85;
 }
 
 .bs-empty-title{
-  font-size: 15px;
+  font-size: var(--m-body);
   font-weight: 600;
   color: var(--text);
 }
 
 .bs-empty-text{
-  font-size: 13px;
+  font-size: var(--m-small);
   color: var(--sub);
   max-width: 340px;
   line-height: 1.5;
@@ -56,5 +56,5 @@ tr.bs-empty-row .bs-empty-action{
   padding: 28px 12px;
 }
 .vsp-panel-body .bs-empty > i{
-  font-size: 28px;
+  font-size: var(--m-figure);
 }

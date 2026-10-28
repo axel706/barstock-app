@@ -36,13 +36,13 @@
 }
 .cp-title{ min-width: 0; }
 .cp-name{
-  font-size: 17px; font-weight: 800; line-height: 1.2;
+  font-size: var(--m-strong); font-weight: 800; line-height: 1.2;
   /* Dos líneas y luego corta. Un nombre larguísimo no puede empujar el
      deslizador fuera de la pantalla. */
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.cp-sub{ font-size: 12px; color: #94a3b8; margin-top: 3px; }
+.cp-sub{ font-size: var(--m-small); color: #94a3b8; margin-top: 3px; }
 .cp-again{ color: #f59e0b; }
 
 .cp-body{
@@ -54,7 +54,7 @@
 }
 .cp-block{ margin-bottom: 18px; }
 .cp-label{
-  font-size: 11px; letter-spacing: .07em; text-transform: uppercase;
+  font-size: var(--m-meta); letter-spacing: .07em; text-transform: uppercase;
   color: #94a3b8; font-weight: 800; margin-bottom: 8px;
 }
 
@@ -72,7 +72,7 @@
   background: rgba(255,255,255,.07);
   border: 1px solid rgba(255,255,255,.18);
   color: #f1f5f9;
-  font-family: inherit; font-size: 28px; font-weight: 700;
+  font-family: inherit; font-size: var(--m-figure); font-weight: 700;
   line-height: 1;
   cursor: pointer;
 }
@@ -103,7 +103,7 @@
   box-sizing: border-box;
   text-align: center;
   font-family: inherit;
-  font-size: 40px; font-weight: 800; line-height: 1;
+  font-size: var(--m-figure); font-weight: 800; line-height: 1;
   font-variant-numeric: tabular-nums;
   color: inherit;
   background: transparent;
@@ -153,11 +153,11 @@ body.light .cp-num:focus{
 .cp-grip{ fill: #0f172a; stroke: rgba(255,255,255,.30); stroke-width: 1; vector-effect: non-scaling-stroke; }
 
 .cp-read{ text-align: center; margin-top: 4px; }
-.cp-read b{ font-size: 34px; font-weight: 800; line-height: 1; display: block; }
-.cp-read small{ font-size: 12px; color: #94a3b8; display: block; margin-top: 4px; }
+.cp-read b{ font-size: var(--m-figure); font-weight: 800; line-height: 1; display: block; }
+.cp-read small{ font-size: var(--m-small); color: #94a3b8; display: block; margin-top: 4px; }
 
 .cp-none{
-  font-size: 13px; color: #94a3b8; text-align: center;
+  font-size: var(--m-small); color: #94a3b8; text-align: center;
   padding: 26px 10px; line-height: 1.5;
 }
 
@@ -174,7 +174,7 @@ body.light .cp-num:focus{
   background: transparent;
   border: 1px dashed rgba(56,189,248,.45);
   color: #38bdf8;
-  font-family: inherit; font-size: 14px; font-weight: 700;
+  font-family: inherit; font-size: var(--m-body); font-weight: 700;
   cursor: pointer;
 }
 
@@ -216,8 +216,8 @@ body.light .cp-num:focus{
 }
 .cp-total:disabled{ cursor: default; }
 .cp-total-l{ display: flex; align-items: baseline; gap: 10px; }
-.cp-total-l > span{ font-size: 13px; color: #94a3b8; }
-.cp-total b{ font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.cp-total-l > span{ font-size: var(--m-small); color: #94a3b8; }
+.cp-total b{ font-size: var(--m-screen); font-weight: 800; font-variant-numeric: tabular-nums; }
 
 /* Con pasadas detrás deja de ser una etiqueta y se vuelve una PUERTA.
    El botón ya ocupaba toda la fila desde el principio, pero nada lo
@@ -234,7 +234,7 @@ body.light .cp-num:focus{
 .cp-total-go{
   margin-left: auto;
   display: flex; align-items: center; gap: 5px;
-  font-size: 12.5px; font-weight: 800;
+  font-size: var(--m-small); font-weight: 800;
   color: #38bdf8;
 }
 .cp-total-go:empty{ display: none; }
@@ -254,7 +254,7 @@ body.light .cp-otro{ color: #b45309 !important; }
    mas de un formato: con todo del mismo tamaño no aportan nada. */
 .cp-ml{
   display: block;
-  font-size: 11px;
+  font-size: var(--m-meta);
   font-weight: 600;
   color: #94a3b8;
   font-variant-numeric: tabular-nums;
@@ -265,7 +265,7 @@ body.light .cp-ml{ color: #64748b; }
 /* El tamaño de cada pasada, en el desglose. */
 .cp-pass-sz{
   flex: 0 0 auto;
-  font-size: 10.5px; font-weight: 800;
+  font-size: var(--m-meta); font-weight: 800;
   padding: 3px 8px; border-radius: 20px;
   background: rgba(148,163,184,.18); color: #cbd5e1;
   white-space: nowrap;
@@ -276,7 +276,7 @@ body.light .cp-pass-sz{ background: rgba(15,23,42,.07); color: #475569; }
   width: 26px; height: 26px; border-radius: 50%;
   background: rgba(56,189,248,.16);
   display: flex; align-items: center; justify-content: center;
-  font-size: 15px;
+  font-size: var(--m-body);
 }
 .cp-total-go .cp-fix{ color: #f59e0b; font-weight: 800; }
 
@@ -315,8 +315,8 @@ body.light .cp-pass-sz{ background: rgba(15,23,42,.07); color: #475569; }
   width: 38px; height: 4px; border-radius: 9px;
   background: rgba(255,255,255,.22); margin: 0 auto 12px;
 }
-.cp-sheet-t{ font-size: 15px; font-weight: 700; }
-.cp-sheet-s{ font-size: 12px; color: #64748b; margin: 2px 0 10px; }
+.cp-sheet-t{ font-size: var(--m-body); font-weight: 700; }
+.cp-sheet-s{ font-size: var(--m-small); color: #64748b; margin: 2px 0 10px; }
 
 .cp-pass{
   display: flex; align-items: center; gap: 10px;
@@ -328,12 +328,12 @@ body.light .cp-pass-sz{ background: rgba(15,23,42,.07); color: #475569; }
   flex: 0 0 auto;
   width: 24px; height: 24px; border-radius: 50%;
   background: rgba(56,189,248,.16); color: #7dd3fc;
-  font-size: 11px; font-weight: 800;
+  font-size: var(--m-meta); font-weight: 800;
   display: flex; align-items: center; justify-content: center;
 }
 .cp-pass-d{ flex: 1 1 auto; min-width: 0; line-height: 1.3; }
-.cp-pass-d b{ font-size: 15px; font-variant-numeric: tabular-nums; }
-.cp-pass-d span{ display: block; font-size: 11px; color: #64748b; }
+.cp-pass-d b{ font-size: var(--m-body); font-variant-numeric: tabular-nums; }
+.cp-pass-d span{ display: block; font-size: var(--m-meta); color: #64748b; }
 .cp-pass-b{
   flex: 0 0 auto;
   width: 36px; height: 36px; border-radius: 10px;
@@ -348,15 +348,15 @@ body.light .cp-pass-sz{ background: rgba(15,23,42,.07); color: #475569; }
   display: flex; align-items: baseline; justify-content: space-between;
   margin-top: 10px; padding-top: 10px;
   border-top: 1px solid rgba(255,255,255,.16);
-  font-size: 13px; color: #94a3b8;
+  font-size: var(--m-small); color: #94a3b8;
 }
-.cp-sheet-sum b{ font-size: 22px; font-weight: 800; color: #f1f5f9;
+.cp-sheet-sum b{ font-size: var(--m-head); font-weight: 800; color: #f1f5f9;
   font-variant-numeric: tabular-nums; }
 .cp-sheet-x{
   width: 100%; height: 46px; margin-top: 12px;
   border-radius: 12px; border: 1px solid rgba(255,255,255,.14);
   background: transparent; color: #e2e8f0;
-  font-family: inherit; font-size: 15px; font-weight: 700;
+  font-family: inherit; font-size: var(--m-body); font-weight: 700;
   cursor: pointer;
 }
 
@@ -373,7 +373,7 @@ body.light .cp-sheet-x{ border-color: rgba(15,23,42,.16); color: #0f172a; }
   width: 100%; height: 58px;
   border-radius: 14px; border: none;
   background: #38bdf8; color: #04263a;
-  font-family: inherit; font-size: 18px; font-weight: 800;
+  font-family: inherit; font-size: var(--m-title); font-weight: 800;
   cursor: pointer;
 }
 .cp-next:active{ background: #0ea5e9; }
@@ -381,9 +381,9 @@ body.light .cp-sheet-x{ border-color: rgba(15,23,42,.16); color: #0f172a; }
 /* Con el teclado abierto o en horizontal, la botella se lleva demasiado */
 @media (max-height: 620px) {
   .cp-stage{ height: 165px; }
-  .cp-read b{ font-size: 27px; }
+  .cp-read b{ font-size: var(--m-screen); }
   .cp-step button{ flex-basis: 56px; width: 56px; height: 56px; }
-  .cp-num{ font-size: 32px; }
+  .cp-num{ font-size: var(--m-figure); }
 }
 
 /* ── Cerrar el conteo ──────────────────────────────────────────────────
@@ -408,7 +408,7 @@ body.light .cp-sheet-x{ border-color: rgba(15,23,42,.16); color: #0f172a; }
   border-bottom: 1px solid rgba(255,255,255,.09);
   flex-shrink: 0;
 }
-.cf-title{ font-size: 16px; font-weight: 800; }
+.cf-title{ font-size: var(--m-strong); font-weight: 800; }
 
 .cf-body{
   flex: 1 1 auto; min-height: 0; overflow-y: auto;
@@ -416,32 +416,32 @@ body.light .cp-sheet-x{ border-color: rgba(15,23,42,.16); color: #0f172a; }
   padding: 18px 14px 14px;
 }
 
-.cf-count{ font-size: 20px; font-weight: 700; margin-bottom: 14px; }
-.cf-count b{ font-size: 30px; font-weight: 800; }
+.cf-count{ font-size: var(--m-title); font-weight: 700; margin-bottom: 14px; }
+.cf-count b{ font-size: var(--m-figure); font-weight: 800; }
 
 .cf-warn{
   background: rgba(245,158,11,.14);
   border: 1px solid rgba(245,158,11,.40);
   color: #fbbf24;
   border-radius: 12px; padding: 12px 13px;
-  font-size: 13px; line-height: 1.5; margin-bottom: 16px;
+  font-size: var(--m-small); line-height: 1.5; margin-bottom: 16px;
 }
 .cf-ok{
   background: rgba(34,197,94,.13);
   border: 1px solid rgba(34,197,94,.38);
   color: #4ade80;
   border-radius: 12px; padding: 12px 13px;
-  font-size: 13px; margin-bottom: 16px;
+  font-size: var(--m-small); margin-bottom: 16px;
 }
 .cf-err{
-  font-size: 11px; color: #94a3b8; margin-bottom: 14px;
+  font-size: var(--m-meta); color: #94a3b8; margin-bottom: 14px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   word-break: break-word;
 }
-.cf-empty{ font-size: 15px; color: #94a3b8; text-align: center; padding: 30px 0; }
+.cf-empty{ font-size: var(--m-body); color: #94a3b8; text-align: center; padding: 30px 0; }
 
 .cf-label{
-  font-size: 11px; letter-spacing: .07em; text-transform: uppercase;
+  font-size: var(--m-meta); letter-spacing: .07em; text-transform: uppercase;
   color: #94a3b8; font-weight: 800; margin-bottom: 8px;
 }
 
@@ -456,26 +456,26 @@ body.light .cp-sheet-x{ border-color: rgba(15,23,42,.16); color: #0f172a; }
   color: #f1f5f9; font-family: inherit; cursor: pointer;
 }
 .cf-opt.on{ border: 2px solid #38bdf8; background: rgba(56,189,248,.10); }
-.cf-opt b{ display: block; font-size: 15px; font-weight: 700; }
-.cf-opt small{ display: block; font-size: 12px; color: #94a3b8; margin-top: 3px; }
+.cf-opt b{ display: block; font-size: var(--m-body); font-weight: 700; }
+.cf-opt small{ display: block; font-size: var(--m-small); color: #94a3b8; margin-top: 3px; }
 
 .cf-ghost{
   width: 100%; height: 48px; margin: 14px 0 8px;
   border-radius: 12px; background: transparent;
   border: 1px solid rgba(255,255,255,.20);
-  color: #f1f5f9; font-family: inherit; font-size: 15px; font-weight: 700;
+  color: #f1f5f9; font-family: inherit; font-size: var(--m-body); font-weight: 700;
   cursor: pointer;
 }
 .cf-go{
   width: 100%; height: 54px;
   border-radius: 13px; border: none;
   background: #38bdf8; color: #04263a;
-  font-family: inherit; font-size: 16px; font-weight: 800;
+  font-family: inherit; font-size: var(--m-strong); font-weight: 800;
   cursor: pointer;
 }
-.cf-note{ font-size: 11px; color: #94a3b8; text-align: center; margin-top: 10px; line-height: 1.5; }
-.cf-status{ font-size: 15px; color: #94a3b8; text-align: center; padding: 40px 0; }
-.cf-done{ font-size: 54px; color: #22c55e; text-align: center; margin-bottom: 6px; }
+.cf-note{ font-size: var(--m-meta); color: #94a3b8; text-align: center; margin-top: 10px; line-height: 1.5; }
+.cf-status{ font-size: var(--m-body); color: #94a3b8; text-align: center; padding: 40px 0; }
+.cf-done{ font-size: var(--m-figure); color: #22c55e; text-align: center; margin-bottom: 6px; }
 
 /* Botón de finalizar, en la pantalla de escaneo */
 .sc-finish{
@@ -483,7 +483,7 @@ body.light .cp-sheet-x{ border-color: rgba(15,23,42,.16); color: #0f172a; }
   border-radius: 12px; border: none;
   background: rgba(56,189,248,.16);
   color: #38bdf8;
-  font-family: inherit; font-size: 15px; font-weight: 800;
+  font-family: inherit; font-size: var(--m-body); font-weight: 800;
   cursor: pointer;
 }
 
@@ -523,7 +523,7 @@ body.light .cp-sheet-x{ border-color: rgba(15,23,42,.16); color: #0f172a; }
   background: rgba(245,158,11,.13);
   border: 1px solid rgba(245,158,11,.34);
   color: #fbbf24;
-  font-size: 11px;
+  font-size: var(--m-meta);
   line-height: 1.5;
 }
 .cp-hint b{ font-weight: 800; }
@@ -610,7 +610,7 @@ body.light .cp-fullline{ stroke: rgba(15,23,42,.35); }
   border-radius: 12px; background: transparent;
   border: 1px dashed rgba(255,255,255,.22);
   color: #94a3b8;
-  font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+  font-family: inherit; font-size: var(--m-small); font-weight: 700; cursor: pointer;
 }
 body.light .cp-trace{ border-color: rgba(15,23,42,.20); color: #475569; }
 
@@ -627,10 +627,10 @@ body.light .cp-trace{ border-color: rgba(15,23,42,.20); color: #475569; }
   background: rgba(255,255,255,.05);
   border: 1px solid rgba(255,255,255,.12);
   color: #cbd5e1;
-  font-size: 13px; font-weight: 700;
+  font-size: var(--m-small); font-weight: 700;
   cursor: pointer;
 }
-.cf-toggle i{ transition: transform .18s ease; font-size: 16px; }
+.cf-toggle i{ transition: transform .18s ease; font-size: var(--m-strong); }
 .cf-toggle.on i{ transform: rotate(180deg); }
 
 .cf-missing{ margin-bottom: 14px; }
@@ -639,7 +639,7 @@ body.light .cp-trace{ border-color: rgba(15,23,42,.20); color: #475569; }
   border-radius: 10px;
   background: rgba(255,255,255,.06);
   border: 1px solid rgba(255,255,255,.14);
-  color: #f1f5f9; font-size: 15px;
+  color: #f1f5f9; font-size: var(--m-body);
   margin-bottom: 8px;
 }
 .cf-missing input::placeholder{ color: #64748b; }
@@ -650,7 +650,7 @@ body.light .cp-trace{ border-color: rgba(15,23,42,.20); color: #475569; }
 #cfMissingList{ max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; }
 
 .cf-cat{
-  font-size: 11px; font-weight: 800; letter-spacing: .06em;
+  font-size: var(--m-meta); font-weight: 800; letter-spacing: .06em;
   text-transform: uppercase; color: #64748b;
   margin: 12px 0 2px;
 }
@@ -658,10 +658,10 @@ body.light .cp-trace{ border-color: rgba(15,23,42,.20); color: #475569; }
   display: flex; align-items: baseline; gap: 10px;
   padding: 7px 0;
   border-bottom: 1px solid rgba(255,255,255,.06);
-  font-size: 13px;
+  font-size: var(--m-small);
 }
-.cf-miss-row small{ margin-left: auto; color: #94a3b8; font-size: 11px; flex-shrink: 0; }
-.cf-empty{ font-size: 13px; color: #94a3b8; padding: 16px 0; text-align: center; }
+.cf-miss-row small{ margin-left: auto; color: #94a3b8; font-size: var(--m-meta); flex-shrink: 0; }
+.cf-empty{ font-size: var(--m-small); color: #94a3b8; padding: 16px 0; text-align: center; }
 
 body.light .cf-toggle{ background: rgba(15,23,42,.04); border-color: rgba(15,23,42,.12); color: #334155; }
 body.light .cf-missing input{ background: #fff; border-color: rgba(15,23,42,.14); color: #0f172a; }
@@ -691,8 +691,8 @@ body.light .cf-miss-row{ border-color: rgba(15,23,42,.08); }
 @media (prefers-reduced-motion: reduce){ .cr-dot{ animation: none } }
 
 .cr-txt{ min-width: 0; flex: 1; }
-.cr-txt b{ display: block; font-size: 13px; font-weight: 800; }
-.cr-txt span{ display: block; font-size: 12px; color: var(--sub); }
+.cr-txt b{ display: block; font-size: var(--m-small); font-weight: 800; }
+.cr-txt span{ display: block; font-size: var(--m-small); color: var(--sub); }
 
 .cr-prog{
   width: 90px; height: 5px; flex-shrink: 0;
@@ -706,7 +706,7 @@ body.light .cf-miss-row{ border-color: rgba(15,23,42,.08); }
   height: 36px; padding: 0 16px;
   border-radius: 999px;
   background: #0ea5e9; border: none; color: #04283b;
-  font-size: 13px; font-weight: 800; cursor: pointer;
+  font-size: var(--m-small); font-weight: 800; cursor: pointer;
 }
 .cr-drop{
   flex-shrink: 0;
@@ -714,7 +714,7 @@ body.light .cf-miss-row{ border-color: rgba(15,23,42,.08); }
   border-radius: 10px;
   background: transparent;
   border: 1px solid rgba(255,255,255,.16);
-  color: var(--sub); font-size: 16px; cursor: pointer;
+  color: var(--sub); font-size: var(--m-strong); cursor: pointer;
   display: flex; align-items: center; justify-content: center;
 }
 .cr-drop:hover{ color: #ef4444; border-color: rgba(239,68,68,.45); }
@@ -736,7 +736,7 @@ body.light .cr-drop{ border-color: rgba(15,23,42,.14); }
    razonable. Ninguno bloquea el cierre — un aviso que se equivoca y
    ademas bloquea se aprende a saltar, y a partir de ahi deja de leerse. */
 .cf-ins-load{
-  font-size: 12px; color: var(--sub);
+  font-size: var(--m-small); color: var(--sub);
   padding: 10px 0 14px;
   display: flex; align-items: center; gap: 7px;
 }
@@ -749,7 +749,7 @@ body.light .cr-drop{ border-color: rgba(15,23,42,.14); }
 .cf-ins-b{ background: rgba(239,68,68,.09);  border: 1px solid rgba(239,68,68,.35); }
 .cf-ins-t{
   display: flex; align-items: center; gap: 8px;
-  font-size: 13px; font-weight: 800; margin-bottom: 9px;
+  font-size: var(--m-small); font-weight: 800; margin-bottom: 9px;
 }
 .cf-ins-a .cf-ins-t{ color: #fbbf24; }
 .cf-ins-b .cf-ins-t{ color: #f87171; }
@@ -773,7 +773,7 @@ body.light .cr-drop{ border-color: rgba(15,23,42,.14); }
   width: 100%;
   padding: 9px 0;
   border-bottom: 1px solid rgba(255,255,255,.08);
-  font-size: 13px; text-align: left;
+  font-size: var(--m-small); text-align: left;
   background: none; border-left: none; border-right: none; border-top: none;
   color: inherit;
 }
@@ -785,7 +785,7 @@ body.light .cr-drop{ border-color: rgba(15,23,42,.14); }
 }
 .cf-ins-row small{
   grid-column: 1; grid-row: 2;
-  color: var(--sub); font-size: 11.5px;
+  color: var(--sub); font-size: var(--m-meta);
   /* Tabulares: los numeros de todas las filas quedan alineados en
    * vertical aunque sean 0.48 y 12.95. */
   font-variant-numeric: tabular-nums;
@@ -807,7 +807,7 @@ body.light .cr-drop{ border-color: rgba(15,23,42,.14); }
 }
 .cf-ins-a .cf-ins-row small{ grid-column: 2; grid-row: 1; text-align: right; }
 .cf-ins-btn{ cursor: pointer; }
-.cf-ins-btn i{ color: var(--sub); font-size: 15px; flex-shrink: 0; }
+.cf-ins-btn i{ color: var(--sub); font-size: var(--m-body); flex-shrink: 0; }
 .cf-ins-btn:active{ opacity: .6; }
 
 .cf-ins-act{
@@ -815,12 +815,12 @@ body.light .cr-drop{ border-color: rgba(15,23,42,.14); }
   padding: 9px; border-radius: 10px;
   background: rgba(255,255,255,.08);
   border: 1px solid rgba(255,255,255,.14);
-  color: #e2e8f0; font-size: 12px; font-weight: 700;
+  color: #e2e8f0; font-size: var(--m-small); font-weight: 700;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 6px;
 }
 .cf-ins-note{
-  font-size: 11px; color: var(--sub); line-height: 1.5;
+  font-size: var(--m-meta); color: var(--sub); line-height: 1.5;
   margin-top: 10px; padding-top: 9px;
   border-top: 1px solid rgba(255,255,255,.08);
 }
@@ -838,7 +838,7 @@ body.light .cf-ins-act{ background: rgba(15,23,42,.04); border-color: rgba(15,23
    pantalla decia "listo" y te devolvia a donde estabas, y los dos pasos
    siguientes habia que ir a buscarlos a dos sitios distintos. */
 .cf-next-t{
-  font-size: 11px; font-weight: 800; letter-spacing: .06em;
+  font-size: var(--m-meta); font-weight: 800; letter-spacing: .06em;
   text-transform: uppercase; color: var(--sub);
   margin: 22px 0 8px;
 }
@@ -851,17 +851,17 @@ body.light .cf-ins-act{ background: rgba(15,23,42,.04); border-color: rgba(15,23
   border: 1px solid rgba(255,255,255,.12);
   color: inherit; text-align: left; cursor: pointer;
 }
-.cf-next > i:first-child{ font-size: 20px; color: #38bdf8; flex-shrink: 0; }
-.cf-next > i:last-child{ font-size: 16px; color: var(--sub); margin-left: auto; flex-shrink: 0; }
+.cf-next > i:first-child{ font-size: var(--m-title); color: #38bdf8; flex-shrink: 0; }
+.cf-next > i:last-child{ font-size: var(--m-strong); color: var(--sub); margin-left: auto; flex-shrink: 0; }
 .cf-next span{ min-width: 0; }
-.cf-next b{ display: block; font-size: 13px; font-weight: 800; }
-.cf-next small{ display: block; font-size: 11px; color: var(--sub); }
+.cf-next b{ display: block; font-size: var(--m-small); font-weight: 800; }
+.cf-next small{ display: block; font-size: var(--m-meta); color: var(--sub); }
 
 /* La primera semana no hay historial, asi que no hay par, no hay
    sugerido y los dos avisos se callan por diseño. Sin decirlo, parece
    que algo esta roto. */
 .cf-first{
-  font-size: 12px; line-height: 1.55;
+  font-size: var(--m-small); line-height: 1.55;
   padding: 11px 13px; margin-top: 14px;
   border-radius: 12px;
   background: rgba(56,189,248,.08);
@@ -878,7 +878,7 @@ body.light .cf-first{ background: rgba(2,132,199,.07); border-color: rgba(2,132,
    solo tiene sentido una vez por semana, y dos botones fijos dejarian
    siempre uno de los dos sin usar ocupando sitio. */
 .cyc-pick{ width: min(440px, 100%); }
-.cyc-pick h3{ margin: 0 0 14px; font-size: 16px; }
+.cyc-pick h3{ margin: 0 0 14px; font-size: var(--m-strong); }
 .cyc-pick-opt{
   width: 100%;
   display: flex; align-items: center; gap: 13px;
@@ -889,13 +889,13 @@ body.light .cf-first{ background: rgba(2,132,199,.07); border-color: rgba(2,132,
   color: inherit; text-align: left; cursor: pointer;
 }
 .cyc-pick-opt:hover{ border-color: rgba(56,189,248,.5); }
-.cyc-pick-opt > i{ font-size: 22px; color: #38bdf8; flex-shrink: 0; }
-.cyc-pick-opt b{ display: block; font-size: 14px; font-weight: 800; }
-.cyc-pick-opt small{ display: block; font-size: 12px; color: var(--sub); margin-top: 2px; }
+.cyc-pick-opt > i{ font-size: var(--m-head); color: #38bdf8; flex-shrink: 0; }
+.cyc-pick-opt b{ display: block; font-size: var(--m-body); font-weight: 800; }
+.cyc-pick-opt small{ display: block; font-size: var(--m-small); color: var(--sub); margin-top: 2px; }
 .cyc-pick-x{
   width: 100%; margin-top: 4px; padding: 9px;
   border-radius: 10px; background: none; border: none;
-  color: var(--sub); font-size: 13px; cursor: pointer;
+  color: var(--sub); font-size: var(--m-small); cursor: pointer;
 }
 body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,23,42,.12); }
 
@@ -918,10 +918,10 @@ body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,
 }
 .cp-read b{
   display: block;
-  font-size: 30px; font-weight: 800; line-height: 1.1;
+  font-size: var(--m-figure); font-weight: 800; line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
-.cp-read small{ display: block; font-size: 12px; color: #94a3b8; margin-top: 2px; }
+.cp-read small{ display: block; font-size: var(--m-small); color: #94a3b8; margin-top: 2px; }
 
 /* Las dos salidas, como pastillas discretas. No son acciones del conteo:
    son "esto no es lo que creia". */
@@ -930,7 +930,7 @@ body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,
   padding: 6px 13px; border-radius: 999px;
   background: rgba(255,255,255,.07);
   border: 1px solid rgba(255,255,255,.14);
-  color: #cbd5e1; font-size: 12px; font-weight: 700;
+  color: #cbd5e1; font-size: var(--m-small); font-weight: 700;
   font-family: inherit; cursor: pointer;
 }
 .cp-chip:active{ transform: translateY(1px); }
@@ -954,15 +954,15 @@ body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,
   display: flex; align-items: center; gap: 6px;
   flex-shrink: 0;
   margin: 0 14px 10px;
-  font-size: 11px; color: #64748b;
+  font-size: var(--m-meta); color: #64748b;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 .cp-upc[hidden]{ display: none; }
-.cp-upc > i{ font-size: 14px; }
+.cp-upc > i{ font-size: var(--m-body); }
 .cp-upc button{
   margin-left: auto; flex-shrink: 0;
   background: none; border: none; padding: 4px 2px;
-  color: #fbbf24; font-family: inherit; font-size: 11px;
+  color: #fbbf24; font-family: inherit; font-size: var(--m-meta);
   text-decoration: underline; cursor: pointer;
 }
 
@@ -982,7 +982,7 @@ body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,
 .bf-head{
   display: flex; align-items: center; gap: 12px; flex-shrink: 0;
   padding: calc(12px + env(safe-area-inset-top)) 14px 12px;
-  font-size: 17px; font-weight: 800;
+  font-size: var(--m-strong); font-weight: 800;
   border-bottom: 1px solid rgba(255,255,255,.09);
 }
 /* El cuerpo NO scrollea: scrollea la lista, y solo la lista.
@@ -1002,18 +1002,18 @@ body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,
 .bf-warn{
   background: rgba(245,158,11,.10); border: 1px solid rgba(245,158,11,.35);
   color: #fbbf24; border-radius: 12px; padding: 11px 13px;
-  font-size: 13px; line-height: 1.55; margin-bottom: 12px;
+  font-size: var(--m-small); line-height: 1.55; margin-bottom: 12px;
 }
 .bf-ok{
   background: rgba(56,189,248,.09); border: 1px solid rgba(56,189,248,.32);
   color: #bae6fd; border-radius: 12px; padding: 11px 13px;
-  font-size: 13px; line-height: 1.55; margin-bottom: 12px;
+  font-size: var(--m-small); line-height: 1.55; margin-bottom: 12px;
 }
 
 .bf-search{ position: relative; margin-bottom: 12px; flex-shrink: 0; }
 .bf-search > i{
   position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-  font-size: 18px; color: #94a3b8; pointer-events: none;
+  font-size: var(--m-title); color: #94a3b8; pointer-events: none;
 }
 .bf-search input{
   width: 100%; height: 50px; padding: 0 13px 0 40px;
@@ -1022,7 +1022,7 @@ body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,
   border: 1px solid rgba(56,189,248,.45);
   color: #f1f5f9; font-family: inherit;
   /* 16px exactos o Safari acerca la pantalla al enfocar */
-  font-size: 16px; font-weight: 600;
+  font-size: var(--m-strong); font-weight: 600;
 }
 
 .bf-list{
@@ -1042,27 +1042,27 @@ body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,
   box-sizing: border-box;
   padding: 13px 4px; background: none; border: none;
   border-bottom: 1px solid rgba(255,255,255,.07);
-  color: inherit; font-family: inherit; font-size: 15px; font-weight: 600;
+  color: inherit; font-family: inherit; font-size: var(--m-body); font-weight: 600;
   text-align: left; cursor: pointer;
 }
 .bf-row > span{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bf-row:disabled{ opacity: .4; cursor: default; }
-.bf-row small{ margin-left: auto; font-size: 11px; color: #94a3b8; font-weight: 700; flex-shrink: 0; }
-.bf-empty{ font-size: 13px; color: #94a3b8; text-align: center; padding: 24px 0; }
+.bf-row small{ margin-left: auto; font-size: var(--m-meta); color: #94a3b8; font-weight: 700; flex-shrink: 0; }
+.bf-empty{ font-size: var(--m-small); color: #94a3b8; text-align: center; padding: 24px 0; }
 
 .bf-card{
   background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.10);
   border-radius: 12px; padding: 12px 13px; margin-bottom: 10px;
 }
-.bf-lab{ font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: #64748b; }
-.bf-big{ font-size: 23px; font-weight: 800; margin-top: 4px; }
-.bf-big span{ font-size: 12px; font-weight: 600; color: #94a3b8; margin-left: 5px; }
-.bf-sub{ font-size: 12px; color: #94a3b8; margin-top: 4px; }
-.bf-note{ font-size: 12px; color: #94a3b8; line-height: 1.55; margin-bottom: 12px; }
+.bf-lab{ font-size: var(--m-meta); letter-spacing: .06em; text-transform: uppercase; color: #64748b; }
+.bf-big{ font-size: var(--m-head); font-weight: 800; margin-top: 4px; }
+.bf-big span{ font-size: var(--m-small); font-weight: 600; color: #94a3b8; margin-left: 5px; }
+.bf-sub{ font-size: var(--m-small); color: #94a3b8; margin-top: 4px; }
+.bf-note{ font-size: var(--m-small); color: #94a3b8; line-height: 1.55; margin-bottom: 12px; }
 
 .bf-go, .bf-forget{
   width: 100%; height: 50px; border-radius: 14px;
-  font-family: inherit; font-size: 15px; font-weight: 800; cursor: pointer;
+  font-family: inherit; font-size: var(--m-body); font-weight: 800; cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 7px;
 }
 .bf-go{ background: #0ea5e9; border: none; color: #04283b; margin-bottom: 8px; }
@@ -1075,10 +1075,10 @@ body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,
      una fila mas, al final del flujo, y la lista se queda con el resto. */
   flex-shrink: 0;
 }
-.bf-foot{ font-size: 11px; color: #64748b; text-align: center; margin-top: 12px; line-height: 1.5; }
-.bf-status{ font-size: 14px; color: #94a3b8; text-align: center; padding: 30px 0; }
+.bf-foot{ font-size: var(--m-meta); color: #64748b; text-align: center; margin-top: 12px; line-height: 1.5; }
+.bf-status{ font-size: var(--m-body); color: #94a3b8; text-align: center; padding: 30px 0; }
 .bf-status.bf-bad{ color: #ef4444; font-weight: 700; }
-.bf-err{ font-size: 11px; color: #94a3b8; text-align: center; word-break: break-word; margin-bottom: 14px; }
+.bf-err{ font-size: var(--m-meta); color: #94a3b8; text-align: center; word-break: break-word; margin-bottom: 14px; }
 
 /* Los pasos que no llevan lista —mover el conteo, un error— son cortos
    pero pueden no caber con el teclado abierto en un telefono pequeño.
@@ -1118,7 +1118,7 @@ body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,
   background: transparent;
   border: 1px solid rgba(255,255,255,.14);
   color: #cbd5e1;
-  font-family: inherit; font-size: 15px; font-weight: 800;
+  font-family: inherit; font-size: var(--m-body); font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 1;
   cursor: pointer;
@@ -1138,7 +1138,7 @@ body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,
   border-radius: 12px;
   background: none;
   border: 1px solid rgba(255,255,255,.14);
-  color: #94a3b8; font-size: 16px; cursor: pointer;
+  color: #94a3b8; font-size: var(--m-strong); cursor: pointer;
   display: flex; align-items: center; justify-content: center;
 }
 .cp-pg-del:hover{ color: #ef4444; border-color: rgba(239,68,68,.45); }
@@ -1146,7 +1146,7 @@ body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,
 /* Cual estas mirando, encima de la cifra. */
 .cp-which{
   display: block;
-  font-size: 11px; font-weight: 800;
+  font-size: var(--m-meta); font-weight: 800;
   letter-spacing: .06em; text-transform: uppercase;
   color: #7dd3fc;
   margin-bottom: 2px;
@@ -1180,11 +1180,11 @@ body.light .cp-which{ color: #0369a1; }
   align-items: center;
   gap: 3px;
   margin-left: 8px;
-  font-size: 11px;
+  font-size: var(--m-meta);
   font-weight: 700;
   color: #fbbf24;
 }
-.cp-pass-z i { font-size: 12px; }
+.cp-pass-z i { font-size: var(--m-small); }
 body.light .cp-pass-z { color: #b45309; }
 
 /* ── El reparto por zona en la pantalla de cierre ─────────────────── */
@@ -1197,11 +1197,11 @@ body.light .cp-pass-z { color: #b45309; }
 }
 .cf-zones-t {
   display: flex; align-items: center; gap: 7px;
-  font-size: 12px; font-weight: 800; color: #fbbf24; margin-bottom: 8px;
+  font-size: var(--m-small); font-weight: 800; color: #fbbf24; margin-bottom: 8px;
 }
 .cf-zones-r {
   display: flex; justify-content: space-between; align-items: baseline;
-  font-size: 13px; padding: 4px 0;
+  font-size: var(--m-small); padding: 4px 0;
   border-bottom: 1px solid rgba(255,255,255,.07);
 }
 .cf-zones-r b { font-variant-numeric: tabular-nums; }
@@ -1211,7 +1211,7 @@ body.light .cp-pass-z { color: #b45309; }
  * demas: inventarle un sitio seria peor que admitir que no se sabe. */
 .cf-zones-no { color: var(--sub); }
 
-.cf-zones-s { font-size: 11px; color: var(--sub); margin-top: 9px; }
+.cf-zones-s { font-size: var(--m-meta); color: var(--sub); margin-top: 9px; }
 .cf-zones-s.cf-zones-bad { color: #f87171; font-weight: 700; }
 
 body.light .cf-zones { background: rgba(245,158,11,.10); border-color: rgba(180,83,9,.32); }
@@ -1240,12 +1240,12 @@ body.light .cp-lastline { stroke: #64748b; }
 .cp-read .cp-same {
   display: block;
   margin-top: 4px;
-  font-size: 11px;
+  font-size: var(--m-meta);
   font-style: normal;
   color: var(--sub);
 }
 .cp-read .cp-same { color: #4ade80; font-weight: 700; }
-.cp-read .cp-same i { font-size: 12px; vertical-align: -1px; }
+.cp-read .cp-same i { font-size: var(--m-small); vertical-align: -1px; }
 body.light .cp-read .cp-same { color: #15803d; }
 
 .cp-read .cp-up   { color: #4ade80; font-weight: 800; }
