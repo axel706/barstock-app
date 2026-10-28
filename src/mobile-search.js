@@ -233,6 +233,38 @@
   // metido en una ficha de producto, y en el teléfono estorba más de
   // lo que informa.
 
+  // ── De qué factura vino este precio ──────────────────────────────────
+  //
+  // Después de que una factura actualice un precio, la ficha pone
+  // $28.50 y no hay forma de saber si eso se tecleó en marzo o llegó
+  // el martes. Esta línea lo dice, y de paso cuánto se movió.
+
+  async function pintarOrigenPrecio(caja, item) {
+    const el = caja.querySelector('#msPrecio');
+    const P = window.BarStockMarginEdgePurchases;
+    if (!el || !P || !P.leerHistorial) return;
+
+    let h = null;
+    try {
+      const todo = await P.leerHistorial(200);
+      h = todo.find(x => x.item_name === item) || null;
+    } catch (e) { return; }
+    if (!h) return;
+
+    const p = P._pct ? P._pct(h.price_before, h.price_after) : null;
+    // Subir un coste es malo y bajarlo es bueno: el color va con lo
+    // que significa, no con el signo.
+    const col = p === null ? '' : p > 0 ? '#fca5a5' : '#6ee7b7';
+    const sig = p === null ? '' : (p > 0 ? '+' : '') + p + '%';
+
+    el.innerHTML = '<div class="m-fuente">' +
+      'from invoice ' + esc(h.invoice_number || '—') +
+      (h.invoice_date ? ' · ' + esc(h.invoice_date) : '') +
+      (sig ? ' · <b style="color:' + col + '">' + esc(sig) + '</b> vs ' +
+             '$' + Number(h.price_before).toFixed(2) : '') +
+      '</div>';
+  }
+
   async function pintarZonas(caja, item) {
     const el = caja.querySelector('#msZonas');
     const Z = window.BarStockZones;
@@ -329,6 +361,11 @@
         <div class="m-row m-row-end">
           <span><i class="ti ti-tag" aria-hidden="true"></i> Unit price</span>
           <b>${Number(r.value) > 0 ? '$' + Number(r.value).toFixed(2) : '—'}</b></div>
+        <!-- De dónde salió ese precio. Se rellena después, leyendo el
+             registro: un precio que cambia solo tiene que poder decir
+             de qué factura vino. Si nunca vino de una, no pone nada,
+             que también es información. -->
+        <div id="msPrecio"></div>
         ${dias === null ? `<div class="m-row m-row-end">
           <span><i class="ti ti-hourglass" aria-hidden="true"></i> Lasts about</span>
           <b><span class="m-soft">needs ${SEMANAS_PARA_FIAR} weeks · has ${semanas}</span></b></div>` : ''}
@@ -357,6 +394,7 @@
     };
 
     pintarZonas(caja, r.item);
+    pintarOrigenPrecio(caja, r.item);
   }
 
 

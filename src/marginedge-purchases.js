@@ -195,6 +195,7 @@
         '<button type="button" id="mepVer" class="ui-control">Show</button>' +
         '<button type="button" id="mepRec" class="ui-control">Ordered vs received</button>' +
         '<button type="button" id="mepPrec" class="ui-control">Prices</button>' +
+        '<button type="button" id="mepHist" class="ui-control">Price changes</button>' +
         '<button type="button" id="mepPrev" class="ui-control">Apply to cycle…</button>' +
         '</div>';
       const b = document.getElementById('mepVer');
@@ -205,6 +206,8 @@
       if (rc) rc.onclick = () => verConciliacion();
       const pr = document.getElementById('mepPrec');
       if (pr) pr.onclick = () => verPrecios();
+      const hi = document.getElementById('mepHist');
+      if (hi) hi.onclick = () => verHistorial();
     }
     abrir();
   }
@@ -286,13 +289,34 @@
                   Authorization: `Bearer ${key}`, Prefer: 'return=minimal' };
     let ok = 0;
     const problemas = [];
+    const log = [];
+
     for (const c of cambios) {
       const r = await fetch(
         `${url}/rest/v1/inventory_items?location_id=eq.${locId}` +
         `&item_name=eq.${encodeURIComponent(c.item)}`,
         { method: 'PATCH', headers: cab, body: JSON.stringify({ value: c.precio }) });
-      if (r.ok) ok++; else problemas.push(c.item + ': ' + r.status);
+      if (!r.ok) { problemas.push(c.item + ': ' + r.status); continue; }
+      ok++;
+      log.push({
+        location_id: locId, item_name: c.item,
+        price_before: c.antes, price_after: c.precio,
+        invoice_number: c.factura || null,
+        invoice_date: c.fecha || null,
+        vendor_name: c.vendor || null
+      });
     }
+
+    // El registro se escribe DESPUÉS y de una vez. Si fallara, los
+    // precios ya están bien: se pierde el rastro, no el dato. Al revés
+    // —apuntar antes— dejaría historial de cambios que no ocurrieron.
+    if (log.length) {
+      try {
+        await fetch(`${url}/rest/v1/marginedge_price_log`, {
+          method: 'POST', headers: cab, body: JSON.stringify(log) });
+      } catch (e) { console.warn('[marginedge] no se pudo registrar el cambio', e); }
+    }
+
     return { ok, problemas };
   }
 
@@ -343,6 +367,81 @@
         try { window.BarStockInventoryRealtime.refresh(); } catch (e) {}
       }
     };
+  }
+
+  // ── El historial de precios ─────────────────────────────────────────
+  //
+  // Lo que contesta «¿esto subió un 10 % o bajó un 30 %?». Se lee del
+  // registro, así que sólo aparece lo que de verdad cambió y cuándo.
+
+  async function leerHistorial(limite) {
+    const { url, key } = cfg();
+    const locId = await locationId();
+    if (!url || !key || !locId) return [];
+    const r = await fetch(
+      `${url}/rest/v1/marginedge_price_log?location_id=eq.${locId}` +
+      `&select=item_name,price_before,price_after,invoice_number,invoice_date,` +
+      `vendor_name,applied_at&order=applied_at.desc&limit=${limite || 60}`,
+      { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+    if (!r.ok) return [];
+    const filas = await r.json();
+    return Array.isArray(filas) ? filas : [];
+  }
+
+  function pct(antes, despues) {
+    const a = Number(antes), d = Number(despues);
+    if (!(a > 0)) return null;
+    return Math.round(((d - a) / a) * 1000) / 10;
+  }
+
+  function filaHistorial(h) {
+    const p = pct(h.price_before, h.price_after);
+    // Subir un coste es malo y bajarlo es bueno: al revés que en una
+    // cotización. El color va con lo que significa, no con el signo.
+    const col = p === null ? '#94a3b8' : p > 0 ? '#fca5a5' : '#6ee7b7';
+    const sig = p === null ? '' : (p > 0 ? '+' : '') + p + '%';
+    return '<div class="mem-row"><div class="mem-mine"><b>' + esc(h.item_name) + '</b>' +
+      '<span>' + esc(h.vendor_name || '') +
+        (h.invoice_number ? ' · invoice ' + esc(h.invoice_number) : '') +
+        (h.invoice_date ? ' · ' + esc(h.invoice_date) : '') + '</span></div>' +
+      '<div class="mep-nums">' +
+        '<div class="mep-n"><b>' + dinero(h.price_before) + ' → ' +
+          dinero(h.price_after) + '</b><span>was · now</span></div>' +
+        '<div class="mep-n"><b style="color:' + col + '">' + esc(sig) +
+          '</b><span>change</span></div>' +
+      '</div></div>';
+  }
+
+  async function verHistorial() {
+    const host = document.getElementById('mepBody');
+    if (host) host.innerHTML = '<div class="mem-empty">Reading price history…</div>';
+    const filas = await leerHistorial(80);
+    if (!host) return;
+
+    if (!filas.length) {
+      host.innerHTML = '<div class="mem-empty"><b>No price changes recorded yet.</b><br>' +
+        'Every time an invoice changes what a bottle costs, it lands here with ' +
+        'the invoice it came from.</div>';
+      return;
+    }
+
+    // Lo que más se movió primero: un 30 % en una botella de 9 dólares
+    // importa menos que un 8 % en una de 90, pero el porcentaje es lo
+    // que se mira para negociar con el proveedor.
+    const grandes = filas.slice()
+      .filter(h => Math.abs(pct(h.price_before, h.price_after) || 0) >= 10)
+      .sort((a, b) => Math.abs(pct(b.price_before, b.price_after) || 0) -
+                      Math.abs(pct(a.price_before, a.price_after) || 0));
+
+    host.innerHTML =
+      (grandes.length
+        ? '<div class="mem-note"><b>' + grandes.length +
+          (grandes.length === 1 ? ' price moved' : ' prices moved') +
+          ' 10% or more.</b> Those are the ones worth a call.</div>' +
+          grandes.slice(0, 12).map(filaHistorial).join('') +
+          '<div class="m-lab" style="margin-top:16px">EVERYTHING ELSE</div>'
+        : '') +
+      filas.filter(h => grandes.indexOf(h) === -1).map(filaHistorial).join('');
   }
 
   async function verPrecios() {
@@ -773,7 +872,8 @@
   }
 
   window.BarStockMarginEdgePurchases = {
-    montar, abrir, previsualizar, verConciliacion, verPrecios, _precioDeLinea: precioDeLinea
+    montar, abrir, previsualizar, verConciliacion, verPrecios, verHistorial,
+    leerHistorial, _precioDeLinea: precioDeLinea, _pct: pct
   };
 
   window.__settingsHooks = window.__settingsHooks || {};

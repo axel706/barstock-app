@@ -46,6 +46,20 @@ grupo('cantidad cero sí vale');
 // el precio sigue siendo el que cobra ese proveedor.
 prueba('no se descarta', precio({ unit_price: 12.5, quantity: 0 }) === 12.5);
 
+grupo('el porcentaje del cambio');
+// Es lo que contesta «¿subió un 10 % o bajó un 30 %?». Se calcula
+// sobre el precio ANTERIOR, que es contra lo que se compara al
+// negociar con el proveedor.
+const pct = dom.window.BarStockMarginEdgePurchases._pct;
+prueba('una subida', pct(10, 11) === 10);
+prueba('una bajada', pct(10, 7) === -30);
+prueba('sin cambio', pct(26.99, 26.99) === 0);
+prueba('un decimal basta', pct(38.94, 42.10) === 8.1, String(pct(38.94, 42.10)));
+// Sin precio anterior no hay porcentaje que calcular: un artículo que
+// nunca tuvo coste no "subió", simplemente ahora tiene uno.
+prueba('desde cero no hay porcentaje', pct(0, 12) === null);
+prueba('ni desde nada', pct(null, 12) === null);
+
 console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
   '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);

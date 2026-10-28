@@ -2044,3 +2044,11 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-set-add input { border-radius: 13px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-set-add button { border-radius: 13px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-set-font { border-radius: 15px !important; }
+
+  /* De dónde vino el precio de la ficha. Pequeño y debajo: es
+   * procedencia, no un dato que se mire primero. */
+  .m-fuente {
+    font-size: var(--m-meta); color: #7b8a9e; line-height: 1.45;
+    padding: 2px 2px 8px; text-align: right;
+  }
+  .m-fuente b { font-weight: 800; }
