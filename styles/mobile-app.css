@@ -224,20 +224,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * raíz —que se propaga a la ventana— remata el trabajo.
    *
    * Sólo con una pantalla propia delante. Las secciones del
-   * escritorio ruedan como siempre.
-   *
-   * ── Y tampoco se toca el <html> ───────────────────────────────
-   *
-   * Aquí había `height: 100%` y `overflow: hidden` en el raíz. Eso
-   * devolvió la franja negra bajo la barra: las capas del fondo son
-   * `position: fixed` y dejaron de llegar al borde de abajo.
-   *
-   * No hacía falta ni una de las dos. Con #mScreens fijo, el body se
-   * queda SIN NADA en flujo: no hay contenido que desplazar, así que
-   * el documento no se mueve por sí solo. El rebote ya lo mata el
-   * `overscroll-behavior: none` que body.m-shell lleva desde hace
-   * meses. Lo único que sigue colgando del raíz es el recorte del
-   * eje X, que lleva días funcionando sin romper nada. */
+   * escritorio ruedan como siempre. */
+  html:has(body.m-shell.m-on) {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
 
   /* El hueco de la banda y el de la barra bajan del body al
    * contenedor: ahora son del contenido, no de la ventana. */

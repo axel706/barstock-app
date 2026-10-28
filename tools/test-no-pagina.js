@@ -52,12 +52,9 @@ function montar() {
 
 grupo('la hoja: el documento quieto, el contenedor rodando');
 {
-  // El raíz NO se toca más allá del eje X. `height: 100%` y
-  // `overflow: hidden` ahí dejaron a las capas del fondo —que son
-  // fijas— sin llegar al borde de abajo: franja negra bajo la barra.
-  const raiz = (/html:has\(body\.m-shell\.m-on\)\s*\{([^}]*)\}/.exec(css) || [])[1] || '';
-  prueba('el raíz sólo recorta el eje X', !/overflow:\s*hidden/.test(raiz) &&
-    !/height/.test(raiz), raiz.trim());
+  const raiz = (/html:has\(body\.m-shell\.m-on\)\s*\{([^}]*)\}/g.exec(css) || [])[1] || '';
+  prueba('el raíz no deja rodar la ventana', /overflow:\s*hidden/.test(css) &&
+    /html:has\(body\.m-shell\.m-on\)\s*\{[^}]*overflow:\s*hidden/.test(css), raiz.trim());
 
   const cont = (/body\.m-shell\.m-on\s*>\s*\.m-screens\s*\{([^}]*)\}/.exec(css) || [])[1] || '';
   prueba('#mScreens va fijo', /position:\s*fixed/.test(cont), cont.trim());
