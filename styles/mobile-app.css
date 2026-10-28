@@ -367,9 +367,19 @@
   .m-logo .m-logo-dot,
   .m-hero-k .m-brand .m-logo-dot {
     display: inline-flex; border-radius: 50%; background: #38bdf8;
-    align-self: flex-end; font-style: normal;
+    font-style: normal;
     width: .22em; height: .22em; min-width: .22em; min-height: .22em;
-    margin: 0 .043em .13em .022em;
+    /* Sin margen inferior y alineado a baseline.
+     *
+     * El brandbook escribe `flex-end` más `0.13em`, pero ese 0.13 es un
+     * ajuste a ojo calibrado para UN cuerpo y UNA altura de línea: en la
+     * banda del móvil caía de más y en el rótulo de bienvenida flotaba.
+     *
+     * Una caja vacía tiene su línea base en su propio borde inferior. Con
+     * `baseline` y cero de margen abajo, el punto se apoya exactamente
+     * donde se apoyan las letras — a cualquier tamaño y sin tocar nada. */
+    align-self: baseline; vertical-align: baseline;
+    margin: 0 .043em 0 .022em;
   }
   .m-logo em {
     font-style: normal; font-size: 9.5px; font-weight: 700;

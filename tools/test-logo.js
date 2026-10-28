@@ -44,14 +44,34 @@ prueba('login en em, no en px',
 prueba('la banda del móvil en em', /width: \.22em/.test(mcss));
 
 grupo('el punto se apoya en la línea base');
-// flex-end más 0.13em de margen inferior es la implementación
-// canónica. `align-self:baseline` sobre una caja vacía deja el punto
-// flotando un pelo según el navegador.
+// Una caja vacía tiene su línea base en su propio borde inferior, así
+// que `baseline` con margen inferior CERO la apoya exactamente donde
+// se apoyan las letras, a cualquier cuerpo.
+//
+// El 0.13em que escribe el brandbook es un ajuste a ojo calibrado para
+// un tamaño concreto: en la banda del móvil caía de más y en el rótulo
+// de bienvenida flotaba. Si vuelve a aparecer, es que alguien lo copió
+// otra vez sin probarlo en las dos.
 const dotApp = (app.match(/\.brand-logo-dot\{[^}]*\}/s) || [''])[0];
-prueba('header de escritorio', /align-self:\s*flex-end/.test(dotApp));
-prueba('login', /align-self:\s*flex-end/.test(dotAuth));
-prueba('y el estilo en línea del header también',
-  !/margin:0 \.043em 0 \.022em;align-self:baseline/.test(html));
+const dotMov = (mcss.match(/\.m-logo \.m-logo-dot[^{]*\{[^}]*\}/s) || [''])[0];
+
+prueba('header de escritorio', /align-self:\s*baseline/.test(dotApp));
+prueba('login', /align-self:\s*baseline/.test(dotAuth));
+prueba('banda del móvil', /align-self: baseline/.test(dotMov));
+
+// Se mira la DECLARACIÓN, no el texto: los comentarios de esas mismas
+// reglas explican de dónde salía el 0.13 y harían fallar la prueba por
+// hablar del problema.
+const margen = css => {
+  const m = css.replace(/\/\*[\s\S]*?\*\//g, '').match(/margin:\s*([^;]+);/);
+  return m ? m[1].trim() : '';
+};
+prueba('el margen inferior del header es cero',
+  /^0 \.043em 0 \.022em$/.test(margen(dotApp)), margen(dotApp));
+prueba('y el del login', /^0 \.043em 0 \.022em$/.test(margen(dotAuth)), margen(dotAuth));
+prueba('y el del móvil', /^0 \.043em 0 \.022em$/.test(margen(dotMov)), margen(dotMov));
+prueba('ni en los estilos en línea',
+  !/align-self:flex-end/.test(html.split('brand-logo-dot')[1] || ''));
 
 console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
   '   ·   ' + (ok + mal) + ' comprobaciones');
