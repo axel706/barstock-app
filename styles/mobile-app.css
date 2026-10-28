@@ -115,6 +115,7 @@
     --m-body:    var(--m-base);                /* 14.0  filas y cuerpo  */
     --m-strong:  calc(var(--m-base) * 1.14);   /* 16.0  énfasis en fila */
     --m-title:   calc(var(--m-base) * 1.36);   /* 19.0  títulos de card */
+    --m-head:    calc(var(--m-base) * 1.57);   /* 22.0  título de héroe */
     --m-screen:  calc(var(--m-base) * 1.79);   /* 25.0  título de pantalla */
     --m-figure:  calc(var(--m-base) * 2.07);   /* 29.0  la cifra grande */
   }
@@ -347,7 +348,7 @@
    * degradado: el fondo de aquí arriba es una foto cualquiera. */
   .m-logo {
     position: relative; z-index: 1;
-    font-size: 23px; font-weight: 800; color: #fff;
+    font-size: var(--m-screen); font-weight: 800; color: #fff;
     letter-spacing: -.65px; display: inline-flex; align-items: baseline;
     text-shadow: 0 1px 12px rgba(0,0,0,.55);
   }
@@ -381,9 +382,13 @@
     align-self: baseline; vertical-align: baseline;
     margin: 0 .043em 0 .022em;
   }
+  /* El sufijo es 0.37 del cuerpo del wordmark, como dice el brandbook,
+   * y el hueco 0.152. Fuera de la escala de la app a propósito: el
+   * logo no cambia de tamaño porque alguien suba el texto. */
   .m-logo em {
-    font-style: normal; font-size: 9.5px; font-weight: 700;
-    letter-spacing: 1.5px; color: #b6c6d8; margin-left: 5px;
+    font-style: normal; font-size: .37em; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: #b6c6d8; margin-left: .152em;
   }
   /* Centrados en la FRANJA DE ABAJO, la de los 52px, no en la banda
    * entera. Con `top: 50%` el 50% se medía sobre la altura total
@@ -403,7 +408,7 @@
   body.m-shell .m-ico {
     width: 33px; height: 33px; flex: 0 0 33px;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 50%; cursor: pointer; font-size: 15px;
+    border-radius: 50%; cursor: pointer; font-size: var(--m-body);
     background: rgba(255,255,255,.13);
     border: 1px solid rgba(255,255,255,.20);
     color: #eaf2fb;
@@ -421,7 +426,7 @@
    * Sin esto, un nombre largo empujaba la píldora fuera. */
   .m-day {
     flex: 1 1 auto; min-width: 0;
-    font-size: 25px; font-weight: 800; color: #fff;
+    font-size: var(--m-screen); font-weight: 800; color: #fff;
     letter-spacing: -.5px; line-height: 1.1;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
@@ -434,7 +439,7 @@
     display: inline-flex; align-items: center; gap: 7px;
     flex: 0 1 auto;
     max-width: 190px; padding: 9px 13px; border-radius: 999px;
-    cursor: pointer; font-size: 13.5px; font-weight: 700; color: #fff;
+    cursor: pointer; font-size: var(--m-body); font-weight: 700; color: #fff;
     background: #0b1220;
     border: 1px solid rgba(255,255,255,.26);
     box-shadow: 0 4px 14px rgba(0,0,0,.40);
@@ -467,7 +472,7 @@
     background: rgba(255,255,255,.26);
   }
   .m-sheet-t {
-    font-size: 11px; font-weight: 800; letter-spacing: .9px;
+    font-size: var(--m-meta); font-weight: 800; letter-spacing: .9px;
     text-transform: uppercase; color: #94a3b8; padding: 0 4px 8px;
   }
   body.m-shell .m-sheet-op {
@@ -475,7 +480,7 @@
     width: 100%; gap: 10px;
     padding: 14px 13px; margin-bottom: 7px;
     border-radius: 12px; text-align: left;
-    font-size: 15px; font-weight: 600; color: #e2e8f0;
+    font-size: var(--m-body); font-weight: 600; color: #e2e8f0;
     background: rgba(255,255,255,.06);
     border: 1px solid rgba(255,255,255,.10);
   }
@@ -484,9 +489,9 @@
     background: rgba(56,189,248,.16);
     border-color: rgba(56,189,248,.44);
   }
-  .m-sheet-op .ti { color: #38bdf8; font-size: 17px; }
+  .m-sheet-op .ti { color: #38bdf8; font-size: var(--m-strong); }
   .m-pill-t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .m-pill > .ti { font-size: 13px; color: #cbd5e1; }
+  .m-pill > .ti { font-size: var(--m-small); color: #cbd5e1; }
   .m-dot {
     width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%;
     background: #22c55e; font-style: normal;
@@ -500,15 +505,15 @@
   body.m-shell .m-searchbar {
     display: flex; align-items: center; gap: 9px; width: 100%;
     padding: 12px 13px; border-radius: 16px; cursor: pointer;
-    text-align: left; font-size: 15.5px; color: #a9bacd;
+    text-align: left; font-size: var(--m-strong); color: #a9bacd;
     background: rgba(255,255,255,.11);
     border: 1px solid rgba(255,255,255,.15);
   }
-  .m-searchbar > i:first-child { font-size: 17px; color: #7dd3fc; }
+  .m-searchbar > i:first-child { font-size: var(--m-strong); color: #7dd3fc; }
   /* 16px obligatorio en el campo real: Safari hace zoom por debajo, y
    * el zoom a media búsqueda descoloca la pantalla entera. */
   body.m-shell .m-searchbar input {
-    flex: 1; min-width: 0; font-size: 16px; padding: 0;
+    flex: 1; min-width: 0; font-size: var(--m-strong); padding: 0;
     background: none; border: none; color: #f1f5f9; -webkit-appearance: none;
   }
   body.m-shell .m-searchbar input:focus { outline: none; }
@@ -526,7 +531,7 @@
   body.m-shell .m-searchbar > button {
     flex: 0 0 24px; width: 24px; height: 24px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 50%; font-size: 13px; color: #cbd5e1;
+    border-radius: 50%; font-size: var(--m-small); color: #cbd5e1;
     background: rgba(255,255,255,.12); border: none;
   }
   body.m-shell .m-searchbar > button:active { background: rgba(255,255,255,.22); }
@@ -599,14 +604,20 @@
   /* El fuego de Top movers va en rojo y el rótulo se queda como está.
    * Un icono que significa "esto arde" pintado del mismo azul que el
    * texto no significa nada. */
-  .m-hero-k .ti-flame { color: #f87171; }
-  .m-hero-t { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -.5px; margin-top: 4px; }
-  .m-hero-s { font-size: 12.5px; color: #c3d2e2; margin-top: 6px; line-height: 1.4; }
+  /* Más grande que el rótulo que acompaña: a 12.5px el icono quedaba
+   * del tamaño de una letra y no se leía como fuego. Va en em para que
+   * siga al encabezado si cambia el tamaño del texto. */
+  .m-hero-k .ti-flame {
+    color: #f87171; font-size: 1.45em; line-height: 0;
+    position: relative; top: .06em;
+  }
+  .m-hero-t { font-size: var(--m-head); font-weight: 800; color: #fff; letter-spacing: -.5px; margin-top: 4px; }
+  .m-hero-s { font-size: var(--m-small); color: #c3d2e2; margin-top: 6px; line-height: 1.4; }
   .m-hero-list { display: flex; flex-direction: column; gap: 3px; margin-top: 7px; }
-  .m-hero-list span { font-size: 12.5px; color: #c3d2e2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-hero-list span { font-size: var(--m-small); color: #c3d2e2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .m-hero-list b { color: #fff; font-weight: 700; }
-  .m-hero-amt { font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -.5px; }
-  .m-hero-vs { font-size: 11px; color: #a9bacd; }
+  .m-hero-amt { font-size: var(--m-title); font-weight: 800; color: #fff; letter-spacing: -.5px; }
+  .m-hero-vs { font-size: var(--m-meta); color: #a9bacd; }
   .m-prog { height: 4px; border-radius: 2px; background: rgba(255,255,255,.14); margin-top: 9px; overflow: hidden; }
   .m-prog i { display: block; height: 100%; background: #22c55e; border-radius: 2px; }
 
@@ -628,7 +639,7 @@
   body.m-shell .m-hero-x {
     flex: 0 0 32px; width: 32px; height: 32px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 50%; font-size: 15px; color: #e8c3c3;
+    border-radius: 50%; font-size: var(--m-body); color: #e8c3c3;
     background: rgba(0,0,0,.20);
     border: 1px solid rgba(255,255,255,.18);
   }
@@ -641,23 +652,23 @@
   .m-hero-pista {
     display: inline-flex; align-items: center; gap: 6px;
     margin-left: auto;
-    font-size: 14px; font-weight: 600; color: #5eead4;
+    font-size: var(--m-body); font-weight: 600; color: #5eead4;
   }
-  .m-hero-pista .ti { font-size: 16px; }
-  .m-hero-ir { font-size: 26px; color: #5eead4; }
+  .m-hero-pista .ti { font-size: var(--m-strong); }
+  .m-hero-ir { font-size: var(--m-screen); color: #5eead4; }
 
   /* La tarjeta de bienvenida no tiene columna de cifras ni botón: es
    * sólo texto. Así que la columna derecha se encoge al icono y el
    * texto crece, que es lo que se pedía de ella. */
   .m-hero-ancha .m-hero-r { width: 30px; flex: 0 0 30px; }
   .m-hero-ancha .m-hero-acts { margin-top: 14px; }
-  .m-hero-ancha .m-hero-s { font-size: 14px; line-height: 1.45; margin-top: 8px; }
-  .m-hero-ancha .m-hero-t { font-size: 24px; }
+  .m-hero-ancha .m-hero-s { font-size: var(--m-body); line-height: 1.45; margin-top: 8px; }
+  .m-hero-ancha .m-hero-t { font-size: var(--m-head); }
 
   body.m-shell .m-hero-b {
     align-self: center;
     padding: 10px 18px; border-radius: 12px;
-    font-size: 14px; font-weight: 800; cursor: pointer;
+    font-size: var(--m-body); font-weight: 800; cursor: pointer;
     background: rgba(255,255,255,.16); color: #fff;
   }
   /* El segundo camino, cuando de verdad hay dos (importar un archivo
@@ -666,7 +677,7 @@
   body.m-shell .m-hero-b2 {
     align-self: center;
     padding: 10px 15px; border-radius: 12px;
-    font-size: 13px; font-weight: 700; cursor: pointer;
+    font-size: var(--m-small); font-weight: 700; cursor: pointer;
     color: #dbe6f2;
     background: rgba(0,0,0,.20);
     border: 1px solid rgba(255,255,255,.18);
@@ -720,8 +731,8 @@
   /* ── Secciones ──────────────────────────────────────────────────── */
 
   .m-sechead { display: flex; align-items: baseline; justify-content: space-between; margin: 18px 2px 8px; }
-  .m-sec { font-size: 17px; font-weight: 800; color: #fff; letter-spacing: -.2px; }
-  body.m-shell .m-seclink { font-size: 13px; color: #7dd3fc; font-weight: 700; cursor: pointer; }
+  .m-sec { font-size: var(--m-strong); font-weight: 800; color: #fff; letter-spacing: -.2px; }
+  body.m-shell .m-seclink { font-size: var(--m-small); color: #7dd3fc; font-weight: 700; cursor: pointer; }
 
   .m-feed { display: flex; flex-direction: column; gap: 7px; }
 
@@ -752,10 +763,10 @@
     padding: 5px 0 0;
   }
   .m-mv1-n { display: flex; align-items: baseline; gap: 6px; }
-  .m-mv1-n b { font-size: 29px; font-weight: 800; color: #fff; letter-spacing: -.9px; line-height: 1; }
-  .m-mv1-n small { font-size: 11.5px; color: #a9bacd; }
-  .m-mv1-t { display: block; font-size: 14.5px; font-weight: 600; color: #e8eef6; line-height: 1.3; margin-top: 6px; }
-  .m-mv1-s { display: block; font-size: 11px; color: #a9bacd; margin-top: 3px; letter-spacing: .3px; }
+  .m-mv1-n b { font-size: var(--m-figure); font-weight: 800; color: #fff; letter-spacing: -.9px; line-height: 1; }
+  .m-mv1-n small { font-size: var(--m-meta); color: #a9bacd; }
+  .m-mv1-t { display: block; font-size: var(--m-body); font-weight: 600; color: #e8eef6; line-height: 1.3; margin-top: 6px; }
+  .m-mv1-s { display: block; font-size: var(--m-meta); color: #a9bacd; margin-top: 3px; letter-spacing: .3px; }
 
   /* La tendencia del héroe se va a la derecha del todo; la de los
    * renglones va pegada a su número. */
@@ -763,10 +774,10 @@
   .m-tr {
     display: inline-flex; align-items: center; gap: 3px; flex: 0 0 auto;
     padding: 3px 7px; border-radius: 999px;
-    font-size: 11.5px; font-weight: 700; letter-spacing: .1px;
+    font-size: var(--m-meta); font-weight: 700; letter-spacing: .1px;
     color: #a9bacd; background: rgba(255,255,255,.08);
   }
-  .m-tr .ti { font-size: 11px; }
+  .m-tr .ti { font-size: var(--m-meta); }
   .m-tr.up { color: #4ade80; background: rgba(74,222,128,.14); }
   .m-tr.dn { color: #f87171; background: rgba(248,113,113,.14); }
 
@@ -779,14 +790,14 @@
   /* El puesto. Con cinco renglones el orden ya no se lee solo, y un
    * número pesa menos que otra barra. */
   .m-mvr-i {
-    flex: 0 0 16px; font-size: 11px; font-weight: 800;
+    flex: 0 0 16px; font-size: var(--m-meta); font-weight: 800;
     color: #8ea3b8; text-align: center;
   }
   .m-mvr-t {
-    flex: 1; min-width: 0; font-size: 13.5px; font-weight: 500; color: #ccd8e6;
+    flex: 1; min-width: 0; font-size: var(--m-body); font-weight: 500; color: #ccd8e6;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .m-mvr b { font-size: 14.5px; font-weight: 800; color: #fff; flex: 0 0 42px; text-align: right; }
+  .m-mvr b { font-size: var(--m-body); font-weight: 800; color: #fff; flex: 0 0 42px; text-align: right; }
 
   /* Una línea al pie, no un fondo detrás del texto. Ésa fue la queja
    * del formato anterior: la barra como fondo parecía un rectángulo
@@ -798,8 +809,8 @@
   }
 
   .m-mvcard-h .m-hero-k { display: inline-flex; align-items: center; gap: 5px; }
-  .m-mvcard-h .m-hero-k .ti { font-size: 12px; }
-  .m-seclink .ti { font-size: 13px; vertical-align: -2px; }
+  .m-mvcard-h .m-hero-k .ti { font-size: var(--m-small); }
+  .m-seclink .ti { font-size: var(--m-small); vertical-align: -2px; }
 
   /* ── Despegó / se apagó ─────────────────────────────────────────── */
   /*
@@ -820,9 +831,9 @@
   }
   .m-col-up .m-col-k { color: #a7f3d0; }
   .m-col-dn .m-col-k { color: #fecaca; }
-  .m-col-r { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: 13px; color: #d7e0ea; padding: 4px 0; }
+  .m-col-r { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: var(--m-small); color: #d7e0ea; padding: 4px 0; }
   .m-col-r span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .m-col-r b { color: #fff; font-weight: 800; font-size: 13.5px; flex: 0 0 auto; }
+  .m-col-r b { color: #fff; font-weight: 800; font-size: var(--m-body); flex: 0 0 auto; }
   /* Una columna vacía conserva su sitio: si desapareciera, la otra
    * ocuparía todo el ancho y el bloque cambiaría de forma cada semana. */
   .m-col-none { opacity: .45; }
@@ -839,8 +850,8 @@
     /* El rótulo a la izquierda; la cifra y su detalle, a la derecha.
    * Las dos tarjetas dejan así sus números en el mismo borde. */
   .m-stat-v { display: block; text-align: right;
-    font-size: 23px; font-weight: 800; color: #fff; letter-spacing: -.6px; margin-top: 3px; }
-  .m-stat-d { display: block; text-align: right; font-size: 11px; color: #a9bacd; margin-top: 3px; }
+    font-size: var(--m-screen); font-weight: 800; color: #fff; letter-spacing: -.6px; margin-top: 3px; }
+  .m-stat-d { display: block; text-align: right; font-size: var(--m-meta); color: #a9bacd; margin-top: 3px; }
   /* Gastar MÁS no es una buena noticia: el verde iría al revés. */
   .m-up { color: #fca5a5; }
   .m-down { color: #86efac; }
@@ -912,7 +923,7 @@
   body.m-shell .m-tab {
     position: relative; flex: 1; height: 40px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 20px; color: #9bb0c6; font-size: 21px;
+    border-radius: 20px; color: #9bb0c6; font-size: var(--m-title);
   }
   body.m-shell .m-tab.on { background: rgba(255,255,255,.14); color: #fff; }
   .m-dot-badge, .m-tab .m-dot {
@@ -936,7 +947,7 @@
     transform: translateX(-50%);
     width: 60px; height: 60px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 50%; font-size: 28px;
+    border-radius: 50%; font-size: var(--m-figure);
     background: #22c55e; color: #06301a;
     box-shadow: 0 0 0 4px rgba(34,197,94,.14), 0 12px 30px rgba(34,197,94,.42);
   }
@@ -980,14 +991,14 @@
   }
   .m-res-l { flex: 1; min-width: 0; }
   .m-res-n {
-    display: block; font-size: 14.5px; font-weight: 600; line-height: 1.3; color: #eef4fb;
+    display: block; font-size: var(--m-body); font-weight: 600; line-height: 1.3; color: #eef4fb;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .m-res-s { display: block; font-size: 11.5px; color: #a9bacd; margin-top: 3px; }
+  .m-res-s { display: block; font-size: var(--m-meta); color: #a9bacd; margin-top: 3px; }
   .m-res-s b { color: #cbd5e1; font-weight: 700; }
   .m-res-r { text-align: right; flex: 0 0 auto; }
-  .m-res-r b { display: block; font-size: 17.5px; font-weight: 800; line-height: 1; }
-  .m-res-r small { display: block; font-size: 10.5px; color: #a9bacd; margin-top: 3px; }
+  .m-res-r b { display: block; font-size: var(--m-strong); font-weight: 800; line-height: 1; }
+  .m-res-r small { display: block; font-size: var(--m-meta); color: #a9bacd; margin-top: 3px; }
 
   /* ── La ficha ───────────────────────────────────────────────────── */
 
@@ -1001,9 +1012,9 @@
     display: inline-flex; align-items: center; gap: 4px;
     margin: 4px 0 12px; padding: 4px 2px;
     background: none; border: none; box-shadow: none;
-    font-size: 12.5px; font-weight: 600; color: #7dd3fc; cursor: pointer;
+    font-size: var(--m-small); font-weight: 600; color: #7dd3fc; cursor: pointer;
   }
-  .m-back .ti { font-size: 15px; }
+  .m-back .ti { font-size: var(--m-body); }
 
   /* Volver atrás con el pulgar, no con la uña. El blanco de 44px es lo
    * mínimo que recomienda Apple, y el de antes rondaba los 26. El
@@ -1011,9 +1022,9 @@
    * margen de la pantalla aunque el blanco se salga de él. */
   body.m-shell .m-back-gde {
     margin: 0 0 10px -10px; padding: 11px 10px;
-    font-size: 15px; font-weight: 700;
+    font-size: var(--m-body); font-weight: 700;
   }
-  .m-back-gde .ti { font-size: 19px; }
+  .m-back-gde .ti { font-size: var(--m-title); }
 
   /* ── La ficha ───────────────────────────────────────────────────
    *
@@ -1038,15 +1049,15 @@
 
   .m-bot { flex: 0 0 52px; text-align: center; }
   .m-bot svg { display: block; }
-  .m-bot small { display: block; font-size: 10px; color: #c3d2e2; margin-top: 5px; }
+  .m-bot small { display: block; font-size: var(--m-meta); color: #c3d2e2; margin-top: 5px; }
 
   .m-fic-d { flex: 1; min-width: 0; }
-  .m-fic-n { color: #fff; font-size: 17px; font-weight: 800; letter-spacing: -.3px; line-height: 1.22; }
-  .m-fic-s { font-size: 11.5px; color: #c3d2e2; margin-top: 5px; letter-spacing: .2px; }
+  .m-fic-n { color: #fff; font-size: var(--m-strong); font-weight: 800; letter-spacing: -.3px; line-height: 1.22; }
+  .m-fic-s { font-size: var(--m-meta); color: #c3d2e2; margin-top: 5px; letter-spacing: .2px; }
   .m-fic-big { display: flex; align-items: baseline; gap: 6px; margin-top: 12px; }
-  .m-fic-big b { font-size: 29px; font-weight: 800; letter-spacing: -1px; line-height: .9; }
-  .m-fic-big span { font-size: 12px; color: #c3d2e2; }
-  .m-fic-av { font-size: 12.5px; font-weight: 700; margin-top: 4px; }
+  .m-fic-big b { font-size: var(--m-figure); font-weight: 800; letter-spacing: -1px; line-height: .9; }
+  .m-fic-big span { font-size: var(--m-small); color: #c3d2e2; }
+  .m-fic-av { font-size: var(--m-small); font-weight: 700; margin-top: 4px; }
 
   /* ── Dónde están ────────────────────────────────────────────────
    * Sólo sale con las zonas encendidas. Con la función apagada no se
@@ -1058,10 +1069,10 @@
     border: 1px solid rgba(255,255,255,.12);
   }
   .m-zon-k {
-    display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .6px;
+    display: block; font-size: var(--m-meta); font-weight: 800; letter-spacing: .6px;
     text-transform: uppercase; color: #a9bacd; margin-bottom: 8px;
   }
-  .m-zon-wait { font-size: 12.5px; color: #a9bacd; }
+  .m-zon-wait { font-size: var(--m-small); color: #a9bacd; }
   /* En tira horizontal: con seis zonas, una por renglón empujaría los
    * botones fuera de la pantalla. */
   .m-zon-s {
@@ -1072,11 +1083,11 @@
   .m-zon-t {
     flex: 0 0 auto; display: inline-flex; align-items: baseline; gap: 5px;
     padding: 7px 11px; border-radius: 999px;
-    font-size: 11.5px; color: #c3d2e2; white-space: nowrap;
+    font-size: var(--m-meta); color: #c3d2e2; white-space: nowrap;
     background: rgba(255,255,255,.08);
     border: 1px solid rgba(255,255,255,.14);
   }
-  .m-zon-t b { font-size: 14px; font-weight: 800; color: #fff; }
+  .m-zon-t b { font-size: var(--m-body); font-weight: 800; color: #fff; }
   .m-zon-t.cero { opacity: .5; }
 
   /* Pares etiqueta / valor. El valor a la derecha y en negrita: se lee
@@ -1089,14 +1100,14 @@
   .m-row {
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
     padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.09);
-    font-size: 13.5px; color: #c3d2e2;
+    font-size: var(--m-body); color: #c3d2e2;
   }
   .m-row > span { display: inline-flex; align-items: center; gap: 8px; }
-  .m-row .ti { font-size: 16px; color: #7dd3fc; }
+  .m-row .ti { font-size: var(--m-strong); color: #7dd3fc; }
   .m-row-end, .m-row:last-child { border-bottom: none; }
-  .m-row b { font-size: 14px; font-weight: 800; color: #fff; text-align: right; }
-  .m-soft { font-weight: 400; font-size: 11px; color: #9fb0c4; }
-  .m-iq { font-weight: 700; font-size: 11.5px; color: #7dd3fc; }
+  .m-row b { font-size: var(--m-body); font-weight: 800; color: #fff; text-align: right; }
+  .m-soft { font-weight: 400; font-size: var(--m-meta); color: #9fb0c4; }
+  .m-iq { font-weight: 700; font-size: var(--m-meta); color: #7dd3fc; }
 
   /* Añadir pesa más que recibir: una es la que se hace diez veces al
    * día y la otra cuando llega el camión. Antes eran gemelas. */
@@ -1104,14 +1115,14 @@
   body.m-shell .m-act {
     flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
     padding: 13px 8px; border-radius: 999px; cursor: pointer;
-    font-size: 13px; font-weight: 700; color: #eaf2fb;
+    font-size: var(--m-small); font-weight: 700; color: #eaf2fb;
     background: rgba(255,255,255,.11);
     border: 1px solid rgba(255,255,255,.17);
   }
   body.m-shell .m-act:first-child {
     background: #38bdf8; border-color: #38bdf8; color: #04283d;
   }
-  .m-act .ti { font-size: 16px; color: #7dd3fc; }
+  .m-act .ti { font-size: var(--m-strong); color: #7dd3fc; }
   .m-act:first-child .ti { color: #04283d; }
 
   /* ── Inventario ─────────────────────────────────────────────────── */
@@ -1119,15 +1130,15 @@
   .m-screen[data-screen="inventory"] { padding: 14px 13px 0; }
 
   .m-inv-h { display: flex; align-items: baseline; justify-content: space-between; margin: 0 2px 11px; }
-  .m-inv-t { color: #fff; font-size: 25px; font-weight: 800; letter-spacing: -.5px; line-height: 1.1; }
-  .m-inv-c { font-size: 11px; color: #9fb0c4; }
+  .m-inv-t { color: #fff; font-size: var(--m-screen); font-weight: 800; letter-spacing: -.5px; line-height: 1.1; }
+  .m-inv-c { font-size: var(--m-meta); color: #9fb0c4; }
 
   .m-inv-bar2 { display: flex; gap: 7px; margin-bottom: 11px; }
   .m-inv-bar2 .m-searchbar { flex: 1; min-width: 0; margin-bottom: 0; }
   body.m-shell .m-adj {
     flex: 0 0 44px; width: 44px; cursor: pointer; position: relative;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 16px; font-size: 17px; color: #eaf2fb;
+    border-radius: 16px; font-size: var(--m-strong); color: #eaf2fb;
     background: rgba(255,255,255,.11);
     border: 1px solid rgba(255,255,255,.15);
   }
@@ -1146,7 +1157,7 @@
   }
   body.m-shell .m-seg button {
     flex: 1; padding: 9px 4px; border-radius: 11px; cursor: pointer;
-    font-size: 12px; color: #9fb0c4; text-align: center;
+    font-size: var(--m-small); color: #9fb0c4; text-align: center;
   }
   body.m-shell .m-seg button.on { background: rgba(255,255,255,.14); color: #fff; font-weight: 700; }
   .m-seg button b { font-weight: 800; color: #7f93a8; margin-left: 2px; }
@@ -1167,7 +1178,7 @@
   }
   .m-inv-l { flex: 1; min-width: 0; }
   .m-inv-n {
-    display: block; font-size: 14px; font-weight: 500; color: #eef4fb;
+    display: block; font-size: var(--m-body); font-weight: 500; color: #eef4fb;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   /* La fracción pegada a la cifra y en su misma línea base: el 2.04
@@ -1176,17 +1187,17 @@
     flex: 0 0 auto; display: flex; align-items: baseline; gap: 1px;
     line-height: 1;
   }
-  .m-inv-v b { font-size: 24px; font-weight: 800; letter-spacing: -.7px; }
-  .m-inv-v i { font-style: normal; font-size: 14px; font-weight: 700; color: #8ea3b8; }
+  .m-inv-v b { font-size: var(--m-screen); font-weight: 800; letter-spacing: -.7px; }
+  .m-inv-v i { font-style: normal; font-size: var(--m-body); font-weight: 700; color: #8ea3b8; }
 
   .m-inv-meta {
     display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
-    margin-top: 7px; font-size: 11.5px; color: #a9bacd;
+    margin-top: 7px; font-size: var(--m-meta); color: #a9bacd;
   }
   /* La etiqueta es el motivo por el que ese renglón está arriba. */
   .m-flag {
     font-style: normal; padding: 2px 6px; border-radius: 5px;
-    font-size: 10.5px; font-weight: 700;
+    font-size: var(--m-meta); font-weight: 700;
   }
   .m-flag-red   { background: rgba(239,68,68,.18);  color: #fca5a5; }
   .m-flag-amber { background: rgba(245,158,11,.20); color: #fcd34d; }
@@ -1199,7 +1210,7 @@
   .m-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
   body.m-shell .m-chip {
     padding: 8px 12px; border-radius: 999px; cursor: pointer;
-    font-size: 11.5px; color: #b6c6d8;
+    font-size: var(--m-meta); color: #b6c6d8;
     background: rgba(255,255,255,.07);
     border: 1px solid rgba(255,255,255,.12);
   }
@@ -1208,8 +1219,8 @@
     background: #7dd3fc; border-color: #7dd3fc;
   }
 
-  .m-edit-n { color: #fff; font-size: 16px; font-weight: 800; line-height: 1.25; letter-spacing: -.2px; }
-  .m-edit-s { color: #a9bacd; font-size: 11.5px; margin: 4px 0 4px; }
+  .m-edit-n { color: #fff; font-size: var(--m-strong); font-weight: 800; line-height: 1.25; letter-spacing: -.2px; }
+  .m-edit-s { color: #a9bacd; font-size: var(--m-meta); margin: 4px 0 4px; }
   /* La hoja puede pasarse de alto con muchos proveedores. Se hace ella
    * la que rueda, no la pantalla de detrás. */
   .m-edit { max-height: 86vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
@@ -1217,7 +1228,7 @@
   .m-step { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
   body.m-shell .m-step button {
     flex: 0 0 42px; height: 42px; cursor: pointer; border-radius: 12px;
-    font-size: 19px; color: #eaf2fb;
+    font-size: var(--m-title); color: #eaf2fb;
     background: rgba(255,255,255,.10);
     border: 1px solid rgba(255,255,255,.15);
   }
@@ -1225,7 +1236,7 @@
   body.m-shell .m-money input {
     /* 16px obligatorio: por debajo Safari hace zoom al enfocar y
      * descoloca la hoja entera. */
-    flex: 1; min-width: 0; height: 42px; font-size: 16px; font-weight: 700;
+    flex: 1; min-width: 0; height: 42px; font-size: var(--m-strong); font-weight: 700;
     text-align: center; color: #fff; -webkit-appearance: none;
     background: rgba(255,255,255,.10);
     border: 1px solid rgba(255,255,255,.15);
@@ -1237,13 +1248,13 @@
   .m-money input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
   .m-money { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-  .m-money > span { font-size: 16px; font-weight: 800; color: #9fb0c4; flex: 0 0 auto; }
+  .m-money > span { font-size: var(--m-strong); font-weight: 800; color: #9fb0c4; flex: 0 0 auto; }
   body.m-shell .m-money input { text-align: left; padding: 0 12px; }
 
   body.m-shell .m-iqline {
     display: flex; align-items: center; gap: 6px; cursor: pointer;
     margin: 8px 0 2px; padding: 8px 11px; border-radius: 10px;
-    font-size: 11px; font-weight: 700; color: #7dd3fc;
+    font-size: var(--m-meta); font-weight: 700; color: #7dd3fc;
     background: rgba(56,189,248,.12);
     border: 1px solid rgba(56,189,248,.26);
   }
@@ -1251,7 +1262,7 @@
   body.m-shell .m-next {
     display: flex; align-items: center; justify-content: center; gap: 7px;
     width: 100%; margin-top: 9px; padding: 11px; border-radius: 999px;
-    font-size: 12px; font-weight: 700; color: #9fb0c4;
+    font-size: var(--m-small); font-weight: 700; color: #9fb0c4;
     background: rgba(255,255,255,.06);
     border: 1px solid rgba(255,255,255,.12);
   }
@@ -1318,7 +1329,7 @@
     position: absolute; top: -3px; right: -3px;
     min-width: 16px; height: 16px; padding: 0 4px;
     border-radius: 999px; background: #ef4444; color: #fff;
-    font-style: normal; font-size: 10px; font-weight: 800;
+    font-style: normal; font-size: var(--m-meta); font-weight: 800;
     line-height: 16px; text-align: center;
     border: 1.5px solid #0b1220;
   }
@@ -1329,7 +1340,7 @@
   .m-bub {
     display: inline-flex; align-items: center; gap: 5px;
     height: 25px; padding: 0 10px; border-radius: 999px;
-    font-size: 11.5px; font-weight: 600; line-height: 1;
+    font-size: var(--m-meta); font-weight: 600; line-height: 1;
     white-space: nowrap; overflow: hidden; max-width: 100%;
     border: 1px solid transparent;
     opacity: 0; transform: translateY(5px) scale(.94);
@@ -1339,7 +1350,7 @@
   .m-bub > span {
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .m-bub > i { font-size: 13px; flex: 0 0 auto; }
+  .m-bub > i { font-size: var(--m-small); flex: 0 0 auto; }
 
   .m-bub-info  { background: rgba(56,189,248,.18);  color: #7dd3fc;
                  border-color: rgba(56,189,248,.26); }
@@ -1367,12 +1378,12 @@
   }
   .m-bub-list.on { opacity: 1; transform: none; }
   .m-bub-row {
-    font-size: 12.5px; line-height: 1.45; padding: 7px 9px;
+    font-size: var(--m-small); line-height: 1.45; padding: 7px 9px;
     border-radius: 9px; margin-bottom: 6px;
   }
   .m-bub-clear {
     width: 100%; border-radius: 10px; padding: 8px;
-    font-size: 12.5px; font-weight: 700;
+    font-size: var(--m-small); font-weight: 700;
     background: rgba(255,255,255,.08); color: #cbd5e1;
     border: 1px solid rgba(255,255,255,.14);
   }
@@ -1385,7 +1396,7 @@
   }
   .bs-toast {
     padding: 9px 12px; border-radius: 13px;
-    font-size: 12.5px; line-height: 1.35;
+    font-size: var(--m-small); line-height: 1.35;
     /* Una línea y a otra cosa. El texto completo del aviso casi
      * siempre cabe, y cuando no, lo que importa está al principio. */
     align-items: center;
@@ -1407,7 +1418,7 @@
     left: 50%; z-index: 9200;
     width: 38px; height: 38px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 19px; color: #9fb0c4;
+    font-size: var(--m-title); color: #9fb0c4;
     background: rgba(11,18,32,.88);
     border: 1px solid rgba(255,255,255,.16);
     box-shadow: 0 6px 18px rgba(0,0,0,.34);
@@ -1435,18 +1446,18 @@
    * por el ancho y la línea de abajo se metía debajo del título. */
   .m-ord-gran {
     display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
-    color: #fff; font-size: 30px; font-weight: 800; letter-spacing: -.8px;
+    color: #fff; font-size: var(--m-figure); font-weight: 800; letter-spacing: -.8px;
     margin: 6px 2px 16px;
   }
-  .m-ord-gran span { font-size: 13px; font-weight: 400; color: #a9bacd; letter-spacing: 0; }
+  .m-ord-gran span { font-size: var(--m-small); font-weight: 400; color: #a9bacd; letter-spacing: 0; }
 
   /* En el detalle sí caben al lado: el nombre del proveedor es corto. */
   .m-ord-h { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
   .m-ord-tot {
-    text-align: right; flex: 0 0 auto; color: #fff; font-size: 23px; font-weight: 800;
+    text-align: right; flex: 0 0 auto; color: #fff; font-size: var(--m-screen); font-weight: 800;
     letter-spacing: -.6px; line-height: 1.1;
   }
-  .m-ord-tot small { display: block; font-size: 12px; font-weight: 400; color: #a9bacd; margin-top: 4px; white-space: nowrap; }
+  .m-ord-tot small { display: block; font-size: var(--m-small); font-weight: 400; color: #a9bacd; margin-top: 4px; white-space: nowrap; }
 
   /* Arriba del todo: que no se pueda colocar desde aquí es lo primero
    * que hay que saber, no la conclusión a la que se llega después de
@@ -1454,11 +1465,11 @@
   .m-ord-nota {
     display: flex; align-items: flex-start; gap: 8px;
     margin: 14px 0 11px; padding: 11px 13px; border-radius: 14px;
-    font-size: 12.5px; line-height: 1.4; color: #c3d2e2;
+    font-size: var(--m-small); line-height: 1.4; color: #c3d2e2;
     background: rgba(255,255,255,.07);
     border: 1px solid rgba(255,255,255,.12);
   }
-  .m-ord-nota .ti { font-size: 16px; color: #7dd3fc; flex: 0 0 auto; margin-top: 1px; }
+  .m-ord-nota .ti { font-size: var(--m-strong); color: #7dd3fc; flex: 0 0 auto; margin-top: 1px; }
 
   /* ── Lo que dejaste fuera ───────────────────────────────────────── */
   /* Excluir era ya poner la cantidad a cero, pero la línea desaparecía
@@ -1469,7 +1480,7 @@
     border: 1px solid rgba(255,255,255,.11);
   }
   .m-ord-fuera-h {
-    font-size: 11.5px; font-weight: 800; letter-spacing: .5px;
+    font-size: var(--m-meta); font-weight: 800; letter-spacing: .5px;
     text-transform: uppercase; color: #a9bacd; margin-bottom: 4px;
   }
   .m-ord-fl {
@@ -1478,13 +1489,13 @@
   }
   .m-ord-fl:last-child { border-bottom: none; }
   .m-ord-fl-n {
-    flex: 1; min-width: 0; font-size: 13.5px; color: #ccd8e6;
+    flex: 1; min-width: 0; font-size: var(--m-body); color: #ccd8e6;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .m-ord-fl small { font-size: 11.5px; color: #8ea3b8; flex: 0 0 auto; }
+  .m-ord-fl small { font-size: var(--m-meta); color: #8ea3b8; flex: 0 0 auto; }
   body.m-shell .m-ord-volver {
     flex: 0 0 auto; padding: 6px 11px; border-radius: 999px; cursor: pointer;
-    font-size: 11.5px; font-weight: 700; color: #7dd3fc;
+    font-size: var(--m-meta); font-weight: 700; color: #7dd3fc;
     background: rgba(56,189,248,.14);
     border: 1px solid rgba(56,189,248,.30);
   }
@@ -1495,7 +1506,7 @@
   body.m-shell .m-ord-x {
     flex: 0 0 26px; width: 26px; height: 26px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 50%; font-size: 13px; color: #8ea3b8;
+    border-radius: 50%; font-size: var(--m-small); color: #8ea3b8;
     background: rgba(255,255,255,.07);
   }
 
@@ -1514,12 +1525,12 @@
   }
   .m-ordv-l { flex: 1; min-width: 0; }
   .m-ordv-n {
-    display: block; font-size: 16px; font-weight: 600; color: #eef4fb;
+    display: block; font-size: var(--m-strong); font-weight: 600; color: #eef4fb;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .m-ordv-l small { display: block; font-size: 12.5px; color: #a9bacd; margin-top: 3px; }
+  .m-ordv-l small { display: block; font-size: var(--m-small); color: #a9bacd; margin-top: 3px; }
   .m-ordv.aviso .m-ordv-l small { color: #fcd34d; }
-  .m-ordv > b { font-size: 18px; font-weight: 800; color: #fff; flex: 0 0 auto; }
+  .m-ordv > b { font-size: var(--m-title); font-weight: 800; color: #fff; flex: 0 0 auto; }
   .m-ordv.aviso > b { color: #fcd34d; }
 
   /* ── Una línea del pedido ───────────────────────────────────────── */
@@ -1535,26 +1546,26 @@
 
   .m-ord-l-top { display: flex; align-items: baseline; gap: 8px; }
   .m-ord-l-n {
-    flex: 1; min-width: 0; font-size: 14.5px; font-weight: 600; color: #eef4fb;
+    flex: 1; min-width: 0; font-size: var(--m-body); font-weight: 600; color: #eef4fb;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .m-ord-l-s { font-size: 12.5px; color: #a9bacd; margin-top: 4px; }
+  .m-ord-l-s { font-size: var(--m-small); color: #a9bacd; margin-top: 4px; }
 
-  .m-ord-out { font-size: 11.5px; font-weight: 700; color: #f87171; flex: 0 0 auto; }
-  .m-ord-sin { font-size: 11.5px; font-weight: 700; color: #fcd34d; flex: 0 0 auto; }
-  .m-ord-ed  { font-size: 11.5px; font-weight: 700; color: #7dd3fc; flex: 0 0 auto; }
-  .m-ord-mal { font-size: 11.5px; font-weight: 700; color: #fca5a5; flex: 0 0 auto; }
+  .m-ord-out { font-size: var(--m-meta); font-weight: 700; color: #f87171; flex: 0 0 auto; }
+  .m-ord-sin { font-size: var(--m-meta); font-weight: 700; color: #fcd34d; flex: 0 0 auto; }
+  .m-ord-ed  { font-size: var(--m-meta); font-weight: 700; color: #7dd3fc; flex: 0 0 auto; }
+  .m-ord-mal { font-size: var(--m-meta); font-weight: 700; color: #fca5a5; flex: 0 0 auto; }
 
   .m-ord-q { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
   body.m-shell .m-ord-q button {
     flex: 0 0 38px; height: 38px; cursor: pointer; border-radius: 11px;
-    font-size: 18px; color: #eaf2fb;
+    font-size: var(--m-title); color: #eaf2fb;
     background: rgba(255,255,255,.10);
     border: 1px solid rgba(255,255,255,.15);
   }
   /* 16px obligatorio: por debajo Safari hace zoom al enfocar. */
   body.m-shell .m-ord-q input {
-    flex: 1; min-width: 0; height: 38px; font-size: 16px; font-weight: 700;
+    flex: 1; min-width: 0; height: 38px; font-size: var(--m-strong); font-weight: 700;
     text-align: center; color: #fff; -webkit-appearance: none;
     background: rgba(255,255,255,.10);
     border: 1px solid rgba(255,255,255,.15);
@@ -1565,23 +1576,23 @@
   }
   .m-ord-q input::-webkit-outer-spin-button,
   .m-ord-q input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .m-ord-l-t { flex: 0 0 58px; text-align: right; font-size: 14px; font-weight: 800; color: #fff; }
+  .m-ord-l-t { flex: 0 0 58px; text-align: right; font-size: var(--m-body); font-weight: 800; color: #fff; }
 
   body.m-shell .m-ord-undo {
-    margin-top: 8px; font-size: 11.5px; color: #7dd3fc; cursor: pointer; text-align: left;
+    margin-top: 8px; font-size: var(--m-meta); color: #7dd3fc; cursor: pointer; text-align: left;
   }
   .m-ord-undo b { font-weight: 800; }
 
   /* Proveedor sin ajuste manual: se enseña la cantidad y se dice por
    * qué no se puede tocar, en vez de un botón que no responde. */
   .m-ord-auto { display: flex; align-items: center; gap: 9px; margin-top: 10px; }
-  .m-ord-auto > b { font-size: 17px; font-weight: 800; color: #fff; }
-  .m-ord-auto > span:not(.m-ord-l-t) { flex: 1; min-width: 0; font-size: 11px; color: #a9bacd; line-height: 1.3; }
+  .m-ord-auto > b { font-size: var(--m-strong); font-weight: 800; color: #fff; }
+  .m-ord-auto > span:not(.m-ord-l-t) { flex: 1; min-width: 0; font-size: var(--m-meta); color: #a9bacd; line-height: 1.3; }
 
   body.m-shell .m-ord-add {
     display: flex; align-items: center; justify-content: center; gap: 7px;
     width: 100%; margin: 4px 0 14px; padding: 13px; border-radius: 999px;
-    cursor: pointer; font-size: 13.5px; font-weight: 700; color: #dbe6f2;
+    cursor: pointer; font-size: var(--m-body); font-weight: 700; color: #dbe6f2;
     background: rgba(255,255,255,.09);
     border: 1px solid rgba(255,255,255,.15);
   }
@@ -1594,7 +1605,7 @@
    * flota sobre una foto. */
 
   .m-screen[data-screen="cycle"] { padding: 14px 13px 0; }
-  .m-cyc-t { color: #fff; font-size: 25px; font-weight: 800; letter-spacing: -.5px; line-height: 1.1; margin: 2px 2px 13px; }
+  .m-cyc-t { color: #fff; font-size: var(--m-screen); font-weight: 800; letter-spacing: -.5px; line-height: 1.1; margin: 2px 2px 13px; }
 
   body.m-shell .m-cyc-h { display: block; padding: 14px; border-radius: 17px; }
   .m-cyc-wait  { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.13); }
@@ -1604,7 +1615,7 @@
   .m-cyc-teal  { background: rgba(29,158,117,.16); border: 1px solid rgba(93,202,165,.42); }
 
   .m-cyc-k {
-    font-size: 11.5px; font-weight: 800; letter-spacing: .8px;
+    font-size: var(--m-meta); font-weight: 800; letter-spacing: .8px;
     text-transform: uppercase; color: #cbd5e1;
   }
   .m-cyc-green .m-cyc-k { color: #c0dd97; }
@@ -1612,8 +1623,8 @@
   .m-cyc-red   .m-cyc-k { color: #f7c1c1; }
   .m-cyc-teal  .m-cyc-k { color: #9fe1cb; }
 
-  .m-cyc-n { color: #fff; font-size: 18px; font-weight: 800; letter-spacing: -.3px; margin: 5px 0 4px; }
-  .m-cyc-d { font-size: 13px; color: #ccd8e6; line-height: 1.5; }
+  .m-cyc-n { color: #fff; font-size: var(--m-title); font-weight: 800; letter-spacing: -.3px; margin: 5px 0 4px; }
+  .m-cyc-d { font-size: var(--m-small); color: #ccd8e6; line-height: 1.5; }
   .m-cyc-bar {
     height: 5px; border-radius: 999px; margin: 8px 0 7px;
     background: rgba(255,255,255,.15); overflow: hidden;
@@ -1623,7 +1634,7 @@
   body.m-shell .m-cyc-go {
     display: block; width: 100%; margin-top: 12px;
     padding: 11px; border-radius: 999px; text-align: center;
-    font-size: 14px; font-weight: 800; color: #0b1220;
+    font-size: var(--m-body); font-weight: 800; color: #0b1220;
     background: #e2e8f0;
   }
   .m-cyc-green .m-cyc-go { background: #97c459; color: #173404; }
@@ -1639,31 +1650,31 @@
   .m-cyc-sn {
     width: 20px; height: 20px; flex: 0 0 20px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 10.5px; font-weight: 800;
+    font-size: var(--m-meta); font-weight: 800;
     color: #9fb0c4; border: 1px solid #9fb0c4;
   }
-  .m-cyc-s.on .m-cyc-sn { background: #97c459; border-color: #97c459; color: #173404; font-size: 12px; }
+  .m-cyc-s.on .m-cyc-sn { background: #97c459; border-color: #97c459; color: #173404; font-size: var(--m-small); }
   .m-cyc-s.next .m-cyc-sn { color: #85b7eb; border-color: #85b7eb; }
-  .m-cyc-st { font-size: 14px; color: #e8eef6; line-height: 1.3; }
-  .m-cyc-st small { display: block; font-size: 12px; color: #a9bacd; margin-top: 3px; }
+  .m-cyc-st { font-size: var(--m-body); color: #e8eef6; line-height: 1.3; }
+  .m-cyc-st small { display: block; font-size: var(--m-small); color: #a9bacd; margin-top: 3px; }
 
   /* Separado y en rojo. No es un paso más: no hay deshacer. */
   body.m-shell .m-cyc-reset {
     display: flex; align-items: center; justify-content: center; gap: 7px;
     width: 100%; margin-top: 22px; padding: 11px; border-radius: 999px;
-    font-size: 13px; font-weight: 700; color: #fca5a5;
+    font-size: var(--m-small); font-weight: 700; color: #fca5a5;
     background: rgba(248,113,113,.10);
     border: 1px solid rgba(248,113,113,.30);
   }
-  .m-cyc-warn { font-size: 11px; color: #9fb0c4; text-align: center; margin-top: 7px; line-height: 1.5; }
+  .m-cyc-warn { font-size: var(--m-meta); color: #9fb0c4; text-align: center; margin-top: 7px; line-height: 1.5; }
 
   /* ── Mensajes y listas sueltas ──────────────────────────────────── */
 
   .m-lab { font-size: var(--m-eyebrow); font-weight: 800; color: #c3d2e2;
     letter-spacing: .1em; text-transform: uppercase; margin: 18px 2px 9px; }
-  .m-cnt { font-size: 11.5px; color: #a9bacd; letter-spacing: .3px; margin: 10px 4px 8px; }
-  .m-empty { font-size: 14px; color: #a9bacd; text-align: center; padding: 34px 20px; line-height: 1.6; }
-  .m-empty small { font-size: 13px; }
+  .m-cnt { font-size: var(--m-meta); color: #a9bacd; letter-spacing: .3px; margin: 10px 4px 8px; }
+  .m-empty { font-size: var(--m-body); color: #a9bacd; text-align: center; padding: 34px 20px; line-height: 1.6; }
+  .m-empty small { font-size: var(--m-small); }
 
   /* ── Pantalla vacía ─────────────────────────────────────────────── */
   /* Un hueco en blanco con una línea pequeña en medio se lee como que
@@ -1682,7 +1693,7 @@
   .m-nada-i {
     width: 62px; height: 62px; border-radius: 50%; margin-bottom: 18px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 27px; color: #9fb0c4;
+    font-size: var(--m-screen); color: #9fb0c4;
     background: rgba(255,255,255,.07);
     border: 1px solid rgba(255,255,255,.13);
   }
@@ -1693,10 +1704,10 @@
     border-color: rgba(74,222,128,.28);
   }
   .m-nada b {
-    font-size: 19px; font-weight: 800; color: #fff; letter-spacing: -.3px;
+    font-size: var(--m-title); font-weight: 800; color: #fff; letter-spacing: -.3px;
   }
   .m-nada small {
-    display: block; font-size: 13.5px; color: #a9bacd;
+    display: block; font-size: var(--m-body); color: #a9bacd;
     line-height: 1.55; margin-top: 8px; max-width: 290px;
   }
 
@@ -1707,10 +1718,10 @@
     background: rgba(255,255,255,.09);
     border: 1px solid rgba(255,255,255,.12);
   }
-  .m-item > i:first-child { font-size: 16px; color: #9fb0c4; flex: 0 0 16px; }
-  .m-item-t { flex: 1; min-width: 0; font-size: 14.5px; font-weight: 500; line-height: 1.25; }
-  .m-item-t small { display: block; font-size: 11.5px; color: #a9bacd; margin-top: 3px; }
-  .m-chev { font-size: 15px; color: #9fb0c4; opacity: .6; flex: 0 0 auto; }
+  .m-item > i:first-child { font-size: var(--m-strong); color: #9fb0c4; flex: 0 0 16px; }
+  .m-item-t { flex: 1; min-width: 0; font-size: var(--m-body); font-weight: 500; line-height: 1.25; }
+  .m-item-t small { display: block; font-size: var(--m-meta); color: #a9bacd; margin-top: 3px; }
+  .m-chev { font-size: var(--m-body); color: #9fb0c4; opacity: .6; flex: 0 0 auto; }
 
   /* Salir: separado y en rojo. No es una sección más de la lista. */
   .m-list-end { margin-top: 22px; }
@@ -1824,12 +1835,12 @@
   body.m-shell .m-hcard:active { background: rgba(255,255,255,.15); }
   .m-hcard-l { flex: 1; min-width: 0; }
   .m-hcard-v {
-    display: block; font-size: 14px; font-weight: 500; color: #eef4fb;
+    display: block; font-size: var(--m-body); font-weight: 500; color: #eef4fb;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .m-hcard-m { display: block; font-size: 11.5px; color: #93a5b8; margin-top: 3px; }
+  .m-hcard-m { display: block; font-size: var(--m-meta); color: #93a5b8; margin-top: 3px; }
   .m-hcard-r { flex: 0 0 auto; text-align: right; }
-  .m-hcard-a { display: block; font-size: 15px; font-weight: 800; color: #fff; }
+  .m-hcard-a { display: block; font-size: var(--m-body); font-weight: 800; color: #fff; }
 
   /* Cabecera de mes, plegable. */
   body.m-shell .m-hmes {
@@ -1837,17 +1848,17 @@
     text-align: left; padding: 11px 4px 9px; margin-top: 10px;
     color: #c8d6e5;
   }
-  .m-hmes-v { font-size: 15px; color: #7b8a9e; transition: transform .18s ease; }
+  .m-hmes-v { font-size: var(--m-body); color: #7b8a9e; transition: transform .18s ease; }
   body.m-shell .m-hmes.on .m-hmes-v { transform: rotate(90deg); }
-  .m-hmes-t { font-size: 14px; font-weight: 700; color: #eef4fb;
+  .m-hmes-t { font-size: var(--m-body); font-weight: 700; color: #eef4fb;
     text-transform: capitalize; }
-  .m-hmes-m { margin-left: auto; font-size: 11.5px; color: #93a5b8; }
+  .m-hmes-m { margin-left: auto; font-size: var(--m-meta); color: #93a5b8; }
   .m-hmes-c { padding-top: 2px; }
 
   /* La pastilla de estado. Es lo primero que se mira después del
    * dinero, así que el color tiene que decirlo antes que el texto. */
   .m-hs { display: inline-block; margin-top: 5px; padding: 4px 9px;
-    border-radius: 999px; font-size: 10px; font-weight: 800;
+    border-radius: 999px; font-size: var(--m-meta); font-weight: 800;
     letter-spacing: .02em; white-space: nowrap; }
   .m-hs-bien   { background: rgba(16,185,129,.20);  color: #6ee7b7; }
   .m-hs-corto  { background: rgba(217,119,6,.24);   color: #fcd34d; }
@@ -1869,15 +1880,15 @@
     padding: 11px 15px; border-bottom: 1px solid rgba(255,255,255,.05);
   }
   .m-hln:last-child { border-bottom: none; }
-  .m-hln-n { flex: 1; min-width: 0; font-size: 13px; color: #cbd5e1;
+  .m-hln-n { flex: 1; min-width: 0; font-size: var(--m-small); color: #cbd5e1;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .m-hln-q { flex: 0 0 auto; font-size: 13.5px; font-weight: 700; color: #e8edf5; }
+  .m-hln-q { flex: 0 0 auto; font-size: var(--m-body); font-weight: 700; color: #e8edf5; }
   .m-hln-q em { font-style: normal; font-weight: 400; color: #64748b; margin: 0 5px; }
   .m-hln.mal .m-hln-q { color: #fcd34d; }
 
   .m-hnote {
     margin: 0 0 16px; padding: 12px 14px; border-radius: 13px;
-    font-size: 12.5px; line-height: 1.55;
+    font-size: var(--m-small); line-height: 1.55;
     background: rgba(217,119,6,.1); border: 1px solid rgba(217,119,6,.28);
     color: #fcd34d;
   }
@@ -1888,18 +1899,18 @@
 
   .m-htot {
     display: flex; justify-content: space-between; align-items: baseline;
-    padding: 7px 2px; font-size: 13px; color: #7b8a9e;
+    padding: 7px 2px; font-size: var(--m-small); color: #7b8a9e;
   }
-  .m-htot b { font-size: 16px; font-weight: 800; color: #e8edf5; }
+  .m-htot b { font-size: var(--m-strong); font-weight: 800; color: #e8edf5; }
 
   /* Subtítulo de pantalla. Texto suelto, no caja: `.m-ord-nota` lleva
    * borde y fondo, y como subtítulo parecía un aviso. */
-  .m-hsub { font-size: 13px; color: #9fb0c4; line-height: 1.5;
+  .m-hsub { font-size: var(--m-small); color: #9fb0c4; line-height: 1.5;
     margin: 4px 2px 14px; }
 
   .m-hchips { display: flex; gap: 7px; margin-bottom: 4px; flex-wrap: wrap; }
   body.m-shell .m-hchip {
-    font-size: 12px; font-weight: 700; padding: 8px 13px;
+    font-size: var(--m-small); font-weight: 700; padding: 8px 13px;
     border-radius: 999px; color: #9fb0c4;
     background: rgba(255,255,255,.06);
     border: 1px solid rgba(255,255,255,.13);
@@ -1919,13 +1930,13 @@
    * anchura y "Guardar" caía fuera del pulgar.
    */
   .m-screen[data-screen="settings"] .m-item-t small {
-    display: block; font-size: 11.5px; font-weight: 400;
+    display: block; font-size: var(--m-meta); font-weight: 400;
     color: #93a5b8; margin-top: 3px;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
 
   .m-set-off {
-    font-size: 12.5px; line-height: 1.55; color: #93a5b8;
+    font-size: var(--m-small); line-height: 1.55; color: #93a5b8;
     padding: 12px 14px; border-radius: 14px;
     background: rgba(255,255,255,.04);
     border: 1px solid rgba(255,255,255,.08);
@@ -1933,24 +1944,24 @@
 
   .m-set-f { margin-bottom: 15px; }
   .m-set-f label {
-    display: block; font-size: 12.5px; font-weight: 700;
+    display: block; font-size: var(--m-small); font-weight: 700;
     color: #c8d6e5; margin-bottom: 6px;
   }
   body.m-shell .m-set-f input {
     width: 100%; height: 46px; padding: 0 14px;
-    font-size: 15px; color: #eef4fb;
+    font-size: var(--m-body); color: #eef4fb;
     background: rgba(255,255,255,.07);
     border: 1px solid rgba(255,255,255,.15);
   }
   .m-set-f small {
-    display: block; font-size: 11.5px; line-height: 1.45;
+    display: block; font-size: var(--m-meta); line-height: 1.45;
     color: #7b8a9e; margin-top: 6px;
   }
 
   /* Guardar: ancho, abajo, al alcance del pulgar. */
   body.m-shell .m-set-save {
     width: 100%; margin-top: 22px; padding: 15px;
-    font-size: 15px; font-weight: 800; color: #fff;
+    font-size: var(--m-body); font-weight: 800; color: #fff;
     background: #0284c7; border: 1px solid #0284c7;
   }
   body.m-shell .m-set-save:disabled { opacity: .6; }
@@ -1963,27 +1974,27 @@
     background: rgba(255,255,255,.08);
     border: 1px solid rgba(255,255,255,.13);
   }
-  .m-set-zn { flex: 1; min-width: 0; font-size: 14px; color: #eef4fb;
+  .m-set-zn { flex: 1; min-width: 0; font-size: var(--m-body); color: #eef4fb;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   body.m-shell .m-set-zd {
-    width: 30px; height: 30px; flex: 0 0 30px; font-size: 14px;
+    width: 30px; height: 30px; flex: 0 0 30px; font-size: var(--m-body);
     color: #64748b; display: flex; align-items: center; justify-content: center;
   }
   body.m-shell .m-set-zd.on { color: #fbbf24; }
   body.m-shell .m-set-zx {
-    flex: 0 0 auto; font-size: 11px; font-weight: 800; padding: 5px 10px;
+    flex: 0 0 auto; font-size: var(--m-meta); font-weight: 800; padding: 5px 10px;
     color: #fca5a5; background: rgba(248,113,113,.12);
     border: 1px solid rgba(248,113,113,.3);
   }
 
   .m-set-add { display: flex; gap: 8px; }
   body.m-shell .m-set-add input {
-    flex: 1; min-width: 0; height: 44px; padding: 0 14px; font-size: 14px;
+    flex: 1; min-width: 0; height: 44px; padding: 0 14px; font-size: var(--m-body);
     color: #eef4fb; background: rgba(255,255,255,.07);
     border: 1px solid rgba(255,255,255,.15);
   }
   body.m-shell .m-set-add button {
-    flex: 0 0 auto; padding: 0 20px; font-size: 14px; font-weight: 700;
+    flex: 0 0 auto; padding: 0 20px; font-size: var(--m-body); font-weight: 700;
     color: #cbd5e1; background: rgba(255,255,255,.08);
     border: 1px solid rgba(255,255,255,.15);
   }
@@ -1998,8 +2009,8 @@
   body.m-shell .m-set-font.on {
     background: rgba(2,132,199,.18); border-color: #0284c7;
   }
-  .m-set-font-s { display: block; font-size: 19px; color: #fff; }
-  .m-set-font-n { display: block; font-size: 12.5px; font-weight: 700;
+  .m-set-font-s { display: block; font-size: var(--m-title); color: #fff; }
+  .m-set-font-n { display: block; font-size: var(--m-small); font-weight: 700;
     color: #9fb0c4; margin-top: 5px; }
   .m-set-font-n small { font-weight: 400; color: #7b8a9e; margin-left: 6px; }
 
