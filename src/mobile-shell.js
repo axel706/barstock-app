@@ -130,6 +130,18 @@
     _host.className = 'm-screens hidden';
     document.body.appendChild(_host);
 
+    // La misma escalera de desenfoque que la banda de arriba, abajo.
+    // Seis capas vacías: cada una desenfoca más que la anterior y la
+    // CSS la recorta a su franja. Va ANTES de la barra en el DOM y
+    // con menos z-index — es el suelo sobre el que la barra se apoya,
+    // no parte de ella, y así la barra no se desenfoca a sí misma.
+    const suelo = document.createElement('div');
+    suelo.id = 'mFloor';
+    suelo.className = 'm-floor';
+    suelo.setAttribute('aria-hidden', 'true');
+    suelo.innerHTML = '<i></i><i></i><i></i><i></i><i></i><i></i>';
+    document.body.appendChild(suelo);
+
     _barra = document.createElement('nav');
     _barra.id = 'mTabs';
     _barra.className = 'm-tabs';
