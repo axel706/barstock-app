@@ -240,6 +240,21 @@ const LINEA = (id, nombre, qty, precio, fecha) => ({
         w.document.getElementById('meuBody').textContent));
   }
 
+  grupo('la hoja no usa una superficie como color de texto');
+  {
+    // En esta app `--muted` es un COLOR DE FONDO: #1f2937 en oscuro,
+    // #e6eef8 en claro. Usarlo para texto dejó media pantalla en
+    // blanco sobre blanco. El de texto secundario es `--sub`.
+    const css = leer('styles/marginedge-connections.css');
+    const malas = (css.match(/color:\s*var\(--muted/g) || []).length;
+    prueba('ningún `color: var(--muted)`', malas === 0, malas + ' encontrados');
+    prueba('y sí usa --sub para el texto secundario',
+      /color:\s*var\(--sub/.test(css));
+    // Un gris suave con `opacity` encima deja de leerse en claro.
+    prueba('sin opacity encima de un gris',
+      !/color:\s*var\(--sub[^;]*;[^}]*opacity/.test(css));
+  }
+
   console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
     '   ·   ' + (ok + mal) + ' comprobaciones');
   process.exit(mal ? 1 : 0);

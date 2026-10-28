@@ -72,6 +72,20 @@
     try { return localStorage.getItem(claveCache()) || ''; } catch (e) { return ''; }
   }
 
+  // El NOMBRE del restaurante, aparte del id.
+  //
+  // La pantalla enseñaba "63906542", que no significa nada para nadie.
+  // El nombre sólo se conoce cuando se ha pedido la lista de
+  // restaurantes, así que se guarda al elegirlo. Si no está, se cae al
+  // id — mejor un número que un hueco.
+  function nombreUnidad() {
+    try { return localStorage.getItem(claveCache() + '__nm') || ''; } catch (e) { return ''; }
+  }
+
+  function guardarNombreUnidad(n) {
+    try { localStorage.setItem(claveCache() + '__nm', String(n || '')); } catch (e) {}
+  }
+
   async function cargarUnidad() {
     const { url, key } = cfg();
     const id = await locationId();
@@ -190,7 +204,12 @@
     cont.querySelectorAll('[data-unit]').forEach(b => {
       b.onclick = async () => {
         const ok = await guardarUnidad(b.dataset.unit);
+        // El nombre se guarda aquí porque es el único momento en que se
+        // conoce: la lista de restaurantes sólo llega cuando se pide.
+        guardarNombreUnidad(idYNombre(
+          lista.find(o => idYNombre(o).id === b.dataset.unit) || {}).nombre);
         pintarUnidades(lista);
+        pintarConexion();
         pintarEstado(ok ? null : 'Elegido, pero no se pudo guardar en la nube. ' +
           'Puede que falte la columna marginedge_unit_id en location_settings.');
       };
@@ -598,7 +617,7 @@
         '<div class="me-row">' +
           '<span class="me-dot"></span>' +
           '<span class="me-nm">MarginEdge</span>' +
-          '<span class="me-unit">' + esc(u) + '</span>' +
+          '<span class="me-unit">' + esc(nombreUnidad() || u) + '</span>' +
         '</div>' +
         '<div class="me-row" style="margin-top:7px">' +
           '<span class="me-state" id="meCuando">Checking…</span>' +
