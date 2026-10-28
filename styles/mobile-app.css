@@ -346,9 +346,20 @@
    * logo —que es un hijo normal del flex— se pintaría por debajo y
    * saldría él mismo desenfocado. La sombra es por lo mismo que el
    * degradado: el fondo de aquí arriba es una foto cualquiera. */
+  /* El logo NO entra en la escala del texto.
+   *
+   * La migración lo metió con los demás y el wordmark crecía al subir
+   * "Text size": como el punto y el sufijo son relativos al cuerpo, el
+   * logo entero se deformaba con una preferencia de lectura. Es el
+   * mismo principio que ya está escrito en el header de escritorio —
+   * Manrope es parte de la marca, no del tema— y aquí aplica al
+   * tamaño además de a la letra.
+   *
+   * 23px fijos: el punto y el PRO siguen colgando de él en em, así que
+   * el conjunto conserva sus proporciones y no se mueve nunca. */
   .m-logo {
     position: relative; z-index: 1;
-    font-size: var(--m-screen); font-weight: 800; color: #fff;
+    font-size: 23px; font-weight: 800; color: #fff;
     letter-spacing: -.65px; display: inline-flex; align-items: baseline;
     text-shadow: 0 1px 12px rgba(0,0,0,.55);
   }

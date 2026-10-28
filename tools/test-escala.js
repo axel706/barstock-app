@@ -24,9 +24,10 @@ function grupo(t) { console.log('\n' + t); }
 // paso; se quitan antes de buscar.
 const limpio = css.replace(/\/\*[\s\S]*?\*\//g, '');
 
-grupo('ningún tamaño suelto');
-const sueltos = limpio.match(/font-size:\s*[0-9.]+px/g) || [];
-prueba('cero declaraciones en px', sueltos.length === 0, sueltos.join(', '));
+grupo('ningún tamaño suelto, salvo el logo');
+// El logo es la única excepción y es deliberada: ver más abajo.
+const sueltos = (limpio.match(/font-size:\s*[0-9.]+px/g) || []);
+prueba('una sola declaración en px', sueltos.length === 1, sueltos.join(', '));
 
 grupo('la escala existe y cuelga de una sola base');
 for (const t of ['meta', 'small', 'eyebrow', 'body', 'strong', 'head', 'title',
@@ -43,6 +44,14 @@ grupo('el logo queda fuera de la escala');
 // sus proporciones son del brandbook y son relativas a sí mismo.
 prueba('el sufijo PRO en em', /\.m-logo em\s*\{[^}]*font-size:\s*\.37em/s.test(limpio));
 prueba('el punto en em', /\.m-logo \.m-logo-dot[^{]*\{[^}]*width:\s*\.22em/s.test(limpio));
+
+// Y el wordmark con un tamaño FIJO. Si entra en la escala, subir
+// "Text size" agranda el logo entero —punto y sufijo incluidos, que
+// cuelgan de él en em— y una preferencia de lectura acaba deformando
+// la marca.
+const logo = (limpio.match(/\.m-logo \{[^}]*\}/s) || [''])[0];
+prueba('el wordmark no escala con el texto',
+  /font-size:\s*23px/.test(logo), logo.replace(/\s+/g, ' ').slice(0, 80));
 
 console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
   '   ·   ' + (ok + mal) + ' comprobaciones');
