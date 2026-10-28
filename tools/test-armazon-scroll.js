@@ -151,10 +151,22 @@ grupo('el panel de avisos para el contenedor, no el body');
 grupo('la hoja no deja rodar el documento');
 {
   const css = leer('styles/mobile-app.css');
-  prueba('el body se fija con una pantalla propia delante',
-    /body\.m-shell\.m-on\s*\{[^}]*position:\s*fixed/.test(css));
+  prueba('el raíz no deja rodar la ventana',
+    /html:has\(body\.m-shell\.m-on\)\s*\{[^}]*overflow:\s*hidden/.test(css));
+  // El body NO se fija: en WebKit un elemento fijo abre contexto de
+  // apilamiento, y las capas del fondo van con z-index negativo. Al
+  // fijarlo dejaron de pintar el borde de abajo y salió una franja
+  // negra bajo la barra en toda la app.
+  prueba('y el body NO se fija, que eso rompía el fondo',
+    !/body\.m-shell\.m-on\s*\{[^}]*position:\s*fixed/.test(css));
   prueba('#mScreens es el único que rueda',
     /body\.m-shell\.m-on\s*>\s*\.m-screens\s*\{[^}]*overflow-y:\s*auto/.test(css));
+  prueba('y va fijo, así el body no tiene nada en flujo',
+    /body\.m-shell\.m-on\s*>\s*\.m-screens\s*\{[^}]*position:\s*fixed/.test(css));
+  // Un velo encima del borde de abajo ES la barra negra. El suelo
+  // desenfoca y nada más.
+  prueba('el suelo no lleva tinte encima del borde',
+    !/\.m-floor i:nth-child\(6\)\s*\{[^}]*background:/.test(css));
   prueba('y no se desliza de lado',
     /body\.m-shell\.m-on\s*>\s*\.m-screens\s*\{[^}]*overflow-x:\s*hidden/.test(css));
   prueba('el hueco de la barra pasó al contenedor',

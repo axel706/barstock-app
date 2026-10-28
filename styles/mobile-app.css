@@ -181,18 +181,27 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * delante. Con una sección del ESCRITORIO abierta rueda el
    * documento como siempre: esa página lleva meses afinándose y no se
    * toca desde aquí. */
-  html:has(body.m-shell.m-on),
-  body.m-shell.m-on {
+  /* El `overflow` del elemento raíz se propaga a la ventana, así que
+   * esto solo ya deja el documento quieto. */
+  html:has(body.m-shell.m-on) {
     height: 100%;
     overflow: hidden;
     overscroll-behavior: none;
   }
-  /* Fijar el body además de ocultar el desbordamiento: en iOS
-   * `overflow:hidden` a secas no impide el arrastre del documento. */
-  body.m-shell.m-on {
-    position: fixed; inset: 0;
-    padding: 0;
-  }
+
+  /* El body NO se fija ni se le oculta el desbordamiento.
+   *
+   * El primer intento le puso `position: fixed`, y en WebKit un
+   * elemento fijo abre un contexto de apilamiento propio. Las capas
+   * del fondo —la foto y el velo— van con z-index negativo, así que
+   * pasaron a vivir dentro de ese contexto y dejaron de pintar el
+   * borde de abajo. De ahí la franja negra bajo la barra, en toda la
+   * app.
+   *
+   * No hace falta: con #mScreens fijo y las barras fijas, el body no
+   * tiene nada en flujo que pueda desplazarse. Sólo se le quita el
+   * hueco, que ahora vive en el contenedor. */
+  body.m-shell.m-on { padding: 0; }
 
   /* El único que rueda. El hueco de la banda y el de la barra pasan
    * aquí desde el body: son del contenido, no de la ventana.
@@ -204,7 +213,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * `overscroll-behavior: contain` para que el rebote muera aquí y no
    * suba al documento. */
   body.m-shell.m-on > .m-screens {
-    position: absolute; inset: 0;
+    position: fixed; inset: 0;
     overflow-y: auto; overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
@@ -1064,13 +1073,16 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     -webkit-mask-image: linear-gradient(to top, #000 0%, #000 70%, transparent 87%);
             mask-image: linear-gradient(to top, #000 0%, #000 70%, transparent 87%);
   }
-  /* La última lleva además el tinte, y flojo. Aquí abajo la barra
-   * tapa casi todo: lo único que se ve de esta franja es el borde del
-   * gesto, y lo que hace falta ahí es que el contenido se apague, no
-   * que aparezca una banda oscura. */
+  /* La última, y SIN tinte.
+   *
+   * Aquí hubo un degradado oscuro y era la mitad del problema: un
+   * velo encima del borde de abajo se lee como una barra pegada,
+   * justamente lo que había que quitar. El velo del fondo ya oscurece
+   * esa zona por su cuenta; lo que falta aquí es desenfoque, nada
+   * más. Si alguna vez hace falta apagar más el suelo, se sube el
+   * velo del fondo, no se añade una capa nueva encima. */
   .m-floor i:nth-child(6) {
     backdrop-filter: blur(26px); -webkit-backdrop-filter: blur(26px);
-    background: linear-gradient(to top, rgba(8,12,19,.40), rgba(8,12,19,0));
     -webkit-mask-image: linear-gradient(to top, #000 0%, #000 84%, transparent 100%);
             mask-image: linear-gradient(to top, #000 0%, #000 84%, transparent 100%);
   }
