@@ -149,3 +149,17 @@ body.light .mem-note { color: #92400e; }
   margin-top: 2px; }
 body.light .mep-n b { color: #0f172a; }
 body.light .mep-n span { color: #475569; }
+
+/* ── El filtro de la lista ──────────────────────────────────────────
+   Con 263 emparejados, encontrar uno concreto era bajar por 263
+   fichas. Esto filtra la lista entera; el buscador que vive dentro de
+   cada ficha es otra cosa — ése busca un PRODUCTO de MarginEdge para
+   esa botella. */
+.mem-filtro {
+  width: 100%; box-sizing: border-box; margin: 2px 0 14px;
+  font-size: 13px; padding: 9px 12px; border-radius: 10px;
+  border: 1px solid rgba(127,140,160,.35);
+  background: transparent; color: var(--text, #e2e8f0);
+}
+.mem-filtro:focus { outline: none; border-color: #0284c7; }
+.mem-filtro::placeholder { color: var(--sub, #64748b); }

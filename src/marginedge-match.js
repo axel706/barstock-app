@@ -64,6 +64,9 @@
   let _filas = null;
   let _tab = 'revisar';
   let _buscando = null;   // idx de la fila con el buscador abierto
+  // El filtro de la lista entera. No se vacía al cambiar de pestaña a
+  // propósito: buscas "smith" y quieres mirarlo en las tres.
+  let _filtro = '';
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, c =>
@@ -489,7 +492,10 @@
 
   function calcular() {
     construirIdf(_prods.map(p => p.name));
-    const master = (window.state && state.master) || [];
+    // `window.state.master` entero, no `state.master`: comprobar
+    // `window.state` y luego leer el global suelto funciona en el
+    // navegador por casualidad y revienta en cualquier otro sitio.
+    const master = (window.state && window.state.master) || [];
     _porId = new Map(_prods.concat(_otros).map(p => [String(p.id), p]));
     const porId = _porId;
 
@@ -629,18 +635,63 @@
           tab('revisar', 'Need your eye', c.revisar) +
           tab('hecho', 'Matched', c.hecho) +
           tab('huerfano', 'No match', c.huerfano) +
-        '</div>';
+        '</div>' +
+        // ── El filtro ──────────────────────────────────────────────
+        //
+        // Con 263 emparejados, encontrar uno concreto era bajar por
+        // una lista de 263 fichas. El buscador que ya había vivía
+        // DENTRO de cada ficha y servía para otra cosa: buscar un
+        // producto de MarginEdge para esa botella. Esto filtra la
+        // lista entera.
+        //
+        // Mira tu nombre y también el del producto emparejado: a
+        // veces te acuerdas de cómo lo llama el proveedor y no de
+        // cómo lo llamas tú.
+        '<input type="search" id="memFiltro" class="mem-filtro" ' +
+          'placeholder="Filter by name…" autocomplete="off" ' +
+          'value="' + esc(_filtro) + '">';
 
       cab.querySelectorAll('[data-tab]').forEach(b => {
         b.onclick = () => { _tab = b.dataset.tab; _buscando = null; _reciente.clear(); pintar(); };
       });
+
+      const f = document.getElementById('memFiltro');
+      if (f) {
+        // Se repinta sólo la lista para no perder el foco ni el cursor
+        // mientras se escribe.
+        f.oninput = () => { _filtro = f.value; pintarLista(); };
+        f.onkeydown = e => {
+          if (e.key === 'Escape') { _filtro = ''; f.value = ''; pintarLista(); }
+        };
+      }
     }
 
-    const visibles = _filas.filter(f => f.estado === _tab || _reciente.has(f.idx));
+    pintarLista();
+  }
+
+  function coincide(f) {
+    const q = norm(_filtro);
+    if (!q) return true;
+    if (norm(f.row.item).includes(q)) return true;
+    if (norm(f.row.code || '').includes(q)) return true;
+    return (f.productos || []).some(p => p && norm(p.name).includes(q));
+  }
+
+  function pintarLista() {
+    const host = document.getElementById('memBody');
+    if (!host) return;
+
+    const enTab = _filas.filter(f => f.estado === _tab || _reciente.has(f.idx));
+    const visibles = enTab.filter(coincide);
 
     host.innerHTML = visibles.length
       ? visibles.map(pintarFila).join('')
-      : '<div class="mem-empty">Nothing here. Try another tab.</div>';
+      // Decir CUÁNTOS hay detrás del filtro: si no, un filtro que no
+      // encuentra nada se lee igual que una pestaña vacía.
+      : (_filtro
+          ? '<div class="mem-empty">Nothing matches “' + esc(_filtro) + '” ' +
+            'among the ' + enTab.length + ' here. Try another tab.</div>'
+          : '<div class="mem-empty">Nothing here. Try another tab.</div>');
 
     enganchar(host);
   }
@@ -782,6 +833,7 @@
     if (host) host.innerHTML = '<div class="mem-empty">Reading the MarginEdge catalog…</div>';
     _buscando = null;
     _tab = 'revisar';
+    _filtro = '';
     _reciente.clear();
 
     try {
