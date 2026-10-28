@@ -27,7 +27,12 @@ function entorno(guardado) {
   global.window = w; global.document = w.document; global.localStorage = w.localStorage;
 
   const reg = [];
-  w.BarStockMobile = { register: x => reg.push(x), ir: () => {} };
+  guardado.volvio = false;
+  w.BarStockMobile = {
+    register: x => reg.push(x), ir: () => {},
+    volver: () => { guardado.volvio = true; },
+    nombreAnterior: () => 'More'
+  };
   w.BARSTOCK_CONFIG = { LOCATION_NAME: 'The Crown Tavern' };
   w.getActiveVendors = () => ['LOOP', 'SOUTHERN', 'UNKNOWN'];
   w.BarStockSenderProfile = {
@@ -108,8 +113,18 @@ function entorno(guardado) {
   await esperar(60);
   prueba('guarda contra ese proveedor', !!g.delivery && g.delivery.v === 'LOOP');
 
-  grupo('el gesto de volver');
-  prueba('en el menú no se arma', S.atras(host) === false);
+  grupo('la salida de la raíz');
+  // Se entra a Ajustes desde More o desde el engranaje, y sin flecha
+  // no hay forma de volver: ninguna pestaña está encendida.
+  S.show(host);
+  await esperar(60);
+  const out = host.querySelector('#msOut');
+  prueba('hay flecha en la raíz', !!out);
+  prueba('y dice de dónde vienes', !!out && /More/.test(out.textContent));
+  out.click();
+  prueba('al pulsarla se vuelve', g.volvio === true);
+  g.volvio = false;
+  prueba('el gesto del borde también sale', S.atras(host, true) === true && g.volvio === true);
 
   console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
     '   ·   ' + (ok + mal) + ' comprobaciones');

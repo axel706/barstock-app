@@ -48,7 +48,17 @@
   function pintarMenu(host) {
     const loc = (window.BARSTOCK_CONFIG || {}).LOCATION_NAME || '';
 
+    // La raíz también necesita salida: se entra desde More o desde el
+    // engranaje de la banda, y sin flecha no hay forma de volver —
+    // ninguna pestaña está encendida y el gesto del borde no tiene a
+    // dónde retroceder.
+    const M = window.BarStockMobile;
+    const vuelta = (M && M.nombreAnterior && M.nombreAnterior()) || 'Back';
+
     host.innerHTML =
+      '<button type="button" class="m-back m-back-gde" id="msOut">' +
+        '<i class="ti ti-chevron-left" aria-hidden="true"></i> ' + esc(vuelta) +
+      '</button>' +
       '<div class="m-inv-t">Settings</div>' +
       '<div class="m-hsub">' + esc(loc) + '</div>' +
       GRUPOS.map(g =>
@@ -70,6 +80,9 @@
         'Categories, vendor codes, copy prices and the MarginEdge ' +
         'integration are wide tables. Open those on a computer.' +
       '</div>';
+
+    const out = host.querySelector('#msOut');
+    if (out) out.onclick = () => { if (M && M.volver) M.volver(); };
 
     host.querySelectorAll('[data-p]').forEach(b => {
       b.onclick = () => { _panel = b.dataset.p; _vendor = null; pintar(host); };
@@ -391,7 +404,12 @@
       mount: montar,
       show(host) { _panel = null; _vendor = null; montar(host); },
       atras(host, hacerlo) {
-        if (_panel === null) return false;
+        // Desde la raíz, el gesto sale de Ajustes en vez de no hacer
+        // nada: es lo que espera cualquiera que entró desde More.
+        if (_panel === null) {
+          if (hacerlo && window.BarStockMobile) window.BarStockMobile.volver();
+          return true;
+        }
         if (hacerlo) {
           if (_panel === 'delivery' && _vendor) _vendor = null;
           else { _panel = null; _vendor = null; }

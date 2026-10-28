@@ -314,7 +314,14 @@
       _abiertos = new Set(meses.length ? [meses[0]] : []);
     }
 
-    let html = '<div class="m-inv-t">Order history</div>' +
+    const M = window.BarStockMobile;
+    const vuelta = (M && M.nombreAnterior && M.nombreAnterior()) || 'Back';
+
+    let html =
+      '<button type="button" class="m-back m-back-gde" id="mhOut">' +
+        '<i class="ti ti-chevron-left" aria-hidden="true"></i> ' + esc(vuelta) +
+      '</button>' +
+      '<div class="m-inv-t">Order history</div>' +
       '<div class="m-hsub">What you sent, and what actually arrived.</div>' +
       '<label class="m-searchbar m-hfind">' +
         '<i class="ti ti-search" aria-hidden="true"></i>' +
@@ -373,6 +380,9 @@
         if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); }
       };
     }
+
+    const out = host.querySelector('#mhOut');
+    if (out) out.onclick = () => { if (M && M.volver) M.volver(); };
 
     host.querySelectorAll('[data-f]').forEach(b => {
       b.onclick = () => { _filtro = b.dataset.f; pintarLista(host); };
@@ -466,7 +476,10 @@
       show(host) { _orden = null; montar(host); },
       // Deslizar desde el borde cierra el detalle antes de salir.
       atras(host, hacerlo) {
-        if (!_orden) return false;
+        if (!_orden) {
+          if (hacerlo && window.BarStockMobile) window.BarStockMobile.volver();
+          return true;
+        }
         if (hacerlo) { _orden = null; pintar(host); }
         return true;
       }

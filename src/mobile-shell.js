@@ -328,9 +328,38 @@
 
   // ── Navegar ──────────────────────────────────────────────────────────
 
+  // ── De dónde vengo ───────────────────────────────────────────────────
+  //
+  // Las pantallas que no son pestaña —Ajustes, Historial— se abren
+  // desde otro sitio y hay que poder volver a ese sitio. Sin esto, se
+  // entraba a Ajustes desde More y no había salida: ninguna pestaña
+  // está encendida y el gesto del borde tampoco sirve, porque el panel
+  // raíz no tiene a dónde retroceder.
+  //
+  // Se guarda la anterior y se ofrece `volver()`. Una sola, no una
+  // pila: con dos saltos ya estás en una pestaña, que siempre es una
+  // salida válida.
+  let _anterior = null;
+
+  function volver() {
+    const destino = _anterior && _pant.has(_anterior) ? _anterior : 'home';
+    _anterior = null;
+    ir(destino);
+  }
+
+  function nombreAnterior() {
+    const p = _anterior && _pant.get(_anterior);
+    return p ? (p.label || '') : '';
+  }
+
   function ir(id) {
     const p = _pant.get(id);
     if (!p || !_montado) return;
+
+    // Sólo se recuerda al ENTRAR en una pantalla que no es pestaña: al
+    // volver a una pestaña no hace falta, y guardarlo siempre haría que
+    // "volver" rebotara entre dos.
+    if (!p.tab && _activa && _activa !== id) _anterior = _activa;
 
     // Pestaña que apunta a una seccion del escritorio: se usa la
     // navegacion que ya existe en vez de duplicarla. Una segunda forma
@@ -591,7 +620,7 @@
   }
 
   window.BarStockMobile = {
-    register, ir, refrescarBadges, refrescarActiva,
+    register, ir, volver, nombreAnterior, refrescarBadges, refrescarActiva,
     esMovil, montado: () => _montado, activa: () => _activa,
     ANCHO
   };
