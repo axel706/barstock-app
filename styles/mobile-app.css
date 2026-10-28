@@ -92,6 +92,35 @@
    *    nombres de producto se siguen pudiendo copiar: es lo que hace
    *    falta para pegarle un nombre a un proveedor por mensaje.
    */
+  /* ── La escala ─────────────────────────────────────────────────────
+   *
+   * Había 29 tamaños distintos en esta hoja. No era una escala, era
+   * improvisación acumulada: cada pantalla eligió el suyo y ninguno
+   * sabía de los demás.
+   *
+   * Ocho pasos, todos derivados de una base. Cambiar `--m-base` mueve
+   * los ocho a la vez, que es lo que permite el control de tamaño en
+   * Ajustes sin tocar una sola regla.
+   *
+   * La migración es por fases: de momento los usan los encabezados y
+   * lo nuevo. El resto de la hoja conserva sus px hasta que se pase
+   * pantalla por pantalla.
+   */
+  body.m-shell {
+    --m-base: 14px;
+
+    --m-meta:    calc(var(--m-base) * 0.79);   /* 11.0  pies, unidades  */
+    --m-small:   calc(var(--m-base) * 0.89);   /* 12.5  texto de apoyo  */
+    --m-eyebrow: calc(var(--m-base) * 0.89);   /* 12.5  encabezados     */
+    --m-body:    var(--m-base);                /* 14.0  filas y cuerpo  */
+    --m-strong:  calc(var(--m-base) * 1.14);   /* 16.0  énfasis en fila */
+    --m-title:   calc(var(--m-base) * 1.36);   /* 19.0  títulos de card */
+    --m-screen:  calc(var(--m-base) * 1.79);   /* 25.0  título de pantalla */
+    --m-figure:  calc(var(--m-base) * 2.07);   /* 29.0  la cifra grande */
+  }
+  body.m-shell.m-txt-sm { --m-base: 13px; }
+  body.m-shell.m-txt-lg { --m-base: 15.5px; }
+
   body.m-shell {
     touch-action: manipulation;
     overscroll-behavior: none;
@@ -525,7 +554,23 @@
   .m-hero-top { display: flex; gap: 10px; flex: 1 1 auto; min-height: 0; }
   .m-hero-txt { flex: 1; min-width: 0; }
   .m-hero-r { width: 82px; flex: 0 0 82px; text-align: right; }
-  .m-hero-k { font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #7dd3fc; }
+  /* El encabezado de tarjeta pesaba lo mismo que el pie: 11px y el
+   * mismo gris. Sube a la escala, aclara el color y abre el
+   * espaciado — es lo que dice de qué va la tarjeta. */
+  .m-hero-k {
+    font-size: var(--m-eyebrow); font-weight: 800;
+    letter-spacing: .12em; text-transform: uppercase; color: #bae6fd;
+  }
+  /* El nombre de la marca conserva su caja dentro de una línea en
+   * mayúsculas. Es lo que se hace en prensa con eBay o iPhone: el
+   * rótulo es una etiqueta, pero contiene un nombre propio. */
+  .m-hero-k .m-brand { text-transform: none; letter-spacing: .01em; }
+  .m-hero-k .m-brand i { color: #38bdf8; font-style: normal; }
+
+  /* El fuego de Top movers va en rojo y el rótulo se queda como está.
+   * Un icono que significa "esto arde" pintado del mismo azul que el
+   * texto no significa nada. */
+  .m-hero-k .ti-flame { color: #f87171; }
   .m-hero-t { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -.5px; margin-top: 4px; }
   .m-hero-s { font-size: 12.5px; color: #c3d2e2; margin-top: 6px; line-height: 1.4; }
   .m-hero-list { display: flex; flex-direction: column; gap: 3px; margin-top: 7px; }
@@ -616,7 +661,7 @@
     background: linear-gradient(135deg, rgba(34,197,94,.34), rgba(34,197,94,.11));
     border: 1px solid rgba(74,222,128,.46);
   }
-  .m-hero-verde .m-hero-k { color: #86efac; }
+  .m-hero-verde .m-hero-k { color: #a7f3d0; }
   .m-hero-verde .m-hero-pista { color: #4ade80; }
   .m-hero-verde .m-hero-ir { color: #4ade80; }
 
@@ -626,11 +671,11 @@
   .m-hero-teal  { background: linear-gradient(135deg, rgba(45,212,191,.26), rgba(45,212,191,.09)); border: 1px solid rgba(94,234,212,.34); }
   .m-hero-calm  { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.14); }
 
-  .m-hero-green .m-hero-k { color: #86efac; }
-  .m-hero-teal  .m-hero-k { color: #5eead4; }
-  .m-hero-amber .m-hero-k { color: #fcd34d; }
-  .m-hero-red   .m-hero-k { color: #fca5a5; }
-  .m-hero-calm  .m-hero-k { color: #9fb0c4; }
+  .m-hero-green .m-hero-k { color: #a7f3d0; }
+  .m-hero-teal  .m-hero-k { color: #99f6e4; }
+  .m-hero-amber .m-hero-k { color: #fde68a; }
+  .m-hero-red   .m-hero-k { color: #fecaca; }
+  .m-hero-calm  .m-hero-k { color: #cbd5e1; }
 
   body.m-shell .m-hero-green .m-hero-b { background: #22c55e; color: #06301a; }
   body.m-shell .m-hero-blue  .m-hero-b { background: #38bdf8; color: #04283d; }
@@ -739,9 +784,13 @@
   .m-col { flex: 1; min-width: 0; padding: 12px 13px; border-radius: 15px; }
   .m-col-up { background: rgba(74,222,128,.12); border: 1px solid rgba(134,239,172,.26); }
   .m-col-dn { background: rgba(248,113,113,.12); border: 1px solid rgba(252,165,165,.26); }
-  .m-col-k { display: flex; align-items: center; gap: 5px; font-size: 11.5px; letter-spacing: .3px; font-weight: 700; margin-bottom: 9px; }
-  .m-col-up .m-col-k { color: #86efac; }
-  .m-col-dn .m-col-k { color: #fca5a5; }
+  .m-col-k {
+    display: flex; align-items: center; gap: 6px;
+    font-size: var(--m-eyebrow); letter-spacing: .1em; font-weight: 800;
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+  .m-col-up .m-col-k { color: #a7f3d0; }
+  .m-col-dn .m-col-k { color: #fecaca; }
   .m-col-r { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: 13px; color: #d7e0ea; padding: 4px 0; }
   .m-col-r span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .m-col-r b { color: #fff; font-weight: 800; font-size: 13.5px; flex: 0 0 auto; }
@@ -754,7 +803,10 @@
   .m-pair { display: flex; gap: 8px; margin-top: 14px; }
   .m-stat { flex: 1; min-width: 0; padding: 14px 13px; border-radius: 17px;
     background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.12); }
-  .m-stat-k { display: block; font-size: 12px; font-weight: 500; color: #a9bacd; }
+  .m-stat-k {
+    display: block; font-size: var(--m-eyebrow); font-weight: 800;
+    letter-spacing: .09em; text-transform: uppercase; color: #c3d2e2;
+  }
     /* El rótulo a la izquierda; la cifra y su detalle, a la derecha.
    * Las dos tarjetas dejan así sus números en el mismo borde. */
   .m-stat-v { display: block; text-align: right;
@@ -1578,7 +1630,8 @@
 
   /* ── Mensajes y listas sueltas ──────────────────────────────────── */
 
-  .m-lab { font-size: 11.5px; font-weight: 500; color: #a9bacd; letter-spacing: .5px; margin: 16px 2px 8px; }
+  .m-lab { font-size: var(--m-eyebrow); font-weight: 800; color: #c3d2e2;
+    letter-spacing: .1em; text-transform: uppercase; margin: 18px 2px 9px; }
   .m-cnt { font-size: 11.5px; color: #a9bacd; letter-spacing: .3px; margin: 10px 4px 8px; }
   .m-empty { font-size: 14px; color: #a9bacd; text-align: center; padding: 34px 20px; line-height: 1.6; }
   .m-empty small { font-size: 13px; }

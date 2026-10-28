@@ -79,9 +79,10 @@ function entorno(guardado) {
   grupo('el menú');
   const items = [...host.querySelectorAll('.m-item-t')]
     .map(e => e.firstChild.textContent.trim());
-  prueba('cinco entradas', items.length === 5, items.join(', '));
+  prueba('seis entradas', items.length === 6, items.join(', '));
   prueba('y son las acordadas',
-    items.join(',') === 'Sender,Emails,Delivery,Zones,Typeface', items.join(','));
+    items.join(',') === 'Sender,Emails,Delivery,Zones,Typeface,Text size',
+    items.join(','));
   prueba('cada una enseña su valor', /Axel Torres/.test(host.textContent) &&
     /2 recipients/.test(host.textContent));
   prueba('dice qué se queda en escritorio', /wide tables/i.test(host.textContent));
@@ -112,6 +113,21 @@ function entorno(guardado) {
   host.querySelector('#msSave').click();
   await esperar(60);
   prueba('guarda contra ese proveedor', !!g.delivery && g.delivery.v === 'LOOP');
+
+  grupo('el tamaño del texto mueve la escala entera');
+  // Toda la escala del móvil cuelga de --m-base. Tres ajustes la
+  // mueven y los ocho pasos se recolocan solos.
+  host.querySelector('[data-p="size"]').click();
+  await esperar(40);
+  host.querySelector('[data-size="lg"]').click();
+  await esperar(20);
+  prueba('large marca el body', w.document.body.classList.contains('m-txt-lg'));
+  host.querySelector('[data-size="sm"]').click();
+  await esperar(20);
+  prueba('y cambiar a small quita la anterior',
+    w.document.body.classList.contains('m-txt-sm') &&
+    !w.document.body.classList.contains('m-txt-lg'));
+  prueba('queda recordado', w.localStorage.getItem('bs_m_txt') === 'sm');
 
   grupo('la salida de la raíz');
   // Se entra a Ajustes desde More o desde el engranaje, y sin flecha

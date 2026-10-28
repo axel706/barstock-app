@@ -41,7 +41,8 @@
       { id: 'zones', ico: 'ti-map-pin', n: 'Zones', d: 'Where the bottles are' }
     ]},
     { t: 'Appearance', items: [
-      { id: 'look', ico: 'ti-typography', n: 'Typeface', d: 'The app font' }
+      { id: 'look', ico: 'ti-typography', n: 'Typeface',  d: 'The app font' },
+      { id: 'size', ico: 'ti-text-size',  n: 'Text size', d: 'Default' }
     ]}
   ];
 
@@ -342,6 +343,61 @@
     });
   }
 
+  // ── Tamaño del texto ─────────────────────────────────────────────────
+  //
+  // Toda la escala del móvil cuelga de una variable, `--m-base`. Tres
+  // ajustes la mueven y los ocho pasos se recolocan solos: no hay una
+  // lista de tamaños que mantener en paralelo.
+  //
+  // Vive en el dispositivo, no en la nube: es una preferencia de los
+  // ojos de quien mira esta pantalla, no de la locación. El iPad de la
+  // barra y el teléfono del gerente pueden querer cosas distintas.
+
+  const TAMANOS = [
+    { id: 'sm', n: 'Small',   d: 'Fits more on screen' },
+    { id: 'md', n: 'Default', d: 'What the app was drawn at' },
+    { id: 'lg', n: 'Large',   d: 'Easier at arm\u2019s length' }
+  ];
+  const LS_TAM = 'bs_m_txt';
+
+  function tamanoActual() {
+    try { return localStorage.getItem(LS_TAM) || 'md'; } catch (e) { return 'md'; }
+  }
+
+  function aplicarTamano(id) {
+    const b = document.body;
+    b.classList.remove('m-txt-sm', 'm-txt-lg');
+    if (id === 'sm') b.classList.add('m-txt-sm');
+    if (id === 'lg') b.classList.add('m-txt-lg');
+    try { localStorage.setItem(LS_TAM, id); } catch (e) {}
+  }
+
+  function pintarTamano(host) {
+    const act = tamanoActual();
+    host.innerHTML = cabecera(host, 'Text size',
+      'Moves every size in the app at once. Only on this device.') +
+      '<div class="m-set-fonts">' + TAMANOS.map(t =>
+        '<button type="button" class="m-set-font' + (t.id === act ? ' on' : '') +
+          '" data-size="' + t.id + '">' +
+          '<span class="m-set-font-s">Wine COGS 22.4%</span>' +
+          '<span class="m-set-font-n">' + esc(t.n) +
+            '<small>' + esc(t.d) + '</small></span>' +
+        '</button>').join('') + '</div>';
+
+    volver(host);
+    host.querySelectorAll('[data-size]').forEach(b => {
+      b.onclick = () => {
+        aplicarTamano(b.dataset.size);
+        _valores.size = (TAMANOS.find(t => t.id === b.dataset.size) || {}).n || '';
+        pintarTamano(host);
+      };
+    });
+  }
+
+  // Se aplica al cargar, no al abrir Ajustes: si no, la app arrancaría
+  // con el tamaño de fábrica y daría un salto al entrar aquí.
+  aplicarTamano(tamanoActual());
+
   // ── Entrada ──────────────────────────────────────────────────────────
 
   function pintar(host) {
@@ -352,6 +408,7 @@
                                               : pintarDeliveryLista(host);
     if (_panel === 'zones')    return pintarZonas(host);
     if (_panel === 'look')     return pintarLook(host);
+    if (_panel === 'size')     return pintarTamano(host);
     return pintarMenu(host);
   }
 
@@ -385,6 +442,7 @@
     } catch (e) {}
     const n = vendors().length;
     if (n) _valores.delivery = n + ' vendor' + (n === 1 ? '' : 's') + ', each its own';
+    _valores.size = (TAMANOS.find(t => t.id === tamanoActual()) || {}).n || '';
 
     if (_panel === null) pintarMenu(host);
   }

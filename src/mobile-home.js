@@ -311,7 +311,11 @@
       // Esta tarjeta no tiene columna de cifras ni botón, así que el
       // texto se queda con el ancho entero y puede ser más grande.
       ancha: true,
-      k: 'Welcome to BarStock',
+      // El rótulo va en mayúsculas como los demás, pero el wordmark
+      // conserva su caja: es una etiqueta que contiene un nombre
+      // propio, igual que "WELCOME TO eBay" en prensa.
+      k: 'Welcome to <span class="m-brand">BarStock<i>.</i> Pro</span>',
+      kHtml: true,
       tt: 'Good to have you',
       sub: 'Scanning bottles is what this app does best. Look up stock, ' +
            'see what is running out and review orders too — placing them, ' +
@@ -453,7 +457,7 @@
                líneas, quedaban a alturas distintas y se veía al
                deslizar. -->
           <div class="m-hero-txt">
-            <div class="m-hero-k">${esc(c.k)}</div>
+            <div class="m-hero-k">${c.kHtml ? c.k : esc(c.k)}</div>
             <div class="m-hero-t">${esc(c.tt)}</div>
             ${c.barra !== undefined ? `<div class="m-prog"><i style="width:${c.barra}%"></i></div>` : ''}
             ${c.sub ? `<div class="m-hero-s">${esc(c.sub)}</div>` : ''}
