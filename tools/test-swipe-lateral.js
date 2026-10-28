@@ -27,24 +27,12 @@ function prueba(n, c, d) {
 
 const regla = (/html:has\(body\.m-shell\.m-on\)\s*\{([^}]*)\}/.exec(css) || [])[1] || '';
 
-const cuerpo = (/body\.m-shell\.m-on\s*\{\s*overflow-x:[^}]*\}/.exec(css) || [])[0] || '';
-
 console.log('\nel documento no se desplaza a lo ancho');
 prueba('la regla existe y cuelga del raíz', !!regla, 'no se encontró');
 prueba('corta el eje X', /overflow-x:\s*clip/.test(regla), regla.trim());
 prueba('con red para quien no conozca clip',
   regla.indexOf('overflow-x: hidden') < regla.indexOf('overflow-x: clip'),
   'el orden importa: hidden primero');
-
-// En el raíz el recorte tiene que propagarse a la ventana y Safari no
-// siempre cumple: acepta la regla —así que la red de `hidden` ya no
-// entra— pero no recorta. En el body no hay propagación que valga.
-prueba('y también en el body, que ahí no hay propagación que falle',
-  /overflow-x:\s*clip/.test(cuerpo), cuerpo.trim() || 'no se encontró');
-// `hidden` en el body lo haría contenedor desplazable y le quitaría el
-// scroll vertical al documento.
-prueba('en el body, clip a secas y nunca hidden',
-  !!cuerpo && !/hidden/.test(cuerpo), cuerpo.trim());
 
 console.log('\ny no toca nada más');
 // `hidden` en el eje X convierte al elemento en contenedor

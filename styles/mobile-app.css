@@ -182,21 +182,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     overflow-x: hidden;
     overflow-x: clip;
   }
-  /* Y en el body también.
-   *
-   * Con el raíz solo no bastó: en el raíz el recorte tiene que
-   * PROPAGARSE a la ventana, y ahí Safari no siempre cumple — acepta
-   * la regla, así que la red de `hidden` ya no entra, pero no recorta
-   * nada. En el body no hay propagación que valga: recorta y punto.
-   *
-   * Aquí va `clip` a secas, sin la red de `hidden`: en el body,
-   * `hidden` lo convertiría en contenedor desplazable y le quitaría
-   * el scroll vertical al documento. Lo de siempre — el arreglo que
-   * rompe otra cosa.
-   *
-   * Las barras y las pantallas son `position: fixed`, así que su caja
-   * de referencia es la ventana y este recorte no las alcanza. */
-  body.m-shell.m-on { overflow-x: clip; }
 
   /* ── UN solo velo ───────────────────────────────────────────────── */
   /*
@@ -998,15 +983,14 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * pasó. Lo oscuro de esa zona lo pone `.m-tabs::before`, que pinta
    * los últimos 34px, y con eso basta.
    *
-   * 70px más el hueco del gesto: los 9 de aire de la barra, sus 52, y
-   * 9 por encima. Con 24 por encima se pasaba de la barra y se veía;
-   * con 9 la transición muere justo en su borde. Si alguna vez hay
-   * que moverlo, este 70 es el único número que se toca.
+   * 85px más el hueco del gesto: los 9 de aire de la barra, sus 52, y
+   * 24 por encima para que la transición se VEA. Si alguna vez sube
+   * demasiado, este 85 es el único número que hay que tocar.
    *
    * Por debajo de la barra en z-index, o se desenfocaría a sí misma. */
   .m-floor {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 8990;
-    height: calc(70px + env(safe-area-inset-bottom, 0px));
+    height: calc(85px + env(safe-area-inset-bottom, 0px));
     pointer-events: none;
   }
   .m-floor > i { position: absolute; inset: 0; display: block; }
