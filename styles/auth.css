@@ -113,23 +113,29 @@ body.light #authCardBrand{
   color:#fff;
 }
 
+/* El punto es un CÍRCULO y su azul es #38BDF8. Estaba en #3B82F6,
+ * que el brandbook lista literalmente como el error a comprobar:
+ * «Is the dot exactly #38BDF8, and not #3B82F6?».
+ *
+ * Y las medidas pasan a em: así el punto crece con el wordmark en
+ * lugar de quedarse en siete píxeles cuando el logo cambia de cuerpo. */
 .auth-brand-dot{
   display:inline-flex;
-  width:7px;
-  height:7px;
-  min-width:7px;
-  min-height:7px;
+  width:.22em;
+  height:.22em;
+  min-width:.22em;
+  min-height:.22em;
   border-radius:50%;
-  background:#3b82f6;
-  margin:0 3px 4px 4px;
+  background:#38bdf8;
+  margin:0 .043em .13em .022em;
   align-self:flex-end;
 }
 
 .auth-brand-pro{
-  font-size:11px;
+  font-size:.37em;
   font-weight:700;
   color:#94a3b8;
-  margin-left:5px;
+  margin-left:.152em;
   letter-spacing:0.08em;
   text-transform:uppercase;
 }

@@ -351,7 +351,26 @@
     letter-spacing: -.65px; display: inline-flex; align-items: baseline;
     text-shadow: 0 1px 12px rgba(0,0,0,.55);
   }
-  .m-logo i { color: #38bdf8; font-style: normal; }
+  /* ── El punto del logo ─────────────────────────────────────────────
+   *
+   * Es un CÍRCULO, no un punto tipográfico. Está en el brandbook como
+   * la regla que más se incumple: «never a period, never vertically
+   * centred, never any other colour».
+   *
+   * Medidas canónicas, todas relativas al cuerpo (S):
+   *   diámetro            0.22 S
+   *   borde inferior      apoyado en la línea base
+   *   hueco wordmark→punto 0.022 S
+   *   hueco punto→sufijo   0.195 S  (0.043 + 0.152)
+   *   color               #38BDF8, nunca #3B82F6
+   */
+  .m-logo .m-logo-dot,
+  .m-hero-k .m-brand .m-logo-dot {
+    display: inline-flex; border-radius: 50%; background: #38bdf8;
+    align-self: flex-end; font-style: normal;
+    width: .22em; height: .22em; min-width: .22em; min-height: .22em;
+    margin: 0 .043em .13em .022em;
+  }
   .m-logo em {
     font-style: normal; font-size: 9.5px; font-weight: 700;
     letter-spacing: 1.5px; color: #b6c6d8; margin-left: 5px;
@@ -565,7 +584,7 @@
    * mayúsculas. Es lo que se hace en prensa con eBay o iPhone: el
    * rótulo es una etiqueta, pero contiene un nombre propio. */
   .m-hero-k .m-brand { text-transform: none; letter-spacing: .01em; }
-  .m-hero-k .m-brand i { color: #38bdf8; font-style: normal; }
+
 
   /* El fuego de Top movers va en rojo y el rótulo se queda como está.
    * Un icono que significa "esto arde" pintado del mismo azul que el

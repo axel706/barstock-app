@@ -1611,8 +1611,12 @@
          "Is the dot exactly #38BDF8, and not #3B82F6?". Solo se salvaba
          porque el style en linea del index pisaba este valor. */
       background:#38bdf8;
-      margin:0 .043em 0 .022em; /* derecha 0.043 S, izquierda 0.022 S */
-      align-self:baseline;      /* borde inferior apoyado en la linea base */
+      /* La implementacion canonica del brandbook: flex-end mas 0.13em
+         de margen inferior. Con `align-self:baseline` el navegador
+         elige la linea base de una caja vacia, que no es lo mismo en
+         todos y deja el punto flotando un pelo en Safari. */
+      margin:0 .043em .13em .022em;
+      align-self:flex-end;
     }
     .brand-logo-pro{
       font-family:"Manrope",-apple-system,BlinkMacSystemFont,sans-serif;

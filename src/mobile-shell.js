@@ -91,7 +91,9 @@
       '<span class="m-blur" aria-hidden="true">' +
         '<i></i><i></i><i></i><i></i><i></i><i></i>' +
       '</span>' +
-      '<span class="m-logo">BarStock<i>.</i><em>PRO</em></span>' +
+      // El punto es un círculo, no un carácter. Ver el brandbook: es la
+      // regla que más se incumple.
+      '<span class="m-logo">BarStock<i class="m-logo-dot"></i><em>PRO</em></span>' +
       // Sin boton de luna: en el telefono el modo claro no existe (ver
       // la cabecera de mobile-app.css). Un boton que no hace nada es
       // peor que no tener boton.

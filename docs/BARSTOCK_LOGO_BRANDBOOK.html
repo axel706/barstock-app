@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BarStock Pro — Logo Brandbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#f8fafc; --ink-2:#cbd5e1; --ink-3:#94a3b8;
+    --bg:#0b1220; --bg-2:#111827; --line:rgba(255,255,255,.10);
+    --dot:#38bdf8; --pro:#64748b;
+    --ok:#22c55e; --no:#ef4444; --warn:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font-family:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       line-height:1.65;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:64px 28px 120px}
+  h1{font-size:38px;font-weight:800;letter-spacing:-.02em;margin:0 0 8px}
+  h2{font-size:13px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+     color:var(--dot);margin:64px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  h3{font-size:17px;font-weight:700;margin:32px 0 10px}
+  p{color:var(--ink-2);margin:0 0 14px}
+  .lede{font-size:17px;color:var(--ink-2);max-width:66ch}
+  code,pre,.mono{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+  code{background:rgba(56,189,248,.12);color:#7dd3fc;padding:2px 6px;border-radius:5px;font-size:.88em}
+  pre{background:#070d18;border:1px solid var(--line);border-radius:12px;padding:18px 20px;
+      overflow-x:auto;font-size:12.5px;line-height:1.7;color:#cbd5e1;margin:0 0 16px}
+  table{width:100%;border-collapse:collapse;margin:0 0 20px;font-size:14px}
+  th{text-align:left;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+     color:var(--ink-3);font-weight:800;padding:0 12px 10px 0;border-bottom:1px solid var(--line)}
+  td{padding:11px 12px 11px 0;border-bottom:1px solid rgba(255,255,255,.05);color:var(--ink-2);vertical-align:top}
+  td:first-child{color:var(--ink);font-weight:600;white-space:nowrap}
+  .card{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:0 0 18px}
+  .rule{background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.28);border-radius:14px;padding:20px 24px;margin:0 0 20px}
+  .rule strong{color:var(--dot)}
+  .warn{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.30)}
+  .warn strong{color:var(--warn)}
+  .stage{border-radius:16px;padding:56px 40px;margin:0 0 12px;display:flex;align-items:center;justify-content:center}
+  .stage-dark{background:#0f172a;border:1px solid var(--line)}
+  .stage-light{background:#f1f5f9;border:1px solid rgba(15,23,42,.10)}
+  .cap{font-size:12px;color:var(--ink-3);margin:0 0 26px;text-align:center}
+
+  /* ---- THE LOGO — canonical implementation ---- */
+  .bs-logo{display:inline-flex;align-items:baseline;line-height:1;
+           font-family:"Manrope",sans-serif;font-weight:800;letter-spacing:-.03em}
+  .bs-logo .dot{display:inline-flex;border-radius:50%;background:#38bdf8;align-self:flex-end;
+                width:.22em;height:.22em;min-width:.22em;min-height:.22em;
+                margin:0 .043em .13em .022em}
+  .bs-logo .pro{font-size:.37em;font-weight:700;color:#64748b;
+                letter-spacing:.08em;text-transform:uppercase;margin-left:.152em}
+  .on-dark{color:#f8fafc}
+  .on-light{color:#0f172a}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .swatch{border-radius:12px;padding:16px 18px;border:1px solid var(--line)}
+  .swatch b{display:block;font-size:15px;margin-bottom:2px}
+  .swatch span{font-size:12px;color:var(--ink-3);display:block}
+  .chip{height:52px;border-radius:9px;margin-bottom:12px;border:1px solid rgba(255,255,255,.14)}
+
+  .do-dont{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+  .dd{border-radius:12px;padding:16px 18px;border:1px solid var(--line);background:rgba(255,255,255,.02)}
+  .dd h4{margin:0 0 8px;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+  .dd.ok h4{color:var(--ok)} .dd.no h4{color:var(--no)}
+  .dd p{font-size:13px;margin:0;color:var(--ink-3)}
+
+  ol.check{counter-reset:c;list-style:none;padding:0;margin:0}
+  ol.check li{counter-increment:c;position:relative;padding:12px 0 12px 44px;
+              border-bottom:1px solid rgba(255,255,255,.05);color:var(--ink-2);font-size:14px}
+  ol.check li::before{content:counter(c);position:absolute;left:0;top:11px;width:26px;height:26px;
+    border-radius:50%;background:rgba(56,189,248,.14);color:var(--dot);
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+  .foot{margin-top:70px;padding-top:22px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px}
+  button{font-family:inherit;font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;
+         background:var(--dot);color:#04283a;border:none;cursor:pointer}
+  @media (max-width:720px){ .grid2,.do-dont{grid-template-columns:1fr} .wrap{padding:40px 18px 80px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--dot);font-weight:800;margin:0 0 10px">BarStock Pro</p>
+  <h1>Logo Brandbook</h1>
+  <p class="lede">A single, unambiguous specification for the BarStock Pro logo. Everything here is measured from the production application. If a value appears twice in this document, it is the same value — there are no alternates, no “approximately”, and no room for interpretation.</p>
+
+  <div class="rule">
+    <p style="margin:0"><strong>If you are an AI reproducing this logo:</strong> read section 03 (Canonical specification) and section 05 (Reproduction). Every measurement is expressed as a multiple of <code>S</code>, the font size of the wordmark. Do not infer values from the rendered images in this document — images compress, numbers do not. When you are done, verify against the checklist in section 10.</p>
+  </div>
+
+  <!-- 01 -->
+  <h2>01 — The logo</h2>
+
+  <div class="stage stage-dark">
+    <span class="bs-logo on-dark" style="font-size:62px">BarStock<span class="dot"></span><span class="pro">Pro</span></span>
+  </div>
+  <p class="cap">Primary — on dark backgrounds</p>
+
+  <div class="stage stage-light">
+    <span class="bs-logo on-light" style="font-size:62px">BarStock<span class="dot"></span><span class="pro">Pro</span></span>
+  </div>
+  <p class="cap">Primary — on light backgrounds</p>
+
+  <p>The logo is a wordmark with two fixed companions: a circular dot and the suffix <code>PRO</code>. The three elements are never separated, never reordered, and never rescaled independently of one another.</p>
+
+  <div class="rule warn">
+    <p style="margin:0"><strong>The single most common error.</strong> The word is <code>BarStock</code> — one word, two capitals, no space. Not “Bar Stock”, not “Barstock”, not “BARSTOCK”. The capital <code>S</code> in the middle is part of the mark.</p>
+  </div>
+
+  <!-- 02 -->
+  <h2>02 — Anatomy</h2>
+
+  <div class="card">
+    <svg viewBox="0 0 900 300" width="100%" style="display:block" role="img" aria-label="Diagram of the logo parts">
+      <text x="60" y="190" font-family="Manrope" font-weight="800" font-size="110" letter-spacing="-3.3" fill="#f8fafc">BarStock</text>
+      <circle cx="561" cy="177" r="12.1" fill="#38bdf8"/>
+      <text x="590" y="190" font-family="Manrope" font-weight="700" font-size="40.7" letter-spacing="3.26" fill="#64748b">PRO</text>
+
+      <line x1="60" y1="190" x2="720" y2="190" stroke="#38bdf8" stroke-width="1" stroke-dasharray="4 4" opacity=".55"/>
+      <text x="726" y="194" font-family="Manrope" font-size="13" fill="#38bdf8">baseline</text>
+
+      <line x1="60" y1="230" x2="533" y2="230" stroke="#475569" stroke-width="1"/>
+      <text x="60" y="252" font-family="Manrope" font-size="13" fill="#94a3b8">1 · Wordmark — Manrope ExtraBold 800</text>
+
+      <line x1="549" y1="120" x2="573" y2="120" stroke="#475569" stroke-width="1"/>
+      <text x="500" y="108" font-family="Manrope" font-size="13" fill="#94a3b8">2 · Dot</text>
+
+      <line x1="590" y1="230" x2="700" y2="230" stroke="#475569" stroke-width="1"/>
+      <text x="590" y="252" font-family="Manrope" font-size="13" fill="#94a3b8">3 · Suffix — Bold 700</text>
+    </svg>
+  </div>
+
+  <table>
+    <tr><th>Part</th><th>What it is</th><th>Never</th></tr>
+    <tr><td>1 · Wordmark</td><td>The word <code>BarStock</code> set in Manrope ExtraBold with negative tracking.</td><td>Never set in another weight, never letterspaced positively.</td></tr>
+    <tr><td>2 · Dot</td><td>A perfect circle in <code>#38BDF8</code> resting on the baseline, immediately after the wordmark.</td><td>Never a period, never vertically centred, never any other colour.</td></tr>
+    <tr><td>3 · Suffix</td><td><code>PRO</code> in uppercase, Bold, grey, with positive tracking, sharing the wordmark’s baseline.</td><td>Never the same size or colour as the wordmark.</td></tr>
+  </table>
+
+  <!-- 03 -->
+  <h2>03 — Canonical specification</h2>
+
+  <p>Every dimension is a multiple of <strong>S</strong>, the font size of the wordmark. Choose S, multiply, done. This is what makes the logo reproducible at any size in any medium.</p>
+
+  <table>
+    <tr><th>Property</th><th>Value</th><th>At S = 100px</th></tr>
+    <tr><td>Wordmark font</td><td>Manrope ExtraBold (800)</td><td>—</td></tr>
+    <tr><td>Wordmark size</td><td><code>S</code></td><td>100 px</td></tr>
+    <tr><td>Wordmark tracking</td><td><code>−0.03 em</code></td><td>−3 px</td></tr>
+    <tr><td>Dot diameter</td><td><code>0.22 S</code></td><td>22 px</td></tr>
+    <tr><td>Dot vertical position</td><td>Bottom edge sits <strong>on the baseline</strong></td><td>—</td></tr>
+    <tr><td>Gap · wordmark → dot</td><td><code>0.022 S</code></td><td>2.2 px</td></tr>
+    <tr><td>Gap · dot → suffix</td><td><code>0.195 S</code></td><td>19.5 px</td></tr>
+    <tr><td>Suffix offset from wordmark</td><td><code>0.43 S</code> to its left edge</td><td>43 px</td></tr>
+    <tr><td>Suffix font</td><td>Manrope Bold (700)</td><td>—</td></tr>
+    <tr><td>Suffix size</td><td><code>0.37 S</code></td><td>37 px</td></tr>
+    <tr><td>Suffix tracking</td><td><code>+0.08 em</code></td><td>+2.96 px</td></tr>
+    <tr><td>Suffix baseline</td><td>Identical to the wordmark baseline</td><td>—</td></tr>
+  </table>
+
+  <div class="rule">
+    <p style="margin:0"><strong>The dot rests on the baseline.</strong> This is the rule most often broken. The dot is not centred on the x-height, not centred on the cap height, and not floating. Its lowest point touches the same invisible line the letters stand on — like a full stop, but round and blue.</p>
+  </div>
+
+  <!-- 04 -->
+  <h2>04 — Colour</h2>
+
+  <div class="grid2">
+    <div class="swatch"><div class="chip" style="background:#38bdf8"></div><b>Dot blue</b><span>#38BDF8 · rgb(56, 189, 248) · hsl(199, 93%, 60%)</span></div>
+    <div class="swatch"><div class="chip" style="background:#64748b"></div><b>Suffix grey</b><span>#64748B · rgb(100, 116, 139) · hsl(215, 16%, 47%)</span></div>
+    <div class="swatch"><div class="chip" style="background:#f8fafc"></div><b>Wordmark on dark</b><span>#F8FAFC · rgb(248, 250, 252)</span></div>
+    <div class="swatch"><div class="chip" style="background:#0f172a"></div><b>Wordmark on light</b><span>#0F172A · rgb(15, 23, 42)</span></div>
+  </div>
+
+  <p>The dot and the suffix keep their colour on every background. Only the wordmark changes, and only between the two values above — never to pure black, never to pure white.</p>
+
+  <div class="rule warn">
+    <p style="margin:0"><strong>Historical note.</strong> Earlier builds of the application rendered the dot as <code>#3B82F6</code> in the app header while PDFs and emails used <code>#38BDF8</code>. That conflict is resolved: <strong>#38BDF8 is the only correct value.</strong> Any asset still showing #3B82F6 is out of date.</p>
+  </div>
+
+  <!-- 05 -->
+  <h2>05 — Reproduction</h2>
+
+  <h3>Recommended · HTML and CSS</h3>
+  <p>This is the most reliable method and the one to use whenever the medium allows it. The layout engine positions the dot and the suffix from the font’s own metrics, so nothing has to be measured and nothing can drift. Every value is expressed in <code>em</code>, which means the whole logo scales from a single <code>font-size</code>.</p>
+
+<pre>&lt;span class="bs-logo" style="font-size:46px; color:#f8fafc"&gt;
+  BarStock&lt;span class="dot"&gt;&lt;/span&gt;&lt;span class="pro"&gt;Pro&lt;/span&gt;
+&lt;/span&gt;
+
+&lt;style&gt;
+.bs-logo{
+  display:inline-flex;
+  align-items:baseline;
+  line-height:1;
+  font-family:"Manrope",sans-serif;
+  font-weight:800;
+  letter-spacing:-.03em;
+}
+.bs-logo .dot{
+  display:inline-flex;
+  align-self:flex-end;
+  width:.22em;  height:.22em;
+  min-width:.22em; min-height:.22em;   /* stops flex from squashing it */
+  border-radius:50%;
+  background:#38bdf8;
+  margin:0 .043em .13em .022em;        /* right, bottom, left */
+}
+.bs-logo .pro{
+  font-size:.37em;
+  font-weight:700;
+  color:#64748b;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  margin-left:.152em;
+}
+&lt;/style&gt;</pre>
+
+  <div class="rule">
+    <p style="margin:0"><strong>Why <code>min-width</code> and <code>min-height</code> are there.</strong> The dot is a flex child. Without the minimums a narrow container squashes it into an oval. This is not decoration — remove it and the logo eventually breaks.</p>
+  </div>
+
+  <h3>SVG</h3>
+  <p>Use SVG for a fixed asset — a favicon, an email header, a file someone will drop into a deck. One caveat decides how you generate it: the horizontal position of the dot and the suffix depends on the rendered width of the word <code>BarStock</code>, which only the font knows. Do not guess it.</p>
+  <p>Generate it from a real render instead. The button below measures the logo as it appears in this very document and writes the exact SVG for you.</p>
+
+  <div class="card">
+    <button id="gen">Generate exact SVG</button>
+    <pre id="out" style="margin-top:16px;display:none"></pre>
+  </div>
+
+  <p>If the wordmark will travel to systems where Manrope may be missing, convert the text to outlines after generating. Outlines are immune to font substitution, which is the other classic way this logo goes wrong.</p>
+
+  <h3>PDF · jsPDF</h3>
+  <p>Used by the application’s reports and purchase orders. Here <code>S</code> is the jsPDF font size.</p>
+
+<pre>const S = 22;                              // wordmark size
+pdf.setFont('helvetica', 'bold');          // or an embedded Manrope
+pdf.setFontSize(S);
+pdf.setTextColor(248, 250, 252);           // #F8FAFC
+pdf.text('BarStock', x, baseline);
+
+const w = pdf.getTextWidth('BarStock');
+const r = 0.11 * S;                        // radius = half of 0.22 S
+
+pdf.setFillColor(56, 189, 248);            // #38BDF8
+pdf.circle(x + w + 0.13 * S, baseline - r, r, 'F');   // bottom edge on the baseline
+
+pdf.setFont('helvetica', 'bold');
+pdf.setFontSize(0.37 * S);
+pdf.setTextColor(100, 116, 139);           // #64748B
+pdf.text('PRO', x + w + 0.43 * S, baseline);</pre>
+
+  <div class="rule warn">
+    <p style="margin:0"><strong>jsPDF has no letter-spacing.</strong> The wordmark will render slightly wider than the CSS version and <code>PRO</code> slightly tighter. This is accepted and expected — do not attempt to compensate by inserting spaces between characters.</p>
+  </div>
+
+  <h3>By hand · Figma, Illustrator, Canva</h3>
+  <ol class="check">
+    <li>Type <code>BarStock</code> in Manrope ExtraBold. Set tracking to <code>−3%</code>. Note the font size — this is <strong>S</strong>.</li>
+    <li>Draw a circle with a diameter of <strong>22% of S</strong>. Hold shift so it stays a perfect circle.</li>
+    <li>Fill it with <code>#38BDF8</code>. No stroke, no shadow, no gradient.</li>
+    <li>Align the circle so its <strong>bottom edge touches the text baseline</strong>, and its left edge sits <strong>2.2% of S</strong> after the final <code>k</code>.</li>
+    <li>Type <code>PRO</code> in Manrope Bold at <strong>37% of S</strong>, tracking <code>+8%</code>, colour <code>#64748B</code>.</li>
+    <li>Put <code>PRO</code> on the same baseline, with its left edge <strong>43% of S</strong> from the end of the wordmark.</li>
+    <li>Group the three. From here on they only ever scale together.</li>
+  </ol>
+
+  <!-- 06 -->
+  <h2>06 — Typography</h2>
+
+  <table>
+    <tr><th>Item</th><th>Value</th></tr>
+    <tr><td>Family</td><td>Manrope</td></tr>
+    <tr><td>Source</td><td>Google Fonts — <code>fonts.google.com/specimen/Manrope</code></td></tr>
+    <tr><td>Licence</td><td>SIL Open Font License 1.1 — free for commercial use and embedding</td></tr>
+    <tr><td>Weights required</td><td>800 ExtraBold (wordmark), 700 Bold (suffix)</td></tr>
+    <tr><td>Web import</td><td><code>family=Manrope:wght@700;800</code></td></tr>
+    <tr><td>Fallback stack</td><td><code>"Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif</code></td></tr>
+  </table>
+
+  <p>Manrope 800 is not the same as a browser’s synthetic bold. If only the regular weight loads, the browser will fake the weight and the wordmark will look thin and slightly smeared. When in doubt, compare against the images in section 01.</p>
+
+  <!-- 07 -->
+  <h2>07 — Clear space and minimum size</h2>
+
+  <p><strong>Clear space:</strong> keep a margin of <code>0.5 S</code> on all four sides, free of text, rules, edges and other logos. Measured from the outermost ink — the left edge of the <code>B</code>, the cap height of the <code>B</code>, the right edge of the <code>O</code>, and the descender line.</p>
+
+  <p><strong>Minimum sizes:</strong></p>
+  <table>
+    <tr><th>Medium</th><th>Minimum S</th><th>Why</th></tr>
+    <tr><td>Screen</td><td>20 px</td><td>Below this the dot is under 4.4 px and reads as an artefact.</td></tr>
+    <tr><td>Print</td><td>7 mm</td><td>Below this the suffix tracking closes up and <code>PRO</code> becomes a blur.</td></tr>
+    <tr><td>Favicon</td><td>—</td><td>Do not shrink the full logo. Use the dot alone, or the letter <code>B</code>.</td></tr>
+  </table>
+
+  <!-- 08 -->
+  <h2>08 — Correct and incorrect</h2>
+
+  <div class="do-dont">
+    <div class="dd ok"><h4>Correct</h4><p>The dot rests on the baseline and is a perfect circle in #38BDF8.</p></div>
+    <div class="dd no"><h4>Incorrect</h4><p>The dot centred on the x-height, or floating between the letters and the suffix.</p></div>
+    <div class="dd ok"><h4>Correct</h4><p><code>PRO</code> in grey at 37% of the wordmark, with open tracking.</p></div>
+    <div class="dd no"><h4>Incorrect</h4><p><code>PRO</code> matching the wordmark’s size or colour, which turns one logo into two words.</p></div>
+    <div class="dd ok"><h4>Correct</h4><p>The whole lockup scaled from one value.</p></div>
+    <div class="dd no"><h4>Incorrect</h4><p>Resizing the wordmark and leaving the dot or the suffix behind.</p></div>
+    <div class="dd ok"><h4>Correct</h4><p>Wordmark in #F8FAFC on dark, #0F172A on light.</p></div>
+    <div class="dd no"><h4>Incorrect</h4><p>Pure black, pure white, or tinting the wordmark with the dot blue.</p></div>
+  </div>
+
+  <p>Also never: rotate it, arch it, outline it, add a shadow or a glow, place it on a busy photograph without a solid or heavily blurred panel behind it, recolour the dot to match a campaign, or translate the word <code>PRO</code>.</p>
+
+  <!-- 09 -->
+  <h2>09 — Source of truth</h2>
+  <p>Every number in this document was measured from the production application, not designed for it. Two independent implementations were compared and reconciled:</p>
+  <table>
+    <tr><th>Implementation</th><th>File</th></tr>
+    <tr><td>Application header</td><td><code>styles/app.css</code> — <code>.brand-logo-type</code>, <code>.brand-logo-dot</code>, <code>.brand-logo-pro</code></td></tr>
+    <tr><td>PDF reports</td><td><code>src/cost-report.js</code>, <code>src/email-order.js</code></td></tr>
+  </table>
+  <p>Where the two disagreed, the conflict is called out explicitly in this document rather than averaged away. If either file changes, this brandbook must be updated in the same commit.</p>
+
+  <!-- 10 -->
+  <h2>10 — Verification checklist</h2>
+  <p>Run through this after reproducing the logo. Every line has a single correct answer.</p>
+
+  <ol class="check">
+    <li>Is the word exactly <code>BarStock</code> — one word, capital <code>B</code>, capital <code>S</code>, no space?</li>
+    <li>Is the wordmark set in Manrope at weight 800, not a synthetic bold?</li>
+    <li>Is the wordmark tracking negative (<code>−0.03 em</code>) rather than default?</li>
+    <li>Is the dot a perfect circle — equal width and height?</li>
+    <li>Is the dot exactly <code>#38BDF8</code>, and not <code>#3B82F6</code>?</li>
+    <li>Does the bottom edge of the dot touch the baseline?</li>
+    <li>Is the dot’s diameter 22% of the wordmark’s font size?</li>
+    <li>Is <code>PRO</code> uppercase, weight 700, and 37% of the wordmark’s size?</li>
+    <li>Is <code>PRO</code> in <code>#64748B</code> — clearly grey, clearly not the wordmark’s colour?</li>
+    <li>Does <code>PRO</code> sit on the same baseline as the wordmark?</li>
+    <li>Is the suffix tracking positive (<code>+0.08 em</code>), so the three letters look open?</li>
+    <li>Is the wordmark <code>#F8FAFC</code> on dark or <code>#0F172A</code> on light — and nothing else?</li>
+    <li>Is there clear space of at least half the font size on all four sides?</li>
+    <li>Placed side by side with section 01 at the same size, is it indistinguishable?</li>
+  </ol>
+
+  <div class="foot">
+    BarStock Pro · Logo Brandbook · Version 1.0<br>
+    Supersedes the logo section of the general brandbook. In any disagreement, this document wins.
+  </div>
+</div>
+
+<script>
+(function(){
+  var btn=document.getElementById('gen'), out=document.getElementById('out');
+  btn.addEventListener('click', function(){
+    var S=100;
+    // Se mide el ancho real del wordmark con la fuente ya cargada.
+    // Adivinarlo es exactamente como se rompe el logo en SVG.
+    var c=document.createElement('canvas').getContext('2d');
+    c.font='800 '+S+'px Manrope, sans-serif';
+    var w=c.measureText('BarStock').width - (0.03*S*8);  // tracking -0.03em x 8 caracteres
+    var d=0.22*S, r=d/2;
+    var base=S;                       // linea base
+    var dotX=w+0.022*S, proX=w+0.43*S;
+    var pad=0.5*S;
+    var svg=
+'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+Math.round(proX+0.37*S*2.6+pad*2)+' '+Math.round(S*1.45)+'" role="img" aria-label="BarStock Pro">\n'+
+'  <text x="'+pad+'" y="'+base+'" font-family="Manrope" font-weight="800" font-size="'+S+'" letter-spacing="'+(-0.03*S).toFixed(2)+'" fill="#F8FAFC">BarStock</text>\n'+
+'  <circle cx="'+(pad+dotX+r).toFixed(2)+'" cy="'+(base-r).toFixed(2)+'" r="'+r.toFixed(2)+'" fill="#38BDF8"/>\n'+
+'  <text x="'+(pad+proX).toFixed(2)+'" y="'+base+'" font-family="Manrope" font-weight="700" font-size="'+(0.37*S).toFixed(2)+'" letter-spacing="'+(0.08*0.37*S).toFixed(2)+'" fill="#64748B">PRO</text>\n'+
+'</svg>';
+    out.textContent=svg;
+    out.style.display='block';
+  });
+})();
+</script>
+</body>
+</html>

@@ -314,7 +314,7 @@
       // El rótulo va en mayúsculas como los demás, pero el wordmark
       // conserva su caja: es una etiqueta que contiene un nombre
       // propio, igual que "WELCOME TO eBay" en prensa.
-      k: 'Welcome to <span class="m-brand">BarStock<i>.</i> Pro</span>',
+      k: 'Welcome to <span class="m-brand">BarStock<i class="m-logo-dot"></i>Pro</span>',
       kHtml: true,
       tt: 'Good to have you',
       sub: 'Scanning bottles is what this app does best. Look up stock, ' +

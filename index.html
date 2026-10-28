@@ -49,12 +49,12 @@
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/tables.css">
   <link rel="stylesheet" href="styles/buttons.css">
-  <link rel="stylesheet" href="styles/app.css?v=sil18">
+  <link rel="stylesheet" href="styles/app.css?v=sil19">
   <link rel="stylesheet" href="styles/consumption-match.css?v=cm14">
   <link rel="stylesheet" href="styles/order-history.css">
 
   <link rel="stylesheet" href="styles/fixes.css">
-  <link rel="stylesheet" href="styles/auth.css?v=login2">
+  <link rel="stylesheet" href="styles/auth.css?v=login3">
   <link rel="stylesheet" href="styles/cost-report.css?v=steps20">
   <link rel="stylesheet" href="styles/motion.css?v=motion3">
   <link rel="stylesheet" href="styles/skeleton.css?v=skel1">
@@ -74,7 +74,7 @@
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/chip-glow.css">
   <link rel="stylesheet" href="styles/mobile.css?v=mob2">
-  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp55">
+  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp56">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -103,7 +103,7 @@
            vacia la linea base ES el borde inferior del margen, asi que el
            punto se apoya exactamente en la linea base sin depender de las
            metricas de la fuente. Antes era flex-end mas 6px a ojo. -->
-      <div class="brand-logo-type" id="headerLogo">BarStock<span class="brand-logo-dot" style="display:inline-flex;width:.22em;height:.22em;min-width:.22em;min-height:.22em;border-radius:50%;background:#38bdf8;margin:0 .043em 0 .022em;align-self:baseline;"></span><span class="brand-logo-pro">PRO</span></div>
+      <div class="brand-logo-type" id="headerLogo">BarStock<span class="brand-logo-dot" style="display:inline-flex;width:.22em;height:.22em;min-width:.22em;min-height:.22em;border-radius:50%;background:#38bdf8;margin:0 .043em .13em .022em;align-self:flex-end;"></span><span class="brand-logo-pro">PRO</span></div>
       <div class="bs-spacer"></div>
       <div class="bs-loc-wrap">
         <div class="bs-loc-chip" id="bsLocChip">
@@ -155,7 +155,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261027-214132</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261027-214935</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5272,8 +5272,8 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
      Las pantallas se REGISTRAN en el armazon; no hay ninguna lista
      escrita a mano, asi que añadir una no toca ningun otro archivo. Y
      nada de esto se monta arriba de 640px. -->
-<script src="src/mobile-shell.js?v=msh12"></script>
-<script src="src/mobile-home.js?v=mh10"></script>
+<script src="src/mobile-shell.js?v=msh13"></script>
+<script src="src/mobile-home.js?v=mh11"></script>
 <script src="src/mobile-search.js?v=m9"></script>
 <script src="src/mobile-cycle.js?v=m5"></script>
 <script src="src/mobile-inventory.js?v=m5"></script>
