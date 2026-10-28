@@ -194,6 +194,7 @@
         '<input type="date" id="mepHasta" value="' + iso(hoy) + '">' +
         '<button type="button" id="mepVer" class="ui-control">Show</button>' +
         '<button type="button" id="mepRec" class="ui-control">Ordered vs received</button>' +
+        '<button type="button" id="mepPrec" class="ui-control">Prices</button>' +
         '<button type="button" id="mepPrev" class="ui-control">Apply to cycle…</button>' +
         '</div>';
       const b = document.getElementById('mepVer');
@@ -202,8 +203,155 @@
       if (g) g.onclick = () => previsualizar();
       const rc = document.getElementById('mepRec');
       if (rc) rc.onclick = () => verConciliacion();
+      const pr = document.getElementById('mepPrec');
+      if (pr) pr.onclick = () => verPrecios();
     }
     abrir();
+  }
+
+  // ── El precio al día ────────────────────────────────────────────────
+  //
+  // La regla, y es la que evita el riesgo grande: **no se borra nada**.
+  // Sólo cambia el precio de los productos que aparecen en una
+  // factura. Lo que nunca has comprado por MarginEdge conserva el
+  // precio que tecleaste.
+  //
+  // `inventory_items.value` es el COSTE de la botella, y de ahí salen
+  // "money on the shelf" y la pérdida en dinero.
+  //
+  // Lo que NO actualiza un precio:
+  //
+  //   precio cero o nulo   — flete, depósitos, líneas de servicio
+  //   cantidad negativa    — un abono o una devolución
+  //
+  // Cualquiera de las dos pondría una botella a cero, y un cero en el
+  // coste no se nota mirando: se nota meses después, cuando el valor
+  // del estante no cuadra y nadie sabe desde cuándo.
+
+  function precioDeLinea(l) {
+    const p = Number(l.unit_price);
+    if (!(p > 0)) return null;
+    if (Number(l.quantity) < 0) return null;
+    return Math.round(p * 100) / 100;
+  }
+
+  async function calcularPrecios() {
+    const { url, key } = cfg();
+    const locId = await locationId();
+    if (!url || !key || !locId) throw new Error('No location.');
+
+    const [lineas, enlaces] = await Promise.all([
+      leerTodo(url, key,
+        `marginedge_invoice_lines?location_id=eq.${locId}` +
+        `&select=product_id,unit_price,quantity,invoice_date,invoice_number,vendor_name` +
+        `&order=invoice_date.asc`),
+      leerTodo(url, key,
+        `marginedge_links?location_id=eq.${locId}&select=product_id,item_name&order=product_id.asc`)
+    ]);
+
+    const deQuien = new Map(enlaces.map(e => [String(e.product_id), e.item_name || '']));
+
+    // Orden ascendente por fecha, así que la última que escribe cada
+    // artículo es la factura más reciente.
+    const ultimo = new Map();
+    for (const l of lineas) {
+      const item = deQuien.get(String(l.product_id));
+      if (!item) continue;
+      const precio = precioDeLinea(l);
+      if (precio === null) continue;
+      ultimo.set(item, { item, precio, fecha: l.invoice_date || '',
+                         factura: l.invoice_number || '', vendor: l.vendor_name || '' });
+    }
+
+    const master = (window.state && state.master) || [];
+    const actual = new Map(master.map(r => [r.item, Number(r.value) || 0]));
+
+    const cambios = [];
+    for (const [item, d] of ultimo) {
+      if (!actual.has(item)) continue;                    // ya no está en inventario
+      const antes = actual.get(item);
+      if (Math.abs(antes - d.precio) < 0.005) continue;   // ya es el mismo
+      cambios.push(Object.assign({ antes }, d));
+    }
+    cambios.sort((a, b) => Math.abs(b.precio - b.antes) - Math.abs(a.precio - a.antes));
+
+    return { cambios, conPrecio: ultimo.size,
+             sinTocar: Math.max(0, master.length - ultimo.size) };
+  }
+
+  async function aplicarPrecios(cambios) {
+    const { url, key } = cfg();
+    const locId = await locationId();
+    const cab = { 'Content-Type': 'application/json', apikey: key,
+                  Authorization: `Bearer ${key}`, Prefer: 'return=minimal' };
+    let ok = 0;
+    const problemas = [];
+    for (const c of cambios) {
+      const r = await fetch(
+        `${url}/rest/v1/inventory_items?location_id=eq.${locId}` +
+        `&item_name=eq.${encodeURIComponent(c.item)}`,
+        { method: 'PATCH', headers: cab, body: JSON.stringify({ value: c.precio }) });
+      if (r.ok) ok++; else problemas.push(c.item + ': ' + r.status);
+    }
+    return { ok, problemas };
+  }
+
+  function pintarPrecios(res) {
+    const host = document.getElementById('mepBody');
+    if (!host) return;
+
+    if (!res.cambios.length) {
+      host.innerHTML = '<div class="mem-empty" style="color:#15803d">' +
+        '<b>Every price is already current.</b><br>' + res.conPrecio +
+        ' items have an invoice price and all of them match. ' + res.sinTocar +
+        ' have never come through MarginEdge and keep the price you typed.</div>';
+      return;
+    }
+
+    const flecha = c => c.precio > c.antes
+      ? '<span style="color:#fca5a5">↑</span>'
+      : '<span style="color:#6ee7b7">↓</span>';
+
+    host.innerHTML =
+      '<div class="mem-note">Only items that appear on an invoice change. The ' +
+      'other <b>' + res.sinTocar + '</b> keep the price you typed — nothing ' +
+      'is cleared.</div>' +
+      res.cambios.map(c =>
+        '<div class="mem-row"><div class="mem-mine"><b>' + esc(c.item) + '</b>' +
+        '<span>' + esc(c.vendor || '') +
+          (c.factura ? ' · invoice ' + esc(c.factura) : '') +
+          (c.fecha ? ' · ' + esc(c.fecha) : '') + '</span></div>' +
+        '<div class="mep-nums">' +
+          '<div class="mep-n"><b>' + dinero(c.antes) + '</b><span>now</span></div>' +
+          '<div class="mep-n"><b>' + flecha(c) + ' ' + dinero(c.precio) +
+            '</b><span>invoice</span></div>' +
+        '</div></div>').join('') +
+      '<div style="margin-top:14px"><button type="button" id="mepPrecGo" ' +
+      'class="success ui-control">Update ' + res.cambios.length + ' prices</button></div>';
+
+    const b = document.getElementById('mepPrecGo');
+    if (b) b.onclick = async () => {
+      b.disabled = true; b.textContent = 'Updating…';
+      const r = await aplicarPrecios(res.cambios);
+      host.innerHTML =
+        '<div class="small" style="color:' + (r.problemas.length ? '#b45309' : '#15803d') +
+        ';font-weight:700">' + r.ok + ' prices updated.</div>' +
+        (r.problemas.length
+          ? '<div class="mem-note" style="margin-top:8px">' +
+            esc(r.problemas.slice(0, 10).join(' · ')) + '</div>' : '');
+      if (window.BarStockInventoryRealtime && window.BarStockInventoryRealtime.refresh) {
+        try { window.BarStockInventoryRealtime.refresh(); } catch (e) {}
+      }
+    };
+  }
+
+  async function verPrecios() {
+    const host = document.getElementById('mepBody');
+    if (host) host.innerHTML = '<div class="mem-empty">Comparing prices…</div>';
+    try { pintarPrecios(await calcularPrecios()); }
+    catch (e) {
+      if (host) host.innerHTML = '<div class="mem-empty">' + esc(String(e.message || e)) + '</div>';
+    }
   }
 
   // ── Conciliar: lo que pediste contra lo que llegó ───────────────────
@@ -268,7 +416,7 @@
     // Las órdenes se filtran por el MISMO rango. created_at es una
     // marca de tiempo, así que el final del rango incluye todo su día.
     const finISO = hasta ? hasta + 'T23:59:59' : new Date().toISOString();
-    const { items: pedidos } = await leerOrdenes(url, key, locId, desde + 'T00:00:00', finISO);
+    const { items: pedidos, ordenes } = await leerOrdenes(url, key, locId, desde + 'T00:00:00', finISO);
 
     await cargar(desde, hasta);
 
@@ -290,26 +438,105 @@
       }
     }
 
-    const porItem = new Map();
+    // ── Tres estados, no uno ───────────────────────────────────────
+    //
+    // Antes, cualquier artículo pedido y no recibido salía como
+    // "nothing arrived". Pero eso cubre dos situaciones opuestas:
+    //
+    //   pediste ayer y el camión viene el jueves  →  normal
+    //   la entrega ya pasó y ese producto no vino →  reclamo
+    //
+    // Con las dos bajo la misma etiqueta, de 104 órdenes 85 salían
+    // marcadas por motivos normales, y el día que una fuera un
+    // problema de verdad nadie la iba a ver.
+    //
+    // La señal que las separa no necesita configurar nada: mirar si el
+    // RESTO de la orden llegó. Si de doce líneas llegaron diez, las
+    // otras dos no están pendientes — la entrega ocurrió y esos dos
+    // productos no venían. Si no llegó ninguna, la entrega aún no ha
+    // pasado, y entonces decide el tiempo.
+    const DIAS_TARDE = 7;
+
+    const recibos = _filas.map(f => ({
+      item: f.item, qty: Number(f.unidades) || 0,
+      fecha: f.ultima ? new Date(f.ultima).getTime() : 0
+    }));
+
+    const fechaDe = new Map(ordenes.map(o => [String(o.id), o.created_at]));
+    const porOrden = new Map();
     for (const p of pedidos) {
-      const k = p.item_name || '';
-      if (!porItem.has(k)) porItem.set(k, { item: k, pedido: 0, recibido: 0, vendor: p.vendor || '' });
-      porItem.get(k).pedido += Number(p.quantity) || 0;
+      const k = String(p.vendor_order_id);
+      if (!porOrden.has(k)) porOrden.set(k, []);
+      porOrden.get(k).push(p);
     }
+
+    const hoy = Date.now();
+    const porItem = new Map();
+
+    for (const [id, lineas] of porOrden) {
+      const f0 = fechaDe.get(id);
+      const t0 = f0 ? new Date(f0).getTime() : 0;
+      const dias = t0 ? Math.floor((hoy - t0) / 86400000) : 999;
+
+      // Cada recibo se consume una sola vez y sólo lo reclaman órdenes
+      // anteriores a su fecha: con dos órdenes del mismo artículo, la
+      // primera se queda lo que llegó primero.
+      const conLlegada = lineas.map(l => {
+        const pedido = Number(l.quantity) || 0;
+        let llegado = 0;
+        for (const r of recibos) {
+          if (r.usado || r.item !== l.item_name) continue;
+          if (r.fecha && t0 && r.fecha + 86400000 < t0) continue;
+          if (llegado >= pedido) break;
+          llegado += r.qty;
+          r.usado = true;
+        }
+        return { l, pedido, llegado };
+      });
+
+      // ¿Pasó ya la entrega de esta orden? Lo dice que alguna de sus
+      // líneas haya llegado.
+      const hubo = conLlegada.some(x => x.llegado > 0);
+
+      for (const { l, pedido, llegado } of conLlegada) {
+        const k = l.item_name || '';
+        if (!porItem.has(k)) {
+          porItem.set(k, { item: k, pedido: 0, recibido: 0,
+                           vendor: l.vendor || '', dias, hubo });
+        }
+        const a = porItem.get(k);
+        a.pedido += pedido;
+        a.recibido += llegado;
+        a.dias = Math.min(a.dias, dias);
+        a.hubo = a.hubo || hubo;
+      }
+    }
+
+    // Lo que llegó sin que nadie lo pidiera.
     for (const f of _filas) {
-      const k = f.item;
-      if (!porItem.has(k)) porItem.set(k, { item: k, pedido: 0, recibido: 0, vendor: '' });
-      porItem.get(k).recibido += Number(f.unidades) || 0;
+      if (porItem.has(f.item)) continue;
+      porItem.set(f.item, { item: f.item, pedido: 0, recibido: f.unidades,
+                            vendor: '', dias: 0, hubo: true });
     }
 
     const filas = Array.from(porItem.values()).map(r => {
       r.dif = r.recibido - r.pedido;
-      r.tipo = r.pedido === 0 ? 'sin-orden'
-             : r.recibido === 0 ? 'nada'
-             : Math.abs(r.dif) < 0.001 ? 'cuadra'
-             : r.dif < 0 ? 'falta' : 'sobra';
+      r.tipo =
+        r.pedido === 0          ? 'sin-orden'
+      : Math.abs(r.dif) < 0.001 ? 'cuadra'
+      : r.dif > 0               ? 'sobra'
+      : r.hubo                  ? 'falta'
+      : r.dias >= DIAS_TARDE    ? 'tarde'
+      :                           'espera';
       return r;
-    }).sort((a, b) => Math.abs(b.dif) - Math.abs(a.dif));
+    }).sort((a, b) => {
+      // Lo accionable primero: reclamar, luego lo que se retrasa, y al
+      // final lo que sólo está esperando su día.
+      const peso = { falta: 0, tarde: 1, sobra: 2, 'sin-orden': 3, espera: 4, cuadra: 5 };
+      const d = (peso[a.tipo] === undefined ? 9 : peso[a.tipo]) -
+                (peso[b.tipo] === undefined ? 9 : peso[b.tipo]);
+      return d || Math.abs(b.dif) - Math.abs(a.dif);
+    });
 
     return { desde, hasta, filas, dudosas, diaReinicio };
   }
@@ -319,12 +546,16 @@
     if (!host) return;
 
     const n = t => res.filas.filter(f => f.tipo === t).length;
-    const problemas = res.filas.filter(f => f.tipo !== 'cuadra');
+    // "Esperando" no es un problema: es lo normal entre que pides y
+    // llega el camión. Cuenta en el resumen pero no entra en la lista,
+    // o la lista se llena de ruido y deja de mirarse.
+    const problemas = res.filas.filter(f => f.tipo !== 'cuadra' && f.tipo !== 'espera');
 
     const etiqueta = {
       falta: ['short', 'mem-conf mid'],
+      tarde: ['overdue', 'mem-conf mid'],
       sobra: ['over', 'mem-conf mid'],
-      nada: ['nothing arrived', 'mem-conf mid'],
+      espera: ['waiting', 'mem-conf taken'],
       'sin-orden': ['no order placed', 'mem-conf taken']
     };
 
@@ -336,8 +567,9 @@
       '<div class="mem-leg" style="margin-bottom:14px">' +
         '<span><b>' + n('cuadra') + '</b> match</span>' +
         '<span><b>' + n('falta') + '</b> short</span>' +
+        '<span><b>' + n('tarde') + '</b> overdue</span>' +
         '<span><b>' + n('sobra') + '</b> over</span>' +
-        '<span><b>' + n('nada') + '</b> nothing arrived</span>' +
+        '<span><b>' + n('espera') + '</b> waiting</span>' +
         '<span><b>' + n('sin-orden') + '</b> no order</span>' +
       '</div>' +
 
@@ -349,6 +581,14 @@
           'for you to decide.</div>'
         : '') +
 
+      (n('espera')
+        ? '<div class="mem-note" style="background:rgba(100,116,139,.12);' +
+          'border-color:rgba(148,163,184,.26);color:#94a3b8"><b>' + n('espera') +
+          ' items are just waiting.</b> Their order went out recently and no ' +
+          'line of it has arrived, so the delivery has not happened yet. They ' +
+          'are left out of the list below \u2014 what is there needs you.</div>'
+        : '') +
+
       (problemas.length
         ? problemas.map(f => {
             const e = etiqueta[f.tipo] || ['', 'mem-conf'];
@@ -358,11 +598,12 @@
                 '<div class="mep-n"><b>' + (Math.round(f.pedido * 100) / 100) + '</b><span>ordered</span></div>' +
                 '<div class="mep-n"><b>' + (Math.round(f.recibido * 100) / 100) + '</b><span>received</span></div>' +
                 '<div class="mep-n"><b>' + (f.dif > 0 ? '+' : '') +
-                  (Math.round(f.dif * 100) / 100) + '</b><span>' + esc(e[0]) + '</span></div>' +
+                  (Math.round(f.dif * 100) / 100) + '</b><span>' + esc(e[0]) +
+                  (f.tipo === 'tarde' ? ' \u00b7 ' + f.dias + 'd' : '') + '</span></div>' +
               '</div></div>';
           }).join('')
-        : '<div class="mem-empty" style="color:#15803d"><b>Everything matches.</b><br>' +
-          'What you ordered this cycle is what arrived.</div>') +
+        : '<div class="mem-empty" style="color:#15803d"><b>Nothing needs you.</b><br>' +
+          'What has been delivered matches what you ordered.</div>') +
 
       '<div class="mem-note" style="margin-top:14px">Read-only. Nothing here changes an ' +
       'order or your inventory.</div>';
@@ -531,7 +772,9 @@
     };
   }
 
-  window.BarStockMarginEdgePurchases = { montar, abrir, previsualizar, verConciliacion };
+  window.BarStockMarginEdgePurchases = {
+    montar, abrir, previsualizar, verConciliacion, verPrecios, _precioDeLinea: precioDeLinea
+  };
 
   window.__settingsHooks = window.__settingsHooks || {};
   window.__settingsHooks.mePurchases = montar;
