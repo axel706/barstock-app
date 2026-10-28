@@ -98,12 +98,18 @@ function entorno(descartadas, guardado) {
   // Al llegar al final de la lista el gesto pasaba al documento: el
   // panel se quedaba fijo, la app se desplazaba por detrás, y volver
   // arriba movía la página en vez del panel.
-  prueba('el body queda bloqueado', w.document.body.classList.contains('m-nf-abierto'));
-  // Y el raíz: según la pantalla el que se desplaza es uno u otro, y
-  // bloquear sólo el body dejaba el documento moviéndose por detrás.
-  prueba('y el elemento raíz también',
+  //
+  // Aquí el armazón NO está montado, así que no hay #mScreens que
+  // parar y entra la red: se bloquea el elemento raíz. Con armazón
+  // —que es lo normal— se para el contenedor, y eso lo cubre
+  // test-armazon-scroll.js.
+  prueba('sin armazón, se bloquea el elemento raíz',
     w.document.documentElement.classList.contains('m-nf-abierto'));
-  prueba('y recuerda dónde estaba', w.document.body.style.top !== '');
+  // El apaño viejo fijaba el body con top negativo. Lo dejaba más
+  // corto que la ventana y debajo asomaba una franja negra sin nada
+  // que desenfocar, con la barra de pestañas aparentemente subida.
+  prueba('y el body no se fija', w.document.body.style.top === '');
+  prueba('ni se marca', !w.document.body.classList.contains('m-nf-abierto'));
 
   grupo('descartar');
   const x = w.document.querySelector('[data-x]');
@@ -117,10 +123,9 @@ function entorno(descartadas, guardado) {
   grupo('al cerrar se devuelve el documento');
   w.BarStockMobileNotif.cerrar();
   await esperar(40);
-  prueba('el body se suelta', !w.document.body.classList.contains('m-nf-abierto'));
-  prueba('y el raíz también',
+  prueba('el raíz se suelta',
     !w.document.documentElement.classList.contains('m-nf-abierto'));
-  prueba('y se le quita el desplazamiento fijado', w.document.body.style.top === '');
+  prueba('y el body sigue sin tocarse', w.document.body.style.top === '');
 
   // A partir de aquí se crea un segundo entorno, y eso reemplaza el
   // `document` global: los módulos lo leen en cada llamada, así que

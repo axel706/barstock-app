@@ -120,6 +120,35 @@
     };
   }
 
+  // ── Quién rueda ──────────────────────────────────────────────────
+  //
+  // Con una pantalla propia abierta el documento NO se mueve: está
+  // fijo y lo que rueda es #mScreens. Es lo que distingue una app de
+  // una página — sin esto, un deslizamiento en cualquier hueco movía
+  // la interfaz entera, las barras fijas se iban con el rebote de iOS
+  // y el panel de avisos se quedaba atascado al llegar al final.
+  //
+  // Con una sección del ESCRITORIO abierta rueda el documento, como
+  // siempre: esa página es la de hace meses y no se toca.
+  //
+  // Todo lo que necesite saber el desplazamiento pregunta aquí. Dos
+  // sitios decidiendo quién rueda es como empiezan los desajustes.
+  function scroller() {
+    return (_host && !_host.classList.contains('hidden')) ? _host : null;
+  }
+
+  function irArriba() {
+    const s = scroller();
+    if (s) { s.scrollTop = 0; return; }
+    try { window.scrollTo({ top: 0 }); } catch (e) {}
+  }
+
+  function desplazamiento() {
+    const s = scroller();
+    if (s) return s.scrollTop || 0;
+    return window.scrollY || document.documentElement.scrollTop || 0;
+  }
+
   function montar() {
     if (_montado || !esMovil()) return;
 
@@ -129,6 +158,25 @@
     _host.id = 'mScreens';
     _host.className = 'm-screens hidden';
     document.body.appendChild(_host);
+
+    // ── El suelo que desenfoca ────────────────────────────────────
+    //
+    // Va ANTES de la barra y con menos z-index: es lo que hay debajo
+    // de ella, no parte de ella.
+    //
+    // Seis capas, cada una con el doble de desenfoque que la anterior
+    // y recortada a su propia franja. Un solo backdrop-filter deja un
+    // borde visible donde empieza —se ve el corte—; encadenarlos así
+    // hace que el desenfoque CREZCA hacia abajo y no empiece en
+    // ningún sitio concreto. Es lo que hace iOS debajo del reproductor.
+    //
+    // aria-hidden y pointer-events:none: no es contenido ni se toca.
+    const suelo = document.createElement('div');
+    suelo.id = 'mFloor';
+    suelo.className = 'm-floor';
+    suelo.setAttribute('aria-hidden', 'true');
+    suelo.innerHTML = '<i></i><i></i><i></i><i></i><i></i><i></i>';
+    document.body.appendChild(suelo);
 
     _barra = document.createElement('nav');
     _barra.id = 'mTabs';
@@ -370,7 +418,7 @@
       ocultarPropias();
       if (typeof window.bsOpenSection === 'function') window.bsOpenSection(p.seccion);
       marcarActiva(id);
-      window.scrollTo({ top: 0 });
+      irArriba();
       return;
     }
 
@@ -408,7 +456,7 @@
     }
 
     marcarActiva(id);
-    window.scrollTo({ top: 0 });
+    irArriba();
   }
 
   // ── Tiempo real ──────────────────────────────────────────────────────
@@ -466,7 +514,7 @@
   let _t = null;
 
   function arribaDelTodo() {
-    return (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
+    return desplazamiento() <= 0;
   }
 
   function cinta() {
@@ -624,6 +672,8 @@
   window.BarStockMobile = {
     register, ir, volver, nombreAnterior, refrescarBadges, refrescarActiva,
     esMovil, montado: () => _montado, activa: () => _activa,
+    // Quién rueda, para que nadie más lo adivine por su cuenta.
+    scroller, irArriba,
     ANCHO
   };
 })();

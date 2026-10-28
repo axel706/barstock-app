@@ -161,6 +161,61 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     padding-bottom: calc(94px + env(safe-area-inset-bottom, 0px));
   }
 
+  /* ── El documento no rueda ─────────────────────────────────────────
+   *
+   * Esto es lo que separa una app de una página, y lo que arregla de
+   * una vez tres cosas que se venían tapando por separado:
+   *
+   *   · un deslizamiento en cualquier hueco movía la interfaz entera
+   *     de lado, como una web;
+   *   · el rebote de iOS arrastraba los elementos fijos, y la barra de
+   *     pestañas parecía subirse dejando un escalón debajo;
+   *   · el panel de avisos se atascaba al llegar al final de la lista,
+   *     porque ahí iOS le entregaba el gesto al documento.
+   *
+   * Las tres son el mismo fallo. Con el documento quieto y un solo
+   * contenedor que rueda, las tres desaparecen: no hay a dónde
+   * entregar el gesto ni qué rebotar.
+   *
+   * Va con `.m-on`, que es justo cuando hay una pantalla propia
+   * delante. Con una sección del ESCRITORIO abierta rueda el
+   * documento como siempre: esa página lleva meses afinándose y no se
+   * toca desde aquí. */
+  html:has(body.m-shell.m-on),
+  body.m-shell.m-on {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  /* Fijar el body además de ocultar el desbordamiento: en iOS
+   * `overflow:hidden` a secas no impide el arrastre del documento. */
+  body.m-shell.m-on {
+    position: fixed; inset: 0;
+    padding: 0;
+  }
+
+  /* El único que rueda. El hueco de la banda y el de la barra pasan
+   * aquí desde el body: son del contenido, no de la ventana.
+   *
+   * `overflow-x: hidden` mata el deslizamiento lateral. Lo que se
+   * sale a lo ancho —una tarjeta, un carril— se recorta en vez de
+   * empujar la interfaz entera.
+   *
+   * `overscroll-behavior: contain` para que el rebote muera aquí y no
+   * suba al documento. */
+  body.m-shell.m-on > .m-screens {
+    position: absolute; inset: 0;
+    overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding-top: calc(52px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(94px + env(safe-area-inset-bottom, 0px));
+  }
+  /* Con el panel de avisos abierto, el contenedor se para en seco.
+   * Conserva su posición: no se mueve nada, así que no hay que
+   * recordar dónde estaba ni devolverlo al cerrar. */
+  .m-screens.m-nf-quieto { overflow: hidden; }
+
   /* ── UN solo velo ───────────────────────────────────────────────── */
   /*
    * app.css ya apila tres capas sobre la foto: `body::before` (o
@@ -947,6 +1002,66 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    *
    * Los 34 del gesto se quedan porque son del sistema: ahí no se
    * ponen controles en ninguna app. */
+  /* ── El suelo que desenfoca ────────────────────────────────────────
+   *
+   * Debajo de la barra el contenido pasaba nítido y se leía entre los
+   * botones. Un solo `backdrop-filter` no sirve: deja un borde donde
+   * empieza, una raya horizontal a media pantalla que se ve enseguida.
+   *
+   * Esto es desenfoque PROGRESIVO, lo mismo que hay bajo el
+   * reproductor de iOS. Seis capas apiladas, cada una con el doble de
+   * desenfoque que la de encima y recortada con una máscara a su
+   * propia franja. Como cada capa desenfoca lo que ya desenfocó la
+   * anterior, el efecto se acumula hacia abajo y en ningún punto hay
+   * un salto: arriba es nítido y abajo es cristal, sin frontera.
+   *
+   * Las máscaras se solapan a propósito —cada franja entra donde la
+   * anterior se está yendo—; sin ese solape vuelven las rayas.
+   *
+   * Por debajo de la barra en z-index: es el suelo sobre el que la
+   * barra se apoya, no parte de ella. */
+  .m-floor {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 8990;
+    height: calc(118px + env(safe-area-inset-bottom, 0px));
+    pointer-events: none;
+  }
+  .m-floor i { position: absolute; inset: 0; display: block; }
+
+  .m-floor i:nth-child(1) {
+    backdrop-filter: blur(1px); -webkit-backdrop-filter: blur(1px);
+    -webkit-mask-image: linear-gradient(to top, #000 0%, #000 14%, transparent 31%);
+            mask-image: linear-gradient(to top, #000 0%, #000 14%, transparent 31%);
+  }
+  .m-floor i:nth-child(2) {
+    backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+    -webkit-mask-image: linear-gradient(to top, #000 0%, #000 28%, transparent 45%);
+            mask-image: linear-gradient(to top, #000 0%, #000 28%, transparent 45%);
+  }
+  .m-floor i:nth-child(3) {
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    -webkit-mask-image: linear-gradient(to top, #000 0%, #000 42%, transparent 59%);
+            mask-image: linear-gradient(to top, #000 0%, #000 42%, transparent 59%);
+  }
+  .m-floor i:nth-child(4) {
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    -webkit-mask-image: linear-gradient(to top, #000 0%, #000 56%, transparent 73%);
+            mask-image: linear-gradient(to top, #000 0%, #000 56%, transparent 73%);
+  }
+  .m-floor i:nth-child(5) {
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    -webkit-mask-image: linear-gradient(to top, #000 0%, #000 70%, transparent 87%);
+            mask-image: linear-gradient(to top, #000 0%, #000 70%, transparent 87%);
+  }
+  /* La última lleva además el tinte. Va aquí y no en una capa aparte
+   * para que lo oscuro aparezca con el desenfoque y no antes: un velo
+   * sobre contenido nítido se lee como una barra negra pegada. */
+  .m-floor i:nth-child(6) {
+    backdrop-filter: blur(26px); -webkit-backdrop-filter: blur(26px);
+    background: linear-gradient(to top, rgba(8,12,19,.60), rgba(8,12,19,0));
+    -webkit-mask-image: linear-gradient(to top, #000 0%, #000 84%, transparent 100%);
+            mask-image: linear-gradient(to top, #000 0%, #000 84%, transparent 100%);
+  }
+
   .m-tabs {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 9000;
     display: block;
@@ -974,12 +1089,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * que sé con certeza que llega al borde. Un degradado y no un color
    * sólido para que al pasar contenido por debajo se funda en vez de
    * cortarse en una línea. */
-  .m-tabs::before {
-    content: ''; position: absolute; left: 0; right: 0; bottom: 0;
-    height: calc(16px + env(safe-area-inset-bottom, 0px));
-    background: linear-gradient(180deg, rgba(8,12,19,0) 0%, rgba(8,12,19,.72) 55%, rgba(8,12,19,.92) 100%);
-    pointer-events: none;
-  }
+  /* Esto era un degradado de 16px pegado al borde para tapar la franja
+   * que las capas de fondo no pintaban. Ya no hace falta: .m-floor
+   * cubre 118px enteros, desenfoca y tiñe. Dejarlo sumaba su tinte al
+   * de la última capa y el suelo salía casi negro. */
 
   /* Con el teclado abierto la barra se va. En iOS un elemento fijo se
    * pega al borde de la ventana VISIBLE, y al abrirse el teclado esa
@@ -987,6 +1100,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * debajo. Mientras escribes no vas a cambiar de pestaña. */
   body.m-kb .m-tabs { display: none; }
   body.m-kb.m-shell { padding-bottom: 24px; }
+  /* Sin barra, el hueco de abajo sobra. Con el armazón fijo ese hueco
+   * ya no vive en el body sino en el contenedor que rueda. */
+  body.m-kb.m-shell.m-on > .m-screens { padding-bottom: 24px; }
+  body.m-kb .m-floor { display: none; }
 
   .m-tabs-bar {
     display: flex; padding: 6px; border-radius: 27px;
@@ -2156,11 +2273,24 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   .m-nf-back.on { background: rgba(4, 8, 15, .2); }
 
+  /* ── Centrado de verdad ────────────────────────────────────────────
+   *
+   * Colgaba de arriba, a 60px de la banda, y con un solo aviso dejaba
+   * media pantalla de cristal vacío debajo. Ahora el centro del panel
+   * es el centro de la ventana: con un aviso sale pequeño y centrado,
+   * con diez crece hacia arriba y hacia abajo por igual hasta el tope.
+   *
+   * Es posición, no animación: el panel sigue naciendo de la campana
+   * —de ahí el transform-origin— pero acaba donde tiene que acabar. */
   .m-nf-panel {
     position: fixed; z-index: 9401;
     left: 12px; right: 12px;
-    top: calc(60px + env(safe-area-inset-top, 0px));
-    max-height: calc(100dvh - 140px - env(safe-area-inset-top, 0px));
+    top: 50%;
+    /* Centrado quiere decir que lo que sobra arriba y abajo es igual,
+     * así que el tope lo marca el estorbo MÁS alto —la barra de
+     * pestañas— contado dos veces. Con la banda (52) habría cabido
+     * más por arriba, pero entonces el panel ya no estaría centrado. */
+    max-height: calc(100dvh - 200px - 2 * env(safe-area-inset-bottom, 0px));
     display: flex; flex-direction: column;
     /* El cristal es ESTO. Translúcido de verdad y desenfocando la app
      * que tiene detrás, no una capa de color. */
@@ -2173,10 +2303,14 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     /* Sale de donde está la campana —arriba a la izquierda— en vez de
      * aparecer en el centro: así se entiende qué lo abrió. */
     transform-origin: 38px top;
-    opacity: 0; transform: scale(.94) translateY(-8px);
+    /* El translateY(-50%) va en las DOS, que es lo que centra. Si
+     * sólo estuviera en el estado final, el panel entraría subiendo
+     * media altura y eso no es la animación que se pidió: entra
+     * creciendo desde la campana, ya centrado. */
+    opacity: 0; transform: translateY(-50%) scale(.94);
     transition: opacity .2s ease, transform .24s cubic-bezier(.22,.61,.36,1);
   }
-  .m-nf-panel.on { opacity: 1; transform: none; }
+  .m-nf-panel.on { opacity: 1; transform: translateY(-50%) scale(1); }
 
   .m-nf-h {
     display: flex; align-items: flex-start; gap: 12px;
@@ -2209,19 +2343,15 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     padding: 12px 13px 16px;
   }
 
-  /* Y mientras el panel está abierto, el documento no se mueve. En
-   * iOS `overflow:hidden` en el body no basta: hay que fijarlo y
-   * recordar dónde estaba para devolverlo al cerrar. */
-  /* Quien se desplaza puede ser el body o el elemento raíz según la
-   * pantalla, así que se bloquean los dos. Bloquear sólo el body
-   * dejaba el documento moviéndose por detrás del panel. */
-  html.m-nf-abierto,
-  body.m-nf-abierto {
+  /* El bloqueo de verdad vive arriba: `.m-screens.m-nf-quieto`. Esto
+   * es sólo la red para cuando el panel se abre sin armazón montado
+   * —no debería pasar, pero dejar la app desplazándose por detrás del
+   * panel es peor que una regla de más. Ya no fija el body: fijarlo
+   * lo dejaba más corto que la ventana y debajo asomaba una franja
+   * negra, sin nada que desenfocar y con la barra encima. */
+  html.m-nf-abierto {
     overflow: hidden;
     overscroll-behavior: none;
-  }
-  body.m-nf-abierto {
-    position: fixed; left: 0; right: 0; width: 100%;
   }
 
   .m-nf-lab {

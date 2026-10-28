@@ -239,27 +239,34 @@
   // `overscroll-behavior: contain` corta el encadenado; esto además
   // impide que el documento se mueva en absoluto. En iOS no basta
   // `overflow:hidden`: hay que fijar el body y recordar dónde estaba.
-  let _scrollY = 0;
+  // ── Cinco intentos y la causa estaba un piso más abajo ────────────
+  //
+  // Antes esto fijaba el <body> con `top: -scrollY` y lo devolvía al
+  // cerrar. Era un apaño contra un documento que rodaba, y traía lo
+  // suyo: el body fijado quedaba más corto que la ventana y debajo
+  // asomaba una franja negra sin nada que desenfocar, con la barra de
+  // pestañas aparentemente subida encima.
+  //
+  // Ahora el armazón ya no deja rodar el documento —rueda #mScreens—
+  // así que bloquear es sólo eso: parar ese contenedor. Sin mover
+  // nada, sin recordar nada, sin franja.
+  function caja() {
+    const M = window.BarStockMobile;
+    return (M && M.scroller) ? M.scroller() : null;
+  }
 
   function bloquear() {
-    _scrollY = window.scrollY || window.pageYOffset ||
-               document.documentElement.scrollTop || 0;
-    document.body.style.top = (-_scrollY) + 'px';
-    document.body.classList.add('m-nf-abierto');
-    // El raíz también: según la pantalla, el que se desplaza es uno u
-    // otro, y bloquear sólo el body dejaba el documento moviéndose por
-    // detrás del panel.
-    document.documentElement.classList.add('m-nf-abierto');
+    const c = caja();
+    if (c) c.classList.add('m-nf-quieto');
+    // Red por si esto corre con el armazón a medio montar: sin
+    // contenedor, se bloquea el documento a la antigua.
+    else document.documentElement.classList.add('m-nf-abierto');
   }
 
   function desbloquear() {
-    document.body.classList.remove('m-nf-abierto');
+    const c = caja();
+    if (c) c.classList.remove('m-nf-quieto');
     document.documentElement.classList.remove('m-nf-abierto');
-    document.body.style.top = '';
-    // Devolver el desplazamiento es lo último y va protegido: si
-    // fallara, lo importante —soltar el body— ya está hecho. Al revés
-    // dejaría la app congelada por no poder hacer scroll.
-    try { window.scrollTo(0, _scrollY); } catch (e) {}
   }
 
   async function abrir() {
@@ -301,7 +308,22 @@
     const x = panel.querySelector('#mNotifX');
     if (x) x.onclick = cerrar;
 
-    // ── El gesto, bien hecho ───────────────────────────────────────
+    // ── Resuelto: el que rodaba era el documento ──────────────────
+    //
+    // Cuatro intentos fallaron aquí y los cuatro atacaban el síntoma:
+    // `overscroll-behavior` en la lista, fijar el body con su scroll
+    // guardado, empujar la lista un píxel en cada touchmove —ese
+    // peleaba contra el dedo— y bloquear también el elemento raíz.
+    //
+    // La causa estaba un piso más abajo: el documento entero se podía
+    // desplazar, así que al final de la lista iOS le entregaba el
+    // gesto y uno se quedaba abajo. Ya no: el armazón fija el
+    // documento y lo que rueda es #mScreens, que aquí se para.
+    //
+    // Era el mismo fallo que el hueco de la barra inferior y que el
+    // deslizamiento lateral de toda la interfaz. Un solo arreglo.
+
+    // ── El gesto ───────────────────────────────────────────────────
     //
     // El intento anterior empujaba la lista un píxel hacia dentro en
     // cada movimiento. Eso peleaba contra el dedo: había que forzar
