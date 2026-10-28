@@ -2052,3 +2052,106 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     padding: 2px 2px 8px; text-align: right;
   }
   .m-fuente b { font-weight: 800; }
+
+  /* ── Centro de notificaciones ──────────────────────────────────────
+   *
+   * Panel flotante sobre la app, no una pantalla nueva: esto se mira
+   * de paso. El fondo se desenfoca para que quede claro que la app
+   * sigue detrás y que esto se cierra, no se navega.
+   */
+  .m-ico-bell { position: relative; }
+  .m-pip {
+    position: absolute; top: -1px; right: -1px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #ef4444;
+    /* El borde del color del fondo despega el punto del icono; sin él
+     * se lee como parte de la campana. */
+    border: 2px solid #0b1220;
+  }
+
+  .m-nf-back {
+    position: fixed; inset: 0; z-index: 9400;
+    background: rgba(4, 8, 15, .55);
+    backdrop-filter: blur(14px) saturate(.9);
+    -webkit-backdrop-filter: blur(14px) saturate(.9);
+    opacity: 0; transition: opacity .2s ease;
+  }
+  .m-nf-back.on { opacity: 1; }
+
+  .m-nf-panel {
+    position: fixed; z-index: 9401;
+    left: 12px; right: 12px;
+    top: calc(60px + env(safe-area-inset-top, 0px));
+    max-height: calc(100dvh - 140px - env(safe-area-inset-top, 0px));
+    display: flex; flex-direction: column;
+    background: rgba(17, 26, 46, .94);
+    border: 1px solid rgba(255,255,255,.13);
+    border-radius: 20px;
+    box-shadow: 0 26px 60px rgba(0,0,0,.6);
+    /* Sale de donde está la campana —arriba a la izquierda— en vez de
+     * aparecer en el centro: así se entiende qué lo abrió. */
+    transform-origin: 28px top;
+    opacity: 0; transform: scale(.94) translateY(-8px);
+    transition: opacity .2s ease, transform .24s cubic-bezier(.22,.61,.36,1);
+  }
+  .m-nf-panel.on { opacity: 1; transform: none; }
+
+  .m-nf-h {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .m-nf-h b { display: block; font-size: var(--m-title); font-weight: 800;
+    color: #fff; letter-spacing: -.02em; }
+  .m-nf-h span { display: block; font-size: var(--m-small); color: #93a5b8;
+    margin-top: 3px; line-height: 1.45; }
+  body.m-shell .m-nf-cerrar {
+    margin-left: auto; flex: 0 0 auto;
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--m-strong); color: #9fb0c4;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.14);
+  }
+
+  .m-nf-body { overflow-y: auto; padding: 12px 13px 16px; }
+
+  .m-nf-lab {
+    font-size: var(--m-eyebrow); font-weight: 800; color: #c3d2e2;
+    letter-spacing: .1em; text-transform: uppercase; margin: 8px 2px 8px;
+  }
+
+  .m-nf {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 12px 13px; margin-bottom: 8px; border-radius: 15px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.14);
+  }
+  .m-nf-i { font-size: var(--m-strong); flex: 0 0 auto; margin-top: 1px; }
+  /* Un coste que sube es malo y uno que baja es bueno: el color va con
+   * lo que significa, no con el signo. */
+  .m-nf-i.up   { color: #fca5a5; }
+  .m-nf-i.dn   { color: #6ee7b7; }
+  .m-nf-i.warn { color: #fcd34d; }
+
+  .m-nf-t { flex: 1; min-width: 0; }
+  .m-nf-t b { display: block; font-size: var(--m-body); font-weight: 500;
+    color: #eef4fb; line-height: 1.35; }
+  .m-nf-t span { display: block; font-size: var(--m-meta); color: #93a5b8;
+    margin-top: 3px; line-height: 1.45; }
+
+  body.m-shell .m-nf-x {
+    flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--m-small); color: #7b8a9e;
+    background: rgba(255,255,255,.06);
+  }
+  body.m-shell .m-nf-x:active { background: rgba(255,255,255,.14); }
+
+  .m-nf-vacio {
+    text-align: center; padding: 34px 20px;
+    font-size: var(--m-small); line-height: 1.7; color: #7b8a9e;
+  }
+  .m-nf-vacio > i { display: block; font-size: var(--m-screen); margin-bottom: 10px; }
+
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ico-bell { border-radius: 50% !important; }

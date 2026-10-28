@@ -127,7 +127,6 @@
   }
 
   function hueco() { return contenedor('m-band-slot'); }
-  function marca() { return contenedor('m-band-note'); }
 
   function burbuja(tone, texto, clase) {
     const b = document.createElement('span');
@@ -194,68 +193,25 @@
   }
 
   // Lo que queda cuando la cola termina.
-  // Lo que queda cuando la cola termina: un botón redondo a la
-  // izquierda, de la misma forma que el de ajustes. No tapa el logo y
-  // se queda hasta que lo tocas.
+  // Al vaciarse la cola, lo que no era informativo pasa al centro de
+  // notificaciones. Antes este módulo pintaba su propia campana a la
+  // izquierda; ahora esa campana es una sola para toda la app y la
+  // dibuja `mobile-notif.js`. Dos campanas en la misma banda era la
+  // forma segura de que ninguna se mirase.
   function resumen() {
     const slot = hueco();
-    const nota = marca();
     if (slot) slot.innerHTML = '';
     const banda = document.getElementById('mBand');
     if (banda) banda.classList.remove('m-band-bub');
-    if (!nota) return;
 
-    nota.innerHTML = '';
-    if (!_pendientes.length) return;
-
-    const n = _pendientes.length;
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'm-ico m-ico-alert';
-    b.setAttribute('aria-label', n + (n === 1 ? ' notice' : ' notices'));
-    b.innerHTML = '<i class="ti ti-bell" aria-hidden="true"></i>' +
-                  (n > 1 ? '<em class="m-ico-n">' + n + '</em>' : '');
-    b.onclick = abrirLista;
-    nota.appendChild(b);
-    raf(() => b.classList.add('on'));
+    const N = window.BarStockMobileNotif;
+    if (N && N.refrescar) N.refrescar();
   }
 
-  function abrirLista() {
-    cerrarLista();
-    const caja = document.createElement('div');
-    caja.id = 'mBubList';
-    caja.className = 'm-bub-list';
-    caja.innerHTML =
-      _pendientes.map(p =>
-        '<div class="m-bub-row m-bub-' + p.tone + '"></div>').join('') +
-      '<button type="button" class="m-bub-clear">Dismiss</button>';
-    Array.from(caja.querySelectorAll('.m-bub-row')).forEach((row, i) => {
-      row.textContent = _pendientes[i].text;
-    });
-    caja.querySelector('.m-bub-clear').onclick = () => {
-      _pendientes = [];
-      cerrarLista();
-      resumen();
-    };
-    // Tocar fuera también la cierra: un panel que sólo se va con su
-    // botón se queda abierto estorbando.
-    setTimeout(() => {
-      const fuera = e => {
-        if (!caja.contains(e.target) && !e.target.closest('.m-ico-alert')) {
-          cerrarLista();
-          document.removeEventListener('pointerdown', fuera, true);
-        }
-      };
-      document.addEventListener('pointerdown', fuera, true);
-    }, 0);
-    document.body.appendChild(caja);
-    raf(() => caja.classList.add('on'));
-  }
-
-  function cerrarLista() {
-    const v = document.getElementById('mBubList');
-    if (v) v.remove();
-  }
+  // El panel de la lista vivía aquí. Ahora lo dibuja el centro de
+  // notificaciones, que además junta los fallos de la app con los
+  // cambios de precio. Mantener los dos habría dejado dos paneles
+  // distintos enseñando cosas parecidas.
 
   function encolar(text, tone) {
     // Mismo mensaje repetido seguido: no se apila.
@@ -310,7 +266,13 @@
     el.dataset.timer = String(setTimeout(() => dismiss(el), DURATION_MS));
   }
 
-  window.BarStockToast = { show, dismiss };
+  // El centro de notificaciones lee de aquí lo que quedó pendiente.
+  function pendientes() { return _pendientes.slice(); }
+  function olvidar(texto) {
+    _pendientes = _pendientes.filter(p => p.text !== texto);
+  }
+
+  window.BarStockToast = { show, dismiss, pendientes, olvidar };
 
   // ── Enganche a setStatus ────────────────────────────────────────
   // Se envuelve la funcion original en vez de reemplazarla, para que

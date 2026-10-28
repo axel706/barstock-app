@@ -56,10 +56,16 @@ const esperar = ms => new Promise(r => setTimeout(r, ms));
   w.BarStockToast.show('Could not save the match');
   await esperar(2700);
   const s2 = w.document.querySelector('#mBand .m-band-slot');
-  const nota = w.document.querySelector('#mBand .m-band-note');
   prueba('el hueco central queda vacío', !!s2 && s2.children.length === 0);
-  prueba('y a la izquierda queda el botón de aviso',
-    !!nota && !!nota.querySelector('.m-ico-alert'));
+  // La campana la dibuja ahora el centro de notificaciones, no este
+  // módulo: dos campanas en la misma banda era la forma segura de que
+  // ninguna se mirase. Aquí sólo se comprueba que el error quede
+  // disponible para que el centro lo recoja.
+  prueba('el fallo queda pendiente para el centro',
+    w.BarStockToast.pendientes().some(p => /Could not save/.test(p.text)));
+  prueba('y se puede olvidar desde fuera',
+    (w.BarStockToast.olvidar('Could not save the match'),
+     w.BarStockToast.pendientes().length === 0));
 
   grupo('en escritorio sigue el comportamiento de siempre');
   const w3 = entorno(false);
