@@ -99,6 +99,10 @@ function entorno(descartadas, guardado) {
   // panel se quedaba fijo, la app se desplazaba por detrás, y volver
   // arriba movía la página en vez del panel.
   prueba('el body queda bloqueado', w.document.body.classList.contains('m-nf-abierto'));
+  // Y el raíz: según la pantalla el que se desplaza es uno u otro, y
+  // bloquear sólo el body dejaba el documento moviéndose por detrás.
+  prueba('y el elemento raíz también',
+    w.document.documentElement.classList.contains('m-nf-abierto'));
   prueba('y recuerda dónde estaba', w.document.body.style.top !== '');
 
   grupo('descartar');
@@ -114,6 +118,8 @@ function entorno(descartadas, guardado) {
   w.BarStockMobileNotif.cerrar();
   await esperar(40);
   prueba('el body se suelta', !w.document.body.classList.contains('m-nf-abierto'));
+  prueba('y el raíz también',
+    !w.document.documentElement.classList.contains('m-nf-abierto'));
   prueba('y se le quita el desplazamiento fijado', w.document.body.style.top === '');
 
   // A partir de aquí se crea un segundo entorno, y eso reemplaza el

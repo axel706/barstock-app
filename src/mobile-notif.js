@@ -242,13 +242,19 @@
   let _scrollY = 0;
 
   function bloquear() {
-    _scrollY = window.scrollY || window.pageYOffset || 0;
+    _scrollY = window.scrollY || window.pageYOffset ||
+               document.documentElement.scrollTop || 0;
     document.body.style.top = (-_scrollY) + 'px';
     document.body.classList.add('m-nf-abierto');
+    // El raíz también: según la pantalla, el que se desplaza es uno u
+    // otro, y bloquear sólo el body dejaba el documento moviéndose por
+    // detrás del panel.
+    document.documentElement.classList.add('m-nf-abierto');
   }
 
   function desbloquear() {
     document.body.classList.remove('m-nf-abierto');
+    document.documentElement.classList.remove('m-nf-abierto');
     document.body.style.top = '';
     // Devolver el desplazamiento es lo último y va protegido: si
     // fallara, lo importante —soltar el body— ya está hecho. Al revés
