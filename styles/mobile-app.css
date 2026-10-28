@@ -969,66 +969,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    *
    * Los 34 del gesto se quedan porque son del sistema: ahí no se
    * ponen controles en ninguna app. */
-  /* ── El suelo: la banda de arriba, espejada ───────────────────────
-   *
-   * Debajo de la barra el contenido pasaba nítido y se leía entre los
-   * botones. Esto es la MISMA escalera que `.m-blur` usa arriba, con
-   * las máscaras al revés: seis capas, cada una con más desenfoque
-   * que la anterior y recortada a su franja, solapándose para que el
-   * salto entre niveles no se vea. Arriba se funde hacia la pantalla
-   * y abajo llega a cristal.
-   *
-   * SIN TINTE, y esto importa: un velo oscuro encima del borde de
-   * abajo se lee como una barra negra pegada, por suave que sea. Ya
-   * pasó. Lo oscuro de esa zona lo pone `.m-tabs::before`, que pinta
-   * los últimos 34px, y con eso basta.
-   *
-   * 85px más el hueco del gesto: los 9 de aire de la barra, sus 52, y
-   * 24 por encima para que la transición se VEA. Si alguna vez sube
-   * demasiado, este 85 es el único número que hay que tocar.
-   *
-   * Por debajo de la barra en z-index, o se desenfocaría a sí misma. */
-  .m-floor {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 8990;
-    height: calc(85px + env(safe-area-inset-bottom, 0px));
-    pointer-events: none;
-  }
-  .m-floor > i { position: absolute; inset: 0; display: block; }
-
-  .m-floor > i:nth-child(1) {
-    backdrop-filter: blur(1px); -webkit-backdrop-filter: blur(1px);
-    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 17%, transparent 34%);
-            mask-image: linear-gradient(to bottom, #000 0%, #000 17%, transparent 34%);
-  }
-  .m-floor > i:nth-child(2) {
-    backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 17%, #000 34%, transparent 51%);
-            mask-image: linear-gradient(to bottom, transparent 0%, #000 17%, #000 34%, transparent 51%);
-  }
-  .m-floor > i:nth-child(3) {
-    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 17%, #000 34%, #000 51%, transparent 68%);
-            mask-image: linear-gradient(to bottom, transparent 17%, #000 34%, #000 51%, transparent 68%);
-  }
-  .m-floor > i:nth-child(4) {
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 34%, #000 51%, #000 68%, transparent 85%);
-            mask-image: linear-gradient(to bottom, transparent 34%, #000 51%, #000 68%, transparent 85%);
-  }
-  .m-floor > i:nth-child(5) {
-    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 51%, #000 68%, #000 85%, transparent 100%);
-            mask-image: linear-gradient(to bottom, transparent 51%, #000 68%, #000 85%, transparent 100%);
-  }
-  .m-floor > i:nth-child(6) {
-    backdrop-filter: blur(22px) saturate(130%); -webkit-backdrop-filter: blur(22px) saturate(130%);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 68%, #000 85%, #000 100%);
-            mask-image: linear-gradient(to bottom, transparent 68%, #000 85%, #000 100%);
-  }
-
-  /* Con el teclado abierto la barra se va, y el suelo con ella. */
-  body.m-kb .m-floor { display: none; }
-
   .m-tabs {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 9000;
     display: block;
