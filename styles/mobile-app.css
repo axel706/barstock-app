@@ -214,7 +214,8 @@
    * márgenes propios. */
   .m-screen[data-screen="search"],
   .m-screen[data-screen="more"],
-  .m-screen[data-screen="orderHistory"] { padding: 14px 13px 0; }
+  .m-screen[data-screen="orderHistory"],
+  .m-screen[data-screen="settings"] { padding: 14px 13px 0; }
 
   /* ── La banda ───────────────────────────────────────────────────── */
   /*
@@ -1828,3 +1829,104 @@
   /* El buscador del historial. Reusa la barra del resto de la app; lo
    * único propio es el aire de debajo. */
   .m-hfind { margin: 0 0 12px; }
+
+  /* ── Ajustes en el teléfono ────────────────────────────────────────
+   *
+   * Una columna. El modal del escritorio usa rejillas de dos y filas
+   * de botones a la derecha: en un móvil los campos salían a media
+   * anchura y "Guardar" caía fuera del pulgar.
+   */
+  .m-screen[data-screen="settings"] .m-item-t small {
+    display: block; font-size: 11.5px; font-weight: 400;
+    color: #93a5b8; margin-top: 3px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  .m-set-off {
+    font-size: 12.5px; line-height: 1.55; color: #93a5b8;
+    padding: 12px 14px; border-radius: 14px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+  }
+
+  .m-set-f { margin-bottom: 15px; }
+  .m-set-f label {
+    display: block; font-size: 12.5px; font-weight: 700;
+    color: #c8d6e5; margin-bottom: 6px;
+  }
+  body.m-shell .m-set-f input {
+    width: 100%; height: 46px; padding: 0 14px;
+    font-size: 15px; color: #eef4fb;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.15);
+  }
+  .m-set-f small {
+    display: block; font-size: 11.5px; line-height: 1.45;
+    color: #7b8a9e; margin-top: 6px;
+  }
+
+  /* Guardar: ancho, abajo, al alcance del pulgar. */
+  body.m-shell .m-set-save {
+    width: 100%; margin-top: 22px; padding: 15px;
+    font-size: 15px; font-weight: 800; color: #fff;
+    background: #0284c7; border: 1px solid #0284c7;
+  }
+  body.m-shell .m-set-save:disabled { opacity: .6; }
+
+  /* Zonas */
+  .m-set-zs { margin-bottom: 12px; }
+  .m-set-z {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 13px; margin-bottom: 7px; border-radius: 14px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.13);
+  }
+  .m-set-zn { flex: 1; min-width: 0; font-size: 14px; color: #eef4fb;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  body.m-shell .m-set-zd {
+    width: 30px; height: 30px; flex: 0 0 30px; font-size: 14px;
+    color: #64748b; display: flex; align-items: center; justify-content: center;
+  }
+  body.m-shell .m-set-zd.on { color: #fbbf24; }
+  body.m-shell .m-set-zx {
+    flex: 0 0 auto; font-size: 11px; font-weight: 800; padding: 5px 10px;
+    color: #fca5a5; background: rgba(248,113,113,.12);
+    border: 1px solid rgba(248,113,113,.3);
+  }
+
+  .m-set-add { display: flex; gap: 8px; }
+  body.m-shell .m-set-add input {
+    flex: 1; min-width: 0; height: 44px; padding: 0 14px; font-size: 14px;
+    color: #eef4fb; background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.15);
+  }
+  body.m-shell .m-set-add button {
+    flex: 0 0 auto; padding: 0 20px; font-size: 14px; font-weight: 700;
+    color: #cbd5e1; background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.15);
+  }
+
+  /* Tipografía: la muestra manda, el nombre acompaña. */
+  body.m-shell .m-set-font {
+    width: 100%; display: block; text-align: left;
+    padding: 14px; margin-bottom: 8px;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.14);
+  }
+  body.m-shell .m-set-font.on {
+    background: rgba(2,132,199,.18); border-color: #0284c7;
+  }
+  .m-set-font-s { display: block; font-size: 19px; color: #fff; }
+  .m-set-font-n { display: block; font-size: 12.5px; font-weight: 700;
+    color: #9fb0c4; margin-top: 5px; }
+  .m-set-font-n small { font-weight: 400; color: #7b8a9e; margin-left: 6px; }
+
+  /* Radios, contra el 999px de app.css */
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-set-f input { border-radius: 13px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-set-save { border-radius: 999px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-set-z { border-radius: 14px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-set-zd { border-radius: 50% !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-set-zx { border-radius: 999px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-set-add input { border-radius: 13px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-set-add button { border-radius: 13px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-set-font { border-radius: 15px !important; }

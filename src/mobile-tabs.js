@@ -82,6 +82,10 @@
     });
     const set = host.querySelector('#mMoreSet');
     if (set) set.onclick = () => {
+      if (window.BarStockMobileSettings && window.BarStockMobile) {
+        window.BarStockMobile.ir('settings');
+        return;
+      }
       if (typeof window.openSettingsModal === 'function') window.openSettingsModal();
     };
 

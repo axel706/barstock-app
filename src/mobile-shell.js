@@ -105,6 +105,11 @@
 
     const st = _banda.querySelector('#mSet');
     if (st) st.onclick = () => {
+      // Pantalla propia si existe. El modal del escritorio tiene
+      // rejillas de dos columnas y botones a la derecha: en el
+      // teléfono los campos salen a media anchura y "Guardar" cae
+      // fuera del pulgar.
+      if (window.BarStockMobileSettings) return ir('settings');
       // openSettingsModal, no openSettings. Lo segundo no existe y
       // nunca existió: el botón llevaba todo este tiempo llamando a
       // undefined dentro de un `typeof`, que es la forma más silenciosa
