@@ -167,6 +167,10 @@ grupo('la hoja no deja rodar el documento');
   // desenfoca y nada más.
   prueba('el suelo no lleva tinte encima del borde',
     !/\.m-floor i:nth-child\(6\)\s*\{[^}]*background:/.test(css));
+  // Y lo que SÍ pinta ese borde sigue ahí. Quitarlo dejó una franja
+  // negra bajo la barra en todas las pantallas.
+  prueba('la barra sigue pintando los últimos 34px',
+    /\.m-tabs::before\s*\{[^}]*height:\s*calc\(16px \+ env\(safe-area-inset-bottom/.test(css));
   prueba('y no se desliza de lado',
     /body\.m-shell\.m-on\s*>\s*\.m-screens\s*\{[^}]*overflow-x:\s*hidden/.test(css));
   prueba('el hueco de la barra pasó al contenedor',

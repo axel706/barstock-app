@@ -1114,10 +1114,19 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * que sé con certeza que llega al borde. Un degradado y no un color
    * sólido para que al pasar contenido por debajo se funda en vez de
    * cortarse en una línea. */
-  /* Esto era un degradado de 16px pegado al borde para tapar la franja
-   * que las capas de fondo no pintaban. Ya no hace falta: .m-floor
-   * cubre 118px enteros, desenfoca y tiñe. Dejarlo sumaba su tinte al
-   * de la última capa y el suelo salía casi negro. */
+  /* NO BORRAR. Esto es lo único que pinta los últimos 34px.
+   *
+   * Lo quité una vez pensando que .m-floor lo cubría, y no: el suelo
+   * DESENFOCA, no pinta. Al quitarlo, ahí dejó de haber nada y salió
+   * una franja negra bajo la barra en todas las pantallas a la vez.
+   * Las capas del fondo de esta app no llegan a ese borde —está
+   * medido—, así que si esta regla se va, la franja vuelve. */
+  .m-tabs::before {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0;
+    height: calc(16px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(180deg, rgba(8,12,19,0) 0%, rgba(8,12,19,.72) 55%, rgba(8,12,19,.92) 100%);
+    pointer-events: none;
+  }
 
   /* Con el teclado abierto la barra se va. En iOS un elemento fijo se
    * pega al borde de la ventana VISIBLE, y al abrirse el teclado esa
