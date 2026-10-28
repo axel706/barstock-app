@@ -161,6 +161,28 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     padding-bottom: calc(94px + env(safe-area-inset-bottom, 0px));
   }
 
+  /* ── De lado no se mueve nada ──────────────────────────────────────
+   *
+   * Un deslizamiento en cualquier hueco movía la interfaz entera a la
+   * izquierda, como una página web. Algo de la pantalla se sale a lo
+   * ancho —una tarjeta del carril, un nombre largo— y el documento se
+   * deja arrastrar detrás. Una app no hace eso.
+   *
+   * `clip` y no `hidden`: los dos cortan, pero `hidden` convierte al
+   * elemento en un contenedor desplazable y en el raíz eso cambia
+   * quién manda en el scroll vertical. `clip` sólo recorta y deja el
+   * eje Y como estaba, que es justo lo que se quiere tocar aquí:
+   * nada. La línea de `hidden` va primero como red para un navegador
+   * que no conozca `clip`.
+   *
+   * Sólo con una pantalla propia delante. Las secciones del
+   * escritorio tienen tablas anchas que SÍ se desplazan a lo ancho, y
+   * ésas no se tocan. */
+  html:has(body.m-shell.m-on) {
+    overflow-x: hidden;
+    overflow-x: clip;
+  }
+
   /* ── UN solo velo ───────────────────────────────────────────────── */
   /*
    * app.css ya apila tres capas sobre la foto: `body::before` (o
