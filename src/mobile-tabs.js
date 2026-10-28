@@ -14,12 +14,16 @@
   // Este archivo es SOLO registro. Añadir una pestaña se hace aqui y en
   // ningun otro sitio.
 
-  const MAS = [
-    { id: 'noMatch',     icon: 'ti-alert-circle',  label: 'Unmatched' },
-    { id: 'costReport',  icon: 'ti-chart-bar',     label: 'Costs' },
-    { id: 'consumption', icon: 'ti-chart-area',    label: 'Variance' },
-    { id: 'pourIq',      icon: 'ti-brain',         label: 'Pour·IQ' }
-  ];
+  // ── Lo que NO está aquí, y por qué ───────────────────────────────────
+  //
+  // Unmatched, Costs, Variance y Pour·IQ abren la sección del
+  // escritorio tal cual: tablas de ocho columnas dentro de un teléfono.
+  // Se podía entrar, pero no se podía usar.
+  //
+  // Una entrada que lleva a algo inservible es peor que no tenerla: la
+  // pruebas, no funciona, y a partir de ahí dudas del resto del menú.
+  // Vuelven en cuanto cada una tenga pantalla propia, como History.
+  const MAS = [];
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c =>
     ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
