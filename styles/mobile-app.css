@@ -198,59 +198,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * de referencia es la ventana y este recorte no las alcanza. */
   body.m-shell.m-on { overflow-x: clip; }
 
-  /* ── Y que no ruede el documento ───────────────────────────────────
-   *
-   * Lo anterior sólo frenaba el eje X. Lo que se siente como "esto es
-   * una página" es el documento entero moviéndose: el rebote de iOS
-   * arrastra con él las barras fijas y toda la interfaz baila.
-   *
-   * Una app no hace eso. El documento se queda quieto y lo que rueda
-   * es UN contenedor dentro, que es como está hecha cualquier app
-   * nativa.
-   *
-   * ── Lo que NO se hace aquí ────────────────────────────────────
-   *
-   * No se le pone `position: fixed` al body. Se intentó y fue un
-   * desastre: en WebKit un elemento fijo abre contexto de
-   * apilamiento, y las capas del fondo de esta app —la foto y el
-   * velo— van con z-index negativo, así que quedaron atrapadas
-   * dentro y dejaron de pintar el borde de abajo. Salió una franja
-   * negra bajo la barra en todas las pantallas y hubo que tirar
-   * cuatro commits.
-   *
-   * No hace falta: con #mScreens fijo y las barras fijas, el body no
-   * tiene NADA en flujo que pueda desplazarse. Se queda estático,
-   * las capas del fondo siguen donde estaban, y el `overflow` del
-   * raíz —que se propaga a la ventana— remata el trabajo.
-   *
-   * Sólo con una pantalla propia delante. Las secciones del
-   * escritorio ruedan como siempre. */
-  html:has(body.m-shell.m-on) {
-    height: 100%;
-    overflow: hidden;
-    overscroll-behavior: none;
-  }
-
-  /* El hueco de la banda y el de la barra bajan del body al
-   * contenedor: ahora son del contenido, no de la ventana. */
-  body.m-shell.m-on { padding: 0; }
-
-  /* El único que rueda.
-   *
-   * `overscroll-behavior: contain` para que el rebote muera aquí y no
-   * suba al documento: es lo que también desatasca el panel de avisos
-   * al llegar al final de una lista. */
-  body.m-shell.m-on > .m-screens {
-    position: fixed; inset: 0;
-    overflow-y: auto; overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    padding-top: calc(52px + env(safe-area-inset-top, 0px));
-    padding-bottom: calc(94px + env(safe-area-inset-bottom, 0px));
-  }
-  /* Sin barra no hace falta su hueco. */
-  body.m-kb.m-shell.m-on > .m-screens { padding-bottom: 24px; }
-
   /* ── UN solo velo ───────────────────────────────────────────────── */
   /*
    * app.css ya apila tres capas sobre la foto: `body::before` (o

@@ -120,34 +120,6 @@
     };
   }
 
-  // ── Quién rueda ──────────────────────────────────────────────────
-  //
-  // Con una pantalla propia delante el documento NO se mueve: rueda
-  // #mScreens. Es lo que separa una app de una página — sin esto, el
-  // rebote de iOS arrastra las barras fijas y la interfaz entera
-  // baila.
-  //
-  // Con una sección del ESCRITORIO abierta rueda el documento, como
-  // siempre: esa página lleva meses afinándose y no se toca.
-  //
-  // Todo lo que necesite el desplazamiento pregunta aquí. Dos sitios
-  // decidiendo quién rueda es como empiezan los desajustes.
-  function scroller() {
-    return (_host && !_host.classList.contains('hidden')) ? _host : null;
-  }
-
-  function irArriba() {
-    const s = scroller();
-    if (s) { s.scrollTop = 0; return; }
-    try { window.scrollTo({ top: 0 }); } catch (e) {}
-  }
-
-  function desplazamiento() {
-    const s = scroller();
-    if (s) return s.scrollTop || 0;
-    return window.scrollY || document.documentElement.scrollTop || 0;
-  }
-
   function montar() {
     if (_montado || !esMovil()) return;
 
@@ -410,7 +382,7 @@
       ocultarPropias();
       if (typeof window.bsOpenSection === 'function') window.bsOpenSection(p.seccion);
       marcarActiva(id);
-      irArriba();
+      window.scrollTo({ top: 0 });
       return;
     }
 
@@ -448,7 +420,7 @@
     }
 
     marcarActiva(id);
-    irArriba();
+    window.scrollTo({ top: 0 });
   }
 
   // ── Tiempo real ──────────────────────────────────────────────────────
@@ -506,7 +478,7 @@
   let _t = null;
 
   function arribaDelTodo() {
-    return desplazamiento() <= 0;
+    return (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
   }
 
   function cinta() {
@@ -664,8 +636,6 @@
   window.BarStockMobile = {
     register, ir, volver, nombreAnterior, refrescarBadges, refrescarActiva,
     esMovil, montado: () => _montado, activa: () => _activa,
-    // Quién rueda, para que nadie más lo adivine por su cuenta.
-    scroller, irArriba,
     ANCHO
   };
 })();
