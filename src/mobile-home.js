@@ -83,6 +83,100 @@
 
   function master() { return (window.state && window.state.master) || []; }
 
+  // Lo que SE CONTÓ, que no es lo mismo que lo que hay en el catálogo.
+  //
+  // La tarjeta del ciclo decía "Counted 265 items" con master().length,
+  // y esos 265 son el inventario entero. Un artículo en cero no es un
+  // artículo contado en cero: es uno que nadie miró. Contar el catálogo
+  // y llamarlo conteo infla el número justo en la cifra que sirve para
+  // saber si el conteo quedó completo.
+  function contados() {
+    let n = 0;
+    for (const r of master()) if (Number(r.onHand) > 0) n++;
+    return n;
+  }
+
+  // ── Las entregas de este ciclo ───────────────────────────────────────
+  //
+  // Una sola fila para TODAS —"3 deliveries in"— y no una por entrega.
+  // La línea de tiempo de la tarjeta tiene tres pasos fijos: se contó,
+  // llegó mercancía, esto es lo que queda. Así no crece con la semana:
+  // un ciclo con nueve entregas se ve igual de limpio que uno con una.
+  //
+  // null = todavía no se sabe, y mientras no se sabe la fila NO sale.
+  // Un "0 deliveries" falso en una tarjeta que se mira de reojo es peor
+  // que una fila de menos; es el mismo fallo de las diecisiete semanas.
+  let _entregas = null;        // null = sin saber · false = no hay · {…}
+  let _entregasDe = '';        // el resetAt con el que se pidió
+  let _pidiendoEntregas = false;
+
+  function cfgSB() {
+    const c = window.BARSTOCK_CONFIG || {};
+    return { url: c.SUPABASE_URL, key: c.SUPABASE_KEY };
+  }
+
+  // 'YYYY-MM-DD' con new Date() se interpreta en UTC, así que en
+  // cualquier huso al oeste de Greenwich una factura del 26 se enseña
+  // como del 25. Se arma la fecha a mano, en local.
+  function fmtDia(ymd) {
+    const p = String(ymd || '').slice(0, 10).split('-');
+    if (p.length !== 3) return '';
+    const d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  async function pedirEntregas(desde) {
+    const { url, key } = cfgSB();
+    if (!url || !key) return false;
+
+    const P = window.BarStockParIntelligence;
+    const locId = (P && P.fetchLocationId) ? await P.fetchLocationId() : null;
+    if (!locId) return false;
+
+    const dia = String(desde).slice(0, 10);
+    const ordenes = new Set();
+    let unidades = 0, ultima = '';
+
+    // PostgREST corta en 1000 filas SIN avisar. Una semana de facturas
+    // se pasa de ahí en cuanto entra la comida —se guardan todas las
+    // líneas, también las de cocina—, y lo que se vería es un número
+    // creíble y equivocado. Ya pasó con el catálogo.
+    for (let p = 0; p < 20; p++) {
+      const r = await fetch(
+        `${url}/rest/v1/marginedge_invoice_lines?location_id=eq.${locId}` +
+        `&invoice_date=gte.${dia}&select=order_id,quantity,invoice_date` +
+        `&order=invoice_date.asc&limit=1000&offset=${p * 1000}`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+      if (!r.ok) return false;
+      const filas = await r.json();
+      if (!Array.isArray(filas) || !filas.length) break;
+      for (const f of filas) {
+        ordenes.add(f.order_id);
+        unidades += Number(f.quantity) || 0;
+        if (f.invoice_date && f.invoice_date > ultima) ultima = f.invoice_date;
+      }
+      if (filas.length < 1000) break;
+    }
+
+    if (!ordenes.size) return false;
+    return { n: ordenes.size, unidades: Math.round(unidades), ultima };
+  }
+
+  // Se vuelve a pedir cuando cambia el arranque del ciclo, no cada vez
+  // que se pinta el Home: reiniciar la semana es lo único que cambia la
+  // respuesta, y el Home se repinta decenas de veces por sesión.
+  function cargarEntregas(desde) {
+    if (!desde) return;
+    if (_entregasDe === desde || _pidiendoEntregas) return;
+    _pidiendoEntregas = true;
+    _entregasDe = desde;
+    Promise.resolve()
+      .then(() => pedirEntregas(desde))
+      .then(e => { _entregas = e; if (e) refresh(); })
+      .catch(() => { _entregas = false; })
+      .then(() => { _pidiendoEntregas = false; });
+  }
+
   // Todos los artículos con su ficha de par, que es donde viven el
   // consumo ponderado y el histórico.
   function conPar() {
@@ -232,13 +326,60 @@
     const dias = ms ? Math.floor(ms / 86400000) : 0;
     const viejo = !!(W && W.cicloViejo && W.cicloViejo());
 
+    // ── El ciclo contado como lo que es: tres momentos ───────────────
+    //
+    // Aquí había una sola línea —"Counted 265 items"— y debajo 130px de
+    // nada, porque todas las tarjetas del carril miden lo que la más
+    // alta. El hueco no se quita: se llena con lo que la tarjeta ya
+    // sabe y no estaba diciendo.
+    //
+    // Tres pasos FIJOS y no un registro de eventos: se contó, llegó
+    // mercancía, esto es lo que queda hoy. Un registro crecería con la
+    // semana y habría que cortarlo con un "y 4 más", que es la forma
+    // de que una línea de tiempo deje de valer para nada.
+    const inicio = (W && W.resetAt) ? W.resetAt() : '';
+    cargarEntregas(inicio);
+
+    const linea = [];
+    linea.push({ d: fecha || 'Start', t: '<em>' + contados() + ' items</em> counted' });
+
+    // Sólo cuando se sabe. Mientras la consulta viaja, la fila no
+    // existe; nunca dice "0 deliveries" por no haber mirado todavía.
+    if (_entregas) {
+      linea.push({
+        d: fmtDia(_entregas.ultima),
+        t: '<em>' + _entregas.n + (_entregas.n === 1 ? ' delivery' : ' deliveries') +
+           '</em> in, ' + _entregas.unidades + ' units'
+      });
+    }
+
+    if (viejo) {
+      // El aviso que antes vivía en el subtítulo. Cabe aquí mejor: es
+      // justamente en qué punto está el ciclo hoy.
+      linea.push({ hoy: true, alerta: true, d: 'Today',
+                   t: 'Open ' + dias + ' days — usage keeps adding up' });
+    } else {
+      const pend = lineasPendientes();
+      if (pend === null) {
+        // No se sabe: no se inventa una fila.
+      } else if (pend > 0) {
+        linea.push({ hoy: true, d: 'Today',
+                     t: '<em>' + pend + (pend === 1 ? ' line' : ' lines') +
+                        '</em> waiting to order' });
+      } else {
+        const puestos = colocados().length;
+        linea.push({ hoy: true, d: 'Today',
+                     t: puestos
+                        ? '<em>' + puestos + (puestos === 1 ? ' vendor' : ' vendors') + '</em> ordered'
+                        : 'Nothing waiting' });
+      }
+    }
+
     return {
       tono: viejo ? 'amber' : 'teal',
       k: 'Cycle open',
       tt: fecha ? 'Since ' + fecha : 'Open',
-      sub: viejo
-        ? 'Usage keeps adding up until you restart'
-        : 'Counted ' + master().length + ' items',
+      linea,
       amt: dias + 'd',
       vs: 'usual is 7',
 
@@ -341,6 +482,25 @@
       try { if (window.isRowPlaced(r)) s.add(v); } catch (e) {}
     }
     return Array.from(s);
+  }
+
+  // Líneas que esperan a que alguien las pida. Es el mismo recuento que
+  // alimenta la tarjeta de órdenes; aquí sólo hace falta el número, no
+  // los subtotales, así que no se reusa aquella — se reusan las mismas
+  // funciones de siempre, que es lo que importa para que las dos
+  // tarjetas nunca se contradigan.
+  //
+  // null cuando no se puede saber todavía: el Home se pinta antes de
+  // que el inventario llegue, y un 0 ahí sería mentira.
+  function lineasPendientes() {
+    if (typeof window.getActiveVendors !== 'function' ||
+        typeof window.getOrderRowsForVendor !== 'function') return null;
+    let n = 0;
+    for (const v of window.getActiveVendors()) {
+      if (v === 'UNKNOWN') continue;
+      n += (window.getOrderRowsForVendor(v) || []).length;
+    }
+    return n;
   }
 
   function tarjetas() {
@@ -466,6 +626,15 @@
             ${c.barra !== undefined ? `<div class="m-prog"><i style="width:${c.barra}%"></i></div>` : ''}
             ${c.sub ? `<div class="m-hero-s">${esc(c.sub)}</div>` : ''}
             ${c.lista ? `<div class="m-hero-list">${c.lista.map(x => '<span>' + x + '</span>').join('')}</div>` : ''}
+            <!-- La línea de tiempo del ciclo. El texto lleva <em> para
+                 destacar la cifra y lo arma esta misma página con
+                 números, nunca con nombres que vengan de fuera: por eso
+                 va sin escapar. Si algún día entra un proveedor ahí,
+                 tiene que pasar por esc(). -->
+            ${c.linea ? `<ul class="m-hero-tl">${c.linea.map(x =>
+              `<li${x.hoy ? ' class="is-hoy' + (x.alerta ? ' is-alerta' : '') + '"' : ''}>
+                 <u>${esc(x.d)}</u><p>${x.t}</p>
+               </li>`).join('')}</ul>` : ''}
           </div>
           <div class="m-hero-r">
             ${c.icoR

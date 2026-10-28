@@ -635,6 +635,48 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   .m-hero-t { font-size: var(--m-head); font-weight: 800; color: #fff; letter-spacing: -.5px; margin-top: 4px; }
   .m-hero-s { font-size: var(--m-small); color: #c3d2e2; margin-top: 6px; line-height: 1.4; }
+  /* ── La línea de tiempo del ciclo ──────────────────────────────────
+   *
+   * Tres momentos, siempre tres: se contó, llegó mercancía, esto es lo
+   * que queda. El hilo lo dibuja el ::after de cada fila menos la
+   * última; el punto, el ::before. Hacerlo con pseudoelementos y no
+   * con un <i> deja el HTML en lo que de verdad dice la fila.
+   *
+   * El punto de hoy va hueco y el hilo muere antes de llegar: lo de
+   * arriba ya pasó, lo de abajo todavía no. */
+  .m-hero-tl { margin: 11px 0 0; padding: 0; list-style: none; }
+  .m-hero-tl li {
+    position: relative; display: flex; gap: 9px;
+    align-items: flex-start; padding: 4px 0;
+  }
+  .m-hero-tl li::before {
+    content: ''; flex: 0 0 7px; width: 7px; height: 7px;
+    border-radius: 50%; background: #2dd4bf; margin-top: .42em;
+  }
+  .m-hero-tl li:not(:last-child)::after {
+    content: ''; position: absolute; left: 3px;
+    top: calc(.42em + 11px); bottom: -4px; width: 1px;
+    background: rgba(255,255,255,.16);
+  }
+  /* Con el ciclo abierto de más la tarjeta se pone ámbar, y un punto
+   * turquesa encima es de otra tarjeta. Va ANTES de las dos reglas de
+   * abajo: tienen la misma especificidad, así que manda el orden, y
+   * puesta después se comía el punto hueco de "hoy". */
+  .m-hero-amber .m-hero-tl li::before { background: #fcd34d; }
+  .m-hero-tl li.is-hoy::before {
+    background: transparent; box-shadow: inset 0 0 0 2px rgba(255,255,255,.45);
+  }
+  .m-hero-tl li.is-alerta::before { background: #fbbf24; box-shadow: none; }
+  /* La fecha en una columna propia para que los textos arranquen todos
+   * a la misma x. Alineados a la izquierda sin columna, "Oct 25" y
+   * "Today" desplazaban cada frase a un sitio distinto. */
+  .m-hero-tl u {
+    flex: 0 0 48px; text-decoration: none;
+    font-size: var(--m-meta); color: #8fa3b8; padding-top: .12em;
+  }
+  .m-hero-tl p { margin: 0; font-size: var(--m-small); color: #dbe7f3; line-height: 1.35; }
+  .m-hero-tl em { font-style: normal; font-weight: 700; color: #fff; }
+
   .m-hero-list { display: flex; flex-direction: column; gap: 3px; margin-top: 7px; }
   .m-hero-list span { font-size: var(--m-small); color: #c3d2e2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .m-hero-list b { color: #fff; font-weight: 700; }
