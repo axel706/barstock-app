@@ -266,6 +266,18 @@
     fondo.className = 'm-nf-back';
     fondo.onclick = cerrar;
 
+    // ── La barrera del gesto ───────────────────────────────────────
+    //
+    // El CSS solo no basta en iOS: con `overscroll-behavior` y el body
+    // fijado, arrastrar seguía moviendo la página por detrás y al
+    // llegar al final de la lista uno se quedaba abajo sin poder
+    // volver.
+    //
+    // Aquí se corta el gesto en origen: lo que no nace dentro de la
+    // lista no desplaza nada. Y lo que nace dentro sólo desplaza la
+    // lista, nunca el documento.
+    fondo.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
     const panel = document.createElement('div');
     panel.id = 'mNotifPanel';
     panel.className = 'm-nf-panel';
@@ -282,6 +294,20 @@
     document.body.appendChild(panel);
     const x = panel.querySelector('#mNotifX');
     if (x) x.onclick = cerrar;
+
+    // Dentro del panel, sólo la lista se mueve. Un arrastre sobre la
+    // cabecera no puede llevarse la app por delante.
+    panel.addEventListener('touchmove', e => {
+      const lista = panel.querySelector('#mNotifBody');
+      if (!lista || !lista.contains(e.target)) { e.preventDefault(); return; }
+      // En los extremos, iOS entrega el gesto al documento. Se
+      // empuja un píxel hacia dentro para que nunca esté justo en el
+      // borde y el encadenado no llegue a dispararse.
+      if (lista.scrollTop <= 0) lista.scrollTop = 1;
+      else if (lista.scrollTop + lista.clientHeight >= lista.scrollHeight) {
+        lista.scrollTop = lista.scrollHeight - lista.clientHeight - 1;
+      }
+    }, { passive: false });
 
     // Dos cuadros: el navegador tiene que ver el estado inicial antes
     // de que cambie, o no hay transición que animar.

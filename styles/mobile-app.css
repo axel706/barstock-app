@@ -422,12 +422,13 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * Se ancla al suelo en vez de al techo: abajo no hay inset que
    * valga, así que es la referencia que no cambia. */
   .m-band-ico {
-    position: absolute; right: 12px; z-index: 1;
+    /* 16 y no 12: a doce parecían rozar el borde de la pantalla. */
+    position: absolute; right: 16px; z-index: 1;
     bottom: 0; height: 52px;
     display: flex; align-items: center; gap: 6px;
   }
   body.m-shell .m-ico {
-    width: 33px; height: 33px; flex: 0 0 33px;
+    width: 36px; height: 36px; flex: 0 0 36px;
     display: flex; align-items: center; justify-content: center;
     border-radius: 50%; cursor: pointer; font-size: var(--m-body);
     background: rgba(255,255,255,.13);
@@ -1327,7 +1328,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * ancho de verdad: a la izquierda quedaban setenta píxeles y no
    * cabía ni "Orders loaded". El logo se aparta mientras dura. */
   .m-band-slot {
-    position: absolute; left: 56px; right: 56px; bottom: 0; z-index: 3;
+    position: absolute; left: 60px; right: 60px; bottom: 0; z-index: 3;
     height: 52px;
     display: flex; align-items: center; justify-content: center;
     pointer-events: none;
@@ -1335,7 +1336,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
 
   /* Lo que se queda: a la izquierda, misma forma que ajustes. */
   .m-band-note {
-    position: absolute; left: 12px; bottom: 0; z-index: 3;
+    position: absolute; left: 16px; bottom: 0; z-index: 3;
     height: 52px; display: flex; align-items: center;
   }
   body.m-shell .m-ico-alert {
@@ -2077,6 +2078,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * sí se interpolan, y la opacidad se deja quieta. */
   .m-nf-back {
     position: fixed; inset: 0; z-index: 9400;
+    /* El dedo sobre el fondo no mueve nada. Sin esto, arrastrar fuera
+     * del panel desplaza la app por detrás. */
+    touch-action: none;
     background: rgba(4, 8, 15, 0);
     backdrop-filter: blur(0px) saturate(1);
     -webkit-backdrop-filter: blur(0px) saturate(1);
@@ -2096,13 +2100,18 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     top: calc(60px + env(safe-area-inset-top, 0px));
     max-height: calc(100dvh - 140px - env(safe-area-inset-top, 0px));
     display: flex; flex-direction: column;
-    background: rgba(17, 26, 46, .94);
-    border: 1px solid rgba(255,255,255,.13);
+    /* Translúcido y con su propio desenfoque. Con el .94 de antes era
+     * una caja opaca: aunque el fondo se desenfocara detrás, el panel
+     * no se leía como cristal, que es lo que se pidió. */
+    background: rgba(17, 26, 46, .72);
+    backdrop-filter: blur(22px) saturate(1.2);
+    -webkit-backdrop-filter: blur(22px) saturate(1.2);
+    border: 1px solid rgba(255,255,255,.16);
     border-radius: 20px;
     box-shadow: 0 26px 60px rgba(0,0,0,.6);
     /* Sale de donde está la campana —arriba a la izquierda— en vez de
      * aparecer en el centro: así se entiende qué lo abrió. */
-    transform-origin: 28px top;
+    transform-origin: 34px top;
     opacity: 0; transform: scale(.94) translateY(-8px);
     transition: opacity .2s ease, transform .24s cubic-bezier(.22,.61,.36,1);
   }
@@ -2131,7 +2140,11 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * fijo mientras la app se desplaza por detrás y parece atascado. */
   .m-nf-body {
     overflow-y: auto; -webkit-overflow-scrolling: touch;
+    /* `contain` corta el encadenado y `pan-y` deja claro que aquí
+     * dentro sólo se desplaza en vertical. Las dos juntas porque en
+     * iOS ninguna basta sola. */
     overscroll-behavior: contain;
+    touch-action: pan-y;
     padding: 12px 13px 16px;
   }
 
