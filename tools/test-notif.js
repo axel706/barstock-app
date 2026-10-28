@@ -94,6 +94,13 @@ function entorno(descartadas, guardado) {
   prueba('es flotante, no una pantalla', !!w.document.getElementById('mNotifPanel'));
   prueba('y desenfoca el fondo', !!w.document.getElementById('mNotifBack'));
 
+  grupo('el documento no se mueve detrás del panel');
+  // Al llegar al final de la lista el gesto pasaba al documento: el
+  // panel se quedaba fijo, la app se desplazaba por detrás, y volver
+  // arriba movía la página en vez del panel.
+  prueba('el body queda bloqueado', w.document.body.classList.contains('m-nf-abierto'));
+  prueba('y recuerda dónde estaba', w.document.body.style.top !== '');
+
   grupo('descartar');
   const x = w.document.querySelector('[data-x]');
   x.click();
@@ -102,6 +109,16 @@ function entorno(descartadas, guardado) {
     guardado.join(','));
   prueba('y desaparece de la lista',
     !w.document.getElementById('mNotifBody').textContent.includes('White Haven'));
+
+  grupo('al cerrar se devuelve el documento');
+  w.BarStockMobileNotif.cerrar();
+  await esperar(40);
+  prueba('el body se suelta', !w.document.body.classList.contains('m-nf-abierto'));
+  prueba('y se le quita el desplazamiento fijado', w.document.body.style.top === '');
+
+  // A partir de aquí se crea un segundo entorno, y eso reemplaza el
+  // `document` global: los módulos lo leen en cada llamada, así que
+  // tocar el primero después de esto manipularía el body del segundo.
 
   grupo('lo descartado no vuelve');
   // Es la razón de la tabla: si volviera en cada arranque, cerrar un

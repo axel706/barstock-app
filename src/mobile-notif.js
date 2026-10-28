@@ -230,9 +230,36 @@
     });
   }
 
+  // ── Bloquear el documento mientras el panel está abierto ───────────
+  //
+  // Al llegar al final de la lista el gesto pasaba al documento de
+  // debajo: el panel se quedaba fijo, la app se desplazaba por detrás,
+  // y al intentar volver arriba no subía el panel sino la página.
+  //
+  // `overscroll-behavior: contain` corta el encadenado; esto además
+  // impide que el documento se mueva en absoluto. En iOS no basta
+  // `overflow:hidden`: hay que fijar el body y recordar dónde estaba.
+  let _scrollY = 0;
+
+  function bloquear() {
+    _scrollY = window.scrollY || window.pageYOffset || 0;
+    document.body.style.top = (-_scrollY) + 'px';
+    document.body.classList.add('m-nf-abierto');
+  }
+
+  function desbloquear() {
+    document.body.classList.remove('m-nf-abierto');
+    document.body.style.top = '';
+    // Devolver el desplazamiento es lo último y va protegido: si
+    // fallara, lo importante —soltar el body— ya está hecho. Al revés
+    // dejaría la app congelada por no poder hacer scroll.
+    try { window.scrollTo(0, _scrollY); } catch (e) {}
+  }
+
   async function abrir() {
     if (_abierto) return cerrar();
     _abierto = true;
+    bloquear();
 
     const fondo = document.createElement('div');
     fondo.id = 'mNotifBack';
@@ -273,6 +300,7 @@
     const fondo = document.getElementById('mNotifBack');
     const panel = document.getElementById('mNotifPanel');
     _abierto = false;
+    desbloquear();
     document.removeEventListener('keydown', escTecla, true);
     if (fondo) fondo.classList.remove('on');
     if (panel) panel.classList.remove('on');

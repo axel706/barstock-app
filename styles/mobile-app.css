@@ -2069,14 +2069,26 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     border: 2px solid #0b1220;
   }
 
+  /* ── Por qué el fondo NO anima su opacidad ─────────────────────
+   *
+   * Safari descarta `backdrop-filter` cuando el elemento que lo lleva
+   * tiene la opacidad en transición: el panel salía sin desenfoque
+   * ninguno. Así que aquí se animan el color y el propio filtro, que
+   * sí se interpolan, y la opacidad se deja quieta. */
   .m-nf-back {
     position: fixed; inset: 0; z-index: 9400;
-    background: rgba(4, 8, 15, .55);
-    backdrop-filter: blur(14px) saturate(.9);
-    -webkit-backdrop-filter: blur(14px) saturate(.9);
-    opacity: 0; transition: opacity .2s ease;
+    background: rgba(4, 8, 15, 0);
+    backdrop-filter: blur(0px) saturate(1);
+    -webkit-backdrop-filter: blur(0px) saturate(1);
+    transition: background-color .22s ease,
+                backdrop-filter .26s ease,
+                -webkit-backdrop-filter .26s ease;
   }
-  .m-nf-back.on { opacity: 1; }
+  .m-nf-back.on {
+    background: rgba(4, 8, 15, .5);
+    backdrop-filter: blur(16px) saturate(.9);
+    -webkit-backdrop-filter: blur(16px) saturate(.9);
+  }
 
   .m-nf-panel {
     position: fixed; z-index: 9401;
@@ -2114,7 +2126,22 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     border: 1px solid rgba(255,255,255,.14);
   }
 
-  .m-nf-body { overflow-y: auto; padding: 12px 13px 16px; }
+  /* `contain` corta el encadenado: al llegar al final de la lista el
+   * gesto NO pasa al documento de debajo. Sin esto, el panel se queda
+   * fijo mientras la app se desplaza por detrás y parece atascado. */
+  .m-nf-body {
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: 12px 13px 16px;
+  }
+
+  /* Y mientras el panel está abierto, el documento no se mueve. En
+   * iOS `overflow:hidden` en el body no basta: hay que fijarlo y
+   * recordar dónde estaba para devolverlo al cerrar. */
+  body.m-nf-abierto {
+    position: fixed; left: 0; right: 0; width: 100%;
+    overflow: hidden;
+  }
 
   .m-nf-lab {
     font-size: var(--m-eyebrow); font-weight: 800; color: #c3d2e2;
