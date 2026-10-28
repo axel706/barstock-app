@@ -282,21 +282,46 @@
              sinTocar: Math.max(0, master.length - ultimo.size) };
   }
 
-  async function aplicarPrecios(cambios) {
+  // ── De seis en seis, no de una en una ─────────────────────────────
+  //
+  // En serie, con cien precios eran casi dos minutos de botón en
+  // "Updating…" sin decir nada. Y sin try dentro del bucle, una sola
+  // petición fallida tiraba la excepción fuera del manejador y el
+  // botón se quedaba deshabilitado para siempre — que es exactamente
+  // lo que pasó.
+  //
+  // El tope de seis existe porque cien peticiones a la vez contra
+  // Supabase es la otra forma de que esto se atasque.
+  const A_LA_VEZ = 6;
+
+  async function aplicarPrecios(cambios, avisar) {
     const { url, key } = cfg();
     const locId = await locationId();
+    if (!url || !key || !locId) return { ok: 0, problemas: ['No location.'] };
+
     const cab = { 'Content-Type': 'application/json', apikey: key,
                   Authorization: `Bearer ${key}`, Prefer: 'return=minimal' };
-    let ok = 0;
+    let ok = 0, hechos = 0;
     const problemas = [];
     const log = [];
 
-    for (const c of cambios) {
-      const r = await fetch(
-        `${url}/rest/v1/inventory_items?location_id=eq.${locId}` +
-        `&item_name=eq.${encodeURIComponent(c.item)}`,
-        { method: 'PATCH', headers: cab, body: JSON.stringify({ value: c.precio }) });
-      if (!r.ok) { problemas.push(c.item + ': ' + r.status); continue; }
+    async function uno(c) {
+      hechos++;
+      if (avisar) avisar(hechos, cambios.length);
+      let r;
+      try {
+        r = await fetch(
+          `${url}/rest/v1/inventory_items?location_id=eq.${locId}` +
+          `&item_name=eq.${encodeURIComponent(c.item)}`,
+          { method: 'PATCH', headers: cab, body: JSON.stringify({ value: c.precio }) });
+      } catch (e) {
+        problemas.push(c.item + ': ' + (e && e.message || e));
+        return;
+      }
+      if (!r.ok) {
+        problemas.push(c.item + ': ' + r.status + ' ' + (await r.text()).slice(0, 70));
+        return;
+      }
       ok++;
       log.push({
         location_id: locId, item_name: c.item,
@@ -305,6 +330,10 @@
         invoice_date: c.fecha || null,
         vendor_name: c.vendor || null
       });
+    }
+
+    for (let i = 0; i < cambios.length; i += A_LA_VEZ) {
+      await Promise.all(cambios.slice(i, i + A_LA_VEZ).map(uno));
     }
 
     // El registro se escribe DESPUÉS y de una vez. Si fallara, los
@@ -355,16 +384,28 @@
 
     const b = document.getElementById('mepPrecGo');
     if (b) b.onclick = async () => {
-      b.disabled = true; b.textContent = 'Updating…';
-      const r = await aplicarPrecios(res.cambios);
-      host.innerHTML =
-        '<div class="small" style="color:' + (r.problemas.length ? '#b45309' : '#15803d') +
-        ';font-weight:700">' + r.ok + ' prices updated.</div>' +
-        (r.problemas.length
-          ? '<div class="mem-note" style="margin-top:8px">' +
-            esc(r.problemas.slice(0, 10).join(' · ')) + '</div>' : '');
-      if (window.BarStockInventoryRealtime && window.BarStockInventoryRealtime.refresh) {
-        try { window.BarStockInventoryRealtime.refresh(); } catch (e) {}
+      b.disabled = true;
+      // Pase lo que pase, el botón vuelve. Un "Updating…" eterno no
+      // dice si funcionó, si falló o si sigue trabajando.
+      try {
+        const r = await aplicarPrecios(res.cambios, (n, tot) => {
+          b.textContent = 'Updating… ' + n + ' of ' + tot;
+        });
+        host.innerHTML =
+          '<div class="small" style="color:' + (r.problemas.length ? '#b45309' : '#15803d') +
+          ';font-weight:700">' + r.ok + ' prices updated' +
+          (r.problemas.length ? ' · ' + r.problemas.length + ' failed' : '') + '.</div>' +
+          (r.problemas.length
+            ? '<div class="mem-note" style="margin-top:8px">' +
+              esc(r.problemas.slice(0, 10).join(' · ')) + '</div>' : '');
+        if (window.BarStockInventoryRealtime && window.BarStockInventoryRealtime.refresh) {
+          try { window.BarStockInventoryRealtime.refresh(); } catch (e) {}
+        }
+      } catch (e) {
+        b.disabled = false;
+        b.textContent = 'Update ' + res.cambios.length + ' prices';
+        host.insertAdjacentHTML('afterbegin',
+          '<div class="mem-err">' + esc(String(e && e.message || e)) + '</div>');
       }
     };
   }
