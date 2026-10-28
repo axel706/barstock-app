@@ -423,7 +423,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * valga, así que es la referencia que no cambia. */
   .m-band-ico {
     /* 16 y no 12: a doce parecían rozar el borde de la pantalla. */
-    position: absolute; right: 16px; z-index: 1;
+    position: absolute; right: 20px; z-index: 1;
     bottom: 0; height: 52px;
     display: flex; align-items: center; gap: 6px;
   }
@@ -1328,7 +1328,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * ancho de verdad: a la izquierda quedaban setenta píxeles y no
    * cabía ni "Orders loaded". El logo se aparta mientras dura. */
   .m-band-slot {
-    position: absolute; left: 60px; right: 60px; bottom: 0; z-index: 3;
+    position: absolute; left: 66px; right: 66px; bottom: 0; z-index: 3;
     height: 52px;
     display: flex; align-items: center; justify-content: center;
     pointer-events: none;
@@ -1336,7 +1336,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
 
   /* Lo que se queda: a la izquierda, misma forma que ajustes. */
   .m-band-note {
-    position: absolute; left: 16px; bottom: 0; z-index: 3;
+    position: absolute; left: 20px; bottom: 0; z-index: 3;
     height: 52px; display: flex; align-items: center;
   }
   body.m-shell .m-ico-alert {
@@ -2070,29 +2070,25 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     border: 2px solid #0b1220;
   }
 
-  /* ── Por qué el fondo NO anima su opacidad ─────────────────────
+  /* ── Por qué este fondo casi no pinta nada ─────────────────────
    *
-   * Safari descarta `backdrop-filter` cuando el elemento que lo lleva
-   * tiene la opacidad en transición: el panel salía sin desenfoque
-   * ninguno. Así que aquí se animan el color y el propio filtro, que
-   * sí se interpolan, y la opacidad se deja quieta. */
+   * Tres intentos fallaron por lo mismo: aquí había una capa oscura al
+   * 50 %, y el panel desenfoca LO QUE TIENE DETRÁS. Detrás tenía un
+   * color plano, y desenfocar un color plano devuelve el mismo color
+   * plano. De ahí que el panel se viera opaco por mucho blur que se le
+   * pusiera.
+   *
+   * Ahora el desenfoque vive sólo en el panel y esta capa es casi
+   * transparente: está para recoger el toque de fuera y para apagar un
+   * poco la app, no para taparla. */
   .m-nf-back {
     position: fixed; inset: 0; z-index: 9400;
-    /* El dedo sobre el fondo no mueve nada. Sin esto, arrastrar fuera
-     * del panel desplaza la app por detrás. */
+    /* El dedo sobre el fondo no mueve nada. */
     touch-action: none;
     background: rgba(4, 8, 15, 0);
-    backdrop-filter: blur(0px) saturate(1);
-    -webkit-backdrop-filter: blur(0px) saturate(1);
-    transition: background-color .22s ease,
-                backdrop-filter .26s ease,
-                -webkit-backdrop-filter .26s ease;
+    transition: background-color .22s ease;
   }
-  .m-nf-back.on {
-    background: rgba(4, 8, 15, .5);
-    backdrop-filter: blur(16px) saturate(.9);
-    -webkit-backdrop-filter: blur(16px) saturate(.9);
-  }
+  .m-nf-back.on { background: rgba(4, 8, 15, .18); }
 
   .m-nf-panel {
     position: fixed; z-index: 9401;
@@ -2100,18 +2096,17 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     top: calc(60px + env(safe-area-inset-top, 0px));
     max-height: calc(100dvh - 140px - env(safe-area-inset-top, 0px));
     display: flex; flex-direction: column;
-    /* Translúcido y con su propio desenfoque. Con el .94 de antes era
-     * una caja opaca: aunque el fondo se desenfocara detrás, el panel
-     * no se leía como cristal, que es lo que se pidió. */
-    background: rgba(17, 26, 46, .72);
-    backdrop-filter: blur(22px) saturate(1.2);
-    -webkit-backdrop-filter: blur(22px) saturate(1.2);
+    /* El cristal es ESTO. Translúcido de verdad y desenfocando la app
+     * que tiene detrás, no una capa de color. */
+    background: rgba(17, 26, 46, .55);
+    backdrop-filter: blur(26px) saturate(1.5);
+    -webkit-backdrop-filter: blur(26px) saturate(1.5);
     border: 1px solid rgba(255,255,255,.16);
     border-radius: 20px;
     box-shadow: 0 26px 60px rgba(0,0,0,.6);
     /* Sale de donde está la campana —arriba a la izquierda— en vez de
      * aparecer en el centro: así se entiende qué lo abrió. */
-    transform-origin: 34px top;
+    transform-origin: 38px top;
     opacity: 0; transform: scale(.94) translateY(-8px);
     transition: opacity .2s ease, transform .24s cubic-bezier(.22,.61,.36,1);
   }
@@ -2164,8 +2159,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-nf {
     display: flex; gap: 10px; align-items: flex-start;
     padding: 12px 13px; margin-bottom: 8px; border-radius: 15px;
-    background: rgba(255,255,255,.08);
-    border: 1px solid rgba(255,255,255,.14);
+    /* Sobre cristal, una tarjeta sólida vuelve a matar el efecto:
+     * se ve el panel translúcido y encima siete cajas opacas. */
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.12);
   }
   .m-nf-i { font-size: var(--m-strong); flex: 0 0 auto; margin-top: 1px; }
   /* Un coste que sube es malo y uno que baja es bueno: el color va con

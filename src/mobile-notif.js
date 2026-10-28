@@ -295,18 +295,34 @@
     const x = panel.querySelector('#mNotifX');
     if (x) x.onclick = cerrar;
 
-    // Dentro del panel, sólo la lista se mueve. Un arrastre sobre la
-    // cabecera no puede llevarse la app por delante.
+    // ── El gesto, bien hecho ───────────────────────────────────────
+    //
+    // El intento anterior empujaba la lista un píxel hacia dentro en
+    // cada movimiento. Eso peleaba contra el dedo: había que forzar
+    // arriba-abajo varias veces para "destrabarlo". Era un parche, no
+    // un arreglo.
+    //
+    // Lo correcto es mirar la DIRECCIÓN del arrastre: sólo se cancela
+    // cuando la lista ya no puede ir más en ese sentido. Dentro de su
+    // recorrido, el dedo manda y nadie le toca el scrollTop.
+    let y0 = 0;
+    panel.addEventListener('touchstart', e => {
+      y0 = e.touches[0].clientY;
+    }, { passive: true });
+
     panel.addEventListener('touchmove', e => {
       const lista = panel.querySelector('#mNotifBody');
+      // Fuera de la lista —la cabecera— no se desplaza nada.
       if (!lista || !lista.contains(e.target)) { e.preventDefault(); return; }
-      // En los extremos, iOS entrega el gesto al documento. Se
-      // empuja un píxel hacia dentro para que nunca esté justo en el
-      // borde y el encadenado no llegue a dispararse.
-      if (lista.scrollTop <= 0) lista.scrollTop = 1;
-      else if (lista.scrollTop + lista.clientHeight >= lista.scrollHeight) {
-        lista.scrollTop = lista.scrollHeight - lista.clientHeight - 1;
-      }
+
+      const dy = e.touches[0].clientY - y0;
+      const arriba = lista.scrollTop <= 0;
+      const abajo = lista.scrollTop + lista.clientHeight >= lista.scrollHeight - 1;
+
+      // Arrastrar hacia abajo estando arriba del todo, o hacia arriba
+      // estando al final: ahí es donde iOS entregaría el gesto al
+      // documento. Es el único momento en que se cancela.
+      if ((arriba && dy > 0) || (abajo && dy < 0)) e.preventDefault();
     }, { passive: false });
 
     // Dos cuadros: el navegador tiene que ver el estado inicial antes
