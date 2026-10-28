@@ -1020,9 +1020,21 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    *
    * Por debajo de la barra en z-index: es el suelo sobre el que la
    * barra se apoya, no parte de ella. */
+  /* ── Dónde EMPIEZA ────────────────────────────────────────────────
+   *
+   * En la mitad de la barra de pestañas, ni un píxel más arriba.
+   *
+   * El primer intento le puso 118px y fue un desastre: el desenfoque
+   * y su tinte subían hasta media pantalla y se leían como una franja
+   * negra sobre el contenido, en todas las pantallas a la vez.
+   *
+   * La cuenta, desde el borde de abajo: el hueco del gesto
+   * (safe-area), luego la barra, que mide 52 —6 de aire, 40 de botón,
+   * 6 de aire—. Su mitad está en safe + 26. Si la barra cambia de
+   * alto, este 26 cambia con ella. */
   .m-floor {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 8990;
-    height: calc(118px + env(safe-area-inset-bottom, 0px));
+    height: calc(26px + env(safe-area-inset-bottom, 0px));
     pointer-events: none;
   }
   .m-floor i { position: absolute; inset: 0; display: block; }
@@ -1052,12 +1064,13 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     -webkit-mask-image: linear-gradient(to top, #000 0%, #000 70%, transparent 87%);
             mask-image: linear-gradient(to top, #000 0%, #000 70%, transparent 87%);
   }
-  /* La última lleva además el tinte. Va aquí y no en una capa aparte
-   * para que lo oscuro aparezca con el desenfoque y no antes: un velo
-   * sobre contenido nítido se lee como una barra negra pegada. */
+  /* La última lleva además el tinte, y flojo. Aquí abajo la barra
+   * tapa casi todo: lo único que se ve de esta franja es el borde del
+   * gesto, y lo que hace falta ahí es que el contenido se apague, no
+   * que aparezca una banda oscura. */
   .m-floor i:nth-child(6) {
     backdrop-filter: blur(26px); -webkit-backdrop-filter: blur(26px);
-    background: linear-gradient(to top, rgba(8,12,19,.60), rgba(8,12,19,0));
+    background: linear-gradient(to top, rgba(8,12,19,.40), rgba(8,12,19,0));
     -webkit-mask-image: linear-gradient(to top, #000 0%, #000 84%, transparent 100%);
             mask-image: linear-gradient(to top, #000 0%, #000 84%, transparent 100%);
   }
@@ -2257,6 +2270,26 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     /* El dedo sobre el fondo no mueve nada. */
     touch-action: none;
 
+    /* ── Y es quien centra el panel ──────────────────────────────
+     *
+     * El intento anterior centraba con `top:50%` más un
+     * `translateY(-50%)`, y el mismo `transform` llevaba la
+     * animación de entrada. Dos cosas distintas peleando por una
+     * propiedad: en cuanto algo tocaba el transform, el centrado se
+     * iba con él.
+     *
+     * Así el centrado lo hace el flex del fondo y el transform queda
+     * libre para la animación. No se pueden estorbar.
+     *
+     * El relleno es IGUAL arriba y abajo —lo que mide la barra de
+     * pestañas, que es el estorbo más alto— y es lo que mantiene el
+     * panel centrado de verdad mientras crece: con un aviso sale
+     * pequeño en mitad de la pantalla, con diez crece hacia los dos
+     * lados por igual hasta tocar ese relleno. */
+    display: flex; align-items: center; justify-content: center;
+    padding: calc(94px + env(safe-area-inset-bottom, 0px)) 12px;
+    box-sizing: border-box;
+
     /* El desenfoque de alrededor va AQUÍ y está desde el primer
      * cuadro, sin transición.
      *
@@ -2282,15 +2315,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    *
    * Es posición, no animación: el panel sigue naciendo de la campana
    * —de ahí el transform-origin— pero acaba donde tiene que acabar. */
+  /* Vive DENTRO del fondo, que es quien lo centra. Aquí sólo dice
+   * cuánto ocupa: todo el ancho que le deja el relleno, y como mucho
+   * todo el alto. Nada de coordenadas. */
   .m-nf-panel {
-    position: fixed; z-index: 9401;
-    left: 12px; right: 12px;
-    top: 50%;
-    /* Centrado quiere decir que lo que sobra arriba y abajo es igual,
-     * así que el tope lo marca el estorbo MÁS alto —la barra de
-     * pestañas— contado dos veces. Con la banda (52) habría cabido
-     * más por arriba, pero entonces el panel ya no estaría centrado. */
-    max-height: calc(100dvh - 200px - 2 * env(safe-area-inset-bottom, 0px));
+    position: relative; z-index: 9401;
+    width: 100%; max-height: 100%;
     display: flex; flex-direction: column;
     /* El cristal es ESTO. Translúcido de verdad y desenfocando la app
      * que tiene detrás, no una capa de color. */
@@ -2300,17 +2330,14 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     border: 1px solid rgba(255,255,255,.16);
     border-radius: 20px;
     box-shadow: 0 26px 60px rgba(0,0,0,.6);
-    /* Sale de donde está la campana —arriba a la izquierda— en vez de
-     * aparecer en el centro: así se entiende qué lo abrió. */
+    /* Crece desde arriba a la izquierda, que es donde está la
+     * campana: así se entiende qué lo abrió. El transform es SÓLO
+     * para esto; de centrarlo se encarga el fondo. */
     transform-origin: 38px top;
-    /* El translateY(-50%) va en las DOS, que es lo que centra. Si
-     * sólo estuviera en el estado final, el panel entraría subiendo
-     * media altura y eso no es la animación que se pidió: entra
-     * creciendo desde la campana, ya centrado. */
-    opacity: 0; transform: translateY(-50%) scale(.94);
+    opacity: 0; transform: scale(.94);
     transition: opacity .2s ease, transform .24s cubic-bezier(.22,.61,.36,1);
   }
-  .m-nf-panel.on { opacity: 1; transform: translateY(-50%) scale(1); }
+  .m-nf-panel.on { opacity: 1; transform: scale(1); }
 
   .m-nf-h {
     display: flex; align-items: flex-start; gap: 12px;

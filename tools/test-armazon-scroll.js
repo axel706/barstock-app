@@ -126,6 +126,15 @@ grupo('el panel de avisos para el contenedor, no el body');
 
   host.scrollTop = 300;
   N.abrir();
+  // El panel cuelga del fondo porque es el fondo quien lo centra.
+  const fondo = w.document.getElementById('mNotifBack');
+  const panel = w.document.getElementById('mNotifPanel');
+  prueba('el panel vive dentro del fondo', !!fondo && !!panel && panel.parentNode === fondo);
+  // Y por eso el clic de cerrar tiene que mirar dónde cayó: tocar un
+  // aviso no puede cerrar el panel.
+  fondo.onclick({ target: panel });
+  prueba('tocar el panel no lo cierra', !!w.document.getElementById('mNotifPanel'));
+
   prueba('el contenedor queda quieto', host.classList.contains('m-nf-quieto'));
   prueba('sin moverlo de sitio', host.scrollTop === 300);
   // El apaño viejo: fijar el body con top negativo. Dejaba el body más
@@ -150,10 +159,22 @@ grupo('la hoja no deja rodar el documento');
     /body\.m-shell\.m-on\s*>\s*\.m-screens\s*\{[^}]*overflow-x:\s*hidden/.test(css));
   prueba('el hueco de la barra pasó al contenedor',
     /body\.m-shell\.m-on\s*>\s*\.m-screens\s*\{[^}]*padding-bottom/.test(css));
-  prueba('el panel de avisos va centrado',
-    /\.m-nf-panel\s*\{[^}]*top:\s*50%/.test(css));
-  prueba('y crece a los dos lados desde el centro',
-    /\.m-nf-panel\.on\s*\{[^}]*translateY\(-50%\)/.test(css));
+  // El centrado lo hace el flex del fondo, no un transform. Si
+  // volviera a hacerlo el transform, la animación de entrada se lo
+  // llevaría por delante otra vez.
+  prueba('el fondo centra el panel',
+    /\.m-nf-back\s*\{[^}]*align-items:\s*center/.test(css));
+  prueba('con relleno igual arriba y abajo, que es lo que lo centra',
+    /\.m-nf-back\s*\{[^}]*padding:\s*calc\(94px \+ env\(safe-area-inset-bottom/.test(css));
+  prueba('y el panel no lleva coordenadas propias',
+    !/\.m-nf-panel\s*\{[^}]*(top|bottom):\s*\d/.test(css));
+  prueba('su transform es sólo la animación',
+    /\.m-nf-panel\.on\s*\{[^}]*transform:\s*scale\(1\)/.test(css));
+  // 118px subían el desenfoque hasta media pantalla y se leía como una
+  // franja negra en todas las pantallas. Va de la mitad de la barra
+  // (52 de alto → 26) hacia abajo, y de ahí no sube.
+  prueba('el suelo empieza en la mitad de la barra, no más arriba',
+    /\.m-floor\s*\{[^}]*height:\s*calc\(26px \+ env\(safe-area-inset-bottom/.test(css));
   prueba('el suelo tiene sus seis capas de desenfoque',
     (css.match(/\.m-floor i:nth-child\(\d\)/g) || []).length === 6);
   prueba('con máscara en todas, que es lo que lo hace progresivo',

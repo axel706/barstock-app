@@ -277,7 +277,10 @@
     const fondo = document.createElement('div');
     fondo.id = 'mNotifBack';
     fondo.className = 'm-nf-back';
-    fondo.onclick = cerrar;
+    // El panel va DENTRO del fondo —es el fondo quien lo centra— así
+    // que el clic de cerrar tiene que mirar dónde cayó. Sin esto,
+    // tocar cualquier aviso cerraría el panel.
+    fondo.onclick = (e) => { if (e.target === fondo) cerrar(); };
 
     // ── La barrera del gesto ───────────────────────────────────────
     //
@@ -289,7 +292,13 @@
     // Aquí se corta el gesto en origen: lo que no nace dentro de la
     // lista no desplaza nada. Y lo que nace dentro sólo desplaza la
     // lista, nunca el documento.
-    fondo.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+    // Y lo mismo con el gesto: ahora el panel está dentro, así que
+    // sus touchmove pasan por aquí. Si se cancelaran todos, la lista
+    // de avisos no se podría desplazar. Sólo muere lo que nace fuera.
+    fondo.addEventListener('touchmove', e => {
+      const p = document.getElementById('mNotifPanel');
+      if (!p || !p.contains(e.target)) e.preventDefault();
+    }, { passive: false });
 
     const panel = document.createElement('div');
     panel.id = 'mNotifPanel';
@@ -304,7 +313,8 @@
         '<div class="m-nf-vacio">Looking…</div></div>';
 
     document.body.appendChild(fondo);
-    document.body.appendChild(panel);
+    // Dentro del fondo, no al lado: el centrado lo hace su flex.
+    fondo.appendChild(panel);
     const x = panel.querySelector('#mNotifX');
     if (x) x.onclick = cerrar;
 
