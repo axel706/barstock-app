@@ -60,6 +60,7 @@
   <link rel="stylesheet" href="styles/skeleton.css?v=skel1">
   <link rel="stylesheet" href="styles/toast.css?v=toast2">
   <link rel="stylesheet" href="styles/marginedge-match.css?v=mem8">
+  <link rel="stylesheet" href="styles/marginedge-connections.css?v=mec1">
   <link rel="stylesheet" href="styles/empty-state.css?v=empty2">
   <link rel="stylesheet" href="styles/pour-iq.css?v=piq1">
   <link rel="stylesheet" href="styles/admin.css?v=adm3">
@@ -155,7 +156,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261028-160536</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261028-182147</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5261,6 +5262,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/settings-integrations.js?v=int19"></script>
 <script src="src/marginedge-match.js?v=mem16"></script>
 <script src="src/marginedge-purchases.js?v=mep7"></script>
+<script src="src/marginedge-unclaimed.js?v=meu1"></script>
 
 <!-- ── La app movil ─────────────────────────────────────────────────
      mobile-shell  el armazon: barra de pestañas, boton de escanear y
@@ -6065,7 +6067,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     loadSavedBackground();
     window.showSettingsPanel = function(panel) {
       const menu = document.getElementById('settingsMenu');
-      const panelIds = ['general', 'vendorCodes', 'orderDefaults', 'senderProfile', 'appearance', 'categories', 'copyPrices', 'zones', 'integrations', 'meMatch', 'mePurchases'];
+      const panelIds = ['general', 'vendorCodes', 'orderDefaults', 'senderProfile', 'appearance', 'categories', 'copyPrices', 'zones', 'integrations', 'meMatch', 'mePurchases', 'meUnclaimed'];
       panelIds.forEach(p => {
         const el = document.getElementById('settingsPanel-' + p);
         if (el) el.classList.add('hidden');
@@ -6572,19 +6574,38 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 
     <div id="settingsPanel-integrations" class="settings-panel hidden">
       <button class="settings-back-btn" onclick="showSettingsPanel(null)">‹ Back</button>
-      <h4 style="margin:0 0 4px">Integrations</h4>
-      <div class="small muted" style="margin-bottom:16px">
-        MarginEdge ya sabe qué compras y a qué precio. Aquí sólo
-        <b>preguntamos y miramos</b>: nada de lo que salga abajo se guarda
-        en tu inventario. Empieza por <b>Restaurantes</b> para ver qué ve
-        la clave, elige el tuyo, y luego prueba el resto.
-      </div>
-      <div id="meEstado" class="small" style="margin-bottom:12px"></div>
-      <div id="meFechas" style="margin-bottom:12px"></div>
-      <div id="meBotones" style="display:flex;gap:8px;flex-wrap:wrap"></div>
-      <div id="meUnits"></div>
+      <h4 style="margin:0 0 4px">Connections</h4>
+      <div class="small muted" style="margin-bottom:16px">Where your purchase data comes from.</div>
+
+      <!-- Arriba el estado y lo que necesita tu atención. Abajo, plegado,
+           el panel de diagnóstico: los nueve botones de API, el rango de
+           fechas y el volcado en crudo. Nos han salvado varias veces,
+           pero son herramienta, no la pantalla. -->
+      <div id="meConexion"></div>
+      <div id="meAtencion"></div>
+      <div id="meCifras"></div>
       <div id="meAccion"></div>
-      <div id="meSalida" style="margin-top:16px"></div>
+
+      <details id="meDiag" class="me-diag">
+        <summary>Developer tools</summary>
+        <div class="small muted" style="margin:10px 0 12px">
+          Preguntas directas a la API de MarginEdge. Nada de lo que salga
+          aquí se guarda en tu inventario.
+        </div>
+        <div id="meEstado" class="small" style="margin-bottom:12px"></div>
+        <div id="meFechas" style="margin-bottom:12px"></div>
+        <div id="meBotones" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+        <div id="meUnits"></div>
+        <!-- Los dos sync manuales siguen aquí: el automático trae las
+             facturas nuevas, pero copiar el catálogo entero de cero
+             sigue siendo una operación que se lanza a mano. -->
+        <div style="display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap">
+          <button type="button" id="meSync" class="ui-control">Sync catalog</button>
+          <button type="button" id="meSyncInv" class="ui-control">Sync invoices</button>
+          <span id="meSyncNota" class="small muted"></span>
+        </div>
+        <div id="meSalida" style="margin-top:16px"></div>
+      </details>
     </div>
 
     <div id="settingsPanel-mePurchases" class="settings-panel hidden">
@@ -6597,6 +6618,16 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
       </div>
       <div id="mepFechas"></div>
       <div id="mepBody"></div>
+    </div>
+
+    <!-- La pregunta al revés: de las facturas hacia tus botellas. Es el
+         único sitio desde el que se ve un producto de MarginEdge que
+         ninguna botella reclama — y por ahí se cayó una factura entera
+         sin que nada lo dijera. -->
+    <div id="settingsPanel-meUnclaimed" class="settings-panel hidden">
+      <button class="settings-back-btn" onclick="showSettingsPanel('integrations')">‹ Connections</button>
+      <h4 style="margin:0 0 4px">Arrived but unclaimed</h4>
+      <div id="meuBody"></div>
     </div>
 
     <div id="settingsPanel-meMatch" class="settings-panel hidden">

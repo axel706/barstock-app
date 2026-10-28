@@ -812,5 +812,17 @@
     }
   }
 
-  window.BarStockMarginEdgeMatch = { abrir, leerTodas, _clave: clave, _puntuar: puntuar, _tamanoDe: tamanoDe };
+  // `_idf`, `_puntuar` y `_familia` los usa también la pantalla de
+  // "Arrived but unclaimed", que hace la misma pregunta al revés:
+  // dado un producto de MarginEdge, qué botella tuya es.
+  //
+  // Se exportan en vez de copiarse. Dos motores de parecido darían dos
+  // respuestas distintas a la misma pregunta según por qué pantalla
+  // entraras, y eso es el fallo que más veces ha mordido este
+  // proyecto.
+  window.BarStockMarginEdgeMatch = {
+    abrir, leerTodas,
+    _clave: clave, _puntuar: puntuar, _tamanoDe: tamanoDe,
+    _idf: construirIdf, _familia: familiaDe, _norm: norm
+  };
 })();

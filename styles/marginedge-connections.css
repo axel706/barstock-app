@@ -1,0 +1,186 @@
+/* La pantalla de conexiones y la de "llegó y nadie lo reclama".
+
+   Vive DENTRO del modal de Ajustes, que mide unos 770 px, y hereda sus
+   variables de color: nada de colores a pelo salvo los semánticos
+   —verde conectado, ámbar atención—, que significan lo mismo en claro
+   y en oscuro. */
+
+/* ── Conexiones ──────────────────────────────────────────────────── */
+
+.me-card {
+  border: 1px solid rgba(127,140,160,.28);
+  border-radius: 13px;
+  background: rgba(127,140,160,.07);
+  padding: 12px 13px;
+  margin-bottom: 10px;
+}
+.me-row { display: flex; align-items: center; gap: 10px; }
+.me-grow { flex: 1; min-width: 0; }
+
+.me-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #16a34a; flex: 0 0 8px;
+}
+.me-dot.off { background: #94a3b8; }
+
+.me-nm {
+  display: block; font-size: 14px; font-weight: 800;
+  letter-spacing: -.01em; color: var(--text, #e2e8f0);
+}
+/* El restaurante de MarginEdge, no la locación: son dos nombres y
+   confundirlos ya costó una ronda de preguntas. */
+.me-unit {
+  font-size: 11.5px; font-weight: 600; color: var(--muted, #94a3b8);
+  background: rgba(127,140,160,.14); border-radius: 999px; padding: 3px 9px;
+  white-space: nowrap;
+}
+.me-state {
+  display: block; flex: 1; min-width: 0;
+  font-size: 12px; color: var(--muted, #94a3b8); margin-top: 3px;
+}
+.me-state .ok { color: #16a34a; font-weight: 700; }
+
+.me-ghost {
+  font-size: 11.5px; font-weight: 700; color: #2563eb;
+  background: rgba(37,99,235,.10);
+  border: 1px solid rgba(37,99,235,.28);
+  border-radius: 999px; padding: 6px 12px; cursor: pointer;
+  white-space: nowrap;
+}
+.me-ghost:disabled { opacity: .55; cursor: default; }
+
+.me-lab {
+  font-size: 10px; font-weight: 800; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--muted, #94a3b8);
+  margin: 16px 2px 7px;
+}
+
+/* El aviso. Ámbar y no rojo: esto no está roto, te está esperando. */
+.me-card.alert {
+  border-color: rgba(217,119,6,.42);
+  background: rgba(217,119,6,.09);
+}
+.me-card.alert .me-nm { color: #b45309; }
+.me-card.alert .me-state { color: #a16207; }
+.me-card.alert .me-ghost {
+  color: #b45309; background: rgba(217,119,6,.12); border-color: rgba(217,119,6,.32);
+}
+.me-ic { font-size: 14px; color: #d97706; flex: 0 0 auto; }
+
+.me-nums { display: flex; text-align: center; }
+.me-nums > div { flex: 1; padding: 4px 4px; }
+.me-nums > div + div { border-left: 1px solid rgba(127,140,160,.22); }
+.me-nums b {
+  display: block; font-size: 17px; font-weight: 800;
+  letter-spacing: -.03em; color: var(--text, #e2e8f0);
+}
+.me-nums span { display: block; font-size: 10.5px; color: var(--muted, #94a3b8); margin-top: 2px; }
+.me-nums small { display: block; font-size: 9.5px; color: var(--muted, #94a3b8); opacity: .75; margin-top: 1px; }
+
+.me-go { display: flex; gap: 8px; margin-top: 14px; }
+.me-go-b {
+  flex: 1; text-align: center; font-size: 12.5px; font-weight: 700;
+  padding: 10px; border-radius: 11px; cursor: pointer;
+  border: 1px solid rgba(127,140,160,.32);
+  background: transparent; color: var(--text, #e2e8f0);
+}
+.me-go-b.pri { background: #2563eb; border-color: #2563eb; color: #fff; }
+
+/* El panel de diagnóstico, plegado. Nos ha salvado varias veces, pero
+   nueve botones de API en crudo no son una pantalla de ajustes. */
+.me-diag {
+  margin-top: 18px; padding-top: 14px;
+  border-top: 1px solid rgba(127,140,160,.22);
+}
+.me-diag > summary {
+  cursor: pointer; font-size: 12px; font-weight: 600;
+  color: var(--muted, #94a3b8); list-style: revert;
+}
+
+/* ── Llegó y nadie lo reclama ────────────────────────────────────── */
+
+.meu-sub { font-size: 12.5px; color: var(--muted, #94a3b8); margin: 0 0 4px; line-height: 1.5; }
+.meu-money { font-size: 12.5px; color: #b45309; font-weight: 800; margin: 0 0 14px; }
+
+.meu-it {
+  border: 1px solid rgba(127,140,160,.28);
+  border-radius: 13px; padding: 12px 13px; margin-bottom: 10px;
+  background: rgba(127,140,160,.05);
+}
+.meu-nm {
+  font-size: 13.5px; font-weight: 800; line-height: 1.3;
+  letter-spacing: -.01em; color: var(--text, #e2e8f0);
+}
+.meu-meta { font-size: 11px; color: var(--muted, #94a3b8); margin-top: 3px; }
+.meu-qty { font-size: 11.5px; font-weight: 600; margin-top: 5px; color: var(--text, #e2e8f0); }
+.meu-qty b { color: #b45309; }
+
+.meu-ask {
+  font-size: 10px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase;
+  color: var(--muted, #94a3b8);
+  margin: 11px 0 7px; padding-top: 10px;
+  border-top: 1px solid rgba(127,140,160,.18);
+}
+
+.meu-acts { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
+.meu-derecha { justify-content: flex-end; margin-top: 7px; }
+
+/* La sugerencia es el camino principal y se nota: ocupa el espacio y
+   lleva el color. Un toque y listo — eso es lo automático que faltaba. */
+.meu-sug {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px;
+  border: 1.5px solid #2563eb; background: rgba(37,99,235,.09);
+  border-radius: 11px; padding: 9px 11px; cursor: pointer; text-align: left;
+}
+.meu-sug:disabled { opacity: .55; cursor: default; }
+.meu-tick {
+  width: 17px; height: 17px; border-radius: 50%; background: #2563eb; color: #fff;
+  font-size: 10px; display: flex; align-items: center; justify-content: center; flex: 0 0 17px;
+}
+.meu-t {
+  flex: 1; min-width: 0; font-size: 12.5px; font-weight: 700;
+  color: var(--text, #e2e8f0);
+}
+.meu-t small {
+  display: block; font-weight: 500; font-size: 10.5px;
+  color: var(--muted, #94a3b8); margin-top: 1px;
+}
+
+.meu-alt, .meu-no {
+  font-size: 11.5px; font-weight: 700; border-radius: 999px;
+  padding: 8px 12px; cursor: pointer; white-space: nowrap;
+  border: 1px solid rgba(127,140,160,.32); background: transparent;
+  color: var(--text, #e2e8f0);
+}
+.meu-no { color: var(--muted, #94a3b8); }
+.meu-alt:disabled, .meu-no:disabled { opacity: .55; cursor: default; }
+
+.meu-buscar {
+  width: 100%; box-sizing: border-box; font-size: 12.5px;
+  border: 1px solid rgba(127,140,160,.32); border-radius: 11px;
+  padding: 9px 11px; background: transparent; color: var(--text, #e2e8f0);
+}
+.meu-res { display: flex; flex-direction: column; gap: 6px; margin-top: 7px; }
+.meu-hit {
+  display: flex; align-items: center; gap: 9px; text-align: left;
+  border: 1px solid rgba(127,140,160,.3); border-radius: 10px;
+  padding: 9px 11px; background: rgba(127,140,160,.07); cursor: pointer;
+}
+.meu-vacio, .meu-hint {
+  font-size: 11px; color: var(--muted, #94a3b8); margin-top: 7px; line-height: 1.5;
+}
+
+.meu-aviso:empty { display: none; }
+.meu-aviso {
+  font-size: 11.5px; color: var(--muted, #94a3b8); margin-top: 8px;
+}
+.meu-aviso.mal { color: #f87171; }
+
+/* El cero se dice, no se deja en blanco: una lista vacía sin
+   explicación se lee como que algo no cargó. */
+.meu-ok {
+  font-size: 12.5px; color: var(--muted, #94a3b8); line-height: 1.6;
+  padding: 18px 2px;
+}
+.meu-ok b { color: var(--text, #e2e8f0); }
+.meu-ok.mal { color: #f87171; }

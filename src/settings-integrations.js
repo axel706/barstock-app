@@ -238,10 +238,18 @@
       '</div>';
   }
 
+  // Con respaldo propio: el sync automático corre sin que nadie haya
+  // abierto el plegable, así que las cajas de fecha pueden no existir
+  // todavía. Sin esto, /orders contesta 400 y el automático nunca
+  // funcionaría — fallando en silencio, que es lo peor.
   function rango() {
     const d = document.getElementById('meDesde');
     const h = document.getElementById('meHasta');
-    return { startDate: d && d.value, endDate: h && h.value };
+    const hoy = new Date();
+    return {
+      startDate: (d && d.value) || iso(new Date(hoy.getTime() - 30 * 86400000)),
+      endDate: (h && h.value) || iso(hoy)
+    };
   }
 
   function mostrarFallo(e) {
@@ -471,22 +479,70 @@
     pintarFechas();
     pintarEstado();
     pintarAccion();
-    cargarUnidad().then(() => { pintarEstado(); pintarAccion(); });
+    cargarUnidad().then(() => { pintarEstado(); pintarAccion(); autoSync(); });
   }
 
-  // El botón de emparejar sólo aparece cuando hay restaurante elegido:
-  // sin él la pantalla no sabría qué catálogo pedir.
+  // ── Que se sincronice solo ─────────────────────────────────────────
+  //
+  // Antes esto eran dos botones y tú tenías que saber cuál tocar. No
+  // es trabajo tuyo: si hay facturas nuevas, se traen.
+  //
+  // Una vez por hora como mucho. Abrir y cerrar la pantalla tres veces
+  // seguidas no puede disparar tres recorridos de la API, que tiene un
+  // límite de dos peticiones por segundo y responde 429 en cuanto se
+  // le insiste.
+  //
+  // Y en segundo plano: no bloquea la pantalla ni enseña errores. Si
+  // falla, "Check now" sigue ahí y el estado dirá que no está al día.
+  // Un fallo de red al abrir Ajustes no es una emergencia.
+  const CADA_MS = 60 * 60 * 1000;
+  let _auto = false;
+
+  async function autoSync() {
+    if (_auto || !unidad()) return;
+    _auto = true;
+    try {
+      const t = await ultimoSync();
+      if (t && Date.now() - new Date(t).getTime() < CADA_MS) return;
+      await sincronizarFacturas();
+      pintarCuando();
+      pintarAtencion();
+    } catch (e) {
+      console.warn('[marginedge] auto sync', e);
+    } finally {
+      _auto = false;
+    }
+  }
+
+  // ── La pantalla ────────────────────────────────────────────────────
+  //
+  // Antes esto eran cuatro botones en fila —Sync catalog, Sync
+  // invoices, Match products, What came in— y encima nueve botones de
+  // API en crudo. Un panel de diagnóstico haciendo de pantalla.
+  //
+  // Tres cambios y el porqué de cada uno:
+  //
+  // 1. El sync deja de ser un verbo y pasa a ser un ESTADO. Saber si
+  //    toca catálogo o facturas no es trabajo de quien usa la app. Se
+  //    hace solo; "Check now" queda como salida de emergencia.
+  //
+  // 2. "Needs you" sólo se dibuja cuando hay algo. Una pantalla que
+  //    siempre enseña avisos enseña a ignorarlos.
+  //
+  // 3. Los nueve botones se pliegan en Developer tools. No se borran:
+  //    han hecho falta varias veces. Pero no son la pantalla.
+
   function pintarAccion() {
+    pintarConexion();
+
     const cont = document.getElementById('meAccion');
     if (!cont) return;
     if (!unidad()) { cont.innerHTML = ''; return; }
+
     cont.innerHTML =
-      '<div style="display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap">' +
-        '<button type="button" id="meSync" class="ui-control">Sync catalog</button>' +
-        '<button type="button" id="meSyncInv" class="ui-control">Sync invoices</button>' +
-        '<button type="button" id="meIrMatch" class="success ui-control">Match products →</button>' +
-        '<button type="button" id="meIrCompras" class="ui-control">What came in →</button>' +
-        '<span id="meSyncNota" class="small muted"></span>' +
+      '<div class="me-go">' +
+        '<button type="button" id="meIrMatch" class="me-go-b pri">Match products →</button>' +
+        '<button type="button" id="meIrCompras" class="me-go-b">What came in →</button>' +
       '</div>';
 
     const b = document.getElementById('meIrMatch');
@@ -495,13 +551,180 @@
     const c = document.getElementById('meIrCompras');
     if (c) c.onclick = () => window.showSettingsPanel('mePurchases');
 
+    // Los botones viejos siguen vivos dentro del plegable, para cuando
+    // haga falta forzar una copia completa del catálogo.
     const s = document.getElementById('meSync');
     if (s) s.onclick = () => sincronizar().catch(mostrarFallo);
-
     const si = document.getElementById('meSyncInv');
     if (si) si.onclick = () => sincronizarFacturas().catch(mostrarFallo);
 
-    notaSync();
+    pintarCifras();
+    pintarAtencion();
+  }
+
+  // ── El estado de la conexión ───────────────────────────────────────
+
+  function hace(iso) {
+    if (!iso) return '';
+    const ms = Date.now() - new Date(iso).getTime();
+    if (!isFinite(ms) || ms < 0) return '';
+    const min = Math.round(ms / 60000);
+    if (min < 1) return 'just now';
+    if (min < 60) return min + (min === 1 ? ' minute ago' : ' minutes ago');
+    const h = Math.round(min / 60);
+    if (h < 24) return h + (h === 1 ? ' hour ago' : ' hours ago');
+    const d = Math.round(h / 24);
+    return d + (d === 1 ? ' day ago' : ' days ago');
+  }
+
+  function pintarConexion() {
+    const el = document.getElementById('meConexion');
+    if (!el) return;
+    const u = unidad();
+
+    if (!u) {
+      el.innerHTML =
+        '<div class="me-card">' +
+          '<div class="me-row"><span class="me-dot off"></span>' +
+          '<span class="me-nm">MarginEdge</span></div>' +
+          '<div class="me-state">No restaurant picked yet. Open ' +
+          '<b>Developer tools</b> below and press <b>Restaurantes</b>.</div>' +
+        '</div>';
+      return;
+    }
+
+    el.innerHTML =
+      '<div class="me-card">' +
+        '<div class="me-row">' +
+          '<span class="me-dot"></span>' +
+          '<span class="me-nm">MarginEdge</span>' +
+          '<span class="me-unit">' + esc(u) + '</span>' +
+        '</div>' +
+        '<div class="me-row" style="margin-top:7px">' +
+          '<span class="me-state" id="meCuando">Checking…</span>' +
+          '<button type="button" class="me-ghost" id="meAhora">Check now</button>' +
+        '</div>' +
+      '</div>';
+
+    const b = document.getElementById('meAhora');
+    if (b) b.onclick = () => {
+      b.disabled = true;
+      const c = document.getElementById('meCuando');
+      if (c) c.textContent = 'Checking…';
+      sincronizarFacturas()
+        .catch(mostrarFallo)
+        .then(() => { b.disabled = false; pintarCuando(); pintarAtencion(); });
+    };
+
+    pintarCuando();
+  }
+
+  async function pintarCuando() {
+    const el = document.getElementById('meCuando');
+    if (!el) return;
+    const t = await ultimoSync();
+    el.innerHTML = t
+      ? '<b class="ok">Up to date</b> · checked ' + esc(hace(t))
+      : 'Never checked. It runs on its own when you open the app.';
+  }
+
+  async function ultimoSync() {
+    const { url, key } = cfg();
+    const id = await locationId();
+    if (!url || !key || !id) return null;
+    try {
+      const r = await fetch(
+        `${url}/rest/v1/location_settings?location_id=eq.${id}` +
+        `&select=marginedge_invoices_synced_at,marginedge_synced_at`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+      const f = await r.json();
+      return f?.[0]?.marginedge_invoices_synced_at || f?.[0]?.marginedge_synced_at || null;
+    } catch (e) { return null; }
+  }
+
+  // ── Las cifras ─────────────────────────────────────────────────────
+  //
+  // Con `count=exact` y `limit=0`: el conteo viene en la cabecera y no
+  // se descargan las filas. Con diez mil productos eso importa.
+  async function contar(ruta) {
+    const { url, key } = cfg();
+    if (!url || !key) return null;
+    try {
+      const r = await fetch(`${url}/rest/v1/${ruta}&limit=0`, {
+        headers: {
+          apikey: key, Authorization: `Bearer ${key}`,
+          Prefer: 'count=exact', Range: '0-0'
+        }
+      });
+      const cr = r.headers.get('content-range') || '';
+      const n = Number(String(cr).split('/')[1]);
+      return isFinite(n) ? n : null;
+    } catch (e) { return null; }
+  }
+
+  async function pintarCifras() {
+    const el = document.getElementById('meCifras');
+    if (!el) return;
+    const id = await locationId();
+    if (!id) { el.innerHTML = ''; return; }
+
+    const total = ((window.state && window.state.master) || []).length;
+    const [enlaces, prods] = await Promise.all([
+      contar(`marginedge_links?location_id=eq.${id}&select=item_name`),
+      contar(`marginedge_products?location_id=eq.${id}&select=product_id`)
+    ]);
+
+    const n = (x) => x == null ? '…' : Number(x).toLocaleString('en-US');
+
+    el.innerHTML =
+      '<p class="me-lab">What is linked</p>' +
+      '<div class="me-card"><div class="me-nums">' +
+        '<div><b>' + n(enlaces) + '</b><span>links</span>' +
+          '<small>' + (total ? 'of ' + total + ' bottles' : '&nbsp;') + '</small></div>' +
+        '<div><b>' + n(prods) + '</b><span>products</span><small>mirrored</small></div>' +
+      '</div></div>';
+  }
+
+  // ── Lo que necesita tu atención ────────────────────────────────────
+  //
+  // Esta sección NO se dibuja cuando no hay nada. Es toda la gracia:
+  // si siempre hay un aviso, deja de ser un aviso.
+  //
+  // Lo primero es el agujero que costó una factura entera: mercancía
+  // que llegó y ninguna botella reclama. Va con el DINERO, no con el
+  // número — "3 productos sin emparejar" no mueve a nadie, "$212 que
+  // no están contados en tu ciclo" sí.
+  async function pintarAtencion() {
+    const el = document.getElementById('meAtencion');
+    if (!el) return;
+    el.innerHTML = '';
+    if (!unidad()) return;
+
+    const U = window.BarStockMarginEdgeUnclaimed;
+    if (!U || !U.resumen) return;
+
+    let r = null;
+    try { r = await U.resumen(); } catch (e) { return; }
+    if (!r || !r.n) return;
+
+    const plata = '$' + (Math.round(r.dinero * 100) / 100)
+      .toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    el.innerHTML =
+      '<p class="me-lab">Needs you</p>' +
+      '<div class="me-card alert"><div class="me-row">' +
+        '<span class="me-ic">⚠</span>' +
+        '<span class="me-grow">' +
+          '<span class="me-nm">' + r.n +
+            (r.n === 1 ? ' delivery didn\'t count' : ' deliveries didn\'t count') + '</span>' +
+          '<span class="me-state">Products arrived that no bottle claims · ' +
+            esc(plata) + ' missing from your cycle</span>' +
+        '</span>' +
+        '<button type="button" class="me-ghost" id="meVerHuerfanos">Review</button>' +
+      '</div></div>';
+
+    const b = document.getElementById('meVerHuerfanos');
+    if (b) b.onclick = () => window.showSettingsPanel('meUnclaimed');
   }
 
   // Cuándo se copió el catálogo por última vez. Un dato que se llena
@@ -711,5 +934,8 @@
   window.__settingsHooks.integrations = render;
   window.__settingsHooks.meMatch = () => {
     if (window.BarStockMarginEdgeMatch) window.BarStockMarginEdgeMatch.abrir(unidad());
+  };
+  window.__settingsHooks.meUnclaimed = () => {
+    if (window.BarStockMarginEdgeUnclaimed) window.BarStockMarginEdgeUnclaimed.abrir();
   };
 })();
