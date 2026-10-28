@@ -317,9 +317,13 @@
       k: 'Welcome to <span class="m-brand">BarStock<i class="m-logo-dot"></i>Pro</span>',
       kHtml: true,
       tt: 'Good to have you',
-      sub: 'Scanning bottles is what this app does best. Look up stock, ' +
-           'see what is running out and review orders too — placing them, ' +
-           'and the deeper reports, live on desktop or iPad.',
+      // Los   son espacios duros: atan las parejas que leían mal
+      // partidas en dos líneas ("Look / up", "orders / too",
+      // "live / on desktop"). El ancho ya da de sobra, esto sólo
+      // impide que vuelvan a separarse con otro tamaño de texto.
+      sub: 'Scanning bottles is what this app does best. Look up stock, ' +
+           'see what is running out and review orders too — placing them, ' +
+           'and the deeper reports, live on desktop or iPad.',
       pista: 'Swipe to discover more',
       icoR: 'scan',
       amt: '', vs: '', btn: ''

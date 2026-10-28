@@ -684,7 +684,19 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * texto crece, que es lo que se pedía de ella. */
   .m-hero-ancha .m-hero-r { width: 30px; flex: 0 0 30px; }
   .m-hero-ancha .m-hero-acts { margin-top: 14px; }
-  .m-hero-ancha .m-hero-s { font-size: var(--m-body); line-height: 1.45; margin-top: 8px; }
+  /* El párrafo se sale de la columna de texto y pasa por debajo del
+   * icono. El icono ocupa una línea arriba a la derecha, pero su
+   * columna reservaba 40px de ancho en TODA la altura de la tarjeta,
+   * así que el párrafo partía palabras ("Look / up", "orders / too")
+   * teniendo el hueco justo al lado. Recupera esos 40px sin tocar el
+   * encabezado, que sí convive con el icono.
+   * `pretty` además evita que la última línea quede con una palabra
+   * suelta; donde no esté soportado simplemente no hace nada. */
+  .m-hero-ancha .m-hero-s {
+    font-size: var(--m-body); line-height: 1.45; margin-top: 8px;
+    margin-right: -40px;
+    text-wrap: pretty;
+  }
   .m-hero-ancha .m-hero-t { font-size: var(--m-head); }
 
   body.m-shell .m-hero-b {
