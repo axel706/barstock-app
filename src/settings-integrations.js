@@ -500,40 +500,17 @@
     pintarFechas();
     pintarEstado();
     pintarAccion();
-    cargarUnidad().then(() => { pintarEstado(); pintarAccion(); autoSync(); });
+    // El sync al arrancar vive ahora en marginedge-connect.js, que
+    // corre con la app y no con esta pantalla. Dos implementaciones
+    // del mismo sync acaban dando dos comportamientos distintos.
+    cargarUnidad().then(() => { pintarEstado(); pintarAccion(); });
   }
 
-  // ── Que se sincronice solo ─────────────────────────────────────────
-  //
-  // Antes esto eran dos botones y tú tenías que saber cuál tocar. No
-  // es trabajo tuyo: si hay facturas nuevas, se traen.
-  //
-  // Una vez por hora como mucho. Abrir y cerrar la pantalla tres veces
-  // seguidas no puede disparar tres recorridos de la API, que tiene un
-  // límite de dos peticiones por segundo y responde 429 en cuanto se
-  // le insiste.
-  //
-  // Y en segundo plano: no bloquea la pantalla ni enseña errores. Si
-  // falla, "Check now" sigue ahí y el estado dirá que no está al día.
-  // Un fallo de red al abrir Ajustes no es una emergencia.
-  const CADA_MS = 60 * 60 * 1000;
-  let _auto = false;
+  // El sync automático vive en `marginedge-connect.js`: corre al
+  // arrancar la APP, no al abrir esta pantalla. Estaba aquí y por eso
+  // en la práctica no corría nunca — nadie entra a Ajustes a diario.
 
-  async function autoSync() {
-    if (_auto || !unidad()) return;
-    _auto = true;
-    try {
-      const t = await ultimoSync();
-      if (t && Date.now() - new Date(t).getTime() < CADA_MS) return;
-      await sincronizarFacturas();
-      pintarCuando();
-      pintarAtencion();
-    } catch (e) {
-      console.warn('[marginedge] auto sync', e);
-    } finally {
-      _auto = false;
-    }
-  }
+
 
   // ── La pantalla ────────────────────────────────────────────────────
   //

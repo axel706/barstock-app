@@ -270,6 +270,28 @@ const B = (item, code) => ({ item, code: code || '', category: 'Liquor', vendor:
       /MarginEdge/.test(error), error);
   }
 
+  grupo('el sync corre al arrancar la app, no al abrir Ajustes');
+  {
+    const src = leer('src/marginedge-connect.js');
+    // Estaba en `render()` del panel de Conexiones: sólo corría si
+    // entrabas a Ajustes, que es la pantalla que no deberías
+    // necesitar abrir. En la práctica no corría nunca.
+    prueba('se engancha a la carga de la página',
+      /DOMContentLoaded', programarArranque/.test(src));
+    prueba('con retraso, que al cargar no hay sesión ni locación',
+      /ESPERA_MS/.test(src));
+    prueba('una vez por hora como mucho', /CADA_MS/.test(src));
+    // La marca vive en la nube: abrir la app en el móvil y en el
+    // ordenador no puede disparar dos recorridos de una API que
+    // contesta 429 a la segunda petición por segundo.
+    prueba('y la marca se lee de la nube',
+      /marginedge_invoices_synced_at/.test(src));
+    prueba('sin restaurante no pide nada', /if \(!unitId\) return;/.test(src));
+
+    const panel = leer('src/settings-integrations.js');
+    prueba('y ya no vive en el panel de Ajustes', !/autoSync/.test(panel));
+  }
+
   console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
     '   ·   ' + (ok + mal) + ' comprobaciones');
   process.exit(mal ? 1 : 0);

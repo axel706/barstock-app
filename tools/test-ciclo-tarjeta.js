@@ -319,6 +319,43 @@ const inv = (n, conStock) => Array.from({ length: n }, (_, i) => ({
     }
   }
 
+  grupo('sin conectar no es lo mismo que sin facturas');
+  {
+    // Decir "nothing new yet" en una locación que nadie conectó es
+    // mentira por omisión, y sólo te enterabas si pulsabas el botón
+    // y leías el aviso.
+    const w = entorno({
+      master: inv(10, 6), pedidos: {},
+      entregas: { n: 0, unidades: 0, dinero: 0, sueltas: 0, ultima: '', conectado: false }
+    });
+    const h = pintar(w);
+    await esperar(60);
+    const c = Array.from(h.querySelectorAll('.m-hero'))
+      .find(x => /MarginEdge sync/i.test(x.textContent));
+    const t = c.textContent.replace(/\s+/g, ' ');
+    prueba('lo dice', /Not connected yet/.test(t), t.slice(0, 80));
+    prueba('y no finge que no llegó nada', !/Nothing new yet/.test(t), t.slice(0, 80));
+    // Son diez mil productos y un par de minutos: aquí se dice dónde,
+    // no se intenta hacer.
+    prueba('manda al escritorio', /Settings . Connections/.test(t), t.slice(0, 220));
+    prueba('y sin botón de refrescar, que no haría nada',
+      !c.querySelector('.m-hero-sync'));
+  }
+
+  grupo('conectada y sin facturas, el botón vuelve');
+  {
+    const w = entorno({
+      master: inv(10, 6), pedidos: {},
+      entregas: { n: 0, unidades: 0, dinero: 0, sueltas: 0, ultima: '', conectado: true }
+    });
+    const h = pintar(w);
+    await esperar(60);
+    const c = Array.from(h.querySelectorAll('.m-hero'))
+      .find(x => /MarginEdge sync/i.test(x.textContent));
+    prueba('dice que no hay nada nuevo', /Nothing new yet/.test(c.textContent));
+    prueba('con su botón', !!c.querySelector('.m-hero-sync'));
+  }
+
   grupo('si la lectura falla, la tarjeta lo dice en vez de esconderse');
   {
     const w = entorno({ master: inv(10, 6), pedidos: {} });

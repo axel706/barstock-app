@@ -648,6 +648,30 @@
       }
     }
 
+    // ── Sin conectar no es lo mismo que sin facturas ────────────────
+    //
+    // Decir "nothing new yet" en una locación que nadie ha conectado
+    // es mentira por omisión: no es que no haya llegado nada, es que
+    // no hay de dónde. Y el único modo de enterarte era pulsar el
+    // botón y leer el aviso.
+    //
+    // El alta vive en el escritorio porque son diez mil productos y
+    // un par de minutos; aquí se dice dónde, no se intenta hacer.
+    if (!e.error && e.conectado === false) {
+      return {
+        tono: 'calm',
+        k: 'MarginEdge sync',
+        tt: 'Not connected yet',
+        sub: 'This location has no MarginEdge catalog. Connect it from ' +
+             'Settings \u203a Connections on a computer — it takes one button ' +
+             'and a couple of minutes.',
+        amt: '', amtPie: '',
+        icoR: 'plug-connected',
+        vs: '',
+        btn: '', go: null
+      };
+    }
+
     // Si la lectura falló, la tarjeta lo dice y deja el botón para
     // reintentar. Esconderse es lo único que no puede hacer.
     if (e.error) {

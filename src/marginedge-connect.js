@@ -499,8 +499,73 @@
     return facturas(unitId, locId, () => {});
   }
 
+  // ── Al arrancar la app, no al abrir Ajustes ────────────────────────
+  //
+  // El sync "automático" vivía en `render()` del panel de Conexiones:
+  // sólo corría si entrabas a Ajustes, que es justo la pantalla que
+  // no deberías necesitar abrir. En la práctica nada se sincronizaba
+  // solo nunca.
+  //
+  // Reglas, y cada una por algo concreto:
+  //
+  //   · una vez por hora como mucho — la marca vive en la nube, así
+  //     que abrir la app en el móvil y en el ordenador no dispara dos
+  //     recorridos de una API que contesta 429 a la segunda petición
+  //     por segundo;
+  //   · sólo si la locación está conectada — sin restaurante elegido
+  //     no hay nada que pedir;
+  //   · en silencio absoluto — un fallo de red al abrir la app no es
+  //     una emergencia, y el botón de la tarjeta sigue ahí;
+  //   · con retraso, porque al cargar la página todavía no hay sesión
+  //     ni locación y `fetchLocationId` fallaría.
+  const CADA_MS = 60 * 60 * 1000;
+  const ESPERA_MS = 8000;
+  let _yaArranco = false;
+
+  async function alArrancar() {
+    if (_yaArranco) return;
+    _yaArranco = true;
+
+    const api = I();
+    if (!api) return;
+
+    try {
+      const locId = await api.locationId();
+      if (!locId) return;
+
+      let unitId = api.unidad && api.unidad();
+      if (!unitId && api.cargarUnidad) unitId = await api.cargarUnidad();
+      if (!unitId) return;          // sin conectar: nada que pedir
+
+      const { url, key } = cfg();
+      if (!url || !key) return;
+
+      const r = await fetch(
+        `${url}/rest/v1/location_settings?location_id=eq.${locId}` +
+        `&select=marginedge_invoices_synced_at`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+      const f = r.ok ? await r.json() : [];
+      const t = f?.[0]?.marginedge_invoices_synced_at;
+      if (t && Date.now() - new Date(t).getTime() < CADA_MS) return;
+
+      await facturas(unitId, locId, () => {});
+    } catch (e) {
+      console.warn('[marginedge] sync al arrancar', e);
+    }
+  }
+
+  function programarArranque() {
+    setTimeout(() => { alArrancar(); }, ESPERA_MS);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', programarArranque);
+  } else {
+    programarArranque();
+  }
+
   window.BarStockMarginEdgeConnect = {
-    montar, pintar, conectar, buscarFacturas,
+    montar, pintar, conectar, buscarFacturas, alArrancar,
     _emparejar: emparejar, _catalogo: catalogo, _facturas: facturas
   };
 })();

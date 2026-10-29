@@ -936,6 +936,17 @@
   // Ahora sale de aquí: una sola lectura, una sola respuesta.
   async function resumen() {
     const fs_ = await cargar();
+
+    // ── ¿Está conectada esta locación? ──────────────────────────────
+    //
+    // Sin catálogo copiado no hay conexión: lo que falta no son
+    // facturas, es dar de alta la locación. La tarjeta del Home
+    // necesita distinguirlo o dice "nothing new yet" sobre algo que
+    // nadie ha conectado nunca — mentira por omisión.
+    const { url, key } = cfg();
+    const locId = await locationId();
+    const prods = await contar(url, key,
+      `marginedge_products?location_id=eq.${locId}&select=product_id`);
     let unidades = 0, dinero = 0, sueltas = 0, ultima = '';
     for (const f of fs_) {
       unidades += f.unidades;
@@ -943,7 +954,8 @@
       sueltas += f.sueltas;
       if (f.fecha && f.fecha > ultima) ultima = f.fecha;
     }
-    return { n: fs_.length, unidades: Math.round(unidades), dinero, sueltas, ultima };
+    return { n: fs_.length, unidades: Math.round(unidades), dinero, sueltas, ultima,
+             conectado: prods > 0 };
   }
 
   window.BarStockMobileInvoices = { montar, resumen, _cargar: cargar, _sugerir: sugerir };
