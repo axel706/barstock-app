@@ -78,9 +78,14 @@
   // últimos 14 días, que es más que una semana de compras y menos que
   // un historial entero.
   function desde() {
+    // La fecha del reinicio en LOCAL, no cortando el ISO: `resetAt()`
+    // es UTC y un ciclo reiniciado el 26 por la tarde en Pensilvania
+    // es el 27 en UTC. Las facturas traen fecha sin hora —fecha
+    // local—, así que comparar contra la UTC se comía el día entero
+    // del reinicio. Faltaban dos facturas del 26 por esto.
     const W = window.BarStockWeeklyCycle;
-    const t = W && W.resetAt ? W.resetAt() : null;
-    if (t) return String(t).slice(0, 10);
+    const t = (W && W.fechaInicioLocal) ? W.fechaInicioLocal() : '';
+    if (t) return t;
     const d = new Date(Date.now() - 14 * 86400000);
     return d.toISOString().slice(0, 10);
   }

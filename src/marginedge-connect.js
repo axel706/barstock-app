@@ -131,7 +131,11 @@
     // El más antiguo de los dos: si el ciclo lleva más de 45 días
     // abierto, se respeta el ciclo entero.
     const desde = ciclo && ciclo < atras ? ciclo : atras;
-    return new Date(desde).toISOString().slice(0, 10);
+    // En LOCAL. `toISOString()` da UTC, y pedir un día de menos es
+    // gratis mientras que pedir uno de más pierde facturas.
+    const d = new Date(desde);
+    const z = (n) => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate());
   }
 
   async function facturas(unitId, locId, avisar) {

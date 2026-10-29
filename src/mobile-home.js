@@ -133,7 +133,13 @@
     const locId = (P && P.fetchLocationId) ? await P.fetchLocationId() : null;
     if (!locId) return false;
 
-    const dia = String(desde).slice(0, 10);
+    // La fecha del ciclo en LOCAL, no cortando el ISO. `resetAt()` es
+    // UTC: un reinicio del 26 por la tarde en Pensilvania es el 27 en
+    // UTC, y las facturas traen fecha sin hora. Comparar la una
+    // contra la otra se come el día entero del reinicio.
+    const W = window.BarStockWeeklyCycle;
+    const dia = (W && W.fechaInicioLocal && W.fechaInicioLocal()) ||
+                String(desde).slice(0, 10);
     const ordenes = new Set();
     let unidades = 0, ultima = '', dinero = 0;
     const sinDueno = new Set();   // productos que ninguna botella reclama

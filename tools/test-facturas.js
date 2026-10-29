@@ -58,7 +58,12 @@ function entorno(opts) {
   w.state = { master: INVENTARIO.map(r => Object.assign({}, r)) };
   w.BARSTOCK_CONFIG = { SUPABASE_URL: 'https://db.test', SUPABASE_KEY: 'k' };
   w.BarStockParIntelligence = { fetchLocationId: async () => 'loc-1' };
-  w.BarStockWeeklyCycle = { resetAt: () => '2026-10-25T08:00:00Z', fmtDate: () => 'Oct 25' };
+  w.BarStockWeeklyCycle = {
+    resetAt: () => '2026-10-25T08:00:00Z', fmtDate: () => 'Oct 25',
+    // La fecha del ciclo sale de aquí, en local: cortar el ISO daba
+    // la fecha UTC y se comía el día del reinicio.
+    fechaInicioLocal: () => '2026-10-25'
+  };
 
   w.__escrito = [];
   const f = async (u, init) => {

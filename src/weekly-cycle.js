@@ -608,8 +608,31 @@
     }
   }
 
+  // ── La fecha del reinicio, en LOCAL ────────────────────────────────
+  //
+  // `resetAt()` es una marca de tiempo UTC. Cortarla con
+  // `.slice(0, 10)` da la fecha UTC, no la tuya: un ciclo reiniciado
+  // el 26 a las ocho de la tarde en Pensilvania es el 27 en UTC.
+  //
+  // Las facturas de MarginEdge traen fecha SIN hora, o sea fecha
+  // local. Comparar una fecha local contra una fecha UTC se come el
+  // día del reinicio entero: faltaban dos facturas del 26 y la
+  // pantalla pedía desde el 27.
+  //
+  // Esto vive aquí porque el ciclo es de este módulo, y porque tres
+  // pantallas lo necesitan: una copia en cada una sería tres sitios
+  // donde volver a equivocarse.
+  function fechaInicioLocal() {
+    const t = _resetAt;
+    if (!t) return '';
+    const d = new Date(t);
+    if (isNaN(d.getTime())) return '';
+    const p = (n) => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+
   window.BarStockWeeklyCycle = {
-    refresh, onDataChanged,
+    refresh, onDataChanged, fechaInicioLocal,
     // Lo pide el Home del telefono para avisar de un ciclo que lleva
     // demasiado abierto. Ese aviso ya existia aqui dentro, pero solo se
     // veia en el boton del encabezado de escritorio.
