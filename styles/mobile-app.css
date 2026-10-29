@@ -705,6 +705,69 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-hero-list span { font-size: var(--m-small); color: #c3d2e2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .m-hero-list b { color: #fff; font-weight: 700; }
   .m-hero-amt { font-size: var(--m-title); font-weight: 800; color: #fff; letter-spacing: -.5px; }
+  /* La unidad bajo la cifra. Hacía falta desde que la esquina dejó de
+   * ser dinero: "26" solo no dice de qué, y "$0" decía algo falso. */
+  .m-hero-amt small {
+    display: block; font-size: var(--m-meta); font-weight: 600;
+    color: #a9bacd; letter-spacing: 0; margin-top: 1px;
+  }
+
+  /* ── Las líneas de una orden, y el índice de proveedores ───────────
+   *
+   * Los dos se SALEN de la columna de la cifra —80px: sus 82 menos el
+   * hueco— y acaban en el mismo borde que los botones del pie. Esa
+   * columna reserva su ancho en toda la altura de la tarjeta y de la
+   * primera línea para abajo no hay nada que esquivar. Es el mismo
+   * arreglo que la tarjeta de bienvenida. */
+  .m-hero-ln, .m-hero-pv { margin-top: 10px; margin-right: -80px; }
+
+  .m-hln { display: flex; align-items: center; gap: 9px; padding: 5px 0; }
+  .m-hln + .m-hln { border-top: 1px solid rgba(255,255,255,.08); }
+  .m-hln .q {
+    flex: 0 0 30px; text-align: right;
+    font-size: var(--m-small); font-weight: 800; color: #fff;
+  }
+  .m-hln .n {
+    flex: 1; min-width: 0; font-size: var(--m-small); color: #dbe7f3;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .m-hln .v { font-size: var(--m-meta); color: #8fa3b8; white-space: nowrap; }
+
+  body.m-shell .m-hpv {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 8px 0; text-align: left;
+    background: none; border: none; cursor: pointer;
+  }
+  body.m-shell .m-hpv + .m-hpv { border-top: 1px solid rgba(255,255,255,.08); }
+  .m-hpv .co { flex: 1; min-width: 0; display: block; }
+  .m-hpv .h { display: flex; align-items: baseline; gap: 8px; }
+  .m-hpv .nm {
+    flex: 1; min-width: 0; font-size: var(--m-small); font-weight: 700; color: #fff;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .m-hpv .d { font-size: var(--m-meta); color: #a9bacd; white-space: nowrap; }
+  .m-hpv .bar {
+    display: block; height: 4px; border-radius: 2px;
+    background: rgba(255,255,255,.14); margin-top: 6px; overflow: hidden;
+  }
+  .m-hpv .bar i { display: block; height: 100%; background: #38bdf8; border-radius: 2px; }
+  /* Redondo y del tamaño de un dedo: es el control de la fila, no un
+   * adorno. app.css fuerza border-radius en los botones, así que el
+   * 50% va con el selector que sí gana. */
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hpv .chev {
+    flex: 0 0 30px; width: 30px; height: 30px; border-radius: 50% !important;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.16);
+    color: #cfe8fb; font-size: var(--m-small);
+  }
+
+  .m-hero-mas { font-size: var(--m-meta); color: #8fa3b8; margin-top: 6px; }
+
+  /* "Review all" pesa menos que "Review the order": con el índice
+   * delante, el camino principal son las filas. */
+  body.m-shell .m-hero-b-suave {
+    background: rgba(255,255,255,.16); color: #fff;
+  }
   .m-hero-vs { font-size: var(--m-meta); color: #a9bacd; }
   .m-prog { height: 4px; border-radius: 2px; background: rgba(255,255,255,.14); margin-top: 9px; overflow: hidden; }
   .m-prog i { display: block; height: 100%; background: #22c55e; border-radius: 2px; }

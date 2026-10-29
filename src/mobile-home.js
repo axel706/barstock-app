@@ -503,6 +503,88 @@
     return n;
   }
 
+  // Cuántas botellas pide una línea. El campo que vale es el que
+  // escribe la app al guardar la orden; `quantity` es el respaldo.
+  function cuantas(r) {
+    return Number(r.finalOrder != null ? r.finalOrder : r.quantity) || 0;
+  }
+
+  // ── Las órdenes que esperan ──────────────────────────────────────────
+  //
+  // Dos formas de la MISMA tarjeta, según cuántos proveedores haya.
+  //
+  //   varios → un índice, una fila por proveedor, y cada fila entra
+  //            DIRECTO a esa orden. Antes la tarjeta listaba los
+  //            nombres sin más y el único botón te dejaba en el índice
+  //            de la pantalla de órdenes: leías la lista dos veces.
+  //
+  //   uno    → se salta el índice. Enseñar una lista de un elemento
+  //            para que lo pulses es un paso de más, así que el título
+  //            pasa a ser el proveedor y debajo van sus líneas.
+  //
+  // ── Y el $0 se va ───────────────────────────────────────────────
+  //
+  // La cifra de la esquina era el importe. Con 47 artículos sin precio
+  // salía "$0", que no significa "gratis" sino "no lo sé", y una cifra
+  // falsa en la esquina es peor que ninguna. Van botellas, que siempre
+  // se saben. El dinero vuelve al pie y sólo cuando existe.
+  function tarjetaOrdenes(v, tot) {
+    const irA = (nombre) => () => {
+      const O = window.BarStockMobileOrders;
+      if (O && O.abrirVendor) O.abrirVendor(nombre);
+      else if (window.BarStockMobile) window.BarStockMobile.ir('orders');
+    };
+
+    const pie = tot.total > 0
+      ? tot.lineas + (tot.lineas === 1 ? ' line · ' : ' lines · ') + money(tot.total)
+      : tot.lineas + (tot.lineas === 1 ? ' line · ' : ' lines · ') +
+        tot.conPrecio + ' priced';
+
+    const base = {
+      tono: 'blue',
+      k: 'Orders waiting',
+      amt: String(tot.botellas),
+      amtPie: tot.botellas === 1 ? 'bottle' : 'bottles',
+      vs: pie
+    };
+
+    if (v.length === 1) {
+      const u = v[0];
+      return Object.assign(base, {
+        tt: u.nombre,
+        // Cuatro y el resto contado. Con cinco la tarjeta crece y
+        // arrastra el alto de TODO el carril, que es común.
+        filas: u.filas.slice(0, 4).map(r => ({
+          q: cuantas(r) + '×',
+          n: r.item || '',
+          v: Number(r.value) > 0 ? money(Number(r.value) * cuantas(r)) : 'no price'
+        })),
+        mas: u.filas.length > 4 ? 'and ' + (u.filas.length - 4) + ' more' : '',
+        btn: 'Review the order',
+        go: irA(u.nombre)
+      });
+    }
+
+    const tope = Math.max.apply(null, v.map(x => x.btl)) || 1;
+    return Object.assign(base, {
+      tt: v.length + ' vendors',
+      // Tres como mucho: la cuarta fila ya empuja el carril entero.
+      prov: v.slice(0, 3).map(x => ({
+        nombre: x.nombre,
+        d: x.filas.length + (x.filas.length === 1 ? ' line · ' : ' lines · ') +
+           x.btl + ' btl',
+        // Proporción entre ellos, no contra un objetivo: el primero
+        // siempre llena la barra.
+        pct: Math.round(x.btl / tope * 100),
+        go: irA(x.nombre)
+      })),
+      mas: v.length > 3 ? 'and ' + (v.length - 3) + ' more' : '',
+      btn: 'Review all',
+      btnTono: 'suave',
+      go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('orders'); }
+    });
+  }
+
   function tarjetas() {
     const t = [tarjetaBienvenida(), tarjetaCiclo()];
 
@@ -511,27 +593,26 @@
         typeof window.getOrderRowsForVendor === 'function' &&
         typeof window.computeOrderSubtotal === 'function') {
       const v = [];
-      let total = 0;
+      let total = 0, botellas = 0, lineas = 0, conPrecio = 0;
       for (const nombre of window.getActiveVendors()) {
         if (nombre === 'UNKNOWN') continue;
         const filas = window.getOrderRowsForVendor(nombre);
         if (!filas.length) continue;
         const sub = window.computeOrderSubtotal(filas);
+        const btl = filas.reduce((s, r) => s + cuantas(r), 0);
         total += sub;
-        v.push({ nombre, sub });
+        botellas += btl;
+        lineas += filas.length;
+        conPrecio += filas.filter(r => Number(r.value) > 0).length;
+        v.push({ nombre, sub, filas, btl });
       }
+
       if (v.length) {
-        v.sort((a, b) => b.sub - a.sub);
-        t.push({
-          tono: 'blue',
-          k: 'Orders waiting',
-          tt: v.length + (v.length === 1 ? ' vendor' : ' vendors'),
-          lista: v.slice(0, 3).map(x => '<b>' + esc(x.nombre) + '</b> ' + money(x.sub)),
-          amt: money(total),
-          vs: '',
-          btn: v.length === 1 ? 'Review the order' : 'Review orders',
-          go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('orders'); }
-        });
+        // Por botellas y no por dinero: con 47 artículos sin precio, el
+        // orden por importe pondría arriba al proveedor más barato que
+        // encima tiene precios, y abajo el pedido grande sin ellos.
+        v.sort((a, b) => b.btl - a.btl);
+        t.push(tarjetaOrdenes(v, { total, botellas, lineas, conPrecio }));
       } else {
         // ── Y cuando ya no queda ninguna ─────────────────────────────
         //
@@ -635,11 +716,37 @@
               `<li${x.hoy ? ' class="is-hoy' + (x.alerta ? ' is-alerta' : '') + '"' : ''}>
                  <u>${esc(x.d)}</u><p>${x.t}</p>
                </li>`).join('')}</ul>` : ''}
+
+            <!-- Las líneas de una orden y el índice de proveedores
+                 salen de la columna de la cifra y acaban en el mismo
+                 borde que los botones del pie: esa columna reserva 80px
+                 en TODA la altura, y ahí abajo no hay nada. -->
+            ${c.filas ? `<div class="m-hero-ln">${c.filas.map(x =>
+              `<div class="m-hln">
+                 <span class="q">${esc(x.q)}</span>
+                 <span class="n">${esc(x.n)}</span>
+                 <span class="v">${esc(x.v)}</span>
+               </div>`).join('')}</div>` : ''}
+
+            ${c.prov ? `<div class="m-hero-pv">${c.prov.map((x, k) =>
+              `<button type="button" class="m-hpv" data-pv="${i}-${k}">
+                 <span class="co">
+                   <span class="h"><span class="nm">${esc(x.nombre)}</span>
+                     <span class="d">${esc(x.d)}</span></span>
+                   <span class="bar"><i style="width:${x.pct}%"></i></span>
+                 </span>
+                 <span class="chev"><i class="ti ti-chevron-right" aria-hidden="true"></i></span>
+               </button>`).join('')}</div>` : ''}
+
+            ${c.mas ? `<div class="m-hero-mas">${esc(c.mas)}</div>` : ''}
           </div>
           <div class="m-hero-r">
             ${c.icoR
               ? `<i class="ti ti-${esc(c.icoR)} m-hero-ir" aria-hidden="true"></i>`
-              : (c.amt ? `<div class="m-hero-amt">${esc(c.amt)}</div>` : '')}
+              : (c.amt
+                  ? `<div class="m-hero-amt">${esc(c.amt)}${
+                      c.amtPie ? `<small>${esc(c.amtPie)}</small>` : ''}</div>`
+                  : '')}
           </div>
         </div>
 
@@ -984,6 +1091,15 @@
     host.querySelectorAll('[data-go3]').forEach(b => {
       const c = cards[Number(b.dataset.go3)];
       if (c && c.go3) b.onclick = (ev) => { ev.stopPropagation(); c.go3(); };
+    });
+
+    // Cada proveedor del índice entra en SU orden. La clave lleva los
+    // dos números —tarjeta y fila— porque el carril pinta todas las
+    // tarjetas a la vez y un índice suelto chocaría entre ellas.
+    host.querySelectorAll('[data-pv]').forEach(b => {
+      const [ci, pi] = String(b.dataset.pv).split('-').map(Number);
+      const p = cards[ci] && cards[ci].prov && cards[ci].prov[pi];
+      if (p && p.go) b.onclick = (ev) => { ev.stopPropagation(); p.go(); };
     });
 
     host.querySelectorAll('[data-item]').forEach(b => {

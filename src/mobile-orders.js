@@ -334,7 +334,24 @@
     refresh();
   }
 
-  window.BarStockMobileOrders = { refresh, falloAlGuardar };
+  // ── Entrar directo a un proveedor ──────────────────────────────────
+  //
+  // La tarjeta del Home enseña las órdenes que esperan, una fila por
+  // proveedor. Pulsar una tiene que llevarte A ESA, no al índice que
+  // acabas de leer para volver a elegir lo mismo.
+  //
+  // `_pedida` y no abrir aquí la pantalla: `show()` se ejecuta DESPUÉS
+  // y pone `_vendor = null` —a propósito, para que entrar por la
+  // pestaña arranque siempre en el resumen—. Así que se deja la
+  // petición anotada y es `show()` quien la recoge y la borra.
+  let _pedida = null;
+
+  function abrirVendor(nombre) {
+    _pedida = String(nombre || '') || null;
+    if (window.BarStockMobile) window.BarStockMobile.ir('orders');
+  }
+
+  window.BarStockMobileOrders = { refresh, falloAlGuardar, abrirVendor };
 
   function registrar() {
     if (!window.BarStockMobile) return;
@@ -355,7 +372,15 @@
       },
       // Al volver se arranca siempre en el resumen: entrar a Órdenes y
       // caer dentro del proveedor que miraste ayer es desorientador.
-      show(host) { _vendor = null; pintar(host); }
+      //
+      // Salvo que alguien haya pedido uno concreto —la tarjeta del
+      // Home—. Esa petición se consume aquí y se borra: vale para esta
+      // entrada y ninguna más.
+      show(host) {
+        _vendor = _pedida || null;
+        _pedida = null;
+        pintar(host);
+      }
     });
   }
 
