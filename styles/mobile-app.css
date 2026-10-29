@@ -279,6 +279,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-screen[data-screen="search"],
   .m-screen[data-screen="more"],
   .m-screen[data-screen="orderHistory"],
+  .m-screen[data-screen="invoices"],
   .m-screen[data-screen="settings"] { padding: 14px 13px 0; }
 
   /* ── La banda ───────────────────────────────────────────────────── */
@@ -2603,3 +2604,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.09);
   }
   .m-ipie b { color: #cfe0f0; }
+
+  /* La pastilla "fix" de la tarjeta de compras. Mismo sitio que el
+     importe de las otras filas, para que la columna derecha diga
+     siempre lo mismo: qué pasa con esta línea. */
+  .m-hln .tag.fix { background: rgba(252,211,77,.26); color: #fde68a; }

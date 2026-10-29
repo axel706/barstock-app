@@ -103,16 +103,31 @@
 
     const d = desdeCiclo();
 
+    // ── Una tabla que falte no puede tumbar la pantalla ─────────────
+    //
+    // La primera versión leía las tres con un `Promise.all` pelado.
+    // Si `marginedge_not_mine` todavía no existe —su SQL se corre a
+    // mano— la lectura falla y se lleva por delante TODA la vista: no
+    // ves tus facturas por una tabla que sólo sirve para descartar
+    // papel de cocina.
+    //
+    // Las facturas son obligatorias: sin ellas no hay nada que
+    // enseñar y el error sí tiene que verse. Las otras dos degradan:
+    // sin vínculos todo sale como "sin botella", y sin descartados no
+    // hay nada descartado. Las dos cosas son ciertas y se entienden.
+    const opcional = async (ruta) => {
+      try { return await leerPaginado(url, key, ruta); }
+      catch (e) { console.warn('[facturas] tabla opcional', ruta, e); return []; }
+    };
+
     const [lineas, enlaces, fuera] = await Promise.all([
       leerPaginado(url, key,
         `marginedge_invoice_lines?location_id=eq.${locId}&invoice_date=gte.${d}` +
         `&select=order_id,line_no,invoice_date,invoice_number,vendor_name,status,` +
         `product_id,vendor_item_name,unit_price,quantity,line_price` +
         `&order=order_id.asc,line_no.asc`),
-      leerPaginado(url, key,
-        `marginedge_links?location_id=eq.${locId}&select=product_id,item_name&order=product_id.asc`),
-      leerPaginado(url, key,
-        `marginedge_not_mine?location_id=eq.${locId}&select=product_id&order=product_id.asc`)
+      opcional(`marginedge_links?location_id=eq.${locId}&select=product_id,item_name&order=product_id.asc`),
+      opcional(`marginedge_not_mine?location_id=eq.${locId}&select=product_id&order=product_id.asc`)
     ]);
 
     const dueno = new Map(enlaces.map(e => [String(e.product_id), e.item_name || '']));

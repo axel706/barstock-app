@@ -232,6 +232,48 @@ const txt = (h) => h.textContent.replace(/\s+/g, ' ');
       /No invoices yet this cycle/.test(txt(h)), txt(h));
   }
 
+  grupo('una tabla que falte no tumba la pantalla');
+  {
+    // `marginedge_not_mine` se crea a mano. Si todavía no existe, la
+    // lectura falla — y la primera versión se llevaba por delante
+    // TODA la vista: no veías tus facturas por una tabla que sólo
+    // sirve para descartar papel de cocina.
+    const w = entorno({
+      lineas: [L({ product_id: 'p1', vendor_item_name: 'Tito’s Handmade Vodka 1.75L', quantity: 2, unit_price: 22.99, line_price: 45.98 })],
+      enlaces: [{ product_id: 'p1', item_name: 'Tito’s Vodka 1.75L' }]
+    });
+    const antes = w.fetch;
+    const roto = async (u, i) => {
+      if (/marginedge_not_mine/.test(u)) return { ok: false, text: async () => 'relation does not exist' };
+      return antes(u, i);
+    };
+    w.fetch = roto; global.fetch = roto;
+
+    const h = host(w);
+    await w.BarStockMobileInvoices.montar(h);
+    await esperar(40);
+    prueba('las facturas se siguen viendo', h.querySelectorAll('.m-inv').length === 1,
+      txt(h).slice(0, 120));
+    prueba('y no sale un error', !/does not exist/.test(txt(h)), txt(h).slice(0, 120));
+  }
+
+  grupo('sin la factura no hay pantalla, y eso sí se dice');
+  {
+    const w = entorno({ lineas: [], enlaces: [] });
+    const antes = w.fetch;
+    const roto = async (u, i) => {
+      if (/invoice_lines/.test(u)) return { ok: false, text: async () => 'boom' };
+      return antes(u, i);
+    };
+    w.fetch = roto; global.fetch = roto;
+    const h = host(w);
+    await w.BarStockMobileInvoices.montar(h);
+    await esperar(40);
+    // Ésta sí es obligatoria: callarse un fallo aquí dejaría una
+    // pantalla vacía que parece "no hay facturas".
+    prueba('el error se ve', /boom/.test(txt(h)), txt(h).slice(0, 120));
+  }
+
   console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
     '   ·   ' + (ok + mal) + ' comprobaciones');
   process.exit(mal ? 1 : 0);

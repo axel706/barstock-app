@@ -135,7 +135,8 @@
 
     const dia = String(desde).slice(0, 10);
     const ordenes = new Set();
-    let unidades = 0, ultima = '';
+    let unidades = 0, ultima = '', dinero = 0;
+    const sinDueno = new Set();   // productos que ninguna botella reclama
 
     // PostgREST corta en 1000 filas SIN avisar. Una semana de facturas
     // se pasa de ahí en cuanto entra la comida —se guardan todas las
@@ -144,7 +145,7 @@
     for (let p = 0; p < 20; p++) {
       const r = await fetch(
         `${url}/rest/v1/marginedge_invoice_lines?location_id=eq.${locId}` +
-        `&invoice_date=gte.${dia}&select=order_id,quantity,invoice_date` +
+        `&invoice_date=gte.${dia}&select=order_id,quantity,invoice_date,product_id,line_price` +
         `&order=invoice_date.asc&limit=1000&offset=${p * 1000}`,
         { headers: { apikey: key, Authorization: `Bearer ${key}` } });
       if (!r.ok) return false;
@@ -153,13 +154,48 @@
       for (const f of filas) {
         ordenes.add(f.order_id);
         unidades += Number(f.quantity) || 0;
+        dinero += Number(f.line_price) || 0;
+        if (f.product_id) sinDueno.add(String(f.product_id));
         if (f.invoice_date && f.invoice_date > ultima) ultima = f.invoice_date;
       }
       if (filas.length < 1000) break;
     }
 
     if (!ordenes.size) return false;
-    return { n: ordenes.size, unidades: Math.round(unidades), ultima };
+
+    // ── Cuántos de esos productos no tienen botella ─────────────────
+    //
+    // Se calcula sobre la MISMA lectura de líneas, no con una segunda
+    // consulta: dos sitios contando lo mismo acaban dando cifras
+    // distintas, y eso ya pasó en este proyecto más de una vez.
+    //
+    // Las dos tablas son opcionales. Si `marginedge_not_mine` todavía
+    // no existe —su SQL se corre a mano—, la cuenta sale de más, no
+    // se cae la tarjeta.
+    const lee = async (ruta) => {
+      try {
+        const r = await fetch(`${url}/rest/v1/${ruta}`,
+          { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+        if (!r.ok) return [];
+        const x = await r.json();
+        return Array.isArray(x) ? x : [];
+      } catch (e) { return []; }
+    };
+
+    const [enlaces, fuera] = await Promise.all([
+      lee(`marginedge_links?location_id=eq.${locId}&select=product_id&limit=5000`),
+      lee(`marginedge_not_mine?location_id=eq.${locId}&select=product_id&limit=5000`)
+    ]);
+    for (const e of enlaces) sinDueno.delete(String(e.product_id));
+    for (const e of fuera)   sinDueno.delete(String(e.product_id));
+
+    return {
+      n: ordenes.size,
+      unidades: Math.round(unidades),
+      dinero,
+      sueltas: sinDueno.size,
+      ultima
+    };
   }
 
   // Se vuelve a pedir cuando cambia el arranque del ciclo, no cada vez
@@ -605,8 +641,53 @@
     });
   }
 
+  // ── Lo que llegó de los proveedores ──────────────────────────────────
+  //
+  // Sale de la MISMA lectura que alimenta la línea de tiempo del
+  // ciclo, así que la tarjeta y la tarjeta de al lado no se pueden
+  // contradecir.
+  //
+  // Sólo aparece si hay facturas en el ciclo. No es un panel de
+  // control permanente: el carrusel enseña lo que pasa AHORA, y una
+  // tarjeta que siempre está deja de mirarse.
+  //
+  // De momento lleva a la pantalla de facturas. Aplicar lo recibido y
+  // los precios desde aquí es el paso siguiente y necesita columnas
+  // nuevas en la orden; mientras no existan, un botón que dijera
+  // "Apply" mentiría.
+  function tarjetaFacturas() {
+    const e = _entregas;
+    if (!e || !e.n) return null;
+
+    const filas = [
+      { n: e.unidades + (e.unidades === 1 ? ' unit received' : ' units received'),
+        v: e.dinero ? money(e.dinero) : '' }
+    ];
+    if (e.sueltas) {
+      filas.push({
+        n: e.sueltas + (e.sueltas === 1 ? ' line has no bottle' : ' lines have no bottle'),
+        tag: 'fix', v: ''
+      });
+    }
+
+    return {
+      tono: e.sueltas ? 'amber' : 'teal',
+      k: 'Purchases came in',
+      tt: e.n + (e.n === 1 ? ' invoice' : ' invoices'),
+      filas,
+      amt: String(e.n),
+      amtPie: e.n === 1 ? 'invoice' : 'invoices',
+      vs: e.ultima ? 'last on ' + fmtDia(e.ultima) : '',
+      btn: e.sueltas ? 'Review them' : 'See invoices',
+      go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('invoices'); }
+    };
+  }
+
   function tarjetas() {
     const t = [tarjetaBienvenida(), tarjetaCiclo()];
+
+    const fac = tarjetaFacturas();
+    if (fac) t.push(fac);
 
     // 3 · Ordenes sin colocar, TODAS.
     if (typeof window.getActiveVendors === 'function' &&
