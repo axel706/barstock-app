@@ -574,7 +574,10 @@
           n: r.item || '',
           v: Number(r.value) > 0 ? money(Number(r.value) * cuantas(r)) : 'no price'
         })),
-        mas: u.filas.length > 3 ? 'and ' + (u.filas.length - 3) + ' more' : '',
+        mas: '',
+        vs: u.filas.length > 3
+          ? 'and ' + (u.filas.length - 3) + ' more · ' + pie
+          : pie,
         btn: 'Review the order',
         go: irA(u.nombre)
       });
@@ -685,12 +688,15 @@
         (b.fuera - a.fuera) || (b.avg - a.avg) || (a.dias - b.dias));
 
       const fuera = pronto.filter(x => x.fuera).length;
-      // TRES, no cuatro. Cada fila que se añade estira el alto de la
-      // tarjeta, y como todas las del carril miden lo que la más alta,
-      // estira el carril ENTERO: una fila de más aquí hace crecer la
-      // bienvenida, el ciclo y las órdenes a la vez. Con cuatro el
-      // Home ya no cabía en pantalla.
-      const CUANTAS = 3;
+      // DOS. Ésta es la tarjeta más alta del carril, así que es la
+      // que fija la altura de TODAS: la bienvenida, el ciclo y las
+      // órdenes crecen con ella. Cada fila que se le quita encoge el
+      // Home entero.
+      //
+      // Con dos sigue contestando lo que importa —qué es lo que más
+      // duele— y el resto lo cuenta el pie. La lista completa está a
+      // un toque en "See them".
+      const CUANTAS = 2;
       const resto = pronto.length - Math.min(CUANTAS, pronto.length);
 
       t.push({
@@ -710,12 +716,14 @@
           tag: x.fuera ? 'out' : '',
           v: n1(x.avg) + '/wk'
         })),
-        mas: resto ? 'and ' + resto + ' more within a week' : '',
+        mas: '',
         // La esquina deja de repetir el título: es el recuento de lo
         // que está en cero, que es otro dato.
         amt: String(fuera || pronto.length),
         amtPie: fuera ? 'out now' : 'this week',
-        vs: pronto.length + ' under a week',
+        vs: resto
+          ? 'and ' + resto + ' more under a week'
+          : pronto.length + ' under a week',
         btn: 'See them',
         // Al inventario YA ORDENADO por lo que está más cerca de
         // vaciarse. Antes llevaba a los 264 artículos por valor en el

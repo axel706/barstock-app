@@ -86,8 +86,13 @@ const nombres = (h) => filas(h).map(f => f.querySelector('.n').textContent);
     const h = pintar(w);
     prueba('el que más se mueve va primero',
       /Tito/.test(nombres(h)[0] || ''), nombres(h).join(' | '));
-    prueba('y el que menos, el último',
-      /Amaretto/.test(nombres(h)[2] || ''), nombres(h).join(' | '));
+    // Sólo caben dos filas, así que el que menos se mueve ni sale:
+    // se comprueba que el segundo sea el segundo que más se mueve y
+    // que el amaretto quede fuera.
+    prueba('el segundo es el siguiente que más se mueve',
+      /White Haven/.test(nombres(h)[1] || ''), nombres(h).join(' | '));
+    prueba('y el que menos no entra',
+      !nombres(h).some(n => /Amaretto/.test(n)), nombres(h).join(' | '));
     prueba('con su consumo a la derecha',
       filas(h)[0].querySelector('.v').textContent === '12/wk',
       filas(h)[0].querySelector('.v').textContent);
@@ -126,7 +131,7 @@ const nombres = (h) => filas(h).map(f => f.querySelector('.n').textContent);
     // La esquina repetía el título. Ahora dice otra cosa.
     const amt = tarjeta(h).querySelector('.m-hero-amt').textContent.replace(/\s/g, '');
     prueba('la esquina no repite el total', amt === '2outnow', amt);
-    prueba('y el pie sí lleva el total', /3 under a week/.test(txt(h)), txt(h));
+    prueba('y el pie cuenta el resto', /and 1 more under a week/.test(txt(h)), txt(h));
   }
 
   grupo('sin nada fuera, el titular vuelve al total');
@@ -159,10 +164,12 @@ const nombres = (h) => filas(h).map(f => f.querySelector('.n').textContent);
       ({ item: n, onHand: 0, avg: 10 - i }));
     const w = entorno(seis);
     const h = pintar(w);
-    // Cada fila estira el alto de TODO el carril, no sólo de esta
-    // tarjeta: con cuatro, el Home dejaba de caber en pantalla.
-    prueba('enseña tres', filas(h).length === 3, String(filas(h).length));
-    prueba('y cuenta las otras tres', /and 3 more within a week/.test(txt(h)), txt(h));
+    // Ésta es la tarjeta más alta del carril, así que fija la altura
+    // de todas. Cada fila que se le quita encoge el Home entero.
+    prueba('enseña dos', filas(h).length === 2, String(filas(h).length));
+    // Y el resto se cuenta en el pie, que ya es un renglón dibujado:
+    // una línea propia costaría altura a todas las tarjetas.
+    prueba('el resto va en el pie', /and 4 more under a week/.test(txt(h)), txt(h));
   }
 
   grupo('más de una semana no entra');
