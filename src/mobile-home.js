@@ -661,21 +661,55 @@
       .map(({ r, p }) => {
         const avg = Number(p.avgUsed) || 0;
         if (avg <= 0 || (p.normalWeeks || 0) < SEMANAS_MIN) return null;
-        const dias = Math.round((Number(r.onHand) || 0) / avg * 7);
-        return dias <= 7 ? { item: r.item, dias } : null;
+        const onHand = Number(r.onHand) || 0;
+        const dias = Math.round(onHand / avg * 7);
+        // `fuera` mira el estante, no el redondeo. Media botella de
+        // algo que se mueve mucho también da "0 days", y decir que
+        // está fuera cuando queda media es mentira.
+        return dias <= 7 ? { item: r.item, dias, avg, fuera: onHand <= 0 } : null;
       })
-      .filter(Boolean)
-      .sort((a, b) => a.dias - b.dias);
+      .filter(Boolean);
 
     if (pronto.length) {
+      // ── Ordenar por CONSUMO, no por días ──────────────────────────
+      //
+      // Con cuarenta y nueve productos bajo la semana, los primeros
+      // diez dicen todos "0 days" y esa lista no prioriza nada: no se
+      // distingue un Tito's que se mueve doce a la semana de un
+      // amaretto que se mueve uno. Los días contestan "cuándo"; con
+      // todo a cero la pregunta que queda es "cuánto duele".
+      //
+      // Los que están fuera van primero —eso sí es otro estado— y
+      // dentro de cada grupo manda el consumo.
+      pronto.sort((a, b) =>
+        (b.fuera - a.fuera) || (b.avg - a.avg) || (a.dias - b.dias));
+
+      const fuera = pronto.filter(x => x.fuera).length;
+      const resto = pronto.length - Math.min(4, pronto.length);
+
       t.push({
         tono: 'red',
         k: 'Running out first',
-        tt: pronto.length + (pronto.length === 1 ? ' product' : ' products'),
-        lista: pronto.slice(0, 3).map(x =>
-          '<b>' + esc(x.item.slice(0, 18)) + '</b> ' + x.dias + (x.dias === 1 ? ' day' : ' days')),
-        amt: String(pronto.length),
-        vs: 'within a week',
+        // El titular es el número que exige algo hoy. "49 products"
+        // mezcla el aviso con el problema, y mezclados no se mira
+        // ninguno.
+        tt: fuera
+          ? fuera + (fuera === 1 ? ' is out right now' : ' are out right now')
+          : pronto.length + (pronto.length === 1 ? ' product' : ' products'),
+        // Nombres enteros: el recorte a 18 caracteres partía palabras
+        // a lo bruto ("Canyon Road Cabern"). Lo corta el ancho, con
+        // puntos suspensivos, que es lo que sabe dónde está el borde.
+        filas: pronto.slice(0, 4).map(x => ({
+          n: x.item,
+          tag: x.fuera ? 'out' : '',
+          v: n1(x.avg) + '/wk'
+        })),
+        mas: resto ? 'and ' + resto + ' more within a week' : '',
+        // La esquina deja de repetir el título: es el recuento de lo
+        // que está en cero, que es otro dato.
+        amt: String(fuera || pronto.length),
+        amtPie: fuera ? 'out now' : 'this week',
+        vs: pronto.length + ' under a week',
         btn: 'See them',
         go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('inventory'); }
       });
@@ -738,8 +772,9 @@
                  en TODA la altura, y ahí abajo no hay nada. -->
             ${c.filas ? `<div class="m-hero-ln">${c.filas.map(x =>
               `<div class="m-hln">
-                 <span class="q">${esc(x.q)}</span>
+                 ${x.q ? `<span class="q">${esc(x.q)}</span>` : ''}
                  <span class="n">${esc(x.n)}</span>
+                 ${x.tag ? `<span class="tag">${esc(x.tag)}</span>` : ''}
                  <span class="v">${esc(x.v)}</span>
                </div>`).join('')}</div>` : ''}
 

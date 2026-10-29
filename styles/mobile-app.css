@@ -735,6 +735,17 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .m-hln .v { font-size: var(--m-meta); color: #8fa3b8; white-space: nowrap; }
+  /* "out" es un ESTADO, no una cifra: pastilla, no texto suelto. Que
+   * se lea de un vistazo entre los que sólo van bajos. */
+  .m-hln .tag {
+    font-size: var(--m-meta); font-weight: 800; color: #fff;
+    background: rgba(239,68,68,.34); border-radius: 999px;
+    padding: 2px 8px; white-space: nowrap;
+  }
+  /* Sobre la tarjeta roja el gris del importe se apaga demasiado. */
+  .m-hero-red .m-hln .n { color: #f3dede; }
+  .m-hero-red .m-hln .v { color: #e2a9a9; }
+  .m-hero-red .m-hero-mas { color: #e2a9a9; }
 
   body.m-shell .m-hpv {
     display: flex; align-items: center; gap: 10px;
