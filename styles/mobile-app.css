@@ -619,8 +619,19 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     scrollbar-width: none;
   }
   .m-rail::-webkit-scrollbar { display: none; }
+  /* min-width: 0 NO es decorativo. Sin el, el minimo automatico de un
+   * elemento flex es su contenido minimo, y el nombre de la fila lleva
+   * white-space: nowrap, asi que su contenido minimo es el nombre
+   * ENTERO. El min-width: 0 de .m-hln .n deja que se encoja al usarse,
+   * pero no reduce lo que aporta a ese calculo.
+   *
+   * Con "Chateau Lassegue Les Cadrans De Lassegue Grand Cru 2020" la
+   * cuenta salia asi: fila 467, menos los 80 del margen negativo 387,
+   * mas 10 de hueco y 82 de la columna de la cifra 479, mas el relleno
+   * = 507px de tarjeta donde caben 350. Se salia por los dos lados. */
   .m-rail > .m-hero {
     flex: 0 0 100%;
+    min-width: 0;
     scroll-snap-align: center;
   }
 
