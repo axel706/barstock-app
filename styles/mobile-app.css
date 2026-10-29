@@ -2643,6 +2643,21 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   .m-ipie b { color: #cfe0f0; }
 
+  /* Los números del pie son enlaces: un contador dice que falta algo,
+     y sin poder abrirlo no se sabe si lo que falta es lechuga o la
+     factura que estás buscando. */
+  body.m-shell .m-ilink {
+    background: none; border: none; padding: 0; cursor: pointer;
+    font-size: var(--m-meta); font-weight: 700; color: #7dd3fc;
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+  /* El proveedor y la fecha bajo el nombre, en la vista de
+     descartados: sin ellos una lista de nombres sueltos no dice de
+     dónde salió cada uno. */
+  .m-iln .who2 {
+    display: block; font-size: var(--m-meta); color: #8fa3b8; margin-top: 2px;
+  }
+
   /* La pastilla "fix" de la tarjeta de compras. Mismo sitio que el
      importe de las otras filas, para que la columna derecha diga
      siempre lo mismo: qué pasa con esta línea. */

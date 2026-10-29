@@ -50,6 +50,12 @@
   // no haya forma de saber por qué, no.
   let _fuera = { comida: 0, ocultas: 0, sinFecha: 0 };
   let _antes = 0;
+  // Las líneas descartadas, no sólo cuántas. Un contador dice que
+  // falta algo; la lista dice QUÉ, y es la diferencia entre media
+  // hora de preguntas y cinco segundos.
+  let _descartadas = { comida: [], ocultas: [] };
+  let _verFuera = '';   // '' | 'comida' | 'ocultas' | 'antes'
+  let _viejas = null;   // facturas de ciclos anteriores, bajo demanda
   let _abierta = null;    // order_id de la que se está mirando
   let _busy = new Set();
 
@@ -210,11 +216,16 @@
     const descartado = new Set(fuera.map(e => String(e.product_id)));
 
     _fuera = { comida: 0, ocultas: 0, sinFecha: 0 };
+    _descartadas = { comida: [], ocultas: [] };
 
     const porOrden = new Map();
     for (const l of lineas) {
       const id = String(l.order_id);
-      if (ocultoFactura.has(id) || ocultoVendor.has(norm(l.vendor_name))) { _fuera.ocultas++; continue; }
+      if (ocultoFactura.has(id) || ocultoVendor.has(norm(l.vendor_name))) {
+        _fuera.ocultas++;
+        if (_descartadas.ocultas.length < 60) _descartadas.ocultas.push(l);
+        continue;
+      }
       let f = porOrden.get(id);
       if (!f) {
         f = { id, vendor: l.vendor_name || '', numero: l.invoice_number || '',
@@ -227,7 +238,11 @@
       // La comida se cuenta pero no se enseña: hay que poder decir
       // "y 6 líneas más que no son bebida" en vez de que los totales
       // no cuadren con el papel sin explicación.
-      if (esBebida && !esBebida.has(pid)) { f.ocultas++; _fuera.comida++; continue; }
+      if (esBebida && !esBebida.has(pid)) {
+        f.ocultas++; _fuera.comida++;
+        if (_descartadas.comida.length < 60) _descartadas.comida.push(l);
+        continue;
+      }
 
       const item = dueno.get(pid) || '';
       // Descartado no es lo mismo que suelto: dijiste que no es tuyo,
@@ -337,6 +352,9 @@
     host.querySelectorAll('[data-inv]').forEach(b => {
       b.onclick = () => { _abierta = _facturas[Number(b.dataset.inv)].id; pintar(host); };
     });
+    host.querySelectorAll('[data-ver]').forEach(b => {
+      b.onclick = () => { _verFuera = b.dataset.ver; pintar(host); };
+    });
   }
 
   // ── Por qué no está aquí ───────────────────────────────────────────
@@ -347,15 +365,79 @@
   // una respuesta que la pantalla podía dar sola.
   function pieHuecos() {
     const t = [];
-    if (_fuera.comida)   t.push(_fuera.comida + ' not beverages');
-    if (_fuera.ocultas)  t.push(_fuera.ocultas + ' from hidden vendors');
-    if (_antes)          t.push(_antes + ' from earlier cycles');
+    if (_fuera.comida)  t.push('<button type="button" class="m-ilink" data-ver="comida">' +
+                               _fuera.comida + ' not beverages</button>');
+    if (_fuera.ocultas) t.push('<button type="button" class="m-ilink" data-ver="ocultas">' +
+                               _fuera.ocultas + ' from hidden vendors</button>');
+    if (_antes)         t.push('<button type="button" class="m-ilink" data-ver="antes">' +
+                               _antes + ' from earlier cycles</button>');
     if (!t.length) return '';
-    return '<div class="m-ipie">' +
-      '<b>Not shown here:</b> ' + esc(t.join(' · ')) + ' line' +
-      ((_fuera.comida + _fuera.ocultas + _antes) === 1 ? '' : 's') + '. ' +
-      'Earlier cycles are kept, just not listed; hidden vendors are in ' +
-      'Settings › Connections.</div>';
+    return '<div class="m-ipie"><b>Not shown here:</b> ' + t.join(' · ') +
+      '. Tap any of them to see what they are.</div>';
+  }
+
+  // ── Qué hay detrás de cada número ──────────────────────────────────
+  //
+  // Un contador dice que falta algo; sin la lista no se puede saber
+  // si lo que falta es lechuga o la factura que estás buscando. Eso
+  // costó varias rondas de preguntas, así que se enseña.
+  async function pintarFuera(host) {
+    const cual = _verFuera;
+    const titulo = cual === 'comida' ? 'Not beverages'
+                 : cual === 'ocultas' ? 'From hidden vendors'
+                 : 'Earlier cycles';
+
+    let filas = [];
+    if (cual === 'antes') {
+      if (!_viejas) {
+        const { url, key } = cfg();
+        const locId = await locationId();
+        const d = desde();
+        try {
+          filas = await leerPaginado(url, key,
+            `marginedge_invoice_lines?location_id=eq.${locId}&invoice_date=lt.${d}` +
+            `&select=order_id,invoice_date,invoice_number,vendor_name,line_price` +
+            `&order=invoice_date.desc`);
+        } catch (e) { filas = []; }
+        // Una por factura, no una por línea: son cientos.
+        const vistas = new Set();
+        _viejas = filas.filter(l => {
+          const k = String(l.order_id);
+          if (vistas.has(k)) return false;
+          vistas.add(k); return true;
+        }).slice(0, 80);
+      }
+      filas = _viejas;
+    } else {
+      filas = _descartadas[cual] || [];
+    }
+
+    host.innerHTML =
+      '<button type="button" class="m-iback" id="mInvBack">' +
+        '<i class="ti ti-chevron-left" aria-hidden="true"></i> Invoices</button>' +
+      '<div class="m-inv-t">' + esc(titulo) + '</div>' +
+      '<div class="m-isub">' +
+        (cual === 'comida'
+          ? 'Lines whose MarginEdge product is not in a beverage category.'
+          : cual === 'ocultas'
+            ? 'Lines from vendors you marked as not yours.'
+            : 'Invoices kept but dated before this cycle opened.') +
+      '</div>' +
+      (filas.length
+        ? filas.map(l =>
+            '<div class="m-iln m-icard">' +
+              '<span class="co">' +
+                '<span class="n">' + esc(l.vendor_item_name || l.invoice_number || l.order_id) + '</span>' +
+                '<span class="who2">' + esc(l.vendor_name || '') +
+                  (l.invoice_date ? ' · ' + esc(dia(l.invoice_date).txt) : '') + '</span>' +
+              '</span>' +
+              '<span class="v">' + dinero(l.line_price) + '</span>' +
+            '</div>').join('')
+        : '<div class="m-ivacio">Nothing here.</div>') +
+      (filas.length >= 60 ? '<div class="m-ipie">Showing the first ' + filas.length + '.</div>' : '');
+
+    const b = host.querySelector('#mInvBack');
+    if (b) b.onclick = () => { _verFuera = ''; pintar(host); };
   }
 
   function cabecera() {
@@ -764,12 +846,15 @@
 
   function pintar(host) {
     if (!host || !_facturas) return;
+    if (_verFuera) { pintarFuera(host); return; }
     const f = _abierta && _facturas.find(x => x.id === _abierta);
     if (f) pintarDetalle(host, f);
     else { _abierta = null; pintarLista(host); }
   }
 
   async function montar(host) {
+    _verFuera = '';
+    _viejas = null;
     host.innerHTML = '<div class="m-inv-t">Invoices</div>' +
                      '<div class="m-isub">Reading…</div>';
     try {
@@ -794,6 +879,10 @@
       show(host) { _abierta = null; montar(host); },
       // Deslizar desde el borde cierra la factura antes de salir.
       atras(host, hacerlo) {
+        if (_verFuera) {
+          if (hacerlo) { _verFuera = ''; pintar(host); }
+          return true;
+        }
         if (!_abierta) {
           if (hacerlo && window.BarStockMobile) window.BarStockMobile.volver();
           return true;

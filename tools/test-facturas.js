@@ -412,6 +412,40 @@ const txt = (h) => h.textContent.replace(/\s+/g, ' ');
     prueba('y lo oculto', /1 from hidden vendors/.test(t), t.slice(-200));
   }
 
+  grupo('los números del pie se pueden abrir');
+  {
+    // Un contador dice que falta algo. Sin poder abrirlo no se sabe
+    // si lo que falta es lechuga o la factura que estás buscando, y
+    // eso costó varias rondas de preguntas.
+    const w = entorno({
+      lineas: [
+        L({ order_id: 'A', product_id: 'p1', vendor_item_name: 'Tito’s' }),
+        L({ order_id: 'A', line_no: 2, product_id: 'f1',
+            vendor_item_name: 'Lett Baby Iceberg Cs', vendor_name: 'J. Ambrogi Foods' })
+      ],
+      enlaces: [],
+      bebida: [{ product_id: 'p1' }]
+    });
+    const h = host(w);
+    await w.BarStockMobileInvoices.montar(h);
+    await esperar(40);
+
+    const link = h.querySelector('[data-ver="comida"]');
+    prueba('el número es un enlace', !!link, txt(h).slice(-140));
+
+    link.click();
+    await esperar(40);
+    const t = txt(h);
+    prueba('abre la lista de lo descartado', /Not beverages/.test(t), t.slice(0, 120));
+    // Lo que de verdad hacía falta: el NOMBRE de lo que se dejó fuera.
+    prueba('con el nombre de la línea', /Lett Baby Iceberg/.test(t), t.slice(0, 220));
+    prueba('y de quién vino', /Ambrogi/.test(t), t.slice(0, 220));
+
+    h.querySelector('#mInvBack').click();
+    await esperar(20);
+    prueba('se puede volver', !!h.querySelector('[data-inv]'), txt(h).slice(0, 80));
+  }
+
   grupo('sin nada que esconder, no hay pie');
   {
     const w = entorno({
