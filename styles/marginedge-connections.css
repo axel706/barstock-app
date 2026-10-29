@@ -187,3 +187,14 @@
 }
 .meu-ok b { color: var(--text, #e2e8f0); }
 .meu-ok.mal { color: #f87171; }
+
+/* Lo que marcaste como "no es del bar". Las filas van dentro de una
+   sola tarjeta, separadas por una línea: son una lista para revisar,
+   no elementos que se tocan a diario. */
+.me-oculto + .me-oculto {
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid rgba(127,140,160,.22);
+}
+.me-nota {
+  font-size: 11px; color: var(--sub, #64748b); line-height: 1.5; margin: 7px 2px 0;
+}

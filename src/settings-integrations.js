@@ -579,6 +579,7 @@
 
     pintarCifras();
     pintarAtencion();
+    pintarOcultos();
   }
 
   // ── El estado de la conexión ───────────────────────────────────────
@@ -744,6 +745,72 @@
 
     const b = document.getElementById('meVerHuerfanos');
     if (b) b.onclick = () => window.showSettingsPanel('meUnclaimed');
+  }
+
+  // ── Lo que escondiste ──────────────────────────────────────────────
+  //
+  // Proveedores y facturas marcados como "no es del bar". Vive aquí y
+  // no en el móvil porque se toca una vez cada muchos meses, y porque
+  // deshacerlo es lo que hay que poder encontrar cuando te equivocas.
+  //
+  // Sólo se dibuja si hay algo oculto: una sección vacía permanente
+  // enseña a ignorar la zona.
+  async function pintarOcultos() {
+    const el = document.getElementById('meOcultos');
+    if (!el) return;
+    el.innerHTML = '';
+
+    const { url, key } = cfg();
+    const id = await locationId();
+    if (!url || !key || !id) return;
+
+    let filas = [];
+    try {
+      const r = await fetch(
+        `${url}/rest/v1/marginedge_hidden?location_id=eq.${id}` +
+        `&select=kind,clave,label&order=kind.asc,label.asc`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+      if (!r.ok) return;          // sin tabla todavía: nada que enseñar
+      filas = await r.json();
+    } catch (e) { return; }
+    if (!Array.isArray(filas) || !filas.length) return;
+
+    el.innerHTML =
+      '<p class="me-lab">Hidden</p>' +
+      '<div class="me-card">' +
+        filas.map((f, i) =>
+          '<div class="me-row me-oculto">' +
+            '<span class="me-grow">' +
+              '<span class="me-nm">' + esc(f.label || f.clave) + '</span>' +
+              '<span class="me-state">' +
+                (f.kind === 'vendor' ? 'vendor · no invoices saved' : 'single invoice') +
+              '</span>' +
+            '</span>' +
+            '<button type="button" class="me-ghost" data-unhide="' + i + '">Show again</button>' +
+          '</div>').join('') +
+      '</div>' +
+      '<p class="me-nota">Showing a vendor again brings in its NEW invoices. The ones ' +
+      'deleted when you hid it do not come back.</p>';
+
+    el.querySelectorAll('[data-unhide]').forEach(b => {
+      b.onclick = async () => {
+        const f = filas[Number(b.dataset.unhide)];
+        if (!f) return;
+        b.disabled = true;
+        try {
+          const r = await fetch(
+            `${url}/rest/v1/marginedge_hidden?location_id=eq.${id}` +
+            `&kind=eq.${encodeURIComponent(f.kind)}` +
+            `&clave=eq.${encodeURIComponent(f.clave)}`,
+            { method: 'DELETE', headers: { apikey: key, Authorization: `Bearer ${key}` } });
+          if (!r.ok) throw new Error(await r.text());
+          pintarOcultos();
+        } catch (e) {
+          b.disabled = false;
+          mostrarFallo(e);
+        }
+      };
+    });
   }
 
   // Cuándo se copió el catálogo por última vez. Un dato que se llena

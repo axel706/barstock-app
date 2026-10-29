@@ -2527,6 +2527,34 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ichg { border-radius: 50% !important; }
   body.m-shell .m-ichg:active { background: rgba(255,255,255,.16); }
+
+  /* ── Descartar ─────────────────────────────────────────────────────
+   * Al final de la factura y detrás de una línea: borrar historial no
+   * puede estar a la misma distancia del pulgar que enlazar una
+   * botella. Rojo apagado, no rojo de alarma — es una decisión
+   * deliberada, no un error. */
+  .m-idanger {
+    margin-top: 14px; padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,.1);
+  }
+  .m-idlab {
+    font-size: var(--m-meta); font-weight: 800; letter-spacing: .11em;
+    text-transform: uppercase; color: #7f8ea3; margin-bottom: 8px;
+  }
+  .m-idrow { display: flex; gap: 7px; }
+  body.m-shell .m-idbtn {
+    flex: 1; text-align: center; font-size: var(--m-meta); font-weight: 700;
+    border-radius: 999px; padding: 10px 8px; cursor: pointer;
+    border: 1px solid rgba(248,113,113,.3); background: rgba(248,113,113,.08);
+    color: #fca5a5;
+  }
+  body.m-shell .m-idbtn.soft {
+    border-color: rgba(255,255,255,.18); background: transparent; color: #9fb0c4;
+  }
+  body.m-shell .m-idbtn:disabled { opacity: .55; cursor: default; }
+  .m-idnote {
+    font-size: var(--m-meta); color: #7d8c9e; line-height: 1.5; margin-top: 9px;
+  }
   .m-iln .q {
     flex: 0 0 auto; min-width: 24px;
     font-size: var(--m-small); font-weight: 800; color: #fff;

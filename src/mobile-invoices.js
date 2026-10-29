@@ -61,6 +61,17 @@
 
   function master() { return (window.state && window.state.master) || []; }
 
+  // El mismo criterio de "mismo nombre" que el resto de la app. Los
+  // nombres de proveedor llegan con puntuación distinta según el día.
+  function norm(x) {
+    const M = window.BarStockMarginEdgeMatch;
+    if (M && M._norm) { try { return M._norm(x); } catch (e) {} }
+    return String(x == null ? '' : x)
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase().replace(/['\u2018\u2019\u00b4`]/g, '')
+      .replace(/[^A-Z0-9]+/g, ' ').trim();
+  }
+
   function desdeCiclo() {
     const W = window.BarStockWeeklyCycle;
     const t = W && W.resetAt ? W.resetAt() : null;
@@ -120,7 +131,7 @@
       catch (e) { console.warn('[facturas] tabla opcional', ruta, e); return []; }
     };
 
-    const [lineas, enlaces, fuera, bebida] = await Promise.all([
+    const [lineas, enlaces, fuera, bebida, ocultos] = await Promise.all([
       leerPaginado(url, key,
         `marginedge_invoice_lines?location_id=eq.${locId}&invoice_date=gte.${d}` +
         `&select=order_id,line_no,invoice_date,invoice_number,vendor_name,status,` +
@@ -141,8 +152,17 @@
       // contra ellos. Es la misma familia de tipos que usa la
       // pantalla de emparejar.
       opcional(`marginedge_products?location_id=eq.${locId}` +
-        `&type=in.(BEER,LIQUOR,WINE,NA_BEVERAGES)&select=product_id&order=product_id.asc`)
+        `&type=in.(BEER,LIQUOR,WINE,NA_BEVERAGES)&select=product_id&order=product_id.asc`),
+      // Proveedores y facturas que dijiste que no son de la barra. El
+      // servidor ya no los guarda; esto es para que desaparezcan al
+      // instante, sin esperar al siguiente sync.
+      opcional(`marginedge_hidden?location_id=eq.${locId}&select=kind,clave&order=clave.asc`)
     ]);
+
+    const ocultoVendor = new Set(
+      ocultos.filter(o => o.kind === 'vendor').map(o => String(o.clave)));
+    const ocultoFactura = new Set(
+      ocultos.filter(o => o.kind === 'invoice').map(o => String(o.clave)));
 
     // Sin catálogo guardado no se puede distinguir bebida de comida.
     // En ese caso se enseña todo: es peor esconder una factura real
@@ -157,6 +177,7 @@
     const porOrden = new Map();
     for (const l of lineas) {
       const id = String(l.order_id);
+      if (ocultoFactura.has(id) || ocultoVendor.has(norm(l.vendor_name))) continue;
       let f = porOrden.get(id);
       if (!f) {
         f = { id, vendor: l.vendor_name || '', numero: l.invoice_number || '',
@@ -384,6 +405,23 @@
         'food and all. The totals above are the beverage part of this invoice. '
       : '';
 
+    // ── Descartar ───────────────────────────────────────────────────
+    //
+    // Al final y separado del resto: borrar historial no puede estar a
+    // la misma distancia del pulgar que enlazar una botella.
+    html +=
+      '<div class="m-idanger">' +
+        '<div class="m-idlab">Not a bar purchase?</div>' +
+        '<div class="m-idrow">' +
+          '<button type="button" class="m-idbtn" id="mInvHideV">Hide ' +
+            esc(f.vendor || 'this vendor') + '</button>' +
+          '<button type="button" class="m-idbtn soft" id="mInvHideI">Hide this invoice</button>' +
+        '</div>' +
+        '<div class="m-idnote">MarginEdge marks juice, soda and cream as beverages, so a ' +
+          'food distributor slips through the category filter. Hiding a vendor is how you ' +
+          'tell the app which ones are yours.</div>' +
+      '</div>';
+
     html += '<div class="m-ipie">' + ocultas +
       'These are <b>purchase units</b>, not bottles: a 2 might be ' +
       'two bottles or two cases of twelve. What gets written to your stock comes from the ' +
@@ -520,6 +558,105 @@
     host.querySelectorAll('[data-q]').forEach(inp => {
       inp.oninput = () => buscar(host, f, Number(inp.dataset.q), inp.value);
     });
+
+    // ── Ocultar ─────────────────────────────────────────────────────
+    //
+    // Se pregunta con las consecuencias EXACTAS, incluidas cuántas
+    // facturas se van a borrar. "¿Ocultar proveedor?" no deja decidir
+    // nada; "se borran las 14 que ya están guardadas" sí.
+    const hv = host.querySelector('#mInvHideV');
+    if (hv) hv.onclick = async () => {
+      const nom = f.vendor || '';
+      const cuantas = _facturas.filter(x => norm(x.vendor) === norm(nom)).length;
+      const ok = window.confirm(
+        'Hide ' + nom + '?\n\n' +
+        'From now on this vendor is treated as not yours:\n' +
+        '· its invoices stop being saved when MarginEdge syncs\n' +
+        '· the ' + cuantas + ' already stored ' + (cuantas === 1 ? 'is' : 'are') + ' deleted\n' +
+        '· nothing in your inventory, orders or prices changes\n\n' +
+        'You can bring it back from Settings › Connections.');
+      if (!ok) return;
+      hv.disabled = true;
+      try {
+        await ocultar('vendor', norm(nom), nom);
+        await borrarDe({ vendor: nom });
+        _abierta = null;
+        await montar(host);
+      } catch (e) {
+        hv.disabled = false;
+        window.alert(String(e && e.message || e));
+      }
+    };
+
+    const hi = host.querySelector('#mInvHideI');
+    if (hi) hi.onclick = async () => {
+      const ok = window.confirm(
+        'Hide this invoice?\n\n' +
+        'It stops being saved and the lines already stored are deleted. ' +
+        'Other invoices from ' + (f.vendor || 'this vendor') + ' keep coming in.');
+      if (!ok) return;
+      hi.disabled = true;
+      try {
+        await ocultar('invoice', f.id, (f.vendor || '') + ' · ' + (f.numero || f.id));
+        await borrarDe({ orderId: f.id });
+        _abierta = null;
+        await montar(host);
+      } catch (e) {
+        hi.disabled = false;
+        window.alert(String(e && e.message || e));
+      }
+    };
+  }
+
+  // ── Escribir el descarte ─────────────────────────────────────────
+
+  async function ocultar(kind, clave, label) {
+    const { url, key } = cfg();
+    const locId = await locationId();
+    if (!url || !key || !locId) throw new Error('No location.');
+
+    const r = await fetch(
+      `${url}/rest/v1/marginedge_hidden?on_conflict=location_id,kind,clave`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: key, Authorization: `Bearer ${key}`,
+          Prefer: 'resolution=merge-duplicates,return=representation'
+        },
+        body: JSON.stringify({
+          location_id: locId, kind, clave: String(clave), label: String(label || '')
+        })
+      });
+    if (!r.ok) {
+      const t = await r.text();
+      // El caso que de verdad va a pasar: falta la tabla.
+      if (/marginedge_hidden/.test(t) || /does not exist|PGRST205/.test(t)) {
+        throw new Error('Run docs/sql/marginedge-hidden.sql in Supabase first.');
+      }
+      throw new Error(t);
+    }
+    return true;
+  }
+
+  // Borrar lo ya guardado. Ocultar sin borrar dejaría la tabla
+  // creciendo con comida y la pantalla mintiendo sobre el tamaño del
+  // historial.
+  async function borrarDe(q) {
+    const { url, key } = cfg();
+    const locId = await locationId();
+    if (!url || !key || !locId) throw new Error('No location.');
+
+    const filtro = q.orderId
+      ? `&order_id=eq.${encodeURIComponent(String(q.orderId))}`
+      : `&vendor_name=eq.${encodeURIComponent(String(q.vendor || ''))}`;
+
+    const r = await fetch(
+      `${url}/rest/v1/marginedge_invoice_lines?location_id=eq.${locId}${filtro}`, {
+        method: 'DELETE',
+        headers: { apikey: key, Authorization: `Bearer ${key}` }
+      });
+    if (!r.ok) throw new Error(await r.text());
+    return true;
   }
 
   function buscar(host, f, k, q) {

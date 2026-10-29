@@ -169,6 +169,49 @@ async function pedir(url, apiKey) {
 // lo demás —comida, químicos, desechables, nómina— se queda fuera.
 const TIPOS_BEBIDA = ['BEER', 'LIQUOR', 'WINE', 'NA_BEVERAGES'];
 
+// ── Proveedores que no son de la barra ──────────────────────────────
+//
+// El filtro por categoría no basta: Gordon Food Service y US Foods te
+// venden zumo y leche, y MarginEdge los marca como bebida. Lo que
+// distingue a un proveedor de barra de uno de cocina es el criterio
+// de quien usa la app, y eso vive en `marginedge_hidden`.
+//
+// Se mira AQUÍ, antes de descargar las líneas: un proveedor oculto ni
+// se pide a MarginEdge ni se escribe en Supabase. Filtrar sólo al
+// leer dejaría que el sync volviera a meter cada hora lo que se acaba
+// de borrar.
+//
+// Por nombre normalizado porque no hay id de proveedor en las líneas
+// de factura, y el nombre llega con puntuación distinta según el día.
+function normNombre(x) {
+  return String(x == null ? '' : x)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/['\u2018\u2019\u00b4`]/g, '')
+    .replace(/[^A-Z0-9]+/g, ' ')
+    .trim();
+}
+
+async function leerOcultos(supabase, locationId) {
+  try {
+    const { data, error } = await supabase
+      .from('marginedge_hidden')
+      .select('kind,clave')
+      .eq('location_id', locationId);
+    if (error) throw error;
+    const v = new Set(), f = new Set();
+    for (const r of (data || [])) {
+      if (r.kind === 'vendor') v.add(String(r.clave));
+      else if (r.kind === 'invoice') f.add(String(r.clave));
+    }
+    return { vendors: v, facturas: f };
+  } catch (e) {
+    // Si la tabla todavía no existe, no se oculta nada. Dejar de
+    // sincronizar por eso sería peor que traer comida de más.
+    return { vendors: new Set(), facturas: new Set() };
+  }
+}
+
 // Recorre todas las páginas de una ruta y devuelve la lista entera.
 async function traerTodo(ruta, params, apiKey) {
   let lista = [];
@@ -618,7 +661,10 @@ module.exports = async function handler(req, res) {
         };
         let cursor = (params || {}).nextPage || null;
         const pedidos = [];
-        let paginas = 0, descartadas = 0;
+        let paginas = 0, descartadas = 0, ocultadas = 0;
+
+        // Se leen una vez por pasada, no por factura.
+        const ocultos = await leerOcultos(supabase, locationId);
 
         do {
           const p = cursor ? Object.assign({}, base, { nextPage: cursor }) : base;
@@ -639,6 +685,14 @@ module.exports = async function handler(req, res) {
             // cambiar de cantidad o de precio, y un importe provisional
             // metido en el coste de mercancía no lo revisa nadie.
             if (o.status !== 'CLOSED' && o.status !== 'COMPLETED') { descartadas++; continue; }
+
+            // Oculto: ni se pide el detalle ni se guarda nada. Se
+            // corta aquí y no al escribir porque bajar las líneas de
+            // un proveedor de comida gasta peticiones de un límite de
+            // dos por segundo que ya nos ha dado 429 varias veces.
+            if (ocultos.vendors.has(normNombre(o.vendorName)) ||
+                ocultos.facturas.has(String(o.orderId))) { ocultadas++; continue; }
+
             pedidos.push({
               id: String(o.orderId),
               vendor: o.vendorName || '',
@@ -658,7 +712,7 @@ module.exports = async function handler(req, res) {
         } while (cursor && Date.now() < limite && paginas < MAX_PAGINAS);
 
         return res.status(200).json({
-          ok: true, action, fase: 'headers', pedidos, descartadas, nextPage: cursor
+          ok: true, action, fase: 'headers', pedidos, descartadas, ocultadas, nextPage: cursor
         });
       }
 
@@ -667,10 +721,17 @@ module.exports = async function handler(req, res) {
       let hechos = 0, lineas = 0;
       const fallidos = [];
 
+      // Red: la fase 1 ya los filtró, pero el cliente podría mandar
+      // una lista vieja de antes de ocultar el proveedor.
+      const ocultos2 = await leerOcultos(supabase, locationId);
+
       for (const id of ids) {
         if (Date.now() >= limite) break;
         hechos++;
         if (!/^\d+$/.test(String(id))) continue;
+        const mv = (meta[id] || {}).vendor;
+        if (ocultos2.facturas.has(String(id)) ||
+            (mv && ocultos2.vendors.has(normNombre(mv)))) continue;
 
         // `/orders/{id}` exige restaurantUnitId igual que `/orders`.
         // Llamarlo sin él devuelve 400 en todas y cada una: 293
