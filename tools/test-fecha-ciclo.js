@@ -134,8 +134,10 @@ function entorno(lineas) {
   grupo('nadie vuelve a cortar el ISO para sacar una fecha');
   {
     // La regla, escrita donde falla si alguien la rompe.
-    for (const f of ['src/mobile-invoices.js', 'src/marginedge-unclaimed.js',
-                     'src/mobile-home.js']) {
+    // mobile-home.js ya no sale en esta lista: dejó de leer las
+    // facturas por su cuenta y ahora pide el resumen al módulo de
+    // facturas, que es el único que decide la fecha del ciclo.
+    for (const f of ['src/mobile-invoices.js', 'src/marginedge-unclaimed.js']) {
       const s = leer(f);
       prueba(f.split('/').pop() + ' usa fechaInicioLocal', /fechaInicioLocal/.test(s));
       prueba(f.split('/').pop() + ' no corta resetAt a pelo',
@@ -144,6 +146,11 @@ function entorno(lineas) {
     }
     const wc = leer('src/weekly-cycle.js');
     prueba('weekly-cycle lo exporta', /fechaInicioLocal,/.test(wc));
+    // Y el Home no vuelve a leer facturas por su cuenta: una sola
+    // lectura, una sola respuesta.
+    const home = leer('src/mobile-home.js');
+    prueba('el Home no consulta las facturas él mismo',
+      !/marginedge_invoice_lines/.test(home));
   }
 
   console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +

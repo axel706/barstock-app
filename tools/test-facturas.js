@@ -513,6 +513,29 @@ const txt = (h) => h.textContent.replace(/\s+/g, ' ');
     prueba('la lista sale limpia', !/Not shown here/.test(txt(h)), txt(h).slice(-160));
   }
 
+  grupo('el resumen de la tarjeta sale de aquí, ya filtrado');
+  {
+    // La tarjeta del Home leía las líneas por su cuenta y sin filtro
+    // de bebida: decía 24 facturas y $15.424 —el restaurante entero—
+    // mientras esta pantalla enseñaba cuatro de licor.
+    const w = entorno({
+      lineas: [
+        L({ order_id: 'A', product_id: 'p1', vendor_item_name: 'Tito\u2019s', quantity: 2, line_price: 40 }),
+        L({ order_id: 'A', line_no: 2, product_id: 'f1', vendor_item_name: 'Onion', quantity: 9, line_price: 300 }),
+        L({ order_id: 'B', product_id: 'p1', vendor_item_name: 'Tito\u2019s', quantity: 1, line_price: 20,
+            invoice_date: '2026-10-28' })
+      ],
+      enlaces: [{ product_id: 'p1', item_name: 'Tito\u2019s Vodka 1.75L' }],
+      bebida: [{ product_id: 'p1' }]
+    });
+    const r = await w.BarStockMobileInvoices.resumen();
+    prueba('cuenta sólo facturas con bebida', r.n === 2, JSON.stringify(r));
+    // Las 9 unidades de cebolla y sus 300 dólares no entran.
+    prueba('unidades sin la comida', r.unidades === 3, String(r.unidades));
+    prueba('dinero sin la comida', Math.abs(r.dinero - 60) < 0.001, String(r.dinero));
+    prueba('y la fecha de la última', r.ultima === '2026-10-28', r.ultima);
+  }
+
   grupo('una tabla que falte no tumba la pantalla');
   {
     // `marginedge_not_mine` se crea a mano. Si todavía no existe, la

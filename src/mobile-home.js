@@ -110,10 +110,7 @@
   let _entregasDe = '';        // el resetAt con el que se pidió
   let _pidiendoEntregas = false;
 
-  function cfgSB() {
-    const c = window.BARSTOCK_CONFIG || {};
-    return { url: c.SUPABASE_URL, key: c.SUPABASE_KEY };
-  }
+
 
   // 'YYYY-MM-DD' con new Date() se interpreta en UTC, así que en
   // cualquier huso al oeste de Greenwich una factura del 26 se enseña
@@ -126,83 +123,32 @@
   }
 
   async function pedirEntregas(desde) {
-    const { url, key } = cfgSB();
-    if (!url || !key) return false;
-
-    const P = window.BarStockParIntelligence;
-    const locId = (P && P.fetchLocationId) ? await P.fetchLocationId() : null;
-    if (!locId) return false;
-
-    // La fecha del ciclo en LOCAL, no cortando el ISO. `resetAt()` es
-    // UTC: un reinicio del 26 por la tarde en Pensilvania es el 27 en
-    // UTC, y las facturas traen fecha sin hora. Comparar la una
-    // contra la otra se come el día entero del reinicio.
-    const W = window.BarStockWeeklyCycle;
-    const dia = (W && W.fechaInicioLocal && W.fechaInicioLocal()) ||
-                String(desde).slice(0, 10);
-    const ordenes = new Set();
-    let unidades = 0, ultima = '', dinero = 0;
-    const sinDueno = new Set();   // productos que ninguna botella reclama
-
-    // PostgREST corta en 1000 filas SIN avisar. Una semana de facturas
-    // se pasa de ahí en cuanto entra la comida —se guardan todas las
-    // líneas, también las de cocina—, y lo que se vería es un número
-    // creíble y equivocado. Ya pasó con el catálogo.
-    for (let p = 0; p < 20; p++) {
-      const r = await fetch(
-        `${url}/rest/v1/marginedge_invoice_lines?location_id=eq.${locId}` +
-        `&invoice_date=gte.${dia}&select=order_id,quantity,invoice_date,product_id,line_price` +
-        `&order=invoice_date.asc&limit=1000&offset=${p * 1000}`,
-        { headers: { apikey: key, Authorization: `Bearer ${key}` } });
-      if (!r.ok) return false;
-      const filas = await r.json();
-      if (!Array.isArray(filas) || !filas.length) break;
-      for (const f of filas) {
-        ordenes.add(f.order_id);
-        unidades += Number(f.quantity) || 0;
-        dinero += Number(f.line_price) || 0;
-        if (f.product_id) sinDueno.add(String(f.product_id));
-        if (f.invoice_date && f.invoice_date > ultima) ultima = f.invoice_date;
-      }
-      if (filas.length < 1000) break;
-    }
-
-    if (!ordenes.size) return false;
-
-    // ── Cuántos de esos productos no tienen botella ─────────────────
+    // ── Una sola lectura para las dos pantallas ─────────────────────
     //
-    // Se calcula sobre la MISMA lectura de líneas, no con una segunda
-    // consulta: dos sitios contando lo mismo acaban dando cifras
-    // distintas, y eso ya pasó en este proyecto más de una vez.
+    // Esto leía las líneas por su cuenta y SIN el filtro de bebida.
+    // La tarjeta decía 24 facturas y 15.424 dólares —el restaurante
+    // entero, con comida y limpieza— mientras la pantalla de facturas
+    // enseñaba cuatro de licor. Dos lectores de los mismos datos con
+    // reglas distintas es el fallo que más veces ha mordido este
+    // proyecto, y aquí estaba otra vez.
     //
-    // Las dos tablas son opcionales. Si `marginedge_not_mine` todavía
-    // no existe —su SQL se corre a mano—, la cuenta sale de más, no
-    // se cae la tarjeta.
-    const lee = async (ruta) => {
+    // Ahora manda el módulo de facturas, que es el dueño de esa
+    // pregunta. Esta función sólo queda como respaldo para cuando no
+    // esté cargado — y entonces devuelve `false`, que es "no sé", no
+    // un número inventado.
+    const F = window.BarStockMobileInvoices;
+    if (F && F.resumen) {
       try {
-        const r = await fetch(`${url}/rest/v1/${ruta}`,
-          { headers: { apikey: key, Authorization: `Bearer ${key}` } });
-        if (!r.ok) return [];
-        const x = await r.json();
-        return Array.isArray(x) ? x : [];
-      } catch (e) { return []; }
-    };
-
-    const [enlaces, fuera] = await Promise.all([
-      lee(`marginedge_links?location_id=eq.${locId}&select=product_id&limit=5000`),
-      lee(`marginedge_not_mine?location_id=eq.${locId}&select=product_id&limit=5000`)
-    ]);
-    for (const e of enlaces) sinDueno.delete(String(e.product_id));
-    for (const e of fuera)   sinDueno.delete(String(e.product_id));
-
-    return {
-      n: ordenes.size,
-      unidades: Math.round(unidades),
-      dinero,
-      sueltas: sinDueno.size,
-      ultima
-    };
+        const r = await F.resumen();
+        return (r && r.n) ? r : false;
+      } catch (e) {
+        console.warn('[home] resumen de facturas', e);
+        return false;
+      }
+    }
+    return false;
   }
+
 
   // Se vuelve a pedir cuando cambia el arranque del ciclo, no cada vez
   // que se pinta el Home: reiniciar la semana es lo único que cambia la

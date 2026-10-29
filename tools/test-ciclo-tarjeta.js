@@ -60,6 +60,13 @@ function entorno(opts) {
 
   w.BARSTOCK_CONFIG = o.config || {};
   if (o.fetch) { w.fetch = o.fetch; global.fetch = o.fetch; }
+  // Las entregas del ciclo salen del módulo de facturas, que es el
+  // dueño de esa pregunta: filtra a bebida y a proveedores ocultos.
+  // Antes el Home las leía por su cuenta y sin esos filtros, y la
+  // tarjeta contradecía a la pantalla de facturas.
+  if (o.entregas !== undefined) {
+    w.BarStockMobileInvoices = { resumen: async () => o.entregas };
+  }
   if (o.locId) {
     w.BarStockParIntelligence = { fetchLocationId: async () => o.locId };
   }
@@ -132,50 +139,32 @@ const inv = (n, conStock) => Array.from({ length: n }, (_, i) => ({
     !f.some(x => /deliver/i.test(x)), JSON.stringify(f));
 
   grupo('cuando las facturas llegan, aparece la fila');
-  const lineas = [
-    { order_id: 'A', quantity: 12, invoice_date: '2026-10-26' },
-    { order_id: 'A', quantity: 6,  invoice_date: '2026-10-26' },
-    { order_id: 'B', quantity: 4,  invoice_date: '2026-10-27' }
-  ];
-  let pedidas = [];
-  w = entorno({
-    master: inv(10, 6), pedidos: {},
-    config: { SUPABASE_URL: 'https://db.test', SUPABASE_KEY: 'k' },
-    locId: 'loc-1',
-    fetch: async (u) => {
-      pedidas.push(u);
-      const off = /offset=(\d+)/.exec(u);
-      const n = off ? Number(off[1]) : 0;
-      return { ok: true, json: async () => (n === 0 ? lineas : []) };
-    }
-  });
-  h = pintar(w);
-  await esperar(60);
-  f = filas(h);
-  prueba('dos facturas distintas, no tres líneas',
-    /2 deliveries in, 22 units/.test(f[1] || ''), f[1]);
-  prueba('fechada con la última factura',
-    /^Oct 27 /.test(f[1] || ''), f[1]);
-  prueba('se pide desde el arranque del ciclo',
-    /invoice_date=gte\.2026-10-25/.test(pedidas[0] || ''), pedidas[0]);
-  prueba('y paginado, que PostgREST corta en 1000 sin avisar',
-    /limit=1000&offset=0/.test(pedidas[0] || ''), pedidas[0]);
+  {
+    // Ya filtradas a bebida por el módulo de facturas: la tarjeta no
+    // vuelve a contarlas por su cuenta.
+    const w = entorno({
+      master: inv(10, 6), pedidos: {},
+      entregas: { n: 2, unidades: 22, dinero: 58.57, sueltas: 0, ultima: '2026-10-27' }
+    });
+    const h = pintar(w);
+    await esperar(60);
+    const f = filas(h);
+    prueba('dos facturas distintas, no tres líneas',
+      /2 deliveries in, 22 units/.test(f[1] || ''), f[1]);
+    prueba('fechada con la última factura', /^Oct 27 /.test(f[1] || ''), f[1]);
+  }
 
   grupo('una factura sola se dice en singular');
-  w = entorno({
-    master: inv(10, 6), pedidos: {},
-    config: { SUPABASE_URL: 'https://db.test', SUPABASE_KEY: 'k' },
-    locId: 'loc-1',
-    fetch: async (u) => ({
-      ok: true,
-      json: async () => (/offset=0/.test(u)
-        ? [{ order_id: 'A', quantity: 9, invoice_date: '2026-10-26' }] : [])
-    })
-  });
-  h = pintar(w);
-  await esperar(60);
-  prueba('"1 delivery", no "1 deliveries"',
-    /1 delivery in, 9 units/.test(filas(h)[1] || ''), filas(h)[1]);
+  {
+    const w = entorno({
+      master: inv(10, 6), pedidos: {},
+      entregas: { n: 1, unidades: 9, dinero: 20, sueltas: 0, ultima: '2026-10-26' }
+    });
+    const h = pintar(w);
+    await esperar(60);
+    prueba('"1 delivery", no "1 deliveries"',
+      /1 delivery in, 9 units/.test(filas(h)[1] || ''), filas(h)[1]);
+  }
 
   grupo('el ciclo abierto de más avisa en la línea, no en un subtítulo');
   w = entorno({ master: inv(10, 6), pedidos: {}, viejo: true, dias: 11 });

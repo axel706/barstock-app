@@ -924,7 +924,29 @@
     }
   }
 
-  window.BarStockMobileInvoices = { montar, _cargar: cargar, _sugerir: sugerir };
+  // ── El resumen que usa la tarjeta del Home ─────────────────────────
+  //
+  // La tarjeta leía las líneas por su cuenta y SIN el filtro de
+  // bebida: decía 24 facturas y 15.424 dólares, que es el restaurante
+  // entero —lechuga, marisco y limpieza de ventanas— mientras esta
+  // pantalla enseñaba cuatro facturas de licor. Dos lectores de los
+  // mismos datos con reglas distintas, que es el fallo que más veces
+  // ha mordido este proyecto.
+  //
+  // Ahora sale de aquí: una sola lectura, una sola respuesta.
+  async function resumen() {
+    const fs_ = await cargar();
+    let unidades = 0, dinero = 0, sueltas = 0, ultima = '';
+    for (const f of fs_) {
+      unidades += f.unidades;
+      dinero += f.total;
+      sueltas += f.sueltas;
+      if (f.fecha && f.fecha > ultima) ultima = f.fecha;
+    }
+    return { n: fs_.length, unidades: Math.round(unidades), dinero, sueltas, ultima };
+  }
+
+  window.BarStockMobileInvoices = { montar, resumen, _cargar: cargar, _sugerir: sugerir };
 
   function registrar() {
     if (!window.BarStockMobile) return;
