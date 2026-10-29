@@ -468,8 +468,27 @@
     pintar();
   }
 
+  // ── Buscar facturas nuevas, sin asistente ──────────────────────────
+  //
+  // Lo que pide el botón de la tarjeta del Home: traer lo que haya
+  // entrado desde el último vistazo. No copia el catálogo ni empareja
+  // nada — eso es dar de alta una locación y se hace una vez.
+  //
+  // Vive aquí y no en el Home porque el Home no debe saber hablar con
+  // MarginEdge: ya tuvimos dos lectores de lo mismo dando cifras
+  // distintas, y no hace falta un tercero.
+  async function buscarFacturas() {
+    const api = I();
+    if (!api) throw new Error('Integrations module not loaded.');
+    const unitId = api.unidad && api.unidad();
+    if (!unitId) throw new Error('This location is not connected yet.');
+    const locId = await api.locationId();
+    if (!locId) throw new Error('No location.');
+    return facturas(unitId, locId, () => {});
+  }
+
   window.BarStockMarginEdgeConnect = {
-    montar, pintar, conectar,
+    montar, pintar, conectar, buscarFacturas,
     _emparejar: emparejar, _catalogo: catalogo, _facturas: facturas
   };
 })();

@@ -174,6 +174,79 @@ const inv = (n, conStock) => Array.from({ length: n }, (_, i) => ({
     /Open 11 days/.test(f[f.length - 1] || ''), f[f.length - 1]);
   prueba('y marca la fila', !!ciclo(h).querySelector('.m-hero-tl li.is-alerta'));
 
+  grupo('la tarjeta dice de dónde viene y qué enseña');
+  {
+    const w = entorno({
+      master: inv(10, 6), pedidos: {},
+      entregas: { n: 24, unidades: 1256, dinero: 15424, sueltas: 86, ultima: '2026-10-28' }
+    });
+    const h = pintar(w);
+    await esperar(60);
+    const c = Array.from(h.querySelectorAll('.m-hero'))
+      .find(x => /MarginEdge sync/i.test(x.textContent));
+    const t = c.textContent.replace(/\s+/g, ' ');
+    // El rótulo nombra la fuente: esto no lo escribiste tú.
+    prueba('el rótulo dice MarginEdge', /MarginEdge sync/i.test(t), t.slice(0, 60));
+    prueba('y el título, de qué va', /What came in this cycle/.test(t), t.slice(0, 90));
+    // El número ya está en la esquina; repetirlo en el título no
+    // añade nada.
+    prueba('el título no repite el número', !/24 invoices this/.test(t), t.slice(0, 90));
+  }
+
+  grupo('con cero facturas la tarjeta sigue, para poder buscar');
+  {
+    // Esconderla hasta que haya datos deja el botón inútil justo
+    // cuando lo necesitas: esperando una entrega.
+    const w = entorno({
+      master: inv(10, 6), pedidos: {},
+      entregas: { n: 0, unidades: 0, dinero: 0, sueltas: 0, ultima: '' }
+    });
+    const h = pintar(w);
+    await esperar(60);
+    const c = Array.from(h.querySelectorAll('.m-hero'))
+      .find(x => /MarginEdge sync/i.test(x.textContent));
+    prueba('la tarjeta está', !!c);
+    prueba('y lo dice con palabras', /Nothing new yet/.test(c.textContent), c.textContent.slice(0, 90));
+    prueba('con su botón de buscar', !!c.querySelector('.m-hero-sync'));
+  }
+
+  grupo('el botón de sincronizar vive en la tarjeta');
+  {
+    const w = entorno({
+      master: inv(10, 6), pedidos: {},
+      entregas: { n: 2, unidades: 22, dinero: 58, sueltas: 1, ultima: '2026-10-27' }
+    });
+    let llamado = 0;
+    w.BarStockMarginEdgeConnect = {
+      buscarFacturas: async () => { llamado++; return { facturas: 1, lineas: 3 }; }
+    };
+    const h = pintar(w);
+    await esperar(60);
+
+    const card = Array.from(h.querySelectorAll('.m-hero'))
+      .find(c => /MarginEdge sync/i.test(c.textContent));
+    prueba('la tarjeta está', !!card, Array.from(h.querySelectorAll('.m-hero-k')).map(x => x.textContent).join(' | '));
+
+    const sync = card.querySelector('.m-hero-sync');
+    prueba('con su botón a la izquierda', !!sync);
+    // A la izquierda del texto del pie, y la acción a la derecha.
+    const pie = card.querySelector('.m-hero-acts');
+    prueba('antes que el texto del pie',
+      pie.firstElementChild === sync, pie.firstElementChild.className);
+    prueba('y la acción sigue a la derecha',
+      pie.lastElementChild.classList.contains('m-hero-b'), pie.lastElementChild.className);
+
+    sync.click();
+    // Gira mientras busca: un botón quieto cinco segundos se pulsa
+    // dos veces, y cada pulsación son peticiones a una API que
+    // contesta 429 a la segunda por segundo.
+    prueba('gira mientras busca', sync.classList.contains('girando'));
+    prueba('y no se puede pulsar otra vez', sync.disabled);
+
+    await esperar(60);
+    prueba('pide las facturas nuevas', llamado === 1, String(llamado));
+  }
+
   console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
     '   ·   ' + (ok + mal) + ' comprobaciones');
   process.exit(mal ? 1 : 0);

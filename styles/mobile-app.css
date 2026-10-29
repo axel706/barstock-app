@@ -800,6 +800,37 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
 
   .m-hero-mas { font-size: var(--m-meta); color: #8fa3b8; margin-top: 6px; }
 
+  /* ── Buscar facturas nuevas, desde la tarjeta ──────────────────────
+   *
+   * A la izquierda y pegado al texto que actualiza: "last on Oct 28"
+   * y el botón que lo vuelve a mirar son la misma idea. La acción de
+   * la tarjeta se queda a la derecha, como en todas las demás.
+   *
+   * Redondo y del tamaño de un dedo, pero sin color: refrescar es
+   * barato y reversible; no compite con el botón principal. */
+  body.m-shell .m-hero-sync {
+    flex: 0 0 32px; width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    margin-right: 9px;
+    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.18);
+    color: #e8f1fb; font-size: var(--m-strong); cursor: pointer;
+  }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hero-sync { border-radius: 50% !important; }
+  body.m-shell .m-hero-sync:active { background: rgba(255,255,255,.24); }
+  body.m-shell .m-hero-sync:disabled { opacity: .7; cursor: default; }
+
+  /* Gira mientras busca. Un botón que tarda cinco segundos sin
+   * moverse se pulsa dos veces, y cada pulsación son peticiones a una
+   * API que contesta 429 a la segunda por segundo. */
+  .m-hero-sync.girando > i {
+    display: block;
+    animation: mSyncGira .9s linear infinite;
+  }
+  @keyframes mSyncGira { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    .m-hero-sync.girando > i { animation: none; opacity: .6; }
+  }
+
   /* "Review all" pesa menos que "Review the order": con el índice
    * delante, el camino principal son las filas. */
   body.m-shell .m-hero-b-suave {

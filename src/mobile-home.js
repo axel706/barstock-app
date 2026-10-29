@@ -140,7 +140,9 @@
     if (F && F.resumen) {
       try {
         const r = await F.resumen();
-        return (r && r.n) ? r : false;
+        // Con cero facturas también se devuelve: la tarjeta sale
+        // igual para poder pulsar refrescar.
+        return r ? Object.assign({ revisado: Date.now() }, r) : false;
       } catch (e) {
         console.warn('[home] resumen de facturas', e);
         return false;
@@ -609,30 +611,95 @@
   // "Apply" mentiría.
   function tarjetaFacturas() {
     const e = _entregas;
-    if (!e || !e.n) return null;
+    // Sin conexión no hay nada que contar. Pero con conexión y cero
+    // facturas la tarjeta SÍ sale: el botón de buscar es justo lo que
+    // hace falta cuando estás esperando una entrega, y esconderlo
+    // hasta que haya datos lo deja inútil en el único momento en que
+    // lo necesitas.
+    if (!e) return null;
 
-    const filas = [
-      { n: e.unidades + (e.unidades === 1 ? ' unit received' : ' units received'),
-        v: e.dinero ? money(e.dinero) : '' }
-    ];
-    if (e.sueltas) {
+    const filas = [];
+    if (e.n) {
       filas.push({
-        n: e.sueltas + (e.sueltas === 1 ? ' line has no bottle' : ' lines have no bottle'),
-        tag: 'fix', v: ''
+        n: e.unidades + (e.unidades === 1 ? ' unit' : ' units') + ' received',
+        v: e.dinero ? money(e.dinero) : ''
       });
+      if (e.sueltas) {
+        filas.push({
+          n: e.sueltas + (e.sueltas === 1 ? ' line has no bottle' : ' lines have no bottle'),
+          tag: 'fix', v: ''
+        });
+      }
     }
 
     return {
       tono: e.sueltas ? 'amber' : 'teal',
-      k: 'Purchases came in',
-      tt: e.n + (e.n === 1 ? ' invoice' : ' invoices'),
+      // El rótulo nombra la FUENTE: lo que hay aquí no lo escribiste
+      // tú, viene de MarginEdge. Sin eso, "24 invoices" en el Home de
+      // una app de inventario se lee como órdenes tuyas.
+      k: 'MarginEdge sync',
+      // Y el título dice de qué va, no sólo cuántas: el número ya
+      // está en la esquina y repetirlo no añade nada.
+      tt: e.n ? 'What came in this cycle' : 'Nothing new yet',
       filas,
+      // Con cero facturas la explicación es la propia frase, no una
+      // lista de ceros.
+      sub: e.n ? '' : 'No invoices since the cycle opened. Tap refresh to look again.',
       amt: String(e.n),
       amtPie: e.n === 1 ? 'invoice' : 'invoices',
-      vs: e.ultima ? 'last on ' + fmtDia(e.ultima) : '',
+      icoL: 'refresh',
+      icoLt: 'Check MarginEdge for new invoices',
+      goL: (btn) => sincronizarDesdeTarjeta(btn),
+      // El pie dice cuándo se miró por última vez, no la fecha de la
+      // última factura: con un botón de refrescar al lado, lo que
+      // importa es si lo que ves está al día.
+      vs: e.revisado ? 'checked ' + hace(e.revisado)
+                     : (e.ultima ? 'last invoice ' + fmtDia(e.ultima) : ''),
       btn: e.sueltas ? 'Review them' : 'See invoices',
       go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('invoices'); }
     };
+  }
+
+  // Cuánto hace, en palabras. Un reloj exacto no dice nada; "hace dos
+  // horas" sí dice si merece la pena volver a mirar.
+  function hace(ms) {
+    const min = Math.round((Date.now() - ms) / 60000);
+    if (min < 1) return 'just now';
+    if (min < 60) return min + (min === 1 ? ' minute ago' : ' minutes ago');
+    const h = Math.round(min / 60);
+    if (h < 24) return h + (h === 1 ? ' hour ago' : ' hours ago');
+    const d = Math.round(h / 24);
+    return d + (d === 1 ? ' day ago' : ' days ago');
+  }
+
+  // ── Buscar facturas nuevas desde la tarjeta ──────────────────────
+  //
+  // Gira mientras busca. Un botón que tarda cinco segundos sin
+  // moverse se pulsa dos veces, y cada pulsación son peticiones a una
+  // API que contesta 429 a la segunda por segundo.
+  let _sincronizando = false;
+
+  async function sincronizarDesdeTarjeta(btn) {
+    if (_sincronizando) return;
+    _sincronizando = true;
+    if (btn) { btn.classList.add('girando'); btn.disabled = true; }
+
+    const C = window.BarStockMarginEdgeConnect;
+    try {
+      if (!C || !C.buscarFacturas) throw new Error('This location is not connected yet.');
+      await C.buscarFacturas();
+      // Se obliga a releer: el resumen está cacheado contra el
+      // arranque del ciclo y, sin esto, la tarjeta diría exactamente
+      // lo mismo que antes de sincronizar.
+      _entregasDe = '';
+      _entregas = null;
+      refresh();
+    } catch (e) {
+      if (window.BarStockToast) window.BarStockToast.show(String(e && e.message || e));
+      if (btn) { btn.classList.remove('girando'); btn.disabled = false; }
+    } finally {
+      _sincronizando = false;
+    }
   }
 
   function tarjetas() {
@@ -858,6 +925,14 @@
         </div>
 
         <div class="m-hero-acts">
+          <!-- El refresco va a la IZQUIERDA, pegado al texto que
+               actualiza: "last on Oct 28" y el botón que lo vuelve a
+               mirar son la misma idea. La acción de la tarjeta se
+               queda a la derecha, donde está en todas las demás. -->
+          ${c.icoL ? `<button type="button" class="m-hero-sync" data-sync="${i}"
+                             aria-label="${esc(c.icoLt || 'Refresh')}">
+                       <i class="ti ti-${esc(c.icoL)}" aria-hidden="true"></i>
+                     </button>` : ''}
           ${c.vs ? `<span class="m-hero-vs">${esc(c.vs)}</span>` : ''}
           ${c.pista ? `<span class="m-hero-pista">${esc(c.pista)}
             <i class="ti ti-chevron-right" aria-hidden="true"></i></span>` : ''}
@@ -1203,6 +1278,11 @@
     // Cada proveedor del índice entra en SU orden. La clave lleva los
     // dos números —tarjeta y fila— porque el carril pinta todas las
     // tarjetas a la vez y un índice suelto chocaría entre ellas.
+    host.querySelectorAll('[data-sync]').forEach(b => {
+      const c = cards[Number(b.dataset.sync)];
+      if (c && c.goL) b.onclick = (ev) => { ev.stopPropagation(); c.goL(b); };
+    });
+
     host.querySelectorAll('[data-pv]').forEach(b => {
       const [ci, pi] = String(b.dataset.pv).split('-').map(Number);
       const p = cards[ci] && cards[ci].prov && cards[ci].prov[pi];
