@@ -723,8 +723,11 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
 
   .m-hln { display: flex; align-items: center; gap: 9px; padding: 5px 0; }
   .m-hln + .m-hln { border-top: 1px solid rgba(255,255,255,.08); }
+  /* La cantidad a la IZQUIERDA y pegada al borde de la tarjeta. Es el
+   * dato que se lee primero —cuántas se piden— y alineado a la derecha
+   * dentro de su columna quedaba flotando en mitad de la nada. */
   .m-hln .q {
-    flex: 0 0 30px; text-align: right;
+    flex: 0 0 auto; min-width: 26px; text-align: left;
     font-size: var(--m-small); font-weight: 800; color: #fff;
   }
   .m-hln .n {

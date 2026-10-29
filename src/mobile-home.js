@@ -503,10 +503,25 @@
     return n;
   }
 
-  // Cuántas botellas pide una línea. El campo que vale es el que
-  // escribe la app al guardar la orden; `quantity` es el respaldo.
+  // ── Cuántas se van a PEDIR ────────────────────────────────────────
+  //
+  // `getEffectiveOrder` y nada más: respeta el override manual cuando
+  // el proveedor lo admite y si no usa `toOrder`. Es exactamente la
+  // misma función que alimenta `computeOrderSubtotal`, así que la
+  // tarjeta no puede contradecir a la pantalla de órdenes.
+  //
+  // El primer intento leyó `finalOrder`, que es el campo de una orden
+  // YA GUARDADA — otra forma de fila—. Aquí no existe, así que salía
+  // "0×" y, multiplicado por el precio, un "$0" en una línea que sí
+  // tenía precio. El pie decía $30 al mismo tiempo: dos cifras del
+  // mismo dinero sin hablarse.
   function cuantas(r) {
-    return Number(r.finalOrder != null ? r.finalOrder : r.quantity) || 0;
+    if (typeof window.getEffectiveOrder === 'function') {
+      try { return Math.max(0, Number(window.getEffectiveOrder(r)) || 0); } catch (e) {}
+    }
+    const v = r.orderOverride;
+    if (v !== '' && v !== null && v !== undefined) return Math.max(0, Number(v) || 0);
+    return Math.max(0, Number(r.toOrder) || 0);
   }
 
   // ── Las órdenes que esperan ──────────────────────────────────────────

@@ -47,8 +47,13 @@ function entorno(pedidos) {
 
   w.getActiveVendors = () => Object.keys(pedidos || {});
   w.getOrderRowsForVendor = v => (pedidos || {})[v] || [];
+  // Tal cual la app: el override manual gana, y si no, toOrder.
+  w.getEffectiveOrder = r => Math.max(0,
+    (r.orderOverride !== '' && r.orderOverride != null)
+      ? Number(r.orderOverride) || 0
+      : Number(r.toOrder) || 0);
   w.computeOrderSubtotal = filas =>
-    filas.reduce((s, r) => s + (Number(r.value) || 0) * (Number(r.finalOrder) || 0), 0);
+    filas.reduce((s, r) => s + (Number(r.value) || 0) * w.getEffectiveOrder(r), 0);
   w.isRowPlaced = () => false;
 
   w.__ido = [];
@@ -72,7 +77,10 @@ function pintar(w) {
 const ord = (h) => h.querySelectorAll('.m-hero')[2];
 const txt = (h) => ord(h).textContent.replace(/\s+/g, ' ');
 
-const linea = (item, qty, precio) => ({ item, finalOrder: qty, value: precio, code: '' });
+// `toOrder` es el campo real de una fila de inventario pendiente de
+// pedir. `finalOrder` pertenece a una orden YA GUARDADA y no existe
+// aquí — leerlo fue justo el fallo que sacaba "0×" y "$0".
+const linea = (item, qty, precio) => ({ item, toOrder: qty, value: precio, code: '' });
 
 (() => {
   grupo('con varios proveedores: un índice');
@@ -145,6 +153,41 @@ const linea = (item, qty, precio) => ({ item, finalOrder: qty, value: precio, co
     ord(h).querySelector('.m-hero-b').click();
     prueba('el botón entra en ese proveedor',
       w.__ido.includes('vendor:SOUTHERN'), w.__ido.join(','));
+  }
+
+  grupo('la cantidad es la que se va a PEDIR');
+  {
+    // onHand 0 y toOrder 2: lo que se pide es 2. El primer intento
+    // leía `finalOrder` —que aquí no existe— y sacaba "0×" junto a un
+    // "$0", mientras el pie decía "$30". Dos cifras del mismo dinero
+    // sin hablarse.
+    const w = entorno({
+      SOUTHERN: [{ item: 'Smirnoff Blueberry Vodka', onHand: 0, toOrder: 2, value: 15, code: '' }]
+    });
+    const h = pintar(w);
+    const q = ord(h).querySelector('.m-hln .q').textContent;
+    const v = ord(h).querySelector('.m-hln .v').textContent;
+
+    prueba('enseña lo que se pide, no lo que hay', q === '2×', q);
+    prueba('y el importe es precio × cantidad', v === '$30', v);
+    // La misma cifra en los dos sitios o la tarjeta se contradice.
+    prueba('el pie dice lo mismo', /1 line · \$30/.test(txt(h)), txt(h));
+  }
+
+  grupo('y respeta el override manual');
+  {
+    // getEffectiveOrder antepone orderOverride a toOrder. Si la
+    // tarjeta usara toOrder a secas, diría una cosa y el subtotal otra.
+    const w = entorno({
+      SOUTHERN: [{ item: 'Tito’s', onHand: 1, toOrder: 2, orderOverride: 5, value: 10, code: '' }]
+    });
+    const h = pintar(w);
+    prueba('usa el override, no toOrder',
+      ord(h).querySelector('.m-hln .q').textContent === '5×',
+      ord(h).querySelector('.m-hln .q').textContent);
+    prueba('y el importe va con él',
+      ord(h).querySelector('.m-hln .v').textContent === '$50',
+      ord(h).querySelector('.m-hln .v').textContent);
   }
 
   grupo('la esquina dejó de ser dinero');
