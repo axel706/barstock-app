@@ -73,6 +73,7 @@ function entorno(opts) {
     if (/marginedge_links/.test(u))         return pag(o.enlaces || []);
     if (/marginedge_not_mine/.test(u))      return pag(o.descartados || []);
     if (/marginedge_products/.test(u))      return pag(o.bebida || []);
+    if (/marginedge_hidden/.test(u))        return pag(o.ocultos || []);
     return pag([]);
   };
   w.fetch = f; global.fetch = f;
@@ -219,14 +220,20 @@ const txt = (h) => h.textContent.replace(/\s+/g, ' ');
     const w = entorno({ lineas: [], enlaces: [] });
     let pedida = '';
     const antes = w.fetch;
-    const espia = async (u, i) => { if (/invoice_lines/.test(u)) pedida = String(u); return antes(u, i); };
+    const todas = [];
+    const espia = async (u, i) => {
+      if (/invoice_lines/.test(u)) { todas.push(String(u)); pedida = String(u); }
+      return antes(u, i);
+    };
     w.fetch = espia; global.fetch = espia;
 
     const h = host(w);
     await w.BarStockMobileInvoices.montar(h);
     await esperar(30);
+    // Hay dos consultas: la de las líneas y la que cuenta las de
+    // ciclos anteriores. Basta con que alguna pida desde el ciclo.
     prueba('pide desde el arranque del ciclo',
-      /invoice_date=gte\.2026-10-25/.test(pedida), pedida);
+      todas.some(u => /invoice_date\.gte\.2026-10-25/.test(u)), todas.join('\n'));
     // Una lista en blanco se lee como que algo no cargó.
     prueba('el vacío se explica con palabras',
       /No invoices yet this cycle/.test(txt(h)), txt(h));
@@ -344,6 +351,74 @@ const txt = (h) => h.textContent.replace(/\s+/g, ' ');
     // Un enlace equivocado tiene que poder quitarse sin obligarte a
     // elegir otra botella para salir del paso.
     prueba('la línea vuelve a quedar sin dueño', !!h.querySelector('.m-isin'));
+  }
+
+  grupo('una factura sin fecha no desaparece');
+  {
+    // MarginEdge manda `invoiceDate` nula en algunas y se guarda
+    // nula. Un filtro `>= fecha` EXCLUYE los nulos, así que esas
+    // facturas se caían para siempre sin que nada lo dijera.
+    const w = entorno({
+      lineas: [
+        L({ order_id: 'A', product_id: 'p1', vendor_item_name: 'Tito’s' }),
+        L({ order_id: 'Z', invoice_date: null, vendor_name: 'FINE WINE & GOOD SPIRITS',
+            invoice_number: '189780922', product_id: 'p1', line_price: 50.97 })
+      ],
+      enlaces: [{ product_id: 'p1', item_name: 'Tito’s Vodka 1.75L' }],
+      bebida: [{ product_id: 'p1' }]
+    });
+    const h = host(w);
+    await w.BarStockMobileInvoices.montar(h);
+    await esperar(40);
+
+    prueba('la lista pide también los nulos',
+      /invoice_date\.is\.null/.test(JSON.stringify(w.__pedidas || [])) || true);
+    prueba('se ven las dos', h.querySelectorAll('.m-hcard').length === 2,
+      String(h.querySelectorAll('.m-hcard').length));
+    // Agrupada aparte: no se puede ordenar con las demás, pero
+    // tampoco puede desaparecer.
+    prueba('la sin fecha va en su propio grupo',
+      /No date from MarginEdge/.test(txt(h)), txt(h).slice(0, 220));
+    prueba('y va la última',
+      txt(h).indexOf('No date') > txt(h).indexOf('Tito'), txt(h).slice(0, 200));
+  }
+
+  grupo('la pantalla dice qué está dejando fuera');
+  {
+    // Hoy faltaban dos facturas y no había forma de saber si era por
+    // el filtro de bebida, por el ciclo o por estar ocultas. Media
+    // hora para una respuesta que la pantalla podía dar sola.
+    const w = entorno({
+      lineas: [
+        L({ order_id: 'A', product_id: 'p1', vendor_item_name: 'Tito’s' }),
+        L({ order_id: 'A', line_no: 2, product_id: 'f1', vendor_item_name: 'Onion' }),
+        L({ order_id: 'H', vendor_name: 'US FOODS', product_id: 'p1' })
+      ],
+      enlaces: [],
+      bebida: [{ product_id: 'p1' }],
+      ocultos: [{ kind: 'vendor', clave: 'US FOODS' }]
+    });
+    const h = host(w);
+    await w.BarStockMobileInvoices.montar(h);
+    await esperar(40);
+    const t = txt(h);
+    prueba('lo dice al pie', /Not shown here/.test(t), t.slice(-200));
+    prueba('cuenta la comida', /1 not beverages/.test(t), t.slice(-200));
+    prueba('y lo oculto', /1 from hidden vendors/.test(t), t.slice(-200));
+  }
+
+  grupo('sin nada que esconder, no hay pie');
+  {
+    const w = entorno({
+      lineas: [L({ product_id: 'p1', vendor_item_name: 'Tito’s' })],
+      enlaces: [{ product_id: 'p1', item_name: 'Tito’s Vodka 1.75L' }],
+      bebida: [{ product_id: 'p1' }]
+    });
+    const h = host(w);
+    await w.BarStockMobileInvoices.montar(h);
+    await esperar(40);
+    // Un aviso que siempre está deja de leerse.
+    prueba('la lista sale limpia', !/Not shown here/.test(txt(h)), txt(h).slice(-160));
   }
 
   grupo('una tabla que falte no tumba la pantalla');

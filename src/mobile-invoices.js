@@ -46,6 +46,10 @@
   const MAX_PAGINAS = 40;
 
   let _facturas = null;   // [{ id, vendor, numero, fecha, total, lineas[] }]
+  // Lo que NO se enseña, por motivo. Que algo falte es aceptable; que
+  // no haya forma de saber por qué, no.
+  let _fuera = { comida: 0, ocultas: 0, sinFecha: 0 };
+  let _antes = 0;
   let _abierta = null;    // order_id de la que se está mirando
   let _busy = new Set();
 
@@ -91,6 +95,20 @@
     };
   }
 
+  // Conteo sin descargar filas: el número viene en la cabecera.
+  async function contar(url, key, ruta) {
+    try {
+      const r = await fetch(`${url}/rest/v1/${ruta}&limit=0`, {
+        headers: {
+          apikey: key, Authorization: `Bearer ${key}`,
+          Prefer: 'count=exact', Range: '0-0'
+        }
+      });
+      const n = Number(String(r.headers.get('content-range') || '').split('/')[1]);
+      return isFinite(n) ? n : 0;
+    } catch (e) { return 0; }
+  }
+
   async function leerPaginado(url, key, ruta) {
     let todo = [];
     for (let p = 0; p < MAX_PAGINAS; p++) {
@@ -132,8 +150,15 @@
     };
 
     const [lineas, enlaces, fuera, bebida, ocultos] = await Promise.all([
+      // ── Y las que no traen fecha ────────────────────────────────
+      //
+      // MarginEdge manda `invoiceDate` nula en algunas, y entonces se
+      // guarda nula. Un filtro `>= fecha` EXCLUYE los nulos, así que
+      // esas facturas desaparecían para siempre sin que nada lo
+      // dijera. Entran, y se agrupan aparte.
       leerPaginado(url, key,
-        `marginedge_invoice_lines?location_id=eq.${locId}&invoice_date=gte.${d}` +
+        `marginedge_invoice_lines?location_id=eq.${locId}` +
+        `&or=(invoice_date.gte.${d},invoice_date.is.null)` +
         `&select=order_id,line_no,invoice_date,invoice_number,vendor_name,status,` +
         `product_id,vendor_item_name,unit_price,quantity,line_price` +
         `&order=order_id.asc,line_no.asc`),
@@ -167,6 +192,11 @@
     // Sin catálogo guardado no se puede distinguir bebida de comida.
     // En ese caso se enseña todo: es peor esconder una factura real
     // que colar una de lechuga.
+    // Cuántas líneas quedaron fuera por ser anteriores al ciclo. Sólo
+    // el número: sirve para explicar un hueco, no para enseñarlas.
+    _antes = await contar(url, key,
+      `marginedge_invoice_lines?location_id=eq.${locId}&invoice_date=lt.${d}&select=order_id`);
+
     const esBebida = bebida.length
       ? new Set(bebida.map(p => String(p.product_id)))
       : null;
@@ -174,10 +204,12 @@
     const dueno = new Map(enlaces.map(e => [String(e.product_id), e.item_name || '']));
     const descartado = new Set(fuera.map(e => String(e.product_id)));
 
+    _fuera = { comida: 0, ocultas: 0, sinFecha: 0 };
+
     const porOrden = new Map();
     for (const l of lineas) {
       const id = String(l.order_id);
-      if (ocultoFactura.has(id) || ocultoVendor.has(norm(l.vendor_name))) continue;
+      if (ocultoFactura.has(id) || ocultoVendor.has(norm(l.vendor_name))) { _fuera.ocultas++; continue; }
       let f = porOrden.get(id);
       if (!f) {
         f = { id, vendor: l.vendor_name || '', numero: l.invoice_number || '',
@@ -190,7 +222,7 @@
       // La comida se cuenta pero no se enseña: hay que poder decir
       // "y 6 líneas más que no son bebida" en vez de que los totales
       // no cuadren con el papel sin explicación.
-      if (esBebida && !esBebida.has(pid)) { f.ocultas++; continue; }
+      if (esBebida && !esBebida.has(pid)) { f.ocultas++; _fuera.comida++; continue; }
 
       const item = dueno.get(pid) || '';
       // Descartado no es lo mismo que suelto: dijiste que no es tuyo,
@@ -212,8 +244,15 @@
     // Una factura sin una sola línea de bebida no pinta nada aquí.
     // "Fish Window Cleaning" no es una compra de barra.
     const todas = Array.from(porOrden.values()).filter(f => f.lineas.length);
-    for (const f of todas) f.ts = dia(f.fecha).t;
-    todas.sort((a, b) => b.ts - a.ts || String(a.vendor).localeCompare(String(b.vendor)));
+    for (const f of todas) {
+      f.ts = dia(f.fecha).t;
+      if (!f.fecha) { f.sinFecha = true; _fuera.sinFecha++; }
+    }
+    // Las sin fecha al final: no se pueden ordenar con las demás, pero
+    // tampoco pueden desaparecer.
+    todas.sort((a, b) =>
+      (a.sinFecha ? 1 : 0) - (b.sinFecha ? 1 : 0) ||
+      b.ts - a.ts || String(a.vendor).localeCompare(String(b.vendor)));
 
     sugerir(todas);
     _facturas = todas;
@@ -262,7 +301,7 @@
 
     for (let i = 0; i < n; i++) {
       const f = _facturas[i];
-      const d = dia(f.fecha).txt;
+      const d = f.sinFecha ? 'No date from MarginEdge' : dia(f.fecha).txt;
       if (d !== ultimoDia) { html += '<div class="m-iday">' + esc(d) + '</div>'; ultimoDia = d; }
 
       // `m-hcard` es la tarjeta que ya usan el historial de órdenes y
@@ -287,10 +326,31 @@
         '</button>';
     }
 
+    html += pieHuecos();
+
     host.innerHTML = html;
     host.querySelectorAll('[data-inv]').forEach(b => {
       b.onclick = () => { _abierta = _facturas[Number(b.dataset.inv)].id; pintar(host); };
     });
+  }
+
+  // ── Por qué no está aquí ───────────────────────────────────────────
+  //
+  // Hoy faltaban dos facturas de Fine Wine & Good Spirits y no había
+  // manera de saber si era por el filtro de bebida, por el ciclo, por
+  // estar ocultas o porque no se habían descargado. Media hora para
+  // una respuesta que la pantalla podía dar sola.
+  function pieHuecos() {
+    const t = [];
+    if (_fuera.comida)   t.push(_fuera.comida + ' not beverages');
+    if (_fuera.ocultas)  t.push(_fuera.ocultas + ' from hidden vendors');
+    if (_antes)          t.push(_antes + ' from earlier cycles');
+    if (!t.length) return '';
+    return '<div class="m-ipie">' +
+      '<b>Not shown here:</b> ' + esc(t.join(' · ')) + ' line' +
+      ((_fuera.comida + _fuera.ocultas + _antes) === 1 ? '' : 's') + '. ' +
+      'Earlier cycles are kept, just not listed; hidden vendors are in ' +
+      'Settings › Connections.</div>';
   }
 
   function cabecera() {

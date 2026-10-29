@@ -110,16 +110,33 @@
 
   // ── Paso 3 · las facturas del ciclo ────────────────────────────────
 
-  function desdeCiclo() {
+  // ── Al conectar se trae HISTORIA, no sólo el ciclo ─────────────────
+  //
+  // La primera versión pedía desde el arranque del ciclo. En una
+  // locación recién conectada eso puede ser hoy mismo, así que no
+  // bajaba casi nada: faltaban facturas que sí habían llegado y no
+  // había forma de saber por qué.
+  //
+  // Son 45 días: cubre un mes natural con margen y sigue siendo un
+  // rango que MarginEdge contesta sin ahogarse. La PANTALLA sigue
+  // enseñando sólo el ciclo abierto — eso es una decisión de qué
+  // mirar, no de qué guardar, y son cosas distintas.
+  const DIAS_ALTA = 45;
+
+  function desdeAlta() {
     const W = window.BarStockWeeklyCycle;
     const t = W && W.resetAt ? W.resetAt() : null;
-    if (t) return String(t).slice(0, 10);
-    return new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+    const ciclo = t ? new Date(t).getTime() : null;
+    const atras = Date.now() - DIAS_ALTA * 86400000;
+    // El más antiguo de los dos: si el ciclo lleva más de 45 días
+    // abierto, se respeta el ciclo entero.
+    const desde = ciclo && ciclo < atras ? ciclo : atras;
+    return new Date(desde).toISOString().slice(0, 10);
   }
 
   async function facturas(unitId, locId, avisar) {
     const api = I();
-    const startDate = desdeCiclo();
+    const startDate = desdeAlta();
     const endDate = new Date().toISOString().slice(0, 10);
 
     // Fase 1 · cabeceras
