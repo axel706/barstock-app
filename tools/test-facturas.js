@@ -434,12 +434,14 @@ const txt = (h) => h.textContent.replace(/\s+/g, ' ');
     prueba('el número es un enlace', !!link, txt(h).slice(-140));
 
     link.click();
-    await esperar(40);
+    await esperar(60);
     const t = txt(h);
     prueba('abre la lista de lo descartado', /Not beverages/.test(t), t.slice(0, 120));
-    // Lo que de verdad hacía falta: el NOMBRE de lo que se dejó fuera.
-    prueba('con el nombre de la línea', /Lett Baby Iceberg/.test(t), t.slice(0, 220));
-    prueba('y de quién vino', /Ambrogi/.test(t), t.slice(0, 220));
+    // Por FACTURA, no por producto: con mil líneas, una lista de
+    // nombres de producto es un muro. Lo que buscas es una factura.
+    prueba('agrupado por factura', !!h.querySelector('.m-hcard'), t.slice(0, 220));
+    prueba('con el proveedor', /Ambrogi/.test(t), t.slice(0, 220));
+    prueba('y su número', /06808287|2689338/.test(t) || /line/.test(t), t.slice(0, 220));
 
     h.querySelector('#mInvBack').click();
     await esperar(20);

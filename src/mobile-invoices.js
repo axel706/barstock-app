@@ -223,7 +223,7 @@
       const id = String(l.order_id);
       if (ocultoFactura.has(id) || ocultoVendor.has(norm(l.vendor_name))) {
         _fuera.ocultas++;
-        if (_descartadas.ocultas.length < 60) _descartadas.ocultas.push(l);
+        _descartadas.ocultas.push(l);
         continue;
       }
       let f = porOrden.get(id);
@@ -240,7 +240,7 @@
       // no cuadren con el papel sin explicación.
       if (esBebida && !esBebida.has(pid)) {
         f.ocultas++; _fuera.comida++;
-        if (_descartadas.comida.length < 60) _descartadas.comida.push(l);
+        _descartadas.comida.push(l);
         continue;
       }
 
@@ -387,54 +387,91 @@
                  : cual === 'ocultas' ? 'From hidden vendors'
                  : 'Earlier cycles';
 
-    let filas = [];
-    if (cual === 'antes') {
-      if (!_viejas) {
-        const { url, key } = cfg();
-        const locId = await locationId();
-        const d = desde();
-        try {
-          filas = await leerPaginado(url, key,
-            `marginedge_invoice_lines?location_id=eq.${locId}&invoice_date=lt.${d}` +
-            `&select=order_id,invoice_date,invoice_number,vendor_name,line_price` +
+    host.innerHTML =
+      '<button type="button" class="m-iback" id="mInvBack">' +
+        '<i class="ti ti-chevron-left" aria-hidden="true"></i> Invoices</button>' +
+      '<div class="m-inv-t">' + esc(titulo) + '</div>' +
+      '<div class="m-isub">Reading…</div>';
+
+    let lineas = [];
+    try {
+      if (cual === 'antes') {
+        if (!_viejas) {
+          const { url, key } = cfg();
+          const locId = await locationId();
+          _viejas = await leerPaginado(url, key,
+            `marginedge_invoice_lines?location_id=eq.${locId}&invoice_date=lt.${desde()}` +
+            `&select=order_id,invoice_date,invoice_number,vendor_name,line_price,quantity` +
             `&order=invoice_date.desc`);
-        } catch (e) { filas = []; }
-        // Una por factura, no una por línea: son cientos.
-        const vistas = new Set();
-        _viejas = filas.filter(l => {
-          const k = String(l.order_id);
-          if (vistas.has(k)) return false;
-          vistas.add(k); return true;
-        }).slice(0, 80);
+        }
+        lineas = _viejas;
+      } else {
+        lineas = _descartadas[cual] || [];
       }
-      filas = _viejas;
-    } else {
-      filas = _descartadas[cual] || [];
+    } catch (e) {
+      host.innerHTML =
+        '<button type="button" class="m-iback" id="mInvBack">' +
+          '<i class="ti ti-chevron-left" aria-hidden="true"></i> Invoices</button>' +
+        '<div class="m-inv-t">' + esc(titulo) + '</div>' +
+        '<div class="m-ivacio mal">' + esc(String(e && e.message || e)) + '</div>';
+      const b0 = host.querySelector('#mInvBack');
+      if (b0) b0.onclick = () => { _verFuera = ''; pintar(host); };
+      return;
     }
+
+    // ── Por FACTURA, no por producto ────────────────────────────────
+    //
+    // La primera versión listaba líneas sueltas. Con 1008 eso es un
+    // muro de nombres de producto, y lo que estás buscando es una
+    // factura: un proveedor, un número y un importe.
+    const porOrden = new Map();
+    for (const l of lineas) {
+      const id = String(l.order_id);
+      let f = porOrden.get(id);
+      if (!f) {
+        f = { id, vendor: l.vendor_name || '', numero: l.invoice_number || '',
+              fecha: l.invoice_date || '', n: 0, total: 0 };
+        porOrden.set(id, f);
+      }
+      f.n++;
+      f.total += Number(l.line_price) || 0;
+    }
+
+    const facturas = Array.from(porOrden.values())
+      .sort((x, y) => String(y.fecha).localeCompare(String(x.fecha)) ||
+                      String(x.vendor).localeCompare(String(y.vendor)));
+
+    const sub = cual === 'comida'
+      ? 'Invoices with lines whose product is not in a beverage category. ' +
+        'The count is lines; this list is invoices.'
+      : cual === 'ocultas'
+        ? 'Invoices from vendors you marked as not yours.'
+        : 'Invoices kept but dated before this cycle opened on ' + esc(desde()) + '.';
 
     host.innerHTML =
       '<button type="button" class="m-iback" id="mInvBack">' +
         '<i class="ti ti-chevron-left" aria-hidden="true"></i> Invoices</button>' +
       '<div class="m-inv-t">' + esc(titulo) + '</div>' +
-      '<div class="m-isub">' +
-        (cual === 'comida'
-          ? 'Lines whose MarginEdge product is not in a beverage category.'
-          : cual === 'ocultas'
-            ? 'Lines from vendors you marked as not yours.'
-            : 'Invoices kept but dated before this cycle opened.') +
-      '</div>' +
-      (filas.length
-        ? filas.map(l =>
-            '<div class="m-iln m-icard">' +
-              '<span class="co">' +
-                '<span class="n">' + esc(l.vendor_item_name || l.invoice_number || l.order_id) + '</span>' +
-                '<span class="who2">' + esc(l.vendor_name || '') +
-                  (l.invoice_date ? ' · ' + esc(dia(l.invoice_date).txt) : '') + '</span>' +
+      '<div class="m-isub">' + sub + '</div>' +
+      (facturas.length
+        ? facturas.map(f =>
+            '<div class="m-hcard">' +
+              '<span class="m-hcard-l">' +
+                '<span class="m-hcard-v">' + esc(f.vendor || 'Unknown vendor') + '</span>' +
+                '<span class="m-hcard-m">' +
+                  (f.numero ? esc(f.numero) + ' · ' : '') +
+                  (f.fecha ? esc(dia(f.fecha).txt) + ' · ' : '') +
+                  f.n + (f.n === 1 ? ' line' : ' lines') +
+                '</span>' +
               '</span>' +
-              '<span class="v">' + dinero(l.line_price) + '</span>' +
+              '<span class="m-hcard-r"><span class="m-hcard-a">' +
+                dinero(f.total) + '</span></span>' +
             '</div>').join('')
-        : '<div class="m-ivacio">Nothing here.</div>') +
-      (filas.length >= 60 ? '<div class="m-ipie">Showing the first ' + filas.length + '.</div>' : '');
+        : '<div class="m-ivacio"><b>Nothing here.</b><br>' +
+          'The count came from a different query — tell me and I will look at it.</div>') +
+      '<div class="m-ipie">' + facturas.length +
+        (facturas.length === 1 ? ' invoice' : ' invoices') + ' · ' +
+        lineas.length + (lineas.length === 1 ? ' line' : ' lines') + '</div>';
 
     const b = host.querySelector('#mInvBack');
     if (b) b.onclick = () => { _verFuera = ''; pintar(host); };
@@ -844,12 +881,33 @@
     });
   }
 
+  // Un fallo aquí dejaba la pantalla en blanco, que es indistinguible
+  // de "no hay nada". Se enseña, con la forma de volver.
   function pintar(host) {
     if (!host || !_facturas) return;
-    if (_verFuera) { pintarFuera(host); return; }
-    const f = _abierta && _facturas.find(x => x.id === _abierta);
-    if (f) pintarDetalle(host, f);
-    else { _abierta = null; pintarLista(host); }
+    try {
+      if (_verFuera) {
+        const p = pintarFuera(host);
+        if (p && p.catch) p.catch(e => falloAlPintar(host, e));
+        return;
+      }
+      const f = _abierta && _facturas.find(x => x.id === _abierta);
+      if (f) pintarDetalle(host, f);
+      else { _abierta = null; pintarLista(host); }
+    } catch (e) {
+      falloAlPintar(host, e);
+    }
+  }
+
+  function falloAlPintar(host, e) {
+    console.error('[facturas]', e);
+    host.innerHTML =
+      '<button type="button" class="m-iback" id="mInvBack">' +
+        '<i class="ti ti-chevron-left" aria-hidden="true"></i> Invoices</button>' +
+      '<div class="m-inv-t">Something broke</div>' +
+      '<div class="m-ivacio mal">' + esc(String((e && (e.stack || e.message)) || e)) + '</div>';
+    const b = host.querySelector('#mInvBack');
+    if (b) b.onclick = () => { _verFuera = ''; _abierta = null; pintar(host); };
   }
 
   async function montar(host) {
