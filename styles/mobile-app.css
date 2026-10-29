@@ -736,30 +736,37 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * multiplica por el número de filas y luego por TODAS las tarjetas
    * del carril, que miden lo que la más alta. 2px de más en el
    * relleno son 12px de más en el Home. */
-  .m-hln { display: flex; align-items: center; gap: 9px; padding: 3px 0; line-height: 1.3; }
-  .m-hln + .m-hln { border-top: 1px solid rgba(255,255,255,.08); }
+  /* El nombre .m-hln lo usa TAMBIEN la linea del detalle del historial,
+   * mas abajo en esta hoja, con padding 11px 15px. Misma clase, misma
+   * especificidad: ganaba la de abajo y estas filas median 39px en vez
+   * de 22. Tres filas por tarjeta son 51px que se comia el carril
+   * entero, porque todas las tarjetas miden lo que la mas alta.
+   * Por eso van ancladas a .m-hero-ln, que es lo unico que las
+   * distingue de las del historial. */
+  .m-hero-ln .m-hln { display: flex; align-items: center; gap: 9px; padding: 3px 0; line-height: 1.3; }
+  .m-hero-ln .m-hln + .m-hln { border-top: 1px solid rgba(255,255,255,.08); }
   /* La cantidad a la IZQUIERDA y pegada al borde de la tarjeta. Es el
    * dato que se lee primero —cuántas se piden— y alineado a la derecha
    * dentro de su columna quedaba flotando en mitad de la nada. */
-  .m-hln .q {
+  .m-hero-ln .m-hln .q {
     flex: 0 0 auto; min-width: 26px; text-align: left;
     font-size: var(--m-small); font-weight: 800; color: #fff;
   }
-  .m-hln .n {
+  .m-hero-ln .m-hln .n {
     flex: 1; min-width: 0; font-size: var(--m-small); color: #dbe7f3;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .m-hln .v { font-size: var(--m-meta); color: #8fa3b8; white-space: nowrap; }
+  .m-hero-ln .m-hln .v { font-size: var(--m-meta); color: #8fa3b8; white-space: nowrap; }
   /* "out" es un ESTADO, no una cifra: pastilla, no texto suelto. Que
    * se lea de un vistazo entre los que sólo van bajos. */
-  .m-hln .tag {
+  .m-hero-ln .m-hln .tag {
     font-size: var(--m-meta); font-weight: 800; color: #fff;
     background: rgba(239,68,68,.34); border-radius: 999px;
     padding: 2px 8px; white-space: nowrap;
   }
   /* Sobre la tarjeta roja el gris del importe se apaga demasiado. */
-  .m-hero-red .m-hln .n { color: #f3dede; }
-  .m-hero-red .m-hln .v { color: #e2a9a9; }
+  .m-hero-red .m-hero-ln .m-hln .n { color: #f3dede; }
+  .m-hero-red .m-hero-ln .m-hln .v { color: #e2a9a9; }
   .m-hero-red .m-hero-mas { color: #e2a9a9; }
 
   body.m-shell .m-hpv {
@@ -2126,11 +2133,13 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
 
   /* Línea del detalle. Lo que cuadra en gris y lo que no en ámbar: si
    * todo llegó bien la pantalla es aburrida, y eso es correcto. */
-  .m-hln {
+  /* OJO: misma clase que las filas del Home, que van ancladas a
+   * .m-hero-ln. Esta es la del detalle, dentro de .m-hlist. */
+  .m-hlist .m-hln {
     display: flex; align-items: center; gap: 10px;
     padding: 11px 15px; border-bottom: 1px solid rgba(255,255,255,.05);
   }
-  .m-hln:last-child { border-bottom: none; }
+  .m-hlist .m-hln:last-child { border-bottom: none; }
   .m-hln-n { flex: 1; min-width: 0; font-size: var(--m-small); color: #cbd5e1;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .m-hln-q { flex: 0 0 auto; font-size: var(--m-body); font-weight: 700; color: #e8edf5; }
