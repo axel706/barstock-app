@@ -60,7 +60,7 @@
   <link rel="stylesheet" href="styles/skeleton.css?v=skel1">
   <link rel="stylesheet" href="styles/toast.css?v=toast2">
   <link rel="stylesheet" href="styles/marginedge-match.css?v=mem9">
-  <link rel="stylesheet" href="styles/marginedge-connections.css?v=mec1">
+  <link rel="stylesheet" href="styles/marginedge-connections.css?v=mec2">
   <link rel="stylesheet" href="styles/empty-state.css?v=empty2">
   <link rel="stylesheet" href="styles/pour-iq.css?v=piq1">
   <link rel="stylesheet" href="styles/admin.css?v=adm3">
@@ -156,7 +156,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261029-132145</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261029-133325</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5263,6 +5263,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/marginedge-match.js?v=mem17"></script>
 <script src="src/marginedge-purchases.js?v=mep7"></script>
 <script src="src/marginedge-unclaimed.js?v=meu1"></script>
+<script src="src/marginedge-connect.js?v=mec1"></script>
 
 <!-- ── La app movil ─────────────────────────────────────────────────
      mobile-shell  el armazon: barra de pestañas, boton de escanear y
@@ -6582,6 +6583,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
            el panel de diagnóstico: los nueve botones de API, el rango de
            fechas y el volcado en crudo. Nos han salvado varias veces,
            pero son herramienta, no la pantalla. -->
+      <div id="meConectar"></div>
       <div id="meConexion"></div>
       <div id="meAtencion"></div>
       <div id="meCifras"></div>

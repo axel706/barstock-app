@@ -198,3 +198,69 @@
 .me-nota {
   font-size: 11px; color: var(--sub, #64748b); line-height: 1.5; margin: 7px 2px 0;
 }
+
+/* ── El asistente de conexión ──────────────────────────────────────
+   Una locación nueva no necesita una pantalla de estado con ceros:
+   necesita un botón. Esto es lo que se ve mientras no hay catálogo. */
+.mec { padding: 16px; }
+.mec-h { font-size: 15px; font-weight: 800; letter-spacing: -.2px; color: var(--text, #e2e8f0); }
+.mec-s { font-size: 11.5px; color: var(--sub, #64748b); margin: 3px 0 13px; line-height: 1.5; }
+
+.mec-big {
+  display: block; width: 100%; text-align: center;
+  background: #2563eb; color: #fff; border: none; border-radius: 12px;
+  padding: 13px; font-size: 14px; font-weight: 800; cursor: pointer;
+}
+.mec-big:disabled { opacity: .6; cursor: default; }
+
+/* Decir qué va a hacer antes de hacerlo. Un botón que arranca un
+   proceso de dos minutos sin explicarse no se pulsa. */
+.mec-will {
+  margin-top: 11px; padding: 11px 12px;
+  border: 1px solid rgba(127,140,160,.26); border-radius: 11px;
+  background: rgba(127,140,160,.07);
+}
+.mec-will > div { font-size: 11.5px; color: var(--sub, #64748b); padding: 2px 0; }
+.mec-will b { color: var(--text, #e2e8f0); }
+.mec-note { font-size: 11px; color: var(--sub, #64748b); margin-top: 10px; line-height: 1.5; }
+
+.mec-pick { display: flex; gap: 8px; flex-wrap: wrap; }
+.mec-opt {
+  flex: 1 1 45%; text-align: center; font-size: 12.5px; font-weight: 700;
+  padding: 12px 10px; border-radius: 11px; cursor: pointer;
+  border: 1px solid rgba(127,140,160,.3); background: transparent;
+  color: var(--text, #e2e8f0);
+}
+.mec-opt:hover { border-color: #2563eb; }
+
+/* El progreso. Un proceso de dos minutos sin estado visible se lee
+   como colgado, y entonces se pulsa otra vez. */
+.mec-step { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; }
+.mec-step + .mec-step { border-top: 1px solid rgba(127,140,160,.18); }
+.mec-ic {
+  flex: 0 0 18px; width: 18px; height: 18px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 800; margin-top: 1px;
+}
+.mec-ic.ok  { background: var(--good, #16a34a); color: #fff; }
+.mec-ic.run { background: #2563eb; color: #fff; }
+.mec-ic.mal { background: #b91c1c; color: #fff; }
+.mec-ic.esp { background: rgba(127,140,160,.22); color: var(--sub, #64748b); }
+.mec-st { flex: 1; min-width: 0; }
+.mec-st b { display: block; font-size: 12.5px; font-weight: 700; color: var(--text, #e2e8f0); }
+.mec-st span { display: block; font-size: 11px; color: var(--sub, #64748b); margin-top: 1px; }
+.mec-st.esp b { color: var(--sub, #64748b); font-weight: 600; }
+
+.mec-err {
+  font-size: 11.5px; color: #b91c1c; line-height: 1.5;
+  margin: 10px 0; padding: 10px 11px; border-radius: 10px;
+  border: 1px solid rgba(185,28,28,.3); background: rgba(185,28,28,.07);
+}
+
+.mec-alert {
+  display: flex; align-items: center; gap: 10px; margin-top: 11px;
+  border: 1px solid rgba(217,119,6,.38); background: rgba(217,119,6,.09);
+  border-radius: 11px; padding: 10px 12px;
+}
+.mec-alert .t { flex: 1; min-width: 0; font-size: 12px; font-weight: 700; color: var(--warn, #b45309); }
+.mec-alert .t small { display: block; font-weight: 500; font-size: 11px; margin-top: 1px; }

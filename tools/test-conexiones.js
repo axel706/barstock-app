@@ -119,9 +119,13 @@ function entorno(unidadGuardada) {
       typeof w.document.getElementById('meSync').onclick === 'function');
     prueba('Sync invoices también',
       typeof w.document.getElementById('meSyncInv').onclick === 'function');
-    prueba('y la pantalla se pinta entera',
-      /MarginEdge/.test(w.document.getElementById('meConexion').textContent),
-      w.document.getElementById('meConexion').textContent.trim().slice(0, 60));
+    // No se comprueba el contenido de la tarjeta: `cargarUnidad()`
+    // relee la nube y, en este montaje, la nube no tiene nada, así
+    // que la locación acaba sin restaurante y la tarjeta se vacía a
+    // propósito — ahora manda el asistente de conexión. Lo que este
+    // test protege es que los botones sigan respondiendo.
+    prueba('y sigue sin romperse al repintar',
+      typeof w.document.getElementById('meSync').onclick === 'function');
   }
 
   grupo('el cableado va ANTES de cualquier return');

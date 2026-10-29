@@ -618,16 +618,12 @@
     if (!el) return;
     const u = unidad();
 
-    if (!u) {
-      el.innerHTML =
-        '<div class="me-card">' +
-          '<div class="me-row"><span class="me-dot off"></span>' +
-          '<span class="me-nm">MarginEdge</span></div>' +
-          '<div class="me-state">No restaurant picked yet. Open ' +
-          '<b>Developer tools</b> below and press <b>Restaurantes</b>.</div>' +
-        '</div>';
-      return;
-    }
+    // Sin restaurante elegido el asistente de arriba es todo lo que
+    // hace falta. Una tarjeta de estado que dice "no conectado" al
+    // lado de un botón que dice "conectar" es la misma frase dos
+    // veces, y antes mandaba a abrir Developer tools — que es
+    // justamente lo que había que dejar de pedir.
+    if (!u) { el.innerHTML = ''; return; }
 
     el.innerHTML =
       '<div class="me-card">' +
@@ -709,6 +705,21 @@
       contar(`marginedge_links?location_id=eq.${id}&select=item_name`),
       contar(`marginedge_products?location_id=eq.${id}&select=product_id`)
     ]);
+
+    // ── Sin catálogo, manda el asistente ────────────────────────────
+    //
+    // Una locación recién creada no necesita una pantalla de estado
+    // con ceros y cuatro accesos que no llevan a nada: necesita un
+    // botón que la conecte. Cuando ya hay catálogo, al revés.
+    const C = window.BarStockMarginEdgeConnect;
+    const sinCatalogo = prods === 0;
+    const caja = document.getElementById('meConectar');
+    if (caja) {
+      if (sinCatalogo && C) { C.montar(); }
+      else { caja.innerHTML = ''; }
+    }
+    // Las cifras en cero no dicen nada que el asistente no diga mejor.
+    if (sinCatalogo) { el.innerHTML = ''; return; }
 
     const n = (x) => x == null ? '…' : Number(x).toLocaleString('en-US');
 
@@ -1022,7 +1033,14 @@
     notaSync();
   }
 
-  window.BarStockIntegrations = { render, correr, unidad };
+  // `llamar` y `guardarUnidad` los usa el asistente de conexión, que
+  // conduce los mismos bucles con su propio progreso. Se exportan en
+  // vez de copiarse: dos caminos para copiar el catálogo acabarían
+  // guardando cosas distintas según por dónde entraras.
+  window.BarStockIntegrations = {
+    render, correr, unidad, nombreUnidad,
+    llamar, guardarUnidad, guardarNombreUnidad, locationId, idYNombre
+  };
 
   // El index es el único dueño de showSettingsPanel; los módulos se
   // apuntan aquí en vez de envolverla.
