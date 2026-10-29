@@ -296,6 +296,48 @@ const inv = (n, conStock) => Array.from({ length: n }, (_, i) => ({
     prueba('y se puede volver a pulsar', !b.disabled);
   }
 
+  grupo('la tarjeta no depende del estado del conteo');
+  {
+    // La carga vivía DENTRO de la rama "ciclo cerrado" de la tarjeta
+    // del ciclo. Con la locación contando, esa rama no se ejecuta:
+    // los datos de MarginEdge no se pedían nunca y su tarjeta no
+    // aparecía — sin error, sin hueco, sin pista.
+    for (const estado of ['step1', 'step2', 'counting', 'done']) {
+      const w = entorno({
+        master: inv(10, 6), pedidos: {},
+        entregas: { n: 3, unidades: 40, dinero: 900, sueltas: 0, ultima: '2026-10-27' }
+      });
+      w.BarStockWeeklyCycle.estado = () => estado;
+      if (estado === 'counting') {
+        w.BarStockCountSession = { progress: () => ({ counted: 5, total: 10 }), size: () => 5 };
+      }
+      const h = pintar(w);
+      await esperar(60);
+      const hay = Array.from(h.querySelectorAll('.m-hero'))
+        .some(x => /MarginEdge sync/i.test(x.textContent));
+      prueba('con el ciclo en "' + estado + '" la tarjeta está', hay);
+    }
+  }
+
+  grupo('si la lectura falla, la tarjeta lo dice en vez de esconderse');
+  {
+    const w = entorno({ master: inv(10, 6), pedidos: {} });
+    w.BarStockMobileInvoices = {
+      resumen: async () => { throw new Error('relation does not exist'); }
+    };
+    const h = pintar(w);
+    await esperar(80);
+    const c = Array.from(h.querySelectorAll('.m-hero'))
+      .find(x => /MarginEdge sync/i.test(x.textContent));
+    // Una tarjeta que no está es indistinguible de "no hay nada".
+    prueba('la tarjeta sigue ahí', !!c);
+    prueba('y dice qué pasó',
+      !!c && /Could not read invoices/.test(c.textContent), c && c.textContent.slice(0, 90));
+    prueba('con el error concreto',
+      !!c && /relation does not exist/.test(c.textContent), c && c.textContent.slice(0, 160));
+    prueba('y el botón para reintentar', !!c && !!c.querySelector('.m-hero-sync'));
+  }
+
   console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
     '   ·   ' + (ok + mal) + ' comprobaciones');
   process.exit(mal ? 1 : 0);

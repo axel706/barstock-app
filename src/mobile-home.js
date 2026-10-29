@@ -144,8 +144,15 @@
         // igual para poder pulsar refrescar.
         return r ? Object.assign({ revisado: Date.now() }, r) : false;
       } catch (e) {
+        // ── Un fallo NO esconde la tarjeta ───────────────────────
+        //
+        // Devolver `false` la hacía desaparecer, y una tarjeta que no
+        // está es indistinguible de "no hay nada que contar". En
+        // Will's & Bill's eso dejó la integración invisible sin una
+        // sola pista de por qué.
         console.warn('[home] resumen de facturas', e);
-        return false;
+        return { n: 0, unidades: 0, dinero: 0, sueltas: 0, ultima: '',
+                 revisado: Date.now(), error: String(e && e.message || e) };
       }
     }
     return false;
@@ -156,14 +163,24 @@
   // que se pinta el Home: reiniciar la semana es lo único que cambia la
   // respuesta, y el Home se repinta decenas de veces por sesión.
   function cargarEntregas(desde) {
-    if (!desde) return;
-    if (_entregasDe === desde || _pidiendoEntregas) return;
+    // Sin ciclo abierto todavía se pregunta: el módulo de facturas
+    // sabe caerse a los últimos días por su cuenta, y una locación
+    // recién creada también tiene derecho a ver sus compras.
+    const clave = desde || 'sin-ciclo';
+    if (_entregasDe === clave || _pidiendoEntregas) return;
     _pidiendoEntregas = true;
-    _entregasDe = desde;
+    _entregasDe = clave;
     Promise.resolve()
       .then(() => pedirEntregas(desde))
-      .then(e => { _entregas = e; if (e) refresh(); })
-      .catch(() => { _entregas = false; })
+      // Siempre se repinta: `pedirEntregas` ya devuelve un objeto con
+      // `error` cuando falla, y esa tarjeta hay que enseñarla. Antes
+      // un fallo dejaba la integración invisible.
+      .then(e => { _entregas = e; refresh(); })
+      .catch(e => {
+        _entregas = { n: 0, unidades: 0, dinero: 0, sueltas: 0, ultima: '',
+                      revisado: Date.now(), error: String(e && e.message || e) };
+        refresh();
+      })
       .then(() => { _pidiendoEntregas = false; });
   }
 
@@ -328,7 +345,6 @@
     // semana y habría que cortarlo con un "y 4 más", que es la forma
     // de que una línea de tiempo deje de valer para nada.
     const inicio = (W && W.resetAt) ? W.resetAt() : '';
-    cargarEntregas(inicio);
 
     const linea = [];
     linea.push({ d: fecha || 'Start', t: '<em>' + contados() + ' items</em> counted' });
@@ -632,6 +648,24 @@
       }
     }
 
+    // Si la lectura falló, la tarjeta lo dice y deja el botón para
+    // reintentar. Esconderse es lo único que no puede hacer.
+    if (e.error) {
+      return {
+        tono: 'amber',
+        k: 'MarginEdge sync',
+        tt: 'Could not read invoices',
+        sub: e.error,
+        amt: '—', amtPie: '',
+        icoL: 'refresh',
+        icoLt: 'Try again',
+        goL: (btn) => sincronizarDesdeTarjeta(btn),
+        vs: 'checked ' + hace(e.revisado),
+        btn: 'See invoices',
+        go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('invoices'); }
+      };
+    }
+
     return {
       tono: e.sueltas ? 'amber' : 'teal',
       // El rótulo nombra la FUENTE: lo que hay aquí no lo escribiste
@@ -737,6 +771,18 @@
 
 
   function tarjetas() {
+    // ── La carga va AQUÍ, no dentro de una tarjeta ──────────────────
+    //
+    // Estaba dentro de la rama "ciclo cerrado" de la tarjeta del
+    // ciclo. Con la locación contando, o sin conteo cargado, esa rama
+    // no se ejecuta: los datos de MarginEdge no se pedían nunca y su
+    // tarjeta no aparecía — sin error, sin hueco, sin pista.
+    //
+    // Que la tarjeta de MarginEdge dependa del estado del conteo no
+    // tiene ningún sentido: son dos cosas distintas.
+    const W = window.BarStockWeeklyCycle;
+    cargarEntregas((W && W.resetAt && W.resetAt()) || '');
+
     const t = [tarjetaBienvenida(), tarjetaCiclo()];
 
     const fac = tarjetaFacturas();
