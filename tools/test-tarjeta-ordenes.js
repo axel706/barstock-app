@@ -125,8 +125,11 @@ const linea = (item, qty, precio) => ({ item, toOrder: qty, value: precio, code:
     const w = entorno({
       SOUTHERN: [
         linea('Tito’s Vodka 1.75L', 2, 22.99),
-        linea('Blade and Bow', 1, 47.99),
+        // El sin precio, el segundo: con dos filas a la vista, en
+        // tercera posicion ya no se pintaba y la comprobacion de
+        // "no price" dejaba de mirar nada.
         linea('Jameson 750', 6, 0),
+        linea('Blade and Bow', 1, 47.99),
         linea('Campari 750', 1, 24.80),
         linea('Aperol 1L', 1, 21.00),
         linea('Hendricks 750', 1, 31.00)
@@ -137,18 +140,18 @@ const linea = (item, qty, precio) => ({ item, toOrder: qty, value: precio, code:
     prueba('el título es el proveedor', /SOUTHERN/.test(txt(h)), txt(h).slice(0, 60));
     prueba('y no "1 vendor"', !/1 vendor/.test(txt(h)));
     prueba('no hay índice', !ord(h).querySelector('.m-hpv'));
-    // Cuatro y el resto contado: con cinco la tarjeta crece y arrastra
-    // el alto de todo el carril.
-    prueba('enseña tres líneas',
-      ord(h).querySelectorAll('.m-hln').length === 3,
+    // Dos y el resto contado: cada fila de mas estira el carril entero,
+    // porque todas las tarjetas miden lo que la mas alta.
+    prueba('enseña dos líneas',
+      ord(h).querySelectorAll('.m-hln').length === 2,
       String(ord(h).querySelectorAll('.m-hln').length));
-    prueba('y cuenta el resto en el pie', /and 3 more · 6 lines/.test(txt(h)), txt(h));
+    prueba('y cuenta el resto en el pie', /and 4 more · 6 lines/.test(txt(h)), txt(h));
 
     const vs = Array.from(ord(h).querySelectorAll('.m-hln .v')).map(e => e.textContent);
     prueba('el importe de la línea es precio × cantidad',
       vs[0] === '$46', vs.join(' | '));
     // Un precio 0 no es "gratis", es que no se sabe.
-    prueba('sin precio lo dice con palabras', vs[2] === 'no price', vs.join(' | '));
+    prueba('sin precio lo dice con palabras', vs[1] === 'no price', vs.join(' | '));
 
     ord(h).querySelector('.m-hero-b').click();
     prueba('el botón entra en ese proveedor',

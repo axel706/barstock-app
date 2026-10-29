@@ -567,16 +567,18 @@
       const u = v[0];
       return Object.assign(base, {
         tt: u.nombre,
-        // Tres y el resto contado: cada fila estira el carril entero,
-        // no sólo esta tarjeta.
-        filas: u.filas.slice(0, 3).map(r => ({
+        // DOS y el resto contado: cada fila estira el carril entero, no
+        // sólo esta tarjeta. Con los nombres largos del catálogo la
+        // tercera no aportaba una lectura más, sólo alto: el pie ya
+        // dice cuántas quedan y el botón entra a la orden completa.
+        filas: u.filas.slice(0, 2).map(r => ({
           q: cuantas(r) + '×',
           n: r.item || '',
           v: Number(r.value) > 0 ? money(Number(r.value) * cuantas(r)) : 'no price'
         })),
         mas: '',
-        vs: u.filas.length > 3
-          ? 'and ' + (u.filas.length - 3) + ' more · ' + pie
+        vs: u.filas.length > 2
+          ? 'and ' + (u.filas.length - 2) + ' more · ' + pie
           : pie,
         btn: 'Review the order',
         go: irA(u.nombre)
