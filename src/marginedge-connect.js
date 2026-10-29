@@ -480,8 +480,20 @@
   async function buscarFacturas() {
     const api = I();
     if (!api) throw new Error('Integrations module not loaded.');
-    const unitId = api.unidad && api.unidad();
-    if (!unitId) throw new Error('This location is not connected yet.');
+    // ── El restaurante puede no estar en ESTE navegador ────────────
+    //
+    // `unidad()` sale de localStorage. Lo eliges una vez en el
+    // escritorio y el teléfono no se entera nunca: el botón del Home
+    // decía "This location is not connected yet" en una locación que
+    // llevaba semanas conectada.
+    //
+    // La copia de verdad vive en `location_settings`, así que si el
+    // caché local está vacío se baja antes de rendirse.
+    let unitId = api.unidad && api.unidad();
+    if (!unitId && api.cargarUnidad) {
+      try { unitId = await api.cargarUnidad(); } catch (e) {}
+    }
+    if (!unitId) throw new Error('This location is not connected to MarginEdge yet.');
     const locId = await api.locationId();
     if (!locId) throw new Error('No location.');
     return facturas(unitId, locId, () => {});

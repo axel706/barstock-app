@@ -1039,6 +1039,11 @@
   // guardando cosas distintas según por dónde entraras.
   window.BarStockIntegrations = {
     render, correr, unidad, nombreUnidad,
+    // `cargarUnidad` lee el restaurante de la NUBE. Hace falta fuera
+    // de aquí porque `unidad()` sale de localStorage, que es por
+    // navegador: el restaurante elegido en el escritorio no existe
+    // para el teléfono hasta que alguien lo baja.
+    cargarUnidad,
     llamar, guardarUnidad, guardarNombreUnidad, locationId, idYNombre
   };
 

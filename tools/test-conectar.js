@@ -71,6 +71,9 @@ function entorno(o) {
   w.BarStockIntegrations = {
     locationId: async () => 'loc-2',
     unidad: () => o.unidadGuardada || '',
+    // La copia de la nube, que es la que vale cuando el navegador no
+    // tiene nada guardado.
+    cargarUnidad: async () => o.unidadNube || o.unidadGuardada || '',
     nombreUnidad: () => '',
     guardarUnidad: async () => true,
     guardarNombreUnidad: () => {},
@@ -236,6 +239,35 @@ const B = (item, code) => ({ item, code: code || '', category: 'Liquor', vendor:
     prueba('con las tres cifras', /products/.test(t) && /matched/.test(t) && /invoices/.test(t));
     // Sin esto, terminas la conexión sin saber que falta trabajo.
     prueba('y avisa de lo que necesita tu ojo', /needs? your eye/.test(t), t.slice(-160));
+  }
+
+  grupo('el restaurante puede estar sólo en la nube');
+  {
+    // `unidad()` sale de localStorage, que es por navegador. Lo
+    // eliges en el escritorio y el teléfono no se entera: el botón
+    // del Home decía "not connected yet" en una locación que llevaba
+    // semanas conectada.
+    const w = entorno({ unidadGuardada: '', unidadNube: '639', pedidos: [{ id: '1' }] });
+    let error = '';
+    let r = null;
+    try { r = await w.BarStockMarginEdgeConnect.buscarFacturas(); }
+    catch (e) { error = String(e.message || e); }
+    prueba('no dice que no está conectada', !/not connected/i.test(error), error);
+    prueba('y trae las facturas', !!r && r.facturas === 1, JSON.stringify(r));
+    // Con el restaurante en el navegador, igual.
+    const w2 = entorno({ unidadGuardada: '216', pedidos: [{ id: '1' }] });
+    const r2 = await w2.BarStockMarginEdgeConnect.buscarFacturas();
+    prueba('y si está en el navegador, también', r2.facturas === 1, JSON.stringify(r2));
+  }
+
+  grupo('sin restaurante en ningún sitio, sí lo dice');
+  {
+    const w = entorno({ unidadGuardada: '', unidadNube: '' });
+    let error = '';
+    try { await w.BarStockMarginEdgeConnect.buscarFacturas(); }
+    catch (e) { error = String(e.message || e); }
+    prueba('avisa con el nombre de la integración',
+      /MarginEdge/.test(error), error);
   }
 
   console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
