@@ -469,5 +469,13 @@
     }
   }
 
-  window.BarStockMarginEdgeUnclaimed = { abrir, resumen, _calcular: calcular, _sugerir: sugerir };
+  // `asignar` y `noEsMio` los usa también la pantalla de facturas del
+  // teléfono, que enlaza una línea sin salir de la factura. Se
+  // exportan en vez de copiarse: dos sitios escribiendo en
+  // `marginedge_links` con reglas ligeramente distintas es el fallo
+  // que más veces ha mordido este proyecto.
+  window.BarStockMarginEdgeUnclaimed = {
+    abrir, resumen, asignar, noEsMio,
+    _calcular: calcular, _sugerir: sugerir
+  };
 })();

@@ -39,6 +39,11 @@
           <span class="m-item-t">History</span>
           <i class="ti ti-chevron-right m-chev" aria-hidden="true"></i>
         </button>
+        <button type="button" class="m-item" id="mMoreInv">
+          <i class="ti ti-receipt" aria-hidden="true"></i>
+          <span class="m-item-t">Invoices</span>
+          <i class="ti ti-chevron-right m-chev" aria-hidden="true"></i>
+        </button>
         ${MAS.map(m => `
           <button type="button" class="m-item" data-sec="${esc(m.id)}">
             <i class="ti ${esc(m.icon)}" aria-hidden="true"></i>
@@ -70,6 +75,13 @@
     const his = host.querySelector('#mMoreHist');
     if (his) his.onclick = () => {
       if (window.BarStockMobile) window.BarStockMobile.ir('orderHistory');
+    };
+
+    // Las facturas de MarginEdge, igual: pantalla propia del armazón,
+    // no una sección del escritorio.
+    const inv = host.querySelector('#mMoreInv');
+    if (inv) inv.onclick = () => {
+      if (window.BarStockMobile) window.BarStockMobile.ir('invoices');
     };
 
     host.querySelectorAll('[data-sec]').forEach(b => {

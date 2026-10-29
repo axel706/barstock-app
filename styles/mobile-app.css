@@ -2449,3 +2449,157 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-nf-vacio > i { display: block; font-size: var(--m-screen); margin-bottom: 10px; }
 
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ico-bell { border-radius: 50% !important; }
+
+  /* ── Las facturas de MarginEdge ────────────────────────────────────
+   *
+   * Una factura es el papel que te dio el repartidor. Esta pantalla
+   * se parece a él a propósito: número arriba, los tres totales para
+   * cuadrar, y las líneas debajo.
+   *
+   * Va dentro de la media query del móvil, como todo lo de aquí. */
+  .m-isub {
+    font-size: var(--m-small); color: #93a5b8; margin-top: 3px; line-height: 1.45;
+  }
+
+  .m-iday {
+    font-size: var(--m-meta); font-weight: 800; letter-spacing: .11em;
+    text-transform: uppercase; color: #7f8ea3; margin: 15px 0 1px;
+  }
+
+  body.m-shell .m-inv {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 11px 0; text-align: left;
+    background: none; border: none; cursor: pointer;
+  }
+  body.m-shell .m-inv + .m-inv { border-top: 1px solid rgba(255,255,255,.09); }
+  .m-inv .co { flex: 1; min-width: 0; display: block; }
+  .m-inv .r1 { display: flex; align-items: baseline; gap: 8px; }
+  .m-inv .vd {
+    flex: 1; min-width: 0; font-size: var(--m-small); font-weight: 800; color: #fff;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .m-inv .tot { font-size: var(--m-small); font-weight: 800; color: #fff; white-space: nowrap; }
+  .m-inv .r2 { display: flex; align-items: center; gap: 7px; margin-top: 3px; }
+  .m-inv .mt { font-size: var(--m-meta); color: #8fa3b8; }
+  /* Lo que te hace abrirla. Sin esto, una factura correcta y una a la
+   * que le falta una botella se ven exactamente igual. */
+  .m-iflag {
+    font-size: var(--m-meta); font-weight: 800; color: #fcd34d;
+    background: rgba(252,211,77,.15); border: 1px solid rgba(252,211,77,.3);
+    border-radius: 999px; padding: 1px 7px; white-space: nowrap;
+  }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-inv .chev {
+    flex: 0 0 28px; width: 28px; height: 28px; border-radius: 50% !important;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+    color: #cfe8fb; font-size: var(--m-small);
+  }
+
+  body.m-shell .m-iback {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: var(--m-small); font-weight: 700; color: #7dd3fc;
+    background: none; border: none; padding: 0; margin-bottom: 10px; cursor: pointer;
+  }
+
+  .m-itot {
+    display: flex; margin: 12px 0 2px;
+    border-top: 1px solid rgba(255,255,255,.1);
+    border-bottom: 1px solid rgba(255,255,255,.1);
+  }
+  .m-itot > div { flex: 1; padding: 9px 2px; text-align: center; }
+  .m-itot > div + div { border-left: 1px solid rgba(255,255,255,.08); }
+  .m-itot b {
+    display: block; font-size: var(--m-title); font-weight: 800;
+    color: #fff; letter-spacing: -.4px;
+  }
+  .m-itot span { display: block; font-size: var(--m-meta); color: #8fa3b8; margin-top: 1px; }
+
+  .m-iln { display: flex; align-items: flex-start; gap: 9px; padding: 9px 0; }
+  .m-iln + .m-iln { border-top: 1px solid rgba(255,255,255,.08); }
+  .m-iln .q {
+    flex: 0 0 auto; min-width: 24px;
+    font-size: var(--m-small); font-weight: 800; color: #fff;
+  }
+  .m-iln .co { flex: 1; min-width: 0; }
+  .m-iln .n { font-size: var(--m-small); color: #dbe7f3; line-height: 1.3; }
+  /* La botella a la que alimenta la línea. Verde porque es lo que
+   * confirma que el dinero va al sitio correcto, y eso hasta ahora no
+   * se podía comprobar en ninguna pantalla. */
+  .m-iln .who { display: block; font-size: var(--m-meta); color: #6ee7b7; margin-top: 2px; }
+  .m-iln .v {
+    font-size: var(--m-small); font-weight: 700; color: #fff;
+    white-space: nowrap; text-align: right;
+  }
+  .m-iln .v small {
+    display: block; font-weight: 500; font-size: var(--m-meta); color: #8fa3b8;
+  }
+
+  /* La línea sin botella se queda EN SU SITIO. Sacarla a otra pantalla
+   * es perder el contexto que la explica: de quién vino, en qué
+   * factura y por cuánto. */
+  .m-isin {
+    border: 1px solid rgba(252,211,77,.34); background: rgba(252,211,77,.07);
+    border-radius: 12px; padding: 10px 11px; margin: 9px 0;
+  }
+  .m-iask {
+    font-size: var(--m-meta); font-weight: 800; letter-spacing: .1em;
+    text-transform: uppercase; color: #fcd34d; margin: 8px 0 7px;
+  }
+  body.m-shell .m-isug {
+    display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
+    border: 1.5px solid #38bdf8; background: rgba(56,189,248,.1);
+    border-radius: 11px; padding: 9px 11px; cursor: pointer;
+  }
+  body.m-shell .m-isug:disabled { opacity: .55; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-isug .tick {
+    width: 17px; height: 17px; border-radius: 50% !important; background: #38bdf8;
+    /* En la escala, no en px: esta hoja los tiene prohibidos y el
+     * test lo comprueba. --m-meta es el paso más pequeño. */
+    color: #04283d; font-size: var(--m-meta); font-weight: 800; flex: 0 0 17px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .m-isug .t, .m-ihit .t {
+    flex: 1; min-width: 0; font-size: var(--m-small); font-weight: 700; color: #fff;
+  }
+  .m-isug .t small, .m-ihit .t small {
+    display: block; font-weight: 500; font-size: var(--m-meta); color: #93a5b8; margin-top: 1px;
+  }
+  .m-irow2 { display: flex; gap: 7px; margin-top: 7px; }
+  body.m-shell .m-ialt, body.m-shell .m-ino {
+    flex: 1; text-align: center; font-size: var(--m-meta); font-weight: 700;
+    border-radius: 999px; padding: 8px 10px; cursor: pointer;
+    border: 1px solid rgba(255,255,255,.18); background: transparent; color: #dbe7f3;
+  }
+  body.m-shell .m-ino { color: #9fb0c4; }
+  body.m-shell .m-ialt:disabled, body.m-shell .m-ino:disabled { opacity: .55; }
+
+  .m-ibuscar {
+    width: 100%; box-sizing: border-box; font-size: var(--m-small);
+    border: 1px solid rgba(255,255,255,.2); border-radius: 11px;
+    padding: 9px 11px; background: transparent; color: #fff;
+  }
+  .m-ires { display: flex; flex-direction: column; gap: 6px; margin-top: 7px; }
+  body.m-shell .m-ihit {
+    display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
+    border: 1px solid rgba(255,255,255,.16); border-radius: 10px;
+    padding: 9px 11px; background: rgba(255,255,255,.06); cursor: pointer;
+  }
+
+  .m-iav:empty { display: none; }
+  .m-iav { font-size: var(--m-meta); color: #93a5b8; margin-top: 8px; }
+  .m-iav.mal { color: #fca5a5; }
+
+  .m-ivacio2 { font-size: var(--m-meta); color: #93a5b8; margin-top: 7px; }
+  /* El vacío se dice con palabras: una lista en blanco se lee como
+   * que algo no cargó. */
+  .m-ivacio {
+    font-size: var(--m-small); color: #93a5b8; line-height: 1.6; padding: 20px 2px;
+  }
+  .m-ivacio b { color: #fff; }
+  .m-ivacio.mal { color: #fca5a5; }
+
+  .m-ipie {
+    font-size: var(--m-meta); color: #7d8c9e; line-height: 1.5;
+    margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.09);
+  }
+  .m-ipie b { color: #cfe0f0; }
