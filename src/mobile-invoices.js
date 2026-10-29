@@ -120,15 +120,36 @@
       catch (e) { console.warn('[facturas] tabla opcional', ruta, e); return []; }
     };
 
-    const [lineas, enlaces, fuera] = await Promise.all([
+    const [lineas, enlaces, fuera, bebida] = await Promise.all([
       leerPaginado(url, key,
         `marginedge_invoice_lines?location_id=eq.${locId}&invoice_date=gte.${d}` +
         `&select=order_id,line_no,invoice_date,invoice_number,vendor_name,status,` +
         `product_id,vendor_item_name,unit_price,quantity,line_price` +
         `&order=order_id.asc,line_no.asc`),
       opcional(`marginedge_links?location_id=eq.${locId}&select=product_id,item_name&order=product_id.asc`),
-      opcional(`marginedge_not_mine?location_id=eq.${locId}&select=product_id&order=product_id.asc`)
+      opcional(`marginedge_not_mine?location_id=eq.${locId}&select=product_id&order=product_id.asc`),
+      // ── Sólo bebida ─────────────────────────────────────────────
+      //
+      // MarginEdge manda el restaurante ENTERO. La primera versión
+      // enseñaba todo y la pantalla se llenó de J. Ambrogi Foods,
+      // cebolla, marisco, Amazon y "Fish Window Cleaning", con cada
+      // línea diciendo "no bottle claims this" — claro que no: no son
+      // botellas. Eso no es una lista de trabajo, es ruido.
+      //
+      // Se piden sólo los ids de categoría de bebida, que son unos
+      // pocos miles de los diez mil y pico del catálogo, y se filtra
+      // contra ellos. Es la misma familia de tipos que usa la
+      // pantalla de emparejar.
+      opcional(`marginedge_products?location_id=eq.${locId}` +
+        `&type=in.(BEER,LIQUOR,WINE,NA_BEVERAGES)&select=product_id&order=product_id.asc`)
     ]);
+
+    // Sin catálogo guardado no se puede distinguir bebida de comida.
+    // En ese caso se enseña todo: es peor esconder una factura real
+    // que colar una de lechuga.
+    const esBebida = bebida.length
+      ? new Set(bebida.map(p => String(p.product_id)))
+      : null;
 
     const dueno = new Map(enlaces.map(e => [String(e.product_id), e.item_name || '']));
     const descartado = new Set(fuera.map(e => String(e.product_id)));
@@ -140,10 +161,16 @@
       if (!f) {
         f = { id, vendor: l.vendor_name || '', numero: l.invoice_number || '',
               fecha: l.invoice_date || '', status: l.status || '',
-              total: 0, unidades: 0, sueltas: 0, lineas: [] };
+              total: 0, unidades: 0, sueltas: 0, ocultas: 0, lineas: [] };
         porOrden.set(id, f);
       }
       const pid = String(l.product_id || '');
+
+      // La comida se cuenta pero no se enseña: hay que poder decir
+      // "y 6 líneas más que no son bebida" en vez de que los totales
+      // no cuadren con el papel sin explicación.
+      if (esBebida && !esBebida.has(pid)) { f.ocultas++; continue; }
+
       const item = dueno.get(pid) || '';
       // Descartado no es lo mismo que suelto: dijiste que no es tuyo,
       // así que no vuelve a pedir atención.
@@ -161,7 +188,9 @@
       });
     }
 
-    const todas = Array.from(porOrden.values());
+    // Una factura sin una sola línea de bebida no pinta nada aquí.
+    // "Fish Window Cleaning" no es una compra de barra.
+    const todas = Array.from(porOrden.values()).filter(f => f.lineas.length);
     for (const f of todas) f.ts = dia(f.fecha).t;
     todas.sort((a, b) => b.ts - a.ts || String(a.vendor).localeCompare(String(b.vendor)));
 
@@ -215,24 +244,25 @@
       const d = dia(f.fecha).txt;
       if (d !== ultimoDia) { html += '<div class="m-iday">' + esc(d) + '</div>'; ultimoDia = d; }
 
+      // `m-hcard` es la tarjeta que ya usan el historial de órdenes y
+      // las filas de inventario. Se reusa en vez de inventar otra: la
+      // primera versión eran filas sueltas con una rayita, y al lado
+      // del resto de la app se veían de otro programa.
       html +=
-        '<button type="button" class="m-inv" data-inv="' + i + '">' +
-          '<span class="co">' +
-            '<span class="r1">' +
-              '<span class="vd">' + esc(f.vendor || 'Unknown vendor') + '</span>' +
-              '<span class="tot">' + dinero(f.total) + '</span>' +
-            '</span>' +
-            '<span class="r2">' +
-              '<span class="mt">' +
-                (f.numero ? 'invoice ' + esc(f.numero) + ' &middot; ' : '') +
-                f.lineas.length + (f.lineas.length === 1 ? ' line' : ' lines') +
-              '</span>' +
+        '<button type="button" class="m-hcard" data-inv="' + i + '">' +
+          '<span class="m-hcard-l">' +
+            '<span class="m-hcard-v">' + esc(f.vendor || 'Unknown vendor') + '</span>' +
+            '<span class="m-hcard-m">' +
+              (f.numero ? esc(f.numero) + ' &middot; ' : '') +
+              f.lineas.length + (f.lineas.length === 1 ? ' line' : ' lines') +
               // La pastilla es lo que te hace abrirla: sin ella una
-              // factura correcta y una rota se ven igual.
-              (f.sueltas ? '<span class="m-iflag">' + f.sueltas + ' unlinked</span>' : '') +
+              // factura completa y una a la que le falta una botella
+              // se ven igual.
+              (f.sueltas ? ' <i class="m-iflag">' + f.sueltas + ' unlinked</i>' : '') +
             '</span>' +
           '</span>' +
-          '<span class="chev"><i class="ti ti-chevron-right" aria-hidden="true"></i></span>' +
+          '<span class="m-hcard-r"><span class="m-hcard-a">' + dinero(f.total) + '</span></span>' +
+          '<i class="ti ti-chevron-right m-chev" aria-hidden="true"></i>' +
         '</button>';
     }
 
@@ -283,7 +313,7 @@
         '<span class="v">' + dinero(l.total) +
           '<small>' + dinero(l.unit) + ' ea</small></span>';
 
-      if (!l.suelto) { html += '<div class="m-iln">' + cuerpo + '</div>'; return; }
+      if (!l.suelto) { html += '<div class="m-iln m-icard">' + cuerpo + '</div>'; return; }
 
       // La línea sin botella se queda EN SU SITIO, dentro de la
       // factura. Sacarla a otra pantalla es perder el contexto que la
@@ -312,7 +342,14 @@
         '</div>';
     });
 
-    html += '<div class="m-ipie">These are <b>purchase units</b>, not bottles: a 2 might be ' +
+    const ocultas = f.ocultas
+      ? '<b>' + f.ocultas + (f.ocultas === 1 ? ' line is' : ' lines are') +
+        '</b> not beverages and are hidden — MarginEdge sends the whole restaurant, ' +
+        'food and all. The totals above are the beverage part of this invoice. '
+      : '';
+
+    html += '<div class="m-ipie">' + ocultas +
+      'These are <b>purchase units</b>, not bottles: a 2 might be ' +
       'two bottles or two cases of twelve. What gets written to your stock comes from the ' +
       'confirmed packaging, not from here.</div>';
 

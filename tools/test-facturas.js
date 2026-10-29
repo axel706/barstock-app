@@ -72,7 +72,7 @@ function entorno(opts) {
     if (/marginedge_invoice_lines/.test(u)) return pag(o.lineas || []);
     if (/marginedge_links/.test(u))         return pag(o.enlaces || []);
     if (/marginedge_not_mine/.test(u))      return pag(o.descartados || []);
-    if (/marginedge_products/.test(u))      return pag([]);
+    if (/marginedge_products/.test(u))      return pag(o.bebida || []);
     return pag([]);
   };
   w.fetch = f; global.fetch = f;
@@ -118,7 +118,7 @@ const txt = (h) => h.textContent.replace(/\s+/g, ' ');
     const h = host(w);
     await w.BarStockMobileInvoices.montar(h);
     await esperar(30);
-    prueba('se pintan las dos', h.querySelectorAll('.m-inv').length === 2);
+    prueba('se pintan las dos', h.querySelectorAll('.m-hcard').length === 2);
     prueba('con la pastilla de lo que falta', /1 unlinked/.test(txt(h)), txt(h).slice(0, 160));
     prueba('y agrupadas por día', h.querySelectorAll('.m-iday').length === 2);
   }
@@ -135,7 +135,7 @@ const txt = (h) => h.textContent.replace(/\s+/g, ' ');
     const h = host(w);
     await w.BarStockMobileInvoices.montar(h);
     await esperar(30);
-    h.querySelector('.m-inv').click();
+    h.querySelector('.m-hcard').click();
 
     prueba('el número de factura está', /2689338/.test(txt(h)), txt(h).slice(0, 120));
     prueba('los tres totales', h.querySelectorAll('.m-itot > div').length === 3);
@@ -165,7 +165,7 @@ const txt = (h) => h.textContent.replace(/\s+/g, ' ');
     const h = host(w);
     await w.BarStockMobileInvoices.montar(h);
     await esperar(30);
-    h.querySelector('.m-inv').click();
+    h.querySelector('.m-hcard').click();
     h.querySelector('.m-isug').click();
     await esperar(40);
 
@@ -191,7 +191,7 @@ const txt = (h) => h.textContent.replace(/\s+/g, ' ');
     const h = host(w);
     await w.BarStockMobileInvoices.montar(h);
     await esperar(30);
-    h.querySelector('.m-inv').click();
+    h.querySelector('.m-hcard').click();
     h.querySelector('.m-ino').click();
     await esperar(40);
 
@@ -232,6 +232,55 @@ const txt = (h) => h.textContent.replace(/\s+/g, ' ');
       /No invoices yet this cycle/.test(txt(h)), txt(h));
   }
 
+  grupo('sólo bebida: MarginEdge manda el restaurante entero');
+  {
+    // Esto llenó la pantalla de J. Ambrogi Foods, cebolla, marisco,
+    // Amazon y "Fish Window Cleaning", con cada línea diciendo "no
+    // bottle claims this". Claro que no: no son botellas.
+    const w = entorno({
+      lineas: [
+        L({ order_id: 'A', line_no: 1, product_id: 'p1', vendor_item_name: 'Tito’s Vodka', quantity: 2, unit_price: 20, line_price: 40 }),
+        L({ order_id: 'A', line_no: 2, product_id: 'f1', vendor_item_name: 'Onion Spanish Jumbo', quantity: 1, unit_price: 31, line_price: 31 }),
+        L({ order_id: 'C', line_no: 1, vendor_name: 'FISH WINDOW CLEANING', invoice_number: '2670',
+            product_id: 'f2', vendor_item_name: 'Window cleaning', quantity: 1, unit_price: 247, line_price: 247 })
+      ],
+      enlaces: [{ product_id: 'p1', item_name: 'Tito’s Vodka 1.75L' }],
+      bebida: [{ product_id: 'p1' }]
+    });
+    const fs_ = await w.BarStockMobileInvoices._cargar();
+
+    prueba('la factura sin una sola bebida desaparece',
+      !fs_.some(f => /FISH WINDOW/.test(f.vendor)), fs_.map(f => f.vendor).join(' | '));
+    prueba('queda una', fs_.length === 1, String(fs_.length));
+    prueba('con la línea de bebida y no la cebolla',
+      fs_[0].lineas.length === 1 && /Tito/.test(fs_[0].lineas[0].nombre),
+      fs_[0].lineas.map(l => l.nombre).join(' | '));
+    // Los totales son los de la bebida, no los del papel: hay que
+    // poder explicar la diferencia en vez de que no cuadre sin más.
+    prueba('el total es el de la parte de bebida', Math.abs(fs_[0].total - 40) < 0.001,
+      String(fs_[0].total));
+    prueba('y se recuerda cuántas se escondieron', fs_[0].ocultas === 1, String(fs_[0].ocultas));
+
+    const h = host(w);
+    await w.BarStockMobileInvoices.montar(h);
+    await esperar(30);
+    h.querySelector('.m-hcard').click();
+    prueba('la factura lo dice en el pie',
+      /1 line is.*not beverages/.test(txt(h)), txt(h).slice(-240));
+  }
+
+  grupo('sin catálogo guardado se enseña todo');
+  {
+    // Esconder una factura real es peor que colar una de lechuga.
+    const w = entorno({
+      lineas: [L({ product_id: 'f1', vendor_item_name: 'Onion Spanish Jumbo', quantity: 1, unit_price: 31, line_price: 31 })],
+      enlaces: [], bebida: []
+    });
+    const fs_ = await w.BarStockMobileInvoices._cargar();
+    prueba('la factura sigue ahí', fs_.length === 1, String(fs_.length));
+    prueba('y nada se marca como escondido', fs_[0].ocultas === 0, String(fs_[0].ocultas));
+  }
+
   grupo('una tabla que falte no tumba la pantalla');
   {
     // `marginedge_not_mine` se crea a mano. Si todavía no existe, la
@@ -252,7 +301,7 @@ const txt = (h) => h.textContent.replace(/\s+/g, ' ');
     const h = host(w);
     await w.BarStockMobileInvoices.montar(h);
     await esperar(40);
-    prueba('las facturas se siguen viendo', h.querySelectorAll('.m-inv').length === 1,
+    prueba('las facturas se siguen viendo', h.querySelectorAll('.m-hcard').length === 1,
       txt(h).slice(0, 120));
     prueba('y no sale un error', !/does not exist/.test(txt(h)), txt(h).slice(0, 120));
   }

@@ -2467,33 +2467,24 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     text-transform: uppercase; color: #7f8ea3; margin: 15px 0 1px;
   }
 
-  body.m-shell .m-inv {
-    display: flex; align-items: center; gap: 10px;
-    width: 100%; padding: 11px 0; text-align: left;
-    background: none; border: none; cursor: pointer;
-  }
-  body.m-shell .m-inv + .m-inv { border-top: 1px solid rgba(255,255,255,.09); }
-  .m-inv .co { flex: 1; min-width: 0; display: block; }
-  .m-inv .r1 { display: flex; align-items: baseline; gap: 8px; }
-  .m-inv .vd {
-    flex: 1; min-width: 0; font-size: var(--m-small); font-weight: 800; color: #fff;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .m-inv .tot { font-size: var(--m-small); font-weight: 800; color: #fff; white-space: nowrap; }
-  .m-inv .r2 { display: flex; align-items: center; gap: 7px; margin-top: 3px; }
-  .m-inv .mt { font-size: var(--m-meta); color: #8fa3b8; }
-  /* Lo que te hace abrirla. Sin esto, una factura correcta y una a la
-   * que le falta una botella se ven exactamente igual. */
+  /* La lista reusa `.m-hcard`, la tarjeta del historial de órdenes y
+   * de las filas de inventario. La primera versión eran filas sueltas
+   * separadas por una rayita: al lado del resto de la app parecían de
+   * otro programa.
+   *
+   * Y además se llamaban `.m-inv`, que YA ERA la fila del inventario.
+   * Al ir después en la hoja, le estaban pisando el estilo. Una clase
+   * nueva se comprueba antes de usarla.
+   *
+   * Aquí queda sólo lo propio de una factura. */
+
+  /* Lo que falta por enlazar. Es lo que te hace abrirla: sin esto,
+   * una factura completa y una a la que le falta una botella se ven
+   * exactamente igual. */
   .m-iflag {
-    font-size: var(--m-meta); font-weight: 800; color: #fcd34d;
+    font-style: normal; font-size: var(--m-meta); font-weight: 800; color: #fcd34d;
     background: rgba(252,211,77,.15); border: 1px solid rgba(252,211,77,.3);
-    border-radius: 999px; padding: 1px 7px; white-space: nowrap;
-  }
-  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-inv .chev {
-    flex: 0 0 28px; width: 28px; height: 28px; border-radius: 50% !important;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
-    color: #cfe8fb; font-size: var(--m-small);
+    border-radius: 999px; padding: 1px 7px; white-space: nowrap; margin-left: 4px;
   }
 
   body.m-shell .m-iback {
@@ -2516,7 +2507,13 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-itot span { display: block; font-size: var(--m-meta); color: #8fa3b8; margin-top: 1px; }
 
   .m-iln { display: flex; align-items: flex-start; gap: 9px; padding: 9px 0; }
-  .m-iln + .m-iln { border-top: 1px solid rgba(255,255,255,.08); }
+  /* Cada línea, su tarjeta: el mismo aire entre elementos que pediste
+   * para el historial. En lista continua no se ve dónde acaba una. */
+  .m-icard {
+    padding: 12px 13px; margin-bottom: 7px; border-radius: 15px;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.14);
+  }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-icard { border-radius: 15px !important; }
   .m-iln .q {
     flex: 0 0 auto; min-width: 24px;
     font-size: var(--m-small); font-weight: 800; color: #fff;
