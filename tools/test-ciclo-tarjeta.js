@@ -59,6 +59,11 @@ function entorno(opts) {
   w.isRowPlaced = () => !!o.colocado;
 
   w.BARSTOCK_CONFIG = o.config || {};
+  // Los avisos de la app: el botón de sync tiene que DECIR qué pasó,
+  // también cuando no pasó nada. Un botón que funciona en silencio es
+  // indistinguible de uno roto.
+  w.__toast = '';
+  w.BarStockToast = { show: (t) => { w.__toast = t; } };
   if (o.fetch) { w.fetch = o.fetch; global.fetch = o.fetch; }
   // Las entregas del ciclo salen del módulo de facturas, que es el
   // dueño de esa pregunta: filtra a bebida y a proveedores ocultos.
@@ -243,8 +248,52 @@ const inv = (n, conStock) => Array.from({ length: n }, (_, i) => ({
     prueba('gira mientras busca', sync.classList.contains('girando'));
     prueba('y no se puede pulsar otra vez', sync.disabled);
 
-    await esperar(60);
+    await esperar(700);
     prueba('pide las facturas nuevas', llamado === 1, String(llamado));
+    // Un botón que funciona y no lo dice es indistinguible de uno
+    // roto: si no hay nada nuevo, los números no cambian y el giro
+    // dura un parpadeo.
+    prueba('y dice qué pasó', !!w.__toast, String(w.__toast));
+    prueba('deja de girar al terminar', !sync.classList.contains('girando'));
+  }
+
+  grupo('sin nada nuevo también lo dice');
+  {
+    const w = entorno({
+      master: inv(10, 6), pedidos: {},
+      entregas: { n: 2, unidades: 22, dinero: 58, sueltas: 0, ultima: '2026-10-27' }
+    });
+    w.BarStockMarginEdgeConnect = {
+      buscarFacturas: async () => ({ facturas: 2, lineas: 0 })
+    };
+    const h = pintar(w);
+    await esperar(60);
+    const c = Array.from(h.querySelectorAll('.m-hero'))
+      .find(x => /MarginEdge sync/i.test(x.textContent));
+    c.querySelector('.m-hero-sync').click();
+    await esperar(700);
+    // "Nada nuevo" es un resultado, no un fallo.
+    prueba('lo dice con palabras', /up to date/i.test(String(w.__toast)), String(w.__toast));
+  }
+
+  grupo('y si falla, lo dice también');
+  {
+    const w = entorno({
+      master: inv(10, 6), pedidos: {},
+      entregas: { n: 1, unidades: 5, dinero: 20, sueltas: 0, ultima: '2026-10-27' }
+    });
+    w.BarStockMarginEdgeConnect = {
+      buscarFacturas: async () => { throw new Error('MarginEdge rate limit (429)'); }
+    };
+    const h = pintar(w);
+    await esperar(60);
+    const c = Array.from(h.querySelectorAll('.m-hero'))
+      .find(x => /MarginEdge sync/i.test(x.textContent));
+    const b = c.querySelector('.m-hero-sync');
+    b.click();
+    await esperar(120);
+    prueba('enseña el error', /429/.test(String(w.__toast)), String(w.__toast));
+    prueba('y se puede volver a pulsar', !b.disabled);
   }
 
   console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +

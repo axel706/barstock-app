@@ -682,25 +682,59 @@
   async function sincronizarDesdeTarjeta(btn) {
     if (_sincronizando) return;
     _sincronizando = true;
+
+    const avisar = (t) => { if (window.BarStockToast) window.BarStockToast.show(t); };
+    const parar = () => {
+      if (btn) { btn.classList.remove('girando'); btn.disabled = false; }
+      _sincronizando = false;
+    };
+
     if (btn) { btn.classList.add('girando'); btn.disabled = true; }
 
     const C = window.BarStockMarginEdgeConnect;
+    if (!C || !C.buscarFacturas) {
+      parar();
+      avisar('MarginEdge is not set up for this location yet.');
+      return;
+    }
+
+    // Medio segundo de giro como mínimo. Sin esto, un sync rápido es
+    // un parpadeo: el botón parece que no hizo nada y se vuelve a
+    // pulsar — y cada pulsación son peticiones a una API que contesta
+    // 429 a la segunda por segundo.
+    const t0 = Date.now();
     try {
-      if (!C || !C.buscarFacturas) throw new Error('This location is not connected yet.');
-      await C.buscarFacturas();
-      // Se obliga a releer: el resumen está cacheado contra el
-      // arranque del ciclo y, sin esto, la tarjeta diría exactamente
-      // lo mismo que antes de sincronizar.
-      _entregasDe = '';
-      _entregas = null;
-      refresh();
+      const r = await C.buscarFacturas();
+      const falta = 500 - (Date.now() - t0);
+      if (falta > 0) await new Promise(res => setTimeout(res, falta));
+
+      // ── Decir SIEMPRE qué pasó ──────────────────────────────────
+      //
+      // "Nada nuevo" es un resultado, no un fallo, y hay que decirlo:
+      // sin eso, un sync correcto sobre un día sin entregas se lee
+      // como un botón roto.
+      const n = (r && r.lineas) || 0;
+      avisar(n
+        ? n + (n === 1 ? ' new line' : ' new lines') + ' from MarginEdge'
+        : 'Already up to date · nothing new');
+
+      if (n) {
+        // Sólo se relee si entró algo: el resumen está cacheado
+        // contra el arranque del ciclo y releer por releer son cuatro
+        // consultas de más.
+        _entregasDe = '';
+        _entregas = null;
+        parar();
+        refresh();
+        return;
+      }
+      parar();
     } catch (e) {
-      if (window.BarStockToast) window.BarStockToast.show(String(e && e.message || e));
-      if (btn) { btn.classList.remove('girando'); btn.disabled = false; }
-    } finally {
-      _sincronizando = false;
+      parar();
+      avisar(String(e && e.message || e));
     }
   }
+
 
   function tarjetas() {
     const t = [tarjetaBienvenida(), tarjetaCiclo()];
