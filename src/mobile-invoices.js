@@ -313,7 +313,43 @@
         '<span class="v">' + dinero(l.total) +
           '<small>' + dinero(l.unit) + ' ea</small></span>';
 
-      if (!l.suelto) { html += '<div class="m-iln m-icard">' + cuerpo + '</div>'; return; }
+      // ── Una línea enlazada también se puede corregir ──────────────
+      //
+      // Antes el enlace era de ida y sin vuelta: si una línea apuntaba
+      // a la botella equivocada, desde aquí no había nada que hacer y
+      // había que irse a la pantalla de emparejar a buscarla entre
+      // doscientas sesenta.
+      //
+      // `Change` abre el mismo picker que una línea sin dueño, más la
+      // salida de soltarla del todo.
+      if (!l.suelto && !l.editando) {
+        html +=
+          '<div class="m-iln m-icard">' + cuerpo +
+            '<button type="button" class="m-ichg" data-chg="' + k + '" ' +
+              'aria-label="Change the bottle">' +
+              '<i class="ti ti-pencil" aria-hidden="true"></i></button>' +
+          '</div>';
+        return;
+      }
+
+      if (l.editando) {
+        html +=
+          '<div class="m-isin" data-sin="' + k + '">' +
+            '<div class="m-iln" style="padding-top:0">' + cuerpo + '</div>' +
+            '<div class="m-iask">Pick the right bottle</div>' +
+            '<input type="search" class="m-ibuscar" data-q="' + k + '" ' +
+              'placeholder="Search your bottles…" autocomplete="off">' +
+            '<div class="m-ires" data-res="' + k + '"></div>' +
+            '<div class="m-irow2">' +
+              (l.item
+                ? '<button type="button" class="m-ialt" data-unlink="' + k + '">Unlink</button>'
+                : '') +
+              '<button type="button" class="m-ino" data-cancel="' + k + '">Cancel</button>' +
+            '</div>' +
+            '<div class="m-iav" data-av="' + k + '"></div>' +
+          '</div>';
+        return;
+      }
 
       // La línea sin botella se queda EN SU SITIO, dentro de la
       // factura. Sacarla a otra pantalla es perder el contexto que la
@@ -435,6 +471,52 @@
       };
     });
 
+    // Corregir una línea ya enlazada: abre el picker en su sitio.
+    host.querySelectorAll('[data-chg]').forEach(b => {
+      b.onclick = () => {
+        const k = Number(b.dataset.chg);
+        if (!f.lineas[k]) return;
+        f.lineas[k].editando = true;
+        pintarDetalle(host, f);
+        const inp = document.querySelector('[data-q="' + k + '"]');
+        if (inp) inp.focus();
+      };
+    });
+
+    host.querySelectorAll('[data-cancel]').forEach(b => {
+      b.onclick = () => {
+        const k = Number(b.dataset.cancel);
+        if (!f.lineas[k]) return;
+        f.lineas[k].editando = false;
+        pintarDetalle(host, f);
+      };
+    });
+
+    // Soltarla del todo. Hace falta para deshacer: un enlace
+    // equivocado tiene que poder quitarse sin obligarte a elegir una
+    // botella cualquiera para salir del paso.
+    host.querySelectorAll('[data-unlink]').forEach(b => {
+      b.onclick = () => {
+        const k = Number(b.dataset.unlink);
+        const l = f.lineas[k];
+        if (!l) return;
+        conBloqueo(k, async () => {
+          b.disabled = true;
+          avisar(k, 'Unlinking…');
+          const u = U();
+          if (!u || !u.desenlazar) throw new Error('Not available right now.');
+          await u.desenlazar(l.pid);
+          l.item = '';
+          l.suelto = true;
+          l.editando = false;
+          l.sugerida = null;
+          f.sueltas = f.lineas.filter(x => x.suelto).length;
+          sugerir([f]);
+          pintarDetalle(host, f);
+        });
+      };
+    });
+
     host.querySelectorAll('[data-q]').forEach(inp => {
       inp.oninput = () => buscar(host, f, Number(inp.dataset.q), inp.value);
     });
@@ -470,6 +552,7 @@
           await u.asignar(l.pid, r, l.nombre);
           l.item = r.item;
           l.suelto = false;
+          l.editando = false;
           f.sueltas = f.lineas.filter(x => x.suelto).length;
           pintarDetalle(host, f);
         });

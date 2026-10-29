@@ -237,6 +237,27 @@
     return true;
   }
 
+  // Quitar el vínculo y dejar el producto sin dueño otra vez.
+  //
+  // Reasignarlo a otra botella no necesita esto —el upsert mueve el
+  // vínculo porque la clave es el producto—, pero sí hace falta para
+  // deshacer: un enlace equivocado tiene que poder soltarse sin
+  // obligarte a elegir una botella cualquiera para salir del paso.
+  async function desenlazar(productId) {
+    const { url, key } = cfg();
+    const locId = await locationId();
+    if (!url || !key || !locId) throw new Error('No location.');
+
+    const r = await fetch(
+      `${url}/rest/v1/marginedge_links?location_id=eq.${locId}` +
+      `&product_id=eq.${encodeURIComponent(String(productId))}`, {
+        method: 'DELETE',
+        headers: { apikey: key, Authorization: `Bearer ${key}` }
+      });
+    if (!r.ok) throw new Error(await r.text());
+    return true;
+  }
+
   async function noEsMio(productId, nombre) {
     const { url, key } = cfg();
     const locId = await locationId();
@@ -475,7 +496,7 @@
   // `marginedge_links` con reglas ligeramente distintas es el fallo
   // que más veces ha mordido este proyecto.
   window.BarStockMarginEdgeUnclaimed = {
-    abrir, resumen, asignar, noEsMio,
+    abrir, resumen, asignar, noEsMio, desenlazar,
     _calcular: calcular, _sugerir: sugerir
   };
 })();

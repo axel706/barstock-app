@@ -30,6 +30,29 @@
   let _busca = '';
   let _datos = null;     // { ciclos: [...], porOrden: Map }
 
+  // ── Comparar nombres como los lee una persona ──────────────────────
+  //
+  // Aquí se cruzaba el nombre guardado en el vínculo con el de la
+  // línea de la orden CARÁCTER POR CARÁCTER. "Bailey's Irish Cream" y
+  // "Baileys Irish Cream" son el mismo producto para cualquiera y dos
+  // cadenas distintas para un `!==`: la entrega no se encontraba y la
+  // orden salía corta aunque hubiera llegado.
+  //
+  // Se usa la misma normalización que el emparejado —sin acentos, sin
+  // apóstrofes, sin signos— para que una sola definición de "el mismo
+  // nombre" valga en toda la app.
+  function norm(x) {
+    const M = window.BarStockMarginEdgeMatch;
+    if (M && M._norm) { try { return M._norm(x); } catch (e) {} }
+    return String(x == null ? '' : x)
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .toUpperCase()
+      .replace(/['‘’´`]/g, '')
+      .replace(/[^A-Z0-9]+/g, ' ')
+      .trim();
+  }
+  const mismoNombre = (a, b) => norm(a) === norm(b);
+
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c =>
     ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
 
@@ -168,7 +191,7 @@
         let factura = '';
         for (const r of recibos) {
           if (r.usado) continue;
-          if (r.item !== l.item_name) continue;
+          if (!mismoNombre(r.item, l.item_name)) continue;
           if (r.fecha && r.fecha + 86400000 < t0) continue;
           if (llegado >= pedido) break;
           llegado += r.qty;

@@ -2514,6 +2514,19 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.14);
   }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-icard { border-radius: 15px !important; }
+
+  /* El lápiz para corregir una línea ya enlazada. Discreto y al final
+   * de la fila: cambiar un enlace correcto no puede ser más fácil que
+   * leerlo. */
+  body.m-shell .m-ichg {
+    flex: 0 0 28px; width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14);
+    color: #9fb0c4; font-size: var(--m-small); cursor: pointer;
+    align-self: center;
+  }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ichg { border-radius: 50% !important; }
+  body.m-shell .m-ichg:active { background: rgba(255,255,255,.16); }
   .m-iln .q {
     flex: 0 0 auto; min-width: 24px;
     font-size: var(--m-small); font-weight: 800; color: #fff;

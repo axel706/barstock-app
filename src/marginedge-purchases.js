@@ -28,6 +28,22 @@
 
   let _filas = null;
 
+  // La misma normalización que el emparejado: "Bailey's Irish Cream"
+  // y "Baileys Irish Cream" son el mismo producto para cualquiera y
+  // dos cadenas distintas para un `!==`. Comparar en crudo hacía que
+  // una entrega no se encontrara y la orden saliera corta.
+  function norm(x) {
+    const M = window.BarStockMarginEdgeMatch;
+    if (M && M._norm) { try { return M._norm(x); } catch (e) {} }
+    return String(x == null ? '' : x)
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .replace(/['\u2018\u2019\u00b4`]/g, '')
+      .replace(/[^A-Z0-9]+/g, ' ')
+      .trim();
+  }
+  const mismoNombre = (a, b) => norm(a) === norm(b);
+
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, c =>
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -625,7 +641,7 @@
         const pedido = Number(l.quantity) || 0;
         let llegado = 0;
         for (const r of recibos) {
-          if (r.usado || r.item !== l.item_name) continue;
+          if (r.usado || !mismoNombre(r.item, l.item_name)) continue;
           if (r.fecha && t0 && r.fecha + 86400000 < t0) continue;
           if (llegado >= pedido) break;
           llegado += r.qty;

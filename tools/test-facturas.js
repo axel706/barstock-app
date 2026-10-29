@@ -281,6 +281,71 @@ const txt = (h) => h.textContent.replace(/\s+/g, ' ');
     prueba('y nada se marca como escondido', fs_[0].ocultas === 0, String(fs_[0].ocultas));
   }
 
+  grupo('una línea ya enlazada se puede corregir');
+  {
+    // El enlace era de ida y sin vuelta: si apuntaba a la botella
+    // equivocada, desde la factura no había nada que hacer.
+    const w = entorno({
+      lineas: [L({ product_id: 'p1', vendor_item_name: 'Tito’s Handmade Vodka', quantity: 1, unit_price: 20, line_price: 20 })],
+      enlaces: [{ product_id: 'p1', item_name: 'Smith Hook Cabernet Sauvignon' }],
+      bebida: [{ product_id: 'p1' }]
+    });
+    const h = host(w);
+    await w.BarStockMobileInvoices.montar(h);
+    await esperar(30);
+    h.querySelector('.m-hcard').click();
+
+    prueba('la línea enlazada lleva su lápiz', !!h.querySelector('[data-chg]'));
+    h.querySelector('[data-chg]').click();
+    prueba('se abre el buscador en su sitio', !!h.querySelector('[data-q]'));
+    prueba('con la salida de soltarla', !!h.querySelector('[data-unlink]'));
+
+    const inp = h.querySelector('[data-q]');
+    inp.value = 'tito';
+    inp.oninput();
+    prueba('encuentra la botella correcta', !!h.querySelector('[data-h]'),
+      (h.querySelector('.m-ires') || {}).textContent);
+
+    h.querySelector('[data-h]').click();
+    await esperar(40);
+    const esc = w.__escrito.filter(e => /marginedge_links/.test(e.u));
+    prueba('reasigna el producto', esc.length === 1 && esc[0].cuerpo.product_id === 'p1',
+      JSON.stringify(w.__escrito));
+    prueba('a la botella elegida',
+      esc[0] && esc[0].cuerpo.item_name === 'Tito’s Vodka 1.75L', esc[0] && esc[0].cuerpo.item_name);
+    prueba('y el buscador se cierra', !h.querySelector('[data-q]'));
+  }
+
+  grupo('y se puede soltar del todo');
+  {
+    const w = entorno({
+      lineas: [L({ product_id: 'p1', vendor_item_name: 'Algo raro', quantity: 1, unit_price: 20, line_price: 20 })],
+      enlaces: [{ product_id: 'p1', item_name: 'Smith Hook Cabernet Sauvignon' }],
+      bebida: [{ product_id: 'p1' }]
+    });
+    let borrado = '';
+    const antes = w.fetch;
+    const espia = async (u, i) => {
+      if (i && i.method === 'DELETE') { borrado = String(u); return { ok: true, text: async () => '' }; }
+      return antes(u, i);
+    };
+    w.fetch = espia; global.fetch = espia;
+
+    const h = host(w);
+    await w.BarStockMobileInvoices.montar(h);
+    await esperar(30);
+    h.querySelector('.m-hcard').click();
+    h.querySelector('[data-chg]').click();
+    h.querySelector('[data-unlink]').click();
+    await esperar(40);
+
+    prueba('borra el vínculo de ese producto',
+      /marginedge_links/.test(borrado) && /product_id=eq\.p1/.test(borrado), borrado);
+    // Un enlace equivocado tiene que poder quitarse sin obligarte a
+    // elegir otra botella para salir del paso.
+    prueba('la línea vuelve a quedar sin dueño', !!h.querySelector('.m-isin'));
+  }
+
   grupo('una tabla que falte no tumba la pantalla');
   {
     // `marginedge_not_mine` se crea a mano. Si todavía no existe, la
