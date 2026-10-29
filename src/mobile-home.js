@@ -567,14 +567,14 @@
       const u = v[0];
       return Object.assign(base, {
         tt: u.nombre,
-        // Cuatro y el resto contado. Con cinco la tarjeta crece y
-        // arrastra el alto de TODO el carril, que es común.
-        filas: u.filas.slice(0, 4).map(r => ({
+        // Tres y el resto contado: cada fila estira el carril entero,
+        // no sólo esta tarjeta.
+        filas: u.filas.slice(0, 3).map(r => ({
           q: cuantas(r) + '×',
           n: r.item || '',
           v: Number(r.value) > 0 ? money(Number(r.value) * cuantas(r)) : 'no price'
         })),
-        mas: u.filas.length > 4 ? 'and ' + (u.filas.length - 4) + ' more' : '',
+        mas: u.filas.length > 3 ? 'and ' + (u.filas.length - 3) + ' more' : '',
         btn: 'Review the order',
         go: irA(u.nombre)
       });
@@ -685,7 +685,13 @@
         (b.fuera - a.fuera) || (b.avg - a.avg) || (a.dias - b.dias));
 
       const fuera = pronto.filter(x => x.fuera).length;
-      const resto = pronto.length - Math.min(4, pronto.length);
+      // TRES, no cuatro. Cada fila que se añade estira el alto de la
+      // tarjeta, y como todas las del carril miden lo que la más alta,
+      // estira el carril ENTERO: una fila de más aquí hace crecer la
+      // bienvenida, el ciclo y las órdenes a la vez. Con cuatro el
+      // Home ya no cabía en pantalla.
+      const CUANTAS = 3;
+      const resto = pronto.length - Math.min(CUANTAS, pronto.length);
 
       t.push({
         tono: 'red',
@@ -699,7 +705,7 @@
         // Nombres enteros: el recorte a 18 caracteres partía palabras
         // a lo bruto ("Canyon Road Cabern"). Lo corta el ancho, con
         // puntos suspensivos, que es lo que sabe dónde está el borde.
-        filas: pronto.slice(0, 4).map(x => ({
+        filas: pronto.slice(0, CUANTAS).map(x => ({
           n: x.item,
           tag: x.fuera ? 'out' : '',
           v: n1(x.avg) + '/wk'
@@ -711,7 +717,15 @@
         amtPie: fuera ? 'out now' : 'this week',
         vs: pronto.length + ' under a week',
         btn: 'See them',
-        go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('inventory'); }
+        // Al inventario YA ORDENADO por lo que está más cerca de
+        // vaciarse. Antes llevaba a los 264 artículos por valor en el
+        // estante: la lista que acababas de leer no estaba por ningún
+        // lado.
+        go: () => {
+          const I = window.BarStockMobileInventory;
+          if (I && I.abrirCon) I.abrirCon('falta');
+          else if (window.BarStockMobile) window.BarStockMobile.ir('inventory');
+        }
       });
     }
 

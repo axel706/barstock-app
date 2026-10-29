@@ -430,14 +430,41 @@
     if (host && host.classList.contains('on')) show(host);
   }
 
-  window.BarStockMobileInventory = { refresh };
+  // ── Entrar con un orden ya puesto ──────────────────────────────────
+  //
+  // "See them" en la tarjeta de lo que se está acabando llevaba aquí y
+  // te dejaba con los 264 artículos ordenados por dinero: la lista que
+  // acababas de leer no aparecía por ninguna parte y había que ir a
+  // buscar el filtro.
+  //
+  // Esta pantalla ya sabe ordenar por "Closest to empty". Sólo había
+  // que dejar que se pidiera desde fuera, en vez de inventar una
+  // pantalla nueva que diría lo mismo.
+  //
+  // La petición se consume en `show()` y se borra: vale para esta
+  // entrada y ninguna más. Entrar mañana por la pestaña y encontrarte
+  // un orden que no pusiste es peor que no tener atajo.
+  let _pedido = null;
+
+  function abrirCon(orden) {
+    _pedido = orden || null;
+    if (window.BarStockMobile) window.BarStockMobile.ir('inventory');
+  }
+
+  window.BarStockMobileInventory = { refresh, abrirCon };
 
   function registrar() {
     if (!window.BarStockMobile) return;
     window.BarStockMobile.register({
       id: 'inventory', icon: 'ti-package', label: 'Inventory',
       tab: true, orden: 30,
-      mount, show,
+      mount,
+      show(host) {
+        // Si alguien pidió un orden concreto al entrar, se aplica
+        // aquí y se olvida.
+        if (_pedido) { _orden = _pedido; _pedido = null; }
+        return show(host);
+      },
       // show() reajusta el total y repinta; los filtros y la búsqueda
       // viven en el módulo, así que un refresco no los pierde.
       refrescar: show

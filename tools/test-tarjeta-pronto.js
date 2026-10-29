@@ -159,9 +159,10 @@ const nombres = (h) => filas(h).map(f => f.querySelector('.n').textContent);
       ({ item: n, onHand: 0, avg: 10 - i }));
     const w = entorno(seis);
     const h = pintar(w);
-    // Con cinco la tarjeta crece y arrastra el alto de todo el carril.
-    prueba('enseña cuatro', filas(h).length === 4, String(filas(h).length));
-    prueba('y cuenta las otras dos', /and 2 more within a week/.test(txt(h)), txt(h));
+    // Cada fila estira el alto de TODO el carril, no sólo de esta
+    // tarjeta: con cuatro, el Home dejaba de caber en pantalla.
+    prueba('enseña tres', filas(h).length === 3, String(filas(h).length));
+    prueba('y cuenta las otras tres', /and 3 more within a week/.test(txt(h)), txt(h));
   }
 
   grupo('más de una semana no entra');
@@ -173,6 +174,21 @@ const nombres = (h) => filas(h).map(f => f.querySelector('.n').textContent);
     const h = pintar(w);
     prueba('sólo el de la semana', nombres(h).length === 1, nombres(h).join(' | '));
     prueba('y es el justo', nombres(h)[0] === 'Justo', nombres(h)[0]);
+  }
+
+  grupo('"See them" lleva a la lista que acabas de leer');
+  {
+    const w = entorno([{ item: 'A', onHand: 0, avg: 5 }]);
+    const h = pintar(w);
+    w.__orden = null;
+    w.BarStockMobileInventory = {
+      abrirCon: (o) => { w.__orden = o; w.__ido.push('inventory'); }
+    };
+    tarjeta(h).querySelector('.m-hero-b').click();
+    // Antes caía en los 264 artículos ordenados por valor en el
+    // estante, donde lo que acababas de leer no aparecía.
+    prueba('abre inventario', w.__ido.includes('inventory'), w.__ido.join(','));
+    prueba('ordenado por lo más cerca de vaciarse', w.__orden === 'falta', String(w.__orden));
   }
 
   console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +

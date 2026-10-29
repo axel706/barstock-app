@@ -139,10 +139,10 @@ const linea = (item, qty, precio) => ({ item, toOrder: qty, value: precio, code:
     prueba('no hay índice', !ord(h).querySelector('.m-hpv'));
     // Cuatro y el resto contado: con cinco la tarjeta crece y arrastra
     // el alto de todo el carril.
-    prueba('enseña cuatro líneas',
-      ord(h).querySelectorAll('.m-hln').length === 4,
+    prueba('enseña tres líneas',
+      ord(h).querySelectorAll('.m-hln').length === 3,
       String(ord(h).querySelectorAll('.m-hln').length));
-    prueba('y cuenta el resto', /and 2 more/.test(txt(h)), txt(h));
+    prueba('y cuenta el resto', /and 3 more/.test(txt(h)), txt(h));
 
     const vs = Array.from(ord(h).querySelectorAll('.m-hln .v')).map(e => e.textContent);
     prueba('el importe de la línea es precio × cantidad',
