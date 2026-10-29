@@ -400,7 +400,7 @@
           const { url, key } = cfg();
           const locId = await locationId();
           _viejas = await leerPaginado(url, key,
-            `marginedge_invoice_lines?location_id=eq.${locId}&invoice_date=lt.${desde()}` +
+            `marginedge_invoice_lines?location_id=eq.${locId}&invoice_date=lt.${desdeCiclo()}` +
             `&select=order_id,invoice_date,invoice_number,vendor_name,line_price,quantity` +
             `&order=invoice_date.desc`);
         }
@@ -446,7 +446,7 @@
         'The count is lines; this list is invoices.'
       : cual === 'ocultas'
         ? 'Invoices from vendors you marked as not yours.'
-        : 'Invoices kept but dated before this cycle opened on ' + esc(desde()) + '.';
+        : 'Invoices kept but dated before this cycle opened on ' + esc(desdeCiclo()) + '.';
 
     host.innerHTML =
       '<button type="button" class="m-iback" id="mInvBack">' +

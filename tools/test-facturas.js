@@ -73,8 +73,16 @@ function entorno(opts) {
       return { ok: true, json: async () => [cuerpo], text: async () => '' };
     }
     const off = Number((/offset=(\d+)/.exec(u) || [])[1] || 0);
-    const pag = (x) => ({ ok: true, json: async () => (off ? [] : x), text: async () => '' });
-    if (/marginedge_invoice_lines/.test(u)) return pag(o.lineas || []);
+    // `contar()` lee el total de la cabecera content-range.
+    const pag = (x) => ({
+      ok: true,
+      headers: { get: () => '0-0/' + ((o.viejas || []).length) },
+      json: async () => (off ? [] : x), text: async () => ''
+    });
+    if (/marginedge_invoice_lines/.test(u)) {
+      if (/invoice_date=lt\./.test(u)) return pag(o.viejas || []);
+      return pag(o.lineas || []);
+    }
     if (/marginedge_links/.test(u))         return pag(o.enlaces || []);
     if (/marginedge_not_mine/.test(u))      return pag(o.descartados || []);
     if (/marginedge_products/.test(u))      return pag(o.bebida || []);
@@ -446,6 +454,49 @@ const txt = (h) => h.textContent.replace(/\s+/g, ' ');
     h.querySelector('#mInvBack').click();
     await esperar(20);
     prueba('se puede volver', !!h.querySelector('[data-inv]'), txt(h).slice(0, 80));
+  }
+
+  grupo('la vista de ciclos anteriores también se abre');
+  {
+    // Aquí se llamaba a `desde()`, que no existe —la función es
+    // `desdeCiclo()`—. Reventaba, y como `_verFuera` se quedaba
+    // fijado, TODO lo que se pintaba después volvía a intentar esta
+    // vista y fallaba: ni la lista ni el detalle de una factura
+    // volvían a salir. Un error en una pantalla no puede secuestrar
+    // las demás.
+    const w = entorno({
+      lineas: [L({ product_id: 'p1', vendor_item_name: 'Tito’s' })],
+      enlaces: [{ product_id: 'p1', item_name: 'Tito’s Vodka 1.75L' }],
+      bebida: [{ product_id: 'p1' }],
+      viejas: [
+        { order_id: 'V1', invoice_date: '2026-09-30', invoice_number: '111',
+          vendor_name: 'FINE WINE & GOOD SPIRITS', line_price: 50.97, quantity: 1 },
+        { order_id: 'V1', invoice_date: '2026-09-30', invoice_number: '111',
+          vendor_name: 'FINE WINE & GOOD SPIRITS', line_price: 20, quantity: 1 }
+      ]
+    });
+    const h = host(w);
+    await w.BarStockMobileInvoices.montar(h);
+    await esperar(40);
+
+    const link = h.querySelector('[data-ver="antes"]');
+    prueba('el enlace está', !!link, txt(h).slice(-140));
+    link.click();
+    await esperar(60);
+
+    const t = txt(h);
+    prueba('no revienta', !/Something broke|Can't find/.test(t), t.slice(0, 160));
+    prueba('y enseña la factura vieja', /FINE WINE/.test(t), t.slice(0, 200));
+    // Dos líneas, UNA factura.
+    prueba('agrupada, no una fila por línea',
+      h.querySelectorAll('.m-hcard').length === 1,
+      String(h.querySelectorAll('.m-hcard').length));
+
+    h.querySelector('#mInvBack').click();
+    await esperar(30);
+    prueba('al volver, la lista sigue viva', !!h.querySelector('[data-inv]'), txt(h).slice(0, 90));
+    h.querySelector('[data-inv]').click();
+    prueba('y el detalle abre', /total/.test(txt(h)), txt(h).slice(0, 140));
   }
 
   grupo('sin nada que esconder, no hay pie');
