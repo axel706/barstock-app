@@ -209,7 +209,9 @@
         guardarNombreUnidad(idYNombre(
           lista.find(o => idYNombre(o).id === b.dataset.unit) || {}).nombre);
         pintarUnidades(lista);
-        pintarConexion();
+        // La pantalla entera, no sólo la tarjeta de arriba: elegir
+        // restaurante cambia las cifras, los avisos y los accesos.
+        pintarAccion();
         pintarEstado(ok ? null : 'Elegido, pero no se pudo guardar en la nube. ' +
           'Puede que falte la columna marginedge_unit_id en location_settings.');
       };
@@ -554,6 +556,27 @@
   function pintarAccion() {
     pintarConexion();
 
+    // ── Los botones del plegable, SIEMPRE ───────────────────────────
+    //
+    // Van antes de cualquier `return`. Estaban al final de la función,
+    // detrás del corte de "sin restaurante elegido": en una locación
+    // nueva no se enganchaban nunca, y al elegir el restaurante nadie
+    // volvía a pasar por aquí. Resultado: dos botones que no hacían
+    // absolutamente nada.
+    //
+    // Es el MISMO fallo que ya está escrito unas líneas más abajo con
+    // el gancho de meMatch. Dos veces el mismo error en el mismo
+    // archivo: cualquier `onclick` de este panel va antes de los
+    // returns, sin excepción.
+    //
+    // Y pueden estar vivos sin restaurante: los dos avisan por su
+    // cuenta con "Pick a restaurant first", que es mejor respuesta que
+    // el silencio.
+    const s = document.getElementById('meSync');
+    if (s) s.onclick = () => sincronizar().catch(mostrarFallo);
+    const si = document.getElementById('meSyncInv');
+    if (si) si.onclick = () => sincronizarFacturas().catch(mostrarFallo);
+
     const cont = document.getElementById('meAccion');
     if (!cont) return;
     if (!unidad()) { cont.innerHTML = ''; return; }
@@ -569,13 +592,6 @@
 
     const c = document.getElementById('meIrCompras');
     if (c) c.onclick = () => window.showSettingsPanel('mePurchases');
-
-    // Los botones viejos siguen vivos dentro del plegable, para cuando
-    // haga falta forzar una copia completa del catálogo.
-    const s = document.getElementById('meSync');
-    if (s) s.onclick = () => sincronizar().catch(mostrarFallo);
-    const si = document.getElementById('meSyncInv');
-    if (si) si.onclick = () => sincronizarFacturas().catch(mostrarFallo);
 
     pintarCifras();
     pintarAtencion();
