@@ -11,11 +11,16 @@
   //             ve lo mismo en grande en vez de empezar otra frase.
   //   DETALLE   las líneas de un proveedor, con su cantidad ajustable.
   //
-  // ── Desde aquí NO se coloca ──────────────────────────────────────────
+  //   REVISIÓN  la última mirada antes de colocar: qué sale, cuánto, y
+  //             a quién. No se edita — para eso está DETALLE.
   //
-  // Colocar manda correos, escribe el historial y cierra la semana. Eso
-  // vive en el escritorio y aquí se dice, abajo, en vez de dejar que
-  // alguien busque el botón.
+  // ── Colocar es dos pasos, y el orden no es intercambiable ───────────
+  //
+  // Primero se guarda la orden en la nube, después sale el correo. Si
+  // fuera al revés y el guardado fallara, el proveedor tendría un
+  // pedido que la app no conoce: imposible de cuadrar contra la factura
+  // cuando llegue de MarginEdge. Al revés es recuperable — queda una
+  // orden colocada que se puede reenviar.
   //
   // ── Y no se reimplementa nada ────────────────────────────────────────
   //
@@ -32,6 +37,17 @@
   const money = (n) => '$' + Math.round(num(n)).toLocaleString('en-US');
 
   let _vendor = null;        // null = resumen
+  let _revisar = false;      // true = la pantalla de revisión del _vendor
+  let _to = [];              // destinatarios de ESTE envío
+  let _recordar = true;      // guardarlos en vendor_defaults al enviar
+  let _cargandoDest = false;
+  // Para qué proveedor ya se preguntó. El guardia NO puede ser "_to
+  // está vacío": un proveedor sin correo guardado deja _to vacío para
+  // siempre, y entonces cada repintado vuelve a pedirlo — carga, no
+  // encuentra nada, repinta, carga. Bucle infinito y la pantalla
+  // congelada.
+  let _destDe = null;
+  let _colocando = false;
   const _fallos = new Set(); // claves de líneas que no llegaron a la nube
 
   const clave = (r) => (r.item || '') + '||' + (r.code || '');
@@ -107,13 +123,13 @@
       <div class="m-ord-gran">${money(total)}
         <span>across ${vs.length} vendor${vs.length === 1 ? '' : 's'}</span></div>
 
-      <!-- También aquí, no sólo dentro de un proveedor: si sólo
-           estuviera en el detalle, alguien que entra, mira los totales
-           y se va nunca se entera de que esto no coloca nada. -->
-      <div class="m-ord-nota">
-        <i class="ti ti-device-desktop" aria-hidden="true"></i>
-        Review and adjust here. Place orders from desktop or iPad.
-      </div>
+      <!-- Aquí ya no se avisa de nada. Durante mucho tiempo este hueco
+           decía "Place orders from desktop or iPad", y lo decía en las
+           dos pantallas para que nadie mirara los totales, se fuera y
+           no se enterara. Desde que se coloca desde el teléfono, esa
+           frase sería mentira: el camino está dentro de cada
+           proveedor, que es donde se repasa antes de mandar. -->
+      ${''}
       ${vs.map((v, i) => `
         <button type="button" class="m-ordv${v.sinPrecio ? ' aviso' : ''}" data-v="${i}">
           <span class="m-ordv-l">
@@ -172,13 +188,13 @@
             v.sinPrecio ? ' · ' + v.sinPrecio + ' without price' : ''}</small></div>
       </div>
 
-      <!-- Arriba y no al final: que no se pueda colocar desde aquí es
-           lo primero que hay que saber, no la conclusión a la que se
-           llega después de repasar doce líneas. -->
-      <div class="m-ord-nota">
-        <i class="ti ti-device-desktop" aria-hidden="true"></i>
-        Review and adjust here. Place the order from desktop or iPad.
-      </div>
+      <!-- Arriba y no al final. Antes aquí vivía el aviso de que esto
+           sólo se podía hacer desde el escritorio; ahora vive el botón,
+           en el mismo sitio y por la misma razón: con noventa líneas,
+           lo que está al final no se encuentra. -->
+      <button type="button" class="m-ord-enviar" id="moSend">
+        Review and send
+      </button>
 
       <!-- Sólo si este proveedor admite ajuste manual: añadir una
            línea ES poner una cantidad a mano, así que en los demás el
@@ -207,6 +223,8 @@
         </div>` : ''}`;
 
     host.querySelector('#moBack').onclick = () => { _vendor = null; pintar(host); };
+    const env = host.querySelector('#moSend');
+    if (env) env.onclick = () => { _revisar = true; _to = []; _destDe = null; pintar(host); };
     const add = host.querySelector('#moAdd');
     if (add) add.onclick = () => {
       // Se le pasa el proveedor. Sin él, el diálogo mira la pestaña
@@ -221,6 +239,230 @@
       };
     });
     enganchar(host);
+  }
+
+  // ── Revisión ─────────────────────────────────────────────────────────
+  //
+  // Aquí NO se edita. Una pantalla que muestra y a la vez deja cambiar
+  // no es una revisión: es la pantalla anterior otra vez. Si algo está
+  // mal, atrás y se corrige donde se corrige.
+  //
+  // Los destinatarios sí se tocan, porque ésos cambian por envío.
+
+  const EMAIL = /^[^\s@,]+@[^\s@,]+\.[^\s@,]{2,}$/;
+  const partir = (s) => String(s || '').split(',').map(x => x.trim()).filter(Boolean);
+
+  async function cargarDestinatarios(vendor, host) {
+    if (_cargandoDest || _destDe === vendor) return;
+    _cargandoDest = true;
+    _destDe = vendor;
+    try {
+      if (window.BarStockVendorDefaults) {
+        const d = await window.BarStockVendorDefaults.getDefaults(vendor);
+        _to = partir(d && d.vendor_email);
+      }
+    } catch (e) {
+      // Sin correo guardado no se bloquea nada: se escribe a mano.
+      console.warn('[orders] no se pudieron leer los destinatarios', e);
+    }
+    _cargandoDest = false;
+    if (_revisar && _vendor === vendor) pintar(host);
+  }
+
+  function pintarRevision(host) {
+    const v = proveedores().find(x => x.nombre === _vendor);
+    if (!v) { _revisar = false; _vendor = null; return pintarResumen(host); }
+
+    const botellas = v.filas.reduce((s, r) => s + cantidad(r), 0);
+
+    host.innerHTML = `
+      <button type="button" class="m-back m-back-gde" id="mrBack">
+        <i class="ti ti-chevron-left" aria-hidden="true"></i> ${esc(v.nombre)}
+      </button>
+
+      <div class="m-ord-h">
+        <span class="m-inv-t">Review the order</span>
+        <div class="m-ord-tot">${money(v.total)}
+          <small>${v.filas.length} line${v.filas.length === 1 ? '' : 's'} · ${n2(botellas)} bottles${
+            v.sinPrecio ? ' · ' + v.sinPrecio + ' without price' : ''}</small></div>
+      </div>
+
+      <div class="m-rev-lab">You are ordering</div>
+      <div class="m-rev-list">
+        ${v.filas.map(r => `
+          <div class="m-rev-l">
+            <span class="q">${n2(cantidad(r))}×</span>
+            <span class="n">${esc(r.item || '')}</span>
+            <span class="v">${num(r.value) > 0
+              ? money(num(r.value) * cantidad(r)) : 'no price'}</span>
+          </div>`).join('')}
+      </div>
+
+      <div class="m-rev-lab">To</div>
+      <div class="m-rev-chips" id="mrTo">
+        ${_cargandoDest && !_to.length
+          ? '<span class="m-rev-cargando">Looking up the saved address…</span>'
+          : _to.map((e, i) => `
+              <span class="m-rev-chip">${esc(e)}
+                <button type="button" data-quitar="${i}" aria-label="Remove ${esc(e)}">
+                  <i class="ti ti-x" aria-hidden="true"></i></button>
+              </span>`).join('')}
+        <button type="button" class="m-rev-chip m-rev-add" id="mrAdd">
+          <i class="ti ti-plus" aria-hidden="true"></i> Add
+        </button>
+      </div>
+      <div class="m-rev-nuevo" id="mrNuevo" hidden>
+        <input type="email" id="mrMail" inputmode="email" autocomplete="email"
+               autocapitalize="off" spellcheck="false" placeholder="name@vendor.com">
+        <button type="button" id="mrOk">Add</button>
+      </div>
+
+      <label class="m-rev-rec">
+        <input type="checkbox" id="mrRec"${_recordar ? ' checked' : ''}>
+        <span>Remember these for ${esc(v.nombre)}</span>
+      </label>
+
+      <div class="m-rev-pie">
+        <div class="m-rev-pie-r">
+          <span>${n2(botellas)} bottles to ${esc(v.nombre)}</span>
+          <b>${money(v.total)}</b>
+        </div>
+        <button type="button" class="m-rev-go" id="mrGo"${
+          _to.length && !_colocando ? '' : ' disabled'}>${
+          _colocando ? 'Placing…' : 'Place order'}</button>
+        ${!_to.length && !_cargandoDest
+          ? '<div class="m-rev-falta">Add at least one address first.</div>' : ''}
+      </div>`;
+
+    host.querySelector('#mrBack').onclick = () => { _revisar = false; pintar(host); };
+
+    host.querySelectorAll('[data-quitar]').forEach(b => {
+      b.onclick = () => { _to.splice(Number(b.dataset.quitar), 1); pintar(host); };
+    });
+
+    const caja = host.querySelector('#mrNuevo');
+    const mail = host.querySelector('#mrMail');
+    host.querySelector('#mrAdd').onclick = () => {
+      caja.hidden = false;
+      if (mail) mail.focus();
+    };
+    const meter = () => {
+      const val = String(mail.value || '').trim();
+      if (!EMAIL.test(val)) {
+        mail.setAttribute('aria-invalid', 'true');
+        if (window.BarStockToast) window.BarStockToast.show('That address does not look right.');
+        return;
+      }
+      if (!_to.includes(val)) _to.push(val);
+      pintar(host);
+    };
+    host.querySelector('#mrOk').onclick = meter;
+    // Enter en el teclado del teléfono hace lo mismo que el botón.
+    mail.onkeydown = (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); meter(); } };
+
+    host.querySelector('#mrRec').onchange = (ev) => { _recordar = !!ev.target.checked; };
+    host.querySelector('#mrGo').onclick = () => colocar(v, host);
+
+    cargarDestinatarios(v.nombre, host);   // no hace nada si ya se preguntó
+  }
+
+  // ── Colocar ──────────────────────────────────────────────────────────
+  //
+  // Esto guarda. El correo es el paso siguiente y todavía no existe
+  // aquí: hasta que exista, se coloca desde el teléfono y se manda
+  // desde el escritorio, que es exactamente lo que se hacía antes con
+  // el paso de colocar incluido.
+  //
+  // Se reusa `persistOrderToSupabase` y `loadOrdersFromCloud`, las
+  // mismas del escritorio. Nada de una segunda forma de guardar una
+  // orden: con dos, cualquier arreglo hay que hacerlo dos veces y la
+  // segunda se olvida.
+
+  async function guardarDestinatarios(vendor) {
+    if (!_recordar || !window.BarStockVendorDefaults) return;
+    try {
+      // LEER y fusionar. `saveDefaults` escribe el registro entero, así
+      // que mandar sólo el correo borraría el número de cuenta, el rep
+      // y la ventana de entrega.
+      const d = (await window.BarStockVendorDefaults.getDefaults(vendor)) || {};
+      await window.BarStockVendorDefaults.saveDefaults(vendor,
+        Object.assign({}, d, { vendor_email: _to.join(', ') }));
+    } catch (e) {
+      // Que no se guarde la libreta no puede tumbar una orden que ya
+      // está en la nube.
+      console.warn('[orders] no se pudieron guardar los destinatarios', e);
+    }
+  }
+
+  async function colocar(v, host) {
+    if (_colocando) return;
+    if (!_to.length) return;
+
+    const avisar = (t) => { if (window.BarStockToast) window.BarStockToast.show(t); };
+
+    if (typeof window.persistOrderToSupabase !== 'function' ||
+        typeof window.loadOrdersFromCloud !== 'function') {
+      avisar('Orders are not connected right now. Try again in a moment.');
+      return;
+    }
+
+    const filas = v.filas
+      .map(r => (hay('cloneOrderRow') ? window.cloneOrderRow(r) : r))
+      .filter(r => cantidad(r) > 0);
+    if (!filas.length) { avisar('Nothing to order for this vendor.'); return; }
+
+    _colocando = true;
+    pintar(host);
+
+    const ahora = new Date().toISOString();
+    const orden = {
+      id: hay('uniqueOrderId') ? window.uniqueOrderId() : 'ord_' + Date.now(),
+      vendor: v.nombre,
+      createdAt: ahora,
+      date: ahora,
+      // El mismo reparto que el escritorio: LOOP sale por CSV y el
+      // resto por imagen. Que el tipo lo decida otro sitio sería una
+      // segunda regla que se desincroniza.
+      exportType: v.nombre === 'LOOP' ? 'loop_csv' : 'vendor_jpg',
+      filename: v.nombre === 'LOOP'
+        ? 'loop_upload.csv'
+        : 'vendor_order_' + String(v.nombre).toLowerCase().replace(/\s+/g, '_') + '.jpg',
+      items: filas,
+      totalUnits: filas.reduce((s, r) => s + cantidad(r), 0),
+      subtotal: hay('computeOrderSubtotal') ? window.computeOrderSubtotal(filas) : v.total
+    };
+
+    try {
+      await window.persistOrderToSupabase(orden);
+
+      if (window.BarStockParIntelligence) {
+        window.BarStockParIntelligence.updateSnapshotOrdered(orden.items)
+          .catch(e => console.warn('[ParIntelligence] updateSnapshotOrdered', e));
+      }
+      if (window.BarStockLogger) {
+        window.BarStockLogger.log('place_order_saved', {
+          vendor: v.nombre, orderId: orden.id, totalUnits: orden.totalUnits,
+          subtotal: orden.subtotal, itemCount: filas.length, from: 'mobile'
+        });
+      }
+
+      await window.loadOrdersFromCloud();
+      await guardarDestinatarios(v.nombre);
+
+      avisar(v.nombre + ' order placed · email it from desktop');
+      _colocando = false;
+      _revisar = false;
+      _vendor = null;
+      pintar(host);
+    } catch (e) {
+      _colocando = false;
+      pintar(host);
+      // Con todas las letras: si no se guardó, NO está colocada. Lo
+      // contrario —creer que sí— acaba en dos órdenes al mismo
+      // proveedor.
+      avisar('Could not place it: ' + (e && e.message ? e.message : String(e)));
+      console.error('[orders] colocar falló', e);
+    }
   }
 
   function linea(r) {
@@ -312,7 +554,9 @@
 
   function pintar(host) {
     if (!host) return;
-    if (_vendor) pintarDetalle(host); else pintarResumen(host);
+    if (_vendor && _revisar) pintarRevision(host);
+    else if (_vendor) pintarDetalle(host);
+    else pintarResumen(host);
   }
 
   function pantalla() {
@@ -367,7 +611,13 @@
       // el gesto ni se arme.
       atras(host, hacerlo) {
         if (!_vendor) return false;
-        if (hacerlo) { _vendor = null; pintar(host); }
+        if (hacerlo) {
+          // Un escalón cada vez: de la revisión se vuelve a las líneas,
+          // no al resumen. Saltarse el intermedio al deslizar hace
+          // perder el sitio.
+          if (_revisar) _revisar = false; else _vendor = null;
+          pintar(host);
+        }
         return true;
       },
       // Al volver se arranca siempre en el resumen: entrar a Órdenes y
@@ -379,6 +629,13 @@
       show(host) {
         _vendor = _pedida || null;
         _pedida = null;
+        // Nunca se entra directo a la revisión: es el último paso de un
+        // camino, no un sitio al que llegar. Si se quedara puesta, al
+        // volver a Órdenes aparecería una pantalla de confirmar un
+        // pedido que no acabas de repasar.
+        _revisar = false;
+        _to = []; _destDe = null;
+        _colocando = false;
         pintar(host);
       }
     });

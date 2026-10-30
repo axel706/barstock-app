@@ -2109,6 +2109,104 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   .m-ord-nota .ti { font-size: var(--m-strong); color: #7dd3fc; flex: 0 0 auto; margin-top: 1px; }
 
+  /* ── El botón que lleva a revisar ──────────────────────────────────
+   * Ocupa el sitio donde antes estaba el aviso de "esto se hace desde
+   * el escritorio", y por la misma razón que estaba ahí: con noventa
+   * líneas, lo que va al final no se encuentra. */
+  body.m-shell .m-ord-enviar {
+    display: block; width: 100%; margin: 14px 0 11px;
+    height: 46px; border: 0; cursor: pointer;
+    background: #38bdf8; color: #04283d;
+    font-size: var(--m-body); font-weight: 800;
+  }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ord-enviar { border-radius: 14px !important; }
+  body.m-shell .m-ord-enviar:active { background: #7dd3fc; }
+
+  /* ── La revisión ───────────────────────────────────────────────────
+   * Sólo se mira. Por eso las líneas no llevan ni botones ni campos:
+   * la que edita es la pantalla de antes. */
+  .m-rev-lab {
+    font-size: var(--m-meta); font-weight: 800; letter-spacing: .09em;
+    text-transform: uppercase; color: #8fa3b8; margin: 18px 0 7px;
+  }
+  .m-rev-list { border-top: 1px solid rgba(255,255,255,.08); }
+  .m-rev-l {
+    display: flex; align-items: center; gap: 10px; padding: 9px 0;
+    font-size: var(--m-small);
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .m-rev-l .q { font-weight: 800; color: #fff; flex: 0 0 auto; min-width: 30px; }
+  .m-rev-l .n {
+    flex: 1; min-width: 0; color: #dbe7f3;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .m-rev-l .v { font-size: var(--m-meta); color: #8fa3b8; white-space: nowrap; }
+
+  /* Fichas: quitar un destinatario tiene que ser un gesto, no abrir
+   * Ajustes y editar una cadena separada por comas. */
+  .m-rev-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  body.m-shell .m-rev-chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 10px 7px 12px;
+    background: rgba(56,189,248,.14); border: 1px solid rgba(56,189,248,.30);
+    font-size: var(--m-small); color: #e4f3ff; cursor: default;
+  }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-rev-chip { border-radius: 999px !important; }
+  body.m-shell .m-rev-chip > button {
+    background: none; border: 0; padding: 0; cursor: pointer;
+    color: #8fb6d6; font-size: var(--m-small); display: flex; align-items: center;
+  }
+  body.m-shell .m-rev-add {
+    background: rgba(255,255,255,.07); border: 1px dashed rgba(255,255,255,.22);
+    color: #a9bacd; cursor: pointer; padding: 7px 12px;
+  }
+  .m-rev-cargando { font-size: var(--m-small); color: #8fa3b8; padding: 7px 0; }
+
+  .m-rev-nuevo { display: flex; gap: 7px; margin-top: 8px; }
+  body.m-shell .m-rev-nuevo input {
+    flex: 1; min-width: 0; height: 42px; padding: 0 13px;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
+    color: #fff; font-family: inherit; font-size: var(--m-body);
+  }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-rev-nuevo input { border-radius: 12px !important; }
+  body.m-shell .m-rev-nuevo input[aria-invalid="true"] { border-color: rgba(239,68,68,.6); }
+  body.m-shell .m-rev-nuevo button {
+    flex: 0 0 auto; height: 42px; padding: 0 16px; border: 0; cursor: pointer;
+    background: rgba(255,255,255,.14); color: #e8f1fb;
+    font-family: inherit; font-size: var(--m-small); font-weight: 800;
+  }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-rev-nuevo button { border-radius: 12px !important; }
+
+  .m-rev-rec {
+    display: flex; align-items: center; gap: 10px; margin-top: 14px;
+    font-size: var(--m-small); color: #c3d2e2; cursor: pointer;
+  }
+  .m-rev-rec input { width: 20px; height: 20px; accent-color: #38bdf8; flex: 0 0 20px; }
+
+  /* ── El pie ────────────────────────────────────────────────────────
+   * Pegajoso y con el importe al lado. Con noventa líneas, un botón al
+   * final de la lista queda a treinta deslizamientos — y lo que se
+   * confirma es una cifra, así que la cifra tiene que estar a la vista
+   * en el momento de pulsar. */
+  .m-rev-pie {
+    position: sticky; bottom: 0; z-index: 2;
+    margin: 18px -2px 0; padding: 12px 2px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(to top, #0b1017 72%, rgba(11,16,23,0));
+  }
+  .m-rev-pie-r {
+    display: flex; align-items: baseline; justify-content: space-between;
+    font-size: var(--m-meta); color: #8fa3b8; margin-bottom: 9px;
+  }
+  .m-rev-pie-r b { color: #fff; font-size: var(--m-strong); font-weight: 800; }
+  body.m-shell .m-rev-go {
+    display: block; width: 100%; height: 48px; border: 0; cursor: pointer;
+    background: #38bdf8; color: #04283d;
+    font-size: var(--m-body); font-weight: 800;
+  }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-rev-go { border-radius: 14px !important; }
+  body.m-shell .m-rev-go:disabled { background: rgba(255,255,255,.12); color: #8fa3b8; cursor: default; }
+  .m-rev-falta { font-size: var(--m-meta); color: #fca5a5; text-align: center; margin-top: 8px; }
+
   /* ── Lo que dejaste fuera ───────────────────────────────────────── */
   /* Excluir era ya poner la cantidad a cero, pero la línea desaparecía
    * sin decirlo. Ahora va aquí, con el camino de vuelta. */

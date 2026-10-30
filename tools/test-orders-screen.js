@@ -94,6 +94,33 @@ function pantalla(extra) {
   w.__reset = [];
   w.resetFinalOrder = (i) => { w.__reset.push(i); w.state.master[i].orderOverride = ''; };
 
+  // ── Lo que hace falta para colocar ────────────────────────────────
+  // Las mismas piezas del escritorio. Si la pantalla del telefono se
+  // inventara su propia forma de guardar una orden, habria dos, y
+  // cualquier arreglo habria que hacerlo dos veces.
+  w.uniqueOrderId = () => 'ord_test_1';
+  w.cloneOrderRow = (r) => Object.assign({}, r);
+  w.__guardadas = [];
+  w.persistOrderToSupabase = async (o) => {
+    if (w.__fallarGuardado) throw new Error('cloud down');
+    w.__guardadas.push(o);
+  };
+  w.__recargado = 0;
+  w.loadOrdersFromCloud = async () => { w.__recargado++; };
+
+  w.__defaults = { SOUTHERN: {
+    vendor_email: 'orders@southern.com, pedro@southern.com',
+    account_number: '44821', rep_name: 'Pedro Morales'
+  } };
+  w.__guardadosDef = [];
+  w.BarStockVendorDefaults = {
+    getDefaults: async (v) => w.__defaults[v] || {},
+    saveDefaults: async (v, f) => { w.__guardadosDef.push({ v, f }); }
+  };
+
+  w.__toasts = [];
+  w.BarStockToast = { show: (t) => w.__toasts.push(String(t)) };
+
   let def = null;
   w.BarStockMobile = { register(d) { def = d; }, refrescarBadges() {} };
   new Function(fs.readFileSync(path.join(RAIZ, 'src/mobile-orders.js'), 'utf8'))();
@@ -215,13 +242,23 @@ console.log('\nun proveedor sin ajuste manual');
   ok('y se dice por que', /no manual override/.test(l.textContent));
 }
 
-console.log('\ndesde aqui no se coloca');
+console.log('\ndesde aqui SI se coloca');
 {
+  // Durante mucho tiempo esta pantalla decia "Place the order from
+  // desktop or iPad" y no tenia boton. Ya no: se repasa y se coloca
+  // desde el telefono.
   const { host } = pantalla();
   abrir(host, 'LOOP');
-  ok('lo dice la nota de arriba', /from desktop or iPad/i.test(host.textContent));
-  ok('y no hay ningun boton de colocar', !/place .*order/i.test(
-     Array.from(host.querySelectorAll('button')).map(b => b.textContent).join(' ')));
+  const botones = Array.from(host.querySelectorAll('button')).map(b => b.textContent).join(' ');
+  ok('hay un boton que lleva a revisar', /review and send/i.test(botones), botones.slice(0, 80));
+  ok('y ya no manda al escritorio', !/from desktop or iPad/i.test(host.textContent));
+
+  // ARRIBA, no al final. Con noventa lineas, lo que esta abajo no se
+  // encuentra: por eso ocupa el sitio donde estaba el aviso.
+  const b = host.querySelector('.m-ord-enviar');
+  const lista = host.querySelector('#moList');
+  ok('y esta antes que las lineas',
+     !!b && !!lista && (b.compareDocumentPosition(lista) & 4) !== 0);
 }
 
 console.log('\ndejar una linea fuera, y traerla de vuelta');
@@ -260,14 +297,15 @@ console.log('\nlo que nunca se iba a pedir no cuenta como excluido');
      !/Nunca/.test(host.querySelector('.m-ord-fuera').textContent));
 }
 
-console.log('\nel aviso de que esto no coloca');
+console.log('\nel aviso viejo ya no esta en ningun sitio');
 {
-  // En las DOS pantallas. Si solo estuviera en el detalle, alguien que
-  // entra, mira los totales y se va nunca se entera.
+  // Estaba en las DOS pantallas, para que nadie mirara los totales, se
+  // fuera y no se enterara de que aquello no colocaba nada. Ahora
+  // coloca, asi que esa frase seria mentira.
   const { host } = pantalla();
-  ok('en el resumen', /from desktop or iPad/i.test(host.textContent));
+  ok('ni en el resumen', !/from desktop or iPad/i.test(host.textContent));
   abrir(host, 'LOOP');
-  ok('y en el detalle', /from desktop or iPad/i.test(host.textContent));
+  ok('ni en el detalle', !/from desktop or iPad/i.test(host.textContent));
 }
 
 console.log('\nañadir un producto');
@@ -308,6 +346,7 @@ console.log('\nla pantalla vacia dice CUAL de los dos vacios es');
   ok('y ahi si se celebra', !!contado.host.querySelector('.m-nada-i.bien'));
 }
 
+
 console.log('\nal volver se entra por el resumen');
 {
   const { host, def } = pantalla();
@@ -319,5 +358,159 @@ console.log('\nal volver se entra por el resumen');
   ok('al volver, el resumen', !host.querySelector('#moBack'));
 }
 
-console.log('\n' + (falla ? falla + ' FALLO(S)' : 'todo bien') + '   ·   ' + pasa + ' comprobaciones');
+// ── Revisar y colocar ───────────────────────────────────────────────
+
+const esperar = (ms) => new Promise(r => setTimeout(r, ms || 0));
+async function revisar(host, vendor) {
+  abrir(host, vendor);
+  host.querySelector('.m-ord-enviar').click();
+  await esperar(10);   // los destinatarios se leen de la nube
+  return host;
+}
+
+(async () => {
+
+console.log('\nla revision ensena que sale y a quien');
+{
+  const { w, host } = pantalla();
+  await revisar(host, 'SOUTHERN');
+
+  ok('es otra pantalla', /Review the order/i.test(host.textContent));
+  ok('con el proveedor en el camino de vuelta',
+     /SOUTHERN/.test(host.querySelector('.m-back').textContent));
+  ok('ensena las lineas', host.querySelectorAll('.m-rev-l').length === 1);
+  ok('con el importe de la linea', /\$28/.test(host.querySelector('.m-rev-l').textContent));
+
+  // AQUI NO SE EDITA. Una pantalla que muestra y a la vez deja cambiar
+  // no es una revision: es la anterior otra vez.
+  ok('y sin nada que tocar',
+     !host.querySelector('.m-rev-list input') &&
+     !host.querySelector('.m-rev-list button'));
+
+  // Los destinatarios salen de vendor_defaults, partidos por comas
+  // igual que los parte el escritorio.
+  const chips = Array.from(host.querySelectorAll('.m-rev-chip:not(.m-rev-add)'))
+    .map(c => c.textContent.trim());
+  eq('trae los correos guardados', chips, ['orders@southern.com', 'pedro@southern.com']);
+}
+
+console.log('\nlos destinatarios se tocan sin ir a Ajustes');
+{
+  const { host } = pantalla();
+  await revisar(host, 'SOUTHERN');
+
+  host.querySelector('[data-quitar="1"]').click();
+  ok('quitar uno lo quita',
+     host.querySelectorAll('.m-rev-chip:not(.m-rev-add)').length === 1);
+
+  host.querySelector('#mrAdd').click();
+  const inp = host.querySelector('#mrMail');
+  inp.value = 'no-es-un-correo';
+  host.querySelector('#mrOk').click();
+  ok('una direccion mala no entra',
+     host.querySelectorAll('.m-rev-chip:not(.m-rev-add)').length === 1);
+
+  host.querySelector('#mrAdd').click();
+  host.querySelector('#mrMail').value = 'nuevo@southern.com';
+  host.querySelector('#mrOk').click();
+  const chips = Array.from(host.querySelectorAll('.m-rev-chip:not(.m-rev-add)'))
+    .map(c => c.textContent.trim());
+  eq('una buena si', chips, ['orders@southern.com', 'nuevo@southern.com']);
+}
+
+console.log('\nsin destinatario no se puede colocar');
+{
+  const { host } = pantalla();
+  await revisar(host, 'PEQUENO');   // este no tiene correo guardado
+  ok('el boton nace apagado', host.querySelector('.m-rev-go').disabled);
+  ok('y dice por que', /add at least one address/i.test(host.textContent));
+}
+
+console.log('\ncolocar guarda por el mismo camino que el escritorio');
+{
+  const { w, host } = pantalla();
+  await revisar(host, 'SOUTHERN');
+  host.querySelector('.m-rev-go').click();
+  await esperar(20);
+
+  ok('se guardo una orden', w.__guardadas.length === 1, String(w.__guardadas.length));
+  const o = w.__guardadas[0];
+  ok('con su proveedor', o && o.vendor === 'SOUTHERN');
+  ok('y sus lineas', o && o.items.length === 1);
+  ok('con las unidades contadas', o && o.totalUnits === 2, String(o && o.totalUnits));
+  // LOOP sale por CSV y el resto por imagen, como en el escritorio.
+  ok('y el tipo de exportacion del escritorio', o && o.exportType === 'vendor_jpg');
+
+  // Releer de la nube es lo que hace que las lineas desaparezcan de
+  // Ordering. Sin esto la orden esta puesta y la pantalla no se entera.
+  ok('se relee la verdad desde la nube', w.__recargado === 1);
+  ok('y lo dice', w.__toasts.some(t => /placed/i.test(t)), w.__toasts.join(' | '));
+  ok('al terminar vuelve al resumen', /Orders waiting|All orders/i.test(host.textContent) ||
+     !!host.querySelector('.m-ordv'));
+}
+
+console.log('\nguardar la libreta NO borra el resto de la ficha');
+{
+  const { w, host } = pantalla();
+  await revisar(host, 'SOUTHERN');
+  host.querySelector('.m-rev-go').click();
+  await esperar(20);
+
+  const g = w.__guardadosDef[0];
+  ok('se guardaron los destinatarios', !!g && g.v === 'SOUTHERN');
+  // `saveDefaults` escribe el registro ENTERO. Mandar solo el correo
+  // borraria el numero de cuenta y el rep.
+  ok('y el numero de cuenta sigue ahi', !!g && g.f.account_number === '44821',
+     JSON.stringify(g && g.f));
+  ok('y el rep tambien', !!g && g.f.rep_name === 'Pedro Morales');
+  ok('con el correo actualizado',
+     !!g && g.f.vendor_email === 'orders@southern.com, pedro@southern.com');
+}
+
+console.log('\nsi la nube falla, la orden NO esta colocada');
+{
+  const { w, host } = pantalla();
+  w.__fallarGuardado = true;
+  // El modulo escribe el error en consola, y aqui ESE error es lo que
+  // se esta probando: se calla para que el informe se lea.
+  const err = console.error; console.error = () => {};
+  await revisar(host, 'SOUTHERN');
+  host.querySelector('.m-rev-go').click();
+  await esperar(20);
+
+  ok('no se guardo nada', w.__guardadas.length === 0);
+  ok('no se releyo nada', w.__recargado === 0);
+  // Decirlo con todas las letras. Creer que si acaba en dos ordenes al
+  // mismo proveedor.
+  ok('lo dice', w.__toasts.some(t => /could not place/i.test(t)), w.__toasts.join(' | '));
+  ok('y te deja donde estabas, para reintentar',
+     /Review the order/i.test(host.textContent));
+  ok('con el boton otra vez vivo', !host.querySelector('.m-rev-go').disabled);
+  console.error = err;
+}
+
+console.log('\nla revision no se queda pegada');
+{
+  const { host, def } = pantalla();
+  await revisar(host, 'SOUTHERN');
+  ok('estabas revisando', /Review the order/i.test(host.textContent));
+
+  // Atras va un escalon, no dos: de la revision a las lineas.
+  def.atras(host, true);
+  ok('atras lleva a las lineas, no al resumen',
+     !/Review the order/i.test(host.textContent) && !!host.querySelector('.m-ord-enviar'));
+
+  // Y volver a entrar a Ordenes nunca cae en una confirmacion.
+  // `atras` nos dejo en el detalle, asi que primero al resumen.
+  def.atras(host, true);
+  await revisar(host, 'SOUTHERN');
+  def.show(host);
+  ok('y al reentrar se empieza por el resumen',
+     !/Review the order/i.test(host.textContent) && !!host.querySelector('.m-ordv'));
+}
+
+console.log('\n' + (falla ? falla + ' fallos' : 'todo bien') +
+  '   ·   ' + (pasa + falla) + ' comprobaciones');
 process.exit(falla ? 1 : 0);
+
+})();
