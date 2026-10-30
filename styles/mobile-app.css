@@ -2190,21 +2190,24 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   .m-rev-rec input { width: 20px; height: 20px; accent-color: #38bdf8; flex: 0 0 20px; }
 
-  /* ── El pie ────────────────────────────────────────────────────────
-   * Pegajoso y con el importe al lado. Con noventa líneas, un botón al
-   * final de la lista queda a treinta deslizamientos — y lo que se
-   * confirma es una cifra, así que la cifra tiene que estar a la vista
-   * en el momento de pulsar. */
-  .m-rev-pie {
-    position: sticky; bottom: 0; z-index: 2;
-    margin: 18px -2px 0; padding: 12px 2px calc(10px + env(safe-area-inset-bottom, 0px));
-    background: linear-gradient(to top, #0b1017 72%, rgba(11,16,23,0));
+  /* ── El bloque de enviar, ARRIBA ───────────────────────────────────
+   * Estaba abajo en un pie `position: sticky` con fondo opaco, y ese
+   * fondo pintaba un rectángulo oscuro sobre el de la app que se leía
+   * como una barra negra cruzando la pantalla.
+   *
+   * Arriba no hace falta nada pegajoso: lo primero que ves al entrar
+   * es a quién va y el botón. Las líneas quedan debajo, para repasar
+   * si quieres — y si no quieres, no hace falta bajar treinta
+   * deslizamientos para encontrar el botón. */
+  .m-rev-enviar {
+    margin-top: 14px; padding: 13px;
+    border-radius: 18px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
   }
-  .m-rev-pie-r {
-    display: flex; align-items: baseline; justify-content: space-between;
-    font-size: var(--m-meta); color: #8fa3b8; margin-bottom: 9px;
-  }
-  .m-rev-pie-r b { color: #fff; font-size: var(--m-strong); font-weight: 800; }
+  .m-rev-enviar .m-rev-lab:first-child { margin-top: 0; }
+  .m-rev-enviar .m-rev-go { margin-top: 14px; }
+
   body.m-shell .m-rev-go {
     display: block; width: 100%; height: 48px; border: 0; cursor: pointer;
     background: #38bdf8; color: #04283d;
@@ -2213,6 +2216,30 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-rev-go { border-radius: 14px !important; }
   body.m-shell .m-rev-go:disabled { background: rgba(255,255,255,.12); color: #8fa3b8; cursor: default; }
   .m-rev-falta { font-size: var(--m-meta); color: #fca5a5; text-align: center; margin-top: 8px; }
+
+  /* ── Salió ─────────────────────────────────────────────────────────
+   * Hacerlo todo bien y no decirlo se lee igual que fallar. Antes la
+   * pantalla se cerraba sola y te devolvía a la lista sin una palabra,
+   * con el correo ya en la bandeja del proveedor. */
+  .m-rev-ok { text-align: center; padding: 26px 14px 10px; }
+  .m-rev-ok-i {
+    width: 62px; height: 62px; margin: 0 auto 16px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(34,197,94,.18); border: 1px solid rgba(34,197,94,.42);
+    color: #4ade80; font-size: var(--m-figure);
+  }
+  .m-rev-ok-t { font-size: var(--m-screen); font-weight: 800; color: #fff; letter-spacing: -.5px; }
+  .m-rev-ok-s { font-size: var(--m-small); color: #8fa3b8; margin-top: 3px; }
+  .m-rev-ok-m {
+    margin-top: 14px; padding: 11px 13px; border-radius: 13px;
+    font-size: var(--m-small); line-height: 1.6; color: #e4f3ff;
+    background: rgba(56,189,248,.12); border: 1px solid rgba(56,189,248,.26);
+    word-break: break-all;
+  }
+  .m-rev-ok-n {
+    font-size: var(--m-meta); color: #8fa3b8; line-height: 1.5;
+    margin: 14px 0 20px; padding: 0 6px;
+  }
 
   /* Tres pasos y no una rueda. En un iPhone el PDF tarda segundos, y
    * si el correo falla hay que poder ver que el de guardar ya pasó. */

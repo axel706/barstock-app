@@ -389,6 +389,12 @@ console.log('\nal volver se entra por el resumen');
 // ── Revisar y colocar ───────────────────────────────────────────────
 
 const esperar = (ms) => new Promise(r => setTimeout(r, ms || 0));
+
+// Colocar y enviar son TRES pasos y cada uno dura un minimo en
+// pantalla (PASO_MS = 420ms en mobile-orders.js). Sin ese minimo
+// pasaban en un parpadeo y no se leia ninguno. Si lo cambias ahi,
+// sube esto con el.
+const TODO_EL_PROCESO = 1800;
 async function revisar(host, vendor) {
   abrir(host, vendor);
   host.querySelector('.m-ord-enviar').click();
@@ -459,7 +465,7 @@ console.log('\ncolocar guarda por el mismo camino que el escritorio');
   const { w, host } = pantalla();
   await revisar(host, 'SOUTHERN');
   host.querySelector('.m-rev-go').click();
-  await esperar(20);
+  await esperar(TODO_EL_PROCESO);
 
   ok('se guardo una orden', w.__guardadas.length === 1, String(w.__guardadas.length));
   const o = w.__guardadas[0];
@@ -479,7 +485,7 @@ console.log('\ny despues manda el correo con el PDF adjunto');
   const { w, host } = pantalla();
   await revisar(host, 'SOUTHERN');
   host.querySelector('.m-rev-go').click();
-  await esperar(30);
+  await esperar(TODO_EL_PROCESO);
 
   ok('se pidio UN pdf', w.__pdfPedidos.length === 1);
   // El del escritorio. Dos generadores = dos pedidos distintos segun
@@ -496,8 +502,20 @@ console.log('\ny despues manda el correo con el PDF adjunto');
      c.filename);
   ok('con el perfil de quien lo manda', c.senderEmail === 'axel@wjm.com');
 
-  ok('lo dice', w.__toasts.some(t => /sent to/i.test(t)), w.__toasts.join(' | '));
-  ok('y al terminar vuelve al resumen', !!host.querySelector('.m-ordv'));
+  // ── Y LO DICE, y se queda dicho ──────────────────────────────────
+  //
+  // Antes salia un aviso efimero y la pantalla se cerraba sola hacia
+  // la lista. Con el correo ya en la bandeja del proveedor, eso se lee
+  // igual que un fallo: hiciste todo bien y nadie te lo confirmo.
+  ok('se queda una confirmacion en pantalla',
+     /sent to/i.test(host.textContent), host.textContent.slice(0, 90));
+  ok('con a quien fue', /orders@southern\.com/.test(host.textContent));
+  ok('y con lo que iba dentro', /\$28|2 bottles/i.test(host.textContent));
+  ok('sin volver solo a la lista', !host.querySelector('.m-ordv'));
+
+  // Salir lo decide el usuario.
+  host.querySelector('#mrDone').click();
+  ok('y al pulsar Done si vuelve al resumen', !!host.querySelector('.m-ordv'));
 }
 
 console.log('\nsi el correo falla, la orden SIGUE colocada');
@@ -507,7 +525,7 @@ console.log('\nsi el correo falla, la orden SIGUE colocada');
   const err = console.error; console.error = () => {};
   await revisar(host, 'SOUTHERN');
   host.querySelector('.m-rev-go').click();
-  await esperar(30);
+  await esperar(TODO_EL_PROCESO);
 
   // Lo que NO puede pasar: que parezca que no se hizo nada.
   ok('la orden se guardo igual', w.__guardadas.length === 1);
@@ -521,7 +539,7 @@ console.log('\nsi el correo falla, la orden SIGUE colocada');
   // quedarian dos ordenes al mismo proveedor.
   w.__fallarCorreo = false;
   host.querySelector('.m-rev-go').click();
-  await esperar(30);
+  await esperar(TODO_EL_PROCESO);
   ok('reintentar no crea una segunda orden', w.__guardadas.length === 1,
      String(w.__guardadas.length));
   ok('pero si vuelve a mandar', w.__enviados.length === 2, String(w.__enviados.length));
@@ -533,7 +551,7 @@ console.log('\nguardar la libreta NO borra el resto de la ficha');
   const { w, host } = pantalla();
   await revisar(host, 'SOUTHERN');
   host.querySelector('.m-rev-go').click();
-  await esperar(20);
+  await esperar(TODO_EL_PROCESO);
 
   const g = w.__guardadosDef[0];
   ok('se guardaron los destinatarios', !!g && g.v === 'SOUTHERN');
@@ -555,7 +573,7 @@ console.log('\nsi la nube falla, la orden NO esta colocada');
   const err = console.error; console.error = () => {};
   await revisar(host, 'SOUTHERN');
   host.querySelector('.m-rev-go').click();
-  await esperar(20);
+  await esperar(TODO_EL_PROCESO);
 
   ok('no se guardo nada', w.__guardadas.length === 0);
   ok('no se releyo nada', w.__recargado === 0);

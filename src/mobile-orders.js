@@ -258,6 +258,7 @@
     _to = []; _destDe = null;
     _colocando = false; _paso = 0;
     _falloCorreo = false; _colocada = null;
+    _enviado = null;
   }
 
   const EMAIL = /^[^\s@,]+@[^\s@,]+\.[^\s@,]{2,}$/;
@@ -280,7 +281,31 @@
     if (_revisar && _vendor === vendor) pintar(host);
   }
 
+  function pintarEnviado(host) {
+    const e = _enviado;
+    host.innerHTML = `
+      <div class="m-rev-ok">
+        <div class="m-rev-ok-i"><i class="ti ti-circle-check" aria-hidden="true"></i></div>
+        <div class="m-rev-ok-t">Sent to ${esc(e.vendor)}</div>
+        <div class="m-rev-ok-s">${n2(e.botellas)} bottles · ${money(e.total)}</div>
+        <div class="m-rev-ok-m">${e.to.map(x => esc(x)).join('<br>')}</div>
+        <div class="m-rev-ok-n">The order is placed and the email is on its way
+          with the PDF attached. You can resend it from History.</div>
+        <button type="button" class="m-rev-go" id="mrDone">Done</button>
+      </div>`;
+    // Salir lo decides tú. Que la pantalla se cierre sola es lo que
+    // hacía que un envío correcto pareciera un fallo.
+    host.querySelector('#mrDone').onclick = () => {
+      _enviado = null;
+      salirRevision();
+      _vendor = null;
+      pintar(host);
+    };
+  }
+
   function pintarRevision(host) {
+    if (_enviado) return pintarEnviado(host);
+
     const v = proveedores().find(x => x.nombre === _vendor);
     if (!v) { _revisar = false; _vendor = null; return pintarResumen(host); }
 
@@ -298,6 +323,62 @@
             v.sinPrecio ? ' · ' + v.sinPrecio + ' without price' : ''}</small></div>
       </div>
 
+      <!-- ── El bloque de enviar va ARRIBA ─────────────────────
+           Estaba abajo, en un pie pegajoso, y ese pie pintaba un
+           rectángulo oscuro sobre el fondo de la app que se leía como
+           una barra negra. Arriba no hace falta nada pegajoso: lo
+           primero que ves al entrar es a quién va y el botón, y las
+           líneas quedan debajo para repasarlas si quieres. -->
+      <div class="m-rev-enviar">
+        <div class="m-rev-lab">To</div>
+        <div class="m-rev-chips" id="mrTo">
+          ${_cargandoDest && !_to.length
+            ? '<span class="m-rev-cargando">Looking up the saved address…</span>'
+            : _to.map((e, i) => `
+                <span class="m-rev-chip">${esc(e)}
+                  <button type="button" data-quitar="${i}" aria-label="Remove ${esc(e)}">
+                    <i class="ti ti-x" aria-hidden="true"></i></button>
+                </span>`).join('')}
+          <button type="button" class="m-rev-chip m-rev-add" id="mrAdd">
+            <i class="ti ti-plus" aria-hidden="true"></i> Add
+          </button>
+        </div>
+        <div class="m-rev-nuevo" id="mrNuevo" hidden>
+          <input type="email" id="mrMail" inputmode="email" autocomplete="email"
+                 autocapitalize="off" spellcheck="false" placeholder="name@vendor.com">
+          <button type="button" id="mrOk">Add</button>
+        </div>
+
+        <label class="m-rev-rec">
+          <input type="checkbox" id="mrRec"${_recordar ? ' checked' : ''}>
+          <span>Remember these for ${esc(v.nombre)}</span>
+        </label>
+
+        ${_colocando ? `
+          <!-- Tres pasos y no una rueda: si el correo falla hay que
+               poder ver que el paso de guardar ya pasó. Cada uno dura
+               un mínimo en pantalla, o pasan tan rápido que no se leen
+               y parece que no hizo nada. -->
+          <div class="m-rev-pasos">
+            <div class="${_paso > 1 ? 'ok' : 'go'}">${_paso > 1 ? '✓' : '●'} Saving the order</div>
+            <div class="${_paso > 2 ? 'ok' : _paso === 2 ? 'go' : ''}">${
+              _paso > 2 ? '✓' : '●'} Building the PDF</div>
+            <div class="${_paso === 3 ? 'go' : ''}">● Emailing ${esc(_to[0] || '')}</div>
+          </div>` : ''}
+
+        ${_falloCorreo ? `
+          <div class="m-rev-fallo">
+            <b>The order is placed.</b> The email did not go out.
+            You can send it again from here or from History.
+          </div>` : ''}
+
+        <button type="button" class="m-rev-go" id="mrGo"${
+          _to.length && !_colocando ? '' : ' disabled'}>${
+          _colocando ? 'Working…' : _falloCorreo ? 'Try sending again' : 'Place & send'}</button>
+        ${!_to.length && !_cargandoDest
+          ? '<div class="m-rev-falta">Add at least one address first.</div>' : ''}
+      </div>
+
       <div class="m-rev-lab">You are ordering</div>
       <div class="m-rev-list">
         ${v.filas.map(r => `
@@ -307,61 +388,6 @@
             <span class="v">${num(r.value) > 0
               ? money(num(r.value) * cantidad(r)) : 'no price'}</span>
           </div>`).join('')}
-      </div>
-
-      <div class="m-rev-lab">To</div>
-      <div class="m-rev-chips" id="mrTo">
-        ${_cargandoDest && !_to.length
-          ? '<span class="m-rev-cargando">Looking up the saved address…</span>'
-          : _to.map((e, i) => `
-              <span class="m-rev-chip">${esc(e)}
-                <button type="button" data-quitar="${i}" aria-label="Remove ${esc(e)}">
-                  <i class="ti ti-x" aria-hidden="true"></i></button>
-              </span>`).join('')}
-        <button type="button" class="m-rev-chip m-rev-add" id="mrAdd">
-          <i class="ti ti-plus" aria-hidden="true"></i> Add
-        </button>
-      </div>
-      <div class="m-rev-nuevo" id="mrNuevo" hidden>
-        <input type="email" id="mrMail" inputmode="email" autocomplete="email"
-               autocapitalize="off" spellcheck="false" placeholder="name@vendor.com">
-        <button type="button" id="mrOk">Add</button>
-      </div>
-
-      <label class="m-rev-rec">
-        <input type="checkbox" id="mrRec"${_recordar ? ' checked' : ''}>
-        <span>Remember these for ${esc(v.nombre)}</span>
-      </label>
-
-      <div class="m-rev-pie">
-        ${_colocando ? `
-          <!-- Tres pasos y no una rueda: en un iPhone el PDF tarda
-               segundos, y si el correo falla hay que poder ver que el
-               paso de guardar ya pasó. -->
-          <div class="m-rev-pasos">
-            <div class="${_paso > 1 ? 'ok' : 'go'}">${_paso > 1 ? '✓' : '●'} Saving the order</div>
-            <div class="${_paso > 2 ? 'ok' : _paso === 2 ? 'go' : ''}">${
-              _paso > 2 ? '✓' : '●'} Building the PDF</div>
-            <div class="${_paso === 3 ? 'go' : ''}">● Emailing ${esc(_to[0] || '')}</div>
-          </div>` : ''}
-
-        ${_falloCorreo ? `
-          <!-- Lo primero, y con todas las letras. Sin esto se vuelve a
-               colocar y acabas con dos órdenes al mismo proveedor. -->
-          <div class="m-rev-fallo">
-            <b>The order is placed.</b> The email did not go out.
-            You can send it again from here or from History.
-          </div>` : ''}
-
-        <div class="m-rev-pie-r">
-          <span>${n2(botellas)} bottles to ${esc(v.nombre)}</span>
-          <b>${money(v.total)}</b>
-        </div>
-        <button type="button" class="m-rev-go" id="mrGo"${
-          _to.length && !_colocando ? '' : ' disabled'}>${
-          _colocando ? 'Working…' : _falloCorreo ? 'Try sending again' : 'Place & send'}</button>
-        ${!_to.length && !_cargandoDest
-          ? '<div class="m-rev-falta">Add at least one address first.</div>' : ''}
       </div>`;
 
     host.querySelector('#mrBack').onclick = () => { salirRevision(); pintar(host); };
@@ -420,6 +446,22 @@
   // al mismo proveedor, que es justo el desastre que el aviso de
   // "the order is placed" viene a evitar.
   let _colocada = null;
+  // Lo que se enseña al terminar. Hacerlo todo bien y no decirlo se
+  // lee igual que fallar: antes la pantalla se cerraba sola y te
+  // devolvía a la lista sin una palabra.
+  let _enviado = null;      // { vendor, to: [], botellas, total }
+
+  // Cada paso dura un MÍNIMO en pantalla. Guardar y mandar tardan
+  // décimas con buena señal, así que los tres pasos pasaban en un
+  // parpadeo y no se leía ninguno — peor que no enseñarlos.
+  const PASO_MS = 420;
+  const alMenos = async (ms, trabajo) => {
+    const t0 = Date.now();
+    const r = await trabajo;
+    const falta = ms - (Date.now() - t0);
+    if (falta > 0) await new Promise(res => setTimeout(res, falta));
+    return r;
+  };
 
   // `destinatarios` entra por parámetro y no se lee de `_to` para que
   // History pueda reusar esto tal cual: allí no hay pantalla de
@@ -550,7 +592,7 @@
       };
 
       try {
-        await window.persistOrderToSupabase(orden);
+        await alMenos(PASO_MS, window.persistOrderToSupabase(orden));
 
         if (window.BarStockParIntelligence) {
           window.BarStockParIntelligence.updateSnapshotOrdered(orden.items)
@@ -588,9 +630,12 @@
     _paso = 2;
     pintar(host);
     try {
+      // El PDF se ve construirse: es el paso que de verdad tarda en un
+      // iPhone, y el que explica por que la pantalla no reacciona.
+      await alMenos(PASO_MS, Promise.resolve());
       _paso = 3;
       pintar(host);
-      const fueron = await enviarCorreo(orden);
+      const fueron = await alMenos(PASO_MS, enviarCorreo(orden));
 
       if (window.BarStockLogger) {
         window.BarStockLogger.log('email_order_sent', {
@@ -598,9 +643,16 @@
           itemCount: filas.length, from: 'mobile'
         });
       }
-      avisar(v.nombre + ' order sent to ' + fueron.join(', '));
+      // Se QUEDA en pantalla diciendo que salio. Antes se cerraba
+      // sola y te devolvia a la lista sin una palabra: con el correo
+      // ya en la bandeja del proveedor, eso se lee como que fallo.
       _colocando = false; _paso = 0; _falloCorreo = false; _colocada = null;
-      _revisar = false; _vendor = null;
+      _enviado = {
+        vendor: v.nombre,
+        to: fueron.slice(),
+        botellas: orden.totalUnits,
+        total: orden.subtotal
+      };
       pintar(host);
     } catch (e) {
       // La orden está colocada y el correo no salió. Es el estado que
