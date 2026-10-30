@@ -2305,18 +2305,25 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* ARRIBA, pegadas al encabezado y antes de las líneas. Con
    * veintisiete productos, lo que va al final no se encuentra — es la
    * misma razón por la que el botón de enviar subió en Órdenes. */
-  .m-hacc { display: flex; gap: 8px; margin: 14px 0 4px; }
+  /* 18px abajo y no 4: estaban pegados al cuerpo de la orden y
+   * parecían el encabezado de la lista en vez de dos acciones. */
+  .m-hacc { display: flex; gap: 9px; margin: 14px 0 18px; }
+  /* Sólidos, no translúcidos. Sobre la foto de fondo de la banda un
+   * relleno al 12% depende de lo que haya detrás: en una etiqueta
+   * clara se desvanecía. Un color opaco se lee igual siempre. */
   body.m-shell .m-hacc button {
-    flex: 1; height: 44px; border: 0; cursor: pointer;
-    background: rgba(255,255,255,.12); color: #e8f1fb;
-    font-family: inherit; font-size: var(--m-small); font-weight: 800;
+    flex: 1; height: 46px; border: 0; cursor: pointer;
+    background: #38bdf8; color: #04283d;
+    font-family: inherit; font-size: var(--m-body); font-weight: 800;
   }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hacc button { border-radius: 13px !important; }
-  /* Borrar algo no se viste igual que mandarlo otra vez. */
+  /* Borrar algo no se viste igual que mandarlo otra vez. Rojo pleno,
+   * y el segundo toque de confirmación es lo que lo hace seguro
+   * estando tan arriba. */
   body.m-shell .m-hacc button.mal {
-    background: rgba(239,68,68,.16); color: #fca5a5;
-    border: 1px solid rgba(239,68,68,.34);
+    background: #ef4444; color: #fff; border: 0;
   }
+  body.m-shell .m-hacc button:active { filter: brightness(.88); }
   .m-hacc-busy {
     flex: 1; text-align: center; padding: 13px 0;
     font-size: var(--m-small); color: #8fa3b8;
