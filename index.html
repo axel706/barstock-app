@@ -37,7 +37,7 @@
 <script src="src/config.js?v=account-wjm-1"></script>
 <script src="src/events.js"></script>
 <script src="src/supabase-client.js"></script>
-<script src="src/location-access.js?v=active-location-2"></script>
+<script src="src/location-access.js?v=active-location-3"></script>
 <script src="src/location-settings.js"></script>
 <script src="src/settings-ui.js"></script>
 <script src="src/logger.js"></script>
@@ -54,7 +54,7 @@
   <link rel="stylesheet" href="styles/order-history.css">
 
   <link rel="stylesheet" href="styles/fixes.css">
-  <link rel="stylesheet" href="styles/auth.css?v=login5">
+  <link rel="stylesheet" href="styles/auth.css?v=login6">
   <link rel="stylesheet" href="styles/cost-report.css?v=steps20">
   <link rel="stylesheet" href="styles/motion.css?v=motion3">
   <link rel="stylesheet" href="styles/skeleton.css?v=skel1">
@@ -82,6 +82,45 @@
 <style>
 #emailCostReportCheckSvg polyline,#emailOrderCheckSvg polyline{stroke-dasharray:30;stroke-dashoffset:30;transition:stroke-dashoffset 0.35s ease 0.45s;}
 </style>
+
+<!-- ── La cortina al cambiar de locación ─────────────────────────────
+     Este script va EN LÍNEA y en el <head> por la misma razón por la
+     que la pantalla de entrada se pinta desde el primer fotograma: si
+     esperase a que cargue un src/*.js, el login ya habría parpadeado y
+     no habríamos arreglado nada. Tiene que correr antes del primer
+     píxel del <body>.
+
+     La clase va en <html>, no en <body>: aquí arriba el <body> todavía
+     no existe.
+
+     El temporizador es lo más importante del bloque. Una cortina
+     atascada es peor que el parpadeo que vino a tapar, así que se
+     levanta sola a los 6 s pase lo que pase — aunque auth.js no llegue
+     a cargar nunca. Si para entonces no hay sesión, debajo está el
+     login, que es el lado correcto por el que fallar.              -->
+<script>
+(function(){
+  var n = null;
+  try { n = sessionStorage.getItem('barstock.switchingTo'); } catch (e) {}
+  if (!n) return;
+
+  document.documentElement.classList.add('loc-switch');
+
+  // Quien sepa la respuesta (auth.js, en cuanto Supabase contesta)
+  // llama a esto. Es idempotente: da igual que lo llamen dos veces.
+  window.__bsLiftCurtain = function(){
+    try { sessionStorage.removeItem('barstock.switchingTo'); } catch (e) {}
+    var h = document.documentElement;
+    if (!h.classList.contains('loc-switch')) return;
+    h.classList.add('loc-switch-out');
+    setTimeout(function(){
+      h.classList.remove('loc-switch', 'loc-switch-out');
+    }, 260);
+  };
+
+  setTimeout(function(){ window.__bsLiftCurtain(); }, 6000);
+})();
+</script>
 </head>
 <!-- auth-locked de salida: la pantalla de entrada esta puesta desde
      el primer fotograma y el body no hace scroll por detras. auth.js
@@ -156,7 +195,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261029-204815</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261029-210014</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5697,7 +5736,29 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   </div>
 </div>
 
-<script src="src/auth.js?v=gate1"></script>
+<!-- La cortina vive AQUI, pegada al overlay de login y despues de el,
+     porque va justo encima: mismo sitio del documento, z-index uno mas
+     alto. Nace oculta y solo la muestra `html.loc-switch`, que pone el
+     script en linea del <head>. Sin esa clase no existe. -->
+<div id="locCurtain" aria-hidden="true">
+  <div class="lc-logo">BarStock<i class="lc-dot"></i><em>PRO</em></div>
+  <div class="lc-to">Switching to</div>
+  <div class="lc-pill"><i class="lc-led"></i><span id="lcName"></span></div>
+</div>
+<script>
+(function(){
+  // En linea y aqui mismo: corre mientras el analizador va bajando, no
+  // despues. El nombre tiene que estar puesto en el primer fotograma en
+  // que la cortina se ve, o se veria la pildora vacia y luego llenarse.
+  var el = document.getElementById('lcName');
+  if (!el) return;
+  var n = '';
+  try { n = sessionStorage.getItem('barstock.switchingTo') || ''; } catch (e) {}
+  el.textContent = n;
+})();
+</script>
+
+<script src="src/auth.js?v=gate2"></script>
 <script src="src/wipe-location.js?v=wipe2"></script>
 <script src="src/admin-panel.js?v=wipe1"></script>
 <script>

@@ -36,7 +36,13 @@ grupo('ningún tamaño suelto en lo que ve el teléfono');
 for (const h of HOJAS) {
   const txt = leer(h).replace(/\/\*[\s\S]*?\*\//g, '');
   const px = txt.match(/font-size:\s*[0-9.]+px/g) || [];
-  const esperado = (h === 'mobile-app' || h === 'auth') ? 1 : 0;
+  // auth.css lleva DOS wordmarks con tamaño fijo, no uno: el de la
+  // pantalla de entrada y el de la cortina del cambio de locación. Los
+  // dos son la misma excepción deliberada — la marca no escala con el
+  // ajuste de texto — y los dos están comentados en la hoja. Si este
+  // número sube otra vez, mira que sea de verdad un wordmark y no un
+  // px suelto colándose por la puerta de atrás.
+  const esperado = h === 'auth' ? 2 : (h === 'mobile-app' ? 1 : 0);
   prueba(h + '.css', px.length === esperado, px.join(', '));
 }
 

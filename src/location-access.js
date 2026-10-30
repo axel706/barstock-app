@@ -50,6 +50,29 @@
 
   function setActiveLocationName(name){
     if (!name) return;
+
+    // ── La marca para la cortina ─────────────────────────────────────
+    //
+    // Cambiar de locación recarga la página entera, y al recargar la
+    // pantalla de entrada se pinta desde el primer fotograma a propósito
+    // (ver el comentario largo en styles/auth.css). Resultado: dos
+    // segundos de login cada vez que cambias de bar, aunque tu sesión
+    // esté perfectamente viva.
+    //
+    // En ESTE instante sí sabemos que hay sesión. Lo que falta es que
+    // ese dato sobreviva al reload, y para eso sirve la marca: el script
+    // en línea del <head> la lee antes de que se pinte nada y pone la
+    // cortina por encima del login.
+    //
+    // Va aquí y no en quien llama porque por esta función pasan los tres
+    // caminos: la hoja del móvil, el selector del escritorio y el paso
+    // de locación del login. Uno solo.
+    //
+    // sessionStorage y no localStorage: si algo sale mal, la marca muere
+    // al cerrar la pestaña en vez de dejar una cortina fantasma para
+    // siempre.
+    try { sessionStorage.setItem('barstock.switchingTo', name); } catch (e) {}
+
     localStorage.setItem('barstock.activeLocationName', name);
     if (window.BARSTOCK_CONFIG) {
       window.BARSTOCK_CONFIG.LOCATION_NAME = name;

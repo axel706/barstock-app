@@ -18,8 +18,12 @@ body.auth-locked{
 
    `visibility` y no `display`: display:none obliga a recalcular la
    maquetación entera al revelarla y provoca un salto. Con visibility el
-   navegador ya midió y colocó todo; solo deja de dibujarlo.           */
-body.auth-locked > *:not(#authOverlay){
+   navegador ya midió y colocó todo; solo deja de dibujarlo.
+
+   #locCurtain queda fuera de la lista: es lo UNICO que puede taparle la
+   cara al login, y si esta regla lo escondiera, la cortina no existiria
+   nunca.                                                              */
+body.auth-locked > *:not(#authOverlay):not(#locCurtain){
   visibility:hidden !important;
 }
 
@@ -382,4 +386,137 @@ body.light #authFoot{
 
 body.light .auth-brand-type{
   color:#0f172a;
+}
+
+/* ── La cortina al cambiar de locación ───────────────────────────────
+   Cambiar de bar recarga la página entera, y al recargar el login se
+   pinta desde el primer fotograma (ver arriba). Eso son dos segundos de
+   pantalla de entrada cada vez que cambias de locación, con la sesión
+   perfectamente viva.
+
+   La cortina dice lo que de verdad está pasando: "te estoy llevando a
+   Will's & Bills". No tapa un estado roto — en el momento del cambio la
+   app SÍ sabe que hay sesión; lo único que faltaba era que ese dato
+   sobreviviera al reload.
+
+   Nace oculta. Sin `html.loc-switch` no se ve nada, y esa clase solo la
+   pone el script en línea del <head> cuando encuentra la marca. Si el
+   JavaScript no corre, no hay cortina y se ve el login de siempre: el
+   lado correcto por el que fallar.
+
+   Oscura siempre, también en tema claro: debajo está el login, que
+   tiene su propia foto de fondo, y una cortina clara dejaría ver el
+   borde. Además dura un segundo — no es una pantalla, es un tránsito. */
+#locCurtain{
+  display:none;
+  position:fixed;
+  inset:0;
+  /* Uno por encima del login (999999). Es lo único que va más arriba. */
+  z-index:1000000;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(180deg,#0b1220,#0d131f);
+  /* Opaco de verdad. Si esto fuera translúcido se vería la foto del
+     login por detrás y el cambio parecería un parpadeo más. */
+  color:#e5e7eb;
+  font-family:"Manrope",-apple-system,BlinkMacSystemFont,sans-serif;
+}
+html.loc-switch #locCurtain{
+  display:flex;
+}
+/* La salida: se desvanece, no desaparece de golpe. 240ms, igual que el
+   resto de transiciones largas de la app. El script quita la clase a
+   los 260ms, cuando la animación ya terminó. */
+html.loc-switch-out #locCurtain{
+  opacity:0;
+  transition:opacity .24s ease;
+}
+
+/* El wordmark va en px FIJOS y fuera de la escala --m-*, igual que el
+   del login y el de la banda del móvil. Sus proporciones son del
+   brandbook y son relativas a sí mismo: si entra en la escala, subir
+   "Text size" en Ajustes deforma la marca. Es la excepción documentada,
+   no un descuido. */
+#locCurtain .lc-logo{
+  display:inline-flex;
+  align-items:baseline;
+  font-size:20px;
+  font-weight:800;
+  letter-spacing:-.02em;
+  color:#fff;
+}
+/* Punto y sufijo en em, con los valores del brandbook: diámetro .22 S,
+   sufijo .37 S. En px solo serían correctos al tamaño exacto para el
+   que se escribieron. */
+#locCurtain .lc-dot{
+  width:.22em;
+  height:.22em;
+  min-width:.22em;
+  min-height:.22em;
+  border-radius:50%;
+  background:#38bdf8;
+  margin:0 .043em 0 .022em;
+  align-self:baseline;
+}
+#locCurtain .lc-logo em{
+  font-size:.37em;
+  font-style:normal;
+  font-weight:700;
+  color:#64748b;
+  margin-left:.26em;
+  letter-spacing:.09em;
+}
+/* El texto sí usa la escala: es texto de interfaz y tiene que obedecer
+   el ajuste de tamaño como todo lo demás. */
+#locCurtain .lc-to{
+  margin-top:26px;
+  font-size:var(--m-meta, 11px);
+  font-weight:700;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:#5c738c;
+}
+
+/* La píldora es la misma del header, traída al centro: el control que
+   tocaste es el que te contesta. */
+#locCurtain .lc-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin-top:10px;
+  padding:9px 15px;
+  border-radius:999px;
+  background:rgba(10,16,26,.9);
+  border:1px solid rgba(56,189,248,.34);
+  font-size:var(--m-small, 12.5px);
+  font-weight:700;
+  color:#e5e7eb;
+  /* Si el nombre es largo que parta, no que desborde la pantalla. */
+  max-width:calc(100vw - 48px);
+  text-align:center;
+  animation:lcPill .5s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes lcPill{
+  from{ transform:scale(.82) translateY(-26px); opacity:0 }
+  to  { transform:scale(1)    translateY(0);    opacity:1 }
+}
+#locCurtain .lc-led{
+  width:7px;
+  height:7px;
+  min-width:7px;
+  border-radius:50%;
+  background:#22c55e;
+  animation:lcLed 1s ease-in-out infinite;
+}
+@keyframes lcLed{
+  0%,100%{ opacity:1 }
+  50%    { opacity:.25 }
+}
+
+/* Quien prefiere no ver movimiento ve la cortina quieta, no el login
+   parpadeando. El punto deja de latir y la píldora no entra volando. */
+@media (prefers-reduced-motion: reduce){
+  #locCurtain .lc-pill{ animation:none }
+  #locCurtain .lc-led { animation:none }
 }

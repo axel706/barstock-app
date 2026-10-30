@@ -24,11 +24,24 @@
   // Ahora el CSS la pinta desde el primer fotograma y estas dos
   // funciones solo ponen y quitan la clase que la aparta. Mostrarla no
   // es "abrirla": es dejarla donde ya estaba.
+  // ── Levantar la cortina del cambio de locación ──────────────────
+  //
+  // La define el script en línea del <head> (index.html). Aquí solo se
+  // llama, y se llama en LOS DOS lados: tanto si hay sesión como si no.
+  // La cortina no dice "estás dentro", dice "estoy averiguando"; en
+  // cuanto hay respuesta, sea cual sea, sobra.
+  //
+  // Si no existe, es que no había cortina que levantar. No es un fallo.
+  function levantarCortina(){
+    try { if (window.__bsLiftCurtain) window.__bsLiftCurtain(); } catch (e) {}
+  }
+
   function showOverlay(){
     document.body.classList.add('auth-locked');
     document.body.style.pointerEvents = '';
     const overlay = document.getElementById('authOverlay');
     if (overlay) overlay.classList.remove('auth-ok');
+    levantarCortina();
   }
 
   function hideOverlay(){
@@ -41,6 +54,7 @@
     document.body.style.pointerEvents = '';
     const overlay = document.getElementById('authOverlay');
     if (overlay) overlay.classList.add('auth-ok');
+    levantarCortina();
   }
 
   // ─── Cierre de sesion por inactividad ────────────────────────────
