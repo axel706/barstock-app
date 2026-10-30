@@ -111,9 +111,9 @@ grupo('el arranque la lee antes de pintar');
     /__bsLiftCurtain[\s\S]{0,400}removeItem\(\s*['"]barstock\.switchingTo/.test(cabeza));
 }
 
-grupo('el temporizador de seguridad');
+grupo('el tope de seguridad');
 {
-  const m = /setTimeout\(\s*function\(\)\s*\{\s*window\.__bsLiftCurtain\(\);?\s*\}\s*,\s*(\d+)\s*\)/.exec(cabeza);
+  const m = /var\s+TOPE\s*=\s*(\d+)/.exec(cabeza);
   prueba('existe', !!m);
 
   const ms = m ? Number(m[1]) : 0;
@@ -125,7 +125,56 @@ grupo('el temporizador de seguridad');
 
   // Vive en el mismo bloque en línea: así salta aunque auth.js no
   // llegue a cargarse nunca, que es el caso que de verdad importa.
-  prueba('no depende de auth.js', /setTimeout/.test(cabeza));
+  // Ojo: `[^)]*` no sirve aquí, se para en el `)` de `function()`.
+  prueba('lo arma el propio script en línea',
+    /setTimeout\([\s\S]{0,60}__bsLiftCurtain[\s\S]{0,40}TOPE\s*\)/.test(cabeza));
+}
+
+grupo('el mínimo en pantalla');
+{
+  // El fallo que vino a arreglar: con la sesión caliente auth contesta
+  // en 200ms, la cortina se levantaba antes de que la píldora acabara
+  // de entrar (500ms de animación) y lo que quedaba era un parpadeo.
+  const m = /var\s+MINIMO\s*=\s*(\d+)/.exec(cabeza);
+  prueba('existe', !!m);
+
+  const min = m ? Number(m[1]) : 0;
+  const tope = Number((/var\s+TOPE\s*=\s*(\d+)/.exec(cabeza) || [])[1] || 0);
+
+  // La animación de entrada de la píldora dura .5s. Un mínimo por
+  // debajo de eso la vuelve a cortar y no hemos arreglado nada.
+  // Otra vez el punto sin cero delante: `.5s` es válido en CSS, y un
+  // `\.?` suelto delante del grupo se lo come y deja "5" — o sea 5000ms
+  // en vez de 500. Ya pasó en test-tab-activa.js.
+  const entrada = Number((/animation:\s*lcPill\s+(\d*\.?\d+)s/.exec(css) || [])[1] || 0) * 1000;
+  prueba('la píldora alcanza a entrar entera', min >= entrada && entrada > 0,
+    min + 'ms vs ' + entrada + 'ms de animación');
+
+  // Y además tiene que quedarse quieta un momento para poder leerla.
+  prueba('queda tiempo para leerla', min - entrada >= 300,
+    (min - entrada) + 'ms quieta');
+
+  // Un suelo largo hace lento algo que es rápido.
+  prueba('no hace lenta la app', min <= 1600, min + 'ms');
+
+  // El techo tiene que ganar siempre; si no, la cortina se puede
+  // quedar pegada más de lo que promete el tope.
+  prueba('el tope sigue mandando', tope > min, tope + ' > ' + min);
+
+  // Si llega la respuesta antes de tiempo, se espera; no se levanta.
+  prueba('si llega pronto, espera lo que falte',
+    /falta\s*=\s*MINIMO\s*-\s*\(\s*Date\.now\(\)\s*-\s*t0\s*\)/.test(cabeza) &&
+    /if\s*\(\s*falta\s*>\s*0\s*\)/.test(cabeza));
+
+  // Dos llamadas no pueden dejar dos esperas corriendo.
+  prueba('una sola espera pendiente',
+    /if\s*\(\s*pendiente\s*===\s*null\s*\)/.test(cabeza));
+
+  // La marca se borra al primer aviso, no al final de la espera: si
+  // no, un reload a mitad la encontraría y la cortina volvería a salir.
+  prueba('la marca se borra al primer aviso',
+    /__bsLiftCurtain\s*=\s*function\(\)\{\s*(?:\/\/[^\n]*\n\s*)*try\s*\{[^}]*removeItem/.test(
+      cabeza.replace(/\r/g, '')));
 }
 
 grupo('se ve por encima del login');

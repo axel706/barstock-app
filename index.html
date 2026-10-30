@@ -93,32 +93,71 @@
      La clase va en <html>, no en <body>: aquí arriba el <body> todavía
      no existe.
 
-     El temporizador es lo más importante del bloque. Una cortina
-     atascada es peor que el parpadeo que vino a tapar, así que se
-     levanta sola a los 6 s pase lo que pase — aunque auth.js no llegue
-     a cargar nunca. Si para entonces no hay sesión, debajo está el
-     login, que es el lado correcto por el que fallar.              -->
+     Hay DOS temporizadores y hacen cosas opuestas. Vale la pena tener
+     clara la diferencia antes de tocar ninguno:
+
+     MINIMO (1100ms) — un suelo. Con la sesion caliente, auth contesta
+     en 200ms y la cortina se levantaba antes de que terminara de
+     entrar la pildora, que sola dura 500ms. Se cortaba a si misma y
+     quedaba un parpadeo azul. Si la respuesta llega antes del suelo,
+     la cortina espera a terminar. 500 de entrada + 360 quieta + 240
+     de salida.
+
+     TOPE (6000ms) — un techo, y es lo mas importante del bloque. Una
+     cortina atascada es peor que el parpadeo que vino a tapar, asi que
+     se levanta pase lo que pase, aunque auth.js no llegue a cargar
+     nunca. Si para entonces no hay sesion, debajo esta el login, que
+     es el lado correcto por el que fallar.
+
+     El suelo no puede comerse al techo: a los 6s el minimo lleva mucho
+     rato cumplido, asi que el tope siempre gana.                   -->
 <script>
 (function(){
   var n = null;
   try { n = sessionStorage.getItem('barstock.switchingTo'); } catch (e) {}
   if (!n) return;
 
+  var MINIMO = 1100;
+  var TOPE   = 6000;
+  var t0 = Date.now();
+  var pendiente = null;
+
   document.documentElement.classList.add('loc-switch');
 
   // Quien sepa la respuesta (auth.js, en cuanto Supabase contesta)
-  // llama a esto. Es idempotente: da igual que lo llamen dos veces.
+  // llama a esto. Es idempotente: da igual que lo llamen dos veces, y
+  // da igual que lo llamen antes de tiempo.
   window.__bsLiftCurtain = function(){
+    // La marca se borra YA, aunque la cortina siga en pantalla. Si no,
+    // un reload a mitad de la espera la encontraria otra vez y la
+    // cortina volveria a salir sin motivo.
     try { sessionStorage.removeItem('barstock.switchingTo'); } catch (e) {}
+
     var h = document.documentElement;
     if (!h.classList.contains('loc-switch')) return;
+
+    // Todavia no ha cumplido el minimo: se reprograma para lo que
+    // falte en vez de levantarse ahora. Una sola espera pendiente,
+    // pase quien pase por aqui.
+    var falta = MINIMO - (Date.now() - t0);
+    if (falta > 0) {
+      if (pendiente === null) {
+        pendiente = setTimeout(function(){
+          pendiente = null;
+          window.__bsLiftCurtain();
+        }, falta);
+      }
+      return;
+    }
+
+    if (pendiente !== null) { clearTimeout(pendiente); pendiente = null; }
     h.classList.add('loc-switch-out');
     setTimeout(function(){
       h.classList.remove('loc-switch', 'loc-switch-out');
     }, 260);
   };
 
-  setTimeout(function(){ window.__bsLiftCurtain(); }, 6000);
+  setTimeout(function(){ window.__bsLiftCurtain(); }, TOPE);
 })();
 </script>
 </head>
@@ -195,7 +234,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261029-210014</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261029-210828</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
