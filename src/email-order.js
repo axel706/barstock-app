@@ -607,7 +607,20 @@
     openModal,
     closeModal,
     send,
-    isValidEmail
+    isValidEmail,
+    // ── Para el móvil ────────────────────────────────────────────────
+    //
+    // El teléfono arma su propio envío porque no tiene este modal, pero
+    // el PDF lo genera AQUÍ. Es lo único que ve el proveedor: si hubiera
+    // dos generadores, el pedido se vería distinto según desde dónde se
+    // mandó, y el día que haya que arreglar un margen o una columna
+    // habría que acordarse de los dos.
+    //
+    // Lo que el móvil sí repite son las quince líneas de armar el
+    // payload. Se repiten a propósito: extraer el `send()` del
+    // escritorio significa tocar el camino que manda las órdenes de
+    // verdad cada semana, y ahorrarse quince líneas no paga ese riesgo.
+    generarPdf: generatePdfBase64
   };
 
   document.addEventListener('DOMContentLoaded', bindModalBackdrop);

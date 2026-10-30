@@ -121,6 +121,34 @@ function pantalla(extra) {
   w.__toasts = [];
   w.BarStockToast = { show: (t) => w.__toasts.push(String(t)) };
 
+  // ── El correo ─────────────────────────────────────────────────────
+  // El PDF lo genera el modulo del escritorio: si hubiera dos
+  // generadores, el pedido se veria distinto segun desde donde se
+  // mando.
+  w.__pdfPedidos = [];
+  w.BarStockEmailOrder = {
+    generarPdf: async (vendor, items, resumen) => {
+      w.__pdfPedidos.push({ vendor, items: items.length, resumen });
+      return 'JVBERi0xLjQK';   // un PDF de mentira en base64
+    }
+  };
+  w.BarStockSenderProfile = {
+    getProfile: async () => ({ name: 'Axel Torres', email: 'axel@wjm.com' })
+  };
+  w.__enviados = [];
+  // `global.fetch` TAMBIEN, no solo `w.fetch`: el modulo llama a
+  // `fetch` a secas y dentro del `new Function` eso resuelve al global
+  // de Node, no al del navegador falso. Es la misma trampa que el
+  // proyecto ya tiene anotada con `state`, y aqui se traduce en una
+  // peticion de verdad saliendo a internet desde una prueba.
+  const red = async (url, opts) => {
+    const cuerpo = JSON.parse((opts && opts.body) || '{}');
+    w.__enviados.push({ url: String(url), cuerpo });
+    if (w.__fallarCorreo) return { json: async () => ({ ok: false, error: 'mailbox full' }) };
+    return { json: async () => ({ ok: true, id: 'msg_1' }) };
+  };
+  w.fetch = red; global.fetch = red;
+
   let def = null;
   w.BarStockMobile = { register(d) { def = d; }, refrescarBadges() {} };
   new Function(fs.readFileSync(path.join(RAIZ, 'src/mobile-orders.js'), 'utf8'))();
@@ -444,9 +472,60 @@ console.log('\ncolocar guarda por el mismo camino que el escritorio');
   // Releer de la nube es lo que hace que las lineas desaparezcan de
   // Ordering. Sin esto la orden esta puesta y la pantalla no se entera.
   ok('se relee la verdad desde la nube', w.__recargado === 1);
-  ok('y lo dice', w.__toasts.some(t => /placed/i.test(t)), w.__toasts.join(' | '));
-  ok('al terminar vuelve al resumen', /Orders waiting|All orders/i.test(host.textContent) ||
-     !!host.querySelector('.m-ordv'));
+}
+
+console.log('\ny despues manda el correo con el PDF adjunto');
+{
+  const { w, host } = pantalla();
+  await revisar(host, 'SOUTHERN');
+  host.querySelector('.m-rev-go').click();
+  await esperar(30);
+
+  ok('se pidio UN pdf', w.__pdfPedidos.length === 1);
+  // El del escritorio. Dos generadores = dos pedidos distintos segun
+  // desde donde se mando.
+  ok('al generador del escritorio', w.__pdfPedidos[0].vendor === 'SOUTHERN');
+
+  ok('se llamo al endpoint de siempre', w.__enviados.length === 1 &&
+     /\/api\/send-order$/.test(w.__enviados[0].url), (w.__enviados[0] || {}).url);
+  const c = w.__enviados[0].cuerpo;
+  eq('a los destinatarios de la pantalla', c.to,
+     ['orders@southern.com', 'pedro@southern.com']);
+  ok('con el PDF adjunto', !!c.pdfBase64, String(c.pdfBase64).slice(0, 10));
+  ok('y nombre de archivo con fecha', /southern_order_\d{4}-\d{2}-\d{2}\.pdf/.test(c.filename),
+     c.filename);
+  ok('con el perfil de quien lo manda', c.senderEmail === 'axel@wjm.com');
+
+  ok('lo dice', w.__toasts.some(t => /sent to/i.test(t)), w.__toasts.join(' | '));
+  ok('y al terminar vuelve al resumen', !!host.querySelector('.m-ordv'));
+}
+
+console.log('\nsi el correo falla, la orden SIGUE colocada');
+{
+  const { w, host } = pantalla();
+  w.__fallarCorreo = true;
+  const err = console.error; console.error = () => {};
+  await revisar(host, 'SOUTHERN');
+  host.querySelector('.m-rev-go').click();
+  await esperar(30);
+
+  // Lo que NO puede pasar: que parezca que no se hizo nada.
+  ok('la orden se guardo igual', w.__guardadas.length === 1);
+  ok('y la pantalla lo dice con todas las letras',
+     /the order is placed/i.test(host.textContent), host.textContent.slice(0, 120));
+  ok('sin volver al resumen', !host.querySelector('.m-ordv'));
+  ok('el boton pasa a reintentar el envio',
+     /try sending again/i.test(host.querySelector('.m-rev-go').textContent));
+
+  // Y reintentar manda el correo SIN volver a guardar: si guardara,
+  // quedarian dos ordenes al mismo proveedor.
+  w.__fallarCorreo = false;
+  host.querySelector('.m-rev-go').click();
+  await esperar(30);
+  ok('reintentar no crea una segunda orden', w.__guardadas.length === 1,
+     String(w.__guardadas.length));
+  ok('pero si vuelve a mandar', w.__enviados.length === 2, String(w.__enviados.length));
+  console.error = err;
 }
 
 console.log('\nguardar la libreta NO borra el resto de la ficha');

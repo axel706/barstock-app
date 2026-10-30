@@ -2214,6 +2214,60 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   body.m-shell .m-rev-go:disabled { background: rgba(255,255,255,.12); color: #8fa3b8; cursor: default; }
   .m-rev-falta { font-size: var(--m-meta); color: #fca5a5; text-align: center; margin-top: 8px; }
 
+  /* Tres pasos y no una rueda. En un iPhone el PDF tarda segundos, y
+   * si el correo falla hay que poder ver que el de guardar ya pasó. */
+  .m-rev-pasos { margin-bottom: 11px; }
+  .m-rev-pasos > div {
+    font-size: var(--m-small); color: #6f8296; padding: 3px 0;
+  }
+  .m-rev-pasos > div.go { color: #cfe8fb; }
+  .m-rev-pasos > div.ok { color: #86efac; }
+
+  /* El estado que más confunde: la orden existe y el correo no salió.
+   * Volver a colocarla deja DOS pedidos al mismo proveedor, así que
+   * esto va antes que el botón y lo dice en negrita. */
+  .m-rev-fallo {
+    margin-bottom: 11px; padding: 11px 13px; border-radius: 13px;
+    font-size: var(--m-small); line-height: 1.45; color: #fde0e0;
+    background: rgba(239,68,68,.16);
+    border: 1px solid rgba(239,68,68,.34);
+  }
+  .m-rev-fallo b { color: #fff; font-weight: 800; }
+
+  /* ── Reenviar y reabrir, en el detalle del historial ───────────────
+   * Aquí y no en Órdenes: una orden colocada desaparece de allí, así
+   * que éste es el único sitio donde existe para poder tocarla. */
+  .m-hacc { display: flex; gap: 8px; margin-top: 18px; }
+  body.m-shell .m-hacc button {
+    flex: 1; height: 44px; border: 0; cursor: pointer;
+    background: rgba(255,255,255,.12); color: #e8f1fb;
+    font-family: inherit; font-size: var(--m-small); font-weight: 800;
+  }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hacc button { border-radius: 13px !important; }
+  /* Borrar algo no se viste igual que mandarlo otra vez. */
+  body.m-shell .m-hacc button.mal {
+    background: rgba(239,68,68,.16); color: #fca5a5;
+    border: 1px solid rgba(239,68,68,.34);
+  }
+  .m-hacc-busy {
+    flex: 1; text-align: center; padding: 13px 0;
+    font-size: var(--m-small); color: #8fa3b8;
+  }
+  .m-hacc-no {
+    margin-top: 18px; padding: 11px 13px; border-radius: 13px;
+    font-size: var(--m-small); line-height: 1.45; color: #a9bacd;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.10);
+  }
+  /* La confirmación DICE lo que hace. Un "¿Seguro?" no informa de que
+   * esto borra la orden. */
+  .m-hacc-conf {
+    margin-top: 18px; padding: 12px 13px; border-radius: 14px;
+    font-size: var(--m-small); line-height: 1.45; color: #fde0e0;
+    background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.28);
+  }
+  .m-hacc-conf b { color: #fff; font-weight: 800; }
+  .m-hacc-conf .m-hacc { margin-top: 11px; }
+
   /* ── Lo que dejaste fuera ───────────────────────────────────────── */
   /* Excluir era ya poner la cantidad a cero, pero la línea desaparecía
    * sin decirlo. Ahora va aquí, con el camino de vuelta. */

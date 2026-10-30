@@ -224,7 +224,7 @@
 
     host.querySelector('#moBack').onclick = () => { _vendor = null; pintar(host); };
     const env = host.querySelector('#moSend');
-    if (env) env.onclick = () => { _revisar = true; _to = []; _destDe = null; pintar(host); };
+    if (env) env.onclick = () => { salirRevision(); _revisar = true; pintar(host); };
     const add = host.querySelector('#moAdd');
     if (add) add.onclick = () => {
       // Se le pasa el proveedor. Sin él, el diálogo mira la pestaña
@@ -248,6 +248,17 @@
   // mal, atrás y se corrige donde se corrige.
   //
   // Los destinatarios sí se tocan, porque ésos cambian por envío.
+
+  // Salir de la revisión limpia TODO su estado, y `_colocada` es el
+  // que importa: si se quedara puesto, al revisar el siguiente
+  // proveedor el paso de guardar se saltaría —cree que ya está— y se
+  // mandaría el correo de una orden que nunca se guardó.
+  function salirRevision() {
+    _revisar = false;
+    _to = []; _destDe = null;
+    _colocando = false; _paso = 0;
+    _falloCorreo = false; _colocada = null;
+  }
 
   const EMAIL = /^[^\s@,]+@[^\s@,]+\.[^\s@,]{2,}$/;
   const partir = (s) => String(s || '').split(',').map(x => x.trim()).filter(Boolean);
@@ -323,18 +334,37 @@
       </label>
 
       <div class="m-rev-pie">
+        ${_colocando ? `
+          <!-- Tres pasos y no una rueda: en un iPhone el PDF tarda
+               segundos, y si el correo falla hay que poder ver que el
+               paso de guardar ya pasó. -->
+          <div class="m-rev-pasos">
+            <div class="${_paso > 1 ? 'ok' : 'go'}">${_paso > 1 ? '✓' : '●'} Saving the order</div>
+            <div class="${_paso > 2 ? 'ok' : _paso === 2 ? 'go' : ''}">${
+              _paso > 2 ? '✓' : '●'} Building the PDF</div>
+            <div class="${_paso === 3 ? 'go' : ''}">● Emailing ${esc(_to[0] || '')}</div>
+          </div>` : ''}
+
+        ${_falloCorreo ? `
+          <!-- Lo primero, y con todas las letras. Sin esto se vuelve a
+               colocar y acabas con dos órdenes al mismo proveedor. -->
+          <div class="m-rev-fallo">
+            <b>The order is placed.</b> The email did not go out.
+            You can send it again from here or from History.
+          </div>` : ''}
+
         <div class="m-rev-pie-r">
           <span>${n2(botellas)} bottles to ${esc(v.nombre)}</span>
           <b>${money(v.total)}</b>
         </div>
         <button type="button" class="m-rev-go" id="mrGo"${
           _to.length && !_colocando ? '' : ' disabled'}>${
-          _colocando ? 'Placing…' : 'Place order'}</button>
+          _colocando ? 'Working…' : _falloCorreo ? 'Try sending again' : 'Place & send'}</button>
         ${!_to.length && !_cargandoDest
           ? '<div class="m-rev-falta">Add at least one address first.</div>' : ''}
       </div>`;
 
-    host.querySelector('#mrBack').onclick = () => { _revisar = false; pintar(host); };
+    host.querySelector('#mrBack').onclick = () => { salirRevision(); pintar(host); };
 
     host.querySelectorAll('[data-quitar]').forEach(b => {
       b.onclick = () => { _to.splice(Number(b.dataset.quitar), 1); pintar(host); };
@@ -366,17 +396,94 @@
     cargarDestinatarios(v.nombre, host);   // no hace nada si ya se preguntó
   }
 
-  // ── Colocar ──────────────────────────────────────────────────────────
-  //
-  // Esto guarda. El correo es el paso siguiente y todavía no existe
-  // aquí: hasta que exista, se coloca desde el teléfono y se manda
-  // desde el escritorio, que es exactamente lo que se hacía antes con
-  // el paso de colocar incluido.
+  // ── Colocar y enviar ─────────────────────────────────────────────────
   //
   // Se reusa `persistOrderToSupabase` y `loadOrdersFromCloud`, las
   // mismas del escritorio. Nada de una segunda forma de guardar una
   // orden: con dos, cualquier arreglo hay que hacerlo dos veces y la
-  // segunda se olvida.
+  // segunda se olvida. El PDF sale de `BarStockEmailOrder.generarPdf`
+  // por lo mismo: es lo único que ve el proveedor.
+  //
+  // El ORDEN no es intercambiable. Primero se guarda, después sale el
+  // correo. Si fuera al revés y el guardado fallara, el proveedor
+  // tendría un pedido que la app no conoce — y eso aparece semanas
+  // después, al no poder cuadrar su factura contra ninguna orden.
+  // Al revés es recuperable: queda una orden colocada que se reenvía
+  // desde History.
+
+  // Los pasos que se enseñan mientras trabaja. Un botón quieto cinco
+  // segundos se pulsa dos veces, y dos pulsaciones son dos órdenes.
+  let _paso = 0;            // 0 nada · 1 guardando · 2 PDF · 3 enviando
+  let _falloCorreo = false; // guardada pero el correo no salió
+  // La orden YA guardada en la nube. Mientras exista, reintentar manda
+  // el correo y nada más: volver a guardarla crearía una segunda orden
+  // al mismo proveedor, que es justo el desastre que el aviso de
+  // "the order is placed" viene a evitar.
+  let _colocada = null;
+
+  // `destinatarios` entra por parámetro y no se lee de `_to` para que
+  // History pueda reusar esto tal cual: allí no hay pantalla de
+  // revisión, pero el correo tiene que salir exactamente igual.
+  async function enviarCorreo(orden, destinatarios) {
+    const para = (destinatarios && destinatarios.length) ? destinatarios.slice() : _to.slice();
+    if (!para.length) throw new Error('No address to send it to.');
+    const E = window.BarStockEmailOrder;
+    if (!E || typeof E.generarPdf !== 'function') {
+      throw new Error('The order mailer is not loaded.');
+    }
+
+    const loc = (window.BARSTOCK_CONFIG || {}).LOCATION_NAME || 'BarStock';
+
+    let defs = {}, perfil = {};
+    try { if (window.BarStockVendorDefaults)
+      defs = (await window.BarStockVendorDefaults.getDefaults(orden.vendor)) || {}; } catch (e) {}
+    try { if (window.BarStockSenderProfile)
+      perfil = (await window.BarStockSenderProfile.getProfile()) || {}; } catch (e) {}
+
+    const pdf = await E.generarPdf(orden.vendor, orden.items, {
+      location: loc,
+      vendor: orden.vendor,
+      poNumber: orden.poNumber || '',
+      date: new Date().toLocaleDateString('en-US',
+        { month: 'short', day: 'numeric', year: 'numeric' }),
+      deliveryDate: '',
+      buyerName: perfil.name || '',
+      buyerEmail: perfil.email || '',
+      buyerPhone: perfil.phone || '',
+      buyerTitle: perfil.title || '',
+      items: orden.items.length,
+      totalUnits: orden.totalUnits,
+      vendorDefaults: defs
+    });
+
+    let replyTo = null;
+    try { if (window.BarStockLocationSettings)
+      replyTo = await window.BarStockLocationSettings.getReplyToEmail(); } catch (e) {}
+
+    const cuerpo = {
+      to: para,
+      vendor: orden.vendor,
+      items: orden.items,
+      totalUnits: orden.totalUnits,
+      subtotal: orden.subtotal,
+      locationName: loc,
+      pdfBase64: pdf,
+      filename: String(orden.vendor).toLowerCase().replace(/\s+/g, '_') +
+                '_order_' + new Date().toISOString().slice(0, 10) + '.pdf'
+    };
+    if (replyTo) cuerpo.replyTo = replyTo;
+    if (perfil.name) cuerpo.senderName = perfil.name;
+    if (perfil.email) cuerpo.senderEmail = perfil.email;
+
+    const res = await fetch('https://barstock-app.vercel.app/api/send-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cuerpo)
+    });
+    const r = await res.json().catch(() => ({}));
+    if (!r || !r.ok) throw new Error((r && r.error) || 'The mail server refused it.');
+    return para;
+  }
 
   async function guardarDestinatarios(vendor) {
     if (!_recordar || !window.BarStockVendorDefaults) return;
@@ -406,62 +513,103 @@
       return;
     }
 
-    const filas = v.filas
-      .map(r => (hay('cloneOrderRow') ? window.cloneOrderRow(r) : r))
-      .filter(r => cantidad(r) > 0);
-    if (!filas.length) { avisar('Nothing to order for this vendor.'); return; }
+    let orden = _colocada;
 
-    _colocando = true;
-    pintar(host);
+    // ── 1 · Guardar ────────────────────────────────────────────────
+    //
+    // Se SALTA si ya está colocada. Reintentar después de un fallo de
+    // correo manda el correo y nada más: volver a guardar crearía una
+    // segunda orden al mismo proveedor.
+    if (!orden) {
+      const filas = v.filas
+        .map(r => (hay('cloneOrderRow') ? window.cloneOrderRow(r) : r))
+        .filter(r => cantidad(r) > 0);
+      if (!filas.length) { avisar('Nothing to order for this vendor.'); return; }
 
-    const ahora = new Date().toISOString();
-    const orden = {
-      id: hay('uniqueOrderId') ? window.uniqueOrderId() : 'ord_' + Date.now(),
-      vendor: v.nombre,
-      createdAt: ahora,
-      date: ahora,
-      // El mismo reparto que el escritorio: LOOP sale por CSV y el
-      // resto por imagen. Que el tipo lo decida otro sitio sería una
-      // segunda regla que se desincroniza.
-      exportType: v.nombre === 'LOOP' ? 'loop_csv' : 'vendor_jpg',
-      filename: v.nombre === 'LOOP'
-        ? 'loop_upload.csv'
-        : 'vendor_order_' + String(v.nombre).toLowerCase().replace(/\s+/g, '_') + '.jpg',
-      items: filas,
-      totalUnits: filas.reduce((s, r) => s + cantidad(r), 0),
-      subtotal: hay('computeOrderSubtotal') ? window.computeOrderSubtotal(filas) : v.total
-    };
+      _colocando = true;
+      _falloCorreo = false;
+      _paso = 1;
+      pintar(host);
 
-    try {
-      await window.persistOrderToSupabase(orden);
+      const ahora = new Date().toISOString();
+      orden = {
+        id: hay('uniqueOrderId') ? window.uniqueOrderId() : 'ord_' + Date.now(),
+        vendor: v.nombre,
+        createdAt: ahora,
+        date: ahora,
+        // El mismo reparto que el escritorio: LOOP sale por CSV y el
+        // resto por imagen. Que el tipo lo decida otro sitio sería una
+        // segunda regla que se desincroniza.
+        exportType: v.nombre === 'LOOP' ? 'loop_csv' : 'vendor_jpg',
+        filename: v.nombre === 'LOOP'
+          ? 'loop_upload.csv'
+          : 'vendor_order_' + String(v.nombre).toLowerCase().replace(/\s+/g, '_') + '.jpg',
+        items: filas,
+        totalUnits: filas.reduce((s, r) => s + cantidad(r), 0),
+        subtotal: hay('computeOrderSubtotal') ? window.computeOrderSubtotal(filas) : v.total
+      };
 
-      if (window.BarStockParIntelligence) {
-        window.BarStockParIntelligence.updateSnapshotOrdered(orden.items)
-          .catch(e => console.warn('[ParIntelligence] updateSnapshotOrdered', e));
+      try {
+        await window.persistOrderToSupabase(orden);
+
+        if (window.BarStockParIntelligence) {
+          window.BarStockParIntelligence.updateSnapshotOrdered(orden.items)
+            .catch(e => console.warn('[ParIntelligence] updateSnapshotOrdered', e));
+        }
+        if (window.BarStockLogger) {
+          window.BarStockLogger.log('place_order_saved', {
+            vendor: v.nombre, orderId: orden.id, totalUnits: orden.totalUnits,
+            subtotal: orden.subtotal, itemCount: filas.length, from: 'mobile'
+          });
+        }
+        await window.loadOrdersFromCloud();
+      } catch (e) {
+        _colocando = false; _paso = 0;
+        pintar(host);
+        // Si no se guardó, NO está colocada. Decirlo con todas las
+        // letras: creer lo contrario acaba en dos órdenes al mismo
+        // proveedor.
+        avisar('Could not place it: ' + (e && e.message ? e.message : String(e)));
+        console.error('[orders] guardar la orden falló', e);
+        return;
       }
+
+      // Desde aquí la orden YA EXISTE. Lo que falle a partir de ahora
+      // no la deshace, y la pantalla no puede dar a entender que sí.
+      _colocada = orden;
+      await guardarDestinatarios(v.nombre);
+    } else {
+      _colocando = true;
+      _falloCorreo = false;
+      pintar(host);
+    }
+
+    // ── 2 · El PDF y el correo ─────────────────────────────────────
+    _paso = 2;
+    pintar(host);
+    try {
+      _paso = 3;
+      pintar(host);
+      const fueron = await enviarCorreo(orden);
+
       if (window.BarStockLogger) {
-        window.BarStockLogger.log('place_order_saved', {
-          vendor: v.nombre, orderId: orden.id, totalUnits: orden.totalUnits,
-          subtotal: orden.subtotal, itemCount: filas.length, from: 'mobile'
+        window.BarStockLogger.log('email_order_sent', {
+          vendor: v.nombre, orderId: orden.id, to: fueron.join(', '),
+          itemCount: filas.length, from: 'mobile'
         });
       }
-
-      await window.loadOrdersFromCloud();
-      await guardarDestinatarios(v.nombre);
-
-      avisar(v.nombre + ' order placed · email it from desktop');
-      _colocando = false;
-      _revisar = false;
-      _vendor = null;
+      avisar(v.nombre + ' order sent to ' + fueron.join(', '));
+      _colocando = false; _paso = 0; _falloCorreo = false; _colocada = null;
+      _revisar = false; _vendor = null;
       pintar(host);
     } catch (e) {
-      _colocando = false;
+      // La orden está colocada y el correo no salió. Es el estado que
+      // más confunde, así que se queda en pantalla diciéndolo en vez
+      // de desaparecer con un aviso que se va solo.
+      _colocando = false; _paso = 0; _falloCorreo = true;
       pintar(host);
-      // Con todas las letras: si no se guardó, NO está colocada. Lo
-      // contrario —creer que sí— acaba en dos órdenes al mismo
-      // proveedor.
-      avisar('Could not place it: ' + (e && e.message ? e.message : String(e)));
-      console.error('[orders] colocar falló', e);
+      console.error('[orders] el correo no salió', e);
+      avisar('Order placed, but the email did not go out.');
     }
   }
 
@@ -595,7 +743,10 @@
     if (window.BarStockMobile) window.BarStockMobile.ir('orders');
   }
 
-  window.BarStockMobileOrders = { refresh, falloAlGuardar, abrirVendor };
+  // `enviarCorreo` se exporta para History: reenviar una orden ya
+  // colocada es el MISMO correo, con el mismo PDF. Dos funciones que
+  // mandan el mismo pedido acabarían mandándolo distinto.
+  window.BarStockMobileOrders = { refresh, falloAlGuardar, abrirVendor, enviarCorreo };
 
   function registrar() {
     if (!window.BarStockMobile) return;
@@ -615,7 +766,7 @@
           // Un escalón cada vez: de la revisión se vuelve a las líneas,
           // no al resumen. Saltarse el intermedio al deslizar hace
           // perder el sitio.
-          if (_revisar) _revisar = false; else _vendor = null;
+          if (_revisar) salirRevision(); else _vendor = null;
           pintar(host);
         }
         return true;
@@ -633,9 +784,7 @@
         // camino, no un sitio al que llegar. Si se quedara puesta, al
         // volver a Órdenes aparecería una pantalla de confirmar un
         // pedido que no acabas de repasar.
-        _revisar = false;
-        _to = []; _destDe = null;
-        _colocando = false;
+        salirRevision();
         pintar(host);
       }
     });

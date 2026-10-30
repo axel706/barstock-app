@@ -464,10 +464,130 @@
       '<div class="m-htot"><span>Ordered</span><b>' + money(o.pedidoDinero) + '</b></div>' +
       (o.estado !== 'waiting'
         ? '<div class="m-htot"><span>Received</span><b>' + money(o.recibidoDinero) + '</b></div>'
-        : '');
+        : '') +
+      acciones(o);
 
     const b = host.querySelector('#mhBack');
     if (b) b.onclick = () => { _orden = null; pintar(host); };
+    engancharAcciones(host, o);
+  }
+
+  // ── Reenviar y reabrir ───────────────────────────────────────────────
+  //
+  // Aquí y no en Órdenes. Una orden colocada DESAPARECE de Órdenes —sus
+  // líneas dejan de estar pendientes—, así que éste es el único sitio
+  // donde esa orden existe para poder tocarla.
+  //
+  // Sólo si sigue en `state.orderHistory`. Esa lista es la que carga el
+  // escritorio desde la nube y la que tiene las líneas con la forma que
+  // necesita el correo; las de esta pantalla vienen de otra consulta y
+  // están cruzadas contra facturas, que es otra cosa.
+
+  let _confirmando = false;   // el Reopen pide un segundo toque
+  let _trabajando = '';       // '' | 'enviar' | 'reabrir'
+
+  function laDelEscritorio(id) {
+    const h = (window.state && window.state.orderHistory) || [];
+    return h.find(x => String(x.id) === String(id)) || null;
+  }
+
+  function acciones(o) {
+    if (!laDelEscritorio(o.id)) {
+      // Órdenes viejas que ya no están cargadas. Decirlo es mejor que
+      // dos botones que fallarían al pulsarlos.
+      return '<div class="m-hacc-no">This order is older than what the app keeps ' +
+             'loaded. Resend it from a computer.</div>';
+    }
+    if (_trabajando) {
+      return '<div class="m-hacc"><div class="m-hacc-busy">' +
+        (_trabajando === 'enviar' ? 'Building the PDF and sending…' : 'Reopening…') +
+        '</div></div>';
+    }
+    if (_confirmando) {
+      return '<div class="m-hacc-conf">' +
+        '<b>Reopen deletes this order.</b> Its lines come back to Ordering ' +
+        'and the vendor keeps whatever you already sent them.' +
+        '<div class="m-hacc"><button type="button" id="mhNo">Cancel</button>' +
+        '<button type="button" id="mhSi" class="mal">Delete and reopen</button></div></div>';
+    }
+    return '<div class="m-hacc">' +
+      '<button type="button" id="mhRe">Resend</button>' +
+      '<button type="button" id="mhAbrir" class="mal">Reopen</button></div>';
+  }
+
+  function engancharAcciones(host, o) {
+    const avisar = (t) => { if (window.BarStockToast) window.BarStockToast.show(t); };
+    const re = host.querySelector('#mhRe');
+    const ab = host.querySelector('#mhAbrir');
+    const no = host.querySelector('#mhNo');
+    const si = host.querySelector('#mhSi');
+
+    if (ab) ab.onclick = () => { _confirmando = true; pintar(host); };
+    if (no) no.onclick = () => { _confirmando = false; pintar(host); };
+
+    if (re) re.onclick = async () => {
+      const orden = laDelEscritorio(o.id);
+      const M = window.BarStockMobileOrders;
+      if (!orden || !M || typeof M.enviarCorreo !== 'function') {
+        return avisar('The order mailer is not available right now.');
+      }
+      let para = [];
+      try {
+        if (window.BarStockVendorDefaults) {
+          const d = await window.BarStockVendorDefaults.getDefaults(orden.vendor);
+          para = String((d && d.vendor_email) || '').split(',')
+            .map(x => x.trim()).filter(Boolean);
+        }
+      } catch (e) {}
+      if (!para.length) {
+        return avisar('No saved address for ' + orden.vendor + '. Add one in Settings.');
+      }
+
+      _trabajando = 'enviar';
+      pintar(host);
+      try {
+        const fueron = await M.enviarCorreo(orden, para);
+        avisar(orden.vendor + ' order sent again to ' + fueron.join(', '));
+      } catch (e) {
+        avisar('It did not go out: ' + (e && e.message ? e.message : String(e)));
+        console.error('[history] reenviar falló', e);
+      }
+      _trabajando = '';
+      pintar(host);
+    };
+
+    if (si) si.onclick = async () => {
+      const orden = laDelEscritorio(o.id);
+      if (typeof window.deleteOrderFromSupabase !== 'function') {
+        return avisar('Not connected right now. Try again in a moment.');
+      }
+      _trabajando = 'reabrir';
+      _confirmando = false;
+      pintar(host);
+      try {
+        await window.deleteOrderFromSupabase(o.id);
+        // Devolver lo que esta orden apuntó como pedido, o Par
+        // Intelligence seguiría creyendo que esas botellas se pidieron.
+        if (orden && window.BarStockParIntelligence) {
+          window.BarStockParIntelligence.reverseSnapshotOrdered(orden)
+            .catch(e => console.warn('[ParIntelligence] reverse', e));
+        }
+        if (typeof window.loadOrdersFromCloud === 'function') {
+          await window.loadOrdersFromCloud();
+        }
+        _trabajando = '';
+        _orden = null;
+        _datos = null;           // la lista se relee: esta orden ya no está
+        avisar((orden ? orden.vendor : 'The') + ' order reopened · its lines are back in Ordering');
+        await montar(host);
+        if (window.BarStockMobileOrders) window.BarStockMobileOrders.refresh();
+      } catch (e) {
+        _trabajando = '';
+        pintar(host);
+        avisar('Could not reopen it: ' + (e && e.message ? e.message : String(e)));
+        console.error('[history] reabrir falló', e);
+      }
+    };
   }
 
   function pintar(host) {
