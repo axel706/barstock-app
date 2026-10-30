@@ -181,6 +181,52 @@ grupo('mientras sincroniza, el degradado se mueve');
     /prefers-reduced-motion[\s\S]{0,200}\.m-hero-sync-on[\s\S]{0,80}animation:\s*none/.test(css));
 }
 
+grupo('lo de abajo del Home habla el mismo idioma');
+{
+  // Mismo degradado de tres paradas que el carrusel. Lo que cambia es
+  // qué dice el color, no cómo está hecho.
+  const abajo = {
+    '.m-stat':   'las dos cifras',
+    '.m-mvcard': 'Top movers',
+    '.m-col-up': 'Took off',
+    '.m-col-dn': 'Went quiet'
+  };
+  for (const [sel, q] of Object.entries(abajo)) {
+    const m = new RegExp(sel.replace('.', '\\.') + '\\s*\\{([^}]*)\\}').exec(css);
+    const r = m ? m[1] : '';
+    const paradas = (r.match(/rgba\([^)]*\)\s+\d+%/g) || []).length;
+    prueba(q + ' · tres paradas', paradas === 3, paradas + ' paradas');
+  }
+
+  // Las dos cifras van al MISMO gris que `.m-hero-calm`, que en el
+  // carrusel significa "no hay nada que hacer aquí". Reusarlo es lo
+  // que hace que el gris quiera decir algo en vez de ser ausencia de
+  // color. Si alguien le inventa un gris propio, se pierde.
+  const calm = /\.m-hero-calm\s*\{([^}]*)\}/.exec(css);
+  const stat = /\.m-stat\s*\{([^}]*)\}/.exec(css);
+  const grisDe = (t) => ((/linear-gradient\([^;]*/.exec(t || '') || [''])[0]
+    .match(/rgba\((\d+),(\d+),(\d+)/) || []).slice(1).join(',');
+  prueba('las cifras reusan el gris de calm',
+    !!calm && !!stat && grisDe(calm[1]) === grisDe(stat[1]),
+    grisDe(stat && stat[1]) + ' vs ' + grisDe(calm && calm[1]));
+
+  // Took off y Went quiet conservan color porque ahí el color ES el
+  // dato: sube o baja. Si alguien las pasa a gris, la mitad del
+  // mensaje desaparece.
+  const up = /\.m-col-up\s*\{([^}]*)\}/.exec(css);
+  const dn = /\.m-col-dn\s*\{([^}]*)\}/.exec(css);
+  prueba('Took off sigue siendo verde', !!up && /rgba\(16,185,129/.test(up[1]));
+  prueba('Went quiet sigue siendo rojo', !!dn && /rgba\(244,63,94/.test(dn[1]));
+
+  // Los rótulos en blanco, igual que arriba.
+  for (const [sel, q] of [['\\.m-stat-k', 'las cifras'],
+                          ['\\.m-mvcard \\.m-hero-k', 'Top movers'],
+                          ['\\.m-col-dn \\.m-col-k', 'las dos columnas']]) {
+    const re = new RegExp(sel + '[^}]*color:\\s*rgba\\(255,255,255');
+    prueba('el rótulo de ' + q + ' va en blanco', re.test(css));
+  }
+}
+
 grupo('los botones saltan sobre el fondo oscuro');
 {
   // Al nivel 400 de su familia: el 500 es el del relleno y se

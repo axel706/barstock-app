@@ -1176,12 +1176,21 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * se mueva mucho no es noticia si siempre se movió mucho.
    */
 
+  /* Mismo degradado de tres paradas que el carrusel, y por las mismas
+   * razones: el color arriba a la izquierda donde va el rótulo, casi
+   * negro abajo a la derecha donde van las filas y las cifras.
+   *
+   * Conserva su azul. No es el azul "de órdenes" aquí abajo: fuera del
+   * carrusel el color no identifica una tarjeta, solo da carácter. */
   .m-mvcard {
     margin-top: 16px; padding: 14px;
     border-radius: 19px;
-    background: linear-gradient(135deg, rgba(56,189,248,.18), rgba(56,189,248,.05));
-    border: 1px solid rgba(125,211,252,.24);
+    background: linear-gradient(135deg, rgba(14,165,233,.82) 0%, rgba(14,165,233,.40) 42%, rgba(3,14,24,.94) 100%);
+    border: 1px solid rgba(125,211,252,.48);
   }
+  /* En blanco, igual que en el carrusel: los tintes pálidos se lavan
+   * sobre la esquina viva. */
+  .m-mvcard .m-hero-k { color: rgba(255,255,255,.92); }
   .m-mvcard-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 
   body.m-shell .m-mv1 {
@@ -1248,15 +1257,23 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    */
   .m-cols { display: flex; gap: 8px; margin-top: 14px; }
   .m-col { flex: 1; min-width: 0; padding: 12px 13px; border-radius: 15px; }
-  .m-col-up { background: rgba(74,222,128,.12); border: 1px solid rgba(134,239,172,.26); }
-  .m-col-dn { background: rgba(248,113,113,.12); border: 1px solid rgba(252,165,165,.26); }
+  /* Aquí el color SÍ es el dato: arriba y abajo. Por eso estas dos
+   * conservan verde y rojo mientras las cifras de al lado se van al
+   * gris — no es decoración, es la mitad del mensaje.
+   *
+   * Al estilo del carrusel, tres paradas. La caída al negro importa
+   * más que en las grandes: son tarjetas de 12px de relleno con dos
+   * filas, y un verde plano al 82% dejaría el texto encima sin fondo
+   * oscuro donde apoyarse. */
+  .m-col-up { background: linear-gradient(135deg, rgba(16,185,129,.82) 0%, rgba(16,185,129,.38) 46%, rgba(4,18,14,.94) 100%); border: 1px solid rgba(110,231,183,.46); }
+  .m-col-dn { background: linear-gradient(135deg, rgba(244,63,94,.82) 0%, rgba(244,63,94,.38) 46%, rgba(22,5,9,.94) 100%); border: 1px solid rgba(253,164,175,.46); }
   .m-col-k {
     display: flex; align-items: center; gap: 6px;
     font-size: var(--m-eyebrow); letter-spacing: .1em; font-weight: 800;
     text-transform: uppercase; margin-bottom: 10px;
   }
-  .m-col-up .m-col-k { color: #a7f3d0; }
-  .m-col-dn .m-col-k { color: #fecaca; }
+  .m-col-up .m-col-k,
+  .m-col-dn .m-col-k { color: rgba(255,255,255,.92); }
   .m-col-r { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: var(--m-small); color: #d7e0ea; padding: 4px 0; }
   .m-col-r span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .m-col-r b { color: #fff; font-weight: 800; font-size: var(--m-body); flex: 0 0 auto; }
@@ -1267,11 +1284,21 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* ── Dinero ─────────────────────────────────────────────────────── */
 
   .m-pair { display: flex; gap: 8px; margin-top: 14px; }
+  /* Gris pizarra, y es el MISMO gris que `.m-hero-calm` del carrusel,
+   * que allí significa "no hay nada que hacer aquí". Estas dos son
+   * exactamente eso: cifras que miras, sin botón y sin sitio al que
+   * ir. Reusando el tono, el gris pasa a querer decir algo en vez de
+   * ser solo ausencia de color.
+   *
+   * Y marca la frontera que pedía el carrusel: arriba color y acción,
+   * aquí abajo referencia. */
   .m-stat { flex: 1; min-width: 0; padding: 14px 13px; border-radius: 17px;
-    background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.12); }
+    background: linear-gradient(135deg, rgba(100,116,139,.78) 0%, rgba(100,116,139,.38) 42%, rgba(8,12,18,.94) 100%);
+    border: 1px solid rgba(203,213,225,.28); }
   .m-stat-k {
     display: block; font-size: var(--m-eyebrow); font-weight: 800;
-    letter-spacing: .09em; text-transform: uppercase; color: #c3d2e2;
+    letter-spacing: .09em; text-transform: uppercase;
+    color: rgba(255,255,255,.92);
   }
     /* El rótulo a la izquierda; la cifra y su detalle, a la derecha.
    * Las dos tarjetas dejan así sus números en el mismo borde. */
