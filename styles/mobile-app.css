@@ -1292,23 +1292,19 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    *
    * Y marca la frontera que pedía el carrusel: arriba color y acción,
    * aquí abajo referencia. */
-  /* Más apagado que el `calm` del carrusel a propósito, y es la única
-   * diferencia entre los dos: mismo pizarra, menos presencia.
+  /* Las dos cifras se quedan como estaban: vidrio blanco translúcido,
+   * sin degradado y sin tono.
    *
-   * `calm` es una tarjeta del carrusel y tiene que aguantar al lado de
-   * hermanas saturadas sin desaparecer. Estas dos van debajo, no
-   * compiten con nadie y lo que tiene que gritar es la CIFRA, no su
-   * fondo. Al 78% el recuadro pesaba más que el número que contiene.
-   *
-   * El suelo está en que no se lean como deshabilitadas. Por eso baja
-   * el relleno pero no el blanco del rótulo. */
+   * Se probó pasarlas al pizarra del carrusel y luego a una versión
+   * apagada de ese pizarra, y las dos veces pesaban más de la cuenta.
+   * No son tarjetas: son dos cifras, y lo único que tiene que gritar
+   * aquí es el número. El degradado es para lo que arriba se mira y
+   * se toca. */
   .m-stat { flex: 1; min-width: 0; padding: 14px 13px; border-radius: 17px;
-    background: linear-gradient(135deg, rgba(71,85,105,.58) 0%, rgba(71,85,105,.26) 42%, rgba(8,12,18,.94) 100%);
-    border: 1px solid rgba(203,213,225,.18); }
+    background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.12); }
   .m-stat-k {
     display: block; font-size: var(--m-eyebrow); font-weight: 800;
-    letter-spacing: .09em; text-transform: uppercase;
-    color: rgba(255,255,255,.92);
+    letter-spacing: .09em; text-transform: uppercase; color: #c3d2e2;
   }
     /* El rótulo a la izquierda; la cifra y su detalle, a la derecha.
    * Las dos tarjetas dejan así sus números en el mismo borde. */

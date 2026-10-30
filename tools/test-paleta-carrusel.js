@@ -185,8 +185,9 @@ grupo('lo de abajo del Home habla el mismo idioma');
 {
   // Mismo degradado de tres paradas que el carrusel. Lo que cambia es
   // qué dice el color, no cómo está hecho.
+  //
+  // `.m-stat` NO está en la lista a propósito: ver más abajo.
   const abajo = {
-    '.m-stat':   'las dos cifras',
     '.m-mvcard': 'Top movers',
     '.m-col-up': 'Took off',
     '.m-col-dn': 'Went quiet'
@@ -198,32 +199,22 @@ grupo('lo de abajo del Home habla el mismo idioma');
     prueba(q + ' · tres paradas', paradas === 3, paradas + ' paradas');
   }
 
-  // Las dos cifras son de la MISMA familia pizarra que `.m-hero-calm`
-  // —el tono que en el carrusel significa "no hay nada que hacer
-  // aquí"— pero MÁS APAGADAS.
+  // ── Las dos cifras se quedan FUERA del sistema ────────────────────
   //
-  // La diferencia es deliberada y se prueba en los dos sentidos:
-  // comparten familia, para que el gris siga queriendo decir algo; y
-  // las de abajo pesan menos, porque ahí lo que tiene que gritar es la
-  // cifra, no su recuadro.
-  const calm = /\.m-hero-calm\s*\{([^}]*)\}/.exec(css);
+  // Se probaron dos veces dentro: primero con el pizarra del carrusel
+  // y luego con una versión apagada de ese pizarra. Las dos veces el
+  // recuadro pesaba más que el número que contiene, que es al revés
+  // de lo que tiene que hacer una tarjeta de cifra.
+  //
+  // No son tarjetas: son dos números. El degradado es para lo que
+  // arriba se mira y se toca.
   const stat = /\.m-stat\s*\{([^}]*)\}/.exec(css);
-  const primera = (t) => /linear-gradient\([^;]*/.exec(t || '');
-  const alfaDe = (t) => Number((/rgba\(\d+,\d+,\d+,\s*\.?(\d+)/.exec(
-    (primera(t) || [''])[0]) || [])[1] || 0);
-  const esPizarra = (t) => {
-    const c = ((primera(t) || [''])[0].match(/rgba\((\d+),(\d+),(\d+)/) || []).slice(1).map(Number);
-    // pizarra = los tres canales cerca entre sí y el azul por encima
-    return c.length === 3 && Math.abs(c[0] - c[1]) < 25 && c[2] > c[0];
-  };
-  prueba('las cifras son de la familia pizarra',
-    !!stat && esPizarra(stat[1]), (primera(stat && stat[1]) || [''])[0].slice(0, 46));
-  prueba('y pesan menos que el calm del carrusel',
-    !!calm && !!stat && alfaDe(stat[1]) < alfaDe(calm[1]),
-    'abajo .' + alfaDe(stat && stat[1]) + ' vs carrusel .' + alfaDe(calm && calm[1]));
-  // Pero no tanto como para leerse deshabilitadas.
-  prueba('sin desaparecer del todo', alfaDe(stat && stat[1]) >= 40,
-    '.' + alfaDe(stat && stat[1]));
+  prueba('las cifras siguen en vidrio liso',
+    !!stat && /background:\s*rgba\(255,255,255,\.09\)/.test(stat[1]),
+    (stat && stat[1] || '').trim().slice(0, 70));
+  prueba('sin degradado', !!stat && !/linear-gradient/.test(stat[1]));
+  prueba('y su rótulo conserva el gris de antes',
+    /\.m-stat-k\s*\{[^}]*color:\s*#c3d2e2/.test(css));
 
   // Took off y Went quiet conservan color porque ahí el color ES el
   // dato: sube o baja. Si alguien las pasa a gris, la mitad del
@@ -233,9 +224,9 @@ grupo('lo de abajo del Home habla el mismo idioma');
   prueba('Took off sigue siendo verde', !!up && /rgba\(16,185,129/.test(up[1]));
   prueba('Went quiet sigue siendo rojo', !!dn && /rgba\(244,63,94/.test(dn[1]));
 
-  // Los rótulos en blanco, igual que arriba.
-  for (const [sel, q] of [['\\.m-stat-k', 'las cifras'],
-                          ['\\.m-mvcard \\.m-hero-k', 'Top movers'],
+  // Los rótulos en blanco, igual que arriba. Las cifras no entran:
+  // sobre vidrio liso el blanco puro es demasiado y su gris funciona.
+  for (const [sel, q] of [['\\.m-mvcard \\.m-hero-k', 'Top movers'],
                           ['\\.m-col-dn \\.m-col-k', 'las dos columnas']]) {
     const re = new RegExp(sel + '[^}]*color:\\s*rgba\\(255,255,255');
     prueba('el rótulo de ' + q + ' va en blanco', re.test(css));
