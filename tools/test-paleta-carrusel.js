@@ -198,17 +198,32 @@ grupo('lo de abajo del Home habla el mismo idioma');
     prueba(q + ' · tres paradas', paradas === 3, paradas + ' paradas');
   }
 
-  // Las dos cifras van al MISMO gris que `.m-hero-calm`, que en el
-  // carrusel significa "no hay nada que hacer aquí". Reusarlo es lo
-  // que hace que el gris quiera decir algo en vez de ser ausencia de
-  // color. Si alguien le inventa un gris propio, se pierde.
+  // Las dos cifras son de la MISMA familia pizarra que `.m-hero-calm`
+  // —el tono que en el carrusel significa "no hay nada que hacer
+  // aquí"— pero MÁS APAGADAS.
+  //
+  // La diferencia es deliberada y se prueba en los dos sentidos:
+  // comparten familia, para que el gris siga queriendo decir algo; y
+  // las de abajo pesan menos, porque ahí lo que tiene que gritar es la
+  // cifra, no su recuadro.
   const calm = /\.m-hero-calm\s*\{([^}]*)\}/.exec(css);
   const stat = /\.m-stat\s*\{([^}]*)\}/.exec(css);
-  const grisDe = (t) => ((/linear-gradient\([^;]*/.exec(t || '') || [''])[0]
-    .match(/rgba\((\d+),(\d+),(\d+)/) || []).slice(1).join(',');
-  prueba('las cifras reusan el gris de calm',
-    !!calm && !!stat && grisDe(calm[1]) === grisDe(stat[1]),
-    grisDe(stat && stat[1]) + ' vs ' + grisDe(calm && calm[1]));
+  const primera = (t) => /linear-gradient\([^;]*/.exec(t || '');
+  const alfaDe = (t) => Number((/rgba\(\d+,\d+,\d+,\s*\.?(\d+)/.exec(
+    (primera(t) || [''])[0]) || [])[1] || 0);
+  const esPizarra = (t) => {
+    const c = ((primera(t) || [''])[0].match(/rgba\((\d+),(\d+),(\d+)/) || []).slice(1).map(Number);
+    // pizarra = los tres canales cerca entre sí y el azul por encima
+    return c.length === 3 && Math.abs(c[0] - c[1]) < 25 && c[2] > c[0];
+  };
+  prueba('las cifras son de la familia pizarra',
+    !!stat && esPizarra(stat[1]), (primera(stat && stat[1]) || [''])[0].slice(0, 46));
+  prueba('y pesan menos que el calm del carrusel',
+    !!calm && !!stat && alfaDe(stat[1]) < alfaDe(calm[1]),
+    'abajo .' + alfaDe(stat && stat[1]) + ' vs carrusel .' + alfaDe(calm && calm[1]));
+  // Pero no tanto como para leerse deshabilitadas.
+  prueba('sin desaparecer del todo', alfaDe(stat && stat[1]) >= 40,
+    '.' + alfaDe(stat && stat[1]));
 
   // Took off y Went quiet conservan color porque ahí el color ES el
   // dato: sube o baja. Si alguien las pasa a gris, la mitad del
