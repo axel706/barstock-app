@@ -73,6 +73,35 @@ prueba('y el del móvil', /^0 \.043em 0 \.022em$/.test(margen(dotMov)), margen(d
 prueba('ni en los estilos en línea',
   !/align-self:flex-end/.test(html.split('brand-logo-dot')[1] || ''));
 
+grupo('el desenfoque de la banda no se come el logo ni los botones');
+{
+  const hoja = fs.readFileSync(path.join(__dirname, '..', 'styles', 'mobile-app.css'), 'utf8');
+  const r = (sel) => {
+    const m = new RegExp('^\\s*' + sel.replace(/[.]/g, '\\.') + '\\s*\\{([^}]*)\\}', 'm').exec(hoja);
+    return m ? m[1] : '';
+  };
+  const blur = r('.m-blur'), logo = r('.m-logo'), ico = r('.m-band-ico');
+
+  // El z-index por sí solo NO arreglaba esto: en WebKit un elemento
+  // con backdrop-filter se lleva por delante a vecinos que deberían
+  // ir encima si no están en su propia capa compuesta. Hacen falta
+  // las dos cosas, y por eso se prueban las dos.
+  const z = (t) => Number((/z-index:\s*(-?\d+)/.exec(t) || [])[1]);
+  prueba('las capas de desenfoque van en un escalón declarado',
+    z(blur) === 0, 'z-index ' + z(blur));
+  prueba('el logo va por encima', z(logo) > z(blur), 'z-index ' + z(logo));
+  prueba('los botones también', z(ico) > z(blur), 'z-index ' + z(ico));
+
+  prueba('el logo está en su propia capa', /transform:\s*translateZ\(0\)/.test(logo));
+  prueba('y los botones también', /transform:\s*translateZ\(0\)/.test(ico));
+
+  // Aislar .m-blur parece la solución elegante y rompe el efecto: lo
+  // convertiría en su propio backdrop root y sus capas dejarían de
+  // ver lo que hay detrás de la banda.
+  prueba('sin aislar las capas, que las dejaría sin nada que desenfocar',
+    !/isolation:\s*isolate/.test(blur));
+}
+
 grupo('"Stock" viaja de verde a azul, y no desaparece si no se puede');
 {
   const shell = fs.readFileSync(path.join(__dirname, '..', 'src', 'mobile-shell.js'), 'utf8');

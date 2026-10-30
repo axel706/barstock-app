@@ -345,7 +345,23 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
       rgba(8,12,19,.74) 100%);
   }
 
-  .m-blur { position: absolute; inset: 0; pointer-events: none; }
+  /* ── El desenfoque, y por qué el logo se le escapa ────────────────
+   *
+   * Las seis capas van PRIMERO en el DOM y el logo lleva `z-index`, o
+   * sea que por especificación el logo pinta encima y no debería
+   * tocarlo nadie. En iPhone no era así: la mitad de arriba del
+   * wordmark y de los dos botones salía lavada.
+   *
+   * Es un fallo viejo de WebKit. Un elemento con `backdrop-filter`
+   * mete en su "backdrop" a vecinos que deberían ir por encima,
+   * cuando esos vecinos NO están en su propia capa compuesta. El
+   * z-index solo no basta: hay que sacarlos a una capa de verdad, y
+   * eso lo hace `translateZ(0)`.
+   *
+   * El `z-index: 0` explícito aquí es la otra mitad: deja a las capas
+   * de desenfoque en un escalón declarado por debajo, en vez de
+   * depender del orden del DOM. */
+  .m-blur { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
   .m-blur > i { position: absolute; inset: 0; display: block; }
 
   /* Seis franjas de abajo arriba. Cada máscara se solapa con la
@@ -395,8 +411,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    *
    * 23px fijos: el punto y el PRO siguen colgando de él en em, así que
    * el conjunto conserva sus proporciones y no se mueve nunca. */
+  /* `translateZ(0)` no es para animar: saca el wordmark a su propia
+   * capa compuesta para que el `backdrop-filter` de `.m-blur` no se
+   * lo trague. Ver el comentario largo en `.m-blur`. */
   .m-logo {
-    position: relative; z-index: 1;
+    position: relative; z-index: 2;
+    transform: translateZ(0);
     font-size: 23px; font-weight: 800; color: #fff;
     letter-spacing: -.65px; display: inline-flex; align-items: baseline;
     text-shadow: 0 1px 12px rgba(0,0,0,.55);
@@ -496,9 +516,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * valga, así que es la referencia que no cambia. */
   .m-band-ico {
     /* 16 y no 12: a doce parecían rozar el borde de la pantalla. */
-    position: absolute; right: 20px; z-index: 1;
+    position: absolute; right: 20px; z-index: 2;
     bottom: 0; height: 52px;
     display: flex; align-items: center; gap: 6px;
+    /* Misma razón que el logo: su propia capa, o el desenfoque de
+     * `.m-blur` les come la parte de arriba a los dos botones. */
+    transform: translateZ(0);
   }
   body.m-shell .m-ico {
     width: 36px; height: 36px; flex: 0 0 36px;
