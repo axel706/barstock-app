@@ -265,10 +265,19 @@
 
     const boton = (p) => {
       const n = typeof p.badge === 'function' ? (p.badge() || 0) : 0;
+      // La etiqueta se PINTA, ya no vive sólo en el aria-label. Un
+      // icono solo obliga a adivinar: el cubo es Inventory y el carrito
+      // Orders si ya lo sabes, y si no, lo descubres entrando.
+      //
+      // Va también en la pestaña activa. Quitársela —que es como se
+      // veía en la captura— rompe la retícula: al cambiar de sección
+      // una palabra aparece y otra desaparece, y ese salto se ve.
+      const etiqueta = p.label || p.id;
       return `<button type="button" class="m-tab${_activa === p.id ? ' on' : ''}"
                       data-m="${esc(p.id)}" role="tab"
-                      aria-selected="${_activa === p.id}" aria-label="${esc(p.label || p.id)}">
+                      aria-selected="${_activa === p.id}" aria-label="${esc(etiqueta)}">
                 <i class="ti ${esc(p.icon || 'ti-point')}" aria-hidden="true"></i>
+                <span class="m-tab-lab">${esc(etiqueta)}</span>
                 ${n ? '<span class="m-dot"></span>' : ''}
               </button>`;
     };

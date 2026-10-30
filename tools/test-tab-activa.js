@@ -88,6 +88,85 @@ grupo('el grosor del icono activo');
     /currentColor/i.test(r), r.trim());
 }
 
+grupo('las etiquetas de las secciones');
+{
+  const shell = leer('src/mobile-shell.js');
+
+  // Un cubo es Inventory y un carrito es Orders si ya lo sabes. Si no,
+  // lo averiguas entrando.
+  prueba('la pestaña pinta su nombre', /class="m-tab-lab"/.test(shell));
+
+  // También la activa. Quitársela rompe la retícula: al cambiar de
+  // sección una palabra aparece y otra desaparece, y ese salto se ve.
+  prueba('también la activa',
+    !/m-tab\.on[^}]*\.m-tab-lab\s*\{[^}]*display:\s*none/.test(css),
+    'alguien escondió la etiqueta de la pestaña activa');
+
+  const lab = /\.m-tab-lab\s*\{([^}]*)\}/.exec(css);
+  prueba('la regla existe', !!lab);
+  prueba('sigue el ajuste de Text size',
+    !!lab && /font-size:\s*var\(--m-meta\)/.test(lab[1]), (lab && lab[1] || '').trim());
+  // A tamaño grande "Inventory" aprieta. Que se recorte, no que
+  // desborde la pestaña y descuadre la barra.
+  prueba('un nombre largo se recorta', !!lab && /text-overflow:\s*ellipsis/.test(lab[1]));
+
+  const tab = /body\.m-shell \.m-tab\s*\{([^}]*)\}/.exec(css);
+  prueba('la pestaña va en columna',
+    !!tab && /flex-direction:\s*column/.test(tab[1]));
+  const alto = Number((/height:\s*(\d+)px/.exec(tab ? tab[1] : '') || [])[1] || 0);
+  prueba('creció para que quepa el nombre', alto >= 46, alto + 'px');
+}
+
+grupo('el escáner sigue apoyado en la barra');
+{
+  // Lo que importa no es el tamaño: es que sobresalga lo MISMO por
+  // arriba y por abajo. El `bottom` fija los 4px de abajo, así que el
+  // alto tiene que ser el de la barra más 8.
+  const tab = /body\.m-shell \.m-tab\s*\{([^}]*)\}/.exec(css);
+  const bar = /\.m-tabs-bar\s*\{([^}]*)\}/.exec(css);
+  const fab = /body\.m-shell \.m-fab\s*\{([^}]*)\}/.exec(css);
+  const hole = /\.m-tabs-hole\s*\{([^}]*)\}/.exec(css);
+
+  const hTab  = Number((/height:\s*(\d+)px/.exec(tab  ? tab[1]  : '') || [])[1] || 0);
+  const pad   = Number((/padding:\s*(\d+)px/.exec(bar  ? bar[1]  : '') || [])[1] || 0);
+  const hFab  = Number((/height:\s*(\d+)px/.exec(fab  ? fab[1]  : '') || [])[1] || 0);
+  const hHole = Number((/flex:\s*0 0 (\d+)px/.exec(hole ? hole[1] : '') || [])[1] || 0);
+  const hBar  = hTab + pad * 2;
+
+  prueba('el escáner sobresale 4px por lado', hFab === hBar + 8,
+    'barra ' + hBar + 'px, escáner ' + hFab + 'px');
+  prueba('el hueco le deja aire', hHole >= hFab + 8,
+    'hueco ' + hHole + 'px para un botón de ' + hFab + 'px');
+  prueba('se apoya 4px por debajo',
+    !!fab && /bottom:\s*calc\(env\(safe-area-inset-bottom[^)]*\)\s*-\s*4px\)/.test(fab[1]));
+}
+
+grupo('lo que la barra tapa sigue siendo alcanzable');
+{
+  // Si la barra crece y esto no, la última fila de cualquier lista se
+  // queda debajo y no hay forma de llegar a ella.
+  // Hay TRES reglas `body.m-shell {` en la hoja. Se busca la que
+  // reserva el hueco, no la primera que aparezca.
+  const bloques = css.match(/body\.m-shell\s*\{[^}]*\}/g) || [];
+  const elHueco = bloques.find(b => /padding-bottom:\s*calc\(/.test(b)) || '';
+  const pb = Number((/padding-bottom:\s*calc\((\d+)px/.exec(elHueco) || [])[1] || 0);
+
+  const tab = /body\.m-shell \.m-tab\s*\{([^}]*)\}/.exec(css);
+  const bar = /\.m-tabs-bar\s*\{([^}]*)\}/.exec(css);
+  const hBar = Number((/height:\s*(\d+)px/.exec(tab ? tab[1] : '') || [])[1] || 0) +
+               Number((/padding:\s*(\d+)px/.exec(bar ? bar[1] : '') || [])[1] || 0) * 2;
+
+  prueba('el contenido reserva sitio para la barra', pb >= hBar + 20,
+    'reserva ' + pb + 'px para una barra de ' + hBar + 'px');
+
+  const floor = Number((/\.m-floor\s*\{[^}]*height:\s*calc\((\d+)px/.exec(css) || [])[1] || 0);
+  prueba('el desenfoque la cubre', floor >= hBar + 10,
+    'suelo ' + floor + 'px para una barra de ' + hBar + 'px');
+  // Pasarse lo convierte en una banda oscura cruzando la pantalla,
+  // que es el fallo que ya costó cuatro commits.
+  prueba('pero no sube media pantalla', floor <= hBar + 40, floor + 'px');
+}
+
 grupo('y no se rompió nada alrededor');
 {
   // Las pestañas apagadas conservan su color tenue.
