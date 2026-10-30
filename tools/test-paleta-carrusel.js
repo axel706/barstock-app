@@ -147,6 +147,40 @@ grupo('cada familia tiene su tono, y no lo comparte');
     !/tono:\s*'blue', k: 'Cycle/.test(jsLimpio));
 }
 
+grupo('mientras sincroniza, el degradado se mueve');
+{
+  const m = /\.m-hero-sync-on\s*\{([^}]*)\}/.exec(css);
+  prueba('la regla existe', !!m);
+  const r = m ? m[1] : '';
+
+  prueba('anima', !!r && /animation:\s*mSyncDeriva/.test(r), r.trim());
+  prueba('mueve el fondo, no el color',
+    /@keyframes mSyncDeriva\s*\{[^}]*background-position/.test(
+      css.replace(/\s+/g, ' ').replace(/\} *\}/g, '}}')) ||
+    /mSyncDeriva[\s\S]{0,200}background-position/.test(css));
+
+  // Recorrido corto a propósito: con uno largo la esquina viva acaba
+  // bajo los tres renglones y el texto gris pierde contraste.
+  const z = Number((/background-size:\s*(\d+)%/.exec(r) || [])[1] || 0);
+  prueba('el recorrido es corto', z > 100 && z <= 180, z + '%');
+
+  // Una tarjeta que se queda animando para siempre dice que sigue
+  // sincronizando cuando ya terminó.
+  const js2 = jsLimpio;
+  prueba('se quita en TODAS las salidas',
+    /const parar = \(\) => \{[\s\S]{0,260}m-hero-sync-on/.test(js2));
+  prueba('y se pone al arrancar', /classList\.add\('m-hero-sync-on'\)/.test(js2));
+
+  // Mil milisegundos: el recorrido dura 2.6s, y con medio segundo se
+  // veía un tirón a media pasada.
+  const min = Number((/MINIMO_MS\s*=\s*(\d+)/.exec(js2) || [])[1] || 0);
+  prueba('tiene un mínimo en pantalla', min >= 900, min + 'ms');
+  prueba('pero no hace esperar de más', min <= 1600, min + 'ms');
+
+  prueba('respeta prefers-reduced-motion',
+    /prefers-reduced-motion[\s\S]{0,200}\.m-hero-sync-on[\s\S]{0,80}animation:\s*none/.test(css));
+}
+
 grupo('los botones saltan sobre el fondo oscuro');
 {
   // Al nivel 400 de su familia: el 500 es el del relleno y se

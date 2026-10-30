@@ -248,7 +248,11 @@ const inv = (n, conStock) => Array.from({ length: n }, (_, i) => ({
     prueba('gira mientras busca', sync.classList.contains('girando'));
     prueba('y no se puede pulsar otra vez', sync.disabled);
 
-    await esperar(700);
+    // 1200 y no 700: `sincronizarDesdeTarjeta` mantiene el aviso en
+    // pantalla un MINIMO_MS (1000ms) aunque la respuesta llegue antes,
+    // para que el degradado de la tarjeta alcance a verse moviéndose.
+    // Si cambias ese mínimo, esta espera sube con él.
+    await esperar(1200);
     prueba('pide las facturas nuevas', llamado === 1, String(llamado));
     // Un botón que funciona y no lo dice es indistinguible de uno
     // roto: si no hay nada nuevo, los números no cambian y el giro
@@ -271,7 +275,7 @@ const inv = (n, conStock) => Array.from({ length: n }, (_, i) => ({
     const c = Array.from(h.querySelectorAll('.m-hero'))
       .find(x => /MarginEdge sync/i.test(x.textContent));
     c.querySelector('.m-hero-sync').click();
-    await esperar(700);
+    await esperar(1200);   // el mínimo en pantalla, igual que arriba
     // "Nada nuevo" es un resultado, no un fallo.
     prueba('lo dice con palabras', /up to date/i.test(String(w.__toast)), String(w.__toast));
   }

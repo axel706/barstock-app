@@ -1082,6 +1082,45 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-hero-amber  { background: linear-gradient(135deg, rgba(245,158,11,.84) 0%, rgba(245,158,11,.42) 42%, rgba(22,13,3,.94) 100%);  border: 1px solid rgba(252,211,77,.50); }
   .m-hero-calm   { background: linear-gradient(135deg, rgba(100,116,139,.78) 0%, rgba(100,116,139,.38) 42%, rgba(8,12,18,.94) 100%); border: 1px solid rgba(203,213,225,.28); }
 
+  /* ── Mientras sincroniza, el degradado se mueve ────────────────────
+   *
+   * Lo que avisa es la tarjeta ENTERA, no sólo el botón: 32px girando
+   * en una esquina son fáciles de no ver.
+   *
+   * Va aquí y no en cada tono porque `background-size` y
+   * `background-position` actúan sobre el degradado que ya tenga la
+   * tarjeta, sea cual sea. Si mañana otra tarjeta sincroniza, hereda
+   * esto sin tocar nada.
+   *
+   * ── Por qué 160% y no más ─────────────────────────────────────────
+   *
+   * Con un recorrido largo la esquina viva acaba pasando por DEBAJO de
+   * los tres renglones, y el texto gris pequeño sobre un fondo que
+   * cambia es justo donde se pierde la legibilidad — ya nos pasó con
+   * `--muted`. A 160% el degradado respira pero el extremo oscuro no
+   * se aleja nunca de donde está el contenido.
+   *
+   * ── El riesgo que queda ───────────────────────────────────────────
+   *
+   * Esta tarjeta lleva `backdrop-filter`, y animar el fondo de un
+   * elemento que además desenfoca lo de detrás es la combinación cara
+   * en WebKit. Si en el iPhone va a tirones, la salida es mover un
+   * `::after` encima en vez del fondo propio. */
+  .m-hero-sync-on {
+    background-size: 160% 160%;
+    animation: mSyncDeriva 2.6s ease-in-out infinite;
+  }
+  @keyframes mSyncDeriva {
+    0%   { background-position: 0% 0%; }
+    50%  { background-position: 100% 100%; }
+    100% { background-position: 0% 0%; }
+  }
+  /* Con movimiento reducido no se anima nada: queda el botón girando,
+   * que ya existía y ya avisaba. */
+  @media (prefers-reduced-motion: reduce) {
+    .m-hero-sync-on { animation: none; background-size: auto; }
+  }
+
   /* El encabezado en blanco, no en el tinte pálido de su familia.
    * Los tintes (#fde68a sobre ámbar, #fecaca sobre rojo) funcionaban
    * sobre el fondo apagado de antes; sobre una esquina ahora mucho

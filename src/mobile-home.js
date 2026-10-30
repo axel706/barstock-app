@@ -754,12 +754,23 @@
     _sincronizando = true;
 
     const avisar = (t) => { if (window.BarStockToast) window.BarStockToast.show(t); };
+
+    // La tarjeta ENTERA avisa, no sólo el botón. Un botón de 32px
+    // girando en una esquina es fácil de no ver; el degradado moviéndose
+    // bajo todo lo demás, no.
+    //
+    // `parar()` la quita en TODAS las salidas —éxito, nada nuevo,
+    // error, MarginEdge sin configurar—, que es donde se quedan
+    // pegadas estas clases.
+    const tarjeta = btn && btn.closest ? btn.closest('.m-hero') : null;
     const parar = () => {
       if (btn) { btn.classList.remove('girando'); btn.disabled = false; }
+      if (tarjeta) tarjeta.classList.remove('m-hero-sync-on');
       _sincronizando = false;
     };
 
     if (btn) { btn.classList.add('girando'); btn.disabled = true; }
+    if (tarjeta) tarjeta.classList.add('m-hero-sync-on');
 
     const C = window.BarStockMarginEdgeConnect;
     if (!C || !C.buscarFacturas) {
@@ -768,14 +779,23 @@
       return;
     }
 
-    // Medio segundo de giro como mínimo. Sin esto, un sync rápido es
-    // un parpadeo: el botón parece que no hizo nada y se vuelve a
+    // Un mínimo en pantalla, no por capricho: sin esto un sync rápido
+    // es un parpadeo, el botón parece que no hizo nada y se vuelve a
     // pulsar — y cada pulsación son peticiones a una API que contesta
     // 429 a la segunda por segundo.
+    //
+    // Sube de 500 a 1000 porque ahora lo que avisa es el degradado, y
+    // su recorrido completo dura 2.6s. Con medio segundo se veía un
+    // tirón a media pasada, que es peor que no animar nada. Mil
+    // milisegundos no completan el ciclo pero sí dejan ver hacia
+    // dónde va, que es lo que lo hace legible como "cargando".
+    //
+    // Es la misma lección que la cortina del cambio de locación.
+    const MINIMO_MS = 1000;
     const t0 = Date.now();
     try {
       const r = await C.buscarFacturas();
-      const falta = 500 - (Date.now() - t0);
+      const falta = MINIMO_MS - (Date.now() - t0);
       if (falta > 0) await new Promise(res => setTimeout(res, falta));
 
       // ── Decir SIEMPRE qué pasó ──────────────────────────────────
