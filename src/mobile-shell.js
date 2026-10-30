@@ -45,7 +45,6 @@
   let _host = null;          // contenedor de las pantallas propias
   let _barra = null;
   let _banda = null;         // el encabezado fijo, común a todas
-  let _velo = null;          // el desenfoque de arriba, hermano de la banda
 
   const esMovil = () => window.matchMedia('(max-width: ' + ANCHO + 'px)').matches;
 
@@ -81,37 +80,17 @@
   // desenfoque — el velo de .m-screens está detrás del contenido, no
   // delante, así que sin esto se leería el texto a través de la banda.
   function montarBanda() {
-    // ── El desenfoque vive FUERA de la banda ───────────────────────
-    //
-    // Antes era el primer hijo del <header>, hermano del logo, con la
-    // idea de que el z-index bastaba para que el logo quedara encima.
-    // Por especificación basta: el backdrop de un `backdrop-filter`
-    // es lo que se pinta DEBAJO de él, y el logo se pinta encima.
-    //
-    // En el iPhone no era así. La mitad de arriba del wordmark y de
-    // los dos botones salía lavada. Se probó subir el z-index y sacar
-    // el contenido a su propia capa con `translateZ(0)`: no cambió
-    // nada.
-    //
-    // Con dos elementos separados deja de ser una cuestión de
-    // interpretación. El desenfoque es un <div> propio, fijo, en
-    // z-index 9099; la banda va en 9100. Son dos contextos de apilado
-    // distintos, así que el contenido de la banda no puede estar en
-    // el backdrop del otro ni queriendo.
-    //
-    // Seis capas vacías: cada una desenfoca más que la anterior y la
-    // CSS la recorta a su franja con una máscara.
-    _velo = document.createElement('div');
-    _velo.id = 'mBlur';
-    _velo.className = 'm-blur';
-    _velo.setAttribute('aria-hidden', 'true');
-    _velo.innerHTML = '<i></i><i></i><i></i><i></i><i></i><i></i>';
-    document.body.insertBefore(_velo, document.body.firstChild);
-
     _banda = document.createElement('header');
     _banda.id = 'mBand';
     _banda.className = 'm-band';
+    // La escalera del desenfoque progresivo. Seis capas vacías: cada
+    // una desenfoca más que la anterior y la CSS la recorta a su
+    // franja con una máscara. Van primero en el DOM para que el logo y
+    // los botones queden por encima.
     _banda.innerHTML =
+      '<span class="m-blur" aria-hidden="true">' +
+        '<i></i><i></i><i></i><i></i><i></i><i></i>' +
+      '</span>' +
       // El punto es un círculo, no un carácter. Ver el brandbook: es la
       // regla que más se incumple.
       // "Stock" va en su propio <b> para poder teñirlo aparte: lleva el
@@ -279,11 +258,7 @@
     if (_host) _host.remove();
     if (_barra) _barra.remove();
     if (_banda) _banda.remove();
-    // El velo del desenfoque ya no es hijo de la banda, así que
-    // quitar la banda no se lo lleva: hay que borrarlo aparte o se
-    // queda flotando sobre el escritorio.
-    if (_velo) _velo.remove();
-    _host = _barra = _banda = _velo = null;
+    _host = _barra = _banda = null;
     _activa = null;
     _montado = false;
     _entrado = false;

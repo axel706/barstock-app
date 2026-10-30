@@ -73,46 +73,31 @@ prueba('y el del móvil', /^0 \.043em 0 \.022em$/.test(margen(dotMov)), margen(d
 prueba('ni en los estilos en línea',
   !/align-self:flex-end/.test(html.split('brand-logo-dot')[1] || ''));
 
-grupo('el desenfoque de arriba no se come el logo ni los botones');
+grupo('el desenfoque de la banda no se come el logo ni los botones');
 {
   const hoja = fs.readFileSync(path.join(__dirname, '..', 'styles', 'mobile-app.css'), 'utf8');
-  const shell = fs.readFileSync(path.join(__dirname, '..', 'src', 'mobile-shell.js'), 'utf8');
   const r = (sel) => {
-    const m = new RegExp('^\\s*' + sel.replace(/[.#]/g, '\\$&') + '\\s*\\{([^}]*)\\}', 'm').exec(hoja);
+    const m = new RegExp('^\\s*' + sel.replace(/[.]/g, '\\.') + '\\s*\\{([^}]*)\\}', 'm').exec(hoja);
     return m ? m[1] : '';
   };
-  const blur = r('.m-blur'), banda = r('.m-band');
+  const blur = r('.m-blur'), logo = r('.m-logo'), ico = r('.m-band-ico');
+
+  // El z-index por sí solo NO arreglaba esto: en WebKit un elemento
+  // con backdrop-filter se lleva por delante a vecinos que deberían
+  // ir encima si no están en su propia capa compuesta. Hacen falta
+  // las dos cosas, y por eso se prueban las dos.
   const z = (t) => Number((/z-index:\s*(-?\d+)/.exec(t) || [])[1]);
+  prueba('las capas de desenfoque van en un escalón declarado',
+    z(blur) === 0, 'z-index ' + z(blur));
+  prueba('el logo va por encima', z(logo) > z(blur), 'z-index ' + z(logo));
+  prueba('los botones también', z(ico) > z(blur), 'z-index ' + z(ico));
 
-  // ── La única forma que funcionó ────────────────────────────────
-  //
-  // El velo era el primer hijo del <header>, hermano del logo. Por
-  // especificación bastaba —el backdrop es lo que se pinta DEBAJO— y
-  // en el iPhone el logo salía lavado igual. Se probó subirle el
-  // z-index y sacarlo a su propia capa con translateZ(0): nada.
-  //
-  // Con dos elementos separados deja de depender del motor.
-  prueba('el velo NO es hijo de la banda',
-    !/_banda\.innerHTML\s*=\s*\n?\s*'<span class="m-blur"/.test(shell) &&
-    !/m-band[^}]*>\s*\.m-blur/.test(hoja));
-  prueba('es un elemento propio del body',
-    /id = 'mBlur'/.test(shell) &&
-    /document\.body\.insertBefore\(_velo/.test(shell));
-  prueba('fijo, como la banda', /position:\s*fixed/.test(blur));
-  prueba('y por debajo de ella', z(blur) < z(banda),
-    'velo ' + z(blur) + ' vs banda ' + z(banda));
-  prueba('sin robarle los toques a los botones',
-    /pointer-events:\s*none/.test(blur));
-  prueba('con el mismo alto que la banda',
-    /height:\s*calc\(52px \+ env\(safe-area-inset-top/.test(blur));
+  prueba('el logo está en su propia capa', /transform:\s*translateZ\(0\)/.test(logo));
+  prueba('y los botones también', /transform:\s*translateZ\(0\)/.test(ico));
 
-  // Quitar la banda ya no se lo lleva: se queda flotando sobre el
-  // escritorio si nadie lo borra.
-  prueba('se desmonta con el resto', /if \(_velo\) _velo\.remove\(\)/.test(shell));
-
-  // Aislar el velo parece la solución elegante y rompe el efecto: lo
+  // Aislar .m-blur parece la solución elegante y rompe el efecto: lo
   // convertiría en su propio backdrop root y sus capas dejarían de
-  // ver lo que hay detrás.
+  // ver lo que hay detrás de la banda.
   prueba('sin aislar las capas, que las dejaría sin nada que desenfocar',
     !/isolation:\s*isolate/.test(blur));
 }
