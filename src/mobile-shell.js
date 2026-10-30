@@ -102,9 +102,18 @@
       // Sin boton de luna: en el telefono el modo claro no existe (ver
       // la cabecera de mobile-app.css). Un boton que no hace nada es
       // peor que no tener boton.
+      // El grupo de la derecha. La campana se mete AQUÍ dentro desde
+      // mobile-notif.js, como primer hijo, así que el orden en
+      // pantalla acaba siendo campana y luego perfil.
+      //
+      // Icono de persona y no de engranaje: lleva a Ajustes, que es
+      // donde viven el perfil de remitente y los datos de la cuenta.
+      // La pantalla sigue llamándose Settings y en la lista de "More"
+      // sigue saliendo con engranaje — ahí el gesto es elegir de una
+      // lista, no reconocer un botón suelto en una esquina.
       '<span class="m-band-ico">' +
         '<button type="button" class="m-ico" id="mSet" aria-label="Settings">' +
-          '<i class="ti ti-settings" aria-hidden="true"></i></button>' +
+          '<i class="ti ti-user-circle" aria-hidden="true"></i></button>' +
       '</span>';
     // Al principio del body: así el bloqueo de la pantalla de entrada
     // (body.auth-locked > *) también la tapa, como a todo lo demás.

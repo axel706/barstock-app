@@ -168,7 +168,24 @@
     if (!el) {
       el = document.createElement('span');
       el.className = 'm-band-note';
-      banda.appendChild(el);
+
+      // ── La campana va con el otro icono, a la DERECHA ─────────────
+      //
+      // Antes colgaba del <header> y la CSS la clavaba a la izquierda
+      // con `position:absolute`, o sea que los dos botones de la banda
+      // vivían en esquinas opuestas con el logo flotando en medio.
+      //
+      // Ahora entra DENTRO del grupo de la derecha y como primer hijo:
+      // campana y luego perfil, el mismo orden de la maqueta. Al ser
+      // los dos hijos de un flex, el hueco entre ellos lo pone el
+      // `gap` del padre y no hace falta posicionar nada.
+      //
+      // Si el grupo todavía no existe —esto corre antes que la banda
+      // en algún arranque— se cuelga del header y la CSS la deja
+      // pasable igual.
+      const grupo = banda.querySelector('.m-band-ico');
+      if (grupo) grupo.insertBefore(el, grupo.firstChild);
+      else banda.appendChild(el);
     }
     return el;
   }

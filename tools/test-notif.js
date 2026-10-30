@@ -136,6 +136,45 @@ function entorno(descartadas, guardado) {
     a2.map(a => a.t).join(' | '));
   prueba('pero los demás siguen', a2.some(a => /Pedro Morales/.test(a.t)));
 
+  grupo('los dos botones de la banda viven juntos, a la derecha');
+  {
+    const fs2 = require('fs'), path2 = require('path');
+    const RAIZ2 = path2.join(__dirname, '..');
+    const nf = fs2.readFileSync(path2.join(RAIZ2, 'src/mobile-notif.js'), 'utf8');
+    const sh = fs2.readFileSync(path2.join(RAIZ2, 'src/mobile-shell.js'), 'utf8');
+    const cs = fs2.readFileSync(path2.join(RAIZ2, 'styles/mobile-app.css'), 'utf8');
+
+    // La campana colgaba del <header> y la CSS la clavaba a la
+    // izquierda, así que los dos botones quedaban en esquinas
+    // opuestas con el logo flotando en medio.
+    prueba('la campana entra en el grupo de la derecha',
+      /querySelector\('\.m-band-ico'\)/.test(nf) &&
+      /insertBefore\(el,\s*grupo\.firstChild\)/.test(nf));
+    // Primero la campana, luego el perfil: el orden de la maqueta.
+    prueba('y va antes que el perfil', /insertBefore\(el,\s*grupo\.firstChild\)/.test(nf));
+    // Si la banda aún no existe no puede quedarse sin sitio.
+    prueba('con salida si la banda no está lista',
+      /else banda\.appendChild\(el\)/.test(nf));
+
+    const note = /\.m-band-note\s*\{([^}]*)\}/.exec(cs);
+    prueba('ya no se clava a la izquierda',
+      !!note && !/left:\s*20px/.test(note[1]) && !/position:\s*absolute/.test(note[1]),
+      (note && note[1] || '').trim());
+
+    const grupoCss = /\.m-band-ico\s*\{([^}]*)\}/.exec(cs);
+    prueba('el grupo sigue a la derecha',
+      !!grupoCss && /right:\s*\d+px/.test(grupoCss[1]));
+    prueba('y separa sus hijos',
+      !!grupoCss && /gap:\s*\d+px/.test(grupoCss[1]));
+
+    // Persona y no engranaje. Lleva a Ajustes igual, pero en una
+    // esquina un botón suelto se reconoce por la forma.
+    prueba('el botón de Ajustes es un perfil',
+      /id="mSet"[\s\S]{0,120}ti-user-circle/.test(sh));
+    prueba('y conserva su etiqueta para lectores de pantalla',
+      /id="mSet" aria-label="Settings"/.test(sh));
+  }
+
   console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
     '   ·   ' + (ok + mal) + ' comprobaciones');
   process.exit(mal ? 1 : 0);

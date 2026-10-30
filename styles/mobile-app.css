@@ -1928,10 +1928,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
 
   /* Lo que se queda: a la izquierda, misma forma que ajustes. */
-  .m-band-note {
-    position: absolute; left: 20px; bottom: 0; z-index: 3;
-    height: 52px; display: flex; align-items: center;
-  }
+  /* Ya no se posiciona: es un hijo más del grupo de la derecha y el
+   * flex del padre la coloca. Clavarla a la izquierda era lo que
+   * mandaba los dos botones a esquinas opuestas. */
+  .m-band-note { display: flex; align-items: center; }
   body.m-shell .m-ico-alert {
     background: rgba(248,113,113,.20);
     border-color: rgba(248,113,113,.38);
