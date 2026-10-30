@@ -38,6 +38,19 @@
 
   let _vendor = null;        // null = resumen
   let _revisar = false;      // true = la pantalla de revisión del _vendor
+  // La FOTO de lo que se está confirmando, tomada al entrar.
+  //
+  // No se puede repintar la revisión consultando `proveedores()` cada
+  // vez: en cuanto la orden se guarda, sus líneas dejan de estar
+  // pendientes y ese proveedor desaparece de la lista. Y como
+  // `loadOrdersFromCloud()` dispara un repintado a mitad del envío, la
+  // pantalla se desmontaba sola — los pasos 2 y 3 no se veían y
+  // acababas en la lista sin confirmación, con el correo ya enviado.
+  //
+  // Una pantalla de confirmar tiene que enseñar lo que vas a confirmar,
+  // congelado. Que cambie bajo los pies mientras la miras es lo
+  // contrario de confirmar.
+  let _vista = null;         // { nombre, filas, total, botellas, sinPrecio }
   let _to = [];              // destinatarios de ESTE envío
   let _recordar = true;      // guardarlos en vendor_defaults al enviar
   let _cargandoDest = false;
@@ -224,7 +237,18 @@
 
     host.querySelector('#moBack').onclick = () => { _vendor = null; pintar(host); };
     const env = host.querySelector('#moSend');
-    if (env) env.onclick = () => { salirRevision(); _revisar = true; pintar(host); };
+    if (env) env.onclick = () => {
+      salirRevision();
+      _revisar = true;
+      _vista = {
+        nombre: v.nombre,
+        filas: v.filas.slice(),
+        total: v.total,
+        sinPrecio: v.sinPrecio,
+        botellas: v.filas.reduce((s, r) => s + cantidad(r), 0)
+      };
+      pintar(host);
+    };
     const add = host.querySelector('#moAdd');
     if (add) add.onclick = () => {
       // Se le pasa el proveedor. Sin él, el diálogo mira la pestaña
@@ -259,6 +283,7 @@
     _colocando = false; _paso = 0;
     _falloCorreo = false; _colocada = null;
     _enviado = null;
+    _vista = null;
   }
 
   const EMAIL = /^[^\s@,]+@[^\s@,]+\.[^\s@,]{2,}$/;
@@ -306,10 +331,11 @@
   function pintarRevision(host) {
     if (_enviado) return pintarEnviado(host);
 
-    const v = proveedores().find(x => x.nombre === _vendor);
-    if (!v) { _revisar = false; _vendor = null; return pintarResumen(host); }
+    // De la FOTO, no de `proveedores()`. Ver el comentario de `_vista`.
+    const v = _vista;
+    if (!v) { salirRevision(); _vendor = null; return pintarResumen(host); }
 
-    const botellas = v.filas.reduce((s, r) => s + cantidad(r), 0);
+    const botellas = v.botellas;
 
     host.innerHTML = `
       <button type="button" class="m-back m-back-gde" id="mrBack">
@@ -754,7 +780,10 @@
 
   function pintar(host) {
     if (!host) return;
-    if (_vendor && _revisar) pintarRevision(host);
+    // La revisión manda mientras esté abierta, aunque el proveedor ya
+    // no tenga líneas pendientes — que es justo lo que pasa en cuanto
+    // la orden se guarda.
+    if (_revisar) pintarRevision(host);
     else if (_vendor) pintarDetalle(host);
     else pintarResumen(host);
   }

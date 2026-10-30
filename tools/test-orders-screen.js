@@ -106,7 +106,23 @@ function pantalla(extra) {
     w.__guardadas.push(o);
   };
   w.__recargado = 0;
-  w.loadOrdersFromCloud = async () => { w.__recargado++; };
+  // ── Fiel a lo que pasa de verdad, y esto importa ─────────────────
+  //
+  // Releer de la nube marca las lineas como colocadas Y dispara un
+  // repintado. Las dos cosas juntas son las que destaparon el fallo:
+  // el proveedor desaparece de `proveedores()` a mitad del envio, y
+  // una pantalla de revision que consulte datos vivos se desmonta
+  // sola — los pasos 2 y 3 no se ven y acabas en la lista sin
+  // confirmacion, con el correo ya enviado.
+  //
+  // Con el stub mudo de antes, todo pasaba y en el telefono fallaba.
+  w.loadOrdersFromCloud = async () => {
+    w.__recargado++;
+    const puestas = new Set();
+    w.__guardadas.forEach(o => (o.items || []).forEach(i => puestas.add(i.item)));
+    w.isRowPlaced = (r) => puestas.has(r && r.item);
+    if (w.BarStockMobileOrders) w.BarStockMobileOrders.refresh();
+  };
 
   w.__defaults = { SOUTHERN: {
     vendor_email: 'orders@southern.com, pedro@southern.com',
