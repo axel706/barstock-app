@@ -73,6 +73,57 @@ prueba('y el del móvil', /^0 \.043em 0 \.022em$/.test(margen(dotMov)), margen(d
 prueba('ni en los estilos en línea',
   !/align-self:flex-end/.test(html.split('brand-logo-dot')[1] || ''));
 
+grupo('"Stock" viaja de verde a azul, y no desaparece si no se puede');
+{
+  const shell = fs.readFileSync(path.join(__dirname, '..', 'src', 'mobile-shell.js'), 'utf8');
+  const hoja = fs.readFileSync(path.join(__dirname, '..', 'styles', 'mobile-app.css'), 'utf8');
+
+  prueba('la banda parte el wordmark en Bar + Stock',
+    /Bar<b class="m-logo-st">Stock<\/b>/.test(shell));
+  // Copiar el logo tiene que seguir dando "BarStock", no "Bar Stock".
+  prueba('sin espacio entre las dos mitades',
+    !/Bar\s+<b class="m-logo-st">/.test(shell));
+  prueba('y el punto sigue detrás',
+    /<\/b>\s*'?\s*\+?\s*'?<i class="m-logo-dot">/.test(shell.replace(/\n\s*/g, '')));
+
+  // ── Lo importante de todo esto ─────────────────────────────────
+  //
+  // `background-clip: text` necesita `color: transparent`. Donde no
+  // esté soportado, eso es un logo INVISIBLE. El color sólido tiene
+  // que declararse fuera del @supports y antes.
+  const fuera = /\.m-logo \.m-logo-st\s*\{([^}]*)\}/.exec(hoja);
+  prueba('hay un color sólido de respaldo',
+    !!fuera && /color:\s*#[0-9a-f]{3,6}/i.test(fuera[1]), (fuera && fuera[1] || '').trim());
+  prueba('y no es transparente',
+    !!fuera && !/color:\s*transparent/.test(fuera[1]));
+
+  prueba('el degradado va dentro de un @supports',
+    /@supports[^{]*background-clip:\s*text[^{]*\{[\s\S]{0,600}?\.m-logo \.m-logo-st/.test(hoja));
+  prueba('con el prefijo -webkit, que es quien lo soporta en iOS',
+    /-webkit-background-clip:\s*text/.test(hoja));
+  prueba('acaba en el azul del punto',
+    /linear-gradient\([^)]*#38bdf8[^)]*\)/.test(hoja) &&
+    /\.m-logo \.m-logo-dot[\s\S]{0,200}background:\s*#38bdf8/.test(hoja));
+
+  // text-shadow sobre texto transparente pinta la sombra POR DELANTE
+  // del degradado. Pero quitarla a secas deja "Stock" sin contraste
+  // sobre la foto de la banda mientras "Bar" sí la tiene.
+  // Se busca el bloque POR SU CONTENIDO y no "el primero después de
+  // un @supports": hay otros @supports antes en la hoja, y con una
+  // búsqueda perezosa se capturaba la regla de respaldo en su lugar.
+  const dentro = /\.m-logo \.m-logo-st\s*\{([^}]*-webkit-background-clip[^}]*)\}/.exec(hoja);
+  prueba('se quita la sombra de texto',
+    !!dentro && /text-shadow:\s*none/.test(dentro[1]));
+  prueba('pero se repone como drop-shadow',
+    !!dentro && /filter:\s*drop-shadow/.test(dentro[1]));
+
+  // Esto NO puede salir de la banda: en los correos no hay
+  // background-clip y el logo saldría en blanco.
+  const correo = fs.existsSync(path.join(__dirname, '..', 'lib', 'email-shell.js'))
+    ? fs.readFileSync(path.join(__dirname, '..', 'lib', 'email-shell.js'), 'utf8') : '';
+  prueba('no se coló en los correos', !/background-clip/.test(correo));
+}
+
 console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
   '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);

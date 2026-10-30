@@ -93,7 +93,12 @@
       '</span>' +
       // El punto es un círculo, no un carácter. Ver el brandbook: es la
       // regla que más se incumple.
-      '<span class="m-logo">BarStock<i class="m-logo-dot"></i><em>PRO</em></span>' +
+      // "Stock" va en su propio <b> para poder teñirlo aparte: lleva el
+      // degradado de verde a azul que acaba en el punto. Es un <b> sin
+      // peso extra —el wordmark entero ya es 800— y no un <span>,
+      // porque así el texto copiado sigue diciendo "BarStock".
+      '<span class="m-logo">Bar<b class="m-logo-st">Stock</b>' +
+        '<i class="m-logo-dot"></i><em>PRO</em></span>' +
       // Sin boton de luna: en el telefono el modo claro no existe (ver
       // la cabecera de mobile-app.css). Un boton que no hace nada es
       // peor que no tener boton.

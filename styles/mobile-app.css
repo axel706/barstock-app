@@ -434,6 +434,51 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* El sufijo es 0.37 del cuerpo del wordmark, como dice el brandbook,
    * y el hueco 0.152. Fuera de la escala de la app a propósito: el
    * logo no cambia de tamaño porque alguien suba el texto. */
+  /* ── "Stock" viaja de verde a azul ────────────────────────────────
+   *
+   * El punto siempre fue azul y el wordmark blanco, así que el punto
+   * era EL acento: un solo color, deliberado, una firma. Al teñir
+   * "Stock" de verde dejaba de serlo y pasaba a ser un segundo color
+   * suelto — dos tonos de temperaturas distintas peleando en nueve
+   * caracteres.
+   *
+   * Con el degradado el punto recupera su razón de ser: no es un color
+   * aparte, es el final del recorrido. La palabra sale verde y aterriza
+   * en el azul del punto.
+   *
+   * ── El color sólido va PRIMERO, y no es decorativo ───────────────
+   *
+   * `background-clip: text` necesita `color: transparent` para que se
+   * vea el fondo. Donde no esté soportado, un texto transparente es un
+   * texto INVISIBLE: el logo desaparece. Por eso el verde sólido se
+   * declara antes y el degradado entra dentro de un @supports.
+   *
+   * Y por eso esto vive sólo aquí, en la banda del móvil. En los
+   * correos no funcionaría —Outlook y Gmail no soportan
+   * background-clip— y el logo saldría en blanco. Si algún día se
+   * quiere en el correo o el PDF, hay que usar la versión de color
+   * sólido, no ésta. */
+  .m-logo .m-logo-st { font-weight: inherit; color: #6ee7b7; }
+
+  @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    .m-logo .m-logo-st {
+      background: linear-gradient(95deg, #6ee7b7 0%, #5eead4 45%, #38bdf8 100%);
+      -webkit-background-clip: text;
+              background-clip: text;
+      color: transparent;
+      /* `text-shadow` sobre texto transparente dibuja la sombra de la
+       * forma de la letra POR DELANTE del degradado y lo emborrona.
+       * Se anula la heredada y se repone como `drop-shadow`, que se
+       * aplica al resultado ya pintado.
+       *
+       * No es un capricho: la banda va sobre la foto de la locación y
+       * sin sombra "Stock" se pierde sobre un fondo claro, mientras
+       * "Bar" —que sí la conserva— seguiría leyéndose. */
+      text-shadow: none;
+      filter: drop-shadow(0 1px 7px rgba(0,0,0,.55));
+    }
+  }
+
   .m-logo em {
     font-style: normal; font-size: .37em; font-weight: 700;
     letter-spacing: .08em; text-transform: uppercase;
