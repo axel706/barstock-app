@@ -2237,7 +2237,23 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * Hacerlo todo bien y no decirlo se lee igual que fallar. Antes la
    * pantalla se cerraba sola y te devolvía a la lista sin una palabra,
    * con el correo ya en la bandeja del proveedor. */
-  .m-rev-ok { text-align: center; padding: 26px 14px 10px; }
+  /* Centrada en lo que queda de pantalla, no pegada arriba. Es la
+   * única pantalla de la app que no es una lista: no hay nada debajo
+   * que justifique empezar por el borde de arriba, y así quedaba un
+   * tercio de contenido y dos tercios de vacío.
+   *
+   * La cuenta descuenta lo que ya reservan la banda (52) y la barra de
+   * abajo (102, el mismo número del padding del body), más las zonas
+   * seguras del teléfono. `dvh` y no `vh`: en iOS el `vh` cuenta con
+   * la barra del navegador aunque esté recogida, y centraría bajo. */
+  .m-rev-ok {
+    text-align: center; padding: 20px 14px;
+    min-height: calc(100vh - 154px);
+    min-height: calc(100dvh - 154px
+                     - env(safe-area-inset-top, 0px)
+                     - env(safe-area-inset-bottom, 0px));
+    display: flex; flex-direction: column; justify-content: center;
+  }
   .m-rev-ok-i {
     width: 62px; height: 62px; margin: 0 auto 16px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
