@@ -639,13 +639,65 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* Columna: arriba texto y cifra, abajo una fila entera para el pie
    * y los botones. El texto crece y empuja esa fila al suelo, así que
    * los botones quedan a la misma altura en todas las tarjetas. */
+  /* ── LA PLANTILLA ──────────────────────────────────────────────────
+   *
+   * Altura FIJA. No min-height, no "lo que mida el contenido": fija.
+   *
+   * Antes la altura la decidía la tarjeta más alta, porque el carril
+   * estira todas a la mayor. En la práctica eso significaba que la
+   * tarjeta de cuatro proveedores —con una barra de progreso y un
+   * chevron de 30px por fila— agrandaba la bienvenida, el ciclo y
+   * Running out de paso, y el Home entero crecía.
+   *
+   * ── Por qué NO hay un `height: 188px` aquí ───────────────────────
+   *
+   * Lo intenté y estaba mal. Clavar el total obliga a que la suma de
+   * las partes —encabezado, título, cuerpo, pie— quepa exactamente en
+   * ese número, y esa suma depende de la altura de línea real de
+   * Manrope y del ajuste de "Text size" del usuario. Si me paso por
+   * dos píxeles, `overflow:hidden` recorta los BOTONES y eso se
+   * descubre en el teléfono, no aquí.
+   *
+   * Al revés es determinista: lo que se clava es el CUERPO, que es lo
+   * único que variaba entre tarjetas. Todas tienen las mismas partes
+   * —encabezado, título, tres renglones, pie—, así que todas miden lo
+   * mismo sin que nadie escriba cuánto. El total sale ~188px, pero
+   * nadie depende de ese número.
+   *
+   * Si algún día quieres la tarjeta más alta, sube --m-ren o mete un
+   * cuarto renglón. No hay un total que tocar. */
   .m-hero {
+    /* 1.5 × la base del texto, no 21px fijos: así el renglón sigue al
+     * ajuste de "Text size" como todo lo demás de la app. */
+    --m-ren: calc(var(--m-base) * 1.5);
     display: flex; flex-direction: column; padding: 13px;
     border-radius: 20px; box-sizing: border-box;
+    overflow: hidden;
   }
   .m-hero-top { display: flex; gap: 10px; flex: 1 1 auto; min-height: 0; }
-  .m-hero-txt { flex: 1; min-width: 0; }
+  .m-hero-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .m-hero-r { width: 82px; flex: 0 0 82px; text-align: right; }
+
+  /* ── El cuerpo: tres renglones y ni uno más ────────────────────────
+   *
+   * El margen negativo recupera los 82px que la columna de la cifra
+   * reserva en TODA la altura de la tarjeta y que, debajo de la cifra,
+   * no usa nadie. Sin esto lo alineado a la derecha —"out", "8.4/wk",
+   * "no price", "96 lines · 238 btl"— se para 82px antes del borde y
+   * parece mal alineado, porque lo está.
+   *
+   * El `overflow: hidden` es el cinturón: si alguna tarjeta mete un
+   * cuarto renglón, se corta en vez de empujar. Mejor perder una fila
+   * que descuadrar el carril entero. */
+  .m-hero-cuerpo {
+    height: calc(var(--m-ren) * 3);
+    margin-top: 9px; margin-right: -82px;
+    overflow: hidden;
+  }
+  /* Prosa no es lista: una frase que ocupa tres líneas no son tres
+   * elementos. Se le deja el ancho normal —no llega al borde— y un
+   * interlineado de leer, no de tabla. */
+  .m-hero-cuerpo.es-prosa { margin-right: 0; }
   /* El encabezado de tarjeta pesaba lo mismo que el pie: 11px y el
    * mismo gris. Sube a la escala, aclara el color y abre el
    * espaciado — es lo que dice de qué va la tarjeta. */
@@ -670,7 +722,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     position: relative; top: .06em;
   }
   .m-hero-t { font-size: var(--m-head); font-weight: 800; color: #fff; letter-spacing: -.5px; margin-top: 4px; }
-  .m-hero-s { font-size: var(--m-small); color: #c3d2e2; margin-top: 6px; line-height: 1.4; }
+  /* Sin margin-top: lo pone ya el cuerpo. Tenerlo aquí sumaba 6px que
+   * salían del presupuesto de los tres renglones. */
+  .m-hero-s { font-size: var(--m-small); color: #c3d2e2; line-height: 1.38; }
   /* ── La línea de tiempo del ciclo ──────────────────────────────────
    *
    * Tres momentos, siempre tres: se contó, llegó mercancía, esto es lo
@@ -680,18 +734,24 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    *
    * El punto de hoy va hueco y el hilo muere antes de llegar: lo de
    * arriba ya pasó, lo de abajo todavía no. */
-  .m-hero-tl { margin: 11px 0 0; padding: 0; list-style: none; }
+  .m-hero-tl { margin: 0; padding: 0; list-style: none; }
+  /* Un renglón de la plantilla, como cualquier otra fila. Centrado en
+   * vez de alineado arriba: con el alto clavado, `flex-start` dejaba el
+   * texto pegado al borde de su fila. */
   .m-hero-tl li {
     position: relative; display: flex; gap: 9px;
-    align-items: flex-start; padding: 4px 0;
+    align-items: center; height: var(--m-ren);
   }
   .m-hero-tl li::before {
     content: ''; flex: 0 0 7px; width: 7px; height: 7px;
-    border-radius: 50%; background: #2dd4bf; margin-top: .42em;
+    border-radius: 50%; background: #2dd4bf;
   }
+  /* El hilo entre puntos. Con el alto fijo se puede calcular en vez de
+   * perseguirlo con `bottom`: arranca bajo el punto y llega al
+   * siguiente. */
   .m-hero-tl li:not(:last-child)::after {
     content: ''; position: absolute; left: 3px;
-    top: calc(.42em + 11px); bottom: -4px; width: 1px;
+    top: calc(50% + 5px); height: calc(var(--m-ren) - 10px); width: 1px;
     background: rgba(255,255,255,.16);
   }
   /* Con el ciclo abierto de más la tarjeta se pone ámbar, y un punto
@@ -713,7 +773,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-hero-tl p { margin: 0; font-size: var(--m-small); color: #dbe7f3; line-height: 1.35; }
   .m-hero-tl em { font-style: normal; font-weight: 700; color: #fff; }
 
-  .m-hero-list { display: flex; flex-direction: column; gap: 3px; margin-top: 7px; }
+  /* Sin margin-top: lo pone el cuerpo. Y cada ítem vale un renglón de
+   * la plantilla, como en todas las demás tarjetas. */
+  .m-hero-list { display: flex; flex-direction: column; }
+  .m-hero-list > span { height: var(--m-ren); display: flex; align-items: center; }
   .m-hero-list span { font-size: var(--m-small); color: #c3d2e2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .m-hero-list b { color: #fff; font-weight: 700; }
   .m-hero-amt { font-size: var(--m-title); font-weight: 800; color: #fff; letter-spacing: -.5px; }
@@ -731,7 +794,24 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * columna reserva su ancho en toda la altura de la tarjeta y de la
    * primera línea para abajo no hay nada que esquivar. Es el mismo
    * arreglo que la tarjeta de bienvenida. */
-  .m-hero-ln, .m-hero-pv { margin-top: 10px; margin-right: -80px; }
+  /* El margen y el desplazamiento los pone ya .m-hero-cuerpo, que es
+   * quien manda sobre el alto. Tenerlos aquí los sumaba dos veces. */
+  .m-hero-ln, .m-hero-pv { margin: 0; }
+
+  /* ── El renglón, igual para las cuatro tarjetas ────────────────────
+   *
+   * Izquierda crece y se recorta con puntos suspensivos; derecha se
+   * pega al borde y NUNCA encoge. Un nombre largo se corta en vez de
+   * empujar el precio fuera de la tarjeta, que es lo que pasaba con
+   * "Chateau Lassegue Les Cadrans De Lassegue Grand Cru 2020". */
+  .m-hero-cuerpo .izq {
+    flex: 1; min-width: 0; display: flex; align-items: center;
+    gap: 9px; overflow: hidden;
+  }
+  .m-hero-cuerpo .der {
+    flex: 0 0 auto; display: flex; align-items: center;
+    gap: 8px; white-space: nowrap;
+  }
 
   /* Filas apretadas a propósito. Cada píxel de relleno aquí se
    * multiplica por el número de filas y luego por TODAS las tarjetas
@@ -744,8 +824,14 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * entero, porque todas las tarjetas miden lo que la mas alta.
    * Por eso van ancladas a .m-hero-ln, que es lo unico que las
    * distingue de las del historial. */
-  .m-hero-ln .m-hln { display: flex; align-items: center; gap: 9px; padding: 3px 0; line-height: 1.3; }
-  .m-hero-ln .m-hln + .m-hln { border-top: 1px solid rgba(255,255,255,.08); }
+  /* Un renglón de la plantilla. Sin divisorias: con el alto clavado ya
+   * se leen como filas, y la línea entre cada una hacía que la tarjeta
+   * pareciera papel de libreta. */
+  .m-hero-ln .m-hln {
+    display: flex; align-items: center; gap: 9px;
+    height: var(--m-ren); padding: 0; line-height: 1;
+  }
+  .m-hero-ln .m-hln + .m-hln { border-top: 0; }
   /* La cantidad a la IZQUIERDA y pegada al borde de la tarjeta. Es el
    * dato que se lee primero —cuántas se piden— y alineado a la derecha
    * dentro de su columna quedaba flotando en mitad de la nada. */
@@ -770,35 +856,36 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-hero-red .m-hero-ln .m-hln .v { color: #e2a9a9; }
   .m-hero-red .m-hero-mas { color: #e2a9a9; }
 
+  /* ── Un proveedor ocupa UN renglón ─────────────────────────────────
+   *
+   * Antes esta fila llevaba el nombre, su cuenta, una barra de
+   * progreso debajo y un chevron redondo de 30px al lado: valía por
+   * dos renglones largos. Con cuatro proveedores la tarjeta crecía
+   * tanto que arrastraba al carril entero, y el Home con él.
+   *
+   * La barra comparaba a los proveedores ENTRE SÍ y eso no es una
+   * carrera: que LOOP tenga 96 líneas y Wine Merchant 12 ya lo dice
+   * el número, y el primero siempre llenaba la barra pasara lo que
+   * pasara. Costaba el doble de alto para no añadir una lectura. */
   body.m-shell .m-hpv {
-    display: flex; align-items: center; gap: 10px;
-    width: 100%; padding: 8px 0; text-align: left;
+    display: flex; align-items: center; gap: 9px;
+    width: 100%; height: var(--m-ren); padding: 0; text-align: left;
     background: none; border: none; cursor: pointer;
   }
-  body.m-shell .m-hpv + .m-hpv { border-top: 1px solid rgba(255,255,255,.08); }
-  .m-hpv .co { flex: 1; min-width: 0; display: block; }
-  .m-hpv .h { display: flex; align-items: baseline; gap: 8px; }
+  body.m-shell .m-hpv + .m-hpv { border-top: 0; }
   .m-hpv .nm {
-    flex: 1; min-width: 0; font-size: var(--m-small); font-weight: 700; color: #fff;
+    min-width: 0; font-size: var(--m-small); font-weight: 700; color: #fff;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .m-hpv .d { font-size: var(--m-meta); color: #a9bacd; white-space: nowrap; }
-  .m-hpv .bar {
-    display: block; height: 4px; border-radius: 2px;
-    background: rgba(255,255,255,.14); margin-top: 6px; overflow: hidden;
-  }
-  .m-hpv .bar i { display: block; height: 100%; background: #38bdf8; border-radius: 2px; }
-  /* Redondo y del tamaño de un dedo: es el control de la fila, no un
-   * adorno. app.css fuerza border-radius en los botones, así que el
-   * 50% va con el selector que sí gana. */
-  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hpv .chev {
-    flex: 0 0 30px; width: 30px; height: 30px; border-radius: 50% !important;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.16);
-    color: #cfe8fb; font-size: var(--m-small);
-  }
+  /* Sin círculo: es un indicio de que se puede entrar, no un botón
+   * aparte. La zona táctil es la fila entera, que mide 21px de alto
+   * pero ocupa todo el ancho de la tarjeta. */
+  .m-hpv .chev { color: #8fb6d6; font-size: var(--m-strong); line-height: 1; flex: 0 0 auto; }
 
-  .m-hero-mas { font-size: var(--m-meta); color: #8fa3b8; margin-top: 6px; }
+  /* Va FUERA del cuerpo de tres renglones y pegado a él, no dentro:
+   * si entrara dentro se comería uno de los tres. */
+  .m-hero-mas { font-size: var(--m-meta); color: #8fa3b8; margin-top: 4px; }
 
   /* ── Buscar facturas nuevas, desde la tarjeta ──────────────────────
    *
@@ -847,9 +934,22 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * misma fila y ocupando la tarjeta entera. `margin-right: auto` en
    * el pie empuja todo lo demás contra el borde derecho; si no hay
    * pie, los botones siguen a la derecha por el justify-content. */
+  /* `margin-top: auto` y no un número: el pie se pega al SUELO de la
+   * tarjeta, no al final del texto. Con la altura fija eso deja los
+   * botones a la misma altura en las cuatro tarjetas, que es lo que
+   * se nota al deslizar el carrusel. */
+  /* `margin-top: auto` empuja el pie al SUELO de la tarjeta, no al
+   * final del texto: los botones quedan a la misma altura en las
+   * cuatro.
+   *
+   * El `min-height` es lo que hace que la bienvenida —que no tiene
+   * botones— mida igual que las demás. Va atado al alto del botón de
+   * abajo, así que si uno cambia hay que cambiar el otro; por eso
+   * comparten la misma cuenta. */
   .m-hero-acts {
     display: flex; align-items: center; justify-content: flex-end;
-    gap: 8px; margin-top: 10px;
+    gap: 8px; margin-top: auto; padding-top: 8px;
+    min-height: calc(var(--m-base) * 2.64 + 8px);
   }
   .m-hero-acts .m-hero-vs { margin-right: auto; text-align: left; }
 
@@ -880,7 +980,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * sólo texto. Así que la columna derecha se encoge al icono y el
    * texto crece, que es lo que se pedía de ella. */
   .m-hero-ancha .m-hero-r { width: 30px; flex: 0 0 30px; }
-  .m-hero-ancha .m-hero-acts { margin-top: 14px; }
+  /* Sin cifra ni botones, el párrafo puede usar los tres renglones
+   * enteros y el pie ya va pegado al suelo por el `margin-top: auto`
+   * de arriba. */
+  .m-hero-ancha .m-hero-cuerpo { margin-right: -30px; }
   /* El párrafo se sale de la columna de texto y pasa por debajo del
    * icono. El icono ocupa una línea arriba a la derecha, pero su
    * columna reservaba 40px de ancho en TODA la altura de la tarjeta,
@@ -889,8 +992,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * encabezado, que sí convive con el icono.
    * `pretty` además evita que la última línea quede con una palabra
    * suelta; donde no esté soportado simplemente no hace nada. */
+  /* Sin margin-top: lo pone el cuerpo, y tenerlo aquí lo sumaba dos
+   * veces y empujaba la cuarta línea fuera de los tres renglones. */
   .m-hero-ancha .m-hero-s {
-    font-size: var(--m-body); line-height: 1.45; margin-top: 8px;
+    font-size: var(--m-body); line-height: 1.45;
     margin-right: -40px;
     text-wrap: pretty;
   }

@@ -104,10 +104,18 @@ const linea = (item, qty, precio) => ({ item, toOrder: qty, value: precio, code:
     prueba('el que más botellas pide va primero',
       nombres[0] === 'SOUTHERN', nombres.join(' | '));
 
-    // La barra del primero llena; las demás en proporción a él.
-    const anchos = Array.from(ord(h).querySelectorAll('.m-hpv .bar i'))
-      .map(e => e.getAttribute('style'));
-    prueba('la primera barra va al 100%', /width:\s*100%/.test(anchos[0] || ''), anchos[0]);
+    // Las barras de progreso se quitaron al unificar la plantilla.
+    // Comparaban a los proveedores ENTRE SÍ, que no es una carrera: el
+    // primero llenaba la barra siempre, pasara lo que pasara. Y
+    // costaban el doble de alto por fila, que era lo que hacía crecer
+    // al carril entero.
+    //
+    // La cuenta sigue estando, en texto, donde se lee mejor.
+    prueba('ya no hay barras de progreso',
+      !ord(h).querySelector('.m-hpv .bar'));
+    const cuentas = Array.from(ord(h).querySelectorAll('.m-hpv .d')).map(e => e.textContent);
+    prueba('cada proveedor dice sus líneas y botellas',
+      /lines?\s*·\s*\d+ btl/.test(cuentas[0] || ''), cuentas.join(' | '));
 
     grupo('cada fila entra en SU orden, no en el índice');
     ord(h).querySelectorAll('.m-hpv')[1].click();
@@ -140,12 +148,17 @@ const linea = (item, qty, precio) => ({ item, toOrder: qty, value: precio, code:
     prueba('el título es el proveedor', /SOUTHERN/.test(txt(h)), txt(h).slice(0, 60));
     prueba('y no "1 vendor"', !/1 vendor/.test(txt(h)));
     prueba('no hay índice', !ord(h).querySelector('.m-hpv'));
-    // Dos y el resto contado: cada fila de mas estira el carril entero,
-    // porque todas las tarjetas miden lo que la mas alta.
-    prueba('enseña dos líneas',
-      ord(h).querySelectorAll('.m-hln').length === 2,
+    // TRES, que es lo que cabe en el cuerpo de la plantilla.
+    //
+    // Eran dos, y el comentario de entonces decía por qué: cada fila
+    // de más estiraba el carril entero, porque todas las tarjetas
+    // medían lo que la más alta. Eso se arregló fijando el cuerpo en
+    // tres renglones, así que la tercera ya no cuesta nada y el hueco
+    // vacío sobraba.
+    prueba('enseña tres líneas',
+      ord(h).querySelectorAll('.m-hln').length === 3,
       String(ord(h).querySelectorAll('.m-hln').length));
-    prueba('y cuenta el resto en el pie', /and 4 more · 6 lines/.test(txt(h)), txt(h));
+    prueba('y cuenta el resto en el pie', /and 3 more · 6 lines/.test(txt(h)), txt(h));
 
     const vs = Array.from(ord(h).querySelectorAll('.m-hln .v')).map(e => e.textContent);
     prueba('el importe de la línea es precio × cantidad',

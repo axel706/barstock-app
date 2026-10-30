@@ -573,25 +573,23 @@
       const u = v[0];
       return Object.assign(base, {
         tt: u.nombre,
-        // DOS y el resto contado: cada fila estira el carril entero, no
-        // sólo esta tarjeta. Con los nombres largos del catálogo la
-        // tercera no aportaba una lectura más, sólo alto: el pie ya
-        // dice cuántas quedan y el botón entra a la orden completa.
-        filas: u.filas.slice(0, 2).map(r => ({
+        // TRES, que es lo que cabe en el cuerpo de la plantilla. Antes
+        // eran dos porque cada fila estiraba el carril entero; ahora la
+        // altura está fija en el CSS y tres es tres en todas.
+        filas: u.filas.slice(0, 3).map(r => ({
           q: cuantas(r) + '×',
           n: r.item || '',
           v: Number(r.value) > 0 ? money(Number(r.value) * cuantas(r)) : 'no price'
         })),
         mas: '',
-        vs: u.filas.length > 2
-          ? 'and ' + (u.filas.length - 2) + ' more · ' + pie
+        vs: u.filas.length > 3
+          ? 'and ' + (u.filas.length - 3) + ' more · ' + pie
           : pie,
         btn: 'Review the order',
         go: irA(u.nombre)
       });
     }
 
-    const tope = Math.max.apply(null, v.map(x => x.btl)) || 1;
     return Object.assign(base, {
       tt: v.length + ' vendors',
       // Tres como mucho: la cuarta fila ya empuja el carril entero.
@@ -599,12 +597,17 @@
         nombre: x.nombre,
         d: x.filas.length + (x.filas.length === 1 ? ' line · ' : ' lines · ') +
            x.btl + ' btl',
-        // Proporción entre ellos, no contra un objetivo: el primero
-        // siempre llena la barra.
-        pct: Math.round(x.btl / tope * 100),
         go: irA(x.nombre)
       })),
-      mas: v.length > 3 ? 'and ' + (v.length - 3) + ' more' : '',
+      // El "and N more" va en el PIE, no en una línea suya.
+      //
+      // Antes esta tarjeta usaba `mas` y `vs` a la vez: dos renglones
+      // de pie. Con la altura libre simplemente crecía; con la altura
+      // fija se habría comido los botones. La de un solo proveedor ya
+      // lo hacía así —"and 4 more · 7 lines · $147"— y ahora las dos
+      // dicen lo mismo en el mismo sitio.
+      mas: '',
+      vs: (v.length > 3 ? 'and ' + (v.length - 3) + ' more · ' : '') + pie,
       btn: 'Review all',
       btnTono: 'suave',
       go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('orders'); }
@@ -894,15 +897,14 @@
         (b.fuera - a.fuera) || (b.avg - a.avg) || (a.dias - b.dias));
 
       const fuera = pronto.filter(x => x.fuera).length;
-      // DOS. Ésta es la tarjeta más alta del carril, así que es la
-      // que fija la altura de TODAS: la bienvenida, el ciclo y las
-      // órdenes crecen con ella. Cada fila que se le quita encoge el
-      // Home entero.
+      // TRES, los que caben en el cuerpo de la plantilla.
       //
-      // Con dos sigue contestando lo que importa —qué es lo que más
-      // duele— y el resto lo cuenta el pie. La lista completa está a
-      // un toque en "See them".
-      const CUANTAS = 2;
+      // Esto era DOS, y el comentario de entonces explicaba por qué:
+      // ésta era la tarjeta más alta del carril y por tanto la que
+      // fijaba la altura de todas, así que cada fila de más agrandaba
+      // el Home entero. Ya no manda nadie: la altura está fija en el
+      // CSS y sobraba un renglón vacío.
+      const CUANTAS = 3;
       const resto = pronto.length - Math.min(CUANTAS, pronto.length);
 
       t.push({
@@ -982,6 +984,21 @@
             <div class="m-hero-k">${c.kHtml ? c.k : esc(c.k)}</div>
             <div class="m-hero-t">${esc(c.tt)}</div>
             ${c.barra !== undefined ? `<div class="m-prog"><i style="width:${c.barra}%"></i></div>` : ''}
+
+            <!-- ── El cuerpo, con altura fija ────────────────────────
+                 Tres renglones del mismo alto, se llenen o no. Antes
+                 cada tipo de contenido traía su propio alto de fila
+                 —la línea de tiempo uno, las filas de una orden otro,
+                 y el índice de proveedores el doble por la barra de
+                 progreso— así que cada tarjeta medía distinto.
+
+                 El carril estira todas a la más alta, de modo que la
+                 tarjeta de cuatro proveedores agrandaba el Home
+                 entero. Fijando el alto AQUÍ, en un solo sitio, da
+                 igual qué meta cada tarjeta: ninguna puede crecer.
+
+                 Lo que no entra se cuenta en el pie ("and N more"). -->
+            <div class="m-hero-cuerpo${c.sub || c.lista ? ' es-prosa' : ''}">
             ${c.sub ? `<div class="m-hero-s">${esc(c.sub)}</div>` : ''}
             ${c.lista ? `<div class="m-hero-list">${c.lista.map(x => '<span>' + x + '</span>').join('')}</div>` : ''}
             <!-- La línea de tiempo del ciclo. El texto lleva <em> para
@@ -998,23 +1015,41 @@
                  salen de la columna de la cifra y acaban en el mismo
                  borde que los botones del pie: esa columna reserva 80px
                  en TODA la altura, y ahí abajo no hay nada. -->
+            <!-- Izquierda y derecha, siempre. La izquierda crece y se
+                 recorta con puntos suspensivos; la derecha se pega al
+                 borde de la tarjeta y NUNCA encoge.
+
+                 Antes todo iba en una sola fila flex y un nombre como
+                 "Chateau Lassegue Les Cadrans De Lassegue Grand Cru
+                 2020" empujaba el precio fuera de la tarjeta. -->
             ${c.filas ? `<div class="m-hero-ln">${c.filas.map(x =>
               `<div class="m-hln">
-                 ${x.q ? `<span class="q">${esc(x.q)}</span>` : ''}
-                 <span class="n">${esc(x.n)}</span>
-                 ${x.tag ? `<span class="tag">${esc(x.tag)}</span>` : ''}
-                 <span class="v">${esc(x.v)}</span>
+                 <span class="izq">
+                   ${x.q ? `<span class="q">${esc(x.q)}</span>` : ''}
+                   <span class="n">${esc(x.n)}</span>
+                 </span>
+                 <span class="der">
+                   ${x.tag ? `<span class="tag">${esc(x.tag)}</span>` : ''}
+                   <span class="v">${esc(x.v)}</span>
+                 </span>
                </div>`).join('')}</div>` : ''}
 
+            <!-- Un proveedor ocupa UN renglón, igual que un producto.
+                 Antes llevaba una barra de progreso debajo del nombre
+                 y un chevron redondo de 30px, así que cada fila valía
+                 por dos y tres proveedores no cabían en ninguna
+                 altura razonable.
+
+                 La barra comparaba a los proveedores entre sí, y eso
+                 no es una carrera: que LOOP tenga 96 líneas y Wine
+                 Merchant 12 no dice nada que no diga ya el número. -->
             ${c.prov ? `<div class="m-hero-pv">${c.prov.map((x, k) =>
               `<button type="button" class="m-hpv" data-pv="${i}-${k}">
-                 <span class="co">
-                   <span class="h"><span class="nm">${esc(x.nombre)}</span>
-                     <span class="d">${esc(x.d)}</span></span>
-                   <span class="bar"><i style="width:${x.pct}%"></i></span>
-                 </span>
-                 <span class="chev"><i class="ti ti-chevron-right" aria-hidden="true"></i></span>
+                 <span class="izq"><span class="nm">${esc(x.nombre)}</span></span>
+                 <span class="der"><span class="d">${esc(x.d)}</span>
+                   <i class="ti ti-chevron-right chev" aria-hidden="true"></i></span>
                </button>`).join('')}</div>` : ''}
+            </div>
 
             ${c.mas ? `<div class="m-hero-mas">${esc(c.mas)}</div>` : ''}
           </div>

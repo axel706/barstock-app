@@ -86,13 +86,14 @@ const nombres = (h) => filas(h).map(f => f.querySelector('.n').textContent);
     const h = pintar(w);
     prueba('el que más se mueve va primero',
       /Tito/.test(nombres(h)[0] || ''), nombres(h).join(' | '));
-    // Sólo caben dos filas, así que el que menos se mueve ni sale:
-    // se comprueba que el segundo sea el segundo que más se mueve y
-    // que el amaretto quede fuera.
+    // Caben TRES, que es el cuerpo de la plantilla. Lo que se prueba
+    // es el ORDEN: primero el que más se mueve, y el que menos al
+    // final. Antes cabían dos y el amaretto quedaba fuera; ahora
+    // entra, pero sigue siendo el último.
     prueba('el segundo es el siguiente que más se mueve',
       /White Haven/.test(nombres(h)[1] || ''), nombres(h).join(' | '));
-    prueba('y el que menos no entra',
-      !nombres(h).some(n => /Amaretto/.test(n)), nombres(h).join(' | '));
+    prueba('y el que menos se mueve va al final',
+      /Amaretto/.test(nombres(h)[nombres(h).length - 1] || ''), nombres(h).join(' | '));
     prueba('con su consumo a la derecha',
       filas(h)[0].querySelector('.v').textContent === '12/wk',
       filas(h)[0].querySelector('.v').textContent);
@@ -131,7 +132,10 @@ const nombres = (h) => filas(h).map(f => f.querySelector('.n').textContent);
     // La esquina repetía el título. Ahora dice otra cosa.
     const amt = tarjeta(h).querySelector('.m-hero-amt').textContent.replace(/\s/g, '');
     prueba('la esquina no repite el total', amt === '2outnow', amt);
-    prueba('y el pie cuenta el resto', /and 1 more under a week/.test(txt(h)), txt(h));
+    // Con tres filas y tres productos no sobra ninguno, así que el pie
+    // deja de contar un resto que no existe y dice el total.
+    prueba('y el pie dice el total cuando no sobra nadie',
+      /3 under a week/.test(txt(h)), txt(h));
   }
 
   grupo('sin nada fuera, el titular vuelve al total');
@@ -164,12 +168,16 @@ const nombres = (h) => filas(h).map(f => f.querySelector('.n').textContent);
       ({ item: n, onHand: 0, avg: 10 - i }));
     const w = entorno(seis);
     const h = pintar(w);
-    // Ésta es la tarjeta más alta del carril, así que fija la altura
-    // de todas. Cada fila que se le quita encoge el Home entero.
-    prueba('enseña dos', filas(h).length === 2, String(filas(h).length));
-    // Y el resto se cuenta en el pie, que ya es un renglón dibujado:
-    // una línea propia costaría altura a todas las tarjetas.
-    prueba('el resto va en el pie', /and 4 more under a week/.test(txt(h)), txt(h));
+    // TRES, el cuerpo de la plantilla.
+    //
+    // Antes eran dos porque ésta era la tarjeta más alta del carril y
+    // por tanto la que fijaba la altura de todas: cada fila de más
+    // agrandaba el Home entero. Ya no manda nadie, el cuerpo está
+    // clavado en el CSS, y con dos sobraba un renglón vacío.
+    prueba('enseña tres', filas(h).length === 3, String(filas(h).length));
+    // El resto sigue contándose en el pie, que ya es un renglón
+    // dibujado: una línea propia costaría altura a todas las tarjetas.
+    prueba('el resto va en el pie', /and 3 more under a week/.test(txt(h)), txt(h));
   }
 
   grupo('más de una semana no entra');
