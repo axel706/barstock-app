@@ -2199,14 +2199,30 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * es a quién va y el botón. Las líneas quedan debajo, para repasar
    * si quieres — y si no quieres, no hace falta bajar treinta
    * deslizamientos para encontrar el botón. */
+  /* Una tarjeta de verdad, no un rectángulo con cosas dentro. Más
+   * superficie que el fondo, borde más claro y sombra: lo que la
+   * separa de la lista de abajo es que se lee como UN objeto. */
   .m-rev-enviar {
-    margin-top: 14px; padding: 13px;
-    border-radius: 18px;
-    background: rgba(255,255,255,.05);
-    border: 1px solid rgba(255,255,255,.10);
+    margin-top: 14px; padding: 15px 14px 16px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.045));
+    border: 1px solid rgba(255,255,255,.16);
+    box-shadow: 0 10px 26px rgba(0,0,0,.26);
   }
-  .m-rev-enviar .m-rev-lab:first-child { margin-top: 0; }
-  .m-rev-enviar .m-rev-go { margin-top: 14px; }
+  /* El título es lo que hace que las fichas, el campo y la casilla se
+   * lean como partes de una cosa en vez de tres controles sueltos. */
+  .m-rev-enviar-h {
+    font-size: var(--m-strong); font-weight: 800; color: #fff;
+    letter-spacing: -.2px; margin-bottom: 2px;
+  }
+  .m-rev-enviar .m-rev-lab { margin: 14px 0 8px; }
+  /* Aire entre piezas. Se rozaban: las fichas con el campo, el campo
+   * con la casilla, y la casilla con el aviso rojo. */
+  .m-rev-enviar .m-rev-nuevo { margin-top: 10px; }
+  .m-rev-enviar .m-rev-rec { margin-top: 16px; }
+  .m-rev-enviar .m-rev-pasos { margin: 16px 0 0; }
+  .m-rev-enviar .m-rev-fallo { margin: 16px 0 0; }
+  .m-rev-enviar .m-rev-go { margin-top: 16px; }
 
   body.m-shell .m-rev-go {
     display: block; width: 100%; height: 48px; border: 0; cursor: pointer;
@@ -2260,6 +2276,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     border: 1px solid rgba(239,68,68,.34);
   }
   .m-rev-fallo b { color: #fff; font-weight: 800; }
+  /* Duda, no fallo. Ámbar y no rojo: el correo puede haber salido
+   * perfectamente, y pintarlo de rojo empuja a reenviar a ciegas. */
+  .m-rev-fallo.duda {
+    color: #fdebc8; background: rgba(245,158,11,.14);
+    border-color: rgba(245,158,11,.34);
+  }
 
   /* ── Reenviar y reabrir, en el detalle del historial ───────────────
    * Aquí y no en Órdenes: una orden colocada desaparece de allí, así

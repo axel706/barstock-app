@@ -281,7 +281,7 @@
     _revisar = false;
     _to = []; _destDe = null;
     _colocando = false; _paso = 0;
-    _falloCorreo = false; _colocada = null;
+    _falloCorreo = false; _dudaCorreo = false; _colocada = null;
     _enviado = null;
     _vista = null;
   }
@@ -356,6 +356,10 @@
            primero que ves al entrar es a quién va y el botón, y las
            líneas quedan debajo para repasarlas si quieres. -->
       <div class="m-rev-enviar">
+        <!-- Un título, para que el bloque se lea como UNA cosa. Sin
+             él, las fichas, el campo y la casilla parecían tres
+             controles sueltos que casualmente estaban juntos. -->
+        <div class="m-rev-enviar-h">Send this order</div>
         <div class="m-rev-lab">To</div>
         <div class="m-rev-chips" id="mrTo">
           ${_cargandoDest && !_to.length
@@ -392,15 +396,28 @@
             <div class="${_paso === 3 ? 'go' : ''}">● Emailing ${esc(_to[0] || '')}</div>
           </div>` : ''}
 
-        ${_falloCorreo ? `
+        ${_falloCorreo ? (_dudaCorreo ? `
+          <!-- DUDA, no fallo. El servidor no contestó claro, y eso
+               pasa cuando el PDF sube lento: la petición llega, el
+               correo sale, y la respuesta se pierde. Decir "no salió"
+               cuando el proveedor ya lo tiene hace que lo mandes dos
+               veces. -->
+          <div class="m-rev-fallo duda">
+            <b>The order is placed.</b> We could not confirm the email.
+            It may well have gone out — check your inbox before sending
+            it again.
+          </div>` : `
           <div class="m-rev-fallo">
             <b>The order is placed.</b> The email did not go out.
             You can send it again from here or from History.
-          </div>` : ''}
+          </div>`) : ''}
 
         <button type="button" class="m-rev-go" id="mrGo"${
           _to.length && !_colocando ? '' : ' disabled'}>${
-          _colocando ? 'Working…' : _falloCorreo ? 'Try sending again' : 'Place & send'}</button>
+          _colocando ? 'Working…'
+            : _dudaCorreo ? 'Send it again anyway'
+            : _falloCorreo ? 'Try sending again'
+            : 'Place & send'}</button>
         ${!_to.length && !_cargandoDest
           ? '<div class="m-rev-falta">Add at least one address first.</div>' : ''}
       </div>
@@ -467,6 +484,7 @@
   // segundos se pulsa dos veces, y dos pulsaciones son dos órdenes.
   let _paso = 0;            // 0 nada · 1 guardando · 2 PDF · 3 enviando
   let _falloCorreo = false; // guardada pero el correo no salió
+  let _dudaCorreo = false;  // ...o no sabemos si salió, que no es igual
   // La orden YA guardada en la nube. Mientras exista, reintentar manda
   // el correo y nada más: volver a guardarla crearía una segunda orden
   // al mismo proveedor, que es justo el desastre que el aviso de
@@ -548,9 +566,29 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(cuerpo)
     });
-    const r = await res.json().catch(() => ({}));
-    if (!r || !r.ok) throw new Error((r && r.error) || 'The mail server refused it.');
-    return para;
+
+    // ── Rechazado NO es lo mismo que no saber ──────────────────────
+    //
+    // Antes cualquier respuesta que no fuera `{ok:true}` se daba por
+    // fallo. Pero con un PDF grande subiendo por 5G pasa esto: la
+    // petición llega, el servidor manda el correo, y la RESPUESTA se
+    // pierde o vuelve como una página de error del gateway. El
+    // proveedor ya tiene el pedido y la app dice que no salió.
+    //
+    // Si el servidor contesta y dice que no, es un fallo de verdad.
+    // Si no se entiende la respuesta, es una duda — y una duda hay
+    // que contarla como duda, porque reenviar a ciegas manda el
+    // pedido dos veces.
+    let r = null;
+    try { r = await res.json(); } catch (e) { r = null; }
+
+    if (r && r.ok) return para;
+    if (r && r.error) throw new Error(r.error);
+
+    const dudoso = new Error(
+      'The server did not answer clearly (HTTP ' + res.status + ').');
+    dudoso.incierto = true;
+    throw dudoso;
   }
 
   async function guardarDestinatarios(vendor) {
@@ -655,40 +693,58 @@
     // ── 2 · El PDF y el correo ─────────────────────────────────────
     _paso = 2;
     pintar(host);
+    let fueron = [];
     try {
       // El PDF se ve construirse: es el paso que de verdad tarda en un
       // iPhone, y el que explica por que la pantalla no reacciona.
       await alMenos(PASO_MS, Promise.resolve());
       _paso = 3;
       pintar(host);
-      const fueron = await alMenos(PASO_MS, enviarCorreo(orden));
+      fueron = await alMenos(PASO_MS, enviarCorreo(orden));
+    } catch (e) {
+      // La orden está colocada y el correo no salió —o no sabemos si
+      // salió—. Es el estado que más confunde, así que se queda en
+      // pantalla diciéndolo en vez de desaparecer con un aviso.
+      _colocando = false; _paso = 0;
+      _falloCorreo = true;
+      _dudaCorreo = !!(e && e.incierto);
+      pintar(host);
+      console.error('[orders] el correo no salió', e);
+      avisar(_dudaCorreo
+        ? 'Order placed. Could not confirm the email.'
+        : 'Order placed, but the email did not go out.');
+      return;
+    }
 
+    // ── De aquí para abajo el correo YA SALIÓ ──────────────────────
+    //
+    // Nada de esto puede marcar el envío como fallido. Antes todo
+    // vivía dentro del mismo try, así que un error al registrar o al
+    // repintar daba "el correo no salió" con el correo ya entregado.
+    try {
       if (window.BarStockLogger) {
         window.BarStockLogger.log('email_order_sent', {
           vendor: v.nombre, orderId: orden.id, to: fueron.join(', '),
-          itemCount: filas.length, from: 'mobile'
+          itemCount: orden.items.length, from: 'mobile'
         });
       }
       // Se QUEDA en pantalla diciendo que salio. Antes se cerraba
       // sola y te devolvia a la lista sin una palabra: con el correo
       // ya en la bandeja del proveedor, eso se lee como que fallo.
-      _colocando = false; _paso = 0; _falloCorreo = false; _colocada = null;
-      _enviado = {
-        vendor: v.nombre,
-        to: fueron.slice(),
-        botellas: orden.totalUnits,
-        total: orden.subtotal
-      };
-      pintar(host);
+
     } catch (e) {
-      // La orden está colocada y el correo no salió. Es el estado que
-      // más confunde, así que se queda en pantalla diciéndolo en vez
-      // de desaparecer con un aviso que se va solo.
-      _colocando = false; _paso = 0; _falloCorreo = true;
-      pintar(host);
-      console.error('[orders] el correo no salió', e);
-      avisar('Order placed, but the email did not go out.');
+      console.error('[orders] el correo salió pero algo después falló', e);
     }
+
+    _colocando = false; _paso = 0; _falloCorreo = false; _dudaCorreo = false;
+    _colocada = null;
+    _enviado = {
+      vendor: v.nombre,
+      to: fueron.slice(),
+      botellas: orden.totalUnits,
+      total: orden.subtotal
+    };
+    pintar(host);
   }
 
   function linea(r) {

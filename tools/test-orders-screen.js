@@ -534,7 +534,33 @@ console.log('\ny despues manda el correo con el PDF adjunto');
   ok('y al pulsar Done si vuelve al resumen', !!host.querySelector('.m-ordv'));
 }
 
-console.log('\nsi el correo falla, la orden SIGUE colocada');
+console.log('\nno saber NO es lo mismo que fallar');
+{
+  // El caso real: el PDF sube lento, la peticion llega, el correo SALE
+  // y la respuesta se pierde o vuelve como una pagina de error del
+  // gateway. Decir "no salio" cuando el proveedor ya lo tiene hace que
+  // lo mandes dos veces.
+  const { w, host } = pantalla();
+  const err = console.error; console.error = () => {};
+  w.fetch = global.fetch = async (url, opts) => {
+    w.__enviados.push({ url: String(url), cuerpo: JSON.parse((opts && opts.body) || '{}') });
+    return { status: 504, json: async () => { throw new Error('not json'); } };
+  };
+  await revisar(host, 'SOUTHERN');
+  host.querySelector('.m-rev-go').click();
+  await esperar(TODO_EL_PROCESO);
+
+  ok('la orden se guardo', w.__guardadas.length === 1);
+  ok('no afirma que no salio', !/did not go out/i.test(host.textContent));
+  ok('dice que no pudo confirmarlo',
+     /could not confirm/i.test(host.textContent), host.textContent.slice(0, 140));
+  ok('y sugiere mirar antes de reenviar', /check your inbox/i.test(host.textContent));
+  ok('el boton avisa de lo que hace',
+     /again anyway/i.test(host.querySelector('.m-rev-go').textContent));
+  console.error = err;
+}
+
+console.log('\nsi el servidor dice que NO, eso si es un fallo');
 {
   const { w, host } = pantalla();
   w.__fallarCorreo = true;
