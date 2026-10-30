@@ -1215,7 +1215,31 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     display: flex; align-items: center; justify-content: center;
     border-radius: 20px; color: #9bb0c6; font-size: var(--m-title);
   }
-  body.m-shell .m-tab.on { background: rgba(255,255,255,.14); color: #fff; }
+  /* La pestaña activa iba en blanco al 14%: sobre el vidrio oscuro eso
+   * se lee gris, y gris no dice "estás aquí", dice "deshabilitado".
+   *
+   * El azul va FIJO, no `var(--accent)`: en tema claro esa variable es
+   * #0284c7, mucho más oscuro, y la barra es oscura en los dos temas
+   * (`rgba(10,16,26,.76)`). Con el icono en tono oscuro encima, el azul
+   * claro contrasta siempre; el oscuro sobre oscuro no. Una regla, sin
+   * variante por tema.
+   *
+   * El verde quedó descartado a propósito: en esta app ya significa
+   * "bien / en vivo / hay stock" (el punto de la locación, la tarjeta de
+   * bienvenida, las flechas de subida). Usarlo también para navegar lo
+   * vacía de significado. */
+  body.m-shell .m-tab.on { background: #38bdf8; color: #06212e; }
+
+  /* El grosor vive en `.ti`, no en el botón, para que cualquier pestaña
+   * que se registre después lo herede sola — sin mapear icono por icono
+   * ni tocar `mobile-shell.js`.
+   *
+   * Son glifos de la fuente Tabler, no SVG: `stroke-width` no hace nada
+   * aquí. `-webkit-text-stroke` sí engrosa el trazo del glifo.
+   *
+   * .7px es el techo útil. Más que eso cierra los huecos interiores
+   * (la puerta de la casa, el asa del carrito) y a 21px se empasta. */
+  body.m-shell .m-tab.on .ti { -webkit-text-stroke: .7px currentColor; }
   .m-dot-badge, .m-tab .m-dot {
     position: absolute; top: 5px; right: 22%;
     width: 6px; height: 6px; border-radius: 50%; background: #f59e0b; box-shadow: none;
