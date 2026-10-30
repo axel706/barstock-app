@@ -248,7 +248,11 @@
     // hay sitio, así que se ofrecen las dos y se ahorra el modal.
     if (st === 'step2') {
       return {
-        tono: 'blue', k: 'Cycle open' + (fecha ? ' · ' + fecha : ''),
+        // Teal porque esto SIGUE siendo la tarjeta del ciclo, solo que
+        // en otro paso. Iba en azul, que es la familia de las órdenes,
+        // y al avanzar de paso parecía que el carrusel había saltado a
+        // otra tarjeta.
+        tono: 'teal', k: 'Cycle open' + (fecha ? ' · ' + fecha : ''),
         tt: 'Load the count', sub: 'Scan the bottles, or import the sheet',
         amt: '2', vs: 'of 3',
         btn: 'Count now',
@@ -694,7 +698,12 @@
     }
 
     return {
-      tono: e.sueltas ? 'amber' : 'teal',
+      // Violeta, no teal. Esta tarjeta y la del ciclo usaban el MISMO
+      // tono, y al deslizar de una a otra no cambiaba nada en pantalla
+      // — parecía que seguías mirando la misma. El ámbar se queda para
+      // cuando hay facturas sin enlazar, que es el estado que pide que
+      // la mires.
+      tono: e.sueltas ? 'amber' : 'violet',
       // El rótulo nombra la FUENTE: lo que hay aquí no lo escribiste
       // tú, viene de MarginEdge. Sin eso, "24 invoices" en el Home de
       // una app de inventario se lee como órdenes tuyas.
@@ -853,7 +862,10 @@
         const puestos = colocados();
         if (puestos.length) {
           t.push({
-            tono: 'teal',
+            // Azul: esta tarjeta es de ÓRDENES y sustituye a la de
+            // "Orders waiting" cuando no queda ninguna. Que cambie de
+            // familia al quedarse vacía haría pensar que es otra cosa.
+            tono: 'blue',
             k: 'Orders placed',
             tt: 'You are up to date',
             sub: 'Nothing waiting. New lines show up when a count drops something below par.',

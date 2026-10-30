@@ -1029,37 +1029,85 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     background: #ef4444; color: #fff; border: none;
   }
 
-  .m-hero-green { background: linear-gradient(135deg, rgba(34,197,94,.24), rgba(34,197,94,.09)); border: 1px solid rgba(134,239,172,.32); }
-  .m-hero-blue  { background: linear-gradient(135deg, rgba(56,189,248,.26), rgba(56,189,248,.10)); border: 1px solid rgba(125,211,252,.34); }
-  .m-hero-amber { background: linear-gradient(135deg, rgba(245,158,11,.24), rgba(245,158,11,.09)); border: 1px solid rgba(252,211,77,.32); }
-  .m-hero-red   { background: linear-gradient(135deg, rgba(239,68,68,.24), rgba(239,68,68,.09)); border: 1px solid rgba(252,165,165,.32); }
-  /* El verde vivo es de la bienvenida y de nadie más. Está al lado de
-   * la del ciclo, que es verde azulado, y con el mismo tono las dos
-   * deslizar de una a otra no se notaba. */
-  .m-hero-verde {
-    background: linear-gradient(135deg, rgba(34,197,94,.34), rgba(34,197,94,.11));
-    border: 1px solid rgba(74,222,128,.46);
-  }
-  .m-hero-verde .m-hero-k { color: #a7f3d0; }
-  .m-hero-verde .m-hero-pista { color: #4ade80; }
-  .m-hero-verde .m-hero-ir { color: #4ade80; }
+  /* ── LA PALETA DEL CARRUSEL ────────────────────────────────────────
+   *
+   * Un tono por tarjeta, y el tono SIGNIFICA algo:
+   *
+   *     verde    bienvenida
+   *     teal     ciclo abierto, todo normal
+   *     violet   MarginEdge
+   *     blue     órdenes esperando
+   *     red      se está acabando
+   *     amber    esta tarjeta necesita que la mires
+   *     calm     no hay nada que hacer aquí
+   *
+   * Los dos últimos no son tarjetas, son ESTADOS: el ciclo es teal y
+   * se pone amber si lleva demasiado abierto; MarginEdge es violet y
+   * se pone amber si hay facturas sin enlazar, o calm si la locación
+   * no está conectada.
+   *
+   * El violet es nuevo y vino a arreglar un fallo real: el ciclo y
+   * MarginEdge usaban los dos `teal`. No es que se parecieran, es que
+   * eran el MISMO color, y al deslizar de una a otra no cambiaba nada
+   * en pantalla.
+   *
+   * Lo que NO se hace aquí es rotar colores por posición para que
+   * nunca se repitan. Resolvería que dos tarjetas seguidas se parezcan,
+   * pero convertiría el color en decoración: dejaría de decir nada.
+   *
+   * ── El degradado, y por qué lleva TRES paradas ────────────────────
+   *
+   * El color aguanta hasta el 40% y de ahí cae a casi negro. Con dos
+   * paradas es una rampa constante, y una rampa suave sobre un color
+   * que ya es oscuro no se lee como transición: se lee como un color
+   * plano sucio. Con la parada de en medio hay una zona de color y una
+   * caída, que es lo que sí se percibe.
+   *
+   * Los siete arrancan del nivel 500 de su familia. El primer intento
+   * mezclaba niveles —500 para verde y teal, 600 para violeta, azul,
+   * rojo y ámbar— y el recorrido solo se veía en dos de los siete,
+   * porque los 600 ya salen oscuros y les quedaba poco que recorrer.
+   *
+   * El reparto no es estético: arriba a la izquierda, donde caen el
+   * encabezado y el título, va el color y dice QUÉ TARJETA ES. Abajo a
+   * la derecha, donde caen los tres renglones y los botones, va el
+   * casi negro y deja LEER. El ángulo de 135° pone cada cosa donde le
+   * sirve. */
+  .m-hero-verde  { background: linear-gradient(135deg, rgba(16,185,129,.82) 0%, rgba(16,185,129,.40) 42%, rgba(4,18,14,.94) 100%);  border: 1px solid rgba(110,231,183,.50); }
+  .m-hero-green  { background: linear-gradient(135deg, rgba(16,185,129,.82) 0%, rgba(16,185,129,.40) 42%, rgba(4,18,14,.94) 100%);  border: 1px solid rgba(110,231,183,.50); }
+  .m-hero-teal   { background: linear-gradient(135deg, rgba(20,184,166,.82) 0%, rgba(20,184,166,.40) 42%, rgba(3,18,20,.94) 100%);  border: 1px solid rgba(94,234,212,.48); }
+  .m-hero-violet { background: linear-gradient(135deg, rgba(139,92,246,.84) 0%, rgba(139,92,246,.42) 42%, rgba(12,7,26,.94) 100%);  border: 1px solid rgba(196,181,253,.50); }
+  .m-hero-blue   { background: linear-gradient(135deg, rgba(14,165,233,.82) 0%, rgba(14,165,233,.40) 42%, rgba(3,14,24,.94) 100%);  border: 1px solid rgba(125,211,252,.48); }
+  .m-hero-red    { background: linear-gradient(135deg, rgba(244,63,94,.82) 0%,  rgba(244,63,94,.40) 42%,  rgba(22,5,9,.94) 100%);   border: 1px solid rgba(253,164,175,.48); }
+  .m-hero-amber  { background: linear-gradient(135deg, rgba(245,158,11,.84) 0%, rgba(245,158,11,.42) 42%, rgba(22,13,3,.94) 100%);  border: 1px solid rgba(252,211,77,.50); }
+  .m-hero-calm   { background: linear-gradient(135deg, rgba(100,116,139,.78) 0%, rgba(100,116,139,.38) 42%, rgba(8,12,18,.94) 100%); border: 1px solid rgba(203,213,225,.28); }
 
-  /* Verde azulado y no verde para el ciclo abierto: el verde ya es
-   * "hay algo empezado" (el conteo) y "despegó". Un estado tranquilo
-   * no debe vestirse igual que una acción en marcha. */
-  .m-hero-teal  { background: linear-gradient(135deg, rgba(45,212,191,.26), rgba(45,212,191,.09)); border: 1px solid rgba(94,234,212,.34); }
-  .m-hero-calm  { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.14); }
+  /* El encabezado en blanco, no en el tinte pálido de su familia.
+   * Los tintes (#fde68a sobre ámbar, #fecaca sobre rojo) funcionaban
+   * sobre el fondo apagado de antes; sobre una esquina ahora mucho
+   * más viva se lavan y dejan de leerse. */
+  .m-hero-verde .m-hero-k,
+  .m-hero-green .m-hero-k,
+  .m-hero-teal  .m-hero-k,
+  .m-hero-violet .m-hero-k,
+  .m-hero-blue  .m-hero-k,
+  .m-hero-red   .m-hero-k,
+  .m-hero-amber .m-hero-k,
+  .m-hero-calm  .m-hero-k { color: rgba(255,255,255,.92); }
 
-  .m-hero-green .m-hero-k { color: #a7f3d0; }
-  .m-hero-teal  .m-hero-k { color: #99f6e4; }
-  .m-hero-amber .m-hero-k { color: #fde68a; }
-  .m-hero-red   .m-hero-k { color: #fecaca; }
-  .m-hero-calm  .m-hero-k { color: #cbd5e1; }
+  .m-hero-verde .m-hero-pista { color: #6ee7b7; }
+  .m-hero-verde .m-hero-ir { color: #6ee7b7; }
 
-  body.m-shell .m-hero-green .m-hero-b { background: #22c55e; color: #06301a; }
-  body.m-shell .m-hero-blue  .m-hero-b { background: #38bdf8; color: #04283d; }
-  body.m-shell .m-hero-amber .m-hero-b { background: #f59e0b; color: #3d2305; }
-  body.m-shell .m-hero-red   .m-hero-b { background: #ef4444; color: #fff; }
+  /* Los botones van al nivel 400 de su familia: sobre el extremo
+   * oscuro del degradado tienen que saltar, y el 500 que usa el
+   * relleno se confundiría con su propia tarjeta. */
+  body.m-shell .m-hero-verde  .m-hero-b { background: #34d399; color: #053224; }
+  body.m-shell .m-hero-green  .m-hero-b { background: #34d399; color: #053224; }
+  body.m-shell .m-hero-teal   .m-hero-b { background: #2dd4bf; color: #053330; }
+  body.m-shell .m-hero-violet .m-hero-b { background: #a78bfa; color: #2e1065; }
+  body.m-shell .m-hero-blue   .m-hero-b { background: #38bdf8; color: #04283d; }
+  body.m-shell .m-hero-amber  .m-hero-b { background: #fbbf24; color: #451a03; }
+  body.m-shell .m-hero-red    .m-hero-b { background: #fb7185; color: #4c0519; }
 
   .m-dots { display: flex; justify-content: center; gap: 5px; padding: 10px 0 0; }
   .m-dots i { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,.26); transition: width .18s ease; }
