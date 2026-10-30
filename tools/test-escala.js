@@ -46,6 +46,43 @@ for (const h of HOJAS) {
   prueba(h + '.css', px.length === esperado, px.join(', '));
 }
 
+grupo('ningún campo de texto hace que Safari haga zoom');
+{
+  // iOS amplía la página al enfocar un `input` con letra por debajo de
+  // 16px. Y esta app BLOQUEA el zoom, así que una vez ampliada no hay
+  // forma de volver: la pantalla se queda así.
+  //
+  // En la escala, --m-strong es lo primero que llega a 16 (14 × 1.14).
+  // Cualquier cosa por debajo —--m-body, --m-small, --m-meta— amplía.
+  const OK = ['--m-strong', '--m-title', '--m-head', '--m-screen', '--m-figure'];
+  const txt = leer('mobile-app').replace(/\/\*[\s\S]*?\*\//g, '');
+
+  // Reglas cuyo selector menciona un input de texto.
+  const reglas = txt.match(/[^{}]*\{[^}]*\}/g) || [];
+  const malos = [];
+  for (const r of reglas) {
+    const sel = r.slice(0, r.indexOf('{'));
+    if (!/\binput\b/.test(sel)) continue;
+    if (/\[type="(checkbox|radio|range)"\]/.test(sel)) continue;
+    const cuerpo = r.slice(r.indexOf('{'));
+    const fs = /font-size:\s*([^;]+);/.exec(cuerpo);
+    if (!fs) continue;                       // hereda, no lo decide aquí
+    const val = fs[1].trim();
+    const px = /^(\d+(?:\.\d+)?)px$/.exec(val);
+    if (px) { if (Number(px[1]) < 16) malos.push(sel.trim() + ' → ' + val); continue; }
+    const v = /var\(\s*(--[\w-]+)/.exec(val);
+    if (v && !OK.includes(v[1])) malos.push(sel.trim() + ' → ' + val);
+  }
+  prueba('todos a 16px o más', malos.length === 0, malos.join(' | '));
+
+  // La trampa que queda: con "Text size" en pequeño la base baja a
+  // 13px y --m-strong se queda en 14.8. Eso amplía igual. No se
+  // arregla aquí porque tocaría la escala entera, pero que conste.
+  prueba('la base pequeña sigue siendo un riesgo conocido',
+    /m-txt-sm\s*\{\s*--m-base:\s*13px/.test(leer('mobile-app')),
+    'si cambió la base pequeña, revisa si los inputs siguen ampliando');
+}
+
 grupo('la escala existe y cuelga de una sola base');
 for (const t of ['meta', 'small', 'eyebrow', 'body', 'strong', 'head', 'title',
                  'screen', 'figure']) {

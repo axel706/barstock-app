@@ -2164,9 +2164,16 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
 
   .m-rev-nuevo { display: flex; gap: 7px; margin-top: 8px; }
   body.m-shell .m-rev-nuevo input {
+    /* 16px obligatorio: por debajo Safari hace zoom al enfocar, y como
+     * la app bloquea el zoom no hay forma de volver — la pantalla se
+     * queda ampliada para siempre. `--m-strong` son 16 en la base.
+     *
+     * Es la tercera vez que esta regla hace falta en esta hoja. Si
+     * añades un campo de texto al móvil, ya sabes. */
     flex: 1; min-width: 0; height: 42px; padding: 0 13px;
     background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
-    color: #fff; font-family: inherit; font-size: var(--m-body);
+    color: #fff; font-family: inherit; font-size: var(--m-strong);
+    -webkit-appearance: none;
   }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-rev-nuevo input { border-radius: 12px !important; }
   body.m-shell .m-rev-nuevo input[aria-invalid="true"] { border-color: rgba(239,68,68,.6); }
@@ -2685,9 +2692,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     display: block; font-size: var(--m-small); font-weight: 700;
     color: #c8d6e5; margin-bottom: 6px;
   }
+  /* 16px obligatorio, como en todos los campos del móvil: por debajo
+   * Safari amplía al enfocar y, con el zoom bloqueado, la pantalla se
+   * queda así. Estaba en --m-body (14) desde que se escribió. */
   body.m-shell .m-set-f input {
     width: 100%; height: 46px; padding: 0 14px;
-    font-size: var(--m-body); color: #eef4fb;
+    font-size: var(--m-strong); color: #eef4fb;
     background: rgba(255,255,255,.07);
     border: 1px solid rgba(255,255,255,.15);
   }
@@ -2726,8 +2736,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
 
   .m-set-add { display: flex; gap: 8px; }
+  /* 16px obligatorio, misma razón que arriba. */
   body.m-shell .m-set-add input {
-    flex: 1; min-width: 0; height: 44px; padding: 0 14px; font-size: var(--m-body);
+    flex: 1; min-width: 0; height: 44px; padding: 0 14px; font-size: var(--m-strong);
     color: #eef4fb; background: rgba(255,255,255,.07);
     border: 1px solid rgba(255,255,255,.15);
   }
