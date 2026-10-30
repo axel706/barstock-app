@@ -154,8 +154,17 @@ grupo('el mínimo en pantalla');
   prueba('queda tiempo para leerla', min - entrada >= 300,
     (min - entrada) + 'ms quieta');
 
-  // Un suelo largo hace lento algo que es rápido.
-  prueba('no hace lenta la app', min <= 1600, min + 'ms');
+  // Un suelo largo hace lento algo que es rápido, y eso tiene un
+  // coste real: con los datos listos en 300ms, igual esperas el suelo
+  // entero. El número de ahora (2.6s) está elegido a ojo sobre el
+  // teléfono, no medido. Este tope no dice cuál es el bueno; dice
+  // hasta dónde deja de ser un tránsito y pasa a ser una espera.
+  prueba('sigue siendo un tránsito, no una espera', min <= 3500, min + 'ms');
+
+  // Y que quede margen para que auth conteste dentro del suelo: si el
+  // suelo rozara el techo, el tope no serviría de nada.
+  prueba('el techo tiene margen sobre el suelo', tope - min >= 2000,
+    (tope - min) + 'ms de margen');
 
   // El techo tiene que ganar siempre; si no, la cortina se puede
   // quedar pegada más de lo que promete el tope.

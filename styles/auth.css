@@ -441,7 +441,11 @@ html.loc-switch-out #locCurtain{
 #locCurtain .lc-logo{
   display:inline-flex;
   align-items:baseline;
-  font-size:20px;
+  /* 42px y no 20: a 20 el bloque entero ocupaba un cuarto del ancho de
+     un teléfono y la cortina no se leía, se intuía. Esto es una
+     pantalla completa, no una fila de lista. El techo es ~42: por
+     encima, el wordmark roza los bordes en teléfonos estrechos. */
+  font-size:42px;
   font-weight:800;
   letter-spacing:-.02em;
   color:#fff;
@@ -470,8 +474,8 @@ html.loc-switch-out #locCurtain{
 /* El texto sí usa la escala: es texto de interfaz y tiene que obedecer
    el ajuste de tamaño como todo lo demás. */
 #locCurtain .lc-to{
-  margin-top:26px;
-  font-size:var(--m-meta, 11px);
+  margin-top:38px;
+  font-size:var(--m-strong, 16px);
   font-weight:700;
   letter-spacing:.16em;
   text-transform:uppercase;
@@ -483,13 +487,13 @@ html.loc-switch-out #locCurtain{
 #locCurtain .lc-pill{
   display:inline-flex;
   align-items:center;
-  gap:7px;
-  margin-top:10px;
-  padding:9px 15px;
+  gap:10px;
+  margin-top:18px;
+  padding:16px 26px;
   border-radius:999px;
   background:rgba(10,16,26,.9);
   border:1px solid rgba(56,189,248,.34);
-  font-size:var(--m-small, 12.5px);
+  font-size:var(--m-head, 22px);
   font-weight:700;
   color:#e5e7eb;
   /* Si el nombre es largo que parta, no que desborde la pantalla. */
@@ -502,9 +506,9 @@ html.loc-switch-out #locCurtain{
   to  { transform:scale(1)    translateY(0);    opacity:1 }
 }
 #locCurtain .lc-led{
-  width:7px;
-  height:7px;
-  min-width:7px;
+  width:10px;
+  height:10px;
+  min-width:10px;
   border-radius:50%;
   background:#22c55e;
   animation:lcLed 1s ease-in-out infinite;
