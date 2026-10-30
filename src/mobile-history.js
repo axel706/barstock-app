@@ -123,7 +123,8 @@
 
     const ordenes = await leerTodo(url, key,
       `vendor_orders?location_id=eq.${locId}` +
-      `&select=id,vendor,po_number,created_at,subtotal,status&order=created_at.desc`);
+      `&select=id,app_order_id,vendor,po_number,created_at,subtotal,status` +
+      `&order=created_at.desc`);
 
     const recortadas = ordenes.slice(0, MAX_ORDENES);
     const ids = recortadas.map(o => o.id).filter(Boolean);
@@ -220,7 +221,17 @@
       const recibidoDinero = items.reduce((s, i) => s + i.recibido * i.precio, 0);
 
       return {
+        // DOS ids, y no son intercambiables:
+        //   `id`     es la fila de `vendor_orders`, y sirve para unir
+        //            con sus líneas en esta misma pantalla.
+        //   `appId`  es `app_order_id`, el que genera la app. Es el que
+        //            usan `state.orderHistory`, `deleteOrderFromSupabase`
+        //            y el escritorio entero.
+        //
+        // Usar el primero donde va el segundo hacía que "reabrir" no
+        // encontrara nunca la orden y dijera que era demasiado vieja.
         id: String(o.id),
+        appId: String(o.app_order_id || ''),
         vendor: o.vendor || '',
         po: o.po_number || '',
         fecha: o.created_at,
@@ -449,6 +460,8 @@
         (o.factura ? ' · invoice ' + esc(o.factura) : '') +
       '</div>' +
 
+      acciones(o) +
+
       '<div class="m-hlist">' + lineas + '</div>' +
 
       (o.estado === 'waiting'
@@ -464,8 +477,7 @@
       '<div class="m-htot"><span>Ordered</span><b>' + money(o.pedidoDinero) + '</b></div>' +
       (o.estado !== 'waiting'
         ? '<div class="m-htot"><span>Received</span><b>' + money(o.recibidoDinero) + '</b></div>'
-        : '') +
-      acciones(o);
+        : '');
 
     const b = host.querySelector('#mhBack');
     if (b) b.onclick = () => { _orden = null; pintar(host); };
@@ -492,7 +504,7 @@
   }
 
   function acciones(o) {
-    if (!laDelEscritorio(o.id)) {
+    if (!laDelEscritorio(o.appId)) {
       // Órdenes viejas que ya no están cargadas. Decirlo es mejor que
       // dos botones que fallarían al pulsarlos.
       return '<div class="m-hacc-no">This order is older than what the app keeps ' +
@@ -526,7 +538,7 @@
     if (no) no.onclick = () => { _confirmando = false; pintar(host); };
 
     if (re) re.onclick = async () => {
-      const orden = laDelEscritorio(o.id);
+      const orden = laDelEscritorio(o.appId);
       const M = window.BarStockMobileOrders;
       if (!orden || !M || typeof M.enviarCorreo !== 'function') {
         return avisar('The order mailer is not available right now.');
@@ -557,7 +569,7 @@
     };
 
     if (si) si.onclick = async () => {
-      const orden = laDelEscritorio(o.id);
+      const orden = laDelEscritorio(o.appId);
       if (typeof window.deleteOrderFromSupabase !== 'function') {
         return avisar('Not connected right now. Try again in a moment.');
       }
@@ -565,13 +577,21 @@
       _confirmando = false;
       pintar(host);
       try {
-        await window.deleteOrderFromSupabase(o.id);
+        // Con el id de la APP: la función consulta por `app_order_id`.
+        await window.deleteOrderFromSupabase(o.appId);
         // Devolver lo que esta orden apuntó como pedido, o Par
         // Intelligence seguiría creyendo que esas botellas se pidieron.
-        if (orden && window.BarStockParIntelligence) {
-          window.BarStockParIntelligence.reverseSnapshotOrdered(orden)
-            .catch(e => console.warn('[ParIntelligence] reverse', e));
-        }
+        // Envuelto, y comprobando que la función exista. La orden YA
+        // está borrada a estas alturas: si esto lanzara, el `catch` de
+        // abajo diría "no se pudo reabrir" sobre una orden que sí se
+        // reabrió. Es el mismo fallo que tuvimos con el correo.
+        try {
+          const PI = window.BarStockParIntelligence;
+          if (orden && PI && typeof PI.reverseSnapshotOrdered === 'function') {
+            Promise.resolve(PI.reverseSnapshotOrdered(orden))
+              .catch(e => console.warn('[ParIntelligence] reverse', e));
+          }
+        } catch (e) { console.warn('[ParIntelligence] reverse', e); }
         if (typeof window.loadOrdersFromCloud === 'function') {
           await window.loadOrdersFromCloud();
         }

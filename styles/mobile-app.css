@@ -2302,7 +2302,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* ── Reenviar y reabrir, en el detalle del historial ───────────────
    * Aquí y no en Órdenes: una orden colocada desaparece de allí, así
    * que éste es el único sitio donde existe para poder tocarla. */
-  .m-hacc { display: flex; gap: 8px; margin-top: 18px; }
+  /* ARRIBA, pegadas al encabezado y antes de las líneas. Con
+   * veintisiete productos, lo que va al final no se encuentra — es la
+   * misma razón por la que el botón de enviar subió en Órdenes. */
+  .m-hacc { display: flex; gap: 8px; margin: 14px 0 4px; }
   body.m-shell .m-hacc button {
     flex: 1; height: 44px; border: 0; cursor: pointer;
     background: rgba(255,255,255,.12); color: #e8f1fb;
@@ -2319,14 +2322,14 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     font-size: var(--m-small); color: #8fa3b8;
   }
   .m-hacc-no {
-    margin-top: 18px; padding: 11px 13px; border-radius: 13px;
+    margin: 14px 0 4px; padding: 11px 13px; border-radius: 13px;
     font-size: var(--m-small); line-height: 1.45; color: #a9bacd;
     background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.10);
   }
   /* La confirmación DICE lo que hace. Un "¿Seguro?" no informa de que
    * esto borra la orden. */
   .m-hacc-conf {
-    margin-top: 18px; padding: 12px 13px; border-radius: 14px;
+    margin: 14px 0 4px; padding: 12px 13px; border-radius: 14px;
     font-size: var(--m-small); line-height: 1.45; color: #fde0e0;
     background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.28);
   }

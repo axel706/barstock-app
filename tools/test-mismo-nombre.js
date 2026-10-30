@@ -42,9 +42,11 @@ function entorno() {
   global.window = w; global.document = w.document;
   w.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} });
 
-  w.state = { master: [] };
+  w.state = { master: [], orderHistory: [] };
   w.BARSTOCK_CONFIG = { SUPABASE_URL: 'https://db.test', SUPABASE_KEY: 'k' };
   w.BarStockParIntelligence = { fetchLocationId: async () => 'loc-1' };
+  // Sin `reverseSnapshotOrdered` a proposito: en una locacion donde el
+  // modulo no este completo, reabrir NO puede romperse por eso.
   w.BarStockCycle = { startedAt: () => new Date('2026-10-25T08:00:00Z') };
 
   const f = async (u) => {
@@ -53,7 +55,10 @@ function entorno() {
     if (off) return pag([]);
 
     if (/vendor_orders\?/.test(u)) return pag([
-      { id: 1, vendor: 'BREAKTHRU', po_number: 'CT-0205',
+      // DOS ids, y a proposito distintos: `id` es la fila de
+      // Supabase y `app_order_id` el que genera la app. Confundirlos
+      // es lo que rompia reabrir y reenviar.
+      { id: 1, app_order_id: 'ord_abc123', vendor: 'BREAKTHRU', po_number: 'CT-0205',
         created_at: '2026-10-26T10:00:00Z', subtotal: 113.97, status: 'sent' }
     ]);
     if (/vendor_order_items/.test(u)) return pag([
@@ -89,6 +94,51 @@ function entorno() {
     // Lo que veía Axel: "1 item came up short · $113.97 never arrived".
     prueba('no dice que se quedó corta', !/came up short/i.test(t), t.slice(0, 200));
     prueba('ni que no llegó nada', !/never arrived/i.test(t), t.slice(0, 200));
+  }
+
+  grupo('reabrir y reenviar usan el id de la APP');
+  {
+    // Esta pantalla lee `vendor_orders`, que tiene DOS ids: el de su
+    // propia fila y `app_order_id`, el que genera la app. Todo lo
+    // demas —`state.orderHistory`, `deleteOrderFromSupabase`, el
+    // escritorio— habla el segundo.
+    //
+    // Usando el primero, "reabrir" no encontraba nunca la orden y la
+    // pantalla decia que era demasiado vieja. Con la orden delante.
+    const w = entorno();
+    w.state.orderHistory = [{ id: 'ord_abc123', vendor: 'BREAKTHRU', items: [] }];
+    w.__borradas = [];
+    w.deleteOrderFromSupabase = async (id) => { w.__borradas.push(id); };
+    w.loadOrdersFromCloud = async () => {};
+    w.BarStockVendorDefaults = { getDefaults: async () => ({ vendor_email: 'a@b.com' }) };
+    w.BarStockToast = { show() {} };
+
+    const h = w.document.createElement('div');
+    w.document.body.appendChild(h);
+    await w.BarStockMobileHistory.montar(h);
+    await esperar(60);
+    h.querySelector('[data-o]').click();
+    await esperar(30);
+
+    prueba('no la da por perdida',
+      !/older than what the app keeps/i.test(h.textContent), h.textContent.slice(0, 120));
+    prueba('ofrece reenviar', !!h.querySelector('#mhRe'));
+    prueba('y reabrir', !!h.querySelector('#mhAbrir'));
+
+    // ARRIBA. Con veintisiete lineas, lo que va al final no se
+    // encuentra.
+    const acc = h.querySelector('.m-hacc');
+    const lista = h.querySelector('.m-hlist');
+    prueba('y van antes que las lineas',
+      !!acc && !!lista && (acc.compareDocumentPosition(lista) & 4) !== 0);
+
+    // Reabrir borra por `app_order_id`, no por la fila de Supabase.
+    h.querySelector('#mhAbrir').click();
+    await esperar(10);
+    h.querySelector('#mhSi').click();
+    await esperar(40);
+    prueba('borra con el id de la app',
+      w.__borradas[0] === 'ord_abc123', JSON.stringify(w.__borradas));
   }
 
   grupo('la normalización, caso por caso');
