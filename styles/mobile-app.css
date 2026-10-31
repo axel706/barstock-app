@@ -2677,12 +2677,20 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
 
   /* Salir: separado y en rojo. No es una sección más de la lista. */
   .m-list-end { margin-top: 22px; }
+  /* Sólido, no un contorno. Sobre una foto de fondo un rojo al 10% de
+   * opacidad se mezcla con lo que haya detrás: en el patrón de marca
+   * casi desaparecía, y un botón que se desvanece según el fondo no se
+   * lee como un botón.
+   *
+   * Es el mismo rojo que usa el diálogo para lo que destruye algo
+   * (#ef4444). Una sola familia para "esto no se deshace". */
   body.m-shell .m-item-out {
-    justify-content: center; color: #fca5a5;
-    background: rgba(248,113,113,.10);
-    border-color: rgba(248,113,113,.28);
+    justify-content: center; color: #fff; font-weight: 800;
+    background: #ef4444;
+    border-color: transparent;
   }
-  .m-item-out > i:first-child { color: #fca5a5; flex: 0 0 auto; }
+  body.m-shell .m-item-out:active { background: #dc2626; }
+  .m-item-out > i:first-child { color: #fff; flex: 0 0 auto; }
   .m-item-out .m-item-t { flex: 0 0 auto; font-weight: 600; }
 
   /* ══ El radio contra app.css ══════════════════════════════════════
