@@ -693,7 +693,8 @@
         goL: (btn) => sincronizarDesdeTarjeta(btn),
         vs: 'checked ' + hace(e.revisado),
         btn: 'See invoices',
-        go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('invoices'); }
+        go: () => { const O = window.BarStockMobileOrders;
+                  if (O && O.abrirSeccion) O.abrirSeccion('inv'); }
       };
     }
 
@@ -726,7 +727,8 @@
       vs: e.revisado ? 'checked ' + hace(e.revisado)
                      : (e.ultima ? 'last invoice ' + fmtDia(e.ultima) : ''),
       btn: e.sueltas ? 'Review them' : 'See invoices',
-      go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('invoices'); }
+      go: () => { const O = window.BarStockMobileOrders;
+                  if (O && O.abrirSeccion) O.abrirSeccion('inv'); }
     };
   }
 

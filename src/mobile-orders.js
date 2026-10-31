@@ -166,7 +166,7 @@
         </button>`).join('')}`;
 
     host.querySelectorAll('[data-v]').forEach(b => {
-      b.onclick = () => { _vendor = vs[Number(b.dataset.v)].nombre; pintar(host); };
+      b.onclick = () => { _vendor = vs[Number(b.dataset.v)].nombre; repintar(); };
     });
   }
 
@@ -243,7 +243,7 @@
           }).join('')}
         </div>` : ''}`;
 
-    volverCon(host, () => { _vendor = null; pintar(host); });
+    volverCon(host, () => { _vendor = null; repintar(); });
     const env = host.querySelector('#moSend');
     if (env) env.onclick = () => {
       salirRevision();
@@ -255,7 +255,7 @@
         sinPrecio: v.sinPrecio,
         botellas: v.filas.reduce((s, r) => s + cantidad(r), 0)
       };
-      pintar(host);
+      repintar();
     };
     const add = host.querySelector('#moAdd');
     if (add) add.onclick = () => {
@@ -267,7 +267,7 @@
       b.onclick = () => {
         // Vuelve a automático, no a la cantidad que tuviera antes: el
         // automático se recalcula con lo que hay hoy en el estante.
-        if (hay('resetFinalOrder')) { window.resetFinalOrder(Number(b.dataset.volver)); pintar(host); }
+        if (hay('resetFinalOrder')) { window.resetFinalOrder(Number(b.dataset.volver)); repintar(); }
       };
     });
     enganchar(host);
@@ -311,7 +311,7 @@
       console.warn('[orders] no se pudieron leer los destinatarios', e);
     }
     _cargandoDest = false;
-    if (_revisar && _vendor === vendor) pintar(host);
+    if (_revisar && _vendor === vendor) repintar();
   }
 
   function pintarEnviado(host) {
@@ -332,7 +332,7 @@
       _enviado = null;
       salirRevision();
       _vendor = null;
-      pintar(host);
+      repintar();
     };
   }
 
@@ -438,10 +438,10 @@
           </div>`).join('')}
       </div>`;
 
-    volverCon(host, () => { salirRevision(); pintar(host); });
+    volverCon(host, () => { salirRevision(); repintar(); });
 
     host.querySelectorAll('[data-quitar]').forEach(b => {
-      b.onclick = () => { _to.splice(Number(b.dataset.quitar), 1); pintar(host); };
+      b.onclick = () => { _to.splice(Number(b.dataset.quitar), 1); repintar(); };
     });
 
     const caja = host.querySelector('#mrNuevo');
@@ -458,7 +458,7 @@
         return;
       }
       if (!_to.includes(val)) _to.push(val);
-      pintar(host);
+      repintar();
     };
     host.querySelector('#mrOk').onclick = meter;
     // Enter en el teclado del teléfono hace lo mismo que el botón.
@@ -640,7 +640,7 @@
       _colocando = true;
       _falloCorreo = false;
       _paso = 1;
-      pintar(host);
+      repintar();
 
       const ahora = new Date().toISOString();
       orden = {
@@ -676,7 +676,7 @@
         await window.loadOrdersFromCloud();
       } catch (e) {
         _colocando = false; _paso = 0;
-        pintar(host);
+        repintar();
         // Si no se guardó, NO está colocada. Decirlo con todas las
         // letras: creer lo contrario acaba en dos órdenes al mismo
         // proveedor.
@@ -692,19 +692,19 @@
     } else {
       _colocando = true;
       _falloCorreo = false;
-      pintar(host);
+      repintar();
     }
 
     // ── 2 · El PDF y el correo ─────────────────────────────────────
     _paso = 2;
-    pintar(host);
+    repintar();
     let fueron = [];
     try {
       // El PDF se ve construirse: es el paso que de verdad tarda en un
       // iPhone, y el que explica por que la pantalla no reacciona.
       await alMenos(PASO_MS, Promise.resolve());
       _paso = 3;
-      pintar(host);
+      repintar();
       fueron = await alMenos(PASO_MS, enviarCorreo(orden));
     } catch (e) {
       // La orden está colocada y el correo no salió —o no sabemos si
@@ -713,7 +713,7 @@
       _colocando = false; _paso = 0;
       _falloCorreo = true;
       _dudaCorreo = !!(e && e.incierto);
-      pintar(host);
+      repintar();
       console.error('[orders] el correo no salió', e);
       avisar(_dudaCorreo
         ? 'Order placed. Could not confirm the email.'
@@ -749,7 +749,7 @@
       botellas: orden.totalUnits,
       total: orden.subtotal
     };
-    pintar(host);
+    repintar();
   }
 
   function linea(r) {
@@ -812,7 +812,7 @@
         if (!hay('updateFinalOrder')) return;
         _fallos.delete(clave(master()[i] || {}));
         window.updateFinalOrder(i, valor);
-        pintar(host);
+        repintar();
       };
 
       // Excluir es poner la cantidad a cero: lo mismo que ya hacía
@@ -832,21 +832,111 @@
 
       const undo = caja.querySelector('.m-ord-undo');
       if (undo) undo.onclick = () => {
-        if (hay('resetFinalOrder')) { window.resetFinalOrder(i); pintar(host); }
+        if (hay('resetFinalOrder')) { window.resetFinalOrder(i); repintar(); }
       };
     });
   }
 
+  // ── Las tres secciones ───────────────────────────────────────────
+  //
+  // Órdenes, historial y facturas contestan la misma pregunta en tres
+  // momentos: qué voy a pedir, qué pedí, qué llegó. Vivían en tres
+  // sitios y seguir ese hilo obligaba a pasar por More dos veces.
+  //
+  // Esto NO rediseña ninguna de las tres. Cada una sigue pintando su
+  // `innerHTML` igual que antes; lo único que cambia es que recibe un
+  // div de aquí dentro en vez de la pantalla entera. No se enteran.
+
+  const SECCIONES = [
+    { id: 'open',  n: 'Open',     sub: 'What the count says to buy.' },
+    { id: 'sent',  n: 'Sent',     sub: 'What you sent, and what arrived.' },
+    { id: 'inv',   n: 'Invoices', sub: 'What MarginEdge has received.' }
+  ];
+  let _sec = 'open';
+
+  const H = () => window.BarStockMobileHistory;
+  const I = () => window.BarStockMobileInvoices;
+
+  // ¿La sección activa está dentro de un detalle? Entonces el
+  // segmentado estorba: un detalle es otro nivel, y dejar ahí tres
+  // pestañas invita a saltar de sección perdiendo lo que mirabas.
+  function enDetalle() {
+    if (_sec === 'open') return !!_vendor || !!_revisar;
+    const m = _sec === 'sent' ? H() : I();
+    return !!(m && m.enDetalle && m.enDetalle());
+  }
+
+  // El marco se arma UNA vez por pantalla. `#moCuerpo` no se vuelve a
+  // crear nunca: si se recreara, el repintado asíncrono del historial
+  // escribiría sobre un elemento que ya no está en el documento y la
+  // sección se quedaría en blanco.
+  function marco(host) {
+    let cuerpo = host.querySelector('#moCuerpo');
+    if (!cuerpo) {
+      host.innerHTML = '<div id="moCab"></div><div id="moCuerpo"></div>';
+      cuerpo = host.querySelector('#moCuerpo');
+    }
+
+    const cab = host.querySelector('#moCab');
+    if (enDetalle()) { cab.innerHTML = ''; return cuerpo; }
+
+    const s = SECCIONES.find(x => x.id === _sec) || SECCIONES[0];
+    const nPend = proveedores().length;
+    const nSin = (I() && I().resumen && (I().resumen() || {}).sueltas) || 0;
+
+    cab.innerHTML =
+      '<div class="m-inv-t">Orders</div>' +
+      '<div class="m-isub">' + esc(s.sub) + '</div>' +
+      '<div class="m-seg" id="moSeg">' +
+        SECCIONES.map(x => {
+          // El contador solo donde significa algo: proveedores con
+          // pedido esperando, y líneas de factura sin enlazar. Un
+          // contador en "Sent" seria el total del historial, que no
+          // pide nada.
+          const n = x.id === 'open' ? nPend : x.id === 'inv' ? nSin : 0;
+          return '<button type="button" class="' + (x.id === _sec ? 'on' : '') + '"' +
+            ' data-sec="' + x.id + '">' + esc(x.n) +
+            (n ? ' <b>' + n + '</b>' : '') + '</button>';
+        }).join('') +
+      '</div>';
+
+    cab.querySelectorAll('[data-sec]').forEach(b => {
+      b.onclick = () => {
+        if (b.dataset.sec === _sec) return;
+        _sec = b.dataset.sec;
+        // Cada sección arranca por su lista. Volver a una y caer
+        // dentro de lo que mirabas hace diez minutos desorienta.
+        salirRevision(); _vendor = null;
+        if (H() && H().reiniciar) H().reiniciar();
+        if (I() && I().reiniciar) I().reiniciar();
+        pintar(host);
+      };
+    });
+    return cuerpo;
+  }
+
   // ── Pintar ───────────────────────────────────────────────────────────
+
+  // La pantalla entera, recordada. Los manejadores de dentro reciben
+  // el CUERPO, no la pantalla: si llamaran a `pintar()` con lo que
+  // tienen a mano, se armaría un marco dentro de otro marco.
+  let _host = null;
+  const repintar = () => pintar(_host);
 
   function pintar(host) {
     if (!host) return;
+    _host = host;
+    const cuerpo = marco(host);
+
+    if (_sec === 'sent') { if (H()) H().montar(cuerpo); return; }
+    if (_sec === 'inv')  { if (I()) I().montar(cuerpo); return; }
+
     // La revisión manda mientras esté abierta, aunque el proveedor ya
     // no tenga líneas pendientes — que es justo lo que pasa en cuanto
     // la orden se guarda.
-    if (_revisar) pintarRevision(host);
-    else if (_vendor) pintarDetalle(host);
-    else pintarResumen(host);
+    if (_revisar) pintarRevision(cuerpo);
+    else if (_vendor) pintarDetalle(cuerpo);
+    else pintarResumen(cuerpo);
   }
 
   function pantalla() {
@@ -879,6 +969,7 @@
   // pestaña arranque siempre en el resumen—. Así que se deja la
   // petición anotada y es `show()` quien la recoge y la borra.
   let _pedida = null;
+  let _secPedida = null;   // sección que alguien pidió al entrar
 
   function abrirVendor(nombre) {
     _pedida = String(nombre || '') || null;
@@ -888,7 +979,17 @@
   // `enviarCorreo` se exporta para History: reenviar una orden ya
   // colocada es el MISMO correo, con el mismo PDF. Dos funciones que
   // mandan el mismo pedido acabarían mandándolo distinto.
-  window.BarStockMobileOrders = { refresh, falloAlGuardar, abrirVendor, enviarCorreo };
+  // `abrirSeccion` es cómo el resto de la app entra a una de las tres
+  // sin saber que viven dentro de Orders. Antes se hacía con
+  // `BarStockMobile.ir('invoices')`, que ya no existe como pantalla.
+  function abrirSeccion(id) {
+    _secPedida = (id === 'sent' || id === 'inv') ? id : 'open';
+    if (window.BarStockMobile) window.BarStockMobile.ir('orders');
+  }
+
+  window.BarStockMobileOrders = {
+    refresh, falloAlGuardar, abrirVendor, enviarCorreo, abrirSeccion
+  };
 
   function registrar() {
     if (!window.BarStockMobile) return;
@@ -902,12 +1003,29 @@
       // Deslizar desde el borde vuelve al resumen. Sin proveedor
       // abierto no hay a dónde volver, y se contesta que no para que
       // el gesto ni se arme.
+      // El gesto del borde lo atiende la SECCIÓN que esté activa. Un
+      // escalón cada vez, y nunca salta de sección: deslizar dentro
+      // de una factura la cierra, no te manda a Open.
+      //
+      // En la raíz de cualquiera de las tres devuelve false: Orders es
+      // una pestaña, no un sitio del que se vuelva.
       atras(host, hacerlo) {
+        if (_sec === 'sent') {
+          const m = H();
+          if (!m || !m.enDetalle || !m.enDetalle()) return false;
+          if (hacerlo) { m.cerrarDetalle(host.querySelector('#moCuerpo')); repintar(); }
+          return true;
+        }
+        if (_sec === 'inv') {
+          const m = I();
+          if (!m || !m.enDetalle || !m.enDetalle()) return false;
+          if (hacerlo) { m.cerrarDetalle(host.querySelector('#moCuerpo')); repintar(); }
+          return true;
+        }
         if (!_vendor) return false;
         if (hacerlo) {
-          // Un escalón cada vez: de la revisión se vuelve a las líneas,
-          // no al resumen. Saltarse el intermedio al deslizar hace
-          // perder el sitio.
+          // De la revisión se vuelve a las líneas, no al resumen.
+          // Saltarse el intermedio hace perder el sitio.
           if (_revisar) salirRevision(); else _vendor = null;
           pintar(host);
         }
@@ -920,6 +1038,15 @@
       // Home—. Esa petición se consume aquí y se borra: vale para esta
       // entrada y ninguna más.
       show(host) {
+        // Entrar por la pestaña arranca siempre en Open. Las otras dos
+        // son sitios a los que se va a propósito, no donde caer.
+        //
+        // Salvo que el Home haya pedido un proveedor concreto: eso es
+        // una petición explícita y manda.
+        _sec = _secPedida || 'open';
+        _secPedida = null;
+        if (H() && H().reiniciar) H().reiniciar();
+        if (I() && I().reiniciar) I().reiniciar();
         _vendor = _pedida || null;
         _pedida = null;
         // Nunca se entra directo a la revisión: es el último paso de un

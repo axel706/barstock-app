@@ -165,6 +165,23 @@ function pantalla(extra) {
   };
   w.fetch = red; global.fetch = red;
 
+  // ── Las otras dos secciones ───────────────────────────────────────
+  // Pintan sobre el `host` que les den, igual que las de verdad: eso
+  // es justo lo que hace que la mudanza funcione sin reescribirlas.
+  const seccion = (nombre) => {
+    const o = {
+      _dentro: false, _pintadas: 0, _hosts: [],
+      montar(h) { o._pintadas++; o._hosts.push(h); h.innerHTML = '<div class="' + nombre + '">' + nombre + '</div>'; },
+      enDetalle: () => o._dentro,
+      cerrarDetalle(h) { o._dentro = false; o.montar(h); },
+      reiniciar() { o._dentro = false; }
+    };
+    return o;
+  };
+  w.BarStockMobileHistory = seccion('sent');
+  w.BarStockMobileInvoices = Object.assign(seccion('inv'),
+    { resumen: () => ({ sueltas: 3 }) });
+
   let def = null;
   // `cabecera` y `alVolver` son las DE VERDAD, copiadas del armazon
   // por referencia: se carga `mobile-shell.js` solo para tomarlas.
@@ -188,8 +205,13 @@ function pantalla(extra) {
   host.dataset.screen = 'orders';
   w.document.body.appendChild(host);
   def.mount(host);
+  _defs.set(host, def);
   return { w, host, def };
 }
+
+// Para poder llamar a `atras()` sin arrastrar `def` por todas partes.
+const _defs = new WeakMap();
+const def_de = (host) => _defs.get(host);
 
 const nombres = (host, sel) =>
   Array.from(host.querySelectorAll(sel)).map(e => e.textContent.trim());
@@ -434,6 +456,88 @@ async function revisar(host, vendor) {
 }
 
 (async () => {
+
+console.log('\nlas tres secciones viven en Orders');
+{
+  const { w, host } = pantalla();
+  const seg = host.querySelector('#moSeg');
+  ok('hay un segmentado', !!seg);
+  const botones = Array.from(seg.querySelectorAll('button')).map(b => b.textContent.trim());
+  ok('con las tres', /Open/.test(botones[0]) && /Sent/.test(botones[1]) && /Invoices/.test(botones[2]),
+     botones.join(' | '));
+  ok('Open arranca encendida', seg.querySelector('button').classList.contains('on'));
+
+  // El contador solo donde pide algo: proveedores esperando y lineas
+  // de factura sin enlazar. Un contador en Sent seria el total del
+  // historial, que no pide nada.
+  ok('Open cuenta los proveedores', /Open\s*3/.test(botones[0]), botones[0]);
+  ok('Invoices cuenta las sueltas', /Invoices\s*3/.test(botones[2]), botones[2]);
+  ok('Sent no cuenta nada', !/\d/.test(botones[1]), botones[1]);
+}
+
+console.log('\ncambiar de seccion cede el cuerpo a su modulo');
+{
+  const { w, host } = pantalla();
+  const ir = (i) => host.querySelectorAll('#moSeg button')[i].click();
+
+  ir(1);
+  ok('Sent la pinta el historial', w.BarStockMobileHistory._pintadas === 1);
+  ok('y se ve', !!host.querySelector('.sent'));
+
+  ir(2);
+  ok('Invoices la pinta su modulo', w.BarStockMobileInvoices._pintadas === 1);
+  ok('y se ve', !!host.querySelector('.inv') && !host.querySelector('.sent'));
+
+  ir(0);
+  ok('y Open vuelve a las ordenes', !!host.querySelector('.m-ordv'));
+
+  // ── EL detalle que importa ──────────────────────────────────────
+  //
+  // El cuerpo NO se puede recrear en cada repintado. El historial
+  // pinta de forma asincrona: si al volver encuentra un elemento que
+  // ya no esta en el documento, escribe en el vacio y la seccion se
+  // queda en blanco.
+  const cuerpos = w.BarStockMobileHistory._hosts;
+  ir(1); ir(0); ir(1);
+  ok('el cuerpo es SIEMPRE el mismo elemento',
+     cuerpos.every(h => h === cuerpos[0]), cuerpos.length + ' pintadas');
+  ok('y sigue dentro del documento', host.contains(cuerpos[0]));
+}
+
+console.log('\nun detalle esconde el segmentado');
+{
+  const { w, host } = pantalla();
+  host.querySelectorAll('#moSeg button')[2].click();
+  ok('con la lista, el segmentado esta', !!host.querySelector('#moSeg'));
+
+  w.BarStockMobileInvoices._dentro = true;
+  host.querySelector('#moSeg button').parentElement;   // forzar repintado
+  w.BarStockMobileOrders.refresh();
+  ok('dentro de una factura, no', !host.querySelector('#moSeg'));
+
+  // Y el gesto del borde cierra el detalle, no salta de seccion.
+  const r = def_de(host).atras(host, true);
+  ok('el gesto cierra el detalle', r === true && !w.BarStockMobileInvoices._dentro);
+  ok('y el segmentado vuelve', !!host.querySelector('#moSeg'));
+  ok('sin cambiar de seccion',
+     host.querySelectorAll('#moSeg button')[2].classList.contains('on'));
+}
+
+console.log('\nentrar por la pestana arranca en Open');
+{
+  const { w, host, def } = pantalla();
+  host.querySelectorAll('#moSeg button')[1].click();
+  ok('estabas en Sent', host.querySelectorAll('#moSeg button')[1].classList.contains('on'));
+  def.show(host);
+  ok('al reentrar, Open', host.querySelector('#moSeg button').classList.contains('on'));
+
+  // Salvo que alguien pida una seccion concreta — la tarjeta del Home
+  // lleva a las facturas.
+  w.BarStockMobile.ir = () => def.show(host);
+  w.BarStockMobileOrders.abrirSeccion('inv');
+  ok('abrirSeccion manda a Invoices',
+     host.querySelectorAll('#moSeg button')[2].classList.contains('on'));
+}
 
 console.log('\nla revision ensena que sale y a quien');
 {

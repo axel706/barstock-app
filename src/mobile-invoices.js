@@ -487,27 +487,11 @@
   // que a Ajustes o al historial: desde More, donde ninguna pestaña
   // queda encendida. Sin flecha no había forma de salir salvo pulsar
   // otra pestaña — que es irse, no volver.
-  function cabecera() {
-    const W = window.BarStockWeeklyCycle;
-    const f = (W && W.resetAt && W.fmtDate) ? W.fmtDate(W.resetAt()) : '';
-    const Mv = window.BarStockMobile;
-    const vuelta = (Mv && Mv.nombreAnterior && Mv.nombreAnterior()) || 'Back';
-    return cab({
-      volverA: vuelta,
-      titulo: 'Invoices',
-      sub: 'What MarginEdge has received' +
-           (f ? ' since the cycle opened on ' + f : ' this cycle') + '.'
-    });
-  }
-
-  // El `sub` ya lo pinta la cabecera, así que quien quiera engancharla
-  // llama a esto justo después de escribir el HTML.
-  function salirDeLaRaiz(host) {
-    volverCon(host, () => {
-      const Mv = window.BarStockMobile;
-      if (Mv && Mv.volver) Mv.volver();
-    });
-  }
+  // La raíz ya no pinta encabezado: el título, el subtítulo y el
+  // segmentado los pone la pantalla de Orders, que es donde vive
+  // esta sección desde la mudanza.
+  function cabecera() { return ''; }
+  function salirDeLaRaiz() {}
 
   function ficha(r) {
     return [r.category, r.vendor, (Number(r.onHand) || 0) + ' on hand']
@@ -978,33 +962,23 @@
              conectado: prods > 0 };
   }
 
-  window.BarStockMobileInvoices = { montar, resumen, _cargar: cargar, _sugerir: sugerir };
+  // ── Ya no es una pantalla, es una SECCIÓN de Orders ──────────────
+  //
+  // Misma idea que el historial: el contenedor le pasa un `host`
+  // propio y esta pantalla pinta sobre él como siempre.
+  //
+  // `enDetalle` cuenta las DOS formas de estar dentro: una factura
+  // abierta, o una de las listas de "no mostrado aquí".
+  window.BarStockMobileInvoices = {
+    montar, resumen, _cargar: cargar, _sugerir: sugerir,
+    enDetalle: () => !!_abierta || !!_verFuera,
+    cerrarDetalle(host) {
+      if (_verFuera) { _verFuera = ''; pintar(host); return; }
+      _abierta = null; pintar(host);
+    },
+    reiniciar() { _abierta = null; _verFuera = ''; }
+  };
 
-  function registrar() {
-    if (!window.BarStockMobile) return;
-    window.BarStockMobile.register({
-      id: 'invoices', icon: 'ti-receipt', label: 'Invoices',
-      tab: false,
-      mount: montar,
-      // Entrar siempre por la lista: caer dentro de la factura que
-      // miraste ayer desorienta.
-      show(host) { _abierta = null; montar(host); },
-      // Deslizar desde el borde cierra la factura antes de salir.
-      atras(host, hacerlo) {
-        if (_verFuera) {
-          if (hacerlo) { _verFuera = ''; pintar(host); }
-          return true;
-        }
-        if (!_abierta) {
-          if (hacerlo && window.BarStockMobile) window.BarStockMobile.volver();
-          return true;
-        }
-        if (hacerlo) { _abierta = null; pintar(host); }
-        return true;
-      }
-    });
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', registrar);
-  else registrar();
+  // Sin `register`: desde que vive dentro de Orders, no es una
+  // pantalla del armazón. Quien la pinta es `mobile-orders.js`.
 })();

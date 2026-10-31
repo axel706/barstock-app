@@ -349,10 +349,8 @@
     }
 
     const M = window.BarStockMobile;
-    const vuelta = (M && M.nombreAnterior && M.nombreAnterior()) || 'Back';
 
     let html =
-      cab({ volverA: vuelta, titulo: 'Order history' }) +
       '<div class="m-hsub">What you sent, and what actually arrived.</div>' +
       '<label class="m-searchbar m-hfind">' +
         '<i class="ti ti-search" aria-hidden="true"></i>' +
@@ -412,7 +410,6 @@
       };
     }
 
-    volverCon(host, () => { if (M && M.volver) M.volver(); });
 
     host.querySelectorAll('[data-f]').forEach(b => {
       b.onclick = () => { _filtro = b.dataset.f; pintarLista(host); };
@@ -632,28 +629,24 @@
     }
   }
 
-  window.BarStockMobileHistory = { montar };
+  // ── Ya no es una pantalla, es una SECCIÓN de Orders ──────────────
+  //
+  // El contenedor le pasa un `host` propio —un div dentro de la
+  // pantalla de Orders— y esta pantalla sigue pintando `innerHTML`
+  // sobre él exactamente igual que antes. No se entera de la mudanza.
+  //
+  // Lo que sí tiene que exponer es su estado de navegación: el
+  // contenedor necesita saber si está en un detalle para esconder el
+  // segmentado, y poder cerrarlo desde el gesto del borde.
+  window.BarStockMobileHistory = {
+    montar,
+    enDetalle: () => !!_orden,
+    cerrarDetalle(host) { _orden = null; pintar(host); },
+    // Volver a entrar arranca siempre en la lista: caer dentro de la
+    // orden que miraste ayer desorienta.
+    reiniciar() { _orden = null; }
+  };
 
-  function registrar() {
-    if (!window.BarStockMobile) return;
-    window.BarStockMobile.register({
-      id: 'orderHistory', icon: 'ti-history', label: 'History',
-      tab: false,
-      mount: montar,
-      // Volver a entrar arranca siempre en la lista.
-      show(host) { _orden = null; montar(host); },
-      // Deslizar desde el borde cierra el detalle antes de salir.
-      atras(host, hacerlo) {
-        if (!_orden) {
-          if (hacerlo && window.BarStockMobile) window.BarStockMobile.volver();
-          return true;
-        }
-        if (hacerlo) { _orden = null; pintar(host); }
-        return true;
-      }
-    });
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', registrar);
-  else registrar();
+  // Sin `register`: desde que vive dentro de Orders, no es una
+  // pantalla del armazón. Quien la pinta es `mobile-orders.js`.
 })();

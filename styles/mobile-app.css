@@ -2691,6 +2691,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-act { border-radius: 999px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-adj { border-radius: 16px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-adj.on::after { border-radius: 50% !important; }
+  /* El segmentado de Orders separa un poco más que el de Inventory:
+   * ahí va pegado al buscador, aquí debajo del subtítulo. */
+  #moCab .m-seg { margin: 13px 0 14px; }
+
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-seg { border-radius: 15px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-seg button { border-radius: 11px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-inv { border-radius: 15px !important; }

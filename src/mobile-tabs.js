@@ -34,16 +34,10 @@
     host.innerHTML = `
       <div class="m-lab">EVERYTHING ELSE</div>
       <div class="m-list">
-        <button type="button" class="m-item" id="mMoreHist">
-          <i class="ti ti-history" aria-hidden="true"></i>
-          <span class="m-item-t">History</span>
-          <i class="ti ti-chevron-right m-chev" aria-hidden="true"></i>
-        </button>
-        <button type="button" class="m-item" id="mMoreInv">
-          <i class="ti ti-receipt" aria-hidden="true"></i>
-          <span class="m-item-t">Invoices</span>
-          <i class="ti ti-chevron-right m-chev" aria-hidden="true"></i>
-        </button>
+        <!-- History e Invoices ya no están aquí: viven dentro de
+             Orders, en su segmentado. Dejarlas también en esta lista
+             serían dos puertas a la misma habitación, y la segunda
+             envejece hasta llevar a otro sitio. -->
         ${MAS.map(m => `
           <button type="button" class="m-item" data-sec="${esc(m.id)}">
             <i class="ti ${esc(m.icon)}" aria-hidden="true"></i>
@@ -72,26 +66,6 @@
     // History tiene pantalla propia en el teléfono: la del escritorio
     // es una tabla que en un móvil no se puede leer. Va aparte de MAS
     // porque no abre una sección, abre una pantalla del armazón.
-    const his = host.querySelector('#mMoreHist');
-    if (his) his.onclick = () => {
-      if (window.BarStockMobile) window.BarStockMobile.ir('orderHistory');
-    };
-
-    // Las facturas de MarginEdge, igual: pantalla propia del armazón,
-    // no una sección del escritorio.
-    const inv = host.querySelector('#mMoreInv');
-    if (inv) inv.onclick = () => {
-      if (window.BarStockMobile) window.BarStockMobile.ir('invoices');
-    };
-
-    host.querySelectorAll('[data-sec]').forEach(b => {
-      b.onclick = () => {
-        if (typeof window.bsOpenSection === 'function') window.bsOpenSection(b.dataset.sec);
-        // La barra deja de marcar "More": lo que se esta viendo es una
-        // seccion, y una pestaña encendida sobre otra pantalla miente.
-        if (window.BarStockMobile) window.BarStockMobile.refrescarBadges();
-      };
-    });
     const set = host.querySelector('#mMoreSet');
     if (set) set.onclick = () => {
       if (window.BarStockMobileSettings && window.BarStockMobile) {
