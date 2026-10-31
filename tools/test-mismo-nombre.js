@@ -96,6 +96,58 @@ function entorno() {
     prueba('ni que no llegó nada', !/never arrived/i.test(t), t.slice(0, 200));
   }
 
+  grupo('buscador y filtros, como en Inventory');
+  {
+    // Las pastillas All / Short / Waiting ocupaban un renglon entero
+    // para una eleccion que se hace de vez en cuando. Ahora viven en
+    // un cajon, detras del mismo boton que usa Inventory.
+    const w = entorno();
+    const h = w.document.createElement('div');
+    w.document.body.appendChild(h);
+    await w.BarStockMobileHistory.montar(h);
+    await esperar(60);
+
+    prueba('el buscador y el boton van en la misma fila',
+      !!h.querySelector('.m-inv-bar2 .m-searchbar') && !!h.querySelector('.m-inv-bar2 #mhAdj'));
+    prueba('y es el MISMO boton que Inventory',
+      h.querySelector('#mhAdj').classList.contains('m-adj'));
+    prueba('las pastillas ya no estan en la pantalla', !h.querySelector('.m-hchip'));
+
+    // Sin filtro puesto, el boton esta apagado y no hay nada que
+    // quitar.
+    prueba('el boton nace apagado', !h.querySelector('#mhAdj').classList.contains('on'));
+    prueba('y no hay etiqueta de filtro', !h.querySelector('#mhClr'));
+
+    h.querySelector('#mhAdj').click();
+    const hoja = w.document.querySelector('#mSheet');
+    prueba('abre un cajon', !!hoja);
+    const ops = hoja ? Array.from(hoja.querySelectorAll('[data-f]')).map(b => b.dataset.f) : [];
+    prueba('con las tres opciones', ops.join(',') === 'all,short,waiting', ops.join(','));
+    prueba('y cada una dice que significa',
+      /never arrived/i.test(hoja.textContent) && /No invoice/i.test(hoja.textContent));
+
+    hoja.querySelector('[data-f="short"]').click();
+    prueba('elegir cierra el cajon', !w.document.querySelector('#mSheet'));
+    prueba('el boton se enciende', h.querySelector('#mhAdj').classList.contains('on'));
+    // Un icono encendido avisa de que algo filtra, pero no de QUE.
+    prueba('y se dice cual es', /Short/.test((h.querySelector('#mhClr') || {}).textContent || ''),
+      (h.querySelector('#mhClr') || {}).textContent);
+
+    h.querySelector('#mhClr').click();
+    prueba('y se puede quitar sin abrir el cajon',
+      !h.querySelector('#mhClr') && !h.querySelector('#mhAdj').classList.contains('on'));
+  }
+
+  grupo('la lupa del buscador de Inventory');
+  {
+    // Embudo era el icono de filtrar, y filtrar es lo que hace el
+    // boton de al lado: dos cosas distintas con el mismo dibujo.
+    const inv = leer('src/mobile-inventory.js');
+    const barra = /<div class="m-searchbar on">([\s\S]{0,700}?)<\/div>/.exec(inv);
+    prueba('es una lupa', !!barra && /ti-search/.test(barra[1]), (barra && barra[1] || '').slice(0, 70));
+    prueba('y no un embudo', !!barra && !/ti-filter/.test(barra[1]));
+  }
+
   grupo('reabrir y reenviar usan el id de la APP');
   {
     // Esta pantalla lee `vendor_orders`, que tiene DOS ids: el de su

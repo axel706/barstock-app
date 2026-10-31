@@ -2722,6 +2722,24 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ord-run { border-radius: 13px !important; }
   body.m-shell .m-ord-run:active { background: rgba(255,255,255,.12); }
 
+  /* El filtro puesto, visible y quitable sin abrir el cajón. Un icono
+   * encendido avisa de que algo filtra, pero no de qué. */
+  body.m-shell .m-hfiltro {
+    display: inline-flex; align-items: center; gap: 7px;
+    margin: 0 0 12px; padding: 7px 12px; cursor: pointer;
+    background: rgba(56,189,248,.14); border: 1px solid rgba(56,189,248,.32);
+    color: #e4f3ff; font-family: inherit;
+    font-size: var(--m-small); font-weight: 700;
+  }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hfiltro { border-radius: 999px !important; }
+  .m-hfiltro .ti { font-size: var(--m-small); color: #8fb6d6; }
+
+  /* El pie de cada opción del cajón, que dice qué significa. */
+  .m-sheet-op small {
+    display: block; margin-top: 2px;
+    font-size: var(--m-meta); font-weight: 400; color: #8fa3b8;
+  }
+
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-seg { border-radius: 15px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-seg button { border-radius: 11px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-inv { border-radius: 15px !important; }
@@ -2745,7 +2763,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * orden salen con forma de píldora: el mismo problema del resto de
    * la lista, sólo que estas clases son nuevas. */
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hcard { border-radius: 15px !important; }
-  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hchip { border-radius: 999px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hmes { border-radius: 0 !important; }
 }
 
@@ -2843,20 +2860,14 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-hsub { font-size: var(--m-small); color: #9fb0c4; line-height: 1.5;
     margin: 4px 2px 14px; }
 
-  .m-hchips { display: flex; gap: 7px; margin-bottom: 4px; flex-wrap: wrap; }
-  body.m-shell .m-hchip {
-    font-size: var(--m-small); font-weight: 700; padding: 8px 13px;
-    border-radius: 999px; color: #9fb0c4;
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.13);
-  }
-  body.m-shell .m-hchip.on {
-    background: #0284c7; border-color: #0284c7; color: #fff;
-  }
+  /* Las pastillas All / Short / Waiting se mudaron al cajón de
+   * filtros, que es el mismo patrón que usa Inventory. Ocupaban un
+   * renglón entero para una elección que se hace de vez en cuando. */
 
-  /* El buscador del historial. Reusa la barra del resto de la app; lo
-   * único propio es el aire de debajo. */
-  .m-hfind { margin: 0 0 12px; }
+  /* El buscador del historial. Reusa la barra del resto de la app; el
+   * margen de debajo lo pone ahora la fila que comparte con el botón
+   * de filtros. */
+  .m-hfind { margin: 0; }
 
   /* ── Ajustes en el teléfono ────────────────────────────────────────
    *

@@ -399,7 +399,11 @@
 
       <div class="m-inv-bar2">
         <div class="m-searchbar on">
-          <i class="ti ti-filter" aria-hidden="true"></i>
+          <!-- Lupa y no embudo: esto escribe para BUSCAR. El embudo es
+               el icono de filtrar, y filtrar es lo que hace el botón
+               de al lado — dos iconos distintos para dos cosas
+               distintas. -->
+          <i class="ti ti-search" aria-hidden="true"></i>
           <input id="miInput" type="search" inputmode="search" autocomplete="off"
                  placeholder="Filter items" aria-label="Filter items">
         </div>

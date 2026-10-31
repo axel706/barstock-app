@@ -305,9 +305,8 @@
       short: enBusca.filter(o => o.estado === 'short').length,
       waiting: enBusca.filter(o => o.estado === 'waiting').length
     };
-    const chip = (id, txt) =>
-      '<button type="button" class="m-hchip' + (_filtro === id ? ' on' : '') +
-      '" data-f="' + id + '">' + txt + ' · ' + cuenta[id] + '</button>';
+    // Los nombres de los filtros, para el botón y para la hoja.
+    const NOMBRE = { all: 'All', short: 'Short', waiting: 'Waiting' };
 
     // ── Buscar por proveedor O por producto ───────────────────────
     //
@@ -353,14 +352,33 @@
     // Sin subtítulo: lo pone el contenedor de Orders, justo encima del
     // segmentado. Decía casi lo mismo —"what you sent, and what
     // actually arrived"— y salía dos veces seguidas.
+    // ── La misma fila que Inventory ─────────────────────────────────
+    //
+    // Buscador y botón de filtros en una línea. Las tres pastillas
+    // —All, Short, Waiting— se mudan dentro de ese botón: ocupaban un
+    // renglón entero para una elección que se hace de vez en cuando.
+    //
+    // El botón se enciende cuando hay un filtro puesto, para que no se
+    // pueda estar filtrando sin verlo.
     let html =
-      '<label class="m-searchbar m-hfind">' +
-        '<i class="ti ti-search" aria-hidden="true"></i>' +
-        '<input type="search" id="mhQ" placeholder="Vendor or product\u2026" ' +
-          'autocomplete="off" value="' + esc(_busca) + '">' +
-      '</label>' +
-      '<div class="m-hchips">' + chip('all', 'All') + chip('short', 'Short') +
-        chip('waiting', 'Waiting') + '</div>';
+      '<div class="m-inv-bar2">' +
+        '<label class="m-searchbar on m-hfind">' +
+          '<i class="ti ti-search" aria-hidden="true"></i>' +
+          '<input type="search" id="mhQ" placeholder="Vendor or product\u2026" ' +
+            'autocomplete="off" value="' + esc(_busca) + '">' +
+        '</label>' +
+        '<button type="button" class="m-adj' + (_filtro === 'all' ? '' : ' on') + '" ' +
+          'id="mhAdj" aria-label="Filters">' +
+          '<i class="ti ti-adjustments-horizontal" aria-hidden="true"></i>' +
+        '</button>' +
+      '</div>' +
+      // Cuando hay filtro puesto se dice CUÁL, y se puede quitar sin
+      // abrir la hoja. Un icono encendido avisa de que algo está
+      // filtrando, pero no de qué.
+      (_filtro === 'all' ? ''
+        : '<button type="button" class="m-hfiltro" id="mhClr">' +
+            esc(NOMBRE[_filtro] || _filtro) + ' &middot; ' + cuenta[_filtro] +
+            ' <i class="ti ti-x" aria-hidden="true"></i></button>');
 
     if (abiertas.length) {
       const gasto = abiertas.reduce((t, o) => t + importe(o), 0);
@@ -413,9 +431,12 @@
     }
 
 
-    host.querySelectorAll('[data-f]').forEach(b => {
-      b.onclick = () => { _filtro = b.dataset.f; pintarLista(host); };
-    });
+    // Las pastillas ya no están en la pantalla: viven en el cajón.
+    const aj = host.querySelector('#mhAdj');
+    if (aj) aj.onclick = () => cajon(host, cuenta);
+    const clr = host.querySelector('#mhClr');
+    if (clr) clr.onclick = () => { _filtro = 'all'; pintarLista(host); };
+
     host.querySelectorAll('[data-m]').forEach(b => {
       b.onclick = () => {
         const id = b.dataset.m;
@@ -486,6 +507,46 @@
 
     volverCon(host, () => { _orden = null; pintar(host); cambioDeNivel(); });
     engancharAcciones(host, o);
+  }
+
+  // ── El cajón de filtros ──────────────────────────────────────────
+  //
+  // Misma forma que el de Inventory: una hoja desde abajo con las
+  // opciones en pastillas. No se inventa otro patrón — con dos, el día
+  // que uno cambie el otro se queda viejo.
+  function cajon(host, cuenta) {
+    const NOMBRE = { all: 'All', short: 'Short', waiting: 'Waiting' };
+    const PIE = {
+      all: 'Every order this cycle and before.',
+      short: 'Something you ordered never arrived.',
+      waiting: 'No invoice has come through yet.'
+    };
+
+    const hoja_ = document.createElement('div');
+    hoja_.className = 'm-sheet';
+    // El id no es decoración: las reglas de la hoja se apoyan en él
+    // para ganarle en especificidad al radio de app.css.
+    hoja_.id = 'mSheet';
+    hoja_.innerHTML =
+      '<div class="m-sheet-bg"></div>' +
+      '<div class="m-sheet-box" role="dialog" aria-label="Filters">' +
+        '<div class="m-sheet-grip"></div>' +
+        '<div class="m-sheet-t">Show</div>' +
+        ['all', 'short', 'waiting'].map(id =>
+          '<button type="button" class="m-sheet-op' + (_filtro === id ? ' on' : '') + '" ' +
+            'data-f="' + id + '">' +
+            '<span>' + NOMBRE[id] + ' &middot; ' + cuenta[id] + '<br>' +
+            '<small>' + PIE[id] + '</small></span>' +
+            (_filtro === id ? '<i class="ti ti-check" aria-hidden="true"></i>' : '') +
+          '</button>').join('') +
+      '</div>';
+    document.body.appendChild(hoja_);
+
+    const cerrar = () => hoja_.remove();
+    hoja_.querySelector('.m-sheet-bg').onclick = cerrar;
+    hoja_.querySelectorAll('[data-f]').forEach(b => {
+      b.onclick = () => { _filtro = b.dataset.f; cerrar(); pintarLista(host); };
+    });
   }
 
   // ── Reenviar y reabrir ───────────────────────────────────────────────
