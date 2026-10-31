@@ -65,6 +65,12 @@ function montar(movil) {
   w.__cerradas = 0;
   w.bsCloseSection = () => { w.__cerradas++; };
 
+  // El diálogo DE VERDAD, no un stub. El armazón ya no llama a
+  // `confirm()` del navegador: pregunta con el diálogo de la app, y un
+  // stub propio aquí sería una segunda implementación que el día que
+  // cambie el markup deja pasar la prueba con la app rota.
+  new Function(fs.readFileSync(path.join(RAIZ, 'src/dialog.js'), 'utf8'))();
+
   new Function(fs.readFileSync(path.join(RAIZ, 'src/mobile-shell.js'), 'utf8'))();
   // jsdom deja el documento en 'loading' para siempre, asi que el
   // DOMContentLoaded del que cuelga init() no llega solo. En el
@@ -321,12 +327,27 @@ console.log('\nel boton de escanear');
 }
 
 console.log('\nel escaner se apaga cuando contar no toca');
-{
+(async () => {
+  // El diálogo es asíncrono y `confirm()` no lo era, así que hay que
+  // dejar correr las microtareas entre pulsar y mirar. Es exactamente
+  // lo que cambia para quien lo usa, y por eso se prueba así.
+  const latir = () => new Promise(r => setTimeout(r, 0));
+  const pulsar = async (w, id) => {
+    const b = w.document.getElementById(id);
+    if (b) b.click();
+    await latir();
+  };
+
+  const PARAR = { activo: false, dialogo: {
+    titulo: 'Start the cycle first.',
+    cuerpo: 'It sets on hand to zero so the count starts clean.',
+    ok: 'Open the cycle', cancelar: 'Not now'
+  } };
+
   const w = montar(true);
   let abierto = 0, ido = [];
   w.BarStockScanCount = { open() { abierto++; } };
-  w.BarStockMobileCycle = { escaneo: () => ({ activo: false, motivo: 'Start the cycle first. Open it?' }) };
-  w.confirm = () => true;
+  w.BarStockMobileCycle = { escaneo: () => PARAR };
   w.BarStockMobile.register({ id: 'home', tab: true, orden: 10, mount() {} });
   w.BarStockMobile.register({ id: 'cycle', tab: false, mount() { ido.push('cycle'); } });
   w.BarStockMobile.refrescarBadges();
@@ -334,21 +355,50 @@ console.log('\nel escaner se apaga cuando contar no toca');
   const fab = w.document.getElementById('mFab');
   ok('sale apagado', fab.classList.contains('off'));
   fab.click();
+  await latir();
   eq('y no abre el escaner', abierto, 0);
+
+  // Ya no es el diálogo del navegador: es el de la app, con su texto y
+  // sus dos botones.
+  ok('pregunta con el dialogo de la app', !!w.document.querySelector('#dlgBg .dlg-modal'));
+  ok('con el titulo', /Start the cycle first/.test(w.document.getElementById('dlgBg').textContent));
+  ok('y el boton dice lo que hace',
+     /Open the cycle/.test((w.document.getElementById('dlgSi') || {}).textContent || ''));
+
   // Apagado no es inerte: explica por que y lleva al sitio donde se
   // arregla. Un boton que no hace nada al tocarlo se lee como roto.
+  await pulsar(w, 'dlgSi');
   eq('lleva al ciclo si dices que si', ido, ['cycle']);
+  ok('y el dialogo se cierra', w.document.getElementById('dlgBg').classList.contains('hidden'));
 
   const no = montar(true);
   no.BarStockScanCount = { open() {} };
-  no.BarStockMobileCycle = { escaneo: () => ({ activo: false, motivo: 'x' }) };
-  no.confirm = () => false;
+  no.BarStockMobileCycle = { escaneo: () => PARAR };
   no.BarStockMobile.register({ id: 'home', tab: true, orden: 10, mount() {} });
   let fue = 0;
   no.BarStockMobile.register({ id: 'cycle', tab: false, mount() { fue++; } });
   no.BarStockMobile.refrescarBadges();
   no.document.getElementById('mFab').click();
+  await latir();
+  await pulsar(no, 'dlgNo');
   eq('y si dices que no, no pasa nada', fue, 0);
+
+  // `loading` no pregunta nada: no hay decisión que tomar. Con
+  // `confirm()` salía con OK y Cancel y el OK te llevaba al ciclo sin
+  // que nadie lo hubiera pedido.
+  const esp = montar(true);
+  let fue2 = 0;
+  esp.BarStockScanCount = { open() {} };
+  esp.BarStockMobileCycle = { escaneo: () => ({ activo: false, dialogo: {
+    titulo: 'Still checking the cycle.', cuerpo: 'One moment.', soloAviso: true } }) };
+  esp.BarStockMobile.register({ id: 'home', tab: true, orden: 10, mount() {} });
+  esp.BarStockMobile.register({ id: 'cycle', tab: false, mount() { fue2++; } });
+  esp.BarStockMobile.refrescarBadges();
+  esp.document.getElementById('mFab').click();
+  await latir();
+  ok('mientras carga solo avisa', !esp.document.getElementById('dlgNo'));
+  await pulsar(esp, 'dlgSi');
+  eq('y no te lleva a ningun sitio', fue2, 0);
 
   const si = montar(true);
   let abre = 0;
@@ -358,8 +408,13 @@ console.log('\nel escaner se apaga cuando contar no toca');
   si.BarStockMobile.refrescarBadges();
   ok('con el ciclo listo, encendido', !si.document.getElementById('mFab').classList.contains('off'));
   si.document.getElementById('mFab').click();
+  await latir();
   eq('y escanea', abre, 1);
-}
+
+  cierre();
+})();
+
+function cierre() {
 
 console.log('\nel margen lateral no es una lista de nombres');
 {
@@ -396,3 +451,4 @@ console.log('\nel margen lateral no es una lista de nombres');
 
 console.log('\n' + (falla ? falla + ' FALLO(S)' : 'todo bien') + '   ·   ' + pasa + ' comprobaciones');
 process.exit(falla ? 1 : 0);
+}

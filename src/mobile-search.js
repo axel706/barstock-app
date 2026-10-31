@@ -389,7 +389,13 @@
       // la pestaña del escritorio y se cierra sin abrir nada.
       if (!window.BarStockAddToOrder) return;
       if (!window.BarStockAddToOrder.open(r.vendor)) {
-        window.alert('This vendor does not take manual order lines.');
+        const D = window.BarStockDialog;
+        const t = 'This vendor does not take manual order lines.';
+        if (D && D.avisar) {
+          D.avisar({ titulo: t,
+            cuerpo: (r.vendor || 'This vendor') + ' orders are built from the ' +
+                    'cycle. Change the quantity from Orders instead.' });
+        } else window.alert(t);
       }
     };
     const recv = caja.querySelector('#msRecv');

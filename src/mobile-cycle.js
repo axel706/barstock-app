@@ -230,18 +230,30 @@
 
 
     const dr = host.querySelector('#mcDrop');
-    if (dr) dr.onclick = () => {
+    if (dr) dr.onclick = async () => {
       // Se dice el número. "¿Descartar el conteo?" no deja decidir;
       // "vas a tirar 112 botellas contadas" sí.
       const n = contados(estado());
-      const ok = window.confirm(
-        'Discard this count?\n\n' +
-        n + ' bottle' + (n === 1 ? '' : 's') + ' counted so far will be thrown away. ' +
-        'This cannot be undone.\n\nThe cycle stays open.');
+      const ok = await preguntar({
+        titulo: 'Discard this count?',
+        cuerpo: 'The cycle stays open.',
+        aviso: n + ' bottle' + (n === 1 ? '' : 's') +
+               ' counted so far will be thrown away. This cannot be undone.',
+        ok: 'Discard', cancelar: 'Keep counting', peligro: true
+      });
       if (!ok) return;
       const w = W();
       if (w && w.descartarConteo) w.descartarConteo();
     };
+  }
+
+  // El diálogo de la app en vez del `confirm()` del navegador. El
+  // respaldo es por si este archivo corriera sin `dialog.js`: quedarse
+  // sin preguntar y seguir adelante sería lo peor que podría pasar aquí.
+  function preguntar(o) {
+    const D = window.BarStockDialog;
+    if (D && D.confirmar) return D.confirmar(o);
+    return Promise.resolve(window.confirm(o.titulo));
   }
 
   function contados(st) {
@@ -285,25 +297,38 @@
   // —ni debe saber— qué es un ciclo. Si este archivo no cargara, el
   // armazón deja el botón encendido: más vale un botón de más que
   // bloquear la acción principal del teléfono por un script que faltó.
+  // El mensaje viene PARTIDO en título, detalle y consecuencia. Antes
+  // era una sola cadena con saltos de línea, porque se la tragaba
+  // `confirm()` del navegador y ahí no hay más que un párrafo. El
+  // diálogo de la app sí distingue: la consecuencia irreversible va en
+  // su propio renglón, en rojo, y se ve antes de leer nada.
   function escaneo() {
     const st = estado();
     if (st === 'step2' || st === 'counting') return { activo: true };
 
     if (st === 'loading') {
-      return { activo: false, motivo: 'Still checking the cycle. One moment.' };
+      return { activo: false, dialogo: {
+        titulo: 'Still checking the cycle.',
+        cuerpo: 'One moment.',
+        // No hay nada que decidir, así que no se pregunta. Con
+        // `confirm()` esto salía con OK y Cancel, y el OK te llevaba al
+        // ciclo sin que nadie lo hubiera pedido.
+        soloAviso: true
+      } };
     }
     if (st === 'step1') {
-      return {
-        activo: false,
-        motivo: 'Start the cycle first.\n\nIt sets on hand to zero so the ' +
-                'count starts clean. Open the cycle?'
-      };
+      return { activo: false, dialogo: {
+        titulo: 'Start the cycle first.',
+        cuerpo: 'It sets on hand to zero so the count starts clean.',
+        ok: 'Open the cycle', cancelar: 'Not now'
+      } };
     }
-    return {
-      activo: false,
-      motivo: 'This week is already counted.\n\nRestart the cycle to count ' +
-              'again — it sets every on hand back to zero. Open the cycle?'
-    };
+    return { activo: false, dialogo: {
+      titulo: 'This week is already counted.',
+      cuerpo: 'Restart the cycle to count again.',
+      aviso: 'Restarting sets every on hand back to zero.',
+      ok: 'Open the cycle', cancelar: 'Not now', peligro: true
+    } };
   }
 
   window.BarStockMobileCycle = { render, refresh, escaneo };

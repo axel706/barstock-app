@@ -414,12 +414,15 @@
   // ciclo?" no significa nada; "los 270 vuelven a cero" sí. Luego
   // resetOnHand vuelve a preguntar por su cuenta, y está bien: es la
   // única acción de la app sin deshacer.
-  function reiniciar() {
+  async function reiniciar() {
     const n = master().length;
-    const ok = window.confirm(
-      'Restart the cycle?\n\n' +
-      'On hand goes back to zero for all ' + n + ' items, and a new week starts. ' +
-      'This cannot be undone.');
+    const ok = await preguntar({
+      titulo: 'Restart the cycle?',
+      cuerpo: 'A new week starts.',
+      aviso: 'On hand goes back to zero for all ' + n +
+             ' items. This cannot be undone.',
+      ok: 'Restart', cancelar: 'Cancel', peligro: true
+    });
     if (!ok) return;
     const W = window.BarStockWeeklyCycle;
     if (W && W.reiniciar) W.reiniciar();
@@ -428,14 +431,26 @@
   // El mismo descarte que la pantalla del ciclo: tira el conteo, deja
   // la semana abierta. Y dice el número — "¿descartar el conteo?" no
   // deja decidir nada, "vas a tirar 112 botellas contadas" sí.
-  function descartar(n) {
-    const ok = window.confirm(
-      'Discard this count?\n\n' +
-      n + ' bottle' + (n === 1 ? '' : 's') + ' counted so far will be thrown away. ' +
-      'This cannot be undone.\n\nThe cycle stays open.');
+  async function descartar(n) {
+    const ok = await preguntar({
+      titulo: 'Discard this count?',
+      cuerpo: 'The cycle stays open.',
+      aviso: n + ' bottle' + (n === 1 ? '' : 's') +
+             ' counted so far will be thrown away. This cannot be undone.',
+      ok: 'Discard', cancelar: 'Keep counting', peligro: true
+    });
     if (!ok) return;
     const W = window.BarStockWeeklyCycle;
     if (W && W.descartarConteo) W.descartarConteo();
+  }
+
+  // El diálogo de la app en vez del `confirm()` del navegador. El
+  // respaldo es por si esto corriera sin `dialog.js`: seguir adelante
+  // sin preguntar es lo peor que podría pasar en estas dos.
+  function preguntar(o) {
+    const D = window.BarStockDialog;
+    if (D && D.confirmar) return D.confirmar(o);
+    return Promise.resolve(window.confirm(o.titulo));
   }
 
   // ── La bienvenida ────────────────────────────────────────────────────

@@ -759,13 +759,16 @@
     if (hv) hv.onclick = async () => {
       const nom = f.vendor || '';
       const cuantas = _facturas.filter(x => norm(x.vendor) === norm(nom)).length;
-      const ok = window.confirm(
-        'Hide ' + nom + '?\n\n' +
-        'From now on this vendor is treated as not yours:\n' +
-        '· its invoices stop being saved when MarginEdge syncs\n' +
-        '· the ' + cuantas + ' already stored ' + (cuantas === 1 ? 'is' : 'are') + ' deleted\n' +
-        '· nothing in your inventory, orders or prices changes\n\n' +
-        'You can bring it back from Settings › Connections.');
+      const ok = await preguntar({
+        titulo: 'Hide ' + nom + '?',
+        cuerpo: 'From now on this vendor is treated as not yours:\n' +
+                '· its invoices stop being saved when MarginEdge syncs\n' +
+                '· nothing in your inventory, orders or prices changes\n' +
+                '\nYou can bring it back from Settings › Connections.',
+        aviso: 'The ' + cuantas + ' invoice' + (cuantas === 1 ? '' : 's') +
+               ' already stored ' + (cuantas === 1 ? 'is' : 'are') + ' deleted.',
+        ok: 'Hide it', cancelar: 'Cancel', peligro: true
+      });
       if (!ok) return;
       hv.disabled = true;
       try {
@@ -775,16 +778,19 @@
         await montar(host);
       } catch (e) {
         hv.disabled = false;
-        window.alert(String(e && e.message || e));
+        fallo(e);
       }
     };
 
     const hi = host.querySelector('#mInvHideI');
     if (hi) hi.onclick = async () => {
-      const ok = window.confirm(
-        'Hide this invoice?\n\n' +
-        'It stops being saved and the lines already stored are deleted. ' +
-        'Other invoices from ' + (f.vendor || 'this vendor') + ' keep coming in.');
+      const ok = await preguntar({
+        titulo: 'Hide this invoice?',
+        cuerpo: 'Other invoices from ' + (f.vendor || 'this vendor') +
+                ' keep coming in.',
+        aviso: 'It stops being saved and the lines already stored are deleted.',
+        ok: 'Hide it', cancelar: 'Cancel', peligro: true
+      });
       if (!ok) return;
       hi.disabled = true;
       try {
@@ -794,12 +800,30 @@
         await montar(host);
       } catch (e) {
         hi.disabled = false;
-        window.alert(String(e && e.message || e));
+        fallo(e);
       }
     };
   }
 
   // ── Escribir el descarte ─────────────────────────────────────────
+
+  // El diálogo de la app en vez de los del navegador. El respaldo es
+  // por si esto corriera sin `dialog.js`: ocultar un proveedor borra
+  // facturas, así que seguir adelante sin preguntar no es una opción.
+  function preguntar(o) {
+    const D = window.BarStockDialog;
+    if (D && D.confirmar) return D.confirmar(o);
+    return Promise.resolve(window.confirm(o.titulo));
+  }
+
+  // Un fallo al ocultar deja el botón vivo para reintentar, así que lo
+  // único que hace falta es contarlo.
+  function fallo(e) {
+    const texto = String((e && e.message) || e);
+    const D = window.BarStockDialog;
+    if (D && D.avisar) D.avisar({ titulo: 'It could not be hidden.', cuerpo: texto, peligro: true });
+    else window.alert(texto);
+  }
 
   async function ocultar(kind, clave, label) {
     const { url, key } = cfg();

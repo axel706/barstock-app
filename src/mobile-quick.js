@@ -404,15 +404,25 @@
     if (M() && M().alVolver) M().alVolver(host, () => { if (M()) M().ir('orders'); });
 
     host.querySelectorAll('[data-qv]').forEach(b => {
-      b.onclick = () => {
+      b.onclick = async () => {
         if (b.dataset.qv === _vendor) return;
         // Cambiar de proveedor VACÍA las líneas. Una orden es a un
         // proveedor; mezclarlas mandaría a SOUTHERN una botella que
         // compraste en BREAKTHRU.
-        if (_items.length &&
-            !window.confirm('Switch to ' + b.dataset.qv + '? The ' +
-              _items.length + ' line' + (_items.length === 1 ? '' : 's') +
-              ' you added will be cleared.')) return;
+        if (_items.length) {
+          const D = window.BarStockDialog;
+          const n = _items.length + ' line' + (_items.length === 1 ? '' : 's');
+          const ok = (D && D.confirmar)
+            ? await D.confirmar({
+                titulo: 'Switch to ' + b.dataset.qv + '?',
+                cuerpo: 'An order goes to one vendor.',
+                aviso: 'The ' + n + ' you added will be cleared.',
+                ok: 'Switch', cancelar: 'Stay here', peligro: true
+              })
+            : window.confirm('Switch to ' + b.dataset.qv + '? The ' + n +
+                             ' you added will be cleared.');
+          if (!ok) return;
+        }
         _vendor = b.dataset.qv;
         _items = [];
         _elegido = null; _busca = ''; _fallo = '';

@@ -67,7 +67,10 @@ function pintar(cycle, extra) {
     reiniciar: () => w.__hecho.push('reiniciar'),
     descartarConteo: () => w.__hecho.push('descartar')
   }, cycle);
-  w.confirm = () => (extra && extra.confirma === false ? false : true);
+  // El diálogo DE VERDAD, no `w.confirm`. La pantalla ya no llama al
+  // del navegador: pregunta con el de la app, y eso cambia la forma de
+  // probarlo — hay que esperar a que alguien pulse.
+  new Function(fs.readFileSync(path.join(RAIZ, 'src/dialog.js'), 'utf8'))();
 
   if (extra && extra.contados != null) {
     w.BarStockCountSession = {
@@ -145,6 +148,18 @@ console.log('\nreiniciar el ciclo NO esta en esta pantalla');
   }
 }
 
+// El diálogo contesta en una promesa, así que entre pulsar y mirar hay
+// que dejar correr las microtareas. Es justo lo que cambia respecto a
+// `confirm()`, y por eso se prueba así.
+const latir = () => new Promise(r => setTimeout(r, 0));
+async function responder(w, si) {
+  const b = w.document.getElementById(si ? 'dlgSi' : 'dlgNo');
+  if (b) b.click();
+  await latir();
+}
+
+(async () => {
+
 console.log('\ndescartar el conteo');
 {
   // Antes esto solo se podia hacer por accidente: era el "Cancel" del
@@ -160,11 +175,20 @@ console.log('\ndescartar el conteo');
   ok('y no se mezcla con reiniciar el ciclo', !c.host.querySelector('#mcReset'));
 
   c.host.querySelector('#mcDrop').click();
+  await latir();
+  // Y lo pregunta con el diálogo de la app, con el número dentro y
+  // marcado como destructivo: tirar un conteo no se deshace.
+  ok('pregunta con el dialogo de la app', !!c.w.document.querySelector('.dlg-modal.peligro'));
+  ok('con las botellas que se van',
+     /112 bottles/.test(c.w.document.getElementById('dlgBg').textContent));
+  await responder(c.w, true);
   eq('usa el descarte de weekly-cycle', c.w.__hecho, ['descartar']);
 
   const no = pintar({ estado: () => 'counting', resetAt: () => '2026-10-20T00:00:00Z' },
-                    { contados: 112, confirma: false });
+                    { contados: 112 });
   no.host.querySelector('#mcDrop').click();
+  await latir();
+  await responder(no.w, false);
   eq('y si dices que no, no pasa nada', no.w.__hecho, []);
 
   const d = pintar({ estado: () => 'done', resetAt: () => '2026-10-20T00:00:00Z' });
@@ -216,7 +240,11 @@ console.log('\ncuando el circulo verde debe invitar');
                          { contados: 20 });
     const e = w.BarStockMobileCycle.escaneo();
     eq('en ' + st + (activo ? ' se puede escanear' : ' NO se puede'), !!e.activo, activo);
-    if (texto) ok('y dice por que en ' + st, texto.test(e.motivo || ''));
+    // El mensaje viene PARTIDO: título, detalle y consecuencia. Antes
+    // era una sola cadena, que es lo único que cabe en un `confirm()`.
+    const d = e.dialogo || {};
+    const todo = [d.titulo, d.cuerpo, d.aviso].filter(Boolean).join(' ');
+    if (texto) ok('y dice por que en ' + st, texto.test(todo), todo);
   }
   // El de step1 es el que importa: escanear antes de poner el on hand a
   // cero mezcla el conteo nuevo con las existencias viejas, que es
@@ -234,3 +262,5 @@ console.log('\nsin datos no se miente');
 
 console.log('\n' + (falla ? falla + ' FALLO(S)' : 'todo bien') + '   ·   ' + pasa + ' comprobaciones');
 process.exit(falla ? 1 : 0);
+
+})();

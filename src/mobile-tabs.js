@@ -76,11 +76,19 @@
     };
 
     const out = host.querySelector('#mMoreOut');
-    if (out) out.onclick = () => {
+    if (out) out.onclick = async () => {
       // Se pregunta: cerrar sesión por un roce del pulgar, con un conteo
       // a medias, es de las pocas cosas de esta app que cuestan trabajo
       // de verdad deshacer.
-      if (!window.confirm('Log out of BarStock?')) return;
+      const D = window.BarStockDialog;
+      const ok = (D && D.confirmar)
+        ? await D.confirmar({
+            titulo: 'Log out of BarStock?',
+            cuerpo: 'You will have to sign in again on this phone.',
+            ok: 'Log out', cancelar: 'Stay', peligro: true
+          })
+        : window.confirm('Log out of BarStock?');
+      if (!ok) return;
       const A = window.BarStockAuth;
       if (A && typeof A.logout === 'function') A.logout();
     };

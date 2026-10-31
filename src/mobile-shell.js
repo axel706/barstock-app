@@ -323,12 +323,22 @@
     });
 
     const fab = _barra.querySelector('#mFab');
-    if (fab) fab.onclick = () => {
+    if (fab) fab.onclick = async () => {
       // Apagado no es inerte: explica POR QUÉ y ofrece el camino. Un
       // boton que no hace nada al tocarlo se lee como roto.
+      //
+      // El mensaje viene partido en titulo, detalle y consecuencia,
+      // porque el diálogo de la app los distingue. Antes era una sola
+      // cadena con saltos de línea: lo único que cabe en un
+      // `confirm()`.
       const e = escaneo();
       if (!e.activo) {
-        if (e.motivo && window.confirm(e.motivo)) ir('cycle');
+        const d = e.dialogo;
+        if (!d) return;
+        const D = window.BarStockDialog;
+        if (!D) { if (window.confirm(d.titulo)) ir('cycle'); return; }
+        if (d.soloAviso) { D.avisar(d); return; }
+        if (await D.confirmar(d)) ir('cycle');
         return;
       }
       // El escaner es el mismo de siempre. Esta app no reimplementa el
