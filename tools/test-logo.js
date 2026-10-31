@@ -181,6 +181,27 @@ grupo('ninguna pantalla se guarda un renglón para volver');
   const shell = fs.readFileSync(path.join(dir, 'mobile-shell.js'), 'utf8');
   prueba('el armazón la expone', /cabecera,\s*alVolver/.test(shell));
   prueba('con un id estable para engancharla', /id="mAtras"/.test(shell));
+
+  // ── Si se puede salir con el gesto, tiene que haber botón ────────
+  //
+  // Una pantalla a la que se entra desde More no enciende ninguna
+  // pestaña: sin flecha, la única salida es pulsar otra pestaña, que
+  // es irse, no volver. La de facturas estuvo así desde que se
+  // escribió, y el gesto del borde sí funcionaba — por eso no se
+  // notó.
+  //
+  // El indicio de que una pantalla es de esas: su `atras` llama a
+  // `BarStockMobile.volver()`. Si lo hace, su encabezado tiene que
+  // preguntar por `nombreAnterior`.
+  const sinBoton = [];
+  for (const f of fs.readdirSync(dir)) {
+    if (!/^mobile-.*\.js$/.test(f) || f === 'mobile-shell.js') continue;
+    const txt = fs.readFileSync(path.join(dir, f), 'utf8');
+    if (!/BarStockMobile\.volver\(\)|M\.volver\(\)|Mv\.volver\(\)/.test(txt)) continue;
+    if (!/nombreAnterior/.test(txt)) sinBoton.push(f);
+  }
+  prueba('las que salen con el gesto tienen flecha', sinBoton.length === 0,
+    sinBoton.join(', '));
 }
 
 grupo('el caché se rompe cuando la hoja cambia');

@@ -313,6 +313,7 @@
       host.innerHTML = cabecera() +
         '<div class="m-ivacio"><b>No invoices yet this cycle.</b><br>' +
         'They show up on their own as MarginEdge closes them.</div>';
+      salirDeLaRaiz(host);
       return;
     }
 
@@ -349,6 +350,7 @@
     html += pieHuecos();
 
     host.innerHTML = html;
+    salirDeLaRaiz(host);
     host.querySelectorAll('[data-inv]').forEach(b => {
       b.onclick = () => { _abierta = _facturas[Number(b.dataset.inv)].id; pintar(host); };
     });
@@ -481,12 +483,30 @@
     }
   };
 
+  // La raíz de esta pantalla NO tenía vuelta, y se entra a ella igual
+  // que a Ajustes o al historial: desde More, donde ninguna pestaña
+  // queda encendida. Sin flecha no había forma de salir salvo pulsar
+  // otra pestaña — que es irse, no volver.
   function cabecera() {
     const W = window.BarStockWeeklyCycle;
     const f = (W && W.resetAt && W.fmtDate) ? W.fmtDate(W.resetAt()) : '';
-    return '<div class="m-inv-t">Invoices</div>' +
-      '<div class="m-isub">What MarginEdge has received' +
-      (f ? ' since the cycle opened on ' + esc(f) : ' this cycle') + '.</div>';
+    const Mv = window.BarStockMobile;
+    const vuelta = (Mv && Mv.nombreAnterior && Mv.nombreAnterior()) || 'Back';
+    return cab({
+      volverA: vuelta,
+      titulo: 'Invoices',
+      sub: 'What MarginEdge has received' +
+           (f ? ' since the cycle opened on ' + f : ' this cycle') + '.'
+    });
+  }
+
+  // El `sub` ya lo pinta la cabecera, así que quien quiera engancharla
+  // llama a esto justo después de escribir el HTML.
+  function salirDeLaRaiz(host) {
+    volverCon(host, () => {
+      const Mv = window.BarStockMobile;
+      if (Mv && Mv.volver) Mv.volver();
+    });
   }
 
   function ficha(r) {
