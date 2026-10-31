@@ -126,7 +126,6 @@
       const contado = st === 'done';
 
       host.innerHTML = `
-        <div class="m-inv-t">Orders</div>
         <div class="m-nada">
           <span class="m-nada-i${contado ? ' bien' : ''}">
             <i class="ti ti-${contado ? 'circle-check' : 'scan'}" aria-hidden="true"></i>
@@ -139,11 +138,10 @@
       return;
     }
 
-    // Apilado y no en dos columnas: "Orders" y "$590" uno al lado del
-    // otro se peleaban por el ancho y la línea de abajo se metía
-    // debajo del título.
+    // Sin título propio: "Orders" lo pone el contenedor, arriba del
+    // segmentado. Estaba aquí de cuando esta sección ERA la pantalla,
+    // y al mudarse salía dos veces seguidas.
     host.innerHTML = `
-      <div class="m-inv-t">Orders</div>
       <div class="m-ord-gran">${money(total)}
         <span>across ${vs.length} vendor${vs.length === 1 ? '' : 's'}</span></div>
 

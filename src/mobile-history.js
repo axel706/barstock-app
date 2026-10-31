@@ -285,9 +285,9 @@
     const todas = _datos ? _datos.ordenes : [];
 
     if (!todas.length) {
-      host.innerHTML = '<div class="m-inv-t">Order history</div>' +
-        '<div class="m-hsub">Orders you place show up here with what ' +
-        'actually arrived against them.</div>';
+      // Sin título: lo pone el contenedor de Orders.
+      host.innerHTML = '<div class="m-hsub">Orders you place show up here ' +
+        'with what actually arrived against them.</div>';
       return;
     }
 

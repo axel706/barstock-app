@@ -483,6 +483,42 @@ console.log('\nlas tres secciones viven en Orders');
   ok('Sent no cuenta nada', !/\d/.test(botones[1]), botones[1]);
 }
 
+console.log('\nel titulo se escribe UNA vez');
+{
+  // Las tres eran pantallas y cada una pintaba su propio titulo. Al
+  // mudarse dentro de Orders, el contenedor pone el suyo y el de la
+  // seccion sale justo debajo: "Orders" dos veces seguidas.
+  const { host } = pantalla();
+  const titulos = host.querySelectorAll('.m-inv-t');
+  ok('solo hay un titulo', titulos.length === 1,
+     Array.from(titulos).map(t => t.textContent).join(' | '));
+  ok('y es el del contenedor', titulos[0].textContent.trim() === 'Orders');
+
+  // Ninguna de las tres puede escribirlo por su cuenta. Se mira el
+  // codigo porque el stub de las otras dos no las representa aqui.
+  //
+  // Hay DOS usos legitimos de `m-inv-t` y el test tiene que dejarlos
+  // pasar:
+  //   1. El titulo del contenedor, dentro de `marco()`.
+  //   2. El respaldo de `cab()`, que es el encabezado de un DETALLE
+  //      —otro nivel— y ahi el titulo si es suyo.
+  const malos = [];
+  for (const f of ['mobile-orders.js', 'mobile-history.js', 'mobile-invoices.js']) {
+    let txt = fs.readFileSync(path.join(RAIZ, 'src', f), 'utf8');
+    // Fuera el cuerpo de `marco()`, que es el contenedor.
+    const i = txt.indexOf('function marco(host) {');
+    if (i >= 0) {
+      const j = txt.indexOf('\n  }', i);
+      txt = txt.slice(0, i) + txt.slice(j);
+    }
+    // Fuera el respaldo de `cab`, que lleva el titulo por variable.
+    const sueltos = (txt.match(/m-inv-t">[^<]*</g) || [])
+      .filter(x => !/'\s*\+\s*esc\(/.test(x) && !/^m-inv-t">'?\s*\+/.test(x));
+    if (sueltos.length) malos.push(f + ': ' + sueltos.join(' '));
+  }
+  ok('ninguna seccion se escribe un titulo suelto', malos.length === 0, malos.join(' | '));
+}
+
 console.log('\ncambiar de seccion cede el cuerpo a su modulo');
 {
   const { w, host } = pantalla();
