@@ -4230,3 +4230,36 @@ body.light #invPanelBody .inv-panel-name { color: #0369a1; }
   text-align: center;
   opacity: .85;
 }
+
+    /* ── Quick Order en un teléfono ──────────────────────────────────
+     *
+     * El modal se diseñó para una pantalla ancha: la fila de arriba es
+     * una rejilla de cuatro columnas y la lista de artículos una tabla
+     * de cinco. En 390px eso deja campos de 85px, que no se pueden ni
+     * tocar ni leer.
+     *
+     * Esto NO es una pantalla móvil de verdad —esa sería como las de
+     * Órdenes o Ajustes, hecha para el pulgar—. Es el modal del
+     * escritorio puesto en una columna para que se pueda usar mientras
+     * tanto.
+     *
+     * 16px en los campos: por debajo Safari amplía al enfocar, y con
+     * el zoom bloqueado la página se queda ampliada. */
+    @media (max-width: 640px){
+      .quick-order-top,
+      .quick-order-entry{
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+      }
+      .quick-order-card{ padding: 13px !important; }
+      .quick-order-shell .ui-control{ font-size: 16px !important; }
+      /* La tabla se desborda por el lado; que se pueda arrastrar en
+       * vez de recortarse. */
+      .quick-order-table{ overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .quick-order-table table{ min-width: 520px; }
+      #quickOrderModalBg .modal{
+        width: 100%; max-width: 100%;
+        max-height: 92vh; overflow-y: auto;
+        border-radius: 18px 18px 0 0;
+      }
+    }

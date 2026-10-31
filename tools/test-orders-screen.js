@@ -186,6 +186,9 @@ function pantalla(extra) {
     };
     return o;
   };
+  w.__quick = 0;
+  w.BarStockQuickOrder = { openModal: () => { w.__quick++; } };
+
   w.BarStockMobileHistory = seccion('sent');
   w.BarStockMobileInvoices = Object.assign(seccion('inv'),
     { resumen: () => ({ sueltas: 3 }) });
@@ -536,6 +539,34 @@ console.log('\nel titulo se escribe UNA vez');
     if (/m-[hi]sub">(What you sent|What MarginEdge)/.test(cuerpo)) subs.push(f);
   }
   ok('ni un subtitulo que ya pone el contenedor', subs.length === 0, subs.join(', '));
+}
+
+console.log('\nla cifra sube y el boton ocupa su sitio');
+{
+  const { w, host } = pantalla();
+
+  // La cifra, al lado del titulo. Estaba debajo del segmentado en su
+  // propio renglon.
+  const cif = host.querySelector('.m-ord-cif');
+  ok('la cifra esta en la cabecera', !!cif);
+  ok('con el total', /\$668/.test((cif || {}).textContent || ''), (cif || {}).textContent);
+  ok('y cuantos proveedores', /3 vendors/.test((cif || {}).textContent || ''));
+  ok('y ya no esta debajo', !host.querySelector('.m-ord-gran'));
+
+  // El boton dice lo que HACE. "Quick order" hay que aprenderlo.
+  const run = host.querySelector('#moRun');
+  ok('hay boton de apuntar una compra', !!run);
+  ok('y no dice jerga', /log a store run/i.test((run || {}).textContent || ''),
+     (run || {}).textContent);
+  run.click();
+  ok('abre Quick Order', w.__quick === 1);
+
+  // Solo en Open: en Sent y en Invoices no pinta nada.
+  host.querySelectorAll('#moSeg button')[1].click();
+  ok('en Sent no sale', !host.querySelector('#moRun'));
+  ok('ni la cifra', !host.querySelector('.m-ord-cif'));
+  host.querySelectorAll('#moSeg button')[2].click();
+  ok('en Invoices tampoco', !host.querySelector('#moRun'));
 }
 
 console.log('\ncambiar de seccion cede el cuerpo a su modulo');

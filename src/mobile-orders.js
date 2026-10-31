@@ -138,12 +138,11 @@
       return;
     }
 
-    // Sin título propio: "Orders" lo pone el contenedor, arriba del
-    // segmentado. Estaba aquí de cuando esta sección ERA la pantalla,
-    // y al mudarse salía dos veces seguidas.
+    // Sin título ni cifra propios: los pone el contenedor. El título
+    // estaba aquí de cuando esta sección ERA la pantalla y salía dos
+    // veces; la cifra subió al lado del título para dejarle el
+    // renglón al botón de apuntar una compra.
     host.innerHTML = `
-      <div class="m-ord-gran">${money(total)}
-        <span>across ${vs.length} vendor${vs.length === 1 ? '' : 's'}</span></div>
 
       <!-- Aquí ya no se avisa de nada. Durante mucho tiempo este hueco
            decía "Place orders from desktop or iPad", y lo decía en las
@@ -879,12 +878,29 @@
     if (enDetalle()) { cab.innerHTML = ''; return cuerpo; }
 
     const s = SECCIONES.find(x => x.id === _sec) || SECCIONES[0];
-    const nPend = proveedores().length;
+    const vs = proveedores();
+    const nPend = vs.length;
     const nSin = (I() && I().resumen && (I().resumen() || {}).sueltas) || 0;
 
+    // La cifra, a la derecha del título. Estaba debajo del segmentado
+    // en su propio renglón, y ese renglón es el que ahora ocupa el
+    // botón de apuntar una compra.
+    //
+    // Apilada y no en una línea: "$10,098 across 4 vendors" al lado de
+    // "Orders" se pelea por el ancho y alguno se parte.
+    const total = vs.reduce((a, v) => a + v.total, 0);
+    const cifra = (_sec === 'open' && vs.length)
+      ? '<div class="m-ord-cif"><b>' + money(total) + '</b>' +
+        '<span>' + vs.length + ' vendor' + (vs.length === 1 ? '' : 's') + '</span></div>'
+      : '';
+
     cab.innerHTML =
-      '<div class="m-inv-t">Orders</div>' +
-      '<div class="m-isub">' + esc(s.sub) + '</div>' +
+      '<div class="m-cab">' +
+        '<div class="m-cab-t">' +
+          '<div class="m-inv-t">Orders</div>' +
+          '<div class="m-isub">' + esc(s.sub) + '</div>' +
+        '</div>' + cifra +
+      '</div>' +
       '<div class="m-seg" id="moSeg">' +
         SECCIONES.map(x => {
           // El contador solo donde significa algo: proveedores con
@@ -896,7 +912,26 @@
             ' data-sec="' + x.id + '">' + esc(x.n) +
             (n ? ' <b>' + n + '</b>' : '') + '</button>';
         }).join('') +
-      '</div>';
+      '</div>' +
+      // ── Apuntar una compra ya hecha ─────────────────────────────
+      //
+      // No pide nada: registra una carrera a la tienda y la guarda
+      // directa en el historial. Por eso NO dice "quick order" —eso
+      // hay que aprenderlo— sino lo que hace.
+      //
+      // Vive en Open porque es donde se entra a pensar en comprar,
+      // aunque lo que guarde aparezca en Sent.
+      (_sec === 'open'
+        ? '<button type="button" class="m-ord-run" id="moRun">' +
+            '<i class="ti ti-plus" aria-hidden="true"></i> Log a store run</button>'
+        : '');
+
+    const run = cab.querySelector('#moRun');
+    if (run) run.onclick = () => {
+      const Q = window.BarStockQuickOrder;
+      if (Q && Q.openModal) return Q.openModal();
+      if (window.BarStockToast) window.BarStockToast.show('Not available right now.');
+    };
 
     cab.querySelectorAll('[data-sec]').forEach(b => {
       b.onclick = () => {
