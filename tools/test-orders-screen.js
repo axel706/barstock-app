@@ -137,6 +137,14 @@ function pantalla(extra) {
   w.__toasts = [];
   w.BarStockToast = { show: (t) => w.__toasts.push(String(t)) };
 
+  // El historico de pares. Se apunta lo que se le manda porque una
+  // orden rapida NO debe entrar ahi: predice con lo que se pide cada
+  // semana, y una carrera a la tienda es justo lo que no se repite.
+  w.__snapshot = [];
+  w.BarStockParIntelligence = {
+    updateSnapshotOrdered: async (items) => { w.__snapshot.push((items || []).length); }
+  };
+
   // ── El correo ─────────────────────────────────────────────────────
   // El PDF lo genera el modulo del escritorio: si hubiera dos
   // generadores, el pedido se veria distinto segun desde donde se
@@ -204,8 +212,10 @@ function pantalla(extra) {
   // `cabecera` y `alVolver` son las DE VERDAD, tomadas del armazon.
   // Un stub propio seria una segunda implementacion, y el dia que
   // cambie el markup los tests pasarian mientras la app se rompe.
+  w.__ido = [];
   w.BarStockMobile = Object.assign(
-    { register(d) { def = d; }, refrescarBadges() {} },
+    { register(d) { def = d; }, refrescarBadges() {},
+      ir(id) { w.__ido.push(String(id)); } },
     require('./lib-cabecera'));
 
   new Function(fs.readFileSync(path.join(RAIZ, 'src/mobile-orders.js'), 'utf8'))();
@@ -553,13 +563,20 @@ console.log('\nla cifra sube y el boton ocupa su sitio');
   ok('y cuantos proveedores', /3 vendors/.test((cif || {}).textContent || ''));
   ok('y ya no esta debajo', !host.querySelector('.m-ord-gran'));
 
-  // El boton dice lo que HACE. "Quick order" hay que aprenderlo.
+  // ── Se llama "Quick order", y no "Log a store run" ───────────────
+  //
+  // Se llamo asi mientras creiamos que solo apuntaba una compra ya
+  // hecha. No es eso: salvo LOOP, de ahi sale un correo al proveedor
+  // con su PDF. Eso es una orden, y "log" hacia esperar un registro.
   const run = host.querySelector('#moRun');
-  ok('hay boton de apuntar una compra', !!run);
-  ok('y no dice jerga', /log a store run/i.test((run || {}).textContent || ''),
+  ok('hay boton de orden rapida', !!run);
+  ok('y se llama Quick order', /quick order/i.test((run || {}).textContent || ''),
      (run || {}).textContent);
   run.click();
-  ok('abre Quick Order', w.__quick === 1);
+  // Lleva a la PANTALLA del telefono, no al dialogo del escritorio:
+  // ese es una rejilla de cinco columnas con un `datalist`.
+  ok('abre la pantalla del movil', w.__ido.includes('quick'), w.__ido.join(','));
+  ok('y no el dialogo del escritorio', w.__quick === 0);
 
   // Solo en Open: en Sent y en Invoices no pinta nada.
   host.querySelectorAll('#moSeg button')[1].click();
@@ -713,6 +730,12 @@ console.log('\ncolocar guarda por el mismo camino que el escritorio');
   // Releer de la nube es lo que hace que las lineas desaparezcan de
   // Ordering. Sin esto la orden esta puesta y la pantalla no se entera.
   ok('se relee la verdad desde la nube', w.__recargado === 1);
+
+  // Una orden del ciclo SI entrena la prediccion de pares. Va junto a
+  // la prueba de que la rapida no lo hace: separar los dos casos es
+  // como se nota si un dia se apaga de mas.
+  ok('y entrena la prediccion de pares', w.__snapshot.length === 1,
+     JSON.stringify(w.__snapshot));
 }
 
 console.log('\ny despues manda el correo con el PDF adjunto');
@@ -865,6 +888,67 @@ console.log('\nla revision no se queda pegada');
   def.show(host);
   ok('y al reentrar se empieza por el resumen',
      !/Review the order/i.test(host.textContent) && !!host.querySelector('.m-ordv'));
+}
+
+console.log('\nun borrador de Quick order usa ESTA revision, no otra');
+{
+  // ── Por que esto se prueba aqui ──────────────────────────────────
+  //
+  // Quick order no tiene pantalla de enviar: manda su borrador a esta
+  // y se reusa todo —los destinatarios, el PDF, los tres pasos, la
+  // diferencia entre rechazo y duda—. Si en vez de reusarla se hubiera
+  // escrito una segunda, todo eso habria que volver a aprenderlo, y la
+  // lista de lo que ya nos fallo es larga.
+  const { w, host, def } = pantalla();
+  w.BarStockMobile.ir = () => def.show(host);
+
+  // Una botella de un proveedor que NO tiene nada pendiente: una
+  // orden rapida no sale del ciclo, y la revision tenia que dejar de
+  // consultar `proveedores()` justo por esto.
+  const linea = {
+    code: '', item: 'Fernet Branca', vendor: 'SOUTHERN',
+    onHand: 0, suggested: 0, value: 31.5,
+    qty: 4, toOrder: 4, orderOverride: 4, finalOrder: 4, quickOrder: true
+  };
+  ok('acepta el borrador',
+     w.BarStockMobileOrders.revisarBorrador(
+       { nombre: 'SOUTHERN', filas: [linea], nota: 'Quick Order' }) === true);
+
+  ok('y entra directo a la revision', /Review the order/i.test(host.textContent));
+  ok('con la botella del borrador', /Fernet Branca/.test(host.textContent));
+  ok('y su importe', /\$126/.test(host.textContent), '4 × 31.50');
+
+  // Atras vuelve a Quick order, NO a las lineas pendientes de
+  // SOUTHERN: esas son otra orden, y ahi se perderia lo teclado.
+  w.__ido = [];
+  // Se devuelve el `ir` que apunta: el de arriba se cambio para poder
+  // simular la navegacion a Orders, y aqui lo que interesa es a donde
+  // se pide ir.
+  w.BarStockMobile.ir = (id) => { w.__ido.push(String(id)); };
+  def.atras(host, true);
+  ok('atras lleva a Quick order', w.__ido.join(',') === 'quick', w.__ido.join(','));
+
+  // Y la orden que se guarda lleva las marcas de rapida.
+  const b = pantalla();
+  b.w.BarStockMobile.ir = () => b.def.show(b.host);
+  b.w.BarStockMobileOrders.revisarBorrador(
+    { nombre: 'SOUTHERN', filas: [linea], nota: 'Store run' });
+  await esperar(0);
+  b.host.querySelector('.m-rev-go').click();
+  await esperar(TODO_EL_PROCESO);
+
+  const o = b.w.__guardadas[0];
+  ok('se guardo', !!o);
+  ok('marcada como rapida', !!o && o.quickOrder === true);
+  ok('con su nota', !!o && o.note === 'Store run', o && o.note);
+  ok('y el correo salio igual que en cualquier otra',
+     b.w.__enviados.length === 1 && b.w.__pdfPedidos.length === 1);
+  // El historico de pares NO se toca: una carrera a la tienda es
+  // justo lo que no se repite cada semana, y el escritorio tampoco lo
+  // apunta. Si aqui si, las dos mitades entrenarian la prediccion con
+  // datos distintos.
+  ok('sin ensuciar la prediccion de pares', (b.w.__snapshot || []).length === 0,
+     JSON.stringify(b.w.__snapshot || []));
 }
 
 console.log('\n' + (falla ? falla + ' fallos' : 'todo bien') +

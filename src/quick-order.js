@@ -54,13 +54,23 @@
     renderDraft();
   }
 
+  // La lista de proveedores sale de la app, no de aquí. Estaba escrita a
+  // mano en este archivo, así que era una segunda lista: dar de alta un
+  // proveedor lo hacía aparecer en Inventario y en los filtros pero no
+  // en Quick Order, y eso no se nota hasta el día que hace falta.
+  function vendors(){
+    if (typeof window.getVendorsWithUnknown === 'function') {
+      const l = window.getVendorsWithUnknown();
+      if (Array.isArray(l) && l.length) return l;
+    }
+    return ['LOOP','SOUTHERN','BREAKTHRU','WINE MERCHANT','UNKNOWN'];
+  }
+
   function renderVendorTabs(){
     const wrap = safeEl('quickOrderVendorTabs');
     if(!wrap) return;
 
-    const vendors = ['LOOP','SOUTHERN','BREAKTHRU','WINE MERCHANT','UNKNOWN'];
-
-    wrap.innerHTML = vendors.map(v => `
+    wrap.innerHTML = vendors().map(v => `
       <button type="button" class="${quickOrderVendorTab===v?'active':''}" data-quick-vendor="${escapeHtml(v)}">
         ${v}
       </button>
@@ -152,52 +162,101 @@
     renderDraft();
   }
 
-  async function save(){
-    const vendor = quickOrderVendorTab;
-    const dateValue = String(document.getElementById('quickOrderDateInput')?.value || '').trim();
-    const timeValue = String(document.getElementById('quickOrderTimeInput')?.value || '12:00').trim() || '12:00';
-    const note = String(document.getElementById('quickOrderNoteInput')?.value || 'Quick Order').trim() || 'Quick Order';
+  // ── La forma de la entrada, en un solo sitio ───────────────────────
+  //
+  // El móvil arma su propio borrador con su propia pantalla, pero la
+  // ENTRADA que acaba en la nube tiene que ser idéntica a la del
+  // escritorio: mismo `exportType`, mismo `note`, mismo `finalOrder`.
+  // Si cada pantalla la armara a su manera, el día que haya que
+  // cambiar un campo se cambiaría en una y se olvidaría en la otra, y
+  // el historial acabaría con dos clases de orden rápida.
+  //
+  // `when` es un Date ya validado. Aquí no se leen inputs: esta
+  // función no sabe de qué pantalla viene.
+  // ── La regla de LOOP, en un solo sitio ─────────────────────────────
+  //
+  // LOOP no se pide por correo: se sube un CSV a su portal. Los demás
+  // reciben un PDF por email. Esa frase estaba escrita tres veces
+  // —aquí, en `colocar()` y en la etiqueta del botón del móvil— y de
+  // las tres la que decide de verdad es ésta, porque es la que pone
+  // el `exportType` con el que se guarda la orden.
+  function porCorreo(vendor){
+    return String(vendor || '').toUpperCase() !== 'LOOP';
+  }
 
-    if(!vendor || !dateValue || !quickOrderDraftItems.length){
-      setStatus('Add at least one item and complete vendor/date.');
-      return;
-    }
+  function construirEntrada({ vendor, when, note, items }){
+    const nota = String(note || 'Quick Order').trim() || 'Quick Order';
 
-    const when = new Date(`${dateValue}T${timeValue}:00`);
-    if(Number.isNaN(when.getTime())){
-      setStatus('Invalid quick order date or time.');
-      return;
-    }
-
-    const items = quickOrderDraftItems.map(item => ({
+    const filas = (items || []).map(item => ({
       ...item,
       finalOrder: parseNum(item.qty || item.finalOrder),
-      note
+      note: nota
     }));
 
-    const totalUnits = items.reduce((sum, item) => sum + parseNum(item.qty || item.finalOrder), 0);
-    const subtotal = items.reduce((sum, item) => sum + (parseNum(item.qty || item.finalOrder) * parseNum(item.value)), 0);
-    const exportType = vendor === 'LOOP' ? 'loop_csv' : 'vendor_jpg';
-    const filename = vendor === 'LOOP' ? 'LOOP upload-ready CSV' : 'Vendor JPG';
+    const totalUnits = filas.reduce((sum, item) => sum + parseNum(item.qty || item.finalOrder), 0);
+    const subtotal = filas.reduce((sum, item) => sum + (parseNum(item.qty || item.finalOrder) * parseNum(item.value)), 0);
 
-    const entry = {
+    return {
       id: uniqueOrderId(),
       vendor,
-      createdAt: when.toISOString(),
-      exportType,
-      filename,
+      createdAt: (when instanceof Date ? when : new Date()).toISOString(),
+      // El mismo reparto que el resto de la app: LOOP sale por CSV y
+      // los demás por imagen. Ver `porCorreo`.
+      exportType: porCorreo(vendor) ? 'vendor_jpg' : 'loop_csv',
+      filename: porCorreo(vendor) ? 'Vendor JPG' : 'LOOP upload-ready CSV',
       totalUnits: clampNonNegative(totalUnits),
       subtotal: clampNonNegative(subtotal),
-      items,
+      items: filas,
       quickOrder: true,
-      note
+      note: nota
     };
+  }
+
+  // `datos` lo pasa el móvil: { vendor, when, note, items }. Sin él se
+  // leen los campos del diálogo del escritorio, como siempre.
+  //
+  // Es la MISMA función a propósito. Guardar una orden rápida tiene
+  // avisos de validación, registro y recarga de la nube; con dos
+  // copias, el arreglo de la segunda llega tarde o no llega.
+  async function save(datos){
+    const delMovil = !!(datos && Array.isArray(datos.items));
+
+    let vendor, when, note, items;
+
+    if (delMovil) {
+      vendor = datos.vendor;
+      when = datos.when instanceof Date ? datos.when : new Date();
+      note = String(datos.note || 'Quick Order').trim() || 'Quick Order';
+      items = datos.items;
+      if (!vendor || !items.length) throw new Error('Add at least one item first.');
+    } else {
+      vendor = quickOrderVendorTab;
+      const dateValue = String(document.getElementById('quickOrderDateInput')?.value || '').trim();
+      const timeValue = String(document.getElementById('quickOrderTimeInput')?.value || '12:00').trim() || '12:00';
+      note = String(document.getElementById('quickOrderNoteInput')?.value || 'Quick Order').trim() || 'Quick Order';
+
+      if(!vendor || !dateValue || !quickOrderDraftItems.length){
+        setStatus('Add at least one item and complete vendor/date.');
+        return;
+      }
+
+      when = new Date(`${dateValue}T${timeValue}:00`);
+      if(Number.isNaN(when.getTime())){
+        setStatus('Invalid quick order date or time.');
+        return;
+      }
+      items = quickOrderDraftItems;
+    }
+
+    const entry = construirEntrada({ vendor, when, note, items });
+    const totalUnits = entry.totalUnits;
+    const subtotal = entry.subtotal;
 
     let validationWarnings = [];
     const saveBtn = document.getElementById('quickOrderSaveBtn');
 
     try{
-      if (typeof setButtonBusy === 'function') {
+      if (!delMovil && typeof setButtonBusy === 'function') {
         setButtonBusy(saveBtn, 'Saving...');
       }
       if (window.BarStockOrderValidator && typeof window.BarStockOrderValidator.validate === 'function') {
@@ -234,6 +293,23 @@
         state.orderHistory = [entry, ...(state.orderHistory || [])];
         saveState();
         render();
+      }
+
+      // El diálogo, la barra de estado y el cartel amarillo son del
+      // escritorio. El móvil no los tiene: su pantalla cuenta el
+      // resultado ella misma, y `setStatus` ahí escribe en una barra
+      // que nadie ve.
+      if (delMovil) {
+        if (validationWarnings.length) {
+          console.warn('[quick] guardada con avisos', validationWarnings);
+        }
+        if (window.BarStockLogger) {
+          window.BarStockLogger.log("quick_order_saved", {
+            vendor, totalUnits, subtotal, itemCount: items.length, from: 'mobile'
+          });
+        }
+        // La entrada vuelve para que quien llama pueda enseñarla.
+        return { entrada: entry, avisos: validationWarnings };
       }
 
       closeModal();
@@ -274,10 +350,15 @@
       }
     } catch(err){
       console.error(err);
+      // En el móvil se RELANZA. Un `alert` detrás de una pantalla de
+      // teléfono es un diálogo del navegador que tapa la app, y
+      // tragarse el error dejaría la pantalla diciendo que guardó
+      // cuando no guardó — el fallo que ya nos costó una orden.
+      if (delMovil) throw err;
       alert('Quick Order was NOT saved to cloud.\\n\\n' + (err.message || String(err)));
       setStatus('Quick Order failed because cloud save failed.');
     } finally {
-      if (typeof clearButtonBusy === 'function') {
+      if (!delMovil && typeof clearButtonBusy === 'function') {
         clearButtonBusy(saveBtn);
       }
     }
@@ -322,6 +403,11 @@
     save,
     setVendor,
     renderVendorTabs,
+    // Lo que usa la pantalla del móvil: la lista de proveedores y el
+    // constructor de la entrada. Nada de armarla por su cuenta.
+    vendors,
+    construirEntrada,
+    porCorreo,
     getVendor: () => quickOrderVendorTab,
     getItems: () => quickOrderDraftItems.slice()
   };

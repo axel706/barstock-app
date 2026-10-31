@@ -2764,6 +2764,155 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * la lista, sólo que estas clases son nuevas. */
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hcard { border-radius: 15px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hmes { border-radius: 0 !important; }
+
+  /* ── Quick order ──────────────────────────────────────────────────
+   *
+   * La pantalla de una orden fuera del ciclo. Comparte `.m-chips`,
+   * `.m-step`, `.m-money` y `.m-rev-go` con el resto del teléfono: lo
+   * de aquí es sólo lo que no existía.
+   */
+
+  /* El renglón del cuándo. Plegado por defecto porque casi siempre es
+   * ahora, y desplegado enseña fecha, hora y nota. */
+  body.m-shell .m-qk-cuando {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    width: 100%; margin-bottom: 12px; padding: 12px 13px; cursor: pointer;
+    text-align: left; font-family: inherit;
+    font-size: var(--m-small); color: #c3d2e2;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
+  }
+  .m-qk-cuando span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m-qk-cuando i { font-style: normal; flex: 0 0 auto;
+                   font-size: var(--m-meta); font-weight: 800; color: #7dd3fc; }
+
+  .m-qk-abre { margin: -4px 0 12px; }
+  .m-qk-lab {
+    display: block; margin: 10px 0 5px;
+    font-size: var(--m-meta); font-weight: 800; letter-spacing: .07em;
+    text-transform: uppercase; color: #8fa3b8;
+  }
+
+  /* 16px CLAVADO, no `--m-strong`. A escala normal `--m-strong` son
+   * 15.96px y vale, pero con el texto en "small" la base baja a 13px y
+   * se queda en 14.8: por debajo de 16 Safari hace zoom al enfocar y,
+   * con el zoom bloqueado, no se vuelve. El resto de la app lo tiene
+   * así desde el día que pasó. */
+  body.m-shell .m-qk-campo {
+    width: 100%; height: 46px; padding: 0 13px;
+    font-family: inherit; font-size: max(16px, var(--m-strong)); font-weight: 600;
+    color: #fff; -webkit-appearance: none;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.14);
+  }
+  body.m-shell .m-qk-campo::placeholder { color: #8fa1b5; font-weight: 500; }
+  .m-qk-campo::-webkit-outer-spin-button,
+  .m-qk-campo::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .m-qk-campo::-webkit-search-cancel-button { -webkit-appearance: none; }
+
+  /* La tarjeta de añadir. Se distingue del fondo: es un formulario,
+   * no parte de la lista. */
+  .m-qk-add {
+    margin-bottom: 14px; padding: 14px;
+    background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.045));
+    border: 1px solid rgba(255,255,255,.16);
+  }
+  .m-qk-add-h { margin-bottom: 9px; font-size: var(--m-strong); font-weight: 800; color: #fff; }
+  .m-qk-busca { margin-bottom: 0; }
+
+  /* Los resultados del buscador. Ocho como mucho: la lista entera son
+   * cientos de botellas y no se desplaza con el pulgar. */
+  .m-qk-res { margin-top: 8px; overflow: hidden;
+              border: 1px solid rgba(255,255,255,.10); }
+  body.m-shell .m-qk-res button {
+    display: block; width: 100%; padding: 11px 12px; cursor: pointer;
+    text-align: left; font-family: inherit; background: rgba(255,255,255,.04);
+    border: 0; border-bottom: 1px solid rgba(255,255,255,.07);
+  }
+  body.m-shell .m-qk-res button:last-child { border-bottom: 0; }
+  body.m-shell .m-qk-res button:active { background: rgba(125,211,252,.16); }
+  .m-qk-res .n { display: block; font-size: var(--m-small); font-weight: 700; color: #eaf2fb; }
+  .m-qk-res .s { display: block; margin-top: 2px; font-size: var(--m-meta); color: #8fa3b8; }
+  .m-qk-nada { margin-top: 9px; font-size: var(--m-small); color: #8fa3b8; }
+
+  /* La botella elegida, en lugar del buscador. */
+  .m-qk-elegido {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 12px;
+    background: rgba(125,211,252,.12);
+    border: 1px solid rgba(125,211,252,.30);
+  }
+  .m-qk-elegido > div:first-child { flex: 1; min-width: 0; }
+  .m-qk-elegido-n { font-size: var(--m-small); font-weight: 800; color: #eaf6ff;
+                    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m-qk-elegido-s { margin-top: 2px; font-size: var(--m-meta); color: #9fc6e2; }
+  body.m-shell .m-qk-elegido button {
+    flex: 0 0 30px; height: 30px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--m-small); color: #cfe8fb;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.16);
+  }
+
+  .m-qk-dos { display: flex; gap: 9px; margin-top: 10px; }
+  .m-qk-dos .m-step,
+  .m-qk-dos .m-money { flex: 1; min-width: 0; margin-bottom: 0; }
+
+  body.m-shell .m-qk-go {
+    width: 100%; height: 46px; margin-top: 11px; cursor: pointer;
+    font-family: inherit; font-size: var(--m-body); font-weight: 800;
+    color: #06301a; background: #22c55e; border: 0;
+  }
+  body.m-shell .m-qk-go:active { background: #1aa34d; }
+
+  /* Las líneas puestas. El mismo renglón que la revisión —cantidad,
+   * nombre, dinero— para que las dos pantallas se lean igual. */
+  .m-qk-list { margin-bottom: 14px; }
+  .m-qk-l {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 0; font-size: var(--m-small);
+  }
+  .m-qk-l + .m-qk-l { border-top: 1px solid rgba(255,255,255,.07); }
+  .m-qk-l .q { flex: 0 0 auto; min-width: 30px; font-weight: 800; color: #fff; }
+  .m-qk-l .n { flex: 1; min-width: 0; color: #dbe7f3;
+               overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m-qk-l .v { flex: 0 0 auto; font-size: var(--m-meta); color: #8fa3b8; }
+  body.m-shell .m-qk-l .x {
+    flex: 0 0 28px; height: 28px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--m-meta); color: #8fa3b8;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.12);
+  }
+
+  .m-qk-vacio {
+    margin-bottom: 14px; padding: 20px 12px; text-align: center;
+    font-size: var(--m-small); line-height: 1.5; color: #8fa3b8;
+    border: 1px dashed rgba(255,255,255,.14);
+  }
+
+  /* El pie no es pegajoso. Lo fue en la revisión y pintaba un
+   * rectángulo oscuro sobre el fondo que se leía como una barra
+   * negra; aquí la lista es corta y no hace falta. */
+  .m-qk-pie { margin-top: 4px; }
+  .m-qk-pie-r {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+    margin-bottom: 10px; font-size: var(--m-meta); color: #8fa3b8;
+  }
+  .m-qk-pie-r b { font-size: var(--m-strong); font-weight: 800; color: #fff; }
+
+  /* app.css le pone 999px a casi todo lo que sea botón o campo. Sin
+   * esto, la tarjeta y los campos salen con forma de píldora. */
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-qk-cuando { border-radius: 14px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-qk-campo { border-radius: 12px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-qk-add { border-radius: 18px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-qk-res { border-radius: 12px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-qk-res button { border-radius: 0 !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-qk-elegido { border-radius: 12px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-qk-elegido button { border-radius: 50% !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-qk-go { border-radius: 12px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-qk-l .x { border-radius: 50% !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-qk-vacio { border-radius: 16px !important; }
 }
 
   /* ── Historial de órdenes ──────────────────────────────────────────

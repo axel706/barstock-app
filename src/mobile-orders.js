@@ -289,7 +289,22 @@
     _falloCorreo = false; _dudaCorreo = false; _colocada = null;
     _enviado = null;
     _vista = null;
+    _extra = null; _deBorrador = false;
   }
+
+  // ── Lo que distingue una orden rápida ──────────────────────────────
+  //
+  // `_extra` son los campos que se le añaden a la orden al guardarla
+  // —`quickOrder`, `note`— y que una orden del ciclo no lleva. Van
+  // aquí y no en `colocar()` porque `colocar()` no tiene por qué
+  // saber de dónde viene lo que está colocando.
+  //
+  // `_deBorrador` sólo sirve para una cosa: que el chevron y el gesto
+  // del borde devuelvan a Quick order con el borrador intacto, en vez
+  // de a las líneas pendientes de ese proveedor —que no son lo que
+  // estabas mirando, y perderían lo que acabas de teclear—.
+  let _extra = null;
+  let _deBorrador = false;
 
   const EMAIL = /^[^\s@,]+@[^\s@,]+\.[^\s@,]{2,}$/;
   const partir = (s) => String(s || '').split(',').map(x => x.trim()).filter(Boolean);
@@ -435,7 +450,14 @@
           </div>`).join('')}
       </div>`;
 
-    volverCon(host, () => { salirRevision(); repintar(); });
+    volverCon(host, () => {
+      // Si esto vino de un borrador, atrás es Quick order. Caer en las
+      // líneas pendientes del proveedor sería caer en otra orden.
+      const aQuick = _deBorrador;
+      salirRevision();
+      if (aQuick) { _vendor = null; volverAQuick(); return; }
+      repintar();
+    });
 
     host.querySelectorAll('[data-quitar]').forEach(b => {
       b.onclick = () => { _to.splice(Number(b.dataset.quitar), 1); repintar(); };
@@ -657,10 +679,20 @@
         subtotal: hay('computeOrderSubtotal') ? window.computeOrderSubtotal(filas) : v.total
       };
 
+      // Los campos de una orden rápida se añaden encima, no se
+      // reescribe la orden: así lo de arriba sigue siendo lo único
+      // que decide cómo se guarda una orden en este teléfono.
+      if (_extra) Object.assign(orden, _extra);
+
       try {
         await alMenos(PASO_MS, window.persistOrderToSupabase(orden));
 
-        if (window.BarStockParIntelligence) {
+        // Una orden rápida NO toca el histórico de pares. El ciclo
+        // predice con lo que se pide cada semana, y una carrera a la
+        // tienda es justo lo que no se repite. El escritorio tampoco
+        // lo hace: si aquí sí, las dos mitades de la app entrenarían
+        // la predicción con datos distintos.
+        if (window.BarStockParIntelligence && !(_extra && _extra.quickOrder)) {
           window.BarStockParIntelligence.updateSnapshotOrdered(orden.items)
             .catch(e => console.warn('[ParIntelligence] updateSnapshotOrdered', e));
         }
@@ -685,6 +717,15 @@
       // Desde aquí la orden YA EXISTE. Lo que falle a partir de ahora
       // no la deshace, y la pantalla no puede dar a entender que sí.
       _colocada = orden;
+
+      // El borrador de Quick order se tira AQUÍ, en cuanto la orden
+      // existe en la nube. Si siguiera guardado, volver atrás desde
+      // la revisión enseñaría los mismos renglones listos para
+      // mandarse otra vez — y eso son dos órdenes al proveedor.
+      if (_extra && _extra.quickOrder && window.BarStockMobileQuick) {
+        try { window.BarStockMobileQuick.limpiar(); } catch (e) {}
+      }
+
       await guardarDestinatarios(v.nombre);
     } else {
       _colocando = true;
@@ -913,23 +954,29 @@
             (n ? ' <b>' + n + '</b>' : '') + '</button>';
         }).join('') +
       '</div>' +
-      // ── Apuntar una compra ya hecha ─────────────────────────────
+      // ── Una orden fuera del ciclo ───────────────────────────────
       //
-      // No pide nada: registra una carrera a la tienda y la guarda
-      // directa en el historial. Por eso NO dice "quick order" —eso
-      // hay que aprenderlo— sino lo que hace.
+      // Se llamó "Log a store run" mientras creíamos que sólo
+      // apuntaba una compra ya hecha. No es eso: salvo LOOP, de aquí
+      // sale un correo al proveedor con su PDF, igual que de una
+      // orden normal. Eso es una ORDEN, y llamarla "log" hacía
+      // esperar un registro y mandar un pedido.
       //
       // Vive en Open porque es donde se entra a pensar en comprar,
       // aunque lo que guarde aparezca en Sent.
       (_sec === 'open'
         ? '<button type="button" class="m-ord-run" id="moRun">' +
-            '<i class="ti ti-plus" aria-hidden="true"></i> Log a store run</button>'
+            '<i class="ti ti-plus" aria-hidden="true"></i> Quick order</button>'
         : '');
 
     const run = cab.querySelector('#moRun');
     if (run) run.onclick = () => {
-      const Q = window.BarStockQuickOrder;
-      if (Q && Q.openModal) return Q.openModal();
+      // La pantalla del teléfono, no el diálogo del escritorio: ése
+      // es una rejilla de cinco columnas con un `datalist`, y en un
+      // iPhone no se puede usar.
+      if (window.BarStockMobile && window.BarStockMobile.ir) {
+        return window.BarStockMobile.ir('quick');
+      }
       if (window.BarStockToast) window.BarStockToast.show('Not available right now.');
     };
 
@@ -1032,8 +1079,57 @@
     if (window.BarStockMobile) window.BarStockMobile.ir('orders');
   }
 
+  function volverAQuick() {
+    if (window.BarStockMobile && window.BarStockMobile.ir) window.BarStockMobile.ir('quick');
+  }
+
+  // ── Revisar un borrador de Quick order ─────────────────────────────
+  //
+  // Quick order NO tiene su propia pantalla de enviar. Manda su
+  // borrador AQUÍ y se usa la revisión que ya existe: los
+  // destinatarios con su libreta, los tres pasos, el PDF, el estado
+  // de "colocada pero el correo no salió" y la diferencia entre
+  // rechazo y duda. Todo eso costó varias vueltas de aprender; una
+  // segunda copia en otra pantalla volvería a aprenderlo mal.
+  //
+  // Se deja ANOTADO y se navega, como `_pedida`: `show()` corre
+  // después y llama a `salirRevision()`, así que ponerlo aquí
+  // directamente se borraría solo al llegar.
+  let _borrador = null;   // { nombre, filas, nota }
+
+  function revisarBorrador(b) {
+    if (!b || !b.nombre || !Array.isArray(b.filas) || !b.filas.length) return false;
+    _borrador = { nombre: b.nombre, filas: b.filas.slice(), nota: b.nota || 'Quick Order' };
+    if (window.BarStockMobile) window.BarStockMobile.ir('orders');
+    return true;
+  }
+
+  // Monta la revisión a partir del borrador. Devuelve false si no
+  // había ninguno, para que `show()` siga su camino normal.
+  function montarBorrador() {
+    const b = _borrador;
+    _borrador = null;
+    if (!b) return false;
+    salirRevision();
+    _sec = 'open';
+    _vendor = b.nombre;
+    _revisar = true;
+    _deBorrador = true;
+    _extra = { quickOrder: true, note: b.nota };
+    const botellas = b.filas.reduce((s, r) => s + cantidad(r), 0);
+    _vista = {
+      nombre: b.nombre,
+      filas: b.filas.slice(),
+      total: hay('computeOrderSubtotal') ? window.computeOrderSubtotal(b.filas) : 0,
+      sinPrecio: b.filas.filter(r => num(r.value) <= 0).length,
+      botellas
+    };
+    return true;
+  }
+
   window.BarStockMobileOrders = {
-    refresh, falloAlGuardar, abrirVendor, enviarCorreo, abrirSeccion
+    refresh, falloAlGuardar, abrirVendor, enviarCorreo, abrirSeccion,
+    revisarBorrador
   };
 
   function registrar() {
@@ -1069,8 +1165,12 @@
         }
         if (!_vendor) return false;
         if (hacerlo) {
-          // De la revisión se vuelve a las líneas, no al resumen.
-          // Saltarse el intermedio hace perder el sitio.
+          // Un borrador vuelve a Quick order. Lo demás: de la revisión
+          // se vuelve a las líneas, no al resumen — saltarse el
+          // intermedio hace perder el sitio.
+          if (_revisar && _deBorrador) {
+            salirRevision(); _vendor = null; volverAQuick(); return true;
+          }
           if (_revisar) salirRevision(); else _vendor = null;
           pintar(host);
         }
@@ -1083,6 +1183,11 @@
       // Home—. Esa petición se consume aquí y se borra: vale para esta
       // entrada y ninguna más.
       show(host) {
+        // Un borrador de Quick order manda sobre todo lo demás: es el
+        // único caso en que se entra a Orders DIRECTO a la revisión,
+        // porque el camino empezó en otra pantalla.
+        if (montarBorrador()) { pintar(host); return; }
+
         // Entrar por la pestaña arranca siempre en Open. Las otras dos
         // son sitios a los que se va a propósito, no donde caer.
         //
