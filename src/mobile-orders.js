@@ -68,6 +68,17 @@
 
   const hay = (n) => typeof window[n] === 'function';
 
+  // El encabezado lo arma el armazón: chevron a la izquierda del
+  // título, en la misma fila, para no gastar un renglón en volver.
+  const cab = (o) => (window.BarStockMobile && window.BarStockMobile.cabecera)
+    ? window.BarStockMobile.cabecera(o)
+    : '<div class="m-inv-t">' + esc(o.titulo || '') + '</div>';
+  const volverCon = (host, fn) => {
+    if (window.BarStockMobile && window.BarStockMobile.alVolver) {
+      window.BarStockMobile.alVolver(host, fn);
+    }
+  };
+
   function proveedores() {
     if (!hay('getActiveVendors') || !hay('getOrderRowsForVendor') ||
         !hay('computeOrderSubtotal')) return [];
@@ -190,16 +201,13 @@
     // un pedido es mirar las primeras líneas, así que el orden ES la
     // información.
     host.innerHTML = `
-      <button type="button" class="m-back m-back-gde" id="moBack">
-        <i class="ti ti-chevron-left" aria-hidden="true"></i> All orders
-      </button>
-
-      <div class="m-ord-h">
-        <span class="m-inv-t">${esc(v.nombre)}</span>
-        <div class="m-ord-tot">${money(v.total)}
+      ${cab({
+        volverA: 'All orders',
+        titulo: v.nombre,
+        der: `<div class="m-ord-tot">${money(v.total)}
           <small>${v.filas.length} line${v.filas.length === 1 ? '' : 's'}${
-            v.sinPrecio ? ' · ' + v.sinPrecio + ' without price' : ''}</small></div>
-      </div>
+            v.sinPrecio ? ' · ' + v.sinPrecio + ' without price' : ''}</small></div>`
+      })}
 
       <!-- Arriba y no al final. Antes aquí vivía el aviso de que esto
            sólo se podía hacer desde el escritorio; ahora vive el botón,
@@ -235,7 +243,7 @@
           }).join('')}
         </div>` : ''}`;
 
-    host.querySelector('#moBack').onclick = () => { _vendor = null; pintar(host); };
+    volverCon(host, () => { _vendor = null; pintar(host); });
     const env = host.querySelector('#moSend');
     if (env) env.onclick = () => {
       salirRevision();
@@ -338,16 +346,13 @@
     const botellas = v.botellas;
 
     host.innerHTML = `
-      <button type="button" class="m-back m-back-gde" id="mrBack">
-        <i class="ti ti-chevron-left" aria-hidden="true"></i> ${esc(v.nombre)}
-      </button>
-
-      <div class="m-ord-h">
-        <span class="m-inv-t">Review the order</span>
-        <div class="m-ord-tot">${money(v.total)}
+      ${cab({
+        volverA: v.nombre,
+        titulo: 'Review the order',
+        der: `<div class="m-ord-tot">${money(v.total)}
           <small>${v.filas.length} line${v.filas.length === 1 ? '' : 's'} · ${n2(botellas)} bottles${
-            v.sinPrecio ? ' · ' + v.sinPrecio + ' without price' : ''}</small></div>
-      </div>
+            v.sinPrecio ? ' · ' + v.sinPrecio + ' without price' : ''}</small></div>`
+      })}
 
       <!-- ── El bloque de enviar va ARRIBA ─────────────────────
            Estaba abajo, en un pie pegajoso, y ese pie pintaba un
@@ -433,7 +438,7 @@
           </div>`).join('')}
       </div>`;
 
-    host.querySelector('#mrBack').onclick = () => { salirRevision(); pintar(host); };
+    volverCon(host, () => { salirRevision(); pintar(host); });
 
     host.querySelectorAll('[data-quitar]').forEach(b => {
       b.onclick = () => { _to.splice(Number(b.dataset.quitar), 1); pintar(host); };

@@ -656,9 +656,61 @@
     init();
   }
 
+  // ── El encabezado de una pantalla, en un solo sitio ──────────────
+  //
+  // Antes cada pantalla escribía lo mismo a mano: un botón de volver
+  // ocupando un renglón entero y, debajo, el título. Dos líneas para
+  // una sola idea, y repetido en ocho sitios.
+  //
+  // Ahora el chevron va A LA IZQUIERDA del título, en la misma fila.
+  // Se recupera un renglón en cada pantalla y el gesto no cambia.
+  //
+  // Lo que se pierde es la etiqueta de a dónde vuelves —"More",
+  // "Settings", "All orders"—. Sigue estando para quien usa lector de
+  // pantalla, en el `aria-label`: la decisión es que en un teléfono
+  // ese renglón cuesta más de lo que informa, porque el sitio al que
+  // vuelves es casi siempre el que acabas de dejar.
+  //
+  //   cabecera({ volverA: 'Settings', titulo: 'Delivery', sub: '...' })
+  //
+  // `der` es HTML YA ARMADO para la esquina derecha —la cifra de una
+  // orden, por ejemplo—. Va sin escapar a propósito: quien lo pasa es
+  // esta misma app con números, nunca texto que venga de fuera. Si
+  // algún día entra ahí el nombre de un proveedor, tiene que pasar
+  // por esc() antes.
+  //
+  // Devuelve HTML. El `id` del botón es siempre `mAtras`, así que
+  // quien lo usa engancha una sola cosa.
+  function cabecera(o) {
+    const t = (o && o.titulo) || '';
+    const v = (o && o.volverA) || '';
+    const s = (o && o.sub) || '';
+    const d = (o && o.der) || '';
+    return '<div class="m-cab">' +
+      '<button type="button" class="m-atras" id="mAtras"' +
+        ' aria-label="' + esc(v ? 'Back to ' + v : 'Back') + '">' +
+        '<i class="ti ti-chevron-left" aria-hidden="true"></i></button>' +
+      '<div class="m-cab-t">' +
+        '<div class="m-inv-t">' + esc(t) + '</div>' +
+        (s ? '<div class="m-hsub">' + esc(s) + '</div>' : '') +
+      '</div>' +
+      (d ? '<div class="m-cab-d">' + d + '</div>' : '') +
+      '</div>';
+  }
+
+  // Engancha el botón de la cabecera. Devuelve false si no hay, para
+  // que quien llama pueda decidir.
+  function alVolver(host, fn) {
+    const b = host && host.querySelector('#mAtras');
+    if (!b) return false;
+    b.onclick = fn;
+    return true;
+  }
+
   window.BarStockMobile = {
     register, ir, volver, nombreAnterior, refrescarBadges, refrescarActiva,
     esMovil, montado: () => _montado, activa: () => _activa,
+    cabecera, alVolver,
     ANCHO
   };
 })();

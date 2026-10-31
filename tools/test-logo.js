@@ -153,6 +153,36 @@ grupo('"Stock" viaja de verde a azul, y no desaparece si no se puede');
   prueba('no se coló en los correos', !/background-clip/.test(correo));
 }
 
+grupo('el caché se rompe cuando la hoja cambia');
+{
+  // Esto estuvo roto varios commits sin que nadie lo notara: los
+  // `sed` que subian el numero apuntaban al valor anterior, uno fallo
+  // y los siguientes no encontraron nada. La hoja cambiaba y la URL
+  // no, asi que iOS servia la version cacheada.
+  //
+  // No se puede comprobar "es el numero correcto" sin repetir aqui el
+  // numero. Lo que SI se puede: que el buster cambie cuando cambie la
+  // hoja. Se guarda la huella de la hoja junto al buster.
+  const crypto = require('crypto');
+  const hoja = fs.readFileSync(path.join(__dirname, '..', 'styles', 'mobile-app.css'));
+  const huella = crypto.createHash('sha1').update(hoja).digest('hex').slice(0, 12);
+  const idx = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const buster = (/mobile-app\.css\?v=([\w-]+)/.exec(idx) || [])[1] || '';
+
+  const sello = path.join(__dirname, '.cache-buster.json');
+  let prev = {};
+  try { prev = JSON.parse(fs.readFileSync(sello, 'utf8')); } catch (e) {}
+
+  const cambio = prev.huella && prev.huella !== huella;
+  prueba('el buster existe', !!buster, buster);
+  prueba('si la hoja cambio, el buster tambien',
+    !cambio || prev.buster !== buster,
+    'la hoja cambio pero sigue en ?v=' + buster + ' — iOS servira la version vieja');
+
+  try { fs.writeFileSync(sello, JSON.stringify({ huella, buster }, null, 2) + '\n'); }
+  catch (e) {}
+}
+
 console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
   '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);

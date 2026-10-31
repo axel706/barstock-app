@@ -328,9 +328,13 @@
 
     const caja = host.querySelector('#msFicha');
     caja.innerHTML = `
-      <button type="button" class="m-back m-back-gde" id="msBack">
-        <i class="ti ti-chevron-left" aria-hidden="true"></i> Back to results
-      </button>
+      <!-- Aquí no hay título al lado: la ficha del producto va justo
+           debajo y ya dice de qué es. Solo el chevron, con el mismo
+           tamaño de dedo que en las demás pantallas. -->
+      <div class="m-cab m-cab-sola">
+        <button type="button" class="m-atras" id="msBack" aria-label="Back to results">
+          <i class="ti ti-chevron-left" aria-hidden="true"></i></button>
+      </div>
 
       <div class="m-fic m-fic-${esc(k.t === 'out of stock' ? 'mal' : k.t === 'running low' ? 'ojo' : 'bien')}">
         ${silueta(r, k.c)}

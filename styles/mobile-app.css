@@ -1664,6 +1664,36 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   .m-back-gde .ti { font-size: var(--m-title); }
 
+  /* ── La cabecera de una pantalla ───────────────────────────────────
+   *
+   * El chevron A LA IZQUIERDA del título, no en un renglón propio
+   * encima. Se recupera una línea entera en cada pantalla que tenga
+   * vuelta — que son ocho.
+   *
+   * El botón mide 44px aunque la flecha sea pequeña: es el mínimo
+   * para un dedo, y hacerlo del tamaño del icono lo vuelve imposible
+   * de acertar en marcha. El margen negativo le devuelve al título su
+   * alineación con el resto de la pantalla, para que el bloque de
+   * texto no quede desplazado respecto a lo que viene debajo. */
+  .m-cab {
+    display: flex; align-items: flex-start; gap: 4px;
+    margin: 0 0 14px -12px;
+  }
+  body.m-shell .m-atras {
+    flex: 0 0 44px; width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: -6px;
+    background: none; border: 0; box-shadow: none;
+    color: #7dd3fc; font-size: var(--m-screen); cursor: pointer;
+  }
+  body.m-shell .m-atras:active { color: #bae6fd; }
+  .m-cab-t { flex: 1; min-width: 0; padding-top: 1px; }
+  /* La cifra de la esquina, donde la pantalla tenga una. */
+  .m-cab-d { flex: 0 0 auto; text-align: right; padding-top: 2px; }
+  /* Sin título al lado —la ficha de un producto, por ejemplo— el
+   * chevron va solo y no necesita el hueco del texto. */
+  .m-cab-sola { margin-bottom: 4px; }
+
   /* ── La ficha ───────────────────────────────────────────────────
    *
    * La silueta a la izquierda y los datos a la derecha, y la tarjeta

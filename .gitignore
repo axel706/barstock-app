@@ -6,3 +6,6 @@ test-results/
 .vercel
 .env*
 tools/harness.html
+
+# El sello del cache buster: es local, cambia en cada maquina.
+tools/.cache-buster.json

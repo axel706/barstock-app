@@ -352,10 +352,7 @@
     const vuelta = (M && M.nombreAnterior && M.nombreAnterior()) || 'Back';
 
     let html =
-      '<button type="button" class="m-back m-back-gde" id="mhOut">' +
-        '<i class="ti ti-chevron-left" aria-hidden="true"></i> ' + esc(vuelta) +
-      '</button>' +
-      '<div class="m-inv-t">Order history</div>' +
+      cab({ volverA: vuelta, titulo: 'Order history' }) +
       '<div class="m-hsub">What you sent, and what actually arrived.</div>' +
       '<label class="m-searchbar m-hfind">' +
         '<i class="ti ti-search" aria-hidden="true"></i>' +
@@ -415,8 +412,7 @@
       };
     }
 
-    const out = host.querySelector('#mhOut');
-    if (out) out.onclick = () => { if (M && M.volver) M.volver(); };
+    volverCon(host, () => { if (M && M.volver) M.volver(); });
 
     host.querySelectorAll('[data-f]').forEach(b => {
       b.onclick = () => { _filtro = b.dataset.f; pintarLista(host); };
@@ -435,6 +431,18 @@
 
   // ── Pintar el detalle ────────────────────────────────────────────────
 
+  // El encabezado lo arma el armazón: chevron a la izquierda del
+  // título, en la misma fila. Si por lo que sea no estuviera, se cae
+  // a un título suelto en vez de dejar la pantalla sin cabecera.
+  const cab = (o) => (window.BarStockMobile && window.BarStockMobile.cabecera)
+    ? window.BarStockMobile.cabecera(o)
+    : '<div class="m-inv-t">' + esc(o.titulo || '') + '</div>';
+  const volverCon = (host, fn) => {
+    if (window.BarStockMobile && window.BarStockMobile.alVolver) {
+      return window.BarStockMobile.alVolver(host, fn);
+    }
+  };
+
   function pintarDetalle(host) {
     const o = _orden;
     const faltan = o.items.filter(i => i.recibido < i.pedido);
@@ -451,14 +459,12 @@
     }).join('');
 
     host.innerHTML =
-      '<button type="button" class="m-back m-back-gde" id="mhBack">' +
-        '<i class="ti ti-chevron-left" aria-hidden="true"></i> Order history</button>' +
-
-      '<div class="m-inv-t">' + esc(o.vendor) + '</div>' +
-      '<div class="m-hsub">' +
-        (o.po ? 'PO ' + esc(o.po) + ' · ' : '') + 'sent ' + esc(dia(o.fecha)) +
-        (o.factura ? ' · invoice ' + esc(o.factura) : '') +
-      '</div>' +
+      cab({
+        volverA: 'Order history',
+        titulo: o.vendor,
+        sub: (o.po ? 'PO ' + o.po + ' · ' : '') + 'sent ' + dia(o.fecha) +
+             (o.factura ? ' · invoice ' + o.factura : '')
+      }) +
 
       acciones(o) +
 
@@ -479,8 +485,7 @@
         ? '<div class="m-htot"><span>Received</span><b>' + money(o.recibidoDinero) + '</b></div>'
         : '');
 
-    const b = host.querySelector('#mhBack');
-    if (b) b.onclick = () => { _orden = null; pintar(host); };
+    volverCon(host, () => { _orden = null; pintar(host); });
     engancharAcciones(host, o);
   }
 

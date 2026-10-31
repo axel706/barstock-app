@@ -166,7 +166,20 @@ function pantalla(extra) {
   w.fetch = red; global.fetch = red;
 
   let def = null;
-  w.BarStockMobile = { register(d) { def = d; }, refrescarBadges() {} };
+  // `cabecera` y `alVolver` son las DE VERDAD, copiadas del armazon
+  // por referencia: se carga `mobile-shell.js` solo para tomarlas.
+  //
+  // Un stub propio aqui seria una segunda implementacion de la
+  // cabecera, y el dia que cambie el markup el test seguiria pasando
+  // mientras la app se rompe. Es justo lo que paso con
+  // `loadOrdersFromCloud`.
+  // `cabecera` y `alVolver` son las DE VERDAD, tomadas del armazon.
+  // Un stub propio seria una segunda implementacion, y el dia que
+  // cambie el markup los tests pasarian mientras la app se rompe.
+  w.BarStockMobile = Object.assign(
+    { register(d) { def = d; }, refrescarBadges() {} },
+    require('./lib-cabecera'));
+
   new Function(fs.readFileSync(path.join(RAIZ, 'src/mobile-orders.js'), 'utf8'))();
   w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
 
@@ -211,7 +224,9 @@ console.log('\nel detalle');
   const { host } = pantalla();
   abrir(host, 'LOOP');
   eq('tres lineas', host.querySelectorAll('.m-ord-l').length, 3);
-  ok('se puede volver', !!host.querySelector('#moBack'));
+  // El volver ya no es un renglon propio con etiqueta: es el chevron
+  // de la cabecera, a la izquierda del titulo.
+  ok('se puede volver', !!host.querySelector('#mAtras'));
 
   const sin = Array.from(host.querySelectorAll('.m-ord-l'))
     .find(x => /Jameson/.test(x.textContent));
@@ -395,11 +410,11 @@ console.log('\nal volver se entra por el resumen');
 {
   const { host, def } = pantalla();
   abrir(host, 'LOOP');
-  ok('estabas dentro', !!host.querySelector('#moBack'));
+  ok('estabas dentro', !!host.querySelector('#mAtras'));
   def.show(host);
   // Entrar a Ordenes y caer dentro del proveedor que miraste ayer es
   // desorientador.
-  ok('al volver, el resumen', !host.querySelector('#moBack'));
+  ok('al volver, el resumen', !host.querySelector('#mAtras'));
 }
 
 // ── Revisar y colocar ───────────────────────────────────────────────
@@ -426,8 +441,11 @@ console.log('\nla revision ensena que sale y a quien');
   await revisar(host, 'SOUTHERN');
 
   ok('es otra pantalla', /Review the order/i.test(host.textContent));
+  // El chevron ya no lleva etiqueta visible; el destino vive en el
+  // `aria-label`, que es lo que oye un lector de pantalla.
   ok('con el proveedor en el camino de vuelta',
-     /SOUTHERN/.test(host.querySelector('.m-back').textContent));
+     /SOUTHERN/.test(host.querySelector('#mAtras').getAttribute('aria-label')),
+     host.querySelector('#mAtras').getAttribute('aria-label'));
   ok('ensena las lineas', host.querySelectorAll('.m-rev-l').length === 1);
   ok('con el importe de la linea', /\$28/.test(host.querySelector('.m-rev-l').textContent));
 

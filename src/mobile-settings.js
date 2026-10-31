@@ -57,10 +57,7 @@
     const vuelta = (M && M.nombreAnterior && M.nombreAnterior()) || 'Back';
 
     host.innerHTML =
-      '<button type="button" class="m-back m-back-gde" id="msOut">' +
-        '<i class="ti ti-chevron-left" aria-hidden="true"></i> ' + esc(vuelta) +
-      '</button>' +
-      '<div class="m-inv-t">Settings</div>' +
+      cab({ volverA: vuelta, titulo: 'Settings' }) +
       '<div class="m-hsub">' + esc(loc) + '</div>' +
       GRUPOS.map(g =>
         '<div class="m-lab">' + esc(g.t.toUpperCase()) + '</div>' +
@@ -82,8 +79,7 @@
         'integration are wide tables. Open those on a computer.' +
       '</div>';
 
-    const out = host.querySelector('#msOut');
-    if (out) out.onclick = () => { if (M && M.volver) M.volver(); };
+    volverCon(host, () => { if (M && M.volver) M.volver(); });
 
     host.querySelectorAll('[data-p]').forEach(b => {
       b.onclick = () => { _panel = b.dataset.p; _vendor = null; pintar(host); };
@@ -102,15 +98,22 @@
   }
 
   function cabecera(host, titulo, sub) {
-    return '<button type="button" class="m-back m-back-gde" id="msBack">' +
-      '<i class="ti ti-chevron-left" aria-hidden="true"></i> Settings</button>' +
-      '<div class="m-inv-t">' + esc(titulo) + '</div>' +
-      (sub ? '<div class="m-hsub">' + esc(sub) + '</div>' : '');
+    return cab({ volverA: 'Settings', titulo: titulo, sub: sub || '' });
   }
 
+  // El encabezado lo arma el armazón: chevron a la izquierda del
+  // título, en la misma fila, para no gastar un renglón en volver.
+  const cab = (o) => (window.BarStockMobile && window.BarStockMobile.cabecera)
+    ? window.BarStockMobile.cabecera(o)
+    : '<div class="m-inv-t">' + esc(o.titulo || '') + '</div>';
+  const volverCon = (host, fn) => {
+    if (window.BarStockMobile && window.BarStockMobile.alVolver) {
+      window.BarStockMobile.alVolver(host, fn);
+    }
+  };
+
   function volver(host) {
-    const b = host.querySelector('#msBack');
-    if (b) b.onclick = () => { _panel = null; _vendor = null; montar(host); };
+    volverCon(host, () => { _panel = null; _vendor = null; montar(host); });
   }
 
   function guardar(host, texto, fn) {
@@ -214,10 +217,8 @@
     try { d = (await window.BarStockVendorDefaults.getDefaults(_vendor)) || {}; } catch (e) {}
 
     host.innerHTML =
-      '<button type="button" class="m-back m-back-gde" id="msBack">' +
-        '<i class="ti ti-chevron-left" aria-hidden="true"></i> Delivery</button>' +
-      '<div class="m-inv-t">' + esc(_vendor) + '</div>' +
-      '<div class="m-hsub">These details print on this vendor’s orders only.</div>' +
+      cab({ volverA: 'Delivery', titulo: _vendor,
+            sub: 'These details print on this vendor\u2019s orders only.' }) +
       campo('ms_vemail', 'Vendor email', d.vendor_email,
         'Pre-filled when emailing an order.', 'email') +
       campo('ms_acct',   'Account number', d.account_number, 'Optional.') +
@@ -230,8 +231,7 @@
 
     // El atrás de esta ficha vuelve a la LISTA de proveedores, no al
     // menú: salir del todo desde aquí perdería el sitio.
-    const b = host.querySelector('#msBack');
-    if (b) b.onclick = () => { _vendor = null; pintar(host); };
+    volverCon(host, () => { _vendor = null; pintar(host); });
 
     guardar(host, 'Delivery saved for ' + _vendor, () =>
       window.BarStockVendorDefaults.saveDefaults(_vendor, {

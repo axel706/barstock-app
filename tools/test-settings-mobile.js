@@ -28,11 +28,12 @@ function entorno(guardado) {
 
   const reg = [];
   guardado.volvio = false;
-  w.BarStockMobile = {
+  // cabecera/alVolver DE VERDAD, del armazon. Ver tools/lib-cabecera.js.
+  w.BarStockMobile = Object.assign({
     register: x => reg.push(x), ir: () => {},
     volver: () => { guardado.volvio = true; },
     nombreAnterior: () => 'More'
-  };
+  }, require('./lib-cabecera'));
   w.BARSTOCK_CONFIG = { LOCATION_NAME: 'The Crown Tavern' };
   w.getActiveVendors = () => ['LOOP', 'SOUTHERN', 'UNKNOWN'];
   w.BarStockSenderProfile = {
@@ -134,9 +135,14 @@ function entorno(guardado) {
   // no hay forma de volver: ninguna pestaña está encendida.
   S.show(host);
   await esperar(60);
-  const out = host.querySelector('#msOut');
+  const out = host.querySelector('#mAtras');
   prueba('hay flecha en la raíz', !!out);
-  prueba('y dice de dónde vienes', !!out && /More/.test(out.textContent));
+  // El destino ya no se escribe al lado de la flecha: ese renglón
+  // costaba más de lo que informaba. Sigue estando para quien usa
+  // lector de pantalla.
+  prueba('y dice de dónde vienes',
+    !!out && /More/.test(out.getAttribute('aria-label')),
+    out && out.getAttribute('aria-label'));
   out.click();
   prueba('al pulsarla se vuelve', g.volvio === true);
   g.volvio = false;
