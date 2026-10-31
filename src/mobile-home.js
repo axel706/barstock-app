@@ -296,19 +296,132 @@
       // UNKNOWN y nunca bajaba de cien. Ahora que el progreso sólo
       // cuenta lo que se pide, el final del conteo llega de verdad.
       const UMBRAL = 12;
-      const MUESTRA = 4;
-      let faltan = '';
+      const MUESTRA = 3;
+      let pendientes = [];
       if (tot && (tot - n) > 0 && (tot - n) <= UMBRAL && S && S.missingRows) {
-        let q = [];
-        try { q = S.missingRows().map(r => r.item).filter(Boolean); } catch (e) {}
-        if (q.length) {
-          const resto = q.length - MUESTRA;
-          faltan = 'Still to count: ' + q.slice(0, MUESTRA).join(', ') +
-                   (resto > 0 ? ' +' + resto : '');
+        try { pendientes = S.missingRows().map(r => r.item).filter(Boolean); } catch (e) {}
+      }
+
+      // ── Los tres renglones del cuerpo ────────────────────────────
+      //
+      // Esta tarjeta tenía una línea de texto y dos renglones de aire:
+      // mucha tarjeta para muy poco. La plantilla reserva tres a
+      // TODAS, así que lo que había que arreglar no era el alto, era
+      // no estar metiendo nada.
+      //
+      // Lo que se mete es lo único que no se puede saber mirándola:
+      // cuánto queda. Sale del cronómetro —botellas entre tiempo
+      // activo, por las que faltan—, así que es TU ritmo de hoy y no
+      // una media inventada.
+      //
+      // ── Pero no desde la primera botella ─────────────────────────
+      //
+      // Con seis contadas en dos minutos, el ritmo se calcula sobre
+      // dos minutos: la estimación baila de 50 a 80 y vuelve a 40, y
+      // un número que baila se deja de creer. Hasta las 20 el cuerpo
+      // enseña lo que sí se sabe —lo contado y las zonas donde no has
+      // entrado— y la estimación aparece cuando significa algo.
+      const FIABLE = 20;
+      const ms = (S && S.activeMs) ? (() => { try { return S.activeMs(); } catch (e) { return 0; } })() : 0;
+      const dur = (x) => (S && S.fmtDur) ? S.fmtDur(x) : Math.round(x / 60000) + ' min';
+      const quedan = tot ? Math.max(0, tot - n) : 0;
+
+      // Cuánto hace del último apunte. Se usa `hace` del ciclo, que es
+      // quien ya sabe decir "40 min" en vez de un número de milisegundos.
+      // La hora a la que cayó la primera botella.
+      const desde = () => {
+        if (!S || !S.cronoDesde) return '';
+        const t = Date.parse(S.cronoDesde() || '');
+        if (!t) return '';
+        return new Date(t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      };
+
+      const hace = () => {
+        if (!S || !S.updatedAt) return '';
+        const t = Date.parse(S.updatedAt() || '');
+        if (!t) return '';
+        const ms2 = Date.now() - t;
+        if (ms2 < 60000) return 'just now';
+        return (W && W.hace ? W.hace(ms2) : Math.round(ms2 / 60000) + ' min') + ' ago';
+      };
+
+      // Las zonas donde todavía no has entrado. Es la pregunta de quien
+      // retoma un conteo pausado, y hoy hay que abrir el escáner para
+      // contestarla.
+      const sinEmpezar = () => {
+        const Z = window.BarStockZones;
+        if (!Z || !Z.lista || !S || !S.zonesUsed) return '';
+        let todas = [], usadas = [];
+        try { todas = Z.lista() || []; usadas = S.zonesUsed() || []; } catch (e) { return ''; }
+        const hechas = new Set(usadas.map(x => String(x).toLowerCase()));
+        const faltan2 = todas.map(z => (z && z.nombre) ? z.nombre : String(z))
+          .filter(x => x && !hechas.has(x.toLowerCase()));
+        if (!faltan2.length) return todas.length ? 'none left' : '';
+        const corte = 3;
+        return faltan2.slice(0, corte).join(' · ') +
+               (faltan2.length > corte ? ' +' + (faltan2.length - corte) : '');
+      };
+
+      // La cifra y su unidad por separado: la columna de la derecha
+      // enseña el número grande y la unidad pequeña debajo. Por encima
+      // de la hora se parte en 1:32 para que quepa; "92" sin más no se
+      // entiende y "1 h 32 min" no cabe.
+      const reloj = () => {
+        if (!ms) return { n: '—', u: '' };
+        const min = Math.round(ms / 60000);
+        if (min < 60) return { n: String(min), u: 'min' };
+        return { n: Math.floor(min / 60) + ':' + String(min % 60).padStart(2, '0'), u: 'h' };
+      };
+
+      let cuerpo;
+      if (pendientes.length) {
+        // ── Cerca del final: los nombres ─────────────────────────────
+        //
+        // Con doce o menos pendientes, "7 left" no manda a nadie a
+        // ningún estante y los NOMBRES sí: o vuelves a por ellos, o
+        // compruebas que de verdad no hay.
+        //
+        // Un renglón por botella y no una lista separada por comas.
+        // La lista era prosa, y la prosa deja los otros dos renglones
+        // en blanco — que es justo lo que esta tarjeta venía a dejar
+        // de hacer.
+        // El resto se cuenta en el ÚLTIMO renglón, no en `mas`. `mas`
+        // va entre el cuerpo y el pie, y con `vs` puesto son dos
+        // renglones donde solo cabe uno: se comerían los botones.
+        const caben = pendientes.length > MUESTRA ? MUESTRA - 1 : MUESTRA;
+        cuerpo = pendientes.slice(0, caben).map(x => ({ n: x, v: '' }));
+        if (pendientes.length > caben) {
+          cuerpo.push({ n: '+' + (pendientes.length - caben) + ' more', v: '' });
         }
+      } else if (viejo) {
+        // Abandonado: lo primero es desde cuándo. El rótulo ya lo dice,
+        // pero el dato concreto —tres días— es lo que decide si lo
+        // retomas o lo tiras.
+        cuerpo = [
+          { n: 'Untouched', v: hace() || 'three days' },
+          { n: 'Started', v: desde() || '—' },
+          { n: 'Not started', v: sinEmpezar() || '—' }
+        ];
+      } else if (n >= FIABLE && ms > 0 && quedan > 0) {
+        const porBotella = ms / n;
+        cuerpo = [
+          { n: 'Pace', v: dur(porBotella) + ' a bottle' },
+          { n: 'Left at this pace', v: 'about ' + dur(porBotella * quedan) },
+          { n: 'Last scan', v: [zona, hace()].filter(Boolean).join(' · ') || '—' }
+        ];
+      } else {
+        // Nada de "6 in 2 min": eso ya lo dicen el título y la cifra
+        // grande. La hora a la que empezaste no está en ningún sitio,
+        // y es la que te dice si llevas toda la tarde en esto.
+        cuerpo = [
+          { n: 'Started', v: desde() || '—' },
+          { n: 'Last scan', v: [zona, hace()].filter(Boolean).join(' · ') || '—' },
+          { n: 'Not started', v: sinEmpezar() || '—' }
+        ];
       }
 
       return {
+        filas: cuerpo,
         // Con un conteo a medias, ESTA es la tarjeta que tiene que
         // estar delante: o lo retomas, o al menos ves que quedó
         // abierto. La bienvenida puede esperar.
@@ -321,18 +434,24 @@
         tono: viejo ? 'red' : 'amber',
         k: pau ? 'Count paused' : viejo ? 'Count abandoned' : 'Counting',
         tt: tot ? n + ' of ' + tot : String(n),
-        // El tiempo PRIMERO: es lo que se mira mientras cuentas. Es
-        // tiempo activo, no reloj de pared — los ratos en que nadie
-        // registra nada no suman (ver `latir` en count-session).
-        //
-        // Con el conteo abandonado no sale: ahí lo que hace falta saber
-        // es que lleva tres días parado, no cuánto se contó el martes.
-        sub: viejo ? 'Untouched for three days'
-             : [crono(), faltan || (zona ? 'last scan in ' + zona : '')]
-                 .filter(Boolean).join(' · '),
+        // Sin línea de prosa: el cuerpo son SIEMPRE tres renglones. Lo
+        // que antes iba apretado en una línea —tiempo, zona, lo que
+        // falta— vive ahora en ellos, cada cosa en el suyo.
+        sub: '',
         barra: pct,
-        amt: pct + '%',
-        vs: tot ? (tot - n) + ' left' : '',
+        // ── La cifra grande es el TIEMPO ─────────────────────────────
+        //
+        // Era el porcentaje, y el porcentaje ya lo dicen otras dos
+        // cosas en la misma tarjeta: el título ("40 of 162") y la
+        // barra. Tres veces lo mismo y cero veces el dato que se
+        // quiere mirar a mitad de conteo, que es cuánto llevas.
+        //
+        // Estaba en el pie, en gris y en letra pequeña: ahí no se ve.
+        amt: reloj().n,
+        amtPie: reloj().u,
+        // El porcentaje baja aquí: sigue estando para quien lo quiera,
+        // sin ocupar el sitio del tiempo.
+        vs: [tot ? (tot - n) + ' left' : '', tot ? pct + '%' : ''].filter(Boolean).join(' · '),
         btn: viejo ? 'Pick it up' : 'Keep counting',
         go: () => { if (window.BarStockScanCount) window.BarStockScanCount.open(); },
 
