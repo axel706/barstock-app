@@ -388,10 +388,7 @@
                  : 'Earlier cycles';
 
     host.innerHTML =
-      '<button type="button" class="m-iback" id="mInvBack">' +
-        '<i class="ti ti-chevron-left" aria-hidden="true"></i> Invoices</button>' +
-      '<div class="m-inv-t">' + esc(titulo) + '</div>' +
-      '<div class="m-isub">Reading…</div>';
+      cab({ volverA: 'Invoices', titulo: titulo, sub: 'Reading…' });
 
     let lineas = [];
     try {
@@ -410,12 +407,9 @@
       }
     } catch (e) {
       host.innerHTML =
-        '<button type="button" class="m-iback" id="mInvBack">' +
-          '<i class="ti ti-chevron-left" aria-hidden="true"></i> Invoices</button>' +
-        '<div class="m-inv-t">' + esc(titulo) + '</div>' +
+        cab({ volverA: 'Invoices', titulo: titulo }) +
         '<div class="m-ivacio mal">' + esc(String(e && e.message || e)) + '</div>';
-      const b0 = host.querySelector('#mInvBack');
-      if (b0) b0.onclick = () => { _verFuera = ''; pintar(host); };
+      volverCon(host, () => { _verFuera = ''; pintar(host); });
       return;
     }
 
@@ -449,9 +443,7 @@
         : 'Invoices kept but dated before this cycle opened on ' + esc(desdeCiclo()) + '.';
 
     host.innerHTML =
-      '<button type="button" class="m-iback" id="mInvBack">' +
-        '<i class="ti ti-chevron-left" aria-hidden="true"></i> Invoices</button>' +
-      '<div class="m-inv-t">' + esc(titulo) + '</div>' +
+      cab({ volverA: 'Invoices', titulo: titulo }) +
       '<div class="m-isub">' + sub + '</div>' +
       (facturas.length
         ? facturas.map(f =>
@@ -473,9 +465,21 @@
         (facturas.length === 1 ? ' invoice' : ' invoices') + ' · ' +
         lineas.length + (lineas.length === 1 ? ' line' : ' lines') + '</div>';
 
-    const b = host.querySelector('#mInvBack');
-    if (b) b.onclick = () => { _verFuera = ''; pintar(host); };
+    volverCon(host, () => { _verFuera = ''; pintar(host); });
   }
+
+  // El encabezado lo arma el armazón: chevron a la izquierda del
+  // título, en la misma fila. Esta pantalla se había quedado con el
+  // patrón viejo porque usaba su propia clase, `m-iback`, y no salió
+  // en el barrido de `m-back`.
+  const cab = (o) => (window.BarStockMobile && window.BarStockMobile.cabecera)
+    ? window.BarStockMobile.cabecera(o)
+    : '<div class="m-inv-t">' + esc(o.titulo || '') + '</div>';
+  const volverCon = (host, fn) => {
+    if (window.BarStockMobile && window.BarStockMobile.alVolver) {
+      window.BarStockMobile.alVolver(host, fn);
+    }
+  };
 
   function cabecera() {
     const W = window.BarStockWeeklyCycle;
@@ -492,13 +496,13 @@
 
   function pintarDetalle(host, f) {
     let html =
-      '<button type="button" class="m-iback" id="mInvBack">' +
-        '<i class="ti ti-chevron-left" aria-hidden="true"></i> Invoices</button>' +
-      '<div class="m-inv-t">' + esc(f.vendor || 'Unknown vendor') + '</div>' +
-      '<div class="m-isub">' +
-        (f.numero ? 'invoice ' + esc(f.numero) + ' &middot; ' : '') +
-        esc(dia(f.fecha).txt) + (f.status ? ' &middot; ' + esc(String(f.status).toLowerCase()) : '') +
-      '</div>' +
+      cab({
+        volverA: 'Invoices',
+        titulo: f.vendor || 'Unknown vendor',
+        sub: (f.numero ? 'invoice ' + f.numero + ' \u00b7 ' : '') +
+             dia(f.fecha).txt +
+             (f.status ? ' \u00b7 ' + String(f.status).toLowerCase() : '')
+      }) +
       // Los tres totales existen para una sola cosa: cuadrar contra el
       // papel que tienes en la mano.
       '<div class="m-itot">' +
@@ -635,8 +639,7 @@
   function U() { return window.BarStockMarginEdgeUnclaimed || null; }
 
   function enganchar(host, f) {
-    const atras = host.querySelector('#mInvBack');
-    if (atras) atras.onclick = () => { _abierta = null; pintar(host); };
+    volverCon(host, () => { _abierta = null; pintar(host); });
 
     const tras = (k, item) => {
       // Se refleja en memoria y se repinta: volver a leer la base
@@ -902,12 +905,9 @@
   function falloAlPintar(host, e) {
     console.error('[facturas]', e);
     host.innerHTML =
-      '<button type="button" class="m-iback" id="mInvBack">' +
-        '<i class="ti ti-chevron-left" aria-hidden="true"></i> Invoices</button>' +
-      '<div class="m-inv-t">Something broke</div>' +
+      cab({ volverA: 'Invoices', titulo: 'Something broke' }) +
       '<div class="m-ivacio mal">' + esc(String((e && (e.stack || e.message)) || e)) + '</div>';
-    const b = host.querySelector('#mInvBack');
-    if (b) b.onclick = () => { _verFuera = ''; _abierta = null; pintar(host); };
+    volverCon(host, () => { _verFuera = ''; _abierta = null; pintar(host); });
   }
 
   async function montar(host) {

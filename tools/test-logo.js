@@ -153,6 +153,36 @@ grupo('"Stock" viaja de verde a azul, y no desaparece si no se puede');
   prueba('no se coló en los correos', !/background-clip/.test(correo));
 }
 
+grupo('ninguna pantalla se guarda un renglón para volver');
+{
+  // El chevron va A LA IZQUIERDA del título, en la misma fila, y lo
+  // arma `BarStockMobile.cabecera`. Una pantalla que se escriba su
+  // propio botón de volver recupera el patrón viejo — que gastaba un
+  // renglón entero — y nadie se entera hasta verlo en el teléfono.
+  //
+  // La pantalla de facturas se quedó atrás justo por esto: usaba su
+  // propia clase, `m-iback`, así que no salió en el barrido de
+  // `m-back` cuando se cambió el resto.
+  const dir = path.join(__dirname, '..', 'src');
+  const malos = [];
+  for (const f of fs.readdirSync(dir)) {
+    if (!/^mobile-.*\.js$/.test(f) || f === 'mobile-shell.js') continue;
+    const txt = fs.readFileSync(path.join(dir, f), 'utf8');
+    // Un chevron de volver con TEXTO al lado es el patrón viejo. El
+    // chevron solo —la ficha de búsqueda— es legítimo.
+    const re = /ti-chevron-left[^<]*<\/i>\s*[^<\s][^<]*/g;
+    const hay = txt.match(re);
+    if (hay) malos.push(f + ': ' + hay[0].slice(0, 46).replace(/\s+/g, ' '));
+  }
+  prueba('todas usan la cabecera del armazón', malos.length === 0, malos.join(' | '));
+
+  // Y el armazón la expone, o las pantallas se caen al respaldo sin
+  // botón de volver.
+  const shell = fs.readFileSync(path.join(dir, 'mobile-shell.js'), 'utf8');
+  prueba('el armazón la expone', /cabecera,\s*alVolver/.test(shell));
+  prueba('con un id estable para engancharla', /id="mAtras"/.test(shell));
+}
+
 grupo('el caché se rompe cuando la hoja cambia');
 {
   // Esto estuvo roto varios commits sin que nadie lo notara: los

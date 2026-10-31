@@ -53,6 +53,9 @@ function entorno(opts) {
   const dom = new JSDOM('<!doctype html><body></body>', { url: 'https://x.test/' });
   const w = dom.window;
   global.window = w; global.document = w.document;
+  // La cabecera DE VERDAD, del armazon: el titulo y el subtitulo de
+  // cada pantalla salen de ahi. Ver tools/lib-cabecera.js.
+  w.BarStockMobile = Object.assign(w.BarStockMobile || {}, require('./lib-cabecera'));
   w.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} });
 
   w.state = { master: INVENTARIO.map(r => Object.assign({}, r)) };
@@ -451,7 +454,7 @@ const txt = (h) => h.textContent.replace(/\s+/g, ' ');
     prueba('con el proveedor', /Ambrogi/.test(t), t.slice(0, 220));
     prueba('y su número', /06808287|2689338/.test(t) || /line/.test(t), t.slice(0, 220));
 
-    h.querySelector('#mInvBack').click();
+    h.querySelector('#mAtras').click();   // el chevron de la cabecera
     await esperar(20);
     prueba('se puede volver', !!h.querySelector('[data-inv]'), txt(h).slice(0, 80));
   }
@@ -492,7 +495,7 @@ const txt = (h) => h.textContent.replace(/\s+/g, ' ');
       h.querySelectorAll('.m-hcard').length === 1,
       String(h.querySelectorAll('.m-hcard').length));
 
-    h.querySelector('#mInvBack').click();
+    h.querySelector('#mAtras').click();   // el chevron de la cabecera
     await esperar(30);
     prueba('al volver, la lista sigue viva', !!h.querySelector('[data-inv]'), txt(h).slice(0, 90));
     h.querySelector('[data-inv]').click();
