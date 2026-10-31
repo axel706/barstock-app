@@ -422,7 +422,7 @@
       };
     });
     host.querySelectorAll('[data-o]').forEach(b => {
-      b.onclick = () => { _orden = todas[Number(b.dataset.o)]; pintar(host); };
+      b.onclick = () => { _orden = todas[Number(b.dataset.o)]; pintar(host); cambioDeNivel(); };
     });
   }
 
@@ -482,7 +482,7 @@
         ? '<div class="m-htot"><span>Received</span><b>' + money(o.recibidoDinero) + '</b></div>'
         : '');
 
-    volverCon(host, () => { _orden = null; pintar(host); });
+    volverCon(host, () => { _orden = null; pintar(host); cambioDeNivel(); });
     engancharAcciones(host, o);
   }
 
@@ -617,15 +617,25 @@
     if (_orden) pintarDetalle(host); else pintarLista(host);
   }
 
-  async function montar(host) {
-    host.innerHTML = '<div class="m-inv-t">Order history</div>' +
-                     '<div class="m-hsub">Reading orders…</div>';
+  // `aviso` lo pasa el contenedor de Orders. Hay que llamarlo cada vez
+  // que esta sección CAMBIA DE NIVEL —abre o cierra un detalle— porque
+  // es lo único que hace que el marco de arriba se entere.
+  //
+  // Sin esto, el detalle se pintaba dentro y el segmentado seguía
+  // puesto encima: dos salidas compitiendo, una que te saca del
+  // detalle y otra que te manda a otra sección.
+  let _aviso = null;
+  const cambioDeNivel = () => { if (_aviso) _aviso(); };
+
+  async function montar(host, aviso) {
+    if (typeof aviso === 'function') _aviso = aviso;
+    // Sin título propio: lo pone el contenedor.
+    host.innerHTML = '<div class="m-hsub">Reading orders…</div>';
     try {
       await cargar();
       pintar(host);
     } catch (e) {
-      host.innerHTML = '<div class="m-inv-t">Order history</div>' +
-        '<div class="m-hsub">' + esc(String(e.message || e)) + '</div>';
+      host.innerHTML = '<div class="m-hsub">' + esc(String(e.message || e)) + '</div>';
     }
   }
 
@@ -641,7 +651,7 @@
   window.BarStockMobileHistory = {
     montar,
     enDetalle: () => !!_orden,
-    cerrarDetalle(host) { _orden = null; pintar(host); },
+    cerrarDetalle(host) { _orden = null; pintar(host); cambioDeNivel(); },
     // Volver a entrar arranca siempre en la lista: caer dentro de la
     // orden que miraste ayer desorienta.
     reiniciar() { _orden = null; }

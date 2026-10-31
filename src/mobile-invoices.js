@@ -352,10 +352,10 @@
     host.innerHTML = html;
     salirDeLaRaiz(host);
     host.querySelectorAll('[data-inv]').forEach(b => {
-      b.onclick = () => { _abierta = _facturas[Number(b.dataset.inv)].id; pintar(host); };
+      b.onclick = () => { _abierta = _facturas[Number(b.dataset.inv)].id; pintar(host); cambioDeNivel(); };
     });
     host.querySelectorAll('[data-ver]').forEach(b => {
-      b.onclick = () => { _verFuera = b.dataset.ver; pintar(host); };
+      b.onclick = () => { _verFuera = b.dataset.ver; pintar(host); cambioDeNivel(); };
     });
   }
 
@@ -411,7 +411,7 @@
       host.innerHTML =
         cab({ volverA: 'Invoices', titulo: titulo }) +
         '<div class="m-ivacio mal">' + esc(String(e && e.message || e)) + '</div>';
-      volverCon(host, () => { _verFuera = ''; pintar(host); });
+      volverCon(host, () => { _verFuera = ''; pintar(host); cambioDeNivel(); });
       return;
     }
 
@@ -467,7 +467,7 @@
         (facturas.length === 1 ? ' invoice' : ' invoices') + ' · ' +
         lineas.length + (lineas.length === 1 ? ' line' : ' lines') + '</div>';
 
-    volverCon(host, () => { _verFuera = ''; pintar(host); });
+    volverCon(host, () => { _verFuera = ''; pintar(host); cambioDeNivel(); });
   }
 
   // El encabezado lo arma el armazón: chevron a la izquierda del
@@ -643,7 +643,7 @@
   function U() { return window.BarStockMarginEdgeUnclaimed || null; }
 
   function enganchar(host, f) {
-    volverCon(host, () => { _abierta = null; pintar(host); });
+    volverCon(host, () => { _abierta = null; pintar(host); cambioDeNivel(); });
 
     const tras = (k, item) => {
       // Se refleja en memoria y se repinta: volver a leer la base
@@ -911,20 +911,26 @@
     host.innerHTML =
       cab({ volverA: 'Invoices', titulo: 'Something broke' }) +
       '<div class="m-ivacio mal">' + esc(String((e && (e.stack || e.message)) || e)) + '</div>';
-    volverCon(host, () => { _verFuera = ''; _abierta = null; pintar(host); });
+    volverCon(host, () => { _verFuera = ''; _abierta = null; pintar(host); cambioDeNivel(); });
   }
 
-  async function montar(host) {
+  // Ver el comentario gemelo en mobile-history.js: `aviso` es lo que
+  // hace que el marco de Orders sepa que esta sección entró o salió
+  // de un detalle.
+  let _aviso = null;
+  const cambioDeNivel = () => { if (_aviso) _aviso(); };
+
+  async function montar(host, aviso) {
+    if (typeof aviso === 'function') _aviso = aviso;
     _verFuera = '';
     _viejas = null;
-    host.innerHTML = '<div class="m-inv-t">Invoices</div>' +
-                     '<div class="m-isub">Reading…</div>';
+    // Sin título propio: lo pone el contenedor.
+    host.innerHTML = '<div class="m-isub">Reading…</div>';
     try {
       await cargar();
       pintar(host);
     } catch (e) {
-      host.innerHTML = '<div class="m-inv-t">Invoices</div>' +
-        '<div class="m-ivacio mal">' + esc(String(e.message || e)) + '</div>';
+      host.innerHTML = '<div class="m-ivacio mal">' + esc(String(e.message || e)) + '</div>';
     }
   }
 
@@ -973,8 +979,8 @@
     montar, resumen, _cargar: cargar, _sugerir: sugerir,
     enDetalle: () => !!_abierta || !!_verFuera,
     cerrarDetalle(host) {
-      if (_verFuera) { _verFuera = ''; pintar(host); return; }
-      _abierta = null; pintar(host);
+      if (_verFuera) { _verFuera = ''; pintar(host); cambioDeNivel(); return; }
+      _abierta = null; pintar(host); cambioDeNivel();
     },
     reiniciar() { _abierta = null; _verFuera = ''; }
   };

@@ -171,7 +171,15 @@ function pantalla(extra) {
   const seccion = (nombre) => {
     const o = {
       _dentro: false, _pintadas: 0, _hosts: [],
-      montar(h) { o._pintadas++; o._hosts.push(h); h.innerHTML = '<div class="' + nombre + '">' + nombre + '</div>'; },
+      _aviso: null,
+      montar(h, aviso) {
+        if (typeof aviso === 'function') o._aviso = aviso;
+        o._pintadas++; o._hosts.push(h);
+        h.innerHTML = '<div class="' + nombre + '">' + nombre + '</div>';
+      },
+      // Lo que hace la de verdad al abrir un detalle: pinta su cuerpo
+      // y AVISA al marco. Sin el aviso, el segmentado se queda encima.
+      abrirDetalle() { o._dentro = true; if (o._aviso) o._aviso(); },
       enDetalle: () => o._dentro,
       cerrarDetalle(h) { o._dentro = false; o.montar(h); },
       reiniciar() { o._dentro = false; }
@@ -510,10 +518,13 @@ console.log('\nun detalle esconde el segmentado');
   host.querySelectorAll('#moSeg button')[2].click();
   ok('con la lista, el segmentado esta', !!host.querySelector('#moSeg'));
 
-  w.BarStockMobileInvoices._dentro = true;
-  host.querySelector('#moSeg button').parentElement;   // forzar repintado
-  w.BarStockMobileOrders.refresh();
+  // La seccion abre el detalle y avisa, igual que la de verdad.
+  // Esto es lo que fallaba: pintaba dentro y nadie repintaba el marco.
+  w.BarStockMobileInvoices.abrirDetalle();
   ok('dentro de una factura, no', !host.querySelector('#moSeg'));
+  ok('y sin montar la seccion otra vez',
+     w.BarStockMobileInvoices._pintadas === 1,
+     w.BarStockMobileInvoices._pintadas + ' montajes');
 
   // Y el gesto del borde cierra el detalle, no salta de seccion.
   const r = def_de(host).atras(host, true);

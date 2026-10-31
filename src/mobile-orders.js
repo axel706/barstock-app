@@ -917,6 +917,12 @@
 
   // ── Pintar ───────────────────────────────────────────────────────────
 
+  // Redibuja la cabecera y nada más. Es lo que llaman las secciones
+  // al abrir o cerrar un detalle.
+  function refrescarMarco() {
+    if (_host) marco(_host);
+  }
+
   // La pantalla entera, recordada. Los manejadores de dentro reciben
   // el CUERPO, no la pantalla: si llamaran a `pintar()` con lo que
   // tienen a mano, se armaría un marco dentro de otro marco.
@@ -928,8 +934,14 @@
     _host = host;
     const cuerpo = marco(host);
 
-    if (_sec === 'sent') { if (H()) H().montar(cuerpo); return; }
-    if (_sec === 'inv')  { if (I()) I().montar(cuerpo); return; }
+    // El `aviso` es cómo la sección le dice al marco que cambió de
+    // nivel. Sin él, el detalle se pintaba dentro y el segmentado
+    // seguía encima: dos salidas compitiendo.
+    //
+    // Redibuja SOLO la cabecera. Volver a montar la sección aquí
+    // dispararía otra carga de red por cada vez que abres un detalle.
+    if (_sec === 'sent') { if (H()) H().montar(cuerpo, refrescarMarco); return; }
+    if (_sec === 'inv')  { if (I()) I().montar(cuerpo, refrescarMarco); return; }
 
     // La revisión manda mientras esté abierta, aunque el proveedor ya
     // no tenga líneas pendientes — que es justo lo que pasa en cuanto
