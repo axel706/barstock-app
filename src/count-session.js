@@ -97,8 +97,81 @@
     return _data;
   }
 
+  // ── Cuánto se tarda en contar ────────────────────────────────────────
+  //
+  // No hay cronómetro corriendo. No hay `arrancar` ni `parar`, ni nada
+  // que se quede colgado si el navegador se muere a mitad: el tiempo se
+  // RECONSTRUYE de los huecos entre botellas.
+  //
+  // En cada botella se mira cuánto pasó desde la anterior. Si fue poco,
+  // estabas contando y ese hueco suma. Si fue mucho, te fuiste —al
+  // sótano, al teléfono, a casa— y no suma nada.
+  //
+  // Eso es lo que hace que no haga falta pausar: mientras nadie
+  // registra, nada corre. Cerrar el escáner, bloquear el teléfono o
+  // perder la pestaña dan todos el mismo resultado sin un solo
+  // manejador de eventos, y lo guardado siempre está al día hasta la
+  // última botella.
+  //
+  // Da igual si la botella entró por el escáner o a mano: las dos
+  // escriben por aquí.
+  //
+  // CINCO MINUTOS. Contando se va a unos 20 segundos por botella, así
+  // que cinco minutos son quince veces el ritmo: eso ya no es contar.
+  // Si algún día se corta al cambiar de zona, este es el número.
+  const CRONO_HUECO_MS = 5 * 60 * 1000;
+
+  function crono() {
+    const d = data();
+    if (!d.crono) d.crono = { ms: 0, ultimo: null, desde: null };
+    return d.crono;
+  }
+
+  // Se llama al guardar, y SOLO si ya hay algo contado: abrir el
+  // escáner y mirarlo no es contar. El reloj empieza con el primer
+  // producto, que es lo que se pidió.
+  function latir() {
+    const c = crono();
+    const ahora = Date.now();
+    if (c.ultimo) {
+      const hueco = ahora - c.ultimo;
+      if (hueco > 0 && hueco <= CRONO_HUECO_MS) c.ms += hueco;
+    } else {
+      c.desde = new Date(ahora).toISOString();
+    }
+    c.ultimo = ahora;
+  }
+
+  // Lo que se enseña mientras cuentas: lo acumulado más el hueco en
+  // curso, si todavía cuenta como activo. Así el número avanza en
+  // pantalla y se congela solo cuando de verdad paraste — con el mismo
+  // criterio que decide lo que se guarda.
+  function activeMs() {
+    const c = data().crono;
+    if (!c || !c.ultimo) return 0;
+    const hueco = Date.now() - c.ultimo;
+    return c.ms + (hueco > 0 && hueco <= CRONO_HUECO_MS ? hueco : 0);
+  }
+
+  function cronoDesde() { const c = data().crono; return (c && c.desde) || null; }
+
+  // "1 h 32 min", "24 min", "40 s". Vive aquí para que la tarjeta del
+  // Home y la pantalla de cierre no lo escriban cada una a su manera.
+  function fmtDur(ms) {
+    const s = Math.max(0, Math.round(Number(ms) || 0) / 1000);
+    if (s < 60) return Math.round(s) + ' s';
+    const min = Math.round(s / 60);
+    if (min < 60) return min + ' min';
+    const h = Math.floor(min / 60);
+    const r = min % 60;
+    return r ? h + ' h ' + r + ' min' : h + ' h';
+  }
+
   function save() {
     if (!_key) load();
+    // El latido va ANTES de escribir, para que lo que se guarda lleve
+    // ya el hueco contado.
+    if (size() > 0) latir();
     _data.updatedAt = new Date().toISOString();
     try {
       localStorage.setItem(_key, JSON.stringify(_data));
@@ -588,7 +661,10 @@
       counted: counted.size,
       missing: missing.length,
       missingItems: missing.map(r => r.item),
-      startedAt: startedAt()
+      startedAt: startedAt(),
+      // El tiempo ACTIVO, no el de pared. Ver `latir`.
+      activeMs: activeMs(),
+      countingSince: cronoDesde()
     };
   }
 
@@ -598,6 +674,7 @@
     mlFor, bottlesFor, countedItems, size, startedAt, summary,
     pause, resume, isPaused, pausedAt, exists, progress, missingRows,
     bottlesByZone, zonesUsed,
-    updatedAt
+    updatedAt,
+    activeMs, cronoDesde, fmtDur, CRONO_HUECO_MS
   };
 })();

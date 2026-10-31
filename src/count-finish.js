@@ -33,6 +33,90 @@
       ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
   }
 
+  // ── Cuánto se tardó ──────────────────────────────────────────────────
+  //
+  // El tiempo ACTIVO del conteo, el que reconstruye `count-session` de
+  // los huecos entre botellas. Se guarda una fila por conteo cerrado
+  // —no una columna que sólo recuerda el último— para poder comparar
+  // una semana con otra, que es donde está el valor: saber que pasaste
+  // de dos horas a una y cuarto.
+  //
+  // Nada de esto puede tumbar el cierre. Si la tabla no existe todavía
+  // o la red falla, se avisa por consola y el conteo se cierra igual:
+  // el inventario ya está escrito y es lo único que importa.
+  function cfgNube() {
+    const c = window.BARSTOCK_CONFIG || {};
+    return { url: c.SUPABASE_URL, key: c.SUPABASE_KEY, loc: c.LOCATION_NAME || '' };
+  }
+
+  async function tiempoAnterior() {
+    const { url, key, loc } = cfgNube();
+    if (!url || !key) return null;
+    try {
+      const res = await fetch(url + '/rest/v1/count_sessions' +
+        '?location_name=eq.' + encodeURIComponent(loc) +
+        '&select=active_ms,week_key&order=finished_at.desc&limit=1',
+        { headers: { apikey: key, Authorization: 'Bearer ' + key } });
+      if (!res.ok) return null;
+      const filas = await res.json();
+      return (Array.isArray(filas) && filas[0]) ? filas[0] : null;
+    } catch (e) {
+      console.warn('[conteo] no se pudo leer el tiempo anterior', e);
+      return null;
+    }
+  }
+
+  async function guardarTiempo(s) {
+    const { url, key, loc } = cfgNube();
+    if (!url || !key) return;
+    if (!s || !s.activeMs) return;   // sin tiempo medido no se inventa una fila
+    try {
+      const semana = (window.BarStockWeek && window.BarStockWeek.cycleWeekKey)
+        ? window.BarStockWeek.cycleWeekKey() : '';
+      const res = await fetch(url + '/rest/v1/count_sessions', {
+        method: 'POST',
+        headers: { apikey: key, Authorization: 'Bearer ' + key,
+                   'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          location_name: loc,
+          week_key: semana,
+          started_at: s.countingSince || s.startedAt,
+          active_ms: Math.round(s.activeMs),
+          items: s.counted
+        })
+      });
+      if (!res.ok) {
+        const t = await res.text();
+        if (/count_sessions/.test(t) && /does not exist|relation/i.test(t)) {
+          console.warn('[conteo] falta la tabla count_sessions. Corre la migración 020.');
+        } else {
+          console.warn('[conteo] no se pudo guardar el tiempo del conteo', t);
+        }
+      }
+    } catch (e) {
+      console.warn('[conteo] no se pudo guardar el tiempo del conteo', e);
+    }
+  }
+
+  // El formato lo pone `count-session`, para que la tarjeta del Home y
+  // esta pantalla no lo escriban cada una a su manera. El respaldo es
+  // por si esta pantalla se abriera sin el módulo cargado.
+  function S_FMT(ms) {
+    const s = S();
+    if (s && s.fmtDur) return s.fmtDur(ms);
+    return Math.round((Number(ms) || 0) / 60000) + ' min';
+  }
+
+  // "18 min faster than last time". Se dice la DIFERENCIA y no los dos
+  // números: el anterior ya pasó y lo que interesa saber es si vas
+  // mejor. Por debajo de un minuto no se dice nada — esa diferencia es
+  // ruido y presentarla como una mejora sería mentir.
+  function comparar(ahora, antes) {
+    const d = Math.round((antes - ahora) / 60000);
+    if (!d) return 'same as last time';
+    return Math.abs(d) + ' min ' + (d > 0 ? 'faster' : 'slower') + ' than last time';
+  }
+
   function build() {
     if ($('cfPanel')) return;
     const el = document.createElement('div');
@@ -543,6 +627,12 @@
         console.warn('conteo: el ciclo de Par Intelligence fallo', e);
       }
 
+      // El tiempo, antes de vaciar la sesión: `s` ya lo lleva dentro,
+      // pero el anterior hay que leerlo mientras todavía es "el
+      // anterior" y no el que acabamos de escribir.
+      const antes = await tiempoAnterior();
+      await guardarTiempo(s);
+
       // La sesion se vacia SOLO despues de que todo lo anterior salio
       // bien. Vaciarla antes y fallar al guardar seria perder el conteo
       // entero sin forma de recuperarlo.
@@ -597,6 +687,19 @@
         <div class="cf-note">${s.counted} items updated${
           s.missing ? (_mode === 'zero' ? `, ${s.missing} set to zero` : `, ${s.missing} left as they were`) : ''
         }${yaHayCiclo ? '. The cycle was already open, so this corrected the numbers without starting a new week' : ''}.</div>
+
+        <!-- Cuánto costó. Es tiempo ACTIVO: los ratos en que nadie
+             registró nada no cuentan, así que no es la hora a la que
+             empezaste menos la hora a la que acabaste.
+
+             La comparación sólo sale si hay con qué comparar. La
+             primera vez no hay fila anterior, y un "vs —" no dice
+             nada. -->
+        ${s.activeMs ? `
+          <div class="cf-tiempo">
+            <b>${esc(S_FMT(s.activeMs))}</b> of counting
+            ${antes && antes.active_ms ? `<small>${esc(comparar(s.activeMs, antes.active_ms))}</small>` : ''}
+          </div>` : ''}
 
         ${primeraVez ? `
           <div class="cf-first">

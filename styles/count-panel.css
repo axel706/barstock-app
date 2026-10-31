@@ -474,6 +474,21 @@ body.light .cp-sheet-x{ border-color: rgba(15,23,42,.16); color: #0f172a; }
   cursor: pointer;
 }
 .cf-note{ font-size: var(--m-meta); color: #94a3b8; text-align: center; margin-top: 10px; line-height: 1.5; }
+
+/* Cuánto costó el conteo. Centrado y con su propio aire: es un dato
+   que se mira una vez y se recuerda, no parte del recuento de arriba. */
+.cf-tiempo{
+  margin-top: 14px; text-align: center;
+  font-size: var(--m-body); color: #94a3b8;
+}
+.cf-tiempo b{
+  font-size: var(--m-title); font-weight: 800; color: #e5e7eb;
+  margin-right: 4px;
+}
+.cf-tiempo small{
+  display: block; margin-top: 4px;
+  font-size: var(--m-meta); color: #7f93a8;
+}
 .cf-status{ font-size: var(--m-body); color: #94a3b8; text-align: center; padding: 40px 0; }
 .cf-done{ font-size: var(--m-figure); color: #22c55e; text-align: center; margin-bottom: 6px; }
 

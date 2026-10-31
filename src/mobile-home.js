@@ -276,6 +276,16 @@
       const zona = (window.BarStockZones && window.BarStockZones.activas())
         ? window.BarStockZones.paraPasada() : '';
 
+      // El tiempo activo del conteo, ya con formato. Se pregunta en vez
+      // de calcularlo aquí: la regla de qué cuenta como tiempo activo
+      // vive en un solo sitio, y es la misma que acabará guardada.
+      const crono = () => {
+        if (!S || !S.activeMs || !S.fmtDur) return '';
+        let ms = 0;
+        try { ms = S.activeMs(); } catch (e) { return ''; }
+        return ms > 0 ? S.fmtDur(ms) : '';
+      };
+
       // ── Cuando queda poco, se dice QUÉ queda ──────────────────
       //
       // "259 left" no manda a nadie a ningún estante. Pero al final
@@ -311,8 +321,15 @@
         tono: viejo ? 'red' : 'amber',
         k: pau ? 'Count paused' : viejo ? 'Count abandoned' : 'Counting',
         tt: tot ? n + ' of ' + tot : String(n),
+        // El tiempo PRIMERO: es lo que se mira mientras cuentas. Es
+        // tiempo activo, no reloj de pared — los ratos en que nadie
+        // registra nada no suman (ver `latir` en count-session).
+        //
+        // Con el conteo abandonado no sale: ahí lo que hace falta saber
+        // es que lleva tres días parado, no cuánto se contó el martes.
         sub: viejo ? 'Untouched for three days'
-             : (faltan || (zona ? 'Last scan in ' + zona : '')),
+             : [crono(), faltan || (zona ? 'last scan in ' + zona : '')]
+                 .filter(Boolean).join(' · '),
         barra: pct,
         amt: pct + '%',
         vs: tot ? (tot - n) + ' left' : '',
