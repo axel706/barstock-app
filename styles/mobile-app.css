@@ -3134,13 +3134,27 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     border-radius: 999px; padding: 1px 7px; white-space: nowrap; margin-left: 4px;
   }
 
+  /* ── Los tres totales ──────────────────────────────────────────────
+   *
+   * Una tarjeta, no una tabla con reglas. Tenía borde arriba y abajo
+   * de lado a lado, y como las tarjetas de producto de abajo van
+   * redondeadas y con margen, esas dos líneas sobresalían y acababan
+   * en el aire — rectas contra el fondo, sin tocar nada.
+   *
+   * Los separadores verticales SÍ se quedan: dentro de una caja
+   * tienen principio y final, y son los que dicen que son tres datos
+   * y no una frase.
+   *
+   * Y 14px abajo. Tenía 2, así que la lista empezaba pegada a los
+   * totales y parecía una fila más de la misma tabla. */
   .m-itot {
-    display: flex; margin: 12px 0 2px;
-    border-top: 1px solid rgba(255,255,255,.1);
-    border-bottom: 1px solid rgba(255,255,255,.1);
+    display: flex; margin: 14px 0 14px;
+    border-radius: 16px;
+    background: rgba(255,255,255,.055);
+    border: 1px solid rgba(255,255,255,.10);
   }
-  .m-itot > div { flex: 1; padding: 9px 2px; text-align: center; }
-  .m-itot > div + div { border-left: 1px solid rgba(255,255,255,.08); }
+  .m-itot > div { flex: 1; padding: 11px 2px; text-align: center; }
+  .m-itot > div + div { border-left: 1px solid rgba(255,255,255,.09); }
   .m-itot b {
     display: block; font-size: var(--m-title); font-weight: 800;
     color: #fff; letter-spacing: -.4px;
