@@ -240,7 +240,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261031-011550</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261031-012205</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -6059,6 +6059,12 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     { id: 'jockey-bar',     label: 'The Jockey Tavern',  src: 'assets/backgrounds/jockey-bar.jpg' },
     { id: 'crown-dining',   label: 'Crown Dining',       src: 'assets/backgrounds/crown-dining.jpg' },
     { id: 'crown-lounge',   label: 'Crown Lounge',       src: 'assets/backgrounds/crown-lounge.jpg' },
+    // Los dos del patrón de marca. Van en dos proporciones porque el
+    // fondo se pinta con `cover`: la vertical llena un teléfono sin
+    // recortar el dibujo, y la apaisada hace lo propio en el
+    // escritorio. Elegir la que no toca no rompe nada, solo recorta.
+    { id: 'neon-tall',      label: 'Neon',               src: 'assets/backgrounds/neon-tall.jpg' },
+    { id: 'neon-wide',      label: 'Neon wide',          src: 'assets/backgrounds/neon-wide.jpg' },
     { id: 'default',        label: 'Default',            src: 'assets/bar-background.jpg' },
   ];
 

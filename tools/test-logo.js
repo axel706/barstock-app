@@ -204,6 +204,35 @@ grupo('ninguna pantalla se guarda un renglón para volver');
     sinBoton.join(', '));
 }
 
+grupo('los fondos no engordan');
+{
+  // Un fondo se descarga entero cada vez que la app arranca en un
+  // teléfono sin caché. Las dos imágenes del patrón de marca llegaron
+  // pesando 970 KB cada una; los que ya había van de 63 a 200.
+  //
+  // El tope es generoso a propósito: no se trata de perseguir bytes,
+  // sino de que no entre un original de cámara sin tocar.
+  const dir = path.join(__dirname, '..', 'assets', 'backgrounds');
+  const gordos = [];
+  for (const f of fs.readdirSync(dir)) {
+    if (!/\.(jpe?g|png|webp)$/i.test(f)) continue;
+    const kb = Math.round(fs.statSync(path.join(dir, f)).size / 1024);
+    if (kb > 280) gordos.push(f + ' ' + kb + ' KB');
+  }
+  prueba('ninguno pasa de 280 KB', gordos.length === 0, gordos.join(', '));
+
+  // Y que los de la lista existan: una ruta mal escrita deja el fondo
+  // en negro sin decir nada.
+  const idx = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const bloque = /const BACKGROUNDS = \[([\s\S]*?)\];/.exec(idx);
+  const rutas = bloque ? (bloque[1].match(/src: '([^']+)'/g) || [])
+    .map(x => x.replace(/^src: '|'$/g, '')) : [];
+  const faltan = rutas.filter(r =>
+    !fs.existsSync(path.join(__dirname, '..', r)));
+  prueba('todos los de la lista existen', faltan.length === 0, faltan.join(', '));
+  prueba('y la lista no está vacía', rutas.length >= 5, rutas.length + ' fondos');
+}
+
 grupo('el caché se rompe cuando la hoja cambia');
 {
   // Esto estuvo roto varios commits sin que nadie lo notara: los
