@@ -1611,6 +1611,47 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     border: 1px solid rgba(255,255,255,.16);
   }
 
+  /* ── El latido ──────────────────────────────────────────────────
+   *
+   * Un anillo que se abre y se desvanece, una vez cada diez segundos.
+   * Sólo aparece si hay un conteo a medias, así que es un aviso y no
+   * un adorno — y por eso va espaciado: un parpadeo cada dos segundos
+   * se deja de ver enseguida, y encima molesta en una pantalla que
+   * miras media hora seguida.
+   *
+   * Va en un ::after y NO en el botón. El botón ya usa `transform`
+   * para centrarse (`translateX(-50%)`) y otra vez al pulsarlo
+   * (`scale(.94)`): animarlo a él pisaría las dos cosas y el círculo
+   * saltaría de sitio en cada latido.
+   *
+   * `inset: -1px` por el borde del estado apagado: sin eso el anillo
+   * arranca justo por dentro y se ve un filo doble en el primer
+   * fotograma. */
+  body.m-shell .m-fab.pulsa::after {
+    content: ''; position: absolute; inset: -1px;
+    border-radius: 50%; pointer-events: none;
+    border: 2px solid rgba(34,197,94,.65);
+    opacity: 0;
+    animation: m-fab-latido 10s ease-out infinite;
+  }
+  /* Apagado el anillo es claro, no verde: en esta app el verde dice
+   * "en vivo", y con el ciclo cerrado no hay nada en vivo. Lo que
+   * dice el latido ahí es "te dejaste un conteo abierto". */
+  body.m-shell .m-fab.off.pulsa::after { border-color: rgba(255,255,255,.55); }
+
+  @keyframes m-fab-latido {
+    0%   { transform: scale(1);    opacity: 0; }
+    2%   { transform: scale(1);    opacity: .9; }
+    8%   { transform: scale(1.55); opacity: 0; }
+    100% { transform: scale(1.55); opacity: 0; }
+  }
+
+  /* Quien pidió menos movimiento no lo recibe. El conteo a medias se
+   * sigue viendo en la tarjeta del Home, así que no se pierde nada. */
+  @media (prefers-reduced-motion: reduce) {
+    body.m-shell .m-fab.pulsa::after { animation: none; }
+  }
+
   /* ── Buscar ─────────────────────────────────────────────────────── */
   /*
    * Esto se perdió entero al reescribir el archivo para el Home

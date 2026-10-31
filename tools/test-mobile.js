@@ -416,6 +416,67 @@ console.log('\nel escaner se apaga cuando contar no toca');
 
 function cierre() {
 
+console.log('\nel boton late solo si dejaste un conteo a medias');
+{
+  const w = montar(true);
+  w.BarStockScanCount = { open() {} };
+  w.BarStockMobileCycle = { escaneo: () => ({ activo: true }) };
+  w.BarStockMobile.register({ id: 'home', tab: true, orden: 10, mount() {} });
+  w.BarStockMobile.refrescarBadges();
+  ok('sin conteo, quieto', !w.document.getElementById('mFab').classList.contains('pulsa'));
+
+  // `exists()` es false con la sesion recien creada y vacia: abrir el
+  // escaner y cerrarlo sin contar nada no puede dejarlo parpadeando.
+  w.BarStockCountSession = { exists: () => false };
+  w.BarStockMobile.refrescarBadges();
+  ok('con la sesion vacia, tampoco',
+     !w.document.getElementById('mFab').classList.contains('pulsa'));
+
+  w.BarStockCountSession = { exists: () => true };
+  w.BarStockMobile.refrescarBadges();
+  ok('con un conteo abierto, late', w.document.getElementById('mFab').classList.contains('pulsa'));
+
+  // El caso que mas importa: ciclo cerrado, boton gris, y aun asi
+  // quedo un conteo colgando. Antes eso no tenia ninguna señal.
+  w.BarStockMobileCycle = { escaneo: () => ({ activo: false, dialogo: { titulo: 'x' } }) };
+  w.BarStockMobile.refrescarBadges();
+  const fab = w.document.getElementById('mFab');
+  ok('apagado tambien late', fab.classList.contains('off') && fab.classList.contains('pulsa'));
+
+  // Que el modulo no este cargado no puede dejar el boton parpadeando
+  // sin motivo ni reventar la barra.
+  delete w.BarStockCountSession;
+  w.BarStockMobile.refrescarBadges();
+  ok('sin el modulo de conteo, quieto',
+     !w.document.getElementById('mFab').classList.contains('pulsa'));
+}
+
+console.log('\nel latido no pisa el centrado del boton');
+{
+  // ── La trampa ────────────────────────────────────────────────────
+  //
+  // `.m-fab` se centra con `transform: translateX(-50%)` y al pulsarlo
+  // añade `scale(.94)`. Animar el `transform` DEL BOTON pisaria las
+  // dos cosas: el circulo saltaria de sitio en cada latido y dejaria
+  // de reaccionar al tacto. Por eso el anillo va en un ::after.
+  const fs = require('fs');
+  const path = require('path');
+  const css = fs.readFileSync(
+    path.join(__dirname, '..', 'styles', 'mobile-app.css'), 'utf8');
+
+  ok('el anillo va en un pseudoelemento', /\.m-fab\.pulsa::after/.test(css));
+
+  const enElBoton = /\.m-fab\.pulsa\s*\{[^}]*animation/.test(css);
+  ok('y la animacion NO va en el boton', !enElBoton);
+
+  const bloque = (css.match(/\.m-fab\.pulsa::after\s*\{[^}]*\}/) || [''])[0];
+  ok('cada diez segundos', /animation:[^;]*\b10s\b/.test(bloque), bloque.slice(0, 160));
+  ok('y se repite', /infinite/.test(bloque));
+
+  ok('quien pidio menos movimiento no lo recibe',
+     /prefers-reduced-motion[\s\S]{0,220}\.m-fab\.pulsa::after\s*\{\s*animation:\s*none/.test(css));
+}
+
 console.log('\nel margen lateral no es una lista de nombres');
 {
   // ── Lo que paso ──────────────────────────────────────────────────

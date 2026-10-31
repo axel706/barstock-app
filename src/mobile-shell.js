@@ -313,7 +313,22 @@
         '<span class="m-tabs-hole" aria-hidden="true"></span>' +
         lista.slice(mitad).map(boton).join('') +
       '</div>' +
-      '<button type="button" class="m-fab' + (escaneo().activo ? '' : ' off') + '"' +
+      // ── El latido ───────────────────────────────────────────────
+      //
+      // Pulsa SOLO si hay un conteo a medias, y por eso significa algo:
+      // es la señal de "te dejaste algo abierto". Un botón que late
+      // siempre es decoración, y a los dos minutos deja de verse.
+      //
+      // Va en los dos estados, verde y apagado. El caso que más
+      // importa es justo el apagado: el ciclo ya está cerrado, el
+      // botón está gris, y aún así quedó un conteo colgando. Hoy eso
+      // no tiene ninguna señal en la barra.
+      //
+      // Se pregunta por `exists()`, que es false con la sesión recién
+      // creada y vacía: abrir el escáner y cerrarlo sin contar nada no
+      // deja el botón parpadeando.
+      '<button type="button" class="m-fab' + (escaneo().activo ? '' : ' off') +
+              (hayConteo() ? ' pulsa' : '') + '"' +
               ' id="mFab" aria-label="Scan and count">' +
         '<i class="ti ti-scan" aria-hidden="true"></i>' +
       '</button>';
@@ -352,6 +367,15 @@
   // archivo no cargara, el botón se queda encendido: más vale un botón
   // de más que bloquear la acción principal del teléfono porque faltó
   // un script.
+  // ¿Quedó un conteo a medias? Lo contesta la sesión, que es quien lo
+  // sabe. Si el módulo no cargó se dice que no: un botón quieto de más
+  // es mejor que uno latiendo sin motivo.
+  function hayConteo() {
+    const S = window.BarStockCountSession;
+    if (!S || typeof S.exists !== 'function') return false;
+    try { return !!S.exists(); } catch (e) { return false; }
+  }
+
   function escaneo() {
     const C = window.BarStockMobileCycle;
     if (!C || typeof C.escaneo !== 'function') return { activo: true };
