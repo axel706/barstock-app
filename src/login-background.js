@@ -21,13 +21,23 @@
   const MAX_W = 1920;
   const QUALITY = 0.82;
 
-  const PRESETS = [
-    { id: 'crown-lounge', label: 'Crown Lounge',    src: 'assets/backgrounds/crown-lounge.jpg' },
-    { id: 'crown-dining', label: 'Crown Dining',    src: 'assets/backgrounds/crown-dining.jpg' },
-    { id: 'wills-bills',  label: "Will's & Bill's", src: 'assets/backgrounds/wills-bills.jpg' },
-    { id: 'jockey-bar',   label: 'The Jockey',      src: 'assets/backgrounds/jockey-bar.jpg' },
-    { id: 'midnight',     label: 'Medianoche',      src: 'assets/backgrounds/midnight.svg' }
-  ];
+  // El catálogo compartido. Esto era una lista escrita a mano, y la del
+  // selector de fondo de la app era otra: habían divergido sin que nadie
+  // lo decidiera —las dos "neon" estaban sólo en una y "midnight" sólo
+  // en ésta—. Ahora añadir una imagen se hace en `src/backgrounds.js` y
+  // aparece en los dos sitios.
+  //
+  // El respaldo es por si este archivo se carga sin el catálogo: el
+  // fondo de la entrada se pinta ANTES de iniciar sesión y quedarse sin
+  // opciones es peor que quedarse con cuatro.
+  const PRESETS = (window.BarStockBackgrounds && window.BarStockBackgrounds.lista())
+    || [
+      { id: 'crown-lounge', label: 'Crown Lounge',    src: 'assets/backgrounds/crown-lounge.jpg' },
+      { id: 'crown-dining', label: 'Crown Dining',    src: 'assets/backgrounds/crown-dining.jpg' },
+      { id: 'wills-bills',  label: "Will's & Bill's", src: 'assets/backgrounds/wills-bills.jpg' },
+      { id: 'jockey-bar',   label: 'The Jockey',      src: 'assets/backgrounds/jockey-bar.jpg' },
+      { id: 'midnight',     label: 'Midnight',        src: 'assets/backgrounds/midnight.svg' }
+    ];
 
   let _current = '';
 

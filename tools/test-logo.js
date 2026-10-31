@@ -221,16 +221,23 @@ grupo('los fondos no engordan');
   }
   prueba('ninguno pasa de 280 KB', gordos.length === 0, gordos.join(', '));
 
-  // Y que los de la lista existan: una ruta mal escrita deja el fondo
+  // Y que los del catálogo existan: una ruta mal escrita deja el fondo
   // en negro sin decir nada.
-  const idx = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-  const bloque = /const BACKGROUNDS = \[([\s\S]*?)\];/.exec(idx);
-  const rutas = bloque ? (bloque[1].match(/src: '([^']+)'/g) || [])
-    .map(x => x.replace(/^src: '|'$/g, '')) : [];
+  //
+  // Antes esto se sacaba con una expresión regular sobre el `const
+  // BACKGROUNDS` del index. El día que la lista se mudó a
+  // `src/backgrounds.js` —para dejar de estar escrita dos veces— la
+  // expresión dejó de encontrar nada y esta prueba cantó "0 fondos".
+  // Hizo su trabajo, pero leer el catálogo es más robusto que adivinar
+  // su forma: ahora se ejecuta.
+  const w = {};
+  new Function('window',
+    fs.readFileSync(path.join(__dirname, '..', 'src', 'backgrounds.js'), 'utf8'))(w);
+  const rutas = w.BarStockBackgrounds.lista().map(b => b.src);
   const faltan = rutas.filter(r =>
     !fs.existsSync(path.join(__dirname, '..', r)));
-  prueba('todos los de la lista existen', faltan.length === 0, faltan.join(', '));
-  prueba('y la lista no está vacía', rutas.length >= 5, rutas.length + ' fondos');
+  prueba('todos los del catálogo existen', faltan.length === 0, faltan.join(', '));
+  prueba('y el catálogo no está vacío', rutas.length >= 5, rutas.length + ' fondos');
 }
 
 grupo('el caché se rompe cuando la hoja cambia');
