@@ -273,17 +273,26 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
 
   .m-body { padding: 0 13px; }
 
-  /* Buscar no lleva banda, pero su encabezado tambien tiene que
-   * esquivar la barra de estado cuando la app va instalada. */
-  /* Buscar y More no usan .m-body: sus hijos cuelgan de la pantalla, y
-   * sin esto el contenido iba pegado a los dos bordes. El hueco de
-   * arriba lo da el padding del body por la banda fija; aquí sólo los
-   * márgenes propios. */
-  .m-screen[data-screen="search"],
-  .m-screen[data-screen="more"],
-  .m-screen[data-screen="orderHistory"],
-  .m-screen[data-screen="invoices"],
-  .m-screen[data-screen="settings"] { padding: 14px 13px 0; }
+  /* ── El margen lateral, UNA regla para todas ──────────────────────
+   *
+   * Esto era una lista de nombres de pantalla escrita a mano, y
+   * repetida en cuatro sitios distintos del archivo: aquí, en la
+   * sección de Inventario, en la de Órdenes y en la del Ciclo. Cada
+   * pantalla nueva tenía que acordarse de apuntarse en una de ellas, y
+   * la que no lo hacía salía pegada a los dos bordes. Quick order no
+   * se apuntó. Dos de los nombres de la lista —orderHistory,
+   * invoices— ya ni existen como pantalla.
+   *
+   * Ahora el margen es lo que pasa por defecto y la excepción se
+   * declara. Una pantalla nueva no tiene que saber nada.
+   *
+   * El hueco de arriba lo da el padding del body por la banda fija;
+   * aquí sólo los márgenes propios. */
+  .m-screen { padding: 14px 13px 0; }
+
+  /* El Home es la excepción: su carrusel y su portada sangran de borde
+   * a borde a propósito, y el margen lo pone .m-body por dentro. */
+  .m-screen[data-screen="home"] { padding: 0; }
 
   /* ── La banda ───────────────────────────────────────────────────── */
   /*
@@ -1795,7 +1804,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
 
   /* ── Inventario ─────────────────────────────────────────────────── */
 
-  .m-screen[data-screen="inventory"] { padding: 14px 13px 0; }
 
   .m-inv-h { display: flex; align-items: baseline; justify-content: space-between; margin: 0 2px 11px; }
   .m-inv-t { color: #fff; font-size: var(--m-screen); font-weight: 800; letter-spacing: -.5px; line-height: 1.1; }
@@ -2108,7 +2116,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
 
   /* ── Órdenes ────────────────────────────────────────────────────── */
 
-  .m-screen[data-screen="orders"] { padding: 14px 13px 0; }
 
   /* El resumen apila: el título y la cifra en dos columnas se peleaban
    * por el ancho y la línea de abajo se metía debajo del título. */
@@ -2506,7 +2513,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * olvidado, verde azulado todo en orden. Escritos, no del tema: esto
    * flota sobre una foto. */
 
-  .m-screen[data-screen="cycle"] { padding: 14px 13px 0; }
   .m-cyc-t { color: #fff; font-size: var(--m-screen); font-weight: 800; letter-spacing: -.5px; line-height: 1.1; margin: 2px 2px 13px; }
 
   body.m-shell .m-cyc-h { display: block; padding: 14px; border-radius: 17px; }

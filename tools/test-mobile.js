@@ -361,5 +361,38 @@ console.log('\nel escaner se apaga cuando contar no toca');
   eq('y escanea', abre, 1);
 }
 
+console.log('\nel margen lateral no es una lista de nombres');
+{
+  // ── Lo que paso ──────────────────────────────────────────────────
+  //
+  // El margen de los lados estaba escrito como una lista de nombres de
+  // pantalla, y repetida en CUATRO sitios del mismo archivo. Cada
+  // pantalla nueva tenia que acordarse de apuntarse, y la que no lo
+  // hacia salia pegada a los dos bordes del telefono. Quick order no
+  // se apunto, y asi se vio. Dos de los nombres de la lista
+  // —orderHistory, invoices— ya ni existian como pantalla.
+  //
+  // Un nombre mas en la lista solo arregla ESTA vez. Esto arregla la
+  // siguiente: el margen es lo que pasa por defecto.
+  const fs = require('fs');
+  const path = require('path');
+  const css = fs.readFileSync(
+    path.join(__dirname, '..', 'styles', 'mobile-app.css'), 'utf8');
+
+  ok('todas las pantallas lo llevan por defecto',
+     /\.m-screen\s*\{\s*padding:\s*14px\s+13px/.test(css));
+
+  // Las excepciones se DECLARAN, y solo valen para quitarlo. Una que
+  // lo vuelva a poner es la lista reapareciendo.
+  const porNombre = css.match(/\.m-screen\[data-screen="[^"]+"\][^{]*\{[^}]*padding:[^;}]*/g) || [];
+  const ponen = porNombre.filter(r => !/padding:\s*0\s*[;}]?\s*$/.test(r.trim()));
+  ok('y ninguna se lo pone por su nombre', ponen.length === 0, ponen.join(' | '));
+
+  // Y el Home sigue siendo la excepcion: su carrusel sangra de borde a
+  // borde a proposito.
+  ok('salvo el Home, que lo quita',
+     /\.m-screen\[data-screen="home"\]\s*\{\s*padding:\s*0/.test(css));
+}
+
 console.log('\n' + (falla ? falla + ' FALLO(S)' : 'todo bien') + '   ·   ' + pasa + ' comprobaciones');
 process.exit(falla ? 1 : 0);
