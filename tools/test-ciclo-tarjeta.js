@@ -76,6 +76,13 @@ function entorno(opts) {
     w.BarStockParIntelligence = { fetchLocationId: async () => o.locId };
   }
 
+  // La marca de cuando se hablo con MarginEdge. La escribe el
+  // servidor al acabar de bajar las lineas, asi que es la unica que
+  // de verdad significa "se sincronizo".
+  w.BarStockIntegrations = {
+    ultimoSync: async () => (o.sync === undefined ? null : o.sync)
+  };
+
   new Function(SRC)();
   return w;
 }
@@ -379,7 +386,116 @@ const inv = (n, conStock) => Array.from({ length: n }, (_, i) => ({
     prueba('y el botón para reintentar', !!c && !!c.querySelector('.m-hero-sync'));
   }
 
-  console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
+    grupo('el pie dice cuando se hablo con MarginEdge, no cuando se leyo la cache');
+  {
+    // ── Lo que pasaba ────────────────────────────────────────────
+    //
+    // El pie marcaba `Date.now()` en el momento en que la tarjeta
+    // leia su propia copia en Supabase, cosa que ocurre al abrir el
+    // Home y en cada repintado. Resultado: "checked just now" sin
+    // que nadie hubiera hablado con MarginEdge en horas, y escrito
+    // justo al lado de un boton de refrescar.
+    //
+    // Contestaba otra pregunta, y por eso no se podia confiar en el.
+    const hace2h = new Date(Date.now() - 2 * 3600000).toISOString();
+    let w = entorno({
+      master: inv(10, 6), pedidos: {}, sync: hace2h,
+      entregas: { n: 3, unidades: 30, dinero: 300, sueltas: 0, ultima: '2026-10-28' }
+    });
+    let h = pintar(w);
+    await esperar(60);
+    let c = Array.from(h.querySelectorAll('.m-hero'))
+      .find(x => /MarginEdge sync/i.test(x.textContent));
+    let pie = (c.querySelector('.m-hero-vs') || {}).textContent || '';
+    prueba('dice cuando se sincronizo', /synced/.test(pie), pie);
+    prueba('con la hora de la nube, no la de ahora', /2 h/.test(pie), pie);
+    prueba('y ya no dice "checked"', !/checked/.test(pie), pie);
+
+    // Nunca sincronizado: se DICE, no se maquilla con la fecha de la
+    // ultima factura ni con la hora actual.
+    w = entorno({
+      master: inv(10, 6), pedidos: {}, sync: null,
+      entregas: { n: 3, unidades: 30, dinero: 300, sueltas: 0, ultima: '2026-10-28' }
+    });
+    h = pintar(w);
+    await esperar(60);
+    c = Array.from(h.querySelectorAll('.m-hero'))
+      .find(x => /MarginEdge sync/i.test(x.textContent));
+    pie = (c.querySelector('.m-hero-vs') || {}).textContent || '';
+    prueba('sin sincronizar nunca, lo dice', /never synced/.test(pie), pie);
+    prueba('sin inventarse una hora', !/just now/.test(pie), pie);
+  }
+
+  grupo('sincronizar sin novedades tambien mueve el pie');
+  {
+    // Si el pie dice cuando se hablo con MarginEdge, tiene que
+    // moverse aunque no entre ni una linea. Si no, sincronizas y
+    // sigue diciendo "synced 3 h ago": el mismo engaño al reves.
+    const w = entorno({
+      master: inv(10, 6), pedidos: {},
+      sync: new Date(Date.now() - 3 * 3600000).toISOString(),
+      entregas: { n: 2, unidades: 22, dinero: 58, sueltas: 0, ultima: '2026-10-27' }
+    });
+    w.BarStockMarginEdgeConnect = {
+      buscarFacturas: async () => ({ facturas: 0, lineas: 0 })
+    };
+    const h = pintar(w);
+    await esperar(60);
+    const card = Array.from(h.querySelectorAll('.m-hero'))
+      .find(c => /MarginEdge sync/i.test(c.textContent));
+    prueba('antes decia que hacia horas',
+      /3 h/.test((card.querySelector('.m-hero-vs') || {}).textContent || ''),
+      (card.querySelector('.m-hero-vs') || {}).textContent);
+
+    card.querySelector('.m-hero-sync').click();
+    await esperar(1300);   // el minimo en pantalla es de 1000 ms
+
+    const c2 = Array.from(h.querySelectorAll('.m-hero'))
+      .find(x => /MarginEdge sync/i.test(x.textContent));
+    const pie = (c2.querySelector('.m-hero-vs') || {}).textContent || '';
+    prueba('y despues dice que acaba de sincronizar', /just now/.test(pie), pie);
+    prueba('aunque no entrara ni una linea', /nothing new/i.test(w.__toast), w.__toast);
+  }
+
+  grupo('mientras busca, dice por donde va');
+  {
+    // El recorrido son decenas de viajes encadenados y puede tardar
+    // minutos. Un boton girando no basta: sin cifras se lee como un
+    // cuelgue, se pulsa otra vez, y cada pulsacion son mas peticiones
+    // a una API que ya nos frena.
+    const w = entorno({
+      master: inv(10, 6), pedidos: {},
+      sync: new Date(Date.now() - 3 * 3600000).toISOString(),
+      entregas: { n: 2, unidades: 22, dinero: 58, sueltas: 0, ultima: '2026-10-27' }
+    });
+    let avisar = null;
+    w.BarStockMarginEdgeConnect = {
+      buscarFacturas: async (cb) => {
+        avisar = cb;
+        cb(48, 0);
+        await esperar(10);
+        cb(48, 24);
+        await esperar(10);
+        return { facturas: 48, lineas: 120 };
+      }
+    };
+    const h = pintar(w);
+    await esperar(60);
+    const card = Array.from(h.querySelectorAll('.m-hero'))
+      .find(c => /MarginEdge sync/i.test(c.textContent));
+    const pie = card.querySelector('.m-hero-vs');
+
+    card.querySelector('.m-hero-sync').click();
+    await esperar(5);
+    prueba('le pasa un avisador de verdad', typeof avisar === 'function');
+    prueba('dice cuantas facturas encontro',
+      /48 invoices found/.test(pie.textContent), pie.textContent);
+
+    await esperar(20);
+    prueba('y por cual va', /24 of 48/.test(pie.textContent), pie.textContent);
+  }
+
+console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
     '   ·   ' + (ok + mal) + ' comprobaciones');
   process.exit(mal ? 1 : 0);
 })();

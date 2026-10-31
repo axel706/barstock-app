@@ -123,6 +123,31 @@
   }
 
   async function pedirEntregas(desde) {
+    // ── Cuándo se habló con MARGINEDGE ──────────────────────────────
+    //
+    // Esto era `Date.now()`, y por eso el pie decía "checked just now"
+    // sin que nadie hubiera hablado con MarginEdge en horas: lo que
+    // marcaba era el instante en que esta función leía la caché de
+    // Supabase, cosa que pasa al abrir el Home y en cada repintado.
+    //
+    // Contestaba otra pregunta, y justo al lado de un botón de
+    // refrescar — así que se leía como "está al día" cuando no se
+    // sabía nada de eso.
+    //
+    // La marca de verdad la escribe la función de servidor al acabar
+    // de bajar las líneas. Si no se puede leer se devuelve null, y la
+    // tarjeta dice que nunca se ha sincronizado en vez de inventarse
+    // una hora.
+    async function ultimoSync() {
+      const I = window.BarStockIntegrations;
+      if (!I || typeof I.ultimoSync !== 'function') return null;
+      try {
+        const t = await I.ultimoSync();
+        const ms = t ? Date.parse(t) : 0;
+        return ms || null;
+      } catch (e) { return null; }
+    }
+
     // ── Una sola lectura para las dos pantallas ─────────────────────
     //
     // Esto leía las líneas por su cuenta y SIN el filtro de bebida.
@@ -142,7 +167,7 @@
         const r = await F.resumen();
         // Con cero facturas también se devuelve: la tarjeta sale
         // igual para poder pulsar refrescar.
-        return r ? Object.assign({ revisado: Date.now() }, r) : false;
+        return r ? Object.assign({ revisado: await ultimoSync() }, r) : false;
       } catch (e) {
         // ── Un fallo NO esconde la tarjeta ───────────────────────
         //
@@ -152,7 +177,7 @@
         // sola pista de por qué.
         console.warn('[home] resumen de facturas', e);
         return { n: 0, unidades: 0, dinero: 0, sueltas: 0, ultima: '',
-                 revisado: Date.now(), error: String(e && e.message || e) };
+                 revisado: null, error: String(e && e.message || e) };
       }
     }
     return false;
@@ -178,7 +203,7 @@
       .then(e => { _entregas = e; refresh(); })
       .catch(e => {
         _entregas = { n: 0, unidades: 0, dinero: 0, sueltas: 0, ultima: '',
-                      revisado: Date.now(), error: String(e && e.message || e) };
+                      revisado: null, error: String(e && e.message || e) };
         refresh();
       })
       .then(() => { _pidiendoEntregas = false; });
@@ -842,7 +867,7 @@
         icoL: 'refresh',
         icoLt: 'Try again',
         goL: (btn) => sincronizarDesdeTarjeta(btn),
-        vs: 'checked ' + hace(e.revisado),
+        vs: e.revisado ? 'synced ' + hace(e.revisado) : 'never synced',
         btn: 'See invoices',
         go: () => { const O = window.BarStockMobileOrders;
                   if (O && O.abrirSeccion) O.abrirSeccion('inv'); }
@@ -875,8 +900,10 @@
       // El pie dice cuándo se miró por última vez, no la fecha de la
       // última factura: con un botón de refrescar al lado, lo que
       // importa es si lo que ves está al día.
-      vs: e.revisado ? 'checked ' + hace(e.revisado)
-                     : (e.ultima ? 'last invoice ' + fmtDia(e.ultima) : ''),
+      // "synced" y no "checked": lo que se dice es cuándo se habló con
+      // MarginEdge. Sin marca no se maquilla con la fecha de la última
+      // factura —son cosas distintas— se dice que no se ha hecho.
+      vs: e.revisado ? 'synced ' + hace(e.revisado) : 'never synced',
       btn: e.sueltas ? 'Review them' : 'See invoices',
       go: () => { const O = window.BarStockMobileOrders;
                   if (O && O.abrirSeccion) O.abrirSeccion('inv'); }
@@ -946,8 +973,35 @@
     // Es la misma lección que la cortina del cambio de locación.
     const MINIMO_MS = 1000;
     const t0 = Date.now();
+
+    // ── Decir por dónde va ──────────────────────────────────────────
+    //
+    // El recorrido son decenas de viajes encadenados a MarginEdge y
+    // puede tardar minutos. Antes sólo giraba el botón, y una espera
+    // larga sin cifras se lee como un cuelgue — se pulsa otra vez, y
+    // cada pulsación son más peticiones a una API que ya nos frena.
+    //
+    // `facturas()` lleva desde siempre un aviso con (pedidos, hechos)
+    // y aquí se le pasaba una función vacía: el dato estaba y lo
+    // tirábamos.
+    //
+    // Se escribe DIRECTO en el pie de la tarjeta, sin repintar: un
+    // repintado por cada tanda reconstruye el carril entero y da un
+    // tirón al carrusel en mitad de la espera.
+    const pie = tarjeta ? tarjeta.querySelector('.m-hero-vs') : null;
+    const pieAntes = pie ? pie.textContent : '';
+    const avance = (pedidos, hechos) => {
+      if (!pie) return;
+      if (!pedidos) { pie.textContent = 'looking for invoices…'; return; }
+      pie.textContent = hechos
+        ? hechos + ' of ' + pedidos + ' invoices'
+        : pedidos + (pedidos === 1 ? ' invoice found' : ' invoices found');
+    };
+    const devolverPie = () => { if (pie && pie.isConnected) pie.textContent = pieAntes; };
+    avance(0, 0);
+
     try {
-      const r = await C.buscarFacturas();
+      const r = await C.buscarFacturas(avance);
       const falta = MINIMO_MS - (Date.now() - t0);
       if (falta > 0) await new Promise(res => setTimeout(res, falta));
 
@@ -971,8 +1025,20 @@
         refresh();
         return;
       }
+
+      // Nada nuevo, pero SÍ se habló con MarginEdge. El pie dice
+      // cuándo fue eso, así que tiene que moverse aunque el resumen
+      // no cambie — si no, sincronizas y sigue diciendo "synced 3 h
+      // ago", que es el mismo engaño de antes al revés.
+      //
+      // Se toca sólo esa marca y no se tira el resumen entero: las
+      // cuatro consultas que cuesta releerlo no aportan nada cuando
+      // no entró ni una línea.
+      if (_entregas) _entregas.revisado = Date.now();
       parar();
+      refresh();
     } catch (e) {
+      devolverPie();
       parar();
       avisar(String(e && e.message || e));
     }

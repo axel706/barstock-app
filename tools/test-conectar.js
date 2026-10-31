@@ -61,6 +61,13 @@ function entorno(o) {
     const pag = (x) => ({ ok: true, json: async () => (off ? [] : x), text: async () => '' });
     if (/marginedge_products/.test(u)) return pag(o.catalogo || []);
     if (/marginedge_links/.test(u))    return pag(o.enlaces || []);
+    // La marca de cuándo se sincronizó por última vez. Es la que
+    // decide si el refresco pide 45 días o sólo la última semana.
+    if (/location_settings/.test(u)) {
+      return { ok: true, text: async () => '',
+               json: async () => (o.syncedAt
+                 ? [{ marginedge_invoices_synced_at: o.syncedAt }] : []) };
+    }
     return pag([]);
   };
   w.fetch = f; global.fetch = f;
@@ -292,7 +299,73 @@ const B = (item, code) => ({ item, code: code || '', category: 'Liquor', vendor:
     prueba('y ya no vive en el panel de Ajustes', !/autoSync/.test(panel));
   }
 
-  console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
+  grupo('un refresco manual no vuelve a pedir cuarenta y cinco dias');
+{
+  // ── Por que importa ──────────────────────────────────────────────
+  //
+  // El recorrido son viajes ENCADENADOS a MarginEdge: cabeceras
+  // paginadas, y despues las lineas en tandas de doce. Con 45 dias de
+  // facturas eso son minutos, y el boton del Home parece colgado.
+  //
+  // 45 dias es lo correcto al dar de alta una locacion. Para un
+  // refresco, desde el ultimo sync basta.
+  const hoy = new Date();
+  const ymd = (ms) => {
+    const d = new Date(ms), z = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate());
+  };
+
+  let w = entorno({ unidadGuardada: 'u1', pedidos: [] });
+  await w.BarStockMarginEdgeConnect.buscarFacturas();
+  let inv = w.__llamadas.filter(x => x.action === 'sync-invoices')[0];
+  prueba('sin sync previo pide la ventana larga',
+    inv && inv.params.startDate <= ymd(Date.now() - 44 * 86400000),
+    inv && inv.params.startDate);
+
+  // Sincronizado hace dos horas: basta con la ultima semana.
+  w = entorno({ unidadGuardada: 'u1', pedidos: [],
+                syncedAt: new Date(Date.now() - 2 * 3600000).toISOString() });
+  await w.BarStockMarginEdgeConnect.buscarFacturas();
+  inv = w.__llamadas.filter(x => x.action === 'sync-invoices')[0];
+  prueba('con sync reciente pide solo la ultima semana',
+    inv && inv.params.startDate >= ymd(Date.now() - 8 * 86400000),
+    inv && inv.params.startDate);
+
+  // ── El colchon no es por si acaso ────────────────────────────────
+  //
+  // MarginEdge publica una factura dias despues de la fecha que lleva
+  // impresa, y la ventana filtra por ESA fecha. Pedir desde el ultimo
+  // sync a secas perderia para siempre la factura del lunes que
+  // aparece el jueves.
+  prueba('con una semana de colchon, no desde el minuto del ultimo sync',
+    inv && inv.params.startDate <= ymd(Date.now() - 6 * 86400000),
+    inv && inv.params.startDate);
+}
+
+grupo('el recorrido dice por donde va');
+{
+  // Una espera de minutos sin cifras se lee como un cuelgue: se pulsa
+  // otra vez, y cada pulsacion son mas peticiones a una API que ya
+  // nos frena.
+  const w = entorno({ unidadGuardada: 'u1',
+    pedidos: [{ id: 'o1' }, { id: 'o2' }, { id: 'o3' }] });
+  const visto = [];
+  await w.BarStockMarginEdgeConnect.buscarFacturas((pedidos, hechos) => {
+    visto.push([pedidos, hechos]);
+  });
+  prueba('avisa durante el recorrido', visto.length > 0, JSON.stringify(visto));
+  prueba('con cuantas facturas hay', visto.some(x => x[0] === 3), JSON.stringify(visto));
+  prueba('y cuantas lleva', visto.some(x => x[1] === 3), JSON.stringify(visto));
+
+  // Sin callback no puede reventar: lo llaman dos sitios y uno de
+  // ellos —el sync al arrancar— no quiere saber nada.
+  const w2 = entorno({ unidadGuardada: 'u1', pedidos: [{ id: 'o1' }] });
+  let revento = false;
+  try { await w2.BarStockMarginEdgeConnect.buscarFacturas(); } catch (e) { revento = true; }
+  prueba('y sin callback sigue funcionando', !revento);
+}
+
+console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
     '   ·   ' + (ok + mal) + ' comprobaciones');
   process.exit(mal ? 1 : 0);
 })();

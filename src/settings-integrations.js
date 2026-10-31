@@ -1021,6 +1021,14 @@
     // navegador: el restaurante elegido en el escritorio no existe
     // para el teléfono hasta que alguien lo baja.
     cargarUnidad,
+    // Cuándo se habló con MarginEdge por última vez. Lo escribe la
+    // función de servidor al terminar de bajar las líneas, así que es
+    // la ÚNICA marca que de verdad significa "se sincronizó".
+    //
+    // Se exporta porque la tarjeta del Home decía "checked just now"
+    // con la hora en que leyó su propia caché de Supabase: contestaba
+    // otra pregunta, y justo al lado de un botón de refrescar.
+    ultimoSync,
     llamar, guardarUnidad, guardarNombreUnidad, locationId, idYNombre
   };
 

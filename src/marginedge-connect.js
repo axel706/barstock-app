@@ -138,9 +138,13 @@
     return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate());
   }
 
-  async function facturas(unitId, locId, avisar) {
+  // `desde` (YYYY-MM-DD) acorta la ventana. Sin él se piden los 45
+  // días del alta, que es lo correcto la primera vez y un disparate
+  // para un refresco manual: son decenas de viajes encadenados a una
+  // API que además nos frena.
+  async function facturas(unitId, locId, avisar, desde) {
     const api = I();
-    const startDate = desdeAlta();
+    const startDate = desde || desdeAlta();
     const endDate = new Date().toISOString().slice(0, 10);
 
     // Fase 1 · cabeceras
@@ -477,7 +481,51 @@
   // Vive aquí y no en el Home porque el Home no debe saber hablar con
   // MarginEdge: ya tuvimos dos lectores de lo mismo dando cifras
   // distintas, y no hace falta un tercero.
-  async function buscarFacturas() {
+  // ── Desde cuándo pedir en un refresco manual ───────────────────────
+  //
+  // Desde el último sync, con una semana de colchón. El colchón no es
+  // por si acaso: MarginEdge publica una factura días después de la
+  // fecha que lleva impresa, y la ventana se filtra por ESA fecha. Sin
+  // solaparse, una factura del lunes que aparece el jueves no se ve
+  // nunca más.
+  //
+  // Una semana de más son unos pocos viajes; cuarenta y cinco días son
+  // minutos de espera.
+  const COLCHON_DIAS = 7;
+
+  function aYMD(ms) {
+    const d = new Date(ms);
+    const z = (n) => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate());
+  }
+
+  async function desdeUltimoSync(locId) {
+    const { url, key } = cfg();
+    if (!url || !key || !locId) return null;
+    try {
+      const r = await fetch(
+        `${url}/rest/v1/location_settings?location_id=eq.${locId}` +
+        `&select=marginedge_invoices_synced_at`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+      if (!r.ok) return null;
+      const f = await r.json();
+      const t = f?.[0]?.marginedge_invoices_synced_at;
+      const ms = t ? Date.parse(t) : 0;
+      if (!ms) return null;   // nunca sincronizado: la ventana larga
+      const inicio = ms - COLCHON_DIAS * 86400000;
+      // Nunca más tarde que el alta: si alguien tocó la marca a mano o
+      // el reloj va mal, se pide de más y no de menos.
+      const alta = desdeAlta();
+      const corto = aYMD(inicio);
+      return corto > alta ? corto : alta;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // `avisar(pedidos, hechos)` se llama durante el recorrido. El móvil
+  // lo usa para que una espera de dos minutos no parezca un cuelgue.
+  async function buscarFacturas(avisar) {
     const api = I();
     if (!api) throw new Error('Integrations module not loaded.');
     // ── El restaurante puede no estar en ESTE navegador ────────────
@@ -496,7 +544,9 @@
     if (!unitId) throw new Error('This location is not connected to MarginEdge yet.');
     const locId = await api.locationId();
     if (!locId) throw new Error('No location.');
-    return facturas(unitId, locId, () => {});
+    const desde = await desdeUltimoSync(locId);
+    return facturas(unitId, locId,
+      typeof avisar === 'function' ? avisar : () => {}, desde);
   }
 
   // ── Al arrancar la app, no al abrir Ajustes ────────────────────────
