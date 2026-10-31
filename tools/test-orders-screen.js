@@ -517,6 +517,25 @@ console.log('\nel titulo se escribe UNA vez');
     if (sueltos.length) malos.push(f + ': ' + sueltos.join(' '));
   }
   ok('ninguna seccion se escribe un titulo suelto', malos.length === 0, malos.join(' | '));
+
+  // Y el SUBTITULO igual. Al mudarlas quite los titulos y me deje los
+  // subtitulos: en Sent salian dos frases casi identicas seguidas,
+  // una del contenedor y otra de la seccion.
+  //
+  // Los subtitulos de un DETALLE si son suyos —ahi el contenedor no
+  // pinta nada—, asi que solo se miran los de las LISTAS.
+  const subs = [];
+  for (const [f, fn] of [['mobile-history.js', 'function pintarLista(host) {'],
+                         ['mobile-invoices.js', 'function pintarLista(host) {']]) {
+    const txt = fs.readFileSync(path.join(RAIZ, 'src', f), 'utf8');
+    const i = txt.indexOf(fn);
+    if (i < 0) continue;
+    const cuerpo = txt.slice(i, txt.indexOf('\n  }', i));
+    // Un subtitulo que describe la SECCION, no un estado vacio ni un
+    // "cargando". Se reconoce porque es una frase fija.
+    if (/m-[hi]sub">(What you sent|What MarginEdge)/.test(cuerpo)) subs.push(f);
+  }
+  ok('ni un subtitulo que ya pone el contenedor', subs.length === 0, subs.join(', '));
 }
 
 console.log('\ncambiar de seccion cede el cuerpo a su modulo');

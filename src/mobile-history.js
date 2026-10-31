@@ -350,8 +350,10 @@
 
     const M = window.BarStockMobile;
 
+    // Sin subtítulo: lo pone el contenedor de Orders, justo encima del
+    // segmentado. Decía casi lo mismo —"what you sent, and what
+    // actually arrived"— y salía dos veces seguidas.
     let html =
-      '<div class="m-hsub">What you sent, and what actually arrived.</div>' +
       '<label class="m-searchbar m-hfind">' +
         '<i class="ti ti-search" aria-hidden="true"></i>' +
         '<input type="search" id="mhQ" placeholder="Vendor or product\u2026" ' +
