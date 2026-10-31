@@ -102,8 +102,89 @@ console.log('\nlos dos selectores leen el catalogo, no su propia lista');
   // Se cuenta cuantas rutas a assets/backgrounds hay escritas fuera del
   // catalogo: las del respaldo de cada selector y ninguna mas.
   const cuenta = (s) => (s.match(/assets\/backgrounds\//g) || []).length;
-  ok('la entrada solo tiene su respaldo', cuenta(login) <= 5, String(cuenta(login)));
+  // El respaldo (5) mas las dos rutas que aparecen en los comentarios
+  // que explican el fallo de la barra inicial.
+  ok('la entrada solo tiene su respaldo', cuenta(login) <= 8, String(cuenta(login)));
   ok('y el index solo el suyo', cuenta(index) <= 5, String(cuenta(index)));
+}
+
+console.log('\nla ruta del fondo de la entrada sale con barra inicial');
+{
+  // ── Lo que pasaba ────────────────────────────────────────────────
+  //
+  // El valor se guarda como `assets/backgrounds/neon-plum.jpg` y se
+  // mete en una variable CSS que usa `#authOverlay`, cuya regla vive
+  // en `styles/auth.css`. El navegador resuelve una `url()` relativa
+  // que viene de una variable contra la HOJA donde se usa, no contra
+  // el documento, así que pedía
+  //
+  //     /styles/assets/backgrounds/neon-plum.jpg
+  //
+  // 404, y detrás del login quedaba el color sólido: se veía negro.
+  // Le pasaba a los cinco fondos de siempre y al valor por defecto del
+  // propio CSS; nadie lo había visto porque nadie había cambiado nunca
+  // el fondo de la entrada.
+  //
+  // Medido en el navegador, no deducido: `getComputedStyle` daba
+  // `https://app.barstockpro.com/styles/assets/...`.
+  let JSDOM = null;
+  try { JSDOM = require('jsdom').JSDOM; } catch (e) {}
+
+  if (!JSDOM) {
+    ok('(hace falta jsdom para esta parte)', false, 'npm install');
+  } else {
+    // El módulo pinta al cargarse con lo último que vio, así que basta
+    // con dejarlo en la caché y mirar la variable.
+    const pintar = (guardado) => {
+      const dom = new JSDOM('<!doctype html><body></body>', { url: 'https://x.test/' });
+      const w = dom.window;
+      global.window = w; global.document = w.document;
+      // Sin BARSTOCK_CONFIG, `refresh()` se va sin tocar la red. Un
+      // test que salga a internet es un test que falla en el avión.
+      w.fetch = () => { throw new Error('la prueba no debe salir a la red'); };
+      // `localStorage` TAMBIÉN en el global de Node: el módulo lo llama
+      // a secas y dentro de un `new Function` eso no resuelve al del
+      // navegador falso. Es la misma trampa que el proyecto ya tiene
+      // anotada con `fetch` y con `state`, y aquí se traduce en que la
+      // caché se lee vacía y la prueba no comprueba nada.
+      global.localStorage = w.localStorage;
+      try { w.localStorage.setItem('bs_login_bg_cache', guardado); } catch (e) {}
+      new Function(fs.readFileSync(path.join(RAIZ, 'src/login-background.js'), 'utf8'))();
+      return w.document.documentElement.style.getPropertyValue('--login-bg');
+    };
+
+    ok('una ruta del catalogo sale con /',
+       pintar('assets/backgrounds/neon-plum.jpg') === 'url("/assets/backgrounds/neon-plum.jpg")',
+       pintar('assets/backgrounds/neon-plum.jpg'));
+
+    // Lo que ya es absoluto no se toca: las subidas son `data:` y los
+    // enlaces pegados son `http(s):`.
+    ok('una imagen subida se queda igual',
+       pintar('data:image/jpeg;base64,AAA') === 'url("data:image/jpeg;base64,AAA")');
+    ok('un enlace pegado tambien',
+       pintar('https://images.unsplash.com/x.jpg') === 'url("https://images.unsplash.com/x.jpg")');
+    ok('y una que ya tenia barra no se duplica',
+       pintar('/assets/backgrounds/midnight.svg') === 'url("/assets/backgrounds/midnight.svg")');
+  }
+
+  // Y la misma trampa en el CSS: el valor por defecto de `auth.css`
+  // estaba escrito relativo y apuntaba a /styles/assets/...
+  const css = fs.readFileSync(path.join(RAIZ, 'styles', 'auth.css'), 'utf8');
+  ok('el valor por defecto del CSS tambien',
+     /url\(['"]?\/assets\/backgrounds\//.test(css));
+
+  // Ninguna hoja puede volver a escribir `url(assets/...)` a secas:
+  // desde `styles/` eso siempre apunta a un sitio que no existe. Con
+  // `../assets/` sí vale, que es como lo tiene `app.css`.
+  const malas = [];
+  fs.readdirSync(path.join(RAIZ, 'styles'))
+    .filter(f => f.endsWith('.css'))
+    .forEach(f => {
+      const s = fs.readFileSync(path.join(RAIZ, 'styles', f), 'utf8');
+      (s.match(/url\(\s*['"]?assets\//g) || []).forEach(() => malas.push(f));
+    });
+  ok('ninguna hoja apunta a assets/ sin salir de styles/', malas.length === 0,
+     malas.join(', '));
 }
 
 console.log('\n' + (falla ? falla + ' MAL' : 'todo bien') +

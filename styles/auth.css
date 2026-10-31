@@ -56,7 +56,11 @@ body.auth-locked > *:not(#authOverlay):not(#locCurtain){
      solida y no la aplicacion. En un iPad se veia el inventario a
      traves de la pantalla de entrada. */
   background-color:#0b1220;
-  background-image:var(--login-bg, url('assets/backgrounds/crown-lounge.jpg'));
+  /* Con barra inicial. Sin ella, esta ruta se resuelve contra la
+     carpeta de ESTA hoja —styles/— y pedia
+     /styles/assets/backgrounds/crown-lounge.jpg, que no existe: 404 y
+     detras del login quedaba solo el color de arriba. */
+  background-image:var(--login-bg, url('/assets/backgrounds/crown-lounge.jpg'));
   background-size:cover;
   background-position:center;
   background-repeat:no-repeat;

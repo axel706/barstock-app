@@ -46,9 +46,39 @@
     return { url: c.SUPABASE_URL, key: c.SUPABASE_KEY };
   }
 
+  // ── La ruta tiene que salir con barra inicial ────────────────────────
+  //
+  // Esto costó una tarde. El valor se guarda como
+  // `assets/backgrounds/neon-plum.jpg` y se mete en una variable CSS que
+  // usa `#authOverlay`, cuya regla vive en `styles/auth.css`. El
+  // navegador resuelve una `url()` relativa que viene de una variable
+  // contra la HOJA donde se usa, no contra el documento — así que
+  // pedía:
+  //
+  //     https://app.barstockpro.com/styles/assets/backgrounds/neon-plum.jpg
+  //
+  // 404, y detrás del login quedaba el color sólido. Se veía negro.
+  //
+  // No es un fallo de las imágenes nuevas: le pasaba a los cinco fondos
+  // de siempre y al valor por defecto del propio CSS. Nadie lo había
+  // visto porque nadie había cambiado nunca el fondo de la entrada.
+  //
+  // Con barra inicial da igual quién resuelva: `/assets/...` es la misma
+  // dirección desde cualquier hoja. Se arregla AQUÍ y no en la base de
+  // datos para que los valores ya guardados se arreglen solos.
+  function absoluta(src) {
+    const s = String(src || '');
+    if (!s) return s;
+    // Las subidas son `data:` y los enlaces pegados son `http(s):`. Esos
+    // ya son absolutos y no se tocan.
+    if (/^(https?:|data:|blob:|\/)/i.test(s)) return s;
+    return '/' + s.replace(/^\.?\//, '');
+  }
+
   function paintBg(src) {
     const root = document.documentElement;
-    if (src) root.style.setProperty('--login-bg', `url("${String(src).replace(/"/g, '\\"')}")`);
+    const u = absoluta(src);
+    if (u) root.style.setProperty('--login-bg', `url("${u.replace(/"/g, '\\"')}")`);
     else root.style.removeProperty('--login-bg');
   }
 

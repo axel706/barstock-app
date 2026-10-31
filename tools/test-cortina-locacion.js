@@ -250,13 +250,40 @@ grupo('auth la levanta sepa lo que sepa');
 
 grupo('el caché');
 {
-  prueba('auth.css renovado', /styles\/auth\.css\?v=login6/.test(html),
-    (/styles\/auth\.css\?v=\w+/.exec(html) || [])[0]);
-  prueba('auth.js renovado', /src\/auth\.js\?v=gate2/.test(html),
-    (/src\/auth\.js\?v=\w+/.exec(html) || [])[0]);
-  prueba('location-access.js renovado',
-    /src\/location-access\.js\?v=active-location-3/.test(html),
-    (/src\/location-access\.js\?v=[\w-]+/.exec(html) || [])[0]);
+  // ── Por qué ya no se fija el número exacto ───────────────────────
+  //
+  // Esto decía `?v=login6` literal, así que fallaba cada vez que
+  // alguien subía el buster por un motivo legítimo — que es
+  // exactamente cuando NO hay nada que arreglar. Un test que grita
+  // cuando todo va bien se acaba ignorando, y entonces ya no protege
+  // de nada.
+  //
+  // Lo que importa no es qué número hay: es que el número CAMBIE
+  // cuando cambie el archivo. Si no, iOS sirve la versión cacheada y
+  // el arreglo no llega al teléfono. Se guarda la huella del archivo
+  // junto a su buster, igual que ya se hace con mobile-app.css.
+  const crypto = require('crypto');
+  const sello = path.join(__dirname, '.cache-buster.json');
+  let prev = {};
+  try { prev = JSON.parse(fs.readFileSync(sello, 'utf8')); } catch (e) {}
+  const ahora = Object.assign({}, prev);
+
+  [['styles/auth.css', /styles\/auth\.css\?v=([\w-]+)/],
+   ['src/auth.js', /src\/auth\.js\?v=([\w-]+)/],
+   ['src/location-access.js', /src\/location-access\.js\?v=([\w-]+)/]
+  ].forEach(([rel, re]) => {
+    const huella = crypto.createHash('sha1')
+      .update(fs.readFileSync(path.join(__dirname, '..', rel))).digest('hex').slice(0, 12);
+    const buster = (re.exec(html) || [])[1] || '';
+    const antes = prev[rel] || {};
+    prueba(rel + ' lleva buster', !!buster, buster);
+    prueba(rel + ': si cambió, el buster también',
+      !(antes.huella && antes.huella !== huella) || antes.buster !== buster,
+      'cambió pero sigue en ?v=' + buster + ' — iOS servirá la versión vieja');
+    ahora[rel] = { huella, buster };
+  });
+
+  try { fs.writeFileSync(sello, JSON.stringify(ahora, null, 2) + '\n'); } catch (e) {}
 }
 
 console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
