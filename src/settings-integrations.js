@@ -554,6 +554,24 @@
     const si = document.getElementById('meSyncInv');
     if (si) si.onclick = () => sincronizarFacturas().catch(mostrarFallo);
 
+    // ── Las cifras y el asistente, ANTES del corte ──────────────────
+    //
+    // Estaban al final, detrás del `return` de "sin restaurante
+    // elegido". Y `pintarCifras` es lo ÚNICO que monta el asistente de
+    // conexión, así que el asistente sólo aparecía en locaciones que
+    // YA estaban conectadas — justo al revés de para lo que existe.
+    // The Jockey Tavern, sin catálogo y sin restaurante, no enseñaba
+    // nada en absoluto.
+    //
+    // Es la tercera vez que este archivo tropieza con el mismo corte:
+    // ya está escrito dos veces aquí arriba que los `onclick` van
+    // antes de los returns. La regla era más amplia de lo que decía —
+    // cualquier cosa que decida QUÉ SE VE va antes del corte, y
+    // después sólo lo que de verdad necesita un restaurante elegido.
+    pintarCifras();
+    pintarAtencion();
+    pintarOcultos();
+
     const cont = document.getElementById('meAccion');
     if (!cont) return;
     if (!unidad()) { cont.innerHTML = ''; return; }
@@ -569,10 +587,6 @@
 
     const c = document.getElementById('meIrCompras');
     if (c) c.onclick = () => window.showSettingsPanel('mePurchases');
-
-    pintarCifras();
-    pintarAtencion();
-    pintarOcultos();
   }
 
   // ── El estado de la conexión ───────────────────────────────────────
