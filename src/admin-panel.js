@@ -152,7 +152,13 @@
       cl.disabled = true; cl.textContent = 'Creating…';
       const r = await callAdmin('createLocation', { name });
       cl.disabled = false; cl.textContent = 'Create';
-      if (r.ok) { await loadLocations(); render(); }
+      // Crear ahora da acceso al admin. Si por lo que sea no pudo,
+      // se dice: una locación que existe pero no aparece en tu
+      // selector es peor que una que no existe.
+      if (r.ok) {
+        await loadLocations(); render();
+        if (r.aviso) msg('admLocMsg', r.aviso, 'error');
+      }
       else msg('admLocMsg', r.error || 'Could not create location.', 'error');
     };
   }

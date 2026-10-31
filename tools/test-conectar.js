@@ -201,7 +201,9 @@ const B = (item, code) => ({ item, code: code || '', category: 'Liquor', vendor:
 
   grupo('con un solo restaurante no pregunta');
   {
-    const w = entorno({ units: [{ id: '216', name: "Will's + Bill's" }] });
+    // Con inventario: conectar antes de cargarlo empareja contra una
+    // lista vacia, y el asistente ahora lo impide.
+    const w = entorno({ master: [P('x', 'Algo')], units: [{ id: '216', name: "Will's + Bill's" }] });
     const el = w.document.getElementById('meConectar');
     w.BarStockMarginEdgeConnect.montar();
     prueba('sale el botón', !!el.querySelector('#mecGo'), el.textContent.slice(0, 60));
@@ -215,6 +217,7 @@ const B = (item, code) => ({ item, code: code || '', category: 'Liquor', vendor:
   grupo('con dos, pregunta una sola vez');
   {
     const w = entorno({
+      master: [P('x', 'Algo')],
       units: [{ id: '216', name: "Will's + Bill's" }, { id: '639', name: 'The Crown Tavern' }]
     });
     const el = w.document.getElementById('meConectar');
@@ -363,6 +366,33 @@ grupo('el recorrido dice por donde va');
   let revento = false;
   try { await w2.BarStockMarginEdgeConnect.buscarFacturas(); } catch (e) { revento = true; }
   prueba('y sin callback sigue funcionando', !revento);
+}
+
+grupo('sin inventario no se puede conectar');
+{
+  // ── El orden importa y nadie lo decia ────────────────────────────
+  //
+  // Emparejar compara los productos de MarginEdge contra TUS
+  // botellas. Con el inventario vacio empareja contra una lista
+  // vacia: no rompe nada, simplemente no hace nada — y hay que
+  // repetirlo despues sin que nadie te avise de que hizo falta.
+  const vacio = entorno({ master: [], units: [{ id: '216', name: 'X' }] });
+  const e1 = vacio.document.getElementById('meConectar');
+  vacio.BarStockMarginEdgeConnect.montar();
+  const b1 = e1.querySelector('#mecGo');
+  prueba('el boton esta apagado', !!b1 && b1.disabled);
+  prueba('y dice por que', /Load your inventory first/i.test(e1.textContent),
+    e1.textContent.slice(0, 120));
+  prueba('con donde hacerlo', /Import/.test(e1.textContent), e1.textContent.slice(0, 220));
+
+  const lleno = entorno({ master: [P('x', 'Algo'), P('y', 'Otro')],
+                          units: [{ id: '216', name: 'X' }] });
+  const e2 = lleno.document.getElementById('meConectar');
+  lleno.BarStockMarginEdgeConnect.montar();
+  const b2 = e2.querySelector('#mecGo');
+  prueba('con inventario, el boton vive', !!b2 && !b2.disabled);
+  prueba('y dice cuantas botellas hay', /2 bottles/.test(e2.textContent),
+    e2.textContent.slice(0, 160));
 }
 
 console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +

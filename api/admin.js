@@ -111,7 +111,37 @@ module.exports = async function handler(req, res) {
         .single();
       if (error) throw error;
 
-      return res.status(200).json({ ok: true, location: data });
+      // ── Y quien la crea entra ───────────────────────────────────
+      //
+      // Esto no estaba, y el selector de locaciones lee de
+      // `user_location_access` SIN excepción para el admin. O sea:
+      // creabas una locación y no aparecía en tu propia lista. El
+      // único modo de entrar era acordarse de añadirse a mano en otra
+      // pestaña del panel.
+      //
+      // No era un paso de alta, era un agujero.
+      //
+      // Si esto falla, la locación ya existe y se dice: callarlo
+      // dejaría una locación invisible sin pista de por qué.
+      let aviso = null;
+      try {
+        const { data: quien } = await supabase.auth.admin.listUsers({ page: 1, perPage: 50 });
+        const yo = ((quien && quien.users) || [])
+          .find(u => (u.email || '').toLowerCase() === String(ADMIN_EMAIL || '').toLowerCase());
+        if (yo) {
+          const { error: e2 } = await supabase.from('user_location_access').insert({
+            user_id: yo.id, location_id: data.id,
+            account_id: ACCOUNT_ID, role: 'admin'
+          });
+          if (e2) throw e2;
+        } else {
+          aviso = 'Location created, but the admin user was not found to grant access.';
+        }
+      } catch (e) {
+        aviso = 'Location created, but access could not be granted: ' + (e.message || String(e));
+      }
+
+      return res.status(200).json({ ok: true, location: data, aviso });
     }
 
     // ── Gestion de usuarios ────────────────────────────────────────────

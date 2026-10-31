@@ -343,19 +343,61 @@
     enganchar(el);
   }
 
+  // ── El alta de una locación ────────────────────────────────────────
+  //
+  // Esto era un botón suelto. Y el botón funciona —conectar es de
+  // verdad un clic— pero no es el primer paso: emparejar compara los
+  // productos de MarginEdge contra TUS botellas, así que con el
+  // inventario vacío empareja contra una lista vacía. No rompe nada,
+  // simplemente no hace nada, y hay que repetirlo después sin que
+  // nadie te lo diga.
+  //
+  // Así que el asistente enseña el orden y dónde estás. Lo que no
+  // hace es inventarse pasos: los tres que salen son los que de
+  // verdad hacen falta para que esta integración sirva.
+  function botellas() {
+    const m = (window.state && window.state.master) || [];
+    return Array.isArray(m) ? m.length : 0;
+  }
+
+  function paso(estado, titulo, nota) {
+    const ic = { ok: '✓', ahora: '→', esp: '' }[estado] || '';
+    const cls = { ok: 'ok', ahora: 'run', esp: 'esp' }[estado] || 'esp';
+    return '<div class="mec-step">' +
+      '<span class="mec-ic ' + cls + '">' + ic + '</span>' +
+      '<span class="mec-st' + (estado === 'esp' ? ' esp' : '') + '">' +
+        '<b>' + titulo + '</b><span>' + nota + '</span></span>' +
+    '</div>';
+  }
+
   function vistaInicio() {
+    const n = botellas();
+    const hay = n > 0;
+
     return '<div class="me-card mec">' +
-      '<div class="mec-h">Connect MarginEdge</div>' +
-      '<div class="mec-s">One button. It figures out the rest and tells you when it is done.</div>' +
-      '<button type="button" class="mec-big" id="mecGo">Connect this location</button>' +
-      '<div class="mec-will">' +
-        '<div>· find which restaurant this location is</div>' +
-        '<div>· copy the product catalog</div>' +
-        '<div>· pull the invoices of the open cycle</div>' +
-        '<div><b>· match every bottle whose name is an exact match</b></div>' +
+      '<div class="mec-h">Set up MarginEdge</div>' +
+      '<div class="mec-s">Invoices, matched products and current prices. ' +
+        'Two steps, and the second is one button.</div>' +
+
+      '<div class="mec-will" style="padding:4px 12px;margin-top:0">' +
+        paso(hay ? 'ok' : 'ahora', 'Your inventory',
+          hay ? n.toLocaleString('en-US') + ' bottles ready to match'
+              : 'No bottles yet. Load it from Import › Load master — ' +
+                'matching compares MarginEdge products against your list, ' +
+                'and right now there is nothing to compare to.') +
+        paso(hay ? 'ahora' : 'esp', 'Connect MarginEdge',
+          'Finds which restaurant this location is, copies the catalog, ' +
+          'pulls the invoices and matches every exact name.') +
       '</div>' +
+
+      '<button type="button" class="mec-big" id="mecGo"' + (hay ? '' : ' disabled') + '>' +
+        (hay ? 'Connect this location' : 'Load your inventory first') +
+      '</button>' +
+
       '<div class="mec-note">Nothing is written to your inventory, orders or prices. ' +
-      'Matching only records which MarginEdge product is which bottle.</div>' +
+      'Matching only records which MarginEdge product is which bottle.' +
+      (hay ? ' Prices and leftover matches come after, and the app asks you first.' : '') +
+      '</div>' +
     '</div>';
   }
 
