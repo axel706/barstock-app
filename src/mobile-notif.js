@@ -93,6 +93,76 @@
     return out;
   }
 
+  // ── Los precios que ESPERAN ──────────────────────────────────────
+  //
+  // Lo de arriba (`precios`) sale de `marginedge_price_log`, que se
+  // escribe DESPUÉS de aplicar: es un recibo de lo que ya pasó. Esto
+  // es lo contrario — facturas que trajeron un precio distinto al que
+  // tienes escrito y que nadie ha aprobado todavía.
+  //
+  // Era lo único de la cadena que no avisaba: las facturas entran
+  // solas, el emparejado pendiente se ve en la tarjeta del Home, y los
+  // precios se quedaban esperando dentro de la cuarta pestaña de un
+  // panel de Ajustes.
+  //
+  // El cálculo NO se repite aquí: lo hace el módulo de compras, que es
+  // su dueño. Dos reglas de "qué precio vale" acabarían diciendo cosas
+  // distintas en la campana y en la lista.
+  async function preciosPendientes() {
+    const P = window.BarStockMarginEdgePurchases;
+    if (!P || typeof P.calcularPrecios !== 'function') return [];
+
+    let r = null;
+    try { r = await P.calcularPrecios(); } catch (e) { return []; }
+    const cambios = (r && r.cambios) || [];
+    if (!cambios.length) return [];
+
+    // El mismo umbral que los aplicados. Un 2% en treinta productos sí
+    // mueve el valor del inventario, pero no merece una notificación:
+    // la lista completa los sigue enseñando todos.
+    const grandes = cambios.filter(c => {
+      const a = Number(c.antes);
+      return a > 0 && Math.abs(((c.precio - a) / a) * 100) >= UMBRAL;
+    });
+    if (!grandes.length) return [];
+
+    const pct = (c) => Math.round(((c.precio - c.antes) / c.antes) * 100);
+    const titular = grandes.slice(0, 2)
+      .map(c => esc(c.item) + ' ' + (pct(c) > 0 ? '+' : '') + pct(c) + '%')
+      .join(', ');
+    const resto = grandes.length - 2;
+    const facturas = new Set(grandes.map(c => c.factura).filter(Boolean)).size;
+
+    // ── Un solo aviso, no doce ───────────────────────────────────────
+    //
+    // Doce renglones de precio llenan la campana y entierran todo lo
+    // demás, y encima la acción es la misma para los doce: aprobarlos
+    // de golpe. Un aviso con la cuenta y los dos mayores.
+    //
+    // La clave lleva las facturas implicadas: cerrarlo lo calla para
+    // ESTAS, y una factura nueva vuelve a avisar.
+    const clave = 'pend:' + grandes.map(c => c.factura || c.item).sort().join('|');
+
+    return [{
+      clave,
+      grupo: 'Waiting for you',
+      ico: 'ti-tag',
+      tono: grandes.filter(c => pct(c) > 0).length >= grandes.length / 2 ? 'up' : 'dn',
+      t: grandes.length + (grandes.length === 1 ? ' price changed' : ' prices changed') +
+         ' on new invoices',
+      d: titular + (resto > 0 ? ' and ' + resto + ' more' : '') +
+         (facturas ? ' · from ' + facturas + (facturas === 1 ? ' invoice' : ' invoices') : ''),
+      orden: 'zzzz',           // lo primero de la lista: es una tarea
+      accion: 'Review',
+      // TODOS, no sólo los grandes. El umbral decide a quién se
+      // molesta, no qué se actualiza: un 2% en treinta productos sí
+      // mueve el valor del inventario. La prueba cazó que aquí había
+      // puesto `grandes`, que es lo contrario de lo que dice el
+      // comentario de arriba.
+      cambios
+    }];
+  }
+
   // Los fallos de la app que el sistema de burbujas dejó pendientes.
   // Viven en memoria, así que no necesitan clave estable ni se guardan.
   function fallosApp() {
@@ -123,7 +193,12 @@
     let lista = [];
     try { lista = await precios(url, key, locId); } catch (e) {}
 
-    _avisos = lista.filter(a => !_descartadas.has(a.clave))
+    // Los pendientes van ANTES: son una tarea, y los de `precios` son
+    // un recibo de algo que ya hiciste.
+    let esperando = [];
+    try { esperando = await preciosPendientes(); } catch (e) {}
+
+    _avisos = esperando.concat(lista).filter(a => !_descartadas.has(a.clave))
       .concat(fallosApp())
       .sort((a, b) => String(b.orden).localeCompare(String(a.orden)))
       .slice(0, MAX);
@@ -206,9 +281,35 @@
 
   // ── El panel ─────────────────────────────────────────────────────────
 
+  // ── La cabecera del panel ────────────────────────────────────────
+  //
+  // Un nivel más adentro cambia el título y aparece el chevron A LA
+  // IZQUIERDA de él, en la misma fila. Es el mismo patrón que usan
+  // todas las pantallas desde que se recuperó ese renglón.
+  function titulo(texto, conVolver) {
+    const cab = document.querySelector('.m-nf-panel .m-nf-h');
+    if (!cab) return;
+    cab.innerHTML =
+      (conVolver
+        ? '<button type="button" class="m-nf-atras" id="mnfBack" aria-label="Back">' +
+            '<i class="ti ti-chevron-left" aria-hidden="true"></i></button>'
+        : '') +
+      '<div><b>' + esc(texto) + '</b>' +
+        (conVolver ? '' : '<span>What changed while you were away.</span>') +
+      '</div>' +
+      '<button type="button" class="m-nf-cerrar" id="mNotifX" aria-label="Close">' +
+        '<i class="ti ti-x" aria-hidden="true"></i></button>';
+
+    const atras = cab.querySelector('#mnfBack');
+    if (atras) atras.onclick = () => pintarPanel();
+    const x = cab.querySelector('#mNotifX');
+    if (x) x.onclick = cerrar;
+  }
+
   function pintarPanel() {
     const caja = document.getElementById('mNotifBody');
     if (!caja) return;
+    titulo('Notifications', false);
 
     if (!_avisos.length) {
       caja.innerHTML =
@@ -234,8 +335,14 @@
         '<div class="m-nf" data-k="' + esc(a.clave) + '">' +
           '<i class="ti ' + esc(a.ico) + ' m-nf-i ' + esc(a.tono) + '" aria-hidden="true"></i>' +
           '<span class="m-nf-t"><b>' + a.t + '</b><span>' + a.d + '</span></span>' +
-          '<button type="button" class="m-nf-x" data-x="' + esc(a.clave) + '" ' +
-            'aria-label="Dismiss"><i class="ti ti-x" aria-hidden="true"></i></button>' +
+          // Un aviso que se puede ATENDER lleva su acción en vez de la
+          // X. Cerrar algo que hay que hacer no es una salida: es
+          // esconderlo.
+          (a.accion
+            ? '<button type="button" class="m-nf-go" data-ver="' + esc(a.clave) + '">' +
+                esc(a.accion) + '</button>'
+            : '<button type="button" class="m-nf-x" data-x="' + esc(a.clave) + '" ' +
+                'aria-label="Dismiss"><i class="ti ti-x" aria-hidden="true"></i></button>') +
         '</div>').join('')
     ).join('');
 
@@ -245,6 +352,91 @@
         if (a) descartar(a);
       };
     });
+
+    caja.querySelectorAll('[data-ver]').forEach(b => {
+      b.onclick = () => {
+        const a = _avisos.find(x => x.clave === b.dataset.ver);
+        if (a && a.cambios) pintarPrecios(a);
+      };
+    });
+  }
+
+  // ── La lista, dentro del mismo panel ─────────────────────────────
+  //
+  // No se navega a ningún sitio. La pantalla de precios del escritorio
+  // vive en la cuarta pestaña de un panel de Ajustes y en el teléfono
+  // no existe; mandar a alguien allí desde una notificación es
+  // perderlo. Aquí se ve la lista, se aprueba, y se acabó.
+  //
+  // Se enseñan TODOS los cambios, no sólo los que pasaron el umbral:
+  // el umbral decide a quién se molesta, no qué se actualiza. Un 2%
+  // en treinta productos sí mueve el valor del inventario.
+  function pintarPrecios(aviso) {
+    const caja = document.getElementById('mNotifBody');
+    if (!caja) return;
+
+    const cambios = aviso.cambios || [];
+    const pct = (c) => Math.round(((c.precio - c.antes) / c.antes) * 100);
+
+    // El chevron va en la cabecera que ya existe, a la izquierda del
+    // título — no en un renglón propio. Gastar una fila entera en un
+    // botón de volver es el patrón viejo que la app dejó atrás, y hay
+    // una prueba que lo vigila.
+    titulo(cambios.length + (cambios.length === 1 ? ' price' : ' prices'), true);
+
+    caja.innerHTML =
+      '<div class="m-nf-lab">FROM THE LATEST INVOICE OF EACH ITEM</div>' +
+      cambios.map(c =>
+        '<div class="m-nf-pr">' +
+          '<span class="m-nf-pr-n"><b>' + esc(c.item) + '</b>' +
+            '<span>' + esc(c.vendor || '') +
+              (c.factura ? ' · invoice ' + esc(c.factura) : '') +
+              (c.fecha ? ' · ' + esc(c.fecha) : '') + '</span></span>' +
+          '<span class="m-nf-pr-v ' + (c.precio > c.antes ? 'up' : 'dn') + '">' +
+            dinero(c.antes) + ' → <b>' + dinero(c.precio) + '</b>' +
+            '<span>' + (pct(c) > 0 ? '+' : '') + pct(c) + '%</span></span>' +
+        '</div>').join('') +
+      '<button type="button" class="m-nf-aplicar" id="mnfGo">' +
+        'Update ' + cambios.length + (cambios.length === 1 ? ' price' : ' prices') +
+      '</button>' +
+      '<div class="m-nf-nota">Only these change. Everything else keeps the price ' +
+        'you typed — nothing is cleared.</div>';
+
+    const go = caja.querySelector('#mnfGo');
+    if (go) go.onclick = async () => {
+      const P = window.BarStockMarginEdgePurchases;
+      if (!P || !P.aplicarPrecios) return;
+      go.disabled = true;
+      // Pase lo que pase el botón vuelve. Un "Updating…" eterno no
+      // dice si funcionó, si falló o si sigue trabajando.
+      try {
+        const r = await P.aplicarPrecios(cambios, (n, tot) => {
+          go.textContent = 'Updating… ' + n + ' of ' + tot;
+        });
+        caja.innerHTML =
+          '<div class="m-nf-vacio">' +
+            '<i class="ti ti-circle-check" aria-hidden="true"></i>' +
+            r.ok + ' prices updated.' +
+            (r.problemas && r.problemas.length
+              ? '<br>' + r.problemas.length + ' could not be saved.' : '') +
+          '</div>';
+        if (window.BarStockInventoryRealtime && window.BarStockInventoryRealtime.refresh) {
+          try { window.BarStockInventoryRealtime.refresh(); } catch (e) {}
+        }
+        // La campana se recalcula —el aviso tiene que desaparecer solo,
+        // sin que nadie lo cierre a mano— pero el PANEL no se
+        // repinta: lo hacía, y se comía el mensaje de que todo salió
+        // bien. Acabar un trabajo y volver a la lista sin una palabra
+        // se lee como que no pasó nada.
+        try { await cargar(); } catch (e2) {}
+        pintarCampana();
+      } catch (e) {
+        go.disabled = false;
+        go.textContent = 'Update ' + cambios.length + ' prices';
+        caja.insertAdjacentHTML('afterbegin',
+          '<div class="m-nf-err">' + esc(String(e && e.message || e)) + '</div>');
+      }
+    };
   }
 
   // ── Bloquear el documento mientras el panel está abierto ───────────

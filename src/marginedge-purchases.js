@@ -930,7 +930,20 @@
 
   window.BarStockMarginEdgePurchases = {
     montar, abrir, previsualizar, verConciliacion, verPrecios, verHistorial,
-    leerHistorial, _precioDeLinea: precioDeLinea, _pct: pct
+    leerHistorial,
+    // ── Lo que usan la campana y la tarjeta del Home ───────────────
+    //
+    // El cálculo de qué precios cambiaron vivía SOLO dentro de este
+    // panel, en una de cuatro pestañas que hay que saber que existen.
+    // Las facturas entraban solas y los precios se quedaban esperando
+    // a que alguien se acordara — que es justo el dato que cuesta
+    // dinero tener viejo.
+    //
+    // Se exporta en vez de copiarse: si mañana cambia qué precio
+    // vale —el de la última factura, el medio, el del proveedor
+    // habitual— cambia aquí y lo ven los tres sitios.
+    calcularPrecios, aplicarPrecios,
+    _precioDeLinea: precioDeLinea, _pct: pct
   };
 
   window.__settingsHooks = window.__settingsHooks || {};

@@ -829,6 +829,18 @@
           tag: 'fix', v: ''
         });
       }
+      // ── Los precios que esperan ──────────────────────────────────
+      //
+      // Las facturas entraban solas y los precios se quedaban
+      // esperando dentro de la cuarta pestaña de un panel de Ajustes,
+      // sin que nada avisara. Es el eslabón que faltaba: el valor del
+      // inventario y el coste de cada orden salen de ahí.
+      if (_precios > 0) {
+        filas.push({
+          n: _precios + (_precios === 1 ? ' price changed' : ' prices changed'),
+          tag: 'review', v: ''
+        });
+      }
     }
 
     // ── Sin conectar no es lo mismo que sin facturas ────────────────
@@ -904,10 +916,46 @@
       // MarginEdge. Sin marca no se maquilla con la fecha de la última
       // factura —son cosas distintas— se dice que no se ha hecho.
       vs: e.revisado ? 'synced ' + hace(e.revisado) : 'never synced',
-      btn: e.sueltas ? 'Review them' : 'See invoices',
-      go: () => { const O = window.BarStockMobileOrders;
-                  if (O && O.abrirSeccion) O.abrirSeccion('inv'); }
+      // Con precios esperando, eso es lo primero: es lo único de los
+      // tres que cuesta dinero dejar para mañana.
+      btn: _precios > 0 ? 'Review prices' : (e.sueltas ? 'Review them' : 'See invoices'),
+      go: () => {
+        if (_precios > 0) {
+          const N = window.BarStockMobileNotif;
+          if (N && N.abrir) return N.abrir();
+        }
+        const O = window.BarStockMobileOrders;
+        if (O && O.abrirSeccion) O.abrirSeccion('inv');
+      }
     };
+  }
+
+  // ── Cuántos precios esperan ──────────────────────────────────────
+  //
+  // Se pide una vez y se recuerda, igual que el resumen de facturas:
+  // el cálculo lee todas las líneas de factura y todos los enlaces, y
+  // el Home se repinta decenas de veces por sesión.
+  //
+  // El cálculo es el del módulo de compras, que es su dueño. Aquí no
+  // se decide qué precio vale.
+  let _precios = 0;
+  let _pidiendoPrecios = false;
+  let _preciosLeidos = false;
+
+  function cargarPrecios() {
+    if (_preciosLeidos || _pidiendoPrecios) return;
+    const P = window.BarStockMarginEdgePurchases;
+    if (!P || typeof P.calcularPrecios !== 'function') return;
+    _pidiendoPrecios = true;
+    Promise.resolve()
+      .then(() => P.calcularPrecios())
+      .then(r => {
+        const n = ((r && r.cambios) || []).length;
+        _preciosLeidos = true;
+        if (n !== _precios) { _precios = n; refresh(); }
+      })
+      .catch(e => { console.warn('[home] precios pendientes', e); _preciosLeidos = true; })
+      .then(() => { _pidiendoPrecios = false; });
   }
 
   // Cuánto hace, en palabras. Un reloj exacto no dice nada; "hace dos
@@ -1021,6 +1069,9 @@
         // consultas de más.
         _entregasDe = '';
         _entregas = null;
+        // Facturas nuevas pueden traer precios nuevos: la cuenta que
+        // se enseña en la tarjeta deja de valer.
+        _preciosLeidos = false;
         parar();
         refresh();
         return;
@@ -1057,6 +1108,7 @@
     // tiene ningún sentido: son dos cosas distintas.
     const W = window.BarStockWeeklyCycle;
     cargarEntregas((W && W.resetAt && W.resetAt()) || '');
+    cargarPrecios();
 
     const t = [tarjetaBienvenida(), tarjetaCiclo()];
 

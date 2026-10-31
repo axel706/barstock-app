@@ -3325,6 +3325,69 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-nf-i.dn   { color: #6ee7b7; }
   .m-nf-i.warn { color: #fcd34d; }
 
+  /* ── Un aviso que se puede atender lleva su acción ──────────────
+   *
+   * En vez de la X. Cerrar algo que hay que hacer no es una salida,
+   * es esconderlo — y los precios sin aprobar son justo eso: una
+   * tarea, no un recibo. */
+  body.m-shell .m-nf-go {
+    flex: 0 0 auto; align-self: center; cursor: pointer;
+    padding: 7px 12px; font-family: inherit;
+    font-size: var(--m-meta); font-weight: 800;
+    color: #04283d; background: #38bdf8; border: 0;
+  }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-nf-go { border-radius: 9px !important; }
+
+  /* ── La lista de precios, dentro del propio panel ────────────────
+   *
+   * No se navega a ningún sitio: la pantalla de precios del
+   * escritorio vive en la cuarta pestaña de un panel de Ajustes y en
+   * el teléfono no existe. Mandar a alguien allí desde una
+   * notificación es perderlo. */
+  /* El chevron de volver, en la cabecera y a la izquierda del título.
+   * No en un renglón propio: eso es el patrón viejo que la app dejó
+   * atrás, y hay una prueba que lo impide. */
+  body.m-shell .m-nf-atras {
+    flex: 0 0 34px; width: 34px; height: 34px; margin-left: -8px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    background: none; border: 0;
+    font-size: var(--m-head); color: #7dd3fc;
+  }
+
+  .m-nf-pr {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 13px; margin-bottom: 8px; border-radius: 15px;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.12);
+  }
+  .m-nf-pr-n { flex: 1; min-width: 0; }
+  .m-nf-pr-n b { display: block; font-size: var(--m-small); font-weight: 700;
+    color: #eef4fb; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m-nf-pr-n > span { display: block; margin-top: 2px;
+    font-size: var(--m-meta); color: #8fa3b8;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m-nf-pr-v { flex: 0 0 auto; text-align: right;
+    font-size: var(--m-meta); color: #8fa3b8; white-space: nowrap; }
+  .m-nf-pr-v b { font-size: var(--m-small); font-weight: 800; color: #eef4fb; }
+  .m-nf-pr-v > span { display: block; margin-top: 2px; font-weight: 800; }
+  .m-nf-pr-v.up > span { color: #fca5a5; }
+  .m-nf-pr-v.dn > span { color: #6ee7b7; }
+
+  body.m-shell .m-nf-aplicar {
+    width: 100%; min-height: 48px; margin-top: 6px; cursor: pointer;
+    font-family: inherit; font-size: var(--m-body); font-weight: 800;
+    color: #04283d; background: #38bdf8; border: 0;
+  }
+  body.m-shell .m-nf-aplicar:disabled { background: rgba(255,255,255,.12); color: #8fa3b8; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-nf-aplicar { border-radius: 14px !important; }
+
+  .m-nf-nota { margin-top: 10px; font-size: var(--m-meta); color: #8fa3b8; line-height: 1.5; }
+  .m-nf-err {
+    margin-bottom: 10px; padding: 10px 12px; border-radius: 12px;
+    font-size: var(--m-small); line-height: 1.5; color: #fecaca;
+    background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3);
+  }
+
   .m-nf-t { flex: 1; min-width: 0; }
   .m-nf-t b { display: block; font-size: var(--m-body); font-weight: 500;
     color: #eef4fb; line-height: 1.35; }
