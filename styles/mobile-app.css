@@ -3109,10 +3109,24 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     font-size: var(--m-small); color: #93a5b8; margin-top: 3px; line-height: 1.45;
   }
 
+  /* El día manda sobre las facturas que vienen DEBAJO, así que el
+   * hueco de arriba tiene que ser mayor que el de abajo: así se lee
+   * como el encabezado de su grupo y no como un pie del anterior.
+   *
+   * Estaba en 1px abajo —pegado a su tarjeta— y 15 arriba. Los dos
+   * huecos se parecían demasiado y no quedaba claro a qué día
+   * pertenecía cada factura.
+   *
+   * Ahora: 26 arriba (más los 7 que deja la tarjeta anterior) contra
+   * 9 abajo. Entre tarjetas del mismo día siguen siendo 7, que es lo
+   * que las mantiene agrupadas. */
   .m-iday {
     font-size: var(--m-meta); font-weight: 800; letter-spacing: .11em;
-    text-transform: uppercase; color: #7f8ea3; margin: 15px 0 1px;
+    text-transform: uppercase; color: #7f8ea3; margin: 26px 0 9px;
   }
+  /* El primero no arrastra el hueco de un grupo anterior que no
+   * existe: justo encima está el subtítulo de la pantalla. */
+  .m-isub + .m-iday { margin-top: 18px; }
 
   /* La lista reusa `.m-hcard`, la tarjeta del historial de órdenes y
    * de las filas de inventario. La primera versión eran filas sueltas
