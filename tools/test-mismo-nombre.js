@@ -146,6 +146,18 @@ function entorno() {
     const barra = /<div class="m-searchbar on">([\s\S]{0,700}?)<\/div>/.exec(inv);
     prueba('es una lupa', !!barra && /ti-search/.test(barra[1]), (barra && barra[1] || '').slice(0, 70));
     prueba('y no un embudo', !!barra && !/ti-filter/.test(barra[1]));
+
+    // ── El orden: primero sobre QUE, despues acotar ────────────────
+    //
+    // El segmentado elige el conjunto —lo que hay que arreglar, o
+    // todo— y el buscador lo acota. Al reves se buscaba dentro de un
+    // conjunto que todavia no habias elegido.
+    //
+    // Y es el mismo orden que Orders, que era de lo que iba.
+    const iSeg = inv.indexOf('id="miSeg"');
+    const iBar = inv.indexOf('class="m-inv-bar2"');
+    prueba('el segmentado va antes del buscador',
+      iSeg > 0 && iBar > 0 && iSeg < iBar, 'seg@' + iSeg + ' bar@' + iBar);
   }
 
   grupo('reabrir y reenviar usan el id de la APP');

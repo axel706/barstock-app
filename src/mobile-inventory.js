@@ -397,6 +397,15 @@
         <span class="m-inv-c" id="miTotal"></span>
       </div>
 
+      <!-- El segmentado ANTES del buscador, igual que en Orders.
+           Primero eliges sobre qué conjunto trabajas —lo que hay que
+           arreglar, o todo— y después lo acotas escribiendo. Al revés
+           se buscaba dentro de un conjunto que aún no habías elegido.
+
+           Y las dos pantallas con listas largas se ordenan igual, que
+           es de lo que iba el cambio. -->
+      <div class="m-seg" id="miSeg"></div>
+
       <div class="m-inv-bar2">
         <div class="m-searchbar on">
           <!-- Lupa y no embudo: esto escribe para BUSCAR. El embudo es
@@ -412,7 +421,6 @@
         </button>
       </div>
 
-      <div class="m-seg" id="miSeg"></div>
       <div id="miList"></div>`;
 
     const inp = host.querySelector('#miInput');
