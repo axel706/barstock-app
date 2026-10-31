@@ -470,7 +470,12 @@ console.log('\nel latido no pisa el centrado del boton');
   ok('y la animacion NO va en el boton', !enElBoton);
 
   const bloque = (css.match(/\.m-fab\.pulsa::after\s*\{[^}]*\}/) || [''])[0];
-  ok('cada diez segundos', /animation:[^;]*\b10s\b/.test(bloque), bloque.slice(0, 160));
+  // No se fija el numero exacto: ajustarlo es normal y un test que
+  // falla cada vez que lo mueves se acaba ignorando. Lo que protege es
+  // que siga siendo ESPACIADO — un latido cada segundo seria un
+  // parpadeo, y entonces el aviso deja de avisar.
+  const seg = Number((/animation:[^;]*?([\d.]+)s\b/.exec(bloque) || [])[1] || 0);
+  ok('espaciado, no un parpadeo', seg >= 4, seg + 's');
   ok('y se repite', /infinite/.test(bloque));
 
   ok('quien pidio menos movimiento no lo recibe',
