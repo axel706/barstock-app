@@ -801,7 +801,21 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     color: #f87171; font-size: 1.45em; line-height: 0;
     position: relative; top: .06em;
   }
-  .m-hero-t { font-size: var(--m-head); font-weight: 800; color: #fff; letter-spacing: -.5px; margin-top: 4px; }
+  /* ── Una línea, siempre ───────────────────────────────────────────
+   *
+   * El CUERPO estaba clavado a tres renglones, pero el título no tenía
+   * tope. Un título de dos líneas crece la tarjeta, y como el carril
+   * estira todas a la más alta, crecía el Home entero. Es exactamente
+   * el fallo que la plantilla vino a resolver, por la única parte que
+   * se quedó sin medir.
+   *
+   * Los puntos suspensivos son la red, no el plan: hay una prueba que
+   * rechaza un título que no quepa, para que nunca lleguen a verse. */
+  .m-hero-t {
+    font-size: var(--m-head); font-weight: 800; color: #fff;
+    letter-spacing: -.5px; margin-top: 4px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
   /* Sin margin-top: lo pone ya el cuerpo. Tenerlo aquí sumaba 6px que
    * salían del presupuesto de los tres renglones. */
   .m-hero-s { font-size: var(--m-small); color: #c3d2e2; line-height: 1.38; }

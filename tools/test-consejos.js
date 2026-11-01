@@ -79,10 +79,20 @@ grupo('ningun consejo se pasa de los tres renglones');
     .map(t => t.length + ': ' + t.slice(0, 40) + '…');
   prueba('todos caben', largos.length === 0, largos.join(' | '));
 
-  // El título va en una sola línea y se recorta con puntos: un título
-  // partido en dos come un renglón del cuerpo.
-  const titulosLargos = titulos.filter(t => t.length > 38);
-  prueba('y los titulos no se parten', titulosLargos.length === 0,
+  // ── El titulo, en UNA linea ──────────────────────────────────────
+  //
+  // El cuerpo estaba clavado a tres renglones, pero el titulo no tenia
+  // tope. "Something arrived without an order?" ocupaba dos lineas a
+  // 22px, la tarjeta crecia, y como el carril estira todas a la mas
+  // alta crecia el Home entero. Es el fallo que la plantilla vino a
+  // resolver, por la unica parte que se habia quedado sin medir.
+  //
+  // El tope: a --m-head (22px) en la columna de texto de un telefono
+  // de 390px caben unos 27 caracteres. 26 deja margen.
+  const TOPE_T = 26;
+  const titulosLargos = titulos.filter(t => t.length > TOPE_T)
+    .map(t => t.length + ': ' + t);
+  prueba('ningun titulo se parte en dos', titulosLargos.length === 0,
     titulosLargos.join(' | '));
 }
 
@@ -125,6 +135,40 @@ grupo('la tarjeta se marca para poder encontrarla');
   prueba('con transicion', /\.m-hero-tip \.m-hero-txt \{[^}]*transition/.test(css));
   prueba('y respeta a quien pidio menos movimiento',
     /prefers-reduced-motion[\s\S]{0,200}m-hero-tip[^}]*transition:\s*none/.test(css));
+}
+
+grupo('la tarjeta no puede crecer por el titulo');
+{
+  // Los puntos suspensivos son la red, no el plan: el tope de arriba
+  // existe para que nunca se vean. Pero sin esta regla, un titulo
+  // largo que se cuele agranda el Home entero en vez de recortarse.
+  const r = /\n  \.m-hero-t \{([^}]*)\}/.exec(css);
+  prueba('la regla existe', !!r);
+  const t = r ? r[1] : '';
+  prueba('una sola linea', /white-space:\s*nowrap/.test(t), t.replace(/\s+/g, ' ').trim());
+  prueba('y lo que sobre se recorta', /text-overflow:\s*ellipsis/.test(t));
+}
+
+grupo('los consejos dicen la verdad de hoy');
+{
+  const todo = textos.join(' ');
+  // Decia que colocar ordenes vivia en el escritorio. Era verdad
+  // cuando se escribio y dejo de serlo el dia que el telefono aprendio
+  // a colocarlas y a mandarlas por correo. Un consejo desactualizado
+  // enseña a NO usar lo que si se puede.
+  prueba('no dice que las ordenes sean solo de escritorio',
+    !/placing them[\s\S]{0,40}desktop/i.test(todo) &&
+    !/orders[\s\S]{0,30}live on desktop/i.test(todo), todo.slice(0, 120));
+
+  // Y cada consejo dice DONDE esta la cosa. Uno que no lleva a ningun
+  // sitio es una curiosidad.
+  //
+  // El primero no: es la bienvenida, y su trabajo es decir de que va
+  // la app, no mandarte a una pantalla.
+  const sinCamino = textos.slice(1).filter(t =>
+    !/Orders ›|Search |Import ›|the bell/i.test(t));
+  prueba('todos dicen donde', sinCamino.length === 0,
+    sinCamino.map(t => t.slice(0, 40)).join(' | '));
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') +

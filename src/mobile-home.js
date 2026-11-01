@@ -653,39 +653,67 @@
       k: 'Welcome to <span class="m-brand">BarStock<i class="m-logo-dot"></i>Pro</span>',
       kHtml: true,
       tt: 'Good to have you',
-      sub: 'Scanning bottles is what this app does best. Counting, stock and ' +
-           'what is running out live here; placing orders and the deeper ' +
-           'reports, on desktop.',
+      // Decía que colocar órdenes vivía en el escritorio. Era verdad
+      // cuando se escribió y dejó de serlo el día que el teléfono
+      // aprendió a colocarlas y a mandarlas por correo. Un consejo
+      // desactualizado enseña a no usar lo que sí se puede.
+      sub: 'Counting, stock, orders and invoices all work from here. The ' +
+           'deeper reports live on desktop.',
       icoR: 'scan'
     },
     {
       // La que más duele no saber: sin esto la resta del consumo
       // cuenta como inexistentes las botellas que compraste tú.
+      //
+      // Y dice el camino. Decía "open the bottle", que no significa
+      // nada: a la ficha sólo se llega buscando.
       k: 'Did you know',
-      tt: 'Something arrived without an order?',
-      sub: 'Open the bottle and tap Received. It adds to what came in this ' +
-           'week so the usage adds up — it does not touch your on hand, ' +
-           'that comes from counting.',
+      tt: 'Went to the store?',
+      sub: 'Search the bottle, tap Received and put in how many. It adds to ' +
+           'what came in this week so your usage adds up — your on hand only ' +
+           'changes by counting.',
       icoR: 'truck-delivery'
     },
     {
       k: 'Did you know',
-      tt: 'You can order off-cycle',
+      tt: 'Order from your phone',
+      sub: 'Orders › Open, pick a vendor, then Review and send. The PDF goes ' +
+           'out by email exactly like on desktop.',
+      icoR: 'send'
+    },
+    {
+      k: 'Did you know',
+      tt: 'Invoices live here too',
+      sub: 'Orders › Invoices shows what came in this cycle. A line pointing ' +
+           'at the wrong bottle — or at none — gets fixed right there.',
+      icoR: 'file-invoice'
+    },
+    {
+      k: 'Did you know',
+      tt: 'Short or over?',
+      sub: 'When invoices come in, each sent order is compared to what ' +
+           'arrived. Orders › Sent marks the ones that came up short and the ' +
+           'ones that came over.',
+      icoR: 'scale'
+    },
+    {
+      k: 'Did you know',
+      tt: 'Order off-cycle',
       sub: 'Orders › Quick order. Pick the vendor, add what you need, and it ' +
            'goes out by email with its PDF like any other order.',
       icoR: 'bolt'
     },
     {
       k: 'Did you know',
-      tt: 'Invoice prices wait for you',
+      tt: 'Prices wait for you',
       sub: 'When MarginEdge brings a price different from yours, the bell ' +
            'tells you. You look at the list and approve them all at once.',
       icoR: 'tag'
     },
     {
       k: 'Did you know',
-      tt: 'The app suggests your par',
-      sub: 'Open any bottle. If your history says a different par than the ' +
+      tt: 'The app suggests pars',
+      sub: 'Search a bottle. If your history says a different par than the ' +
            'one you typed, Pour·IQ says so and you can take it with one tap.',
       icoR: 'brain'
     }
