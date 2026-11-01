@@ -272,20 +272,46 @@
     // ahí el ciclo es UN botón que no puede ofrecer dos cosas; aquí
     // hay sitio, así que se ofrecen las dos y se ahorra el modal.
     if (st === 'step2') {
+      // ── Un ciclo que se quedó sin contar ───────────────────────
+      //
+      // Abierto hace más de una semana y sin un solo conteo. El paso 2
+      // decía "Load the count · Scan the bottles" igual que si lo
+      // hubieras abierto hace cinco minutos, y la única salida
+      // —empezar la semana de nuevo— no estaba en ninguna pantalla.
+      //
+      // Como todo lo de esa semana ya se pidió, Ordering también está
+      // vacío: no hay nada que contar ni nada que pedir. Ése es el
+      // bucle.
+      const sinContar = !!(W && W.cicloSinContar && W.cicloSinContar());
+      const dias = (W && W.diasDeCalendario) ? (W.diasDeCalendario() || 0) : 0;
+
       return {
         // Teal porque esto SIGUE siendo la tarjeta del ciclo, solo que
         // en otro paso. Iba en azul, que es la familia de las órdenes,
         // y al avanzar de paso parecía que el carrusel había saltado a
         // otra tarjeta.
-        tono: 'teal', k: 'Cycle open' + (fecha ? ' · ' + fecha : ''),
-        tt: 'Load the count', sub: 'Scan the bottles, or import the sheet',
+        tono: 'teal',
+        k: sinContar
+          ? 'Cycle open · ' + dias + ' days'
+          : 'Cycle open' + (fecha ? ' · ' + fecha : ''),
+        tt: 'Load the count',
+        sub: sinContar
+          ? 'Nothing counted since ' + (fecha || 'it opened') + '.'
+          : 'Scan the bottles, or import the sheet',
         amt: '2', vs: 'of 3',
+        // Contar sigue siendo la respuesta correcta y se queda de
+        // primario. Lo que cambia es el segundo botón: a los siete
+        // días sin contar, importar un archivo es tan improbable como
+        // escanear, y el sitio lo necesita la salida. Importar sigue
+        // estando en la pantalla del ciclo.
         btn: 'Count now',
         go: () => { if (window.BarStockScanCount) window.BarStockScanCount.open(); },
-        btn2: 'Import a file',
-        // El mismo <input type=file> de siempre, el que usa el modal
-        // del escritorio. No hay un segundo camino de importación.
-        go2: () => { const f = document.getElementById('countFile'); if (f) f.click(); }
+        btn2: sinContar ? 'Start over' : 'Import a file',
+        go2: sinContar
+          ? () => empezarDeNuevo()
+          // El mismo <input type=file> de siempre, el que usa el modal
+          // del escritorio. No hay un segundo camino de importación.
+          : () => { const f = document.getElementById('countFile'); if (f) f.click(); }
       };
     }
 
@@ -607,6 +633,27 @@
     if (!ok) return;
     const W = window.BarStockWeeklyCycle;
     if (W && W.descartarConteo) W.descartarConteo();
+  }
+
+  // ── Cerrar un ciclo que nunca se contó ──────────────────────────
+  //
+  // No es lo mismo que "Restart cycle" del ciclo cerrado, aunque por
+  // debajo llame a lo mismo: aquí NO hay conteo que perder y el on
+  // hand ya está a cero, así que lo único que pasa es que la semana
+  // empieza otra vez y todo vuelve a poder pedirse. La frase lo dice
+  // así, porque el miedo al botón de reiniciar es justo que te borre
+  // algo.
+  async function empezarDeNuevo() {
+    const ok = await preguntar({
+      titulo: 'Start the week over?',
+      cuerpo: 'Closes this cycle without a count and opens a new one. ' +
+              'Everything becomes available to order again.',
+      aviso: 'On hand stays where it is — there is no count to lose.',
+      ok: 'Start over', cancelar: 'Not now'
+    });
+    if (!ok) return;
+    const W = window.BarStockWeeklyCycle;
+    if (W && W.reiniciar) W.reiniciar();
   }
 
   // El diálogo de la app en vez del `confirm()` del navegador. El

@@ -2648,6 +2648,20 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-cyc-st small { display: block; font-size: var(--m-small); color: #a9bacd; margin-top: 3px; }
 
   /* Separado y en rojo. No es un paso más: no hay deshacer. */
+  /* Una salida secundaria del paso 2. Neutra y no roja: el rojo de
+   * `.m-cyc-reset` es para tirar trabajo, y aquí no hay conteo que
+   * perder — ése es justo el miedo que la frase viene a quitar. */
+  body.m-shell .m-cyc-sec {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    width: 100%; margin-top: 12px; padding: 11px; cursor: pointer;
+    font-family: inherit; font-size: var(--m-small); font-weight: 700;
+    color: #cfe0f0;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.14);
+  }
+  body.m-shell .m-cyc-sec:active { background: rgba(255,255,255,.12); }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-cyc-sec { border-radius: 999px !important; }
+
   body.m-shell .m-cyc-reset {
     display: flex; align-items: center; justify-content: center; gap: 7px;
     width: 100%; margin-top: 22px; padding: 11px; border-radius: 999px;

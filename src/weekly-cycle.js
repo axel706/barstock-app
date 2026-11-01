@@ -117,6 +117,22 @@
     return Math.max(0, Math.round((b - a) / 86400000));
   }
 
+  // ── Un ciclo que se quedó sin contar ─────────────────────────────
+  //
+  // Abierto, sin un solo conteo, y más viejo que la semana que debía
+  // cubrir. Es el callejón sin salida de quien no cuenta: el paso 2
+  // ofrece "carga el conteo" para siempre, y como todo lo de esa
+  // semana ya se pidió, Ordering también está vacío.
+  //
+  // Se contesta aquí y no en la tarjeta porque es una pregunta sobre
+  // el ciclo, y porque la hacen dos pantallas.
+  function cicloSinContar() {
+    if (_countingSince) return false;        // hay un conteo en marcha
+    if (_resetAt === null) return false;     // no hay ciclo
+    if (countLoaded()) return false;         // ya se contó
+    return cicloViejo();
+  }
+
   function cicloViejo() {
     const ms = edadCiclo();
     return ms !== null && ms > VIEJO_MS;
@@ -669,7 +685,7 @@
     estado: () => _state,
     resetAt: () => _resetAt,
     pausado, abandonado, quietoDesdeHace, hace, cuantoLleva, fmtDate,
-    diasDeCalendario,
+    diasDeCalendario, cicloSinContar,
     accion: onClick,
     reiniciar, descartarConteo
   };

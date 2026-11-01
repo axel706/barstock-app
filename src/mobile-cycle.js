@@ -121,9 +121,18 @@
     }
 
     if (st === 'step2') {
+      // Un ciclo abierto hace más de una semana y sin un solo conteo
+      // no es "acabas de empezar": es que no se va a contar. Decirlo
+      // es la mitad de la salida.
+      const sinContar = !!(W() && W().cicloSinContar && W().cicloSinContar());
+      const dias = (W() && W().diasDeCalendario) ? (W().diasDeCalendario() || 0) : 0;
       return {
-        tono: 'green', k: 'Step 2 of 3', t: 'Load the count',
-        d: 'From a file, or count the bottles with your phone.',
+        tono: 'green',
+        k: 'Step 2 of 3' + (sinContar ? ' · open ' + dias + ' days' : ''),
+        t: 'Load the count',
+        d: sinContar
+          ? 'Nothing counted since it opened.'
+          : 'From a file, or count the bottles with your phone.',
         btn: 'Load it'
       };
     }
@@ -208,6 +217,26 @@
           </div>`).join('')}
       </div>
 
+      ${estado() === 'step2' ? `
+        <!-- ── Las dos salidas del paso 2 ─────────────────────────
+             Importar vive aquí además de en la tarjeta del Home,
+             porque en un ciclo sin contar la tarjeta le cede su sitio
+             a "empezar de nuevo" y no puede desaparecer del todo. -->
+        <button type="button" class="m-cyc-sec" id="mcFile">
+          <i class="ti ti-file-import" aria-hidden="true"></i> Import a file
+        </button>
+        ${W() && W().cicloSinContar && W().cicloSinContar() ? `
+          <button type="button" class="m-cyc-sec" id="mcOtra">
+            <i class="ti ti-refresh" aria-hidden="true"></i> Start the week over
+          </button>
+          <div class="m-cyc-warn">
+            Closes this cycle without a count and opens a new one. On hand
+            stays where it is — there is no count to lose — and everything
+            becomes available to order again.
+          </div>
+        ` : ''}
+      ` : ''}
+
       ${st === 'counting' ? `
         <button type="button" class="m-cyc-reset" id="mcDrop">
           <i class="ti ti-trash" aria-hidden="true"></i> Discard this count
@@ -228,6 +257,25 @@
     // seria tener dos caminos para poner el inventario a cero.
     if (go) go.onclick = () => { const w = W(); if (w && w.accion) w.accion(); };
 
+
+    const fi = host.querySelector('#mcFile');
+    // El mismo <input type=file> de siempre. No hay un segundo camino
+    // de importación.
+    if (fi) fi.onclick = () => { const f = document.getElementById('countFile'); if (f) f.click(); };
+
+    const otra = host.querySelector('#mcOtra');
+    if (otra) otra.onclick = async () => {
+      const ok = await preguntar({
+        titulo: 'Start the week over?',
+        cuerpo: 'Closes this cycle without a count and opens a new one. ' +
+                'Everything becomes available to order again.',
+        aviso: 'On hand stays where it is — there is no count to lose.',
+        ok: 'Start over', cancelar: 'Not now'
+      });
+      if (!ok) return;
+      const w = W();
+      if (w && w.reiniciar) w.reiniciar();
+    };
 
     const dr = host.querySelector('#mcDrop');
     if (dr) dr.onclick = async () => {

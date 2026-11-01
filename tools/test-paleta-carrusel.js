@@ -127,7 +127,10 @@ grupo('cada familia tiene su tono, y no lo comparte');
   // Se lee el tono que emite cada constructor, no el CSS.
   const dueno = {
     bienvenida: /tono:\s*'verde'/,
-    ciclo:      /tono:\s*'teal', k: 'Cycle open'/,
+    // El rótulo se calcula —un ciclo sin contar dice los días que
+    // lleva abierto— así que no puede ir pegado al tono en la misma
+    // línea. Lo que importa es que el teal siga siendo del ciclo.
+    ciclo:      /tono:\s*'teal',[\s\S]{0,400}?'Cycle open/,
     marginedge: /tono:\s*e\.sueltas \? 'amber' : 'violet'/,
     ordenes:    /tono:\s*'blue',\s*\n?\s*k:\s*'Orders waiting'|tono:\s*'blue',$/m,
     pronto:     /tono:\s*'red'/
