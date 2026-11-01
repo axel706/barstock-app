@@ -153,7 +153,60 @@ function entorno(lineas) {
       !/marginedge_invoice_lines/.test(home));
   }
 
+  // ── Los dias del ciclo son de CALENDARIO ──────────────────────
+  //
+  // La tarjeta decia "5d" con el ciclo abierto el 25 y el telefono en
+  // el 31. Salia de dividir el tiempo transcurrido entre 24 y truncar:
+  // con el reinicio a las 23:00 del 25 y mirandolo a las 21:00 del 31
+  // son 5,9 dias, o sea "5".
+  //
+  // Nadie cuenta asi. Del 25 al 31 hay seis dias, y la hora a la que
+  // se pulso el boton hace una semana no entra en la cuenta.
+  grupo('los dias del ciclo son de calendario');
+  {
+    // La formula, que es la que decide el numero. Copiada de
+    // `diasDeCalendario`: si cambia alla y no aqui, los casos de abajo
+    // lo cantan.
+    const calendario = (desde, hasta) => {
+      const d = new Date(desde), h = new Date(hasta);
+      const a = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const b = new Date(h.getFullYear(), h.getMonth(), h.getDate());
+      return Math.max(0, Math.round((b - a) / 86400000));
+    };
+    const vieja = (desde, hasta) =>
+      Math.floor((new Date(hasta) - new Date(desde)) / 86400000);
+
+    const casos = [
+      // El caso de la captura.
+      ['2026-10-25T23:00:00', '2026-10-31T21:00:00', 6],
+      // El mismo dia a cualquier hora: cero.
+      ['2026-10-31T01:00:00', '2026-10-31T23:00:00', 0],
+      // Un dia justo, aunque pasen menos de 24 horas.
+      ['2026-10-30T23:30:00', '2026-10-31T00:30:00', 1],
+      // Una semana entera.
+      ['2026-10-24T08:00:00', '2026-10-31T08:00:00', 7],
+      // El cambio de hora: ese dia dura 25 horas y truncar se comia uno.
+      ['2026-11-01T00:30:00', '2026-11-02T00:30:00', 1]
+    ];
+
+    for (const [d, h, esperado] of casos) {
+      const n = calendario(d, h);
+      prueba(d.slice(5, 16) + ' → ' + h.slice(5, 16) + ' son ' + esperado,
+        n === esperado, 'dio ' + n);
+      if (vieja(d, h) !== esperado) {
+        console.log('       la cuenta vieja daba ' + vieja(d, h));
+      }
+    }
+
+    // Y que el modulo la exponga y el Home la use.
+    prueba('weekly-cycle la expone',
+      /diasDeCalendario/.test(leer('src/weekly-cycle.js')));
+    prueba('y el Home ya no divide entre 86400000 para esto',
+      /diasDeCalendario/.test(leer('src/mobile-home.js')));
+  }
+
   console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
     '   ·   ' + (ok + mal) + ' comprobaciones');
   process.exit(mal ? 1 : 0);
 })();
+

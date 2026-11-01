@@ -495,7 +495,11 @@
 
     // done
     const ms = (W && W.edadCiclo) ? W.edadCiclo() : null;
-    const dias = ms ? Math.floor(ms / 86400000) : 0;
+    // Días de calendario. `edadCiclo()` da horas transcurridas, y
+    // dividirlas entre 24 decía "5d" del 25 al 31 — ver
+    // `diasDeCalendario` en weekly-cycle.
+    const dias = (W && W.diasDeCalendario) ? (W.diasDeCalendario() || 0)
+               : (ms ? Math.floor(ms / 86400000) : 0);
     const viejo = !!(W && W.cicloViejo && W.cicloViejo());
 
     // ── El ciclo contado como lo que es: tres momentos ───────────────

@@ -94,6 +94,29 @@
     return Date.now() - t;
   }
 
+  // ── Días de CALENDARIO, no horas entre 24 ─────────────────────────
+  //
+  // La tarjeta decía "5d" con el ciclo abierto el 25 y el teléfono en
+  // el 31. Salía de dividir el tiempo transcurrido entre 24 y redondear
+  // hacia abajo: con el reinicio a las 23:00 del 25 y mirándolo a las
+  // 21:00 del 31 son 5,9 días, o sea "5".
+  //
+  // Pero nadie cuenta así. Del 25 al 31 hay seis días, y la hora a la
+  // que se pulsó el botón hace una semana no entra en esa cuenta.
+  //
+  // De medianoche a medianoche en hora LOCAL, y con `round` en vez de
+  // `floor`: un día de cambio de horario dura 23 o 25 horas, y
+  // truncar ahí se come un día entero.
+  function diasDeCalendario() {
+    if (!_resetAt) return null;
+    const d = new Date(_resetAt);
+    if (!isFinite(d.getTime())) return null;
+    const a = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const h = new Date();
+    const b = new Date(h.getFullYear(), h.getMonth(), h.getDate());
+    return Math.max(0, Math.round((b - a) / 86400000));
+  }
+
   function cicloViejo() {
     const ms = edadCiclo();
     return ms !== null && ms > VIEJO_MS;
@@ -646,6 +669,7 @@
     estado: () => _state,
     resetAt: () => _resetAt,
     pausado, abandonado, quietoDesdeHace, hace, cuantoLleva, fmtDate,
+    diasDeCalendario,
     accion: onClick,
     reiniciar, descartarConteo
   };
