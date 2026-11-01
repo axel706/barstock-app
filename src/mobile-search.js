@@ -45,6 +45,41 @@
 
   function master() { return (window.state && window.state.master) || []; }
 
+  // La cabecera del producto y el color de su estado viven en
+  // `src/product-hero.js`, porque los comparte con la hoja de
+  // Inventory. Aqui solo se piden.
+  //
+  // Con respaldo, y no por elegancia: `tono()` lo llama CADA fila de
+  // la lista. Sin el, un fallo al cargar ese archivo no dejaria la
+  // ficha sin adorno — tiraria la pantalla de busqueda entera, que es
+  // de las mas usadas. El respaldo es el mismo criterio, escrito en
+  // una linea.
+  const HERO = () => window.BarStockProductHero;
+
+  function tono(r) {
+    const H = HERO();
+    if (H && H.tono) return H.tono(r);
+    const oh = Number(r.onHand) || 0;
+    if (oh <= 0) return { c: '#f87171', t: 'out of stock' };
+    const sug = Number(r.suggested) || 0;
+    if (sug > 0 && oh / sug <= 0.25) return { c: '#fbbf24', t: 'running low' };
+    return { c: '#4ade80', t: '' };
+  }
+
+  // La cabecera entera. Sin el modulo, los datos en texto: feo, pero
+  // la ficha sigue diciendo que producto es y cuanto hay.
+  function cabecera(r, par, aviso) {
+    const H = HERO();
+    if (H && H.html) return H.html(r, { par, aviso });
+    const k = tono(r);
+    return `<div class="m-fic m-fic-bien"><div class="m-fic-d">
+      <div class="m-fic-n">${esc(r.item)}</div>
+      <div class="m-fic-big"><b style="color:${k.c}">${n2(r.onHand)}</b>
+      <span>${Number(r.suggested) > 0 ? 'of ' + n2(r.suggested) : 'on hand'}</span></div>
+      ${aviso ? `<div class="m-fic-av" style="color:${k.c}">${esc(aviso)}</div>` : ''}
+      </div></div>`;
+  }
+
   function parDe(r) {
     const m = window.parAdjustments;
     if (!m || !m.size) return null;
@@ -74,13 +109,6 @@
   }
 
   // ── El color del numero es la respuesta rapida ───────────────────────
-  function tono(r) {
-    const oh = Number(r.onHand) || 0;
-    if (oh <= 0) return { c: '#f87171', t: 'out of stock' };
-    const sug = Number(r.suggested) || 0;
-    if (sug > 0 && oh / sug <= 0.25) return { c: '#fbbf24', t: 'running low' };
-    return { c: '#4ade80', t: '' };
-  }
 
   // ── Lista ────────────────────────────────────────────────────────────
 
@@ -154,76 +182,6 @@
                  .map(z => '<b>' + n2(z.botellas) + '</b> ' + esc(z.zona)).join(' · ');
       } catch (e) {}
     }
-  }
-
-  // ── La botella ───────────────────────────────────────────────────────
-  //
-  // La silueta real del producto, con la forma que tenga asignada, y
-  // llena hasta donde está. El cálculo no es nuevo: heightFor es el
-  // mismo que mueve el deslizador del conteo, así que lo que se dibuja
-  // aquí y lo que se ve al contar no pueden discrepar.
-  //
-  // La botella dibujada es la PARCIAL. Con 1.96 hay una entera y una a
-  // la mitad larga; dibujar una sola llena al 96% sería mentira si no
-  // se dice que además hay otra. De ahí el "+1 full" de debajo.
-
-  const BOT = { w: 52, h: 116, pad: 4 };
-
-  function silueta(r, color) {
-    const V = window.BarStockBottleProfiles;
-    if (!V || !V.pathFor) return '';
-
-    const key = (r.bottleShape && V.forSize)
-      ? V.forSize(r.bottleShape, r.bottleSizeMl) : 'generic';
-
-    let d = '';
-    try { d = V.pathFor(key, BOT.w, BOT.h, BOT.pad); } catch (e) { return ''; }
-    if (!d) return '';
-
-    // ── La botella es un medidor, no una botella ───────────────────
-    //
-    // Antes dibujaba la parte decimal del on hand —de 7.3 pintaba el
-    // 0.3— y debajo ponía "+7 full". Eso contesta "cómo está la
-    // botella abierta", que no es lo que se mira al buscar un
-    // producto: lo que importa es cuánto queda contra lo que debería
-    // haber.
-    //
-    // Ahora el PAR es la botella llena y el on hand marca el nivel.
-    // 7.3 de un par de 18 sale a poco menos de la mitad; 30 de 36 sale
-    // casi llena; 2 de 2, llena del todo.
-    //
-    // El nivel es lineal, no por volumen. `heightFor` convierte
-    // volumen de líquido en altura teniendo en cuenta el hombro, y eso
-    // es correcto para una botella de verdad: aquí falsearía el
-    // medidor, porque la mitad del par se dibujaría por debajo de la
-    // mitad de la altura.
-    //
-    // Sin par no hay contra qué medir, así que la botella se queda
-    // vacía. No se escribe nada: el par ya está en la ficha, y un
-    // texto de más en el icono es ruido.
-    const oh = Number(r.onHand) || 0;
-    const par = Number(r.suggested) || 0;
-    const ratio = par > 0 ? Math.max(0, Math.min(1, oh / par)) : null;
-
-    let yPx = BOT.h - BOT.pad;
-    if (ratio !== null && ratio > 0) {
-      try { yPx = V.yToPx(key, ratio, BOT.w, BOT.h, BOT.pad); } catch (e) {}
-    }
-    const frac = ratio || 0;
-
-    const id = 'ms' + Math.random().toString(36).slice(2, 8);
-    return `
-      <div class="m-bot">
-        <svg viewBox="0 0 ${BOT.w} ${BOT.h}" width="${BOT.w}" height="${BOT.h}" aria-hidden="true">
-          <defs>
-            <clipPath id="${id}"><rect x="0" y="${yPx}" width="${BOT.w}" height="${BOT.h}"/></clipPath>
-          </defs>
-          <path d="${d}" fill="rgba(0,0,0,.22)" stroke="rgba(255,255,255,.38)" stroke-width="1.6"/>
-          ${frac > 0 ? `<g clip-path="url(#${id})">
-            <path d="${d}" fill="${color}" opacity=".78"/></g>` : ''}
-          <path d="${d}" fill="none" stroke="rgba(255,255,255,.38)" stroke-width="1.6"/>
-        </svg>
-      </div>`;
   }
 
   // ── Dónde están ──────────────────────────────────────────────────────
@@ -336,19 +294,10 @@
           <i class="ti ti-chevron-left" aria-hidden="true"></i></button>
       </div>
 
-      <div class="m-fic m-fic-${esc(k.t === 'out of stock' ? 'mal' : k.t === 'running low' ? 'ojo' : 'bien')}">
-        ${silueta(r, k.c)}
-        <div class="m-fic-d">
-          <div class="m-fic-n">${esc(r.item)}</div>
-          <div class="m-fic-s">${esc(r.vendor || '')}${r.category ? ' · ' + esc(r.category) : ''}${
-            r.bottleSizeMl ? ' · ' + esc(String(r.bottleSizeMl)) + ' ml' : ''}</div>
-          <div class="m-fic-big">
-            <b style="color:${k.c}">${n2(r.onHand)}</b>
-            <span>${Number(r.suggested) > 0 ? 'of ' + par18 : 'on hand'}</span>
-          </div>
-          ${aviso ? `<div class="m-fic-av" style="color:${k.c}">${esc(aviso)}</div>` : ''}
-        </div>
-      </div>
+      <!-- La MISMA cabecera que usa la hoja de Inventory. Es un solo
+           sitio a proposito: dos copias acaban diciendo cosas
+           distintas el dia que una se toque. -->
+      ${cabecera(r, par, aviso)}
 
       <div id="msZonas"></div>
 

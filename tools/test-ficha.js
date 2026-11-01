@@ -49,6 +49,11 @@ function abrir(opts) {
   w.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} });
 
   new Function(fs.readFileSync(path.join(RAIZ, 'src/bottle-profiles.js'), 'utf8'))();
+  // La cabecera de la ficha —silueta, numero grande y color— vive en
+  // su propio modulo porque la comparte con la hoja de Inventory.
+  // mobile-search.js tiene respaldo si falta, asi que sin cargarla
+  // aqui esta prueba mediria el respaldo y no la ficha de verdad.
+  new Function(fs.readFileSync(path.join(RAIZ, 'src/product-hero.js'), 'utf8'))();
 
   w.state = { master: [{
     item: "Tito's Vodka", vendor: 'LOOP', code: '2153', category: 'Vodka',

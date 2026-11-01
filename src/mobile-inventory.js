@@ -44,6 +44,22 @@
 
   function master() { return (window.state && window.state.master) || []; }
 
+  // ── La cabecera del producto ─────────────────────────────────────
+  //
+  // La dibuja `src/product-hero.js`, el mismo que usa la ficha de
+  // búsqueda. Si el módulo no estuviera cargado se cae a los dos
+  // renglones de texto de antes: perder el adorno es molesto, quedarse
+  // sin saber qué producto estás editando no es aceptable.
+  function hero(r, p) {
+    const H = window.BarStockProductHero;
+    const sub = (r.code ? r.code + ' · ' : '') + String(r.vendor || '') +
+                (r.bottleSizeMl ? ' · ' + r.bottleSizeMl + ' ml' : '');
+    if (H && H.html) return H.html(r, { par: p, sub });
+    return `<div class="m-edit-n">${esc(r.item)}</div>
+            <div class="m-edit-s">${esc(sub)} · ${n2(r.onHand)} on hand${
+              num(r.suggested) > 0 ? ' of ' + n2(r.suggested) : ''}</div>`;
+  }
+
   function parDe(r) {
     const m = window.parAdjustments;
     if (!m || !m.size) return null;
@@ -302,9 +318,20 @@
       <div class="m-sheet-bg"></div>
       <div class="m-sheet-box m-edit" role="dialog" aria-label="Edit item">
         <div class="m-sheet-grip"></div>
-        <div class="m-edit-n">${esc(r.item)}</div>
-        <div class="m-edit-s">${r.code ? esc(r.code) + ' · ' : ''}${n2(r.onHand)} on hand${
-          num(r.suggested) > 0 ? ' of ' + n2(r.suggested) : ''}</div>
+
+        <!-- ── La MISMA cabecera que la ficha de búsqueda ──────────
+             Eran dos pantallas distintas para el mismo producto: la
+             de Home con silueta, número grande y color de estado; y
+             ésta con dos renglones de texto. Nadie debería aprender
+             dos veces de qué le están hablando.
+             Lo que NO cambia es que esto sigue siendo una hoja que
+             sube desde abajo: el "Save and next" es lo que convierte
+             118 correcciones en una sesión, y una pantalla completa
+             por artículo se lo cargaría.
+             El subtítulo lleva el CÓDIGO, que en la ficha de búsqueda
+             no va: aquí sí importa, es con lo que casan las
+             facturas. -->
+        ${hero(r, p)}
 
         <div class="m-sheet-t">Vendor</div>
         <div class="m-chips" id="miVend">

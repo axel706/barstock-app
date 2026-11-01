@@ -242,7 +242,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261101-134828</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261101-140531</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5367,9 +5367,13 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
      nada de esto se monta arriba de 640px. -->
 <script src="src/mobile-shell.js?v=msh20"></script>
 <script src="src/mobile-home.js?v=mh33"></script>
-<script src="src/mobile-search.js?v=m12"></script>
+<!-- La cabecera de producto que comparten la ficha de busqueda y la
+     hoja de Inventory. Va ANTES que las dos: ambas la piden al
+     dibujar, y sin ella una se cae al respaldo de texto. -->
+<script src="src/product-hero.js?v=ph1"></script>
+<script src="src/mobile-search.js?v=m13"></script>
 <script src="src/mobile-cycle.js?v=m8"></script>
-<script src="src/mobile-inventory.js?v=m6"></script>
+<script src="src/mobile-inventory.js?v=m7"></script>
 <script src="src/mobile-orders.js?v=m17"></script>
 <script src="src/mobile-quick.js?v=mqk2"></script>
 <script src="src/mobile-tabs.js?v=m12"></script>
