@@ -2027,6 +2027,44 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-money > span { font-size: var(--m-strong); font-weight: 800; color: #9fb0c4; flex: 0 0 auto; }
   body.m-shell .m-money input { text-align: left; padding: 0 12px; }
 
+  /* Un campo de texto con la misma caja que los de numero, sin el
+   * simbolo de la izquierda. */
+  .m-money-txt > input { text-align: left; }
+
+  /* "optional" al lado del titulo del campo. Que algo no haga falta
+   * tiene que leerse ANTES de rellenarlo, no al fallar al guardar. */
+  .m-opt {
+    font-size: var(--m-meta); font-weight: 600; color: #8aa0b4;
+    text-transform: none; letter-spacing: 0; margin-left: 6px;
+  }
+
+  /* El fallo, pegado a los botones y en rojo. Antes de esto el unico
+   * sitio donde cabia era un `alert()` del navegador. */
+  .m-nerr:not(:empty) {
+    margin: 12px 0 0; padding: 10px 12px; border-radius: 11px;
+    font-size: var(--m-small); font-weight: 700; color: #fecaca;
+    background: rgba(239,68,68,.16);
+    border: 1px solid rgba(239,68,68,.34);
+  }
+
+  /* ── Añadir un producto ───────────────────────────────────────────
+   *
+   * Verde y redondo, como el de escanear: en esta app el verde es
+   * "esto añade". Mismo alto que el buscador y el boton de filtros,
+   * que es lo que lo mantiene en la fila. */
+  body.m-shell .m-nuevo {
+    flex: 0 0 44px; width: 44px; height: 44px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; font-size: var(--m-title); color: #053224;
+    background: #34d399; border: none;
+  }
+  body.m-shell .m-nuevo:active { background: #2bbd8a; }
+
+  /* El primario de una hoja que CREA algo. Los dos botones de la hoja
+   * de editar son neutros porque ahi la accion peligrosa no existe;
+   * aqui "Add it" es la que se busca y tiene que verse. */
+  body.m-shell .m-act-ok { background: #34d399; color: #053224; }
+
   body.m-shell .m-iqline {
     display: flex; align-items: center; gap: 6px; cursor: pointer;
     margin: 8px 0 2px; padding: 8px 11px; border-radius: 10px;
@@ -2818,6 +2856,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-res { border-radius: 15px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-act { border-radius: 999px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-adj { border-radius: 16px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-nuevo { border-radius: 50% !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-adj.on::after { border-radius: 50% !important; }
   /* El segmentado de Orders separa un poco más que el de Inventory:
    * ahí va pegado al buscador, aquí debajo del subtítulo. */

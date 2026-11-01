@@ -37,7 +37,17 @@
   const SEMANAS_PARA_FIAR = 4;
 
   let _q = '';
-  let _solo = 'fix';     // fix | todo
+  // ── Se entra por "Everything", no por "Needs fixing" ─────────────
+  //
+  // Arrancaba en los 31 incompletos. Eso contesta una pregunta de
+  // mantenimiento —"¿qué me falta por llenar?"— que se hace de vez en
+  // cuando; la de todos los días es "¿qué tengo?". Entrar en una lista
+  // filtrada sin haberlo pedido es como se concluye que faltan
+  // productos.
+  //
+  // Y va a la IZQUIERDA por lo mismo: el primero de un segmentado se
+  // lee como el estado normal y el segundo como la desviación.
+  let _solo = 'todo';    // todo | fix
   let _vendor = 'ALL';
   let _orden = 'valor';  // valor | nombre | falta
   let _verDormidos = false;
@@ -216,10 +226,10 @@
     const seg = host.querySelector('#miSeg');
     if (seg) {
       seg.innerHTML = `
-        <button type="button" class="${_solo === 'fix' ? 'on' : ''}" data-s="fix">
-          Needs fixing <b>${nFix}</b></button>
         <button type="button" class="${_solo === 'todo' ? 'on' : ''}" data-s="todo">
-          Everything <b>${nTodo}</b></button>`;
+          Everything <b>${nTodo}</b></button>
+        <button type="button" class="${_solo === 'fix' ? 'on' : ''}" data-s="fix">
+          Needs fixing <b>${nFix}</b></button>`;
       seg.querySelectorAll('button').forEach(b => {
         b.onclick = () => { _solo = b.dataset.s; pintarCabecera(host); pintarLista(host); };
       });
@@ -415,6 +425,169 @@
     };
   }
 
+  // ── Dar de alta un producto ──────────────────────────────────────────
+  //
+  // Hasta ahora sólo se podía desde el escritorio, y sólo de rebote:
+  // resolviendo un "no match" de un conteo importado. Si una botella
+  // nueva entraba en la barra y no estaba en el catálogo, no había
+  // forma de meterla desde el teléfono.
+  //
+  // ── Lo que NO pide ──────────────────────────────────────────────
+  //
+  // El ON HAND. Un producto nuevo nace en cero, como todos: la
+  // existencia viene del escáner y de recibir mercancía, y ésa es la
+  // regla que hace que cada número se pueda rastrear. Meterlo aquí
+  // sería la primera excepción, y la primera excepción es como esa
+  // regla deja de valer.
+  //
+  // Tampoco el tamaño ni la forma de la botella: ésos los pone el
+  // selector de botella la primera vez que se escanea, que es cuando
+  // se sabe de verdad.
+
+  function hojaNueva(host) {
+    const vendors = typeof window.getVendorsWithUnknown === 'function'
+      ? window.getVendorsWithUnknown() : [];
+
+    const h = document.createElement('div');
+    h.className = 'm-sheet';
+    h.id = 'mSheet';
+    h.innerHTML = `
+      <div class="m-sheet-bg"></div>
+      <div class="m-sheet-box m-edit" role="dialog" aria-label="Add a product">
+        <div class="m-sheet-grip"></div>
+        <div class="m-edit-n">Add a product</div>
+        <div class="m-edit-s">It starts at zero on hand. Scan it or receive it
+          to put bottles on the shelf.</div>
+
+        <div class="m-sheet-t">Name</div>
+        <div class="m-money m-money-txt">
+          <input id="mnName" type="text" autocomplete="off" autocapitalize="words"
+                 placeholder="Tito&rsquo;s Vodka" aria-label="Product name">
+        </div>
+
+        <!-- El codigo del proveedor. No es obligatorio, pero es con lo
+             que casan las facturas de MarginEdge: sin el, el producto
+             hay que emparejarlo a mano cada vez. -->
+        <div class="m-sheet-t">Vendor code <span class="m-opt">optional</span></div>
+        <div class="m-money m-money-txt">
+          <input id="mnCode" type="text" autocomplete="off" autocapitalize="characters"
+                 placeholder="2153" aria-label="Vendor code">
+        </div>
+
+        <div class="m-sheet-t">Vendor</div>
+        <div class="m-chips" id="mnVend">
+          ${vendors.map(v => `<button type="button" class="m-chip${v === 'UNKNOWN' ? ' on' : ''}"
+                                      data-nv="${esc(v)}">${esc(v)}</button>`).join('')}
+        </div>
+
+        <div class="m-sheet-t">Par <span class="m-opt">optional</span></div>
+        <div class="m-step">
+          <button type="button" id="mnLess" aria-label="Lower the par">&minus;</button>
+          <input id="mnPar" type="number" inputmode="decimal" step="1" min="0"
+                 value="0" aria-label="Par">
+          <button type="button" id="mnMore" aria-label="Raise the par">+</button>
+        </div>
+
+        <div class="m-sheet-t">Unit price <span class="m-opt">optional</span></div>
+        <div class="m-money">
+          <span>$</span>
+          <input id="mnVal" type="number" inputmode="decimal" step="0.01" min="0"
+                 placeholder="0.00" aria-label="Unit price">
+        </div>
+
+        <div class="m-nerr" id="mnErr"></div>
+
+        <div class="m-acts">
+          <button type="button" class="m-act" id="mnCancel">Cancel</button>
+          <button type="button" class="m-act m-act-ok" id="mnSave">Add it</button>
+        </div>
+      </div>`;
+    document.body.appendChild(h);
+
+    let vend = 'UNKNOWN';
+    h.querySelectorAll('[data-nv]').forEach(b => {
+      b.onclick = () => {
+        vend = b.dataset.nv;
+        h.querySelectorAll('[data-nv]').forEach(x => x.classList.toggle('on', x === b));
+      };
+    });
+
+    const par = h.querySelector('#mnPar');
+    const mas = (d) => { par.value = Math.max(0, (Number(par.value) || 0) + d); };
+    h.querySelector('#mnLess').onclick = () => mas(-1);
+    h.querySelector('#mnMore').onclick = () => mas(1);
+
+    const cerrar = () => h.remove();
+    h.querySelector('.m-sheet-bg').onclick = cerrar;
+    h.querySelector('#mnCancel').onclick = cerrar;
+
+    const err = (t) => { h.querySelector('#mnErr').textContent = t || ''; };
+
+    h.querySelector('#mnSave').onclick = async () => {
+      const nombre = String(h.querySelector('#mnName').value || '').trim();
+      const code = String(h.querySelector('#mnCode').value || '').trim();
+      if (!nombre) { err('Give it a name.'); return; }
+
+      // ── El duplicado ──────────────────────────────────────────────
+      //
+      // Dos filas para la misma botella es el peor resultado posible:
+      // el conteo se reparte entre las dos, el par se calcula sobre
+      // media historia y las facturas casan con la que no es. Se
+      // comprueba por el MISMO criterio de nombre que usa el resto de
+      // la app, no por igualdad de cadena.
+      const ya = master().find(r =>
+        norm(r.item) === norm(nombre) ||
+        (code && String(r.code || '').trim().toUpperCase() === code.toUpperCase()));
+      if (ya) {
+        err('“' + ya.item + '” is already in the catalogue.');
+        return;
+      }
+
+      const b = h.querySelector('#mnSave');
+      b.disabled = true; err('');
+      try {
+        if (!window.BarStockInventoryCloud) throw new Error('Cloud not available.');
+        await window.BarStockInventoryCloud.createInventoryItem({
+          code, item: nombre, vendor: vend,
+          onHand: 0,
+          suggested: Number(par.value) || 0,
+          value: Number(h.querySelector('#mnVal').value) || 0
+        });
+
+        // La fila local, con la MISMA forma que arma el escritorio al
+        // dar de alta. Se añade DESPUÉS de que la nube conteste, no
+        // antes: el escritorio lo hace al revés y por eso puede
+        // quedarse con un producto que sólo existe en ese navegador.
+        const fila = {
+          code, item: nombre,
+          itemNorm: typeof window.normalizeName === 'function'
+            ? window.normalizeName(nombre) : norm(nombre),
+          vendor: String(vend || 'UNKNOWN').trim().toUpperCase(),
+          onHand: 0,
+          suggested: Number(par.value) || 0,
+          value: Number(h.querySelector('#mnVal').value) || 0,
+          orderOverride: ''
+        };
+        fila.toOrder = typeof window.computeToOrder === 'function'
+          ? window.computeToOrder(0, fila.suggested)
+          : Math.max(0, fila.suggested);
+
+        master().push(fila);
+        master().sort((a, b) =>
+          String(a.item || '').localeCompare(String(b.item || '')));
+        if (typeof window.saveState === 'function') window.saveState();
+        if (typeof window.render === 'function') window.render();
+        cerrar();
+        show(host);
+        const T = window.BarStockToast;
+        if (T && T.show) T.show(nombre + ' added');
+      } catch (e) {
+        b.disabled = false;
+        err(String((e && e.message) || e));
+      }
+    };
+  }
+
   // ── La pantalla ──────────────────────────────────────────────────────
 
   function mount(host) {
@@ -446,6 +619,14 @@
         <button type="button" class="m-adj" id="miAdj" aria-label="Filters and sorting">
           <i class="ti ti-adjustments-horizontal" aria-hidden="true"></i>
         </button>
+        <!-- Verde y redondo, como el de escanear: en esta app el verde
+             es "esto añade existencia". Aquí no añade botellas —el on
+             hand de un producto nuevo arranca en cero, como el de
+             todos— pero sí añade el producto al catálogo, que es lo
+             que faltaba poder hacer desde el teléfono. -->
+        <button type="button" class="m-nuevo" id="miNuevo" aria-label="Add a product">
+          <i class="ti ti-plus" aria-hidden="true"></i>
+        </button>
       </div>
 
       <div id="miList"></div>`;
@@ -453,6 +634,7 @@
     const inp = host.querySelector('#miInput');
     inp.oninput = () => { _q = inp.value; pintarLista(host); };
     host.querySelector('#miAdj').onclick = () => cajon(host);
+    host.querySelector('#miNuevo').onclick = () => hojaNueva(host);
 
     show(host);
   }

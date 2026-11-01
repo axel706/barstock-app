@@ -103,7 +103,10 @@ console.log('\nla pestaña abre la pantalla propia, no la tabla del escritorio')
 console.log('\n"needs fixing" es lo que dice que es');
 {
   const { host } = pantalla();
-  // Arranca en "needs fixing": sin proveedor, sin precio o sin par.
+  // Ahora se entra por "Everything" —la pregunta de todos los dias es
+  // "que tengo"—, asi que el filtro de incompletos se pide.
+  host.querySelector('[data-s="fix"]').click();
+  // Sin proveedor, sin precio o sin par.
   eq('salen los tres incompletos', nombres(host).sort(),
      ["Casa Noble Crystal", "Tito's Vodka", "Villa Brici Pinot"]);
   // Barefoot no tiene categoria y NO debe salir: si contara, entrarian
