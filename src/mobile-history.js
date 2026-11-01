@@ -139,12 +139,26 @@
     try {
       facturas = await leerTodo(url, key,
         `marginedge_invoice_lines?location_id=eq.${locId}` +
-        `&select=product_id,quantity,unit_price,invoice_date,invoice_number,vendor_name` +
+        `&select=order_id,product_id,quantity,unit_price,invoice_date,invoice_number,vendor_name` +
         `&order=order_id.asc`);
       enlaces = await leerTodo(url, key,
         `marginedge_links?location_id=eq.${locId}` +
         `&select=product_id,item_name&order=product_id.asc`);
     } catch (e) { /* sin MarginEdge el historial sigue en pie */ }
+
+    // ── Las facturas que alguien enlazó a mano ──────────────────────
+    //
+    // Tabla opcional: su SQL se corre a mano (migración 022). Si no
+    // está, esto queda vacío y todo casa como siempre.
+    let manuales = [];
+    try {
+      manuales = await leerTodo(url, key,
+        `invoice_order_links?location_id=eq.${locId}` +
+        `&select=order_id,vendor_order_id&order=order_id.asc`);
+    } catch (e) { /* sin la tabla, sólo el emparejamiento automático */ }
+
+    // factura -> orden a la que pertenece, dicho por una persona.
+    const dueno = new Map(manuales.map(m => [String(m.order_id), String(m.vendor_order_id)]));
 
     const deQuien = new Map(enlaces.map(e => [String(e.product_id), e.item_name || '']));
 
@@ -157,6 +171,12 @@
       if (!item) continue;
       recibos.push({
         item,
+        // De qué factura sale, y si esa factura está reservada para una
+        // orden concreta. Sin esto el reparto no puede distinguir "este
+        // recibo es de cualquiera" de "este es de esa orden y de nadie
+        // más".
+        factId: String(f.order_id || ''),
+        reservado: dueno.get(String(f.order_id || '')) || '',
         qty: Number(f.quantity) || 0,
         // Lo que de verdad costó. Sin esto, "Received" multiplicaba lo
         // recibido por el precio de TU catálogo: una orden de $55.78
@@ -227,7 +247,23 @@
         for (const r of recibos) {
           if (r.usado) continue;
           if (!mismoNombre(r.item, l.item_name)) continue;
-          if (r.fecha && r.fecha < suelo) continue;
+
+          // ── Un enlace a mano gana sobre todas las reglas ──────────
+          //
+          // Lo dijo quien estuvo ahí: esta factura es de esta orden.
+          // Así que ni el proveedor ni la fecha pueden desmentirlo, y
+          // ninguna otra orden puede llevarse estos recibos aunque
+          // pase antes por ser más nueva.
+          //
+          // Es el caso de Crown: se pide en el portal de LOOP, se va a
+          // la tienda, y la factura llega a nombre de Fine Wine. Son
+          // el mismo pedido y la app no tiene cómo saberlo sola.
+          if (r.reservado) {
+            if (r.reservado !== String(o.id)) continue;   // de otra orden
+          } else if (r.fecha && r.fecha < suelo) {
+            continue;   // sin enlace, el criterio de siempre
+          }
+
           if (llegado >= pedido) break;
           llegado += r.qty;
           // El dinero sale de la FACTURA, no del catálogo. Si una

@@ -57,6 +57,8 @@
   let _verFuera = '';   // '' | 'comida' | 'ocultas' | 'antes'
   let _viejas = null;   // facturas de ciclos anteriores, bajo demanda
   let _ciclos = null;   // aperturas registradas, de la mas nueva a la mas vieja
+  let _enlaceOrden = null;  // { porFactura: Map, ordenes: [...] } o null
+  let _eligiendoOrden = false;
   let _abierta = null;    // order_id de la que se está mirando
   let _busy = new Set();
 
@@ -189,6 +191,86 @@
         g.facturas.map(tarjetaFactura).join('');
     }
     return html;
+  }
+
+  // ── Enlazar una factura con su orden, a mano ────────────────────
+  //
+  // El emparejamiento automatico va por PRODUCTO dentro del ciclo y
+  // funciona casi siempre. Casi: en Crown se pide en el portal de
+  // LOOP, se va a la tienda, y la factura llega a nombre de Fine Wine
+  // & Good Spirits. Son el mismo pedido y la app no tiene como
+  // saberlo.
+  //
+  // Esto no afina el automatico: lo deja en paz y anade una forma de
+  // que la persona que estuvo ahi lo diga. Un enlace a mano gana
+  // sobre cualquier regla — ver `src/mobile-history.js`.
+  async function cargarEnlaceOrden() {
+    if (_enlaceOrden) return _enlaceOrden;
+    const { url, key } = cfg();
+    const locId = await locationId();
+    if (!url || !key || !locId) { _enlaceOrden = { porFactura: new Map(), ordenes: [] }; return _enlaceOrden; }
+
+    let links = [], ordenes = [];
+    try {
+      links = await leerPaginado(url, key,
+        `invoice_order_links?location_id=eq.${locId}` +
+        `&select=order_id,vendor_order_id&order=order_id.asc`);
+    } catch (e) {
+      // Tabla opcional: su SQL se corre a mano. Sin ella no se puede
+      // enlazar, pero la pantalla no se cae.
+      console.warn('[facturas] falta invoice_order_links. Corre la migracion 022.');
+    }
+    try {
+      // Solo las del ciclo abierto y un poco antes: enlazar una
+      // factura a una orden de hace tres meses no es un caso real, y
+      // una lista de trescientas no se puede mirar en un telefono.
+      const desde = new Date(dia(desdeCiclo()).t - 30 * 86400000).toISOString();
+      ordenes = await leerPaginado(url, key,
+        `vendor_orders?location_id=eq.${locId}&created_at=gte.${desde}` +
+        `&select=id,app_order_id,vendor,po_number,created_at,subtotal` +
+        `&order=created_at.desc`);
+    } catch (e) {
+      console.warn('[facturas] no se pudieron leer las ordenes', e);
+    }
+
+    _enlaceOrden = {
+      porFactura: new Map(links.map(l => [String(l.order_id), String(l.vendor_order_id)])),
+      ordenes: ordenes
+    };
+    return _enlaceOrden;
+  }
+
+  async function guardarEnlaceOrden(facturaId, ordenId) {
+    const { url, key } = cfg();
+    const locId = await locationId();
+    const res = await fetch(`${url}/rest/v1/invoice_order_links`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: key, Authorization: `Bearer ${key}`,
+        // Una factura pertenece a UNA orden: volver a enlazarla
+        // reemplaza en vez de acumular filas.
+        Prefer: 'return=minimal,resolution=merge-duplicates'
+      },
+      body: JSON.stringify({
+        location_id: locId,
+        order_id: String(facturaId),
+        vendor_order_id: Number(ordenId)
+      })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    (await cargarEnlaceOrden()).porFactura.set(String(facturaId), String(ordenId));
+  }
+
+  async function quitarEnlaceOrden(facturaId) {
+    const { url, key } = cfg();
+    const locId = await locationId();
+    const res = await fetch(
+      `${url}/rest/v1/invoice_order_links?location_id=eq.${locId}` +
+      `&order_id=eq.${encodeURIComponent(String(facturaId))}`,
+      { method: 'DELETE', headers: { apikey: key, Authorization: `Bearer ${key}` } });
+    if (!res.ok) throw new Error(await res.text());
+    (await cargarEnlaceOrden()).porFactura.delete(String(facturaId));
   }
 
   function desdeCiclo() {
@@ -646,6 +728,57 @@
       .filter(Boolean).join(' · ');
   }
 
+  // ── "Esta factura es de esta orden" ─────────────────────────────
+  //
+  // Va justo debajo de los totales y encima de las lineas: es una
+  // afirmacion sobre la factura entera, no sobre un producto.
+  //
+  // Cuando ya esta enlazada se dice a cual y se puede soltar. El
+  // enlace equivocado tiene que poder quitarse sin obligarte a elegir
+  // otro para salir del paso — el mismo criterio que el `Unlink` de
+  // las botellas.
+  function bloqueOrden(f) {
+    const d = _enlaceOrden;
+    if (!d) return '';
+    const atada = d.porFactura.get(String(f.id)) || '';
+
+    if (_eligiendoOrden) {
+      const lista = d.ordenes.length
+        ? d.ordenes.map(o =>
+            '<button type="button" class="m-iord" data-ord="' + esc(String(o.id)) + '">' +
+              '<span class="m-iord-l">' +
+                '<b>' + esc(o.vendor || 'Unknown vendor') + '</b>' +
+                '<small>' + esc(o.po_number || o.app_order_id || '') + ' · ' +
+                  esc(dia(o.created_at).txt) + '</small>' +
+              '</span>' +
+              '<span class="m-iord-r">' + dinero(o.subtotal) + '</span>' +
+            '</button>').join('')
+        : '<div class="m-ivacio">No orders in the last weeks.</div>';
+      return '<div class="m-iatar">' +
+        '<div class="m-iask">Which order is this invoice for?</div>' +
+        lista +
+        '<button type="button" class="m-ino" id="miOrdX">Cancel</button>' +
+      '</div>';
+    }
+
+    if (atada) {
+      const o = d.ordenes.find(x => String(x.id) === atada);
+      return '<div class="m-iatar on">' +
+        '<div class="m-iatar-t"><i class="ti ti-link" aria-hidden="true"></i> ' +
+          'Counts toward ' + esc(o ? (o.po_number || o.app_order_id || o.vendor) : 'an order') +
+          (o ? ' · ' + esc(o.vendor || '') : '') + '</div>' +
+        '<button type="button" class="m-ialt" id="miOrdOff">Unlink</button>' +
+      '</div>';
+    }
+
+    return '<div class="m-iatar">' +
+      '<button type="button" class="m-ialt" id="miOrdOn">' +
+        '<i class="ti ti-link" aria-hidden="true"></i> Link to an order</button>' +
+      '<div class="m-iatar-s">For when the invoice comes from a different ' +
+        'vendor than the order — a store run, say.</div>' +
+    '</div>';
+  }
+
   function pintarDetalle(host, f) {
     let html =
       cab({
@@ -662,7 +795,8 @@
         '<div><b>' + f.lineas.length + '</b><span>' +
           (f.lineas.length === 1 ? 'line' : 'lines') + '</span></div>' +
         '<div><b>' + n1(f.unidades) + '</b><span>units</span></div>' +
-      '</div>';
+      '</div>' +
+      bloqueOrden(f);
 
     f.lineas.forEach((l, k) => {
       const cuerpo =
@@ -849,6 +983,42 @@
     });
 
     // Corregir una línea ya enlazada: abre el picker en su sitio.
+    // ── Los botones del enlace con la orden ───────────────────────
+    const on = host.querySelector('#miOrdOn');
+    if (on) on.onclick = () => { _eligiendoOrden = true; pintar(host); };
+    const x = host.querySelector('#miOrdX');
+    if (x) x.onclick = () => { _eligiendoOrden = false; pintar(host); };
+
+    host.querySelectorAll('[data-ord]').forEach(b => {
+      b.onclick = async () => {
+        b.disabled = true;
+        try {
+          await guardarEnlaceOrden(_abierta, b.dataset.ord);
+          _eligiendoOrden = false;
+          // El historial de órdenes lee esta tabla al pintar, así que
+          // en cuanto vuelva se recalcula solo. Aquí sólo se repinta
+          // lo de delante.
+          pintar(host);
+          const T = window.BarStockToast;
+          if (T && T.show) T.show('Linked. The order will count it.');
+        } catch (e) {
+          b.disabled = false;
+          const D = window.BarStockDialog;
+          const t = /invoice_order_links/.test(String(e && e.message))
+            ? 'The table is missing. Run migration 022.'
+            : String((e && e.message) || e);
+          if (D && D.avisar) D.avisar({ titulo: 'Could not link', cuerpo: t });
+        }
+      };
+    });
+
+    const off = host.querySelector('#miOrdOff');
+    if (off) off.onclick = async () => {
+      off.disabled = true;
+      try { await quitarEnlaceOrden(_abierta); pintar(host); }
+      catch (e) { off.disabled = false; }
+    };
+
     host.querySelectorAll('[data-chg]').forEach(b => {
       b.onclick = () => {
         const k = Number(b.dataset.chg);
@@ -1096,10 +1266,15 @@
     if (typeof aviso === 'function') _aviso = aviso;
     _verFuera = '';
     _viejas = null;
+    _eligiendoOrden = false;
+    _enlaceOrden = null;
     // Sin título propio: lo pone el contenedor.
     host.innerHTML = '<div class="m-isub">Reading…</div>';
     try {
       await cargar();
+      // Los enlaces a mano, antes de pintar: el detalle de una factura
+      // tiene que saber de salida si ya está atada a una orden.
+      await cargarEnlaceOrden();
       pintar(host);
     } catch (e) {
       host.innerHTML = '<div class="m-ivacio mal">' + esc(String(e.message || e)) + '</div>';

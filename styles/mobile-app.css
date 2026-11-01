@@ -3619,6 +3619,39 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * existe: justo encima está el subtítulo de la pantalla. */
   .m-isub + .m-iday { margin-top: 18px; }
 
+  /* ── "Esta factura es de esta orden" ──────────────────────────────
+   *
+   * Va entre los totales y las lineas: es una afirmacion sobre la
+   * factura entera, no sobre un producto. */
+  .m-iatar {
+    margin: 2px 0 14px; padding: 12px 13px; border-radius: 14px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
+  }
+  .m-iatar.on {
+    background: rgba(52,211,153,.12);
+    border-color: rgba(52,211,153,.30);
+  }
+  .m-iatar-t {
+    display: flex; align-items: center; gap: 7px; margin-bottom: 9px;
+    font-size: var(--m-small); font-weight: 700; color: #6ee7b7;
+  }
+  .m-iatar-s { margin-top: 8px; font-size: var(--m-meta); color: #8aa0b4; }
+
+  /* Una orden candidata. Proveedor y PO a la izquierda, importe a la
+   * derecha: es lo que se mira para reconocerla. */
+  body.m-shell .m-iord {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; width: 100%; cursor: pointer; text-align: left;
+    margin-bottom: 6px; padding: 11px 12px; border-radius: 12px;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.12);
+  }
+  .m-iord-l { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .m-iord-l b { font-size: var(--m-small); font-weight: 800; color: #eaf2fb; }
+  .m-iord-l small { font-size: var(--m-meta); color: #8aa0b4; }
+  .m-iord-r { font-size: var(--m-small); font-weight: 800; color: #fff; flex: 0 0 auto; }
+
   /* ── Cabecera de ciclo en "Earlier cycles" ────────────────────────
    *
    * Separa los grupos de la lista de facturas cerradas. Es una
