@@ -234,6 +234,40 @@ grupo('si la nube falla, no se inventa un producto local');
     w.state.master.map(r => r.item).join('|'));
 }
 
+grupo('el ritmo de la hoja lo pone un solo sitio');
+{
+  // "VENDOR" salia pegado a la tarjeta del producto, y las distancias
+  // entre bloques eran tres distintas sin querer: los proveedores
+  // dejaban 14px debajo, el contador 4 y el precio 4. Cada control
+  // traia su propio margen.
+  //
+  // Se invirtio: separa el TITULO del bloque siguiente por arriba, y
+  // los controles no ponen nada debajo. Si uno vuelve a poner su
+  // margen, el acordeon vuelve.
+  const css = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8');
+
+  const bloque = (sel) => {
+    const re = new RegExp('(^|[\\n}])\\s*' +
+      sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\{([^}]*)\\}', 'm');
+    const m = re.exec(css);
+    return m ? m[2] : null;
+  };
+
+  const titulo = bloque('.m-edit .m-sheet-t');
+  prueba('el titulo separa por arriba', !!titulo && /margin-top:\s*20px/.test(titulo), titulo);
+
+  const ceros = bloque('.m-edit .m-money');
+  prueba('y los controles no separan por abajo',
+    !!ceros && /margin-bottom:\s*0/.test(ceros), ceros);
+  prueba('los tres a la vez, no uno por uno',
+    /\.m-edit \.m-chips,\s*\n\s*\.m-edit \.m-step,\s*\n\s*\.m-edit \.m-money/.test(css));
+
+  // Los botones separan MAS que los titulos: no se pulsa de paso lo
+  // que se iba a ajustar.
+  const acts = bloque('.m-edit .m-acts');
+  prueba('y los botones se separan mas', !!acts && /margin-top:\s*24px/.test(acts), acts);
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') +
             '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);

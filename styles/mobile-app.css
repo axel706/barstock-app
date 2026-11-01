@@ -2082,8 +2082,39 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   body.m-shell .m-next:disabled { opacity: .5; }
 
+  /* ── El ritmo de la hoja de producto ──────────────────────────────
+   *
+   * "VENDOR" salia pegado a la tarjeta del producto, y las distancias
+   * entre bloques eran tres distintas sin querer: los proveedores
+   * dejaban 14px debajo, el contador 4 y el precio 4. Cada control
+   * traia su propio margen y el resultado era un acordeon.
+   *
+   * Se invierte: los controles no separan por abajo, separa el TITULO
+   * del bloque siguiente por arriba. Asi la distancia entre bloques es
+   * una sola y da igual que control la preceda — y el primer titulo,
+   * el que iba pegado a la tarjeta, la hereda sin ser un caso aparte.
+   *
+   *   titulo  ->  su control     9px   (el padding del titulo)
+   *   control ->  titulo        20px
+   *   ultimo  ->  los botones   24px   (mas, para que no se pulse de
+   *                                     paso lo que se iba a ajustar)
+   */
+  .m-edit .m-sheet-t { padding: 0 4px 9px; margin-top: 20px; }
+  .m-edit .m-chips,
+  .m-edit .m-step,
+  .m-edit .m-money { margin-bottom: 0; }
+
+  /* La linea de Pour·IQ cuelga de su contador, no es un bloque: se
+   * queda pegada a el y el margen de arriba lo pone el titulo que
+   * venga despues. */
+  body.m-shell .m-edit .m-iqline { margin: 9px 0 0; }
+
+  /* El subtitulo de la hoja de alta. La tarjeta de producto no lo
+   * lleva, asi que solo aparece ahi. */
+  .m-edit .m-edit-s { margin: 5px 0 0; }
+
   /* En la hoja de producto, Guardar es el azul. */
-  .m-edit .m-acts { margin-top: 16px; }
+  .m-edit .m-acts { margin-top: 24px; }
   body.m-shell .m-edit .m-act:first-child {
     background: rgba(255,255,255,.11); border-color: rgba(255,255,255,.17); color: #eaf2fb;
   }
