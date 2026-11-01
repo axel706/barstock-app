@@ -360,8 +360,11 @@
     return Array.isArray(m) ? m.length : 0;
   }
 
-  function paso(estado, titulo, nota) {
-    const ic = { ok: '✓', ahora: '→', esp: '' }[estado] || '';
+  // El número en vez de un círculo vacío: esto es una secuencia, y
+  // "2" dice que falta su turno. Un círculo gris sin nada dentro se
+  // lee como un bullet que no cargó.
+  function paso(n, estado, titulo, nota) {
+    const ic = { ok: '✓', ahora: String(n), esp: String(n) }[estado] || String(n);
     const cls = { ok: 'ok', ahora: 'run', esp: 'esp' }[estado] || 'esp';
     return '<div class="mec-step">' +
       '<span class="mec-ic ' + cls + '">' + ic + '</span>' +
@@ -379,24 +382,29 @@
       '<div class="mec-s">Invoices, matched products and current prices. ' +
         'Two steps, and the second is one button.</div>' +
 
-      '<div class="mec-will" style="padding:4px 12px;margin-top:0">' +
-        paso(hay ? 'ok' : 'ahora', 'Your inventory',
+      '<div class="mec-pasos">' +
+        paso(1, hay ? 'ok' : 'ahora', 'Your inventory',
           hay ? n.toLocaleString('en-US') + ' bottles ready to match'
-              : 'No bottles yet. Load it from Import › Load master — ' +
-                'matching compares MarginEdge products against your list, ' +
-                'and right now there is nothing to compare to.') +
-        paso(hay ? 'ahora' : 'esp', 'Connect MarginEdge',
-          'Finds which restaurant this location is, copies the catalog, ' +
-          'pulls the invoices and matches every exact name.') +
+              // Corto. El porqué va en la nota de abajo; aquí lo que
+              // hace falta es qué hacer y dónde.
+              : 'No bottles yet — load it from Import › Load master.') +
+        paso(2, hay ? 'ahora' : 'esp', 'Connect MarginEdge',
+          'Finds the restaurant, copies the catalog, pulls the invoices ' +
+          'and matches every exact name.') +
       '</div>' +
 
       '<button type="button" class="mec-big" id="mecGo"' + (hay ? '' : ' disabled') + '>' +
         (hay ? 'Connect this location' : 'Load your inventory first') +
       '</button>' +
 
-      '<div class="mec-note">Nothing is written to your inventory, orders or prices. ' +
-      'Matching only records which MarginEdge product is which bottle.' +
-      (hay ? ' Prices and leftover matches come after, and the app asks you first.' : '') +
+      '<div class="mec-note">' +
+        (hay
+          ? 'Nothing is written to your inventory, orders or prices. Matching ' +
+            'only records which MarginEdge product is which bottle. Prices and ' +
+            'leftover matches come after, and the app asks you first.'
+          : 'Matching compares MarginEdge products against your bottles, so the ' +
+            'list has to exist first. Nothing is written to your inventory, ' +
+            'orders or prices.') +
       '</div>' +
     '</div>';
   }

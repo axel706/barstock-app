@@ -224,6 +224,42 @@
 .mec-will b { color: var(--text, #e2e8f0); }
 .mec-note { font-size: 11px; color: var(--sub, #64748b); margin-top: 10px; line-height: 1.5; }
 
+/* ── Los pasos del alta ────────────────────────────────────────────
+ *
+ * La primera versión reusaba `.mec-will`, que es una caja de texto
+ * suelto: 9px de alto por paso, la divisoria al 18% —invisible sobre
+ * el cristal— y el número pegado al texto. Los dos pasos se leían
+ * como un párrafo partido.
+ *
+ * Aquí cada paso es una fila con aire propio y una separación que se
+ * ve. No es un detalle: esta pantalla existe para que se entienda que
+ * hay un ORDEN, y sin separación no hay orden, hay una lista. */
+.mec-pasos {
+  margin: 14px 0 16px;
+  border: 1px solid rgba(127,140,160,.26); border-radius: 12px;
+  background: rgba(127,140,160,.07);
+  overflow: hidden;
+}
+.mec-pasos .mec-step {
+  gap: 13px; padding: 14px 14px;
+  align-items: flex-start;
+}
+.mec-pasos .mec-step + .mec-step {
+  border-top: 1px solid rgba(127,140,160,.26);
+}
+/* 22px y redondo, con el número dentro. El círculo vacío de antes se
+ * leía como un bullet que no cargó. */
+.mec-pasos .mec-ic {
+  flex: 0 0 22px; width: 22px; height: 22px; margin-top: 0;
+  font-size: 11px; line-height: 1;
+}
+.mec-pasos .mec-st b { font-size: 13px; margin-bottom: 3px; }
+.mec-pasos .mec-st span { font-size: 11.5px; line-height: 1.55; margin-top: 0; }
+/* El que toca ahora, en claro. Los demás apagados: el contraste es lo
+ * que dice dónde estás sin tener que leer. */
+.mec-pasos .mec-ic.esp { background: rgba(127,140,160,.18); }
+.mec-pasos .mec-st.esp b { color: var(--sub, #64748b); }
+
 .mec-pick { display: flex; gap: 8px; flex-wrap: wrap; }
 .mec-opt {
   flex: 1 1 45%; text-align: center; font-size: 12.5px; font-weight: 700;
