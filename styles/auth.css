@@ -98,9 +98,13 @@ body.auth-locked > *:not(#authOverlay):not(#locCurtain){
  * un sitio y lo hereden la tarjeta y el separador del móvil. Antes cada
  * tema repetía los tres valores en dos reglas. */
 #authCard{
-  --auth-linea:  rgba(255,255,255,.10);
-  --auth-vidrio: rgba(15,23,42,.50);
-  --auth-brillo: rgba(255,255,255,.05);
+  --auth-linea:   rgba(255,255,255,.10);
+  --auth-vidrio:  rgba(15,23,42,.50);
+  --auth-brillo:  rgba(255,255,255,.05);
+  /* Tinte extra SÓLO de la cabecera. Es una capa plana sobre el
+     cristal del padre, no un segundo `backdrop-filter`: ese era el
+     fallo de las costuras y no se vuelve a abrir por esto. */
+  --auth-cabecera: rgba(15,23,42,.55);
 
   width:min(720px,94vw);
   border-radius:18px;
@@ -114,9 +118,12 @@ body.auth-locked > *:not(#authOverlay):not(#locCurtain){
 }
 
 body.light #authCard{
-  --auth-linea:  rgba(255,255,255,.58);
-  --auth-vidrio: rgba(255,255,255,.44);
-  --auth-brillo: rgba(255,255,255,.72);
+  --auth-linea:   rgba(255,255,255,.58);
+  --auth-vidrio:  rgba(255,255,255,.44);
+  --auth-brillo:  rgba(255,255,255,.72);
+  /* En claro el contraste se hace sumando blanco, no oscuridad: con el
+     tinte oscuro la cabecera se vería como un parche sucio. */
+  --auth-cabecera: rgba(255,255,255,.52);
 }
 
 .auth-grid-2{
@@ -125,13 +132,16 @@ body.light #authCard{
   gap:0 12px;
 }
 
-/* Sólo coloca la marca. El cristal es del padre. */
+/* Coloca la marca, y lleva el único tinte propio de la tarjeta: un
+   velo plano que separa la cabecera del formulario. El cristal —fondo
+   base, borde y desenfoque— sigue siendo del padre. */
 #authCardBrand{
   flex:0 0 220px;
   display:flex;
   align-items:center;
   justify-content:center;
   text-align:center;
+  background:var(--auth-cabecera);
 }
 
 .auth-brand-type{

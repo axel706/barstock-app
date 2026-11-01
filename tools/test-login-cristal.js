@@ -61,16 +61,34 @@ grupo('el cristal vive en el contenedor');
   prueba('y el desenfoque', /backdrop-filter:/.test(card));
 }
 
-grupo('los hijos sólo colocan contenido');
+grupo('los hijos no vuelven a pintar cristal');
 {
+  // Lo que causaba las costuras era el `backdrop-filter` repetido, no
+  // un fondo. Un velo plano encima es otra cosa y sí está permitido:
+  // es lo que separa la cabecera del formulario.
   for (const sel of ['#authCardBrand', '#authCardBody']) {
     const b = bloque(auth, sel);
     prueba(sel + ' existe', !!b);
-    prueba(sel + ' sin fondo',      !/background/.test(b), b);
     prueba(sel + ' sin borde',      !/border(?!-radius)/.test(b), b);
     prueba(sel + ' sin desenfoque', !/backdrop-filter/.test(b), b);
     prueba(sel + ' sin sombra',     !/box-shadow/.test(b), b);
   }
+  const cuerpo = bloque(auth, '#authCardBody');
+  prueba('el formulario no tiene fondo propio', !/background/.test(cuerpo), cuerpo);
+}
+
+grupo('el velo de la cabecera');
+{
+  const marca = bloque(auth, '#authCardBrand');
+  prueba('lo lleva la marca', /background:\s*var\(--auth-cabecera\)/.test(marca), marca);
+  // Por variable, no por valor: claro y oscuro necesitan tintes
+  // opuestos —oscuro suma negro, claro suma blanco— y con el valor a
+  // pelo el tema claro se vería como un parche sucio.
+  prueba('oscuro define su tinte', /--auth-cabecera:\s*rgba\(15,23,42/.test(auth));
+  prueba('y claro el suyo, en blanco',
+    /--auth-cabecera:\s*rgba\(255,255,255/.test(auth));
+  prueba('es un fondo plano, no otro desenfoque',
+    !/--auth-cabecera[^;]*blur/.test(auth));
 }
 
 grupo('y no vuelve a haber un segundo backdrop-filter en la tarjeta');
