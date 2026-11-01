@@ -434,12 +434,13 @@
     // ── Cabecera ──
     const hdrH = y + 42;
     pdf.setFillColor(...NAVY); pdf.rect(0, 0, pageW, hdrH, 'F');
-    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(22); pdf.setTextColor(...WHITE);
-    pdf.text('BarStock', margin, y + 16);
-    const bw = pdf.getTextWidth('BarStock');
-    pdf.setFillColor(...BLUE); pdf.circle(margin + bw + 3.5, y + 13.5, 2.6, 'F');
-    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8); pdf.setTextColor(...GRAY);
-    pdf.text('PRO', margin + bw + 9, y + 16);
+    // El logo lo dibuja `brand-logo.js`: el degradado de "Stock" y las
+    // proporciones del punto viven en un solo sitio. Aquí estaba la
+    // copia que se quedó en blanco cuando el resto de la app pasó al
+    // degradado.
+    window.BarStockBrandLogo.enPdf(pdf, {
+      x: margin, y: y + 16, size: 22, font: 'helvetica', blanco: WHITE
+    });
 
     pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8);
     const locW = pdf.getTextWidth(location) + 16;

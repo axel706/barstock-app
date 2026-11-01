@@ -242,7 +242,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261031-224755</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261031-232427</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5320,7 +5320,10 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/par-intelligence.js?v=adj6"></script>
 <script src="src/par-intelligence-section.js"></script>
 <script src="src/consumption-match.js?v=cm13"></script>
-<script src="src/consumption-report.js?v=rep8"></script>
+<!-- El logo dibujado, para PDF y canvas. Va antes que los tres que lo
+     usan: email-order, consumption-report y email-cost-report. -->
+<script src="src/brand-logo.js?v=bl1"></script>
+<script src="src/consumption-report.js?v=rep9"></script>
 <script src="src/sales-fix.js?v=sf2"></script>
 <script src="src/count-fix.js?v=cf1"></script>
 <script src="src/theoretical-usage.js?v=fix5"></script>
@@ -5486,8 +5489,8 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/orders-cloud.js"></script>
 <script src="src/order-history-ui.js"></script>
 <script src="src/onboarding.js?v=onb2"></script>
-    <script src="src/email-order.js?v=eo7"></script>
-<script src="src/email-cost-report.js"></script>
+    <script src="src/email-order.js?v=eo8"></script>
+<script src="src/email-cost-report.js?v=ecr2"></script>
 <script src="src/vendor-defaults-cloud.js"></script>
 <script src="src/sender-profile-cloud.js"></script>
 <script src="src/settings-sender-profile.js"></script>

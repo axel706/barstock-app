@@ -281,6 +281,49 @@ grupo('los otros tres logos llevan el mismo degradado');
     /Bar<b class="bs-stock">Stock<\/b>/.test(onb), 'onboarding');
 }
 
+grupo('el logo dibujado vive en un solo sitio');
+{
+  // ── Por qué ────────────────────────────────────────────────────
+  //
+  // Estaba escrito a mano en tres archivos: el PDF de la orden, el del
+  // reporte de consumo y la imagen del correo de costes. Al teñir uno
+  // de degradado, los otros dos se quedaron en blanco — el mismo
+  // producto con dos marcas según el papel que te llegue. Y el del
+  // canvas además usaba un punto TIPOGRÁFICO en vez del círculo del
+  // brandbook.
+  const mod = raiz('src/brand-logo.js');
+  prueba('el módulo existe', /BarStockBrandLogo/.test(mod));
+  prueba('sabe dibujar en PDF', /function enPdf/.test(mod));
+  prueba('y en canvas', /function enCanvas/.test(mod));
+  // Canvas sí sabe hacer degradados de verdad: ahí no hace falta el
+  // truco de letra a letra.
+  prueba('en canvas usa un degradado de verdad',
+    /createLinearGradient/.test(mod));
+  prueba('y el punto es un círculo, no un punto tipográfico',
+    /arc\(/.test(mod) && !/fillText\('\.'/.test(mod));
+
+  const usuarios = ['src/email-order.js', 'src/consumption-report.js',
+                    'src/email-cost-report.js'];
+  for (const f of usuarios) {
+    const t = raiz(f);
+    prueba(f.replace('src/', '') + ' lo usa',
+      /BarStockBrandLogo\.(enPdf|enCanvas)/.test(t));
+    // Y ya no se lo dibuja por su cuenta.
+    prueba(f.replace('src/', '') + ' ya no escribe el wordmark a mano',
+      !/(text|fillText)\(\s*'BarStock'/.test(t),
+      (/(text|fillText)\(\s*'BarStock'[^)]*\)/.exec(t) || [''])[0]);
+  }
+
+  // El orden de carga: el módulo antes que los tres.
+  const idx = raiz('index.html');
+  const iMod = idx.indexOf('src/brand-logo.js');
+  prueba('se carga antes que quien lo usa',
+    iMod > 0 &&
+    iMod < idx.indexOf('src/consumption-report.js') &&
+    iMod < idx.indexOf('src/email-order.js') &&
+    iMod < idx.indexOf('src/email-cost-report.js'));
+}
+
 grupo('el PDF lleva el mismo degradado');
 {
   // ── Por qué aquí se dibuja y no se maqueta ──────────────────────
@@ -294,10 +337,10 @@ grupo('el PDF lleva el mismo degradado');
   // las de la app. Dos degradados parecidos en la pantalla y en el
   // papel es peor que uno solo mal elegido: nadie lo nota hasta que
   // alguien pone las dos cosas lado a lado.
-  const pdf = raiz('src/email-order.js');
+  const pdf = raiz('src/brand-logo.js');
   const tema = raiz('styles/theme.css');
 
-  prueba('el wordmark se parte en Bar + Stock', /txt\('Bar', margin/.test(pdf));
+  prueba('el wordmark se parte en Bar + Stock', /text\('Bar', x, y\)/.test(pdf));
   prueba('y "Stock" se dibuja letra a letra',
     /for \(let i = 0; i < STOCK\.length/.test(pdf));
 

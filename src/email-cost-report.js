@@ -28,17 +28,15 @@
     ctx.fillStyle = '#1e5b8a';
     ctx.fillRect(0, 0, W, 52);
 
-    // Logo
-    ctx.font = 'bold 22px -apple-system, Helvetica, sans-serif';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText('BarStock', 24, 33);
-    const bw = ctx.measureText('BarStock').width;
-    ctx.fillStyle = '#93c5fd';
-    ctx.fillText('.', 24 + bw, 33);
-    const dw = ctx.measureText('.').width;
-    ctx.font = 'bold 11px -apple-system, Helvetica, sans-serif';
-    ctx.fillStyle = '#cbd5e1';
-    ctx.fillText('PRO', 24 + bw + dw + 3, 31);
+    // ── Logo ────────────────────────────────────────────────────────
+    //
+    // Aquí había un punto TIPOGRÁFICO —un "." de la fuente— y no el
+    // círculo del brandbook, que es la regla que más se incumple. Y el
+    // wordmark iba en blanco.
+    //
+    // Canvas sí sabe hacer degradados de verdad, así que "Stock" sale
+    // continuo: mejor que en el PDF, que lo pinta letra a letra.
+    window.BarStockBrandLogo.enCanvas(ctx, { x: 24, y: 33, size: 22 });
 
     // Title right
     ctx.font = 'bold 13px -apple-system, Helvetica, sans-serif';
