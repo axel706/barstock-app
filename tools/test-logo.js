@@ -121,8 +121,14 @@ grupo('"Stock" viaja de verde a azul, y no desaparece si no se puede');
   // esté soportado, eso es un logo INVISIBLE. El color sólido tiene
   // que declararse fuera del @supports y antes.
   const fuera = /\.m-logo \.m-logo-st\s*\{([^}]*)\}/.exec(hoja);
+  // El respaldo puede ser un color literal o la variable de marca —
+  // pero la variable tiene que traer SU propio respaldo, porque un
+  // `var()` sin segundo argumento en un navegador que no la conozca
+  // deja la propiedad sin valor y volvemos al logo invisible.
   prueba('hay un color sólido de respaldo',
-    !!fuera && /color:\s*#[0-9a-f]{3,6}/i.test(fuera[1]), (fuera && fuera[1] || '').trim());
+    !!fuera && (/color:\s*#[0-9a-f]{3,6}/i.test(fuera[1]) ||
+                /color:\s*var\(--bs-stock-solid,\s*#[0-9a-f]{3,6}\)/i.test(fuera[1])),
+    (fuera && fuera[1] || '').trim());
   prueba('y no es transparente',
     !!fuera && !/color:\s*transparent/.test(fuera[1]));
 
@@ -130,9 +136,20 @@ grupo('"Stock" viaja de verde a azul, y no desaparece si no se puede');
     /@supports[^{]*background-clip:\s*text[^{]*\{[\s\S]{0,600}?\.m-logo \.m-logo-st/.test(hoja));
   prueba('con el prefijo -webkit, que es quien lo soporta en iOS',
     /-webkit-background-clip:\s*text/.test(hoja));
+  // ── El degradado vive en una variable ──────────────────────────
+  //
+  // Lo usan cuatro sitios: la banda del móvil, la cabecera del
+  // escritorio, la pantalla de entrada y la bienvenida. Cuatro copias
+  // de tres paradas de color acaban siendo cuatro degradados
+  // distintos, y entonces el logo deja de ser uno.
+  const tema = raiz("styles/theme.css");
+  prueba('el degradado está en una sola variable',
+    /--bs-stock-grad:\s*linear-gradient\(/.test(tema));
   prueba('acaba en el azul del punto',
-    /linear-gradient\([^)]*#38bdf8[^)]*\)/.test(hoja) &&
+    /--bs-stock-grad:[^;]*#38bdf8[^;]*;/.test(tema) &&
     /\.m-logo \.m-logo-dot[\s\S]{0,200}background:\s*#38bdf8/.test(hoja));
+  prueba('y el móvil la usa en vez de su copia',
+    /background:\s*var\(--bs-stock-grad\)/.test(hoja));
 
   // text-shadow sobre texto transparente pinta la sombra POR DELANTE
   // del degradado. Pero quitarla a secas deja "Stock" sin contraste
@@ -238,6 +255,30 @@ grupo('los fondos no engordan');
     !fs.existsSync(path.join(__dirname, '..', r)));
   prueba('todos los del catálogo existen', faltan.length === 0, faltan.join(', '));
   prueba('y el catálogo no está vacío', rutas.length >= 5, rutas.length + ' fondos');
+}
+
+grupo('los otros tres logos llevan el mismo degradado');
+{
+  // La cabecera del escritorio, la pantalla de entrada y la
+  // bienvenida. Antes iban en blanco mientras el móvil ya viajaba de
+  // verde a azul: el mismo producto con dos marcas.
+  const app = raiz("styles/app.css");
+  const idx = raiz("index.html");
+  const onb = raiz("src/onboarding.js");
+
+  prueba('hay una regla compartida', /\.bs-stock\s*\{/.test(app));
+  prueba('con su color sólido fuera del @supports',
+    /\.bs-stock\{[^}]*color:var\(--bs-stock-solid/.test(app.replace(/\s+/g, '')));
+  prueba('y el degradado dentro',
+    /@supports[^{]*background-clip:text[^{]*\{[\s\S]{0,900}?\.bs-stock\{/
+      .test(app.replace(/\s+/g, '')));
+
+  prueba('la cabecera del escritorio parte el wordmark',
+    /id="headerLogo">Bar<b class="bs-stock">Stock<\/b>/.test(idx), 'headerLogo');
+  prueba('la pantalla de entrada también',
+    /auth-brand-type">Bar<b class="bs-stock">Stock<\/b>/.test(idx), 'authCardBrand');
+  prueba('y la bienvenida',
+    /Bar<b class="bs-stock">Stock<\/b>/.test(onb), 'onboarding');
 }
 
 grupo('el caché se rompe cuando la hoja cambia');

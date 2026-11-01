@@ -1584,6 +1584,39 @@
       text-transform:uppercase;
     }
 
+    /* ── El "Stock" del logo ───────────────────────────────────────
+     *
+     * Una sola regla para la cabecera del escritorio, la pantalla de
+     * entrada y la bienvenida. El móvil tiene la suya porque además
+     * lleva sombra: va sobre la foto de la locación.
+     *
+     * ── El color sólido va PRIMERO, y no es decorativo ────────────
+     *
+     * `background-clip: text` necesita `color: transparent` para que
+     * se vea el fondo. Donde no esté soportado, un texto transparente
+     * es un texto INVISIBLE y el logo desaparece. Por eso el verde
+     * sólido se declara antes y el degradado entra dentro de un
+     * @supports.
+     *
+     * Y por eso esto NO vale para los correos ni el PDF: Outlook y
+     * Gmail no soportan background-clip y el logo saldría en blanco.
+     * Allí hay que usar la versión de color sólido. */
+    .bs-stock{ font-weight:inherit; color:var(--bs-stock-solid,#6ee7b7); }
+
+    @supports ((-webkit-background-clip: text) or (background-clip: text)){
+      .bs-stock{
+        background:var(--bs-stock-grad);
+        -webkit-background-clip:text;
+                background-clip:text;
+        color:transparent;
+        /* `text-shadow` sobre texto transparente dibuja la sombra de
+         * la forma de la letra POR DELANTE del degradado. Ninguno de
+         * estos tres sitios la lleva hoy, pero si alguien se la pone
+         * al wordmark, esto impide que emborrone el degradado. */
+        text-shadow:none;
+      }
+    }
+
     .brand-logo-type{
       /* El logo NO hereda la tipografia de la app. Antes si lo hacia, y en
          cuanto exista el selector de tipografia el logo cambiaria con ella.

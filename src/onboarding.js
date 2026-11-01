@@ -33,7 +33,7 @@
         <div id="bsObWelcome" style="font-size:12px;font-weight:500;color:#38bdf8;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:6px;opacity:0;transition:opacity 0.5s ease;">Welcome to</div>
 
         <div style="position:relative;display:inline-flex;align-items:baseline;margin-bottom:16px;">
-          <div id="bsObBarstock" style="font-size:52px;font-weight:800;letter-spacing:-0.03em;line-height:1;color:#f8fafc;opacity:0;transform:translateX(-10px);transition:opacity 0.5s ease,transform 0.5s ease;">BarStock</div>
+          <div id="bsObBarstock" style="font-size:52px;font-weight:800;letter-spacing:-0.03em;line-height:1;color:#f8fafc;opacity:0;transform:translateX(-10px);transition:opacity 0.5s ease,transform 0.5s ease;">Bar<b class="bs-stock">Stock</b></div>
           <div style="position:relative;display:inline-flex;align-items:flex-end;justify-content:center;width:14px;margin-bottom:8px;">
             <div id="bsObBurst1" style="position:absolute;border-radius:50%;background:#38bdf8;pointer-events:none;transform:translate(-50%,-50%);left:50%;top:50%;width:10px;height:10px;opacity:0;"></div>
             <div id="bsObBurst2" style="position:absolute;border-radius:50%;background:rgba(56,189,248,0.4);pointer-events:none;transform:translate(-50%,-50%);left:50%;top:50%;width:10px;height:10px;opacity:0;"></div>

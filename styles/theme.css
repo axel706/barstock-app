@@ -1,5 +1,16 @@
 @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
 :root{
+      /* ── "Stock" viaja de verde a azul ─────────────────────────────
+         El wordmark sale verde y aterriza en el azul del punto, que
+         deja de ser un color suelto y pasa a ser el final del
+         recorrido.
+
+         Vive aquí porque lo usan cuatro sitios: la banda del móvil, la
+         cabecera del escritorio, la pantalla de entrada y la
+         bienvenida. Cuatro copias de tres paradas de color acaban
+         siendo cuatro degradados distintos. */
+      --bs-stock-grad: linear-gradient(95deg, #6ee7b7 0%, #5eead4 45%, #38bdf8 100%);
+      --bs-stock-solid: #6ee7b7;
       --control-h:38px;
       --control-radius:10px;
       --control-font:13px;

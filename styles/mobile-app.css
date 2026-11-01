@@ -487,11 +487,14 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * background-clip— y el logo saldría en blanco. Si algún día se
    * quiere en el correo o el PDF, hay que usar la versión de color
    * sólido, no ésta. */
-  .m-logo .m-logo-st { font-weight: inherit; color: #6ee7b7; }
+  .m-logo .m-logo-st { font-weight: inherit; color: var(--bs-stock-solid, #6ee7b7); }
 
   @supports ((-webkit-background-clip: text) or (background-clip: text)) {
     .m-logo .m-logo-st {
-      background: linear-gradient(95deg, #6ee7b7 0%, #5eead4 45%, #38bdf8 100%);
+      /* La misma variable que usan la cabecera del escritorio, la
+       * entrada y la bienvenida. Cuatro copias del degradado acaban
+       * siendo cuatro degradados distintos. */
+      background: var(--bs-stock-grad);
       -webkit-background-clip: text;
               background-clip: text;
       color: transparent;
