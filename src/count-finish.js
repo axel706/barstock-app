@@ -641,7 +641,7 @@
       // `weekly_reset_at` acaba de moverse: hay que releerla y repintar
       // el boton del ciclo. Sin esto el boton seguia ofreciendo "Load the
       // count" con el conteo ya cerrado, hasta recargar la pagina.
-      await window.BarStockCycleOpen?.settle?.();
+      await window.BarStockCycleOpen?.settle?.('count');
 
       // Y reconstruir que filas cuentan como ya pedidas, ahora contra la
       // frontera NUEVA. Es lo que hace que la pantalla de ordenes arranque

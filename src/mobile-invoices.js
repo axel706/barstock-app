@@ -56,6 +56,7 @@
   let _descartadas = { comida: [], ocultas: [] };
   let _verFuera = '';   // '' | 'comida' | 'ocultas' | 'antes'
   let _viejas = null;   // facturas de ciclos anteriores, bajo demanda
+  let _ciclos = null;   // aperturas registradas, de la mas nueva a la mas vieja
   let _abierta = null;    // order_id de la que se está mirando
   let _busy = new Set();
 
@@ -80,6 +81,114 @@
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .toUpperCase().replace(/['\u2018\u2019\u00b4`]/g, '')
       .replace(/[^A-Z0-9]+/g, ' ').trim();
+  }
+
+  // ── Los ciclos que hubo ─────────────────────────────────────────
+  //
+  // `cycle_periods` guarda una fila por apertura. El FIN de un ciclo
+  // es el inicio del siguiente, asi que no se guarda: se deduce.
+  //
+  // Si la tabla no existe todavia —su SQL se corre a mano— se
+  // devuelve lista vacia y la pantalla se comporta como antes, con un
+  // solo cajon. Que falte una migracion no puede tumbar una vista.
+  async function ciclos() {
+    if (_ciclos) return _ciclos;
+    const { url, key } = cfg();
+    const nombre = (window.BARSTOCK_CONFIG || {}).LOCATION_NAME || '';
+    if (!url || !key || !nombre) { _ciclos = []; return _ciclos; }
+    try {
+      const r = await fetch(
+        `${url}/rest/v1/cycle_periods?location_name=eq.${encodeURIComponent(nombre)}` +
+        `&select=started_at&order=started_at.desc&limit=200`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+      const filas = await r.json();
+      if (!Array.isArray(filas)) {
+        console.warn('[facturas] falta la tabla cycle_periods. Corre la migracion 021.');
+        _ciclos = [];
+      } else {
+        _ciclos = filas.map(f => f.started_at).filter(Boolean);
+      }
+    } catch (e) {
+      console.warn('[facturas] no se pudieron leer los ciclos', e);
+      _ciclos = [];
+    }
+    return _ciclos;
+  }
+
+  // Fecha local 'YYYY-MM-DD' de una marca de tiempo. La misma cuenta
+  // que `fechaInicioLocal()` del ciclo: cortar el ISO da la fecha UTC,
+  // y un ciclo abierto el 26 por la tarde en Pensilvania es el 27 en
+  // UTC. Las facturas traen fecha sin hora, o sea local.
+  function ymdLocal(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    const p = (n) => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+
+  // 'Oct 26'
+  function corto(ymd) {
+    const t = dia(ymd);
+    if (!t.t) return ymd || '';
+    return new Date(t.t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  // ── Las facturas, con su cabecera de ciclo ──────────────────────
+  //
+  // `agrupar` en false para las otras dos vistas —comida y ocultas—,
+  // donde el ciclo no es la pregunta: ahi se listan seguidas, como
+  // siempre.
+  function tarjetaFactura(f) {
+    return '<div class="m-hcard">' +
+      '<span class="m-hcard-l">' +
+        '<span class="m-hcard-v">' + esc(f.vendor || 'Unknown vendor') + '</span>' +
+        '<span class="m-hcard-m">' +
+          (f.numero ? esc(f.numero) + ' · ' : '') +
+          (f.fecha ? esc(dia(f.fecha).txt) + ' · ' : '') +
+          f.n + (f.n === 1 ? ' line' : ' lines') +
+        '</span>' +
+      '</span>' +
+      '<span class="m-hcard-r"><span class="m-hcard-a">' +
+        dinero(f.total) + '</span></span>' +
+    '</div>';
+  }
+
+  function pintarGrupos(grupos, agrupar) {
+    if (!agrupar) {
+      return grupos.reduce((a, g) => a.concat(g.facturas), [])
+                   .map(tarjetaFactura).join('');
+    }
+    let html = '';
+    for (const g of grupos) {
+      // Un ciclo sin facturas no se anuncia. La cabecera esta para
+      // separar lo que hay, no para listar semanas vacias.
+      if (!g.facturas.length) continue;
+
+      const total = g.facturas.reduce((a, f) => a + (Number(f.total) || 0), 0);
+      const n = g.facturas.length;
+
+      let titulo, meta;
+      if (g.sinRegistro) {
+        titulo = g.hasta ? 'Before ' + corto(g.hasta) : 'No date';
+        // Se dice POR QUE no tiene rango. La alternativa —enseñar una
+        // fecha inventada— es peor que decir que no se sabe.
+        meta = 'cycles not recorded yet';
+      } else {
+        titulo = corto(g.desde) + ' – ' + corto(g.hasta);
+        const d = Math.max(1, Math.round(
+          (dia(g.hasta).t - dia(g.desde).t) / 86400000));
+        meta = d + (d === 1 ? ' day' : ' days');
+      }
+
+      html += '<div class="m-iciclo">' +
+          '<span class="m-iciclo-t">' + esc(titulo) + '</span>' +
+          '<span class="m-iciclo-s">' + esc(meta) + ' · ' +
+            n + (n === 1 ? ' invoice' : ' invoices') + ' · ' +
+            esc(dinero(total)) + '</span>' +
+        '</div>' +
+        g.facturas.map(tarjetaFactura).join('');
+    }
+    return html;
   }
 
   function desdeCiclo() {
@@ -310,9 +419,20 @@
     const n = _facturas.length;
 
     if (!n) {
+      // El pie va TAMBIEN aqui, y es donde mas falta hace: el dia
+      // despues de abrir un ciclo no hay ni una factura propia, y sin
+      // el pie la unica puerta a las anteriores no existe. Justo lo
+      // que ve quien acaba de reiniciar la semana.
+      //
+      // Estaba fuera por el return temprano de arriba. Es el mismo
+      // patron que ya mordio en settings-integrations.js y en el panel
+      // de admin: codigo que decide lo que el usuario ve, colocado
+      // donde no se ejecuta en el camino que importa.
       host.innerHTML = cabecera() +
         '<div class="m-ivacio"><b>No invoices yet this cycle.</b><br>' +
-        'They show up on their own as MarginEdge closes them.</div>';
+        'They show up on their own as MarginEdge closes them.</div>' +
+        pieHuecos();
+      enlacesDelPie(host);
       salirDeLaRaiz(host);
       return;
     }
@@ -354,6 +474,13 @@
     host.querySelectorAll('[data-inv]').forEach(b => {
       b.onclick = () => { _abierta = _facturas[Number(b.dataset.inv)].id; pintar(host); cambioDeNivel(); };
     });
+    enlacesDelPie(host);
+  }
+
+  // Los enlaces del pie, en su propia funcion: los pintan DOS caminos
+  // —la lista con facturas y la lista vacia— y engancharlos solo en
+  // uno es como el de arriba se quedo sin ellos.
+  function enlacesDelPie(host) {
     host.querySelectorAll('[data-ver]').forEach(b => {
       b.onclick = () => { _verFuera = b.dataset.ver; pintar(host); cambioDeNivel(); };
     });
@@ -437,30 +564,51 @@
       .sort((x, y) => String(y.fecha).localeCompare(String(x.fecha)) ||
                       String(x.vendor).localeCompare(String(y.vendor)));
 
+    // ── Repartirlas por el ciclo en que cayeron ─────────────────────
+    //
+    // Era un cajon plano: en dos meses, cuatrocientas facturas
+    // ordenadas por fecha y nada mas. Ahora cada una cae en el ciclo
+    // que estaba abierto el dia que llego.
+    //
+    // El ultimo grupo es el de antes del primer registro. Esa historia
+    // NO existe —`weekly_reset_at` solo recordaba el ciclo abierto— y
+    // no hay de donde sacarla, asi que se dice con esas palabras en
+    // vez de inventar una fecha.
+    const aperturas = cual === 'antes' ? await ciclos() : [];
+    const grupos = [];
+    if (aperturas.length) {
+      // De la mas nueva a la mas vieja: [inicio, fin) en fecha local.
+      for (let i = 0; i < aperturas.length; i++) {
+        grupos.push({
+          desde: ymdLocal(aperturas[i]),
+          hasta: i === 0 ? desdeCiclo() : ymdLocal(aperturas[i - 1]),
+          facturas: []
+        });
+      }
+    }
+    // El cajon del final, siempre: recoge lo anterior al primer
+    // registro, y tambien cualquier factura sin fecha legible.
+    const primera = aperturas.length ? ymdLocal(aperturas[aperturas.length - 1]) : '';
+    grupos.push({ desde: '', hasta: primera, facturas: [], sinRegistro: true });
+
+    for (const f of facturas) {
+      const d = String(f.fecha || '').slice(0, 10);
+      const g = grupos.find(x => !x.sinRegistro && d >= x.desde && d < x.hasta);
+      (g || grupos[grupos.length - 1]).facturas.push(f);
+    }
+
     const sub = cual === 'comida'
       ? 'Invoices with lines whose product is not in a beverage category. ' +
         'The count is lines; this list is invoices.'
       : cual === 'ocultas'
         ? 'Invoices from vendors you marked as not yours.'
-        : 'Invoices kept but dated before this cycle opened on ' + esc(desdeCiclo()) + '.';
+        : 'Invoices from cycles that are already closed. Nothing is deleted — ' +
+          'the prices and matches they set are still in place.';
 
     host.innerHTML =
       cab({ volverA: 'Invoices', titulo: titulo }) +
       '<div class="m-isub">' + sub + '</div>' +
-      (facturas.length
-        ? facturas.map(f =>
-            '<div class="m-hcard">' +
-              '<span class="m-hcard-l">' +
-                '<span class="m-hcard-v">' + esc(f.vendor || 'Unknown vendor') + '</span>' +
-                '<span class="m-hcard-m">' +
-                  (f.numero ? esc(f.numero) + ' · ' : '') +
-                  (f.fecha ? esc(dia(f.fecha).txt) + ' · ' : '') +
-                  f.n + (f.n === 1 ? ' line' : ' lines') +
-                '</span>' +
-              '</span>' +
-              '<span class="m-hcard-r"><span class="m-hcard-a">' +
-                dinero(f.total) + '</span></span>' +
-            '</div>').join('')
+      (facturas.length ? pintarGrupos(grupos, cual === 'antes')
         : '<div class="m-ivacio"><b>Nothing here.</b><br>' +
           'The count came from a different query — tell me and I will look at it.</div>') +
       '<div class="m-ipie">' + facturas.length +

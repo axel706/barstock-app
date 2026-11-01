@@ -3549,6 +3549,24 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * existe: justo encima está el subtítulo de la pantalla. */
   .m-isub + .m-iday { margin-top: 18px; }
 
+  /* ── Cabecera de ciclo en "Earlier cycles" ────────────────────────
+   *
+   * Separa los grupos de la lista de facturas cerradas. Es una
+   * cabecera, no una tarjeta: la línea de abajo basta para agrupar y
+   * una caja más competiría con las tarjetas de factura, que son lo
+   * que se viene a mirar. */
+  .m-iciclo {
+    display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap;
+    margin: 22px 2px 10px; padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,.10);
+  }
+  .m-isub + .m-iciclo { margin-top: 14px; }
+  .m-iciclo-t {
+    font-size: var(--m-strong); font-weight: 800;
+    color: #fff; letter-spacing: -.2px;
+  }
+  .m-iciclo-s { font-size: var(--m-meta); color: #8aa0b4; }
+
   /* La lista reusa `.m-hcard`, la tarjeta del historial de órdenes y
    * de las filas de inventario. La primera versión eran filas sueltas
    * separadas por una rayita: al lado del resto de la app parecían de
