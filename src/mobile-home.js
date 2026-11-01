@@ -711,10 +711,17 @@
       icoR: 'tag'
     },
     {
+      // ── Sin jerga ─────────────────────────────────────────────────
+      //
+      // La primera versión contaba la mecánica: media ponderada, un
+      // 35% de colchón, la corrección por semanas agotadas. Todo eso
+      // es cierto y a nadie detrás de una barra le importa. Lo que
+      // hace falta saber es qué hace, para qué sirve y dónde está.
       k: 'Did you know',
-      tt: 'The app suggests pars',
-      sub: 'Search a bottle. If your history says a different par than the ' +
-           'one you typed, Pour·IQ says so and you can take it with one tap.',
+      tt: 'Pour·IQ has an opinion',
+      sub: 'It knows which bottles you keep running out of and which ones ' +
+           'just sit there. Search a bottle and it tells you the number ' +
+           'worth keeping.',
       icoR: 'brain'
     }
   ];
