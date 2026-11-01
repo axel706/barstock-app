@@ -126,11 +126,46 @@
   //
   // Se contesta aquí y no en la tarjeta porque es una pregunta sobre
   // el ciclo, y porque la hacen dos pantallas.
+  // ¿Queda algo por pedir? Mientras quede, no hay callejón: la
+  // respuesta es pedir, no empezar la semana de nuevo.
+  function quedaPorPedir() {
+    if (typeof window.getActiveVendors !== 'function' ||
+        typeof window.getOrderRowsForVendor !== 'function') return true;
+    try {
+      return window.getActiveVendors().some(v => {
+        const f = window.getOrderRowsForVendor(v) || [];
+        return f.length > 0;
+      });
+    } catch (e) {
+      // Sin saberlo, se dice que SÍ queda: ofrecer la salida por un
+      // fallo de lectura es peor que no ofrecerla.
+      return true;
+    }
+  }
+
+  // ── El callejón sin salida ───────────────────────────────────────
+  //
+  // Lo até primero a `cicloViejo()` —más de siete días— y era el
+  // criterio equivocado: un ciclo abierto el 26 mirado el 1 son seis
+  // días, así que la salida habría aparecido justo el día DESPUÉS de
+  // hacer falta. Para alguien que trabaja por semanas, siempre tarde.
+  //
+  // Los días no son la señal. La señal es que no hay nada que contar
+  // Y nada que pedir: ahí la app no ofrece absolutamente nada y la
+  // semana no puede avanzar.
+  //
+  // El suelo de tres días —el mismo que usa un conteo abandonado— es
+  // sólo para que la salida no aparezca el mismo rato en que acabas
+  // de pedirlo todo.
+  const SUELO_MS = 3 * 24 * 60 * 60 * 1000;
+
   function cicloSinContar() {
     if (_countingSince) return false;        // hay un conteo en marcha
     if (_resetAt === null) return false;     // no hay ciclo
     if (countLoaded()) return false;         // ya se contó
-    return cicloViejo();
+    const ms = edadCiclo();
+    if (ms === null || ms < SUELO_MS) return false;
+    return !quedaPorPedir();
   }
 
   function cicloViejo() {

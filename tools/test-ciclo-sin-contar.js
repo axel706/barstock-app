@@ -77,8 +77,12 @@ function entorno(o) {
     pausado: () => false,
     abandonado: () => false,
     hace: (ms) => Math.round(ms / 60000) + ' min',
-    // La de verdad: abierto, sin conteo, y más viejo que su semana.
-    cicloSinContar: () => !o.counting && !o.contado && o.dias > 7,
+    // Aquí es un stub A PROPÓSITO: esta prueba es de las PANTALLAS.
+    // Quién decide que hay callejón —ciclo abierto, nada contado y
+    // nada que pedir, con suelo de tres días— se prueba de verdad,
+    // cargando el módulo, en `tools/test-salida-ciclo.js`.
+    cicloSinContar: () =>
+      !o.counting && !o.contado && o.dias >= 3 && !o.porPedir,
     reiniciar: () => { w.__reiniciado = (w.__reiniciado || 0) + 1; }
   };
 
@@ -131,6 +135,22 @@ grupo('un ciclo de ayer habla como un ciclo de ayer');
   prueba('la pantalla del ciclo tampoco la ofrece', !h.querySelector('#mcOtra'));
   // Pero importar sí está, siempre: es la otra forma de cargar el conteo.
   prueba('aunque importar sí', !!h.querySelector('#mcFile'));
+}
+
+grupo('el de Will\'s & Bill\'s: abierto el 26, mirado el 1');
+{
+  // La captura que lo destapó: CYCLE OPEN · OCT 26 con [Count now]
+  // [Import a file] y nada más. Seis días. "no hay salida".
+  const w = entorno({ dias: 6 });
+  const c = home(w);
+  prueba('a los 6 días la tarjeta ofrece la salida',
+    /Start over/.test(c.textContent), c.textContent.slice(0, 180));
+  prueba('y ya no ofrece importar como segundo botón',
+    !/Import a file/.test(c.textContent), c.textContent.slice(0, 180));
+
+  const h = ciclo(w);
+  prueba('la pantalla del ciclo también', !!h.querySelector('#mcOtra'));
+  prueba('y ahí importar sigue estando', !!h.querySelector('#mcFile'));
 }
 
 grupo('uno de hace diez días, no');
