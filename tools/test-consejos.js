@@ -171,6 +171,68 @@ grupo('los consejos dicen la verdad de hoy');
     sinCamino.map(t => t.slice(0, 40)).join(' | '));
 }
 
+grupo('la app recibe con una distinta cada vez');
+{
+  // Sin esto, cada arranque empezaba por la bienvenida —que se aprende
+  // el primer dia— y las otras siete solo las veia quien dejara el
+  // Home abierto varios minutos. O sea casi nadie.
+  prueba('el indice se guarda', /CLAVE_CONSEJO/.test(js));
+  prueba('en localStorage', /localStorage\.setItem\(CLAVE_CONSEJO/.test(js));
+
+  // Se avanza AL CARGAR y no al salir: cerrar la app de golpe no
+  // dispara ningun evento fiable en iOS, y una marca que depende de
+  // despedirse bien se queda atascada.
+  prueba('y se avanza al cargar, no al cerrar',
+    !/beforeunload|pagehide/.test(js));
+
+  // La primera vez de todas, la bienvenida: para eso esta la primera.
+  const ini = /let _consejo = \(\(\) => \{([\s\S]*?)\}\)\(\);/.exec(js);
+  prueba('arranca la logica de inicio', !!ini);
+  prueba('sin marca previa empieza en cero',
+    !!ini && /prev === null \? 0/.test(ini[1]), ini && ini[1].slice(0, 80));
+
+  // Y el indice da la vuelta: el modulo lo usa con modulo en los dos
+  // sitios, asi que un numero guardado grande no rompe nada.
+  prueba('el indice da la vuelta',
+    (js.match(/% CONSEJOS\.length/g) || []).length >= 2);
+
+  // Comprobacion de verdad: se ejecuta el modulo dos veces con el
+  // mismo almacen y tiene que salir un consejo distinto.
+  let JSDOM = null;
+  try { JSDOM = require('jsdom').JSDOM; } catch (e) {}
+  if (!JSDOM) {
+    prueba('(hace falta jsdom para esta parte)', false, 'npm install');
+  } else {
+    const dom = new JSDOM('<!doctype html><body></body>', { url: 'https://x.test/' });
+    const w = dom.window;
+    const leido = [];
+    // Un entorno minimo: solo interesa con que consejo arranca.
+    for (let i = 0; i < 3; i++) {
+      global.window = w; global.document = w.document;
+      global.localStorage = w.localStorage;
+      w.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} });
+      w.state = { master: [] };
+      w.BarStockWeeklyCycle = { estado: () => 'loading' };
+      w.getActiveVendors = () => []; w.getOrderRowsForVendor = () => [];
+      w.computeOrderSubtotal = () => 0; w.isRowPlaced = () => false;
+      w.BARSTOCK_CONFIG = {}; w.BarStockToast = { show() {} };
+      delete w.BarStockMobileHome;
+      new Function(js)();
+      const host = w.document.createElement('div');
+      host.className = 'm-screen on'; host.dataset.screen = 'home';
+      w.document.body.appendChild(host);
+      w.BarStockMobileHome.render(host);
+      const t = host.querySelector('.m-hero-tip .m-hero-t');
+      leido.push(t ? t.textContent : '');
+      host.remove();
+    }
+    prueba('tres arranques, tres consejos distintos',
+      new Set(leido).size === 3, leido.join(' | '));
+    prueba('y el primero es la bienvenida',
+      /Good to have you/.test(leido[0]), leido[0]);
+  }
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') +
             '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);

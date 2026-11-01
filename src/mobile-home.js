@@ -726,7 +726,33 @@
     }
   ];
 
-  let _consejo = 0;
+  // ── La app te recibe con una distinta cada vez ──────────────────
+  //
+  // El índice sobrevive al cierre. Sin esto, cada arranque empezaba
+  // por la bienvenida —que se aprende el primer día— y las otras
+  // siete sólo las veía quien dejara el Home abierto varios minutos.
+  // O sea casi nadie.
+  //
+  // Se avanza AL CARGAR, no al salir: cerrar la app de golpe no
+  // dispara ningún evento fiable en iOS, y una marca que depende de
+  // despedirse bien se queda atascada.
+  //
+  // La primera vez de todas empieza en la bienvenida, que para eso
+  // está la primera.
+  const CLAVE_CONSEJO = 'bs_consejo';
+
+  let _consejo = (() => {
+    let prev = null;
+    try { prev = window.localStorage.getItem(CLAVE_CONSEJO); } catch (e) {}
+    // Sin marca previa: la bienvenida. Con marca: la siguiente.
+    const n = prev === null ? 0 : (Number(prev) + 1);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  })();
+
+  function recordarConsejo() {
+    try { window.localStorage.setItem(CLAVE_CONSEJO, String(_consejo)); } catch (e) {}
+  }
+  recordarConsejo();
 
   function tarjetaBienvenida() {
     return Object.assign({}, CONSEJOS[_consejo % CONSEJOS.length], {
@@ -763,6 +789,10 @@
     if (document.hidden) return;
 
     _consejo = (_consejo + 1) % CONSEJOS.length;
+    // También se guarda al rotar: si dejas el Home abierto diez
+    // minutos y cierras, al volver sigue por donde iba y no repite
+    // las que acabas de ver.
+    recordarConsejo();
     const c = CONSEJOS[_consejo];
 
     art.classList.add('cambiando');
