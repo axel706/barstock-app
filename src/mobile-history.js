@@ -139,7 +139,7 @@
     try {
       facturas = await leerTodo(url, key,
         `marginedge_invoice_lines?location_id=eq.${locId}` +
-        `&select=product_id,quantity,invoice_date,invoice_number,vendor_name` +
+        `&select=product_id,quantity,unit_price,invoice_date,invoice_number,vendor_name` +
         `&order=order_id.asc`);
       enlaces = await leerTodo(url, key,
         `marginedge_links?location_id=eq.${locId}` +
@@ -158,6 +158,10 @@
       recibos.push({
         item,
         qty: Number(f.quantity) || 0,
+        // Lo que de verdad costó. Sin esto, "Received" multiplicaba lo
+        // recibido por el precio de TU catálogo: una orden de $55.78
+        // en la factura aparecía como $71.98 recibidos.
+        precio: Number(f.unit_price) || 0,
         fecha: f.invoice_date ? new Date(f.invoice_date).getTime() : 0,
         factura: f.invoice_number || ''
       });
@@ -216,6 +220,9 @@
       const items = ls.map(l => {
         const pedido = Number(l.quantity) || 0;
         let llegado = 0;
+        let dinero = 0;
+        let conPrecio = false;
+        let precioFactura = 0;
         let factura = '';
         for (const r of recibos) {
           if (r.usado) continue;
@@ -223,6 +230,12 @@
           if (r.fecha && r.fecha < suelo) continue;
           if (llegado >= pedido) break;
           llegado += r.qty;
+          // El dinero sale de la FACTURA, no del catálogo. Si una
+          // línea viene sin precio se cae al tuyo para esa línea: un
+          // cero ahí restaría del total y diría que llegó más barato
+          // de lo que llegó.
+          if (r.precio > 0) { dinero += r.qty * r.precio; conPrecio = true; precioFactura = r.precio; }
+          else { dinero += r.qty * (Number(l.unit_price) || 0); }
           if (!factura && r.factura) factura = r.factura;
           r.usado = true;
         }
@@ -231,6 +244,9 @@
           pedido,
           recibido: llegado,
           precio: Number(l.unit_price) || 0,
+          dinero,
+          conPrecio,
+          precioFactura,
           factura
         };
       });
@@ -245,7 +261,12 @@
                    : 'ok';
 
       const pedidoDinero   = items.reduce((s, i) => s + i.pedido * i.precio, 0);
-      const recibidoDinero = items.reduce((s, i) => s + i.recibido * i.precio, 0);
+      // Lo que costó de verdad. `i.dinero` ya viene de la factura
+      // cuando la hay.
+      const recibidoDinero = items.reduce((s, i) => s + i.dinero, 0);
+      // ¿Alguna línea trae precio de factura? Si no, lo que se enseña
+      // es una estimación con tus precios y hay que decirlo.
+      const precioReal = items.some(i => i.conPrecio);
 
       return {
         // DOS ids, y no son intercambiables:
@@ -263,7 +284,7 @@
         po: o.po_number || '',
         fecha: o.created_at,
         items, estado, cortos, sobras,
-        pedidoDinero, recibidoDinero,
+        pedidoDinero, recibidoDinero, precioReal,
         factura: (items.find(i => i.factura) || {}).factura || '',
         ciclo: cicloDe(o.created_at, cortes)
       };
@@ -493,7 +514,24 @@
   function pintarDetalle(host) {
     const o = _orden;
     const faltan = o.items.filter(i => i.recibido < i.pedido);
-    const diferencia = o.pedidoDinero - o.recibidoDinero;
+
+    // ── Dos causas distintas, dos cuentas distintas ───────────────
+    //
+    // Desde que "Received" sale de la factura, la resta entre pedido y
+    // recibido mezcla dos cosas: mercancía que no llegó y mercancía
+    // que llegó a otro precio. Decir que todo "never arrived" acusa a
+    // la segunda de ser la primera.
+    //
+    // Lo que falta se cuenta con TU precio: es lo que no llegó, y de
+    // lo que no llegó no hay factura.
+    const diferencia = faltan.reduce(
+      (s, i) => s + (i.pedido - i.recibido) * i.precio, 0);
+
+    // Y los que llegaron a un precio distinto del tuyo.
+    const CAMBIO_MIN = 0.005;
+    const cambios = o.items.filter(i =>
+      i.recibido > 0 && i.precioFactura > 0 &&
+      Math.abs(i.precioFactura - i.precio) > CAMBIO_MIN);
 
     const lineas = o.items.map(i => {
       const mal = i.recibido !== i.pedido;
@@ -527,13 +565,69 @@
             'figure below already reflects that.</div>'
           : '') +
 
+      // ── Los precios de esta factura ────────────────────────────
+      //
+      // Aquí es donde se ve: tienes la orden delante y el papel al
+      // lado. La campana ya avisa de todos los precios del ciclo,
+      // pero esto es el de ESTA entrega, y aprobarlo aquí ahorra ir a
+      // buscarlo.
+      //
+      // Se aplica con `aplicarPrecios` del módulo de compras, el
+      // mismo que usa la campana: una sola forma de escribir un
+      // precio.
+      (cambios.length
+        ? '<div class="m-hprec">' +
+            '<div class="m-hprec-h">' + cambios.length +
+              (cambios.length === 1 ? ' price is different' : ' prices are different') +
+              ' on this invoice</div>' +
+            cambios.map(i =>
+              '<div class="m-hprec-l"><span class="n">' + esc(i.item) + '</span>' +
+                '<span class="v ' + (i.precioFactura > i.precio ? 'up' : 'dn') + '">' +
+                  money(i.precio) + ' → <b>' + money(i.precioFactura) + '</b></span>' +
+              '</div>').join('') +
+            '<button type="button" class="m-hprec-go" id="mhPrec">Update ' +
+              cambios.length + (cambios.length === 1 ? ' price' : ' prices') + '</button>' +
+            '<div class="m-hprec-n">Changes what each bottle is worth from now on. ' +
+              'It does not touch this order.</div>' +
+          '</div>'
+        : '') +
+
       '<div class="m-htot"><span>Ordered</span><b>' + money(o.pedidoDinero) + '</b></div>' +
       (o.estado !== 'waiting'
-        ? '<div class="m-htot"><span>Received</span><b>' + money(o.recibidoDinero) + '</b></div>'
+        ? '<div class="m-htot"><span>Received' +
+          // Sin precio de factura, lo que se enseña es una estimación
+          // con los tuyos. Decirlo: un número que parece dato y es
+          // cálculo es peor que no darlo.
+          (o.precioReal ? '' : ' <small>at your prices</small>') +
+          '</span><b>' + money(o.recibidoDinero) + '</b></div>'
         : '');
 
     volverCon(host, () => { _orden = null; pintar(host); cambioDeNivel(); });
     engancharAcciones(host, o);
+
+    const bp = host.querySelector('#mhPrec');
+    if (bp) bp.onclick = async () => {
+      const P = window.BarStockMarginEdgePurchases;
+      if (!P || !P.aplicarPrecios) return;
+      bp.disabled = true;
+      try {
+        const r = await P.aplicarPrecios(
+          cambios.map(i => ({ item: i.item, precio: i.precioFactura, antes: i.precio,
+                              factura: o.factura, vendor: o.vendor })),
+          (n, tot) => { bp.textContent = 'Updating… ' + n + ' of ' + tot; });
+        bp.textContent = r.ok + ' updated';
+        if (window.BarStockInventoryRealtime && window.BarStockInventoryRealtime.refresh) {
+          try { window.BarStockInventoryRealtime.refresh(); } catch (e) {}
+        }
+        // Y la campana deja de pedir lo que ya se hizo.
+        if (window.BarStockMobileNotif) window.BarStockMobileNotif.refrescar();
+      } catch (e) {
+        // El botón vuelve. Un "Updating…" eterno no dice si funcionó.
+        bp.disabled = false;
+        bp.textContent = 'Update ' + cambios.length + ' prices';
+        if (window.BarStockToast) window.BarStockToast.show(String(e && e.message || e));
+      }
+    };
   }
 
   // ── El cajón de filtros ──────────────────────────────────────────

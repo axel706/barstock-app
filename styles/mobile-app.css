@@ -2857,6 +2857,45 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* Historial. Sin esto, `app.css` les pone 999px y las tarjetas de
    * orden salen con forma de píldora: el mismo problema del resto de
    * la lista, sólo que estas clases son nuevas. */
+  /* ── Los precios de una factura, en el detalle de la orden ──────
+   *
+   * Tienes la orden delante y el papel al lado: es donde se aprueba
+   * sin ir a buscarlo. Enmarcado, porque no es parte del recuento de
+   * arriba sino algo que hay que decidir. */
+  .m-hprec {
+    margin: 16px 0 14px; padding: 13px 14px;
+    background: rgba(56,189,248,.08);
+    border: 1px solid rgba(56,189,248,.26);
+  }
+  .m-hprec-h {
+    font-size: var(--m-small); font-weight: 800; color: #eaf6ff;
+    margin-bottom: 9px;
+  }
+  .m-hprec-l {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 6px 0; font-size: var(--m-small);
+  }
+  .m-hprec-l + .m-hprec-l { border-top: 1px solid rgba(255,255,255,.07); }
+  .m-hprec-l .n { flex: 1; min-width: 0; color: #dbe7f3;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m-hprec-l .v { flex: 0 0 auto; color: #8fa3b8; white-space: nowrap; }
+  /* Un coste que sube es malo y uno que baja es bueno: el color va con
+   * lo que significa, no con el signo. */
+  .m-hprec-l .v.up b { color: #fca5a5; }
+  .m-hprec-l .v.dn b { color: #6ee7b7; }
+
+  body.m-shell .m-hprec-go {
+    width: 100%; min-height: 44px; margin-top: 11px; cursor: pointer;
+    font-family: inherit; font-size: var(--m-small); font-weight: 800;
+    color: #04283d; background: #38bdf8; border: 0;
+  }
+  body.m-shell .m-hprec-go:disabled { background: rgba(255,255,255,.12); color: #8fa3b8; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hprec { border-radius: 14px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hprec-go { border-radius: 11px !important; }
+
+  .m-hprec-n { margin-top: 9px; font-size: var(--m-meta); color: #8fa3b8; line-height: 1.5; }
+  .m-htot small { font-weight: 500; color: #8fa3b8; }
+
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hcard { border-radius: 15px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hmes { border-radius: 0 !important; }
 
