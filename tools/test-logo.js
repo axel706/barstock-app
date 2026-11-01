@@ -281,6 +281,54 @@ grupo('los otros tres logos llevan el mismo degradado');
     /Bar<b class="bs-stock">Stock<\/b>/.test(onb), 'onboarding');
 }
 
+grupo('el PDF lleva el mismo degradado');
+{
+  // ── Por qué aquí se dibuja y no se maqueta ──────────────────────
+  //
+  // `background-clip: text` es CSS de navegador. El PDF lo genera
+  // jsPDF dibujando, así que "Stock" se pinta letra a letra
+  // interpolando el color. A 22pt y cinco caracteres el escalón no se
+  // distingue de un degradado continuo.
+  //
+  // Lo que esta prueba vigila es que las paradas sean LAS MISMAS que
+  // las de la app. Dos degradados parecidos en la pantalla y en el
+  // papel es peor que uno solo mal elegido: nadie lo nota hasta que
+  // alguien pone las dos cosas lado a lado.
+  const pdf = raiz('src/email-order.js');
+  const tema = raiz('styles/theme.css');
+
+  prueba('el wordmark se parte en Bar + Stock', /txt\('Bar', margin/.test(pdf));
+  prueba('y "Stock" se dibuja letra a letra',
+    /for \(let i = 0; i < STOCK\.length/.test(pdf));
+
+  const paradasPdf = (/const PARADAS = \[([^\]]*\]\s*)*\];/.exec(pdf) || [''])[0];
+  const hex = (s) => (s.match(/0x([0-9a-f]{2})/gi) || [])
+    .map(x => x.slice(2).toLowerCase());
+  const delPdf = hex(paradasPdf).join('');
+
+  const grad = (/--bs-stock-grad:[^;]*;/.exec(tema) || [''])[0];
+  const delTema = (grad.match(/#([0-9a-f]{6})/gi) || [])
+    .map(x => x.slice(1).toLowerCase()).join('');
+
+  prueba('las paradas del PDF son las de la app', delPdf === delTema,
+    'pdf ' + delPdf + ' · tema ' + delTema);
+
+  // Y aterriza en el azul del punto, que es el sentido del degradado.
+  prueba('acaba en el azul del punto', /38bdf8$/.test(delPdf), delPdf);
+
+  // El color se toma en el centro de cada letra: con el borde, la
+  // última no llega al azul y el punto queda descolgado.
+  prueba('el color se toma en el centro de cada letra',
+    /\(i \+ 0\.5\) \/ STOCK\.length/.test(pdf));
+}
+
+grupo('la cortina de locación también');
+{
+  const idx = raiz('index.html');
+  prueba('parte el wordmark',
+    /lc-logo">Bar<b class="bs-stock">Stock<\/b>/.test(idx));
+}
+
 grupo('el caché se rompe cuando la hoja cambia');
 {
   // Esto estuvo roto varios commits sin que nadie lo notara: los

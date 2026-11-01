@@ -81,10 +81,48 @@
     pdf.setFillColor(15, 23, 42);
     pdf.rect(0, 0, W, hdrH, 'F');
 
-    // Logo — BarStock
-    pdf.setFont(f, 'bold'); pdf.setFontSize(22); pdf.setTextColor(248, 250, 252);
-    txt('BarStock', margin, y + 16);
-    const bw = pdf.getTextWidth('BarStock');
+    // ── Logo — "Bar" blanco y "Stock" de verde a azul ──────────────
+    //
+    // En la app el degradado se hace con `background-clip: text`, que
+    // es CSS de navegador y aquí no existe: jsPDF dibuja, no maqueta.
+    //
+    // Así que se dibuja LETRA A LETRA, interpolando el color entre el
+    // verde de salida y el azul del punto. A 22pt y cinco caracteres
+    // el escalón no se distingue de un degradado continuo, y lo que
+    // importa es lo que ve el proveedor con tu nombre encima.
+    //
+    // Las paradas son las mismas que `--bs-stock-grad` en theme.css:
+    // #6ee7b7 → #5eead4 → #38bdf8. Si cambian allí, cambian aquí; hay
+    // una prueba que compara los dos sitios.
+    const PARADAS = [[0x6e, 0xe7, 0xb7], [0x5e, 0xea, 0xd4], [0x38, 0xbd, 0xf8]];
+    const colorEn = (t) => {
+      const n = PARADAS.length - 1;
+      const i = Math.min(n - 1, Math.floor(t * n));
+      const k = (t * n) - i;
+      const a = PARADAS[i], b = PARADAS[i + 1];
+      return a.map((v, j) => Math.round(v + (b[j] - v) * k));
+    };
+
+    pdf.setFont(f, 'bold'); pdf.setFontSize(22);
+    pdf.setTextColor(248, 250, 252);
+    txt('Bar', margin, y + 16);
+
+    let lx = margin + pdf.getTextWidth('Bar');
+    const STOCK = 'Stock';
+    for (let i = 0; i < STOCK.length; i++) {
+      // El color se toma en el CENTRO de cada letra, no en su borde:
+      // con el borde, la primera sale del verde puro y la última no
+      // llega al azul del punto, que es justo donde tiene que
+      // aterrizar.
+      const [r, g, bl] = colorEn((i + 0.5) / STOCK.length);
+      pdf.setTextColor(r, g, bl);
+      txt(STOCK[i], lx, y + 16);
+      lx += pdf.getTextWidth(STOCK[i]);
+    }
+    pdf.setTextColor(248, 250, 252);
+
+    // Dónde acaba el wordmark: de ahí cuelgan el punto y PRO.
+    const bw = lx - margin;
     // Punto circular azul
     pdf.setFillColor(56, 189, 248);
     pdf.circle(margin + bw + 3.5, y + 13.5, 2.6, 'F');
