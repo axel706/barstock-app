@@ -1074,10 +1074,27 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * suelta; donde no esté soportado simplemente no hace nada. */
   /* Sin margin-top: lo pone el cuerpo, y tenerlo aquí lo sumaba dos
    * veces y empujaba la cuarta línea fuera de los tres renglones. */
+  /* ── Sin el -40px ────────────────────────────────────────────────
+   *
+   * Lo llevaba para recuperar el ancho que el icono reservaba en toda
+   * la altura. Pero el CUERPO ya se sale -30px por su cuenta, así que
+   * eran 70 en total: el párrafo se salía de la caja y, como el
+   * cuerpo recorta lo que sobra, el texto se cortaba a media palabra
+   * en el borde derecho — "Look up st…".
+   *
+   * Dos márgenes negativos encima del mismo texto. El del cuerpo es
+   * el que vale, porque es el que manda sobre el recorte. */
   .m-hero-ancha .m-hero-s {
     font-size: var(--m-body); line-height: 1.45;
-    margin-right: -40px;
     text-wrap: pretty;
+  }
+
+  /* El cambio de consejo, con un parpadeo corto. Sin esto el texto
+   * salta de golpe y parece un fallo de pintado. */
+  .m-hero-tip .m-hero-txt { transition: opacity .35s ease; }
+  .m-hero-tip.cambiando .m-hero-txt { opacity: 0; }
+  @media (prefers-reduced-motion: reduce) {
+    .m-hero-tip .m-hero-txt { transition: none; }
   }
   .m-hero-ancha .m-hero-t { font-size: var(--m-head); }
 

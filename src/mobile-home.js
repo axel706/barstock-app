@@ -630,31 +630,123 @@
   //
   // Es FIJA. Si algún día estorba, quitarla es devolver false aquí:
   //   if (yaCerroUnCiclo()) return null;
-  function tarjetaBienvenida() {
-    return {
-      // Verde y no el verde azulado del ciclo: eran vecinas y las dos
-      // del mismo color, así que deslizar de una a otra no se notaba.
-      tono: 'verde',
-      // Esta tarjeta no tiene columna de cifras ni botón, así que el
-      // texto se queda con el ancho entero y puede ser más grande.
-      ancha: true,
+  // ── Los consejos ────────────────────────────────────────────────
+  //
+  // La tarjeta decía siempre lo mismo, y lo que decía —"esto sirve
+  // para escanear"— se aprende el primer día. A partir del segundo era
+  // un hueco ocupado en la primera posición del carrusel.
+  //
+  // Ahora rota entre funciones que NADIE descubre solo. El criterio
+  // para entrar aquí es ése: si se encuentra pulsando por la app, no
+  // hace falta contarlo.
+  //
+  // ── Tres renglones, y ni uno más ─────────────────────────────────
+  //
+  // El cuerpo de la plantilla mide tres renglones clavados para todas
+  // las tarjetas. Un consejo más largo se corta a media palabra y eso
+  // parece un fallo de pintado. Hay una prueba que lo mide.
+  const CONSEJOS = [
+    {
       // El rótulo va en mayúsculas como los demás, pero el wordmark
       // conserva su caja: es una etiqueta que contiene un nombre
       // propio, igual que "WELCOME TO eBay" en prensa.
       k: 'Welcome to <span class="m-brand">BarStock<i class="m-logo-dot"></i>Pro</span>',
       kHtml: true,
       tt: 'Good to have you',
-      // Los   son espacios duros: atan las parejas que leían mal
-      // partidas en dos líneas ("Look / up", "orders / too",
-      // "live / on desktop"). El ancho ya da de sobra, esto sólo
-      // impide que vuelvan a separarse con otro tamaño de texto.
-      sub: 'Scanning bottles is what this app does best. Look up stock, ' +
-           'see what is running out and review orders too — placing them, ' +
-           'and the deeper reports, live on desktop or iPad.',
+      sub: 'Scanning bottles is what this app does best. Counting, stock and ' +
+           'what is running out live here; placing orders and the deeper ' +
+           'reports, on desktop.',
+      icoR: 'scan'
+    },
+    {
+      // La que más duele no saber: sin esto la resta del consumo
+      // cuenta como inexistentes las botellas que compraste tú.
+      k: 'Did you know',
+      tt: 'Something arrived without an order?',
+      sub: 'Open the bottle and tap Received. It adds to what came in this ' +
+           'week so the usage adds up — it does not touch your on hand, ' +
+           'that comes from counting.',
+      icoR: 'truck-delivery'
+    },
+    {
+      k: 'Did you know',
+      tt: 'You can order off-cycle',
+      sub: 'Orders › Quick order. Pick the vendor, add what you need, and it ' +
+           'goes out by email with its PDF like any other order.',
+      icoR: 'bolt'
+    },
+    {
+      k: 'Did you know',
+      tt: 'Invoice prices wait for you',
+      sub: 'When MarginEdge brings a price different from yours, the bell ' +
+           'tells you. You look at the list and approve them all at once.',
+      icoR: 'tag'
+    },
+    {
+      k: 'Did you know',
+      tt: 'The app suggests your par',
+      sub: 'Open any bottle. If your history says a different par than the ' +
+           'one you typed, Pour·IQ says so and you can take it with one tap.',
+      icoR: 'brain'
+    }
+  ];
+
+  let _consejo = 0;
+
+  function tarjetaBienvenida() {
+    return Object.assign({}, CONSEJOS[_consejo % CONSEJOS.length], {
+      // Verde y no el verde azulado del ciclo: eran vecinas y las dos
+      // del mismo color, así que deslizar de una a otra no se notaba.
+      tono: 'verde',
+      // Esta tarjeta no tiene columna de cifras ni botón, así que el
+      // texto se queda con el ancho entero y puede ser más grande.
+      ancha: true,
+      tip: true,
       pista: 'Swipe to discover more',
-      icoR: 'scan',
       amt: '', vs: '', btn: ''
-    };
+    });
+  }
+
+  // ── Rotar sin repintar el carrusel ──────────────────────────────
+  //
+  // Se reescribe el texto DE ESA TARJETA y nada más. Repintar el Home
+  // entero devolvería el carrusel a la primera posición, así que a
+  // quien esté mirando la tarjeta del ciclo se la moverían de debajo
+  // del dedo cada minuto.
+  //
+  // Un minuto, no unos segundos: el texto cambia mientras alguien
+  // puede estar leyéndolo, y lo único peor que un cartel que no se lee
+  // es uno que se va a media frase.
+  const CADA_MS = 60 * 1000;
+  let _relojTip = null;
+
+  function rotar() {
+    const art = document.querySelector('.m-screen[data-screen="home"].on .m-hero-tip');
+    if (!art) return;
+    // Con la pestaña detrás no se gasta nada: al volver se verá el
+    // siguiente igual.
+    if (document.hidden) return;
+
+    _consejo = (_consejo + 1) % CONSEJOS.length;
+    const c = CONSEJOS[_consejo];
+
+    art.classList.add('cambiando');
+    setTimeout(() => {
+      const k = art.querySelector('.m-hero-k');
+      const t = art.querySelector('.m-hero-t');
+      const sub = art.querySelector('.m-hero-s');
+      const ico = art.querySelector('.m-hero-ir');
+      if (k) k.innerHTML = c.kHtml ? c.k : esc(c.k);
+      if (t) t.textContent = c.tt;
+      if (sub) sub.textContent = c.sub;
+      if (ico) ico.className = 'ti ti-' + c.icoR + ' m-hero-ir';
+      art.classList.remove('cambiando');
+    }, 350);
+  }
+
+  function arrancarRotacion() {
+    if (_relojTip) return;
+    _relojTip = setInterval(rotar, CADA_MS);
   }
 
   // Proveedores con alguna línea ya colocada en este ciclo. Es lo que
@@ -1270,7 +1362,8 @@
 
   function pintarTarjeta(c, i) {
     return `
-      <article class="m-hero m-hero-${c.tono}${c.ancha ? ' m-hero-ancha' : ''}" data-hero="${i}">
+      <article class="m-hero m-hero-${c.tono}${c.ancha ? ' m-hero-ancha' : ''}${
+        c.tip ? ' m-hero-tip' : ''}" data-hero="${i}">
         <!-- Arriba el texto y la cifra, en dos columnas. Abajo, una
              fila entera para la pie de página y los botones.
              Antes todo colgaba de la columna izquierda, así que los
@@ -1492,6 +1585,12 @@
 
   function render(host) {
     if (!host) return;
+    // El reloj de los consejos arranca con el primer pintado y vive
+    // mientras la app esté abierta. No se para al salir del Home: la
+    // rotación comprueba que la tarjeta esté en pantalla antes de
+    // tocar nada, y un intervalo de un minuto que no hace nada es más
+    // barato que montar y desmontar temporizadores en cada pestaña.
+    arrancarRotacion();
 
     const cards = tarjetas();
     const mov = movers();
