@@ -1053,6 +1053,25 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   .m-hero-acts .m-hero-vs { margin-right: auto; text-align: left; }
 
+  /* ── Tres botones en la fila ──────────────────────────────────────
+   *
+   * El paso 2 del ciclo lleva tres: contar, importar y empezar la
+   * semana de nuevo. Con el `padding` normal se salen de 390px, y en
+   * esta fila nada puede envolver: la tarjeta tiene altura fija y una
+   * segunda línea la rompería.
+   *
+   * Así que los dos secundarios se aprietan y, si aun así no caben,
+   * ceden ancho ellos (min-width: 0) antes que el primario, que es la
+   * respuesta correcta y tiene que leerse entera. Medido a 390px con
+   * los tres textos de verdad: entran, y sobra sitio para el "of 3"
+   * de la izquierda. */
+  .m-hero-acts:has(.m-hero-b2 ~ .m-hero-b2) { gap: 6px; }
+  body.m-shell .m-hero-acts:has(.m-hero-b2 ~ .m-hero-b2) .m-hero-b { padding: 10px 14px; }
+  body.m-shell .m-hero-acts:has(.m-hero-b2 ~ .m-hero-b2) .m-hero-b2 {
+    padding: 10px 11px; min-width: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
   /* Pequeño, sin color y al lado del grande. Tirar trabajo no debe ser
    * más fácil de pulsar que seguirlo. */
   body.m-shell .m-hero-x {

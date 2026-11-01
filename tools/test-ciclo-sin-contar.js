@@ -158,16 +158,62 @@ grupo('e importar no desaparece de ninguna de las dos pantallas');
   prueba('y en la tarjeta', /Import a file/.test(home(w).textContent));
 }
 
-grupo('la tarjeta del Home no cambia en este paso');
+grupo('contar sigue siendo el botón primario de la tarjeta');
 {
-  // Lo que se le pidió: la salida vive en la pantalla del ciclo. Aquí
-  // sólo las dos respuestas normales.
+  // Que la salida esté a mano no la asciende: la respuesta correcta
+  // sigue siendo contar, y es la única con color sólido.
+  const c = home(entorno({ dias: 30, porPedir: false }));
+  prueba('Count now es el .m-hero-b',
+    /Count now/.test(c.querySelector('.m-hero-b').textContent));
+  const secs = Array.from(c.querySelectorAll('.m-hero-b2')).map(b => b.textContent.trim());
+  prueba('y los otros dos son secundarios',
+    secs.join('|') === 'Import a file|Start over', secs.join(' · '));
+}
+
+grupo('y en la tarjeta del Home, que es donde se mira');
+{
+  // Estuvo sólo en la pantalla del ciclo y fue peor: a esa pantalla no
+  // se llega desde ningún sitio en el teléfono, así que el botón
+  // existía y no lo veía nadie.
   for (const dias of [1, 6, 30]) {
-    const c = home(entorno({ dias, porPedir: false }));
-    prueba('dias=' + dias + ': sigue siendo [Count now] [Import a file]',
-      /Count now/.test(c.textContent) && /Import a file/.test(c.textContent) &&
-      !/Start over/.test(c.textContent), c.textContent.slice(0, 160));
+    const c = home(entorno({ dias, porPedir: dias !== 6 }));
+    const bs = Array.from(c.querySelectorAll('button')).map(b => b.textContent.trim());
+    prueba('dias=' + dias + ': los tres en la fila',
+      bs.join('|') === 'Count now|Import a file|Start over', bs.join(' · '));
   }
+}
+
+grupo('y el tercero de la tarjeta hace lo mismo que el del ciclo');
+{
+  const w = entorno({ dias: 6, porPedir: true });
+  const c = home(w);
+  Array.from(c.querySelectorAll('button'))
+    .find(b => /Start over/.test(b.textContent)).click();
+  await esperar(20);
+  const t = (w.document.getElementById('dlgBg') || {}).textContent || '';
+  prueba('pregunta antes', /Start the week over/.test(t), t.slice(0, 120));
+  // En el botón no cabe la explicación, así que TIENE que estar aquí.
+  prueba('y la explicación entera está en el diálogo',
+    /not going to be counted/.test(t) && /On hand stays/.test(t) &&
+    /available to order again/.test(t), t.slice(0, 260));
+  prueba('todavía no ha reiniciado nada', !w.__reiniciado);
+  w.document.getElementById('dlgSi').click();
+  await esperar(20);
+  prueba('al confirmar, reinicia', w.__reiniciado === 1, String(w.__reiniciado));
+}
+
+grupo('la tarjeta no crece por el tercer botón');
+{
+  // La regla de siempre: estas tarjetas no cambian de alto. Tres
+  // botones en UNA fila, no dos filas.
+  const c = home(entorno({ dias: 6, porPedir: true }));
+  const fila = c.querySelector('.m-hero-acts');
+  prueba('los tres cuelgan de la misma fila',
+    fila.querySelectorAll('button').length === 3,
+    String(fila.querySelectorAll('button').length));
+  const css = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8');
+  prueba('y el CSS apreta la fila cuando hay tres',
+    /m-hero-acts:has\(\.m-hero-b2 ~ \.m-hero-b2\)/.test(css));
 }
 
 grupo('la salida pregunta antes, y dice que no se pierde nada');
@@ -213,6 +259,8 @@ grupo('y no vuelve a colarse un umbral');
   const mh = fs.readFileSync(path.join(RAIZ, 'src/mobile-home.js'), 'utf8');
   prueba('cicloSinContar ya no existe en ningún lado',
     !/cicloSinContar/.test(wc + mc + mh));
+  prueba('ni queda un umbral de días decidiendo la salida',
+    !/SUELO_MS|quedaPorPedir/.test(wc + mc + mh));
   // El comentario es la mitad del arreglo: quien lea esto tiene que
   // encontrarse los dos intentos fallidos antes de proponer un tercero.
   prueba('y queda escrito por qué no se detecta',

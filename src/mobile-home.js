@@ -272,13 +272,18 @@
     // ahí el ciclo es UN botón que no puede ofrecer dos cosas; aquí
     // hay sitio, así que se ofrecen las dos y se ahorra el modal.
     if (st === 'step2') {
-      // La tarjeta del Home no cambia nunca en este paso: contar e
-      // importar son las dos respuestas normales y las dos caben.
+      // ── Las tres salidas del paso 2, en la misma fila ──────────
       //
-      // Empezar la semana de nuevo NO vive aquí. Es la única acción que
-      // cierra un ciclo sin conteo, y su sitio es la pantalla del ciclo
-      // —a un toque de esta tarjeta—, que es donde él la pidió y donde
-      // hay espacio para explicar lo que hace antes de pulsarla.
+      // Contar, importar, y empezar la semana de nuevo.
+      //
+      // La tercera estuvo primero detrás de una detección —"¿está
+      // atascada?"— que falló dos veces, y después sólo en la pantalla
+      // del ciclo. Lo segundo fue peor: a esa pantalla no se llega
+      // desde ningún sitio en el teléfono, así que el botón existía y
+      // no lo veía nadie.
+      //
+      // Va SIN condición. Si esta semana se cuenta o no lo sabe quien
+      // lleva la barra, no la app.
       return {
         // Teal porque esto SIGUE siendo la tarjeta del ciclo, solo que
         // en otro paso. Iba en azul, que es la familia de las órdenes,
@@ -294,7 +299,9 @@
         btn2: 'Import a file',
         // El mismo <input type=file> de siempre, el que usa el modal
         // del escritorio. No hay un segundo camino de importación.
-        go2: () => { const f = document.getElementById('countFile'); if (f) f.click(); }
+        go2: () => { const f = document.getElementById('countFile'); if (f) f.click(); },
+        btn3: 'Start over',
+        goB3: () => empezarDeNuevo()
       };
     }
 
@@ -616,6 +623,31 @@
     if (!ok) return;
     const W = window.BarStockWeeklyCycle;
     if (W && W.descartarConteo) W.descartarConteo();
+  }
+
+  // ── Cerrar un ciclo que nunca se contó ──────────────────────────
+  //
+  // No es lo mismo que "Restart cycle" del ciclo cerrado, aunque por
+  // debajo llame a lo mismo: aquí NO hay conteo que perder y el on
+  // hand ya está a cero, así que lo único que pasa es que la semana
+  // empieza otra vez y todo vuelve a poder pedirse.
+  //
+  // El botón de la tarjeta dice sólo "Start over" porque en esa fila
+  // no cabe más. Toda la explicación va aquí, que es donde se lee
+  // antes de decidir: el miedo a un botón de reiniciar es justo que
+  // te borre algo, y lo primero que tiene que leerse es que no.
+  async function empezarDeNuevo() {
+    const ok = await preguntar({
+      titulo: 'Start the week over?',
+      cuerpo: 'For a week that is not going to be counted. Closes this ' +
+              'cycle without a count and opens a new one. Everything ' +
+              'becomes available to order again.',
+      aviso: 'On hand stays where it is — there is no count to lose.',
+      ok: 'Start over', cancelar: 'Not now'
+    });
+    if (!ok) return;
+    const W = window.BarStockWeeklyCycle;
+    if (W && W.reiniciar) W.reiniciar();
   }
 
   // El diálogo de la app en vez del `confirm()` del navegador. El
@@ -1552,6 +1584,9 @@
           ${c.btn ? `<button type="button" class="m-hero-b${c.btnTono ? ' m-hero-b-' + esc(c.btnTono) : ''}"
                              data-go="${i}">${esc(c.btn)}</button>` : ''}
           ${c.btn2 ? `<button type="button" class="m-hero-b2" data-go2="${i}">${esc(c.btn2)}</button>` : ''}
+          <!-- El tercero. Va con data-gob3 y no con data-go3 porque
+               ese ultimo ya es el del boton de icono de mas abajo. -->
+          ${c.btn3 ? `<button type="button" class="m-hero-b2" data-gob3="${i}">${esc(c.btn3)}</button>` : ''}
           ${c.ico ? `<button type="button" class="m-hero-x" data-go3="${i}"
                              aria-label="${esc(c.icot || '')}">
                        <i class="ti ti-${esc(c.ico)}" aria-hidden="true"></i>
@@ -1887,6 +1922,11 @@
     host.querySelectorAll('[data-go2]').forEach(b => {
       const c = cards[Number(b.dataset.go2)];
       if (c && c.go2) b.onclick = (ev) => { ev.stopPropagation(); c.go2(); };
+    });
+
+    host.querySelectorAll('[data-gob3]').forEach(b => {
+      const c = cards[Number(b.dataset.gob3)];
+      if (c && c.goB3) b.onclick = (ev) => { ev.stopPropagation(); c.goB3(); };
     });
 
     host.querySelectorAll('[data-go3]').forEach(b => {
