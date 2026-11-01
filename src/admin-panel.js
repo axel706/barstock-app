@@ -531,6 +531,10 @@
     if (!el) return;
     if (!_locations.length) await loadLocations();
 
+    // Antes de dibujar nada: el listener va en la raíz, que sobrevive a
+    // todos los `innerHTML` de abajo.
+    delegarLocaciones(el);
+
     el.innerHTML = tabBar() + '<div id="admBody"></div>';
 
     el.querySelectorAll('.adm-tab').forEach(b => b.onclick = () => {
@@ -545,9 +549,34 @@
     else if (_tab === 'delete')  viewDelete(body);
     else                    await viewWipe(body);
 
-    // Las ubicaciones se marcan con delegacion: el contenido se redibuja
-    // completo en cada cambio y los manejadores directos se perderian.
-    el.querySelectorAll('.adm-loc').forEach(b => b.onclick = () => {
+  }
+
+  // ── Marcar ubicaciones: delegación DE VERDAD ────────────────────────
+  //
+  // Esto vivía al final de render() con un comentario que decía
+  // "se marcan con delegacion". No lo era: era un `onclick` directo por
+  // cada botón, puesto una sola vez, al terminar de dibujar la pestaña.
+  //
+  // En "Create user" funcionaba de casualidad, porque esa pestaña dibuja
+  // la cuadrícula DENTRO de render(), así que los botones ya existían
+  // cuando se repartían los manejadores.
+  //
+  // En "Edit access" no existían. Ahí la cuadrícula no aparece hasta que
+  // buscas al usuario y `drawEdit()` la crea después, con su propio
+  // `innerHTML`. Esos botones nunca recibieron manejador: no se marcaban
+  // ni se desmarcaban, así que a un usuario ya creado no se le podía dar
+  // acceso a una locación nueva ni quitársela. El único camino que
+  // quedaba era borrarlo y volverlo a crear.
+  //
+  // Un solo listener en la raíz, puesto una vez. Da igual cuándo se
+  // dibuje la cuadrícula, cuántas veces se redibuje, ni qué pestaña la
+  // pinte.
+  function delegarLocaciones(el) {
+    if (el.dataset.locDeleg === '1') return;
+    el.dataset.locDeleg = '1';
+    el.addEventListener('click', (ev) => {
+      const b = ev.target.closest && ev.target.closest('.adm-loc');
+      if (!b || !el.contains(b)) return;
       const id = b.dataset.loc;
       const set = b.dataset.handler === 'new' ? _newSel : _editSel;
       if (set.has(id)) set.delete(id); else set.add(id);
