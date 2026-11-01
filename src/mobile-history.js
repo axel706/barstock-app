@@ -192,32 +192,28 @@
     // DENTRO DEL CICLO.
     const inicioCiclo = ini ? ini.getTime() : 0;
 
-    // ── Y el reparto va de la más VIEJA a la más nueva ──────────────
+    // ── El reparto sigue yendo de la más NUEVA a la más vieja ───────
     //
-    // Con el suelo en el ciclo entero, dos órdenes del mismo artículo
-    // compiten por las mismas entregas. Se recorren en orden de
-    // llegada para que la primera se quede lo que llegó primero;
-    // `recortadas` viene de la más nueva a la más vieja, así que
-    // recorrerla tal cual haría que la última orden se comiera la
-    // entrega de la primera.
+    // Lo cambié a "de la más vieja a la más nueva" pensando en que dos
+    // órdenes del mismo artículo no se pisaran, y rompí el historial
+    // entero: una orden de hace meses conserva su suelo viejo —su
+    // fecha menos un día— así que puede reclamar CUALQUIER factura
+    // posterior. Al pasar primero, se comió las de este mes y todo lo
+    // reciente quedó en "waiting".
     //
-    // Antes esto no hacía falta porque el corte por fecha lo impedía
-    // de rebote. Al quitarlo, hay que decirlo.
-    recibos.sort((a, b) => (a.fecha || 0) - (b.fecha || 0));
-
-    const itemsDe = new Map();
-    const porFecha = recortadas.slice().sort(
-      (a, b) => new Date(a.created_at) - new Date(b.created_at));
-
-    for (const o of porFecha) {
+    // `recortadas` viene de la más nueva a la más vieja y así se
+    // queda: las recientes eligen primero, que es lo que hacía que
+    // esto funcionara.
+    const detalles = recortadas.map(o => {
       const ls = porOrden.get(String(o.id)) || [];
       const t0 = new Date(o.created_at).getTime();
-      // Dentro del ciclo abierto, el suelo es su arranque. Para las
-      // anteriores no se conoce su ciclo aquí, así que se conserva el
-      // criterio de siempre.
+      // Lo ÚNICO que cambia respecto a siempre: dentro del ciclo
+      // abierto el suelo es su arranque, para que una factura anterior
+      // a la orden —una ida a la tienda apuntada después— también
+      // cuente. Fuera del ciclo, el criterio de siempre.
       const suelo = (inicioCiclo && t0 >= inicioCiclo) ? inicioCiclo : (t0 - 86400000);
 
-      itemsDe.set(String(o.id), ls.map(l => {
+      const items = ls.map(l => {
         const pedido = Number(l.quantity) || 0;
         let llegado = 0;
         let factura = '';
@@ -237,11 +233,7 @@
           precio: Number(l.unit_price) || 0,
           factura
         };
-      }));
-    }
-
-    const detalles = recortadas.map(o => {
-      const items = itemsDe.get(String(o.id)) || [];
+      });
 
       const conDato = items.some(i => i.recibido > 0);
       const cortos = items.filter(i => i.recibido < i.pedido).length;

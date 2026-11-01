@@ -319,6 +319,50 @@ function entorno(o) {
     prueba('y la otra no', (t.match(/waiting/gi) || []).length === 1, t.slice(0, 240));
   }
 
+  grupo('una orden vieja no se come las facturas de este ciclo');
+  {
+    // ── El fallo que costo una manana ────────────────────────────
+    //
+    // Al relajar el suelo cambie tambien el reparto a "de la mas
+    // vieja a la mas nueva", pensando en que dos ordenes del mismo
+    // articulo no se pisaran. Pero una orden de hace meses conserva
+    // su suelo viejo —su fecha menos un dia— asi que puede reclamar
+    // CUALQUIER factura posterior. Al pasar primero, se comio las de
+    // este mes: el historial entero paso a "waiting" de golpe.
+    //
+    // Las recientes eligen primero. Eso es lo que hacia que esto
+    // funcionara y no se toca.
+    const w = entorno({
+      ordenes: [
+        { id: 9, app_order_id: 'nueva', vendor: 'LOOP', po_number: 'NUEVA',
+          created_at: '2026-10-28T10:00:00Z', subtotal: 20, status: 'sent' },
+        { id: 1, app_order_id: 'vieja', vendor: 'LOOP', po_number: 'VIEJA',
+          created_at: '2026-07-04T10:00:00Z', subtotal: 20, status: 'sent' }
+      ],
+      lineas: [
+        { vendor_order_id: 9, item_name: 'Tito Vodka', quantity: 1, unit_price: 20 },
+        { vendor_order_id: 1, item_name: 'Tito Vodka', quantity: 1, unit_price: 20 }
+      ],
+      facturas: [
+        { product_id: 'p1', quantity: 1, invoice_date: '2026-10-29', invoice_number: 'F9', vendor_name: 'X' }
+      ],
+      enlaces: [{ product_id: 'p1', item_name: 'Tito Vodka' }]
+    });
+    const h = w.document.createElement('div');
+    w.document.body.appendChild(h);
+    await w.BarStockMobileHistory.montar(h);
+    await esperar(60);
+
+    const tarjetas = Array.from(h.querySelectorAll('.m-hcard'))
+      .map(c => c.textContent.replace(/\s+/g, ' '));
+    const nueva = tarjetas.find(t => /NUEVA/.test(t)) || '';
+    const vieja = tarjetas.find(t => /VIEJA/.test(t)) || '';
+    prueba('la del ciclo recibe la factura',
+      !!nueva && !/waiting/i.test(nueva), nueva.slice(0, 160));
+    prueba('y la vieja es la que se queda esperando',
+      !!vieja && /waiting/i.test(vieja), vieja.slice(0, 160));
+  }
+
 console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
     '   ·   ' + (ok + mal) + ' comprobaciones');
   process.exit(mal ? 1 : 0);
