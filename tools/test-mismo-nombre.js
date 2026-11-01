@@ -36,7 +36,8 @@ const esperar = ms => new Promise(r => setTimeout(r, ms));
 
 // ── El caso real, extremo a extremo ─────────────────────────────────
 
-function entorno() {
+function entorno(o) {
+  o = o || {};
   const dom = new JSDOM('<!doctype html><body></body>', { url: 'https://x.test/' });
   const w = dom.window;
   global.window = w; global.document = w.document;
@@ -53,6 +54,11 @@ function entorno() {
     const pag = (x) => ({ ok: true, json: async () => x, text: async () => '' });
     const off = Number((/offset=(\d+)/.exec(u) || [])[1] || 0);
     if (off) return pag([]);
+
+    if (o.ordenes)   { if (/vendor_orders\?/.test(u))          return pag(o.ordenes); }
+    if (o.lineas)    { if (/vendor_order_items/.test(u))        return pag(o.lineas); }
+    if (o.facturas)  { if (/marginedge_invoice_lines/.test(u))  return pag(o.facturas); }
+    if (o.enlaces)   { if (/marginedge_links/.test(u))          return pag(o.enlaces); }
 
     if (/vendor_orders\?/.test(u)) return pag([
       // DOS ids, y a proposito distintos: `id` es la fila de
@@ -236,7 +242,84 @@ function entorno() {
     }
   }
 
-  console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
+    grupo('la factura puede llegar ANTES que la orden');
+  {
+    // ── El caso real, 1 de noviembre ─────────────────────────────
+    //
+    // Factura de Fine Wine & Good Spirits del 30 de octubre; la orden
+    // a LOOP se registró el 1 de noviembre. Las dos dentro del mismo
+    // ciclo, los productos bien enlazados, y la orden decía "waiting"
+    // con la factura delante.
+    //
+    // El corte era "sólo entregas posteriores a la orden, con un día
+    // de margen", que da por supuesto que primero se pide y después
+    // llega. Con LOOP se pide en su portal, llega la mercancía, y la
+    // orden se apunta en la app cuando toca.
+    const w = entorno({
+      ordenes: [{ id: 7, app_order_id: 'ord_loop', vendor: 'LOOP', po_number: 'WB-0034',
+                  created_at: '2026-11-01T15:00:00Z', subtotal: 71.98, status: 'sent' }],
+      lineas: [
+        { vendor_order_id: 7, item_name: 'Bombay Saphire Gin', quantity: 1, unit_price: 26.09 },
+        { vendor_order_id: 7, item_name: 'Jameson Irish Whiskey', quantity: 1, unit_price: 29.69 }
+      ],
+      facturas: [
+        { product_id: 'p1', quantity: 1, invoice_date: '2026-10-30', invoice_number: '2930', vendor_name: 'Fine Wine & Good Spirits' },
+        { product_id: 'p2', quantity: 1, invoice_date: '2026-10-30', invoice_number: '2930', vendor_name: 'Fine Wine & Good Spirits' }
+      ],
+      enlaces: [
+        { product_id: 'p1', item_name: 'Bombay Saphire Gin' },
+        { product_id: 'p2', item_name: 'Jameson Irish Whiskey' }
+      ]
+    });
+    const h = w.document.createElement('div');
+    w.document.body.appendChild(h);
+    await w.BarStockMobileHistory.montar(h);
+    await esperar(60);
+
+    const t = h.textContent.replace(/\s+/g, ' ');
+    prueba('la orden NO se queda esperando', !/waiting/i.test(t), t.slice(0, 220));
+    prueba('ni dice que llegó corta', !/short/i.test(t), t.slice(0, 220));
+    // El nombre del proveedor de la factura NO tiene por qué coincidir
+    // con el de la orden: LOOP es Fine Wine & Good Spirits. El
+    // emparejado va por producto, y así tiene que seguir.
+    prueba('el nombre del proveedor no estorba', !/never arrived/i.test(t));
+  }
+
+  grupo('y dos órdenes del mismo artículo no se pisan');
+  {
+    // Con el suelo en el ciclo entero, dos órdenes compiten por las
+    // mismas entregas. La primera se queda lo que llegó primero: si
+    // se repartiera al revés, la orden nueva se comería la entrega de
+    // la vieja y la vieja saldría corta sin serlo.
+    const w = entorno({
+      ordenes: [
+        { id: 1, app_order_id: 'a', vendor: 'LOOP', po_number: 'P1',
+          created_at: '2026-10-26T10:00:00Z', subtotal: 10, status: 'sent' },
+        { id: 2, app_order_id: 'b', vendor: 'LOOP', po_number: 'P2',
+          created_at: '2026-10-29T10:00:00Z', subtotal: 10, status: 'sent' }
+      ],
+      lineas: [
+        { vendor_order_id: 1, item_name: 'Tito Vodka', quantity: 2, unit_price: 10 },
+        { vendor_order_id: 2, item_name: 'Tito Vodka', quantity: 2, unit_price: 10 }
+      ],
+      facturas: [
+        { product_id: 'p1', quantity: 2, invoice_date: '2026-10-27', invoice_number: 'F1', vendor_name: 'X' }
+      ],
+      enlaces: [{ product_id: 'p1', item_name: 'Tito Vodka' }]
+    });
+    const h = w.document.createElement('div');
+    w.document.body.appendChild(h);
+    await w.BarStockMobileHistory.montar(h);
+    await esperar(60);
+
+    const t = h.textContent.replace(/\s+/g, ' ');
+    // Una completa y otra esperando: con una sola entrega de dos, no
+    // pueden estar las dos bien.
+    prueba('una queda esperando', /waiting/i.test(t), t.slice(0, 240));
+    prueba('y la otra no', (t.match(/waiting/gi) || []).length === 1, t.slice(0, 240));
+  }
+
+console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
     '   ·   ' + (ok + mal) + ' comprobaciones');
   process.exit(mal ? 1 : 0);
 })();

@@ -176,24 +176,55 @@
     const ini = C && C.startedAt && C.startedAt();
     if (ini) cortes.push({ id: 'abierto', titulo: 'This cycle', desde: ini.getTime() });
 
-    const detalles = recortadas.map(o => {
+    // ── El suelo es el CICLO, no la fecha de la orden ───────────────
+    //
+    // Antes una orden sólo reclamaba entregas posteriores a su propia
+    // fecha, con un día de margen. Y eso da por supuesto que primero
+    // se pide y después llega, que no es como funciona:
+    //
+    // Con LOOP se pide en su portal, la mercancía llega, y la orden se
+    // registra en la app cuando toca. Una factura del 30 con la orden
+    // apuntada el 1 se quedaba fuera por dos días, y la orden decía
+    // "waiting" con la factura delante.
+    //
+    // Dentro de una semana los documentos no se ordenan. El criterio
+    // es el mismo que usa la conciliación del escritorio: por artículo
+    // DENTRO DEL CICLO.
+    const inicioCiclo = ini ? ini.getTime() : 0;
+
+    // ── Y el reparto va de la más VIEJA a la más nueva ──────────────
+    //
+    // Con el suelo en el ciclo entero, dos órdenes del mismo artículo
+    // compiten por las mismas entregas. Se recorren en orden de
+    // llegada para que la primera se quede lo que llegó primero;
+    // `recortadas` viene de la más nueva a la más vieja, así que
+    // recorrerla tal cual haría que la última orden se comiera la
+    // entrega de la primera.
+    //
+    // Antes esto no hacía falta porque el corte por fecha lo impedía
+    // de rebote. Al quitarlo, hay que decirlo.
+    recibos.sort((a, b) => (a.fecha || 0) - (b.fecha || 0));
+
+    const itemsDe = new Map();
+    const porFecha = recortadas.slice().sort(
+      (a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+    for (const o of porFecha) {
       const ls = porOrden.get(String(o.id)) || [];
       const t0 = new Date(o.created_at).getTime();
+      // Dentro del ciclo abierto, el suelo es su arranque. Para las
+      // anteriores no se conoce su ciclo aquí, así que se conserva el
+      // criterio de siempre.
+      const suelo = (inicioCiclo && t0 >= inicioCiclo) ? inicioCiclo : (t0 - 86400000);
 
-      // ── Cómo se reparte lo recibido ─────────────────────────────
-      //
-      // Una orden sólo reclama entregas POSTERIORES a su fecha, y cada
-      // recibo se consume una sola vez: con dos órdenes del mismo
-      // artículo, la primera se queda lo que llegó primero. Sin este
-      // reparto, las dos dirían "completa" con una sola entrega.
-      const items = ls.map(l => {
+      itemsDe.set(String(o.id), ls.map(l => {
         const pedido = Number(l.quantity) || 0;
         let llegado = 0;
         let factura = '';
         for (const r of recibos) {
           if (r.usado) continue;
           if (!mismoNombre(r.item, l.item_name)) continue;
-          if (r.fecha && r.fecha + 86400000 < t0) continue;
+          if (r.fecha && r.fecha < suelo) continue;
           if (llegado >= pedido) break;
           llegado += r.qty;
           if (!factura && r.factura) factura = r.factura;
@@ -206,7 +237,11 @@
           precio: Number(l.unit_price) || 0,
           factura
         };
-      });
+      }));
+    }
+
+    const detalles = recortadas.map(o => {
+      const items = itemsDe.get(String(o.id)) || [];
 
       const conDato = items.some(i => i.recibido > 0);
       const cortos = items.filter(i => i.recibido < i.pedido).length;
