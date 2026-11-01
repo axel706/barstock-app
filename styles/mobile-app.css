@@ -527,7 +527,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     /* 16 y no 12: a doce parecían rozar el borde de la pantalla. */
     position: absolute; right: 20px; z-index: 2;
     bottom: 0; height: 52px;
-    display: flex; align-items: center; gap: 6px;
+    /* 11 y no 6. A seis, los dos círculos de 36px quedaban a menos de
+     * un dedo de separación y la campana se pulsaba yendo a Ajustes.
+     * Cinco píxeles más no se notan y el toque ya no se equivoca. */
+    display: flex; align-items: center; gap: 11px;
     /* Misma razón que el logo: su propia capa, o el desenfoque de
      * `.m-blur` les come la parte de arriba a los dos botones. */
     transform: translateZ(0);
