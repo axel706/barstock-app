@@ -119,6 +119,29 @@ grupo('la media query del móvil ya no hace malabares con los bordes');
     /#authCardBody\s*\{[^}]*border-top:\s*1px solid var\(--auth-linea\)/.test(movil));
 }
 
+grupo('el aviso del login se lee antes de volver a pulsar');
+{
+  const idx = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8');
+  const i = idx.indexOf('<div id="authOverlay">');
+  const card = idx.slice(i, idx.indexOf('id="locCurtain"'));
+
+  const pos = (frag) => card.indexOf(frag);
+  const aviso = pos('id="authMsg"');
+  prueba('el aviso existe', aviso !== -1);
+  // Estaba al final, debajo de "Sign up": con el teclado abierto caía
+  // fuera de la vista, así que pulsabas Login y no pasaba nada visible.
+  prueba('va por encima del botón de Login', aviso < pos('id="authLoginBtn"'),
+    aviso + ' vs ' + pos('id="authLoginBtn"'));
+  prueba('y por encima del pie', aviso < pos('id="authFoot"'));
+  prueba('justo después del subtítulo', aviso > pos('id="authSub"'));
+  // Si no se anuncia, quien usa lector de pantalla sigue sin enterarse.
+  prueba('se anuncia solo', /id="authMsg"[^>]*aria-live="polite"/.test(card));
+
+  const b = bloque(auth, '#authMsg:not(:empty)');
+  prueba('y separa de lo que viene DEBAJO',
+    /margin-bottom/.test(b) && !/margin-top/.test(b), b);
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') +
             '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);

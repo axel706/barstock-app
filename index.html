@@ -55,7 +55,7 @@
   <link rel="stylesheet" href="styles/order-history.css">
 
   <link rel="stylesheet" href="styles/fixes.css">
-  <link rel="stylesheet" href="styles/auth.css?v=login11">
+  <link rel="stylesheet" href="styles/auth.css?v=login12">
   <link rel="stylesheet" href="styles/cost-report.css?v=steps20">
   <link rel="stylesheet" href="styles/motion.css?v=motion3">
   <link rel="stylesheet" href="styles/skeleton.css?v=skel1">
@@ -242,7 +242,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261101-134309</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261101-134828</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5720,6 +5720,13 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     <h2 id="authTitle">Welcome back</h2>
     <div id="authSub">Access your inventory and ordering workspace.</div>
 
+    <!-- El aviso va ARRIBA, no debajo del pie.
+         Abajo quedaba por debajo de "Sign up" y fuera de la vista con el
+         teclado abierto: pulsabas Login, no pasaba nada visible y no
+         había forma de enterarse de que faltaba elegir locación. Aquí
+         cae en el primer sitio donde se mira al volver del botón. -->
+    <div id="authMsg" role="status" aria-live="polite"></div>
+
     <label class="auth-label" for="authEmail">Email</label>
     <div class="auth-field">
       <input id="authEmail" type="email" placeholder="Enter your email">
@@ -5783,7 +5790,6 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     <button id="authLoginBtn">Login</button>
 
     <div id="authFoot"><span id="authFootLead">Don’t have an account?</span> <span id="authFootAction">Sign up</span></div>
-    <div id="authMsg"></div>
     </div>
   </div>
 </div>

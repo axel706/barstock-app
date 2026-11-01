@@ -369,8 +369,10 @@ body.light #authCard{
   background:none;
 }
 
+/* El margen va DEBAJO: el aviso vive sobre el formulario, así que lo
+   que tiene que separar es lo que viene después, no lo de antes. */
 #authMsg:not(:empty){
-  margin-top:16px;
+  margin-bottom:18px;
   padding:10px 14px;
 }
 
