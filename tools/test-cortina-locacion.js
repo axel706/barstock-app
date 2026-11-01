@@ -269,6 +269,7 @@ grupo('el caché');
   const ahora = Object.assign({}, prev);
 
   [['styles/auth.css', /styles\/auth\.css\?v=([\w-]+)/],
+   ['styles/mobile.css', /styles\/mobile\.css\?v=([\w-]+)/],
    ['src/auth.js', /src\/auth\.js\?v=([\w-]+)/],
    ['src/location-access.js', /src\/location-access\.js\?v=([\w-]+)/]
   ].forEach(([rel, re]) => {

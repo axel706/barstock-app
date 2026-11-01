@@ -76,13 +76,47 @@ body.auth-locked > *:not(#authOverlay):not(#locCurtain){
   display:none !important;
 }
 
-/* Card — split panel, exact same glass as app .card */
+/* ── La tarjeta: UN cristal, no dos ──────────────────────────────────
+ *
+ * Esto era un panel partido en el que la marca y el cuerpo pintaban
+ * cada uno su propio cristal: mismo `background`, mismo `border`, mismo
+ * `box-shadow` interior y, lo que de verdad se veía, su propio
+ * `backdrop-filter`.
+ *
+ * Dos `backdrop-filter` hermanos son dos capas de desenfoque
+ * independientes. Donde se tocan, cada una muestrea el fondo por su
+ * cuenta y queda una costura; y contra el borde redondeado del padre
+ * el desenfoque no llega al último subpíxel, así que el fondo se cuela
+ * como una raya clara. Eso eran las líneas del borde izquierdo y de la
+ * esquina superior derecha.
+ *
+ * Los dos lados eran idénticos —mismo color en oscuro y en claro—, así
+ * que nunca fueron dos superficies: eran una, dibujada dos veces. Ahora
+ * el cristal es del contenedor y los hijos sólo colocan contenido.
+ *
+ * Los colores viven en variables de aquí para que `body.light` cambie
+ * un sitio y lo hereden la tarjeta y el separador del móvil. Antes cada
+ * tema repetía los tres valores en dos reglas. */
 #authCard{
+  --auth-linea:  rgba(255,255,255,.10);
+  --auth-vidrio: rgba(15,23,42,.50);
+  --auth-brillo: rgba(255,255,255,.05);
+
   width:min(720px,94vw);
   border-radius:18px;
   overflow:hidden;
   display:flex;
-  box-shadow:0 8px 24px rgba(0,0,0,.28);
+  background:var(--auth-vidrio);
+  border:1px solid var(--auth-linea);
+  box-shadow:0 8px 24px rgba(0,0,0,.28), inset 0 1px 0 var(--auth-brillo);
+  backdrop-filter:blur(11px) saturate(150%);
+  -webkit-backdrop-filter:blur(11px) saturate(150%);
+}
+
+body.light #authCard{
+  --auth-linea:  rgba(255,255,255,.58);
+  --auth-vidrio: rgba(255,255,255,.44);
+  --auth-brillo: rgba(255,255,255,.72);
 }
 
 .auth-grid-2{
@@ -91,24 +125,13 @@ body.auth-locked > *:not(#authOverlay):not(#locCurtain){
   gap:0 12px;
 }
 
+/* Sólo coloca la marca. El cristal es del padre. */
 #authCardBrand{
   flex:0 0 220px;
   display:flex;
   align-items:center;
   justify-content:center;
   text-align:center;
-  background:rgba(15,23,42,.50);
-  border:1px solid rgba(255,255,255,.10);
-  border-right:none;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
-  backdrop-filter:blur(11px) saturate(150%);
-  -webkit-backdrop-filter:blur(11px) saturate(150%);
-}
-
-body.light #authCardBrand{
-  background:rgba(255,255,255,.44);
-  border-color:rgba(255,255,255,.58);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.72);
 }
 
 .auth-brand-type{
@@ -161,22 +184,11 @@ body.light #authCardBrand{
   text-transform:uppercase;
 }
 
+/* Igual: sólo el formulario. */
 #authCardBody{
   flex:1;
   min-width:0;
   padding:32px 36px;
-  background:rgba(15,23,42,.50);
-  border:1px solid rgba(255,255,255,.10);
-  border-left:none;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
-  backdrop-filter:blur(11px) saturate(150%);
-  -webkit-backdrop-filter:blur(11px) saturate(150%);
-}
-
-body.light #authCardBody{
-  background:rgba(255,255,255,.44);
-  border-color:rgba(255,255,255,.58);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.72);
 }
 
 #authCard h2{

@@ -305,24 +305,18 @@
     padding: 22px 16px;
   }
 
-  /* Los dos paneles se unian por el centro quitando el borde que se
-     tocaba: la marca sin borde derecho y el cuerpo sin izquierdo. Al
-     girar a vertical los lados que se tocan son otros, asi que hay que
-     devolver los verticales y quitar los horizontales.
+  /* Antes aqui habia que devolver y quitar bordes al girar: cada panel
+     pintaba su propio cristal y se unian por el centro quitando el
+     borde que se tocaba, asi que al apilarse los lados que se tocan
+     son otros. Ese malabar ya no hace falta — el cristal lo pinta
+     ahora #authCard y los hijos no tienen borde ninguno.
 
-     Se toca STYLE y WIDTH pero nunca COLOR: el color del borde lo
-     ponen dos reglas distintas segun el tema (auth.css lo define para
-     oscuro y body.light lo redefine). Sin nombrarlo, cada tema
-     conserva el suyo y esto sigue funcionando en claro y en oscuro. */
-  #authCardBrand {
-    border-right-style: solid;
-    border-right-width: 1px;
-    border-bottom-style: none;
-  }
+     Lo unico que queda es la raya bajo la marca, que antes salia de
+     rebote del `box-shadow` interior del cuerpo y ahora se pide a
+     proposito. El color sale de la variable de auth.css, asi que
+     claro y oscuro lo heredan sin repetirlo. */
   #authCardBody {
-    border-left-style: solid;
-    border-left-width: 1px;
-    border-top-style: none;
+    border-top: 1px solid var(--auth-linea);
     padding: 24px 20px;
   }
 
