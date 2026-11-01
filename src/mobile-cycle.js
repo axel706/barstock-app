@@ -121,18 +121,16 @@
     }
 
     if (st === 'step2') {
-      // Un ciclo abierto hace más de una semana y sin un solo conteo
-      // no es "acabas de empezar": es que no se va a contar. Decirlo
-      // es la mitad de la salida.
-      const sinContar = !!(W() && W().cicloSinContar && W().cicloSinContar());
+      // Cuántos días lleva abierto se dice SIEMPRE, no sólo pasado un
+      // umbral. Es el dato que hace falta para decidir si esta semana
+      // se cuenta o se empieza de nuevo, y esa decisión se toma en
+      // esta pantalla.
       const dias = (W() && W().diasDeCalendario) ? (W().diasDeCalendario() || 0) : 0;
       return {
         tono: 'green',
-        k: 'Step 2 of 3' + (sinContar ? ' · open ' + dias + ' days' : ''),
+        k: 'Step 2 of 3' + (dias ? ' · open ' + dias + (dias === 1 ? ' day' : ' days') : ''),
         t: 'Load the count',
-        d: sinContar
-          ? 'Nothing counted since it opened.'
-          : 'From a file, or count the bottles with your phone.',
+        d: 'From a file, or count the bottles with your phone.',
         btn: 'Load it'
       };
     }
@@ -218,23 +216,27 @@
       </div>
 
       ${estado() === 'step2' ? `
-        <!-- ── Las dos salidas del paso 2 ─────────────────────────
-             Importar vive aquí además de en la tarjeta del Home,
-             porque en un ciclo sin contar la tarjeta le cede su sitio
-             a "empezar de nuevo" y no puede desaparecer del todo. -->
+        <!-- ── Las tres salidas del paso 2 ────────────────────────
+             Contar (arriba), importar, y empezar la semana de nuevo.
+             La tercera va SIN condición: dos intentos de detectar
+             cuándo hacía falta —siete días, y luego "nada que pedir"—
+             fallaron los dos en Will's & Bill's, y mientras tanto no
+             había salida. Si va a contar esta semana o no lo sabe
+             ella, no nosotros; el botón está puesto y pregunta antes.
+             Aquí y no en la tarjeta del Home: ahí no cabe explicar lo
+             que hace, y sin la explicación "Start over" da miedo. -->
         <button type="button" class="m-cyc-sec" id="mcFile">
           <i class="ti ti-file-import" aria-hidden="true"></i> Import a file
         </button>
-        ${W() && W().cicloSinContar && W().cicloSinContar() ? `
-          <button type="button" class="m-cyc-sec" id="mcOtra">
-            <i class="ti ti-refresh" aria-hidden="true"></i> Start the week over
-          </button>
-          <div class="m-cyc-warn">
-            Closes this cycle without a count and opens a new one. On hand
-            stays where it is — there is no count to lose — and everything
-            becomes available to order again.
-          </div>
-        ` : ''}
+        <button type="button" class="m-cyc-sec" id="mcOtra">
+          <i class="ti ti-refresh" aria-hidden="true"></i> Start the week over
+        </button>
+        <div class="m-cyc-warn">
+          For a week that is not going to be counted. Closes this cycle
+          without a count and opens a new one. On hand stays where it is
+          — there is no count to lose — and everything becomes available
+          to order again.
+        </div>
       ` : ''}
 
       ${st === 'counting' ? `

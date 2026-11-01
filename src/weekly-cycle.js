@@ -117,56 +117,27 @@
     return Math.max(0, Math.round((b - a) / 86400000));
   }
 
-  // ── Un ciclo que se quedó sin contar ─────────────────────────────
+  // ── Por qué aquí NO se detecta el "ciclo atascado" ───────────────
   //
-  // Abierto, sin un solo conteo, y más viejo que la semana que debía
-  // cubrir. Es el callejón sin salida de quien no cuenta: el paso 2
-  // ofrece "carga el conteo" para siempre, y como todo lo de esa
-  // semana ya se pidió, Ordering también está vacío.
+  // Hubo dos intentos de que la app adivinara cuándo alguien está en un
+  // callejón sin salida, para enseñar la salida sólo entonces:
   //
-  // Se contesta aquí y no en la tarjeta porque es una pregunta sobre
-  // el ciclo, y porque la hacen dos pantallas.
-  // ¿Queda algo por pedir? Mientras quede, no hay callejón: la
-  // respuesta es pedir, no empezar la semana de nuevo.
-  function quedaPorPedir() {
-    if (typeof window.getActiveVendors !== 'function' ||
-        typeof window.getOrderRowsForVendor !== 'function') return true;
-    try {
-      return window.getActiveVendors().some(v => {
-        const f = window.getOrderRowsForVendor(v) || [];
-        return f.length > 0;
-      });
-    } catch (e) {
-      // Sin saberlo, se dice que SÍ queda: ofrecer la salida por un
-      // fallo de lectura es peor que no ofrecerla.
-      return true;
-    }
-  }
-
-  // ── El callejón sin salida ───────────────────────────────────────
+  //   1 · más de siete días abierto          → llegaba un día TARDE
+  //   2 · y además nada que pedir            → nunca llegó a ser cierto
   //
-  // Lo até primero a `cicloViejo()` —más de siete días— y era el
-  // criterio equivocado: un ciclo abierto el 26 mirado el 1 son seis
-  // días, así que la salida habría aparecido justo el día DESPUÉS de
-  // hacer falta. Para alguien que trabaja por semanas, siempre tarde.
+  // El segundo falló en Will's & Bill's con el ciclo del 26 mirado el
+  // 1: quedaban renglones en Ordering, así que la app decidió que había
+  // camino y se guardó la salida. Él sólo veía "no hay salida".
   //
-  // Los días no son la señal. La señal es que no hay nada que contar
-  // Y nada que pedir: ahí la app no ofrece absolutamente nada y la
-  // semana no puede avanzar.
+  // La conclusión no es un tercer criterio mejor. Es que la pregunta
+  // estaba mal: empezar la semana de nuevo es una DECISIÓN de quien
+  // lleva la barra, no un diagnóstico que la app pueda hacer por ella.
+  // Nosotros no sabemos si va a contar esta semana; ella sí.
   //
-  // El suelo de tres días —el mismo que usa un conteo abandonado— es
-  // sólo para que la salida no aparezca el mismo rato en que acabas
-  // de pedirlo todo.
-  const SUELO_MS = 3 * 24 * 60 * 60 * 1000;
-
-  function cicloSinContar() {
-    if (_countingSince) return false;        // hay un conteo en marcha
-    if (_resetAt === null) return false;     // no hay ciclo
-    if (countLoaded()) return false;         // ya se contó
-    const ms = edadCiclo();
-    if (ms === null || ms < SUELO_MS) return false;
-    return !quedaPorPedir();
-  }
+  // Así que la salida vive siempre en la pantalla del ciclo mientras el
+  // paso sea `step2`, detrás de su confirmación, como el botón de
+  // escritorio lleva haciéndolo desde siempre. Sin umbrales que ajustar
+  // y sin un estado que podamos leer mal.
 
   function cicloViejo() {
     const ms = edadCiclo();
@@ -720,7 +691,7 @@
     estado: () => _state,
     resetAt: () => _resetAt,
     pausado, abandonado, quietoDesdeHace, hace, cuantoLleva, fmtDate,
-    diasDeCalendario, cicloSinContar,
+    diasDeCalendario,
     accion: onClick,
     reiniciar, descartarConteo
   };

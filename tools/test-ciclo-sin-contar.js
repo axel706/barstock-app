@@ -1,30 +1,38 @@
 #!/usr/bin/env node
 /*
- * ── El ciclo que se quedó sin contar ─────────────────────────────────
+ * ── La salida de un ciclo que no se va a contar ──────────────────────
  *
  * En Will's & Bill's no se cuenta. Se reinicia el ciclo, todo queda en
- * cero, todo aparece en Ordering, se ajusta a ojo y se pide.
+ * cero, todo aparece en Ordering, se ajusta a ojo y se pide. La semana
+ * siguiente la app se quedaba sin salida: el paso 2 ofrecía "Load the
+ * count · Scan the bottles" para siempre, y lo único que desatasca
+ * —empezar la semana de nuevo— sólo vivía en el estado `done`.
  *
- * La semana siguiente la app se queda sin salida:
+ * ── Dos intentos de adivinar, y por qué ya no se adivina ────────────
  *
- *   · el ciclo sigue abierto, así que el paso es `step2`
- *   · nadie contó, así que nunca llega a `done`
- *   · y todo lo de esa semana ya se pidió, así que Ordering está vacío
+ * Primero la salida salía con el ciclo abierto más de SIETE días. El
+ * de ella abrió el 26 y lo miró el 1: seis. Llegaba un día tarde, cada
+ * semana.
  *
- * El paso 2 ofrecía "Load the count · Scan the bottles" para siempre, y
- * lo único que desatasca —empezar la semana de nuevo— no existía en
- * ninguna pantalla: el botón de reiniciar sólo vive en `done`.
+ * Después, con el ciclo abierto y NADA que pedir. Tampoco: en su
+ * locación quedaban renglones en Ordering, así que la app decidió que
+ * había camino y se guardó la salida. Él seguía viendo lo mismo.
  *
- * Lo que se protege:
+ * La pregunta estaba mal. Si esta semana se va a contar o no lo sabe
+ * quien lleva la barra, no la app. Así que la salida está SIEMPRE en el
+ * paso 2, detrás de su confirmación — que es como el botón de
+ * escritorio se ha comportado desde siempre.
  *
- *   1. La app RECONOCE el estado. Un ciclo de hace una semana sin nada
- *      contado no puede hablar como si acabaras de abrirlo.
- *   2. La salida está en las DOS pantallas donde se mira: la tarjeta
- *      del Home y la del ciclo.
- *   3. Y no sale cuando no toca: con un ciclo de ayer la respuesta es
- *      contar, no reiniciar.
- *   4. Importar no desaparece. La tarjeta le cede su segundo botón a
- *      la salida, así que la pantalla del ciclo lo recoge.
+ * Lo que se protege aquí:
+ *
+ *   1. En el paso 2 la salida está, sin condiciones y sin umbrales.
+ *   2. Pregunta antes, y dice lo primero que hay que saber: que no se
+ *      pierde ningún conteo.
+ *   3. No aparece donde ya hay camino: con un conteo en marcha la
+ *      respuesta es terminarlo o descartarlo, no reiniciar.
+ *   4. Importar no desaparece: sigue en las dos pantallas.
+ *   5. La tarjeta del Home no se toca. Contar e importar caben; la
+ *      salida necesita la explicación que sólo cabe en el ciclo.
  *
  *   node tools/test-ciclo-sin-contar.js
  */
@@ -53,7 +61,7 @@ const inv = (n, conStock) => Array.from({ length: n }, (_, i) => ({
   onHand: i < conStock ? 3 : 0, toOrder: 0
 }));
 
-// o: { dias, contado, counting }
+// o: { dias, contado, counting, porPedir }
 function entorno(o) {
   const dom = new JSDOM('<!doctype html><body></body>', { url: 'https://x.test/' });
   const w = dom.window;
@@ -70,24 +78,20 @@ function entorno(o) {
   w.BarStockWeeklyCycle = {
     estado: () => o.counting ? 'counting' : (o.contado ? 'done' : 'step2'),
     resetAt: () => abierto.toISOString(),
-    fmtDate: () => 'Oct 25',
+    fmtDate: () => 'Oct 26',
     edadCiclo: () => Date.now() - abierto.getTime(),
     diasDeCalendario: () => o.dias,
     cicloViejo: () => o.dias > 7,
     pausado: () => false,
     abandonado: () => false,
     hace: (ms) => Math.round(ms / 60000) + ' min',
-    // Aquí es un stub A PROPÓSITO: esta prueba es de las PANTALLAS.
-    // Quién decide que hay callejón —ciclo abierto, nada contado y
-    // nada que pedir, con suelo de tres días— se prueba de verdad,
-    // cargando el módulo, en `tools/test-salida-ciclo.js`.
-    cicloSinContar: () =>
-      !o.counting && !o.contado && o.dias >= 3 && !o.porPedir,
     reiniciar: () => { w.__reiniciado = (w.__reiniciado || 0) + 1; }
   };
 
-  w.getActiveVendors = () => [];
-  w.getOrderRowsForVendor = () => [];
+  // Lo que queda por pedir. Estuvo en la condición y ya no está: se
+  // deja en el entorno para poder probar justo eso.
+  w.getActiveVendors = () => ['ACME'];
+  w.getOrderRowsForVendor = () => (o.porPedir ? [{ item: 'ITEM 1', toOrder: 6 }] : []);
   w.computeOrderSubtotal = () => 0;
   w.isRowPlaced = () => false;
   w.BarStockCountSession = { exists: () => false, size: () => 0 };
@@ -121,59 +125,56 @@ function ciclo(w) {
 
 (async () => {
 
-grupo('un ciclo de ayer habla como un ciclo de ayer');
+grupo('el de Will\'s & Bill\'s: abierto el 26, mirado el 1, con cosas por pedir');
 {
-  const w = entorno({ dias: 1 });
-  const c = home(w);
-  prueba('la tarjeta está', !!c);
-  prueba('no dice los días que lleva', !/\d+ days/.test(c.textContent), c.textContent.slice(0, 90));
-  prueba('y el segundo botón sigue siendo importar',
-    /Import a file/.test(c.textContent), c.textContent.slice(0, 140));
-  prueba('sin salida de emergencia', !/Start over/.test(c.textContent));
-
+  // La captura exacta que lo destapó, con la condición que falló:
+  // seis días, nada contado, y Ordering NO vacío.
+  const w = entorno({ dias: 6, porPedir: true });
   const h = ciclo(w);
-  prueba('la pantalla del ciclo tampoco la ofrece', !h.querySelector('#mcOtra'));
-  // Pero importar sí está, siempre: es la otra forma de cargar el conteo.
-  prueba('aunque importar sí', !!h.querySelector('#mcFile'));
+  prueba('la salida está', !!h.querySelector('#mcOtra'));
+  prueba('dice cuántos días lleva abierto',
+    /open 6 days/.test(h.textContent), h.textContent.slice(0, 160));
+  prueba('y para qué es', /not going to be counted/.test(h.textContent));
 }
 
-grupo('el de Will\'s & Bill\'s: abierto el 26, mirado el 1');
+grupo('en el paso 2 está siempre, sin umbrales');
 {
-  // La captura que lo destapó: CYCLE OPEN · OCT 26 con [Count now]
-  // [Import a file] y nada más. Seis días. "no hay salida".
-  const w = entorno({ dias: 6 });
-  const c = home(w);
-  prueba('a los 6 días la tarjeta ofrece la salida',
-    /Start over/.test(c.textContent), c.textContent.slice(0, 180));
-  prueba('y ya no ofrece importar como segundo botón',
-    !/Import a file/.test(c.textContent), c.textContent.slice(0, 180));
-
-  const h = ciclo(w);
-  prueba('la pantalla del ciclo también', !!h.querySelector('#mcOtra'));
-  prueba('y ahí importar sigue estando', !!h.querySelector('#mcFile'));
+  for (const caso of [
+    { dias: 0, porPedir: true },   // recién abierto
+    { dias: 1, porPedir: false },
+    { dias: 6, porPedir: false },
+    { dias: 30, porPedir: true }
+  ]) {
+    const h = ciclo(entorno(caso));
+    prueba('dias=' + caso.dias + ' porPedir=' + caso.porPedir,
+      !!h.querySelector('#mcOtra'));
+  }
 }
 
-grupo('uno de hace diez días, no');
+grupo('e importar no desaparece de ninguna de las dos pantallas');
 {
-  const w = entorno({ dias: 10 });
-  const c = home(w);
-  prueba('dice cuántos lleva', /10 days/.test(c.textContent), c.textContent.slice(0, 90));
-  prueba('y que no se contó nada',
-    /Nothing counted/.test(c.textContent), c.textContent.slice(0, 140));
-  prueba('el segundo botón es la salida',
-    /Start over/.test(c.textContent), c.textContent.slice(0, 160));
-  // Contar sigue siendo lo correcto: no se le quita el sitio.
-  prueba('contar sigue siendo el primario', /Count now/.test(c.textContent));
+  const w = entorno({ dias: 6, porPedir: true });
+  prueba('en el ciclo', !!ciclo(w).querySelector('#mcFile'));
+  prueba('y en la tarjeta', /Import a file/.test(home(w).textContent));
+}
+
+grupo('la tarjeta del Home no cambia en este paso');
+{
+  // Lo que se le pidió: la salida vive en la pantalla del ciclo. Aquí
+  // sólo las dos respuestas normales.
+  for (const dias of [1, 6, 30]) {
+    const c = home(entorno({ dias, porPedir: false }));
+    prueba('dias=' + dias + ': sigue siendo [Count now] [Import a file]',
+      /Count now/.test(c.textContent) && /Import a file/.test(c.textContent) &&
+      !/Start over/.test(c.textContent), c.textContent.slice(0, 160));
+  }
 }
 
 grupo('la salida pregunta antes, y dice que no se pierde nada');
 {
-  const w = entorno({ dias: 10 });
-  const c = home(w);
-  const b = Array.from(c.querySelectorAll('button'))
-    .find(x => /Start over/.test(x.textContent));
-  prueba('el botón existe', !!b);
-  b.click();
+  const w = entorno({ dias: 6, porPedir: true });
+  const h = ciclo(w);
+  h.querySelector('#mcOtra').click();
   await esperar(20);
 
   const dlg = w.document.getElementById('dlgBg');
@@ -191,26 +192,31 @@ grupo('la salida pregunta antes, y dice que no se pierde nada');
   prueba('al confirmar, reinicia', w.__reiniciado === 1, String(w.__reiniciado));
 }
 
-grupo('y la pantalla del ciclo lleva la misma salida');
+grupo('donde ya hay camino, no se ofrece');
 {
-  const w = entorno({ dias: 10 });
-  const h = ciclo(w);
-  prueba('la ofrece', !!h.querySelector('#mcOtra'));
-  prueba('con la explicación entera',
-    /no count to lose/.test(h.textContent), h.textContent.slice(0, 400));
-  // Importar no puede desaparecer: en la tarjeta le cede el sitio a
-  // la salida, así que aquí tiene que estar.
-  prueba('e importar sigue estando', !!h.querySelector('#mcFile'));
+  // Hay trabajo hecho: la salida no es empezar de nuevo, es terminar o
+  // descartar el conteo.
+  const h = ciclo(entorno({ dias: 10, counting: true }));
+  prueba('con un conteo en marcha, no', !h.querySelector('#mcOtra'));
+  prueba('sino descartar el conteo', !!h.querySelector('#mcDrop'));
+}
+{
+  // Ciclo cerrado: reiniciar ya existe y vive en la tarjeta del Home.
+  const h = ciclo(entorno({ dias: 10, contado: true }));
+  prueba('con el conteo cargado, tampoco', !h.querySelector('#mcOtra'));
 }
 
-grupo('con un conteo en marcha, nada de esto aparece');
+grupo('y no vuelve a colarse un umbral');
 {
-  // Hay trabajo hecho: ahí la salida no es empezar de nuevo, es
-  // terminar o descartar el conteo.
-  const w = entorno({ dias: 10, counting: true });
-  const h = ciclo(w);
-  prueba('no se ofrece empezar de nuevo', !h.querySelector('#mcOtra'));
-  prueba('sino descartar el conteo', !!h.querySelector('#mcDrop'));
+  const wc = fs.readFileSync(path.join(RAIZ, 'src/weekly-cycle.js'), 'utf8');
+  const mc = fs.readFileSync(path.join(RAIZ, 'src/mobile-cycle.js'), 'utf8');
+  const mh = fs.readFileSync(path.join(RAIZ, 'src/mobile-home.js'), 'utf8');
+  prueba('cicloSinContar ya no existe en ningún lado',
+    !/cicloSinContar/.test(wc + mc + mh));
+  // El comentario es la mitad del arreglo: quien lea esto tiene que
+  // encontrarse los dos intentos fallidos antes de proponer un tercero.
+  prueba('y queda escrito por qué no se detecta',
+    /llegaba un día TARDE|NO se detecta/i.test(wc));
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') +
