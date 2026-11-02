@@ -531,7 +531,7 @@
           <defs><clipPath id="cpClip"><path d="${bottlePath(key)}"/></clipPath></defs>
           <path class="cp-glass" d="${bottlePath(key)}" stroke-width="2"/>
           <g clip-path="url(#cpClip)">
-            <rect class="cp-liquid" x="0" y="${yToPx(key, y)}" width="${VB.w}" height="${VB.h}"/>
+            <rect class="cp-liquid" id="cpLiquid" x="0" y="${yToPx(key, y)}" width="${VB.w}" height="${VB.h}"/>
           </g>
           <line class="cp-fullline" x1="14" y1="${yToPx(key, prof.yFull)}"
                 x2="${VB.w - 14}" y2="${yToPx(key, prof.yFull)}"
@@ -555,23 +555,61 @@
                Aquí no hay nada que medir. La línea está en las mismas
                coordenadas que el vidrio, así que no pueden separarse.
                -->
-          <line class="cp-dragline" x1="0" y1="${yToPx(key, y)}"
+          <line class="cp-dragline" id="cpDrag" x1="0" y1="${yToPx(key, y)}"
                 x2="${VB.w}" y2="${yToPx(key, y)}"
                 stroke-width="3" vector-effect="non-scaling-stroke"/>
-          <rect class="cp-grip" x="${(VB.w - 42) / 2}" y="${yToPx(key, y) - 10}"
+          <rect class="cp-grip" id="cpGrip" x="${(VB.w - 42) / 2}" y="${yToPx(key, y) - 10}"
                 width="42" height="20" rx="10"/>
         </svg>
       </div>
       <div class="cp-read">
         ${whichLabel()}
-        <b>${frac.toFixed(2)}</b>
-        <small>${ml} ml · drag the line</small>
-        ${compararConAntes(antes, frac)}
+        <b id="cpFrac">${frac.toFixed(2)}</b>
+        <small id="cpMl">${ml} ml &middot; drag the line</small>
+        <span id="cpCmp">${compararConAntes(antes, frac)}</span>
       </div>
       ${shapeIsSet(_row) ? '' :
         `<div class="cp-hint">Bottle shape not set — using a generic one.</div>`}`;
 
     bindDrag();
+  }
+
+  // ── Mover la línea SIN reconstruir nada ─────────────────────────
+  //
+  // `paintBottle()` rehace el `innerHTML` entero: vuelve a parsear el
+  // SVG, el clipPath y las líneas, y vuelve a enganchar el arrastre.
+  // Llamarlo en cada `pointermove` costaba tres cosas a la vez, y las
+  // tres se notaban al intentar clavar la marca del conteo anterior:
+  //
+  //   · parpadeo, porque el dibujo se destruye y se rehace;
+  //   · la caja CAMBIA DE ALTO —el texto de abajo pasa de "0.6" a
+  //     "0.60" y aparece o desaparece la comparación—, así que el SVG
+  //     se reescala a media pulsación;
+  //   · y como `encuadre()` mide esa caja, el mapa dedo→nivel se
+  //     recalcula bajo el dedo. Por eso costaba tanto parar justo en
+  //     la línea punteada: se movía mientras la perseguías.
+  //
+  // Arrastrando sólo cambian cuatro atributos y dos textos. Eso es lo
+  // único que se toca. La geometría se queda quieta y el dedo
+  // también.
+  function moverLinea() {
+    const liq = $('cpLiquid'), drag = $('cpDrag'), grip = $('cpGrip');
+    if (!liq || !drag || !grip) return false;
+
+    const key = profileOf(_row);
+    const frac = _opens[_active];
+    const py = yToPx(key, P().heightFor(key, frac));
+
+    liq.setAttribute('y', py);
+    drag.setAttribute('y1', py); drag.setAttribute('y2', py);
+    grip.setAttribute('y', py - 10);
+
+    const f = $('cpFrac'); if (f) f.textContent = frac.toFixed(2);
+    const m = $('cpMl');
+    if (m) m.innerHTML = Math.round(frac * sizeOf(_row)) + ' ml &middot; drag the line';
+    const c = $('cpCmp');
+    if (c) c.innerHTML = compararConAntes(antesDe(_active), frac);
+    return true;
   }
 
 
@@ -604,9 +642,21 @@
   function bindDrag() {
     const stage = $('cpStage');
     if (!stage) return;
+    // El encuadre se mide al APOYAR el dedo y no en cada movimiento.
+    //
+    // Medirlo cada vez significaba que cualquier cosa que moviera el
+    // layout a media pulsación —el texto de abajo cambiando de alto,
+    // el teclado, una barra que aparece— movía también el mapa
+    // dedo→nivel. Perseguías la marca y la marca se te escapaba.
+    //
+    // Durante un arrastre la geometría no puede cambiar. Si cambia,
+    // es un fallo; congelarla aquí es además lo que lo hace
+    // imposible.
+    let _enc = null;
+
     const move = (clientY) => {
       const svg = stage.querySelector('svg');
-      const e = encuadre(svg);
+      const e = _enc || encuadre(svg);
       if (!e) return;
       const key = profileOf(_row);
       const prof = P().profOf(key);
@@ -619,17 +669,20 @@
       let y = (base - clientY) / usable;
       y = Math.max(0, Math.min(prof.yFull, y));
       _opens[_active] = redondearAPaso(P().fractionAt(key, y));
-      paintBottle();
+      // Sólo si algo faltara en el DOM se rehace todo.
+      if (!moverLinea()) paintBottle();
       paintNums();
     };
     stage.addEventListener('pointerdown', (e) => {
       _dragging = true;
       stage.setPointerCapture(e.pointerId);
+      _enc = encuadre(stage.querySelector('svg'));
       move(e.clientY);
     });
+    const soltar = () => { _dragging = false; _enc = null; };
     stage.addEventListener('pointermove', (e) => { if (_dragging) move(e.clientY); });
-    stage.addEventListener('pointerup',   () => { _dragging = false; });
-    stage.addEventListener('pointercancel', () => { _dragging = false; });
+    stage.addEventListener('pointerup',   soltar);
+    stage.addEventListener('pointercancel', soltar);
   }
 
   // ── Varias botellas abiertas ─────────────────────────────────────────

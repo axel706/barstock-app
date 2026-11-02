@@ -156,6 +156,15 @@ body.light .cp-num:focus{
 .cp-read b{ font-size: var(--m-figure); font-weight: 800; line-height: 1; display: block; }
 .cp-read small{ font-size: var(--m-small); color: #94a3b8; display: block; margin-top: 4px; }
 
+/* El renglón de la comparación con el conteo anterior reserva su sitio
+   SIEMPRE, aparezca o no.
+   Sin esto, pasar por el valor exacto de la semana pasada cambiaba el
+   texto de "last count 0.60 −0.05" a "same as last count", el bloque
+   cambiaba de alto, y el dibujo de arriba se movía justo cuando estabas
+   intentando pararte ahí. El sitio reservado no se ve; lo que hace es
+   que nada salte. */
+#cpCmp{ display: block; min-height: 1.35em; margin-top: 4px; }
+
 .cp-none{
   font-size: var(--m-small); color: #94a3b8; text-align: center;
   padding: 26px 10px; line-height: 1.5;
