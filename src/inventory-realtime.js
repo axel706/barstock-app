@@ -62,19 +62,57 @@
 
     const locationId = await fetchLocationId();
 
-    const res = await fetch(
-      `${BARSTOCK_RT_URL}/rest/v1/inventory_items?location_id=eq.${locationId}&select=code,item_name,vendor,on_hand,suggested,value,category,order_override,par_adjusted_week,bottle_size_ml,bottle_shape,created_at,last_opens`,
-      {
-        headers: {
-          apikey: BARSTOCK_RT_KEY,
-          Authorization: `Bearer ${BARSTOCK_RT_KEY}`
-        }
-      }
-    );
+    // ── Leer el inventario ENTERO, o no leerlo ──────────────────────
+    //
+    // Esto era un `fetch` suelto: sin `limit`, sin paginar, y sin mirar
+    // `res.ok`. Lo que llegara se convertia en `state.master`, y de ahi
+    // en la verdad: al cerrar un conteo, `replaceInventoryMaster` BORRA
+    // la tabla y reinserta esa lista. Una lectura corta se convertia en
+    // un borrado permanente, en silencio.
+    //
+    // Paso: entre el 25 de octubre y el 1 de noviembre desaparecieron
+    // ocho productos de Crown. Nadie los borro — se perdieron asi.
+    //
+    // Ahora: se comprueba la respuesta, se pagina de verdad, y se
+    // contrasta el total con el que dice el servidor. Si no cuadra, se
+    // lanza; quien llama ya sabe tratar un fallo de carga, y fallar es
+    // infinitamente mejor que escribir medio inventario encima.
+    const COLS = 'code,item_name,vendor,on_hand,suggested,value,category,' +
+                 'order_override,par_adjusted_week,bottle_size_ml,bottle_shape,' +
+                 'created_at,last_opens';
+    const PAGINA = 1000;
+    const H = { apikey: BARSTOCK_RT_KEY, Authorization: `Bearer ${BARSTOCK_RT_KEY}` };
 
-    const rows = await res.json();
-    if (!Array.isArray(rows)) {
-      throw new Error('La respuesta de inventory_items no fue válida');
+    let rows = [];
+    let esperados = null;
+    for (let p = 0; p < 40; p++) {
+      const res = await fetch(
+        `${BARSTOCK_RT_URL}/rest/v1/inventory_items?location_id=eq.${locationId}` +
+        `&select=${COLS}&order=item_name.asc&limit=${PAGINA}&offset=${p * PAGINA}`,
+        { headers: Object.assign({ Prefer: 'count=exact' }, H) }
+      );
+      if (!res.ok) {
+        throw new Error('inventory_items respondio ' + res.status + ': ' + (await res.text()));
+      }
+      // El total REAL, que es con lo que se comprueba al final. Viene en
+      // la cabecera como "0-999/1234".
+      if (esperados === null) {
+        const n = Number(String(res.headers.get('content-range') || '').split('/')[1]);
+        if (isFinite(n)) esperados = n;
+      }
+      const trozo = await res.json();
+      if (!Array.isArray(trozo)) {
+        throw new Error('La respuesta de inventory_items no fue válida');
+      }
+      rows = rows.concat(trozo);
+      if (trozo.length < PAGINA) break;
+    }
+
+    // La comprobacion que faltaba. Sin esto, "llegaron 262 de 270" se
+    // veia exactamente igual que "hay 262".
+    if (esperados !== null && rows.length !== esperados) {
+      throw new Error('inventory_items incompleto: llegaron ' + rows.length +
+                      ' de ' + esperados + '. No se toca el inventario local.');
     }
 
     // Si lo que llego es identico a lo que ya hay en pantalla, no se toca

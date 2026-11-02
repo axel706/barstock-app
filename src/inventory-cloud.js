@@ -287,9 +287,13 @@
   // Asi que antes de borrar se cuenta lo que hay. Si lo que entra es
   // mucho mas pequeño, se para. Un inventario no encoge un 20% solo.
   //
-  // `force: true` para los dos casos en que si es legitimo: vaciar a
-  // proposito desde Admin, y el import de un conteo que de verdad trae
-  // una lista nueva mas corta.
+  // `force: true` para el caso en que si es legitimo: restaurar un
+  // respaldo, que es la vuelta atras y puede traer menos.
+  //
+  // Y hay un segundo nivel, `exacto: true`, para quien NUNCA debe
+  // quitar productos. El umbral del 80% sirve para un desastre, no
+  // para una fuga: perder 8 de 270 es el 3% y pasaba por debajo sin
+  // despeinarse. Eso fue exactamente lo que ocurrio.
   const MERMA_MAX = 0.8;   // menos del 80% de lo que habia = sospechoso
 
   async function cuantosHay(url, key, locationId) {
@@ -315,6 +319,16 @@
       // una lectura perdida. Pero se dice.
       if (habia === null) {
         console.warn('[inventario] no se pudo contar antes de reemplazar; se sigue');
+      } else if (opts && opts.exacto && entran < habia) {
+        // Cerrar un conteo cambia CANTIDADES. Nunca quita productos del
+        // catalogo. Asi que aqui cualquier merma, aunque sea de uno,
+        // significa que la lista local llego corta — y escribirla seria
+        // borrar lo que falta.
+        const msg = 'Refusing to save the count: ' + entran +
+          ' items would replace ' + habia + '. Reload the page and finish ' +
+          'the count again — nothing was lost.';
+        console.error('[inventario] ' + msg);
+        throw new Error(msg);
       } else if (entran < habia * MERMA_MAX) {
         const msg = 'Refusing to replace the catalogue: ' + entran +
           ' items would replace ' + habia + '. That would delete ' +

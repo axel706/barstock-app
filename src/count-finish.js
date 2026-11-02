@@ -585,7 +585,10 @@
       else if (typeof recalc === 'function') recalc();
 
       $('cfBody').innerHTML = `<div class="cf-status">Saving to the cloud…</div>`;
-      await window.BarStockInventoryCloud.replaceInventoryMaster(master);
+      // `exacto`: un conteo cambia cantidades, nunca quita productos.
+      // Si la lista local llego corta, se para aqui en vez de borrar la
+      // diferencia. El conteo no se pierde — esta en la sesion.
+      await window.BarStockInventoryCloud.replaceInventoryMaster(master, { exacto: true });
 
       // ── El ciclo ─────────────────────────────────────────────────────
       //

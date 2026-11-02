@@ -121,6 +121,54 @@ grupo('una merma pequeña también pasa');
   prueba('255 de 260 entran', !err, err && err.message);
 }
 
+grupo('cerrar un conteo no puede borrar NI UNO');
+{
+  // El umbral del 80% sirve para un desastre, no para una fuga: perder
+  // 8 de 270 es el 3% y pasaba por debajo sin despeinarse. Eso fue
+  // exactamente lo que ocurrio en Crown.
+  const w = entorno({ hay: 270 });
+  let err = null;
+  try { await w.BarStockInventoryCloud.replaceInventoryMaster(filas(262), { exacto: true }); }
+  catch (e) { err = e; }
+  prueba('262 de 270 se rechaza', !!err, err && err.message);
+  prueba('y no borró nada', w.__borrado === 0, String(w.__borrado));
+  prueba('el aviso dice que no se perdió el conteo',
+    err && /nothing was lost/i.test(err.message), err && err.message);
+}
+{
+  // Uno menos. Ni ese.
+  const w = entorno({ hay: 270 });
+  let err = null;
+  try { await w.BarStockInventoryCloud.replaceInventoryMaster(filas(269), { exacto: true }); }
+  catch (e) { err = e; }
+  prueba('269 de 270 también', !!err, err && err.message);
+}
+{
+  // Lo normal: el mismo número. Un conteo no cambia el catálogo.
+  const w = entorno({ hay: 270 });
+  let err = null;
+  try { await w.BarStockInventoryCloud.replaceInventoryMaster(filas(270), { exacto: true }); }
+  catch (e) { err = e; }
+  prueba('270 de 270 pasa', !err, err && err.message);
+  prueba('y se escribieron', w.__insertado && w.__insertado.length === 270,
+    String(w.__insertado && w.__insertado.length));
+}
+{
+  // Y dar de alta un producto durante el conteo tampoco estorba.
+  const w = entorno({ hay: 270 });
+  let err = null;
+  try { await w.BarStockInventoryCloud.replaceInventoryMaster(filas(271), { exacto: true }); }
+  catch (e) { err = e; }
+  prueba('271 de 270 pasa', !err, err && err.message);
+}
+
+grupo('y el cierre de conteo lo pide así');
+{
+  const cf = fs.readFileSync(path.join(RAIZ, 'src/count-finish.js'), 'utf8');
+  prueba('count-finish pasa exacto',
+    /replaceInventoryMaster\(master, \{ exacto: true \}\)/.test(cf));
+}
+
 grupo('restaurar un respaldo pasa igualmente');
 {
   // Es la vuelta atrás: traer menos es exactamente lo que se le pide.
