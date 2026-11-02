@@ -242,7 +242,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261101-222956</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261101-224403</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -4977,7 +4977,11 @@ async function importBackup(file){
       throw new Error('Inventory cloud module not available');
     }
 
-    await window.BarStockInventoryCloud.replaceInventoryMaster(state.master || []);
+    // `force`: restaurar un respaldo SI puede traer menos articulos que
+    // los que hay, y es legitimo — es la vuelta atras. El seguro de
+    // merma esta para los otros cuatro caminos, que nunca deberian
+    // encoger el catalogo.
+    await window.BarStockInventoryCloud.replaceInventoryMaster(state.master || [], { force: true });
 
     if (window.BarStockNoMatchCloud) {
       await window.BarStockNoMatchCloud.replaceNoMatches(state.noMatches || []);
@@ -5322,7 +5326,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/toast.js?v=t6"></script>
 <script src="src/empty-state.js"></script>
 <script src="src/inventory-realtime.js?v=rt6"></script>
-<script src="src/inventory-cloud.js?v=account-wjm-3"></script>
+<script src="src/inventory-cloud.js?v=account-wjm-4"></script>
 <script src="src/par-intelligence.js?v=adj6"></script>
 <script src="src/par-intelligence-section.js"></script>
 <script src="src/consumption-match.js?v=cm13"></script>

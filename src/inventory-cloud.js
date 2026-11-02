@@ -271,9 +271,58 @@
     return true;
   }
 
-  async function replaceInventoryMaster(masterRows) {
+  // ── El seguro contra borrar medio inventario ──────────────────────
+  //
+  // Esta funcion BORRA la tabla entera y la reinserta desde el array
+  // local. La llaman cinco sitios, y todos dan por hecho que
+  // `state.master` esta completo. El dia que no lo este —una carga a
+  // medias, un cambio de locacion a destiempo, una lectura que fallo
+  // sin ruido— se lleva por delante todo lo que falte, sin preguntar y
+  // sin dejar rastro.
+  //
+  // Paso: una noche, contando, Baileys y otros dos dejaron de existir.
+  // Nunca supimos cual de los cinco fue, y eso es justo el problema:
+  // no habia forma de saberlo.
+  //
+  // Asi que antes de borrar se cuenta lo que hay. Si lo que entra es
+  // mucho mas pequeño, se para. Un inventario no encoge un 20% solo.
+  //
+  // `force: true` para los dos casos en que si es legitimo: vaciar a
+  // proposito desde Admin, y el import de un conteo que de verdad trae
+  // una lista nueva mas corta.
+  const MERMA_MAX = 0.8;   // menos del 80% de lo que habia = sospechoso
+
+  async function cuantosHay(url, key, locationId) {
+    try {
+      const r = await fetch(
+        `${url}/rest/v1/inventory_items?location_id=eq.${locationId}&select=id&limit=0`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}`,
+                     Prefer: 'count=exact', Range: '0-0' } });
+      const n = Number(String(r.headers.get('content-range') || '').split('/')[1]);
+      return isFinite(n) ? n : null;
+    } catch (e) { return null; }
+  }
+
+  async function replaceInventoryMaster(masterRows, opts) {
     const { url, key } = getConfig();
     const locationId = await fetchLocationId();
+
+    const entran = (masterRows || []).length;
+    if (!(opts && opts.force)) {
+      const habia = await cuantosHay(url, key, locationId);
+      // `null` = no se pudo contar. Ahi NO se para: fallar por el lado
+      // de no escribir dejaria la app sin poder importar un conteo por
+      // una lectura perdida. Pero se dice.
+      if (habia === null) {
+        console.warn('[inventario] no se pudo contar antes de reemplazar; se sigue');
+      } else if (entran < habia * MERMA_MAX) {
+        const msg = 'Refusing to replace the catalogue: ' + entran +
+          ' items would replace ' + habia + '. That would delete ' +
+          (habia - entran) + '. Reload and try again.';
+        console.error('[inventario] ' + msg);
+        throw new Error(msg);
+      }
+    }
 
     await deleteAllInventoryItems();
 
