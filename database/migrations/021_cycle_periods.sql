@@ -33,6 +33,16 @@ create table if not exists public.cycle_periods (
   unique (location_name, started_at)
 );
 
+-- `create table if not exists` NO añade columnas a una tabla que ya
+-- existe. Una version anterior de esta migracion no traia `origen`, asi
+-- que en una base donde ya se corrio, el insert de abajo fallaba con
+-- "column origen does not exist" y la siembra no ocurria.
+--
+-- Regla para quien añada una columna a una migracion ya corrida en
+-- algun sitio: el `create table` no basta, hace falta el `alter`.
+alter table public.cycle_periods
+  add column if not exists origen text;
+
 create index if not exists cycle_periods_loc
   on public.cycle_periods (location_name, started_at desc);
 
