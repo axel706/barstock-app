@@ -3619,6 +3619,11 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * existe: justo encima está el subtítulo de la pantalla. */
   .m-isub + .m-iday { margin-top: 18px; }
 
+  /* El chevron de las facturas de ciclos anteriores: dice que se
+   * puede entrar. Eran tarjetas muertas y no habia forma de saber que
+   * ahora abren. */
+  .m-hcard-go { flex: 0 0 auto; color: #7f93a8; font-size: var(--m-strong); }
+
   /* ── "Esta factura es de esta orden" ──────────────────────────────
    *
    * Va entre los totales y las lineas: es una afirmacion sobre la

@@ -58,6 +58,13 @@
   let _viejas = null;   // facturas de ciclos anteriores, bajo demanda
   let _ciclos = null;   // aperturas registradas, de la mas nueva a la mas vieja
   let _enlaceOrden = null;  // { porFactura: Map, ordenes: [...] } o null
+  // Los conjuntos que deciden QUE se enseña: proveedores ocultos,
+  // facturas ocultas, que product_id es bebida, de quien es cada uno.
+  // Se guardan porque los necesitan DOS vistas —la del ciclo y la de
+  // ciclos anteriores— y montarlos dos veces fue justo el fallo: la
+  // segunda lista salia con todos los proveedores.
+  let _ctx = null;
+  let _viejasFac = [];      // las facturas de antes, ya montadas
   let _eligiendoOrden = false;
   let _abierta = null;    // order_id de la que se está mirando
   let _busy = new Set();
@@ -140,8 +147,11 @@
   // `agrupar` en false para las otras dos vistas —comida y ocultas—,
   // donde el ciclo no es la pregunta: ahi se listan seguidas, como
   // siempre.
+  // Un BOTÓN, no un div. Eran divs y por eso no se podía entrar al
+  // detalle de una factura de un ciclo anterior — ni enlazarla a una
+  // orden, que es justo para lo que se mira esa lista.
   function tarjetaFactura(f) {
-    return '<div class="m-hcard">' +
+    return '<button type="button" class="m-hcard" data-vieja="' + esc(String(f.id)) + '">' +
       '<span class="m-hcard-l">' +
         '<span class="m-hcard-v">' + esc(f.vendor || 'Unknown vendor') + '</span>' +
         '<span class="m-hcard-m">' +
@@ -152,7 +162,8 @@
       '</span>' +
       '<span class="m-hcard-r"><span class="m-hcard-a">' +
         dinero(f.total) + '</span></span>' +
-    '</div>';
+      '<i class="ti ti-chevron-right m-hcard-go" aria-hidden="true"></i>' +
+    '</button>';
   }
 
   function pintarGrupos(grupos, agrupar) {
@@ -409,12 +420,34 @@
     _fuera = { comida: 0, ocultas: 0, sinFecha: 0 };
     _descartadas = { comida: [], ocultas: [] };
 
+    // El contexto, para que la vista de ciclos anteriores filtre con
+    // EXACTAMENTE el mismo criterio. Sin esto montaba su propia lista
+    // en crudo y salian todos los proveedores, incluidos los que
+    // marcaste como no tuyos y las facturas que no son de barra.
+    _ctx = { ocultoFactura, ocultoVendor, esBebida, dueno, descartado };
+
+    const todas = armar(lineas, _ctx, true);
+    sugerir(todas);
+    _facturas = todas;
+    return todas;
+  }
+
+  // ── De lineas sueltas a facturas ────────────────────────────────
+  //
+  // Lo usan la lista del ciclo y la de ciclos anteriores. Estaba
+  // escrito solo en la primera, y la segunda se monto aparte: por eso
+  // una filtraba proveedores ocultos y comida, y la otra no.
+  //
+  // `contar` solo en la del ciclo: los contadores del pie —"6 no son
+  // bebida", "3 de proveedores ocultos"— explican huecos de ESA
+  // lista.
+  function armar(lineas, ctx, contar) {
+    const { ocultoFactura, ocultoVendor, esBebida, dueno, descartado } = ctx;
     const porOrden = new Map();
     for (const l of lineas) {
       const id = String(l.order_id);
       if (ocultoFactura.has(id) || ocultoVendor.has(norm(l.vendor_name))) {
-        _fuera.ocultas++;
-        _descartadas.ocultas.push(l);
+        if (contar) { _fuera.ocultas++; _descartadas.ocultas.push(l); }
         continue;
       }
       let f = porOrden.get(id);
@@ -429,9 +462,17 @@
       // La comida se cuenta pero no se enseña: hay que poder decir
       // "y 6 líneas más que no son bebida" en vez de que los totales
       // no cuadren con el papel sin explicación.
-      if (esBebida && !esBebida.has(pid)) {
-        f.ocultas++; _fuera.comida++;
-        _descartadas.comida.push(l);
+      // Comida fuera, pero sólo cuando se SABE que lo es.
+      //
+      // `esBebida` son los product_id del catálogo actual de
+      // MarginEdge. Una línea sin product_id, o de un producto que ya
+      // no está en ese catálogo —cosa normal en facturas viejas— no
+      // se puede clasificar: no es prueba de que sea comida.
+      // Descartarla sería hacer desaparecer una factura real sin
+      // decirlo, que es el fallo que llevamos todo el día persiguiendo.
+      if (esBebida && pid && !esBebida.has(pid)) {
+        f.ocultas++;
+        if (contar) { _fuera.comida++; _descartadas.comida.push(l); }
         continue;
       }
 
@@ -457,7 +498,7 @@
     const todas = Array.from(porOrden.values()).filter(f => f.lineas.length);
     for (const f of todas) {
       f.ts = dia(f.fecha).t;
-      if (!f.fecha) { f.sinFecha = true; _fuera.sinFecha++; }
+      if (!f.fecha) { f.sinFecha = true; if (contar) _fuera.sinFecha++; }
     }
     // Las sin fecha al final: no se pueden ordenar con las demás, pero
     // tampoco pueden desaparecer.
@@ -465,8 +506,6 @@
       (a.sinFecha ? 1 : 0) - (b.sinFecha ? 1 : 0) ||
       b.ts - a.ts || String(a.vendor).localeCompare(String(b.vendor)));
 
-    sugerir(todas);
-    _facturas = todas;
     return todas;
   }
 
@@ -607,9 +646,14 @@
         if (!_viejas) {
           const { url, key } = cfg();
           const locId = await locationId();
+          // LAS MISMAS columnas que la lista del ciclo. Antes se pedian
+          // cuatro campos sueltos, y por eso estas facturas no podian
+          // abrirse: sin `product_id` ni `vendor_item_name` no hay
+          // detalle que enseñar.
           _viejas = await leerPaginado(url, key,
             `marginedge_invoice_lines?location_id=eq.${locId}&invoice_date=lt.${desdeCiclo()}` +
-            `&select=order_id,invoice_date,invoice_number,vendor_name,line_price,quantity` +
+            `&select=order_id,product_id,vendor_item_name,invoice_date,invoice_number,` +
+            `vendor_name,unit_price,line_price,quantity,status` +
             `&order=invoice_date.desc`);
         }
         lineas = _viejas;
@@ -624,27 +668,33 @@
       return;
     }
 
-    // ── Por FACTURA, no por producto ────────────────────────────────
+    // ── Por FACTURA, y con EL MISMO criterio que la lista del ciclo ──
     //
-    // La primera versión listaba líneas sueltas. Con 1008 eso es un
-    // muro de nombres de producto, y lo que estás buscando es una
-    // factura: un proveedor, un número y un importe.
-    const porOrden = new Map();
-    for (const l of lineas) {
-      const id = String(l.order_id);
-      let f = porOrden.get(id);
-      if (!f) {
-        f = { id, vendor: l.vendor_name || '', numero: l.invoice_number || '',
-              fecha: l.invoice_date || '', n: 0, total: 0 };
-        porOrden.set(id, f);
-      }
-      f.n++;
-      f.total += Number(l.line_price) || 0;
-    }
-
-    const facturas = Array.from(porOrden.values())
-      .sort((x, y) => String(y.fecha).localeCompare(String(x.fecha)) ||
-                      String(x.vendor).localeCompare(String(y.vendor)));
+    // Antes esto montaba su propia agrupacion en crudo: sin filtrar
+    // proveedores ocultos ni lineas que no son bebida. El resultado
+    // era una lista interminable con TODOS los proveedores, incluidos
+    // los que marcaste como no tuyos.
+    //
+    // Ahora usa `armar()`, el mismo de la lista del ciclo. `contar` en
+    // false: los contadores del pie explican huecos de aquella, no de
+    // esta.
+    // ── Con qué criterio se agrupa cada vista ───────────────────────
+    //
+    // "Earlier cycles" son facturas de verdad, así que pasan por el
+    // MISMO filtro que la lista del ciclo: proveedores ocultos fuera,
+    // comida fuera. Eso es lo que faltaba.
+    //
+    // Las otras dos enseñan justo lo que ese filtro descarta. Pasarlas
+    // por él las dejaría vacías — que es exactamente lo que acabo de
+    // hacer al unificarlas sin pensar. Ahí se agrupa sin excluir nada.
+    const SIN_FILTRO = {
+      ocultoFactura: new Set(), ocultoVendor: new Set(),
+      esBebida: null, dueno: new Map(), descartado: new Set()
+    };
+    const ctx = cual === 'antes' ? (_ctx || SIN_FILTRO) : SIN_FILTRO;
+    const facturas = armar(lineas, ctx, false);
+    for (const f of facturas) f.n = f.lineas.length;
+    _viejasFac = cual === 'antes' ? facturas : _viejasFac;
 
     // ── Repartirlas por el ciclo en que cayeron ─────────────────────
     //
@@ -696,6 +746,18 @@
       '<div class="m-ipie">' + facturas.length +
         (facturas.length === 1 ? ' invoice' : ' invoices') + ' · ' +
         lineas.length + (lineas.length === 1 ? ' line' : ' lines') + '</div>';
+
+    // Entrar al detalle desde aqui. Es lo que faltaba: sin esto la
+    // lista de ciclos anteriores se podia mirar pero no abrir, y
+    // enlazar una factura a su orden —que es para lo que se mira— era
+    // imposible.
+    host.querySelectorAll('[data-vieja]').forEach(b => {
+      b.onclick = () => {
+        _abierta = b.dataset.vieja;
+        pintar(host);
+        cambioDeNivel();
+      };
+    });
 
     volverCon(host, () => { _verFuera = ''; pintar(host); cambioDeNivel(); });
   }
@@ -1235,14 +1297,25 @@
   function pintar(host) {
     if (!host || !_facturas) return;
     try {
+      // El DETALLE manda sobre la lista, venga de donde venga.
+      //
+      // Antes `_verFuera` cortaba antes de llegar aqui, asi que una
+      // factura de un ciclo anterior no podia abrirse: pulsarla
+      // repintaba la misma lista. Se busca en las dos, y al volver
+      // `_verFuera` sigue puesto, asi que se regresa a la lista de
+      // ciclos anteriores y no a la del ciclo.
+      const f = _abierta &&
+        (_facturas.find(x => x.id === _abierta) ||
+         _viejasFac.find(x => x.id === _abierta));
+      if (f) { pintarDetalle(host, f); return; }
+      if (_abierta) _abierta = null;
+
       if (_verFuera) {
         const p = pintarFuera(host);
         if (p && p.catch) p.catch(e => falloAlPintar(host, e));
         return;
       }
-      const f = _abierta && _facturas.find(x => x.id === _abierta);
-      if (f) pintarDetalle(host, f);
-      else { _abierta = null; pintarLista(host); }
+      pintarLista(host);
     } catch (e) {
       falloAlPintar(host, e);
     }

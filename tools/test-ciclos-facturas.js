@@ -59,6 +59,10 @@ const APERTURAS = [
 ];
 
 // line_price por línea; una fila por línea de factura.
+// Una de un proveedor que marcaste como NO tuyo, y una que no es
+// bebida. Las dos tienen que quedarse fuera de la lista de antes
+// igual que se quedan fuera de la del ciclo.
+const OCULTO = 'FISH WINDOW CLEANING';
 const LINEAS = [
   // ciclo 26-oct → 1-nov
   ['A1', '2026-10-26', '189652844', 'LOOP',          100],
@@ -68,8 +72,13 @@ const LINEAS = [
   ['B1', '2026-10-19', '189640112', 'LOOP',          300],
   ['B2', '2026-10-23', 'TR-2201',   'TRIAGE',        120],
   // antes del primer registro
-  ['C1', '2026-10-12', '189602001', 'LOOP',          400]
+  ['C1', '2026-10-12', '189602001', 'LOOP',          400],
+  // no es tuyo
+  ['D1', '2026-10-28', 'FW-77',     OCULTO,          90],
+  // es tuyo pero no es bebida
+  ['E1', '2026-10-29', 'GR-12',     'LOOP',          40]
 ];
+const NO_BEBIDA = new Set(['E1']);
 
 function entorno(o) {
   o = o || {};
@@ -101,7 +110,20 @@ function entorno(o) {
       return { ok: true, headers: { get: () => '0-0/' + LINEAS.length },
         json: async () => LINEAS.map(([id, f, num, v, p]) => ({
           order_id: id, invoice_date: f, invoice_number: num,
-          vendor_name: v, line_price: p, quantity: 1 })) };
+          vendor_name: v, line_price: p, quantity: 1,
+          // product_id por FACTURA: basta para distinguir la de comida.
+          product_id: id, vendor_item_name: 'Linea de ' + id, unit_price: p })) };
+    }
+    if (/marginedge_hidden/.test(u)) {
+      return { ok: true, headers: { get: () => '0-0/1' },
+        json: async () => [{ kind: 'vendor', clave: OCULTO }] };
+    }
+    if (/marginedge_products/.test(u)) {
+      // El catálogo de bebida: todos menos el de comida.
+      return { ok: true, headers: { get: () => '0-0/4' },
+        json: async () => LINEAS.map(l => l[0])
+          .filter(id => !NO_BEBIDA.has(id))
+          .map(id => ({ product_id: id })) };
     }
     return { ok: true, headers: { get: () => '0-0/0' }, json: async () => [] };
   };
@@ -210,6 +232,42 @@ grupo('un ciclo sin facturas no pinta cabecera');
     JSON.stringify(grupos.map(g => [g.titulo, g.facturas.length])));
 }
 
+grupo('y aplican el MISMO filtro que la lista del ciclo');
+{
+  // Esta lista montaba su propia agrupación en crudo: salían todos los
+  // proveedores, incluidos los que marcaste como no tuyos, y las
+  // líneas que no son bebida.
+  const { host } = await vista();
+  const txt = host.textContent;
+  prueba('el proveedor oculto no sale', !new RegExp(OCULTO, 'i').test(txt),
+    txt.slice(0, 200));
+  prueba('ni la factura que no es bebida', !/GR-12/.test(txt));
+  // Y las de verdad siguen estando.
+  prueba('las tuyas sí', /LOOP/.test(txt) && /SOUTHERN/.test(txt));
+}
+
+grupo('las facturas de antes se pueden ABRIR');
+{
+  // Eran divs muertos: se veian el proveedor y el total y ya. Enlazar
+  // una a su orden —que es para lo que se mira esa lista— era
+  // imposible.
+  const { w, host } = await vista();
+  const t = host.querySelector('[data-vieja]');
+  prueba('son botones', !!t && t.tagName === 'BUTTON', t && t.tagName);
+  prueba('con chevron', !!host.querySelector('.m-hcard-go'));
+
+  t.onclick();
+  for (let i = 0; i < 40 && !host.querySelector('.m-itot'); i++) {
+    await new Promise(r => setTimeout(r, 5));
+  }
+  prueba('abren el detalle', !!host.querySelector('.m-itot'),
+    host.textContent.slice(0, 120));
+  // Y desde el detalle se puede enlazar, que era el objetivo.
+  prueba('con la opción de enlazar a una orden',
+    /Link to an order|Counts toward/.test(host.textContent),
+    host.textContent.slice(0, 200));
+}
+
 grupo('y con el ciclo vacío, la puerta a las anteriores sigue ahí');
 {
   // Es el día después de reiniciar: cero facturas propias. El pie con
@@ -223,7 +281,7 @@ grupo('y con el ciclo vacío, la puerta a las anteriores sigue ahí');
   prueba('el ciclo está vacío', /No invoices yet this cycle/.test(host.textContent));
   const b = host.querySelector('[data-ver="antes"]');
   prueba('pero el enlace está', !!b, host.textContent.slice(0, 160));
-  prueba('y dice cuántas hay', /6 from earlier cycles/.test(host.textContent),
+  prueba('y dice cuántas hay', /8 from earlier cycles/.test(host.textContent),
     host.textContent.slice(0, 200));
   b.onclick();
   for (let i = 0; i < 40 && !host.querySelector('.m-hcard'); i++) {
