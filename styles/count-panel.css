@@ -142,7 +142,30 @@ body.light .cp-num:focus{
   user-select: none;
   -webkit-user-select: none;
 }
-.cp-stage svg{ display: block; width: 100%; height: 100%; }
+.cp-stage{
+  /* Su propia capa de dibujo, y aislada del resto.
+   *
+   * Desde que arrastrar dejo de rehacer el SVG —antes se reconstruia
+   * entero en cada movimiento, que era el parpadeo— el nodo persiste y
+   * solo cambian cuatro atributos. En iOS eso deja a veces el
+   * fotograma ANTERIOR pegado: aparecia una segunda botella fantasma,
+   * desplazada, con su linea y su tirador.
+   *
+   * No es un fallo del marcado —el DOM tiene un solo trazo, un solo
+   * tirador— sino de WebKit, que no invalida la capa al cambiar
+   * atributos de un SVG que no se ha tocado por fuera.
+   *
+   * `translateZ(0)` la promueve y `isolation` la separa, asi que cada
+   * cambio repinta esta caja entera y no puede quedar nada debajo.
+   */
+  transform: translateZ(0);
+  isolation: isolate;
+}
+.cp-stage svg{
+  display: block; width: 100%; height: 100%;
+  -webkit-backface-visibility: hidden;
+          backface-visibility: hidden;
+}
 
 /* La línea de arrastre vive DENTRO del SVG, en las mismas coordenadas
    que el vidrio. Antes era un div colocado con getBoundingClientRect y

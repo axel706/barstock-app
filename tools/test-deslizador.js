@@ -212,6 +212,22 @@ grupo('el renglón de la comparación reserva su sitio');
   prueba('tiene alto mínimo', /#cpCmp\{[^}]*min-height/.test(css));
 }
 
+grupo('y el visor tiene su propia capa de dibujo');
+{
+  // Desde que el SVG persiste, iOS dejaba a veces el fotograma
+  // anterior pegado: una segunda botella fantasma con su línea y su
+  // tirador. El DOM siempre tuvo una sola — es WebKit sin invalidar
+  // la capa. Promoverla y aislarla obliga a repintar la caja entera.
+  const css = fs.readFileSync(path.join(RAIZ, 'styles/count-panel.css'), 'utf8');
+  const stage = /\.cp-stage\{([^}]*)\}/.exec(css);
+  prueba('la capa está promovida', /translateZ\(0\)/.test(css));
+  prueba('y aislada', /isolation:\s*isolate/.test(css));
+  prueba('con el SVG sin cara trasera', /backface-visibility:\s*hidden/.test(css));
+  // Y lo que ya estaba: el alto no depende del contenido.
+  prueba('el visor sigue con alto fijo', !!stage && /height:\s*230px/.test(stage[1]),
+    stage && stage[1]);
+}
+
 grupo('y no vuelve a repintarse entero al arrastrar');
 {
   const src = fs.readFileSync(path.join(RAIZ, 'src/count-panel.js'), 'utf8');
