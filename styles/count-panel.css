@@ -142,30 +142,7 @@ body.light .cp-num:focus{
   user-select: none;
   -webkit-user-select: none;
 }
-.cp-stage{
-  /* Su propia capa de dibujo, y aislada del resto.
-   *
-   * Desde que arrastrar dejo de rehacer el SVG —antes se reconstruia
-   * entero en cada movimiento, que era el parpadeo— el nodo persiste y
-   * solo cambian cuatro atributos. En iOS eso deja a veces el
-   * fotograma ANTERIOR pegado: aparecia una segunda botella fantasma,
-   * desplazada, con su linea y su tirador.
-   *
-   * No es un fallo del marcado —el DOM tiene un solo trazo, un solo
-   * tirador— sino de WebKit, que no invalida la capa al cambiar
-   * atributos de un SVG que no se ha tocado por fuera.
-   *
-   * `translateZ(0)` la promueve y `isolation` la separa, asi que cada
-   * cambio repinta esta caja entera y no puede quedar nada debajo.
-   */
-  transform: translateZ(0);
-  isolation: isolate;
-}
-.cp-stage svg{
-  display: block; width: 100%; height: 100%;
-  -webkit-backface-visibility: hidden;
-          backface-visibility: hidden;
-}
+.cp-stage svg{ display: block; width: 100%; height: 100%; }
 
 /* La línea de arrastre vive DENTRO del SVG, en las mismas coordenadas
    que el vidrio. Antes era un div colocado con getBoundingClientRect y
@@ -178,15 +155,6 @@ body.light .cp-num:focus{
 .cp-read{ text-align: center; margin-top: 4px; }
 .cp-read b{ font-size: var(--m-figure); font-weight: 800; line-height: 1; display: block; }
 .cp-read small{ font-size: var(--m-small); color: #94a3b8; display: block; margin-top: 4px; }
-
-/* El renglón de la comparación con el conteo anterior reserva su sitio
-   SIEMPRE, aparezca o no.
-   Sin esto, pasar por el valor exacto de la semana pasada cambiaba el
-   texto de "last count 0.60 −0.05" a "same as last count", el bloque
-   cambiaba de alto, y el dibujo de arriba se movía justo cuando estabas
-   intentando pararte ahí. El sitio reservado no se ve; lo que hace es
-   que nada salte. */
-#cpCmp{ display: block; min-height: 1.35em; margin-top: 4px; }
 
 .cp-none{
   font-size: var(--m-small); color: #94a3b8; text-align: center;
