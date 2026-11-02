@@ -127,6 +127,33 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true, backups: data || [] });
     }
 
+    // ── Leer un respaldo SIN restaurarlo ──────────────────────────
+    //
+    // Hasta ahora la unica forma de ver que habia dentro era
+    // restaurarlo, o sea reemplazar el inventario entero. Para
+    // averiguar que desaparecio y cuando, eso es como abrir una caja
+    // fuerte con dinamita.
+    //
+    // Paso: una noche desaparecieron productos del catalogo y no habia
+    // manera de saber cuales ni en que momento, teniendo diez
+    // respaldos guardados con la respuesta dentro.
+    //
+    // Solo lectura y solo admin, igual que restaurar: el payload lleva
+    // el inventario completo de la locacion.
+    if (action === 'get') {
+      if (!isAdmin) return res.status(403).json({ ok: false, error: 'Only the admin can read a backup' });
+      if (!backupId) return res.status(400).json({ ok: false, error: 'Missing backupId' });
+
+      const { data: bk, error } = await supabase
+        .from('inventory_backups')
+        .select('id, created_at, reason, location_name, item_count, payload')
+        .eq('id', backupId)
+        .single();
+      if (error || !bk) return res.status(404).json({ ok: false, error: 'Backup not found' });
+
+      return res.status(200).json({ ok: true, backup: bk });
+    }
+
     if (action === 'restore') {
       if (!isAdmin) return res.status(403).json({ ok: false, error: 'Only the admin can restore' });
       if (!backupId) return res.status(400).json({ ok: false, error: 'Missing backupId' });
