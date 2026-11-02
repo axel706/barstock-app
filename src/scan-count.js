@@ -433,11 +433,25 @@
 
   // Primero lo aprendido; si no, se prueba contra el codigo de proveedor
   // por si en alguna locacion coincidieran de casualidad.
+  // El MISMO criterio de "mismo nombre" que usa el resto de la app.
+  // Comparar con `===` era el fallo: el codigo aprendido guardaba
+  // "Bailey's Irish Cream" con apostrofo tipografico y el catalogo dice
+  // "Baileys Irish Cream" sin el. Un caracter, y la botella dejaba de
+  // existir para el escaner.
+  function norm(x) {
+    return typeof window.normalizeName === 'function'
+      ? window.normalizeName(x || '')
+      : String(x == null ? '' : x).trim().toLowerCase();
+  }
+
   function resolve(upc) {
     const master = (window.state && state.master) || [];
     const rec = learned.get(String(upc));
     if (rec) {
-      const m = master.find(r => r.item === rec.item_name);
+      // Exacto primero —si existe tal cual, es ese— y si no, por
+      // nombre normalizado.
+      const m = master.find(r => r.item === rec.item_name)
+             || master.find(r => norm(r.item) === norm(rec.item_name));
       // El tamaño del CODIGO, no el del producto. Un Hendrick's de 750
       // comprado de emergencia tiene su propio codigo y su propio
       // tamaño, aunque el que se ordene sea el litro. Null significa
@@ -725,6 +739,26 @@
     stats();
 
     const found = resolve(text);
+
+    // ── Un codigo aprendido cuyo producto ya no se encuentra ────────
+    //
+    // Pasaba y la pantalla MENTIA: pintaba "counted" y no abria el
+    // panel, porque abrirlo depende de `found.row`. No se contaba
+    // nada y no habia forma de saberlo — tres botellas en una noche,
+    // y la sensacion de que el inventario se estaba borrando.
+    //
+    // Si no hay fila, esto es exactamente un codigo sin dueño: se
+    // trata como tal y se pregunta de que botella es. La respuesta
+    // corrige el enlace para siempre.
+    if (found && !found.row) {
+      hit(`<div class="sc-new">
+             <div class="sc-code">${esc(text)}</div>
+             <div class="sc-item">${esc(found.item)} is not in this catalogue</div>
+           </div>`);
+      askAssign(text);
+      return;
+    }
+
     if (found) {
       // Sin el codigo crudo ni el formato ni el tiempo: eso era del banco
       // de pruebas. Lo que hace falta saber es QUE botella se leyo, y que
