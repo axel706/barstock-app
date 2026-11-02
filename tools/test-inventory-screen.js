@@ -163,13 +163,16 @@ console.log('\nse guarda contra el indice del maestro');
 }
 
 {
-  console.log('\nlos dormidos siguen escondidos');
+  console.log('\nesta lista ya no esconde dormidos');
   {
+    // Antes salian de la lista y volvian con un interruptor. Costo que
+    // tres botellas "desaparecieran" en mitad de un conteo nocturno, y
+    // que la pestaña dijera "Everything 164" con 260 en la base.
+    // La regla sigue viva donde si tiene sentido: el total del conteo.
+    // Ver tools/test-sin-dormidos.js.
     const { host } = pantalla({ dormido: "Tito's Vodka" });
-    ok('no sale en la lista', nombres(host).indexOf("Tito's Vodka") === -1);
-    // Pero se dice cuantos hay y se pueden sacar: esconder sin decirlo
-    // es el fallo que ya evitamos una vez.
-    ok('y el boton de filtros avisa', true);
+    ok('sale igual', nombres(host).indexOf("Tito's Vodka") !== -1,
+       nombres(host).join(' | '));
   }
 
   console.log('\nfiltrar por texto');

@@ -242,7 +242,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261101-202525</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261101-222956</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2728,21 +2728,23 @@ function render(){
   // funcion devuelve false para todo y aqui no se esconde nada: el fallo
   // tiene que verse como "se ve todo", nunca como "desaparecio medio
   // inventario".
-  const D = window.BarStockDormant;
-  const visibles = state.master.filter(r => !(D && D.oculto(r)));
-  const nEscondidos = D ? D.cuantos(state.master) : 0;
-
-  // El chip de los escondidos va al final de la fila de proveedores, no
-  // en un menu de ajustes: esconder cosas sin decirlo, y sin una forma
-  // obvia de deshacerlo, es como se pierde la confianza en una lista.
-  const chipQuietos = (D && D.listo() && (nEscondidos > 0 || D.mostrandoTodo()))
-    ? `<div class="oh-filter-chip dorm-chip ${D.mostrandoTodo() ? 'active' : ''}" onclick="toggleDormant()" title="Items with no stock, no par and no movement in ${D.SEMANAS_QUIETO} weeks"><i class="ti ti-${D.mostrandoTodo() ? 'eye' : 'eye-off'}" aria-hidden="true"></i> ${D.mostrandoTodo() ? 'Showing all' : nEscondidos + ' hidden'}</div>`
-    : '';
-  document.getElementById('inventoryVendorTabs').innerHTML = inventoryVendors.map(v => `<div class="oh-filter-chip ${vendorFilter===v?'active':''}" onclick="setInventoryVendorFilter('${escapeJsAttr(v)}')">${v==='ALL'?'ALL':v}</div>`).join('') + chipQuietos;
-  // El buscador mira el master COMPLETO. Buscar algo por su nombre y que
-  // no salga porque esta escondido seria el peor momento posible para
-  // esconderlo: buscarlo es la prueba de que lo quieres.
-  const base = q ? state.master : visibles;
+  // ── Aqui ya no se esconde nada ──────────────────────────────────
+  //
+  // Esta tabla escondia los "dormidos" —sin stock, sin par y quietos
+  // ocho semanas— detras de un chip de "N hidden". El chip estaba a la
+  // vista justo para que esconder no fuera silencioso, y aun asi
+  // costo caro: contando de noche tres botellas no aparecian y parecia
+  // que el inventario se estaba borrando.
+  //
+  // Y habia algo peor que no se veia venir: `estaQuieto` devuelve
+  // false mientras sus datos no han cargado, asi que el mismo producto
+  // estaba al entrar y desaparecia un segundo despues. Un filtro que
+  // aparece solo al rato no es un filtro, es un fantasma.
+  //
+  // La lista enseña el inventario entero. La regla sigue viva donde si
+  // tiene sentido: el total del conteo, en `src/count-session.js`.
+  document.getElementById('inventoryVendorTabs').innerHTML = inventoryVendors.map(v => `<div class="oh-filter-chip ${vendorFilter===v?'active':''}" onclick="setInventoryVendorFilter('${escapeJsAttr(v)}')">${v==='ALL'?'ALL':v}</div>`).join('');
+  const base = state.master;
   const filtered = base.filter(r => (!q || r.itemNorm.includes(q) || normalizeName(r.code).includes(q)) && (vendorFilter==='ALL' || r.vendor===vendorFilter));
   const invVendorActive = vendorFilter !== 'ALL';
   // Toggle vendor column visibility
@@ -3094,14 +3096,6 @@ window.setVendorTab = setVendorTab;
 // alguien hubiera escrito a mano en el HTML, y fallaba sin ruido para
 // cualquier otra cosa. El <select> se mantiene sincronizado porque hay
 // un listener de 'change' colgado de el.
-function toggleDormant(){
-  const D = window.BarStockDormant;
-  if (!D) return;
-  D.verTodo(!D.mostrandoTodo());
-  render();
-}
-window.toggleDormant = toggleDormant;
-
 function setInventoryVendorFilter(v){
   invVendorFilter = String(v || 'ALL');
   const el = document.getElementById('vendorFilter');
@@ -5385,7 +5379,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/product-hero.js?v=ph1"></script>
 <script src="src/mobile-search.js?v=m13"></script>
 <script src="src/mobile-cycle.js?v=m8"></script>
-<script src="src/mobile-inventory.js?v=m8"></script>
+<script src="src/mobile-inventory.js?v=m9"></script>
 <script src="src/mobile-orders.js?v=m17"></script>
 <script src="src/mobile-quick.js?v=mqk2"></script>
 <script src="src/mobile-tabs.js?v=m12"></script>

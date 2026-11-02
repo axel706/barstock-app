@@ -50,7 +50,6 @@
   let _solo = 'todo';    // todo | fix
   let _vendor = 'ALL';
   let _orden = 'valor';  // valor | nombre | falta
-  let _verDormidos = false;
 
   function master() { return (window.state && window.state.master) || []; }
 
@@ -118,17 +117,30 @@
 
   // ── La lista ─────────────────────────────────────────────────────────
 
+  // ── Aquí ya no se esconde nada ──────────────────────────────────
+  //
+  // Esta lista escondía los "dormidos" —sin stock, sin par y quietos
+  // ocho semanas— con un interruptor en el cajón de filtros. La idea
+  // era no llenar la pantalla de productos muertos.
+  //
+  // Lo que costó: contando de noche, tres botellas no aparecían al
+  // buscarlas y parecía que el inventario se estaba borrando. Y la
+  // pestaña decía "Everything 164" con 260 productos en la base, que
+  // es una pestaña mintiendo.
+  //
+  // Peor todavía: `estaQuieto` devuelve false mientras sus datos no
+  // han cargado, así que el mismo producto estaba a las 2 y no a las
+  // 8. Un filtro que aparece solo al rato no es un filtro, es un
+  // fantasma.
+  //
+  // Everything es everything. Si la lista es larga, para eso está el
+  // buscador. La regla sigue viva donde sí tiene sentido: el total
+  // del conteo, en `src/count-session.js` — ahí esconder un producto
+  // muerto no es mentir, es no pedirte que cuentes lo que no existe.
   function visibles() {
-    const D = window.BarStockDormant;
     const t = norm(_q);
 
     let filas = master().filter(r => {
-      // Los dormidos siguen escondidos, igual que en escritorio.
-      // Esconder cosas sin decirlo es el error que ya evitamos una vez,
-      // y por eso el interruptor está en el cajón de filtros con su
-      // número al lado.
-      if (!_verDormidos && D && D.estaQuieto && D.estaQuieto(r)) return false;
-
       if (_vendor !== 'ALL' && String(r.vendor || 'UNKNOWN').toUpperCase() !== _vendor) return false;
       if (_solo === 'fix' && !faltas(r).length) return false;
       if (t.length >= 2 && !(norm(r.item).includes(t) || norm(r.code).includes(t))) return false;
@@ -149,12 +161,10 @@
     return filas;
   }
 
+  // Los números del segmentado cuentan sobre TODO el maestro, que es
+  // lo que ahora se enseña. "Everything 260" y 260 en la lista.
   function cuantos(pred) {
-    const D = window.BarStockDormant;
-    return master().filter(r => {
-      if (!_verDormidos && D && D.estaQuieto && D.estaQuieto(r)) return false;
-      return pred(r);
-    }).length;
+    return master().filter(pred).length;
   }
 
   function pintarLista(host) {
@@ -239,14 +249,12 @@
     if (inp) inp.placeholder = 'Filter ' + nTodo + ' items';
 
     const aj = host.querySelector('#miAdj');
-    if (aj) aj.classList.toggle('on', _vendor !== 'ALL' || _orden !== 'valor' || _verDormidos);
+    if (aj) aj.classList.toggle('on', _vendor !== 'ALL' || _orden !== 'valor');
   }
 
   // ── El cajón de filtros ──────────────────────────────────────────────
 
   function cajon(host) {
-    const D = window.BarStockDormant;
-    const nQuietos = D && D.cuantos ? D.cuantos(master()) : 0;
     const vendors = typeof window.getVendorsForFilter === 'function'
       ? window.getVendorsForFilter() : ['ALL'];
 
@@ -274,10 +282,6 @@
           <button type="button" class="m-chip${_orden === 'nombre' ? ' on' : ''}" data-o="nombre">Name</button>
         </div>
 
-        <button type="button" class="m-sheet-op${_verDormidos ? ' on' : ''}" id="miDorm">
-          <span>Show ${nQuietos} dormant item${nQuietos === 1 ? '' : 's'}</span>
-          <i class="ti ti-${_verDormidos ? 'eye' : 'eye-off'}" aria-hidden="true"></i>
-        </button>
       </div>`;
     document.body.appendChild(hoja_);
 
@@ -292,8 +296,6 @@
     hoja_.querySelectorAll('[data-o]').forEach(b => {
       b.onclick = () => { _orden = b.dataset.o; cerrar(); repintar(); };
     });
-    const dm = hoja_.querySelector('#miDorm');
-    if (dm) dm.onclick = () => { _verDormidos = !_verDormidos; cerrar(); repintar(); };
   }
 
   // ── La hoja de producto ──────────────────────────────────────────────
