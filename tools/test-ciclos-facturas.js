@@ -76,9 +76,13 @@ const LINEAS = [
   // no es tuyo
   ['D1', '2026-10-28', 'FW-77',     OCULTO,          90],
   // es tuyo pero no es bebida
-  ['E1', '2026-10-29', 'GR-12',     'LOOP',          40]
+  ['E1', '2026-10-29', 'GR-12',     'LOOP',          40],
+  // Target: ni esta en el catalogo de bebida ni enlazada a ninguna
+  // botella tuya. Es una factura de verdad, pero no es de barra.
+  ['T1', '2026-10-22', '',          'TARGET',        10.49]
 ];
 const NO_BEBIDA = new Set(['E1']);
+const AJENA     = new Set(['T1']);
 
 function entorno(o) {
   o = o || {};
@@ -112,7 +116,10 @@ function entorno(o) {
           order_id: id, invoice_date: f, invoice_number: num,
           vendor_name: v, line_price: p, quantity: 1,
           // product_id por FACTURA: basta para distinguir la de comida.
-          product_id: id, vendor_item_name: 'Linea de ' + id, unit_price: p })) };
+          // Las ajenas van SIN product_id, como en la base de verdad:
+          // es lo que hace que el filtro de bebida no las pille.
+          product_id: AJENA.has(id) ? '' : id,
+          vendor_item_name: 'Linea de ' + id, unit_price: p })) };
     }
     if (/marginedge_hidden/.test(u)) {
       return { ok: true, headers: { get: () => '0-0/1' },
@@ -122,7 +129,7 @@ function entorno(o) {
       // El catálogo de bebida: todos menos el de comida.
       return { ok: true, headers: { get: () => '0-0/4' },
         json: async () => LINEAS.map(l => l[0])
-          .filter(id => !NO_BEBIDA.has(id))
+          .filter(id => !NO_BEBIDA.has(id) && !AJENA.has(id))
           .map(id => ({ product_id: id })) };
     }
     return { ok: true, headers: { get: () => '0-0/0' }, json: async () => [] };
@@ -232,6 +239,30 @@ grupo('un ciclo sin facturas no pinta cabecera');
     JSON.stringify(grupos.map(g => [g.titulo, g.facturas.length])));
 }
 
+grupo('y las que no son compras de barra se dejan fuera');
+{
+  // Target, la ferretería: facturas de verdad, pero nada suyo es una
+  // botella tuya. En el historial el filtro de bebida no basta porque
+  // un producto de hace meses puede no estar ya en el catálogo.
+  const { host } = await vista();
+  prueba('Target no sale', !/TARGET/.test(host.textContent),
+    host.textContent.slice(0, 220));
+  prueba('pero las tuyas sí', /LOOP/.test(host.textContent));
+
+  // Y NO en silencio: se dicen y se pueden desplegar. Esconder sin
+  // decirlo ya nos costó caro con los productos dormidos.
+  const b = host.querySelector('#miAjenas');
+  prueba('se avisa de cuántas hay', !!b, host.textContent.slice(-140));
+  prueba('y dice qué son', /nothing of yours/.test(host.textContent));
+
+  b.onclick();
+  for (let i = 0; i < 40 && !/TARGET/.test(host.textContent); i++) {
+    await new Promise(r => setTimeout(r, 5));
+  }
+  prueba('al desplegar, aparecen', /TARGET/.test(host.textContent),
+    host.textContent.slice(0, 220));
+}
+
 grupo('y aplican el MISMO filtro que la lista del ciclo');
 {
   // Esta lista montaba su propia agrupación en crudo: salían todos los
@@ -281,7 +312,7 @@ grupo('y con el ciclo vacío, la puerta a las anteriores sigue ahí');
   prueba('el ciclo está vacío', /No invoices yet this cycle/.test(host.textContent));
   const b = host.querySelector('[data-ver="antes"]');
   prueba('pero el enlace está', !!b, host.textContent.slice(0, 160));
-  prueba('y dice cuántas hay', /8 from earlier cycles/.test(host.textContent),
+  prueba('y dice cuántas hay', /9 from earlier cycles/.test(host.textContent),
     host.textContent.slice(0, 200));
   b.onclick();
   for (let i = 0; i < 40 && !host.querySelector('.m-hcard'); i++) {

@@ -65,6 +65,7 @@
   // segunda lista salia con todos los proveedores.
   let _ctx = null;
   let _viejasFac = [];      // las facturas de antes, ya montadas
+  let _verAjenas = false;   // enseñar tambien las que no son de barra
   let _eligiendoOrden = false;
   let _abierta = null;    // order_id de la que se está mirando
   let _busy = new Set();
@@ -692,7 +693,36 @@
       esBebida: null, dueno: new Map(), descartado: new Set()
     };
     const ctx = cual === 'antes' ? (_ctx || SIN_FILTRO) : SIN_FILTRO;
-    const facturas = armar(lineas, ctx, false);
+    let facturas = armar(lineas, ctx, false);
+
+    // ── Lo que no es una compra de barra ────────────────────────────
+    //
+    // En el ciclo abierto basta con el filtro de bebida: los productos
+    // de esta semana estan en el catalogo de MarginEdge, asi que se
+    // sabe cual es cual.
+    //
+    // En el historial no. Un producto de hace meses puede no estar ya
+    // en ese catalogo, y descartar por eso haria desaparecer facturas
+    // reales — por eso una linea con producto desconocido se conserva.
+    // El efecto secundario fue que se colaron Target y la ferreteria.
+    //
+    // Asi que aqui la pregunta es por FACTURA, no por linea: es una
+    // compra de barra si ALGUNA de sus lineas apunta a algo tuyo —una
+    // botella enlazada, o un producto que el catalogo dice que es
+    // bebida—. Una factura de Target no tiene ninguna.
+    //
+    // Y no se esconden en silencio: se cuentan y se pueden desplegar.
+    // Esconder sin decirlo es el fallo que ya nos costo caro con los
+    // productos "dormidos".
+    let ajenas = 0;
+    if (cual === 'antes' && _ctx) {
+      const mia = (f) => f.lineas.some(l =>
+        (_ctx.dueno && _ctx.dueno.has(l.pid)) ||
+        (_ctx.esBebida && _ctx.esBebida.has(l.pid)));
+      const dentro = facturas.filter(mia);
+      ajenas = facturas.length - dentro.length;
+      if (!_verAjenas) facturas = dentro;
+    }
     for (const f of facturas) f.n = f.lineas.length;
     _viejasFac = cual === 'antes' ? facturas : _viejasFac;
 
@@ -744,13 +774,21 @@
         : '<div class="m-ivacio"><b>Nothing here.</b><br>' +
           'The count came from a different query — tell me and I will look at it.</div>') +
       '<div class="m-ipie">' + facturas.length +
-        (facturas.length === 1 ? ' invoice' : ' invoices') + ' · ' +
-        lineas.length + (lineas.length === 1 ? ' line' : ' lines') + '</div>';
+        (facturas.length === 1 ? ' invoice' : ' invoices') +
+        (ajenas
+          ? ' · <button type="button" class="m-ilink" id="miAjenas">' +
+            (_verAjenas ? 'hide ' : 'show ') + ajenas +
+            ' with nothing of yours</button>'
+          : '') +
+      '</div>';
 
     // Entrar al detalle desde aqui. Es lo que faltaba: sin esto la
     // lista de ciclos anteriores se podia mirar pero no abrir, y
     // enlazar una factura a su orden —que es para lo que se mira— era
     // imposible.
+    const aj = host.querySelector('#miAjenas');
+    if (aj) aj.onclick = () => { _verAjenas = !_verAjenas; pintar(host); };
+
     host.querySelectorAll('[data-vieja]').forEach(b => {
       b.onclick = () => {
         _abierta = b.dataset.vieja;
@@ -1341,6 +1379,7 @@
     _viejas = null;
     _eligiendoOrden = false;
     _enlaceOrden = null;
+    _verAjenas = false;
     // Sin título propio: lo pone el contenedor.
     host.innerHTML = '<div class="m-isub">Reading…</div>';
     try {

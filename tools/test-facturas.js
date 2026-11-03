@@ -471,11 +471,19 @@ const txt = (h) => h.textContent.replace(/\s+/g, ' ');
       lineas: [L({ product_id: 'p1', vendor_item_name: 'Tito’s' })],
       enlaces: [{ product_id: 'p1', item_name: 'Tito’s Vodka 1.75L' }],
       bebida: [{ product_id: 'p1' }],
+      // Con `product_id` enlazado: una factura vieja DE BARRA. Sin
+      // nada suyo, la vista la deja fuera a proposito —ahi es donde se
+      // colaban Target y la ferreteria— y eso se prueba aparte, en
+      // tools/test-ciclos-facturas.js.
       viejas: [
-        { order_id: 'V1', invoice_date: '2026-09-30', invoice_number: '111',
-          vendor_name: 'FINE WINE & GOOD SPIRITS', line_price: 50.97, quantity: 1 },
-        { order_id: 'V1', invoice_date: '2026-09-30', invoice_number: '111',
-          vendor_name: 'FINE WINE & GOOD SPIRITS', line_price: 20, quantity: 1 }
+        { order_id: 'V1', product_id: 'p1', vendor_item_name: 'Tito’s',
+          invoice_date: '2026-09-30', invoice_number: '111',
+          vendor_name: 'FINE WINE & GOOD SPIRITS', unit_price: 50.97,
+          line_price: 50.97, quantity: 1 },
+        { order_id: 'V1', product_id: 'p1', vendor_item_name: 'Tito’s',
+          invoice_date: '2026-09-30', invoice_number: '111',
+          vendor_name: 'FINE WINE & GOOD SPIRITS', unit_price: 20,
+          line_price: 20, quantity: 1 }
       ]
     });
     const h = host(w);
