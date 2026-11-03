@@ -552,6 +552,12 @@
 
   function alTocar(e) {
     if (!e.touches || e.touches.length !== 1) { _t = null; return; }
+    // Con una hoja abierta, estos dos gestos no existen. La hoja tiene
+    // el suyo propio —arrastrar el asa para cerrarla— y ambos cuelgan de
+    // `document`, así que bajar el dedo sobre la hoja disparaba también
+    // el tirón de recargar: la cinta giraba detrás mientras la ficha
+    // bajaba. Lo de detrás de una hoja está fuera de juego, entero.
+    if (window.BarStockSheet && window.BarStockSheet.hayAlguna()) { _t = null; return; }
     const t = e.touches[0];
     _t = {
       x: t.clientX, y: t.clientY,

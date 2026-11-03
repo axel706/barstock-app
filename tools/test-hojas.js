@@ -150,6 +150,28 @@ grupo('y el fondo no se mueve');
   prueba('con contenido largo, desplazar funciona', !e.defaultPrevented);
 }
 
+grupo('y con una hoja abierta, el armazón se aparta');
+{
+  // Los dos gestos del armazón cuelgan de `document` y la hoja vive en
+  // el `<body>`: bajar el dedo sobre la hoja disparaba también el tirón
+  // de recargar. La cinta giraba detrás mientras la ficha bajaba.
+  const { w } = hoja();
+  prueba('BarStockSheet sabe decir si hay una', w.BarStockSheet.hayAlguna() === true);
+  w.document.getElementById('mSheet').remove();
+  prueba('y si no la hay, también', w.BarStockSheet.hayAlguna() === false);
+
+  const src = fs.readFileSync(path.join(RAIZ, 'src/mobile-shell.js'), 'utf8');
+  // Tiene que cortar en alTocar, antes de armar NINGÚN gesto: si sólo
+  // bloqueara el tirón, seguiría armándose el de volver atrás.
+  const m = src.match(/function alTocar\(e\)\s*\{[\s\S]*?\n  \}/);
+  prueba('alTocar existe', !!m);
+  const cuerpo = m ? m[0] : '';
+  prueba('pregunta por las hojas', /BarStockSheet\.hayAlguna\(\)/.test(cuerpo));
+  prueba('y se va antes de armar nada',
+    cuerpo.indexOf('hayAlguna') < cuerpo.indexOf('puedeTirar'),
+    cuerpo.indexOf('hayAlguna') + ' vs ' + cuerpo.indexOf('puedeTirar'));
+}
+
 grupo('lo enganchan las cuatro pantallas que abren hojas');
 {
   for (const f of ['mobile-search', 'mobile-inventory', 'mobile-home', 'mobile-history']) {

@@ -116,5 +116,20 @@
     });
   }
 
-  window.BarStockSheet = { enganchar, UMBRAL };
+  // ── ¿Hay una hoja abierta ahora mismo? ────────────────────────────────
+  //
+  // Lo pregunta el armazón: sus dos gestos —tirar para recargar y
+  // deslizar desde el borde para volver— cuelgan de `document`, y la
+  // hoja vive en el `<body>`, así que arrastrarla hacia abajo disparaba
+  // también el "pull to refresh". Dos gestos sobre el mismo dedo.
+  //
+  // Se mira el DOM en vez de llevar una cuenta: las hojas se cierran por
+  // cinco caminos distintos (el asa, el fondo, la X, Escape, el botón de
+  // la propia hoja) y todos acaban en `remove()`, pero un contador se
+  // desincronizaría el día que alguien añada el sexto.
+  function hayAlguna() {
+    return !!document.querySelector('.m-sheet');
+  }
+
+  window.BarStockSheet = { enganchar, hayAlguna, UMBRAL };
 })();
