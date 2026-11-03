@@ -65,7 +65,36 @@
       .map(([name, value]) => ({ name, value, pct: total > 0 ? (value / total) * 100 : 0 }))
       .sort((a, b) => b.value - a.value);
 
-    return { total, items, uncategorized, noPrice, cats };
+    return { total, items, uncategorized, noPrice, cats, llegado: _llegado };
+  }
+
+  // ── Lo que llego despues del conteo ──────────────────────────────────
+  //
+  // `total` es `on hand × precio`, y `on hand` es lo que alguien conto:
+  // entre un conteo y el siguiente no se mueve, ni con `Received` ni
+  // con una factura, a proposito. `on_hand` es el ancla de la
+  // matematica de consumo —inicio + entradas − final = usado— y si una
+  // factura lo subiera, Pour·IQ calcularia los pares con basura.
+  //
+  // Pero el DINERO del estante si se mueve: llega una factura de
+  // $2,000 y las botellas estan ahi.
+  //
+  // Vive aqui y no en cada pantalla porque si no, el Home diria
+  // $12,030 y este panel $9,990 sobre lo mismo. Dos lectores del mismo
+  // dato con reglas distintas es el fallo que mas veces ha mordido
+  // este proyecto.
+  //
+  // `total` se queda siendo LO CONTADO, no la suma: es lo que suman
+  // las categorias de abajo, y un titular que no cuadra con sus partes
+  // es peor que un titular viejo. Quien quiera el techo suma los dos.
+  let _llegado = 0;
+
+  // Lo pone quien pregunta al modulo de facturas, que es el dueño de
+  // esa cuenta: solo el ciclo abierto, solo proveedores de bebida, y
+  // `line_price` sin impuesto ni depositos, que es lo unico comparable
+  // con el valor del catalogo.
+  function recordarLlegado(n) {
+    _llegado = Number(n) || 0;
   }
 
   function render() {
@@ -98,8 +127,9 @@
       <div class="iv-head">Money on the shelf</div>
       <div class="iv-total">${money(d.total)}</div>
       <div class="iv-sub">${d.items} items${notes.length ? ' · ' + notes.join(' · ') : ''}</div>
+      ${d.llegado > 0 ? `<div class="iv-sub">+${money(d.llegado).slice(1)} arrived since the count, not in the breakdown below</div>` : ''}
       <div class="iv-list">${rows}</div>`;
   }
 
-  window.BarStockInventoryValue = { render, compute };
+  window.BarStockInventoryValue = { render, compute, recordarLlegado };
 })();

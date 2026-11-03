@@ -200,13 +200,25 @@
       // Siempre se repinta: `pedirEntregas` ya devuelve un objeto con
       // `error` cuando falla, y esa tarjeta hay que enseñarla. Antes
       // un fallo dejaba la integración invisible.
-      .then(e => { _entregas = e; refresh(); })
+      .then(e => { _entregas = e; depositarLlegado(e); refresh(); })
       .catch(e => {
         _entregas = { n: 0, unidades: 0, dinero: 0, sueltas: 0, ultima: '',
                       revisado: null, error: String(e && e.message || e) };
+        depositarLlegado(null);
         refresh();
       })
       .then(() => { _pidiendoEntregas = false; });
+  }
+
+  // Lo facturado desde el conteo se le deja a inventory-value, que es
+  // quien responde "cuánto dinero hay en el estante" para las dos
+  // pantallas. Si la consulta falló se deposita CERO y no se deja el
+  // de antes: un número viejo presentado como fresco es peor que no
+  // tenerlo.
+  function depositarLlegado(e) {
+    const V = window.BarStockInventoryValue;
+    if (!V || !V.recordarLlegado) return;
+    V.recordarLlegado((e && !e.error && Number(e.dinero)) || 0);
   }
 
   // Todos los artículos con su ficha de par, que es donde viven el
@@ -1683,6 +1695,28 @@
     } catch (e) { return null; }
   }
 
+  // ── Lo que hay en el estante, en dinero ──────────────────────────────
+  //
+  // Es `on hand × precio`, y `on hand` es lo que alguien conto. Entre
+  // un conteo y el siguiente ese numero no se mueve: ni `Received` ni
+  // una factura lo tocan, A PROPOSITO. `on_hand` es el ancla de toda la
+  // matematica de consumo —inicio + entradas − final = usado— y si una
+  // factura lo subiera, Pour·IQ calcularia los pares con basura.
+  //
+  // Pero el dinero del estante SI tiene que moverse. Llega una factura
+  // de $2,000 y las botellas estan ahi: decir que hay $9,990 cuando
+  // hay $12,030 es mirar una foto vieja.
+  //
+  // Asi que se suma aparte. `_entregas.dinero` lo da el modulo de
+  // facturas, que es el dueño de esa pregunta: solo el ciclo abierto,
+  // solo proveedores de bebida, y suma `line_price` —sin impuesto ni
+  // depositos—, que es lo unico comparable con el valor del catalogo.
+  // Calcularlo aqui por mi cuenta seria el fallo que mas veces ha
+  // mordido este proyecto, y en esta misma tarjeta ya mordio una vez.
+  //
+  // Lo que este numero NO es: lo que hay AHORA. Nadie resta lo que se
+  // sirve. Es el techo —lo que se pago y deberia estar ahi— y por eso
+  // el desglose va debajo en vez de un solo numero sin explicar.
   function estante() {
     const V = window.BarStockInventoryValue;
     if (!V || typeof V.compute !== 'function') return null;
@@ -1690,7 +1724,12 @@
       const d = V.compute();
       if (!d || !d.items) return null;
       if (!d.total && d.noPrice >= d.items) return null;
-      return { total: d.total, n: d.items, sin: d.noPrice };
+      // `d.llegado` lo guarda inventory-value, no se calcula aqui: el
+      // panel del escritorio lee el mismo numero y los dos tienen que
+      // decir lo mismo del mismo estante.
+      const llego = Number(d.llegado) || 0;
+      return { total: d.total + llego, contado: d.total, llego,
+               n: d.items, sin: d.noPrice };
     } catch (e) { return null; }
   }
 
@@ -1747,9 +1786,16 @@
           <div class="m-stat">
             <span class="m-stat-k">On the shelf</span>
             <b class="m-stat-v">${e ? money(e.total) : '…'}</b>
-            <small class="m-stat-d">${e
-              ? e.n + ' items' + (e.sin ? ' · ' + e.sin + ' no price' : '')
-              : '&nbsp;'}</small>
+            <!-- Cuando algo llego despues del conteo, el pie DICE DE
+                 DONDE sale el numero. Sin esto el titular sube solo y
+                 no hay forma de saber si es mercancia nueva o un
+                 fallo. Si no ha llegado nada, el pie de siempre. -->
+            <small class="m-stat-d">${!e ? '&nbsp;'
+              : e.llego > 0
+                ? money(e.contado) + ' counted · +' + money(e.llego).slice(1) + ' in' +
+                  (e.sin ? ' · ' + e.sin + ' no price' : '')
+                : e.n + ' items' + (e.sin ? ' · ' + e.sin + ' no price' : '')
+            }</small>
           </div>
         </div>
 
