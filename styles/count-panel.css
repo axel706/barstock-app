@@ -435,8 +435,13 @@ body.light .cp-sheet-x{ border-color: rgba(15,23,42,.16); color: #0f172a; }
   padding: 18px 14px 14px;
 }
 
-.cf-count{ font-size: var(--m-title); font-weight: 700; margin-bottom: 14px; }
-.cf-count b{ font-size: var(--m-figure); font-weight: 800; }
+/* Centrado, debajo del visto. Heredaba la alineacion a la izquierda
+   del panel y quedaba el titulo pegado al borde con el icono flotando
+   solo en medio: dos cosas que son una sola, en dos sitios. */
+.cf-count{
+  font-size: var(--m-title); font-weight: 700;
+  text-align: center;
+}
 
 .cf-warn{
   background: rgba(245,158,11,.14);
@@ -479,7 +484,7 @@ body.light .cp-sheet-x{ border-color: rgba(15,23,42,.16); color: #0f172a; }
 .cf-opt small{ display: block; font-size: var(--m-small); color: #94a3b8; margin-top: 3px; }
 
 .cf-ghost{
-  width: 100%; height: 48px; margin: 14px 0 8px;
+  width: 100%; height: 48px; margin: 22px 0 8px;
   border-radius: 12px; background: transparent;
   border: 1px solid rgba(255,255,255,.20);
   color: #f1f5f9; font-family: inherit; font-size: var(--m-body); font-weight: 700;
@@ -505,7 +510,7 @@ body.light .cp-sheet-x{ border-color: rgba(15,23,42,.16); color: #0f172a; }
  * en grande y centrado, siendo lo unico de la pantalla sobre lo que
  * no se puede hacer nada. */
 .cf-tres{
-  display: flex; gap: 8px; margin-top: 16px;
+  display: flex; gap: 8px; margin-top: 18px;
 }
 .cf-t1{
   flex: 1; text-align: center;
@@ -535,8 +540,19 @@ body.light .cp-sheet-x{ border-color: rgba(15,23,42,.16); color: #0f172a; }
  *
  * Acabas de contar doscientas botellas. Lo unico que quieres saber es
  * que hay que pedir, y eso estaba a dos pantallas. */
+/* ── El aire de esta pantalla va por ARRIBA ───────────────────────────
+ *
+ * `.cf-next` separa por abajo y esta tarjeta separaba por arriba, asi
+ * que en la union entre las dos el hueco era CERO y el boton azul
+ * tocaba la tarjeta de las ventas. Es el mismo fallo que el bloque de
+ * Pour·IQ en la ficha de producto, dos dias antes: dos convenciones
+ * distintas en la misma columna siempre se encuentran en algun sitio,
+ * y ahi el hueco desaparece o se dobla.
+ *
+ * Aqui gana `margin-top`, que es lo que ya usan `.cf-tres` y el resto
+ * de la app. `.cf-next` y `.cf-ghost` se pasan abajo. */
 .cf-next-card{
-  margin-top: 18px; padding: 14px;
+  margin-top: 22px; padding: 16px;
   border-radius: 16px;
   background: rgba(56,189,248,.09);
   border: 1px solid rgba(56,189,248,.28);
@@ -561,7 +577,16 @@ body.light .cp-sheet-x{ border-color: rgba(15,23,42,.16); color: #0f172a; }
   font-size: var(--m-small); font-weight: 800; cursor: pointer;
 }
 .cf-status{ font-size: var(--m-body); color: #94a3b8; text-align: center; padding: 40px 0; }
-.cf-done{ font-size: var(--m-figure); color: #22c55e; text-align: center; margin-bottom: 6px; }
+/* El visto. Mas grande que el titulo que lleva debajo, no igual: es
+   lo primero que se ve al levantar la vista despues de contar, y a la
+   altura de una letra se leia como un adorno. */
+.cf-done{
+  /* Media vez mas que el tope de la escala, no un 46px suelto: asi
+     sigue creciendo con el ajuste de tamaño de texto del telefono,
+     como todo lo demas. */
+  font-size: calc(var(--m-figure) * 1.5); line-height: 1; color: #22c55e;
+  text-align: center; margin: 10px 0 14px;
+}
 
 /* Botón de finalizar, en la pantalla de escaneo */
 .sc-finish{
@@ -950,8 +975,10 @@ body.light .cf-next-big{ color: #0284c7; }
 .cf-next{
   width: 100%;
   display: flex; align-items: center; gap: 12px;
-  padding: 13px 14px; margin-bottom: 8px;
-  border-radius: 12px;
+  /* Por arriba, como todo lo demas de esta columna: con margen abajo
+     se pegaba a la tarjeta azul, que separa por arriba. */
+  padding: 14px; margin-top: 10px;
+  border-radius: 14px;
   background: rgba(255,255,255,.05);
   border: 1px solid rgba(255,255,255,.12);
   color: inherit; text-align: left; cursor: pointer;

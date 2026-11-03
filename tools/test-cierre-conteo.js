@@ -269,10 +269,28 @@ grupo('la pantalla de cierre dice que cambio, y que toca');
 
   // "22 min slower than last time" sobre un conteo de 22 minutos
   // significa que el anterior duro cero: una prueba, no un conteo.
+  // Se exige a LOS DOS. Con el minimo solo en el anterior, un conteo
+  // de 29 segundos contra uno de 22 minutos anunciaba "22 min faster
+  // than last time": enhorabuena por no haber contado.
   prueba('no se compara contra un conteo de prueba',
     /antes\.active_ms >= MINIMO_PARA_COMPARAR/.test(src));
+  prueba('ni desde uno', /s\.activeMs >= MINIMO_PARA_COMPARAR/.test(src));
 
+  // El aire de esta columna va por ARRIBA. Con `.cf-next` separando
+  // por abajo y la tarjeta azul por arriba, en la union el hueco era
+  // cero y el boton tocaba la tarjeta de las ventas.
   const css = fs.readFileSync(path.join(RAIZ, 'styles/count-panel.css'), 'utf8');
+  const bloque = (sel) => {
+    const m = css.match(new RegExp('\\' + sel + '\\s*\\{([^}]*)\\}'));
+    return m ? m[1] : '';
+  };
+  for (const sel of ['.cf-tres', '.cf-next-card', '.cf-next']) {
+    prueba(sel + ' separa por arriba', /margin-top:/.test(bloque(sel)), bloque(sel).trim().slice(0, 60));
+    prueba(sel + ' y no por abajo', !/margin-bottom/.test(bloque(sel)));
+  }
+  prueba('el titulo va centrado bajo el visto',
+    /\.cf-count\{[^}]*text-align: center/.test(css));
+
   prueba('las minicards se leen en modo claro', /body\.light \.cf-t1 b\{/.test(css));
   prueba('y la tarjeta azul tambien', /body\.light \.cf-next-card\{/.test(css));
   // El rotulo WHAT NOW lo sustituye el NEXT de dentro de la tarjeta.

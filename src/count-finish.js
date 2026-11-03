@@ -117,10 +117,14 @@
     return Math.abs(d) + ' min ' + (d > 0 ? 'faster' : 'slower') + ' than last time';
   }
 
-  // Por debajo de esto, el conteo anterior no fue un conteo: fue una
-  // prueba, o alguien que abrio el escaner y se salio. Comparar contra
-  // eso daba "22 min slower than last time" sobre un conteo de 22
-  // minutos, que es ruido con cara de dato.
+  // Por debajo de esto no fue un conteo: fue una prueba, o alguien que
+  // abrio el escaner y se salio.
+  //
+  // Se exige a LOS DOS, y eso costo dos pasadas. Primero solo al
+  // anterior, y entonces un conteo de 29 segundos contra uno de 22
+  // minutos anunciaba "22 min faster than last time" — enhorabuena por
+  // no haber contado. Una comparacion vale cuando las dos mitades
+  // valen; si una no es un conteo, no hay nada que comparar.
   const MINIMO_PARA_COMPARAR = 5 * 60000;
 
   // ── Lo que hay que pedir, ahora mismo ────────────────────────────────
@@ -808,6 +812,7 @@
       // suyo, en vez de mandarte a buscarlo.
       const pedir = loPorPedir();
       const compara = antes && antes.active_ms >= MINIMO_PARA_COMPARAR
+                      && s.activeMs >= MINIMO_PARA_COMPARAR
         ? comparar(s.activeMs, antes.active_ms) : '';
 
       $('cfBody').innerHTML = `
