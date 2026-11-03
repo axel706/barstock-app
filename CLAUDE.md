@@ -243,6 +243,50 @@ En `tools/`, sólo lectura, se pegan en la consola del navegador:
 
 ---
 
+## Dónde nos quedamos · 2026-11-03
+
+**Esta sección caduca.** Es lo que estaba en el aire el día de la fecha, no
+historia. Si la fecha es vieja, créela a medias: comprueba contra el código
+y el `git log` antes de actuar, y actualízala o bórrala. Lo de abajo
+—"Pendientes conocidos"— sí es estable.
+
+**El enlace automático de facturas está recién conectado y sin estrenar.**
+`src/invoice-order-auto.js` escribe en `invoice_order_links` con
+`origen = 'auto'`, sólo para facturas del ciclo abierto, desde
+`mobile-history.cargar()`. Las migraciones 022, 024 y 025 están corridas y
+verificadas contra el esquema. Pero **nunca ha escrito una fila de verdad**:
+no hubo facturas nuevas desde que se conectó. Axel quedó en mirar las
+próximas.
+
+Lo que hay que vigilar cuando lleguen: que enlace la factura a la orden
+correcta, y que ninguna orden de un ciclo cerrado cambie de estado. Antes de
+tocar nada, `tools/ensayo-auto.js` → `await bsEnsayo()` enseña qué haría sin
+hacerlo. Los pesos y umbrales de ese módulo son un punto de partida mío, no
+una verdad medida: si fallan, se ajustan ahí, con el ensayo delante.
+
+La marcha atrás es una línea, y no toca los enlaces hechos a mano:
+
+```sql
+delete from public.invoice_order_links where origen = 'auto';
+```
+
+**Tres cosas más que están en producción pero casi sin usar**, todas de los
+últimos dos días. Si algo se ve raro en ellas, es reciente y probablemente
+mío:
+
+- La pantalla `Count closed` rediseñada, que aún no se ha visto con una
+  orden de verdad detrás.
+- La ficha de producto con la gráfica de semanas en el hueco de la cabecera
+  y el botón de aplicar Pour·IQ.
+- `On the shelf` del Home, que ahora suma lo facturado desde el conteo.
+
+**Lo que sigue sin resolverse** de todo esto: por qué dos órdenes de Crown
+decían `waiting` teniendo factura. El enlace manual lo tapa, pero la causa
+raíz no se encontró. `await bsPorQue('CT-0207','CT-0204')` en la consola lo
+contestaría en segundos y nunca se corrió.
+
+---
+
 ## Pendientes conocidos
 
 - **Fase 0**: las 16 políticas RLS en `using (true)` con repo público.

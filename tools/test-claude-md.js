@@ -103,6 +103,22 @@ grupo('las herramientas que menciona existen');
   }
 }
 
+grupo('la seccion que caduca lleva su fecha');
+{
+  // "Donde nos quedamos" es lo unico del documento que envejece a
+  // proposito. Sin fecha, quien lo lea dentro de tres meses no tiene
+  // forma de saber si sigue siendo cierto, y un estado viejo leido
+  // como actual es peor que no tener estado.
+  //
+  // No se comprueba que sea RECIENTE: un test que falla solo con el
+  // paso del tiempo rompe la suite un martes cualquiera sin que nadie
+  // haya tocado nada. La fecha esta para que la lea una persona.
+  const m = md.match(/## D[oó]nde nos quedamos · (\d{4}-\d{2}-\d{2})/);
+  prueba('la seccion existe y lleva fecha', !!m, m && m[1]);
+  prueba('y la fecha es una fecha', !!m && !isNaN(Date.parse(m[1])), m && m[1]);
+  prueba('y dice que caduca', /Esta secci[oó]n caduca/.test(md));
+}
+
 grupo('y no se le escapa ninguna credencial');
 {
   // El repo es publico. Un ejemplo copiado de una clave real dentro
