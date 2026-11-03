@@ -112,6 +112,31 @@ grupo('un fallo no se disfraza de producto quieto');
     !!f && /if \(!s\.length\) return;/.test(f[0]));
 }
 
+grupo('la grafica vive en el hueco de la cabecera');
+{
+  const hero = fs.readFileSync(path.join(RAIZ, 'src/product-hero.js'), 'utf8');
+  const src = fs.readFileSync(path.join(RAIZ, 'src/mobile-search.js'), 'utf8');
+  const inv = fs.readFileSync(path.join(RAIZ, 'src/mobile-inventory.js'), 'utf8');
+
+  prueba('la cabecera sabe abrir el hueco', /o\.hueco \? '<div class="m-fic-g">/.test(hero));
+  // Vacia NO ocupa: una ranura que reserva aire sin nada dentro
+  // descoloca el nombre sin motivo.
+  prueba('y no lo abre si no se lo piden',
+    /\$\{o\.hueco \?/.test(hero) && /: ''\}/.test(hero));
+  prueba('la ficha de busqueda lo pide', /hueco: true/.test(src));
+  // Inventory NO: ahi la cabecera encabeza un formulario de edicion y
+  // una grafica al lado del nombre es un dato que nadie fue a buscar.
+  prueba('la hoja de Inventory no', !/hueco/.test(inv));
+  prueba('y la grafica se pinta dentro del hueco',
+    /querySelector\('\.m-fic-g'\)/.test(src));
+
+  // Lo que ya no puede volver: la tarjeta propia de 110px.
+  prueba('ya no hay tarjeta de semanas', !/id="msSem"/.test(src));
+  const css = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8');
+  prueba('ni su CSS', !/\.m-sem-k/.test(css));
+  prueba('pero si el del hueco', /\.m-fic-gb i\.hoy/.test(css));
+}
+
 grupo('las semanas de evento quedan fuera');
 {
   const { W, llamadas } = cargar([{ body: [] }]);

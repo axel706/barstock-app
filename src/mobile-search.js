@@ -80,7 +80,9 @@
   // la ficha sigue diciendo que producto es y cuanto hay.
   function cabecera(r, par, aviso) {
     const H = HERO();
-    if (H && H.html) return H.html(r, { par, aviso });
+    // `hueco` abre la ranura de la derecha, donde va la grafica de las
+    // semanas. La llena `pintarSemanas` cuando llegue la consulta.
+    if (H && H.html) return H.html(r, { par, aviso, hueco: true });
     const k = tono(r);
     return `<div class="m-fic m-fic-bien"><div class="m-fic-d">
       <div class="m-fic-n">${esc(r.item)}</div>
@@ -287,15 +289,22 @@
   // Se pinta DESPUÉS, como las zonas: la hoja ya está arriba con todo
   // lo demás y no se queda esperando a una consulta.
   //
-  // Sin historia la tarjeta no existe. En el escritorio se queda con un
-  // "No weekly history yet" porque ahí el panel tiene una rejilla fija
-  // y un hueco movería todo lo de abajo; aquí la hoja se desplaza, así
-  // que una tarjeta vacía sólo sería una tarjeta vacía.
+  // Va en el hueco de la cabecera, a la derecha del nombre. Empezó
+  // siendo una tarjeta propia debajo de las zonas, y ahí se comía 110px
+  // de una hoja que ya llegaba demasiado arriba mientras media cabecera
+  // estaba en blanco. Los seis números bajo las barras se quedaron en
+  // el camino: a este tamaño nadie lee "13.2" parado frente al estante,
+  // lo que se lee es la forma.
+  //
+  // Sin historia no se pinta nada. En el escritorio el hueco se queda
+  // con un "No weekly history yet" porque ahí el panel tiene una
+  // rejilla fija y un vacío movería todo lo de abajo; aquí el hueco es
+  // aire al lado de un nombre, y aire no se nota.
 
   const SEMANAS_GRAFICA = 6;
 
   async function pintarSemanas(caja, item) {
-    const el = caja.querySelector('#msSem');
+    const el = caja.querySelector('.m-fic-g');
     const W = window.BarStockProductWeeks;
     if (!el || !W) return;
 
@@ -306,34 +315,21 @@
     const tope = Math.max(...s.map(x => Number(x.usado) || 0), 1);
     const r = W.rumbo(s);
 
-    // El pie dice las tres cosas que hacen legible la gráfica: hacia
-    // dónde va, cuánto, y sobre cuánta historia. Sueltas en renglones
-    // propios serían tres datos más; aquí son la leyenda de lo que ya
-    // se está mirando.
-    const par = parDe(master()[_ficha] || {});
-    const sem = par && par.normalWeeks ? par.normalWeeks : 0;
-    const pie = [
-      r ? esc(r.txt) : '',
-      r && r.d !== 0
-        ? '<b style="color:' + (r.d > 0 ? '#86efac' : '#fca5a5') + '">' +
-          (r.d > 0 ? '↑' : '↓') + ' ' + Math.abs(r.d) + '</b>/wk'
-        : '',
-      sem ? sem + ' wks of data' : ''
-    ].filter(Boolean).join(' · ');
+    // El pie es la leyenda de lo que ya se está mirando: cuántas
+    // semanas son y hacia dónde van. Sin él las barras son un dibujo
+    // bonito del que no se sabe la escala ni el periodo.
+    const pie = s.length + ' wks' + (r && r.d !== 0
+      ? ' · <b style="color:' + (r.d > 0 ? '#86efac' : '#fca5a5') + '">' +
+        (r.d > 0 ? '↑' : '↓') + Math.abs(r.d) + '</b>'
+      : '');
 
     el.innerHTML =
-      '<div class="m-card m-sem">' +
-        '<div class="m-sem-k">LAST ' + s.length + ' WEEKS</div>' +
-        '<div class="m-sem-g">' +
-          s.map((x, i) => '<i style="height:' +
-            Math.max(8, Math.round((Number(x.usado) || 0) / tope * 100)) + '%' +
-            (i === s.length - 1 ? ';opacity:1' : '') + '"></i>').join('') +
-        '</div>' +
-        '<div class="m-sem-n">' +
-          s.map(x => '<span>' + (Number(x.usado) || 0).toFixed(1) + '</span>').join('') +
-        '</div>' +
-        (pie ? '<div class="m-sem-p">' + pie + '</div>' : '') +
-      '</div>';
+      '<div class="m-fic-gb">' +
+        s.map((x, i) => '<i style="height:' +
+          Math.max(8, Math.round((Number(x.usado) || 0) / tope * 100)) + '%"' +
+          (i === s.length - 1 ? ' class="hoy"' : '') + '></i>').join('') +
+      '</div>' +
+      '<div class="m-fic-gp">' + pie + '</div>';
   }
 
   // ── Pour·IQ, con su botón ────────────────────────────────────────────
@@ -442,10 +438,6 @@
       ${cabecera(r, par, aviso)}
 
       <div id="msZonas"></div>
-
-      <!-- La grafica de las ultimas semanas. Llega despues, como las
-           zonas, y si no hay historia no se pinta nada. -->
-      <div id="msSem"></div>
 
       <div class="m-card m-rows">
         <div class="m-row">

@@ -124,6 +124,16 @@
   // defecto es "proveedor · categoría · tamaño", que es lo que dice la
   // ficha de búsqueda. Inventory le añade el código, que ahí sí
   // importa: es con lo que se cruzan las facturas.
+  //
+  // `o.hueco` abre una ranura vacía a la derecha. A la derecha del
+  // nombre sobraba espacio —media tarjeta en blanco— y la gráfica de
+  // las semanas estaba abajo ocupando una tarjeta entera para sí sola.
+  // Aquí sólo se reserva el sitio; lo que entra lo pone quien llama,
+  // DESPUÉS, porque ese dato llega de una consulta y la cabecera no
+  // espera a nadie.
+  //
+  // Vacía no ocupa: una ranura que reserva aire cuando no hay nada que
+  // meter descoloca el nombre sin motivo.
   function html(r, o) {
     o = o || {};
     const k = tono(r);
@@ -148,6 +158,7 @@
           </div>
           ${av ? `<div class="m-fic-av" style="color:${k.c}">${esc(av)}</div>` : ''}
         </div>
+        ${o.hueco ? '<div class="m-fic-g"></div>' : ''}
       </div>`;
   }
 

@@ -1760,31 +1760,34 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   .m-zon-when.viejo { color: #fbbf24; }
 
-  /* ── Las ultimas semanas ──────────────────────────────────────────
-   * Barras planas, sin ejes ni rejilla: a este tamaño una rejilla es
-   * ruido y el numero va debajo de cada barra. La ultima va opaca
-   * porque es la semana que acaba de cerrar. */
-  .m-sem { padding: 11px 12px; }
-  .m-sem-k {
-    font-size: var(--m-meta); letter-spacing: .08em; font-weight: 700;
-    color: #7c8ba1; margin-bottom: 9px;
+  /* ── Las ultimas semanas, en el hueco de la cabecera ──────────────
+   *
+   * A la derecha del nombre sobraba media tarjeta en blanco y esto
+   * estaba abajo, en una tarjeta propia de 110px, en una hoja que ya
+   * llegaba demasiado arriba.
+   *
+   * Barras planas, sin ejes, sin rejilla y sin los numeros debajo: a
+   * este tamaño nadie lee "13.2" parado frente al estante. Lo que se
+   * lee es la forma. La ultima va opaca porque es la semana que acaba
+   * de cerrar, que es contra la que se comparan las demas.
+   *
+   * Alineada abajo para que su base coincida con la del numero grande:
+   * dos cosas a distinta altura en la misma tarjeta se leen como dos
+   * tarjetas. */
+  .m-fic-g {
+    flex: 0 0 76px; align-self: flex-end;
   }
-  .m-sem-g {
-    display: flex; align-items: flex-end; gap: 5px; height: 34px;
+  .m-fic-gb {
+    display: flex; align-items: flex-end; gap: 3px; height: 32px;
   }
-  .m-sem-g i {
-    flex: 1; background: #38bdf8; opacity: .42; border-radius: 2px;
+  .m-fic-gb i {
+    flex: 1; background: #93b0cc; opacity: .5; border-radius: 2px;
     min-height: 3px;
   }
-  .m-sem-n {
-    display: flex; gap: 5px; margin-top: 5px;
-    font-size: var(--m-meta); color: #64748b;
-  }
-  .m-sem-n span { flex: 1; text-align: center; }
-  .m-sem-p {
-    margin-top: 9px; padding-top: 9px;
-    border-top: 1px solid rgba(255,255,255,.08);
-    font-size: var(--m-meta); color: #94a3b8;
+  .m-fic-gb i.hoy { background: #38bdf8; opacity: 1; }
+  .m-fic-gp {
+    margin-top: 6px; text-align: right; white-space: nowrap;
+    font-size: var(--m-meta); color: #a9bacd;
   }
 
   /* ── Pour·IQ ──────────────────────────────────────────────────────
