@@ -236,6 +236,31 @@ grupo('la fecha del conteo sale de Zones, no de una copia');
     !/86400000/.test(movil), 'hay un calculo de dias suelto');
 }
 
+grupo('y los bloques de la ficha respiran igual');
+{
+  // El aire de esta hoja va todo por ARRIBA. El bloque de Pour·IQ se
+  // escribio al reves —margen abajo, ninguno arriba— y quedaba pegado
+  // a la tarjeta de datos mientras le sobraba hueco con los botones,
+  // que ya traen el suyo.
+  const css = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8');
+  const bloque = (sel) => {
+    const m = css.match(new RegExp('\\' + sel + '\\s*\\{([^}]*)\\}'));
+    return m ? m[1] : '';
+  };
+  for (const sel of ['.m-zon', '.m-iqb']) {
+    const d = bloque(sel);
+    prueba(sel + ' separa por arriba', /margin-top:\s*9px/.test(d), d.trim().slice(0, 50));
+    prueba(sel + ' y no por abajo', !/margin-bottom/.test(d), d.trim().slice(0, 50));
+  }
+  prueba('.m-rows tambien', /margin-top:\s*9px/.test(bloque('.m-rows')));
+
+  // Y la regla muerta no vuelve: ponia margin-bottom: 0 a la ultima
+  // .m-card con un comentario explicando el margen que quitaba, y no
+  // quitaba ninguno porque .m-card no tiene estilos en ningun sitio.
+  prueba('la regla que no hacia nada no volvio',
+    !/\.m-card:last-of-type/.test(css));
+}
+
 grupo('y la hoja sigue siendo una tarjeta');
 {
   // Con la grafica y Pour·IQ dentro, a 88vh dejaba de parecer una

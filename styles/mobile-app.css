@@ -1794,8 +1794,13 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * Verde porque es una sugerencia que mejora algo, no una alarma. El
    * boton NO lleva el radio de pastilla por capricho: en esta app las
    * pastillas son los botones, y este lo es. */
+  /* El aire de esta hoja va todo por ARRIBA: `.m-rows` y `.m-zon`
+   * llevan margin-top y nada abajo. Esto se escribio al reves —margen
+   * abajo y ninguno arriba— y el bloque quedaba pegado a la tarjeta de
+   * datos mientras le sobraba hueco con los botones, que ya traen el
+   * suyo. */
   .m-iqb {
-    padding: 10px 12px; margin-bottom: 9px; border-radius: 15px;
+    padding: 10px 12px; margin-top: 9px; border-radius: 15px;
     background: rgba(74,222,128,.08);
     border: 1px solid rgba(74,222,128,.22);
   }
@@ -1811,9 +1816,13 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     background: transparent; border: 1px solid rgba(74,222,128,.55);
   }
   body.m-shell .m-iqb-b:disabled { color: #7c8ba1; border-color: rgba(255,255,255,.14); }
-  /* El bloque de zonas y el de datos no necesitan su margen de
-   * pantalla aqui dentro: la hoja ya tiene el suyo. */
-  .m-ficha .m-card:last-of-type { margin-bottom: 0; }
+  /* Aqui habia una regla que ponia margin-bottom: 0 a la ultima
+   * `.m-card` de la ficha, con un comentario explicando el margen que
+   * quitaba. No quitaba ninguno: `.m-card` no tiene estilos en ningun
+   * sitio —es solo un gancho— y `.m-rows` separa por arriba. Una regla
+   * que no hace nada con un comentario que dice que si es peor que no
+   * tener regla: la proxima vez que algo no respire aqui, se va a
+   * buscar la causa en este renglon. */
 
   body.m-shell .m-res {
     display: flex; align-items: center; gap: 9px; width: 100%;
