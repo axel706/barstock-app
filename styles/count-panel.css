@@ -135,9 +135,26 @@ body.light .cp-num:focus{
 
 /* ── Abiertas ── */
 .cp-open{ margin-bottom: 10px; }
+/* ── El visor de la botella, en UNA sola regla ────────────────────
+ *
+ * Estaba repartido en TRES sitios del archivo: `height: 230px` aqui,
+ * `flex: 1; min-height: 0` en la linea 925 y `min-height: 190px` en
+ * la 1178. Leyendo la primera parecia que el alto era fijo, y no lo
+ * es — es elastico, se queda con lo que sobra.
+ *
+ * Eso me costo dos arreglos fallidos del deslizador: busque la causa
+ * del "se hace pequeña, grande" en el dibujado y en el compositor,
+ * cuando estaba en el reparto del alto.
+ *
+ * Elastico se queda, que es lo que hace que la botella aproveche la
+ * pantalla. Lo que NO puede pasar es que algo de abajo cambie de alto
+ * mientras arrastras: ver `.cp-read .cp-cmp`.
+ */
 .cp-stage{
   position: relative;
-  height: 230px;
+  flex: 1;
+  height: 230px;             /* la base del reparto, no un alto fijo */
+  min-height: 190px;         /* ni con la pantalla mas corta se aplasta */
   touch-action: none;        /* sin esto iOS desplaza la página al arrastrar */
   user-select: none;
   -webkit-user-select: none;
@@ -153,7 +170,9 @@ body.light .cp-num:focus{
 .cp-grip{ fill: #0f172a; stroke: rgba(255,255,255,.30); stroke-width: 1; vector-effect: non-scaling-stroke; }
 
 .cp-read{ text-align: center; margin-top: 4px; }
-.cp-read b{ font-size: var(--m-figure); font-weight: 800; line-height: 1; display: block; }
+/* `> b`: el hijo DIRECTO. Sin el `>` esto le pegaba tambien al <b> del
+   "+0.30" de la comparacion, que es un <b> anidado. */
+.cp-read > b{ font-size: var(--m-figure); font-weight: 800; line-height: 1; display: block; }
 .cp-read small{ font-size: var(--m-small); color: #94a3b8; display: block; margin-top: 4px; }
 
 .cp-none{
@@ -922,8 +941,6 @@ body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,
 .cp-body{ display: flex; flex-direction: column; min-height: 0; }
 #cpOpenBlock{ display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .cp-open{ flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.cp-stage{ flex: 1; min-height: 0; }
-
 /* La cifra, centrada DEBAJO de la botella. Al costado obligaba a mover
    la vista en diagonal justo despues de arrastrar la linea; debajo cae
    donde el ojo ya esta. */
@@ -931,7 +948,10 @@ body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,
   text-align: center;
   padding: 8px 0 2px;
 }
-.cp-read b{
+/* `> b`, el hijo DIRECTO. Sin el `>` esto le pegaba tambien al <b> del
+   "+0.30" que va dentro de la comparacion: se volvia un bloque del
+   tamaño de la cifra grande y se comia una linea entera. */
+.cp-read > b{
   display: block;
   font-size: var(--m-figure); font-weight: 800; line-height: 1.1;
   font-variant-numeric: tabular-nums;
@@ -1172,7 +1192,6 @@ body.light .cyc-pick-opt{ background: rgba(15,23,42,.03); border-color: rgba(15,
    podia robarle alto al visor sin tope. Con esto, la silueta tiene un
    minimo por debajo del cual no baja: si algo no cabe, desborda y se
    nota, en vez de comerse en silencio la unica parte que hay que mirar. */
-.cp-stage{ min-height: 190px; }
 .cp-read, .cp-chips, .cp-opens, .cp-hint{ flex-shrink: 0; }
 
 body.light .cp-pg{ background: transparent; border-color: rgba(15,23,42,.14); color: #475569; }
@@ -1250,11 +1269,41 @@ body.light .cf-zones-r { border-bottom-color: rgba(15,23,42,.08); }
 }
 body.light .cp-lastline { stroke: #64748b; }
 
+/* ── El bloque de abajo NO puede cambiar de alto ──────────────────
+ *
+ * `.cp-stage` es `flex: 1`: se queda con lo que sobre. Asi que cada
+ * pixel que crece o encoge lo de abajo se lo quita o se lo da a la
+ * botella, el SVG se reescala, y el mapa dedo→nivel se mueve a media
+ * pulsacion.
+ *
+ * Y la linea que cambia es justo la comparacion con el conteo
+ * anterior: al cruzar el valor exacto de la semana pasada pasa de
+ * "last count 0.05  +0.30" a "= same as last count". Por eso costaba
+ * tanto clavar ESA marca y ninguna otra: al acercarte, el dibujo
+ * saltaba.
+ *
+ * Con el alto reservado, el visor no se entera de que algo cambio
+ * debajo. El sitio no se ve; lo que hace es que nada salte. */
+/* El hueco de la comparacion, reservado pase lo que pase. Una linea
+ * exacta: los tres estados —sin marca, distinta, igual— miden lo
+ * mismo, asi que el visor de arriba no se entera de que algo cambio
+ * debajo. No se ve; lo que hace es que nada salte. */
+.cp-read .cp-cmp{
+  display: block;
+  /* El cuerpo va AQUI y no solo en los dos estados con texto: `em` es
+   * relativo al propio font-size, asi que el hueco vacio heredaba el
+   * del padre y media 6px mas. Los tres tienen que calcular el mismo
+   * alto. */
+  font-size: var(--m-meta);
+  height: 1.35em;
+  line-height: 1.35em;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
 /* La comparacion debajo del numero. */
 .cp-read .cp-last,
 .cp-read .cp-same {
-  display: block;
-  margin-top: 4px;
   font-size: var(--m-meta);
   font-style: normal;
   color: var(--sub);
@@ -1263,7 +1312,11 @@ body.light .cp-lastline { stroke: #64748b; }
 .cp-read .cp-same i { font-size: var(--m-small); vertical-align: -1px; }
 body.light .cp-read .cp-same { color: #15803d; }
 
-.cp-read .cp-up   { color: #4ade80; font-weight: 800; }
-.cp-read .cp-down { color: #f87171; font-weight: 800; }
+/* En linea y del mismo cuerpo que el resto de la comparacion: es un
+   matiz del renglon, no una segunda cifra grande. */
+.cp-read .cp-up,
+.cp-read .cp-down { display: inline; font-size: inherit; font-weight: 800; }
+.cp-read .cp-up   { color: #4ade80; }
+.cp-read .cp-down { color: #f87171; }
 body.light .cp-read .cp-up   { color: #15803d; }
 body.light .cp-read .cp-down { color: #b91c1c; }

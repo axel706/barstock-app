@@ -487,14 +487,27 @@
   // La comparacion en palabras. "Same as last week" no es un adorno:
   // confirma que NO se registro consumo donde no lo hubo, que es
   // precisamente la duda que deja un deslizador a ojo.
+  // ── El renglon de la comparacion SIEMPRE ocupa su sitio ──────────
+  //
+  // `.cp-stage` es `flex: 1`: se queda con lo que sobre. Asi que cada
+  // pixel que crece o encoge esto se lo quita o se lo da a la botella,
+  // el SVG se reescala y el mapa dedo→nivel se mueve a media pulsacion.
+  //
+  // Y la linea que cambia es justo esta: al cruzar el valor exacto del
+  // conteo anterior pasa de "last count 0.05 +0.30" a "same as last
+  // count", y cuando no hay marca desaparece del todo. Por eso costaba
+  // clavar ESA marca y ninguna otra — al acercarte, el dibujo saltaba.
+  //
+  // Vacio pero presente: CSS no puede reservar sitio para un elemento
+  // que no existe.
   function compararConAntes(antes, ahora) {
-    if (antes === null) return '';
+    if (antes === null) return '<em class="cp-cmp"></em>';
     const d = Math.round((ahora - antes) * 100) / 100;
     if (Math.abs(d) < 0.001) {
-      return `<em class="cp-same"><i class="ti ti-equal" aria-hidden="true"></i> same as last count</em>`;
+      return `<em class="cp-cmp cp-same"><i class="ti ti-equal" aria-hidden="true"></i> same as last count</em>`;
     }
     const signo = d > 0 ? '+' : '\u2212';
-    return `<em class="cp-last">last count ${antes.toFixed(2)} ` +
+    return `<em class="cp-cmp cp-last">last count ${antes.toFixed(2)} ` +
            `<b class="${d < 0 ? 'cp-down' : 'cp-up'}">${signo}${Math.abs(d).toFixed(2)}</b></em>`;
   }
 
