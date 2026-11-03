@@ -319,6 +319,9 @@
     fondo.className = 'm-sheet-bg';
     h.appendChild(fondo); h.appendChild(caja);
     document.body.appendChild(h);
+    // El asa de arriba dice "arrastrame para cerrar". Que lo diga
+    // de verdad, y que el fondo no se mueva mientras tanto.
+    if (window.BarStockSheet) window.BarStockSheet.enganchar(h, () => cerrarHoja());
     fondo.onclick = () => cerrarHoja();
 
     caja.innerHTML = `

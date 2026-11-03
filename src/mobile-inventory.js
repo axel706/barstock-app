@@ -284,6 +284,7 @@
 
       </div>`;
     document.body.appendChild(hoja_);
+    if (window.BarStockSheet) window.BarStockSheet.enganchar(hoja_, () => hoja_.remove());
 
     const cerrar = () => hoja_.remove();
     hoja_.querySelector('.m-sheet-bg').onclick = cerrar;
@@ -380,6 +381,8 @@
                    <i class="ti ti-arrow-right" aria-hidden="true"></i></button>` : ''}
       </div>`;
     document.body.appendChild(h);
+    // El asa dice "arrastrame para cerrar". Que lo diga de verdad.
+    if (window.BarStockSheet) window.BarStockSheet.enganchar(h, () => h.remove());
 
     let vend = actual;
     h.querySelectorAll('[data-nv]').forEach(b => {
@@ -505,6 +508,8 @@
         </div>
       </div>`;
     document.body.appendChild(h);
+    // El asa dice "arrastrame para cerrar". Que lo diga de verdad.
+    if (window.BarStockSheet) window.BarStockSheet.enganchar(h, () => h.remove());
 
     let vend = 'UNKNOWN';
     h.querySelectorAll('[data-nv]').forEach(b => {

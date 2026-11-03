@@ -698,6 +698,9 @@
           '</button>').join('') +
       '</div>';
     document.body.appendChild(hoja_);
+    // El asa de arriba dice "arrastrame para cerrar". Que lo diga
+    // de verdad, y que el fondo no se mueva mientras tanto.
+    if (window.BarStockSheet) window.BarStockSheet.enganchar(hoja_, () => hoja_.remove());
 
     const cerrar = () => hoja_.remove();
     hoja_.querySelector('.m-sheet-bg').onclick = cerrar;
