@@ -229,6 +229,75 @@ grupo('nada de esto se queda de una apertura a la otra');
     !!card(w.document.getElementById('cfBody'), 'faltan'));
 }
 
+grupo('la pantalla de cierre dice que cambio, y que toca');
+{
+  // Antes era un acuse: un visto verde, lo importante —cuantos
+  // articulos se tocaron de cuantos— en el texto mas pequeño de la
+  // pantalla, el tiempo en el sitio de honor siendo lo menos
+  // accionable, y media pantalla vacia debajo.
+  const src = fs.readFileSync(path.join(RAIZ, 'src/count-finish.js'), 'utf8');
+
+  prueba('los tres numeros del cierre', /class="cf-tres"/.test(src));
+  prueba('lo tocado y lo no tocado, cada uno en el suyo',
+    /cf-t1"><b class="ok">\$\{s\.counted\}/.test(src) &&
+    /<b>\$\{s\.missing\}<\/b>/.test(src));
+  // El parrafo gris ya no lleva el recuento: lo dicen las minicards.
+  // La barra de estado del escritorio si lo sigue diciendo, y debe:
+  // ahi no hay minicards, es una linea de texto y punto.
+  prueba('el parrafo ya no repite el recuento',
+    !/class="cf-note">\$\{s\.counted\}/.test(src));
+  prueba('y dice si se abrio semana o se corrigio',
+    /Corrected this week · no new cycle/.test(src) &&
+    /A new week starts now/.test(src));
+
+  prueba('la tarjeta del siguiente paso trae su numero',
+    /cf-next-big">\$\{pedir\.n\}/.test(src));
+  // La tilde y la linea de abajo no son adorno: el dinero sale de tu
+  // catalogo, no de lo que te van a cobrar.
+  prueba('el dinero va como estimacion', /· ~\$\{esc\(dinero\(pedir\.dinero\)\)\}/.test(src));
+  prueba('y dice de donde sale', /at your catalogue prices/.test(src));
+
+  // Un cero grande en una tarjeta destacada se lee como un fallo de
+  // carga, no como "estas al dia".
+  prueba('sin nada que pedir, no se enseña un cero', /pedir\.n \?/.test(src));
+  prueba('y el paso que manda pasa a ser las ventas',
+    /Nothing to order right now/.test(src));
+  // Y entonces no existe el boton de ordenar: engancharlo a ciegas
+  // reventaba la pantalla de un bar al dia con sus pedidos.
+  prueba('los botones se enganchan solo si existen',
+    /const al = \(id, fn\) => \{ const b = \$\(id\); if \(b\) b\.onclick = fn; \}/.test(src));
+
+  // "22 min slower than last time" sobre un conteo de 22 minutos
+  // significa que el anterior duro cero: una prueba, no un conteo.
+  prueba('no se compara contra un conteo de prueba',
+    /antes\.active_ms >= MINIMO_PARA_COMPARAR/.test(src));
+
+  const css = fs.readFileSync(path.join(RAIZ, 'styles/count-panel.css'), 'utf8');
+  prueba('las minicards se leen en modo claro', /body\.light \.cf-t1 b\{/.test(css));
+  prueba('y la tarjeta azul tambien', /body\.light \.cf-next-card\{/.test(css));
+  // El rotulo WHAT NOW lo sustituye el NEXT de dentro de la tarjeta.
+  prueba('la regla del rotulo viejo se borro', !/^\.cf-next-t\{/m.test(css));
+}
+
+grupo('lo por pedir sale del estado, despues del commit');
+{
+  const { w } = await abrir({ contados: 3 });
+  // El master del fixture: 260 articulos, suggested 6, on hand 2 o 0.
+  // `toOrder` lo calcula la app; aqui se pone a mano para comprobar
+  // que la cuenta es sobre `state.master` y no sobre otra cosa.
+  w.state.master.forEach(r => { r.toOrder = 0; r.value = 10; });
+  w.state.master[0].toOrder = 2;  w.state.master[0].vendor = 'LOOP';
+  w.state.master[1].toOrder = 3;  w.state.master[1].vendor = 'LOOP';
+  w.state.master[2].toOrder = 1;  w.state.master[2].vendor = 'Fine Wine';
+  w.state.master[3].toOrder = 0;  w.state.master[3].vendor = 'Other';
+
+  const p = w.BarStockCountFinish._porPedir();
+  prueba('cuenta solo los que hay que pedir', p.n === 3, String(p.n));
+  prueba('el dinero es cantidad por precio', p.dinero === 60, String(p.dinero));
+  // Dos lineas del mismo proveedor son UN proveedor.
+  prueba('los proveedores no se repiten', p.vendors === 2, String(p.vendors));
+}
+
 grupo('y el commit repinta la app, no este panel');
 {
   // `render` a secas resolvía a la función LOCAL de este módulo, que le

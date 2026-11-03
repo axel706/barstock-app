@@ -117,6 +117,37 @@
     return Math.abs(d) + ' min ' + (d > 0 ? 'faster' : 'slower') + ' than last time';
   }
 
+  // Por debajo de esto, el conteo anterior no fue un conteo: fue una
+  // prueba, o alguien que abrio el escaner y se salio. Comparar contra
+  // eso daba "22 min slower than last time" sobre un conteo de 22
+  // minutos, que es ruido con cara de dato.
+  const MINIMO_PARA_COMPARAR = 5 * 60000;
+
+  // ── Lo que hay que pedir, ahora mismo ────────────────────────────────
+  //
+  // Se lee DESPUES del commit, cuando `toOrder` ya esta recalculado
+  // contra el on hand nuevo. Es el unico momento en que este numero es
+  // la consecuencia directa de lo que se acaba de contar.
+  //
+  // El dinero sale de `toOrder × tu precio de catalogo`, no de lo que
+  // te van a cobrar: por eso en pantalla lleva tilde y se dice de
+  // donde sale. Un signo de dolar a secas se lee como una factura.
+  function loPorPedir() {
+    const m = (window.state && window.state.master) || [];
+    let n = 0, dinero = 0;
+    const vend = new Set();
+    for (const r of m) {
+      const q = Number(r.toOrder) || 0;
+      if (q <= 0) continue;
+      n++;
+      dinero += q * (Number(r.value) || 0);
+      if (r.vendor) vend.add(String(r.vendor));
+    }
+    return { n, dinero, vendors: vend.size };
+  }
+
+  const dinero = (x) => '$' + Math.round(Number(x) || 0).toLocaleString('en-US');
+
   function build() {
     if ($('cfPanel')) return;
     const el = document.createElement('div');
@@ -763,25 +794,45 @@
         console.warn('[conteo] BarStockCountInsight no esta cargado');
       }
 
+      // ── Qué cambió, y qué toca ahora ────────────────────────────────
+      //
+      // Antes esto era un acuse: un visto verde, un párrafo gris con lo
+      // que de verdad importaba —cuántos artículos se tocaron de
+      // cuántos— en el texto más pequeño de la pantalla, el tiempo
+      // ocupando el sitio de honor siendo lo menos accionable, y media
+      // pantalla vacía debajo.
+      //
+      // Acabas de contar doscientas botellas durante veintidós minutos.
+      // Lo único que quieres saber es qué hay que pedir. Así que el
+      // cierre se resume en tres números y el siguiente paso trae el
+      // suyo, en vez de mandarte a buscarlo.
+      const pedir = loPorPedir();
+      const compara = antes && antes.active_ms >= MINIMO_PARA_COMPARAR
+        ? comparar(s.activeMs, antes.active_ms) : '';
+
       $('cfBody').innerHTML = `
         <div class="cf-done"><i class="ti ti-circle-check" aria-hidden="true"></i></div>
         <div class="cf-count">Count closed</div>
-        <div class="cf-note">${s.counted} items updated${
-          s.missing ? (_mode === 'zero' ? `, ${s.missing} set to zero` : `, ${s.missing} left as they were`) : ''
-        }${yaHayCiclo ? '. The cycle was already open, so this corrected the numbers without starting a new week' : ''}.</div>
+        <div class="cf-note">${yaHayCiclo
+          ? 'Corrected this week · no new cycle'
+          : 'A new week starts now'}</div>
 
-        <!-- Cuánto costó. Es tiempo ACTIVO: los ratos en que nadie
-             registró nada no cuentan, así que no es la hora a la que
-             empezaste menos la hora a la que acabaste.
+        <!-- Los tres números del cierre. Lo que cambió y lo que no es
+             lo que antes iba en el párrafo pequeño: 5 de 260 es una
+             frase muy distinta de 255 de 260, y de un vistazo tiene
+             que verse cuál de las dos fue.
 
-             La comparación sólo sale si hay con qué comparar. La
-             primera vez no hay fila anterior, y un "vs —" no dice
-             nada. -->
-        ${s.activeMs ? `
-          <div class="cf-tiempo">
-            <b>${esc(S_FMT(s.activeMs))}</b> of counting
-            ${antes && antes.active_ms ? `<small>${esc(comparar(s.activeMs, antes.active_ms))}</small>` : ''}
-          </div>` : ''}
+             El tiempo es ACTIVO: los ratos en que nadie registró nada
+             no cuentan, así que no es la hora de empezar menos la de
+             acabar. -->
+        <div class="cf-tres">
+          <div class="cf-t1"><b class="ok">${s.counted}</b><small>updated</small></div>
+          <div class="cf-t1"><b>${s.missing}</b><small>${
+            _mode === 'zero' ? 'set to zero' : 'untouched'}</small></div>
+          ${s.activeMs ? `<div class="cf-t1">
+            <b>${esc(S_FMT(s.activeMs))}</b><small>counting</small></div>` : ''}
+        </div>
+        ${compara ? `<div class="cf-vs">${esc(compara)}</div>` : ''}
 
         ${primeraVez ? `
           <div class="cf-first">
@@ -790,17 +841,36 @@
             count that does not match your history.
           </div>` : ''}
 
-        <div class="cf-next-t">What now</div>
-        <button class="cf-next" id="cfGoOrder" type="button">
-          <i class="ti ti-shopping-cart" aria-hidden="true"></i>
-          <span><b>Check the order</b><small>Suggested amounts are already updated</small></span>
-          <i class="ti ti-chevron-right" aria-hidden="true"></i>
-        </button>
-        <button class="cf-next" id="cfGoSales" type="button">
-          <i class="ti ti-file-upload" aria-hidden="true"></i>
-          <span><b>Upload this week's sales</b><small>Needed for Variance to compare</small></span>
-          <i class="ti ti-chevron-right" aria-hidden="true"></i>
-        </button>
+        <!-- El siguiente paso, con su número ya puesto.
+
+             Si no hay nada que pedir NO se enseña "0 items · ~$0": un
+             cero grande en una tarjeta destacada se lee como un fallo
+             de carga. Se dice que no hay nada, y el paso que manda
+             pasa a ser subir las ventas. -->
+        ${pedir.n ? `
+          <div class="cf-next-card">
+            <div class="cf-next-k">Next</div>
+            <div class="cf-next-h">Check the order</div>
+            <div class="cf-next-big">${pedir.n} ${pedir.n === 1 ? 'item' : 'items'} · ~${esc(dinero(pedir.dinero))}</div>
+            <!-- La tilde y esta linea no son adorno: el dinero sale de
+                 tu precio de catalogo, no de lo que te van a cobrar. Un
+                 signo de dolar a secas se lee como una factura. -->
+            <div class="cf-next-s">${pedir.vendors} ${
+              pedir.vendors === 1 ? 'vendor' : 'vendors'} · at your catalogue prices</div>
+            <button class="cf-cta" id="cfGoOrder" type="button">Open Ordering</button>
+          </div>
+          <button class="cf-next" id="cfGoSales" type="button">
+            <i class="ti ti-file-upload" aria-hidden="true"></i>
+            <span><b>Upload this week's sales</b><small>Needed for Variance to compare</small></span>
+            <i class="ti ti-chevron-right" aria-hidden="true"></i>
+          </button>`
+        : `
+          <div class="cf-next-card">
+            <div class="cf-next-k">Next</div>
+            <div class="cf-next-h">Upload this week's sales</div>
+            <div class="cf-next-s" style="margin-top:6px">Nothing to order right now · Variance needs the sales to compare</div>
+            <button class="cf-cta" id="cfGoSales" type="button">Open Variance</button>
+          </div>`}
 
         <button class="cf-ghost" id="cfEnd" type="button">Not now</button>`;
 
@@ -810,9 +880,13 @@
       const irA = (s) => {
         if (typeof window.bsOpenSection === 'function') window.bsOpenSection(s);
       };
-      $('cfEnd').onclick = () => close(false);
-      $('cfGoOrder').onclick = () => { close(false); irA('vendor'); };
-      $('cfGoSales').onclick = () => { close(false); irA('consumption'); };
+      // Con todo pedido no hay boton de ordenar, asi que se comprueba
+      // antes de engancharlo. Sin esto, un bar al dia con sus pedidos
+      // reventaba aqui y se quedaba sin pantalla de cierre.
+      const al = (id, fn) => { const b = $(id); if (b) b.onclick = fn; };
+      al('cfEnd', () => close(false));
+      al('cfGoOrder', () => { close(false); irA('vendor'); });
+      al('cfGoSales', () => { close(false); irA('consumption'); });
 
       if (typeof setStatus === 'function') setStatus(`Count closed · ${s.counted} items updated.`);
 
@@ -838,5 +912,8 @@
     else { if (_onDone) _onDone(); }
   }
 
-  window.BarStockCountFinish = { open, close };
+  // `_porPedir` sale sólo para el test: es la cuenta que se enseña en
+  // grande al cerrar, y comprobarla leyendo HTML sería comprobar el
+  // formato, no la suma.
+  window.BarStockCountFinish = { open, close, _porPedir: loPorPedir };
 })();

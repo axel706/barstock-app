@@ -494,19 +494,71 @@ body.light .cp-sheet-x{ border-color: rgba(15,23,42,.16); color: #0f172a; }
 }
 .cf-note{ font-size: var(--m-meta); color: #94a3b8; text-align: center; margin-top: 10px; line-height: 1.5; }
 
-/* Cuánto costó el conteo. Centrado y con su propio aire: es un dato
-   que se mira una vez y se recuerda, no parte del recuento de arriba. */
-.cf-tiempo{
-  margin-top: 14px; text-align: center;
-  font-size: var(--m-body); color: #94a3b8;
+/* ── Los tres números del cierre ──────────────────────────────────────
+ *
+ * Antes esto era un parrafo gris: "5 items updated, 255 left as they
+ * were", en el texto mas pequeño de la pantalla. Y 5 de 260 es una
+ * frase muy distinta de 255 de 260 — de un vistazo tiene que verse
+ * cual de las dos fue.
+ *
+ * El tiempo baja aqui con los otros dos. Ocupaba el sitio de honor,
+ * en grande y centrado, siendo lo unico de la pantalla sobre lo que
+ * no se puede hacer nada. */
+.cf-tres{
+  display: flex; gap: 8px; margin-top: 16px;
 }
-.cf-tiempo b{
-  font-size: var(--m-title); font-weight: 800; color: #e5e7eb;
-  margin-right: 4px;
+.cf-t1{
+  flex: 1; text-align: center;
+  padding: 11px 6px; border-radius: 14px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.09);
 }
-.cf-tiempo small{
-  display: block; margin-top: 4px;
+.cf-t1 b{
+  display: block; font-size: var(--m-head); font-weight: 800;
+  color: #cbd5e1; line-height: 1.1;
+}
+.cf-t1 b.ok{ color: #4ade80; }
+.cf-t1 small{
+  display: block; margin-top: 5px;
   font-size: var(--m-meta); color: #7f93a8;
+}
+/* La comparacion con el conteo anterior sale fuera de la minicard:
+   es sobre uno de los tres numeros, no un cuarto. Y solo aparece
+   cuando el anterior duro lo suficiente — ver MINIMO_PARA_COMPARAR
+   en count-finish.js. */
+.cf-vs{
+  margin-top: 8px; text-align: center;
+  font-size: var(--m-meta); color: #7f93a8;
+}
+
+/* ── El siguiente paso, con su numero ─────────────────────────────────
+ *
+ * Acabas de contar doscientas botellas. Lo unico que quieres saber es
+ * que hay que pedir, y eso estaba a dos pantallas. */
+.cf-next-card{
+  margin-top: 18px; padding: 14px;
+  border-radius: 16px;
+  background: rgba(56,189,248,.09);
+  border: 1px solid rgba(56,189,248,.28);
+}
+.cf-next-k{
+  font-size: var(--m-meta); font-weight: 800; letter-spacing: .07em;
+  text-transform: uppercase; color: #7cb8d8; margin-bottom: 7px;
+}
+.cf-next-h{ font-size: var(--m-strong); font-weight: 800; color: #e5e7eb; }
+.cf-next-big{
+  font-size: var(--m-figure); font-weight: 800; color: #38bdf8;
+  line-height: 1.1; margin: 7px 0 4px;
+}
+.cf-next-s{ font-size: var(--m-meta); color: #8fa3b8; line-height: 1.45; }
+/* El unico boton lleno de la pantalla: es la accion que se espera.
+   El radio de pastilla se lo gana `#cfPanel`, que es como esta hoja
+   le gana al !important de app.css — ver la nota del panel. */
+#cfPanel .cf-cta{
+  width: 100%; margin-top: 12px; padding: 11px;
+  border-radius: 999px !important; border: none;
+  background: #38bdf8; color: #06283d;
+  font-size: var(--m-small); font-weight: 800; cursor: pointer;
 }
 .cf-status{ font-size: var(--m-body); color: #94a3b8; text-align: center; padding: 40px 0; }
 .cf-done{ font-size: var(--m-figure); color: #22c55e; text-align: center; margin-bottom: 6px; }
@@ -871,15 +923,30 @@ body.light .cf-ins-row{ border-color: rgba(15,23,42,.08); }
 body.light .cf-ins-row small b{ color: #b91c1c; }
 body.light .cf-ins-act{ background: rgba(15,23,42,.04); border-color: rgba(15,23,42,.12); color: #334155; }
 
+/* El cierre en modo claro. Sin esto las tres minicards son texto gris
+   claro sobre blanco: el dato que mas se mira de esta pantalla,
+   ilegible. */
+body.light .cf-t1{ background: rgba(15,23,42,.04); border-color: rgba(15,23,42,.10); }
+body.light .cf-t1 b{ color: #0f172a; }
+body.light .cf-t1 b.ok{ color: #15803d; }
+body.light .cf-t1 small,
+body.light .cf-vs,
+body.light .cf-next-s{ color: #475569; }
+body.light .cf-next-card{ background: rgba(2,132,199,.07); border-color: rgba(2,132,199,.26); }
+body.light .cf-next-k{ color: #0369a1; }
+body.light .cf-next-h{ color: #0f172a; }
+body.light .cf-next-big{ color: #0284c7; }
+
 /* ── Y ahora que ───────────────────────────────────────────────────────
    Contar no es el final de nada: se cuenta para decidir que pedir. Esta
    pantalla decia "listo" y te devolvia a donde estabas, y los dos pasos
-   siguientes habia que ir a buscarlos a dos sitios distintos. */
-.cf-next-t{
-  font-size: var(--m-meta); font-weight: 800; letter-spacing: .06em;
-  text-transform: uppercase; color: var(--sub);
-  margin: 22px 0 8px;
-}
+   siguientes habia que ir a buscarlos a dos sitios distintos.
+
+   Aqui vivia `.cf-next-t`, el rotulo "WHAT NOW". Lo sustituye el
+   "NEXT" de dentro de la tarjeta azul, que ademas dice cual es el
+   siguiente paso en vez de anunciar una lista. Se borra en vez de
+   dejarlo por si acaso: una regla sin dueño es la que mañana explica
+   un hueco que nadie puso. */
 .cf-next{
   width: 100%;
   display: flex; align-items: center; gap: 12px;
