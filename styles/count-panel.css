@@ -1324,3 +1324,127 @@ body.light .cp-read .cp-same { color: #15803d; }
 .cp-read .cp-down { color: #f87171; }
 body.light .cp-read .cp-up   { color: #15803d; }
 body.light .cp-read .cp-down { color: #b91c1c; }
+
+/* ══ Finish count · el rediseño ══════════════════════════════════════
+ *
+ * Antes era todo apilado: cuatro cajas de aviso del mismo peso, el
+ * mismo hecho dicho tres veces, y el botón de cerrar debajo del
+ * pliegue. Ahora el resumen dice UNA cosa —el veredicto— y cada asunto
+ * tiene su tarjeta, que abre su vista.
+ *
+ * ── El radio contra app.css ─────────────────────────────────────────
+ *
+ * app.css fuerza `border-radius: 999px !important` a todo <button> con
+ * un selector de 21 :not() — pesa (0,21,1). Repetir clases es una
+ * carrera perdida: mañana alguien añade el :not() veintidós. Un ID
+ * vale (1,0,0) y gana por categoría, se añadan las que se añadan. Es
+ * el mismo truco que ya usa mobile-app.css, y hace falta aquí porque
+ * esta pantalla no vive dentro de #mScreens.
+ */
+#cfPanel .cf-card { border-radius: 20px !important; }
+#cfPanel .cf-row-b { border-radius: 0 !important; }
+#cfPanel .cf-b    { border-radius: 999px !important; }
+
+.cf-title-s{ display:block; font-size: var(--m-meta); color:#8aa0b4;
+  font-weight:600; margin-top:2px; letter-spacing:0; text-transform:none; }
+
+/* El veredicto. Rojo por defecto, verde cuando no queda nada en cero. */
+.cf-vd{
+  border-radius:20px; padding:15px; margin-bottom:11px;
+  background:linear-gradient(135deg,rgba(248,113,113,.17),rgba(248,113,113,.04));
+  border:1px solid rgba(248,113,113,.34);
+}
+.cf-vd.ok{ background:linear-gradient(135deg,rgba(52,211,153,.16),rgba(52,211,153,.04));
+  border-color:rgba(52,211,153,.32); }
+.cf-vd-top{ display:flex; align-items:center; gap:14px; }
+.cf-ring{ flex:0 0 68px; }
+.cf-vd-t b{ display:block; font-size:var(--m-screen); font-weight:800; color:#fff;
+  line-height:1; letter-spacing:-.5px; }
+.cf-vd-t span{ display:block; font-size:var(--m-small); color:#cbd5e1; margin-top:5px; }
+.cf-vd-c{ margin-top:13px; padding-top:11px; border-top:1px solid rgba(248,113,113,.22);
+  font-size:var(--m-small); color:#fecaca; line-height:1.42; }
+.cf-vd.ok .cf-vd-c{ border-top-color:rgba(52,211,153,.22); color:#bbf7d0; }
+.cf-vd-c b{ color:#fff; font-weight:800; }
+
+/* Las tarjetas que abren cada vista. Mismo radio que el carrusel. */
+.cf-card{
+  display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+  padding:14px; margin-bottom:8px; box-sizing:border-box; font-family:inherit;
+  background:rgba(255,255,255,.055); border:1px solid rgba(255,255,255,.11);
+  color:#e8eef7; cursor:pointer;
+}
+.cf-card-i{ flex:0 0 auto; font-size:var(--m-title); color:#7f93a8; line-height:1; }
+.cf-card-t{ flex:1; min-width:0; }
+.cf-card-t b{ display:block; font-size:var(--m-small); font-weight:800; }
+.cf-card-t span{ display:block; font-size:var(--m-meta); color:#8aa0b4; margin-top:3px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cf-card-go{ flex:0 0 auto; color:#7f93a8; font-size:var(--m-strong); }
+.cf-card.urge{ background:rgba(251,191,36,.12); border-color:rgba(251,191,36,.33); }
+.cf-card.urge .cf-card-i{ color:#fbbf24; }
+.cf-card.urge .cf-card-t b{ color:#fde68a; }
+
+/* La decisión keep/zero, cuando existe. No es una tarjeta que abre:
+ * es la elección, y vive a la vista. */
+.cf-dec{ margin:4px 0 8px; }
+.cf-dec-k{ font-size:var(--m-eyebrow); font-weight:800; letter-spacing:.1em;
+  text-transform:uppercase; color:#7f93a8; margin:0 2px 7px; }
+
+/* Vistas de detalle */
+.cf-sub{ font-size:var(--m-small); color:#9fb0c4; line-height:1.45; margin:2px 2px 14px; }
+.cf-row{ display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+  padding:12px 2px; border-bottom:1px solid rgba(255,255,255,.07);
+  background:none; border-left:none; border-right:none; border-top:none;
+  font-family:inherit; color:#e8eef7; }
+.cf-row-b{ cursor:pointer; }
+.cf-row-n{ flex:1; min-width:0; font-size:var(--m-small); font-weight:700;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cf-row-v{ flex:0 0 auto; font-size:var(--m-small); font-weight:800; color:#fde68a; }
+.cf-row-v small{ color:#8aa0b4; font-weight:600; }
+.cf-row-q{ color:#8aa0b4; font-weight:600; }
+/* La barra dice de un vistazo cuál corre más: "12.0" y "2.4" se leen
+ * igual de rápido, el largo no. */
+.cf-bar{ flex:0 0 52px; height:5px; border-radius:999px;
+  background:rgba(255,255,255,.10); overflow:hidden; }
+.cf-bar i{ display:block; height:100%; background:#fbbf24; border-radius:999px; }
+
+.cf-cat{ font-size:var(--m-eyebrow); font-weight:800; letter-spacing:.1em;
+  text-transform:uppercase; color:#7f93a8; margin:18px 2px 2px; }
+
+.cf-busca{ display:flex; align-items:center; gap:9px; padding:0 13px; height:46px;
+  border-radius:14px; background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.14); margin-bottom:6px; }
+.cf-busca > i{ color:#64748b; font-size:var(--m-strong); }
+.cf-busca input{ flex:1; min-width:0; background:none; border:none; outline:none;
+  color:#f1f5f9; font-family:inherit;
+  /* 16px obligatorio o Safari hace zoom al enfocar. Ver test-zoom-ios. */
+  font-size:max(16px, var(--m-body)); }
+.cf-busca input::placeholder{ color:#64748b; }
+
+.cf-zrow{ display:flex; align-items:baseline; gap:12px; padding:15px 2px;
+  border-bottom:1px solid rgba(255,255,255,.07); }
+.cf-zrow .n{ flex:1; font-size:var(--m-strong); font-weight:800; color:#fff; }
+.cf-zrow .v{ font-size:var(--m-title); font-weight:800; color:#5eead4; }
+.cf-zrow .u{ font-size:var(--m-meta); color:#8aa0b4; margin-left:-7px; }
+.cf-zrow-no .n{ color:#8aa0b4; font-weight:600; }
+.cf-zrow-no .v{ color:#8aa0b4; }
+
+.cf-est{ margin-top:16px; padding:13px 14px; border-radius:20px;
+  font-size:var(--m-small); line-height:1.4;
+  background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); color:#9fb0c4; }
+.cf-est.ok{ background:rgba(52,211,153,.12); border-color:rgba(52,211,153,.30); color:#bbf7d0; }
+.cf-est.mal{ background:rgba(239,68,68,.14); border-color:rgba(239,68,68,.34); color:#fecaca; }
+
+/* El pie, siempre a la vista. Antes la decisión quedaba al fondo de un
+ * scroll de cuatro cajas. */
+.cf-pie{ position:sticky; bottom:0; padding:13px 0 0;
+  background:linear-gradient(180deg, transparent, #0b1220 26%); }
+.cf-b{ display:flex; align-items:center; justify-content:center; gap:9px;
+  width:100%; padding:15px; font-size:var(--m-strong); font-weight:800;
+  border:none; margin-bottom:8px; font-family:inherit; cursor:pointer; }
+.cf-b-go{ background:#38bdf8; color:#04283d; }
+/* Verde porque ir a contar AÑADE existencia. El azul de "Close the
+ * count" es la acción contraria y no pueden compartir color. */
+.cf-b-ok{ background:#34d399; color:#053224; }
+.cf-b-gh{ background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16);
+  color:#e8eef7; }
+.cf-nota{ text-align:center; font-size:var(--m-meta); color:#7f93a8; padding-bottom:8px; }

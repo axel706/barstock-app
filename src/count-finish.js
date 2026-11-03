@@ -131,7 +131,9 @@
       </div>
       <div class="cf-body" id="cfBody"></div>`;
     document.body.appendChild(el);
-    $('cfBack').onclick = () => close(true);
+    // Un solo boton, dos significados: dentro de una vista vuelve al
+    // resumen; en el resumen sale al escaner.
+    $('cfBack').onclick = () => { if (_vista) irA(''); else close(true); };
   }
 
   function open(onCancel, onDone) {
@@ -139,21 +141,46 @@
     _onCancel = onCancel || null;
     _onDone = onDone || null;
     _mode = 'keep';
+    // Siempre se abre en el resumen, y las cargas se rehacen: volver a
+    // entrar despues de contar mas tiene que decir la verdad nueva.
+    _vista = '';
+    _busca = '';
+    _ins = null;
+    _zonas = null;
     $('cfPanel').classList.add('on');
     render();
   }
 
+  // ── Una pantalla con cuatro vistas ───────────────────────────────────
+  //
+  // Antes esto era una sola pantalla con todo apilado: cuatro cajas de
+  // aviso del mismo peso, el mismo hecho dicho tres veces —"257 never
+  // scanned", "See which ones", "Those 257 stay at zero"— y la decisión
+  // por debajo del pliegue. Lo más accionable, los artículos de alta
+  // rotación sin contar, quedaba enterrado en medio.
+  //
+  // Ahora el resumen dice UNA cosa —el veredicto— y cada asunto tiene su
+  // tarjeta, que abre su propia vista. El botón de cerrar está siempre a
+  // la vista.
+  //
+  // `_vista` es el único estado nuevo. El resto de la pantalla —el modo
+  // keep/zero, el commit, el cierre— no cambia.
+  let _vista = '';        // '' | 'movers' | 'raros' | 'faltan' | 'zonas'
+  let _ins = null;        // lo que devolvió BarStockCountInsight
+  let _zonas = null;      // { filas, sinZona, estado }
+  let _busca = '';        // el filtro de la lista de los que faltan
+
+  const n2 = (x) => String(Math.round((Number(x) || 0) * 100) / 100);
+
   // ── El reparto por zona ──────────────────────────────────────────────
   //
-  // Dos cosas, y la segunda importa mas: cuanto hay en cada sitio, y si
-  // eso llego a la nube. Se fuerza la subida al abrir esta pantalla en
+  // Dos cosas, y la segunda importa más: cuánto hay en cada sitio, y si
+  // eso llegó a la nube. Se fuerza la subida al abrir esta pantalla en
   // vez de confiar en el pulso de dos minutos, porque este es el momento
-  // en que alguien esta mirando y puede hacer algo si falla.
-  async function pintarZonas() {
-    const host = $('cfZonas');
+  // en que alguien está mirando y puede hacer algo si falla.
+  async function cargarZonas() {
     const Z = window.BarStockZones;
-    if (!host) return;
-    if (!Z || !Z.activas()) { host.innerHTML = ''; return; }
+    if (!Z || !Z.activas()) { _zonas = { filas: [], sinZona: 0, estado: '' }; return; }
 
     const tam = {};
     for (const r of (window.state && window.state.master) || []) {
@@ -170,145 +197,20 @@
       }
     }
 
-    const filas = Object.entries(totales).sort((a, b) => b[1] - a[1]);
-    if (!filas.length && !sinZona) { host.innerHTML = ''; return; }
+    _zonas = {
+      filas: Object.entries(totales).sort((a, b) => b[1] - a[1]),
+      sinZona,
+      estado: 'guardando'
+    };
+    repintar();
 
-    const n = (x) => String(Math.round(x * 100) / 100);
-    host.innerHTML = `
-      <div class="cf-zones">
-        <div class="cf-zones-t"><i class="ti ti-map-pin" aria-hidden="true"></i> By zone</div>
-        ${filas.map(([z, v]) => `
-          <div class="cf-zones-r"><span>${esc(z)}</span><b>${n(v)}</b></div>`).join('')}
-        ${sinZona ? `
-          <div class="cf-zones-r cf-zones-no">
-            <span>No zone</span><b>${n(sinZona)}</b>
-          </div>` : ''}
-        <div class="cf-zones-s" id="cfZonasSync">Saving…</div>
-      </div>`;
-
-    const est = $('cfZonasSync');
     try {
       const subidas = await Z.sincronizar();
-      if (est) est.textContent = subidas
-        ? 'Saved \u00b7 you can look this up from your phone.'
-        : 'Nothing to save.';
+      _zonas.estado = subidas ? 'ok' : 'nada';
     } catch (e) {
-      if (est) {
-        est.textContent = 'Could not save the zone breakdown. The count itself is fine.';
-        est.className = 'cf-zones-s cf-zones-bad';
-      }
+      _zonas.estado = 'mal';
     }
-  }
-
-  function render() {
-    const s = S().summary();
-
-    // Si todos los no contados ya estan en cero, es que se venia de un
-    // reset y no hay nada que preguntar.
-    const desdeCero = S().missingRows().every(r => Number(r.onHand || 0) === 0);
-
-    if (!s.counted) {
-      $('cfBody').innerHTML = `
-        <div class="cf-empty">Nothing counted yet.</div>
-        <button class="cf-ghost" id="cfBack2" type="button">Keep scanning</button>`;
-      $('cfBack2').onclick = () => close(true);
-      return;
-    }
-
-    $('cfBody').innerHTML = `
-      <div class="cf-count"><b>${s.counted}</b> of ${s.total} items counted</div>
-
-      <!-- El reparto por zona y, sobre todo, si llego a guardarse.
-           Antes un fallo al subirlo solo dejaba un aviso en una consola
-           que nadie mira, y la funcion entera vale por una cosa: que el
-           dato este ahi cuando preguntes desde fuera del restaurante.
-           Fallar en silencio es el peor comportamiento posible para eso. -->
-      <div id="cfZonas"></div>
-
-      <!-- Los avisos van AQUÍ, antes de la pregunta de qué hacer con los
-           no contados, porque cambian esa respuesta: si faltan nueve de
-           alta rotación, "poner a cero" deja de ser razonable. Se llenan
-           solos cuando el historial termina de leerse. -->
-      <div id="cfInsight"></div>
-
-      ${s.missing ? `
-        <div class="cf-warn">
-          ${s.missing} item${s.missing === 1 ? '' : 's'} never scanned.
-          Closing replaces the on hand for this whole location.
-        </div>
-
-        <!-- Cuantas faltan ya se decia. Cuales no, y era el dato que
-             convierte el aviso en algo accionable: "faltan 177" solo
-             asusta, pero "faltan doce de Vodka" manda a alguien a un
-             estante concreto. -->
-        <button class="cf-toggle" id="cfToggle" type="button">
-          <i class="ti ti-chevron-down" aria-hidden="true"></i>
-          <span>See which ones</span>
-        </button>
-        <div class="cf-missing" id="cfMissing" hidden>
-          <input type="text" id="cfSearch" placeholder="Search the missing" autocomplete="off">
-          <div id="cfMissingList"></div>
-        </div>
-
-        ${desdeCero ? `
-          <!-- Viniendo de "Start new cycle" todo esta en cero, asi que
-               "dejarlos como estaban" y "ponerlos a cero" hacen lo mismo.
-               Ofrecer las dos era ofrecer una eleccion que no existe, y
-               una eleccion falsa es peor que ninguna: hace dudar. Aqui se
-               dice lo que va a pasar y ya. -->
-          <div class="cf-label cf-label-plain">
-            Those ${s.missing} stay at zero. The cycle was reset before you
-            started, so anything not counted has nothing recorded.
-          </div>
-        ` : `
-          <div class="cf-label">What about those ${s.missing}?</div>
-          <!-- La marca sale de _mode y no esta fija en 'keep'. render() se
-               vuelve a llamar despues de recontar desde un aviso, y con la
-               clase escrita a mano la pantalla decia 'dejarlos como estaban'
-               mientras la variable seguia en 'zero'. -->
-          <button class="cf-opt${_mode === 'keep' ? ' on' : ''}" type="button" data-mode="keep">
-            <b>Leave them as they were</b>
-            <small>Keeps their previous count</small>
-          </button>
-          <button class="cf-opt${_mode === 'zero' ? ' on' : ''}" type="button" data-mode="zero">
-            <b>Set them to zero</b>
-            <small>Only if you counted absolutely everything</small>
-          </button>
-        `}
-      ` : `
-        <div class="cf-ok">Every item was counted.</div>
-      `}
-
-      <button class="cf-ghost" id="cfMore" type="button">Keep scanning</button>
-      <button class="cf-go" id="cfGo" type="button">Close the count</button>
-      <div class="cf-note">A backup is taken first. It can be restored from Admin.</div>`;
-
-    $('cfBody').querySelectorAll('.cf-opt').forEach(b => {
-      b.onclick = () => {
-        _mode = b.dataset.mode;
-        $('cfBody').querySelectorAll('.cf-opt').forEach(x => x.classList.toggle('on', x === b));
-      };
-    });
-    $('cfMore').onclick = () => close(true);
-    $('cfGo').onclick = commit;
-
-    if ($('cfToggle')) {
-      $('cfToggle').onclick = () => {
-        const box = $('cfMissing');
-        const abierto = !box.hidden;
-        box.hidden = abierto;
-        $('cfToggle').classList.toggle('on', !abierto);
-        $('cfToggle').querySelector('span').textContent =
-          abierto ? 'See which ones' : 'Hide the list';
-        if (!abierto) { paintMissing(''); $('cfSearch').focus(); }
-      };
-      $('cfSearch').oninput = (e) => paintMissing(e.target.value);
-    }
-
-    paintInsight();
-    // Igual que los avisos: en segundo plano. Nadie debe esperar a la red
-    // para poder pulsar "Keep scanning".
-    pintarZonas().catch(e => console.warn('[zonas] resumen de cierre', e));
+    repintar();
   }
 
   // ── Los avisos ───────────────────────────────────────────────────────
@@ -318,101 +220,235 @@
   // debe esperar a la red para poder pulsar "Keep scanning". Si la
   // consulta tarda o falla, esto simplemente no aparece y todo lo demás
   // funciona igual.
-  async function paintInsight() {
-    const host = $('cfInsight');
-    if (!host || !window.BarStockCountInsight) return;
+  async function cargarInsight() {
+    if (!window.BarStockCountInsight) return;
+    try { _ins = await window.BarStockCountInsight.analizar(); }
+    catch (e) { console.warn('[conteo] avisos no disponibles', e); _ins = null; }
+    repintar();
+  }
 
-    host.innerHTML = `<div class="cf-ins-load">
-      <i class="ti ti-loader" aria-hidden="true"></i> Checking against your history…</div>`;
+  // Repintar sin relanzar las cargas. `render()` las dispara; esto sólo
+  // vuelve a dibujar con lo que ya hay.
+  function repintar() {
+    if (!$('cfPanel') || !$('cfPanel').classList.contains('on')) return;
+    pintar();
+  }
 
-    let r;
-    try { r = await window.BarStockCountInsight.analizar(); }
-    catch (e) { console.warn('[conteo] avisos no disponibles', e); host.innerHTML = ''; return; }
+  function render() {
+    pintar();
+    // En segundo plano, y sólo una vez por apertura.
+    if (_ins === null) cargarInsight();
+    if (_zonas === null) cargarZonas().catch(e => console.warn('[zonas] cierre', e));
+  }
 
-    // El panel pudo cerrarse mientras se leía el historial.
-    if (!$('cfInsight')) return;
-    if (!r.listo || (!r.faltan.length && !r.raros.length)) {
-      $('cfInsight').innerHTML = '';
+  // ── El encabezado ────────────────────────────────────────────────────
+  //
+  // La flecha vuelve al resumen cuando estás en una vista, y sale del
+  // cierre cuando estás en el resumen. Un solo botón, dos significados,
+  // y el título dice en cuál estás.
+  function cabecera() {
+    const T = {
+      movers: ['Moves every week', (_ins && _ins.faltan.length || 0) + ' not counted'],
+      raros:  ['Does not look right', (_ins && _ins.raros.length || 0) + ' to check'],
+      faltan: ['What is missing', S().summary().missing + ' of ' + S().summary().total],
+      zonas:  ['By zone', (_zonas && _zonas.filas.length || 0) + ' zones']
+    };
+    const t = T[_vista] || ['Finish count', ''];
+    const cab = $('cfPanel') && $('cfPanel').querySelector('.cf-title');
+    if (cab) cab.innerHTML = esc(t[0]) +
+      (t[1] ? '<small class="cf-title-s">' + esc(t[1]) + '</small>' : '');
+  }
+
+  function pintar() {
+    cabecera();
+    const b = $('cfBody');
+    if (!b) return;
+    if (_vista === 'movers')      { vistaMovers(b); return; }
+    if (_vista === 'raros')       { vistaRaros(b);  return; }
+    if (_vista === 'faltan')      { vistaFaltan(b); return; }
+    if (_vista === 'zonas')       { vistaZonas(b);  return; }
+    vistaResumen(b);
+  }
+
+  function irA(v) { _vista = v; _busca = ''; pintar(); }
+
+  // El pie de las vistas de detalle. Verde porque ir a contar AÑADE
+  // existencia; el azul de "Close the count" es la acción contraria y no
+  // pueden compartir color.
+  function pieDetalle(accion) {
+    return `<div class="cf-pie">
+      ${accion ? `<button class="cf-b cf-b-ok" id="cfGoScan" type="button">
+        <i class="ti ti-scan" aria-hidden="true"></i> ${esc(accion)}</button>` : ''}
+      <button class="cf-b cf-b-gh" id="cfVolver" type="button">Back</button>
+    </div>`;
+  }
+
+  function colgarPie(b) {
+    const g = b.querySelector('#cfGoScan');
+    if (g) g.onclick = () => close(true);
+    const v = b.querySelector('#cfVolver');
+    if (v) v.onclick = () => irA('');
+  }
+
+  // ── El resumen ───────────────────────────────────────────────────────
+  function vistaResumen(b) {
+    const s = S().summary();
+
+    if (!s.counted) {
+      b.innerHTML = `
+        <div class="cf-empty">Nothing counted yet.</div>
+        <button class="cf-b cf-b-gh" id="cfBack2" type="button">Keep scanning</button>`;
+      b.querySelector('#cfBack2').onclick = () => close(true);
       return;
     }
 
-    const n1 = r.faltan.length, n2 = r.raros.length;
+    // Si todos los no contados ya están en cero, es que se venía de un
+    // reset y no hay nada que preguntar.
+    const desdeCero = S().missingRows().every(r => Number(r.onHand || 0) === 0);
+    const pct = s.total ? s.counted / s.total : 0;
+    const todo = !s.missing;
+    const color = todo ? '#34d399' : pct < 0.5 ? '#f87171' : '#fbbf24';
 
-    // Antes se restaba una semana fija. Ahora se resta lo que el ciclo
-    // lleve abierto, asi que el aviso tiene que decir cual fue, o el
-    // numero no se puede comprobar a mano.
-    const sc = r.semanasCiclo;
-    const ventana = !sc || Math.abs(sc - 1) < 0.15
-      ? 'a week'
-      : (sc < 1 ? Math.round(sc * 7) + ' days' : sc.toFixed(1) + ' weeks');
-    const TOPE = 4;   // en pantalla; el resto se abre
+    const r = 28, C = 2 * Math.PI * r;
+    const anillo = `
+      <svg class="cf-ring" viewBox="0 0 68 68" width="68" height="68" aria-hidden="true">
+        <circle cx="34" cy="34" r="${r}" fill="none" stroke="rgba(255,255,255,.13)" stroke-width="7"/>
+        <circle cx="34" cy="34" r="${r}" fill="none" stroke="${color}" stroke-width="7"
+          stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - pct)).toFixed(1)}"
+          stroke-linecap="round" transform="rotate(-90 34 34)"/>
+      </svg>`;
 
-    $('cfInsight').innerHTML = `
-      ${n1 ? `
-        <div class="cf-ins cf-ins-a">
-          <div class="cf-ins-t">
-            <i class="ti ti-alert-triangle" aria-hidden="true"></i>
-            ${n1} of the missing move every week
-          </div>
-          <div id="cfMoveList">
-            ${r.faltan.slice(0, TOPE).map(x => `
-              <div class="cf-ins-row">
-                <span>${esc(x.item)}</span>
-                <small>${x.semanal.toFixed(1)} / week</small>
-              </div>`).join('')}
-          </div>
-          ${n1 > TOPE ? `<button class="cf-ins-act" id="cfMoveMore" type="button">See all ${n1}</button>` : ''}
-          <button class="cf-ins-act" id="cfMoveGo" type="button">
-            <i class="ti ti-scan" aria-hidden="true"></i> Go count them
+    // El veredicto dice la CONSECUENCIA, no el mecanismo. "Replaces the
+    // on hand" es lo que hace el programa; "saves 257 items as zero" es
+    // lo que te pasa a ti.
+    const frase = todo
+      ? 'Every item was counted. Nothing will be saved as zero.'
+      : desdeCero
+        ? `Closing now saves <b>${s.missing} item${s.missing === 1 ? '' : 's'} as zero</b>
+           for this whole location.`
+        : `<b>${s.missing} item${s.missing === 1 ? '' : 's'}</b> have no reading.
+           Pick below what happens to them.`;
+
+    const nMov = _ins && _ins.listo ? _ins.faltan.length : 0;
+    const nRar = _ins && _ins.listo ? _ins.raros.length : 0;
+    const nZon = _zonas ? _zonas.filas.length : 0;
+
+    b.innerHTML = `
+      <div class="cf-vd ${todo ? 'ok' : ''}">
+        <div class="cf-vd-top">${anillo}
+          <div class="cf-vd-t"><b>${s.counted} of ${s.total}</b>
+            <span>items counted &middot; ${Math.round(pct * 100)}%</span></div>
+        </div>
+        <div class="cf-vd-c">${frase}</div>
+      </div>
+
+      ${nMov ? tarjeta('movers', 'urge', 'trending-up',
+          nMov + ' fast mover' + (nMov === 1 ? '' : 's') + ' not counted',
+          _ins.faltan.slice(0, 3).map(x => esc(x.item) + ' ' + x.semanal.toFixed(1) + '/wk')
+            .join(' · ')) : ''}
+
+      ${nRar ? tarjeta('raros', 'urge', 'help-circle',
+          nRar + ' count' + (nRar === 1 ? '' : 's') + ' do not look right',
+          'Tap to see them and count again') : ''}
+
+      ${s.missing ? tarjeta('faltan', '', 'list-search',
+          'See the ' + s.missing + ' missing',
+          'Search by name or category') : ''}
+
+      ${s.missing && !desdeCero ? `
+        <div class="cf-dec">
+          <div class="cf-dec-k">Those ${s.missing}</div>
+          <button class="cf-opt${_mode === 'keep' ? ' on' : ''}" type="button" data-mode="keep">
+            <b>Leave them as they were</b>
+            <small>Keeps their previous count</small>
+          </button>
+          <button class="cf-opt${_mode === 'zero' ? ' on' : ''}" type="button" data-mode="zero">
+            <b>Set them to zero</b>
+            <small>Only if you counted absolutely everything</small>
           </button>
         </div>` : ''}
 
-      ${n2 ? `
-        <div class="cf-ins cf-ins-b">
-          <div class="cf-ins-t">
-            <i class="ti ti-help-circle" aria-hidden="true"></i>
-            ${n2} count${n2 === 1 ? '' : 's'} don't look right
-          </div>
-          ${r.raros.map((x, i) => `
-            <button class="cf-ins-row cf-ins-btn" type="button" data-raro="${i}">
-              <span class="cf-ins-name">${esc(x.item)}</span>
-              <small><b>counted ${x.contado}</b> <span class="cf-ins-exp">expected ${x.esperado}</span></small>
-              <i class="ti ti-chevron-right" aria-hidden="true"></i>
-            </button>`).join('')}
-          <div class="cf-ins-note">
-            Expected = what was on hand when the cycle opened, plus what came
-            in, minus ${ventana} of typical use.
-            Tap one to count it again. It may also be stock that arrived
-            without the order being recorded — the number would be right
-            and this warning wrong.
-          </div>
-        </div>` : ''}`;
+      ${nZon ? tarjeta('zonas', '', 'map-pin', nZon + ' zone' + (nZon === 1 ? '' : 's'),
+          _zonas.filas.map(([z, v]) => esc(z) + ' ' + n2(v)).join(' · ')) : ''}
 
-    if ($('cfMoveMore')) {
-      $('cfMoveMore').onclick = () => {
-        $('cfMoveList').innerHTML = r.faltan.map(x => `
-          <div class="cf-ins-row">
-            <span>${esc(x.item)}</span>
-            <small>${x.semanal.toFixed(1)} / week</small>
-          </div>`).join('');
-        $('cfMoveMore').remove();
+      <div class="cf-pie">
+        <button class="cf-b cf-b-go" id="cfGo" type="button">Close the count</button>
+        <button class="cf-b cf-b-gh" id="cfMore" type="button">Keep scanning</button>
+        <div class="cf-nota">A backup is taken first &middot; restorable from Admin</div>
+      </div>`;
+
+    b.querySelectorAll('[data-ir]').forEach(x => {
+      x.onclick = () => irA(x.dataset.ir);
+    });
+    b.querySelectorAll('.cf-opt').forEach(x => {
+      x.onclick = () => {
+        _mode = x.dataset.mode;
+        b.querySelectorAll('.cf-opt').forEach(y => y.classList.toggle('on', y === x));
       };
-    }
-    if ($('cfMoveGo')) $('cfMoveGo').onclick = () => close(true);
+    });
+    b.querySelector('#cfMore').onclick = () => close(true);
+    b.querySelector('#cfGo').onclick = commit;
+  }
 
-    // Tocar uno abre SU panel de conteo, con lo que ya se había puesto.
-    // Al volver se recalcula: si el número dejó de ser raro, el aviso
-    // desaparece solo y no hay que acordarse de nada.
-    $('cfInsight').querySelectorAll('[data-raro]').forEach(b => {
-      b.onclick = () => {
-        const x = r.raros[Number(b.dataset.raro)];
-        const row = ((window.state && window.state.master) || []).find(m => m.item === x.item);
+  function tarjeta(ir, tono, ico, titulo, sub) {
+    return `<button class="cf-card ${tono}" type="button" data-ir="${esc(ir)}">
+      <i class="ti ti-${esc(ico)} cf-card-i" aria-hidden="true"></i>
+      <span class="cf-card-t"><b>${esc(titulo)}</b><span>${sub}</span></span>
+      <i class="ti ti-chevron-right cf-card-go" aria-hidden="true"></i>
+    </button>`;
+  }
+
+  // ── Los que se mueven cada semana ────────────────────────────────────
+  function vistaMovers(b) {
+    const f = (_ins && _ins.faltan) || [];
+    const max = f.reduce((m, x) => Math.max(m, x.semanal), 0) || 1;
+    b.innerHTML = `
+      <div class="cf-sub">These are the ones you sell. Closing now records
+        them as zero, and next week&rsquo;s order will be built on that.</div>
+      ${f.map(x => `
+        <div class="cf-row">
+          <span class="cf-row-n">${esc(x.item)}</span>
+          <span class="cf-bar"><i style="width:${Math.round(x.semanal / max * 100)}%"></i></span>
+          <span class="cf-row-v">${x.semanal.toFixed(1)}/wk</span>
+        </div>`).join('')}
+      ${pieDetalle('Go count these ' + f.length)}`;
+    colgarPie(b);
+  }
+
+  // ── Los que no cuadran ───────────────────────────────────────────────
+  //
+  // Tocar uno abre SU panel de conteo con lo que ya se había puesto. Al
+  // volver se recalcula: si el número dejó de ser raro, desaparece solo.
+  function vistaRaros(b) {
+    const r = (_ins && _ins.raros) || [];
+    const sc = _ins && _ins.semanasCiclo;
+    const ventana = !sc || Math.abs(sc - 1) < 0.15
+      ? 'a week' : (sc < 1 ? Math.round(sc * 7) + ' days' : sc.toFixed(1) + ' weeks');
+
+    b.innerHTML = `
+      <div class="cf-sub">Expected = what was on hand when the cycle opened,
+        plus what came in, minus ${esc(ventana)} of typical use. It may also be
+        stock that arrived without the order being recorded &mdash; then the
+        count is right and this is wrong.</div>
+      ${r.map((x, i) => `
+        <button class="cf-row cf-row-b" type="button" data-raro="${i}">
+          <span class="cf-row-n">${esc(x.item)}</span>
+          <span class="cf-row-v">${x.contado}
+            <small>vs ${x.esperado}</small></span>
+          <i class="ti ti-chevron-right cf-card-go" aria-hidden="true"></i>
+        </button>`).join('')}
+      ${pieDetalle('')}`;
+    colgarPie(b);
+
+    b.querySelectorAll('[data-raro]').forEach(x => {
+      x.onclick = () => {
+        const d = r[Number(x.dataset.raro)];
+        const row = ((window.state && window.state.master) || []).find(m => m.item === d.item);
         if (!row || !window.BarStockCountPanel) return;
         window.BarStockCountPanel.open(row, () => {
-          // render() y no solo paintInsight(): recontar cambia el total
-          // de arriba y la lista de faltantes, no solo los avisos. El
-          // historial no se relee — sigue en cache.
-          render();
+          // El historial no se relee: sigue en caché. Lo que cambia es el
+          // conteo, así que se vuelve a analizar con lo que ya hay.
+          cargarInsight();
         });
       };
     });
@@ -421,17 +457,31 @@
   // ── Los que faltan ───────────────────────────────────────────────────
   //
   // Agrupados por categoría porque así está la barra: el vodka en un
-  // sitio, el vino en otro. Una lista alfabética de 177 nombres obliga a
+  // sitio, el vino en otro. Una lista alfabética de 257 nombres obliga a
   // recorrer el local entero; agrupada, dice a qué estantes volver.
   //
-  // Con buscador, porque el otro uso de esta lista es comprobar UNO: "¿le
-  // di al Tito's?". Y ese caso es tan frecuente como el de repasarla
-  // entera.
-  function paintMissing(q) {
+  // Con buscador, porque el otro uso de esta lista es comprobar UNO:
+  // "¿le di al Tito's?". Y ese caso es tan frecuente como repasarla.
+  function vistaFaltan(b) {
+    b.innerHTML = `
+      <div class="cf-busca">
+        <i class="ti ti-search" aria-hidden="true"></i>
+        <input id="cfSearch" type="text" placeholder="Search the missing"
+               autocomplete="off" value="${esc(_busca)}">
+      </div>
+      <div id="cfMissingList"></div>
+      ${pieDetalle('Go count them')}`;
+    colgarPie(b);
+    const inp = b.querySelector('#cfSearch');
+    inp.oninput = (e) => { _busca = e.target.value; paintMissing(); };
+    paintMissing();
+  }
+
+  function paintMissing() {
     const host = $('cfMissingList');
     if (!host) return;
 
-    const filtro = String(q || '').trim().toLowerCase();
+    const filtro = String(_busca || '').trim().toLowerCase();
     let filas = S().missingRows();
     if (filtro) filas = filas.filter(r => String(r.item || '').toLowerCase().includes(filtro));
 
@@ -442,18 +492,43 @@
 
     const porCat = {};
     for (const r of filas) {
-      const c = r.category || 'Uncategorised';
+      const c = String(r.category || '').trim() || 'No category';
       (porCat[c] = porCat[c] || []).push(r);
     }
 
     host.innerHTML = Object.keys(porCat).sort().map(cat => `
-      <div class="cf-cat">${esc(cat)} · ${porCat[cat].length}</div>
+      <div class="cf-cat">${esc(cat)} &middot; ${porCat[cat].length}</div>
       ${porCat[cat].map(r => `
-        <div class="cf-miss-row">
-          <span>${esc(r.item)}</span>
-          <small>was ${r.onHand ?? 0}</small>
+        <div class="cf-row">
+          <span class="cf-row-n">${esc(r.item)}</span>
+          <span class="cf-row-v cf-row-q">was ${n2(r.onHand ?? 0)}</span>
         </div>`).join('')}
     `).join('');
+  }
+
+  // ── El reparto por zona ──────────────────────────────────────────────
+  function vistaZonas(b) {
+    const z = _zonas || { filas: [], sinZona: 0, estado: '' };
+    const E = {
+      guardando: ['', 'Saving…'],
+      ok:   ['ok',  'Saved. If the phone loses signal it retries on its own.'],
+      nada: ['ok',  'Nothing new to save.'],
+      mal:  ['mal', 'Could not save the zone breakdown. The count itself is fine.']
+    };
+    const e = E[z.estado] || ['', ''];
+
+    b.innerHTML = `
+      <div class="cf-sub">What you counted, split by where it was. Saved with
+        the count, so you can look it up from anywhere.</div>
+      ${z.filas.map(([n, v]) => `
+        <div class="cf-zrow"><span class="n">${esc(n)}</span>
+          <span class="v">${n2(v)}</span><span class="u">bottles</span></div>`).join('')}
+      ${z.sinZona ? `
+        <div class="cf-zrow cf-zrow-no"><span class="n">No zone</span>
+          <span class="v">${n2(z.sinZona)}</span><span class="u">bottles</span></div>` : ''}
+      ${e[1] ? `<div class="cf-est ${e[0]}">${esc(e[1])}</div>` : ''}
+      ${pieDetalle('')}`;
+    colgarPie(b);
   }
 
   // ── ¿Ya corrió el ciclo esta semana? ─────────────────────────────────
@@ -654,7 +729,11 @@
       }
 
       if (typeof saveState === 'function') saveState();
-      if (typeof render === 'function') render();
+      // `window.render` y no `render` a secas: dentro de este IIFE hay
+      // una funcion `render` propia —la de este panel— que le hacia
+      // sombra a la de la app. Lo que se queria repintar aqui es la
+      // pantalla principal con el on hand nuevo, y nunca se repintaba.
+      if (typeof window.render === 'function') window.render();
 
       // ── Y ahora qué ──────────────────────────────────────────────────
       //
