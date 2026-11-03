@@ -85,7 +85,13 @@ function abrir(opts) {
   host.querySelector('#msInput').value = 'tito';
   host.querySelector('#msInput').oninput();
   host.querySelector('.m-res').click();
-  return { w, host };
+
+  // La ficha ya NO reemplaza la pantalla: sube como hoja y vive en
+  // <body>, igual que la de Inventory. Lo que se mira es la hoja; si
+  // no hubiera, se devuelve la pantalla y las comprobaciones fallan
+  // diciendo que falta, que es lo correcto.
+  const hoja = w.document.querySelector('#mSheet .m-sheet-box') || host;
+  return { w, host: hoja, pantalla: host };
 }
 
 const esperar = () => new Promise(r => setTimeout(r, 20));

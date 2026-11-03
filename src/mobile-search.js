@@ -56,6 +56,16 @@
   // una linea.
   const HERO = () => window.BarStockProductHero;
 
+  // La hoja abierta, si hay. Vive en <body> como las demas hojas de la
+  // app, no dentro de la pantalla: asi el teclado y el scroll de los
+  // resultados no la arrastran.
+  function cerrarHoja() {
+    const h = document.getElementById('mSheet');
+    if (h) h.remove();
+    _ficha = -1;
+  }
+  const hojaAbierta = () => !!document.getElementById('mSheet');
+
   function tono(r) {
     const H = HERO();
     if (H && H.tono) return H.tono(r);
@@ -284,15 +294,35 @@
       : (Number(r.suggested) > 0 && Number(r.onHand) / Number(r.suggested) <= 0.25
           ? 'Running low' : '');
 
-    const caja = host.querySelector('#msFicha');
+    // ── Una HOJA, no una pantalla ───────────────────────────────────
+    //
+    // Esto reemplazaba la lista de resultados y se salia con un
+    // chevron propio. Dos problemas: la app ya tiene una vuelta atras
+    // —la del armazon— y poner otra al lado confunde cual es cual; y
+    // al volver perdias de vista los resultados, que es justo lo que
+    // estabas mirando.
+    //
+    // Ahora sube desde abajo, igual que la hoja de producto de
+    // Inventory, y los resultados se quedan detras. Mirar una botella
+    // y volver a la lista deja de ser navegar.
+    cerrarHoja();
+    const h = document.createElement('div');
+    h.className = 'm-sheet';
+    // El id no es decoracion: las reglas de esta hoja se apoyan en el
+    // para ganarle en especificidad al radio de app.css.
+    h.id = 'mSheet';
+    const caja = document.createElement('div');
+    caja.className = 'm-sheet-box m-ficha';
+    caja.setAttribute('role', 'dialog');
+    caja.setAttribute('aria-label', 'Product');
+    const fondo = document.createElement('div');
+    fondo.className = 'm-sheet-bg';
+    h.appendChild(fondo); h.appendChild(caja);
+    document.body.appendChild(h);
+    fondo.onclick = () => cerrarHoja();
+
     caja.innerHTML = `
-      <!-- Aquí no hay título al lado: la ficha del producto va justo
-           debajo y ya dice de qué es. Solo el chevron, con el mismo
-           tamaño de dedo que en las demás pantallas. -->
-      <div class="m-cab m-cab-sola">
-        <button type="button" class="m-atras" id="msBack" aria-label="Back to results">
-          <i class="ti ti-chevron-left" aria-hidden="true"></i></button>
-      </div>
+      <div class="m-sheet-grip"></div>
 
       <!-- La MISMA cabecera que usa la hoja de Inventory. Es un solo
            sitio a proposito: dos copias acaban diciendo cosas
@@ -329,8 +359,6 @@
         <button type="button" class="m-act" id="msRecv"><i class="ti ti-truck-delivery" aria-hidden="true"></i> Received</button>
       </div>`;
 
-    host.classList.add('ficha');
-    caja.querySelector('#msBack').onclick = () => { host.classList.remove('ficha'); };
 
     const add = caja.querySelector('#msAdd');
     if (add) add.onclick = () => {
@@ -373,20 +401,19 @@
       <div class="m-cnt" id="msCount"></div>
 
       <div id="msList"></div>
-      <div id="msFicha"></div>`;
+`;
 
     const inp = host.querySelector('#msInput');
-    inp.oninput = () => { _q = inp.value; host.classList.remove('ficha'); pintarLista(host); };
+    inp.oninput = () => { _q = inp.value; cerrarHoja(); pintarLista(host); };
     host.querySelector('#msClear').onclick = () => {
-      _q = ''; inp.value = ''; host.classList.remove('ficha'); pintarLista(host); inp.focus();
+      _q = ''; inp.value = ''; cerrarHoja(); pintarLista(host); inp.focus();
     };
 
     pintarLista(host);
   }
 
   function show(host) {
-    host.classList.remove('ficha');
-    _ficha = -1;
+    cerrarHoja();
     pintarLista(host);
 
     // ── El foco va SIN setTimeout ──────────────────────────────────
@@ -429,13 +456,14 @@
       // Sin tocar dónde estás: en la lista repinta la lista, y con una
       // ficha abierta repinta ESA ficha. show() te sacaría de ella.
       refrescar(host) {
-        if (host.classList.contains('ficha')) { if (_ficha >= 0) ficha(host, _ficha); }
+        if (hojaAbierta() && _ficha >= 0) ficha(host, _ficha);
         else pintarLista(host);
       },
-      // De la ficha a los resultados. En la lista no hay vuelta atrás.
+      // Con la hoja abierta, atras la cierra. En la lista no hay vuelta
+      // atras: los resultados son el sitio, no un paso.
       atras(host, hacerlo) {
-        if (!host.classList.contains('ficha')) return false;
-        if (hacerlo) { host.classList.remove('ficha'); _ficha = -1; }
+        if (!hojaAbierta()) return false;
+        if (hacerlo) cerrarHoja();
         return true;
       }
     });

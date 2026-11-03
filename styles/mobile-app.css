@@ -1722,12 +1722,23 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * derecha.
    */
 
-  /* Lista y ficha son dos niveles, no dos cosas a la vez. Sin esto se
-   * pintaban una debajo de la otra. */
-  .m-screen[data-screen="search"] #msFicha { display: none; }
-  .m-screen[data-screen="search"].ficha #msFicha { display: block; }
-  .m-screen[data-screen="search"].ficha #msList,
-  .m-screen[data-screen="search"].ficha #msCount { display: none; }
+  /* ── La ficha de Buscar es una HOJA ───────────────────────────────
+   *
+   * Antes reemplazaba la lista —`.ficha` escondia #msList y #msCount—
+   * y traia su propio chevron de vuelta. Eso ponia dos vueltas atras
+   * en la misma pantalla y, al volver, perdias los resultados que
+   * estabas mirando.
+   *
+   * Ahora sube desde abajo como la hoja de producto de Inventory y los
+   * resultados se quedan detras. Las reglas de `.m-sheet` ya hacen
+   * todo el trabajo; aqui solo el alto, que esta ficha es mas larga
+   * que la de editar. */
+  body.m-shell .m-sheet-box.m-ficha {
+    max-height: 88vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+  /* El bloque de zonas y el de datos no necesitan su margen de
+   * pantalla aqui dentro: la hoja ya tiene el suyo. */
+  .m-ficha .m-card:last-of-type { margin-bottom: 0; }
 
   body.m-shell .m-res {
     display: flex; align-items: center; gap: 9px; width: 100%;

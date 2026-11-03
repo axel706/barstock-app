@@ -88,13 +88,15 @@ function fichaBusqueda() {
   def.abrir ? def.abrir("Tito's Vodka") : null;
 
   // Si no hay atajo, se teclea y se pulsa el resultado.
-  if (!host.querySelector('.m-fic')) {
+  if (!w.document.querySelector('.m-fic')) {
     const inp = host.querySelector('#msQ') || host.querySelector('input');
     inp.value = "Tito"; inp.oninput && inp.oninput();
     const b = host.querySelector('[data-i]');
     if (b) b.onclick();
   }
-  return { w, host, fic: host.querySelector('.m-fic') };
+  // La ficha de busqueda es ahora una HOJA y vive en <body>, igual que
+  // la de Inventory. Era lo ultimo que las hacia distintas.
+  return { w, host, fic: w.document.querySelector('.m-fic') };
 }
 
 // La hoja de Inventory.
@@ -152,6 +154,27 @@ grupo('las dos pantallas pintan la misma cabecera');
     col(a.fic) + ' vs ' + col(b.fic));
   prueba('y la misma clase de tono', a.fic.className === b.fic.className,
     a.fic.className + ' vs ' + b.fic.className);
+}
+
+grupo('y la de búsqueda también es una HOJA, no una pantalla');
+{
+  // Antes reemplazaba la lista de resultados y traía su propio chevron
+  // de vuelta: dos vueltas atrás en la misma pantalla, y al volver
+  // perdías los resultados que estabas mirando.
+  const a = fichaBusqueda();
+  const hoja = a.w.document.querySelector('#mSheet .m-sheet-box');
+  prueba('sube como hoja', !!hoja);
+  prueba('con su asa', !!a.w.document.querySelector('#mSheet .m-sheet-grip'));
+  prueba('y la ficha va dentro', !!hoja && !!hoja.querySelector('.m-fic'));
+
+  // Los resultados siguen detrás: no se navegó a ningún sitio.
+  prueba('los resultados siguen ahí', !!a.host.querySelector('[data-i]'));
+  prueba('y ya no hay chevron propio', !a.w.document.querySelector('#msBack'));
+
+  // Tocar el fondo la cierra, como las demás hojas de la app.
+  a.w.document.querySelector('#mSheet .m-sheet-bg').onclick();
+  prueba('el fondo la cierra', !a.w.document.querySelector('#mSheet'));
+  prueba('y los resultados siguen enteros', !!a.host.querySelector('[data-i]'));
 }
 
 grupo('pero sólo Inventory lleva el código, que es lo que casa facturas');
