@@ -673,7 +673,11 @@ body.light .cp-trace{ border-color: rgba(15,23,42,.20); color: #475569; }
   border-radius: 10px;
   background: rgba(255,255,255,.06);
   border: 1px solid rgba(255,255,255,.14);
-  color: #f1f5f9; font-size: var(--m-body);
+  color: #f1f5f9;
+  /* 16px obligatorio: por debajo, Safari hace zoom al enfocar y como
+   * la app bloquea el zoom no hay forma de volver. `--m-body` son 14.
+   * Ver tools/test-zoom-ios.js. */
+  font-size: max(16px, var(--m-body));
   margin-bottom: 8px;
 }
 .cf-missing input::placeholder{ color: #64748b; }

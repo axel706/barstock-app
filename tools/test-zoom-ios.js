@@ -156,6 +156,76 @@ grupo('y el suelo se escribe siempre igual');
     sueltos.map(r => r.sel).join(' | '));
 }
 
+grupo('y NINGUNA hoja de estilos esconde otro campo pequeño');
+{
+  // Este test miraba SOLO `mobile-app.css`. Por eso se le escapó el
+  // buscador de "Finish count", que vive en `count-panel.css` — la
+  // hoja del escáner y del panel de botella, de lo más usado en el
+  // teléfono.
+  //
+  // Ahora se barren todas. Los que ya estaban mal el día que se amplió
+  // el barrido quedan en la lista de abajo: no se arreglan a ciegas
+  // —varios son de escritorio y cambiarles el cuerpo mueve
+  // maquetación— pero la lista NO PUEDE CRECER. Cualquier campo nuevo
+  // por debajo de 16px hace fallar esto.
+  const PENDIENTES = new Set([
+    'add-to-order.css .ato-step input',
+    'admin.css .adm-input',
+    'app.css .history-controls-top input,.history-controls-top select',
+    'app.css .vendor-code-row input[type="text"]',
+    'app.css .bs-loc-select',
+    'app.css .ac-row select',
+    'app.css .lb-url input',
+    'auth.css .auth-field input, .auth-field select',
+    'auth.css .auth-field textarea',
+    'consumption-match.css .cmr-note textarea',
+    'cost-report.css .cr-cat-input > span',
+    'cost-report.css .cr-cat-input.sm input',
+    'cost-report.css .cr-section input, .cr-section textarea',
+    'cost-report.css .cr-card-input input',
+    'cost-report.css .cr-invoice-input::before',
+    'cost-report.css .cr-target-input::after',
+    'count-panel.css .bf-search input',
+    'marginedge-match.css .mem-find input',
+    'mobile.css .scan-toolbar select',
+    'mobile.css .ac-row select',
+    'mobile.css .lb-url input',
+    'mobile.css .cr-card-input input',
+    'scan-count.css .sc-assign input',
+    'mobile.css .bs-loc-select',
+    'mobile.css .cr-cat-input.sm input',
+    'mobile.css .auth-field input, .auth-field select, .auth-field textarea'
+  ]);
+
+  const dir = path.join(RAIZ, 'styles');
+  const nuevos = [];
+  for (const f of fs.readdirSync(dir).filter(x => x.endsWith('.css')).sort()) {
+    const css = fs.readFileSync(path.join(dir, f), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '');
+    const re = /([^{}]+)\{([^}]*)\}/g;
+    let m;
+    while ((m = re.exec(css))) {
+      const sel = m[1].trim().replace(/\s+/g, ' ');
+      if (!/\b(input|textarea|select)\b/.test(sel)) continue;
+      const fz = /font-size:\s*([^;]+);/.exec(m[2]);
+      if (!fz) continue;
+      const p = px(fz[1]);
+      if (p >= 16) continue;
+      const clave = f + ' ' + sel;
+      if (PENDIENTES.has(clave)) continue;
+      nuevos.push(clave + '  (' + Math.round(p * 100) / 100 + 'px)');
+    }
+  }
+
+  prueba('ningún campo nuevo por debajo de 16px',
+    nuevos.length === 0, nuevos.join('  |  '));
+
+  // El que mordió hoy. Si vuelve a bajar, salta por su nombre.
+  const cp = fs.readFileSync(path.join(RAIZ, 'styles/count-panel.css'), 'utf8');
+  prueba('el buscador de "Finish count" tiene su suelo',
+    /\.cf-missing input\{[^}]*max\(16px/s.test(cp));
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') +
             '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
