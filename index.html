@@ -77,7 +77,7 @@
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/chip-glow.css">
   <link rel="stylesheet" href="styles/mobile.css?v=mob5">
-  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp115">
+  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp116">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -242,7 +242,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261102-232600</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261102-234717</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -3737,49 +3737,32 @@ async function openInvPanel(idx) {
   const statusColor = status === 'over' ? '#ef4444' : status === 'under' ? '#f59e0b' : status === 'on' ? '#22c55e' : 'var(--sub)';
   const statusLabel = status === 'over' ? 'Over par' : status === 'under' ? 'Under par' : status === 'on' ? 'On par' : 'Observing';
 
-  // Apply button logic — max ±2 per step
-  const canApply = optimal !== null && r.suggested !== optimal;
-  const applyTarget = optimal !== null ? (r.suggested > optimal ? Math.max(optimal, r.suggested - 2) : Math.min(optimal, r.suggested + 2)) : null;
+  // El tope de ±2 por paso vive en product-weeks.js, con la ficha del
+  // telefono. Escrito en los dos sitios, el dia que cambie el tope una
+  // pantalla ofreceria un salto y la otra otro sobre el mismo producto.
+  const applyTarget = optimal !== null
+    ? window.BarStockProductWeeks.paso(r.suggested, optimal) : null;
+  const canApply = applyTarget !== null;
   const applyHint = canApply ? `Suggested: ${r.suggested} → ${applyTarget} (${applyTarget < r.suggested ? '-' : '+'}${Math.abs(applyTarget - r.suggested)} this step)` : '';
 
-  // Fetch last 4 weeks usage
+  // El consumo de las ultimas semanas, con su correccion si alguien
+  // arreglo el conteo de cierre. La consulta y esa regla viven en
+  // src/product-weeks.js porque el telefono pinta la misma grafica:
+  // escrita aqui y alla, un dia se toca una y las dos dejan de decir lo
+  // mismo del mismo producto.
+  //
+  // Devuelve [] tanto si no hay historia como si la consulta fallo, y
+  // en los dos casos aqui se dice "no hay", nunca una grafica plana:
+  // un fallo con pinta de dato es el disfraz de siempre.
   let sparkData = [];
   try {
-    const { url, key } = window.BARSTOCK_CONFIG ? { url: window.BARSTOCK_CONFIG.SUPABASE_URL, key: window.BARSTOCK_CONFIG.SUPABASE_KEY } : {};
-    const locRes = await fetch(`${url}/rest/v1/locations?name=eq.${encodeURIComponent(window.BARSTOCK_CONFIG.LOCATION_NAME)}&select=id`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
-    const locData = await locRes.json();
-    const locationId = locData[0]?.id;
-    if (locationId) {
-      const snapRes = await fetch(`${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&item_name=eq.${encodeURIComponent(r.item)}&is_event_week=eq.false&used=not.is.null&order=week_start.desc&limit=4&select=week_start,used,on_hand_start,ordered,on_hand_end_adjusted`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
-      sparkData = await snapRes.json();
-      // La barrita usa el consumo CORREGIDO si alguien arreglo el conteo
-      // de esa semana. Si no, esta grafica contaria una historia y Usage
-      // otra sobre el mismo producto.
-      sparkData = sparkData.map(x => {
-        const adj = x.on_hand_end_adjusted;
-        const used = (adj !== null && adj !== undefined && x.on_hand_start !== null)
-          ? Number(x.on_hand_start || 0) + Number(x.ordered || 0) - Number(adj)
-          : Number(x.used || 0);
-        return { ...x, used };
-      });
-      sparkData = sparkData.reverse();
-    }
-  } catch(e) {
-    // Sin esto, la grafica de las ultimas semanas sale vacia y parece un
-    // producto sin historial. Es el mismo disfraz de siempre: un fallo
-    // con pinta de dato.
+    const s = await window.BarStockProductWeeks.semanas(r.item, 4);
+    sparkData = s.map(x => ({ week_start: x.semana, used: x.usado }));
+  } catch (e) {
     console.warn('panel del articulo: no se pudo leer el consumo semanal', e);
   }
 
   const maxUsed = Math.max(...sparkData.map(s => Number(s.used || 0)), 1);
-  const sparkHtml = sparkData.length ? `
-    <div>
-      <div class="inv-panel-section-label">LAST ${sparkData.length} WEEKS</div>
-      <div class="inv-sparkline">
-        ${sparkData.map(s => `<div class="inv-sparkbar" style="height:${Math.max(10, Math.round((Number(s.used||0)/maxUsed)*100))}%"></div>`).join('')}
-      </div>
-      <div class="inv-sparklabels">${sparkData.map(s => `<span>${Number(s.used||0).toFixed(1)}</span>`).join('')}</div>
-    </div>` : '';
 
   body.innerHTML = `
     <div class="inv-panel-header">
@@ -3960,19 +3943,21 @@ window.openVendorItemPanel = openVendorItemPanel;
 async function applyInvPourIq(idx, target) {
   const r = state.master[idx];
   if (!r) return;
-  const { url, key } = window.BARSTOCK_CONFIG ? { url: window.BARSTOCK_CONFIG.SUPABASE_URL, key: window.BARSTOCK_CONFIG.SUPABASE_KEY } : {};
-  const locRes = await fetch(`${url}/rest/v1/locations?name=eq.${encodeURIComponent(window.BARSTOCK_CONFIG.LOCATION_NAME)}&select=id`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
-  const locData = await locRes.json();
-  const locationId = locData[0]?.id;
-  if (!locationId) return;
-  await fetch(`${url}/rest/v1/inventory_items?location_id=eq.${locationId}&item_name=eq.${encodeURIComponent(r.item)}`, {
-    method: 'PATCH',
-    headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-    body: JSON.stringify({ suggested: target, par_adjusted_week: new Date().toISOString().slice(0,10) })
-  });
-  r.suggested = target;
-  r.toOrder = computeToOrder(r.onHand, target);
-  saveState();
+  // La escritura vive en src/product-weeks.js, que es tambien de donde
+  // la llama la ficha del telefono. Aqui queda SOLO lo que es de esta
+  // pantalla: reabrir el panel. Antes la misma funcion hacia las dos
+  // cosas, y por eso no se podia reusar.
+  //
+  // Si el PATCH falla, se para aqui: repintar como si hubiera guardado
+  // deja el numero nuevo en pantalla y el viejo en la base, y la
+  // siguiente orden sale con el viejo.
+  try {
+    await window.BarStockProductWeeks.aplicarPar(r, target);
+  } catch (e) {
+    console.warn('no se pudo aplicar el par', e);
+    if (window.BarStockToast) window.BarStockToast.show('Could not save the par');
+    return;
+  }
   // Store selected idx before render clears it
   const _keepIdx = idx;
   _invSelectedIdx = null; // reset so toggle doesn't close panel
@@ -5357,7 +5342,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/stock-in.js?v=si1"></script>
 <script src="src/add-to-order.js?v=ato3"></script>
 <script src="src/dormant-items.js?v=dorm1"></script>
-<script src="src/zones.js?v=zon7"></script>
+<script src="src/zones.js?v=zon8"></script>
 <script src="src/settings-zones.js?v=zon2"></script>
 <script src="src/settings-integrations.js?v=si12"></script>
 <script src="src/marginedge-match.js?v=mem17"></script>
@@ -5386,8 +5371,13 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
      hoja de Inventory. Va ANTES que las dos: ambas la piden al
      dibujar, y sin ella una se cae al respaldo de texto. -->
 <script src="src/product-hero.js?v=ph1"></script>
+<!-- El consumo semanal y el paso de Pour·IQ. Lo usan las DOS fichas,
+     la del escritorio y la del telefono: la consulta, la correccion
+     del conteo de cierre y el tope de ±2 viven aqui y en ningun otro
+     sitio. -->
+<script src="src/product-weeks.js?v=pw1"></script>
 <script src="src/mobile-home.js?v=mh34"></script>
-<script src="src/mobile-search.js?v=m15"></script>
+<script src="src/mobile-search.js?v=m16"></script>
 <script src="src/mobile-cycle.js?v=m8"></script>
 <script src="src/mobile-inventory.js?v=m10"></script>
 <script src="src/mobile-orders.js?v=m17"></script>

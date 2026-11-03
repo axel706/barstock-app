@@ -397,6 +397,11 @@
   window.BarStockZones = {
     cargar, lista, activas, guardarLista,
     activa, setActiva, paraPasada, porDefecto, reiniciar,
-    sincronizar, donde, pintarEn, invalidate
+    // `cuando` sale de aqui para que el movil no vuelva a escribirlo.
+    // La ficha del telefono pinta su propio bloque de zonas —la hoja no
+    // es el panel lateral— y al hacerlo se habia dejado fuera la fecha:
+    // "1 en el closet" de un conteo de hace cinco dias manda a alguien
+    // a buscar algo que ya se acabo.
+    sincronizar, donde, pintarEn, invalidate, cuando
   };
 })();

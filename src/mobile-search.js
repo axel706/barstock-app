@@ -246,6 +246,20 @@
     let d = null;
     try { d = await Z.donde(item); } catch (e) {}
 
+    // ── Y CUANDO se contó ────────────────────────────────────────────
+    //
+    // El panel de escritorio siempre lo ha dicho. El teléfono pinta su
+    // propio bloque —la hoja no es el panel lateral— y al escribirlo se
+    // dejó fuera la fecha. No es adorno: "1 en el closet" de un conteo
+    // de hace cinco días manda a alguien a buscar algo que ya se acabó.
+    //
+    // El cálculo se pide a Zones en vez de repetirlo aquí, así que de
+    // paso el móvil hereda el ámbar a los siete días.
+    const c = (Z.cuando && d && d.at) ? Z.cuando(d.at) : null;
+    const fecha = c && c.txt
+      ? '<span class="m-zon-when' + (c.viejo ? ' viejo' : '') + '">' + esc(c.txt) + '</span>'
+      : '';
+
     if (!d || !d.zonas || !d.zonas.length) {
       // Hay zonas puestas pero este producto no se ha repartido. No es
       // lo mismo que no tener zonas, y se dice.
@@ -261,7 +275,102 @@
           <span class="m-zon-t${Number(z.botellas) > 0 ? '' : ' cero'}">
             <b>${n2(z.botellas)}</b>${esc(z.zona)}
           </span>`).join('') +
-      '</div></div>';
+      '</div>' + fecha + '</div>';
+  }
+
+  // ── Las últimas semanas ──────────────────────────────────────────────
+  //
+  // Lo más rico que tenía el escritorio y no tenía el teléfono, y es
+  // justo lo que una pantalla pequeña hace bien: de un vistazo dice si
+  // este producto se mueve más o menos que de costumbre.
+  //
+  // Se pinta DESPUÉS, como las zonas: la hoja ya está arriba con todo
+  // lo demás y no se queda esperando a una consulta.
+  //
+  // Sin historia la tarjeta no existe. En el escritorio se queda con un
+  // "No weekly history yet" porque ahí el panel tiene una rejilla fija
+  // y un hueco movería todo lo de abajo; aquí la hoja se desplaza, así
+  // que una tarjeta vacía sólo sería una tarjeta vacía.
+
+  const SEMANAS_GRAFICA = 6;
+
+  async function pintarSemanas(caja, item) {
+    const el = caja.querySelector('#msSem');
+    const W = window.BarStockProductWeeks;
+    if (!el || !W) return;
+
+    let s = [];
+    try { s = await W.semanas(item, SEMANAS_GRAFICA); } catch (e) { return; }
+    if (!s.length) return;
+
+    const tope = Math.max(...s.map(x => Number(x.usado) || 0), 1);
+    const r = W.rumbo(s);
+
+    // El pie dice las tres cosas que hacen legible la gráfica: hacia
+    // dónde va, cuánto, y sobre cuánta historia. Sueltas en renglones
+    // propios serían tres datos más; aquí son la leyenda de lo que ya
+    // se está mirando.
+    const par = parDe(master()[_ficha] || {});
+    const sem = par && par.normalWeeks ? par.normalWeeks : 0;
+    const pie = [
+      r ? esc(r.txt) : '',
+      r && r.d !== 0
+        ? '<b style="color:' + (r.d > 0 ? '#86efac' : '#fca5a5') + '">' +
+          (r.d > 0 ? '↑' : '↓') + ' ' + Math.abs(r.d) + '</b>/wk'
+        : '',
+      sem ? sem + ' wks of data' : ''
+    ].filter(Boolean).join(' · ');
+
+    el.innerHTML =
+      '<div class="m-card m-sem">' +
+        '<div class="m-sem-k">LAST ' + s.length + ' WEEKS</div>' +
+        '<div class="m-sem-g">' +
+          s.map((x, i) => '<i style="height:' +
+            Math.max(8, Math.round((Number(x.usado) || 0) / tope * 100)) + '%' +
+            (i === s.length - 1 ? ';opacity:1' : '') + '"></i>').join('') +
+        '</div>' +
+        '<div class="m-sem-n">' +
+          s.map(x => '<span>' + (Number(x.usado) || 0).toFixed(1) + '</span>').join('') +
+        '</div>' +
+        (pie ? '<div class="m-sem-p">' + pie + '</div>' : '') +
+      '</div>';
+  }
+
+  // ── Pour·IQ, con su botón ────────────────────────────────────────────
+  //
+  // El teléfono ya decía "Pour·IQ says 3" y ahí se quedaba: te daba la
+  // respuesta y te mandaba a la computadora a ejecutarla. Una
+  // afordancia al revés.
+  //
+  // Tres estados, los mismos que el escritorio, porque los tres son
+  // distintos y callarse uno confunde:
+  //   · todavía mirando  → lo dice, y cuántas semanas le faltan
+  //   · ya coincide      → no aparece nada; no hay nada que decir
+  //   · hay salto        → el botón, topado a ±2 por paso
+  function bloqueIQ(r, par) {
+    const W = window.BarStockProductWeeks;
+    if (!W) return '';
+    const opt = par && par.suggestedOptimal != null ? Number(par.suggestedOptimal) : null;
+    const sem = par && par.normalWeeks ? par.normalWeeks : 0;
+
+    if (opt === null) {
+      return sem
+        ? '<div class="m-iqb mirando">Pour·IQ is still watching · ' +
+          sem + ' of ' + SEMANAS_PARA_FIAR + ' weeks</div>'
+        : '';
+    }
+    const destino = W.paso(Number(r.suggested), opt);
+    if (destino === null) return '';
+
+    // Si el tope recorta el salto, se dice: un botón que pone 3 cuando
+    // arriba se lee "says 6" parece que se equivocó.
+    const recortado = destino !== opt;
+    return '<div class="m-iqb">' +
+      '<div class="m-iqb-t">Pour·IQ says the par should be ' + opt +
+        (recortado ? ' · max ' + W.TOPE + ' per step' : '') + '</div>' +
+      '<button type="button" class="m-iqb-b" id="msIQ" data-to="' + destino + '">' +
+        'Apply → ' + destino + '</button>' +
+    '</div>';
   }
 
   // ── Ficha ────────────────────────────────────────────────────────────
@@ -334,16 +443,20 @@
 
       <div id="msZonas"></div>
 
+      <!-- La grafica de las ultimas semanas. Llega despues, como las
+           zonas, y si no hay historia no se pinta nada. -->
+      <div id="msSem"></div>
+
       <div class="m-card m-rows">
         <div class="m-row">
           <span><i class="ti ti-trending-up" aria-hidden="true"></i> Uses per week</span>
           <b>${avg !== null ? avg : '—'}</b></div>
+        <!-- El par, a secas. Lo que Pour·IQ opina ya no cabe de refilon
+             en este renglon: tiene su propio bloque y su boton, debajo.
+             Decirlo en los dos sitios era decirlo dos veces. -->
         <div class="m-row">
           <span><i class="ti ti-brain" aria-hidden="true"></i> Par</span>
-          <b>${par18}${
-          par && par.suggestedOptimal != null && par.suggestedOptimal !== Number(r.suggested)
-            ? ' <span class="m-iq">· Pour·IQ says ' + par.suggestedOptimal + '</span>' : ''
-        }</b></div>
+          <b>${par18}</b></div>
         <div class="m-row m-row-end">
           <span><i class="ti ti-tag" aria-hidden="true"></i> Unit price</span>
           <b>${Number(r.value) > 0 ? '$' + Number(r.value).toFixed(2) : '—'}</b></div>
@@ -357,11 +470,36 @@
           <b><span class="m-soft">needs ${SEMANAS_PARA_FIAR} weeks · has ${semanas}</span></b></div>` : ''}
       </div>
 
+      ${bloqueIQ(r, par)}
+
       <div class="m-acts">
         <button type="button" class="m-act" id="msAdd"><i class="ti ti-plus" aria-hidden="true"></i> Add to order</button>
         <button type="button" class="m-act" id="msRecv"><i class="ti ti-truck-delivery" aria-hidden="true"></i> Received</button>
       </div>`;
 
+
+    // ── Aplicar el par ───────────────────────────────────────────────
+    //
+    // Se desactiva mientras escribe y sólo se repinta si el PATCH
+    // devolvio bien. Un par que no se guardo y dice que si es peor que
+    // un error en pantalla: la siguiente orden sale con el numero
+    // viejo y nadie se entera.
+    const iq = caja.querySelector('#msIQ');
+    if (iq) iq.onclick = async () => {
+      const destino = Number(iq.dataset.to);
+      iq.disabled = true;
+      iq.textContent = 'Saving…';
+      try {
+        await window.BarStockProductWeeks.aplicarPar(r, destino);
+        if (window.BarStockToast) window.BarStockToast.show('Par set to ' + destino);
+        if (typeof window.render === 'function') window.render();
+        ficha(host, idx);
+      } catch (e) {
+        console.warn('[ficha] no se pudo aplicar el par', e);
+        iq.disabled = false;
+        iq.textContent = 'Could not save · retry';
+      }
+    };
 
     const add = caja.querySelector('#msAdd');
     if (add) add.onclick = () => {
@@ -385,6 +523,7 @@
 
     pintarZonas(caja, r.item);
     pintarOrigenPrecio(caja, r.item);
+    pintarSemanas(caja, r.item);
   }
 
 

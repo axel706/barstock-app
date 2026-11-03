@@ -1741,9 +1741,73 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * resultados se quedan detras. Las reglas de `.m-sheet` ya hacen
    * todo el trabajo; aqui solo el alto, que esta ficha es mas larga
    * que la de editar. */
+  /* 78vh y no 88: con la grafica y el bloque de Pour·IQ dentro, la hoja
+   * llegaba tan arriba que dejaba de parecer una tarjeta y parecia una
+   * pantalla. La franja de arriba —los resultados desenfocados detras—
+   * es lo que dice "esto esta ENCIMA de donde estabas, y se cierra".
+   * Sin ella el gesto de bajar no se le ocurre a nadie. */
   body.m-shell .m-sheet-box.m-ficha {
-    max-height: 88vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    max-height: 78vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
   }
+
+  /* ── Cuando se conto ──────────────────────────────────────────────
+   * Debajo de las zonas y pegada a ellas, porque califica ESE numero.
+   * Ambar a los siete dias: a esas alturas el reparto es una pista, no
+   * un hecho. El umbral lo decide BarStockZones.cuando(), no esto. */
+  .m-zon-when {
+    display: block; margin-top: 7px;
+    font-size: var(--m-meta); color: #7c8ba1;
+  }
+  .m-zon-when.viejo { color: #fbbf24; }
+
+  /* ── Las ultimas semanas ──────────────────────────────────────────
+   * Barras planas, sin ejes ni rejilla: a este tamaño una rejilla es
+   * ruido y el numero va debajo de cada barra. La ultima va opaca
+   * porque es la semana que acaba de cerrar. */
+  .m-sem { padding: 11px 12px; }
+  .m-sem-k {
+    font-size: var(--m-meta); letter-spacing: .08em; font-weight: 700;
+    color: #7c8ba1; margin-bottom: 9px;
+  }
+  .m-sem-g {
+    display: flex; align-items: flex-end; gap: 5px; height: 34px;
+  }
+  .m-sem-g i {
+    flex: 1; background: #38bdf8; opacity: .42; border-radius: 2px;
+    min-height: 3px;
+  }
+  .m-sem-n {
+    display: flex; gap: 5px; margin-top: 5px;
+    font-size: var(--m-meta); color: #64748b;
+  }
+  .m-sem-n span { flex: 1; text-align: center; }
+  .m-sem-p {
+    margin-top: 9px; padding-top: 9px;
+    border-top: 1px solid rgba(255,255,255,.08);
+    font-size: var(--m-meta); color: #94a3b8;
+  }
+
+  /* ── Pour·IQ ──────────────────────────────────────────────────────
+   * Verde porque es una sugerencia que mejora algo, no una alarma. El
+   * boton NO lleva el radio de pastilla por capricho: en esta app las
+   * pastillas son los botones, y este lo es. */
+  .m-iqb {
+    padding: 10px 12px; margin-bottom: 9px; border-radius: 15px;
+    background: rgba(74,222,128,.08);
+    border: 1px solid rgba(74,222,128,.22);
+  }
+  .m-iqb.mirando {
+    background: rgba(255,255,255,.05);
+    border-color: rgba(255,255,255,.10);
+    font-size: var(--m-meta); color: #94a3b8;
+  }
+  .m-iqb-t { font-size: var(--m-meta); color: #86b98c; margin-bottom: 8px; }
+  body.m-shell .m-iqb-b {
+    display: block; width: 100%; padding: 9px;
+    font-size: var(--m-small); font-weight: 700; color: #4ade80;
+    background: transparent; border: 1px solid rgba(74,222,128,.55);
+  }
+  body.m-shell .m-iqb-b:disabled { color: #7c8ba1; border-color: rgba(255,255,255,.14); }
   /* El bloque de zonas y el de datos no necesitan su margen de
    * pantalla aqui dentro: la hoja ya tiene el suyo. */
   .m-ficha .m-card:last-of-type { margin-bottom: 0; }
