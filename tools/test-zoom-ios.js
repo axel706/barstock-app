@@ -168,6 +168,21 @@ grupo('y NINGUNA hoja de estilos esconde otro campo pequeño');
   // —varios son de escritorio y cambiarles el cuerpo mueve
   // maquetación— pero la lista NO PUEDE CRECER. Cualquier campo nuevo
   // por debajo de 16px hace fallar esto.
+  // Lo que queda, TODO de pantallas de escritorio. No se tocan a
+  // ciegas: cambiarles el cuerpo mueve maquetacion que no puedo
+  // comprobar desde aqui. Pero en un iPad tambien hacen zoom, asi que
+  // son deuda, no decision.
+  //
+  // Las de MOVIL ya estan arregladas: mobile.css entera, auth.css,
+  // scan-count.css, count-panel.css, marginedge-match.css y
+  // add-to-order.css.
+  // Lo que queda, TODO de pantallas de escritorio. No se tocan: subir
+  // el cuerpo de letra ahi mueve maquetacion que no puedo comprobar.
+  // En un iPad tambien harian zoom, asi que son deuda conocida.
+  //
+  // Los de MOVIL y TABLETA estan cubiertos por el bloque
+  // `@media (pointer: coarse)` del final de mobile.css, que el raton
+  // nunca cumple — asi el escritorio no se entera.
   const PENDIENTES = new Set([
     'add-to-order.css .ato-step input',
     'admin.css .adm-input',
@@ -185,16 +200,10 @@ grupo('y NINGUNA hoja de estilos esconde otro campo pequeño');
     'cost-report.css .cr-card-input input',
     'cost-report.css .cr-invoice-input::before',
     'cost-report.css .cr-target-input::after',
+    'count-panel.css .cf-missing input',
     'count-panel.css .bf-search input',
     'marginedge-match.css .mem-find input',
-    'mobile.css .scan-toolbar select',
-    'mobile.css .ac-row select',
-    'mobile.css .lb-url input',
-    'mobile.css .cr-card-input input',
-    'scan-count.css .sc-assign input',
-    'mobile.css .bs-loc-select',
-    'mobile.css .cr-cat-input.sm input',
-    'mobile.css .auth-field input, .auth-field select, .auth-field textarea'
+    'scan-count.css .sc-assign input'
   ]);
 
   const dir = path.join(RAIZ, 'styles');
@@ -220,10 +229,39 @@ grupo('y NINGUNA hoja de estilos esconde otro campo pequeño');
   prueba('ningún campo nuevo por debajo de 16px',
     nuevos.length === 0, nuevos.join('  |  '));
 
-  // El que mordió hoy. Si vuelve a bajar, salta por su nombre.
-  const cp = fs.readFileSync(path.join(RAIZ, 'styles/count-panel.css'), 'utf8');
-  prueba('el buscador de "Finish count" tiene su suelo',
-    /\.cf-missing input\{[^}]*max\(16px/s.test(cp));
+  // ── Y los de dedo tienen su suelo, SIN tocar el escritorio ──────
+  //
+  // El bloque va en `@media (pointer: coarse)`: un raton nunca lo
+  // cumple, asi que la tabla del escritorio se queda como esta. Y es
+  // `pointer` y no un ancho porque el iPad tambien hace zoom y mide
+  // mas de 640.
+  const mob = fs.readFileSync(path.join(RAIZ, 'styles/mobile.css'), 'utf8');
+  const i0 = mob.indexOf('@media (pointer: coarse)');
+  prueba('existe el bloque de dedo', i0 !== -1);
+  const dedo = i0 === -1 ? '' : mob.slice(i0);
+
+  prueba('NO es por ancho de pantalla', !/@media \(max-width[^)]*\)\s*\{[^@]*pointer: coarse/s.test(mob));
+
+  for (const [n, sel] of [
+    ['el buscador de "Finish count"', '.cf-missing input'],
+    ['el buscador de botella',        '.bf-search input'],
+    ['"which item is this" del escáner', '.sc-assign input'],
+    ['emparejar productos de MarginEdge', '.mem-find input'],
+    ['el contador de Add to order',   '.ato-step input'],
+    ['y los campos del login',        '.auth-field input']
+  ]) {
+    const re = new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') +
+      '[^{]*\\{[^}]*max\\(16px');
+    prueba(n, re.test(dedo), sel);
+  }
+
+  // Y lo que ya estaba: en el telefono, mobile.css no deja ninguno.
+  prueba('mobile.css no deja ninguno',
+    ![...mob.matchAll(/([^{}]+)\{([^}]*)\}/g)].some(m => {
+      if (!/\b(input|textarea|select)\b/.test(m[1])) return false;
+      const fz = /font-size:\s*([^;]+);/.exec(m[2]);
+      return fz && px(fz[1]) < 16;
+    }));
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') +

@@ -45,20 +45,20 @@
   textarea            { font-size: var(--m-strong); }
 
   #vendorSearchInput  { font-size: var(--m-strong); }
-  .scan-toolbar select{ font-size: var(--m-strong); }
-  .ac-row select      { font-size: var(--m-strong); }
-  .lb-url input       { font-size: var(--m-strong); }
-  .cr-card-input input{ font-size: var(--m-strong); }
+  .scan-toolbar select{ font-size: max(16px, var(--m-strong)); }
+  .ac-row select      { font-size: max(16px, var(--m-strong)); }
+  .lb-url input       { font-size: max(16px, var(--m-strong)); }
+  .cr-card-input input{ font-size: max(16px, var(--m-strong)); }
 
   /* Este es un <select> real de 12px con opacity:0 encima del chip de
      locacion. Es invisible, asi que subirlo a 16 no cambia nada de lo
      que se ve — pero si evita el zoom, porque Safari mira el campo
      que enfocas, no si se ve o no. */
-  .bs-loc-select      { font-size: var(--m-strong); }
+  .bs-loc-select      { font-size: max(16px, var(--m-strong)); }
 
   /* El unico !important del archivo: el original tambien lo trae
      (cost-report.css:613) y sin el no habria forma de ganarle. */
-  .cr-cat-input.sm input { font-size: var(--m-strong) !important; }
+  .cr-cat-input.sm input { font-size: max(16px, var(--m-strong)) !important; }
 
 
   /* ── 2 · Los paneles laterales se apilan ──────────────────────────
@@ -330,6 +330,54 @@
      esta. */
   .auth-field input,
   .auth-field select,
-  .auth-field textarea { font-size: var(--m-strong); }
+  .auth-field textarea { font-size: max(16px, var(--m-strong)); }
 
+}
+
+/* ── El suelo de 16px, SÓLO donde se toca con el dedo ────────────────
+ *
+ * Por debajo de 16px Safari acerca la pantalla al enfocar un campo, y
+ * como la app bloquea el zoom no hay forma de volver: te quedas con la
+ * interfaz ampliada hasta cerrar la app. Ya mordió en el buscador de
+ * productos, en el de "Finish count" y en el emparejado de facturas.
+ *
+ * Lo de arriba de este archivo vive en `@media (max-width: 640px)`, o
+ * sea sólo el teléfono. Pero el iPad también hace zoom y mide más de
+ * 640, así que estos campos se quedaban fuera.
+ *
+ * `pointer: coarse` es la pregunta correcta: ¿se señala con el dedo?
+ * Un ratón NUNCA cumple, así que el escritorio no se entera de esta
+ * regla — que es justo lo que se pidió. Subir el cuerpo de letra en
+ * una tabla de escritorio movería maquetación que no toca.
+ *
+ * Y `max()` en vez de 16px pelado: el valor de diseño sigue escrito,
+ * el 16 es sólo el suelo. Los de `cost-report.css`, `app.css`,
+ * `admin.css` y `consumption-match.css` NO están aquí a propósito:
+ * son pantallas de escritorio que en un iPad también harían zoom, pero
+ * no puedo comprobar su maquetación desde donde estoy. Quedan en la
+ * lista de `tools/test-zoom-ios.js`.
+ */
+@media (pointer: coarse) {
+
+  /* El buscador de "Finish count" — el que mordió hoy. */
+  .cf-missing input { font-size: max(16px, var(--m-body)); }
+
+  /* El buscador de botella del panel de conteo. */
+  .bf-search input { font-size: max(16px, var(--m-strong)); }
+
+  /* "Which item is this?" del escáner: sale con el teclado abierto,
+     que es el peor momento posible para que la pantalla salte. */
+  .sc-assign input { font-size: max(16px, var(--m-strong)); }
+
+  /* Emparejar productos de MarginEdge. */
+  .mem-find input { font-size: max(16px, 13px); }
+
+  /* El contador de "Add to order", que se abre desde la ficha. */
+  .ato-step input { font-size: max(16px, var(--m-strong)); }
+
+  /* Los campos del login. En el teléfono ya los cubre la media query
+     de arriba; esto los cubre también en tableta. */
+  .auth-field input,
+  .auth-field select,
+  .auth-field textarea { font-size: max(16px, var(--m-body)); }
 }
