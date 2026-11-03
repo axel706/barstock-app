@@ -882,7 +882,20 @@
       // bsOpenSection es la misma función que usan las pastillas del
       // encabezado: una sola forma de navegar, no una segunda inventada
       // aquí que mañana se quede atrás cuando cambien las secciones.
+      //
+      // Pero en el telefono eso no basta. Ahi las pantallas son del shell
+      // movil y la seccion del escritorio queda debajo, sin verse: "Open
+      // Ordering" abria `vendor` por detras y lo que quedaba delante era
+      // el Home. Si el shell esta montado y la seccion tiene pantalla
+      // propia, se va a esa pantalla. Las que no la tienen siguen como
+      // estaban.
+      const PANTALLA_MOVIL = { vendor: 'orders' };
       const irA = (s) => {
+        const M = window.BarStockMobile;
+        if (M && M.montado && M.montado() && PANTALLA_MOVIL[s]) {
+          M.ir(PANTALLA_MOVIL[s]);
+          return;
+        }
         if (typeof window.bsOpenSection === 'function') window.bsOpenSection(s);
       };
       // Con todo pedido no hay boton de ordenar, asi que se comprueba

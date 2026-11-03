@@ -326,6 +326,51 @@ grupo('y el commit repinta la app, no este panel');
   prueba('y ya no el local', !/typeof render === 'function'\) render\(\)/.test(src));
 }
 
+grupo('Open Ordering, en el telefono, lleva a Orders');
+{
+  // En el telefono Orders es una pantalla del shell movil, no la
+  // seccion del escritorio. El boton llamaba a bsOpenSection('vendor'),
+  // que abre una seccion que ahi no se ve, y la pantalla activa seguia
+  // siendo el Home: el boton "llevaba al home".
+  const { w, b } = await abrir({ contados: 3 });
+  w.state.master.forEach((r, i) => { r.toOrder = i < 2 ? 2 : 0; r.value = 10; });
+  w.BarStockInventoryCloud = { replaceInventoryMaster: async () => {} };
+  // El modulo lee `state` a secas, y aqui corre con los globales de node.
+  global.state = w.state;
+  w.__irMovil = []; w.__seccion = [];
+  w.BarStockMobile = { montado: () => true, ir: (id) => { w.__irMovil.push(id); } };
+  w.bsOpenSection = (s) => { w.__seccion.push(s); };
+
+  b.querySelector('#cfGo').click();
+  await esperar(30);
+  const boton = w.document.getElementById('cfGoOrder');
+  prueba('tras cerrar, esta el boton de ordenar', !!boton, txt(b).slice(0, 120));
+  if (boton) boton.click();
+  prueba('abre la pantalla de Orders del telefono',
+    w.__irMovil.length === 1 && w.__irMovil[0] === 'orders', JSON.stringify(w.__irMovil));
+  prueba('y no la seccion del escritorio, que ahi no se ve',
+    w.__seccion.length === 0, JSON.stringify(w.__seccion));
+}
+{
+  // En el escritorio no hay shell movil montado: sigue la seccion.
+  const { w, b } = await abrir({ contados: 3 });
+  w.state.master.forEach((r, i) => { r.toOrder = i < 2 ? 2 : 0; r.value = 10; });
+  w.BarStockInventoryCloud = { replaceInventoryMaster: async () => {} };
+  // El modulo lee `state` a secas, y aqui corre con los globales de node.
+  global.state = w.state;
+  w.__irMovil = []; w.__seccion = [];
+  w.BarStockMobile = { montado: () => false, ir: (id) => { w.__irMovil.push(id); } };
+  w.bsOpenSection = (s) => { w.__seccion.push(s); };
+
+  b.querySelector('#cfGo').click();
+  await esperar(30);
+  const boton = w.document.getElementById('cfGoOrder');
+  if (boton) boton.click();
+  prueba('en el escritorio, abre la seccion de ordenes',
+    w.__seccion.length === 1 && w.__seccion[0] === 'vendor', JSON.stringify(w.__seccion));
+  prueba('y no toca el shell movil', w.__irMovil.length === 0, JSON.stringify(w.__irMovil));
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') +
             '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
