@@ -255,7 +255,20 @@
   async function guardarEnlaceOrden(facturaId, ordenId) {
     const { url, key } = cfg();
     const locId = await locationId();
-    const res = await fetch(`${url}/rest/v1/invoice_order_links`, {
+    // ── `on_conflict` no es opcional ─────────────────────────────────
+    //
+    // `resolution=merge-duplicates` sin más resuelve contra la LLAVE
+    // PRIMARIA, y aquí la primaria es `id`, el autonumérico, que nunca
+    // choca. La restricción de verdad es `unique (location_id,
+    // order_id)` de la migración 022.
+    //
+    // Sin esto el primer enlace entraba y el segundo —reenlazar una
+    // factura, que es justo para lo que existe esta pantalla— chocaba
+    // con el unique y devolvía 409. El mensaje de ese 409 nombra la
+    // tabla, y el catch de ahí arriba lo convertía en "falta la tabla,
+    // corre la migración 022". Una migración que ya estaba corrida.
+    const res = await fetch(
+      `${url}/rest/v1/invoice_order_links?on_conflict=location_id,order_id`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -270,7 +283,14 @@
         vendor_order_id: Number(ordenId)
       })
     });
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) {
+      // El estado viaja con el error. Sin él, quien lo recoge sólo
+      // tiene un texto donde sale el nombre de la tabla, y adivinar a
+      // partir de ahí fue exactamente el problema.
+      const e = new Error(await res.text());
+      e.status = res.status;
+      throw e;
+    }
     (await cargarEnlaceOrden()).porFactura.set(String(facturaId), String(ordenId));
   }
 
@@ -1104,10 +1124,25 @@
         } catch (e) {
           b.disabled = false;
           const D = window.BarStockDialog;
-          const t = /invoice_order_links/.test(String(e && e.message))
-            ? 'The table is missing. Run migration 022.'
-            : String((e && e.message) || e);
-          if (D && D.avisar) D.avisar({ titulo: 'Could not link', cuerpo: t });
+          // ── El error dice lo que paso, no lo que uno supone ────────
+          //
+          // Esto decia "falta la tabla, corre la migracion 022" ante
+          // CUALQUIER error que mencionara la tabla, y PostgREST la
+          // menciona en todos: en un 409 por el unique, en una columna
+          // que no cuadra, en un permiso. La migracion estaba corrida y
+          // el mensaje mandaba a correrla otra vez.
+          //
+          // Ahora solo se dice eso cuando de verdad falta la relacion:
+          // un 404, o el 42P01 de Postgres. Lo demas se enseña tal
+          // cual, feo pero cierto.
+          const txt = String((e && e.message) || e);
+          const falta = e && e.status === 404 || /42P01|does not exist/i.test(txt);
+          if (D && D.avisar) {
+            D.avisar({
+              titulo: 'Could not link',
+              cuerpo: falta ? 'The table is missing. Run migration 022.' : txt
+            });
+          }
         }
       };
     });
@@ -1116,7 +1151,18 @@
     if (off) off.onclick = async () => {
       off.disabled = true;
       try { await quitarEnlaceOrden(_abierta); pintar(host); }
-      catch (e) { off.disabled = false; }
+      catch (e) {
+        // Antes esto se tragaba el error: el boton volvia a estar
+        // disponible, el enlace seguia ahi, y la pantalla no decia
+        // nada. Quitar un enlace equivocado y que no pase nada, sin
+        // aviso, es como no tener el boton.
+        off.disabled = false;
+        const D = window.BarStockDialog;
+        if (D && D.avisar) {
+          D.avisar({ titulo: 'Could not unlink',
+                     cuerpo: String((e && e.message) || e) });
+        }
+      }
     };
 
     host.querySelectorAll('[data-chg]').forEach(b => {

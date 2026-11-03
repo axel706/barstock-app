@@ -179,6 +179,46 @@ grupo('el enlace gana sobre el suelo de fecha, no lo borra');
     /continue;\s*\/\/ sin enlace, el criterio de siempre/.test(src));
 }
 
+grupo('y reenlazar una factura funciona');
+{
+  // El upsert resolvia contra la LLAVE PRIMARIA, que aqui es `id`, el
+  // autonumerico, y nunca choca. La restriccion de verdad es
+  // `unique (location_id, order_id)` de la migracion 022.
+  //
+  // El primer enlace entraba; el segundo —reenlazar, que es justo para
+  // lo que existe esta pantalla— chocaba con el unique y devolvia 409.
+  const src = fs.readFileSync(path.join(RAIZ, 'src/mobile-invoices.js'), 'utf8');
+  const g = src.match(/async function guardarEnlaceOrden[\s\S]*?\n  \}/);
+  prueba('guardarEnlaceOrden existe', !!g);
+  const cuerpo = g ? g[0] : '';
+  prueba('el upsert dice contra que resuelve',
+    /on_conflict=location_id,order_id/.test(cuerpo), cuerpo.slice(0, 120));
+  // Y que sean las columnas del unique de la 022, no otras.
+  const sql = fs.readFileSync(
+    path.join(RAIZ, 'database/migrations/022_invoice_order_links.sql'), 'utf8');
+  prueba('y son las del unique de la migracion',
+    /unique \(location_id, order_id\)/.test(sql));
+}
+
+grupo('el error dice lo que paso, no lo que uno supone');
+{
+  const src = fs.readFileSync(path.join(RAIZ, 'src/mobile-invoices.js'), 'utf8');
+  // Decia "falta la tabla, corre la 022" ante CUALQUIER error que
+  // mencionara la tabla, y PostgREST la menciona en todos. La
+  // migracion estaba corrida y el mensaje mandaba a correrla otra vez.
+  prueba('ya no se adivina por el nombre de la tabla',
+    !/\/invoice_order_links\/\.test\(String\(e/.test(src));
+  prueba('se mira el estado de la respuesta',
+    /e\.status = res\.status/.test(src));
+  prueba('y solo se culpa a la migracion si falta la relacion',
+    /e\.status === 404 \|\| \/42P01\|does not exist\/i\.test\(txt\)/.test(src));
+
+  // Desenlazar fallaba en silencio: el boton volvia, el enlace seguia.
+  const off = src.match(/if \(off\) off\.onclick[\s\S]*?\n    \};/);
+  prueba('desenlazar avisa si falla',
+    !!off && /Could not unlink/.test(off[0]));
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') +
             '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
