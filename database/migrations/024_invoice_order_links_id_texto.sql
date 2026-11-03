@@ -1,0 +1,37 @@
+-- ── El id de la orden es texto, no un numero ────────────────────────
+--
+-- La migracion 022 declaro `vendor_order_id bigint`. Fue una
+-- suposicion: `vendor_orders` es anterior a esta carpeta y no hay
+-- ningun archivo que diga de que tipo es su `id`.
+--
+-- La suposicion era falsa. Al enlazar, el codigo hacia
+-- `Number(o.id)`, eso daba NaN, `JSON.stringify` convierte NaN en
+-- null, y Postgres respondia:
+--
+--   null value in column "vendor_order_id" ... violates not-null
+--
+-- Un error de tipo disfrazado de campo vacio, que es de los peores:
+-- manda a buscar por que no llega el dato cuando el dato llegaba
+-- entero y se perdia por el camino.
+--
+-- ── Por que texto y no uuid ─────────────────────────────────────────
+--
+-- Porque es lo que el codigo ya hace. Todas las comparaciones de este
+-- id pasan por String():
+--
+--   porFactura: new Map(links.map(l => [String(l.order_id),
+--                                       String(l.vendor_order_id)]))
+--   r.reservado !== String(o.id)
+--
+-- Poner `uuid` seria volver a apostar por una forma concreta, y si
+-- manana esa tabla se recrea con identidad numerica estariamos en lo
+-- mismo al reves. `text` aguanta las dos y coincide con como se usa.
+--
+-- No hay clave foranea a `vendor_orders` —la 022 tampoco la puso— asi
+-- que no se pierde integridad que existiera.
+--
+-- La tabla deberia estar vacia: con bigint ningun enlace llego a
+-- entrar. El `using` esta por si alguno entro de otra forma.
+
+alter table public.invoice_order_links
+  alter column vendor_order_id type text using vendor_order_id::text;

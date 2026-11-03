@@ -198,6 +198,20 @@ grupo('y reenlazar una factura funciona');
     path.join(RAIZ, 'database/migrations/022_invoice_order_links.sql'), 'utf8');
   prueba('y son las del unique de la migracion',
     /unique \(location_id, order_id\)/.test(sql));
+
+  // El id de la orden NO se convierte a numero. vendor_orders.id no es
+  // numerico, asi que Number() daba NaN, JSON.stringify lo manda como
+  // null, y Postgres se quejaba de un campo vacio: un error de tipo
+  // disfrazado de dato que falta.
+  prueba('el id de la orden va como texto',
+    /vendor_order_id: String\(ordenId\)/.test(cuerpo), cuerpo.slice(-200));
+  prueba('y no convertido a numero', !/Number\(ordenId\)/.test(cuerpo));
+
+  const m24 = path.join(RAIZ, 'database/migrations/024_invoice_order_links_id_texto.sql');
+  prueba('con su migracion', fs.existsSync(m24));
+  prueba('que cambia la columna a texto',
+    fs.existsSync(m24) &&
+    /alter column vendor_order_id type text/.test(fs.readFileSync(m24, 'utf8')));
 }
 
 grupo('el error dice lo que paso, no lo que uno supone');

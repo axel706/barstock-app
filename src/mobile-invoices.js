@@ -280,7 +280,11 @@
       body: JSON.stringify({
         location_id: locId,
         order_id: String(facturaId),
-        vendor_order_id: Number(ordenId)
+        // Texto, no Number(). `vendor_orders.id` no es numerico, asi
+        // que Number() daba NaN, JSON.stringify lo manda como null y
+        // Postgres se quejaba de un campo vacio — un error de tipo
+        // disfrazado de dato que falta. Ver la migracion 024.
+        vendor_order_id: String(ordenId)
       })
     });
     if (!res.ok) {
