@@ -228,8 +228,64 @@
     return filas;
   }
 
+  // ── Escribirlo ───────────────────────────────────────────────────────
+  //
+  // Recibe los datos YA LEÍDOS por quien llama. No lee nada por su
+  // cuenta a propósito: el historial acaba de traer las órdenes, sus
+  // líneas, las facturas y los enlaces para pintar la pantalla, y
+  // volver a pedirlos serían cinco consultas repetidas y una séptima
+  // copia de `locationId()` en este proyecto.
+  //
+  // Devuelve las filas escritas para que quien llama las meta en su
+  // mapa sin releer.
+  //
+  // Nada de esto es crítico: si falla, no se escribe y el reparto hace
+  // exactamente lo de siempre. Por eso no se propaga el error — una
+  // pantalla de historial que no abre porque no pudo escribir un
+  // enlace sería un cambio a peor.
+  async function escribir(d) {
+    const propuestas = proponer(d).filter(x => x.enlaza);
+    if (!propuestas.length) return [];
+    if (!d.url || !d.key || !d.locId) return [];
+
+    const filas = propuestas.map(p => ({
+      location_id: d.locId,
+      order_id: String(p.factura),
+      // Texto, como la 024: `vendor_orders.id` no es numerico.
+      vendor_order_id: String(p.enlaza),
+      origen: 'auto'
+    }));
+
+    try {
+      // `on_conflict` con las columnas del unique de la 022, no la
+      // llave primaria: lo mismo que mordio al enlace a mano.
+      //
+      // `ignore-duplicates` y NO merge: si una factura ya tiene dueño
+      // —de una pasada anterior o puesto a mano entre medias— se deja
+      // en paz. Un enlace a mano no se pisa nunca.
+      const res = await fetch(
+        d.url + '/rest/v1/invoice_order_links?on_conflict=location_id,order_id', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: d.key, Authorization: 'Bearer ' + d.key,
+          Prefer: 'return=minimal,resolution=ignore-duplicates'
+        },
+        body: JSON.stringify(filas)
+      });
+      if (!res.ok) {
+        console.warn('[enlace auto] no se pudo escribir', await res.text());
+        return [];
+      }
+    } catch (e) {
+      console.warn('[enlace auto] no se pudo escribir', e);
+      return [];
+    }
+    return filas;
+  }
+
   window.BarStockInvoiceOrderAuto = {
-    proponer, puntuar, agruparFacturas, agruparOrdenes,
+    proponer, escribir, puntuar, agruparFacturas, agruparOrdenes,
     PESOS, MINIMO_SOLAPE, MINIMO_PUNTOS, MARGEN, DIAS_LEJOS
   };
 })();

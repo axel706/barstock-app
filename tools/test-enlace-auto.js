@@ -37,7 +37,12 @@ const grupo = t => console.log('\n' + t);
 
 const w = { console: { warn() {} } };
 global.window = w;
-new Function('window', fs.readFileSync(path.join(RAIZ, 'src/invoice-order-auto.js'), 'utf8'))(w);
+// `fetch` se inyecta como parametro y se delega a `w.fetch` en cada
+// llamada: dentro del modulo se resuelve del ambito, no de `window`,
+// asi que reasignar `w.fetch` a mitad del test no le llegaria.
+new Function('window', 'fetch', 'console',
+  fs.readFileSync(path.join(RAIZ, 'src/invoice-order-auto.js'), 'utf8'))(
+  w, (...a) => w.fetch(...a), w.console);
 const A = w.BarStockInvoiceOrderAuto;
 
 // ── Un mundo de mentira, lo mas parecido al de verdad ───────────────
@@ -214,6 +219,60 @@ grupo('el importe desempata en proporcion, no en dolares');
     grande.dinero > k2.dinero, grande.dinero + ' vs ' + k2.dinero);
 }
 
+grupo('escribirlo: solo las seguras, y sin pisar nada');
+{
+  const llamadas = [];
+  w.fetch = async (url, opt) => { llamadas.push({ url, opt }); return { ok: true, text: async () => '' }; };
+  w.console = { warn() {} };
+
+  const items = [['Tito Vodka', 6, 27], ['Bombay', 3, 22], ['Jameson', 2, 31]];
+  const base = {
+    url: 'https://x.test', key: 'k', locId: 'loc1', desde: CICLO, enlaces: enlaces(),
+    lineas: [].concat(
+      factura('F-SEGURA', '2026-11-01', 'Fine Wine', items),
+      // Esta no: un solo producto en comun de cinco.
+      factura('F-DUDOSA', '2026-11-01', 'LOOP',
+        [['Tito Vodka', 6, 27], ['Cabernet', 12, 18], ['Prosecco', 6, 14],
+         ['Malbec', 6, 16], ['Rioja', 6, 19]])),
+    ordenes: [orden('O-1', '2026-10-30', 'LOOP', 265)],
+    lineasOrden: lineasDe('O-1', items)
+  };
+
+  return A.escribir(base).then(filas => {
+    prueba('escribe una sola', filas.length === 1, String(filas.length));
+    prueba('la segura', filas[0] && filas[0].order_id === 'F-SEGURA', filas[0] && filas[0].order_id);
+    prueba('marcada como auto', filas[0] && filas[0].origen === 'auto');
+    // Texto, como la 024: vendor_orders.id no es numerico.
+    prueba('con el id de la orden en texto',
+      filas[0] && typeof filas[0].vendor_order_id === 'string');
+
+    const p = llamadas[0];
+    prueba('una sola peticion', llamadas.length === 1, String(llamadas.length));
+    prueba('con el on_conflict del unique de la 022',
+      /on_conflict=location_id,order_id/.test(p.url), p.url);
+    // ignore y NO merge: una factura que ya tiene dueño —a mano o de
+    // una pasada anterior— se deja en paz. Un enlace a mano no se
+    // pisa nunca.
+    prueba('ignorando duplicados, no fusionandolos',
+      /ignore-duplicates/.test(p.opt.headers.Prefer) &&
+      !/merge-duplicates/.test(p.opt.headers.Prefer), p.opt.headers.Prefer);
+
+    return A.escribir(Object.assign({}, base, { ordenes: [], lineasOrden: [] }));
+  }).then(filas => {
+    prueba('sin nada que enlazar, ni se llama', filas.length === 0 && llamadas.length === 1,
+      String(llamadas.length));
+
+    // Y si el POST falla, no se inventa que escribio.
+    w.fetch = async () => ({ ok: false, text: async () => 'boom' });
+    return A.escribir(base);
+  }).then(filas => {
+    prueba('un POST fallido no devuelve filas', filas.length === 0, String(filas.length));
+    fin();
+  });
+}
+
+function fin() {
+
 grupo('y nada de esto toca el reparto');
 {
   // La regla entera depende de que mobile-history.js siga igual: este
@@ -221,11 +280,47 @@ grupo('y nada de esto toca el reparto');
   const h = fs.readFileSync(path.join(RAIZ, 'src/mobile-history.js'), 'utf8');
   prueba('el reparto sigue respetando el enlace primero',
     /if \(r\.reservado\) \{[\s\S]{0,200}\} else if \(r\.fecha && r\.fecha < suelo\)/.test(h));
-  prueba('y no sabe nada de este modulo', !/InvoiceOrderAuto/.test(h));
+  // El reparto no cambia: solo le llegan mas enlaces, que ya sabia
+  // respetar. Lo que SI hay es la llamada que los escribe, antes.
+  prueba('el historial lo llama antes de repartir',
+    h.indexOf('A.escribir(') > 0 &&
+    h.indexOf('A.escribir(') < h.indexOf('const recibos'));
+  prueba('con la frontera del ciclo abierto',
+    /desde: ini \? ini\.toISOString\(\) : ''/.test(h));
+  prueba('y sin releer la tabla despues',
+    /for \(const f of nuevos\) dueno\.set\(/.test(h));
+  // El arranque del ciclo se lee UNA vez: dos lecturas son dos
+  // respuestas posibles a cuando empezo esta semana.
+  prueba('el arranque del ciclo se lee una sola vez',
+    (h.match(/C\.startedAt && C\.startedAt\(\)/g) || []).length === 1,
+    String((h.match(/C\.startedAt && C\.startedAt\(\)/g) || []).length));
+}
+
+grupo('y el origen queda escrito');
+{
+  const m25 = path.join(RAIZ, 'database/migrations/025_invoice_order_links_origen.sql');
+  prueba('con su migracion', fs.existsSync(m25));
+  const sql = fs.existsSync(m25) ? fs.readFileSync(m25, 'utf8') : '';
+  prueba('añade la columna', /add column if not exists origen/.test(sql));
+  // Las filas que ya existen son todas a mano: marcarlas como auto
+  // seria mentir sobre su origen y dejarlas expuestas al borrado en
+  // bloque.
+  prueba('y las de antes quedan como manual', /default 'manual'/.test(sql));
+}
+
+grupo('y se carga antes que quien lo usa');
+{
+  // Funcionaria igual cargado despues —la llamada es en tiempo de
+  // ejecucion—, pero "funciona por casualidad" es justo lo que mordio
+  // con sheet.js hace dos dias.
+  const html = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8');
+  prueba('antes que el historial',
+    html.indexOf('src/invoice-order-auto.js') < html.indexOf('src/mobile-history.js'));
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') +
             '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
 
+}
 })();

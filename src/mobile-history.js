@@ -157,8 +157,56 @@
         `&select=order_id,vendor_order_id&order=order_id.asc`);
     } catch (e) { /* sin la tabla, sólo el emparejamiento automático */ }
 
-    // factura -> orden a la que pertenece, dicho por una persona.
+    // factura -> orden a la que pertenece.
     const dueno = new Map(manuales.map(m => [String(m.order_id), String(m.vendor_order_id)]));
+
+    // El arranque del ciclo abierto. Se lee aquí arriba y no más abajo
+    // —donde se armaban los cortes— porque el enlace automático lo
+    // necesita antes: es su frontera, lo que deja el pasado fuera.
+    // Calcularlo dos veces sería tener dos respuestas posibles a
+    // "cuándo empezó esta semana".
+    const C = window.BarStockCycle;
+    const ini = C && C.startedAt && C.startedAt();
+
+    // ── Y las que decide la app sola ────────────────────────────────
+    //
+    // El reparto de abajo va LÍNEA POR LÍNEA: el primero que pide un
+    // recibo se lo queda, recorriendo las órdenes de la más nueva a la
+    // más vieja. Por eso registrar una orden nueva le quita los
+    // recibos a una anterior, y esa vuelve a decir "waiting" con la
+    // factura delante.
+    //
+    // Esto decide, UNA sola vez, de qué orden es cada factura, y lo
+    // escribe en la misma tabla del enlace a mano. A partir de ahí
+    // deja de moverse: ni otra orden más nueva se lo lleva, ni se
+    // recalcula al repintar.
+    //
+    // Tres cosas que NO hace, y las tres son deliberadas:
+    //
+    //   · No toca el reparto. Ni una línea de lo de abajo cambia: sólo
+    //     le llegan más enlaces, que ya sabía respetar.
+    //   · No mira el pasado. Sólo facturas y órdenes del ciclo
+    //     abierto, porque los cerrados ya están bien y reasignarlos
+    //     sería estropear lo que funciona.
+    //   · No adivina. Si ninguna orden comparte suficientes productos,
+    //     o si las dos mejores van empatadas, no escribe nada y esa
+    //     factura se reparte como siempre.
+    //
+    // Si falla, no escribe y aquí no pasa nada: la pantalla sigue
+    // igual que hoy.
+    const A = window.BarStockInvoiceOrderAuto;
+    if (A && A.escribir) {
+      const nuevos = await A.escribir({
+        url, key, locId,
+        lineas: facturas, enlaces,
+        ordenes: recortadas, lineasOrden: lineas,
+        yaEnlazadas: new Set(dueno.keys()),
+        desde: ini ? ini.toISOString() : ''
+      });
+      // Se meten en el mapa en vez de releer la tabla: acaban de
+      // escribirse y ya se sabe qué dicen.
+      for (const f of nuevos) dueno.set(String(f.order_id), String(f.vendor_order_id));
+    }
 
     const deQuien = new Map(enlaces.map(e => [String(e.product_id), e.item_name || '']));
 
@@ -194,10 +242,9 @@
       porOrden.get(k).push(l);
     }
 
-    // Cortes de ciclo, del más reciente al más viejo.
-    const C = window.BarStockCycle;
+    // Cortes de ciclo, del más reciente al más viejo. `C` e `ini` se
+    // leyeron arriba: el enlace automático los necesitaba antes.
     const cortes = [];
-    const ini = C && C.startedAt && C.startedAt();
     if (ini) cortes.push({ id: 'abierto', titulo: 'This cycle', desde: ini.getTime() });
 
     // ── El suelo es el CICLO, no la fecha de la orden ───────────────
