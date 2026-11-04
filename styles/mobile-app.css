@@ -538,6 +538,14 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
      * `.m-blur` les come la parte de arriba a los dos botones. */
     transform: translateZ(0);
   }
+  /* El de la izquierda (Time Machine), en espejo: misma distancia al
+   * borde, misma altura y su propia capa por la misma razón. */
+  .m-band-izq {
+    position: absolute; left: 20px; z-index: 2;
+    bottom: 0; height: 52px;
+    display: flex; align-items: center;
+    transform: translateZ(0);
+  }
   body.m-shell .m-ico {
     width: 36px; height: 36px; flex: 0 0 36px;
     display: flex; align-items: center; justify-content: center;
@@ -3977,3 +3985,66 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
      importe de las otras filas, para que la columna derecha diga
      siempre lo mismo: qué pasa con esta línea. */
   .m-hln .tag.fix { background: rgba(252,211,77,.26); color: #fde68a; }
+
+  /* ── Time Machine ──────────────────────────────────────────────────
+   *
+   * El último conteo en una tarjeta grande y los anteriores en
+   * tarjetas pequeñas debajo. Las dos llevan 20px de radio, el de las
+   * tarjetas del carrusel. Son <div>, no <button>, así que la regla de
+   * píldora de app.css no las alcanza.
+   *
+   * El aire va por arriba, como en el resto de la columna. */
+  body.m-shell .m-tm-hero {
+    margin-top: 14px; padding: 16px; border-radius: 20px;
+    background: linear-gradient(160deg, rgba(125,211,252,.16), rgba(110,231,183,.08));
+    border: 1px solid rgba(255,255,255,.12);
+    font-variant-numeric: tabular-nums;
+  }
+  .m-tm-k {
+    font-size: var(--m-meta); font-weight: 800; letter-spacing: .1em;
+    text-transform: uppercase; color: #7dd3fc;
+  }
+  .m-tm-big {
+    margin-top: 4px; font-size: var(--m-figure); font-weight: 800;
+    color: #fff; letter-spacing: -.6px; line-height: 1.1;
+  }
+  .m-tm-vs { margin-top: 2px; font-size: var(--m-small); font-weight: 700; color: #9fb0c4; }
+  .m-tm-par { margin-top: 10px; display: flex; gap: 18px; font-size: var(--m-meta); color: #8193a8; }
+  .m-tm-par b { display: block; color: #fff; font-size: var(--m-strong); }
+
+  /* Las barras son la tendencia, no una gráfica que leer al minuto: la
+   * cifra exacta está en cada tarjeta. Por eso no llevan eje. */
+  .m-tm-barras { margin-top: 14px; height: 64px; display: flex; align-items: flex-end; gap: 10px; }
+  .m-tm-barras span { flex: 1; border-radius: 6px 6px 2px 2px; background: rgba(255,255,255,.22); }
+  .m-tm-barras span.ahora { background: #6ee7b7; }
+  .m-tm-fechas { margin-top: 5px; display: flex; gap: 10px; }
+  .m-tm-fechas span {
+    flex: 1; min-width: 0; text-align: center; white-space: nowrap; overflow: hidden;
+    font-size: var(--m-meta); color: #8193a8;
+  }
+
+  .m-tm-sec { margin-top: 20px; font-size: var(--m-eyebrow); font-weight: 800; color: #fff; }
+
+  body.m-shell .m-tm-card {
+    margin-top: 9px; padding: 13px 14px; border-radius: 20px;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.09);
+    font-variant-numeric: tabular-nums;
+  }
+  .m-tm-ch { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .m-tm-ch b { color: #fff; font-size: var(--m-body); }
+  .m-tm-dif { font-size: var(--m-meta); font-weight: 700; color: #8193a8; white-space: nowrap; }
+  /* Más rápido en verde y más lento en ámbar, no en rojo: tardar más
+   * una semana no es un error, puede ser un pedido grande. */
+  .m-tm-vs.rapido, .m-tm-dif.rapido { color: #6ee7b7; }
+  .m-tm-vs.lento, .m-tm-dif.lento { color: #fbbf24; }
+  .m-tm-tres { margin-top: 9px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .m-tm-tres div { font-size: var(--m-meta); color: #8193a8; min-width: 0; }
+  .m-tm-tres b { display: block; color: #fff; font-size: var(--m-strong); font-weight: 800; }
+
+  .m-tm-nota {
+    margin-top: 14px; padding: 12px; border-radius: 14px;
+    border: 1px dashed rgba(255,255,255,.14);
+    font-size: var(--m-small); color: #9fb0c4; line-height: 1.5;
+  }
+  .m-tm-nota.mal { color: #fca5a5; border-color: rgba(248,113,113,.38); }
+  .m-tm-nota small { display: block; margin-top: 6px; color: #9fb0c4; word-break: break-word; }

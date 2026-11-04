@@ -109,14 +109,14 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 
 ## La arquitectura
 
-Frontend estático, sin build. `index.html` es un monolito y hay ~93 módulos
+Frontend estático, sin build. `index.html` es un monolito y hay ~95 módulos
 `src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 29 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
 11 funciones en `api/` sobre Vercel. **El tope del plan son 12.** Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 65 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 66 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -216,7 +216,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 65 suites · ~2030 comprobaciones. Tienen que pasar enteras.
+`npm test` · 66 suites · ~2090 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

@@ -111,7 +111,11 @@ console.log('\nla banda es del armazon, no del Home');
   // la pintaba el Home, al entrar a Buscar o a Inventario desaparecia.
   ok('existe sin que ninguna pantalla se haya registrado', !!b);
   ok('con el logo', !!b && !!b.querySelector('.m-logo'));
-  ok('y su boton de ajustes', !!b && b.querySelectorAll('.m-ico').length === 1);
+  ok('y su boton de ajustes', !!b && !!b.querySelector('#mSet'));
+  // Dos botones y no uno desde Time Machine: el reloj a la izquierda y
+  // ajustes a la derecha. Se cuentan para que no se cuele un tercero.
+  ok('y el de Time Machine', !!b && !!b.querySelector('.m-band-izq #mTime'));
+  eq('y ninguno mas', b ? b.querySelectorAll('.m-ico').length : 0, 2);
   // Sin boton de luna: en el telefono no hay modo claro, y un boton
   // que no hace nada es peor que no tener boton.
   ok('y ningun boton de tema', !w.document.getElementById('mTheme'));
@@ -129,6 +133,14 @@ console.log('\nla banda es del armazon, no del Home');
   w.BarStockMobile.register({ id: 'inv', tab: true, seccion: 'inventory' });
   w.BarStockMobile.ir('inv');
   ok('y sigue ahi dentro de una seccion', !!w.document.getElementById('mBand'));
+
+  // El reloj abre su pantalla. Sin esto el boton se podria quedar
+  // apuntando a un id que nadie registro, y no haria nada sin avisar.
+  let vista = 0;
+  w.BarStockMobile.register({ id: 'timemachine', tab: false, show() { vista++; } });
+  w.document.getElementById('mTime').click();
+  eq('y el reloj abre Time Machine', w.BarStockMobile.activa(), 'timemachine');
+  eq('pintandola al entrar', vista, 1);
 }
 
 console.log('\nla barra sale de lo registrado');

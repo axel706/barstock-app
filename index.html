@@ -77,7 +77,7 @@
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/chip-glow.css">
   <link rel="stylesheet" href="styles/mobile.css?v=mob5">
-  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp118">
+  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp119">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -5360,7 +5360,10 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
      Las pantallas se REGISTRAN en el armazon; no hay ninguna lista
      escrita a mano, asi que añadir una no toca ningun otro archivo. Y
      nada de esto se monta arriba de 640px. -->
-<script src="src/mobile-shell.js?v=msh21"></script>
+<!-- Lectura paginada de PostgREST, compartida. Va antes que las
+     pantallas del telefono porque son ellas las que la usan. -->
+<script src="src/rest-paginado.js?v=rp1"></script>
+<script src="src/mobile-shell.js?v=msh22"></script>
 <!-- El gesto de las hojas: arrastrar para cerrar, y que el fondo no se
      mueva. Lo piden CUATRO pantallas (home, search, inventory, history),
      asi que va antes que las cuatro. Estaba debajo de mobile-home con un
@@ -5392,7 +5395,9 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/mobile-notif.js?v=mnf8"></script>
 <script src="src/count-resume.js?v=cnt12"></script>
 <script src="src/count-insight.js?v=cnt13"></script>
-<script src="src/count-finish.js?v=cnt25"></script>
+<script src="src/count-finish.js?v=cnt26"></script>
+<!-- Time Machine usa la regla de comparar de count-finish: va despues. -->
+<script src="src/mobile-time-machine.js?v=tm1"></script>
 <script src="src/scan-count.js?v=scan18"></script>
 <script>
   // Aqui habia una puerta: el boton de escaneo solo lo veia el admin,

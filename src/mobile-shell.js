@@ -111,6 +111,13 @@
       // La pantalla sigue llamándose Settings y en la lista de "More"
       // sigue saliendo con engranaje — ahí el gesto es elegir de una
       // lista, no reconocer un botón suelto en una esquina.
+      // A la izquierda, Time Machine: el historial de cuánto se tardó en
+      // cada conteo. Ese lado estaba vacío porque el logo va centrado.
+      // Mismo círculo que los de la derecha, para que se lea como botón.
+      '<span class="m-band-izq">' +
+        '<button type="button" class="m-ico" id="mTime" aria-label="Time Machine">' +
+          '<i class="ti ti-history" aria-hidden="true"></i></button>' +
+      '</span>' +
       '<span class="m-band-ico">' +
         '<button type="button" class="m-ico" id="mSet" aria-label="Settings">' +
           '<i class="ti ti-user-circle" aria-hidden="true"></i></button>' +
@@ -118,6 +125,9 @@
     // Al principio del body: así el bloqueo de la pantalla de entrada
     // (body.auth-locked > *) también la tapa, como a todo lo demás.
     document.body.insertBefore(_banda, document.body.firstChild);
+
+    const tm = _banda.querySelector('#mTime');
+    if (tm) tm.onclick = () => ir('timemachine');
 
     const st = _banda.querySelector('#mSet');
     if (st) st.onclick = () => {

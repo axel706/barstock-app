@@ -111,10 +111,16 @@
   // números: el anterior ya pasó y lo que interesa saber es si vas
   // mejor. Por debajo de un minuto no se dice nada — esa diferencia es
   // ruido y presentarla como una mejora sería mentir.
-  function comparar(ahora, antes) {
+  //
+  // `cola` existe por Time Machine: en sus tarjetas pequeñas cada conteo
+  // se compara con el de justo antes y "than last time" sobra. Es esta
+  // misma función y no una copia allí, para que la regla del minuto y
+  // el redondeo no puedan separarse entre las dos pantallas.
+  function comparar(ahora, antes, cola) {
+    const c = cola === undefined ? ' than last time' : cola;
     const d = Math.round((antes - ahora) / 60000);
-    if (!d) return 'same as last time';
-    return Math.abs(d) + ' min ' + (d > 0 ? 'faster' : 'slower') + ' than last time';
+    if (!d) return c ? 'same as last time' : 'same time';
+    return Math.abs(d) + ' min ' + (d > 0 ? 'faster' : 'slower') + c;
   }
 
   // Por debajo de esto no fue un conteo: fue una prueba, o alguien que
@@ -933,5 +939,8 @@
   // `_porPedir` sale sólo para el test: es la cuenta que se enseña en
   // grande al cerrar, y comprobarla leyendo HTML sería comprobar el
   // formato, no la suma.
-  window.BarStockCountFinish = { open, close, _porPedir: loPorPedir };
+  // `comparar` y `MINIMO_PARA_COMPARAR` salen para Time Machine, que
+  // compara los mismos tiempos y tiene que hacerlo con la misma regla.
+  window.BarStockCountFinish = { open, close, _porPedir: loPorPedir,
+                                 comparar, MINIMO_PARA_COMPARAR };
 })();
