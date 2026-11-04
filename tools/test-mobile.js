@@ -111,11 +111,14 @@ console.log('\nla banda es del armazon, no del Home');
   // la pintaba el Home, al entrar a Buscar o a Inventario desaparecia.
   ok('existe sin que ninguna pantalla se haya registrado', !!b);
   ok('con el logo', !!b && !!b.querySelector('.m-logo'));
-  ok('y su boton de ajustes', !!b && !!b.querySelector('#mSet'));
-  // Dos botones y no uno desde Time Machine: el reloj a la izquierda y
-  // ajustes a la derecha. Se cuentan para que no se cuele un tercero.
-  ok('y el de Time Machine', !!b && !!b.querySelector('.m-band-izq #mTime'));
-  eq('y ninguno mas', b ? b.querySelectorAll('.m-ico').length : 0, 2);
+  // Un botón a cada lado: Time Machine a la izquierda y la campana a la
+  // derecha. La campana la mete mobile-notif, que aquí no se carga, así
+  // que del armazón sale sólo el reloj. Ajustes ya no está en la banda:
+  // se abre desde More → Settings.
+  ok('con Time Machine a la izquierda', !!b && !!b.querySelector('.m-band-izq #mTime'));
+  ok('sin boton de ajustes', !!b && !b.querySelector('#mSet'));
+  ok('y el grupo de la derecha, listo para la campana', !!b && !!b.querySelector('.m-band-ico'));
+  eq('y ningun boton mas', b ? b.querySelectorAll('.m-ico').length : 0, 1);
   // Sin boton de luna: en el telefono no hay modo claro, y un boton
   // que no hace nada es peor que no tener boton.
   ok('y ningun boton de tema', !w.document.getElementById('mTheme'));
@@ -123,10 +126,9 @@ console.log('\nla banda es del armazon, no del Home');
   // encabezado no puede quedar flotando sobre la pantalla de entrada.
   eq('va la primera del body', w.document.body.firstElementChild.id, 'mBand');
 
-  let ajustes = 0;
-  w.openSettingsModal = () => { ajustes++; };
-  w.document.getElementById('mSet').click();
-  eq('y los ajustes la pantalla de siempre', ajustes, 1);
+  // Quitar el botón no puede dejar Ajustes sin entrada.
+  const tabs = fs.readFileSync(path.join(__dirname, '..', 'src', 'mobile-tabs.js'), 'utf8');
+  ok('Ajustes sigue en More', /id="mMoreSet"/.test(tabs) && /ir\('settings'\)/.test(tabs));
 
   // Sigue estando al entrar a una seccion del escritorio: ahi es donde
   // mas se notaba que faltaba.

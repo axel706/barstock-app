@@ -530,9 +530,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     /* 16 y no 12: a doce parecían rozar el borde de la pantalla. */
     position: absolute; right: 20px; z-index: 2;
     bottom: 0; height: 52px;
-    /* 11 y no 6. A seis, los dos círculos de 36px quedaban a menos de
-     * un dedo de separación y la campana se pulsaba yendo a Ajustes.
-     * Cinco píxeles más no se notan y el toque ya no se equivoca. */
+    /* 11 y no 6. A seis, dos círculos quedaban a menos de un dedo de
+     * separación y la campana se pulsaba yendo a Ajustes. Hoy aquí sólo
+     * vive la campana (y el aviso rojo cuando sale), pero si vuelve a
+     * haber dos, el hueco ya está. */
     display: flex; align-items: center; gap: 11px;
     /* Misma razón que el logo: su propia capa, o el desenfoque de
      * `.m-blur` les come la parte de arriba a los dos botones. */
@@ -546,8 +547,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     display: flex; align-items: center;
     transform: translateZ(0);
   }
+  /* 40 px. Eran 36; Axel pidió el tamaño del botón de atrás de iOS
+   * (44) "o a mitad de camino". Con 44, en una banda de 52 de alto
+   * quedaban 4 px de aire arriba y abajo y el círculo se veía apretado
+   * contra los bordes. */
   body.m-shell .m-ico {
-    width: 36px; height: 36px; flex: 0 0 36px;
+    width: 40px; height: 40px; flex: 0 0 40px;
     display: flex; align-items: center; justify-content: center;
     border-radius: 50%; cursor: pointer; font-size: var(--m-body);
     background: rgba(255,255,255,.13);

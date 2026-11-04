@@ -136,7 +136,7 @@ function entorno(descartadas, guardado) {
     a2.map(a => a.t).join(' | '));
   prueba('pero los demás siguen', a2.some(a => /Pedro Morales/.test(a.t)));
 
-  grupo('los dos botones de la banda viven juntos, a la derecha');
+  grupo('la campana vive a la derecha de la banda');
   {
     const fs2 = require('fs'), path2 = require('path');
     const RAIZ2 = path2.join(__dirname, '..');
@@ -150,8 +150,9 @@ function entorno(descartadas, guardado) {
     prueba('la campana entra en el grupo de la derecha',
       /querySelector\('\.m-band-ico'\)/.test(nf) &&
       /insertBefore\(el,\s*grupo\.firstChild\)/.test(nf));
-    // Primero la campana, luego el perfil: el orden de la maqueta.
-    prueba('y va antes que el perfil', /insertBefore\(el,\s*grupo\.firstChild\)/.test(nf));
+    // Primera del grupo: si un día vuelve a haber otro botón a la
+    // derecha, la campana queda delante, como en la maqueta.
+    prueba('y va la primera del grupo', /insertBefore\(el,\s*grupo\.firstChild\)/.test(nf));
     // Si la banda aún no existe no puede quedarse sin sitio.
     prueba('con salida si la banda no está lista',
       /else banda\.appendChild\(el\)/.test(nf));
@@ -167,12 +168,10 @@ function entorno(descartadas, guardado) {
     prueba('y separa sus hijos',
       !!grupoCss && /gap:\s*\d+px/.test(grupoCss[1]));
 
-    // Persona y no engranaje. Lleva a Ajustes igual, pero en una
-    // esquina un botón suelto se reconoce por la forma.
-    prueba('el botón de Ajustes es un perfil',
-      /id="mSet"[\s\S]{0,120}ti-user-circle/.test(sh));
-    prueba('y conserva su etiqueta para lectores de pantalla',
-      /id="mSet" aria-label="Settings"/.test(sh));
+    // El perfil que llevaba a Ajustes se quitó: la campana ocupa su
+    // esquina y Ajustes se abre desde More → Settings.
+    prueba('ya no hay boton de Ajustes en la banda', !/id="mSet"/.test(sh));
+    prueba('y la campana se queda sola a la derecha', /'<span class="m-band-ico"><\/span>'/.test(sh));
   }
 
   console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +

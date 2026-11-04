@@ -102,26 +102,22 @@
       // Sin boton de luna: en el telefono el modo claro no existe (ver
       // la cabecera de mobile-app.css). Un boton que no hace nada es
       // peor que no tener boton.
-      // El grupo de la derecha. La campana se mete AQUÍ dentro desde
-      // mobile-notif.js, como primer hijo, así que el orden en
-      // pantalla acaba siendo campana y luego perfil.
+      // Un botón a cada lado del logo: Time Machine a la izquierda, la
+      // campana a la derecha.
       //
-      // Icono de persona y no de engranaje: lleva a Ajustes, que es
-      // donde viven el perfil de remitente y los datos de la cuenta.
-      // La pantalla sigue llamándose Settings y en la lista de "More"
-      // sigue saliendo con engranaje — ahí el gesto es elegir de una
-      // lista, no reconocer un botón suelto en una esquina.
-      // A la izquierda, Time Machine: el historial de cuánto se tardó en
-      // cada conteo. Ese lado estaba vacío porque el logo va centrado.
-      // Mismo círculo que los de la derecha, para que se lea como botón.
+      // ── Sin botón de Ajustes ───────────────────────────────────────
+      //
+      // Hubo un perfil a la derecha que llevaba a Ajustes. Axel lo quitó:
+      // Ajustes ya se abre desde More → Settings (mobile-tabs.js), y dos
+      // caminos a la misma pantalla en la misma vista son uno de sobra.
+      // La campana ocupó su esquina y la banda quedó simétrica.
       '<span class="m-band-izq">' +
         '<button type="button" class="m-ico" id="mTime" aria-label="Time Machine">' +
           '<i class="ti ti-history" aria-hidden="true"></i></button>' +
       '</span>' +
-      '<span class="m-band-ico">' +
-        '<button type="button" class="m-ico" id="mSet" aria-label="Settings">' +
-          '<i class="ti ti-user-circle" aria-hidden="true"></i></button>' +
-      '</span>';
+      // El grupo de la derecha. Nace vacío: la campana la mete
+      // mobile-notif.js cuando arranca.
+      '<span class="m-band-ico"></span>';
     // Al principio del body: así el bloqueo de la pantalla de entrada
     // (body.auth-locked > *) también la tapa, como a todo lo demás.
     document.body.insertBefore(_banda, document.body.firstChild);
@@ -132,20 +128,6 @@
     const tm = _banda.querySelector('#mTime');
     if (tm) tm.onclick = () => {
       if (window.BarStockMobileTimeMachine) window.BarStockMobileTimeMachine.alternar();
-    };
-
-    const st = _banda.querySelector('#mSet');
-    if (st) st.onclick = () => {
-      // Pantalla propia si existe. El modal del escritorio tiene
-      // rejillas de dos columnas y botones a la derecha: en el
-      // teléfono los campos salen a media anchura y "Guardar" cae
-      // fuera del pulgar.
-      if (window.BarStockMobileSettings) return ir('settings');
-      // openSettingsModal, no openSettings. Lo segundo no existe y
-      // nunca existió: el botón llevaba todo este tiempo llamando a
-      // undefined dentro de un `typeof`, que es la forma más silenciosa
-      // que hay de no hacer nada.
-      if (typeof window.openSettingsModal === 'function') window.openSettingsModal();
     };
   }
 
