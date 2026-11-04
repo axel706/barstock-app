@@ -76,13 +76,20 @@ function entorno(o) {
   // que lo calcule bien — eso es de su propio módulo.
   w.__aplicados = null;
   w.__vecesCalculado = 0;
+  // En qué orden pasan las cosas: aplicar, releer el catálogo, recalcular.
+  w.__orden = [];
+  w.BarStockInventoryRealtime = {
+    recargar: async () => { w.__orden.push('recargar'); }
+  };
   w.BarStockMarginEdgePurchases = {
     calcularPrecios: async () => {
       w.__vecesCalculado++;
+      w.__orden.push('calcular');
       return { cambios: o.cambios || [], conPrecio: 0, sinTocar: 0 };
     },
     aplicarPrecios: async (cambios) => {
       w.__aplicados = cambios;
+      w.__orden.push('aplicar');
       if (o.fallaAplicar) throw new Error('cloud down');
       return { ok: cambios.length, problemas: [] };
     }
@@ -163,6 +170,31 @@ grupo('aprobar todos de golpe');
   prueba('se aplican por el modulo de compras', Array.isArray(w.__aplicados));
   prueba('los dos', (w.__aplicados || []).length === 2, String((w.__aplicados || []).length));
   prueba('y lo dice', /2 prices updated/.test(caja.textContent), caja.textContent.slice(0, 90));
+}
+
+grupo('despues de aplicar, la campana se recalcula con el catalogo nuevo');
+{
+  // La campana se recalcula comparando cada factura con el catálogo que
+  // el teléfono tiene en memoria. Si no se relee primero, compara con
+  // los precios VIEJOS y vuelve a avisar de lo que se acaba de
+  // actualizar. Se llamaba a `refresh()`, que no existe: el módulo
+  // exporta `recargar`, y la llamada iba dentro de un `if` que la
+  // saltaba en silencio. El tiempo real recarga el catálogo, pero con
+  // retraso, y llegaba después del recálculo.
+  const w = entorno({ cambios: [CAMBIO("Tito's Vodka", 26.99, 31.85)] });
+  const caja = await panel(w);
+  caja.querySelector('[data-ver]').click();
+  await esperar(10);
+  w.__orden = [];
+  caja.querySelector('.m-nf-aplicar').click();
+  await esperar(40);
+  const o = w.__orden.join(' > ');
+  prueba('relee el catalogo', w.__orden.includes('recargar'), o);
+  prueba('antes de recalcular la campana',
+    w.__orden.indexOf('recargar') > w.__orden.indexOf('aplicar') &&
+    w.__orden.indexOf('recargar') < w.__orden.lastIndexOf('calcular'), o);
+  prueba('y sigue diciendo que salio bien', /1 prices updated/.test(caja.textContent),
+    caja.textContent.slice(0, 90));
 }
 
 grupo('si falla, no se traga el error');

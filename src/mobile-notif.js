@@ -420,8 +420,18 @@
             (r.problemas && r.problemas.length
               ? '<br>' + r.problemas.length + ' could not be saved.' : '') +
           '</div>';
-        if (window.BarStockInventoryRealtime && window.BarStockInventoryRealtime.refresh) {
-          try { window.BarStockInventoryRealtime.refresh(); } catch (e) {}
+        // El catálogo se relee ANTES de recalcular la campana. El
+        // recálculo compara cada factura con el catálogo en memoria; sin
+        // releerlo, compara con los precios viejos y vuelve a avisar de
+        // lo que se acaba de actualizar.
+        //
+        // `recargar` y no `refresh`: el módulo exporta `recargar`, y
+        // `refresh` no existe. Iba dentro de un `if`, así que no fallaba:
+        // no hacía nada. El tiempo real recarga igual, pero con retraso,
+        // y llegaba después del recálculo.
+        const RT = window.BarStockInventoryRealtime;
+        if (RT && RT.recargar) {
+          try { await RT.recargar(); } catch (e) { console.warn('[campana] no se pudo releer el catálogo', e); }
         }
         // La campana se recalcula —el aviso tiene que desaparecer solo,
         // sin que nadie lo cierre a mano— pero el PANEL no se
