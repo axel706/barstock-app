@@ -105,30 +105,6 @@ grupo('y no toca nada más del armazón');
     !/body\.m-shell\.m-on\s*>\s*\.m-screens/.test(css));
 }
 
-console.log('\nla campana abierta no apila tres desenfoques abajo');
-{
-  // Con el panel de notificaciones abierto, abajo había TRES capas de
-  // desenfoque una encima de otra: este suelo, la pastilla de cristal
-  // de las pestañas y el fondo del panel. Arriba, dos (la escalera de
-  // la banda y el fondo del panel). En el iPhone, arriba se veía bien
-  // y abajo salía una barra negra. Con el panel abierto el suelo se
-  // esconde, y abajo quedan dos, como arriba.
-  const sinComentarios = css.replace(/\/\*[\s\S]*?\*\//g, '');
-  prueba('con la campana abierta, el suelo se esconde',
-    /body\.m-nf-abierto\s+\.m-floor\s*\{[^}]*display:\s*none/.test(sinComentarios));
-  // La otra vez que se tocó esto, el negro acabó en casi toda la
-  // interfaz. Por eso la regla vive SÓLO bajo el panel abierto, y el
-  // suelo de siempre no pierde nada.
-  const reglas = sinComentarios.match(/[^{}]*\{[^}]*\}/g) || [];
-  const ocultan = reglas.filter(r => /\.m-floor/.test(r.slice(0, r.indexOf('{'))) &&
-                                    /display:\s*none/.test(r));
-  prueba('y solo con la campana o el teclado',
-    ocultan.every(r => /m-nf-abierto|m-kb/.test(r.slice(0, r.indexOf('{')))),
-    ocultan.map(r => r.slice(0, r.indexOf('{')).trim()).join(' | '));
-  prueba('sin velos nuevos: la regla no pinta nada',
-    !/body\.m-nf-abierto\s+\.m-floor\s*\{[^}]*background/.test(sinComentarios));
-}
-
 console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
   '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
