@@ -1445,7 +1445,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
 
   .m-mvcard-h .m-hero-k { display: inline-flex; align-items: center; gap: 5px; }
-  .m-mvcard-h .m-hero-k .ti { font-size: var(--m-small); }
+  /* Aquí había un `.m-mvcard-h .m-hero-k .ti { font-size: var(--m-small) }`.
+   * El único icono de esta cabecera es el fuego, y esa regla, más
+   * específica, le ganaba a la suya (`.m-hero-k .ti-flame`, 1.45em) y
+   * lo dejaba en 12.5px: justo el tamaño "de una letra" del que esa regla
+   * lo quería sacar. Se quitó; el tamaño del fuego lo decide sólo la
+   * suya. */
   .m-seclink .ti { font-size: var(--m-small); vertical-align: -2px; }
 
   /* ── Despegó / se apagó ─────────────────────────────────────────── */

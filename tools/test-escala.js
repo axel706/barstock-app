@@ -112,6 +112,27 @@ const logoAuth = (auth.match(/\.auth-brand-type\{[^}]*\}/s) || [''])[0];
 prueba('ni el del login', /font-size:\s*28px/.test(logoAuth),
   logoAuth.replace(/\s+/g, ' ').slice(0, 80));
 
+
+grupo('el fuego de Top movers no lo encoge nadie');
+{
+  // La regla del fuego lo pone a 1.45em del rótulo: "a 12.5px el icono
+  // quedaba del tamaño de una letra y no se leía como fuego". Otra regla,
+  // más específica, le ponía var(--m-small) a todo icono de la cabecera
+  // de Top movers —y el único que hay es el fuego—, así que ganaba y lo
+  // dejaba justo en los 12.5px de los que se quería salir.
+  prueba('el fuego va a 1.45em del rotulo',
+    /\.m-hero-k \.ti-flame\s*\{[^}]*font-size:\s*1\.45em/.test(limpio));
+  const reglas = limpio.match(/[^{}]*\{[^}]*\}/g) || [];
+  const encogen = reglas.filter(r => {
+    const sel = r.slice(0, r.indexOf('{'));
+    // Cualquier otra regla que alcance un icono dentro de .m-hero-k y le
+    // ponga tamaño le pisa al fuego.
+    return /\.m-hero-k\s+\.ti(?![\w-])/.test(sel) && /font-size:/.test(r);
+  });
+  prueba('y ninguna otra regla de iconos de la cabecera le cambia el tamaño', encogen.length === 0,
+    encogen.map(r => r.slice(0, r.indexOf('{')).trim()).join(' | '));
+}
+
 console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
   '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
