@@ -299,104 +299,6 @@
     });
   }
 
-  // ── Proveedor, par y precio, en UN sitio ─────────────────────────────
-  //
-  // La hoja de editar y la de dar de alta llevaban cada una su copia de
-  // los chips, el contador y el campo de precio. Ahora salen de aquí las
-  // dos: el diseño B que eligió Axel (proveedores en una fila que se
-  // desliza, par y precio en dos baldosas con el contenido centrado).
-  //
-  // Clases propias (`m-pb-*`) y no `.m-step` / `.m-money`: esas las usa
-  // también la pantalla de una orden, y ese cambio no se pidió.
-  //
-  // Los ids se conservan (`miPar`, `mnVal`...): los usan los tests y el
-  // código que guarda, y cambiarlos aquí sería romper lo que no se tocaba.
-  //
-  // o: { pre, vendors, actual, par, valor, ml, iq, extra, opcional }
-  //    `opcional` pone "optional" en par y precio, como hacía el alta:
-  //    que algo no haga falta tiene que leerse ANTES de rellenarlo.
-  //    `extra` va entre los proveedores y las baldosas (el código del
-  //    alta). `iq` es el número de Pour·IQ, o null.
-
-  // "WINE MERCHANT" se lee como un grito en una fila de chips. El valor
-  // que se guarda sigue siendo el de siempre (data-nv); sólo cambia lo
-  // que se lee.
-  function rotulo(v) {
-    return String(v || '').toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
-  }
-
-  function bloqueProducto(o) {
-    const id = (s) => o.pre + s;
-    const opt = o.opcional ? ' <span class="m-opt">optional</span>' : '';
-    return `
-      <div class="m-sheet-t">Vendor</div>
-      <!-- data-scroll-x: sheet.js deja pasar el gesto de lado aquí.
-           Sin eso, la hoja cancela todo arrastre y la fila no se mueve. -->
-      <div class="m-chips m-pb-fila" id="${id('Vend')}" data-scroll-x>
-        ${o.vendors.map(v => `<button type="button" class="m-chip${o.actual === v ? ' on' : ''}"
-                                      data-nv="${esc(v)}">${esc(rotulo(v))}</button>`).join('')}
-      </div>
-      ${o.extra || ''}
-      <div class="m-pb">
-        <div class="m-pb-t">
-          <div class="m-pb-k">Par${opt}</div>
-          <input id="${id('Par')}" type="number" inputmode="decimal" step="1" min="0"
-                 value="${esc(o.par)}" aria-label="Par">
-          <div class="m-pb-pm">
-            <button type="button" id="${id('Less')}" aria-label="Lower the par">&minus;</button>
-            <button type="button" id="${id('More')}" aria-label="Raise the par">+</button>
-          </div>
-          ${o.iq != null ? `<button type="button" class="m-pb-iq" id="${id('Iq')}">
-              <i class="ti ti-brain" aria-hidden="true"></i> Pour·IQ: ${esc(String(o.iq))} · Use</button>` : ''}
-        </div>
-        <div class="m-pb-t">
-          <div class="m-pb-k">Unit price${opt}</div>
-          <div class="m-pb-precio">
-            <span>$</span>
-            <input id="${id('Val')}" type="number" inputmode="decimal" step="0.01" min="0"
-                   value="${esc(o.valor)}" placeholder="0.00" aria-label="Unit price">
-          </div>
-          ${o.ml ? `<div class="m-pb-s">Per ${esc(String(o.ml))} ml bottle</div>` : ''}
-        </div>
-      </div>`;
-  }
-
-  // Lo que hacen esos controles, también una sola vez.
-  function engancharProducto(h, pre, inicial, iq) {
-    let vend = inicial;
-    const fila = h.querySelector('#' + pre + 'Vend');
-    h.querySelectorAll('#' + pre + 'Vend [data-nv]').forEach(b => {
-      b.onclick = () => {
-        vend = b.dataset.nv;
-        h.querySelectorAll('#' + pre + 'Vend [data-nv]').forEach(x => x.classList.toggle('on', x === b));
-      };
-    });
-    // El proveedor elegido tiene que verse al abrir. Con la fila
-    // deslizable, uno al final de la lista quedaba fuera de la vista y la
-    // hoja parecía no tener ninguno.
-    const on = fila && fila.querySelector('.m-chip.on');
-    if (on && fila) fila.scrollLeft = Math.max(0, on.offsetLeft - fila.offsetLeft - 14);
-
-    const par = h.querySelector('#' + pre + 'Par');
-    const mas = (d) => { par.value = Math.max(0, (Number(par.value) || 0) + d); };
-    h.querySelector('#' + pre + 'Less').onclick = () => mas(-1);
-    h.querySelector('#' + pre + 'More').onclick = () => mas(1);
-    const b = h.querySelector('#' + pre + 'Iq');
-    if (b && iq != null) b.onclick = () => { par.value = Number(iq); };
-
-    // El campo del precio mide lo que lleva escrito, para que "$124.99"
-    // quede centrado como un todo. En `ch`, que con cifras tabulares es
-    // el ancho de un dígito.
-    const val = h.querySelector('#' + pre + 'Val');
-    const ancho = () => {
-      const n = String(val.value || val.placeholder || '').length;
-      val.style.width = Math.max(3, n + 0.5) + 'ch';
-    };
-    if (val) { ancho(); val.addEventListener('input', ancho); }
-
-    return { vendor: () => vend, par };
-  }
-
   // ── La hoja de producto ──────────────────────────────────────────────
   //
   // Lo que se puede tocar y nada más. El "Next" de abajo es lo que
@@ -444,14 +346,31 @@
              facturas. -->
         ${hero(r, p)}
 
-        ${bloqueProducto({
-          pre: 'mi', vendors, actual,
-          par: num(r.suggested), valor: num(r.value) || '',
-          ml: r.bottleSizeMl,
-          // Pour·IQ sólo cuando dice algo distinto de lo que ya hay.
-          iq: p && p.suggestedOptimal != null && Number(p.suggestedOptimal) !== num(r.suggested)
-            ? p.suggestedOptimal : null
-        })}
+        <div class="m-sheet-t">Vendor</div>
+        <div class="m-chips" id="miVend">
+          ${vendors.map(v => `<button type="button" class="m-chip${actual === v ? ' on' : ''}"
+                                      data-nv="${esc(v)}">${esc(v)}</button>`).join('')}
+        </div>
+
+        <div class="m-sheet-t">Par</div>
+        <div class="m-step">
+          <button type="button" id="miLess" aria-label="Lower the par">−</button>
+          <input id="miPar" type="number" inputmode="decimal" step="1" min="0"
+                 value="${num(r.suggested)}" aria-label="Par">
+          <button type="button" id="miMore" aria-label="Raise the par">+</button>
+        </div>
+        ${p && p.suggestedOptimal != null && Number(p.suggestedOptimal) !== num(r.suggested)
+          ? `<button type="button" class="m-iqline" id="miIq">
+               <i class="ti ti-brain" aria-hidden="true"></i>
+               Pour·IQ says ${esc(String(p.suggestedOptimal))} — use it</button>`
+          : ''}
+
+        <div class="m-sheet-t">Unit price</div>
+        <div class="m-money">
+          <span>$</span>
+          <input id="miVal" type="number" inputmode="decimal" step="0.01" min="0"
+                 value="${num(r.value) || ''}" placeholder="0.00" aria-label="Unit price">
+        </div>
 
         <div class="m-acts">
           <button type="button" class="m-act" id="miCancel">Cancel</button>
@@ -465,8 +384,20 @@
     // El asa dice "arrastrame para cerrar". Que lo diga de verdad.
     if (window.BarStockSheet) window.BarStockSheet.enganchar(h, () => h.remove());
 
-    const c = engancharProducto(h, 'mi', actual, p ? p.suggestedOptimal : null);
-    const par = c.par;
+    let vend = actual;
+    h.querySelectorAll('[data-nv]').forEach(b => {
+      b.onclick = () => {
+        vend = b.dataset.nv;
+        h.querySelectorAll('[data-nv]').forEach(x => x.classList.toggle('on', x === b));
+      };
+    });
+
+    const par = h.querySelector('#miPar');
+    const mas = (d) => { par.value = Math.max(0, (Number(par.value) || 0) + d); };
+    h.querySelector('#miLess').onclick = () => mas(-1);
+    h.querySelector('#miMore').onclick = () => mas(1);
+    const iq = h.querySelector('#miIq');
+    if (iq && p) iq.onclick = () => { par.value = Number(p.suggestedOptimal); };
 
     const cerrar = () => h.remove();
     h.querySelector('.m-sheet-bg').onclick = cerrar;
@@ -475,7 +406,7 @@
     async function guardar() {
       if (typeof window.bsSaveItemFields !== 'function') return false;
       const ok = await window.bsSaveItemFields(idx, {
-        vendor: c.vendor(),
+        vendor: vend,
         suggested: Number(par.value) || 0,
         value: Number(h.querySelector('#miVal').value) || 0
       });
@@ -539,19 +470,35 @@
                  placeholder="Tito&rsquo;s Vodka" aria-label="Product name">
         </div>
 
-        ${bloqueProducto({
-          pre: 'mn', vendors, actual: 'UNKNOWN', par: 0, valor: '', opcional: true,
-          // El codigo del proveedor, pegado a los proveedores porque es
-          // SUYO. No es obligatorio, pero es con lo que casan las
-          // facturas de MarginEdge: sin el, el producto hay que
-          // emparejarlo a mano cada vez. Aquí sí se escribe: un producto
-          // nuevo no tiene semanas pasadas que se puedan quedar atrás.
-          extra: `<label class="m-pb-code">
-              <span>Code</span>
-              <input id="mnCode" type="text" autocomplete="off" autocapitalize="characters"
-                     placeholder="Optional · e.g. 2153" aria-label="Vendor code">
-            </label>`
-        })}
+        <!-- El codigo del proveedor. No es obligatorio, pero es con lo
+             que casan las facturas de MarginEdge: sin el, el producto
+             hay que emparejarlo a mano cada vez. -->
+        <div class="m-sheet-t">Vendor code <span class="m-opt">optional</span></div>
+        <div class="m-money m-money-txt">
+          <input id="mnCode" type="text" autocomplete="off" autocapitalize="characters"
+                 placeholder="2153" aria-label="Vendor code">
+        </div>
+
+        <div class="m-sheet-t">Vendor</div>
+        <div class="m-chips" id="mnVend">
+          ${vendors.map(v => `<button type="button" class="m-chip${v === 'UNKNOWN' ? ' on' : ''}"
+                                      data-nv="${esc(v)}">${esc(v)}</button>`).join('')}
+        </div>
+
+        <div class="m-sheet-t">Par <span class="m-opt">optional</span></div>
+        <div class="m-step">
+          <button type="button" id="mnLess" aria-label="Lower the par">&minus;</button>
+          <input id="mnPar" type="number" inputmode="decimal" step="1" min="0"
+                 value="0" aria-label="Par">
+          <button type="button" id="mnMore" aria-label="Raise the par">+</button>
+        </div>
+
+        <div class="m-sheet-t">Unit price <span class="m-opt">optional</span></div>
+        <div class="m-money">
+          <span>$</span>
+          <input id="mnVal" type="number" inputmode="decimal" step="0.01" min="0"
+                 placeholder="0.00" aria-label="Unit price">
+        </div>
 
         <div class="m-nerr" id="mnErr"></div>
 
@@ -564,8 +511,18 @@
     // El asa dice "arrastrame para cerrar". Que lo diga de verdad.
     if (window.BarStockSheet) window.BarStockSheet.enganchar(h, () => h.remove());
 
-    const c = engancharProducto(h, 'mn', 'UNKNOWN', null);
-    const par = c.par;
+    let vend = 'UNKNOWN';
+    h.querySelectorAll('[data-nv]').forEach(b => {
+      b.onclick = () => {
+        vend = b.dataset.nv;
+        h.querySelectorAll('[data-nv]').forEach(x => x.classList.toggle('on', x === b));
+      };
+    });
+
+    const par = h.querySelector('#mnPar');
+    const mas = (d) => { par.value = Math.max(0, (Number(par.value) || 0) + d); };
+    h.querySelector('#mnLess').onclick = () => mas(-1);
+    h.querySelector('#mnMore').onclick = () => mas(1);
 
     const cerrar = () => h.remove();
     h.querySelector('.m-sheet-bg').onclick = cerrar;
@@ -598,7 +555,7 @@
       try {
         if (!window.BarStockInventoryCloud) throw new Error('Cloud not available.');
         await window.BarStockInventoryCloud.createInventoryItem({
-          code, item: nombre, vendor: c.vendor(),
+          code, item: nombre, vendor: vend,
           onHand: 0,
           suggested: Number(par.value) || 0,
           value: Number(h.querySelector('#mnVal').value) || 0
@@ -612,7 +569,7 @@
           code, item: nombre,
           itemNorm: typeof window.normalizeName === 'function'
             ? window.normalizeName(nombre) : norm(nombre),
-          vendor: String(c.vendor() || 'UNKNOWN').trim().toUpperCase(),
+          vendor: String(vend || 'UNKNOWN').trim().toUpperCase(),
           onHand: 0,
           suggested: Number(par.value) || 0,
           value: Number(h.querySelector('#mnVal').value) || 0,

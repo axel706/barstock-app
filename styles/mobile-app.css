@@ -2226,96 +2226,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   body.m-shell .m-edit .m-act:disabled { opacity: .55; }
 
-  /* ── Proveedor, par y precio: el diseño B ────────────────────────
-   *
-   * Lo comparten la hoja de editar y la de alta (ver bloqueProducto en
-   * mobile-inventory.js). Clases propias porque `.m-step` y `.m-money`
-   * los usa también la pantalla de una orden, y ese cambio no se pidió.
-   *
-   * El aire va por arriba en todo el bloque. */
-
-  /* Los proveedores, en UNA fila que se desliza de lado. Se sale por los
-   * dos bordes de la hoja (el margen negativo) para que se vea que hay
-   * más; el gesto lo deja pasar sheet.js por el `data-scroll-x`. */
-  .m-pb-fila {
-    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
-    margin-left: -13px; margin-right: -13px; padding-left: 13px; padding-right: 13px;
-    scrollbar-width: none; touch-action: pan-x; overscroll-behavior-x: contain;
-  }
-  .m-pb-fila::-webkit-scrollbar { display: none; }
-  body.m-shell .m-pb-fila .m-chip {
-    flex: 0 0 auto; white-space: nowrap;
-    font-size: var(--m-small); font-weight: 700; padding: 8px 14px;
-  }
-
-  /* El código del proveedor, pegado a sus chips. */
-  .m-pb-code {
-    margin-top: 10px; display: flex; align-items: center; gap: 10px;
-    height: 48px; padding: 0 14px; border-radius: 14px;
-    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
-  }
-  .m-pb-code > span {
-    flex: 0 0 auto; font-size: var(--m-meta); font-weight: 800;
-    letter-spacing: .1em; text-transform: uppercase; color: #8aa0b4;
-  }
-  body.m-shell .m-pb-code input {
-    flex: 1; min-width: 0; height: 100%; padding: 0;
-    font-size: max(16px, var(--m-strong)); font-weight: 600; color: #fff;
-    background: transparent; border: none; -webkit-appearance: none;
-    /* app.css le pone a todo input una sombra interior y un desenfoque
-     * de fondo. Aquí el campo es la caja de fuera: dentro salía una raya
-     * arriba y un rectángulo más oscuro. */
-    box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
-  }
-
-  /* Las dos baldosas. El contenido va CENTRADO: fue lo que Axel corrigió
-   * sobre el boceto, que lo tenía alineado a la izquierda. */
-  .m-pb { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .m-pb-t {
-    min-width: 0; padding: 12px; border-radius: 20px;
-    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
-    display: flex; flex-direction: column; align-items: center; text-align: center;
-    font-variant-numeric: tabular-nums;
-  }
-  .m-pb-k {
-    font-size: var(--m-meta); font-weight: 800; letter-spacing: .1em;
-    text-transform: uppercase; color: #94a3b8;
-  }
-  .m-pb-k .m-opt { margin-left: 4px; }
-  /* El número ES el campo: se toca y se escribe. 29px, de sobra por
-   * encima de los 16 que evitan el zoom de iOS. */
-  body.m-shell .m-pb input {
-    margin-top: 4px; width: 100%; min-width: 0; height: auto; padding: 0;
-    font-size: var(--m-figure); font-weight: 800; letter-spacing: -.5px;
-    text-align: center; color: #fff;
-    background: transparent; border: none; -webkit-appearance: none;
-    /* Lo mismo que el código: sin la sombra ni el desenfoque de app.css,
-     * que dibujaban una raya fina encima del número. */
-    box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
-  }
-  .m-pb input::-webkit-outer-spin-button,
-  .m-pb input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-
-  /* El "$" va pegado al número, y el par queda centrado: el ancho del
-   * campo lo ajusta engancharProducto a lo que hay escrito. Con el campo
-   * a todo el ancho, el "$" se quedaba en el borde y el número en medio. */
-  .m-pb-precio { margin-top: 4px; display: flex; align-items: baseline; justify-content: center; max-width: 100%; }
-  .m-pb-precio > span { font-size: var(--m-strong); font-weight: 800; color: #9fb0c4; }
-  body.m-shell .m-pb .m-pb-precio input { margin-top: 0; width: auto; max-width: 100%; }
-
-  .m-pb-pm { margin-top: 8px; width: 100%; display: flex; gap: 6px; }
-  body.m-shell .m-pb-pm button {
-    flex: 1; height: 34px; cursor: pointer;
-    font-size: var(--m-title); color: #eaf2fb;
-    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.15);
-  }
-  body.m-shell .m-pb-iq {
-    margin-top: 8px; cursor: pointer; padding: 2px 4px;
-    font-size: var(--m-meta); font-weight: 700; color: #7dd3fc;
-    background: none; border: none;
-  }
-  .m-pb-s { margin-top: 8px; font-size: var(--m-meta); color: #8193a8; }
-
   /* ── Los avisos flotantes ───────────────────────────────────────── */
   /*
    * En escritorio van abajo a la derecha, y ahí está bien: no estorban
@@ -3145,9 +3055,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-chip { border-radius: 999px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-step button { border-radius: 12px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-step input { border-radius: 12px !important; }
-  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-pb-pm button { border-radius: 10px !important; }
-  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-pb-iq { border-radius: 8px !important; }
-  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-pb input { border-radius: 0 !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-iqline { border-radius: 10px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-next { border-radius: 999px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-cyc-go { border-radius: 999px !important; }
