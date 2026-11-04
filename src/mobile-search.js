@@ -546,9 +546,17 @@
     pintarLista(host);
   }
 
+  // Cuando se entra a Buscar sólo para abrir una ficha (abrirItem, desde
+  // Top movers), nadie va a escribir. Sin esto, show() ponía el foco en
+  // el buscador, la ficha se abría encima y el teclado del buscador de
+  // detrás se quedaba abierto tapando media ficha. Es de una sola vez: la
+  // siguiente entrada normal vuelve a dar el teclado.
+  let _sinTeclado = false;
+
   function show(host) {
     cerrarHoja();
     pintarLista(host);
+    if (_sinTeclado) { _sinTeclado = false; return; }
 
     // ── El foco va SIN setTimeout ──────────────────────────────────
     //
@@ -568,7 +576,11 @@
   // Buscar y se abre su ficha directamente, sin teclear.
   function abrirItem(nombre) {
     if (!window.BarStockMobile) return;
+    _sinTeclado = true;
     window.BarStockMobile.ir('search');
+    // Por si ir() no llegó a llamar a show() (la pantalla no se pudo
+    // mostrar): que el aviso no se quede para la próxima vez.
+    _sinTeclado = false;
     const host = document.querySelector('.m-screen[data-screen="search"]');
     if (!host) return;
     const i = master().findIndex(r => r.item === nombre);
