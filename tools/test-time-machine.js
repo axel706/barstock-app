@@ -52,7 +52,10 @@ function cargar(fetchFn) {
     return fetchFn(url, op);
   };
   global.fetch = w.fetch;
-  for (const f of ['count-session', 'count-finish', 'rest-paginado', 'mobile-time-machine']) {
+  // El boton de la banda, como lo deja mobile-shell: la hoja le cambia
+  // el icono y el estado.
+  w.document.body.innerHTML = '<button id="mTime" class="m-ico"><i class="ti ti-history"></i></button>';
+  for (const f of ['count-session', 'count-finish', 'rest-paginado', 'sheet', 'mobile-time-machine']) {
     new Function(fs.readFileSync(path.join(RAIZ, 'src/' + f + '.js'), 'utf8'))();
   }
   return w;
@@ -256,6 +259,120 @@ grupo('la lectura pagina y solo lee');
   prueba('al tope, para y lo dice', /stopped instead of showing a partial list/.test(error), error);
 }
 
+grupo('se abre como tarjeta');
+{
+  global.fetch = w.fetch = async () => resp(FILAS);
+  const T = w.BarStockMobileTimeMachine;
+  const boton = w.document.getElementById('mTime');
+  T.abrir();
+  await esperar(10);
+  const h = w.document.querySelector('.m-tm-sheet');
+  prueba('aparece la hoja', !!h);
+  prueba('como tarjeta, no como pantalla', h && !h.classList.contains('llena'));
+  prueba('con su asa', h && !!h.querySelector('.m-sheet-grip'));
+  prueba('sin la flecha de atras', h && !h.querySelector('#mAtras, .m-atras'));
+  prueba('con los conteos dentro', h && /1 h 12 min/.test(h.textContent));
+  prueba('el reloj se enciende', boton.classList.contains('m-tm-on'));
+  prueba('y sigue siendo un reloj', /ti-history/.test(boton.querySelector('i').className));
+
+  T.abrir();
+  prueba('abrir dos veces no apila dos hojas', w.document.querySelectorAll('.m-tm-sheet').length === 1);
+
+  boton.onclick = () => T.alternar();   // como en mobile-shell
+  boton.click();
+  prueba('tocar el reloj la cierra', !w.document.querySelector('.m-tm-sheet'));
+  prueba('y el reloj se apaga', !boton.classList.contains('m-tm-on'));
+}
+
+function toca(el, tipo, y) {
+  const e = new w.Event(tipo, { bubbles: true, cancelable: true });
+  e.touches = [{ clientY: y }];
+  el.dispatchEvent(e);
+  return e;
+}
+async function arrastrar(caja, desde, hasta, ms) {
+  toca(caja, 'touchstart', desde);
+  toca(caja, 'touchmove', hasta);
+  if (ms) await esperar(ms);
+  toca(caja, 'touchend', hasta);
+  await esperar(300);
+}
+const caja = () => w.document.querySelector('.m-tm-sheet .m-sheet-box');
+
+grupo('como tarjeta, se cierra como una tarjeta');
+{
+  const T = w.BarStockMobileTimeMachine;
+  T.abrir(); await esperar(10);
+  await arrastrar(caja(), 100, 320, 0);
+  prueba('bajarla la cierra', !T.abierta());
+
+  T.abrir(); await esperar(10);
+  w.document.querySelector('.m-tm-sheet .m-sheet-bg').click();
+  prueba('tocar lo oscuro la cierra', !T.abierta());
+}
+
+grupo('subirla la vuelve pantalla completa');
+{
+  const T = w.BarStockMobileTimeMachine;
+  const boton = w.document.getElementById('mTime');
+  T.abrir(); await esperar(10);
+
+  // Un roce hacia arriba no la cambia: hace falta intención.
+  await arrastrar(caja(), 300, 260, 400);
+  prueba('un roce no basta', T.abierta() && !T.llena());
+  prueba('y vuelve a su alto', caja().style.height === '', caja().style.height);
+
+  toca(caja(), 'touchstart', 400);
+  toca(caja(), 'touchmove', 200);
+  prueba('mientras sube, crece con el dedo', caja().style.height === '200px', caja().style.height);
+  toca(caja(), 'touchend', 200);
+  await esperar(300);
+  prueba('pasado el umbral, pantalla completa', T.llena());
+  prueba('suelta el alto del dedo y manda el CSS', caja().style.height === '', caja().style.height);
+  prueba('el reloj se vuelve una X', /ti-x/.test(boton.querySelector('i').className),
+    boton.querySelector('i').className);
+  prueba('y ya no se ve encendido', !boton.classList.contains('m-tm-on'));
+  prueba('dice que cierra', boton.getAttribute('aria-label') === 'Close Time Machine');
+}
+
+grupo('en pantalla completa, la unica salida es la X');
+{
+  const T = w.BarStockMobileTimeMachine;
+  const boton = w.document.getElementById('mTime');
+  prueba('sigue en pantalla completa', T.abierta() && T.llena());
+
+  await arrastrar(caja(), 100, 400, 0);
+  prueba('bajarla no la cierra', T.abierta());
+  prueba('ni la devuelve a tarjeta', T.llena());
+  prueba('ni la mueve', caja().style.transform === '', caja().style.transform);
+
+  w.document.querySelector('.m-tm-sheet .m-sheet-bg').click();
+  prueba('tocar el velo tampoco', T.abierta());
+
+  boton.click();
+  prueba('la X la cierra', !T.abierta());
+  prueba('y el boton vuelve a ser un reloj', /ti-history/.test(boton.querySelector('i').className));
+
+  T.abrir(); await esperar(10);
+  prueba('al reabrir, empieza otra vez como tarjeta', !T.llena());
+  T.cerrar();
+}
+
+grupo('va debajo de la banda, encima de las pestañas');
+{
+  const css = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8');
+  const z = (re) => Number((re.exec(css) || [])[1]);
+  const banda = z(/\.m-band \{[^}]*?z-index:\s*(\d+)/);
+  const hoja = z(/\.m-sheet\.m-tm-sheet \{\s*z-index:\s*(\d+)/);
+  const tabs = z(/position: fixed; left: 0; right: 0; bottom: 0; z-index:\s*(\d+)/);
+  // Por encima de la banda, la X y el reloj quedarian tapados y no
+  // habria forma de salir de la pantalla completa.
+  prueba('debajo de la banda', hoja > 0 && hoja < banda, hoja + ' vs ' + banda);
+  prueba('encima de las pestañas', hoja > tabs, hoja + ' vs ' + tabs);
+  prueba('el aviso rojo de la banda no se pinta de azul',
+    !/\.m-ico\.on\b/.test(css.replace(/\/\*[\s\S]*?\*\//g, '')));
+}
+
 grupo('se engancha a la app');
 {
   const html = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8');
@@ -263,6 +380,7 @@ grupo('se engancha a la app');
   prueba('se carga', i('mobile-time-machine') > 0);
   prueba('despues de la regla que usa', i('count-finish') < i('mobile-time-machine'));
   prueba('y el lector antes que ella', i('rest-paginado') > 0 && i('rest-paginado') < i('mobile-time-machine'));
+  prueba('y el gesto de las hojas tambien', i('sheet') > 0 && i('sheet') < i('mobile-time-machine'));
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') +

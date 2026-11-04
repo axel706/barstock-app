@@ -126,8 +126,13 @@
     // (body.auth-locked > *) también la tapa, como a todo lo demás.
     document.body.insertBefore(_banda, document.body.firstChild);
 
+    // Time Machine es una hoja, no una pantalla: el botón la abre o la
+    // cierra, y es el propio módulo el que cambia el icono a X cuando
+    // pasa a pantalla completa.
     const tm = _banda.querySelector('#mTime');
-    if (tm) tm.onclick = () => ir('timemachine');
+    if (tm) tm.onclick = () => {
+      if (window.BarStockMobileTimeMachine) window.BarStockMobileTimeMachine.alternar();
+    };
 
     const st = _banda.querySelector('#mSet');
     if (st) st.onclick = () => {

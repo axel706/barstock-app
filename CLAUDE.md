@@ -216,7 +216,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 66 suites · ~2090 comprobaciones. Tienen que pasar enteras.
+`npm test` · 66 suites · ~2120 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

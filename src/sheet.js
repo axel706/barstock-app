@@ -23,8 +23,23 @@
   // manotazo corto y rápido también es "ciérrate".
   const VELOCIDAD = 0.55;   // px por ms
 
-  function enganchar(hoja, cerrar) {
+  // `op` es opcional, y sin él todo se comporta como siempre:
+  //
+  //   op.alSubir()  Si existe, arrastrar hacia ARRIBA hace crecer la caja
+  //                 y, pasado el umbral, se llama. Es para Time Machine,
+  //                 que de tarjeta pasa a pantalla completa. Quien llama
+  //                 decide qué significa "completa" (una clase y su CSS);
+  //                 aquí sólo se reconoce el gesto.
+  //   op.quieta()   Si devuelve true, no se arrastra nada: ni subir ni
+  //                 bajar. Time Machine en pantalla completa ya no es una
+  //                 tarjeta y sólo se sale con su X.
+  //
+  // Va aquí y no en un gesto aparte en Time Machine: el gesto de las
+  // hojas ya estuvo escrito seis veces, y la séptima copia es la que se
+  // deja de comportar como las demás.
+  function enganchar(hoja, cerrar, op) {
     if (!hoja) return;
+    op = op || {};
     const caja = hoja.querySelector('.m-sheet-box');
     if (!caja) return;
 
@@ -49,12 +64,14 @@
     // Sólo cuenta cuando la caja está arriba del todo. Si estás leyendo
     // la mitad de una ficha larga y tiras hacia abajo, lo que quieres es
     // volver al principio, no cerrar.
-    let y0 = null, t0 = 0, dy = 0, activo = false;
+    let y0 = null, t0 = 0, dy = 0, activo = false, h0 = 0;
 
     const empezar = (e) => {
+      if (op.quieta && op.quieta()) return;
       if (caja.scrollTop > 0) return;
       const t = e.touches ? e.touches[0] : e;
       y0 = t.clientY; t0 = Date.now(); dy = 0; activo = true;
+      h0 = caja.getBoundingClientRect().height;
       caja.style.transition = 'none';
     };
 
@@ -63,7 +80,15 @@
       const t = e.touches ? e.touches[0] : e;
       dy = t.clientY - y0;
       // Hacia arriba no se estira: la hoja no sube más de donde está.
-      if (dy < 0) { dy = 0; return; }
+      // Salvo que la hoja sepa crecer: entonces crece con el dedo. Crece
+      // de ALTO y no se traslada, porque trasladarla la despegaría del
+      // borde de abajo y se vería el Home por debajo.
+      if (dy < 0) {
+        if (!op.alSubir) { dy = 0; return; }
+        if (e.cancelable) e.preventDefault();
+        caja.style.height = Math.round(h0 - dy) + 'px';
+        return;
+      }
       if (caja.scrollTop > 0) { soltar(); return; }
       if (e.cancelable) e.preventDefault();
       caja.style.transform = 'translateY(' + dy + 'px)';
@@ -77,6 +102,15 @@
       activo = false;
       const v = dy / Math.max(1, Date.now() - t0);
       caja.style.transition = 'transform .18s ease-out';
+
+      if (dy < 0 && op.alSubir) {
+        // Se quita el alto del dedo y el CSS lleva la caja a su sitio:
+        // al de pantalla completa si pasó el umbral, al de tarjeta si no.
+        caja.style.transition = 'height .22s ease-out';
+        caja.style.height = '';
+        if (-dy > UMBRAL || -v > VELOCIDAD) op.alSubir();
+        return;
+      }
 
       if (dy > UMBRAL || v > VELOCIDAD) {
         caja.style.transform = 'translateY(100%)';

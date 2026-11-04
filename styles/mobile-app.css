@@ -3994,6 +3994,47 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * píldora de app.css no las alcanza.
    *
    * El aire va por arriba, como en el resto de la columna. */
+
+  /* La hoja. Va POR DEBAJO de la banda (9100) y por encima de la barra
+   * de pestañas (9000). Las demás hojas van a 9500, encima de todo,
+   * pero ésta necesita la banda a la vista: el reloj que la cierra y la
+   * X de pantalla completa viven ahí. */
+  .m-sheet.m-tm-sheet { z-index: 9050; }
+
+  /* Tarjeta: dos tercios de la pantalla, sin desplazarse por dentro.
+   * Lo que no cabe se corta a propósito, y asoma la primera tarjeta de
+   * abajo: dice que hay más y que se sube para verlo. Si la caja se
+   * desplazara, subir el dedo moveria la lista en vez de la hoja. */
+  .m-tm-sheet .m-sheet-box {
+    height: 66vh; overflow: hidden;
+    padding-left: 16px; padding-right: 16px;
+  }
+  /* Pantalla completa: de justo debajo de la banda hasta abajo, sin
+   * asa ni esquinas, porque ya no es una tarjeta. Ahora sí se
+   * desplaza, y sólo eso: el arrastre lo apaga sheet.js (`quieta`). */
+  .m-tm-sheet.llena .m-sheet-box {
+    height: calc(100% - 52px - env(safe-area-inset-top, 0px));
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    border-radius: 0; border-top-color: transparent;
+    transition: height .22s ease-out, border-radius .22s ease-out;
+  }
+  .m-tm-sheet.llena .m-sheet-grip { display: none; }
+  /* Sin velo que tocar: en pantalla completa no hay nada detrás. */
+  .m-tm-sheet.llena .m-sheet-bg { pointer-events: none; }
+
+  .m-tm-t {
+    font-size: var(--m-title); font-weight: 800; color: #fff;
+    letter-spacing: -.3px; line-height: 1.2;
+  }
+  .m-tm-sheet.llena .m-tm-t { font-size: var(--m-screen); margin-top: 8px; }
+
+  /* El reloj encendido: la tarjeta está abierta y tocarlo la cierra.
+   * Mismo azul que los enlaces de la app. Clase propia y no `.on`: el
+   * aviso rojo de la banda ya usa `.m-ico-alert.on`, y una regla
+   * `.m-ico.on` lo habría pintado de azul. */
+  body.m-shell .m-ico.m-tm-on {
+    background: rgba(125,211,252,.26); border-color: rgba(125,211,252,.58); color: #e0f2fe;
+  }
   body.m-shell .m-tm-hero {
     margin-top: 14px; padding: 16px; border-radius: 20px;
     background: linear-gradient(160deg, rgba(125,211,252,.16), rgba(110,231,183,.08));

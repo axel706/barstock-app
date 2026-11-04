@@ -12,6 +12,23 @@
   // tarjetas pequeñas. Es la mezcla de B y C que eligió Axel sobre los
   // bocetos.
   //
+  // ── Una hoja que crece, no una pantalla ──────────────────────────────
+  //
+  // Primero fue una pantalla del shell, con la flecha de atrás. Axel lo
+  // vio en el teléfono y no encajaba: se entra desde un botón de la
+  // banda, no desde otra pantalla, y "volver" no tenía a dónde.
+  //
+  // Ahora se abre como tarjeta, por encima de donde estés. Se cierra
+  // como cualquier tarjeta: bajándola, tocando lo oscuro de arriba o
+  // tocando el reloj otra vez. Si se sube, pasa a pantalla completa y
+  // deja de ser una tarjeta: pierde el asa, no se arrastra, y el reloj
+  // de la banda se vuelve una X, que es la única salida. Eso fue
+  // explícito.
+  //
+  // La hoja va POR DEBAJO de la banda (ver `.m-tm-sheet` en
+  // mobile-app.css). Las demás hojas van por encima, pero ésta necesita
+  // la banda a la vista: el reloj y la X viven ahí.
+  //
   // Sólo lee. Nada de esta pantalla escribe en la base.
   //
   // ── Los conteos de prueba se enseñan ─────────────────────────────────
@@ -104,15 +121,12 @@
 
   // ── Pintar ───────────────────────────────────────────────────────────
 
+  // Sin la cabecera del shell: esa lleva la flecha de atrás, y la
+  // flecha es justo lo que sobraba.
   function cabecera() {
-    const M = window.BarStockMobile;
     const loc = (window.BARSTOCK_CONFIG || {}).LOCATION_NAME || '';
-    const o = {
-      titulo: 'Time Machine',
-      volverA: (M && M.nombreAnterior && M.nombreAnterior()) || 'Home',
-      sub: (loc ? loc + ' · ' : '') + 'active time, pauses not counted'
-    };
-    return (M && M.cabecera) ? M.cabecera(o) : '<div class="m-inv-t">Time Machine</div>';
+    return `<div class="m-tm-t">Time Machine</div>
+      <div class="m-hsub">${esc((loc ? loc + ' · ' : '') + 'active time, pauses not counted')}</div>`;
   }
 
   function claseDif(d) {
@@ -163,11 +177,6 @@
       : `<div class="m-tm-nota">This is your first saved count. From the next one on, earlier counts show up here and you will see whether each one went faster.</div>`);
   }
 
-  function enganchar(host) {
-    const M = window.BarStockMobile;
-    if (M && M.alVolver) M.alVolver(host, () => M.volver());
-  }
-
   // Cada entrada vuelve a leer. Si se entra dos veces seguidas, la
   // respuesta vieja no puede pisar a la nueva.
   let _gen = 0;
@@ -177,7 +186,6 @@
     const g = ++_gen;
     host.innerHTML = `<div class="m-tm">${cabecera()}
       <div class="m-tm-nota">Loading your counts…</div></div>`;
-    enganchar(host);
     let filas;
     try {
       filas = await leer();
@@ -188,30 +196,80 @@
       host.innerHTML = `<div class="m-tm">${cabecera()}
         <div class="m-tm-nota mal">Could not load your count times.
           <small>${esc((e && e.message) || String(e))}</small></div></div>`;
-      enganchar(host);
       return;
     }
     if (g !== _gen) return;
     host.innerHTML = `<div class="m-tm">${cabecera()}${cuerpo(armar(filas))}</div>`;
-    enganchar(host);
   }
 
-  window.BarStockMobileTimeMachine = { pintar, _armar: armar };
+  // ── La hoja ──────────────────────────────────────────────────────────
 
-  function registrar() {
-    if (!window.BarStockMobile) return;
-    window.BarStockMobile.register({
-      // Sin pestaña: se entra desde el reloj de la banda.
-      id: 'timemachine', icon: 'ti-history', label: 'Time Machine',
-      tab: false,
-      show: pintar,
-      atras(host, hacerlo) {
-        if (hacerlo && window.BarStockMobile) window.BarStockMobile.volver();
-        return true;
-      }
-    });
+  let _hoja = null;
+
+  const llena = () => !!(_hoja && _hoja.classList.contains('llena'));
+
+  // El botón de la banda dice en qué estado está la hoja. Cerrada, un
+  // reloj. Tarjeta, el reloj encendido: tocarlo otra vez la cierra.
+  // Pantalla completa, una X: ahí ya no hay tarjeta que bajar.
+  function pintarBoton() {
+    const b = document.getElementById('mTime');
+    if (!b) return;
+    const i = b.querySelector('i');
+    const x = llena();
+    b.classList.toggle('m-tm-on', !!_hoja && !x);
+    if (i) i.className = 'ti ' + (x ? 'ti-x' : 'ti-history');
+    b.setAttribute('aria-label', _hoja ? 'Close Time Machine' : 'Time Machine');
+    b.setAttribute('aria-expanded', _hoja ? 'true' : 'false');
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', registrar);
-  else registrar();
+  function abrir() {
+    if (_hoja) return;
+    const h = document.createElement('div');
+    h.className = 'm-sheet m-tm-sheet';
+    h.innerHTML = `
+      <div class="m-sheet-bg"></div>
+      <div class="m-sheet-box" role="dialog" aria-label="Time Machine">
+        <div class="m-sheet-grip"></div>
+        <div class="m-tm-cuerpo"></div>
+      </div>`;
+    document.body.appendChild(h);
+    _hoja = h;
+    // En pantalla completa el velo ni se ve ni se puede tocar (CSS),
+    // pero la guarda va también aquí: la única salida de la pantalla
+    // completa es la X, y eso no puede depender de una regla de estilo.
+    h.querySelector('.m-sheet-bg').onclick = () => { if (!llena()) cerrar(); };
+    if (window.BarStockSheet) {
+      window.BarStockSheet.enganchar(h, cerrar, { alSubir: completa, quieta: llena });
+    }
+    pintarBoton();
+    pintar(h.querySelector('.m-tm-cuerpo'));
+  }
+
+  // De tarjeta a pantalla. No hay camino de vuelta a tarjeta: o se queda
+  // así, o se cierra con la X.
+  function completa() {
+    if (!_hoja || llena()) return;
+    _hoja.classList.add('llena');
+    pintarBoton();
+  }
+
+  function cerrar() {
+    const h = _hoja;
+    if (!h) return;
+    _hoja = null;
+    h.remove();
+    pintarBoton();
+  }
+
+  // Lo que hace el botón de la banda, sea reloj o X: siempre cierra si
+  // hay algo abierto. Nunca hace las dos cosas según dónde se toque.
+  function alternar() {
+    if (_hoja) cerrar(); else abrir();
+  }
+
+  window.BarStockMobileTimeMachine = {
+    abrir, cerrar, alternar, completa,
+    abierta: () => !!_hoja, llena,
+    pintar, _armar: armar
+  };
 })();

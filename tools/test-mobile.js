@@ -134,13 +134,14 @@ console.log('\nla banda es del armazon, no del Home');
   w.BarStockMobile.ir('inv');
   ok('y sigue ahi dentro de una seccion', !!w.document.getElementById('mBand'));
 
-  // El reloj abre su pantalla. Sin esto el boton se podria quedar
-  // apuntando a un id que nadie registro, y no haria nada sin avisar.
-  let vista = 0;
-  w.BarStockMobile.register({ id: 'timemachine', tab: false, show() { vista++; } });
+  // El reloj abre y cierra la hoja de Time Machine. Ya no es una
+  // pantalla del shell: no cambia la pantalla activa.
+  let veces = 0;
+  w.BarStockMobileTimeMachine = { alternar() { veces++; } };
+  const antes = w.BarStockMobile.activa();
   w.document.getElementById('mTime').click();
-  eq('y el reloj abre Time Machine', w.BarStockMobile.activa(), 'timemachine');
-  eq('pintandola al entrar', vista, 1);
+  eq('y el reloj abre Time Machine', veces, 1);
+  eq('sin cambiar de pantalla', w.BarStockMobile.activa(), antes);
 }
 
 console.log('\nla barra sale de lo registrado');

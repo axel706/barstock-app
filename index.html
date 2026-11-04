@@ -77,7 +77,7 @@
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/chip-glow.css">
   <link rel="stylesheet" href="styles/mobile.css?v=mob5">
-  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp119">
+  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp120">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -5363,13 +5363,13 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <!-- Lectura paginada de PostgREST, compartida. Va antes que las
      pantallas del telefono porque son ellas las que la usan. -->
 <script src="src/rest-paginado.js?v=rp1"></script>
-<script src="src/mobile-shell.js?v=msh22"></script>
+<script src="src/mobile-shell.js?v=msh23"></script>
 <!-- El gesto de las hojas: arrastrar para cerrar, y que el fondo no se
      mueva. Lo piden CUATRO pantallas (home, search, inventory, history),
      asi que va antes que las cuatro. Estaba debajo de mobile-home con un
      comentario que decia "va antes que todas": funcionaba de casualidad,
      porque enganchar() se llama al abrir la hoja y no al cargar. -->
-<script src="src/sheet.js?v=sh2"></script>
+<script src="src/sheet.js?v=sh3"></script>
 <!-- La cabecera de producto que comparten la ficha de busqueda y la
      hoja de Inventory. Va ANTES que las dos: ambas la piden al
      dibujar, y sin ella una se cae al respaldo de texto. -->
@@ -5397,7 +5397,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/count-insight.js?v=cnt13"></script>
 <script src="src/count-finish.js?v=cnt26"></script>
 <!-- Time Machine usa la regla de comparar de count-finish: va despues. -->
-<script src="src/mobile-time-machine.js?v=tm1"></script>
+<script src="src/mobile-time-machine.js?v=tm2"></script>
 <script src="src/scan-count.js?v=scan18"></script>
 <script>
   // Aqui habia una puerta: el boton de escaneo solo lo veia el admin,
