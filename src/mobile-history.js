@@ -610,11 +610,38 @@
     const diferencia = faltan.reduce(
       (s, i) => s + (i.pedido - i.recibido) * i.precio, 0);
 
-    // Y los que llegaron a un precio distinto del tuyo.
+    // ── Los que llegaron a un precio distinto del de tu CATÁLOGO ─────
+    //
+    // Se comparaba con `i.precio`, que es el precio de la línea de la
+    // orden: lo que valía la botella el día que se pidió, congelado. El
+    // botón de abajo cambia el catálogo, no la orden, así que ese número
+    // no se movía nunca y la tarjeta seguía pidiendo lo mismo después de
+    // actualizar, cada vez que se volvía a entrar.
+    //
+    // La pregunta es "¿tu catálogo dice lo que dice esta factura?", y se
+    // contesta contra el catálogo de ahora, igual que la campana
+    // (`calcularPrecios` en marginedge-purchases.js).
+    //
+    // Del catálogo se toma también el NOMBRE: el PATCH busca por nombre
+    // exacto, y la orden puede escribirlo con otro apóstrofo. Con el de la
+    // orden la fila no aparecía y no se actualizaba nada, sin error.
+    //
+    // Un artículo que ya no está en el catálogo no se propone: no hay
+    // precio que cambiar.
     const CAMBIO_MIN = 0.005;
-    const cambios = o.items.filter(i =>
-      i.recibido > 0 && i.precioFactura > 0 &&
-      Math.abs(i.precioFactura - i.precio) > CAMBIO_MIN);
+    const master = (window.state && window.state.master) || [];
+    const cambios = o.items
+      .filter(i => i.recibido > 0 && i.precioFactura > 0)
+      .map(i => {
+        const fila = master.find(r => mismoNombre(r.item, i.item));
+        return fila ? {
+          item: fila.item,
+          actual: Number(fila.value) || 0,
+          // Al céntimo, como la campana: es lo que se va a escribir.
+          factura: Math.round(i.precioFactura * 100) / 100
+        } : null;
+      })
+      .filter(c => c && Math.abs(c.factura - c.actual) > CAMBIO_MIN);
 
     const lineas = o.items.map(i => {
       const mal = i.recibido !== i.pedido;
@@ -663,10 +690,10 @@
             '<div class="m-hprec-h">' + cambios.length +
               (cambios.length === 1 ? ' price is different' : ' prices are different') +
               ' on this invoice</div>' +
-            cambios.map(i =>
-              '<div class="m-hprec-l"><span class="n">' + esc(i.item) + '</span>' +
-                '<span class="v ' + (i.precioFactura > i.precio ? 'up' : 'dn') + '">' +
-                  money(i.precio) + ' → <b>' + money(i.precioFactura) + '</b></span>' +
+            cambios.map(c =>
+              '<div class="m-hprec-l"><span class="n">' + esc(c.item) + '</span>' +
+                '<span class="v ' + (c.factura > c.actual ? 'up' : 'dn') + '">' +
+                  money(c.actual) + ' → <b>' + money(c.factura) + '</b></span>' +
               '</div>').join('') +
             '<button type="button" class="m-hprec-go" id="mhPrec">Update ' +
               cambios.length + (cambios.length === 1 ? ' price' : ' prices') + '</button>' +
@@ -695,13 +722,22 @@
       bp.disabled = true;
       try {
         const r = await P.aplicarPrecios(
-          cambios.map(i => ({ item: i.item, precio: i.precioFactura, antes: i.precio,
+          cambios.map(c => ({ item: c.item, precio: c.factura, antes: c.actual,
                               factura: o.factura, vendor: o.vendor })),
           (n, tot) => { bp.textContent = 'Updating… ' + n + ' of ' + tot; });
         bp.textContent = r.ok + ' updated';
-        if (window.BarStockInventoryRealtime && window.BarStockInventoryRealtime.refresh) {
-          try { window.BarStockInventoryRealtime.refresh(); } catch (e) {}
+        // Se relee el catálogo y se repinta la orden: así la tarjeta se
+        // va en cuanto el catálogo dice lo mismo que la factura, sin
+        // salir y volver a entrar.
+        //
+        // `recargar` y no `refresh`: el módulo exporta `recargar`, y
+        // `refresh` no existe. Como la llamada iba dentro de un `if`, no
+        // fallaba: no hacía nada.
+        const RT = window.BarStockInventoryRealtime;
+        if (RT && RT.recargar) {
+          try { await RT.recargar(); } catch (e) { console.warn('[historial] no se pudo releer el catálogo', e); }
         }
+        if (_orden === o) pintarDetalle(host);
         // Y la campana deja de pedir lo que ya se hizo.
         if (window.BarStockMobileNotif) window.BarStockMobileNotif.refrescar();
       } catch (e) {

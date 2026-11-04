@@ -118,7 +118,7 @@ desde `api/integrations.js`, que es la de Toast y será la de TripleSeat: cada
 integración vive en `lib/` y esa función sólo reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 67 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 68 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -218,7 +218,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 67 suites · ~2170 comprobaciones. Tienen que pasar enteras.
+`npm test` · 68 suites · ~2190 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
