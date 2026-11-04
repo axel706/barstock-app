@@ -174,26 +174,6 @@ function entorno(descartadas, guardado) {
     prueba('y la campana se queda sola a la derecha', /'<span class="m-band-ico"><\/span>'/.test(sh));
   }
 
-  grupo('el fondo de la campana llega hasta abajo del todo');
-  {
-    // Con la app en la pantalla de inicio, el viewport de los
-    // `position: fixed` EXCLUYE la franja del gesto de inicio (está
-    // medido; ver "Las capas se pasan de largo por abajo" en
-    // mobile-app.css). El fondo de la app ya se estiraba 140px por
-    // debajo por eso. El de la campana no: se cortaba encima de la
-    // franja y ahí asomaba, sin desenfocar, el degradado oscuro de las
-    // pestañas. En el iPhone se veía como una barra negra.
-    const cs2 = require('fs').readFileSync(require('path').join(__dirname, '..', 'styles/mobile-app.css'), 'utf8')
-      .replace(/\/\*[\s\S]*?\*\//g, '');
-    const back = (/\.m-nf-back\s*\{([^}]*)\}/.exec(cs2) || [])[1] || '';
-    prueba('se estira por debajo como el fondo de la app', /bottom:\s*-140px/.test(back), back.trim().slice(0, 120));
-    prueba('sin dejar de cubrir arriba y los lados', /inset:\s*0/.test(back) || (/top:\s*0/.test(back) && /left:\s*0/.test(back) && /right:\s*0/.test(back)),
-      back.trim().slice(0, 120));
-    // La vez anterior que se tocó esta franja, el negro acabó en casi
-    // toda la interfaz. Aquí no se pinta nada nuevo.
-    prueba('y el tinte sigue siendo el de siempre', /background:\s*rgba\(4,\s*8,\s*15,\s*0\)/.test(back));
-  }
-
   console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
     '   ·   ' + (ok + mal) + ' comprobaciones');
   process.exit(mal ? 1 : 0);

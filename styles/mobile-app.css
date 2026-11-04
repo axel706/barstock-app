@@ -3505,18 +3505,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * poco la app, no para taparla. */
   .m-nf-back {
     position: fixed; inset: 0; z-index: 9400;
-    /* Hasta 140px por debajo, como la foto y el velo del body (ver "Las
-     * capas se pasan de largo por abajo", más arriba). Con la app en la
-     * pantalla de inicio, `inset: 0` acaba ENCIMA de la franja del gesto
-     * de inicio, y ahí asomaba sin desenfocar el degradado oscuro de
-     * `.m-tabs::before`: con las pestañas desenfocadas encima, una barra
-     * negra pegada al borde. Lo que sobra por debajo queda fuera de la
-     * pantalla y no se ve.
-     *
-     * El intento anterior (esconder `.m-floor` con la campana abierta)
-     * partía de que abajo había un desenfoque de más. No lo arregló y se
-     * deshizo. */
-    bottom: -140px;
     /* El dedo sobre el fondo no mueve nada. */
     touch-action: none;
 
