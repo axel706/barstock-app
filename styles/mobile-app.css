@@ -560,6 +560,53 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     color: #eaf2fb;
   }
 
+  /* ── Cristal ──────────────────────────────────────────────────────
+   *
+   * Los botones de la banda y el escáner, como el "liquid glass" de
+   * iOS hasta donde llega Safari: desenfoque con la saturación subida,
+   * casi sin tinte, un filo de luz arriba y un reflejo curvo. Sin
+   * refracción: eso necesita un filtro SVG dentro de backdrop-filter, y
+   * Safari no lo soporta.
+   *
+   * El reflejo va SÓLO en ::before y el borde de luz con sombras
+   * interiores, no con un ::after. El escáner ya usa su ::after para el
+   * latido de "conteo a medias", y un segundo ::after lo pisaría.
+   *
+   * Los de la banda ya llevaban un desenfoque de 6px que les ponía la
+   * regla general de `button` de app.css. Aquí se sube; no es una capa
+   * nueva en esa zona, que es donde Safari ya dio guerra con los
+   * desenfoques (ver `.m-blur`).
+   *
+   * El aviso rojo (.m-ico-alert) se queda como está: es un aviso, no
+   * un botón de cristal. */
+  /* El escáner lleva el desenfoque en su propia regla (`.m-fab`, más
+   * abajo) y no aquí: una regla compartida le ponía `position: relative`
+   * y sólo funcionaba porque la suya, escrita después, le devolvía el
+   * `absolute`. Dos reglas para el mismo selector es como empiezan los
+   * fallos que nadie encuentra. */
+  body.m-shell #mBand .m-ico:not(.m-ico-alert) {
+    position: relative;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
+            backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.22);
+    color: #fff;
+    box-shadow:
+      inset 0 1.5px 0 rgba(255,255,255,.5),
+      inset 0 -1px 0 rgba(255,255,255,.12),
+      inset 0 0 16px rgba(255,255,255,.08),
+      0 6px 18px rgba(0,0,0,.28);
+  }
+  body.m-shell #mBand .m-ico:not(.m-ico-alert)::before,
+  body.m-shell .m-fab::before {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background: radial-gradient(120% 70% at 30% 0%, rgba(255,255,255,.34), rgba(255,255,255,0) 55%);
+    mix-blend-mode: screen;
+  }
+  /* El icono por encima del reflejo, o el brillo lo lava. */
+  body.m-shell #mBand .m-ico > .ti,
+  body.m-shell .m-fab > .ti { position: relative; z-index: 1; }
+
   /* ── Día y locación ─────────────────────────────────────────────── */
   /* Juntos son el título de la PANTALLA, no el de la app. */
 
@@ -1672,8 +1719,20 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     width: 68px; height: 68px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     border-radius: 50%; font-size: var(--m-figure);
-    background: #22c55e; color: #06301a;
-    box-shadow: 0 0 0 4px rgba(34,197,94,.14), 0 12px 30px rgba(34,197,94,.42);
+    /* Verde de cristal: translúcido para que se vea el fondo, pero con
+     * tinte de sobra para que siga diciendo "toca contar" de lejos. El
+     * icono pasa de verde oscuro a blanco: sobre verde translúcido el
+     * oscuro se perdía. El halo de siempre se queda. */
+    background: rgba(34,197,94,.62); color: #fff;
+    border: 1px solid rgba(255,255,255,.26);
+    -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
+            backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255,255,255,.55),
+      inset 0 -1px 0 rgba(255,255,255,.15),
+      inset 0 0 18px rgba(255,255,255,.12),
+      0 0 0 4px rgba(34,197,94,.12),
+      0 12px 28px rgba(34,197,94,.38);
   }
   body.m-shell .m-fab:active { transform: translateX(-50%) scale(.94); }
 
@@ -1682,10 +1741,17 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * visible y pulsable porque al tocarlo explica por qué — un botón
    * que desaparece deja al usuario buscándolo. */
   body.m-shell .m-fab.off {
-    background: rgba(255,255,255,.10);
-    color: #8fa1b5;
-    box-shadow: none;
-    border: 1px solid rgba(255,255,255,.16);
+    /* Gris de cristal: casi el mismo color de antes, pero ahora
+     * desenfoca lo de detrás y lleva el filo de luz. Sin halo, como
+     * siempre: apagado no invita a nada. */
+    background: rgba(255,255,255,.07);
+    color: #b6c6d8;
+    border: 1px solid rgba(255,255,255,.20);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255,255,255,.45),
+      inset 0 -1px 0 rgba(255,255,255,.10),
+      inset 0 0 16px rgba(255,255,255,.07),
+      0 8px 22px rgba(0,0,0,.28);
   }
 
   /* ── El latido ──────────────────────────────────────────────────
@@ -4037,7 +4103,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * Mismo azul que los enlaces de la app. Clase propia y no `.on`: el
    * aviso rojo de la banda ya usa `.m-ico-alert.on`, y una regla
    * `.m-ico.on` lo habría pintado de azul. */
-  body.m-shell .m-ico.m-tm-on {
+  /* Con #mBand: la regla de cristal de los botones de la banda lleva el
+   * id y, sin él aquí, le ganaba a ésta y el reloj no se encendía. */
+  body.m-shell #mBand .m-ico.m-tm-on {
     background: rgba(125,211,252,.26); border-color: rgba(125,211,252,.58); color: #e0f2fe;
   }
   body.m-shell .m-tm-hero {

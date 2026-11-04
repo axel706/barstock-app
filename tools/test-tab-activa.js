@@ -183,6 +183,37 @@ grupo('y no se rompió nada alrededor');
     (/styles\/mobile-app\.css\?v=\w+/.exec(html) || [])[0]);
 }
 
+
+console.log('\nlos botones de cristal');
+{
+  const limpio = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  const bloque = (re) => (re.exec(limpio) || [])[1] || '';
+  const banda = bloque(/body\.m-shell #mBand \.m-ico:not\(\.m-ico-alert\)\s*\{([^}]*)\}/);
+  const fab = bloque(/body\.m-shell \.m-fab\s*\{([^}]*)\}/);
+  const off = bloque(/body\.m-shell \.m-fab\.off\s*\{([^}]*)\}/);
+  prueba('los de la banda desenfocan lo de detras', /backdrop-filter:\s*blur\(/.test(banda), banda.trim().slice(0, 80));
+  prueba('el escaner tambien', /backdrop-filter:\s*blur\(/.test(fab), fab.trim().slice(0, 80));
+  // Una regla compartida le ponía `relative` y sólo la salvaba el orden.
+  prueba('el escaner sigue colgado de la barra', /position:\s*absolute/.test(fab));
+  // Sólo las reglas del propio botón: cada selector de la lista tiene
+  // que ACABAR en .m-fab (con sus estados), no en algo de dentro.
+  const delBoton = (r) => r.slice(0, r.indexOf('{')).split(',')
+    .some(sel => /\.m-fab(\.[\w-]+|:[\w-]+)*\s*$/.test(sel.trim()));
+  const otras = (limpio.match(/[^{}]*\{[^}]*\}/g) || []).filter(r =>
+    delBoton(r) && !/^\s*body\.m-shell \.m-fab\s*\{/.test(r) && /position:\s*relative/.test(r));
+  prueba('y nadie mas le cambia la posicion', otras.length === 0,
+    otras.map(r => r.slice(0, r.indexOf('{')).trim()).join(' | '));
+  prueba('verde, pero se ve el fondo', /background:\s*rgba\(34,\s*197,\s*94,\s*\.\d+\)/.test(fab), fab.trim().slice(0, 140));
+  prueba('y apagado sigue sin halo verde', !/rgba\(34,\s*197,\s*94/.test(off), off.trim().slice(0, 140));
+  // El latido del conteo a medias vive en el ::after del escáner. El
+  // brillo del cristal va en el ::before para no pisarlo.
+  prueba('el brillo no usa el ::after del latido', !/\.m-fab::after/.test(limpio) && /\.m-fab::before/.test(limpio));
+  // La regla de cristal lleva #mBand; el reloj encendido tiene que
+  // llevarlo también o pierde y no se enciende.
+  prueba('el reloj encendido le gana al cristal', /body\.m-shell #mBand \.m-ico\.m-tm-on\s*\{/.test(limpio));
+  prueba('el aviso rojo no se vuelve de cristal', /:not\(\.m-ico-alert\)/.test(limpio));
+}
+
 console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
   '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
