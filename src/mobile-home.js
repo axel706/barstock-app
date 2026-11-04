@@ -604,9 +604,13 @@
   }
 
   // Pregunta antes, y dice lo que de verdad va a pasar. "¿Reiniciar el
-  // ciclo?" no significa nada; "los 270 vuelven a cero" sí. Luego
-  // resetOnHand vuelve a preguntar por su cuenta, y está bien: es la
-  // única acción de la app sin deshacer.
+  // ciclo?" no significa nada; "los 270 vuelven a cero" sí.
+  //
+  // Se pregunta DOS veces, y está bien: es la única acción de la app sin
+  // deshacer. Pero las dos en la misma caja (`luego`): la segunda era
+  // antes el confirm() del navegador de resetOnHand, que salía encima de
+  // este diálogo. Por eso se le avisa a resetOnHand de que ya está
+  // confirmado.
   async function reiniciar() {
     const n = master().length;
     const ok = await preguntar({
@@ -614,11 +618,18 @@
       cuerpo: 'A new week starts.',
       aviso: 'On hand goes back to zero for all ' + n +
              ' items. This cannot be undone.',
-      ok: 'Restart', cancelar: 'Cancel', peligro: true
+      ok: 'Restart', cancelar: 'Cancel', peligro: true,
+      luego: {
+        titulo: 'Are you sure?',
+        cuerpo: 'This is the last step.',
+        aviso: 'All ' + n + ' items go to 0 on hand, here and in the cloud. ' +
+               'A backup is saved first.',
+        ok: 'Reset to 0'
+      }
     });
     if (!ok) return;
     const W = window.BarStockWeeklyCycle;
-    if (W && W.reiniciar) W.reiniciar();
+    if (W && W.reiniciar) W.reiniciar({ yaConfirmado: true });
   }
 
   // El mismo descarte que la pantalla del ciclo: tira el conteo, deja
@@ -658,8 +669,10 @@
       ok: 'Start over', cancelar: 'Not now'
     });
     if (!ok) return;
+    // Ver `empezarDeNuevo` en weekly-cycle.js: comprueba que lo que se
+    // acaba de prometer ("stays where it is") sea verdad.
     const W = window.BarStockWeeklyCycle;
-    if (W && W.reiniciar) W.reiniciar();
+    if (W && W.empezarDeNuevo) W.empezarDeNuevo();
   }
 
   // El diálogo de la app en vez del `confirm()` del navegador. El

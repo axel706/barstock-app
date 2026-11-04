@@ -85,7 +85,11 @@ function entorno(o) {
     pausado: () => false,
     abandonado: () => false,
     hace: (ms) => Math.round(ms / 60000) + ' min',
-    reiniciar: () => { w.__reiniciado = (w.__reiniciado || 0) + 1; }
+    reiniciar: () => { w.__reiniciado = (w.__reiniciado || 0) + 1; },
+    // "Start over" ya no llama a reiniciar a secas: pasa por
+    // empezarDeNuevo, que comprueba que el on hand de verdad esté a cero
+    // antes de saltarse la segunda pregunta (ver test-reinicio.js).
+    empezarDeNuevo: () => { w.__reiniciado = (w.__reiniciado || 0) + 1; }
   };
 
   // Lo que queda por pedir. Estuvo en la condición y ya no está: se

@@ -275,8 +275,9 @@
         ok: 'Start over', cancelar: 'Not now'
       });
       if (!ok) return;
+      // Ver `empezarDeNuevo` en weekly-cycle.js.
       const w = W();
-      if (w && w.reiniciar) w.reiniciar();
+      if (w && w.empezarDeNuevo) w.empezarDeNuevo();
     };
 
     const dr = host.querySelector('#mcDrop');

@@ -69,7 +69,7 @@
   <link rel="stylesheet" href="styles/scan-count.css?v=scan14">
   <link rel="stylesheet" href="styles/count-panel.css?v=cnt35">
   <link rel="stylesheet" href="styles/stock-in.css?v=si2">
-  <link rel="stylesheet" href="styles/dialog.css?v=dlg1">
+  <link rel="stylesheet" href="styles/dialog.css?v=dlg2">
   <link rel="stylesheet" href="styles/toolbar-pills.css?v=pill5">
   <link rel="stylesheet" href="styles/add-to-order.css?v=ato3">
   <!-- Siempre al final: solo contiene @media (max-width:640px) y necesita
@@ -4779,9 +4779,33 @@ function exportNoMatch(){
   setStatus('No Match CSV exported.');
 }
 
-async function resetOnHand(){
+// `opc.yaConfirmado`: quien llama ya preguntó con el diálogo de la app.
+//
+// En el teléfono, "Restart cycle" preguntaba con su diálogo y luego esta
+// función volvía a preguntar con un `confirm()` del navegador, que salía
+// ENCIMA del diálogo: dos preguntas apiladas, la de arriba blanca y con
+// otra tipografía. Ahora el diálogo de la app hace los dos pasos en la
+// misma caja (ver `luego` en src/dialog.js) y avisa aquí de que ya está.
+//
+// Sin ese aviso, en el teléfono se pregunta con el diálogo de la app (el
+// "Start new cycle" del paso 1 llega aquí sin haber preguntado nada). En
+// el escritorio, la alerta de siempre: ahí no hay diálogo encima y no se
+// cambió.
+async function resetOnHand(opc){
   if(!state.master.length) return;
-  if(!confirm('Reset all ON HAND values to 0?')) return;
+  if(!(opc && opc.yaConfirmado)){
+    const M = window.BarStockMobile, D = window.BarStockDialog;
+    if (M && M.montado && M.montado() && D && D.confirmar) {
+      const n = state.master.length;
+      const ok = await D.confirmar({
+        titulo: 'Reset all on hand to 0?',
+        cuerpo: 'Starts the cycle so the count starts clean.',
+        aviso: 'All ' + n + ' items go to 0 on hand, here and in the cloud. A backup is saved first.',
+        ok: 'Reset to 0', cancelar: 'Cancel', peligro: true
+      });
+      if (!ok) return;
+    } else if(!confirm('Reset all ON HAND values to 0?')) return;
+  }
 
   // El respaldo va despues de confirmar y antes de tocar la nube: no
   // tiene sentido guardar una copia si el usuario cancela.
@@ -5334,11 +5358,11 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/spend-by-category.js?v=sp4"></script>
 <script src="src/settings-home.js?v=sh3"></script>
 <script src="src/inventory-backup.js?v=bk1"></script>
-<script src="src/weekly-cycle.js?v=wc12"></script>
+<script src="src/weekly-cycle.js?v=wc13"></script>
 <script src="src/count-session.js?v=cnt20"></script>
 <script src="src/count-panel.js?v=cp13"></script>
 <script src="src/barcode-fix.js?v=bf5"></script>
-<script src="src/dialog.js?v=dlg1"></script>
+<script src="src/dialog.js?v=dlg2"></script>
 <script src="src/stock-in.js?v=si1"></script>
 <script src="src/add-to-order.js?v=ato3"></script>
 <script src="src/dormant-items.js?v=dorm1"></script>
@@ -5379,9 +5403,9 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
      del conteo de cierre y el tope de ±2 viven aqui y en ningun otro
      sitio. -->
 <script src="src/product-weeks.js?v=pw1"></script>
-<script src="src/mobile-home.js?v=mh35"></script>
+<script src="src/mobile-home.js?v=mh36"></script>
 <script src="src/mobile-search.js?v=m17"></script>
-<script src="src/mobile-cycle.js?v=m8"></script>
+<script src="src/mobile-cycle.js?v=m9"></script>
 <script src="src/mobile-inventory.js?v=m10"></script>
 <script src="src/mobile-orders.js?v=m17"></script>
 <script src="src/mobile-quick.js?v=mqk2"></script>

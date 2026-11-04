@@ -78,3 +78,12 @@ body.light .dlg-aviso { background: rgba(220,38,38,.06); border-color: rgba(220,
   .dlg-modal { width: 100%; border-radius: 20px; }
   .dlg-cancel, .dlg-go { min-height: 52px; }
 }
+
+/* Los puntos de los diálogos de dos pasos (`luego` en dialog.js). Dicen
+   en qué paso vas y que el segundo es el último. Sólo salen cuando hay
+   dos pasos. */
+.dlg-pasos { margin-top: 12px; display: flex; justify-content: center; gap: 6px; }
+.dlg-pasos i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.25); }
+.dlg-pasos i.on { background: #fff; }
+body.light .dlg-pasos i { background: rgba(15,23,42,.2); }
+body.light .dlg-pasos i.on { background: #0f172a; }

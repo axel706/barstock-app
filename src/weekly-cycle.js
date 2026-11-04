@@ -617,10 +617,33 @@
   // Reiniciar desde el telefono. El boton de escritorio lo hace en dos
   // toques (done -> confirm -> step1) porque es una tira estrecha donde
   // no cabe una pregunta; en el telefono hay sitio para preguntarlo de
-  // frente, y resetOnHand ya pide su propia confirmacion.
-  async function reiniciar() {
-    if (typeof resetOnHand === 'function') await resetOnHand();
+  // frente.
+  //
+  // `opc` va tal cual a resetOnHand. Quien llama desde el telefono ya
+  // pregunto con el dialogo de la app y pasa `yaConfirmado`; sin eso,
+  // resetOnHand volvia a preguntar con un confirm() del navegador que
+  // salia encima del dialogo.
+  async function reiniciar(opc) {
+    if (typeof resetOnHand === 'function') await resetOnHand(opc);
     await refresh();
+  }
+
+  // ── "Start over": una semana que no se va a contar ───────────────
+  //
+  // Lo llaman el Home y la pantalla del ciclo, después de su diálogo,
+  // que promete "On hand stays where it is". Por debajo es el mismo
+  // reinicio, que pone TODO el on hand a cero, así que la promesa sólo
+  // es verdad si ya está a cero. Antes lo vigilaba el confirm() del
+  // navegador de resetOnHand, que salía encima del diálogo.
+  //
+  // Se comprueba aquí y no en cada pantalla, para que no haya dos
+  // copias que un día digan cosas distintas: con todo a cero no hay
+  // nada más que preguntar; si algo no lo está, resetOnHand pregunta con
+  // el diálogo de la app, que dice claro que va a cero.
+  async function empezarDeNuevo() {
+    const m = (window.state && window.state.master) || [];
+    const aCero = m.every(r => !(Number(r.onHand) > 0));
+    return reiniciar({ yaConfirmado: aCero });
   }
 
   // ── Tirar el conteo ──────────────────────────────────────────────────
@@ -693,6 +716,6 @@
     pausado, abandonado, quietoDesdeHace, hace, cuantoLleva, fmtDate,
     diasDeCalendario,
     accion: onClick,
-    reiniciar, descartarConteo
+    reiniciar, empezarDeNuevo, descartarConteo
   };
 })();
