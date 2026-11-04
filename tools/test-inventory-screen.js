@@ -200,6 +200,75 @@ console.log('\nse guarda contra el indice del maestro');
     // alguien concluye que le faltan productos.
   }
 
+  console.log('\nla hoja de producto: el diseño B');
+  {
+    const { w, host } = pantalla();
+    const idx = w.state.master.findIndex(r => r.item === 'White Haven Sauv');
+    w.state.master[idx].bottleSizeMl = 750;
+    w.parAdjustments.set('White Haven Sauv||', { suggestedOptimal: 18 });
+    const fila = Array.from(host.querySelectorAll('.m-inv'))
+      .find(e => /White Haven Sauv/.test(e.textContent));
+    fila.click();
+    const hoja = w.document.querySelector('.m-sheet');
+
+    ok('par y precio en dos baldosas', hoja.querySelectorAll('.m-pb > .m-pb-t').length === 2);
+    ok('el par dentro de la suya', !!hoja.querySelector('.m-pb-t #miPar'));
+    ok('y el precio en la otra', !!hoja.querySelector('.m-pb-t #miVal'));
+    // Sin la marca, sheet.js cancela el gesto y la fila no se mueve.
+    ok('los proveedores en una fila que se desliza', !!hoja.querySelector('#miVend.m-pb-fila[data-scroll-x]'));
+    eq('se leen sin gritar', hoja.querySelector('[data-nv="BREAKTHRU"]').textContent.trim(), 'Breakthru');
+    ok('el tamaño de la botella bajo el precio', /Per 750 ml bottle/.test(hoja.textContent));
+    ok('el ancho del precio sigue a lo escrito', /ch$/.test(hoja.querySelector('#miVal').style.width),
+       hoja.querySelector('#miVal').style.width);
+    ok('y sigue sin campo de codigo: todavia no guarda', !hoja.querySelector('#miCode'));
+
+    hoja.querySelector('#miMore').click();
+    eq('el + sube el par', hoja.querySelector('#miPar').value, '17');
+    hoja.querySelector('#miLess').click();
+    hoja.querySelector('#miLess').click();
+    eq('y el − lo baja', hoja.querySelector('#miPar').value, '15');
+    ok('Pour·IQ sale en la baldosa del par', /Pour·IQ: 18/.test(hoja.querySelector('#miIq').textContent));
+    hoja.querySelector('#miIq').click();
+    eq('y usarlo pone su numero', hoja.querySelector('#miPar').value, '18');
+
+    // Se lee "Wine Merchant", pero se guarda lo de siempre: el nombre
+    // del proveedor es una llave en media app.
+    hoja.querySelector('[data-nv="LOOP"]').click();
+    hoja.querySelector('#miVal').value = '13.5';
+    hoja.querySelector('#miSave').click();
+    await new Promise(r => setTimeout(r, 0));
+    const g = w.__guardados[0] || { campos: {} };
+    eq('guarda el proveedor como se llama, no como se lee', g.campos.vendor, 'LOOP');
+    eq('con el par de Pour·IQ', g.campos.suggested, 18);
+    eq('y el precio nuevo', g.campos.value, 13.5);
+  }
+  {
+    const { w, host } = pantalla();
+    const fila = Array.from(host.querySelectorAll('.m-inv'))
+      .find(e => /Barefoot Cabernet/.test(e.textContent));
+    fila.click();
+    const hoja = w.document.querySelector('.m-sheet');
+    ok('sin consejo de Pour·IQ, no hay boton', !hoja.querySelector('#miIq'));
+    ok('sin tamaño, no se inventa uno', !/Per .* ml bottle/.test(hoja.textContent));
+  }
+  {
+    const { w, host } = pantalla();
+    host.querySelector('#miNuevo').click();
+    const hoja = w.document.querySelector('.m-sheet');
+    ok('el alta usa las mismas baldosas', hoja.querySelectorAll('.m-pb > .m-pb-t').length === 2);
+    ok('con el codigo pegado a los proveedores',
+       !!hoja.querySelector('#mnVend + .m-pb-code #mnCode'));
+    eq('y par y precio siguen diciendo que son opcionales',
+       hoja.querySelectorAll('.m-pb-k .m-opt').length, 2);
+  }
+  {
+    // Las dos hojas salen del mismo bloque. Si una vuelve a escribir
+    // sus propios chips, las dos dejan de decir lo mismo.
+    const src = fs.readFileSync(path.join(RAIZ, 'src/mobile-inventory.js'), 'utf8');
+    eq('los chips de proveedor se escriben una sola vez', (src.match(/data-nv="/g) || []).length, 1);
+    ok('y ya no quedan contadores viejos', !/class="m-step"/.test(src));
+  }
+
   console.log('\n' + (falla ? falla + ' FALLO(S)' : 'todo bien') + '   ·   ' + pasa + ' comprobaciones');
   process.exit(falla ? 1 : 0);
 }

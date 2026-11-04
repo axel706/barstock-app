@@ -172,6 +172,34 @@ grupo('y con una hoja abierta, el armazón se aparta');
     cuerpo.indexOf('hayAlguna') + ' vs ' + cuerpo.indexOf('puedeTirar'));
 }
 
+grupo('una fila que se desliza de lado se deja deslizar');
+{
+  // La fila de proveedores de la hoja de producto. La caja no rueda en
+  // vertical, y sin la excepcion la hoja cancelaba el gesto y la fila
+  // se quedaba quieta.
+  const { w, h, caja } = hoja({ alto: 300 });
+  const fila = w.document.createElement('div');
+  fila.setAttribute('data-scroll-x', '');
+  fila.innerHTML = '<button>Loop</button>';
+  caja.appendChild(fila);
+  const chip = fila.querySelector('button');
+
+  const e = toca(chip, 'touchmove', 100);
+  prueba('el gesto en la fila no se cancela', !e.defaultPrevented);
+  const fuera = toca(caja.querySelector('p'), 'touchmove', 100);
+  prueba('fuera de ella, si: la hoja no rueda', fuera.defaultPrevented);
+
+  // Un deslizamiento lateral siempre lleva algo de vertical. Si empieza
+  // en la fila, no puede convertirse en "cerrar la hoja".
+  toca(chip, 'touchstart', 100);
+  toca(chip, 'touchmove', 300);
+  toca(chip, 'touchend', 300);
+  await esperar(300);
+  prueba('y arrastrar desde la fila no cierra', w.__cerrado === 0, String(w.__cerrado));
+  prueba('ni mueve la hoja', caja.style.transform === '', caja.style.transform);
+  void h;
+}
+
 grupo('lo enganchan las cuatro pantallas que abren hojas');
 {
   for (const f of ['mobile-search', 'mobile-inventory', 'mobile-home', 'mobile-history']) {

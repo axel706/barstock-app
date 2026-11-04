@@ -52,7 +52,15 @@
     // en todo lo que no sea la caja, y dejar que la caja desplace lo
     // suyo con `overscroll-behavior: contain` para que al llegar al
     // final no se lo pase a la página.
+    // Lo que lleva `data-scroll-x` se desliza de LADO (la fila de
+    // proveedores de la hoja de producto). Ahí el dedo es suyo: ni se
+    // cancela el gesto, ni se arrastra la hoja. Sin esta excepción,
+    // una caja que no rueda en vertical cancelaba todo y la fila se
+    // quedaba quieta.
+    const deLado = (e) => !!(e.target && e.target.closest && e.target.closest('[data-scroll-x]'));
+
     const noArrastres = (e) => {
+      if (deLado(e)) return;
       if (!caja.contains(e.target)) { e.preventDefault(); return; }
       // Dentro de la caja: sólo si de verdad puede desplazarse.
       if (caja.scrollHeight <= caja.clientHeight) e.preventDefault();
@@ -68,6 +76,7 @@
 
     const empezar = (e) => {
       if (op.quieta && op.quieta()) return;
+      if (deLado(e)) return;
       if (caja.scrollTop > 0) return;
       const t = e.touches ? e.touches[0] : e;
       y0 = t.clientY; t0 = Date.now(); dy = 0; activo = true;
