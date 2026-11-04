@@ -3592,6 +3592,24 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     position: fixed; left: 0; right: 0; width: 100%;
   }
 
+  /* ── La barra negra al fondo, con la campana abierta ───────────────
+   *
+   * Con el panel abierto, abajo quedaban TRES desenfoques apilados: el
+   * suelo (`.m-floor`, seis capas), la pastilla de cristal de las
+   * pestañas y el fondo del panel (`.m-nf-back`). Arriba, dos: la
+   * escalera de la banda y el fondo del panel. En el iPhone arriba se
+   * veía bien y abajo salía una franja negra que tapaba las pestañas.
+   * Es la misma familia de fallo de WebKit que se cuenta en `.m-blur`.
+   *
+   * Mientras el panel está abierto el suelo no hace falta: todo lo de
+   * detrás ya está desenfocado por el fondo del panel. Se esconde y
+   * abajo quedan dos capas, como arriba.
+   *
+   * SÓLO bajo `body.m-nf-abierto`, y sin pintar nada. La vez anterior
+   * que se intentó arreglar esta franja, el negro acabó en casi toda la
+   * interfaz. Al cerrar la campana, el suelo vuelve tal cual. */
+  body.m-nf-abierto .m-floor { display: none; }
+
   .m-nf-lab {
     font-size: var(--m-eyebrow); font-weight: 800; color: #c3d2e2;
     letter-spacing: .1em; text-transform: uppercase; margin: 8px 2px 8px;
