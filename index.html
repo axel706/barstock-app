@@ -43,6 +43,9 @@
 <script src="src/logger.js"></script>
 <script src="src/order-validator.js"></script>
 <script src="src/backgrounds.js?v=bg1"></script>
+<!-- Aplicar y guardar el fondo. Después del catálogo y antes del
+     selector del escritorio, que lo usa. -->
+<script src="src/fondo.js?v=fd1"></script>
 <script src="src/login-background.js?v=lb4"></script>
 
   <link rel="stylesheet" href="styles/theme.css?v=th4">
@@ -6123,79 +6126,18 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     { id: 'default',        label: 'Default',            src: 'assets/bar-background.jpg' }
   ]);
 
-  const STORAGE_KEY = 'bs_background';
-
-  function getLocationKey() {
-    const loc = (localStorage.getItem('barstock.activeLocationName') || window.BARSTOCK_CONFIG?.LOCATION_NAME || 'default').replace(/\s+/g,'_').toLowerCase();
-    return STORAGE_KEY + '_' + loc;
-  }
-
-  function applyBackground(src) {
-    const layer = document.getElementById('bgLayer');
-    if (!layer) return;
-    if (!src || src === 'default') {
-      layer.style.backgroundImage = '';
-      layer.classList.remove('active');
-      document.body.classList.remove('has-custom-bg');
-    } else {
-      layer.style.backgroundImage = `url('${src}')`;
-      layer.classList.add('active');
-      document.body.classList.add('has-custom-bg');
-    }
-  }
-
-  async function getLocationId() {
-    try {
-      const client = window.BarStockSupabase?.getClient();
-      if (!client) return null;
-      const locName = localStorage.getItem('barstock.activeLocationName') || window.BARSTOCK_CONFIG?.LOCATION_NAME;
-      if (!locName) return null;
-      const { data } = await client.from('locations').select('id').eq('name', locName).eq('account_id', window.BARSTOCK_CONFIG?.ACCOUNT_ID || 'wjm-hospitality').single();
-      return data?.id || null;
-    } catch(e) { return null; }
-  }
-
-  async function loadSavedBackground() {
-    // Intentar cargar desde Supabase primero
-    try {
-      const client = window.BarStockSupabase?.getClient();
-      const locationId = await getLocationId();
-      if (client && locationId) {
-        const { data } = await client.from('locations').select('background_src').eq('id', locationId).single();
-        if (data?.background_src) {
-          localStorage.setItem(getLocationKey(), data.background_src);
-          applyBackground(data.background_src);
-          return;
-        }
-      }
-    } catch(e) {}
-    // Fallback a localStorage
-    const saved = localStorage.getItem(getLocationKey());
-    if (saved) applyBackground(saved);
-  }
-
-  async function saveBackground(src) {
-    if (!src || src === 'default') {
-      localStorage.removeItem(getLocationKey());
-      applyBackground(null);
-    } else {
-      localStorage.setItem(getLocationKey(), src);
-      applyBackground(src);
-    }
-    // Sincronizar con Supabase
-    try {
-      const client = window.BarStockSupabase?.getClient();
-      const locationId = await getLocationId();
-      if (client && locationId) {
-        await client.from('locations').update({ background_src: src || null }).eq('id', locationId);
-      }
-    } catch(e) { console.warn('Could not sync background to Supabase:', e); }
-  }
+  // Aplicar, cargar y guardar viven en `src/fondo.js` desde que el
+  // teléfono también necesita aplicar un fondo: aquí dentro sólo podía
+  // usarlas este selector, y la alternativa era copiarlas. Se mudaron tal
+  // cual; los nombres de aquí son alias para no tocar lo de abajo.
+  const F = window.BarStockFondo;
+  const loadSavedBackground = () => F.cargar();
+  const saveBackground = (src) => F.guardar(src);
 
   function renderBgGrid() {
     const grid = document.getElementById('bgGrid');
     if (!grid) return;
-    const current = localStorage.getItem(getLocationKey()) || '';
+    const current = F.actual();
     grid.innerHTML = BACKGROUNDS.map(bg => `
       <div class="bg-thumb ${current === bg.src ? 'bg-thumb-active' : ''}" data-src="${bg.src}" style="
         background-image:url('${bg.src}');
