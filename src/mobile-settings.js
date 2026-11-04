@@ -18,7 +18,7 @@
   // precios, MarginEdge— son tablas anchas. Se declara que son de
   // escritorio en vez de llevar a algo inservible.
 
-  let _panel = null;      // null | 'sender' | 'emails' | 'delivery' | 'zones' | 'look'
+  let _panel = null;      // null | 'sender' | 'emails' | 'delivery' | 'zones' | 'look' | 'size' | 'fondo'
   let _vendor = null;     // proveedor abierto dentro de delivery
   let _valores = {};      // lo que se enseña bajo cada entrada del menú
 
@@ -42,7 +42,8 @@
     ]},
     { t: 'Appearance', items: [
       { id: 'look', ico: 'ti-typography', n: 'Typeface',  d: 'The app font' },
-      { id: 'size', ico: 'ti-text-size',  n: 'Text size', d: 'Default' }
+      { id: 'size', ico: 'ti-text-size',  n: 'Text size', d: 'Default' },
+      { id: 'fondo', ico: 'ti-photo',     n: 'Background', d: 'Same as computer' }
     ]}
   ];
 
@@ -398,6 +399,67 @@
   // con el tamaño de fábrica y daría un salto al entrar aquí.
   aplicarTamano(tamanoActual());
 
+  // ── El fondo del teléfono ────────────────────────────────────────────
+  //
+  // Al revés que el tipo de letra y el tamaño, éste NO es de este
+  // teléfono: es de la locación, y lo ven todos los teléfonos de ella
+  // (locations.mobile_background_src). Axel lo eligió así. Por eso el
+  // texto de arriba lo dice, para que quien lo cambia sepa que no es
+  // sólo el suyo. El escritorio sigue con su fondo.
+  //
+  // Aplicar y guardar viven en src/fondo.js; aquí sólo se elige.
+
+  const fondos = () => (window.BarStockBackgrounds && window.BarStockBackgrounds.listaMovil)
+    ? window.BarStockBackgrounds.listaMovil() : [];
+
+  function nombreFondo() {
+    const F = window.BarStockFondo;
+    const src = F && F.actualMovil ? F.actualMovil() : '';
+    const f = src && fondos().find(x => x.src === src);
+    return f ? f.label : 'Same as computer';
+  }
+
+  let _errFondo = '';
+
+  function pintarFondo(host) {
+    const F = window.BarStockFondo;
+    const act = F && F.actualMovil ? F.actualMovil() : '';
+    const loc = (window.BARSTOCK_CONFIG || {}).LOCATION_NAME || 'this location';
+    // "Same as computer" enseña el fondo que tiene el escritorio, para que
+    // se vea qué es lo que se elige al tocarlo.
+    const delPc = F && F.actual ? F.actual() : '';
+    const mini = (src) => src ? ' style="background-image:url(\'' + esc(src) + '\')"' : '';
+
+    host.innerHTML = cabecera(host, 'Background',
+      'Every phone at ' + loc + ' sees it. The computer keeps its own.') +
+      (_errFondo ? '<div class="m-set-err">Could not save it. ' + esc(_errFondo) + '</div>' : '') +
+      '<div class="m-set-bgs">' +
+        '<button type="button" class="m-set-bg m-set-bg-pc' + (!act ? ' on' : '') + '" data-bg=""' + mini(delPc) + '>' +
+          (!act ? '<i class="ti ti-check" aria-hidden="true"></i>' : '') +
+          '<span>Same as computer</span></button>' +
+        fondos().map(f =>
+          '<button type="button" class="m-set-bg' + (f.src === act ? ' on' : '') + '"' +
+            ' data-bg="' + esc(f.src) + '"' + mini(f.src) + '>' +
+            (f.src === act ? '<i class="ti ti-check" aria-hidden="true"></i>' : '') +
+            '<span>' + esc(f.label) + '</span></button>').join('') +
+      '</div>';
+
+    volver(host);
+    host.querySelectorAll('[data-bg]').forEach(b => {
+      b.onclick = async () => {
+        if (!F || !F.guardarMovil) return;
+        host.querySelectorAll('[data-bg]').forEach(x => { x.disabled = true; });
+        const r = await F.guardarMovil(b.dataset.bg || null);
+        // Si no se pudo guardar, se dice lo que contestó la nube, tal
+        // cual: el fondo ya se ve en este teléfono, pero los demás no lo
+        // verán, y eso es lo que hay que saber.
+        _errFondo = r && r.ok ? '' : ((r && r.error) || 'Unknown error.');
+        _valores.fondo = nombreFondo();
+        pintarFondo(host);
+      };
+    });
+  }
+
   // ── Entrada ──────────────────────────────────────────────────────────
 
   function pintar(host) {
@@ -409,6 +471,7 @@
     if (_panel === 'zones')    return pintarZonas(host);
     if (_panel === 'look')     return pintarLook(host);
     if (_panel === 'size')     return pintarTamano(host);
+    if (_panel === 'fondo')    { _errFondo = ''; return pintarFondo(host); }
     return pintarMenu(host);
   }
 
@@ -443,6 +506,7 @@
     const n = vendors().length;
     if (n) _valores.delivery = n + ' vendor' + (n === 1 ? '' : 's') + ', each its own';
     _valores.size = (TAMANOS.find(t => t.id === tamanoActual()) || {}).n || '';
+    _valores.fondo = nombreFondo();
 
     if (_panel === null) pintarMenu(host);
   }

@@ -3529,6 +3529,40 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     color: #9fb0c4; margin-top: 5px; }
   .m-set-font-n small { font-weight: 400; color: #7b8a9e; margin-left: 6px; }
 
+  /* El fondo del teléfono: una rejilla de miniaturas altas, con la forma
+   * de la pantalla, para que se vea el trozo de imagen que de verdad
+   * queda detrás y no la foto entera. */
+  .m-set-bgs { margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  body.m-shell .m-set-bg {
+    position: relative; display: block; width: 100%; aspect-ratio: 9 / 15;
+    overflow: hidden; cursor: pointer; text-align: left;
+    background: linear-gradient(180deg, #0b1220, #111827) center / cover no-repeat;
+    border: 2px solid rgba(255,255,255,.10);
+  }
+  /* El fondo de cada miniatura lo pone el style del propio botón; el
+   * degradado de arriba es para "Same as computer" sin fondo propio. */
+  body.m-shell .m-set-bg[style] { background-size: cover; background-position: center; }
+  body.m-shell .m-set-bg.on { border-color: #7dd3fc; }
+  .m-set-bg > span {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 9px 7px;
+    font-size: var(--m-meta); font-weight: 700; color: #fff;
+    background: linear-gradient(transparent, rgba(0,0,0,.72));
+  }
+  .m-set-bg > .ti {
+    position: absolute; top: 7px; right: 7px; width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--m-small); color: #04283d; background: #7dd3fc;
+  }
+  body.m-shell .m-set-bg:disabled { opacity: .6; }
+
+  /* Si no se pudo guardar en la nube, se dice tal cual. El fondo ya se
+   * ve en este teléfono; lo que falta es que lo vean los demás. */
+  .m-set-err {
+    margin-top: 12px; padding: 10px 12px; border-radius: 11px;
+    font-size: var(--m-small); font-weight: 700; color: #fecaca;
+    background: rgba(239,68,68,.16); border: 1px solid rgba(239,68,68,.34);
+  }
+
   /* Radios, contra el 999px de app.css */
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-set-f input { border-radius: 13px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-set-save { border-radius: 999px !important; }
@@ -3538,6 +3572,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-set-add input { border-radius: 13px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-set-add button { border-radius: 13px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-set-font { border-radius: 15px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-set-bg { border-radius: 16px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-set-bg > .ti { border-radius: 50% !important; }
 
   /* De dónde vino el precio de la ficha. Pequeño y debajo: es
    * procedencia, no un dato que se mire primero. */

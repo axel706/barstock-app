@@ -80,9 +80,10 @@ function entorno(guardado) {
   grupo('el menú');
   const items = [...host.querySelectorAll('.m-item-t')]
     .map(e => e.firstChild.textContent.trim());
-  prueba('seis entradas', items.length === 6, items.join(', '));
+  // Siete desde el fondo del teléfono: Background, en Appearance.
+  prueba('siete entradas', items.length === 7, items.join(', '));
   prueba('y son las acordadas',
-    items.join(',') === 'Sender,Emails,Delivery,Zones,Typeface,Text size',
+    items.join(',') === 'Sender,Emails,Delivery,Zones,Typeface,Text size,Background',
     items.join(','));
   prueba('cada una enseña su valor', /Axel Torres/.test(host.textContent) &&
     /2 recipients/.test(host.textContent));

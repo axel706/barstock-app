@@ -41,10 +41,39 @@
     { id: 'neon-fade',    label: 'Neon fade',         src: 'assets/backgrounds/neon-fade.jpg' }
   ];
 
+  // ── Sólo para el teléfono ──────────────────────────────────────────
+  //
+  // Dibujos en vertical que trajo Axel para el fondo del teléfono. No
+  // sirven en una pantalla apaisada, así que NO están en `lista()`: el
+  // selector del escritorio y la pantalla de entrada siguen viendo
+  // exactamente lo de antes.
+  //
+  // Reducidas a 1000 px de ancho y por debajo del tope de peso. Detrás
+  // del velo del teléfono la reducción no se nota, y se cargan con la
+  // app abierta en el móvil.
+  const SOLO_MOVIL = [
+    { id: 'movil-neon-doodles', label: 'Neon Doodles', src: 'assets/backgrounds/movil-neon-doodles.jpg' },
+    { id: 'movil-pixel-bar',    label: 'Pixel Bar',    src: 'assets/backgrounds/movil-pixel-bar.jpg' },
+    { id: 'movil-chalk',        label: 'Chalk',        src: 'assets/backgrounds/movil-chalk.jpg' },
+    { id: 'movil-groovy',       label: 'Groovy',       src: 'assets/backgrounds/movil-groovy.jpg' },
+    { id: 'movil-watercolor',   label: 'Watercolor',   src: 'assets/backgrounds/movil-watercolor.jpg' },
+    { id: 'movil-happy-hour',   label: 'Happy Hour',   src: 'assets/backgrounds/movil-happy-hour.jpg' },
+    { id: 'movil-last-call',    label: 'Last Call',    src: 'assets/backgrounds/movil-last-call.jpg' }
+  ];
+
+  // Las del catálogo general que tienen sentido en vertical. Fuera las
+  // tres versiones apaisadas del patrón: en un teléfono se recortan y se
+  // ven igual que "Neon".
+  const APAISADAS = ['neon-wide', 'neon-plum', 'neon-fade'];
+
   // Se devuelve una COPIA. Quien la use puede añadirle su "Default" o su
   // "Upload" sin ensuciar el catálogo del otro.
   window.BarStockBackgrounds = {
     lista: () => IMAGENES.map(x => Object.assign({}, x)),
+    // Lo que se ofrece en el teléfono: primero las suyas, luego las
+    // generales que funcionan en vertical.
+    listaMovil: () => SOLO_MOVIL.concat(IMAGENES.filter(x => !APAISADAS.includes(x.id)))
+      .map(x => Object.assign({}, x)),
     tiene: (src) => IMAGENES.some(x => x.src === src)
   };
 })();

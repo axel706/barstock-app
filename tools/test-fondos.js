@@ -70,6 +70,38 @@ console.log('\ncada imagen existe y no pesa de mas');
   });
 }
 
+console.log('\nlos del telefono');
+{
+  // Siete dibujos en vertical que trajo Axel, sólo para el teléfono.
+  const movil = w.BarStockBackgrounds.listaMovil();
+  const soloMovil = movil.filter(b => /^movil-/.test(b.id));
+  ok('estan las siete', soloMovil.length === 7, soloMovil.map(b => b.id).join(','));
+  ok('y van primero', movil.slice(0, 7).every(b => /^movil-/.test(b.id)));
+  // El escritorio y la pantalla de entrada leen `lista()`: verticales en
+  // un monitor apaisado se recortarían por la mitad.
+  ok('no salen en el escritorio ni en la entrada', !lista.some(b => /^movil-/.test(b.id)));
+  // Las apaisadas del patrón, recortadas en vertical, se ven como "Neon".
+  ok('sin las apaisadas del patron', !movil.some(b => ['neon-wide', 'neon-plum', 'neon-fade'].includes(b.id)));
+  ok('pero si las fotos de las locaciones y Neon',
+    ['wills-bills', 'jockey-bar', 'crown-dining', 'crown-lounge', 'neon-tall', 'midnight']
+      .every(id => movil.some(b => b.id === id)));
+  const ids = movil.map(b => b.id);
+  ok('sin repetidas', new Set(ids).size === ids.length);
+
+  const TOPE_KB = 400;
+  soloMovil.forEach(b => {
+    const f = path.join(RAIZ, b.src);
+    const hay = fs.existsSync(f);
+    ok(b.id + ' esta en el disco', hay, b.src);
+    if (hay) {
+      const kb = Math.round(fs.statSync(f).size / 1024);
+      ok(b.id + ' pesa ' + kb + ' KB', kb <= TOPE_KB, 'tope ' + TOPE_KB + ' KB');
+    }
+  });
+  const raros = soloMovil.filter(b => /[áéíóúñ¿¡]/i.test(b.label));
+  ok('con nombre en ingles', raros.length === 0, raros.map(b => b.label).join(','));
+}
+
 console.log('\nla interfaz va en ingles');
 {
   // "Medianoche" estuvo meses en el selector de la entrada. Es la unica
