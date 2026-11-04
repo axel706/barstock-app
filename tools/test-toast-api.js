@@ -181,6 +181,26 @@ grupo('el login va como lo pide Toast');
   // Lo que dijo Toast, tal cual: nada de adivinar una causa.
   prueba('con lo que dijo Toast', /Invalid client credentials/.test(JSON.stringify(r.body)));
   prueba('sin el secreto', !JSON.stringify(r.body).includes(SECRETO));
+  const rev = r.body.toast && r.body.toast.revision;
+  prueba('dice cuanto mide cada valor', rev && rev.TOAST_CLIENT_ID.largo === 9 &&
+    rev.TOAST_CLIENT_SECRET.largo === SECRETO.length, JSON.stringify(rev));
+  prueba('ni el id del cliente sale', !JSON.stringify(r.body).includes('cliente-1'));
+}
+{
+  // Un salto de línea pegado al copiar de Toast Web. Toast lo rechaza;
+  // la función lo limpia antes de mandarlo y además dice que estaba.
+  entorno({ TOAST_CLIENT_ID: ' cliente-1\n', TOAST_CLIENT_SECRET: SECRETO + ' ' });
+  respuestas = { '/authentication/': LOGIN_OK };
+  await llamar({ accion: 'ping' });
+  const cuerpo = JSON.parse((peticiones[0] || {}).cuerpo || '{}');
+  prueba('limpia los espacios del id antes de mandarlo', cuerpo.clientId === 'cliente-1', JSON.stringify(cuerpo.clientId));
+  prueba('y los del secreto', cuerpo.clientSecret === SECRETO);
+
+  respuestas = { '/authentication/': { status: 401, body: { error_description: 'Unauthorized' } } };
+  const r = await llamar({ accion: 'ping' });
+  const rev = r.body.toast.revision;
+  prueba('y si falla, dice que los habia', rev.TOAST_CLIENT_ID.espaciosAlrededor === true &&
+    rev.TOAST_CLIENT_SECRET.espaciosAlrededor === true, JSON.stringify(rev));
 }
 
 grupo('el restaurante va en su cabecera');
