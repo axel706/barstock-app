@@ -62,8 +62,16 @@ grupo('los numeros cuadran con el repo');
   prueba('las funciones de api tambien',
     cifraAntesDe('funciones en `api/`') === api,
     cifraAntesDe('funciones en `api/`') + ' vs ' + api);
-  // El tope de Vercel. Si se llega a 12, esto avisa antes que Vercel.
-  prueba('y todavia caben', api < 12, api + ' de 12');
+  // El tope de Vercel son 12: la doce se despliega, la trece no. Antes
+  // esto exigía menos de 12 para avisar al llegar al tope, y avisó: la
+  // doce es api/integrations.js, que ocupó la ranura que se dejó libre a
+  // propósito. Ahora exige no pasarse, y que el doc diga que está lleno
+  // para que la próxima función no se descubra en el despliegue.
+  prueba('y no se pasan del tope', api <= 12, api + ' de 12');
+  if (api === 12) {
+    prueba('y el doc dice que el tope esta lleno', /El tope del plan son 12[^\n]*lleno/.test(md),
+      'si son 12, CLAUDE.md tiene que decir que no queda ranura');
+  }
 
   const src = fs.readdirSync(path.join(RAIZ, 'src')).filter(f => f.endsWith('.js')).length;
   const dice = (md.match(/~(\d+) m[oó]dulos/) || [])[1];

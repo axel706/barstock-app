@@ -57,10 +57,17 @@ grupo('el techo de doce funciones');
   const api = fs.readdirSync(path.join(RAIZ, 'api')).filter(f => f.endsWith('.js'));
   prueba('no pasa de 12', api.length <= 12, api.length + ' funciones');
 
-  // Esto es lo que el merge vino a conseguir. Si vuelve a 12, alguien
-  // añadió algo y el siguiente despliegue con una integración revienta.
-  prueba('queda al menos una libre', api.length <= 11,
-    api.length + ' de 12 — sin hueco para api/oauth.js');
+  // Esto es lo que el merge vino a conseguir: una ranura para la función
+  // de integraciones (Toast y TripleSeat juntas). Primero se pidió que
+  // quedara libre; ahora que está ocupada, se pide que la ocupe ESA y
+  // nada más. Si la doce es cualquier otra cosa, la primera integración
+  // que llegue no tendrá dónde desplegarse.
+  prueba('la doce es la de integraciones, o queda libre',
+    api.length <= 11 || api.includes('integrations.js'),
+    api.length + ' de 12 — y ninguna es api/integrations.js');
+  prueba('y ninguna integracion se lleva una ranura propia',
+    !api.some(f => /^(toast|tripleseat|oauth)\.js$/i.test(f)),
+    api.filter(f => /^(toast|tripleseat|oauth)\.js$/i.test(f)).join(', '));
 
   prueba('api/contact.js ya no está', !api.includes('contact.js'),
     'sigue en api/, la ranura no se liberó');
