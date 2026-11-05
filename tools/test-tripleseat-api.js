@@ -24,6 +24,9 @@
  *      si hay 40 o menos distintos, y con 50 eventos la descripción
  *      tenía ~35: salió entera, con nombres de clientes y lo que
  *      escribieron, en algo que se dijo que se podía mandar tal cual.
+ *  11. El tipo de bar sale de la línea `Drinks:` que escribe el
+ *      planificador online, y SÓLO de ésa: un cliente que escribe
+ *      "Drinks:" en su mensaje no cuenta como paquete.
  *
  *   node tools/test-tripleseat-api.js
  */
@@ -287,6 +290,40 @@ grupo('el texto libre no sale en el resumen');
   const r = await llamar({ accion: 'locations' });
   prueba('el nombre de un restaurante si sale: no es de un cliente',
     r.body.campos && r.body.campos.name && r.body.campos.name[' The Crown Tavern - Concord'] === 1, JSON.stringify(r.body.campos));
+}
+
+grupo('el tipo de bar, de la linea Drinks del planificador');
+{
+  entorno();
+  const plan = (drinks) => 'Date: 2026-11-07, 12:00 to 14:00\r\nGuests: 30\r\nRoom: The Saratoga Room\r\n' +
+    (drinks ? 'Drinks: ' + drinks + '\r\n' : '') + 'Guest\'s notes: Colleen here, call me\r\n\r\nOnline planner ref: abc-123';
+  respuestas = { '/oauth2/token': LOGIN_OK, '/v1/events/search.json': { status: 200, body: { results: [
+    { event: { id: 1, status: 'DEFINITE', description: plan('Consumption bar; Non-Alcoholic Beverage Package') } },
+    { event: { id: 2, status: 'DEFINITE', description: plan('Open bar 3 hours') } },
+    { event: { id: 3, status: 'LOST', description: plan('Consumption bar') } },
+    { event: { id: 4, status: 'DEFINITE', description: plan(null) } },
+    { event: { id: 5, status: 'DEFINITE', description: 'Hi! Drinks: we want an open bar for my sister Maria' } },
+    { event: { id: 6, status: 'DEFINITE', description: '' } },
+    { event: { id: 7, status: 'DEFINITE', description: plan('A package name that a person could have typed by hand and is way too long to be a package') } }
+  ] } } };
+  const r = await llamar({ accion: 'search' });
+  const b = r.body.bebidas || {};
+  prueba('cuenta cada paquete', b.paquetes && b.paquetes['Consumption bar'] === 2 &&
+    b.paquetes['Non-Alcoholic Beverage Package'] === 1 && b.paquetes['Open bar 3 hours'] === 1, JSON.stringify(b));
+  prueba('y tambien solo los confirmados', b.confirmados && b.confirmados['Consumption bar'] === 1 &&
+    !('Consumption bar' in b) , JSON.stringify(b.confirmados));
+  prueba('cuantos eventos traen la linea y cuantos no', b.conLinea === 4 && b.delPlanificadorSinLinea === 1 && b.sinPlanificador === 2,
+    JSON.stringify(b));
+  const txt = JSON.stringify(b);
+  prueba('lo que escribe un cliente no cuenta', !/Maria|sister/.test(txt), txt);
+  prueba('ni el resto de la descripcion', !/Colleen|Saratoga|abc-123/.test(txt), txt);
+  prueba('un paquete demasiado largo no se enseña', !/typed by hand/.test(txt) && (b.paquetes || {})['(texto largo)'] === 1, txt);
+}
+{
+  entorno();
+  respuestas = { '/oauth2/token': LOGIN_OK, '/v1/locations.json': { status: 200, body: [{ location: { id: 1, name: 'X' } }] } };
+  const r = await llamar({ accion: 'locations' });
+  prueba('en locations no hay resumen de bar', r.body.bebidas === undefined, JSON.stringify(r.body.bebidas));
 }
 
 grupo('lo que viene alrededor de la lista no se pierde');

@@ -122,7 +122,7 @@ grupo('cada boton pregunta con la sesion');
   const w = entorno(c => c.action === 'search'
     ? { ok: true, accion: 'search', ruta: '/v1/events/search.json', registros: 50, envoltorio: { total_pages: 2 },
         intentos: [{ ruta: '/v1/events/search.json', status: 200, registros: 50 }],
-        campos: { status: { DEFINITE: 38 } }, forma: { contact: { tipo: 'objeto', veces: 50, claves: ['email'] } },
+        campos: { status: { DEFINITE: 38 } }, bebidas: { conLinea: 9, paquetes: { 'Consumption bar': 9 } }, forma: { contact: { tipo: 'objeto', veces: 50, claves: ['email'] } },
         muestra: JSON.stringify([{ id: 4321, contact: { first_name: 'Clienta' } }]) }
     : { ok: true, accion: c.action, registros: 0 });
   abrir(w);
@@ -136,6 +136,7 @@ grupo('cada boton pregunta con la sesion');
   const txt = salida(w);
   prueba('se ve la ruta, los registros y las paginas', /search\.json/.test(txt) && /50/.test(txt) && /2 pages/.test(txt), txt.slice(0, 200));
   prueba('y los valores por campo', /DEFINITE/.test(txt));
+  prueba('y el resumen del bar', /Bar packages/.test(txt) && /Consumption bar/.test(txt), txt.slice(0, 300));
   const crudo = w.document.querySelector('#tsSalida details');
   prueba('los ejemplos crudos van plegados', crudo && !crudo.open && /Clienta/.test(crudo.textContent));
   const id = w.document.getElementById('tsEvento');

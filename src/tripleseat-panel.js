@@ -119,6 +119,7 @@
       '<div class="ts-bien">' + esc(action) + ' · ok' + (linea.length ? ' · ' + esc(linea.join(' · ')) : '') + '</div>' +
       (res.ruta ? '<div class="small muted">Route: <b>' + esc(res.ruta) + '</b></div>' : '') +
       (intentos(res) ? '<div class="small muted ts-rutas">' + esc(intentos(res)) + '</div>' : '') +
+      bloque('Bar packages · from the online planner', res.bebidas) +
       bloque('Values per field', res.campos) +
       bloque('Nested fields · names only', res.forma) +
       bloque('Around the list', res.envoltorio) +
