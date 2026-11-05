@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 72 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 73 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -127,6 +127,16 @@ Las pruebas son 72 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 Cada `<script>` y cada `<link>` de `index.html` lleva `?v=algo`. **Si tocas
 un `.js` o un `.css`, súbele la versión.** Si no, el navegador de su
 teléfono sirve el viejo y parece que tu cambio no hizo nada.
+
+### El sello del build
+
+`index.html` lleva un `BUILD-AAAAMMDD-HHMMSS` (`#buildBadge`, hora de Nueva
+York) con el que Axel sabe qué versión está viendo. **Es texto fijo: se
+pone a mano en cada commit que cambia la app.** Durante días no se tocó y
+producción enseñaba un build del 3 de noviembre con cambios de días
+después. En el teléfono está escondido (`app.css`); sólo se ve en el
+escritorio. `tools/test-sello.js` falla si el último commit que tocó la
+app es más de dos horas más nuevo que el sello.
 
 ### El orden de carga
 
@@ -219,7 +229,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 72 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 73 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
