@@ -114,11 +114,12 @@ Frontend estático, sin build. `index.html` es un monolito y hay ~95 módulos
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
 12 funciones en `api/` sobre Vercel. **El tope del plan son 12, y está lleno**
-desde `api/integrations.js`, que es la de Toast y será la de TripleSeat: cada
-integración vive en `lib/` y esa función sólo reparte. Antes de
+desde `api/integrations.js`, que es la de Toast y TripleSeat: cada
+integración vive en `lib/`, y esa función comprueba la sesión una vez y
+reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 71 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 72 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -218,7 +219,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 71 suites · ~2300 comprobaciones. Tienen que pasar enteras.
+`npm test` · 72 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -242,6 +243,8 @@ En `tools/`, sólo lectura, se pegan en la consola del navegador:
 - `existe.js` — si un producto está en la nube
 - `toast.js` → `await bsToast('ping')` — qué contesta Toast (`ping`,
   `restaurant`, `menu`, `orders`), a través de `api/integrations.js`
+- `tripleseat.js` → `await bsTripleseat('ping')` — qué contesta TripleSeat
+  (`ping`, `locations`, `events`, `bookings`), por la misma función
 - `ensayo-auto.js` → `await bsEnsayo()` — qué enlazaría el automático sin
   enlazarlo
 

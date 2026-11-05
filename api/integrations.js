@@ -5,7 +5,7 @@
 // función que atiende a las integraciones externas. Cada una vive en
 // lib/ (que no cuenta) y aquí se reparte por `provider`.
 //
-// Hoy: Toast (lib/toast.js). TripleSeat entra aquí también. Si un día
+// Hoy: Toast (lib/toast.js) y TripleSeat (lib/tripleseat.js). Si un día
 // una integración pide su propio api/*.js, la trece no despliega: tiene
 // que entrar aquí.
 //
@@ -23,8 +23,9 @@
 
 const { sesion } = require('../lib/integracion');
 const toast = require('../lib/toast');
+const tripleseat = require('../lib/tripleseat');
 
-const PROVEEDORES = { toast };
+const PROVEEDORES = { toast, tripleseat };
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
