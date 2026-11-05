@@ -81,7 +81,7 @@
   // mañana no entre en lo copiado sin que nadie lo decida.
   let seguro = null;
 
-  const SEGUROS_OK = ['accion', 'ruta', 'registros', 'intentos', 'envoltorio', 'cabeceras', 'bebidas', 'personalizados', 'campos', 'forma',
+  const SEGUROS_OK = ['accion', 'ruta', 'registros', 'intentos', 'envoltorio', 'cabeceras', 'bebidas', 'personalizados', 'eventosConBebida', 'campos', 'forma',
     'permisos', 'expiraEnSegundos'];
   const SEGUROS_MAL = ['accion', 'paso', 'error', 'intentos', 'tripleseat', 'diagnostico'];
 
@@ -186,11 +186,14 @@
           bloque('', legible(ejemplos)) + '</details>'
         : '');
 
-    // El id del primer evento queda puesto para Menu: copiarlo a mano
-    // del bloque de ejemplos era justo el paso que sobraba.
+    // El id queda puesto para Menu: copiarlo a mano del bloque de
+    // ejemplos era justo el paso que sobraba. Mejor uno que tenga
+    // Beverage cobrado: el menú de los primeros de la lista salió vacío,
+    // y un evento sin bebida no dice nada del tipo de bar.
     if (action === 'search' || action === 'events') {
       const lista = legible(res.muestra);
-      const id = Array.isArray(lista) && lista[0] && lista[0].id;
+      const id = (res.eventosConBebida && res.eventosConBebida[0]) ||
+        (Array.isArray(lista) && lista[0] && lista[0].id);
       const caja = $('tsEvento');
       if (id && caja) caja.value = String(id);
     }

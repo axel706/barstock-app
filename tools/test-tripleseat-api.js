@@ -359,6 +359,23 @@ grupo('los campos personalizados, del evento y de la reserva');
     JSON.stringify(p.categorias));
 }
 
+grupo('los eventos con bebida, para probar su menu');
+{
+  entorno();
+  const bev = (t) => [{ name: 'Food', total: '100.0' }, { name: 'Beverage', total: t }];
+  respuestas = { '/oauth2/token': LOGIN_OK, '/v1/events/search.json': { status: 200, body: { results: [
+    { event: { id: 11, status: 'DEFINITE', category_totals: [{ name: 'Food', total: '90.0' }] } },
+    { event: { id: 12, status: 'LOST', category_totals: bev('300.0') } },
+    { event: { id: 13, status: 'DEFINITE', category_totals: bev('0.0') } },
+    { event: { id: 14, status: 'DEFINITE', category_totals: bev('450.0') } },
+    { event: { id: 15, status: 'PROSPECT', category_totals: bev('120.0') } }
+  ] } } };
+  const r = await llamar({ accion: 'search' });
+  const ids = r.body.eventosConBebida || [];
+  prueba('solo los que tienen Beverage por encima de cero', ids.length === 3 && !ids.includes(11) && !ids.includes(13), JSON.stringify(ids));
+  prueba('los confirmados primero', ids[0] === 14, JSON.stringify(ids));
+}
+
 grupo('lo que viene alrededor de la lista no se pierde');
 {
   entorno();

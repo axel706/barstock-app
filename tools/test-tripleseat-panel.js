@@ -130,6 +130,8 @@ grupo('cada boton pregunta con la sesion');
         intentos: [{ ruta: '/v1/events/search.json', status: 200, registros: 50 }],
         campos: { status: { DEFINITE: 38 } }, bebidas: { conLinea: 9, paquetes: { 'Consumption bar': 9 } }, forma: { contact: { tipo: 'objeto', veces: 50, claves: ['email'] } },
         muestra: JSON.stringify([{ id: 4321, contact: { first_name: 'Clienta' } }]) }
+    : c.action === 'events' ? { ok: true, accion: 'events', registros: 2, eventosConBebida: [777, 778],
+        muestra: JSON.stringify([{ id: 4321 }]) }
     : { ok: true, accion: c.action, registros: 0 });
   abrir(w);
   w.document.getElementById('tsDesde').value = '2026-11-05';
@@ -151,6 +153,17 @@ grupo('cada boton pregunta con la sesion');
   await esperar(20);
   const m = (w.__llamadas[1] || {}).cuerpo || {};
   prueba('y menu lo manda', m.action === 'menu' && m.params && String(m.params.event_id) === '4321', JSON.stringify(m));
+}
+
+grupo('el evento para Menu, mejor uno con bebida');
+{
+  const w = entorno(() => ({ ok: true, accion: 'events', registros: 2, eventosConBebida: [777, 778],
+    muestra: JSON.stringify([{ id: 4321 }]) }));
+  abrir(w);
+  (boton(w, 'events') || { click() {} }).click();
+  await esperar(20);
+  const id = w.document.getElementById('tsEvento');
+  prueba('pone el primero con Beverage, no el primero de la lista', id && id.value === '777', id && id.value);
 }
 
 grupo('copiar sin seleccionar');
