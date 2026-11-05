@@ -81,7 +81,7 @@
   // mañana no entre en lo copiado sin que nadie lo decida.
   let seguro = null;
 
-  const SEGUROS_OK = ['accion', 'ruta', 'registros', 'intentos', 'envoltorio', 'cabeceras', 'bebidas', 'campos', 'forma',
+  const SEGUROS_OK = ['accion', 'ruta', 'registros', 'intentos', 'envoltorio', 'cabeceras', 'bebidas', 'personalizados', 'campos', 'forma',
     'permisos', 'expiraEnSegundos'];
   const SEGUROS_MAL = ['accion', 'paso', 'error', 'intentos', 'tripleseat', 'diagnostico'];
 
@@ -176,6 +176,7 @@
       (res.ruta ? '<div class="small muted">Route: <b>' + esc(res.ruta) + '</b></div>' : '') +
       (intentos(res) ? '<div class="small muted ts-rutas">' + esc(intentos(res)) + '</div>' : '') +
       bloque('Bar packages · from the online planner', res.bebidas, 'bebidas') +
+      bloque('Custom fields · event, booking and money categories', res.personalizados, 'personalizados') +
       bloque('Values per field', res.campos, 'campos') +
       bloque('Nested fields · names only', res.forma, 'forma') +
       bloque('Around the list', res.envoltorio, 'envoltorio') +

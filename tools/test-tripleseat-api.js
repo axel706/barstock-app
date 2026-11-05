@@ -27,6 +27,9 @@
  *  11. El tipo de bar sale de la línea `Drinks:` que escribe el
  *      planificador online, y SÓLO de ésa: un cliente que escribe
  *      "Drinks:" en su mensaje no cuenta como paquete.
+ *  12. Los campos personalizados (del evento y de su reserva) se ven
+ *      por nombre, con sus valores sólo si son pocos y cortos, y nunca
+ *      los de un campo que por su nombre es de una persona.
  *
  *   node tools/test-tripleseat-api.js
  */
@@ -324,6 +327,36 @@ grupo('el tipo de bar, de la linea Drinks del planificador');
   respuestas = { '/oauth2/token': LOGIN_OK, '/v1/locations.json': { status: 200, body: [{ location: { id: 1, name: 'X' } }] } };
   const r = await llamar({ accion: 'locations' });
   prueba('en locations no hay resumen de bar', r.body.bebidas === undefined, JSON.stringify(r.body.bebidas));
+}
+
+grupo('los campos personalizados, del evento y de la reserva');
+{
+  entorno();
+  const cf = (n, v) => ({ custom_field_id: 1, custom_field_name: n, custom_field_slug: 'x', id: 9, value: v });
+  respuestas = { '/oauth2/token': LOGIN_OK, '/v1/events/search.json': { status: 200, body: { results: [
+    { event: { id: 1, custom_fields: [cf('Deposit Due Date', ''), cf('Bar Package', 'Open Bar 3 hrs')],
+      booking: { custom_fields: [cf('Market', 'Corporate'), cf('On-site Contact Name', 'Maria Lopez')] },
+      category_totals: [{ name: 'Food', total: '100.0' }, { name: 'Beverage', total: '50.0' }] } },
+    { event: { id: 2, custom_fields: [cf('Deposit Due Date', ''), cf('Bar Package', 'Beer & Wine')],
+      booking: { custom_fields: [cf('Market', 'Social'), cf('Notes for bar', 'Please call Jim at 555-0199 before the event, he will bring his own wine')] },
+      category_totals: [{ name: 'Food', total: '80.0' }] } },
+    { event: { id: 3, custom_fields: [], booking: {} } }
+  ] } } };
+  const r = await llamar({ accion: 'search' });
+  const p = r.body.personalizados || {};
+  const ev = p.evento || {}, re = p.reserva || {};
+  prueba('los del evento, por nombre y cuantas veces', ev['Bar Package'] && ev['Bar Package'].veces === 2, JSON.stringify(ev));
+  prueba('con sus valores si son pocos y cortos', ev['Bar Package'] && ev['Bar Package'].valores &&
+    ev['Bar Package'].valores['Open Bar 3 hrs'] === 1 && ev['Bar Package'].valores['Beer & Wine'] === 1, JSON.stringify(ev['Bar Package']));
+  prueba('un valor vacio se cuenta como vacio', ev['Deposit Due Date'] && ev['Deposit Due Date'].valores['(vacio)'] === 2,
+    JSON.stringify(ev['Deposit Due Date']));
+  prueba('los de la reserva, aparte', re.Market && re.Market.valores.Corporate === 1, JSON.stringify(re));
+  const txt = JSON.stringify(p);
+  prueba('un campo de una persona nunca dice sus valores', !/Maria Lopez/.test(txt) && re['On-site Contact Name'] &&
+    /texto libre/.test(re['On-site Contact Name'].valores), txt);
+  prueba('ni un valor largo', !/Jim|555-0199/.test(txt), txt);
+  prueba('y las categorias de dinero, por nombre', p.categorias && p.categorias.Food === 2 && p.categorias.Beverage === 1,
+    JSON.stringify(p.categorias));
 }
 
 grupo('lo que viene alrededor de la lista no se pierde');

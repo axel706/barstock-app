@@ -157,6 +157,7 @@ grupo('copiar sin seleccionar');
 {
   const w = entorno(() => ({ ok: true, accion: 'search', ruta: '/v1/events/search.json', registros: 50,
     envoltorio: { total_pages: 2 }, bebidas: { conLinea: 9, paquetes: { 'Consumption bar': 9 } },
+    personalizados: { evento: { 'Bar Package': { veces: 3, valores: { 'Open bar': 3 } } } },
     campos: { status: { DEFINITE: 38 } }, forma: { contact: { tipo: 'objeto', veces: 50, claves: ['email'] } },
     muestra: JSON.stringify([{ id: 4321, contact: { first_name: 'Clienta', email: 'c@cliente.test' } }]) }));
   abrir(w);
@@ -169,6 +170,8 @@ grupo('copiar sin seleccionar');
   const c = w.__copiado || '';
   prueba('copia lo de arriba', /Consumption bar/.test(c) && /DEFINITE/.test(c) && /search\.json/.test(c) && /total_pages/.test(c), c.slice(0, 200));
   prueba('y nunca los ejemplos crudos', !/Clienta|c@cliente/.test(c), c);
+  prueba('con los campos personalizados', /Bar Package/.test(c), c.slice(0, 300));
+  prueba('que tambien se ven', /Custom fields/.test(salida(w)));
   prueba('dice que lo copio', /Copied/.test(todo ? todo.textContent : ''), todo && todo.textContent);
   const uno = w.document.querySelector('#tsSalida [data-copiar="bebidas"]');
   prueba('y cada bloque tiene el suyo', !!uno);
