@@ -292,6 +292,23 @@ grupo('solo lee');
   prueba('una accion que no existe no hace nada', r.code === 400 && peticiones.length === 0, r.code + ' ' + peticiones.length);
 }
 
+grupo('la sesion se comprueba una vez, antes de repartir');
+{
+  // Antes lo hacía cada integración por su cuenta, y con dos una se lo
+  // podía saltar. Ahora la comprueba api/integrations.js y las de lib/
+  // ni siquiera tienen con qué.
+  const fs2 = require('fs');
+  const api = fs2.readFileSync(path.join(RAIZ, 'api/integrations.js'), 'utf8');
+  const i = api.indexOf('await sesion(req)'), j = api.indexOf('return h(req, res)');
+  prueba('integrations la comprueba antes de repartir', i > 0 && j > i);
+  for (const f of fs2.readdirSync(path.join(RAIZ, 'lib'))) {
+    if (!/\.js$/.test(f) || f === 'integracion.js') continue;
+    const src = fs2.readFileSync(path.join(RAIZ, 'lib', f), 'utf8');
+    if (!/require\(['"]\.\/integracion['"]\)/.test(src)) continue;
+    prueba(f + ' no valida sesiones por su cuenta', !/supabase-js|auth\.getUser/.test(src));
+  }
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') +
             '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
