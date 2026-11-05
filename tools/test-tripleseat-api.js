@@ -13,6 +13,11 @@
  *      una, en vez de fallar con un 404 sin explicación.
  *   5. Lo que llega del navegador no se pega a la URL sin mirarlo.
  *   6. Sólo lee: un POST para el token y lo demás son GET.
+ *   7. Lo que viene alrededor de la lista (cuántas páginas hay) no se
+ *      pierde: la primera página de eventos resultó ser de 2021, y sin
+ *      saber cuántas hay no se llega a las de ahora.
+ *   8. Lo anidado se enseña por sus NOMBRES, nunca por sus valores: ahí
+ *      dentro van el contacto del cliente y, si existe, el menú.
  *
  *   node tools/test-tripleseat-api.js
  */
@@ -61,7 +66,9 @@ global.fetch = async (u, op) => {
   peticiones.push({ url: u, metodo: (op && op.method) || 'GET', cabeceras: (op && op.headers) || {}, cuerpo: op && op.body });
   const clave = Object.keys(respuestas).find(k => u.includes(k));
   const r = clave ? respuestas[clave] : { status: 404, body: { error: 'not found' } };
-  return { ok: r.status < 400, status: r.status, text: async () => JSON.stringify(r.body) };
+  const h = r.headers || {};
+  return { ok: r.status < 400, status: r.status, text: async () => JSON.stringify(r.body),
+    headers: { get: (k) => (Object.prototype.hasOwnProperty.call(h, k.toLowerCase()) ? h[k.toLowerCase()] : null) } };
 };
 
 const LOGIN_OK = { status: 200, body: { access_token: TOKEN_TS, token_type: 'Bearer', expires_in: 7200,
@@ -197,6 +204,43 @@ grupo('solo lee');
   prueba('nada que no sea leer o el token', escribe.length === 0, escribe.join(' | '));
   const r = await llamar({ accion: 'borrar' });
   prueba('una accion que no existe no hace nada', r.code === 400 && peticiones.length === 0);
+}
+
+grupo('lo que viene alrededor de la lista no se pierde');
+{
+  entorno();
+  respuestas = { '/oauth2/token': LOGIN_OK, '/v1/events.json': { status: 200,
+    headers: { 'x-total-pages': '12', 'link': '<https://api.tripleseat.com/v1/events.json?page=12>; rel="last"', 'set-cookie': 'sesion=ojo' },
+    body: { events: [{ event: { id: 1 } }], total_pages: 12, current_page: 1, filtro: { desde: 'x' } } } };
+  const r = await llamar({ accion: 'events' });
+  prueba('los datos sueltos del envoltorio', r.body.envoltorio && r.body.envoltorio.total_pages === 12 &&
+    r.body.envoltorio.current_page === 1, JSON.stringify(r.body.envoltorio));
+  prueba('un objeto del envoltorio, sólo por sus nombres', r.body.envoltorio &&
+    JSON.stringify(r.body.envoltorio.filtro) === '["desde"]', JSON.stringify(r.body.envoltorio));
+  prueba('las cabeceras de paginacion', r.body.cabeceras && r.body.cabeceras['x-total-pages'] === '12' &&
+    /rel="last"/.test(r.body.cabeceras.link || ''), JSON.stringify(r.body.cabeceras));
+  prueba('y ninguna otra cabecera', !JSON.stringify(r.body).includes('sesion=ojo'));
+}
+
+grupo('lo anidado, por sus nombres y nunca por sus valores');
+{
+  entorno();
+  respuestas = { '/oauth2/token': LOGIN_OK, '/v1/events.json': { status: 200, body: { events: [
+    { event: { id: 1, contact: { first_name: 'Anabela', email: 'ana@cliente.test' },
+               rooms: [{ id: 3, name: 'Wine Cellar' }], menu: { items: [{ name: 'Bud' }] } } },
+    { event: { id: 2, contact: { first_name: 'Rober', phone: '555' }, rooms: [] } }
+  ] } } };
+  const r = await llamar({ accion: 'events' });
+  const f = r.body.forma || {};
+  prueba('cada campo anidado, con cuantas veces viene', f.contact && f.contact.veces === 2 && f.contact.tipo === 'objeto',
+    JSON.stringify(f));
+  prueba('con la union de sus nombres', f.contact && ['email', 'first_name', 'phone'].every(k => f.contact.claves.includes(k)),
+    JSON.stringify(f.contact));
+  prueba('una lista dice los nombres de lo que lleva dentro', f.rooms && f.rooms.tipo === 'lista' &&
+    f.rooms.claves.includes('name'), JSON.stringify(f.rooms));
+  prueba('y marca lo que vuelve a anidar', f.menu && f.menu.claves.includes('items[]'), JSON.stringify(f.menu));
+  const txt = JSON.stringify(f);
+  prueba('sin un solo valor', !/Anabela|ana@cliente|Rober|555|Wine Cellar|Bud/.test(txt), txt);
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') +

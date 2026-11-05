@@ -14,6 +14,11 @@
  *        await bsTripleseat('events')      una muestra de eventos
  *        await bsTripleseat('events', { site_id: 123 })   de un sitio
  *        await bsTripleseat('bookings')    una muestra de reservas
+ *        await bsTripleseat('events', { page: 12 })   otra página
+ *
+ * Los eventos llegan de 50 en 50 y del más viejo al más nuevo.
+ * `envoltorio` y `cabeceras` dicen cuántas páginas hay; `forma`, qué
+ * campos anidados trae cada evento (sólo los nombres, nunca valores).
  *
  * Cada una imprime lo que contestó cada ruta que probó. Si algo falla,
  * lo que sale es lo que dijo TripleSeat, tal cual.
