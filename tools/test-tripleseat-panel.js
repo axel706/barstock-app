@@ -102,7 +102,7 @@ grupo('solo se dibuja al abrirlo');
   const w = entorno();
   prueba('cerrado, sin botones', !boton(w, 'ping'));
   abrir(w);
-  const acciones = ['ping', 'locations', 'events', 'search', 'menu', 'bookings'];
+  const acciones = ['ping', 'locations', 'events', 'search', 'menu', 'detalle', 'bookings'];
   prueba('abierto, un boton por accion', acciones.every(a => boton(w, a)),
     acciones.filter(a => !boton(w, a)).join(','));
   const hoy = new Date();
@@ -164,6 +164,25 @@ grupo('el evento para Menu, mejor uno con bebida');
   await esperar(20);
   const id = w.document.getElementById('tsEvento');
   prueba('pone el primero con Beverage, no el primero de la lista', id && id.value === '777', id && id.value);
+}
+
+grupo('el detalle de un evento');
+{
+  const w = entorno(() => ({ ok: true, accion: 'detalle', ruta: '/v1/events/{event_id}.json?show_financial=true', registros: 1,
+    lineas: [{ ruta: 'financial.items', categoria: 'Beverage', veces: 1, nombres: { 'Silver Open Bar': 1 } }],
+    muestra: JSON.stringify([{ id: 58038602, contact: { first_name: 'Clienta' } }]) }));
+  abrir(w);
+  w.document.getElementById('tsEvento').value = '58038602';
+  (boton(w, 'detalle') || { click() {} }).click();
+  await esperar(20);
+  const c = (w.__llamadas[0] || {}).cuerpo || {};
+  prueba('manda el evento de la caja', c.action === 'detalle' && String((c.params || {}).event_id) === '58038602', JSON.stringify(c));
+  prueba('enseña los productos cobrados', /Charged items/.test(salida(w)) && /Silver Open Bar/.test(salida(w)), salida(w).slice(0, 300));
+  const todo = w.document.querySelector('#tsSalida [data-copiar="todo"]');
+  if (todo) todo.click();
+  await esperar(20);
+  prueba('y entran en lo copiado, sin el cliente', /Silver Open Bar/.test(w.__copiado || '') && !/Clienta/.test(w.__copiado || ''),
+    w.__copiado);
 }
 
 grupo('copiar sin seleccionar');

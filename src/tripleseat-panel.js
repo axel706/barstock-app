@@ -28,6 +28,7 @@
     { id: 'events',    nombre: 'Events',    nota: 'By creation, uses Page' },
     { id: 'search',    nombre: 'Search',    nota: 'By date, uses From/To' },
     { id: 'menu',      nombre: 'Menu',      nota: 'One event, uses Event id' },
+    { id: 'detalle',   nombre: 'Detail',    nota: 'One event, whole, uses Event id' },
     { id: 'bookings',  nombre: 'Bookings',  nota: 'Uses Page' }
   ];
 
@@ -68,7 +69,7 @@
       p.event_start_date = ($('tsDesde') || {}).value || '';
       p.event_end_date = ($('tsHasta') || {}).value || '';
     }
-    if (action === 'menu') p.event_id = (($('tsEvento') || {}).value || '').trim();
+    if (action === 'menu' || action === 'detalle') p.event_id = (($('tsEvento') || {}).value || '').trim();
     return p;
   }
 
@@ -81,7 +82,7 @@
   // mañana no entre en lo copiado sin que nadie lo decida.
   let seguro = null;
 
-  const SEGUROS_OK = ['accion', 'ruta', 'registros', 'intentos', 'envoltorio', 'cabeceras', 'bebidas', 'personalizados', 'eventosConBebida', 'campos', 'forma',
+  const SEGUROS_OK = ['accion', 'ruta', 'registros', 'intentos', 'envoltorio', 'cabeceras', 'lineas', 'bebidas', 'personalizados', 'eventosConBebida', 'campos', 'forma',
     'permisos', 'expiraEnSegundos'];
   const SEGUROS_MAL = ['accion', 'paso', 'error', 'intentos', 'tripleseat', 'diagnostico'];
 
@@ -175,6 +176,7 @@
         botonCopiar('todo', 'Copy results') + '</div>' +
       (res.ruta ? '<div class="small muted">Route: <b>' + esc(res.ruta) + '</b></div>' : '') +
       (intentos(res) ? '<div class="small muted ts-rutas">' + esc(intentos(res)) + '</div>' : '') +
+      bloque('Charged items · where they are and their names', res.lineas, 'lineas') +
       bloque('Bar packages · from the online planner', res.bebidas, 'bebidas') +
       bloque('Custom fields · event, booking and money categories', res.personalizados, 'personalizados') +
       bloque('Values per field', res.campos, 'campos') +

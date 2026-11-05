@@ -30,6 +30,9 @@
  *  12. Los campos personalizados (del evento y de su reserva) se ven
  *      por nombre, con sus valores sólo si son pocos y cortos, y nunca
  *      los de un campo que por su nombre es de una persona.
+ *  13. El detalle de UN evento busca dentro las listas de productos
+ *      cobrados (el "Silver Open Bar" de la hoja de cocina) y dice dónde
+ *      están y cómo se llaman, sin sacar al cliente.
  *
  *   node tools/test-tripleseat-api.js
  */
@@ -208,7 +211,7 @@ grupo('solo lee');
   entorno();
   respuestas = { '/oauth2/token': LOGIN_OK, '/v1/': { status: 200, body: [] } };
   const metodos = [];
-  for (const a of ['ping', 'locations', 'events', 'bookings', 'search', 'menu']) {
+  for (const a of ['ping', 'locations', 'events', 'bookings', 'search', 'menu', 'detalle']) {
     await llamar({ accion: a, params: { event_id: 5, event_start_date: '2026-11-05' } });
     for (const p of peticiones) metodos.push(p.metodo + ' ' + p.url.replace('https://api.tripleseat.com', ''));
   }
@@ -374,6 +377,42 @@ grupo('los eventos con bebida, para probar su menu');
   const ids = r.body.eventosConBebida || [];
   prueba('solo los que tienen Beverage por encima de cero', ids.length === 3 && !ids.includes(11) && !ids.includes(13), JSON.stringify(ids));
   prueba('los confirmados primero', ids[0] === 14, JSON.stringify(ids));
+}
+
+grupo('el detalle de un evento, con sus productos cobrados');
+{
+  entorno();
+  respuestas = { '/oauth2/token': LOGIN_OK };
+  const r = await llamar({ accion: 'detalle' });
+  prueba('sin evento, lo dice y no llama a nadie', r.body.ok === false && /event_id/.test(r.body.error) && peticiones.length === 0,
+    JSON.stringify(r.body));
+}
+{
+  entorno();
+  respuestas = { '/oauth2/token': LOGIN_OK, '/v1/events/58038602.json': { status: 200, body: { event: {
+    id: 58038602, status: 'DEFINITE', guest_count: 31, description: 'Call Janice at 484-000-0000',
+    contact: { first_name: 'Janice', email_addresses: [{ address: 'jan@cliente.test' }] },
+    financial: { categories: [
+      { name: 'Food', items: [{ name: 'Passed Hors d Oeuvres', quantity: 31, price: '12.0' }] },
+      { name: 'Beverage', items: [
+        { name: 'Silver Open Bar', quantity: 31, price: '30.0', unit: 'per person' },
+        { name: 'CONSUMPTION BAR ( after 8pm)', quantity: 1, price: '0.0' }] }
+    ] },
+    secondary_contacts: [{ first_name: 'Otro', last_name: 'Cliente', phone: '555' }]
+  } } } };
+  const r = await llamar({ accion: 'detalle', params: { event_id: 58038602 } });
+  const u = (peticiones[1] || {}).url || '';
+  prueba('pide el evento con su parte financiera', /\/v1\/events\/58038602\.json\?show_financial=true/.test(u), u);
+  const l = r.body.lineas || [];
+  const nombres = l.flatMap(x => x.nombres ? Object.keys(x.nombres) : []);
+  prueba('encuentra los productos, en el sitio que esten', nombres.includes('Silver Open Bar') && nombres.includes('Passed Hors d Oeuvres'),
+    JSON.stringify(l));
+  prueba('y dice donde', l.some(x => /financial\.categories\[\]\.items/.test(x.ruta)), JSON.stringify(l.map(x => x.ruta)));
+  prueba('con la categoria de encima', l.some(x => x.categoria === 'Beverage' && x.nombres && x.nombres['Silver Open Bar'] === 1),
+    JSON.stringify(l));
+  const txt = JSON.stringify(Object.assign({}, r.body, { crudo: undefined, muestra: undefined }));
+  prueba('sin el cliente', !/Janice|jan@cliente|484-000|Otro|Cliente"/.test(txt), txt.slice(0, 400));
+  prueba('y con la forma del evento entero', r.body.forma && r.body.forma.financial, JSON.stringify(r.body.forma));
 }
 
 grupo('lo que viene alrededor de la lista no se pierde');
