@@ -15,6 +15,9 @@
  *        await bsTripleseat('events', { site_id: 123 })   de un sitio
  *        await bsTripleseat('bookings')    una muestra de reservas
  *        await bsTripleseat('events', { page: 12 })   otra página
+ *        await bsTripleseat('search', { event_start_date: '2026-11-05',
+ *                                       event_end_date: '2026-11-19' })
+ *        await bsTripleseat('menu', { event_id: 123 })   lo elegido del menú
  *
  * Los eventos llegan de 50 en 50 y del más viejo al más nuevo.
  * `envoltorio` y `cabeceras` dicen cuántas páginas hay; `forma`, qué

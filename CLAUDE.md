@@ -254,7 +254,7 @@ En `tools/`, sólo lectura, se pegan en la consola del navegador:
 - `toast.js` → `await bsToast('ping')` — qué contesta Toast (`ping`,
   `restaurant`, `menu`, `orders`), a través de `api/integrations.js`
 - `tripleseat.js` → `await bsTripleseat('ping')` — qué contesta TripleSeat
-  (`ping`, `locations`, `events`, `bookings`), por la misma función
+  (`ping`, `locations`, `events`, `bookings`, `search`, `menu`), por la misma función
 - `ensayo-auto.js` → `await bsEnsayo()` — qué enlazaría el automático sin
   enlazarlo
 

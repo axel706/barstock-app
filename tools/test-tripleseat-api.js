@@ -18,6 +18,8 @@
  *      saber cuántas hay no se llega a las de ahora.
  *   8. Lo anidado se enseña por sus NOMBRES, nunca por sus valores: ahí
  *      dentro van el contacto del cliente y, si existe, el menú.
+ *   9. La búsqueda por fechas sólo deja pasar fechas, y el menú de un
+ *      evento sólo un id de cifras: van dentro de la URL.
  *
  *   node tools/test-tripleseat-api.js
  */
@@ -196,14 +198,61 @@ grupo('solo lee');
   entorno();
   respuestas = { '/oauth2/token': LOGIN_OK, '/v1/': { status: 200, body: [] } };
   const metodos = [];
-  for (const a of ['ping', 'locations', 'events', 'bookings']) {
-    await llamar({ accion: a });
+  for (const a of ['ping', 'locations', 'events', 'bookings', 'search', 'menu']) {
+    await llamar({ accion: a, params: { event_id: 5, event_start_date: '2026-11-05' } });
     for (const p of peticiones) metodos.push(p.metodo + ' ' + p.url.replace('https://api.tripleseat.com', ''));
   }
   const escribe = metodos.filter(m => !m.startsWith('GET ') && m !== 'POST /oauth2/token');
   prueba('nada que no sea leer o el token', escribe.length === 0, escribe.join(' | '));
   const r = await llamar({ accion: 'borrar' });
   prueba('una accion que no existe no hace nada', r.code === 400 && peticiones.length === 0);
+}
+
+grupo('buscar eventos por fecha');
+{
+  entorno();
+  respuestas = { '/oauth2/token': LOGIN_OK, '/v1/events/search.json': { status: 200, body: { results: [{ event: { id: 9 } }] } } };
+  const r = await llamar({ accion: 'search', params: {
+    event_start_date: '2026-11-05', event_end_date: '11/19/2026', sort_direction: 'asc', order: 'event_start', location_id: 15361 } });
+  const u = (peticiones[1] || {}).url || '';
+  prueba('va a la ruta de busqueda', /\/v1\/events\/search\.json\?/.test(u), u);
+  prueba('con las fechas', /event_start_date=2026-11-05/.test(u) && /event_end_date=11%2F19%2F2026/.test(u), u);
+  prueba('con el orden', /sort_direction=asc/.test(u) && /order=event_start/.test(u), u);
+  prueba('y el restaurante', /location_id=15361/.test(u), u);
+  prueba('y saca la lista', r.body.ok === true && r.body.registros === 1, JSON.stringify(r.body));
+}
+{
+  entorno();
+  respuestas = { '/oauth2/token': LOGIN_OK, '/v1/events/search.json': { status: 200, body: [] } };
+  await llamar({ accion: 'search', params: {
+    event_start_date: '2026-11-05&delete=1', event_end_date: 'mañana', sort_direction: 'asc;drop', order: 'x&y=1' } });
+  const u = (peticiones[1] || {}).url || '';
+  prueba('una fecha que no es fecha no pasa', !/event_start_date|event_end_date|delete/.test(u), u);
+  prueba('ni un orden raro', !/sort_direction|order=/.test(u), u);
+}
+
+grupo('lo elegido del menu de un evento');
+{
+  entorno();
+  respuestas = { '/oauth2/token': LOGIN_OK };
+  const r = await llamar({ accion: 'menu' });
+  prueba('sin evento, lo dice y no llama a nadie', r.body.ok === false && /event_id/.test(r.body.error) && peticiones.length === 0,
+    JSON.stringify(r.body));
+  await llamar({ accion: 'menu', params: { event_id: '5/../../users' } });
+  prueba('un id que no es de cifras tampoco pasa', peticiones.length === 0, String(peticiones.length));
+}
+{
+  entorno();
+  respuestas = { '/oauth2/token': LOGIN_OK,
+    '/v1/events/77/menu_item_selections.json': { status: 404, body: { error: 'nope' } },
+    '/v1/menu_item_selections.json': { status: 200, body: [{ menu_item_selection: { id: 1, name: 'Open Bar 3 hrs', quantity: 40 } }] } };
+  const r = await llamar({ accion: 'menu', params: { event_id: 77 } });
+  prueba('el id va dentro de la primera ruta', /\/v1\/events\/77\/menu_item_selections\.json/.test((peticiones[1] || {}).url || ''),
+    (peticiones[1] || {}).url);
+  prueba('y como parametro en la segunda', /menu_item_selections\.json\?event_id=77/.test((peticiones[2] || {}).url || ''),
+    (peticiones[2] || {}).url);
+  prueba('y se queda con la que contesta', r.body.ok === true && r.body.registros === 1 && /Open Bar/.test(r.body.muestra),
+    JSON.stringify(r.body));
 }
 
 grupo('lo que viene alrededor de la lista no se pierde');
