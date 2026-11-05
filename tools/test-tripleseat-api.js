@@ -415,6 +415,33 @@ grupo('el detalle de un evento, con sus productos cobrados');
   prueba('y con la forma del evento entero', r.body.forma && r.body.forma.financial, JSON.stringify(r.body.forma));
 }
 
+grupo('las lineas de un documento, se llamen como se llamen sus campos');
+{
+  entorno();
+  respuestas = { '/oauth2/token': LOGIN_OK, '/v1/events/58038602.json': { status: 200, body: { event: {
+    id: 58038602, category_totals: [{ name: 'Food', total: '310.0' }],
+    documents: [{ id: 37734321, title: 'Contract & Event Order', line_items: [
+      { description: 'Silver Open Bar', category_name: 'Beverage', qty: 31, unit: 'per person' },
+      { description: 'CONSUMPTION BAR ( after 8pm)', category_name: 'Beverage' },
+      { item_name: 'Passed Hor D Oeuvres', category: 'Food', amount: '0.0' },
+      { description: 'hand crafted brews | house wine | house liquor highballs & Up Drinks | soft drinks | coffee', category_name: 'Beverage' }
+    ] }]
+  } } } };
+  const r = await llamar({ accion: 'detalle', params: { event_id: 58038602 } });
+  const l = r.body.lineas || [];
+  const de = l.filter(x => /documents\[\]\.line_items/.test(x.ruta));
+  const bev = de.find(x => x.categoria === 'Beverage') || {};
+  prueba('encuentra las lineas del documento', de.length > 0, JSON.stringify(l));
+  prueba('con su categoria, aunque se llame category_name', bev.nombres && bev.nombres['Silver Open Bar'] === 1 &&
+    bev.nombres['CONSUMPTION BAR ( after 8pm)'] === 1, JSON.stringify(bev));
+  prueba('o category a secas', de.some(x => x.categoria === 'Food' && x.nombres && x.nombres['Passed Hor D Oeuvres'] === 1),
+    JSON.stringify(de));
+  prueba('una descripcion larga se cuenta sin enseñarse', bev.nombres && bev.nombres['(texto largo)'] === 1 &&
+    !/hand crafted/.test(JSON.stringify(l)), JSON.stringify(bev));
+  prueba('y dice como se llaman los campos de las lineas', bev.claves && ['category_name', 'description', 'qty', 'unit'].every(k => bev.claves.includes(k)),
+    JSON.stringify(bev.claves));
+}
+
 grupo('lo que viene alrededor de la lista no se pierde');
 {
   entorno();
