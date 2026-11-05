@@ -29,6 +29,7 @@
     { id: 'search',    nombre: 'Search',    nota: 'By date, uses From/To' },
     { id: 'menu',      nombre: 'Menu',      nota: 'One event, uses Event id' },
     { id: 'detalle',   nombre: 'Detail',    nota: 'One event, whole, uses Event id' },
+    { id: 'catalogo',  nombre: 'Catalog',   nota: 'Menu items and their ids' },
     { id: 'bookings',  nombre: 'Bookings',  nota: 'Uses Page' }
   ];
 
@@ -82,7 +83,7 @@
   // mañana no entre en lo copiado sin que nadie lo decida.
   let seguro = null;
 
-  const SEGUROS_OK = ['accion', 'ruta', 'registros', 'intentos', 'envoltorio', 'cabeceras', 'lineas', 'bebidas', 'personalizados', 'eventosConBebida', 'campos', 'forma',
+  const SEGUROS_OK = ['accion', 'ruta', 'registros', 'intentos', 'envoltorio', 'cabeceras', 'lineas', 'productos', 'bebidas', 'personalizados', 'eventosConBebida', 'campos', 'forma',
     'permisos', 'expiraEnSegundos'];
   const SEGUROS_MAL = ['accion', 'paso', 'error', 'intentos', 'tripleseat', 'diagnostico'];
 
@@ -177,6 +178,7 @@
       (res.ruta ? '<div class="small muted">Route: <b>' + esc(res.ruta) + '</b></div>' : '') +
       (intentos(res) ? '<div class="small muted ts-rutas">' + esc(intentos(res)) + '</div>' : '') +
       bloque('Charged items · where they are and their names', res.lineas, 'lineas') +
+      bloque('Menu items · id, name, category, price', res.productos, 'productos') +
       bloque('Bar packages · from the online planner', res.bebidas, 'bebidas') +
       bloque('Custom fields · event, booking and money categories', res.personalizados, 'personalizados') +
       bloque('Values per field', res.campos, 'campos') +

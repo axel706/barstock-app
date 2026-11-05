@@ -211,7 +211,7 @@ grupo('solo lee');
   entorno();
   respuestas = { '/oauth2/token': LOGIN_OK, '/v1/': { status: 200, body: [] } };
   const metodos = [];
-  for (const a of ['ping', 'locations', 'events', 'bookings', 'search', 'menu', 'detalle']) {
+  for (const a of ['ping', 'locations', 'events', 'bookings', 'search', 'menu', 'detalle', 'catalogo']) {
     await llamar({ accion: a, params: { event_id: 5, event_start_date: '2026-11-05' } });
     for (const p of peticiones) metodos.push(p.metodo + ' ' + p.url.replace('https://api.tripleseat.com', ''));
   }
@@ -484,6 +484,38 @@ grupo('cuando display_name viene vacio, se ve como viene el texto');
   prueba('de long_description, las etiquetas con el texto cambiado por su largo',
     typeof it.esqueleto === 'string' && it.esqueleto.startsWith('<p><strong><u>[15]</u></strong></p><p>['), JSON.stringify(it.esqueleto));
   prueba('y el primer trozo, que es el nombre', it.primero === 'Silver Open Bar', JSON.stringify(it.primero));
+}
+
+grupo('el id del producto de cada linea, y el catalogo');
+{
+  entorno();
+  respuestas = { '/oauth2/token': LOGIN_OK, '/v1/events/58038602.json': { status: 200, body: { event: {
+    id: 58038602, documents: [{ id: 1, line_items: [
+      { display_name: '', category: 'Beverage', description: 'Silver Open Barhand crafted brews', menu_item_id: 4455 }] }] } } } };
+  const r = await llamar({ accion: 'detalle', params: { event_id: 58038602 } });
+  const it = (((r.body.lineas || []).find(x => x.categoria === 'Beverage') || {}).items || [])[0] || {};
+  prueba('cada linea dice su menu_item_id', it.menu_item_id === 4455, JSON.stringify(it));
+}
+{
+  entorno();
+  respuestas = { '/oauth2/token': LOGIN_OK,
+    '/v1/menu_items.json': { status: 404, body: { error: 'nope' } },
+    '/v1/menus.json': { status: 200, body: { menus: [
+      { menu: { id: 1, name: 'Bar Packages', menu_items: [
+        { id: 4455, name: 'Silver Open Bar', category: 'Beverage', price: '26.0',
+          description: 'hand crafted brews | house wine | house liquor highballs & Up Drinks | soft drinks | coffee | tea' },
+        { id: 4456, name: 'Gold Open Bar', category_name: 'Beverage', price: '32.0' }] } },
+      { menu: { id: 2, name: 'Dinner', menu_items: [{ id: 5001, name: 'Chicken Marsala', category: 'Food', price: '28.0' }] } }
+    ] } } };
+  const r = await llamar({ accion: 'catalogo' });
+  const ps = r.body.productos || [];
+  prueba('prueba las rutas del catalogo y se queda con la que contesta', r.body.ok === true && r.body.ruta === '/v1/menus.json', r.body.ruta);
+  const silver = ps.find(x => x.id === 4455) || {};
+  prueba('cada producto con su id, nombre, categoria y precio', silver.nombre === 'Silver Open Bar' &&
+    silver.categoria === 'Beverage' && silver.precio === '26.0', JSON.stringify(silver));
+  prueba('y el menu del que cuelga', silver.menu === 'Bar Packages', JSON.stringify(silver));
+  prueba('los de todos los menus', ps.length === 3 && ps.some(x => x.id === 5001), JSON.stringify(ps));
+  prueba('sin la descripcion larga', !/hand crafted/.test(JSON.stringify(ps)), JSON.stringify(ps));
 }
 
 grupo('lo que viene alrededor de la lista no se pierde');

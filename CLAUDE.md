@@ -254,7 +254,7 @@ En `tools/`, sólo lectura, se pegan en la consola del navegador:
 - `toast.js` → `await bsToast('ping')` — qué contesta Toast (`ping`,
   `restaurant`, `menu`, `orders`), a través de `api/integrations.js`
 - `tripleseat.js` → `await bsTripleseat('ping')` — qué contesta TripleSeat
-  (`ping`, `locations`, `events`, `bookings`, `search`, `menu`, `detalle`), por la misma función.
+  (`ping`, `locations`, `events`, `bookings`, `search`, `menu`, `detalle`, `catalogo`), por la misma función.
   Lo mismo con botones, sin consola: Settings → Connections →
   *TripleSeat · Developer tools* (`src/tripleseat-panel.js`)
 - `ensayo-auto.js` → `await bsEnsayo()` — qué enlazaría el automático sin

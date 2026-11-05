@@ -102,7 +102,7 @@ grupo('solo se dibuja al abrirlo');
   const w = entorno();
   prueba('cerrado, sin botones', !boton(w, 'ping'));
   abrir(w);
-  const acciones = ['ping', 'locations', 'events', 'search', 'menu', 'detalle', 'bookings'];
+  const acciones = ['ping', 'locations', 'events', 'search', 'menu', 'detalle', 'catalogo', 'bookings'];
   prueba('abierto, un boton por accion', acciones.every(a => boton(w, a)),
     acciones.filter(a => !boton(w, a)).join(','));
   const hoy = new Date();
@@ -183,6 +183,20 @@ grupo('el detalle de un evento');
   await esperar(20);
   prueba('y entran en lo copiado, sin el cliente', /Silver Open Bar/.test(w.__copiado || '') && !/Clienta/.test(w.__copiado || ''),
     w.__copiado);
+}
+
+grupo('el catalogo');
+{
+  const w = entorno(() => ({ ok: true, accion: 'catalogo', ruta: '/v1/menus.json', registros: 2,
+    productos: [{ id: 4455, nombre: 'Silver Open Bar', categoria: 'Beverage', precio: '26.0', menu: 'Bar Packages' }] }));
+  abrir(w);
+  (boton(w, 'catalogo') || { click() {} }).click();
+  await esperar(20);
+  prueba('enseña los productos', /Menu items/.test(salida(w)) && /Silver Open Bar/.test(salida(w)), salida(w).slice(0, 200));
+  const todo = w.document.querySelector('#tsSalida [data-copiar="todo"]');
+  if (todo) todo.click();
+  await esperar(20);
+  prueba('y entran en lo copiado', /Silver Open Bar/.test(w.__copiado || ''), w.__copiado);
 }
 
 grupo('copiar sin seleccionar');
