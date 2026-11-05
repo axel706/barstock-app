@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 73 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 74 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -229,7 +229,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 73 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 74 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -254,7 +254,9 @@ En `tools/`, sólo lectura, se pegan en la consola del navegador:
 - `toast.js` → `await bsToast('ping')` — qué contesta Toast (`ping`,
   `restaurant`, `menu`, `orders`), a través de `api/integrations.js`
 - `tripleseat.js` → `await bsTripleseat('ping')` — qué contesta TripleSeat
-  (`ping`, `locations`, `events`, `bookings`, `search`, `menu`), por la misma función
+  (`ping`, `locations`, `events`, `bookings`, `search`, `menu`), por la misma función.
+  Lo mismo con botones, sin consola: Settings → Connections →
+  *TripleSeat · Developer tools* (`src/tripleseat-panel.js`)
 - `ensayo-auto.js` → `await bsEnsayo()` — qué enlazaría el automático sin
   enlazarlo
 

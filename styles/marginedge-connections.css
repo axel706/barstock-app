@@ -300,3 +300,29 @@
 }
 .mec-alert .t { flex: 1; min-width: 0; font-size: 12px; font-weight: 700; color: var(--warn, #b45309); }
 .mec-alert .t small { display: block; font-weight: 500; font-size: 11px; margin-top: 1px; }
+
+/* ── TripleSeat · Developer tools ────────────────────────────────── */
+/* Vive aquí porque es la misma pantalla y el mismo plegable que el de
+   MarginEdge (.me-diag). Los estilos sueltos del panel de MarginEdge
+   van en línea en el JS; éstos no, para no copiarlos una segunda vez. */
+
+.ts-cajas { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+.ts-cajas label { display: flex; gap: 6px; align-items: center; }
+.ts-corta { width: 70px; }
+.ts-media { width: 120px; }
+.ts-botones { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.ts-b { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; }
+.ts-bn { font-weight: 700; }
+.ts-bt { font-size: 11px; }
+.ts-salida { margin-top: 16px; }
+.ts-bien { color: #86efac; font-weight: 700; margin-top: 6px; }
+.ts-mal { color: #fca5a5; font-weight: 700; margin-top: 6px; }
+.ts-rutas { margin-top: 6px; }
+.ts-tit { font-size: 12px; font-weight: 700; margin-top: 12px; }
+.ts-pre {
+  max-height: 300px; overflow: auto; font-size: 11px; line-height: 1.5;
+  background: rgba(0,0,0,.25); padding: 12px; border-radius: 10px; margin-top: 5px;
+  white-space: pre-wrap; word-break: break-word;
+}
+.ts-crudo { margin-top: 14px; }
+.ts-crudo > summary { cursor: pointer; font-size: 12px; font-weight: 600; color: var(--sub, #64748b); }
