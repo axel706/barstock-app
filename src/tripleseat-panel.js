@@ -72,10 +72,62 @@
     return p;
   }
 
-  function bloque(titulo, dato) {
+  // ── Copiar sin seleccionar ───────────────────────────────────────────
+  //
+  // Seleccionar a mano un <pre> de 300 líneas que hace scroll es el paso
+  // que sobraba. Lo que se copia sale de `seguro`: lo mismo que se ve
+  // arriba, y nunca los ejemplos crudos, que llevan datos de clientes. Se
+  // arma aparte, sin leer el DOM, para que un bloque nuevo que se pinte
+  // mañana no entre en lo copiado sin que nadie lo decida.
+  let seguro = null;
+
+  const SEGUROS_OK = ['accion', 'ruta', 'registros', 'intentos', 'envoltorio', 'cabeceras', 'bebidas', 'campos', 'forma',
+    'permisos', 'expiraEnSegundos'];
+  const SEGUROS_MAL = ['accion', 'paso', 'error', 'intentos', 'tripleseat', 'diagnostico'];
+
+  function armarSeguro(res) {
+    const out = {};
+    for (const k of (res && res.ok ? SEGUROS_OK : SEGUROS_MAL)) {
+      if (res && res[k] !== undefined && res[k] !== null) out[k] = res[k];
+    }
+    return out;
+  }
+
+  async function copiar(texto) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(texto); return true; }
+    } catch (e) { /* sin permiso: se prueba a la antigua */ }
+    try {
+      const t = document.createElement('textarea');
+      t.value = texto; t.setAttribute('readonly', '');
+      t.style.position = 'fixed'; t.style.opacity = '0';
+      document.body.appendChild(t); t.select();
+      const ok = document.execCommand('copy');
+      t.remove();
+      return ok;
+    } catch (e) { return false; }
+  }
+
+  async function alCopiar(b) {
+    if (!seguro) return;
+    const clave = b.dataset.copiar;
+    const dato = clave === 'todo' ? seguro : seguro[clave];
+    if (dato === undefined) return;
+    const ok = await copiar(typeof dato === 'string' ? dato : JSON.stringify(dato, null, 2));
+    const antes = b.dataset.texto || b.textContent;
+    b.dataset.texto = antes;
+    b.textContent = ok ? 'Copied' : 'Could not copy';
+    setTimeout(() => { b.textContent = antes; }, 1500);
+  }
+
+  function botonCopiar(clave, texto) {
+    return '<button type="button" class="ts-copiar" data-copiar="' + esc(clave) + '">' + esc(texto || 'Copy') + '</button>';
+  }
+
+  function bloque(titulo, dato, clave) {
     if (dato == null) return '';
     if (typeof dato === 'object' && !Object.keys(dato).length) return '';
-    return '<div class="ts-tit">' + esc(titulo) + '</div>' +
+    return '<div class="ts-tit">' + esc(titulo) + (clave ? botonCopiar(clave) : '') + '</div>' +
       '<pre class="ts-pre">' + esc(typeof dato === 'string' ? dato : JSON.stringify(dato, null, 2)) + '</pre>';
   }
 
@@ -95,14 +147,17 @@
     const el = $('tsSalida');
     if (!el) return;
 
-    if (!res || !res.ok) {
-      res = res || {};
+    res = res || {};
+    seguro = armarSeguro(Object.assign({ accion: action }, res));
+
+    if (!res.ok) {
       el.innerHTML =
-        '<div class="ts-mal">' + esc(action) + ' · failed' + (res.paso ? ' at ' + esc(res.paso) : '') + '</div>' +
+        '<div class="ts-mal">' + esc(action) + ' · failed' + (res.paso ? ' at ' + esc(res.paso) : '') +
+          botonCopiar('todo', 'Copy result') + '</div>' +
         '<div class="small">' + esc(res.error || 'Unknown error') + '</div>' +
         (intentos(res) ? '<div class="small muted ts-rutas">' + esc(intentos(res)) + '</div>' : '') +
-        bloque('What TripleSeat said', res.tripleseat) +
-        bloque('Diagnosis', res.diagnostico);
+        bloque('What TripleSeat said', res.tripleseat, 'tripleseat') +
+        bloque('Diagnosis', res.diagnostico, 'diagnostico');
       return;
     }
 
@@ -116,14 +171,15 @@
     const ejemplos = res.muestra != null ? res.muestra : res.crudo;
 
     el.innerHTML =
-      '<div class="ts-bien">' + esc(action) + ' · ok' + (linea.length ? ' · ' + esc(linea.join(' · ')) : '') + '</div>' +
+      '<div class="ts-bien">' + esc(action) + ' · ok' + (linea.length ? ' · ' + esc(linea.join(' · ')) : '') +
+        botonCopiar('todo', 'Copy results') + '</div>' +
       (res.ruta ? '<div class="small muted">Route: <b>' + esc(res.ruta) + '</b></div>' : '') +
       (intentos(res) ? '<div class="small muted ts-rutas">' + esc(intentos(res)) + '</div>' : '') +
-      bloque('Bar packages · from the online planner', res.bebidas) +
-      bloque('Values per field', res.campos) +
-      bloque('Nested fields · names only', res.forma) +
-      bloque('Around the list', res.envoltorio) +
-      bloque('Paging headers', res.cabeceras) +
+      bloque('Bar packages · from the online planner', res.bebidas, 'bebidas') +
+      bloque('Values per field', res.campos, 'campos') +
+      bloque('Nested fields · names only', res.forma, 'forma') +
+      bloque('Around the list', res.envoltorio, 'envoltorio') +
+      bloque('Paging headers', res.cabeceras, 'cabeceras') +
       (ejemplos != null
         ? '<details class="ts-crudo"><summary>Raw examples · contain customer data</summary>' +
           bloque('', legible(ejemplos)) + '</details>'
@@ -161,6 +217,15 @@
 
     const hoy = new Date();
     const fin = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + DIAS_BUSQUEDA);
+    // Un solo escuchador para los botones de copiar: el resultado se
+    // repinta entero con cada pregunta y engancharlos uno a uno sería
+    // volver a hacerlo cada vez.
+    const sal = $('tsSalida');
+    if (sal) sal.addEventListener('click', e => {
+      const b = e.target && e.target.closest && e.target.closest('[data-copiar]');
+      if (b) alCopiar(b);
+    });
+
     const cajas = $('tsCajas');
     if (cajas) {
       cajas.innerHTML =

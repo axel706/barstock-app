@@ -315,10 +315,14 @@
 .ts-bn { font-weight: 700; }
 .ts-bt { font-size: 11px; }
 .ts-salida { margin-top: 16px; }
-.ts-bien { color: #86efac; font-weight: 700; margin-top: 6px; }
-.ts-mal { color: #fca5a5; font-weight: 700; margin-top: 6px; }
+.ts-bien { color: #86efac; font-weight: 700; margin-top: 6px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ts-mal { color: #fca5a5; font-weight: 700; margin-top: 6px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .ts-rutas { margin-top: 6px; }
-.ts-tit { font-size: 12px; font-weight: 700; margin-top: 12px; }
+.ts-tit { font-size: 12px; font-weight: 700; margin-top: 12px; display: flex; align-items: center; gap: 8px; }
+.ts-copiar {
+  font-size: 11px; font-weight: 600; padding: 3px 10px; cursor: pointer;
+  border: 1px solid rgba(127,140,160,.32); background: transparent; color: var(--sub, #64748b);
+}
 .ts-pre {
   max-height: 300px; overflow: auto; font-size: 11px; line-height: 1.5;
   background: rgba(0,0,0,.25); padding: 12px; border-radius: 10px; margin-top: 5px;

@@ -20,7 +20,10 @@
  *      ejemplos crudos llevan datos de clientes y van PLEGADOS.
  *   5. Un fallo se ve en pantalla. Un botón que no responde se parece
  *      demasiado a "la API está lenta".
- *   6. Está en index.html, después del módulo de MarginEdge, y sólo se
+ *   6. Un botón copia el resultado sin tener que seleccionarlo, y lo que
+ *      copia NUNCA lleva los ejemplos crudos: es lo que se pega en una
+ *      conversación.
+ *   7. Está en index.html, después del módulo de MarginEdge, y sólo se
  *      dibuja al abrir su plegable.
  *
  *   node tools/test-tripleseat-panel.js
@@ -55,6 +58,9 @@ function entorno(contesta) {
   const dom = new JSDOM('<!doctype html><body>' + panel + '</body>', { url: 'https://x.test/', runScripts: 'outside-only' });
   const w = dom.window;
   w.BarStockSupabase = { getClient: () => ({ auth: { getSession: async () => ({ data: { session: { access_token: 'tok-sesion' } } }) } }) };
+  w.__copiado = null;
+  Object.defineProperty(w.navigator, 'clipboard', { configurable: true,
+    value: { writeText: async (t) => { w.__copiado = t; } } });
   w.console.error = () => {};   // el fallo a propósito no ensucia la salida
   w.__llamadas = [];
   w.fetch = async (u, op) => {
@@ -145,6 +151,32 @@ grupo('cada boton pregunta con la sesion');
   await esperar(20);
   const m = (w.__llamadas[1] || {}).cuerpo || {};
   prueba('y menu lo manda', m.action === 'menu' && m.params && String(m.params.event_id) === '4321', JSON.stringify(m));
+}
+
+grupo('copiar sin seleccionar');
+{
+  const w = entorno(() => ({ ok: true, accion: 'search', ruta: '/v1/events/search.json', registros: 50,
+    envoltorio: { total_pages: 2 }, bebidas: { conLinea: 9, paquetes: { 'Consumption bar': 9 } },
+    campos: { status: { DEFINITE: 38 } }, forma: { contact: { tipo: 'objeto', veces: 50, claves: ['email'] } },
+    muestra: JSON.stringify([{ id: 4321, contact: { first_name: 'Clienta', email: 'c@cliente.test' } }]) }));
+  abrir(w);
+  (boton(w, 'search') || { click() {} }).click();
+  await esperar(20);
+  const todo = w.document.querySelector('#tsSalida [data-copiar="todo"]');
+  prueba('hay un boton para copiar el resultado', !!todo);
+  if (todo) todo.click();
+  await esperar(20);
+  const c = w.__copiado || '';
+  prueba('copia lo de arriba', /Consumption bar/.test(c) && /DEFINITE/.test(c) && /search\.json/.test(c) && /total_pages/.test(c), c.slice(0, 200));
+  prueba('y nunca los ejemplos crudos', !/Clienta|c@cliente/.test(c), c);
+  prueba('dice que lo copio', /Copied/.test(todo ? todo.textContent : ''), todo && todo.textContent);
+  const uno = w.document.querySelector('#tsSalida [data-copiar="bebidas"]');
+  prueba('y cada bloque tiene el suyo', !!uno);
+  if (uno) uno.click();
+  await esperar(20);
+  const c2 = w.__copiado || '';
+  prueba('que copia solo ese bloque', /Consumption bar/.test(c2) && !/DEFINITE/.test(c2), c2);
+  prueba('los ejemplos crudos no tienen boton de copiar', !w.document.querySelector('#tsSalida .ts-crudo [data-copiar]'));
 }
 
 grupo('un fallo se ve');
