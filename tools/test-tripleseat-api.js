@@ -442,6 +442,30 @@ grupo('las lineas de un documento, se llamen como se llamen sus campos');
     JSON.stringify(bev.claves));
 }
 
+grupo('las lineas de verdad: display_name, y sus cifras');
+{
+  entorno();
+  const li = (o) => Object.assign({ billing_ids: [], discount: null, grand_total: null, id: 1, long_description: 'x',
+    menu_item_id: 9, position: 1, section: 'Beverage', section_position: 1 }, o);
+  respuestas = { '/oauth2/token': LOGIN_OK, '/v1/events/58038602.json': { status: 200, body: { event: {
+    id: 58038602, documents: [{ id: 37734321, title: 'Contract & Event Order', line_items: [
+      li({ display_name: 'Silver Open Bar', description: 'Silver Open Barhand crafted brews | house wine | house liquor highballs & Up Drinks',
+           category: 'Beverage', quantity: 31, price: '30.0', total_price: '930.0' }),
+      li({ display_name: 'CONSUMPTION BAR ( after 8pm)', description: 'CONSUMPTION BAR ( after 8pm)Charges are based on precise guest consumption',
+           category: 'Beverage', quantity: 1, price: '0.0', total_price: '0.0' })
+    ] }]
+  } } } };
+  const r = await llamar({ accion: 'detalle', params: { event_id: 58038602 } });
+  const bev = (r.body.lineas || []).find(x => x.categoria === 'Beverage') || {};
+  prueba('el nombre sale de display_name', bev.nombres && bev.nombres['Silver Open Bar'] === 1 &&
+    bev.nombres['CONSUMPTION BAR ( after 8pm)'] === 1, JSON.stringify(bev.nombres));
+  const silver = (bev.items || []).find(x => x.nombre === 'Silver Open Bar') || {};
+  prueba('con cuantos, a cuanto y el total', silver.cantidad === 31 && silver.precio === '30.0' && silver.total === '930.0',
+    JSON.stringify(bev.items));
+  prueba('y su seccion', silver.seccion === 'Beverage', JSON.stringify(silver));
+  prueba('sin la descripcion larga', !/hand crafted|precise guest/.test(JSON.stringify(r.body.lineas)));
+}
+
 grupo('lo que viene alrededor de la lista no se pierde');
 {
   entorno();
