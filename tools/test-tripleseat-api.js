@@ -466,6 +466,26 @@ grupo('las lineas de verdad: display_name, y sus cifras');
   prueba('sin la descripcion larga', !/hand crafted|precise guest/.test(JSON.stringify(r.body.lineas)));
 }
 
+grupo('cuando display_name viene vacio, se ve como viene el texto');
+{
+  entorno();
+  respuestas = { '/oauth2/token': LOGIN_OK, '/v1/events/58038602.json': { status: 200, body: { event: {
+    id: 58038602, documents: [{ id: 1, line_items: [
+      { display_name: '', category: 'Beverage', section: 'Beverage', price: null,
+        description: 'Silver Open Barhand crafted brews | house wine | house liquor highballs & Up Drinks | soft drinks| coffee| Tea |Iced Tea | Lemonade | Water',
+        long_description: '<p><strong><u>Silver Open Bar</u></strong></p><p>hand crafted brews | house wine | house liquor highballs & Up Drinks | soft drinks| coffee| Tea</p>' }
+    ] }]
+  } } } };
+  const r = await llamar({ accion: 'detalle', params: { event_id: 58038602 } });
+  const it = (((r.body.lineas || []).find(x => x.categoria === 'Beverage') || {}).items || [])[0] || {};
+  prueba('dice que display_name venia vacio', it.display === null, JSON.stringify(it));
+  prueba('de description dice cuanto mide y si lleva saltos, sin el texto',
+    it.texto && it.texto.largo === 139 && it.texto.saltos === 0 && !/hand crafted/.test(JSON.stringify(it)), JSON.stringify(it.texto));
+  prueba('de long_description, las etiquetas con el texto cambiado por su largo',
+    typeof it.esqueleto === 'string' && it.esqueleto.startsWith('<p><strong><u>[15]</u></strong></p><p>['), JSON.stringify(it.esqueleto));
+  prueba('y el primer trozo, que es el nombre', it.primero === 'Silver Open Bar', JSON.stringify(it.primero));
+}
+
 grupo('lo que viene alrededor de la lista no se pierde');
 {
   entorno();
