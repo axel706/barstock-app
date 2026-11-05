@@ -20,6 +20,10 @@
  *      dentro van el contacto del cliente y, si existe, el menú.
  *   9. La búsqueda por fechas sólo deja pasar fechas, y el menú de un
  *      evento sólo un id de cifras: van dentro de la URL.
+ *  10. El texto libre no sale en el resumen. `resumir` enseña cada valor
+ *      si hay 40 o menos distintos, y con 50 eventos la descripción
+ *      tenía ~35: salió entera, con nombres de clientes y lo que
+ *      escribieron, en algo que se dijo que se podía mandar tal cual.
  *
  *   node tools/test-tripleseat-api.js
  */
@@ -253,6 +257,36 @@ grupo('lo elegido del menu de un evento');
     (peticiones[2] || {}).url);
   prueba('y se queda con la que contesta', r.body.ok === true && r.body.registros === 1 && /Open Bar/.test(r.body.muestra),
     JSON.stringify(r.body));
+}
+
+grupo('el texto libre no sale en el resumen');
+{
+  entorno();
+  const largo = 'Date: 2026-11-07\r\nDrinks: Consumption bar\r\nGuest notes: Hi, thanks. Colleen, call me at 555-0101 please';
+  respuestas = { '/oauth2/token': LOGIN_OK, '/v1/events/search.json': { status: 200, body: { results: [
+    { event: { id: 1, name: 'Ortega Birthday Party', post_as: 'Ortega Birthday Party', description: 'Nut allergies',
+               lost_reason_details: 'never got back to me', status: 'DEFINITE', event_type: 'Dinner', notas: largo } },
+    { event: { id: 2, name: 'Bridal Shower', post_as: 'Bridal Shower', description: '', status: 'LOST', event_type: 'Dinner', notas: 'corto' } }
+  ] } } };
+  const r = await llamar({ accion: 'search', params: {} });
+  const c = r.body.campos || {};
+  const txt = JSON.stringify(c);
+  prueba('ni el nombre del evento', !/Ortega|Bridal/.test(txt), txt);
+  prueba('ni la descripcion', !/Nut allergies/.test(txt), txt);
+  prueba('ni el motivo de perdida', !/never got back/.test(txt), txt);
+  prueba('ni un texto largo de un campo cualquiera', !/Colleen|555-0101/.test(txt), txt);
+  prueba('dice cuantos valores tiene, como el resto del texto libre',
+    c.description === '2 valores distintos (texto libre)' && c.name === '2 valores distintos (texto libre)', JSON.stringify(c.description));
+  prueba('lo demas sigue saliendo con sus valores', c.status && c.status.DEFINITE === 1 && c.event_type && c.event_type.Dinner === 2,
+    JSON.stringify(c.status));
+}
+{
+  entorno();
+  respuestas = { '/oauth2/token': LOGIN_OK, '/v1/locations.json': { status: 200, body: [
+    { location: { id: 15361, name: ' The Crown Tavern - Concord' } }] } };
+  const r = await llamar({ accion: 'locations' });
+  prueba('el nombre de un restaurante si sale: no es de un cliente',
+    r.body.campos && r.body.campos.name && r.body.campos.name[' The Crown Tavern - Concord'] === 1, JSON.stringify(r.body.campos));
 }
 
 grupo('lo que viene alrededor de la lista no se pierde');
