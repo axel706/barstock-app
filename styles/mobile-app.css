@@ -1865,6 +1865,31 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-fic-g {
     flex: 0 0 76px; align-self: flex-end;
   }
+  /* ── La tarjeta como resultado de "Do we have…" ──────────────────
+   *
+   * La misma de la ficha, una por resultado. En la lista el hueco de la
+   * derecha lleva las zonas, no la gráfica. Los nombres largos se cortan
+   * a dos renglones: "Casa Noble Crystal Organic Tequila Blanco" ocupaba
+   * tres y empujaba la cifra; entero sale en la ficha.
+   *
+   * El envoltorio sigue llevando `m-res` (es lo que se toca), y con eso
+   * hereda de `body.m-shell .m-res` el fondo, el borde y el relleno de
+   * la fila vieja: la tarjeta salía dentro de otra tarjeta. Se anulan
+   * aquí con la misma base de selector para ganarle. El aire va por
+   * arriba; el margin-bottom de la fila se quita. */
+  body.m-shell .m-res.m-res-fic {
+    display: block; margin: 12px 0 0; padding: 0; cursor: pointer;
+    background: none; border: 0;
+  }
+  .m-res-fic .m-fic-n {
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .m-res-zonas {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
+    font-size: var(--m-small); color: #c3d2e2; white-space: nowrap;
+  }
+  .m-res-zonas b { color: #fff; font-weight: 700; }
+
   .m-fic-gb {
     display: flex; align-items: flex-end; gap: 3px; height: 32px;
   }

@@ -145,9 +145,25 @@
       return;
     }
 
+    // ── Cada resultado es la tarjeta de la ficha ─────────────────────
+    //
+    // Eran filas de texto. Axel pidió la MISMA tarjeta que abre la ficha
+    // —botella, cifra con su color, "Runs out in…"— y, de dos variantes
+    // dibujadas, la que lleva las ZONAS en el hueco de la derecha. La
+    // gráfica de semanas se queda en la ficha: es una consulta por
+    // producto, y en una lista serían decenas.
+    //
+    // `m-res` sigue en el envoltorio porque es lo que se toca para abrir
+    // la ficha, igual que con la fila.
+    const H = HERO();
     caja.innerHTML = res.map((r, i) => {
-      const k = tono(r);
       const mi = master().indexOf(r);
+      if (H && H.html) {
+        return `<div class="m-res m-res-fic" data-i="${mi}" role="button" tabindex="0">
+          ${H.html(r, { par: parDe(r), hueco: true })}</div>`;
+      }
+      // Sin el módulo, la fila de antes: fea, pero dice qué hay.
+      const k = tono(r);
       return `
         <button type="button" class="m-card m-res" data-i="${mi}">
           <span class="m-res-l">
@@ -171,26 +187,55 @@
     pintarZonasEnLista(caja, res);
   }
 
+  // ── Las zonas de la lista, según aparecen ──────────────────────────
+  //
+  // Se pedían sólo para los 6 primeros: con filas, nadie miraba más
+  // allá. Con tarjetas caben 2 o 3 por pantalla, y desde la 7.ª el hueco
+  // salía vacío al desplazarse. Ahora se piden cuando cada tarjeta entra
+  // en pantalla. Sin IntersectionObserver, los 6 primeros, como antes.
+  let _obs = null;
+
   async function pintarZonasEnLista(caja, res) {
+    if (_obs) { try { _obs.disconnect(); } catch (e) {} _obs = null; }
     const Z = window.BarStockZones;
     if (!Z) return;
     try { if (!Z.lista().length) await Z.cargar(); } catch (e) {}
     if (!Z.activas()) return;
 
-    // Solo los primeros: con cuarenta resultados serian cuarenta
-    // consultas, y nadie mira mas alla del quinto.
-    for (const r of res.slice(0, 6)) {
-      const mi = master().indexOf(r);
-      const el = caja.querySelector('[data-zonas="' + mi + '"]');
-      if (!el) continue;
+    const porIndice = new Map(res.map(r => [String(master().indexOf(r)), r]));
+
+    const pintar = async (el) => {
+      const r = porIndice.get(el.dataset.i);
+      if (!r) return;
       try {
         const d = await Z.donde(r.item);
-        if (!d || !d.zonas.length) continue;
-        el.innerHTML = esc(r.vendor || '') + ' · ' +
-          d.zonas.filter(z => z.botellas > 0)
-                 .map(z => '<b>' + n2(z.botellas) + '</b> ' + esc(z.zona)).join(' · ');
+        const zonas = d && d.zonas ? d.zonas.filter(z => z.botellas > 0) : [];
+        if (!zonas.length) return;
+        const hueco = el.querySelector('.m-fic-g');
+        if (hueco) {
+          hueco.innerHTML = '<div class="m-res-zonas">' + zonas.map(z =>
+            '<span><b>' + n2(z.botellas) + '</b> ' + esc(z.zona) + '</span>').join('') + '</div>';
+          return;
+        }
+        const s = el.querySelector('[data-zonas]');
+        if (s) s.innerHTML = esc(r.vendor || '') + ' · ' +
+          zonas.map(z => '<b>' + n2(z.botellas) + '</b> ' + esc(z.zona)).join(' · ');
       } catch (e) {}
+    };
+
+    const tarjetas = Array.from(caja.querySelectorAll('.m-res'));
+    if (typeof window.IntersectionObserver === 'function') {
+      _obs = new window.IntersectionObserver((entradas, o) => {
+        for (const e of entradas) {
+          if (!e.isIntersecting) continue;
+          o.unobserve(e.target);
+          pintar(e.target);
+        }
+      });
+      tarjetas.forEach(t => _obs.observe(t));
+      return;
     }
+    for (const t of tarjetas.slice(0, 6)) await pintar(t);
   }
 
   // ── Dónde están ──────────────────────────────────────────────────────
