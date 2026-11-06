@@ -11,7 +11,7 @@
   //
   // ── De dónde salen estos números ────────────────────────────────────
   //
-  // Los veintisiete perfiles de abajo están MEDIDOS. Cada uno se sacó de
+  // Los veintiocho perfiles de abajo están MEDIDOS. Cada uno se sacó de
   // una foto o ilustración de una botella real, contando píxeles fila por
   // fila, y después se comprobó superponiendo la silueta reconstruida
   // sobre la imagen original. El desajuste de área quedó entre 0.4% y
@@ -53,7 +53,7 @@
   // línea donde no es. Se ajustaron a ojo de Axel sobre una lámina; su
   // comentario cuenta por qué. Y `carlo_rossi`, la única medida viendo
   // el líquido en la foto. `smirnoff` y `patron` siguen el criterio de
-  // `botanist`.
+  // `botanist`; `wine_flute` la bajó Axel a ojo.
   //
   // ── Por qué la sección puede tratarse como circular ─────────────────
   //
@@ -407,6 +407,23 @@
       // la ponia al .77, debajo del corcho, el mismo fallo que en
       // clase_azul y don_julio_anejo.
       p: [[0,0.4994], [0.0156,0.824], [0.0469,0.9746], [0.0781,0.9931], [0.1094,0.9848], [0.1406,0.9945], [0.1719,0.9694], [0.2031,0.9708], [0.2344,0.9688], [0.2656,0.9509], [0.2969,0.9548], [0.3281,0.9404], [0.3594,0.9266], [0.3906,0.9197], [0.4219,0.8977], [0.4531,0.8682], [0.4844,0.8209], [0.5156,0.749], [0.5469,0.6362], [0.5781,0.4757], [0.6094,0.3398], [0.6406,0.3045], [0.6719,0.3001], [0.7031,0.2951], [0.7344,0.2902], [0.7656,0.2832], [0.7969,0.3362], [0.8281,0.4049], [0.8594,0.3439], [0.8906,0.3646], [0.9219,0.3616], [0.9531,0.326], [0.9844,0.2278], [1,0.112]]
+    },
+    wine_flute: {
+      name: 'Wine · Flute', asp: 4.33, yFull: 0.70, pourable: true,
+      // La flauta: Riesling, Gewurztraminer y los vinos que vienen en ella.
+      // Medida de una foto de un J. Lohr Bay Mist White Riesling, fondo
+      // transparente, 554 px de alto por 128 de ancho maximo, centro
+      // constante. Desajuste de area 0.77 %.
+      //
+      // La mas esbelta del catalogo (4.33, por delante de liqueur_slim).
+      // Cuerpo recto hasta la mitad y un hombro MUY largo, del 45 % al
+      // 80 % de la altura, que se funde con el cuello sin escalon. Iba en
+      // wine_burgundy, que es mas ancha y cuyo hombro empieza mas arriba:
+      // con la misma cantidad, el nivel se ve distinto.
+      //
+      // yFull .70, a media bajada del hombro. La regla del 95 % daba .77;
+      // Axel la bajo sobre la lamina: .77, .74 y "yo diria 70".
+      p: [[0,0.3906], [0.0156,0.809], [0.0469,0.9844], [0.0781,0.9931], [0.1094,0.9952], [0.1406,0.9922], [0.1719,0.9922], [0.2031,0.9922], [0.2344,0.9822], [0.2656,0.9775], [0.2969,0.9775], [0.3281,0.9779], [0.3594,0.9775], [0.3906,0.971], [0.4219,0.9674], [0.4531,0.9492], [0.4844,0.9127], [0.5156,0.8727], [0.5469,0.8225], [0.5781,0.756], [0.6094,0.6769], [0.6406,0.6131], [0.6719,0.5534], [0.7031,0.4954], [0.7344,0.4494], [0.7656,0.411], [0.7969,0.3764], [0.8281,0.3608], [0.8594,0.3594], [0.8906,0.3611], [0.9219,0.3663], [0.9531,0.3631], [0.9844,0.341], [1,0.2708]]
     },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del

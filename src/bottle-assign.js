@@ -81,10 +81,14 @@
     [/\bpatr[oó]n\b(?![\s\S]*\b(xo|cafe|citr[oó]nge)\b)/i, 'patron'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
+    // Riesling y Gewurztraminer vienen en flauta, no en Burgundy: iban
+    // en esa regla de abajo y se contaban con una botella mas ancha y de
+    // hombro mas alto. Va antes para ganarle.
+    [/\b(riesling|gew[uü]rztraminer)\b/i,           'wine_flute'],
     // "sauvignon" a secas no vale: un Cabernet Sauvignon viene en botella
     // de Burdeos y un Sauvignon Blanc en una de hombro caído. La palabra
     // que decide es la segunda, así que el blanco se caza entero y antes.
-    [/\b(sauvignon blanc|pinot noir|pinot grigio|pinot gris|chardonnay|burgundy|bourgogne|gew[uü]rztraminer|viognier|riesling)\b/i, 'wine_burgundy'],
+    [/\b(sauvignon blanc|pinot noir|pinot grigio|pinot gris|chardonnay|burgundy|bourgogne|viognier)\b/i, 'wine_burgundy'],
     [/\b(cabernet|merlot|bordeaux|malbec|syrah|shiraz|zinfandel|petite sirah|rioja|chianti|tempranillo)\b/i, 'bordeaux'],
     [/\b(keg|draft|draught)\b/i, 'none'],
     [/\b(can|cans|seltzer|soda|juice|syrup|puree|mix)\b/i, 'none']
