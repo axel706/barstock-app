@@ -11,7 +11,7 @@
   //
   // ── De dónde salen estos números ────────────────────────────────────
   //
-  // Los veintitrés perfiles de abajo están MEDIDOS. Cada uno se sacó de
+  // Los veinticuatro perfiles de abajo están MEDIDOS. Cada uno se sacó de
   // una foto o ilustración de una botella real, contando píxeles fila por
   // fila, y después se comprobó superponiendo la silueta reconstruida
   // sobre la imagen original. El desajuste de área quedó entre 0.4% y
@@ -48,10 +48,10 @@
   // altura a la que llega el líquido en una botella llena — no es 1,
   // porque encima quedan el cuello y el aire. No se eligió a ojo: es la
   // altura a la que cabe el 95% del volumen, integrada sobre el perfil.
-  // Las excepciones son `clase_azul`, `don_julio_anejo` y `bluecoat`:
-  // tapón o cuello largo, y esa regla deja la línea donde no es. Las
-  // tres se ajustaron a ojo de Axel sobre una lámina; su comentario
-  // cuenta por qué.
+  // Las excepciones son `clase_azul`, `don_julio_anejo`, `bluecoat` y
+  // `botanist`: tapón, cuello largo u hombro brusco, y esa regla deja la
+  // línea donde no es. Se ajustaron a ojo de Axel sobre una lámina; su
+  // comentario cuenta por qué.
   //
   // ── Por qué la sección puede tratarse como circular ─────────────────
   //
@@ -319,6 +319,25 @@
       // Axel la vio "un poco, solo un poco" alta: .73, en lo alto del
       // hombro.
       p: [[0,0.8763], [0.0156,0.9147], [0.0469,0.9107], [0.0781,0.9032], [0.1094,0.9032], [0.1406,0.9088], [0.1719,0.8976], [0.2031,0.9032], [0.2344,0.9078], [0.2656,0.9113], [0.2969,0.9237], [0.3281,0.9274], [0.3594,0.9305], [0.3906,0.9392], [0.4219,0.946], [0.4531,0.9516], [0.4844,0.9622], [0.5156,0.969], [0.5469,0.977], [0.5781,0.9882], [0.6094,0.9919], [0.6406,0.9957], [0.6719,0.9631], [0.7031,0.7177], [0.7344,0.4237], [0.7656,0.3514], [0.7969,0.3368], [0.8281,0.3189], [0.8594,0.299], [0.8906,0.2823], [0.9219,0.3089], [0.9531,0.3226], [0.9844,0.322], [1,0.2608]]
+    },
+    botanist: {
+      name: 'The Botanist', asp: 3.1, yFull: 0.69, pourable: true,
+      // La de The Botanist. Medida de una foto con fondo transparente,
+      // 385 px de alto por 124 de ancho maximo, fila por fila sobre el
+      // canal alfa. Desajuste de area 0.95 %; solo se separan las cuatro
+      // filas de la base, por la sombra.
+      //
+      // Cilindro recto del 5 % al 66 % y un hombro MUY corto: del cuerpo
+      // al cuello en ~6 % de la altura (de .99 a .36 entre el 66 % y el
+      // 73 %). Vodka tiene un hombro largo en pendiente y whiskey, que es
+      // igual de ancha (3.05), lleva collares en la base y el hombro.
+      //
+      // ── yFull NO es el 95 % del volumen ──────────────────────────────
+      //
+      // Aqui la regla se pasaba por ARRIBA: 75 %, ya dentro del cuello.
+      // Se ajusto sobre la lamina con Axel: 71 % "muy arriba", 67 % le
+      // faltaba "que cubra los hombros", .69 si.
+      p: [[0,0.4624], [0.0156,0.8192], [0.0469,0.9899], [0.0781,0.9758], [0.1094,0.9805], [0.1406,0.9825], [0.1719,0.9758], [0.2031,0.9819], [0.2344,0.9839], [0.2656,0.9839], [0.2969,0.9839], [0.3281,0.9886], [0.3594,0.9919], [0.3906,0.9866], [0.4219,0.9839], [0.4531,0.9839], [0.4844,0.9839], [0.5156,0.9852], [0.5469,0.9919], [0.5781,0.9919], [0.6094,0.9919], [0.6406,0.9926], [0.6719,0.9805], [0.7031,0.5155], [0.7344,0.3495], [0.7656,0.3448], [0.7969,0.371], [0.8281,0.371], [0.8594,0.371], [0.8906,0.373], [0.9219,0.3952], [0.9531,0.3878], [0.9844,0.3837], [1,0.3522]]
     },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del

@@ -65,6 +65,9 @@
     // Por la categoria caeria en la de vodka: misma esbeltez, otra
     // botella (se estrecha hacia la base, hombro corto, cuello largo).
     [/\bblue\s*coat\b/i,                            'bluecoat'],
+    // Igual: por la categoria caeria en vodka, y esta es un cilindro con
+    // hombro brusco.
+    [/\bbotanist\b/i,                               'botanist'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
     // "sauvignon" a secas no vale: un Cabernet Sauvignon viene en botella
