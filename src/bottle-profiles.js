@@ -11,7 +11,7 @@
   //
   // ── De dónde salen estos números ────────────────────────────────────
   //
-  // Los veintiocho perfiles de abajo están MEDIDOS. Cada uno se sacó de
+  // Los treinta perfiles de abajo están MEDIDOS. Cada uno se sacó de
   // una foto o ilustración de una botella real, contando píxeles fila por
   // fila, y después se comprobó superponiendo la silueta reconstruida
   // sobre la imagen original. El desajuste de área quedó entre 0.4% y
@@ -52,8 +52,8 @@
   // `botanist`: tapón, cuello largo u hombro brusco, y esa regla deja la
   // línea donde no es. Se ajustaron a ojo de Axel sobre una lámina; su
   // comentario cuenta por qué. Y `carlo_rossi`, la única medida viendo
-  // el líquido en la foto. `smirnoff` y `patron` siguen el criterio de
-  // `botanist`; `wine_flute` la bajó Axel a ojo.
+  // el líquido en la foto. `smirnoff`, `patron`, `belvedere` y `ketel_one`
+  // siguen el criterio de `botanist`; `wine_flute` la bajó Axel a ojo.
   //
   // ── Por qué la sección puede tratarse como circular ─────────────────
   //
@@ -424,6 +424,35 @@
       // yFull .70, a media bajada del hombro. La regla del 95 % daba .77;
       // Axel la bajo sobre la lamina: .77, .74 y "yo diria 70".
       p: [[0,0.3906], [0.0156,0.809], [0.0469,0.9844], [0.0781,0.9931], [0.1094,0.9952], [0.1406,0.9922], [0.1719,0.9922], [0.2031,0.9922], [0.2344,0.9822], [0.2656,0.9775], [0.2969,0.9775], [0.3281,0.9779], [0.3594,0.9775], [0.3906,0.971], [0.4219,0.9674], [0.4531,0.9492], [0.4844,0.9127], [0.5156,0.8727], [0.5469,0.8225], [0.5781,0.756], [0.6094,0.6769], [0.6406,0.6131], [0.6719,0.5534], [0.7031,0.4954], [0.7344,0.4494], [0.7656,0.411], [0.7969,0.3764], [0.8281,0.3608], [0.8594,0.3594], [0.8906,0.3611], [0.9219,0.3663], [0.9531,0.3631], [0.9844,0.341], [1,0.2708]]
+    },
+    belvedere: {
+      name: 'Belvedere', asp: 4.81, yFull: 0.68, pourable: true,
+      // La de Belvedere. Medida de una foto con fondo transparente, 447 px
+      // de alto por 93 de ancho maximo, centro constante. Desajuste de area
+      // 0.44 %. Foto pequeña: cada pixel de ancho pesa mas del 1 %.
+      //
+      // La mas esbelta del catalogo (4.81). Iba en la de vodka (3.41), que
+      // es bastante mas ancha. Cilindro recto hasta el 63 %, hombro corto
+      // hasta el 72 % y un cuello recto y largo. Parecida a ketel_one, que
+      // tiene el hombro mas arriba y el cuello mas corto: Axel, "similares
+      // pero no iguales".
+      //
+      // yFull .68, a media bajada del hombro (el criterio de botanist).
+      p: [[0,0.767], [0.0156,0.9255], [0.0469,0.9892], [0.0781,0.9892], [0.1094,0.9892], [0.1406,0.9892], [0.1719,0.9892], [0.2031,0.9892], [0.2344,0.9892], [0.2656,0.9892], [0.2969,0.9892], [0.3281,0.9892], [0.3594,0.9892], [0.3906,0.9892], [0.4219,0.9892], [0.4531,0.9923], [0.4844,1], [0.5156,1], [0.5469,1], [0.5781,0.9969], [0.6094,0.9962], [0.6406,0.9439], [0.6719,0.7834], [0.7031,0.5046], [0.7344,0.4094], [0.7656,0.4194], [0.7969,0.4194], [0.8281,0.4147], [0.8594,0.4009], [0.8906,0.3978], [0.9219,0.3986], [0.9531,0.4378], [0.9844,0.4359], [1,0.4014]]
+    },
+    ketel_one: {
+      name: 'Ketel One', asp: 4.63, yFull: 0.75, pourable: true,
+      // La de Ketel One. Medida de una foto con fondo transparente, 384 px
+      // de alto por 83 de ancho maximo; solo las dos filas de la base se
+      // van de centro. Desajuste de area 0.92 %. Foto pequeña, como la de
+      // belvedere.
+      //
+      // Recta hasta el 71 %, con un surco pequeño cerca de la base, hombro
+      // hasta el 79 % y cuello recto. Respecto a belvedere: el hombro mas
+      // alto y el cuello mas corto.
+      //
+      // yFull .75, a media bajada del hombro.
+      p: [[0,0.4337], [0.0156,0.7892], [0.0469,0.999], [0.0781,1], [0.1094,0.99], [0.1406,0.9558], [0.1719,0.9649], [0.2031,0.988], [0.2344,0.988], [0.2656,0.988], [0.2969,0.993], [0.3281,1], [0.3594,1], [0.3906,1], [0.4219,1], [0.4531,1], [0.4844,1], [0.5156,1], [0.5469,1], [0.5781,0.9789], [0.6094,0.9859], [0.6406,0.9679], [0.6719,0.9759], [0.7031,0.9398], [0.7344,0.7992], [0.7656,0.509], [0.7969,0.4137], [0.8281,0.4016], [0.8594,0.4006], [0.8906,0.3976], [0.9219,0.3956], [0.9531,0.3976], [0.9844,0.3834], [1,0.3012]]
     },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del

@@ -8,7 +8,7 @@
  * ahora iban en la Burgundy, la de White Haven. Lo que se protege:
  *
  *   1. Existe: `wine_flute`, "Wine · Flute", en el selector, válida.
- *   2. Es la más esbelta del catálogo y su hombro es MUY largo: baja del
+ *   2. Es la más esbelta de las de vino y licor y su hombro es MUY largo: baja del
  *      45 % al 80 % de la altura y se funde con el cuello. La Burgundy
  *      es más ancha y su hombro empieza más arriba.
  *   3. La línea de llena al 70 %, a media bajada del hombro: Axel la
@@ -46,7 +46,11 @@ prueba('esbeltez medida, 4.33', !!P && P.asp === 4.33, P && P.asp);
 console.log('\nconserva su forma');
 if (P) {
   const r = (y) => B.radiusAt(K, y);
-  prueba('la mas esbelta del catalogo', B.pickable().every(k => k === K || Number(B.PROFILES[k].asp) <= P.asp));
+  // Era "la mas esbelta del catalogo" hasta que llegaron Belvedere (4.81)
+  // y Ketel One (4.63). Lo que importa es que lo sea entre las de vino y
+  // las de licor, que es con las que se confundia.
+  prueba('la mas esbelta de las de vino y licor', ['bordeaux', 'wine_burgundy', 'wine_magnum', 'sparkling', 'liqueur_slim', 'liqueur_cream']
+    .every(k => Number(B.PROFILES[k].asp) < P.asp));
   prueba('cuerpo recto hasta la mitad', r(0.15) > 0.97 && r(0.4) > 0.95, r(0.15).toFixed(3) + ' / ' + r(0.4).toFixed(3));
   prueba('hombro largo: a mitad de camino todavia baja', r(0.6) > 0.65 && r(0.6) < 0.75 && r(0.72) > 0.44 && r(0.72) < 0.5,
     r(0.6).toFixed(3) + ' / ' + r(0.72).toFixed(3));
