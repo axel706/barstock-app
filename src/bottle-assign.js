@@ -72,6 +72,10 @@
     // Burgundy" es un garrafon, y esa regla le ponia la botella de vino
     // de 750 ml, que convierte mal un nivel en mililitros.
     [/\bcarlo\s*rossi\b/i,                          'carlo_rossi'],
+    // Los Smirnoff, sabores incluidos, comparten botella. Smirnoff Ice y
+    // los seltzers NO: van en botellin o lata y se cuentan enteros; sin la
+    // excepcion esta regla les ponia un nivel que nunca tienen.
+    [/\bsmirnoff\b(?![\s\S]*\b(ice|seltzer)\b)/i,       'smirnoff'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
     // "sauvignon" a secas no vale: un Cabernet Sauvignon viene en botella

@@ -11,7 +11,7 @@
   //
   // ── De dónde salen estos números ────────────────────────────────────
   //
-  // Los veinticinco perfiles de abajo están MEDIDOS. Cada uno se sacó de
+  // Los veintiséis perfiles de abajo están MEDIDOS. Cada uno se sacó de
   // una foto o ilustración de una botella real, contando píxeles fila por
   // fila, y después se comprobó superponiendo la silueta reconstruida
   // sobre la imagen original. El desajuste de área quedó entre 0.4% y
@@ -52,7 +52,7 @@
   // `botanist`: tapón, cuello largo u hombro brusco, y esa regla deja la
   // línea donde no es. Se ajustaron a ojo de Axel sobre una lámina; su
   // comentario cuenta por qué. Y `carlo_rossi`, la única medida viendo
-  // el líquido en la foto.
+  // el líquido en la foto. `smirnoff` sigue el criterio de `botanist`.
   //
   // ── Por qué la sección puede tratarse como circular ─────────────────
   //
@@ -371,6 +371,23 @@
         interior: [[0.854,0.486], [0.8407,0.529], [0.8252,0.538], [0.8119,0.546], [0.7965,0.546], [0.7832,0.538], [0.7699,0.521], [0.7544,0.495], [0.7412,0.435]]
       },
       p: [[0,0.3728], [0.0156,0.6581], [0.0469,0.8496], [0.0781,0.9116], [0.1094,0.9497], [0.1406,0.9669], [0.1719,0.9742], [0.2031,0.9742], [0.2344,0.9742], [0.2656,0.9742], [0.2969,0.9742], [0.3281,0.9742], [0.3594,0.9797], [0.3906,0.9828], [0.4219,0.9896], [0.4531,0.9914], [0.4844,0.9914], [0.5156,0.9937], [0.5469,1], [0.5781,0.9963], [0.6094,0.9662], [0.6406,0.9073], [0.6719,0.8048], [0.7031,0.6306], [0.7344,0.4268], [0.7656,0.339], [0.7969,0.309], [0.8281,0.285], [0.8594,0.2574], [0.8906,0.2353], [0.9219,0.2298], [0.9531,0.2261], [0.9844,0.2145], [1,0.138]]
+    },
+    smirnoff: {
+      name: 'Smirnoff', asp: 3.93, yFull: 0.75, pourable: true,
+      // La de Smirnoff (la foto era la de vainilla; los sabores comparten
+      // botella). Medida de una foto con fondo transparente, 554 px de
+      // alto por 141 de ancho maximo, fila por fila sobre el canal alfa,
+      // centro estable. Desajuste de area 0.66 %.
+      //
+      // Caia en la de vodka, que es recta y de hombro largo. Esta tiene
+      // la base ensanchada, una cintura suave hacia el 15 %, un cuerpo que
+      // se abre hasta un hombro CORTO al 70 % (de .99 a .45 en el 8 % de
+      // la altura) y un cuello recto. La mas parecida es aperol, que tiene
+      // el cuello mas largo y el hombro mas arriba.
+      //
+      // yFull .75: a media bajada del hombro, el criterio que Axel fijo
+      // con botanist ("que cubra los hombros"). La regla del 95 % daba .77.
+      p: [[0,0.6028], [0.0156,0.8467], [0.0469,0.99], [0.0781,0.9967], [0.1094,0.9196], [0.1406,0.9024], [0.1719,0.9078], [0.2031,0.9128], [0.2344,0.9216], [0.2656,0.9212], [0.2969,0.9303], [0.3281,0.9381], [0.3594,0.9433], [0.3906,0.9458], [0.4219,0.9537], [0.4531,0.9574], [0.4844,0.9654], [0.5156,0.9716], [0.5469,0.9716], [0.5781,0.9716], [0.6094,0.975], [0.6406,0.9921], [0.6719,0.9929], [0.7031,0.995], [0.7344,0.806], [0.7656,0.5457], [0.7969,0.3938], [0.8281,0.3901], [0.8594,0.3901], [0.8906,0.3885], [0.9219,0.3922], [0.9531,0.3963], [0.9844,0.3821], [1,0.3475]]
     },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del
