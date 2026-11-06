@@ -43,7 +43,8 @@
 
   function sil(key) {
     return `<svg viewBox="0 0 ${VB.w} ${VB.h}" class="ac-sil bp-sil" aria-hidden="true">
-      <path d="${P().pathFor(key, VB.w, VB.h, VB.pad)}"/></svg>`;
+      <path d="${P().pathFor(key, VB.w, VB.h, VB.pad)}"/>${P().asaFor && P().asaFor(key, VB.w, VB.h, VB.pad)
+        ? `<path d="${P().asaFor(key, VB.w, VB.h, VB.pad)}"/>` : ''}</svg>`;
   }
 
   // ── El orden de la parrilla: de gorda a flaca ────────────────────────

@@ -543,6 +543,7 @@
         <svg viewBox="0 0 ${VB.w} ${VB.h}" preserveAspectRatio="xMidYMid meet">
           <defs><clipPath id="cpClip"><path d="${bottlePath(key)}"/></clipPath></defs>
           <path class="cp-glass" d="${bottlePath(key)}" stroke-width="2"/>
+          ${P().asaFor && P().asaFor(key, VB.w, VB.h, VB.pad) ? `<path class="cp-glass" d="${P().asaFor(key, VB.w, VB.h, VB.pad)}" stroke-width="2" stroke-linejoin="round"/>` : ''}
           <g clip-path="url(#cpClip)">
             <rect class="cp-liquid" x="0" y="${yToPx(key, y)}" width="${VB.w}" height="${VB.h}"/>
           </g>

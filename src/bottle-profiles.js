@@ -11,7 +11,7 @@
   //
   // ── De dónde salen estos números ────────────────────────────────────
   //
-  // Los veinticuatro perfiles de abajo están MEDIDOS. Cada uno se sacó de
+  // Los veinticinco perfiles de abajo están MEDIDOS. Cada uno se sacó de
   // una foto o ilustración de una botella real, contando píxeles fila por
   // fila, y después se comprobó superponiendo la silueta reconstruida
   // sobre la imagen original. El desajuste de área quedó entre 0.4% y
@@ -51,7 +51,8 @@
   // Las excepciones son `clase_azul`, `don_julio_anejo`, `bluecoat` y
   // `botanist`: tapón, cuello largo u hombro brusco, y esa regla deja la
   // línea donde no es. Se ajustaron a ojo de Axel sobre una lámina; su
-  // comentario cuenta por qué.
+  // comentario cuenta por qué. Y `carlo_rossi`, la única medida viendo
+  // el líquido en la foto.
   //
   // ── Por qué la sección puede tratarse como circular ─────────────────
   //
@@ -339,6 +340,38 @@
       // faltaba "que cubra los hombros", .69 si.
       p: [[0,0.4624], [0.0156,0.8192], [0.0469,0.9899], [0.0781,0.9758], [0.1094,0.9805], [0.1406,0.9825], [0.1719,0.9758], [0.2031,0.9819], [0.2344,0.9839], [0.2656,0.9839], [0.2969,0.9839], [0.3281,0.9886], [0.3594,0.9919], [0.3906,0.9866], [0.4219,0.9839], [0.4531,0.9839], [0.4844,0.9839], [0.5156,0.9852], [0.5469,0.9919], [0.5781,0.9919], [0.6094,0.9919], [0.6406,0.9926], [0.6719,0.9805], [0.7031,0.5155], [0.7344,0.3495], [0.7656,0.3448], [0.7969,0.371], [0.8281,0.371], [0.8594,0.371], [0.8906,0.373], [0.9219,0.3952], [0.9531,0.3878], [0.9844,0.3837], [1,0.3522]]
     },
+    carlo_rossi: {
+      name: 'Carlo Rossi', asp: 1.95, yFull: 0.79, pourable: true,
+      // El garrafon de Carlo Rossi, y la primera con ASA. Medida de una
+      // foto con fondo transparente (453 px de alto), pero SOLO la mitad
+      // izquierda —del borde al eje, x=117.4— reflejada: el asa va a la
+      // derecha y, medida de borde a borde, habria inflado el ancho y el
+      // volumen. Desajuste de area 0.67 %.
+      //
+      // Cuerpo recto y ancho, hombro redondo y largo, cuello que se afina
+      // hacia la tapa. Ancha como crown (1.95 contra 1.77).
+      //
+      // ── yFull esta MEDIDA ────────────────────────────────────────────
+      //
+      // La primera del catalogo en la que se ve el liquido: el vino es
+      // rojo oscuro y el vidrio vacio del cuello, claro. Por la columna
+      // del centro el cambio cae entre el 78 % y el 80 % de la altura.
+      //
+      // ── El asa ───────────────────────────────────────────────────────
+      //
+      // Las siluetas son de revolucion: un radio por altura, reflejado,
+      // y asi se integra el volumen. Un asa no cabe en eso, asi que va
+      // aparte: `borde` es su lado de fuera y `interior` el borde del
+      // hueco, en las mismas unidades que `p` (y de 0 a 1, r relativo al
+      // ancho maximo, siempre a la derecha). La traza `asaFor`; no entra
+      // en `radiusAt` ni en el volumen. En la foto el asa esta vacia
+      // —vidrio claro, sin vino— y se dibuja asi, sin liquido.
+      asa: {
+        borde:    [[0.896,0.426], [0.8827,0.572], [0.8673,0.632], [0.854,0.658], [0.8385,0.667], [0.8252,0.675], [0.8097,0.675], [0.7965,0.675], [0.781,0.675], [0.7677,0.667], [0.7522,0.658], [0.7389,0.649], [0.7235,0.632], [0.7102,0.615]],
+        interior: [[0.854,0.486], [0.8407,0.529], [0.8252,0.538], [0.8119,0.546], [0.7965,0.546], [0.7832,0.538], [0.7699,0.521], [0.7544,0.495], [0.7412,0.435]]
+      },
+      p: [[0,0.3728], [0.0156,0.6581], [0.0469,0.8496], [0.0781,0.9116], [0.1094,0.9497], [0.1406,0.9669], [0.1719,0.9742], [0.2031,0.9742], [0.2344,0.9742], [0.2656,0.9742], [0.2969,0.9742], [0.3281,0.9742], [0.3594,0.9797], [0.3906,0.9828], [0.4219,0.9896], [0.4531,0.9914], [0.4844,0.9914], [0.5156,0.9937], [0.5469,1], [0.5781,0.9963], [0.6094,0.9662], [0.6406,0.9073], [0.6719,0.8048], [0.7031,0.6306], [0.7344,0.4268], [0.7656,0.339], [0.7969,0.309], [0.8281,0.285], [0.8594,0.2574], [0.8906,0.2353], [0.9219,0.2298], [0.9531,0.2261], [0.9844,0.2145], [1,0.138]]
+    },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del
     // catálogo: recta de base a hombro. No aparece en el selector — a
@@ -586,6 +619,30 @@
     return b.base - y * b.usable;
   }
 
+  // ── El asa ───────────────────────────────────────────────────────────
+  //
+  // Un adorno que se DIBUJA y no CUENTA: va aparte de `p`, así que ni
+  // radiusAt ni el volumen la ven. Nace del cuerpo y vuelve a él —el
+  // contorno empieza y acaba en el borde de la silueta— y el hueco queda
+  // entre el asa y el cuello. El primer intento la cerraba sin tocar el
+  // cuello y salía suelta. Misma caja que `pathFor`, siempre a la
+  // derecha. Sin asa, cadena vacía: quien dibuja no tiene que preguntar.
+  function asaFor(x, w, h, pad) {
+    const prof = profOf(x);
+    const A = prof && prof.asa;
+    if (!A || !Array.isArray(A.borde) || A.borde.length < 2) return '';
+    const { maxR, usable, cx, base } = boxFor(x, w, h, pad);
+    const P = ([y, r]) => (cx + r * maxR).toFixed(2) + ' ' + (base - y * usable).toFixed(2);
+    const bo = A.borde, it = Array.isArray(A.interior) ? A.interior : [];
+    const yT = bo[0][0], yB = bo[bo.length - 1][0];
+    let seq = [[yT, radiusAt(x, yT)]].concat(bo, [[yB, radiusAt(x, yB)]]);
+    if (it.length >= 2) {
+      const hT = it[0][0], hB = it[it.length - 1][0];
+      seq = seq.concat([[hB, radiusAt(x, hB)]], it.slice().reverse(), [[hT, radiusAt(x, hT)]]);
+    }
+    return 'M ' + seq.map(P).join(' L ') + ' Z';
+  }
+
   // Un perfil que no venga de este archivo entra al cálculo igual, así que
   // se valida antes de creérselo. Un perfil mal formado no da error: da un
   // número plausible y equivocado.
@@ -621,7 +678,7 @@
 
   window.BarStockBottleProfiles = {
     PROFILES, ALIAS, keys, pickable, get, profOf, resolveKey, forSize,
-    pathFor, yToPx, boxFor, isValidProfile,
+    pathFor, asaFor, yToPx, boxFor, isValidProfile,
     radiusAt, volumeTo, fractionAt, heightFor
   };
 })();

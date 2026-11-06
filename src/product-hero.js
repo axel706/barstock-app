@@ -101,6 +101,9 @@
     let d = '';
     try { d = V.pathFor(key, BOT.w, BOT.h, BOT.pad); } catch (e) { return ''; }
     if (!d) return '';
+    // El asa (Carlo Rossi) va FUERA del recorte del líquido: está vacía.
+    let asa = '';
+    try { asa = V.asaFor ? V.asaFor(key, BOT.w, BOT.h, BOT.pad) : ''; } catch (e) {}
 
     const oh = Number(r.onHand) || 0;
     const par = Number(r.suggested) || 0;
@@ -130,6 +133,7 @@
           ${frac > 0 ? `<g clip-path="url(#${id})">
             <path d="${d}" fill="${color}" opacity=".78"/></g>` : ''}
           <path d="${d}" fill="none" stroke="rgba(255,255,255,.38)" stroke-width="1.6"/>
+          ${asa ? `<path class="m-bot-asa" d="${asa}" fill="rgba(0,0,0,.22)" stroke="rgba(255,255,255,.38)" stroke-width="1.6" stroke-linejoin="round"/>` : ''}
         </svg>
       </div>`;
   }

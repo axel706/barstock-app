@@ -68,6 +68,10 @@
     // Igual: por la categoria caeria en vodka, y esta es un cilindro con
     // hombro brusco.
     [/\bbotanist\b/i,                               'botanist'],
+    // Antes que la regla de "burgundy" de mas abajo: "Carlo Rossi
+    // Burgundy" es un garrafon, y esa regla le ponia la botella de vino
+    // de 750 ml, que convierte mal un nivel en mililitros.
+    [/\bcarlo\s*rossi\b/i,                          'carlo_rossi'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
     // "sauvignon" a secas no vale: un Cabernet Sauvignon viene en botella
@@ -234,7 +238,8 @@
     // no es la botella de Patron" se detecta de un vistazo, y es
     // exactamente el error que hay que cazar antes de guardar.
     const svg = (r) => `<svg viewBox="0 0 60 90" class="ac-sil" aria-hidden="true">
-        <path d="${V.pathFor(r.shape || 'generic', 60, 90, 5)}"/>
+        <path d="${V.pathFor(r.shape || 'generic', 60, 90, 5)}"/>${V.asaFor && V.asaFor(r.shape || 'generic', 60, 90, 5)
+        ? `<path d="${V.asaFor(r.shape || 'generic', 60, 90, 5)}"/>` : ''}
       </svg>`;
 
     body(`
