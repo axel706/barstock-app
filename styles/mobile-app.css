@@ -719,6 +719,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   body.m-shell .m-searchbar input:focus { outline: none; }
   body.m-shell .m-searchbar input::placeholder { color: #8fa1b5; }
+  /* La X propia del navegador en un type="search" salía pegada a la
+   * nuestra: dos X para lo mismo. La nuestra es la que se ve igual en
+   * todos los teléfonos, así que la del navegador se apaga. */
+  body.m-shell .m-searchbar input::-webkit-search-cancel-button { -webkit-appearance: none; }
 
   /* El campo de verdad, el de la pantalla de Buscar, se despega un
    * poco: aquí sí está activo, no es un botón que lleva a otro sitio. */

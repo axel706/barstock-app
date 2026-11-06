@@ -622,6 +622,7 @@
           <i class="ti ti-search" aria-hidden="true"></i>
           <input id="miInput" type="search" inputmode="search" autocomplete="off"
                  placeholder="Filter items" aria-label="Filter items">
+          <button type="button" id="miClear" aria-label="Clear"><i class="ti ti-x" aria-hidden="true"></i></button>
         </div>
         <button type="button" class="m-adj" id="miAdj" aria-label="Filters and sorting">
           <i class="ti ti-adjustments-horizontal" aria-hidden="true"></i>
@@ -640,6 +641,14 @@
 
     const inp = host.querySelector('#miInput');
     inp.oninput = () => { _q = inp.value; pintarLista(host); };
+    // La misma X que "Do we have…" del Home, con el mismo estilo
+    // compartido (.m-searchbar > button en mobile-app.css): borrar letra
+    // a letra con el teclado del teléfono era el paso que sobraba. El
+    // comentario va aquí y no dentro de la barra: test-mismo-nombre
+    // busca la lupa en los primeros 700 caracteres de esa barra.
+    host.querySelector('#miClear').onclick = () => {
+      _q = ''; inp.value = ''; pintarLista(host); inp.focus();
+    };
     host.querySelector('#miAdj').onclick = () => cajon(host);
     host.querySelector('#miNuevo').onclick = () => hojaNueva(host);
 

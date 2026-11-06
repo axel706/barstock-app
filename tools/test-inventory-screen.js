@@ -191,6 +191,25 @@ console.log('\nse guarda contra el indice del maestro');
     eq('una sola letra no filtra', nombres(host).length, 5);
   }
 
+  console.log('\nla X borra el filtro de golpe');
+  {
+    // Como en "Do we have…" del Home: borrar letra a letra con el
+    // teclado del teléfono es lo que pedía Axel no tener que hacer.
+    const { host, w } = pantalla();
+    host.querySelector('[data-s="todo"]').click();
+    const inp = host.querySelector('#miInput');
+    const x = host.querySelector('#miClear');
+    ok('hay una X dentro del buscador', !!x && !!x.closest('.m-searchbar'));
+    ok('con el mismo icono que la de Do we have', !!x && !!x.querySelector('.ti-x'));
+    inp.value = 'vill';
+    inp.oninput();
+    eq('filtrado', nombres(host), ['Villa Brici Pinot']);
+    if (x) x.click();
+    eq('la X vacia el campo', inp.value, '');
+    eq('y la lista vuelve entera', nombres(host).length, 5);
+    ok('y deja el teclado listo para escribir otra cosa', w.document.activeElement === inp);
+  }
+
   console.log('\nel filtro se nota');
   {
     const { host } = pantalla();
