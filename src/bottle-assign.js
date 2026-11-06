@@ -52,6 +52,9 @@
     [/\b(jose\s*cuervo|cuervo)\b/i,               'tequila_tall'],
     [/\b(bailey'?s|rumchata|cream liqueur)\b/i,   'liqueur_cream'],
     [/\b(cointreau|grand\s*marnier|chambord|st[- ]?germain|luxardo)\b/i, 'liqueur_slim'],
+    // Medida aparte: cintura baja y cuerpo que se abre hacia el hombro.
+    // Sin esta regla caería en liqueur_slim por la categoría.
+    [/\baperol\b/i,                              'aperol'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
     // "sauvignon" a secas no vale: un Cabernet Sauvignon viene en botella

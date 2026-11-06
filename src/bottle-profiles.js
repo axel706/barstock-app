@@ -11,7 +11,7 @@
   //
   // ── De dónde salen estos números ────────────────────────────────────
   //
-  // Los diecinueve perfiles de abajo están MEDIDOS. Cada uno se sacó de
+  // Los veinte perfiles de abajo están MEDIDOS. Cada uno se sacó de
   // una foto o ilustración de una botella real, contando píxeles fila por
   // fila, y después se comprobó superponiendo la silueta reconstruida
   // sobre la imagen original. El desajuste de área quedó entre 0.4% y
@@ -227,6 +227,24 @@
       // Desajuste de area 0.8%. Al reducir de 63 puntos medidos a 39, la
       // fraccion de volumen se movio 0.11% como maximo.
       p: [[0,0.34], [0.0037,0.4484], [0.0075,0.4882], [0.0113,0.5149], [0.0151,0.534], [0.0226,0.5569], [0.0302,0.564], [0.0553,0.564], [0.0804,0.564], [0.0965,0.5961], [0.1126,0.6281], [0.1553,0.7797], [0.1981,0.88], [0.2408,0.9502], [0.2836,0.996], [0.3263,0.9976], [0.369,0.9976], [0.4119,0.9942], [0.4546,0.9951], [0.4973,0.952], [0.5401,0.8854], [0.5828,0.7941], [0.6256,0.6586], [0.6683,0.4466], [0.6774,0.3794], [0.6864,0.3192], [0.6955,0.2831], [0.7065,0.2656], [0.7146,0.2721], [0.7226,0.2798], [0.7307,0.2863], [0.7387,0.289], [0.8342,0.289], [0.9347,0.289], [0.9869,0.289], [0.9952,0.286], [0.9981,0.279], [0.9996,0.2711], [1,0.2631]]
+    },
+    aperol: {
+      name: 'Aperol', asp: 4.12, yFull: 0.792, pourable: true,
+      // La de Aperol. Medida de una foto de la botella real con fondo
+      // transparente: 1000 px de alto por 243 de ancho maximo, el borde
+      // leido fila por fila del canal alfa, sin adivinar donde acaba el
+      // fondo. Centro estable entre x=491 y x=502. Desajuste de area
+      // 0.98 %; lo que mas se separa es la base, por la elipse de
+      // perspectiva de la foto, igual que en las demas.
+      //
+      // Lo que no tiene ninguna otra del catalogo es la CINTURA BAJA: la
+      // base se ensancha casi al maximo (.99 al 5 %), se estrecha hasta
+      // .86 hacia el 20 % y el cuerpo se va abriendo, sin tramo recto,
+      // hasta el hombro estriado (.99 al 57 %). liqueur_slim, la mas
+      // parecida en esbeltez (4.27), es recta; la generica, un cilindro.
+      //
+      // yFull .792 es la altura del 95 % del volumen integrado.
+      p: [[0,0.31], [0.0156,0.8165], [0.0469,0.987], [0.0781,0.9741], [0.1094,0.9084], [0.1406,0.8768], [0.1719,0.8645], [0.2031,0.8609], [0.2344,0.8692], [0.2656,0.8819], [0.2969,0.8943], [0.3281,0.9039], [0.3594,0.9161], [0.3906,0.9266], [0.4219,0.9401], [0.4531,0.9522], [0.4844,0.9655], [0.5156,0.9766], [0.5469,0.9873], [0.5781,0.9905], [0.6094,0.9462], [0.6406,0.8037], [0.6719,0.5731], [0.7031,0.4694], [0.7344,0.4476], [0.7656,0.4346], [0.7969,0.4097], [0.8281,0.396], [0.8594,0.3904], [0.8906,0.3868], [0.9219,0.3835], [0.9531,0.3852], [0.9844,0.3684], [1,0.1948]]
     },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del
