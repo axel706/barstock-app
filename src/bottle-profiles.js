@@ -11,7 +11,7 @@
   //
   // ── De dónde salen estos números ────────────────────────────────────
   //
-  // Los veintiséis perfiles de abajo están MEDIDOS. Cada uno se sacó de
+  // Los veintisiete perfiles de abajo están MEDIDOS. Cada uno se sacó de
   // una foto o ilustración de una botella real, contando píxeles fila por
   // fila, y después se comprobó superponiendo la silueta reconstruida
   // sobre la imagen original. El desajuste de área quedó entre 0.4% y
@@ -52,7 +52,8 @@
   // `botanist`: tapón, cuello largo u hombro brusco, y esa regla deja la
   // línea donde no es. Se ajustaron a ojo de Axel sobre una lámina; su
   // comentario cuenta por qué. Y `carlo_rossi`, la única medida viendo
-  // el líquido en la foto. `smirnoff` sigue el criterio de `botanist`.
+  // el líquido en la foto. `smirnoff` y `patron` siguen el criterio de
+  // `botanist`.
   //
   // ── Por qué la sección puede tratarse como circular ─────────────────
   //
@@ -388,6 +389,24 @@
       // yFull .75: a media bajada del hombro, el criterio que Axel fijo
       // con botanist ("que cubra los hombros"). La regla del 95 % daba .77.
       p: [[0,0.6028], [0.0156,0.8467], [0.0469,0.99], [0.0781,0.9967], [0.1094,0.9196], [0.1406,0.9024], [0.1719,0.9078], [0.2031,0.9128], [0.2344,0.9216], [0.2656,0.9212], [0.2969,0.9303], [0.3281,0.9381], [0.3594,0.9433], [0.3906,0.9458], [0.4219,0.9537], [0.4531,0.9574], [0.4844,0.9654], [0.5156,0.9716], [0.5469,0.9716], [0.5781,0.9716], [0.6094,0.975], [0.6406,0.9921], [0.6719,0.9929], [0.7031,0.995], [0.7344,0.806], [0.7656,0.5457], [0.7969,0.3938], [0.8281,0.3901], [0.8594,0.3901], [0.8906,0.3885], [0.9219,0.3922], [0.9531,0.3963], [0.9844,0.3821], [1,0.3475]]
+    },
+    patron: {
+      name: 'Patrón', asp: 1.72, yFull: 0.56, pourable: true,
+      // La de Patron (Silver, Reposado y Añejo comparten botella). Medida
+      // de una foto con fondo transparente, 445 px de alto por 259 de
+      // ancho maximo, fila por fila sobre el canal alfa. Desajuste de area
+      // 1.05 %; solo se van de centro las tres filas de la base, la sombra.
+      //
+      // La segunda mas ancha (1.72; solo globe_footed la pasa). Cuerpo casi
+      // recto y una CUPULA de hombro larga, del 35 % al 60 % de la altura,
+      // que ninguna otra tiene: crown baja en pendiente con un cuello alto,
+      // don_julio_anejo tiene el hombro casi plano. Cuello corto con la
+      // banda verde y corcho en bola.
+      //
+      // yFull .56: cubre la cupula casi hasta el cuello. La regla del 95 %
+      // la ponia al .77, debajo del corcho, el mismo fallo que en
+      // clase_azul y don_julio_anejo.
+      p: [[0,0.4994], [0.0156,0.824], [0.0469,0.9746], [0.0781,0.9931], [0.1094,0.9848], [0.1406,0.9945], [0.1719,0.9694], [0.2031,0.9708], [0.2344,0.9688], [0.2656,0.9509], [0.2969,0.9548], [0.3281,0.9404], [0.3594,0.9266], [0.3906,0.9197], [0.4219,0.8977], [0.4531,0.8682], [0.4844,0.8209], [0.5156,0.749], [0.5469,0.6362], [0.5781,0.4757], [0.6094,0.3398], [0.6406,0.3045], [0.6719,0.3001], [0.7031,0.2951], [0.7344,0.2902], [0.7656,0.2832], [0.7969,0.3362], [0.8281,0.4049], [0.8594,0.3439], [0.8906,0.3646], [0.9219,0.3616], [0.9531,0.326], [0.9844,0.2278], [1,0.112]]
     },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del

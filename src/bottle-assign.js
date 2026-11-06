@@ -76,6 +76,9 @@
     // los seltzers NO: van en botellin o lata y se cuentan enteros; sin la
     // excepcion esta regla les ponia un nivel que nunca tienen.
     [/\bsmirnoff\b(?![\s\S]*\b(ice|seltzer)\b)/i,       'smirnoff'],
+    // Silver, Reposado y Añejo comparten botella. XO Cafe y Citronge van
+    // en otras, y no se les pone una forma que no es la suya.
+    [/\bpatr[oó]n\b(?![\s\S]*\b(xo|cafe|citr[oó]nge)\b)/i, 'patron'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
     // "sauvignon" a secas no vale: un Cabernet Sauvignon viene en botella
