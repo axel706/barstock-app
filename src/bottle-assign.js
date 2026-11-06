@@ -55,6 +55,9 @@
     // Medida aparte: cintura baja y cuerpo que se abre hacia el hombro.
     // Sin esta regla caería en liqueur_slim por la categoría.
     [/\baperol\b/i,                              'aperol'],
+    // Tambien medida aparte, y por la misma razon: por la categoria
+    // caeria en la de vodka, y esta tiene cintura y tapon esferico.
+    [/\bclase\s*azul\b/i,                         'clase_azul'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
     // "sauvignon" a secas no vale: un Cabernet Sauvignon viene en botella

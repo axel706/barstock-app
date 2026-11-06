@@ -11,7 +11,7 @@
   //
   // ── De dónde salen estos números ────────────────────────────────────
   //
-  // Los veinte perfiles de abajo están MEDIDOS. Cada uno se sacó de
+  // Los veintiún perfiles de abajo están MEDIDOS. Cada uno se sacó de
   // una foto o ilustración de una botella real, contando píxeles fila por
   // fila, y después se comprobó superponiendo la silueta reconstruida
   // sobre la imagen original. El desajuste de área quedó entre 0.4% y
@@ -48,6 +48,8 @@
   // altura a la que llega el líquido en una botella llena — no es 1,
   // porque encima quedan el cuello y el aire. No se eligió a ojo: es la
   // altura a la que cabe el 95% del volumen, integrada sobre el perfil.
+  // La excepción es `clase_azul`, cuyo tapón macizo y cuello largo dejan
+  // esa regla en mitad del cuerpo; su comentario cuenta por qué.
   //
   // ── Por qué la sección puede tratarse como circular ─────────────────
   //
@@ -245,6 +247,32 @@
       //
       // yFull .792 es la altura del 95 % del volumen integrado.
       p: [[0,0.31], [0.0156,0.8165], [0.0469,0.987], [0.0781,0.9741], [0.1094,0.9084], [0.1406,0.8768], [0.1719,0.8645], [0.2031,0.8609], [0.2344,0.8692], [0.2656,0.8819], [0.2969,0.8943], [0.3281,0.9039], [0.3594,0.9161], [0.3906,0.9266], [0.4219,0.9401], [0.4531,0.9522], [0.4844,0.9655], [0.5156,0.9766], [0.5469,0.9873], [0.5781,0.9905], [0.6094,0.9462], [0.6406,0.8037], [0.6719,0.5731], [0.7031,0.4694], [0.7344,0.4476], [0.7656,0.4346], [0.7969,0.4097], [0.8281,0.396], [0.8594,0.3904], [0.8906,0.3868], [0.9219,0.3835], [0.9531,0.3852], [0.9844,0.3684], [1,0.1948]]
+    },
+    clase_azul: {
+      name: 'Clase Azul', asp: 3.97, yFull: 0.75, pourable: true,
+      // La de Clase Azul. Medida de una foto con fondo transparente, 538 px
+      // de alto por 135 de ancho maximo, fila por fila sobre el canal
+      // alfa. Desajuste de area 1.22 %: algo mas que Aperol porque la
+      // foto es pequeña y cada pixel de ancho pesa mas.
+      //
+      // Cinco piezas: base ancha (.99 al 5 %), un cuerpo que se estrecha
+      // hacia arriba, una CINTURA encima del pie azul (.54 al 36 %), la
+      // panza del medallon (.75 al 48 %), un cuello fino (.38 al 77 %) y
+      // el TAPON esferico. La cintura parecia un fallo de medicion —vidrio
+      // transparente comido por el corte del canal alfa— y se comprobo
+      // que no: mide lo mismo con cualquier umbral.
+      //
+      // ── yFull NO es el 95 % del volumen ──────────────────────────────
+      //
+      // Es la unica del catalogo donde esa regla falla. El tapon es
+      // macizo y ocupa el 17 % del contorno; y aun midiendo solo hasta el
+      // cuello, el tramo de arriba es tan largo y estrecho que el ultimo
+      // 5 % del volumen ocupa casi un tercio de la altura. La regla ponia
+      // la linea de llena al 66 %, en mitad del cuerpo, y Axel lo vio en
+      // la lamina: "dejas el lleno muy abajo". En una Clase Azul llena el
+      // tequila llega hasta el tapon, asi que la linea va justo debajo
+      // del cuello: .75, donde ya cabe el 99.4 % de lo que hay hasta el.
+      p: [[0,0.3556], [0.0156,0.7673], [0.0469,0.9956], [0.0781,0.9834], [0.1094,0.9514], [0.1406,0.9159], [0.1719,0.8702], [0.2031,0.8292], [0.2344,0.7949], [0.2656,0.7617], [0.2969,0.7259], [0.3281,0.6495], [0.3594,0.5429], [0.3906,0.6131], [0.4219,0.7011], [0.4531,0.744], [0.4844,0.7464], [0.5156,0.7229], [0.5469,0.6727], [0.5781,0.6222], [0.6094,0.5821], [0.6406,0.542], [0.6719,0.4986], [0.7031,0.4545], [0.7344,0.4126], [0.7656,0.3829], [0.7969,0.4405], [0.8281,0.5146], [0.8594,0.5847], [0.8906,0.7519], [0.9219,0.756], [0.9531,0.6619], [0.9844,0.4287], [1,0.2123]]
     },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del
