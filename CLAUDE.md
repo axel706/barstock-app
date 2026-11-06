@@ -109,7 +109,7 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 
 ## La arquitectura
 
-Frontend estático, sin build. `index.html` es un monolito y hay ~95 módulos
+Frontend estático, sin build. `index.html` es un monolito y hay ~99 módulos
 `src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 29 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 82 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 84 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -137,6 +137,13 @@ producción enseñaba un build del 3 de noviembre con cambios de días
 después. En el teléfono está escondido (`app.css`); sólo se ve en el
 escritorio. `tools/test-sello.js` falla si el último commit que tocó la
 app es más de dos horas más nuevo que el sello.
+
+**Y cada build lleva su nota en `changelog.json`**, la primera de la lista:
+una a tres líneas, en inglés y cortas, de lo que nota quien usa la app
+("Clear button in the Inventory search"), no del código. Es lo que enseña
+el centro de versiones de More en el teléfono. `tools/test-changelog.js`
+falla si la build de `index.html` no tiene su entrada. Una build sin
+cambios visibles también la lleva: "Behind-the-scenes fixes".
 
 ### El orden de carga
 
@@ -229,7 +236,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 82 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 84 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

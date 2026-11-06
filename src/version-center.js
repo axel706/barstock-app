@@ -1,0 +1,180 @@
+(() => {
+  if (window.BarStockVersionCenter) return;
+
+  // ── El centro de versiones, en More ──────────────────────────────────
+  //
+  // En el teléfono el número de build va escondido (app.css), y sin él
+  // no hay forma de saber si lo que tienes es lo último. Esta tarjeta lo
+  // enseña —el mismo número del escritorio—, dice si hay una versión
+  // nueva esperando y qué trae cada una. Diseño que Axel aprobó sobre su
+  // captura de More: entre Settings y Log out, con la plantilla de las
+  // tarjetas del carrusel (encabezado, título, tres renglones, pie).
+  //
+  // ── De dónde salen las notas ──────────────────────────────────────
+  //
+  // De changelog.json, que se escribe a mano con cada build, en inglés y
+  // corto: lo lee el personal del bar. tools/test-changelog.js falla si
+  // la build de index.html no tiene su entrada, igual que test-sello
+  // falla si se sube la app sin subir el sello. Se pide al servidor sin
+  // caché: así, con una versión nueva esperando, se puede decir qué trae
+  // antes de actualizar.
+  //
+  // Si no hay notas —sin red, o una build sin entrada— se DICE. Enseñar
+  // las de otra build como si fueran de ésta sería peor que no enseñar.
+
+  const MAX = 10;                   // en la hoja, nunca más de diez
+  const MESES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  let _notas = null;                // la lista, o null si no se pudo leer
+  let _pidiendo = null;
+  let _host = null;
+  let _cuantas = 5;
+
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  const V = () => window.BarStockVersion || null;
+
+  // "20261106-131106" → "Nov 6 · 1:11 PM". El sello ya va en hora de
+  // Nueva York, así que se lee tal cual: convertirlo de zona lo movería.
+  function fecha(build) {
+    const m = /^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/.exec(String(build || ''));
+    if (!m) return '';
+    let h = Number(m[4]);
+    const pm = h >= 12;
+    h = h % 12 || 12;
+    return MESES[Number(m[2]) - 1] + ' ' + Number(m[3]) + ' · ' + h + ':' + m[5] + ' ' + (pm ? 'PM' : 'AM');
+  }
+
+  function leer() {
+    if (_pidiendo) return _pidiendo;
+    _pidiendo = (async () => {
+      try {
+        const r = await fetch('/changelog.json?_=' + Date.now(), { cache: 'no-store' });
+        const j = r && r.ok ? await r.json() : null;
+        if (Array.isArray(j)) _notas = j;
+      } catch (e) {
+        // Sin red: se queda lo que hubiera, o nada, y la tarjeta lo dice.
+      } finally {
+        _pidiendo = null;
+      }
+      return _notas;
+    })();
+    return _pidiendo;
+  }
+
+  const de = (build) => (_notas || []).find(e => e && e.build === build) || null;
+
+  // ── La tarjeta ─────────────────────────────────────────────────────
+  function tarjeta() {
+    const v = V();
+    const mia = v ? v.actual() : null;
+    const nueva = v ? v.nueva() : null;
+    const hayNueva = !!(nueva && nueva !== mia);
+    const eMia = de(mia), eNueva = hayNueva ? de(nueva) : null;
+
+    let lineas;
+    if (hayNueva) {
+      lineas = ['Ready: BUILD-' + nueva].concat(eNueva ? eNueva.items.slice(0, 2) : []);
+    } else {
+      lineas = eMia ? eMia.items.slice(0, 3) : null;
+    }
+
+    const cuerpo = lineas
+      ? '<ul class="m-vc-l">' + lineas.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>'
+      : '<p class="m-vc-nada">Release notes are not available right now.</p>';
+    // Con una nueva esperando y sin sus notas, al menos el número va:
+    // eso sí se sabe. Lo que no se sabe no se rellena.
+    const sinNotasNueva = hayNueva && !eNueva
+      ? '<p class="m-vc-nada">Notes for it are not available right now.</p>' : '';
+
+    return `
+      <article class="m-hero m-hero-ver" id="mVerCard">
+        <div class="m-hero-top"><div class="m-hero-txt">
+          <div class="m-hero-k m-vc-k">VERSION
+            ${hayNueva
+              ? '<span class="m-vc-chip es-nueva"><i></i>New version ready</span>'
+              : '<span class="m-vc-chip"><i></i>Up to date</span>'}
+          </div>
+          <div class="m-hero-t m-vc-t">${mia ? 'BUILD-' + esc(mia) : 'Unknown build'}
+            <small>${hayNueva ? 'yours' : esc(fecha(mia))}</small></div>
+          <div class="m-hero-cuerpo es-prosa">${cuerpo}${sinNotasNueva}</div>
+        </div></div>
+        <div class="m-hero-acts">
+          <button type="button" class="m-hero-b2" id="mVerOld">Earlier versions</button>
+          ${hayNueva ? '<button type="button" class="m-hero-b" id="mVerGo">Update now</button>' : ''}
+        </div>
+      </article>`;
+  }
+
+  function pintar(host) {
+    if (host) _host = host;
+    if (!_host || !_host.isConnected) return;
+    _host.innerHTML = tarjeta();
+    const old = _host.querySelector('#mVerOld');
+    if (old) old.onclick = abrirHoja;
+    const go = _host.querySelector('#mVerGo');
+    if (go) go.onclick = () => { const v = V(); if (v) v._recargar(); };
+  }
+
+  // Se pinta ya con lo que haya, y otra vez cuando llegan las notas y
+  // cuando se sabe si hay versión nueva: la tarjeta no espera a la red.
+  function montar(host) {
+    pintar(host);
+    leer().then(() => pintar());
+    const v = V();
+    if (v && v.comprobar) v.comprobar().then(() => pintar());
+  }
+
+  // ── Earlier versions ───────────────────────────────────────────────
+  function filas() {
+    const v = V();
+    const mia = v ? v.actual() : null;
+    const lista = (_notas || []).slice(0, Math.min(_cuantas, MAX));
+    if (!lista.length) return '<p class="m-vc-nada">Release notes are not available right now.</p>';
+    return lista.map(e => `
+      <div class="m-vc-v${e.build === mia ? ' es-mia' : ''}">
+        <div class="m-vc-vh"><b>BUILD-${esc(e.build)}${e.build === mia ? '<span>YOURS</span>' : ''}</b>
+          <small>${esc(fecha(e.build))}</small></div>
+        <ul>${(e.items || []).map(t => '<li>' + esc(t) + '</li>').join('')}</ul>
+      </div>`).join('');
+  }
+
+  function abrirHoja() {
+    const vieja = document.getElementById('mSheet');
+    if (vieja) vieja.remove();
+    const h = document.createElement('div');
+    h.className = 'm-sheet';
+    // El id es el de todas las hojas del teléfono: las reglas que les
+    // ganan el radio a app.css se apoyan en él.
+    h.id = 'mSheet';
+    h.innerHTML = `
+      <div class="m-sheet-bg"></div>
+      <div class="m-sheet-box m-vc-hoja" role="dialog" aria-label="Versions">
+        <div class="m-sheet-grip"></div>
+        <div class="m-vc-hh"><b>Versions</b>
+          <div class="m-vc-seg">
+            <button type="button" data-n="5">Last 5</button>
+            <button type="button" data-n="10">Last 10</button>
+          </div>
+        </div>
+        <div id="mVerList"></div>
+      </div>`;
+    document.body.appendChild(h);
+    if (window.BarStockSheet) window.BarStockSheet.enganchar(h, () => h.remove());
+    h.querySelector('.m-sheet-bg').onclick = () => h.remove();
+
+    const repintar = () => {
+      h.querySelectorAll('[data-n]').forEach(b => b.classList.toggle('on', Number(b.dataset.n) === _cuantas));
+      const l = h.querySelector('#mVerList');
+      if (l) l.innerHTML = filas();
+    };
+    h.querySelectorAll('[data-n]').forEach(b => {
+      b.onclick = () => { _cuantas = Number(b.dataset.n); repintar(); };
+    });
+    repintar();
+    if (!_notas) leer().then(repintar);
+  }
+
+  window.BarStockVersionCenter = { montar, pintar, fecha, _leer: leer };
+})();

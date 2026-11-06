@@ -1,0 +1,82 @@
+[
+  {
+    "build": "20261106-132509",
+    "items": [
+      "Version center here in More",
+      "See what changed in the last 10 versions"
+    ]
+  },
+  {
+    "build": "20261106-131106",
+    "items": [
+      "Test build for the update notice"
+    ]
+  },
+  {
+    "build": "20261106-130723",
+    "items": [
+      "Update notice drops from the bell",
+      "Tap it to load the newest version"
+    ]
+  },
+  {
+    "build": "20261106-124624",
+    "items": [
+      "Change a bottle right from Inventory"
+    ]
+  },
+  {
+    "build": "20261106-121557",
+    "items": [
+      "Carlo Rossi jug bottle, with its handle"
+    ]
+  },
+  {
+    "build": "20261106-120938",
+    "items": [
+      "The Botanist bottle shape"
+    ]
+  },
+  {
+    "build": "20261106-120402",
+    "items": [
+      "Bluecoat bottle shape"
+    ]
+  },
+  {
+    "build": "20261106-115459",
+    "items": [
+      "Don Julio Añejo bottle shape"
+    ]
+  },
+  {
+    "build": "20261106-114747",
+    "items": [
+      "Bottles fill to the full line, not the cap"
+    ]
+  },
+  {
+    "build": "20261106-114614",
+    "items": [
+      "Clase Azul bottle shape"
+    ]
+  },
+  {
+    "build": "20261106-113838",
+    "items": [
+      "Aperol bottle shape"
+    ]
+  },
+  {
+    "build": "20261106-105000",
+    "items": [
+      "Same stock color in the list and the product card"
+    ]
+  },
+  {
+    "build": "20261106-103422",
+    "items": [
+      "Clear button in the Inventory search"
+    ]
+  }
+]

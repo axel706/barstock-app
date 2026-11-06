@@ -3677,6 +3677,65 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     color: #94a3b8; font-size: var(--m-strong); cursor: pointer;
   }
 
+  /* ── El centro de versiones, en More ─────────────────────────────
+   *
+   * La tarjeta usa la plantilla del carrusel (.m-hero: encabezado,
+   * título, tres renglones, pie) pero NO uno de sus tonos: allí cada
+   * color significa algo —azul es "órdenes esperando"— y ésta no es
+   * una tarjeta del carrusel. Lleva el azul claro del aviso de versión
+   * y del punto de la campana, que es lo que sí es. */
+  .m-vc-wrap { margin-top: 22px; }
+  .m-hero-ver {
+    background: linear-gradient(135deg, rgba(56,189,248,.16), rgba(56,189,248,.05));
+    border: 1px solid rgba(125,211,252,.28);
+  }
+  .m-vc-k { display: flex; align-items: center; justify-content: space-between; color: #9fb3c8; }
+  .m-vc-chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px;
+    font-size: var(--m-meta); font-weight: 700; letter-spacing: 0; text-transform: none;
+    color: #86efac; background: rgba(74,222,128,.12);
+  }
+  .m-vc-chip i { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; }
+  .m-vc-chip.es-nueva { color: #7dd3fc; background: rgba(56,189,248,.16); }
+  .m-vc-chip.es-nueva i { background: #38bdf8; }
+  /* 19px y no los 22 del título del carrusel: "BUILD-20261106-131106"
+   * y la fecha no caben en una línea a ese tamaño. */
+  .m-hero-t.m-vc-t { font-size: var(--m-title); letter-spacing: 0; }
+  .m-vc-t small { margin-left: 6px; font-size: var(--m-small); font-weight: 600; color: #94a3b8; letter-spacing: 0; }
+  .m-vc-l { margin: 0; padding: 0; list-style: none; }
+  .m-vc-l li {
+    font-size: var(--m-small); color: #dbe7f3; line-height: var(--m-ren);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .m-vc-l li::before { content: "•"; color: #7dd3fc; margin-right: 7px; }
+  .m-vc-nada { margin: 0; font-size: var(--m-small); color: #94a3b8; line-height: 1.4; }
+  body.m-shell .m-hero-ver .m-hero-acts { justify-content: stretch; }
+  body.m-shell .m-hero-ver .m-hero-b2,
+  body.m-shell .m-hero-ver .m-hero-b { flex: 1; }
+  body.m-shell .m-hero-ver .m-hero-b { background: #38bdf8; color: #04283d; }
+
+  /* La hoja de versiones anteriores. */
+  .m-vc-hh { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+  .m-vc-hh b { font-size: var(--m-title); font-weight: 800; color: #f8fafc; }
+  .m-vc-seg { display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: rgba(255,255,255,.07); }
+  #mSheet .m-vc-seg button {
+    padding: 6px 11px; border: none; cursor: pointer; background: none;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+    font-size: var(--m-small); font-weight: 700; color: #94a3b8;
+    border-radius: 8px !important;
+  }
+  #mSheet .m-vc-seg button.on { background: rgba(56,189,248,.22); color: #e0f2fe; }
+  .m-vc-v {
+    margin-top: 12px; padding: 11px 12px; border-radius: 14px;
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09);
+  }
+  .m-vc-v.es-mia { border-color: rgba(74,222,128,.40); }
+  .m-vc-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .m-vc-vh b { font-size: var(--m-small); font-weight: 800; color: #f1f5f9; }
+  .m-vc-vh b span { margin-left: 6px; font-size: var(--m-meta); color: #86efac; }
+  .m-vc-vh small { font-size: var(--m-meta); color: #94a3b8; white-space: nowrap; }
+  .m-vc-v ul { margin: 6px 0 0; padding-left: 18px; font-size: var(--m-small); color: #cbd5e1; line-height: 1.45; }
+
   /* ── Por qué este fondo casi no pinta nada ─────────────────────
    *
    * Tres intentos fallaron por lo mismo: aquí había una capa oscura al

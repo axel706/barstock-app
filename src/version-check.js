@@ -86,6 +86,10 @@
   function avisar() {
     const N = window.BarStockMobileNotif;
     if (N && N.refrescar) { try { N.refrescar(); } catch (e) {} }
+    // Y la tarjeta de More, si está pintada: que no siga diciendo
+    // "Up to date" con una versión nueva ya sabida.
+    const C = window.BarStockVersionCenter;
+    if (C && C.pintar) { try { C.pintar(); } catch (e) {} }
     // UNA vez por versión. Sin esto, cada vuelta a la app sería otra
     // tarjeta hasta actualizar; para recordarlo ya está la campana.
     if (esMovil() && _mostrada !== _nueva) {

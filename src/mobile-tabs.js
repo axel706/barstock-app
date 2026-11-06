@@ -51,6 +51,10 @@
         </button>
       </div>
 
+      <!-- El centro de versiones (version-center.js): qué build tiene
+           este teléfono —el número va escondido en él— y qué trae. -->
+      <div class="m-vc-wrap" id="mVerCenter"></div>
+
       <!-- Salir vive aquí porque el botón del escritorio está dentro de
            .wrap, y .wrap se esconde mientras hay pantalla propia: desde
            el teléfono no había ninguna forma de cerrar sesión.
@@ -66,6 +70,9 @@
     // History tiene pantalla propia en el teléfono: la del escritorio
     // es una tabla que en un móvil no se puede leer. Va aparte de MAS
     // porque no abre una sección, abre una pantalla del armazón.
+    const vc = host.querySelector('#mVerCenter');
+    if (vc && window.BarStockVersionCenter) window.BarStockVersionCenter.montar(vc);
+
     const set = host.querySelector('#mMoreSet');
     if (set) set.onclick = () => {
       if (window.BarStockMobileSettings && window.BarStockMobile) {
