@@ -58,6 +58,10 @@
     // Tambien medida aparte, y por la misma razon: por la categoria
     // caeria en la de vodka, y esta tiene cintura y tapon esferico.
     [/\bclase\s*azul\b/i,                         'clase_azul'],
+    // Solo el Añejo: no se ha medido si el Blanco y el Reposado usan la
+    // misma botella, y una forma sin medir es un numero falso con buena
+    // pinta.
+    [/\bdon\s*julio\s+a[ñn]ejo\b/i,                 'don_julio_anejo'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
     // "sauvignon" a secas no vale: un Cabernet Sauvignon viene en botella

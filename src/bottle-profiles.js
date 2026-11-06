@@ -11,7 +11,7 @@
   //
   // ── De dónde salen estos números ────────────────────────────────────
   //
-  // Los veintiún perfiles de abajo están MEDIDOS. Cada uno se sacó de
+  // Los veintidós perfiles de abajo están MEDIDOS. Cada uno se sacó de
   // una foto o ilustración de una botella real, contando píxeles fila por
   // fila, y después se comprobó superponiendo la silueta reconstruida
   // sobre la imagen original. El desajuste de área quedó entre 0.4% y
@@ -48,8 +48,9 @@
   // altura a la que llega el líquido en una botella llena — no es 1,
   // porque encima quedan el cuello y el aire. No se eligió a ojo: es la
   // altura a la que cabe el 95% del volumen, integrada sobre el perfil.
-  // La excepción es `clase_azul`, cuyo tapón macizo y cuello largo dejan
-  // esa regla en mitad del cuerpo; su comentario cuenta por qué.
+  // Las excepciones son `clase_azul` y `don_julio_anejo`: tapón macizo y
+  // cuello largo, y esa regla deja la línea en mitad del cuerpo o del
+  // hombro. Su comentario cuenta por qué.
   //
   // ── Por qué la sección puede tratarse como circular ─────────────────
   //
@@ -273,6 +274,30 @@
       // tequila llega hasta el tapon, asi que la linea va justo debajo
       // del cuello: .75, donde ya cabe el 99.4 % de lo que hay hasta el.
       p: [[0,0.3556], [0.0156,0.7673], [0.0469,0.9956], [0.0781,0.9834], [0.1094,0.9514], [0.1406,0.9159], [0.1719,0.8702], [0.2031,0.8292], [0.2344,0.7949], [0.2656,0.7617], [0.2969,0.7259], [0.3281,0.6495], [0.3594,0.5429], [0.3906,0.6131], [0.4219,0.7011], [0.4531,0.744], [0.4844,0.7464], [0.5156,0.7229], [0.5469,0.6727], [0.5781,0.6222], [0.6094,0.5821], [0.6406,0.542], [0.6719,0.4986], [0.7031,0.4545], [0.7344,0.4126], [0.7656,0.3829], [0.7969,0.4405], [0.8281,0.5146], [0.8594,0.5847], [0.8906,0.7519], [0.9219,0.756], [0.9531,0.6619], [0.9844,0.4287], [1,0.2123]]
+    },
+    don_julio_anejo: {
+      name: 'Don Julio Añejo', asp: 1.86, yFull: 0.70, pourable: true,
+      // La de Don Julio Añejo. Medida de una foto con fondo transparente,
+      // 425 px de alto por 228 de ancho maximo, fila por fila sobre el
+      // canal alfa. Desajuste de area 1.04 %; solo se separa la base, por
+      // la perspectiva (las dos ultimas filas se van de centro).
+      //
+      // Casi igual de ancha que crown (1.86 contra 1.77) y, como ella, se
+      // estrecha hacia la base. Lo que la separa: un hombro CORTO y casi
+      // plano (de .97 a .35 entre el 58 % y el 67 %), un cuello recto con
+      // la banda de "Añejo Tequila" y un tapon de madera mas ancho que el
+      // cuello. En crown el hombro es largo y el cuello sale sin escalon.
+      //
+      // ── yFull NO es el 95 % del volumen ──────────────────────────────
+      //
+      // Como en clase_azul. La regla la ponia al 63 %, en mitad del
+      // hombro. El primer intento la subio justo debajo de la madera
+      // (79 %) y Axel lo vio en la lamina: "te estas yendo al tapon". El
+      // aro oscuro del tapon mide lo mismo que el cuello y un corte por
+      // ancho no lo distingue. El corcho entra por el cuello, asi que la
+      // linea va donde termina el hombro y empieza el cuello: .70, donde
+      // ya cabe el 98 % de lo que hay hasta el tapon.
+      p: [[0,0.4971], [0.0156,0.8117], [0.0469,0.9177], [0.0781,0.9258], [0.1094,0.9352], [0.1406,0.9433], [0.1719,0.9501], [0.2031,0.9561], [0.2344,0.9605], [0.2656,0.9633], [0.2969,0.9693], [0.3281,0.974], [0.3594,0.9781], [0.3906,0.9825], [0.4219,0.9868], [0.4531,0.9926], [0.4844,0.9956], [0.5156,0.9991], [0.5469,0.9949], [0.5781,0.9676], [0.6094,0.8762], [0.6406,0.6093], [0.6719,0.3451], [0.7031,0.3266], [0.7344,0.3246], [0.7656,0.3236], [0.7969,0.3229], [0.8281,0.4207], [0.8594,0.4437], [0.8906,0.4248], [0.9219,0.4426], [0.9531,0.416], [0.9844,0.2908], [1,0.1564]]
     },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del
