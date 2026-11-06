@@ -180,10 +180,19 @@
     }));
   }
 
+  // La versión nueva de la app (version-check.js) va SIEMPRE la primera,
+  // fuera del orden por fecha: es lo único de la lista que cambia la app
+  // que estás usando. No se guarda ni se descarta; desaparece al recargar.
+  function conVersion(lista) {
+    const V = window.BarStockVersion;
+    const v = V && V.aviso ? V.aviso() : null;
+    return v ? [v].concat(lista) : lista;
+  }
+
   async function cargar() {
     const { url, key } = cfg();
     const locId = await locationId();
-    if (!url || !key || !locId) { _avisos = fallosApp(); return _avisos; }
+    if (!url || !key || !locId) { _avisos = conVersion(fallosApp()); return _avisos; }
 
     if (_descartadas === null) {
       try { _descartadas = await leerDescartadas(url, key, locId); }
@@ -202,6 +211,7 @@
       .concat(fallosApp())
       .sort((a, b) => String(b.orden).localeCompare(String(a.orden)))
       .slice(0, MAX);
+    _avisos = conVersion(_avisos);
     return _avisos;
   }
 
@@ -268,12 +278,19 @@
   function pintarCampana() {
     const nota = hueco();
     if (!nota) return;
-    const n = _avisos.length;
+    // Dos puntos que dicen cosas distintas: el ROJO, que hay algo sin
+    // leer; el AZUL, que hay una versión nueva de la app. Si la versión
+    // contara para el rojo, una campana roja ya no diría si hay precios
+    // que mirar.
+    const ver = _avisos.some(a => a.version);
+    const n = _avisos.filter(a => !a.version).length;
     nota.innerHTML =
       '<button type="button" class="m-ico m-ico-bell" id="mNotif" ' +
-        'aria-label="' + (n ? n + ' notifications' : 'Notifications') + '">' +
+        'aria-label="' + (n ? n + ' notifications' : 'Notifications') +
+        (ver ? ', new version available' : '') + '">' +
         '<i class="ti ti-bell" aria-hidden="true"></i>' +
         (n ? '<span class="m-pip"></span>' : '') +
+        (ver ? '<span class="m-pip m-pip-ver"></span>' : '') +
       '</button>';
     const b = nota.querySelector('#mNotif');
     if (b) b.onclick = abrir;
@@ -357,6 +374,7 @@
       b.onclick = () => {
         const a = _avisos.find(x => x.clave === b.dataset.ver);
         if (a && a.cambios) pintarPrecios(a);
+        else if (a && typeof a.recargar === 'function') a.recargar();
       };
     });
   }

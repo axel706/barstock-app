@@ -3622,6 +3622,60 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
      * se lee como parte de la campana. */
     border: 2px solid #0b1220;
   }
+  /* El punto AZUL es la versión nueva de la app; va a la izquierda para
+   * no pisar el rojo, que sigue siendo "hay algo sin leer". */
+  .m-pip.m-pip-ver { right: auto; left: -1px; background: #38bdf8; }
+
+  /* ── La tarjeta de versión nueva ─────────────────────────────────
+   *
+   * Salta desde la campana (el piquito la apunta) a la misma altura que
+   * las burbujas de la app, para que se lea de dónde viene. Se toca para
+   * actualizar; la ✕ la cierra; sola se recoge a los 8 s. */
+  .m-ver {
+    position: fixed; z-index: 9400; right: 10px;
+    top: calc(60px + env(safe-area-inset-top, 0px));
+    width: min(320px, calc(100% - 20px));
+    display: flex; align-items: center; gap: 4px;
+    padding: 8px 8px 8px 6px; border-radius: 18px;
+    background: rgba(15,23,42,.92);
+    -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+    border: 1px solid rgba(56,189,248,.45);
+    box-shadow: 0 12px 30px rgba(0,0,0,.5);
+    opacity: 0; transform: translateY(-10px) scale(.97); transform-origin: top right;
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  .m-ver.on { opacity: 1; transform: none; }
+  .m-ver::before {
+    /* Sobre la campana, que va pegada al borde derecho de la banda. */
+    content: ""; position: absolute; top: -7px; right: 20px;
+    width: 12px; height: 12px; transform: rotate(45deg);
+    background: rgba(15,23,42,.96);
+    border-left: 1px solid rgba(56,189,248,.45);
+    border-top: 1px solid rgba(56,189,248,.45);
+  }
+  /* Los dos botones van con el ID delante y sin desenfoque propio. El
+   * `backdrop-filter` que motion.css pone a todo <button> dejaba, dentro
+   * de una tarjeta que ya va desenfocada, una píldora tenue detrás del
+   * texto y un círculo en la ✕. */
+  #mVer .m-ver-msg {
+    flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px;
+    background: none; border: none; box-shadow: none; padding: 4px 6px;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+    text-align: left; cursor: pointer;
+  }
+  .m-ver-ic {
+    flex: 0 0 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(56,189,248,.18); color: #7dd3fc; font-size: var(--m-strong);
+  }
+  .m-ver-t b { display: block; font-size: var(--m-strong); font-weight: 700; color: #f1f5f9; }
+  .m-ver-t small { display: block; margin-top: 2px; font-size: var(--m-small); font-weight: 600; color: #7dd3fc; }
+  #mVer .m-ver-x {
+    flex: 0 0 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    background: none; border: none; box-shadow: none; padding: 0;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+    color: #94a3b8; font-size: var(--m-strong); cursor: pointer;
+  }
 
   /* ── Por qué este fondo casi no pinta nada ─────────────────────
    *
