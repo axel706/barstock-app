@@ -140,6 +140,32 @@ console.log('\ny el nivel es on hand contra par');
   eq('pasarse del par no desborda',
      rectoClip(abrir({ onHand: 40, par: 18 }).host), lleno);
 
+  // El par completo llega a la LÍNEA DE LLENA de la silueta, no a la
+  // tapa. Con la Clase Azul eso pintaba el tapón esférico, que es macizo;
+  // en las demás llenaba el cuello y la cápsula, que tampoco llevan
+  // líquido. Se mide contra yToPx en la misma caja que dibuja la ficha.
+  {
+    const V = global.window.BarStockBottleProfiles;
+    const prof = V.get('vodka');
+    const caja = abrir({ onHand: 18, par: 18 }).host.querySelector('.m-bot svg');
+    const [, , bw, bh] = caja.getAttribute('viewBox').split(' ').map(Number);
+    const enLinea = V.yToPx('vodka', prof.yFull, bw, bh, 4);
+    ok('el par completo llega a la linea de llena, no a la tapa',
+       Math.abs(lleno - enLinea) < 0.5, lleno + ' vs ' + enLinea.toFixed(2));
+    const mitad = V.yToPx('vodka', prof.yFull / 2, bw, bh, 4);
+    ok('y la mitad del par, a media linea de llena',
+       Math.abs(medio - mitad) < 0.5, medio + ' vs ' + mitad.toFixed(2));
+  }
+  {
+    const ca = abrir({ onHand: 18, par: 18, shape: 'clase_azul' });
+    const V = ca.w.BarStockBottleProfiles;
+    const caja = ca.host.querySelector('.m-bot svg');
+    const [, , bw, bh] = caja.getAttribute('viewBox').split(' ').map(Number);
+    const tapon = V.yToPx('clase_azul', 0.78, bw, bh, 4);
+    ok('Clase Azul llena no pinta el tapon', rectoClip(ca.host) > tapon,
+       rectoClip(ca.host) + ' vs tapon ' + tapon.toFixed(2));
+  }
+
   const vacia = abrir({ onHand: 0, par: 18 });
   ok('en cero no se pinta líquido', !vacia.host.querySelector('.m-bot g[clip-path]'));
   ok('pero la botella sigue ahí', !!vacia.host.querySelector('.m-bot svg path'));

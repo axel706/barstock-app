@@ -78,8 +78,9 @@
 
   // ── La botella es un medidor, no una botella ───────────────────────
   //
-  // El PAR es la botella llena y el on hand marca el nivel. 7.3 de un
-  // par de 18 sale a poco menos de la mitad; 30 de 36 casi llena.
+  // El PAR es la botella llena —hasta su línea de llena, no hasta la
+  // tapa— y el on hand marca el nivel. 7.3 de un par de 18 sale a poco
+  // menos de la mitad de esa línea; 30 de 36, casi en ella.
   //
   // El nivel es lineal, no por volumen. `heightFor` convierte volumen
   // de líquido en altura teniendo en cuenta el hombro, y eso es
@@ -105,9 +106,16 @@
     const par = Number(r.suggested) || 0;
     const ratio = par > 0 ? Math.max(0, Math.min(1, oh / par)) : null;
 
+    // El par completo llega a la LÍNEA DE LLENA de la silueta (yFull), no
+    // a la tapa. Antes la proporción se repartía sobre la altura entera y
+    // un producto en su par pintaba el cuello y la cápsula; con la Clase
+    // Azul pintaba el tapón esférico, que es macizo. Sigue siendo lineal
+    // —la mitad del par, a media línea de llena—, sólo cambia el tope.
+    const prof = V.get ? V.get(key) : null;
+    const tope = prof && Number(prof.yFull) > 0 ? Number(prof.yFull) : 1;
     let yPx = BOT.h - BOT.pad;
     if (ratio !== null && ratio > 0) {
-      try { yPx = V.yToPx(key, ratio, BOT.w, BOT.h, BOT.pad); } catch (e) {}
+      try { yPx = V.yToPx(key, ratio * tope, BOT.w, BOT.h, BOT.pad); } catch (e) {}
     }
     const frac = ratio || 0;
 
