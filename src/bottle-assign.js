@@ -83,6 +83,11 @@
     // Ketel One Botanical va en otra botella, mas redonda.
     [/\bbelvedere\b/i,                              'belvedere'],
     [/\bketel\s*one\b(?![\s\S]*\bbotanical\b)/i,  'ketel_one'],
+    // Tres whiskies que caian en la forma generica de whiskey. Todos los
+    // Macallan usan la misma botella (Axel).
+    [/\bblanton'?s?\b/i,                            'blantons'],
+    [/\bjura\b/i,                                   'jura'],
+    [/\bmacallan\b/i,                               'macallan'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
     // Riesling y Gewurztraminer vienen en flauta, no en Burgundy: iban

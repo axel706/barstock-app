@@ -11,7 +11,7 @@
   //
   // ── De dónde salen estos números ────────────────────────────────────
   //
-  // Los treinta perfiles de abajo están MEDIDOS. Cada uno se sacó de
+  // Los treinta y tres perfiles de abajo están MEDIDOS. Cada uno se sacó de
   // una foto o ilustración de una botella real, contando píxeles fila por
   // fila, y después se comprobó superponiendo la silueta reconstruida
   // sobre la imagen original. El desajuste de área quedó entre 0.4% y
@@ -52,8 +52,9 @@
   // `botanist`: tapón, cuello largo u hombro brusco, y esa regla deja la
   // línea donde no es. Se ajustaron a ojo de Axel sobre una lámina; su
   // comentario cuenta por qué. Y `carlo_rossi`, la única medida viendo
-  // el líquido en la foto. `smirnoff`, `patron`, `belvedere` y `ketel_one`
-  // siguen el criterio de `botanist`; `wine_flute` la bajó Axel a ojo.
+  // el líquido en la foto. `smirnoff`, `patron`, `belvedere`, `ketel_one`,
+  // `jura` y `macallan` siguen el criterio de `botanist`; `wine_flute` y
+  // `blantons` las movió Axel a ojo.
   //
   // ── Por qué la sección puede tratarse como circular ─────────────────
   //
@@ -453,6 +454,39 @@
       //
       // yFull .75, a media bajada del hombro.
       p: [[0,0.4337], [0.0156,0.7892], [0.0469,0.999], [0.0781,1], [0.1094,0.99], [0.1406,0.9558], [0.1719,0.9649], [0.2031,0.988], [0.2344,0.988], [0.2656,0.988], [0.2969,0.993], [0.3281,1], [0.3594,1], [0.3906,1], [0.4219,1], [0.4531,1], [0.4844,1], [0.5156,1], [0.5469,1], [0.5781,0.9789], [0.6094,0.9859], [0.6406,0.9679], [0.6719,0.9759], [0.7031,0.9398], [0.7344,0.7992], [0.7656,0.509], [0.7969,0.4137], [0.8281,0.4016], [0.8594,0.4006], [0.8906,0.3976], [0.9219,0.3956], [0.9531,0.3976], [0.9844,0.3834], [1,0.3012]]
+    },
+    blantons: {
+      name: "Blanton's", asp: 1.98, yFull: 0.59, pourable: true,
+      // La de Blanton's: granada ancha, cupula de hombro larga, cuello corto
+      // y el caballito del tapon. Medida de una foto con fondo transparente,
+      // 530 px de alto por 269 de ancho maximo. Desajuste de area 1.63 %:
+      // el caballito no es simetrico y la silueta, que es de revolucion, lo
+      // dibuja como un tapon con relieve; lo que mas se separa es arriba.
+      //
+      // yFull .59: cubre la cupula hasta el cuello. Se propuso .56 (el
+      // criterio de patron) y Axel la quiso "un poco mas llena".
+      p: [[0,0.3483], [0.0156,0.5818], [0.0469,0.739], [0.0781,0.8074], [0.1094,0.8717], [0.1406,0.9297], [0.1719,0.9813], [0.2031,0.9971], [0.2344,1], [0.2656,1], [0.2969,1], [0.3281,1], [0.3594,1], [0.3906,0.9978], [0.4219,0.9951], [0.4531,0.9647], [0.4844,0.8958], [0.5156,0.8196], [0.5469,0.7282], [0.5781,0.579], [0.6094,0.3322], [0.6406,0.31], [0.6719,0.3109], [0.7031,0.3109], [0.7344,0.3134], [0.7656,0.4098], [0.7969,0.4562], [0.8281,0.4391], [0.8594,0.3474], [0.8906,0.3547], [0.9219,0.2502], [0.9531,0.2963], [0.9844,0.1971], [1,0.0462]]
+    },
+    jura: {
+      name: 'Jura', asp: 2.87, yFull: 0.68, pourable: true,
+      // La de Jura. La foto traia el tubo de carton a la izquierda; se midio
+      // solo la botella (x >= 195), 508 px de alto por 177 de ancho, centro
+      // constante. Desajuste de area 0.71 %.
+      //
+      // Cuerpo con una cintura suave entre la base y el hombro, hombro corto
+      // del 65 % al 75 % y cuello recto. yFull .68, a media bajada.
+      p: [[0,0.4953], [0.0156,0.7592], [0.0469,0.923], [0.0781,0.9735], [0.1094,0.9961], [0.1406,0.9968], [0.1719,0.9901], [0.2031,0.9751], [0.2344,0.9523], [0.2656,0.929], [0.2969,0.91], [0.3281,0.8965], [0.3594,0.8927], [0.3906,0.8927], [0.4219,0.8987], [0.4531,0.9181], [0.4844,0.9389], [0.5156,0.9647], [0.5469,0.9869], [0.5781,0.9944], [0.6094,0.9876], [0.6406,0.9421], [0.6719,0.81], [0.7031,0.5516], [0.7344,0.4615], [0.7656,0.4477], [0.7969,0.4147], [0.8281,0.3715], [0.8594,0.3482], [0.8906,0.339], [0.9219,0.3552], [0.9531,0.3616], [0.9844,0.3469], [1,0.2448]]
+    },
+    macallan: {
+      name: 'Macallan', asp: 3.87, yFull: 0.75, pourable: true,
+      // La de Macallan; Axel: "todos los Macallan son iguales". Medida de
+      // una foto DIMINUTA (la edicion David Carson), 182 px de alto por 47
+      // de ancho: cada pixel de ancho pesa mas del 2 %. Desajuste de area
+      // 1.20 %. Si llega una foto mas grande, se vuelve a medir.
+      //
+      // Recta y alta, hombro corto del 72 % al 80 % y cuello recto. yFull
+      // .75, a media bajada del hombro.
+      p: [[0,0.383], [0.0156,0.5709], [0.0469,0.8298], [0.0781,0.8298], [0.1094,0.8298], [0.1406,0.8298], [0.1719,0.8426], [0.2031,0.8511], [0.2344,0.8723], [0.2656,0.8723], [0.2969,0.8865], [0.3281,0.8936], [0.3594,0.8936], [0.3906,0.8936], [0.4219,0.9149], [0.4531,0.9362], [0.4844,0.9362], [0.5156,0.9362], [0.5469,0.9617], [0.5781,0.9787], [0.6094,0.9787], [0.6406,0.9787], [0.6719,0.9965], [0.7031,0.9645], [0.7344,0.8], [0.7656,0.5213], [0.7969,0.3901], [0.8281,0.383], [0.8594,0.3723], [0.8906,0.3617], [0.9219,0.3617], [0.9531,0.3617], [0.9844,0.3574], [1,0.2695]]
     },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del
