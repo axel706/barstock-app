@@ -62,6 +62,9 @@
     // misma botella, y una forma sin medir es un numero falso con buena
     // pinta.
     [/\bdon\s*julio\s+a[ñn]ejo\b/i,                 'don_julio_anejo'],
+    // Por la categoria caeria en la de vodka: misma esbeltez, otra
+    // botella (se estrecha hacia la base, hombro corto, cuello largo).
+    [/\bblue\s*coat\b/i,                            'bluecoat'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
     // "sauvignon" a secas no vale: un Cabernet Sauvignon viene en botella
