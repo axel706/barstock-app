@@ -52,8 +52,9 @@
   // Con respaldo, y no por elegancia: `tono()` lo llama CADA fila de
   // la lista. Sin el, un fallo al cargar ese archivo no dejaria la
   // ficha sin adorno — tiraria la pantalla de busqueda entera, que es
-  // de las mas usadas. El respaldo es el mismo criterio, escrito en
-  // una linea.
+  // de las mas usadas. El respaldo era el mismo criterio copiado, y se
+  // separo del de la lista de Inventory: ahora es gris y sin aviso. Sin
+  // el modulo, mejor sin color que con una tercera regla.
   const HERO = () => window.BarStockProductHero;
 
   // La hoja abierta, si hay. Vive en <body> como las demas hojas de la
@@ -69,11 +70,7 @@
   function tono(r) {
     const H = HERO();
     if (H && H.tono) return H.tono(r);
-    const oh = Number(r.onHand) || 0;
-    if (oh <= 0) return { c: '#f87171', t: 'out of stock' };
-    const sug = Number(r.suggested) || 0;
-    if (sug > 0 && oh / sug <= 0.25) return { c: '#fbbf24', t: 'running low' };
-    return { c: '#4ade80', t: '' };
+    return { c: '#94a3b8', t: Number(r.onHand) > 0 ? '' : 'out of stock' };
   }
 
   // La cabecera entera. Sin el modulo, los datos en texto: feo, pero
@@ -393,11 +390,11 @@
     // La tarjeta se tiñe segun como este el producto: lo primero que
     // se ve desde lejos es el color, no el numero.
     const par18 = n2(r.suggested);
-    const aviso = Number(r.onHand) <= 0
-      ? 'Out of stock'
-      : dias !== null ? 'Runs out in ' + cuantos(dias, 'day')
-      : (Number(r.suggested) > 0 && Number(r.onHand) / Number(r.suggested) <= 0.25
-          ? 'Running low' : '');
+    // El aviso lo escribe product-hero, con el mismo corte que el color.
+    const H = HERO();
+    const aviso = H && H.aviso ? H.aviso(r, dias)
+      : Number(r.onHand) <= 0 ? 'Out of stock'
+      : dias !== null ? 'Runs out in ' + cuantos(dias, 'day') : '';
 
     // ── Una HOJA, no una pantalla ───────────────────────────────────
     //

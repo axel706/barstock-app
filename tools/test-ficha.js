@@ -158,7 +158,12 @@ console.log('\nel color dice el estado antes que el número');
 {
   eq('en cero, rojo', abrir({ onHand: 0 }).host.querySelector('.m-fic').className,
      'm-fic m-fic-mal');
-  eq('por los suelos, ámbar', abrir({ onHand: 1.96, par: 18 }).host.querySelector('.m-fic').className,
+  // La regla es la de la lista de Inventory (Axel la dio por buena):
+  // ≤25 % del par es rojo, ≤60 % ámbar. Esta ficha decía ámbar al 11 %
+  // y verde al 43 %, mientras la lista decía rojo y ámbar.
+  eq('por los suelos, rojo', abrir({ onHand: 1.96, par: 18 }).host.querySelector('.m-fic').className,
+     'm-fic m-fic-mal');
+  eq('a menos de la mitad, ámbar', abrir({ onHand: 7.7, par: 18 }).host.querySelector('.m-fic').className,
      'm-fic m-fic-ojo');
   eq('bien, neutro', abrir({ onHand: 16, par: 18 }).host.querySelector('.m-fic').className,
      'm-fic m-fic-bien');

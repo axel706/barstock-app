@@ -97,14 +97,15 @@
   const TONO = { 'no vendor': 'amber', 'no price': 'red', 'no par': 'gris' };
 
   // ── Cuánto hay contra su par ─────────────────────────────────────────
+  // El color y la barrita de cada fila los decide product-hero.js, el
+  // mismo que pinta la ficha al tocarla. Aquí había otra regla con sus
+  // propios cortes, y Tito's salía ámbar en la lista y verde en la
+  // ficha. Sin el módulo, gris y sin barra: mejor sin color que con uno
+  // que diga otra cosa que la ficha.
   function salud(r) {
-    const oh = num(r.onHand), par = num(r.suggested);
-    if (par <= 0) return { c: '#94a3b8', pct: null };
-    const ratio = oh / par;
-    if (oh <= 0) return { c: '#f87171', pct: 0 };
-    if (ratio <= 0.25) return { c: '#f87171', pct: Math.round(ratio * 100) };
-    if (ratio <= 0.60) return { c: '#fbbf24', pct: Math.round(ratio * 100) };
-    return { c: '#4ade80', pct: Math.min(100, Math.round(ratio * 100)) };
+    const H = window.BarStockProductHero;
+    if (H && H.tono) { const k = H.tono(r); return { c: k.c, pct: k.pct }; }
+    return { c: '#94a3b8', pct: null };
   }
 
   function dias(r) {

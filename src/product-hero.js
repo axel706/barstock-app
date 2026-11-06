@@ -28,19 +28,46 @@
 
   const BOT = { w: 52, h: 116, pad: 4 };
 
-  // ── El color del estado ──────────────────────────────────────────────
+  // ── El color del estado, en UN sitio ────────────────────────────────
   //
   // Lo primero que se ve desde lejos es el color, no el número.
+  //
+  // Había tres reglas para esto. La lista de Inventory pintaba rojo
+  // hasta el 25 % del par y ámbar hasta el 60 %; esta ficha, rojo sólo
+  // en cero y ámbar hasta el 25 %; y la búsqueda llevaba una copia de
+  // la ficha como respaldo. Tito's con 7.7 de 18 (43 %) salía ámbar en
+  // la lista y verde al tocarlo. La buena es la de la lista —Axel la
+  // dio por buena— y ahora es la única: las pantallas la piden aquí.
+  //
+  //   cero, o ≤25 % del par   rojo
+  //   ≤60 % del par           ámbar
+  //   más                     verde
+  //   sin par                 gris: no hay contra qué medir
+  //
+  // `pct` es lo que dibuja la barrita de la lista.
+  const CORTE_ROJO = 0.25;
+  const CORTE_AMBAR = 0.60;
+  const COLOR = { mal: '#f87171', ojo: '#fbbf24', bien: '#4ade80', sin: '#94a3b8' };
+
   function tono(r) {
     const oh = Number(r.onHand) || 0;
-    if (oh <= 0) return { c: '#f87171', t: 'out of stock' };
-    const sug = Number(r.suggested) || 0;
-    if (sug > 0 && oh / sug <= 0.25) return { c: '#fbbf24', t: 'running low' };
-    return { c: '#4ade80', t: '' };
+    const par = Number(r.suggested) || 0;
+    if (oh <= 0) return { c: COLOR.mal, t: 'out of stock', nivel: 'mal', pct: par > 0 ? 0 : null };
+    if (par <= 0) return { c: COLOR.sin, t: '', nivel: 'sin', pct: null };
+    // A milésimas: 10.8 / 18 da 0.6000000000000001 en coma flotante, y
+    // un producto justo en el corte del 60 % salía verde. La lista vieja
+    // tenía el mismo fallo; lo encontró test-tono-unico.
+    const ratio = Math.round(oh / par * 1000) / 1000;
+    const pct = Math.min(100, Math.round(ratio * 100));
+    if (ratio <= CORTE_ROJO) return { c: COLOR.mal, t: 'running low', nivel: 'mal', pct };
+    if (ratio <= CORTE_AMBAR) return { c: COLOR.ojo, t: '', nivel: 'ojo', pct };
+    return { c: COLOR.bien, t: '', nivel: 'bien', pct };
   }
 
+  // Sin par la tarjeta va neutra: el tinte verde diría "bien" de algo
+  // que no se puede medir.
   function clase(k) {
-    return k.t === 'out of stock' ? 'mal' : k.t === 'running low' ? 'ojo' : 'bien';
+    return k.nivel === 'sin' ? 'bien' : (k.nivel || 'bien');
   }
 
   function parDe(r) {
@@ -114,7 +141,7 @@
     if (Number(r.onHand) <= 0) return 'Out of stock';
     if (dias !== null) return 'Runs out in ' + cuantos(dias, 'day');
     const sug = Number(r.suggested) || 0;
-    if (sug > 0 && Number(r.onHand) / sug <= 0.25) return 'Running low';
+    if (sug > 0 && Number(r.onHand) / sug <= CORTE_ROJO) return 'Running low';
     return '';
   }
 
