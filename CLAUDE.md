@@ -262,12 +262,68 @@ En `tools/`, sólo lectura, se pegan en la consola del navegador:
 
 ---
 
-## Dónde nos quedamos · 2026-11-03
+## Dónde nos quedamos · 2026-11-06
 
 **Esta sección caduca.** Es lo que estaba en el aire el día de la fecha, no
 historia. Si la fecha es vieja, créela a medias: comprueba contra el código
 y el `git log` antes de actuar, y actualízala o bórrala. Lo de abajo
 —"Pendientes conocidos"— sí es estable.
+
+### TripleSeat: en pausa, esperando la lista de paquetes de bar
+
+**Lo que se busca:** que BarStock sepa qué eventos vienen en cada
+restaurante y con qué bar, para tenerlo delante al pedir. Todo es sólo
+lectura; no se ha guardado nada de TripleSeat en Supabase.
+
+**Lo que ya se sabe**, medido contra producción con el panel
+(Settings → Connections → *TripleSeat · Developer tools*):
+
+- Locaciones: Crown `15361`, Jockey `15362`, Will's & Bill's `22225`, todas
+  bajo el site `8469`. Harvest no usa TripleSeat. Se emparejan por id: el
+  nombre de Crown en TripleSeat empieza con un espacio y Will's & Bill's se
+  escribe con `+`.
+- `/v1/events.json` viene por orden de CREACIÓN, no por fecha (121
+  páginas). Para "lo de las próximas dos semanas" se usa
+  `/v1/events/search.json` con `event_start_date` / `event_end_date`.
+- Los `LOST` y los que traen `deleted_at` también llegan: hay que
+  descartarlos. `guest_count` viene casi siempre.
+- **El tipo de bar no es un campo.** No está en los campos del evento, ni en
+  los personalizados (sólo dos fechas de depósito, vacías), ni en
+  `menu_item_selections` (vacío incluso en eventos con bar), ni en el
+  catálogo (`/v1/menus.json` contesta cero menús: WJM no los carga).
+- **Está en el documento del evento.** `/v1/events/{id}.json?show_financial=true`
+  trae `documents[].line_items`, con `category` Food / Beverage, `price`,
+  `quantity`, `total_price`. Es el "Contract & Event Order" del que sale la
+  hoja de cocina. Ejemplo: evento `58038602` (Crown, 11/6, 31 invitados),
+  hoja de cocina con "Silver Open Bar · 2 hours | per person" ($26) y
+  "Consumption bar (after 8pm)".
+- **Pero el nombre no se puede cortar del texto.** `display_name` y
+  `long_description` vienen vacíos y `menu_item_id` es null: las líneas se
+  escriben a mano. `description` es texto plano que pega el nombre a su
+  descripción sin separarlo ("Silver Open Barhand crafted brews…").
+- Los eventos que entran por el planificador online traen además una línea
+  `Drinks:` en `description` (sólo ~6 de 50).
+
+**El plan acordado:** el coordinador de eventos le da a Axel la lista de
+paquetes de bar, escritos como en TripleSeat (Silver Open Bar, Consumption
+Bar, los demás niveles, y la duración si la hay). Con ella, cada línea de
+Beverage se RECONOCE por cómo empieza su texto, sin adivinar. Uno que no esté
+en la lista sale como "Beverage sin reconocer", sin inventarle nombre.
+Después se decide con Axel dónde se enseña en la app (diseño antes que
+código).
+
+**Limpieza pendiente, como cambio aparte:** en `lib/tripleseat.js`, los
+campos de diagnóstico de cada línea de `lineas()` (`texto`, `esqueleto`,
+`primero`, `menu_item_id`) ya cumplieron su función. Se quitan junto con sus
+tests cuando se haga el reconocimiento.
+
+**Lo que no se debe repetir:** el resumen de valores (`resumir`) enseñó
+entera la `description` de 50 eventos, con nombres de clientes, en un
+bloque del que se había dicho que era seguro copiar. Ya está tapado
+(`sinTextoLibre`, y lo copiable sale de una lista cerrada de claves), pero
+cualquier bloque nuevo del panel tiene que pasar por esas reglas.
+
+### Del 2026-11-03, sin volver a mirar desde entonces
 
 **El enlace automático de facturas está recién conectado y sin estrenar.**
 `src/invoice-order-auto.js` escribe en `invoice_order_links` con
