@@ -76,6 +76,14 @@ function pantalla(extra) {
     w.BarStockDormant = { estaQuieto: (r) => r.item === extra.dormido, cuantos: () => 1 };
   }
 
+  if (extra && extra.formas) {
+    new Function(fs.readFileSync(path.join(RAIZ, 'src/bottle-profiles.js'), 'utf8'))();
+    new Function(fs.readFileSync(path.join(RAIZ, 'src/product-hero.js'), 'utf8'))();
+    w.state.master.forEach(r => { r.bottleShape = 'vodka'; r.bottleSizeMl = 750; });
+    w.__selector = null;
+    w.BarStockBottlePicker = { open(row, alGuardar) { w.__selector = { row, alGuardar }; } };
+  }
+
   let def = null;
   w.BarStockMobile = { register(d) { def = d; }, refrescarBadges() {} };
   new Function(fs.readFileSync(path.join(RAIZ, 'src/mobile-inventory.js'), 'utf8'))();
@@ -189,6 +197,43 @@ console.log('\nse guarda contra el indice del maestro');
     // Con una sola letra no se filtra: medio teclazo no debe vaciar la
     // pantalla.
     eq('una sola letra no filtra', nombres(host).length, 5);
+  }
+
+  console.log('\nla botella se cambia desde la ficha, sin entrar a un conteo');
+  {
+    // Antes la unica puerta era "not this bottle?" dentro del conteo: para
+    // corregir una silueta habia que reiniciar el ciclo. La fila abre el
+    // MISMO selector, que guarda en la fila y en el mapa global de las
+    // locaciones; aqui no se escribe nada por otro camino.
+    const { w, host } = pantalla({ formas: true });
+    host.querySelector('[data-s="todo"]').click();
+    host.querySelector('.m-inv').click();
+    const hoja = w.document.querySelector('#mSheet');
+    const fila = hoja && hoja.querySelector('#miBottle');
+    ok('hay una fila Bottle en la ficha', !!fila);
+    ok('dice la forma que tiene ahora', !!fila && /Vodka/.test(fila.textContent), fila && fila.textContent.trim());
+    ok('y su tamaño', !!fila && /750 ml/.test(fila.textContent));
+    ok('con la silueta dibujada', !!fila && !!fila.querySelector('svg path'));
+    const titulos = Array.from(hoja.querySelectorAll('.m-sheet-t')).map(t => t.textContent.trim());
+    eq('debajo de Unit price', titulos.slice(-2), ['Unit price', 'Bottle']);
+    eq('y no añade campos de texto', Array.from(hoja.querySelectorAll('input')).map(i => i.id).sort(), ['miPar', 'miVal']);
+
+    if (fila) fila.click();
+    const sel = w.__selector;
+    const nombre = hoja.querySelector('.m-fic-n') && hoja.querySelector('.m-fic-n').textContent.trim();
+    ok('abre el selector de siempre', !!sel);
+    ok('con la fila DEL MAESTRO, no una copia', !!sel && w.state.master.includes(sel.row) && sel.row.item === nombre,
+       sel && sel.row.item + ' vs ' + nombre);
+
+    if (sel) {
+      sel.row.bottleShape = 'carlo_rossi'; sel.row.bottleSizeMl = 4000;
+      sel.alGuardar('carlo_rossi', 4000);
+      const f2 = w.document.querySelector('#miBottle');
+      ok('al guardar, la fila dice la nueva', !!f2 && /Carlo Rossi/.test(f2.textContent) && /4000 ml/.test(f2.textContent),
+         f2 && f2.textContent.trim());
+      ok('y la cabecera dibuja la nueva, con su asa', !!w.document.querySelector('#mSheet .m-fic .m-bot-asa'));
+      ok('sin cerrar la hoja', !!w.document.querySelector('#mSheet'));
+    }
   }
 
   console.log('\nla X borra el filtro de golpe');

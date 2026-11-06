@@ -69,6 +69,37 @@
               num(r.suggested) > 0 ? ' of ' + n2(r.suggested) : ''}</div>`;
   }
 
+  // ── La fila "Bottle" ───────────────────────────────────────────────
+  //
+  // La única puerta para cambiar la silueta era "not this bottle?" dentro
+  // del conteo: para corregir una forma había que reiniciar el ciclo y
+  // estar contando. Esta fila abre el MISMO selector (bottle-picker.js),
+  // que guarda en la fila de la locación y en el mapa global de todas
+  // (item-shapes.js). No hay un segundo camino de guardado que pueda
+  // dejar de decir lo mismo que el del conteo.
+  //
+  // Dice qué forma tiene AHORA, no sólo "cambiar": sin eso, para saber si
+  // está bien hay que abrir el selector.
+  function filaBotella(r) {
+    const B = window.BarStockBottleProfiles;
+    const clave = B ? B.resolveKey(r.bottleShape) : (r.bottleShape || 'generic');
+    const sinForma = !r.bottleShape || clave === 'generic';
+    const prof = B && !sinForma ? B.get(clave) : null;
+    const nombre = sinForma ? 'Not set' : (prof && prof.name) || String(r.bottleShape);
+    const tam = clave !== 'none' && r.bottleSizeMl ? r.bottleSizeMl + ' ml · ' : '';
+    const sub = sinForma ? 'generic bottle · tap to choose' : tam + 'tap to change';
+    let dibujo = '';
+    if (B && B.pathFor) {
+      const k = sinForma ? 'generic' : clave;
+      const asa = B.asaFor ? B.asaFor(k, 34, 48, 3) : '';
+      dibujo = `<svg class="m-botrow-sil" viewBox="0 0 34 48" width="34" height="48" aria-hidden="true">
+        <path d="${B.pathFor(k, 34, 48, 3)}"/>${asa ? `<path d="${asa}"/>` : ''}</svg>`;
+    }
+    return `${dibujo}
+      <span class="m-botrow-t"><b>${esc(nombre)}</b><small>${esc(sub)}</small></span>
+      <i class="ti ti-chevron-right" aria-hidden="true"></i>`;
+  }
+
   function parDe(r) {
     const m = window.parAdjustments;
     if (!m || !m.size) return null;
@@ -373,6 +404,9 @@
                  value="${num(r.value) || ''}" placeholder="0.00" aria-label="Unit price">
         </div>
 
+        <div class="m-sheet-t">Bottle</div>
+        <button type="button" class="m-botrow" id="miBottle">${filaBotella(r)}</button>
+
         <div class="m-acts">
           <button type="button" class="m-act" id="miCancel">Cancel</button>
           <button type="button" class="m-act" id="miSave">Save</button>
@@ -384,6 +418,21 @@
     document.body.appendChild(h);
     // El asa dice "arrastrame para cerrar". Que lo diga de verdad.
     if (window.BarStockSheet) window.BarStockSheet.enganchar(h, () => h.remove());
+
+    // La forma se guarda en el selector, al elegirla, no con el Save de
+    // esta hoja: es el mismo guardado que el del conteo. Al volver se
+    // repintan la fila y la cabecera, sin cerrar la hoja.
+    const bot = h.querySelector('#miBottle');
+    if (bot) bot.onclick = () => {
+      const BP = window.BarStockBottlePicker;
+      if (!BP || !BP.open) return;
+      BP.open(r, () => {
+        const f = h.querySelector('#miBottle');
+        if (f) f.innerHTML = filaBotella(r);
+        const fic = h.querySelector('.m-fic');
+        if (fic) fic.outerHTML = hero(r, p);
+      });
+    };
 
     let vend = actual;
     h.querySelectorAll('[data-nv]').forEach(b => {

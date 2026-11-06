@@ -2283,6 +2283,26 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    *                                     paso lo que se iba a ajustar)
    */
   .m-edit .m-sheet-t { padding: 0 4px 9px; margin-top: 20px; }
+
+  /* La fila "Bottle": la misma caja que el precio y el par (fondo, borde,
+   * 12px), porque es un campo más del producto. El prefijo #mSheet y el
+   * !important no son decoración: sin los dos, el radio de 999px de
+   * app.css la vuelve píldora. Con sólo el ID salió píldora igual. */
+  #mSheet .m-botrow {
+    display: flex; align-items: center; gap: 12px; width: 100%; cursor: pointer;
+    padding: 8px 12px; text-align: left; color: #f1f5f9;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.15);
+    /* !important además del ID: el de app.css también lo lleva, y entre
+     * dos !important gana la especificidad, que aquí es la del ID. */
+    border-radius: 12px !important;
+  }
+  #mSheet .m-botrow-sil { flex: 0 0 auto; }
+  #mSheet .m-botrow-sil path { fill: rgba(255,255,255,.06); stroke: rgba(255,255,255,.55); stroke-width: 1.4; }
+  #mSheet .m-botrow-t { flex: 1; min-width: 0; }
+  #mSheet .m-botrow-t b { display: block; font-size: var(--m-strong); font-weight: 700; }
+  #mSheet .m-botrow-t small { display: block; margin-top: 2px; font-size: var(--m-small); color: #94a3b8; }
+  #mSheet .m-botrow > .ti { flex: 0 0 auto; font-size: var(--m-strong); color: #94a3b8; }
   .m-edit .m-chips,
   .m-edit .m-step,
   .m-edit .m-money { margin-bottom: 0; }
