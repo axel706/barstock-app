@@ -552,3 +552,158 @@ html.loc-switch-out #locCurtain{
   #locCurtain .lc-pill{ animation:none }
   #locCurtain .lc-led { animation:none }
 }
+
+/* ── La animación de actualizar: la app se contrae en el punto ──────
+   Ver src/update-anim.js (los tiempos y el porqué) y el script en línea
+   del <head> de index.html (el fotograma de llegada). Va en esta hoja,
+   junto a la cortina, por lo mismo que ella: tiene que estar aplicada
+   en el primer fotograma de la página nueva, y esta hoja carga en el
+   <head> antes que nada.
+
+   Uno por encima de la cortina (1000000): si las dos coincidieran, la
+   que se ve es ésta.
+
+   El círculo que se cierra y se abre (.bu-iris) es transparente por
+   dentro y tapa lo demás con su sombra. Con 0 de ancho todo es fondo;
+   con 260vmax el hueco ya cubre la pantalla entera. Así no se toca el
+   <body>: un transform en él rompería todo lo `position: fixed`.
+
+   El punto mide lo mismo que el del logo (.22 × 42px = 9.24px), porque
+   ES el punto del logo: viaja entre el centro y su sitio en la marca. */
+#bsUpd{
+  position:fixed;
+  inset:0;
+  z-index:1000001;
+  --d:9.24px;
+  font-family:"Manrope",-apple-system,BlinkMacSystemFont,sans-serif;
+  color:#e5e7eb;
+}
+html.bs-upd body{ overflow:hidden; }
+
+#bsUpd .bu-iris{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:0;
+  height:0;
+  border-radius:50%;
+  transform:translate(-50%,-50%);
+  box-shadow:0 0 0 150vmax #0b1220;
+}
+#bsUpd .bu-grupo{
+  position:absolute;
+  left:0;
+  right:0;
+  top:50%;
+  transform:translateY(-50%);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+/* El wordmark va en px FIJOS, igual que el de la cortina y el del
+   login: es la marca y no escala con "Text size". 42px es el de la
+   cortina, el techo para que no roce los bordes de un teléfono. */
+#bsUpd .bu-logo{ font-size:42px; color:#fff; }
+#bsUpd .bu-logo-dot{ visibility:hidden; }
+#bsUpd .bu-to{
+  margin-top:30px;
+  font-size:var(--m-small, 12px);
+  font-weight:700;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:#5c738c;
+}
+#bsUpd .bu-build{
+  margin-top:6px;
+  font-size:var(--m-body, 14px);
+  font-weight:700;
+  letter-spacing:.02em;
+  color:#e5e7eb;
+}
+#bsUpd .bu-barra{
+  margin-top:14px;
+  width:150px;
+  height:3px;
+  border-radius:3px;
+  background:rgba(255,255,255,.1);
+  overflow:hidden;
+}
+#bsUpd .bu-barra i{
+  display:block;
+  height:100%;
+  width:0;
+  border-radius:3px;
+  background:linear-gradient(90deg,#6ee7b7,#38bdf8);
+}
+#bsUpd .bu-dot{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:var(--d);
+  height:var(--d);
+  margin:calc(var(--d) / -2) 0 0 calc(var(--d) / -2);
+  border-radius:50%;
+  background:#38bdf8;
+  box-shadow:0 0 12px rgba(56,189,248,.75);
+  opacity:0;
+}
+#bsUpd .bu-dot::after{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  border-radius:50%;
+  border:2px solid rgba(56,189,248,.6);
+  opacity:0;
+}
+
+/* ── Salida (página vieja) ── */
+/* --grande es la diagonal de la pantalla (la pone update-anim.js): el
+   hueco empieza justo cubriéndola. Con 260vmax casi todo el cierre pasaba
+   fuera de la pantalla y la contracción se veía en los últimos 50ms. */
+#bsUpd.bu-sale .bu-iris{
+  width:var(--grande, 260vmax);
+  height:var(--grande, 260vmax);
+  transition:width .38s cubic-bezier(.4,0,.6,1), height .38s cubic-bezier(.4,0,.6,1), background .1s linear .28s;
+}
+#bsUpd.bu-sale .bu-grupo{ opacity:0; }
+#bsUpd.bu-sale.cierra .bu-iris{ width:var(--d); height:var(--d); background:#38bdf8; }
+/* El hueco se cierra del todo, SIN opacity: la sombra del iris es lo que
+   tapa la app, y con opacity 0 la app volvía a verse detrás del logo. */
+#bsUpd.bu-sale.punto .bu-iris{ width:0; height:0; background:none; transition:none; }
+#bsUpd.bu-sale.punto .bu-dot{ opacity:1; }
+#bsUpd.bu-sale.logo .bu-grupo{ opacity:1; transition:opacity .3s ease; }
+#bsUpd.bu-sale.logo .bu-dot{
+  transform:translate(var(--dx),var(--dy));
+  transition:transform .3s cubic-bezier(.2,.8,.2,1);
+}
+#bsUpd.bu-sale.logo .bu-barra i{ width:35%; transition:width .3s ease; }
+#bsUpd.bu-sale.en-logo .bu-dot{ opacity:0; }
+#bsUpd.bu-sale.en-logo .bu-logo-dot{ visibility:visible; }
+
+/* ── Llegada (página nueva) ──
+   La barra arranca donde la dejó la salida y avanza sola hacia el 90 %;
+   el 100 % lo pone update-anim.js cuando la app está lista. */
+#bsUpd.bu-llega .bu-logo-dot{ visibility:visible; }
+#bsUpd.bu-llega .bu-barra i{ width:35%; animation:buCarga 6s cubic-bezier(.1,.6,.3,1) forwards; }
+@keyframes buCarga{ to{ width:90% } }
+#bsUpd.bu-llega.flota .bu-logo-dot{ visibility:hidden; }
+#bsUpd.bu-llega.flota .bu-dot{ opacity:1; transform:translate(var(--dx),var(--dy)); }
+#bsUpd.bu-llega.vuelve .bu-grupo{ opacity:0; transition:opacity .2s ease; }
+#bsUpd.bu-llega.vuelve .bu-dot{ transform:translate(0,0); transition:transform .28s cubic-bezier(.2,.8,.2,1); }
+#bsUpd.bu-llega.pulso .bu-dot{ animation:buPulso .28s ease-out; }
+#bsUpd.bu-llega.pulso .bu-dot::after{ animation:buOnda .5s ease-out; }
+@keyframes buPulso{ 0%{ transform:scale(1) } 45%{ transform:scale(1.9) } 100%{ transform:scale(1) } }
+@keyframes buOnda{ from{ transform:scale(1); opacity:.8 } to{ transform:scale(5); opacity:0 } }
+#bsUpd.bu-llega.abre{ pointer-events:none; }
+#bsUpd.bu-llega.abre .bu-iris{
+  width:var(--grande, 260vmax);
+  height:var(--grande, 260vmax);
+  transition:width .48s cubic-bezier(.3,0,.2,1), height .48s cubic-bezier(.3,0,.2,1);
+}
+#bsUpd.bu-llega.abre .bu-dot{ opacity:0; transition:opacity .2s ease; }
+
+/* Sin movimiento: los mismos pasos, sin viajes ni pulsos. update-anim.js
+   tampoco espera entre ellos. */
+@media (prefers-reduced-motion: reduce){
+  #bsUpd *, #bsUpd *::after{ transition:none !important; animation:none !important; }
+}

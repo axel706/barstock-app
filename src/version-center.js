@@ -176,5 +176,52 @@
     if (!_notas) leer().then(repintar);
   }
 
-  window.BarStockVersionCenter = { montar, pintar, fecha, _leer: leer };
+  // ── What's new, al llegar de una actualización ────────────────────
+  //
+  // La abre update-anim.js cuando el punto ya se abrió en la app nueva.
+  // Axel la quiso como hoja desde abajo, igual que la ficha de producto
+  // de Inventory, y no como tarjeta desde la campana. No se cierra sola:
+  // es una hoja y la decide quien la lee.
+  //
+  // Las líneas salen de changelog.json, las mismas del centro de
+  // versiones. Si esa build no tiene entrada, se DICE, igual que en la
+  // tarjeta: enseñar las de otra versión sería mentir.
+  async function novedades(build) {
+    if (!/^\d{8}-\d{6}$/.test(String(build || ''))) return;
+    if (!_notas) await leer();
+    const e = de(build);
+    const items = e && Array.isArray(e.items) ? e.items : [];
+    const cuerpo = items.length
+      ? '<ul class="m-wn-l">' + items.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>'
+      : '<p class="m-vc-nada">Release notes are not available right now.</p>';
+
+    const vieja = document.getElementById('mSheet');
+    if (vieja) vieja.remove();
+    const h = document.createElement('div');
+    h.className = 'm-sheet';
+    // El id de todas las hojas del teléfono: las reglas que les ganan el
+    // radio a app.css se apoyan en él.
+    h.id = 'mSheet';
+    h.innerHTML = `
+      <div class="m-sheet-bg"></div>
+      <div class="m-sheet-box m-wn" role="dialog" aria-label="What's new">
+        <div class="m-sheet-grip"></div>
+        <div class="m-wn-k"><i></i>Updated</div>
+        <div class="m-wn-t">What's new</div>
+        <div class="m-wn-s">BUILD-${esc(build)} · ${esc(fecha(build))}</div>
+        ${cuerpo}
+        <div class="m-wn-acts">
+          <button type="button" class="m-wn-b2" id="mWnAll">All versions</button>
+          <button type="button" class="m-wn-b" id="mWnOk">Got it</button>
+        </div>
+      </div>`;
+    document.body.appendChild(h);
+    const cerrar = () => h.remove();
+    if (window.BarStockSheet) window.BarStockSheet.enganchar(h, cerrar);
+    h.querySelector('.m-sheet-bg').onclick = cerrar;
+    h.querySelector('#mWnOk').onclick = cerrar;
+    h.querySelector('#mWnAll').onclick = () => { cerrar(); abrirHoja(); };
+  }
+
+  window.BarStockVersionCenter = { montar, pintar, fecha, novedades, _leer: leer };
 })();

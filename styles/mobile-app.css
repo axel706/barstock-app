@@ -3761,6 +3761,42 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-vc-vh small { font-size: var(--m-meta); color: #94a3b8; white-space: nowrap; }
   .m-vc-v ul { margin: 6px 0 0; padding-left: 18px; font-size: var(--m-small); color: #cbd5e1; line-height: 1.45; }
 
+  /* La hoja What's new, al llegar de una actualización (ver
+   * version-center.js → novedades). El verde de "Updated" es el de "ya
+   * la tienes", el mismo de "YOURS" en la hoja de versiones; el azul se
+   * queda para "hay una nueva". */
+  .m-wn-k {
+    display: flex; align-items: center; gap: 8px; margin-top: 2px;
+    font-size: var(--m-meta); font-weight: 800; letter-spacing: .12em;
+    text-transform: uppercase; color: #6ee7b7;
+  }
+  .m-wn-k i { width: 8px; height: 8px; border-radius: 50%; background: #6ee7b7; box-shadow: 0 0 8px rgba(110,231,183,.8); }
+  .m-wn-t { margin-top: 8px; font-size: var(--m-title); font-weight: 800; color: #fff; letter-spacing: -.3px; }
+  .m-wn-s { margin-top: 3px; font-size: var(--m-small); font-weight: 600; color: #94a3b8; }
+  .m-wn .m-vc-nada { margin-top: 14px; }
+  .m-wn-l { margin: 0; padding: 0; list-style: none; }
+  .m-wn-l li {
+    position: relative; margin-top: 8px; padding: 10px 12px 10px 30px;
+    border-radius: 14px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+    font-size: var(--m-body); color: #e2e8f0; line-height: 1.35;
+  }
+  .m-wn-l li:first-child { margin-top: 14px; }
+  .m-wn-l li::before {
+    content: ""; position: absolute; left: 13px; top: calc(10px + .45em);
+    width: 7px; height: 7px; border-radius: 50%; background: #38bdf8;
+  }
+  .m-wn-acts { display: flex; gap: 10px; margin-top: 16px; }
+  /* Con el ID delante: app.css fuerza 999px a todo <button>, y motion.css
+   * le pone un desenfoque que dentro de la hoja deja una píldora tenue. */
+  #mSheet .m-wn-b, #mSheet .m-wn-b2 {
+    flex: 1; padding: 12px; cursor: pointer;
+    font-size: var(--m-body); font-weight: 800;
+    border-radius: 12px !important;
+    -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none;
+  }
+  #mSheet .m-wn-b { background: #38bdf8; color: #04283d; border: 1px solid #38bdf8; }
+  #mSheet .m-wn-b2 { background: none; color: #e2e8f0; border: 1px solid rgba(255,255,255,.18); }
+
   /* ── Por qué este fondo casi no pinta nada ─────────────────────
    *
    * Tres intentos fallaron por lo mismo: aquí había una capa oscura al

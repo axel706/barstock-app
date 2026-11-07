@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261107-004452",
+    "items": [
+      "Smooth animation when the app updates",
+      "What's new sheet after updating"
+    ]
+  },
+  {
     "build": "20261106-235840",
     "items": [
       "Bulleit, Buffalo Trace, Bols and Bacardí bottle shapes"

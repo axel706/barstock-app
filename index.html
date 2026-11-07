@@ -58,7 +58,7 @@
   <link rel="stylesheet" href="styles/order-history.css">
 
   <link rel="stylesheet" href="styles/fixes.css">
-  <link rel="stylesheet" href="styles/auth.css?v=login12">
+  <link rel="stylesheet" href="styles/auth.css?v=login13">
   <link rel="stylesheet" href="styles/cost-report.css?v=steps20">
   <link rel="stylesheet" href="styles/motion.css?v=motion3">
   <link rel="stylesheet" href="styles/skeleton.css?v=skel1">
@@ -80,7 +80,7 @@
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/chip-glow.css">
   <link rel="stylesheet" href="styles/mobile.css?v=mob5">
-  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp135">
+  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp136">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -171,6 +171,82 @@
   setTimeout(function(){ window.__bsLiftCurtain(); }, TOPE);
 })();
 </script>
+
+<!-- ── La llegada de una versión nueva ──────────────────────────────
+     Al tocar "Update", src/update-anim.js contrae la app en el punto
+     azul, enseña el logo con "Updating to BUILD-…" y deja la marca
+     `barstock.updatingTo` antes de recargar. Este script la encuentra
+     y pinta ese MISMO fotograma desde el primer píxel de la página
+     nueva: así el negro de la recarga no se ve nunca (lo que Axel
+     llamaba "el apagón").
+
+     Va en línea y en el <head> por la misma razón que la cortina de
+     arriba. Y el overlay se cuelga de <html>, no del <body>, porque el
+     <body> aquí todavía no existe.
+
+     Qué hace cada cosa:
+     - Este script: el fotograma de llegada y los dos temporizadores.
+     - auth.js llama a __bsUpdListo() en cuanto Supabase contesta, haya
+       sesión o no: la app ya está debajo.
+     - update-anim.js hace la salida (barra llena, el punto vuelve al
+       centro, pulsa y se abre) y luego la hoja What's new.
+
+     El TOPE es lo importante, igual que en la cortina: un overlay
+     atascado tapando la app es peor que el apagón que vino a quitar.
+     A los 10 s se quita pase lo que pase, aunque update-anim.js no
+     haya llegado a cargar. -->
+<script>
+(function(){
+  // El fotograma del logo, en UN solo sitio: lo usa este script para la
+  // llegada y update-anim.js para la salida. Tienen que coincidir o se
+  // nota el corte; por eso se define aquí siempre, haya marca o no.
+  window.__bsUpdMarcado = function(build){
+    return '<div class="bu-iris"></div>' +
+      '<div class="bu-grupo">' +
+        '<span class="brand-logo-type bu-logo">Bar<span class="bs-stock">Stock</span>' +
+          '<span class="brand-logo-dot bu-logo-dot"></span><span class="brand-logo-pro">Pro</span></span>' +
+        '<div class="bu-to">Updating to</div>' +
+        '<div class="bu-build">BUILD-' + build + '</div>' +
+        '<div class="bu-barra"><i></i></div>' +
+      '</div>' +
+      '<div class="bu-dot"></div>';
+  };
+
+  var b = null;
+  try { b = sessionStorage.getItem('barstock.updatingTo'); } catch (e) {}
+  if (!b) return;
+  // La marca se borra YA: si alguien recarga a mano a mitad, no tiene
+  // que volver a salir la animación. La build queda en window para la
+  // hoja What's new.
+  try { sessionStorage.removeItem('barstock.updatingTo'); } catch (e) {}
+  if (!/^\d{8}-\d{6}$/.test(b)) return;
+
+  var TOPE = 10000;
+  var h = document.documentElement;
+  h.classList.add('bs-upd');
+  var o = document.createElement('div');
+  o.id = 'bsUpd';
+  o.className = 'bu-llega';
+  o.setAttribute('aria-hidden', 'true');
+  o.innerHTML = window.__bsUpdMarcado(b);
+  h.appendChild(o);
+
+  window.__bsUpd = { build: b, t0: Date.now(), listo: false };
+  window.__bsUpdListo = function(){
+    var u = window.__bsUpd;
+    if (!u || u.listo) return;
+    u.listo = true;
+    var A = window.BarStockUpdateAnim;
+    if (A && A.llegar) A.llegar();
+  };
+  setTimeout(function(){ window.__bsUpdListo(); }, 8000);
+  setTimeout(function(){
+    var x = document.getElementById('bsUpd');
+    if (x) x.remove();
+    h.classList.remove('bs-upd');
+  }, TOPE);
+})();
+</script>
 </head>
 <!-- auth-locked de salida: la pantalla de entrada esta puesta desde
      el primer fotograma y el body no hace scroll por detras. auth.js
@@ -245,7 +321,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261106-235840</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261107-004452</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5413,8 +5489,9 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/mobile-inventory.js?v=m13"></script>
 <script src="src/mobile-orders.js?v=m17"></script>
 <script src="src/mobile-quick.js?v=mqk2"></script>
-<script src="src/version-check.js?v=ver2"></script>
-<script src="src/version-center.js?v=vc1"></script>
+<script src="src/update-anim.js?v=upd1"></script>
+<script src="src/version-check.js?v=ver3"></script>
+<script src="src/version-center.js?v=vc2"></script>
 <script src="src/mobile-tabs.js?v=m13"></script>
 <!-- Decide de que orden es cada factura y lo escribe como enlace.
      Lo llama el historial al repartir, asi que va ANTES que el. -->
@@ -5864,7 +5941,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 })();
 </script>
 
-<script src="src/auth.js?v=gate2"></script>
+<script src="src/auth.js?v=gate3"></script>
 <script src="src/wipe-location.js?v=wipe2"></script>
 <script src="src/admin-panel.js?v=adm4"></script>
 <script>

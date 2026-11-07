@@ -152,7 +152,18 @@
     actual: () => _actual || (_actual = leerActual()),
     nueva: () => _nueva,
     DURACION: 8000,
-    _recargar: () => window.location.reload()
+    // Antes era un reload() en seco: la pantalla se iba a negro mientras
+    // bajaba la versión nueva ("el apagón"). Ahora la recarga va dentro
+    // de la animación de update-anim.js, que la hace al final de la
+    // salida. Sin ese módulo, o sin versión nueva sabida, se recarga
+    // como antes: la animación es lo de menos, actualizar es lo que
+    // importa.
+    _recargar: () => {
+      const A = window.BarStockUpdateAnim;
+      const recargar = () => window.location.reload();
+      if (A && A.salir && _nueva) A.salir(_nueva, recargar);
+      else recargar();
+    }
   };
   window.BarStockVersion = api;
 

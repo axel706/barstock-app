@@ -34,6 +34,9 @@
   // Si no existe, es que no había cortina que levantar. No es un fallo.
   function levantarCortina(){
     try { if (window.__bsLiftCurtain) window.__bsLiftCurtain(); } catch (e) {}
+    // Lo mismo para la llegada de una versión nueva (el punto azul que
+    // se abre): la define el <head> solo si se viene de actualizar.
+    try { if (window.__bsUpdListo) window.__bsUpdListo(); } catch (e) {}
   }
 
   function showOverlay(){
