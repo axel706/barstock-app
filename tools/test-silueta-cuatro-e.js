@@ -44,7 +44,9 @@ const B = window.BarStockBottleProfiles;
 const E = [
   ['tullamore', 'Tullamore D.E.W.', 2.72, 0.75],
   ['elijah_craig', 'Elijah Craig', 2.51, 0.72],
-  ['don_julio_blanco', 'Don Julio Blanco', 1.56, 0.65],
+  // El nombre que se ve cambio: la de 750 resulto otra botella (ver
+  // test-silueta-cuatro-i) y esta es la de 1.75 L.
+  ['don_julio_blanco', 'Don Julio · 1.75 L', 1.56, 0.65],
   ['michters', "Michter's", 3.28, 0.63]
 ];
 
@@ -85,8 +87,10 @@ console.log('\npor nombre, acotado a lo medido');
   const A = window.BarStockBottleAssign;
   for (const [n, c, k] of [['Tullamore Dew Irish Whiskey', 'Whiskey & Bourbon', 'tullamore'],
                            ['Elijah Craig Small Batch', 'Whiskey & Bourbon', 'elijah_craig'],
-                           ['Don Julio Blanco', 'Tequila & Mezcal', 'don_julio_blanco'],
-                           ['Don Julio Reposado', 'Tequila & Mezcal', 'vodka'],
+                           // Blanco y Reposado reciben ahora la de 750 (don_julio);
+                           // la de 1.75 L la elige el tamano. Ver test-silueta-cuatro-i.
+                           ['Don Julio Blanco', 'Tequila & Mezcal', 'don_julio'],
+                           ['Don Julio Reposado', 'Tequila & Mezcal', 'don_julio'],
                            ['Don Julio Añejo', 'Tequila & Mezcal', 'don_julio_anejo'],
                            ["Michter's US*1 Rye", 'Whiskey & Bourbon', 'michters'],
                            ['Michters Small Batch Bourbon', 'Whiskey & Bourbon', 'michters'],

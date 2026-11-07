@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261107-014519",
+    "items": [
+      "Buchanan's, Campari and Captain Morgan bottle shapes",
+      "Don Julio: 750 ml and 1.75 L bottles drawn apart"
+    ]
+  },
+  {
     "build": "20261107-013751",
     "items": [
       "2 Gingers, Averna, Baileys and Blade and Bow shapes"
@@ -180,12 +187,6 @@
     "build": "20261106-113838",
     "items": [
       "Aperol bottle shape"
-    ]
-  },
-  {
-    "build": "20261106-105000",
-    "items": [
-      "Same stock color in the list and the product card"
     ]
   }
 ]

@@ -56,13 +56,13 @@
   // `balvenie`, `nikka_coffey`, `whistlepig`, `chivas`, `empress`,
   // `disaronno`, `tullamore`, `elijah_craig`, `basil_hayden`, `skrewball`,
   // `dewars`, `bulleit`, `buffalo_trace`, `bols`, `t1800`, `frangelico`,
-  // `st_elder`, `st_germain`, `two_gingers`, `averna` y `blade_and_bow`,
-  // medidas viendo el líquido en la foto. `smirnoff`, `patron`,
+  // `st_elder`, `st_germain`, `two_gingers`, `averna`, `blade_and_bow`,
+  // `campari` y `captain_morgan`, medidas viendo el líquido en la foto. `smirnoff`, `patron`,
   // `belvedere`, `ketel_one`, `jura`, `macallan`, `glenfiddich`,
   // `drambuie`, `fireball`, `cointreau`, `grey_goose`, `ciroc`, `jameson`,
   // `don_julio_blanco`, `michters`, `malibu`, `bacardi`, `v360`, `mozart`
-  // y `baileys` siguen el criterio de `botanist`; `wine_flute` y
-  // `blantons` las movió Axel a ojo.
+  // `baileys`, `don_julio` y `buchanans` siguen el criterio de
+  // `botanist`; `wine_flute` y `blantons` las movió Axel a ojo.
   //
   // ── Por qué la sección puede tratarse como circular ─────────────────
   //
@@ -713,7 +713,10 @@
       p: [[0,0.4778], [0.0156,0.7456], [0.0469,0.8208], [0.0781,0.8363], [0.1094,0.8545], [0.1406,0.8685], [0.1719,0.8842], [0.2031,0.9006], [0.2344,0.9159], [0.2656,0.9318], [0.2969,0.9473], [0.3281,0.9602], [0.3594,0.9749], [0.3906,0.9892], [0.4219,0.9992], [0.4531,1], [0.4844,1], [0.5156,0.9988], [0.5469,0.9872], [0.5781,0.962], [0.6094,0.9122], [0.6406,0.8289], [0.6719,0.704], [0.7031,0.5247], [0.7344,0.3932], [0.7656,0.3341], [0.7969,0.2917], [0.8281,0.277], [0.8594,0.2774], [0.8906,0.3267], [0.9219,0.4097], [0.9531,0.3999], [0.9844,0.3481], [1,0.1838]]
     },
     don_julio_blanco: {
-      name: "Don Julio Blanco", asp: 1.56, yFull: 0.65, pourable: true,
+      // La clave se queda (ya hay productos guardados con ella), pero la
+      // botella es la de 1.75 L: la de 750 resulto otra (ver `don_julio`).
+      // Ver BY_SIZE: con menos de 1.5 L esta clave se dibuja como la de 750.
+      name: "Don Julio · 1.75 L", asp: 1.56, yFull: 0.65, pourable: true,
       // La de Don Julio Blanco (foto de la de 1.75 L): la botella redonda,
       // que no se parece a la del Anejo. 998 px de alto por 641 de ancho
       // maximo, desajuste de area 0.60 %. Cuerpo redondo que se cierra del
@@ -916,6 +919,42 @@
       // liquido, que llega al final del hombro: el cuello va vacio.
       p: [[0,0.3966], [0.0156,0.6009], [0.0469,0.7541], [0.0781,0.82], [0.1094,0.8859], [0.1406,0.8889], [0.1719,0.8991], [0.2031,0.9077], [0.2344,0.9138], [0.2656,0.9224], [0.2969,0.9295], [0.3281,0.9371], [0.3594,0.9437], [0.3906,0.9523], [0.4219,0.9604], [0.4531,0.967], [0.4844,0.9758], [0.5156,0.9828], [0.5469,0.9904], [0.5781,0.9706], [0.6094,0.6947], [0.6406,0.4579], [0.6719,0.36], [0.7031,0.3342], [0.7344,0.3222], [0.7656,0.3256], [0.7969,0.3235], [0.8281,0.319], [0.8594,0.3124], [0.8906,0.3256], [0.9219,0.3311], [0.9531,0.3362], [0.9844,0.2996], [1,0.1322]]
     },
+    don_julio: {
+      name: "Don Julio", asp: 1.73, yFull: 0.66, pourable: true,
+      // La de Don Julio Blanco y Reposado de 750 ml (foto del Reposado).
+      // JPG con fondo blanco, 554 px de alto, desajuste de area 0.56 %.
+      // Primero se midio el Blanco de una foto de 1.75 L y se asumio que el
+      // 750 era la misma botella; no lo es: el de 750 tiene la base plana y
+      // ancha (1.73) y el de 1.75 L es casi una esfera (1.56). La de 1.75 L
+      // sigue en `don_julio_blanco` y BY_SIZE elige entre las dos por el
+      // tamano, como con las magnums de vino. El nivel lo tapa la etiqueta
+      // del cuello: yFull .66 por el hombro, como la de 1.75 L.
+      p: [[0,0.7917], [0.0156,0.8875], [0.0469,0.9807], [0.0781,0.9996], [0.1094,0.9993], [0.1406,0.9938], [0.1719,0.9893], [0.2031,0.9857], [0.2344,0.9804], [0.2656,0.975], [0.2969,0.9697], [0.3281,0.9632], [0.3594,0.9568], [0.3906,0.9531], [0.4219,0.9437], [0.4531,0.9259], [0.4844,0.8945], [0.5156,0.8485], [0.5469,0.7866], [0.5781,0.7072], [0.6094,0.5971], [0.6406,0.4312], [0.6719,0.3142], [0.7031,0.2993], [0.7344,0.3024], [0.7656,0.3031], [0.7969,0.3015], [0.8281,0.3498], [0.8594,0.4232], [0.8906,0.3976], [0.9219,0.4184], [0.9531,0.3925], [0.9844,0.2792], [1,0.1354]]
+    },
+    buchanans: {
+      name: "Buchanan's", asp: 2.04, yFull: 0.66, pourable: true,
+      // La de Buchanan's 12 (Deluxe). JPG con fondo blanco, 416 px de alto,
+      // desajuste de area 0.64 %. Ancha y de esquinas redondas. Los dos
+      // sellos rojos de los costados (del 27 % al 43 %) no son vidrio y
+      // dejaban un bulto: en esas filas el borde va en linea recta entre el
+      // de debajo y el de encima. Vidrio verde: yFull .66 por el hombro.
+      p: [[0,0.4837], [0.0156,0.6735], [0.0469,0.8646], [0.0781,0.9329], [0.1094,0.9657], [0.1406,0.9804], [0.1719,0.9891], [0.2031,0.9936], [0.2344,0.9996], [0.2656,1], [0.2969,0.9996], [0.3281,0.9951], [0.3594,0.991], [0.3906,0.9876], [0.4219,0.9853], [0.4531,0.9853], [0.4844,0.9815], [0.5156,0.9695], [0.5469,0.948], [0.5781,0.911], [0.6094,0.845], [0.6406,0.7025], [0.6719,0.4529], [0.7031,0.3273], [0.7344,0.2998], [0.7656,0.3186], [0.7969,0.3092], [0.8281,0.3088], [0.8594,0.3088], [0.8906,0.3296], [0.9219,0.3164], [0.9531,0.3096], [0.9844,0.306], [1,0.219]]
+    },
+    campari: {
+      name: "Campari", asp: 4.04, yFull: 0.76, pourable: true,
+      // La de Campari (foto del litro). WEBP con fondo blanco, 1047 px de
+      // alto, desajuste de area 0.92 %. Recta, con un pie un poco mas ancho,
+      // hombro del 64 % al 77 %. yFull .76 medida viendo el rojo, debajo de
+      // la franja clara bajo la tapa.
+      p: [[0,0.3346], [0.0156,0.8652], [0.0469,0.9961], [0.0781,0.9726], [0.1094,0.9653], [0.1406,0.9617], [0.1719,0.9624], [0.2031,0.9654], [0.2344,0.9634], [0.2656,0.9651], [0.2969,0.9643], [0.3281,0.9663], [0.3594,0.9665], [0.3906,0.9663], [0.4219,0.9691], [0.4531,0.9736], [0.4844,0.9767], [0.5156,0.9743], [0.5469,0.9764], [0.5781,0.9798], [0.6094,0.9827], [0.6406,0.9868], [0.6719,0.9415], [0.7031,0.7891], [0.7344,0.5023], [0.7656,0.4068], [0.7969,0.3855], [0.8281,0.3757], [0.8594,0.373], [0.8906,0.3708], [0.9219,0.3763], [0.9531,0.3676], [0.9844,0.3542], [1,0.1236]]
+    },
+    captain_morgan: {
+      name: "Captain Morgan", asp: 4.06, yFull: 0.74, pourable: true,
+      // La de Captain Morgan Spiced. JPG con fondo blanco, 548 px de alto,
+      // desajuste de area 0.81 %. Recta y alta, hombro corto del 61 % al
+      // 73 %. yFull .74 medida viendo el liquido, debajo del cuello vacio.
+      p: [[0,0.4123], [0.0156,0.7745], [0.0469,0.9769], [0.0781,0.9991], [0.1094,0.9839], [0.1406,0.9708], [0.1719,0.9699], [0.2031,0.9704], [0.2344,0.9704], [0.2656,0.9708], [0.2969,0.9704], [0.3281,0.9704], [0.3594,0.9704], [0.3906,0.9704], [0.4219,0.9704], [0.4531,0.9704], [0.4844,0.9704], [0.5156,0.9704], [0.5469,0.9621], [0.5781,0.963], [0.6094,0.98], [0.6406,0.8532], [0.6719,0.6436], [0.7031,0.4654], [0.7344,0.4222], [0.7656,0.4022], [0.7969,0.3922], [0.8281,0.3926], [0.8594,0.3926], [0.8906,0.3983], [0.9219,0.4052], [0.9531,0.4], [0.9844,0.3782], [1,0.2864]]
+    },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del
     // catálogo: recta de base a hombro. No aparece en el selector — a
@@ -993,7 +1032,13 @@
   // devuelve la forma tal cual, que es lo honesto.
   const BY_SIZE = {
     bordeaux:      [[1500, 'wine_magnum']],
-    wine_burgundy: [[1500, 'wine_magnum']]
+    wine_burgundy: [[1500, 'wine_magnum']],
+    // Don Julio Blanco/Reposado: la de 750 y la de 1.75 L son botellas
+    // distintas. Y los productos a los que ya se les puso la de 1.75 L
+    // (`don_julio_blanco`) siendo de 750 se corrigen solos aqui, por su
+    // tamano, sin tocar lo guardado.
+    don_julio:        [[1500, 'don_julio_blanco']],
+    don_julio_blanco: [[0, 'don_julio'], [1500, 'don_julio_blanco']]
   };
 
   function forSize(key, sizeMl) {

@@ -142,7 +142,10 @@
     // otra botella.
     [/\btullamore\b/i,                              'tullamore'],
     [/\belijah\s*craig\b/i,                         'elijah_craig'],
-    [/\bdon\s*julio\s+blanco\b/i,                  'don_julio_blanco'],
+    // Blanco y Reposado van en la misma botella (la de 750 se midio del
+    // Reposado). El tamano decide si se dibuja la de 750 o la de 1.75 L:
+    // ver BY_SIZE en bottle-profiles.js.
+    [/\bdon\s*julio\s+(blanco|reposado)\b/i,      'don_julio'],
     [/\bmichter'?s?\b(?![\s\S]*\b(10|20|25)\b)/i,  'michters'],
     // Basil Hayden, Skrewball y Dewar's caian en la de whiskey; Malibu en
     // la de vodka (por ser ron). De Dewar's, el White Label: los de 12
@@ -179,6 +182,13 @@
     [/\b(2|two)\s*gingers\b/i,                     'two_gingers'],
     [/\baverna\b/i,                                 'averna'],
     [/\bblade\s*(and|&)\s*bow\b/i,                  'blade_and_bow'],
+    // Buchanan's y Captain Morgan caian en la de whiskey y en la de vodka
+    // (por ser ron), Campari en liqueur_slim. De Buchanan's, el 12: el 18
+    // y los demas van en otra botella. De Captain Morgan, sin el Private
+    // Stock, que va en otra.
+    [/\bbuchanan['’]?s?\b(?![\s\S]*\b(18|21|master|red\s*seal|two\s*souls)\b)/i, 'buchanans'],
+    [/\bcampari\b/i,                                'campari'],
+    [/\bcaptain\s*morgan\b(?![\s\S]*\bprivate\s*stock\b)/i, 'captain_morgan'],
     [/\bjameson\b(?![\s\S]*\b(black\s*barrel|caskmates|crested|18|12|reserve|blender'?s?)\b)/i, 'jameson'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
