@@ -54,12 +54,13 @@
   // comentario cuenta por qué. Y `carlo_rossi`, `casa_noble`,
   // `monkey_shoulder`, `oban`, `boulard`, `red_label`, `dads_hat`,
   // `balvenie`, `nikka_coffey`, `whistlepig`, `chivas`, `empress`,
-  // `disaronno`, `tullamore`, `elijah_craig`, `basil_hayden`, `skrewball`
-  // y `dewars`, medidas viendo el líquido en la foto. `smirnoff`,
-  // `patron`, `belvedere`, `ketel_one`, `jura`, `macallan`, `glenfiddich`,
-  // `drambuie`, `fireball`, `cointreau`, `grey_goose`, `ciroc`, `jameson`,
-  // `don_julio_blanco`, `michters` y `malibu` siguen el criterio de
-  // `botanist`; `wine_flute` y `blantons` las movió Axel a ojo.
+  // `disaronno`, `tullamore`, `elijah_craig`, `basil_hayden`, `skrewball`,
+  // `dewars`, `bulleit`, `buffalo_trace` y `bols`, medidas viendo el
+  // líquido en la foto. `smirnoff`, `patron`, `belvedere`, `ketel_one`,
+  // `jura`, `macallan`, `glenfiddich`, `drambuie`, `fireball`,
+  // `cointreau`, `grey_goose`, `ciroc`, `jameson`, `don_julio_blanco`,
+  // `michters`, `malibu` y `bacardi` siguen el criterio de `botanist`;
+  // `wine_flute` y `blantons` las movió Axel a ojo.
   //
   // ── Por qué la sección puede tratarse como circular ─────────────────
   //
@@ -773,6 +774,44 @@
       // base y el pie se abre otra vez. yFull .78 medida viendo el liquido,
       // hasta la etiqueta roja del cuello.
       p: [[0,0.6086], [0.0156,0.8571], [0.0469,0.9882], [0.0781,0.9515], [0.1094,0.9155], [0.1406,0.8997], [0.1719,0.8991], [0.2031,0.8991], [0.2344,0.8991], [0.2656,0.9004], [0.2969,0.9102], [0.3281,0.916], [0.3594,0.9174], [0.3906,0.9312], [0.4219,0.9391], [0.4531,0.9482], [0.4844,0.9561], [0.5156,0.9633], [0.5469,0.9797], [0.5781,0.983], [0.6094,0.9902], [0.6406,0.9528], [0.6719,0.8363], [0.7031,0.6022], [0.7344,0.5098], [0.7656,0.5131], [0.7969,0.4705], [0.8281,0.4227], [0.8594,0.3709], [0.8906,0.3834], [0.9219,0.3965], [0.9531,0.3912], [0.9844,0.386], [1,0.3517]]
+    },
+    bulleit: {
+      name: 'Bulleit', asp: 2.46, yFull: 0.74, pourable: true,
+      // La de Bulleit. JPG con fondo blanco: la mascara va fila por fila,
+      // del primer al ultimo pixel que no es fondo. 554 px de alto por 225
+      // de ancho maximo, desajuste de area 0.65 %. Ancha y baja, hombro
+      // casi cuadrado del 70 % al 80 %, cuello corto. yFull .74 medida
+      // viendo el liquido en la foto.
+      p: [[0,0.5185], [0.0156,0.8351], [0.0469,0.9446], [0.0781,0.9386], [0.1094,0.9499], [0.1406,0.9556], [0.1719,0.9556], [0.2031,0.9631], [0.2344,0.9644], [0.2656,0.9668], [0.2969,0.9663], [0.3281,0.9686], [0.3594,0.9733], [0.3906,0.9754], [0.4219,0.9822], [0.4531,0.9822], [0.4844,0.9822], [0.5156,0.9875], [0.5469,0.9911], [0.5781,0.9942], [0.6094,1], [0.6406,1], [0.6719,0.9946], [0.7031,0.9566], [0.7344,0.8708], [0.7656,0.6773], [0.7969,0.3427], [0.8281,0.2837], [0.8594,0.3043], [0.8906,0.3133], [0.9219,0.3156], [0.9531,0.3022], [0.9844,0.2905], [1,0.2059]]
+    },
+    buffalo_trace: {
+      name: 'Buffalo Trace', asp: 2.9, yFull: 0.72, pourable: true,
+      // La de Buffalo Trace. WEBP con fondo blanco, misma mascara. 1078 px
+      // de alto por 372 de ancho maximo, desajuste de area 0.77 %. Un poco
+      // mas angosta abajo, hombro redondo del 52 % al 64 % y cuello con
+      // anillo. yFull .72 medida viendo el liquido, ya en el cuello.
+      p: [[0,0.4122], [0.0156,0.7438], [0.0469,0.9396], [0.0781,0.9375], [0.1094,0.8918], [0.1406,0.8944], [0.1719,0.9031], [0.2031,0.9132], [0.2344,0.9232], [0.2656,0.9329], [0.2969,0.94], [0.3281,0.9497], [0.3594,0.9584], [0.3906,0.969], [0.4219,0.9806], [0.4531,0.9898], [0.4844,0.9957], [0.5156,0.9845], [0.5469,0.9317], [0.5781,0.7815], [0.6094,0.5568], [0.6406,0.4043], [0.6719,0.388], [0.7031,0.4222], [0.7344,0.4196], [0.7656,0.3883], [0.7969,0.3529], [0.8281,0.3179], [0.8594,0.3208], [0.8906,0.3231], [0.9219,0.3088], [0.9531,0.2994], [0.9844,0.3039], [1,0.1935]]
+    },
+    bols: {
+      name: 'Bols', asp: 3.55, yFull: 0.69, pourable: true,
+      // La de los licores Bols (foto del Blue Curacao). WEBP con fondo
+      // blanco. 898 px de alto por 253 de ancho maximo, desajuste de area
+      // 0.89 %. Una campana: se abre abajo y sube en cono del 27 % al 70 %
+      // hasta el cuello. yFull .69 medida viendo el azul en la foto; mas
+      // arriba lo tapa la etiqueta del cuello.
+      p: [[0,0.2279], [0.0156,0.6343], [0.0469,0.8584], [0.0781,0.8909], [0.1094,0.918], [0.1406,0.9442], [0.1719,0.9681], [0.2031,0.9884], [0.2344,0.9994], [0.2656,0.9977], [0.2969,0.9774], [0.3281,0.9561], [0.3594,0.9219], [0.3906,0.8759], [0.4219,0.7976], [0.4531,0.7316], [0.4844,0.6698], [0.5156,0.6084], [0.5469,0.5597], [0.5781,0.5165], [0.6094,0.4788], [0.6406,0.4496], [0.6719,0.4259], [0.7031,0.415], [0.7344,0.4067], [0.7656,0.3962], [0.7969,0.3855], [0.8281,0.3751], [0.8594,0.3607], [0.8906,0.3636], [0.9219,0.3615], [0.9531,0.3624], [0.9844,0.3403], [1,0.191]]
+    },
+    bacardi: {
+      name: 'Bacardí', asp: 4.13, yFull: 0.71, pourable: true,
+      // La de Bacardi Superior. JPG con fondo blanco y vidrio transparente.
+      // La foto trae la sombra del piso pegada a la base, un ovalo gris
+      // claro (227-232) que con el umbral de siempre (235) salia como un
+      // ensanche. Esas filas (la base) se midieron con 215; el resto con
+      // 235, porque con 215 el borde del vidrio claro se perdia en medio
+      // cuerpo (desajuste 6.2 %). 971 px de alto, desajuste de area 0.91 %.
+      // Recta y alta, hombro del 64 % al 73 %. El ron es transparente:
+      // yFull .71 por el criterio de botanist.
+      p: [[0,0.261], [0.0156,0.7735], [0.0469,0.961], [0.0781,0.9526], [0.1094,0.9341], [0.1406,0.9311], [0.1719,0.9332], [0.2031,0.9366], [0.2344,0.9406], [0.2656,0.9447], [0.2969,0.9507], [0.3281,0.9529], [0.3594,0.9539], [0.3906,0.9553], [0.4219,0.9599], [0.4531,0.961], [0.4844,0.9609], [0.5156,0.9643], [0.5469,0.9633], [0.5781,0.9657], [0.6094,0.9841], [0.6406,0.9942], [0.6719,0.9262], [0.7031,0.6386], [0.7344,0.4226], [0.7656,0.4018], [0.7969,0.4011], [0.8281,0.402], [0.8594,0.4], [0.8906,0.3999], [0.9219,0.3942], [0.9531,0.3946], [0.9844,0.3763], [1,0.173]]
     },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del

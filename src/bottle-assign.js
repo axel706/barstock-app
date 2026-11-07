@@ -144,6 +144,17 @@
     [/\bskrewball\b/i,                              'skrewball'],
     [/\bmalibu\b(?![\s\S]*\b(splash|seltzer|can|rtd)\b)/i, 'malibu'],
     [/\bdewar'?s\b(?![\s\S]*\b(12|15|18|19|21|25|27|32)\b)/i, 'dewars'],
+    // Bulleit y Buffalo Trace caian en la de whiskey, Bols en liqueur_slim
+    // y Bacardi en la de vodka (por ser ron). De Bols, los licores: el
+    // genever y el vodka van en otras botellas. De Bacardi, Superior y los
+    // de su botella: el 8, el Reserva, el Gran Reserva y el Cuatro no.
+    [/\bbulleit\b/i,                                'bulleit'],
+    [/\bbuffalo\s*trace\b/i,                        'buffalo_trace'],
+    [/\bbols\b(?![\s\S]*\b(genever|vodka)\b)/i,     'bols'],
+    // Despues de "bacardí" no vale \b: para JavaScript la í no es letra de
+    // palabra, asi que entre la í y el espacio no hay borde y "Bacardí
+    // Superior" no coincidia. Se pide que no siga otra letra.
+    [/\bbacard[ií](?![a-zá-ú])(?![\s\S]*\b(8|ocho|reserva|gran|cuatro|10|diez)\b)/i, 'bacardi'],
     [/\bjameson\b(?![\s\S]*\b(black\s*barrel|caskmates|crested|18|12|reserve|blender'?s?)\b)/i, 'jameson'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
