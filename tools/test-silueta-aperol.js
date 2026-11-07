@@ -65,7 +65,9 @@ console.log('\nun producto llamado Aperol la recibe');
   const A = window.BarStockBottleAssign;
   const a = A.byRules({ item: 'Aperol Aperitivo', category: 'Liqueur' });
   prueba('por el nombre, aunque la categoria diga licor', a.shape === 'aperol', a.shape);
-  const b = A.byRules({ item: 'Cointreau', category: 'Liqueur' });
+  // Antes era Cointreau; desde que tiene su forma medida ya no es "otro
+  // licor" de liqueur_slim. Grand Marnier sigue ahi.
+  const b = A.byRules({ item: 'Grand Marnier', category: 'Liqueur' });
   prueba('y no le quita su forma a los demas licores', b.shape === 'liqueur_slim', b.shape);
 }
 

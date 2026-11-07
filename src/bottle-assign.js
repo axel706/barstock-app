@@ -51,7 +51,9 @@
     [/\btanqueray\b/i,                            'shaker_faceted'],
     [/\b(jose\s*cuervo|cuervo)\b/i,               'tequila_tall'],
     [/\b(bailey'?s|rumchata|cream liqueur)\b/i,   'liqueur_cream'],
-    [/\b(cointreau|grand\s*marnier|chambord|st[- ]?germain|luxardo)\b/i, 'liqueur_slim'],
+    // Cointreau salio de esta lista: tiene su forma medida, mas abajo. Si
+    // se quedaba aqui, esta regla, que va antes, le ganaba siempre.
+    [/\b(grand\s*marnier|chambord|st[- ]?germain|luxardo)\b/i, 'liqueur_slim'],
     // Medida aparte: cintura baja y cuerpo que se abre hacia el hombro.
     // Sin esta regla caería en liqueur_slim por la categoría.
     [/\baperol\b/i,                              'aperol'],
@@ -101,6 +103,13 @@
     [/\bmonkey\s*shoulder\b/i,                     'monkey_shoulder'],
     [/\boban\b/i,                                   'oban'],
     [/\bboulard\b(?![\s\S]*\bxo\b)/i,              'boulard'],
+    // Red Label, Dad's Hat y Balvenie caian en la de whiskey; Cointreau en
+    // liqueur_slim. De Johnnie Walker solo el Red Label, que es el que se
+    // midio: Black, Blue y los demas no se han comprobado.
+    [/\bjohnnie\s*walker\b[\s\S]*\bred\b|\bred\s*label\b/i, 'red_label'],
+    [/\bdad'?s\s*hat\b/i,                          'dads_hat'],
+    [/\bcointreau\b/i,                              'cointreau'],
+    [/\bbalvenie\b/i,                               'balvenie'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
     // Riesling y Gewurztraminer vienen en flauta, no en Burgundy: iban

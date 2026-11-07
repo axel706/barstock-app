@@ -52,10 +52,11 @@
   // `botanist`: tapón, cuello largo u hombro brusco, y esa regla deja la
   // línea donde no es. Se ajustaron a ojo de Axel sobre una lámina; su
   // comentario cuenta por qué. Y `carlo_rossi`, `casa_noble`,
-  // `monkey_shoulder`, `oban` y `boulard`, medidas viendo el líquido en
-  // la foto. `smirnoff`, `patron`, `belvedere`, `ketel_one`, `jura`,
-  // `macallan`, `glenfiddich`, `drambuie` y `fireball` siguen el criterio
-  // de `botanist`; `wine_flute` y `blantons` las movió Axel a ojo.
+  // `monkey_shoulder`, `oban`, `boulard`, `red_label`, `dads_hat` y
+  // `balvenie`, medidas viendo el líquido en la foto. `smirnoff`,
+  // `patron`, `belvedere`, `ketel_one`, `jura`, `macallan`, `glenfiddich`,
+  // `drambuie`, `fireball` y `cointreau` siguen el criterio de `botanist`;
+  // `wine_flute` y `blantons` las movió Axel a ojo.
   //
   // ── Por qué la sección puede tratarse como circular ─────────────────
   //
@@ -562,6 +563,41 @@
       // llega bien arriba del cuello, que es estrecho y pesa poco en el
       // volumen.
       p: [[0,0.3536], [0.0156,0.7273], [0.0469,0.8866], [0.0781,0.8957], [0.1094,0.9056], [0.1406,0.9144], [0.1719,0.9262], [0.2031,0.9362], [0.2344,0.945], [0.2656,0.9549], [0.2969,0.965], [0.3281,0.9756], [0.3594,0.9868], [0.3906,0.9959], [0.4219,1], [0.4531,0.985], [0.4844,0.8843], [0.5156,0.6271], [0.5469,0.5029], [0.5781,0.442], [0.6094,0.4042], [0.6406,0.3845], [0.6719,0.3642], [0.7031,0.3404], [0.7344,0.3357], [0.7656,0.3281], [0.7969,0.3154], [0.8281,0.3083], [0.8594,0.3073], [0.8906,0.3421], [0.9219,0.3698], [0.9531,0.3435], [0.9844,0.3068], [1,0.1631]]
+    },
+    red_label: {
+      name: "Red Label", asp: 3.99, yFull: 0.76, pourable: true,
+      // La de Johnnie Walker Red Label. 543 px de alto por 136 de ancho
+      // maximo, desajuste de area 0.45 %. La botella real es cuadrada; la
+      // silueta, de revolucion, la trata como redonda, que es una
+      // constante y no cambia el nivel relativo. Recta, hombro del 70 % al
+      // 83 %, cuello corto. yFull .76 medida viendo el liquido en la foto,
+      // a mitad del hombro: encima, cuello vacio y la tapa dorada.
+      p: [[0,0.8015], [0.0156,0.9416], [0.0469,0.9987], [0.0781,1], [0.1094,1], [0.1406,1], [0.1719,1], [0.2031,1], [0.2344,1], [0.2656,1], [0.2969,1], [0.3281,1], [0.3594,1], [0.3906,1], [0.4219,1], [0.4531,1], [0.4844,1], [0.5156,1], [0.5469,1], [0.5781,1], [0.6094,1], [0.6406,1], [0.6719,1], [0.7031,0.9516], [0.7344,0.7971], [0.7656,0.6116], [0.7969,0.471], [0.8281,0.3936], [0.8594,0.3663], [0.8906,0.404], [0.9219,0.4079], [0.9531,0.4005], [0.9844,0.369], [1,0.1838]]
+    },
+    dads_hat: {
+      name: "Dad's Hat", asp: 3.18, yFull: 0.72, pourable: true,
+      // La de Dad's Hat. 670 px de alto por 211 de ancho maximo, desajuste
+      // de area 0.58 %. Recta, hombro corto del 64 % al 73 %, cuello recto.
+      // yFull .72 medida viendo el liquido en la foto, justo arriba del
+      // hombro.
+      p: [[0,0.5513], [0.0156,0.8775], [0.0469,0.9941], [0.0781,0.9932], [0.1094,0.9953], [0.1406,0.9953], [0.1719,0.9986], [0.2031,0.9989], [0.2344,0.9998], [0.2656,1], [0.2969,1], [0.3281,1], [0.3594,1], [0.3906,1], [0.4219,1], [0.4531,1], [0.4844,1], [0.5156,1], [0.5469,0.9968], [0.5781,0.9953], [0.6094,0.9935], [0.6406,0.9562], [0.6719,0.8559], [0.7031,0.6427], [0.7344,0.3963], [0.7656,0.3791], [0.7969,0.3791], [0.8281,0.3791], [0.8594,0.3782], [0.8906,0.3956], [0.9219,0.4076], [0.9531,0.4076], [0.9844,0.4059], [1,0.3744]]
+    },
+    cointreau: {
+      name: "Cointreau", asp: 2.43, yFull: 0.72, pourable: true,
+      // La de Cointreau (foto del litro). 990 px de alto por 408 de ancho
+      // maximo, desajuste de area 0.76 %. Botella cuadrada, tratada como
+      // redonda igual que Red Label. Baja y ancha, hombro del 58 % al 73 %.
+      // Con el vidrio naranja y la tapa cobre el liquido no se distingue:
+      // yFull .72 sigue el criterio de botanist, que cubra el hombro.
+      p: [[0,0.2761], [0.0156,0.7793], [0.0469,0.9812], [0.0781,0.9995], [0.1094,1], [0.1406,0.9986], [0.1719,0.9951], [0.2031,0.9951], [0.2344,0.9951], [0.2656,0.9951], [0.2969,0.9949], [0.3281,0.9905], [0.3594,0.9945], [0.3906,0.9951], [0.4219,0.9951], [0.4531,0.9983], [0.4844,1], [0.5156,0.9973], [0.5469,0.9867], [0.5781,0.9774], [0.6094,0.9469], [0.6406,0.8748], [0.6719,0.7435], [0.7031,0.476], [0.7344,0.3511], [0.7656,0.3306], [0.7969,0.3183], [0.8281,0.3137], [0.8594,0.3109], [0.8906,0.3137], [0.9219,0.314], [0.9531,0.314], [0.9844,0.3065], [1,0.2386]]
+    },
+    balvenie: {
+      name: "Balvenie", asp: 2.98, yFull: 0.72, pourable: true,
+      // La de Balvenie (foto del DoubleWood 12). 978 px de alto por 328 de
+      // ancho maximo, desajuste de area 0.90 %. Hombro del 56 % al 67 % y
+      // cuello con un anillo. yFull .72 medida viendo el liquido en la
+      // foto, debajo de la franja de vidrio vacio.
+      p: [[0,0.2419], [0.0156,0.7696], [0.0469,0.997], [0.0781,0.9603], [0.1094,0.9374], [0.1406,0.9488], [0.1719,0.9512], [0.2031,0.9512], [0.2344,0.9565], [0.2656,0.963], [0.2969,0.9648], [0.3281,0.9748], [0.3594,0.9784], [0.3906,0.983], [0.4219,0.9878], [0.4531,0.988], [0.4844,0.9939], [0.5156,0.9939], [0.5469,0.9919], [0.5781,0.9532], [0.6094,0.8571], [0.6406,0.67], [0.6719,0.4596], [0.7031,0.4435], [0.7344,0.4818], [0.7656,0.485], [0.7969,0.4382], [0.8281,0.3701], [0.8594,0.3326], [0.8906,0.3313], [0.9219,0.3895], [0.9531,0.3751], [0.9844,0.3593], [1,0.2581]]
     },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del
