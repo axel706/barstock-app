@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261107-020243",
+    "items": [
+      "Bottle shape picker: search, suggestions, A–Z",
+      "Fits the phone screen"
+    ]
+  },
+  {
     "build": "20261107-015205",
     "items": [
       "Update screen stays a little longer"
@@ -181,12 +188,6 @@
     "build": "20261106-114747",
     "items": [
       "Bottles fill to the full line, not the cap"
-    ]
-  },
-  {
-    "build": "20261106-114614",
-    "items": [
-      "Clase Azul bottle shape"
     ]
   }
 ]

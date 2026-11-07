@@ -47,32 +47,66 @@
         ? `<path d="${P().asaFor(key, VB.w, VB.h, VB.pad)}"/>` : ''}</svg>`;
   }
 
-  // ── El orden de la parrilla: de gorda a flaca ────────────────────────
+  // ── El orden de la parrilla: A–Z ─────────────────────────────────────
   //
-  // `pickable()` devuelve las claves en el orden en que están escritas en
-  // bottle-profiles.js, o sea el orden en que se fueron midiendo. Eso
-  // servía con siete formas y dejó de servir: cada silueta nueva se
-  // añadía al FINAL, la parrilla crecía hacia abajo, y las últimas
-  // quedaban fuera de la primera pantalla. La queja fue literal —"no veo
-  // estas últimas 2 botellas"— y el orden cronológico era la mitad del
-  // motivo.
-  //
-  // Ordenar por esbeltez pone juntas las que se parecen, que es como se
-  // busca de verdad: quien tiene delante una botella gorda mira arriba y
-  // quien tiene una flaca mira abajo, sin recorrer las veinte. Y una
-  // silueta nueva ya no aterriza al final, sino entre sus parecidas.
+  // Estuvo de gorda a flaca: con diecisiete formas ponía juntas las
+  // parecidas y las nuevas no aterrizaban al final, fuera de la pantalla
+  // ("no veo estas últimas 2 botellas"). Con más de ochenta, casi todas
+  // con nombre de marca, ya no se busca por forma sino por nombre, y
+  // ordenadas por esbeltez no había manera de encontrar "Campari". Axel
+  // pidió A–Z por defecto, y la búsqueda de arriba hace el resto.
   //
   // `none` va aparte y al final: no es una botella, es apagar el
   // deslizador.
+  const norm = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
   function ordenadas(V) {
     return V.pickable()
       .filter(k => k !== 'none')
-      .sort((a, b) => (V.get(a).asp || 99) - (V.get(b).asp || 99))
+      .sort((a, b) => norm(V.get(a).name).localeCompare(norm(V.get(b).name), 'en', { numeric: true }))
       .concat(V.pickable().includes('none') ? ['none'] : []);
   }
 
+  // Las que coinciden con lo escrito, por nombre o por clave, sin
+  // acentos: "bacardi" encuentra "Bacardí" y "patron" a "Patrón".
+  function filtradas(V, q) {
+    const n = norm(q).trim();
+    const todas = ordenadas(V);
+    if (!n) return todas;
+    return todas.filter(k => norm(V.get(k).name).includes(n) || norm(k.replace(/_/g, ' ')).includes(n));
+  }
+
+  // ── Sugeridas para ESTE producto ─────────────────────────────────────
+  //
+  // La que tiene puesta, la que le pondría la asignación automática por
+  // el nombre y la de su categoría. Son las mismas reglas de
+  // bottle-assign.js, no otras: si allí se corrige una regla, aquí se
+  // sugiere lo corregido. Casi siempre la buena está entre estas tres.
+  function sugeridas(V) {
+    const A = window.BarStockBottleAssign;
+    const out = [];
+    const poner = (k, por) => {
+      if (!k || k === 'generic' || out.some(x => x.k === k)) return;
+      if (!V.pickable().includes(k)) return;
+      out.push({ k, por });
+    };
+    const actual = _row && _row.bottleShape ? V.resolveKey(_row.bottleShape) : null;
+    poner(actual, 'Current');
+    if (A && A.byRules && _row) {
+      try { poner(A.byRules({ item: _row.item || '' }).shape, 'By name'); } catch (e) {}
+      try { if (_row.category) poner(A.byRules({ item: '', category: _row.category }).shape, 'Its category'); } catch (e) {}
+    }
+    return out.slice(0, 3);
+  }
+
   // ── Pintar ───────────────────────────────────────────────────────────
-  function paint() {
+  // En el teléfono es una hoja desde abajo; en el escritorio, el modal de
+  // siempre. Lo demás (el orden, las sugeridas, guardar) es lo mismo.
+  let _movil = false;
+  let _q = '';
+  function paint() { return _movil ? pintarHoja() : pintarModal(); }
+
+  function pintarModal() {
     const V = P();
     const keys = ordenadas(V);
 
@@ -83,7 +117,7 @@
       // demás: quien la elija está apagando el deslizador, no eligiendo
       // una silueta.
       const isNone = (k === 'none');
-      const sub = isNone ? 'sin deslizador' : `${prof.asp} : 1`;
+      const sub = isNone ? 'counted whole' : `${prof.asp} : 1`;
       return `
         <div class="ac-cell bp-cell${k === _shape ? ' on' : ''}${isNone ? ' bp-none' : ''}"
              data-k="${esc(k)}" role="button" tabindex="0">
@@ -113,8 +147,8 @@
       <div class="bp-sizes">${sizeChips}</div>
 
       <div class="ac-foot">
-        <button class="ac-cancel" type="button">Cancelar</button>
-        <button class="ac-ok" type="button" id="bpSave">Guardar</button>
+        <button class="ac-cancel" type="button">Cancel</button>
+        <button class="ac-ok" type="button" id="bpSave">Save</button>
       </div>`);
 
     const el = document.getElementById('bpBody');
@@ -137,6 +171,101 @@
     // está puesta, obliga a buscarla a ojo entre diecisiete.
     const on = el.querySelector('.bp-cell.on');
     if (on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest' });
+  }
+
+  // ── La hoja del teléfono ─────────────────────────────────────────────
+  //
+  // El modal del escritorio en el teléfono era una caja con su propio
+  // scroll y los botones al fondo: no se sentía de la app. Diseño que
+  // Axel eligió sobre lámina: hoja desde abajo como la ficha de producto,
+  // búsqueda arriba, tres sugeridas y luego todas en rejilla A–Z; el
+  // tamaño y Cancel / Save quedan fijos abajo.
+  //
+  // La búsqueda se pinta UNA vez: si se repintara con cada letra, el
+  // teclado del teléfono se cerraría a cada pulsación. Al escribir solo
+  // se repinta la rejilla.
+  function celda(k, por) {
+    const V = P();
+    const prof = V.get(k);
+    const isNone = (k === 'none');
+    return `
+      <div class="bp-c${k === _shape ? ' on' : ''}${isNone ? ' bp-none' : ''}" data-k="${esc(k)}" role="button" tabindex="0">
+        ${isNone ? `<div class="bp-nonebox"><i class="ti ti-package" aria-hidden="true"></i></div>` : sil(k)}
+        <span class="bp-cn">${esc(prof.name)}</span>
+        ${por ? `<span class="bp-cs">${esc(por)}</span>` : ''}
+      </div>`;
+  }
+
+  function pintarHoja() {
+    const h = document.getElementById('bpSheet');
+    const el = document.getElementById('bpBody');
+    if (!h || !el) return;
+    const sizeChips = SIZES.map(s =>
+      `<button type="button" class="bp-size${Number(s) === Number(_size) ? ' on' : ''}" data-s="${s}">${s}</button>`).join('');
+    el.innerHTML = `
+      <div class="bp-top">
+        <div class="m-sheet-grip"></div>
+        <div class="bp-k">Bottle shape</div>
+        <div class="bp-item">${esc(_row.item || '')}</div>
+        <div class="m-searchbar on bp-busca">
+          <i class="ti ti-search" aria-hidden="true"></i>
+          <input id="bpQ" type="search" inputmode="search" autocomplete="off"
+                 placeholder="Search bottles" aria-label="Search bottles" value="${esc(_q)}">
+          <button type="button" id="bpClear" aria-label="Clear"><i class="ti ti-x" aria-hidden="true"></i></button>
+        </div>
+      </div>
+      <div class="bp-scroll" id="bpRej"></div>
+      <div class="bp-pie">
+        <div class="bp-sizes-label">Size you order</div>
+        <div class="bp-sizes">${sizeChips}</div>
+        <div class="bp-acts">
+          <button type="button" class="bp-b2" id="bpCancel">Cancel</button>
+          <button type="button" class="bp-b" id="bpSave">Save</button>
+        </div>
+      </div>`;
+
+    const inp = el.querySelector('#bpQ');
+    inp.oninput = () => { _q = inp.value; pintarRejilla(); };
+    el.querySelector('#bpClear').onclick = () => { _q = ''; inp.value = ''; pintarRejilla(); inp.focus(); };
+    el.querySelectorAll('.bp-size').forEach(b => {
+      b.onclick = () => {
+        _size = Number(b.dataset.s);
+        el.querySelectorAll('.bp-size').forEach(x => x.classList.toggle('on', x === b));
+      };
+    });
+    el.querySelector('#bpCancel').onclick = close;
+    el.querySelector('#bpSave').onclick = save;
+    // La fila de tamaños se desliza de lado y empieza en 50: el elegido
+    // (casi siempre 750) quedaba fuera. Se centra en él. Con scrollLeft y
+    // no scrollIntoView, que movería también la hoja hacia arriba.
+    const fila = el.querySelector('.bp-sizes'), elegido = el.querySelector('.bp-size.on');
+    if (fila && elegido) fila.scrollLeft = Math.max(0, elegido.offsetLeft - fila.offsetLeft - (fila.clientWidth - elegido.offsetWidth) / 2);
+    pintarRejilla();
+  }
+
+  function pintarRejilla() {
+    const V = P();
+    const caja = document.getElementById('bpRej');
+    if (!caja) return;
+    const q = String(_q || '').trim();
+    const lista = filtradas(V, q);
+    // Con algo escrito, las sugeridas sobran: se busca otra cosa.
+    const sug = q ? [] : sugeridas(V);
+    caja.innerHTML =
+      (sug.length ? `<div class="bp-lbl">Suggested for this product</div>
+        <div class="bp-rej">${sug.map(x => celda(x.k, x.por)).join('')}</div>` : '') +
+      `<div class="bp-lbl">${q ? lista.length + (lista.length === 1 ? ' match' : ' matches') : 'All bottles · A–Z'}</div>` +
+      (lista.length
+        ? `<div class="bp-rej">${lista.map(k => celda(k)).join('')}</div>`
+        : `<p class="bp-nada">No bottle shape called "${esc(q)}".</p>`);
+    caja.querySelectorAll('.bp-c').forEach(c => {
+      const pick = () => {
+        _shape = c.dataset.k;
+        caja.querySelectorAll('.bp-c').forEach(x => x.classList.toggle('on', x.dataset.k === _shape));
+      };
+      c.onclick = pick;
+      c.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } };
+    });
   }
 
   // ── Guardar ──────────────────────────────────────────────────────────
@@ -180,7 +309,7 @@
       if (!res.ok) throw new Error(await res.text());
     } catch (e) {
       console.warn('[silueta] no se pudo guardar', e);
-      body(`<div class="ac-status">No se pudo guardar. La forma anterior sigue puesta.</div>`);
+      body(`<div class="ac-status">Couldn't save. The previous shape is still set.</div>`);
       setTimeout(paint, 2200);
       return;
     }
@@ -225,9 +354,33 @@
     _shape = P().resolveKey(row.bottleShape);
     if (_shape === 'generic') _shape = null;
     _size = Number(row.bottleSizeMl) || 750;
+    _q = '';
+    _movil = !!(document.body && document.body.classList.contains('m-shell') &&
+      window.matchMedia && window.matchMedia('(max-width: 640px)').matches);
+    if (_movil) { abrirHoja(); return; }
     build();
     document.getElementById('bpModalBg').classList.remove('hidden');
     paint();
+  }
+
+  // Id propio y no `mSheet`: desde Inventory el selector se abre ENCIMA
+  // de la ficha de producto, que ya es `#mSheet`, y dos con el mismo id
+  // hacían que quitar uno quitara el otro.
+  function abrirHoja() {
+    const vieja = document.getElementById('bpSheet');
+    if (vieja) vieja.remove();
+    const h = document.createElement('div');
+    h.className = 'm-sheet bp-sheet';
+    h.id = 'bpSheet';
+    h.innerHTML = `<div class="m-sheet-bg"></div>
+      <div class="m-sheet-box bp-box" role="dialog" aria-label="Bottle shape"><div id="bpBody"></div></div>`;
+    document.body.appendChild(h);
+    h.querySelector('.m-sheet-bg').onclick = close;
+    pintarHoja();
+    if (window.BarStockSheet) window.BarStockSheet.enganchar(h, close);
+    // La elegida a la vista: con ochenta, si está abajo no se encuentra.
+    const on = h.querySelector('.bp-c.on');
+    if (on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest' });
   }
 
   function build() {
@@ -236,7 +389,7 @@
     bg.id = 'bpModalBg';
     bg.className = 'modalbg hidden';
     bg.innerHTML = `<div class="modal ac-modal bp-modal">
-      <div class="ac-head"><i class="ti ti-bottle" aria-hidden="true"></i> Silueta de la botella</div>
+      <div class="ac-head"><i class="ti ti-bottle" aria-hidden="true"></i> Bottle shape</div>
       <div id="bpBody"></div>
     </div>`;
     document.body.appendChild(bg);
@@ -246,6 +399,8 @@
   function close() {
     const bg = document.getElementById('bpModalBg');
     if (bg) bg.classList.add('hidden');
+    const h = document.getElementById('bpSheet');
+    if (h) h.remove();
     _row = null; _onSaved = null;
   }
 
@@ -254,5 +409,5 @@
     if (el) el.innerHTML = html;
   }
 
-  window.BarStockBottlePicker = { open, close, SIZES };
+  window.BarStockBottlePicker = { open, close, SIZES, _ordenadas: () => ordenadas(P()), _filtradas: (q) => filtradas(P(), q) };
 })();

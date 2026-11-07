@@ -4401,3 +4401,98 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   .m-tm-nota.mal { color: #fca5a5; border-color: rgba(248,113,113,.38); }
   .m-tm-nota small { display: block; margin-top: 6px; color: #9fb0c4; word-break: break-word; }
+
+/* ── El selector de botella, como hoja del teléfono ──────────────────
+ *
+ * Ver bottle-picker.js (abrirHoja). Va con id propio, #bpSheet, porque
+ * se abre ENCIMA de la ficha de producto de Inventory, que ya es #mSheet;
+ * por eso también va un escalón más arriba. Los botones llevan el id
+ * delante: app.css fuerza 999px a todo <button> y solo un id le gana.
+ *
+ * La caja es alta y en columna: búsqueda arriba, rejilla con su scroll
+ * en medio, tamaño y Cancel / Save fijos abajo, para que guardar nunca
+ * quede debajo de ochenta botellas. */
+@media (max-width: 640px) {
+  /* Por encima de la ficha de Inventory (9500) y del panel de conteo
+   * (100003 a 100004, en count-panel.css), que también lo abre: con 9600
+   * se abría DEBAJO del conteo y no se veía. Por debajo de la animación
+   * de actualizar (1000001). */
+  #bpSheet { z-index: 100010; }
+  #bpSheet .bp-box {
+    top: calc(44px + env(safe-area-inset-top, 0px));
+    display: flex; flex-direction: column;
+    padding: 0; overflow: hidden;
+    border-radius: 20px 20px 0 0 !important;
+  }
+  #bpSheet #bpBody { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+  #bpSheet .bp-top { padding: 9px 14px 4px; }
+  #bpSheet .bp-k {
+    font-size: var(--m-meta); font-weight: 800; letter-spacing: .1em;
+    text-transform: uppercase; color: #94a3b8;
+  }
+  #bpSheet .bp-item { margin-top: 3px; font-size: var(--m-title); font-weight: 800; color: #fff; letter-spacing: -.3px; }
+  #bpSheet .bp-busca { margin-top: 10px; }
+  #bpSheet .m-searchbar { border-radius: 16px !important; }
+  #bpSheet .m-searchbar > button { border-radius: 50% !important; }
+  #bpSheet .m-searchbar input {
+    background: none !important; border: none !important; box-shadow: none !important;
+    border-radius: 0 !important; padding: 0 !important; height: auto !important; min-height: 0 !important;
+  }
+
+  #bpSheet .bp-scroll {
+    flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain; padding: 0 14px 12px;
+  }
+  #bpSheet .bp-lbl {
+    margin-top: 14px; font-size: var(--m-meta); font-weight: 800;
+    letter-spacing: .12em; text-transform: uppercase; color: #64748b;
+  }
+  #bpSheet .bp-rej { margin-top: 8px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  #bpSheet .bp-c {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 10px 4px 8px; border-radius: 14px; cursor: pointer;
+    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.09);
+  }
+  #bpSheet .bp-c.on { border-color: #38bdf8; background: rgba(56,189,248,.12); }
+  #bpSheet .bp-c.on .bp-sil path { stroke: #38bdf8; fill: rgba(56,189,248,.14); }
+  #bpSheet .bp-c .bp-sil { width: 46px; height: 60px; }
+  #bpSheet .bp-cn {
+    font-size: var(--m-small); font-weight: 700; color: #e2e8f0;
+    text-align: center; line-height: 1.2;
+  }
+  #bpSheet .bp-cs { font-size: var(--m-meta); color: #94a3b8; }
+  #bpSheet .bp-c.on .bp-cs { color: #7dd3fc; }
+  #bpSheet .bp-nada { margin-top: 10px; font-size: var(--m-small); color: #94a3b8; }
+
+  #bpSheet .bp-pie {
+    padding: 10px 14px calc(14px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid rgba(255,255,255,.1); background: #0b1220;
+  }
+  #bpSheet .bp-sizes-label {
+    font-size: var(--m-meta); font-weight: 800; letter-spacing: .12em;
+    text-transform: uppercase; color: #64748b;
+  }
+  /* Una sola fila que se desliza: app.css le pone flex-wrap a .bp-sizes
+   * para el modal del escritorio, y en el teléfono eran tres renglones
+   * de tamaños que le quitaban media pantalla a la rejilla. */
+  #bpSheet .bp-sizes {
+    display: flex; flex-wrap: nowrap !important; gap: 6px; margin-top: 7px; overflow-x: auto;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  #bpSheet .bp-sizes::-webkit-scrollbar { display: none; }
+  #bpSheet .bp-size {
+    flex: 0 0 auto; padding: 7px 11px; border-radius: 10px !important; cursor: pointer;
+    font-size: var(--m-small); font-weight: 700; color: #cbd5e1;
+    background: rgba(255,255,255,.07); border: none;
+  }
+  #bpSheet .bp-size.on { background: #38bdf8; color: #04283d; }
+  #bpSheet .bp-acts { display: flex; gap: 10px; margin-top: 12px; }
+  #bpSheet .bp-b, #bpSheet .bp-b2 {
+    flex: 1; padding: 12px; cursor: pointer; font-size: var(--m-body); font-weight: 800;
+    border-radius: 12px !important;
+  }
+  #bpSheet .bp-b { background: #38bdf8; color: #04283d; border: 1px solid #38bdf8; }
+  #bpSheet .bp-b2 { background: none; color: #e2e8f0; border: 1px solid rgba(255,255,255,.18); }
+  #bpSheet .bp-nonebox { width: 46px; height: 60px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: var(--m-title); }
+  #bpSheet .ac-status { padding: 30px 16px; text-align: center; color: #cbd5e1; font-size: var(--m-body); }
+}
