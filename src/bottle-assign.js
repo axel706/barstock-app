@@ -110,6 +110,15 @@
     [/\bdad'?s\s*hat\b/i,                          'dads_hat'],
     [/\bcointreau\b/i,                              'cointreau'],
     [/\bbalvenie\b/i,                               'balvenie'],
+    // Nikka y WhistlePig caian en la de whiskey; Grey Goose y Ciroc en la
+    // de vodka. Acotadas a lo medido: de Nikka, la linea Coffey menos el
+    // gin y el vodka, que van en otra botella (From the Barrel es una
+    // cuadrada y chica). De WhistlePig, el 10: el 12, el 15 y PiggyBack
+    // no se han comprobado. Los Ciroc de sabor comparten botella.
+    [/\bnikka\b(?=[\s\S]*\bcoffey\b)(?![\s\S]*\b(gin|vodka)\b)/i, 'nikka_coffey'],
+    [/\bgrey\s*goose\b/i,                          'grey_goose'],
+    [/\bc[iî]roc\b/i,                               'ciroc'],
+    [/\bwhistle\s*pig\b(?=[\s\S]*\b10\b)/i,       'whistlepig'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
     // Riesling y Gewurztraminer vienen en flauta, no en Burgundy: iban
