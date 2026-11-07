@@ -195,6 +195,17 @@ grupo('7 · What\'s new sin notas de esa build');
   prueba('Got it la cierra', !w.document.getElementById('mSheet'));
 }
 
+grupo('9 · la pantalla de la barra no pasa de largo');
+{
+  // Con 700 ms Axel la vio pasar demasiado rápido. Lo de antes y lo de
+  // después se quedaron igual: se protege solo esta pantalla.
+  const w = entorno({});
+  const T = w.BarStockUpdateAnim.T;
+  prueba('el logo se ve al menos 1.8 s en la pagina nueva', T.minimo >= 1800, T.minimo);
+  prueba('la barra tarda en llenarse al menos 0.4 s', T.llena >= 400, T.llena);
+  prueba('la contraccion y la apertura no cambiaron', T.cierra === 380 && T.abre === 480, T.cierra + ' / ' + T.abre);
+}
+
 grupo('8 · el iris no se apaga con opacity');
 {
   const css = leer('styles/auth.css').replace(/\/\*[\s\S]*?\*\//g, '');

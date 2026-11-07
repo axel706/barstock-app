@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261107-015205",
+    "items": [
+      "Update screen stays a little longer"
+    ]
+  },
+  {
     "build": "20261107-014519",
     "items": [
       "Buchanan's, Campari and Captain Morgan bottle shapes",
@@ -181,12 +187,6 @@
     "build": "20261106-114614",
     "items": [
       "Clase Azul bottle shape"
-    ]
-  },
-  {
-    "build": "20261106-113838",
-    "items": [
-      "Aperol bottle shape"
     ]
   }
 ]

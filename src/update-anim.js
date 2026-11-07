@@ -35,8 +35,12 @@
     cierra: 380,   // la interfaz se contrae en el punto
     punto: 160,    // queda el punto solo
     logo: 300,     // aparece el logo y el punto viaja a su sitio
-    minimo: 700,   // lo mínimo que el logo se ve en la página nueva
-    llena: 240,    // la barra termina
+    // La pantalla del logo y la barra. Con 700 ms y 240 ms, en el
+    // teléfono de Axel pasaba demasiado rápido ("esa pantalla en
+    // particular debe durar un poco más"); lo de antes y lo de después
+    // le parecieron bien y no se tocaron.
+    minimo: 1800,  // lo mínimo que el logo se ve en la página nueva
+    llena: 400,    // la barra termina
     vuelve: 280,   // el logo se va y el punto vuelve al centro
     pulso: 280,
     abre: 480
