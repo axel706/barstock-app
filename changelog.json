@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261107-112705",
+    "items": [
+      "Welcome setup redesigned for the phone",
+      "Two steps, with a signature preview"
+    ]
+  },
+  {
     "build": "20261107-090810",
     "items": [
       "Bottle shape picker scrolls again",
@@ -183,12 +190,6 @@
     "build": "20261106-120402",
     "items": [
       "Bluecoat bottle shape"
-    ]
-  },
-  {
-    "build": "20261106-115459",
-    "items": [
-      "Don Julio Añejo bottle shape"
     ]
   }
 ]

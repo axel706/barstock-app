@@ -25,10 +25,10 @@
 
     const el = document.createElement('div');
     el.id = OVERLAY_ID;
-    el.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:40px 20px;overflow-y:auto;background:rgba(15,23,42,0.72);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);';
+    el.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:max(28px, env(safe-area-inset-top, 0px)) 16px 28px;overflow-y:auto;box-sizing:border-box;background:rgba(15,23,42,0.72);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);';
 
     el.innerHTML = `
-      <div id="bsObContent" style="width:580px;max-width:95vw;display:flex;flex-direction:column;align-items:center;opacity:0;transform:translateY(28px);transition:opacity 0.5s ease,transform 0.5s ease;margin:auto;">
+      <div id="bsObContent" style="width:440px;max-width:100%;display:flex;flex-direction:column;align-items:center;opacity:0;transform:translateY(28px);transition:opacity 0.5s ease,transform 0.5s ease;margin:auto;">
 
         <div id="bsObWelcome" style="font-size:12px;font-weight:500;color:#38bdf8;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:6px;opacity:0;transition:opacity 0.5s ease;">Welcome to</div>
 
@@ -42,54 +42,135 @@
           <div id="bsObPro" style="font-size:19px;font-weight:700;color:#64748b;margin-left:7px;letter-spacing:0.08em;text-transform:uppercase;opacity:0;transform:translateX(10px);transition:opacity 0.5s ease,transform 0.5s ease;">PRO</div>
         </div>
 
-        <div id="bsObCard" style="background:rgba(10,18,35,0.92);border:0.5px solid rgba(255,255,255,0.2);border-radius:16px;padding:28px 32px;width:100%;box-sizing:border-box;opacity:0;transform:translateY(16px);transition:opacity 0.5s ease,transform 0.5s ease;">
-          <div style="font-size:17px;font-weight:500;color:#ffffff;margin-bottom:20px;text-align:center;">One last thing before you get started</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
-            <div style="font-size:13px;color:#e2e8f0;line-height:1.65;">
-              BarStock Pro sends order emails and cost reports directly to your vendors on your behalf.<br><br>
-              We need a <strong style="color:#fff;font-weight:500;">Reply To</strong> address so vendors know who to respond to, and a <strong style="color:#fff;font-weight:500;">Sender Profile</strong> with your name and contact info — it appears as the signature on every email sent from BarStock Pro.
+        <!-- ── La tarjeta, en dos pasos ───────────────────────────────
+             Era una tarjeta de dos columnas (explicación a la izquierda,
+             cinco campos a la derecha) que en el teléfono quedaba
+             apretada y con los campos cortados. Diseño que Axel eligió
+             sobre lámina: dos pasos, lo obligatorio primero y solo. Pidió
+             que se quedaran la explicación y el "Skip for now" de antes. -->
+        <div id="bsObCard" class="bsob-card" style="opacity:0;transform:translateY(16px);transition:opacity 0.5s ease,transform 0.5s ease;">
+          <div class="bsob-pasos"><b class="on"></b><b id="bsObPaso2Marca"></b></div>
+
+          <div id="bsObPaso1">
+            <div class="bsob-k">Step 1 of 2</div>
+            <div class="bsob-t">Where should vendors reply?</div>
+            <p class="bsob-p">BarStock Pro sends order emails and cost reports directly to your vendors on your behalf.</p>
+            <p class="bsob-p">We need a <strong>Reply To</strong> address so vendors know who to respond to. Their replies come straight back to it.</p>
+            <label class="bsob-lab" for="bsObReplyTo">Reply To <span class="bsob-req">Required</span></label>
+            <input id="bsObReplyTo" class="bsob-in" type="email" inputmode="email" autocomplete="email" placeholder="manager@yourbar.com">
+            <div class="bsob-err" id="bsObErr"></div>
+            <button id="bsObNext" class="bsob-btn" type="button">Continue</button>
+          </div>
+
+          <div id="bsObPaso2" hidden>
+            <div class="bsob-k">Step 2 of 2 · Optional</div>
+            <div class="bsob-t">How should emails be signed?</div>
+            <p class="bsob-p">Your <strong>Sender Profile</strong> appears as the signature on every email sent from BarStock Pro.</p>
+            <div class="bsob-firma" aria-hidden="true">
+              <small>Signature preview</small>
+              <b id="bsObFName">Your name</b>
+              <span id="bsObFTitle"></span>
+              <span id="bsObFContact"></span>
             </div>
-            <div style="display:flex;flex-direction:column;gap:12px;">
-              <div style="display:flex;flex-direction:column;gap:5px;">
-                <div style="font-size:12px;font-weight:500;color:#cbd5e1;display:flex;align-items:center;gap:6px;">Reply To <span style="font-size:11px;background:rgba(239,68,68,0.15);color:#f87171;padding:1px 7px;border-radius:20px;">Required</span></div>
-                <input id="bsObReplyTo" type="email" placeholder="manager@yourbar.com" style="height:36px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.07);padding:0 12px;font-size:13px;color:#f1f5f9;width:100%;box-sizing:border-box;">
-              </div>
-              <div style="width:100%;height:0.5px;background:rgba(255,255,255,0.08);"></div>
-              <div style="font-size:11px;font-weight:500;color:#94a3b8;text-transform:uppercase;letter-spacing:0.1em;">Sender Profile</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                <div style="display:flex;flex-direction:column;gap:4px;">
-                  <div style="font-size:12px;font-weight:500;color:#cbd5e1;">Name</div>
-                  <input id="bsObName" type="text" placeholder="Jamie Rivera" style="height:36px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.07);padding:0 12px;font-size:13px;color:#f1f5f9;width:100%;box-sizing:border-box;">
-                </div>
-                <div style="display:flex;flex-direction:column;gap:4px;">
-                  <div style="font-size:12px;font-weight:500;color:#cbd5e1;">Email</div>
-                  <input id="bsObEmail" type="email" placeholder="jamie@yourbar.com" style="height:36px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.07);padding:0 12px;font-size:13px;color:#f1f5f9;width:100%;box-sizing:border-box;">
-                </div>
-              </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                <div style="display:flex;flex-direction:column;gap:4px;">
-                  <div style="font-size:12px;font-weight:500;color:#cbd5e1;">Phone</div>
-                  <input id="bsObPhone" type="tel" placeholder="+1 312 555 0192" style="height:36px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.07);padding:0 12px;font-size:13px;color:#f1f5f9;width:100%;box-sizing:border-box;">
-                </div>
-                <div style="display:flex;flex-direction:column;gap:4px;">
-                  <div style="font-size:12px;font-weight:500;color:#cbd5e1;">Title</div>
-                  <input id="bsObTitle" type="text" placeholder="Bar Manager" style="height:36px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.07);padding:0 12px;font-size:13px;color:#f1f5f9;width:100%;box-sizing:border-box;">
-                </div>
-              </div>
+            <div class="bsob-dos">
+              <div><label class="bsob-lab" for="bsObName">Name</label>
+                <input id="bsObName" class="bsob-in" type="text" autocomplete="name" placeholder="Jamie Rivera"></div>
+              <div><label class="bsob-lab" for="bsObTitle">Title</label>
+                <input id="bsObTitle" class="bsob-in" type="text" autocomplete="organization-title" placeholder="Bar Manager"></div>
+            </div>
+            <div class="bsob-dos">
+              <div><label class="bsob-lab" for="bsObEmail">Email</label>
+                <input id="bsObEmail" class="bsob-in" type="email" inputmode="email" autocomplete="email" placeholder="jamie@bar.com"></div>
+              <div><label class="bsob-lab" for="bsObPhone">Phone</label>
+                <input id="bsObPhone" class="bsob-in" type="tel" autocomplete="tel" placeholder="312 555 0192"></div>
+            </div>
+            <button id="bsObSaveBtn" class="bsob-btn" type="button">Save & continue</button>
+            <div class="bsob-links">
+              <button id="bsObBack" class="bsob-link" type="button">Back</button>
+              <button id="bsObSkipPerfil" class="bsob-link" type="button">Skip this step</button>
             </div>
           </div>
-          <button id="bsObSaveBtn" style="width:100%;height:46px;border-radius:10px;background:#22c55e;border:none;color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-top:24px;">Save & continue</button>
         </div>
 
-        <div id="bsObSkip" style="font-size:12px;color:#475569;margin-top:14px;cursor:pointer;opacity:0;transition:opacity 0.5s ease;">Skip for now</div>
+        <div id="bsObSkip" style="font-size:12px;color:#64748b;margin-top:14px;cursor:pointer;opacity:0;transition:opacity 0.5s ease;padding:8px;">Skip for now</div>
       </div>
     `;
 
     document.body.appendChild(el);
-    document.getElementById('bsObSaveBtn').onclick = save;
+    document.getElementById('bsObNext').onclick = siguiente;
+    document.getElementById('bsObSaveBtn').onclick = () => save(true);
+    document.getElementById('bsObSkipPerfil').onclick = () => save(false);
+    document.getElementById('bsObBack').onclick = () => paso(1);
     document.getElementById('bsObSkip').onclick = dismiss;
+    ['bsObName', 'bsObTitle', 'bsObEmail', 'bsObPhone'].forEach(id => {
+      document.getElementById(id).oninput = firma;
+    });
+    document.getElementById('bsObReplyTo').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); siguiente(); }
+    });
+    rellenar();
 
     runAnimation();
+  }
+
+  // Lo que ya hubiera guardado se trae puesto: la pantalla sale si falta
+  // el Reply To O el perfil, y pedir otra vez lo que ya se dio obliga a
+  // escribirlo dos veces.
+  async function rellenar() {
+    try {
+      const [settings, profile] = await Promise.all([
+        window.BarStockLocationSettings?.getSettings?.(),
+        window.BarStockSenderProfile?.getProfile?.()
+      ]);
+      const pon = (id, v) => { const x = document.getElementById(id); if (x && v && !x.value) x.value = v; };
+      pon('bsObReplyTo', settings?.reply_to_email);
+      pon('bsObName', profile?.name); pon('bsObEmail', profile?.email);
+      pon('bsObPhone', profile?.phone); pon('bsObTitle', profile?.title);
+      firma();
+    } catch (e) {}
+  }
+
+  // La firma de ejemplo se escribe sola mientras se llena el perfil: es
+  // lo que de verdad explica para qué sirve.
+  function firma() {
+    const v = (id) => (document.getElementById(id)?.value || '').trim();
+    const n = document.getElementById('bsObFName');
+    if (!n) return;
+    n.textContent = v('bsObName') || 'Your name';
+    document.getElementById('bsObFTitle').textContent = v('bsObTitle');
+    document.getElementById('bsObFContact').textContent = [v('bsObEmail'), v('bsObPhone')].filter(Boolean).join(' · ');
+  }
+
+  function paso(n) {
+    document.getElementById('bsObPaso1').hidden = n !== 1;
+    document.getElementById('bsObPaso2').hidden = n !== 2;
+    document.getElementById('bsObPaso2Marca').classList.toggle('on', n === 2);
+    // "Skip for now" (no guardar nada) solo tiene sentido en el paso 1;
+    // en el 2 ya está "Skip this step", que sí guarda el Reply To.
+    const sk = document.getElementById('bsObSkip');
+    if (sk) sk.style.display = n === 1 ? '' : 'none';
+    const foco = document.getElementById(n === 1 ? 'bsObReplyTo' : 'bsObName');
+    // Sin foco automático en el teléfono: abriría el teclado encima de la
+    // explicación antes de que se lea.
+    if (foco && !(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) foco.focus();
+  }
+
+  // Un @ con algo a cada lado y un punto después: lo justo para cazar el
+  // error de dedo, no una validación de correo de verdad.
+  const pareceCorreo = (t) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t);
+
+  function siguiente() {
+    const inp = document.getElementById('bsObReplyTo');
+    const err = document.getElementById('bsObErr');
+    const v = (inp?.value || '').trim();
+    if (!v || !pareceCorreo(v)) {
+      inp.classList.add('mal');
+      err.textContent = v ? "That doesn't look like an email address." : 'Add an email address to continue.';
+      inp.focus();
+      return;
+    }
+    inp.classList.remove('mal'); err.textContent = '';
+    paso(2);
   }
 
   function runAnimation() {
@@ -116,31 +197,30 @@
     setTimeout(() => { card.style.opacity='1'; card.style.transform='translateY(0)'; skip.style.opacity='1'; }, 1500);
   }
 
-  async function save() {
-    const btn = document.getElementById('bsObSaveBtn');
+  // conPerfil=false es "Skip this step": se guarda solo el Reply To del
+  // paso 1, que es lo obligatorio.
+  async function save(conPerfil) {
+    const btn = document.getElementById(conPerfil ? 'bsObSaveBtn' : 'bsObSkipPerfil');
     const replyTo = document.getElementById('bsObReplyTo')?.value?.trim();
     const name    = document.getElementById('bsObName')?.value?.trim();
     const email   = document.getElementById('bsObEmail')?.value?.trim();
     const phone   = document.getElementById('bsObPhone')?.value?.trim();
     const title   = document.getElementById('bsObTitle')?.value?.trim();
 
-    if (!replyTo) {
-      document.getElementById('bsObReplyTo').style.borderColor='#f87171';
-      document.getElementById('bsObReplyTo').focus();
-      return;
-    }
+    if (!replyTo || !pareceCorreo(replyTo)) { paso(1); siguiente(); return; }
 
+    const texto = btn ? btn.textContent : '';
     if (btn) { btn.disabled=true; btn.textContent='Saving...'; }
 
     try {
       await Promise.all([
         window.BarStockLocationSettings?.saveSettings?.({ reply_to_email: replyTo }),
-        (name || email) && window.BarStockSenderProfile?.saveProfile?.({ name, email, phone, title })
+        conPerfil && (name || email) && window.BarStockSenderProfile?.saveProfile?.({ name, email, phone, title })
       ]);
       runOutroAndDismiss();
     } catch(err) {
       console.error('Onboarding save error:', err);
-      if (btn) { btn.disabled=false; btn.textContent='Save & continue'; }
+      if (btn) { btn.disabled=false; btn.textContent=texto; }
     }
   }
 
@@ -222,8 +302,52 @@
   style.textContent = `
     @keyframes bsObBurst { 0%{opacity:0.7;transform:translate(-50%,-50%) scale(1)} 100%{opacity:0;transform:translate(-50%,-50%) scale(18)} }
     @keyframes bsObRays  { 0%{opacity:0.5;transform:translate(-50%,-50%) scale(1) rotate(0deg)} 100%{opacity:0;transform:translate(-50%,-50%) scale(12) rotate(15deg)} }
-    #bsObReplyTo:focus,#bsObName:focus,#bsObEmail:focus,#bsObPhone:focus,#bsObTitle:focus { outline:none;border-color:#38bdf8 !important;background:rgba(56,189,248,0.07) !important; }
-    #bsObSaveBtn:hover { background:#16a34a !important; }
+    /* Todo con el id del overlay delante: app.css fuerza 999px de radio a
+       todo <button> y le da a <input> fondo, borde y sombra propios. */
+    #bsOnboardingOverlay .bsob-card { background:rgba(10,18,35,0.92);border:1px solid rgba(255,255,255,0.16);border-radius:20px;padding:20px 18px;width:100%;box-sizing:border-box;text-align:left; }
+    #bsOnboardingOverlay .bsob-pasos { display:flex;gap:6px;justify-content:center;margin-bottom:16px; }
+    #bsOnboardingOverlay .bsob-pasos b { width:24px;height:4px;border-radius:4px;background:rgba(255,255,255,0.15); }
+    #bsOnboardingOverlay .bsob-pasos b.on { background:#38bdf8; }
+    #bsOnboardingOverlay .bsob-k { font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#7dd3fc; }
+    #bsOnboardingOverlay .bsob-t { margin-top:6px;font-size:19px;font-weight:800;color:#fff;letter-spacing:-0.2px;line-height:1.25; }
+    #bsOnboardingOverlay .bsob-p { margin:10px 0 0;font-size:14px;color:#cbd5e1;line-height:1.55; }
+    #bsOnboardingOverlay .bsob-p strong { color:#fff;font-weight:700; }
+    #bsOnboardingOverlay .bsob-lab { display:block;margin-top:14px;font-size:12.5px;font-weight:700;color:#cbd5e1; }
+    #bsOnboardingOverlay .bsob-req { font-size:11px;background:rgba(239,68,68,0.15);color:#f87171;padding:1px 7px;border-radius:20px;margin-left:4px;font-weight:600; }
+    #bsOnboardingOverlay .bsob-in { display:block;width:100%;box-sizing:border-box;margin-top:6px;height:46px;padding:0 13px;border-radius:12px !important;border:1px solid rgba(255,255,255,0.14) !important;background:rgba(255,255,255,0.07) !important;box-shadow:none !important;color:#f1f5f9;font-size:14px; }
+    #bsOnboardingOverlay .bsob-in::placeholder { color:#64748b; }
+    #bsOnboardingOverlay .bsob-in:focus { outline:none;border-color:#38bdf8 !important;background:rgba(56,189,248,0.07) !important; }
+    #bsOnboardingOverlay .bsob-in.mal { border-color:#f87171 !important; }
+    /* iOS amplía la pantalla al enfocar un campo de menos de 16px y la
+       app no deja volver. Los de antes eran de 13px. Solo en táctil: en
+       el escritorio se quedan en 14. */
+    @media (pointer: coarse) { #bsOnboardingOverlay .bsob-in { font-size:max(16px, 14px); } }
+    #bsOnboardingOverlay .bsob-err { min-height:0;margin-top:6px;font-size:12.5px;color:#f87171; }
+    #bsOnboardingOverlay .bsob-err:empty { display:none; }
+    #bsOnboardingOverlay .bsob-dos { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+    #bsOnboardingOverlay .bsob-firma { margin-top:14px;padding:11px 13px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px dashed rgba(255,255,255,0.2); }
+    #bsOnboardingOverlay .bsob-firma small { display:block;font-size:10px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#64748b; }
+    #bsOnboardingOverlay .bsob-firma b { display:block;margin-top:5px;font-size:14.5px;color:#fff; }
+    #bsOnboardingOverlay .bsob-firma span { display:block;margin-top:2px;font-size:12.5px;color:#94a3b8;overflow-wrap:anywhere; }
+    #bsOnboardingOverlay .bsob-firma span:empty { display:none; }
+    #bsOnboardingOverlay .bsob-btn { display:block;width:100%;height:50px;margin-top:18px;border-radius:14px !important;background:#22c55e;border:none;box-shadow:none;color:#fff;font-size:15.5px;font-weight:800;cursor:pointer;-webkit-backdrop-filter:none;backdrop-filter:none; }
+    #bsOnboardingOverlay .bsob-btn:hover { background:#16a34a; }
+    #bsOnboardingOverlay .bsob-btn:disabled { opacity:0.6;cursor:default; }
+    #bsOnboardingOverlay .bsob-links { display:flex;justify-content:space-between;margin-top:10px; }
+    #bsOnboardingOverlay .bsob-link { background:none;border:none;box-shadow:none;padding:8px 4px;font-size:13px;color:#94a3b8;cursor:pointer;-webkit-backdrop-filter:none;backdrop-filter:none; }
+    #bsOnboardingOverlay .bsob-link:hover { color:#e2e8f0; }
+    /* En el teléfono, más apretado: el paso 2 (firma y cuatro campos)
+       tiene que caber con su botón sin desplazar. El logo a 52px se comía
+       un tercio de la pantalla. */
+    @media (max-width: 640px) {
+      #bsObBarstock { font-size:36px !important; } #bsObPro { font-size:14px !important; }
+      #bsOnboardingOverlay .bsob-card { padding:16px 16px; }
+      #bsOnboardingOverlay .bsob-pasos { margin-bottom:12px; }
+      #bsOnboardingOverlay .bsob-lab { margin-top:11px; }
+      #bsOnboardingOverlay .bsob-in { height:44px; }
+      #bsOnboardingOverlay .bsob-firma { margin-top:11px;padding:9px 12px; }
+      #bsOnboardingOverlay .bsob-btn { margin-top:15px;height:48px; }
+    }
     #bsObSkip:hover { color:#94a3b8 !important; }
     .bsOutroBarstock { color:#f8fafc;opacity:1;transition:opacity 0.9s ease,transform 0.9s ease; }
     .bsOutroBarstock.hide { opacity:0 !important;transform:translateX(-10px) !important; }
