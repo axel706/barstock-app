@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261107-013751",
+    "items": [
+      "2 Gingers, Averna, Baileys and Blade and Bow shapes"
+    ]
+  },
+  {
     "build": "20261107-012800",
     "items": [
       "1800, 360, Frangelico and St. Elder bottle shapes",
@@ -180,12 +186,6 @@
     "build": "20261106-105000",
     "items": [
       "Same stock color in the list and the product card"
-    ]
-  },
-  {
-    "build": "20261106-103422",
-    "items": [
-      "Clear button in the Inventory search"
     ]
   }
 ]

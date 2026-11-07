@@ -56,12 +56,13 @@
   // `balvenie`, `nikka_coffey`, `whistlepig`, `chivas`, `empress`,
   // `disaronno`, `tullamore`, `elijah_craig`, `basil_hayden`, `skrewball`,
   // `dewars`, `bulleit`, `buffalo_trace`, `bols`, `t1800`, `frangelico`,
-  // `st_elder` y `st_germain`, medidas viendo el líquido en la foto.
-  // `smirnoff`, `patron`, `belvedere`, `ketel_one`, `jura`, `macallan`,
-  // `glenfiddich`, `drambuie`, `fireball`, `cointreau`, `grey_goose`,
-  // `ciroc`, `jameson`, `don_julio_blanco`, `michters`, `malibu`,
-  // `bacardi`, `v360` y `mozart` siguen el criterio de `botanist`;
-  // `wine_flute` y `blantons` las movió Axel a ojo.
+  // `st_elder`, `st_germain`, `two_gingers`, `averna` y `blade_and_bow`,
+  // medidas viendo el líquido en la foto. `smirnoff`, `patron`,
+  // `belvedere`, `ketel_one`, `jura`, `macallan`, `glenfiddich`,
+  // `drambuie`, `fireball`, `cointreau`, `grey_goose`, `ciroc`, `jameson`,
+  // `don_julio_blanco`, `michters`, `malibu`, `bacardi`, `v360`, `mozart`
+  // y `baileys` siguen el criterio de `botanist`; `wine_flute` y
+  // `blantons` las movió Axel a ojo.
   //
   // ── Por qué la sección puede tratarse como circular ─────────────────
   //
@@ -879,6 +880,41 @@
       // dorado no deja ver el liquido: yFull .66 por el criterio de
       // botanist, donde la bola se cierra en el cuello.
       p: [[0,0.2663], [0.0156,0.5762], [0.0469,0.697], [0.0781,0.7073], [0.1094,0.78], [0.1406,0.8444], [0.1719,0.8956], [0.2031,0.934], [0.2344,0.9629], [0.2656,0.9848], [0.2969,0.9966], [0.3281,1], [0.3594,0.9977], [0.3906,0.9862], [0.4219,0.969], [0.4531,0.943], [0.4844,0.9118], [0.5156,0.8678], [0.5469,0.804], [0.5781,0.7255], [0.6094,0.6337], [0.6406,0.515], [0.6719,0.3738], [0.7031,0.3211], [0.7344,0.3211], [0.7656,0.3211], [0.7969,0.3179], [0.8281,0.3185], [0.8594,0.3182], [0.8906,0.3159], [0.9219,0.3139], [0.9531,0.3133], [0.9844,0.3], [1,0.2037]]
+    },
+    two_gingers: {
+      name: '2 Gingers', asp: 3.79, yFull: 0.79, pourable: true,
+      // La de 2 Gingers (foto de la de 1 L). WEBP con fondo blanco: la
+      // mascara va fila por fila, del primer al ultimo pixel que no es
+      // fondo. 917 px de alto, desajuste de area 0.61 %. Recta, hombro
+      // corto del 58 % al 68 %, cuello largo. yFull .79 medida viendo el
+      // liquido, que sube hasta el cuello.
+      p: [[0,0.9105], [0.0156,0.9144], [0.0469,0.9823], [0.0781,0.9929], [0.1094,0.9833], [0.1406,0.9803], [0.1719,0.9787], [0.2031,0.9805], [0.2344,0.9798], [0.2656,0.9793], [0.2969,0.9812], [0.3281,0.9836], [0.3594,0.9835], [0.3906,0.9835], [0.4219,0.9835], [0.4531,0.9843], [0.4844,0.9836], [0.5156,0.9882], [0.5469,0.9944], [0.5781,0.9612], [0.6094,0.8618], [0.6406,0.675], [0.6719,0.4727], [0.7031,0.4544], [0.7344,0.4613], [0.7656,0.4456], [0.7969,0.4184], [0.8281,0.374], [0.8594,0.315], [0.8906,0.3319], [0.9219,0.3498], [0.9531,0.3482], [0.9844,0.3377], [1,0.2245]]
+    },
+    averna: {
+      name: 'Averna', asp: 4.5, yFull: 0.76, pourable: true,
+      // La de Averna. JPG con fondo blanco, 554 px de alto, desajuste de
+      // area 0.91 %. Alta y delgada, con un pie un poco mas ancho en la base
+      // (es de la botella), hombro del 70 % al 77 %. yFull .76 medida viendo
+      // el liquido oscuro, debajo de la franja clara bajo la tapa.
+      p: [[0,0.5149], [0.0156,0.8284], [0.0469,0.9923], [0.0781,0.9756], [0.1094,0.9264], [0.1406,0.9024], [0.1719,0.9024], [0.2031,0.9115], [0.2344,0.9164], [0.2656,0.9225], [0.2969,0.9268], [0.3281,0.9268], [0.3594,0.9297], [0.3906,0.9378], [0.4219,0.9536], [0.4531,0.9557], [0.4844,0.9598], [0.5156,0.9675], [0.5469,0.9675], [0.5781,0.9708], [0.6094,0.9794], [0.6406,0.9837], [0.6719,0.9887], [0.7031,0.9837], [0.7344,0.7054], [0.7656,0.4679], [0.7969,0.4314], [0.8281,0.4409], [0.8594,0.4371], [0.8906,0.4309], [0.9219,0.4333], [0.9531,0.4261], [0.9844,0.4237], [1,0.3279]]
+    },
+    baileys: {
+      name: 'Baileys', asp: 3.28, yFull: 0.7, pourable: true,
+      // La de Baileys (foto de la de 1 L). WEBP con fondo blanco, 1036 px de
+      // alto, desajuste de area 0.67-0.70 %. Se abre desde la base hasta un
+      // hombro largo y caido, del 52 % al 72 %, cuello largo. Vidrio negro:
+      // yFull .70 por el criterio de botanist.
+      p: [[0,0.2447], [0.0156,0.6995], [0.0469,0.8752], [0.0781,0.8835], [0.1094,0.8909], [0.1406,0.9007], [0.1719,0.9079], [0.2031,0.9186], [0.2344,0.9255], [0.2656,0.9327], [0.2969,0.9434], [0.3281,0.9508], [0.3594,0.961], [0.3906,0.9686], [0.4219,0.9762], [0.4531,0.987], [0.4844,0.9938], [0.5156,0.9967], [0.5469,0.9601], [0.5781,0.8594], [0.6094,0.7265], [0.6406,0.5863], [0.6719,0.4551], [0.7031,0.3674], [0.7344,0.3312], [0.7656,0.3214], [0.7969,0.3167], [0.8281,0.3228], [0.8594,0.3228], [0.8906,0.3228], [0.9219,0.3196], [0.9531,0.3146], [0.9844,0.3005], [1,0.1688]]
+    },
+    blade_and_bow: {
+      name: 'Blade and Bow', asp: 2.33, yFull: 0.63, pourable: true,
+      // La de Blade and Bow. JPG con fondo blanco. La llave cuelga a la
+      // derecha (del 63 % al 71 %) y se midio el lado izquierdo, reflejado
+      // sobre el eje del cuello. 541 px de alto, desajuste de area 0.96 %.
+      // Cuadrada (tratada como redonda, como Red Label), ancha y baja, base
+      // biselada, hombro corto del 58 % al 66 %. yFull .63 medida viendo el
+      // liquido, que llega al final del hombro: el cuello va vacio.
+      p: [[0,0.3966], [0.0156,0.6009], [0.0469,0.7541], [0.0781,0.82], [0.1094,0.8859], [0.1406,0.8889], [0.1719,0.8991], [0.2031,0.9077], [0.2344,0.9138], [0.2656,0.9224], [0.2969,0.9295], [0.3281,0.9371], [0.3594,0.9437], [0.3906,0.9523], [0.4219,0.9604], [0.4531,0.967], [0.4844,0.9758], [0.5156,0.9828], [0.5469,0.9904], [0.5781,0.9706], [0.6094,0.6947], [0.6406,0.4579], [0.6719,0.36], [0.7031,0.3342], [0.7344,0.3222], [0.7656,0.3256], [0.7969,0.3235], [0.8281,0.319], [0.8594,0.3124], [0.8906,0.3256], [0.9219,0.3311], [0.9531,0.3362], [0.9844,0.2996], [1,0.1322]]
     },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del

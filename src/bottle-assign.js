@@ -50,7 +50,13 @@
     [/\babsolut\b/i,                              'apothecary_tall'],
     [/\btanqueray\b/i,                            'shaker_faceted'],
     [/\b(jose\s*cuervo|cuervo)\b/i,               'tequila_tall'],
-    [/\b(bailey'?s|rumchata|cream liqueur)\b/i,   'liqueur_cream'],
+    // Baileys tiene su forma medida, y va ANTES que la regla de "cream
+    // liqueur": "Baileys Irish Cream Liqueur" lleva esas dos palabras y,
+    // con la regla de abajo primero, se quedaba en liqueur_cream. El
+    // apostrofo puede ser el tipografico (asi lo trae el escaner, ver
+    // test-escaner-huerfano).
+    [/\bbailey['’]?s\b/i,                            'baileys'],
+    [/\b(rumchata|cream liqueur)\b/i,             'liqueur_cream'],
     // Cointreau salio de esta lista: tiene su forma medida, mas abajo. Si
     // se quedaba aqui, esta regla, que va antes, le ganaba siempre.
     // St-Germain salio de aqui igual que Cointreau: tiene su forma medida
@@ -168,6 +174,11 @@
     [/\bst\.?\s*elder\b/i,                          'st_elder'],
     [/\bst[-. ]?\s*germain\b/i,                      'st_germain'],
     [/\bmozart\b/i,                                 'mozart'],
+    // 2 Gingers y Blade and Bow caian en la de whiskey, Averna en
+    // liqueur_slim.
+    [/\b(2|two)\s*gingers\b/i,                     'two_gingers'],
+    [/\baverna\b/i,                                 'averna'],
+    [/\bblade\s*(and|&)\s*bow\b/i,                  'blade_and_bow'],
     [/\bjameson\b(?![\s\S]*\b(black\s*barrel|caskmates|crested|18|12|reserve|blender'?s?)\b)/i, 'jameson'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
