@@ -119,6 +119,15 @@
     [/\bgrey\s*goose\b/i,                          'grey_goose'],
     [/\bc[iî]roc\b/i,                               'ciroc'],
     [/\bwhistle\s*pig\b(?=[\s\S]*\b10\b)/i,       'whistlepig'],
+    // Chivas y Jameson caian en la de whiskey, Empress en la de vodka (por
+    // ser gin) y Disaronno en liqueur_slim. Se midieron el Chivas 12 y el
+    // Jameson de siempre: los Chivas mayores y los Jameson de linea
+    // especial van en otras botellas o no se han comprobado, y se quedan
+    // con su categoria.
+    [/\bchivas\b(?![\s\S]*\b(18|25|mizunara|xv|extra|ultis)\b)/i, 'chivas'],
+    [/\bempress\b/i,                                'empress'],
+    [/\bdisaronno\b/i,                              'disaronno'],
+    [/\bjameson\b(?![\s\S]*\b(black\s*barrel|caskmates|crested|18|12|reserve|blender'?s?)\b)/i, 'jameson'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
     // Riesling y Gewurztraminer vienen en flauta, no en Burgundy: iban

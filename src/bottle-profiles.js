@@ -53,11 +53,12 @@
   // línea donde no es. Se ajustaron a ojo de Axel sobre una lámina; su
   // comentario cuenta por qué. Y `carlo_rossi`, `casa_noble`,
   // `monkey_shoulder`, `oban`, `boulard`, `red_label`, `dads_hat`,
-  // `balvenie`, `nikka_coffey` y `whistlepig`, medidas viendo el líquido
-  // en la foto. `smirnoff`, `patron`, `belvedere`, `ketel_one`, `jura`,
-  // `macallan`, `glenfiddich`, `drambuie`, `fireball`, `cointreau`,
-  // `grey_goose` y `ciroc` siguen el criterio de `botanist`; `wine_flute`
-  // y `blantons` las movió Axel a ojo.
+  // `balvenie`, `nikka_coffey`, `whistlepig`, `chivas`, `empress` y
+  // `disaronno`, medidas viendo el líquido en la foto. `smirnoff`,
+  // `patron`, `belvedere`, `ketel_one`, `jura`, `macallan`, `glenfiddich`,
+  // `drambuie`, `fireball`, `cointreau`, `grey_goose`, `ciroc` y `jameson`
+  // siguen el criterio de `botanist`; `wine_flute` y `blantons` las movió
+  // Axel a ojo.
   //
   // ── Por qué la sección puede tratarse como circular ─────────────────
   //
@@ -639,6 +640,51 @@
       // desajuste de area 0.57 %. Baja y redonda, hombro del 58 % al 75 %,
       // cuello corto. yFull .72 medida viendo el liquido en la foto.
       p: [[0,0.5642], [0.0156,0.6792], [0.0469,0.7691], [0.0781,0.7963], [0.1094,0.8128], [0.1406,0.8425], [0.1719,0.8695], [0.2031,0.8871], [0.2344,0.9041], [0.2656,0.9222], [0.2969,0.9414], [0.3281,0.9535], [0.3594,0.9603], [0.3906,0.9691], [0.4219,0.9776], [0.4531,0.985], [0.4844,0.9913], [0.5156,0.9939], [0.5469,0.9996], [0.5781,0.993], [0.6094,0.981], [0.6406,0.9425], [0.6719,0.8652], [0.7031,0.7172], [0.7344,0.4157], [0.7656,0.2988], [0.7969,0.2963], [0.8281,0.2952], [0.8594,0.2943], [0.8906,0.2977], [0.9219,0.3272], [0.9531,0.3394], [0.9844,0.3131], [1,0.1951]]
+    },
+    chivas: {
+      name: 'Chivas Regal', asp: 2.67, yFull: 0.75, pourable: true,
+      // La de Chivas Regal 12. 872 px de alto por 326 de ancho maximo,
+      // desajuste de area 0.68 %. Hombro redondo y ancho del 48 % al 64 %,
+      // cuello con la etiqueta roja. yFull .75 medida viendo el liquido en
+      // la foto: se ve hasta debajo de esa etiqueta.
+      p: [[0,0.4622], [0.0156,0.8466], [0.0469,0.9773], [0.0781,0.9663], [0.1094,0.9705], [0.1406,0.9724], [0.1719,0.9749], [0.2031,0.9785], [0.2344,0.9785], [0.2656,0.9805], [0.2969,0.9847], [0.3281,0.9847], [0.3594,0.9847], [0.3906,0.99], [0.4219,0.9962], [0.4531,0.9989], [0.4844,0.9978], [0.5156,0.9701], [0.5469,0.9041], [0.5781,0.7842], [0.6094,0.5969], [0.6406,0.4431], [0.6719,0.4394], [0.7031,0.4612], [0.7344,0.4485], [0.7656,0.4155], [0.7969,0.3807], [0.8281,0.3491], [0.8594,0.3447], [0.8906,0.3483], [0.9219,0.3499], [0.9531,0.3458], [0.9844,0.334], [1,0.2843]]
+    },
+    empress: {
+      name: 'Empress 1908', asp: 3.29, yFull: 0.72, pourable: true,
+      // La de Empress 1908. 543 px de alto por 165 de ancho maximo,
+      // desajuste de area 0.90 %. Recta, hombro corto del 67 % al 73 %.
+      // yFull .72 medida viendo el liquido (morado) en la foto: llega
+      // justo a donde empieza el cuello, que esta vacio.
+      p: [[0,0.4364], [0.0156,0.7508], [0.0469,0.9465], [0.0781,0.9793], [0.1094,0.9793], [0.1406,0.9818], [0.1719,0.9818], [0.2031,0.9857], [0.2344,0.9879], [0.2656,0.9879], [0.2969,0.9868], [0.3281,0.9818], [0.3594,0.9818], [0.3906,0.9818], [0.4219,0.9818], [0.4531,0.9818], [0.4844,0.9864], [0.5156,0.9936], [0.5469,0.9943], [0.5781,1], [0.6094,0.9932], [0.6406,0.9857], [0.6719,0.9551], [0.7031,0.7045], [0.7344,0.3676], [0.7656,0.354], [0.7969,0.3558], [0.8281,0.3601], [0.8594,0.3636], [0.8906,0.3679], [0.9219,0.3882], [0.9531,0.3754], [0.9844,0.3239], [1,0.1333]]
+    },
+    disaronno: {
+      name: 'Disaronno', asp: 2.06, yFull: 0.72, pourable: true,
+      // La de Disaronno. Se midio primero de una foto CORTADA, sin el
+      // tapon: salia chata (1.76) y con la linea al 82 %. Axel lo vio en la
+      // lamina y mando la foto entera. Esta es de esa: JPG con fondo
+      // blanco, sin canal alfa; el alfa se hizo rellenando el blanco desde
+      // las esquinas. 606 px de alto por 294 de ancho maximo, desajuste
+      // de area 0.65 %.
+      //
+      // Cuadrada, tratada como redonda igual que Red Label. Cintura muy
+      // suave (un 3 %), que es de la botella y es continua; hombro del 64 %
+      // al 75 % y el tapon cuadrado, mas ancho que el cuello. yFull .72
+      // medida viendo el liquido en la foto.
+      p: [[0,0.8946], [0.0156,0.9298], [0.0469,0.9744], [0.0781,0.9932], [0.1094,0.9959], [0.1406,0.9939], [0.1719,0.9891], [0.2031,0.983], [0.2344,0.9803], [0.2656,0.9792], [0.2969,0.9771], [0.3281,0.9752], [0.3594,0.9737], [0.3906,0.9731], [0.4219,0.9703], [0.4531,0.9705], [0.4844,0.969], [0.5156,0.9692], [0.5469,0.9742], [0.5781,0.9757], [0.6094,0.9814], [0.6406,0.9868], [0.6719,0.9618], [0.7031,0.8435], [0.7344,0.4651], [0.7656,0.2902], [0.7969,0.275], [0.8281,0.2719], [0.8594,0.358], [0.8906,0.538], [0.9219,0.5383], [0.9531,0.5378], [0.9844,0.5325], [1,0.5147]]
+    },
+    jameson: {
+      name: 'Jameson', asp: 3.98, yFull: 0.7, pourable: true,
+      // La de Jameson. 864 px de alto por 217 de ancho maximo. La foto tenia
+      // dos defectos: abajo, entre el 8 % y el 15 %, el recorte se comia el
+      // borde izquierdo (donde va el 1780 en relieve), y el cuerpo salia
+      // con ondas. Con lo que Axel pidio para Grey Goose ("debe ser
+      // continuo"), el cuerpo es una recta ajustada por minimos cuadrados
+      // en el tramo limpio, del 20 % al 60 %, y prolongada hasta la base:
+      // se abre de r .91 a .98 hacia el hombro. Desajuste de area 1.41 %.
+      //
+      // Hombro del 61 % al 70 %. El vidrio verde no deja ver el liquido:
+      // yFull .70 sigue el criterio de botanist.
+      p: [[0,0.1905], [0.0156,0.6377], [0.0469,0.9104], [0.0781,0.9145], [0.1094,0.9186], [0.1406,0.9226], [0.1719,0.9267], [0.2031,0.9308], [0.2344,0.9348], [0.2656,0.9389], [0.2969,0.943], [0.3281,0.947], [0.3594,0.9511], [0.3906,0.9551], [0.4219,0.9592], [0.4531,0.9633], [0.4844,0.9673], [0.5156,0.9714], [0.5469,0.9755], [0.5781,0.9795], [0.6094,0.9836], [0.6406,0.9541], [0.6719,0.7797], [0.7031,0.488], [0.7344,0.4194], [0.7656,0.4054], [0.7969,0.397], [0.8281,0.3847], [0.8594,0.3821], [0.8906,0.3825], [0.9219,0.377], [0.9531,0.3767], [0.9844,0.3644], [1,0.2673]]
     },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del
