@@ -55,11 +55,12 @@
   // `monkey_shoulder`, `oban`, `boulard`, `red_label`, `dads_hat`,
   // `balvenie`, `nikka_coffey`, `whistlepig`, `chivas`, `empress`,
   // `disaronno`, `tullamore`, `elijah_craig`, `basil_hayden`, `skrewball`,
-  // `dewars`, `bulleit`, `buffalo_trace` y `bols`, medidas viendo el
-  // líquido en la foto. `smirnoff`, `patron`, `belvedere`, `ketel_one`,
-  // `jura`, `macallan`, `glenfiddich`, `drambuie`, `fireball`,
-  // `cointreau`, `grey_goose`, `ciroc`, `jameson`, `don_julio_blanco`,
-  // `michters`, `malibu` y `bacardi` siguen el criterio de `botanist`;
+  // `dewars`, `bulleit`, `buffalo_trace`, `bols`, `t1800`, `frangelico`,
+  // `st_elder` y `st_germain`, medidas viendo el líquido en la foto.
+  // `smirnoff`, `patron`, `belvedere`, `ketel_one`, `jura`, `macallan`,
+  // `glenfiddich`, `drambuie`, `fireball`, `cointreau`, `grey_goose`,
+  // `ciroc`, `jameson`, `don_julio_blanco`, `michters`, `malibu`,
+  // `bacardi`, `v360` y `mozart` siguen el criterio de `botanist`;
   // `wine_flute` y `blantons` las movió Axel a ojo.
   //
   // ── Por qué la sección puede tratarse como circular ─────────────────
@@ -812,6 +813,72 @@
       // Recta y alta, hombro del 64 % al 73 %. El ron es transparente:
       // yFull .71 por el criterio de botanist.
       p: [[0,0.261], [0.0156,0.7735], [0.0469,0.961], [0.0781,0.9526], [0.1094,0.9341], [0.1406,0.9311], [0.1719,0.9332], [0.2031,0.9366], [0.2344,0.9406], [0.2656,0.9447], [0.2969,0.9507], [0.3281,0.9529], [0.3594,0.9539], [0.3906,0.9553], [0.4219,0.9599], [0.4531,0.961], [0.4844,0.9609], [0.5156,0.9643], [0.5469,0.9633], [0.5781,0.9657], [0.6094,0.9841], [0.6406,0.9942], [0.6719,0.9262], [0.7031,0.6386], [0.7344,0.4226], [0.7656,0.4018], [0.7969,0.4011], [0.8281,0.402], [0.8594,0.4], [0.8906,0.3999], [0.9219,0.3942], [0.9531,0.3946], [0.9844,0.3763], [1,0.173]]
+    },
+    t1800: {
+      name: '1800 Reposado', asp: 2.61, yFull: 0.74, pourable: true,
+      // La de 1800 Reposado. JPG con fondo blanco: la mascara va fila por
+      // fila, del primer al ultimo pixel que no es fondo. 447 px de alto
+      // por 171 de ancho maximo, desajuste de area 0.81 %. Botella de
+      // cuatro caras (tratada como redonda, como Red Label) que se abre
+      // hacia la base, hombro del 70 % al 77 % y la tapa dorada mas ancha
+      // que el cuello. yFull .74 medida viendo el liquido; mas arriba lo
+      // tapa la etiqueta del cuello.
+      p: [[0,0.8655], [0.0156,0.9261], [0.0469,0.9933], [0.0781,0.9871], [0.1094,0.9804], [0.1406,0.9607], [0.1719,0.9511], [0.2031,0.9332], [0.2344,0.9231], [0.2656,0.9106], [0.2969,0.8981], [0.3281,0.8872], [0.3594,0.8776], [0.3906,0.8684], [0.4219,0.8534], [0.4531,0.8434], [0.4844,0.8349], [0.5156,0.8275], [0.5469,0.8145], [0.5781,0.8041], [0.6094,0.7966], [0.6406,0.7849], [0.6719,0.7698], [0.7031,0.7302], [0.7344,0.5113], [0.7656,0.3158], [0.7969,0.3037], [0.8281,0.3033], [0.8594,0.312], [0.8906,0.444], [0.9219,0.4854], [0.9531,0.4854], [0.9844,0.4395], [1,0.2885]]
+    },
+    v360: {
+      name: '360', asp: 3.94, yFull: 0.73, pourable: true,
+      // La de 360 Vodka (foto del Double Chocolate). Vidrio transparente
+      // sobre blanco: el borde izquierdo se perdia a media altura y se midio
+      // el derecho, reflejado sobre el eje. El cierre de alambre del cuello
+      // (swing-top) sobresale por los dos lados y se recorto al ancho del
+      // cuello: no es vidrio ni guarda liquido, como el asa de Carlo Rossi.
+      //
+      // La foto daba un escalon al 40 % (la parte de abajo un 9 % mas
+      // ancha) y se tomo por real porque salia igual a los dos lados. Axel:
+      // "le pusiste un bump y no lleva". El cuerpo es recto, con el ancho de
+      // abajo, donde el borde se ve limpio; contra la foto el desajuste es
+      // 3.34 %, casi todo ese escalon. Es transparente: yFull .73 por el
+      // criterio de botanist.
+      p: [[0,0.5321], [0.0156,0.7959], [0.0469,0.963], [0.0781,0.9586], [0.1094,1], [0.1406,1], [0.1719,1], [0.2031,1], [0.2344,1], [0.2656,1], [0.2969,1], [0.3281,1], [0.3594,1], [0.3906,1], [0.4219,1], [0.4531,1], [0.4844,1], [0.5156,1], [0.5469,1], [0.5781,1], [0.6094,1], [0.6406,0.96], [0.6719,0.8536], [0.7031,0.774], [0.7344,0.5518], [0.7656,0.3787], [0.7969,0.3654], [0.8281,0.3609], [0.8594,0.3654], [0.8906,0.3654], [0.9219,0.3654], [0.9531,0.3654], [0.9844,0.3654], [1,0.3397]]
+    },
+    frangelico: {
+      name: 'Frangelico', asp: 3.38, yFull: 0.83, pourable: true,
+      // La de Frangelico, el monje. El cordon cuelga por la derecha y se
+      // midio el lado izquierdo, reflejado sobre el eje del cuello. 554 px
+      // de alto, desajuste de area 1.41 %. La base se abre como el habito,
+      // la cintura donde va el cordon es angosta y la capucha, encima, es
+      // mas ancha: ese escalon es de la botella. yFull .83 medida viendo el
+      // liquido, ya en el cuello.
+      p: [[0,0.3577], [0.0156,0.7825], [0.0469,0.9785], [0.0781,0.9634], [0.1094,0.9465], [0.1406,0.9247], [0.1719,0.9082], [0.2031,0.8852], [0.2344,0.8659], [0.2656,0.8465], [0.2969,0.8286], [0.3281,0.8035], [0.3594,0.7862], [0.3906,0.7712], [0.4219,0.7554], [0.4531,0.7188], [0.4844,0.7647], [0.5156,0.9448], [0.5469,0.9925], [0.5781,0.9498], [0.6094,0.9053], [0.6406,0.8594], [0.6719,0.8137], [0.7031,0.7661], [0.7344,0.7217], [0.7656,0.6755], [0.7969,0.5674], [0.8281,0.3357], [0.8594,0.33], [0.8906,0.3449], [0.9219,0.3544], [0.9531,0.3644], [0.9844,0.3293], [1,0.1423]]
+    },
+    st_elder: {
+      name: 'St. Elder', asp: 3.79, yFull: 0.78, pourable: true,
+      // La de St. Elder. 424 px de alto, desajuste de area 0.93 %. Recta,
+      // hombro corto del 70 % al 77 %. yFull .78 medida viendo el liquido,
+      // que llega al cuello debajo de la capsula verde.
+      p: [[0,0.3929], [0.0156,0.8036], [0.0469,0.9835], [0.0781,0.9725], [0.1094,0.9176], [0.1406,0.8897], [0.1719,0.897], [0.2031,0.9011], [0.2344,0.9018], [0.2656,0.9107], [0.2969,0.9196], [0.3281,0.921], [0.3594,0.9272], [0.3906,0.9334], [0.4219,0.9375], [0.4531,0.9444], [0.4844,0.9554], [0.5156,0.9554], [0.5469,0.9615], [0.5781,0.9649], [0.6094,0.9725], [0.6406,0.9746], [0.6719,0.9815], [0.7031,0.9483], [0.7344,0.671], [0.7656,0.4258], [0.7969,0.3819], [0.8281,0.3757], [0.8594,0.375], [0.8906,0.375], [0.9219,0.3709], [0.9531,0.3777], [0.9844,0.3626], [1,0.3274]]
+    },
+    st_germain: {
+      name: 'St-Germain', asp: 3.78, yFull: 0.84, pourable: true,
+      // La de St-Germain. 552 px de alto. Primero se hizo con los 34 puntos
+      // parejos de siempre y Axel la quiso con "mas detalles": esos puntos
+      // se comian el filo del hombro y el pellizco del cuello. Esta lleva
+      // 57 puntos puestos donde la forma cambia (Douglas-Peucker sobre la
+      // medida fila por fila, mediana de 5 filas, tolerancia .008), y el
+      // desajuste baja de 1.13 % a 0.59 %. El pie un poco mas ancho, la
+      // cintura larga, el hombro en corona casi en punta al 75 %, el
+      // pellizco del cuello al 88 % y la tapa mas ancha que el cuello. Las
+      // facetas del vidrio no salen: no cambian el contorno.
+      // yFull .84 medida viendo el liquido, casi hasta la tapa.
+      p: [[0,0.411], [0.0018,0.5137], [0.0036,0.5137], [0.0054,0.6712], [0.0073,0.7877], [0.0091,0.8151], [0.02,0.8425], [0.1089,0.8014], [0.2432,0.774], [0.265,0.7808], [0.274,0.7671], [0.4301,0.774], [0.4319,0.7877], [0.4755,0.7877], [0.5336,0.8151], [0.5535,0.8356], [0.5789,0.8356], [0.5826,0.8493], [0.5953,0.8493], [0.6007,0.863], [0.6171,0.863], [0.6207,0.8767], [0.6534,0.8904], [0.6588,0.911], [0.6951,0.9315], [0.7078,0.9589], [0.726,0.9658], [0.7405,0.9932], [0.755,1], [0.7804,0.9658], [0.7822,0.9521], [0.8004,0.9178], [0.8076,0.8836], [0.8149,0.8767], [0.8221,0.8288], [0.8276,0.8288], [0.8312,0.7877], [0.8385,0.7603], [0.8439,0.7055], [0.8566,0.6096], [0.8639,0.5274], [0.8657,0.4932], [0.8675,0.4932], [0.8693,0.4726], [0.8711,0.4041], [0.8748,0.3493], [0.8784,0.3493], [0.882,0.3973], [0.8857,0.4178], [0.9583,0.4452], [0.9619,0.4589], [0.9691,0.4589], [0.9855,0.5], [0.9927,0.5], [0.9946,0.4795], [0.9964,0.4315], [1,0.4247]]
+    },
+    mozart: {
+      name: 'Mozart', asp: 1.45, yFull: 0.66, pourable: true,
+      // La de los licores Mozart (foto del White Chocolate): la bola con el
+      // cuello largo. 554 px de alto, desajuste de area 0.67 %. El papel
+      // dorado no deja ver el liquido: yFull .66 por el criterio de
+      // botanist, donde la bola se cierra en el cuello.
+      p: [[0,0.2663], [0.0156,0.5762], [0.0469,0.697], [0.0781,0.7073], [0.1094,0.78], [0.1406,0.8444], [0.1719,0.8956], [0.2031,0.934], [0.2344,0.9629], [0.2656,0.9848], [0.2969,0.9966], [0.3281,1], [0.3594,0.9977], [0.3906,0.9862], [0.4219,0.969], [0.4531,0.943], [0.4844,0.9118], [0.5156,0.8678], [0.5469,0.804], [0.5781,0.7255], [0.6094,0.6337], [0.6406,0.515], [0.6719,0.3738], [0.7031,0.3211], [0.7344,0.3211], [0.7656,0.3211], [0.7969,0.3179], [0.8281,0.3185], [0.8594,0.3182], [0.8906,0.3159], [0.9219,0.3139], [0.9531,0.3133], [0.9844,0.3], [1,0.2037]]
     },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del

@@ -53,7 +53,9 @@
     [/\b(bailey'?s|rumchata|cream liqueur)\b/i,   'liqueur_cream'],
     // Cointreau salio de esta lista: tiene su forma medida, mas abajo. Si
     // se quedaba aqui, esta regla, que va antes, le ganaba siempre.
-    [/\b(grand\s*marnier|chambord|st[- ]?germain|luxardo)\b/i, 'liqueur_slim'],
+    // St-Germain salio de aqui igual que Cointreau: tiene su forma medida
+    // mas abajo, y esta regla, que va antes, le ganaba siempre.
+    [/\b(grand\s*marnier|chambord|luxardo)\b/i, 'liqueur_slim'],
     // Medida aparte: cintura baja y cuerpo que se abre hacia el hombro.
     // Sin esta regla caería en liqueur_slim por la categoría.
     [/\baperol\b/i,                              'aperol'],
@@ -155,6 +157,17 @@
     // palabra, asi que entre la í y el espacio no hay borde y "Bacardí
     // Superior" no coincidia. Se pide que no siga otra letra.
     [/\bbacard[ií](?![a-zá-ú])(?![\s\S]*\b(8|ocho|reserva|gran|cuatro|10|diez)\b)/i, 'bacardi'],
+    // 1800 y 360 caian en la de vodka (tequila y vodka), los cuatro
+    // licores en liqueur_slim. De 1800, solo el Reposado: es el medido y
+    // no se ha comprobado si el Silver y el Anejo van en la misma botella.
+    // "360" a secas es tambien un tamano ("360 ml"): solo cuenta al
+    // principio del nombre o seguido de "vodka".
+    [/^(?=[\s\S]*\b1800\b)(?=[\s\S]*\breposado\b)/i,  't1800'],
+    [/^\s*360\b(?!\s*ml)|\b360\s+vodka\b/i,          'v360'],
+    [/\bfrangelico\b/i,                             'frangelico'],
+    [/\bst\.?\s*elder\b/i,                          'st_elder'],
+    [/\bst[-. ]?\s*germain\b/i,                      'st_germain'],
+    [/\bmozart\b/i,                                 'mozart'],
     [/\bjameson\b(?![\s\S]*\b(black\s*barrel|caskmates|crested|18|12|reserve|blender'?s?)\b)/i, 'jameson'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],

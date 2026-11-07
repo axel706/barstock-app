@@ -75,7 +75,9 @@ console.log('\npor nombre');
                            ['Cointreau', 'Liqueur', 'cointreau'],
                            ['Cointreau 1L', 'Liqueur', 'cointreau'],
                            ['Grand Marnier', 'Liqueur', 'liqueur_slim'],
-                           ['St-Germain', 'Liqueur', 'liqueur_slim'],
+                           // Antes era St-Germain; desde que tiene su forma medida, el ejemplo
+                           // de los que siguen en liqueur_slim es Luxardo.
+                           ['Luxardo Maraschino', 'Liqueur', 'liqueur_slim'],
                            ['The Balvenie 12 DoubleWood', 'Whiskey & Bourbon', 'balvenie']]) {
     const s = A.byRules({ item: n, category: c }).shape;
     prueba(n + ' → ' + k, s === k, s);
