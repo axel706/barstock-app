@@ -52,10 +52,41 @@
     // en todo lo que no sea la caja, y dejar que la caja desplace lo
     // suyo con `overscroll-behavior: contain` para que al llegar al
     // final no se lo pase a la página.
+    // ── Qué se desplaza bajo el dedo ──────────────────────────────────
+    //
+    // Antes solo se miraba la caja: si ella no se desplazaba, se cancelaba
+    // el gesto. Con el selector de botella eso rompió el scroll entero
+    // (Axel: "no puedo hacer scroll en el grid"): allí la caja está quieta
+    // a propósito —búsqueda arriba, botones fijos abajo— y lo que se
+    // desplaza es la rejilla de DENTRO, y de lado la fila de tamaños. El
+    // gesto cancelaba los dos.
+    //
+    // Ahora se busca, desde lo que toca el dedo hacia arriba, lo primero
+    // que de verdad se desplaza. La caja cuenta como antes (por su
+    // contenido); lo de dentro, solo si su CSS lo deja desplazarse.
+    const deja = (el, eje) => {
+      try {
+        const v = window.getComputedStyle(el)[eje === 'y' ? 'overflowY' : 'overflowX'];
+        return v === 'auto' || v === 'scroll';
+      } catch (e) { return false; }
+    };
+    const desplazador = (t) => {
+      for (let el = t; el && el !== caja && caja.contains(el); el = el.parentElement) {
+        if (el.scrollHeight > el.clientHeight + 1 && deja(el, 'y')) return el;
+      }
+      return caja.scrollHeight > caja.clientHeight ? caja : null;
+    };
+    const deLado = (t) => {
+      for (let el = t; el && el !== caja && caja.contains(el); el = el.parentElement) {
+        if (el.scrollWidth > el.clientWidth + 1 && deja(el, 'x')) return el;
+      }
+      return null;
+    };
+
     const noArrastres = (e) => {
       if (!caja.contains(e.target)) { e.preventDefault(); return; }
-      // Dentro de la caja: sólo si de verdad puede desplazarse.
-      if (caja.scrollHeight <= caja.clientHeight) e.preventDefault();
+      // Dentro de la caja: solo si algo bajo el dedo puede desplazarse.
+      if (!desplazador(e.target) && !deLado(e.target)) e.preventDefault();
     };
     hoja.addEventListener('touchmove', noArrastres, { passive: false });
 
@@ -65,12 +96,24 @@
     // la mitad de una ficha larga y tiras hacia abajo, lo que quieres es
     // volver al principio, no cerrar.
     let y0 = null, t0 = 0, dy = 0, activo = false, h0 = 0;
+    // Lo que se desplaza bajo el dedo al empezar: la caja en casi todas
+    // las hojas, la rejilla en el selector de botella. "Arriba del todo"
+    // se mira en ESE, o tirar hacia abajo a media rejilla cerraría la
+    // hoja en vez de subir la lista.
+    let sc = caja;
+    // La dirección se decide con el primer movimiento claro. Antes el
+    // gesto cancelaba TODO movimiento en cuanto empezaba, también el de
+    // lado: la fila de tamaños del selector de botella no se deslizaba,
+    // ni ninguna fila horizontal de ninguna hoja.
+    let x0 = 0, rumbo = null;
 
     const empezar = (e) => {
       if (op.quieta && op.quieta()) return;
-      if (caja.scrollTop > 0) return;
+      sc = desplazador(e.target) || caja;
+      if (sc.scrollTop > 0) return;
       const t = e.touches ? e.touches[0] : e;
-      y0 = t.clientY; t0 = Date.now(); dy = 0; activo = true;
+      y0 = t.clientY; x0 = t.clientX || 0; rumbo = null;
+      t0 = Date.now(); dy = 0; activo = true;
       h0 = caja.getBoundingClientRect().height;
       caja.style.transition = 'none';
     };
@@ -79,6 +122,15 @@
       if (!activo) return;
       const t = e.touches ? e.touches[0] : e;
       dy = t.clientY - y0;
+      if (!rumbo) {
+        const dx = (t.clientX || 0) - x0;
+        // Menos de 6px todavía no dice nada: ni se arrastra ni se cancela.
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < 6) { dy = 0; return; }
+        rumbo = Math.abs(dx) > Math.abs(dy) ? 'lado' : 'vertical';
+        // De lado no es cerrar la hoja: se suelta y el dedo desliza lo
+        // que tenga debajo.
+        if (rumbo === 'lado') { activo = false; caja.style.transition = ''; dy = 0; return; }
+      }
       // Hacia arriba no se estira: la hoja no sube más de donde está.
       // Salvo que la hoja sepa crecer: entonces crece con el dedo. Crece
       // de ALTO y no se traslada, porque trasladarla la despegaría del
@@ -89,7 +141,7 @@
         caja.style.height = Math.round(h0 - dy) + 'px';
         return;
       }
-      if (caja.scrollTop > 0) { soltar(); return; }
+      if (sc.scrollTop > 0) { soltar(); return; }
       if (e.cancelable) e.preventDefault();
       caja.style.transform = 'translateY(' + dy + 'px)';
       // El fondo se va aclarando: dice que soltar aquí cierra.

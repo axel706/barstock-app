@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261107-090810",
+    "items": [
+      "Bottle shape picker scrolls again",
+      "Sizes row slides sideways"
+    ]
+  },
+  {
     "build": "20261107-020243",
     "items": [
       "Bottle shape picker: search, suggestions, A–Z",
@@ -182,12 +189,6 @@
     "build": "20261106-115459",
     "items": [
       "Don Julio Añejo bottle shape"
-    ]
-  },
-  {
-    "build": "20261106-114747",
-    "items": [
-      "Bottles fill to the full line, not the cap"
     ]
   }
 ]

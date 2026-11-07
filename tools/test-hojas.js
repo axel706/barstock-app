@@ -192,6 +192,63 @@ grupo('y se carga antes que quien lo usa');
   }
 }
 
+grupo('7 · la caja quieta con su lista dentro (el selector de botella)');
+{
+  // Allí la caja NO se desplaza: arriba la búsqueda, abajo los botones,
+  // y en medio una rejilla con su propio scroll. Axel: "no puedo hacer
+  // scroll en el grid". El gesto miraba solo la caja y cancelaba todo.
+  const dom = new JSDOM(`<!doctype html><body>
+    <div class="m-sheet" id="bpSheet">
+      <div class="m-sheet-bg"></div>
+      <div class="m-sheet-box" style="overflow:hidden">
+        <div class="busca">buscar</div>
+        <div class="rej" style="overflow-y:auto"><p id="botella">botella</p></div>
+        <div class="tallas" style="overflow-x:auto"><b id="talla">750</b></div>
+        <div class="pie" id="pie">Save</div>
+      </div>
+    </div></body>`);
+  const w = dom.window;
+  global.window = w; global.document = w.document;
+  new Function(fs.readFileSync(path.join(RAIZ, 'src/sheet.js'), 'utf8'))();
+  const h = w.document.getElementById('bpSheet');
+  const caja = h.querySelector('.m-sheet-box');
+  const rej = h.querySelector('.rej'), tallas = h.querySelector('.tallas');
+  const fija = (el, k, v) => Object.defineProperty(el, k, { value: v, writable: true, configurable: true });
+  fija(caja, 'scrollHeight', 600); fija(caja, 'clientHeight', 600); fija(caja, 'scrollTop', 0);
+  fija(rej, 'scrollHeight', 2400); fija(rej, 'clientHeight', 400); fija(rej, 'scrollTop', 0);
+  fija(tallas, 'scrollWidth', 900); fija(tallas, 'clientWidth', 340);
+  let cerrado = 0;
+  w.BarStockSheet.enganchar(h, () => { cerrado++; });
+
+  const mueve = (el, y) => toca(el, 'touchmove', y);
+  prueba('arrastrar sobre la rejilla la deja desplazarse', !mueve(w.document.getElementById('botella'), 200).defaultPrevented);
+  prueba('deslizar los tamanos de lado tambien', !mueve(w.document.getElementById('talla'), 200).defaultPrevented);
+  prueba('sobre lo que no se desplaza (el pie) no se mueve nada', mueve(w.document.getElementById('pie'), 200).defaultPrevented);
+
+  // Deslizar de lado con la hoja arriba del todo: el gesto de cerrar
+  // empezaba igual y cancelaba también el movimiento horizontal.
+  {
+    const t = w.document.getElementById('talla');
+    const ev = (tipo, x, y) => {
+      const e = new w.Event(tipo, { bubbles: true, cancelable: true });
+      e.touches = [{ clientX: x, clientY: y }]; t.dispatchEvent(e); return e;
+    };
+    ev('touchstart', 200, 100);
+    const a = ev('touchmove', 160, 101), b2 = ev('touchmove', 100, 102);
+    ev('touchend', 100, 102);
+    prueba('de lado con la hoja arriba: el gesto de cerrar no lo cancela', !a.defaultPrevented && !b2.defaultPrevented);
+  }
+
+  // Con la rejilla bajada, tirar hacia abajo sube la lista, no cierra.
+  rej.scrollTop = 500;
+  const b = w.document.getElementById('botella');
+  toca(b, 'touchstart', 100); toca(b, 'touchmove', 300);
+  await esperar(150);
+  toca(b, 'touchend', 300);
+  await esperar(300);
+  prueba('con la rejilla bajada, tirar hacia abajo no cierra', cerrado === 0, cerrado);
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') +
             '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
