@@ -51,10 +51,11 @@
   // Las excepciones son `clase_azul`, `don_julio_anejo`, `bluecoat` y
   // `botanist`: tapón, cuello largo u hombro brusco, y esa regla deja la
   // línea donde no es. Se ajustaron a ojo de Axel sobre una lámina; su
-  // comentario cuenta por qué. Y `carlo_rossi`, la única medida viendo
-  // el líquido en la foto. `smirnoff`, `patron`, `belvedere`, `ketel_one`,
-  // `jura` y `macallan` siguen el criterio de `botanist`; `wine_flute` y
-  // `blantons` las movió Axel a ojo.
+  // comentario cuenta por qué. Y `carlo_rossi` y `casa_noble`, medidas
+  // viendo el líquido en la foto. `smirnoff`, `patron`, `belvedere`,
+  // `ketel_one`, `jura`, `macallan`, `glenfiddich` y `drambuie` siguen el
+  // criterio de `botanist`; `wine_flute` y `blantons` las movió Axel a
+  // ojo.
   //
   // ── Por qué la sección puede tratarse como circular ─────────────────
   //
@@ -487,6 +488,38 @@
       // Recta y alta, hombro corto del 72 % al 80 % y cuello recto. yFull
       // .75, a media bajada del hombro.
       p: [[0,0.383], [0.0156,0.5709], [0.0469,0.8298], [0.0781,0.8298], [0.1094,0.8298], [0.1406,0.8298], [0.1719,0.8426], [0.2031,0.8511], [0.2344,0.8723], [0.2656,0.8723], [0.2969,0.8865], [0.3281,0.8936], [0.3594,0.8936], [0.3906,0.8936], [0.4219,0.9149], [0.4531,0.9362], [0.4844,0.9362], [0.5156,0.9362], [0.5469,0.9617], [0.5781,0.9787], [0.6094,0.9787], [0.6406,0.9787], [0.6719,0.9965], [0.7031,0.9645], [0.7344,0.8], [0.7656,0.5213], [0.7969,0.3901], [0.8281,0.383], [0.8594,0.3723], [0.8906,0.3617], [0.9219,0.3617], [0.9531,0.3617], [0.9844,0.3574], [1,0.2695]]
+    },
+    glenfiddich: {
+      name: 'Glenfiddich', asp: 3.93, yFull: 0.75, pourable: true,
+      // La de Glenfiddich 12. Medida de una foto con fondo transparente,
+      // 1162 px de alto por 296 de ancho maximo. Desajuste de area 0.73 %;
+      // lo que mas se separa es la base redondeada.
+      //
+      // La botella real es de tres caras; la silueta, de revolucion, la
+      // trata como redonda. Lo que se pierde ahi es una constante que no
+      // cambia el nivel relativo. Alta y recta, hombro corto del 64 % al
+      // 77 % y cuello recto. yFull .75: cubre el hombro.
+      p: [[0,0.1622], [0.0156,0.7267], [0.0469,0.9886], [0.0781,0.9686], [0.1094,0.93], [0.1406,0.9299], [0.1719,0.9324], [0.2031,0.936], [0.2344,0.9392], [0.2656,0.9425], [0.2969,0.9447], [0.3281,0.9485], [0.3594,0.9522], [0.3906,0.9546], [0.4219,0.9605], [0.4531,0.9637], [0.4844,0.9673], [0.5156,0.9731], [0.5469,0.9789], [0.5781,0.9845], [0.6094,0.9892], [0.6406,0.9905], [0.6719,0.9421], [0.7031,0.7296], [0.7344,0.5135], [0.7656,0.4541], [0.7969,0.4626], [0.8281,0.4462], [0.8594,0.4236], [0.8906,0.4142], [0.9219,0.4339], [0.9531,0.4314], [0.9844,0.4197], [1,0.3412]]
+    },
+    casa_noble: {
+      name: 'Casa Noble', asp: 4.1, yFull: 0.73, pourable: true,
+      // La de Casa Noble (foto del Reposado). 1940 px de alto por 473 de
+      // ancho maximo, desajuste de area 0.55 %. Hombros biselados, cuello
+      // angosto y la bola del tapon.
+      //
+      // yFull .73 no es a ojo: es donde empieza el liquido naranja en la
+      // foto, fila por fila, justo donde terminan los hombros. Por la
+      // categoria caia en la de vodka, que tiene el hombro mas alto.
+      p: [[0,0.828], [0.0156,0.8789], [0.0469,0.9148], [0.0781,0.9447], [0.1094,0.9703], [0.1406,0.9746], [0.1719,0.9762], [0.2031,0.9789], [0.2344,0.9792], [0.2656,0.9823], [0.2969,0.9831], [0.3281,0.9845], [0.3594,0.9869], [0.3906,0.9875], [0.4219,0.9905], [0.4531,0.9915], [0.4844,0.9938], [0.5156,0.9958], [0.5469,0.9965], [0.5781,0.9995], [0.6094,1], [0.6406,0.9884], [0.6719,0.9424], [0.7031,0.807], [0.7344,0.4777], [0.7656,0.4017], [0.7969,0.4017], [0.8281,0.4017], [0.8594,0.4116], [0.8906,0.5185], [0.9219,0.5354], [0.9531,0.5203], [0.9844,0.3283], [1,0.0747]]
+    },
+    drambuie: {
+      name: 'Drambuie', asp: 2.44, yFull: 0.72, pourable: true,
+      // La de Drambuie. 500 px de alto por 205 de ancho maximo, desajuste
+      // de area 0.46 %. Baja y ancha, hombro largo y redondo del 58 % al
+      // 73 %, cuello con la capsula. Por la categoria caia en liqueur_slim,
+      // que es esbelta: la mitad de ancha para la misma altura. yFull
+      // .72: cubre el hombro.
+      p: [[0,0.7935], [0.0156,0.8405], [0.0469,0.8872], [0.0781,0.9011], [0.1094,0.9122], [0.1406,0.9213], [0.1719,0.9296], [0.2031,0.9387], [0.2344,0.9447], [0.2656,0.9518], [0.2969,0.9607], [0.3281,0.9662], [0.3594,0.9716], [0.3906,0.9798], [0.4219,0.9826], [0.4531,0.9902], [0.4844,0.9902], [0.5156,0.9951], [0.5469,1], [0.5781,0.9936], [0.6094,0.945], [0.6406,0.8439], [0.6719,0.6793], [0.7031,0.4667], [0.7344,0.3756], [0.7656,0.3629], [0.7969,0.3503], [0.8281,0.3393], [0.8594,0.347], [0.8906,0.3561], [0.9219,0.3828], [0.9531,0.428], [0.9844,0.415], [1,0.348]]
     },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del

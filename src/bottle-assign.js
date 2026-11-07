@@ -88,6 +88,13 @@
     [/\bblanton'?s?\b/i,                            'blantons'],
     [/\bjura\b/i,                                   'jura'],
     [/\bmacallan\b/i,                               'macallan'],
+    // Glenfiddich caia en la de whiskey, Casa Noble en la de vodka (por
+    // ser tequila) y Drambuie en liqueur_slim. Se midieron el 12, el
+    // Reposado y el Drambuie normal; la regla toma la marca entera
+    // porque la linea comparte botella.
+    [/\bglenfiddich\b/i,                            'glenfiddich'],
+    [/\bcasa\s*noble\b/i,                          'casa_noble'],
+    [/\bdrambuie\b/i,                               'drambuie'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
     // Riesling y Gewurztraminer vienen en flauta, no en Burgundy: iban
