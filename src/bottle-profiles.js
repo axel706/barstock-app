@@ -53,10 +53,11 @@
   // línea donde no es. Se ajustaron a ojo de Axel sobre una lámina; su
   // comentario cuenta por qué. Y `carlo_rossi`, `casa_noble`,
   // `monkey_shoulder`, `oban`, `boulard`, `red_label`, `dads_hat`,
-  // `balvenie`, `nikka_coffey`, `whistlepig`, `chivas`, `empress` y
-  // `disaronno`, medidas viendo el líquido en la foto. `smirnoff`,
-  // `patron`, `belvedere`, `ketel_one`, `jura`, `macallan`, `glenfiddich`,
-  // `drambuie`, `fireball`, `cointreau`, `grey_goose`, `ciroc` y `jameson`
+  // `balvenie`, `nikka_coffey`, `whistlepig`, `chivas`, `empress`,
+  // `disaronno`, `tullamore` y `elijah_craig`, medidas viendo el líquido
+  // en la foto. `smirnoff`, `patron`, `belvedere`, `ketel_one`, `jura`,
+  // `macallan`, `glenfiddich`, `drambuie`, `fireball`, `cointreau`,
+  // `grey_goose`, `ciroc`, `jameson`, `don_julio_blanco` y `michters`
   // siguen el criterio de `botanist`; `wine_flute` y `blantons` las movió
   // Axel a ojo.
   //
@@ -685,6 +686,47 @@
       // Hombro del 61 % al 70 %. El vidrio verde no deja ver el liquido:
       // yFull .70 sigue el criterio de botanist.
       p: [[0,0.1905], [0.0156,0.6377], [0.0469,0.9104], [0.0781,0.9145], [0.1094,0.9186], [0.1406,0.9226], [0.1719,0.9267], [0.2031,0.9308], [0.2344,0.9348], [0.2656,0.9389], [0.2969,0.943], [0.3281,0.947], [0.3594,0.9511], [0.3906,0.9551], [0.4219,0.9592], [0.4531,0.9633], [0.4844,0.9673], [0.5156,0.9714], [0.5469,0.9755], [0.5781,0.9795], [0.6094,0.9836], [0.6406,0.9541], [0.6719,0.7797], [0.7031,0.488], [0.7344,0.4194], [0.7656,0.4054], [0.7969,0.397], [0.8281,0.3847], [0.8594,0.3821], [0.8906,0.3825], [0.9219,0.377], [0.9531,0.3767], [0.9844,0.3644], [1,0.2673]]
+    },
+    tullamore: {
+      name: "Tullamore D.E.W.", asp: 2.72, yFull: 0.75, pourable: true,
+      // La de Tullamore D.E.W. (foto de la de 1.75 L). 992 px de alto por
+      // 365 de ancho maximo. En la foto el ancho del cuerpo iba y venia un
+      // 5 % (de 348 a 365 px) por la perspectiva del render; con lo que
+      // Axel pidio para Grey Goose ("debe ser continuo"), el cuerpo es una
+      // recta ajustada por minimos cuadrados del 8 % al 62 %: se abre un
+      // poco hacia la base, de r .96 a 1. Desajuste de area 1.34 %.
+      //
+      // Hombro del 64 % al 77 %. yFull .75 medida viendo el liquido en la
+      // foto, justo debajo del cuello vacio.
+      p: [[0,0.358], [0.0156,0.6886], [0.0469,0.935], [0.0781,0.9964], [0.1094,0.9941], [0.1406,0.9917], [0.1719,0.9893], [0.2031,0.987], [0.2344,0.9846], [0.2656,0.9823], [0.2969,0.9799], [0.3281,0.9775], [0.3594,0.9752], [0.3906,0.9728], [0.4219,0.9704], [0.4531,0.9681], [0.4844,0.9657], [0.5156,0.9634], [0.5469,0.961], [0.5781,0.9586], [0.6094,0.9563], [0.6406,0.954], [0.6719,0.8884], [0.7031,0.7219], [0.7344,0.4771], [0.7656,0.3703], [0.7969,0.3176], [0.8281,0.2838], [0.8594,0.2884], [0.8906,0.2849], [0.9219,0.2856], [0.9531,0.2862], [0.9844,0.2624], [1,0.1571]]
+    },
+    elijah_craig: {
+      name: "Elijah Craig", asp: 2.51, yFull: 0.72, pourable: true,
+      // La de Elijah Craig. 978 px de alto por 390 de ancho maximo,
+      // desajuste de area 0.74 %. Mas angosta en la base (r .82) y ancha en
+      // los hombros: es de la botella, no de la foto, y es continua.
+      // Hombro del 55 % al 73 %. yFull .72 medida viendo el liquido en la
+      // foto.
+      p: [[0,0.4778], [0.0156,0.7456], [0.0469,0.8208], [0.0781,0.8363], [0.1094,0.8545], [0.1406,0.8685], [0.1719,0.8842], [0.2031,0.9006], [0.2344,0.9159], [0.2656,0.9318], [0.2969,0.9473], [0.3281,0.9602], [0.3594,0.9749], [0.3906,0.9892], [0.4219,0.9992], [0.4531,1], [0.4844,1], [0.5156,0.9988], [0.5469,0.9872], [0.5781,0.962], [0.6094,0.9122], [0.6406,0.8289], [0.6719,0.704], [0.7031,0.5247], [0.7344,0.3932], [0.7656,0.3341], [0.7969,0.2917], [0.8281,0.277], [0.8594,0.2774], [0.8906,0.3267], [0.9219,0.4097], [0.9531,0.3999], [0.9844,0.3481], [1,0.1838]]
+    },
+    don_julio_blanco: {
+      name: "Don Julio Blanco", asp: 1.56, yFull: 0.65, pourable: true,
+      // La de Don Julio Blanco (foto de la de 1.75 L): la botella redonda,
+      // que no se parece a la del Anejo. 998 px de alto por 641 de ancho
+      // maximo, desajuste de area 0.60 %. Cuerpo redondo que se cierra del
+      // 33 % al 66 %, cuello recto y el tapon de madera. El tequila es
+      // transparente y no se ve: yFull .65 por el criterio de botanist.
+      p: [[0,0.1846], [0.0156,0.4374], [0.0469,0.6647], [0.0781,0.7664], [0.1094,0.8329], [0.1406,0.8869], [0.1719,0.9292], [0.2031,0.9597], [0.2344,0.9818], [0.2656,0.9935], [0.2969,0.9993], [0.3281,0.9993], [0.3594,0.9921], [0.3906,0.9792], [0.4219,0.9603], [0.4531,0.9342], [0.4844,0.8969], [0.5156,0.8453], [0.5469,0.7769], [0.5781,0.6871], [0.6094,0.5579], [0.6406,0.3651], [0.6719,0.2788], [0.7031,0.2692], [0.7344,0.2699], [0.7656,0.2699], [0.7969,0.2692], [0.8281,0.3095], [0.8594,0.3808], [0.8906,0.3508], [0.9219,0.3718], [0.9531,0.3483], [0.9844,0.2381], [1,0.0764]]
+    },
+    michters: {
+      name: "Michter's", asp: 3.28, yFull: 0.63, pourable: true,
+      // La de Michter's US*1. 996 px de alto por 304 de ancho maximo,
+      // desajuste de area 0.76 %. El centro de las filas se mueve arriba
+      // por el liston verde del cuello; el cuerpo esta centrado. Hombro del
+      // 52 % al 63 %, cuello largo. Las etiquetas de papel tapan el cuello
+      // hasta el 63 % y justo debajo ya hay liquido: yFull .63 por el
+      // criterio de botanist.
+      p: [[0,0.7204], [0.0156,0.8834], [0.0469,0.9829], [0.0781,0.9817], [0.1094,0.977], [0.1406,0.977], [0.1719,0.977], [0.2031,0.977], [0.2344,0.977], [0.2656,0.9805], [0.2969,0.972], [0.3281,0.9585], [0.3594,0.9792], [0.3906,0.9868], [0.4219,0.9913], [0.4531,0.9995], [0.4844,1], [0.5156,0.9823], [0.5469,0.9076], [0.5781,0.7242], [0.6094,0.4828], [0.6406,0.41], [0.6719,0.4051], [0.7031,0.3966], [0.7344,0.3997], [0.7656,0.3883], [0.7969,0.3719], [0.8281,0.3716], [0.8594,0.4096], [0.8906,0.3905], [0.9219,0.3716], [0.9531,0.3594], [0.9844,0.3098], [1,0.0976]]
     },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del

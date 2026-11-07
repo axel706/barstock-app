@@ -127,6 +127,15 @@
     [/\bchivas\b(?![\s\S]*\b(18|25|mizunara|xv|extra|ultis)\b)/i, 'chivas'],
     [/\bempress\b/i,                                'empress'],
     [/\bdisaronno\b/i,                              'disaronno'],
+    // Tullamore, Elijah Craig y Michter's caian en la de whiskey; Don Julio
+    // Blanco en la de vodka (por ser tequila). De Don Julio solo el Blanco:
+    // es la botella redonda y la del Anejo es otra; el Reposado no se ha
+    // comprobado. De Michter's, la linea US*1: los de 10 y 20 anos van en
+    // otra botella.
+    [/\btullamore\b/i,                              'tullamore'],
+    [/\belijah\s*craig\b/i,                         'elijah_craig'],
+    [/\bdon\s*julio\s+blanco\b/i,                  'don_julio_blanco'],
+    [/\bmichter'?s?\b(?![\s\S]*\b(10|20|25)\b)/i,  'michters'],
     [/\bjameson\b(?![\s\S]*\b(black\s*barrel|caskmates|crested|18|12|reserve|blender'?s?)\b)/i, 'jameson'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
