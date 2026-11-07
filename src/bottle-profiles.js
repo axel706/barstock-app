@@ -54,12 +54,12 @@
   // comentario cuenta por qué. Y `carlo_rossi`, `casa_noble`,
   // `monkey_shoulder`, `oban`, `boulard`, `red_label`, `dads_hat`,
   // `balvenie`, `nikka_coffey`, `whistlepig`, `chivas`, `empress`,
-  // `disaronno`, `tullamore` y `elijah_craig`, medidas viendo el líquido
-  // en la foto. `smirnoff`, `patron`, `belvedere`, `ketel_one`, `jura`,
-  // `macallan`, `glenfiddich`, `drambuie`, `fireball`, `cointreau`,
-  // `grey_goose`, `ciroc`, `jameson`, `don_julio_blanco` y `michters`
-  // siguen el criterio de `botanist`; `wine_flute` y `blantons` las movió
-  // Axel a ojo.
+  // `disaronno`, `tullamore`, `elijah_craig`, `basil_hayden`, `skrewball`
+  // y `dewars`, medidas viendo el líquido en la foto. `smirnoff`,
+  // `patron`, `belvedere`, `ketel_one`, `jura`, `macallan`, `glenfiddich`,
+  // `drambuie`, `fireball`, `cointreau`, `grey_goose`, `ciroc`, `jameson`,
+  // `don_julio_blanco`, `michters` y `malibu` siguen el criterio de
+  // `botanist`; `wine_flute` y `blantons` las movió Axel a ojo.
   //
   // ── Por qué la sección puede tratarse como circular ─────────────────
   //
@@ -727,6 +727,52 @@
       // hasta el 63 % y justo debajo ya hay liquido: yFull .63 por el
       // criterio de botanist.
       p: [[0,0.7204], [0.0156,0.8834], [0.0469,0.9829], [0.0781,0.9817], [0.1094,0.977], [0.1406,0.977], [0.1719,0.977], [0.2031,0.977], [0.2344,0.977], [0.2656,0.9805], [0.2969,0.972], [0.3281,0.9585], [0.3594,0.9792], [0.3906,0.9868], [0.4219,0.9913], [0.4531,0.9995], [0.4844,1], [0.5156,0.9823], [0.5469,0.9076], [0.5781,0.7242], [0.6094,0.4828], [0.6406,0.41], [0.6719,0.4051], [0.7031,0.3966], [0.7344,0.3997], [0.7656,0.3883], [0.7969,0.3719], [0.8281,0.3716], [0.8594,0.4096], [0.8906,0.3905], [0.9219,0.3716], [0.9531,0.3594], [0.9844,0.3098], [1,0.0976]]
+    },
+    basil_hayden: {
+      name: "Basil Hayden", asp: 3.92, yFull: 0.7, pourable: true,
+      // La de Basil Hayden. 992 px de alto. La foto trae la etiqueta de
+      // cobre colgando a la derecha y la banda sobresaliendo a la
+      // izquierda: se midio el lado izquierdo desde el eje del cuello,
+      // saltando la banda (del 25 % al 42 %), y el cuerpo es una recta por
+      // minimos cuadrados del 6 % al 58 %, que se abre un poco hacia el
+      // hombro. Desajuste de area 3.32 %, casi todo de la banda que se dejo
+      // fuera. Hombro del 58 % al 70 %. yFull .70 medida viendo el liquido
+      // en la foto, debajo de la etiqueta del cuello.
+      p: [[0,0.9442], [0.0156,0.9442], [0.0469,0.9442], [0.0781,0.9461], [0.1094,0.9495], [0.1406,0.9528], [0.1719,0.9562], [0.2031,0.9596], [0.2344,0.963], [0.2656,0.9663], [0.2969,0.9697], [0.3281,0.973], [0.3594,0.9765], [0.3906,0.9798], [0.4219,0.9832], [0.4531,0.9865], [0.4844,0.9899], [0.5156,0.9933], [0.5469,0.9967], [0.5781,1], [0.6094,0.9097], [0.6406,0.7275], [0.6719,0.4919], [0.7031,0.4237], [0.7344,0.4079], [0.7656,0.3965], [0.7969,0.3847], [0.8281,0.3751], [0.8594,0.3644], [0.8906,0.3776], [0.9219,0.3779], [0.9531,0.3883], [0.9844,0.3822], [1,0.1382]]
+    },
+    skrewball: {
+      name: "Skrewball", asp: 3.37, yFull: 0.75, pourable: true,
+      // La de Skrewball. La primera foto traia la etiqueta sobresaliendo y
+      // un lado mal recortado, y de ahi salio un cilindro recto que Axel
+      // rechazo ("estan mal disenadas"). Esta es de la segunda: JPG con
+      // fondo blanco, la mascara va fila por fila del primer al ultimo
+      // pixel que no es fondo. 550 px de alto por 163 de ancho maximo,
+      // desajuste de area 0.95 %. Se angosta hacia la base (r .88), hombro
+      // del 49 % al 62 %, cuello largo. yFull .75 medida viendo el liquido,
+      // ya en el cuello.
+      p: [[0,0.3742], [0.0156,0.7209], [0.0469,0.8802], [0.0781,0.8885], [0.1094,0.8943], [0.1406,0.9109], [0.1719,0.9127], [0.2031,0.9179], [0.2344,0.9257], [0.2656,0.9365], [0.2969,0.9423], [0.3281,0.9473], [0.3594,0.961], [0.3906,0.9673], [0.4219,0.9765], [0.4531,0.982], [0.4844,0.9917], [0.5156,0.9657], [0.5469,0.8759], [0.5781,0.6795], [0.6094,0.424], [0.6406,0.354], [0.6719,0.3374], [0.7031,0.3374], [0.7344,0.332], [0.7656,0.3223], [0.7969,0.319], [0.8281,0.3194], [0.8594,0.3165], [0.8906,0.3176], [0.9219,0.3212], [0.9531,0.3197], [0.9844,0.3136], [1,0.2025]]
+    },
+    malibu: {
+      name: "Malibu", asp: 3.51, yFull: 0.74, pourable: true,
+      // La de Malibu. Tambien de una segunda foto, tras rechazar la primera.
+      // Botella blanca sobre fondo blanco: el hombro izquierdo no se
+      // distingue del fondo, asi que se midio el borde derecho, limpio en
+      // toda la altura, y se reflejo sobre el eje (x 164, fijo de arriba a
+      // abajo). 1140 px de alto, desajuste de area 0.73 %. Cintura suave a
+      // un tercio de la altura y hombro largo y caido del 58 % al 77 %. Es
+      // opaca: yFull .74 por el criterio de botanist.
+      p: [[0,0.3538], [0.0156,0.7436], [0.0469,0.9168], [0.0781,0.9676], [0.1094,0.9901], [0.1406,0.9919], [0.1719,0.9834], [0.2031,0.9759], [0.2344,0.9699], [0.2656,0.9588], [0.2969,0.9525], [0.3281,0.9446], [0.3594,0.9475], [0.3906,0.9508], [0.4219,0.9595], [0.4531,0.9703], [0.4844,0.9793], [0.5156,0.9933], [0.5469,0.9938], [0.5781,0.9694], [0.6094,0.8615], [0.6406,0.7082], [0.6719,0.5803], [0.7031,0.4866], [0.7344,0.4219], [0.7656,0.3873], [0.7969,0.379], [0.8281,0.3757], [0.8594,0.3756], [0.8906,0.394], [0.9219,0.3955], [0.9531,0.3844], [0.9844,0.3693], [1,0.2636]]
+    },
+    dewars: {
+      name: "Dewar's", asp: 4.09, yFull: 0.78, pourable: true,
+      // La de Dewar's White Label. Tambien de una segunda foto (JPG con
+      // fondo blanco). En la primera se le habia quitado el pie; es de la
+      // botella y se queda. 446 px de alto por 109 de ancho maximo,
+      // desajuste de area 0.93 %; la tapa toca el borde de la foto y le
+      // puede faltar algun pixel. Ancha en el hombro, se angosta hacia la
+      // base y el pie se abre otra vez. yFull .78 medida viendo el liquido,
+      // hasta la etiqueta roja del cuello.
+      p: [[0,0.6086], [0.0156,0.8571], [0.0469,0.9882], [0.0781,0.9515], [0.1094,0.9155], [0.1406,0.8997], [0.1719,0.8991], [0.2031,0.8991], [0.2344,0.8991], [0.2656,0.9004], [0.2969,0.9102], [0.3281,0.916], [0.3594,0.9174], [0.3906,0.9312], [0.4219,0.9391], [0.4531,0.9482], [0.4844,0.9561], [0.5156,0.9633], [0.5469,0.9797], [0.5781,0.983], [0.6094,0.9902], [0.6406,0.9528], [0.6719,0.8363], [0.7031,0.6022], [0.7344,0.5098], [0.7656,0.5131], [0.7969,0.4705], [0.8281,0.4227], [0.8594,0.3709], [0.8906,0.3834], [0.9219,0.3965], [0.9531,0.3912], [0.9844,0.386], [1,0.3517]]
     },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del

@@ -136,6 +136,14 @@
     [/\belijah\s*craig\b/i,                         'elijah_craig'],
     [/\bdon\s*julio\s+blanco\b/i,                  'don_julio_blanco'],
     [/\bmichter'?s?\b(?![\s\S]*\b(10|20|25)\b)/i,  'michters'],
+    // Basil Hayden, Skrewball y Dewar's caian en la de whiskey; Malibu en
+    // la de vodka (por ser ron). De Dewar's, el White Label: los de 12
+    // anos y mas van en otra botella. Malibu Splash y los RTD van en lata
+    // y se cuentan enteros: sin la excepcion esta regla les pondria nivel.
+    [/\bbasil\s*hayden'?s?\b/i,                     'basil_hayden'],
+    [/\bskrewball\b/i,                              'skrewball'],
+    [/\bmalibu\b(?![\s\S]*\b(splash|seltzer|can|rtd)\b)/i, 'malibu'],
+    [/\bdewar'?s\b(?![\s\S]*\b(12|15|18|19|21|25|27|32)\b)/i, 'dewars'],
     [/\bjameson\b(?![\s\S]*\b(black\s*barrel|caskmates|crested|18|12|reserve|blender'?s?)\b)/i, 'jameson'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
