@@ -51,11 +51,11 @@
   // Las excepciones son `clase_azul`, `don_julio_anejo`, `bluecoat` y
   // `botanist`: tapón, cuello largo u hombro brusco, y esa regla deja la
   // línea donde no es. Se ajustaron a ojo de Axel sobre una lámina; su
-  // comentario cuenta por qué. Y `carlo_rossi` y `casa_noble`, medidas
-  // viendo el líquido en la foto. `smirnoff`, `patron`, `belvedere`,
-  // `ketel_one`, `jura`, `macallan`, `glenfiddich` y `drambuie` siguen el
-  // criterio de `botanist`; `wine_flute` y `blantons` las movió Axel a
-  // ojo.
+  // comentario cuenta por qué. Y `carlo_rossi`, `casa_noble`,
+  // `monkey_shoulder`, `oban` y `boulard`, medidas viendo el líquido en
+  // la foto. `smirnoff`, `patron`, `belvedere`, `ketel_one`, `jura`,
+  // `macallan`, `glenfiddich`, `drambuie` y `fireball` siguen el criterio
+  // de `botanist`; `wine_flute` y `blantons` las movió Axel a ojo.
   //
   // ── Por qué la sección puede tratarse como circular ─────────────────
   //
@@ -520,6 +520,48 @@
       // que es esbelta: la mitad de ancha para la misma altura. yFull
       // .72: cubre el hombro.
       p: [[0,0.7935], [0.0156,0.8405], [0.0469,0.8872], [0.0781,0.9011], [0.1094,0.9122], [0.1406,0.9213], [0.1719,0.9296], [0.2031,0.9387], [0.2344,0.9447], [0.2656,0.9518], [0.2969,0.9607], [0.3281,0.9662], [0.3594,0.9716], [0.3906,0.9798], [0.4219,0.9826], [0.4531,0.9902], [0.4844,0.9902], [0.5156,0.9951], [0.5469,1], [0.5781,0.9936], [0.6094,0.945], [0.6406,0.8439], [0.6719,0.6793], [0.7031,0.4667], [0.7344,0.3756], [0.7656,0.3629], [0.7969,0.3503], [0.8281,0.3393], [0.8594,0.347], [0.8906,0.3561], [0.9219,0.3828], [0.9531,0.428], [0.9844,0.415], [1,0.348]]
+    },
+    fireball: {
+      name: 'Fireball', asp: 3.06, yFull: 0.75, pourable: true,
+      // La de Fireball. Medida de una foto con fondo transparente, 521 px
+      // de alto por 170 de ancho maximo. Desajuste de area 0.71 %. La foto
+      // parece la botella de plastico; si la de 750 ml de vidrio resulta
+      // ser otra, la regla por nombre se acota a la que es.
+      //
+      // Recta de base a hombro, hombro del 64 % al 77 %, cuello largo. En
+      // la foto el liquido sube casi hasta la tapa, pero la etiqueta del
+      // cuello tapa donde acaba: yFull .75 sigue el criterio de botanist,
+      // que cubra el hombro.
+      p: [[0,0.3961], [0.0156,0.7938], [0.0469,0.9776], [0.0781,0.993], [0.1094,0.9941], [0.1406,0.9941], [0.1719,0.9941], [0.2031,0.9941], [0.2344,0.9956], [0.2656,1], [0.2969,1], [0.3281,1], [0.3594,1], [0.3906,1], [0.4219,1], [0.4531,1], [0.4844,1], [0.5156,1], [0.5469,1], [0.5781,1], [0.6094,1], [0.6406,0.9958], [0.6719,0.9419], [0.7031,0.8114], [0.7344,0.5632], [0.7656,0.399], [0.7969,0.3621], [0.8281,0.354], [0.8594,0.3529], [0.8906,0.3429], [0.9219,0.3312], [0.9531,0.3239], [0.9844,0.3151], [1,0.2765]]
+    },
+    monkey_shoulder: {
+      name: 'Monkey Shoulder', asp: 2.56, yFull: 0.65, pourable: true,
+      // La de Monkey Shoulder. 1082 px de alto por 422 de ancho maximo,
+      // desajuste de area 0.85 %. Medida con la mitad IZQUIERDA reflejada:
+      // los monos de metal van en el hombro derecho y podian ensanchar la
+      // silueta. Al final apenas la cambian (0.83 % con las dos mitades).
+      //
+      // Baja y ancha, hombro del 52 % al 66 %. yFull .65 medida viendo el
+      // liquido en la foto: empieza al 64 %, encima hay vidrio vacio y la
+      // capsula gris.
+      p: [[0,0.1643], [0.0156,0.7979], [0.0469,0.9996], [0.0781,0.9898], [0.1094,0.9858], [0.1406,0.9858], [0.1719,0.9858], [0.2031,0.9858], [0.2344,0.9858], [0.2656,0.9858], [0.2969,0.9858], [0.3281,0.9858], [0.3594,0.9858], [0.3906,0.9858], [0.4219,0.9836], [0.4531,0.9837], [0.4844,1], [0.5156,0.9919], [0.5469,0.9455], [0.5781,0.8578], [0.6094,0.706], [0.6406,0.4474], [0.6719,0.356], [0.7031,0.3577], [0.7344,0.3791], [0.7656,0.3791], [0.7969,0.3791], [0.8281,0.3739], [0.8594,0.3421], [0.8906,0.3606], [0.9219,0.3649], [0.9531,0.3649], [0.9844,0.3544], [1,0.2622]]
+    },
+    oban: {
+      name: 'Oban', asp: 3.95, yFull: 0.71, pourable: true,
+      // La de Oban (foto del 14). 1162 px de alto por 294 de ancho maximo,
+      // desajuste de area 0.76 %. Alta, hombro corto del 57 % al 67 % y
+      // cuello largo. yFull .71 medida viendo el liquido en la foto: ya
+      // dentro del cuello.
+      p: [[0,0.3322], [0.0156,0.7867], [0.0469,0.9356], [0.0781,0.9382], [0.1094,0.942], [0.1406,0.9451], [0.1719,0.9495], [0.2031,0.9524], [0.2344,0.9548], [0.2656,0.9592], [0.2969,0.9643], [0.3281,0.9685], [0.3594,0.9728], [0.3906,0.9755], [0.4219,0.9796], [0.4531,0.9827], [0.4844,0.9874], [0.5156,0.9929], [0.5469,0.998], [0.5781,0.9828], [0.6094,0.8898], [0.6406,0.6767], [0.6719,0.4757], [0.7031,0.4387], [0.7344,0.4351], [0.7656,0.4327], [0.7969,0.4219], [0.8281,0.3875], [0.8594,0.366], [0.8906,0.3461], [0.9219,0.3593], [0.9531,0.3612], [0.9844,0.3624], [1,0.2551]]
+    },
+    boulard: {
+      name: 'Boulard', asp: 3.71, yFull: 0.73, pourable: true,
+      // La de Boulard VSOP. 1038 px de alto por 280 de ancho maximo,
+      // desajuste de area 0.98 %. Hombro bajo, del 44 % al 58 %, y un
+      // cuello muy largo. yFull .73 medida viendo el liquido en la foto:
+      // llega bien arriba del cuello, que es estrecho y pesa poco en el
+      // volumen.
+      p: [[0,0.3536], [0.0156,0.7273], [0.0469,0.8866], [0.0781,0.8957], [0.1094,0.9056], [0.1406,0.9144], [0.1719,0.9262], [0.2031,0.9362], [0.2344,0.945], [0.2656,0.9549], [0.2969,0.965], [0.3281,0.9756], [0.3594,0.9868], [0.3906,0.9959], [0.4219,1], [0.4531,0.985], [0.4844,0.8843], [0.5156,0.6271], [0.5469,0.5029], [0.5781,0.442], [0.6094,0.4042], [0.6406,0.3845], [0.6719,0.3642], [0.7031,0.3404], [0.7344,0.3357], [0.7656,0.3281], [0.7969,0.3154], [0.8281,0.3083], [0.8594,0.3073], [0.8906,0.3421], [0.9219,0.3698], [0.9531,0.3435], [0.9844,0.3068], [1,0.1631]]
     },
     // El respaldo cuando un artículo todavía no tiene forma asignada.
     // Es la geometría de `vodka`, que es la botella más neutra del

@@ -95,6 +95,12 @@
     [/\bglenfiddich\b/i,                            'glenfiddich'],
     [/\bcasa\s*noble\b/i,                          'casa_noble'],
     [/\bdrambuie\b/i,                               'drambuie'],
+    // Fireball, Monkey Shoulder y Oban caian en la de whiskey; Boulard en
+    // la de brandy. El Boulard XO va en un decantador, no en esta botella.
+    [/\bfireball\b/i,                               'fireball'],
+    [/\bmonkey\s*shoulder\b/i,                     'monkey_shoulder'],
+    [/\boban\b/i,                                   'oban'],
+    [/\bboulard\b(?![\s\S]*\bxo\b)/i,              'boulard'],
 
     [/\b(champagne|prosecco|cava|sparkling|brut|spumante)\b/i, 'sparkling'],
     // Riesling y Gewurztraminer vienen en flauta, no en Burgundy: iban
