@@ -23,6 +23,8 @@
  *        await bsToastHistoria(7)      los últimos 7 días
  *        await bsToastHistoria(365)    el año entero, del más nuevo al
  *                                      más viejo; se salta lo ya cargado
+ *        await bsToastHistoria(7, { otraVez: true })   vuelve a cargar
+ *                                      también lo ya cargado
  *        bsToastParar = true           lo para después del día en curso
  *   Ésta SÍ escribe, pero sólo en toast_sales y toast_sales_days, y lo
  *   hace la función de Vercel, no el navegador. Hay que estar en la
@@ -63,7 +65,10 @@
   // Un día por llamada: un día de Crown son varias páginas de órdenes, y
   // Vercel corta la función que tarda demasiado. Uno detrás de otro, no
   // en paralelo: Toast limita la velocidad.
-  window.bsToastHistoria = async function (dias) {
+  // `{ otraVez: true }` vuelve a cargar también lo ya cargado: si cambia
+  // qué se guarda, los días viejos se quedarían sin lo nuevo.
+  window.bsToastHistoria = async function (dias, op) {
+    op = op || {};
     dias = Math.max(1, Math.min(400, Number(dias) || 7));
     window.bsToastParar = false;
     const C = window.BarStockInventoryCloud;
@@ -82,9 +87,13 @@
       .eq('location_id', locationId).gte('business_date', lista[lista.length - 1]).limit(1000);
     if (error) { console.warn('Supabase dijo:', error.message); return null; }
     const hecho = new Set((data || []).filter(d => d.complete && d.closed).map(d => d.business_date));
-    const faltan = lista.filter(d => !hecho.has(d));
+    const faltan = op.otraVez ? lista : lista.filter(d => !hecho.has(d));
     console.log(faltan.length + ' días por cargar de ' + lista.length + ' (' + hecho.size + ' ya estaban).');
 
+    // Las categorías se juntan de TODOS los días: la primera versión
+    // enseñaba sólo las del primero, y así no salió "Banquet Beverage",
+    // que sólo aparece los días con evento.
+    const guardadas = new Set(), fuera = new Set();
     const res = { cargados: 0, filas: 0, incompletos: [], categorias: null };
     for (let i = 0; i < faltan.length; i++) {
       if (window.bsToastParar) { console.log('Parado. Lo cargado se queda.'); break; }
@@ -104,14 +113,14 @@
       }
       res.cargados++; res.filas += j.filas;
       if (!j.diaCompleto) res.incompletos.push(d);
-      if (!res.categorias) {
-        res.categorias = j.categorias;
-        console.log('Se guarda como bebida:', j.categorias.guardadas.join(', ') || '(nada)',
-          ' · Fuera:', j.categorias.fuera.join(', ') || '(nada)');
-      }
+      for (const c of (j.categorias && j.categorias.guardadas) || []) guardadas.add(c);
+      for (const c of (j.categorias && j.categorias.fuera) || []) fuera.add(c);
       console.log((i + 1) + '/' + faltan.length + '  ' + d + '  · ' + j.ordenes + ' órdenes · ' + j.filas + ' filas' +
         (j.diaCompleto ? '' : ' · INCOMPLETO (demasiadas órdenes)'));
     }
+    res.categorias = { guardadas: [...guardadas].sort(), fuera: [...fuera].sort() };
+    console.log('Se guardó como bebida: ' + (res.categorias.guardadas.join(', ') || '(nada)') +
+      '  ·  Fuera: ' + (res.categorias.fuera.join(', ') || '(nada)'));
     console.log('%cHistoria de Toast', 'font-weight:bold');
     console.log(res);
     return res;

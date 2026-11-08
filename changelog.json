@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261108-141552",
+    "items": [
+      "Behind-the-scenes: Toast open-bar packages are kept"
+    ]
+  },
+  {
     "build": "20261108-140206",
     "items": [
       "Behind-the-scenes: Toast sales saved day by day"
@@ -184,13 +190,6 @@
     "build": "20261106-131106",
     "items": [
       "Test build for the update notice"
-    ]
-  },
-  {
-    "build": "20261106-130723",
-    "items": [
-      "Update notice drops from the bell",
-      "Tap it to load the newest version"
     ]
   }
 ]

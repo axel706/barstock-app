@@ -481,6 +481,11 @@ grupo('sync: guarda lo vendido de bebida de un dia');
       sel('l-tito', 'c-liq', 1),
       sel('f-burger', 'c-food', 4),
       sel('w-sb', 'c-wine', 2),
+      // Un open bar: Toast no dice qué se sirvió, sólo el paquete y las
+      // personas. Se guarda para saber qué días hubo evento.
+      sel('p-silver', 'c-ban', 31),
+      // Refrescos y café: no son del inventario.
+      sel('b-cola', 'c-bev', 40),
       { displayName: 'shot para la mesa 4', salesCategory: { guid: 'c-liq' }, quantity: 1 },
       sel('l-tito', 'c-liq', 9, { voided: true }) ] }] },
     { voided: true, checks: [{ selections: [sel('l-tito', 'c-liq', 7)] }] }
@@ -490,7 +495,8 @@ grupo('sync: guarda lo vendido de bebida de un dia');
     return {
       '/authentication/': LOGIN_OK,
       '/config/v2/salesCategories': o.cats || { status: 200, body: [
-        { guid: 'c-liq', name: 'Liquor' }, { guid: 'c-wine', name: 'Wine' }, { guid: 'c-food', name: 'Food' }] },
+        { guid: 'c-liq', name: 'Liquor' }, { guid: 'c-wine', name: 'Wine' }, { guid: 'c-food', name: 'Food' },
+        { guid: 'c-ban', name: 'Banquet Beverage' }, { guid: 'c-bev', name: 'Beverage' }] },
       '/menus/v2/menus': { status: 200, body: menu },
       '/orders/v2/ordersBulk': o.ordenes || ((url) => ({ status: 200, body: /page=1(&|$)/.test(url) ? ordenes : [] })),
       'sb.test/rest/v1/locations': { status: 200, body: [{ toast_restaurant_guid: o.guidLoc === undefined ? GUID : o.guidLoc }] },
@@ -511,17 +517,20 @@ grupo('sync: guarda lo vendido de bebida de un dia');
   const filas = sb.filter(p => p.metodo === 'POST' && /\/toast_sales(\?|$)/.test(p.url.replace('https://sb.test/rest/v1', '')));
   const cuerpo = filas.length ? JSON.parse(filas[0].cuerpo) : [];
   const de = (g, m) => cuerpo.find(x => x.toast_item_guid === g && x.mods === m);
-  prueba('una fila por articulo y modificadores', cuerpo.length === 3, JSON.stringify(cuerpo));
+  prueba('una fila por articulo y modificadores', cuerpo.length === 4, JSON.stringify(cuerpo));
+  prueba('el open bar se guarda (paquete y personas)', de('p-silver', '') && de('p-silver', '').quantity === 31);
+  prueba('los refrescos no', !cuerpo.some(x => x.toast_item_guid === 'b-cola'));
   prueba("Tito's Martini suma sus dos lineas (2 + 1)", de('l-tito', 'Martini') && de('l-tito', 'Martini').quantity === 3, JSON.stringify(de('l-tito', 'Martini')));
   prueba("Tito's solo, aparte", de('l-tito', '') && de('l-tito', '').quantity === 1);
   prueba('el vino tambien', de('w-sb', '') && de('w-sb', '').quantity === 2);
   prueba('la comida no se guarda', !cuerpo.some(x => x.toast_item_guid === 'f-burger'));
-  prueba('lo anulado no cuenta', !cuerpo.some(x => x.quantity >= 7));
+  const tito = cuerpo.filter(x => x.toast_item_guid === 'l-tito').reduce((a, x) => a + x.quantity, 0);
+  prueba('lo anulado no cuenta (Tito\'s: 3 + 1, sin el 9 ni la orden de 7)', tito === 4, tito);
   prueba('ni el texto libre: ni la linea ni el modificador', !JSON.stringify(cuerpo).includes('Juan') && !JSON.stringify(cuerpo).includes('mesa 4'));
   prueba('pero se dice cuantas lineas libres hubo', b.libres === 1, b.libres);
   prueba('con locacion, fecha y grupo del menu', de('l-tito', '') && de('l-tito', '').location_id === LOC &&
     de('l-tito', '').business_date === '2026-11-05' && de('l-tito', '').toast_group === 'DRINKS › Liquor › Vodka', JSON.stringify(de('l-tito', '')));
-  prueba('dice que categorias guardo y cuales no', JSON.stringify(b.categorias) === JSON.stringify({ guardadas: ['Liquor', 'Wine'], fuera: ['Food'] }), JSON.stringify(b.categorias));
+  prueba('dice que categorias guardo y cuales no', JSON.stringify(b.categorias) === JSON.stringify({ guardadas: ['Banquet Beverage', 'Liquor', 'Wine'], fuera: ['Beverage', 'Food'] }), JSON.stringify(b.categorias));
 
   // El orden: marcar el día como incompleto, borrar, escribir, y sólo al
   // final marcarlo completo. Si algo falla a medias, el día queda

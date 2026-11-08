@@ -42,8 +42,13 @@ function entorno(o) {
     const p = JSON.parse(op.body);
     w.__llamadas.push(p);
     const d = p.params.businessDate;
+    // El primer día sólo trae licor; el evento sale otro día. La lista de
+    // categorías tiene que juntar todos los días, no quedarse con el
+    // primero: así se escondió "Banquet Beverage" la primera vez.
+    const evento = w.__llamadas.length === 2;
     const j = (o.falla === d) ? { ok: false, paso: 'orders', status: 500 }
-      : { ok: true, filas: 10, ordenes: 50, diaCompleto: true, categorias: { guardadas: ['Liquor'], fuera: ['Food'] } };
+      : { ok: true, filas: 10, ordenes: 50, diaCompleto: true,
+          categorias: evento ? { guardadas: ['Banquet Beverage', 'Liquor'], fuera: ['Food'] } : { guardadas: ['Liquor'], fuera: ['Food'] } };
     return { status: 200, json: async () => j };
   };
   w.eval(fs.readFileSync(path.join(__dirname, 'toast.js'), 'utf8'));
@@ -67,6 +72,24 @@ grupo('lo cargado no se vuelve a pedir');
   prueba('del mas nuevo al mas viejo', dias[0] === hoy.replace(/-/g, ''), dias.join(','));
   prueba('todo con la accion sync y la locacion abierta', w.__llamadas.every(p => p.action === 'sync' && p.params.locationId === 'loc-crown'));
   prueba('cuenta lo cargado', r.cargados === 3 && r.filas === 30, JSON.stringify(r));
+}
+
+grupo('las categorias de todos los dias, no solo del primero');
+{
+  const w = entorno();
+  const r = await w.bsToastHistoria(3);
+  prueba('aparece la del evento, que salio el segundo dia', r.categorias.guardadas.includes('Banquet Beverage'), JSON.stringify(r.categorias));
+  prueba('sin repetir', r.categorias.guardadas.length === 2 && r.categorias.fuera.length === 1, JSON.stringify(r.categorias));
+}
+
+grupo('otraVez: vuelve a cargar lo ya cargado');
+{
+  // Si cambia qué se guarda (entró Banquet Beverage), los días ya
+  // cargados se quedarían sin eso para siempre.
+  const w = entorno({ cargados: [{ business_date: ayer, complete: true, closed: true }] });
+  await w.bsToastHistoria(2, { otraVez: true });
+  const dias = w.__llamadas.map(p => p.params.businessDate);
+  prueba('ayer se vuelve a pedir', dias.includes(ayer.replace(/-/g, '')), dias.join(','));
 }
 
 grupo('se para en el primer error');
