@@ -252,7 +252,11 @@ Los tests se registran a mano en el `scripts.test` de `package.json`.
 
 ## Herramientas de diagnóstico
 
-En `tools/`, sólo lectura, se pegan en la consola del navegador:
+En `tools/`, sólo lectura, se pegan en la consola del navegador.
+**Cada vez que le pidas usar una, dale el código entero para pegar**, junto
+con la llamada: él no tiene el repo abierto en el teléfono ni en el
+navegador, y lo pidió así (2026-11-08). En Safari no hay `await` suelto
+en la consola: la llamada va dentro de `(async () => { ... })();`.
 
 - `diagnostico-waiting.js` → `await bsPorQue('CT-0207')` — por qué una orden
   dice "waiting"
