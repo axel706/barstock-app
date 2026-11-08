@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 105 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 106 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -236,7 +236,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 105 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 106 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -259,9 +259,13 @@ En `tools/`, sólo lectura, se pegan en la consola del navegador:
 - `forense.js` → `await bsCuando('Baileys')` — qué le pasó a un producto
 - `existe.js` — si un producto está en la nube
 - `toast.js` → `await bsToast('ping')` — qué contesta Toast (`ping`,
-  `restaurant`, `menu`, `orders`, `drinks`), a través de `api/integrations.js`.
+  `restaurant`, `menu`, `orders`, `drinks`, `wine`), a través de `api/integrations.js`.
   `drinks` resume un día entero de ventas por categoría, con modificadores,
-  sin texto libre: es para ver cómo cuenta Toast los tragos
+  sin texto libre: es para ver cómo cuenta Toast los tragos.
+  **`await bsToastHistoria(365)` NO es sólo lectura:** carga lo vendido día
+  por día en `toast_sales` / `toast_sales_days` (acción `sync`, la única de
+  Toast que escribe, y sólo esas dos tablas). Se salta lo ya cargado y se
+  para en el primer error; `bsToastParar = true` la detiene
 - `tripleseat.js` → `await bsTripleseat('ping')` — qué contesta TripleSeat
   (`ping`, `locations`, `events`, `bookings`, `search`, `menu`, `detalle`, `catalogo`), por la misma función.
   Lo mismo con botones, sin consola: Settings → Connections →
@@ -334,9 +338,13 @@ tiene que tener algo restado o sumado detrás; si no, es una afordancia
 que miente.
 
 **El orden acordado:**
-1. Guardar las ventas diarias de Toast en botellas, por producto, con
-   la historia hacia atrás. Necesita tabla nueva (migración). No se ha
-   comprobado cuántos meses atrás contesta Toast.
+1. Guardar las ventas diarias de Toast, con la historia hacia atrás.
+   Migración 028 corrida (`toast_sales`, `toast_sales_days`). Toast
+   contesta hasta un año atrás (comprobado: 2025-11-01). Se guarda lo
+   que dijo Toast, sólo bebida, sin texto libre; las botellas se
+   calculan al leer. Acción `sync` en `lib/toast.js` y
+   `bsToastHistoria` en `tools/toast.js`. Falta: cargarla de verdad y
+   que la app cargue sola los últimos días.
 2. La comparación C.
 3. La pantalla de ventas: primero el diseño.
 4. El "deberías tener" en Inventory, la ficha y el Home.

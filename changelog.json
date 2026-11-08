@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261108-140206",
+    "items": [
+      "Behind-the-scenes: Toast sales saved day by day"
+    ]
+  },
+  {
     "build": "20261107-235752",
     "items": [
       "Wine from Toast lists your whole inventory"
@@ -185,12 +191,6 @@
     "items": [
       "Update notice drops from the bell",
       "Tap it to load the newest version"
-    ]
-  },
-  {
-    "build": "20261106-124624",
-    "items": [
-      "Change a bottle right from Inventory"
     ]
   }
 ]

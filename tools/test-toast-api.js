@@ -286,6 +286,9 @@ grupo('solo lee');
     await llamar({ accion: a });
     for (const p of peticiones) metodos.push(p.metodo + ' ' + p.url.replace(/https:\/\/[^/]+/, ''));
     prueba(a + ': a Supabase solo le valida la sesion', sbLlamadas.length === 0, sbLlamadas.join(','));
+    // Ni por fetch: sync es la única que escribe, y sólo sus dos tablas.
+    const aSb = peticiones.filter(p => p.url.startsWith('https://sb.test'));
+    prueba(a + ': ni una peticion a la base', aSb.length === 0, aSb.map(p => p.metodo + ' ' + p.url).join(' | '));
   }
   const escribe = metodos.filter(m => !m.startsWith('GET ') && !/\/authentication\/v1\/authentication\/login$/.test(m));
   prueba('a Toast, nada que no sea leer o el login', escribe.length === 0, escribe.join(' | '));
@@ -457,6 +460,119 @@ grupo('429: se espera y se vuelve a pedir');
   respuestas['/menus/v2/menus'] = () => (++veces, { status: 429, body: { message: 'Too Many Requests' } });
   const r2 = await llamar({ accion: 'wine', params: { businessDate: '20261105' } });
   prueba('pero no para siempre: al final dice el 429', r2.body.ok === false && r2.body.status === 429 && veces <= 4, veces);
+}
+
+grupo('sync: guarda lo vendido de bebida de un dia');
+{
+  // Lo vendido día por día, para el inventario en vivo. Es la ÚNICA
+  // acción que escribe en la base, y sólo en toast_sales y
+  // toast_sales_days.
+  const LOC = '11111111-2222-3333-4444-555555555555';
+  const menu = { menus: [{ name: 'DRINKS', menuGroups: [
+    { name: 'Liquor', menuGroups: [{ name: 'Vodka', menuItems: [{ guid: 'l-tito', name: "Tito's" }] }] },
+    { name: 'Wine', menuGroups: [{ name: 'Whites By The Glass', menuItems: [{ guid: 'w-sb', name: 'Sauv Blanc' }] }] } ] },
+    { name: 'FOOD', menuGroups: [{ name: 'Mains', menuItems: [{ guid: 'f-burger', name: 'Burger' }] }] } ] };
+  const sel = (g, cat, q, extra) => Object.assign({ item: { guid: g }, displayName: g, salesCategory: { guid: cat }, quantity: q }, extra || {});
+  const martini = { item: { guid: 'm-mart' }, displayName: 'Martini' };
+  const ordenes = [
+    { checks: [{ selections: [
+      sel('l-tito', 'c-liq', 2, { modifiers: [martini] }),
+      sel('l-tito', 'c-liq', 1, { modifiers: [martini, { displayName: 'sin hielo para Juan' }] }),
+      sel('l-tito', 'c-liq', 1),
+      sel('f-burger', 'c-food', 4),
+      sel('w-sb', 'c-wine', 2),
+      { displayName: 'shot para la mesa 4', salesCategory: { guid: 'c-liq' }, quantity: 1 },
+      sel('l-tito', 'c-liq', 9, { voided: true }) ] }] },
+    { voided: true, checks: [{ selections: [sel('l-tito', 'c-liq', 7)] }] }
+  ];
+  const rutas = (o) => {
+    o = o || {};
+    return {
+      '/authentication/': LOGIN_OK,
+      '/config/v2/salesCategories': o.cats || { status: 200, body: [
+        { guid: 'c-liq', name: 'Liquor' }, { guid: 'c-wine', name: 'Wine' }, { guid: 'c-food', name: 'Food' }] },
+      '/menus/v2/menus': { status: 200, body: menu },
+      '/orders/v2/ordersBulk': o.ordenes || ((url) => ({ status: 200, body: /page=1(&|$)/.test(url) ? ordenes : [] })),
+      'sb.test/rest/v1/locations': { status: 200, body: [{ toast_restaurant_guid: o.guidLoc === undefined ? GUID : o.guidLoc }] },
+      // toast_sales_days antes que toast_sales: la ruta se busca por
+      // "contiene", y la segunda contiene a la primera.
+      'sb.test/rest/v1/toast_sales_days': { status: 201, body: [] },
+      'sb.test/rest/v1/toast_sales': { status: 201, body: [] }
+    };
+  };
+  const aLaBase = () => peticiones.filter(p => p.url.startsWith('https://sb.test'));
+
+  entorno();
+  respuestas = rutas();
+  const r = await llamar({ accion: 'sync', params: { businessDate: '20261105', locationId: LOC } });
+  const b = r.body;
+  prueba('contesta bien', b && b.ok === true, JSON.stringify(b).slice(0, 300));
+  const sb = aLaBase();
+  const filas = sb.filter(p => p.metodo === 'POST' && /\/toast_sales(\?|$)/.test(p.url.replace('https://sb.test/rest/v1', '')));
+  const cuerpo = filas.length ? JSON.parse(filas[0].cuerpo) : [];
+  const de = (g, m) => cuerpo.find(x => x.toast_item_guid === g && x.mods === m);
+  prueba('una fila por articulo y modificadores', cuerpo.length === 3, JSON.stringify(cuerpo));
+  prueba("Tito's Martini suma sus dos lineas (2 + 1)", de('l-tito', 'Martini') && de('l-tito', 'Martini').quantity === 3, JSON.stringify(de('l-tito', 'Martini')));
+  prueba("Tito's solo, aparte", de('l-tito', '') && de('l-tito', '').quantity === 1);
+  prueba('el vino tambien', de('w-sb', '') && de('w-sb', '').quantity === 2);
+  prueba('la comida no se guarda', !cuerpo.some(x => x.toast_item_guid === 'f-burger'));
+  prueba('lo anulado no cuenta', !cuerpo.some(x => x.quantity >= 7));
+  prueba('ni el texto libre: ni la linea ni el modificador', !JSON.stringify(cuerpo).includes('Juan') && !JSON.stringify(cuerpo).includes('mesa 4'));
+  prueba('pero se dice cuantas lineas libres hubo', b.libres === 1, b.libres);
+  prueba('con locacion, fecha y grupo del menu', de('l-tito', '') && de('l-tito', '').location_id === LOC &&
+    de('l-tito', '').business_date === '2026-11-05' && de('l-tito', '').toast_group === 'DRINKS › Liquor › Vodka', JSON.stringify(de('l-tito', '')));
+  prueba('dice que categorias guardo y cuales no', JSON.stringify(b.categorias) === JSON.stringify({ guardadas: ['Liquor', 'Wine'], fuera: ['Food'] }), JSON.stringify(b.categorias));
+
+  // El orden: marcar el día como incompleto, borrar, escribir, y sólo al
+  // final marcarlo completo. Si algo falla a medias, el día queda
+  // incompleto y se vuelve a cargar, en vez de quedar a medias como si
+  // estuviera entero.
+  const pasos = sb.filter(p => p.metodo !== 'GET').map(p => p.metodo + ' ' + p.url.replace(/https:\/\/sb\.test\/rest\/v1\//, '').replace(/\?.*/, ''));
+  prueba('marca incompleto, borra, escribe, marca completo',
+    JSON.stringify(pasos) === JSON.stringify(['POST toast_sales_days', 'DELETE toast_sales', 'POST toast_sales', 'POST toast_sales_days']), JSON.stringify(pasos));
+  const borra = sb.find(p => p.metodo === 'DELETE');
+  prueba('borra solo ese dia de esa locacion', borra && borra.url.includes('location_id=eq.' + LOC) && borra.url.includes('business_date=eq.2026-11-05'), borra && borra.url);
+  const dias = sb.filter(p => p.metodo === 'POST' && p.url.includes('toast_sales_days'));
+  const fin = dias.length ? JSON.parse(dias[dias.length - 1].cuerpo) : {};
+  const ini = dias.length ? JSON.parse(dias[0].cuerpo) : {};
+  prueba('al empezar, el dia queda incompleto', ini.complete === false, JSON.stringify(ini));
+  prueba('al final, completo, cerrado, con sus ordenes', fin.complete === true && fin.closed === true && fin.orders === 1, JSON.stringify(fin));
+  prueba('el dia se escribe contra su llave', dias.every(p => p.url.includes('on_conflict=location_id,business_date') &&
+    /merge-duplicates/.test(JSON.stringify(p.cabeceras))), dias.map(p => p.url).join(' | '));
+  prueba('a la base con la llave de servicio', sb.every(p => JSON.stringify(p.cabeceras).includes('srv')));
+  prueba('sin la llave ni el token en la respuesta', !JSON.stringify(b).includes('srv') && !JSON.stringify(b).includes(TOKEN_TOAST));
+  prueba('a la base solo esas dos tablas y la locacion', sb.every(p => /\/rest\/v1\/(toast_sales_days|toast_sales|locations)(\?|$)/.test(p.url)),
+    sb.map(p => p.url).join(' | '));
+  prueba('la locacion solo se lee', sb.filter(p => p.url.includes('/locations')).every(p => p.metodo === 'GET'));
+
+  // Hoy no está cerrado: se vuelve a cargar entero cada vez.
+  const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()).replace(/-/g, '');
+  await llamar({ accion: 'sync', params: { businessDate: hoy, locationId: LOC } });
+  const dh = peticiones.filter(p => p.metodo === 'POST' && p.url.includes('toast_sales_days'));
+  prueba('hoy queda abierto', dh.length && JSON.parse(dh[dh.length - 1].cuerpo).closed === false);
+  // Cargar un año son cientos de llamadas: el menú no se pide en cada una
+  // (Toast limita esas lecturas; de ahí salió el 429 de Wine from Toast).
+  prueba('la segunda carga seguida no vuelve a pedir el menu', !peticiones.some(p => p.url.includes('/menus/')),
+    peticiones.filter(p => p.url.includes('/menus/')).length);
+
+  // Lo que no tiene que escribir nada.
+  respuestas = rutas({ guidLoc: 'otro-restaurante' });
+  const r2 = await llamar({ accion: 'sync', params: { businessDate: '20261105', locationId: LOC } });
+  prueba('otra locacion: no escribe nada', r2.body.ok === false && r2.body.paso === 'location' && !aLaBase().some(p => p.metodo !== 'GET'), JSON.stringify(r2.body));
+  prueba('y no llega a pedir las ordenes', !peticiones.some(p => p.url.includes('ordersBulk')));
+  respuestas = rutas({ guidLoc: null });
+  const r2b = await llamar({ accion: 'sync', params: { businessDate: '20261105', locationId: LOC } });
+  prueba('locacion sin restaurante: tampoco', r2b.body.ok === false && r2b.body.paso === 'location' && !aLaBase().some(p => p.metodo !== 'GET'));
+  respuestas = rutas();
+  const r3 = await llamar({ accion: 'sync', params: { businessDate: '20261105', locationId: 'x;drop' } });
+  prueba('una locacion rara no se cuela', r3.body.ok === false && aLaBase().length === 0, JSON.stringify(r3.body));
+  respuestas = rutas({ ordenes: { status: 500, body: { message: 'boom' } } });
+  const r4 = await llamar({ accion: 'sync', params: { businessDate: '20261105', locationId: LOC } });
+  prueba('si Toast falla en las ordenes: no escribe nada', r4.body.ok === false && !aLaBase().some(p => p.metodo !== 'GET'), JSON.stringify(r4.body));
+  respuestas = rutas({ cats: { status: 403, body: { message: 'no' } } });
+  require(path.join(RAIZ, 'lib/toast.js'))._olvidarCatalogo();
+  const r5 = await llamar({ accion: 'sync', params: { businessDate: '20261105', locationId: LOC } });
+  prueba('sin categorias no se adivina que es bebida: no escribe', r5.body.ok === false && r5.body.paso === 'categorias' && !aLaBase().some(p => p.metodo !== 'GET'), JSON.stringify(r5.body));
 }
 
 grupo('la sesion se comprueba una vez, antes de repartir');

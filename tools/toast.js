@@ -19,6 +19,15 @@
  *                                      con más artículos
  *        await bsToast('drinks', { businessDate: '20261101' })   otro día
  *
+ *   Y para cargar lo vendido día por día (la base del inventario en vivo):
+ *        await bsToastHistoria(7)      los últimos 7 días
+ *        await bsToastHistoria(365)    el año entero, del más nuevo al
+ *                                      más viejo; se salta lo ya cargado
+ *        bsToastParar = true           lo para después del día en curso
+ *   Ésta SÍ escribe, pero sólo en toast_sales y toast_sales_days, y lo
+ *   hace la función de Vercel, no el navegador. Hay que estar en la
+ *   locación ligada a Toast (Crown); en otra, Toast dice que no.
+ *
  * Cada una devuelve el objeto y además lo imprime. Si algo falla, lo que
  * sale es lo que dijo Toast o lo que le falta a la función, tal cual.
  */
@@ -50,5 +59,63 @@
     console.log(j);
     return j;
   };
+
+  // Un día por llamada: un día de Crown son varias páginas de órdenes, y
+  // Vercel corta la función que tarda demasiado. Uno detrás de otro, no
+  // en paralelo: Toast limita la velocidad.
+  window.bsToastHistoria = async function (dias) {
+    dias = Math.max(1, Math.min(400, Number(dias) || 7));
+    window.bsToastParar = false;
+    const C = window.BarStockInventoryCloud;
+    const locationId = C && C.fetchLocationId ? await C.fetchLocationId() : null;
+    if (!locationId) { console.warn('No encuentro la locación abierta.'); return null; }
+
+    // Los días de negocio, de ayer hacia atrás, más hoy (que sigue abierto).
+    const fmt = (t) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York',
+      year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(t));
+    const lista = [];
+    for (let i = 0; i <= dias; i++) lista.push(fmt(Date.now() - i * 864e5));
+
+    // Lo que ya está cargado, completo y cerrado no se vuelve a pedir.
+    const { data, error } = await window.BarStockSupabase.getClient()
+      .from('toast_sales_days').select('business_date,complete,closed')
+      .eq('location_id', locationId).gte('business_date', lista[lista.length - 1]).limit(1000);
+    if (error) { console.warn('Supabase dijo:', error.message); return null; }
+    const hecho = new Set((data || []).filter(d => d.complete && d.closed).map(d => d.business_date));
+    const faltan = lista.filter(d => !hecho.has(d));
+    console.log(faltan.length + ' días por cargar de ' + lista.length + ' (' + hecho.size + ' ya estaban).');
+
+    const res = { cargados: 0, filas: 0, incompletos: [], categorias: null };
+    for (let i = 0; i < faltan.length; i++) {
+      if (window.bsToastParar) { console.log('Parado. Lo cargado se queda.'); break; }
+      const d = faltan[i];
+      const S = window.BarStockSupabase;
+      const { data: ses } = await S.getClient().auth.getSession();
+      const token = ses && ses.session && ses.session.access_token;
+      const r = await fetch('/api/integrations?provider=toast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ action: 'sync', params: { businessDate: d.replace(/-/g, ''), locationId } })
+      });
+      let j; try { j = await r.json(); } catch (e) { j = { ok: false, error: 'HTTP ' + r.status + ' sin JSON' }; }
+      if (!j.ok) {
+        console.warn('Se paró en ' + d + '. Lo de antes quedó guardado. Toast o la base dijeron:', j);
+        break;
+      }
+      res.cargados++; res.filas += j.filas;
+      if (!j.diaCompleto) res.incompletos.push(d);
+      if (!res.categorias) {
+        res.categorias = j.categorias;
+        console.log('Se guarda como bebida:', j.categorias.guardadas.join(', ') || '(nada)',
+          ' · Fuera:', j.categorias.fuera.join(', ') || '(nada)');
+      }
+      console.log((i + 1) + '/' + faltan.length + '  ' + d + '  · ' + j.ordenes + ' órdenes · ' + j.filas + ' filas' +
+        (j.diaCompleto ? '' : ' · INCOMPLETO (demasiadas órdenes)'));
+    }
+    console.log('%cHistoria de Toast', 'font-weight:bold');
+    console.log(res);
+    return res;
+  };
+
   console.log('Listo. Empieza por:  await bsToast("ping")');
 })();
