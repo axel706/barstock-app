@@ -77,24 +77,33 @@
     const puntos = productos.map(p => {
       const w = palabras(p);
       const hits = t.filter(x => w.some(y => casan(x, y))).length;
-      return { p, s: hits / t.length, hits };
-    }).sort((a, b) => b.s - a.s);
+      // También desde el producto: "Red Blend - The Arborist" sólo tiene
+      // una de sus tres palabras en "The Arborist" (1/3, no llegaba), pero
+      // "The Arborist" está ENTERO en el nombre de Toast. Esto sólo decide
+      // qué se ofrece; "seguro" (abajo) sigue mirando el lado de Toast.
+      const delProducto = w.length ? w.filter(y => t.some(x => casan(x, y))).length / w.length : 0;
+      const st = hits / t.length;
+      return { p, s: Math.max(st, delProducto), st, hits };
+    }).sort((a, b) => b.s - a.s || b.st - a.st);
     const [uno, dos] = puntos;
     if (!uno || uno.s < 0.4) return { producto: null, nivel: 'none' };
     // Claro solo si casa casi todo, con al menos DOS palabras, y no hay
     // otro igual de bueno. Con una sola palabra "HH Prosecco" salía seguro
     // de ser el Nino Ardevi, y puede ser otro prosecco más barato. Dos
     // vinos de la misma bodega empatan, y eso lo decide una persona.
-    const claro = uno.s >= 0.75 && uno.hits >= 2 && !(dos && dos.s === uno.s);
+    const claro = uno.st >= 0.75 && uno.hits >= 2 && !(dos && dos.s === uno.s && dos.st === uno.st);
     return { producto: uno.p, nivel: claro ? 'high' : 'mid' };
   }
 
-  // Los vinos del inventario: lo que tiene categoría Wine. Si no hay
-  // ninguno categorizado, todo el inventario, para no dejar la lista vacía.
-  function productosDeVino() {
+  // Todo el inventario, no sólo lo que tiene categoría Wine. Se filtraba
+  // por categoría y en Crown The Arborist no salía en la lista: casi
+  // ningún artículo tiene categoría (mobile-inventory.js lo dice en
+  // `faltas`), así que el filtro dejaba fuera a casi todos los vinos sin
+  // avisar. El proveedor tampoco sirve: "WINE MERCHANT" es un proveedor,
+  // no una forma de saber qué es vino.
+  function productosDelInventario() {
     const m = (window.state && window.state.master) || [];
-    const vino = m.filter(r => r && r.item && /wine/i.test(String(r.category || '')));
-    return [...new Set((vino.length ? vino : m.filter(r => r && r.item)).map(r => r.item))]
+    return [...new Set(m.filter(r => r && r.item).map(r => r.item))]
       .sort((a, b) => norm(a).localeCompare(norm(b)));
   }
 
@@ -161,7 +170,7 @@
         if (!rk.ok) { _d = { estado: 'error', donde: 'links', error: 'Supabase answered ' + rk.status + ': ' + tk.slice(0, 200) }; return _d; }
         const enlaces = new Map((JSON.parse(tk) || []).map(e => [e.toast_item_guid, e]));
 
-        const productos = productosDeVino();
+        const productos = productosDelInventario();
         const filas = [...articulos.values()].map(a => {
           const e = enlaces.get(a.guid);
           const base = { guid: a.guid, nombre: a.nombre, grupo: a.grupo, servicio: a.servicio, vendido: vendido[a.guid] || 0 };

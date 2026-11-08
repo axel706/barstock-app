@@ -50,7 +50,10 @@ const INVENTARIO = [
   { item: 'Canal Grande Pinot Grigio', category: 'Wine' },
   { item: 'Les Cadrans Bordeaux', category: 'Wine' },
   { item: 'Nino Ardevi Prosecco', category: 'Wine' },
-  { item: "Tito's Vodka", category: 'Vodka' }
+  { item: "Tito's Vodka", category: 'Vodka' },
+  // Como en Crown: casi nada tiene categoría. The Arborist es vino y no
+  // la tiene; "WINE MERCHANT" es su proveedor.
+  { item: 'The Arborist', vendor: 'WINE MERCHANT' }
 ];
 const ARTICULOS = [
   { guid: 'w-sb', nombre: 'Sauv Blanc - Whitehaven', grupo: 'DRINKS › Wine › Whites By The Glass', servicio: 'glass' },
@@ -176,7 +179,13 @@ grupo('5 · lo vendido y lo ya decidido');
   prueba('lo confirmado sigue confirmado, con su vino', f['w-pio'].estado === 'confirmed' && f['w-pio'].producto === 'Villa Brici Pinot Grigio');
   prueba('lo ignorado sigue ignorado', f['w-pg'].estado === 'ignored');
   prueba('lo demas, por revisar con su sugerida', f['w-sb'].estado === 'review' && f['w-sb'].producto === 'Whitehaven Sauvignon Blanc');
-  prueba('solo vinos en la lista (el vodka no)', !d.productos.includes("Tito's Vodka") && d.productos.includes('Les Cadrans Bordeaux'));
+  // Filtrar por categoría dejaba fuera a The Arborist: casi ningún
+  // artículo tiene categoría. La lista es el inventario entero.
+  prueba('un vino sin categoria esta en la lista', d.productos.includes('The Arborist'), d.productos.join(' | '));
+  prueba('la lista es todo el inventario, en orden', d.productos.length === INVENTARIO.length && d.productos[0] === 'Canal Grande Pinot Grigio', d.productos.join(' | '));
+  const sa = w.BarStockToastWine._sugerir('Red Blend - The Arborist', d.productos);
+  prueba('y se sugiere para "Red Blend - The Arborist"', sa.producto === 'The Arborist', JSON.stringify(sa));
+  prueba('pero en duda: es una sola palabra', sa.nivel === 'mid', sa.nivel);
 }
 
 grupo('6 · confirmar, ignorar, deshacer');
