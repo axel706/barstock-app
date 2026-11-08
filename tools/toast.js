@@ -13,6 +13,11 @@
  *        await bsToast('menu')         cuántos artículos y una muestra
  *        await bsToast('orders')       las ventas de ayer, resumidas
  *        await bsToast('orders', { businessDate: '20261101' })   otro día
+ *        await bsToast('drinks')       lo vendido ayer, el día entero, por
+ *                                      categoría de venta, con modificadores
+ *        await bsToast('drinks', { categoria: 'liquor' })   una categoría,
+ *                                      con más artículos
+ *        await bsToast('drinks', { businessDate: '20261101' })   otro día
  *
  * Cada una devuelve el objeto y además lo imprime. Si algo falla, lo que
  * sale es lo que dijo Toast o lo que le falta a la función, tal cual.

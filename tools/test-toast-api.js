@@ -74,7 +74,9 @@ global.fetch = async (url, op) => {
   peticiones.push({ url, metodo: (op && op.method) || 'GET', cabeceras: (op && op.headers) || {},
                     cuerpo: op && op.body });
   const clave = Object.keys(respuestas).find(k => url.includes(k));
-  const r = clave ? respuestas[clave] : { status: 404, body: { message: 'no route' } };
+  // Una respuesta puede ser una función de la URL: las páginas de un día.
+  const r0 = clave ? respuestas[clave] : { status: 404, body: { message: 'no route' } };
+  const r = typeof r0 === 'function' ? r0(url) : r0;
   return { ok: r.status < 400, status: r.status, text: async () => JSON.stringify(r.body) };
 };
 
@@ -280,7 +282,7 @@ grupo('solo lee');
     '/orders/v2/ordersBulk': { status: 200, body: [] }
   };
   const metodos = [];
-  for (const a of ['ping', 'restaurant', 'menu', 'orders']) {
+  for (const a of ['ping', 'restaurant', 'menu', 'orders', 'drinks']) {
     await llamar({ accion: a });
     for (const p of peticiones) metodos.push(p.metodo + ' ' + p.url.replace(/https:\/\/[^/]+/, ''));
     prueba(a + ': a Supabase solo le valida la sesion', sbLlamadas.length === 0, sbLlamadas.join(','));
@@ -290,6 +292,87 @@ grupo('solo lee');
 
   const r = await llamar({ accion: 'borrar' });
   prueba('una accion que no existe no hace nada', r.code === 400 && peticiones.length === 0, r.code + ' ' + peticiones.length);
+}
+
+grupo('drinks: que se vende de bebida y como lo cuenta Toast');
+{
+  // Para decidir como pasar de tragos a botellas hay que ver como vienen
+  // los tragos. Un dia ENTERO, por categoria de venta, sin texto libre.
+  entorno();
+  const CAT = { liquor: 'cat-liq', food: 'cat-food' };
+  const sel = (nombre, cat, q, mods, extra) => Object.assign({
+    displayName: nombre, item: { guid: 'it-' + nombre }, quantity: q,
+    salesCategory: { guid: cat }, modifiers: mods || []
+  }, extra || {});
+  const mod = (nombre, q, sub) => ({ displayName: nombre, item: { guid: 'm-' + nombre }, quantity: q || 1, modifiers: sub || [] });
+  const orden = (sels, extra) => Object.assign({ checks: [{ selections: sels }] }, extra || {});
+  const pagina1 = [];
+  for (let i = 0; i < 100; i++) pagina1.push(orden([sel('Vodka Soda', CAT.liquor, 1, [mod("Tito's"), mod('Double')])]));
+  const pagina2 = [
+    orden([sel('Vodka Soda', CAT.liquor, 2, [mod('Grey Goose')])]),
+    orden([sel('Burger', CAT.food, 1)]),
+    // Anuladas: no cuentan.
+    orden([sel('Vodka Soda', CAT.liquor, 5, [mod("Tito's")])], { voided: true }),
+    orden([sel('Vodka Soda', CAT.liquor, 7, [], { voided: true })]),
+    // Texto libre: un open item y una peticion especial, sin guid.
+    orden([{ displayName: 'Para Juan Perez cumple', quantity: 1, salesCategory: { guid: CAT.liquor },
+             modifiers: [] },
+           sel('Margarita', CAT.liquor, 1, [{ displayName: 'sin hielo, es para Maria', quantity: 1 }])])
+  ];
+  respuestas = {
+    '/authentication/': LOGIN_OK,
+    '/config/v2/salesCategories': { status: 200, body: [{ guid: CAT.liquor, name: 'Liquor' }, { guid: CAT.food, name: 'Food' }] },
+    '/menus/v2/menus': { status: 200, body: { menus: [{ name: 'DRINKS', menuGroups: [{ name: 'Cocktails', menuItems: [{ guid: 'it-Vodka Soda', name: 'Vodka Soda' }] }] }] } },
+    '/orders/v2/ordersBulk': (url) => ({ status: 200, body: /page=1(&|$)/.test(url) ? pagina1 : (/page=2(&|$)/.test(url) ? pagina2 : []) })
+  };
+  const r = await llamar({ accion: 'drinks', params: { businessDate: '20261106' } });
+  const b = r.body;
+  const paginas = peticiones.filter(x => x.url.includes('ordersBulk')).map(x => (/page=(\d+)/.exec(x.url) || [])[1]);
+  prueba('pide todas las paginas del dia, no solo la primera', paginas.join(',') === '1,2', paginas.join(','));
+  prueba('y el dia queda completo', b.ok === true && b.diaCompleto === true && b.ordenes === 105, JSON.stringify({ ok: b.ok, c: b.diaCompleto, o: b.ordenes }));
+  const liq = (b.porCategoria || []).find(c => c.categoria === 'Liquor') || {};
+  const food = (b.porCategoria || []).find(c => c.categoria === 'Food') || {};
+  prueba('agrupa por categoria de venta', !!liq.articulos && food.unidades === 1, JSON.stringify((b.porCategoria || []).map(c => c.categoria)));
+  const vs = (liq.articulos || []).find(a => a.nombre === 'Vodka Soda') || {};
+  prueba('suma cantidades y salta lo anulado (100 + 2, no + 5 ni + 7)', vs.unidades === 102, vs.unidades);
+  prueba('con el grupo del menu', vs.grupo === 'DRINKS › Cocktails', vs.grupo);
+  prueba('y sus modificadores contados', (vs.modificadores || []).includes("Tito's ×100") && (vs.modificadores || []).includes('Double ×100') &&
+    (vs.modificadores || []).includes('Grey Goose ×2'), JSON.stringify(vs.modificadores));
+  const todo = JSON.stringify(b);
+  prueba('el texto libre se cuenta pero no se ensena', !/Juan Perez|Maria/.test(todo) && todo.includes('(free text)'));
+  prueba('ni el token', !todo.includes(TOKEN_TOAST));
+}
+{
+  // Un dia que no acaba: al tope se para, y lo dice.
+  entorno();
+  const llena = Array.from({ length: 100 }, () => ({ checks: [] }));
+  respuestas = {
+    '/authentication/': LOGIN_OK,
+    '/config/v2/salesCategories': { status: 200, body: [] },
+    '/menus/v2/menus': { status: 200, body: { menus: [] } },
+    '/orders/v2/ordersBulk': { status: 200, body: llena }
+  };
+  const r = await llamar({ accion: 'drinks' });
+  const n = peticiones.filter(x => x.url.includes('ordersBulk')).length;
+  prueba('con tope de paginas', n === 15, n);
+  prueba('y avisa que el dia no esta entero', r.body.diaCompleto === false, r.body.diaCompleto);
+}
+{
+  // Filtrar una categoria trae mas articulos de ella.
+  entorno();
+  const muchos = Array.from({ length: 60 }, (_, i) => ({ checks: [{ selections: [
+    { displayName: 'Cerveza ' + i, item: { guid: 'b' + i }, quantity: 1, salesCategory: { guid: 'cat-beer' } }] }] }));
+  respuestas = {
+    '/authentication/': LOGIN_OK,
+    '/config/v2/salesCategories': { status: 200, body: [{ guid: 'cat-beer', name: 'Beer' }] },
+    '/menus/v2/menus': { status: 200, body: { menus: [] } },
+    '/orders/v2/ordersBulk': { status: 200, body: muchos }
+  };
+  const sin = await llamar({ accion: 'drinks' });
+  const con = await llamar({ accion: 'drinks', params: { categoria: 'beer' } });
+  const n1 = sin.body.porCategoria[0].articulos.length, n2 = con.body.porCategoria[0].articulos.length;
+  prueba('sin filtro, los 30 que mas se venden', n1 === 30, n1);
+  prueba('con filtro, mas de esa categoria', n2 === 60, n2);
 }
 
 grupo('la sesion se comprueba una vez, antes de repartir');

@@ -259,7 +259,9 @@ En `tools/`, sólo lectura, se pegan en la consola del navegador:
 - `forense.js` → `await bsCuando('Baileys')` — qué le pasó a un producto
 - `existe.js` — si un producto está en la nube
 - `toast.js` → `await bsToast('ping')` — qué contesta Toast (`ping`,
-  `restaurant`, `menu`, `orders`), a través de `api/integrations.js`
+  `restaurant`, `menu`, `orders`, `drinks`), a través de `api/integrations.js`.
+  `drinks` resume un día entero de ventas por categoría, con modificadores,
+  sin texto libre: es para ver cómo cuenta Toast los tragos
 - `tripleseat.js` → `await bsTripleseat('ping')` — qué contesta TripleSeat
   (`ping`, `locations`, `events`, `bookings`, `search`, `menu`, `detalle`, `catalogo`), por la misma función.
   Lo mismo con botones, sin consola: Settings → Connections →
