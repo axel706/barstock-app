@@ -303,8 +303,8 @@ categoría.
   licor, Axel confirma que `quantity` son botellas, no cajas (la comida
   sí puede ser caja, pero no está en el inventario). Protección
   acordada: una línea que cueste por unidad mucho más que la botella
-  (4× o más) se marca para revisar, no se suma a ciegas. Pendiente
-  preguntar si el vino también se factura siempre por botella.
+  (4× o más) se marca para revisar, no se suma a ciegas. El vino
+  también se factura siempre por botella (Axel, 2026-11-08).
 - **Cuándo se acaba:** desde lo que queda HOY (con las ventas reales),
   día por día hacia adelante con lo que se suele gastar CADA día de la
   semana, aprendido de Toast (mediana, para que un evento no lo
@@ -325,8 +325,13 @@ categoría.
 - **Pantalla de ventas:** lo vendido cada día, y los promedios por día
   de la semana y por semana. Falta su diseño.
 
-**Pendiente de preguntarle:** si durante un conteo activo se enseña lo
-contado y no el estimado (lo propuse; no contestó).
+**Cuándo sale la marca "Live"** (Axel, 2026-11-08): durante un conteo
+activo se enseña lo contado, sin marca. Al cerrar el conteo todo vuelve
+a cero: el número es lo contado y NO lleva "Live". La marca aparece con
+el primer movimiento después del conteo, la primera venta de Toast o la
+primera factura recibida, lo que llegue antes. Una tarjeta con "Live"
+tiene que tener algo restado o sumado detrás; si no, es una afordancia
+que miente.
 
 **El orden acordado:**
 1. Guardar las ventas diarias de Toast en botellas, por producto, con
