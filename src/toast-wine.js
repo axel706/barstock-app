@@ -119,19 +119,27 @@
         }
         const guidLoc = String(((JSON.parse(tl) || [])[0] || {}).toast_restaurant_guid || '').trim();
 
-        // Una semana, de tres en tres días: cada día son varias páginas
-        // de Toast y no hace falta pedirlas todas a la vez.
+        // El primer día va solo y trae el menú: de ahí salen los vinos.
+        // Los otros seis piden sólo lo vendido de esos vinos, sin menú.
+        // Antes cada día leía el menú, tres a la vez, y Toast, que limita
+        // esas lecturas, contestó 429 la primera vez que se abrió en Crown.
         const dias = diasAtras(DIAS, op.ahora);
         const res = new Array(dias.length);
-        let i = 0;
-        async function obrero() {
-          while (i < dias.length) {
-            const k = i++;
-            res[k] = await toast('wine', { businessDate: dias[k] });
-            _d.progreso++; avisar();
+        const contar = (r) => { _d.progreso++; avisar(); return r; };
+        res[0] = contar(await toast('wine', { businessDate: dias[0] }));
+        if (res[0] && res[0].ok) {
+          const guids = (res[0].articulos || []).map(a => a.guid);
+          // De dos en dos: cada día son varias páginas de órdenes, y
+          // Toast también limita esas.
+          let i = 1;
+          async function obrero() {
+            while (i < dias.length) {
+              const k = i++;
+              res[k] = contar(await toast('wine', { businessDate: dias[k], guids }));
+            }
           }
+          await Promise.all([obrero(), obrero()]);
         }
-        await Promise.all([obrero(), obrero(), obrero()]);
 
         const malo = res.find(r => !r || !r.ok);
         if (malo) {

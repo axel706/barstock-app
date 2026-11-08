@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261107-234311",
+    "items": [
+      "Wine from Toast no longer stops on busy Toast"
+    ]
+  },
+  {
     "build": "20261107-233233",
     "items": [
       "Wine from Toast: match Toast wines to your inventory",
@@ -185,12 +191,6 @@
     "build": "20261106-121557",
     "items": [
       "Carlo Rossi jug bottle, with its handle"
-    ]
-  },
-  {
-    "build": "20261106-120938",
-    "items": [
-      "The Botanist bottle shape"
     ]
   }
 ]

@@ -85,6 +85,12 @@ function entorno(o) {
       // Cada día vende lo mismo: 1 Whitehaven, 2 Pio, 0 Canal, y el día 1 una botella.
       const vendido = { 'w-sb': 1, 'w-pio': 2 };
       if (p.businessDate === w.__dias[0]) vendido['w-bdx'] = 1;
+      // Como el servidor: con `guids` no lee el menú, así que no trae
+      // artículos y sólo cuenta esos.
+      if (Array.isArray(p.guids)) {
+        for (const g of Object.keys(vendido)) if (!p.guids.includes(g)) delete vendido[g];
+        return resp(200, { ok: true, restaurante: CROWN, diaCompleto: true, articulos: [], vendido });
+      }
       return resp(200, { ok: true, restaurante: CROWN, diaCompleto: true, articulos: ARTICULOS, vendido });
     }
     if (String(url).includes('/rest/v1/toast_item_links')) {
@@ -156,6 +162,13 @@ grupo('5 · lo vendido y lo ya decidido');
   prueba('listo', d.estado === 'listo', d.estado);
   const pedidos = w.__peticiones.filter(p => p.url.includes('/api/integrations'));
   prueba('pide los siete dias', pedidos.length === 7, pedidos.length);
+  // Toast limita las lecturas del menú: pedirlo siete veces, tres a la
+  // vez, le hizo contestar 429 la primera vez que se abrió en Crown.
+  const conMenu = pedidos.filter(p => !Array.isArray(p.cuerpo.params.guids));
+  prueba('el menu se pide UNA vez, no una por dia', conMenu.length === 1, conMenu.length);
+  prueba('y es lo primero que se pide', pedidos[0] === conMenu[0]);
+  const g1 = pedidos[1] && pedidos[1].cuerpo.params.guids;
+  prueba('los otros dias llevan los vinos del menu', Array.isArray(g1) && g1.length === ARTICULOS.length && g1.includes('w-pio'), JSON.stringify(g1));
   const f = Object.fromEntries(d.filas.map(x => [x.guid, x]));
   prueba('suma la semana por articulo', f['w-pio'].vendido === 14 && f['w-sb'].vendido === 7 && f['w-bdx'].vendido === 1,
     [f['w-pio'].vendido, f['w-sb'].vendido, f['w-bdx'].vendido].join(','));

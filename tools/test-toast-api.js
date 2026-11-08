@@ -420,6 +420,45 @@ grupo('wine: los vinos del menu y lo vendido de cada uno');
   prueba('sin el token', !JSON.stringify(b).includes(TOKEN_TOAST));
 }
 
+grupo('wine con guids: no vuelve a leer el menu');
+{
+  // La pantalla lee el menu el primer dia y los otros seis los pide con
+  // los guids que ya tiene. Toast limita las lecturas del menu.
+  entorno();
+  const ordenes = [{ checks: [{ selections: [
+    { item: { guid: 'w-sb' }, quantity: 2 }, { item: { guid: 'l-tito' }, quantity: 5 } ] }] }];
+  respuestas = {
+    '/authentication/': LOGIN_OK,
+    '/menus/v2/menus': { status: 500, body: { message: 'no deberia pedirse' } },
+    '/orders/v2/ordersBulk': (url) => ({ status: 200, body: /page=1(&|$)/.test(url) ? ordenes : [] })
+  };
+  peticiones = [];
+  const r = await llamar({ accion: 'wine', params: { businessDate: '20261105', guids: ['w-sb', 'w-pio'] } });
+  prueba('contesta bien', r.body.ok === true, JSON.stringify(r.body).slice(0, 200));
+  prueba('sin pedir el menu', !peticiones.some(p => p.url.includes('/menus/')));
+  prueba('cuenta solo esos guids', r.body.vendido && r.body.vendido['w-sb'] === 2 && r.body.vendido['l-tito'] === undefined, JSON.stringify(r.body.vendido));
+  prueba('y dice de que restaurante es', r.body.restaurante === GUID);
+}
+
+grupo('429: se espera y se vuelve a pedir');
+{
+  // Toast contesta 429 cuando se le pide demasiado seguido. Es pasajero:
+  // un segundo despues contesta bien.
+  entorno();
+  let veces = 0;
+  respuestas = {
+    '/authentication/': LOGIN_OK,
+    '/menus/v2/menus': () => (++veces === 1 ? { status: 429, body: { message: 'Too Many Requests' } } : { status: 200, body: { menus: [] } }),
+    '/orders/v2/ordersBulk': { status: 200, body: [] }
+  };
+  const r = await llamar({ accion: 'wine', params: { businessDate: '20261105' } });
+  prueba('tras un 429, lo vuelve a pedir y sale bien', r.body.ok === true && veces === 2, veces + ' · ' + JSON.stringify(r.body).slice(0, 120));
+  veces = 0;
+  respuestas['/menus/v2/menus'] = () => (++veces, { status: 429, body: { message: 'Too Many Requests' } });
+  const r2 = await llamar({ accion: 'wine', params: { businessDate: '20261105' } });
+  prueba('pero no para siempre: al final dice el 429', r2.body.ok === false && r2.body.status === 429 && veces <= 4, veces);
+}
+
 grupo('la sesion se comprueba una vez, antes de repartir');
 {
   // Antes lo hacía cada integración por su cuenta, y con dos una se lo
