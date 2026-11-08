@@ -271,12 +271,80 @@ En `tools/`, sólo lectura, se pegan en la consola del navegador:
 
 ---
 
-## Dónde nos quedamos · 2026-11-06
+## Dónde nos quedamos · 2026-11-08
 
 **Esta sección caduca.** Es lo que estaba en el aire el día de la fecha, no
 historia. Si la fecha es vieja, créela a medias: comprueba contra el código
 y el `git log` antes de actuar, y actualízala o bórrala. Lo de abajo
 —"Pendientes conocidos"— sí es estable.
+
+### Toast: de las ventas a botellas, para el inventario en vivo
+
+**Lo que se busca:** dejar el CSV de MarginEdge y sacar las ventas de
+Toast, convertidas a botellas. Y sobre eso, el "deberías tener" en vivo
+y un correo cada mañana con lo que se va a acabar.
+
+**Hecho y en producción:** *Wine from Toast* (`src/toast-wine.js`, la
+tabla del escritorio y las tarjetas del teléfono). Cada vino de Toast
+apunta a un producto en `toast_item_links` (migración 027, corrida).
+Crown tiene su `toast_restaurant_guid`; las demás locaciones no. Axel ya
+emparejó todos los vinos de Crown. Copa = 6 oz siempre; se venden
+botellas. La lista de opciones es el inventario entero: casi nada tiene
+categoría.
+
+**Decidido con Axel, sin construir:**
+
+- **El "deberías tener" en vivo** = contado + lo que llegó desde el
+  conteo − lo vendido en Toast desde el conteo. Es un número aparte:
+  **nunca se escribe en `on_hand`**, vuelve a empezar en cada conteo y
+  va con "≈".
+- **Lo que llegó** sale de `marginedge_invoice_lines` (`product_id`,
+  `quantity`, `invoice_date`) → `marginedge_links` → producto. Para
+  licor, Axel confirma que `quantity` son botellas, no cajas (la comida
+  sí puede ser caja, pero no está en el inventario). Protección
+  acordada: una línea que cueste por unidad mucho más que la botella
+  (4× o más) se marca para revisar, no se suma a ciegas. Pendiente
+  preguntar si el vino también se factura siempre por botella.
+- **Cuándo se acaba:** desde lo que queda HOY (con las ventas reales),
+  día por día hacia adelante con lo que se suele gastar CADA día de la
+  semana, aprendido de Toast (mediana, para que un evento no lo
+  infle). No dividir entre un promedio: una semana movida tiene que
+  adelantar el aviso. Así lo pidió Axel.
+- **Dónde se ve:**
+  - Inventory, opción A: el número grande es el estimado ("≈3.1/4",
+    "Out Sat"), con "● Live" al principio de la línea pequeña de abajo
+    (opción 3 de la marca). Lo que no tiene datos en vivo (el licor sin
+    receta, la cerveza) enseña lo contado, sin marca.
+  - Ficha del producto: la cuenta línea por línea y la semana día por
+    día, lo vendido contra lo que se suele gastar ese día.
+  - Home: tarjeta "Running out", lo mismo que dirá el correo.
+- **Comparación Toast vs MarginEdge del vino:** opción C (barras), con
+  semanas viejas de `theoretical_sales`, sólo lectura. Axel no sabe si
+  MarginEdge seguirá dando los CSV sin su báscula, y por eso se compara
+  contra lo ya cargado.
+- **Pantalla de ventas:** lo vendido cada día, y los promedios por día
+  de la semana y por semana. Falta su diseño.
+
+**Pendiente de preguntarle:** si durante un conteo activo se enseña lo
+contado y no el estimado (lo propuse; no contestó).
+
+**El orden acordado:**
+1. Guardar las ventas diarias de Toast en botellas, por producto, con
+   la historia hacia atrás. Necesita tabla nueva (migración). No se ha
+   comprobado cuántos meses atrás contesta Toast.
+2. La comparación C.
+3. La pantalla de ventas: primero el diseño.
+4. El "deberías tener" en Inventory, la ficha y el Home.
+5. Recetas y licor: Tito's va casi todo en cócteles, sin recetas no hay
+   estimado. Faltan de Axel las recetas y los pours (Single, Double,
+   3oz, UP/RX).
+6. El correo de la mañana. Resend ya está; la tarea diaria tiene que
+   caber en una función de `api/` que ya exista (están las 12).
+
+**Visto de paso, sin tocar:** el pie de la lista de facturas del
+teléfono (`src/mobile-invoices.js`) dice que el stock sale del
+"confirmed packaging", y en el código no hay ningún sitio que confirme
+un empaque. Es una afordancia que miente: se arregla aparte.
 
 ### TripleSeat: en pausa, esperando la lista de paquetes de bar
 
