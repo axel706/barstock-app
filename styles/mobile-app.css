@@ -4497,3 +4497,62 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   #bpSheet .bp-nonebox { width: 46px; height: 60px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: var(--m-title); }
   #bpSheet .ac-status { padding: 30px 16px; text-align: center; color: #cbd5e1; font-size: var(--m-body); }
 }
+
+/* ── Wine from Toast, en el teléfono (src/mobile-toast-wine.js) ───────
+ *
+ * Una tarjeta por artículo de Toast. Con el id de la pantalla delante:
+ * app.css fuerza 999px a todo <button> y le da su propio aspecto a
+ * <select>. El <select> va a 16px como mínimo, igual que el buscador de
+ * Inventory: por debajo, Safari amplía la pantalla al tocarlo y la app no
+ * deja volver. Esta hoja solo la ve el teléfono. */
+@media (max-width: 640px) {
+  #mScreens .m-tw-p { margin-top: 6px; font-size: var(--m-small); color: #94a3b8; line-height: 1.45; }
+  #mScreens .m-tw-aviso {
+    margin-top: 12px; padding: 12px 13px; border-radius: 14px;
+    font-size: var(--m-body); color: #e2e8f0; background: rgba(56,189,248,.12);
+  }
+  #mScreens .m-tw-aviso.mal { background: rgba(248,113,113,.14); }
+  #mScreens .m-tw-aviso small { display: block; margin-top: 4px; font-size: var(--m-small); color: #94a3b8; word-break: break-word; }
+  #mScreens .m-tw-tabs {
+    display: inline-flex; gap: 3px; margin-top: 12px; padding: 3px; border-radius: 12px;
+    background: rgba(255,255,255,.08);
+  }
+  #mScreens .m-tw-tabs button {
+    padding: 7px 12px; cursor: pointer; border: none; background: none;
+    font-size: var(--m-small); font-weight: 700; color: #94a3b8; border-radius: 9px !important;
+  }
+  #mScreens .m-tw-tabs button.on { background: rgba(56,189,248,.22); color: #e0f2fe; }
+  #mScreens .m-tw-todas {
+    display: block; width: 100%; margin-top: 12px; padding: 11px; cursor: pointer;
+    font-size: var(--m-body); font-weight: 800; color: #7dd3fc;
+    background: rgba(56,189,248,.1); border: 1px solid rgba(56,189,248,.35); border-radius: 12px !important;
+  }
+  #mScreens .m-tw-card {
+    margin-top: 10px; padding: 12px; border-radius: 18px;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.11);
+  }
+  #mScreens .m-tw-r1 { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  #mScreens .m-tw-r1 b { font-size: var(--m-strong); color: #fff; line-height: 1.25; }
+  #mScreens .m-tw-n { flex: 0 0 auto; font-size: var(--m-meta); font-weight: 800; padding: 3px 8px; border-radius: 8px; }
+  #mScreens .m-tw-n.ok { color: #7dd3fc; background: rgba(56,189,248,.16); }
+  #mScreens .m-tw-n.dudo { color: #fcd34d; background: rgba(251,191,36,.16); }
+  #mScreens .m-tw-n.no { color: #fca5a5; background: rgba(248,113,113,.16); }
+  #mScreens .m-tw-meta { margin-top: 6px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: var(--m-small); color: #94a3b8; }
+  #mScreens .m-tw-sv { font-size: var(--m-meta); font-weight: 800; padding: 3px 8px; border-radius: 8px; background: rgba(255,255,255,.09); color: #cbd5e1; }
+  #mScreens .m-tw-sv.b { background: rgba(167,139,250,.18); color: #c4b5fd; }
+  #mScreens .m-tw-dest { margin-top: 9px; font-size: var(--m-body); color: #64748b; }
+  #mScreens .m-tw-dest span { color: #e2e8f0; font-weight: 700; }
+  #mScreens .m-tw-mut { color: #94a3b8 !important; font-weight: 600 !important; }
+  #mScreens .m-tw-sel {
+    display: block; width: 100%; margin-top: 10px; padding: 10px 12px; height: auto;
+    font-size: max(16px, var(--m-body)); color: #f1f5f9; background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.16); border-radius: 12px !important; box-shadow: none;
+  }
+  #mScreens .m-tw-acts { display: flex; gap: 8px; margin-top: 10px; }
+  #mScreens .m-tw-b, #mScreens .m-tw-b2 {
+    flex: 1; padding: 10px; cursor: pointer; font-size: var(--m-body); font-weight: 800;
+    border-radius: 12px !important; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+  #mScreens .m-tw-b { background: #38bdf8; color: #04283d; border: 1px solid #38bdf8; }
+  #mScreens .m-tw-b2 { background: none; color: #e2e8f0; border: 1px solid rgba(255,255,255,.18); }
+}

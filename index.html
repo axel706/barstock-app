@@ -64,7 +64,7 @@
   <link rel="stylesheet" href="styles/skeleton.css?v=skel1">
   <link rel="stylesheet" href="styles/toast.css?v=toast2">
   <link rel="stylesheet" href="styles/marginedge-match.css?v=mem9">
-  <link rel="stylesheet" href="styles/marginedge-connections.css?v=mecss6">
+  <link rel="stylesheet" href="styles/marginedge-connections.css?v=mecss7">
   <link rel="stylesheet" href="styles/empty-state.css?v=empty2">
   <link rel="stylesheet" href="styles/pour-iq.css?v=piq1">
   <link rel="stylesheet" href="styles/admin.css?v=adm3">
@@ -80,7 +80,7 @@
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/chip-glow.css">
   <link rel="stylesheet" href="styles/mobile.css?v=mob5">
-  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp138">
+  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp139">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -321,7 +321,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261107-112705</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261107-233233</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5453,6 +5453,8 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/marginedge-unclaimed.js?v=meu1"></script>
 <script src="src/marginedge-connect.js?v=mec7"></script>
 <script src="src/tripleseat-panel.js?v=tsp7"></script>
+<script src="src/toast-wine.js?v=tw1"></script>
+<script src="src/toast-wine-panel.js?v=twp1"></script>
 
 <!-- ── La app movil ─────────────────────────────────────────────────
      mobile-shell  el armazon: barra de pestañas, boton de escanear y
@@ -5498,7 +5500,8 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/invoice-order-auto.js?v=ioa2"></script>
 <script src="src/mobile-history.js?v=mhis20"></script>
 <script src="src/mobile-invoices.js?v=miv19"></script>
-<script src="src/mobile-settings.js?v=mset5"></script>
+<script src="src/mobile-toast-wine.js?v=mtw1"></script>
+<script src="src/mobile-settings.js?v=mset6"></script>
 <script src="src/mobile-notif.js?v=mnf10"></script>
 <script src="src/count-resume.js?v=cnt12"></script>
 <script src="src/count-insight.js?v=cnt13"></script>
@@ -6258,7 +6261,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     loadSavedBackground();
     window.showSettingsPanel = function(panel) {
       const menu = document.getElementById('settingsMenu');
-      const panelIds = ['general', 'vendorCodes', 'orderDefaults', 'senderProfile', 'appearance', 'categories', 'copyPrices', 'zones', 'integrations', 'meMatch', 'mePurchases', 'meUnclaimed'];
+      const panelIds = ['general', 'vendorCodes', 'orderDefaults', 'senderProfile', 'appearance', 'categories', 'copyPrices', 'zones', 'integrations', 'meMatch', 'mePurchases', 'meUnclaimed', 'toastWine'];
       panelIds.forEach(p => {
         const el = document.getElementById('settingsPanel-' + p);
         if (el) el.classList.add('hidden');
@@ -6800,6 +6803,10 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
         <div id="meSalida" style="margin-top:16px"></div>
       </details>
 
+      <!-- El vino de Toast, emparejado con el inventario: la entrada. La
+           pantalla es settingsPanel-toastWine (src/toast-wine-panel.js). -->
+      <div id="twEntrada" class="tw-entrada"></div>
+
       <!-- Lo mismo para TripleSeat. Antes esto se preguntaba pegando
            código en la consola. Sólo lee; los ejemplos crudos traen
            datos de clientes y van plegados. -->
@@ -6812,6 +6819,11 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
         <div id="tsBotones" class="ts-botones"></div>
         <div id="tsSalida" class="ts-salida"></div>
       </details>
+    </div>
+
+    <div id="settingsPanel-toastWine" class="settings-panel hidden">
+      <button class="settings-back-btn" onclick="showSettingsPanel('integrations')">‹ Connections</button>
+      <div id="twBody"></div>
     </div>
 
     <div id="settingsPanel-mePurchases" class="settings-panel hidden">

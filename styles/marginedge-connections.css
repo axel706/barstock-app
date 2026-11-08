@@ -330,3 +330,77 @@
 }
 .ts-crudo { margin-top: 14px; }
 .ts-crudo > summary { cursor: pointer; font-size: 12px; font-weight: 600; color: var(--sub, #64748b); }
+
+/* ── Wine from Toast (src/toast-wine-panel.js) ─────────────────────────
+   La tabla del escritorio para emparejar cada vino de Toast con una
+   botella del inventario. Con las variables del tema, para que valga en
+   claro y en oscuro. Los botones llevan el id del panel delante: app.css
+   fuerza 999px de radio a todo <button>. */
+.tw-entrada {
+  margin-top: 18px; padding: 14px 16px; border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--text, #e2e8f0) 14%, transparent);
+  display: grid; grid-template-columns: 1fr auto; gap: 4px 14px; align-items: center;
+}
+.tw-ent-t { font-weight: 700; color: var(--text, #e2e8f0); display: flex; gap: 8px; align-items: center; }
+.tw-ent-s { grid-column: 1; font-size: 12.5px; color: var(--sub, #64748b); }
+.tw-entrada .ui-control { grid-column: 2; grid-row: 1 / span 2; }
+
+/* La ventana de Settings mide 560px fijos (estilo en línea) y la tabla
+   de seis columnas se cortaba a la derecha, con los Confirm fuera de la
+   vista. Se ensancha solo mientras esta pantalla está abierta. :has y no
+   JS: así no queda ancha al volver a otro panel. */
+#settingsModalBg .modal:has(#settingsPanel-toastWine:not(.hidden)) { width: min(1080px, 96vw) !important; }
+
+#settingsPanel-toastWine .tw-aviso {
+  margin-top: 10px; padding: 12px 14px; border-radius: 12px; font-size: 13px;
+  color: var(--text, #e2e8f0); background: color-mix(in srgb, var(--accent, #38bdf8) 10%, transparent);
+}
+#settingsPanel-toastWine .tw-aviso small { display: block; margin-top: 4px; color: var(--sub, #64748b); word-break: break-word; }
+#settingsPanel-toastWine .tw-aviso-mal { background: color-mix(in srgb, var(--bad, #ef4444) 12%, transparent); }
+#settingsPanel-toastWine .tw-barra { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+#settingsPanel-toastWine .tw-tabs {
+  display: inline-flex; gap: 3px; padding: 3px; border-radius: 10px;
+  background: color-mix(in srgb, var(--text, #e2e8f0) 7%, transparent);
+}
+#settingsPanel-toastWine .tw-tabs button {
+  border: none; background: none; box-shadow: none; padding: 6px 12px; cursor: pointer;
+  font-size: 12.5px; font-weight: 600; color: var(--sub, #64748b); border-radius: 8px !important;
+}
+#settingsPanel-toastWine .tw-tabs button.on {
+  background: color-mix(in srgb, var(--accent, #38bdf8) 22%, transparent); color: var(--text, #e2e8f0);
+}
+#settingsPanel-toastWine .tw-tabla { width: 100%; margin-top: 12px; border-collapse: collapse; font-size: 13px; }
+#settingsPanel-toastWine .tw-tabla th {
+  text-align: left; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--sub, #64748b); padding: 8px; font-weight: 700;
+  border-bottom: 1px solid color-mix(in srgb, var(--text, #e2e8f0) 12%, transparent);
+}
+#settingsPanel-toastWine .tw-tabla td {
+  padding: 8px; vertical-align: middle;
+  border-bottom: 1px solid color-mix(in srgb, var(--text, #e2e8f0) 6%, transparent);
+}
+#settingsPanel-toastWine .tw-g { color: var(--sub, #64748b); font-size: 12px; }
+#settingsPanel-toastWine .tw-num { font-weight: 700; }
+#settingsPanel-toastWine .tw-sv {
+  font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 7px; white-space: nowrap;
+  background: color-mix(in srgb, var(--text, #e2e8f0) 8%, transparent);
+}
+#settingsPanel-toastWine .tw-sv-b { background: rgba(167,139,250,.18); color: #a78bfa; }
+#settingsPanel-toastWine .tw-sel { min-width: 240px; max-width: 320px; }
+#settingsPanel-toastWine .tw-acc { white-space: nowrap; text-align: right; }
+#settingsPanel-toastWine .tw-n { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 7px; margin-right: 6px; }
+#settingsPanel-toastWine .tw-n-ok { color: #7dd3fc; background: rgba(56,189,248,.16); }
+#settingsPanel-toastWine .tw-n-dudo { color: #fcd34d; background: rgba(251,191,36,.16); }
+#settingsPanel-toastWine .tw-n-no { color: #fca5a5; background: rgba(248,113,113,.16); }
+/* En claro, los mismos tonos más oscuros: el pastel no se lee en blanco. */
+body.light #settingsPanel-toastWine .tw-n-ok { color: #0369a1; }
+body.light #settingsPanel-toastWine .tw-n-dudo { color: #b45309; }
+body.light #settingsPanel-toastWine .tw-n-no { color: #b91c1c; }
+body.light #settingsPanel-toastWine .tw-sv-b { color: #6d28d9; }
+#settingsPanel-toastWine .tw-b {
+  border: none; box-shadow: none; background: none; cursor: pointer; padding: 5px 8px;
+  font-size: 12.5px; font-weight: 700; border-radius: 8px !important;
+}
+#settingsPanel-toastWine .tw-ok { color: var(--good, #16a34a); }
+#settingsPanel-toastWine .tw-link { color: var(--sub, #64748b); }
+#settingsPanel-toastWine .tw-vacio { margin-top: 18px; color: var(--sub, #64748b); font-size: 13px; }

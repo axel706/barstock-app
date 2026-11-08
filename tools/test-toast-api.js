@@ -282,7 +282,7 @@ grupo('solo lee');
     '/orders/v2/ordersBulk': { status: 200, body: [] }
   };
   const metodos = [];
-  for (const a of ['ping', 'restaurant', 'menu', 'orders', 'drinks']) {
+  for (const a of ['ping', 'restaurant', 'menu', 'orders', 'drinks', 'wine']) {
     await llamar({ accion: a });
     for (const p of peticiones) metodos.push(p.metodo + ' ' + p.url.replace(/https:\/\/[^/]+/, ''));
     prueba(a + ': a Supabase solo le valida la sesion', sbLlamadas.length === 0, sbLlamadas.join(','));
@@ -373,6 +373,51 @@ grupo('drinks: que se vende de bebida y como lo cuenta Toast');
   const n1 = sin.body.porCategoria[0].articulos.length, n2 = con.body.porCategoria[0].articulos.length;
   prueba('sin filtro, los 30 que mas se venden', n1 === 30, n1);
   prueba('con filtro, mas de esa categoria', n2 === 60, n2);
+}
+
+grupo('wine: los vinos del menu y lo vendido de cada uno');
+{
+  // Para emparejar cada articulo de Toast con una botella del inventario.
+  entorno();
+  const menu = { menus: [
+    { name: 'DRINKS', menuGroups: [
+      { name: 'Wine', menuGroups: [
+        { name: 'Whites By The Glass', menuItems: [{ guid: 'w-sb', name: 'Sauv Blanc - Whitehaven' }] },
+        { name: 'Red By The Bottle', menuItems: [{ guid: 'w-bdx', name: 'BTL Bordeaux - Les Cadrans' }] }
+      ]},
+      { name: 'Liquor', menuGroups: [{ name: 'Vodka', menuItems: [{ guid: 'l-tito', name: 'Titos vodka' }] }] }
+    ]},
+    { name: 'HAPPY HOUR', menuGroups: [{ name: 'HH Wines', menuItems: [
+      { guid: 'w-pio', name: 'Pio Pinot Grigio' }, { guid: 'w-btl', name: 'BTL House Red' } ] }] }
+  ] };
+  const sel = (g, q, extra) => Object.assign({ item: { guid: g }, quantity: q }, extra || {});
+  const ordenes = [
+    { checks: [{ selections: [sel('w-sb', 2), sel('w-pio', 1), sel('l-tito', 5)] }] },
+    // El cobro malo se anula y se timbra otra con Don't Make: cuenta UNA.
+    { checks: [{ selections: [sel('w-pio', 1, { voided: true }), sel('w-pio', 1, { modifiers: [{ displayName: "Don't Make" }] })] }] },
+    { voided: true, checks: [{ selections: [sel('w-sb', 9)] }] },
+    { checks: [{ selections: [sel('w-bdx', 1)] }] }
+  ];
+  respuestas = {
+    '/authentication/': LOGIN_OK,
+    '/menus/v2/menus': { status: 200, body: menu },
+    '/orders/v2/ordersBulk': (url) => ({ status: 200, body: /page=1(&|$)/.test(url) ? ordenes : [] })
+  };
+  const r = await llamar({ accion: 'wine', params: { businessDate: '20261106' } });
+  const b = r.body;
+  const art = Object.fromEntries((b.articulos || []).map(a => [a.guid, a]));
+  prueba('salen los vinos del menu, y no el vodka', !!art['w-sb'] && !!art['w-bdx'] && !!art['w-pio'] && !art['l-tito'], Object.keys(art).join(','));
+  prueba('copa por defecto', art['w-sb'] && art['w-sb'].servicio === 'glass' && art['w-pio'].servicio === 'glass');
+  prueba('botella por el grupo "By The Bottle"', art['w-bdx'] && art['w-bdx'].servicio === 'bottle');
+  prueba('botella por el nombre "BTL"', art['w-btl'] && art['w-btl'].servicio === 'bottle');
+  prueba('con la ruta del grupo', art['w-pio'] && art['w-pio'].grupo === 'HAPPY HOUR › HH Wines', art['w-pio'] && art['w-pio'].grupo);
+  const v = b.vendido || {};
+  prueba('vendido por articulo, sin lo anulado', v['w-sb'] === 2 && v['w-bdx'] === 1, JSON.stringify(v));
+  prueba("el Don't Make cuenta, la linea anulada no (Pio: 1 + 1)", v['w-pio'] === 2, v['w-pio']);
+  prueba('lo que no es vino no entra en lo vendido', v['l-tito'] === undefined);
+  prueba('dice de que restaurante es', b.restaurante === GUID, b.restaurante);
+  prueba('y si el dia esta entero', b.diaCompleto === true);
+  prueba('sin el token', !JSON.stringify(b).includes(TOKEN_TOAST));
 }
 
 grupo('la sesion se comprueba una vez, antes de repartir');
