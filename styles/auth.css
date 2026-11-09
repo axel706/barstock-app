@@ -578,7 +578,10 @@ html.loc-switch-out #locCurtain{
   font-family:"Manrope",-apple-system,BlinkMacSystemFont,sans-serif;
   color:#e5e7eb;
 }
-html.bs-upd body{ overflow:hidden; }
+/* La página entera quieta mientras dura, no sólo el body: en iOS lo
+   que se desplaza es el documento, y una capa fija se mueve con él
+   (los saltos del logo que grabó Axel). */
+html.bs-upd, html.bs-upd body{ overflow:hidden; }
 
 #bsUpd .bu-iris{
   position:absolute;

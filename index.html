@@ -58,7 +58,7 @@
   <link rel="stylesheet" href="styles/order-history.css">
 
   <link rel="stylesheet" href="styles/fixes.css">
-  <link rel="stylesheet" href="styles/auth.css?v=login13">
+  <link rel="stylesheet" href="styles/auth.css?v=login14">
   <link rel="stylesheet" href="styles/cost-report.css?v=steps20">
   <link rel="stylesheet" href="styles/motion.css?v=motion3">
   <link rel="stylesheet" href="styles/skeleton.css?v=skel1">
@@ -223,6 +223,14 @@
 
   var TOPE = 10000;
   var h = document.documentElement;
+  // La página nueva nace arriba y quieta. Al recargar, Safari la
+  // devolvía al scroll de la vieja (Axel estaba en Inventory, con la
+  // lista bajada); al arrancar la app, la página cambia de alto y vuelve
+  // arriba, e iOS mueve las capas fijas con ese desplazamiento: el logo,
+  // el texto y la barra brincaban y bajaban deslizándose mientras se
+  // llenaba la barra (medido en su grabación: +23 px y +47 px).
+  try { history.scrollRestoration = 'manual'; } catch (e) {}
+  try { window.scrollTo(0, 0); } catch (e) {}
   h.classList.add('bs-upd');
   var o = document.createElement('div');
   o.id = 'bsUpd';
@@ -321,7 +329,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261109-100959</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261109-103347</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">

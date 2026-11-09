@@ -206,6 +206,37 @@ grupo('9 · la pantalla de la barra no pasa de largo');
   prueba('la contraccion y la apertura no cambiaron', T.cierra === 380 && T.abre === 480, T.cierra + ' / ' + T.abre);
 }
 
+grupo('10 · la pantalla del logo no brinca');
+{
+  // Axel lo grabó (2026-11-09): mientras se llenaba la barra, el logo,
+  // el texto y la barra brincaban hacia arriba y bajaban deslizándose.
+  // Medido fotograma a fotograma: +23 px a los 0.8 s, +47 px a los 1.2 s
+  // y vuelta en 0.25 s. Es lo que hace iOS con una capa fija cuando la
+  // página se desplaza por debajo: al recargar, Safari devuelve la página
+  // al scroll que tenía la vieja (estaba en Inventory, con la lista
+  // bajada), y al arrancar la app la página cambia de alto y vuelve
+  // arriba. La página nueva tiene que nacer arriba y quedarse quieta.
+  const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', { url: 'https://app.barstockpro.com/', runScripts: 'outside-only' });
+  const w = dom.window;
+  const scrolls = [];
+  w.scrollTo = (x, y) => { scrolls.push([x, y]); };
+  w.sessionStorage.setItem('barstock.updatingTo', BUILD);
+  w.eval(HEAD);
+  prueba('no recupera el scroll de la página vieja', w.history.scrollRestoration === 'manual', w.history.scrollRestoration);
+  prueba('y arranca arriba', scrolls.some(([x, y]) => x === 0 && y === 0), JSON.stringify(scrolls));
+  const css = leer('styles/auth.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  prueba('mientras dura, la página entera no se desplaza (html, no sólo body)',
+    /html\.bs-upd\s*[,{][^{}]*\{[^}]*overflow\s*:\s*hidden/.test(css), (css.match(/html\.bs-upd[^{]*\{[^}]*\}/g) || []).join(' | '));
+}
+{
+  // Sin actualización, nada de esto: un recargar normal recupera su scroll.
+  const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', { url: 'https://app.barstockpro.com/', runScripts: 'outside-only' });
+  const w = dom.window;
+  w.scrollTo = () => {};
+  w.eval(HEAD);
+  prueba('sin actualización no toca el scroll', w.history.scrollRestoration !== 'manual', w.history.scrollRestoration);
+}
+
 grupo('8 · el iris no se apaga con opacity');
 {
   const css = leer('styles/auth.css').replace(/\/\*[\s\S]*?\*\//g, '');
