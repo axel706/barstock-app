@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-084606",
+    "items": [
+      "Counting: the app no longer shows through above the keyboard"
+    ]
+  },
+  {
     "build": "20261109-011602",
     "items": [
       "Add a note for the vendor when sending an order",
@@ -184,13 +190,6 @@
     "build": "20261106-134138",
     "items": [
       "Smirnoff bottle shape"
-    ]
-  },
-  {
-    "build": "20261106-132509",
-    "items": [
-      "Version center here in More",
-      "See what changed in the last 10 versions"
     ]
   }
 ]

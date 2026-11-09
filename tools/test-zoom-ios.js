@@ -147,6 +147,32 @@ grupo('ni las clases que el JS pone a un input');
   prueba('por clase', malos.length === 0, malos.join(' | '));
 }
 
+grupo('con el teclado abierto no asoma la app debajo del conteo');
+{
+  // Al abrir el teclado numérico del panel de conteo, iOS no encoge las
+  // capas fijas: desplaza la vista hacia abajo para enseñar el campo, y
+  // por debajo del borde del panel asomaba la app (las tarjetas del
+  // Home), entre el botón Next y el teclado. Axel lo vio contando.
+  //
+  // El fondo del panel se alarga por debajo de su borde: lo que asome
+  // es más panel. Sin cambiar cómo se reparte ni se mueve el conteo.
+  const cp = fs.readFileSync(path.join(RAIZ, 'styles/count-panel.css'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '');
+  const regla = (sel) => {
+    const re = new RegExp('(^|})\\s*' + sel.replace(/[.:()]/g, '\\$&') + '\\s*\\{([^}]*)\\}', 'm');
+    const m = re.exec(cp);
+    return m ? m[2] : null;
+  };
+  const tras = regla('.cp-panel::after');
+  prueba('el panel tiene un fondo por debajo de su borde', !!tras);
+  prueba('empieza donde acaba el panel', !!tras && /top:\s*100%/.test(tras), tras);
+  prueba('y es alto como la pantalla', !!tras && /height:\s*100vh/.test(tras), tras);
+  prueba('del mismo color que el panel (oscuro y claro)', !!tras && /background:\s*inherit/.test(tras), tras);
+  prueba('y no se come los toques', !!tras && /pointer-events:\s*none/.test(tras), tras);
+  const panel = regla('.cp-panel');
+  prueba('el panel no lo recorta', !!panel && !/overflow\s*:\s*hidden/.test(panel), panel);
+}
+
 grupo('y el suelo se escribe siempre igual');
 {
   // `max(16px, …)` y no un 16px pelado: así el campo sigue creciendo

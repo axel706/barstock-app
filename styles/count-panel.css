@@ -25,6 +25,21 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 .cp-panel.on{ display: flex; }
+/* El fondo sigue por debajo del borde del panel. Al abrir el teclado
+   numérico (cantidades grandes), iOS no encoge las capas fijas: desplaza
+   la vista hacia abajo para enseñar el campo, y entre el botón Next y el
+   teclado asomaba la app de debajo (las tarjetas del Home). Con esto lo
+   que asoma es más panel. `inherit` toma el color del panel, también en
+   modo claro. No recibe toques: no tapa nada que se pueda pulsar. */
+.cp-panel::after{
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  top: 100%;
+  height: 100vh;
+  background: inherit;
+  pointer-events: none;
+}
 
 .cp-head{
   display: flex;
