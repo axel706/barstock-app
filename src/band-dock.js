@@ -172,10 +172,10 @@
   // contiene su overscroll-behavior. Lo que vive fuera de la pantalla
   // (la ficha de un producto, en <body>) no se toca.
   //
-  // Frenaba también en los extremos de la lista, y al final de ella no
-  // se podía volver (Axel, 2026-11-09): en iOS, cancelar el primer
-  // movimiento bloquea el gesto ENTERO, y ese primer movimiento puede
-  // leerse como "seguir empujando".
+  // Frenaba también en los extremos de la lista, y se quitó: cancelar el
+  // primer movimiento de un toque bloquea en iOS el gesto ENTERO. (Lo
+  // que de verdad impedía volver desde el final era otra cosa: el tirón
+  // de recargar del armazón. Ver más abajo.)
   //
   // Tampoco se le quita el alto a la pantalla: con una página corta la
   // barra de pestañas sube y deja negro debajo (ver .m-screen.on). La
@@ -197,19 +197,20 @@
     if (!a.scroll.contains(t) || !cabeMover(a.scroll)) e.preventDefault();
   }
 
-  // ── La trampa de iOS con una lista dentro de una página ──────────
+  // ── Que el gesto sea siempre de la lista ─────────────────────────
   //
-  // Con la lista JUSTO en su tope, iOS le da el gesto a la página de
-  // detrás, y la página se lo queda un rato: como en Buscar todo es
-  // fijo, no se ve moverse nada y la lista parece bloqueada. Axel lo
-  // vio dos veces al llegar al final (2026-11-09); la primera era
-  // además mi freno de los extremos, la segunda era esto solo.
-  // overscroll-behavior no lo evita en el iPhone.
+  // Al poner el dedo, si la lista está en un tope se la separa 1 px:
+  // así un gesto nunca empieza en el borde, que es cuando iOS se lo
+  // puede dar a la página de detrás. Ese píxel no cuenta como "bajado"
+  // para el desenfoque (ver actualizar) ni para el tirón de recargar
+  // (mobile-shell.js, dentroDeAlgoBajado).
   //
-  // El remedio de siempre: al poner el dedo, si la lista está en un
-  // tope se la separa 1 px. Nunca empieza un gesto en el borde, así
-  // que el gesto es siempre suyo. Ese píxel no cuenta como "bajado"
-  // para el desenfoque (ver actualizar).
+  // OJO, esto es una precaución y no un arreglo medido. Se puso creyendo
+  // que la lista "bloqueada al final" era esa trampa de iOS, y no lo
+  // era: era el tirón de recargar del armazón, que miraba sólo la
+  // página (lo enseñó el video de Axel, 2026-11-09). Se deja porque es
+  // inofensivo y la página puede moverse por detrás; si estorba, se
+  // puede quitar sin miedo.
   const cabeMover = (sc) => sc.scrollHeight - sc.clientHeight > 2;
   function alTocar(e) {
     const a = _actual;

@@ -274,6 +274,33 @@ console.log('\nel tiempo real llega a la pantalla que esta delante');
   eq('sin refrescar, no pasa nada', refrescos, []);
 }
 
+console.log('\ntirar para recargar no le roba el gesto a una lista bajada');
+{
+  // Axel, 2026-11-09, en video: en Buscar, al final de los resultados,
+  // bajar el dedo para volver a subir disparaba el tirón de recargar (la
+  // cinta giraba, "Orders loaded") y la lista no se movía. El tirón sólo
+  // miraba si la PÁGINA estaba arriba del todo, y en Buscar lo está
+  // siempre: lo que se desplaza es la lista (band-dock.js).
+  const w = montar(true);
+  const lista = w.document.createElement('div');
+  const fila = w.document.createElement('div');
+  lista.appendChild(fila); w.document.body.appendChild(lista);
+  const tirar = (el) => {
+    const a = new w.Event('touchstart', { bubbles: true, cancelable: true });
+    a.touches = [{ clientX: 200, clientY: 300 }]; el.dispatchEvent(a);
+    const m = new w.Event('touchmove', { bubbles: true, cancelable: true });
+    m.touches = [{ clientX: 200, clientY: 380 }]; el.dispatchEvent(m);
+    el.dispatchEvent(new w.Event('touchcancel', { bubbles: true }));
+    return m.defaultPrevented;
+  };
+  lista.scrollTop = 900;
+  ok('con la lista bajada, bajar el dedo la desplaza: no es un tirón', tirar(fila) === false);
+  lista.scrollTop = 1;
+  ok('con la lista arriba (a 1 px, como la deja band-dock), sí es el tirón', tirar(fila) === true);
+  lista.scrollTop = 0;
+  ok('y fuera de cualquier lista, con la página arriba, también', tirar(w.document.body) === true);
+}
+
 console.log('\nel pellizco no amplia');
 {
   // Se vigila con JavaScript y no con user-scalable=no en el viewport:

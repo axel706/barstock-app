@@ -535,6 +535,24 @@
     return (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
   }
 
+  // ¿El dedo cayó dentro de algo que tiene su propio scroll y está
+  // bajado? Entonces bajar el dedo es desplazar ESO, no recargar.
+  //
+  // El tirón sólo miraba la página, y en Buscar la página está siempre
+  // arriba: lo que se desplaza es la lista (band-dock.js). Al final de
+  // los resultados, bajar el dedo para volver disparaba el tirón —la
+  // cinta giraba y salía "Orders loaded"— y la lista no se movía (Axel,
+  // 2026-11-09, en video). Yo lo había tomado por un bloqueo de iOS.
+  //
+  // Más de 1 px, no más de 0: band-dock.js deja la lista a 1 px del
+  // tope al poner el dedo, y eso sigue siendo "arriba".
+  function dentroDeAlgoBajado(el) {
+    for (let n = el; n && n !== document.body && n.nodeType === 1; n = n.parentElement) {
+      if (n.scrollTop > 1) return true;
+    }
+    return false;
+  }
+
   function cinta() {
     let el = document.getElementById('mPull');
     if (!el) {
@@ -560,7 +578,7 @@
       x: t.clientX, y: t.clientY,
       // Sólo cuenta como tirón si se empieza con la página arriba del
       // todo. Si no, tirar hacia abajo es desplazarse, no recargar.
-      puedeTirar: arribaDelTodo(),
+      puedeTirar: arribaDelTodo() && !dentroDeAlgoBajado(e.target),
       puedeVolver: t.clientX <= BORDE && !!atrasDe(),
       haciendo: null
     };
