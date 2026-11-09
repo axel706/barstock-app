@@ -114,8 +114,10 @@ grupo('el cuerpo llega al borde de la tarjeta');
   // La columna de la cifra reserva 82px en TODA la altura y debajo de
   // la cifra no los usa nadie. Sin recuperarlos, "out", "8.4/wk" y
   // "no price" se paran 82px antes del borde.
+  // Con la medida en la variable --m-hero-r (la misma que el ancho de
+  // la columna), o escrita a mano como antes.
   prueba('recupera la columna de la cifra',
-    !!r && /margin-right:\s*-8[02]px/.test(r), (r || '').trim());
+    !!r && /margin-right:\s*(-8[02]px|calc\(var\(--m-hero-r\)\s*\*\s*-1\))/.test(r), (r || '').trim());
 
   // Prosa no: una frase no es una tabla de dos columnas.
   prueba('la prosa no se desplaza',
