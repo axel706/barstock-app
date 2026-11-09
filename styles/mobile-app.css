@@ -828,13 +828,19 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     /* 1.5 × la base del texto, no 21px fijos: así el renglón sigue al
      * ajuste de "Text size" como todo lo demás de la app. */
     --m-ren: calc(var(--m-base) * 1.5);
+    /* El ancho de la columna de la cifra, en UN sitio. Lo usan la
+     * columna, el cuerpo y los tramos del conteo para salirse por
+     * debajo de ella hasta el borde. Estaba escrito a mano dos veces, y
+     * los tramos, que no lo llevaban, se quedaban cortos: parecía que
+     * después de la raya había algo más (Axel, 2026-11-09). */
+    --m-hero-r: 82px;
     display: flex; flex-direction: column; padding: 13px;
     border-radius: 20px; box-sizing: border-box;
     overflow: hidden;
   }
   .m-hero-top { display: flex; gap: 10px; flex: 1 1 auto; min-height: 0; }
   .m-hero-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-  .m-hero-r { width: 82px; flex: 0 0 82px; text-align: right; }
+  .m-hero-r { width: var(--m-hero-r); flex: 0 0 var(--m-hero-r); text-align: right; }
 
   /* ── El cuerpo: tres renglones y ni uno más ────────────────────────
    *
@@ -849,7 +855,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * que descuadrar el carril entero. */
   .m-hero-cuerpo {
     height: calc(var(--m-ren) * 3);
-    margin-top: 9px; margin-right: -82px;
+    margin-top: 9px; margin-right: calc(var(--m-hero-r) * -1);
     overflow: hidden;
   }
   /* Prosa no es lista: una frase que ocupa tres líneas no son tres
@@ -1103,9 +1109,15 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * Diseño de Axel (E5 + E6). Cada tramo es el 10 % de lo esperado; la
    * raya es donde acaba lo que había la última vez. A trozos a
    * propósito: lo esperado es una estimación y una barra continua
-   * prometería más precisión de la que hay. Mismo margen que .m-prog,
-   * para que la tarjeta no crezca y el carril no cambie de alto. */
-  .m-tramos { display: flex; align-items: center; gap: 3px; margin-top: 9px; }
+   * prometería más precisión de la que hay. Mismo margen arriba que
+   * .m-prog, para que la tarjeta no crezca y el carril no cambie de
+   * alto. Y se sale por debajo de la cifra hasta el borde, como el
+   * cuerpo: la raya es el final, y un hueco detrás parecía decir que
+   * quedaba algo. */
+  .m-tramos {
+    display: flex; align-items: center; gap: 3px; margin-top: 9px;
+    margin-right: calc(var(--m-hero-r) * -1);
+  }
   .m-tramos i { flex: 1; height: 8px; border-radius: 2px; background: rgba(255,255,255,.16); }
   .m-tramos i.on { background: #22c55e; }
   .m-tramos b { flex: 0 0 2px; height: 14px; margin-left: 3px; border-radius: 1px; background: #fff; }

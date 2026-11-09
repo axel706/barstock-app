@@ -249,6 +249,20 @@ grupo('una locación sin conteo anterior');
   prueba('pero el titular sigue en botellas', /120/.test((c.querySelector('.m-hero-t') || {}).textContent));
 }
 
+grupo('los tramos llegan al borde, como los renglones');
+{
+  // Los tramos vivían en la columna del texto y acababan donde empieza
+  // la de la cifra: detrás de la raya quedaba un hueco que parecía
+  // decir que había algo más (Axel, 2026-11-09). El cuerpo ya se salía
+  // por debajo de la cifra; los tramos ahora igual, con la misma medida.
+  const css = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const regla = (sel) => { const m = new RegExp('(^|})\\s*' + sel.replace(/[.-]/g, '\\$&') + '\\s*\\{([^}]*)\\}', 'm').exec(css); return m ? m[2] : ''; };
+  prueba('los tramos se salen por debajo de la cifra', /margin-right:\s*calc\(var\(--m-hero-r\)\s*\*\s*-1\)/.test(regla('.m-tramos')), regla('.m-tramos'));
+  prueba('igual que el cuerpo', /margin-right:\s*calc\(var\(--m-hero-r\)\s*\*\s*-1\)/.test(regla('.m-hero-cuerpo')), regla('.m-hero-cuerpo'));
+  prueba('y la columna mide eso mismo', /width:\s*var\(--m-hero-r\)/.test(regla('.m-hero-r')), regla('.m-hero-r'));
+  prueba('el ancho está escrito en un solo sitio', (css.match(/\b82px\b/g) || []).length === 1, String((css.match(/\b82px\b/g) || []).length));
+}
+
 grupo('abandonado dice desde cuándo');
 {
   const c = tarjeta(entorno(Object.assign({}, BASE,
