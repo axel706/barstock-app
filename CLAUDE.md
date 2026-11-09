@@ -208,6 +208,20 @@ mueve. Una copia de un `<input>` no sirve: el teclado escribiría en el
 escondido. Y sticky en la página tampoco: en el iPhone el teclado se
 lleva el header y el elástico arrastra la barra
 (`overscroll-behavior` en el `<html>` no lo para ahí).
+
+Con título **y** campo de verdad (Inventory), la tercera forma:
+`pegado`, con `scroll`, `titulo` y `nombre`. La lista lleva su propio
+scroll; el bloque que se queda (pestañas y filtro) se pega con sticky
+*dentro* de la lista, que lo mueve el navegador y por eso es suave; y
+el título de la pantalla sustituye al logo en el header con un fundido
+ligado al scroll, no disparado: primero se va el logo, después entra
+el título. Axel lo pidió así: "que la animación sea suave".
+
+Dos cosas que muerden con listas de scroll propio: **el tirón de
+recargar** del armazón miraba sólo la página y le robaba el gesto a la
+lista (ya mira dónde cae el dedo), y **una página corta sube la barra
+de pestañas** en la app instalada (no quitarle el alto mínimo a la
+pantalla ni fijar el `body`).
 **Una sección nueva lo usa, no lo copia.** La prueba es
 `tools/test-banda-acoplada.js`.
 

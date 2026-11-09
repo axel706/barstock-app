@@ -301,6 +301,72 @@ if (SRC) {
     prueba('volviendo al Home, el Home se sigue acoplando', acoplada(w) && !!w.document.querySelector('#mDock .m-searchbar'));
   })();
 
+  grupo('Inventory: el título pasa al header y pestañas y filtro se quedan');
+  await (async () => {
+    // Axel, 2026-11-09: "al empezar a hacer scroll inventory se va y
+    // reemplaza el logo en el header, todo el contenido arriba de la
+    // línea roja se congela y el progressive blur empieza de ahí". Y que
+    // la animación sea suave: por eso el fundido va ligado al scroll (no
+    // se dispara de golpe) y el bloque se pega por CSS (sticky dentro de
+    // la lista), no moviéndolo con JavaScript.
+    const w = new JSDOM('<!doctype html><html><body class="m-shell"><header id="mBand" class="m-band"><span class="m-logo">BarStock</span></header>' +
+      '<div id="mScreens"><div class="m-screen on" data-screen="inventory"><div id="miScroll">' +
+      '<div class="m-inv-h" id="tit"><span class="m-inv-t">Inventory</span></div>' +
+      '<div id="blo"><div class="m-seg"></div><div class="m-inv-bar2"><input id="miInput"></div></div>' +
+      '<div id="miList"></div></div></div><div class="m-screen" data-screen="orders"></div></div></body></html>',
+      { url: 'https://x.test/', runScripts: 'outside-only' }).window;
+    w.requestAnimationFrame = (f) => { f(); return 1; };
+    const band = w.document.getElementById('mBand');
+    band.getBoundingClientRect = () => ({ top: 0, bottom: BANDA, height: BANDA });
+    w.eval(SRC);
+    const inv = w.document.querySelector('[data-screen="inventory"]'), ord = w.document.querySelector('[data-screen="orders"]');
+    const sc = w.document.getElementById('miScroll'), blo = w.document.getElementById('blo'), tit = w.document.getElementById('tit');
+    blo.getBoundingClientRect = () => ({ top: D0, bottom: D0 + 110, height: 110, left: 13, width: 364 });
+    const eng = () => w.BarStockBandDock.enganchar({ pantalla: inv, scroll: sc, pegado: blo, titulo: tit, nombre: 'Inventory' });
+    eng();
+    // En reposo el bloque está 60 px por debajo de donde se pega. Lo
+    // dice la marca de antes del bloque, no el bloque: su offsetTop,
+    // una vez pegado, crece con el scroll.
+    const marca = blo.previousElementSibling;
+    prueba('hay una marca fija justo antes del bloque', !!marca && marca.classList.contains('m-dock-marca'));
+    Object.defineProperty(marca, 'offsetTop', { value: D0 + 60, configurable: true });
+    Object.defineProperty(blo, 'offsetTop', { get: () => D0 + 60 + sc.scrollTop, configurable: true });
+    sc.dispatchEvent(new w.Event('scroll'));
+    const q = () => band.style.getPropertyValue('--m-dock-q');
+    const velo = blo.querySelector('.m-dock-velo');
+    const bt = band.querySelector('.m-band-titulo');
+    prueba('la lista lleva su propio scroll', sc.classList.contains('m-dock-scroll') && sc.classList.contains('m-dock-con-titulo'));
+    prueba('pestañas y filtro van pegados (sticky), sin copia', blo.classList.contains('m-dock-pegado') && !w.document.querySelector('#mDock .m-searchbar'));
+    prueba('con su desenfoque dentro, detrás de ellos', !!velo && blo.firstElementChild === velo);
+    prueba('el header tiene el título de la pantalla', !!bt && bt.textContent === 'Inventory' && band.classList.contains('m-con-titulo'));
+    prueba('en reposo: el logo, el título grande entero y sin desenfoque', q() === '0' && tit.style.opacity === '' && velo.style.opacity === '0',
+      [q(), tit.style.opacity, velo.style.opacity].join(' | '));
+    sc.scrollTop = 30; sc.dispatchEvent(new w.Event('scroll'));
+    const medio = Number(q());
+    prueba('a medio camino: el fundido va por la mitad, ligado al scroll', medio > 0 && medio < 1 && Number(tit.style.opacity) > 0 && Number(tit.style.opacity) < 1,
+      [q(), tit.style.opacity].join(' | '));
+    sc.scrollTop = 60; sc.dispatchEvent(new w.Event('scroll'));
+    prueba('acoplado: el título en el header, el grande fuera, desenfoque entero', q() === '1' && tit.style.opacity === '0' && velo.style.opacity === '1',
+      [q(), tit.style.opacity, velo.style.opacity].join(' | '));
+    sc.scrollTop = 900; sc.dispatchEvent(new w.Event('scroll'));
+    prueba('más abajo sigue igual', q() === '1' && velo.style.opacity === '1');
+    sc.scrollTop = 30; sc.dispatchEvent(new w.Event('scroll'));
+    prueba('y al volver retrocede por el mismo camino', Number(q()) === medio);
+    eng();                                   // refrescar: show() en la misma pantalla
+    prueba('un repintado no duplica el desenfoque ni el título', blo.querySelectorAll('.m-dock-velo').length === 1 && band.querySelectorAll('.m-band-titulo').length === 1 && sc.querySelectorAll('.m-dock-marca').length === 1);
+    prueba('ni mueve la lista de donde estaba', sc.scrollTop === 30);
+
+    // A otra pestaña: vuelve el logo.
+    sc.scrollTop = 900; sc.dispatchEvent(new w.Event('scroll'));
+    inv.classList.remove('on'); ord.classList.add('on');
+    await new Promise(r => setTimeout(r, 0));
+    prueba('en otra pestaña, el header vuelve al logo', !band.classList.contains('m-con-titulo') && q() === '');
+    // Y al volver a Inventory se entra arriba, como siempre.
+    ord.classList.remove('on'); inv.classList.add('on');
+    await new Promise(r => setTimeout(r, 0));
+    prueba('al volver a la pestaña, la lista empieza arriba', sc.scrollTop === 0 && q() === '0', sc.scrollTop + ' | ' + q());
+  })();
+
   grupo('lo que vio Axel en el iPhone (2026-11-09)');
   {
     // Sin las reglas comentadas: la que manda es la última y la de verdad.
@@ -325,6 +391,12 @@ if (SRC) {
     const bus = fs.readFileSync(path.join(RAIZ, 'src/mobile-search.js'), 'utf8');
     prueba('mobile-search.js fija su barra con la lista aparte', /BarStockBandDock[\s\S]{0,300}fija:\s*true[\s\S]{0,80}scroll:/.test(bus));
     prueba('band-dock.js antes que mobile-search.js', i > 0 && i < html.indexOf('src/mobile-search.js'));
+    const invSrc = fs.readFileSync(path.join(RAIZ, 'src/mobile-inventory.js'), 'utf8');
+    prueba('mobile-inventory.js pega su bloque y pasa el título', /BarStockBandDock[\s\S]{0,400}pegado:[\s\S]{0,120}titulo:/.test(invSrc));
+    prueba('band-dock.js antes que mobile-inventory.js', i > 0 && i < html.indexOf('src/mobile-inventory.js'));
+    const css2 = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    prueba('el bloque se pega por CSS (sticky), no con JavaScript', /\.m-dock-pegado\s*\{[^}]*position\s*:\s*sticky/.test(css2));
+    prueba('un aviso en el header tapa también el título', /m-band-bub\s+\.m-band-titulo[^{]*\{[^}]*opacity\s*:\s*0/.test(css2));
   }
 }
 

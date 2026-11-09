@@ -770,6 +770,82 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   /* Con el teclado no hay barra de pestañas que salvar abajo. */
   body.m-kb .m-dock-scroll { padding-bottom: 24px; }
+
+  /* ── Inventory: el título al header, y pestañas y filtro pegados ───
+   *
+   * (band-dock.js, forma `pegado`.) La lista lleva su propio scroll,
+   * como en Buscar, pero aquí empieza con el título de la pantalla: el
+   * hueco de arriba es el de la banda más el margen de toda pantalla.
+   *
+   * El bloque (pestañas y filtro) se pega con `position: sticky` DENTRO
+   * de la lista. Lo mueve el navegador en su propio hilo, no JavaScript
+   * al compás del scroll: por eso no tiembla ni se retrasa. Sticky en
+   * la PÁGINA falló en el iPhone (teclado, elástico); dentro de una
+   * lista con scroll propio no le afecta ninguna de las dos cosas.
+   *
+   * El desenfoque (.m-dock-velo) va dentro del bloque, detrás de sus
+   * hijos, y se sale de él: por arriba hasta el borde de la pantalla,
+   * por los lados hasta el de la lista, y 30 px por abajo, donde la
+   * máscara lo deshace. No puede ser #mDock, que es fijo y va por
+   * encima de toda la lista: desenfocaría también las pestañas y el
+   * filtro, que viven dentro de ella. Su opacidad la pone band-dock.js
+   * según lo que falta para pegarse; en reposo es 0, que si no
+   * emborronaría el título.
+   *
+   * Los hijos van en su propia capa (translateZ) por lo mismo que el
+   * logo: en iPhone, un desenfoque se traga a los vecinos que no la
+   * tienen. */
+  /* El hueco de arriba es un espaciador y no padding: con padding, el
+   * punto donde se pega un sticky se cuenta desde el borde de DENTRO
+   * del padding, y el bloque se quedaba 113 px más abajo de su sitio. */
+  body.m-shell .m-dock-scroll.m-dock-con-titulo { padding-top: 0; }
+  .m-dock-scroll.m-dock-con-titulo::before {
+    content: ''; display: block; height: calc(var(--m-banda, 52px) + 14px);
+  }
+  .m-dock-marca { display: block; height: 0; }
+  body.m-shell .m-dock-pegado {
+    position: sticky; z-index: 2;
+    top: var(--m-dock-top, calc(60px + env(safe-area-inset-top, 0px)));
+  }
+  .m-dock-pegado > :not(.m-dock-velo) { position: relative; z-index: 1; transform: translateZ(0); }
+  .m-dock-velo {
+    position: absolute; z-index: 0; pointer-events: none; opacity: 0;
+    left: -13px; right: -13px; bottom: -30px;
+    top: calc(-1 * var(--m-dock-top, 60px));
+    backdrop-filter: blur(22px) saturate(130%); -webkit-backdrop-filter: blur(22px) saturate(130%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 30px), transparent 100%);
+            mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 30px), transparent 100%);
+  }
+
+  /* El título de la pantalla en el header, en el sitio del logo. Cuánto
+   * se ve lo dice --m-dock-q (0 → 1), que band-dock.js mueve con el
+   * scroll: el logo sube un poco y se apaga en la primera mitad, y el
+   * título sube a su sitio y aparece en la segunda. Uno detrás del otro
+   * y no a la vez: cruzados, a medio camino se leían los dos encimados.
+   * Ligado al dedo, no disparado: a medio camino se queda a medias, y
+   * al volver deshace lo andado.
+   *
+   * La transición corta de opacidad es sólo para limar los saltos entre
+   * dos avisos de scroll; el movimiento va directo.
+   *
+   * Con un aviso en la banda (m-band-bub) el título se quita, como el
+   * logo: el aviso ocupa ese sitio. Esa regla va más abajo, junto a la
+   * del logo. */
+  .m-band-titulo {
+    position: absolute; left: 66px; right: 66px; bottom: 0; height: 52px; z-index: 2;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none; white-space: nowrap;
+    font-size: var(--m-head); font-weight: 800; color: #fff; letter-spacing: -.5px;
+    text-shadow: 0 1px 12px rgba(0,0,0,.55);
+    opacity: clamp(0, calc(var(--m-dock-q, 0) * 2 - 1), 1);
+    transform: translateY(calc((1 - var(--m-dock-q, 0)) * 8px)) translateZ(0);
+    transition: opacity .12s linear;
+  }
+  .m-band.m-con-titulo .m-logo {
+    opacity: clamp(0, calc(1 - var(--m-dock-q, 0) * 2), 1);
+    transform: translateY(calc(var(--m-dock-q, 0) * -6px)) translateZ(0);
+    transition: opacity .12s linear;
+  }
   /* La copia de la búsqueda. Fuera de .m-screens no le llega el reset
    * de botones, y app.css le pondría su sombra, su blur y el radio de
    * 999px: de ahí el prefijo de id, que es lo único que gana a ese
@@ -2519,6 +2595,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
 
   .m-logo { transition: opacity .22s ease; }
   .m-band.m-band-bub .m-logo { opacity: 0; }
+  /* Y el título de la pantalla, si era él quien estaba (band-dock.js). */
+  .m-band.m-band-bub .m-band-titulo { opacity: 0; }
 
   .m-bub {
     display: inline-flex; align-items: center; gap: 5px;

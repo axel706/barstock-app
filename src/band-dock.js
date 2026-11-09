@@ -57,11 +57,23 @@
   //   para en el iPhone. Con la página quieta y el scroll en la lista,
   //   nada de eso puede mover la barra.
   //
+  // Inventory (`pegado`, con `scroll`, `titulo` y `nombre`): tiene las
+  //   dos cosas, un título encima (como el Home) y un campo de verdad
+  //   (como Buscar), y un giro que pidió Axel: al bajar, el título de la
+  //   pantalla sustituye al logo en el header. La lista lleva su propio
+  //   scroll, como en Buscar. El título grande se va con ella. El bloque
+  //   (pestañas y filtro) se pega bajo el header con `position: sticky`
+  //   DENTRO de la lista: lo mueve el navegador, no JavaScript, que es
+  //   lo que lo hace suave. El desenfoque va dentro del bloque, detrás
+  //   de él (ver .m-dock-velo). Y el fundido logo → título va ligado al
+  //   scroll (--m-dock-q, de 0 a 1): avanza y retrocede con el dedo, no
+  //   se dispara de golpe.
+  //
   // Cada pantalla deja su enganche y se queda guardado: manda el de la
   // pantalla que esté a la vista. Si sólo se recordara el último, al
   // volver de Buscar al Home sin repintarlo el Home ya no se acoplaría.
 
-  const _regs = new Map();  // pantalla → { pantalla, barra, desvanecer, fija, scroll, copia }
+  const _regs = new Map();  // pantalla → { pantalla, barra, desvanecer, fija, scroll, copia, pegado, titulo, nombre }
   let _actual = null;       // el de la pantalla a la vista
   let _dock = null;
   let _pedido = false;
@@ -152,9 +164,66 @@
 
   function aLaVista() {
     for (const r of _regs.values()) {
-      if (r.pantalla.isConnected && r.pantalla.classList.contains('on') && r.barra && r.barra.isConnected) return r;
+      const pieza = r.pegado || r.barra;
+      if (r.pantalla.isConnected && r.pantalla.classList.contains('on') && pieza && pieza.isConnected) return r;
     }
     return null;
+  }
+
+  const entre = (x) => Math.max(0, Math.min(1, x));
+  const dos = (x) => String(Math.round(x * 100) / 100);
+
+  // Las medidas que la CSS necesita para una lista con scroll propio.
+  function medidas(banda) {
+    const h = document.documentElement.style;
+    h.setProperty('--m-dock-top', (banda + HUECO) + 'px');
+    h.setProperty('--m-banda', banda + 'px');
+    // Lo visible, no la pantalla: con el teclado abierto la lista
+    // acaba encima de él y el último renglón se puede alcanzar.
+    const vv = window.visualViewport;
+    h.setProperty('--m-vvh', Math.round(vv ? vv.height : window.innerHeight) + 'px');
+  }
+
+  // ── El título de la pantalla en el header ────────────────────────
+  //
+  // Un solo elemento en la banda, que cambia de texto según la pantalla.
+  // Cuánto se ve lo dice --m-dock-q; la CSS hace el fundido con el logo.
+  function tituloBanda(nombre, q) {
+    const band = document.getElementById('mBand');
+    if (!band) return;
+    let t = band.querySelector('.m-band-titulo');
+    if (nombre == null) {
+      band.classList.remove('m-con-titulo');
+      band.style.removeProperty('--m-dock-q');
+      return;
+    }
+    if (!t) {
+      t = document.createElement('span');
+      t.className = 'm-band-titulo';
+      t.setAttribute('aria-hidden', 'true');
+      band.appendChild(t);
+    }
+    if (t.textContent !== nombre) t.textContent = nombre;
+    band.classList.add('m-con-titulo');
+    band.style.setProperty('--m-dock-q', dos(q));
+  }
+
+  // p: cuánto falta para que el bloque se pegue (0 en reposo, 1 pegado).
+  // Los tres fundidos salen de p, escalonados para que no se pisen: el
+  // título grande se va primero, el del header entra después, y el
+  // desenfoque al final, cuando ya no queda título grande que emborronar.
+  function pegar(a, banda) {
+    medidas(banda);
+    // Se mide la MARCA, no el bloque: el offsetTop de un elemento sticky
+    // ya pegado incluye lo que se ha desplazado, y el recorrido crecería
+    // con el scroll (lo enseñó el navegador: el fundido no llegaba nunca).
+    const recorrido = Math.max(1, a.marca.offsetTop - (banda + HUECO));
+    const p = entre(a.scroll.scrollTop / recorrido);
+    // El grande ya no se ve cuando llega a la altura del logo: en el
+    // navegador pasaba por detrás de él, los dos legibles a la vez.
+    if (a.titulo) a.titulo.style.opacity = p <= 0 ? '' : dos(1 - entre(p / 0.6));
+    if (a.velo) a.velo.style.opacity = dos(entre((p - 0.6) / 0.4));
+    tituloBanda(a.nombre || '', entre((p - 0.25) / 0.75));
   }
 
   // ── La página quieta mientras la lista lleva su propio scroll ─────
@@ -227,20 +296,23 @@
   function actualizar() {
     _pedido = false;
     const a = aLaVista();
-    if (a !== _actual) { soltar(); quitarCopia(); _actual = a; }
+    if (a !== _actual) {
+      soltar(); quitarCopia(); _actual = a;
+      // Al entrar en una pantalla con lista propia se empieza arriba,
+      // como hace el armazón con la página (ir() → scrollTo 0).
+      if (a && a.scroll) a.scroll.scrollTop = 0;
+    }
     quieta(!!(a && a.scroll));
+    if (!a || !a.pegado) tituloBanda(null);
     if (!a) { soltar(); return; }
     const banda = bordeBanda();
     const top = banda + HUECO;
+    if (a.pegado) { soltar(); pegar(a, banda); return; }
     if (a.fija) {
+      medidas(banda);
       const h = document.documentElement.style;
-      h.setProperty('--m-dock-top', top + 'px');
       const alto = a.barra.getBoundingClientRect().height;
       if (alto) h.setProperty('--m-dock-barra-h', alto + 'px');
-      // Lo visible, no la pantalla: con el teclado abierto la lista
-      // acaba encima de él y el último resultado se puede alcanzar.
-      const vv = window.visualViewport;
-      h.setProperty('--m-vvh', Math.round(vv ? vv.height : window.innerHeight) + 'px');
       // > 1 y no > 0: el píxel de alTocar no es haber bajado.
       const bajado = a.scroll ? a.scroll.scrollTop : (window.scrollY || 0);
       if (bajado > 1) cubrir(top, alto);
@@ -263,17 +335,44 @@
   // La pantalla lo llama cada vez que se pinta: un repintado (refresh)
   // cambia los elementos, y la copia tiene que apuntar a los nuevos.
   function enganchar(o) {
-    if (!o || !o.pantalla || !o.barra) return;
+    if (!o || !o.pantalla || !(o.barra || (o.pegado && o.scroll))) return;
     const viejo = _regs.get(o.pantalla);
     if (viejo && viejo.barra && viejo.barra !== o.barra) viejo.barra.style.visibility = '';
-    if (viejo === _actual) { quitarCopia(); _actual = null; }
-    const r = { pantalla: o.pantalla, barra: o.barra, desvanecer: o.desvanecer || [], fija: !!o.fija,
-      scroll: o.fija && o.scroll ? o.scroll : null, copia: null };
+    const eraElActual = viejo === _actual;
+    if (eraElActual) quitarCopia();
+    const r = { pantalla: o.pantalla, barra: o.barra || null, desvanecer: o.desvanecer || [], fija: !!o.fija,
+      scroll: (o.fija || o.pegado) && o.scroll ? o.scroll : null, copia: null,
+      pegado: o.pegado || null, titulo: o.titulo || null, nombre: o.nombre || '', velo: null, marca: null };
     if (r.fija) o.barra.classList.add('m-dock-fija');
     if (r.scroll && !r.scroll.classList.contains('m-dock-scroll')) {
       r.scroll.classList.add('m-dock-scroll');
       r.scroll.addEventListener('scroll', pedir, { passive: true });
     }
+    if (r.pegado) {
+      r.scroll.classList.add('m-dock-con-titulo');
+      r.pegado.classList.add('m-dock-pegado');
+      // El desenfoque, dentro del bloque y lo primero: detrás de las
+      // pestañas y del filtro. Una vez; un repintado no lo duplica.
+      r.velo = r.pegado.querySelector(':scope > .m-dock-velo');
+      if (!r.velo) {
+        r.velo = document.createElement('span');
+        r.velo.className = 'm-dock-velo';
+        r.velo.setAttribute('aria-hidden', 'true');
+        r.pegado.insertBefore(r.velo, r.pegado.firstChild);
+      }
+      // Una marca sin alto justo antes del bloque: dice dónde está el
+      // bloque EN REPOSO, que el bloque mismo deja de saberlo al pegarse.
+      r.marca = r.pegado.previousElementSibling;
+      if (!r.marca || !r.marca.classList.contains('m-dock-marca')) {
+        r.marca = document.createElement('span');
+        r.marca.className = 'm-dock-marca';
+        r.marca.setAttribute('aria-hidden', 'true');
+        r.pegado.parentNode.insertBefore(r.marca, r.pegado);
+      }
+    }
+    // Si era la pantalla a la vista, sigue siéndolo: que el cambio de
+    // enganche no se tome por "acabo de entrar" y devuelva la lista arriba.
+    if (eraElActual) _actual = r;
     _regs.set(o.pantalla, r);
     vigilarPantallas(o.pantalla.parentNode);
     actualizar();

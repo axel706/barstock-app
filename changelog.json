@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261109-164926",
+    "items": [
+      "Inventory: tabs and filter stay at the top as you scroll",
+      "The Inventory title moves into the header"
+    ]
+  },
+  {
     "build": "20261109-163522",
     "items": [
       "In Search, scrolling back up no longer refreshes instead"
@@ -178,12 +185,6 @@
     "build": "20261109-085550",
     "items": [
       "Don Julio Blanco keeps the bottle shape you pick"
-    ]
-  },
-  {
-    "build": "20261109-084606",
-    "items": [
-      "Counting: the app no longer shows through above the keyboard"
     ]
   }
 ]

@@ -648,7 +648,15 @@
   // ── La pantalla ──────────────────────────────────────────────────────
 
   function mount(host) {
+    // ── La lista con su propio scroll ──────────────────────────────
+    //
+    // Todo va dentro de #miScroll, y las pestañas con el filtro dentro
+    // de #miPegado: al bajar, "Inventory" pasa al header en el sitio del
+    // logo y ese bloque se queda pegado debajo, con el desenfoque
+    // empezando bajo el filtro (Axel, 2026-11-09). Lo hace band-dock.js;
+    // sin él, los dos envoltorios no cambian nada.
     host.innerHTML = `
+      <div id="miScroll">
       <div class="m-inv-h">
         <span class="m-inv-t">Inventory</span>
         <span class="m-inv-c" id="miTotal"></span>
@@ -661,6 +669,7 @@
 
            Y las dos pantallas con listas largas se ordenan igual, que
            es de lo que iba el cambio. -->
+      <div id="miPegado">
       <div class="m-seg" id="miSeg"></div>
 
       <div class="m-inv-bar2">
@@ -686,8 +695,10 @@
           <i class="ti ti-plus" aria-hidden="true"></i>
         </button>
       </div>
+      </div>
 
-      <div id="miList"></div>`;
+      <div id="miList"></div>
+      </div>`;
 
     const inp = host.querySelector('#miInput');
     inp.oninput = () => { _q = inp.value; pintarLista(host); };
@@ -710,6 +721,12 @@
     if (tot) tot.textContent = master().length ? master().length + ' items' : '…';
     pintarCabecera(host);
     pintarLista(host);
+    const D = window.BarStockBandDock;
+    const sc = host.querySelector('#miScroll'), blo = host.querySelector('#miPegado');
+    if (D && sc && blo) {
+      D.enganchar({ pantalla: host, scroll: sc, pegado: blo,
+        titulo: host.querySelector('.m-inv-h'), nombre: 'Inventory' });
+    }
   }
 
   function refresh() {
