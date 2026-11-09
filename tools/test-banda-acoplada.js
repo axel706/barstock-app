@@ -62,6 +62,7 @@ function pintarHome(w, clics) {
 function mover(w, p, y) {
   p.bus.getBoundingClientRect = () => ({ top: 210 - y, bottom: 258 - y, height: 48, left: 30, width: 330 });
   p.fila.getBoundingClientRect = () => ({ top: 150 - y, bottom: 200 - y, height: 50, left: 30, width: 330 });
+  w.scrollY = y;
   w.dispatchEvent(new w.Event('scroll'));
 }
 const acoplada = (w) => {
@@ -116,10 +117,25 @@ if (SRC) {
     mover(w, p, 150 - (BANDA + 4));
     const o = Number(p.fila.style.opacity);
     prueba('a medio camino: a medias', o > 0 && o < 1, p.fila.style.opacity);
-    mover(w, p, 150 - (BANDA - 24));
-    prueba('debajo del header: invisible', p.fila.style.opacity === '0', p.fila.style.opacity);
+    mover(w, p, 200 - BANDA);
+    prueba('con su borde de abajo en el header: invisible', p.fila.style.opacity === '0', p.fila.style.opacity);
     mover(w, p, 0);
     prueba('de vuelta arriba: entero otra vez', p.fila.style.opacity === '');
+  }
+
+  grupo('arriba del todo, el saludo entero aunque esté pegado al header');
+  {
+    // Axel, 2026-11-09, en el iPhone: "ese contenido parece haber
+    // quedado debajo de un velo". El desvanecido se medía por la
+    // distancia al borde del header, y en su teléfono el saludo queda a
+    // pocos px de él ya en reposo: salía a medias sin haber bajado nada.
+    const w = entorno(), clics = { n: 0 };
+    const p = pintarHome(w, clics);
+    p.bus.getBoundingClientRect = () => ({ top: 170, bottom: 218, height: 48, left: 30, width: 330 });
+    p.fila.getBoundingClientRect = () => ({ top: BANDA + 2, bottom: BANDA + 52, height: 50, left: 30, width: 330 });
+    w.scrollY = 0;
+    w.BarStockBandDock.enganchar({ pantalla: p.host, barra: p.bus, desvanecer: [p.fila] });
+    prueba('sin haber bajado: opacidad entera', p.fila.style.opacity === '', p.fila.style.opacity);
   }
 
   grupo('en otra pestaña no queda nada acoplado');

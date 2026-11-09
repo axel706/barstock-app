@@ -34,8 +34,6 @@
 
   const HUECO = 8;        // entre la banda y la búsqueda acoplada
   const RAMPA = 30;       // lo que tarda el desenfoque en deshacerse
-  const ARRIBA = 16;      // el saludo empieza a irse 16 px antes del header…
-  const ABAJO = 24;       // …y ya no se ve 24 px dentro de él
 
   let _actual = null;     // { pantalla, barra, desvanecer, copia }
   let _dock = null;
@@ -99,11 +97,23 @@
     a.barra.style.visibility = 'hidden';
   }
 
+  // ── Lo que se desvanece ──────────────────────────────────────────
+  //
+  // Se mide por lo que se ha bajado, no por la distancia al header:
+  // entero arriba del todo, e invisible cuando su borde de abajo llega
+  // al header. Antes se medía por la distancia (empezaba a irse 16 px
+  // antes del borde) y en el iPhone de Axel el saludo queda a pocos px
+  // de él YA EN REPOSO: salía a 0.65 sin haber bajado nada, "debajo de
+  // un velo". Cómo de cerca quede del header depende del teléfono; lo
+  // que se ha bajado, no.
   function desvanecer(banda) {
+    const y = Math.max(0, window.scrollY || 0);
     for (const el of _actual.desvanecer) {
       if (!el || !el.isConnected) continue;
-      const t = el.getBoundingClientRect().top;
-      const o = (t - (banda - ABAJO)) / (ARRIBA + ABAJO);
+      const abajo = el.getBoundingClientRect().bottom;
+      const recorrido = abajo + y - banda;        // lo que hay que bajar
+      if (y <= 0 || recorrido <= 0) { el.style.opacity = ''; continue; }
+      const o = (abajo - banda) / recorrido;
       el.style.opacity = o >= 1 ? '' : String(Math.max(0, Math.round(o * 100) / 100));
     }
   }

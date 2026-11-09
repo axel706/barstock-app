@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-154158",
+    "items": [
+      "The greeting on Home is fully visible again"
+    ]
+  },
+  {
     "build": "20261109-153658",
     "items": [
       "The top of Home no longer darkens as you scroll",
@@ -178,13 +184,6 @@
     "items": [
       "Wine from Toast: match Toast wines to your inventory",
       "In Settings, on the computer and the phone"
-    ]
-  },
-  {
-    "build": "20261107-112705",
-    "items": [
-      "Welcome setup redesigned for the phone",
-      "Two steps, with a signature preview"
     ]
   }
 ]
