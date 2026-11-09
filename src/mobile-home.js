@@ -374,10 +374,27 @@
       // un número que baila se deja de creer. Hasta las 20 el cuerpo
       // enseña lo que sí se sabe —lo contado y las zonas donde no has
       // entrado— y la estimación aparece cuando significa algo.
-      const FIABLE = 20;
+      //
+      // ── Y por BOTELLAS, no por productos ─────────────────────────
+      //
+      // Estimaba con productos: "125 de 174" en 37 min daba "18 s a
+      // bottle" y "15 min", y era tiempo entre productos, como si los
+      // que faltan estuvieran en fila. Axel lo vio contando: lo que
+      // falta son botellas, muchas de productos ya escaneados en otra
+      // zona. Ahora el ritmo es por botella de verdad y lo que falta
+      // sale de `bottleProgress()` (producto por producto, contra lo de
+      // la última vez). Por eso el umbral también va en botellas.
+      const FIABLE = 30;
       const ms = (S && S.activeMs) ? (() => { try { return S.activeMs(); } catch (e) { return 0; } })() : 0;
       const dur = (x) => (S && S.fmtDur) ? S.fmtDur(x) : Math.round(x / 60000) + ' min';
-      const quedan = tot ? Math.max(0, tot - n) : 0;
+      let bp = null;
+      try { bp = (S && S.bottleProgress) ? S.bottleProgress() : null; } catch (e) { bp = null; }
+      const contadas = bp ? bp.contadas : 0;
+      // Sin conteo anterior (`antes` = 0) no hay nada que esperar: ni
+      // raya, ni "lo que falta", ni tiempo. Inventarlo sería peor.
+      const hayAntes = !!(bp && bp.antes > 0);
+      const faltan = hayAntes ? bp.faltan : 0;
+      const redondo = (x) => Math.round(x).toLocaleString('en-US');
 
       // Cuánto hace del último apunte. Se usa `hace` del ciclo, que es
       // quien ya sabe decir "40 min" en vez de un número de milisegundos.
@@ -455,11 +472,12 @@
           { n: 'Started', v: desde() || '—' },
           { n: 'Not started', v: sinEmpezar() || '—' }
         ];
-      } else if (n >= FIABLE && ms > 0 && quedan > 0) {
-        const porBotella = ms / n;
+      } else if (hayAntes && contadas >= FIABLE && ms > 0) {
+        // Ya no hay renglón de ritmo: era "a bottle" y medía productos.
+        // Lo que sirve es cuánto falta; el ritmo va dentro de la cuenta.
         cuerpo = [
-          { n: 'Pace', v: dur(porBotella) + ' a bottle' },
-          { n: 'Left at this pace', v: 'about ' + dur(porBotella * quedan) },
+          { n: 'Products', v: tot ? n + ' of ' + tot : String(n) },
+          { n: 'Left at this pace', v: faltan >= 0.5 ? 'about ' + dur((ms / contadas) * faltan) : '—' },
           { n: 'Last scan', v: [zona, hace()].filter(Boolean).join(' · ') || '—' }
         ];
       } else {
@@ -486,12 +504,23 @@
         foco: 'conteo',
         tono: viejo ? 'red' : 'amber',
         k: pau ? 'Count paused' : viejo ? 'Count abandoned' : 'Counting',
-        tt: tot ? n + ' of ' + tot : String(n),
+        // El titular son las botellas: es lo que se hace con las manos.
+        // Los productos bajan a un renglón.
+        tt: bp ? redondo(contadas) : (tot ? n + ' of ' + tot : String(n)),
+        ttU: bp ? 'bottles' : '',
         // Sin línea de prosa: el cuerpo son SIEMPRE tres renglones. Lo
         // que antes iba apretado en una línea —tiempo, zona, lo que
         // falta— vive ahora en ellos, cada cosa en el suyo.
         sub: '',
-        barra: pct,
+        // Diez tramos hasta una raya, cada uno el 10 % de lo esperado
+        // (lo que llevas + lo que falta). Diseño de Axel (E5 + E6). Sin
+        // tramos de "más de lo esperado" detrás de la raya: lo esperado
+        // sube con lo que cuentas, así que nunca se pasaría y serían
+        // tramos que no se encienden jamás. Lo de más lo dice el pie.
+        tramos: hayAntes
+          ? ((contadas + faltan) > 0 ? Math.min(10, Math.round((contadas / (contadas + faltan)) * 10)) : 10)
+          : undefined,
+        barra: bp ? undefined : pct,
         // ── La cifra grande es el TIEMPO ─────────────────────────────
         //
         // Era el porcentaje, y el porcentaje ya lo dicen otras dos
@@ -504,7 +533,11 @@
         amtPie: reloj().u,
         // El porcentaje baja aquí: sigue estando para quien lo quiera,
         // sin ocupar el sitio del tiempo.
-        vs: [tot ? (tot - n) + ' left' : '', tot ? pct + '%' : ''].filter(Boolean).join(' · '),
+        vs: !bp ? [tot ? (tot - n) + ' left' : '', tot ? pct + '%' : ''].filter(Boolean).join(' · ')
+          : !hayAntes ? ''
+          : faltan >= 0.5 ? '≈' + redondo(faltan) + ' bottles left'
+          : (contadas - bp.antes) >= 0.5 ? '≈' + redondo(contadas - bp.antes) + ' more than last time'
+          : 'Nothing left from last time',
         btn: viejo ? 'Pick it up' : 'Keep counting',
         go: () => { if (window.BarStockScanCount) window.BarStockScanCount.open(); },
 
@@ -1513,8 +1546,12 @@
                deslizar. -->
           <div class="m-hero-txt">
             <div class="m-hero-k">${c.kHtml ? c.k : esc(c.k)}</div>
-            <div class="m-hero-t">${esc(c.tt)}</div>
-            ${c.barra !== undefined ? `<div class="m-prog"><i style="width:${c.barra}%"></i></div>` : ''}
+            <div class="m-hero-t">${esc(c.tt)}${c.ttU ? ` <small class="m-hero-tu">${esc(c.ttU)}</small>` : ''}</div>
+            ${c.tramos !== undefined
+              ? `<div class="m-tramos" aria-hidden="true">${
+                  Array.from({ length: 10 }, (_, k) => `<i${k < c.tramos ? ' class="on"' : ''}></i>`).join('')
+                }<b></b></div>`
+              : c.barra !== undefined ? `<div class="m-prog"><i style="width:${c.barra}%"></i></div>` : ''}
 
             <!-- ── El cuerpo, con altura fija ────────────────────────
                  Tres renglones del mismo alto, se llenen o no. Antes

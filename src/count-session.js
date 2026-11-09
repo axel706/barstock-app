@@ -428,6 +428,41 @@
     };
   }
 
+  // ── Las botellas: lo que llevas y lo que falta ─────────────────────
+  //
+  // Para la tarjeta del conteo en el Home. Antes estimaba con productos
+  // —"125 de 174", tiempo ÷ productos × los que faltan— y lo llamaba
+  // "a bottle". Axel lo vio mal contando: lo que falta son BOTELLAS, y
+  // muchas son de productos que ya escaneaste en otra zona; los
+  // productos que faltan no están en fila esperando.
+  //
+  // Lo que falta va producto por producto: lo que había la última vez
+  // (`onHand`, que durante el conteo no toca nadie: sólo lo escribe el
+  // cierre) menos lo que ya llevas de ese producto, sin bajar de cero.
+  // Un producto con más que la última vez no se come lo que falta de
+  // otro. Las botellas van en el tamaño de cada producto, sumando en
+  // mililitros (`bottlesFor`), como en el resto del conteo.
+  //
+  // `antes` es lo de la última vez entero: sin él (una locación sin
+  // conteo anterior) no hay nada que esperar.
+  function bottleProgress() {
+    const master = (window.state && window.state.master) || [];
+    const tam = {};
+    for (const r of master) if (r && r.item) tam[r.item] = Number(r.bottleSizeMl) || 750;
+    const hechos = new Set(countedItems());
+    let contadas = 0;
+    for (const item of hechos) contadas += bottlesFor(item, tam[item] || 750);
+    let faltan = 0, antes = 0;
+    for (const r of master) {
+      if (!r || !r.item) continue;
+      const ultima = Math.max(0, Number(r.onHand) || 0);
+      antes += ultima;
+      const hoy = hechos.has(r.item) ? bottlesFor(r.item, tam[r.item]) : 0;
+      faltan += Math.max(0, ultima - hoy);
+    }
+    return { contadas, faltan, antes };
+  }
+
   // Los artículos que faltan, con su categoría, para poder agruparlos.
   // Sin el nombre concreto, "faltan 177" no le dice a nadie a qué estante
   // volver.
@@ -672,7 +707,7 @@
     load, save, get, has, set, remove, clear,
     passesOf, addPass, replacePass, removePass,
     mlFor, bottlesFor, countedItems, size, startedAt, summary,
-    pause, resume, isPaused, pausedAt, exists, progress, missingRows,
+    pause, resume, isPaused, pausedAt, exists, progress, missingRows, bottleProgress,
     bottlesByZone, zonesUsed,
     updatedAt,
     activeMs, cronoDesde, fmtDur, CRONO_HUECO_MS

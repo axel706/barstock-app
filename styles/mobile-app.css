@@ -1099,6 +1099,19 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-prog { height: 4px; border-radius: 2px; background: rgba(255,255,255,.14); margin-top: 9px; overflow: hidden; }
   .m-prog i { display: block; height: 100%; background: #22c55e; border-radius: 2px; }
 
+  /* ── El conteo: diez tramos hasta una raya ─────────────────────────
+   * Diseño de Axel (E5 + E6). Cada tramo es el 10 % de lo esperado; la
+   * raya es donde acaba lo que había la última vez. A trozos a
+   * propósito: lo esperado es una estimación y una barra continua
+   * prometería más precisión de la que hay. Mismo margen que .m-prog,
+   * para que la tarjeta no crezca y el carril no cambie de alto. */
+  .m-tramos { display: flex; align-items: center; gap: 3px; margin-top: 9px; }
+  .m-tramos i { flex: 1; height: 8px; border-radius: 2px; background: rgba(255,255,255,.16); }
+  .m-tramos i.on { background: #22c55e; }
+  .m-tramos b { flex: 0 0 2px; height: 14px; margin-left: 3px; border-radius: 1px; background: #fff; }
+  /* La unidad del titular ("431 bottles"), pequeña: la cifra manda. */
+  .m-hero-tu { font-size: var(--m-body); font-weight: 600; letter-spacing: 0; color: rgba(255,255,255,.72); }
+
   /* A la derecha: la columna de la izquierda es texto alineado a la
    * izquierda y los botones ahí abajo quedaban flotando en medio de
    * la tarjeta. Pegados a la derecha cierran el bloque. */

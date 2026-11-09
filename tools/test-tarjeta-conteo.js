@@ -45,8 +45,11 @@ const grupo = t => console.log('\n' + t);
 const SRC = fs.readFileSync(path.join(RAIZ, 'src/mobile-home.js'), 'utf8');
 const MIN = 60 * 1000;
 
-const inv = (n) => Array.from({ length: n }, (_, i) => ({
-  item: 'ITEM ' + i, code: 'C' + i, vendor: 'ACME', onHand: 0, toOrder: 1
+// `onHand` es lo de la ULTIMA vez: durante el conteo no se toca (sólo
+// lo escribe el cierre). Por defecto 4 botellas por producto.
+const inv = (n, ultima) => Array.from({ length: n }, (_, i) => ({
+  item: 'ITEM ' + i, code: 'C' + i, vendor: 'ACME', bottleSizeMl: 750,
+  onHand: ultima === undefined ? 4 : ultima, toOrder: 1
 }));
 
 // o: { total, contadas, ms, zona, zonas, usadas, viejo, pausado, hace }
@@ -56,7 +59,7 @@ function entorno(o) {
   global.window = w; global.document = w.document;
   w.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} });
 
-  w.state = { master: inv(o.total) };
+  w.state = { master: inv(o.total, o.ultima) };
 
   w.BarStockWeeklyCycle = {
     estado: () => 'counting',
@@ -74,6 +77,16 @@ function entorno(o) {
   w.BarStockCountSession = {
     progress: () => ({ counted: o.contadas, total: o.total }),
     size: () => o.contadas,
+    // Lo de las botellas lo calcula la sesión (bottleProgress). Aquí se
+    // simula con la misma regla: cada producto contado lleva `porProd`
+    // botellas (3 por defecto) y lo que falta va producto por producto.
+    bottleProgress: () => {
+      const por = o.porProd === undefined ? 3 : o.porProd;
+      const ult = o.ultima === undefined ? 4 : o.ultima;
+      const contadas = o.contadas * por;
+      const faltan = o.contadas * Math.max(0, ult - por) + (o.total - o.contadas) * ult;
+      return { contadas, faltan, antes: o.total * ult };
+    },
     activeMs: () => o.ms || 0,
     fmtDur: (ms) => {
       const s = Math.max(0, Math.round(Number(ms) || 0) / 1000);
@@ -151,17 +164,35 @@ grupo('al principio no se estima nada');
     !r.some(x => /Not started/.test(x.n) && /Closet/.test(x.v)), texto);
 }
 
-grupo('con suficientes, sí');
+grupo('con suficientes, sí, y por BOTELLAS');
 {
-  // 40 botellas en 20 minutos = 30 s cada una. Faltan 122.
-  // 122 × 30 s = 61 min.
+  // Axel, 2026-11-09: "125 de 174" en 37 min daba "18 s a bottle" y
+  // "15 min" que no eran verdad. Era tiempo entre PRODUCTOS, y suponía
+  // que los que faltan estaban en fila esperando. Lo que falta son
+  // botellas, muchas de productos ya escaneados en otra zona.
+  //
+  // 40 productos × 3 botellas = 120 botellas en 20 min = 10 s cada una.
+  // Faltan: de los 40 contados, 1 cada uno (tenían 4) = 40; de los 122
+  // sin tocar, 4 cada uno = 488. Total 528 × 10 s = 88 min.
   const c = tarjeta(entorno(Object.assign({}, BASE, { contadas: 40, ms: 20 * MIN })));
   const r = renglones(c);
   const texto = JSON.stringify(r);
-  prueba('aparece el ritmo', r.some(x => /Pace/.test(x.n) && /30 s/.test(x.v)), texto);
-  prueba('y la estimación', r.some(x => /Left at this pace/.test(x.n)), texto);
-  prueba('calculada sobre lo que falta, no sobre el total',
-    r.some(x => /Left at this pace/.test(x.n) && /1 h 1 min/.test(x.v)), texto);
+  prueba('la estimación sale', r.some(x => /Left at this pace/.test(x.n)), texto);
+  prueba('calculada por botellas, producto por producto',
+    r.some(x => /Left at this pace/.test(x.n) && /1 h 28 min/.test(x.v)), texto);
+  prueba('sin el renglón de ritmo "a bottle" que era por producto', !/a bottle/.test(texto), texto);
+  prueba('los productos bajan a un renglón', r.some(x => /Products/.test(x.n) && /40 of 162/.test(x.v)), texto);
+  const tit = (c.querySelector('.m-hero-t') || {}).textContent || '';
+  prueba('el titular son las botellas', /120/.test(tit) && /bottles/.test(tit) && !/of 162/.test(tit), tit);
+  const pie = (c.querySelector('.m-hero-vs') || {}).textContent || '';
+  prueba('el pie dice las botellas que faltan', /≈528 bottles left/.test(pie), pie);
+  const tr = c.querySelectorAll('.m-tramos i');
+  prueba('diez tramos', tr.length === 10, String(tr.length));
+  // 120 de 648 (lo que llevas más lo que falta) = 19 %: dos tramos.
+  prueba('encendidos por lo que llevas de lo esperado', c.querySelectorAll('.m-tramos i.on').length === 2,
+    String(c.querySelectorAll('.m-tramos i.on').length));
+  prueba('con la raya al final', !!c.querySelector('.m-tramos b'));
+  prueba('y sin la barra fina de antes', !c.querySelector('.m-prog'));
   prueba('y el último escaneo con su zona',
     r.some(x => /Last scan/.test(x.n) && /Closet/.test(x.v)), texto);
   prueba('siguen siendo tres', r.length === 3, String(r.length));
@@ -193,8 +224,29 @@ grupo('cerca del final salen los nombres');
     /1:10/.test((c.querySelector('.m-hero-amt') || {}).textContent || ''),
     (c.querySelector('.m-hero-amt') || {}).textContent);
   const pie = (c.querySelector('.m-hero-vs') || {}).textContent || '';
-  prueba('y el pie lleva lo que falta y el porcentaje',
-    /7 left/.test(pie) && /96%/.test(pie), pie);
+  prueba('y el pie lleva las botellas que faltan', /bottles left/.test(pie), pie);
+}
+
+grupo('si hoy hay más que la última vez');
+{
+  // Todo contado y con más botellas que la última vez: no hay "lo que
+  // falta". La barra llega a la raya y el pie dice cuánto de más.
+  const c = tarjeta(entorno(Object.assign({}, BASE, { contadas: 162, ms: 60 * MIN, porProd: 5 })));
+  const pie = (c.querySelector('.m-hero-vs') || {}).textContent || '';
+  prueba('los diez tramos encendidos', c.querySelectorAll('.m-tramos i.on').length === 10);
+  prueba('el pie dice cuánto de más', /162 more than last time/.test(pie), pie);
+  prueba('y no promete tiempo', !/Left at this pace[^"]*min/.test(JSON.stringify(renglones(c))), JSON.stringify(renglones(c)));
+}
+
+grupo('una locación sin conteo anterior');
+{
+  // Sin lo de la última vez no hay nada que esperar: ni raya ni "left".
+  const c = tarjeta(entorno(Object.assign({}, BASE, { contadas: 40, ms: 20 * MIN, ultima: 0 })));
+  prueba('sin tramos', !c.querySelector('.m-tramos'));
+  const pie = (c.querySelector('.m-hero-vs') || {}).textContent || '';
+  prueba('sin inventar lo que falta', !/left/.test(pie), pie);
+  prueba('ni un tiempo restante', !/Left at this pace/.test(JSON.stringify(renglones(c))));
+  prueba('pero el titular sigue en botellas', /120/.test((c.querySelector('.m-hero-t') || {}).textContent));
 }
 
 grupo('abandonado dice desde cuándo');

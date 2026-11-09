@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261109-093407",
+    "items": [
+      "Count card on Home counts bottles, not products",
+      "Time left now matches what is really left"
+    ]
+  },
+  {
     "build": "20261109-085550",
     "items": [
       "Don Julio Blanco keeps the bottle shape you pick"
@@ -184,12 +191,6 @@
     "items": [
       "Wine flute bottle shape, for Riesling",
       "Riesling and Gewürztraminer get it on their own"
-    ]
-  },
-  {
-    "build": "20261106-134829",
-    "items": [
-      "Patrón bottle shape"
     ]
   }
 ]
