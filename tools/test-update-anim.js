@@ -312,6 +312,22 @@ grupo('13 · iOS no ofrece la contraseña debajo de la animación');
     (css.match(/html\.bs-upd[^{]*#authOverlay[^{]*\{[^}]*\}/g) || []).join(' | '));
 }
 
+grupo('14 · sin destello blanco al recargar');
+{
+  // Tercer video de Axel (2026-11-09): un fotograma con una franja blanca
+  // abajo, de ~62 px, justo en la recarga. En el primer fotograma de la
+  // página nueva la app instalada todavía mide 894 de alto (luego 956):
+  // lo que queda debajo lo pinta el fondo del documento, blanco por
+  // defecto. Durante la actualización el documento es del color del fondo
+  // desde el primer instante, y vuelve a lo suyo al terminar.
+  const w = entorno({ marca: BUILD });
+  const fondo = w.document.documentElement.style.backgroundColor;
+  prueba('el documento nace del color del fondo', /rgb\(11,\s*18,\s*32\)|#0b1220/i.test(fondo), fondo);
+  w.__bsUpdListo();
+  await esperar(300);
+  prueba('y al terminar se le devuelve el suyo', !w.document.documentElement.style.backgroundColor, w.document.documentElement.style.backgroundColor);
+}
+
 grupo('8 · el iris no se apaga con opacity');
 {
   const css = leer('styles/auth.css').replace(/\/\*[\s\S]*?\*\//g, '');

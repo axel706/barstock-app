@@ -247,6 +247,12 @@
   // llenaba la barra (medido en su grabación: +23 px y +47 px).
   try { history.scrollRestoration = 'manual'; } catch (e) {}
   try { window.scrollTo(0, 0); } catch (e) {}
+  // El documento, del color del fondo desde el primer instante. En el
+  // primer fotograma la app instalada aún mide 894 de alto (luego 956), y
+  // lo que queda debajo lo pinta el fondo del documento: blanco por
+  // defecto. Era el destello blanco que Axel vio en la recarga (una
+  // franja de ~62 px abajo, un fotograma). update-anim.js lo devuelve.
+  h.style.backgroundColor = '#0b1220';
   h.classList.add('bs-upd');
   var o = document.createElement('div');
   o.id = 'bsUpd';
@@ -313,6 +319,7 @@
     var x = document.getElementById('bsUpd');
     if (x) x.remove();
     h.classList.remove('bs-upd');
+    h.style.backgroundColor = '';
     window.__bsUpd.soltarFoco();
   }, TOPE);
 })();
@@ -391,7 +398,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261109-110814</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261109-111530</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5561,7 +5568,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/mobile-inventory.js?v=m13"></script>
 <script src="src/mobile-orders.js?v=m18"></script>
 <script src="src/mobile-quick.js?v=mqk2"></script>
-<script src="src/update-anim.js?v=upd5"></script>
+<script src="src/update-anim.js?v=upd6"></script>
 <script src="src/version-check.js?v=ver3"></script>
 <script src="src/version-center.js?v=vc2"></script>
 <script src="src/mobile-tabs.js?v=m13"></script>

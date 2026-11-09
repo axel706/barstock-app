@@ -166,6 +166,8 @@
 
     o.remove();
     document.documentElement.classList.remove('bs-upd');
+    // El fondo que el <head> le puso al documento para que no destellara.
+    document.documentElement.style.backgroundColor = '';
     if (u.soltarFoco) u.soltarFoco();
 
     // TEMPORAL: el rastro que anotó el <head> (ver index.html), al log
