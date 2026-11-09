@@ -75,7 +75,11 @@ prueba('Don Julio 750: base plana y ancha, no la esfera de 1.75 L', r('don_julio
 console.log('\nel tamano elige la botella de Don Julio');
 prueba('Don Julio de 750 → la de 750', B.forSize('don_julio', 750) === 'don_julio', B.forSize('don_julio', 750));
 prueba('Don Julio de 1.75 L → la de 1.75 L', B.forSize('don_julio', 1750) === 'don_julio_blanco', B.forSize('don_julio', 1750));
-prueba('el que ya tenia la de 1.75 L siendo de 750 → la de 750', B.forSize('don_julio_blanco', 750) === 'don_julio', B.forSize('don_julio_blanco', 750));
+// Axel, 2026-11-09: la redonda (don_julio_blanco) es la de SU Don Julio
+// Blanco, y se la asignó a mano. Antes, con 750 ml, el conteo la cambiaba
+// en silencio por la de 750 y enseñaba otra botella de la que decía el
+// selector. Asignada, se respeta sea cual sea el tamaño.
+prueba('la redonda asignada se respeta aunque sea de 750', B.forSize('don_julio_blanco', 750) === 'don_julio_blanco', B.forSize('don_julio_blanco', 750));
 prueba('el que tiene la de 1.75 L y es de 1.75 L → se queda', B.forSize('don_julio_blanco', 1750) === 'don_julio_blanco', B.forSize('don_julio_blanco', 1750));
 prueba('las magnums de vino siguen igual', B.forSize('bordeaux', 1500) === 'wine_magnum' && B.forSize('bordeaux', 750) === 'bordeaux');
 

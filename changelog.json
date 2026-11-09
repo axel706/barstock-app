@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-085550",
+    "items": [
+      "Don Julio Blanco keeps the bottle shape you pick"
+    ]
+  },
+  {
     "build": "20261109-084606",
     "items": [
       "Counting: the app no longer shows through above the keyboard"
@@ -184,12 +190,6 @@
     "build": "20261106-134829",
     "items": [
       "Patrón bottle shape"
-    ]
-  },
-  {
-    "build": "20261106-134138",
-    "items": [
-      "Smirnoff bottle shape"
     ]
   }
 ]

@@ -46,7 +46,7 @@ const E = [
   ['elijah_craig', 'Elijah Craig', 2.51, 0.72],
   // El nombre que se ve cambio: la de 750 resulto otra botella (ver
   // test-silueta-cuatro-i) y esta es la de 1.75 L.
-  ['don_julio_blanco', 'Don Julio · 1.75 L', 1.56, 0.65],
+  ['don_julio_blanco', 'Don Julio Blanco', 1.56, 0.65],
   ['michters', "Michter's", 3.28, 0.63]
 ];
 

@@ -713,10 +713,13 @@
       p: [[0,0.4778], [0.0156,0.7456], [0.0469,0.8208], [0.0781,0.8363], [0.1094,0.8545], [0.1406,0.8685], [0.1719,0.8842], [0.2031,0.9006], [0.2344,0.9159], [0.2656,0.9318], [0.2969,0.9473], [0.3281,0.9602], [0.3594,0.9749], [0.3906,0.9892], [0.4219,0.9992], [0.4531,1], [0.4844,1], [0.5156,0.9988], [0.5469,0.9872], [0.5781,0.962], [0.6094,0.9122], [0.6406,0.8289], [0.6719,0.704], [0.7031,0.5247], [0.7344,0.3932], [0.7656,0.3341], [0.7969,0.2917], [0.8281,0.277], [0.8594,0.2774], [0.8906,0.3267], [0.9219,0.4097], [0.9531,0.3999], [0.9844,0.3481], [1,0.1838]]
     },
     don_julio_blanco: {
-      // La clave se queda (ya hay productos guardados con ella), pero la
-      // botella es la de 1.75 L: la de 750 resulto otra (ver `don_julio`).
-      // Ver BY_SIZE: con menos de 1.5 L esta clave se dibuja como la de 750.
-      name: "Don Julio · 1.75 L", asp: 1.56, yFull: 0.65, pourable: true,
+      // La botella redonda. Se midió de una foto de la de 1.75 L, y un
+      // tiempo se llamó "Don Julio · 1.75 L" y, con menos de 1.5 L, el
+      // conteo la cambiaba por la de 750 (`don_julio`). Axel, 2026-11-09:
+      // es la de SU Don Julio Blanco; el selector decía que estaba
+      // asignada y el conteo enseñaba otra. Ahora se llama como la botella
+      // y, asignada, se dibuja siempre (ver BY_SIZE).
+      name: "Don Julio Blanco", asp: 1.56, yFull: 0.65, pourable: true,
       // La de Don Julio Blanco (foto de la de 1.75 L): la botella redonda,
       // que no se parece a la del Anejo. 998 px de alto por 641 de ancho
       // maximo, desajuste de area 0.60 %. Cuerpo redondo que se cierra del
@@ -1033,12 +1036,15 @@
   const BY_SIZE = {
     bordeaux:      [[1500, 'wine_magnum']],
     wine_burgundy: [[1500, 'wine_magnum']],
-    // Don Julio Blanco/Reposado: la de 750 y la de 1.75 L son botellas
-    // distintas. Y los productos a los que ya se les puso la de 1.75 L
-    // (`don_julio_blanco`) siendo de 750 se corrigen solos aqui, por su
-    // tamano, sin tocar lo guardado.
-    don_julio:        [[1500, 'don_julio_blanco']],
-    don_julio_blanco: [[0, 'don_julio'], [1500, 'don_julio_blanco']]
+    // Don Julio: la de 750 y la grande son botellas distintas, así que
+    // un Don Julio de 1.5 L o más se dibuja con la redonda.
+    //
+    // Al revés ya NO: hubo una regla que dibujaba la redonda
+    // (`don_julio_blanco`) como la de 750 cuando el producto era de 750,
+    // y el selector decía "Current: la redonda" mientras el conteo
+    // enseñaba otra botella. Lo que se asigna a mano se respeta (Axel,
+    // 2026-11-09).
+    don_julio:        [[1500, 'don_julio_blanco']]
   };
 
   function forSize(key, sizeMl) {
