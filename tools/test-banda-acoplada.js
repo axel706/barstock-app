@@ -215,7 +215,7 @@ if (SRC) {
     sc.scrollTop = 120; sc.dispatchEvent(new w.Event('scroll'));
     prueba('al bajar la lista: desenfoque debajo de la barra', acoplada(w));
     prueba('sin copia: la barra es la de verdad', !w.document.querySelector('#mDock .m-searchbar') && sb.style.visibility === '');
-    prueba('con el alto hasta la rampa', w.document.getElementById('mDock').style.height === (D0 + 50 + 30) + 'px',
+    prueba('con el alto hasta 10 px bajo la barra, donde empieza nítido', w.document.getElementById('mDock').style.height === (D0 + 50 + 10) + 'px',
       w.document.getElementById('mDock').style.height);
     sc.scrollTop = 0; sc.dispatchEvent(new w.Event('scroll'));
     prueba('arriba otra vez: sin desenfoque', !acoplada(w));
@@ -338,18 +338,19 @@ if (SRC) {
     prueba('la lista lleva su propio scroll', sc.classList.contains('m-dock-scroll') && sc.classList.contains('m-dock-con-titulo'));
     prueba('pestañas y filtro van pegados (sticky), sin copia', blo.classList.contains('m-dock-pegado') && !w.document.querySelector('#mDock .m-searchbar'));
     prueba('con su desenfoque dentro, detrás de ellos', !!velo && blo.firstElementChild === velo);
+    prueba('que es la escalera de seis capas', !!velo && velo.classList.contains('m-dock-esc') && velo.querySelectorAll(':scope > i').length === 6);
     prueba('el header tiene el título de la pantalla', !!bt && bt.textContent === 'Inventory' && band.classList.contains('m-con-titulo'));
-    prueba('en reposo: el logo, el título grande entero y sin desenfoque', q() === '0' && tit.style.opacity === '' && velo.style.opacity === '0',
-      [q(), tit.style.opacity, velo.style.opacity].join(' | '));
+    prueba('en reposo: el logo, el título grande entero y sin desenfoque', q() === '0' && tit.style.opacity === '' && velo.style.getPropertyValue('--m-dock-o') === '0',
+      [q(), tit.style.opacity, velo.style.getPropertyValue('--m-dock-o')].join(' | '));
     sc.scrollTop = 30; sc.dispatchEvent(new w.Event('scroll'));
     const medio = Number(q());
     prueba('a medio camino: el fundido va por la mitad, ligado al scroll', medio > 0 && medio < 1 && Number(tit.style.opacity) > 0 && Number(tit.style.opacity) < 1,
       [q(), tit.style.opacity].join(' | '));
     sc.scrollTop = 60; sc.dispatchEvent(new w.Event('scroll'));
-    prueba('acoplado: el título en el header, el grande fuera, desenfoque entero', q() === '1' && tit.style.opacity === '0' && velo.style.opacity === '1',
-      [q(), tit.style.opacity, velo.style.opacity].join(' | '));
+    prueba('acoplado: el título en el header, el grande fuera, desenfoque entero', q() === '1' && tit.style.opacity === '0' && velo.style.getPropertyValue('--m-dock-o') === '1',
+      [q(), tit.style.opacity, velo.style.getPropertyValue('--m-dock-o')].join(' | '));
     sc.scrollTop = 900; sc.dispatchEvent(new w.Event('scroll'));
-    prueba('más abajo sigue igual', q() === '1' && velo.style.opacity === '1');
+    prueba('más abajo sigue igual', q() === '1' && velo.style.getPropertyValue('--m-dock-o') === '1');
     sc.scrollTop = 30; sc.dispatchEvent(new w.Event('scroll'));
     prueba('y al volver retrocede por el mismo camino', Number(q()) === medio);
     eng();                                   // refrescar: show() en la misma pantalla
@@ -379,6 +380,39 @@ if (SRC) {
     // llegar arriba. overscroll-behavior en el body no cuenta para el
     // scroll de la página; tiene que ir en el <html>.
     prueba('sin rebote: overscroll-behavior en el html', /(^|[\s,}])html\s*\{[^}]*overscroll-behavior(-y)?\s*:\s*none/.test(css));
+  }
+
+  grupo('el desenfoque es PROGRESIVO, no uno solo que se transparenta');
+  {
+    // Axel, 2026-11-09: "pedí progressive blur tanto en home, como en do
+    // we have y ahora en inventory y veo que estás poniendo blur en su
+    // lugar". Era un solo desenfoque de 22 px recortado con una máscara
+    // que lo hacía transparente hacia abajo: eso mezcla lo nítido con lo
+    // muy borroso, no desenfoca poco a poco. Progresivo es la escalera
+    // de la banda: seis capas, cada una con más radio que la anterior y
+    // recortada a su franja.
+    const css = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const radios = [];
+    for (let n = 1; n <= 6; n++) {
+      const m = new RegExp('\\.m-dock-esc\\s*>\\s*i:nth-child\\(' + n + '\\)\\s*\\{([^}]*)\\}').exec(css);
+      const r = m && /backdrop-filter\s*:\s*blur\((\d+)px\)/.exec(m[1]);
+      radios.push(r ? Number(r[1]) : null);
+      if (n === 1) prueba('cada capa va recortada a su franja', !!m && /mask-image/.test(m[1]));
+    }
+    prueba('seis capas con radio creciente', radios.every((r, i) => r !== null && (i === 0 || r > radios[i - 1])), JSON.stringify(radios));
+    prueba('de casi nada a mucho', radios[0] <= 2 && radios[5] >= 20, JSON.stringify(radios));
+    const cont = /\.m-dock-blur\s*\{([^}]*)\}/.exec(css), velo = /\.m-dock-velo\s*\{([^}]*)\}/.exec(css);
+    prueba('el contenedor del Home y Buscar ya no desenfoca de un golpe', !!cont && !/backdrop-filter/.test(cont[1]));
+    prueba('ni el de Inventory', !!velo && !/backdrop-filter/.test(velo[1]));
+    // Y la escalera está puesta en las dos capas que la llevan.
+    const w = entorno(), clics = { n: 0 };
+    const p = pintarHome(w, clics);
+    w.BarStockBandDock.enganchar({ pantalla: p.host, barra: p.bus, desvanecer: [p.fila] });
+    mover(w, p, 400);
+    const d = w.document.querySelector('#mDock .m-dock-blur');
+    prueba('Home y Buscar: seis capas en el desenfoque acoplado', !!d && d.classList.contains('m-dock-esc') && d.querySelectorAll(':scope > i').length === 6);
+    const src = fs.readFileSync(path.join(RAIZ, 'src/band-dock.js'), 'utf8');
+    prueba('Inventory: la misma escalera, no otra copia', (src.match(/ESCALERA/g) || []).length >= 3);
   }
 
   grupo('el Home lo usa, y carga después del módulo');

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-170508",
+    "items": [
+      "Smoother, gradual blur under the header and search"
+    ]
+  },
+  {
     "build": "20261109-164926",
     "items": [
       "Inventory: tabs and filter stay at the top as you scroll",
@@ -179,12 +185,6 @@
     "items": [
       "Count card on Home counts bottles, not products",
       "Time left now matches what is really left"
-    ]
-  },
-  {
-    "build": "20261109-085550",
-    "items": [
-      "Don Julio Blanco keeps the bottle shape you pick"
     ]
   }
 ]

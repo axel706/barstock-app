@@ -26,14 +26,36 @@
   // ── El desenfoque ─────────────────────────────────────────────────
   //
   // #mDock va detrás de la banda (z-index menor) y cubre desde arriba
-  // hasta un poco por debajo de la búsqueda. Lleva un solo desenfoque
-  // fuerte, recortado con una máscara que se deshace en los últimos
-  // RAMPA px: borroso detrás del header y de la búsqueda, nítido justo
-  // debajo. No se estira la banda: su altura es la del logo y los
+  // hasta un poco por debajo de la búsqueda. Lleva el desenfoque
+  // progresivo (ESCALERA, más abajo): nítido en el borde, creciendo en
+  // RAMPA px desde un poco por debajo de la búsqueda hacia arriba, y del
+  // todo borroso en lo alto de ella y en el header. No se estira la banda: su altura es la del logo y los
   // botones, y cambiarla los movería.
 
   const HUECO = 8;        // entre la banda y la búsqueda acoplada
-  const RAMPA = 30;       // lo que tarda el desenfoque en deshacerse
+  const RAMPA = 50;       // el tramo en que el desenfoque va de nada a todo
+  const BAJO = 10;        // cuánto de ese tramo queda por debajo de la barra
+
+  // ── El desenfoque es PROGRESIVO ──────────────────────────────────
+  //
+  // Seis capas, cada una con más radio que la anterior (1, 2, 4, 8, 14 y
+  // 22 px) y recortada a su franja: la misma escalera de la banda. Las
+  // cinco primeras se reparten la RAMPA, de abajo arriba, y la sexta
+  // cubre todo lo de encima. El contenido se va deshaciendo según sube.
+  //
+  // Dónde: empieza nítido BAJO px por debajo de la barra —la línea roja
+  // que dibujó Axel va pegada a ella— y crece por DETRÁS de la barra,
+  // hasta el máximo en su parte alta. La primera escalera cabía entera
+  // debajo de la barra, en 40 px: pasaba de nítido a muy borroso casi de
+  // golpe y empezaba más abajo de la línea.
+  //
+  // Antes era UN desenfoque de 22 px con una máscara que lo hacía
+  // transparente hacia abajo, en las tres pantallas. Eso no es
+  // progresivo: mezcla lo nítido con lo muy borroso. Axel lo pidió
+  // progresivo desde el principio y lo vio (2026-11-09: "estás poniendo
+  // blur en su lugar"). Una sola constante para las dos capas que la
+  // llevan (#mDock y la del bloque de Inventory): que no haya dos.
+  const ESCALERA = '<i></i><i></i><i></i><i></i><i></i><i></i>';
 
   // ── Dos formas, según la pantalla ─────────────────────────────────
   //
@@ -85,7 +107,7 @@
       _dock = document.createElement('div');
       _dock.id = 'mDock';
       _dock.className = 'm-dock';
-      _dock.innerHTML = '<span class="m-dock-blur" aria-hidden="true"></span>';
+      _dock.innerHTML = '<span class="m-dock-blur m-dock-esc" aria-hidden="true">' + ESCALERA + '</span>';
       // Junto a la banda, al principio del body: el bloqueo de la
       // pantalla de entrada (body.auth-locked > *) también lo tapa.
       const band = document.getElementById('mBand');
@@ -114,8 +136,8 @@
 
   function cubrir(top, alto) {
     const d = dock();
-    d.style.height = (top + alto + RAMPA) + 'px';
-    d.style.setProperty('--m-dock-rampa', RAMPA + 'px');
+    d.style.height = (top + alto + BAJO) + 'px';
+    document.documentElement.style.setProperty('--m-dock-rampa', RAMPA + 'px');
     d.classList.add('on');
   }
 
@@ -178,6 +200,8 @@
     const h = document.documentElement.style;
     h.setProperty('--m-dock-top', (banda + HUECO) + 'px');
     h.setProperty('--m-banda', banda + 'px');
+    h.setProperty('--m-dock-rampa', RAMPA + 'px');
+    h.setProperty('--m-dock-bajo', BAJO + 'px');
     // Lo visible, no la pantalla: con el teclado abierto la lista
     // acaba encima de él y el último renglón se puede alcanzar.
     const vv = window.visualViewport;
@@ -222,7 +246,11 @@
     // El grande ya no se ve cuando llega a la altura del logo: en el
     // navegador pasaba por detrás de él, los dos legibles a la vez.
     if (a.titulo) a.titulo.style.opacity = p <= 0 ? '' : dos(1 - entre(p / 0.6));
-    if (a.velo) a.velo.style.opacity = dos(entre((p - 0.6) / 0.4));
+    // Por variable y no con opacity en el contenedor: un contenedor con
+    // opacidad se vuelve el fondo de sus capas, y dejarían de desenfocar
+    // la lista para desenfocar el contenedor vacío. La CSS se la pone a
+    // cada capa.
+    if (a.velo) a.velo.style.setProperty('--m-dock-o', dos(entre((p - 0.6) / 0.4)));
     tituloBanda(a.nombre || '', entre((p - 0.25) / 0.75));
   }
 
@@ -356,8 +384,9 @@
       r.velo = r.pegado.querySelector(':scope > .m-dock-velo');
       if (!r.velo) {
         r.velo = document.createElement('span');
-        r.velo.className = 'm-dock-velo';
+        r.velo.className = 'm-dock-velo m-dock-esc';
         r.velo.setAttribute('aria-hidden', 'true');
+        r.velo.innerHTML = ESCALERA;
         r.pegado.insertBefore(r.velo, r.pegado.firstChild);
       }
       // Una marca sin alto justo antes del bloque: dice dónde está el
@@ -397,5 +426,5 @@
   // El teclado no cambia la ventana en iOS, cambia lo visible.
   if (window.visualViewport) window.visualViewport.addEventListener('resize', pedir);
 
-  window.BarStockBandDock = { enganchar, actualizar, HUECO, RAMPA };
+  window.BarStockBandDock = { enganchar, actualizar, HUECO, RAMPA, BAJO };
 })();

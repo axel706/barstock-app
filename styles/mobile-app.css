@@ -716,12 +716,13 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * la banda y cubre desde arriba hasta un poco por debajo de la
    * búsqueda; su alto lo pone band-dock.js.
    *
-   * Un solo desenfoque fuerte, recortado por una máscara que se deshace
-   * en los últimos --m-dock-rampa px: borroso detrás del header y de la
-   * búsqueda (que es translúcida: sin esto se leería el texto a través
-   * de ella), nítido justo debajo. La escalera de seis capas de la banda
-   * no sirve aquí: va de borroso arriba a nítido abajo a lo largo de
-   * TODO su alto, y debajo de la búsqueda quedaría casi sin desenfocar.
+   * El desenfoque es progresivo (la escalera .m-dock-esc, más abajo):
+   * nítido en el borde de abajo, que queda 10 px por debajo de la
+   * búsqueda (la línea que dibujó Axel), creciendo en --m-dock-rampa px
+   * por detrás de ella, y del todo borroso en su parte alta y en el
+   * header. No se reparte por todo el alto, como en la banda: detrás
+   * del texto de la búsqueda tiene que ir ya fuerte, que es translúcida
+   * y con poco se leería lo de debajo a través de ella.
    *
    * Sin tinte. Llevaba el degradado oscuro de la banda y, en la zona del
    * logo, se sumaba al de la propia banda: al acoplarse, todo el header
@@ -732,11 +733,56 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     display: none; pointer-events: none;
   }
   body.m-shell .m-dock.on { display: block; }
-  .m-dock-blur {
-    position: absolute; inset: 0; z-index: 0;
+  .m-dock-blur { position: absolute; inset: 0; z-index: 0; }
+
+  /* ── La escalera: desenfoque PROGRESIVO ───────────────────────────
+   *
+   * La misma idea que .m-blur de la banda: seis capas con radio
+   * creciente, cada una recortada a su franja con una máscara que se
+   * solapa con la siguiente. Aquí las cinco primeras se reparten los
+   * últimos --m-dock-rampa px (de abajo arriba: 1, 2, 4, 8, 14) y la
+   * sexta, de 22, cubre todo lo de encima: nítido en el borde de abajo,
+   * cada vez más deshecho al subir, y del todo borroso en lo alto de la
+   * barra y en el header.
+   *
+   * Fue UN desenfoque de 22 px con una máscara que lo transparentaba
+   * hacia abajo. Eso no es progresivo, es lo nítido mezclado con lo
+   * muy borroso; Axel lo pidió progresivo y lo notó. Las dos capas que
+   * lo llevan (#mDock y .m-dock-velo) usan esta misma regla.
+   *
+   * El contenedor no lleva ni desenfoque, ni máscara, ni opacidad: con
+   * cualquiera de las tres se vuelve el fondo de sus capas y dejan de
+   * desenfocar lo de detrás. */
+  .m-dock-esc > i { position: absolute; inset: 0; display: block; --s: calc(var(--m-dock-rampa, 50px) / 5); }
+  .m-dock-esc > i:nth-child(1) {
+    backdrop-filter: blur(1px); -webkit-backdrop-filter: blur(1px);
+    -webkit-mask-image: linear-gradient(to top, #000 0, #000 var(--s), transparent calc(var(--s) * 2));
+            mask-image: linear-gradient(to top, #000 0, #000 var(--s), transparent calc(var(--s) * 2));
+  }
+  .m-dock-esc > i:nth-child(2) {
+    backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+    -webkit-mask-image: linear-gradient(to top, transparent 0, #000 var(--s), #000 calc(var(--s) * 2), transparent calc(var(--s) * 3));
+            mask-image: linear-gradient(to top, transparent 0, #000 var(--s), #000 calc(var(--s) * 2), transparent calc(var(--s) * 3));
+  }
+  .m-dock-esc > i:nth-child(3) {
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    -webkit-mask-image: linear-gradient(to top, transparent var(--s), #000 calc(var(--s) * 2), #000 calc(var(--s) * 3), transparent calc(var(--s) * 4));
+            mask-image: linear-gradient(to top, transparent var(--s), #000 calc(var(--s) * 2), #000 calc(var(--s) * 3), transparent calc(var(--s) * 4));
+  }
+  .m-dock-esc > i:nth-child(4) {
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    -webkit-mask-image: linear-gradient(to top, transparent calc(var(--s) * 2), #000 calc(var(--s) * 3), #000 calc(var(--s) * 4), transparent calc(var(--s) * 5));
+            mask-image: linear-gradient(to top, transparent calc(var(--s) * 2), #000 calc(var(--s) * 3), #000 calc(var(--s) * 4), transparent calc(var(--s) * 5));
+  }
+  .m-dock-esc > i:nth-child(5) {
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    -webkit-mask-image: linear-gradient(to top, transparent calc(var(--s) * 3), #000 calc(var(--s) * 4), #000 calc(var(--s) * 5), transparent calc(var(--s) * 6));
+            mask-image: linear-gradient(to top, transparent calc(var(--s) * 3), #000 calc(var(--s) * 4), #000 calc(var(--s) * 5), transparent calc(var(--s) * 6));
+  }
+  .m-dock-esc > i:nth-child(6) {
     backdrop-filter: blur(22px) saturate(130%); -webkit-backdrop-filter: blur(22px) saturate(130%);
-    -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--m-dock-rampa, 30px)), transparent 100%);
-            mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--m-dock-rampa, 30px)), transparent 100%);
+    -webkit-mask-image: linear-gradient(to top, transparent calc(var(--s) * 4), #000 calc(var(--s) * 5), #000 100%);
+            mask-image: linear-gradient(to top, transparent calc(var(--s) * 4), #000 calc(var(--s) * 5), #000 100%);
   }
   /* En Buscar (band-dock.js, `fija` con `scroll`) la barra misma va
    * fija, a la altura de la acoplada del Home, y la lista lleva su
@@ -785,8 +831,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    *
    * El desenfoque (.m-dock-velo) va dentro del bloque, detrás de sus
    * hijos, y se sale de él: por arriba hasta el borde de la pantalla,
-   * por los lados hasta el de la lista, y 30 px por abajo, donde la
-   * máscara lo deshace. No puede ser #mDock, que es fijo y va por
+   * por los lados hasta el de la lista, y --m-dock-bajo px por abajo,
+   * que es donde la escalera empieza, nítida. No puede ser #mDock, que es fijo y va por
    * encima de toda la lista: desenfocaría también las pestañas y el
    * filtro, que viven dentro de ella. Su opacidad la pone band-dock.js
    * según lo que falta para pegarse; en reposo es 0, que si no
@@ -809,13 +855,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   .m-dock-pegado > :not(.m-dock-velo) { position: relative; z-index: 1; transform: translateZ(0); }
   .m-dock-velo {
-    position: absolute; z-index: 0; pointer-events: none; opacity: 0;
-    left: -13px; right: -13px; bottom: -30px;
+    position: absolute; z-index: 0; pointer-events: none;
+    left: -13px; right: -13px; bottom: calc(-1 * var(--m-dock-bajo, 10px));
     top: calc(-1 * var(--m-dock-top, 60px));
-    backdrop-filter: blur(22px) saturate(130%); -webkit-backdrop-filter: blur(22px) saturate(130%);
-    -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 30px), transparent 100%);
-            mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 30px), transparent 100%);
   }
+  /* La opacidad va en cada capa, no en el contenedor (ver .m-dock-esc). */
+  .m-dock-velo > i { opacity: var(--m-dock-o, 0); }
 
   /* El título de la pantalla en el header, en el sitio del logo. Cuánto
    * se ve lo dice --m-dock-q (0 → 1), que band-dock.js mueve con el

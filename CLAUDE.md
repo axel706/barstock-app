@@ -191,9 +191,14 @@ repetirse en otras secciones, igual:
   al logo; nunca pasan por debajo de él leyéndose.
 - **La búsqueda se acopla bajo el logo, tal cual**: mismo tamaño y
   estilo, 8 px bajo la banda. Desde ahí es parte del header.
-- **El desenfoque empieza justo debajo de la búsqueda**: fuerte detrás
-  del header y de la búsqueda, y se deshace en 30 px. El contenido
-  pasa por debajo; nítido desde el borde de la búsqueda.
+- **El desenfoque es PROGRESIVO y empieza justo debajo de la
+  búsqueda**: nítido 10 px por debajo de ella, creciendo en 50 px por
+  detrás de ella (seis capas de 1 a 22 px de radio, la escalera
+  `.m-dock-esc`, igual que la banda), y del todo borroso en su parte
+  alta y en el header. **No es un blur con
+  una máscara que lo transparenta**: eso se hizo primero en las tres
+  pantallas y Axel lo notó ("pedí progressive blur y estás poniendo
+  blur"). Cuando pida desenfoque progresivo, es la escalera.
 - **Todo regresa sólo al volver arriba**, no con cualquier gesto hacia
   arriba a media página (no se le preguntó a Axel; si pide lo de
   Safari, se cambia).
