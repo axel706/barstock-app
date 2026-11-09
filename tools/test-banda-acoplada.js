@@ -220,6 +220,40 @@ if (SRC) {
     sc.scrollTop = 0; sc.dispatchEvent(new w.Event('scroll'));
     prueba('arriba otra vez: sin desenfoque', !acoplada(w));
 
+    // ── La página quieta, sin tocar el body ───────────────────────
+    //
+    // Primero se fijó el body (position: fixed + overflow: hidden). En
+    // la app instalada, iOS volvía a medir la pantalla sin la franja de
+    // abajo y la barra de pestañas subía ~60 px con negro debajo (Axel,
+    // 2026-11-09, comparándolo con el Home). Ahora se frena el arrastre:
+    // fuera de la lista no mueve nada, y dentro sólo mueve la lista.
+    const css = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    prueba('el body no se fija (la barra de pestañas se subía)',
+      !/m-scroll-propio[^{]*\{[^}]*position\s*:\s*fixed/.test(css) && !/m-scroll-propio[^{]*\{[^}]*overflow\s*:\s*hidden/.test(css));
+    const arrastre = (el, desde, hasta) => {
+      const ev0 = new w.Event('touchstart', { bubbles: true, cancelable: true });
+      ev0.touches = [{ clientY: desde }]; el.dispatchEvent(ev0);
+      const ev = new w.Event('touchmove', { bubbles: true, cancelable: true });
+      ev.touches = [{ clientY: hasta }]; el.dispatchEvent(ev);
+      return ev.defaultPrevented;
+    };
+    Object.defineProperty(sc, 'scrollHeight', { value: 2000, configurable: true });
+    Object.defineProperty(sc, 'clientHeight', { value: 500, configurable: true });
+    const fila = w.document.getElementById('msList');
+    prueba('arrastrar sobre la barra no mueve la página', arrastre(sb, 300, 200) === true);
+    prueba('arrastrar la banda tampoco', arrastre(w.document.getElementById('mBand'), 50, 150) === true);
+    sc.scrollTop = 0;
+    prueba('arriba de la lista, tirar hacia abajo no rebota', arrastre(fila, 300, 400) === true);
+    prueba('arriba de la lista, subirla sí se puede', arrastre(fila, 400, 300) === false);
+    sc.scrollTop = 700;
+    prueba('a media lista, en los dos sentidos', arrastre(fila, 300, 400) === false && arrastre(fila, 400, 300) === false);
+    sc.scrollTop = 1500;
+    prueba('al final de la lista, empujar más no rebota', arrastre(fila, 400, 300) === true);
+    const hoja = w.document.createElement('div'); hoja.id = 'mSheet'; w.document.body.appendChild(hoja);
+    prueba('la ficha (fuera de la pantalla) se sigue pudiendo arrastrar', arrastre(hoja, 400, 300) === false);
+    hoja.remove();
+    sc.scrollTop = 0;
+
     // Se sale a otra pantalla que NO engancha nada (Inventory): la
     // página tiene que volver a moverse sola, sin esperar a nadie. Si
     // se quedara bloqueada, Inventory no haría scroll.
@@ -228,6 +262,7 @@ if (SRC) {
     w.document.getElementById('mScreens').appendChild(inv);
     await new Promise(r => setTimeout(r, 0));
     prueba('al salir de Buscar, la página vuelve a moverse', !html.classList.contains('m-scroll-propio') && !w.document.body.classList.contains('m-scroll-propio'));
+    prueba('y el arrastre vuelve a ser libre', arrastre(inv, 400, 300) === false);
 
     // De vuelta al Home, sin que el Home se repinte: su enganche sigue.
     inv.classList.remove('on'); home.classList.add('on');

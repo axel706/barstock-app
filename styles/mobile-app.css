@@ -741,7 +741,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* En Buscar (band-dock.js, `fija` con `scroll`) la barra misma va
    * fija, a la altura de la acoplada del Home, y la lista lleva su
    * propio scroll de arriba abajo de lo visible, con hueco arriba para
-   * pasar por debajo de la barra. Mientras, la página no se mueve.
+   * pasar por debajo de la barra. Mientras, la página no se mueve
+   * (eso lo hace band-dock.js, frenando el arrastre).
    *
    * Fue sticky en la página, y en el iPhone el teclado se llevaba el
    * header y el elástico arrastraba la barra. Así ninguno de los dos la
@@ -750,9 +751,11 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * La barra, por encima del desenfoque (9090) y por debajo de la banda
    * (9100). `.m-searchbar` en el selector para ganarle al width: 100%
    * de la regla de la barra, que va más abajo. */
-  html.m-scroll-propio,
-  body.m-scroll-propio { overflow: hidden; overscroll-behavior: none; }
-  body.m-shell.m-scroll-propio { position: fixed; left: 0; right: 0; width: 100%; }
+  /* La página no se fija (lo hizo, y en la app instalada la barra de
+   * pestañas subía ~60 px con negro debajo): band-dock.js frena el
+   * arrastre. Aquí sólo que la pantalla no ocupe alto, para que la
+   * página no tenga nada que desplazar. */
+  body.m-scroll-propio .m-screen.on { min-height: 0; padding: 0; }
   body.m-shell .m-searchbar.m-dock-fija {
     position: fixed; z-index: 9095; margin: 0; box-sizing: border-box;
     top: var(--m-dock-top, calc(60px + env(safe-area-inset-top, 0px)));

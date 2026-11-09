@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-161019",
+    "items": [
+      "The tab bar sits at the bottom again in Search"
+    ]
+  },
+  {
     "build": "20261109-160345",
     "items": [
       "Search bar stays put with the keyboard open",
@@ -178,12 +184,6 @@
     "build": "20261108-140206",
     "items": [
       "Behind-the-scenes: Toast sales saved day by day"
-    ]
-  },
-  {
-    "build": "20261107-235752",
-    "items": [
-      "Wine from Toast lists your whole inventory"
     ]
   }
 ]
