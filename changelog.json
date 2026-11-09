@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-144608",
+    "items": [
+      "The update card stays until you tap Update"
+    ]
+  },
+  {
     "build": "20261109-143219",
     "items": [
       "Behind-the-scenes fixes"
@@ -180,12 +186,6 @@
     "items": [
       "Bottle shape picker: search, suggestions, A–Z",
       "Fits the phone screen"
-    ]
-  },
-  {
-    "build": "20261107-015205",
-    "items": [
-      "Update screen stays a little longer"
     ]
   }
 ]

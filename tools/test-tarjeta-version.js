@@ -59,12 +59,14 @@ function entorno(o) {
   w.BARSTOCK_CONFIG = {}; w.BarStockToast = { show() {} };
   w.__recargas = 0;
   w.BarStockVersion = {
-    nueva: () => o.nueva || null, actual: () => '20261109-100000',
+    nueva: () => o.nueva || null, actual: () => o.actual || '20261109-100000',
+    pendiente: () => o.nueva || o.pendiente || null,
     _recargar: () => { w.__recargas++; }
   };
   w.BarStockVersionCenter = {
     fecha: (b) => 'Nov 9 · 2:10 PM',
-    notasDe: async () => o.notas || []
+    visto: () => o.visto || null,
+    notasDe: async (b, desde) => { w.__desde = desde; return o.notas || []; }
   };
   new Function(SRC)();
   return w;
@@ -120,6 +122,19 @@ grupo('2 · con versión nueva');
   const w = entorno({ nueva: '20261109-141000', notas: [] });
   const c = laDeVersion(pintar(w));
   prueba('sin notas todavía: una línea, no un hueco', !!c && /latest fixes and features/i.test(c.textContent), c && c.textContent.replace(/\s+/g, ' '));
+}
+
+grupo('2b · se queda aunque cierres y abras, hasta pulsar UPDATE');
+{
+  // Axel, 2026-11-09: la app ya cargó la nueva al abrir en frío, pero
+  // quien la usa no pulsó UPDATE: la tarjeta sigue, con esa build y lo
+  // que trae desde la última que vio.
+  const w = entorno({ pendiente: '20261109-141000', actual: '20261109-141000', visto: '20261109-090000', notas: ['Uno'] });
+  pintar(w); await esperar(20);
+  const c = laDeVersion(pintar(w));
+  prueba('sale la tarjeta sin versión en el servidor', !!c);
+  prueba('con la build cargada en la píldora', !!c && (c.querySelector('.m-app-build') || {}).textContent === 'BUILD-20261109-141000');
+  prueba('y lo que trae desde la última vista', w.__desde === '20261109-090000', String(w.__desde));
 }
 
 grupo('3 · dónde va');

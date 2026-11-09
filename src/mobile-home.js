@@ -1361,7 +1361,9 @@
   // Antes era un aviso arriba que se recogía solo a los 8 segundos y se
   // perdía fácil (Axel, 2026-11-09). Ahora es una tarjeta del carrusel:
   // sale sólo si hay una versión para actualizar (version-check.js) y se
-  // va al actualizar, porque la página nueva ya no tiene versión nueva.
+  // va al pulsar UPDATE, aunque la app se cierre y se abra entre medias
+  // y ya haya cargado la nueva (Axel, 2026-11-09: la ilusión de que es
+  // quien la usa el que actualiza).
   // La campana ya no la lleva: la tarjeta basta.
   //
   // Diseño que eligió (la C, "como en la App Store" con el brillo del
@@ -1376,14 +1378,19 @@
     const C = window.BarStockVersionCenter, V = window.BarStockVersion;
     if (!C || !C.notasDe) return;
     _pidiendoVer = nueva;
-    Promise.resolve(C.notasDe(nueva, V && V.actual ? V.actual() : null))
+    // Desde la última vista, no desde la cargada: si la app ya cargó la
+    // nueva al abrir, la cargada ES la nueva y no saldría nada.
+    const desde = (C.visto && C.visto()) || (V && V.actual ? V.actual() : null);
+    Promise.resolve(C.notasDe(nueva, desde))
       .then(l => { _notasVer = { de: nueva, lista: Array.isArray(l) ? l : [] }; refresh(); })
       .catch(() => {})
       .then(() => { _pidiendoVer = null; });
   }
   function tarjetaVersion() {
     const V = window.BarStockVersion;
-    const nueva = V && V.nueva ? V.nueva() : null;
+    // pendiente(), no nueva(): también la que ya se cargó al abrir sin
+    // pulsar UPDATE (version-check.js). La tarjeta se va al pulsarlo.
+    const nueva = V ? (V.pendiente ? V.pendiente() : (V.nueva ? V.nueva() : null)) : null;
     if (!nueva) return null;
     cargarNotasVersion(nueva);
     return {

@@ -141,6 +141,40 @@ grupo('la campana ya no lleva la versión nueva');
   }
 }
 
+grupo('la versión sin "instalar" se queda hasta pulsar UPDATE');
+{
+  // Axel, 2026-11-09: la app carga siempre la versión más nueva al abrir,
+  // pero la tarjeta y la animación dan la ilusión de que es quien la usa
+  // el que actualiza. Si la cierras y la abres sin pulsar UPDATE, la
+  // tarjeta sigue: la versión cargada es más nueva que la última vista.
+  const con = (visto, remoto) => {
+    const r = entorno({ remoto: remoto || '20261106-100000' });
+    r.w.BarStockVersionCenter = { visto: () => visto };
+    return r;
+  };
+  let { V } = con('20261106-080000');
+  prueba('cargada más nueva que la vista: pendiente la cargada', !!V && typeof V.pendiente === 'function' && V.pendiente() === '20261106-100000', V && V.pendiente && V.pendiente());
+  ({ V } = con('20261106-100000'));
+  prueba('ya vista: nada pendiente', !!V && V.pendiente && V.pendiente() === null);
+  ({ V } = con(null));
+  prueba('primera vez en el teléfono (sin vista): nada pendiente', !!V && V.pendiente && V.pendiente() === null);
+  const r = con('20261106-080000', '20261106-120000');
+  await r.V.comprobar(true);
+  prueba('y si además hay una en el servidor, manda ésa', r.V.pendiente && r.V.pendiente() === '20261106-120000');
+
+  // UPDATE con la pendiente cargada: la animación hacia ESA build, que
+  // al terminar saca What's new y la apunta como vista.
+  const s = entorno({});
+  s.w.BarStockVersionCenter = { visto: () => '20261106-080000' };
+  const real = leer('src/version-check.js');
+  s.w.BarStockVersion = null;
+  new Function(real)();
+  let animada = null;
+  s.w.BarStockUpdateAnim = { salir: (b) => { animada = b; } };
+  s.w.BarStockVersion._recargar();
+  prueba('UPDATE anima hacia la pendiente aunque el servidor no traiga otra', animada === '20261106-100000', String(animada));
+}
+
 grupo('esta en index.html, antes de la campana');
 {
   const html = leer('index.html');

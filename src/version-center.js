@@ -68,9 +68,13 @@
   // ── La tarjeta ─────────────────────────────────────────────────────
   function tarjeta() {
     const v = V();
-    const mia = v ? v.actual() : null;
-    const nueva = v ? v.nueva() : null;
-    const hayNueva = !!(nueva && nueva !== mia);
+    const cargada = v ? v.actual() : null;
+    // La pendiente, como la tarjeta del Home: si la app ya cargó una
+    // nueva al abrir pero no se pulsó UPDATE, aquí tampoco dice "Up to
+    // date". La tuya es entonces la última que viste.
+    const nueva = v ? (v.pendiente ? v.pendiente() : v.nueva()) : null;
+    const hayNueva = !!nueva;
+    const mia = hayNueva && nueva === cargada ? (visto() || cargada) : cargada;
     const eMia = de(mia), eNueva = hayNueva ? de(nueva) : null;
 
     let lineas;
@@ -257,28 +261,40 @@
 
   // ── La última versión que viste ────────────────────────────────────
   //
-  // Se apunta en el teléfono para saber, al abrir, si hubo versiones
-  // nuevas. Antes What's new sólo salía al actualizar con el aviso; si la
-  // app se abría en frío ya estaba al día y nadie se enteraba de nada.
+  // Se apunta en el teléfono al terminar la animación de UPDATE. Mientras
+  // la cargada sea más nueva que ésta, la tarjeta del Home sigue
+  // ofreciendo actualizar, y What's new junta lo de todas las que se
+  // saltaron desde aquí.
   const VISTO = 'barstock.buildVisto';
   function visto() { try { return localStorage.getItem(VISTO); } catch (e) { return null; } }
   function marcarVisto(build) {
     if (!SELLO.test(String(build || ''))) return;
     try { localStorage.setItem(VISTO, build); } catch (e) {}
+    // La tarjeta del Home y la de More dependen de esto (pendiente(), en
+    // version-check.js): al apuntarla, que se vayan ya, no al siguiente
+    // repintado.
+    const H = window.BarStockMobileHome;
+    if (H && H.refresh) { try { H.refresh(); } catch (e) {} }
+    try { pintar(); } catch (e) {}
   }
 
-  // Al entrar con sesión (auth.js). La primera vez en un teléfono no hay
-  // con qué comparar: sólo se apunta (un usuario nuevo no ve "What's new"
-  // de todo lo anterior). Si se viene de actualizar con el aviso, la hoja
-  // la saca la animación al terminar, no esto.
+  // Al entrar con sesión (auth.js). Sólo apunta la versión la primera vez
+  // en un teléfono: sin nada con qué comparar, un usuario nuevo no ve
+  // "What's new" de todo lo anterior ni una tarjeta para "actualizar" a
+  // lo que ya tiene.
+  //
+  // Antes, con una versión nueva cargada al abrir en frío, sacaba aquí
+  // What's new y la apuntaba como vista. Axel (2026-11-09) la quiere
+  // como si la actualización la hiciera quien usa la app: la tarjeta del
+  // Home se queda hasta pulsar UPDATE, y la hoja la saca la animación de
+  // ese UPDATE (update-anim.js), que es la que apunta la versión. Si se
+  // apuntara aquí, la tarjeta se iría sola al volver a abrir, que es
+  // justo lo que vio.
   async function alEntrar() {
     if (window.__bsUpd) return;
     const actual = V() && V().actual ? V().actual() : null;
     if (!SELLO.test(String(actual || ''))) return;
-    const v = visto();
-    marcarVisto(actual);
-    if (!v || v >= actual) return;
-    await novedades(actual, v);
+    if (!visto()) marcarVisto(actual);
   }
 
   // Las notas de lo que trae una versión nueva todavía sin instalar,

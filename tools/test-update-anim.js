@@ -370,7 +370,7 @@ grupo('16 · What\'s new junta las versiones que te perdiste');
   prueba('sólo behind-the-scenes: una línea', JSON.stringify(li) === JSON.stringify(['Behind-the-scenes fixes']), JSON.stringify(li));
 }
 
-grupo('17 · al abrir en frío con una versión nueva, la hoja sale una vez');
+grupo('17 · al abrir en frío: la hoja no sale sola, espera al UPDATE');
 {
   const notas = [
     { build: '20261109-120000', items: ['Nueva'] },
@@ -389,11 +389,14 @@ grupo('17 · al abrir en frío con una versión nueva, la hoja sale una vez');
   w = montar('20261109-120000');
   await w.BarStockVersionCenter.alEntrar();
   prueba('la misma versión: sin hoja', !w.document.getElementById('mSheet'));
+  // Axel, 2026-11-09: al abrir en frío NO sale la hoja. Sale la tarjeta
+  // del Home, que se queda hasta pulsar UPDATE; la hoja la saca la
+  // animación de ese UPDATE. Y la versión no se apunta como vista: si
+  // se apuntara, la tarjeta se iría sola al volver a abrir.
   w = montar('20261109-100000');
   await w.BarStockVersionCenter.alEntrar();
-  const h = w.document.getElementById('mSheet');
-  prueba('una versión nueva: sale la hoja', !!h && /Nueva/.test(h.textContent) && !/Vieja/.test(h.textContent), h && h.textContent.replace(/\s+/g, ' '));
-  prueba('y se apunta, para que no vuelva a salir', w.localStorage.getItem('barstock.buildVisto') === '20261109-120000');
+  prueba('una versión sin pulsar UPDATE: sin hoja al abrir', !w.document.getElementById('mSheet'));
+  prueba('y no se apunta: la tarjeta tiene que seguir', w.localStorage.getItem('barstock.buildVisto') === '20261109-100000', w.localStorage.getItem('barstock.buildVisto'));
 }
 {
   // Si se viene de actualizar con el aviso, la hoja la saca la animación:
@@ -404,10 +407,16 @@ grupo('17 · al abrir en frío con una versión nueva, la hoja sale una vez');
   w.localStorage.setItem('barstock.buildVisto', '20200101-000000');
   await w.BarStockVersionCenter.alEntrar();
   prueba('viniendo de actualizar, alEntrar no la saca', !w.document.getElementById('mSheet'));
+  let repintos = 0;
+  w.BarStockMobileHome = { refresh: () => { repintos++; } };
   w.__bsUpdListo();
   await esperar(300);
   prueba('la saca la animación al terminar', !!w.document.getElementById('mSheet'));
   prueba('y apunta la versión', w.localStorage.getItem('barstock.buildVisto') === BUILD);
+  // El Home se pintó debajo de la animación con la tarjeta todavía
+  // puesta (la versión aún no estaba vista): al apuntarla se repinta, o
+  // la tarjeta seguiría ahí después de actualizar.
+  prueba('y repinta el Home, para que la tarjeta se vaya', repintos > 0, String(repintos));
 }
 {
   const auth = leer('src/auth.js');
