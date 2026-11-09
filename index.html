@@ -80,7 +80,7 @@
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/chip-glow.css">
   <link rel="stylesheet" href="styles/mobile.css?v=mob5">
-  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp139">
+  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp140">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -321,7 +321,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261108-141552</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261109-011602</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5489,7 +5489,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/mobile-search.js?v=m20"></script>
 <script src="src/mobile-cycle.js?v=m9"></script>
 <script src="src/mobile-inventory.js?v=m13"></script>
-<script src="src/mobile-orders.js?v=m17"></script>
+<script src="src/mobile-orders.js?v=m18"></script>
 <script src="src/mobile-quick.js?v=mqk2"></script>
 <script src="src/update-anim.js?v=upd2"></script>
 <script src="src/version-check.js?v=ver3"></script>
@@ -5617,7 +5617,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/orders-cloud.js"></script>
 <script src="src/order-history-ui.js"></script>
 <script src="src/onboarding.js?v=onb3"></script>
-    <script src="src/email-order.js?v=eo8"></script>
+    <script src="src/email-order.js?v=eo9"></script>
 <script src="src/email-cost-report.js?v=ecr2"></script>
 <script src="src/vendor-defaults-cloud.js"></script>
 <script src="src/sender-profile-cloud.js"></script>
@@ -6440,6 +6440,14 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     </div>
     <label style="display:block;margin-bottom:6px;font-weight:600">CC <span class="muted small">(optional, separate multiple with commas)</span></label>
     <input id="emailOrderCc" type="text" placeholder="manager@example.com, owner@example.com" style="width:100%;margin-bottom:16px">
+    <!-- La nota para el proveedor. Cerrada hasta que se pide: casi
+         siempre va vacía. Sale arriba en el correo, no en el PDF, y no
+         se guarda en la orden (email-order.js, send-order.js). -->
+    <button type="button" class="ui-control" id="emailOrderNoteAdd" style="margin-bottom:16px">+ Add a note for the vendor</button>
+    <div id="emailOrderNoteBox" hidden>
+      <label for="emailOrderNote" style="display:block;margin-bottom:6px;font-weight:600">Note for the vendor <span class="muted small">(optional · shows at the top of the email, not in the PDF)</span></label>
+      <textarea id="emailOrderNote" rows="3" maxlength="1000" placeholder="Delivery window, back door, a substitution…" style="width:100%;margin-bottom:16px;resize:vertical;font:inherit"></textarea>
+    </div>
     <div style="margin-bottom:20px">
       <label style="display:block;margin-bottom:6px;font-weight:600">Order preview (will be attached as JPG)</label>
       <div id="emailOrderPreview" style="border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:8px;background:rgba(255,255,255,.04);max-height:380px;overflow-y:auto;display:flex;align-items:center;justify-content:center;min-height:120px">

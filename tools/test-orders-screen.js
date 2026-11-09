@@ -704,6 +704,61 @@ console.log('\nlos destinatarios se tocan sin ir a Ajustes');
   eq('una buena si', chips, ['orders@southern.com', 'nuevo@southern.com']);
 }
 
+console.log('\nla nota para el proveedor');
+{
+  // Va en el correo, arriba, en ambar. NO en el PDF ni en la orden
+  // guardada (History): Axel lo pidio asi. Se llama vendorNote porque
+  // `note` ya es la etiqueta de una orden rapida, que si se guarda.
+  const { w, host } = pantalla();
+  await revisar(host, 'SOUTHERN');
+  ok('hay un boton para anadirla', !!host.querySelector('#mrNotaAdd'));
+  ok('y el campo nace cerrado: casi siempre va vacia', !host.querySelector('#mrNota'));
+  host.querySelector('#mrNotaAdd').click();
+  const t = host.querySelector('#mrNota');
+  ok('al pulsarlo se abre el campo', !!t);
+  ok('y el boton se va', !host.querySelector('#mrNotaAdd'));
+  t.value = 'Deliver before Thursday.';
+  t.dispatchEvent(new w.Event('input'));
+  // Quitar un destinatario repinta la tarjeta entera: la nota no se
+  // puede perder en el camino.
+  host.querySelector('[data-quitar="1"]').click();
+  ok('sobrevive a un repintado', host.querySelector('#mrNota') && host.querySelector('#mrNota').value === 'Deliver before Thursday.',
+     host.querySelector('#mrNota') && host.querySelector('#mrNota').value);
+  ok('a 16px o mas en el telefono (o Safari hace zoom)', /m-rev-nota/.test(host.querySelector('#mrNota').className));
+  host.querySelector('.m-rev-go').click();
+  await esperar(TODO_EL_PROCESO);
+  const c = (w.__enviados[0] || {}).cuerpo || {};
+  ok('va en el correo', c.vendorNote === 'Deliver before Thursday.', JSON.stringify(c.vendorNote));
+  ok('no en la orden guardada (History)', w.__guardadas[0] && !JSON.stringify(w.__guardadas[0]).includes('Thursday'));
+  ok('ni en el PDF', !JSON.stringify(w.__pdfPedidos).includes('Thursday'));
+
+  host.querySelector('#mrDone').click();
+  await revisar(host, 'PEQUENO');
+  ok('la siguiente orden empieza sin nota', !host.querySelector('#mrNota') && !!host.querySelector('#mrNotaAdd'));
+
+  // History reenvia por el mismo camino, con sus destinatarios: ahi no
+  // hay nota que mandar, y no puede colarse la de la pantalla.
+  host.querySelector('#mrNotaAdd').click();
+  host.querySelector('#mrNota').value = 'Esta no.';
+  host.querySelector('#mrNota').dispatchEvent(new w.Event('input'));
+  w.__enviados = [];
+  await w.BarStockMobileOrders.enviarCorreo({ vendor: 'SOUTHERN', items: [{ item: "Tito's", finalOrder: 2 }], totalUnits: 2 }, ['a@southern.com']);
+  ok('el reenvio de History no lleva nota', w.__enviados[0] && !w.__enviados[0].cuerpo.vendorNote,
+     JSON.stringify(w.__enviados[0] && w.__enviados[0].cuerpo.vendorNote));
+}
+
+{
+  // Vacia o de puros espacios no se manda.
+  const { w, host } = pantalla();
+  await revisar(host, 'SOUTHERN');
+  host.querySelector('#mrNotaAdd').click();
+  host.querySelector('#mrNota').value = '   ';
+  host.querySelector('#mrNota').dispatchEvent(new w.Event('input'));
+  host.querySelector('.m-rev-go').click();
+  await esperar(TODO_EL_PROCESO);
+  ok('una nota en blanco no viaja', w.__enviados[0] && !('vendorNote' in w.__enviados[0].cuerpo));
+}
+
 console.log('\nsin destinatario no se puede colocar');
 {
   const { host } = pantalla();

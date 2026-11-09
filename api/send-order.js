@@ -12,7 +12,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "Method not allowed" });
 
   try {
-    const { to, cc, replyTo, vendor, items, totalUnits, subtotal, locationName, jpgBase64, pdfBase64, filename, fromName, senderName: senderNameFromBody, senderEmail } = req.body || {};
+    const { to, cc, replyTo, vendor, items, totalUnits, subtotal, locationName, jpgBase64, pdfBase64, filename, fromName, senderName: senderNameFromBody, senderEmail, vendorNote } = req.body || {};
 
     if (!to || !vendor || !items?.length) {
       return res.status(400).json({ ok: false, error: "Missing required fields" });
@@ -54,11 +54,33 @@ module.exports = async function handler(req, res) {
     // El texto es el que ya se enviaba, palabra por palabra. Solo se ha
     // quitado "for ${vendor}" de la primera frase, porque el titular ya
     // lo dice dos líneas más arriba y quedaba dicho dos veces.
+    // ── La nota para el proveedor ─────────────────────────────────────
+    //
+    // Lo que el comercial tiene que hacer distinto con ESTE pedido
+    // ("antes del jueves", "puerta de atrás"). Va arriba, antes del
+    // saludo y en ámbar, porque hay quien sólo abre el PDF: abajo se
+    // perdería. Firmada, para que se sepa de quién es.
+    //
+    // NO va en el PDF ni se guarda en la orden: Axel lo pidió así. Y se
+    // llama `vendorNote` y no `note`, porque `note` ya es la etiqueta
+    // interna de una orden rápida ("Quick Order"), que sí se guarda.
+    //
+    // Se escapa: es texto que alguien escribió y va dentro de un HTML.
+    // Con tope, para que un pegado accidental no mande una novela.
+    const nota = typeof vendorNote === 'string' ? vendorNote.trim().slice(0, 1000) : '';
+    const bloqueNota = nota
+      ? `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;margin:0 0 22px"><tr><td style="padding:14px 16px">
+    <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b45309">Note from ${escapeHtml(senderName)}</p>
+    <p style="margin:0;font-size:15px;line-height:1.6;color:#78350f">${escapeHtml(nota).replace(/\r?\n/g, '<br>')}</p>
+  </td></tr></table>`
+      : '';
+
     const htmlBody = shell({
   right: loc,
   footer: 'Automated ordering system',
   body:
     badge('📦', `New order for ${vendor}`, resumen) +
+    bloqueNota +
     `<p style="margin:0 0 20px;font-size:15px;color:#0f172a">Hello,</p>
     <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.75">This email confirms a new order request from <strong style="color:#0f172a">${escapeHtml(loc)}</strong>. The details are attached as a PDF document for your review.</p>` +
     // La fila del adjunto solo si de verdad hay adjunto: anunciar un PDF

@@ -2624,6 +2624,32 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   .m-rev-rec input { width: 20px; height: 20px; accent-color: #38bdf8; flex: 0 0 20px; }
 
+  /* ── La nota para el proveedor ─────────────────────────────────────
+   * Cerrada hasta que se pide: un botón discontinuo, como el "Add" de
+   * los destinatarios, para que se lea como "añadir algo" y no como un
+   * campo vacío que hay que rellenar. Prefijo de ID: sin él, app.css lo
+   * vuelve píldora (999px !important).
+   *
+   * El campo a 16px como mínimo: por debajo Safari hace zoom al
+   * enfocarlo y, con el zoom bloqueado, la pantalla se queda ampliada. */
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-rev-nota-add {
+    display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 14px;
+    padding: 11px 13px; border-radius: 12px !important; cursor: pointer;
+    background: rgba(255,255,255,.05); border: 1px dashed rgba(255,255,255,.22);
+    color: #a9bacd; font-family: inherit; font-size: var(--m-small); font-weight: 700;
+  }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-rev-nota-add i { font-size: var(--m-title); color: #7dd3fc; }
+  .m-rev-op { text-transform: none; letter-spacing: 0; font-weight: 600; color: #64748b; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-rev-nota {
+    display: block; width: 100%; box-sizing: border-box; padding: 11px 13px;
+    border-radius: 12px !important; resize: none;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
+    color: #fff; font-family: inherit; font-size: max(16px, var(--m-body)); line-height: 1.45;
+    -webkit-appearance: none;
+  }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-rev-nota::placeholder { color: #6b7f95; }
+  .m-rev-nota-pie { margin-top: 6px; font-size: var(--m-meta); color: #8fa3b8; }
+
   /* ── El bloque de enviar, ARRIBA ───────────────────────────────────
    * Estaba abajo en un pie `position: sticky` con fondo opaco, y ese
    * fondo pintaba un rectángulo oscuro sobre el de la app que se leía

@@ -60,6 +60,16 @@
   // encuentra nada, repinta, carga. Bucle infinito y la pantalla
   // congelada.
   let _destDe = null;
+  // La nota para el proveedor. Sale arriba en el correo y en ningún
+  // otro sitio: ni en el PDF ni en la orden guardada (Axel lo pidió
+  // así). No es `_extra.note`: ésa es la etiqueta interna de una orden
+  // rápida ("Quick Order") y sí se guarda.
+  //
+  // `_notaAbierta` separa "pulsé Add a note" de "escribí algo": el
+  // campo se queda abierto aunque lo vacíes, y no se cierra solo en el
+  // siguiente repintado (que llega, por ejemplo, al quitar un correo).
+  let _notaProv = '';
+  let _notaAbierta = false;
   let _colocando = false;
   const _fallos = new Set(); // claves de líneas que no llegaron a la nube
 
@@ -290,6 +300,9 @@
     _enviado = null;
     _vista = null;
     _extra = null; _deBorrador = false;
+    // La nota es de ESTA orden. Si sobreviviera, el "antes del jueves"
+    // de Southern le llegaría al siguiente proveedor.
+    _notaProv = ''; _notaAbierta = false;
   }
 
   // ── Lo que distingue una orden rápida ──────────────────────────────
@@ -396,6 +409,18 @@
           <button type="button" id="mrOk">Add</button>
         </div>
 
+        <!-- La nota para el proveedor, cerrada hasta que se pide: casi
+             siempre va vacía y la tarjeta queda como antes (opción 2
+             que eligió Axel). -->
+        ${_notaAbierta || _notaProv ? `
+          <div class="m-rev-lab">Note for the vendor <span class="m-rev-op">· optional</span></div>
+          <textarea id="mrNota" class="m-rev-nota" rows="3" maxlength="1000"${_colocando ? ' disabled' : ''}
+                    placeholder="Delivery window, back door, a substitution…">${esc(_notaProv)}</textarea>
+          <div class="m-rev-nota-pie">Shows at the top of the email. Not in the PDF.</div>` : `
+          <button type="button" class="m-rev-nota-add" id="mrNotaAdd">
+            <i class="ti ti-message-plus" aria-hidden="true"></i> Add a note for the vendor
+          </button>`}
+
         <label class="m-rev-rec">
           <input type="checkbox" id="mrRec"${_recordar ? ' checked' : ''}>
           <span>Remember these for ${esc(v.nombre)}</span>
@@ -483,6 +508,18 @@
     // Enter en el teclado del teléfono hace lo mismo que el botón.
     mail.onkeydown = (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); meter(); } };
 
+    const notaAdd = host.querySelector('#mrNotaAdd');
+    if (notaAdd) notaAdd.onclick = () => {
+      _notaAbierta = true;
+      repintar();
+      const t = host.querySelector('#mrNota');
+      if (t) t.focus();
+    };
+    // Se lee al escribir y NO repinta: repintar en cada letra cerraría
+    // el teclado. Es lo mismo que hace la nota de Quick order.
+    const notaTxt = host.querySelector('#mrNota');
+    if (notaTxt) notaTxt.oninput = () => { _notaProv = notaTxt.value; };
+
     host.querySelector('#mrRec').onchange = (ev) => { _recordar = !!ev.target.checked; };
     host.querySelector('#mrGo').onclick = () => colocar(v, host);
 
@@ -534,7 +571,10 @@
   // `destinatarios` entra por parámetro y no se lee de `_to` para que
   // History pueda reusar esto tal cual: allí no hay pantalla de
   // revisión, pero el correo tiene que salir exactamente igual.
-  async function enviarCorreo(orden, destinatarios) {
+  //
+  // `op.vendorNote` sólo lo pasa la revisión. History reenvía sin nota:
+  // la nota no se guarda, y no puede colarse la que haya en pantalla.
+  async function enviarCorreo(orden, destinatarios, op) {
     const para = (destinatarios && destinatarios.length) ? destinatarios.slice() : _to.slice();
     if (!para.length) throw new Error('No address to send it to.');
     const E = window.BarStockEmailOrder;
@@ -584,6 +624,8 @@
     if (replyTo) cuerpo.replyTo = replyTo;
     if (perfil.name) cuerpo.senderName = perfil.name;
     if (perfil.email) cuerpo.senderEmail = perfil.email;
+    const nota = String((op && op.vendorNote) || '').trim();
+    if (nota) cuerpo.vendorNote = nota;
 
     const res = await fetch('https://barstock-app.vercel.app/api/send-order', {
       method: 'POST',
@@ -743,7 +785,7 @@
       await alMenos(PASO_MS, Promise.resolve());
       _paso = 3;
       repintar();
-      fueron = await alMenos(PASO_MS, enviarCorreo(orden));
+      fueron = await alMenos(PASO_MS, enviarCorreo(orden, null, { vendorNote: _notaProv }));
     } catch (e) {
       // La orden está colocada y el correo no salió —o no sabemos si
       // salió—. Es el estado que más confunde, así que se queda en

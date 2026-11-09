@@ -135,7 +135,10 @@ grupo('ni las clases que el JS pone a un input');
 
   const malos = [];
   for (const [cl, archivos] of clases) {
-    const t = tamañoDe(sel => new RegExp('\\.' + cl.replace(/[-]/g, '\\-') + '\\b').test(sel));
+    // La clase tiene que acabar ahí: con `\b`, `.m-rev-nota` casaba
+    // también con `.m-rev-nota-add` (el guion cuenta como frontera de
+    // palabra) y medía el botón en vez del campo.
+    const t = tamañoDe(sel => new RegExp('\\.' + cl.replace(/[-]/g, '\\-') + '(?![\\w-])').test(sel));
     if (t && t.px !== null && t.px < 16) {
       malos.push('.' + cl + ' (' + t.px.toFixed(2) + 'px, ' +
                  Array.from(archivos).join(',') + ')');

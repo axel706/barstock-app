@@ -333,6 +333,22 @@
     }
 
     if (ccInput) ccInput.value = '';
+    // La nota es de UNA orden: al abrir la ventana para otra, empieza
+    // vacía y cerrada. Si se heredara, el "antes del jueves" de Southern
+    // le llegaría a Breakthru.
+    const notaBtn = document.getElementById('emailOrderNoteAdd');
+    const notaCaja = document.getElementById('emailOrderNoteBox');
+    const nota = document.getElementById('emailOrderNote');
+    if (nota) nota.value = '';
+    if (notaCaja) notaCaja.hidden = true;
+    if (notaBtn) {
+      notaBtn.hidden = false;
+      notaBtn.onclick = () => {
+        notaBtn.hidden = true;
+        if (notaCaja) notaCaja.hidden = false;
+        if (nota) nota.focus();
+      };
+    }
     if (preview) preview.innerHTML = '<div class="small muted">Generating preview...</div>';
     _emailOrderJpgBase64 = null;
 
@@ -477,6 +493,10 @@
 
       if (ccEmails.length) payload.cc = ccEmails;
       if (replyTo) payload.replyTo = replyTo;
+      // `vendorNote` y no `note`: `note` es la etiqueta de una orden
+      // rápida. Sólo viaja en el correo; no va al PDF ni a la orden.
+      const notaTxt = String(document.getElementById('emailOrderNote')?.value || '').trim();
+      if (notaTxt) payload.vendorNote = notaTxt;
       try {
         if (window.BarStockSenderProfile) {
           const sp = await window.BarStockSenderProfile.getProfile();
