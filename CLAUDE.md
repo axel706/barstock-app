@@ -223,7 +223,9 @@ ligado al scroll, no disparado: primero se va el logo, después entra
 el título. Axel lo pidió así: "que la animación sea suave". Orders
 usa la misma forma: se quedan las pestañas (Open / Sent / Invoices);
 "Quick order" sube con la lista, y dentro de un detalle se engancha
-sin `nombre`, que deja el logo en el header. **Lo que se pega tiene
+sin `nombre`, que deja el logo en el header. En Sent, la fila del
+buscador y los filtros también se queda, debajo de las pestañas: la
+pinta la sección, así que se pasa con `tambien` (una función). **Lo que se pega tiene
 que colgar directamente de la lista**: un sticky sólo dura lo que su
 padre.
 

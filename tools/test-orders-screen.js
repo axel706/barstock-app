@@ -658,6 +658,18 @@ console.log('\nel header al hacer scroll, como en Inventory');
      !!u && u.pantalla === host && u.scroll === sc && u.pegado === peg && u.nombre === 'Orders' && !!u.titulo,
      u && Object.keys(u).join(','));
 
+  // En Sent, la fila del buscador y los filtros la pinta la seccion
+  // dentro del cuerpo. Tambien se queda pegada (Axel, 2026-11-09): se
+  // le pasa a band-dock como funcion, porque la seccion se pinta
+  // despues y por su cuenta.
+  ok('le pasa como encontrar la fila de la seccion', !!u && typeof u.tambien === 'function');
+  const cuerpo = host.querySelector('#moCuerpo');
+  ok('sin fila en la seccion, nada', u.tambien() === null);
+  const fila = w.document.createElement('div'); fila.className = 'm-inv-bar2';
+  cuerpo.insertBefore(fila, cuerpo.firstChild);
+  ok('con la fila de buscador y filtros arriba del cuerpo, esa', u.tambien() === fila);
+  fila.remove();
+
   // Dentro de un detalle no hay pestanas ni titulo: el header se queda
   // con el logo. Se dice con el nombre vacio.
   w.BarStockMobileInvoices.abrirDetalle();

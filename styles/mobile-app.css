@@ -856,7 +856,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-dock-pegado > :not(.m-dock-velo) { position: relative; z-index: 1; transform: translateZ(0); }
   .m-dock-velo {
     position: absolute; z-index: 0; pointer-events: none;
-    left: -13px; right: -13px; bottom: calc(-1 * var(--m-dock-bajo, 10px));
+    /* --m-dock-mas: lo que ocupa una segunda pieza pegada debajo (la
+     * fila del buscador de Sent), para llegar hasta debajo de ella. */
+    left: -13px; right: -13px; bottom: calc(-1 * (var(--m-dock-bajo, 10px) + var(--m-dock-mas, 0px)));
     top: calc(-1 * var(--m-dock-top, 60px));
   }
   /* La opacidad va en cada capa, no en el contenedor (ver .m-dock-esc). */

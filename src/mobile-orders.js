@@ -981,8 +981,16 @@
     // header conserva el logo.
     const acoplar = (nombre) => {
       const D = window.BarStockBandDock;
+      // `tambien`: en Sent, la fila del buscador y los filtros, que la
+      // pinta la sección arriba de su contenido. Se queda pegada bajo
+      // las pestañas (Axel, 2026-11-09). Sólo si es LO PRIMERO del
+      // cuerpo: una fila igual más abajo no es la de la sección.
       if (D) D.enganchar({ pantalla: host, scroll: host.querySelector('#moScroll'),
-        pegado: peg, titulo: cab, nombre });
+        pegado: peg, titulo: cab, nombre,
+        tambien: () => {
+          const p = cuerpo.firstElementChild;
+          return p && p.classList.contains('m-inv-bar2') ? p : null;
+        } });
     };
     if (enDetalle()) { cab.innerHTML = ''; peg.innerHTML = ''; tras.innerHTML = ''; acoplar(''); return cuerpo; }
 

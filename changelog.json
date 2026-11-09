@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-173022",
+    "items": [
+      "Sent: search and filters stay at the top as you scroll"
+    ]
+  },
+  {
     "build": "20261109-171348",
     "items": [
       "Orders: the tabs stay at the top as you scroll",
@@ -179,12 +185,6 @@
     "build": "20261109-100959",
     "items": [
       "Add product: searching picks the first match for you"
-    ]
-  },
-  {
-    "build": "20261109-100448",
-    "items": [
-      "Add product works again on the computer"
     ]
   }
 ]

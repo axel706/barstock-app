@@ -357,6 +357,30 @@ if (SRC) {
     prueba('un repintado no duplica el desenfoque ni el título', blo.querySelectorAll('.m-dock-velo').length === 1 && band.querySelectorAll('.m-band-titulo').length === 1 && sc.querySelectorAll('.m-dock-marca').length === 1);
     prueba('ni mueve la lista de donde estaba', sc.scrollTop === 30);
 
+    // ── Una segunda pieza pegada debajo (Orders → Sent) ───────────
+    //
+    // Axel, 2026-11-09, sobre Sent: "la barra de búsqueda y el botón de
+    // filtro también se deben congelar con el header como en inventory".
+    // Esa fila la pinta la sección dentro de su contenido, no la
+    // cabecera: se le dice al módulo con `tambien`, una función, porque
+    // la sección se pinta después y por su cuenta.
+    {
+      const fila = w.document.createElement('div'); fila.className = 'm-inv-bar2';
+      w.document.getElementById('miList').appendChild(fila);
+      fila.getBoundingClientRect = () => ({ top: 0, bottom: 48, height: 48 });
+      blo.lastElementChild.style.marginBottom = '13px';
+      let hay = true;
+      w.BarStockBandDock.enganchar({ pantalla: inv, scroll: sc, pegado: blo, titulo: tit, nombre: 'Inventory', tambien: () => (hay ? fila : null) });
+      Object.defineProperty(blo.previousElementSibling, 'offsetTop', { value: D0 + 60, configurable: true });
+      sc.scrollTop = 900; sc.dispatchEvent(new w.Event('scroll'));
+      prueba('la segunda pieza también va pegada', fila.classList.contains('m-dock-pegado'));
+      prueba('justo debajo de la primera, con su separación', fila.style.top === (D0 + 110 + 13) + 'px', fila.style.top);
+      prueba('y el desenfoque se alarga hasta debajo de ella', blo.style.getPropertyValue('--m-dock-mas') === (13 + 48) + 'px', blo.style.getPropertyValue('--m-dock-mas'));
+      hay = false; sc.dispatchEvent(new w.Event('scroll'));
+      prueba('si la sección deja de tenerla, el desenfoque vuelve a su largo', blo.style.getPropertyValue('--m-dock-mas') === '0px', blo.style.getPropertyValue('--m-dock-mas'));
+      fila.remove();
+    }
+
     // Orders, dentro de un detalle: la misma pantalla y la misma lista,
     // pero sin pestañas ni título. Se engancha sin nombre, y entonces el
     // header conserva el logo y no hay desenfoque que poner.
@@ -442,6 +466,7 @@ if (SRC) {
     prueba('band-dock.js antes que mobile-orders.js', i > 0 && i < html.indexOf('src/mobile-orders.js'));
     const css2 = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     prueba('el bloque se pega por CSS (sticky), no con JavaScript', /\.m-dock-pegado\s*\{[^}]*position\s*:\s*sticky/.test(css2));
+    prueba('el desenfoque sabe alargarse para una segunda pieza', /\.m-dock-velo\s*\{[^}]*bottom\s*:[^;]*--m-dock-mas/.test(css2));
     prueba('un aviso en el header tapa también el título', /m-band-bub\s+\.m-band-titulo[^{]*\{[^}]*opacity\s*:\s*0/.test(css2));
   }
 }

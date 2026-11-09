@@ -245,8 +245,10 @@
       tituloBanda(null);
       if (a.titulo) a.titulo.style.opacity = '';
       if (a.velo) a.velo.style.setProperty('--m-dock-o', '0');
+      a.pegado.style.setProperty('--m-dock-mas', '0px');
       return;
     }
+    segundaPieza(a, banda);
     // Se mide la MARCA, no el bloque: el offsetTop de un elemento sticky
     // ya pegado incluye lo que se ha desplazado, y el recorrido crecería
     // con el scroll (lo enseñó el navegador: el fundido no llegaba nunca).
@@ -261,6 +263,31 @@
     // cada capa.
     if (a.velo) a.velo.style.setProperty('--m-dock-o', dos(entre((p - 0.6) / 0.4)));
     tituloBanda(a.nombre, entre((p - 0.25) / 0.75));
+  }
+
+  // ── Una segunda pieza pegada debajo de la primera ────────────────
+  //
+  // Orders → Sent: bajo las pestañas hay una fila con el buscador y el
+  // botón de filtros, y Axel la quiere pegada también ("como en
+  // inventory", 2026-11-09). Pero esa fila no es de la cabecera: la
+  // pinta la SECCIÓN dentro de su contenido, más tarde y por su cuenta,
+  // y cada sección tiene la suya o ninguna. Por eso se pide con una
+  // función (`tambien`) y se mira en cada cálculo, no al enganchar.
+  //
+  // Se pega igual, con sticky, a la altura donde acaba la primera más
+  // la separación que ya tenían. Aquí sí puede ir dentro de otro
+  // elemento (el cuerpo de la sección): su padre dura toda la lista. Y
+  // el desenfoque, que vive en la primera pieza, se alarga hasta debajo
+  // de la segunda con --m-dock-mas.
+  function segundaPieza(a, banda) {
+    const el = typeof a.tambien === 'function' ? a.tambien() : null;
+    if (!el || !el.isConnected) { a.pegado.style.setProperty('--m-dock-mas', '0px'); return; }
+    el.classList.add('m-dock-pegado');
+    const ult = a.pegado.lastElementChild;
+    const sep = (ult && parseFloat(getComputedStyle(ult).marginBottom)) || 0;
+    const alto1 = a.pegado.getBoundingClientRect().height;
+    el.style.top = (banda + HUECO + alto1 + sep) + 'px';
+    a.pegado.style.setProperty('--m-dock-mas', (sep + el.getBoundingClientRect().height) + 'px');
   }
 
   // ── La página quieta mientras la lista lleva su propio scroll ─────
@@ -379,7 +406,8 @@
     if (eraElActual) quitarCopia();
     const r = { pantalla: o.pantalla, barra: o.barra || null, desvanecer: o.desvanecer || [], fija: !!o.fija,
       scroll: (o.fija || o.pegado) && o.scroll ? o.scroll : null, copia: null,
-      pegado: o.pegado || null, titulo: o.titulo || null, nombre: o.nombre || '', velo: null, marca: null };
+      pegado: o.pegado || null, titulo: o.titulo || null, nombre: o.nombre || '', velo: null, marca: null,
+      tambien: o.tambien || null };
     if (r.fija) o.barra.classList.add('m-dock-fija');
     if (r.scroll && !r.scroll.classList.contains('m-dock-scroll')) {
       r.scroll.classList.add('m-dock-scroll');
