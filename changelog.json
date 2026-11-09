@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-104956",
+    "items": [
+      "Behind-the-scenes fixes"
+    ]
+  },
+  {
     "build": "20261109-103546",
     "items": [
       "The update screen takes its time, like a real update"
@@ -180,12 +186,6 @@
     "build": "20261106-222709",
     "items": [
       "Fireball, Monkey Shoulder, Oban and Boulard shapes"
-    ]
-  },
-  {
-    "build": "20261106-220801",
-    "items": [
-      "Glenfiddich, Casa Noble and Drambuie bottle shapes"
     ]
   }
 ]
