@@ -172,7 +172,20 @@
     paintList();
 
     const s = $('atoSearch');
-    s.oninput = () => { _q = s.value; _sel = null; paintList(); };
+    // Al buscar queda elegido el primero que se puede agregar. Antes
+    // escribir sólo borraba la elección: con un único resultado en
+    // pantalla, Add seguía apagado hasta hacer clic en la fila, y nada
+    // lo decía (Axel creyó que el "to order 0" lo bloqueaba). Con el
+    // buscador vacío no se elige nada: Add a ciegas agregaría lo primero
+    // de la lista.
+    s.oninput = () => {
+      _q = s.value; _sel = null;
+      if (_q.trim()) {
+        const libre = candidatos().find(c => !c.colocado && !c.yaVa);
+        if (libre) _sel = libre.idx;
+      }
+      paintList();
+    };
     s.onkeydown = (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();

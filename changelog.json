@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-100959",
+    "items": [
+      "Add product: searching picks the first match for you"
+    ]
+  },
+  {
     "build": "20261109-100448",
     "items": [
       "Add product works again on the computer"
@@ -183,13 +189,6 @@
       "Blanton's bottle shape",
       "Jura bottle shape",
       "Macallan bottle shape"
-    ]
-  },
-  {
-    "build": "20261106-135836",
-    "items": [
-      "Belvedere bottle shape",
-      "Ketel One bottle shape"
     ]
   }
 ]

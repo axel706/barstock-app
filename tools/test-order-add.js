@@ -185,6 +185,34 @@ console.log('\nbuscar');
 
   s.value = 'zzz'; s.dispatchEvent(new w.Event('input'));
   ok('sin resultados lo dice', /nothing matches/i.test($(w, 'atoList').textContent));
+  ok('y Add se apaga', $(w, 'atoGo').disabled);
+}
+
+console.log('\nbuscar deja elegido el primero que se puede agregar');
+{
+  // Axel, 2026-11-09: escribio "basil", salio Basil Hayden solo y Add
+  // seguia apagado. Escribir borraba la eleccion y habia que hacer clic
+  // en la fila, sin que nada lo dijera. Parecia que el "to order 0" lo
+  // bloqueaba, y no: hacia falta elegirlo.
+  const w = montar({ master: clon(), tab: 'SOUTHERN' });
+  w.BarStockAddToOrder.open();
+  const s = $(w, 'atoSearch');
+  s.value = 'casa'; s.dispatchEvent(new w.Event('input'));
+  ok('el resultado queda elegido', !!w.document.querySelector('.ato-row.sel') && /Casa Noble/.test(textoDe(w.document.querySelector('.ato-row.sel'))));
+  ok('y Add se enciende sin hacer clic', !$(w, 'atoGo').disabled);
+  $(w, 'atoGo').click();
+  eq('y agrega ese', w.__llamadas, [[1, 1]]);
+
+  // Uno bloqueado (ya va en la orden) no se elige solo.
+  const w2 = montar({ master: clon(), tab: 'SOUTHERN' });
+  w2.BarStockAddToOrder.open();
+  const s2 = $(w2, 'atoSearch');
+  s2.value = 'tito'; s2.dispatchEvent(new w2.Event('input'));
+  ok('lo que ya va en la orden no se elige solo', $(w2, 'atoGo').disabled);
+
+  // Sin texto no se elige nada: Add a ciegas agregaria lo primero.
+  s2.value = ''; s2.dispatchEvent(new w2.Event('input'));
+  ok('con el buscador vacio, nada elegido', $(w2, 'atoGo').disabled);
 }
 
 console.log('\nagregar');
