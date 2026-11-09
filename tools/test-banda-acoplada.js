@@ -169,6 +169,54 @@ if (SRC) {
     prueba('que abre con el botón nuevo', clics.n === 1);
   }
 
+  grupo('Buscar: la barra misma se queda, y el desenfoque sale al bajar');
+  {
+    // Axel, 2026-11-09: "lo mismo debe pasar al pulsar el do we have".
+    // En Buscar la barra es un <input> de verdad: una copia no sirve (el
+    // teclado escribiría en la escondida). La barra se queda pegada con
+    // sticky y el módulo sólo pone el desenfoque cuando el contenido
+    // empieza a pasar por debajo.
+    const w = new JSDOM('<!doctype html><body class="m-shell"><header id="mBand" class="m-band"></header>' +
+      '<div id="mScreens"><div class="m-screen on" data-screen="home"></div><div class="m-screen" data-screen="search">' +
+      '<div class="m-searchbar on" id="sb"><input id="msInput"></div><div id="msList"></div></div></div></body>',
+      { url: 'https://x.test/', runScripts: 'outside-only' }).window;
+    w.requestAnimationFrame = (f) => { f(); return 1; };
+    w.document.getElementById('mBand').getBoundingClientRect = () => ({ top: 0, bottom: BANDA, height: BANDA });
+    w.eval(SRC);
+    const home = w.document.querySelector('[data-screen="home"]'), bus = w.document.querySelector('[data-screen="search"]');
+    const clics = { n: 0 };
+    home.innerHTML = '<div class="m-daterow" id="fila">Hello</div><button type="button" class="m-searchbar" id="mhSearch">x</button>';
+    const hb = home.querySelector('#mhSearch'), hf = home.querySelector('#fila');
+    hb.getBoundingClientRect = () => ({ top: 210, bottom: 258, height: 48, left: 30, width: 330 });
+    hf.getBoundingClientRect = () => ({ top: 150, bottom: 200, height: 50, left: 30, width: 330 });
+    w.BarStockBandDock.enganchar({ pantalla: home, barra: hb, desvanecer: [hf] });
+
+    // Se entra a Buscar: el Home se esconde y Buscar engancha su barra.
+    home.classList.remove('on'); bus.classList.add('on');
+    const sb = w.document.getElementById('sb');
+    sb.getBoundingClientRect = () => ({ top: D0, bottom: D0 + 50, height: 50, left: 16, width: 358 });
+    w.scrollY = 0;
+    w.BarStockBandDock.enganchar({ pantalla: bus, barra: sb, fija: true });
+    prueba('la barra de Buscar va pegada (sticky)', sb.classList.contains('m-dock-sticky'));
+    prueba('a su altura: 8 px bajo la banda', w.document.documentElement.style.getPropertyValue('--m-dock-top') === D0 + 'px',
+      w.document.documentElement.style.getPropertyValue('--m-dock-top'));
+    prueba('sin bajar: sin desenfoque (no tapa el primer resultado)', !acoplada(w));
+    w.scrollY = 120; w.dispatchEvent(new w.Event('scroll'));
+    prueba('al bajar: desenfoque debajo de la barra', acoplada(w));
+    prueba('sin copia: la barra es la de verdad', !w.document.querySelector('#mDock .m-searchbar') && sb.style.visibility === '');
+    prueba('con el alto hasta la rampa', w.document.getElementById('mDock').style.height === (D0 + 50 + 30) + 'px',
+      w.document.getElementById('mDock').style.height);
+    w.scrollY = 0; w.dispatchEvent(new w.Event('scroll'));
+    prueba('arriba otra vez: sin desenfoque', !acoplada(w));
+
+    // De vuelta al Home, sin que el Home se repinte: su enganche sigue.
+    bus.classList.remove('on'); home.classList.add('on');
+    hb.getBoundingClientRect = () => ({ top: 210 - 400, bottom: 258 - 400, height: 48, left: 30, width: 330 });
+    w.scrollY = 400; w.dispatchEvent(new w.Event('scroll'));
+    prueba('volviendo al Home, el Home se sigue acoplando', acoplada(w) && !!w.document.querySelector('#mDock .m-searchbar'));
+    w.document.querySelector('#mDock .m-searchbar').click();
+  }
+
   grupo('lo que vio Axel en el iPhone (2026-11-09)');
   {
     // Sin las reglas comentadas: la que manda es la última y la de verdad.
@@ -190,6 +238,9 @@ if (SRC) {
     const html = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8');
     const i = html.indexOf('src/band-dock.js'), j = html.indexOf('src/mobile-home.js');
     prueba('band-dock.js antes que mobile-home.js', i > 0 && i < j);
+    const bus = fs.readFileSync(path.join(RAIZ, 'src/mobile-search.js'), 'utf8');
+    prueba('mobile-search.js fija su barra', /BarStockBandDock[\s\S]{0,300}fija:\s*true/.test(bus));
+    prueba('band-dock.js antes que mobile-search.js', i > 0 && i < html.indexOf('src/mobile-search.js'));
   }
 }
 

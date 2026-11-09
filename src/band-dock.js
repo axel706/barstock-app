@@ -35,7 +35,24 @@
   const HUECO = 8;        // entre la banda y la búsqueda acoplada
   const RAMPA = 30;       // lo que tarda el desenfoque en deshacerse
 
-  let _actual = null;     // { pantalla, barra, desvanecer, copia }
+  // ── Dos formas, según la pantalla ─────────────────────────────────
+  //
+  // Home: la búsqueda es un botón que lleva a Buscar y tiene encima el
+  //   saludo; se acopla con una COPIA fija al llegar a su sitio (ver
+  //   arriba).
+  // Buscar (`fija: true`): la barra es un <input> de verdad y está
+  //   arriba del todo. Una copia no sirve —el teclado escribiría en la
+  //   escondida—, así que la barra MISMA se queda con `position:
+  //   sticky` (aquí sí vale: su padre es la pantalla entera) y el módulo
+  //   sólo pone el desenfoque debajo en cuanto se baja. En reposo no lo
+  //   pone: la rampa taparía el primer resultado.
+  //
+  // Cada pantalla deja su enganche y se queda guardado: manda el de la
+  // pantalla que esté a la vista. Si sólo se recordara el último, al
+  // volver de Buscar al Home sin repintarlo el Home ya no se acoplaría.
+
+  const _regs = new Map();  // pantalla → { pantalla, barra, desvanecer, fija, copia }
+  let _actual = null;       // el de la pantalla a la vista
   let _dock = null;
   let _pedido = false;
 
@@ -61,16 +78,23 @@
     return b ? b.getBoundingClientRect().bottom : 0;
   };
 
-  function soltar() {
-    const a = _actual;
-    if (_dock) _dock.classList.remove('on');
-    if (a && a.barra) a.barra.style.visibility = '';
+  function quitarCopia() {
+    if (!_dock) return;
+    _dock.querySelectorAll('.m-dock-barra').forEach(x => x.remove());
+    for (const r of _regs.values()) r.copia = null;
   }
 
-  function quitarCopia() {
-    const d = _dock;
-    if (!d) return;
-    d.querySelectorAll('.m-dock-barra').forEach(x => x.remove());
+  function soltar() {
+    if (_dock) _dock.classList.remove('on');
+    const a = _actual;
+    if (a && a.barra && !a.fija) a.barra.style.visibility = '';
+  }
+
+  function cubrir(top, alto) {
+    const d = dock();
+    d.style.height = (top + alto + RAMPA) + 'px';
+    d.style.setProperty('--m-dock-rampa', RAMPA + 'px');
+    d.classList.add('on');
   }
 
   function acoplar(r, banda) {
@@ -91,9 +115,7 @@
     a.copia.style.top = top + 'px';
     a.copia.style.left = r.left + 'px';
     a.copia.style.width = r.width + 'px';
-    d.style.height = (top + r.height + RAMPA) + 'px';
-    d.style.setProperty('--m-dock-rampa', RAMPA + 'px');
-    d.classList.add('on');
+    cubrir(top, r.height);
     a.barra.style.visibility = 'hidden';
   }
 
@@ -118,16 +140,28 @@
     }
   }
 
+  function aLaVista() {
+    for (const r of _regs.values()) {
+      if (r.pantalla.isConnected && r.pantalla.classList.contains('on') && r.barra && r.barra.isConnected) return r;
+    }
+    return null;
+  }
+
   function actualizar() {
     _pedido = false;
-    const a = _actual;
-    if (!a || !a.barra || !a.barra.isConnected || !a.pantalla.classList.contains('on')) {
-      soltar();
+    const a = aLaVista();
+    if (a !== _actual) { soltar(); quitarCopia(); _actual = a; }
+    if (!a) { soltar(); return; }
+    const banda = bordeBanda();
+    const top = banda + HUECO;
+    if (a.fija) {
+      document.documentElement.style.setProperty('--m-dock-top', top + 'px');
+      if ((window.scrollY || 0) > 0) cubrir(top, a.barra.getBoundingClientRect().height);
+      else soltar();
       return;
     }
-    const banda = bordeBanda();
     const r = a.barra.getBoundingClientRect();
-    if (r.top <= banda + HUECO) acoplar(r, banda);
+    if (r.top <= top) acoplar(r, banda);
     else soltar();
     desvanecer(banda);
   }
@@ -143,9 +177,12 @@
   // cambia los elementos, y la copia tiene que apuntar a los nuevos.
   function enganchar(o) {
     if (!o || !o.pantalla || !o.barra) return;
-    if (_actual && _actual.barra && _actual.barra !== o.barra) _actual.barra.style.visibility = '';
-    quitarCopia();
-    _actual = { pantalla: o.pantalla, barra: o.barra, desvanecer: o.desvanecer || [], copia: null };
+    const viejo = _regs.get(o.pantalla);
+    if (viejo && viejo.barra && viejo.barra !== o.barra) viejo.barra.style.visibility = '';
+    if (viejo === _actual) { quitarCopia(); _actual = null; }
+    const r = { pantalla: o.pantalla, barra: o.barra, desvanecer: o.desvanecer || [], fija: !!o.fija, copia: null };
+    if (r.fija) o.barra.classList.add('m-dock-sticky');
+    _regs.set(o.pantalla, r);
     actualizar();
   }
 

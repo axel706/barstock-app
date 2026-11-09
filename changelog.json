@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-155056",
+    "items": [
+      "In Search, the search bar stays at the top as you scroll"
+    ]
+  },
+  {
     "build": "20261109-154158",
     "items": [
       "The greeting on Home is fully visible again"
@@ -177,13 +183,6 @@
     "build": "20261107-234311",
     "items": [
       "Wine from Toast no longer stops on busy Toast"
-    ]
-  },
-  {
-    "build": "20261107-233233",
-    "items": [
-      "Wine from Toast: match Toast wines to your inventory",
-      "In Settings, on the computer and the phone"
     ]
   }
 ]

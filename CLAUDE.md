@@ -199,7 +199,12 @@ repetirse en otras secciones, igual:
   Safari, se cambia).
 
 Vive en `src/band-dock.js` (`BarStockBandDock.enganchar({ pantalla,
-barra, desvanecer })`), que la pantalla llama en cada pintado.
+barra, desvanecer })`), que la pantalla llama en cada pintado. Hay dos
+formas: con algo encima que se va (el Home), una copia fija aparece al
+llegar la barra a su sitio; con la barra ya arriba y siendo un `<input>`
+de verdad (Buscar), `fija: true`, la barra misma va sticky y sólo se
+añade el desenfoque al bajar. Una copia de un `<input>` no sirve: el
+teclado escribiría en el escondido.
 **Una sección nueva lo usa, no lo copia.** La prueba es
 `tools/test-banda-acoplada.js`.
 

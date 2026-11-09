@@ -738,6 +738,13 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--m-dock-rampa, 30px)), transparent 100%);
             mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--m-dock-rampa, 30px)), transparent 100%);
   }
+  /* En Buscar la barra misma se queda (band-dock.js, `fija`): sticky a
+   * la altura de la acoplada del Home, que pone band-dock.js. Por
+   * encima del desenfoque (9090) y por debajo de la banda (9100). */
+  body.m-shell .m-dock-sticky {
+    position: sticky; z-index: 9095;
+    top: var(--m-dock-top, calc(60px + env(safe-area-inset-top, 0px)));
+  }
   /* La copia de la búsqueda. Fuera de .m-screens no le llega el reset
    * de botones, y app.css le pondría su sombra, su blur y el radio de
    * 999px: de ahí el prefijo de id, que es lo único que gana a ese

@@ -595,9 +595,20 @@
   // siguiente entrada normal vuelve a dar el teclado.
   let _sinTeclado = false;
 
+  // La barra se queda arriba y los resultados pasan por debajo, con el
+  // desenfoque empezando bajo ella: el mismo header del Home (Axel,
+  // 2026-11-09, "es el mismo concepto"). Aquí la barra es el <input> de
+  // verdad, así que va `fija` (sticky) y no con copia; ver band-dock.js.
+  function fijarBarra(host) {
+    const D = window.BarStockBandDock;
+    const b = host.querySelector('.m-searchbar');
+    if (D && b) D.enganchar({ pantalla: host, barra: b, fija: true });
+  }
+
   function show(host) {
     cerrarHoja();
     pintarLista(host);
+    fijarBarra(host);
     if (_sinTeclado) { _sinTeclado = false; return; }
 
     // ── El foco va SIN setTimeout ──────────────────────────────────
