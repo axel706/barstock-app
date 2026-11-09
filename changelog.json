@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-112214",
+    "items": [
+      "Update screen fills the whole screen from the start"
+    ]
+  },
+  {
     "build": "20261109-111530",
     "items": [
       "No white flash when the app updates"
@@ -180,12 +186,6 @@
     "build": "20261106-230245",
     "items": [
       "Tullamore, Elijah Craig, Don Julio Blanco, Michter's shapes"
-    ]
-  },
-  {
-    "build": "20261106-225703",
-    "items": [
-      "Chivas, Empress, Disaronno and Jameson bottle shapes"
     ]
   }
 ]

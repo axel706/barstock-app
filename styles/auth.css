@@ -573,9 +573,19 @@ html.loc-switch-out #locCurtain{
 /* --cy es la altura del centro, fijada una vez en px (index.html,
    __bsUpdCentro): con top:50% el logo se recentraba cada vez que la
    pantalla cambiaba de alto al arrancar, y brincaba. */
+/* Se estira 140 px por debajo del borde, como la foto de fondo de
+   mobile-app.css. En la app instalada, al arrancar, la caja de las capas
+   fijas se queda corta por abajo (la pantalla mide 894 y luego 956), y
+   asomaba una barra oscura de otro tono durante ~0.75 s antes de que "la
+   pantalla se extendiera" (cuarto video de Axel). Si la caja ya llega al
+   borde, lo que sobra queda fuera de la pantalla. El logo no se mueve: su
+   altura es --cy, contada desde arriba. */
 #bsUpd{
   position:fixed;
-  inset:0;
+  top:0;
+  left:0;
+  right:0;
+  bottom:-140px;
   z-index:1000001;
   --d:9.24px;
   font-family:"Manrope",-apple-system,BlinkMacSystemFont,sans-serif;
@@ -597,7 +607,7 @@ html.bs-upd #authOverlay{ display:none !important; }
 #bsUpd .bu-iris{
   position:absolute;
   left:50%;
-  top:var(--cy, 50%);
+  top:var(--cy, calc(50% - 70px));
   width:0;
   height:0;
   border-radius:50%;
@@ -608,7 +618,7 @@ html.bs-upd #authOverlay{ display:none !important; }
   position:absolute;
   left:0;
   right:0;
-  top:var(--cy, 50%);
+  top:var(--cy, calc(50% - 70px));
   transform:translateY(-50%);
   display:flex;
   flex-direction:column;
@@ -652,7 +662,7 @@ html.bs-upd #authOverlay{ display:none !important; }
 #bsUpd .bu-dot{
   position:absolute;
   left:50%;
-  top:var(--cy, 50%);
+  top:var(--cy, calc(50% - 70px));
   width:var(--d);
   height:var(--d);
   margin:calc(var(--d) / -2) 0 0 calc(var(--d) / -2);

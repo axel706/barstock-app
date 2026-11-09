@@ -328,6 +328,20 @@ grupo('14 · sin destello blanco al recargar');
   prueba('y al terminar se le devuelve el suyo', !w.document.documentElement.style.backgroundColor, w.document.documentElement.style.backgroundColor);
 }
 
+grupo('15 · la capa llega hasta abajo aunque la pantalla aún no');
+{
+  // Cuarto video (2026-11-09): ya sin saltos, pero al empezar una barra
+  // oscura de ~62 px abajo durante ~0.75 s, de otro tono (12,13,19 frente
+  // a 12,18,28), y luego "la pantalla se extiende". En la app instalada,
+  // la caja de las capas fijas se queda corta por abajo al arrancar y
+  // asoma lo que hay detrás. Es el mismo caso que mobile-app.css ya
+  // resolvió para la foto de fondo (bottom: -140px): se estira la capa.
+  const css = leer('styles/auth.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  const r = /#bsUpd\{([^}]*)\}/.exec(css);
+  prueba('la capa se estira 140 px por debajo', !!r && /bottom\s*:\s*-140px/.test(r[1]), r && r[1].trim());
+  prueba('y sigue pegada arriba y a los lados', !!r && /top\s*:\s*0/.test(r[1]) && /left\s*:\s*0/.test(r[1]) && /right\s*:\s*0/.test(r[1]), r && r[1].trim());
+}
+
 grupo('8 · el iris no se apaga con opacity');
 {
   const css = leer('styles/auth.css').replace(/\/\*[\s\S]*?\*\//g, '');
