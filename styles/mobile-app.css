@@ -699,6 +699,48 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     box-shadow: 0 0 0 3px rgba(34,197,94,.20);
   }
 
+  /* ── La búsqueda acoplada al header (band-dock.js) ────────────────
+   *
+   * Al bajar, la búsqueda se queda pegada bajo el logo y el contenido
+   * pasa por debajo (Axel, 2026-11-09, opción A). #mDock va detrás de
+   * la banda y cubre desde arriba hasta un poco por debajo de la
+   * búsqueda; su alto lo pone band-dock.js.
+   *
+   * Un solo desenfoque fuerte, recortado por una máscara que se deshace
+   * en los últimos --m-dock-rampa px: borroso detrás del header y de la
+   * búsqueda (que es translúcida: sin esto se leería el texto a través
+   * de ella), nítido justo debajo. La escalera de seis capas de la banda
+   * no sirve aquí: va de borroso arriba a nítido abajo a lo largo de
+   * TODO su alto, y debajo de la búsqueda quedaría casi sin desenfocar.
+   *
+   * El tinte es el mismo de la banda, y lo recorta la misma máscara: así
+   * no hay borde en ningún sitio. */
+  body.m-shell .m-dock {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9090;
+    display: none; pointer-events: none;
+  }
+  body.m-shell .m-dock.on { display: block; }
+  .m-dock-blur {
+    position: absolute; inset: 0; z-index: 0;
+    backdrop-filter: blur(22px) saturate(130%); -webkit-backdrop-filter: blur(22px) saturate(130%);
+    background: linear-gradient(to bottom, rgba(8,12,19,.74) 0, rgba(8,12,19,.62) 100%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--m-dock-rampa, 30px)), transparent 100%);
+            mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--m-dock-rampa, 30px)), transparent 100%);
+  }
+  /* La copia de la búsqueda. Fuera de .m-screens no le llega el reset
+   * de botones, y app.css le pondría su sombra, su blur y el radio de
+   * 999px: de ahí el prefijo de id, que es lo único que gana a ese
+   * !important (ver el bloque del final). `translateZ(0)` la saca a su
+   * capa, como al logo: si no, el desenfoque de al lado se la traga en
+   * iPhone. */
+  body.m-shell #mDock .m-dock-barra {
+    position: absolute; margin: 0; box-sizing: border-box;
+    pointer-events: auto; z-index: 1; transform: translateZ(0);
+    font-family: inherit; box-shadow: none;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+    border-radius: 16px !important;
+  }
+
   /* ── Buscar ─────────────────────────────────────────────────────── */
   /* Nunca cambia de sitio: es lo más frecuente y tiene que ser memoria
    * muscular. */

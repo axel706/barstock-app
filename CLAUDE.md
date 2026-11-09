@@ -109,7 +109,7 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 
 ## La arquitectura
 
-Frontend estático, sin build. `index.html` es un monolito y hay ~105 módulos
+Frontend estático, sin build. `index.html` es un monolito y hay ~106 módulos
 `src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 29 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 110 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 111 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -180,6 +180,29 @@ desaparece o se dobla. Ya pasó dos veces en dos días.
 El radio de las tarjetas del carrusel (`.m-hero`) es **20px**, y es la
 referencia cuando pida "como las tarjetas".
 
+### El header al hacer scroll (patrón para todas las secciones)
+
+Axel, 2026-11-09, empezando por el Home (opción A sobre lámina). Va a
+repetirse en otras secciones, igual:
+
+- **Arriba, todo como siempre.** Nada cambia en reposo.
+- **Al bajar, lo que titula la pantalla se va**: en el Home, el saludo
+  y la píldora de locación. Se desvanecen con el scroll antes de llegar
+  al logo; nunca pasan por debajo de él leyéndose.
+- **La búsqueda se acopla bajo el logo, tal cual**: mismo tamaño y
+  estilo, 8 px bajo la banda. Desde ahí es parte del header.
+- **El desenfoque empieza justo debajo de la búsqueda**: fuerte detrás
+  del header y de la búsqueda, y se deshace en 30 px. El contenido
+  pasa por debajo; nítido desde el borde de la búsqueda.
+- **Todo regresa sólo al volver arriba**, no con cualquier gesto hacia
+  arriba a media página (no se le preguntó a Axel; si pide lo de
+  Safari, se cambia).
+
+Vive en `src/band-dock.js` (`BarStockBandDock.enganchar({ pantalla,
+barra, desvanecer })`), que la pantalla llama en cada pintado.
+**Una sección nueva lo usa, no lo copia.** La prueba es
+`tools/test-banda-acoplada.js`.
+
 ---
 
 ## Reglas del dominio que no son obvias
@@ -236,7 +259,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 110 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 111 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

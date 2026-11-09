@@ -1,0 +1,146 @@
+(() => {
+  if (window.BarStockBandDock) return;
+
+  // ── La búsqueda que se acopla al header al hacer scroll ──────────────
+  //
+  // Axel (2026-11-09, opción A sobre lámina, empezando por el Home): al
+  // bajar, lo de arriba de la pantalla (el saludo y la locación) se
+  // desvanece antes de llegar al logo, la búsqueda se queda pegada bajo
+  // él como parte del header, y el desenfoque empieza justo debajo de
+  // ella. Al volver arriba, todo regresa. Antes el saludo pasaba por
+  // debajo del logo y se leía a través de él.
+  //
+  // Va a repetirse en otras secciones: por eso es un módulo y no un
+  // bloque dentro del Home. Cada pantalla le da su barra y lo que se
+  // desvanece; el resto es igual para todas.
+  //
+  // ── Por qué una copia fija y no `position: sticky` ────────────────
+  //
+  // Sticky sólo pega dentro de su padre, y la búsqueda del Home vive en
+  // un bloque que termina justo debajo de ella: se soltaría enseguida.
+  // Sacarla de ahí cambiaría el maquetado de toda la pantalla. En vez de
+  // eso, cuando la de verdad llega a su sitio bajo el header se esconde
+  // (visibility, para que no deje hueco) y aparece una copia fija en el
+  // MISMO punto. Como están en el mismo píxel, el cambio no se ve.
+  //
+  // ── El desenfoque ─────────────────────────────────────────────────
+  //
+  // #mDock va detrás de la banda (z-index menor) y cubre desde arriba
+  // hasta un poco por debajo de la búsqueda. Lleva un solo desenfoque
+  // fuerte, recortado con una máscara que se deshace en los últimos
+  // RAMPA px: borroso detrás del header y de la búsqueda, nítido justo
+  // debajo. No se estira la banda: su altura es la del logo y los
+  // botones, y cambiarla los movería.
+
+  const HUECO = 8;        // entre la banda y la búsqueda acoplada
+  const RAMPA = 30;       // lo que tarda el desenfoque en deshacerse
+  const ARRIBA = 16;      // el saludo empieza a irse 16 px antes del header…
+  const ABAJO = 24;       // …y ya no se ve 24 px dentro de él
+
+  let _actual = null;     // { pantalla, barra, desvanecer, copia }
+  let _dock = null;
+  let _pedido = false;
+
+  function dock() {
+    if (_dock && _dock.isConnected) return _dock;
+    _dock = document.getElementById('mDock');
+    if (!_dock) {
+      _dock = document.createElement('div');
+      _dock.id = 'mDock';
+      _dock.className = 'm-dock';
+      _dock.innerHTML = '<span class="m-dock-blur" aria-hidden="true"></span>';
+      // Junto a la banda, al principio del body: el bloqueo de la
+      // pantalla de entrada (body.auth-locked > *) también lo tapa.
+      const band = document.getElementById('mBand');
+      if (band && band.parentNode) band.parentNode.insertBefore(_dock, band.nextSibling);
+      else document.body.insertBefore(_dock, document.body.firstChild);
+    }
+    return _dock;
+  }
+
+  const bordeBanda = () => {
+    const b = document.getElementById('mBand');
+    return b ? b.getBoundingClientRect().bottom : 0;
+  };
+
+  function soltar() {
+    const a = _actual;
+    if (_dock) _dock.classList.remove('on');
+    if (a && a.barra) a.barra.style.visibility = '';
+  }
+
+  function quitarCopia() {
+    const d = _dock;
+    if (!d) return;
+    d.querySelectorAll('.m-dock-barra').forEach(x => x.remove());
+  }
+
+  function acoplar(r, banda) {
+    const a = _actual;
+    const d = dock();
+    if (!a.copia || !a.copia.isConnected) {
+      quitarCopia();
+      const c = a.barra.cloneNode(true);
+      c.removeAttribute('id');
+      c.classList.add('m-dock-barra');
+      // Hace lo mismo que la de verdad, sin copiar su manejador: si la
+      // pantalla cambia lo que hace la barra, la copia lo sigue.
+      c.onclick = (ev) => { ev.preventDefault(); if (_actual && _actual.barra) _actual.barra.click(); };
+      d.appendChild(c);
+      a.copia = c;
+    }
+    const top = banda + HUECO;
+    a.copia.style.top = top + 'px';
+    a.copia.style.left = r.left + 'px';
+    a.copia.style.width = r.width + 'px';
+    d.style.height = (top + r.height + RAMPA) + 'px';
+    d.style.setProperty('--m-dock-rampa', RAMPA + 'px');
+    d.classList.add('on');
+    a.barra.style.visibility = 'hidden';
+  }
+
+  function desvanecer(banda) {
+    for (const el of _actual.desvanecer) {
+      if (!el || !el.isConnected) continue;
+      const t = el.getBoundingClientRect().top;
+      const o = (t - (banda - ABAJO)) / (ARRIBA + ABAJO);
+      el.style.opacity = o >= 1 ? '' : String(Math.max(0, Math.round(o * 100) / 100));
+    }
+  }
+
+  function actualizar() {
+    _pedido = false;
+    const a = _actual;
+    if (!a || !a.barra || !a.barra.isConnected || !a.pantalla.classList.contains('on')) {
+      soltar();
+      return;
+    }
+    const banda = bordeBanda();
+    const r = a.barra.getBoundingClientRect();
+    if (r.top <= banda + HUECO) acoplar(r, banda);
+    else soltar();
+    desvanecer(banda);
+  }
+
+  // Un cálculo por fotograma, aunque lleguen varios scroll en el mismo.
+  function pedir() {
+    if (_pedido) return;
+    _pedido = true;
+    (window.requestAnimationFrame || ((f) => setTimeout(f, 16)))(actualizar);
+  }
+
+  // La pantalla lo llama cada vez que se pinta: un repintado (refresh)
+  // cambia los elementos, y la copia tiene que apuntar a los nuevos.
+  function enganchar(o) {
+    if (!o || !o.pantalla || !o.barra) return;
+    if (_actual && _actual.barra && _actual.barra !== o.barra) _actual.barra.style.visibility = '';
+    quitarCopia();
+    _actual = { pantalla: o.pantalla, barra: o.barra, desvanecer: o.desvanecer || [], copia: null };
+    actualizar();
+  }
+
+  window.addEventListener('scroll', pedir, { passive: true });
+  window.addEventListener('resize', pedir);
+
+  window.BarStockBandDock = { enganchar, actualizar, HUECO, RAMPA };
+})();

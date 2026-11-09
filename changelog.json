@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-152933",
+    "items": [
+      "On Home, search stays at the top as you scroll"
+    ]
+  },
+  {
     "build": "20261109-144608",
     "items": [
       "The update card stays until you tap Update"
@@ -179,13 +185,6 @@
     "items": [
       "Bottle shape picker scrolls again",
       "Sizes row slides sideways"
-    ]
-  },
-  {
-    "build": "20261107-020243",
-    "items": [
-      "Bottle shape picker: search, suggestions, A–Z",
-      "Fits the phone screen"
     ]
   }
 ]

@@ -2087,6 +2087,11 @@
 
     const bus = host.querySelector('#mhSearch');
     if (bus) bus.onclick = () => window.BarStockMobile.ir('search');
+    // Al bajar, la búsqueda se acopla bajo el logo y el saludo con la
+    // locación se desvanecen (Axel, 2026-11-09). Vive en band-dock.js
+    // porque va a repetirse en otras secciones.
+    const D = window.BarStockBandDock;
+    if (bus && D) D.enganchar({ pantalla: host, barra: bus, desvanecer: [host.querySelector('.m-daterow')] });
 
     host.querySelectorAll('[data-go]').forEach(b => {
       const c = cards[Number(b.dataset.go)];
