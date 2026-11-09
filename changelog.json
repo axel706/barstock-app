@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-100448",
+    "items": [
+      "Add product works again on the computer"
+    ]
+  },
+  {
     "build": "20261109-094044",
     "items": [
       "Count card on Home counts bottles, not products",
@@ -184,13 +190,6 @@
     "items": [
       "Belvedere bottle shape",
       "Ketel One bottle shape"
-    ]
-  },
-  {
-    "build": "20261106-135455",
-    "items": [
-      "Wine flute bottle shape, for Riesling",
-      "Riesling and Gewürztraminer get it on their own"
     ]
   }
 ]

@@ -298,8 +298,14 @@
 
   // `vendor` es opcional. Sin el, se usa la pestaña del escritorio,
   // que es como lo llama el boton de la barra de siempre.
+  //
+  // Sólo un texto cuenta como proveedor. El botón del escritorio estuvo
+  // enganchado como addEventListener('click', open), y el navegador le
+  // pasaba el EVENTO del clic: se tomaba por proveedor ("[OBJECT
+  // POINTEREVENT]"), no existía y el panel no se abría. Axel pulsaba y
+  // no pasaba nada.
   function open(vendor) {
-    _forzado = vendor ? String(vendor).toUpperCase() : null;
+    _forzado = (typeof vendor === 'string' && vendor) ? vendor.toUpperCase() : null;
     const v = vendorActivo();
     if (!v || v === 'ALL' || v === 'UNKNOWN' || !vendorSirve(v)) { _forzado = null; return false; }
     build();
@@ -311,7 +317,7 @@
 
   function init() {
     const btn = $('addToOrderBtn');
-    if (btn && !btn._ato) { btn._ato = true; btn.addEventListener('click', open); }
+    if (btn && !btn._ato) { btn._ato = true; btn.addEventListener('click', () => open()); }
     sync();
   }
 

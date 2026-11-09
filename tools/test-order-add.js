@@ -128,6 +128,20 @@ console.log('\nel boton de la barra');
   ok('BREAKTHRU tambien lo acepta', !$(w, 'addToOrderBtn').disabled);
 }
 
+console.log('\npulsar el boton de verdad abre el panel');
+{
+  // Axel, 2026-11-09: en el escritorio lo pulsaba y no pasaba nada.
+  // `open(vendor)` acepta el proveedor desde que el telefono le pasa el
+  // suyo, y el boton estaba enganchado como addEventListener('click',
+  // open): el navegador le pasaba el EVENTO del clic, que se tomaba por
+  // proveedor ("[OBJECT POINTEREVENT]"), no existia y no se abria nada.
+  // Las pruebas llamaban a open() a mano y nunca pulsaban el boton.
+  const w = montar({ master: clon(), tab: 'SOUTHERN' });
+  $(w, 'addToOrderBtn').click();
+  ok('se abre', $(w, 'atoBg') && !$(w, 'atoBg').classList.contains('hidden'));
+  ok('con los del proveedor de la pestaña', filas(w).length === 3, String(filas(w).length));
+}
+
 console.log('\nla lista');
 {
   const w = montar({
