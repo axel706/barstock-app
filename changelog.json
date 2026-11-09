@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-143219",
+    "items": [
+      "Behind-the-scenes fixes"
+    ]
+  },
+  {
     "build": "20261109-142521",
     "items": [
       "Update card shows BarStock Pro and the build",
@@ -180,13 +186,6 @@
     "build": "20261107-015205",
     "items": [
       "Update screen stays a little longer"
-    ]
-  },
-  {
-    "build": "20261107-014519",
-    "items": [
-      "Buchanan's, Campari and Captain Morgan bottle shapes",
-      "Don Julio: 750 ml and 1.75 L bottles drawn apart"
     ]
   }
 ]
