@@ -570,6 +570,9 @@ html.loc-switch-out #locCurtain{
 
    El punto mide lo mismo que el del logo (.22 × 42px = 9.24px), porque
    ES el punto del logo: viaja entre el centro y su sitio en la marca. */
+/* --cy es la altura del centro, fijada una vez en px (index.html,
+   __bsUpdCentro): con top:50% el logo se recentraba cada vez que la
+   pantalla cambiaba de alto al arrancar, y brincaba. */
 #bsUpd{
   position:fixed;
   inset:0;
@@ -586,7 +589,7 @@ html.bs-upd, html.bs-upd body{ overflow:hidden; }
 #bsUpd .bu-iris{
   position:absolute;
   left:50%;
-  top:50%;
+  top:var(--cy, 50%);
   width:0;
   height:0;
   border-radius:50%;
@@ -597,7 +600,7 @@ html.bs-upd, html.bs-upd body{ overflow:hidden; }
   position:absolute;
   left:0;
   right:0;
-  top:50%;
+  top:var(--cy, 50%);
   transform:translateY(-50%);
   display:flex;
   flex-direction:column;
@@ -641,7 +644,7 @@ html.bs-upd, html.bs-upd body{ overflow:hidden; }
 #bsUpd .bu-dot{
   position:absolute;
   left:50%;
-  top:50%;
+  top:var(--cy, 50%);
   width:var(--d);
   height:var(--d);
   margin:calc(var(--d) / -2) 0 0 calc(var(--d) / -2);

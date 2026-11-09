@@ -58,7 +58,7 @@
   <link rel="stylesheet" href="styles/order-history.css">
 
   <link rel="stylesheet" href="styles/fixes.css">
-  <link rel="stylesheet" href="styles/auth.css?v=login15">
+  <link rel="stylesheet" href="styles/auth.css?v=login16">
   <link rel="stylesheet" href="styles/cost-report.css?v=steps20">
   <link rel="stylesheet" href="styles/motion.css?v=motion3">
   <link rel="stylesheet" href="styles/skeleton.css?v=skel1">
@@ -200,6 +200,22 @@
   // El fotograma del logo, en UN solo sitio: lo usa este script para la
   // llegada y update-anim.js para la salida. Tienen que coincidir o se
   // nota el corte; por eso se define aquí siempre, haya marca o no.
+  // La altura del centro de la pantalla del logo, fijada UNA vez y en
+  // px. Con top:50% el bloque se recentraba cada vez que la pantalla
+  // cambiaba de alto, y en la app instalada eso pasa al arrancar: el
+  // rastro de producción (2026-11-09) dio 894 → 956 px en 200 ms. En la
+  // app instalada el alto final es el de la pantalla (screen.height), y
+  // se usa ése desde el primer fotograma; sólo si se parece al de la
+  // ventana, para que un iPad en horizontal no quede descentrado.
+  window.__bsUpdCentro = function(){
+    var h = window.innerHeight || 0;
+    var st = !!(navigator.standalone ||
+      (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches));
+    var sh = (window.screen && screen.height) || 0;
+    if (st && sh && Math.abs(sh - h) < 120) h = sh;
+    return Math.round(h / 2) + 'px';
+  };
+
   window.__bsUpdMarcado = function(build){
     return '<div class="bu-iris"></div>' +
       '<div class="bu-grupo">' +
@@ -236,10 +252,29 @@
   o.id = 'bsUpd';
   o.className = 'bu-llega';
   o.setAttribute('aria-hidden', 'true');
+  o.style.setProperty('--cy', window.__bsUpdCentro());
   o.innerHTML = window.__bsUpdMarcado(b);
   h.appendChild(o);
 
   window.__bsUpd = { build: b, t0: Date.now(), listo: false, rastro: [] };
+
+  // Sin teclado mientras dura. La pantalla de entrada está debajo desde
+  // el primer fotograma y uno de sus campos recibía el foco al arrancar:
+  // se abría el teclado detrás del logo, lo visible encogía (894 → 541
+  // px en el rastro) y el bloque saltaba. Mientras esta pantalla está,
+  // un campo que recibe el foco lo suelta en el acto, y se anota cuál
+  // era. Se quita al terminar (update-anim.js o el tope).
+  function sinFoco(e){
+    var t = e.target;
+    if (!t || !(t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    var u2 = window.__bsUpd;
+    if (u2 && u2.rastro && u2.rastro.length < 80) {
+      u2.rastro.push((Date.now() - u2.t0) + '|foco|' + (t.id || t.name || t.tagName));
+    }
+    try { t.blur(); } catch (er) {}
+  }
+  document.addEventListener('focusin', sinFoco, true);
+  window.__bsUpd.soltarFoco = function(){ document.removeEventListener('focusin', sinFoco, true); };
 
   // ── TEMPORAL: el rastro de la pantalla del logo ──────────────────────
   // Los saltos del logo mientras se llena la barra siguieron después de
@@ -278,6 +313,7 @@
     var x = document.getElementById('bsUpd');
     if (x) x.remove();
     h.classList.remove('bs-upd');
+    window.__bsUpd.soltarFoco();
   }, TOPE);
 })();
 </script>
@@ -355,7 +391,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261109-105613</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261109-110547</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5525,7 +5561,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/mobile-inventory.js?v=m13"></script>
 <script src="src/mobile-orders.js?v=m18"></script>
 <script src="src/mobile-quick.js?v=mqk2"></script>
-<script src="src/update-anim.js?v=upd4"></script>
+<script src="src/update-anim.js?v=upd5"></script>
 <script src="src/version-check.js?v=ver3"></script>
 <script src="src/version-center.js?v=vc2"></script>
 <script src="src/mobile-tabs.js?v=m13"></script>

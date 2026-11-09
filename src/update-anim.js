@@ -65,18 +65,28 @@
 
   // El hueco del iris, abierto del todo, es la diagonal de la pantalla:
   // ni un píxel más, o el cierre pasa fuera de la pantalla y se ve de golpe.
+  //
+  // El círculo sale de --cy, que puede no ser el centro exacto de la
+  // ventana: se le suma el doble del desfase para que ninguna esquina
+  // quede sin cubrir.
   function aLaDiagonal(o) {
-    o.style.setProperty('--grande', Math.ceil(Math.hypot(window.innerWidth, window.innerHeight)) + 2 + 'px');
+    const cy = parseFloat(o.style.getPropertyValue('--cy'));
+    const desfase = isNaN(cy) ? 0 : Math.abs(cy - window.innerHeight / 2);
+    o.style.setProperty('--grande', Math.ceil(Math.hypot(window.innerWidth, window.innerHeight) + desfase * 2) + 2 + 'px');
   }
 
   // Dónde cae el punto del logo, medido desde el centro de la pantalla.
   // El punto suelto viaja entre el centro y ese sitio.
+  // El centro vertical es --cy (lo fija el <head>), no la mitad de la
+  // ventana: la ventana cambia de alto al arrancar y el punto se iría a
+  // otro sitio que el logo.
   function alPuntoDelLogo(o) {
     const d = o.querySelector('.bu-logo-dot');
     if (!d) return;
     const r = d.getBoundingClientRect();
+    const cy = parseFloat(o.style.getPropertyValue('--cy')) || window.innerHeight / 2;
     o.style.setProperty('--dx', (r.left + r.width / 2 - window.innerWidth / 2) + 'px');
-    o.style.setProperty('--dy', (r.top + r.height / 2 - window.innerHeight / 2) + 'px');
+    o.style.setProperty('--dy', (r.top + r.height / 2 - cy) + 'px');
   }
 
   // ── La salida, en la página vieja ──────────────────────────────────
@@ -93,6 +103,9 @@
     o.id = 'bsUpd';
     o.className = 'bu-sale';
     o.setAttribute('aria-hidden', 'true');
+    // La misma altura de centro que usará la página nueva al llegar: si
+    // no coincidieran, el logo daría un salto en la recarga.
+    if (window.__bsUpdCentro) o.style.setProperty('--cy', window.__bsUpdCentro());
     o.innerHTML = html;
     aLaDiagonal(o);
     h.appendChild(o);
@@ -153,6 +166,7 @@
 
     o.remove();
     document.documentElement.classList.remove('bs-upd');
+    if (u.soltarFoco) u.soltarFoco();
 
     // TEMPORAL: el rastro que anotó el <head> (ver index.html), al log
     // de la app. Se quita cuando se sepa por qué brinca el logo.

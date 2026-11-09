@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-110547",
+    "items": [
+      "Update screen stays still while the bar fills"
+    ]
+  },
+  {
     "build": "20261109-105613",
     "items": [
       "Behind-the-scenes fixes"
@@ -180,12 +186,6 @@
     "build": "20261106-224101",
     "items": [
       "Nikka Coffey, Grey Goose, Cîroc and WhistlePig shapes"
-    ]
-  },
-  {
-    "build": "20261106-223232",
-    "items": [
-      "Red Label, Dad's Hat, Cointreau and Balvenie shapes"
     ]
   }
 ]

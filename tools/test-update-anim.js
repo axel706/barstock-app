@@ -266,6 +266,36 @@ grupo('11 · el rastro de la pantalla del logo (diagnóstico)');
   prueba('con la build y la lista', !!r && r[1].build === BUILD && Array.isArray(r[1].rastro), r && JSON.stringify(r[1]).slice(0, 120));
 }
 
+grupo('12 · las dos causas de los saltos, según el rastro');
+{
+  // El rastro de producción (2026-11-09) enseñó dos cosas, y ninguna era
+  // el scroll:
+  //  1. A los 450 ms un campo de la pantalla de entrada (puesta debajo
+  //     desde el primer fotograma) recibía el foco y se abría el teclado:
+  //     lo visible bajaba de 894 a 541 px y el bloque, centrado, subía.
+  //     Se cerraba a los 6.4 s, al esconderse la pantalla de entrada.
+  //  2. En los primeros 200 ms el alto de la app instalada pasaba de 894
+  //     a 956 px, y el bloque se recentraba.
+  const w = entorno({ marca: BUILD });
+  const o = w.document.getElementById('bsUpd');
+  prueba('la altura del centro se fija una vez, en px', /^\d+(\.\d+)?px$/.test(o.style.getPropertyValue('--cy')), o.style.getPropertyValue('--cy'));
+  const inp = w.document.createElement('input');
+  w.document.body.appendChild(inp);
+  inp.focus();
+  prueba('mientras está, un campo no se queda con el foco (no se abre el teclado)', w.document.activeElement !== inp, w.document.activeElement && w.document.activeElement.tagName);
+  prueba('y se anota cuál fue', w.__bsUpd.rastro.some(x => /\|foco\|/.test(x)), JSON.stringify(w.__bsUpd.rastro.slice(-2)));
+  w.__bsUpdListo();
+  await esperar(300);
+  inp.focus();
+  prueba('al terminar, los campos vuelven a funcionar', w.document.activeElement === inp);
+  const css = leer('styles/auth.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  for (const c of ['bu-grupo', 'bu-dot', 'bu-iris']) {
+    const r = new RegExp('#bsUpd \\.' + c + '\\{([^}]*)\\}').exec(css);
+    prueba(c + ' se coloca con --cy, no con 50%', !!r && /top:\s*var\(--cy/.test(r[1]), r && r[1].trim().slice(0, 80));
+  }
+  prueba('la salida también fija --cy', /--cy/.test(ANIM));
+}
+
 grupo('8 · el iris no se apaga con opacity');
 {
   const css = leer('styles/auth.css').replace(/\/\*[\s\S]*?\*\//g, '');
