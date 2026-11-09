@@ -574,9 +574,13 @@
                placeholder="Do we have…" aria-label="Search products">
         <button type="button" id="msClear" aria-label="Clear"><i class="ti ti-x" aria-hidden="true"></i></button>
       </div>
-      <div class="m-cnt" id="msCount"></div>
-
-      <div id="msList"></div>
+      <!-- La lista con su propio scroll, por debajo de la barra: así
+           ni el teclado ni el elástico de iOS mueven la barra. Ver
+           band-dock.js. -->
+      <div id="msScroll">
+        <div class="m-cnt" id="msCount"></div>
+        <div id="msList"></div>
+      </div>
 `;
 
     const inp = host.querySelector('#msInput');
@@ -598,11 +602,13 @@
   // La barra se queda arriba y los resultados pasan por debajo, con el
   // desenfoque empezando bajo ella: el mismo header del Home (Axel,
   // 2026-11-09, "es el mismo concepto"). Aquí la barra es el <input> de
-  // verdad, así que va `fija` (sticky) y no con copia; ver band-dock.js.
+  // verdad, así que va `fija` con la lista en su propio scroll, y no con
+  // copia; ver band-dock.js.
   function fijarBarra(host) {
     const D = window.BarStockBandDock;
     const b = host.querySelector('.m-searchbar');
-    if (D && b) D.enganchar({ pantalla: host, barra: b, fija: true });
+    const sc = host.querySelector('#msScroll');
+    if (D && b) D.enganchar({ pantalla: host, barra: b, fija: true, scroll: sc });
   }
 
   function show(host) {

@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261109-160345",
+    "items": [
+      "Search bar stays put with the keyboard open",
+      "No more bounce in Search"
+    ]
+  },
+  {
     "build": "20261109-155056",
     "items": [
       "In Search, the search bar stays at the top as you scroll"
@@ -177,12 +184,6 @@
     "build": "20261107-235752",
     "items": [
       "Wine from Toast lists your whole inventory"
-    ]
-  },
-  {
-    "build": "20261107-234311",
-    "items": [
-      "Wine from Toast no longer stops on busy Toast"
     ]
   }
 ]

@@ -40,18 +40,28 @@
   // Home: la búsqueda es un botón que lleva a Buscar y tiene encima el
   //   saludo; se acopla con una COPIA fija al llegar a su sitio (ver
   //   arriba).
-  // Buscar (`fija: true`): la barra es un <input> de verdad y está
-  //   arriba del todo. Una copia no sirve —el teclado escribiría en la
-  //   escondida—, así que la barra MISMA se queda con `position:
-  //   sticky` (aquí sí vale: su padre es la pantalla entera) y el módulo
-  //   sólo pone el desenfoque debajo en cuanto se baja. En reposo no lo
-  //   pone: la rampa taparía el primer resultado.
+  // Buscar (`fija: true`, con `scroll`): la barra es un <input> de
+  //   verdad y está arriba del todo. Una copia no sirve —el teclado
+  //   escribiría en la escondida—, así que la barra MISMA va fija y la
+  //   lista lleva su propio scroll, de arriba abajo de la pantalla y con
+  //   hueco arriba para pasar por debajo de la barra. La página de
+  //   detrás no se mueve mientras tanto. El desenfoque sale en cuanto
+  //   la lista baja; en reposo no, que la rampa taparía el primer
+  //   resultado.
+  //
+  //   Primero fue `position: sticky` en la página, y en el iPhone falló
+  //   de dos formas (Axel, 2026-11-09): con el teclado abierto iOS
+  //   desplaza la ventana visible y se llevaba el header; y sin teclado
+  //   el elástico arrastraba la página, barra incluida ("un rebote al
+  //   subir o bajar todo"). overscroll-behavior en el <html> no lo
+  //   para en el iPhone. Con la página quieta y el scroll en la lista,
+  //   nada de eso puede mover la barra.
   //
   // Cada pantalla deja su enganche y se queda guardado: manda el de la
   // pantalla que esté a la vista. Si sólo se recordara el último, al
   // volver de Buscar al Home sin repintarlo el Home ya no se acoplaría.
 
-  const _regs = new Map();  // pantalla → { pantalla, barra, desvanecer, fija, copia }
+  const _regs = new Map();  // pantalla → { pantalla, barra, desvanecer, fija, scroll, copia }
   let _actual = null;       // el de la pantalla a la vista
   let _dock = null;
   let _pedido = false;
@@ -147,16 +157,33 @@
     return null;
   }
 
+  // La página quieta mientras la pantalla a la vista tiene su propio
+  // scroll. En iOS overflow:hidden en el body no basta: se fija, como
+  // hace el panel de avisos (m-nf-abierto).
+  function quieta(si) {
+    document.documentElement.classList.toggle('m-scroll-propio', si);
+    document.body.classList.toggle('m-scroll-propio', si);
+  }
+
   function actualizar() {
     _pedido = false;
     const a = aLaVista();
     if (a !== _actual) { soltar(); quitarCopia(); _actual = a; }
+    quieta(!!(a && a.scroll));
     if (!a) { soltar(); return; }
     const banda = bordeBanda();
     const top = banda + HUECO;
     if (a.fija) {
-      document.documentElement.style.setProperty('--m-dock-top', top + 'px');
-      if ((window.scrollY || 0) > 0) cubrir(top, a.barra.getBoundingClientRect().height);
+      const h = document.documentElement.style;
+      h.setProperty('--m-dock-top', top + 'px');
+      const alto = a.barra.getBoundingClientRect().height;
+      if (alto) h.setProperty('--m-dock-barra-h', alto + 'px');
+      // Lo visible, no la pantalla: con el teclado abierto la lista
+      // acaba encima de él y el último resultado se puede alcanzar.
+      const vv = window.visualViewport;
+      h.setProperty('--m-vvh', Math.round(vv ? vv.height : window.innerHeight) + 'px');
+      const bajado = a.scroll ? a.scroll.scrollTop : (window.scrollY || 0);
+      if (bajado > 0) cubrir(top, alto);
       else soltar();
       return;
     }
@@ -180,14 +207,36 @@
     const viejo = _regs.get(o.pantalla);
     if (viejo && viejo.barra && viejo.barra !== o.barra) viejo.barra.style.visibility = '';
     if (viejo === _actual) { quitarCopia(); _actual = null; }
-    const r = { pantalla: o.pantalla, barra: o.barra, desvanecer: o.desvanecer || [], fija: !!o.fija, copia: null };
-    if (r.fija) o.barra.classList.add('m-dock-sticky');
+    const r = { pantalla: o.pantalla, barra: o.barra, desvanecer: o.desvanecer || [], fija: !!o.fija,
+      scroll: o.fija && o.scroll ? o.scroll : null, copia: null };
+    if (r.fija) o.barra.classList.add('m-dock-fija');
+    if (r.scroll && !r.scroll.classList.contains('m-dock-scroll')) {
+      r.scroll.classList.add('m-dock-scroll');
+      r.scroll.addEventListener('scroll', pedir, { passive: true });
+    }
     _regs.set(o.pantalla, r);
+    vigilarPantallas(o.pantalla.parentNode);
     actualizar();
+  }
+
+  // ── Al cambiar de pantalla ───────────────────────────────────────
+  //
+  // Las pantallas se cambian con la clase `on` (mobile-shell.js), y no
+  // todas enganchan algo al mostrarse: Inventory no. Si sólo se
+  // recalculara al hacer scroll, al salir de Buscar a Inventory la
+  // página se quedaría quieta (sin scroll) hasta que algo la moviera,
+  // y no la mueve nada. Se mira el cambio de clase directamente.
+  let _vigilado = null;
+  function vigilarPantallas(caja) {
+    if (!caja || caja === _vigilado || typeof MutationObserver === 'undefined') return;
+    _vigilado = caja;
+    new MutationObserver(pedir).observe(caja, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
   }
 
   window.addEventListener('scroll', pedir, { passive: true });
   window.addEventListener('resize', pedir);
+  // El teclado no cambia la ventana en iOS, cambia lo visible.
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', pedir);
 
   window.BarStockBandDock = { enganchar, actualizar, HUECO, RAMPA };
 })();

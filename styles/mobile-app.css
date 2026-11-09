@@ -738,13 +738,36 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--m-dock-rampa, 30px)), transparent 100%);
             mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--m-dock-rampa, 30px)), transparent 100%);
   }
-  /* En Buscar la barra misma se queda (band-dock.js, `fija`): sticky a
-   * la altura de la acoplada del Home, que pone band-dock.js. Por
-   * encima del desenfoque (9090) y por debajo de la banda (9100). */
-  body.m-shell .m-dock-sticky {
-    position: sticky; z-index: 9095;
+  /* En Buscar (band-dock.js, `fija` con `scroll`) la barra misma va
+   * fija, a la altura de la acoplada del Home, y la lista lleva su
+   * propio scroll de arriba abajo de lo visible, con hueco arriba para
+   * pasar por debajo de la barra. Mientras, la página no se mueve.
+   *
+   * Fue sticky en la página, y en el iPhone el teclado se llevaba el
+   * header y el elástico arrastraba la barra. Así ninguno de los dos la
+   * alcanza: lo que se desplaza es la lista, y la barra no está dentro.
+   *
+   * La barra, por encima del desenfoque (9090) y por debajo de la banda
+   * (9100). `.m-searchbar` en el selector para ganarle al width: 100%
+   * de la regla de la barra, que va más abajo. */
+  html.m-scroll-propio,
+  body.m-scroll-propio { overflow: hidden; overscroll-behavior: none; }
+  body.m-shell.m-scroll-propio { position: fixed; left: 0; right: 0; width: 100%; }
+  body.m-shell .m-searchbar.m-dock-fija {
+    position: fixed; z-index: 9095; margin: 0; box-sizing: border-box;
     top: var(--m-dock-top, calc(60px + env(safe-area-inset-top, 0px)));
+    left: 13px; right: 13px; width: auto;
   }
+  body.m-shell .m-dock-scroll {
+    position: fixed; top: 0; left: 0; right: 0; box-sizing: border-box;
+    height: var(--m-vvh, 100dvh);
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+    padding: calc(var(--m-dock-top, 60px) + var(--m-dock-barra-h, 50px) + 4px) 13px
+             calc(102px + env(safe-area-inset-bottom, 0px));
+  }
+  /* Con el teclado no hay barra de pestañas que salvar abajo. */
+  body.m-kb .m-dock-scroll { padding-bottom: 24px; }
   /* La copia de la búsqueda. Fuera de .m-screens no le llega el reset
    * de botones, y app.css le pondría su sombra, su blur y el radio de
    * 999px: de ahí el prefijo de id, que es lo único que gana a ese

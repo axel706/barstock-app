@@ -78,6 +78,7 @@ grupo('el módulo');
   prueba('existe', !!w.BarStockBandDock && typeof w.BarStockBandDock.enganchar === 'function');
 }
 
+(async () => {
 if (SRC) {
   grupo('se acopla al llegar, no antes');
   {
@@ -169,53 +170,71 @@ if (SRC) {
     prueba('que abre con el botón nuevo', clics.n === 1);
   }
 
-  grupo('Buscar: la barra misma se queda, y el desenfoque sale al bajar');
-  {
+  grupo('Buscar: la barra fija y la lista con su propio scroll');
+  await (async () => {
     // Axel, 2026-11-09: "lo mismo debe pasar al pulsar el do we have".
     // En Buscar la barra es un <input> de verdad: una copia no sirve (el
-    // teclado escribiría en la escondida). La barra se queda pegada con
-    // sticky y el módulo sólo pone el desenfoque cuando el contenido
-    // empieza a pasar por debajo.
-    const w = new JSDOM('<!doctype html><body class="m-shell"><header id="mBand" class="m-band"></header>' +
+    // teclado escribiría en la escondida).
+    //
+    // Primero fue sticky en la página, y en el iPhone falló de dos
+    // formas: con el teclado abierto la página entera se desplazaba y se
+    // llevaba el header; y sin teclado el elástico de iOS arrastraba la
+    // barra ("un rebote al subir o bajar todo"). Ahora la página no se
+    // mueve: la lista tiene su propio scroll por debajo de la barra, y
+    // la barra va fija fuera de él.
+    const w = new JSDOM('<!doctype html><html><body class="m-shell"><header id="mBand" class="m-band"></header>' +
       '<div id="mScreens"><div class="m-screen on" data-screen="home"></div><div class="m-screen" data-screen="search">' +
-      '<div class="m-searchbar on" id="sb"><input id="msInput"></div><div id="msList"></div></div></div></body>',
+      '<div class="m-searchbar on" id="sb"><input id="msInput"></div><div id="msScroll"><div id="msList"></div></div></div></div></body></html>',
       { url: 'https://x.test/', runScripts: 'outside-only' }).window;
     w.requestAnimationFrame = (f) => { f(); return 1; };
+    w.visualViewport = Object.assign(new w.EventTarget(), { height: 500, offsetTop: 0 });
     w.document.getElementById('mBand').getBoundingClientRect = () => ({ top: 0, bottom: BANDA, height: BANDA });
     w.eval(SRC);
+    const html = w.document.documentElement;
     const home = w.document.querySelector('[data-screen="home"]'), bus = w.document.querySelector('[data-screen="search"]');
-    const clics = { n: 0 };
     home.innerHTML = '<div class="m-daterow" id="fila">Hello</div><button type="button" class="m-searchbar" id="mhSearch">x</button>';
     const hb = home.querySelector('#mhSearch'), hf = home.querySelector('#fila');
     hb.getBoundingClientRect = () => ({ top: 210, bottom: 258, height: 48, left: 30, width: 330 });
     hf.getBoundingClientRect = () => ({ top: 150, bottom: 200, height: 50, left: 30, width: 330 });
     w.BarStockBandDock.enganchar({ pantalla: home, barra: hb, desvanecer: [hf] });
 
-    // Se entra a Buscar: el Home se esconde y Buscar engancha su barra.
+    // Se entra a Buscar.
     home.classList.remove('on'); bus.classList.add('on');
-    const sb = w.document.getElementById('sb');
-    sb.getBoundingClientRect = () => ({ top: D0, bottom: D0 + 50, height: 50, left: 16, width: 358 });
-    w.scrollY = 0;
-    w.BarStockBandDock.enganchar({ pantalla: bus, barra: sb, fija: true });
-    prueba('la barra de Buscar va pegada (sticky)', sb.classList.contains('m-dock-sticky'));
-    prueba('a su altura: 8 px bajo la banda', w.document.documentElement.style.getPropertyValue('--m-dock-top') === D0 + 'px',
-      w.document.documentElement.style.getPropertyValue('--m-dock-top'));
+    const sb = w.document.getElementById('sb'), sc = w.document.getElementById('msScroll');
+    sb.getBoundingClientRect = () => ({ top: D0, bottom: D0 + 50, height: 50, left: 13, width: 364 });
+    w.BarStockBandDock.enganchar({ pantalla: bus, barra: sb, fija: true, scroll: sc });
+    prueba('la barra va fija, fuera de lo que se desplaza', sb.classList.contains('m-dock-fija'));
+    prueba('la lista lleva su propio scroll', sc.classList.contains('m-dock-scroll'));
+    prueba('y la página de detrás no se mueve', html.classList.contains('m-scroll-propio') && w.document.body.classList.contains('m-scroll-propio'));
+    prueba('la barra a su altura: 8 px bajo la banda', html.style.getPropertyValue('--m-dock-top') === D0 + 'px', html.style.getPropertyValue('--m-dock-top'));
+    prueba('la lista sabe cuánto mide la barra', html.style.getPropertyValue('--m-dock-barra-h') === '50px', html.style.getPropertyValue('--m-dock-barra-h'));
+    prueba('la lista acaba donde acaba lo visible (encima del teclado)', html.style.getPropertyValue('--m-vvh') === '500px', html.style.getPropertyValue('--m-vvh'));
+    w.visualViewport.height = 320; w.visualViewport.dispatchEvent(new w.Event('resize'));
+    prueba('al abrirse el teclado, la lista se acorta con lo visible', html.style.getPropertyValue('--m-vvh') === '320px', html.style.getPropertyValue('--m-vvh'));
     prueba('sin bajar: sin desenfoque (no tapa el primer resultado)', !acoplada(w));
-    w.scrollY = 120; w.dispatchEvent(new w.Event('scroll'));
-    prueba('al bajar: desenfoque debajo de la barra', acoplada(w));
+    sc.scrollTop = 120; sc.dispatchEvent(new w.Event('scroll'));
+    prueba('al bajar la lista: desenfoque debajo de la barra', acoplada(w));
     prueba('sin copia: la barra es la de verdad', !w.document.querySelector('#mDock .m-searchbar') && sb.style.visibility === '');
     prueba('con el alto hasta la rampa', w.document.getElementById('mDock').style.height === (D0 + 50 + 30) + 'px',
       w.document.getElementById('mDock').style.height);
-    w.scrollY = 0; w.dispatchEvent(new w.Event('scroll'));
+    sc.scrollTop = 0; sc.dispatchEvent(new w.Event('scroll'));
     prueba('arriba otra vez: sin desenfoque', !acoplada(w));
 
+    // Se sale a otra pantalla que NO engancha nada (Inventory): la
+    // página tiene que volver a moverse sola, sin esperar a nadie. Si
+    // se quedara bloqueada, Inventory no haría scroll.
+    bus.classList.remove('on');
+    const inv = w.document.createElement('div'); inv.className = 'm-screen on'; inv.dataset.screen = 'inventory';
+    w.document.getElementById('mScreens').appendChild(inv);
+    await new Promise(r => setTimeout(r, 0));
+    prueba('al salir de Buscar, la página vuelve a moverse', !html.classList.contains('m-scroll-propio') && !w.document.body.classList.contains('m-scroll-propio'));
+
     // De vuelta al Home, sin que el Home se repinte: su enganche sigue.
-    bus.classList.remove('on'); home.classList.add('on');
+    inv.classList.remove('on'); home.classList.add('on');
     hb.getBoundingClientRect = () => ({ top: 210 - 400, bottom: 258 - 400, height: 48, left: 30, width: 330 });
     w.scrollY = 400; w.dispatchEvent(new w.Event('scroll'));
     prueba('volviendo al Home, el Home se sigue acoplando', acoplada(w) && !!w.document.querySelector('#mDock .m-searchbar'));
-    w.document.querySelector('#mDock .m-searchbar').click();
-  }
+  })();
 
   grupo('lo que vio Axel en el iPhone (2026-11-09)');
   {
@@ -239,10 +258,11 @@ if (SRC) {
     const i = html.indexOf('src/band-dock.js'), j = html.indexOf('src/mobile-home.js');
     prueba('band-dock.js antes que mobile-home.js', i > 0 && i < j);
     const bus = fs.readFileSync(path.join(RAIZ, 'src/mobile-search.js'), 'utf8');
-    prueba('mobile-search.js fija su barra', /BarStockBandDock[\s\S]{0,300}fija:\s*true/.test(bus));
+    prueba('mobile-search.js fija su barra con la lista aparte', /BarStockBandDock[\s\S]{0,300}fija:\s*true[\s\S]{0,80}scroll:/.test(bus));
     prueba('band-dock.js antes que mobile-search.js', i > 0 && i < html.indexOf('src/mobile-search.js'));
   }
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
+})();

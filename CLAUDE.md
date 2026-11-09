@@ -202,9 +202,12 @@ Vive en `src/band-dock.js` (`BarStockBandDock.enganchar({ pantalla,
 barra, desvanecer })`), que la pantalla llama en cada pintado. Hay dos
 formas: con algo encima que se va (el Home), una copia fija aparece al
 llegar la barra a su sitio; con la barra ya arriba y siendo un `<input>`
-de verdad (Buscar), `fija: true`, la barra misma va sticky y sólo se
-añade el desenfoque al bajar. Una copia de un `<input>` no sirve: el
-teclado escribiría en el escondido.
+de verdad (Buscar), `fija: true` con `scroll`, la barra misma va fija,
+la lista lleva su propio scroll por debajo de ella y la página no se
+mueve. Una copia de un `<input>` no sirve: el teclado escribiría en el
+escondido. Y sticky en la página tampoco: en el iPhone el teclado se
+lleva el header y el elástico arrastra la barra
+(`overscroll-behavior` en el `<html>` no lo para ahí).
 **Una sección nueva lo usa, no lo copia.** La prueba es
 `tools/test-banda-acoplada.js`.
 
