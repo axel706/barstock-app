@@ -751,11 +751,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * La barra, por encima del desenfoque (9090) y por debajo de la banda
    * (9100). `.m-searchbar` en el selector para ganarle al width: 100%
    * de la regla de la barra, que va más abajo. */
-  /* La página no se fija (lo hizo, y en la app instalada la barra de
-   * pestañas subía ~60 px con negro debajo): band-dock.js frena el
-   * arrastre. Aquí sólo que la pantalla no ocupe alto, para que la
-   * página no tenga nada que desplazar. */
-  body.m-scroll-propio .m-screen.on { min-height: 0; padding: 0; }
+  /* La página no se fija ni se le quita el alto: las dos cosas subían
+   * la barra de pestañas en la app instalada, con negro debajo (Axel,
+   * 2026-11-09). Lo que la mantiene quieta es band-dock.js, frenando el
+   * arrastre que empieza fuera de la lista. */
   body.m-shell .m-searchbar.m-dock-fija {
     position: fixed; z-index: 9095; margin: 0; box-sizing: border-box;
     top: var(--m-dock-top, calc(60px + env(safe-area-inset-top, 0px)));

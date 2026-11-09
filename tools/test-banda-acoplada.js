@@ -242,13 +242,22 @@ if (SRC) {
     const fila = w.document.getElementById('msList');
     prueba('arrastrar sobre la barra no mueve la página', arrastre(sb, 300, 200) === true);
     prueba('arrastrar la banda tampoco', arrastre(w.document.getElementById('mBand'), 50, 150) === true);
+    // Dentro de la lista no se frena nada. Frenaba en los extremos, y en
+    // iOS cancelar el primer movimiento bloquea el gesto entero: al final
+    // de la lista no se podía volver (Axel, 2026-11-09). El rebote de la
+    // lista lo contiene su overscroll-behavior.
     sc.scrollTop = 0;
-    prueba('arriba de la lista, tirar hacia abajo no rebota', arrastre(fila, 300, 400) === true);
-    prueba('arriba de la lista, subirla sí se puede', arrastre(fila, 400, 300) === false);
-    sc.scrollTop = 700;
-    prueba('a media lista, en los dos sentidos', arrastre(fila, 300, 400) === false && arrastre(fila, 400, 300) === false);
+    prueba('arriba de la lista, en los dos sentidos', arrastre(fila, 300, 400) === false && arrastre(fila, 400, 300) === false);
     sc.scrollTop = 1500;
-    prueba('al final de la lista, empujar más no rebota', arrastre(fila, 400, 300) === true);
+    prueba('al final de la lista, se puede volver', arrastre(fila, 300, 400) === false);
+    prueba('y empujar más tampoco se frena (lo contiene la CSS)', arrastre(fila, 400, 300) === false);
+    prueba('la lista no pasa el rebote a la página', /\.m-dock-scroll\s*\{[^}]*overscroll-behavior\s*:\s*none/.test(css));
+    // Y la pantalla conserva su alto mínimo. Se le quitó para que la
+    // página no tuviera nada que desplazar, y con una página corta la
+    // barra de pestañas sube y deja negro debajo (ya documentado en
+    // .m-screen.on, y lo volvió a ver Axel).
+    prueba('Buscar conserva su alto mínimo (si no, la barra de pestañas sube)',
+      !/m-scroll-propio[^{]*\{[^}]*min-height\s*:\s*0/.test(css));
     const hoja = w.document.createElement('div'); hoja.id = 'mSheet'; w.document.body.appendChild(hoja);
     prueba('la ficha (fuera de la pantalla) se sigue pudiendo arrastrar', arrastre(hoja, 400, 300) === false);
     hoja.remove();

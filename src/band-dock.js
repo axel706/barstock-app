@@ -165,25 +165,26 @@
   // quedaba negro debajo (Axel, 2026-11-09). Son los mismos 894 contra
   // 956 px que salieron en la animación de actualizar.
   //
-  // Ahora no se toca el body. Se frena el ARRASTRE: si empieza en la
-  // pantalla o en el header y no es dentro de la lista, no mueve nada; y
-  // dentro de la lista, en sus extremos (arriba tirando hacia abajo, al
-  // final empujando hacia arriba), tampoco, que es cuando iOS rebotaría
-  // o se pasaría a la página. Lo que vive fuera de la pantalla (la ficha
-  // de un producto, en <body>) no se toca.
+  // Ahora no se toca el body. Se frena el ARRASTRE que empieza en la
+  // pantalla o en el header FUERA de la lista (sobre la barra, sobre la
+  // banda): ése movería la página, y con el teclado abierto se llevaría
+  // el header. Dentro de la lista no se frena nada; su rebote lo
+  // contiene su overscroll-behavior. Lo que vive fuera de la pantalla
+  // (la ficha de un producto, en <body>) no se toca.
   //
-  // La clase se queda: sirve a la CSS para que la pantalla no ocupe alto
-  // y la página no tenga nada que desplazar.
+  // Frenaba también en los extremos de la lista, y al final de ella no
+  // se podía volver (Axel, 2026-11-09): en iOS, cancelar el primer
+  // movimiento bloquea el gesto ENTERO, y ese primer movimiento puede
+  // leerse como "seguir empujando".
+  //
+  // Tampoco se le quita el alto a la pantalla: con una página corta la
+  // barra de pestañas sube y deja negro debajo (ver .m-screen.on). La
+  // clase m-scroll-propio queda como marca de que la página está quieta.
   function quieta(si) {
     document.documentElement.classList.toggle('m-scroll-propio', si);
     document.body.classList.toggle('m-scroll-propio', si);
   }
 
-  let _dedoY = 0;
-  function alTocar(e) {
-    const t = e.touches && e.touches[0];
-    if (t) _dedoY = t.clientY;
-  }
   function alArrastrar(e) {
     const a = _actual;
     if (!a || !a.scroll) return;
@@ -191,15 +192,8 @@
     const band = document.getElementById('mBand');
     const nuestro = (a.pantalla.contains(t)) || (band && band.contains(t)) || (_dock && _dock.contains(t));
     if (!nuestro) return;
-    const sc = a.scroll;
-    if (!sc.contains(t)) { e.preventDefault(); return; }
-    const dedo = e.touches && e.touches[0];
-    const dy = dedo ? dedo.clientY - _dedoY : 0;
-    const arriba = sc.scrollTop <= 0;
-    const abajo = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 1;
-    if ((arriba && dy > 0) || (abajo && dy < 0)) e.preventDefault();
+    if (!a.scroll.contains(t)) e.preventDefault();
   }
-  document.addEventListener('touchstart', alTocar, { passive: true });
   document.addEventListener('touchmove', alArrastrar, { passive: false });
 
   function actualizar() {

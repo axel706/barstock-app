@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261109-161816",
+    "items": [
+      "Search: the tab bar is back at the bottom",
+      "You can scroll back up from the end of the results"
+    ]
+  },
+  {
     "build": "20261109-161019",
     "items": [
       "The tab bar sits at the bottom again in Search"
@@ -178,12 +185,6 @@
     "build": "20261108-141552",
     "items": [
       "Behind-the-scenes: Toast open-bar packages are kept"
-    ]
-  },
-  {
-    "build": "20261108-140206",
-    "items": [
-      "Behind-the-scenes: Toast sales saved day by day"
     ]
   }
 ]
