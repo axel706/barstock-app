@@ -60,29 +60,75 @@
     levantarCortina();
   }
 
-  // ─── Cierre de sesion por inactividad ────────────────────────────
-  // Tras 30 minutos sin actividad del usuario se cierra la sesion sola.
-  // Cualquier movimiento de mouse, tecla, scroll, toque o click reinicia
-  // la cuenta. El watcher se arranca una sola vez, ya autenticado.
-  const INACTIVITY_LIMIT_MS = 30 * 60 * 1000;
-  let inactivityTimer = null;
-  let inactivityWatcherStarted = false;
+  // ─── Cuándo se cierra la sesión sola ─────────────────────────────
+  // A medianoche (Nueva York), recorriéndose 2 h mientras alguien use la
+  // app en los 30 minutos antes del corte. La regla vive en
+  // session-cutoff.js; aquí se guarda y se aplica.
+  //
+  // Antes era "30 minutos sin tocar la app" con un setTimeout. En el
+  // iPhone el temporizador se congela con la app en segundo plano y el
+  // cierre era impredecible (Axel, 2026-11-09). Ahora no hay temporizador
+  // que congelar: se guarda el próximo corte y se mira al abrir, al
+  // volver a la app y cada 30 s.
+  //
+  // Va ligado al correo y se borra al entrar y al salir: un corte viejo
+  // de otra sesión cerraría la nueva nada más entrar.
+  const CORTE_KEY = 'barstock.sesionCorte';
+  let corteVigilado = false;
 
-  function resetInactivityTimer(){
-    if (inactivityTimer) clearTimeout(inactivityTimer);
-    inactivityTimer = setTimeout(() => {
-      console.log('[Auth] Sesion cerrada por inactividad');
-      logout();
-    }, INACTIVITY_LIMIT_MS);
+  function leerCorte(email){
+    try {
+      const e = JSON.parse(localStorage.getItem(CORTE_KEY) || 'null');
+      if (e && e.email === email && typeof e.corte === 'number') return e;
+    } catch (err) {}
+    return null;
+  }
+  function guardarCorte(email, e){
+    try { localStorage.setItem(CORTE_KEY, JSON.stringify({ email, corte: e.corte, ultimaAntes: e.ultimaAntes })); } catch (err) {}
+  }
+  function olvidarCorte(){
+    try { localStorage.removeItem(CORTE_KEY); } catch (err) {}
   }
 
-  function startInactivityWatcher(){
-    if (inactivityWatcherStarted) return;
-    inactivityWatcherStarted = true;
-    ['mousemove','mousedown','keydown','scroll','touchstart','click'].forEach(evt => {
-      document.addEventListener(evt, resetInactivityTimer, { passive: true });
+  function vigilarCorte(email){
+    const C = window.BarStockSessionCutoff;
+    if (!C || corteVigilado) return;
+    corteVigilado = true;
+    let estado = leerCorte(email) || C.empezar(Date.now());
+    guardarCorte(email, estado);
+
+    // true si cerró la sesión.
+    const revisar = () => {
+      const r = C.resolver(estado, Date.now());
+      estado = r.estado;
+      if (r.cerrar) {
+        console.log('[Auth] Sesion cerrada: paso el corte de medianoche sin uso antes');
+        olvidarCorte();
+        logout();
+        return true;
+      }
+      guardarCorte(email, estado);
+      return false;
+    };
+
+    // El uso se anota como mucho cada 15 s: basta para la ventana de 30
+    // minutos y no escribe en localStorage con cada movimiento.
+    let anotado = 0;
+    const alUsar = () => {
+      const ahora = Date.now();
+      if (ahora - anotado < 15000) return;
+      anotado = ahora;
+      if (revisar()) return;
+      estado = C.actividad(estado, ahora);
+      guardarCorte(email, estado);
+    };
+    ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'].forEach(evt => {
+      document.addEventListener(evt, alUsar, { passive: true });
     });
-    resetInactivityTimer();
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) revisar(); });
+    window.addEventListener('pageshow', revisar);
+    setInterval(revisar, 30000);
+    revisar();
   }
 
   async function checkAuth(){
@@ -137,7 +183,7 @@
         window.BarStockAdmin.render();
       }
 
-      startInactivityWatcher();
+      vigilarCorte(data.user.email || '');
       hideOverlay();
       return true;
     } catch(err){
@@ -170,6 +216,9 @@
 
       const { error } = await authClient.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      // Sesión nueva, corte nuevo: el de una sesión anterior la cerraría
+      // nada más entrar.
+      olvidarCorte();
 
       const locations = await window.BarStockLocationAccess.getAllowedLocations();
 
@@ -255,6 +304,7 @@
   }
 
   async function logout(){
+    olvidarCorte();
     try{
       authClient = getAuthClient();
       await authClient.auth.signOut();

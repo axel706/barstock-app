@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261109-120940",
+    "items": [
+      "You stay signed in all day",
+      "Sign-out happens at midnight, later if you're still working"
+    ]
+  },
+  {
     "build": "20261109-115855",
     "items": [
       "Behind-the-scenes fixes"
@@ -180,12 +187,6 @@
     "build": "20261106-235840",
     "items": [
       "Bulleit, Buffalo Trace, Bols and Bacardí bottle shapes"
-    ]
-  },
-  {
-    "build": "20261106-231243",
-    "items": [
-      "Basil Hayden, Skrewball, Malibu and Dewar's shapes"
     ]
   }
 ]
