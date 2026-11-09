@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261109-153658",
+    "items": [
+      "The top of Home no longer darkens as you scroll",
+      "No more bounce at the top of the screen"
+    ]
+  },
+  {
     "build": "20261109-152933",
     "items": [
       "On Home, search stays at the top as you scroll"
@@ -178,13 +185,6 @@
     "items": [
       "Welcome setup redesigned for the phone",
       "Two steps, with a signature preview"
-    ]
-  },
-  {
-    "build": "20261107-090810",
-    "items": [
-      "Bottle shape picker scrolls again",
-      "Sizes row slides sideways"
     ]
   }
 ]

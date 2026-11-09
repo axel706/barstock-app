@@ -153,6 +153,20 @@ if (SRC) {
     prueba('que abre con el botón nuevo', clics.n === 1);
   }
 
+  grupo('lo que vio Axel en el iPhone (2026-11-09)');
+  {
+    // Sin las reglas comentadas: la que manda es la última y la de verdad.
+    const css = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    // "¿Por qué se oscurece?": la capa llevaba un tinte oscuro, y en la
+    // zona del logo se sumaba al degradado de la banda. Sólo desenfoca.
+    const m = /\.m-dock-blur\s*\{([^}]*)\}/.exec(css);
+    prueba('el desenfoque acoplado no lleva tinte', !!m && !/background/.test(m[1]), m && m[1].replace(/\s+/g, ' '));
+    // "Tiene un rebote, debería estar fija": el elástico de iOS al
+    // llegar arriba. overscroll-behavior en el body no cuenta para el
+    // scroll de la página; tiene que ir en el <html>.
+    prueba('sin rebote: overscroll-behavior en el html', /(^|[\s,}])html\s*\{[^}]*overscroll-behavior(-y)?\s*:\s*none/.test(css));
+  }
+
   grupo('el Home lo usa, y carga después del módulo');
   {
     const home = fs.readFileSync(path.join(RAIZ, 'src/mobile-home.js'), 'utf8');

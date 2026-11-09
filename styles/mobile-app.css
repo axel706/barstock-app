@@ -100,9 +100,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    *    sigue haciendo falta para quien necesite agrandar. Por eso no se
    *    usa user-scalable=no en el viewport, que lo mataria todo.
    *
-   * 2. overscroll-behavior: none en el body quita el rebote y, de paso,
-   *    el "tirar para recargar" de Chrome en Android — que contando
-   *    botellas se dispara solo y te borra la pantalla a medias.
+   * 2. overscroll-behavior: none quita el rebote (en el <html>: en el
+   *    body solo no hacía nada en el iPhone) y, de paso, el "tirar para
+   *    recargar" de Chrome en Android — que contando botellas se
+   *    dispara solo y te borra la pantalla a medias.
    *
    * 3. La seleccion se quita SOLO en los controles. Los numeros y los
    *    nombres de producto se siguen pudiendo copiar: es lo que hace
@@ -131,6 +132,15 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * Declararla arriba no cambia el escritorio: sólo la ven las reglas
    * que la nombran, y los tres ajustes de tamaño siguen colgando de
    * body.m-shell, que es lo único que mueve la base. */
+
+  /* El rebote de la página se quita en el <html>, no en el body: el
+   * scroll del documento es el del viewport, y overscroll-behavior sólo
+   * se le aplica desde el elemento raíz. Escrito sólo en el body (como
+   * estuvo siempre) no hacía nada, y al llegar arriba la búsqueda del
+   * Home rebotaba con la página (Axel, 2026-11-09: "tiene un rebote,
+   * debería estar fija"). La del body se queda: es la que cubre el
+   * "tirar para recargar" de Chrome en Android. */
+  html { overscroll-behavior: none; }
 
   body.m-shell {
     touch-action: manipulation;
@@ -713,8 +723,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * no sirve aquí: va de borroso arriba a nítido abajo a lo largo de
    * TODO su alto, y debajo de la búsqueda quedaría casi sin desenfocar.
    *
-   * El tinte es el mismo de la banda, y lo recorta la misma máscara: así
-   * no hay borde en ningún sitio. */
+   * Sin tinte. Llevaba el degradado oscuro de la banda y, en la zona del
+   * logo, se sumaba al de la propia banda: al acoplarse, todo el header
+   * se oscurecía (Axel, en el iPhone: "¿por qué se oscurece?"). El
+   * contraste del logo ya lo pone la banda; aquí sólo se desenfoca. */
   body.m-shell .m-dock {
     position: fixed; top: 0; left: 0; right: 0; z-index: 9090;
     display: none; pointer-events: none;
@@ -723,7 +735,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-dock-blur {
     position: absolute; inset: 0; z-index: 0;
     backdrop-filter: blur(22px) saturate(130%); -webkit-backdrop-filter: blur(22px) saturate(130%);
-    background: linear-gradient(to bottom, rgba(8,12,19,.74) 0, rgba(8,12,19,.62) 100%);
     -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--m-dock-rampa, 30px)), transparent 100%);
             mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--m-dock-rampa, 30px)), transparent 100%);
   }
