@@ -71,43 +71,24 @@ grupo('compara el sello cargado contra el del servidor');
   prueba('lee el build cargado de la pagina', !!V && V.actual() === '20261106-100000', V && V.actual());
 }
 
-grupo('hay version nueva: salta desde la campana');
+grupo('hay version nueva: la tarjeta del Home, no el aviso de arriba');
 {
+  // Axel, 2026-11-09: el aviso de 8 segundos de arriba se perdía fácil.
+  // Ahora es una tarjeta en el carrusel del Home que se queda hasta que
+  // actualizas (mobile-home.js); la campana sigue teniendo su entrada.
   const { w, V } = entorno({ remoto: '20261106-120000' });
   if (V) {
+    let repintados = 0;
+    w.BarStockMobileHome = { refresh: () => { repintados++; } };
     await V.comprobar(true);
     const u = (w.__pedidos[0] || {}).u || '';
     prueba('pide index.html sin cache', /index\.html/.test(u) && /[?&]_=\d+/.test(u) &&
       ((w.__pedidos[0] || {}).op || {}).cache === 'no-store', u);
     prueba('sabe que hay una nueva', V.nueva() === '20261106-120000', V.nueva());
-    const t = w.document.getElementById('mVer');
-    prueba('salta la tarjeta', !!t && /New version of BarStock/.test(t.textContent) && /Tap to update/.test(t.textContent));
-    if (t) t.querySelector('.m-ver-msg').click();
-    prueba('tocarla recarga', w.__recargas === 1, String(w.__recargas));
-  }
-}
-{
-  const { w, V } = entorno({ remoto: '20261106-120000' });
-  if (V) {
-    await V.comprobar(true);
-    const x = w.document.querySelector('#mVer .m-ver-x');
-    if (x) x.click();
-    await esperar(260);
-    prueba('la X la cierra', !w.document.getElementById('mVer'));
-    prueba('sin recargar', w.__recargas === 0);
-    prueba('y la version nueva sigue sabida, para la campana', V.nueva() === '20261106-120000');
-  }
-}
-{
-  const { w, V } = entorno({ remoto: '20261106-120000' });
-  if (V) {
-    V.DURACION = 30;
-    await V.comprobar(true);
-    prueba('esta', !!w.document.getElementById('mVer'));
-    await esperar(320);
-    prueba('sola, se recoge', !w.document.getElementById('mVer'));
-    await V.comprobar(true);
-    prueba('y no vuelve a saltar por la misma version', !w.document.getElementById('mVer'));
+    prueba('ya no salta el aviso de arriba', !w.document.getElementById('mVer'));
+    prueba('repinta el Home para que salga la tarjeta', repintados >= 1, String(repintados));
+    const a = V.aviso && V.aviso();
+    prueba('y la campana sigue teniendo su entrada', !!a && /New version/.test(a.t), JSON.stringify(a));
   }
 }
 

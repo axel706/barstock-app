@@ -14,22 +14,20 @@
   // se sube a mano en cada commit que cambia la app (tools/test-sello.js
   // lo vigila), así que no hace falta llevar la cuenta de nada más.
   //
-  // Si son distintos, salta una tarjeta desde la campana —Axel eligió la
-  // campana, pero que SALTE: que no haya que abrirla para enterarse—. Se
-  // toca y recarga; la ✕ la cierra; sola se recoge a los 8 segundos. En
-  // la campana se queda, la primera, con su punto azul, hasta actualizar.
-  // La recarga la decide quien está usando la app: nunca a mitad de un
-  // conteo sin que lo pida.
+  // Si son distintos, sale una tarjeta en el carrusel del Home
+  // (mobile-home.js, tarjetaVersion) que se queda hasta actualizar, y en
+  // la campana una entrada, la primera, con su punto azul. Antes era un
+  // aviso que saltaba arriba y se recogía solo a los 8 segundos: se
+  // perdía fácil (Axel, 2026-11-09). La recarga la decide quien está
+  // usando la app: nunca a mitad de un conteo sin que lo pida.
 
   const MINIMO_MS = 60 * 1000;      // como mucho una pregunta por minuto
   const ARRANQUE_MS = 5000;         // la primera, cuando la app ya pintó
 
   let _actual = null;
   let _nueva = null;
-  let _mostrada = null;             // la versión cuya tarjeta ya saltó
   let _ultima = 0;
   let _enCurso = null;
-  let _cierre = null;
 
   const SELLO = /BUILD-(\d{8}-\d{6})/;
 
@@ -45,10 +43,6 @@
   function selloDe(html) {
     const m = /id="buildBadge"[^>]*>\s*BUILD-(\d{8}-\d{6})/.exec(String(html || ''));
     return m ? m[1] : null;
-  }
-
-  function esMovil() {
-    return !!(window.matchMedia && window.matchMedia('(max-width: 640px)').matches);
   }
 
   // ── Preguntar ───────────────────────────────────────────────────────
@@ -90,48 +84,12 @@
     // "Up to date" con una versión nueva ya sabida.
     const C = window.BarStockVersionCenter;
     if (C && C.pintar) { try { C.pintar(); } catch (e) {} }
-    // UNA vez por versión. Sin esto, cada vuelta a la app sería otra
-    // tarjeta hasta actualizar; para recordarlo ya está la campana.
-    if (esMovil() && _mostrada !== _nueva) {
-      _mostrada = _nueva;
-      mostrar();
-    }
+    // Y el Home, para que salga (o se quede) la tarjeta de la versión.
+    const H = window.BarStockMobileHome;
+    if (H && H.refresh) { try { H.refresh(); } catch (e) {} }
   }
 
   function recargar() { api._recargar(); }
-
-  // ── La tarjeta ─────────────────────────────────────────────────────
-  function mostrar() {
-    quitar(true);
-    const t = document.createElement('div');
-    t.id = 'mVer';
-    t.className = 'm-ver';
-    t.setAttribute('role', 'status');
-    t.innerHTML =
-      '<button type="button" class="m-ver-msg">' +
-        '<span class="m-ver-ic"><i class="ti ti-refresh" aria-hidden="true"></i></span>' +
-        '<span class="m-ver-t"><b>New version of BarStock</b><small>Tap to update</small></span>' +
-      '</button>' +
-      '<button type="button" class="m-ver-x" aria-label="Dismiss">' +
-        '<i class="ti ti-x" aria-hidden="true"></i></button>';
-    document.body.appendChild(t);
-    t.querySelector('.m-ver-msg').onclick = recargar;
-    t.querySelector('.m-ver-x').onclick = () => quitar();
-
-    const raf = window.requestAnimationFrame || (f => setTimeout(f, 16));
-    raf(() => raf(() => t.classList.add('on')));
-    // Sola se recoge: la campana se queda con el aviso y el punto azul.
-    _cierre = setTimeout(() => quitar(), api.DURACION);
-  }
-
-  function quitar(alInstante) {
-    clearTimeout(_cierre);
-    const t = document.getElementById('mVer');
-    if (!t) return;
-    if (alInstante) { t.remove(); return; }
-    t.classList.remove('on');
-    setTimeout(() => t.remove(), 220);
-  }
 
   // ── Para la campana ────────────────────────────────────────────────
   //
@@ -151,7 +109,6 @@
     comprobar, aviso,
     actual: () => _actual || (_actual = leerActual()),
     nueva: () => _nueva,
-    DURACION: 8000,
     // Antes era un reload() en seco: la pantalla se iba a negro mientras
     // bajaba la versión nueva ("el apagón"). Ahora la recarga va dentro
     // de la animación de update-anim.js, que la hace al final de la

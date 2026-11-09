@@ -3702,55 +3702,50 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * no pisar el rojo, que sigue siendo "hay algo sin leer". */
   .m-pip.m-pip-ver { right: auto; left: -1px; background: #38bdf8; }
 
-  /* ── La tarjeta de versión nueva ─────────────────────────────────
+  /* ── La tarjeta de versión nueva, en el carrusel del Home ──────────
    *
-   * Salta desde la campana (el piquito la apunta) a la misma altura que
-   * las burbujas de la app, para que se lea de dónde viene. Se toca para
-   * actualizar; la ✕ la cierra; sola se recoge a los 8 s. */
-  .m-ver {
-    position: fixed; z-index: 9400; right: 10px;
-    top: calc(60px + env(safe-area-inset-top, 0px));
-    width: min(320px, calc(100% - 20px));
-    display: flex; align-items: center; gap: 4px;
-    padding: 8px 8px 8px 6px; border-radius: 18px;
-    background: rgba(15,23,42,.92);
-    -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
-    border: 1px solid rgba(56,189,248,.45);
-    box-shadow: 0 12px 30px rgba(0,0,0,.5);
-    opacity: 0; transform: translateY(-10px) scale(.97); transform-origin: top right;
-    transition: opacity .2s ease, transform .2s ease;
+   * Antes era un aviso que saltaba arriba y se recogía a los 8 s: se
+   * perdía fácil. Ahora es una tarjeta que se queda hasta actualizar
+   * (mobile-home.js, pintarVersion). Diseño que eligió Axel sobre lámina
+   * (2026-11-09): "como en la App Store", con el azul del ícono
+   * derramándose por el fondo y la píldora con el degradado del logo.
+   * Mide lo que miden las demás: es un .m-hero. */
+  .m-hero-app {
+    position: relative; overflow: hidden;
+    background: #0b1220; border: 1px solid rgba(94,234,212,.3);
   }
-  .m-ver.on { opacity: 1; transform: none; }
-  .m-ver::before {
-    /* Sobre la campana, que va pegada al borde derecho de la banda. */
-    content: ""; position: absolute; top: -7px; right: 20px;
-    width: 12px; height: 12px; transform: rotate(45deg);
-    background: rgba(15,23,42,.96);
-    border-left: 1px solid rgba(56,189,248,.45);
-    border-top: 1px solid rgba(56,189,248,.45);
+  .m-app-halo {
+    position: absolute; left: -40px; top: -60px; width: 260px; height: 260px;
+    border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle, rgba(56,189,248,.55), rgba(94,234,212,.25) 40%, transparent 70%);
+    filter: blur(10px);
   }
-  /* Los dos botones van con el ID delante y sin desenfoque propio. El
-   * `backdrop-filter` que motion.css pone a todo <button> dejaba, dentro
-   * de una tarjeta que ya va desenfocada, una píldora tenue detrás del
-   * texto y un círculo en la ✕. */
-  #mVer .m-ver-msg {
-    flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px;
-    background: none; border: none; box-shadow: none; padding: 4px 6px;
+  .m-app-top { position: relative; display: flex; align-items: center; gap: 12px; }
+  .m-app-ico {
+    width: 56px; height: 56px; flex: 0 0 56px; border-radius: 13px;
+    box-shadow: 0 0 30px rgba(56,189,248,.7);
+  }
+  .m-app-nm { min-width: 0; }
+  .m-app-nm b { display: block; font-size: var(--m-strong); font-weight: 800; color: #fff; letter-spacing: -.2px; }
+  .m-app-nm small { display: block; margin-top: 2px; font-size: var(--m-meta); color: #7dd3fc; white-space: nowrap; }
+  /* Con el ID delante: app.css pone su radio a todo <button> y
+   * motion.css un desenfoque que dentro de la tarjeta se ve turbio. */
+  :is(#mScreens) .m-app-up {
+    margin-left: auto; flex: 0 0 auto; height: 32px; padding: 0 16px;
+    border: 0; border-radius: 999px !important; cursor: pointer;
+    background: linear-gradient(90deg, #6ee7b7, #38bdf8); color: #04283d;
+    font-family: inherit; font-size: var(--m-meta); font-weight: 800; letter-spacing: .06em;
     -webkit-backdrop-filter: none; backdrop-filter: none;
-    text-align: left; cursor: pointer;
   }
-  .m-ver-ic {
-    flex: 0 0 34px; height: 34px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(56,189,248,.18); color: #7dd3fc; font-size: var(--m-strong);
+  .m-app-l { position: relative; list-style: none; margin: 14px 0 0; padding: 0; }
+  .m-app-l li {
+    display: flex; align-items: center; gap: 9px; margin-top: 8px;
+    font-size: var(--m-small); color: #e2e8f0;
   }
-  .m-ver-t b { display: block; font-size: var(--m-strong); font-weight: 700; color: #f1f5f9; }
-  .m-ver-t small { display: block; margin-top: 2px; font-size: var(--m-small); font-weight: 600; color: #7dd3fc; }
-  #mVer .m-ver-x {
-    flex: 0 0 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-    background: none; border: none; box-shadow: none; padding: 0;
-    -webkit-backdrop-filter: none; backdrop-filter: none;
-    color: #94a3b8; font-size: var(--m-strong); cursor: pointer;
+  .m-app-l li span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-app-l svg {
+    width: 13px; height: 13px; flex: 0 0 13px;
+    fill: none; stroke: #5eead4; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round;
   }
 
   /* ── El centro de versiones, en More ─────────────────────────────

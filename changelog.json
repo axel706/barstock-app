@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-141150",
+    "items": [
+      "New versions show up as a card on Home"
+    ]
+  },
+  {
     "build": "20261109-134154",
     "items": [
       "What's new also shows when you open the app",
@@ -181,12 +187,6 @@
     "items": [
       "1800, 360, Frangelico and St. Elder bottle shapes",
       "St-Germain and Mozart bottle shapes"
-    ]
-  },
-  {
-    "build": "20261107-010923",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]

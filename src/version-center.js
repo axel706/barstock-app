@@ -281,5 +281,14 @@
     await novedades(actual, v);
   }
 
-  window.BarStockVersionCenter = { montar, pintar, fecha, novedades, visto, marcarVisto, alEntrar, _leer: leer };
+  // Las notas de lo que trae una versión nueva todavía sin instalar,
+  // juntando las intermedias como hace What's new. Para la tarjeta del
+  // Home (mobile-home.js), que las enseña antes de actualizar.
+  async function notasDe(build, desde) {
+    if (!SELLO.test(String(build || ''))) return [];
+    if (!_notas) await leer();
+    return notasDesde(build, desde);
+  }
+
+  window.BarStockVersionCenter = { montar, pintar, fecha, novedades, notasDe, visto, marcarVisto, alEntrar, _leer: leer };
 })();
