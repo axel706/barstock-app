@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-103546",
+    "items": [
+      "The update screen takes its time, like a real update"
+    ]
+  },
+  {
     "build": "20261109-103347",
     "items": [
       "Update screen no longer jumps while the bar fills"
@@ -180,13 +186,6 @@
     "build": "20261106-220801",
     "items": [
       "Glenfiddich, Casa Noble and Drambuie bottle shapes"
-    ]
-  },
-  {
-    "build": "20261106-143844",
-    "items": [
-      "Do we have shows each result as a product card",
-      "The card lists where it is, zone by zone"
     ]
   }
 ]

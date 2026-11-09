@@ -38,9 +38,12 @@
     // La pantalla del logo y la barra. Con 700 ms y 240 ms, en el
     // teléfono de Axel pasaba demasiado rápido ("esa pantalla en
     // particular debe durar un poco más"); lo de antes y lo de después
-    // le parecieron bien y no se tocaron.
-    minimo: 1800,  // lo mínimo que el logo se ve en la página nueva
-    llena: 400,    // la barra termina
+    // le parecieron bien y no se tocaron. Luego, con 1.8 s: "que dure
+    // unos 2 o 3 segundos más, que se entienda como un update de
+    // verdad" (2026-11-09). La barra de auth.css avanza durante toda
+    // esta espera, no sólo al principio.
+    minimo: 4300,  // lo mínimo que el logo se ve en la página nueva
+    llena: 600,    // la barra termina
     vuelve: 280,   // el logo se va y el punto vuelve al centro
     pulso: 280,
     abre: 480

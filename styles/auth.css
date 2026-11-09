@@ -687,7 +687,10 @@ html.bs-upd, html.bs-upd body{ overflow:hidden; }
    La barra arranca donde la dejó la salida y avanza sola hacia el 90 %;
    el 100 % lo pone update-anim.js cuando la app está lista. */
 #bsUpd.bu-llega .bu-logo-dot{ visibility:visible; }
-#bsUpd.bu-llega .bu-barra i{ width:35%; animation:buCarga 6s cubic-bezier(.1,.6,.3,1) forwards; }
+/* La barra avanza pareja durante toda la espera del logo (4.3 s en
+   update-anim.js) y no da un arranque y se para: así se lee como una
+   carga de verdad. Llega al 90 % al final; el 100 % lo pone llegar(). */
+#bsUpd.bu-llega .bu-barra i{ width:35%; animation:buCarga 5s cubic-bezier(.35,.15,.45,1) forwards; }
 @keyframes buCarga{ to{ width:90% } }
 #bsUpd.bu-llega.flota .bu-logo-dot{ visibility:hidden; }
 #bsUpd.bu-llega.flota .bu-dot{ opacity:1; transform:translate(var(--dx),var(--dy)); }

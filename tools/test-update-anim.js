@@ -201,8 +201,20 @@ grupo('9 · la pantalla de la barra no pasa de largo');
   // después se quedaron igual: se protege solo esta pantalla.
   const w = entorno({});
   const T = w.BarStockUpdateAnim.T;
-  prueba('el logo se ve al menos 1.8 s en la pagina nueva', T.minimo >= 1800, T.minimo);
-  prueba('la barra tarda en llenarse al menos 0.4 s', T.llena >= 400, T.llena);
+  // Axel, 2026-11-09: "que dure unos 2 o 3 segundos más, que se entienda
+  // como un update de verdad". Era 1.8 s.
+  prueba('el logo se ve entre 4 y 5 s en la pagina nueva', T.minimo >= 4000 && T.minimo <= 5000, T.minimo);
+  prueba('la barra tarda en llenarse al menos 0.6 s', T.llena >= 600, T.llena);
+  // Todo tiene que caber antes del tope de 10 s del <head>, o el overlay
+  // se quitaría a medias.
+  const total = T.minimo + T.llena + T.vuelve + T.pulso + T.abre;
+  prueba('todo cabe con holgura antes del tope de 10 s', total < 8000, total);
+  // La barra no puede llegar a su 90 % mucho antes de que acabe la
+  // espera, o se queda parada y deja de parecer una carga.
+  const cssA = leer('styles/auth.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  const m = /#bsUpd\.bu-llega \.bu-barra i\{[^}]*animation:\s*buCarga\s+([\d.]+)(m?s)/.exec(cssA);
+  const durCarga = m ? Number(m[1]) * (m[2] === 's' ? 1000 : 1) : 0;
+  prueba('la barra avanza durante toda la espera', durCarga >= T.minimo, durCarga + ' vs ' + T.minimo);
   prueba('la contraccion y la apertura no cambiaron', T.cierra === 380 && T.abre === 480, T.cierra + ' / ' + T.abre);
 }
 
