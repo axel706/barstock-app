@@ -249,6 +249,23 @@ grupo('10 · la pantalla del logo no brinca');
   prueba('sin actualización no toca el scroll', w.history.scrollRestoration !== 'manual', w.history.scrollRestoration);
 }
 
+grupo('11 · el rastro de la pantalla del logo (diagnóstico)');
+{
+  // TEMPORAL. Los saltos del logo siguieron después de quitar el scroll
+  // (Axel, 2026-11-09). En vez de otro arreglo a ciegas, la pantalla
+  // anota qué cambia en cada fotograma y lo manda al log de la app al
+  // terminar. Se quita cuando se sepa la causa.
+  const w = entorno({ marca: BUILD });
+  prueba('el <head> empieza a anotar', !!w.__bsUpd && Array.isArray(w.__bsUpd.rastro), w.__bsUpd && typeof w.__bsUpd.rastro);
+  const enviados = [];
+  w.BarStockLogger = { log: (ev, p) => { enviados.push([ev, p]); } };
+  w.__bsUpdListo();
+  await esperar(300);
+  const r = enviados.find(([ev]) => ev === 'update_anim_rastro');
+  prueba('al terminar lo manda al log', !!r);
+  prueba('con la build y la lista', !!r && r[1].build === BUILD && Array.isArray(r[1].rastro), r && JSON.stringify(r[1]).slice(0, 120));
+}
+
 grupo('8 · el iris no se apaga con opacity');
 {
   const css = leer('styles/auth.css').replace(/\/\*[\s\S]*?\*\//g, '');

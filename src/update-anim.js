@@ -154,6 +154,12 @@
     o.remove();
     document.documentElement.classList.remove('bs-upd');
 
+    // TEMPORAL: el rastro que anotó el <head> (ver index.html), al log
+    // de la app. Se quita cuando se sepa por qué brinca el logo.
+    if (u.rastro && window.BarStockLogger && window.BarStockLogger.log) {
+      try { window.BarStockLogger.log('update_anim_rastro', { build: u.build, rastro: u.rastro }); } catch (e) {}
+    }
+
     // Con el Home de vuelta, la hoja de lo que trae. Una sola vez: la
     // marca ya se borró en el <head>, y esto solo corre si había marca.
     const C = window.BarStockVersionCenter;

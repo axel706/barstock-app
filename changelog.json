@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-105613",
+    "items": [
+      "Behind-the-scenes fixes"
+    ]
+  },
+  {
     "build": "20261109-104956",
     "items": [
       "Behind-the-scenes fixes"
@@ -180,12 +186,6 @@
     "build": "20261106-223232",
     "items": [
       "Red Label, Dad's Hat, Cointreau and Balvenie shapes"
-    ]
-  },
-  {
-    "build": "20261106-222709",
-    "items": [
-      "Fireball, Monkey Shoulder, Oban and Boulard shapes"
     ]
   }
 ]
