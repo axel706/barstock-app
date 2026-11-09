@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261109-134154",
+    "items": [
+      "What's new also shows when you open the app",
+      "If you missed a few updates, it lists them all"
+    ]
+  },
+  {
     "build": "20261109-121507",
     "items": [
       "Behind-the-scenes fixes"
@@ -180,13 +187,6 @@
     "build": "20261107-010923",
     "items": [
       "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261107-004452",
-    "items": [
-      "Smooth animation when the app updates",
-      "What's new sheet after updating"
     ]
   }
 ]

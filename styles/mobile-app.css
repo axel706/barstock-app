@@ -3826,6 +3826,16 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-wn-s { margin-top: 3px; font-size: var(--m-small); font-weight: 600; color: #94a3b8; }
   .m-wn .m-vc-nada { margin-top: 14px; }
   .m-wn-l { margin: 0; padding: 0; list-style: none; }
+  /* Con varias versiones juntas la lista crece, y la hoja, sin alto
+   * máximo, se salía por arriba: el título no se veía. No pasa de la
+   * pantalla (menos la barra de estado); el título y los botones se
+   * quedan y la lista se desplaza por dentro. src/sheet.js ya distingue
+   * un desplazamiento interior del gesto de cerrar. */
+  .m-sheet-box.m-wn {
+    max-height: calc(100% - env(safe-area-inset-top, 0px) - 24px);
+    display: flex; flex-direction: column;
+  }
+  .m-wn .m-wn-l { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
   .m-wn-l li {
     position: relative; margin-top: 8px; padding: 10px 12px 10px 30px;
     border-radius: 14px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);

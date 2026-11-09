@@ -172,8 +172,14 @@
 
     // Con el Home de vuelta, la hoja de lo que trae. Una sola vez: la
     // marca ya se borró en el <head>, y esto solo corre si había marca.
+    // Con lo de todas las versiones que te perdiste, si fueron varias, y
+    // se apunta como vista para que abrir no la vuelva a sacar.
     const C = window.BarStockVersionCenter;
-    if (C && C.novedades) { try { C.novedades(u.build); } catch (e) {} }
+    if (C && C.novedades) {
+      const desde = C.visto ? C.visto() : null;
+      if (C.marcarVisto) C.marcarVisto(u.build);
+      try { C.novedades(u.build, desde); } catch (e) {}
+    }
   }
 
   window.BarStockUpdateAnim = { salir, llegar, T };

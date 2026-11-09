@@ -332,6 +332,102 @@ grupo('15 · la capa llega hasta abajo aunque la pantalla aún no');
   prueba('y sigue pegada arriba y a los lados', !!r && /top\s*:\s*0/.test(r[1]) && /left\s*:\s*0/.test(r[1]) && /right\s*:\s*0/.test(r[1]), r && r[1].trim());
 }
 
+grupo('16 · What\'s new junta las versiones que te perdiste');
+{
+  // Axel, 2026-11-09: si te saltaste varias versiones, se ve UNA vez y
+  // una sola hoja: "What's new" y la lista de lo que cambió. Sin decir
+  // cuántas versiones y sin fecha en cada nota. Las "Behind-the-scenes
+  // fixes" se juntan en una línea al final, sin número.
+  const notas = [
+    { build: '20261109-120000', items: ['Behind-the-scenes fixes'] },
+    { build: '20261109-110000', items: ['You stay signed in all day', 'Shared note'] },
+    { build: '20261109-100000', items: ['Behind-the-scenes fixes'] },
+    { build: '20261109-090000', items: ['Add product works again', 'Shared note'] },
+    { build: '20261108-090000', items: ['Ya lo habias visto'] }
+  ];
+  const w = entorno({ notas });
+  await w.BarStockVersionCenter.novedades('20261109-120000', '20261108-090000');
+  const h = w.document.getElementById('mSheet');
+  const li = h ? [...h.querySelectorAll('.m-wn-l li')].map(x => x.textContent.trim()) : [];
+  prueba('salen las notas de las que te perdiste, lo más nuevo arriba',
+    JSON.stringify(li.slice(0, 3)) === JSON.stringify(['You stay signed in all day', 'Shared note', 'Add product works again']), JSON.stringify(li));
+  prueba('sin repetidas', li.filter(x => x === 'Shared note').length === 1);
+  prueba('sin la que ya habías visto', !li.includes('Ya lo habias visto'));
+  prueba('las behind-the-scenes en una línea al final, sin número', li[li.length - 1] === 'Plus behind-the-scenes fixes' && li.filter(x => /behind-the-scenes/i.test(x)).length === 1, JSON.stringify(li));
+  const txt = h ? h.textContent.replace(/\s+/g, ' ') : '';
+  prueba('sin decir cuántas versiones', !/\d+\s+(updates|versions)/i.test(txt), txt);
+  prueba('sin fecha en cada nota', !li.some(x => /Nov \d/.test(x)));
+  prueba('sigue diciendo What\'s new', /What's new/.test(txt));
+}
+{
+  // Si todas eran behind-the-scenes, una sola línea como hasta ahora.
+  const w = entorno({ notas: [
+    { build: '20261109-120000', items: ['Behind-the-scenes fixes'] },
+    { build: '20261109-110000', items: ['Behind-the-scenes fixes'] },
+    { build: '20261109-100000', items: ['Antes'] } ] });
+  await w.BarStockVersionCenter.novedades('20261109-120000', '20261109-100000');
+  const li = [...w.document.querySelectorAll('#mSheet .m-wn-l li')].map(x => x.textContent.trim());
+  prueba('sólo behind-the-scenes: una línea', JSON.stringify(li) === JSON.stringify(['Behind-the-scenes fixes']), JSON.stringify(li));
+}
+
+grupo('17 · al abrir en frío con una versión nueva, la hoja sale una vez');
+{
+  const notas = [
+    { build: '20261109-120000', items: ['Nueva'] },
+    { build: '20261109-100000', items: ['Vieja'] } ];
+  const montar = (visto) => {
+    const w = entorno({ notas });
+    w.document.body.innerHTML = '<span id="buildBadge">BUILD-20261109-120000</span>';
+    w.eval(CHECK);
+    if (visto !== undefined) w.localStorage.setItem('barstock.buildVisto', visto);
+    return w;
+  };
+  let w = montar(undefined);
+  await w.BarStockVersionCenter.alEntrar();
+  prueba('la primera vez en un teléfono: sin hoja', !w.document.getElementById('mSheet'));
+  prueba('pero se apunta la versión', w.localStorage.getItem('barstock.buildVisto') === '20261109-120000');
+  w = montar('20261109-120000');
+  await w.BarStockVersionCenter.alEntrar();
+  prueba('la misma versión: sin hoja', !w.document.getElementById('mSheet'));
+  w = montar('20261109-100000');
+  await w.BarStockVersionCenter.alEntrar();
+  const h = w.document.getElementById('mSheet');
+  prueba('una versión nueva: sale la hoja', !!h && /Nueva/.test(h.textContent) && !/Vieja/.test(h.textContent), h && h.textContent.replace(/\s+/g, ' '));
+  prueba('y se apunta, para que no vuelva a salir', w.localStorage.getItem('barstock.buildVisto') === '20261109-120000');
+}
+{
+  // Si se viene de actualizar con el aviso, la hoja la saca la animación:
+  // abrir no la saca otra vez.
+  const w = entorno({ marca: BUILD, notas: [{ build: BUILD, items: ['X'] }] });
+  w.document.body.innerHTML = '<span id="buildBadge">BUILD-' + BUILD + '</span>';
+  w.eval(CHECK);
+  w.localStorage.setItem('barstock.buildVisto', '20200101-000000');
+  await w.BarStockVersionCenter.alEntrar();
+  prueba('viniendo de actualizar, alEntrar no la saca', !w.document.getElementById('mSheet'));
+  w.__bsUpdListo();
+  await esperar(300);
+  prueba('la saca la animación al terminar', !!w.document.getElementById('mSheet'));
+  prueba('y apunta la versión', w.localStorage.getItem('barstock.buildVisto') === BUILD);
+}
+{
+  const auth = leer('src/auth.js');
+  prueba('auth.js avisa al entrar con sesión', /function hideOverlay\(\)\{[\s\S]*?alEntrar[\s\S]*?\n  \}/.test(auth));
+}
+
+grupo('18 · con muchas notas, la hoja no se sale de la pantalla');
+{
+  // Al juntar varias versiones la lista crece, y la hoja (sin alto
+  // máximo) se salía por arriba: el título no se veía. La hoja no pasa
+  // de la pantalla; el título y los botones quedan, y la lista se
+  // desplaza por dentro.
+  const css = leer('styles/mobile-app.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  const box = /\.m-sheet-box\.m-wn\s*\{([^}]*)\}/.exec(css);
+  prueba('la hoja tiene alto máximo', !!box && /max-height/.test(box[1]), box && box[1].trim());
+  prueba('y apila en columna', !!box && /flex-direction\s*:\s*column/.test(box[1]));
+  const l = /\.m-wn\s+\.m-wn-l\s*\{([^}]*)\}/.exec(css);
+  prueba('la lista se desplaza por dentro', !!l && /overflow-y\s*:\s*auto/.test(l[1]) && /min-height\s*:\s*0/.test(l[1]), l && l[1].trim());
+}
+
 grupo('8 · el iris no se apaga con opacity');
 {
   const css = leer('styles/auth.css').replace(/\/\*[\s\S]*?\*\//g, '');

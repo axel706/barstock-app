@@ -58,6 +58,9 @@
     const overlay = document.getElementById('authOverlay');
     if (overlay) overlay.classList.add('auth-ok');
     levantarCortina();
+    // Con la app a la vista, What's new si hubo versiones nuevas desde la
+    // última que se vio en este teléfono (también al abrir en frío).
+    try { if (window.BarStockVersionCenter && window.BarStockVersionCenter.alEntrar) window.BarStockVersionCenter.alEntrar(); } catch (e) {}
   }
 
   // ─── Cuándo se cierra la sesión sola ─────────────────────────────

@@ -186,11 +186,43 @@
   // Las líneas salen de changelog.json, las mismas del centro de
   // versiones. Si esa build no tiene entrada, se DICE, igual que en la
   // tarjeta: enseñar las de otra versión sería mentir.
-  async function novedades(build) {
-    if (!/^\d{8}-\d{6}$/.test(String(build || ''))) return;
+  // ── Las que te perdiste ────────────────────────────────────────────
+  //
+  // Si te saltaste varias versiones (la app estuvo cerrada, o no se tocó
+  // el aviso), What's new sale UNA vez con lo de todas juntas. Axel
+  // (2026-11-09): sin decir cuántas versiones y sin fecha en cada nota;
+  // lo más nuevo arriba, sin repetidas, y las "Behind-the-scenes fixes"
+  // en una línea al final, sin número. Con una sola versión, sus notas
+  // tal cual, como siempre.
+  //
+  // Los sellos se comparan como texto: AAAAMMDD-HHMMSS ordena igual.
+  const SELLO = /^\d{8}-\d{6}$/;
+  const deFondo = (t) => /^behind-the-scenes fixes$/i.test(String(t || '').trim());
+  function notasDesde(build, desde) {
+    if (!desde || !SELLO.test(desde) || desde >= build) {
+      const e = de(build);
+      return e && Array.isArray(e.items) ? e.items : [];
+    }
+    const entre = (_notas || []).filter(e => e && SELLO.test(e.build) && e.build > desde && e.build <= build)
+      .sort((a, b) => (a.build < b.build ? 1 : -1));
+    const vistas = new Set(), out = [];
+    let fondo = false;
+    for (const e of entre) {
+      for (const t of (Array.isArray(e.items) ? e.items : [])) {
+        if (deFondo(t)) { fondo = true; continue; }
+        if (vistas.has(t)) continue;
+        vistas.add(t); out.push(t);
+      }
+    }
+    if (!out.length) return fondo ? ['Behind-the-scenes fixes'] : [];
+    if (fondo) out.push('Plus behind-the-scenes fixes');
+    return out;
+  }
+
+  async function novedades(build, desde) {
+    if (!SELLO.test(String(build || ''))) return;
     if (!_notas) await leer();
-    const e = de(build);
-    const items = e && Array.isArray(e.items) ? e.items : [];
+    const items = notasDesde(build, desde);
     const cuerpo = items.length
       ? '<ul class="m-wn-l">' + items.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>'
       : '<p class="m-vc-nada">Release notes are not available right now.</p>';
@@ -223,5 +255,31 @@
     h.querySelector('#mWnAll').onclick = () => { cerrar(); abrirHoja(); };
   }
 
-  window.BarStockVersionCenter = { montar, pintar, fecha, novedades, _leer: leer };
+  // ── La última versión que viste ────────────────────────────────────
+  //
+  // Se apunta en el teléfono para saber, al abrir, si hubo versiones
+  // nuevas. Antes What's new sólo salía al actualizar con el aviso; si la
+  // app se abría en frío ya estaba al día y nadie se enteraba de nada.
+  const VISTO = 'barstock.buildVisto';
+  function visto() { try { return localStorage.getItem(VISTO); } catch (e) { return null; } }
+  function marcarVisto(build) {
+    if (!SELLO.test(String(build || ''))) return;
+    try { localStorage.setItem(VISTO, build); } catch (e) {}
+  }
+
+  // Al entrar con sesión (auth.js). La primera vez en un teléfono no hay
+  // con qué comparar: sólo se apunta (un usuario nuevo no ve "What's new"
+  // de todo lo anterior). Si se viene de actualizar con el aviso, la hoja
+  // la saca la animación al terminar, no esto.
+  async function alEntrar() {
+    if (window.__bsUpd) return;
+    const actual = V() && V().actual ? V().actual() : null;
+    if (!SELLO.test(String(actual || ''))) return;
+    const v = visto();
+    marcarVisto(actual);
+    if (!v || v >= actual) return;
+    await novedades(actual, v);
+  }
+
+  window.BarStockVersionCenter = { montar, pintar, fecha, novedades, visto, marcarVisto, alEntrar, _leer: leer };
 })();
