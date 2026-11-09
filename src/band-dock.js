@@ -192,8 +192,35 @@
     const band = document.getElementById('mBand');
     const nuestro = (a.pantalla.contains(t)) || (band && band.contains(t)) || (_dock && _dock.contains(t));
     if (!nuestro) return;
-    if (!a.scroll.contains(t)) e.preventDefault();
+    // Fuera de la lista, o con una lista que cabe entera (no tiene
+    // dónde separarse del tope): el arrastre no es de nadie.
+    if (!a.scroll.contains(t) || !cabeMover(a.scroll)) e.preventDefault();
   }
+
+  // ── La trampa de iOS con una lista dentro de una página ──────────
+  //
+  // Con la lista JUSTO en su tope, iOS le da el gesto a la página de
+  // detrás, y la página se lo queda un rato: como en Buscar todo es
+  // fijo, no se ve moverse nada y la lista parece bloqueada. Axel lo
+  // vio dos veces al llegar al final (2026-11-09); la primera era
+  // además mi freno de los extremos, la segunda era esto solo.
+  // overscroll-behavior no lo evita en el iPhone.
+  //
+  // El remedio de siempre: al poner el dedo, si la lista está en un
+  // tope se la separa 1 px. Nunca empieza un gesto en el borde, así
+  // que el gesto es siempre suyo. Ese píxel no cuenta como "bajado"
+  // para el desenfoque (ver actualizar).
+  const cabeMover = (sc) => sc.scrollHeight - sc.clientHeight > 2;
+  function alTocar(e) {
+    const a = _actual;
+    if (!a || !a.scroll || !a.scroll.contains(e.target)) return;
+    const sc = a.scroll;
+    if (!cabeMover(sc)) return;
+    const max = sc.scrollHeight - sc.clientHeight;
+    if (sc.scrollTop <= 0) sc.scrollTop = 1;
+    else if (sc.scrollTop >= max) sc.scrollTop = max - 1;
+  }
+  document.addEventListener('touchstart', alTocar, { passive: true });
   document.addEventListener('touchmove', alArrastrar, { passive: false });
 
   function actualizar() {
@@ -213,8 +240,9 @@
       // acaba encima de él y el último resultado se puede alcanzar.
       const vv = window.visualViewport;
       h.setProperty('--m-vvh', Math.round(vv ? vv.height : window.innerHeight) + 'px');
+      // > 1 y no > 0: el píxel de alTocar no es haber bajado.
       const bajado = a.scroll ? a.scroll.scrollTop : (window.scrollY || 0);
-      if (bajado > 0) cubrir(top, alto);
+      if (bajado > 1) cubrir(top, alto);
       else soltar();
       return;
     }

@@ -258,6 +258,27 @@ if (SRC) {
     // .m-screen.on, y lo volvió a ver Axel).
     prueba('Buscar conserva su alto mínimo (si no, la barra de pestañas sube)',
       !/m-scroll-propio[^{]*\{[^}]*min-height\s*:\s*0/.test(css));
+    // ── La trampa de iOS con una lista dentro de una página ───────
+    //
+    // Con la lista JUSTO en su tope, iOS le da el gesto a la página de
+    // detrás, que se lo queda: la lista parecía bloqueada al final
+    // (Axel, 2026-11-09, dos veces). Al poner el dedo, la lista se
+    // separa 1 px del tope, y el gesto es siempre suyo.
+    const tocar = (el) => { const e = new w.Event('touchstart', { bubbles: true, cancelable: true }); e.touches = [{ clientY: 300 }]; el.dispatchEvent(e); };
+    sc.scrollTop = 1500; tocar(fila);
+    prueba('al final: el dedo la encuentra 1 px antes del tope', sc.scrollTop === 1499, String(sc.scrollTop));
+    sc.scrollTop = 0; tocar(fila);
+    prueba('arriba: 1 px después del tope', sc.scrollTop === 1, String(sc.scrollTop));
+    prueba('y ese píxel no saca el desenfoque', !acoplada(w));
+    sc.scrollTop = 700; tocar(fila);
+    prueba('a media lista no se toca', sc.scrollTop === 700);
+    // Una lista que cabe entera no tiene dónde separarse: ahí el
+    // arrastre se frena, para que no se lo lleve la página.
+    Object.defineProperty(sc, 'scrollHeight', { value: 500, configurable: true });
+    sc.scrollTop = 0;
+    prueba('una lista corta: el arrastre no mueve la página', arrastre(fila, 400, 300) === true);
+    Object.defineProperty(sc, 'scrollHeight', { value: 2000, configurable: true });
+
     const hoja = w.document.createElement('div'); hoja.id = 'mSheet'; w.document.body.appendChild(hoja);
     prueba('la ficha (fuera de la pantalla) se sigue pudiendo arrastrar', arrastre(hoja, 400, 300) === false);
     hoja.remove();

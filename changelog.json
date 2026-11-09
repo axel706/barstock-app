@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-162755",
+    "items": [
+      "Search results no longer get stuck at the end"
+    ]
+  },
+  {
     "build": "20261109-161816",
     "items": [
       "Search: the tab bar is back at the bottom",
@@ -179,12 +185,6 @@
     "items": [
       "Add a note for the vendor when sending an order",
       "It shows at the top of the email"
-    ]
-  },
-  {
-    "build": "20261108-141552",
-    "items": [
-      "Behind-the-scenes: Toast open-bar packages are kept"
     ]
   }
 ]
