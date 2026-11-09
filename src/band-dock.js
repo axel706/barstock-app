@@ -238,6 +238,15 @@
   // desenfoque al final, cuando ya no queda título grande que emborronar.
   function pegar(a, banda) {
     medidas(banda);
+    // Sin nombre: la pantalla está en un nivel sin título ni bloque que
+    // pegar (Orders dentro de un detalle). Conserva la lista con su
+    // scroll, y el header se queda con el logo, sin desenfoque.
+    if (!a.nombre) {
+      tituloBanda(null);
+      if (a.titulo) a.titulo.style.opacity = '';
+      if (a.velo) a.velo.style.setProperty('--m-dock-o', '0');
+      return;
+    }
     // Se mide la MARCA, no el bloque: el offsetTop de un elemento sticky
     // ya pegado incluye lo que se ha desplazado, y el recorrido crecería
     // con el scroll (lo enseñó el navegador: el fundido no llegaba nunca).
@@ -251,7 +260,7 @@
     // la lista para desenfocar el contenedor vacío. La CSS se la pone a
     // cada capa.
     if (a.velo) a.velo.style.setProperty('--m-dock-o', dos(entre((p - 0.6) / 0.4)));
-    tituloBanda(a.nombre || '', entre((p - 0.25) / 0.75));
+    tituloBanda(a.nombre, entre((p - 0.25) / 0.75));
   }
 
   // ── La página quieta mientras la lista lleva su propio scroll ─────

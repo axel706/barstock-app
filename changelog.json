@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261109-171348",
+    "items": [
+      "Orders: the tabs stay at the top as you scroll",
+      "The Orders title moves into the header"
+    ]
+  },
+  {
     "build": "20261109-170508",
     "items": [
       "Smoother, gradual blur under the header and search"
@@ -178,13 +185,6 @@
     "build": "20261109-100448",
     "items": [
       "Add product works again on the computer"
-    ]
-  },
-  {
-    "build": "20261109-094044",
-    "items": [
-      "Count card on Home counts bottles, not products",
-      "Time left now matches what is really left"
     ]
   }
 ]

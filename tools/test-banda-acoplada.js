@@ -357,6 +357,17 @@ if (SRC) {
     prueba('un repintado no duplica el desenfoque ni el título', blo.querySelectorAll('.m-dock-velo').length === 1 && band.querySelectorAll('.m-band-titulo').length === 1 && sc.querySelectorAll('.m-dock-marca').length === 1);
     prueba('ni mueve la lista de donde estaba', sc.scrollTop === 30);
 
+    // Orders, dentro de un detalle: la misma pantalla y la misma lista,
+    // pero sin pestañas ni título. Se engancha sin nombre, y entonces el
+    // header conserva el logo y no hay desenfoque que poner.
+    sc.scrollTop = 900;
+    w.BarStockBandDock.enganchar({ pantalla: inv, scroll: sc, pegado: blo, titulo: tit, nombre: '' });
+    prueba('sin nombre: el header se queda con el logo', !band.classList.contains('m-con-titulo') && q() === '');
+    prueba('y sin desenfoque', blo.querySelector('.m-dock-velo').style.getPropertyValue('--m-dock-o') === '0');
+    prueba('y la lista sigue con su scroll propio', sc.classList.contains('m-dock-scroll') && w.document.documentElement.classList.contains('m-scroll-propio'));
+    eng();
+    Object.defineProperty(blo.previousElementSibling, 'offsetTop', { value: D0 + 60, configurable: true });
+
     // A otra pestaña: vuelve el logo.
     sc.scrollTop = 900; sc.dispatchEvent(new w.Event('scroll'));
     inv.classList.remove('on'); ord.classList.add('on');
@@ -428,6 +439,7 @@ if (SRC) {
     const invSrc = fs.readFileSync(path.join(RAIZ, 'src/mobile-inventory.js'), 'utf8');
     prueba('mobile-inventory.js pega su bloque y pasa el título', /BarStockBandDock[\s\S]{0,400}pegado:[\s\S]{0,120}titulo:/.test(invSrc));
     prueba('band-dock.js antes que mobile-inventory.js', i > 0 && i < html.indexOf('src/mobile-inventory.js'));
+    prueba('band-dock.js antes que mobile-orders.js', i > 0 && i < html.indexOf('src/mobile-orders.js'));
     const css2 = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     prueba('el bloque se pega por CSS (sticky), no con JavaScript', /\.m-dock-pegado\s*\{[^}]*position\s*:\s*sticky/.test(css2));
     prueba('un aviso en el header tapa también el título', /m-band-bub\s+\.m-band-titulo[^{]*\{[^}]*opacity\s*:\s*0/.test(css2));

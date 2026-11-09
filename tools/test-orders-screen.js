@@ -637,6 +637,35 @@ console.log('\nun detalle esconde el segmentado');
      host.querySelectorAll('#moSeg button')[2].classList.contains('on'));
 }
 
+console.log('\nel header al hacer scroll, como en Inventory');
+{
+  // Axel, 2026-11-09: "el mismo concepto de inventory para orders". Al
+  // bajar, "Orders" pasa al header y las pestanas se quedan pegadas
+  // debajo, con el desenfoque progresivo. Lo hace band-dock.js; aqui se
+  // comprueba que la pantalla esta armada para eso y que se lo pide.
+  const { w, host } = pantalla();
+  const pedidos = [];
+  w.BarStockBandDock = { enganchar: (o) => pedidos.push(o) };
+  host.querySelectorAll('#moSeg button')[2].click();        // repinta el marco
+  const sc = host.querySelector('#moScroll'), peg = host.querySelector('#moPeg');
+  ok('todo va dentro de una lista con su propio scroll', !!sc && sc.contains(host.querySelector('#moCuerpo')));
+  // Un sticky solo se pega mientras dura su PADRE. Si las pestanas
+  // colgaran de la cabecera, se irian con ella en cuanto pasara.
+  ok('las pestanas cuelgan directamente de esa lista', !!peg && peg.parentElement === sc && !!peg.querySelector('#moSeg'));
+  ok('y el titulo va aparte, antes', !!host.querySelector('#moCab .m-inv-t') && !host.querySelector('#moCab #moSeg'));
+  const u = pedidos[pedidos.length - 1];
+  ok('se lo pide a band-dock: lista, bloque, titulo y nombre',
+     !!u && u.pantalla === host && u.scroll === sc && u.pegado === peg && u.nombre === 'Orders' && !!u.titulo,
+     u && Object.keys(u).join(','));
+
+  // Dentro de un detalle no hay pestanas ni titulo: el header se queda
+  // con el logo. Se dice con el nombre vacio.
+  w.BarStockMobileInvoices.abrirDetalle();
+  const d = pedidos[pedidos.length - 1];
+  ok('dentro de un detalle, sin nombre: el header conserva el logo', !!d && d.nombre === '' && d.scroll === sc);
+  ok('y el cuerpo sigue siendo el mismo elemento', sc.contains(host.querySelector('#moCuerpo')));
+}
+
 console.log('\nentrar por la pestana arranca en Open');
 {
   const { w, host, def } = pantalla();

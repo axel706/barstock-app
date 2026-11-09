@@ -951,14 +951,40 @@
   // escribiría sobre un elemento que ya no está en el documento y la
   // sección se quedaría en blanco.
   function marco(host) {
+    // ── Cuatro piezas dentro de una lista con su propio scroll ─────
+    //
+    // Al bajar, "Orders" pasa al header en el sitio del logo y las
+    // pestañas se quedan pegadas debajo, con el desenfoque progresivo:
+    // lo mismo que Inventory (Axel, 2026-11-09). Lo hace band-dock.js.
+    //
+    //   #moCab     el título y la cifra: se van con la lista.
+    //   #moPeg     las pestañas: lo que se queda pegado.
+    //   #moTras    "Quick order": es contenido de Open, sube con él.
+    //   #moCuerpo  la sección.
+    //
+    // Las pestañas van en su propia pieza, colgando DIRECTAMENTE de la
+    // lista, y no dentro de la cabecera como antes: un sticky sólo se
+    // pega mientras dura su padre, y con la cabecera de padre se irían
+    // con ella en cuanto pasara.
     let cuerpo = host.querySelector('#moCuerpo');
     if (!cuerpo) {
-      host.innerHTML = '<div id="moCab"></div><div id="moCuerpo"></div>';
+      host.innerHTML = '<div id="moScroll"><div id="moCab"></div><div id="moPeg"></div>' +
+        '<div id="moTras"></div><div id="moCuerpo"></div></div>';
       cuerpo = host.querySelector('#moCuerpo');
     }
 
     const cab = host.querySelector('#moCab');
-    if (enDetalle()) { cab.innerHTML = ''; return cuerpo; }
+    const peg = host.querySelector('#moPeg');
+    const tras = host.querySelector('#moTras');
+    // Se engancha en los dos casos, con la cabecera ya pintada. Dentro
+    // de un detalle va sin nombre: no hay título ni pestañas, y el
+    // header conserva el logo.
+    const acoplar = (nombre) => {
+      const D = window.BarStockBandDock;
+      if (D) D.enganchar({ pantalla: host, scroll: host.querySelector('#moScroll'),
+        pegado: peg, titulo: cab, nombre });
+    };
+    if (enDetalle()) { cab.innerHTML = ''; peg.innerHTML = ''; tras.innerHTML = ''; acoplar(''); return cuerpo; }
 
     const s = SECCIONES.find(x => x.id === _sec) || SECCIONES[0];
     const vs = proveedores();
@@ -983,7 +1009,9 @@
           '<div class="m-inv-t">Orders</div>' +
           '<div class="m-isub">' + esc(s.sub) + '</div>' +
         '</div>' + cifra +
-      '</div>' +
+      '</div>';
+
+    peg.innerHTML =
       '<div class="m-seg" id="moSeg">' +
         SECCIONES.map(x => {
           // El contador solo donde significa algo: proveedores con
@@ -995,7 +1023,9 @@
             ' data-sec="' + x.id + '">' + esc(x.n) +
             (n ? ' <b>' + n + '</b>' : '') + '</button>';
         }).join('') +
-      '</div>' +
+      '</div>';
+
+    tras.innerHTML =
       // ── Una orden fuera del ciclo ───────────────────────────────
       //
       // Se llamó "Log a store run" mientras creíamos que sólo
@@ -1011,7 +1041,7 @@
             '<i class="ti ti-plus" aria-hidden="true"></i> Quick order</button>'
         : '');
 
-    const run = cab.querySelector('#moRun');
+    const run = tras.querySelector('#moRun');
     if (run) run.onclick = () => {
       // La pantalla del teléfono, no el diálogo del escritorio: ése
       // es una rejilla de cinco columnas con un `datalist`, y en un
@@ -1022,7 +1052,7 @@
       if (window.BarStockToast) window.BarStockToast.show('Not available right now.');
     };
 
-    cab.querySelectorAll('[data-sec]').forEach(b => {
+    peg.querySelectorAll('[data-sec]').forEach(b => {
       b.onclick = () => {
         if (b.dataset.sec === _sec) return;
         _sec = b.dataset.sec;
@@ -1034,6 +1064,7 @@
         pintar(host);
       };
     });
+    acoplar('Orders');
     return cuerpo;
   }
 
