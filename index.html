@@ -262,51 +262,22 @@
   o.innerHTML = window.__bsUpdMarcado(b);
   h.appendChild(o);
 
-  window.__bsUpd = { build: b, t0: Date.now(), listo: false, rastro: [] };
+  window.__bsUpd = { build: b, t0: Date.now(), listo: false };
 
   // Sin teclado mientras dura. La pantalla de entrada está debajo desde
   // el primer fotograma y uno de sus campos recibía el foco al arrancar:
   // se abría el teclado detrás del logo, lo visible encogía (894 → 541
-  // px en el rastro) y el bloque saltaba. Mientras esta pantalla está,
-  // un campo que recibe el foco lo suelta en el acto, y se anota cuál
-  // era. Se quita al terminar (update-anim.js o el tope).
+  // px en el rastro que se tomó en producción) y el bloque saltaba.
+  // Mientras esta pantalla está, un campo que recibe el foco lo suelta en
+  // el acto. Se quita al terminar (update-anim.js o el tope).
   function sinFoco(e){
     var t = e.target;
     if (!t || !(t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-    var u2 = window.__bsUpd;
-    if (u2 && u2.rastro && u2.rastro.length < 80) {
-      u2.rastro.push((Date.now() - u2.t0) + '|foco|' + (t.id || t.name || t.tagName));
-    }
     try { t.blur(); } catch (er) {}
   }
   document.addEventListener('focusin', sinFoco, true);
   window.__bsUpd.soltarFoco = function(){ document.removeEventListener('focusin', sinFoco, true); };
 
-  // ── TEMPORAL: el rastro de la pantalla del logo ──────────────────────
-  // Los saltos del logo mientras se llena la barra siguieron después de
-  // quitar el scroll (2026-11-09). En vez de otro arreglo a ciegas, se
-  // anota en cada fotograma qué cambia —dónde está el bloque y cuánto
-  // mide, el alto de la pantalla y de lo visible, el scroll, si la fuente
-  // cargó, las clases de <html> y <body>— y update-anim.js lo manda al
-  // log de la app al terminar. Sólo cuando algo cambia, 80 como mucho.
-  // Se quita en cuanto se sepa la causa.
-  (function(){
-    var u = window.__bsUpd, g = o.querySelector('.bu-grupo'), antes = '';
-    var raf = window.requestAnimationFrame || function(f){ return setTimeout(f, 16); };
-    function mira(){
-      if (!document.getElementById('bsUpd') || !g) return;
-      var r = g.getBoundingClientRect(), vv = window.visualViewport;
-      var f = [Math.round(r.top), Math.round(r.height), window.innerHeight,
-        vv ? Math.round(vv.height) : -1, vv ? Math.round(vv.offsetTop) : -1,
-        Math.round(window.scrollY || 0),
-        (document.fonts && document.fonts.status) || '',
-        document.documentElement.className,
-        document.body ? document.body.className : ''].join('|');
-      if (f !== antes && u.rastro.length < 80) { u.rastro.push((Date.now() - u.t0) + '|' + f); antes = f; }
-      if (Date.now() - u.t0 < 9000) raf(mira);
-    }
-    raf(mira);
-  })();
   window.__bsUpdListo = function(){
     var u = window.__bsUpd;
     if (!u || u.listo) return;
@@ -398,7 +369,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261109-120940</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261109-121507</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5568,7 +5539,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/mobile-inventory.js?v=m13"></script>
 <script src="src/mobile-orders.js?v=m18"></script>
 <script src="src/mobile-quick.js?v=mqk2"></script>
-<script src="src/update-anim.js?v=upd6"></script>
+<script src="src/update-anim.js?v=upd7"></script>
 <script src="src/version-check.js?v=ver3"></script>
 <script src="src/version-center.js?v=vc2"></script>
 <script src="src/mobile-tabs.js?v=m13"></script>

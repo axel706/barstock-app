@@ -249,21 +249,12 @@ grupo('10 · la pantalla del logo no brinca');
   prueba('sin actualización no toca el scroll', w.history.scrollRestoration !== 'manual', w.history.scrollRestoration);
 }
 
-grupo('11 · el rastro de la pantalla del logo (diagnóstico)');
+grupo('11 · el rastro de diagnóstico ya no está');
 {
-  // TEMPORAL. Los saltos del logo siguieron después de quitar el scroll
-  // (Axel, 2026-11-09). En vez de otro arreglo a ciegas, la pantalla
-  // anota qué cambia en cada fotograma y lo manda al log de la app al
-  // terminar. Se quita cuando se sepa la causa.
-  const w = entorno({ marca: BUILD });
-  prueba('el <head> empieza a anotar', !!w.__bsUpd && Array.isArray(w.__bsUpd.rastro), w.__bsUpd && typeof w.__bsUpd.rastro);
-  const enviados = [];
-  w.BarStockLogger = { log: (ev, p) => { enviados.push([ev, p]); } };
-  w.__bsUpdListo();
-  await esperar(300);
-  const r = enviados.find(([ev]) => ev === 'update_anim_rastro');
-  prueba('al terminar lo manda al log', !!r);
-  prueba('con la build y la lista', !!r && r[1].build === BUILD && Array.isArray(r[1].rastro), r && JSON.stringify(r[1]).slice(0, 120));
+  // Sirvió para encontrar las causas de los saltos (teclado de la
+  // contraseña y alto de la pantalla); ya no escribe en app_logs.
+  prueba('el <head> no anota nada', !/rastro/.test(HEAD.replace(/\/\/.*$/gm, '')));
+  prueba('update-anim.js no manda nada al log', !/update_anim_rastro/.test(ANIM));
 }
 
 grupo('12 · las dos causas de los saltos, según el rastro');
@@ -283,7 +274,6 @@ grupo('12 · las dos causas de los saltos, según el rastro');
   w.document.body.appendChild(inp);
   inp.focus();
   prueba('mientras está, un campo no se queda con el foco (no se abre el teclado)', w.document.activeElement !== inp, w.document.activeElement && w.document.activeElement.tagName);
-  prueba('y se anota cuál fue', w.__bsUpd.rastro.some(x => /\|foco\|/.test(x)), JSON.stringify(w.__bsUpd.rastro.slice(-2)));
   w.__bsUpdListo();
   await esperar(300);
   inp.focus();
