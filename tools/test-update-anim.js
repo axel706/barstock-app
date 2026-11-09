@@ -296,6 +296,22 @@ grupo('12 · las dos causas de los saltos, según el rastro');
   prueba('la salida también fija --cy', /--cy/.test(ANIM));
 }
 
+grupo('13 · iOS no ofrece la contraseña debajo de la animación');
+{
+  // El segundo video de Axel (2026-11-09) enseñó qué abría el teclado:
+  // el aviso de contraseñas de iOS, "Sign In to barstockpro.com… Fill
+  // Password", y luego el teclado "password for this website". La
+  // pantalla de entrada está puesta desde el primer fotograma, debajo de
+  // la animación, e iOS ve su campo de contraseña. Soltar el foco no
+  // basta: el aviso sale porque iOS VE el formulario. Mientras dura, la
+  // pantalla de entrada no está en la página (display:none, no sólo
+  // invisible); al terminar vuelve a lo que fuera.
+  const css = leer('styles/auth.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  prueba('con bs-upd, la pantalla de entrada fuera de la página',
+    /html\.bs-upd\s+#authOverlay\s*\{[^}]*display\s*:\s*none\s*!important/.test(css),
+    (css.match(/html\.bs-upd[^{]*#authOverlay[^{]*\{[^}]*\}/g) || []).join(' | '));
+}
+
 grupo('8 · el iris no se apaga con opacity');
 {
   const css = leer('styles/auth.css').replace(/\/\*[\s\S]*?\*\//g, '');

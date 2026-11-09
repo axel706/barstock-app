@@ -585,6 +585,14 @@ html.loc-switch-out #locCurtain{
    que se desplaza es el documento, y una capa fija se mueve con él
    (los saltos del logo que grabó Axel). */
 html.bs-upd, html.bs-upd body{ overflow:hidden; }
+/* La pantalla de entrada, fuera de la página mientras dura. Está puesta
+   desde el primer fotograma, debajo de la animación, e iOS veía su campo
+   de contraseña: sacaba "Sign In to barstockpro.com… Fill Password" y el
+   teclado, la pantalla visible encogía y el logo saltaba (el segundo
+   video de Axel). display:none y no visibility: iOS ofrece la contraseña
+   de un formulario que VE, y con visibility sigue en la maquetación. Al
+   quitarse bs-upd vuelve a lo que fuera: si no hay sesión, sale. */
+html.bs-upd #authOverlay{ display:none !important; }
 
 #bsUpd .bu-iris{
   position:absolute;
