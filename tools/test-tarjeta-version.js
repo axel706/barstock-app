@@ -96,7 +96,11 @@ grupo('2 · con versión nueva');
   const c = laDeVersion(host);
   prueba('sale la tarjeta', !!c);
   prueba('con el ícono de la app', !!c && !!c.querySelector('img.m-app-ico') && /assets\/icons\//.test(c.querySelector('img.m-app-ico').getAttribute('src')));
-  prueba('"BarStock" y la fecha de la versión', !!c && /BarStock/.test(c.textContent) && /New version · Nov 9/.test(c.textContent), c && c.textContent.replace(/\s+/g, ' '));
+  // Axel, 2026-11-09, sobre la primera de verdad: "BarStock Pro", sin
+  // la fecha, y el build en una píldora.
+  prueba('"BarStock Pro"', !!c && /BarStock Pro/.test((c.querySelector('.m-app-nm b') || {}).textContent || ''), c && c.textContent.replace(/\s+/g, ' '));
+  prueba('sin la fecha', !!c && !/Nov 9/.test(c.textContent), c && c.textContent.replace(/\s+/g, ' '));
+  prueba('el build en una píldora', !!c && (c.querySelector('.m-app-build') || {}).textContent === 'BUILD-20261109-141000', c && (c.querySelector('.m-app-build') || {}).textContent);
   const li = c ? [...c.querySelectorAll('.m-app-l li')].map(x => x.textContent.trim()) : [];
   prueba('con lo que trae', JSON.stringify(li) === JSON.stringify(['Add a note for the vendor', 'What’s new shows when you open', 'You stay signed in all day']), JSON.stringify(li));
   const b = c && c.querySelector('[data-go]');

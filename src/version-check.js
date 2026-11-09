@@ -15,10 +15,10 @@
   // lo vigila), así que no hace falta llevar la cuenta de nada más.
   //
   // Si son distintos, sale una tarjeta en el carrusel del Home
-  // (mobile-home.js, tarjetaVersion) que se queda hasta actualizar, y en
-  // la campana una entrada, la primera, con su punto azul. Antes era un
-  // aviso que saltaba arriba y se recogía solo a los 8 segundos: se
-  // perdía fácil (Axel, 2026-11-09). La recarga la decide quien está
+  // (mobile-home.js, tarjetaVersion) que se queda hasta actualizar. Antes
+  // era un aviso que saltaba arriba y se recogía solo a los 8 segundos,
+  // más una entrada en la campana con su punto azul; Axel quitó los dos
+  // (2026-11-09): la tarjeta basta. La recarga la decide quien está
   // usando la app: nunca a mitad de un conteo sin que lo pida.
 
   const MINIMO_MS = 60 * 1000;      // como mucho una pregunta por minuto
@@ -78,8 +78,6 @@
   }
 
   function avisar() {
-    const N = window.BarStockMobileNotif;
-    if (N && N.refrescar) { try { N.refrescar(); } catch (e) {} }
     // Y la tarjeta de More, si está pintada: que no siga diciendo
     // "Up to date" con una versión nueva ya sabida.
     const C = window.BarStockVersionCenter;
@@ -91,22 +89,8 @@
 
   function recargar() { api._recargar(); }
 
-  // ── Para la campana ────────────────────────────────────────────────
-  //
-  // Un aviso más de su lista, con acción y no con X: cerrarlo no es
-  // actualizar, y esconderlo dejaría otra vez sin saber si la versión
-  // cargada es la buena.
-  function aviso() {
-    if (!_nueva) return null;
-    return {
-      clave: 'version', grupo: 'App', ico: 'ti-refresh', tono: 'ver',
-      t: 'New version of BarStock', d: 'Tap to update',
-      accion: 'Update', recargar, efimero: true, version: true
-    };
-  }
-
   const api = {
-    comprobar, aviso,
+    comprobar,
     actual: () => _actual || (_actual = leerActual()),
     nueva: () => _nueva,
     // Antes era un reload() en seco: la pantalla se iba a negro mientras

@@ -1362,11 +1362,11 @@
   // perdía fácil (Axel, 2026-11-09). Ahora es una tarjeta del carrusel:
   // sale sólo si hay una versión para actualizar (version-check.js) y se
   // va al actualizar, porque la página nueva ya no tiene versión nueva.
-  // La campana sigue teniendo su entrada.
+  // La campana ya no la lleva: la tarjeta basta.
   //
   // Diseño que eligió (la C, "como en la App Store" con el brillo del
-  // ícono): el ícono de la app, "BarStock", "New version · <fecha>",
-  // UPDATE en píldora, y lo que trae con palomitas. Lo que trae se pide
+  // ícono): el ícono de la app, "BarStock Pro", el build en una
+  // píldora, UPDATE, y lo que trae con palomitas. Lo que trae se pide
   // aparte (changelog.json sin caché) y repinta al llegar; mientras, una
   // línea honesta en vez de una lista vacía.
   let _notasVer = null;          // { de: build, lista: [] }
@@ -1386,10 +1386,8 @@
     const nueva = V && V.nueva ? V.nueva() : null;
     if (!nueva) return null;
     cargarNotasVersion(nueva);
-    const C = window.BarStockVersionCenter;
-    const f = (C && C.fecha) ? String(C.fecha(nueva) || '').split(' · ')[0] : '';
     return {
-      tipo: 'version', tono: 'app', nueva, fecha: f,
+      tipo: 'version', tono: 'app', nueva,
       notas: (_notasVer && _notasVer.de === nueva) ? _notasVer.lista : null,
       go: () => { if (V && V._recargar) V._recargar(); }
     };
@@ -1587,7 +1585,9 @@
         <div class="m-app-halo" aria-hidden="true"></div>
         <div class="m-app-top">
           <img class="m-app-ico" src="assets/icons/icon-192.png" alt="">
-          <div class="m-app-nm"><b>BarStock</b><small>New version${c.fecha ? ' · ' + esc(c.fecha) : ''}</small></div>
+          <!-- "BarStock Pro", sin fecha y con el build en una píldora:
+               así lo pidió Axel al ver la primera de verdad. -->
+          <div class="m-app-nm"><b>BarStock Pro</b><span class="m-app-build">BUILD-${esc(c.nueva)}</span></div>
           <button type="button" class="m-app-up" data-go="${i}">UPDATE</button>
         </div>
         <ul class="m-app-l">${lista.map(t =>

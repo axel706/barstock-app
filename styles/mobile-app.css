@@ -3698,9 +3698,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
      * se lee como parte de la campana. */
     border: 2px solid #0b1220;
   }
-  /* El punto AZUL es la versión nueva de la app; va a la izquierda para
-   * no pisar el rojo, que sigue siendo "hay algo sin leer". */
-  .m-pip.m-pip-ver { right: auto; left: -1px; background: #38bdf8; }
 
   /* ── La tarjeta de versión nueva, en el carrusel del Home ──────────
    *
@@ -3727,7 +3724,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   .m-app-nm { min-width: 0; }
   .m-app-nm b { display: block; font-size: var(--m-strong); font-weight: 800; color: #fff; letter-spacing: -.2px; }
-  .m-app-nm small { display: block; margin-top: 2px; font-size: var(--m-meta); color: #7dd3fc; white-space: nowrap; }
+  /* El build en una píldora, en lugar de la fecha (Axel, 2026-11-09). */
+  .m-app-build {
+    display: inline-block; margin-top: 5px; padding: 3px 8px; border-radius: 999px;
+    font-size: var(--m-meta); font-weight: 700; color: #7dd3fc; white-space: nowrap;
+    background: rgba(56,189,248,.14); border: 1px solid rgba(56,189,248,.35);
+  }
   /* Con el ID delante: app.css pone su radio a todo <button> y
    * motion.css un desenfoque que dentro de la tarjeta se ve turbio. */
   :is(#mScreens) .m-app-up {

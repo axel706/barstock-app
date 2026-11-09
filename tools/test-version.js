@@ -11,16 +11,14 @@
  *
  *   1. La versión se compara por el sello BUILD- de index.html: el que
  *      trae la página cargada contra el del servidor, leído sin caché.
- *   2. Si son distintos, salta una tarjeta desde la campana. Tocarla
- *      recarga; la ✕ la cierra; sola, se recoge a los 8 s.
- *   3. Salta UNA vez por versión. Si no, cada vuelta a la app sería un
- *      aviso más hasta que actualizaras.
- *   4. Mismo build, sin red o con una respuesta rara: nada. Un aviso de
+ *   2. Si son distintos, se repinta el Home para que salga la tarjeta
+ *      de versión nueva (mobile-home.js; la prueba de la tarjeta está en
+ *      test-tarjeta-version.js). Ya no salta el aviso de 8 s de arriba,
+ *      y la campana ya no lleva la versión nueva (Axel, 2026-11-09).
+ *   3. Mismo build, sin red o con una respuesta rara: nada. Un aviso de
  *      versión nueva que no lo es, o un error en pantalla porque no hubo
  *      cobertura, es peor que no avisar.
- *   5. No se pregunta en cada vuelta: como mucho una vez por minuto.
- *   6. La campana lo lleva el primero, con su punto AZUL; el rojo sigue
- *      siendo sólo de las notificaciones de siempre.
+ *   4. No se pregunta en cada vuelta: como mucho una vez por minuto.
  *
  *   node tools/test-version.js
  */
@@ -75,7 +73,7 @@ grupo('hay version nueva: la tarjeta del Home, no el aviso de arriba');
 {
   // Axel, 2026-11-09: el aviso de 8 segundos de arriba se perdía fácil.
   // Ahora es una tarjeta en el carrusel del Home que se queda hasta que
-  // actualizas (mobile-home.js); la campana sigue teniendo su entrada.
+  // actualizas (mobile-home.js).
   const { w, V } = entorno({ remoto: '20261106-120000' });
   if (V) {
     let repintados = 0;
@@ -87,8 +85,9 @@ grupo('hay version nueva: la tarjeta del Home, no el aviso de arriba');
     prueba('sabe que hay una nueva', V.nueva() === '20261106-120000', V.nueva());
     prueba('ya no salta el aviso de arriba', !w.document.getElementById('mVer'));
     prueba('repinta el Home para que salga la tarjeta', repintados >= 1, String(repintados));
-    const a = V.aviso && V.aviso();
-    prueba('y la campana sigue teniendo su entrada', !!a && /New version/.test(a.t), JSON.stringify(a));
+    // Axel, 2026-11-09: la tarjeta basta; la campana ya no lleva la
+    // versión nueva (ni su entrada ni el punto azul).
+    prueba('la campana ya no lleva la versión nueva', !(V.aviso && V.aviso()));
   }
 }
 
@@ -120,8 +119,10 @@ grupo('no pregunta en cada vuelta');
   }
 }
 
-grupo('la campana lo lleva el primero, con su punto azul');
+grupo('la campana ya no lleva la versión nueva');
 {
+  // Antes llevaba la versión nueva la primera, con un punto azul. Axel,
+  // 2026-11-09: la tarjeta del Home basta; fuera de la campana.
   const { w, V } = entorno({ remoto: '20261106-120000' });
   if (V) {
     w.BARSTOCK_CONFIG = {};
@@ -129,20 +130,14 @@ grupo('la campana lo lleva el primero, con su punto azul');
     await V.comprobar(true);
     const N = w.BarStockMobileNotif;
     const avisos = N ? await N._cargar() : [];
-    prueba('el aviso de version, el primero', !!avisos[0] && avisos[0].clave === 'version' && /New version/.test(avisos[0].t),
-      JSON.stringify(avisos[0]));
+    prueba('ningún aviso de versión en la lista', !avisos.some(a => a && (a.clave === 'version' || /New version/.test(a.t || ''))), JSON.stringify(avisos));
     await N.refrescar();
     const b = w.document.getElementById('mNotif');
-    prueba('la campana lleva el punto azul', !!b && !!b.querySelector('.m-pip-ver'));
-    prueba('y no el rojo: no hay otras notificaciones', !!b && !b.querySelector('.m-pip:not(.m-pip-ver)'));
+    prueba('la campana sin punto azul', !!b && !b.querySelector('.m-pip-ver'));
+    prueba('ni rojo: no hay otras notificaciones', !!b && !b.querySelector('.m-pip'));
     await N.abrir();
     await esperar(20);
-    const fila = w.document.querySelector('.m-nf[data-k="version"]');
-    prueba('esta dentro del panel', !!fila);
-    const go = fila && fila.querySelector('[data-ver="version"]');
-    prueba('con su accion, no una X: cerrarlo no es actualizar', !!go && !fila.querySelector('[data-x]'));
-    if (go) go.click();
-    prueba('y la accion recarga', w.__recargas === 1, String(w.__recargas));
+    prueba('ni dentro del panel', !w.document.querySelector('.m-nf[data-k="version"]'));
   }
 }
 
@@ -156,3 +151,4 @@ grupo('esta en index.html, antes de la campana');
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
 })();
+
