@@ -148,6 +148,19 @@ grupo('3 · dónde va');
   prueba('con un conteo a medias, la segunda: el conteo manda', /Count/.test(t[0].textContent) && t[1] === laDeVersion(host), t.map(x => x.className).join(' | '));
 }
 
+grupo('4 · se lee del mismo tamaño que sus vecinas');
+{
+  // Axel, 2026-11-10: "la tarjeta de update es ligeramente más chica que
+  // las otras". Medía lo mismo (318 × 198 px). Lo que pasaba es que su
+  // borde iba a .3 de opacidad sobre un fondo casi negro, y las demás lo
+  // llevan a .5 sobre color: la orilla se perdía y se leía más pequeña.
+  // Eligió la A sobre lámina: el borde con la fuerza de las demás.
+  const css = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const m = /\.m-hero-app\s*\{([^}]*)\}/.exec(css);
+  const a = m && /border\s*:[^;]*rgba\([^)]*,\s*([\d.]+)\s*\)/.exec(m[1]);
+  prueba('el borde se ve tanto como el de las demás (.5 o más)', !!a && Number(a[1]) >= 0.5, a ? a[1] : 'sin borde');
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
 })();

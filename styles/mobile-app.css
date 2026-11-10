@@ -3919,7 +3919,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * Mide lo que miden las demás: es un .m-hero. */
   .m-hero-app {
     position: relative; overflow: hidden;
-    background: #0b1220; border: 1px solid rgba(94,234,212,.3);
+    /* El borde a .55, como el de las demás tarjetas (.5). Iba a .3 y,
+     * sobre este fondo casi negro, la orilla se perdía: la tarjeta medía
+     * lo mismo que sus vecinas y se leía más chica (Axel, 2026-11-10). */
+    background: #0b1220; border: 1px solid rgba(94,234,212,.55);
   }
   .m-app-halo {
     position: absolute; left: -40px; top: -60px; width: 260px; height: 260px;

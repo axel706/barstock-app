@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-191147",
+    "items": [
+      "The update card has a clearer outline"
+    ]
+  },
+  {
     "build": "20261109-173022",
     "items": [
       "Sent: search and filters stay at the top as you scroll"
@@ -179,12 +185,6 @@
     "build": "20261109-103347",
     "items": [
       "Update screen no longer jumps while the bar fills"
-    ]
-  },
-  {
-    "build": "20261109-100959",
-    "items": [
-      "Add product: searching picks the first match for you"
     ]
   }
 ]
