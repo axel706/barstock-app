@@ -117,6 +117,29 @@ grupo('bsToastParar lo detiene');
   prueba('se para despues del dia en curso', w.__llamadas.length === 2, w.__llamadas.length);
 }
 
+grupo('bsToastVentas: el dinero del dia, y por defecto HOY');
+{
+  // Axel, 2026-11-10: "las ventas de licor del dia... numeros, dinero".
+  // Sin fecha pide HOY (en hora de Nueva York), que es lo que pregunto.
+  const w = entorno();
+  w.console.table = () => {};
+  w.fetch = async (url, op) => {
+    w.__llamadas.push(JSON.parse(op.body));
+    return { status: 200, json: async () => ({ ok: true, businessDate: 'x', cerrado: false, diaCompleto: true,
+      porCategoria: [{ categoria: 'Liquor', unidades: 3, bruto: 40, descuentos: 4, neto: 36, impuesto: 3.2, modificadores: 6, sinPrecio: 0 }],
+      total: { unidades: 3, bruto: 40, descuentos: 4, neto: 36, impuesto: 3.2, modificadores: 6, sinPrecio: 0 } }) };
+  };
+  const r = await w.bsToastVentas('liquor');
+  const p = w.__llamadas[0] || {};
+  prueba('pide la accion sales', p.action === 'sales', p.action);
+  prueba('de HOY si no se le dice el dia', p.params && p.params.businessDate === hoy.replace(/-/g, ''), p.params && p.params.businessDate);
+  prueba('con la categoria', p.params && p.params.categoria === 'liquor');
+  prueba('y devuelve lo que dijo Toast', !!r && r.total.neto === 36);
+  await w.bsToastVentas(null, '20261109');
+  const q = w.__llamadas[1] || {};
+  prueba('otro dia, si se le da', q.params && q.params.businessDate === '20261109' && !('categoria' in q.params), JSON.stringify(q.params));
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
 })();

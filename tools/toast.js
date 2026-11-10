@@ -19,6 +19,15 @@
  *                                      con más artículos
  *        await bsToast('drinks', { businessDate: '20261101' })   otro día
  *
+ *   Y el DINERO vendido, por categoría de venta:
+ *        await bsToastVentas()                  hoy, todas las categorías
+ *        await bsToastVentas('liquor')          hoy, sólo licor
+ *        await bsToastVentas('liquor', '20261109')   otro día
+ *   Tres cifras por categoría: bruto (antes de descuentos), neto (después,
+ *   sin impuesto) e impuesto. Los modificadores con precio van aparte:
+ *   compara el neto con el informe de ventas de Toast para ver si ya los
+ *   incluye. Hoy sigue abierto: la cifra crece mientras se vende.
+ *
  *   Y para cargar lo vendido día por día (la base del inventario en vivo):
  *        await bsToastHistoria(7)      los últimos 7 días
  *        await bsToastHistoria(365)    el año entero, del más nuevo al
@@ -59,6 +68,25 @@
     console.log('%cToast · ' + (accion || 'ping') + (j.ok ? ' · ok' : ' · falló'),
       'font-weight:bold;color:' + (j.ok ? '#16a34a' : '#dc2626'));
     console.log(j);
+    return j;
+  };
+
+  // El dinero vendido en un día, por categoría de venta. Sin fecha, HOY:
+  // es lo que pidió Axel (2026-11-10), "las ventas de licor del día, en
+  // dinero". En tabla, que es como se lee una cuenta.
+  window.bsToastVentas = async function (categoria, fecha) {
+    const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York',
+      year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()).replace(/-/g, '');
+    const params = { businessDate: /^\d{8}$/.test(String(fecha || '')) ? String(fecha) : hoy };
+    if (categoria) params.categoria = String(categoria);
+    const j = await window.bsToast('sales', params);
+    if (!j || !j.ok) return j;
+    const fila = (c) => ({ categoria: c.categoria || 'TOTAL', unidades: c.unidades, bruto: c.bruto,
+      descuentos: c.descuentos, neto: c.neto, impuesto: c.impuesto, modificadores: c.modificadores });
+    console.table(j.porCategoria.map(fila).concat([fila(j.total)]));
+    if (!j.cerrado) console.log('El día ' + j.businessDate + ' sigue abierto: esto es lo vendido hasta ahora.');
+    if (!j.diaCompleto) console.warn('OJO: el día tiene más órdenes de las que se leyeron. Esto NO es el total.');
+    if (j.total.sinPrecio) console.warn(j.total.sinPrecio + ' líneas vinieron sin precio y no están sumadas.');
     return j;
   };
 

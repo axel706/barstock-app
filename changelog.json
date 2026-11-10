@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-211423",
+    "items": [
+      "Behind-the-scenes fixes"
+    ]
+  },
+  {
     "build": "20261109-193611",
     "items": [
       "Smoother header animations while scrolling"
@@ -179,12 +185,6 @@
     "build": "20261109-104956",
     "items": [
       "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261109-103546",
-    "items": [
-      "The update screen takes its time, like a real update"
     ]
   }
 ]

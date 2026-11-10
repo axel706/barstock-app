@@ -282,7 +282,7 @@ grupo('solo lee');
     '/orders/v2/ordersBulk': { status: 200, body: [] }
   };
   const metodos = [];
-  for (const a of ['ping', 'restaurant', 'menu', 'orders', 'drinks', 'wine']) {
+  for (const a of ['ping', 'restaurant', 'menu', 'orders', 'drinks', 'wine', 'sales']) {
     await llamar({ accion: a });
     for (const p of peticiones) metodos.push(p.metodo + ' ' + p.url.replace(/https:\/\/[^/]+/, ''));
     prueba(a + ': a Supabase solo le valida la sesion', sbLlamadas.length === 0, sbLlamadas.join(','));
@@ -599,6 +599,87 @@ grupo('la sesion se comprueba una vez, antes de repartir');
     if (!/require\(['"]\.\/integracion['"]\)/.test(src)) continue;
     prueba(f + ' no valida sesiones por su cuenta', !/supabase-js|auth\.getUser/.test(src));
   }
+}
+
+grupo('sales: el dinero vendido en un dia, por categoria de venta');
+{
+  // Axel, 2026-11-10: "lo que quiero saber es si somos capaces de traer
+  // las ventas de licor del dia... numeros, dinero". Hasta aqui todo lo
+  // de Toast contaba tragos; ni drinks ni sync llevaban importes.
+  //
+  // Toast manda el precio en cada linea de la orden. Se suman tres cosas
+  // por separado y no una sola cifra, porque cual es "la venta" depende
+  // de contra que informe de Toast se compare: antes de descuentos
+  // (preDiscountPrice), despues (price) y el impuesto (tax). Y los
+  // modificadores con precio (un doble, un upcharge) aparte, sin
+  // sumarlos a ciegas: si Toast ya los incluye en la linea, sumarlos
+  // otra vez los doblaria.
+  entorno();
+  const CAT = { liquor: 'cat-liq', wine: 'cat-wine', food: 'cat-food' };
+  const sel = (nombre, cat, q, plata, mods, extra) => Object.assign({
+    displayName: nombre, item: { guid: 'it-' + nombre }, quantity: q,
+    salesCategory: { guid: cat }, modifiers: mods || []
+  }, plata || {}, extra || {});
+  const mod = (nombre, precio) => ({ displayName: nombre, item: { guid: 'm-' + nombre }, quantity: 1, price: precio, modifiers: [] });
+  const orden = (sels, extra) => Object.assign({ checks: [{ selections: sels }] }, extra || {});
+  const dia = [
+    orden([sel("Tito's", CAT.liquor, 2, { preDiscountPrice: 24, price: 24, tax: 2.13 }, [mod('Double', 6)])]),
+    orden([sel('Don Julio', CAT.liquor, 1, { preDiscountPrice: 16, price: 12, tax: 1.07 })]),      // con descuento
+    orden([sel('Pinot Grigio', CAT.wine, 1, { preDiscountPrice: 11, price: 11, tax: 0.98 })]),
+    orden([sel('Burger', CAT.food, 1, { preDiscountPrice: 18, price: 18, tax: 1.6 })]),
+    // Anuladas, a los tres niveles: no cuentan.
+    orden([sel("Tito's", CAT.liquor, 9, { preDiscountPrice: 999, price: 999, tax: 99 })], { voided: true }),
+    { checks: [{ voided: true, selections: [sel("Tito's", CAT.liquor, 9, { preDiscountPrice: 999, price: 999, tax: 99 })] }] },
+    orden([sel("Tito's", CAT.liquor, 9, { preDiscountPrice: 999, price: 999, tax: 99 }, [], { voided: true })]),
+    // Una linea sin precio: se cuenta como tal, no como cero vendido.
+    orden([sel('Mystery', CAT.liquor, 1, {})]),
+    // Texto libre con precio: suma, pero su texto no sale.
+    orden([{ displayName: 'Botella para Juan Perez', quantity: 1, salesCategory: { guid: CAT.liquor },
+             preDiscountPrice: 100, price: 100, tax: 8.88, modifiers: [] }])
+  ];
+  respuestas = {
+    '/authentication/': LOGIN_OK,
+    '/config/v2/salesCategories': { status: 200, body: [{ guid: CAT.liquor, name: 'Liquor' }, { guid: CAT.wine, name: 'Wine' }, { guid: CAT.food, name: 'Food' }] },
+    '/orders/v2/ordersBulk': (url) => ({ status: 200, body: /page=1(&|$)/.test(url) ? dia : [] })
+  };
+  const r = await llamar({ accion: 'sales', params: { businessDate: '20261110' } });
+  const b = r.body || {};
+  prueba('contesta, con el dia que se pidio', b.ok === true && b.accion === 'sales' && b.businessDate === '20261110', JSON.stringify({ ok: b.ok, d: b.businessDate }));
+  const liq = (b.porCategoria || []).find(c => c.categoria === 'Liquor') || {};
+  prueba('licor: antes de descuentos, 24 + 16 + 100', liq.bruto === 140, liq.bruto);
+  prueba('licor: despues de descuentos, 24 + 12 + 100', liq.neto === 136, liq.neto);
+  prueba('y lo descontado, la diferencia', liq.descuentos === 4, liq.descuentos);
+  prueba('el impuesto aparte', liq.impuesto === 12.08, liq.impuesto);
+  prueba('los modificadores con precio, aparte y sin sumarlos a la venta', liq.modificadores === 6 && liq.neto === 136, liq.modificadores);
+  prueba('lo anulado no cuenta, a ningun nivel', liq.neto < 900);
+  prueba('las unidades tambien: 2 + 1 + 1 + 1', liq.unidades === 5, liq.unidades);
+  prueba('una linea sin precio se dice, no se da por cero', liq.sinPrecio === 1, liq.sinPrecio);
+  const food = (b.porCategoria || []).find(c => c.categoria === 'Food') || {};
+  prueba('todas las categorias, no solo bebida: la comida tambien', food.neto === 18, food.neto);
+  prueba('ordenadas por dinero, lo que mas vendio primero', (b.porCategoria || [])[0].categoria === 'Liquor', (b.porCategoria || []).map(c => c.categoria).join(','));
+  prueba('y un total del dia', !!b.total && b.total.neto === 136 + 11 + 18 && b.total.bruto === 140 + 11 + 18, JSON.stringify(b.total));
+  prueba('dice si el dia sigue abierto', typeof b.cerrado === 'boolean');
+  const todo = JSON.stringify(b);
+  prueba('sin texto libre: ni nombres de articulos ni de clientes', !/Juan Perez|Tito|Don Julio|Burger/.test(todo), todo.slice(0, 200));
+  prueba('ni el token', !todo.includes(TOKEN_TOAST));
+
+  const solo = await llamar({ accion: 'sales', params: { businessDate: '20261110', categoria: 'liquor' } });
+  prueba('se puede pedir una sola categoria', (solo.body.porCategoria || []).length === 1 && solo.body.porCategoria[0].categoria === 'Liquor' &&
+    solo.body.total.neto === 136, JSON.stringify((solo.body.porCategoria || []).map(c => c.categoria)));
+}
+{
+  // Si las categorias no se pueden leer, no se inventa a que pertenece
+  // cada venta: se dice, y el dinero sale junto, sin repartir.
+  entorno();
+  respuestas = {
+    '/authentication/': LOGIN_OK,
+    '/config/v2/salesCategories': { status: 500, body: { message: 'boom' } },
+    '/orders/v2/ordersBulk': (url) => ({ status: 200, body: /page=1(&|$)/.test(url)
+      ? [{ checks: [{ selections: [{ displayName: 'X', item: { guid: 'g' }, quantity: 1, salesCategory: { guid: 'c1' }, preDiscountPrice: 10, price: 10, tax: 1 }] }] }] : [] })
+  };
+  const r = await llamar({ accion: 'sales' });
+  prueba('sin categorias: lo dice', /no se pudieron leer/.test(String(r.body.categoriasDeVenta)), String(r.body.categoriasDeVenta));
+  prueba('y no reparte el dinero en categorias que no conoce', (r.body.porCategoria || []).length === 1 && r.body.porCategoria[0].categoria === '(no sales category)');
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') +

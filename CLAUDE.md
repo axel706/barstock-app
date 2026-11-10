@@ -328,7 +328,11 @@ en la consola: la llamada va dentro de `(async () => { ... })();`.
 - `forense.js` → `await bsCuando('Baileys')` — qué le pasó a un producto
 - `existe.js` — si un producto está en la nube
 - `toast.js` → `await bsToast('ping')` — qué contesta Toast (`ping`,
-  `restaurant`, `menu`, `orders`, `drinks`, `wine`), a través de `api/integrations.js`.
+  `restaurant`, `menu`, `orders`, `drinks`, `wine`, `sales`), a través de `api/integrations.js`.
+  `await bsToastVentas('liquor')` es el DINERO vendido hoy por categoría
+  de venta (acción `sales`): bruto, descuentos, neto e impuesto, con los
+  modificadores con precio aparte. Falta medirlo contra el informe de
+  ventas de Toast para saber cuál de las cifras es "la venta".
   `drinks` resume un día entero de ventas por categoría, con modificadores,
   sin texto libre: es para ver cómo cuenta Toast los tragos.
   **`await bsToastHistoria(365)` NO es sólo lectura:** carga lo vendido día
