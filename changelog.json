@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261109-193611",
+    "items": [
+      "Smoother header animations while scrolling"
+    ]
+  },
+  {
     "build": "20261109-191147",
     "items": [
       "The update card has a clearer outline"
@@ -179,12 +185,6 @@
     "build": "20261109-103546",
     "items": [
       "The update screen takes its time, like a real update"
-    ]
-  },
-  {
-    "build": "20261109-103347",
-    "items": [
-      "Update screen no longer jumps while the bar fills"
     ]
   }
 ]

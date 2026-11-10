@@ -128,60 +128,92 @@
     for (const r of _regs.values()) r.copia = null;
   }
 
-  function soltar() {
-    if (_dock) _dock.classList.remove('on');
-    const a = _actual;
-    if (a && a.barra && !a.fija) a.barra.style.visibility = '';
-  }
-
-  function cubrir(top, alto) {
-    const d = dock();
-    d.style.height = (top + alto + BAJO) + 'px';
-    document.documentElement.style.setProperty('--m-dock-rampa', RAMPA + 'px');
-    d.classList.add('on');
-  }
-
-  function acoplar(r, banda) {
-    const a = _actual;
-    const d = dock();
-    if (!a.copia || !a.copia.isConnected) {
-      quitarCopia();
-      const c = a.barra.cloneNode(true);
-      c.removeAttribute('id');
-      c.classList.add('m-dock-barra');
-      // Hace lo mismo que la de verdad, sin copiar su manejador: si la
-      // pantalla cambia lo que hace la barra, la copia lo sigue.
-      c.onclick = (ev) => { ev.preventDefault(); if (_actual && _actual.barra) _actual.barra.click(); };
-      d.appendChild(c);
-      a.copia = c;
-    }
-    const top = banda + HUECO;
-    a.copia.style.top = top + 'px';
-    a.copia.style.left = r.left + 'px';
-    a.copia.style.width = r.width + 'px';
-    cubrir(top, r.height);
-    a.barra.style.visibility = 'hidden';
-  }
-
-  // ── Lo que se desvanece ──────────────────────────────────────────
+  // ── Medir pocas veces, animar sin medir ──────────────────────────
   //
-  // Se mide por lo que se ha bajado, no por la distancia al header:
-  // entero arriba del todo, e invisible cuando su borde de abajo llega
-  // al header. Antes se medía por la distancia (empezaba a irse 16 px
-  // antes del borde) y en el iPhone de Axel el saludo queda a pocos px
-  // de él YA EN REPOSO: salía a 0.65 sin haber bajado nada, "debajo de
-  // un velo". Cómo de cerca quede del header depende del teléfono; lo
-  // que se ha bajado, no.
-  function desvanecer(banda) {
-    const y = Math.max(0, window.scrollY || 0);
-    for (const el of _actual.desvanecer) {
-      if (!el || !el.isConnected) continue;
-      const abajo = el.getBoundingClientRect().bottom;
-      const recorrido = abajo + y - banda;        // lo que hay que bajar
-      if (y <= 0 || recorrido <= 0) { el.style.opacity = ''; continue; }
-      const o = (abajo - banda) / recorrido;
-      el.style.opacity = o >= 1 ? '' : String(Math.max(0, Math.round(o * 100) / 100));
+  // Axel, 2026-11-10: "pule todas las animaciones de los headers, haz
+  // todo más fluido". Lo que restaba fluidez no eran los fundidos. En
+  // CADA fotograma de scroll el módulo medía la banda, el bloque y los
+  // márgenes —y cada medida obliga al navegador a recalcular el diseño a
+  // mitad del scroll, con 264 renglones delante— y reescribía las
+  // variables del documento entero aunque no hubieran cambiado.
+  //
+  // Ahora hay dos funciones y no se mezclan:
+  //
+  //   medir()    lo caro. Lee posiciones y tamaños y los guarda en el
+  //              enganche. Corre al pintar, al cambiar de pantalla o de
+  //              tamaño, cuando cambia el contenido y al poner el dedo
+  //              (una vez por gesto, por si algo se movió sin avisar).
+  //   animar()   lo de cada fotograma. Sólo lee cuánto se ha bajado y
+  //              escribe los dos o tres valores que dependen de eso, y
+  //              sólo si cambiaron (ver `est`).
+  //
+  // Lo que animar() necesita saber de la pantalla es su geometría EN
+  // REPOSO: dónde está cada cosa con el scroll a cero. La posición de
+  // ahora es ésa menos lo bajado; no hace falta volver a preguntarla.
+
+  // Escribe un estilo sólo si cambia. Un mismo valor reescrito sesenta
+  // veces por segundo no pinta nada nuevo, pero el navegador lo
+  // comprueba cada vez; en el <html>, contra el documento entero.
+  const _puesto = new WeakMap();
+  function est(el, prop, valor) {
+    if (!el) return;
+    let m = _puesto.get(el);
+    if (!m) { m = {}; _puesto.set(el, m); }
+    if (m[prop] === valor) return;
+    m[prop] = valor;
+    if (prop.charAt(0) === '-') {
+      if (valor === null) el.style.removeProperty(prop); else el.style.setProperty(prop, valor);
+    } else el.style[prop] = valor === null ? '' : valor;
+  }
+  const raiz = (prop, valor) => est(document.documentElement, prop, valor);
+
+  // Suaviza un avance de 0 a 1: arranca y frena despacio en vez de en
+  // seco. Los fundidos iban en línea recta y se notaba el tirón al
+  // empezar y al acabar.
+  const suave = (x) => x * x * (3 - 2 * x);
+  const entre = (x) => Math.max(0, Math.min(1, x));
+  const dos = (x) => String(Math.round(x * 100) / 100);
+
+  // Deja de acoplar lo de `a`: sin desenfoque, sin copia a la vista y
+  // con la barra de verdad otra vez visible.
+  function soltar(a) {
+    if (_dock) {
+      _dock.classList.remove('on', 'viva');
+      est(_dock, '--m-dock-o', '0');
     }
+    if (a && a.copia) est(a.copia, 'display', 'none');
+    if (a && a.barra && !a.fija) est(a.barra, 'visibility', null);
+  }
+
+  // El desenfoque de #mDock (Home y Buscar). `o` es cuánto se ve, de 0 a
+  // 1, y va a cada capa por variable: entraba de golpe, con un
+  // display, y ahora entra con el scroll como el de Inventory. `viva`
+  // es "hay algo que pintar"; `on`, "está acoplado" (lo que miran las
+  // pruebas y la copia del Home).
+  function velar(o, acoplado) {
+    const d = dock();
+    est(d, '--m-dock-o', dos(o));
+    d.classList.toggle('viva', o > 0);
+    d.classList.toggle('on', !!acoplado);
+  }
+
+  // La copia del Home se crea al MEDIR, escondida, y no en el fotograma
+  // en que la búsqueda llega a su sitio: clonar y meter un nodo justo
+  // entonces era un tropiezo en el peor momento.
+  function prepararCopia(a) {
+    const d = dock();
+    if (a.copia && a.copia.isConnected) return;
+    quitarCopia();
+    const c = a.barra.cloneNode(true);
+    c.removeAttribute('id');
+    c.classList.add('m-dock-barra');
+    c.style.display = 'none';
+    // Hace lo mismo que la de verdad, sin copiar su manejador: si la
+    // pantalla cambia lo que hace la barra, la copia lo sigue.
+    c.onclick = (ev) => { ev.preventDefault(); if (_actual && _actual.barra) _actual.barra.click(); };
+    d.appendChild(c);
+    a.copia = c;
+    _puesto.set(c, { display: 'none' });
   }
 
   function aLaVista() {
@@ -192,77 +224,45 @@
     return null;
   }
 
-  const entre = (x) => Math.max(0, Math.min(1, x));
-  const dos = (x) => String(Math.round(x * 100) / 100);
-
   // Las medidas que la CSS necesita para una lista con scroll propio.
+  // Van en el <html> y por eso pasan por `raiz`: sólo se escriben si
+  // cambian (al girar la pantalla, al abrir el teclado).
   function medidas(banda) {
-    const h = document.documentElement.style;
-    h.setProperty('--m-dock-top', (banda + HUECO) + 'px');
-    h.setProperty('--m-banda', banda + 'px');
-    h.setProperty('--m-dock-rampa', RAMPA + 'px');
-    h.setProperty('--m-dock-bajo', BAJO + 'px');
+    raiz('--m-dock-top', (banda + HUECO) + 'px');
+    raiz('--m-banda', banda + 'px');
+    raiz('--m-dock-rampa', RAMPA + 'px');
+    raiz('--m-dock-bajo', BAJO + 'px');
     // Lo visible, no la pantalla: con el teclado abierto la lista
     // acaba encima de él y el último renglón se puede alcanzar.
     const vv = window.visualViewport;
-    h.setProperty('--m-vvh', Math.round(vv ? vv.height : window.innerHeight) + 'px');
+    raiz('--m-vvh', Math.round(vv ? vv.height : window.innerHeight) + 'px');
   }
 
   // ── El título de la pantalla en el header ────────────────────────
   //
   // Un solo elemento en la banda, que cambia de texto según la pantalla.
   // Cuánto se ve lo dice --m-dock-q; la CSS hace el fundido con el logo.
+  let _tituloEl = null;
   function tituloBanda(nombre, q) {
     const band = document.getElementById('mBand');
     if (!band) return;
-    let t = band.querySelector('.m-band-titulo');
     if (nombre == null) {
       band.classList.remove('m-con-titulo');
-      band.style.removeProperty('--m-dock-q');
+      est(band, '--m-dock-q', null);
       return;
     }
-    if (!t) {
-      t = document.createElement('span');
-      t.className = 'm-band-titulo';
-      t.setAttribute('aria-hidden', 'true');
-      band.appendChild(t);
+    if (!_tituloEl || !_tituloEl.isConnected) {
+      _tituloEl = band.querySelector('.m-band-titulo');
+      if (!_tituloEl) {
+        _tituloEl = document.createElement('span');
+        _tituloEl.className = 'm-band-titulo';
+        _tituloEl.setAttribute('aria-hidden', 'true');
+        band.appendChild(_tituloEl);
+      }
     }
-    if (t.textContent !== nombre) t.textContent = nombre;
+    if (_tituloEl.textContent !== nombre) _tituloEl.textContent = nombre;
     band.classList.add('m-con-titulo');
-    band.style.setProperty('--m-dock-q', dos(q));
-  }
-
-  // p: cuánto falta para que el bloque se pegue (0 en reposo, 1 pegado).
-  // Los tres fundidos salen de p, escalonados para que no se pisen: el
-  // título grande se va primero, el del header entra después, y el
-  // desenfoque al final, cuando ya no queda título grande que emborronar.
-  function pegar(a, banda) {
-    medidas(banda);
-    // Sin nombre: la pantalla está en un nivel sin título ni bloque que
-    // pegar (Orders dentro de un detalle). Conserva la lista con su
-    // scroll, y el header se queda con el logo, sin desenfoque.
-    if (!a.nombre) {
-      tituloBanda(null);
-      if (a.titulo) a.titulo.style.opacity = '';
-      if (a.velo) a.velo.style.setProperty('--m-dock-o', '0');
-      a.pegado.style.setProperty('--m-dock-mas', '0px');
-      return;
-    }
-    segundaPieza(a, banda);
-    // Se mide la MARCA, no el bloque: el offsetTop de un elemento sticky
-    // ya pegado incluye lo que se ha desplazado, y el recorrido crecería
-    // con el scroll (lo enseñó el navegador: el fundido no llegaba nunca).
-    const recorrido = Math.max(1, a.marca.offsetTop - (banda + HUECO));
-    const p = entre(a.scroll.scrollTop / recorrido);
-    // El grande ya no se ve cuando llega a la altura del logo: en el
-    // navegador pasaba por detrás de él, los dos legibles a la vez.
-    if (a.titulo) a.titulo.style.opacity = p <= 0 ? '' : dos(1 - entre(p / 0.6));
-    // Por variable y no con opacity en el contenedor: un contenedor con
-    // opacidad se vuelve el fondo de sus capas, y dejarían de desenfocar
-    // la lista para desenfocar el contenedor vacío. La CSS se la pone a
-    // cada capa.
-    if (a.velo) a.velo.style.setProperty('--m-dock-o', dos(entre((p - 0.6) / 0.4)));
-    tituloBanda(a.nombre, entre((p - 0.25) / 0.75));
+    est(band, '--m-dock-q', dos(q));
   }
 
   // ── Una segunda pieza pegada debajo de la primera ────────────────
@@ -272,22 +272,23 @@
   // inventory", 2026-11-09). Pero esa fila no es de la cabecera: la
   // pinta la SECCIÓN dentro de su contenido, más tarde y por su cuenta,
   // y cada sección tiene la suya o ninguna. Por eso se pide con una
-  // función (`tambien`) y se mira en cada cálculo, no al enganchar.
+  // función (`tambien`) y se mira cada vez que se mide, no al enganchar:
+  // cuando la sección se pinta, cambia el contenido y eso hace medir.
   //
   // Se pega igual, con sticky, a la altura donde acaba la primera más
   // la separación que ya tenían. Aquí sí puede ir dentro de otro
   // elemento (el cuerpo de la sección): su padre dura toda la lista. Y
   // el desenfoque, que vive en la primera pieza, se alarga hasta debajo
   // de la segunda con --m-dock-mas.
-  function segundaPieza(a, banda) {
+  function segundaPieza(a) {
     const el = typeof a.tambien === 'function' ? a.tambien() : null;
-    if (!el || !el.isConnected) { a.pegado.style.setProperty('--m-dock-mas', '0px'); return; }
+    if (!el || !el.isConnected) { est(a.pegado, '--m-dock-mas', '0px'); return; }
     el.classList.add('m-dock-pegado');
     const ult = a.pegado.lastElementChild;
     const sep = (ult && parseFloat(getComputedStyle(ult).marginBottom)) || 0;
     const alto1 = a.pegado.getBoundingClientRect().height;
-    el.style.top = (banda + HUECO + alto1 + sep) + 'px';
-    a.pegado.style.setProperty('--m-dock-mas', (sep + el.getBoundingClientRect().height) + 'px');
+    est(el, 'top', (a.top + alto1 + sep) + 'px');
+    est(a.pegado, '--m-dock-mas', (sep + el.getBoundingClientRect().height) + 'px');
   }
 
   // ── La página quieta mientras la lista lleva su propio scroll ─────
@@ -335,7 +336,7 @@
   // Al poner el dedo, si la lista está en un tope se la separa 1 px:
   // así un gesto nunca empieza en el borde, que es cuando iOS se lo
   // puede dar a la página de detrás. Ese píxel no cuenta como "bajado"
-  // para el desenfoque (ver actualizar) ni para el tirón de recargar
+  // para el desenfoque (ver animar) ni para el tirón de recargar
   // (mobile-shell.js, dentroDeAlgoBajado).
   //
   // OJO, esto es una precaución y no un arreglo medido. Se puso creyendo
@@ -357,51 +358,162 @@
   document.addEventListener('touchstart', alTocar, { passive: true });
   document.addEventListener('touchmove', alArrastrar, { passive: false });
 
-  function actualizar() {
-    _pedido = false;
+  // ── medir(): lo caro, pocas veces ────────────────────────────────
+  function medir() {
     const a = aLaVista();
     if (a !== _actual) {
-      soltar(); quitarCopia(); _actual = a;
+      soltar(_actual); quitarCopia(); _actual = a;
       // Al entrar en una pantalla con lista propia se empieza arriba,
       // como hace el armazón con la página (ir() → scrollTo 0).
       if (a && a.scroll) a.scroll.scrollTop = 0;
     }
     quieta(!!(a && a.scroll));
-    if (!a || !a.pegado) tituloBanda(null);
-    if (!a) { soltar(); return; }
+    if (!a || !a.pegado || !a.nombre) tituloBanda(null);
+    if (!a) { soltar(null); return; }
+
     const banda = bordeBanda();
-    const top = banda + HUECO;
-    if (a.pegado) { soltar(); pegar(a, banda); return; }
-    if (a.fija) {
-      medidas(banda);
-      const h = document.documentElement.style;
-      const alto = a.barra.getBoundingClientRect().height;
-      if (alto) h.setProperty('--m-dock-barra-h', alto + 'px');
-      // > 1 y no > 0: el píxel de alTocar no es haber bajado.
-      const bajado = a.scroll ? a.scroll.scrollTop : (window.scrollY || 0);
-      if (bajado > 1) cubrir(top, alto);
-      else soltar();
+    a.banda = banda;
+    a.top = banda + HUECO;
+    if (a.scroll) medidas(banda);
+
+    // Inventory y Orders: el bloque pegado y el título al header.
+    if (a.pegado) {
+      soltar(null);
+      if (!a.nombre) {
+        // Sin nombre: la pantalla está en un nivel sin título ni bloque
+        // que pegar (Orders dentro de un detalle). Conserva la lista con
+        // su scroll, y el header se queda con el logo, sin desenfoque.
+        if (a.titulo) est(a.titulo, 'opacity', null);
+        if (a.velo) est(a.velo, '--m-dock-o', '0');
+        est(a.pegado, '--m-dock-mas', '0px');
+        return;
+      }
+      segundaPieza(a);
+      // Se mide la MARCA, no el bloque: el offsetTop de un elemento
+      // sticky ya pegado incluye lo que se ha desplazado, y el recorrido
+      // crecería con el scroll (lo enseñó el navegador: el fundido no
+      // llegaba nunca).
+      a.recorrido = Math.max(1, a.marca.offsetTop - a.top);
       return;
     }
+
+    // Buscar: la barra fija; aquí sólo cuánto mide, para la CSS y para
+    // el alto del desenfoque.
+    if (a.fija) {
+      const alto = a.barra.getBoundingClientRect().height;
+      if (alto) raiz('--m-dock-barra-h', alto + 'px');
+      est(dock(), 'height', (a.top + alto + BAJO) + 'px');
+      return;
+    }
+
+    // Home: dónde están, EN REPOSO, la búsqueda y lo que se desvanece.
+    const y = Math.max(0, window.scrollY || 0);
     const r = a.barra.getBoundingClientRect();
-    if (r.top <= top) acoplar(r, banda);
-    else soltar();
-    desvanecer(banda);
+    a.reposo = r.top + y;
+    a.fondos = a.desvanecer.map(el => (el && el.isConnected ? el.getBoundingClientRect().bottom + y : null));
+    prepararCopia(a);
+    est(a.copia, 'top', a.top + 'px');
+    est(a.copia, 'left', r.left + 'px');
+    est(a.copia, 'width', r.width + 'px');
+    est(dock(), 'height', (a.top + r.height + BAJO) + 'px');
   }
 
-  // Un cálculo por fotograma, aunque lleguen varios scroll en el mismo.
-  function pedir() {
-    if (_pedido) return;
-    _pedido = true;
-    (window.requestAnimationFrame || ((f) => setTimeout(f, 16)))(actualizar);
+  // ── animar(): lo de cada fotograma, sin medir ────────────────────
+  //
+  // El desenfoque del Home empieza a entrar ANTES pasos antes de que la
+  // búsqueda llegue a su sitio, y el de Buscar en los primeros ENTRA px
+  // de lista: ligados al scroll, no a un interruptor.
+  const ANTES = 28;
+  const ENTRA = 24;
+  function animar() {
+    const a = _actual;
+    if (!a) return;
+
+    if (a.pegado) {
+      if (!a.nombre) return;
+      // p: cuánto falta para que el bloque se pegue (0 en reposo, 1
+      // pegado). Los tres fundidos salen de p, escalonados para que no
+      // se pisen: el título grande se va primero, el del header entra
+      // después, y el desenfoque al final, cuando ya no queda título
+      // grande que emborronar. Cada tramo va suavizado.
+      const p = entre(a.scroll.scrollTop / a.recorrido);
+      // El grande ya no se ve cuando llega a la altura del logo: en el
+      // navegador pasaba por detrás de él, los dos legibles a la vez.
+      if (a.titulo) est(a.titulo, 'opacity', p <= 0 ? null : dos(1 - suave(entre(p / 0.6))));
+      // Por variable y no con opacity en el contenedor: un contenedor
+      // con opacidad se vuelve el fondo de sus capas, y dejarían de
+      // desenfocar la lista para desenfocar el contenedor vacío. La CSS
+      // se la pone a cada capa.
+      if (a.velo) est(a.velo, '--m-dock-o', dos(suave(entre((p - 0.6) / 0.4))));
+      tituloBanda(a.nombre, suave(entre((p - 0.25) / 0.75)));
+      return;
+    }
+
+    if (a.fija) {
+      // Desde 1 px y no desde 0: el píxel de alTocar no es haber bajado.
+      const bajado = a.scroll ? a.scroll.scrollTop : (window.scrollY || 0);
+      velar(suave(entre((bajado - 1) / ENTRA)), bajado > 1);
+      return;
+    }
+
+    // Home.
+    const y = Math.max(0, window.scrollY || 0);
+    const arriba = a.reposo - y;              // dónde va ahora la búsqueda
+    const acoplado = arriba <= a.top;
+    velar(suave(entre((a.top + ANTES - arriba) / ANTES)), acoplado);
+    est(a.copia, 'display', acoplado ? '' : 'none');
+    est(a.barra, 'visibility', acoplado ? 'hidden' : null);
+
+    // Lo que se desvanece. Se mide por lo que se ha bajado, no por la
+    // distancia al header: entero arriba del todo, e invisible cuando
+    // su borde de abajo llega al header. Antes se medía por la distancia
+    // (empezaba a irse 16 px antes del borde) y en el iPhone de Axel el
+    // saludo queda a pocos px de él YA EN REPOSO: salía a 0.65 sin haber
+    // bajado nada, "debajo de un velo". Cómo de cerca quede del header
+    // depende del teléfono; lo que se ha bajado, no.
+    for (let i = 0; i < a.desvanecer.length; i++) {
+      const el = a.desvanecer[i], fondo = a.fondos[i];
+      if (!el || fondo == null) continue;
+      const recorrido = fondo - a.banda;      // lo que hay que bajar
+      if (y <= 0 || recorrido <= 0) { est(el, 'opacity', null); continue; }
+      const o = 1 - suave(entre(y / recorrido));
+      est(el, 'opacity', o >= 1 ? null : dos(o));
+    }
   }
+
+  // Las dos cosas, ya. Lo llama enganchar, y lo puede llamar una
+  // pantalla (`medir`) si cambia su geometría sin repintarse.
+  function actualizar() { medir(); animar(); }
+
+  // Un cálculo por fotograma, aunque lleguen varios avisos en el mismo.
+  // `medirTambien` lo piden los avisos de que la geometría pudo cambiar;
+  // el scroll no.
+  let _programado = false, _hayQueMedir = false;
+  function tic() {
+    const m = _hayQueMedir;
+    _programado = false; _hayQueMedir = false;
+    // Una comprobación barata por si se cambió de pantalla y el aviso
+    // aún no ha llegado: animar la pantalla que ya no está sería peor
+    // que medir una vez de más.
+    const a = _actual;
+    if (m || !a || !a.pantalla.classList.contains('on')) medir();
+    animar();
+  }
+  function pedir(medirTambien) {
+    if (medirTambien === true) _hayQueMedir = true;
+    if (_programado) return;
+    _programado = true;
+    (window.requestAnimationFrame || ((f) => setTimeout(f, 16)))(tic);
+  }
+  const pedirMedir = () => pedir(true);
+  const alScroll = () => pedir(false);
 
   // La pantalla lo llama cada vez que se pinta: un repintado (refresh)
   // cambia los elementos, y la copia tiene que apuntar a los nuevos.
   function enganchar(o) {
     if (!o || !o.pantalla || !(o.barra || (o.pegado && o.scroll))) return;
     const viejo = _regs.get(o.pantalla);
-    if (viejo && viejo.barra && viejo.barra !== o.barra) viejo.barra.style.visibility = '';
+    if (viejo && viejo.barra && viejo.barra !== o.barra) est(viejo.barra, 'visibility', null);
     const eraElActual = viejo === _actual;
     if (eraElActual) quitarCopia();
     const r = { pantalla: o.pantalla, barra: o.barra || null, desvanecer: o.desvanecer || [], fija: !!o.fija,
@@ -411,7 +523,7 @@
     if (r.fija) o.barra.classList.add('m-dock-fija');
     if (r.scroll && !r.scroll.classList.contains('m-dock-scroll')) {
       r.scroll.classList.add('m-dock-scroll');
-      r.scroll.addEventListener('scroll', pedir, { passive: true });
+      r.scroll.addEventListener('scroll', alScroll, { passive: true });
     }
     if (r.pegado) {
       r.scroll.classList.add('m-dock-con-titulo');
@@ -455,13 +567,17 @@
   function vigilarPantallas(caja) {
     if (!caja || caja === _vigilado || typeof MutationObserver === 'undefined') return;
     _vigilado = caja;
-    new MutationObserver(pedir).observe(caja, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
+    new MutationObserver(pedirMedir).observe(caja, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
   }
 
-  window.addEventListener('scroll', pedir, { passive: true });
-  window.addEventListener('resize', pedir);
+  window.addEventListener('scroll', alScroll, { passive: true });
+  window.addEventListener('resize', pedirMedir);
   // El teclado no cambia la ventana en iOS, cambia lo visible.
-  if (window.visualViewport) window.visualViewport.addEventListener('resize', pedir);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', pedirMedir);
+  // Al poner el dedo, una medida por gesto: si algo movió la geometría
+  // sin avisar (una letra que acaba de cargar, un tamaño de texto), el
+  // scroll que viene ya la tiene bien.
+  document.addEventListener('touchstart', pedirMedir, { passive: true });
 
-  window.BarStockBandDock = { enganchar, actualizar, HUECO, RAMPA, BAJO };
+  window.BarStockBandDock = { enganchar, actualizar, medir: actualizar, HUECO, RAMPA, BAJO };
 })();

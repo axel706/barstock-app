@@ -732,8 +732,13 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     position: fixed; top: 0; left: 0; right: 0; z-index: 9090;
     display: none; pointer-events: none;
   }
-  body.m-shell .m-dock.on { display: block; }
+  /* `viva`: hay algo que pintar. Cuánto, lo dice --m-dock-o, que
+   * band-dock.js mueve con el scroll: el desenfoque entraba de golpe
+   * (un display) y ahora entra poco a poco, como el de Inventory. La
+   * opacidad va en cada capa y no en el contenedor (ver .m-dock-esc). */
+  body.m-shell .m-dock.viva { display: block; }
   .m-dock-blur { position: absolute; inset: 0; z-index: 0; }
+  .m-dock-blur > i { opacity: var(--m-dock-o, 0); }
 
   /* ── La escalera: desenfoque PROGRESIVO ───────────────────────────
    *

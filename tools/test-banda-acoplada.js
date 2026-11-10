@@ -56,12 +56,18 @@ function pintarHome(w, clics) {
     '<button type="button" class="m-searchbar" id="mhSearch"><span>Do we have…</span></button>';
   const fila = host.querySelector('#fila'), bus = host.querySelector('#mhSearch');
   bus.onclick = () => { clics.n++; };
+  // jsdom no maqueta. Se declara dónde está cada cosa EN REPOSO y la
+  // posición en pantalla sale de lo bajado, como en un navegador: así
+  // el módulo puede medir cuando quiera y le sale lo mismo.
+  const y = () => w.scrollY || 0;
+  bus.getBoundingClientRect = () => ({ top: 210 - y(), bottom: 258 - y(), height: 48, left: 30, width: 330 });
+  fila.getBoundingClientRect = () => ({ top: 150 - y(), bottom: 200 - y(), height: 50, left: 30, width: 330 });
   return { host, fila, bus };
 }
 // La posición "natural": búsqueda a 210, saludo a 150. Bajar `y` las sube.
+// Bajar `y`: sólo cambia el scroll. La búsqueda está a 210 y el saludo a
+// 150 en reposo (pintarHome).
 function mover(w, p, y) {
-  p.bus.getBoundingClientRect = () => ({ top: 210 - y, bottom: 258 - y, height: 48, left: 30, width: 330 });
-  p.fila.getBoundingClientRect = () => ({ top: 150 - y, bottom: 200 - y, height: 50, left: 30, width: 330 });
   w.scrollY = y;
   w.dispatchEvent(new w.Event('scroll'));
 }
@@ -270,6 +276,15 @@ if (SRC) {
     sc.scrollTop = 0; tocar(fila);
     prueba('arriba: 1 px después del tope', sc.scrollTop === 1, String(sc.scrollTop));
     prueba('y ese píxel no saca el desenfoque', !acoplada(w));
+    {
+      // Buscar: el desenfoque entra con los primeros píxeles, no de golpe.
+      const dk = w.document.getElementById('mDock');
+      const oo = () => Number(dk.style.getPropertyValue('--m-dock-o'));
+      sc.scrollTop = 12; sc.dispatchEvent(new w.Event('scroll')); const a1 = oo();
+      sc.scrollTop = 60; sc.dispatchEvent(new w.Event('scroll')); const a2 = oo();
+      prueba('en Buscar el desenfoque entra poco a poco', a1 > 0 && a1 < 1 && a2 === 1, a1 + ' | ' + a2);
+      sc.scrollTop = 1; sc.dispatchEvent(new w.Event('scroll'));
+    }
     sc.scrollTop = 700; tocar(fila);
     prueba('a media lista no se toca', sc.scrollTop === 700);
     // Una lista que cabe entera no tiene dónde separarse: ahí el
@@ -331,7 +346,7 @@ if (SRC) {
     prueba('hay una marca fija justo antes del bloque', !!marca && marca.classList.contains('m-dock-marca'));
     Object.defineProperty(marca, 'offsetTop', { value: D0 + 60, configurable: true });
     Object.defineProperty(blo, 'offsetTop', { get: () => D0 + 60 + sc.scrollTop, configurable: true });
-    sc.dispatchEvent(new w.Event('scroll'));
+    w.BarStockBandDock.medir();
     const q = () => band.style.getPropertyValue('--m-dock-q');
     const velo = blo.querySelector('.m-dock-velo');
     const bt = band.querySelector('.m-band-titulo');
@@ -372,11 +387,12 @@ if (SRC) {
       let hay = true;
       w.BarStockBandDock.enganchar({ pantalla: inv, scroll: sc, pegado: blo, titulo: tit, nombre: 'Inventory', tambien: () => (hay ? fila : null) });
       Object.defineProperty(blo.previousElementSibling, 'offsetTop', { value: D0 + 60, configurable: true });
+      w.BarStockBandDock.medir();
       sc.scrollTop = 900; sc.dispatchEvent(new w.Event('scroll'));
       prueba('la segunda pieza también va pegada', fila.classList.contains('m-dock-pegado'));
       prueba('justo debajo de la primera, con su separación', fila.style.top === (D0 + 110 + 13) + 'px', fila.style.top);
       prueba('y el desenfoque se alarga hasta debajo de ella', blo.style.getPropertyValue('--m-dock-mas') === (13 + 48) + 'px', blo.style.getPropertyValue('--m-dock-mas'));
-      hay = false; sc.dispatchEvent(new w.Event('scroll'));
+      hay = false; w.BarStockBandDock.medir();   // en la app: la sección se repinta
       prueba('si la sección deja de tenerla, el desenfoque vuelve a su largo', blo.style.getPropertyValue('--m-dock-mas') === '0px', blo.style.getPropertyValue('--m-dock-mas'));
       fila.remove();
     }
@@ -391,6 +407,7 @@ if (SRC) {
     prueba('y la lista sigue con su scroll propio', sc.classList.contains('m-dock-scroll') && w.document.documentElement.classList.contains('m-scroll-propio'));
     eng();
     Object.defineProperty(blo.previousElementSibling, 'offsetTop', { value: D0 + 60, configurable: true });
+    w.BarStockBandDock.medir();
 
     // A otra pestaña: vuelve el logo.
     sc.scrollTop = 900; sc.dispatchEvent(new w.Event('scroll'));
@@ -449,6 +466,55 @@ if (SRC) {
     const src = fs.readFileSync(path.join(RAIZ, 'src/band-dock.js'), 'utf8');
     prueba('Inventory: la misma escalera, no otra copia', (src.match(/ESCALERA/g) || []).length >= 3);
   }
+
+  grupo('fluidez: durante el scroll no se mide ni se reescribe de más');
+  await (async () => {
+    // Axel, 2026-11-10: "pule todas las animaciones de los headers, haz
+    // todo más fluido". Lo que restaba fluidez no eran los fundidos: en
+    // CADA fotograma de scroll el módulo medía la banda, el bloque y los
+    // márgenes (cada medida obliga al navegador a recalcular el diseño a
+    // mitad del scroll, con 264 renglones) y reescribía las variables
+    // del documento entero aunque no cambiaran.
+    //
+    // Ahora se mide al pintar, al cambiar de tamaño y al poner el dedo;
+    // durante el scroll sólo se lee lo bajado.
+    const w = entorno(), clics = { n: 0 };
+    const p = pintarHome(w, clics);
+    const band = w.document.getElementById('mBand');
+    let medidas = 0;
+    const r0 = band.getBoundingClientRect;
+    band.getBoundingClientRect = () => { medidas++; return r0(); };
+    const b0 = p.bus.getBoundingClientRect; let medidasBarra = 0;
+    p.bus.getBoundingClientRect = () => { medidasBarra++; return b0(); };
+    w.BarStockBandDock.enganchar({ pantalla: p.host, barra: p.bus, desvanecer: [p.fila] });
+    prueba('la copia del Home se prepara al pintar, no en el momento de acoplarse',
+      w.document.querySelectorAll('#mDock .m-searchbar').length === 1 && !acoplada(w));
+    medidas = 0; medidasBarra = 0;
+    const escritas = [];
+    const html = w.document.documentElement.style, sp0 = html.setProperty.bind(html);
+    html.setProperty = (k, v) => { escritas.push(k); return sp0(k, v); };
+    for (const y of [10, 40, 80, 103, 200, 400, 200, 80, 0]) mover(w, p, y);
+    prueba('Home: ni una medida de la banda en nueve pasos de scroll', medidas === 0, String(medidas));
+    prueba('ni de la búsqueda', medidasBarra === 0, String(medidasBarra));
+    prueba('ni una variable del documento reescrita', escritas.length === 0, escritas.join(','));
+    prueba('y sigue acoplándose donde debe', (mover(w, p, 103), acoplada(w)) && (mover(w, p, 102), !acoplada(w)));
+
+    // El desenfoque del Home y de Buscar entraba de golpe; ahora entra
+    // con el scroll, como el de Inventory.
+    const d = w.document.getElementById('mDock');
+    const o = () => Number(d.style.getPropertyValue('--m-dock-o'));
+    mover(w, p, 0);   const o0 = o();
+    mover(w, p, 90);  const o1 = o();
+    mover(w, p, 103); const o2 = o();
+    prueba('el desenfoque del Home entra poco a poco al acercarse', o0 === 0 && o1 > 0 && o1 < 1 && o2 === 1, [o0, o1, o2].join(' | '));
+
+    // Y si la geometría cambia (gira la pantalla, se repinta), se vuelve a medir.
+    medidas = 0; w.dispatchEvent(new w.Event('resize'));
+    prueba('al cambiar de tamaño sí se mide', medidas > 0);
+    medidas = 0;
+    const t = new w.Event('touchstart', { bubbles: true }); t.touches = [{ clientY: 300 }]; p.bus.dispatchEvent(t);
+    prueba('y al poner el dedo, una vez por gesto', medidas > 0);
+  })();
 
   grupo('el Home lo usa, y carga después del módulo');
   {

@@ -234,6 +234,14 @@ recargar** del armazón miraba sólo la página y le robaba el gesto a la
 lista (ya mira dónde cae el dedo), y **una página corta sube la barra
 de pestañas** en la app instalada (no quitarle el alto mínimo a la
 pantalla ni fijar el `body`).
+**Durante el scroll no se mide.** `band-dock.js` tiene dos funciones
+y no se mezclan: `medir()` (lo caro: posiciones y tamaños, al pintar,
+al cambiar de tamaño o de contenido y al poner el dedo) y `animar()`
+(cada fotograma: sólo lee lo bajado y escribe lo que cambió, con
+`est`). Medía y reescribía variables del documento en cada fotograma,
+y eso era lo que restaba fluidez, no los fundidos. Lo que añadas al
+header va en una de las dos; si lee una posición, es `medir()`.
+
 **Una sección nueva lo usa, no lo copia.** La prueba es
 `tools/test-banda-acoplada.js`.
 
