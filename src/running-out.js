@@ -13,7 +13,13 @@
   // dice que se van a terminar"). Ahora los dos leen esta lista: si la
   // tarjeta dice 18, Inventory enseña esos 18 en el mismo orden.
   //
-  // Qué entra:
+  // Qué entra, y sólo lo que tiene PAR: Axel, 2026-11-11, "si no tienen
+  // par es porque no los ordeno, ¿qué punto hay en que me diga que se me
+  // va a terminar algo QUE NO ORDENO?". Salían quince "Out now" de
+  // productos con "no par" (un vodka de la casa, vermouths que ya no se
+  // piden) porque Pour·IQ conservaba su historia de consumo. La tarjeta
+  // es para lo que se vende Y se pide: saber si se acaba esta semana,
+  // mañana o en los próximos días.
   //   · Lo que Toast vende, por el día en que se acaba según run-out.js
   //     (el LIVE de hoy menos lo que se suele gastar cada día de la
   //     semana): sólo lo de los próximos siete días.
@@ -37,6 +43,7 @@
     const out = [];
     for (const r of master) {
       if (!r || !r.item) continue;
+      if (!((Number(r.suggested) || 0) > 0)) continue;   // sin par: no se pide
       const vivo = !!(LC && LC.vivo(r));
       if (LC && LC.toastLoVende(r)) {
         const a = LC.agota(r);

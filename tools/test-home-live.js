@@ -53,7 +53,11 @@ const FILAS = [
   fila("Tito's Vodka 1L", 3, 5, 0.9, 4),
   fila('Baileys 1L', 2, 0, 0.5, 6),
   fila('Casamigos', 4, 0, 0.2, 10),
-  fila('Guinness Keg', 1, 0, 0, null)
+  fila('Guinness Keg', 1, 0, 0, null),
+  // Sin par: Axel no lo pide. Toast lo vende y está a cero, pero avisar
+  // de que se acaba algo que no se ordena no sirve de nada.
+  fila('Crown Russe Vodka', 0, 0, 0, 0),
+  fila('Sin par Pour IQ', 0, 0, 0, null)
 ];
 
 async function entorno(o) {
@@ -72,7 +76,8 @@ async function entorno(o) {
   const m = (item, onHand, suggested, value) => ({ item, vendor: 'LOOP', code: '', category: 'Liquor', onHand, suggested, value });
   w.state = { master: [
     m('St Germain', 1, 3, 30), m('Bulleit Rye', 1, 2, 28), m("Tito's Vodka 1L", 3, 8, 20),
-    m('Baileys 1L', 2, 4, 25), m('Casamigos', 4, 4, 40), m('Guinness Keg', 1, 1, 190), m('Sin precio', 2, 2, 0)
+    m('Baileys 1L', 2, 4, 25), m('Casamigos', 4, 4, 40), m('Guinness Keg', 1, 1, 190), m('Sin precio', 2, 2, 0),
+    m('Crown Russe Vodka', 0, 0, 9), m('Sin par Pour IQ', 0, 0, 12)
   ] };
   // inventory-value lee `state` suelto: en el navegador es window.state.
   global.state = w.state;
@@ -119,6 +124,11 @@ grupo('Running out first, con Toast');
   prueba('con su día: "Out today", en rojo', !!o0 && o0.textContent === 'Out today' && o0.classList.contains('m-out-r'), o0 && o0.outerHTML);
   prueba('sin "/wk"', !/\/wk/.test(c.textContent), c.textContent.replace(/\s+/g, ' '));
   prueba('lo que se acaba en 10 días no entra', !/Casamigos/.test(c.textContent));
+  // Axel, 2026-11-11: "si no tienen par es porque no los ordeno, ¿qué
+  // punto hay en que me diga que se me va a terminar algo QUE NO ORDENO?"
+  prueba('lo que no tiene par no entra, aunque Toast lo venda', !/Crown Russe/.test(c.textContent) && !/out right now/.test(c.textContent),
+    c.textContent.replace(/\s+/g, ' '));
+  prueba('ni por Pour·IQ', !/Sin par Pour IQ/.test(c.textContent));
   // St Germain, Bulleit, Tito's y Baileys (Toast) + Guinness (Pour·IQ: 1 / 2 × 7 = 4 días).
   prueba('el titular cuenta lo de la semana', /5 run out this week/.test(c.querySelector('.m-hero-t').textContent),
     c.querySelector('.m-hero-t').textContent);

@@ -48,7 +48,9 @@ function entorno(items) {
 
   w.state = { master: items.map(x => ({
     item: x.item, code: x.item, vendor: x.vendor || 'SOUTHERN',
-    category: 'Liquor', onHand: x.onHand
+    // Con par: sin par no se pide y la tarjeta no lo enseña
+    // (test-home-live.js).
+    category: 'Liquor', onHand: x.onHand, suggested: x.par == null ? 4 : x.par
   })) };
 
   w.parAdjustments = new Map(items.map(x => [x.item + '||' + x.item, {
