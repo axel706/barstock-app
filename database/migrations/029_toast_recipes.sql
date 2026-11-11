@@ -7,7 +7,7 @@
 --
 -- Las recetas salen de las hojas que llenó Axel a mano (2026-11-10) y de
 -- sus respuestas del 2026-11-11 (y del 12: Martini y Cosmo, 2.5 de licor,
--- ver la 030). Sólo lo que sale del inventario: el
+-- ver la 030; Rum, Tequila y Whiskey de HH y el Espresso Dark, la 031). Sólo lo que sale del inventario: el
 -- jugo, el sirope y el refresco no se cuentan. Onzas por UN trago.
 --
 -- ── Dos tablas ───────────────────────────────────────────────────────
@@ -142,7 +142,7 @@ begin
     {"tipo":"cocktail","toast":"Pistachio Martini","price":15,"note":"Any pistachio liqueur: this is the only cocktail that uses it.","lines":[["Grey Goose vodka",1.5],["Pistachio liqueur",1.5]]},
     {"tipo":"cocktail","toast":"S'mores Martini","price":15,"lines":[["Smirnoff Vanilla vodka",1.5],["Godiva chocolate liqueur",1.5],["Baileys",1]]},
     {"tipo":"cocktail","toast":"Seasonal Espresso Martini","price":13,"lines":[["Smirnoff Vanilla vodka",1],["Kamora coffee liqueur",1],["Baileys",0.75,{"not_with":["Dark"]}]]},
-    {"tipo":"cocktail","toast":"Espresso Martini","note":"Same as the Seasonal Espresso Martini. Dark = no Baileys.","lines":[["Smirnoff Vanilla vodka",1],["Kamora coffee liqueur",1],["Baileys",0.75,{"not_with":["Dark"]}]]},
+    {"tipo":"cocktail","toast":"Espresso Martini","note":"Dark by default: Baileys only with Creamy.","lines":[["Smirnoff Vanilla vodka",1],["Kamora coffee liqueur",1],["Baileys",0.75,{"only_with":"Creamy"}]]},
     {"tipo":"cocktail","toast":"House Cosmo","lines":[["Triage vodka",2.5],["Triple sec",0.75]]},
     {"tipo":"cocktail","toast":"Aperol Spritz","lines":[["Aperol",2],["Prosecco Nino Ardevi",4.5]]},
     {"tipo":"cocktail","toast":"Hugo Spritz","lines":[["St. Elder",2],["Prosecco Nino Ardevi",4.5]]},
@@ -159,12 +159,12 @@ begin
     {"tipo":"cocktail","toast":"HH Titos Martini","hh":true,"note":"With Cosmo it is the HH Cosmo made with Tito's.","lines":[["Tito's vodka",2.5],["Dry vermouth Cinzano",0.5,{"not_with":["Dirty","Cosmo"]}],["Triple sec",0.75,{"only_with":"Cosmo"}]]},
     {"tipo":"cocktail","toast":"HH Lemon Drop Martini","hh":true,"lines":[["Triage vodka",2.5],["Triple sec",0.5]]},
     {"tipo":"cocktail","toast":"HH House Manhattan","hh":true,"lines":[["Kentucky Tavern",2.5],["Sweet vermouth Cinzano",0.5]]},
-    {"tipo":"cocktail","toast":"HH Espresso Martini","hh":true,"lines":[["Triage Vanilla vodka",1],["Kamora coffee liqueur",1],["Baileys",0.75,{"not_with":["Dark"]}]]},
+    {"tipo":"cocktail","toast":"HH Espresso Martini","hh":true,"note":"Dark by default: Baileys only with Creamy.","lines":[["Triage Vanilla vodka",1],["Kamora coffee liqueur",1],["Baileys",0.75,{"only_with":"Creamy"}]]},
     {"tipo":"cocktail","toast":"Vodka","hh":true,"note":"Happy Hour vodka, any mixer.","lines":[["Triage vodka",2]]},
     {"tipo":"cocktail","toast":"Gin","hh":true,"note":"Happy Hour gin, any mixer.","lines":[["Mr Boston gin",2]]},
-    {"tipo":"cocktail","toast":"Rum","hh":true,"lines":[],"pending":"Which rum, and how much."},
-    {"tipo":"cocktail","toast":"Tequila","hh":true,"lines":[],"pending":"Which tequila, how much, and the Margarita modifier."},
-    {"tipo":"cocktail","toast":"Whiskey","hh":true,"lines":[],"pending":"Which whiskey, and how much."},
+    {"tipo":"cocktail","toast":"Rum","hh":true,"note":"Happy Hour rum, any mixer.","lines":[["Calypso rum",1.5]]},
+    {"tipo":"cocktail","toast":"Tequila","hh":true,"note":"Happy Hour tequila, any mixer. With the Margarita modifier, only the tequila counts for now.","lines":[["Pedro Morales tequila",1.5]]},
+    {"tipo":"cocktail","toast":"Whiskey","hh":true,"note":"Happy Hour whiskey, any mixer.","lines":[["Kentucky Tavern",1.5]]},
 
     {"tipo":"modifier","toast":"Martini","note":"Dirty = no vermouth.","lines":[["Liquor the guest picks",2.5,{"chosen":true}],["Dry vermouth Cinzano",0.5,{"not_with":["Dirty"]}]]},
     {"tipo":"modifier","toast":"Cosmo","note":"The HH Cosmo with the liquor the guest picks.","lines":[["Liquor the guest picks",2.5,{"chosen":true}],["Triple sec",0.75]]},
@@ -200,4 +200,4 @@ end $$;
 --     left join public.toast_recipe_lines l on l.recipe_id = r.id
 --    order by r.tipo, r.happy_hour, r.toast_name, l.position;
 --
--- Tienen que salir 41 recetas y 67 líneas.
+-- Tienen que salir 41 recetas y 70 líneas.
