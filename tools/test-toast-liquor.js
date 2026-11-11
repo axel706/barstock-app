@@ -72,7 +72,7 @@ function entorno(o) {
       w.__acciones = (w.__acciones || []).concat(b.action);
       const vendido = { 'gg-up': 3, 'gg-1': 1, tito: 2, mm3: 1 };
       if (Array.isArray(b.params.guids)) return resp(200, { ok: true, restaurante: CROWN, diaCompleto: true, articulos: [], vendido });
-      return resp(200, { ok: true, restaurante: CROWN, diaCompleto: true, articulos: ARTICULOS, vendido });
+      return resp(200, { ok: true, restaurante: CROWN, diaCompleto: true, articulos: ARTICULOS.concat(w.__extra || []), vendido });
     }
     if (u.includes('/rest/v1/toast_item_links')) {
       if ((op.method || 'GET') === 'GET') return resp(200, o.enlaces || []);
@@ -141,7 +141,7 @@ grupo('una medida desconocida no se guarda como botella entera');
   prueba('se guarda la de 3oz', e.length === 1 && e[0].toast_item_guid === 'mm3' && e[0].pour_oz === 3, JSON.stringify(e));
   prueba('la "Flight" no, y se dice', r.sinMedida.length === 1 && r.sinMedida[0] === 'Flight', JSON.stringify(r));
   prueba('ninguna fila de licor con pour vacío', e.every(x => x.pour_oz != null));
-  prueba('la marca sigue por revisar: le queda una medida', T.marcas().find(m => m.marca === "Maker's Mark").estado === 'review');
+  prueba('la marca no se queda atascada por esa medida', T.marcas().find(m => m.marca === "Maker's Mark").estado === 'confirmed');
 }
 
 grupo('"Confirm N" de una sección, sólo las seguras de esa sección');
@@ -174,39 +174,89 @@ grupo('ignorar y deshacer, por marca');
   prueba('deshacer borra sólo lo decidido de esa marca', borradas.length === 1 && /toast_item_guid=eq\.gg-up/.test(borradas[0]), borradas.join(' | '));
 }
 
-grupo('la pantalla');
+grupo('una medida sin pour no deja la marca atascada');
+{
+  // Axel, 2026-11-11: "muchos ya tienen el correcto seleccionado, le doy
+  // Confirm 10 y no pasa nada, ahí siguen". Casi todas las marcas tienen
+  // en Toast una medida "Mix" que no estaba en la hoja. Sus otras medidas
+  // SÍ se guardaban, pero la marca seguía por revisar por la de Mix, y el
+  // aviso salía arriba de la lista, fuera de la vista.
+  const w = entorno();
+  const T = w.BarStockToastLiquor;
+  await T.cargar();
+  const mm = T.marcas().find(m => m.marca === "Maker's Mark");
+  await T.confirmarMarca(mm.clave, "Maker's Mark Bourbon 1L");
+  const mm2 = T.marcas().find(m => m.marca === "Maker's Mark");
+  prueba('confirmada lo que se puede, la marca pasa a hechas', mm2.estado === 'confirmed', mm2.estado);
+  prueba('y dice qué medida no cuenta', mm2.sinPour.length === 1 && mm2.sinPour[0] === 'Flight', JSON.stringify(mm2.sinPour));
+  prueba('esa fila sigue sin guardarse', !escritas(w).some(x => x.toast_item_guid === 'mm-x'));
+}
+{
+  // Una marca cuya ÚNICA medida no tiene pour: no hay nada que guardar, y
+  // ofrecerle una botella sería otra afordancia que miente.
+  const w = entorno();
+  const T = w.BarStockToastLiquor;
+  w.__extra = [{ guid: 'jw-mix', nombre: 'Jameson Irish Whiskey', grupo: 'DRINKS › Liquor › Whisky › Mix', tipo: 'Whisky', medida: 'Mix', marca: 'Jameson Irish Whiskey' }];
+  await T.cargar();
+  const j = T.marcas().find(m => m.marca === 'Jameson Irish Whiskey');
+  prueba('sólo con medidas sin pour: estado propio, no "por revisar"', !!j && j.estado === 'sinPour', j && j.estado);
+}
+
+grupo('la pantalla: tocar la fila abre un buscador');
 {
   const w = entorno();
+  const avisos = [];
+  w.BarStockToast = { show: (t) => avisos.push(String(t)) };
+  w.BarStockSheet = { enganchar: () => {}, hayAlguna: () => !!w.document.getElementById('mSheet') };
+  w.__extra = [{ guid: 'jw-mix', nombre: 'Jameson Irish Whiskey', grupo: 'DRINKS › Liquor › Whisky › Mix', tipo: 'Whisky', medida: 'Mix', marca: 'Jameson Irish Whiskey' }];
+  w.state.master.push({ item: 'Pedro Morales Tequila 1L' });
   const host = w.document.getElementById('host');
   w.BarStockMobileToastLiquor.montar(host, () => '<div class="cab">Liquor from Toast</div>', () => {});
   await esperar(30);
+  const filas = [...host.querySelectorAll('.m-tl-fila')];
+  const deMarca = (m) => filas.find(f => (f.querySelector('.m-tl-izq b') || {}).textContent === m);
   const secs = [...host.querySelectorAll('.m-tl-sec-h b')].map(b => b.textContent);
   prueba('secciones por tipo', secs.includes('Vodka') && secs.includes('Gin'), secs.join(','));
-  const filas = host.querySelectorAll('.m-tl-fila');
-  prueba('una fila por marca (4 marcas, 7 artículos)', filas.length === 4, String(filas.length));
-  // Por el nombre de la marca, no por el texto de la fila: el selector de
-  // cada fila lleva los nombres de todas las botellas.
-  const deMarca = (m) => [...filas].find(f => (f.querySelector('.m-tl-izq b') || {}).textContent === m);
   const gg = deMarca('Grey Goose');
   prueba('la fila dice sus medidas con su pour', !!gg && /Single · 1.5 oz/.test(gg.textContent) && /UP\/RX · 3 oz/.test(gg.textContent));
   const mm = deMarca("Maker's Mark");
   prueba('y marca la que no tiene pour', !!mm && !!mm.querySelector('.mal') && /Flight · \? oz/.test(mm.textContent));
-  const s = gg && gg.querySelector('select');
-  prueba('elegir es un select nativo con ignorar', !!s && [...s.options].some(o => o.textContent === 'Not in inventory'));
-  // Axel, 2026-11-11: "ya tiene seleccionado Tito's, le vuelvo a
-  // seleccionar Tito's y ahí se queda". La rueda del iPhone no avisa
-  // ('change') si se elige la opción que ya estaba marcada, y la sugerida
-  // venía marcada. En una fila por revisar no puede venir marcada ninguna
-  // botella: arranca en "Choose", y la sugerida va la primera, aparte.
-  const marcada = s && s.options[s.selectedIndex];
-  prueba('por revisar, la rueda arranca sin botella marcada', !!marcada && marcada.value === '', marcada && marcada.textContent);
-  const prim = s && s.options[1];
-  prueba('y la sugerida va la primera, dicha como sugerida', !!prim && prim.value === 'Grey Goose Vodka 750' && /suggested/i.test(prim.textContent),
-    prim && prim.textContent);
-  prueba('sin repetirla más abajo', !!s && [...s.options].filter(o => o.value === 'Grey Goose Vodka 750').length === 1);
-  if (s) { s.value = 'Grey Goose Vodka 750'; s.dispatchEvent(new w.Event('change')); }
+  prueba('sin rueda nativa: la fila es un botón', !host.querySelector('select') && !!gg && gg.tagName === 'BUTTON');
+  const jw = [...host.querySelectorAll('.m-tl-espera')].map(x => x.textContent).join(' ');
+  prueba('la marca sólo con Mix va aparte, sin poder elegirse', /Jameson Irish Whiskey/.test(jw) && !deMarca('Jameson Irish Whiskey'), jw.slice(0, 120));
+
+  gg.click(); await esperar(20);
+  const h = w.document.getElementById('mSheet');
+  const busca = h && h.querySelector('input[type="search"]');
+  prueba('se abre una hoja con buscador', !!h && !!busca);
+  const sug = h && h.querySelector('[data-sug]');
+  prueba('la sugerida, arriba', !!sug && /Grey Goose Vodka 750/.test(sug.textContent));
+
+  busca.value = 'pedro'; busca.dispatchEvent(new w.Event('input'));
+  const res = [...h.querySelectorAll('.m-tl-lista [data-p]')].map(b => b.dataset.p);
+  prueba('escribir "pedro" encuentra Pedro Morales', res.length === 1 && res[0] === 'Pedro Morales Tequila 1L', res.join(','));
+  busca.value = 'vodka 1l'; busca.dispatchEvent(new w.Event('input'));
+  const res2 = [...h.querySelectorAll('.m-tl-lista [data-p]')].map(b => b.dataset.p);
+  prueba('varias palabras, todas', res2.includes("Tito's Handmade Vodka 1L") && res2.includes('Ketel One Vodka 1L') && !res2.includes('Grey Goose Vodka 750'), res2.join(','));
+
+  sug.click(); await esperar(30);
+  prueba('elegir la sugerida guarda toda la marca', escritas(w).filter(x => /^gg-/.test(x.toast_item_guid)).length === 3, String(escritas(w).length));
+  prueba('cierra la hoja', !w.document.getElementById('mSheet'));
+  prueba('y avisa en el header qué se guardó', avisos.some(t => /Grey Goose/.test(t) && /Grey Goose Vodka 750/.test(t)), avisos.join(' | '));
+}
+{
+  const w = entorno();
+  w.BarStockToast = { show: () => {} };
+  w.BarStockSheet = { enganchar: () => {}, hayAlguna: () => false };
+  const host = w.document.getElementById('host');
+  w.BarStockMobileToastLiquor.montar(host, () => '', () => {});
   await esperar(30);
-  prueba('elegir en la fila guarda la marca entera', escritas(w).length === 3, String(escritas(w).length));
+  const gin = [...host.querySelectorAll('.m-tl-fila')].find(f => (f.querySelector('.m-tl-izq b') || {}).textContent === 'Gin');
+  gin.click(); await esperar(20);
+  const no = w.document.querySelector('#mSheet [data-ignorar]');
+  prueba('"Not in inventory" en la hoja', !!no);
+  if (no) no.click(); await esperar(30);
+  prueba('ignora la marca', escritas(w).some(x => x.toast_item_guid === 'gin' && x.status === 'ignored'));
 }
 
 grupo('está en la app');

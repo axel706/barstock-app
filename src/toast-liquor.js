@@ -63,12 +63,27 @@
       M.vendido += f.vendido || 0;
     }
     return [...por.values()].map(M => {
-      const revisar = M.filas.filter(f => f.estado === 'review');
+      // Lo que queda por decidir, separado en lo que SE PUEDE decidir (su
+      // medida tiene pour) y lo que no.
+      const pendientes = M.filas.filter(f => f.estado === 'review');
+      const revisar = pendientes.filter(f => ozDe(f.medida) !== undefined);
+      const sinPour = pendientes.filter(f => ozDe(f.medida) === undefined).map(f => f.medida || 'No size');
       const confirmada = M.filas.find(f => f.estado === 'confirmed');
-      // Por revisar si queda CUALQUIER medida sin decidir: una medida
-      // nueva en Toast (un Double que no existía) vuelve a traer la marca,
-      // con la botella que ya tenía.
-      const estado = revisar.length ? 'review' : (confirmada ? 'confirmed' : 'ignored');
+      // Por revisar si queda una medida sin decidir que SÍ se puede guardar:
+      // una medida nueva en Toast (un Double que no existía) vuelve a traer
+      // la marca, con la botella que ya tenía.
+      //
+      // Una medida sin pour no la retiene. Retenía: casi todas las marcas
+      // tienen en Toast una medida "Mix" que no estaba en la hoja, sus
+      // otras medidas se guardaban, y la marca seguía "por revisar" con
+      // la botella correcta puesta. Axel: "le doy Confirm 10 y no pasa
+      // nada, ahí siguen" (2026-11-11). Ahora pasa a hechas y lleva la
+      // lista de lo que no cuenta (`sinPour`). Si NO tiene ninguna medida
+      // con pour, no hay nada que elegir: 'sinPour', aparte.
+      const estado = revisar.length ? 'review'
+        : confirmada ? 'confirmed'
+          : M.filas.some(f => f.estado === 'ignored') ? 'ignored'
+            : 'sinPour';
       const producto = confirmada ? confirmada.producto : (revisar[0] && revisar[0].producto) || null;
       // Segura sólo si todas sus medidas por revisar lo son.
       const nivel = !revisar.length ? null
@@ -77,7 +92,7 @@
       const medidas = M.filas
         .map(f => ({ guid: f.guid, medida: f.medida, oz: ozDe(f.medida), estado: f.estado }))
         .sort((a, b) => (a.oz === undefined) - (b.oz === undefined) || (a.oz || 0) - (b.oz || 0));
-      return Object.assign(M, { estado, producto, nivel, medidas });
+      return Object.assign(M, { estado, producto, nivel, medidas, sinPour });
     }).sort((a, b) => (b.vendido - a.vendido) || L().norm(a.marca).localeCompare(L().norm(b.marca)));
   }
 

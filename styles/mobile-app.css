@@ -4836,9 +4836,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * Opción C: una sección por tipo y una fila compacta por marca. Usa lo
    * de arriba (.m-tw-p, .m-tw-tabs, .m-tw-aviso) y añade sólo la fila.
    *
-   * El <select> va encima de la fila entera y sin verse: tocar la fila
-   * abre la rueda del sistema, como en los vinos. 16px en táctil, o
-   * Safari amplía la pantalla al tocarlo. */
+   * La fila es un botón que abre la hoja con buscador (abajo). Fue una
+   * rueda nativa encima de la fila y en Crown no sirvió: con todo el
+   * inventario en la lista, llegar a una botella era bajar la rueda
+   * entera (Axel, 2026-11-11). */
   #mScreens .m-tl-sec {
     margin-top: 12px; border-radius: 16px; overflow: hidden;
     background: rgba(15,23,42,.62); border: 1px solid rgba(255,255,255,.1);
@@ -4852,12 +4853,15 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     border-radius: 10px !important; box-shadow: none;
   }
   #mScreens .m-tl-fila {
-    position: relative; display: flex; align-items: center; gap: 10px;
+    position: relative; display: flex; align-items: center; gap: 10px; width: 100%;
     padding: 11px 12px; border-top: 1px solid rgba(255,255,255,.08);
+    text-align: left; cursor: pointer; border-radius: 0 !important;
   }
+  #mScreens .m-tl-fila:active { background: rgba(255,255,255,.05); }
   #mScreens .m-tl-izq { flex: 1; min-width: 0; }
   #mScreens .m-tl-izq b { display: flex; align-items: center; gap: 6px; font-size: var(--m-strong); color: #fff; }
   #mScreens .m-tl-izq small { display: block; margin-top: 3px; font-size: var(--m-small); color: #94a3b8; }
+  #mScreens .m-tl-izq small.mal { color: #fca5a5; font-weight: 700; }
   #mScreens .m-tl-med { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 4px; font-size: var(--m-meta); color: #cbd5e1; }
   #mScreens .m-tl-med .mal { color: #fca5a5; font-weight: 800; }
   #mScreens .m-tl-pt { width: 8px; height: 8px; border-radius: 50%; flex: none; }
@@ -4870,8 +4874,43 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   #mScreens .m-tl-dest.vacio { color: #fca5a5; }
   #mScreens .m-tl-dest.mut { color: #94a3b8; font-weight: 600; }
   #mScreens .m-tl-v { flex: none; color: #64748b; font-size: var(--m-title); }
-  #mScreens .m-tl-sel {
-    position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;
-    font-size: max(16px, var(--m-body)); -webkit-appearance: none; appearance: none;
+
+  /* Las marcas sin ninguna medida con pour: se dicen, no se tocan. */
+  #mScreens .m-tl-espera-p { margin: 0; padding: 0 12px 6px; }
+  #mScreens .m-tl-espera { display: flex; justify-content: space-between; gap: 10px; padding: 9px 12px;
+    border-top: 1px solid rgba(255,255,255,.08); font-size: var(--m-body); }
+  #mScreens .m-tl-espera b { color: #cbd5e1; font-weight: 700; }
+  #mScreens .m-tl-espera span { color: #64748b; font-size: var(--m-small); }
+
+  /* ── La hoja: elegir la botella escribiendo ──
+   * Vive en <body> (#mSheet), como todas las hojas: de ahí el prefijo,
+   * que también es lo que gana al radio de 999px de app.css. La caja no
+   * se desplaza entera: arriba el buscador, en medio la lista con su
+   * propio scroll, abajo los botones, como el selector de siluetas. */
+  #mSheet .m-tl-hoja { display: flex; flex-direction: column; max-height: 82dvh; overflow: hidden; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+  #mSheet .m-tl-hoja-t { padding: 2px 4px 0; }
+  #mSheet .m-tl-hoja-t b { display: block; font-size: var(--m-title); color: #fff; }
+  #mSheet .m-tl-hoja-t span { display: block; margin-top: 3px; font-size: var(--m-small); color: #94a3b8; }
+  #mSheet .m-tl-busca {
+    display: block; width: 100%; margin-top: 12px; padding: 11px 13px; box-sizing: border-box;
+    font-size: max(16px, var(--m-body)); color: #f1f5f9; background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.16); border-radius: 12px !important; box-shadow: none; -webkit-appearance: none;
+  }
+  #mSheet .m-tl-lista { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin-top: 6px; }
+  #mSheet .m-tl-res {
+    display: block; width: 100%; text-align: left; cursor: pointer; padding: 12px 6px;
+    font-size: var(--m-body); color: #e2e8f0; background: none; border: 0;
+    border-bottom: 1px solid rgba(255,255,255,.07); border-radius: 0 !important; box-shadow: none;
+  }
+  #mSheet .m-tl-res.on { color: #7dd3fc; font-weight: 800; }
+  #mSheet .m-tl-sug {
+    margin-top: 10px; padding: 11px 13px; border: 1px solid rgba(56,189,248,.45);
+    background: rgba(56,189,248,.12); border-radius: 12px !important; font-weight: 800; color: #e0f2fe;
+  }
+  #mSheet .m-tl-sug small { display: block; margin-bottom: 2px; font-size: var(--m-meta); font-weight: 800; color: #7dd3fc; letter-spacing: .04em; text-transform: uppercase; }
+  #mSheet .m-tl-hoja-pie { display: flex; gap: 8px; margin-top: 10px; }
+  #mSheet .m-tl-hoja-pie .m-tw-b2 {
+    flex: 1; padding: 10px; cursor: pointer; font-size: var(--m-body); font-weight: 800; color: #e2e8f0;
+    background: none; border: 1px solid rgba(255,255,255,.18); border-radius: 12px !important; box-shadow: none;
   }
 }

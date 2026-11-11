@@ -9,17 +9,21 @@
   // Toast la venda en tres medidas: la botella se elige una vez. La
   // lógica es la de toast-liquor.js; aquí sólo se pinta.
   //
-  // Cambiar la botella es un <select> nativo puesto encima de la fila, sin
-  // verse: en el iPhone abre la rueda del sistema, igual que en la
-  // pantalla de vinos. Elegir ES confirmar: no hay un segundo botón que
-  // olvidar. Por eso el select también lleva "Not in inventory" (ignorar)
-  // y, ya decidida, "Back to review" (deshacer).
+  // Tocar la fila abre una hoja con buscador: la sugerida arriba, y
+  // escribiendo se encuentra cualquier botella. Elegir ES confirmar: no
+  // hay un segundo botón que olvidar. La hoja también lleva "Not in
+  // inventory" (ignorar) y, ya decidida, "Back to review" (deshacer).
+  //
+  // Fue una rueda nativa (<select>), como en los vinos, y en Crown no
+  // sirvió (Axel, 2026-11-11): con todo el inventario en la lista, llegar
+  // a Pedro Morales era bajar la rueda entera hasta la P, marca tras
+  // marca. Y la rueda no avisa si se elige lo que ya estaba marcado.
 
   const T = () => window.BarStockToastLiquor;
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-  const IGNORAR = '__ignorar', DESHACER = '__deshacer';
+  const MAX_RES = 40;   // lo que cabe leer de un vistazo; escribir acota
   let _tab = 'review';
   let _error = '';
   let _quitar = null;
@@ -35,43 +39,129 @@
     return '';
   }
 
-  // ── Por revisar, NINGUNA botella marcada ──────────────────────────
-  //
-  // La rueda del iPhone no avisa ('change') si se elige la opción que ya
-  // estaba marcada. La sugerida venía marcada, y elegirla no guardaba
-  // nada: Axel elegía Tito's sobre Tito's y la fila "ahí se queda"
-  // (2026-11-11). Ahora, por revisar, la rueda arranca en "Choose" y la
-  // sugerida va la primera y aparte, así que elegirla siempre es un
-  // cambio. Ya decidida, sí va marcada su botella: ahí elegir la misma
-  // no tiene nada que guardar.
-  function selector(M, productos) {
-    const ops = [];
-    const revisar = M.estado === 'review';
-    if (revisar) {
-      ops.push('<option value="" selected>— Choose a bottle —</option>');
-      if (M.producto) ops.push(`<option value="${esc(M.producto)}">✓ ${esc(M.producto)} (suggested)</option>`);
-    }
-    for (const p of productos) {
-      if (revisar && p === M.producto) continue;
-      ops.push(`<option value="${esc(p)}"${!revisar && p === M.producto && M.estado !== 'ignored' ? ' selected' : ''}>${esc(p)}</option>`);
-    }
-    ops.push(`<option value="${IGNORAR}"${M.estado === 'ignored' ? ' selected' : ''}>Not in inventory</option>`);
-    if (M.estado !== 'review') ops.push(`<option value="${DESHACER}">Back to review</option>`);
-    return `<select class="m-tl-sel" data-k="${esc(M.clave)}" aria-label="Bottle for ${esc(M.marca)}">${ops.join('')}</select>`;
-  }
-
-  function fila(M, productos) {
+  function fila(M) {
     const marcaPunto = M.estado !== 'review' ? '' : M.nivel === 'high' ? '' : `<i class="m-tl-pt ${M.nivel === 'mid' ? 'dudo' : 'no'}"></i>`;
     const medidas = M.medidas.map(m => `<span class="${m.oz === undefined ? 'mal' : ''}">${esc(T().medidaTexto(m))}</span>`).join('');
     const destino = M.estado === 'ignored' ? '<span class="m-tl-dest mut">Not in inventory</span>'
       : M.producto ? `<span class="m-tl-dest">${esc(M.producto)}</span>`
         : '<span class="m-tl-dest vacio">Choose a bottle</span>';
-    return `<div class="m-tl-fila">
-      <div class="m-tl-izq"><b>${marcaPunto}${esc(M.marca)}</b>
-        <div class="m-tl-med">${medidas}</div>
-        <small>${M.vendido} sold</small></div>
-      ${destino}<i class="ti ti-chevron-right m-tl-v" aria-hidden="true"></i>
-      ${selector(M, productos)}</div>`;
+    // Lo que no cuenta, dicho en la fila: una marca hecha con su Mix sin
+    // pour no puede parecer completa.
+    const noCuenta = M.sinPour.length ? `<small class="mal">${esc(M.sinPour.join(', '))}: not counted yet</small>` : '';
+    return `<button type="button" class="m-tl-fila" data-k="${esc(M.clave)}">
+      <span class="m-tl-izq"><b>${marcaPunto}${esc(M.marca)}</b>
+        <span class="m-tl-med">${medidas}</span>
+        <small>${M.vendido} sold</small>${noCuenta}</span>
+      ${destino}<i class="ti ti-chevron-right m-tl-v" aria-hidden="true"></i></button>`;
+  }
+
+  // Las marcas sin NINGUNA medida con pour: no hay nada que guardar, así
+  // que no se ofrecen. Se dicen, para que no parezca que faltan.
+  function enEspera(lista) {
+    if (!lista.length) return '';
+    const por = {};
+    for (const M of lista) for (const m of M.sinPour) por[m] = (por[m] || 0) + 1;
+    return `<div class="m-tl-sec m-tl-espera-sec">
+      <div class="m-tl-sec-h"><b>Waiting for a pour</b><span>${lista.length} brand${lista.length === 1 ? '' : 's'}</span></div>
+      <div class="m-tw-p m-tl-espera-p">Toast sells these only as ${esc(Object.keys(por).join(', '))}, and that size has no pour in BarStock yet. They show up here to match as soon as it does.</div>
+      ${lista.map(M => `<div class="m-tl-espera"><b>${esc(M.marca)}</b><span>${esc(M.tipo)} · ${M.vendido} sold</span></div>`).join('')}
+    </div>`;
+  }
+
+  // ── La hoja: elegir la botella escribiendo ───────────────────────────
+  const norm = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+  // Con texto: las botellas que tienen TODAS las palabras escritas. Sin
+  // texto: las que comparten alguna palabra con la marca, que es casi
+  // siempre donde está la buena.
+  function buscar(q, M, productos) {
+    const p = norm(q).split(/[^a-z0-9]+/).filter(Boolean);
+    if (p.length) return productos.filter(x => { const n = norm(x); return p.every(w => n.includes(w)); });
+    const m = norm(M.marca).split(/[^a-z0-9]+/).filter(w => w.length >= 3);
+    return productos.filter(x => { const n = norm(x); return m.some(w => n.includes(w)); });
+  }
+
+  function resultados(q, M, productos) {
+    const todos = buscar(q, M, productos).filter(p => !(M.estado === 'review' && p === M.producto));
+    if (!todos.length) return `<div class="m-tw-p">${q ? 'No bottle matches “' + esc(q) + '”.' : 'Type to search the inventory.'}</div>`;
+    return todos.slice(0, MAX_RES).map(p =>
+      `<button type="button" class="m-tl-res${p === M.producto && M.estado === 'confirmed' ? ' on' : ''}" data-p="${esc(p)}">${esc(p)}</button>`).join('') +
+      (todos.length > MAX_RES ? `<div class="m-tw-p">${todos.length - MAX_RES} more · keep typing</div>` : '');
+  }
+
+  function cerrarHoja() {
+    const h = document.getElementById('mSheet');
+    if (h) h.remove();
+  }
+
+  function abrirHoja(k) {
+    const M = T().marcas().find(x => x.clave === k);
+    const d = T().datos();
+    if (!M || !d || !d.productos) return;
+    cerrarHoja();
+    const h = document.createElement('div');
+    h.className = 'm-sheet';
+    // El id es el de todas las hojas del teléfono: las reglas que les
+    // ganan el radio a app.css se apoyan en él.
+    h.id = 'mSheet';
+    const sugerida = M.estado === 'review' && M.producto
+      ? `<button type="button" class="m-tl-res m-tl-sug" data-sug="1" data-p="${esc(M.producto)}"><small>Suggested</small>${esc(M.producto)}</button>` : '';
+    h.innerHTML = `
+      <div class="m-sheet-bg"></div>
+      <div class="m-sheet-box m-tl-hoja" role="dialog" aria-label="Bottle for ${esc(M.marca)}">
+        <div class="m-sheet-grip"></div>
+        <div class="m-tl-hoja-t"><b>${esc(M.marca)}</b><span>${esc(M.tipo)} · ${M.medidas.map(m => esc(T().medidaTexto(m))).join(' · ')}</span></div>
+        <input class="m-tl-busca" type="search" inputmode="search" autocomplete="off" autocapitalize="off" spellcheck="false"
+          placeholder="Search ${d.productos.length} bottles" aria-label="Search bottles">
+        ${sugerida}
+        <div class="m-tl-lista"></div>
+        <div class="m-tl-hoja-pie">
+          <button type="button" class="m-tw-b2" data-ignorar="1">Not in inventory</button>
+          ${M.estado !== 'review' ? '<button type="button" class="m-tw-b2" data-deshacer="1">Back to review</button>' : ''}
+        </div>
+      </div>`;
+    document.body.appendChild(h);
+    if (window.BarStockSheet) window.BarStockSheet.enganchar(h, cerrarHoja);
+    h.querySelector('.m-sheet-bg').onclick = cerrarHoja;
+
+    const lista = h.querySelector('.m-tl-lista');
+    const busca = h.querySelector('.m-tl-busca');
+    const pintarLista = () => { lista.innerHTML = resultados(busca.value.trim(), M, d.productos); };
+    busca.addEventListener('input', pintarLista);
+    pintarLista();
+
+    // Un escuchador para toda la hoja: la lista se repinta al escribir.
+    h.addEventListener('click', (e) => {
+      const b = e.target.closest && e.target.closest('button');
+      if (!b) return;
+      if (b.dataset.p) return hacer(async () => {
+        const r = await T().confirmarMarca(k, b.dataset.p);
+        aviso2(M.marca + ' → ' + b.dataset.p + (r.sinMedida.length ? ' · ' + r.sinMedida.join(', ') + ' not counted yet' : ''));
+      })();
+      if (b.dataset.ignorar) return hacer(async () => { await T().ignorarMarca(k); aviso2(M.marca + ': not in inventory'); })();
+      if (b.dataset.deshacer) return hacer(async () => { await T().deshacerMarca(k); aviso2(M.marca + ': back to review'); })();
+    });
+  }
+
+  // Lo que pasó, en el header, donde se ve aunque la lista esté bajada.
+  // Antes el aviso salía arriba de la lista y no se veía desde abajo.
+  function aviso2(t) {
+    if (window.BarStockToast && window.BarStockToast.show) { try { window.BarStockToast.show('Saved: ' + t); } catch (e) {} }
+  }
+
+  // Guarda, cierra la hoja y repinta. Un fallo se dice arriba y también
+  // en el header.
+  function hacer(fn) {
+    return async () => {
+      _error = '';
+      try { await fn(); }
+      catch (e) {
+        _error = 'Not saved: ' + String((e && e.message) || e);
+        if (window.BarStockToast && window.BarStockToast.show) { try { window.BarStockToast.show(_error); } catch (er) {} }
+      }
+      cerrarHoja();
+      pintar();
+    };
   }
 
   function seccion(S, productos) {
@@ -80,7 +170,7 @@
       <div class="m-tl-sec-h"><b>${esc(S.tipo)}</b>
         <span>${_tab === 'review' ? (claras ? claras + ' suggested' : S.marcas.length + ' to review') : S.marcas.length + ' done'}</span>
         ${_tab === 'review' && claras ? `<button type="button" class="m-tl-todas" data-tipo="${esc(S.tipo)}">Confirm ${claras}</button>` : ''}
-      </div>${S.marcas.map(M => fila(M, productos)).join('')}</div>`;
+      </div>${S.marcas.map(M => fila(M)).join('')}</div>`;
   }
 
   function pintar(host, cab, volver) {
@@ -94,7 +184,9 @@
     if (d.estado !== 'listo') cuerpo = aviso(d);
     else {
       const todas = T().marcas();
-      const lista = todas.filter(M => _tab === 'review' ? M.estado === 'review' : M.estado !== 'review');
+      const espera = todas.filter(M => M.estado === 'sinPour');
+      const decididas = todas.filter(M => M.estado === 'confirmed' || M.estado === 'ignored');
+      const lista = _tab === 'review' ? todas.filter(M => M.estado === 'review') : decididas;
       const nRev = todas.filter(M => M.estado === 'review').length;
       const P = T().MEDIDAS;
       cuerpo = `
@@ -102,34 +194,24 @@
           Single ${P.single} oz, Double ${P.double}, Up or Rocks ${P.up}, Shot ${P.shot}. Sold in the last ${T().DIAS} days.</div>
         <div class="m-tw-tabs">
           <button type="button" data-tab="review" class="${_tab === 'review' ? 'on' : ''}">To review · ${nRev}</button>
-          <button type="button" data-tab="done" class="${_tab === 'done' ? 'on' : ''}">Done · ${todas.length - nRev}</button>
+          <button type="button" data-tab="done" class="${_tab === 'done' ? 'on' : ''}">Done · ${decididas.length}</button>
         </div>
         ${_error ? `<div class="m-tw-aviso mal">${esc(_error)}</div>` : ''}
         ${lista.length ? T().porTipo(lista).map(S => seccion(S, d.productos)).join('')
-          : `<div class="m-tw-p">${_tab === 'review' ? 'Nothing left to review.' : 'Nothing here yet.'}</div>`}`;
+          : `<div class="m-tw-p">${_tab === 'review' ? 'Nothing left to review.' : 'Nothing here yet.'}</div>`}
+        ${_tab === 'review' ? enEspera(espera) : ''}`;
     }
     host.innerHTML = (_cab ? _cab() : '') + '<div class="m-tw m-tl">' + cuerpo + '</div>';
     if (_volver) _volver();
 
     host.querySelectorAll('[data-tab]').forEach(b => { b.onclick = () => { _tab = b.dataset.tab; _error = ''; pintar(); }; });
-    const hacer = (fn) => async () => {
-      _error = '';
-      try { await fn(); } catch (e) { _error = 'Not saved: ' + String((e && e.message) || e); }
-      pintar();
-    };
-    host.querySelectorAll('.m-tl-sel').forEach(s => {
-      s.onchange = hacer(async () => {
-        const v = s.value, k = s.dataset.k;
-        if (!v) return;
-        if (v === IGNORAR) return T().ignorarMarca(k);
-        if (v === DESHACER) return T().deshacerMarca(k);
-        const r = await T().confirmarMarca(k, v);
-        // Lo que no se guardó se dice, con su medida: "deberías tener"
-        // no contará esas ventas hasta que la medida exista.
-        if (r.sinMedida.length) _error = 'Saved, except ' + r.sinMedida.join(', ') + ': that size has no pour yet.';
+    host.querySelectorAll('.m-tl-fila').forEach(b => { b.onclick = () => abrirHoja(b.dataset.k); });
+    host.querySelectorAll('[data-tipo]').forEach(b => {
+      b.onclick = hacer(async () => {
+        const n = await T().confirmarSugeridas(b.dataset.tipo);
+        aviso2(n + ' ' + b.dataset.tipo + ' brand' + (n === 1 ? '' : 's'));
       });
     });
-    host.querySelectorAll('[data-tipo]').forEach(b => { b.onclick = hacer(() => T().confirmarSugeridas(b.dataset.tipo)); });
   }
 
   function montar(host, cab, volver) {
