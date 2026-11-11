@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-161133",
+    "items": [
+      "Behind-the-scenes fixes"
+    ]
+  },
+  {
     "build": "20261111-160151",
     "items": [
       "Settings: its name sits in the header too"
@@ -180,12 +186,6 @@
     "build": "20261109-152933",
     "items": [
       "On Home, search stays at the top as you scroll"
-    ]
-  },
-  {
-    "build": "20261109-144608",
-    "items": [
-      "The update card stays until you tap Update"
     ]
   }
 ]

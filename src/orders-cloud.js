@@ -68,10 +68,36 @@
     }
   }
 
+  // ── La llegada del pedido (migración 033) ──────────────────────────
+  //
+  // Se fija aquí, al guardarlo, para que valga igual en los cuatro
+  // caminos que colocan una orden (escritorio, teléfono, quick order de
+  // LOOP y de correo). Un pedido normal llega en la siguiente entrega de
+  // su proveedor (vendor-delivery.js); un quick order, a la hora que diga
+  // él (por ahora, la suya: casi siempre ya está en la bodega). Si la
+  // orden ya trae su llegada —se está volviendo a guardar— se respeta.
+  async function llegadaDe(order, creada) {
+    if (order.arrivesAt !== undefined) return order.arrivesAt || null;
+    if (order.quickOrder) return creada;
+    const VD = window.BarStockVendorDelivery;
+    if (!VD || !VD.llegadaDe) return null;
+    try { return await VD.llegadaDe(order.vendor, creada); }
+    catch (e) { console.warn('[ordenes] no se pudo leer el horario de ' + order.vendor, e); return null; }
+  }
+
+  // Si la 033 no está corrida, PostgREST contesta que no encuentra la
+  // columna. Se repite sin ella: un pedido sin su llegada es mejor que un
+  // pedido que no se guarda. Se mira el nombre de la columna en la
+  // respuesta, no cualquier error: con otro fallo se repetiría a ciegas.
+  const faltaColumna = (txt) => /arrives_at|is_quick/.test(String(txt || '')) &&
+    /column|schema cache|PGRST204|42703/i.test(String(txt || ''));
+
   async function persistOrderToSupabase(order) {
     const locationId = await orderCloudFetchLocationId();
 
     const poNumber = await getNextPoNumber(locationId);
+    const creada = order.createdAt || order.date || new Date().toISOString();
+    order.arrivesAt = await llegadaDe(order, creada);
 
     const vendorOrderPayload = {
       app_order_id: order.id,
@@ -84,7 +110,9 @@
       filename: order.filename || '',
       export_type: order.exportType || '',
       total_units: Number(order.totalUnits || 0),
-      created_at: order.createdAt || order.date || new Date().toISOString()
+      created_at: creada,
+      arrives_at: order.arrivesAt || null,
+      is_quick: !!order.quickOrder
     };
 
     // DELETE existing order for this app_order_id + location_id, then INSERT fresh
@@ -97,7 +125,7 @@
       }
     );
 
-    const orderRes = await fetch(
+    const insertar = (cuerpo) => fetch(
       `${cfg.url}/rest/v1/vendor_orders`,
       {
         method: 'POST',
@@ -107,13 +135,21 @@
           Authorization: `Bearer ${cfg.key}`,
           Prefer: 'return=representation'
         },
-        body: JSON.stringify(vendorOrderPayload)
+        body: JSON.stringify(cuerpo)
       }
     );
+    let orderRes = await insertar(vendorOrderPayload);
 
     if (!orderRes.ok) {
-      const txt = await orderRes.text();
-      throw new Error('Error guardando vendor_orders: ' + txt);
+      let txt = await orderRes.text();
+      if (faltaColumna(txt)) {
+        console.warn('[ordenes] vendor_orders sin arrives_at / is_quick (falta la migración 033): se guarda sin ellas.');
+        const viejo = Object.assign({}, vendorOrderPayload);
+        delete viejo.arrives_at; delete viejo.is_quick;
+        orderRes = await insertar(viejo);
+        if (!orderRes.ok) txt = await orderRes.text();
+      }
+      if (!orderRes.ok) throw new Error('Error guardando vendor_orders: ' + txt);
     }
 
     const orderRows = await orderRes.json();
@@ -218,11 +254,19 @@
 
   window.deleteOrderFromSupabase = deleteOrderFromSupabase;
   window.persistOrderToSupabase = persistOrderToSupabase;
+  // El segundo bloque de este archivo (la carga) la necesita también y
+  // no ve lo de éste: se comparte por aquí en vez de escribirla dos veces.
+  window.BarStockOrdersFaltaColumna = faltaColumna;
 })();
 
 (() => {
   if (window.__barstockOrdersCoreBooted) return;
   window.__barstockOrdersCoreBooted = true;
+
+  // Definida en el primer bloque (el que guarda). La carga la usa para
+  // reconocer que falta la migración 033; sin ella, aquí no existía y la
+  // carga reventaba justo en ese caso (lo encontró tools/test-llegada.js).
+  const faltaColumna = (txt) => !!(window.BarStockOrdersFaltaColumna && window.BarStockOrdersFaltaColumna(txt));
 
   async function getOrdersLocationId() {
     const res = await fetch(
@@ -281,13 +325,18 @@
       {
         const PAGE_SIZE = 1000;
         const MAX_PAGES = 100; // tope de seguridad
+        // Con la llegada y la marca de quick order (033). Si la base aún
+        // no las tiene, PostgREST lo dice y se vuelve a pedir sin ellas:
+        // el historial de pedidos no puede quedarse vacío por eso.
+        const BASE = 'app_order_id,vendor,created_at,export_type,filename,total_units,subtotal,po_number';
+        let columnas = BASE + ',arrives_at,is_quick';
 
         for (let page = 0; page < MAX_PAGES; page++) {
           const offset = page * PAGE_SIZE;
-          const ordersRes = await fetch(
+          const pedir = () => fetch(
             `${window.BarStockOrdersConfig().url}/rest/v1/vendor_orders` +
             `?location_id=eq.${locationId}` +
-            `&select=app_order_id,vendor,created_at,export_type,filename,total_units,subtotal,po_number` +
+            `&select=${columnas}` +
             `&order=created_at.desc,app_order_id.asc` +
             `&limit=${PAGE_SIZE}&offset=${offset}`,
             {
@@ -297,6 +346,14 @@
               }
             }
           );
+          let ordersRes = await pedir();
+          if (!ordersRes.ok && columnas !== BASE) {
+            const txt = await ordersRes.text();
+            if (!faltaColumna(txt)) throw new Error('vendor_orders: ' + txt);
+            console.warn('[ordenes] vendor_orders sin arrives_at / is_quick (falta la migración 033): se leen sin ellas.');
+            columnas = BASE;
+            ordersRes = await pedir();
+          }
           const pageOrders = await ordersRes.json();
           if (!Array.isArray(pageOrders)) throw new Error('Invalid vendor_orders response');
 
@@ -382,6 +439,10 @@
         poNumber: String(order.po_number || ''),
         totalUnits: Number(order.total_units || 0),
         subtotal: Number(order.subtotal || 0),
+        // undefined si la base aún no tiene la columna: así, al volver a
+        // guardar la orden, se calcula; null es "se miró y no se sabe".
+        arrivesAt: order.arrives_at === undefined ? undefined : (order.arrives_at || null),
+        quickOrder: !!order.is_quick,
         items: (itemsByOrder[String(order.app_order_id || '')] || []).map(item => ({
           code: String(item.code || '').trim(),
           item: String(item.item_name || '').trim(),
