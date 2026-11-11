@@ -94,6 +94,7 @@ function entorno(o) {
     return ok([]);
   };
 
+  new Function(fs.readFileSync(path.join(RAIZ, 'src/order-receipts.js'), 'utf8'))();
   new Function(fs.readFileSync(path.join(RAIZ, 'src/mobile-history.js'), 'utf8'))();
   return w;
 }

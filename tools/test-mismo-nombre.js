@@ -83,6 +83,7 @@ function entorno(o) {
   w.fetch = f; global.fetch = f;
 
   new Function(leer('src/marginedge-match.js'))();
+  new Function(leer('src/order-receipts.js'))();
   new Function(leer('src/mobile-history.js'))();
   return w;
 }

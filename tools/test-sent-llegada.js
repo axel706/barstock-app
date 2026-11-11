@@ -80,6 +80,7 @@ function entorno(o) {
   // misma regla, sin cargar todo ese módulo.
   w.BarStockOrdersFaltaColumna = (t) => /arrives_at|is_quick/.test(String(t)) && /column|42703|PGRST204/i.test(String(t));
   w.eval(leer('src/vendor-delivery.js'));
+  w.eval(leer('src/order-receipts.js'));
   w.eval(leer('src/mobile-history.js'));
   return w;
 }
@@ -126,6 +127,17 @@ grupo('sin la migración 033');
   prueba('Sent no se queda vacío', Object.keys(m).length === 5, Object.keys(m).join(','));
   prueba('se pidió otra vez sin la columna', w.__urls.some(u => /vendor_orders/.test(u) && !/arrives_at/.test(u)));
   prueba('y no inventa llegadas', Object.values(m).every(x => !/Arriv/.test(x.txt)));
+}
+
+grupo('el reparto vive en un solo sitio');
+{
+  // Sent y el LIVE tienen que decir lo mismo sobre cuánto llegó: el
+  // reparto factura ↔ pedido está en order-receipts.js y Sent lo usa.
+  const h = leer('src/mobile-history.js');
+  prueba('Sent no tiene su propio reparto', !/const suelo =/.test(h) && !/r\.usado = true/.test(h) && /RC\.repartir\(/.test(h));
+  const html = leer('index.html');
+  const p = f => html.indexOf('src/' + f + '?v=');
+  prueba('el módulo carga antes que Sent', p('order-receipts.js') > 0 && p('order-receipts.js') < p('mobile-history.js'));
 }
 
 grupo('la CSS');

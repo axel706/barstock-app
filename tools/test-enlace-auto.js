@@ -278,8 +278,11 @@ grupo('y nada de esto toca el reparto');
   // La regla entera depende de que mobile-history.js siga igual: este
   // modulo solo ESCRIBE enlaces, y el reparto ya los respeta.
   const h = fs.readFileSync(path.join(RAIZ, 'src/mobile-history.js'), 'utf8');
+  // El reparto vive en order-receipts.js desde 2026-11-11 (lo comparten
+  // Sent y el LIVE); la regla se mira allí.
+  const rc = fs.readFileSync(path.join(RAIZ, 'src/order-receipts.js'), 'utf8');
   prueba('el reparto sigue respetando el enlace primero',
-    /if \(r\.reservado\) \{[\s\S]{0,200}\} else if \(r\.fecha && r\.fecha < suelo\)/.test(h));
+    /if \(r\.reservado\) \{[\s\S]{0,200}\} else if \(r\.fecha && r\.fecha < suelo\)/.test(rc));
   // El reparto no cambia: solo le llegan mas enlaces, que ya sabia
   // respetar. Lo que SI hay es la llamada que los escribe, antes.
   prueba('el historial lo llama antes de repartir',

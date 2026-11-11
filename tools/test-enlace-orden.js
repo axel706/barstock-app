@@ -99,6 +99,7 @@ function entorno(o) {
     return ok([]);
   };
 
+  new Function(fs.readFileSync(path.join(RAIZ, 'src/order-receipts.js'), 'utf8'))();
   new Function(fs.readFileSync(path.join(RAIZ, 'src/mobile-history.js'), 'utf8'))();
   return w;
 }
@@ -165,7 +166,8 @@ grupo('sin la tabla no se rompe nada');
 
 grupo('el enlace gana sobre el suelo de fecha, no lo borra');
 {
-  const src = fs.readFileSync(path.join(RAIZ, 'src/mobile-history.js'), 'utf8');
+  // El reparto vive en order-receipts.js (lo comparten Sent y el LIVE).
+  const src = fs.readFileSync(path.join(RAIZ, 'src/order-receipts.js'), 'utf8');
   // La forma importa: si el suelo se comprueba IGUAL para los
   // reservados, el enlace no sirve para una factura anterior al
   // ciclo — que es justo el caso.

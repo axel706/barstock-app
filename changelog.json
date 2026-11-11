@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-163203",
+    "items": [
+      "Behind-the-scenes fixes"
+    ]
+  },
+  {
     "build": "20261111-162505",
     "items": [
       "Sent: when each order arrives",
@@ -181,12 +187,6 @@
     "build": "20261109-155056",
     "items": [
       "In Search, the search bar stays at the top as you scroll"
-    ]
-  },
-  {
-    "build": "20261109-154158",
-    "items": [
-      "The greeting on Home is fully visible again"
     ]
   }
 ]
