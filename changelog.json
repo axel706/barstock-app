@@ -1,5 +1,13 @@
 [
   {
+    "build": "20261111-182735",
+    "items": [
+      "Running out first uses Toast: the day each bottle runs out",
+      "On the shelf counts what sold and arrived, with the Live tag",
+      "Tap On the shelf to see the math"
+    ]
+  },
+  {
     "build": "20261111-180347",
     "items": [
       "Live shows on the product sheet and in Do we have",
@@ -181,12 +189,6 @@
     "build": "20261109-193611",
     "items": [
       "Smoother header animations while scrolling"
-    ]
-  },
-  {
-    "build": "20261109-191147",
-    "items": [
-      "The update card has a clearer outline"
     ]
   }
 ]

@@ -88,7 +88,7 @@
       const fin = M.suficiente && med ? proyectar({ stock: f.live, med, viene: f.viene, hoy }) : null;
       return Object.assign({}, f, { med, agota: fin ? fin.dia : null, enDias: fin ? fin.enDias : null });
     });
-    return { estado: 'listo', hoy, muestras: M.muestras, suficiente: M.suficiente, filas };
+    return { estado: 'listo', hoy, conteo: vivo.conteo, muestras: M.muestras, suficiente: M.suficiente, filas };
   }
 
   window.BarStockRunOut = { medianas, proyectar, mediana, ahora, DIAS_HISTORIA, HORIZONTE, MIN_MUESTRAS };

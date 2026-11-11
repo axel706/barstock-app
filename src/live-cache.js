@@ -35,6 +35,8 @@
 
   const VIVO_MS = 30 * 60 * 1000;
   let _vivo = null, _agota = null, _vivoEn = 0, _pidiendo = null;
+  // El instante del último conteo, para decir "Counted Sun Nov 8".
+  let _conteo = null;
   // Un aviso que llega MIENTRAS se lee: la lectura en curso empezó antes
   // de la factura y daría el número de antes, guardado 30 minutos. Se
   // apunta y se vuelve a leer al terminar.
@@ -59,6 +61,7 @@
       const filas = r && r.estado === 'listo' ? r.filas : [];
       _vivo = new Map(filas.filter(f => f.movimiento).map(f => [f.producto, f]));
       _agota = new Map(filas.map(f => [f.producto, f]));
+      _conteo = r && r.estado === 'listo' && r.conteo ? r.conteo : null;
     }).catch(e => {
       console.warn('[live] sin LIVE', e);
       _vivo = new Map();
@@ -143,13 +146,39 @@
     return { n, txt: 'arrived ' + cuando + ', ' + (l[0].de ? l[0].de + ' order' : 'invoice') };
   }
 
+  // ── El dinero del estante, con LIVE (Axel, 2026-11-11) ─────────────
+  //
+  // "On the shelf" del Home pasa a LIVE × precio. Se parte de lo contado
+  // TAL COMO lo calcula inventory-value (on hand × precio, sólo lo que
+  // vale algo), y se le suma y resta lo que movió el LIVE, al mismo
+  // precio. Así el contado del aviso es el mismo número que enseñaba el
+  // Home antes y el escritorio hoy, y la diferencia es sólo el LIVE.
+  // null si no hay LIVE (conteo activo, o nada se movió): quien llama
+  // enseña lo de antes.
+  function dinero() {
+    const V = window.BarStockInventoryValue;
+    if (!_vivo || !_vivo.size || !V || !V.compute) return null;
+    const d = V.compute();
+    if (!d) return null;
+    const precio = (r) => typeof window.parseNum === 'function' ? window.parseNum(r.value) : Number(r.value) || 0;
+    let llego = 0, vendido = 0;
+    for (const r of (window.state && window.state.master) || []) {
+      const v = vivo(r);
+      const p = v ? precio(r) : 0;
+      if (!v || p <= 0) continue;
+      llego += (Number(v.llego) || 0) * p;
+      vendido += (Number(v.vendido) || 0) * p;
+    }
+    return { contado: d.total, llego, vendido, total: d.total + llego - vendido, sinPrecio: d.noPrice, conteo: _conteo };
+  }
+
   // Las piezas de HTML, iguales en todas las pantallas del teléfono.
   const etiquetaLive = (r) => vivo(r) ? '<span class="m-live"><i></i>Live</span>' : '';
   const etiquetaAgota = (r) => { const a = agota(r); return a ? `<span class="m-out m-out-${a.tono}">${a.txt}</span>` : ''; };
 
   window.BarStockLiveCache = {
-    cargar, caducar, alCambiar, vivo, cuanto, conVivo, texto, agota, toastLoVende, llegadas,
+    cargar, caducar, alCambiar, vivo, cuanto, conVivo, texto, agota, toastLoVende, llegadas, dinero,
     etiquetaLive, etiquetaAgota, VIVO_MS,
-    _reset: () => { _vivo = null; _agota = null; _vivoEn = 0; _pidiendo = null; _otraVez = false; _oyentes.clear(); }
+    _reset: () => { _vivo = null; _agota = null; _conteo = null; _vivoEn = 0; _pidiendo = null; _otraVez = false; _oyentes.clear(); }
   };
 })();

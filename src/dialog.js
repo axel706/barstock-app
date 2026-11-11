@@ -50,6 +50,8 @@
   // `opc`:
   //   titulo    — la pregunta, en una línea
   //   cuerpo    — el detalle (opcional)
+  //   filas     — [{ k, v, total }]: una cuenta alineada (opcional)
+  //   nota      — una línea pequeña debajo de la cuenta (opcional)
   //   aviso     — la consecuencia irreversible, en rojo (opcional)
   //   ok        — texto del botón que sigue adelante
   //   cancelar  — texto del otro; `null` deja un solo botón (avisar)
@@ -76,6 +78,13 @@
           '<span>' + esc(o.titulo || '') + '</span>' +
         '</div>' +
         (o.cuerpo ? '<div class="dlg-cuerpo">' + esc(o.cuerpo) + '</div>' : '') +
+        // Una cuenta, alineada como un recibo: "Counted · $4,821". La
+        // pidió "On the shelf" del Home (Axel, 2026-11-11) para no hacer
+        // crecer su tarjeta; un párrafo no alinea las cifras.
+        (o.filas && o.filas.length ? '<div class="dlg-filas">' + o.filas.map(f =>
+          '<span' + (f.total ? ' class="tot"' : '') + '>' + esc(f.k) + '</span>' +
+          '<span class="v' + (f.total ? ' tot' : '') + '">' + esc(f.v) + '</span>').join('') + '</div>' : '') +
+        (o.nota ? '<div class="dlg-nota">' + esc(o.nota) + '</div>' : '') +
         (o.aviso ? '<div class="dlg-aviso">' + esc(o.aviso) + '</div>' : '') +
         '<div class="dlg-foot' + (soloUno ? ' solo' : '') + '">' +
           (soloUno ? '' :

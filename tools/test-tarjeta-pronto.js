@@ -10,6 +10,13 @@
  * Los días contestan "cuándo". Con todo a cero la pregunta que queda
  * es "cuánto duele", y eso lo contesta el consumo.
  *
+ * Desde el LIVE (Axel, 2026-11-11, opción A) la tarjeta va por DÍAS, el
+ * que se acaba antes primero: con Toast los días distinguen. El consumo
+ * queda como desempate, que es justo el caso de arriba: con todo a cero,
+ * el que más se mueve primero. Cada fila lleva su pastilla ("Out now",
+ * "4 days", "Out Thu") en vez de "12/wk". Esto prueba lo que Toast no
+ * vende (Pour·IQ); lo de Toast está en test-home-live.js.
+ *
  *   node tools/test-tarjeta-pronto.js
  */
 
@@ -94,9 +101,9 @@ const nombres = (h) => filas(h).map(f => f.querySelector('.n').textContent);
       /White Haven/.test(nombres(h)[1] || ''), nombres(h).join(' | '));
     prueba('y el que menos se mueve va al final',
       /Amaretto/.test(nombres(h)[nombres(h).length - 1] || ''), nombres(h).join(' | '));
-    prueba('con su consumo a la derecha',
-      filas(h)[0].querySelector('.v').textContent === '12/wk',
-      filas(h)[0].querySelector('.v').textContent);
+    const o0 = filas(h)[0].querySelector('.m-out');
+    prueba('con su pastilla a la derecha, no el consumo',
+      !!o0 && o0.textContent === 'Out now' && !/\/wk/.test(txt(h)), o0 && o0.textContent);
   }
 
   grupo('la pastilla "out" mira el estante, no el redondeo');
@@ -108,7 +115,7 @@ const nombres = (h) => filas(h).map(f => f.querySelector('.n').textContent);
       { item: 'Media botella', onHand: 0.5, avg: 20 }
     ]);
     const h = pintar(w);
-    const con = filas(h).filter(f => f.querySelector('.tag'));
+    const con = filas(h).filter(f => /Out now/.test((f.querySelector('.m-out') || {}).textContent || ''));
     prueba('sólo uno lleva pastilla', con.length === 1, String(con.length));
     prueba('y es el que está a cero',
       con[0].querySelector('.n').textContent === 'Vacío',
@@ -135,7 +142,7 @@ const nombres = (h) => filas(h).map(f => f.querySelector('.n').textContent);
     // Con tres filas y tres productos no sobra ninguno, así que el pie
     // deja de contar un resto que no existe y dice el total.
     prueba('y el pie dice el total cuando no sobra nadie',
-      /3 under a week/.test(txt(h)), txt(h));
+      /3 this week/.test(txt(h)), txt(h));
   }
 
   grupo('sin nada fuera, el titular vuelve al total');
@@ -145,8 +152,8 @@ const nombres = (h) => filas(h).map(f => f.querySelector('.n').textContent);
       { item: 'B', onHand: 1, avg: 2 }
     ]);
     const h = pintar(w);
-    prueba('dice cuántos hay', /2 products/.test(txt(h)), txt(h).slice(0, 70));
-    prueba('ninguna pastilla', filas(h).every(f => !f.querySelector('.tag')));
+    prueba('dice cuántos hay', /2 run out this week/.test(txt(h)), txt(h).slice(0, 70));
+    prueba('ninguna dice "Out now"', filas(h).every(f => !/Out now/.test(f.textContent)));
     const amt = tarjeta(h).querySelector('.m-hero-amt').textContent.replace(/\s/g, '');
     prueba('y la esquina lo dice con su unidad', amt === '2thisweek', amt);
   }
@@ -177,7 +184,8 @@ const nombres = (h) => filas(h).map(f => f.querySelector('.n').textContent);
     prueba('enseña tres', filas(h).length === 3, String(filas(h).length));
     // El resto sigue contándose en el pie, que ya es un renglón
     // dibujado: una línea propia costaría altura a todas las tarjetas.
-    prueba('el resto va en el pie', /and 3 more under a week/.test(txt(h)), txt(h));
+    // Todos a cero: "today", no "by" el día de hoy.
+    prueba('el resto va en el pie', /and 3 more today/.test(txt(h)), txt(h));
   }
 
   grupo('más de una semana no entra');

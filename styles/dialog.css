@@ -33,6 +33,21 @@
 }
 .dlg-cuerpo b { color: var(--text); }
 
+/* La cuenta del aviso ("On the shelf" del Home): etiqueta a la
+ * izquierda, cifra a la derecha, el total tras una raya. El aire va por
+ * abajo, como el resto de bloques de esta caja: dos convenciones en la
+ * misma columna se encuentran y el hueco se dobla. */
+.dlg-filas {
+  /* Sin column-gap: la raya del total va en las dos celdas y un hueco
+   * entre columnas la partía en dos. El aire lo pone la cifra. */
+  display: grid; grid-template-columns: 1fr auto; row-gap: 8px;
+  font-size: var(--m-body); color: var(--sub);
+  margin-bottom: 14px;
+}
+.dlg-filas .v { color: var(--text); font-weight: 700; text-align: right; white-space: nowrap; padding-left: 12px; }
+.dlg-filas .tot { border-top: 1px solid rgba(255,255,255,.12); padding-top: 8px; color: var(--text); }
+.dlg-nota { font-size: var(--m-small); color: var(--sub); margin-bottom: 18px; }
+
 /* El renglón que avisa de lo irreversible. Mismo recurso que la nota de
  * stock-in, pero en rojo: no es información de apoyo, es la consecuencia. */
 .dlg-aviso {

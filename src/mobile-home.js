@@ -1474,71 +1474,85 @@
       }
     }
 
-    // 4 · Se acaba antes que lo demas. Sale de cruzar lo que hay con el
-    // consumo ponderado; hasta ahora no estaba en ninguna pantalla.
-    const pronto = conPar()
-      .map(({ r, p }) => {
-        const avg = Number(p.avgUsed) || 0;
-        if (avg <= 0 || (p.normalWeeks || 0) < SEMANAS_MIN) return null;
-        const onHand = Number(r.onHand) || 0;
-        const dias = Math.round(onHand / avg * 7);
-        // `fuera` mira el estante, no el redondeo. Media botella de
-        // algo que se mueve mucho también da "0 days", y decir que
-        // está fuera cuando queda media es mentira.
-        return dias <= 7 ? { item: r.item, dias, avg, fuera: onHand <= 0 } : null;
-      })
-      .filter(Boolean);
+    // 4 · Se acaba antes que lo demas.
+    //
+    // ── Con Toast, por su día (Axel, 2026-11-11, opción A) ─────────
+    //
+    // Lo que Toast vende entra por el día en que se acaba según
+    // run-out.js —el LIVE de hoy menos lo que se suele gastar cada día
+    // de la semana—, el mismo "Out Thu" que Inventory y la ficha. Sólo
+    // lo de los próximos siete días, el que se acaba antes primero:
+    // antes se ordenaba por botellas a la semana porque con los días de
+    // Pour·IQ todo salía en "0 days" y no se distinguía nada; el día de
+    // Toast sí distingue.
+    //
+    // Lo que Toast no vende (la cerveza) sigue con Pour·IQ, pero sobre
+    // el número que enseña Inventory (el LIVE si se movió): dos
+    // pantallas con dos existencias distintas del mismo producto es lo
+    // que Axel vio con St Elder.
+    const LC = window.BarStockLiveCache;
+    const parM = window.parAdjustments;
+    const pronto = master().map(r => {
+      if (!r || !r.item) return null;
+      const vivo = !!(LC && LC.vivo(r));
+      if (LC && LC.toastLoVende(r)) {
+        const a = LC.agota(r);
+        if (!a || a.enDias >= 7) return null;
+        return { item: r.item, dias: a.enDias, out: a, vivo, fuera: LC.cuanto(r) <= 0, avg: 0 };
+      }
+      const p = parM && parM.get ? parM.get(r.item + '||' + (r.code || '')) : null;
+      if (!p || p.status !== 'active') return null;
+      const avg = Number(p.avgUsed) || 0;
+      if (avg <= 0 || (p.normalWeeks || 0) < SEMANAS_MIN) return null;
+      const queda = LC ? LC.cuanto(r) : (Number(r.onHand) || 0);
+      const dias = Math.max(0, Math.round(queda / avg * 7));
+      if (dias > 7) return null;
+      // `fuera` mira el estante, no el redondeo: media botella de algo
+      // que se mueve mucho también da "0 days", y decir que está fuera
+      // cuando queda media es mentira.
+      const fuera = queda <= 0;
+      return { item: r.item, dias, avg, vivo, fuera,
+        out: { txt: fuera ? 'Out now' : dias + (dias === 1 ? ' day' : ' days'),
+               tono: dias <= 2 ? 'r' : dias < 7 ? 'a' : 'g' } };
+    }).filter(Boolean);
 
     if (pronto.length) {
-      // ── Ordenar por CONSUMO, no por días ──────────────────────────
-      //
-      // Con cuarenta y nueve productos bajo la semana, los primeros
-      // diez dicen todos "0 days" y esa lista no prioriza nada: no se
-      // distingue un Tito's que se mueve doce a la semana de un
-      // amaretto que se mueve uno. Los días contestan "cuándo"; con
-      // todo a cero la pregunta que queda es "cuánto duele".
-      //
-      // Los que están fuera van primero —eso sí es otro estado— y
-      // dentro de cada grupo manda el consumo.
-      pronto.sort((a, b) =>
-        (b.fuera - a.fuera) || (b.avg - a.avg) || (a.dias - b.dias));
+      // Los que están fuera van primero —eso es otro estado—, después
+      // el que se acaba antes y, a igual día, el que más se mueve.
+      pronto.sort((a, b) => (b.fuera - a.fuera) || (a.dias - b.dias) || (b.avg - a.avg));
 
       const fuera = pronto.filter(x => x.fuera).length;
-      // TRES, los que caben en el cuerpo de la plantilla.
-      //
-      // Esto era DOS, y el comentario de entonces explicaba por qué:
-      // ésta era la tarjeta más alta del carril y por tanto la que
-      // fijaba la altura de todas, así que cada fila de más agrandaba
-      // el Home entero. Ya no manda nadie: la altura está fija en el
-      // CSS y sobraba un renglón vacío.
+      // TRES, los que caben en el cuerpo de la plantilla: la altura de
+      // las tarjetas está fija en el CSS.
       const CUANTAS = 3;
       const resto = pronto.length - Math.min(CUANTAS, pronto.length);
+      // El día de la semana dentro de k días, en Nueva York.
+      const dia = (k) => new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short' })
+        .format(new Date(Date.now() + k * 864e5));
+      const urgentes = pronto.filter(x => x.dias <= 2).length;
+      const ultimo = Math.max(...pronto.map(x => x.dias));
+      const n = pronto.length;
 
       t.push({
         tono: 'red',
-        k: 'Running out first',
-        // El titular es el número que exige algo hoy. "49 products"
-        // mezcla el aviso con el problema, y mezclados no se mira
-        // ninguno.
+        // "● Live" ANTES del título (Axel): la marca, como en todas
+        // partes, sólo con algo vendido o llegado detrás.
+        kHtml: true,
+        k: (pronto.some(x => x.vivo) ? '<span class="m-live"><i></i>Live</span>' : '') + 'Running out first',
+        // El titular es el número que exige algo hoy.
         tt: fuera
           ? fuera + (fuera === 1 ? ' is out right now' : ' are out right now')
-          : pronto.length + (pronto.length === 1 ? ' product' : ' products'),
-        // Nombres enteros: el recorte a 18 caracteres partía palabras
-        // a lo bruto ("Canyon Road Cabern"). Lo corta el ancho, con
-        // puntos suspensivos, que es lo que sabe dónde está el borde.
-        filas: pronto.slice(0, CUANTAS).map(x => ({
-          n: x.item,
-          tag: x.fuera ? 'out' : '',
-          v: n1(x.avg) + '/wk'
-        })),
+          : n + (n === 1 ? ' runs out this week' : ' run out this week'),
+        // Nombres enteros: los corta el ancho, con puntos suspensivos.
+        filas: pronto.slice(0, CUANTAS).map(x => ({ n: x.item, out: x.out, v: '' })),
         mas: '',
-        // La esquina deja de repetir el título: es el recuento de lo
-        // que está en cero, que es otro dato.
-        amt: String(fuera || pronto.length),
-        amtPie: fuera ? 'out now' : 'this week',
+        // La esquina: lo que se acaba en dos días o menos, que es lo que
+        // no espera al siguiente pedido. Si no hay, el total.
+        amt: String(fuera || urgentes || n),
+        amtPie: fuera ? 'out now' : urgentes ? 'by ' + dia(2) : 'this week',
         vs: resto
-          ? 'and ' + resto + ' more under a week'
-          : pronto.length + ' under a week',
+          ? 'and ' + resto + ' more ' + (ultimo === 0 ? 'today' : ultimo < 7 ? 'by ' + dia(ultimo) : 'this week')
+          : n + ' this week',
         btn: 'See them',
         // Al inventario YA ORDENADO por lo que está más cerca de
         // vaciarse. Antes llevaba a los 264 artículos por valor en el
@@ -1673,7 +1687,8 @@
                  </span>
                  <span class="der">
                    ${x.tag ? `<span class="tag">${esc(x.tag)}</span>` : ''}
-                   <span class="v">${esc(x.v)}</span>
+                   ${x.out ? `<span class="m-out m-out-${esc(x.out.tono)}">${esc(x.out.txt)}</span>` : ''}
+                   ${x.v ? `<span class="v">${esc(x.v)}</span>` : ''}
                  </span>
                </div>`).join('')}</div>` : ''}
 
@@ -1852,6 +1867,19 @@
       // `d.llegado` lo guarda inventory-value, no se calcula aqui: el
       // panel del escritorio lee el mismo numero y los dos tienen que
       // decir lo mismo del mismo estante.
+      // ── Con LIVE: LIVE × precio (Axel, 2026-11-11) ──────────────
+      //
+      // Lo contado más lo que llegó menos lo vendido en Toast, al
+      // precio de cada producto. Lo suma live-cache, partiendo del
+      // mismo contado que inventory-value, para que la cuenta del
+      // aviso cuadre con lo que el Home decía antes. Sin LIVE (conteo
+      // activo, nada movido), lo de antes: contado + facturado.
+      const LC = window.BarStockLiveCache;
+      const dl = LC && LC.dinero ? LC.dinero() : null;
+      if (dl) {
+        return { live: true, total: dl.total, contado: dl.contado, llego: dl.llego,
+                 vendido: dl.vendido, conteo: dl.conteo, n: d.items, sin: d.noPrice };
+      }
       const llego = Number(d.llegado) || 0;
       return { total: d.total + llego, contado: d.total, llego,
                n: d.items, sin: d.noPrice };
@@ -1868,6 +1896,10 @@
     // tocar nada, y un intervalo de un minuto que no hace nada es más
     // barato que montar y desmontar temporizadores en cada pestaña.
     arrancarRotacion();
+    // El LIVE lo lee live-cache una vez para toda la app; si nadie lo
+    // pidió aún (el Home es lo primero que se abre), se pide aquí y el
+    // Home se repinta al llegar (alCambiar, abajo).
+    if (window.BarStockLiveCache) window.BarStockLiveCache.cargar();
 
     const cards = tarjetas();
     const mov = movers();
@@ -1908,14 +1940,19 @@
               g ? (g.delta >= 0 ? '↗ +' : '↘ −') + money(Math.abs(g.delta)).slice(1) : '&nbsp;'
             }</small>
           </div>
-          <div class="m-stat">
-            <span class="m-stat-k">On the shelf</span>
+          <!-- Con LIVE, el número lleva el protagonismo y la cuenta se
+               abre en el aviso de la app al tocar la tarjeta: Axel no
+               quiso que la tarjeta creciera. "● Live" va antes del
+               título. -->
+          <div class="m-stat${e && e.live ? ' m-stat-toca' : ''}" id="mhEstante"${e && e.live ? ' role="button" tabindex="0"' : ''}>
+            <span class="m-stat-k">${e && e.live ? '<span class="m-live"><i></i>Live</span>' : ''}On the shelf</span>
             <b class="m-stat-v">${e ? money(e.total) : '…'}</b>
             <!-- Cuando algo llego despues del conteo, el pie DICE DE
                  DONDE sale el numero. Sin esto el titular sube solo y
                  no hay forma de saber si es mercancia nueva o un
                  fallo. Si no ha llegado nada, el pie de siempre. -->
             <small class="m-stat-d">${!e ? '&nbsp;'
+              : e.live ? '<span class="m-stat-det" data-detalle>Details <i class="ti ti-chevron-right" aria-hidden="true"></i></span>'
               : e.llego > 0
                 ? money(e.contado) + ' counted · +' + money(e.llego).slice(1) + ' in' +
                   (e.sin ? ' · ' + e.sin + ' no price' : '')
@@ -2138,7 +2175,40 @@
     const all = host.querySelector('#mhAllMov');
     if (all) all.onclick = () => window.BarStockMobile.ir('inventory');
 
+    const est = host.querySelector('#mhEstante.m-stat-toca');
+    if (est) {
+      est.onclick = () => detalleEstante();
+      est.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); detalleEstante(); } };
+    }
+
     puntos(host);
+  }
+
+  // ── La cuenta de "On the shelf" ──────────────────────────────────
+  //
+  // En el aviso de la app, el mismo de reiniciar el ciclo: Axel no
+  // quiso que la tarjeta creciera para enseñarla. Se recalcula al
+  // abrirlo, no se copia de lo pintado: si el LIVE se releyó entre
+  // medias, el aviso y la tarjeta (que se repinta) dicen lo mismo.
+  function detalleEstante() {
+    const e = estante();
+    const D = window.BarStockDialog;
+    if (!e || !e.live || !D || !D.avisar) return;
+    const cuando = e.conteo ? new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York',
+      weekday: 'short', month: 'short', day: 'numeric' }).format(new Date(e.conteo)).replace(',', '') : '';
+    D.avisar({
+      titulo: 'On the shelf · ' + money(e.total),
+      icono: 'ti-building-warehouse',
+      cuerpo: 'What should be on the shelf now, at your unit prices.',
+      filas: [
+        { k: 'Counted' + (cuando ? ' ' + cuando : ''), v: money(e.contado) },
+        { k: 'Arrived since', v: '+' + money(e.llego) },
+        { k: 'Sold in Toast since', v: '\u2212' + money(e.vendido) },
+        { k: 'On the shelf now', v: money(e.total), total: true }
+      ],
+      nota: e.sin ? e.sin + (e.sin === 1 ? ' item has no price and is left out.' : ' items have no price and are left out.') : '',
+      ok: 'Got it'
+    });
   }
 
   // Los puntos siguen al dedo. Es la unica confirmacion de cuantas
@@ -2168,6 +2238,7 @@
     const host = document.querySelector('.m-screen[data-screen="home"]');
     if (host && host.classList.contains('on')) render(host);
   }
+  if (window.BarStockLiveCache) window.BarStockLiveCache.alCambiar(refresh);
 
   // ── Esperar a que lleguen los datos ──────────────────────────────────
   //

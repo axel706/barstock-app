@@ -1266,6 +1266,13 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-hero-red .m-hero-ln .m-hln .n { color: #f3dede; }
   .m-hero-red .m-hero-ln .m-hln .v { color: #e2a9a9; }
   .m-hero-red .m-hero-mas { color: #e2a9a9; }
+  /* "Out Thu" sobre la tarjeta roja: el rojo de la pastilla se perdía
+   * en el fondo (Axel lo vio en la lámina). Fondo blanco translúcido y
+   * el color del tono, más claro. */
+  .m-hero-red .m-out { background: rgba(255,255,255,.16); }
+  .m-hero-red .m-out-r { color: #fecaca; }
+  .m-hero-red .m-out-a { color: #fde68a; }
+  .m-hero-red .m-out-g { color: #e2e8f0; }
 
   /* ── Un proveedor ocupa UN renglón ─────────────────────────────────
    *
@@ -1779,6 +1786,18 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-stat-v { display: block; text-align: right;
     font-size: var(--m-screen); font-weight: 800; color: #fff; letter-spacing: -.6px; margin-top: 3px; }
   .m-stat-d { display: block; text-align: right; font-size: var(--m-meta); color: #a9bacd; margin-top: 3px; }
+  /* "On the shelf" con LIVE: toda la tarjeta abre la cuenta. */
+  .m-stat-toca { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .m-stat-det { color: #7dd3fc; font-weight: 700; }
+  .m-stat-det .ti { font-size: var(--m-meta); vertical-align: -1px; }
+
+  /* "● Live" ANTES del título (Axel, 2026-11-11), en "Running out
+   * first" y "On the shelf". La marca no va en mayúsculas ni con el
+   * espaciado del rótulo: es la misma de Inventory y de la ficha. */
+  .m-hero-k .m-live, .m-stat-k .m-live {
+    margin-right: 8px; font-size: var(--m-meta);
+    letter-spacing: 0; text-transform: none; vertical-align: 1px;
+  }
   /* Gastar MÁS no es una buena noticia: el verde iría al revés. */
   .m-up { color: #fca5a5; }
   .m-down { color: #86efac; }
