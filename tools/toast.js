@@ -35,6 +35,9 @@
  *        await bsToastHistoria(7, { otraVez: true })   vuelve a cargar
  *                                      también lo ya cargado
  *        bsToastParar = true           lo para después del día en curso
+ *
+ *        await bsToastUso()            lo vendido desde el conteo, en
+ *                                      botellas por producto (sólo lee)
  *   Ésta SÍ escribe, pero sólo en toast_sales y toast_sales_days, y lo
  *   hace la función de Vercel, no el navegador. Hay que estar en la
  *   locación ligada a Toast (Crown); en otra, Toast dice que no.
@@ -152,6 +155,26 @@
     console.log('%cHistoria de Toast', 'font-weight:bold');
     console.log(res);
     return res;
+  };
+
+  // Lo vendido en Toast desde el último conteo, en botellas por producto
+  // (src/toast-usage.js, el motor del "deberías tener"). Sólo lee. Es para
+  // compararlo con la barra antes de enseñarlo en la app.
+  window.bsToastUso = async function () {
+    const U = window.BarStockToastUsage;
+    if (!U) { console.warn('Esta versión de la app no tiene el motor. Recarga la página.'); return null; }
+    const r = await U.desdeElConteo();
+    if (r.estado === 'contando') { console.log('Hay un conteo activo: no se estima nada hasta cerrarlo.'); return r; }
+    if (r.estado === 'sinConteo') { console.log('No encuentro cuándo fue el último conteo.'); return r; }
+    console.log('Último conteo: ' + new Date(r.conteo).toLocaleString() + '  ·  se descuenta desde el ' + r.desde +
+      ' (el día del conteo no)  ·  días cargados: ' + (r.dias.map(d => d.business_date).join(', ') || 'ninguno'));
+    console.table(r.productos.map(p => ({ producto: p.producto, botellas: Math.round(p.botellas * 100) / 100,
+      desde: Object.keys(p.de).join(', ') })));
+    if (r.sinConvertir.length) {
+      console.log('%cLo que no se pudo convertir:', 'font-weight:bold');
+      console.table(r.sinConvertir);
+    }
+    return r;
   };
 
   console.log('Listo. Empieza por:  await bsToast("ping")');
