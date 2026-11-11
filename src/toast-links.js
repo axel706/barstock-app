@@ -284,5 +284,5 @@
     };
   }
 
-  window.BarStockToastLinks = { crear, sugerir, diasAtras, norm };
+  window.BarStockToastLinks = { crear, sugerir, diasAtras, norm, productosDelInventario };
 })();

@@ -4882,6 +4882,31 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   #mScreens .m-tl-espera b { color: #cbd5e1; font-weight: 700; }
   #mScreens .m-tl-espera span { color: #64748b; font-size: var(--m-small); }
 
+  /* ── Recipes (mobile-toast-recipes.js) ──
+   * Opción B: una tarjeta por cóctel, con la cabecera y las filas de
+   * Liquor from Toast (.m-tl-sec, .m-tl-fila, .m-tl-dest). Aquí sólo lo
+   * que cambia: la línea es "ingrediente · oz", el precio a la derecha
+   * de la cabecera y el aviso de receta que falta.
+   *
+   * El prefijo es m-rc y no m-tr: .m-tr ya es la píldora de tendencia
+   * (sube / baja), y el contenedor de la pantalla la heredaba entera,
+   * radio de 999px incluido. */
+  /* Con la cabecera delante: `.m-tl-sec-h span` le da flex: 1 a todo
+   * span de la cabecera y dejaba el precio a media tarjeta. */
+  #mScreens .m-tl-sec-h .m-rc-precio { flex: none; font-size: var(--m-small); font-weight: 700; color: #94a3b8; }
+  #mScreens .m-rc-nota { margin-top: 0; padding: 0 12px 8px; }
+  #mScreens .m-rc-cuenta { color: #fca5a5; font-weight: 800; }
+  #mScreens .m-rc-fila {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    border-top: 1px solid rgba(255,255,255,.08);
+  }
+  #mScreens .m-rc-ing { flex: 1; min-width: 0; font-size: var(--m-body); color: #e2e8f0; }
+  #mScreens .m-rc-ing small { display: block; margin-top: 2px; font-size: var(--m-meta); color: #94a3b8; }
+  #mScreens .m-rc-falta {
+    padding: 10px 12px; border-top: 1px solid rgba(255,255,255,.08);
+    font-size: var(--m-small); font-weight: 700; color: #fca5a5;
+  }
+
   /* ── La hoja: elegir la botella escribiendo ──
    * Vive en <body> (#mSheet), como todas las hojas: de ahí el prefijo,
    * que también es lo que gana al radio de 999px de app.css. La caja no
