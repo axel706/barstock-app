@@ -26,7 +26,9 @@
        detras de la hora y la bateria, y ahi es donde entra el inset de
        arriba. -->
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <!-- ?v en el icono también: Safari lo guarda por su dirección, y sin
+       cambiarla, quitar la app y volver a añadirla puede traer el viejo. -->
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=2">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -369,7 +371,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261110-223706</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261110-235334</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">

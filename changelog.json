@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261110-235334",
+    "items": [
+      "Bigger B on the home-screen icon"
+    ]
+  },
+  {
     "build": "20261110-223706",
     "items": [
       "Liquor from Toast: Mix now counts as 1.5 oz"
@@ -181,13 +187,6 @@
     "build": "20261109-121507",
     "items": [
       "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261109-120940",
-    "items": [
-      "You stay signed in all day",
-      "Sign-out happens at midnight, later if you're still working"
     ]
   }
 ]
