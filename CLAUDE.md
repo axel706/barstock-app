@@ -421,6 +421,29 @@ categoría.
 - **Pantalla de ventas:** lo vendido cada día, y los promedios por día
   de la semana y por semana. Falta su diseño.
 
+**La matemática del LIVE** (Axel, 2026-11-11; sustituye a "lo que llegó
+sale de marginedge_invoice_lines" de arriba):
+
+- `LIVE = contado + lo que llegó − lo vendido en Toast desde el conteo`.
+- **Lo ordenado no cambia nunca.** Lo que cambia es CUÁNTO LLEGÓ de lo
+  ordenado: hasta que se casa contra la factura, llegó lo ordenado; desde
+  la factura, lo que dice la factura (corto, nada o de más).
+- **Lo ordenado empieza a contar a la hora de entrega del proveedor**, una
+  por proveedor y por locación, ajustable en una pantalla de Settings (por
+  diseñar). Crown: LOOP martes 7:00 AM (Axel lo recoge el lunes y el lunes
+  está cerrado), Breakthru martes 4:00 PM, Southern miércoles 4:00 PM, Wine
+  Merchant jueves 4:00 PM.
+- **Una línea de factura sin pedido** también llegó: suma desde que entra
+  la factura.
+- **Quick order:** antes de enviar pregunta si se añade al LIVE ya. Sí =
+  cuenta desde ese momento (ya llegó, o viene un proveedor de emergencia);
+  no = cuenta desde la siguiente entrega del proveedor. Después la factura
+  manda, como en un pedido normal.
+- Sin pedido no hay nada que sumar, y lo contado sólo pasa a LIVE al
+  descontar la primera venta.
+- Ejemplo de Axel: contó 3 Tito's el domingo, ordenó 5 → martes 7 AM, 8 →
+  miércoles con las ventas del martes, 7 → la factura dice que no llegó, 2.
+
 **Cuándo sale la marca "Live"** (Axel, 2026-11-08): durante un conteo
 activo se enseña lo contado, sin marca. Al cerrar el conteo todo vuelve
 a cero: el número es lo contado y NO lleva "Live". La marca aparece con
