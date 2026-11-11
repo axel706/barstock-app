@@ -88,8 +88,10 @@ grupo('lo que se movió y lo que no');
   const colorDe = (el) => el.querySelector('.m-inv-v b').getAttribute('style');
   prueba('el color sale del LIVE, no de lo contado (Tito\'s 7.1/8 es verde)', colorDe(t).includes(H.tono({ onHand: 7.1, suggested: 8 }).c) && !colorDe(t).includes(H.tono({ onHand: 3, suggested: 8 }).c));
   prueba('el negativo, rojo como "out of stock"', colorDe(b).includes(rojo));
-  const barra = t.querySelector('.m-inv-bar');
-  prueba('la barra también (89 % y no 37 %)', !!barra && /width:\s*89%/.test(barra.getAttribute('style')), barra && barra.getAttribute('style'));
+  // La barra de color del fondo de cada fila se quitó (Axel,
+  // 2026-11-11: "ya sé que indican visualmente cuánto hay pero no me
+  // gusta, a todos los productos"). El color sigue en el número.
+  prueba('ninguna fila lleva la barra de color', !host.querySelector('.m-inv-bar'));
   prueba('on_hand no se toca', w.state.master.find(r => r.item === "Tito's Vodka 1L").onHand === 3 && w.state.master.find(r => r.item === 'Bulleit Rye').onHand === 1);
   prueba('se pidió una vez', w.__llamadas === 1);
 }

@@ -137,19 +137,24 @@
   const TONO = { 'no vendor': 'amber', 'no price': 'red', 'no par': 'gris' };
 
   // ── Cuánto hay contra su par ─────────────────────────────────────────
-  // El color y la barrita de cada fila los decide product-hero.js, el
+  // El color del número de cada fila lo decide product-hero.js, el
   // mismo que pinta la ficha al tocarla. Aquí había otra regla con sus
   // propios cortes, y Tito's salía ámbar en la lista y verde en la
-  // ficha. Sin el módulo, gris y sin barra: mejor sin color que con uno
-  // que diga otra cosa que la ficha.
+  // ficha. Sin el módulo, gris: mejor sin color que con uno que diga
+  // otra cosa que la ficha.
+  //
+  // Cada fila llevaba además una barra de color en el fondo, lo que hay
+  // contra el par. Se quitó en todas (Axel, 2026-11-11: "ya sé que
+  // indican visualmente cuánto hay pero no me gusta"). El color sigue en
+  // el número.
   // ── El LIVE en la lista (Axel, 2026-11-11, opción A con decimal) ────
   //
   // El número grande es el LIVE con "≈" y un decimal, y la línea de abajo
   // empieza con "● Live"; "Out Sat" detrás, en vez de los "days" de
   // Pour·IQ. El LIVE, cuándo se acaba y cuándo se relee viven en
   // live-cache.js, que comparten todas las pantallas: aquí sólo se pinta.
-  // El color, la barra, los días y el orden salen del mismo número que se
-  // enseña: un "≈7.1/8" verde con la barra de lo contado diría dos cosas.
+  // El color, los días y el orden salen del mismo número que se enseña:
+  // un "≈7.1/8" verde ordenado por lo contado diría dos cosas.
   const LC = () => window.BarStockLiveCache;
   const vivoDe = (r) => LC() ? LC().vivo(r) : null;
   const cuanto = (r) => LC() ? LC().cuanto(r) : num(r.onHand);
@@ -168,8 +173,8 @@
 
   function salud(r) {
     const H = window.BarStockProductHero;
-    if (H && H.tono) { const k = H.tono(r); return { c: k.c, pct: k.pct }; }
-    return { c: '#94a3b8', pct: null };
+    if (H && H.tono) return { c: H.tono(r).c };
+    return { c: '#94a3b8' };
   }
 
   function dias(r) {
@@ -306,7 +311,6 @@
           <span class="m-inv-v">
             <b style="color:${s.c}">${v ? '\u2248' + v.live.toFixed(1) : n2(r.onHand)}</b><i>/${num(r.suggested) > 0 ? n2(r.suggested) : '—'}</i>
           </span>
-          ${s.pct !== null ? `<span class="m-inv-bar" style="width:${s.pct}%;background:${s.c}"></span>` : ''}
         </button>`;
     }).join('');
 

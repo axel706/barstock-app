@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-185002",
+    "items": [
+      "No more color line under each bottle in Inventory"
+    ]
+  },
+  {
     "build": "20261111-184517",
     "items": [
       "See them on Home opens only the bottles running out",
@@ -184,12 +190,6 @@
     "items": [
       "Toast sales by category in Settings, Connections",
       "See how Toast names each drink and modifier"
-    ]
-  },
-  {
-    "build": "20261109-211423",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]

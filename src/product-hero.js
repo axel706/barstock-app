@@ -44,7 +44,9 @@
   //   más                     verde
   //   sin par                 gris: no hay contra qué medir
   //
-  // `pct` es lo que dibuja la barrita de la lista.
+  // `pct` es cuánto hay contra el par, en %. La barrita de la lista que
+  // lo dibujaba se quitó (Axel, 2026-11-11); se sigue devolviendo para
+  // quien lo quiera.
   const CORTE_ROJO = 0.25;
   const CORTE_AMBAR = 0.60;
   const COLOR = { mal: '#f87171', ojo: '#fbbf24', bien: '#4ade80', sin: '#94a3b8' };

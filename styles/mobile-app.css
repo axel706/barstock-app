@@ -2499,8 +2499,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-out-a { background: rgba(245,158,11,.20); color: #fcd34d; }
   .m-out-g { background: rgba(148,163,184,.18); color: #cbd5e1; }
 
-  .m-inv-bar { position: absolute; left: 0; bottom: 0; height: 2px; }
-
   /* ── El cajón de filtros y la hoja de producto ──────────────────── */
 
   .m-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
