@@ -1,6 +1,19 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/api/contact", "destination": "/api/notify?type=contact" }
+    {
+      "source": "/api/contact",
+      "destination": "/api/notify?type=contact"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/integrations?provider=toast&cron=sync&run=1",
+      "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/integrations?provider=toast&cron=sync&run=2",
+      "schedule": "0 12 * * *"
+    }
   ]
 }

@@ -24,6 +24,7 @@
 const { sesion } = require('../lib/integracion');
 const toast = require('../lib/toast');
 const tripleseat = require('../lib/tripleseat');
+const { cronToast } = require('../lib/toast-cron');
 
 const PROVEEDORES = { toast, tripleseat };
 
@@ -37,6 +38,14 @@ module.exports = async function handler(req, res) {
   const h = Object.prototype.hasOwnProperty.call(PROVEEDORES, p) ? PROVEEDORES[p] : null;
   if (!h) {
     return res.status(404).json({ ok: false, error: 'Unknown integration. Use: ' + Object.keys(PROVEEDORES).join(', ') });
+  }
+  // La carga diaria de Toast (lib/toast-cron.js). La llama Vercel con un
+  // GET, sin sesión de la app: en su lugar exige el CRON_SECRET, que
+  // comprueba toast-cron.js. Es la ÚNICA puerta sin sesión, y sólo hace
+  // la acción `sync` del día que falte; cualquier otro GET sigue en 405.
+  if (req.method === 'GET' && p === 'toast' && req.query && req.query.cron === 'sync') {
+    try { return await cronToast(req, res, h); }
+    catch (e) { return res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
   }
   if (req.method !== 'POST') {
     return res.status(405).json({ ok: false, error: 'Method not allowed' });

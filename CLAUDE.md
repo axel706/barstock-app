@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 115 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 116 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -301,7 +301,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 115 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 116 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -427,8 +427,14 @@ que miente.
    contesta hasta un año atrás (comprobado: 2025-11-01). Se guarda lo
    que dijo Toast, sólo bebida, sin texto libre; las botellas se
    calculan al leer. Acción `sync` en `lib/toast.js` y
-   `bsToastHistoria` en `tools/toast.js`. Falta: cargarla de verdad y
-   que la app cargue sola los últimos días.
+   `bsToastHistoria` en `tools/toast.js`. Cargados 90 días (Axel
+   preguntó si hacía falta un año: para la mediana por día de la semana
+   bastan ~13 semanas, y lo viejo tiene otro menú). La carga diaria la
+   hace Vercel (`lib/toast-cron.js`, dos llamadas en `vercel.json`, un
+   día por llamada por el tope de 10 s); necesita `CRON_SECRET` en
+   Vercel o no corre. "Beverage" en Toast es sin alcohol y se queda
+   fuera; "Banquet Beverage" se guarda pero es el paquete de open bar
+   por persona y no se puede pasar a botellas.
 2. La comparación C.
 3. La pantalla de ventas: primero el diseño.
 4. El "deberías tener" en Inventory, la ficha y el Home.
