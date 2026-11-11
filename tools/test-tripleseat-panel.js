@@ -70,7 +70,8 @@ function entorno(contesta) {
     if (r instanceof Error) throw r;
     return { json: async () => r };
   };
-  try { w.eval(leer('src/tripleseat-panel.js')); } catch (e) { console.log('  (no carga: ' + e.message + ')'); }
+  // La llamada y el copiar son de dev-panel.js, compartidos con el panel de Toast.
+  try { w.eval(leer('src/dev-panel.js')); w.eval(leer('src/tripleseat-panel.js')); } catch (e) { console.log('  (no carga: ' + e.message + ')'); }
   return w;
 }
 

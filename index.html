@@ -64,7 +64,7 @@
   <link rel="stylesheet" href="styles/skeleton.css?v=skel1">
   <link rel="stylesheet" href="styles/toast.css?v=toast2">
   <link rel="stylesheet" href="styles/marginedge-match.css?v=mem9">
-  <link rel="stylesheet" href="styles/marginedge-connections.css?v=mecss7">
+  <link rel="stylesheet" href="styles/marginedge-connections.css?v=mecss8">
   <link rel="stylesheet" href="styles/empty-state.css?v=empty2">
   <link rel="stylesheet" href="styles/pour-iq.css?v=piq1">
   <link rel="stylesheet" href="styles/admin.css?v=adm3">
@@ -369,7 +369,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261109-211423</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261110-205510</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5500,7 +5500,9 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/marginedge-purchases.js?v=mep8"></script>
 <script src="src/marginedge-unclaimed.js?v=meu1"></script>
 <script src="src/marginedge-connect.js?v=mec7"></script>
-<script src="src/tripleseat-panel.js?v=tsp7"></script>
+<script src="src/dev-panel.js?v=dev1"></script>
+<script src="src/tripleseat-panel.js?v=tsp8"></script>
+<script src="src/toast-panel.js?v=tp1"></script>
 <script src="src/toast-wine.js?v=tw3"></script>
 <script src="src/toast-wine-panel.js?v=twp1"></script>
 
@@ -6876,6 +6878,19 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
         <div id="tsCajas" class="ts-cajas"></div>
         <div id="tsBotones" class="ts-botones"></div>
         <div id="tsSalida" class="ts-salida"></div>
+      </details>
+
+      <!-- Y para Toast: las ventas del día en dinero y cómo llama Toast
+           a cada trago y a sus modificadores. Antes sólo se veía pegando
+           código en la consola del ordenador. Sólo lee. -->
+      <details id="toastDiag" class="me-diag">
+        <summary>Toast · Developer tools</summary>
+        <div class="small muted" style="margin:10px 0 12px">
+          Direct questions to the Toast API, for The Crown Tavern. Read only: nothing here is saved.
+        </div>
+        <div id="tpCajas" class="ts-cajas"></div>
+        <div id="tpBotones" class="ts-botones"></div>
+        <div id="tpSalida" class="ts-salida"></div>
       </details>
     </div>
 

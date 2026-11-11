@@ -49,18 +49,10 @@
 
   const $ = id => document.getElementById(id);
 
-  async function llamar(action, params) {
-    const S = window.BarStockSupabase;
-    const client = S && S.getClient && S.getClient();
-    const { data } = client ? await client.auth.getSession() : { data: null };
-    const token = (data && data.session && data.session.access_token) || '';
-    const r = await fetch('/api/integrations?provider=tripleseat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify({ action, params: params || {} })
-    });
-    return r.json();
-  }
+  // La llamada con la sesión y el copiar vivían escritos aquí. Al hacer
+  // el panel de Toast hacían falta los dos, iguales: están en
+  // dev-panel.js y los usan los dos paneles.
+  const llamar = (action, params) => window.BarStockDevPanel.llamar('tripleseat', action, params);
 
   function params(action) {
     const p = {};
@@ -95,20 +87,7 @@
     return out;
   }
 
-  async function copiar(texto) {
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(texto); return true; }
-    } catch (e) { /* sin permiso: se prueba a la antigua */ }
-    try {
-      const t = document.createElement('textarea');
-      t.value = texto; t.setAttribute('readonly', '');
-      t.style.position = 'fixed'; t.style.opacity = '0';
-      document.body.appendChild(t); t.select();
-      const ok = document.execCommand('copy');
-      t.remove();
-      return ok;
-    } catch (e) { return false; }
-  }
+  const copiar = (texto) => window.BarStockDevPanel.copiar(texto);
 
   async function alCopiar(b) {
     if (!seguro) return;

@@ -109,7 +109,7 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 
 ## La arquitectura
 
-Frontend estático, sin build. `index.html` es un monolito y hay ~106 módulos
+Frontend estático, sin build. `index.html` es un monolito y hay ~108 módulos
 `src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 29 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 111 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 112 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -301,7 +301,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 111 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 112 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -333,6 +333,10 @@ en la consola: la llamada va dentro de `(async () => { ... })();`.
   de venta (acción `sales`): bruto, descuentos, neto e impuesto, con los
   modificadores con precio aparte. Falta medirlo contra el informe de
   ventas de Toast para saber cuál de las cifras es "la venta".
+  Lo mismo con botones, sin consola y desde el teléfono: Settings →
+  Connections → *Toast · Developer tools* (`src/toast-panel.js`), con
+  Ping, Sales y Drinks. No tiene botón para `sync`. La llamada y el
+  copiar de los dos paneles viven en `src/dev-panel.js`.
   `drinks` resume un día entero de ventas por categoría, con modificadores,
   sin texto libre: es para ver cómo cuenta Toast los tragos.
   **`await bsToastHistoria(365)` NO es sólo lectura:** carga lo vendido día

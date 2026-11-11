@@ -329,6 +329,28 @@
   white-space: pre-wrap; word-break: break-word;
 }
 .ts-crudo { margin-top: 14px; }
+
+/* ── Toast · Developer tools (src/toast-panel.js) ──────────────────── */
+/* Reusa los .ts-* de arriba: mismo plegable, mismos botones. Aquí sólo
+   lo que es suyo, la tabla del dinero y la lista de tragos. La tabla va
+   dentro de .tp-rueda para que en el teléfono se desplace ELLA de lado
+   y no la pantalla entera. */
+.tp-avisos { margin-top: 10px; padding: 9px 12px; border-radius: 10px; font-size: 12px; line-height: 1.5;
+  background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.35); color: #fcd34d; }
+.tp-rueda { margin-top: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.tp-tabla { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+.tp-tabla th, .tp-tabla td { padding: 7px 10px; text-align: right; border-bottom: 1px solid rgba(127,140,160,.18); }
+.tp-tabla th:first-child, .tp-tabla td:first-child { text-align: left; }
+.tp-tabla th { font-size: 11px; font-weight: 700; color: var(--sub, #64748b); }
+.tp-tabla .tp-total td { font-weight: 700; border-top: 1px solid rgba(127,140,160,.4); border-bottom: 0; }
+.tp-pie { margin-top: 8px; }
+.tp-lista { margin-top: 6px; display: grid; gap: 6px; }
+.tp-art { padding: 8px 10px; border-radius: 10px; background: rgba(0,0,0,.2); }
+.tp-art-n { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+.tp-art-n span { font-weight: 700; color: #7dd3fc; }
+.tp-mods { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.tp-mods i { font-style: normal; font-size: 11px; padding: 2px 8px; border-radius: 999px;
+  background: rgba(127,140,160,.16); border: 1px solid rgba(127,140,160,.25); }
 .ts-crudo > summary { cursor: pointer; font-size: 12px; font-weight: 600; color: var(--sub, #64748b); }
 
 /* ── Wine from Toast (src/toast-wine-panel.js) ─────────────────────────

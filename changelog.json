@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261110-205510",
+    "items": [
+      "Toast sales by category in Settings, Connections",
+      "See how Toast names each drink and modifier"
+    ]
+  },
+  {
     "build": "20261109-211423",
     "items": [
       "Behind-the-scenes fixes"
@@ -177,12 +184,6 @@
   },
   {
     "build": "20261109-105613",
-    "items": [
-      "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261109-104956",
     "items": [
       "Behind-the-scenes fixes"
     ]
