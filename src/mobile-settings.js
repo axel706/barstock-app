@@ -65,10 +65,12 @@
     const M = window.BarStockMobile;
     const vuelta = (M && M.nombreAnterior && M.nombreAnterior()) || 'Back';
 
-    if (M && M.salirBanda) M.salirBanda();
+    // La raíz también lleva su nombre en la banda, como sus subsecciones
+    // (Axel, 2026-11-11: "settings debe tener la misma apariencia que las
+    // otras subsecciones"). Su atrás sigue yendo a la pantalla de antes.
     host.innerHTML =
-      cab({ volverA: vuelta, titulo: 'Settings' }) +
-      '<div class="m-hsub">' + esc(loc) + '</div>' +
+      seccion({ volverA: vuelta, titulo: 'Settings' }) +
+      '<div class="m-hsub m-set-intro">' + esc(loc) + '</div>' +
       GRUPOS.map(g =>
         '<div class="m-lab">' + esc(g.t.toUpperCase()) + '</div>' +
         g.items.map(it =>
@@ -112,8 +114,7 @@
   // Las subsecciones llevan su nombre en la banda, en el sitio del logo,
   // y el botón de la izquierda es "atrás" (Axel, 2026-11-11, opción 1,
   // "en todas las subsecciones"). En la página sólo queda la línea que
-  // explica la sección. La raíz de Settings no: conserva su cabecera,
-  // porque desde ahí se vuelve a la pantalla de antes, no a Settings.
+  // explica la sección. La raíz de Settings, igual desde el mismo día.
   function cabecera(host, titulo, sub) {
     return seccion({ volverA: 'Settings', titulo: titulo, sub: sub || '' });
   }

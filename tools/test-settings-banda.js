@@ -60,8 +60,10 @@ function montar() {
   const enSeccion = () => banda().classList.contains('m-en-seccion');
 
   M.ir('home'); M.ir('settings'); await esperar(10);
-  prueba('la raíz de Settings: la banda con su logo', !enSeccion());
-  prueba('y su cabecera con chevron en la página', !!caja().querySelector('#mAtras') && /Settings/.test(caja().querySelector('.m-inv-t').textContent));
+  // La raíz también (Axel, 2026-11-11: "settings debe tener la misma
+  // apariencia que las otras subsecciones").
+  prueba('la raíz de Settings: "Settings" en la banda', enSeccion() && nombre() === 'Settings', nombre());
+  prueba('sin cabecera propia en la página', !caja().querySelector('#mAtras') && !caja().querySelector('.m-inv-t'));
 
   caja().querySelector('[data-p="delivery"]').click(); await esperar(10);
   prueba('Delivery: el nombre en la banda', enSeccion() && nombre() === 'Delivery', nombre());
@@ -75,7 +77,7 @@ function montar() {
   banda().querySelector('#mBandAtras').click(); await esperar(10);
   prueba('atrás desde la ficha vuelve a la lista', nombre() === 'Delivery' && !!caja().querySelector('[data-v="LOOP"]'));
   banda().querySelector('#mBandAtras').click(); await esperar(10);
-  prueba('atrás desde la lista vuelve a Settings, y la banda recupera el logo', !enSeccion() && !!caja().querySelector('[data-p="delivery"]'));
+  prueba('atrás desde la lista vuelve a Settings', nombre() === 'Settings' && !!caja().querySelector('[data-p="delivery"]'));
 
   for (const id of ['zones', 'size', 'emails']) {
     const b = caja().querySelector('[data-p="' + id + '"]');
@@ -85,6 +87,10 @@ function montar() {
     banda().querySelector('#mBandAtras').click(); await esperar(10);
   }
 
+  banda().querySelector('#mBandAtras').click(); await esperar(10);
+  prueba('atrás desde la raíz sale de Settings y devuelve el logo', !enSeccion() && M.activa() === 'home', M.activa());
+
+  M.ir('settings'); await esperar(10);
   caja().querySelector('[data-p="delivery"]').click(); await esperar(10);
   M.ir('home'); await esperar(10);
   prueba('ir a otra pantalla devuelve la banda', !enSeccion());

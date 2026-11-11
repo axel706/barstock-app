@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-160151",
+    "items": [
+      "Settings: its name sits in the header too"
+    ]
+  },
+  {
     "build": "20261111-155323",
     "items": [
       "Delivery: set the day and time each vendor's order arrives"
@@ -180,12 +186,6 @@
     "build": "20261109-144608",
     "items": [
       "The update card stays until you tap Update"
-    ]
-  },
-  {
-    "build": "20261109-143219",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]
