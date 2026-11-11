@@ -439,6 +439,15 @@ sale de marginedge_invoice_lines" de arriba):
   cuenta desde ese momento (ya llegó, o viene un proveedor de emergencia);
   no = cuenta desde la siguiente entrega del proveedor. Después la factura
   manda, como en un pedido normal.
+- **Cada pedido pertenece al ciclo en el que LLEGA, no en el que se
+  colocó** (Axel, 2026-11-11, confirmado). Su fecha de llegada se fija al
+  enviarlo: la siguiente entrega de su proveedor, o "ahora" en un quick
+  order con sí. De ella cuelgan cuándo suma al LIVE, en qué ciclo sale
+  como "ordered" (con una leyenda si se colocó en otro: "Placed Thu Nov 12
+  · arrives Thu Nov 19") y a qué ciclo cuenta su gasto. Vale también para
+  un pedido normal colocado tarde (Breakthru el miércoles, después de su
+  entrega del martes, llega el martes siguiente). El conteo del domingo no
+  lo incluye porque no estaba en la estantería: no se cuenta dos veces.
 - Sin pedido no hay nada que sumar, y lo contado sólo pasa a LIVE al
   descontar la primera venta.
 - Ejemplo de Axel: contó 3 Tito's el domingo, ordenó 5 → martes 7 AM, 8 →
