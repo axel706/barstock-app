@@ -61,6 +61,17 @@ prueba('Espresso Martini: Dark no lleva Baileys', !!esp && esp.lines.some(l => /
 const mt = R.find(r => r.tipo === 'modifier' && r.toast === 'Martini');
 prueba('Martini: Dirty no lleva vermouth', !!mt && mt.lines.some(l => /vermouth/i.test(l[0]) && l[2] && (l[2].not_with || []).includes('Dirty')));
 
+// Axel, 2026-11-12: "la medida de vodka es la misma" en un Martini y en
+// un Cosmo, y el estándar es 2.5, el Blood Orange incluido. Venían de dos
+// hojas distintas (Martini 2.5, House Cosmo 2) y el HH Titos Martini salía
+// con dos líneas de Tito's, 2.5 y 2, según llevara "Cosmo".
+const base = (r) => r.lines.find(l => (l[2] && l[2].chosen) || /vodka|gin/i.test(l[0]));
+const estandar = R.filter(r => /martini|cosmo/i.test(r.toast) && !/espresso|pistachio|s'mores|seasonal/i.test(r.toast) && r.lines.length);
+prueba('Martini y Cosmo: el licor base a 2.5', estandar.every(r => base(r) && base(r)[1] === 2.5),
+  estandar.filter(r => !(base(r) && base(r)[1] === 2.5)).map(r => r.toast + ' ' + (base(r) || [])[1]).join(', '));
+const tm = R.find(r => r.toast === 'HH Titos Martini');
+prueba('HH Titos Martini: una sola línea de Tito\'s', !!tm && tm.lines.filter(l => /tito/i.test(l[0])).length === 1);
+
 prueba('se puede correr dos veces', /on conflict \(location_id, tipo, toast_name\) do nothing/.test(SQL) && /if rid is null then continue/.test(SQL));
 prueba('sólo en la locación de Toast, una', /if n <> 1 then\s+raise exception/.test(SQL));
 

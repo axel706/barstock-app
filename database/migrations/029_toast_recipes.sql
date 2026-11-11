@@ -6,7 +6,8 @@
 -- del licor que más se mueve.
 --
 -- Las recetas salen de las hojas que llenó Axel a mano (2026-11-10) y de
--- sus respuestas del 2026-11-11. Sólo lo que sale del inventario: el
+-- sus respuestas del 2026-11-11 (y del 12: Martini y Cosmo, 2.5 de licor,
+-- ver la 030). Sólo lo que sale del inventario: el
 -- jugo, el sirope y el refresco no se cuentan. Onzas por UN trago.
 --
 -- ── Dos tablas ───────────────────────────────────────────────────────
@@ -133,7 +134,7 @@ begin
     {"tipo":"cocktail","toast":"Seasonal Martini","price":14,"lines":[],"pending":"Changes every week; the sheet was left blank."},
     {"tipo":"cocktail","toast":"Proper Perry","price":12,"lines":[["Prosecco Nino Ardevi",4],["St. Elder",0.5]]},
     {"tipo":"cocktail","toast":"Her Majesty","price":15,"lines":[["Tito's vodka",2],["St. Elder",0.75]]},
-    {"tipo":"cocktail","toast":"Blood Orange Cosmo","price":15,"lines":[["Triage Blood Orange vodka",2],["Triple sec",0.5]]},
+    {"tipo":"cocktail","toast":"Blood Orange Cosmo","price":15,"lines":[["Triage Blood Orange vodka",2.5],["Triple sec",0.5]]},
     {"tipo":"cocktail","toast":"Wimbledon Cup","price":12,"lines":[["Pimm's No. 1 Cup",2]]},
     {"tipo":"cocktail","toast":"Mustique Margarita","price":12,"lines":[["Pedro Morales tequila (jalapeño infusion)",1.5],["Triple sec Phillips",0.5]]},
     {"tipo":"cocktail","toast":"Smoky Old Fashioned","price":18,"lines":[["Dad's Hat rye",3]]},
@@ -142,7 +143,7 @@ begin
     {"tipo":"cocktail","toast":"S'mores Martini","price":15,"lines":[["Smirnoff Vanilla vodka",1.5],["Godiva chocolate liqueur",1.5],["Baileys",1]]},
     {"tipo":"cocktail","toast":"Seasonal Espresso Martini","price":13,"lines":[["Smirnoff Vanilla vodka",1],["Kamora coffee liqueur",1],["Baileys",0.75,{"not_with":["Dark"]}]]},
     {"tipo":"cocktail","toast":"Espresso Martini","note":"Same as the Seasonal Espresso Martini. Dark = no Baileys.","lines":[["Smirnoff Vanilla vodka",1],["Kamora coffee liqueur",1],["Baileys",0.75,{"not_with":["Dark"]}]]},
-    {"tipo":"cocktail","toast":"House Cosmo","lines":[["Triage vodka",2],["Triple sec",0.75]]},
+    {"tipo":"cocktail","toast":"House Cosmo","lines":[["Triage vodka",2.5],["Triple sec",0.75]]},
     {"tipo":"cocktail","toast":"Aperol Spritz","lines":[["Aperol",2],["Prosecco Nino Ardevi",4.5]]},
     {"tipo":"cocktail","toast":"Hugo Spritz","lines":[["St. Elder",2],["Prosecco Nino Ardevi",4.5]]},
 
@@ -152,10 +153,10 @@ begin
     {"tipo":"cocktail","toast":"Old Fashioned Well","lines":[],"pending":"Not on the sheet."},
     {"tipo":"cocktail","toast":"LIT - House","lines":[],"pending":"Not on the sheet."},
 
-    {"tipo":"cocktail","toast":"HH Cosmopolitan","hh":true,"note":"Same as the House Cosmo.","lines":[["Triage vodka",2],["Triple sec",0.75]]},
+    {"tipo":"cocktail","toast":"HH Cosmopolitan","hh":true,"note":"Same as the House Cosmo.","lines":[["Triage vodka",2.5],["Triple sec",0.75]]},
     {"tipo":"cocktail","toast":"HH Vodka Martini","hh":true,"lines":[["Triage vodka",2.5],["Dry vermouth Cinzano",0.5,{"not_with":["Dirty"]}]]},
     {"tipo":"cocktail","toast":"HH Gin Martini","hh":true,"lines":[["Mr Boston gin",2.5],["Dry vermouth Cinzano",0.5,{"not_with":["Dirty"]}]]},
-    {"tipo":"cocktail","toast":"HH Titos Martini","hh":true,"note":"With Cosmo it is the HH Cosmo made with Tito's.","lines":[["Tito's vodka",2.5,{"not_with":["Cosmo"]}],["Dry vermouth Cinzano",0.5,{"not_with":["Dirty","Cosmo"]}],["Tito's vodka",2,{"only_with":"Cosmo"}],["Triple sec",0.75,{"only_with":"Cosmo"}]]},
+    {"tipo":"cocktail","toast":"HH Titos Martini","hh":true,"note":"With Cosmo it is the HH Cosmo made with Tito's.","lines":[["Tito's vodka",2.5],["Dry vermouth Cinzano",0.5,{"not_with":["Dirty","Cosmo"]}],["Triple sec",0.75,{"only_with":"Cosmo"}]]},
     {"tipo":"cocktail","toast":"HH Lemon Drop Martini","hh":true,"lines":[["Triage vodka",2.5],["Triple sec",0.5]]},
     {"tipo":"cocktail","toast":"HH House Manhattan","hh":true,"lines":[["Kentucky Tavern",2.5],["Sweet vermouth Cinzano",0.5]]},
     {"tipo":"cocktail","toast":"HH Espresso Martini","hh":true,"lines":[["Triage Vanilla vodka",1],["Kamora coffee liqueur",1],["Baileys",0.75,{"not_with":["Dark"]}]]},
@@ -166,7 +167,7 @@ begin
     {"tipo":"cocktail","toast":"Whiskey","hh":true,"lines":[],"pending":"Which whiskey, and how much."},
 
     {"tipo":"modifier","toast":"Martini","note":"Dirty = no vermouth.","lines":[["Liquor the guest picks",2.5,{"chosen":true}],["Dry vermouth Cinzano",0.5,{"not_with":["Dirty"]}]]},
-    {"tipo":"modifier","toast":"Cosmo","note":"The HH Cosmo with the liquor the guest picks.","lines":[["Liquor the guest picks",2,{"chosen":true}],["Triple sec",0.75]]},
+    {"tipo":"modifier","toast":"Cosmo","note":"The HH Cosmo with the liquor the guest picks.","lines":[["Liquor the guest picks",2.5,{"chosen":true}],["Triple sec",0.75]]},
     {"tipo":"modifier","toast":"Manhattan","lines":[["Liquor the guest picks",2.5,{"chosen":true}],["Sweet vermouth Cinzano",0.5]]},
     {"tipo":"modifier","toast":"Old Fashioned","lines":[["Liquor the guest picks",3,{"chosen":true}]]}
   ]$recetas$::jsonb)
@@ -199,4 +200,4 @@ end $$;
 --     left join public.toast_recipe_lines l on l.recipe_id = r.id
 --    order by r.tipo, r.happy_hour, r.toast_name, l.position;
 --
--- Tienen que salir 41 recetas y 68 líneas.
+-- Tienen que salir 41 recetas y 67 líneas.
