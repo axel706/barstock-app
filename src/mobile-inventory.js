@@ -133,6 +133,48 @@
   // propios cortes, y Tito's salía ámbar en la lista y verde en la
   // ficha. Sin el módulo, gris y sin barra: mejor sin color que con uno
   // que diga otra cosa que la ficha.
+  // ── El LIVE en la lista (Axel, 2026-11-11, opción A con decimal) ────
+  //
+  // El número grande es el LIVE (live-stock.js: contado + lo que llegó −
+  // lo vendido en Toast desde el conteo), con "≈" y un decimal, y la
+  // línea de abajo empieza con "● Live". Sólo lo que se MOVIÓ desde el
+  // conteo: lo demás —la cerveza, lo que no se vendió ni llegó— enseña lo
+  // contado, sin marca, porque "Live" sin nada detrás sería una
+  // afordancia que miente. Un LIVE por debajo de cero se enseña tal cual,
+  // en rojo: dice que el conteo o algo de lo de detrás no cuadra.
+  //
+  // El color, la barra, los días y el orden salen del mismo número que se
+  // enseña: un "≈7.1/8" verde con la barra al 37 % de lo contado diría
+  // dos cosas a la vez. on_hand no se toca: el LIVE no se guarda.
+  //
+  // Se pide al entrar en Inventory y se guarda dos minutos: son varias
+  // lecturas (pedidos, facturas, ventas de Toast) y la lista se repinta
+  // con cada letra del buscador.
+  const VIVO_MS = 2 * 60 * 1000;
+  let _vivo = null, _vivoEn = 0, _pidiendo = null;
+
+  function cargarVivo(host) {
+    const L = window.BarStockLive;
+    if (!L || !L.ahora || _pidiendo) return;
+    if (_vivo && Date.now() - _vivoEn < VIVO_MS) return;
+    _pidiendo = L.ahora().then(r => {
+      // Con un conteo activo, o sin conteo conocido, se enseña lo contado.
+      _vivo = new Map(r && r.estado === 'listo'
+        ? r.filas.filter(f => f.movimiento).map(f => [f.producto, f]) : []);
+    }).catch(e => {
+      console.warn('[inventory] sin LIVE', e);
+      _vivo = new Map();
+    }).finally(() => {
+      _vivoEn = Date.now();
+      _pidiendo = null;
+      if (host && host.isConnected) pintarLista(host);
+    });
+  }
+
+  const vivoDe = (r) => (_vivo && r ? _vivo.get(r.item) : null) || null;
+  // El número de una fila: el LIVE si se movió, si no lo contado.
+  const cuanto = (r) => { const v = vivoDe(r); return v ? v.live : num(r.onHand); };
+
   function salud(r) {
     const H = window.BarStockProductHero;
     if (H && H.tono) { const k = H.tono(r); return { c: k.c, pct: k.pct }; }
@@ -144,7 +186,7 @@
     if (!p) return null;
     const avg = Number(p.avgUsed) || 0;
     if (avg <= 0 || (p.normalWeeks || 0) < SEMANAS_PARA_FIAR) return null;
-    return Math.round(num(r.onHand) / avg * 7);
+    return Math.max(0, Math.round(cuanto(r) / avg * 7));
   }
 
   // ── La lista ─────────────────────────────────────────────────────────
@@ -182,10 +224,10 @@
     // Por valor en el estante y de mayor a menor: arreglar el precio de
     // un producto de $38 que se mueve importa más que el de uno de $6.
     if (_orden === 'valor') {
-      filas.sort((a, b) => (num(b.value) * num(b.onHand)) - (num(a.value) * num(a.onHand))
+      filas.sort((a, b) => (num(b.value) * cuanto(b)) - (num(a.value) * cuanto(a))
                            || String(a.item).localeCompare(String(b.item)));
     } else if (_orden === 'falta') {
-      const r0 = (r) => { const par = num(r.suggested); return par > 0 ? num(r.onHand) / par : 99; };
+      const r0 = (r) => { const par = num(r.suggested); return par > 0 ? cuanto(r) / par : 99; };
       filas.sort((a, b) => r0(a) - r0(b));
     } else {
       filas.sort((a, b) => String(a.item).localeCompare(String(b.item)));
@@ -226,7 +268,9 @@
     // guardar, la lista se repinta y las posiciones cambian.
     caja.innerHTML = filas.map(r => {
       const i = master().indexOf(r);
-      const s = salud(r);
+      const v = vivoDe(r);
+      // El tono de la fila con el número que se enseña (el LIVE si lo hay).
+      const s = salud(v ? Object.assign({}, r, { onHand: v.live }) : r);
       const f = faltas(r);
       const d = dias(r);
       const pedir = num(r.toOrder);
@@ -245,12 +289,13 @@
           <span class="m-inv-l">
             <span class="m-inv-n">${esc(r.item)}</span>
             <span class="m-inv-meta">
+              ${v ? '<span class="m-live"><i></i>Live</span>' : ''}
               ${f.map(x => `<em class="m-flag m-flag-${TONO[x]}">${x}</em>`).join('')}
               ${meta.length ? `<span>${meta.join(' · ')}</span>` : ''}
             </span>
           </span>
           <span class="m-inv-v">
-            <b style="color:${s.c}">${n2(r.onHand)}</b><i>/${num(r.suggested) > 0 ? n2(r.suggested) : '—'}</i>
+            <b style="color:${s.c}">${v ? '\u2248' + v.live.toFixed(1) : n2(r.onHand)}</b><i>/${num(r.suggested) > 0 ? n2(r.suggested) : '—'}</i>
           </span>
           ${s.pct !== null ? `<span class="m-inv-bar" style="width:${s.pct}%;background:${s.c}"></span>` : ''}
         </button>`;
@@ -717,6 +762,7 @@
   }
 
   function show(host) {
+    cargarVivo(host);
     const tot = host.querySelector('#miTotal');
     if (tot) tot.textContent = master().length ? master().length + ' items' : '…';
     pintarCabecera(host);

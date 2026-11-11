@@ -2444,6 +2444,11 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-flag-red   { background: rgba(239,68,68,.18);  color: #fca5a5; }
   .m-flag-amber { background: rgba(245,158,11,.20); color: #fcd34d; }
   .m-flag-gris  { background: rgba(148,163,184,.20); color: #cbd5e1; }
+  /* "● Live": el número de esta fila es el LIVE, con algo sumado o
+   * restado desde el conteo (mobile-inventory.js). Verde, con su punto,
+   * al principio de la línea de abajo. */
+  .m-live { display: inline-flex; align-items: center; gap: 5px; font-weight: 800; color: #6ee7b7; }
+  .m-live i { width: 7px; height: 7px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 3px rgba(52,211,153,.18); }
 
   .m-inv-bar { position: absolute; left: 0; bottom: 0; height: 2px; }
 
