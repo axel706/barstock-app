@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261110-213750",
+    "items": [
+      "Behind-the-scenes fixes"
+    ]
+  },
+  {
     "build": "20261110-205510",
     "items": [
       "Toast sales by category in Settings, Connections",
@@ -180,12 +186,6 @@
     "build": "20261109-110814",
     "items": [
       "Update screen stays still while the bar fills"
-    ]
-  },
-  {
-    "build": "20261109-105613",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]

@@ -103,6 +103,8 @@ function entorno(o) {
     }
     return resp(404, {});
   };
+  // El motor es toast-links.js (compartido con el licor); el vino, encima.
+  w.eval(leer('src/toast-links.js'));
   w.eval(leer('src/toast-wine.js'));
   w.__dias = w.BarStockToastWine._diasAtras(7, o.ahora);
   return w;
@@ -286,6 +288,19 @@ grupo('9 · las dos vistas');
   prueba('telefono: Done junta confirmados e ignorados', /HH Prosecco/.test(host.textContent) && /Not an inventory wine/.test(host.textContent));
   host.querySelector('#mAtras').click();
   prueba('telefono: la flecha de volver sigue enganchada tras repintar', w.__volvio === true && enganches > 2, enganches);
+}
+
+grupo('el motor es uno, compartido con el licor');
+{
+  // El vino tenía su motor entero escrito aquí. Al llegar el licor hacía
+  // falta el mismo; se sacó a toast-links.js en vez de copiarlo.
+  const v = leer('src/toast-wine.js');
+  prueba('toast-wine.js usa el motor', /BarStockToastLinks\.crear/.test(v));
+  prueba('y no lleva otra copia de leer Toast, sugerir o guardar',
+    !/fetch\(/.test(v) && !/function sugerir/.test(v) && !/toast_item_links\?/.test(v));
+  const html = leer('index.html');
+  const i = html.indexOf('src/toast-links.js?v='), j = html.indexOf('src/toast-wine.js?v=');
+  prueba('el motor carga antes que el vino', i > 0 && i < j, i + ' ' + j);
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
