@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261111-161615",
+    "items": [
+      "Quick order asks if it's already here",
+      "Live counts it now or at the vendor's next delivery"
+    ]
+  },
+  {
     "build": "20261111-161133",
     "items": [
       "Behind-the-scenes fixes"
@@ -180,12 +187,6 @@
     "items": [
       "The top of Home no longer darkens as you scroll",
       "No more bounce at the top of the screen"
-    ]
-  },
-  {
-    "build": "20261109-152933",
-    "items": [
-      "On Home, search stays at the top as you scroll"
     ]
   }
 ]

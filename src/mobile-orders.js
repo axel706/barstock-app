@@ -1180,7 +1180,9 @@
 
   function revisarBorrador(b) {
     if (!b || !b.nombre || !Array.isArray(b.filas) || !b.filas.length) return false;
-    _borrador = { nombre: b.nombre, filas: b.filas.slice(), nota: b.nota || 'Quick Order' };
+    // `llegada`: la respuesta a "¿al LIVE ya?" del quick order
+    // (mobile-quick.js). Viaja hasta la orden para que se guarde con ella.
+    _borrador = { nombre: b.nombre, filas: b.filas.slice(), nota: b.nota || 'Quick Order', llegada: b.llegada };
     if (window.BarStockMobile) window.BarStockMobile.ir('orders');
     return true;
   }
@@ -1197,6 +1199,7 @@
     _revisar = true;
     _deBorrador = true;
     _extra = { quickOrder: true, note: b.nota };
+    if (b.llegada !== undefined) _extra.arrivesAt = b.llegada;
     const botellas = b.filas.reduce((s, r) => s + cantidad(r), 0);
     _vista = {
       nombre: b.nombre,

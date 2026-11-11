@@ -146,6 +146,17 @@ grupo('al cargar');
   prueba('un pedido de antes de esto, sin llegada', h[2].arrivesAt === null);
 }
 
+grupo('la respuesta del quick order llega al pedido');
+{
+  // El camino de correo pasa por la revisión de Orders: la respuesta a
+  // "¿al LIVE ya?" viaja en el borrador y se pega a la orden con _extra.
+  const mo = leer('src/mobile-orders.js');
+  prueba('el borrador lleva la llegada', /_borrador = \{[^}]*llegada: b\.llegada/.test(mo));
+  prueba('y la orden la recibe', /if \(b\.llegada !== undefined\) _extra\.arrivesAt = b\.llegada;/.test(mo));
+  const qo = leer('src/quick-order.js');
+  prueba('el de LOOP la pasa al constructor', /arrivesAt = datos\.arrivesAt;/.test(qo) && /construirEntrada\(\{ vendor, when, note, items, arrivesAt \}\)/.test(qo));
+}
+
 grupo('la migración y la carga');
 {
   const sql = leer('database/migrations/033_vendor_orders_llegada.sql').replace(/--.*$/gm, '');

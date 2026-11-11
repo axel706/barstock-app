@@ -184,7 +184,7 @@
     return String(vendor || '').toUpperCase() !== 'LOOP';
   }
 
-  function construirEntrada({ vendor, when, note, items }){
+  function construirEntrada({ vendor, when, note, items, arrivesAt }){
     const nota = String(note || 'Quick Order').trim() || 'Quick Order';
 
     const filas = (items || []).map(item => ({
@@ -208,7 +208,11 @@
       subtotal: clampNonNegative(subtotal),
       items: filas,
       quickOrder: true,
-      note: nota
+      note: nota,
+      // La respuesta a "¿al LIVE ya?" (mobile-quick.js). Sin ella (el
+      // diálogo del escritorio, que no pregunta), orders-cloud.js usa la
+      // hora del pedido: lo de antes.
+      ...(arrivesAt !== undefined ? { arrivesAt } : {})
     };
   }
 
@@ -221,13 +225,14 @@
   async function save(datos){
     const delMovil = !!(datos && Array.isArray(datos.items));
 
-    let vendor, when, note, items;
+    let vendor, when, note, items, arrivesAt;
 
     if (delMovil) {
       vendor = datos.vendor;
       when = datos.when instanceof Date ? datos.when : new Date();
       note = String(datos.note || 'Quick Order').trim() || 'Quick Order';
       items = datos.items;
+      arrivesAt = datos.arrivesAt;
       if (!vendor || !items.length) throw new Error('Add at least one item first.');
     } else {
       vendor = quickOrderVendorTab;
@@ -248,7 +253,7 @@
       items = quickOrderDraftItems;
     }
 
-    const entry = construirEntrada({ vendor, when, note, items });
+    const entry = construirEntrada({ vendor, when, note, items, arrivesAt });
     const totalUnits = entry.totalUnits;
     const subtotal = entry.subtotal;
 

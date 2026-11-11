@@ -204,6 +204,14 @@ console.log('\nlo que se guarda sale del constructor del escritorio');
   anadir(w, host, 'tito', 2, 30);
   host.querySelector('#mqMain').click();
   await new Promise(r => setTimeout(r, 0));
+  // Antes de guardar pregunta si va al LIVE ya (Axel, 2026-11-11, A).
+  const preg = w.document.querySelector('#mSheet');
+  ok('antes de guardar, la pregunta "Add to Live now?"', !!preg && /Add to Live now/.test(preg.textContent));
+  ok('y sin responder no se guarda nada', w.__guardadas.length === 0);
+  const no = preg && preg.querySelector('.m-ql-op.off');
+  ok('sin horario del proveedor, el "No" no se ofrece y dice por qué', !!no && !no.matches('button') && /no delivery day yet/i.test(no.textContent));
+  preg.querySelector('[data-ql="ya"]').click();
+  await new Promise(r => setTimeout(r, 0));
 
   const o = w.__guardadas[0];
   ok('se guardo una orden', !!o);
@@ -217,6 +225,7 @@ console.log('\nlo que se guarda sale del constructor del escritorio');
        o.items[0].value === 30, String(o.items[0].value));
     ok('el total en botellas', o.totalUnits === 2, String(o.totalUnits));
     ok('y en dinero', o.subtotal === 60, String(o.subtotal));
+    ok('"Yes, it\'s here": cuenta desde la hora del pedido', o.arrivesAt === o.createdAt && !!o.arrivesAt, o.arrivesAt + ' / ' + o.createdAt);
   }
 
   ok('la pantalla lo cuenta', /saved/i.test(texto(host, '.m-rev-ok-t')), texto(host, '.m-rev-ok-t'));
@@ -230,6 +239,8 @@ console.log('\nlo que se guarda sale del constructor del escritorio');
   b.w.__fallarGuardado = true;
   anadir(b.w, b.host, 'tito', 2);
   b.host.querySelector('#mqMain').click();
+  await new Promise(r => setTimeout(r, 0));
+  b.w.document.querySelector('#mSheet [data-ql="ya"]').click();
   await new Promise(r => setTimeout(r, 0));
   ok('lo dice', /was not saved/i.test(texto(b.host, '.m-rev-fallo')), texto(b.host, '.m-rev-fallo'));
   ok('y no se tragó el borrador', !!b.host.querySelector('.m-qk-l'));
@@ -247,9 +258,17 @@ console.log('\nlo que se guarda sale del constructor del escritorio');
     ok('y el subtitulo dice que sale por correo',
        /by email/i.test(texto(host, '.m-hsub')), texto(host, '.m-hsub'));
 
+    // Con horario: el "No" sale y dice cuándo.
+    w.BarStockVendorDelivery = { llegadaDe: async () => '2026-11-18T21:00:00.000Z', fecha: (iso) => iso === '2026-11-18T21:00:00.000Z' ? 'Wed Nov 18 · 4:00 PM' : 'now' };
     bt.click();
+    await new Promise(r => setTimeout(r, 0));
+    const luego = w.document.querySelector('#mSheet [data-ql="luego"]');
+    ok('con horario, "No" dice la siguiente entrega', !!luego && /Wed Nov 18 · 4:00 PM/.test(luego.textContent));
+    luego.click();
+    await new Promise(r => setTimeout(r, 0));
     ok('se entrego el borrador', w.__borradores.length === 1);
     const b2 = w.__borradores[0] || {};
+    ok('con la llegada de la siguiente entrega', b2.llegada === '2026-11-18T21:00:00.000Z', b2.llegada);
     ok('con el proveedor', b2.nombre === 'SOUTHERN', b2.nombre);
     ok('y sus lineas', (b2.filas || []).length === 1);
     ok('con la cantidad puesta', (b2.filas || [{}])[0].qty === 3);

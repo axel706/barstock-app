@@ -3828,6 +3828,22 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-screen[data-screen="settings"] .m-item-t small.m-ent-on { color: #6ee7b7; font-weight: 700; }
   .m-screen[data-screen="settings"] .m-item-t small.m-ent-no { color: #fca5a5; font-weight: 700; }
   #mSheet .m-ent-hoja { padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+  /* ── Quick order: "¿al LIVE ya?" (mobile-quick.js, opción A) ──
+   * Dos respuestas grandes, cada una diciendo desde cuándo cuenta. La
+   * que no se puede elegir (proveedor sin horario) se ve apagada y dice
+   * por qué; no es un botón. */
+  #mSheet .m-ql-hoja { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+  #mSheet .m-ql-t { font-size: var(--m-title); font-weight: 800; color: #fff; }
+  #mSheet .m-ql-p { margin-top: 4px; font-size: var(--m-small); color: #94a3b8; }
+  #mSheet .m-ql-op {
+    display: block; width: 100%; margin-top: 10px; padding: 13px 14px; text-align: left; cursor: pointer;
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.14);
+    border-radius: 16px !important; box-shadow: none; color: inherit;
+  }
+  #mSheet .m-ql-op.pri { background: rgba(56,189,248,.14); border-color: rgba(56,189,248,.45); }
+  #mSheet .m-ql-op.off { opacity: .55; cursor: default; }
+  #mSheet .m-ql-op b { display: block; font-size: var(--m-strong); color: #fff; }
+  #mSheet .m-ql-op small { display: block; margin-top: 3px; font-size: var(--m-meta); line-height: 1.4; color: #94a3b8; }
   #mSheet .m-ent-t b { display: block; font-size: var(--m-title); color: #fff; }
   #mSheet .m-ent-t span { display: block; margin-top: 3px; font-size: var(--m-small); color: #94a3b8; }
   #mSheet .m-ent-ruedas { display: flex; gap: 10px; margin-top: 14px; }

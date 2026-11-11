@@ -97,6 +97,8 @@
   const total = () => _items.reduce((s, r) => s + num(r.qty) * num(r.value), 0);
 
   function limpiar() {
+    _llegada = undefined;
+    _momento = null;
     _items = [];
     _elegido = null;
     _busca = '';
@@ -175,9 +177,10 @@
     try {
       const r = await q.save({
         vendor: _vendor,
-        when: cuando(),
+        when: _momento || cuando(),
         note: _nota.trim() || 'Quick Order',
-        items: _items.slice()
+        items: _items.slice(),
+        arrivesAt: _llegada
       });
       const e = (r && r.entrada) || null;
       _hecho = {
@@ -208,7 +211,77 @@
     o.revisarBorrador({
       nombre: _vendor,
       filas: _items.slice(),
-      nota: _nota.trim() || 'Quick Order'
+      nota: _nota.trim() || 'Quick Order',
+      llegada: _llegada
+    });
+  }
+
+  // ── ¿Al LIVE ya? ─────────────────────────────────────────────────────
+  //
+  // Axel, 2026-11-11, opción A: antes de guardar o de pasar a revisión,
+  // una hoja pregunta si lo de este quick order ya está en la bodega.
+  //   Sí → cuenta en el LIVE desde la hora del pedido (casi siempre LOOP:
+  //        ya lo trae él, o un proveedor de emergencia).
+  //   No → cuenta desde la siguiente entrega de su proveedor (Settings →
+  //        Delivery). Si se coloca el jueves por la tarde y Wine Merchant
+  //        ya entregó, llega el jueves siguiente, en el ciclo siguiente.
+  // Una pregunta y no un interruptor: sin responder no se guarda, así que
+  // no se puede olvidar. Cada respuesta dice desde cuándo cuenta.
+  //
+  // Sin horario para el proveedor, el "No" no se ofrece: no hay
+  // siguiente entrega que decir, y una llegada inventada sería peor.
+  let _llegada;   // la respuesta: ISO de la llegada
+  // El momento del pedido, fijado al preguntar. Sin cambiar la hora,
+  // cuando() es "ahora" y se leía dos veces (en la pregunta y al
+  // guardar), con milésimas de diferencia: el "sí" no coincidía con la
+  // hora del pedido. Lo encontró tools/test-quick-movil.js.
+  let _momento = null;
+
+  function cerrarPregunta() {
+    const h = document.getElementById('mSheet');
+    if (h) h.remove();
+  }
+
+  async function preguntarLive(seguir) {
+    if (_guardando || !_items.length) return;
+    const VD = window.BarStockVendorDelivery;
+    const ya = cuando();
+    _momento = ya;
+    let siguiente = null;
+    try { siguiente = VD && VD.llegadaDe ? await VD.llegadaDe(_vendor, ya) : null; }
+    catch (e) { siguiente = null; }
+    const fecha = (iso) => VD && VD.fecha ? VD.fecha(iso) : String(iso);
+
+    cerrarPregunta();
+    const h = document.createElement('div');
+    h.className = 'm-sheet';
+    // El id de todas las hojas del teléfono: las reglas que ganan el
+    // radio de 999px de app.css se apoyan en él.
+    h.id = 'mSheet';
+    h.innerHTML =
+      '<div class="m-sheet-bg"></div>' +
+      '<div class="m-sheet-box m-ql-hoja" role="dialog" aria-label="Add to Live now?">' +
+        '<div class="m-sheet-grip"></div>' +
+        '<div class="m-ql-t">Add to Live now?</div>' +
+        '<div class="m-ql-p">' + n2(botellas()) + ' bottle' + (botellas() === 1 ? '' : 's') + ' from ' + esc(_vendor) + '.</div>' +
+        '<button type="button" class="m-ql-op pri" data-ql="ya">' +
+          '<b>Yes, it\u2019s here</b><small>Counts in Live from ' + esc(fecha(ya.toISOString())) + '</small></button>' +
+        (siguiente
+          ? '<button type="button" class="m-ql-op" data-ql="luego">' +
+              '<b>No, it comes with the next delivery</b>' +
+              '<small>Counts from ' + esc(_vendor) + '\u2019s next delivery, ' + esc(fecha(siguiente)) + '</small></button>'
+          : '<div class="m-ql-op off"><b>No, it comes with the next delivery</b>' +
+              '<small>' + esc(_vendor) + ' has no delivery day yet. Set it in Settings \u2192 Delivery.</small></div>') +
+      '</div>';
+    document.body.appendChild(h);
+    if (window.BarStockSheet) window.BarStockSheet.enganchar(h, cerrarPregunta);
+    h.querySelector('.m-sheet-bg').onclick = cerrarPregunta;
+    h.querySelectorAll('[data-ql]').forEach(b => {
+      b.onclick = () => {
+        _llegada = b.dataset.ql === 'ya' ? ya.toISOString() : siguiente;
+        cerrarPregunta();
+        seguir();
+      };
     });
   }
 
@@ -478,7 +551,7 @@
     });
 
     const main = host.querySelector('#mqMain');
-    if (main) main.onclick = () => porCorreo(_vendor) ? revisar() : guardar();
+    if (main) main.onclick = () => preguntarLive(() => porCorreo(_vendor) ? revisar() : guardar());
   }
 
   function engancharRes(host) {
