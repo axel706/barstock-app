@@ -51,6 +51,7 @@ function pantalla(vivo, agota) {
   if (agota) w.BarStockRunOut = { ahora: async () => { w.__llamadas++; return agota; } };
   w.eval(leer('src/events.js'));
   w.eval(leer('src/product-hero.js'));
+  w.eval(leer('src/live-cache.js'));
   let def = null;
   w.BarStockMobile = { register(d) { def = d; }, refrescarBadges() {} };
   w.eval(leer('src/mobile-inventory.js'));
@@ -162,7 +163,7 @@ grupo('cuándo se vuelve a leer');
   prueba('un aviso a mitad de una lectura deja otra apuntada', w.__llamadas === antes + 1, w.__llamadas + ' vs ' + antes);
 }
 {
-  const src = leer('src/mobile-inventory.js');
+  const src = leer('src/live-cache.js');
   prueba('la relectura automática es cada 30 minutos', /const VIVO_MS = 30 \* 60 \* 1000;/.test(src));
   const me = leer('src/marginedge-connect.js');
   const i = me.indexOf('async function facturas(');

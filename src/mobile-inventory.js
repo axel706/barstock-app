@@ -135,107 +135,26 @@
   // que diga otra cosa que la ficha.
   // ── El LIVE en la lista (Axel, 2026-11-11, opción A con decimal) ────
   //
-  // El número grande es el LIVE (live-stock.js: contado + lo que llegó −
-  // lo vendido en Toast desde el conteo), con "≈" y un decimal, y la
-  // línea de abajo empieza con "● Live". Sólo lo que se MOVIÓ desde el
-  // conteo: lo demás —la cerveza, lo que no se vendió ni llegó— enseña lo
-  // contado, sin marca, porque "Live" sin nada detrás sería una
-  // afordancia que miente. Un LIVE por debajo de cero se enseña tal cual,
-  // en rojo: dice que el conteo o algo de lo de detrás no cuadra.
-  //
+  // El número grande es el LIVE con "≈" y un decimal, y la línea de abajo
+  // empieza con "● Live"; "Out Sat" detrás, en vez de los "days" de
+  // Pour·IQ. El LIVE, cuándo se acaba y cuándo se relee viven en
+  // live-cache.js, que comparten todas las pantallas: aquí sólo se pinta.
   // El color, la barra, los días y el orden salen del mismo número que se
-  // enseña: un "≈7.1/8" verde con la barra al 37 % de lo contado diría
-  // dos cosas a la vez. on_hand no se toca: el LIVE no se guarda.
-  //
-  // ── Cuándo se vuelve a leer ──────────────────────────────────────────
-  //
-  // Son varias lecturas (pedidos, facturas, lo vendido desde el conteo y
-  // 90 días de Toast) y la lista se repinta con cada letra del buscador:
-  // el resultado se guarda en memoria y se reutiliza.
-  //
-  // Se relee solo cada 30 minutos (Axel, 2026-11-11: las ventas de Toast
-  // se cargan una vez al día, y eran 2 minutos). Y AL MOMENTO cuando pasa
-  // algo que lo cambia, sin esperar a esa relectura:
-  //   · 'invoicesUpdated': el sync de MarginEdge trajo facturas (Axel:
-  //     "si se trae una factura se lee en ese momento lo que llegó");
-  //   · 'ordersUpdated': se colocó un pedido o un quick order;
-  //   · 'inventoryUpdated': se cerró un conteo o se tiró para recargar.
-  // Lo que no avisa —la hora de llegada de un pedido que pasa sola— entra
-  // en la relectura de los 30 minutos.
-  const VIVO_MS = 30 * 60 * 1000;
-  let _vivo = null, _vivoEn = 0, _pidiendo = null;
-  // Un aviso que llega MIENTRAS se lee: la lectura en curso empezó antes
-  // de la factura y daría el número de antes, guardado 30 minutos. Se
-  // apunta y se vuelve a leer al terminar.
-  let _otraVez = false;
-
-  function caducarVivo() {
-    if (_pidiendo) _otraVez = true;
-    _vivoEn = 0;
-    const host = document.querySelector('.m-screen[data-screen="inventory"]');
-    if (host && host.classList.contains('on')) cargarVivo(host);
-  }
-  if (window.BarStockEvents && window.BarStockEvents.on) {
-    for (const ev of ['invoicesUpdated', 'ordersUpdated', 'inventoryUpdated']) window.BarStockEvents.on(ev, caducarVivo);
-  }
-
-  // "Cuándo se acaba" (run-out.js) trae el LIVE de cada producto y su
-  // día; si no está cargado, sólo el LIVE.
-  function cargarVivo(host) {
-    const R = window.BarStockRunOut, L = window.BarStockLive;
-    const fuente = (R && R.ahora) ? R : (L && L.ahora) ? L : null;
-    if (!fuente || _pidiendo) return;
-    if (_vivo && _vivoEn && Date.now() - _vivoEn < VIVO_MS) return;
-    _pidiendo = fuente.ahora().then(r => {
-      // Con un conteo activo, o sin conteo conocido, se enseña lo contado.
-      const filas = r && r.estado === 'listo' ? r.filas : [];
-      _vivo = new Map(filas.filter(f => f.movimiento).map(f => [f.producto, f]));
-      _agota = new Map(filas.map(f => [f.producto, f]));
-    }).catch(e => {
-      console.warn('[inventory] sin LIVE', e);
-      _vivo = new Map();
-      _agota = new Map();
-    }).finally(() => {
-      _vivoEn = _otraVez ? 0 : Date.now();
-      _pidiendo = null;
-      if (host && host.isConnected) pintarLista(host);
-      if (_otraVez) { _otraVez = false; if (host && host.isConnected) cargarVivo(host); }
+  // enseña: un "≈7.1/8" verde con la barra de lo contado diría dos cosas.
+  const LC = () => window.BarStockLiveCache;
+  const vivoDe = (r) => LC() ? LC().vivo(r) : null;
+  const cuanto = (r) => LC() ? LC().cuanto(r) : num(r.onHand);
+  const toastLoVende = (r) => !!(LC() && LC().toastLoVende(r));
+  const etiquetaAgota = (r) => LC() ? LC().etiquetaAgota(r) : '';
+  function cargarVivo() { if (LC()) LC().cargar(); }
+  // Cuando el LIVE termina de leerse (o se relee por una factura), la
+  // lista se repinta si está a la vista.
+  if (window.BarStockLiveCache) {
+    window.BarStockLiveCache.alCambiar(() => {
+      const host = document.querySelector('.m-screen[data-screen="inventory"]');
+      if (host && host.classList.contains('on')) pintarLista(host);
     });
   }
-
-  // ── Cuándo se acaba, en la fila (Axel, 2026-11-11, opción C) ─────────
-  //
-  // "Out Sat" va en la línea pequeña, detrás de "● Live", y SUSTITUYE a
-  // los "N days" de Pour·IQ: dos respuestas distintas a "cuánto me dura"
-  // en la misma fila acabarían contradiciéndose. Se quitan en toda fila
-  // de un producto que Toast vende (aunque no se acabe en dos semanas: si
-  // Toast dice que dura más, "6 days" lo contradiría); sólo los conserva
-  // lo que Toast no vende, como la cerveza, donde es lo único que hay.
-  //
-  // Rojo a dos días o menos, ámbar dentro de la semana, gris más allá.
-  // Más de seis días se dice con la fecha: "Out Sat" sería ambiguo entre
-  // este sábado y el siguiente.
-  let _agota = null;
-  const agotaDe = (r) => (_agota && r ? _agota.get(r.item) : null) || null;
-  const toastLoVende = (r) => { const a = agotaDe(r); return !!(a && a.med && a.med.some(x => x > 0)); };
-  function etiquetaAgota(r) {
-    const a = agotaDe(r);
-    if (!a || !a.agota) return '';
-    const vivo = vivoDe(r);
-    const D = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const f = new Date(a.agota + 'T12:00:00Z');
-    const txt = (vivo ? vivo.live : num(r.onHand)) <= 0 ? 'Out now'
-      : a.enDias === 0 ? 'Out today'
-        : a.enDias < 7 ? 'Out ' + D[f.getUTCDay()]
-          : 'Out ' + M[f.getUTCMonth()] + ' ' + f.getUTCDate();
-    const tono = a.enDias <= 2 ? 'r' : a.enDias < 7 ? 'a' : 'g';
-    return `<span class="m-out m-out-${tono}">${txt}</span>`;
-  }
-
-  const vivoDe = (r) => (_vivo && r ? _vivo.get(r.item) : null) || null;
-  // El número de una fila: el LIVE si se movió, si no lo contado.
-  const cuanto = (r) => { const v = vivoDe(r); return v ? v.live : num(r.onHand); };
 
   function salud(r) {
     const H = window.BarStockProductHero;
