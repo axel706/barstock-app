@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 122 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 123 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -309,7 +309,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 122 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 123 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

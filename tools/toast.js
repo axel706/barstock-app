@@ -36,6 +36,7 @@
  *                                      también lo ya cargado
  *        bsToastParar = true           lo para después del día en curso
  *
+ *        await bsLive()                el LIVE: contado + llegó − vendido
  *        await bsToastUso()            lo vendido desde el conteo, en
  *                                      botellas por producto (sólo lee)
  *   Ésta SÍ escribe, pero sólo en toast_sales y toast_sales_days, y lo
@@ -174,6 +175,20 @@
       console.log('%cLo que no se pudo convertir:', 'font-weight:bold');
       console.table(r.sinConvertir);
     }
+    return r;
+  };
+
+  // El LIVE por producto (src/live-stock.js): contado + lo que llegó −
+  // lo vendido en Toast desde el conteo. Sólo lee. Enseña sólo lo que se
+  // movió; `todos` enseña el inventario entero.
+  window.bsLive = async function (todos) {
+    const L = window.BarStockLive;
+    if (!L) { console.warn('Esta versión de la app no tiene el LIVE. Recarga la página.'); return null; }
+    const r = await L.ahora();
+    if (r.estado !== 'listo') { console.log(r.estado === 'contando' ? 'Hay un conteo activo: se enseña lo contado.' : 'Sin LIVE: ' + (r.error || r.estado)); return r; }
+    console.log('Último conteo: ' + new Date(r.conteo).toLocaleString() + '  ·  ventas desde el ' + r.desde + ' (el día del conteo no)');
+    console.table(r.filas.filter(f => todos || f.movimiento).map(f => ({ producto: f.producto, contado: f.contado,
+      llegó: f.llego, vendido: f.vendido, LIVE: f.live, de: f.de.join(' · ') })));
     return r;
   };
 
