@@ -22,9 +22,13 @@
   // Toast el grupo se llama "UP/RX" o "Up/Rx", que es Up o Rocks: 3. Y los
   // grupos "2oz" / "3oz" dicen su medida en el nombre.
   //
+  // "Mix" (licor con refresco) no estaba en la hoja y casi todas las
+  // marcas lo tienen en Toast. Axel, 2026-11-11: "1.5 en el mix", como el
+  // Single. (Lo de Happy Hour con mix va por receta, no por aquí.)
+  //
   // Una medida que no está aquí no se adivina: devuelve undefined y el
   // motor no guarda esa fila (vacío sería "una botella entera").
-  const MEDIDAS = { single: 1.5, double: 2.5, 'up/rx': 3, up: 3, rx: 3, rocks: 3, shot: 1.5 };
+  const MEDIDAS = { single: 1.5, double: 2.5, 'up/rx': 3, up: 3, rx: 3, rocks: 3, shot: 1.5, mix: 1.5 };
 
   function ozDe(medida) {
     if (medida == null) return undefined;

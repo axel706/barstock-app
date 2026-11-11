@@ -10,7 +10,7 @@
  *
  * Lo que se protege:
  *   1. Las medidas de la casa, como las escribió Axel: Single 1.5,
- *      Double 2.5, Up/Rocks 3, Shot 1.5, y "3oz" son 3.
+ *      Double 2.5, Up/Rocks 3, Shot 1.5, Mix 1.5, y "3oz" son 3.
  *   2. Una medida desconocida NO se guarda: con pour_oz vacío la fila
  *      contaría como una botella entera por venta.
  *   3. Una marca es una fila y una decisión: elegir la botella la guarda
@@ -95,6 +95,8 @@ grupo('las medidas de la casa');
   prueba('Single 1.5, Double 2.5, Shot 1.5', oz('Single') === 1.5 && oz('Double') === 2.5 && oz('Shot') === 1.5);
   prueba('UP/RX y Up/Rx son 3, como Up y Rocks', oz('UP/RX') === 3 && oz('Up/Rx') === 3 && oz('Up') === 3 && oz('Rocks') === 3);
   prueba('"3oz" y "2oz" dicen su medida', oz('3oz') === 3 && oz('2oz') === 2 && oz('2 oz') === 2);
+  // Axel, 2026-11-11: "1.5 en el mix". Licor con refresco = un Single.
+  prueba('Mix es 1.5, como el Single', oz('Mix') === 1.5 && oz('MIX') === 1.5);
   prueba('lo desconocido no se adivina', oz('Flight') === undefined && oz(null) === undefined);
 }
 
@@ -180,7 +182,8 @@ grupo('una medida sin pour no deja la marca atascada');
   // Confirm 10 y no pasa nada, ahí siguen". Casi todas las marcas tienen
   // en Toast una medida "Mix" que no estaba en la hoja. Sus otras medidas
   // SÍ se guardaban, pero la marca seguía por revisar por la de Mix, y el
-  // aviso salía arriba de la lista, fuera de la vista.
+  // aviso salía arriba de la lista, fuera de la vista. (Mix ya tiene pour,
+  // 1.5; el ejemplo de medida sin pour es ahora Flight.)
   const w = entorno();
   const T = w.BarStockToastLiquor;
   await T.cargar();
@@ -196,7 +199,7 @@ grupo('una medida sin pour no deja la marca atascada');
   // ofrecerle una botella sería otra afordancia que miente.
   const w = entorno();
   const T = w.BarStockToastLiquor;
-  w.__extra = [{ guid: 'jw-mix', nombre: 'Jameson Irish Whiskey', grupo: 'DRINKS › Liquor › Whisky › Mix', tipo: 'Whisky', medida: 'Mix', marca: 'Jameson Irish Whiskey' }];
+  w.__extra = [{ guid: 'jw-fl', nombre: 'Jameson Irish Whiskey', grupo: 'DRINKS › Liquor › Whisky › Flight', tipo: 'Whisky', medida: 'Flight', marca: 'Jameson Irish Whiskey' }];
   await T.cargar();
   const j = T.marcas().find(m => m.marca === 'Jameson Irish Whiskey');
   prueba('sólo con medidas sin pour: estado propio, no "por revisar"', !!j && j.estado === 'sinPour', j && j.estado);
@@ -208,7 +211,7 @@ grupo('la pantalla: tocar la fila abre un buscador');
   const avisos = [];
   w.BarStockToast = { show: (t) => avisos.push(String(t)) };
   w.BarStockSheet = { enganchar: () => {}, hayAlguna: () => !!w.document.getElementById('mSheet') };
-  w.__extra = [{ guid: 'jw-mix', nombre: 'Jameson Irish Whiskey', grupo: 'DRINKS › Liquor › Whisky › Mix', tipo: 'Whisky', medida: 'Mix', marca: 'Jameson Irish Whiskey' }];
+  w.__extra = [{ guid: 'jw-fl', nombre: 'Jameson Irish Whiskey', grupo: 'DRINKS › Liquor › Whisky › Flight', tipo: 'Whisky', medida: 'Flight', marca: 'Jameson Irish Whiskey' }];
   w.state.master.push({ item: 'Pedro Morales Tequila 1L' });
   const host = w.document.getElementById('host');
   w.BarStockMobileToastLiquor.montar(host, () => '<div class="cab">Liquor from Toast</div>', () => {});
@@ -223,7 +226,7 @@ grupo('la pantalla: tocar la fila abre un buscador');
   prueba('y marca la que no tiene pour', !!mm && !!mm.querySelector('.mal') && /Flight · \? oz/.test(mm.textContent));
   prueba('sin rueda nativa: la fila es un botón', !host.querySelector('select') && !!gg && gg.tagName === 'BUTTON');
   const jw = [...host.querySelectorAll('.m-tl-espera')].map(x => x.textContent).join(' ');
-  prueba('la marca sólo con Mix va aparte, sin poder elegirse', /Jameson Irish Whiskey/.test(jw) && !deMarca('Jameson Irish Whiskey'), jw.slice(0, 120));
+  prueba('la marca sólo con medidas sin pour va aparte, sin poder elegirse', /Jameson Irish Whiskey/.test(jw) && !deMarca('Jameson Irish Whiskey'), jw.slice(0, 120));
 
   gg.click(); await esperar(20);
   const h = w.document.getElementById('mSheet');

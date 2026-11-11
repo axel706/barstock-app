@@ -45,8 +45,8 @@
     const destino = M.estado === 'ignored' ? '<span class="m-tl-dest mut">Not in inventory</span>'
       : M.producto ? `<span class="m-tl-dest">${esc(M.producto)}</span>`
         : '<span class="m-tl-dest vacio">Choose a bottle</span>';
-    // Lo que no cuenta, dicho en la fila: una marca hecha con su Mix sin
-    // pour no puede parecer completa.
+    // Lo que no cuenta, dicho en la fila: una marca hecha con una medida
+    // sin pour no puede parecer completa.
     const noCuenta = M.sinPour.length ? `<small class="mal">${esc(M.sinPour.join(', '))}: not counted yet</small>` : '';
     return `<button type="button" class="m-tl-fila" data-k="${esc(M.clave)}">
       <span class="m-tl-izq"><b>${marcaPunto}${esc(M.marca)}</b>

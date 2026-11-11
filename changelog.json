@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261110-223706",
+    "items": [
+      "Liquor from Toast: Mix now counts as 1.5 oz"
+    ]
+  },
+  {
     "build": "20261110-221846",
     "items": [
       "Liquor from Toast: search for the bottle",
@@ -182,12 +188,6 @@
     "items": [
       "You stay signed in all day",
       "Sign-out happens at midnight, later if you're still working"
-    ]
-  },
-  {
-    "build": "20261109-115855",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]
