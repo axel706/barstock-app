@@ -153,22 +153,57 @@
   const VIVO_MS = 2 * 60 * 1000;
   let _vivo = null, _vivoEn = 0, _pidiendo = null;
 
+  // "Cuándo se acaba" (run-out.js) trae el LIVE de cada producto y su
+  // día; si no está cargado, sólo el LIVE.
   function cargarVivo(host) {
-    const L = window.BarStockLive;
-    if (!L || !L.ahora || _pidiendo) return;
+    const R = window.BarStockRunOut, L = window.BarStockLive;
+    const fuente = (R && R.ahora) ? R : (L && L.ahora) ? L : null;
+    if (!fuente || _pidiendo) return;
     if (_vivo && Date.now() - _vivoEn < VIVO_MS) return;
-    _pidiendo = L.ahora().then(r => {
+    _pidiendo = fuente.ahora().then(r => {
       // Con un conteo activo, o sin conteo conocido, se enseña lo contado.
-      _vivo = new Map(r && r.estado === 'listo'
-        ? r.filas.filter(f => f.movimiento).map(f => [f.producto, f]) : []);
+      const filas = r && r.estado === 'listo' ? r.filas : [];
+      _vivo = new Map(filas.filter(f => f.movimiento).map(f => [f.producto, f]));
+      _agota = new Map(filas.map(f => [f.producto, f]));
     }).catch(e => {
       console.warn('[inventory] sin LIVE', e);
       _vivo = new Map();
+      _agota = new Map();
     }).finally(() => {
       _vivoEn = Date.now();
       _pidiendo = null;
       if (host && host.isConnected) pintarLista(host);
     });
+  }
+
+  // ── Cuándo se acaba, en la fila (Axel, 2026-11-11, opción C) ─────────
+  //
+  // "Out Sat" va en la línea pequeña, detrás de "● Live", y SUSTITUYE a
+  // los "N days" de Pour·IQ: dos respuestas distintas a "cuánto me dura"
+  // en la misma fila acabarían contradiciéndose. Se quitan en toda fila
+  // de un producto que Toast vende (aunque no se acabe en dos semanas: si
+  // Toast dice que dura más, "6 days" lo contradiría); sólo los conserva
+  // lo que Toast no vende, como la cerveza, donde es lo único que hay.
+  //
+  // Rojo a dos días o menos, ámbar dentro de la semana, gris más allá.
+  // Más de seis días se dice con la fecha: "Out Sat" sería ambiguo entre
+  // este sábado y el siguiente.
+  let _agota = null;
+  const agotaDe = (r) => (_agota && r ? _agota.get(r.item) : null) || null;
+  const toastLoVende = (r) => { const a = agotaDe(r); return !!(a && a.med && a.med.some(x => x > 0)); };
+  function etiquetaAgota(r) {
+    const a = agotaDe(r);
+    if (!a || !a.agota) return '';
+    const vivo = vivoDe(r);
+    const D = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const f = new Date(a.agota + 'T12:00:00Z');
+    const txt = (vivo ? vivo.live : num(r.onHand)) <= 0 ? 'Out now'
+      : a.enDias === 0 ? 'Out today'
+        : a.enDias < 7 ? 'Out ' + D[f.getUTCDay()]
+          : 'Out ' + M[f.getUTCMonth()] + ' ' + f.getUTCDate();
+    const tono = a.enDias <= 2 ? 'r' : a.enDias < 7 ? 'a' : 'g';
+    return `<span class="m-out m-out-${tono}">${txt}</span>`;
   }
 
   const vivoDe = (r) => (_vivo && r ? _vivo.get(r.item) : null) || null;
@@ -277,7 +312,7 @@
 
       const meta = [];
       if (!f.includes('no vendor')) meta.push(esc(r.vendor));
-      if (d !== null) meta.push(d + (d === 1 ? ' day' : ' days'));
+      if (d !== null && !toastLoVende(r)) meta.push(d + (d === 1 ? ' day' : ' days'));
       if (pedir > 0) meta.push('order ' + n2(pedir));
 
       return `
@@ -290,6 +325,7 @@
             <span class="m-inv-n">${esc(r.item)}</span>
             <span class="m-inv-meta">
               ${v ? '<span class="m-live"><i></i>Live</span>' : ''}
+              ${etiquetaAgota(r)}
               ${f.map(x => `<em class="m-flag m-flag-${TONO[x]}">${x}</em>`).join('')}
               ${meta.length ? `<span>${meta.join(' · ')}</span>` : ''}
             </span>

@@ -37,16 +37,18 @@ const ITEMS = [
   ['Baileys 1L', 'LOOP', 1, 4]
 ];
 
-function pantalla(vivo) {
+function pantalla(vivo, agota) {
   const w = new JSDOM('<!doctype html><body></body>', { url: 'https://x.test/', runScripts: 'outside-only' }).window;
   w.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} });
   w.state = { master: ITEMS.map(([item, vendor, onHand, suggested]) => ({ item, vendor, onHand, suggested, value: 20, category: 'Liquor', code: '', toOrder: 0 })) };
   w.normalizeName = (s) => String(s || '').trim().toLowerCase();
   w.getVendorsForFilter = () => ['ALL', 'LOOP', 'BREAKTHRU', 'SOUTHERN'];
   w.getVendorsWithUnknown = () => ['LOOP', 'BREAKTHRU', 'SOUTHERN'];
-  w.parAdjustments = new Map();
+  // Pour·IQ con gasto medio para todos: así sus "days" salen de partida.
+  w.parAdjustments = new Map(ITEMS.map(([item]) => [item + '||', { avgUsed: 2, normalWeeks: 8 }]));
   w.__llamadas = 0;
   w.BarStockLive = { ahora: async () => { w.__llamadas++; return vivo; } };
+  if (agota) w.BarStockRunOut = { ahora: async () => { w.__llamadas++; return agota; } };
   w.eval(leer('src/product-hero.js'));
   let def = null;
   w.BarStockMobile = { register(d) { def = d; }, refrescarBadges() {} };
@@ -106,11 +108,39 @@ grupo('si el LIVE falla');
   prueba('la lista sigue, con lo contado', !!fila(host, "Tito's Vodka 1L") && !host.querySelector('.m-live'));
 }
 
+grupo('cuándo se acaba (opción C)');
+{
+  const med = [1, 0, 1, 1, 1, 2, 2];
+  const AG = { estado: 'listo', filas: [
+    Object.assign({}, VIVO.filas[0], { med, agota: '2026-11-28', enDias: 9 }),
+    Object.assign({}, VIVO.filas[1], { med, agota: '2026-11-19', enDias: 0 }),
+    Object.assign({}, VIVO.filas[2], { med: null, agota: null, enDias: null }),
+    Object.assign({}, VIVO.filas[3], { med, agota: '2026-11-21', enDias: 2 })
+  ] };
+  const { host } = pantalla(null, AG);
+  await esperar(20);
+  const meta = (n) => fila(host, n).querySelector('.m-inv-meta');
+  const out = (n) => (meta(n).querySelector('.m-out') || {});
+  prueba('a dos días: el día de la semana, en rojo', /Out Sat/.test(out('Baileys 1L').textContent) && out('Baileys 1L').classList.contains('m-out-r'), out('Baileys 1L').textContent);
+  prueba('más de seis días: con la fecha, en gris', /Out Nov 28/.test(out("Tito's Vodka 1L").textContent) && out("Tito's Vodka 1L").classList.contains('m-out-g'));
+  prueba('un LIVE por debajo de cero: "Out now"', /Out now/.test(out('Bulleit Rye').textContent));
+  prueba('va detrás de "● Live"', meta("Tito's Vodka 1L").firstElementChild.classList.contains('m-live') && meta("Tito's Vodka 1L").children[1].classList.contains('m-out'));
+  prueba('lo que Toast vende pierde los "days" de Pour·IQ', !/days?\b/.test(meta("Tito's Vodka 1L").textContent) && !/days?\b/.test(meta('Baileys 1L').textContent), meta('Baileys 1L').textContent);
+  prueba('lo que Toast no vende (la cerveza) conserva sus "days"', /\d+ days?/.test(meta('Guinness Keg').textContent) && !meta('Guinness Keg').querySelector('.m-out'), meta('Guinness Keg').textContent);
+}
+{
+  // Sin "cuándo se acaba" cargado, el LIVE solo, y los "days" de siempre.
+  const { host } = pantalla(VIVO);
+  await esperar(20);
+  prueba('sin run-out: ni "Out" ni se quitan los days', !host.querySelector('.m-out') && /\d+ days?/.test(fila(host, "Tito's Vodka 1L").querySelector('.m-inv-meta').textContent));
+}
+
 grupo('la carga');
 {
   const html = leer('index.html');
   const p = f => html.indexOf('src/' + f + '?v=');
   prueba('el LIVE carga antes que Inventory', p('live-stock.js') > 0 && p('live-stock.js') < p('mobile-inventory.js'), p('live-stock.js') + ' / ' + p('mobile-inventory.js'));
+  prueba('y "cuándo se acaba" también', p('run-out.js') > 0 && p('run-out.js') < p('mobile-inventory.js'));
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');

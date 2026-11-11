@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261111-172152",
+    "items": [
+      "Inventory says when each bottle runs out",
+      "Out Sat · red within 2 days, amber this week"
+    ]
+  },
+  {
     "build": "20261111-171251",
     "items": [
       "Behind-the-scenes fixes"
@@ -180,12 +187,6 @@
     "items": [
       "Inventory: tabs and filter stay at the top as you scroll",
       "The Inventory title moves into the header"
-    ]
-  },
-  {
-    "build": "20261109-163522",
-    "items": [
-      "In Search, scrolling back up no longer refreshes instead"
     ]
   }
 ]
