@@ -82,7 +82,7 @@
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/chip-glow.css">
   <link rel="stylesheet" href="styles/mobile.css?v=mob5">
-  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp166">
+  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp167">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -371,7 +371,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261111-175020</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261111-180347</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5532,10 +5532,19 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
      comentario que decia "va antes que todas": funcionaba de casualidad,
      porque enganchar() se llama al abrir la hoja y no al cargar. -->
 <script src="src/sheet.js?v=sh4"></script>
+<!-- El LIVE y lo que lo alimenta: horarios de entrega, el reparto de
+     facturas, el cálculo y "cuándo se acaba". Va ANTES que la cabecera
+     de producto, que lo enseña, y que las pantallas que lo piden. -->
+<script src="src/vendor-defaults-cloud.js?v=vd2"></script>
+<script src="src/vendor-delivery.js?v=vdl2"></script>
+<script src="src/order-receipts.js?v=or3"></script>
+<script src="src/live-stock.js?v=ls5"></script>
+<script src="src/run-out.js?v=ro1"></script>
+<script src="src/live-cache.js?v=lc2"></script>
 <!-- La cabecera de producto que comparten la ficha de busqueda y la
      hoja de Inventory. Va ANTES que las dos: ambas la piden al
      dibujar, y sin ella una se cae al respaldo de texto. -->
-<script src="src/product-hero.js?v=ph5"></script>
+<script src="src/product-hero.js?v=ph6"></script>
 <!-- El consumo semanal y el paso de Pour·IQ. Lo usan las DOS fichas,
      la del escritorio y la del telefono: la consulta, la correccion
      del conteo de cierre y el tope de ±2 viven aqui y en ningun otro
@@ -5543,14 +5552,8 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/product-weeks.js?v=pw1"></script>
 <script src="src/band-dock.js?v=dock13"></script>
 <script src="src/mobile-home.js?v=mh41"></script>
-<script src="src/mobile-search.js?v=m22"></script>
+<script src="src/mobile-search.js?v=m23"></script>
 <script src="src/mobile-cycle.js?v=m9"></script>
-<script src="src/vendor-defaults-cloud.js?v=vd2"></script>
-<script src="src/vendor-delivery.js?v=vdl2"></script>
-<script src="src/order-receipts.js?v=or3"></script>
-<script src="src/live-stock.js?v=ls4"></script>
-<script src="src/run-out.js?v=ro1"></script>
-<script src="src/live-cache.js?v=lc1"></script>
 <script src="src/mobile-inventory.js?v=m19"></script>
 <script src="src/mobile-orders.js?v=m21"></script>
 <script src="src/mobile-quick.js?v=mqk3"></script>

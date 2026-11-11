@@ -119,12 +119,36 @@
     return { txt, tono: a.enDias <= 2 ? 'r' : a.enDias < 7 ? 'a' : 'g', enDias: a.enDias, dia: a.agota };
   }
 
+  // ── Lo que llegó desde el conteo (Axel, 2026-11-11, opción A) ────────
+  //
+  // En la ficha, junto a las zonas, va una pieza aparte "+5 Arrived": lo
+  // que llegó por pedido está en el bar, pero nadie dijo en qué zona.
+  // { n, txt } o null; `txt` es "arrived Tue, LOOP order" si vino de un
+  // solo sitio el mismo día, y "arrived since the count" si no: varias
+  // llegadas en una frase serían un párrafo.
+  function llegadas(r) {
+    const v = vivo(r);
+    const l = v && v.llegadas ? v.llegadas.filter(x => x && x.n > 0) : [];
+    if (!l.length) return null;
+    const n = Math.round(l.reduce((s, x) => s + x.n, 0) * 100) / 100;
+    const dia = (ms) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York',
+      year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms));
+    const uno = l.every(x => x.de === l[0].de && dia(x.cuando) === dia(l[0].cuando));
+    if (!uno || !l[0].cuando) return { n, txt: 'arrived since the count' };
+    // Más de seis días se dice con la fecha: "Tue" sería ambiguo.
+    const reciente = Date.now() - l[0].cuando < 6 * 864e5;
+    const cuando = new Intl.DateTimeFormat('en-US', reciente
+      ? { timeZone: 'America/New_York', weekday: 'short' }
+      : { timeZone: 'America/New_York', month: 'short', day: 'numeric' }).format(new Date(l[0].cuando));
+    return { n, txt: 'arrived ' + cuando + ', ' + (l[0].de ? l[0].de + ' order' : 'invoice') };
+  }
+
   // Las piezas de HTML, iguales en todas las pantallas del teléfono.
   const etiquetaLive = (r) => vivo(r) ? '<span class="m-live"><i></i>Live</span>' : '';
   const etiquetaAgota = (r) => { const a = agota(r); return a ? `<span class="m-out m-out-${a.tono}">${a.txt}</span>` : ''; };
 
   window.BarStockLiveCache = {
-    cargar, caducar, alCambiar, vivo, cuanto, conVivo, texto, agota, toastLoVende,
+    cargar, caducar, alCambiar, vivo, cuanto, conVivo, texto, agota, toastLoVende, llegadas,
     etiquetaLive, etiquetaAgota, VIVO_MS,
     _reset: () => { _vivo = null; _agota = null; _vivoEn = 0; _pidiendo = null; _otraVez = false; _oyentes.clear(); }
   };

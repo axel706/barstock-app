@@ -1,5 +1,13 @@
 [
   {
+    "build": "20261111-180347",
+    "items": [
+      "Live shows on the product sheet and in Do we have",
+      "Live tag in the corner, Out day under the number",
+      "Where it is shows what arrived since the count"
+    ]
+  },
+  {
     "build": "20261111-175020",
     "items": [
       "Inventory no longer says \"order N\" under each bottle"
@@ -179,12 +187,6 @@
     "build": "20261109-191147",
     "items": [
       "The update card has a clearer outline"
-    ]
-  },
-  {
-    "build": "20261109-173022",
-    "items": [
-      "Sent: search and filters stay at the top as you scroll"
     ]
   }
 ]

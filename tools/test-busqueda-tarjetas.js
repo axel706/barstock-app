@@ -4,22 +4,18 @@
  *
  * La lista eran filas de texto (nombre, proveedor y zonas, la cifra a la
  * derecha). Axel pidió que cada resultado sea la MISMA tarjeta de la
- * ficha —botella, cifra con su color, "Runs out in…"— y, de las dos
- * variantes dibujadas, eligió la que lleva las ZONAS en el hueco de la
- * derecha. La gráfica de semanas se queda en la ficha, como estaba.
+ * ficha —botella, cifra con su color, "Runs out in…"—. Llevaba las ZONAS
+ * en el hueco de la derecha hasta el LIVE (Axel, 2026-11-11): con "≈1.4"
+ * en grande, las zonas suman lo contado y la tarjeta se contradecía.
+ * Ahora van sólo en la ficha (test-ficha-live.js). La gráfica de semanas
+ * se queda en la ficha, como estaba.
  *
  * Lo que se protege:
  *
  *   1. Cada resultado es la tarjeta de product-hero, y al tocarla se
  *      abre la ficha de ese producto, igual que antes.
- *   2. En la lista, el hueco lleva las zonas, no la gráfica: la gráfica
- *      es una consulta por producto y en una lista serían decenas.
- *   3. La ficha sigue pidiendo y pintando la gráfica.
- *   4. Las zonas se piden según las tarjetas aparecen en pantalla: con
- *      tarjetas caben 2 o 3, y el corte fijo en los 6 primeros dejaba el
- *      hueco vacío a partir del 7.º. Sin IntersectionObserver, los 6
- *      primeros, como antes.
- *   5. Con las zonas apagadas el hueco queda vacío: ni zonas ni gráfica.
+ *   2. En la lista, ni zonas ni gráfica: la lista no las pide.
+ *   3. La ficha sigue pidiendo y pintando la gráfica, y las zonas.
  *
  *   node tools/test-busqueda-tarjetas.js
  */
@@ -99,41 +95,21 @@ grupo('cada resultado es la tarjeta de la ficha');
   prueba('y su nombre', !!t && /Tequila Blanco 0/.test(t.querySelector('.m-fic-n').textContent));
 }
 
-grupo('en la lista, las zonas; en la ficha, la grafica');
+grupo('en la lista, nada; en la ficha, las zonas y la grafica');
 {
-  const { w, host } = entorno();
+  const { w, host } = entorno({ observador: true });
   await esperar(30);
-  const g = host.querySelector('#msList .m-res .m-fic-g');
-  const txt = g ? g.textContent.replace(/\s+/g, ' ') : '';
-  prueba('el hueco lleva las zonas', /1 Closet/.test(txt) && /0\.55 Main Bar/.test(txt), txt);
-  prueba('y no la grafica', !host.querySelector('#msList .m-fic-gb'));
-  prueba('la lista no pide semanas', w.__semanas.length === 0, String(w.__semanas.length));
+  prueba('la tarjeta no lleva hueco', !host.querySelector('#msList .m-res .m-fic-g'));
+  prueba('ni zonas', !/Closet/.test(host.querySelector('#msList').textContent));
+  prueba('la lista no pide zonas', w.__zonasPedidas.length === 0, String(w.__zonasPedidas.length));
+  prueba('ni semanas', w.__semanas.length === 0, String(w.__semanas.length));
 
   host.querySelector('#msList .m-res').click();
   await esperar(30);
   const hoja = w.document.querySelector('#mSheet');
   prueba('tocarla abre la ficha de ese producto', !!hoja && /Tequila Blanco 0/.test(hoja.textContent));
-  prueba('y la ficha pinta su grafica, como antes', w.__semanas.includes('Tequila Blanco 0') && !!hoja.querySelector('.m-fic-gb'));
-}
-
-grupo('las zonas se piden segun aparecen');
-{
-  const { w } = entorno({ observador: true });
-  await esperar(40);
-  prueba('con IntersectionObserver, tambien las del 7.º en adelante', w.__zonasPedidas.length === 10, String(w.__zonasPedidas.length));
-}
-{
-  const { w } = entorno();
-  await esperar(40);
-  prueba('sin el, las 6 primeras, como antes', w.__zonasPedidas.length === 6, String(w.__zonasPedidas.length));
-}
-
-grupo('con las zonas apagadas, el hueco queda vacio');
-{
-  const { host } = entorno({ zonasApagadas: true });
-  await esperar(30);
-  const g = host.querySelector('#msList .m-res .m-fic-g');
-  prueba('sin zonas ni grafica', !g || !g.textContent.trim(), g && g.textContent);
+  prueba('la ficha pinta su grafica, como antes', w.__semanas.includes('Tequila Blanco 0') && !!hoja.querySelector('.m-fic-gb'));
+  prueba('y sus zonas', /Closet/.test((hoja.querySelector('#msZonas') || {}).textContent || ''));
 }
 
 grupo('la tarjeta no va dentro de otra');

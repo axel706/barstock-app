@@ -173,12 +173,33 @@
   //
   // Vacía no ocupa: una ranura que reserva aire cuando no hay nada que
   // meter descoloca el nombre sin motivo.
+  //
+  // ── El LIVE (Axel, 2026-11-11, opción A sobre lámina) ──────────────
+  //
+  // "Si ya cambió a live, el dato que se muestra en todos lados es ése,
+  // junto con el tag de que es live." La cabecera lo pide a
+  // live-cache.js, el mismo que la lista de Inventory, y no cada
+  // pantalla por su lado: así la ficha, Do we have y la lista no pueden
+  // decir números distintos. Con LIVE:
+  //   · el número es "≈7.1", y el color y la botella salen de él;
+  //   · "● Live" va en la esquina de arriba a la derecha (Axel la quiso
+  //     ahí siempre, con nombre corto o largo);
+  //   · bajo el número, "Out Fri" donde Toast lo vende, en vez de los
+  //     "Runs out in N days" de Pour·IQ: dos respuestas a "cuánto me
+  //     dura" acabarían contradiciéndose.
+  // Lo que no se movió desde el conteo enseña lo contado y sin marca.
+  // `o.vivo: false` la deja en lo contado, para quien lo necesite.
   function html(r, o) {
     o = o || {};
-    const k = tono(r);
+    const LC = o.vivo === false ? null : window.BarStockLiveCache;
+    const v = LC ? LC.vivo(r) : null;
+    const rv = v ? Object.assign({}, r, { onHand: v.live }) : r;
+    const k = tono(rv);
     const p = o.par !== undefined ? o.par : parDe(r);
-    const dias = diasQueAguanta(r, p);
-    const av = o.aviso !== undefined ? o.aviso : aviso(r, dias);
+    const vende = !!(LC && LC.toastLoVende(r));
+    const out = vende ? LC.etiquetaAgota(r) : '';
+    const dias = vende ? null : diasQueAguanta(rv, p);
+    const av = o.aviso !== undefined ? o.aviso : (vende ? '' : aviso(rv, dias));
 
     const sub = o.sub !== undefined ? o.sub
       : (String(r.vendor || '') +
@@ -186,18 +207,20 @@
          (r.bottleSizeMl ? ' · ' + r.bottleSizeMl + ' ml' : ''));
 
     return `
-      <div class="m-fic m-fic-${clase(k)}">
-        ${silueta(r, k.c)}
+      <div class="m-fic m-fic-${clase(k)}${v ? ' m-fic-conlive' : ''}">
+        ${silueta(rv, k.c)}
         <div class="m-fic-d">
           <div class="m-fic-n">${esc(r.item)}</div>
           <div class="m-fic-s">${esc(sub)}</div>
           <div class="m-fic-big">
-            <b style="color:${k.c}">${n2(r.onHand)}</b>
+            <b style="color:${k.c}">${v ? '\u2248' + v.live.toFixed(1) : n2(r.onHand)}</b>
             <span>${Number(r.suggested) > 0 ? 'of ' + n2(r.suggested) : 'on hand'}</span>
           </div>
+          ${out ? `<div class="m-fic-x">${out}</div>` : ''}
           ${av ? `<div class="m-fic-av" style="color:${k.c}">${esc(av)}</div>` : ''}
         </div>
         ${o.hueco ? '<div class="m-fic-g"></div>' : ''}
+        ${v ? '<span class="m-live m-fic-live"><i></i>Live</span>' : ''}
       </div>`;
   }
 

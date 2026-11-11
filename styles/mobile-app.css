@@ -2125,8 +2125,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   /* ── La tarjeta como resultado de "Do we have…" ──────────────────
    *
-   * La misma de la ficha, una por resultado. En la lista el hueco de la
-   * derecha lleva las zonas, no la gráfica. Los nombres largos se cortan
+   * La misma de la ficha, una por resultado, sin hueco: las zonas
+   * salieron de aquí con el LIVE (sólo en la ficha) y la gráfica nunca
+   * estuvo en la lista. Los nombres largos se cortan
    * a dos renglones: "Casa Noble Crystal Organic Tequila Blanco" ocupaba
    * tres y empujaba la cifra; entero sale en la ficha.
    *
@@ -2142,11 +2143,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-res-fic .m-fic-n {
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
-  .m-res-zonas {
-    display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
-    font-size: var(--m-small); color: #c3d2e2; white-space: nowrap;
-  }
-  .m-res-zonas b { color: #fff; font-weight: 700; }
 
   .m-fic-gb {
     display: flex; align-items: flex-end; gap: 3px; height: 32px;
@@ -2280,7 +2276,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * deslizador del conteo, así que lo que se dibuja aquí y lo que se
    * ve al contar no pueden discrepar.
    */
+  /* `relative`: la marca "● Live" va en su esquina (.m-fic-live). */
   .m-fic {
+    position: relative;
     display: flex; align-items: center; gap: 14px;
     padding: 15px; border-radius: 18px;
   }
@@ -2302,6 +2300,15 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-fic-big span { font-size: var(--m-small); color: #c3d2e2; }
   .m-fic-av { font-size: var(--m-small); font-weight: 700; margin-top: 4px; }
 
+  /* ── El LIVE en la cabecera (Axel, 2026-11-11, opción A) ──────────
+   * "● Live" siempre en la esquina de arriba a la derecha, con nombre
+   * corto o largo: el nombre le deja sitio y pasa a dos renglones antes
+   * de meterse debajo. "Out Fri" va bajo el número, donde la lista de
+   * Inventory pone su marca. */
+  .m-fic-live { position: absolute; top: 15px; right: 15px; font-size: var(--m-meta); }
+  .m-fic-conlive .m-fic-n { padding-right: calc(var(--m-base) * 3.6); }
+  .m-fic-x { display: flex; margin-top: 7px; }
+
   /* ── Dónde están ────────────────────────────────────────────────
    * Sólo sale con las zonas encendidas. Con la función apagada no se
    * dice nada: eso es un ajuste, no un dato del producto. */
@@ -2316,6 +2323,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     text-transform: uppercase; color: #a9bacd; margin-bottom: 8px;
   }
   .m-zon-wait { font-size: var(--m-small); color: #a9bacd; }
+  /* Sin reparto por zonas pero con algo llegado: la pieza va debajo. */
+  .m-zon-wait + .m-zon-s { margin-top: 8px; }
   /* En tira horizontal: con seis zonas, una por renglón empujaría los
    * botones fuera de la pantalla. */
   .m-zon-s {
@@ -2332,6 +2341,11 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   .m-zon-t b { font-size: var(--m-body); font-weight: 800; color: #fff; }
   .m-zon-t.cero { opacity: .5; }
+  /* Lo que llegó por pedido desde el conteo: está en el bar, pero
+   * nadie dijo en qué zona. Punteada y en verde para que no se lea
+   * como una zona más. */
+  .m-zon-t.lleg { border: 1px dashed rgba(110,231,183,.55); background: rgba(52,211,153,.08); color: #a7f3d0; }
+  .m-zon-t.lleg b { color: #6ee7b7; }
 
   /* Pares etiqueta / valor. El valor a la derecha y en negrita: se lee
    * la columna de la derecha sola, sin ir leyendo los rótulos. */

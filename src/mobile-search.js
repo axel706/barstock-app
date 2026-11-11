@@ -79,7 +79,9 @@
     const H = HERO();
     // `hueco` abre la ranura de la derecha, donde va la grafica de las
     // semanas. La llena `pintarSemanas` cuando llegue la consulta.
-    if (H && H.html) return H.html(r, { par, aviso, hueco: true });
+    // Sin `aviso`: lo decide product-hero, que sabe si hay LIVE y si
+    // Toast lo vende ("Out Fri" en vez de los días de Pour·IQ).
+    if (H && H.html) return H.html(r, { par, hueco: true });
     const k = tono(r);
     return `<div class="m-fic m-fic-bien"><div class="m-fic-d">
       <div class="m-fic-n">${esc(r.item)}</div>
@@ -148,10 +150,13 @@
     // ── Cada resultado es la tarjeta de la ficha ─────────────────────
     //
     // Eran filas de texto. Axel pidió la MISMA tarjeta que abre la ficha
-    // —botella, cifra con su color, "Runs out in…"— y, de dos variantes
-    // dibujadas, la que lleva las ZONAS en el hueco de la derecha. La
-    // gráfica de semanas se queda en la ficha: es una consulta por
-    // producto, y en una lista serían decenas.
+    // —botella, cifra con su color, "Runs out in…"—. Llevaba las ZONAS en
+    // el hueco de la derecha hasta el LIVE (Axel, 2026-11-11): con
+    // "≈1.4" en grande, "1 Bar · 1 Closet" suma 2, lo contado, y la
+    // tarjeta se contradecía. Las zonas salen sólo en la ficha, con la
+    // fecha del conteo debajo. La gráfica de semanas también se queda en
+    // la ficha: es una consulta por producto, y en una lista serían
+    // decenas.
     //
     // `m-res` sigue en el envoltorio porque es lo que se toca para abrir
     // la ficha, igual que con la fila.
@@ -160,7 +165,7 @@
       const mi = master().indexOf(r);
       if (H && H.html) {
         return `<div class="m-res m-res-fic" data-i="${mi}" role="button" tabindex="0">
-          ${H.html(r, { par: parDe(r), hueco: true })}</div>`;
+          ${H.html(r, { par: parDe(r) })}</div>`;
       }
       // Sin el módulo, la fila de antes: fea, pero dice qué hay.
       const k = tono(r);
@@ -168,7 +173,7 @@
         <button type="button" class="m-card m-res" data-i="${mi}">
           <span class="m-res-l">
             <span class="m-res-n">${esc(r.item)}</span>
-            <span class="m-res-s" data-zonas="${mi}">${esc(r.vendor || '')}</span>
+            <span class="m-res-s">${esc(r.vendor || '')}</span>
           </span>
           <span class="m-res-r">
             <b style="color:${k.c}">${n2(r.onHand)}</b>
@@ -181,61 +186,6 @@
     caja.querySelectorAll('.m-res').forEach(b => {
       b.onclick = () => ficha(host, Number(b.dataset.i));
     });
-
-    // Las zonas llegan despues: son una consulta por producto y no
-    // pueden retrasar la lista, que es lo que se vino a ver.
-    pintarZonasEnLista(caja, res);
-  }
-
-  // ── Las zonas de la lista, según aparecen ──────────────────────────
-  //
-  // Se pedían sólo para los 6 primeros: con filas, nadie miraba más
-  // allá. Con tarjetas caben 2 o 3 por pantalla, y desde la 7.ª el hueco
-  // salía vacío al desplazarse. Ahora se piden cuando cada tarjeta entra
-  // en pantalla. Sin IntersectionObserver, los 6 primeros, como antes.
-  let _obs = null;
-
-  async function pintarZonasEnLista(caja, res) {
-    if (_obs) { try { _obs.disconnect(); } catch (e) {} _obs = null; }
-    const Z = window.BarStockZones;
-    if (!Z) return;
-    try { if (!Z.lista().length) await Z.cargar(); } catch (e) {}
-    if (!Z.activas()) return;
-
-    const porIndice = new Map(res.map(r => [String(master().indexOf(r)), r]));
-
-    const pintar = async (el) => {
-      const r = porIndice.get(el.dataset.i);
-      if (!r) return;
-      try {
-        const d = await Z.donde(r.item);
-        const zonas = d && d.zonas ? d.zonas.filter(z => z.botellas > 0) : [];
-        if (!zonas.length) return;
-        const hueco = el.querySelector('.m-fic-g');
-        if (hueco) {
-          hueco.innerHTML = '<div class="m-res-zonas">' + zonas.map(z =>
-            '<span><b>' + n2(z.botellas) + '</b> ' + esc(z.zona) + '</span>').join('') + '</div>';
-          return;
-        }
-        const s = el.querySelector('[data-zonas]');
-        if (s) s.innerHTML = esc(r.vendor || '') + ' · ' +
-          zonas.map(z => '<b>' + n2(z.botellas) + '</b> ' + esc(z.zona)).join(' · ');
-      } catch (e) {}
-    };
-
-    const tarjetas = Array.from(caja.querySelectorAll('.m-res'));
-    if (typeof window.IntersectionObserver === 'function') {
-      _obs = new window.IntersectionObserver((entradas, o) => {
-        for (const e of entradas) {
-          if (!e.isIntersecting) continue;
-          o.unobserve(e.target);
-          pintar(e.target);
-        }
-      });
-      tarjetas.forEach(t => _obs.observe(t));
-      return;
-    }
-    for (const t of tarjetas.slice(0, 6)) await pintar(t);
   }
 
   // ── Dónde están ──────────────────────────────────────────────────────
@@ -300,17 +250,33 @@
     // El cálculo se pide a Zones en vez de repetirlo aquí, así que de
     // paso el móvil hereda el ámbar a los siete días.
     const c = (Z.cuando && d && d.at) ? Z.cuando(d.at) : null;
-    const fecha = c && c.txt
-      ? '<span class="m-zon-when' + (c.viejo ? ' viejo' : '') + '">' + esc(c.txt) + '</span>'
-      : '';
+
+    // ── Lo que llegó desde el conteo (Axel, 2026-11-11, opción A) ────
+    //
+    // Las zonas son lo que se CONTÓ; lo que llegó después por pedido
+    // está en el bar, pero nadie dijo en qué zona. Va como una pieza más,
+    // punteada y en verde para que no se lea como una zona, y de dónde
+    // vino junto a la fecha del conteo. Sale de live-cache, el mismo
+    // número que suma el LIVE de la cabecera.
+    const LC = window.BarStockLiveCache;
+    const r = master().find(x => x && x.item === item);
+    const ll = LC && r ? LC.llegadas(r) : null;
+    const pieza = ll ? `<span class="m-zon-t lleg"><b>+${n2(ll.n)}</b>Arrived</span>` : '';
 
     if (!d || !d.zonas || !d.zonas.length) {
       // Hay zonas puestas pero este producto no se ha repartido. No es
       // lo mismo que no tener zonas, y se dice.
       el.innerHTML = '<div class="m-zon"><span class="m-zon-k">Where it is</span>' +
-                     '<span class="m-zon-wait">Not counted by zone yet</span></div>';
+                     '<span class="m-zon-wait">Not counted by zone yet</span>' +
+                     (ll ? '<div class="m-zon-s">' + pieza + '</div>' +
+                       '<span class="m-zon-when">' + esc(ll.txt.charAt(0).toUpperCase() + ll.txt.slice(1)) + '</span>' : '') +
+                     '</div>';
       return;
     }
+
+    const cuando = c && c.txt
+      ? '<span class="m-zon-when' + (c.viejo ? ' viejo' : '') + '">' + esc(c.txt) + (ll ? ' · ' + esc(ll.txt) : '') + '</span>'
+      : ll ? '<span class="m-zon-when">' + esc(ll.txt.charAt(0).toUpperCase() + ll.txt.slice(1)) + '</span>' : '';
 
     el.innerHTML =
       '<div class="m-zon"><span class="m-zon-k">Where it is</span>' +
@@ -318,8 +284,8 @@
         d.zonas.map(z => `
           <span class="m-zon-t${Number(z.botellas) > 0 ? '' : ' cero'}">
             <b>${n2(z.botellas)}</b>${esc(z.zona)}
-          </span>`).join('') +
-      '</div>' + fecha + '</div>';
+          </span>`).join('') + pieza +
+      '</div>' + cuando + '</div>';
   }
 
   // ── Las últimas semanas ──────────────────────────────────────────────
@@ -416,7 +382,6 @@
   function ficha(host, idx) {
     const r = master()[idx];
     if (!r) return;
-    _ficha = idx;
     const par = parDe(r);
     const k = tono(r);
 
@@ -427,7 +392,14 @@
     // Con dos semanas de historia ese numero es una corazonada con
     // aspecto de dato, y es de los que se creen.
     const fiable = avg !== null && avg > 0 && semanas >= SEMANAS_PARA_FIAR;
-    const dias = fiable ? Math.round((Number(r.onHand) || 0) / avg * 7) : null;
+    const H = HERO();
+    const dias = !fiable ? null
+      : H && H.diasQueAguanta ? H.diasQueAguanta(r, par)
+      : Math.round((Number(r.onHand) || 0) / avg * 7);
+    // Toast lo vende: "cuánto dura" lo dice "Out Fri" en la cabecera, y
+    // "Lasts about · needs 4 weeks" de Pour·IQ sería la otra respuesta.
+    const LC = window.BarStockLiveCache;
+    const vende = !!(LC && LC.toastLoVende(r));
 
     // "1 days" era un fallo que llevaba ahi desde el principio.
     const cuantos = (n, u) => n + ' ' + u + (n === 1 ? '' : 's');
@@ -436,7 +408,7 @@
     // se ve desde lejos es el color, no el numero.
     const par18 = n2(r.suggested);
     // El aviso lo escribe product-hero, con el mismo corte que el color.
-    const H = HERO();
+    // Éste es sólo para la cabecera de respaldo, sin el módulo.
     const aviso = H && H.aviso ? H.aviso(r, dias)
       : Number(r.onHand) <= 0 ? 'Out of stock'
       : dias !== null ? 'Runs out in ' + cuantos(dias, 'day') : '';
@@ -453,6 +425,10 @@
     // Inventory, y los resultados se quedan detras. Mirar una botella
     // y volver a la lista deja de ser navegar.
     cerrarHoja();
+    // DESPUÉS de cerrarHoja(), que lo pone a -1. Se apuntaba antes y la
+    // hoja abierta quedaba siempre en -1: refrescar() repintaba la lista
+    // en vez de la ficha, y el LIVE que llegaba no la encontraba.
+    _ficha = idx;
     const h = document.createElement('div');
     h.className = 'm-sheet';
     // El id no es decoracion: las reglas de esta hoja se apoyan en el
@@ -499,7 +475,7 @@
              de qué factura vino. Si nunca vino de una, no pone nada,
              que también es información. -->
         <div id="msPrecio"></div>
-        ${dias === null ? `<div class="m-row m-row-end">
+        ${dias === null && !vende ? `<div class="m-row m-row-end">
           <span><i class="ti ti-hourglass" aria-hidden="true"></i> Lasts about</span>
           <b><span class="m-soft">needs ${SEMANAS_PARA_FIAR} weeks · has ${semanas}</span></b></div>` : ''}
       </div>
@@ -613,6 +589,10 @@
 
   function show(host) {
     cerrarHoja();
+    // El LIVE lo lee live-cache una vez para toda la app; si nadie lo
+    // pidió aún (se entró directo aquí, sin pasar por Inventory), se pide
+    // ahora y alLive() repinta al llegar.
+    if (window.BarStockLiveCache) window.BarStockLiveCache.cargar();
     pintarLista(host);
     fijarBarra(host);
     if (_sinTeclado) { _sinTeclado = false; return; }
@@ -645,6 +625,31 @@
     const i = master().findIndex(r => r.item === nombre);
     if (i >= 0) ficha(host, i);
   }
+
+  // ── Cuando llega el LIVE (o se relee por una factura) ──────────────
+  //
+  // Se repintan los resultados y, con una ficha abierta, sólo su
+  // cabecera y "Where it is": rehacer la hoja entera la cerraría y
+  // abriría delante de quien la está leyendo. La gráfica de semanas del
+  // hueco se conserva tal cual; volver a pedirla sería otra consulta.
+  function alLive() {
+    const host = document.querySelector('.m-screen[data-screen="search"]');
+    if (!host || !host.classList.contains('on')) return;
+    pintarLista(host);
+    const caja = document.querySelector('#mSheet .m-ficha');
+    const r = hojaAbierta() && _ficha >= 0 ? master()[_ficha] : null;
+    const viejo = caja && caja.querySelector('.m-fic');
+    if (!r || !viejo) return;
+    const t = document.createElement('div');
+    t.innerHTML = cabecera(r, parDe(r));
+    const nuevo = t.querySelector('.m-fic');
+    if (!nuevo) return;
+    const g = viejo.querySelector('.m-fic-g'), ng = nuevo.querySelector('.m-fic-g');
+    if (g && ng) ng.replaceWith(g);
+    viejo.replaceWith(nuevo);
+    pintarZonas(caja, r.item);
+  }
+  if (window.BarStockLiveCache) window.BarStockLiveCache.alCambiar(alLive);
 
   window.BarStockMobileSearch = { mount, show, abrirItem };
 

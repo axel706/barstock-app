@@ -55,7 +55,7 @@
         f = filas.get(nombre);
         if (!f) {
           f = { producto: nombre, enInventario: !!m, contado: m ? Number(m.onHand) || 0 : 0,
-                llego: 0, vendido: 0, de: [], viene: [] };
+                llego: 0, vendido: 0, de: [], viene: [], llegadas: [] };
           filas.set(nombre, f);
         }
       }
@@ -93,12 +93,17 @@
         if (!(colocada > o.conteo) || !conFactura) continue;
         cuenta = 'factura';
       }
+      // Cuándo llegó: su hora de entrega; sin ella, el día de su factura.
+      const cuando = llega != null ? llega : (ultima || colocada);
       for (const i of items) {
         const n = cuenta === 'factura' ? i.recibido : i.pedido;
         if (!n) continue;
         const f = fila(i.item);
         f.llego += n;
         f.de.push((ord.po_number || ord.vendor || 'order') + (cuenta === 'factura' ? ' (invoice)' : ' (ordered)') + ' +' + n);
+        // Lo mismo que `de`, para pintarlo: la ficha dice "+5 Arrived ·
+        // arrived Tue, LOOP order" y no puede sacarlo de un texto.
+        f.llegadas.push({ n, cuando, de: ord.vendor || '' });
       }
     }
 
@@ -109,6 +114,8 @@
       const f = fila(r.item);
       f.llego += r.qty;
       f.de.push('invoice ' + (r.factura || '') + ' without order +' + r.qty);
+      // Sin pedido no se sabe de qué proveedor: la factura no lo trae.
+      f.llegadas.push({ n: r.qty, cuando: r.fecha, de: '' });
     }
 
     for (const v of o.vendido || []) {
