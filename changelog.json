@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261111-184517",
+    "items": [
+      "See them on Home opens only the bottles running out",
+      "Tap the pill above the list to see everything"
+    ]
+  },
+  {
     "build": "20261111-182735",
     "items": [
       "Running out first uses Toast: the day each bottle runs out",
@@ -183,12 +190,6 @@
     "build": "20261109-211423",
     "items": [
       "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261109-193611",
-    "items": [
-      "Smoother header animations while scrolling"
     ]
   }
 ]

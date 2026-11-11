@@ -26,6 +26,10 @@ const path = require('path');
 
 const SRC = fs.readFileSync(
   path.join(__dirname, '..', 'src', 'mobile-home.js'), 'utf8');
+// La lista de lo que se acaba vive aquí desde "See them" (opción B): la
+// leen la tarjeta y el filtro de Inventory.
+const RUNNING = fs.readFileSync(
+  path.join(__dirname, '..', 'src', 'running-out.js'), 'utf8');
 
 let ok = 0, mal = 0;
 function prueba(n, c, d) {
@@ -58,6 +62,7 @@ function entorno(items) {
   w.__ido = [];
   w.BarStockMobile = { ir: (x) => w.__ido.push(x) };
 
+  new Function(RUNNING)();
   new Function(SRC)();
   return w;
 }
@@ -211,7 +216,9 @@ const nombres = (h) => filas(h).map(f => f.querySelector('.n').textContent);
     // Antes caía en los 264 artículos ordenados por valor en el
     // estante, donde lo que acababas de leer no aparecía.
     prueba('abre inventario', w.__ido.includes('inventory'), w.__ido.join(','));
-    prueba('ordenado por lo más cerca de vaciarse', w.__orden === 'falta', String(w.__orden));
+    // Filtrado a la lista de la tarjeta, no "Closest to empty": con todo
+    // a cero ese orden era el del inventario (test-ver-agota.js).
+    prueba('filtrado a lo que dice la tarjeta', w.__orden === 'agota', String(w.__orden));
   }
 
   console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +

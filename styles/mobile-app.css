@@ -2410,6 +2410,16 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
 
   .m-inv-bar2 { display: flex; gap: 7px; margin-bottom: 11px; }
   .m-inv-bar2 .m-searchbar { flex: 1; min-width: 0; margin-bottom: 0; }
+  /* El filtro de "See them" (Axel, 2026-11-11, opción B): la pastilla
+   * de las del cajón de filtros, encendida, bajo el buscador. El aire va
+   * por abajo como el resto de este bloque pegado (.m-inv-bar2): dos
+   * convenciones en la misma columna doblan el hueco. */
+  #miFiltro:empty { display: none; }
+  body.m-shell .m-inv-filtro {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-bottom: 11px; font-size: var(--m-small);
+  }
+  .m-inv-filtro .ti { font-size: var(--m-small); }
   body.m-shell .m-adj {
     flex: 0 0 44px; width: 44px; cursor: pointer; position: relative;
     display: flex; align-items: center; justify-content: center;

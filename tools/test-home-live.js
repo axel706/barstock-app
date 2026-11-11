@@ -68,6 +68,7 @@ async function entorno(o) {
   // (el resumen de facturas), para que sólo lo repinte alCambiar.
   w.BarStockRunOut = { ahora: async () => (o.lento ? await esperar(60) : null, o.contando ? { estado: 'contando' } : { estado: 'listo', hoy: HOY, conteo: '2026-11-09T04:30:00Z', filas: FILAS }) };
   new Function(leer('src/live-cache.js'))();
+  new Function(leer('src/running-out.js'))();
   const m = (item, onHand, suggested, value) => ({ item, vendor: 'LOOP', code: '', category: 'Liquor', onHand, suggested, value });
   w.state = { master: [
     m('St Germain', 1, 3, 30), m('Bulleit Rye', 1, 2, 28), m("Tito's Vodka 1L", 3, 8, 20),

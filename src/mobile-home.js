@@ -1490,37 +1490,16 @@
     // el número que enseña Inventory (el LIVE si se movió): dos
     // pantallas con dos existencias distintas del mismo producto es lo
     // que Axel vio con St Elder.
-    const LC = window.BarStockLiveCache;
-    const parM = window.parAdjustments;
-    const pronto = master().map(r => {
-      if (!r || !r.item) return null;
-      const vivo = !!(LC && LC.vivo(r));
-      if (LC && LC.toastLoVende(r)) {
-        const a = LC.agota(r);
-        if (!a || a.enDias >= 7) return null;
-        return { item: r.item, dias: a.enDias, out: a, vivo, fuera: LC.cuanto(r) <= 0, avg: 0 };
-      }
-      const p = parM && parM.get ? parM.get(r.item + '||' + (r.code || '')) : null;
-      if (!p || p.status !== 'active') return null;
-      const avg = Number(p.avgUsed) || 0;
-      if (avg <= 0 || (p.normalWeeks || 0) < SEMANAS_MIN) return null;
-      const queda = LC ? LC.cuanto(r) : (Number(r.onHand) || 0);
-      const dias = Math.max(0, Math.round(queda / avg * 7));
-      if (dias > 7) return null;
-      // `fuera` mira el estante, no el redondeo: media botella de algo
-      // que se mueve mucho también da "0 days", y decir que está fuera
-      // cuando queda media es mentira.
-      const fuera = queda <= 0;
-      return { item: r.item, dias, avg, vivo, fuera,
-        out: { txt: fuera ? 'Out now' : dias + (dias === 1 ? ' day' : ' days'),
-               tono: dias <= 2 ? 'r' : dias < 7 ? 'a' : 'g' } };
-    }).filter(Boolean);
+    //
+    // La lista vive en running-out.js: "See them" abre Inventory
+    // filtrado a ESTOS productos, y si cada uno la calculara por su
+    // lado, la tarjeta y la lista dejarían de decir lo mismo.
+    const RO = window.BarStockRunningOut;
+    const pronto = RO ? RO.lista() : [];
 
     if (pronto.length) {
-      // Los que están fuera van primero —eso es otro estado—, después
-      // el que se acaba antes y, a igual día, el que más se mueve.
-      pronto.sort((a, b) => (b.fuera - a.fuera) || (a.dias - b.dias) || (b.avg - a.avg));
-
+      // Ya viene ordenada: lo que está fuera, después el que se acaba
+      // antes y, a igual día, el que más se mueve.
       const fuera = pronto.filter(x => x.fuera).length;
       // TRES, los que caben en el cuerpo de la plantilla: la altura de
       // las tarjetas está fija en el CSS.
@@ -1554,13 +1533,14 @@
           ? 'and ' + resto + ' more ' + (ultimo === 0 ? 'today' : ultimo < 7 ? 'by ' + dia(ultimo) : 'this week')
           : n + ' this week',
         btn: 'See them',
-        // Al inventario YA ORDENADO por lo que está más cerca de
-        // vaciarse. Antes llevaba a los 264 artículos por valor en el
-        // estante: la lista que acababas de leer no estaba por ningún
-        // lado.
+        // A Inventory FILTRADO a estos productos y en este orden
+        // (Axel, 2026-11-11, opción B). Antes abría "Closest to empty",
+        // que ordena por lo que queda contra el par: con quince
+        // productos a cero empatados salían en el orden del inventario
+        // y la lista no se parecía a la tarjeta.
         go: () => {
           const I = window.BarStockMobileInventory;
-          if (I && I.abrirCon) I.abrirCon('falta');
+          if (I && I.abrirCon) I.abrirCon('agota');
           else if (window.BarStockMobile) window.BarStockMobile.ir('inventory');
         }
       });

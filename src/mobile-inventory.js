@@ -50,6 +50,15 @@
   let _solo = 'todo';    // todo | fix
   let _vendor = 'ALL';
   let _orden = 'valor';  // valor | nombre | falta
+  // ── "See them" del Home (Axel, 2026-11-11, opción B) ──────────────
+  //
+  // 'agota': sólo lo que la tarjeta "Running out first" dice que se
+  // acaba, en su orden (running-out.js, la misma lista). Una pastilla
+  // debajo del buscador lo dice y lo quita. Vale para esa entrada: se
+  // pone al entrar desde la tarjeta y se borra al entrar de cualquier
+  // otra forma, como el orden pedido. Un refresco de datos no lo quita.
+  let _filtro = null;
+  const agotan = () => window.BarStockRunningOut ? window.BarStockRunningOut.lista() : [];
 
   function master() { return (window.state && window.state.master) || []; }
 
@@ -152,7 +161,8 @@
   if (window.BarStockLiveCache) {
     window.BarStockLiveCache.alCambiar(() => {
       const host = document.querySelector('.m-screen[data-screen="inventory"]');
-      if (host && host.classList.contains('on')) pintarLista(host);
+      // La cabecera también: la pastilla cuenta lo que se acaba.
+      if (host && host.classList.contains('on')) { pintarCabecera(host); pintarLista(host); }
     });
   }
 
@@ -194,6 +204,14 @@
   // muerto no es mentir, es no pedirte que cuentes lo que no existe.
   function visibles() {
     const t = norm(_q);
+
+    // El filtro de la tarjeta manda sobre el resto: sus productos, en su
+    // orden. Sólo la búsqueda lo acota; el proveedor y "Needs fixing" no,
+    // o la lista dejaría de ser la de la tarjeta sin decirlo.
+    if (_filtro === 'agota') {
+      return agotan().map(x => x.r)
+        .filter(r => !(t.length >= 2) || norm(r.item).includes(t) || norm(r.code).includes(t));
+    }
 
     let filas = master().filter(r => {
       if (_vendor !== 'ALL' && String(r.vendor || 'UNKNOWN').toUpperCase() !== _vendor) return false;
@@ -237,6 +255,12 @@
       caja.innerHTML = !master().length
         ? nada('package', false, 'No inventory yet',
                'Import a count or scan the shelf, and every product shows up here.')
+        : _filtro === 'agota' && norm(_q).length < 2
+          ? nada('circle-check', true, 'Nothing runs out this week',
+                 'Tap the × above to see everything.')
+        : _filtro === 'agota'
+          ? nada('search-off', false, 'Nothing matches',
+                 'None of the bottles running out fits the search.')
         : _solo === 'fix'
           ? nada('circle-check', true, 'Nothing left to fix',
                  'Every product has a vendor, a price and a par. Switch to Everything to see the rest.')
@@ -312,6 +336,23 @@
 
     const aj = host.querySelector('#miAdj');
     if (aj) aj.classList.toggle('on', _vendor !== 'ALL' || _orden !== 'valor');
+
+    // La pastilla del filtro de la tarjeta, con el estilo de las del
+    // cajón de filtros (.m-chip.on). Toda ella quita el filtro: una ✕ de
+    // 22 px sola es un blanco pequeño para un dedo detrás de una barra.
+    // Cuenta lo que hay en la lista, el mismo número que la tarjeta.
+    const fil = host.querySelector('#miFiltro');
+    if (fil) {
+      fil.innerHTML = _filtro === 'agota'
+        ? `<button type="button" class="m-chip on m-inv-filtro" id="miFiltroX" aria-label="Show everything">
+             <i class="ti ti-flame" aria-hidden="true"></i>Running out first · ${agotan().length}
+             <i class="ti ti-x" aria-hidden="true"></i></button>`
+        : '';
+      const x = fil.querySelector('#miFiltroX');
+      // show() y no sólo repintar: el bloque pegado cambia de alto y
+      // band-dock tiene que volver a medirlo.
+      if (x) x.onclick = () => { _filtro = null; show(host); };
+    }
   }
 
   // ── El cajón de filtros ──────────────────────────────────────────────
@@ -725,6 +766,7 @@
           <i class="ti ti-plus" aria-hidden="true"></i>
         </button>
       </div>
+      <div id="miFiltro"></div>
       </div>
 
       <div id="miList"></div>
@@ -797,7 +839,11 @@
       show(host) {
         // Si alguien pidió un orden concreto al entrar, se aplica
         // aquí y se olvida.
-        if (_pedido) { _orden = _pedido; _pedido = null; }
+        // 'agota' no es un orden, es el filtro de la tarjeta. Cualquier
+        // otra entrada lo quita.
+        _filtro = _pedido === 'agota' ? 'agota' : null;
+        if (_pedido && _pedido !== 'agota') _orden = _pedido;
+        _pedido = null;
         return show(host);
       },
       // show() reajusta el total y repinta; los filtros y la búsqueda

@@ -109,7 +109,7 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 
 ## La arquitectura
 
-Frontend estático, sin build. `index.html` es un monolito y hay ~119 módulos
+Frontend estático, sin build. `index.html` es un monolito y hay ~120 módulos
 `src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 29 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 127 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 128 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -309,7 +309,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 127 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 128 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
