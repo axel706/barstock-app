@@ -59,6 +59,8 @@ function live(o) {
 }
 const titos = (r) => r.f("Tito's Vodka 1L");
 
+(async () => {
+
 grupo('el ejemplo de Axel, paso a paso');
 {
   let r = live({ ahora: '2026-11-16T15:00:00Z' });
@@ -112,6 +114,43 @@ grupo('lo facturado sin pedido');
   prueba('del mismo día del conteo, no (ya estaba al contar)', r.f('Baileys 1L').live === 1 && !r.f('Baileys 1L').movimiento);
 }
 
+grupo('pedidos de antes de guardar la llegada (Axel: "loop ya llegó, sólo falta su factura")');
+{
+  // El pedido de LOOP del domingo, sin arrives_at (se colocó antes de la
+  // 033). LOOP tiene horario (martes 7 AM): la llegada se calcula al leer.
+  const w2 = new JSDOM('<!doctype html><body></body>', { runScripts: 'outside-only' }).window;
+  w2.BarStockCycle = { startedAt: () => new Date(CONTEO) };
+  w2.BarStockVendorDefaults = { getAllDefaults: async () => [
+    { vendor: 'LOOP', delivery_day: 2, delivery_time: '07:00:00' },
+    { vendor: 'SOUTHERN', delivery_day: null, delivery_time: null }] };
+  const viejo = [
+    { id: 'a', vendor: 'LOOP', po_number: 'CT-1', created_at: '2026-11-16T02:30:00Z', arrives_at: null },
+    { id: 'b', vendor: 'SOUTHERN', po_number: 'CT-2', created_at: '2026-11-16T02:40:00Z', arrives_at: null },
+    { id: 'c', vendor: 'LOOP', po_number: 'CT-3', created_at: '2026-09-01T15:00:00Z', arrives_at: null },
+    { id: 'd', vendor: 'LOOP', po_number: 'CT-4', created_at: '2026-11-16T03:00:00Z', arrives_at: '2026-11-20T12:00:00Z' }];
+  w2.fetch = async (u) => {
+    u = String(u);
+    const r = (b) => ({ ok: true, status: 200, json: async () => b, text: async () => JSON.stringify(b) });
+    if (/vendor_orders/.test(u)) return r(viejo.map(x => Object.assign({}, x)));
+    if (/vendor_order_items/.test(u)) return r([{ vendor_order_id: 'a', item_name: "Tito's Vodka 1L", quantity: 5, unit_price: 20 }]);
+    return r([]);
+  };
+  for (const f of ['src/vendor-delivery.js', 'src/order-receipts.js', 'src/live-stock.js']) w2.eval(leer(f));
+  const d = await w2.BarStockOrderReceipts.leer({ url: 'https://sb.test', key: 'k', locId: 'loc' });
+  const de = (id) => d.recortadas.find(o => o.id === id);
+  prueba('LOOP sin llegada guardada: se calcula al leer (martes 7 AM)', de('a').arrives_at === '2026-11-17T12:00:00.000Z' && de('a').llegadaCalculada === true, de('a').arrives_at);
+  prueba('un proveedor sin horario se queda sin llegada (opción a)', de('b').arrives_at === null);
+  prueba('a un pedido de hace meses no se le aplica el horario de hoy', de('c').arrives_at === null);
+  prueba('la llegada guardada no se toca', de('d').arrives_at === '2026-11-20T12:00:00Z' && !de('d').llegadaCalculada);
+  const recibos = w2.BarStockOrderReceipts.recibosDe([], [], new Map());
+  const repartido = w2.BarStockOrderReceipts.repartir({ recortadas: d.recortadas, lineas: d.lineas, recibos, inicioCiclo: CONTEO });
+  const filas = w2.BarStockLive.calcular({ master: MASTER, ordenes: d.recortadas, repartido, recibos,
+    conteo: CONTEO, diaConteo: DIA, ahora: T('2026-11-18T15:00:00Z'), vendido: [] });
+  const t = filas.find(f => f.producto === "Tito's Vodka 1L");
+  prueba('y el LIVE lo suma aunque falte la factura: 3 + 5 = 8', t.live === 8 && t.llego === 5, JSON.stringify(t));
+  prueba('no escribe nada al calcularla', !/method:\s*'(POST|PATCH|PUT|DELETE)'/.test(leer('src/order-receipts.js').replace(/\/\/.*$/gm, '')));
+}
+
 grupo('la marca "Live" y el reparto');
 {
   const r = live({ ahora: '2026-11-16T15:00:00Z' });
@@ -122,7 +161,9 @@ grupo('la marca "Live" y el reparto');
   const html = leer('index.html');
   const p = f => html.indexOf('src/' + f + '?v=');
   prueba('carga después de lo que usa', p('live-stock.js') > p('order-receipts.js') && p('live-stock.js') > p('toast-usage.js') && p('order-receipts.js') > 0);
+  prueba('el horario carga antes que el reparto, que lo usa', p('vendor-defaults-cloud.js') > 0 && p('vendor-defaults-cloud.js') < p('vendor-delivery.js') && p('vendor-delivery.js') < p('order-receipts.js'));
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
+})();

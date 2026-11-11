@@ -73,6 +73,7 @@
     }
 
     const recortadas = ordenes.slice(0, MAX_ORDENES);
+    await completarLlegadas(recortadas);
     const ids = recortadas.map(o => o.id).filter(Boolean);
 
     const lineas = ids.length ? await leerTodo(url, key,
@@ -104,6 +105,38 @@
     } catch (e) { /* sin la tabla, sólo el emparejamiento automático */ }
 
     return { ordenes, recortadas, lineas, facturas, enlaces, manuales };
+  }
+
+  // ── La llegada de los pedidos que no la guardaron ────────────────────
+  //
+  // arrives_at se guarda desde 2026-11-11 (033). Los pedidos de antes no
+  // la tienen, y el LIVE los trataba como de un proveedor SIN horario:
+  // sólo sumaban con su factura. Axel recogió el pedido de LOOP el martes
+  // por la mañana, su factura aún no había entrado, y el LIVE decía que
+  // no había llegado nada: "loop ya llegó, sólo falta su factura".
+  //
+  // Si el proveedor SÍ tiene horario, la llegada se calcula al leer, con
+  // la misma regla que al guardar (la siguiente entrega después de
+  // colocarlo). No se escribe: es lo que se habría guardado. Sólo para
+  // pedidos recientes —este ciclo y la semana anterior—: a uno de hace
+  // meses no se le aplica el horario de hoy, que pudo ser otro.
+  //
+  // Sin horario del proveedor se queda sin llegada, y entonces sí vale la
+  // regla de la opción a.
+  async function completarLlegadas(ordenes) {
+    const VD = window.BarStockVendorDelivery, V = window.BarStockVendorDefaults;
+    const C = window.BarStockCycle;
+    const ini = C && C.startedAt && C.startedAt();
+    const desde = (ini ? ini.getTime() : Date.now()) - 7 * 864e5;
+    const faltan = (ordenes || []).filter(o => !o.arrives_at && new Date(o.created_at).getTime() >= desde);
+    if (!faltan.length || !VD || !VD.siguienteEntrega || !V || !V.getAllDefaults) return;
+    let horarios = [];
+    try { horarios = (await V.getAllDefaults()) || []; } catch (e) { return; }
+    const de = new Map(horarios.filter(Boolean).map(f => [String(f.vendor || '').trim().toUpperCase(), f]));
+    for (const o of faltan) {
+      const t = VD.siguienteEntrega(de.get(String(o.vendor || '').trim().toUpperCase()), o.created_at);
+      if (t) { o.arrives_at = t; o.llegadaCalculada = true; }
+    }
   }
 
   // factura → recibos por artículo. `dueno` es factura → orden (los

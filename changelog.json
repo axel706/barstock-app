@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-164355",
+    "items": [
+      "Orders placed before today now show when they arrived"
+    ]
+  },
+  {
     "build": "20261111-163527",
     "items": [
       "Behind-the-scenes fixes"
@@ -180,13 +186,6 @@
     "build": "20261109-161019",
     "items": [
       "The tab bar sits at the bottom again in Search"
-    ]
-  },
-  {
-    "build": "20261109-160345",
-    "items": [
-      "Search bar stays put with the keyboard open",
-      "No more bounce in Search"
     ]
   }
 ]
