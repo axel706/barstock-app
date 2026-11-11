@@ -65,6 +65,7 @@
     const M = window.BarStockMobile;
     const vuelta = (M && M.nombreAnterior && M.nombreAnterior()) || 'Back';
 
+    if (M && M.salirBanda) M.salirBanda();
     host.innerHTML =
       cab({ volverA: vuelta, titulo: 'Settings' }) +
       '<div class="m-hsub">' + esc(loc) + '</div>' +
@@ -106,8 +107,21 @@
     '</div>';
   }
 
+  // Las subsecciones llevan su nombre en la banda, en el sitio del logo,
+  // y el botón de la izquierda es "atrás" (Axel, 2026-11-11, opción 1,
+  // "en todas las subsecciones"). En la página sólo queda la línea que
+  // explica la sección. La raíz de Settings no: conserva su cabecera,
+  // porque desde ahí se vuelve a la pantalla de antes, no a Settings.
   function cabecera(host, titulo, sub) {
-    return cab({ volverA: 'Settings', titulo: titulo, sub: sub || '' });
+    return seccion({ volverA: 'Settings', titulo: titulo, sub: sub || '' });
+  }
+
+  function seccion(o) {
+    const M = window.BarStockMobile;
+    if (M && M.enBanda && M.enBanda(o.titulo || '')) {
+      return o.sub ? '<div class="m-hsub m-set-intro">' + esc(o.sub) + '</div>' : '';
+    }
+    return cab(o);
   }
 
   // El encabezado lo arma el armazón: chevron a la izquierda del
@@ -115,10 +129,13 @@
   const cab = (o) => (window.BarStockMobile && window.BarStockMobile.cabecera)
     ? window.BarStockMobile.cabecera(o)
     : '<div class="m-inv-t">' + esc(o.titulo || '') + '</div>';
+  // Con el nombre en la banda, la página no tiene botón de atrás: el de
+  // la banda hace lo mismo.
   const volverCon = (host, fn) => {
-    if (window.BarStockMobile && window.BarStockMobile.alVolver) {
-      window.BarStockMobile.alVolver(host, fn);
-    }
+    const M = window.BarStockMobile;
+    if (!M) return;
+    if (M.alVolver && M.alVolver(host, fn)) return;
+    if (M.alVolverBanda) M.alVolverBanda(fn);
   };
 
   function volver(host) {
@@ -226,7 +243,7 @@
     try { d = (await window.BarStockVendorDefaults.getDefaults(_vendor)) || {}; } catch (e) {}
 
     host.innerHTML =
-      cab({ volverA: 'Delivery', titulo: _vendor,
+      seccion({ volverA: 'Delivery', titulo: _vendor,
             sub: 'These details print on this vendor\u2019s orders only.' }) +
       campo('ms_vemail', 'Vendor email', d.vendor_email,
         'Pre-filled when emailing an order.', 'email') +

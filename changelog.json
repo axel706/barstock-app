@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-154721",
+    "items": [
+      "Settings: the section name sits in the header"
+    ]
+  },
+  {
     "build": "20261111-113053",
     "items": [
       "Behind-the-scenes fixes"
@@ -181,12 +187,6 @@
     "items": [
       "Update card shows BarStock Pro and the build",
       "New versions no longer show up in the bell"
-    ]
-  },
-  {
-    "build": "20261109-141852",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]

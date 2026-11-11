@@ -423,6 +423,7 @@
   function ir(id) {
     const p = _pant.get(id);
     if (!p || !_montado) return;
+    salirBanda();
 
     // Sólo se recuerda al ENTRAR en una pantalla que no es pestaña: al
     // volver a una pestaña no hace falta, y guardarlo siempre haría que
@@ -753,6 +754,56 @@
       '</div>';
   }
 
+  // ── El nombre de la sección en la banda ──────────────────────────────
+  //
+  // Axel, 2026-11-11, opción 1 de la lámina, para todas las subsecciones
+  // de Settings: el nombre de la sección ocupa el sitio del logo y el
+  // botón redondo de la izquierda (Time Machine) pasa a ser "atrás". La
+  // página ya no repite el título grande y empieza con su contenido.
+  //
+  // No es lo mismo que el título de Inventory al bajar (band-dock.js,
+  // .m-band-titulo): aquél entra con el scroll y se va al volver arriba;
+  // éste está fijo mientras dure la sección. Por eso va en su propio
+  // elemento y su propia clase, y uno no pisa al otro.
+  //
+  // Se quita al cambiar de pantalla (ir()): una sección que se olvidara
+  // de quitarlo dejaría su nombre en el Home.
+  let _bandaAtras = null;
+
+  function enBanda(titulo) {
+    if (!_banda) return false;
+    let t = _banda.querySelector('.m-band-seccion');
+    if (!t) {
+      t = document.createElement('span');
+      t.className = 'm-band-seccion';
+      _banda.appendChild(t);
+    }
+    if (t.textContent !== (titulo || '')) t.textContent = titulo || '';
+    let b = _banda.querySelector('#mBandAtras');
+    if (!b) {
+      b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'm-ico';
+      b.id = 'mBandAtras';
+      b.setAttribute('aria-label', 'Back');
+      b.innerHTML = '<i class="ti ti-chevron-left" aria-hidden="true"></i>';
+      b.onclick = () => { if (_bandaAtras) _bandaAtras(); };
+      const izq = _banda.querySelector('.m-band-izq');
+      (izq || _banda).appendChild(b);
+    }
+    _banda.classList.add('m-en-seccion');
+    return true;
+  }
+
+  // Lo que hace el "atrás" de la banda. Lo pone la sección, igual que
+  // engancha el de su cabecera con alVolver().
+  function alVolverBanda(fn) { _bandaAtras = typeof fn === 'function' ? fn : null; }
+
+  function salirBanda() {
+    if (_banda) _banda.classList.remove('m-en-seccion');
+    _bandaAtras = null;
+  }
+
   // Engancha el botón de la cabecera. Devuelve false si no hay, para
   // que quien llama pueda decidir.
   function alVolver(host, fn) {
@@ -765,7 +816,7 @@
   window.BarStockMobile = {
     register, ir, volver, nombreAnterior, refrescarBadges, refrescarActiva,
     esMovil, montado: () => _montado, activa: () => _activa,
-    cabecera, alVolver,
+    cabecera, alVolver, enBanda, alVolverBanda, salirBanda,
     ANCHO
   };
 })();

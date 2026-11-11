@@ -898,6 +898,26 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     transform: translateY(calc(var(--m-dock-q, 0) * -6px)) translateZ(0);
     transition: opacity .12s linear;
   }
+  /* ── El nombre de la sección, fijo en la banda (subsecciones de
+   * Settings; mobile-shell.js, enBanda). Mismo sitio y misma letra que
+   * el título de Inventory al bajar, pero sin fundido ligado al scroll:
+   * está mientras dure la sección. El botón de la izquierda pasa de
+   * Time Machine a "atrás"; los dos viven en .m-band-izq y se enseña uno.
+   * Con el prefijo de id: el `display` de .m-ico (body.m-shell .m-ico)
+   * le ganaría a una clase sola. */
+  .m-band-seccion {
+    position: absolute; left: 66px; right: 66px; bottom: 0; height: 52px; z-index: 2;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: var(--m-head); font-weight: 800; color: #fff; letter-spacing: -.5px;
+    text-shadow: 0 1px 12px rgba(0,0,0,.55);
+    opacity: 0; transform: translateZ(0);
+  }
+  .m-band.m-en-seccion .m-band-seccion { opacity: 1; }
+  .m-band.m-en-seccion .m-logo { opacity: 0; }
+  body.m-shell #mBand #mBandAtras { display: none; }
+  body.m-shell #mBand.m-en-seccion #mBandAtras { display: flex; }
+  body.m-shell #mBand.m-en-seccion #mTime { display: none; }
   /* La copia de la búsqueda. Fuera de .m-screens no le llega el reset
    * de botones, y app.css le pondría su sombra, su blur y el radio de
    * 999px: de ahí el prefijo de id, que es lo único que gana a ese
@@ -2649,6 +2669,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-band.m-band-bub .m-logo { opacity: 0; }
   /* Y el título de la pantalla, si era él quien estaba (band-dock.js). */
   .m-band.m-band-bub .m-band-titulo { opacity: 0; }
+  .m-band.m-band-bub .m-band-seccion { opacity: 0; }
 
   .m-bub {
     display: inline-flex; align-items: center; gap: 5px;
@@ -3739,6 +3760,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * borde y fondo, y como subtítulo parecía un aviso. */
   .m-hsub { font-size: var(--m-small); color: #9fb0c4; line-height: 1.5;
     margin: 4px 2px 14px; }
+  /* Con el nombre en la banda, la línea que explica la sección es lo
+   * primero de la página: aire arriba, como todo lo demás. */
+  .m-hsub.m-set-intro { margin-top: 10px; }
 
   /* Las pastillas All / Short / Waiting se mudaron al cajón de
    * filtros, que es el mismo patrón que usa Inventory. Ocupaban un
