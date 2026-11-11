@@ -3715,6 +3715,13 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-hs-corto  { background: rgba(217,119,6,.24);   color: #fcd34d; }
   .m-hs-sobra  { background: rgba(56,189,248,.20);  color: #7dd3fc; }
   .m-hs-espera { background: rgba(100,116,139,.26); color: #9fb0c4; }
+  /* Viene: todavía no ha llegado (su hora de entrega no ha pasado). Azul,
+   * como la línea "Arrives…" de la tarjeta; la nota morada es de los
+   * pedidos colocados en el ciclo anterior que llegan en éste. */
+  .m-hs-viene  { background: rgba(56,189,248,.18);  color: #7dd3fc; }
+  .m-hcard-arr { display: block; font-size: var(--m-meta); font-weight: 700; color: #7dd3fc; margin-top: 3px; }
+  .m-hcard-leg { display: inline-block; margin-top: 5px; padding: 3px 8px; border-radius: 8px;
+    font-size: var(--m-meta); font-weight: 700; background: rgba(167,139,250,.16); color: #c4b5fd; }
 
   /* En el DETALLE sí es una lista continua: son las líneas de UNA
    * orden, y separarlas en tarjetas las haría parecer independientes. */

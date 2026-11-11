@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261111-162505",
+    "items": [
+      "Sent: when each order arrives",
+      "Orders placed last cycle are marked"
+    ]
+  },
+  {
     "build": "20261111-161615",
     "items": [
       "Quick order asks if it's already here",
@@ -180,13 +187,6 @@
     "build": "20261109-154158",
     "items": [
       "The greeting on Home is fully visible again"
-    ]
-  },
-  {
-    "build": "20261109-153658",
-    "items": [
-      "The top of Home no longer darkens as you scroll",
-      "No more bounce at the top of the screen"
     ]
   }
 ]

@@ -121,10 +121,21 @@
     const locId = await locationId();
     if (!url || !key || !locId) throw new Error('No location.');
 
-    const ordenes = await leerTodo(url, key,
+    // Con la llegada (033). Si la base aún no la tiene, se pide sin ella:
+    // Sent no puede quedarse vacío por eso. Sólo si Supabase nombra la
+    // columna (orders-cloud.js decide eso); con otro error, se dice.
+    const BASE = 'id,app_order_id,vendor,po_number,created_at,subtotal,status';
+    const pedirOrdenes = (cols) => leerTodo(url, key,
       `vendor_orders?location_id=eq.${locId}` +
-      `&select=id,app_order_id,vendor,po_number,created_at,subtotal,status` +
+      `&select=${cols}` +
       `&order=created_at.desc`);
+    let ordenes;
+    try { ordenes = await pedirOrdenes(BASE + ',arrives_at'); }
+    catch (e) {
+      const falta = window.BarStockOrdersFaltaColumna;
+      if (!(falta && falta(e && e.message))) throw e;
+      ordenes = await pedirOrdenes(BASE);
+    }
 
     const recortadas = ordenes.slice(0, MAX_ORDENES);
     const ids = recortadas.map(o => o.id).filter(Boolean);
@@ -366,10 +377,19 @@
         vendor: o.vendor || '',
         po: o.po_number || '',
         fecha: o.created_at,
+        // Cuándo llega (033). Null en los pedidos de antes, o si el
+        // proveedor no tenía horario: entonces no se dice nada.
+        llegada: o.arrives_at || null,
+        // Colocado en el ciclo anterior y llega en éste: lleva la nota.
+        delAnterior: !!(ini && o.arrives_at && new Date(o.created_at).getTime() < ini.getTime() &&
+          new Date(o.arrives_at).getTime() >= ini.getTime()),
         items, estado, cortos, sobras,
         pedidoDinero, recibidoDinero, precioReal,
         factura: (items.find(i => i.factura) || {}).factura || '',
-        ciclo: cicloDe(o.created_at, cortes)
+        // Cada pedido es del ciclo en el que LLEGA (Axel, 2026-11-11):
+        // uno colocado el jueves para el jueves siguiente sale en el
+        // ciclo de su llegada. Sin llegada, el de siempre: su fecha.
+        ciclo: cicloDe(o.arrives_at || o.created_at, cortes)
       };
     });
 
@@ -383,11 +403,24 @@
     ok:      ['all in',  'bien'],
     short:   ['short',   'corto'],
     over:    ['over',    'sobra'],
-    waiting: ['waiting', 'espera']
+    waiting: ['waiting', 'espera'],
+    coming:  ['coming',  'viene']
   };
 
+  // ── La llegada en la tarjeta (Axel, 2026-11-11, opción A) ────────────
+  //
+  // Antes de su hora de llegada un pedido "viene": todavía no se espera
+  // su factura, y decir "waiting" lo mezclaba con los que ya llegaron y
+  // esperan. Su línea dice cuándo llega. Llegado y sin factura, vuelve a
+  // "waiting" y la línea dice cuándo llegó. Con factura, nada: el
+  // estado ya lo dice todo.
+  const VD = () => window.BarStockVendorDelivery;
+  const fechaLlegada = (iso) => VD() && VD().fecha ? VD().fecha(iso) : dia(iso);
+  const viene = (o, ahora) => o.estado === 'waiting' && !!o.llegada &&
+    new Date(o.llegada).getTime() > (ahora == null ? Date.now() : ahora);
+
   function etiqueta(o) {
-    const [txt, cls] = ETIQ[o.estado] || ETIQ.waiting;
+    const [txt, cls] = viene(o) ? ETIQ.coming : (ETIQ[o.estado] || ETIQ.waiting);
     const n = o.estado === 'short' ? o.cortos : o.estado === 'over' ? o.sobras : 0;
     return '<span class="m-hs m-hs-' + cls + '">' +
            (n ? n + ' ' : '') + esc(txt) + '</span>';
@@ -402,9 +435,19 @@
       '<span class="m-hcard-l">' +
         '<span class="m-hcard-v">' + esc(o.vendor) + '</span>' +
         '<span class="m-hcard-m">' +
-          (o.po ? esc(o.po) + ' · ' : '') + esc(dia(o.fecha)) +
-          ' · ' + o.items.length + ' item' + (o.items.length === 1 ? '' : 's') +
+          // Mientras viene, la fecha que importa es la de llegada, en
+          // su línea; la de colocación sólo estorbaría.
+          (o.po ? esc(o.po) + ' · ' : '') + (viene(o) ? '' : esc(dia(o.fecha)) + ' · ') +
+          o.items.length + ' item' + (o.items.length === 1 ? '' : 's') +
         '</span>' +
+        (o.llegada && viene(o)
+          ? '<span class="m-hcard-arr">Arrives ' + esc(fechaLlegada(o.llegada)) + '</span>'
+          : o.llegada && o.estado === 'waiting'
+            ? '<span class="m-hcard-m">Arrived ' + esc(fechaLlegada(o.llegada)) + '</span>'
+            : '') +
+        (o.delAnterior
+          ? '<span class="m-hcard-leg">Placed ' + esc(dia(o.fecha)) + ' \u00b7 last cycle</span>'
+          : '') +
       '</span>' +
       '<span class="m-hcard-r">' +
         '<span class="m-hcard-a">' + money(importe) + '</span>' +
@@ -434,7 +477,9 @@
     const cuenta = {
       all: enBusca.length,
       short: enBusca.filter(o => o.estado === 'short').length,
-      waiting: enBusca.filter(o => o.estado === 'waiting').length
+      // Lo que todavía viene no "espera" factura: la tarjeta dice
+      // "coming", y el contador no puede decir otra cosa.
+      waiting: enBusca.filter(o => o.estado === 'waiting' && !viene(o)).length
     };
     // Los nombres de los filtros, para el botón y para la hoja.
     const NOMBRE = { all: 'All', short: 'Short', waiting: 'Waiting' };
@@ -451,7 +496,7 @@
       return o.items.some(i => String(i.item).toUpperCase().includes(q));
     };
 
-    const pasa = o => (_filtro === 'all' || o.estado === _filtro) && coincide(o);
+    const pasa = o => (_filtro === 'all' || (o.estado === _filtro && !(_filtro === 'waiting' && viene(o)))) && coincide(o);
     const visibles = todas.filter(pasa);
 
     const importe = o => o.estado === 'waiting' ? o.pedidoDinero : o.recibidoDinero;
