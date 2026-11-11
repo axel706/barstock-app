@@ -127,7 +127,9 @@ grupo('pedidos de antes de guardar la llegada (Axel: "loop ya llegó, sólo falt
     { id: 'a', vendor: 'LOOP', po_number: 'CT-1', created_at: '2026-11-16T02:30:00Z', arrives_at: null },
     { id: 'b', vendor: 'SOUTHERN', po_number: 'CT-2', created_at: '2026-11-16T02:40:00Z', arrives_at: null },
     { id: 'c', vendor: 'LOOP', po_number: 'CT-3', created_at: '2026-09-01T15:00:00Z', arrives_at: null },
-    { id: 'd', vendor: 'LOOP', po_number: 'CT-4', created_at: '2026-11-16T03:00:00Z', arrives_at: '2026-11-20T12:00:00Z' }];
+    { id: 'd', vendor: 'LOOP', po_number: 'CT-4', created_at: '2026-11-16T03:00:00Z', arrives_at: '2026-11-20T12:00:00Z' },
+    // El Baileys de mitad de la semana pasada: llegó y se contó.
+    { id: 'e', vendor: 'LOOP', po_number: 'CT-5', created_at: '2026-11-11T17:00:00Z', arrives_at: null }];
   w2.fetch = async (u) => {
     u = String(u);
     const r = (b) => ({ ok: true, status: 200, json: async () => b, text: async () => JSON.stringify(b) });
@@ -141,6 +143,7 @@ grupo('pedidos de antes de guardar la llegada (Axel: "loop ya llegó, sólo falt
   prueba('LOOP sin llegada guardada: se calcula al leer (martes 7 AM)', de('a').arrives_at === '2026-11-17T12:00:00.000Z' && de('a').llegadaCalculada === true, de('a').arrives_at);
   prueba('un proveedor sin horario se queda sin llegada (opción a)', de('b').arrives_at === null);
   prueba('a un pedido de hace meses no se le aplica el horario de hoy', de('c').arrives_at === null);
+  prueba('ni a uno de la semana pasada (colocado antes del conteo)', de('e').arrives_at === null, de('e').arrives_at);
   prueba('la llegada guardada no se toca', de('d').arrives_at === '2026-11-20T12:00:00Z' && !de('d').llegadaCalculada);
   const recibos = w2.BarStockOrderReceipts.recibosDe([], [], new Map());
   const repartido = w2.BarStockOrderReceipts.repartir({ recortadas: d.recortadas, lineas: d.lineas, recibos, inicioCiclo: CONTEO });
@@ -149,6 +152,22 @@ grupo('pedidos de antes de guardar la llegada (Axel: "loop ya llegó, sólo falt
   const t = filas.find(f => f.producto === "Tito's Vodka 1L");
   prueba('y el LIVE lo suma aunque falte la factura: 3 + 5 = 8', t.live === 8 && t.llego === 5, JSON.stringify(t));
   prueba('no escribe nada al calcularla', !/method:\s*'(POST|PATCH|PUT|DELETE)'/.test(leer('src/order-receipts.js').replace(/\/\/.*$/gm, '')));
+}
+
+grupo('el Baileys de la semana pasada (Axel: "me muestra un llegó de 7")');
+{
+  // Pedido de la semana pasada, con su factura de ANTES del conteo, y con
+  // una llegada que cae después (calculada o guardada, da igual): llegó
+  // antes de contar. Más el pedido de ahora, 3, sin factura.
+  const enlaces = [{ product_id: 'b', item_name: 'Baileys 1L' }];
+  const pasada = { id: 'p', vendor: 'LOOP', po_number: 'CT-0220', created_at: '2026-11-11T17:00:00Z', arrives_at: '2026-11-17T12:00:00Z' };
+  const actual = { id: 'q', vendor: 'LOOP', po_number: 'CT-0230', created_at: '2026-11-16T02:30:00Z', arrives_at: '2026-11-17T12:00:00Z' };
+  const lineas = [{ vendor_order_id: 'p', item_name: 'Baileys 1L', quantity: 4, unit_price: 25 },
+    { vendor_order_id: 'q', item_name: 'Baileys 1L', quantity: 3, unit_price: 25 }];
+  const facturas = [{ order_id: 'F1', product_id: 'b', quantity: 4, unit_price: 25, invoice_date: '2026-11-12' }];
+  const r = live({ ahora: '2026-11-18T15:00:00Z', ordenes: [actual, pasada], lineas, enlaces, facturas, manuales: [['F1', 'p']] });
+  const b = r.f('Baileys 1L');
+  prueba('sólo suma el de ahora: llegó 3, no 7', b.llego === 3 && b.live === 4, JSON.stringify(b));
 }
 
 grupo('la marca "Live" y el reparto');

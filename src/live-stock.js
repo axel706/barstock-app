@@ -70,6 +70,13 @@
       const items = (o.repartido && o.repartido.get(String(ord.id))) || [];
       if (!items.length) continue;
       const conFactura = items.some(i => i.recibido > 0);
+      // Su factura es del día del conteo o de antes: llegó antes de
+      // contar y ya estaba en la estantería, diga lo que diga su llegada
+      // (un pedido que llegó antes de lo previsto, o uno viejo). Sumarlo
+      // es contarlo dos veces: el Baileys de la semana pasada salía en
+      // "llegó" (Axel, 2026-11-11).
+      const ultima = Math.max(0, ...items.map(i => i.ultimaFactura || 0));
+      if (conFactura && ultima && new Date(ultima).toISOString().slice(0, 10) <= o.diaConteo) continue;
       const llega = ord.arrives_at ? new Date(ord.arrives_at).getTime() : null;
       const colocada = new Date(ord.created_at).getTime();
       let cuenta;

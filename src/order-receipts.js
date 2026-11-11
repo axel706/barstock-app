@@ -117,9 +117,15 @@
   //
   // Si el proveedor SÍ tiene horario, la llegada se calcula al leer, con
   // la misma regla que al guardar (la siguiente entrega después de
-  // colocarlo). No se escribe: es lo que se habría guardado. Sólo para
-  // pedidos recientes —este ciclo y la semana anterior—: a uno de hace
-  // meses no se le aplica el horario de hoy, que pudo ser otro.
+  // colocarlo). No se escribe: es lo que se habría guardado.
+  //
+  // Sólo para pedidos colocados DESPUÉS del arranque del ciclo (el
+  // conteo). Fue "este ciclo y la semana anterior", y el Baileys que Axel
+  // pidió a mitad de la semana pasada —que llegó y se contó el domingo—
+  // salía llegando "el martes siguiente", después del conteo, y el LIVE
+  // lo sumaba otra vez: "me muestra un llegó de 7" (4 de ésa + 3 de la
+  // de ahora). De un pedido viejo sin llegada no se sabe cuándo llegó de
+  // verdad, y adivinarla con el horario cuenta dos veces.
   //
   // Sin horario del proveedor se queda sin llegada, y entonces sí vale la
   // regla de la opción a.
@@ -127,7 +133,7 @@
     const VD = window.BarStockVendorDelivery, V = window.BarStockVendorDefaults;
     const C = window.BarStockCycle;
     const ini = C && C.startedAt && C.startedAt();
-    const desde = (ini ? ini.getTime() : Date.now()) - 7 * 864e5;
+    const desde = ini ? ini.getTime() : Date.now();
     const faltan = (ordenes || []).filter(o => !o.arrives_at && new Date(o.created_at).getTime() >= desde);
     if (!faltan.length || !VD || !VD.siguienteEntrega || !V || !V.getAllDefaults) return;
     let horarios = [];
@@ -228,6 +234,9 @@
         let conPrecio = false;
         let precioFactura = 0;
         let factura = '';
+        // La fecha de la última factura que casó con esta línea: el LIVE
+        // la usa para saber si el pedido llegó antes del conteo.
+        let ultimaFactura = 0;
         for (const r of recibos) {
           if (r.usado) continue;
           if (!mismoNombre(r.item, l.item_name)) continue;
@@ -257,6 +266,7 @@
           if (r.precio > 0) { dinero += r.qty * r.precio; conPrecio = true; precioFactura = r.precio; }
           else { dinero += r.qty * (Number(l.unit_price) || 0); }
           if (!factura && r.factura) factura = r.factura;
+          if (r.fecha && r.fecha > ultimaFactura) ultimaFactura = r.fecha;
           r.usado = true;
         }
         return {
@@ -267,7 +277,8 @@
           dinero,
           conPrecio,
           precioFactura,
-          factura
+          factura,
+          ultimaFactura
         };
       });
       resultado.set(String(o.id), items);

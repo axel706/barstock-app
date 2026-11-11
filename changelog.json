@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-165201",
+    "items": [
+      "Behind-the-scenes fixes"
+    ]
+  },
+  {
     "build": "20261111-164355",
     "items": [
       "Orders placed before today now show when they arrived"
@@ -180,12 +186,6 @@
     "items": [
       "Search: the tab bar is back at the bottom",
       "You can scroll back up from the end of the results"
-    ]
-  },
-  {
-    "build": "20261109-161019",
-    "items": [
-      "The tab bar sits at the bottom again in Search"
     ]
   }
 ]
