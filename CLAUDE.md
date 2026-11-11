@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 117 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 118 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -254,6 +254,14 @@ ni una factura. Es el ancla de `inicio + entradas − final = usado`, y si
 algo más lo toca, Pour·IQ calcula los pares con basura. `Received` suma a
 `ordered` del snapshot semanal, que es lo correcto.
 
+**Nada de Toast escribe en el conteo.** El "deberías tener" es un número
+aparte que se calcula al vuelo (`src/toast-usage.js`) y nunca se guarda.
+Lo de Toast sólo escribe en sus tablas (ventas, emparejamientos,
+recetas). `tools/test-toast-no-toca-conteo.js` revisa toda pieza con
+"toast" en el nombre y falla si escribe en el inventario, los snapshots,
+los conteos o `locations`. Axel lo pidió así antes de la prueba y error:
+"el conteo, los datos actuales es lo que me preocupa".
+
 **`replaceInventoryMaster()` borra la tabla entera y reinserta** desde
 `state.master`. Cinco sitios la llaman. Lleva guardas de merma; no las
 quites.
@@ -301,7 +309,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 117 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 118 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
