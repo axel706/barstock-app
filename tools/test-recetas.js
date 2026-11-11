@@ -56,7 +56,7 @@ const con = new Set(R.filter(r => r.tipo === 'cocktail' && r.lines.length).map(r
 prueba('los de Toast con receta, por su nombre de Toast', TOAST.every(t => con.has(t)), TOAST.filter(t => !con.has(t)).join(','));
 prueba('"Vodka Soda" va como "Tito\'s + Berries"', !R.some(r => r.toast === 'Vodka Soda'));
 
-// Axel, 2026-11-12: el que no trae "Creamy" ni "Dark" es Dark: sin Baileys.
+// Axel, 2026-11-11: el que no trae "Creamy" ni "Dark" es Dark: sin Baileys.
 // Contarlo con Baileys salvo "Dark" lo ponía en casi todos (25 de 36 HH
 // Espresso de un día no traían ninguno de los dos).
 for (const n of ['Espresso Martini', 'HH Espresso Martini']) {
@@ -64,7 +64,7 @@ for (const n of ['Espresso Martini', 'HH Espresso Martini']) {
   const b = e && e.lines.find(l => /baileys/i.test(l[0]));
   prueba(n + ': Baileys sólo con Creamy', !!b && b[2] && b[2].only_with === 'Creamy' && !(b[2].not_with || []).length);
 }
-// Rum, Tequila y Whiskey de HH: 1.5 oz (Axel, 2026-11-12).
+// Rum, Tequila y Whiskey de HH: 1.5 oz (Axel, 2026-11-11).
 for (const n of ['Rum', 'Tequila', 'Whiskey']) {
   const r = R.find(x => x.toast === n && x.hh);
   prueba('HH ' + n + ': 1.5 oz, ya sin pending', !!r && !r.pending && r.lines.length === 1 && r.lines[0][1] === 1.5);
@@ -72,7 +72,7 @@ for (const n of ['Rum', 'Tequila', 'Whiskey']) {
 const mt = R.find(r => r.tipo === 'modifier' && r.toast === 'Martini');
 prueba('Martini: Dirty no lleva vermouth', !!mt && mt.lines.some(l => /vermouth/i.test(l[0]) && l[2] && (l[2].not_with || []).includes('Dirty')));
 
-// Axel, 2026-11-12: "la medida de vodka es la misma" en un Martini y en
+// Axel, 2026-11-11: "la medida de vodka es la misma" en un Martini y en
 // un Cosmo, y el estándar es 2.5, el Blood Orange incluido. Venían de dos
 // hojas distintas (Martini 2.5, House Cosmo 2) y el HH Titos Martini salía
 // con dos líneas de Tito's, 2.5 y 2, según llevara "Cosmo".

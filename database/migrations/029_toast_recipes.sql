@@ -6,7 +6,7 @@
 -- del licor que más se mueve.
 --
 -- Las recetas salen de las hojas que llenó Axel a mano (2026-11-10) y de
--- sus respuestas del 2026-11-11 (y del 12: Martini y Cosmo, 2.5 de licor,
+-- sus respuestas del 2026-11-11 (también Martini y Cosmo, 2.5 de licor,
 -- ver la 030; Rum, Tequila y Whiskey de HH y el Espresso Dark, la 031). Sólo lo que sale del inventario: el
 -- jugo, el sirope y el refresco no se cuentan. Onzas por UN trago.
 --

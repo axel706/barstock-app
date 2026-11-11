@@ -1,6 +1,6 @@
 -- ── Rum, Tequila y Whiskey de Happy Hour, y el Espresso Martini Dark ──
 --
--- Axel, 2026-11-12:
+-- Axel, 2026-11-11:
 --
 -- 1. Rum, Tequila y Whiskey de HH son 1.5 oz. Estaban sin líneas y con
 --    `pending`, así que no contaban. La marca (Calypso, Pedro Morales,

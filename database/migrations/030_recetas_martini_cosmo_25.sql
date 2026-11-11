@@ -1,6 +1,6 @@
 -- ── Martini y Cosmo: el licor base, 2.5 oz en todos ──────────────────
 --
--- Axel, 2026-11-12: "la medida de vodka es la misma" en un Martini y en
+-- Axel, 2026-11-11: "la medida de vodka es la misma" en un Martini y en
 -- un Cosmo, "esa debe ser el estándar": 2.5, el Blood Orange incluido.
 --
 -- Venían de dos hojas distintas: el Martini decía 2.5 y el House Cosmo
