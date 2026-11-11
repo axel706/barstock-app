@@ -184,6 +184,17 @@
       avisar(pedidos.length, pos);
     }
 
+    // Llegaron facturas: lo que dependa de ellas (el LIVE de Inventory,
+    // lo que llegó de cada pedido) se vuelve a leer ya, sin esperar a su
+    // relectura automática. Lo pidió Axel: "si se trae una factura se lee
+    // en ese momento lo que llegó". Vale para todos los caminos del sync
+    // (la tarjeta del Home, Settings y el automático al abrir la app),
+    // porque todos pasan por aquí.
+    if (pedidos.length && window.BarStockEvents && typeof window.BarStockEvents.emit === 'function') {
+      try { window.BarStockEvents.emit('invoicesUpdated', { source: 'marginedge', facturas: pedidos.length, lineas }); }
+      catch (e) { console.warn('[marginedge] aviso de facturas', e); }
+    }
+
     return { facturas: pedidos.length, lineas };
   }
 

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-172959",
+    "items": [
+      "Live updates as soon as invoices come in"
+    ]
+  },
+  {
     "build": "20261111-172152",
     "items": [
       "Inventory says when each bottle runs out",
@@ -180,13 +186,6 @@
     "build": "20261109-170508",
     "items": [
       "Smoother, gradual blur under the header and search"
-    ]
-  },
-  {
-    "build": "20261109-164926",
-    "items": [
-      "Inventory: tabs and filter stay at the top as you scroll",
-      "The Inventory title moves into the header"
     ]
   }
 ]

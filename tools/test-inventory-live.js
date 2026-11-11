@@ -49,6 +49,7 @@ function pantalla(vivo, agota) {
   w.__llamadas = 0;
   w.BarStockLive = { ahora: async () => { w.__llamadas++; return vivo; } };
   if (agota) w.BarStockRunOut = { ahora: async () => { w.__llamadas++; return agota; } };
+  w.eval(leer('src/events.js'));
   w.eval(leer('src/product-hero.js'));
   let def = null;
   w.BarStockMobile = { register(d) { def = d; }, refrescarBadges() {} };
@@ -133,6 +134,40 @@ grupo('cuándo se acaba (opción C)');
   const { host } = pantalla(VIVO);
   await esperar(20);
   prueba('sin run-out: ni "Out" ni se quitan los days', !host.querySelector('.m-out') && /\d+ days?/.test(fila(host, "Tito's Vodka 1L").querySelector('.m-inv-meta').textContent));
+}
+
+grupo('cuándo se vuelve a leer');
+{
+  const { host, w, def } = pantalla(VIVO);
+  await esperar(20);
+  def.show(host); await esperar(20);
+  prueba('volver a Inventory antes de 30 minutos no relee', w.__llamadas === 1, String(w.__llamadas));
+  // El sync de MarginEdge trae una factura: Tito's sube.
+  w.BarStockLive.ahora = async () => { w.__llamadas++; return { estado: 'listo', filas: [Object.assign({}, VIVO.filas[0], { live: 9.1 })] }; };
+  w.BarStockEvents.emit('invoicesUpdated', { facturas: 1 });
+  await esperar(20);
+  prueba('al llegar facturas se relee al momento', w.__llamadas === 2 && /≈9\.1/.test(fila(host, "Tito's Vodka 1L").querySelector('.m-inv-v b').textContent));
+  w.BarStockEvents.emit('ordersUpdated', {});
+  await esperar(20);
+  prueba('y al colocar un pedido', w.__llamadas === 3);
+  // Un aviso que llega mientras se lee: al terminar, otra lectura.
+  let soltar;
+  w.BarStockLive.ahora = () => { w.__llamadas++; return new Promise(r => { soltar = () => r(VIVO); }); };
+  w.BarStockEvents.emit('inventoryUpdated', {});
+  await esperar(5);
+  w.BarStockEvents.emit('invoicesUpdated', { facturas: 1 });
+  const antes = w.__llamadas;
+  w.BarStockLive.ahora = async () => { w.__llamadas++; return VIVO; };
+  if (soltar) soltar(); await esperar(30);
+  prueba('un aviso a mitad de una lectura deja otra apuntada', w.__llamadas === antes + 1, w.__llamadas + ' vs ' + antes);
+}
+{
+  const src = leer('src/mobile-inventory.js');
+  prueba('la relectura automática es cada 30 minutos', /const VIVO_MS = 30 \* 60 \* 1000;/.test(src));
+  const me = leer('src/marginedge-connect.js');
+  const i = me.indexOf('async function facturas(');
+  const fin = me.indexOf('return { facturas: pedidos.length, lineas };', i);
+  prueba('el sync de MarginEdge avisa cuando trae facturas', i > 0 && fin > i && /emit\('invoicesUpdated'/.test(me.slice(i, fin)));
 }
 
 grupo('la carga');

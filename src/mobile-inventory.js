@@ -147,11 +147,37 @@
   // enseña: un "≈7.1/8" verde con la barra al 37 % de lo contado diría
   // dos cosas a la vez. on_hand no se toca: el LIVE no se guarda.
   //
-  // Se pide al entrar en Inventory y se guarda dos minutos: son varias
-  // lecturas (pedidos, facturas, ventas de Toast) y la lista se repinta
-  // con cada letra del buscador.
-  const VIVO_MS = 2 * 60 * 1000;
+  // ── Cuándo se vuelve a leer ──────────────────────────────────────────
+  //
+  // Son varias lecturas (pedidos, facturas, lo vendido desde el conteo y
+  // 90 días de Toast) y la lista se repinta con cada letra del buscador:
+  // el resultado se guarda en memoria y se reutiliza.
+  //
+  // Se relee solo cada 30 minutos (Axel, 2026-11-11: las ventas de Toast
+  // se cargan una vez al día, y eran 2 minutos). Y AL MOMENTO cuando pasa
+  // algo que lo cambia, sin esperar a esa relectura:
+  //   · 'invoicesUpdated': el sync de MarginEdge trajo facturas (Axel:
+  //     "si se trae una factura se lee en ese momento lo que llegó");
+  //   · 'ordersUpdated': se colocó un pedido o un quick order;
+  //   · 'inventoryUpdated': se cerró un conteo o se tiró para recargar.
+  // Lo que no avisa —la hora de llegada de un pedido que pasa sola— entra
+  // en la relectura de los 30 minutos.
+  const VIVO_MS = 30 * 60 * 1000;
   let _vivo = null, _vivoEn = 0, _pidiendo = null;
+  // Un aviso que llega MIENTRAS se lee: la lectura en curso empezó antes
+  // de la factura y daría el número de antes, guardado 30 minutos. Se
+  // apunta y se vuelve a leer al terminar.
+  let _otraVez = false;
+
+  function caducarVivo() {
+    if (_pidiendo) _otraVez = true;
+    _vivoEn = 0;
+    const host = document.querySelector('.m-screen[data-screen="inventory"]');
+    if (host && host.classList.contains('on')) cargarVivo(host);
+  }
+  if (window.BarStockEvents && window.BarStockEvents.on) {
+    for (const ev of ['invoicesUpdated', 'ordersUpdated', 'inventoryUpdated']) window.BarStockEvents.on(ev, caducarVivo);
+  }
 
   // "Cuándo se acaba" (run-out.js) trae el LIVE de cada producto y su
   // día; si no está cargado, sólo el LIVE.
@@ -159,7 +185,7 @@
     const R = window.BarStockRunOut, L = window.BarStockLive;
     const fuente = (R && R.ahora) ? R : (L && L.ahora) ? L : null;
     if (!fuente || _pidiendo) return;
-    if (_vivo && Date.now() - _vivoEn < VIVO_MS) return;
+    if (_vivo && _vivoEn && Date.now() - _vivoEn < VIVO_MS) return;
     _pidiendo = fuente.ahora().then(r => {
       // Con un conteo activo, o sin conteo conocido, se enseña lo contado.
       const filas = r && r.estado === 'listo' ? r.filas : [];
@@ -170,9 +196,10 @@
       _vivo = new Map();
       _agota = new Map();
     }).finally(() => {
-      _vivoEn = Date.now();
+      _vivoEn = _otraVez ? 0 : Date.now();
       _pidiendo = null;
       if (host && host.isConnected) pintarLista(host);
+      if (_otraVez) { _otraVez = false; if (host && host.isConnected) cargarVivo(host); }
     });
   }
 
