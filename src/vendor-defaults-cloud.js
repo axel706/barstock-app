@@ -93,10 +93,48 @@
     }
   }
 
+  // El día y la hora en que llega el pedido de este proveedor (migración
+  // 032). Va aparte de saveDefaults: la ficha manda sus campos con
+  // merge-duplicates, que sólo toca las columnas que se le pasan, así
+  // que guardar la ficha no borra el horario ni al revés.
+  //
+  // Devuelve { ok, error } con lo que dijo Supabase tal cual: si la 032
+  // no está corrida, el error lo dice ("column ... does not exist"), y
+  // adivinarlo aquí ya mandó una vez a correr una migración ya corrida.
+  async function saveDelivery(vendor, day, time) {
+    const { url, key } = getConfig();
+    try {
+      const locationId = await fetchLocationId();
+      const res = await fetch(
+        `${url}/rest/v1/vendor_defaults?on_conflict=location_id,vendor`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: key,
+            Authorization: `Bearer ${key}`,
+            Prefer: 'resolution=merge-duplicates,return=minimal'
+          },
+          body: JSON.stringify({
+            location_id: locationId, vendor,
+            delivery_day: day == null ? null : Number(day),
+            delivery_time: time || null,
+            updated_at: new Date().toISOString()
+          })
+        }
+      );
+      if (!res.ok) return { ok: false, error: 'Supabase answered ' + res.status + ': ' + (await res.text()).slice(0, 200) };
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: String((err && err.message) || err) };
+    }
+  }
+
   window.BarStockVendorDefaults = {
     active: true,
     getDefaults,
     getAllDefaults,
-    saveDefaults
+    saveDefaults,
+    saveDelivery
   };
 })();

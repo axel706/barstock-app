@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-155323",
+    "items": [
+      "Delivery: set the day and time each vendor's order arrives"
+    ]
+  },
+  {
     "build": "20261111-154721",
     "items": [
       "Settings: the section name sits in the header"
@@ -180,13 +186,6 @@
     "build": "20261109-143219",
     "items": [
       "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261109-142521",
-    "items": [
-      "Update card shows BarStock Pro and the build",
-      "New versions no longer show up in the bell"
     ]
   }
 ]

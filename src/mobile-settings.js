@@ -92,7 +92,9 @@
     volverCon(host, () => { if (M && M.volver) M.volver(); });
 
     host.querySelectorAll('[data-p]').forEach(b => {
-      b.onclick = () => { _panel = b.dataset.p; _vendor = null; pintar(host); };
+      // Al entrar se vuelven a pedir los horarios: pudieron cambiarse
+      // en el escritorio desde la última vez.
+      b.onclick = () => { _panel = b.dataset.p; _vendor = null; _horarios = null; pintar(host); };
     });
   }
 
@@ -219,23 +221,119 @@
     return window.getActiveVendors().filter(v => v && v !== 'UNKNOWN');
   }
 
+  // ── El horario de entrega, en la misma lista (opción B) ─────────────
+  //
+  // Axel, 2026-11-11: cada proveedor dice en la lista cuándo llega su
+  // pedido ("Arrives Tue · 7:00 AM"), y el que no tiene día sale en rojo.
+  // Tocarlo abre una hoja con dos ruedas, día y hora: en el iPhone un
+  // <select> ES una rueda, la del sistema. La ficha del proveedor (correo,
+  // cuenta…) no cambia y se abre desde la misma hoja.
+  //
+  // Es la hora desde la que lo ordenado cuenta en el LIVE.
+  const VD = () => window.BarStockVendorDelivery;
+  let _horarios = null;   // vendor → fila de vendor_defaults
+
   function pintarDeliveryLista(host) {
     const vs = vendors();
+    const linea = (v) => {
+      if (!_horarios) return '<small>Loading…</small>';
+      const t = VD() ? VD().texto(_horarios[v]) : '';
+      return t ? '<small class="m-ent-on">Arrives ' + esc(t) + '</small>'
+        : '<small class="m-ent-no">No delivery day yet</small>';
+    };
     host.innerHTML = cabecera(host, 'Delivery',
-      'Each vendor keeps its own details. These print on their orders only.') +
+      'When each vendor\u2019s order arrives. Live adds it from that moment.') +
       (vs.length
         ? vs.map(v =>
             '<button type="button" class="m-item" data-v="' + esc(v) + '">' +
               '<i class="ti ti-truck-delivery" aria-hidden="true"></i>' +
-              '<span class="m-item-t">' + esc(v) + '</span>' +
+              '<span class="m-item-t">' + esc(v) + linea(v) + '</span>' +
               '<i class="ti ti-chevron-right m-chev" aria-hidden="true"></i>' +
             '</button>').join('')
         : '<div class="m-empty">No vendors yet.</div>');
 
     volver(host);
     host.querySelectorAll('[data-v]').forEach(b => {
-      b.onclick = () => { _vendor = b.dataset.v; pintar(host); };
+      b.onclick = () => abrirHorario(host, b.dataset.v);
     });
+
+    // Se pide una vez y se repinta: una lista que tarda en salir porque
+    // está consultando la nube es peor que una que dice "Loading…".
+    if (!_horarios && window.BarStockVendorDefaults && window.BarStockVendorDefaults.getAllDefaults) {
+      window.BarStockVendorDefaults.getAllDefaults().then(filas => {
+        _horarios = {};
+        for (const f of filas || []) if (f && f.vendor) _horarios[f.vendor] = f;
+        if (_panel === 'delivery' && !_vendor && host.isConnected) pintarDeliveryLista(host);
+      });
+    }
+  }
+
+  function cerrarHorario() {
+    const h = document.getElementById('mSheet');
+    if (h) h.remove();
+  }
+
+  function abrirHorario(host, v) {
+    cerrarHorario();
+    const D = VD();
+    const f = (_horarios && _horarios[v]) || {};
+    const dia = f.delivery_day == null ? '' : String(f.delivery_day);
+    const hora = D.corta(f.delivery_time);
+    const h = document.createElement('div');
+    h.className = 'm-sheet';
+    // El id de todas las hojas del teléfono: las reglas que ganan el
+    // radio de 999px de app.css se apoyan en él.
+    h.id = 'mSheet';
+    h.innerHTML =
+      '<div class="m-sheet-bg"></div>' +
+      '<div class="m-sheet-box m-ent-hoja" role="dialog" aria-label="' + esc(v) + ' delivery">' +
+        '<div class="m-sheet-grip"></div>' +
+        '<div class="m-ent-t"><b>' + esc(v) + '</b><span>Arrives</span></div>' +
+        '<div class="m-ent-ruedas">' +
+          '<select id="msEntDia" aria-label="Day">' +
+            '<option value=""' + (dia === '' ? ' selected' : '') + '>No day</option>' +
+            D.DIAS.map((n, i) => '<option value="' + i + '"' + (dia === String(i) ? ' selected' : '') + '>' + n + '</option>').join('') +
+          '</select>' +
+          '<select id="msEntHora" aria-label="Time">' +
+            D.HORAS.map(t => '<option value="' + t + '"' + (t === (hora || '16:00') ? ' selected' : '') + '>' + D.hora(t) + '</option>').join('') +
+          '</select>' +
+        '</div>' +
+        '<div class="m-ent-nota">Orders to this vendor count in Live from this moment, until the invoice says what arrived.</div>' +
+        '<div class="m-ent-err" hidden></div>' +
+        '<button type="button" class="m-set-save" id="msEntOk">Save</button>' +
+        '<button type="button" class="m-tw-b2 m-ent-ficha" id="msEntFicha">Vendor details</button>' +
+      '</div>';
+    document.body.appendChild(h);
+    if (window.BarStockSheet) window.BarStockSheet.enganchar(h, cerrarHorario);
+    h.querySelector('.m-sheet-bg').onclick = cerrarHorario;
+
+    h.querySelector('#msEntFicha').onclick = () => { cerrarHorario(); _vendor = v; pintar(host); };
+    const ok = h.querySelector('#msEntOk');
+    ok.onclick = async () => {
+      const d = h.querySelector('#msEntDia').value;
+      const t = h.querySelector('#msEntHora').value;
+      ok.disabled = true;
+      const antes = ok.textContent;
+      ok.textContent = 'Saving…';
+      // "No day" borra el horario entero: una hora sin día no dice nada.
+      const r = await window.BarStockVendorDefaults.saveDelivery(v, d === '' ? null : Number(d), d === '' ? null : t);
+      ok.disabled = false;
+      ok.textContent = antes;
+      if (!r.ok) {
+        // Lo que contestó Supabase, tal cual, en la hoja: si la 032 no
+        // está corrida, lo dice la propia respuesta.
+        const e = h.querySelector('.m-ent-err');
+        e.textContent = 'Not saved: ' + r.error;
+        e.hidden = false;
+        return;
+      }
+      _horarios = _horarios || {};
+      _horarios[v] = Object.assign({}, _horarios[v] || {}, { vendor: v,
+        delivery_day: d === '' ? null : Number(d), delivery_time: d === '' ? null : t });
+      cerrarHorario();
+      aviso(d === '' ? v + ': no delivery day' : v + ' arrives ' + VD().texto(_horarios[v]));
+      pintarDeliveryLista(host);
+    };
   }
 
   async function pintarDeliveryFicha(host) {

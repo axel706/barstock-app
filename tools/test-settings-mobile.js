@@ -59,6 +59,7 @@ function entorno(guardado) {
     current: () => 'manrope', set: id => { guardado.font = id; }
   };
 
+  new Function(fs.readFileSync(path.join(__dirname, '..', 'src', 'vendor-delivery.js'), 'utf8'))();
   new Function(SRC)();
   return { w, reg };
 }
@@ -108,7 +109,13 @@ function entorno(guardado) {
   prueba('lista de proveedores', vs.length === 2, vs.join(','));
   prueba('sin UNKNOWN', !vs.includes('UNKNOWN'));
 
+  // Tocar el proveedor abre la hoja de su horario (opción B, 2026-11-11);
+  // la ficha se abre desde ahí.
   host.querySelector('[data-v="LOOP"]').click();
+  await esperar(20);
+  const ficha = w.document.querySelector('#mSheet #msEntFicha');
+  prueba('el proveedor abre la hoja del horario, con salida a su ficha', !!ficha);
+  if (ficha) ficha.click();
   await esperar(40);
   prueba('la ficha trae lo guardado',
     host.querySelector('#ms_vemail') &&

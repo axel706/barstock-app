@@ -44,6 +44,7 @@ function montar() {
   w.BarStockVendorDefaults = { getDefaults: async () => ({}), saveDefaults: async () => true };
   w.eval(leer('src/dialog.js'));
   w.eval(leer('src/mobile-shell.js'));
+  w.eval(leer('src/vendor-delivery.js'));
   w.eval(leer('src/mobile-settings.js'));
   w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
   w.BarStockMobile.register({ id: 'home', icon: 'ti-home', label: 'Home', tab: true, orden: 1, mount(h) { h.innerHTML = '<div class="home">Home</div>'; } });
@@ -66,9 +67,10 @@ function montar() {
   prueba('Delivery: el nombre en la banda', enSeccion() && nombre() === 'Delivery', nombre());
   prueba('con el botón de atrás en la banda', !!banda().querySelector('#mBandAtras'));
   prueba('y la página sin título ni chevron propios', !caja().querySelector('#mAtras') && !caja().querySelector('.m-inv-t'));
-  prueba('la línea que explica la sección sigue', /print on their orders only/.test(caja().textContent));
+  prueba('la línea que explica la sección sigue', /Live adds it from that moment/.test(caja().textContent));
 
   caja().querySelector('[data-v="LOOP"]').click(); await esperar(20);
+  w.document.querySelector('#mSheet #msEntFicha').click(); await esperar(20);
   prueba('la ficha del proveedor: su nombre en la banda', nombre() === 'LOOP', nombre());
   banda().querySelector('#mBandAtras').click(); await esperar(10);
   prueba('atrás desde la ficha vuelve a la lista', nombre() === 'Delivery' && !!caja().querySelector('[data-v="LOOP"]'));
