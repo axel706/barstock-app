@@ -80,7 +80,7 @@ function entorno(o) {
     }
     return resp(404, {});
   };
-  for (const f of ['src/toast-links.js', 'src/toast-liquor.js', 'src/mobile-toast-liquor.js']) if (existe(f)) w.eval(leer(f));
+  for (const f of ['src/toast-links.js', 'src/toast-liquor.js', 'src/bottle-search.js', 'src/mobile-toast-liquor.js']) if (existe(f)) w.eval(leer(f));
   return w;
 }
 const escritas = (w) => w.__peticiones.filter(p => p.metodo === 'POST' && p.url.includes('toast_item_links')).map(p => p.cuerpo);
@@ -256,7 +256,7 @@ grupo('la pantalla: tocar la fila abre un buscador');
   await esperar(30);
   const gin = [...host.querySelectorAll('.m-tl-fila')].find(f => (f.querySelector('.m-tl-izq b') || {}).textContent === 'Gin');
   gin.click(); await esperar(20);
-  const no = w.document.querySelector('#mSheet [data-ignorar]');
+  const no = w.document.querySelector('#mSheet [data-pie="ignorar"]');
   prueba('"Not in inventory" en la hoja', !!no);
   if (no) no.click(); await esperar(30);
   prueba('ignora la marca', escritas(w).some(x => x.toast_item_guid === 'gin' && x.status === 'ignored'));
@@ -266,6 +266,7 @@ grupo('está en la app');
 {
   const html = leer('index.html');
   const p = f => html.indexOf('src/' + f + '?v=');
+  prueba('la hoja de buscar va antes que la pantalla que la usa', p('bottle-search.js') > 0 && p('bottle-search.js') < p('mobile-toast-liquor.js'));
   prueba('el motor, el licor y su pantalla, en orden', p('toast-links.js') > 0 && p('toast-links.js') < p('toast-liquor.js') && p('toast-liquor.js') < p('mobile-toast-liquor.js'),
     [p('toast-links.js'), p('toast-liquor.js'), p('mobile-toast-liquor.js')].join(','));
   const ms = leer('src/mobile-settings.js');

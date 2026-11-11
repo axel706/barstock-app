@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-094534",
+    "items": [
+      "Behind-the-scenes fixes"
+    ]
+  },
+  {
     "build": "20261110-235334",
     "items": [
       "Bigger B on the home-screen icon"
@@ -181,12 +187,6 @@
     "items": [
       "What's new also shows when you open the app",
       "If you missed a few updates, it lists them all"
-    ]
-  },
-  {
-    "build": "20261109-121507",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]

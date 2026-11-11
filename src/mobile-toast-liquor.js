@@ -23,7 +23,6 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-  const MAX_RES = 40;   // lo que cabe leer de un vistazo; escribir acota
   let _tab = 'review';
   let _error = '';
   let _quitar = null;
@@ -69,77 +68,32 @@
   }
 
   // ── La hoja: elegir la botella escribiendo ───────────────────────────
-  const norm = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-
-  // Con texto: las botellas que tienen TODAS las palabras escritas. Sin
-  // texto: las que comparten alguna palabra con la marca, que es casi
-  // siempre donde está la buena.
-  function buscar(q, M, productos) {
-    const p = norm(q).split(/[^a-z0-9]+/).filter(Boolean);
-    if (p.length) return productos.filter(x => { const n = norm(x); return p.every(w => n.includes(w)); });
-    const m = norm(M.marca).split(/[^a-z0-9]+/).filter(w => w.length >= 3);
-    return productos.filter(x => { const n = norm(x); return m.some(w => n.includes(w)); });
-  }
-
-  function resultados(q, M, productos) {
-    const todos = buscar(q, M, productos).filter(p => !(M.estado === 'review' && p === M.producto));
-    if (!todos.length) return `<div class="m-tw-p">${q ? 'No bottle matches “' + esc(q) + '”.' : 'Type to search the inventory.'}</div>`;
-    return todos.slice(0, MAX_RES).map(p =>
-      `<button type="button" class="m-tl-res${p === M.producto && M.estado === 'confirmed' ? ' on' : ''}" data-p="${esc(p)}">${esc(p)}</button>`).join('') +
-      (todos.length > MAX_RES ? `<div class="m-tw-p">${todos.length - MAX_RES} more · keep typing</div>` : '');
-  }
-
-  function cerrarHoja() {
-    const h = document.getElementById('mSheet');
-    if (h) h.remove();
-  }
+  //
+  // La hoja vive en bottle-search.js, que también la usan las recetas.
+  // Aquí sólo se dice qué marca es y qué se guarda al elegir.
+  const P = () => window.BarStockBottleSearch;
+  const cerrarHoja = () => P().cerrar();
 
   function abrirHoja(k) {
     const M = T().marcas().find(x => x.clave === k);
     const d = T().datos();
     if (!M || !d || !d.productos) return;
-    cerrarHoja();
-    const h = document.createElement('div');
-    h.className = 'm-sheet';
-    // El id es el de todas las hojas del teléfono: las reglas que les
-    // ganan el radio a app.css se apoyan en él.
-    h.id = 'mSheet';
-    const sugerida = M.estado === 'review' && M.producto
-      ? `<button type="button" class="m-tl-res m-tl-sug" data-sug="1" data-p="${esc(M.producto)}"><small>Suggested</small>${esc(M.producto)}</button>` : '';
-    h.innerHTML = `
-      <div class="m-sheet-bg"></div>
-      <div class="m-sheet-box m-tl-hoja" role="dialog" aria-label="Bottle for ${esc(M.marca)}">
-        <div class="m-sheet-grip"></div>
-        <div class="m-tl-hoja-t"><b>${esc(M.marca)}</b><span>${esc(M.tipo)} · ${M.medidas.map(m => esc(T().medidaTexto(m))).join(' · ')}</span></div>
-        <input class="m-tl-busca" type="search" inputmode="search" autocomplete="off" autocapitalize="off" spellcheck="false"
-          placeholder="Search ${d.productos.length} bottles" aria-label="Search bottles">
-        ${sugerida}
-        <div class="m-tl-lista"></div>
-        <div class="m-tl-hoja-pie">
-          <button type="button" class="m-tw-b2" data-ignorar="1">Not in inventory</button>
-          ${M.estado !== 'review' ? '<button type="button" class="m-tw-b2" data-deshacer="1">Back to review</button>' : ''}
-        </div>
-      </div>`;
-    document.body.appendChild(h);
-    if (window.BarStockSheet) window.BarStockSheet.enganchar(h, cerrarHoja);
-    h.querySelector('.m-sheet-bg').onclick = cerrarHoja;
-
-    const lista = h.querySelector('.m-tl-lista');
-    const busca = h.querySelector('.m-tl-busca');
-    const pintarLista = () => { lista.innerHTML = resultados(busca.value.trim(), M, d.productos); };
-    busca.addEventListener('input', pintarLista);
-    pintarLista();
-
-    // Un escuchador para toda la hoja: la lista se repinta al escribir.
-    h.addEventListener('click', (e) => {
-      const b = e.target.closest && e.target.closest('button');
-      if (!b) return;
-      if (b.dataset.p) return hacer(async () => {
-        const r = await T().confirmarMarca(k, b.dataset.p);
-        aviso2(M.marca + ' → ' + b.dataset.p + (r.sinMedida.length ? ' · ' + r.sinMedida.join(', ') + ' not counted yet' : ''));
-      })();
-      if (b.dataset.ignorar) return hacer(async () => { await T().ignorarMarca(k); aviso2(M.marca + ': not in inventory'); })();
-      if (b.dataset.deshacer) return hacer(async () => { await T().deshacerMarca(k); aviso2(M.marca + ': back to review'); })();
+    P().abrir({
+      titulo: M.marca,
+      sub: M.tipo + ' · ' + M.medidas.map(m => T().medidaTexto(m)).join(' · '),
+      productos: d.productos,
+      pista: M.marca,
+      sugerida: M.estado === 'review' && M.producto ? M.producto : null,
+      actual: M.estado === 'confirmed' ? M.producto : null,
+      pie: [{ id: 'ignorar', texto: 'Not in inventory' }]
+        .concat(M.estado !== 'review' ? [{ id: 'deshacer', texto: 'Back to review' }] : []),
+      alElegir: (p) => hacer(async () => {
+        const r = await T().confirmarMarca(k, p);
+        aviso2(M.marca + ' → ' + p + (r.sinMedida.length ? ' · ' + r.sinMedida.join(', ') + ' not counted yet' : ''));
+      })(),
+      alPie: (id) => id === 'ignorar'
+        ? hacer(async () => { await T().ignorarMarca(k); aviso2(M.marca + ': not in inventory'); })()
+        : hacer(async () => { await T().deshacerMarca(k); aviso2(M.marca + ': back to review'); })()
     });
   }
 
