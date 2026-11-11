@@ -40,9 +40,11 @@
     { t: 'Counting', items: [
       { id: 'zones', ico: 'ti-map-pin', n: 'Zones', d: 'Where the bottles are' }
     ]},
-    // El vino de Toast, emparejado con el inventario (mobile-toast-wine.js).
+    // El vino y el licor de Toast, emparejados con el inventario
+    // (mobile-toast-wine.js y mobile-toast-liquor.js).
     { t: 'Toast', items: [
-      { id: 'toastwine', ico: 'ti-glass-full', n: 'Wine from Toast', d: 'Match to your inventory' }
+      { id: 'toastwine', ico: 'ti-glass-full', n: 'Wine from Toast', d: 'Match to your inventory' },
+      { id: 'toastliquor', ico: 'ti-bottle', n: 'Liquor from Toast', d: 'Each brand to its bottle' }
     ]},
     { t: 'Appearance', items: [
       { id: 'look', ico: 'ti-typography', n: 'Typeface',  d: 'The app font' },
@@ -478,6 +480,10 @@
     if (_panel === 'fondo')    { _errFondo = ''; return pintarFondo(host); }
     if (_panel === 'toastwine' && window.BarStockMobileToastWine) {
       window.BarStockMobileToastWine.montar(host, () => cabecera(host, 'Wine from Toast'), () => volver(host));
+      return;
+    }
+    if (_panel === 'toastliquor' && window.BarStockMobileToastLiquor) {
+      window.BarStockMobileToastLiquor.montar(host, () => cabecera(host, 'Liquor from Toast'), () => volver(host));
       return;
     }
     return pintarMenu(host);

@@ -282,7 +282,7 @@ grupo('solo lee');
     '/orders/v2/ordersBulk': { status: 200, body: [] }
   };
   const metodos = [];
-  for (const a of ['ping', 'restaurant', 'menu', 'orders', 'drinks', 'wine', 'sales']) {
+  for (const a of ['ping', 'restaurant', 'menu', 'orders', 'drinks', 'wine', 'sales', 'liquor']) {
     await llamar({ accion: a });
     for (const p of peticiones) metodos.push(p.metodo + ' ' + p.url.replace(/https:\/\/[^/]+/, ''));
     prueba(a + ': a Supabase solo le valida la sesion', sbLlamadas.length === 0, sbLlamadas.join(','));
@@ -599,6 +599,53 @@ grupo('la sesion se comprueba una vez, antes de repartir');
     if (!/require\(['"]\.\/integracion['"]\)/.test(src)) continue;
     prueba(f + ' no valida sesiones por su cuenta', !/supabase-js|auth\.getUser/.test(src));
   }
+}
+
+grupo('liquor: los licores del menu, con su tipo, su medida y su marca');
+{
+  // Para emparejar cada licor de Toast con su botella. En Toast el licor
+  // solo es la MARCA, y la medida la dice el grupo: "Grey Goose" en
+  // DRINKS › Liquor › Vodka › UP/RX, "3oz Maker's Mark" en
+  // Bourbon + Rye › 3oz (lo enseñó Drinks en el panel, 2026-11-10). Los
+  // cócteles y lo de Happy Hour no entran: esos van por receta.
+  entorno();
+  const it = (guid, name) => ({ guid, name });
+  const menu = { menus: [
+    { name: 'DRINKS', menuGroups: [
+      { name: 'Liquor', menuGroups: [
+        { name: 'Vodka', menuGroups: [
+          { name: 'UP/RX', menuItems: [it('l-gg-up', 'Grey Goose')] },
+          { name: 'Single', menuItems: [it('l-gg-1', 'Grey Goose'), it('l-tito', 'Titos vodka')] } ] },
+        { name: 'Bourbon + Rye', menuGroups: [{ name: '3oz', menuItems: [it('l-mm3', "3oz Maker's Mark")] }] },
+        { name: 'Gin', menuGroups: [{ name: 'Up/Rx', menuItems: [it('l-gin', 'Gin UP/RX')] }] } ] },
+      { name: 'Cocktails', menuGroups: [{ name: 'Specialty Cocktails', menuItems: [it('c-boc', 'Blood Orange Cosmo')] }] },
+      { name: 'Wine', menuGroups: [{ name: 'Whites By The Glass', menuItems: [it('w-sb', 'Sauv Blanc - Whitehaven')] }] } ] },
+    { name: 'HAPPY HOUR', menuGroups: [{ name: 'HH Liquor', menuItems: [it('hh-gin', 'Gin'), it('hh-cos', 'HH Cosmopolitan')] }] } ] };
+  const sel = (guid, q) => ({ item: { guid }, quantity: q, displayName: 'x', modifiers: [] });
+  respuestas = {
+    '/authentication/': LOGIN_OK,
+    '/menus/v2/menus': { status: 200, body: menu },
+    '/orders/v2/ordersBulk': (url) => ({ status: 200, body: /page=1(&|$)/.test(url) ? [
+      { checks: [{ selections: [sel('l-gg-up', 2), sel('l-tito', 1), sel('c-boc', 4), sel('hh-gin', 3)] }] },
+      { checks: [{ selections: [sel('l-gg-up', 1)] }] } ] : [] })
+  };
+  const r = await llamar({ accion: 'liquor', params: { businessDate: '20261110' } });
+  const b = r.body || {};
+  const a = {}; for (const x of b.articulos || []) a[x.guid] = x;
+  prueba('contesta, con el restaurante', b.ok === true && b.accion === 'liquor' && b.restaurante === GUID, JSON.stringify({ ok: b.ok, e: b.error }));
+  prueba('sólo los licores: ni cócteles, ni vino, ni Happy Hour',
+    Object.keys(a).sort().join(',') === 'l-gg-1,l-gg-up,l-gin,l-mm3,l-tito', Object.keys(a).join(','));
+  prueba('el tipo y la medida salen del grupo', a['l-gg-up'] && a['l-gg-up'].tipo === 'Vodka' && a['l-gg-up'].medida === 'UP/RX' &&
+    a['l-mm3'].tipo === 'Bourbon + Rye' && a['l-mm3'].medida === '3oz', JSON.stringify(a['l-gg-up']));
+  prueba('la marca, sin la medida pegada al nombre', a['l-mm3'].marca === "Maker's Mark" && a['l-gin'].marca === 'Gin' && a['l-gg-1'].marca === 'Grey Goose',
+    [a['l-mm3'].marca, a['l-gin'].marca].join(' | '));
+  prueba('y el grupo entero, para enseñarlo', a['l-gg-up'].grupo === 'DRINKS › Liquor › Vodka › UP/RX', a['l-gg-up'].grupo);
+  prueba('lo vendido, sólo de los licores', b.vendido && b.vendido['l-gg-up'] === 3 && b.vendido['l-tito'] === 1 && !b.vendido['c-boc'] && !b.vendido['hh-gin'],
+    JSON.stringify(b.vendido));
+
+  const r2 = await llamar({ accion: 'liquor', params: { businessDate: '20261109', guids: ['l-gg-up'] } });
+  prueba('con guids no vuelve a leer el menú', !peticiones.some(x => x.url.includes('/menus/')) && r2.body.vendido['l-gg-up'] === 3 && !r2.body.vendido['l-tito'],
+    JSON.stringify(r2.body.vendido));
 }
 
 grupo('sales: el dinero vendido en un dia, por categoria de venta');

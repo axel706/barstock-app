@@ -4831,4 +4831,47 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   #mScreens .m-tw-b { background: #38bdf8; color: #04283d; border: 1px solid #38bdf8; }
   #mScreens .m-tw-b2 { background: none; color: #e2e8f0; border: 1px solid rgba(255,255,255,.18); }
+
+  /* ── Liquor from Toast (mobile-toast-liquor.js) ─────────────────────
+   * Opción C: una sección por tipo y una fila compacta por marca. Usa lo
+   * de arriba (.m-tw-p, .m-tw-tabs, .m-tw-aviso) y añade sólo la fila.
+   *
+   * El <select> va encima de la fila entera y sin verse: tocar la fila
+   * abre la rueda del sistema, como en los vinos. 16px en táctil, o
+   * Safari amplía la pantalla al tocarlo. */
+  #mScreens .m-tl-sec {
+    margin-top: 12px; border-radius: 16px; overflow: hidden;
+    background: rgba(15,23,42,.62); border: 1px solid rgba(255,255,255,.1);
+  }
+  #mScreens .m-tl-sec-h { display: flex; align-items: center; gap: 8px; padding: 11px 12px; }
+  #mScreens .m-tl-sec-h b { font-size: var(--m-strong); color: #fff; }
+  #mScreens .m-tl-sec-h span { flex: 1; font-size: var(--m-small); color: #94a3b8; }
+  #mScreens .m-tl-todas {
+    flex: none; padding: 6px 11px; cursor: pointer; font-size: var(--m-small); font-weight: 800;
+    background: none; color: #7dd3fc; border: 1px solid rgba(56,189,248,.45);
+    border-radius: 10px !important; box-shadow: none;
+  }
+  #mScreens .m-tl-fila {
+    position: relative; display: flex; align-items: center; gap: 10px;
+    padding: 11px 12px; border-top: 1px solid rgba(255,255,255,.08);
+  }
+  #mScreens .m-tl-izq { flex: 1; min-width: 0; }
+  #mScreens .m-tl-izq b { display: flex; align-items: center; gap: 6px; font-size: var(--m-strong); color: #fff; }
+  #mScreens .m-tl-izq small { display: block; margin-top: 3px; font-size: var(--m-small); color: #94a3b8; }
+  #mScreens .m-tl-med { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 4px; font-size: var(--m-meta); color: #cbd5e1; }
+  #mScreens .m-tl-med .mal { color: #fca5a5; font-weight: 800; }
+  #mScreens .m-tl-pt { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  #mScreens .m-tl-pt.dudo { background: #fbbf24; }
+  #mScreens .m-tl-pt.no { background: #f87171; }
+  #mScreens .m-tl-dest {
+    flex: 0 1 46%; text-align: right; font-size: var(--m-body); font-weight: 700; color: #e2e8f0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  #mScreens .m-tl-dest.vacio { color: #fca5a5; }
+  #mScreens .m-tl-dest.mut { color: #94a3b8; font-weight: 600; }
+  #mScreens .m-tl-v { flex: none; color: #64748b; font-size: var(--m-title); }
+  #mScreens .m-tl-sel {
+    position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;
+    font-size: max(16px, var(--m-body)); -webkit-appearance: none; appearance: none;
+  }
 }

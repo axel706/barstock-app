@@ -109,7 +109,7 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 
 ## La arquitectura
 
-Frontend estático, sin build. `index.html` es un monolito y hay ~109 módulos
+Frontend estático, sin build. `index.html` es un monolito y hay ~111 módulos
 `src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 29 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 112 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 113 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -301,7 +301,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 112 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 113 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -366,7 +366,14 @@ Toast, convertidas a botellas. Y sobre eso, el "deberías tener" en vivo
 y un correo cada mañana con lo que se va a acabar.
 
 **Hecho y en producción:** *Wine from Toast* (`src/toast-wine.js`, la
-tabla del escritorio y las tarjetas del teléfono). Cada vino de Toast
+tabla del escritorio y las tarjetas del teléfono). Y *Liquor from Toast*
+(`src/toast-liquor.js`, sólo en el teléfono: Settings → Toast), con el
+mismo motor (`src/toast-links.js`): en Toast el licor solo es la MARCA y
+la medida la dice el grupo del menú (`DRINKS › Liquor › Vodka › UP/RX`).
+Una fila por marca; la botella se guarda para todas sus medidas con su
+pour (Single 1.5, Double 2.5, Up/Rocks 3, Shot 1.5, "3oz" 3, de la hoja
+de Axel). Una medida desconocida no se guarda: vacío sería "botella
+entera". Los cócteles y lo de Happy Hour van por receta (pendiente). Cada vino de Toast
 apunta a un producto en `toast_item_links` (migración 027, corrida).
 Crown tiene su `toast_restaurant_guid`; las demás locaciones no. Axel ya
 emparejó todos los vinos de Crown. Copa = 6 oz siempre; se venden
