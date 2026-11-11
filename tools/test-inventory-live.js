@@ -171,6 +171,20 @@ grupo('cuándo se vuelve a leer');
   prueba('el sync de MarginEdge avisa cuando trae facturas', i > 0 && fin > i && /emit\('invoicesUpdated'/.test(me.slice(i, fin)));
 }
 
+grupo('sin "order N" en la lista');
+{
+  // Axel, 2026-11-11: "después de poner órdenes y recibirlas la app no
+  // debería mostrar ese tag de pedir 1 o 20: las órdenes ya se colocaron.
+  // Ese tipo de alertas son EL EMAIL." Con algo por pedir, la línea de
+  // abajo no lo dice.
+  const { host, w } = pantalla(VIVO);
+  for (const r of w.state.master) r.toOrder = 5;
+  w.BarStockEvents.emit('inventoryUpdated', {});
+  await esperar(20);
+  const metas = [...host.querySelectorAll('.m-inv-meta')].map(m => m.textContent).join(' | ');
+  prueba('ninguna fila dice "order N"', metas.length > 0 && !/\border\s+\d/i.test(metas), metas);
+}
+
 grupo('la carga');
 {
   const html = leer('index.html');

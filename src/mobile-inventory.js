@@ -254,12 +254,15 @@
       const s = salud(v ? Object.assign({}, r, { onHand: v.live }) : r);
       const f = faltas(r);
       const d = dias(r);
-      const pedir = num(r.toOrder);
 
+      // Sin "order N": la lista enseñaba lo que faltaba para el par
+      // también después de colocar y recibir los pedidos, como si hubiera
+      // que pedir otra vez. Axel, 2026-11-11: "las órdenes ya se colocaron;
+      // ese tipo de alertas son EL EMAIL", el de cada mañana con lo que se
+      // va a acabar. Lo que hay que pedir se ve en Orders.
       const meta = [];
       if (!f.includes('no vendor')) meta.push(esc(r.vendor));
       if (d !== null && !toastLoVende(r)) meta.push(d + (d === 1 ? ' day' : ' days'));
-      if (pedir > 0) meta.push('order ' + n2(pedir));
 
       return `
         <!-- La cifra es su propia columna, centrada en el alto del
