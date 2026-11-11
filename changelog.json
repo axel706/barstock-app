@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261110-220718",
+    "items": [
+      "Liquor from Toast: picking the suggested bottle now saves it",
+      "DBL items join their brand"
+    ]
+  },
+  {
     "build": "20261110-214332",
     "items": [
       "Liquor from Toast in Settings: link each brand to its bottle"
@@ -180,12 +187,6 @@
     "build": "20261109-112214",
     "items": [
       "Update screen fills the whole screen from the start"
-    ]
-  },
-  {
-    "build": "20261109-111530",
-    "items": [
-      "No white flash when the app updates"
     ]
   }
 ]

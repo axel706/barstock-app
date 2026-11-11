@@ -615,7 +615,9 @@ grupo('liquor: los licores del menu, con su tipo, su medida y su marca');
       { name: 'Liquor', menuGroups: [
         { name: 'Vodka', menuGroups: [
           { name: 'UP/RX', menuItems: [it('l-gg-up', 'Grey Goose')] },
-          { name: 'Single', menuItems: [it('l-gg-1', 'Grey Goose'), it('l-tito', 'Titos vodka')] } ] },
+          { name: 'Single', menuItems: [it('l-gg-1', 'Grey Goose'), it('l-tito', 'Titos vodka')] },
+          // Toast escribe "DBL" en el nombre del doble (visto en Crown).
+          { name: 'Double', menuItems: [it('l-360d', '360 Chocolate Vodka DBL')] } ] },
         { name: 'Bourbon + Rye', menuGroups: [{ name: '3oz', menuItems: [it('l-mm3', "3oz Maker's Mark")] }] },
         { name: 'Gin', menuGroups: [{ name: 'Up/Rx', menuItems: [it('l-gin', 'Gin UP/RX')] }] } ] },
       { name: 'Cocktails', menuGroups: [{ name: 'Specialty Cocktails', menuItems: [it('c-boc', 'Blood Orange Cosmo')] }] },
@@ -634,11 +636,12 @@ grupo('liquor: los licores del menu, con su tipo, su medida y su marca');
   const a = {}; for (const x of b.articulos || []) a[x.guid] = x;
   prueba('contesta, con el restaurante', b.ok === true && b.accion === 'liquor' && b.restaurante === GUID, JSON.stringify({ ok: b.ok, e: b.error }));
   prueba('sólo los licores: ni cócteles, ni vino, ni Happy Hour',
-    Object.keys(a).sort().join(',') === 'l-gg-1,l-gg-up,l-gin,l-mm3,l-tito', Object.keys(a).join(','));
+    Object.keys(a).sort().join(',') === 'l-360d,l-gg-1,l-gg-up,l-gin,l-mm3,l-tito', Object.keys(a).join(','));
   prueba('el tipo y la medida salen del grupo', a['l-gg-up'] && a['l-gg-up'].tipo === 'Vodka' && a['l-gg-up'].medida === 'UP/RX' &&
     a['l-mm3'].tipo === 'Bourbon + Rye' && a['l-mm3'].medida === '3oz', JSON.stringify(a['l-gg-up']));
   prueba('la marca, sin la medida pegada al nombre', a['l-mm3'].marca === "Maker's Mark" && a['l-gin'].marca === 'Gin' && a['l-gg-1'].marca === 'Grey Goose',
     [a['l-mm3'].marca, a['l-gin'].marca].join(' | '));
+  prueba('"DBL" pegado al nombre tampoco es parte de la marca', a['l-360d'] && a['l-360d'].marca === '360 Chocolate Vodka', a['l-360d'] && a['l-360d'].marca);
   prueba('y el grupo entero, para enseñarlo', a['l-gg-up'].grupo === 'DRINKS › Liquor › Vodka › UP/RX', a['l-gg-up'].grupo);
   prueba('lo vendido, sólo de los licores', b.vendido && b.vendido['l-gg-up'] === 3 && b.vendido['l-tito'] === 1 && !b.vendido['c-boc'] && !b.vendido['hh-gin'],
     JSON.stringify(b.vendido));

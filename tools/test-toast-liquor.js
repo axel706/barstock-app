@@ -193,6 +193,17 @@ grupo('la pantalla');
   prueba('y marca la que no tiene pour', !!mm && !!mm.querySelector('.mal') && /Flight · \? oz/.test(mm.textContent));
   const s = gg && gg.querySelector('select');
   prueba('elegir es un select nativo con ignorar', !!s && [...s.options].some(o => o.textContent === 'Not in inventory'));
+  // Axel, 2026-11-11: "ya tiene seleccionado Tito's, le vuelvo a
+  // seleccionar Tito's y ahí se queda". La rueda del iPhone no avisa
+  // ('change') si se elige la opción que ya estaba marcada, y la sugerida
+  // venía marcada. En una fila por revisar no puede venir marcada ninguna
+  // botella: arranca en "Choose", y la sugerida va la primera, aparte.
+  const marcada = s && s.options[s.selectedIndex];
+  prueba('por revisar, la rueda arranca sin botella marcada', !!marcada && marcada.value === '', marcada && marcada.textContent);
+  const prim = s && s.options[1];
+  prueba('y la sugerida va la primera, dicha como sugerida', !!prim && prim.value === 'Grey Goose Vodka 750' && /suggested/i.test(prim.textContent),
+    prim && prim.textContent);
+  prueba('sin repetirla más abajo', !!s && [...s.options].filter(o => o.value === 'Grey Goose Vodka 750').length === 1);
   if (s) { s.value = 'Grey Goose Vodka 750'; s.dispatchEvent(new w.Event('change')); }
   await esperar(30);
   prueba('elegir en la fila guarda la marca entera', escritas(w).length === 3, String(escritas(w).length));

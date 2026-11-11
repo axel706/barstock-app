@@ -35,10 +35,26 @@
     return '';
   }
 
+  // ── Por revisar, NINGUNA botella marcada ──────────────────────────
+  //
+  // La rueda del iPhone no avisa ('change') si se elige la opción que ya
+  // estaba marcada. La sugerida venía marcada, y elegirla no guardaba
+  // nada: Axel elegía Tito's sobre Tito's y la fila "ahí se queda"
+  // (2026-11-11). Ahora, por revisar, la rueda arranca en "Choose" y la
+  // sugerida va la primera y aparte, así que elegirla siempre es un
+  // cambio. Ya decidida, sí va marcada su botella: ahí elegir la misma
+  // no tiene nada que guardar.
   function selector(M, productos) {
     const ops = [];
-    if (M.estado === 'review') ops.push(`<option value=""${M.producto ? '' : ' selected'}>— Choose a bottle —</option>`);
-    for (const p of productos) ops.push(`<option value="${esc(p)}"${p === M.producto && M.estado !== 'ignored' ? ' selected' : ''}>${esc(p)}</option>`);
+    const revisar = M.estado === 'review';
+    if (revisar) {
+      ops.push('<option value="" selected>— Choose a bottle —</option>');
+      if (M.producto) ops.push(`<option value="${esc(M.producto)}">✓ ${esc(M.producto)} (suggested)</option>`);
+    }
+    for (const p of productos) {
+      if (revisar && p === M.producto) continue;
+      ops.push(`<option value="${esc(p)}"${!revisar && p === M.producto && M.estado !== 'ignored' ? ' selected' : ''}>${esc(p)}</option>`);
+    }
     ops.push(`<option value="${IGNORAR}"${M.estado === 'ignored' ? ' selected' : ''}>Not in inventory</option>`);
     if (M.estado !== 'review') ops.push(`<option value="${DESHACER}">Back to review</option>`);
     return `<select class="m-tl-sel" data-k="${esc(M.clave)}" aria-label="Bottle for ${esc(M.marca)}">${ops.join('')}</select>`;
