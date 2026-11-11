@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-171251",
+    "items": [
+      "Behind-the-scenes fixes"
+    ]
+  },
+  {
     "build": "20261111-170803",
     "items": [
       "Inventory shows the Live estimate",
@@ -180,12 +186,6 @@
     "build": "20261109-163522",
     "items": [
       "In Search, scrolling back up no longer refreshes instead"
-    ]
-  },
-  {
-    "build": "20261109-162755",
-    "items": [
-      "Search results no longer get stuck at the end"
     ]
   }
 ]

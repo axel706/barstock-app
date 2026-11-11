@@ -55,7 +55,7 @@
         f = filas.get(nombre);
         if (!f) {
           f = { producto: nombre, enInventario: !!m, contado: m ? Number(m.onHand) || 0 : 0,
-                llego: 0, vendido: 0, de: [] };
+                llego: 0, vendido: 0, de: [], viene: [] };
           filas.set(nombre, f);
         }
       }
@@ -81,6 +81,12 @@
       const colocada = new Date(ord.created_at).getTime();
       let cuenta;
       if (llega != null) {
+        // Todavía no ha llegado: no suma, pero se apunta cuándo llega,
+        // para que "cuándo se acaba" lo sume ese día (run-out.js).
+        if (llega > ahora && !conFactura) {
+          for (const i of items) if (i.pedido) fila(i.item).viene.push({ cuando: new Date(llega).toISOString(), n: i.pedido });
+          continue;
+        }
         if (!(llega > o.conteo && llega <= ahora)) continue;
         cuenta = conFactura ? 'factura' : 'pedido';
       } else {

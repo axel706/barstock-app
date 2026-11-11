@@ -148,29 +148,38 @@
     return t || null;
   }
 
-  async function desdeElConteo() {
-    const W = window.BarStockWeeklyCycle;
-    if (W && W.estado && W.estado() === 'counting') return { estado: 'contando' };
-    const conteo = await ultimoConteo();
-    if (!conteo) return { estado: 'sinConteo' };
-    const desde = diaDeNegocio(conteo);
+  // ── Lo vendido en botellas, por producto y por día, desde un día ─────
+  //
+  // `desde` es un día de negocio 'AAAA-MM-DD' y NO entra (gt): así lo
+  // pide el LIVE, para quien el día del conteo no se descuenta. Lo usan
+  // el LIVE (desde el conteo) y "cuándo se acaba" (los últimos 90 días),
+  // y por eso vive aquí una vez. `dias` son los días que se cargaron:
+  // un día sin fila no es un día sin ventas, es un día que no se sabe.
+  async function ventasDesde(desde) {
     const loc = await window.BarStockInventoryCloud.fetchLocationId();
-    const [ventas, enlaces] = await Promise.all([
+    const [ventas, enlaces, dias] = await Promise.all([
       R().leerTodo('toast_sales?location_id=eq.' + loc + '&business_date=gt.' + desde +
         '&select=business_date,toast_item_guid,toast_item_name,toast_group,mods,quantity&order=id.asc'),
-      R().leerTodo('toast_item_links?location_id=eq.' + loc + '&select=toast_item_guid,item_name,pour_oz,status,kind&order=id.asc')
+      R().leerTodo('toast_item_links?location_id=eq.' + loc + '&select=toast_item_guid,item_name,pour_oz,status,kind&order=id.asc'),
+      R().leerTodo('toast_sales_days?location_id=eq.' + loc + '&business_date=gt.' + desde +
+        '&select=business_date,complete,closed&order=business_date.asc')
     ]);
     const TR = window.BarStockToastRecipes;
     if (TR && (!TR.datos() || TR.datos().estado !== 'listo')) await TR.cargar();
     const recetas = TR ? TR.recetas() : [];
     const tamanos = {};
     for (const r of (window.state && window.state.master) || []) if (r && r.item) tamanos[r.item] = r.bottleSizeMl;
-    // Los días que se cargaron, para decir hasta cuándo llega la cuenta.
-    const dias = await R().leerTodo('toast_sales_days?location_id=eq.' + loc + '&business_date=gt.' + desde +
-      '&select=business_date,complete,closed&order=business_date.asc');
-    return Object.assign({ estado: 'listo', conteo: conteo.toISOString(), desde, dias },
-      calcular(ventas, enlaces, recetas, tamanos));
+    return Object.assign({ desde, dias }, calcular(ventas, enlaces, recetas, tamanos));
   }
 
-  window.BarStockToastUsage = { calcular, desdeElConteo, diaDeNegocio, ML_POR_OZ, ML_SIN_TAMANO, CORTE_H };
+  async function desdeElConteo() {
+    const W = window.BarStockWeeklyCycle;
+    if (W && W.estado && W.estado() === 'counting') return { estado: 'contando' };
+    const conteo = await ultimoConteo();
+    if (!conteo) return { estado: 'sinConteo' };
+    const r = await ventasDesde(diaDeNegocio(conteo));
+    return Object.assign({ estado: 'listo', conteo: conteo.toISOString() }, r);
+  }
+
+  window.BarStockToastUsage = { calcular, ventasDesde, desdeElConteo, diaDeNegocio, ML_POR_OZ, ML_SIN_TAMANO, CORTE_H };
 })();

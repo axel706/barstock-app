@@ -192,5 +192,21 @@
     return r;
   };
 
+  // Cuándo se acaba cada producto (src/run-out.js). Sólo lee. Enseña lo
+  // que se acaba en las próximas dos semanas, lo más pronto arriba.
+  window.bsSeAcaba = async function () {
+    const R = window.BarStockRunOut;
+    if (!R) { console.warn('Esta versión de la app no tiene "cuándo se acaba". Recarga la página.'); return null; }
+    const r = await R.ahora();
+    if (r.estado !== 'listo') { console.log('Sin cálculo: ' + (r.error || r.estado)); return r; }
+    const D = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+    console.log('Hoy ' + r.hoy + ' · días cargados por día de la semana: ' + r.muestras.map((n, i) => D[i] + ' ' + n).join(', ') +
+      (r.suficiente ? '' : ' · NO hay historia suficiente (4 de cada día)'));
+    console.table(r.filas.filter(f => f.agota).sort((a, b) => a.enDias - b.enDias).map(f => ({ producto: f.producto, LIVE: f.live,
+      'se acaba': f.agota, 'en días': f.enDias, 'gasto dom→sáb': f.med.map(x => Math.round(x * 10) / 10).join(' '),
+      viene: f.viene.map(v => v.n + ' el ' + v.cuando.slice(0, 10)).join(', ') })));
+    return r;
+  };
+
   console.log('Listo. Empieza por:  await bsToast("ping")');
 })();
