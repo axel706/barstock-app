@@ -165,7 +165,7 @@
         '&select=business_date,toast_item_guid,toast_item_name,toast_group,mods,quantity,net,sales_category&order=id.asc'),
       R().leerTodo('toast_item_links?location_id=eq.' + loc + '&select=toast_item_guid,item_name,pour_oz,status,kind&order=id.asc'),
       R().leerTodo('toast_sales_days?location_id=eq.' + loc + '&business_date=gt.' + desde +
-        '&select=business_date,complete,closed&order=business_date.asc')
+        '&select=business_date,complete,closed,fetched_at&order=business_date.asc')
     ]);
     const TR = window.BarStockToastRecipes;
     if (TR && (!TR.datos() || TR.datos().estado !== 'listo')) await TR.cargar();

@@ -1975,20 +1975,39 @@
     const TS = window.BarStockToastSales;
     const top = TS ? TS.masVendido(V.base, d.fecha, din ? 'dinero' : 'botellas').slice(0, 3) : [];
 
+    // ── El encabezado (Axel, 2026-11-12, opción C sobre lámina) ──────
+    //
+    // El logo de Toast solo en la primera línea: el archivo que dio él,
+    // tal cual (assets/brands/toast.png), sin redibujarlo. Debajo, cuándo
+    // se cargó lo último, con un punto verde; ámbar si lleva más de
+    // VIEJA_H horas, que es que la carga de la mañana no corrió.
+    const carga = TS && TS.ultimaCarga ? TS.ultimaCarga(V.base && V.base.dias) : null;
+    const sync = carga
+      ? `<span class="m-ts-sync${TS.cargaVieja(carga) ? ' vieja' : ''}">Sales · synced ${esc(TS.textoCarga(carga))}<i aria-hidden="true"></i></span>`
+      : `<span class="m-ts-sync vieja">Sales · never synced<i aria-hidden="true"></i></span>`;
+    // La comparación, en su píldora debajo del número. Sin "Wed" al
+    // final: el día ya va al lado del número. Color sólo cuando compara
+    // de verdad; "Closed" y "No data for this day" van en gris.
+    const pill = !cmp ? ''
+      : `<em class="m-ts-pill${d.cargado && n ? (sube ? ' m-ts-up' : ' m-ts-dn') : ''}">${esc(cmp.replace(/ vs usual \w+$/, ' vs usual'))}</em>`;
+
     caja.innerHTML = `
       <div class="m-ts">
-        <div class="m-ts-h">
-          <span class="m-ts-k">Toast sales</span>
+        <div class="m-ts-h m-ts-marca">
+          <span class="m-ts-ti">
+            <img class="m-ts-logo" src="assets/brands/toast.png" alt="Toast">
+            ${sync}
+          </span>
           <span class="m-ts-seg" role="group" aria-label="Show bottles or money">
             <button type="button" class="${din ? '' : 'on'}" data-v="botellas">Bottles</button>
             <button type="button" class="${din ? 'on' : ''}" data-v="dinero">$</button>
           </span>
         </div>
-        <div class="m-ts-t">
+        <div class="m-ts-t m-ts-hero">
           <b>${din ? dinero0(d.dinero) : bot1(d.botellas)}</b>
           <span>${din ? 'net' : 'bottles'} · ${d.dia}</span>
-          <em class="${cmp && n ? (sube ? 'm-ts-up' : 'm-ts-dn') : ''}">${esc(cmp)}</em>
         </div>
+        ${pill}
         <div class="m-ts-g">
           ${sem.map((x, k) => `
             <div class="m-ts-b${k === i ? ' on' : ''}" data-d="${k}" role="button" tabindex="0"

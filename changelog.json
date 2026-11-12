@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261112-085052",
+    "items": [
+      "Toast Sales card: Toast logo and last sync time",
+      "Amber dot when Toast hasn't synced in a day"
+    ]
+  },
+  {
     "build": "20261112-082712",
     "items": [
       "The tab bar stays at the bottom again"
@@ -184,12 +191,6 @@
     "items": [
       "Inventory says when each bottle runs out",
       "Out Sat · red within 2 days, amber this week"
-    ]
-  },
-  {
-    "build": "20261111-171251",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]

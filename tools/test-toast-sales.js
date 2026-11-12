@@ -110,6 +110,9 @@ async function home(o) {
     diaDeNegocio: () => HOY,
     ventasDesde: async () => { w.__lecturas++; return o.sinDatos ? { dias: [], ventas: [], productos: [] } : D; }
   };
+  // La hora de cada carga (fetched_at): la última, hace `o.horas` horas.
+  const ult = new Date(Date.now() - (o.horas === undefined ? 3 : o.horas) * 3600e3);
+  D.dias.forEach((d, k) => { d.fetched_at = new Date(ult.getTime() - (D.dias.length - 1 - k) * 864e5).toISOString(); });
   cargar();
   w.state = { master: [] };
   global.state = w.state;
@@ -129,6 +132,46 @@ const tarjeta = (h) => h.querySelector('#mhVentas .m-ts');
 
 (async () => {
 
+grupo('el encabezado: el logo de Toast y la última carga');
+{
+  // Axel, 2026-11-12, opción C sobre lámina: el logo de Toast solo en la
+  // primera línea (el archivo que dio él, tal cual), y debajo "SALES ·
+  // SYNCED NOV 12 · 5:02 AM" con un punto verde, ámbar si lleva mucho
+  // sin cargarse.
+  const TS = window.BarStockToastSales;
+  prueba('la última carga es la más nueva de los días', TS.ultimaCarga([{ fetched_at: '2026-11-10T10:00:00Z' }, { fetched_at: '2026-11-12T10:02:00Z' }, {}]) === '2026-11-12T10:02:00Z');
+  prueba('sin ninguna, nada', TS.ultimaCarga([{}]) === null);
+  prueba('se dice en hora de Nueva York', TS.textoCarga('2026-11-12T10:02:00Z') === 'Nov 12 · 5:02 AM', TS.textoCarga('2026-11-12T10:02:00Z'));
+  const T0 = Date.parse('2026-11-12T12:00:00Z');
+  // La carga de Vercel corre a las 5 y a las 7 AM: a las 7 de la mañana
+  // la última puede tener 24 h. Pasadas 26, las dos de un día fallaron.
+  prueba('20 h: al día', TS.cargaVieja(new Date(T0 - 20 * 3600e3).toISOString(), T0) === false);
+  prueba('27 h: vieja', TS.cargaVieja(new Date(T0 - 27 * 3600e3).toISOString(), T0) === true);
+  prueba('sin carga: vieja, no "al día"', TS.cargaVieja(null, T0) === true);
+  prueba('la hora de carga se pide con los días', /toast_sales_days[^;]*select=business_date,complete,closed,fetched_at/.test(leer('src/toast-usage.js')));
+}
+{
+  const { host } = await home();
+  const t = tarjeta(host);
+  const logo = t.querySelector('img.m-ts-logo');
+  prueba('el logo de Toast arriba, con su texto alternativo', !!logo && logo.getAttribute('alt') === 'Toast' && /assets\/brands\/toast\.png/.test(logo.getAttribute('src')));
+  prueba('y ya no el rótulo "Toast sales"', !t.querySelector('.m-ts-k'));
+  const sy = t.querySelector('.m-ts-sync');
+  prueba('debajo, "Sales · synced" con fecha y hora', !!sy && /^Sales · synced [A-Z][a-z]{2} \d{1,2} · \d{1,2}:\d{2} (AM|PM)$/.test(sy.textContent.trim()), sy && sy.textContent);
+  prueba('con el punto verde', !!sy && !!sy.querySelector('i') && !sy.classList.contains('vieja'));
+}
+{
+  const { host } = await home({ horas: 30 });
+  const sy = tarjeta(host).querySelector('.m-ts-sync');
+  prueba('30 h sin cargar: el punto en ámbar', !!sy && sy.classList.contains('vieja'), sy && sy.className);
+}
+{
+  const css = leer('styles/mobile-app.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  prueba('la línea va en mayúsculas', /\.m-ts-sync\s*\{[^}]*text-transform\s*:\s*uppercase/.test(css));
+  prueba('y el punto viejo es ámbar', /\.m-ts-sync\.vieja i\s*\{[^}]*#f(cd34d|bbf24|59e0b)/i.test(css));
+  prueba('el logo está en el repositorio', fs.existsSync(path.join(__dirname, '..', 'assets', 'brands', 'toast.png')));
+}
+
 grupo('la tarjeta del Home');
 {
   const { w, host } = await home();
@@ -136,7 +179,11 @@ grupo('la tarjeta del Home');
   prueba('sale', !!t);
   prueba('abre en ayer (martes)', /3\.5/.test(t.querySelector('.m-ts-t b').textContent) && /Tue/.test(t.querySelector('.m-ts-t span').textContent),
     t.querySelector('.m-ts-t').textContent.replace(/\s+/g, ' '));
-  prueba('contra un martes normal: +75%', /↗ 75% vs usual Tue/.test(t.querySelector('.m-ts-t em').textContent), t.querySelector('.m-ts-t em').textContent);
+  // Axel, 2026-11-12, sobre lámina: la comparación pasa a una píldora
+  // debajo del número; el día ya va al lado del número.
+  const pil = t.querySelector('.m-ts-pill');
+  prueba('contra un martes normal: +75%, en su píldora', !!pil && /↗ 75% vs usual$/.test(pil.textContent.trim()) && pil.classList.contains('m-ts-up'),
+    pil && pil.outerHTML);
   prueba('siete barras, la de ayer elegida', t.querySelectorAll('.m-ts-b').length === 7 && t.querySelectorAll('.m-ts-b')[6].classList.contains('on'));
   prueba('con la raya de lo normal', t.querySelectorAll('.m-ts-b u').length === 7);
   prueba('lo más vendido de ese día', /Tito's Vodka 1L/.test(t.querySelector('.m-ts-top').textContent));

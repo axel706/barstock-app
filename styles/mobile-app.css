@@ -1686,6 +1686,38 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   .m-ts-t em.m-ts-up { color: #86efac; }
   .m-ts-t em.m-ts-dn { color: #fca5a5; }
+
+  /* ── Toast Sales: el logo, la última carga y la cifra grande ──────
+   * Axel, 2026-11-12, opción C sobre lámina. Sólo esta tarjeta: Movement
+   * y Changes comparten .m-ts y se quedan con su rótulo y su fila. El
+   * logo es el archivo que dio él, a la altura del título de pantalla.
+   * La línea de la carga, en mayúsculas como los rótulos; su punto es
+   * verde, y ámbar si la carga de la mañana no corrió (toast-sales.js,
+   * cargaVieja). */
+  .m-ts-marca { align-items: flex-start; }
+  .m-ts-ti { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+  .m-ts-logo { display: block; height: var(--m-screen); width: auto; }
+  .m-ts-sync {
+    display: flex; align-items: center; gap: 7px; margin-top: 7px; white-space: nowrap;
+    font-size: var(--m-eyebrow); font-weight: 800; letter-spacing: .08em;
+    text-transform: uppercase; color: #c3d2e2;
+  }
+  .m-ts-sync i {
+    flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%;
+    background: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,.18);
+  }
+  .m-ts-sync.vieja i { background: #fbbf24; box-shadow: 0 0 0 3px rgba(251,191,36,.2); }
+  .m-ts-t.m-ts-hero { margin-top: 16px; }
+  .m-ts-hero b { font-size: calc(var(--m-figure) * 1.58); letter-spacing: -1.2px; line-height: 1; }
+  .m-ts-hero span { font-size: var(--m-strong); }
+  .m-ts-pill {
+    display: inline-flex; align-items: center; margin-top: 9px; padding: 4px 10px;
+    border-radius: 999px; font-style: normal; white-space: nowrap;
+    font-size: var(--m-small); font-weight: 800; color: #a9bacd;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14);
+  }
+  .m-ts-pill.m-ts-up { color: #86efac; background: rgba(34,197,94,.14); border-color: rgba(134,239,172,.35); }
+  .m-ts-pill.m-ts-dn { color: #fca5a5; background: rgba(239,68,68,.14); border-color: rgba(252,165,165,.35); }
   .m-ts-g { display: flex; align-items: flex-end; gap: 7px; height: calc(var(--m-base) * 6.9); margin-top: 14px; }
   .m-ts-b {
     position: relative; flex: 1; height: 100%; cursor: pointer;

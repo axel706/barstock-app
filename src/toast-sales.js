@@ -51,7 +51,7 @@
   // o = { productos, ventas, dias, hoy }
   //   productos  [{ producto, porDia: { fecha: botellas } }] (toast-usage)
   //   ventas     filas de toast_sales con net y sales_category
-  //   dias       [{ business_date, complete, closed }]
+  //   dias       [{ business_date, complete, closed, fetched_at }]
   //   hoy        el día de negocio de hoy, 'AAAA-MM-DD'
   function resumir(o) {
     const cargado = new Set((o.dias || []).filter(d => d && d.complete && d.closed).map(d => d.business_date));
@@ -172,6 +172,41 @@
     return _pidiendo;
   }
 
+  // ── Cuándo se cargó lo último ────────────────────────────────────
+  //
+  // El encabezado de la tarjeta dice "Sales · synced Nov 12 · 5:02 AM"
+  // (Axel, 2026-11-12, sobre lámina): contesta si los números ya están
+  // al día. Es el fetched_at más nuevo de toast_sales_days, que se
+  // escribe en cada carga (lib/toast.js, sync).
+  function ultimaCarga(dias) {
+    let mejor = null, ms = -Infinity;
+    for (const d of dias || []) {
+      const t = d && d.fetched_at ? Date.parse(d.fetched_at) : NaN;
+      if (t > ms) { ms = t; mejor = d.fetched_at; }
+    }
+    return mejor;
+  }
+
+  // En hora de Nueva York, como el resto de la app: "Nov 12 · 5:02 AM".
+  function textoCarga(iso) {
+    const f = new Date(iso);
+    const o = { timeZone: 'America/New_York' };
+    return f.toLocaleDateString('en-US', Object.assign({ month: 'short', day: 'numeric' }, o)) + ' · ' +
+      f.toLocaleTimeString('en-US', Object.assign({ hour: 'numeric', minute: '2-digit' }, o));
+  }
+
+  // Ámbar cuando lleva "mucho" sin cargarse. La carga de Vercel corre a
+  // las 5 y a las 7 AM (lib/toast-cron.js): justo antes de las 7, la
+  // última puede tener 24 h y es normal. Pasadas 26, fallaron las dos de
+  // un día. Sin ninguna carga tampoco está al día: no se pinta verde.
+  const VIEJA_H = 26;
+  function cargaVieja(iso, ahoraMs) {
+    const t = iso ? Date.parse(iso) : NaN;
+    if (!(t > 0)) return true;
+    return ((ahoraMs === undefined ? Date.now() : ahoraMs) - t) > VIEJA_H * 3600e3;
+  }
+
   window.BarStockToastSales = { resumir, masVendido, fuera, semanaDe, ahora, MIN_MUESTRAS, SEMANA,
+    ultimaCarga, textoCarga, cargaVieja, VIEJA_H,
     _reset: () => { _datos = null; _en = 0; _de = ''; _pidiendo = null; } };
 })();
