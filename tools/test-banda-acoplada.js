@@ -493,10 +493,13 @@ if (SRC) {
     // "Necesitan ser un poco más grandes y legibles" (2026-11-12): los
     // iconos de la banda (Time Machine, campana, chevron) iban a 14 px
     // dentro de un círculo de 40; el chevron medía 4 × 8. Eligió 22 px,
-    // de la escala, con el chevron centrado tal cual (sin moverlo).
+    // de la escala, y el chevron movido a la izquierda (corrección
+    // óptica: la punta del "<" a un lado y los brazos al otro lo hacían
+    // parecer corrido a la derecha estando centrado).
     const ico = (/#mBand \.m-ico:not\(\.m-ico-alert\) > \.ti\s*\{([^}]*)\}/.exec(css) || [])[1] || '';
     prueba('los iconos de la banda, a 22 px de la escala', /font-size\s*:\s*calc\(var\(--m-base\) \* 1\.57\)/.test(ico), ico.trim());
-    prueba('y el chevron sin desplazar', !/ti-chevron-left[^{]*\{[^}]*translate/.test(css));
+    const chev = (/#mBand \.m-ico > \.ti-chevron-left\s*\{([^}]*)\}/.exec(css) || [])[1] || '';
+    prueba('y el chevron, un poco a la izquierda', /display\s*:\s*inline-block/.test(chev) && /transform\s*:\s*translateX\(-\.04em\)/.test(chev), chev.trim());
     prueba('sin rebote: overscroll-behavior en el html', /(^|[\s,}])html\s*\{[^}]*overscroll-behavior(-y)?\s*:\s*none/.test(css));
   }
 
