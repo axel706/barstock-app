@@ -1759,6 +1759,74 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* ── Dinero ─────────────────────────────────────────────────────── */
 
   .m-pair { display: flex; gap: 8px; margin-top: 14px; }
+
+  /* ── Toast Sales (Axel, 2026-11-12, sobre lámina) ─────────────────
+   * La semana en barras con una raya punteada en lo de un día normal.
+   * El día elegido va en azul pleno; los demás, apagados. En $, cada
+   * barra se parte en licor (azul) y vino (violeta). El radio y el aire
+   * son los de Top movers, la otra tarjeta grande de esta columna. */
+  #mhVentas:empty { display: none; }
+  .m-ts {
+    margin-top: 16px; padding: 15px 15px 13px; border-radius: 19px;
+    background: linear-gradient(160deg, rgba(14,116,144,.55), rgba(15,23,42,.88));
+    border: 1px solid rgba(125,211,252,.28);
+  }
+  .m-ts-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .m-ts-k {
+    font-size: var(--m-eyebrow); font-weight: 800; letter-spacing: .12em;
+    text-transform: uppercase; color: #bae6fd;
+  }
+  .m-ts-seg {
+    display: inline-flex; padding: 3px; border-radius: 999px;
+    background: rgba(0,0,0,.28); border: 1px solid rgba(255,255,255,.12);
+  }
+  body.m-shell .m-ts-seg button {
+    padding: 5px 11px; border: 0; background: none; cursor: pointer;
+    font-size: var(--m-meta); font-weight: 700; color: #a9bacd;
+  }
+  body.m-shell .m-ts-seg button.on { background: #7dd3fc; color: #04283d; }
+  .m-ts-t { display: flex; align-items: baseline; gap: 8px; margin-top: 12px; }
+  .m-ts-t b { font-size: var(--m-screen); font-weight: 800; color: #fff; letter-spacing: -.6px; }
+  .m-ts-t span { font-size: var(--m-small); color: #c3d2e2; white-space: nowrap; }
+  .m-ts-t em {
+    margin-left: auto; font-style: normal; text-align: right;
+    font-size: var(--m-meta); font-weight: 700; color: #a9bacd;
+  }
+  .m-ts-t em.m-ts-up { color: #86efac; }
+  .m-ts-t em.m-ts-dn { color: #fca5a5; }
+  .m-ts-g { display: flex; align-items: flex-end; gap: 7px; height: calc(var(--m-base) * 6.9); margin-top: 14px; }
+  .m-ts-b {
+    position: relative; flex: 1; height: 100%; cursor: pointer;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .m-ts-b i { display: block; width: 100%; border-radius: 4px; background: #93b0cc; opacity: .45; }
+  .m-ts-b.on i { background: #38bdf8; opacity: 1; }
+  .m-ts-b i.licor { background: #38bdf8; }
+  .m-ts-b i.vino { background: #c084fc; }
+  .m-ts-b i + i { margin-top: 2px; }
+  .m-ts-b.on i.licor, .m-ts-b.on i.vino { opacity: 1; }
+  .m-ts-b u {
+    position: absolute; left: -2px; right: -2px; height: 0;
+    border-top: 2px dashed rgba(255,255,255,.45);
+  }
+  .m-ts-d { display: flex; gap: 7px; margin-top: 6px; }
+  .m-ts-d span { flex: 1; text-align: center; font-size: var(--m-meta); color: #8fa3b8; }
+  .m-ts-d span.on { color: #fff; font-weight: 800; }
+  .m-ts-ley { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: var(--m-meta); color: #c3d2e2; }
+  .m-ts-ley i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .m-ts-ley i.licor { background: #38bdf8; }
+  .m-ts-ley i.vino { background: #c084fc; }
+  .m-ts-top { margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.1); }
+  .m-ts-top-h {
+    font-size: var(--m-meta); font-weight: 700; letter-spacing: .4px;
+    text-transform: uppercase; color: #a9bacd;
+  }
+  .m-ts-r { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-top: 8px; }
+  .m-ts-r .n { min-width: 0; font-size: var(--m-small); color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-ts-r .v { flex: 0 0 auto; font-size: var(--m-small); }
+  .m-ts-r .v b { color: #fff; }
+  .m-ts-r .v small { margin-left: 6px; font-size: var(--m-meta); color: #8fa3b8; }
   /* Gris pizarra, y es el MISMO gris que `.m-hero-calm` del carrusel,
    * que allí significa "no hay nada que hacer aquí". Estas dos son
    * exactamente eso: cifras que miras, sin botón y sin sitio al que

@@ -158,8 +158,11 @@
   async function ventasDesde(desde) {
     const loc = await window.BarStockInventoryCloud.fetchLocationId();
     const [ventas, enlaces, dias] = await Promise.all([
+      // net y sales_category los usa la tarjeta Toast Sales del Home
+      // (toast-sales.js): la misma lectura, para no pedir dos veces lo
+      // mismo. net es el Net sales de Toast (migración 034).
       R().leerTodo('toast_sales?location_id=eq.' + loc + '&business_date=gt.' + desde +
-        '&select=business_date,toast_item_guid,toast_item_name,toast_group,mods,quantity&order=id.asc'),
+        '&select=business_date,toast_item_guid,toast_item_name,toast_group,mods,quantity,net,sales_category&order=id.asc'),
       R().leerTodo('toast_item_links?location_id=eq.' + loc + '&select=toast_item_guid,item_name,pour_oz,status,kind&order=id.asc'),
       R().leerTodo('toast_sales_days?location_id=eq.' + loc + '&business_date=gt.' + desde +
         '&select=business_date,complete,closed&order=business_date.asc')
@@ -169,7 +172,7 @@
     const recetas = TR ? TR.recetas() : [];
     const tamanos = {};
     for (const r of (window.state && window.state.master) || []) if (r && r.item) tamanos[r.item] = r.bottleSizeMl;
-    return Object.assign({ desde, dias }, calcular(ventas, enlaces, recetas, tamanos));
+    return Object.assign({ desde, dias, ventas }, calcular(ventas, enlaces, recetas, tamanos));
   }
 
   async function desdeElConteo() {

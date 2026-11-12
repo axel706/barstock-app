@@ -1941,6 +1941,11 @@
           </div>
         </div>
 
+        <!-- Toast Sales: la pinta pintarVentas() aparte, porque sus
+             datos llegan después y al tocar una barra sólo se repinta
+             ella, sin mover el carrusel. Vacía no ocupa. -->
+        <div id="mhVentas"></div>
+
         ${mov.length ? `
           <div class="m-mvcard">
             <div class="m-mvcard-h">
@@ -1990,7 +1995,120 @@
       </div>`;
 
     enganchar(host, cards);
+    pintarVentas(host);
+  }
 
+  // ── Toast Sales (Axel, 2026-11-12, sobre lámina) ───────────────────
+  //
+  // La semana en barras —los siete días cerrados hasta ayer— con una
+  // raya punteada que marca lo de un día normal. Arriba, el total del
+  // día elegido y cómo va contra lo normal; abajo, sus tres más
+  // vendidos. Bottles / $ cambia de vista: en $, cada barra se parte en
+  // licor (con cócteles) y vino, y lo más vendido va por dinero. Al
+  // tocar una barra, ese día queda elegido.
+  //
+  // Los números los hace toast-sales.js; aquí sólo se pinta. Sin días de
+  // Toast cargados (una locación sin Toast) la tarjeta no sale.
+  //
+  // "All products" y "Full report" van después, cuando existan sus
+  // pantallas: un botón que no lleva a nada es una afordancia que miente.
+  let _ventas = null, _pidiendoVentas = false;
+  let _vista = 'botellas', _diaV = null;
+
+  function cargarVentas() {
+    const TS = window.BarStockToastSales;
+    if (!TS || _pidiendoVentas) return;
+    _pidiendoVentas = true;
+    // Sólo se repinta si llegó algo distinto: toast-sales devuelve el
+    // MISMO objeto mientras no caduca, y repintar siempre volvería a
+    // pedir (pintarVentas pide), en un bucle sin fin.
+    TS.ahora()
+      .then(d => { const cambio = d !== _ventas; _ventas = d; return cambio; })
+      .catch(e => { console.warn('[home] Toast Sales', e); return false; })
+      .then((cambio) => {
+        _pidiendoVentas = false;
+        const host = document.querySelector('.m-screen[data-screen="home"]');
+        if (cambio && host) pintarVentas(host);
+      });
+  }
+
+  const dinero0 = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('en-US');
+  const bot1 = (n) => String(Math.round((Number(n) || 0) * 10) / 10);
+
+  function pintarVentas(host) {
+    const caja = host && host.querySelector('#mhVentas');
+    if (!caja) return;
+    // Pide cada vez que se pinta: toast-sales guarda lo leído y sólo
+    // vuelve a la base al cambiar el día o pasada media hora.
+    if (!_pidiendoVentas) cargarVentas();
+    const V = _ventas;
+    if (!V || !V.cargados || !V.semana || !V.semana.length) { caja.innerHTML = ''; return; }
+    const sem = V.semana;
+    const i = _diaV === null || _diaV >= sem.length ? sem.length - 1 : _diaV;
+    const d = sem[i];
+    const din = _vista === 'dinero';
+    const valor = (x) => din ? x.dinero : x.botellas;
+    const normal = (x) => din ? x.normalDinero : x.normalBotellas;
+    const tope = Math.max(1e-9, ...sem.map(x => Math.max(valor(x), normal(x) || 0)));
+    const pct = (n) => Math.max(0, Math.min(100, (n / tope) * 100)).toFixed(1) + '%';
+
+    // Cómo va contra lo normal. Un día cerrado (0 y lo normal 0) lo dice;
+    // un día sin cargar también, en vez de pintar un cero con cara de dato.
+    const n = normal(d);
+    const cmp = !d.cargado ? 'No data for this day'
+      : !valor(d) && !n ? 'Closed'
+      : n ? ((valor(d) - n) / n * 100 >= 0 ? '↗ ' : '↘ ') + Math.abs(Math.round((valor(d) - n) / n * 100)) + '% vs usual ' + d.dia
+      : '';
+    const sube = n && valor(d) >= n;
+
+    const TS = window.BarStockToastSales;
+    const top = TS ? TS.masVendido(V.base, d.fecha, din ? 'dinero' : 'botellas').slice(0, 3) : [];
+
+    caja.innerHTML = `
+      <div class="m-ts">
+        <div class="m-ts-h">
+          <span class="m-ts-k">Toast sales</span>
+          <span class="m-ts-seg" role="group" aria-label="Show bottles or money">
+            <button type="button" class="${din ? '' : 'on'}" data-v="botellas">Bottles</button>
+            <button type="button" class="${din ? 'on' : ''}" data-v="dinero">$</button>
+          </span>
+        </div>
+        <div class="m-ts-t">
+          <b>${din ? dinero0(d.dinero) : bot1(d.botellas)}</b>
+          <span>${din ? 'net' : 'bottles'} · ${d.dia}</span>
+          <em class="${cmp && n ? (sube ? 'm-ts-up' : 'm-ts-dn') : ''}">${esc(cmp)}</em>
+        </div>
+        <div class="m-ts-g">
+          ${sem.map((x, k) => `
+            <div class="m-ts-b${k === i ? ' on' : ''}" data-d="${k}" role="button" tabindex="0"
+                 aria-label="${x.dia}: ${din ? dinero0(x.dinero) : bot1(x.botellas) + ' bottles'}">
+              ${din
+                ? `<i class="vino" style="height:${pct(x.vino)}"></i><i class="licor" style="height:${pct(x.licor)}"></i>`
+                : `<i style="height:${pct(x.botellas)}"></i>`}
+              ${normal(x) !== null ? `<u style="bottom:${pct(normal(x))}"></u>` : ''}
+            </div>`).join('')}
+        </div>
+        <div class="m-ts-d">${sem.map((x, k) => `<span class="${k === i ? 'on' : ''}">${x.dia}</span>`).join('')}</div>
+        ${din ? `<div class="m-ts-ley">
+            <span><i class="licor"></i>Liquor & cocktails ${dinero0(d.licor)}</span>
+            <span><i class="vino"></i>Wine ${dinero0(d.vino)}</span></div>` : ''}
+        ${top.length ? `
+          <div class="m-ts-top">
+            <div class="m-ts-top-h">Most sold · ${d.dia}</div>
+            ${top.map(x => `<div class="m-ts-r"><span class="n">${esc(x.nombre)}</span>
+              <span class="v"><b>${din ? dinero0(x.dinero) : bot1(x.botellas)}</b><small>${din
+                ? esc(String(Math.round(x.unidades))) + ' sold' : 'bottles'}</small></span></div>`).join('')}
+          </div>` : ''}
+      </div>`;
+
+    caja.querySelectorAll('[data-v]').forEach(b => {
+      b.onclick = () => { _vista = b.dataset.v; pintarVentas(host); };
+    });
+    caja.querySelectorAll('[data-d]').forEach(b => {
+      const elegir = () => { _diaV = Number(b.dataset.d); pintarVentas(host); };
+      b.onclick = elegir;
+      b.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); elegir(); } };
+    });
   }
 
 
