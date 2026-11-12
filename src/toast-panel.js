@@ -46,6 +46,10 @@
   function params(action) {
     const p = {};
     if (action === 'ping' || action === 'restaurants') return p;
+    // Otro restaurante (W&B): el servidor lo usa en vez del de Vercel.
+    // Sólo para leer; vacío, el de siempre.
+    const g = (($('tpRest') || {}).value || '').trim();
+    if (g) p.restaurante = g;
     // Toast quiere el día de negocio como AAAAMMDD.
     const f = (($('tpFecha') || {}).value || '').replace(/-/g, '');
     if (/^\d{8}$/.test(f)) p.businessDate = f;
@@ -184,6 +188,9 @@
     }
 
     const linea = [];
+    // Si se preguntó por otro restaurante, que se vea por cuál.
+    const otro = (($('tpRest') || {}).value || '').trim();
+    if (otro && action !== 'ping' && action !== 'restaurants') linea.push('restaurant ' + otro.slice(0, 8) + '…');
     if (res.businessDate) linea.push(fechaLegible(res.businessDate));
     if (res.ordenes != null) linea.push(res.ordenes + ' orders');
     if (res.expiraEnSegundos) linea.push('token for ' + Math.round(res.expiraEnSegundos / 60) + ' min');
@@ -228,7 +235,8 @@
     if (cajas) {
       cajas.innerHTML =
         '<label class="small muted">Date <input type="date" id="tpFecha" value="' + dia(new Date()) + '"></label>' +
-        '<label class="small muted">Category <input type="text" id="tpCategoria" placeholder="all, or liquor" class="ts-media" autocomplete="off"></label>';
+        '<label class="small muted">Category <input type="text" id="tpCategoria" placeholder="all, or liquor" class="ts-media" autocomplete="off"></label>' +
+        '<label class="small muted">Restaurant GUID <input type="text" id="tpRest" placeholder="empty: this location\'s" class="ts-media" autocomplete="off" spellcheck="false"></label>';
     }
 
     cont.innerHTML = ACCIONES.map(a =>

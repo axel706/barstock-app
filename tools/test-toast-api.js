@@ -225,6 +225,29 @@ grupo('el restaurante va en su cabecera');
   prueba('sin devolver el token', !JSON.stringify(r.body).includes(TOKEN_TOAST));
 }
 
+grupo('leer otro restaurante con su GUID (para probar Will\'s & Bill\'s)');
+{
+  // El login no tiene "Restaurants: read" (Toast contestó 10010), pero las
+  // ventas van con su propio permiso: con el GUID de W&B se prueba si la
+  // credencial lo abre. Sólo para leer; sync, que escribe, no lo acepta.
+  entorno();
+  const WB = '11111111-2222-3333-4444-555555555555';
+  respuestas = { '/authentication/': LOGIN_OK, '/orders/v2/ordersBulk': { status: 200, body: [] },
+    '/config/v2/salesCategories': { status: 200, body: [] } };
+  await llamar({ accion: 'sales', params: { restaurante: WB, businessDate: '20261110' } });
+  const pide = peticiones.filter(p => /ordersBulk|salesCategories/.test(p.url));
+  prueba('sales con otro GUID: pregunta por ESE restaurante', pide.length > 0 && pide.every(p => p.cabeceras['Toast-Restaurant-External-ID'] === WB),
+    pide.map(p => p.cabeceras['Toast-Restaurant-External-ID']).join(','));
+  await llamar({ accion: 'sales', params: { businessDate: '20261110' } });
+  const pide2 = peticiones.filter(p => /ordersBulk/.test(p.url));
+  prueba('sin él, el de Vercel, como siempre', pide2.length > 0 && pide2.every(p => p.cabeceras['Toast-Restaurant-External-ID'] === GUID));
+  let r = await llamar({ accion: 'sales', params: { restaurante: 'no-es-un-guid' } });
+  prueba('un GUID mal escrito: lo dice y no llama a Toast', r.body.ok === false && /GUID/.test(r.body.error) && !peticiones.some(p => /ordersBulk/.test(p.url)), JSON.stringify(r.body));
+  r = await llamar({ accion: 'sync', params: { restaurante: WB, locationId: '7a6b5c4d-0000-4000-8000-000000000001', businessDate: '20261110' } });
+  prueba('sync no lo acepta: escribe sólo para el restaurante de su locación', r.body.ok === false && /sync/i.test(r.body.error) &&
+    !peticiones.some(p => p.url.startsWith('https://sb.test') && p.metodo !== 'GET'), JSON.stringify(r.body));
+}
+
 grupo('qué restaurantes abre este login (para traer Will\'s & Bill\'s)');
 {
   // Axel, 2026-11-12: "traer Toast a Will's & Bill's". Antes de mudar el

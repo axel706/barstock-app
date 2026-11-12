@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261112-132717",
+    "items": [
+      "Toast developer tools: ask another restaurant by GUID"
+    ]
+  },
+  {
     "build": "20261112-130845",
     "items": [
       "Toast developer tools: see which restaurants it can read"
@@ -184,14 +190,6 @@
       "Running out first uses Toast: the day each bottle runs out",
       "On the shelf counts what sold and arrived, with the Live tag",
       "Tap On the shelf to see the math"
-    ]
-  },
-  {
-    "build": "20261111-180347",
-    "items": [
-      "Live shows on the product sheet and in Do we have",
-      "Live tag in the corner, Out day under the number",
-      "Where it is shows what arrived since the count"
     ]
   }
 ]

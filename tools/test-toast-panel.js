@@ -110,17 +110,28 @@ grupo('sólo se dibuja al abrirlo, y sólo lee');
   prueba('abierto: Ping, Sales y Drinks', !!boton(w, 'ping') && !!boton(w, 'sales') && !!boton(w, 'drinks'));
   // Para traer Will's & Bill's (2026-11-12): qué restaurantes abre el login.
   prueba('y Restaurants', !!boton(w, 'restaurants'));
+  // Un GUID opcional para preguntar por otro restaurante (W&B).
+  const rg = w.document.getElementById('tpRest');
+  prueba('un campo para el GUID de otro restaurante, vacío', !!rg && rg.value === '');
   prueba('sin botón para sync, que es la que escribe', !boton(w, 'sync') && !/sync/i.test((w.document.getElementById('tpBotones') || {}).innerHTML || ''));
   const f = w.document.getElementById('tpFecha');
   const hoy = new Date(), p = n => String(n).padStart(2, '0');
   prueba('la fecha arranca en hoy', !!f && f.value === hoy.getFullYear() + '-' + p(hoy.getMonth() + 1) + '-' + p(hoy.getDate()), f && f.value);
 
   for (const a of ['ping', 'sales', 'drinks']) await pulsar(w, a);
+  prueba('sin GUID, no se manda ninguno', w.__llamadas.every(l => !('restaurante' in ((l.cuerpo || {}).params || {}))));
   prueba('todo va a la función de integraciones, por Toast', w.__llamadas.length === 3 &&
     w.__llamadas.every(l => /\/api\/integrations\?provider=toast$/.test(l.url) && l.auth === 'Bearer tok-sesion'),
     JSON.stringify(w.__llamadas.map(l => l.url)));
   prueba('y ninguna acción es sync', w.__llamadas.every(l => ['ping', 'sales', 'drinks'].includes(l.cuerpo.action)),
     w.__llamadas.map(l => l.cuerpo.action).join(','));
+  w.document.getElementById('tpRest').value = ' 11111111-2222-3333-4444-555555555555 ';
+  const antes = w.__llamadas.length;
+  await pulsar(w, 'sales'); await pulsar(w, 'ping');
+  const [ls, lp] = w.__llamadas.slice(antes);
+  prueba('con GUID, Sales lo manda (sin espacios)', ls && ls.cuerpo.params.restaurante === '11111111-2222-3333-4444-555555555555', JSON.stringify(ls && ls.cuerpo));
+  prueba('Ping no: sólo prueba el login', lp && !('restaurante' in (lp.cuerpo.params || {})));
+  w.__llamadas.splice(antes);
   // Aunque alguien llame a mano con otra acción: no sale de la lista.
   let pasada = false;
   try { await w.BarStockToastPanel.correr('sync'); } catch (e) {}
