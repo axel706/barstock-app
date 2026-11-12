@@ -507,6 +507,25 @@ que miente.
    3oz, UP/RX).
 6. El correo de la mañana. Resend ya está; la tarea diaria tiene que
    caber en una función de `api/` que ya exista (están las 12).
+   **Diseño acordado (Axel, 2026-11-12, sobre lámina; sin construir):**
+   el molde de `lib/email-shell.js` (el del correo de órdenes), con el
+   orden de la opción A y una o dos frases en palabras encima de cada
+   bloque: ni lista seca ni carta. Las frases salen de plantillas que
+   eligen los números, no de una IA: nunca dicen nada que los datos no
+   digan. Secciones: el saludo con una línea del día; *Yesterday* (Net
+   de Toast en dinero —total, licor con cócteles, vino— y luego en
+   botellas, cada uno contra lo de siempre de ese día de la semana, y lo
+   más vendido); *Needs attention today* (lo que se acaba hoy) y *Later
+   this week* (lo que se acaba antes del domingo). "What stood out" se
+   quitó: le sobraba. Un día sin nada urgente, la sección no sale.
+   **Cuánto pedir:** cada producto que se acaba lleva su "Order N":
+   lo que se suele vender cada día desde hoy **hasta el domingo,
+   incluidas todas sus ventas**, menos lo que queda y lo que ya viene,
+   redondeado hacia arriba. Se acaba el miércoles → pide más; el sábado
+   → pide menos. **No hasta la siguiente entrega del proveedor:** a
+   mitad de semana ningún proveedor vuelve a entregar, así que lo que
+   falta se busca igual o parecido en LOOP, que se recoge al momento
+   (Axel). Falta decidir a quién va y a qué hora.
 
 **Visto de paso, sin tocar:** el pie de la lista de facturas del
 teléfono (`src/mobile-invoices.js`) dice que el stock sale del
