@@ -65,12 +65,22 @@ global.fetch = async (url, op) => {
   if (url.includes('/salesCategories')) return r(200, [{ guid: 'cat-l', name: 'Liquor' }]);
   if (url.includes('/menus/v2/menus')) return r(200, { menus: [] });
   if (url.includes('/ordersBulk')) {
-    if (estado.toast500) return r(500, { status: 500, message: 'Unexpected error' });
+    const g = op && op.headers && op.headers['Toast-Restaurant-External-ID'];
+    peticiones[peticiones.length - 1].restaurante = g;
+    if (estado.toast500 && (estado.toast500 === true || estado.toast500 === g)) return r(500, { status: 500, message: 'Unexpected error' });
     return r(200, [{ checks: [{ selections: [{ item: { guid: 'it-1' }, displayName: 'Titos', quantity: 2, salesCategory: { guid: 'cat-l' } }] }] }]);
   }
-  if (url.includes('sb.test/rest/v1/locations?toast_restaurant_guid')) return r(200, estado.locs || [{ id: LOC }]);
-  if (url.includes('sb.test/rest/v1/locations?id=')) return r(200, [{ toast_restaurant_guid: GUID }]);
-  if (url.includes('sb.test/rest/v1/toast_sales_days') && metodo === 'GET') return r(200, estado.dias || []);
+  // Las locaciones enlazadas a un restaurante de Toast, cada una con el suyo.
+  const locs = estado.locs || [{ id: LOC, name: 'The Crown Tavern', toast_restaurant_guid: GUID }];
+  if (url.includes('sb.test/rest/v1/locations?toast_restaurant_guid')) return r(200, locs);
+  if (url.includes('sb.test/rest/v1/locations?id=')) {
+    const id = (/id=eq\.([^&]+)/.exec(url) || [])[1];
+    return r(200, locs.filter(l => l.id === id).map(l => ({ toast_restaurant_guid: l.toast_restaurant_guid })));
+  }
+  if (url.includes('sb.test/rest/v1/toast_sales_days') && metodo === 'GET') {
+    const id = (/location_id=eq\.([^&]+)/.exec(url) || [])[1];
+    return r(200, (estado.diasPor && estado.diasPor[id]) || estado.dias || []);
+  }
   if (url.includes('sb.test/rest/v1/')) return r(201, {});
   return r(404, {});
 };
@@ -111,7 +121,8 @@ grupo('qué día carga');
 {
   entorno(); estado = {};
   let r = await llamar();
-  prueba('nada cargado: carga ayer', r.code === 200 && r.body.cargado === dia(1) && syncs().join() === comp(dia(1)), JSON.stringify(r.body).slice(0, 200));
+  const c0 = (r) => ((r.body && r.body.cargas) || [])[0] || {};
+  prueba('nada cargado: carga ayer', r.code === 200 && c0(r).cargado === dia(1) && syncs().join() === comp(dia(1)), JSON.stringify(r.body).slice(0, 200));
   prueba('un solo día por llamada', new Set(syncs()).size === 1);
   prueba('con la acción sync de siempre: marca, borra, escribe y marca', escrituras().map(p => p.metodo).join(',') === 'POST,DELETE,POST,POST', escrituras().map(p => p.metodo).join(','));
   prueba('en la locación del restaurante', escrituras().some(p => p.url.includes('location_id=eq.' + LOC)));
@@ -119,15 +130,15 @@ grupo('qué día carga');
   estado = { dias: [{ business_date: dia(1), complete: true, closed: true }, { business_date: dia(2), complete: true, closed: true },
     { business_date: dia(3), complete: false, closed: true }] };
   r = await llamar();
-  prueba('ayer ya está: recupera el más reciente que falte', r.body.cargado === dia(3) && syncs().join() === comp(dia(3)), r.body.cargado);
+  prueba('ayer ya está: recupera el más reciente que falte', c0(r).cargado === dia(3) && syncs().join() === comp(dia(3)), c0(r).cargado);
 
   estado = { dias: [1, 2, 3, 4, 5, 6, 7].map(n => ({ business_date: dia(n), complete: true, closed: true })) };
   r = await llamar();
-  prueba('la semana entera cargada: no pide nada a Toast', r.code === 200 && r.body.cargado === null && !syncs().length);
+  prueba('la semana entera cargada: no pide nada a Toast', r.code === 200 && c0(r).cargado === null && !syncs().length);
 
   estado = { dias: [{ business_date: dia(1), complete: true, closed: false }] };
   r = await llamar();
-  prueba('un día cargado a medio día (abierto) se vuelve a cargar', r.body.cargado === dia(1));
+  prueba('un día cargado a medio día (abierto) se vuelve a cargar', c0(r).cargado === dia(1));
   prueba('hoy nunca', !syncs().includes(comp(dia(0))));
 }
 
@@ -135,14 +146,36 @@ grupo('cuando algo falla');
 {
   entorno(); estado = { toast500: true };
   let r = await llamar();
-  prueba('Toast 500: sale como fallo, con lo que dijo', r.code === 502 && r.body.ok === false && r.body.resultado.status === 500, JSON.stringify(r.body).slice(0, 200));
+  const c = ((r.body && r.body.cargas) || [])[0] || {};
+  prueba('Toast 500: sale como fallo, con lo que dijo', r.code === 502 && r.body.ok === false && c.resultado && c.resultado.status === 500, JSON.stringify(r.body).slice(0, 200));
   prueba('y no escribe ventas', !escrituras().length);
   estado = { locs: [] };
   r = await llamar();
-  prueba('sin locación de este restaurante: no adivina', r.code === 500 && /found 0/.test(r.body.error) && !syncs().length);
-  estado = { locs: [{ id: LOC }, { id: 'otra' }] };
+  prueba('ninguna locación enlazada: lo dice, y nada', r.code === 500 && /linked to a Toast restaurant/.test(r.body.error) && !syncs().length, JSON.stringify(r.body));
+}
+
+grupo('cada locación con su restaurante (Will\'s & Bill\'s, 2026-11-12)');
+{
+  // Antes se buscaba LA locación del GUID de Vercel, y con dos se paraba.
+  // Ahora se carga cada locación enlazada, con su restaurante.
+  const WB = '02fb0d1b-5b41-4c7c-80eb-c9a5a06a9116', LWB = '92ad1285-3441-4e6f-938e-f94f5c55fcd7';
+  const DOS = [{ id: LOC, name: 'The Crown Tavern', toast_restaurant_guid: GUID }, { id: LWB, name: "Will's & Bill's", toast_restaurant_guid: WB }];
+  entorno(); estado = { locs: DOS, diasPor: { [LOC]: [{ business_date: dia(1), complete: true, closed: true }] } };
+  let r = await llamar();
+  const cs = (r.body && r.body.cargas) || [];
+  prueba('carga las dos', r.code === 200 && r.body.ok && cs.length === 2, JSON.stringify(r.body).slice(0, 300));
+  prueba('cada una su día: Crown recupera el 2, W&B ayer', (cs.find(x => x.location === LOC) || {}).cargado === dia(2) && (cs.find(x => x.location === LWB) || {}).cargado === dia(1),
+    JSON.stringify(cs.map(x => [x.location, x.cargado])));
+  const pedidas = peticiones.filter(p => p.url.includes('/ordersBulk'));
+  prueba('cada una con su restaurante', pedidas.some(p => p.restaurante === GUID && p.url.includes(comp(dia(2)))) && pedidas.some(p => p.restaurante === WB && p.url.includes(comp(dia(1)))),
+    JSON.stringify(pedidas.map(p => [p.restaurante, (/businessDate=(\d{8})/.exec(p.url) || [])[1]])));
+  prueba('y escribe en su locación', escrituras().some(p => p.url.includes('location_id=eq.' + LWB)) && escrituras().some(p => p.url.includes('location_id=eq.' + LOC)));
+
+  estado = { locs: DOS, toast500: WB };
   r = await llamar();
-  prueba('con dos, tampoco', r.code === 500 && /found 2/.test(r.body.error) && !syncs().length);
+  const cs2 = (r.body && r.body.cargas) || [];
+  prueba('si una falla, la otra se carga igual', (cs2.find(x => x.location === LOC) || {}).ok === true && (cs2.find(x => x.location === LWB) || {}).ok === false, JSON.stringify(cs2).slice(0, 300));
+  prueba('y la llamada sale como fallo en los registros', r.code === 502 && r.body.ok === false);
 }
 
 grupo('programada en Vercel');

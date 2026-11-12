@@ -25,10 +25,13 @@
   //
   // ── La locación ──────────────────────────────────────────────────────
   //
-  // En Vercel hay UN restaurante de Toast. Si la locación abierta no es
-  // ese restaurante (locations.toast_restaurant_guid), no se deja tocar
-  // nada: emparejar lo de Crown con el inventario de Will's sería peor que
-  // no emparejarlo.
+  // Cada locación tiene su restaurante de Toast (locations.
+  // toast_restaurant_guid), y cada llamada lo pide por su GUID (Axel,
+  // 2026-11-12, para traer Will's & Bill's). Antes se llamaba sin él, salía
+  // el de Vercel (Crown), y cualquier otra locación se rechazaba. Sin
+  // restaurante no se llama a Toast; y si contesta por otro que el pedido,
+  // no se deja tocar nada: emparejar lo de Crown con el inventario de
+  // Will's sería peor que no emparejarlo.
 
   const cfg = () => window.BARSTOCK_CONFIG || {};
   const H = () => ({ apikey: cfg().SUPABASE_KEY, Authorization: 'Bearer ' + cfg().SUPABASE_KEY });
@@ -142,6 +145,7 @@
             return _d;
           }
           const guidLoc = String(((JSON.parse(tl) || [])[0] || {}).toast_restaurant_guid || '').trim();
+          if (!guidLoc) { _d = { estado: 'sinRestaurante', restaurante: null }; return _d; }
 
           // El primer día va solo y trae el menú: de ahí salen los
           // artículos. Los otros seis piden sólo lo vendido de esos, sin
@@ -151,7 +155,7 @@
           const dias = diasAtras(DIAS, o.ahora);
           const res = new Array(dias.length);
           const contar = (r) => { _d.progreso++; avisar(); return r; };
-          res[0] = contar(await toast(ACCION, { businessDate: dias[0] }));
+          res[0] = contar(await toast(ACCION, { businessDate: dias[0], restaurante: guidLoc }));
           if (res[0] && res[0].ok) {
             const guids = (res[0].articulos || []).map(a => a.guid);
             // De dos en dos: cada día son varias páginas de órdenes, y
@@ -160,7 +164,7 @@
             async function obrero() {
               while (i < dias.length) {
                 const k = i++;
-                res[k] = contar(await toast(ACCION, { businessDate: dias[k], guids }));
+                res[k] = contar(await toast(ACCION, { businessDate: dias[k], guids, restaurante: guidLoc }));
               }
             }
             await Promise.all([obrero(), obrero()]);
@@ -172,7 +176,6 @@
             return _d;
           }
           const restaurante = res[0].restaurante;
-          if (!guidLoc) { _d = { estado: 'sinRestaurante', restaurante }; return _d; }
           if (guidLoc !== restaurante) { _d = { estado: 'otroRestaurante', restaurante, guidLoc }; return _d; }
 
           const articulos = new Map();

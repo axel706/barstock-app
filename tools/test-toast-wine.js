@@ -92,9 +92,9 @@ function entorno(o) {
       // artículos y sólo cuenta esos.
       if (Array.isArray(p.guids)) {
         for (const g of Object.keys(vendido)) if (!p.guids.includes(g)) delete vendido[g];
-        return resp(200, { ok: true, restaurante: CROWN, diaCompleto: true, articulos: [], vendido });
+        return resp(200, { ok: true, restaurante: o.respondeOtro ? CROWN : (p.restaurante || CROWN), diaCompleto: true, articulos: [], vendido });
       }
-      return resp(200, { ok: true, restaurante: CROWN, diaCompleto: true, articulos: ARTICULOS, vendido });
+      return resp(200, { ok: true, restaurante: o.respondeOtro ? CROWN : (p.restaurante || CROWN), diaCompleto: true, articulos: ARTICULOS, vendido });
     }
     if (String(url).includes('/rest/v1/toast_item_links')) {
       if ((op.method || 'GET') === 'GET') return resp(200, o.enlaces || []);
@@ -140,9 +140,28 @@ grupo('3 · la locacion');
   prueba('sin restaurante de Toast: no se carga nada que tocar', d.estado === 'sinRestaurante' && !d.filas, d.estado);
 }
 {
-  const w = entorno({ guidLoc: 'otro-restaurante' });
+  // Toast por locación (Axel, 2026-11-12, para Will's & Bill's): cada
+  // llamada lleva el GUID de la locación abierta, y el servidor pregunta
+  // por ESE restaurante. Antes se llamaba sin él (salía el de Vercel, Crown)
+  // y cualquier otra locación se rechazaba.
+  const WB = '02fb0d1b-5b41-4c7c-80eb-c9a5a06a9116';
+  const w = entorno({ guidLoc: WB });
   const d = await w.BarStockToastWine.cargar();
-  prueba('con otro restaurante: tampoco', d.estado === 'otroRestaurante' && !d.filas, d.estado);
+  const ll = w.__peticiones.filter(p => p.url.includes('/api/integrations'));
+  prueba('otra locación con su restaurante: se carga', d.estado === 'listo', d.estado);
+  prueba('y cada llamada pide SU restaurante', ll.length > 0 && ll.every(p => p.cuerpo.params.restaurante === WB), ll.map(p => p.cuerpo.params.restaurante).join(','));
+}
+{
+  const w = entorno({ guidLoc: '' });
+  await w.BarStockToastWine.cargar();
+  prueba('sin restaurante: ni llama a Toast', !w.__peticiones.some(p => p.url.includes('/api/integrations')));
+}
+{
+  // Si Toast contesta por otro restaurante que el pedido, no se empareja:
+  // lo de Crown con el inventario de Will's sería peor que nada.
+  const w = entorno({ guidLoc: '02fb0d1b-5b41-4c7c-80eb-c9a5a06a9116', respondeOtro: true });
+  const d = await w.BarStockToastWine.cargar();
+  prueba('si contesta otro restaurante: no', d.estado === 'otroRestaurante' && !d.filas, d.estado);
   let r = 'no';
   try { r = await w.BarStockToastWine.confirmar('w-sb', 'Whitehaven Sauvignon Blanc'); } catch (e) { r = 'error'; }
   prueba('y confirmar no escribe nada', r === false && !w.__peticiones.some(p => p.metodo === 'POST' && p.url.includes('toast_item_links')), r);

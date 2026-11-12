@@ -408,7 +408,15 @@ de Axel). Una medida desconocida no se guarda: vacío sería "botella
 entera". Los cócteles y lo de Happy Hour van por receta (pendiente). Cada vino de Toast
 apunta a un producto en `toast_item_links` (migración 027, corrida).
 Crown tiene su `toast_restaurant_guid`; las demás locaciones no. Axel ya
-emparejó todos los vinos de Crown. Copa = 6 oz siempre; se venden
+emparejó todos los vinos de Crown. **Desde el 2026-11-12, Toast va por
+locación:** cada una con su `locations.toast_restaurant_guid` (Will's &
+Bill's: `02fb0d1b-5b41-4c7c-80eb-c9a5a06a9116`, la misma credencial lo
+abre aunque no tenga "Restaurants: read"). `toast-links.js` manda el de
+la locación abierta en cada llamada, `sync` carga el de su locación (con
+el menú guardado por restaurante), y la carga diaria recorre todas las
+locaciones enlazadas. `TOAST_RESTAURANT_GUID` de Vercel sigue siendo el
+de por defecto (Crown) para el panel y el correo de la mañana, que de
+momento sólo sale para Crown. Copa = 6 oz siempre; se venden
 botellas. La lista de opciones es el inventario entero: casi nada tiene
 categoría.
 

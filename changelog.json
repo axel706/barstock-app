@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261112-134307",
+    "items": [
+      "Toast works per location: Will's & Bill's too"
+    ]
+  },
+  {
     "build": "20261112-132717",
     "items": [
       "Toast developer tools: ask another restaurant by GUID"
@@ -182,14 +188,6 @@
     "items": [
       "See them on Home opens only the bottles running out",
       "Tap the pill above the list to see everything"
-    ]
-  },
-  {
-    "build": "20261111-182735",
-    "items": [
-      "Running out first uses Toast: the day each bottle runs out",
-      "On the shelf counts what sold and arrived, with the Live tag",
-      "Tap On the shelf to see the math"
     ]
   }
 ]

@@ -630,10 +630,24 @@ grupo('sync: guarda lo vendido de bebida de un dia');
   prueba('la segunda carga seguida no vuelve a pedir el menu', !peticiones.some(p => p.url.includes('/menus/')),
     peticiones.filter(p => p.url.includes('/menus/')).length);
 
+  // Toast por locación (2026-11-12): una locación con SU restaurante se
+  // carga con ESE restaurante, no con el de Vercel. Antes se rechazaba
+  // toda locación que no fuera Crown.
+  const WBG = '02fb0d1b-5b41-4c7c-80eb-c9a5a06a9116';
+  respuestas = rutas({ guidLoc: WBG });
+  const rw = await llamar({ accion: 'sync', params: { businessDate: '20261105', locationId: LOC } });
+  const aToast = peticiones.filter(p => /ordersBulk|salesCategories|menus/.test(p.url));
+  prueba('otra locación con su restaurante: se carga', rw.body.ok === true, JSON.stringify(rw.body).slice(0, 200));
+  prueba('preguntando por SU restaurante', aToast.length > 0 && aToast.every(p => p.cabeceras['Toast-Restaurant-External-ID'] === WBG),
+    aToast.map(p => p.cabeceras['Toast-Restaurant-External-ID']).join(','));
+  // El menú y las categorías se guardan un rato para no pedirlos en cada
+  // día; pero por restaurante: con uno solo, W&B usaría el menú de Crown.
+  prueba('con el menú de SU restaurante, no el guardado de Crown', aToast.some(p => /menus/.test(p.url)));
+
   // Lo que no tiene que escribir nada.
   respuestas = rutas({ guidLoc: 'otro-restaurante' });
   const r2 = await llamar({ accion: 'sync', params: { businessDate: '20261105', locationId: LOC } });
-  prueba('otra locacion: no escribe nada', r2.body.ok === false && r2.body.paso === 'location' && !aLaBase().some(p => p.metodo !== 'GET'), JSON.stringify(r2.body));
+  prueba('un GUID guardado mal escrito: no escribe nada', r2.body.ok === false && r2.body.paso === 'location' && !aLaBase().some(p => p.metodo !== 'GET'), JSON.stringify(r2.body));
   prueba('y no llega a pedir las ordenes', !peticiones.some(p => p.url.includes('ordersBulk')));
   respuestas = rutas({ guidLoc: null });
   const r2b = await llamar({ accion: 'sync', params: { businessDate: '20261105', locationId: LOC } });
