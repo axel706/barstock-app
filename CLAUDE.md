@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 133 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 134 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -222,8 +222,15 @@ el título de la pantalla sustituye al logo en el header con un fundido
 ligado al scroll, no disparado: primero se va el logo, después entra
 el título. Axel lo pidió así: "que la animación sea suave". Orders
 usa la misma forma: se quedan las pestañas (Open / Sent / Invoices);
-"Quick order" sube con la lista, y dentro de un detalle se engancha
-sin `nombre`, que deja el logo en el header. En Sent, la fila del
+"Quick order" sube con la lista. Inventory y Orders entran ya
+acopladas (`siempre`): el bloque empieza justo donde se pega, sin
+recorrido. Dentro de un detalle de Sent o de Invoices (2026-11-12), el
+nombre del proveedor va a la banda con `enBanda` (el botón de Time
+Machine pasa a ser atrás, como Settings) y la sección pega su bloque
+con `BarStockBandDock.fijar(el)`: Resend / Reopen, o los tres totales
+de la factura. Lo marca con `.m-det-fijo` porque su aviso rehace el
+marco de Orders, y el marco lo vuelve a pegar; sin la marca, el aviso
+deshacía lo pegado. El detalle de Open sigue con el logo. En Sent, la fila del
 buscador y los filtros también se queda, debajo de las pestañas: la
 pinta la sección, así que se pasa con `tambien` (una función). **Lo que se pega tiene
 que colgar directamente de la lista**: un sticky sólo dura lo que su
@@ -309,7 +316,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 133 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 134 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

@@ -379,10 +379,11 @@
     // Inventory y Orders: el bloque pegado y el título al header.
     if (a.pegado) {
       soltar(null);
-      if (!a.nombre) {
+      if (!a.nombre && !a.siempre) {
         // Sin nombre: la pantalla está en un nivel sin título ni bloque
-        // que pegar (Orders dentro de un detalle). Conserva la lista con
-        // su scroll, y el header se queda con el logo, sin desenfoque.
+        // que pegar (Orders dentro de un detalle, mientras la sección no
+        // pide pegar nada con fijar()). Conserva la lista con su scroll,
+        // y el header se queda con el logo, sin desenfoque.
         if (a.titulo) est(a.titulo, 'opacity', null);
         if (a.velo) est(a.velo, '--m-dock-o', '0');
         est(a.pegado, '--m-dock-mas', '0px');
@@ -430,7 +431,7 @@
     if (!a) return;
 
     if (a.pegado) {
-      if (!a.nombre) return;
+      if (!a.nombre && !a.siempre) return;
       // p: cuánto falta para que el bloque se pegue (0 en reposo, 1
       // pegado). Los tres fundidos salen de p, escalonados para que no
       // se pisen: el título grande se va primero, el del header entra
@@ -449,7 +450,9 @@
       // desenfocar la lista para desenfocar el contenedor vacío. La CSS
       // se la pone a cada capa.
       if (a.velo) est(a.velo, '--m-dock-o', dos(suave(entre((p - 0.6) / 0.4))));
-      tituloBanda(a.nombre, suave(entre((p - 0.25) / 0.75)));
+      // Un bloque pegado desde fijar() no trae nombre: el del header lo
+      // pone el armazón (enBanda), y éste no tiene que ponerle otro.
+      tituloBanda(a.nombre || null, suave(entre((p - 0.25) / 0.75)));
       return;
     }
 
@@ -568,6 +571,26 @@
     actualizar();
   }
 
+  // ── Un bloque de un detalle, pegado bajo el header ───────────────
+  //
+  // Orders › Sent e Invoices, dentro de una orden o de una factura (Axel,
+  // 2026-11-12): el nombre va a la banda con el armazón (enBanda) y lo
+  // que tiene que quedarse —Resend / Reopen, o los tres totales— se pega
+  // bajo el header desde que entras, con el mismo desenfoque que las
+  // pestañas. Lo pide la sección cada vez que pinta, porque su bloque es
+  // nuevo en cada pintado.
+  //
+  // La pantalla y la lista salen del propio bloque: la sección sólo
+  // conoce su cuerpo, y la lista con scroll es de Orders (la enganchó
+  // Orders antes, y por eso ya lleva .m-dock-scroll). Sin ella no hay
+  // nada que pegar: fuera de Orders, el bloque se queda donde está.
+  function fijar(el) {
+    const pantalla = el && el.closest && el.closest('.m-screen');
+    const scroll = el && el.closest && el.closest('.m-dock-scroll');
+    if (!pantalla || !scroll) return;
+    enganchar({ pantalla, scroll, pegado: el, siempre: true });
+  }
+
   // ── Al cambiar de pantalla ───────────────────────────────────────
   //
   // Las pantallas se cambian con la clase `on` (mobile-shell.js), y no
@@ -591,5 +614,5 @@
   // scroll que viene ya la tiene bien.
   document.addEventListener('touchstart', pedirMedir, { passive: true });
 
-  window.BarStockBandDock = { enganchar, actualizar, medir: actualizar, HUECO, RAMPA, BAJO };
+  window.BarStockBandDock = { enganchar, fijar, actualizar, medir: actualizar, HUECO, RAMPA, BAJO };
 })();

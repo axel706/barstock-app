@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261111-230108",
+    "items": [
+      "Sent and Invoices details: name in the header",
+      "Resend, Reopen and invoice totals stay on top"
+    ]
+  },
+  {
     "build": "20261111-223533",
     "items": [
       "Inventory and Orders tabs no longer shift when you scroll"
@@ -182,12 +189,6 @@
   },
   {
     "build": "20261111-163527",
-    "items": [
-      "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261111-163203",
     "items": [
       "Behind-the-scenes fixes"
     ]

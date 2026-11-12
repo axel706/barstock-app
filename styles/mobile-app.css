@@ -859,6 +859,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-dock-scroll.m-dock-con-titulo.m-dock-siempre::before {
     height: var(--m-dock-top, calc(60px + env(safe-area-inset-top, 0px)));
   }
+  /* Y lo pegado empieza en ese punto: un margen arriba lo bajaría en
+   * reposo y lo haría subir al primer scroll. Las pestañas no tienen;
+   * Resend / Reopen y los totales de una factura traen 14 px. */
+  .m-dock-siempre .m-dock-pegado { margin-top: 0; }
   .m-dock-marca { display: block; height: 0; }
   body.m-shell .m-dock-pegado {
     position: sticky; z-index: 2;
@@ -910,10 +914,15 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * está mientras dure la sección. El botón de la izquierda pasa de
    * Time Machine a "atrás"; los dos viven en .m-band-izq y se enseña uno.
    * Con el prefijo de id: el `display` de .m-ico (body.m-shell .m-ico)
-   * le ganaría a una clase sola. */
+   * le ganaría a una clase sola.
+   *
+   * Bloque con su alto de línea, no flex centrado: con flex, un nombre
+   * de proveedor largo ("SOUTHERN GLAZER'S WINE & SPIRITS", desde que
+   * los detalles de Orders llevan aquí su nombre) se cortaba por los
+   * dos lados y sin "…": text-overflow no corta el texto de una flex. */
   .m-band-seccion {
     position: absolute; left: 66px; right: 66px; bottom: 0; height: 52px; z-index: 2;
-    display: flex; align-items: center; justify-content: center;
+    display: block; line-height: 52px; text-align: center;
     pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     font-size: var(--m-head); font-weight: 800; color: #fff; letter-spacing: -.5px;
     text-shadow: 0 1px 12px rgba(0,0,0,.55);

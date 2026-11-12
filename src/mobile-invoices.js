@@ -828,13 +828,26 @@
   // título, en la misma fila. Esta pantalla se había quedado con el
   // patrón viejo porque usaba su propia clase, `m-iback`, y no salió
   // en el barrido de `m-back`.
-  const cab = (o) => (window.BarStockMobile && window.BarStockMobile.cabecera)
-    ? window.BarStockMobile.cabecera(o)
-    : '<div class="m-inv-t">' + esc(o.titulo || '') + '</div>';
-  const volverCon = (host, fn) => {
-    if (window.BarStockMobile && window.BarStockMobile.alVolver) {
-      window.BarStockMobile.alVolver(host, fn);
+  //
+  // Desde 2026-11-12 (Axel: "la misma historia para Sent e Invoices"),
+  // con el armazón el título va a la banda en el sitio del logo y el
+  // botón de la izquierda es atrás, como Settings: la página sólo pinta
+  // su subtítulo. Vale para todo lo que se abre desde Invoices —una
+  // factura, "Not beverages", los ciclos anteriores—, que un nivel con
+  // el nombre en la banda y el de al lado con chevron en la página
+  // sería otra vez dos maneras de volver.
+  const cab = (o) => {
+    const M = window.BarStockMobile;
+    if (M && M.enBanda && M.enBanda(o.titulo || '')) {
+      return o.sub ? '<div class="m-hsub m-set-intro">' + esc(o.sub) + '</div>' : '';
     }
+    return (M && M.cabecera) ? M.cabecera(o) : '<div class="m-inv-t">' + esc(o.titulo || '') + '</div>';
+  };
+  const volverCon = (host, fn) => {
+    const M = window.BarStockMobile;
+    if (!M) return;
+    if (M.alVolver && M.alVolver(host, fn)) return;
+    if (M.alVolverBanda) M.alVolverBanda(fn);
   };
 
   // La raíz de esta pantalla NO tenía vuelta, y se entra a ella igual
@@ -904,22 +917,28 @@
   }
 
   function pintarDetalle(host, f) {
-    let html =
-      cab({
-        volverA: 'Invoices',
-        titulo: f.vendor || 'Unknown vendor',
-        sub: (f.numero ? 'invoice ' + f.numero + ' \u00b7 ' : '') +
-             dia(f.fecha).txt +
-             (f.status ? ' \u00b7 ' + String(f.status).toLowerCase() : '')
-      }) +
-      // Los tres totales existen para una sola cosa: cuadrar contra el
-      // papel que tienes en la mano.
-      '<div class="m-itot">' +
+    const M = window.BarStockMobile;
+    const titulo = f.vendor || 'Unknown vendor';
+    const sub = (f.numero ? 'invoice ' + f.numero + ' \u00b7 ' : '') +
+                dia(f.fecha).txt +
+                (f.status ? ' \u00b7 ' + String(f.status).toLowerCase() : '');
+    // Los tres totales existen para una sola cosa: cuadrar contra el
+    // papel que tienes en la mano. Por eso, con el proveedor en la
+    // banda, son lo primero y se quedan pegados bajo el header mientras
+    // bajas por las líneas (Axel, 2026-11-12, eligió esa de dos); la
+    // línea de la factura va debajo y se va con la lista.
+    const totales = (fijo) =>
+      '<div class="m-itot' + (fijo ? ' m-det-fijo' : '') + '">' +
         '<div><b>' + dinero(f.total) + '</b><span>total</span></div>' +
         '<div><b>' + f.lineas.length + '</b><span>' +
           (f.lineas.length === 1 ? 'line' : 'lines') + '</span></div>' +
         '<div><b>' + n1(f.unidades) + '</b><span>units</span></div>' +
-      '</div>' +
+      '</div>';
+    const enBanda = !!(M && M.enBanda && M.enBanda(titulo));
+    let html =
+      (enBanda
+        ? totales(true) + '<div class="m-hsub">' + esc(sub) + '</div>'
+        : cab({ volverA: 'Invoices', titulo, sub }) + totales(false)) +
       bloqueOrden(f);
 
     f.lineas.forEach((l, k) => {
@@ -1050,6 +1069,10 @@
 
   function enganchar(host, f) {
     volverCon(host, () => { _abierta = null; pintar(host); cambioDeNivel(); });
+    // En cada pintado: elegir una orden o cambiar una botella repinta
+    // aquí sin pasar por el marco de Orders, y el bloque es otro.
+    const fijo = host.querySelector(':scope > .m-det-fijo');
+    if (fijo && window.BarStockBandDock && window.BarStockBandDock.fijar) window.BarStockBandDock.fijar(fijo);
 
     const tras = (k, item) => {
       // Se refleja en memoria y se repinta: volver a leer la base

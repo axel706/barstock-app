@@ -995,7 +995,26 @@
           return p && p.classList.contains('m-inv-bar2') ? p : null;
         } });
     };
-    if (enDetalle()) { peg.innerHTML = ''; tras.innerHTML = ''; acoplar(''); return cuerpo; }
+    // ── Dentro de un detalle de Sent o de Invoices ─────────────────
+    //
+    // La sección pinta el detalle —su nombre a la banda con enBanda, su
+    // bloque pegado con BarStockBandDock.fijar()— y DESPUÉS avisa, y el
+    // aviso llega aquí. Así que aquí no se suelta la banda, y tras
+    // enganchar la lista sin nada se vuelve a pegar el bloque que la
+    // sección marcó con .m-det-fijo. Sin esto, el aviso deshacía las dos
+    // cosas en el mismo instante (lo cazó test-detalle-banda con Orders
+    // y Sent de verdad; con secciones de mentira no se ve).
+    if (enDetalle()) {
+      peg.innerHTML = ''; tras.innerHTML = ''; acoplar('');
+      const fijo = cuerpo.querySelector(':scope > .m-det-fijo');
+      const D = window.BarStockBandDock;
+      if (fijo && D && D.fijar) D.fijar(fijo);
+      return cuerpo;
+    }
+    // En la lista, la banda suelta el nombre del detalle: si no, "LOOP"
+    // se quedaría sobre las pestañas.
+    const M = window.BarStockMobile;
+    if (M && M.salirBanda) M.salirBanda();
 
     const vs = proveedores();
     const nPend = vs.length;

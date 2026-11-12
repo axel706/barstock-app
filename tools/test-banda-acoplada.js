@@ -463,6 +463,20 @@ if (SRC) {
     // `siempre`: el hueco vuelve a ser el de siempre.
     w.BarStockBandDock.enganchar({ pantalla: inv, scroll: sc, pegado: blo, nombre: '' });
     prueba('sin `siempre`, la lista vuelve al hueco normal', !sc.classList.contains('m-dock-siempre'));
+
+    // Un detalle de Sent / Invoices (2026-11-12): la sección pega su
+    // bloque con fijar(), sin nombre. El nombre lo pone el armazón en la
+    // banda (enBanda); band-dock no tiene que poner otro encima, pero sí
+    // pegar el bloque con su desenfoque desde el principio.
+    const det = w.document.createElement('div');
+    det.className = 'm-det-fijo';
+    w.document.getElementById('miList').appendChild(det);
+    w.BarStockBandDock.fijar(det);
+    w.BarStockBandDock.medir();
+    prueba('fijar(): el bloque del detalle se pega', det.classList.contains('m-dock-pegado') && sc.classList.contains('m-dock-siempre'));
+    prueba('con su desenfoque puesto desde que entras', (det.querySelector('.m-dock-velo') || { style: { getPropertyValue: () => '' } }).style.getPropertyValue('--m-dock-o') === '1');
+    prueba('y sin título de band-dock en el header', !band.classList.contains('m-con-titulo'));
+    sc.scrollTop = 0; sc.dispatchEvent(new w.Event('scroll'));
   })();
 
   grupo('lo que vio Axel en el iPhone (2026-11-09)');

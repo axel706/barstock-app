@@ -443,10 +443,14 @@
   const cab = (o) => (window.BarStockMobile && window.BarStockMobile.cabecera)
     ? window.BarStockMobile.cabecera(o)
     : '<div class="m-inv-t">' + esc(o.titulo || '') + '</div>';
+  // Con el nombre en la banda, la página no tiene chevron: el atrás es
+  // el botón de la banda (como Settings).
   const volverCon = (host, fn) => {
-    if (window.BarStockMobile && window.BarStockMobile.alVolver) {
-      return window.BarStockMobile.alVolver(host, fn);
-    }
+    const M = window.BarStockMobile;
+    if (!M) return false;
+    if (M.alVolver && M.alVolver(host, fn)) return true;
+    if (M.alVolverBanda) { M.alVolverBanda(fn); return true; }
+    return false;
   };
 
   function pintarDetalle(host) {
@@ -508,15 +512,26 @@
         '</span></div>';
     }).join('');
 
+    // ── El nombre en el header, los dos botones pegados ──────────
+    //
+    // Axel, 2026-11-12, sobre su captura ("la misma historia para Sent
+    // e Invoices"): el proveedor ocupa el sitio del logo y el botón de
+    // la izquierda pasa a ser atrás, como Settings. Resend / Reopen son
+    // lo primero y se quedan pegados bajo el header desde que entras; la
+    // línea del PO va debajo y se va con la lista (eligió esa de tres).
+    //
+    // Una orden vieja no tiene botones, sólo una nota: ésa no se pega.
+    // Sin banda (fuera del armazón) queda la cabecera de antes.
+    const M = window.BarStockMobile;
+    const sub = (o.po ? 'PO ' + o.po + ' · ' : '') + 'sent ' + dia(o.fecha) +
+                (o.factura ? ' · invoice ' + o.factura : '');
+    const enBanda = !!(M && M.enBanda && M.enBanda(o.vendor));
+    const conBotones = !!laDelEscritorio(o.appId);
     host.innerHTML =
-      cab({
-        volverA: 'Order history',
-        titulo: o.vendor,
-        sub: (o.po ? 'PO ' + o.po + ' · ' : '') + 'sent ' + dia(o.fecha) +
-             (o.factura ? ' · invoice ' + o.factura : '')
-      }) +
-
-      acciones(o) +
+      (enBanda
+        ? acciones(o, conBotones) +
+          '<div class="m-hsub">' + esc(sub) + '</div>'
+        : cab({ volverA: 'Order history', titulo: o.vendor, sub }) + acciones(o)) +
 
       '<div class="m-hlist">' + lineas + '</div>' +
 
@@ -569,6 +584,10 @@
 
     volverCon(host, () => { _orden = null; pintar(host); cambioDeNivel(); });
     engancharAcciones(host, o);
+    // En cada pintado: confirmar Reopen repinta aquí sin pasar por el
+    // marco de Orders, y el bloque es otro elemento.
+    const fijo = host.querySelector(':scope > .m-det-fijo');
+    if (fijo && window.BarStockBandDock && window.BarStockBandDock.fijar) window.BarStockBandDock.fijar(fijo);
 
     const bp = host.querySelector('#mhPrec');
     if (bp) bp.onclick = async () => {
@@ -666,7 +685,13 @@
     return h.find(x => String(x.id) === String(id)) || null;
   }
 
-  function acciones(o) {
+  // `fijo`: el bloque va pegado bajo el header (el detalle con su nombre
+  // en la banda). La marca va en el MISMO bloque, no en una caja
+  // alrededor: con caja, su margen de arriba la atravesaba y en reposo
+  // los botones iban 14 px más abajo de donde se pegan (medido en
+  // Chromium, 121 → 107 al primer scroll).
+  function acciones(o, fijo) {
+    const f = fijo ? 'm-det-fijo ' : '';
     if (!laDelEscritorio(o.appId)) {
       // Órdenes viejas que ya no están cargadas. Decirlo es mejor que
       // dos botones que fallarían al pulsarlos.
@@ -674,18 +699,18 @@
              'loaded. Resend it from a computer.</div>';
     }
     if (_trabajando) {
-      return '<div class="m-hacc"><div class="m-hacc-busy">' +
+      return '<div class="' + f + 'm-hacc"><div class="m-hacc-busy">' +
         (_trabajando === 'enviar' ? 'Building the PDF and sending…' : 'Reopening…') +
         '</div></div>';
     }
     if (_confirmando) {
-      return '<div class="m-hacc-conf">' +
+      return '<div class="' + f + 'm-hacc-conf">' +
         '<b>Reopen deletes this order.</b> Its lines come back to Ordering ' +
         'and the vendor keeps whatever you already sent them.' +
         '<div class="m-hacc"><button type="button" id="mhNo">Cancel</button>' +
         '<button type="button" id="mhSi" class="mal">Delete and reopen</button></div></div>';
     }
-    return '<div class="m-hacc">' +
+    return '<div class="' + f + 'm-hacc">' +
       '<button type="button" id="mhRe">Resend</button>' +
       '<button type="button" id="mhAbrir" class="mal">Reopen</button></div>';
   }
