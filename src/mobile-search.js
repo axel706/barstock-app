@@ -288,6 +288,64 @@
       '</div>' + cuando + '</div>';
   }
 
+  // ── Lo vendido en Toast (Axel, 2026-11-12, opción A) ────────────────
+  //
+  // Los siete días cerrados hasta ayer, en botellas, con una raya en lo
+  // de un día normal; y debajo, lo vendido desde el conteo y ayer contra
+  // lo normal de ese día. SÓLO BOTELLAS: Axel quitó el dinero de la
+  // ficha, porque un cóctel no se puede repartir entre sus botellas (ni
+  // entre los mixers, la menta o el lime juice que no se cuentan), y un
+  // "$10" de Tito's escondería todo lo que se fue en martinis.
+  //
+  // Cada número sale de donde ya existe, para no tener dos:
+  //   · las botellas por día, de toast-sales (la lectura de la tarjeta
+  //     del Home y del LIVE);
+  //   · "un día normal", de las medianas con que run-out calcula cuándo
+  //     se acaba (live-cache.medianas);
+  //   · "since the count", de lo vendido que resta el LIVE.
+  // Las barras usan el estilo de la tarjeta del Home (.m-ts-g).
+  //
+  // Lo que Toast no vende (la cerveza) y no tiene ventas esa semana no
+  // lleva el bloque: siete barras a cero dirían "no se vendió" de algo
+  // que Toast no sabe vender.
+  function pintarVentasFicha(caja, r) {
+    const el = caja && caja.querySelector('#msVentas');
+    const TS = window.BarStockToastSales, LC = window.BarStockLiveCache;
+    if (!el || !TS || !r) return;
+    TS.ahora().then(V => {
+      // La ficha pudo cambiar mientras se leía: no pintar la de otro.
+      if (!el.isConnected || !V || !V.cargados) { if (el.isConnected) el.innerHTML = ''; return; }
+      const sem = TS.semanaDe(V.base, r.item);
+      const med = LC && LC.medianas ? LC.medianas(r) : null;
+      const vende = !!(LC && LC.toastLoVende(r));
+      if (!vende && !sem.some(x => x.botellas > 0)) { el.innerHTML = ''; return; }
+      const normal = (x) => med && x.cargado ? med[x.semana] : null;
+      const tope = Math.max(1e-9, ...sem.map(x => Math.max(x.botellas, normal(x) || 0)));
+      const pct = (n) => Math.max(0, Math.min(100, n / tope * 100)).toFixed(1) + '%';
+      const b1 = (n) => String(Math.round((Number(n) || 0) * 10) / 10);
+      const ayer = sem[sem.length - 1];
+      const v = LC ? LC.vivo(r) : null;
+      // Desde el conteo: lo vendido del LIVE. Sin LIVE (conteo activo,
+      // o nada vendido desde el conteo) se dice sólo lo de ayer.
+      const desde = v ? 'Since the count <b>' + b1(v.vendido) + ' btl</b> · ' : '';
+      const n = normal(ayer);
+      el.innerHTML = `
+        <div class="m-vt">
+          <div class="m-vt-k">Sold in Toast <span>last 7 days</span></div>
+          <div class="m-ts-g">
+            ${sem.map((x, k) => `
+              <div class="m-ts-b${k === sem.length - 1 ? ' on' : ''}" aria-label="${x.dia}: ${b1(x.botellas)} bottles">
+                <i style="height:${pct(x.botellas)}"></i>
+                ${normal(x) !== null ? `<u style="bottom:${pct(normal(x))}"></u>` : ''}
+              </div>`).join('')}
+          </div>
+          <div class="m-ts-d">${sem.map((x, k) => `<span class="${k === sem.length - 1 ? 'on' : ''}">${x.dia}</span>`).join('')}</div>
+          <div class="m-vt-s">${desde}yesterday <b>${b1(ayer.botellas)}</b>${n !== null
+            ? ' <span>(usual ' + ayer.dia + ' ' + b1(n) + ')</span>' : ''}</div>
+        </div>`;
+    }).catch(e => { console.warn('[ficha] Toast Sales', e); });
+  }
+
   // ── Las últimas semanas ──────────────────────────────────────────────
   //
   // Lo más rico que tenía el escritorio y no tenía el teléfono, y es
@@ -456,6 +514,7 @@
       ${cabecera(r, par, aviso)}
 
       <div id="msZonas"></div>
+      <div id="msVentas"></div>
 
       <div class="m-card m-rows">
         <div class="m-row">
@@ -532,6 +591,7 @@
     };
 
     pintarZonas(caja, r.item);
+    pintarVentasFicha(caja, r);
     pintarOrigenPrecio(caja, r.item);
     pintarSemanas(caja, r.item);
   }
@@ -648,6 +708,8 @@
     if (g && ng) ng.replaceWith(g);
     viejo.replaceWith(nuevo);
     pintarZonas(caja, r.item);
+    // "Since the count" sale de lo vendido del LIVE, que acaba de llegar.
+    pintarVentasFicha(caja, r);
   }
   if (window.BarStockLiveCache) window.BarStockLiveCache.alCambiar(alLive);
 

@@ -104,6 +104,11 @@
   // lo que Toast no vende, como la cerveza, donde es lo único que hay.
   const agotaDe = (r) => (_agota && r ? _agota.get(r.item) : null) || null;
   const toastLoVende = (r) => { const a = agotaDe(r); return !!(a && a.med && a.med.some(x => x > 0)); };
+  // Lo que se suele vender de un producto cada día de la semana (las
+  // siete medianas de run-out, domingo = 0). La ficha lo usa para la raya
+  // de "un día normal": el mismo número con el que se calcula cuándo se
+  // acaba, no otro.
+  const medianas = (r) => { const a = agotaDe(r); return a && a.med ? a.med : null; };
 
   // { txt: 'Out Sat', tono: 'r'|'a'|'g', enDias } o null. Rojo a dos días o
   // menos, ámbar dentro de la semana, gris más allá. Más de seis días se
@@ -177,7 +182,7 @@
   const etiquetaAgota = (r) => { const a = agota(r); return a ? `<span class="m-out m-out-${a.tono}">${a.txt}</span>` : ''; };
 
   window.BarStockLiveCache = {
-    cargar, caducar, alCambiar, vivo, cuanto, conVivo, texto, agota, toastLoVende, llegadas, dinero,
+    cargar, caducar, alCambiar, vivo, cuanto, conVivo, texto, agota, toastLoVende, medianas, llegadas, dinero,
     etiquetaLive, etiquetaAgota, VIVO_MS,
     _reset: () => { _vivo = null; _agota = null; _conteo = null; _vivoEn = 0; _pidiendo = null; _otraVez = false; _oyentes.clear(); }
   };

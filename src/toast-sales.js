@@ -118,6 +118,21 @@
       .filter(x => x.botellas > 0).sort((a, b) => b.botellas - a.botellas);
   }
 
+  // La semana de UN producto, en botellas, para su ficha: los mismos
+  // siete días cerrados hasta ayer que la tarjeta del Home.
+  function semanaDe(o, producto) {
+    const p = (o.productos || []).find(x => x.producto === producto);
+    const cargado = new Set((o.dias || []).filter(d => d && d.complete && d.closed).map(d => d.business_date));
+    const ayer = sumarDias(o.hoy, -1);
+    const out = [];
+    for (let k = SEMANA - 1; k >= 0; k--) {
+      const f = sumarDias(ayer, -k);
+      out.push({ fecha: f, dia: D[diaSemana(f)], semana: diaSemana(f), cargado: cargado.has(f),
+        botellas: r2(p && p.porDia ? p.porDia[f] || 0 : 0) });
+    }
+    return out;
+  }
+
   // ── Leer ─────────────────────────────────────────────────────────────
   //
   // Una vez por día de negocio y cada 30 minutos como mucho: lo de Toast
@@ -140,6 +155,6 @@
     return _pidiendo;
   }
 
-  window.BarStockToastSales = { resumir, masVendido, ahora, MIN_MUESTRAS, SEMANA,
+  window.BarStockToastSales = { resumir, masVendido, semanaDe, ahora, MIN_MUESTRAS, SEMANA,
     _reset: () => { _datos = null; _en = 0; _de = ''; _pidiendo = null; } };
 })();

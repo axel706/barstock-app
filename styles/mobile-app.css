@@ -1827,6 +1827,26 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-ts-r .v { flex: 0 0 auto; font-size: var(--m-small); }
   .m-ts-r .v b { color: #fff; }
   .m-ts-r .v small { margin-left: 6px; font-size: var(--m-meta); color: #8fa3b8; }
+
+  /* "Sold in Toast" en la ficha del producto: las barras son las de la
+   * tarjeta del Home (.m-ts-g); aquí sólo el marco, como "Where it is",
+   * y sin tocar: es la semana de un producto, no hay día que elegir. */
+  #msVentas:empty { display: none; }
+  .m-vt {
+    margin-top: 9px; padding: 12px 13px; border-radius: 15px;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+  }
+  .m-vt-k {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: var(--m-meta); font-weight: 800; letter-spacing: .6px;
+    text-transform: uppercase; color: #a9bacd;
+  }
+  .m-vt-k span { text-transform: none; letter-spacing: 0; font-weight: 600; }
+  .m-vt .m-ts-g { height: calc(var(--m-base) * 4.6); margin-top: 12px; }
+  .m-vt .m-ts-b { cursor: default; }
+  .m-vt-s { margin-top: 10px; font-size: var(--m-small); color: #c3d2e2; }
+  .m-vt-s b { color: #fff; }
+  .m-vt-s span { color: #a9bacd; }
   /* Gris pizarra, y es el MISMO gris que `.m-hero-calm` del carrusel,
    * que allí significa "no hay nada que hacer aquí". Estas dos son
    * exactamente eso: cifras que miras, sin botón y sin sitio al que

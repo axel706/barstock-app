@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-195302",
+    "items": [
+      "Product sheet shows its last 7 days sold in Toast"
+    ]
+  },
+  {
     "build": "20261111-194734",
     "items": [
       "Toast Sales on Home: the week in bottles or dollars",
@@ -182,12 +188,6 @@
     "build": "20261110-235334",
     "items": [
       "Bigger B on the home-screen icon"
-    ]
-  },
-  {
-    "build": "20261110-223706",
-    "items": [
-      "Liquor from Toast: Mix now counts as 1.5 oz"
     ]
   }
 ]
