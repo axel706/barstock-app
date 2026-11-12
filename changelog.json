@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261112-130845",
+    "items": [
+      "Toast developer tools: see which restaurants it can read"
+    ]
+  },
+  {
     "build": "20261112-125650",
     "items": [
       "The morning email now arrives on its own each day"
@@ -186,12 +192,6 @@
       "Live shows on the product sheet and in Do we have",
       "Live tag in the corner, Out day under the number",
       "Where it is shows what arrived since the count"
-    ]
-  },
-  {
-    "build": "20261111-175020",
-    "items": [
-      "Inventory no longer says \"order N\" under each bottle"
     ]
   }
 ]

@@ -26,7 +26,10 @@
   const ACCIONES = [
     { id: 'ping',   nombre: 'Ping',   nota: 'Does the login work' },
     { id: 'sales',  nombre: 'Sales',  nota: 'Money by category, uses Date' },
-    { id: 'drinks', nombre: 'Drinks', nota: 'Items and modifiers, uses Date' }
+    { id: 'drinks', nombre: 'Drinks', nota: 'Items and modifiers, uses Date' },
+    // Para traer Will's & Bill's (2026-11-12): qué restaurantes del grupo
+    // abre este login, con su GUID. Sólo lee.
+    { id: 'restaurants', nombre: 'Restaurants', nota: 'Which ones this login opens' }
   ];
 
   const D = () => window.BarStockDevPanel;
@@ -42,7 +45,7 @@
 
   function params(action) {
     const p = {};
-    if (action === 'ping') return p;
+    if (action === 'ping' || action === 'restaurants') return p;
     // Toast quiere el día de negocio como AAAAMMDD.
     const f = (($('tpFecha') || {}).value || '').replace(/-/g, '');
     if (/^\d{8}$/.test(f)) p.businessDate = f;
@@ -60,8 +63,10 @@
   // clientes. Aquí lo que llega ya viene sin texto libre (lib/toast.js),
   // pero la lista no depende de eso.
   let seguro = null;
+  // GUIDs y nombres de restaurante: no son secretos, y son lo que hace
+  // falta copiar para enlazar una locación.
   const SEGUROS_OK = ['accion', 'businessDate', 'ordenes', 'diaCompleto', 'cerrado', 'categoriasDeVenta',
-    'porCategoria', 'total', 'restaurante', 'expiraEnSegundos'];
+    'porCategoria', 'total', 'restaurante', 'expiraEnSegundos', 'grupo', 'restaurantes'];
   const SEGUROS_MAL = ['accion', 'businessDate', 'paso', 'pagina', 'status', 'error', 'diagnostico'];
 
   function armarSeguro(res) {
@@ -143,6 +148,18 @@
           '</div>').join('') + '</div>').join('');
   }
 
+  function pintarRestaurantes(res) {
+    const rs = res.restaurantes || [];
+    if (!rs.length) return '<div class="small muted">Toast listed no restaurants in this group.</div>';
+    return '<div class="tp-rueda"><table class="tp-tabla"><thead><tr><th>Restaurant</th><th>GUID</th><th>This login</th></tr></thead><tbody>' +
+      rs.map(r => '<tr><td>' + esc(r.nombre || '—') + (r.actual ? ' <span class="small muted">(now)</span>' : '') + '</td>' +
+        '<td><code>' + esc(r.guid) + '</code></td>' +
+        '<td>' + (r.acceso ? '<b>Opens it</b>' : 'No · HTTP ' + esc(r.status)) + '</td></tr>').join('') +
+      '</tbody></table></div>' +
+      '<div class="small muted tp-pie">A restaurant this login does not open has to be added to the credential in Toast Web ' +
+      '(Integrations › Toast API access) before BarStock can read it.</div>';
+  }
+
   function pintar(action, res) {
     const el = $('tpSalida');
     if (!el) return;
@@ -174,7 +191,8 @@
     el.innerHTML =
       '<div class="ts-bien">' + esc(action) + ' · ok' + (linea.length ? ' · ' + esc(linea.join(' · ')) : '') +
         botonCopiar() + '</div>' +
-      (action === 'sales' ? pintarVentas(res) : action === 'drinks' ? pintarTragos(res) : '');
+      (action === 'sales' ? pintarVentas(res) : action === 'drinks' ? pintarTragos(res)
+        : action === 'restaurants' ? pintarRestaurantes(res) : '');
   }
 
   function fallo(action, e) {

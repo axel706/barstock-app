@@ -225,6 +225,45 @@ grupo('el restaurante va en su cabecera');
   prueba('sin devolver el token', !JSON.stringify(r.body).includes(TOKEN_TOAST));
 }
 
+grupo('qué restaurantes abre este login (para traer Will\'s & Bill\'s)');
+{
+  // Axel, 2026-11-12: "traer Toast a Will's & Bill's". Antes de mudar el
+  // GUID a cada locación hay que saber si estas credenciales abren W&B y
+  // cuál es su GUID: se pregunta el grupo de Crown, sus restaurantes, y
+  // se prueba a leer cada uno con SU GUID en la cabecera. Sólo lee.
+  entorno();
+  const WB = '11111111-2222-3333-4444-555555555555', JK = '99999999-8888-7777-6666-555555555555';
+  respuestas = {
+    '/authentication/': LOGIN_OK,
+    ['/restaurants/v1/groups/MG-1/restaurants']: { status: 200, body: [
+      { restaurantGuid: GUID, restaurantName: 'Crown' }, { guid: WB, name: "Will's + Bill's" }, { guid: JK, locationName: 'Jockey Tavern' }] },
+    '/restaurants/v1/restaurants/': (url, op) => {
+      const g = op.headers['Toast-Restaurant-External-ID'];
+      if (g === JK) return { status: 403, body: { message: 'Access denied' } };
+      return { status: 200, body: { guid: g, general: { name: g === GUID ? 'Crown' : 'WB', locationName: g === GUID ? ' The Crown Tavern' : "Will's & Bill's", managementGroupGuid: 'MG-1' } } };
+    }
+  };
+  const r = await llamar({ accion: 'restaurants' });
+  const b = r.body || {};
+  prueba('lee el grupo del restaurante de Crown', b.ok && b.grupo === 'MG-1', JSON.stringify(b).slice(0, 300));
+  const rs = b.restaurantes || [];
+  prueba('lista los tres, con su GUID', rs.length === 3 && rs.some(x => x.guid === WB) && rs.some(x => x.guid === JK), JSON.stringify(rs));
+  const wb = rs.find(x => x.guid === WB) || {}, jk = rs.find(x => x.guid === JK) || {}, cr = rs.find(x => x.guid === GUID) || {};
+  prueba('W&B: este login lo abre, con su nombre', wb.acceso === true && wb.nombre === "Will's & Bill's", JSON.stringify(wb));
+  prueba('Jockey: no lo abre, y dice qué contestó Toast', jk.acceso === false && jk.status === 403, JSON.stringify(jk));
+  prueba('Crown, marcado como el de ahora', cr.actual === true && !wb.actual);
+  const pruebas = peticiones.filter(p => /\/restaurants\/v1\/restaurants\//.test(p.url));
+  prueba('cada uno se prueba con SU GUID en la cabecera', [WB, JK].every(g => pruebas.some(p => p.url.endsWith(g) && p.cabeceras['Toast-Restaurant-External-ID'] === g)));
+  prueba('sólo lee', peticiones.every(p => p.metodo === 'GET' || /authentication/.test(p.url)));
+  prueba('sin devolver el token', !JSON.stringify(b).includes(TOKEN_TOAST));
+
+  // Si Toast no da el grupo, se dice y se enseña lo que contestó.
+  respuestas = { '/authentication/': LOGIN_OK,
+    '/restaurants/v1/restaurants/': { status: 200, body: { guid: GUID, general: { name: 'Crown' } } } };
+  const r2 = await llamar({ accion: 'restaurants' });
+  prueba('sin grupo: no inventa la lista, lo dice', r2.body.ok === false && r2.body.paso === 'grupo' && !!r2.body.crudo, JSON.stringify(r2.body).slice(0, 200));
+}
+
 grupo('el menu se cuenta, no se reenvia');
 {
   entorno();
@@ -286,7 +325,7 @@ grupo('solo lee');
     '/orders/v2/ordersBulk': { status: 200, body: [] }
   };
   const metodos = [];
-  for (const a of ['ping', 'restaurant', 'menu', 'orders', 'drinks', 'wine', 'sales', 'liquor']) {
+  for (const a of ['ping', 'restaurant', 'restaurants', 'menu', 'orders', 'drinks', 'wine', 'sales', 'liquor']) {
     await llamar({ accion: a });
     for (const p of peticiones) metodos.push(p.metodo + ' ' + p.url.replace(/https:\/\/[^/]+/, ''));
     prueba(a + ': a Supabase solo le valida la sesion', sbLlamadas.length === 0, sbLlamadas.join(','));

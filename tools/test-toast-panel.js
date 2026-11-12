@@ -108,6 +108,8 @@ grupo('sólo se dibuja al abrirlo, y sólo lee');
   prueba('cerrado, sin botones', !boton(w, 'sales'));
   abrir(w);
   prueba('abierto: Ping, Sales y Drinks', !!boton(w, 'ping') && !!boton(w, 'sales') && !!boton(w, 'drinks'));
+  // Para traer Will's & Bill's (2026-11-12): qué restaurantes abre el login.
+  prueba('y Restaurants', !!boton(w, 'restaurants'));
   prueba('sin botón para sync, que es la que escribe', !boton(w, 'sync') && !/sync/i.test((w.document.getElementById('tpBotones') || {}).innerHTML || ''));
   const f = w.document.getElementById('tpFecha');
   const hoy = new Date(), p = n => String(n).padStart(2, '0');
