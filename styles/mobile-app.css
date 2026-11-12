@@ -270,11 +270,21 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * armazón. Esto tapa el síntoma mientras tanto, y lo tapa bien.
    *
    * 100dvh y no 100vh: en iOS, vh cuenta la barra del navegador aunque
-   * no esté, y de ahí salen cien píxeles de más. */
+   * no esté, y de ahí salen cien píxeles de más.
+   *
+   * Y llega JUSTO hasta la barra, sin pasarse: resta exactamente lo que
+   * el body añade arriba y abajo (la banda, 52, y la barra, 102, cada
+   * una con su zona segura), con el padding de la pantalla dentro
+   * (border-box). Restaba 200 px fijos, sin las zonas seguras: en el
+   * iPhone una página de cuatro filas —Settings, Sender, More— quedaba
+   * 77 px más alta que la pantalla y rodaba sin nada debajo (Axel,
+   * 2026-11-12: "un scroll que no necesitan"). */
   .m-screen.on {
-    display: block;
-    min-height: calc(100vh - 200px);
-    min-height: calc(100dvh - 200px);
+    display: block; box-sizing: border-box;
+    min-height: calc(100vh - 154px);
+    min-height: calc(100dvh - 154px
+                     - env(safe-area-inset-top, 0px)
+                     - env(safe-area-inset-bottom, 0px));
   }
 
   /* Mientras hay pantalla propia, la de siempre se esconde: #mScreens

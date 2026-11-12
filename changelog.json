@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-234456",
+    "items": [
+      "Short screens like Settings no longer scroll"
+    ]
+  },
+  {
     "build": "20261111-233342",
     "items": [
       "Home's three figures are centered"
@@ -184,13 +190,6 @@
     "build": "20261111-171251",
     "items": [
       "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261111-170803",
-    "items": [
-      "Inventory shows the Live estimate",
-      "Counted + arrived − sold in Toast"
     ]
   }
 ]

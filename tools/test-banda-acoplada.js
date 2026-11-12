@@ -264,6 +264,24 @@ if (SRC) {
     // .m-screen.on, y lo volvió a ver Axel).
     prueba('Buscar conserva su alto mínimo (si no, la barra de pestañas sube)',
       !/m-scroll-propio[^{]*\{[^}]*min-height\s*:\s*0/.test(css));
+    // Pero ese alto mínimo no puede pasarse de la pantalla. Restaba
+    // 200 px fijos y no las zonas seguras del iPhone (59 + 34), que el
+    // body sí suma a la banda y a la barra: una página de cuatro filas
+    // (Settings, Sender, More) tenía 77 px que rodar y nada debajo
+    // (Axel, 2026-11-12, "un scroll que no necesitan"; medido en
+    // Chromium con esas zonas puestas a mano). Tiene que restar
+    // EXACTAMENTE lo que el body añade, y contar el padding dentro.
+    {
+      const body = [...css.matchAll(/body\.m-shell\s*\{([^}]*)\}/g)].map(m => m[1]).join(';');
+      const pt = Number((/padding-top\s*:\s*calc\((\d+)px/.exec(body) || [])[1]);
+      const pb = Number((/padding-bottom\s*:\s*calc\((\d+)px/.exec(body) || [])[1]);
+      const pant = [...css.matchAll(/\.m-screen\.on\s*\{([^}]*)\}/g)].map(m => m[1]).join(';');
+      const mins = pant.match(/min-height\s*:[^;]*/g) || [];
+      const ult = (mins[mins.length - 1] || '').replace(/\s+/g, ' ');
+      prueba('el alto mínimo resta la banda y la barra, ni más ni menos', pt && pb && new RegExp('100dvh - ' + (pt + pb) + 'px').test(ult), ult + ' / ' + pt + '+' + pb);
+      prueba('y las dos zonas seguras', /safe-area-inset-top/.test(ult) && /safe-area-inset-bottom/.test(ult), ult);
+      prueba('con el padding de la pantalla dentro de la cuenta', /box-sizing\s*:\s*border-box/.test(pant), pant.replace(/\s+/g, ' ').trim());
+    }
     // ── La trampa de iOS con una lista dentro de una página ───────
     //
     // Con la lista JUSTO en su tope, iOS le da el gesto a la página de
