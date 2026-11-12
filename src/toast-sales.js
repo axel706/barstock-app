@@ -106,7 +106,9 @@
         if (!esLicor(v.sales_category) && !esVino(v.sales_category)) continue;
         if (v.net === null || v.net === undefined) continue;
         const k = v.toast_item_name;
-        const x = m.get(k) || { nombre: k, dinero: 0, unidades: 0 };
+        // Licor o vino: el Full report los enseña en dos secciones.
+        const x = m.get(k) || { nombre: k, dinero: 0, unidades: 0,
+          categoria: esLicor(v.sales_category) ? 'licor' : 'vino' };
         x.dinero += Number(v.net) || 0;
         x.unidades += Number(v.quantity) || 0;
         m.set(k, x);
@@ -116,6 +118,21 @@
     }
     return (o.productos || []).map(p => ({ nombre: p.producto, botellas: r2((p.porDia || {})[fecha] || 0) }))
       .filter(x => x.botellas > 0).sort((a, b) => b.botellas - a.botellas);
+  }
+
+  // Lo que el dinero deja FUERA ese día (la cerveza, el open bar): el
+  // Full report lo dice al pie, para que no desaparezca en silencio.
+  // [{ categoria, dinero }] con el nombre de la categoría de Toast.
+  function fuera(o, fecha) {
+    const m = new Map();
+    for (const v of o.ventas || []) {
+      if (v.business_date !== fecha) continue;
+      if (esLicor(v.sales_category) || esVino(v.sales_category)) continue;
+      const k = v.sales_category || '(no category)';
+      m.set(k, (m.get(k) || 0) + (Number(v.net) || 0));
+    }
+    return [...m.entries()].map(([categoria, d]) => ({ categoria, dinero: r2(d) }))
+      .sort((a, b) => b.dinero - a.dinero);
   }
 
   // La semana de UN producto, en botellas, para su ficha: los mismos
@@ -155,6 +172,6 @@
     return _pidiendo;
   }
 
-  window.BarStockToastSales = { resumir, masVendido, semanaDe, ahora, MIN_MUESTRAS, SEMANA,
+  window.BarStockToastSales = { resumir, masVendido, fuera, semanaDe, ahora, MIN_MUESTRAS, SEMANA,
     _reset: () => { _datos = null; _en = 0; _de = ''; _pidiendo = null; } };
 })();

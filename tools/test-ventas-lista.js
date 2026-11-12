@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /*
- * ── Toast Sales · "All products" ─────────────────────────────────────
+ * ── Toast Sales · "All products" y "Full report" ──────────────────────
  *
  * Axel, 2026-11-12, sobre lámina:
- *   1. El botón sale en la vista botellas de la tarjeta, no en la de $
- *      (allí irá "Full report").
+ *   1. "All products" en la vista botellas de la tarjeta; "Full report"
+ *      en la de $.
  *   2. Abre una hoja en el día que estaba elegido en la tarjeta.
  *   3. TODO lo vendido ese día en botellas, del que más al que menos,
  *      con el total y el número de productos.
@@ -12,6 +12,10 @@
  *      (live-cache.medianas), no de otro cálculo.
  *   5. Las pastillas cambian de día; el filtro acota por nombre.
  *   6. Tocar un producto cierra la hoja y abre su ficha.
+ *   7. Full report: Net sales del día en licor y vino, cada artículo de
+ *      Toast con cuántos, cuánto y qué parte del día; los cócteles como
+ *      cócteles; al pie, la cerveza y el open bar que quedan fuera, y
+ *      las líneas sin precio, dichas.
  *
  *   node tools/test-ventas-lista.js
  */
@@ -52,7 +56,14 @@ async function entorno() {
     { producto: 'Kahlua', porDia: { [AYER]: 0.6 } }
   ];
   w.BarStockToastUsage = { diaDeNegocio: () => HOY,
-    ventasDesde: async () => ({ dias, productos, ventas: [] }) };
+    ventasDesde: async () => ({ dias, productos, ventas: [
+      { business_date: AYER, toast_item_name: 'Espresso Martini', sales_category: 'Liquor', net: 392, quantity: 28 },
+      { business_date: AYER, toast_item_name: "Tito's", sales_category: 'Liquor', net: 300, quantity: 28 },
+      { business_date: AYER, toast_item_name: "Tito's", sales_category: 'Liquor', net: 41, quantity: 3 },
+      { business_date: AYER, toast_item_name: 'Nino Ardevi Prosecco', sales_category: 'Wine', net: 480, quantity: 13 },
+      { business_date: AYER, toast_item_name: 'Rosé', sales_category: 'Wine', net: null, quantity: 1 },
+      { business_date: AYER, toast_item_name: 'IPA', sales_category: 'Beer', net: 438, quantity: 70 },
+      { business_date: AYER, toast_item_name: 'Silver Bar', sales_category: 'Banquet Beverage', net: 0, quantity: 31 } ] }) };
   new Function(leer('src/toast-sales.js'))();
   new Function(leer('src/mobile-sales.js'))();
   w.state = { master: [
@@ -86,7 +97,8 @@ grupo('el botón');
   const { host } = await entorno();
   prueba('en la vista botellas', !!host.querySelector('#mhVentas [data-mas]'));
   host.querySelector('#mhVentas [data-v="dinero"]').click();
-  prueba('no en la de $', !host.querySelector('#mhVentas [data-mas]'));
+  const b = host.querySelector('#mhVentas [data-mas]');
+  prueba('en la de $, "Full report"', !!b && /Full report/.test(b.textContent), b && b.textContent);
 }
 
 grupo('la hoja');
@@ -123,6 +135,33 @@ grupo('la hoja');
   host.querySelector('#mhVentas [data-mas]').click();
   await esperar(20);
   prueba('abre en el día elegido en la tarjeta', hoja(w).querySelectorAll('.m-vl-c')[3].classList.contains('on'));
+}
+
+grupo('Full report');
+{
+  const { w, host } = await entorno();
+  host.querySelector('#mhVentas [data-v="dinero"]').click();
+  host.querySelector('#mhVentas [data-mas]').click();
+  await esperar(20);
+  const h = hoja(w);
+  prueba('se abre como Full report', !!h && /Full report/.test(h.querySelector('.m-vl-t').textContent));
+  prueba('en el día elegido (ayer)', h.querySelectorAll('.m-vl-c')[6].classList.contains('on'));
+  prueba('sin filtro: es un reporte', !h.querySelector('#mvQ'));
+  const tot = h.querySelector('.m-vl-tot').textContent.replace(/\s+/g, ' ');
+  prueba('Net sales del día: licor + vino', /\$1,213\s*net · Tue/.test(tot), tot);
+  const ley = h.querySelector('#mvLey').textContent.replace(/\s+/g, ' ');
+  prueba('partido en licor y vino', /Liquor & cocktails \$733/.test(ley) && /Wine \$480/.test(ley), ley);
+  const secs = [...h.querySelectorAll('.m-vl-sec')].map(x => x.textContent.replace(/\s+/g, ' ').trim());
+  prueba('dos secciones con su total', JSON.stringify(secs) === JSON.stringify(['Liquor & cocktails$733', 'Wine$480']), JSON.stringify(secs));
+  const filas = [...h.querySelectorAll('.m-vl-r-din')].map(r => r.textContent.replace(/\s+/g, ' ').trim());
+  prueba('los cócteles como cócteles, el que más dinero primero', /^Espresso Martini\s*28 sold \$392\s*32\.3%/.test(filas[0] || ''), filas[0]);
+  prueba("un artículo suma sus filas (Tito's 300 + 41, 31 vendidos)", filas.some(f => /^Tito's\s*31 sold \$341/.test(f)), filas.join(' | '));
+  const pie = [...h.querySelectorAll('.m-vl-pie')].map(x => x.textContent).join(' | ');
+  prueba('al pie, lo que queda fuera', /Not in this report: Beer \$438 · Banquet Beverage \$0/.test(pie), pie);
+  prueba('y la línea sin precio, dicha', /1 line came without a price and is not counted/.test(pie), pie);
+  prueba('sin cerveza en la lista', !filas.some(f => /IPA|Silver Bar/.test(f)));
+  h.querySelector('.m-vl-r-din').click();
+  prueba('un artículo de Toast no abre ficha', w.__abierto === null && !!w.document.querySelector('#mSheet'));
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');

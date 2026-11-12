@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261111-201604",
+    "items": [
+      "Full report: net sales of the day, item by item",
+      "Liquor and wine apart; beer and open bar left out"
+    ]
+  },
+  {
     "build": "20261111-201252",
     "items": [
       "All products: every bottle sold that day",
@@ -182,13 +189,6 @@
     "build": "20261111-113053",
     "items": [
       "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261111-095006",
-    "items": [
-      "Recipes: choose the bottle for each ingredient",
-      "Settings → Toast → Recipes"
     ]
   }
 ]

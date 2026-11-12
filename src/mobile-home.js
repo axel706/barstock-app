@@ -2010,9 +2010,8 @@
   // Los números los hace toast-sales.js; aquí sólo se pinta. Sin días de
   // Toast cargados (una locación sin Toast) la tarjeta no sale.
   //
-  // "All products" abre la lista entera del día (mobile-sales.js). "Full
-  // report", el de la vista $, va cuando exista su hoja: un botón que no
-  // lleva a nada es una afordancia que miente.
+  // "All products" (botellas) y "Full report" ($) abren la lista entera
+  // del día elegido en una hoja (mobile-sales.js).
   let _ventas = null, _pidiendoVentas = false;
   let _vista = 'botellas', _diaV = null;
 
@@ -2100,15 +2099,15 @@
               <span class="v"><b>${din ? dinero0(x.dinero) : bot1(x.botellas)}</b><small>${din
                 ? esc(String(Math.round(x.unidades))) + ' sold' : 'bottles'}</small></span></div>`).join('')}
           </div>` : ''}
-        ${!din && top.length ? `<div class="m-ts-pie">
-            <button type="button" class="m-ts-mas" data-mas>All products <i class="ti ti-chevron-right" aria-hidden="true"></i></button>
+        ${top.length ? `<div class="m-ts-pie">
+            <button type="button" class="m-ts-mas" data-mas>${din ? 'Full report' : 'All products'} <i class="ti ti-chevron-right" aria-hidden="true"></i></button>
           </div>` : ''}
       </div>`;
 
     caja.querySelectorAll('[data-v]').forEach(b => {
       b.onclick = () => { _vista = b.dataset.v; pintarVentas(host); };
     });
-    // La lista entera del día elegido (mobile-sales.js).
+    // La lista entera del día elegido, o el reporte en $ (mobile-sales.js).
     const mas = caja.querySelector('[data-mas]');
     if (mas) mas.onclick = () => {
       const S = window.BarStockMobileSales;

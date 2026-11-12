@@ -1,7 +1,7 @@
 (() => {
   if (window.BarStockMobileSales) return;
 
-  // ── Las hojas de Toast Sales: "All products" ─────────────────────────
+  // ── Las hojas de Toast Sales: "All products" y "Full report" ─────────
   //
   // Axel, 2026-11-12, sobre lámina. La tarjeta Toast Sales del Home sólo
   // enseña las tres más vendidas del día; "All products" abre una hoja
@@ -19,6 +19,15 @@
   //     calcula cuándo se acaba.
   //   · Tocar un producto abre su ficha.
   //
+  // "Full report", desde la vista $: las mismas pastillas; el Net sales
+  // del día partido en licor (con cócteles) y vino; y dos secciones con
+  // cada artículo de Toast vendido ese día, cuántos y cuánto, y qué parte
+  // del día es. Los cócteles salen como cócteles: su precio no se reparte
+  // entre botellas (Axel). Al pie, lo que el dinero deja fuera —la
+  // cerveza, el open bar— con su importe, para que no desaparezca en
+  // silencio. Un artículo de Toast no es un producto del inventario:
+  // sus filas no abren ficha.
+  //
   // Los números los hace toast-sales.js; aquí sólo se pinta.
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c =>
@@ -30,14 +39,15 @@
   const M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const fechaCorta = (f) => { const d = new Date(f + 'T12:00:00Z'); return M[d.getUTCMonth()] + ' ' + d.getUTCDate(); };
 
-  let _dia = 0, _q = '';
+  let _dia = 0, _q = '', _vista = 'botellas';
+  const dinero0 = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('en-US');
 
   function cerrar() {
     const h = document.getElementById('mSheet');
     if (h) h.remove();
   }
 
-  // o = { vista: 'botellas', dia: índice en la semana }
+  // o = { vista: 'botellas' | 'dinero', dia: índice en la semana }
   function abrir(o) {
     o = o || {};
     const TS = window.BarStockToastSales;
@@ -46,6 +56,8 @@
       if (!V || !V.semana || !V.semana.length) return;
       _dia = o.dia == null || o.dia >= V.semana.length ? V.semana.length - 1 : o.dia;
       _q = '';
+      _vista = o.vista === 'dinero' ? 'dinero' : 'botellas';
+      const din = _vista === 'dinero';
       cerrar();
       const h = document.createElement('div');
       h.className = 'm-sheet';
@@ -54,24 +66,26 @@
       h.id = 'mSheet';
       h.innerHTML = `
         <div class="m-sheet-bg"></div>
-        <div class="m-sheet-box m-vl" role="dialog" aria-label="All products">
+        <div class="m-sheet-box m-vl" role="dialog" aria-label="${din ? 'Full report' : 'All products'}">
           <div class="m-sheet-grip"></div>
-          <div class="m-vl-t">All products</div>
-          <div class="m-vl-s">Bottles sold in Toast · from recipes and pours</div>
+          <div class="m-vl-t">${din ? 'Full report' : 'All products'}</div>
+          <div class="m-vl-s">${din ? 'Net sales in Toast · after discounts, before tax'
+                                    : 'Bottles sold in Toast · from recipes and pours'}</div>
           <div class="m-vl-chips" id="mvChips"></div>
           <div class="m-vl-tot" id="mvTot"></div>
+          ${din ? '<div class="m-ts-ley m-vl-ley" id="mvLey"></div>' : `
           <div class="m-searchbar on m-vl-bus">
             <i class="ti ti-search" aria-hidden="true"></i>
             <input id="mvQ" type="search" inputmode="search" autocomplete="off"
                    placeholder="Filter products" aria-label="Filter products">
-          </div>
+          </div>`}
           <div id="mvLista"></div>
         </div>`;
       document.body.appendChild(h);
       h.querySelector('.m-sheet-bg').onclick = cerrar;
       if (window.BarStockSheet) window.BarStockSheet.enganchar(h, cerrar);
       const q = h.querySelector('#mvQ');
-      q.oninput = () => { _q = q.value; pintar(h, V); };
+      if (q) q.oninput = () => { _q = q.value; pintar(h, V); };
       pintar(h, V);
     }).catch(e => console.warn('[ventas] All products', e));
   }
@@ -90,6 +104,8 @@
       c.onclick = elegir;
       c.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); elegir(); } };
     });
+
+    if (_vista === 'dinero') return pintarDinero(h, V, d);
 
     const todos = TS.masVendido(V.base, d.fecha, 'botellas');
     const n = d.normalBotellas;
@@ -132,6 +148,49 @@
       f.onclick = ir;
       f.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); ir(); } };
     });
+  }
+
+  function pintarDinero(h, V, d) {
+    const TS = window.BarStockToastSales;
+    const n = d.normalDinero;
+    const cmp = !d.cargado ? 'No data for this day'
+      : !d.dinero && !n ? 'Closed'
+      : n ? ((d.dinero - n) / n * 100 >= 0 ? '↗ ' : '↘ ') + Math.abs(Math.round((d.dinero - n) / n * 100)) + '% vs usual ' + d.dia
+      : '';
+    h.querySelector('#mvTot').innerHTML = `
+      <b>${dinero0(d.dinero)}</b><span>net · ${d.dia}</span>
+      <em class="${n && cmp ? (d.dinero >= n ? 'm-ts-up' : 'm-ts-dn') : ''}">${esc(cmp)}</em>`;
+    h.querySelector('#mvLey').innerHTML = `
+      <span><i class="licor"></i>Liquor & cocktails ${dinero0(d.licor)}</span>
+      <span><i class="vino"></i>Wine ${dinero0(d.vino)}</span>`;
+
+    const todos = TS.masVendido(V.base, d.fecha, 'dinero');
+    const lista = h.querySelector('#mvLista');
+    const fuera = TS.fuera(V.base, d.fecha);
+    const pieFuera = fuera.length
+      ? `<div class="m-vl-pie">Not in this report: ${fuera.map(x => esc(x.categoria) + ' ' + dinero0(x.dinero)).join(' · ')}</div>` : '';
+    // Una línea sin precio no suma como $0: se dice cuántas hubo.
+    const pieSin = d.sinPrecio
+      ? `<div class="m-vl-pie">${d.sinPrecio} line${d.sinPrecio === 1 ? '' : 's'} came without a price and ${d.sinPrecio === 1 ? 'is' : 'are'} not counted.</div>` : '';
+    if (!todos.length) {
+      lista.innerHTML = '<div class="m-vl-nada">Nothing sold this day.</div>' + pieFuera + pieSin;
+      return;
+    }
+    const total = d.dinero || todos.reduce((a, x) => a + x.dinero, 0);
+    const seccion = (cat, titulo, sub) => {
+      const xs = todos.filter(x => x.categoria === cat);
+      if (!xs.length) return '';
+      const tope = Math.max(1e-9, ...xs.map(x => x.dinero));
+      return `
+        <div class="m-vl-sec"><span>${titulo}</span><b>${dinero0(sub)}</b></div>
+        ${xs.map(x => `
+          <div class="m-vl-r m-vl-r-din">
+            <span class="n">${esc(x.nombre)}<small>${Math.round(x.unidades)} sold</small>
+              <i class="${cat}" style="width:${(x.dinero / tope * 100).toFixed(1)}%"></i></span>
+            <span class="v">${dinero0(x.dinero)}<small class="eq">${total ? (x.dinero / total * 100).toFixed(1) + '%' : ''}</small></span>
+          </div>`).join('')}`;
+    };
+    lista.innerHTML = seccion('licor', 'Liquor & cocktails', d.licor) + seccion('vino', 'Wine', d.vino) + pieFuera + pieSin;
   }
 
   window.BarStockMobileSales = { abrir, cerrar };

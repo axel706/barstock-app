@@ -1874,6 +1874,19 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-vl-r .v small.eq { color: #8fa3b8; }
   .m-vl-nada { padding: 22px 0; text-align: center; font-size: var(--m-small); color: #8fa3b8; }
 
+  /* Full report: la leyenda de la tarjeta (.m-ts-ley), las dos
+   * secciones con su total y, al pie, lo que el dinero deja fuera. */
+  .m-vl-ley { margin-top: 8px; }
+  .m-vl-sec {
+    display: flex; justify-content: space-between; margin-top: 16px;
+    font-size: var(--m-meta); font-weight: 800; letter-spacing: .6px;
+    text-transform: uppercase; color: #a9bacd;
+  }
+  .m-vl-sec b { color: #fff; letter-spacing: 0; }
+  .m-vl-r-din { cursor: default; }
+  .m-vl-r .n i.vino { background: #c084fc; }
+  .m-vl-pie { margin-top: 14px; font-size: var(--m-meta); color: #8fa3b8; }
+
   /* "Sold in Toast" en la ficha del producto: las barras son las de la
    * tarjeta del Home (.m-ts-g); aquí sólo el marco, como "Where it is",
    * y sin tocar: es la semana de un producto, no hay día que elegir. */
