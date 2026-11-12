@@ -90,5 +90,40 @@ grupo('la carga y el guardián');
   prueba('el guardián lo vigila', /'src\/run-out\.js'/.test(leer('tools/test-toast-no-toca-conteo.js')));
 }
 
+grupo('cuánto pedir para llegar al domingo');
+{
+  // Axel, 2026-11-12, para el correo de la mañana: si se acaba el
+  // miércoles hacen falta más que si se acaba el sábado. Lo que se suele
+  // vender cada día desde HOY hasta el DOMINGO, incluido todo el domingo,
+  // menos lo que queda y lo que llega antes, redondeado hacia arriba. No
+  // hasta la siguiente entrega del proveedor: a mitad de semana se pide
+  // en LOOP, que se recoge al momento.
+  // [dom, lun, mar, mié, jue, vie, sáb]
+  const med = [1.2, 0, 0.5, 0.8, 1.4, 2.6, 3.1];
+  // Jueves 2026-11-12 → jue+vie+sáb+dom = 1.4+2.6+3.1+1.2 = 8.3
+  let c = R.cuantoPedir({ stock: 0.6, med, viene: [], hoy: '2026-11-12' });
+  prueba('hasta el domingo de esa semana', c.hasta === '2026-11-15', c.hasta);
+  prueba('jueves a domingo se suele vender 8.3', Math.abs(c.vende - 8.3) < 1e-9, String(c.vende));
+  prueba('con 0.6 en la estantería, pedir 8', c.pedir === 8, String(c.pedir));
+  // El sábado: sáb + dom = 4.3; con 2.1 → faltan 2.2 → 3.
+  c = R.cuantoPedir({ stock: 2.1, med, viene: [], hoy: '2026-11-14' });
+  prueba('si es sábado, mucho menos: 3', c.pedir === 3 && Math.abs(c.vende - 4.3) < 1e-9, JSON.stringify(c));
+  // Lo que viene antes del domingo se resta; lo que llega el lunes, no.
+  c = R.cuantoPedir({ stock: 0.6, med, viene: [{ cuando: '2026-11-13T21:00:00Z', n: 6 }, { cuando: '2026-11-16T15:00:00Z', n: 12 }], hoy: '2026-11-12' });
+  prueba('lo que llega antes del domingo cuenta; lo del lunes, no', c.llega === 6 && c.pedir === 2, JSON.stringify(c));
+  // El domingo mismo: sólo el domingo.
+  c = R.cuantoPedir({ stock: 0.5, med, viene: [], hoy: '2026-11-15' });
+  prueba('el domingo, sólo lo que queda del domingo', c.hasta === '2026-11-15' && Math.abs(c.vende - 1.2) < 1e-9 && c.pedir === 1, JSON.stringify(c));
+  // Llega de sobra: nada que pedir.
+  c = R.cuantoPedir({ stock: 9, med, viene: [], hoy: '2026-11-12' });
+  prueba('con de sobra, cero', c.pedir === 0, String(c.pedir));
+  // Un LIVE negativo (se vendió más de lo contado) no regala botellas.
+  c = R.cuantoPedir({ stock: -0.4, med, viene: [], hoy: '2026-11-14' });
+  prueba('lo negativo cuenta como cero, no resta', c.pedir === 5, String(c.pedir));
+  // 8.3 − 0.3 = 8.000000000001 en coma flotante no puede pedir 9.
+  c = R.cuantoPedir({ stock: 0.3, med, viene: [], hoy: '2026-11-12' });
+  prueba('una suma exacta no sube una botella por la coma flotante', c.pedir === 8, String(c.pedir));
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);

@@ -56,8 +56,20 @@
   function resumir(o) {
     const cargado = new Set((o.dias || []).filter(d => d && d.complete && d.closed).map(d => d.business_date));
     const botDia = new Map(), dinDia = new Map();
+    // Las botellas partidas en licor y vino, con la misma regla que el
+    // dinero (esLicor / esVino): el correo de la mañana enseña las dos
+    // filas. Sale de la categoría de Toast de cada botella (catPorDia,
+    // toast-usage.js); lo que no es ni licor ni vino no entra en ninguna.
+    const botCat = new Map();
     for (const p of o.productos || []) {
       for (const [f, b] of Object.entries(p.porDia || {})) botDia.set(f, (botDia.get(f) || 0) + b);
+      for (const [f, cs] of Object.entries(p.catPorDia || {})) {
+        const x = botCat.get(f) || { licor: 0, vino: 0 };
+        for (const [c, b] of Object.entries(cs || {})) {
+          if (esLicor(c)) x.licor += b; else if (esVino(c)) x.vino += b;
+        }
+        botCat.set(f, x);
+      }
     }
     const sinPrecio = new Map();
     for (const v of o.ventas || []) {
@@ -70,6 +82,10 @@
     }
     const botDe = (f) => botDia.get(f) || 0;
     const dinDe = (f) => { const x = dinDia.get(f); return x ? x.licor + x.vino : 0; };
+    const botLic = (f) => (botCat.get(f) || {}).licor || 0;
+    const botVin = (f) => (botCat.get(f) || {}).vino || 0;
+    const dinLic = (f) => (dinDia.get(f) || {}).licor || 0;
+    const dinVin = (f) => (dinDia.get(f) || {}).vino || 0;
 
     // Lo normal de un día: la mediana de su día de la semana en lo
     // cargado ANTES de él.
@@ -88,6 +104,9 @@
         fecha: f, dia: D[diaSemana(f)], cargado: cargado.has(f),
         botellas: r2(botDe(f)), licor: r2(din.licor), vino: r2(din.vino), dinero: r2(din.licor + din.vino),
         normalBotellas: normal(f, botDe), normalDinero: normal(f, dinDe),
+        botLicor: r2(botLic(f)), botVino: r2(botVin(f)),
+        normalBotLicor: normal(f, botLic), normalBotVino: normal(f, botVin),
+        normalLicor: normal(f, dinLic), normalVino: normal(f, dinVin),
         sinPrecio: sinPrecio.get(f) || 0
       });
     }

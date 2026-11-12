@@ -3906,6 +3906,17 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   body.m-shell .m-set-save:disabled { opacity: .6; }
 
+  /* ── Settings › Toast › Morning email ─────────────────────────────
+   * El botón arriba, para no tener que bajar por el correo entero; y
+   * debajo la vista, tal cual llegará (src/morning-report.js). El marco
+   * es blanco porque el correo lo es: en el fondo oscuro de la app se
+   * lee como una hoja aparte. Su alto lo pone el script al cargar. */
+  .m-mr-estado { margin-top: 10px; font-size: var(--m-small); color: #9fb0c4; line-height: 1.5; }
+  .m-mr-vista {
+    display: block; width: 100%; margin-top: 12px; height: calc(var(--m-base) * 40);
+    border: 1px solid rgba(255,255,255,.14); border-radius: 14px; background: #fff;
+  }
+
   /* ── El horario de entrega (Delivery, opción B) ──
    * En la lista, la línea de cada proveedor: verde con su horario, roja
    * si no tiene. La hoja vive en <body> (#mSheet), como todas: de ahí el

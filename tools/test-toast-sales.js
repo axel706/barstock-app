@@ -59,7 +59,11 @@ function datos() {
   ventas.push({ business_date: HOY, toast_item_name: "Tito's", sales_category: 'Liquor', net: 999, quantity: 1 });
   // Una fila sin precio el último martes: no suma como $0.
   ventas.push({ business_date: sumar(HOY, -1), toast_item_name: 'Rosé', sales_category: 'Wine', net: null, quantity: 1 });
-  return { dias, ventas, productos: [{ producto: "Tito's Vodka 1L", porDia }, { producto: 'Sauv Blanc', porDia: { [sumar(HOY, -1)]: 0.5 } }] };
+  // catPorDia: la categoría de Toast de cada botella (toast-usage.js).
+  const cat = (pd, c) => Object.fromEntries(Object.entries(pd).map(([f, b]) => [f, { [c]: b }]));
+  const sb = { [sumar(HOY, -1)]: 0.5 };
+  return { dias, ventas, productos: [{ producto: "Tito's Vodka 1L", porDia, catPorDia: cat(porDia, 'Liquor') },
+    { producto: 'Sauv Blanc', porDia: sb, catPorDia: cat(sb, 'Wine') }] };
 }
 
 function cargar(w) {
@@ -85,6 +89,12 @@ grupo('la semana y sus números');
   prueba('la fila sin precio no suma, y se cuenta', s[6].sinPrecio === 1, String(s[6].sinPrecio));
   prueba('un martes normal: la mediana de los martes de antes', s[6].normalBotellas === 2 && s[6].normalDinero === 250,
     s[6].normalBotellas + ' / ' + s[6].normalDinero);
+  // Para el correo de la mañana: lo mismo partido en licor y vino, con
+  // lo de siempre de cada uno.
+  prueba('botellas partidas: licor y vino', s[6].botLicor === 3 && s[6].botVino === 0.5, s[6].botLicor + ' / ' + s[6].botVino);
+  prueba('lo de siempre de cada uno, en botellas', s[6].normalBotLicor === 2 && s[6].normalBotVino === 0,
+    s[6].normalBotLicor + ' / ' + s[6].normalBotVino);
+  prueba('y en dinero', s[6].normalLicor === 200 && s[6].normalVino === 50, s[6].normalLicor + ' / ' + s[6].normalVino);
   prueba('el lunes cerrado: 0 y lo normal 0', s[5].dia === 'Mon' && s[5].botellas === 0 && s[5].normalBotellas === 0);
   // Con menos de cuatro muestras del día, no hay "normal".
   const corto = TS.resumir({ hoy: HOY, productos: D.productos, ventas: D.ventas,

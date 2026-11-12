@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 134 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 135 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -330,7 +330,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 134 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 135 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -525,7 +525,21 @@ que miente.
    → pide menos. **No hasta la siguiente entrega del proveedor:** a
    mitad de semana ningún proveedor vuelve a entregar, así que lo que
    falta se busca igual o parecido en LOOP, que se recoge al momento
-   (Axel). Falta decidir a quién va y a qué hora.
+   (Axel). Sin la etiqueta "from LOOP" (Axel la descartó), y "Won't
+   make it to Sunday" es UNA sección: se acaba hoy y no llega al domingo
+   juntos, por el día en que se acaba.
+   **Construido (2026-11-12), sólo a mano:** Settings › Toast › *Morning
+   email* (`src/morning-report.js`) reúne los números con los mismos
+   módulos del Home (`toast-sales.js`, `run-out.js` y su `cuantoPedir`),
+   enseña la vista y "Send to me" lo manda con "[Test]" en el asunto.
+   Las frases y el HTML los escribe `lib/morning-report.js`, por
+   `api/integrations.js?provider=report` (`preview` / `send`), y se
+   manda **sólo al correo de la sesión**: no acepta otro destinatario.
+   Si no se sabe qué se acaba (conteo a medias, poca historia, un
+   fallo), lo dice en vez de "nothing runs out". **Falta:** a quién va
+   y a qué hora, y que lo mande Vercel cada mañana. Para eso los números
+   tienen que calcularse en el servidor (hoy salen de la app); hacerlo
+   sin escribir dos veces el cálculo es lo que hay que resolver.
 
 **Visto de paso, sin tocar:** el pie de la lista de facturas del
 teléfono (`src/mobile-invoices.js`) dice que el stock sale del

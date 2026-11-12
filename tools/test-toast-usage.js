@@ -100,6 +100,29 @@ grupo('de una venta a botellas');
   prueba('el nombre de Toast casa sin mayúsculas', de(r, "Tito's") > 0);
 }
 
+grupo('las botellas de cada día, por categoría de Toast');
+{
+  // Para el correo de la mañana (Axel, 2026-11-12): las botellas de ayer
+  // partidas en licor y vino, como el dinero. Se apunta la categoría de
+  // venta de cada fila tal cual la dice Toast; quién es licor y quién
+  // vino lo decide toast-sales.js, en un solo sitio.
+  const U = ventana().BarStockToastUsage;
+  const tam = { 'Grey Goose 1L': 1000, 'Pinot Grigio': 750 };
+  const conCat = (x, c) => Object.assign(x, { sales_category: c });
+  const r = U.calcular([conCat(v('gg-up', 'Grey Goose', 2), 'Liquor'), conCat(v('pg-gl', 'Pinot Grigio', 5), 'Wine'),
+    conCat(v('e', 'Espresso Martini', 3), 'Liquor')], ENLACES, RECETAS, tam);
+  const P = (n) => r.productos.find(x => x.producto === n) || {};
+  const gg = (P('Grey Goose 1L').catPorDia || {})['2026-11-10'] || {};
+  prueba('el licor solo, bajo Liquor', cerca(gg.Liquor, 2 * 3 * OZ / 1000) && !gg.Wine, JSON.stringify(gg));
+  const pg = (P('Pinot Grigio').catPorDia || {})['2026-11-10'] || {};
+  prueba('el vino, bajo Wine', cerca(pg.Wine, 5 * 6 * OZ / 750), JSON.stringify(pg));
+  const km = (P('Kamora').catPorDia || {})['2026-11-10'] || {};
+  prueba('lo de un cóctel, bajo la categoría del cóctel', cerca(km.Liquor, 3 * OZ / 750), JSON.stringify(km));
+  const sin = U.calcular([v('gg-up', 'Grey Goose', 2)], ENLACES, RECETAS, tam).productos[0];
+  prueba('una fila sin categoría no se inventa una', !Object.keys((sin.catPorDia || {})['2026-11-10'] || {}).length || !!((sin.catPorDia || {})['2026-11-10'] || {})['(none)'],
+    JSON.stringify(sin.catPorDia));
+}
+
 grupo('lo que no se convierte se dice');
 {
   const U = ventana().BarStockToastUsage;

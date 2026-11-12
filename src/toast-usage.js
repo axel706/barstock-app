@@ -79,12 +79,21 @@
     const sinConvertir = new Map();
     const ml = (p) => Number((tamanos || {})[p]) || ML_SIN_TAMANO;
 
-    const sumar = (producto, fecha, botellas, de) => {
-      if (!productos.has(producto)) productos.set(producto, { producto, botellas: 0, porDia: {}, de: {} });
+    // `cat` es la categoría de venta de la fila, tal cual la dice Toast
+    // (Liquor, Wine…). catPorDia la guarda por día para partir las
+    // botellas en licor y vino (el correo de la mañana, toast-sales.js);
+    // quién es licor y quién vino se decide allí, en un solo sitio. Una
+    // fila sin categoría no se apunta en ninguna: no se le inventa una.
+    const sumar = (producto, fecha, botellas, de, cat) => {
+      if (!productos.has(producto)) productos.set(producto, { producto, botellas: 0, porDia: {}, de: {}, catPorDia: {} });
       const P = productos.get(producto);
       P.botellas += botellas;
       P.porDia[fecha] = (P.porDia[fecha] || 0) + botellas;
       P.de[de] = (P.de[de] || 0) + botellas;
+      if (cat) {
+        const c = P.catPorDia[fecha] || (P.catPorDia[fecha] = {});
+        c[cat] = (c[cat] || 0) + botellas;
+      }
     };
     const perder = (nombre, motivo, q) => {
       const k = nombre + '|' + motivo;
@@ -97,7 +106,7 @@
         if (!vale(l, m)) continue;
         const p = l.eleccion ? eleccion : l.producto;
         if (!p) { perder(v.toast_item_name, 'No bottle chosen for "' + l.etiqueta + '" in ' + R.nombre, q); continue; }
-        sumar(p, v.business_date, q * l.oz * ML_POR_OZ / ml(p), v.toast_item_name);
+        sumar(p, v.business_date, q * l.oz * ML_POR_OZ / ml(p), v.toast_item_name, v.sales_category);
       }
     };
 
@@ -111,7 +120,7 @@
         const R = e.kind === 'liquor' ? ms.map(x => mods.get(x)).find(Boolean) : null;
         if (R && !R.pendiente) { aplicar(R, v, q, e.item_name); continue; }
         const oz = e.pour_oz == null ? null : Number(e.pour_oz);
-        sumar(e.item_name, v.business_date, oz == null ? q : q * oz * ML_POR_OZ / ml(e.item_name), v.toast_item_name);
+        sumar(e.item_name, v.business_date, oz == null ? q : q * oz * ML_POR_OZ / ml(e.item_name), v.toast_item_name, v.sales_category);
         continue;
       }
       const R = cocteles.get(norm(v.toast_item_name));

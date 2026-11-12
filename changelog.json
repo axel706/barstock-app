@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261112-121916",
+    "items": [
+      "Morning email: preview and send yourself a test",
+      "Settings › Toast › Morning email"
+    ]
+  },
+  {
     "build": "20261112-085052",
     "items": [
       "Toast Sales card: Toast logo and last sync time",
@@ -184,13 +191,6 @@
     "build": "20261111-172959",
     "items": [
       "Live updates as soon as invoices come in"
-    ]
-  },
-  {
-    "build": "20261111-172152",
-    "items": [
-      "Inventory says when each bottle runs out",
-      "Out Sat · red within 2 days, amber this week"
     ]
   }
 ]

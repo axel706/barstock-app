@@ -24,9 +24,13 @@
 const { sesion } = require('../lib/integracion');
 const toast = require('../lib/toast');
 const tripleseat = require('../lib/tripleseat');
+// El correo de la mañana no es una integración, pero vive aquí por lo
+// mismo que ellas: el tope de 12 funciones está lleno, y aquí la sesión
+// ya se comprueba una vez antes de repartir.
+const report = require('../lib/morning-report');
 const { cronToast } = require('../lib/toast-cron');
 
-const PROVEEDORES = { toast, tripleseat };
+const PROVEEDORES = { toast, tripleseat, report };
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');

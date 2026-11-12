@@ -83,10 +83,12 @@ function entorno(guardado) {
     .map(e => e.firstChild.textContent.trim());
   // Siete desde el fondo del teléfono: Background, en Appearance. Ocho
   // desde Wine from Toast, en su propio grupo "Toast". Nueve desde Liquor
-  // from Toast, en el mismo grupo (2026-11-11).
-  prueba('diez entradas', items.length === 10, items.join(', '));
+  // from Toast, en el mismo grupo (2026-11-11). Once desde Morning email,
+  // también en Toast: Axel pidió poder mandarse el correo de la mañana a
+  // mano para probarlo, "en ajustes tal vez" (2026-11-12).
+  prueba('once entradas', items.length === 11, items.join(', '));
   prueba('y son las acordadas',
-    items.join(',') === 'Sender,Emails,Delivery,Zones,Wine from Toast,Liquor from Toast,Recipes,Typeface,Text size,Background',
+    items.join(',') === 'Sender,Emails,Delivery,Zones,Wine from Toast,Liquor from Toast,Recipes,Morning email,Typeface,Text size,Background',
     items.join(','));
   prueba('cada una enseña su valor', /Axel Torres/.test(host.textContent) &&
     /2 recipients/.test(host.textContent));

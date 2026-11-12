@@ -46,7 +46,9 @@
     { t: 'Toast', items: [
       { id: 'toastwine', ico: 'ti-glass-full', n: 'Wine from Toast', d: 'Match to your inventory' },
       { id: 'toastliquor', ico: 'ti-bottle', n: 'Liquor from Toast', d: 'Each brand to its bottle' },
-      { id: 'toastrecipes', ico: 'ti-glass-cocktail', n: 'Recipes', d: 'Each ingredient to its bottle' }
+      { id: 'toastrecipes', ico: 'ti-glass-cocktail', n: 'Recipes', d: 'Each ingredient to its bottle' },
+      // El correo de la mañana, para probarlo a mano (src/morning-report.js).
+      { id: 'morning', ico: 'ti-mail-forward', n: 'Morning email', d: 'Preview it or send a test to yourself' }
     ]},
     { t: 'Appearance', items: [
       { id: 'look', ico: 'ti-typography', n: 'Typeface',  d: 'The app font' },
@@ -602,6 +604,10 @@
     }
     if (_panel === 'toastliquor' && window.BarStockMobileToastLiquor) {
       window.BarStockMobileToastLiquor.montar(host, () => cabecera(host, 'Liquor from Toast'), () => volver(host));
+      return;
+    }
+    if (_panel === 'morning' && window.BarStockMorningReport) {
+      window.BarStockMorningReport.montar(host, () => cabecera(host, 'Morning email', 'This morning\'s report, built from the app\'s numbers. The test only goes to you.'), () => volver(host));
       return;
     }
     if (_panel === 'toastrecipes' && window.BarStockMobileToastRecipes) {

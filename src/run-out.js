@@ -74,6 +74,34 @@
     return null;
   }
 
+  // ── Cuánto pedir para llegar al domingo ──────────────────────────────
+  //
+  // Axel, 2026-11-12, para el correo de la mañana: lo que se suele vender
+  // cada día desde HOY hasta el DOMINGO, incluidas todas sus ventas (el
+  // conteo es el domingo al cerrar), menos lo que queda y lo que llega
+  // antes, redondeado hacia arriba a botellas enteras. Se acaba el
+  // miércoles → hacen falta más; el sábado → menos.
+  //
+  // NO hasta la siguiente entrega del proveedor: a mitad de semana ningún
+  // proveedor vuelve a entregar, y lo que falta se busca igual o parecido
+  // en LOOP, que se recoge al momento.
+  //
+  // Un LIVE negativo (se vendió más de lo contado) cuenta como cero: no
+  // hay botellas de menos en la estantería, hay un conteo que se quedó
+  // corto. El margen al redondear es para la coma flotante: 8.3 − 0.3 no
+  // puede pedir 9.
+  function cuantoPedir({ stock, med, viene, hoy }) {
+    const faltanDias = (7 - diaSemana(hoy)) % 7;
+    const hasta = sumarDias(hoy, faltanDias);
+    let vende = 0;
+    for (let k = 0; k <= faltanDias; k++) vende += (med && med[diaSemana(sumarDias(hoy, k))]) || 0;
+    let llega = 0;
+    for (const v of viene || []) if (diaNY(v.cuando) <= hasta) llega += Number(v.n) || 0;
+    const falta = vende - Math.max(0, Number(stock) || 0) - llega;
+    const pedir = falta > 1e-6 ? Math.ceil(falta - 1e-6) : 0;
+    return { hasta, vende, llega, pedir };
+  }
+
   // ── Leer y calcular ──────────────────────────────────────────────────
   async function ahora() {
     const L = window.BarStockLive, U = window.BarStockToastUsage;
@@ -91,5 +119,5 @@
     return { estado: 'listo', hoy, conteo: vivo.conteo, muestras: M.muestras, suficiente: M.suficiente, filas };
   }
 
-  window.BarStockRunOut = { medianas, proyectar, mediana, ahora, DIAS_HISTORIA, HORIZONTE, MIN_MUESTRAS };
+  window.BarStockRunOut = { medianas, proyectar, cuantoPedir, mediana, ahora, DIAS_HISTORIA, HORIZONTE, MIN_MUESTRAS };
 })();
