@@ -29,6 +29,7 @@ const tripleseat = require('../lib/tripleseat');
 // ya se comprueba una vez antes de repartir.
 const report = require('../lib/morning-report');
 const { cronToast } = require('../lib/toast-cron');
+const { cronManana } = require('../lib/morning-cron');
 
 const PROVEEDORES = { toast, tripleseat, report };
 
@@ -49,6 +50,12 @@ module.exports = async function handler(req, res) {
   // la acción `sync` del día que falte; cualquier otro GET sigue en 405.
   if (req.method === 'GET' && p === 'toast' && req.query && req.query.cron === 'sync') {
     try { return await cronToast(req, res, h); }
+    catch (e) { return res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
+  }
+  // El correo de la mañana, cada día (vercel.json). Lo llama Vercel, sin
+  // sesión: cronManana exige CRON_SECRET, como la carga de Toast.
+  if (req.method === 'GET' && p === 'report' && req.query && req.query.cron === 'morning') {
+    try { return await cronManana(req, res); }
     catch (e) { return res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
   }
   if (req.method !== 'POST') {

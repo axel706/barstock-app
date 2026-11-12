@@ -103,6 +103,9 @@ function entorno(o) {
     return { ok: true, status: 200, headers: { get: () => '' }, json: async () => [] };
   };
 
+  // La fila de la nube → state.master vive en inventory-row.js, que va
+  // antes en index.html (lo usa también el correo de la mañana).
+  new Function(fs.readFileSync(path.join(RAIZ, 'src/inventory-row.js'), 'utf8'))();
   new Function(fs.readFileSync(path.join(RAIZ, 'src/inventory-realtime.js'), 'utf8'))();
   return w;
 }

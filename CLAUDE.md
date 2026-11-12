@@ -540,10 +540,22 @@ que miente.
    migración 035, corrida), que el servidor lee de la base: nunca acepta
    destinatarios de la petición.
    Si no se sabe qué se acaba (conteo a medias, poca historia, un
-   fallo), lo dice en vez de "nothing runs out". **Falta:** a qué hora,
-   y que lo mande Vercel cada mañana a esa lista. Para eso los números
-   tienen que calcularse en el servidor (hoy salen de la app); hacerlo
-   sin escribir dos veces el cálculo es lo que hay que resolver.
+   fallo), lo dice en vez de "nothing runs out".
+   **Automático (2026-11-12), sólo para Axel:** Vercel lo llama cada día
+   a las 13 UTC (`vercel.json`; Hobby lo dispara dentro de esa hora: 8–9
+   AM en Nueva York en invierno, 9–10 en verano), después de las cargas
+   de Toast, y va **sólo al reply-to** de la locación de Toast (Settings
+   › Emails). La lista de *Morning email recipients* todavía no se usa
+   en el automático: es para cuando él lo diga. `lib/morning-cron.js`
+   corre en el servidor **los mismos archivos de `src/`** (vm, con un
+   `window` de mentira) y llama a `BarStockMorningReport.datos()`: un
+   solo cálculo. No carga `inventory-cloud.js` (trae los borrados);
+   `state.master` sale de `inventory_items` con `src/inventory-row.js`,
+   la conversión que usa la app. `vercel.json` le pone a
+   `api/integrations.js` `includeFiles: src/**` (se leen al correr, no
+   con `require`, y sin eso Vercel no los empaqueta) y `maxDuration: 60`.
+   La llave la exige `cronAutorizado()` de `lib/integracion.js`, la
+   misma de la carga de Toast.
 
 **Visto de paso, sin tocar:** el pie de la lista de facturas del
 teléfono (`src/mobile-invoices.js`) dice que el stock sale del

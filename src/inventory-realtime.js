@@ -77,9 +77,7 @@
     // contrasta el total con el que dice el servidor. Si no cuadra, se
     // lanza; quien llama ya sabe tratar un fallo de carga, y fallar es
     // infinitamente mejor que escribir medio inventario encima.
-    const COLS = 'code,item_name,vendor,on_hand,suggested,value,category,' +
-                 'order_override,par_adjusted_week,bottle_size_ml,bottle_shape,' +
-                 'created_at,last_opens';
+    const COLS = window.BarStockInventoryRow.COLS;
     const PAGINA = 1000;
     const H = { apikey: BARSTOCK_RT_KEY, Authorization: `Bearer ${BARSTOCK_RT_KEY}` };
 
@@ -136,45 +134,10 @@
     }
     _lastStamp = stamp;
 
-    state.master = rows.map(r => {
-      const onHand = Number(r.on_hand || 0);
-      const suggested = Number(r.suggested || 0);
-      // El override ahora viene de la nube. Antes se intentaba "rescatar" del
-      // state.master en memoria comparando nombre + vendor con igualdad exacta
-      // de texto y sin usar el codigo; cualquier diferencia minima, o dos
-      // articulos con el mismo nombre, hacia que se perdiera en silencio.
-      const override = (r.order_override === null || r.order_override === undefined)
-        ? ''
-        : Math.max(0, Number(r.order_override) || 0);
-      return {
-        code: r.code || '',
-        item: r.item_name || '',
-        itemNorm: typeof normalizeName === 'function' ? normalizeName(r.item_name || '') : (r.item_name || ''),
-        vendor: String(r.vendor || 'UNKNOWN').trim().toUpperCase(),
-        onHand,
-        suggested,
-        value: Number(r.value || 0),
-        category: r.category || null,
-        // Describen la BOTELLA, no el conteo. Se leen aqui y se reescriben
-        // en replaceInventoryMaster para que el import semanal no los
-        // borre, igual que category.
-        bottleSizeMl: r.bottle_size_ml || null,
-        bottleShape: r.bottle_shape || null,
-        // Semana en que Pour-IQ ya ajusto este articulo. Se escribia desde
-        // hace tiempo pero nunca se leia, por eso los articulos ajustados
-        // reaparecian como pendientes de inmediato.
-        parAdjustedWeek: r.par_adjusted_week || null,
-        // Para la gracia de los recien creados en BarStockDormant: un
-        // articulo dado de alta hoy no tiene stock ni par y se
-        // escondería en el acto sin esto.
-        createdAt: r.created_at || null,
-        // Como quedaron las abiertas en el ultimo conteo. Referencia
-        // para el siguiente, no dato de calculo.
-        lastOpens: Array.isArray(r.last_opens) ? r.last_opens.map(Number) : null,
-        toOrder: typeof computeToOrder === 'function' ? computeToOrder(onHand, suggested) : 0,
-        orderOverride: override
-      };
-    });
+    // La fila de la nube → la de state.master, en un solo sitio
+    // (src/inventory-row.js): el correo de la mañana la necesita también
+    // en el servidor, y dos copias acaban diciendo cosas distintas.
+    state.master = rows.map(r => window.BarStockInventoryRow.deNube(r));
 
     // ── La silueta viene del mapa GLOBAL ──────────────────────────────
     //

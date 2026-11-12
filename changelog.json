@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261112-125650",
+    "items": [
+      "The morning email now arrives on its own each day"
+    ]
+  },
+  {
     "build": "20261112-122729",
     "items": [
       "Morning email can go to a list of people",
@@ -186,12 +192,6 @@
     "build": "20261111-175020",
     "items": [
       "Inventory no longer says \"order N\" under each bottle"
-    ]
-  },
-  {
-    "build": "20261111-174447",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]

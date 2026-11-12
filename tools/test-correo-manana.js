@@ -269,6 +269,70 @@ grupo('la migración y Settings › Emails');
   prueba('otro error: el que fue', /permission denied/.test(err) && !/035/.test(err), err);
 }
 
+grupo('cada mañana, solo: Vercel lo manda al reply-to');
+{
+  // Axel, 2026-11-12: "hagámoslo automático, pero sólo para mí por ahora,
+  // al correo registrado en reply-to". Los números salen de los MISMOS
+  // módulos de src/ que usa la app, corridos en el servidor: no hay una
+  // segunda copia del cálculo.
+  const C = require(path.join(RAIZ, 'lib/morning-cron.js'));
+  const SB = 'https://sb.test';
+  Object.assign(process.env, { SUPABASE_URL: SB, SUPABASE_SERVICE_ROLE_KEY: 'srv', TOAST_RESTAURANT_GUID: 'guid-crown', RESEND_API_KEY: 'k-test' });
+  let ajustes = [{ location_id: 'loc-1', reply_to_email: 'axel@crown.test', morning_recipients: 'gm@crown.test, bar@crown.test' }];
+  const pedidas = [];
+  const fetchViejo = global.fetch;
+  global.fetch = async (u, o) => {
+    u = String(u); pedidas.push({ u, metodo: (o && o.method) || 'GET', llave: o && o.headers && (o.headers.apikey || o.headers.Authorization) });
+    const filas = /\/locations\?/.test(u) ? (/toast_restaurant_guid=eq\.guid-crown/.test(u) ? [{ id: 'loc-1', name: 'The Crown Tavern', account_id: 'wjm-hospitality' }] : [])
+      : /\/location_settings\?/.test(u) ? ajustes
+      : /\/inventory_items\?/.test(u) ? [{ code: 'T1', item_name: "Tito's", vendor: 'LOOP', on_hand: 2, suggested: 4, value: 20, bottle_size_ml: 1000 }]
+      : [];
+    return { ok: true, status: 200, headers: { get: (k) => /content-range/i.test(k) ? '0-' + (filas.length - 1) + '/' + filas.length : null },
+      json: async () => filas, text: async () => JSON.stringify(filas) };
+  };
+  const llamarCron = async (auth) => {
+    const res = { code: 200, body: null, setHeader() {}, status(c) { this.code = c; return this; }, json(b) { this.body = b; return this; }, end() { return this; } };
+    await C.cronManana({ method: 'GET', headers: { authorization: auth }, query: {} }, res);
+    return res;
+  };
+
+  delete process.env.CRON_SECRET;
+  enviados.length = 0;
+  let r = await llamarCron('Bearer x');
+  prueba('sin CRON_SECRET no corre, y lo dice', r.code === 500 && /CRON_SECRET/.test(r.body.error) && enviados.length === 0, JSON.stringify(r.body));
+  process.env.CRON_SECRET = 'cron-ok';
+  r = await llamarCron('Bearer otro');
+  prueba('con otra llave, 401 y nada', r.code === 401 && enviados.length === 0);
+
+  r = await llamarCron('Bearer cron-ok');
+  const e = enviados[0] || {};
+  prueba('lo manda', r.code === 200 && r.body.ok && enviados.length === 1, JSON.stringify(r.body).slice(0, 300));
+  prueba('SÓLO al reply-to, no a la lista (de momento)', JSON.stringify(e.to) === JSON.stringify(['axel@crown.test']), JSON.stringify(e.to));
+  prueba('es el de verdad: sin "[Test]"', /^The Crown Tavern/.test(e.subject || ''), e.subject);
+  prueba('el mismo correo de la app', /Good morning/.test(e.html || '') && /Sent via BarStock Pro/.test(e.html || ''));
+  prueba('los números salen de Supabase con la llave del servidor', pedidas.some(p => /toast_sales\?/.test(p.u)) && pedidas.some(p => /inventory_items\?/.test(p.u)) &&
+    pedidas.filter(p => p.u.startsWith(SB)).every(p => p.llave === 'srv' || p.llave === 'Bearer srv'), [...new Set(pedidas.map(p => p.u.split('?')[0]))].join(', '));
+  prueba('y sólo LEE: ni una escritura', pedidas.every(p => p.metodo === 'GET'), pedidas.filter(p => p.metodo !== 'GET').map(p => p.metodo + ' ' + p.u).join(' | '));
+  prueba('dice a quién y qué', r.body.to === 'axel@crown.test' && typeof r.body.asunto === 'string');
+
+  ajustes = [{ location_id: 'loc-1', reply_to_email: '', morning_recipients: 'gm@crown.test' }];
+  enviados.length = 0;
+  r = await llamarCron('Bearer cron-ok');
+  prueba('sin reply-to: no manda, y lo dice', r.code === 500 && /reply-to/i.test(r.body.error) && enviados.length === 0, JSON.stringify(r.body));
+  global.fetch = fetchViejo;
+
+  const v = JSON.parse(require('fs').readFileSync(path.join(RAIZ, 'vercel.json'), 'utf8'));
+  const cr = (v.crons || []).find(c => /provider=report/.test(c.path) && /cron=morning/.test(c.path));
+  // Hobby: una vez al día, y Vercel lo dispara dentro de esa hora. A las
+  // 13 UTC (8–9 AM en Nueva York en invierno), después de las dos cargas
+  // de Toast (10 y 12 UTC): así ayer ya está cargado.
+  prueba('Vercel lo llama una vez al día, después de las cargas de Toast', !!cr && /^0 13 \* \* \*$/.test(cr.schedule), JSON.stringify(cr));
+  // Los módulos de src/ se leen al correr, no con require: sin esto Vercel
+  // no los empaqueta con la función.
+  const fn = (v.functions || {})['api/integrations.js'] || {};
+  prueba('y la función lleva src/ consigo', /src\/\*\*/.test(String(fn.includeFiles || '')), JSON.stringify(fn));
+}
+
 grupo('en la app: los números salen de los mismos módulos');
 {
   const { JSDOM } = require('jsdom');
