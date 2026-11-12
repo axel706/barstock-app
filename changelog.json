@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-232503",
+    "items": [
+      "Bigger header icons: Time Machine, bell and back"
+    ]
+  },
+  {
     "build": "20261111-230108",
     "items": [
       "Sent and Invoices details: name in the header",
@@ -185,12 +191,6 @@
     "build": "20261111-164355",
     "items": [
       "Orders placed before today now show when they arrived"
-    ]
-  },
-  {
-    "build": "20261111-163527",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]

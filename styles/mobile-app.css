@@ -616,6 +616,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* El icono por encima del reflejo, o el brillo lo lava. */
   body.m-shell #mBand .m-ico > .ti,
   body.m-shell .m-fab > .ti { position: relative; z-index: 1; }
+  /* 22 px (14 × 1.57). Iban a 14 —el --m-body que hereda .m-ico— y en
+   * un círculo de 40 no se leían: el chevron de atrás medía 4 × 8 px.
+   * Axel, 2026-11-12, eligió 22 sobre lámina, con el chevron centrado
+   * tal cual: medido en Chromium, su trazo cae a menos de 0.2 px del
+   * centro. El aviso rojo no es un botón de cristal y no entra. */
+  body.m-shell #mBand .m-ico:not(.m-ico-alert) > .ti { font-size: calc(var(--m-base) * 1.57); }
 
   /* ── Día y locación ─────────────────────────────────────────────── */
   /* Juntos son el título de la PANTALLA, no el de la app. */

@@ -490,6 +490,13 @@ if (SRC) {
     // "Tiene un rebote, debería estar fija": el elástico de iOS al
     // llegar arriba. overscroll-behavior en el body no cuenta para el
     // scroll de la página; tiene que ir en el <html>.
+    // "Necesitan ser un poco más grandes y legibles" (2026-11-12): los
+    // iconos de la banda (Time Machine, campana, chevron) iban a 14 px
+    // dentro de un círculo de 40; el chevron medía 4 × 8. Eligió 22 px,
+    // de la escala, con el chevron centrado tal cual (sin moverlo).
+    const ico = (/#mBand \.m-ico:not\(\.m-ico-alert\) > \.ti\s*\{([^}]*)\}/.exec(css) || [])[1] || '';
+    prueba('los iconos de la banda, a 22 px de la escala', /font-size\s*:\s*calc\(var\(--m-base\) \* 1\.57\)/.test(ico), ico.trim());
+    prueba('y el chevron sin desplazar', !/ti-chevron-left[^{]*\{[^}]*translate/.test(css));
     prueba('sin rebote: overscroll-behavior en el html', /(^|[\s,}])html\s*\{[^}]*overscroll-behavior(-y)?\s*:\s*none/.test(css));
   }
 
