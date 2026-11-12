@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-221121",
+    "items": [
+      "Long product names no longer spill out of Top movers"
+    ]
+  },
+  {
     "build": "20261111-214718",
     "items": [
       "Home: Sales, Movement and Changes in tabs",
@@ -186,12 +192,6 @@
     "build": "20261111-161133",
     "items": [
       "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261111-160151",
-    "items": [
-      "Settings: its name sits in the header too"
     ]
   }
 ]

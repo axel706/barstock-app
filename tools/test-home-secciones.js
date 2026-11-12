@@ -159,6 +159,19 @@ grupo('Changes');
   prueba('un lado vacío lo dice', /Nothing went quiet/.test(txt(host.querySelector('#mhCamb'))));
 }
 
+grupo('nada se sale de la tarjeta');
+{
+  // En el teléfono, "Nino Ardevi Prosecco Extra Dry Veneto Vintage"
+  // empujó "↘ 10% vs usual" fuera de la tarjeta (2026-11-12): nada en la
+  // fila del número grande podía encogerse. jsdom no mide; se mira la
+  // regla que lo impide.
+  const css = leer('styles/mobile-app.css');
+  const span = (/\.m-ts-t span\s*\{([^}]*)\}/.exec(css) || [])[1] || '';
+  const em = (/\.m-ts-t em\s*\{([^}]*)\}/.exec(css) || [])[1] || '';
+  prueba('el nombre se corta con "…"', /min-width:\s*0/.test(span) && /text-overflow:\s*ellipsis/.test(span) && /overflow:\s*hidden/.test(span), span.trim());
+  prueba('y la comparación no cede', /flex:\s*0 0 auto/.test(em) && /white-space:\s*nowrap/.test(em), em.trim());
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
 })();

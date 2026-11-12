@@ -1630,10 +1630,17 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   body.m-shell .m-ts-seg button.on { background: #7dd3fc; color: #04283d; }
   .m-ts-t { display: flex; align-items: baseline; gap: 8px; margin-top: 12px; }
-  .m-ts-t b { font-size: var(--m-screen); font-weight: 800; color: #fff; letter-spacing: -.6px; }
-  .m-ts-t span { font-size: var(--m-small); color: #c3d2e2; white-space: nowrap; }
+  /* El texto del medio es el único que cede: con un nombre largo ("29.6
+   * btl/wk · Nino Ardevi Prosecco Extra Dry Veneto Vintage") empujaba la
+   * comparación fuera de la tarjeta, porque nada en esta fila podía
+   * encogerse. Ahora se corta con "…"; el número y la comparación, no. */
+  .m-ts-t b { flex: 0 0 auto; font-size: var(--m-screen); font-weight: 800; color: #fff; letter-spacing: -.6px; }
+  .m-ts-t span {
+    flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis;
+    font-size: var(--m-small); color: #c3d2e2; white-space: nowrap;
+  }
   .m-ts-t em {
-    margin-left: auto; font-style: normal; text-align: right;
+    flex: 0 0 auto; margin-left: auto; font-style: normal; text-align: right; white-space: nowrap;
     font-size: var(--m-meta); font-weight: 700; color: #a9bacd;
   }
   .m-ts-t em.m-ts-up { color: #86efac; }
