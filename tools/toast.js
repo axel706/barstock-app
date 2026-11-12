@@ -126,7 +126,7 @@
     // enseñaba sólo las del primero, y así no salió "Banquet Beverage",
     // que sólo aparece los días con evento.
     const guardadas = new Set(), fuera = new Set();
-    const res = { cargados: 0, filas: 0, incompletos: [], categorias: null };
+    const res = { cargados: 0, filas: 0, incompletos: [], sinDinero: [], categorias: null };
     for (let i = 0; i < faltan.length; i++) {
       if (window.bsToastParar) { console.log('Parado. Lo cargado se queda.'); break; }
       const d = faltan[i];
@@ -145,6 +145,14 @@
       }
       res.cargados++; res.filas += j.filas;
       if (!j.diaCompleto) res.incompletos.push(d);
+      // Sin la migración 034 las ventas se guardan sin el dinero (la
+      // carga no se para por eso: alimenta el LIVE). Rehacer la historia
+      // así no serviría de nada, y se dice en vez de seguir en silencio.
+      if (j.dinero === false) {
+        res.sinDinero.push(d);
+        console.warn(d + ' se guardó SIN dinero: ' + (j.aviso || '') + ' Corre la 034 y vuelve a llamar.');
+        break;
+      }
       for (const c of (j.categorias && j.categorias.guardadas) || []) guardadas.add(c);
       for (const c of (j.categorias && j.categorias.fuera) || []) fuera.add(c);
       console.log((i + 1) + '/' + faltan.length + '  ' + d + '  · ' + j.ordenes + ' órdenes · ' + j.filas + ' filas' +

@@ -47,7 +47,8 @@ function entorno(o) {
     // primero: así se escondió "Banquet Beverage" la primera vez.
     const evento = w.__llamadas.length === 2;
     const j = (o.falla === d) ? { ok: false, paso: 'orders', status: 500 }
-      : { ok: true, filas: 10, ordenes: 50, diaCompleto: true,
+      : { ok: true, filas: 10, ordenes: 50, diaCompleto: true, dinero: !o.sinDinero,
+          aviso: o.sinDinero ? 'Sales saved without money (migration 034).' : undefined,
           categorias: evento ? { guardadas: ['Banquet Beverage', 'Liquor'], fuera: ['Food'] } : { guardadas: ['Liquor'], fuera: ['Food'] } };
     return { status: 200, json: async () => j };
   };
@@ -90,6 +91,22 @@ grupo('otraVez: vuelve a cargar lo ya cargado');
   await w.bsToastHistoria(2, { otraVez: true });
   const dias = w.__llamadas.map(p => p.params.businessDate);
   prueba('ayer se vuelve a pedir', dias.includes(ayer.replace(/-/g, '')), dias.join(','));
+}
+
+grupo('sin la migracion 034: se para y lo dice');
+{
+  // Rehacer la historia para tener el dinero (Axel, 2026-11-12) sin la
+  // 034 corrida guardaría todo otra vez SIN dinero: se para en el primer
+  // día y lo apunta, en vez de recorrer los 90 en balde.
+  const w = entorno({ sinDinero: true });
+  const r = await w.bsToastHistoria(5, { otraVez: true });
+  prueba('se para en el primer dia', w.__llamadas.length === 1, String(w.__llamadas.length));
+  prueba('y lo apunta', r.sinDinero.length === 1, JSON.stringify(r.sinDinero));
+}
+{
+  const w = entorno();
+  const r = await w.bsToastHistoria(3);
+  prueba('con la 034, nada que apuntar', r.sinDinero.length === 0 && w.__llamadas.length === 4, JSON.stringify(r));
 }
 
 grupo('se para en el primer error');

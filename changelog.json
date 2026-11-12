@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-192248",
+    "items": [
+      "Behind-the-scenes fixes"
+    ]
+  },
+  {
     "build": "20261111-185712",
     "items": [
       "Running out first only shows bottles with a par"
@@ -183,12 +189,6 @@
     "build": "20261110-214332",
     "items": [
       "Liquor from Toast in Settings: link each brand to its bottle"
-    ]
-  },
-  {
-    "build": "20261110-213750",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]

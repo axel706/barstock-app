@@ -76,7 +76,7 @@ global.fetch = async (url, op) => {
   const clave = Object.keys(respuestas).find(k => url.includes(k));
   // Una respuesta puede ser una función de la URL: las páginas de un día.
   const r0 = clave ? respuestas[clave] : { status: 404, body: { message: 'no route' } };
-  const r = typeof r0 === 'function' ? r0(url) : r0;
+  const r = typeof r0 === 'function' ? r0(url, op) : r0;
   return { ok: r.status < 400, status: r.status, text: async () => JSON.stringify(r.body) };
 };
 
@@ -582,6 +582,72 @@ grupo('sync: guarda lo vendido de bebida de un dia');
   require(path.join(RAIZ, 'lib/toast.js'))._olvidarCatalogo();
   const r5 = await llamar({ accion: 'sync', params: { businessDate: '20261105', locationId: LOC } });
   prueba('sin categorias no se adivina que es bebida: no escribe', r5.body.ok === false && r5.body.paso === 'categorias' && !aLaBase().some(p => p.metodo !== 'GET'), JSON.stringify(r5.body));
+}
+
+grupo('sync: guarda tambien el dinero (net sales)');
+{
+  // Axel, 2026-11-12: la tarjeta Toast Sales del Home enseña el dinero
+  // (net sales, sin cerveza). Hasta aquí sync sólo guardaba cantidades.
+  // Se guarda por fila:
+  //   net             Σ price: después de descuentos, sin impuesto.
+  //   mods_price      Σ precio de los modificadores, APARTE: no se ha
+  //                   medido si Toast ya los mete en `price`, y así se
+  //                   decide al medir sin volver a cargar nada.
+  //   sales_category  la categoría de venta de Toast (Liquor, Wine…).
+  // Una línea sin `price` deja el neto de su fila en null: un hueco no es
+  // un $0.
+  const LOC = '11111111-2222-3333-4444-555555555555';
+  const menu = { menus: [{ name: 'DRINKS', menuGroups: [
+    { name: 'Liquor', menuGroups: [{ name: 'Vodka', menuItems: [{ guid: 'l-tito', name: "Tito's" }] }] } ] }] };
+  const sel = (g, cat, q, extra) => Object.assign({ item: { guid: g }, displayName: g, salesCategory: { guid: cat }, quantity: q }, extra || {});
+  const doble = { item: { guid: 'm-dbl' }, displayName: 'Double', price: 4 };
+  const ordenes = [{ checks: [{ selections: [
+    sel('l-tito', 'c-liq', 2, { price: 20, modifiers: [doble] }),
+    sel('l-tito', 'c-liq', 1, { price: 9, modifiers: [doble] }),
+    sel('l-tito', 'c-liq', 1, { price: 10 }),
+    sel('w-sb', 'c-wine', 2, { price: 24.5 }),
+    sel('w-x', 'c-wine', 1)
+  ] }] }];
+  let columnas = true;
+  const rutas = () => ({
+    '/authentication/': LOGIN_OK,
+    '/config/v2/salesCategories': { status: 200, body: [{ guid: 'c-liq', name: 'Liquor' }, { guid: 'c-wine', name: 'Wine' }] },
+    '/menus/v2/menus': { status: 200, body: menu },
+    '/orders/v2/ordersBulk': (url) => ({ status: 200, body: /page=1(&|$)/.test(url) ? ordenes : [] }),
+    'sb.test/rest/v1/locations': { status: 200, body: [{ toast_restaurant_guid: GUID }] },
+    'sb.test/rest/v1/toast_sales_days': { status: 201, body: [] },
+    // Sin la migración 034, PostgREST no conoce las columnas nuevas.
+    'sb.test/rest/v1/toast_sales': (url, op) => (!columnas && op && op.method === 'POST' && /"net"/.test(op.body || '')
+      ? { status: 400, body: { code: 'PGRST204', message: "Could not find the 'mods_price' column of 'toast_sales' in the schema cache" } }
+      : { status: 201, body: [] })
+  });
+  const insertadas = () => peticiones.filter(p => p.metodo === 'POST' && /\/toast_sales(\?|$)/.test(p.url.replace('https://sb.test/rest/v1', '')));
+
+  entorno();
+  require(path.join(RAIZ, 'lib/toast.js'))._olvidarCatalogo();
+  respuestas = rutas();
+  const r = await llamar({ accion: 'sync', params: { businessDate: '20261105', locationId: LOC } });
+  const ins = insertadas();
+  const cuerpo = ins.length ? JSON.parse(ins[ins.length - 1].cuerpo) : [];
+  const de = (g, m) => cuerpo.find(x => x.toast_item_guid === g && x.mods === m);
+  prueba('contesta bien', r.body && r.body.ok === true, JSON.stringify(r.body).slice(0, 200));
+  prueba('el neto de la fila suma sus lineas (20 + 9)', de('l-tito', 'Double') && de('l-tito', 'Double').net === 29, JSON.stringify(de('l-tito', 'Double')));
+  prueba('los modificadores aparte (4 + 4)', de('l-tito', 'Double') && de('l-tito', 'Double').mods_price === 8);
+  prueba('sin modificadores con precio, 0', de('l-tito', '') && de('l-tito', '').mods_price === 0 && de('l-tito', '').net === 10);
+  prueba('con su categoria de venta', de('l-tito', '').sales_category === 'Liquor' && de('w-sb', '').sales_category === 'Wine');
+  prueba('una linea sin precio: neto null, no 0', de('w-x', '') && de('w-x', '').net === null, JSON.stringify(de('w-x', '')));
+  prueba('y dice que guardo el dinero', r.body.dinero === true, JSON.stringify(r.body).slice(0, 200));
+
+  // Sin la migración: no puede dejar de cargar las ventas, que alimentan
+  // el LIVE. Guarda lo de siempre y dice que el dinero no entró.
+  columnas = false;
+  respuestas = rutas();
+  const r2 = await llamar({ accion: 'sync', params: { businessDate: '20261105', locationId: LOC } });
+  const ins2 = insertadas();
+  const ult = ins2.length ? JSON.parse(ins2[ins2.length - 1].cuerpo) : [];
+  prueba('sin la migracion 034, la carga sigue', r2.body.ok === true, JSON.stringify(r2.body).slice(0, 300));
+  prueba('reintenta sin las columnas nuevas', ins2.length === 2 && ult.length === cuerpo.length && !('net' in ult[0]) && !('sales_category' in ult[0]), JSON.stringify(ult[0]));
+  prueba('y lo dice, sin adivinar', r2.body.dinero === false && /034/.test(r2.body.aviso || ''), JSON.stringify(r2.body).slice(0, 300));
 }
 
 grupo('la sesion se comprueba una vez, antes de repartir');
