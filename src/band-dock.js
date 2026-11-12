@@ -436,7 +436,11 @@
       // se pisen: el título grande se va primero, el del header entra
       // después, y el desenfoque al final, cuando ya no queda título
       // grande que emborronar. Cada tramo va suavizado.
-      const p = entre(a.scroll.scrollTop / a.recorrido);
+      // `siempre` (Inventory, Axel 2026-11-12): la pantalla entra ya
+      // acoplada —el nombre en el header, el bloque pegado, el
+      // desenfoque puesto— y así se queda. No hay título grande que
+      // desvanecer ni recorrido que medir.
+      const p = a.siempre ? 1 : entre(a.scroll.scrollTop / a.recorrido);
       // El grande ya no se ve cuando llega a la altura del logo: en el
       // navegador pasaba por detrás de él, los dos legibles a la vez.
       if (a.titulo) est(a.titulo, 'opacity', p <= 0 ? null : dos(1 - suave(entre(p / 0.6))));
@@ -519,6 +523,7 @@
     const r = { pantalla: o.pantalla, barra: o.barra || null, desvanecer: o.desvanecer || [], fija: !!o.fija,
       scroll: (o.fija || o.pegado) && o.scroll ? o.scroll : null, copia: null,
       pegado: o.pegado || null, titulo: o.titulo || null, nombre: o.nombre || '', velo: null, marca: null,
+      siempre: !!o.siempre,
       tambien: o.tambien || null };
     if (r.fija) o.barra.classList.add('m-dock-fija');
     if (r.scroll && !r.scroll.classList.contains('m-dock-scroll')) {

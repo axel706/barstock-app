@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-222112",
+    "items": [
+      "Inventory opens with its header already in place"
+    ]
+  },
+  {
     "build": "20261111-221121",
     "items": [
       "Long product names no longer spill out of Top movers"
@@ -186,12 +192,6 @@
     "items": [
       "Quick order asks if it's already here",
       "Live counts it now or at the vendor's next delivery"
-    ]
-  },
-  {
-    "build": "20261111-161133",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]

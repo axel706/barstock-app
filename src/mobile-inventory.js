@@ -726,16 +726,17 @@
     // ── La lista con su propio scroll ──────────────────────────────
     //
     // Todo va dentro de #miScroll, y las pestañas con el filtro dentro
-    // de #miPegado: al bajar, "Inventory" pasa al header en el sitio del
-    // logo y ese bloque se queda pegado debajo, con el desenfoque
-    // empezando bajo el filtro (Axel, 2026-11-09). Lo hace band-dock.js;
-    // sin él, los dos envoltorios no cambian nada.
+    // de #miPegado, pegado bajo el header con el desenfoque empezando
+    // bajo el filtro. Lo hace band-dock.js; sin él, los dos envoltorios
+    // no cambian nada.
+    //
+    // Desde 2026-11-12 la pantalla entra YA acoplada (Axel, con dos
+    // capturas): "Inventory" en el header en el sitio del logo y el
+    // bloque fijo desde el principio. Antes había un título grande en la
+    // página ("Inventory · 264 items") que se desvanecía al bajar; ya no
+    // está, y el total lo dice "Everything 264".
     host.innerHTML = `
       <div id="miScroll">
-      <div class="m-inv-h">
-        <span class="m-inv-t">Inventory</span>
-        <span class="m-inv-c" id="miTotal"></span>
-      </div>
 
       <!-- El segmentado ANTES del buscador, igual que en Orders.
            Primero eliges sobre qué conjunto trabajas —lo que hay que
@@ -794,15 +795,12 @@
 
   function show(host) {
     cargarVivo(host);
-    const tot = host.querySelector('#miTotal');
-    if (tot) tot.textContent = master().length ? master().length + ' items' : '…';
     pintarCabecera(host);
     pintarLista(host);
     const D = window.BarStockBandDock;
     const sc = host.querySelector('#miScroll'), blo = host.querySelector('#miPegado');
     if (D && sc && blo) {
-      D.enganchar({ pantalla: host, scroll: sc, pegado: blo,
-        titulo: host.querySelector('.m-inv-h'), nombre: 'Inventory' });
+      D.enganchar({ pantalla: host, scroll: sc, pegado: blo, nombre: 'Inventory', siempre: true });
     }
   }
 

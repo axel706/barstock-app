@@ -420,6 +420,36 @@ if (SRC) {
     prueba('al volver a la pestaña, la lista empieza arriba', sc.scrollTop === 0 && q() === '0', sc.scrollTop + ' | ' + q());
   })();
 
+  grupo('Inventory desde 2026-11-12: el header acoplado desde que entras');
+  await (async () => {
+    // Axel, 2026-11-12, con dos capturas: Inventory tiene que entrar ya
+    // como acaba al bajar —"Inventory" en el header en el sitio del logo,
+    // pestañas y filtro fijos— y no esperar a que haya scroll. Sin título
+    // grande en la página. Lo pide la pantalla con `siempre`.
+    const w = new JSDOM('<!doctype html><html><body class="m-shell"><header id="mBand" class="m-band"><span class="m-logo">BarStock</span></header>' +
+      '<div id="mScreens"><div class="m-screen on" data-screen="inventory"><div id="miScroll">' +
+      '<div id="blo"><div class="m-seg"></div><div class="m-inv-bar2"><input id="miInput"></div></div>' +
+      '<div id="miList"></div></div></div></div></body></html>',
+      { url: 'https://x.test/', runScripts: 'outside-only' }).window;
+    w.requestAnimationFrame = (f) => { f(); return 1; };
+    const band = w.document.getElementById('mBand');
+    band.getBoundingClientRect = () => ({ top: 0, bottom: BANDA, height: BANDA });
+    w.eval(SRC);
+    const inv = w.document.querySelector('[data-screen="inventory"]');
+    const sc = w.document.getElementById('miScroll'), blo = w.document.getElementById('blo');
+    blo.getBoundingClientRect = () => ({ top: D0, bottom: D0 + 110, height: 110, left: 13, width: 364 });
+    w.BarStockBandDock.enganchar({ pantalla: inv, scroll: sc, pegado: blo, nombre: 'Inventory', siempre: true });
+    w.BarStockBandDock.medir();
+    const q = () => band.style.getPropertyValue('--m-dock-q');
+    const bt = band.querySelector('.m-band-titulo');
+    prueba('sin bajar nada, "Inventory" ya está en el header', !!bt && bt.textContent === 'Inventory' && q() === '1', q());
+    prueba('y pestañas y filtro van pegados', blo.classList.contains('m-dock-pegado'));
+    sc.scrollTop = 200; sc.dispatchEvent(new w.Event('scroll'));
+    prueba('al bajar sigue igual', q() === '1');
+    sc.scrollTop = 0; sc.dispatchEvent(new w.Event('scroll'));
+    prueba('y al volver arriba no regresa el logo', q() === '1', q());
+  })();
+
   grupo('lo que vio Axel en el iPhone (2026-11-09)');
   {
     // Sin las reglas comentadas: la que manda es la última y la de verdad.
@@ -527,7 +557,10 @@ if (SRC) {
     prueba('mobile-search.js fija su barra con la lista aparte', /BarStockBandDock[\s\S]{0,300}fija:\s*true[\s\S]{0,80}scroll:/.test(bus));
     prueba('band-dock.js antes que mobile-search.js', i > 0 && i < html.indexOf('src/mobile-search.js'));
     const invSrc = fs.readFileSync(path.join(RAIZ, 'src/mobile-inventory.js'), 'utf8');
-    prueba('mobile-inventory.js pega su bloque y pasa el título', /BarStockBandDock[\s\S]{0,400}pegado:[\s\S]{0,120}titulo:/.test(invSrc));
+    // Desde 2026-11-12 Inventory no tiene título grande: entra acoplada
+    // (`siempre`) con su nombre en el header.
+    prueba('mobile-inventory.js pega su bloque, con su nombre y acoplada desde el principio',
+      /BarStockBandDock[\s\S]{0,400}pegado:[\s\S]{0,120}nombre: 'Inventory', siempre: true/.test(invSrc));
     prueba('band-dock.js antes que mobile-inventory.js', i > 0 && i < html.indexOf('src/mobile-inventory.js'));
     prueba('band-dock.js antes que mobile-orders.js', i > 0 && i < html.indexOf('src/mobile-orders.js'));
     const css2 = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
