@@ -73,8 +73,10 @@ function pintar(w) {
   return host;
 }
 
-// La tarjeta de órdenes es la tercera: bienvenida, ciclo, órdenes.
-const ord = (h) => h.querySelectorAll('.m-hero')[2];
+// La tarjeta de órdenes, por lo que dice y no por su sitio: era la
+// tercera (bienvenida, ciclo, órdenes) y al quitarse la bienvenida
+// (2026-11-12) la posición fija apuntó a otra.
+const ord = (h) => [...h.querySelectorAll('.m-hero')].find(c => /Orders waiting|Orders placed/.test(c.textContent));
 const txt = (h) => ord(h).textContent.replace(/\s+/g, ' ');
 
 // `toOrder` es el campo real de una fila de inventario pendiente de

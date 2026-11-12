@@ -717,205 +717,14 @@
     return Promise.resolve(window.confirm(o.titulo));
   }
 
-  // ── La bienvenida ────────────────────────────────────────────────────
+  // ── Sin bienvenida ni consejos (Axel, 2026-11-12) ───────────────────
   //
-  // Primera y siempre. Dice lo único que alguien nuevo necesita saber
-  // antes de tocar nada: que este teléfono es para CONTAR, y que
-  // colocar órdenes y lo demás vive en el escritorio. Escrito como un
-  // reparto deliberado y no como una disculpa — "esto vive allí" en vez
-  // de "esto no se puede aquí" — porque es lo segundo lo que suena a
-  // versión recortada.
-  //
-  // No lleva botón: lo que pide es un gesto, no un toque, y un botón
-  // que dice "desliza" es una contradicción. La pista se queda abajo,
-  // a la altura de los botones de las otras tarjetas, porque todas las
-  // del carril miden lo mismo.
-  //
-  // Es FIJA. Si algún día estorba, quitarla es devolver false aquí:
-  //   if (yaCerroUnCiclo()) return null;
-  // ── Los consejos ────────────────────────────────────────────────
-  //
-  // La tarjeta decía siempre lo mismo, y lo que decía —"esto sirve
-  // para escanear"— se aprende el primer día. A partir del segundo era
-  // un hueco ocupado en la primera posición del carrusel.
-  //
-  // Ahora rota entre funciones que NADIE descubre solo. El criterio
-  // para entrar aquí es ése: si se encuentra pulsando por la app, no
-  // hace falta contarlo.
-  //
-  // ── Tres renglones, y ni uno más ─────────────────────────────────
-  //
-  // El cuerpo de la plantilla mide tres renglones clavados para todas
-  // las tarjetas. Un consejo más largo se corta a media palabra y eso
-  // parece un fallo de pintado. Hay una prueba que lo mide.
-  const CONSEJOS = [
-    {
-      // El rótulo va en mayúsculas como los demás, pero el wordmark
-      // conserva su caja: es una etiqueta que contiene un nombre
-      // propio, igual que "WELCOME TO eBay" en prensa.
-      k: 'Welcome to <span class="m-brand">BarStock<i class="m-logo-dot"></i>Pro</span>',
-      kHtml: true,
-      tt: 'Good to have you',
-      // Decía que colocar órdenes vivía en el escritorio. Era verdad
-      // cuando se escribió y dejó de serlo el día que el teléfono
-      // aprendió a colocarlas y a mandarlas por correo. Un consejo
-      // desactualizado enseña a no usar lo que sí se puede.
-      sub: 'Counting, stock, orders and invoices all work from here. The ' +
-           'deeper reports live on desktop.',
-      icoR: 'scan'
-    },
-    {
-      // La que más duele no saber: sin esto la resta del consumo
-      // cuenta como inexistentes las botellas que compraste tú.
-      //
-      // Y dice el camino. Decía "open the bottle", que no significa
-      // nada: a la ficha sólo se llega buscando.
-      k: 'Did you know',
-      tt: 'Went to the store?',
-      sub: 'Search the bottle, tap Received and put in how many. It adds to ' +
-           'what came in this week so your usage adds up — your on hand only ' +
-           'changes by counting.',
-      icoR: 'truck-delivery'
-    },
-    {
-      k: 'Did you know',
-      tt: 'Order from your phone',
-      sub: 'Orders › Open, pick a vendor, then Review and send. The PDF goes ' +
-           'out by email exactly like on desktop.',
-      icoR: 'send'
-    },
-    {
-      k: 'Did you know',
-      tt: 'Invoices live here too',
-      sub: 'Orders › Invoices shows what came in this cycle. A line pointing ' +
-           'at the wrong bottle — or at none — gets fixed right there.',
-      icoR: 'file-invoice'
-    },
-    {
-      k: 'Did you know',
-      tt: 'Short or over?',
-      sub: 'When invoices come in, each sent order is compared to what ' +
-           'arrived. Orders › Sent marks the ones that came up short and the ' +
-           'ones that came over.',
-      icoR: 'scale'
-    },
-    {
-      k: 'Did you know',
-      tt: 'Order off-cycle',
-      sub: 'Orders › Quick order. Pick the vendor, add what you need, and it ' +
-           'goes out by email with its PDF like any other order.',
-      icoR: 'bolt'
-    },
-    {
-      k: 'Did you know',
-      tt: 'Prices wait for you',
-      sub: 'When MarginEdge brings a price different from yours, the bell ' +
-           'tells you. You look at the list and approve them all at once.',
-      icoR: 'tag'
-    },
-    {
-      // ── Sin jerga ─────────────────────────────────────────────────
-      //
-      // La primera versión contaba la mecánica: media ponderada, un
-      // 35% de colchón, la corrección por semanas agotadas. Todo eso
-      // es cierto y a nadie detrás de una barra le importa. Lo que
-      // hace falta saber es qué hace, para qué sirve y dónde está.
-      k: 'Did you know',
-      tt: 'Pour·IQ has an opinion',
-      sub: 'It knows which bottles you keep running out of and which ones ' +
-           'just sit there. Search a bottle and it tells you the number ' +
-           'worth keeping.',
-      icoR: 'brain'
-    }
-  ];
-
-  // ── La app te recibe con una distinta cada vez ──────────────────
-  //
-  // El índice sobrevive al cierre. Sin esto, cada arranque empezaba
-  // por la bienvenida —que se aprende el primer día— y las otras
-  // siete sólo las veía quien dejara el Home abierto varios minutos.
-  // O sea casi nadie.
-  //
-  // Se avanza AL CARGAR, no al salir: cerrar la app de golpe no
-  // dispara ningún evento fiable en iOS, y una marca que depende de
-  // despedirse bien se queda atascada.
-  //
-  // La primera vez de todas empieza en la bienvenida, que para eso
-  // está la primera.
-  const CLAVE_CONSEJO = 'bs_consejo';
-
-  let _consejo = (() => {
-    let prev = null;
-    try { prev = window.localStorage.getItem(CLAVE_CONSEJO); } catch (e) {}
-    // Sin marca previa: la bienvenida. Con marca: la siguiente.
-    const n = prev === null ? 0 : (Number(prev) + 1);
-    return Number.isFinite(n) && n >= 0 ? n : 0;
-  })();
-
-  function recordarConsejo() {
-    try { window.localStorage.setItem(CLAVE_CONSEJO, String(_consejo)); } catch (e) {}
-  }
-  recordarConsejo();
-
-  function tarjetaBienvenida() {
-    return Object.assign({}, CONSEJOS[_consejo % CONSEJOS.length], {
-      // Verde y no el verde azulado del ciclo: eran vecinas y las dos
-      // del mismo color, así que deslizar de una a otra no se notaba.
-      tono: 'verde',
-      // Esta tarjeta no tiene columna de cifras ni botón, así que el
-      // texto se queda con el ancho entero y puede ser más grande.
-      ancha: true,
-      tip: true,
-      pista: 'Swipe to discover more',
-      amt: '', vs: '', btn: ''
-    });
-  }
-
-  // ── Rotar sin repintar el carrusel ──────────────────────────────
-  //
-  // Se reescribe el texto DE ESA TARJETA y nada más. Repintar el Home
-  // entero devolvería el carrusel a la primera posición, así que a
-  // quien esté mirando la tarjeta del ciclo se la moverían de debajo
-  // del dedo cada minuto.
-  //
-  // Un minuto, no unos segundos: el texto cambia mientras alguien
-  // puede estar leyéndolo, y lo único peor que un cartel que no se lee
-  // es uno que se va a media frase.
-  const CADA_MS = 60 * 1000;
-  let _relojTip = null;
-
-  function rotar() {
-    const art = document.querySelector('.m-screen[data-screen="home"].on .m-hero-tip');
-    if (!art) return;
-    // Con la pestaña detrás no se gasta nada: al volver se verá el
-    // siguiente igual.
-    if (document.hidden) return;
-
-    _consejo = (_consejo + 1) % CONSEJOS.length;
-    // También se guarda al rotar: si dejas el Home abierto diez
-    // minutos y cierras, al volver sigue por donde iba y no repite
-    // las que acabas de ver.
-    recordarConsejo();
-    const c = CONSEJOS[_consejo];
-
-    art.classList.add('cambiando');
-    setTimeout(() => {
-      const k = art.querySelector('.m-hero-k');
-      const t = art.querySelector('.m-hero-t');
-      const sub = art.querySelector('.m-hero-s');
-      const ico = art.querySelector('.m-hero-ir');
-      if (k) k.innerHTML = c.kHtml ? c.k : esc(c.k);
-      if (t) t.textContent = c.tt;
-      if (sub) sub.textContent = c.sub;
-      if (ico) ico.className = 'ti ti-' + c.icoR + ' m-hero-ir';
-      art.classList.remove('cambiando');
-    }, 350);
-  }
-
-  function arrancarRotacion() {
-    if (_relojTip) return;
-    _relojTip = setInterval(rotar, CADA_MS);
-  }
+  // El carrusel llevaba una primera tarjeta que rotaba entre una
+  // bienvenida y siete consejos ("Did you know"). Con el rediseño del
+  // Home se quitaron: el carrusel queda para lo que pide algo o dice en
+  // qué va la semana (el ciclo, los pedidos, lo que se acaba, la versión
+  // nueva). La tarjeta de MarginEdge también salió: vive en la cifra
+  // "Spent this cycle" y su hoja (pintarCifras, hojaGasto).
 
   // Proveedores con alguna línea ya colocada en este ciclo. Es lo que
   // distingue "ya se pidió todo" de "nunca hizo falta pedir nada".
@@ -1068,127 +877,7 @@
   // los precios desde aquí es el paso siguiente y necesita columnas
   // nuevas en la orden; mientras no existan, un botón que dijera
   // "Apply" mentiría.
-  function tarjetaFacturas() {
-    const e = _entregas;
-    // Sin conexión no hay nada que contar. Pero con conexión y cero
-    // facturas la tarjeta SÍ sale: el botón de buscar es justo lo que
-    // hace falta cuando estás esperando una entrega, y esconderlo
-    // hasta que haya datos lo deja inútil en el único momento en que
-    // lo necesitas.
-    if (!e) return null;
 
-    const filas = [];
-    if (e.n) {
-      filas.push({
-        n: e.unidades + (e.unidades === 1 ? ' unit' : ' units') + ' received',
-        v: e.dinero ? money(e.dinero) : ''
-      });
-      if (e.sueltas) {
-        filas.push({
-          n: e.sueltas + (e.sueltas === 1 ? ' line has no bottle' : ' lines have no bottle'),
-          tag: 'fix', v: ''
-        });
-      }
-      // ── Los precios que esperan ──────────────────────────────────
-      //
-      // Las facturas entraban solas y los precios se quedaban
-      // esperando dentro de la cuarta pestaña de un panel de Ajustes,
-      // sin que nada avisara. Es el eslabón que faltaba: el valor del
-      // inventario y el coste de cada orden salen de ahí.
-      if (_precios > 0) {
-        filas.push({
-          n: _precios + (_precios === 1 ? ' price changed' : ' prices changed'),
-          tag: 'review', v: ''
-        });
-      }
-    }
-
-    // ── Sin conectar no es lo mismo que sin facturas ────────────────
-    //
-    // Decir "nothing new yet" en una locación que nadie ha conectado
-    // es mentira por omisión: no es que no haya llegado nada, es que
-    // no hay de dónde. Y el único modo de enterarte era pulsar el
-    // botón y leer el aviso.
-    //
-    // El alta vive en el escritorio porque son diez mil productos y
-    // un par de minutos; aquí se dice dónde, no se intenta hacer.
-    if (!e.error && e.conectado === false) {
-      return {
-        tono: 'calm',
-        k: 'MarginEdge sync',
-        tt: 'Not connected yet',
-        sub: 'This location has no MarginEdge catalog. Connect it from ' +
-             'Settings \u203a Connections on a computer — it takes one button ' +
-             'and a couple of minutes.',
-        amt: '', amtPie: '',
-        icoR: 'plug-connected',
-        vs: '',
-        btn: '', go: null
-      };
-    }
-
-    // Si la lectura falló, la tarjeta lo dice y deja el botón para
-    // reintentar. Esconderse es lo único que no puede hacer.
-    if (e.error) {
-      return {
-        tono: 'amber',
-        k: 'MarginEdge sync',
-        tt: 'Could not read invoices',
-        sub: e.error,
-        amt: '—', amtPie: '',
-        icoL: 'refresh',
-        icoLt: 'Try again',
-        goL: (btn) => sincronizarDesdeTarjeta(btn),
-        vs: e.revisado ? 'synced ' + hace(e.revisado) : 'never synced',
-        btn: 'See invoices',
-        go: () => { const O = window.BarStockMobileOrders;
-                  if (O && O.abrirSeccion) O.abrirSeccion('inv'); }
-      };
-    }
-
-    return {
-      // Violeta, no teal. Esta tarjeta y la del ciclo usaban el MISMO
-      // tono, y al deslizar de una a otra no cambiaba nada en pantalla
-      // — parecía que seguías mirando la misma. El ámbar se queda para
-      // cuando hay facturas sin enlazar, que es el estado que pide que
-      // la mires.
-      tono: e.sueltas ? 'amber' : 'violet',
-      // El rótulo nombra la FUENTE: lo que hay aquí no lo escribiste
-      // tú, viene de MarginEdge. Sin eso, "24 invoices" en el Home de
-      // una app de inventario se lee como órdenes tuyas.
-      k: 'MarginEdge sync',
-      // Y el título dice de qué va, no sólo cuántas: el número ya
-      // está en la esquina y repetirlo no añade nada.
-      tt: e.n ? 'What came in this cycle' : 'Nothing new yet',
-      filas,
-      // Con cero facturas la explicación es la propia frase, no una
-      // lista de ceros.
-      sub: e.n ? '' : 'No invoices since the cycle opened. Tap refresh to look again.',
-      amt: String(e.n),
-      amtPie: e.n === 1 ? 'invoice' : 'invoices',
-      icoL: 'refresh',
-      icoLt: 'Check MarginEdge for new invoices',
-      goL: (btn) => sincronizarDesdeTarjeta(btn),
-      // El pie dice cuándo se miró por última vez, no la fecha de la
-      // última factura: con un botón de refrescar al lado, lo que
-      // importa es si lo que ves está al día.
-      // "synced" y no "checked": lo que se dice es cuándo se habló con
-      // MarginEdge. Sin marca no se maquilla con la fecha de la última
-      // factura —son cosas distintas— se dice que no se ha hecho.
-      vs: e.revisado ? 'synced ' + hace(e.revisado) : 'never synced',
-      // Con precios esperando, eso es lo primero: es lo único de los
-      // tres que cuesta dinero dejar para mañana.
-      btn: _precios > 0 ? 'Review prices' : (e.sueltas ? 'Review them' : 'See invoices'),
-      go: () => {
-        if (_precios > 0) {
-          const N = window.BarStockMobileNotif;
-          if (N && N.abrir) return N.abrir();
-        }
-        const O = window.BarStockMobileOrders;
-        if (O && O.abrirSeccion) O.abrirSeccion('inv');
-      }
-    };
-  }
 
   // ── Cuántos precios esperan ──────────────────────────────────────
   //
@@ -1237,28 +926,23 @@
   // API que contesta 429 a la segunda por segundo.
   let _sincronizando = false;
 
-  async function sincronizarDesdeTarjeta(btn) {
+  // Lo llama "Sync now" de la hoja de Spent this cycle (era el botón de
+  // la tarjeta de MarginEdge del carrusel). `pie` es el elemento donde
+  // se dice por dónde va y, al acabar, cuándo se sincronizó.
+  async function sincronizarMarginEdge(btn, pie) {
     if (_sincronizando) return;
     _sincronizando = true;
 
     const avisar = (t) => { if (window.BarStockToast) window.BarStockToast.show(t); };
 
-    // La tarjeta ENTERA avisa, no sólo el botón. Un botón de 32px
-    // girando en una esquina es fácil de no ver; el degradado moviéndose
-    // bajo todo lo demás, no.
-    //
-    // `parar()` la quita en TODAS las salidas —éxito, nada nuevo,
-    // error, MarginEdge sin configurar—, que es donde se quedan
-    // pegadas estas clases.
-    const tarjeta = btn && btn.closest ? btn.closest('.m-hero') : null;
+    // `parar()` en TODAS las salidas —éxito, nada nuevo, error,
+    // MarginEdge sin configurar—, que es donde se quedaba pegado el giro.
     const parar = () => {
       if (btn) { btn.classList.remove('girando'); btn.disabled = false; }
-      if (tarjeta) tarjeta.classList.remove('m-hero-sync-on');
       _sincronizando = false;
     };
 
     if (btn) { btn.classList.add('girando'); btn.disabled = true; }
-    if (tarjeta) tarjeta.classList.add('m-hero-sync-on');
 
     const C = window.BarStockMarginEdgeConnect;
     if (!C || !C.buscarFacturas) {
@@ -1271,12 +955,6 @@
     // es un parpadeo, el botón parece que no hizo nada y se vuelve a
     // pulsar — y cada pulsación son peticiones a una API que contesta
     // 429 a la segunda por segundo.
-    //
-    // Sube de 500 a 1000 porque ahora lo que avisa es el degradado, y
-    // su recorrido completo dura 2.6s. Con medio segundo se veía un
-    // tirón a media pasada, que es peor que no animar nada. Mil
-    // milisegundos no completan el ciclo pero sí dejan ver hacia
-    // dónde va, que es lo que lo hace legible como "cargando".
     //
     // Es la misma lección que la cortina del cambio de locación.
     const MINIMO_MS = 1000;
@@ -1293,10 +971,8 @@
     // y aquí se le pasaba una función vacía: el dato estaba y lo
     // tirábamos.
     //
-    // Se escribe DIRECTO en el pie de la tarjeta, sin repintar: un
-    // repintado por cada tanda reconstruye el carril entero y da un
-    // tirón al carrusel en mitad de la espera.
-    const pie = tarjeta ? tarjeta.querySelector('.m-hero-vs') : null;
+    // Se escribe DIRECTO en el pie, sin repintar: un repintado por cada
+    // tanda reconstruiría la hoja en mitad de la espera.
     const pieAntes = pie ? pie.textContent : '';
     const avance = (pedidos, hechos) => {
       if (!pie) return;
@@ -1414,10 +1090,7 @@
     cargarEntregas((W && W.resetAt && W.resetAt()) || '');
     cargarPrecios();
 
-    const t = [tarjetaBienvenida(), tarjetaCiclo()];
-
-    const fac = tarjetaFacturas();
-    if (fac) t.push(fac);
+    const t = [tarjetaCiclo()];
 
     // 3 · Ordenes sin colocar, TODAS.
     if (typeof window.getActiveVendors === 'function' &&
@@ -1599,8 +1272,7 @@
   function pintarTarjeta(c, i) {
     if (c && c.tipo === 'version') return pintarVersion(c, i);
     return `
-      <article class="m-hero m-hero-${c.tono}${c.ancha ? ' m-hero-ancha' : ''}${
-        c.tip ? ' m-hero-tip' : ''}" data-hero="${i}">
+      <article class="m-hero m-hero-${c.tono}" data-hero="${i}">
         <!-- Arriba el texto y la cifra, en dos columnas. Abajo, una
              fila entera para la pie de página y los botones.
              Antes todo colgaba de la columna izquierda, así que los
@@ -1702,17 +1374,7 @@
         </div>
 
         <div class="m-hero-acts">
-          <!-- El refresco va a la IZQUIERDA, pegado al texto que
-               actualiza: "last on Oct 28" y el botón que lo vuelve a
-               mirar son la misma idea. La acción de la tarjeta se
-               queda a la derecha, donde está en todas las demás. -->
-          ${c.icoL ? `<button type="button" class="m-hero-sync" data-sync="${i}"
-                             aria-label="${esc(c.icoLt || 'Refresh')}">
-                       <i class="ti ti-${esc(c.icoL)}" aria-hidden="true"></i>
-                     </button>` : ''}
           ${c.vs ? `<span class="m-hero-vs">${esc(c.vs)}</span>` : ''}
-          ${c.pista ? `<span class="m-hero-pista">${esc(c.pista)}
-            <i class="ti ti-chevron-right" aria-hidden="true"></i></span>` : ''}
           ${c.btn ? `<button type="button" class="m-hero-b${c.btnTono ? ' m-hero-b-' + esc(c.btnTono) : ''}"
                              data-go="${i}">${esc(c.btn)}</button>` : ''}
           ${c.btn2 ? `<button type="button" class="m-hero-b2" data-go2="${i}">${esc(c.btn2)}</button>` : ''}
@@ -1870,12 +1532,6 @@
 
   function render(host) {
     if (!host) return;
-    // El reloj de los consejos arranca con el primer pintado y vive
-    // mientras la app esté abierta. No se para al salir del Home: la
-    // rotación comprueba que la tarjeta esté en pantalla antes de
-    // tocar nada, y un intervalo de un minuto que no hace nada es más
-    // barato que montar y desmontar temporizadores en cada pestaña.
-    arrancarRotacion();
     // El LIVE lo lee live-cache una vez para toda la app; si nadie lo
     // pidió aún (el Home es lo primero que se abre), se pide aquí y el
     // Home se repinta al llegar (alCambiar, abajo).
@@ -2031,7 +1687,8 @@
       id: 'gasto', k: 'Spent this cycle', v: g ? money(g.total) : '…',
       tono: arreglar ? 'am' : '',
       d: arreglar ? '<span class="m-cf-fix">' + arreglar + ' to fix</span>' : (fecha ? 'since ' + esc(fecha) : '&nbsp;'),
-      btn: arreglar ? 'Review' : '<i class="ti ti-refresh" aria-hidden="true"></i> Sync'
+      btn: arreglar ? 'Review' : E && E.conectado === false ? 'MarginEdge'
+        : '<i class="ti ti-refresh" aria-hidden="true"></i> Sync'
     }));
     caja.classList.toggle('dos', partes.length === 2);
     caja.innerHTML = partes.join('');
@@ -2042,7 +1699,9 @@
       const S = window.BarStockMobileSales;
       if (S) S.abrir({ vista: 'dinero' });
     };
-    if (b('gasto')) b('gasto').onclick = () => hojaGasto(!arreglar);
+    // Sync sincroniza al abrir; Review (algo que arreglar) y una
+    // locación sin MarginEdge sólo abren la hoja.
+    if (b('gasto')) b('gasto').onclick = () => hojaGasto(!arreglar && !(E && E.conectado === false));
   }
 
   // ── La hoja de "Spent this cycle": lo que decía la tarjeta de MarginEdge
@@ -2072,9 +1731,18 @@
       const W = window.BarStockWeeklyCycle;
       const fecha = (W && W.resetAt && W.fmtDate && W.resetAt()) ? W.fmtDate(W.resetAt()) : '';
       const filas = [];
+      // Las mismas reglas que tenía la tarjeta de MarginEdge:
+      //   · una lectura que falla se DICE, con su error, y se puede
+      //     reintentar: esconderlo es indistinguible de "no hay nada";
+      //   · sin conectar no es lo mismo que sin facturas, y sin conectar
+      //     no hay Sync now, que no haría nada: se dice dónde se conecta;
+      //   · con cero facturas sí hay Sync now: es justo cuando se espera
+      //     una entrega.
+      const conectada = !(E && !E.error && E.conectado === false);
       if (!E) filas.push('<div class="m-cfh-r"><span>Reading invoices…</span></div>');
       else if (E.error) filas.push(`<div class="m-cfh-r am"><span>Could not read invoices: ${esc(E.error)}</span></div>`);
-      else if (E.conectado === false) filas.push('<div class="m-cfh-r"><span>This location has no MarginEdge catalog. Connect it from Settings › Connections on a computer.</span></div>');
+      else if (!conectada) filas.push('<div class="m-cfh-r"><span>Not connected yet. This location has no MarginEdge catalog: connect it from Settings › Connections on a computer.</span></div>');
+      else if (!E.n) filas.push('<div class="m-cfh-r"><span>Nothing new yet · no invoices since the cycle opened</span></div>');
       else {
         filas.push(`<div class="m-cfh-r"><span>${E.n} invoice${E.n === 1 ? '' : 's'} · ${E.unidades} unit${E.unidades === 1 ? '' : 's'}</span><b>${E.dinero ? money(E.dinero) : ''}</b></div>`);
         if (E.sueltas) filas.push(`<div class="m-cfh-r am"><span>${E.sueltas} line${E.sueltas === 1 ? ' has' : 's have'} no bottle</span><b>fix</b></div>`);
@@ -2087,10 +1755,11 @@
         <div class="m-cfh-s">${fecha ? 'Since ' + esc(fecha) + ' · ' : ''}MarginEdge · <span id="mcfVs">${E && E.revisado ? 'synced ' + hace(E.revisado) : 'never synced'}</span></div>
         ${filas.join('')}
         <div class="m-cfh-bs">
-          <button type="button" class="m-cfh-sync" id="mcfSync"><i class="ti ti-refresh" aria-hidden="true"></i> Sync now</button>
+          ${conectada ? '<button type="button" class="m-cfh-sync" id="mcfSync"><i class="ti ti-refresh" aria-hidden="true"></i> Sync now</button>' : ''}
           <button type="button" class="m-cfh-go" id="mcfGo">${precios ? 'Review prices' : 'See invoices'}</button>
         </div>`;
-      caja.querySelector('#mcfSync').onclick = (ev) => sincronizarHoja(ev.currentTarget);
+      const sync = caja.querySelector('#mcfSync');
+      if (sync) sync.onclick = (ev) => sincronizarHoja(ev.currentTarget);
       caja.querySelector('#mcfGo').onclick = () => {
         cerrar();
         if (precios) {
@@ -2101,13 +1770,11 @@
         if (O && O.abrirSeccion) O.abrirSeccion('inv');
       };
     };
-    // El sync de siempre (sincronizarDesdeTarjeta): avisa al terminar y
-    // relee el resumen si entró algo. Al acabar se repinta la hoja con
-    // lo nuevo, si sigue abierta.
+    // El sync de siempre: avisa al terminar, dice por dónde va en la
+    // línea de "synced" y relee el resumen si entró algo. Al acabar se
+    // repinta la hoja con lo nuevo, si sigue abierta.
     const sincronizarHoja = async (btn) => {
-      const vs = caja.querySelector('#mcfVs');
-      if (vs) vs.textContent = 'looking for invoices…';
-      await sincronizarDesdeTarjeta(btn);
+      await sincronizarMarginEdge(btn, caja.querySelector('#mcfVs'));
       const t0 = Date.now();
       // Si entró algo, el resumen se relee aparte (cargarEntregas); se
       // espera a que llegue para no pintar el de antes.
@@ -2115,7 +1782,8 @@
       if (h.isConnected) pintar();
     };
     pintar();
-    if (sincronizar) sincronizarHoja(caja.querySelector('#mcfSync'));
+    const sync = caja.querySelector('#mcfSync');
+    if (sincronizar && sync) sincronizarHoja(sync);
   }
 
   // ── Toast Sales (Axel, 2026-11-12, sobre lámina) ───────────────────
@@ -2380,11 +2048,6 @@
     // Cada proveedor del índice entra en SU orden. La clave lleva los
     // dos números —tarjeta y fila— porque el carril pinta todas las
     // tarjetas a la vez y un índice suelto chocaría entre ellas.
-    host.querySelectorAll('[data-sync]').forEach(b => {
-      const c = cards[Number(b.dataset.sync)];
-      if (c && c.goL) b.onclick = (ev) => { ev.stopPropagation(); c.goL(b); };
-    });
-
     host.querySelectorAll('[data-pv]').forEach(b => {
       const [ci, pi] = String(b.dataset.pv).split('-').map(Number);
       const p = cards[ci] && cards[ci].prov && cards[ci].prov[pi];

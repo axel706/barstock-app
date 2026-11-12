@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261111-213544",
+    "items": [
+      "Home carousel: no more welcome, tips or MarginEdge card",
+      "MarginEdge sync now lives in Spent this cycle"
+    ]
+  },
+  {
     "build": "20261111-212807",
     "items": [
       "Home: On the shelf, Sold yesterday and Spent this cycle",
@@ -184,12 +191,6 @@
     "build": "20261111-155323",
     "items": [
       "Delivery: set the day and time each vendor's order arrives"
-    ]
-  },
-  {
-    "build": "20261111-154721",
-    "items": [
-      "Settings: the section name sits in the header"
     ]
   }
 ]

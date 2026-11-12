@@ -1305,36 +1305,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * si entrara dentro se comería uno de los tres. */
   .m-hero-mas { font-size: var(--m-meta); color: #8fa3b8; margin-top: 4px; }
 
-  /* ── Buscar facturas nuevas, desde la tarjeta ──────────────────────
-   *
-   * A la izquierda y pegado al texto que actualiza: "last on Oct 28"
-   * y el botón que lo vuelve a mirar son la misma idea. La acción de
-   * la tarjeta se queda a la derecha, como en todas las demás.
-   *
-   * Redondo y del tamaño de un dedo, pero sin color: refrescar es
-   * barato y reversible; no compite con el botón principal. */
-  body.m-shell .m-hero-sync {
-    flex: 0 0 32px; width: 32px; height: 32px;
-    display: flex; align-items: center; justify-content: center;
-    margin-right: 9px;
-    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.18);
-    color: #e8f1fb; font-size: var(--m-strong); cursor: pointer;
-  }
-  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hero-sync { border-radius: 50% !important; }
-  body.m-shell .m-hero-sync:active { background: rgba(255,255,255,.24); }
-  body.m-shell .m-hero-sync:disabled { opacity: .7; cursor: default; }
-
-  /* Gira mientras busca. Un botón que tarda cinco segundos sin
-   * moverse se pulsa dos veces, y cada pulsación son peticiones a una
-   * API que contesta 429 a la segunda por segundo. */
-  .m-hero-sync.girando > i {
-    display: block;
-    animation: mSyncGira .9s linear infinite;
-  }
+  /* El giro de "Sync now" en la hoja de Spent this cycle (.m-cfh-sync).
+   * Era el del botón redondo de la tarjeta de MarginEdge, que salió del
+   * carrusel (2026-11-12). */
   @keyframes mSyncGira { to { transform: rotate(360deg); } }
-  @media (prefers-reduced-motion: reduce) {
-    .m-hero-sync.girando > i { animation: none; opacity: .6; }
-  }
 
   /* "Review all" pesa menos que "Review the order": con el índice
    * delante, el camino principal son las filas. */
@@ -1420,59 +1394,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   body.m-shell .m-hero-x:active { background: rgba(248,113,113,.26); }
 
-  /* La pista de la bienvenida. No es un botón: lo que pide es un
-   * gesto. Va abajo del todo, a la altura de los botones de las otras
-   * tarjetas, porque todas las del carril miden lo mismo y si flotara
-   * en medio se vería el desajuste. */
-  .m-hero-pista {
-    display: inline-flex; align-items: center; gap: 6px;
-    margin-left: auto;
-    font-size: var(--m-body); font-weight: 600; color: #5eead4;
-  }
-  .m-hero-pista .ti { font-size: var(--m-strong); }
   .m-hero-ir { font-size: var(--m-screen); color: #5eead4; }
-
-  /* La tarjeta de bienvenida no tiene columna de cifras ni botón: es
-   * sólo texto. Así que la columna derecha se encoge al icono y el
-   * texto crece, que es lo que se pedía de ella. */
-  .m-hero-ancha .m-hero-r { width: 30px; flex: 0 0 30px; }
-  /* Sin cifra ni botones, el párrafo puede usar los tres renglones
-   * enteros y el pie ya va pegado al suelo por el `margin-top: auto`
-   * de arriba. */
-  .m-hero-ancha .m-hero-cuerpo { margin-right: -30px; }
-  /* El párrafo se sale de la columna de texto y pasa por debajo del
-   * icono. El icono ocupa una línea arriba a la derecha, pero su
-   * columna reservaba 40px de ancho en TODA la altura de la tarjeta,
-   * así que el párrafo partía palabras ("Look / up", "orders / too")
-   * teniendo el hueco justo al lado. Recupera esos 40px sin tocar el
-   * encabezado, que sí convive con el icono.
-   * `pretty` además evita que la última línea quede con una palabra
-   * suelta; donde no esté soportado simplemente no hace nada. */
-  /* Sin margin-top: lo pone el cuerpo, y tenerlo aquí lo sumaba dos
-   * veces y empujaba la cuarta línea fuera de los tres renglones. */
-  /* ── Sin el -40px ────────────────────────────────────────────────
-   *
-   * Lo llevaba para recuperar el ancho que el icono reservaba en toda
-   * la altura. Pero el CUERPO ya se sale -30px por su cuenta, así que
-   * eran 70 en total: el párrafo se salía de la caja y, como el
-   * cuerpo recorta lo que sobra, el texto se cortaba a media palabra
-   * en el borde derecho — "Look up st…".
-   *
-   * Dos márgenes negativos encima del mismo texto. El del cuerpo es
-   * el que vale, porque es el que manda sobre el recorte. */
-  .m-hero-ancha .m-hero-s {
-    font-size: var(--m-body); line-height: 1.45;
-    text-wrap: pretty;
-  }
-
-  /* El cambio de consejo, con un parpadeo corto. Sin esto el texto
-   * salta de golpe y parece un fallo de pintado. */
-  .m-hero-tip .m-hero-txt { transition: opacity .35s ease; }
-  .m-hero-tip.cambiando .m-hero-txt { opacity: 0; }
-  @media (prefers-reduced-motion: reduce) {
-    .m-hero-tip .m-hero-txt { transition: none; }
-  }
-  .m-hero-ancha .m-hero-t { font-size: var(--m-head); }
 
   body.m-shell .m-hero-b {
     align-self: center;
@@ -1552,45 +1474,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-hero-amber  { background: linear-gradient(135deg, rgba(245,158,11,.84) 0%, rgba(245,158,11,.42) 42%, rgba(22,13,3,.94) 100%);  border: 1px solid rgba(252,211,77,.50); }
   .m-hero-calm   { background: linear-gradient(135deg, rgba(100,116,139,.78) 0%, rgba(100,116,139,.38) 42%, rgba(8,12,18,.94) 100%); border: 1px solid rgba(203,213,225,.28); }
 
-  /* ── Mientras sincroniza, el degradado se mueve ────────────────────
-   *
-   * Lo que avisa es la tarjeta ENTERA, no sólo el botón: 32px girando
-   * en una esquina son fáciles de no ver.
-   *
-   * Va aquí y no en cada tono porque `background-size` y
-   * `background-position` actúan sobre el degradado que ya tenga la
-   * tarjeta, sea cual sea. Si mañana otra tarjeta sincroniza, hereda
-   * esto sin tocar nada.
-   *
-   * ── Por qué 160% y no más ─────────────────────────────────────────
-   *
-   * Con un recorrido largo la esquina viva acaba pasando por DEBAJO de
-   * los tres renglones, y el texto gris pequeño sobre un fondo que
-   * cambia es justo donde se pierde la legibilidad — ya nos pasó con
-   * `--muted`. A 160% el degradado respira pero el extremo oscuro no
-   * se aleja nunca de donde está el contenido.
-   *
-   * ── El riesgo que queda ───────────────────────────────────────────
-   *
-   * Esta tarjeta lleva `backdrop-filter`, y animar el fondo de un
-   * elemento que además desenfoca lo de detrás es la combinación cara
-   * en WebKit. Si en el iPhone va a tirones, la salida es mover un
-   * `::after` encima en vez del fondo propio. */
-  .m-hero-sync-on {
-    background-size: 160% 160%;
-    animation: mSyncDeriva 2.6s ease-in-out infinite;
-  }
-  @keyframes mSyncDeriva {
-    0%   { background-position: 0% 0%; }
-    50%  { background-position: 100% 100%; }
-    100% { background-position: 0% 0%; }
-  }
-  /* Con movimiento reducido no se anima nada: queda el botón girando,
-   * que ya existía y ya avisaba. */
-  @media (prefers-reduced-motion: reduce) {
-    .m-hero-sync-on { animation: none; background-size: auto; }
-  }
-
   /* El encabezado en blanco, no en el tinte pálido de su familia.
    * Los tintes (#fde68a sobre ámbar, #fecaca sobre rojo) funcionaban
    * sobre el fondo apagado de antes; sobre una esquina ahora mucho
@@ -1604,7 +1487,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-hero-amber .m-hero-k,
   .m-hero-calm  .m-hero-k { color: rgba(255,255,255,.92); }
 
-  .m-hero-verde .m-hero-pista { color: #6ee7b7; }
   .m-hero-verde .m-hero-ir { color: #6ee7b7; }
 
   /* Los botones van al nivel 400 de su familia: sobre el extremo

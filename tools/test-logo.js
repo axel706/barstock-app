@@ -28,8 +28,10 @@ const html   = raiz('index.html');
 grupo('nadie escribe el punto como carácter');
 prueba('la banda del móvil', !/BarStock<i>\.<\/i>/.test(shell));
 prueba('el rótulo de bienvenida', !/BarStock<i>\.<\/i>/.test(home));
-prueba('y las dos usan la clase del círculo',
-  /m-logo-dot/.test(shell) && /m-logo-dot/.test(home));
+// El rótulo de bienvenida salió del Home con el rediseño (2026-11-12):
+// el Home ya no pinta el logo. Si vuelve a pintarlo, con la clase.
+prueba('y usan la clase del círculo',
+  /m-logo-dot/.test(shell) && (!/BarStock<i/.test(home) || /m-logo-dot/.test(home)));
 
 grupo('el azul es el bueno');
 // El brandbook pregunta literalmente: «Is the dot exactly #38BDF8,

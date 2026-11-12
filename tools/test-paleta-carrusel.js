@@ -125,13 +125,13 @@ grupo('el encabezado se lee sobre la esquina viva');
 grupo('cada familia tiene su tono, y no lo comparte');
 {
   // Se lee el tono que emite cada constructor, no el CSS.
+  // La bienvenida (verde) y MarginEdge (violeta) salieron del carrusel
+  // con el rediseño del Home (2026-11-12).
   const dueno = {
-    bienvenida: /tono:\s*'verde'/,
     // El rótulo se calcula —un ciclo sin contar dice los días que
     // lleva abierto— así que no puede ir pegado al tono en la misma
     // línea. Lo que importa es que el teal siga siendo del ciclo.
     ciclo:      /tono:\s*'teal',[\s\S]{0,400}?'Cycle open/,
-    marginedge: /tono:\s*e\.sueltas \? 'amber' : 'violet'/,
     ordenes:    /tono:\s*'blue',\s*\n?\s*k:\s*'Orders waiting'|tono:\s*'blue',$/m,
     pronto:     /tono:\s*'red'/
   };
@@ -139,49 +139,34 @@ grupo('cada familia tiene su tono, y no lo comparte');
     prueba(q + ' tiene tono propio', re.test(jsLimpio));
   }
 
-  // El fallo original, por si vuelve: el ciclo en teal Y MarginEdge en
-  // teal a la vez.
-  const facturas = /function tarjetaFacturas[\s\S]*?\n  \}/.exec(jsLimpio);
-  prueba('MarginEdge ya no es teal',
-    !!facturas && !/tono:[^,\n]*'teal'/.test(facturas[0]));
+  // El fallo original era el ciclo en teal Y MarginEdge en teal a la
+  // vez. La tarjeta de MarginEdge salió del carrusel (2026-11-12): vive
+  // en la cifra "Spent this cycle" y su hoja.
+  prueba('MarginEdge ya no es una tarjeta del carrusel', !/function tarjetaFacturas/.test(jsLimpio));
 
   // Y el paso "Load the count" en azul, que es la familia de órdenes.
   prueba('ningún paso del ciclo se va al azul',
     !/tono:\s*'blue', k: 'Cycle/.test(jsLimpio));
 }
 
-grupo('mientras sincroniza, el degradado se mueve');
+grupo('mientras sincroniza, se ve');
 {
-  const m = /\.m-hero-sync-on\s*\{([^}]*)\}/.exec(css);
-  prueba('la regla existe', !!m);
-  const r = m ? m[1] : '';
-
-  prueba('anima', !!r && /animation:\s*mSyncDeriva/.test(r), r.trim());
-  prueba('mueve el fondo, no el color',
-    /@keyframes mSyncDeriva\s*\{[^}]*background-position/.test(
-      css.replace(/\s+/g, ' ').replace(/\} *\}/g, '}}')) ||
-    /mSyncDeriva[\s\S]{0,200}background-position/.test(css));
-
-  // Recorrido corto a propósito: con uno largo la esquina viva acaba
-  // bajo los tres renglones y el texto gris pierde contraste.
-  const z = Number((/background-size:\s*(\d+)%/.exec(r) || [])[1] || 0);
-  prueba('el recorrido es corto', z > 100 && z <= 180, z + '%');
-
-  // Una tarjeta que se queda animando para siempre dice que sigue
-  // sincronizando cuando ya terminó.
+  // El degradado que se movía en la tarjeta de MarginEdge se fue con
+  // ella. Lo que queda es el giro de "Sync now" en la hoja de Spent this
+  // cycle, con las mismas dos reglas.
   const js2 = jsLimpio;
-  prueba('se quita en TODAS las salidas',
-    /const parar = \(\) => \{[\s\S]{0,260}m-hero-sync-on/.test(js2));
-  prueba('y se pone al arrancar', /classList\.add\('m-hero-sync-on'\)/.test(js2));
+  prueba('el botón gira mientras busca', /\.m-cfh-sync\.girando \.ti\s*\{[^}]*animation:\s*mSyncGira/.test(css));
+  prueba('y se para en TODAS las salidas',
+    /const parar = \(\) => \{[\s\S]{0,160}classList\.remove\('girando'\)/.test(js2));
 
-  // Mil milisegundos: el recorrido dura 2.6s, y con medio segundo se
-  // veía un tirón a media pasada.
+  // Mil milisegundos: un sync rápido es un parpadeo, el botón parece que
+  // no hizo nada y se vuelve a pulsar.
   const min = Number((/MINIMO_MS\s*=\s*(\d+)/.exec(js2) || [])[1] || 0);
   prueba('tiene un mínimo en pantalla', min >= 900, min + 'ms');
   prueba('pero no hace esperar de más', min <= 1600, min + 'ms');
 
   prueba('respeta prefers-reduced-motion',
-    /prefers-reduced-motion[\s\S]{0,200}\.m-hero-sync-on[\s\S]{0,80}animation:\s*none/.test(css));
+    /prefers-reduced-motion[\s\S]{0,120}\.m-cfh-sync\.girando \.ti[\s\S]{0,40}animation:\s*none/.test(css));
 }
 
 grupo('lo de abajo del Home habla el mismo idioma');
