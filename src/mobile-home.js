@@ -1884,8 +1884,6 @@
     const cards = tarjetas();
     const mov = movers();
     const ch = cambios();
-    const g = gasto();
-    const e = estante();
 
     host.innerHTML = `
       <div class="m-body">
@@ -1900,6 +1898,14 @@
         </button>
       </div>
 
+      <!-- Las tres cifras (Axel, 2026-11-12, sobre lámina). Van en su
+           propio bloque, fuera del que lleva el saludo y la búsqueda:
+           band-dock acopla esos dos y nada más, y esto sube con el resto
+           del contenido por debajo del desenfoque, como el carrusel. Las
+           pinta pintarCifras(), que se vuelve a llamar cuando llegan las
+           ventas de Toast o el LIVE sin rehacer el Home. -->
+      <div class="m-body"><div class="m-cf" id="mhCifras"></div></div>
+
       <div class="m-railwrap"><div class="m-rail" id="mhRail">
         ${cards.map(pintarTarjeta).join('')}
       </div></div>
@@ -1909,38 +1915,6 @@
         : ''}
 
       <div class="m-body">
-        <!-- El dinero primero: es lo único de esta pantalla que se
-             mira todos los días sin buscar nada. Top movers y lo demás
-             son contexto de la semana. -->
-        <div class="m-pair">
-          <div class="m-stat">
-            <span class="m-stat-k">Spent this cycle</span>
-            <b class="m-stat-v">${g ? money(g.total) : '…'}</b>
-            <small class="m-stat-d ${g && g.delta >= 0 ? 'm-up' : 'm-down'}">${
-              g ? (g.delta >= 0 ? '↗ +' : '↘ −') + money(Math.abs(g.delta)).slice(1) : '&nbsp;'
-            }</small>
-          </div>
-          <!-- Con LIVE, el número lleva el protagonismo y la cuenta se
-               abre en el aviso de la app al tocar la tarjeta: Axel no
-               quiso que la tarjeta creciera. "● Live" va antes del
-               título. -->
-          <div class="m-stat${e && e.live ? ' m-stat-toca' : ''}" id="mhEstante"${e && e.live ? ' role="button" tabindex="0"' : ''}>
-            <span class="m-stat-k">${e && e.live ? '<span class="m-live"><i></i>Live</span>' : ''}On the shelf</span>
-            <b class="m-stat-v">${e ? money(e.total) : '…'}</b>
-            <!-- Cuando algo llego despues del conteo, el pie DICE DE
-                 DONDE sale el numero. Sin esto el titular sube solo y
-                 no hay forma de saber si es mercancia nueva o un
-                 fallo. Si no ha llegado nada, el pie de siempre. -->
-            <small class="m-stat-d">${!e ? '&nbsp;'
-              : e.live ? '<span class="m-stat-det" data-detalle>Details <i class="ti ti-chevron-right" aria-hidden="true"></i></span>'
-              : e.llego > 0
-                ? money(e.contado) + ' counted · +' + money(e.llego).slice(1) + ' in' +
-                  (e.sin ? ' · ' + e.sin + ' no price' : '')
-                : e.n + ' items' + (e.sin ? ' · ' + e.sin + ' no price' : '')
-            }</small>
-          </div>
-        </div>
-
         <!-- Toast Sales: la pinta pintarVentas() aparte, porque sus
              datos llegan después y al tocar una barra sólo se repinta
              ella, sin mover el carrusel. Vacía no ocupa. -->
@@ -1995,7 +1969,153 @@
       </div>`;
 
     enganchar(host, cards);
+    pintarCifras(host);
     pintarVentas(host);
+  }
+
+  // ── Las tres cifras ──────────────────────────────────────────────────
+  //
+  // Sustituyen al par "Spent this cycle / On the shelf". Cada una dice
+  // qué es (título), cuánto (número), una línea corta de contexto y un
+  // botón; lo que no cabe en una línea va dentro de lo que abre su botón
+  // (Axel: "esos números necesitan más clarificación", y el contexto
+  // largo se cortaba en tres columnas).
+  //
+  //   On the shelf     · LIVE × precio · Details: la cuenta del estante
+  //   Sold yesterday   · Net sales de ayer en Toast · Report: el Full
+  //                      report de ayer. Sin Toast no sale, y quedan dos.
+  //   Spent this cycle · desde la apertura del ciclo · ↻ Sync: sincroniza
+  //                      MarginEdge y abre su hoja (era la tarjeta de
+  //                      MarginEdge del carrusel). Con algo que arreglar
+  //                      —líneas sin botella, precios cambiados, un error
+  //                      leyendo facturas— se pone ámbar y el botón dice
+  //                      Review.
+  function pintarCifras(host) {
+    const caja = host && host.querySelector('#mhCifras');
+    if (!caja) return;
+    const e = estante();
+    const g = gasto();
+    const W = window.BarStockWeeklyCycle;
+    const fecha = (W && W.resetAt && W.fmtDate && W.resetAt()) ? W.fmtDate(W.resetAt()) : '';
+    const V = _ventas;
+    const ayer = V && V.cargados && V.semana && V.semana.length ? V.semana[V.semana.length - 1] : null;
+    const E = _entregas;
+    const arreglar = E ? (E.error ? 1 : (E.sueltas || 0) + (_precios || 0)) : 0;
+
+    const cifra = (o) => `
+      <div class="m-cf-c${o.tono ? ' m-cf-' + o.tono : ''}">
+        <span class="m-cf-k">${o.k}</span>
+        <b class="m-cf-v">${o.v}</b>
+        <span class="m-cf-d">${o.d}</span>
+        <button type="button" class="m-cf-b" data-cf="${o.id}">${o.btn}</button>
+      </div>`;
+
+    const partes = [cifra({
+      id: 'estante', k: 'On the shelf', v: e ? money(e.total) : '…',
+      d: e && e.live ? '<span class="m-cf-live">Live</span> now' : e ? 'as counted' : '&nbsp;',
+      btn: 'Details'
+    })];
+    if (ayer) {
+      const n = ayer.normalDinero;
+      const pct = n ? Math.round((ayer.dinero - n) / n * 100) : null;
+      partes.push(cifra({
+        id: 'ayer', k: 'Sold yesterday', v: money(ayer.dinero),
+        // Vender más es bueno: verde arriba. (.m-up/.m-down son del gasto,
+        // donde va al revés.)
+        d: esc(ayer.dia) + (pct === null ? '' : ' · <span class="' + (pct >= 0 ? 'm-cf-sube' : 'm-cf-baja') + '">' +
+          (pct >= 0 ? '↗ ' : '↘ ') + Math.abs(pct) + '%</span>'),
+        btn: 'Report'
+      }));
+    }
+    partes.push(cifra({
+      id: 'gasto', k: 'Spent this cycle', v: g ? money(g.total) : '…',
+      tono: arreglar ? 'am' : '',
+      d: arreglar ? '<span class="m-cf-fix">' + arreglar + ' to fix</span>' : (fecha ? 'since ' + esc(fecha) : '&nbsp;'),
+      btn: arreglar ? 'Review' : '<i class="ti ti-refresh" aria-hidden="true"></i> Sync'
+    }));
+    caja.classList.toggle('dos', partes.length === 2);
+    caja.innerHTML = partes.join('');
+
+    const b = (id) => caja.querySelector('[data-cf="' + id + '"]');
+    if (b('estante')) b('estante').onclick = () => detalleEstante();
+    if (b('ayer')) b('ayer').onclick = () => {
+      const S = window.BarStockMobileSales;
+      if (S) S.abrir({ vista: 'dinero' });
+    };
+    if (b('gasto')) b('gasto').onclick = () => hojaGasto(!arreglar);
+  }
+
+  // ── La hoja de "Spent this cycle": lo que decía la tarjeta de MarginEdge
+  //
+  // Las facturas del ciclo, sus unidades y su dinero; lo que hay que
+  // arreglar; cuándo se sincronizó; y dos botones, Sync now y See
+  // invoices (o Review prices). `sincronizar`: el botón Sync de la cifra
+  // sincroniza al abrirla —si lo tocas es que quieres sincronizar—; el
+  // Review sólo la abre.
+  function hojaGasto(sincronizar) {
+    const viejo = document.getElementById('mSheet');
+    if (viejo) viejo.remove();
+    const h = document.createElement('div');
+    h.className = 'm-sheet';
+    // El id: las reglas de las hojas se apoyan en él para ganarle al
+    // radio forzado de app.css.
+    h.id = 'mSheet';
+    h.innerHTML = '<div class="m-sheet-bg"></div><div class="m-sheet-box m-cfh" role="dialog" aria-label="Spent this cycle"></div>';
+    document.body.appendChild(h);
+    const cerrar = () => h.remove();
+    h.querySelector('.m-sheet-bg').onclick = cerrar;
+    if (window.BarStockSheet) window.BarStockSheet.enganchar(h, cerrar);
+    const caja = h.querySelector('.m-cfh');
+
+    const pintar = () => {
+      const E = _entregas, g = gasto();
+      const W = window.BarStockWeeklyCycle;
+      const fecha = (W && W.resetAt && W.fmtDate && W.resetAt()) ? W.fmtDate(W.resetAt()) : '';
+      const filas = [];
+      if (!E) filas.push('<div class="m-cfh-r"><span>Reading invoices…</span></div>');
+      else if (E.error) filas.push(`<div class="m-cfh-r am"><span>Could not read invoices: ${esc(E.error)}</span></div>`);
+      else if (E.conectado === false) filas.push('<div class="m-cfh-r"><span>This location has no MarginEdge catalog. Connect it from Settings › Connections on a computer.</span></div>');
+      else {
+        filas.push(`<div class="m-cfh-r"><span>${E.n} invoice${E.n === 1 ? '' : 's'} · ${E.unidades} unit${E.unidades === 1 ? '' : 's'}</span><b>${E.dinero ? money(E.dinero) : ''}</b></div>`);
+        if (E.sueltas) filas.push(`<div class="m-cfh-r am"><span>${E.sueltas} line${E.sueltas === 1 ? ' has' : 's have'} no bottle</span><b>fix</b></div>`);
+        if (_precios > 0) filas.push(`<div class="m-cfh-r am"><span>${_precios} price${_precios === 1 ? '' : 's'} changed</span><b>review</b></div>`);
+      }
+      const precios = _precios > 0;
+      caja.innerHTML = `
+        <div class="m-sheet-grip"></div>
+        <div class="m-cfh-t">Spent this cycle${g ? ' · ' + money(g.total) : ''}</div>
+        <div class="m-cfh-s">${fecha ? 'Since ' + esc(fecha) + ' · ' : ''}MarginEdge · <span id="mcfVs">${E && E.revisado ? 'synced ' + hace(E.revisado) : 'never synced'}</span></div>
+        ${filas.join('')}
+        <div class="m-cfh-bs">
+          <button type="button" class="m-cfh-sync" id="mcfSync"><i class="ti ti-refresh" aria-hidden="true"></i> Sync now</button>
+          <button type="button" class="m-cfh-go" id="mcfGo">${precios ? 'Review prices' : 'See invoices'}</button>
+        </div>`;
+      caja.querySelector('#mcfSync').onclick = (ev) => sincronizarHoja(ev.currentTarget);
+      caja.querySelector('#mcfGo').onclick = () => {
+        cerrar();
+        if (precios) {
+          const N = window.BarStockMobileNotif;
+          if (N && N.abrir) return N.abrir();
+        }
+        const O = window.BarStockMobileOrders;
+        if (O && O.abrirSeccion) O.abrirSeccion('inv');
+      };
+    };
+    // El sync de siempre (sincronizarDesdeTarjeta): avisa al terminar y
+    // relee el resumen si entró algo. Al acabar se repinta la hoja con
+    // lo nuevo, si sigue abierta.
+    const sincronizarHoja = async (btn) => {
+      const vs = caja.querySelector('#mcfVs');
+      if (vs) vs.textContent = 'looking for invoices…';
+      await sincronizarDesdeTarjeta(btn);
+      const t0 = Date.now();
+      // Si entró algo, el resumen se relee aparte (cargarEntregas); se
+      // espera a que llegue para no pintar el de antes.
+      while (!_entregas && Date.now() - t0 < 15000) await new Promise(r => setTimeout(r, 200));
+      if (h.isConnected) pintar();
+    };
+    pintar();
+    if (sincronizar) sincronizarHoja(caja.querySelector('#mcfSync'));
   }
 
   // ── Toast Sales (Axel, 2026-11-12, sobre lámina) ───────────────────
@@ -2028,7 +2148,7 @@
       .then((cambio) => {
         _pidiendoVentas = false;
         const host = document.querySelector('.m-screen[data-screen="home"]');
-        if (cambio && host) pintarVentas(host);
+        if (cambio && host) { pintarCifras(host); pintarVentas(host); }
       });
   }
 
@@ -2282,12 +2402,6 @@
     const all = host.querySelector('#mhAllMov');
     if (all) all.onclick = () => window.BarStockMobile.ir('inventory');
 
-    const est = host.querySelector('#mhEstante.m-stat-toca');
-    if (est) {
-      est.onclick = () => detalleEstante();
-      est.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); detalleEstante(); } };
-    }
-
     puntos(host);
   }
 
@@ -2300,7 +2414,24 @@
   function detalleEstante() {
     const e = estante();
     const D = window.BarStockDialog;
-    if (!e || !e.live || !D || !D.avisar) return;
+    if (!e || !D || !D.avisar) return;
+    // Sin LIVE (conteo activo, nada movido): lo de antes, contado más lo
+    // facturado desde el conteo, que es lo que suma la cifra.
+    if (!e.live) {
+      D.avisar({
+        titulo: 'On the shelf · ' + money(e.total),
+        icono: 'ti-building-warehouse',
+        cuerpo: 'What was counted, plus what came in on invoices since.',
+        filas: [
+          { k: 'Counted', v: money(e.contado) },
+          { k: 'Invoiced since', v: '+' + money(e.llego) },
+          { k: 'On the shelf', v: money(e.total), total: true }
+        ],
+        nota: e.sin ? e.sin + (e.sin === 1 ? ' item has no price and is left out.' : ' items have no price and are left out.') : '',
+        ok: 'Got it'
+      });
+      return;
+    }
     const cuando = e.conteo ? new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York',
       weekday: 'short', month: 'short', day: 'numeric' }).format(new Date(e.conteo)).replace(',', '') : '';
     D.avisar({

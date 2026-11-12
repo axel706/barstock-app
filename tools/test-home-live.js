@@ -105,7 +105,10 @@ async function entorno(o) {
   return { w, host };
 }
 const tarjeta = (host) => [...host.querySelectorAll('.m-hero')].find(c => /Running out first/i.test(c.textContent));
-const estante = (host) => [...host.querySelectorAll('.m-stat')].find(c => /On the shelf/i.test(c.textContent));
+// Desde 2026-11-12, "On the shelf" es una de las tres cifras (.m-cf-c):
+// título, número, "● Live now" y el botón Details.
+const estante = (host) => [...host.querySelectorAll('.m-cf-c')].find(c => /On the shelf/i.test(c.textContent));
+const valor = (e) => e.querySelector('.m-cf-v').textContent.trim();
 
 (async () => {
 
@@ -148,21 +151,19 @@ grupo('On the shelf, con LIVE');
 {
   const { w, host } = await entorno();
   const e = estante(host);
-  const k = e.querySelector('.m-stat-k');
-  prueba('"● Live" antes del título', !!k.firstElementChild && k.firstElementChild.classList.contains('m-live'), k.innerHTML);
+  const d0 = e.querySelector('.m-cf-d');
+  prueba('"● Live now" bajo el número', !!d0.querySelector('.m-cf-live') && /Live now/.test(d0.textContent), d0.innerHTML);
   // Contado: 30 + 28 + 60 + 50 + 160 + 190 = 518. Llegó: 5 × 20 = 100.
   // Vendido: .6×30 + .4×28 + .9×20 + .5×25 + .2×40 = 18 + 11.2 + 18 + 12.5 + 8 = 67.7.
   // LIVE: 518 + 100 − 67.7 = 550.3.
-  const v = e.querySelector('.m-stat-v').textContent.trim();
+  const v = valor(e);
   prueba('el número es LIVE × precio', v === '$550', v);
-  const d = e.querySelector('.m-stat-d');
-  prueba('debajo, sólo "Details"', !!d && /^Details$/.test(d.textContent.trim()), d && d.textContent);
-  prueba('sin la cuenta en la tarjeta', !/counted/.test(e.textContent));
+  prueba('sin la cuenta en la cifra', !/counted|arrived|sold/i.test(e.textContent), e.textContent);
 
   let opc = null;
   w.BarStockDialog.avisar = (o) => { opc = o; return Promise.resolve(true); };
-  const btn = e.querySelector('[data-detalle]');
-  prueba('"Details" se puede tocar', !!btn);
+  const btn = e.querySelector('[data-cf="estante"]');
+  prueba('su botón dice Details', !!btn && /^Details$/.test(btn.textContent.trim()), btn && btn.textContent);
   if (btn) btn.click();
   await esperar(5);
   const filas = opc && opc.filas ? opc.filas.map(f => f.k + '=' + f.v).join(' | ') : '';
@@ -176,20 +177,19 @@ grupo('On the shelf, sin LIVE');
 {
   const { host } = await entorno({ contando: true });
   const e = estante(host);
-  prueba('sin marca', !e.querySelector('.m-live'));
+  prueba('sin marca', !e.querySelector('.m-cf-live'));
   // Contado 518 + facturado desde el conteo 500 = 1,018, como antes.
-  prueba('contado + lo facturado, como antes', e.querySelector('.m-stat-v').textContent.trim() === '$1,018',
-    e.querySelector('.m-stat-v').textContent);
+  prueba('contado + lo facturado, como antes', valor(e) === '$1,018', valor(e));
 }
 
 grupo('el LIVE llega con el Home pintado');
 {
   const { w, host } = await entorno({ sinCargar: true, lento: true });
   await esperar(30);
-  prueba('antes, sin marca', !estante(host).querySelector('.m-live'));
+  prueba('antes, sin marca', !estante(host).querySelector('.m-cf-live'));
   await esperar(60);
-  prueba('el Home lo pide al pintarse y se repinta al llegar', !!estante(host).querySelector('.m-live') &&
-    estante(host).querySelector('.m-stat-v').textContent.trim() === '$550', estante(host).textContent.replace(/\s+/g, ' '));
+  prueba('el Home lo pide al pintarse y se repinta al llegar', !!estante(host).querySelector('.m-cf-live') &&
+    valor(estante(host)) === '$550', estante(host).textContent.replace(/\s+/g, ' '));
 }
 
 grupo('el aviso acepta filas');

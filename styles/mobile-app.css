@@ -1758,7 +1758,60 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
 
   /* ── Dinero ─────────────────────────────────────────────────────── */
 
-  .m-pair { display: flex; gap: 8px; margin-top: 14px; }
+  /* ── Las tres cifras (Axel, 2026-11-12, sobre lámina) ─────────────
+   * Sustituyen al par Spent / On the shelf. Título, número, una línea y
+   * su botón, las tres de la misma altura: el título reserva dos líneas
+   * para que los números queden alineados aunque uno quepa en una. Con
+   * Toast desconectado no hay "Sold yesterday" y quedan dos. */
+  .m-cf { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+  .m-cf.dos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .m-cf-c {
+    display: flex; flex-direction: column; min-width: 0;
+    padding: 11px 10px 10px; border-radius: 17px;
+    background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.12);
+  }
+  .m-cf-c.m-cf-am { background: rgba(245,158,11,.12); border-color: rgba(252,211,77,.45); }
+  .m-cf-k {
+    min-height: 2.5em; line-height: 1.25;
+    font-size: var(--m-meta); font-weight: 800; letter-spacing: .06em;
+    text-transform: uppercase; color: #c3d2e2;
+  }
+  .m-cf-v { margin-top: 6px; font-size: var(--m-title); font-weight: 800; color: #fff; letter-spacing: -.4px; white-space: nowrap; }
+  /* La línea crece y empuja el botón al pie: así las tres acaban a la
+   * misma altura aunque una línea sea más corta. */
+  .m-cf-d { flex: 1 0 auto; margin-top: 2px; font-size: var(--m-meta); color: #a9bacd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-cf-live { color: #6ee7b7; font-weight: 800; }
+  .m-cf-live::before { content: '● '; }
+  .m-cf-sube { color: #86efac; }
+  .m-cf-baja { color: #fca5a5; }
+  .m-cf-fix { color: #fcd34d; font-weight: 700; }
+  body.m-shell .m-cf-b {
+    margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 4px;
+    padding: 7px 0; cursor: pointer;
+    font-size: var(--m-meta); font-weight: 800; color: #fff;
+    background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.2);
+  }
+  body.m-shell .m-cf-am .m-cf-b { background: #fcd34d; border-color: #fcd34d; color: #3b2a04; }
+  .m-cf-b .ti { font-size: var(--m-meta); }
+
+  /* La hoja de "Spent this cycle": lo que decía la tarjeta de MarginEdge. */
+  .m-cfh-t { font-size: var(--m-title); font-weight: 800; color: #fff; }
+  .m-cfh-s { margin-top: 3px; font-size: var(--m-meta); color: #8fa3b8; }
+  .m-cfh-r {
+    display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,.08); font-size: var(--m-small); color: #e2e8f0;
+  }
+  .m-cfh-r b { color: #fff; white-space: nowrap; }
+  .m-cfh-r.am, .m-cfh-r.am b { color: #fcd34d; }
+  .m-cfh-bs { display: flex; gap: 8px; margin-top: 14px; }
+  body.m-shell .m-cfh-sync, body.m-shell .m-cfh-go {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 11px 0; cursor: pointer; font-size: var(--m-small); font-weight: 800;
+  }
+  body.m-shell .m-cfh-sync { color: #fff; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); }
+  body.m-shell .m-cfh-go { color: #04283d; background: #7dd3fc; border: 1px solid #7dd3fc; }
+  .m-cfh-sync.girando .ti { display: inline-block; animation: mSyncGira .9s linear infinite; }
+  @media (prefers-reduced-motion: reduce) { .m-cfh-sync.girando .ti { animation: none; opacity: .6; } }
 
   /* ── Toast Sales (Axel, 2026-11-12, sobre lámina) ─────────────────
    * La semana en barras con una raya punteada en lo de un día normal.
@@ -1914,34 +1967,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    *
    * Y marca la frontera que pedía el carrusel: arriba color y acción,
    * aquí abajo referencia. */
-  /* Las dos cifras se quedan como estaban: vidrio blanco translúcido,
-   * sin degradado y sin tono.
-   *
-   * Se probó pasarlas al pizarra del carrusel y luego a una versión
-   * apagada de ese pizarra, y las dos veces pesaban más de la cuenta.
-   * No son tarjetas: son dos cifras, y lo único que tiene que gritar
-   * aquí es el número. El degradado es para lo que arriba se mira y
-   * se toca. */
-  .m-stat { flex: 1; min-width: 0; padding: 14px 13px; border-radius: 17px;
-    background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.12); }
-  .m-stat-k {
-    display: block; font-size: var(--m-eyebrow); font-weight: 800;
-    letter-spacing: .09em; text-transform: uppercase; color: #c3d2e2;
-  }
-    /* El rótulo a la izquierda; la cifra y su detalle, a la derecha.
-   * Las dos tarjetas dejan así sus números en el mismo borde. */
-  .m-stat-v { display: block; text-align: right;
-    font-size: var(--m-screen); font-weight: 800; color: #fff; letter-spacing: -.6px; margin-top: 3px; }
-  .m-stat-d { display: block; text-align: right; font-size: var(--m-meta); color: #a9bacd; margin-top: 3px; }
-  /* "On the shelf" con LIVE: toda la tarjeta abre la cuenta. */
-  .m-stat-toca { cursor: pointer; -webkit-tap-highlight-color: transparent; }
-  .m-stat-det { color: #7dd3fc; font-weight: 700; }
-  .m-stat-det .ti { font-size: var(--m-meta); vertical-align: -1px; }
-
   /* "● Live" ANTES del título (Axel, 2026-11-11), en "Running out
-   * first" y "On the shelf". La marca no va en mayúsculas ni con el
+   * first". La marca no va en mayúsculas ni con el
    * espaciado del rótulo: es la misma de Inventory y de la ficha. */
-  .m-hero-k .m-live, .m-stat-k .m-live {
+  .m-hero-k .m-live {
     margin-right: 8px; font-size: var(--m-meta);
     letter-spacing: 0; text-transform: none; vertical-align: 1px;
   }

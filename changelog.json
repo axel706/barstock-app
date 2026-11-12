@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261111-212807",
+    "items": [
+      "Home: On the shelf, Sold yesterday and Spent this cycle",
+      "Each with its button: Details, Report, Sync"
+    ]
+  },
+  {
     "build": "20261111-201604",
     "items": [
       "Full report: net sales of the day, item by item",
@@ -183,12 +190,6 @@
     "build": "20261111-154721",
     "items": [
       "Settings: the section name sits in the header"
-    ]
-  },
-  {
-    "build": "20261111-113053",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]

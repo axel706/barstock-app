@@ -96,7 +96,10 @@ grupo('el Home suma los dos, y dice de donde salen');
   prueba('y conserva lo contado aparte', /contado: d\.total/.test(cuerpo));
   // Si el titular sube solo y el pie no lo explica, no hay forma de
   // saber si es mercancia nueva o un fallo.
-  prueba('el pie dice el desglose', /counted · \+/.test(src));
+  // Desde las tres cifras (2026-11-12) el desglose ya no va en el pie:
+  // lo dice "Details", que abre el aviso con lo contado y lo facturado.
+  prueba('Details dice el desglose',
+    /k: 'Counted', v: money\(e\.contado\)/.test(src) && /k: 'Invoiced since', v: '\+' \+ money\(e\.llego\)/.test(src));
   // Y NO se calcula aqui: lo lee de inventory-value, que es el dueño.
   prueba('no se calcula en el Home',
     /Number\(d\.llegado\)/.test(cuerpo) && !/_entregas\.dinero/.test(cuerpo));

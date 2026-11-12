@@ -211,13 +211,15 @@ grupo('lo de abajo del Home habla el mismo idioma');
   //
   // No son tarjetas: son dos números. El degradado es para lo que
   // arriba se mira y se toca.
-  const stat = /\.m-stat\s*\{([^}]*)\}/.exec(css);
+  // Desde 2026-11-12 son tres (.m-cf-c, "On the shelf", "Sold
+  // yesterday", "Spent this cycle"), con la misma regla.
+  const stat = /\.m-cf-c\s*\{([^}]*)\}/.exec(css);
   prueba('las cifras siguen en vidrio liso',
     !!stat && /background:\s*rgba\(255,255,255,\.09\)/.test(stat[1]),
     (stat && stat[1] || '').trim().slice(0, 70));
   prueba('sin degradado', !!stat && !/linear-gradient/.test(stat[1]));
   prueba('y su rótulo conserva el gris de antes',
-    /\.m-stat-k\s*\{[^}]*color:\s*#c3d2e2/.test(css));
+    /\.m-cf-k\s*\{[^}]*color:\s*#c3d2e2/.test(css));
 
   // Took off y Went quiet conservan color porque ahí el color ES el
   // dato: sube o baja. Si alguien las pasa a gris, la mitad del
