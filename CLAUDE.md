@@ -537,7 +537,7 @@ que miente.
    manda al correo de la sesión ("Send to me", con "[Test]") o, con
    "Send to the list" (dos toques), a la lista de Settings › Emails ›
    *Morning email recipients* (`location_settings.morning_recipients`,
-   **migración 035**), que el servidor lee de la base: nunca acepta
+   migración 035, corrida), que el servidor lee de la base: nunca acepta
    destinatarios de la petición.
    Si no se sabe qué se acaba (conteo a medias, poca historia, un
    fallo), lo dice en vez de "nothing runs out". **Falta:** a qué hora,
