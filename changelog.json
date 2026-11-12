@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-223123",
+    "items": [
+      "Orders opens with its header already in place"
+    ]
+  },
+  {
     "build": "20261111-222112",
     "items": [
       "Inventory opens with its header already in place"
@@ -185,13 +191,6 @@
     "items": [
       "Sent: when each order arrives",
       "Orders placed last cycle are marked"
-    ]
-  },
-  {
-    "build": "20261111-161615",
-    "items": [
-      "Quick order asks if it's already here",
-      "Live counts it now or at the vendor's next delivery"
     ]
   }
 ]

@@ -562,6 +562,11 @@ if (SRC) {
     prueba('mobile-inventory.js pega su bloque, con su nombre y acoplada desde el principio',
       /BarStockBandDock[\s\S]{0,400}pegado:[\s\S]{0,120}nombre: 'Inventory', siempre: true/.test(invSrc));
     prueba('band-dock.js antes que mobile-inventory.js', i > 0 && i < html.indexOf('src/mobile-inventory.js'));
+    // Orders igual desde el mismo día, salvo dentro de un detalle (sin
+    // nombre: el logo se queda).
+    const ordSrc = fs.readFileSync(path.join(RAIZ, 'src/mobile-orders.js'), 'utf8');
+    prueba('mobile-orders.js entra acoplada, pero no dentro de un detalle',
+      /BarStockBandDock[\s\S]{0,800}nombre, siempre: !!nombre/.test(ordSrc));
     prueba('band-dock.js antes que mobile-orders.js', i > 0 && i < html.indexOf('src/mobile-orders.js'));
     const css2 = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     prueba('el bloque se pega por CSS (sticky), no con JavaScript', /\.m-dock-pegado\s*\{[^}]*position\s*:\s*sticky/.test(css2));

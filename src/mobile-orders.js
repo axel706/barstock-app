@@ -928,9 +928,9 @@
   // div de aquí dentro en vez de la pantalla entera. No se enteran.
 
   const SECCIONES = [
-    { id: 'open',  n: 'Open',     sub: 'What the count says to buy.' },
-    { id: 'sent',  n: 'Sent',     sub: 'What you sent, and what arrived.' },
-    { id: 'inv',   n: 'Invoices', sub: 'What MarginEdge has received.' }
+    { id: 'open',  n: 'Open' },
+    { id: 'sent',  n: 'Sent' },
+    { id: 'inv',   n: 'Invoices' }
   ];
   let _sec = 'open';
 
@@ -951,34 +951,37 @@
   // escribiría sobre un elemento que ya no está en el documento y la
   // sección se quedaría en blanco.
   function marco(host) {
-    // ── Cuatro piezas dentro de una lista con su propio scroll ─────
+    // ── Tres piezas dentro de una lista con su propio scroll ───────
     //
-    // Al bajar, "Orders" pasa al header en el sitio del logo y las
-    // pestañas se quedan pegadas debajo, con el desenfoque progresivo:
-    // lo mismo que Inventory (Axel, 2026-11-09). Lo hace band-dock.js.
+    // Entra ya acoplada: "Orders" en el header en el sitio del logo y
+    // las pestañas pegadas debajo, con el desenfoque progresivo, desde
+    // el principio (Axel, 2026-11-12, "la misma historia para orders",
+    // sobre su captura; antes esperaba al scroll, como Inventory). Lo
+    // hace band-dock.js con `siempre`.
     //
-    //   #moCab     el título y la cifra: se van con la lista.
     //   #moPeg     las pestañas: lo que se queda pegado.
     //   #moTras    "Quick order": es contenido de Open, sube con él.
     //   #moCuerpo  la sección.
     //
-    // Las pestañas van en su propia pieza, colgando DIRECTAMENTE de la
-    // lista, y no dentro de la cabecera como antes: un sticky sólo se
-    // pega mientras dura su padre, y con la cabecera de padre se irían
-    // con ella en cuanto pasara.
+    // Encima de las pestañas iba #moCab, con el título, el subtítulo de
+    // la sección y la cifra de Open ("$X · N vendors"). Se fue entero:
+    // el título ya está en el header, y la cifra sin el título no tenía
+    // dónde quedarse sin volver a dejar algo encima de las pestañas.
+    //
+    // Las pestañas cuelgan DIRECTAMENTE de la lista: un sticky sólo se
+    // pega mientras dura su padre.
     let cuerpo = host.querySelector('#moCuerpo');
     if (!cuerpo) {
-      host.innerHTML = '<div id="moScroll"><div id="moCab"></div><div id="moPeg"></div>' +
+      host.innerHTML = '<div id="moScroll"><div id="moPeg"></div>' +
         '<div id="moTras"></div><div id="moCuerpo"></div></div>';
       cuerpo = host.querySelector('#moCuerpo');
     }
 
-    const cab = host.querySelector('#moCab');
     const peg = host.querySelector('#moPeg');
     const tras = host.querySelector('#moTras');
-    // Se engancha en los dos casos, con la cabecera ya pintada. Dentro
-    // de un detalle va sin nombre: no hay título ni pestañas, y el
-    // header conserva el logo.
+    // Se engancha en los dos casos, con las pestañas ya pintadas.
+    // Dentro de un detalle va sin nombre y sin `siempre`: no hay
+    // pestañas, y el header conserva el logo.
     const acoplar = (nombre) => {
       const D = window.BarStockBandDock;
       // `tambien`: en Sent, la fila del buscador y los filtros, que la
@@ -986,38 +989,17 @@
       // las pestañas (Axel, 2026-11-09). Sólo si es LO PRIMERO del
       // cuerpo: una fila igual más abajo no es la de la sección.
       if (D) D.enganchar({ pantalla: host, scroll: host.querySelector('#moScroll'),
-        pegado: peg, titulo: cab, nombre,
+        pegado: peg, nombre, siempre: !!nombre,
         tambien: () => {
           const p = cuerpo.firstElementChild;
           return p && p.classList.contains('m-inv-bar2') ? p : null;
         } });
     };
-    if (enDetalle()) { cab.innerHTML = ''; peg.innerHTML = ''; tras.innerHTML = ''; acoplar(''); return cuerpo; }
+    if (enDetalle()) { peg.innerHTML = ''; tras.innerHTML = ''; acoplar(''); return cuerpo; }
 
-    const s = SECCIONES.find(x => x.id === _sec) || SECCIONES[0];
     const vs = proveedores();
     const nPend = vs.length;
     const nSin = (I() && I().resumen && (I().resumen() || {}).sueltas) || 0;
-
-    // La cifra, a la derecha del título. Estaba debajo del segmentado
-    // en su propio renglón, y ese renglón es el que ahora ocupa el
-    // botón de apuntar una compra.
-    //
-    // Apilada y no en una línea: "$10,098 across 4 vendors" al lado de
-    // "Orders" se pelea por el ancho y alguno se parte.
-    const total = vs.reduce((a, v) => a + v.total, 0);
-    const cifra = (_sec === 'open' && vs.length)
-      ? '<div class="m-ord-cif"><b>' + money(total) + '</b>' +
-        '<span>' + vs.length + ' vendor' + (vs.length === 1 ? '' : 's') + '</span></div>'
-      : '';
-
-    cab.innerHTML =
-      '<div class="m-cab">' +
-        '<div class="m-cab-t">' +
-          '<div class="m-inv-t">Orders</div>' +
-          '<div class="m-isub">' + esc(s.sub) + '</div>' +
-        '</div>' + cifra +
-      '</div>';
 
     peg.innerHTML =
       '<div class="m-seg" id="moSeg">' +

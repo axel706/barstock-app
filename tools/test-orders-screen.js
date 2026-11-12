@@ -252,8 +252,9 @@ console.log('\nel resumen');
 
   // 18*26.99 + 6*22.40 + 3*0 = 620.22
   ok('el total del proveedor usa la cantidad efectiva', /\$620/.test(host.textContent));
-  // 620.22 de LOOP + 28 de SOUTHERN + 20 de PEQUENO
-  ok('y el de la semana los suma todos', /\$668/.test(host.textContent));
+  // El total de la semana ($668 = 620.22 + 28 + 20) iba en la cabecera,
+  // que se fue con el header acoplado (2026-11-12). Si vuelve a algun
+  // sitio, vuelve su prueba.
 
   // Un pedido sin precios no es barato, es uno que no sabes lo que
   // cuesta. Tiene que cantar desde el resumen.
@@ -501,11 +502,14 @@ console.log('\nel titulo se escribe UNA vez');
   // Las tres eran pantallas y cada una pintaba su propio titulo. Al
   // mudarse dentro de Orders, el contenedor pone el suyo y el de la
   // seccion sale justo debajo: "Orders" dos veces seguidas.
+  //
+  // Desde 2026-11-12 ni el contenedor lo pinta en la pagina: Orders
+  // entra acoplada, con su nombre en el header (como Inventory). Un
+  // titulo grande en la pagina seria "Orders" dos veces otra vez.
   const { host } = pantalla();
   const titulos = host.querySelectorAll('.m-inv-t');
-  ok('solo hay un titulo', titulos.length === 1,
+  ok('ningun titulo en la pagina: va en el header', titulos.length === 0,
      Array.from(titulos).map(t => t.textContent).join(' | '));
-  ok('y es el del contenedor', titulos[0].textContent.trim() === 'Orders');
 
   // Ninguna de las tres puede escribirlo por su cuenta. Se mira el
   // codigo porque el stub de las otras dos no las representa aqui.
@@ -551,17 +555,15 @@ console.log('\nel titulo se escribe UNA vez');
   ok('ni un subtitulo que ya pone el contenedor', subs.length === 0, subs.join(', '));
 }
 
-console.log('\nla cifra sube y el boton ocupa su sitio');
+console.log('\nQuick order, sin cabecera encima');
 {
   const { w, host } = pantalla();
 
-  // La cifra, al lado del titulo. Estaba debajo del segmentado en su
-  // propio renglon.
-  const cif = host.querySelector('.m-ord-cif');
-  ok('la cifra esta en la cabecera', !!cif);
-  ok('con el total', /\$668/.test((cif || {}).textContent || ''), (cif || {}).textContent);
-  ok('y cuantos proveedores', /3 vendors/.test((cif || {}).textContent || ''));
-  ok('y ya no esta debajo', !host.querySelector('.m-ord-gran'));
+  // La cabecera (titulo, subtitulo y la cifra "$X · N vendors") se fue
+  // con el header acoplado desde el principio (Axel, 2026-11-12, sobre
+  // su captura): debajo de las pestanas va Quick order y la lista.
+  ok('sin cabecera en la pagina', !host.querySelector('#moCab') && !host.querySelector('.m-ord-cif'));
+  ok('y la cifra tampoco esta debajo', !host.querySelector('.m-ord-gran'));
 
   // ── Se llama "Quick order", y no "Log a store run" ───────────────
   //
@@ -581,7 +583,6 @@ console.log('\nla cifra sube y el boton ocupa su sitio');
   // Solo en Open: en Sent y en Invoices no pinta nada.
   host.querySelectorAll('#moSeg button')[1].click();
   ok('en Sent no sale', !host.querySelector('#moRun'));
-  ok('ni la cifra', !host.querySelector('.m-ord-cif'));
   host.querySelectorAll('#moSeg button')[2].click();
   ok('en Invoices tampoco', !host.querySelector('#moRun'));
 }
@@ -652,11 +653,14 @@ console.log('\nel header al hacer scroll, como en Inventory');
   // Un sticky solo se pega mientras dura su PADRE. Si las pestanas
   // colgaran de la cabecera, se irian con ella en cuanto pasara.
   ok('las pestanas cuelgan directamente de esa lista', !!peg && peg.parentElement === sc && !!peg.querySelector('#moSeg'));
-  ok('y el titulo va aparte, antes', !!host.querySelector('#moCab .m-inv-t') && !host.querySelector('#moCab #moSeg'));
+  // Y son lo PRIMERO de la lista: sin nada encima que se vaya, entran
+  // ya pegadas bajo el header (Axel, 2026-11-12: "la misma historia
+  // para orders", la de Inventory).
+  ok('las pestanas son lo primero de la lista', sc.firstElementChild === peg);
   const u = pedidos[pedidos.length - 1];
-  ok('se lo pide a band-dock: lista, bloque, titulo y nombre',
-     !!u && u.pantalla === host && u.scroll === sc && u.pegado === peg && u.nombre === 'Orders' && !!u.titulo,
-     u && Object.keys(u).join(','));
+  ok('se lo pide a band-dock: lista, bloque y nombre, acoplada desde el principio',
+     !!u && u.pantalla === host && u.scroll === sc && u.pegado === peg && u.nombre === 'Orders' && u.siempre === true && !u.titulo,
+     u && JSON.stringify({ nombre: u.nombre, siempre: u.siempre, titulo: !!u.titulo }));
 
   // En Sent, la fila del buscador y los filtros la pinta la seccion
   // dentro del cuerpo. Tambien se queda pegada (Axel, 2026-11-09): se
@@ -675,6 +679,9 @@ console.log('\nel header al hacer scroll, como en Inventory');
   w.BarStockMobileInvoices.abrirDetalle();
   const d = pedidos[pedidos.length - 1];
   ok('dentro de un detalle, sin nombre: el header conserva el logo', !!d && d.nombre === '' && d.scroll === sc);
+  // Con `siempre` en un detalle, el logo se apagaria aunque no haya
+  // nombre que poner en su sitio.
+  ok('y sin acoplar a la fuerza', !d.siempre);
   ok('y el cuerpo sigue siendo el mismo elemento', sc.contains(host.querySelector('#moCuerpo')));
 }
 

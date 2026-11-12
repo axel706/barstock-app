@@ -3427,22 +3427,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-adj { border-radius: 16px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-nuevo { border-radius: 50% !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-adj.on::after { border-radius: 50% !important; }
-  /* El segmentado de Orders separa un poco más que el de Inventory:
-   * ahí va pegado al buscador, aquí debajo del subtítulo. */
-  #moCab .m-seg { margin: 13px 0 14px; }
-  /* La cabecera de Orders no tiene chevron —es una pestaña, no se
-   * vuelve de ella—, así que el bloque de texto no lleva el hueco de
-   * los 12px que sí necesitan las pantallas con vuelta. */
-  #moCab .m-cab { margin: 0; align-items: flex-start; gap: 12px; }
-
-  /* La cifra, a la derecha del título. Apilada: "$10,098 across 4
-   * vendors" en una línea se pelea con "Orders" por el ancho. */
-  .m-ord-cif { flex: 0 0 auto; text-align: right; padding-top: 6px; }
-  .m-ord-cif b {
-    display: block; font-size: var(--m-strong); font-weight: 800;
-    color: #fff; letter-spacing: -.3px;
-  }
-  .m-ord-cif span { display: block; font-size: var(--m-meta); color: #8fa3b8; margin-top: 1px; }
 
   /* Apuntar una compra ya hecha. Borde discontinuo y sin relleno
    * sólido: no es la acción principal de la pantalla —esa es repasar
