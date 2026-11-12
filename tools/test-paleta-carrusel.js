@@ -175,17 +175,11 @@ grupo('lo de abajo del Home habla el mismo idioma');
   // qué dice el color, no cómo está hecho.
   //
   // `.m-stat` NO está en la lista a propósito: ver más abajo.
-  const abajo = {
-    '.m-mvcard': 'Top movers',
-    '.m-col-up': 'Took off',
-    '.m-col-dn': 'Went quiet'
-  };
-  for (const [sel, q] of Object.entries(abajo)) {
-    const m = new RegExp(sel.replace('.', '\\.') + '\\s*\\{([^}]*)\\}').exec(css);
-    const r = m ? m[1] : '';
-    const paradas = (r.match(/rgba\([^)]*\)\s+\d+%/g) || []).length;
-    prueba(q + ' · tres paradas', paradas === 3, paradas + ' paradas');
-  }
+  // Desde 2026-11-12 Top movers y Took off / Went quiet son la tarjeta
+  // de Toast Sales (.m-ts): las tres secciones del Home con el mismo
+  // molde, que lleva su propio degradado.
+  const ts = /\n\s*\.m-ts\s*\{([^}]*)\}/.exec(css);
+  prueba('las secciones usan la tarjeta de Toast Sales, con degradado', !!ts && /linear-gradient/.test(ts[1]));
 
   // ── Las dos cifras se quedan FUERA del sistema ────────────────────
   //
@@ -207,20 +201,10 @@ grupo('lo de abajo del Home habla el mismo idioma');
     /\.m-cf-k\s*\{[^}]*color:\s*#c3d2e2/.test(css));
 
   // Took off y Went quiet conservan color porque ahí el color ES el
-  // dato: sube o baja. Si alguien las pasa a gris, la mitad del
-  // mensaje desaparece.
-  const up = /\.m-col-up\s*\{([^}]*)\}/.exec(css);
-  const dn = /\.m-col-dn\s*\{([^}]*)\}/.exec(css);
-  prueba('Took off sigue siendo verde', !!up && /rgba\(16,185,129/.test(up[1]));
-  prueba('Went quiet sigue siendo rojo', !!dn && /rgba\(244,63,94/.test(dn[1]));
-
-  // Los rótulos en blanco, igual que arriba. Las cifras no entran:
-  // sobre vidrio liso el blanco puro es demasiado y su gris funciona.
-  for (const [sel, q] of [['\\.m-mvcard \\.m-hero-k', 'Top movers'],
-                          ['\\.m-col-dn \\.m-col-k', 'las dos columnas']]) {
-    const re = new RegExp(sel + '[^}]*color:\\s*rgba\\(255,255,255');
-    prueba('el rótulo de ' + q + ' va en blanco', re.test(css));
-  }
+  // dato: sube o baja. Ya no en el fondo de dos columnas sino en el
+  // texto de cada fila ("was X" y su flecha).
+  prueba('lo que sube, verde', /\.m-hb-r \.v small\.up\s*\{[^}]*#86efac/.test(css));
+  prueba('lo que baja, rojo', /\.m-hb-r \.v small\.dn\s*\{[^}]*#fca5a5/.test(css));
 }
 
 grupo('los botones saltan sobre el fondo oscuro');

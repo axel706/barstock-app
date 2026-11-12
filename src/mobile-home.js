@@ -1395,20 +1395,30 @@
   // los que hacen falta: de 270 productos, tres es una anécdota.
   const CUANTOS_MOVERS = 5;
 
-  function movers() {
+  // Los que más se mueven, en botellas a la semana o en dinero a la
+  // semana (a tu precio). `usual` es su histórico plano, el mismo número
+  // contra el que se mide la tendencia: la raya punteada de la barra.
+  // Sin historia suficiente no hay raya ni tendencia (tendencia null).
+  function movers(vista) {
+    const din = vista === 'dinero';
     return conPar()
-      .map(({ r, p }) => ({
-        item: r.item,
-        vendor: r.vendor,
-        avg: Number(p.avgUsed) || 0,
-        // La tendencia contra su PROPIA historia, el mismo par de
-        // números que alimenta Took off / Went quiet. Aquí dice algo
-        // más útil: que un producto se mueva mucho no es noticia si
-        // siempre se movió mucho.
-        pct: tendencia(p)
-      }))
-      .filter(x => x.avg > 0)
-      .sort((a, b) => b.avg - a.avg)
+      .map(({ r, p }) => {
+        const precio = Number(r.value) || 0;
+        const k = din ? precio : 1;
+        const pct = tendencia(p);
+        const antes = Number(p.avgHistorical) || 0;
+        return {
+          item: r.item,
+          vendor: r.vendor,
+          valor: (Number(p.avgUsed) || 0) * k,
+          usual: pct === null ? null : antes * k,
+          // La tendencia contra su PROPIA historia: que un producto se
+          // mueva mucho no es noticia si siempre se movió mucho.
+          pct
+        };
+      })
+      .filter(x => x.valor > 0)
+      .sort((a, b) => b.valor - a.valor)
       .slice(0, CUANTOS_MOVERS);
   }
 
@@ -1424,18 +1434,7 @@
     return Math.abs(d) < 8 ? 0 : d;   // por debajo de 8% es la misma semana
   }
 
-  // Pastilla con icono y no texto suelto: a 10px una flecha dibujada se
-  // lee de un vistazo y un "↑" tipografico se confunde con una comilla.
-  function flecha(pct) {
-    if (pct === null) return '';
-    if (pct === 0) {
-      return '<span class="m-tr"><i class="ti ti-minus" aria-hidden="true"></i>steady</span>';
-    }
-    const arriba = pct > 0;
-    return '<span class="m-tr ' + (arriba ? 'up' : 'dn') + '">' +
-           '<i class="ti ti-' + (arriba ? 'trending-up' : 'trending-down') + '" aria-hidden="true"></i>' +
-           Math.abs(pct) + '%</span>';
-  }
+
 
   // ── Qué cambió ───────────────────────────────────────────────────────
   //
@@ -1452,14 +1451,14 @@
 
       if (antes > 0.2 && hoy_ >= antes * 1.5) {
         const x = hoy_ / antes;
-        arriba.push({ item: r.item, dato: x >= 3 ? Math.round(x) + '×' : '+' + Math.round((x - 1) * 100) + '%', orden: x });
+        arriba.push({ item: r.item, hoy: hoy_, antes, orden: x });
       } else if (antes > 0.5 && hoy_ <= antes * 0.4) {
-        abajo.push({ item: r.item, dato: hoy_ < 0.05 ? '0' : n1(hoy_), orden: antes - hoy_ });
+        abajo.push({ item: r.item, hoy: hoy_, antes, orden: antes - hoy_ });
       }
     }
     arriba.sort((a, b) => b.orden - a.orden);
     abajo.sort((a, b) => b.orden - a.orden);
-    return { arriba: arriba.slice(0, 2), abajo: abajo.slice(0, 2) };
+    return { arriba, abajo };
   }
 
   // ── Dinero ───────────────────────────────────────────────────────────
@@ -1538,8 +1537,6 @@
     if (window.BarStockLiveCache) window.BarStockLiveCache.cargar();
 
     const cards = tarjetas();
-    const mov = movers();
-    const ch = cambios();
 
     host.innerHTML = `
       <div class="m-body">
@@ -1571,62 +1568,188 @@
         : ''}
 
       <div class="m-body">
-        <!-- Toast Sales: la pinta pintarVentas() aparte, porque sus
-             datos llegan después y al tocar una barra sólo se repinta
-             ella, sin mover el carrusel. Vacía no ocupa. -->
-        <div id="mhVentas"></div>
-
-        ${mov.length ? `
-          <div class="m-mvcard">
-            <div class="m-mvcard-h">
-              <span class="m-hero-k"><i class="ti ti-flame" aria-hidden="true"></i> Top movers</span>
-              <button type="button" class="m-seclink" id="mhAllMov">
-                See all <i class="ti ti-chevron-right" aria-hidden="true"></i>
-              </button>
-            </div>
-
-            <button type="button" class="m-mv1" data-item="${esc(mov[0].item)}">
-              <span class="m-mv1-n">
-                <b>${n1(mov[0].avg)}</b><small>btl/wk</small>
-                ${flecha(mov[0].pct)}
-              </span>
-              <span class="m-mv1-t">${esc(mov[0].item)}</span>
-              <span class="m-mv1-s">${esc(mov[0].vendor || '')}</span>
-            </button>
-
-            ${mov.length > 1 ? `<div class="m-mvcard-rows">
-              ${mov.slice(1).map((x, i) => `
-                <button type="button" class="m-mvr" data-item="${esc(x.item)}">
-                  <span class="m-mvr-i">${i + 2}</span>
-                  <span class="m-mvr-t">${esc(x.item)}</span>
-                  ${flecha(x.pct)}
-                  <b>${n1(x.avg)}</b>
-                  <span class="m-mvr-bar" style="width:${
-                    Math.round((x.avg / mov[0].avg) * 100)}%"></span>
-                </button>`).join('')}
-            </div>` : ''}
-          </div>` : ''}
-
-        ${(ch.arriba.length || ch.abajo.length) ? `
-          <div class="m-cols">
-            <div class="m-col m-col-up">
-              <div class="m-col-k"><i class="ti ti-trending-up" aria-hidden="true"></i> Took off</div>
-              ${ch.arriba.length
-                ? ch.arriba.map(x => `<div class="m-col-r"><span>${esc(x.item)}</span><b>${esc(x.dato)}</b></div>`).join('')
-                : '<div class="m-col-r m-col-none"><span>Nothing</span><b>—</b></div>'}
-            </div>
-            <div class="m-col m-col-dn">
-              <div class="m-col-k"><i class="ti ti-trending-down" aria-hidden="true"></i> Went quiet</div>
-              ${ch.abajo.length
-                ? ch.abajo.map(x => `<div class="m-col-r"><span>${esc(x.item)}</span><b>${esc(x.dato)}</b></div>`).join('')
-                : '<div class="m-col-r m-col-none"><span>Nothing</span><b>—</b></div>'}
-            </div>
-          </div>` : ''}
+        <!-- Las tres secciones (Axel, 2026-11-12, sobre lámina): Sales,
+             Movement y Changes, cada una con la tarjeta de Toast Sales
+             como molde. Las pinta pintarSecciones() aparte: al cambiar
+             de pestaña o de vista sólo se repinta su tarjeta, sin mover
+             el carrusel. Vacías no ocupan. -->
+        <div class="m-sx" id="mhSecciones">
+          <div class="m-sx-tabs" id="mhTabs" role="tablist"></div>
+          <div id="mhVentas"></div>
+          <div id="mhMov"></div>
+          <div id="mhCamb"></div>
+        </div>
       </div>`;
 
     enganchar(host, cards);
     pintarCifras(host);
     pintarVentas(host);
+    pintarSecciones(host);
+  }
+
+  // ── Las tres secciones: Sales · Movement · Changes ────────────────────
+  //
+  // Sólo salen las pestañas que tienen algo: sin Toast no hay Sales (y
+  // mientras se lee, sí, para no saltar de pestaña al llegar); sin
+  // productos con consumo no hay Movement; sin cambios no hay Changes. Si
+  // la elegida no está, se abre la primera que haya. La elegida se
+  // recuerda mientras la app está abierta: al volver al Home sigues donde
+  // estabas.
+  let _pestana = 'sales', _vistaMov = 'botellas', _vistaCamb = 'arriba';
+
+  function pintarSecciones(host) {
+    const tabs = host && host.querySelector('#mhTabs');
+    if (!tabs) return;
+    const ch = cambios();
+    const hay = {
+      sales: !_ventas || !!_ventas.cargados,
+      movement: movers('botellas').length > 0,
+      changes: ch.arriba.length > 0 || ch.abajo.length > 0
+    };
+    const nombres = { sales: 'Sales', movement: 'Movement', changes: 'Changes' };
+    const lista = Object.keys(nombres).filter(k => hay[k]);
+    if (!lista.includes(_pestana)) _pestana = lista[0] || 'sales';
+    tabs.hidden = lista.length < 2;
+    tabs.innerHTML = lista.map(k => `
+      <button type="button" role="tab" class="${k === _pestana ? 'on' : ''}" data-tab="${k}"
+              aria-selected="${k === _pestana}">${nombres[k]}</button>`).join('');
+    tabs.querySelectorAll('[data-tab]').forEach(b => {
+      b.onclick = () => { _pestana = b.dataset.tab; pintarSecciones(host); };
+    });
+    const ver = (id, k) => { const el = host.querySelector(id); if (el) el.hidden = _pestana !== k; };
+    ver('#mhVentas', 'sales');
+    ver('#mhMov', 'movement');
+    ver('#mhCamb', 'changes');
+    pintarMovement(host);
+    pintarChanges(host, ch);
+  }
+
+  // La pastilla de tendencia en texto: "↗ 20%", "↘ 12%", "— steady".
+  const tendTxt = (pct) => pct === null ? '' : pct === 0 ? '— steady' : (pct > 0 ? '↗ ' : '↘ ') + Math.abs(pct) + '%';
+  const tendCls = (pct) => pct === null || pct === 0 ? 'eq' : pct > 0 ? 'up' : 'dn';
+
+  // Una fila de barra horizontal: la barra es lo de ahora y la raya
+  // punteada lo de siempre. La misma idea que las barras de Toast Sales.
+  function filaBarra(o) {
+    const tope = Math.max(1e-9, o.tope);
+    const ancho = (n) => Math.max(0, Math.min(100, n / tope * 100)).toFixed(1) + '%';
+    return `
+      <div class="m-hb-r${o.on ? ' on' : ''}" data-item="${esc(o.item)}" role="button" tabindex="0">
+        <span class="i">${o.i}</span>
+        <span class="n">${esc(o.item)}</span>
+        <span class="v">${o.v}<small class="${o.cls}">${esc(o.sub)}</small></span>
+        <span class="m-hb-bar"><i style="width:${ancho(o.valor)}"></i>${o.usual !== null && o.usual !== undefined
+          ? `<u style="left:${ancho(o.usual)}"></u>` : ''}</span>
+      </div>`;
+  }
+
+  // Abre la ficha del producto al tocar su fila, como Top movers antes.
+  function filasAFicha(caja) {
+    caja.querySelectorAll('[data-item]').forEach(f => {
+      const ir = () => {
+        const S = window.BarStockMobileSearch;
+        if (S && S.abrirItem) S.abrirItem(f.dataset.item);
+      };
+      f.onclick = ir;
+      f.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); ir(); } };
+    });
+  }
+
+  // ── Movement: Top movers con el molde de Toast Sales ──────────────────
+  //
+  // Los cinco que más se mueven a la semana, en botellas o en dinero a tu
+  // precio (en $ el orden puede cambiar: algo caro y lento sube). Cada
+  // barra contra su histórico, la raya punteada. El primero es el número
+  // grande. Los datos son los de Pour·IQ de siempre (movers()).
+  function pintarMovement(host) {
+    const caja = host.querySelector('#mhMov');
+    if (!caja) return;
+    const din = _vistaMov === 'dinero';
+    const mv = movers(_vistaMov);
+    if (!mv.length) {
+      caja.innerHTML = movers('botellas').length
+        ? `<div class="m-ts m-mv">${cabezaMov(din)}<div class="m-hb-nada">No prices on file for these bottles yet.</div></div>` : '';
+      enganchaMov(host, caja);
+      return;
+    }
+    const tope = Math.max(...mv.map(x => Math.max(x.valor, x.usual || 0)));
+    const v = (n) => din ? money(n) : n1(n);
+    const p = mv[0];
+    caja.innerHTML = `
+      <div class="m-ts m-mv">
+        ${cabezaMov(din)}
+        <div class="m-ts-t">
+          <b>${v(p.valor)}</b><span>${din ? 'a week' : 'btl/wk'} · ${esc(p.item)}</span>
+          <em class="${p.pct ? (p.pct > 0 ? 'm-ts-up' : 'm-ts-dn') : ''}">${p.pct === null ? '' : esc(tendTxt(p.pct)) + (p.pct ? ' vs usual' : '')}</em>
+        </div>
+        <div class="m-hb">
+          ${mv.map((x, k) => filaBarra({ item: x.item, i: k + 1, on: k === 0, v: v(x.valor),
+            sub: tendTxt(x.pct), cls: tendCls(x.pct), valor: x.valor, usual: x.usual, tope })).join('')}
+        </div>
+        <div class="m-hb-ley"><span><i></i>recent weeks</span><span><u></u>its usual</span></div>
+        <div class="m-ts-pie">
+          <button type="button" class="m-ts-mas" data-allmov>See all <i class="ti ti-chevron-right" aria-hidden="true"></i></button>
+        </div>
+      </div>`;
+    enganchaMov(host, caja);
+  }
+  function cabezaMov(din) {
+    return `<div class="m-ts-h">
+        <span class="m-ts-k">Top movers</span>
+        <span class="m-ts-seg" role="group" aria-label="Show bottles or money">
+          <button type="button" class="${din ? '' : 'on'}" data-vm="botellas">Bottles</button>
+          <button type="button" class="${din ? 'on' : ''}" data-vm="dinero">$</button>
+        </span>
+      </div>`;
+  }
+  function enganchaMov(host, caja) {
+    caja.querySelectorAll('[data-vm]').forEach(b => {
+      b.onclick = () => { _vistaMov = b.dataset.vm; pintarMovement(host); };
+    });
+    const all = caja.querySelector('[data-allmov]');
+    if (all) all.onclick = () => { if (window.BarStockMobile) window.BarStockMobile.ir('inventory'); };
+    filasAFicha(caja);
+  }
+
+  // ── Changes: Took off / Went quiet con el molde de Toast Sales ────────
+  //
+  // Los productos cuyo consumo reciente se fue lejos de su histórico (el
+  // mismo criterio de siempre: 1.5× o más arriba; 0.4× o menos abajo).
+  // Cada fila: lo de ahora en la barra y lo de antes en la raya, con
+  // "was X". Hasta cinco de cada lado.
+  const CUANTOS_CAMBIOS = 5;
+  function pintarChanges(host, ch) {
+    const caja = host.querySelector('#mhCamb');
+    if (!caja) return;
+    if (!ch.arriba.length && !ch.abajo.length) { caja.innerHTML = ''; return; }
+    const arriba = _vistaCamb === 'arriba';
+    const xs = (arriba ? ch.arriba : ch.abajo).slice(0, CUANTOS_CAMBIOS);
+    const n = (arriba ? ch.arriba : ch.abajo).length;
+    caja.innerHTML = `
+      <div class="m-ts m-ch">
+        <div class="m-ts-h">
+          <span class="m-ts-k">Changes</span>
+          <span class="m-ts-seg" role="group" aria-label="Took off or went quiet">
+            <button type="button" class="${arriba ? 'on' : ''}" data-vc="arriba">Took off</button>
+            <button type="button" class="${arriba ? '' : 'on'}" data-vc="abajo">Went quiet</button>
+          </span>
+        </div>
+        <div class="m-ts-t">
+          <b>${n}</b><span>${n === 1 ? 'product' : 'products'} using ${arriba ? 'more' : 'less'} than usual</span>
+          <em>vs their history</em>
+        </div>
+        ${xs.length ? `<div class="m-hb">
+          ${xs.map(x => filaBarra({ item: x.item, i: arriba ? '↗' : '↘', on: true,
+            v: n1(x.hoy) + ' /wk', sub: 'was ' + n1(x.antes), cls: arriba ? 'up' : 'dn',
+            valor: x.hoy, usual: x.antes, tope: Math.max(x.hoy, x.antes) })).join('')}
+        </div>
+        <div class="m-hb-ley"><span><i></i>now</span><span><u></u>before</span></div>`
+        : `<div class="m-hb-nada">${arriba ? 'Nothing took off.' : 'Nothing went quiet.'}</div>`}
+      </div>`;
+    caja.querySelectorAll('[data-vc]').forEach(b => {
+      b.onclick = () => { _vistaCamb = b.dataset.vc; pintarChanges(host, cambios()); };
+    });
+    filasAFicha(caja);
   }
 
   // ── Las tres cifras ──────────────────────────────────────────────────
@@ -1816,7 +1939,7 @@
       .then((cambio) => {
         _pidiendoVentas = false;
         const host = document.querySelector('.m-screen[data-screen="home"]');
-        if (cambio && host) { pintarCifras(host); pintarVentas(host); }
+        if (cambio && host) { pintarCifras(host); pintarVentas(host); pintarSecciones(host); }
       });
   }
 
@@ -2053,17 +2176,6 @@
       const p = cards[ci] && cards[ci].prov && cards[ci].prov[pi];
       if (p && p.go) b.onclick = (ev) => { ev.stopPropagation(); p.go(); };
     });
-
-    host.querySelectorAll('[data-item]').forEach(b => {
-      b.onclick = () => {
-        if (window.BarStockMobileSearch && window.BarStockMobileSearch.abrirItem) {
-          window.BarStockMobileSearch.abrirItem(b.dataset.item);
-        }
-      };
-    });
-
-    const all = host.querySelector('#mhAllMov');
-    if (all) all.onclick = () => window.BarStockMobile.ir('inventory');
 
     puntos(host);
   }

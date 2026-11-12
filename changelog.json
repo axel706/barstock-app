@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261111-214718",
+    "items": [
+      "Home: Sales, Movement and Changes in tabs",
+      "Top movers in bottles or dollars, against their usual"
+    ]
+  },
+  {
     "build": "20261111-213544",
     "items": [
       "Home carousel: no more welcome, tips or MarginEdge card",
@@ -185,12 +192,6 @@
     "build": "20261111-160151",
     "items": [
       "Settings: its name sits in the header too"
-    ]
-  },
-  {
-    "build": "20261111-155323",
-    "items": [
-      "Delivery: set the day and time each vendor's order arrives"
     ]
   }
 ]

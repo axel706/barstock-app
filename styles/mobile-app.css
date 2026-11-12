@@ -1102,22 +1102,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     font-size: var(--m-eyebrow); font-weight: 800;
     letter-spacing: .12em; text-transform: uppercase; color: #bae6fd;
   }
-  /* El nombre de la marca conserva su caja dentro de una línea en
-   * mayúsculas. Es lo que se hace en prensa con eBay o iPhone: el
-   * rótulo es una etiqueta, pero contiene un nombre propio. */
-  .m-hero-k .m-brand { text-transform: none; letter-spacing: .01em; }
 
 
-  /* El fuego de Top movers va en rojo y el rótulo se queda como está.
-   * Un icono que significa "esto arde" pintado del mismo azul que el
-   * texto no significa nada. */
-  /* Más grande que el rótulo que acompaña: a 12.5px el icono quedaba
-   * del tamaño de una letra y no se leía como fuego. Va en em para que
-   * siga al encabezado si cambia el tamaño del texto. */
-  .m-hero-k .ti-flame {
-    color: #f87171; font-size: 1.45em; line-height: 0;
-    position: relative; top: .06em;
-  }
   /* ── Una línea, siempre ───────────────────────────────────────────
    *
    * El CUERPO estaba clavado a tres renglones, pero el título no tenía
@@ -1510,133 +1496,56 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
 
   .m-sechead { display: flex; align-items: baseline; justify-content: space-between; margin: 18px 2px 8px; }
   .m-sec { font-size: var(--m-strong); font-weight: 800; color: #fff; letter-spacing: -.2px; }
-  body.m-shell .m-seclink { font-size: var(--m-small); color: #7dd3fc; font-weight: 700; cursor: pointer; }
 
   .m-feed { display: flex; flex-direction: column; gap: 7px; }
 
-  /* ── Top movers ─────────────────────────────────────────────────── */
-  /*
-   * Una sola tarjeta de vidrio, igual que las del carrusel: un héroe
-   * arriba y los demás como renglones debajo.
+  /* ── Las tres secciones: Sales · Movement · Changes ─────────────────
+   * (Axel, 2026-11-12, sobre lámina). Las pestañas son un segmentado de
+   * ancho entero, como el Bottles / $ de Toast Sales pero grande. Movement
+   * y Changes usan la tarjeta de Toast Sales (.m-ts) con filas de barra
+   * horizontal: la barra es lo de ahora y la raya punteada, lo de siempre.
+   * Sustituyen a la tarjeta azul de Top movers y a las dos columnas
+   * verde/roja de Took off / Went quiet.
    *
-   * Lo que había antes eran tres tarjetas sueltas con una barra de
-   * fondo detrás del texto. La barra no se leía como barra —parecía un
-   * rectángulo gris mal pintado— y tres productos de 270 no dicen
-   * gran cosa. Ahora son cinco y el bloque ocupa menos.
-   *
-   * La tendencia vive aquí dentro y no en un bloque aparte: que algo
-   * se mueva mucho no es noticia si siempre se movió mucho.
-   */
+   * El prefijo es m-sx y no m-hs: .m-hs es la pastilla de estado de
+   * Orders › Sent (mobile-history.js), inline-block, y su regla encogía
+   * el bloque entero al ancho de su contenido. */
+  .m-sx { margin-top: 16px; }
+  .m-sx .m-ts { margin-top: 12px; }
+  .m-sx-tabs {
+    display: flex; padding: 3px; border-radius: 999px;
+    background: rgba(0,0,0,.28); border: 1px solid rgba(255,255,255,.12);
+  }
+  .m-sx-tabs[hidden] { display: none; }
+  body.m-shell .m-sx-tabs button {
+    flex: 1; padding: 8px 0; border: 0; background: none; cursor: pointer;
+    font-size: var(--m-small); font-weight: 700; color: #a9bacd;
+  }
+  body.m-shell .m-sx-tabs button.on { background: #7dd3fc; color: #04283d; }
 
-  /* Mismo degradado de tres paradas que el carrusel, y por las mismas
-   * razones: el color arriba a la izquierda donde va el rótulo, casi
-   * negro abajo a la derecha donde van las filas y las cifras.
-   *
-   * Conserva su azul. No es el azul "de órdenes" aquí abajo: fuera del
-   * carrusel el color no identifica una tarjeta, solo da carácter. */
-  .m-mvcard {
-    margin-top: 16px; padding: 14px;
-    border-radius: 19px;
-    background: linear-gradient(135deg, rgba(14,165,233,.82) 0%, rgba(14,165,233,.40) 42%, rgba(3,14,24,.94) 100%);
-    border: 1px solid rgba(125,211,252,.48);
+  .m-hb { margin-top: 12px; }
+  .m-hb-r {
+    display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; align-items: center;
+    column-gap: 8px; margin-top: 9px; cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
-  /* En blanco, igual que en el carrusel: los tintes pálidos se lavan
-   * sobre la esquina viva. */
-  .m-mvcard .m-hero-k { color: rgba(255,255,255,.92); }
-  .m-mvcard-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-
-  body.m-shell .m-mv1 {
-    display: block; width: 100%; text-align: left; cursor: pointer;
-    padding: 5px 0 0;
+  .m-hb-r .i { font-size: var(--m-meta); font-weight: 800; color: #8fa3b8; }
+  .m-hb-r .n { min-width: 0; font-size: var(--m-small); color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-hb-r .v { grid-row: span 2; text-align: right; font-size: var(--m-small); font-weight: 800; color: #fff; white-space: nowrap; }
+  .m-hb-r .v small { display: block; font-size: var(--m-meta); font-weight: 700; }
+  .m-hb-r .v small.up { color: #86efac; }
+  .m-hb-r .v small.dn { color: #fca5a5; }
+  .m-hb-r .v small.eq { color: #8fa3b8; }
+  .m-hb-r .m-hb-bar {
+    grid-column: 2; position: relative; height: 8px; margin-top: 4px;
+    border-radius: 4px; background: rgba(255,255,255,.07);
   }
-  .m-mv1-n { display: flex; align-items: baseline; gap: 6px; }
-  .m-mv1-n b { font-size: var(--m-figure); font-weight: 800; color: #fff; letter-spacing: -.9px; line-height: 1; }
-  .m-mv1-n small { font-size: var(--m-meta); color: #a9bacd; }
-  .m-mv1-t { display: block; font-size: var(--m-body); font-weight: 600; color: #e8eef6; line-height: 1.3; margin-top: 6px; }
-  .m-mv1-s { display: block; font-size: var(--m-meta); color: #a9bacd; margin-top: 3px; letter-spacing: .3px; }
-
-  /* La tendencia del héroe se va a la derecha del todo; la de los
-   * renglones va pegada a su número. */
-  .m-mv1-n .m-tr { margin-left: auto; }
-  .m-tr {
-    display: inline-flex; align-items: center; gap: 3px; flex: 0 0 auto;
-    padding: 3px 7px; border-radius: 999px;
-    font-size: var(--m-meta); font-weight: 700; letter-spacing: .1px;
-    color: #a9bacd; background: rgba(255,255,255,.08);
-  }
-  .m-tr .ti { font-size: var(--m-meta); }
-  .m-tr.up { color: #4ade80; background: rgba(74,222,128,.14); }
-  .m-tr.dn { color: #f87171; background: rgba(248,113,113,.14); }
-
-  .m-mvcard-rows { margin-top: 11px; border-top: 1px solid rgba(255,255,255,.12); padding-top: 3px; }
-  body.m-shell .m-mvr {
-    position: relative; overflow: hidden;
-    display: flex; align-items: center; gap: 9px;
-    width: 100%; padding: 8px 0 10px; text-align: left; cursor: pointer;
-  }
-  /* El puesto. Con cinco renglones el orden ya no se lee solo, y un
-   * número pesa menos que otra barra. */
-  .m-mvr-i {
-    flex: 0 0 16px; font-size: var(--m-meta); font-weight: 800;
-    color: #8ea3b8; text-align: center;
-  }
-  .m-mvr-t {
-    flex: 1; min-width: 0; font-size: var(--m-body); font-weight: 500; color: #ccd8e6;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .m-mvr b { font-size: var(--m-body); font-weight: 800; color: #fff; flex: 0 0 42px; text-align: right; }
-
-  /* Una línea al pie, no un fondo detrás del texto. Ésa fue la queja
-   * del formato anterior: la barra como fondo parecía un rectángulo
-   * gris mal pintado. Al pie se lee como lo que es — cuánto de lo que
-   * se mueve el primero se mueve éste. */
-  .m-mvr-bar {
-    position: absolute; left: 15px; bottom: 2px; height: 2px;
-    border-radius: 999px; background: rgba(125,211,252,.55);
-  }
-
-  .m-mvcard-h .m-hero-k { display: inline-flex; align-items: center; gap: 5px; }
-  /* Aquí había un `.m-mvcard-h .m-hero-k .ti { font-size: var(--m-small) }`.
-   * El único icono de esta cabecera es el fuego, y esa regla, más
-   * específica, le ganaba a la suya (`.m-hero-k .ti-flame`, 1.45em) y
-   * lo dejaba en 12.5px: justo el tamaño "de una letra" del que esa regla
-   * lo quería sacar. Se quitó; el tamaño del fuego lo decide sólo la
-   * suya. */
-  .m-seclink .ti { font-size: var(--m-small); vertical-align: -2px; }
-
-  /* ── Despegó / se apagó ─────────────────────────────────────────── */
-  /*
-   * Dos columnas y no una lista: pesan la mitad y, sobre todo, no se
-   * confunden con Top movers, que está justo encima y también es una
-   * lista de productos con números.
-   *
-   * Sin título propio: el rótulo de cada columna ya dice qué es.
-   */
-  .m-cols { display: flex; gap: 8px; margin-top: 14px; }
-  .m-col { flex: 1; min-width: 0; padding: 12px 13px; border-radius: 15px; }
-  /* Aquí el color SÍ es el dato: arriba y abajo. Por eso estas dos
-   * conservan verde y rojo mientras las cifras de al lado se van al
-   * gris — no es decoración, es la mitad del mensaje.
-   *
-   * Al estilo del carrusel, tres paradas. La caída al negro importa
-   * más que en las grandes: son tarjetas de 12px de relleno con dos
-   * filas, y un verde plano al 82% dejaría el texto encima sin fondo
-   * oscuro donde apoyarse. */
-  .m-col-up { background: linear-gradient(135deg, rgba(16,185,129,.82) 0%, rgba(16,185,129,.38) 46%, rgba(4,18,14,.94) 100%); border: 1px solid rgba(110,231,183,.46); }
-  .m-col-dn { background: linear-gradient(135deg, rgba(244,63,94,.82) 0%, rgba(244,63,94,.38) 46%, rgba(22,5,9,.94) 100%); border: 1px solid rgba(253,164,175,.46); }
-  .m-col-k {
-    display: flex; align-items: center; gap: 6px;
-    font-size: var(--m-eyebrow); letter-spacing: .1em; font-weight: 800;
-    text-transform: uppercase; margin-bottom: 10px;
-  }
-  .m-col-up .m-col-k,
-  .m-col-dn .m-col-k { color: rgba(255,255,255,.92); }
-  .m-col-r { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: var(--m-small); color: #d7e0ea; padding: 4px 0; }
-  .m-col-r span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .m-col-r b { color: #fff; font-weight: 800; font-size: var(--m-body); flex: 0 0 auto; }
-  /* Una columna vacía conserva su sitio: si desapareciera, la otra
-   * ocuparía todo el ancho y el bloque cambiaría de forma cada semana. */
-  .m-col-none { opacity: .45; }
+  .m-hb-r .m-hb-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: #93b0cc; opacity: .55; }
+  .m-hb-r.on .m-hb-bar i { background: #38bdf8; opacity: 1; }
+  .m-hb-r .m-hb-bar u { position: absolute; top: -3px; bottom: -3px; border-left: 2px dashed rgba(255,255,255,.6); }
+  .m-hb-ley { display: flex; gap: 14px; margin-top: 10px; font-size: var(--m-meta); color: #c3d2e2; }
+  .m-hb-ley i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; background: #38bdf8; }
+  .m-hb-ley u { display: inline-block; width: 0; height: 10px; margin-right: 6px; vertical-align: -1px; border-left: 2px dashed rgba(255,255,255,.7); }
+  .m-hb-nada { margin-top: 14px; font-size: var(--m-small); color: #8fa3b8; }
 
   /* ── Dinero ─────────────────────────────────────────────────────── */
 
@@ -3504,7 +3413,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hero-x { border-radius: 50% !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hero-b { border-radius: 11px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hero-b2 { border-radius: 11px !important; }
-  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-mvr-bar { border-radius: 999px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-tabs-bar { border-radius: 24px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-tab { border-radius: 18px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-tab .m-dot { border-radius: 50% !important; }
@@ -5071,9 +4979,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * que cambia: la línea es "ingrediente · oz", el precio a la derecha
    * de la cabecera y el aviso de receta que falta.
    *
-   * El prefijo es m-rc y no m-tr: .m-tr ya es la píldora de tendencia
-   * (sube / baja), y el contenedor de la pantalla la heredaba entera,
-   * radio de 999px incluido. */
+   * El prefijo es m-rc y no m-tr: .m-tr era la píldora de tendencia de
+   * Top movers (sube / baja; salió con el rediseño del Home) y el
+   * contenedor de la pantalla la heredaba entera, radio de 999px
+   * incluido. */
   /* Con la cabecera delante: `.m-tl-sec-h span` le da flex: 1 a todo
    * span de la cabecera y dejaba el precio a media tarjeta. */
   #mScreens .m-tl-sec-h .m-rc-precio { flex: none; font-size: var(--m-small); font-weight: 700; color: #94a3b8; }
