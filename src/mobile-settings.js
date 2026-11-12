@@ -203,13 +203,18 @@
         'email') +
       campo('ms_rcpt', 'Cost report recipients', s.report_recipients,
         'Separate several with commas. Pre-filled when sending the cost report.') +
+      // Aparte de la del informe de costes (Axel, 2026-11-12, eligió
+      // una lista propia). La lee el servidor al mandar.
+      campo('ms_morn', 'Morning email recipients', s.morning_recipients,
+        'Who gets the morning report. Separate several with commas.') +
       '<button type="button" class="m-set-save" id="msSave">Save</button>';
 
     volver(host);
     guardar(host, 'Emails saved', () =>
       window.BarStockLocationSettings.saveSettings({
         reply_to_email: val(host, 'ms_reply'),
-        report_recipients: val(host, 'ms_rcpt')
+        report_recipients: val(host, 'ms_rcpt'),
+        morning_recipients: val(host, 'ms_morn')
       }).then(() => true));
   }
 
@@ -607,7 +612,7 @@
       return;
     }
     if (_panel === 'morning' && window.BarStockMorningReport) {
-      window.BarStockMorningReport.montar(host, () => cabecera(host, 'Morning email', 'This morning\'s report, built from the app\'s numbers. The test only goes to you.'), () => volver(host));
+      window.BarStockMorningReport.montar(host, () => cabecera(host, 'Morning email', 'This morning\'s report, built from the app\'s numbers.'), () => volver(host));
       return;
     }
     if (_panel === 'toastrecipes' && window.BarStockMobileToastRecipes) {

@@ -3912,6 +3912,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * es blanco porque el correo lo es: en el fondo oscuro de la app se
    * lee como una hoja aparte. Su alto lo pone el script al cargar. */
   .m-mr-estado { margin-top: 10px; font-size: var(--m-small); color: #9fb0c4; line-height: 1.5; }
+  /* A la lista: el mismo botón, de contorno. "Send to me" es la prueba de
+   * siempre; éste manda un correo de verdad a varias personas. */
+  body.m-shell .m-set-save.m-mr-lista { margin-top: 10px; background: transparent; color: #7dd3fc; border-color: rgba(125,211,252,.55); }
   .m-mr-vista {
     display: block; width: 100%; margin-top: 12px; height: calc(var(--m-base) * 40);
     border: 1px solid rgba(255,255,255,.14); border-radius: 14px; background: #fff;

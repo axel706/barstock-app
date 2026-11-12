@@ -34,10 +34,23 @@ const texto = (html) => String(html || '').replace(/<[^>]+>/g, ' ').replace(/&am
 
 // Supabase de mentira: sólo valida la sesión, con su correo.
 const rutaSb = require.resolve('@supabase/supabase-js', { paths: [RAIZ] });
+// Y unas tablas, para leer la lista de destinatarios: sólo lee.
+const TABLAS = { locations: [], location_settings: [] };
+let errorTabla = null;
+const consulta = (t) => {
+  const f = [];
+  const q = { select() { return q; }, eq(k, v) { f.push([k, v]); return q; }, limit() { return q; },
+    insert() { throw new Error('escribió en ' + t); }, update() { throw new Error('escribió en ' + t); },
+    upsert() { throw new Error('escribió en ' + t); }, delete() { throw new Error('borró en ' + t); },
+    then(ok, ko) { const r = errorTabla && errorTabla.t === t ? { data: null, error: errorTabla.e }
+      : { data: (TABLAS[t] || []).filter(x => f.every(([k, v]) => x[k] === v)), error: null };
+      return Promise.resolve(r).then(ok, ko); } };
+  return q;
+};
 require.cache[rutaSb] = { id: rutaSb, filename: rutaSb, loaded: true, exports: {
   createClient: () => ({ auth: { getUser: async (t) => (t === 'sesion-buena'
     ? { data: { user: { id: 'u1', email: 'axel@crown.test' } }, error: null }
-    : { data: {}, error: { message: 'bad' } }) } })
+    : { data: {}, error: { message: 'bad' } }) }, from: consulta })
 } };
 // Resend de mentira: apunta lo que se le manda.
 const enviados = [];
@@ -185,6 +198,77 @@ grupo('por la función de integraciones');
   prueba('sin datos, 400 diciendo qué falta', r.code === 400 && /datos/.test(r.body.error), JSON.stringify(r.body));
 }
 
+grupo('a la lista de la locación (Settings › Emails)');
+{
+  // Axel, 2026-11-12: "necesito la posibilidad de mandarlo a más
+  // destinatarios", con su propia lista, aparte de la del informe de
+  // costes. La lista se LEE de la base en el servidor: lo que mande la
+  // app como destinatarios no se usa.
+  TABLAS.locations = [{ id: 'loc-1', account_id: 'wjm-hospitality', name: 'The Crown Tavern' }];
+  TABLAS.location_settings = [{ location_id: 'loc-1', morning_recipients: 'gm@crown.test, bar@crown.test; mal-escrito ,GM@crown.test' }];
+  enviados.length = 0;
+  let r = await llamar({ accion: 'send', params: { datos: BASE, para: 'lista', cuenta: 'wjm-hospitality', to: 'otro@fuera.test' } });
+  const e = enviados[0] || {};
+  prueba('manda a la lista guardada', r.body && r.body.ok && JSON.stringify(e.to) === JSON.stringify(['gm@crown.test', 'bar@crown.test']), JSON.stringify(r.body) + ' ' + JSON.stringify(e.to));
+  prueba('sin repetidos ni lo que no es un correo', !(e.to || []).some(x => /mal|fuera/.test(x)));
+  prueba('dice a cuántos', r.body.to === 'gm@crown.test, bar@crown.test', r.body.to);
+  prueba('a la lista no va marcado como prueba', !/\[Test\]/.test(e.subject || ''), e.subject);
+
+  TABLAS.location_settings = [{ location_id: 'loc-1', morning_recipients: '' }];
+  enviados.length = 0;
+  r = await llamar({ accion: 'send', params: { datos: BASE, para: 'lista', cuenta: 'wjm-hospitality' } });
+  prueba('lista vacía: lo dice y no manda', r.code === 400 && /No morning email recipients/.test(r.body.error) && enviados.length === 0, JSON.stringify(r.body));
+
+  TABLAS.location_settings = [];
+  r = await llamar({ accion: 'send', params: { datos: Object.assign({}, BASE, { local: 'Otra' }), para: 'lista', cuenta: 'wjm-hospitality' } });
+  prueba('una locación que no existe: lo dice', r.code === 400 && /Otra/.test(r.body.error) && enviados.length === 0, JSON.stringify(r.body));
+
+  errorTabla = { t: 'location_settings', e: { code: '42703', message: 'column location_settings.morning_recipients does not exist' } };
+  r = await llamar({ accion: 'send', params: { datos: BASE, para: 'lista', cuenta: 'wjm-hospitality' } });
+  prueba('sin la columna: lo dice, con su migración', r.code === 500 && /morning_recipients/.test(r.body.error) && /035/.test(r.body.error) && enviados.length === 0, JSON.stringify(r.body));
+  errorTabla = { t: 'location_settings', e: { code: '57014', message: 'canceling statement due to statement timeout' } };
+  r = await llamar({ accion: 'send', params: { datos: BASE, para: 'lista', cuenta: 'wjm-hospitality' } });
+  prueba('otro error: el que fue, sin adivinar una migración', r.code === 500 && /statement timeout/.test(r.body.error) && !/035/.test(r.body.error), JSON.stringify(r.body));
+  errorTabla = null;
+
+  TABLAS.location_settings = [{ location_id: 'loc-1', morning_recipients: 'gm@crown.test' }];
+  enviados.length = 0;
+  r = await llamar({ accion: 'send', params: { datos: BASE } });
+  prueba('sin "lista", sigue yendo sólo a ti', JSON.stringify((enviados[0] || {}).to) === JSON.stringify(['axel@crown.test']));
+}
+
+grupo('la migración y Settings › Emails');
+{
+  const fs = require('fs');
+  const leer = f => fs.readFileSync(path.join(RAIZ, f), 'utf8');
+  const mig = path.join(RAIZ, 'database/migrations/035_morning_recipients.sql');
+  prueba('la migración 035 añade la columna', fs.existsSync(mig) && /alter table public\.location_settings[\s\S]*add column if not exists morning_recipients/i.test(fs.readFileSync(mig, 'utf8')));
+  const ms = leer('src/mobile-settings.js');
+  prueba('Emails tiene su campo', /campo\('ms_morn', 'Morning email recipients'/.test(ms) && /morning_recipients: val\(host, 'ms_morn'\)/.test(ms));
+  const { JSDOM } = require('jsdom');
+  const w = new JSDOM('<!doctype html><body></body>', { url: 'https://x.test/', runScripts: 'outside-only' }).window;
+  w.BARSTOCK_CONFIG = { SUPABASE_URL: 'https://sb.test', SUPABASE_KEY: 'k' };
+  w.__cuerpos = [];
+  w.fetch = async (u, o) => {
+    if (/locations\?/.test(u)) return { ok: true, json: async () => [{ id: 'loc-1' }] };
+    w.__cuerpos.push(JSON.parse(o.body)[0]);
+    return w.__falla ? { ok: false, text: async () => w.__falla } : { ok: true, text: async () => '' };
+  };
+  w.eval(leer('src/location-settings.js'));
+  await w.BarStockLocationSettings.saveSettings({ reply_to_email: 'a@b.c', report_recipients: 'x@y.z' });
+  prueba('guardar sin el campo no lo manda (el escritorio no lo tiene)', !('morning_recipients' in w.__cuerpos[0]), JSON.stringify(w.__cuerpos[0]));
+  await w.BarStockLocationSettings.saveSettings({ reply_to_email: 'a@b.c', report_recipients: 'x@y.z', morning_recipients: 'gm@crown.test' });
+  prueba('con el campo, sí', w.__cuerpos[1].morning_recipients === 'gm@crown.test');
+  w.__falla = '{"code":"PGRST204","message":"Could not find the \'morning_recipients\' column of \'location_settings\' in the schema cache"}';
+  let err = '';
+  try { await w.BarStockLocationSettings.saveSettings({ morning_recipients: 'gm@crown.test' }); } catch (e) { err = e.message; }
+  prueba('sin la columna, dice qué migración falta', /morning_recipients/.test(err) && /035/.test(err), err);
+  w.__falla = '{"code":"42501","message":"permission denied"}';
+  err = '';
+  try { await w.BarStockLocationSettings.saveSettings({ morning_recipients: 'gm@crown.test' }); } catch (e) { err = e.message; }
+  prueba('otro error: el que fue', /permission denied/.test(err) && !/035/.test(err), err);
+}
+
 grupo('en la app: los números salen de los mismos módulos');
 {
   const { JSDOM } = require('jsdom');
@@ -242,6 +326,30 @@ grupo('en la app: los números salen de los mismos módulos');
   const env = w.__llamadas.find(x => x.a === 'send');
   prueba('Send to me lo manda, con los mismos datos', !!env && !!env.prm.datos && !('to' in env.prm), JSON.stringify(env && env.prm).slice(0, 120));
   prueba('y dice a dónde se mandó', /axel@crown\.test/.test(host.textContent + ' ' + (w.__toast || '')), host.textContent.slice(0, 200));
+
+  // A la lista: el botón dice a cuántos, y manda "lista", no direcciones.
+  w = await app();
+  w.BarStockLocationSettings = { getSettings: async () => ({ morning_recipients: 'gm@crown.test, bar@crown.test' }) };
+  const h2 = w.document.createElement('div'); w.document.body.appendChild(h2);
+  await w.BarStockMorningReport.montar(h2, () => '', () => {});
+  await new Promise(r => setTimeout(r, 20));
+  const bl = h2.querySelector('#mrLista');
+  prueba('con lista, un botón que dice a cuántos', !!bl && /Send to the list · 2 people/.test(bl.textContent), h2.innerHTML.slice(0, 400));
+  // Es un correo de verdad a varias personas: el primer toque pide el
+  // segundo, como Reopen en Sent.
+  bl.click();
+  await new Promise(r => setTimeout(r, 20));
+  prueba('un toque no lo manda: pide otro', !w.__llamadas.some(x => x.a === 'send') && /Tap again to send to 2 people/.test(bl.textContent), bl.textContent);
+  bl.click();
+  await new Promise(r => setTimeout(r, 20));
+  const env2 = w.__llamadas.filter(x => x.a === 'send').pop();
+  prueba('manda "lista" con la cuenta, no las direcciones', !!env2 && env2.prm.para === 'lista' && !!env2.prm.cuenta && !('to' in env2.prm), JSON.stringify(env2 && env2.prm).slice(0, 160));
+  w = await app();
+  w.BarStockLocationSettings = { getSettings: async () => ({ morning_recipients: '' }) };
+  const h3 = w.document.createElement('div'); w.document.body.appendChild(h3);
+  await w.BarStockMorningReport.montar(h3, () => '', () => {});
+  await new Promise(r => setTimeout(r, 20));
+  prueba('sin lista, sin botón y dice dónde se pone', !h3.querySelector('#mrLista') && /Settings › Emails/.test(h3.textContent), h3.textContent.slice(0, 200));
 
   const ms = leer('src/mobile-settings.js');
   prueba('Settings › Toast lo ofrece', /id: 'morning'[^}]*n: 'Morning email'/.test(ms) && /_panel === 'morning'[\s\S]{0,120}BarStockMorningReport/.test(ms));

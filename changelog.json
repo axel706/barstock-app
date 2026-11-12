@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261112-122729",
+    "items": [
+      "Morning email can go to a list of people",
+      "Set the list in Settings › Emails"
+    ]
+  },
+  {
     "build": "20261112-121916",
     "items": [
       "Morning email: preview and send yourself a test",
@@ -185,12 +192,6 @@
     "build": "20261111-174447",
     "items": [
       "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261111-172959",
-    "items": [
-      "Live updates as soon as invoices come in"
     ]
   }
 ]

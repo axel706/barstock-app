@@ -534,10 +534,14 @@ que miente.
    enseña la vista y "Send to me" lo manda con "[Test]" en el asunto.
    Las frases y el HTML los escribe `lib/morning-report.js`, por
    `api/integrations.js?provider=report` (`preview` / `send`), y se
-   manda **sólo al correo de la sesión**: no acepta otro destinatario.
+   manda al correo de la sesión ("Send to me", con "[Test]") o, con
+   "Send to the list" (dos toques), a la lista de Settings › Emails ›
+   *Morning email recipients* (`location_settings.morning_recipients`,
+   **migración 035**), que el servidor lee de la base: nunca acepta
+   destinatarios de la petición.
    Si no se sabe qué se acaba (conteo a medias, poca historia, un
-   fallo), lo dice en vez de "nothing runs out". **Falta:** a quién va
-   y a qué hora, y que lo mande Vercel cada mañana. Para eso los números
+   fallo), lo dice en vez de "nothing runs out". **Falta:** a qué hora,
+   y que lo mande Vercel cada mañana a esa lista. Para eso los números
    tienen que calcularse en el servidor (hoy salen de la app); hacerlo
    sin escribir dos veces el cálculo es lo que hay que resolver.
 

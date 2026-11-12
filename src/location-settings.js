@@ -53,6 +53,13 @@
       report_recipients: settings.report_recipients || '',
       updated_at: new Date().toISOString()
     };
+    // A quién va el correo de la mañana (migración 035). Sólo si quien
+    // guarda lo trae: el escritorio no tiene ese campo, y mandarlo vacío
+    // borraría la lista que se puso en el teléfono. Con merge-duplicates
+    // una columna que no va en el cuerpo no se toca.
+    if (Object.prototype.hasOwnProperty.call(settings, 'morning_recipients')) {
+      payload.morning_recipients = settings.morning_recipients || '';
+    }
 
     const res = await fetch(
       `${url}/rest/v1/location_settings?on_conflict=location_id`,
@@ -70,6 +77,11 @@
 
     if (!res.ok) {
       const txt = await res.text();
+      // Lo que dijo Supabase. Y sólo si dice que falta ESA columna, cuál
+      // es la migración: no a cualquier error que mencione la tabla.
+      if (/PGRST204|42703/.test(txt) && /morning_recipients/.test(txt)) {
+        throw new Error('The morning_recipients column is not in the database yet: run migration 035. (' + txt + ')');
+      }
       throw new Error('Error saving location_settings: ' + txt);
     }
 

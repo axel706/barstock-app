@@ -72,6 +72,7 @@
     host.innerHTML = cab() +
       '<div class="m-mr">' +
         '<button type="button" class="m-set-save" id="mrSend" disabled>Send to me</button>' +
+        '<div id="mrListaCaja"></div>' +
         '<div class="m-mr-estado" id="mrEstado">Building this morning\'s report…</div>' +
         // Sin scripts: el correo no lleva ninguno. allow-same-origin para
         // medir su alto; los enlaces se abren fuera, no dentro del marco.
@@ -98,19 +99,55 @@
       };
     }
     decir('Subject: ' + r.asunto);
-    if (!boton) return;
-    boton.disabled = false;
-    boton.onclick = async () => {
-      boton.disabled = true;
-      boton.textContent = 'Sending…';
+
+    const mandar = async (b, texto, extra, fin) => {
+      b.disabled = true;
+      b.textContent = 'Sending…';
       let s;
-      try { s = await D().llamar('report', 'send', { datos: d }); }
+      try { s = await D().llamar('report', 'send', Object.assign({ datos: d }, extra)); }
       catch (e) { s = { ok: false, error: (e && e.message) || String(e) }; }
-      boton.disabled = false;
-      boton.textContent = 'Send to me';
-      const t = s && s.ok ? 'Sent to ' + s.to + '. Check your inbox.' : 'Could not send: ' + ((s && s.error) || 'no answer');
+      b.disabled = false;
+      b.textContent = texto;
+      const t = s && s.ok ? 'Sent to ' + s.to + '.' + (fin || '') : 'Could not send: ' + ((s && s.error) || 'no answer');
       decir(t);
       if (window.BarStockToast) window.BarStockToast.show(t);
+    };
+    if (boton) {
+      boton.disabled = false;
+      boton.onclick = () => mandar(boton, 'Send to me', {}, ' Check your inbox.');
+    }
+
+    // ── A la lista de la locación (Settings › Emails) ──────────────────
+    // Axel, 2026-11-12: "necesito la posibilidad de mandarlo a más
+    // destinatarios". Aquí la lista sólo se CUENTA para el botón: quien
+    // la lee para mandar es el servidor, de la base. Es un correo de
+    // verdad a varias personas, así que el primer toque pide el segundo,
+    // como Reopen en Sent.
+    const caja = host.querySelector('#mrListaCaja');
+    if (!caja) return;
+    let n = 0;
+    try {
+      const st = window.BarStockLocationSettings ? await window.BarStockLocationSettings.getSettings() : null;
+      n = new Set(String((st && st.morning_recipients) || '').split(/[,;]/)
+        .map(x => x.trim().toLowerCase()).filter(x => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x))).size;
+    } catch (e) { /* sin lista que contar: se dice abajo */ }
+    if (!n) {
+      caja.innerHTML = '<div class="m-mr-estado">To send it to more people, add them in Settings › Emails › Morning email recipients.</div>';
+      return;
+    }
+    const gente = n + (n === 1 ? ' person' : ' people');
+    const texto = 'Send to the list · ' + gente;
+    caja.innerHTML = '<button type="button" class="m-set-save m-mr-lista" id="mrLista">' + esc(texto) + '</button>';
+    const bl = caja.querySelector('#mrLista');
+    let armado = null;
+    bl.onclick = () => {
+      if (!armado) {
+        bl.textContent = 'Tap again to send to ' + gente;
+        armado = setTimeout(() => { armado = null; bl.textContent = texto; }, 4000);
+        return;
+      }
+      clearTimeout(armado); armado = null;
+      mandar(bl, texto, { para: 'lista', cuenta: (window.BARSTOCK_CONFIG || {}).ACCOUNT_ID || 'wjm-hospitality' });
     };
   }
 
