@@ -241,6 +241,20 @@ recargar** del armazón miraba sólo la página y le robaba el gesto a la
 lista (ya mira dónde cae el dedo), y **una página corta sube la barra
 de pestañas** en la app instalada (no quitarle el alto mínimo a la
 pantalla ni fijar el `body`).
+
+**La barra de pestañas que se sube** (con franja negra debajo) ha
+mordido tres veces: al fijar el `body`, al quitarle el alto mínimo a
+Buscar, y el 2026-11-12 al **acortar** ese alto mínimo para que More y
+Settings no rodaran (restando las zonas seguras: la página cabía
+exacta). Las tres tienen la misma causa: en la app instalada del
+iPhone, **el documento tiene que medir más que la pantalla**. Por eso
+`.m-screen.on` lleva `min-height: calc(100dvh - 200px)` y una página
+corta rueda unos 47 px: es el precio, no un error. No se ve en Chromium
+(ahí las zonas seguras valen 0), así que **cualquier cambio en el alto
+del documento, del `body` o de `.m-screen` se prueba en el teléfono
+antes de darlo por bueno**. `test-banda-acoplada` congela el valor. Si
+algún día se quita ese rodar sobrante, es haciendo que el documento no
+ruede, no acortándolo.
 **Durante el scroll no se mide.** `band-dock.js` tiene dos funciones
 y no se mezclan: `medir()` (lo caro: posiciones y tamaños, al pintar,
 al cambiar de tamaño o de contenido y al poner el dedo) y `animar()`

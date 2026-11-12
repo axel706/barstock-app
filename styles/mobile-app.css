@@ -272,19 +272,20 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * 100dvh y no 100vh: en iOS, vh cuenta la barra del navegador aunque
    * no esté, y de ahí salen cien píxeles de más.
    *
-   * Y llega JUSTO hasta la barra, sin pasarse: resta exactamente lo que
-   * el body añade arriba y abajo (la banda, 52, y la barra, 102, cada
-   * una con su zona segura), con el padding de la pantalla dentro
-   * (border-box). Restaba 200 px fijos, sin las zonas seguras: en el
-   * iPhone una página de cuatro filas —Settings, Sender, More— quedaba
-   * 77 px más alta que la pantalla y rodaba sin nada debajo (Axel,
-   * 2026-11-12: "un scroll que no necesitan"). */
+   * ── NO lo ajustes "a la medida" ──────────────────────────────────
+   * Con este valor, en el iPhone una página corta (More, Settings) mide
+   * unos 47 px MÁS que la pantalla y se puede rodar un poco. Parece un
+   * error y no lo es: el 2026-11-12 se cambió para que restara justo la
+   * banda, la barra y las zonas seguras —la página cabía exacta y dejaba
+   * de rodar— y esa misma noche, en "Do we have", la barra de pestañas
+   * se subió y volvió la franja negra debajo. Se deshizo. La app
+   * instalada necesita que el documento pase de la pantalla. Quitar ese
+   * rodar sobrante pide otro camino (que no ruede el documento), no
+   * acortar esto. Lo vigila test-banda-acoplada. */
   .m-screen.on {
-    display: block; box-sizing: border-box;
-    min-height: calc(100vh - 154px);
-    min-height: calc(100dvh - 154px
-                     - env(safe-area-inset-top, 0px)
-                     - env(safe-area-inset-bottom, 0px));
+    display: block;
+    min-height: calc(100vh - 200px);
+    min-height: calc(100dvh - 200px);
   }
 
   /* Mientras hay pantalla propia, la de siempre se esconde: #mScreens

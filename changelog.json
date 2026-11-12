@@ -1,8 +1,8 @@
 [
   {
-    "build": "20261111-234456",
+    "build": "20261112-082712",
     "items": [
-      "Short screens like Settings no longer scroll"
+      "The tab bar stays at the bottom again"
     ]
   },
   {
