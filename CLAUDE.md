@@ -597,3 +597,12 @@ contestaría en segundos y nunca se corrió.
   5–9 y nueve capturas.
 - La causa raíz de las órdenes `waiting` de Crown sigue sin encontrarse; el
   enlace manual la tapa.
+- **Cargar hoy a mano desde Toast** (Axel, 2026-11-12, aplazado por él): un
+  botón que llame a `sync` con el día de hoy para que el LIVE descuente lo
+  vendido hasta ese momento; la carga automática de la madrugada ya vuelve
+  a cargar los días marcados `closed: false`, así que no se cuenta doble.
+  Propuesto en la cabecera de *Toast Sales* ("↻ Today" · "updated 10:08
+  PM"), sin dibujar todavía. **Antes hay que arreglar `run-out.js`**: da
+  por hecho que lo de hoy no está descontado y resta la mediana de hoy
+  entera; con hoy cargado a medias restaría dos veces. El día 0 tiene que
+  restar `max(0, mediana − lo vendido hoy)`.
