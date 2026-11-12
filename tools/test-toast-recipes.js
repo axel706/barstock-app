@@ -86,7 +86,8 @@ grupo('las recetas, por pestaña');
   const w = entorno();
   const host = await montar(w);
   const tabs = [...host.querySelectorAll('[data-tab]')].map(b => b.textContent);
-  prueba('tres pestañas con su cuenta', tabs.join('|') === 'Cocktails · 3|Happy Hour · 1|Mods · 1', tabs.join('|'));
+  // Cuatro desde el 2026-11-12: "From Toast", lo que Toast vende sin receta.
+  prueba('cuatro pestañas con su cuenta', /^Cocktails · 3\|Happy Hour · 1\|Mods · 1\|From Toast · /.test(tabs.join('|')), tabs.join('|'));
   prueba('empieza en Cocktails, una tarjeta por cóctel', host.querySelectorAll('.m-rc-card').length === 3);
   const hm = tarjeta(host, 'Her Majesty');
   prueba('la tarjeta lleva su precio', !!hm && /\$15/.test(hm.textContent));

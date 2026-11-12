@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 135 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 136 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -330,7 +330,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 135 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 136 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -513,6 +513,17 @@ que miente.
 5. Recetas y licor: Tito's va casi todo en cócteles, sin recetas no hay
    estimado. Faltan de Axel las recetas y los pours (Single, Double,
    3oz, UP/RX).
+   **Escribirlas desde la app (2026-11-12, opción A):** Settings › Toast
+   › Recipes. "+ New recipe" (de cero), Edit en cada tarjeta (onzas de
+   0.25 en 0.25, borrar con dos toques), y la pestaña *From Toast*: lo
+   que Toast vendió en 30 días como cóctel (categoría Liquor, fuera del
+   grupo "Liquor", que es el licor solo) sin receta, con *Write recipe*,
+   *Same as…* (añade el nombre a `also`) y *Not a drink* (fila
+   `ignored` en `toast_item_links`). Una receta que Toast no vende con
+   su nombre lleva "Not in Toast · Match": emparejar cambia
+   `toast_name` y guarda el tuyo en `name`. Migración 036 (`name`,
+   `also`). Los datos en `src/toast-recipes.js`, la pantalla en
+   `src/mobile-toast-recipes.js`; la prueba, `test-recetas-editar`.
 6. El correo de la mañana. Resend ya está; la tarea diaria tiene que
    caber en una función de `api/` que ya exista (están las 12).
    **Diseño acordado (Axel, 2026-11-12, sobre lámina; sin construir):**

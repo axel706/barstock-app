@@ -73,7 +73,13 @@
   function calcular(ventas, enlaces, recetas, tamanos) {
     const porGuid = new Map((enlaces || []).map(e => [e.toast_item_guid, e]));
     const cocteles = new Map(), mods = new Map();
-    for (const R of recetas || []) (R.tipo === 'modifier' ? mods : cocteles).set(norm(R.nombre), R);
+    // Cada receta por su nombre de Toast y por los de "Same as…" (also):
+    // el mismo trago vendido con otro nombre gasta lo mismo.
+    for (const R of recetas || []) {
+      const m = R.tipo === 'modifier' ? mods : cocteles;
+      m.set(norm(R.nombre), R);
+      for (const a of R.tambien || []) m.set(norm(a), R);
+    }
 
     const productos = new Map();
     const sinConvertir = new Map();

@@ -1,5 +1,13 @@
 [
   {
+    "build": "20261112-162401",
+    "items": [
+      "Recipes: write one from scratch, edit or delete it",
+      "From Toast tab: drinks Toast sells with no recipe",
+      "Match a recipe to its Toast item"
+    ]
+  },
+  {
     "build": "20261112-134307",
     "items": [
       "Toast works per location: Will's & Bill's too"
@@ -181,13 +189,6 @@
     "build": "20261111-185002",
     "items": [
       "No more color line under each bottle in Inventory"
-    ]
-  },
-  {
-    "build": "20261111-184517",
-    "items": [
-      "See them on Home opens only the bottles running out",
-      "Tap the pill above the list to see everything"
     ]
   }
 ]

@@ -47,8 +47,14 @@
             _d = { estado: 'error', error: 'More than ' + TOPE + ' recipes: the list would be cut short.' };
           } else {
             const productos = L().productosDelInventario();
+            // `nombre` es como lo vende Toast (la llave con la que casa el
+            // cálculo de botellas); `titulo`, como se enseña: el nombre que
+            // le diste al escribirla, si al emparejarla con Toast cambió.
+            // `tambien`: otros nombres de Toast con la misma receta
+            // ("Same as…").
             const recetas = filas.map(x => ({
-              id: x.id, tipo: x.tipo, nombre: x.toast_name, hh: !!x.happy_hour,
+              id: x.id, tipo: x.tipo, nombre: x.toast_name, titulo: x.name || x.toast_name,
+              tambien: Array.isArray(x.also) ? x.also : [], hh: !!x.happy_hour,
               precio: x.price == null ? null : Number(x.price), nota: x.note || '', pendiente: x.pending || '',
               lineas: (x.toast_recipe_lines || []).map(l => ({
                 id: l.id, etiqueta: l.label, oz: Number(l.oz), producto: l.item_name || null,
@@ -122,8 +128,199 @@
     return '';
   }
 
+  // ── Escribir, editar y casar con Toast ─────────────────────────────
+  //
+  // Axel, 2026-11-12, opción A sobre lámina: escribir una receta de cero,
+  // cambiarla (ingredientes, onzas, Happy Hour, el licor del cliente),
+  // borrarla, y casar con Toast lo que no case por nombre. Siempre primero
+  // la nube y luego la pantalla (se vuelve a leer todo): un fallo deja la
+  // pantalla como estaba y se dice con lo que contestó Supabase.
+  async function pedir(ruta, op) {
+    const r = await fetch(cfg().SUPABASE_URL + '/rest/v1/' + ruta, Object.assign({}, op, {
+      headers: Object.assign({ 'Content-Type': 'application/json' }, (op && op.headers) || {}, H()) }));
+    const t = await r.text();
+    if (!r.ok) {
+      // Un nombre repetido es lo único que se traduce: lo demás, tal cual.
+      if (r.status === 409 && /23505|duplicate/.test(t)) {
+        const e = new Error('duplicado'); e.duplicado = true; throw e;
+      }
+      throw new Error('Supabase answered ' + r.status + ': ' + t.slice(0, 200));
+    }
+    try { return t ? JSON.parse(t) : null; } catch (e) { return null; }
+  }
+  const locacion = () => (_d && _d.locationId) || window.BarStockInventoryCloud.fetchLocationId();
+  const ELECCION = "Customer's choice";
+
+  // Una línea NUEVA necesita su botella (en el editor se añade eligiéndola).
+  // Una que ya estaba puede seguir sin ella: es "Choose a bottle", lo que
+  // falta por elegir de las recetas cargadas, y no puede impedir editar
+  // el resto de la receta.
+  function validar(lineas) {
+    for (const l of lineas || []) {
+      const oz = Number(l.oz);
+      if (!(oz > 0)) throw new Error('Every ingredient needs its ounces (more than 0 oz).');
+      if (l.id == null && !l.eleccion && !l.producto) throw new Error('Every new ingredient needs its bottle.');
+    }
+  }
+  const filaDe = (l, recipeId, pos) => ({
+    recipe_id: recipeId, position: pos, label: l.eleccion ? ELECCION : (l.etiqueta && !l._cambio ? l.etiqueta : l.producto),
+    item_name: l.eleccion ? null : l.producto, oz: Number(l.oz), chosen: !!l.eleccion,
+    only_with: l.soloCon || null, not_with: l.sinCon || []
+  });
+
+  async function crear(o) {
+    const nombre = String((o && o.nombre) || '').trim();
+    if (!nombre) throw new Error('The recipe needs a name.');
+    validar(o.lineas);
+    const loc = await locacion();
+    let fila;
+    try {
+      fila = await pedir('toast_recipes', { method: 'POST', headers: { Prefer: 'return=representation' },
+        body: JSON.stringify([{ location_id: loc, tipo: 'cocktail', toast_name: nombre, happy_hour: !!o.hh }]) });
+    } catch (e) {
+      if (e.duplicado) throw new Error('A recipe called "' + nombre + '" already exists.');
+      throw e;
+    }
+    const id = fila && fila[0] && fila[0].id;
+    if ((o.lineas || []).length) {
+      await pedir('toast_recipe_lines', { method: 'POST', headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify(o.lineas.map((l, i) => filaDe(Object.assign({}, l, { _cambio: true }), id, i))) });
+    }
+    await cargar();
+    return id;
+  }
+
+  // Cambia lo que cambió y conserva lo que el editor no toca (las
+  // condiciones "only with" / "not with"). Lo quitado se borra AL FINAL:
+  // si algo falla antes, la receta no se queda sin líneas, que se leería
+  // como un trago que no gasta nada.
+  async function guardarReceta(id, o) {
+    const R = recetas().find(x => x.id === id);
+    if (!R) throw new Error('That recipe is no longer here.');
+    validar(o.lineas);
+    const antes = new Map(R.lineas.map(l => [l.id, l]));
+    const quedan = new Set();
+    const nuevas = [];
+    for (let i = 0; i < o.lineas.length; i++) {
+      const l = o.lineas[i];
+      const viejo = l.id != null ? antes.get(l.id) : null;
+      if (!viejo) { nuevas.push(filaDe(Object.assign({}, l, { _cambio: true }), id, i)); continue; }
+      quedan.add(l.id);
+      const cambioBotella = (viejo.producto || null) !== (l.producto || null);
+      const cambio = {};
+      if (Number(viejo.oz) !== Number(l.oz)) cambio.oz = Number(l.oz);
+      if (cambioBotella) { cambio.item_name = l.eleccion ? null : l.producto; if (!l.eleccion) cambio.label = l.producto; }
+      if (i !== R.lineas.indexOf(viejo)) cambio.position = i;
+      if (Object.keys(cambio).length) {
+        await pedir('toast_recipe_lines?id=eq.' + l.id, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(cambio) });
+      }
+    }
+    if (nuevas.length) {
+      await pedir('toast_recipe_lines', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(nuevas) });
+    }
+    if (!!o.hh !== R.hh) {
+      await pedir('toast_recipes?id=eq.' + id, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ happy_hour: !!o.hh }) });
+    }
+    const fuera = R.lineas.filter(l => !quedan.has(l.id)).map(l => l.id);
+    if (fuera.length) await pedir('toast_recipe_lines?id=in.(' + fuera.join(',') + ')', { method: 'DELETE' });
+    await cargar();
+    return true;
+  }
+
+  async function borrar(id) {
+    await pedir('toast_recipes?id=eq.' + id, { method: 'DELETE' });
+    await cargar();
+    return true;
+  }
+
+  // La receta pasa a casar con ESE artículo de Toast; el nombre que le
+  // diste se queda para enseñarla.
+  async function emparejar(id, toastName) {
+    const R = recetas().find(x => x.id === id);
+    if (!R) throw new Error('That recipe is no longer here.');
+    const nuevo = String(toastName || '').trim();
+    if (!nuevo) throw new Error('Pick a Toast item.');
+    try {
+      await pedir('toast_recipes?id=eq.' + id, { method: 'PATCH', headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({ toast_name: nuevo, name: R.titulo !== nuevo ? R.titulo : null }) });
+    } catch (e) {
+      if (e.duplicado) throw new Error('"' + nuevo + '" already has its own recipe.');
+      throw e;
+    }
+    await cargar();
+    return true;
+  }
+
+  // "Same as…": otro nombre de Toast que gasta lo mismo.
+  async function igualQue(id, toastName) {
+    const R = recetas().find(x => x.id === id);
+    if (!R) throw new Error('That recipe is no longer here.');
+    const n = String(toastName || '').trim();
+    if (!n) throw new Error('Pick a Toast item.');
+    const also = R.tambien.concat(R.tambien.includes(n) ? [] : [n]);
+    await pedir('toast_recipes?id=eq.' + id, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ also }) });
+    await cargar();
+    return true;
+  }
+
+  // "Not a drink": ignorado en toast_item_links, por su guid. El cálculo
+  // de botellas (toast-usage.js) ya se salta lo ignorado.
+  async function ignorar(x) {
+    if (!x || !x.guid) throw new Error('That Toast item has no id.');
+    const loc = await locacion();
+    await pedir('toast_item_links?on_conflict=location_id,toast_item_guid', { method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify([{ location_id: loc, toast_item_guid: x.guid, toast_item_name: x.nombre, toast_group: x.grupo || null,
+        kind: 'liquor', status: 'ignored', item_name: null, updated_at: new Date().toISOString() }]) });
+    _sinReceta = null;
+    return true;
+  }
+
+  // ── Lo que Toast vende sin receta ──────────────────────────────────
+  //
+  // Los cócteles: ventas de categoría Liquor de los últimos 30 días que
+  // NO están bajo el grupo "Liquor" del menú (ése es el licor solo, que
+  // empareja Liquor from Toast con la misma regla que lib/toast.js), sin
+  // emparejar ni ignorar en toast_item_links, y sin receta por su nombre
+  // ni por "also". El más vendido primero.
+  const DIAS_TOAST = 30;
+  let _sinReceta = null;       // { vendidos: Set de nombres normalizados }
+  const enGrupoLicor = (g) => String(g || '').split('›').map(x => x.trim()).some(x => /^liquor$/i.test(x));
+  async function sinReceta() {
+    const loc = await locacion();
+    const desde = new Date(Date.now() - DIAS_TOAST * 864e5).toISOString().slice(0, 10);
+    const [ventas, enlaces] = await Promise.all([
+      window.BarStockRest.leerTodo('toast_sales?location_id=eq.' + loc + '&business_date=gte.' + desde +
+        '&sales_category=ilike.*liquor*&select=toast_item_guid,toast_item_name,toast_group,quantity&order=id.asc'),
+      window.BarStockRest.leerTodo('toast_item_links?location_id=eq.' + loc + '&select=toast_item_guid,status&order=id.asc')
+    ]);
+    const tocados = new Set(enlaces.map(e => e.toast_item_guid));
+    const conReceta = new Set();
+    for (const R of recetas()) { conReceta.add(L().norm(R.nombre)); for (const a of R.tambien || []) conReceta.add(L().norm(a)); }
+    const vendidos = new Set(), por = new Map();
+    for (const v of ventas) {
+      const n = String(v.toast_item_name || '').trim();
+      if (!n) continue;
+      vendidos.add(L().norm(n));
+      if (enGrupoLicor(v.toast_group) || tocados.has(v.toast_item_guid) || conReceta.has(L().norm(n))) continue;
+      const k = v.toast_item_guid || n;
+      const x = por.get(k) || { guid: v.toast_item_guid || null, nombre: n, grupo: v.toast_group || null, vendidos: 0 };
+      x.vendidos += Number(v.quantity) || 0;
+      por.set(k, x);
+    }
+    _sinReceta = { vendidos };
+    return [...por.values()].sort((a, b) => b.vendidos - a.vendidos);
+  }
+  // ¿Toast vende esta receta por su nombre (o "also")? null si todavía no
+  // se han leído las ventas: no se sabe, y no se dice que no.
+  function enToast(R) {
+    if (!_sinReceta || !R) return null;
+    return [R.nombre].concat(R.tambien || []).some(n => _sinReceta.vendidos.has(L().norm(n)));
+  }
+
   window.BarStockToastRecipes = {
     cargar, datos, recetas, grupo, porElegir, faltan, sugerida, elegir, quitar, condicion, alCambiar,
+    crear, guardarReceta, borrar, emparejar, igualQue, ignorar, sinReceta, enToast, ELECCION,
     _reset: () => { _d = null; _cargando = null; }
   };
 })();

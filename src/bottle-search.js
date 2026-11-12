@@ -35,9 +35,15 @@
 
   // La sugerida ya va arriba con su etiqueta: en la lista sería la misma
   // botella dos veces.
+  // `que`: lo que se elige. Las recetas usan esta misma hoja para elegir
+  // un artículo de Toast o una receta (Match, Same as…), y la hoja no
+  // puede decir "bottles" de algo que no lo es.
+  // `verTodo`: sin escribir, la lista entera. Para listas cortas (los
+  // artículos de Toast sin receta, las recetas): ahí no hay que buscar,
+  // hay que ver. Con el inventario entero no: serían cientos.
   function resultados(q, o) {
-    const todos = buscar(q, o.pista, o.productos).filter(p => p !== o.sugerida);
-    if (!todos.length) return `<div class="m-tw-p">${q ? 'No bottle matches “' + esc(q) + '”.' : 'Type to search the inventory.'}</div>`;
+    const todos = (!q && o.verTodo ? o.productos.slice() : buscar(q, o.pista, o.productos)).filter(p => p !== o.sugerida);
+    if (!todos.length) return `<div class="m-tw-p">${q ? 'Nothing matches “' + esc(q) + '”.' : (o.que ? 'Type to search.' : 'Type to search the inventory.')}</div>`;
     return todos.slice(0, MAX_RES).map(p =>
       `<button type="button" class="m-tl-res${p === o.actual ? ' on' : ''}" data-p="${esc(p)}">${esc(p)}</button>`).join('') +
       (todos.length > MAX_RES ? `<div class="m-tw-p">${todos.length - MAX_RES} more · keep typing</div>` : '');
@@ -49,7 +55,7 @@
   }
 
   // o: { titulo, sub, productos, pista, sugerida, actual,
-  //      pie: [{ id, texto }], alElegir(producto), alPie(id) }
+  //      pie: [{ id, texto }], alElegir(producto), alPie(id), que, verTodo }
   function abrir(o) {
     cerrar();
     const productos = o.productos || [];
@@ -63,11 +69,11 @@
     const pie = (o.pie || []).map(b => `<button type="button" class="m-tw-b2" data-pie="${esc(b.id)}">${esc(b.texto)}</button>`).join('');
     h.innerHTML = `
       <div class="m-sheet-bg"></div>
-      <div class="m-sheet-box m-tl-hoja" role="dialog" aria-label="Bottle for ${esc(o.titulo)}">
+      <div class="m-sheet-box m-tl-hoja" role="dialog" aria-label="${o.que ? 'Choose for' : 'Bottle for'} ${esc(o.titulo)}">
         <div class="m-sheet-grip"></div>
         <div class="m-tl-hoja-t"><b>${esc(o.titulo)}</b><span>${esc(o.sub || '')}</span></div>
         <input class="m-tl-busca" type="search" inputmode="search" autocomplete="off" autocapitalize="off" spellcheck="false"
-          placeholder="Search ${productos.length} bottles" aria-label="Search bottles">
+          placeholder="Search ${productos.length} ${esc(o.que || 'bottles')}" aria-label="Search ${esc(o.que || 'bottles')}">
         ${sugerida}
         <div class="m-tl-lista"></div>
         ${pie ? `<div class="m-tl-hoja-pie">${pie}</div>` : ''}
