@@ -1,4 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
+// El nombre → correo de un bartender: el MISMO archivo que usa el login
+// del teléfono. Si los dos lo calcularan aparte, Billie no entraría.
+const BID = require('../src/bartender-id.js');
 
 const ADMIN_EMAIL = 'axeltorressalgado@icloud.com';
 const ACCOUNT_ID = 'wjm-hospitality';
@@ -306,6 +309,118 @@ module.exports = async function handler(req, res) {
       const { error: delError } = await supabase.auth.admin.deleteUser(userId, true);
       if (delError) throw delError;
 
+      return res.status(200).json({ ok: true });
+    }
+
+    // ── Bartenders: nombre y PIN (Settings › People › Bartenders) ──────
+    //
+    // Axel, 2026-11-12: "quiero que sean usuarios y un PIN que yo les
+    // doy". Cada uno es un usuario de Supabase con un correo sacado de su
+    // nombre (src/bartender-id.js) y el PIN de contraseña. Lo que lo hace
+    // invitado es app_metadata.role = 'bartender', que sólo se escribe
+    // desde aquí (el propio usuario no puede tocar app_metadata), y que
+    // src/guest.js y lib/integracion.js leen. En user_location_access va
+    // también 'bartender', para que el rol se vea en la tabla.
+    //
+    // Estas acciones sólo tocan usuarios que YA son bartenders: con un id
+    // equivocado no se le cambia la contraseña ni se borra a nadie más.
+    const esBartender = (u) => !!(u && u.app_metadata && u.app_metadata.role === BID.ROL);
+    async function bartender(userId) {
+      if (!userId) return null;
+      const { data, error } = await supabase.auth.admin.getUserById(userId);
+      if (error || !data || !data.user || !esBartender(data.user)) return null;
+      return data.user;
+    }
+    async function darAcceso(userId, locationIds) {
+      const { error: delError } = await supabase.from('user_location_access').delete().eq('user_id', userId);
+      if (delError) throw delError;
+      if (!locationIds.length) return;
+      const { error } = await supabase.from('user_location_access').insert(locationIds.map(locationId => ({
+        user_id: userId, account_id: ACCOUNT_ID, location_id: locationId, role: BID.ROL
+      })));
+      if (error) throw error;
+    }
+
+    if (action === 'listBartenders') {
+      // Supabase no filtra por app_metadata: se pagina la lista entera,
+      // con el mismo tope que findUserByEmail.
+      const todos = [];
+      for (let page = 1; page <= 40; page++) {
+        const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 50 });
+        if (error) throw error;
+        const users = (data && data.users) || [];
+        todos.push(...users.filter(esBartender));
+        if (users.length < 50) break;
+      }
+      const ids = todos.map(u => u.id);
+      const [{ data: access, error: aErr }, { data: locs, error: lErr }] = await Promise.all([
+        ids.length ? supabase.from('user_location_access').select('user_id, location_id, role').in('user_id', ids) : Promise.resolve({ data: [] }),
+        supabase.from('locations').select('id, name').eq('account_id', ACCOUNT_ID)
+      ]);
+      if (aErr) throw aErr;
+      if (lErr) throw lErr;
+      const bartenders = todos.map(u => publicUser(u, (access || []).filter(a => a.user_id === u.id), locs))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      return res.status(200).json({ ok: true, bartenders });
+    }
+
+    if (action === 'createBartender') {
+      const { name, pin, locationIds } = req.body || {};
+      const nombre = String(name || '').trim();
+      if (!BID.nombreValido(nombre)) return res.status(400).json({ ok: false, error: 'Enter a name.' });
+      if (!BID.pinValido(pin)) return res.status(400).json({ ok: false, error: 'The PIN has to be 6 digits.' });
+      if (!Array.isArray(locationIds) || !locationIds.length) {
+        return res.status(400).json({ ok: false, error: 'Choose at least one location.' });
+      }
+      const email = BID.correo(nombre);
+      // Dos "Billie" darían el mismo correo, y el login no sabría cuál.
+      if (await findUserByEmail(email)) {
+        return res.status(400).json({ ok: false, error: 'There is already a bartender called ' + nombre + '. Use another name.' });
+      }
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email, password: String(pin), email_confirm: true,
+        user_metadata: { first_name: nombre },
+        app_metadata: { role: BID.ROL }
+      });
+      if (authError) throw authError;
+      const userId = authData.user.id;
+      try { await darAcceso(userId, locationIds); }
+      catch (e) {
+        // Sin acceso no sirve, y el nombre quedaría ocupado: se deshace.
+        await supabase.auth.admin.deleteUser(userId).catch(() => {});
+        throw e;
+      }
+      return res.status(200).json({ ok: true, userId, name: nombre });
+    }
+
+    if (action === 'setBartender') {
+      const { userId, pin, locationIds } = req.body || {};
+      const u = await bartender(userId);
+      if (!u) return res.status(404).json({ ok: false, error: 'That bartender was not found.' });
+      if (pin !== undefined) {
+        if (!BID.pinValido(pin)) return res.status(400).json({ ok: false, error: 'The PIN has to be 6 digits.' });
+        const { error } = await supabase.auth.admin.updateUserById(u.id, { password: String(pin) });
+        if (error) throw error;
+      }
+      if (locationIds !== undefined) {
+        if (!Array.isArray(locationIds) || !locationIds.length) {
+          return res.status(400).json({ ok: false, error: 'Choose at least one location.' });
+        }
+        await darAcceso(u.id, locationIds);
+      }
+      return res.status(200).json({ ok: true });
+    }
+
+    if (action === 'removeBartender') {
+      const { userId } = req.body || {};
+      const u = await bartender(userId);
+      if (!u) return res.status(404).json({ ok: false, error: 'That bartender was not found.' });
+      const { error: accessError } = await supabase.from('user_location_access').delete().eq('user_id', u.id);
+      if (accessError) throw accessError;
+      // Borrado de verdad, no "suave" como deleteUser de arriba: así el
+      // nombre queda libre y se puede volver a crear otro Billie.
+      const { error } = await supabase.auth.admin.deleteUser(u.id);
+      if (error) throw error;
       return res.status(200).json({ ok: true });
     }
 

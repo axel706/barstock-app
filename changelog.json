@@ -1,5 +1,13 @@
 [
   {
+    "build": "20261112-172621",
+    "items": [
+      "Bartenders: sign in with name and PIN",
+      "Guest bartenders see everything and edit only recipes",
+      "Settings › People › Bartenders to add them"
+    ]
+  },
+  {
     "build": "20261112-162401",
     "items": [
       "Recipes: write one from scratch, edit or delete it",
@@ -183,12 +191,6 @@
     "build": "20261111-185712",
     "items": [
       "Running out first only shows bottles with a par"
-    ]
-  },
-  {
-    "build": "20261111-185002",
-    "items": [
-      "No more color line under each bottle in Inventory"
     ]
   }
 ]

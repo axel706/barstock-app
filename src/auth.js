@@ -197,15 +197,20 @@
     }
   }
 
-  async function login(){
-    const email = document.getElementById('authEmail')?.value?.trim() || '';
-    const password = document.getElementById('authPassword')?.value || '';
+  // `cred` lo pasa el login de bartender (src/pin-login.js): su correo
+  // sale del nombre y su contraseña es el PIN. Todo lo de después de
+  // entrar (la locación, el aviso, recargar) es el MISMO camino, para que
+  // no haya dos logins que digan cosas distintas.
+  async function login(cred){
+    const conPin = !!(cred && cred.pin);
+    const email = cred ? String(cred.email || '').trim() : (document.getElementById('authEmail')?.value?.trim() || '');
+    const password = cred ? String(cred.password || '') : (document.getElementById('authPassword')?.value || '');
     const msg = document.getElementById('authMsg');
     const btn = document.getElementById('authLoginBtn');
 
     if (msg) msg.textContent = '';
     if (!email || !password) {
-      if (msg) msg.textContent = 'Enter email and password.';
+      if (msg) msg.textContent = conPin ? 'Enter your name and PIN.' : 'Enter email and password.';
       return;
     }
 
@@ -213,13 +218,21 @@
       if (!window.supabase) throw new Error('Supabase JS not loaded');
       authClient = getAuthClient();
 
-      if (btn) {
+      if (btn && !conPin) {
         btn.disabled = true;
         btn.textContent = 'Logging in...';
       }
 
       const { error } = await authClient.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      if (error) {
+        // Para un bartender, "Invalid login credentials" es exactamente
+        // esto: ese nombre con ese PIN no existe. Cualquier otro error se
+        // dice tal cual.
+        if (conPin && /invalid login credentials/i.test(error.message || '')) {
+          throw new Error('That name and PIN don\u2019t match.');
+        }
+        throw error;
+      }
       // Sesión nueva, corte nuevo: el de una sesión anterior la cerraría
       // nada más entrar.
       olvidarCorte();
@@ -246,7 +259,7 @@
       console.error(err);
       if (msg) msg.textContent = err.message || 'Login failed.';
     } finally {
-      if (btn) {
+      if (btn && !conPin) {
         btn.disabled = false;
         btn.textContent = 'Login';
       }

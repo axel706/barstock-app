@@ -76,16 +76,22 @@ function entorno() {
   w.BarStockAuth = { getAuthClient: async () => ({
     auth: { getSession: async () => ({ data: { session: { access_token: 't' } } }) }
   }) };
+  // json() y text(): la llamada compartida (src/admin-api.js) lee el
+  // texto para poder decir qué contestó un 500 que no es JSON.
+  const resp = (j) => ({ status: 200, json: async () => j, text: async () => JSON.stringify(j) });
   global.fetch = w.fetch = async (url, o) => {
     const b = JSON.parse(o.body);
     w.__enviado.push(b);
-    if (b.action === 'listLocations') return { json: async () => ({ ok: true, locations: LOCS }) };
-    if (b.action === 'list')          return { json: async () => ({ ok: true, requests: [] }) };
-    if (b.action === 'findUser')      return { json: async () => ({ ok: true, user: USUARIO }) };
-    if (b.action === 'setAccess')     return { json: async () => ({ ok: true, count: (b.locationIds || []).length }) };
-    return { json: async () => ({ ok: true }) };
+    if (b.action === 'listLocations') return resp({ ok: true, locations: LOCS });
+    if (b.action === 'list')          return resp({ ok: true, requests: [] });
+    if (b.action === 'findUser')      return resp({ ok: true, user: USUARIO });
+    if (b.action === 'setAccess')     return resp({ ok: true, count: (b.locationIds || []).length });
+    return resp({ ok: true });
   };
 
+  // La llamada a /api/admin vive en admin-api.js desde el 2026-11-12, y
+  // se carga antes que el panel, como en index.html.
+  new Function(fs.readFileSync(path.join(RAIZ, 'src/admin-api.js'), 'utf8'))();
   new Function(fs.readFileSync(path.join(RAIZ, 'src/admin-panel.js'), 'utf8'))();
   return w;
 }

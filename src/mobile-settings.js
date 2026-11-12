@@ -50,12 +50,35 @@
       // El correo de la mañana, para probarlo a mano (src/morning-report.js).
       { id: 'morning', ico: 'ti-mail-forward', n: 'Morning email', d: 'Preview it or send a test to yourself' }
     ]},
+    // Los bartenders invitados (mobile-bartenders.js): sólo para Axel,
+    // como el Admin del escritorio. Esconderlo es comodidad; quien decide
+    // es /api/admin.
+    { t: 'People', admin: true, items: [
+      { id: 'bartenders', ico: 'ti-users', n: 'Bartenders', d: 'Sign in with name and PIN' }
+    ]},
     { t: 'Appearance', items: [
       { id: 'look', ico: 'ti-typography', n: 'Typeface',  d: 'The app font' },
       { id: 'size', ico: 'ti-text-size',  n: 'Text size', d: 'Default' },
       { id: 'fondo', ico: 'ti-photo',     n: 'Background', d: 'Same as computer' }
     ]}
   ];
+
+  // El bartender invitado (src/guest.js) ve lo de Toast y las recetas
+  // (que sí edita), y lo que sólo cambia su propio teléfono (letra y
+  // tamaño). Lo demás es configuración de la locación —quién firma los
+  // pedidos, a quién van los correos, las zonas, el fondo— y no hay nada
+  // que ver ahí que no sea para cambiarlo.
+  const PARA_INVITADO = ['toastwine', 'toastliquor', 'toastrecipes', 'morning', 'look', 'size'];
+
+  function grupos() {
+    const A = window.BarStockAdminApi;
+    const admin = !!(A && A.soyAdmin && A.soyAdmin());
+    const G = window.BarStockGuest;
+    const invitado = !!(G && G.activo && G.activo());
+    return GRUPOS.filter(g => !g.admin || admin)
+      .map(g => invitado ? Object.assign({}, g, { items: g.items.filter(it => PARA_INVITADO.indexOf(it.id) >= 0) }) : g)
+      .filter(g => g.items.length);
+  }
 
   function pintarMenu(host) {
     const loc = (window.BARSTOCK_CONFIG || {}).LOCATION_NAME || '';
@@ -73,7 +96,7 @@
     host.innerHTML =
       seccion({ volverA: vuelta, titulo: 'Settings' }) +
       '<div class="m-hsub m-set-intro">' + esc(loc) + '</div>' +
-      GRUPOS.map(g =>
+      grupos().map(g =>
         '<div class="m-lab">' + esc(g.t.toUpperCase()) + '</div>' +
         g.items.map(it =>
           '<button type="button" class="m-item" data-p="' + it.id + '">' +
@@ -613,6 +636,10 @@
     }
     if (_panel === 'morning' && window.BarStockMorningReport) {
       window.BarStockMorningReport.montar(host, () => cabecera(host, 'Morning email', 'This morning\'s report, built from the app\'s numbers.'), () => volver(host));
+      return;
+    }
+    if (_panel === 'bartenders' && window.BarStockMobileBartenders) {
+      window.BarStockMobileBartenders.montar(host, (t) => cabecera(host, t || 'Bartenders'), () => volver(host));
       return;
     }
     if (_panel === 'toastrecipes' && window.BarStockMobileToastRecipes) {

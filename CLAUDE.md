@@ -109,7 +109,7 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 
 ## La arquitectura
 
-Frontend estático, sin build. `index.html` es un monolito y hay ~122 módulos
+Frontend estático, sin build. `index.html` es un monolito y hay ~129 módulos
 `src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 29 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 136 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 139 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -330,7 +330,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 136 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 139 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -580,6 +580,36 @@ que miente.
 teléfono (`src/mobile-invoices.js`) dice que el stock sale del
 "confirmed packaging", y en el código no hay ningún sitio que confirme
 un empaque. Es una afordancia que miente: se arregla aparte.
+
+### Bartender invitado: nombre y PIN (2026-11-12)
+
+Axel: "puede seguir viendo todo, absolutamente toda la información, pero
+no puede editar nada que no son las recetas". Elegido sobre lámina:
+login **C** (nombre y teclado numérico), dentro **1** (píldora "Guest ·
+Billie" y lo que edita desaparece), alta **A** (Settings › People ›
+Bartenders, sólo Axel).
+
+- **Billie es un usuario de Supabase.** Correo sacado del nombre
+  (`billie@bartenders.barstockpro.com`, nadie lo ve) y el PIN de
+  contraseña. La cuenta vive en `src/bartender-id.js`, que usan el login
+  y `api/admin.js` (require): una sola.
+- **Lo que lo hace invitado es `app_metadata.role = 'bartender'`**, que
+  sólo escribe el servidor. `user_location_access.role` también dice
+  `bartender`, pero no es lo que se lee.
+- **El candado es `src/guest.js`**, cargado justo tras `config.js`:
+  envuelve `window.fetch` y para un invitado sólo deja salir lecturas,
+  `toast_recipes`, `toast_recipe_lines`, el "Not a drink" (fila
+  `ignored` de licor en `toast_item_links`) y la sesión. supabase-js
+  pasa por él (`global.fetch` en `supabase-client.js`). Esconder botones
+  (`html.bs-guest` en el CSS) es para que se vea limpio; lo que impide
+  escribir es el candado. El servidor niega además `sync` y `send` en
+  `api/integrations.js` (`lib/integracion.js`) y todo `api/admin.js`.
+- **No es un candado de verdad** mientras RLS siga en `using (true)`:
+  con la sesión de Billie y conocimientos se escribe saltándose la app.
+- Quitar a un bartender lo borra de verdad (el nombre queda libre). Una
+  app ya abierta sigue con su sesión hasta que caduca (una hora); al
+  volver a abrirla, fuera.
+- Pruebas: `test-invitado`, `test-bartenders`, `test-pin-login`.
 
 ### TripleSeat: en pausa, esperando la lista de paquetes de bar
 

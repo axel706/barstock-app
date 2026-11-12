@@ -17,7 +17,14 @@
     }
 
     if (!client) {
-      client = window.supabase.createClient(url, key);
+      // fetch a través de window en cada llamada, y no el que había al
+      // crear el cliente: supabase-js guarda su fetch al nacer, y el
+      // candado del invitado (src/guest.js) envuelve window.fetch. Si el
+      // cliente se creara con el de antes, sus escrituras pasarían por
+      // fuera del candado.
+      client = window.supabase.createClient(url, key, {
+        global: { fetch: (...a) => window.fetch(...a) }
+      });
       window.supabaseAuth = client;
     }
 

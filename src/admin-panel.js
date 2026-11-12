@@ -28,18 +28,9 @@
   let _editSel = new Set();
   let _delUser = null;         // usuario cargado en "Borrar"
 
-  async function callAdmin(action, params) {
-    params = params || {};
-    const client = await window.BarStockAuth.getAuthClient();
-    const { data: sessionData } = await client.auth.getSession();
-    const token = sessionData?.session?.access_token;
-    const res = await fetch('/api/admin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify(Object.assign({ action }, params))
-    });
-    return res.json();
-  }
+  // La llamada vive en src/admin-api.js: la usa también Settings ›
+  // People › Bartenders del teléfono.
+  const callAdmin = (action, params) => window.BarStockAdminApi.llamar(action, params);
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({

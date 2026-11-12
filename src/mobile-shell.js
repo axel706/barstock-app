@@ -79,6 +79,14 @@
   // Va fija: el contenido pasa por debajo. Por eso lleva su propio
   // desenfoque — el velo de .m-screens está detrás del contenido, no
   // delante, así que sin esto se leería el texto a través de la banda.
+  function pildoraInvitado() {
+    const G = window.BarStockGuest;
+    if (!G || !G.activo()) return '';
+    const n = String(G.nombre() || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    return '<span class="m-guest-pill" role="status"><i class="ti ti-eye" aria-hidden="true"></i>' +
+      'Guest' + (n ? ' · ' + n : '') + '</span>';
+  }
+
   function montarBanda() {
     _banda = document.createElement('header');
     _banda.id = 'mBand';
@@ -117,7 +125,12 @@
       '</span>' +
       // El grupo de la derecha. Nace vacío: la campana la mete
       // mobile-notif.js cuando arranca.
-      '<span class="m-band-ico"></span>';
+      '<span class="m-band-ico"></span>' +
+      // El bartender invitado (src/guest.js): "Guest · Billie" bajo el
+      // logo, en todas las pantallas (Axel, 2026-11-12, opción 1). Va en
+      // la banda porque la banda está siempre; en cada pantalla habría
+      // que acordarse de ponerla.
+      pildoraInvitado();
     // Al principio del body: así el bloqueo de la pantalla de entrada
     // (body.auth-locked > *) también la tapa, como a todo lo demás.
     document.body.insertBefore(_banda, document.body.firstChild);

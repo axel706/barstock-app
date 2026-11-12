@@ -375,6 +375,22 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
       rgba(8,12,19,.74) 100%);
   }
 
+  /* ── "Guest · Billie" (src/guest.js, opción 1 de Axel, 2026-11-12) ─
+   * Cuelga del borde de abajo de la banda, centrada bajo el logo, en
+   * todas las pantallas. Ámbar, el color de "atención" de la app: quien
+   * mira el teléfono de Billie sabe que no está en una cuenta normal.
+   * translateZ(0) por lo mismo que el logo (abajo): fuera del alcance
+   * del desenfoque de la banda en WebKit. */
+  .m-guest-pill {
+    position: absolute; top: calc(100% - 6px); left: 50%; z-index: 3;
+    transform: translateX(-50%) translateZ(0);
+    display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(56,40,8,.86); border: 1px solid rgba(251,191,36,.38);
+    color: #fbbf24; font-size: var(--m-meta); font-weight: 800; pointer-events: none;
+  }
+  .m-guest-pill .ti { font-size: var(--m-small); }
+
   /* ── El desenfoque, y por qué el logo se le escapa ────────────────
    *
    * Las seis capas van PRIMERO en el DOM y el logo lleva `z-index`, o
@@ -3905,6 +3921,48 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     background: #0284c7; border: 1px solid #0284c7;
   }
   body.m-shell .m-set-save:disabled { opacity: .6; }
+
+  /* ── Settings › People › Bartenders (mobile-bartenders.js) ─────────
+   * Opción A (Axel, 2026-11-12): una pantalla como las demás de
+   * Settings. Las filas son .m-item; aquí sólo la inicial, las
+   * locaciones como píldoras, el PIN con su "Generate" al lado y la
+   * tarjeta verde que enseña el PIN una sola vez. Los botones llevan
+   * #mScreens delante: es lo que gana al radio de 999px de app.css. */
+  .m-bt-p { margin-top: 12px; font-size: var(--m-small); color: #9fb0c4; line-height: 1.5; }
+  .m-bt-err { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: rgba(248,113,113,.14);
+    font-size: var(--m-small); color: #fecaca; line-height: 1.45; }
+  .m-bt-ini { flex: none; width: calc(var(--m-base) * 2.2); height: calc(var(--m-base) * 2.2); border-radius: 9px;
+    display: flex; align-items: center; justify-content: center; background: rgba(56,189,248,.16);
+    color: #7dd3fc; font-size: var(--m-small); font-weight: 800; }
+  #mScreens .m-bt-nueva {
+    display: block; width: 100%; margin-top: 12px; padding: 12px; cursor: pointer; box-shadow: none;
+    font-size: var(--m-body); font-weight: 800; color: #7dd3fc;
+    background: none; border: 1px dashed rgba(125,211,252,.45); border-radius: 16px !important;
+  }
+  .m-bt-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  #mScreens .m-bt-chip {
+    padding: 8px 12px; cursor: pointer; box-shadow: none; font-size: var(--m-small); font-weight: 700;
+    color: #94a3b8; background: rgba(255,255,255,.08); border: 1px solid transparent; border-radius: 999px !important;
+  }
+  #mScreens .m-bt-chip.on { color: #e0f2fe; background: rgba(56,189,248,.22); border-color: rgba(56,189,248,.45); }
+  .m-bt-pinf { display: flex; gap: 8px; align-items: stretch; }
+  body.m-shell .m-bt-pinf input { flex: 1; min-width: 0; letter-spacing: .3em; font-weight: 700; }
+  #mScreens .m-bt-gen {
+    flex: none; padding: 0 14px; cursor: pointer; box-shadow: none;
+    font-size: var(--m-small); font-weight: 800; color: #7dd3fc; background: none;
+    border: 1px solid rgba(125,211,252,.45); border-radius: 13px !important;
+  }
+  #mScreens .m-bt-sec {
+    display: block; width: 100%; margin-top: 14px; padding: 14px; cursor: pointer; box-shadow: none;
+    font-size: var(--m-body); font-weight: 800; color: #7dd3fc; background: none;
+    border: 1px solid rgba(125,211,252,.45); border-radius: 999px !important;
+  }
+  #mScreens .m-bt-sec.m-bt-del { color: #fca5a5; border-color: rgba(248,113,113,.45); }
+  .m-bt-ok { margin-top: 12px; padding: 16px; border-radius: 20px; text-align: center;
+    background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.35); }
+  .m-bt-ok b { display: block; font-size: var(--m-small); color: #86efac; }
+  .m-bt-ok big { display: block; margin-top: 6px; font-size: var(--m-figure); font-weight: 800; letter-spacing: .2em; color: #fff; }
+  .m-bt-ok small { display: block; margin-top: 4px; font-size: var(--m-meta); color: #cbd5e1; }
 
   /* ── Settings › Toast › Morning email ─────────────────────────────
    * El botón arriba, para no tener que bajar por el correo entero; y
