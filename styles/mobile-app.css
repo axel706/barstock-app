@@ -1827,6 +1827,52 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-ts-r .v { flex: 0 0 auto; font-size: var(--m-small); }
   .m-ts-r .v b { color: #fff; }
   .m-ts-r .v small { margin-left: 6px; font-size: var(--m-meta); color: #8fa3b8; }
+  .m-ts-pie { display: flex; justify-content: flex-end; margin-top: 12px; }
+  body.m-shell .m-ts-mas {
+    display: inline-flex; align-items: center; gap: 4px; padding: 9px 15px; cursor: pointer;
+    font-size: var(--m-small); font-weight: 700; color: #fff;
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+  }
+  .m-ts-mas .ti { font-size: var(--m-small); }
+
+  /* ── All products (mobile-sales.js) ─────────────────────────────────
+   * Una hoja alta sobre el Home: mucha lista. Las pastillas de día son
+   * <span> y no <button>, para que el 999px forzado de app.css no las
+   * vuelva píldoras: son casillas de un calendario. */
+  body.m-shell .m-sheet-box.m-vl {
+    max-height: 88vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+  .m-vl-t { font-size: var(--m-head); font-weight: 800; color: #fff; letter-spacing: -.4px; }
+  .m-vl-s { font-size: var(--m-small); color: #a9bacd; margin-top: 2px; }
+  .m-vl-chips { display: flex; gap: 6px; margin-top: 14px; }
+  .m-vl-c {
+    flex: 1; min-width: 0; padding: 7px 0; border-radius: 12px; cursor: pointer; text-align: center;
+    font-size: var(--m-meta); font-weight: 700; color: #b6c6d8;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .m-vl-c small { display: block; font-weight: 600; opacity: .8; }
+  .m-vl-c.on { background: #7dd3fc; border-color: #7dd3fc; color: #04283d; }
+  .m-vl-tot { display: flex; align-items: baseline; gap: 8px; margin-top: 16px; }
+  .m-vl-tot b { font-size: var(--m-screen); font-weight: 800; color: #fff; }
+  .m-vl-tot span { font-size: var(--m-small); color: #c3d2e2; }
+  .m-vl-tot em { margin-left: auto; font-style: normal; text-align: right; font-size: var(--m-meta); font-weight: 700; color: #a9bacd; }
+  .m-vl-tot em.m-ts-up { color: #86efac; }
+  .m-vl-tot em.m-ts-dn { color: #fca5a5; }
+  body.m-shell .m-searchbar.m-vl-bus { margin-top: 12px; cursor: text; }
+  .m-vl-r {
+    display: flex; align-items: center; gap: 10px; padding: 11px 2px; cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,.07); -webkit-tap-highlight-color: transparent;
+  }
+  .m-vl-r .n { flex: 1; min-width: 0; font-size: var(--m-body); color: #e2e8f0; }
+  .m-vl-r .n small { display: block; font-size: var(--m-meta); color: #8fa3b8; }
+  .m-vl-r .n i { display: block; height: 4px; margin-top: 5px; border-radius: 2px; background: #38bdf8; opacity: .7; }
+  .m-vl-r .v { flex: 0 0 auto; text-align: right; font-size: var(--m-body); font-weight: 700; color: #fff; }
+  .m-vl-r .v small { display: block; font-size: var(--m-meta); font-weight: 600; }
+  .m-vl-r .v small.up { color: #86efac; }
+  .m-vl-r .v small.dn { color: #fca5a5; }
+  .m-vl-r .v small.eq { color: #8fa3b8; }
+  .m-vl-nada { padding: 22px 0; text-align: center; font-size: var(--m-small); color: #8fa3b8; }
 
   /* "Sold in Toast" en la ficha del producto: las barras son las de la
    * tarjeta del Home (.m-ts-g); aquí sólo el marco, como "Where it is",
