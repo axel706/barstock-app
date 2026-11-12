@@ -1580,11 +1580,14 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * Sustituyen al par Spent / On the shelf. Título, número, una línea y
    * su botón, las tres de la misma altura: el título reserva dos líneas
    * para que los números queden alineados aunque uno quepa en una. Con
-   * Toast desconectado no hay "Sold yesterday" y quedan dos. */
+   * Toast desconectado no hay "Sold yesterday" y quedan dos.
+   * Centradas (Axel, opción B): título, número y línea sobre el mismo
+   * eje que el botón, que ya iba centrado. Se pone en la tarjeta y lo
+   * heredan los tres. */
   .m-cf { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
   .m-cf.dos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .m-cf-c {
-    display: flex; flex-direction: column; min-width: 0;
+    display: flex; flex-direction: column; min-width: 0; text-align: center;
     padding: 11px 10px 10px; border-radius: 17px;
     background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.12);
   }

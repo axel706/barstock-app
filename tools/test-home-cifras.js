@@ -144,6 +144,20 @@ grupo('el header no cambia');
   prueba('y justo después de él', bloque.nextElementSibling && !!bloque.nextElementSibling.querySelector('#mhCifras'));
 }
 
+grupo('centradas');
+{
+  // Axel, 2026-11-12, opción B sobre lámina: título, número y su línea
+  // centrados, sobre el mismo eje que el botón (que ya lo estaba). Se
+  // pone en la tarjeta y lo heredan los tres; jsdom no maqueta, así que
+  // se mira la regla.
+  const css = leer('styles/mobile-app.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  const c = (/\.m-cf-c\s*\{([^}]*)\}/.exec(css) || [])[1] || '';
+  prueba('la tarjeta centra su texto', /text-align\s*:\s*center/.test(c), c.replace(/\s+/g, ' ').trim());
+  const hijos = ['.m-cf-k', '.m-cf-v', '.m-cf-d'].filter(k =>
+    new RegExp(k.replace('.', '\\.') + '\\s*\\{[^}]*text-align\\s*:\\s*(left|start)').test(css));
+  prueba('y ninguno de los tres se vuelve a la izquierda', hijos.length === 0, hijos.join(', '));
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
 })();
