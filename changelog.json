@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-194131",
+    "items": [
+      "Behind-the-scenes fixes"
+    ]
+  },
+  {
     "build": "20261111-193246",
     "items": [
       "Behind-the-scenes fixes"
@@ -182,13 +188,6 @@
     "items": [
       "Liquor from Toast: search for the bottle",
       "Brands no longer stuck on a size with no pour"
-    ]
-  },
-  {
-    "build": "20261110-220718",
-    "items": [
-      "Liquor from Toast: picking the suggested bottle now saves it",
-      "DBL items join their brand"
     ]
   }
 ]

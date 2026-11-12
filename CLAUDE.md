@@ -339,8 +339,11 @@ en la consola: la llamada va dentro de `(async () => { ... })();`.
   `restaurant`, `menu`, `orders`, `drinks`, `wine`, `sales`), a través de `api/integrations.js`.
   `await bsToastVentas('liquor')` es el DINERO vendido hoy por categoría
   de venta (acción `sales`): bruto, descuentos, neto e impuesto, con los
-  modificadores con precio aparte. Falta medirlo contra el informe de
-  ventas de Toast para saber cuál de las cifras es "la venta".
+  modificadores con precio aparte. Medido contra el informe de Toast
+  (2026-11-10, al centavo): **el neto es Net sales, y los modificadores
+  ya van dentro**; sumarlos los cuenta dos veces. La carga diaria guarda
+  ese neto por fila en `toast_sales.net` (migración 034, corrida, con la
+  historia de 91 días rehecha), con `sales_category` para partirlo.
   Lo mismo con botones, sin consola y desde el teléfono: Settings →
   Connections → *Toast · Developer tools* (`src/toast-panel.js`), con
   Ping, Sales y Drinks. No tiene botón para `sync`. La llamada y el
