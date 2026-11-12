@@ -66,6 +66,10 @@ function entorno(cambios) {
   for (const k of Object.keys(process.env)) if (/^TOAST_|^SUPABASE_/.test(k)) delete process.env[k];
   Object.assign(process.env, base, cambios || {});
   for (const [k, v] of Object.entries(cambios || {})) if (v === undefined) delete process.env[k];
+  // Cada caso arranca sin token guardado: si no, el login de un caso
+  // anterior taparía el que éste quiere probar.
+  const T = require(path.join(RAIZ, 'lib/toast.js'));
+  if (T._olvidarToken) T._olvidarToken();
 }
 
 let peticiones = [];
@@ -648,6 +652,65 @@ grupo('sync: guarda tambien el dinero (net sales)');
   prueba('sin la migracion 034, la carga sigue', r2.body.ok === true, JSON.stringify(r2.body).slice(0, 300));
   prueba('reintenta sin las columnas nuevas', ins2.length === 2 && ult.length === cuerpo.length && !('net' in ult[0]) && !('sales_category' in ult[0]), JSON.stringify(ult[0]));
   prueba('y lo dice, sin adivinar', r2.body.dinero === false && /034/.test(r2.body.aviso || ''), JSON.stringify(r2.body).slice(0, 300));
+}
+
+grupo('el token de Toast se guarda mientras dura');
+{
+  // Al rehacer 90 días con el dinero (Axel, 2026-11-12) la carga se paró
+  // en el día 65 con "Toast no aceptó el login": cada llamada pedía un
+  // login nuevo, 64 seguidos en pocos minutos, cuando el token de Toast
+  // dura 24 horas. Ahora se guarda en la instancia y se reutiliza hasta
+  // cinco minutos antes de caducar. `ping` sigue pidiendo uno nuevo: su
+  // trabajo es probar las credenciales.
+  const LOC = '11111111-2222-3333-4444-555555555555';
+  const logins = () => peticiones.filter(p => p.url.includes('/authentication/')).length;
+  let total = 0;
+  const contar = async (o) => { const r = await llamar(o); total += logins(); return r; };
+  entorno();
+  respuestas = {
+    '/authentication/': LOGIN_OK,
+    '/config/v2/salesCategories': { status: 200, body: [{ guid: 'c-liq', name: 'Liquor' }] },
+    '/menus/v2/menus': { status: 200, body: { menus: [] } },
+    '/orders/v2/ordersBulk': { status: 200, body: [] },
+    'sb.test/rest/v1/locations': { status: 200, body: [{ toast_restaurant_guid: GUID }] },
+    'sb.test/rest/v1/toast_sales_days': { status: 201, body: [] },
+    'sb.test/rest/v1/toast_sales': { status: 201, body: [] }
+  };
+  await contar({ accion: 'sync', params: { businessDate: '20261105', locationId: LOC } });
+  await contar({ accion: 'sync', params: { businessDate: '20261104', locationId: LOC } });
+  await contar({ accion: 'sync', params: { businessDate: '20261103', locationId: LOC } });
+  prueba('tres cargas seguidas, un solo login', total === 1, String(total));
+  total = 0;
+  await contar({ accion: 'ping' });
+  prueba('ping pide uno nuevo', total === 1, String(total));
+
+  // Un token a punto de caducar no se reutiliza.
+  entorno();
+  respuestas['/authentication/'] = { status: 200, body: { status: 'SUCCESS',
+    token: { tokenType: 'Bearer', accessToken: TOKEN_TOAST, expiresIn: 60, scope: '' } } };
+  total = 0;
+  await contar({ accion: 'sync', params: { businessDate: '20261105', locationId: LOC } });
+  await contar({ accion: 'sync', params: { businessDate: '20261104', locationId: LOC } });
+  prueba('un token que caduca en un minuto no se guarda', total === 2, String(total));
+
+  // Un login fallido no se guarda: la siguiente vuelve a intentar.
+  entorno();
+  respuestas['/authentication/'] = { status: 401, body: { message: 'no' } };
+  total = 0;
+  await contar({ accion: 'sync', params: { businessDate: '20261105', locationId: LOC } });
+  respuestas['/authentication/'] = LOGIN_OK;
+  const r = await contar({ accion: 'sync', params: { businessDate: '20261105', locationId: LOC } });
+  prueba('un login fallido no se guarda', total === 2 && r.body.ok === true, total + ' ' + JSON.stringify(r.body).slice(0, 120));
+
+  // Otra credencial (otro TOAST_CLIENT_ID) no hereda el token.
+  entorno();
+  respuestas['/authentication/'] = LOGIN_OK;
+  total = 0;
+  await contar({ accion: 'sync', params: { businessDate: '20261105', locationId: LOC } });
+  process.env.TOAST_CLIENT_ID = 'otro-cliente';
+  await contar({ accion: 'sync', params: { businessDate: '20261105', locationId: LOC } });
+  prueba('otra credencial pide su propio login', total === 2, String(total));
+  entorno();
 }
 
 grupo('la sesion se comprueba una vez, antes de repartir');

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-193246",
+    "items": [
+      "Behind-the-scenes fixes"
+    ]
+  },
+  {
     "build": "20261111-192248",
     "items": [
       "Behind-the-scenes fixes"
@@ -183,12 +189,6 @@
     "items": [
       "Liquor from Toast: picking the suggested bottle now saves it",
       "DBL items join their brand"
-    ]
-  },
-  {
-    "build": "20261110-214332",
-    "items": [
-      "Liquor from Toast in Settings: link each brand to its bottle"
     ]
   }
 ]
