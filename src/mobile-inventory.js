@@ -314,8 +314,17 @@
         </button>`;
     }).join('');
 
+    // El bartender invitado (src/guest.js) no edita: su toque abre la
+    // ficha del producto, la misma que Buscar, que enseña todo y no
+    // cambia nada. Sin esto se abriría la hoja de editar con sus
+    // botones escondidos, una hoja vacía.
+    const G = window.BarStockGuest;
+    const S = window.BarStockMobileSearch;
+    const invitado = !!(G && G.activo && G.activo() && S && S.abrirItem);
     caja.querySelectorAll('.m-inv').forEach(b => {
-      b.onclick = () => hoja(host, Number(b.dataset.i));
+      b.onclick = invitado
+        ? () => { const r = master()[Number(b.dataset.i)]; if (r) S.abrirItem(r.item); }
+        : () => hoja(host, Number(b.dataset.i));
     });
   }
 

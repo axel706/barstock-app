@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261112-173349",
+    "items": [
+      "Guest bartenders: buttons that change things are hidden",
+      "Guest bartenders: Inventory rows open the product card"
+    ]
+  },
+  {
     "build": "20261112-172621",
     "items": [
       "Bartenders: sign in with name and PIN",
@@ -185,12 +192,6 @@
     "build": "20261111-192248",
     "items": [
       "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261111-185712",
-    "items": [
-      "Running out first only shows bottles with a par"
     ]
   }
 ]

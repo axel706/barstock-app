@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 139 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 140 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -330,7 +330,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 139 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 140 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -609,7 +609,16 @@ Bartenders, sólo Axel).
 - Quitar a un bartender lo borra de verdad (el nombre queda libre). Una
   app ya abierta sigue con su sesión hasta que caduca (una hora); al
   volver a abrirla, fuera.
-- Pruebas: `test-invitado`, `test-bartenders`, `test-pin-login`.
+- **Lo que se esconde** está en un solo bloque al final de
+  `mobile-app.css` (`html.bs-guest`), acotado para no tocar Recipes ni
+  la hoja de botellas que comparte. Dos toques mezclaban mirar y editar
+  y se cambiaron en JS: la fila de Inventory abre la ficha (la de
+  Buscar), y la tarjeta del ciclo del Home lleva `data-kind="cycle"`.
+  Settings le enseña sólo lo de Toast y letra/tamaño. **Un control nuevo
+  que edite tiene que entrar en ese bloque.** El escritorio no tiene
+  nada escondido: el candado lo cubre igual, pero los botones se ven.
+- Pruebas: `test-invitado`, `test-bartenders`, `test-pin-login`,
+  `test-invitado-pantallas`.
 
 ### TripleSeat: en pausa, esperando la lista de paquetes de bar
 

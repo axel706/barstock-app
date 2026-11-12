@@ -5253,3 +5253,68 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     background: none; border: 1px solid rgba(255,255,255,.18); border-radius: 12px !important; box-shadow: none;
   }
 }
+
+/* ── El bartender invitado: lo que edita, fuera de la vista ──────────
+ *
+ * Axel, 2026-11-12, opción 1: "Guest · Billie" en la banda y los
+ * botones que cambian algo no salen; se ve de sólo lectura. Lo que
+ * impide escribir NO es esto: es el candado de src/guest.js, que niega
+ * cada escritura que no sea de recetas. Esto es para que no haya un
+ * botón que, al tocarlo, diga que no (una afordancia que miente).
+ *
+ * `html.bs-guest` la pone src/guest.js desde el primer fotograma.
+ * Recipes (Settings › Toast › Recipes) es lo único que sigue editable,
+ * por eso nada de aquí toca .m-rc ni .m-re, y las piezas compartidas
+ * (la hoja de botellas, .m-set-save, .m-hero-b) van acotadas a su
+ * pantalla. Settings, además, sólo enseña al invitado lo suyo
+ * (mobile-settings.js, PARA_INVITADO).
+ *
+ * Los dos sitios donde mirar y editar eran el mismo toque se cambiaron
+ * en JS: una fila de Inventory abre la ficha (la de Buscar) en vez de
+ * la hoja de editar, y la tarjeta del ciclo del Home se marca
+ * data-kind="cycle" para poder quitarle los botones. Su "Cycle detail"
+ * sí se queda: sólo enseña. */
+@media (max-width: 640px) {
+  /* Home: empezar, seguir, importar, reiniciar o tirar un conteo, y la
+   * sincronización de MarginEdge de "Spent this cycle". */
+  html.bs-guest #mScreens .m-hero[data-kind="cycle"] :is(.m-hero-b, .m-hero-b2),
+  html.bs-guest #mScreens .m-hero[data-kind="cycle"] .m-hero-x:has(.ti-trash),
+  html.bs-guest #mSheet #mcfSync,
+  /* Inventory: añadir un producto. (La fila abre la ficha.) */
+  html.bs-guest #mScreens #miNuevo,
+  /* La ficha: Add to order, Received y aplicar el par de Pour·IQ. Lo que
+   * Pour·IQ dice se queda; el botón de aplicarlo, no. */
+  html.bs-guest #mSheet .m-ficha .m-acts,
+  html.bs-guest #mSheet #msIQ,
+  /* La pantalla del ciclo. */
+  html.bs-guest #mScreens :is(#mcGo, #mcFile, #mcOtra, #mcDrop, .m-cyc-warn),
+  /* Orders › Open: Quick order, revisar y mandar, añadir, devolver,
+   * quitar una línea, deshacer y los +/−. */
+  html.bs-guest #mScreens :is(#moRun, #moSend, #moAdd, .m-ord-volver, .m-ord-x, .m-ord-undo),
+  html.bs-guest #mScreens .m-ord-q [data-q],
+  /* Orders › Sent: actualizar precios, Resend / Reopen. */
+  html.bs-guest #mScreens :is(#mhPrec, .m-hprec-n, .m-hacc, .m-hacc-conf),
+  /* Orders › Invoices: enlazar a una orden, elegir o cambiar botella,
+   * "Not mine", desenlazar, buscar y esconder. */
+  html.bs-guest #mScreens :is(#miOrdOn, #miOrdOff, .m-iatar-s, .m-ichg, .m-isug, .m-irow2, .m-ibuscar, .m-ihit, .m-idanger),
+  html.bs-guest #moCuerpo :is([data-otra], [data-no], [data-unlink]),
+  /* La campana: revisar y aplicar precios, y descartar avisos (algunos
+   * se guardan en la base). */
+  html.bs-guest #mNotifPanel :is(.m-nf-go, #mnfGo, .m-nf-nota, .m-nf-x),
+  /* Wine from Toast (su raíz es .m-tw sin .m-tl ni .m-rc) y Liquor from
+   * Toast: confirmar, ignorar, deshacer y "Confirm all". */
+  html.bs-guest #mScreens .m-tw:not(.m-tl):not(.m-rc) :is(.m-tw-acts, #mTwTodas),
+  html.bs-guest #mScreens .m-tl :is(.m-tl-todas, .m-tl-v),
+  /* Morning email: la vista se queda; mandarlo, no. */
+  html.bs-guest #mScreens .m-mr :is(#mrSend, #mrListaCaja) {
+    display: none !important;
+  }
+  /* Lo que ENSEÑA un dato y además lo cambia al tocarlo: se queda a la
+   * vista, quieto. La cantidad de una línea de orden, el vino elegido
+   * para cada artículo de Toast, la botella de cada licor. */
+  html.bs-guest #mScreens .m-ord-q input,
+  html.bs-guest #mScreens .m-tw:not(.m-tl):not(.m-rc) .m-tw-sel,
+  html.bs-guest #mScreens .m-tl .m-tl-fila {
+    pointer-events: none;
+  }
+}

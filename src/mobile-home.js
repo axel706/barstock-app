@@ -1090,7 +1090,11 @@
     cargarEntregas((W && W.resetAt && W.resetAt()) || '');
     cargarPrecios();
 
-    const t = [tarjetaCiclo()];
+    // `ciclo` marca la tarjeta (data-kind="cycle"): sus botones empiezan,
+    // siguen o tiran un conteo, y el bartender invitado no los ve
+    // (mobile-app.css, html.bs-guest). Por color no se distingue: el rojo
+    // y el azul los usan también tarjetas que sólo enseñan.
+    const t = [Object.assign(tarjetaCiclo(), { ciclo: true })];
 
     // 3 · Ordenes sin colocar, TODAS.
     if (typeof window.getActiveVendors === 'function' &&
@@ -1272,7 +1276,7 @@
   function pintarTarjeta(c, i) {
     if (c && c.tipo === 'version') return pintarVersion(c, i);
     return `
-      <article class="m-hero m-hero-${c.tono}" data-hero="${i}">
+      <article class="m-hero m-hero-${c.tono}" data-hero="${i}"${c.ciclo ? ' data-kind="cycle"' : ''}>
         <!-- Arriba el texto y la cifra, en dos columnas. Abajo, una
              fila entera para la pie de página y los botones.
              Antes todo colgaba de la columna izquierda, así que los
