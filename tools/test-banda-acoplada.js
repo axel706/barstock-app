@@ -448,6 +448,21 @@ if (SRC) {
     prueba('al bajar sigue igual', q() === '1');
     sc.scrollTop = 0; sc.dispatchEvent(new w.Event('scroll'));
     prueba('y al volver arriba no regresa el logo', q() === '1', q());
+
+    // "No debe pasar, el header debe estar fijo" (Axel, 2026-11-12): el
+    // hueco de arriba medía banda + 14 y el sticky se pega a banda + 8,
+    // así que en reposo las pestañas iban 6 px más abajo y subían al
+    // primer scroll. Acoplada desde el principio, el hueco es justo el
+    // punto donde se pega: no hay recorrido que hacer.
+    prueba('la lista sabe que entra acoplada', sc.classList.contains('m-dock-siempre'));
+    const css = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const r = /\.m-dock-scroll\.m-dock-con-titulo\.m-dock-siempre::before\s*\{([^}]*)\}/.exec(css);
+    prueba('y su hueco de arriba es el punto donde se pega el bloque',
+      !!r && /height\s*:\s*var\(--m-dock-top/.test(r[1]), r && r[1].trim());
+    // Dentro de un detalle de Orders se engancha la MISMA lista sin
+    // `siempre`: el hueco vuelve a ser el de siempre.
+    w.BarStockBandDock.enganchar({ pantalla: inv, scroll: sc, pegado: blo, nombre: '' });
+    prueba('sin `siempre`, la lista vuelve al hueco normal', !sc.classList.contains('m-dock-siempre'));
   })();
 
   grupo('lo que vio Axel en el iPhone (2026-11-09)');

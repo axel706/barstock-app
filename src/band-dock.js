@@ -532,6 +532,13 @@
     }
     if (r.pegado) {
       r.scroll.classList.add('m-dock-con-titulo');
+      // Acoplada desde el principio, el hueco de arriba mide justo hasta
+      // donde se pega el bloque (ver .m-dock-siempre en mobile-app.css).
+      // Con el hueco normal, 6 px más alto, las pestañas entraban más
+      // abajo y subían al primer scroll; Axel: "el header debe estar
+      // fijo". Se pone y se quita en cada enganche: Orders engancha la
+      // misma lista sin `siempre` dentro de un detalle.
+      r.scroll.classList.toggle('m-dock-siempre', r.siempre);
       r.pegado.classList.add('m-dock-pegado');
       // El desenfoque, dentro del bloque y lo primero: detrás de las
       // pestañas y del filtro. Una vez; un repintado no lo duplica.

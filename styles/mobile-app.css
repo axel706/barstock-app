@@ -853,6 +853,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-dock-scroll.m-dock-con-titulo::before {
     content: ''; display: block; height: calc(var(--m-banda, 52px) + 14px);
   }
+  /* Acoplada desde el principio (Inventory, Orders): el hueco es el
+   * punto donde se pega el bloque, para que no tenga nada que subir. Con
+   * el de arriba entraba 6 px más abajo y subía al primer scroll. */
+  .m-dock-scroll.m-dock-con-titulo.m-dock-siempre::before {
+    height: var(--m-dock-top, calc(60px + env(safe-area-inset-top, 0px)));
+  }
   .m-dock-marca { display: block; height: 0; }
   body.m-shell .m-dock-pegado {
     position: sticky; z-index: 2;
