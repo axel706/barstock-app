@@ -308,6 +308,10 @@
   // Lo que Toast no vende (la cerveza) y no tiene ventas esa semana no
   // lleva el bloque: siete barras a cero dirían "no se vendió" de algo
   // que Toast no sabe vender.
+  // El día elegido en la ficha abierta; null es ayer. ficha() lo pone a
+  // null cada vez que se abre una.
+  let _diaFicha = null;
+
   function pintarVentasFicha(caja, r) {
     const el = caja && caja.querySelector('#msVentas');
     const TS = window.BarStockToastSales, LC = window.BarStockLiveCache;
@@ -323,26 +327,37 @@
       const tope = Math.max(1e-9, ...sem.map(x => Math.max(x.botellas, normal(x) || 0)));
       const pct = (n) => Math.max(0, Math.min(100, n / tope * 100)).toFixed(1) + '%';
       const b1 = (n) => String(Math.round((Number(n) || 0) * 10) / 10);
-      const ayer = sem[sem.length - 1];
+      // Tocar una barra elige ese día (Axel: "no puedo pulsar en un día
+      // distinto al actual"), como en la tarjeta del Home. Por defecto,
+      // ayer, que se dice "yesterday".
+      const i = _diaFicha === null || _diaFicha >= sem.length ? sem.length - 1 : _diaFicha;
+      const dia = sem[i];
+      const nombreDia = i === sem.length - 1 ? 'yesterday' : dia.dia;
       const v = LC ? LC.vivo(r) : null;
       // Desde el conteo: lo vendido del LIVE. Sin LIVE (conteo activo,
-      // o nada vendido desde el conteo) se dice sólo lo de ayer.
+      // o nada vendido desde el conteo) se dice sólo lo del día.
       const desde = v ? 'Since the count <b>' + b1(v.vendido) + ' btl</b> · ' : '';
-      const n = normal(ayer);
+      const n = normal(dia);
       el.innerHTML = `
         <div class="m-vt">
           <div class="m-vt-k">Sold in Toast <span>last 7 days</span></div>
           <div class="m-ts-g">
             ${sem.map((x, k) => `
-              <div class="m-ts-b${k === sem.length - 1 ? ' on' : ''}" aria-label="${x.dia}: ${b1(x.botellas)} bottles">
+              <div class="m-ts-b${k === i ? ' on' : ''}" data-d="${k}" role="button" tabindex="0"
+                   aria-label="${x.dia}: ${b1(x.botellas)} bottles">
                 <i style="height:${pct(x.botellas)}"></i>
                 ${normal(x) !== null ? `<u style="bottom:${pct(normal(x))}"></u>` : ''}
               </div>`).join('')}
           </div>
-          <div class="m-ts-d">${sem.map((x, k) => `<span class="${k === sem.length - 1 ? 'on' : ''}">${x.dia}</span>`).join('')}</div>
-          <div class="m-vt-s">${desde}yesterday <b>${b1(ayer.botellas)}</b>${n !== null
-            ? ' <span>(usual ' + ayer.dia + ' ' + b1(n) + ')</span>' : ''}</div>
+          <div class="m-ts-d">${sem.map((x, k) => `<span class="${k === i ? 'on' : ''}">${x.dia}</span>`).join('')}</div>
+          <div class="m-vt-s">${desde}${nombreDia} <b>${b1(dia.botellas)}</b>${n !== null
+            ? ' <span>(usual ' + dia.dia + ' ' + b1(n) + ')</span>' : ''}</div>
         </div>`;
+      el.querySelectorAll('[data-d]').forEach(b => {
+        const elegir = () => { _diaFicha = Number(b.dataset.d); pintarVentasFicha(caja, r); };
+        b.onclick = elegir;
+        b.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); elegir(); } };
+      });
     }).catch(e => { console.warn('[ficha] Toast Sales', e); });
   }
 
@@ -486,6 +501,9 @@
     // DESPUÉS de cerrarHoja(), que lo pone a -1. Se apuntaba antes y la
     // hoja abierta quedaba siempre en -1: refrescar() repintaba la lista
     // en vez de la ficha, y el LIVE que llegaba no la encontraba.
+    // Abrir una ficha vuelve a poner "Sold in Toast" en ayer: el día que
+    // tocaste en otra (o en ésta, la vez anterior) no es el que buscas.
+    _diaFicha = null;
     _ficha = idx;
     const h = document.createElement('div');
     h.className = 'm-sheet';

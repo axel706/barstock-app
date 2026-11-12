@@ -98,6 +98,27 @@ grupo('la semana del producto, en botellas');
   prueba('sin dinero', !/\$/.test(v.textContent) && !v.querySelector('[data-v]'), v.textContent.replace(/\s+/g, ' '));
 }
 
+grupo('tocar otro día');
+{
+  // Axel, 2026-11-12: "no puedo pulsar en una gráfica de un día distinto
+  // al actual para ver cuántas botellas se vendieron ese día". Como en la
+  // tarjeta del Home: tocar una barra elige ese día.
+  const e = await entorno();
+  const v = await ficha(e, 'tito', "Tito's");
+  v.querySelectorAll('.m-ts-b')[0].click();
+  await esperar(10);   // repinta al llegar los datos, de la memoria
+  const v2 = e.w.document.querySelector('#mSheet #msVentas');
+  const t = v2.querySelector('.m-vt-s').textContent.replace(/\s+/g, ' ').trim();
+  prueba('la barra tocada queda marcada', v2.querySelectorAll('.m-ts-b')[0].classList.contains('on') &&
+    !v2.querySelectorAll('.m-ts-b')[6].classList.contains('on'));
+  prueba('y la línea dice ese día contra lo normal de ese día', /Wed 1 \(usual Wed 1\)/.test(t), t);
+  prueba('"since the count" no cambia', /Since the count 0\.9 btl/.test(t), t);
+  // Cerrar y volver a abrir la ficha: abre otra vez en ayer, no en el
+  // día que se tocó la vez anterior.
+  const v3 = await ficha(e, 'tito', "Tito's");
+  prueba('al volver a abrir la ficha, ayer otra vez', v3.querySelectorAll('.m-ts-b')[6].classList.contains('on'));
+}
+
 grupo('lo que Toast no vende');
 {
   const e = await entorno();

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261111-200541",
+    "items": [
+      "Tap a day in Sold in Toast to see that day"
+    ]
+  },
+  {
     "build": "20261111-195302",
     "items": [
       "Product sheet shows its last 7 days sold in Toast"
@@ -182,12 +188,6 @@
     "build": "20261111-094534",
     "items": [
       "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261110-235334",
-    "items": [
-      "Bigger B on the home-screen icon"
     ]
   }
 ]
