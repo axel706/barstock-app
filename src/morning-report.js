@@ -55,7 +55,7 @@
 
     for (const f of ro.filas || []) {
       if (!f || !f.med || !f.med.some(x => x > 0) || !conPar(f.producto)) continue;
-      const c = R.cuantoPedir({ stock: f.live, med: f.med, viene: f.viene, hoy: out.hoy });
+      const c = R.cuantoPedir({ stock: f.live, med: f.med, viene: f.viene, hoy: out.hoy, hoyVendido: f.hoyVendido });
       if (!(c.pedir > 0)) continue;
       out.agotan.push({ producto: f.producto, queda: f.live, agota: f.agota || c.hasta,
         vende: c.vende, llega: c.llega, pedir: c.pedir });

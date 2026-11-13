@@ -18,8 +18,17 @@
   //   3. El primer día en que llega a cero es el día que se acaba. Se
   //      mira hasta dos semanas: más allá no se dice nada.
   //
-  // Hoy cuenta entero: el LIVE todavía no resta lo vendido hoy (Toast se
-  // carga al día siguiente), así que se resta lo que se suele gastar hoy.
+  // Hoy: lo que FALTA por venderse hoy, no el día entero. Lo de hoy se
+  // carga de madrugada, al día siguiente, pero puede cargarse a mano a
+  // media tarde (Axel, 2026-11-13, el "sync" de hoy): entonces el LIVE ya
+  // resta lo vendido hasta ese momento, y restar además lo que se suele
+  // gastar un día entero lo contaría dos veces. Así que el día 0 resta
+  // max(0, lo de siempre de hoy − lo ya vendido hoy). Sin nada cargado de
+  // hoy, lo ya vendido es 0 y es lo de siempre: el día entero.
+  //
+  // Las medianas no se tocan: sólo usan días cerrados y completos
+  // (medianas()), así que un hoy cargado a medias no cuenta como un día
+  // flojo.
   //
   // Sólo lee. No escribe nada (lo vigila test-toast-no-toca-conteo.js).
 
@@ -56,8 +65,15 @@
     return { porProducto, muestras, suficiente };
   }
 
+  // Lo que se resta un día: lo de siempre; el día 0, sólo lo que falta.
+  const restaDia = (med, d, k, hoyVendido) => {
+    const m = med[diaSemana(d)] || 0;
+    return k === 0 ? Math.max(0, m - (Number(hoyVendido) || 0)) : m;
+  };
+
   // stock: el LIVE de hoy · med: [7 medianas, domingo = 0] · viene: [{ cuando, n }]
-  function proyectar({ stock, med, viene, hoy, horizonte }) {
+  // hoyVendido: lo de hoy que el LIVE ya restó (0 si hoy no está cargado)
+  function proyectar({ stock, med, viene, hoy, horizonte, hoyVendido }) {
     if (!med || !med.some(x => x > 0)) return null;
     let s = Number(stock) || 0;
     const llegan = new Map();
@@ -68,7 +84,7 @@
     for (let k = 0; k < (horizonte || HORIZONTE); k++) {
       const d = sumarDias(hoy, k);
       s += llegan.get(d) || 0;
-      s -= med[diaSemana(d)];
+      s -= restaDia(med, d, k, hoyVendido);
       if (s <= 0) return { dia: d, enDias: k };
     }
     return null;
@@ -90,11 +106,13 @@
   // hay botellas de menos en la estantería, hay un conteo que se quedó
   // corto. El margen al redondear es para la coma flotante: 8.3 − 0.3 no
   // puede pedir 9.
-  function cuantoPedir({ stock, med, viene, hoy }) {
+  //
+  // Hoy, como en proyectar(): sólo lo que falta por venderse hoy.
+  function cuantoPedir({ stock, med, viene, hoy, hoyVendido }) {
     const faltanDias = (7 - diaSemana(hoy)) % 7;
     const hasta = sumarDias(hoy, faltanDias);
     let vende = 0;
-    for (let k = 0; k <= faltanDias; k++) vende += (med && med[diaSemana(sumarDias(hoy, k))]) || 0;
+    for (let k = 0; k <= faltanDias; k++) vende += med ? restaDia(med, sumarDias(hoy, k), k, hoyVendido) : 0;
     let llega = 0;
     for (const v of viene || []) if (diaNY(v.cuando) <= hasta) llega += Number(v.n) || 0;
     const falta = vende - Math.max(0, Number(stock) || 0) - llega;
@@ -111,10 +129,14 @@
     const hoy = U.diaDeNegocio(Date.now());
     const h = await U.ventasDesde(sumarDias(hoy, -DIAS_HISTORIA));
     const M = medianas(h.productos, h.dias);
+    // Lo vendido HOY por producto, de la misma lectura: es lo que el LIVE
+    // ya restó si hoy se cargó (los dos leen toast_sales igual).
+    const hoyDe = new Map((h.productos || []).map(p => [p.producto, (p.porDia && p.porDia[hoy]) || 0]));
     const filas = vivo.filas.map(f => {
       const med = M.porProducto.get(f.producto) || null;
-      const fin = M.suficiente && med ? proyectar({ stock: f.live, med, viene: f.viene, hoy }) : null;
-      return Object.assign({}, f, { med, agota: fin ? fin.dia : null, enDias: fin ? fin.enDias : null });
+      const hoyVendido = hoyDe.get(f.producto) || 0;
+      const fin = M.suficiente && med ? proyectar({ stock: f.live, med, viene: f.viene, hoy, hoyVendido }) : null;
+      return Object.assign({}, f, { med, hoyVendido, agota: fin ? fin.dia : null, enDias: fin ? fin.enDias : null });
     });
     return { estado: 'listo', hoy, conteo: vivo.conteo, muestras: M.muestras, suficiente: M.suficiente, filas };
   }

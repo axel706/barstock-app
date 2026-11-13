@@ -777,7 +777,10 @@ contestaría en segundos y nunca se corrió.
   vendido hasta ese momento; la carga automática de la madrugada ya vuelve
   a cargar los días marcados `closed: false`, así que no se cuenta doble.
   Propuesto en la cabecera de *Toast Sales* ("↻ Today" · "updated 10:08
-  PM"), sin dibujar todavía. **Antes hay que arreglar `run-out.js`**: da
-  por hecho que lo de hoy no está descontado y resta la mediana de hoy
-  entera; con hoy cargado a medias restaría dos veces. El día 0 tiene que
-  restar `max(0, mediana − lo vendido hoy)`.
+  PM"), sin dibujar todavía; Axel dijo que ahí no va (2026-11-13), falta
+  decidir dónde. **`run-out.js` ya está listo para ello** (2026-11-13):
+  el día 0 resta `max(0, mediana − lo vendido hoy)`, en `proyectar()` y
+  en `cuantoPedir()` (el correo le pasa `hoyVendido`). Las medianas ya
+  sólo usaban días cerrados y completos: un hoy a medias no las baja.
+  Cargar hoy dos veces no duplica filas: `sync` borra el día y lo vuelve
+  a escribir.

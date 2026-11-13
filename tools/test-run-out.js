@@ -125,5 +125,36 @@ grupo('cuánto pedir para llegar al domingo');
   prueba('una suma exacta no sube una botella por la coma flotante', c.pedir === 8, String(c.pedir));
 }
 
+grupo('hoy cargado a medias no se cuenta dos veces');
+{
+  // Axel, 2026-11-13, antes del "sync" manual de hoy: si lo de hoy ya
+  // está cargado, el LIVE ya lo restó. Restar además el día entero lo
+  // contaría dos veces. El día 0 resta sólo lo que falta.
+  const med = [3, 1, 1, 2, 2, 4, 5];               // jueves = 2
+  // Jueves 19: LIVE 2.5, ya vendidas 1.5 hoy → falta 0.5 hoy → 2.0
+  // al cerrar; viernes 4 → se acaba el viernes.
+  let p = R.proyectar({ stock: 2.5, med, viene: [], hoy: '2026-11-19', hoyVendido: 1.5 });
+  prueba('con lo de hoy cargado, hoy resta sólo lo que falta', p && p.dia === '2026-11-20', JSON.stringify(p));
+  p = R.proyectar({ stock: 2.5, med, viene: [], hoy: '2026-11-19' });
+  prueba('sin nada cargado de hoy, hoy cuenta entero (como antes)', p && p.dia === '2026-11-20' && p.enDias === 1, JSON.stringify(p));
+  p = R.proyectar({ stock: 1.5, med, viene: [], hoy: '2026-11-19', hoyVendido: 1.5 });
+  prueba('lo que queda no se acaba hoy si lo de hoy ya se restó', p && p.dia === '2026-11-20', JSON.stringify(p));
+  p = R.proyectar({ stock: 1.5, med, viene: [], hoy: '2026-11-19' });
+  prueba('…y sí, sin cargar, con el día entero por delante', p && p.dia === '2026-11-19', JSON.stringify(p));
+  p = R.proyectar({ stock: 0.4, med, viene: [], hoy: '2026-11-19', hoyVendido: 6 });
+  prueba('vender hoy más de lo de siempre no resta en negativo', p && p.dia === '2026-11-20', JSON.stringify(p));
+
+  // Cuánto pedir hasta el domingo, el mismo día 0. Jueves 12: jueves 2 +
+  // viernes 4 + sábado 5 + domingo 3 = 14; con 1.5 vendidas hoy, 12.5.
+  let c = R.cuantoPedir({ stock: 0.6, med, viene: [], hoy: '2026-11-12', hoyVendido: 1.5 });
+  prueba('cuánto pedir resta de hoy sólo lo que falta', Math.abs(c.vende - 12.5) < 1e-9 && c.pedir === 12, JSON.stringify(c));
+  c = R.cuantoPedir({ stock: 0.6, med, viene: [], hoy: '2026-11-12' });
+  prueba('y sin cargar, el día entero (como antes)', c.vende === 14 && c.pedir === 14, JSON.stringify(c));
+  const mr = leer('src/morning-report.js');
+  prueba('el correo de la mañana le pasa lo vendido hoy', /cuantoPedir\(\{[^}]*hoyVendido: f\.hoyVendido/.test(mr));
+  const ro = leer('src/run-out.js');
+  prueba('ahora() lo saca de la misma lectura que el LIVE', /p\.porDia && p\.porDia\[hoy\]/.test(ro) && /proyectar\(\{[^}]*hoyVendido/.test(ro));
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
