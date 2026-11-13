@@ -172,6 +172,15 @@ function entorno(o) {
       hoja().querySelector('#miPar').value = '12';
     }
     prueba('es pantalla, con "Edit item" en la banda', !!hoja() && w.__banda === 'Edit item');
+    // Opción B (2026-11-13): el aire de un teléfono alto, repartido entre
+    // los bloques con separadores elásticos, no todo junto antes de los
+    // botones.
+    prueba('un separador elástico entre cada bloque (6), y el último antes de los botones',
+      hoja().querySelectorAll('.m-ed-in > .m-ed-aire').length === 6 &&
+      hoja().querySelector('.m-ed-acts').previousElementSibling.previousElementSibling.classList.contains('m-ed-aire'));
+    prueba('en el CSS crecen por igual y en una pantalla justa miden 0',
+      /\.m-ed-aire \{ display: block; flex: 1 1 0; min-height: 0; \}/.test(leer('styles/mobile-app.css')) &&
+      !/\.m-ed-in > \.m-ed-acts \{[^}]*margin-top: auto/.test(leer('styles/mobile-app.css')));
     prueba('el atrás de la banda vuelve a la lista', typeof w.__atras === 'function' && (w.__atras(), !hoja()) && w.__banda === null &&
       !!host.querySelector('.m-inv'));
     host.querySelector('.m-inv').click();

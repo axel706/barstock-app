@@ -5214,7 +5214,15 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * Con poco contenido el margin-top:auto los empuja al fondo; con mucho,
    * van detrás de todo y la pantalla rueda. */
   .m-ed-in { flex: 1 0 auto; display: flex; flex-direction: column; }
-  .m-ed-in > .m-ed-acts { margin-top: auto; padding-top: 16px; }
+  .m-ed-in > .m-ed-acts { padding-top: 16px; }
+  /* El aire que sobra en un teléfono alto, repartido a partes iguales
+   * entre los bloques (Axel, 2026-11-13, opción B: "hay un gap entre el
+   * contenido y los botones"). Antes se quedaba todo junto encima de
+   * Delete y Save. Separadores elásticos y no margin-top:auto en cada
+   * bloque: auto se come el margen fijo, y en una pantalla justa los
+   * bloques quedaban pegados. En una pantalla justa estos miden 0 y
+   * todo se ve como antes. */
+  .m-ed-aire { display: block; flex: 1 1 0; min-height: 0; }
   /* Lo usado cada semana (opción C): barras que se tocan, el número de
    * la elegida arriba y la raya del par. */
   .m-ed-sem {

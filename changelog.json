@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261113-091334",
+    "items": [
+      "Edit item: spacing evened out on taller phones"
+    ]
+  },
+  {
     "build": "20261113-090935",
     "items": [
       "Edit item: no more color seam under the top bar"
@@ -187,13 +193,6 @@
     "build": "20261111-221121",
     "items": [
       "Long product names no longer spill out of Top movers"
-    ]
-  },
-  {
-    "build": "20261111-214718",
-    "items": [
-      "Home: Sales, Movement and Changes in tabs",
-      "Top movers in bottles or dollars, against their usual"
     ]
   }
 ]

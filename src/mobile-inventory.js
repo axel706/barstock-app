@@ -517,7 +517,7 @@
     ed.innerHTML = `
       <div class="m-ed-in">
         ${hero(r, p)}
-
+        <i class="m-ed-aire" aria-hidden="true"></i>
         <div id="miRenCaja">
           <button type="button" class="m-ed-fila m-ed-ren" id="miRen">
             <span class="m-ed-k">Name &amp; code <small>· ${esc(r.code || 'No code')}</small></span>
@@ -525,6 +525,7 @@
           </button>
         </div>
 
+        <i class="m-ed-aire" aria-hidden="true"></i>
         <!-- "Vendor" va dentro de la fila y no encima: con la gráfica de
              semanas, una etiqueta más dejaba Delete y Save fuera de la
              pantalla en un iPhone (Axel: "que todo entre"). -->
@@ -535,6 +536,7 @@
           <span class="m-ed-a m-ed-mut">Change <i class="ti ti-chevron-right" aria-hidden="true"></i></span>
         </button>
 
+        <i class="m-ed-aire" aria-hidden="true"></i>
         <div class="m-ed-dos">
           <div>
             <div class="m-ed-lab">Par</div>
@@ -552,6 +554,7 @@
                      value="${num(r.value) || ''}" placeholder="0.00" aria-label="Unit price"></div>
           </div>
         </div>
+        <i class="m-ed-aire" aria-hidden="true"></i>
         <!-- Las últimas semanas, junto al par (Axel, 2026-11-13, opción C):
              es para lo que sirve la gráfica, decidir el par. Se llena
              después, sin esperar a la consulta. Lo que dice Pour·IQ va en
@@ -562,9 +565,11 @@
           ${iqBoton(r, p)}
         </div>
 
+        <i class="m-ed-aire" aria-hidden="true"></i>
         <div class="m-ed-lab">Bottle</div>
         <button type="button" class="m-botrow" id="miBottle">${filaBotella(r)}</button>
 
+        <i class="m-ed-aire" aria-hidden="true"></i>
         <div class="m-nerr" id="miErr"></div>
         <!-- Delete y Save en la misma línea (Axel). Delete pide dos
              toques y toma antes un respaldo de Time Machine. -->
