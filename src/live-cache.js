@@ -37,7 +37,7 @@
   const VIVO_MS = 30 * 60 * 1000;
   let _vivo = null, _agota = null, _vivoEn = 0, _pidiendo = null;
   // El instante del último conteo, para decir "Counted Sun Nov 8".
-  let _conteo = null;
+  let _conteo = null, _desde = null;
   // Un aviso que llega MIENTRAS se lee: la lectura en curso empezó antes
   // de la factura y daría el número de antes, guardado 30 minutos. Se
   // apunta y se vuelve a leer al terminar.
@@ -63,6 +63,7 @@
       _vivo = new Map(filas.filter(f => f.movimiento).map(f => [f.producto, f]));
       _agota = new Map(filas.map(f => [f.producto, f]));
       _conteo = r && r.estado === 'listo' && r.conteo ? r.conteo : null;
+      _desde = r && r.estado === 'listo' ? r.desde || null : null;
     }).catch(e => {
       console.warn('[live] sin LIVE', e);
       _vivo = new Map();
@@ -180,13 +181,23 @@
     return { contado: d.total, llego, vendido, total: d.total + llego - vendido, sinPrecio: d.noPrice, conteo: _conteo };
   }
 
+  // La semana de un producto con LIVE, día a día desde el conteo
+  // (live-stock.diaADia); null sin LIVE. Sólo lo que tiene "Live" lleva
+  // la gráfica (Axel, 2026-11-13): sin movimiento sería una raya plana.
+  function semana(r) {
+    const v = vivo(r), L = window.BarStockLive, U = window.BarStockToastUsage;
+    if (!v || !_desde || !L || !L.diaADia || !U || !U.diaDeNegocio) return null;
+    const p = L.diaADia(v, _desde, U.diaDeNegocio(Date.now()), (t) => U.diaDeNegocio(t));
+    return p.length >= 2 ? p : null;
+  }
+
   // Las piezas de HTML, iguales en todas las pantallas del teléfono.
   const etiquetaLive = (r) => vivo(r) ? '<span class="m-live"><i></i>Live</span>' : '';
   const etiquetaAgota = (r) => { const a = agota(r); return a ? `<span class="m-out m-out-${a.tono}">${a.txt}</span>` : ''; };
 
   window.BarStockLiveCache = {
-    cargar, caducar, alCambiar, vivo, cuanto, conVivo, texto, agota, toastLoVende, medianas, llegadas, dinero,
+    cargar, caducar, alCambiar, vivo, cuanto, conVivo, texto, agota, toastLoVende, medianas, llegadas, dinero, semana,
     etiquetaLive, etiquetaAgota, VIVO_MS,
-    _reset: () => { _vivo = null; _agota = null; _conteo = null; _vivoEn = 0; _pidiendo = null; _otraVez = false; _oyentes.clear(); }
+    _reset: () => { _vivo = null; _agota = null; _conteo = null; _desde = null; _vivoEn = 0; _pidiendo = null; _otraVez = false; _oyentes.clear(); }
   };
 })();

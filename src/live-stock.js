@@ -55,7 +55,7 @@
         f = filas.get(nombre);
         if (!f) {
           f = { producto: nombre, enInventario: !!m, contado: m ? Number(m.onHand) || 0 : 0,
-                llego: 0, vendido: 0, de: [], viene: [], llegadas: [] };
+                llego: 0, vendido: 0, de: [], viene: [], llegadas: [], porDia: {} };
           filas.set(nombre, f);
         }
       }
@@ -122,6 +122,8 @@
       if (!v || !v.botellas) continue;
       const f = fila(v.producto);
       f.vendido += v.botellas;
+      // Lo vendido cada día, para la gráfica de la semana (diaADia).
+      for (const [d, b] of Object.entries(v.porDia || {})) f.porDia[d] = (f.porDia[d] || 0) + (Number(b) || 0);
     }
 
     const r2 = (n) => Math.round(n * 100) / 100;
@@ -161,5 +163,42 @@
       filas, sinConvertir: uso.sinConvertir };
   }
 
-  window.BarStockLive = { calcular, ahora };
+  // ── La semana de un producto, día a día (Axel, 2026-11-13, opción A) ─
+  //
+  // La línea de la tarjeta de "Do we have": lo que quedaba al final de
+  // cada día de negocio, desde el día del conteo hasta hoy. Se rehace
+  // con las MISMAS piezas que el LIVE de esa fila (lo contado, sus
+  // llegadas y lo vendido por día), así que el último punto es el LIVE
+  // y no otro número. Una llegada sin hora cuenta hoy, y una del mismo
+  // día del conteo cuenta ese día: si no, el último punto no cuadraría
+  // con el LIVE, que sí las suma.
+  //
+  // diaDe(instante) → 'AAAA-MM-DD' del día de negocio (toast-usage).
+  // Devuelve [{ fecha, queda, vendido, llego }], el primero el del conteo.
+  const masDia = (d, k) => new Date(new Date(d + 'T12:00:00Z').getTime() + k * 864e5).toISOString().slice(0, 10);
+  function diaADia(f, desde, hoy, diaDe) {
+    if (!f || !desde || !hoy || hoy < desde) return [];
+    const dias = [];
+    for (let d = desde; d <= hoy && dias.length < 400; d = masDia(d, 1)) dias.push(d);
+    const llego = {};
+    for (const l of f.llegadas || []) {
+      if (!l || !(Number(l.n) > 0)) continue;
+      let d = l.cuando != null && diaDe ? diaDe(l.cuando) : hoy;
+      if (!d || d > hoy) d = hoy;
+      if (d < desde) d = desde;
+      llego[d] = (llego[d] || 0) + Number(l.n);
+    }
+    const r2 = (n) => Math.round(n * 100) / 100;
+    let q = Number(f.contado) || 0;
+    return dias.map((d, i) => {
+      // Lo vendido el día del conteo ya no está en la estantería contada
+      // (toast-usage lee desde el día SIGUIENTE): no se resta.
+      const v = i === 0 ? 0 : (Number(f.porDia && f.porDia[d]) || 0);
+      const ll = llego[d] || 0;
+      q += ll - v;
+      return { fecha: d, queda: r2(q), vendido: r2(v), llego: r2(ll) };
+    });
+  }
+
+  window.BarStockLive = { calcular, ahora, diaADia };
 })();

@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 142 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 143 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -362,7 +362,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 142 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 143 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -524,6 +524,17 @@ sale de marginedge_invoice_lines" de arriba):
   descontar la primera venta.
 - Ejemplo de Axel: contó 3 Tito's el domingo, ordenó 5 → martes 7 AM, 8 →
   miércoles con las ventas del martes, 7 → la factura dice que no llegó, 2.
+
+**La semana en la tarjeta de "Do we have"** (Axel, 2026-11-13, opción
+A sobre lámina): lo que tiene "Live" lleva una línea con lo que quedaba
+al final de cada día desde el conteo, cada punto con su número y hoy
+relleno, en el color de la tarjeta. Sólo con Live y sólo en esa lista
+(`product-hero.html(r, { semana: true })`); la ficha no. Los datos son
+los del LIVE (`live-cache.semana` → `live-stock.diaADia`: lo contado,
+las llegadas por su día y lo vendido por día), así que el último punto
+ES el número grande. Compacta a propósito ("que las tarjetas no crezcan
+demasiado"): 48 px de gráfica, unos 105 px más por tarjeta; con más de
+ocho días, los ocho últimos y "Since …". Prueba: `test-semana-tarjeta`.
 
 **Cuándo sale la marca "Live"** (Axel, 2026-11-08): durante un conteo
 activo se enseña lo contado, sin marca. Al cerrar el conteo todo vuelve

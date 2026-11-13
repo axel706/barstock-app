@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261113-110139",
+    "items": [
+      "Do we have: Live items show this week, day by day"
+    ]
+  },
+  {
     "build": "20261113-104120",
     "items": [
       "Sold card no longer blinks out after Sync"
@@ -187,13 +193,6 @@
     "build": "20261111-232503",
     "items": [
       "Bigger header icons: Time Machine, bell and back"
-    ]
-  },
-  {
-    "build": "20261111-230108",
-    "items": [
-      "Sent and Invoices details: name in the header",
-      "Resend, Reopen and invoice totals stay on top"
     ]
   }
 ]

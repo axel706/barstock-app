@@ -156,7 +156,9 @@
     // tarjeta se contradecía. Las zonas salen sólo en la ficha, con la
     // fecha del conteo debajo. La gráfica de semanas también se queda en
     // la ficha: es una consulta por producto, y en una lista serían
-    // decenas.
+    // decenas. Lo que sí lleva la lista, si tiene "Live", es la línea de
+    // esta semana (Axel, 2026-11-13, opción A): sale de lo ya leído por
+    // live-cache, sin consultas por tarjeta.
     //
     // `m-res` sigue en el envoltorio porque es lo que se toca para abrir
     // la ficha, igual que con la fila.
@@ -165,7 +167,7 @@
       const mi = master().indexOf(r);
       if (H && H.html) {
         return `<div class="m-res m-res-fic" data-i="${mi}" role="button" tabindex="0">
-          ${H.html(r, { par: parDe(r) })}</div>`;
+          ${H.html(r, { par: parDe(r), semana: true })}</div>`;
       }
       // Sin el módulo, la fila de antes: fea, pero dice qué hay.
       const k = tono(r);

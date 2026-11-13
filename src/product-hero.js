@@ -191,6 +191,63 @@
   //     dura" acabarían contradiciéndose.
   // Lo que no se movió desde el conteo enseña lo contado y sin marca.
   // `o.vivo: false` la deja en lo contado, para quien lo necesite.
+  // ── La semana en la tarjeta (Axel, 2026-11-13, opción A) ───────────
+  //
+  // En la lista de "Do we have", lo que tiene "Live" lleva debajo una
+  // línea con lo que quedaba al final de cada día desde el conteo: con
+  // cuánto empezó, cuánto se fue cada día y cuánto queda, cada punto con
+  // su número y el de hoy relleno. Los datos son los del LIVE
+  // (live-cache.semana → live-stock.diaADia): el último punto es el
+  // número grande de la tarjeta.
+  //
+  // "Que las tarjetas no crezcan demasiado": una línea de título, 48 px
+  // de gráfica y los días. Más de ocho días (un conteo viejo) no caben
+  // legibles: se enseñan los ocho últimos y el título dice desde cuándo.
+  // La línea va en el color de la tarjeta: verde, ámbar o rojo.
+  //
+  // Los puntos y los números son HTML sobre un SVG estirado: el SVG
+  // pinta la línea a lo ancho que tenga la tarjeta, y un círculo o un
+  // texto dentro de él saldrían deformados.
+  const MAX_DIAS = 8;
+  const DSEM = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const MES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const n1 = (n) => String(Math.round((Number(n) || 0) * 10) / 10);
+  function semana(r, color) {
+    const LC = window.BarStockLiveCache;
+    const v = LC && LC.vivo ? LC.vivo(r) : null;
+    const todos = v && LC.semana ? LC.semana(r) : null;
+    if (!todos) return '';
+    const p = todos.slice(-MAX_DIAS);
+    const recorte = p.length < todos.length;
+    const n = p.length;
+    const vals = p.map(x => x.queda);
+    const min = Math.min(...vals), max = Math.max(...vals);
+    // Arriba queda sitio para el número de cada punto; abajo, el aire
+    // del punto. Todo igual (lo que llegó tapó lo vendido): a media altura.
+    const ALTO = 48, ARR = 16, ABA = 5;
+    const y = (q) => max === min ? (ARR + ALTO - ABA) / 2 : ARR + (ALTO - ARR - ABA) * (max - q) / (max - min);
+    const x = (i) => (i + 0.5) / n * 100;
+    const linea = p.map((d, i) => (i ? 'L' : 'M') + x(i).toFixed(2) + ',' + y(d.queda).toFixed(2)).join('');
+    const area = linea + 'L' + x(n - 1).toFixed(2) + ',' + ALTO + 'L' + x(0).toFixed(2) + ',' + ALTO + 'Z';
+    const usado = n1(v.vendido), llego = Number(v.llego) || 0;
+    const f0 = new Date(p[0].fecha + 'T12:00:00Z');
+    const titulo = recorte ? 'Since ' + MES[f0.getUTCMonth()] + ' ' + f0.getUTCDate() : 'This week';
+    const dia = (d, i) => i === n - 1 ? 'Today' : DSEM[new Date(d.fecha + 'T12:00:00Z').getUTCDay()];
+    return `
+      <div class="m-dad" style="--sem:${color}">
+        <div class="m-dad-k">${titulo}<i>started ${n1(v.contado)}${llego > 0 ? ' · +' + n1(llego) + ' in' : ''} · used ${usado}</i></div>
+        <div class="m-dad-g" role="img" aria-label="${titulo}: ${p.map((d, i) => dia(d, i) + ' ' + n1(d.queda)).join(', ')}">
+          <svg viewBox="0 0 100 ${ALTO}" preserveAspectRatio="none">
+            <path d="${area}" class="m-dad-a"/>
+            <path d="${linea}" class="m-dad-l" vector-effect="non-scaling-stroke"/>
+          </svg>
+          ${p.map((d, i) => `<i class="m-dad-p${i === n - 1 ? ' hoy' : ''}" style="left:${x(i).toFixed(2)}%;top:${y(d.queda).toFixed(1)}px"></i>` +
+            `<b class="m-dad-v${i === n - 1 ? ' hoy' : ''}" style="left:${x(i).toFixed(2)}%;top:${y(d.queda).toFixed(1)}px">${n1(d.queda)}</b>`).join('')}
+        </div>
+        <div class="m-dad-d">${p.map((d, i) => `<span${i === n - 1 ? ' class="hoy"' : ''}>${dia(d, i)}</span>`).join('')}</div>
+      </div>`;
+  }
+
   function html(r, o) {
     o = o || {};
     const LC = o.vivo === false ? null : window.BarStockLiveCache;
@@ -208,8 +265,12 @@
          (r.category ? ' · ' + r.category : '') +
          (r.bottleSizeMl ? ' · ' + r.bottleSizeMl + ' ml' : ''));
 
+    // La semana, sólo donde se pide (la lista de "Do we have") y sólo
+    // con LIVE: semana() devuelve '' si no.
+    const sem = o.semana ? semana(r, k.c) : '';
+
     return `
-      <div class="m-fic m-fic-${clase(k)}${v ? ' m-fic-conlive' : ''}">
+      <div class="m-fic m-fic-${clase(k)}${v ? ' m-fic-conlive' : ''}${sem ? ' m-fic-consem' : ''}">
         ${silueta(rv, k.c)}
         <div class="m-fic-d">
           <div class="m-fic-n">${esc(r.item)}</div>
@@ -223,11 +284,12 @@
         </div>
         ${o.hueco ? '<div class="m-fic-g"></div>' : ''}
         ${v ? '<span class="m-live m-fic-live"><i></i>Live</span>' : ''}
+        ${sem}
       </div>`;
   }
 
   window.BarStockProductHero = {
-    html, tono, silueta, parDe, diasQueAguanta, aviso,
+    html, tono, silueta, parDe, diasQueAguanta, aviso, semana,
     SEMANAS_PARA_FIAR
   };
 })();

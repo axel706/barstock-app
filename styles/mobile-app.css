@@ -2406,6 +2406,38 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-fic-conlive .m-fic-n { padding-right: calc(var(--m-base) * 3.6); }
   .m-fic-x { display: flex; margin-top: 7px; }
 
+  /* ── La semana en la tarjeta de "Do we have" (Axel, 2026-11-13, A) ──
+   * Sólo con LIVE (product-hero.js semana). La tarjeta es una fila
+   * flexible; con la semana se parte en dos y la gráfica ocupa la
+   * segunda entera. El hueco entre las dos es el `gap` de .m-fic.
+   * Compacta a propósito ("que las tarjetas no crezcan demasiado"):
+   * título, 48 px de gráfica y los días. El color es el de la tarjeta
+   * (--sem). Puntos y números son HTML sobre el SVG estirado. */
+  .m-fic-consem { flex-wrap: wrap; }
+  .m-dad { flex: 0 0 100%; min-width: 0; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.1); }
+  .m-dad-k {
+    display: flex; justify-content: space-between; gap: 8px;
+    font-size: var(--m-meta); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #8fa3b8;
+  }
+  .m-dad-k i { font-style: normal; text-transform: none; letter-spacing: 0; font-weight: 600; color: #c3d2e2; white-space: nowrap; }
+  .m-dad-g { position: relative; height: 48px; margin-top: 4px; }
+  .m-dad-g svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .m-dad-l { fill: none; stroke: var(--sem); stroke-width: 2.5; stroke-linejoin: round; }
+  .m-dad-a { fill: var(--sem); opacity: .12; }
+  .m-dad-p {
+    position: absolute; width: 8px; height: 8px; margin: -4px 0 0 -4px; box-sizing: border-box;
+    border-radius: 50%; border: 2px solid var(--sem); background: #1f2433;
+  }
+  .m-dad-p.hoy { width: 10px; height: 10px; margin: -5px 0 0 -5px; background: var(--sem); }
+  .m-dad-v {
+    position: absolute; transform: translate(-50%, -100%); margin-top: -5px;
+    font-size: var(--m-meta); font-weight: 800; color: #c3d2e2; white-space: nowrap; line-height: 1;
+  }
+  .m-dad-v.hoy { color: #fff; }
+  .m-dad-d { display: flex; margin-top: 4px; }
+  .m-dad-d span { flex: 1; min-width: 0; text-align: center; font-size: var(--m-meta); font-weight: 700; color: #8fa3b8; }
+  .m-dad-d span.hoy { color: #fff; }
+
   /* ── Dónde están ────────────────────────────────────────────────
    * Sólo sale con las zonas encendidas. Con la función apagada no se
    * dice nada: eso es un ajuste, no un dato del producto. */
