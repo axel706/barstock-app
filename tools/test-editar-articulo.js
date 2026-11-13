@@ -143,7 +143,8 @@ function entorno(o) {
     let def = null;
     w.__banda = null; w.__atras = null;
     w.BarStockMobile = { register(d) { def = d; }, refrescarBadges() {},
-      enBanda: (t) => { w.__banda = t; return true; }, alVolverBanda: (fn) => { w.__atras = fn; }, salirBanda: () => { w.__banda = null; } };
+      enBanda: (t) => { w.__banda = t; return true; }, alVolverBanda: (fn) => { w.__atras = fn; }, salirBanda: () => { w.__banda = null; },
+      ir: (id) => { w.__ir = id; } };
     w.vendorDotColor = (v) => ({ LOOP: '#38bdf8', UNKNOWN: '#71717a' }[v] || '#123456');
     w.BarStockProductWeeks = { semanas: async (item, n) => { w.__semanasPedidas = [item, n];
       return [{ semana: '2026-10-19', usado: 3 }, { semana: '2026-10-26', usado: 6.25 }, { semana: '2026-11-02', usado: 4 }]; } };
@@ -176,7 +177,7 @@ function entorno(o) {
     // los bloques con separadores elásticos, no todo junto antes de los
     // botones.
     prueba('un separador elástico entre cada bloque (6), y el último antes de los botones',
-      hoja().querySelectorAll('.m-ed-in > .m-ed-aire').length === 6 &&
+      hoja().querySelectorAll('.m-ed-in > .m-ed-aire').length === 6 && !!hoja().querySelector('.m-ed-in > #miHero') &&
       hoja().querySelector('.m-ed-acts').previousElementSibling.previousElementSibling.classList.contains('m-ed-aire'));
     prueba('en el CSS crecen por igual y en una pantalla justa miden 0',
       /\.m-ed-aire \{ display: block; flex: 1 1 0; min-height: 0; \}/.test(leer('styles/mobile-app.css')) &&
@@ -212,8 +213,33 @@ function entorno(o) {
     hoja().querySelector('#miCode').value = 'T1';
     hoja().querySelector('#miSave').click(); await esperar(20);
     prueba('renombrar va primero, y después lo demás', w.__orden[0] === 'renombrar:Triage House Vodka 1L|T1' && w.__orden[1] === 'campos', w.__orden.join(' / '));
+    prueba('tras renombrar, la recarga vuelve a ESTA pantalla', w.sessionStorage.getItem('barstock.editarTrasRecargar') === 'Triage House Vodka 1L');
     prueba('y guarda el proveedor elegido', w.state.master[0].vendor === 'LOOP');
     prueba('y avisa que recarga para que todo lea el nombre nuevo', w.__orden.some(x => /Renamed everywhere/.test(x)));
+
+    // Tras la recarga de un renombrar, la app vuelve a esta pantalla.
+    def.atras(host, true);
+    w.BarStockMobileInventory.reabrirTrasRecargar(0);
+    prueba('después de recargar, vuelve a editar ese producto', w.__ir === 'inventory' && !!hoja() &&
+      /Triage House Vodka 1L/.test(hoja().textContent) && !w.sessionStorage.getItem('barstock.editarTrasRecargar'));
+    def.atras(host, true);
+
+    // Guardar sin renombrar: te quedas en la pantalla (Axel, 2026-11-13).
+    host.querySelector('.m-inv').click();
+    w.__orden.length = 0;
+    hoja().querySelector('#miMore').click();
+    hoja().querySelector('#miSave').click(); await esperar(20);
+    prueba('Save no saca de la pantalla', !!hoja() && w.__orden.includes('campos') && w.__orden.some(x => x === 'aviso:Saved'));
+    prueba('y la tarjeta de arriba dice lo guardado', /of 13/.test(hoja().querySelector('#miHero').textContent), hoja().querySelector('#miHero').textContent);
+    // bsSaveItemFields deja en el maestro un objeto NUEVO: lo que se haga
+    // después (borrar) tiene que ir sobre ése, no sobre la copia vieja.
+    w.state.master[0] = Object.assign({}, w.state.master[0]);
+    hoja().querySelector('#miSave').click(); await esperar(20);
+    w.__orden.length = 0;
+    hoja().querySelector('#miDel').click(); hoja().querySelector('#miDel').click(); await esperar(20);
+    prueba('borrar después de guardar borra la fila de verdad', w.__orden.includes('borrar') && w.state.master.length === 0);
+    w.state.master.push({ item: 'Triage House Vodka 1L', itemNorm: 'X', code: 'T1', vendor: 'LOOP', onHand: 1, suggested: 12, value: 5.5, toOrder: 11 });
+    host.querySelector('[data-s="todo"]') && host.querySelector('[data-s="todo"]').click();
 
     host.querySelector('.m-inv').click();
     w.__orden.length = 0;

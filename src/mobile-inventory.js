@@ -493,6 +493,29 @@
     pintar();
   }
 
+  // Tras renombrar se recarga la app (el nombre está en cachés de este
+  // teléfono); esto la vuelve a dejar en la pantalla de editar de ese
+  // producto, que es donde estaba quien guardó.
+  const REABRIR = 'barstock.editarTrasRecargar';
+  function reabrirTrasRecargar(intentos) {
+    let nombre = null;
+    try { nombre = sessionStorage.getItem(REABRIR); } catch (e) { return; }
+    if (!nombre) return;
+    const M = window.BarStockMobile;
+    const i = master().findIndex(x => x && x.item === nombre);
+    if (!M || !M.ir || i < 0) {
+      // El maestro puede tardar un momento en estar: unos intentos, y si
+      // no aparece, se olvida (mejor la lista que una pantalla vacía).
+      if ((intentos || 0) < 10) setTimeout(() => reabrirTrasRecargar((intentos || 0) + 1), 300);
+      else try { sessionStorage.removeItem(REABRIR); } catch (e) {}
+      return;
+    }
+    try { sessionStorage.removeItem(REABRIR); } catch (e) {}
+    M.ir('inventory');
+    const host = document.querySelector('.m-screen[data-screen="inventory"]');
+    if (host) hoja(host, i);
+  }
+
   function cerrarEditor(host) {
     const ed = host && host.querySelector('.m-ed');
     if (ed) ed.remove();
@@ -501,7 +524,11 @@
   }
 
   function hoja(host, idx) {
-    const r = master()[idx];
+    // `let`: al guardar, bsSaveItemFields cambia la fila del maestro por
+    // un objeto NUEVO. Como uno se queda en la pantalla tras guardar
+    // (Axel, 2026-11-13), hay que volver a tomarla; con la vieja, un
+    // Delete o un Rename después de guardar trabajaban sobre una copia.
+    let r = master()[idx];
     if (!r) return;
     cerrarEditor(host);
 
@@ -516,7 +543,7 @@
     ed.setAttribute('aria-label', 'Edit item');
     ed.innerHTML = `
       <div class="m-ed-in">
-        ${hero(r, p)}
+        <div id="miHero">${hero(r, p)}</div>
         <i class="m-ed-aire" aria-hidden="true"></i>
         <div id="miRenCaja">
           <button type="button" class="m-ed-fila m-ed-ren" id="miRen">
@@ -640,8 +667,8 @@
       BP.open(r, () => {
         const f = q('#miBottle');
         if (f) f.innerHTML = filaBotella(r);
-        const fic = ed.querySelector('.m-fic');
-        if (fic) fic.outerHTML = hero(r, p);
+        const hz = q('#miHero');
+        if (hz) hz.innerHTML = hero(r, p);
       });
     };
 
@@ -692,16 +719,34 @@
       });
       if (ok) { pintarCabecera(host); pintarLista(host); }
       if (ok && recargar) {
+        // Tras recargar se vuelve a ESTA pantalla, con el nombre nuevo:
+        // uno no sale de editar por guardar.
+        try { sessionStorage.setItem(REABRIR, master()[idx].item); } catch (e) {}
         aviso('Renamed everywhere. Reloading…');
         setTimeout(() => { try { location.reload(); } catch (e) {} }, 900);
       }
       return ok;
     }
 
+    // Guardar no saca de la pantalla (Axel, 2026-11-13: "al terminar de
+    // editar un artículo no debería sacarte a la lista, deberías
+    // permanecer en esa misma pantalla"). Se queda, con la fila nueva y
+    // la tarjeta de arriba con lo guardado.
+    function trasGuardar() {
+      r = master()[idx] || r;
+      // La caja #miHero y no .m-fic: sin el módulo de la tarjeta
+      // (product-hero.js) la cabecera es otra, y se repinta igual.
+      const hz = q('#miHero');
+      if (hz) hz.innerHTML = hero(r, parDe(r));
+      aviso('Saved');
+    }
+
     q('#miSave').onclick = async () => {
       const b = q('#miSave');
       b.disabled = true;
-      if (await guardar()) cerrar(); else b.disabled = false;
+      const ok = await guardar();
+      b.disabled = false;
+      if (ok && !recargar) trasGuardar();
     };
 
     const del = q('#miDel');
@@ -1002,7 +1047,7 @@
     if (window.BarStockMobile) window.BarStockMobile.ir('inventory');
   }
 
-  window.BarStockMobileInventory = { refresh, abrirCon };
+  window.BarStockMobileInventory = { refresh, abrirCon, reabrirTrasRecargar };
 
   function registrar() {
     if (!window.BarStockMobile) return;
@@ -1036,6 +1081,9 @@
     });
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', registrar);
-  else registrar();
+  // Lo de reabrir tras renombrar, cuando el armazón ya montó las
+  // pantallas (también arranca en DOMContentLoaded).
+  const arrancar = () => { registrar(); setTimeout(() => reabrirTrasRecargar(0), 800); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arrancar);
+  else arrancar();
 })();

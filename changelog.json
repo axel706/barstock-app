@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261113-092111",
+    "items": [
+      "Edit item: Save keeps you on the item instead of the list"
+    ]
+  },
+  {
     "build": "20261113-091334",
     "items": [
       "Edit item: spacing evened out on taller phones"
@@ -187,12 +193,6 @@
     "build": "20261111-222112",
     "items": [
       "Inventory opens with its header already in place"
-    ]
-  },
-  {
-    "build": "20261111-221121",
-    "items": [
-      "Long product names no longer spill out of Top movers"
     ]
   }
 ]

@@ -307,7 +307,12 @@ las últimas 8 semanas (opción C: tocar una barra dice su número; datos
 de `BarStockProductWeeks`, el promedio el de Pour·IQ, y su sugerencia
 en la cabecera), y Delete y Save en la misma línea, abajo sobre las
 pestañas. Cabe sin rodar a la altura útil de un iPhone; lo que se le
-añada tiene que caber también. Sin "Save and next" ni Cancel, y el modal del escritorio
+añada tiene que caber también. Sin "Save and next" ni Cancel. **Save no saca de la pantalla**
+(Axel, 2026-11-13): se queda con la fila nueva del maestro
+(bsSaveItemFields la cambia por un objeto nuevo; quedarse con la vieja
+hacía que un Delete posterior trabajara sobre una copia), y tras
+renombrar, la recarga vuelve a abrir ese producto (`sessionStorage`).
+Y el modal del escritorio
 (`saveEditedItem`) desde el mismo día: los dos pasan por
 `BarStockItemEdit.renombrar()`. Nada más renombra. Y borrar, en los dos,
 por `BarStockItemEdit.borrar()`: respaldo de Time Machine antes, y sin
