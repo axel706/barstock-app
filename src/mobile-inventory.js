@@ -437,6 +437,62 @@
   // vendorDotColor() vive en index.html, junto a esos mismos colores.
   const colorProv = (v) => (typeof window.vendorDotColor === 'function' ? window.vendorDotColor(v) : '#94a3b8');
 
+  // ── Lo usado cada semana, en la pantalla de editar ──────────────────
+  //
+  // Opción C (Axel, 2026-11-13), "que muestre el número al seleccionar
+  // cada semana, no sólo la gráfica": tocar una barra dice su semana y
+  // lo usado; de entrada, la última. Los datos son los de la ficha de
+  // Buscar (BarStockProductWeeks.semanas: lo usado por semana del
+  // historial, sin semanas de evento y con el conteo corregido); el
+  // promedio que se enseña es el de Pour·IQ (avgUsed), no uno sacado
+  // aquí: un número, en un sitio. La raya es el par, el que se está
+  // poniendo arriba, para ver contra qué se mide.
+  const SEMANAS_ED = 8;
+  const fmtSem = (iso) => {
+    const d = new Date(String(iso || '') + 'T12:00:00');
+    return isNaN(d) ? String(iso || '') : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+  const uno = (n) => String(Math.round((Number(n) || 0) * 10) / 10);
+
+  // "Pour·IQ: 6 · use it", en la cabecera de la gráfica. Sólo cuando
+  // dice algo distinto del par que hay.
+  function iqBoton(r, p) {
+    return p && p.suggestedOptimal != null && Number(p.suggestedOptimal) !== num(r.suggested)
+      ? '<button type="button" class="m-ed-iq" id="miIq">Pour·IQ: ' + esc(String(p.suggestedOptimal)) + ' · use it</button>'
+      : '';
+  }
+
+  async function pintarSemanasEd(caja, r, p, parAhora, alPintar) {
+    const W = window.BarStockProductWeeks;
+    if (!caja || !W) return;
+    let s = [];
+    try { s = await W.semanas(r.item, SEMANAS_ED); } catch (e) { return; }
+    if (!s.length || !caja.isConnected) return;
+    let sel = s.length - 1;
+
+    const pintar = () => {
+      const par = parAhora();
+      const tope = Math.max(par, ...s.map(x => Number(x.usado) || 0), 1);
+      const x = s[sel];
+      caja.innerHTML =
+        '<div class="m-ed-sem-t"><span>Used per week</span>' + iqBoton(r, p) + '</div>' +
+        '<div class="m-ed-sem-n"><b>' + esc(uno(x.usado)) + '</b> used · week of ' + esc(fmtSem(x.semana)) +
+          (p && p.avgUsed != null ? ' · <em>Pour·IQ avg ' + esc(uno(p.avgUsed)) + '</em>' : '') + '</div>' +
+        '<div class="m-ed-sem-g">' +
+          (par > 0 ? '<span class="m-ed-sem-par" style="bottom:' + Math.round(par / tope * 100) + '%"><em>par ' + esc(uno(par)) + '</em></span>' : '') +
+          s.map((w, i) => '<button type="button" data-w="' + i + '" class="' + (i === sel ? 'on' : '') + '" aria-label="Week of ' +
+            esc(fmtSem(w.semana)) + ': ' + esc(uno(w.usado)) + ' used"><i style="height:' +
+            Math.max(4, Math.round((Number(w.usado) || 0) / tope * 100)) + '%"></i></button>').join('') +
+        '</div>' +
+        '<div class="m-ed-sem-ax"><span>' + esc(fmtSem(s[0].semana)) + '</span><span>' + esc(fmtSem(s[s.length - 1].semana)) + '</span></div>';
+      caja.querySelectorAll('[data-w]').forEach(b => { b.onclick = () => { sel = Number(b.dataset.w); pintar(); }; });
+      if (alPintar) alPintar();
+    };
+    caja._par = pintar;
+    caja.hidden = false;
+    pintar();
+  }
+
   function cerrarEditor(host) {
     const ed = host && host.querySelector('.m-ed');
     if (ed) ed.remove();
@@ -469,8 +525,11 @@
           </button>
         </div>
 
-        <div class="m-ed-lab">Vendor</div>
-        <button type="button" class="m-ed-fila" id="miVendBtn">
+        <!-- "Vendor" va dentro de la fila y no encima: con la gráfica de
+             semanas, una etiqueta más dejaba Delete y Save fuera de la
+             pantalla en un iPhone (Axel: "que todo entre"). -->
+        <button type="button" class="m-ed-fila m-ed-vend" id="miVendBtn">
+          <span class="m-ed-pre">Vendor</span>
           <span class="m-ed-dot" id="miVendDot" style="background:${colorProv(vend)}"></span>
           <span class="m-ed-k" id="miVendN">${esc(vend)}</span>
           <span class="m-ed-a m-ed-mut">Change <i class="ti ti-chevron-right" aria-hidden="true"></i></span>
@@ -493,11 +552,15 @@
                      value="${num(r.value) || ''}" placeholder="0.00" aria-label="Unit price"></div>
           </div>
         </div>
-        ${p && p.suggestedOptimal != null && Number(p.suggestedOptimal) !== num(r.suggested)
-          ? `<button type="button" class="m-iqline" id="miIq">
-               <i class="ti ti-brain" aria-hidden="true"></i>
-               Pour·IQ says ${esc(String(p.suggestedOptimal))} — use it</button>`
-          : ''}
+        <!-- Las últimas semanas, junto al par (Axel, 2026-11-13, opción C):
+             es para lo que sirve la gráfica, decidir el par. Se llena
+             después, sin esperar a la consulta. Lo que dice Pour·IQ va en
+             su cabecera: fuera, como línea propia, no cabía todo. Sin
+             historia la tarjeta sale sólo con Pour·IQ, si tiene algo que
+             decir; si tampoco, no sale. -->
+        <div class="m-ed-sem" id="miSem"${p && p.suggestedOptimal != null && Number(p.suggestedOptimal) !== num(r.suggested) ? '' : ' hidden'}>
+          ${iqBoton(r, p)}
+        </div>
 
         <div class="m-ed-lab">Bottle</div>
         <button type="button" class="m-botrow" id="miBottle">${filaBotella(r)}</button>
@@ -577,12 +640,22 @@
       });
     };
 
+    // El botón de Pour·IQ vive en la cabecera de la gráfica, que se
+    // repinta: se engancha cada vez.
+    const engancharIq = () => {
+      const iq = q('#miIq');
+      if (iq && p) iq.onclick = () => { q('#miPar').value = Number(p.suggestedOptimal); semPar(); };
+    };
+    pintarSemanasEd(q('#miSem'), r, p, () => Number(q('#miPar').value) || 0, engancharIq);
+
     const par = q('#miPar');
-    const mas = (d) => { par.value = Math.max(0, (Number(par.value) || 0) + d); };
+    const mas = (d) => { par.value = Math.max(0, (Number(par.value) || 0) + d); semPar(); };
+    // La raya del par en la gráfica sigue al par que se está poniendo.
+    const semPar = () => { const f = q('#miSem') && q('#miSem')._par; if (f) f(); };
+    par.addEventListener('input', semPar);
     q('#miLess').onclick = () => mas(-1);
     q('#miMore').onclick = () => mas(1);
-    const iq = q('#miIq');
-    if (iq && p) iq.onclick = () => { par.value = Number(p.suggestedOptimal); };
+    engancharIq();
 
     let recargar = false;
     async function guardar() {

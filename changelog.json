@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261113-085511",
+    "items": [
+      "Edit item: last 8 weeks of use, tap a week for its number",
+      "Save and Delete sit at the bottom, within thumb reach"
+    ]
+  },
+  {
     "build": "20261112-230227",
     "items": [
       "Editing an item is now a full screen, everything at a glance",
@@ -188,13 +195,6 @@
     "items": [
       "Home carousel: no more welcome, tips or MarginEdge card",
       "MarginEdge sync now lives in Spent this cycle"
-    ]
-  },
-  {
-    "build": "20261111-212807",
-    "items": [
-      "Home: On the shelf, Sold yesterday and Spent this cycle",
-      "Each with its button: Details, Report, Sync"
     ]
   }
 ]

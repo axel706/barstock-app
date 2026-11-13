@@ -302,8 +302,12 @@ de la lista de Inventory (`.m-ed`, la lista no se toca), "Edit item" en
 la banda con su atrás, la tarjeta del producto igual que antes, el
 nombre una sola vez (fila "Name & code · Rename" que se abre ahí), el
 proveedor como una fila con su color (`vendorDotColor()` en
-`index.html`) que abre la lista, par y precio lado a lado, y Delete y
-Save en la misma línea. Sin "Save and next" ni Cancel, y el modal del escritorio
+`index.html`) que abre la lista, par y precio lado a lado, lo usado
+las últimas 8 semanas (opción C: tocar una barra dice su número; datos
+de `BarStockProductWeeks`, el promedio el de Pour·IQ, y su sugerencia
+en la cabecera), y Delete y Save en la misma línea, abajo sobre las
+pestañas. Cabe sin rodar a la altura útil de un iPhone; lo que se le
+añada tiene que caber también. Sin "Save and next" ni Cancel, y el modal del escritorio
 (`saveEditedItem`) desde el mismo día: los dos pasan por
 `BarStockItemEdit.renombrar()`. Nada más renombra. Y borrar, en los dos,
 por `BarStockItemEdit.borrar()`: respaldo de Time Machine antes, y sin

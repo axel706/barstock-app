@@ -132,7 +132,6 @@ function entorno(o) {
     w.normalizeName = (s) => String(s || '').trim().toUpperCase();
     w.getVendorsForFilter = () => ['ALL', 'UNKNOWN'];
     w.getVendorsWithUnknown = () => ['LOOP', 'UNKNOWN'];
-    w.parAdjustments = new Map();
     w.__orden = [];
     w.bsSaveItemFields = async (idx, campos) => { w.__orden.push('campos'); Object.assign(w.state.master[idx], campos); return true; };
     let fallar = false;
@@ -146,12 +145,32 @@ function entorno(o) {
     w.BarStockMobile = { register(d) { def = d; }, refrescarBadges() {},
       enBanda: (t) => { w.__banda = t; return true; }, alVolverBanda: (fn) => { w.__atras = fn; }, salirBanda: () => { w.__banda = null; } };
     w.vendorDotColor = (v) => ({ LOOP: '#38bdf8', UNKNOWN: '#71717a' }[v] || '#123456');
+    w.BarStockProductWeeks = { semanas: async (item, n) => { w.__semanasPedidas = [item, n];
+      return [{ semana: '2026-10-19', usado: 3 }, { semana: '2026-10-26', usado: 6.25 }, { semana: '2026-11-02', usado: 4 }]; } };
+    w.parAdjustments = new Map([['Triage House Vodka||', { avgUsed: 4.37, suggestedOptimal: 14 }]]);
     w.eval(leer('src/mobile-inventory.js'));
     w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
     const host = w.document.createElement('div'); host.className = 'm-screen on'; host.dataset.screen = 'inventory'; w.document.body.appendChild(host);
     def.mount(host);
     host.querySelector('.m-inv').click();
     const hoja = () => w.document.querySelector('.m-ed');
+    await esperar(10);
+    {
+      const g = () => hoja().querySelector('#miSem');
+      prueba('las semanas, de la misma fuente que la ficha (8)', w.__semanasPedidas && w.__semanasPedidas[0] === 'Triage House Vodka' && w.__semanasPedidas[1] === 8 &&
+        !g().hidden && g().querySelectorAll('[data-w]').length === 3);
+      prueba('de entrada, la última semana con su número', /4 used · week of Nov 2/.test(g().textContent) && g().querySelector('[data-w="2"]').classList.contains('on'), g().textContent);
+      g().querySelector('[data-w="1"]').click();
+      prueba('tocar otra barra dice la suya', /6\.3 used · week of Oct 26/.test(g().textContent) && g().querySelector('[data-w="1"]').classList.contains('on'), g().textContent);
+      prueba('el promedio es el de Pour·IQ, no uno nuevo', /Pour·IQ avg 4\.4/.test(g().textContent));
+      prueba('la raya del par, con el par de arriba', /par 12/.test(g().textContent));
+      hoja().querySelector('#miLess').click();
+      prueba('y sigue al par al cambiarlo', /par 11/.test(g().textContent) && /6\.3 used/.test(g().textContent));
+      prueba('lo que dice Pour·IQ, en la cabecera de la gráfica', !!g().querySelector('#miIq') && /Pour·IQ: 14 · use it/.test(g().textContent));
+      g().querySelector('#miIq').click();
+      prueba('y usarlo pone el par y mueve la raya', hoja().querySelector('#miPar').value === '14' && /par 14/.test(g().textContent));
+      hoja().querySelector('#miPar').value = '12';
+    }
     prueba('es pantalla, con "Edit item" en la banda', !!hoja() && w.__banda === 'Edit item');
     prueba('el atrás de la banda vuelve a la lista', typeof w.__atras === 'function' && (w.__atras(), !hoja()) && w.__banda === null &&
       !!host.querySelector('.m-inv'));

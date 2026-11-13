@@ -5202,7 +5202,41 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
     background: #0b1220;
     padding: 6px 16px calc(env(safe-area-inset-bottom, 0px) + 96px);
+    display: flex; flex-direction: column;
   }
+  /* Delete y Save, abajo, justo encima de las pestañas, donde llega el
+   * pulgar (Axel, 2026-11-13: "todo está muy arriba o mal distribuido").
+   * Con poco contenido el margin-top:auto los empuja al fondo; con mucho,
+   * van detrás de todo y la pantalla rueda. */
+  .m-ed-in { flex: 1 0 auto; display: flex; flex-direction: column; }
+  .m-ed-in > .m-ed-acts { margin-top: auto; padding-top: 16px; }
+  /* Lo usado cada semana (opción C): barras que se tocan, el número de
+   * la elegida arriba y la raya del par. */
+  .m-ed-sem {
+    margin-top: 12px; padding: 10px 12px 8px; border-radius: 14px;
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09);
+  }
+  .m-ed-sem-t { display: flex; justify-content: space-between; font-size: var(--m-meta); font-weight: 800;
+    letter-spacing: .06em; text-transform: uppercase; color: #94a3b8; }
+  .m-ed-sem-t { align-items: center; }
+  .m-ed-sem-n em { font-style: normal; color: #86efac; }
+  #mScreens .m-ed-iq {
+    flex: none; padding: 4px 9px; cursor: pointer; box-shadow: none; letter-spacing: 0; text-transform: none;
+    font-size: var(--m-meta); font-weight: 800; color: #7dd3fc;
+    background: rgba(56,189,248,.12); border: 1px solid rgba(56,189,248,.35); border-radius: 8px !important;
+  }
+  .m-ed-sem-n { margin-top: 4px; font-size: var(--m-small); color: #cbd5e1; }
+  .m-ed-sem-n b { font-size: var(--m-title); color: #fff; }
+  .m-ed-sem-g { position: relative; display: flex; align-items: flex-end; gap: 6px; height: calc(var(--m-base) * 3.2); margin-top: 8px; }
+  #mScreens .m-ed-sem-g button {
+    flex: 1; height: 100%; padding: 0; display: flex; align-items: flex-end; cursor: pointer;
+    background: none; border: 0; box-shadow: none; border-radius: 0 !important;
+  }
+  .m-ed-sem-g i { display: block; width: 100%; border-radius: 4px 4px 0 0; background: rgba(56,189,248,.4); }
+  .m-ed-sem-g button.on i { background: #38bdf8; }
+  .m-ed-sem-par { position: absolute; left: 0; right: 0; height: 0; border-top: 1px dashed rgba(253,230,138,.6); pointer-events: none; }
+  .m-ed-sem-par em { position: absolute; right: 0; top: -15px; font-style: normal; font-size: var(--m-meta); color: #fde68a; }
+  .m-ed-sem-ax { display: flex; justify-content: space-between; margin-top: 3px; font-size: var(--m-meta); color: #64748b; }
   .m-ed-lab {
     margin-top: 12px; font-size: var(--m-meta); font-weight: 800;
     letter-spacing: .07em; text-transform: uppercase; color: #94a3b8;
@@ -5213,7 +5247,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 14px !important;
     font-size: var(--m-body); font-weight: 700; color: #f1f5f9;
   }
-  #mScreens .m-ed-ren { margin-top: 10px; }
+  #mScreens .m-ed-ren, #mScreens .m-ed-vend { margin-top: 10px; }
+  .m-ed-pre { flex: none; width: calc(var(--m-base) * 4.3); font-size: var(--m-meta); font-weight: 800;
+    letter-spacing: .07em; text-transform: uppercase; color: #94a3b8; }
   .m-ed-k { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .m-ed-k small { font-size: var(--m-meta); font-weight: 500; color: #94a3b8; }
   .m-ed-a { flex: none; font-size: var(--m-small); font-weight: 800; color: #7dd3fc; }
@@ -5242,7 +5278,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   .m-ed .m-botrow { margin-top: 6px; }
   body.m-shell .m-ed .m-iqline { margin: 8px 0 0; }
-  .m-ed-acts { display: flex; gap: 10px; margin-top: 16px; }
+  .m-ed-acts { display: flex; gap: 10px; }
   #mScreens .m-ed-del, #mScreens .m-ed-save {
     flex: 1; height: calc(var(--m-base) * 3.2); cursor: pointer; box-shadow: none;
     font-size: var(--m-body); font-weight: 800; border-radius: 999px !important;
