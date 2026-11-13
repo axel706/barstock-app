@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261113-140856",
+    "items": [
+      "Settings › People: roles, PIN for everyone",
+      "Turn off single permissions per person"
+    ]
+  },
+  {
     "build": "20261113-140149",
     "items": [
       "Behind-the-scenes: roles and permissions"
@@ -185,13 +192,6 @@
     "build": "20261112-125650",
     "items": [
       "The morning email now arrives on its own each day"
-    ]
-  },
-  {
-    "build": "20261112-122729",
-    "items": [
-      "Morning email can go to a list of people",
-      "Set the list in Settings › Emails"
     ]
   }
 ]

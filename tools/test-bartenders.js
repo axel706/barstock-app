@@ -53,10 +53,14 @@ function tabla(nombre) {
     eq: (c, v) => { filtros.push(r => r[c] === v); return q; },
     in: (c, v) => { filtros.push(r => v.includes(r[c])); return q; },
     delete: () => { q._borrar = true; return q; },
+    update: (o) => { q._cambio = o; return q; },
     insert: async (filas) => { db.access.push(...filas); return { error: null }; },
     then: (res) => {
-      const filas = nombre === 'locations' ? [{ id: 'crown', name: 'Crown', account_id: 'wjm-hospitality' }, { id: 'wb', name: "Will's & Bill's", account_id: 'wjm-hospitality' }] : db.access;
+      // `roles` vacía: la migración 039 sin correr; salen los de fábrica.
+      const filas = nombre === 'locations' ? [{ id: 'crown', name: 'Crown', account_id: 'wjm-hospitality' }, { id: 'wb', name: "Will's & Bill's", account_id: 'wjm-hospitality' }]
+        : nombre === 'roles' ? [] : db.access;
       if (q._borrar) { db.access = db.access.filter(r => !filtros.every(f => f(r))); return res({ error: null }); }
+      if (q._cambio) { db.access.filter(r => filtros.every(f => f(r))).forEach(r => Object.assign(r, q._cambio)); return res({ error: null }); }
       return res({ data: filas.filter(r => filtros.every(f => f(r))), error: null });
     }
   };
@@ -146,6 +150,7 @@ async function llamar(token, action, cuerpo) {
     w.__copiado = null;
     w.BarStockDevPanel = { copiar: async (t) => { w.__copiado = t; return true; } };
     w.eval(leer('src/bartender-id.js'));
+    w.eval(leer('src/permisos.js'));
     // La API de verdad del servidor, por la mentira de arriba.
     reiniciar();
     let fallar = null;
@@ -157,11 +162,13 @@ async function llamar(token, action, cuerpo) {
     const host = w.document.createElement('div'); w.document.body.appendChild(host);
     await w.BarStockMobileBartenders.montar(host, (t) => '<div class="cab">' + t + '</div>', () => {});
     const q = s => host.querySelector(s);
-    prueba('sin bartenders: lo dice, y el botón para agregar', /No bartenders yet/.test(host.textContent) && !!q('#btNuevo'));
+    prueba('sin nadie: lo dice, y el botón para agregar', /No one yet/.test(host.textContent) && !!q('#btNuevo'));
 
     q('#btNuevo').click();
-    prueba('Add bartender: nombre, PIN ya generado y la locación abierta marcada', !!q('#btNom') && /^\d{6}$/.test(q('#btPin').value) &&
+    prueba('Add person: nombre, PIN ya generado y la locación abierta marcada', !!q('#btNom') && /^\d{6}$/.test(q('#btPin').value) &&
       q('[data-nl="wb"]').classList.contains('on') && !q('[data-nl="crown"]').classList.contains('on'));
+    // Bartender de entrada: el rol que menos puede.
+    prueba('el rol, Bartender de entrada', q('[data-nr="bartender"]').classList.contains('on') && !!q('[data-nr="manager"]'));
     prueba('el atrás de la banda vuelve a la lista', typeof w.__atras === 'function');
     q('#btCrear').click(); await esperar(30);
     prueba('sin nombre: lo dice y no crea', /Enter a name/.test(host.textContent) && db.users.length === 2);
@@ -191,11 +198,29 @@ async function llamar(token, action, cuerpo) {
       fila && fila.textContent.replace(/\s+/g, ' '));
     fila.click();
     prueba('y al abrirla otra vez, las dos marcadas', q('[data-fl="crown"]').classList.contains('on') && q('[data-fl="wb"]').classList.contains('on'));
+
+    // ── La lista entera de permisos (3A) ─────────────────────────────
+    const sw = (k) => q('[data-fp="' + k + '"]');
+    prueba('3A: todos los permisos, con su interruptor', host.querySelectorAll('[data-fp]').length === 14);
+    prueba('lo que da el rol, encendido; lo que no, gris y quieto', sw('recetas').classList.contains('on') && !sw('recetas').disabled &&
+      !sw('contar').classList.contains('on') && sw('contar').disabled && /Not in Bartender/.test(sw('contar').parentNode.textContent));
+    prueba('Money y Orders: "Soon", sin poder tocarse', sw('ver_dinero').disabled && /Soon/.test(sw('ver_dinero').parentNode.textContent));
+    sw('recetas').click(); await esperar(30);
+    const billie = () => db.users.find(u => u.id === id);
+    prueba('apagar uno se guarda sólo para Billie', billie().app_metadata.off.join() === 'recetas' && billie().app_metadata.perms.indexOf('recetas') < 0 &&
+      !sw('recetas').classList.contains('on') && /Off for Billie/i.test(sw('recetas').parentNode.textContent));
+    sw('recetas').click(); await esperar(30);
+    prueba('y encenderlo se lo devuelve', billie().app_metadata.off.length === 0 && billie().app_metadata.perms.indexOf('recetas') >= 0);
+    q('[data-fr="manager"]').click(); await esperar(40);
+    prueba('cambiarla a Manager: su rol y sus permisos nuevos', billie().app_metadata.role === 'manager' &&
+      billie().app_metadata.perms.indexOf('contar') >= 0 && sw('contar').classList.contains('on') && !sw('contar').disabled);
+    q('[data-fr="bartender"]').click(); await esperar(40);
+    prueba('y de vuelta a Bartender', billie().app_metadata.role === 'bartender' && billie().app_metadata.perms.indexOf('contar') < 0);
     q('[data-fl="crown"]').click(); await esperar(30); q('[data-fl="wb"]').click(); await esperar(30);
     prueba('quitarle la última no: lo dice y no la quita', /at least one location/.test(host.textContent) &&
       db.access.some(a => a.user_id === id && a.location_id === 'wb'));
 
-    fallar = 'setBartender';
+    fallar = 'setPerson';
     q('[data-fl="crown"]').click(); await esperar(30);
     prueba('un fallo se dice tal cual y la píldora vuelve atrás', /Not saved: boom from Supabase/.test(host.textContent) && !q('[data-fl="crown"]').classList.contains('on'));
     fallar = null;
@@ -209,8 +234,20 @@ async function llamar(token, action, cuerpo) {
     q('#btQuitar').click();
     prueba('Remove pide un segundo toque', /Tap again to remove Billie/.test(host.textContent) && db.users.some(u => u.id === id));
     q('#btQuitar').click(); await esperar(40);
-    prueba('al segundo, Billie ya no existe', !db.users.some(u => u.id === id) && /No bartenders yet/.test(host.textContent) &&
+    prueba('al segundo, Billie ya no existe', !db.users.some(u => u.id === id) && /No one yet/.test(host.textContent) &&
       w.__avisos.some(t => /can no longer sign in/.test(t)));
+
+    // ── La pestaña Roles ──────────────────────────────────────────────
+    q('[data-tab="roles"]').click();
+    const rs = [...host.querySelectorAll('[data-r]')].map(b => b.dataset.r).join();
+    prueba('Roles: Owner, Manager y Bartender', rs === 'owner,manager,bartender', rs);
+    q('[data-r="owner"]').click();
+    prueba('Owner: todo encendido, nada se toca, sin Save', host.querySelectorAll('[data-rp].on').length === 14 &&
+      [...host.querySelectorAll('[data-rp]')].every(b => b.disabled) && !q('#ppRolGuardar'));
+    w.__atras(); await esperar(30);
+    q('[data-tab="roles"]').click(); q('[data-r="manager"]').click();
+    prueba('Manager: se edita (Axel es Owner) y dice a cuántos cambia', !!q('#ppRolGuardar') && !q('[data-rp="time_machine"]').disabled &&
+      !q('[data-rp="time_machine"]').classList.contains('on') && /0 people have this role/.test(host.textContent));
   }
 
   grupo('3 · People sólo para Axel');

@@ -4058,6 +4058,48 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-bt-ok big { display: block; margin-top: 6px; font-size: var(--m-figure); font-weight: 800; letter-spacing: .2em; color: #fff; }
   .m-bt-ok small { display: block; margin-top: 4px; font-size: var(--m-meta); color: #cbd5e1; }
 
+  /* ── People con roles (2026-11-13, lámina 3A) ─────────────────────
+   * Las pestañas People / Roles son las de la tarjeta de Toast
+   * (.m-sx-tabs). Cada persona lleva su rol en una píldora de color; los
+   * permisos van en tarjetas, uno por fila, con su interruptor: verde
+   * encendido; apagado sólo para esa persona con "Off for …" en ámbar;
+   * lo que el rol no da, en gris. Los botones con #mScreens delante: es
+   * lo que gana al radio de 999px de app.css. */
+  .m-pp-tabs { margin-top: 4px; }
+  .m-pp-rol {
+    flex: none; margin-left: 8px; padding: 4px 9px; border-radius: 999px;
+    font-size: var(--m-meta); font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+    color: #7dd3fc; background: rgba(125,211,252,.16);
+  }
+  .m-pp-rol-owner { color: #c4b5fd; background: rgba(167,139,250,.2); }
+  .m-pp-rol-bartender { color: #fcd34d; background: rgba(252,211,77,.18); }
+  .m-pp-lista {
+    margin-top: 8px; padding: 2px 14px; border-radius: 16px;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+  }
+  .m-pp-perm {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 11px 0; border-top: 1px solid rgba(255,255,255,.07);
+    font-size: var(--m-small); color: #e5edf6;
+  }
+  .m-pp-perm:first-child { border-top: 0; }
+  .m-pp-perm > span { min-width: 0; }
+  .m-pp-perm small { display: block; margin-top: 2px; font-size: var(--m-meta); color: #8fa3b8; }
+  .m-pp-perm em { margin-left: 6px; font-style: normal; font-size: var(--m-meta); font-weight: 800; color: #fcd34d; text-transform: uppercase; }
+  .m-pp-perm.gris > span { opacity: .45; }
+  #mScreens .m-pp-sw {
+    flex: none; position: relative; width: calc(var(--m-base) * 3); height: calc(var(--m-base) * 1.8);
+    padding: 0; cursor: pointer; box-shadow: none; border: 0;
+    background: #3a4459; border-radius: 999px !important;
+  }
+  #mScreens .m-pp-sw.on { background: #34d399; }
+  #mScreens .m-pp-sw i {
+    position: absolute; top: 2px; left: 2px; width: calc(var(--m-base) * 1.8 - 4px); height: calc(var(--m-base) * 1.8 - 4px);
+    border-radius: 50%; background: #fff; transition: transform .15s;
+  }
+  #mScreens .m-pp-sw.on i { transform: translateX(calc(var(--m-base) * 1.2)); }
+  #mScreens .m-pp-sw:disabled { cursor: default; opacity: .45; }
+
   /* ── Settings › Toast › Morning email ─────────────────────────────
    * El botón arriba, para no tener que bajar por el correo entero; y
    * debajo la vista, tal cual llegará (src/morning-report.js). El marco

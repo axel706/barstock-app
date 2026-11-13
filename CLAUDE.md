@@ -664,6 +664,42 @@ teléfono (`src/mobile-invoices.js`) dice que el stock sale del
 "confirmed packaging", y en el código no hay ningún sitio que confirme
 un empaque. Es una afordancia que miente: se arregla aparte.
 
+### Roles y permisos (2026-11-13, lámina 3A)
+
+Settings › People (`src/mobile-bartenders.js`, el nombre se quedó por el
+orden de carga): Owner, Manager, Bartender y los roles que Axel cree,
+**todos con nombre y PIN**, el mismo rol en todas sus locaciones, y por
+persona las excepciones ("aun cuando tengan el rol de manager pueda yo
+quitarle acceso a ciertas funciones"): la ficha enseña TODOS los permisos
+del rol con su interruptor, lo quitado sólo a ella en ámbar ("Off for
+…"), lo que el rol no da en gris.
+
+- **El catálogo y la cuenta viven en `src/permisos.js`** (navegador y
+  servidor, como `bartender-id.js`): 14 permisos; lo que puede una
+  persona = su rol − sus excepciones. `dePin()` dice quién es persona de
+  PIN, una sola regla para la app y el servidor.
+- **Los roles en la tabla `roles`** (migración 039): nombre y permisos.
+  Sólo lectura con la llave pública; la escribe el servidor. Owner no
+  está: todo, fijo.
+- **De cada persona, en `app_metadata`** (sólo el servidor): `role`,
+  `off` y `perms` ya calculados. Cambiar un rol se lo recalcula a quien lo
+  tiene; llega con su próxima sesión (una hora como mucho).
+- **Un usuario de correo sin rol** (Axel, y los de antes) lo puede todo,
+  como siempre, y un rol viejo que no salió de aquí (`staff`) también.
+  Pero NO administra gente: `api/admin.js` sólo deja People a Axel o a
+  quien tenga "People and roles"; los roles y el Owner, sólo un Owner.
+  Nadie se cambia a sí mismo.
+- **Qué se cumple y qué no** (hablado con Axel): un permiso apagado
+  esconde sus botones (`html.bs-sin-<permiso>`, bloque al final de
+  `mobile-app.css`), y el servidor niega lo que pasa por él (People,
+  `sync`, `send`). El candado de escrituras de `guest.js` es sólo para
+  quien no puede hacer nada más que recetas. Un candado por permiso
+  necesita RLS por usuario: Fase 0.
+- **Sin hacer, por dibujar:** "Money" y "Orders and invoices" salen como
+  "Soon" y no se pueden tocar.
+- Pruebas: `test-roles`, `test-bartenders`, `test-invitado`,
+  `test-invitado-pantallas`.
+
 ### Bartender invitado: nombre y PIN (2026-11-12)
 
 Axel: "puede seguir viendo todo, absolutamente toda la información, pero

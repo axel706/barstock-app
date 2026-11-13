@@ -101,9 +101,9 @@ function ventana(rol, nombre) {
     prueba('el invitado ve lo de Toast y lo de su teléfono', inv === 'Wine from Toast,Liquor from Toast,Recipes,Morning email,Typeface,Text size', inv);
     const w = ventana(); w.__bsUserEmail = 'axel@x.com';
     const ax = await menu(w);
-    prueba('Axel ve todo, con People › Bartenders', /Sender/.test(ax) && /Bartenders/.test(ax) && /Background/.test(ax), ax);
+    prueba('Axel ve todo, con People', /Sender/.test(ax) && /People/.test(ax) && /Background/.test(ax), ax);
     const sam = ventana('staff'); sam.__bsUserEmail = 'sam@x.com';
-    prueba('Sam (staff) lo de siempre, sin People', !/Bartenders/.test(await menu(sam)));
+    prueba('Sam (staff) lo de siempre, sin People', !/People/.test(await menu(sam)));
   }
 
   grupo('3 · mirar y editar no son el mismo toque');

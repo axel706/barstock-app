@@ -63,6 +63,17 @@
   }
   // Sin permisos.js (no debería pasar: carga antes) no se adivina: null
   // es "no se sabe", y activo() vuelve a la regla de antes de los roles.
+  // El id de quien entró: People no le deja cambiarse a sí mismo.
+  function id() {
+    const u = usuario();
+    return (u && u.id) || null;
+  }
+  // La clave del rol de una persona de PIN ('owner', 'manager', …), o
+  // null para un usuario de los de siempre.
+  function rol() {
+    const u = usuario();
+    return persona() ? u.app_metadata.role : null;
+  }
   function permisos() {
     const u = usuario();
     if (!P) return null;
@@ -181,5 +192,5 @@
   }
   marcar();
 
-  window.BarStockGuest = { activo, persona, permisos, puede, nombre, permitido, marcar, MENSAJE };
+  window.BarStockGuest = { activo, persona, id, rol, permisos, puede, nombre, permitido, marcar, MENSAJE };
 })();

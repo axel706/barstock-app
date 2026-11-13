@@ -56,7 +56,7 @@
     // como el Admin del escritorio. Esconderlo es comodidad; quien decide
     // es /api/admin.
     { t: 'People', admin: true, items: [
-      { id: 'bartenders', ico: 'ti-users', n: 'Bartenders', d: 'Sign in with name and PIN' }
+      { id: 'bartenders', ico: 'ti-users', n: 'People', d: 'Who signs in, and what they can do' }
     ]},
     { t: 'Appearance', items: [
       { id: 'look', ico: 'ti-typography', n: 'Typeface',  d: 'The app font' },
