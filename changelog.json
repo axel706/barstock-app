@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261113-104120",
+    "items": [
+      "Sold card no longer blinks out after Sync"
+    ]
+  },
+  {
     "build": "20261113-095747",
     "items": [
       "Home: Sync button on Sold to load today's sales",
@@ -188,12 +194,6 @@
     "items": [
       "Sent and Invoices details: name in the header",
       "Resend, Reopen and invoice totals stay on top"
-    ]
-  },
-  {
-    "build": "20261111-223533",
-    "items": [
-      "Inventory and Orders tabs no longer shift when you scroll"
     ]
   }
 ]

@@ -1797,11 +1797,16 @@
     pintarCifras(host);
     try {
       await TS.sincronizarHoy();
+      // Lo vendido ya se olvidó en toast-sales (escucha el aviso): se
+      // relee AQUÍ, y hasta tenerlo la tarjeta sigue en "Syncing…" con
+      // lo de antes. Antes se vaciaba _ventas y se releía aparte: entre
+      // medias el Home se pintaba sin datos y la tarjeta desaparecía
+      // unos segundos (Axel, 2026-11-13).
+      try { _ventas = await TS.ahora(); } catch (e) { console.warn('[home] Toast Sales tras el sync', e); }
       _syncHoy = null;
-      // Lo vendido ya se olvidó (toast-sales escucha el aviso): se pide
-      // otra vez y, al llegar, se repintan las dos tarjetas.
-      _ventas = null;
-      cargarVentas();
+      const h0 = document.querySelector('.m-screen[data-screen="home"]') || host;
+      pintarVentas(h0);
+      pintarSecciones(h0);
     } catch (e) {
       const msg = String((e && e.message) || e);
       _syncHoy = { error: msg };

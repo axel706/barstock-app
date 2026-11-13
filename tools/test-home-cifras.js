@@ -84,7 +84,7 @@ async function entorno(o) {
     return { ok: true };
   } };
   w.BarStockToastUsage = { diaDeNegocio: () => HOY,
-    ventasDesde: async () => (o.sinToast ? { dias: [], ventas: [], productos: [] } : { dias, ventas, productos: [] }) };
+    ventasDesde: async () => (w.__lento && await esperar(w.__lento), o.sinToast ? { dias: [], ventas: [], productos: [] } : { dias, ventas, productos: [] }) };
   new Function(leer('src/run-out.js'))();
   new Function(leer('src/toast-sales.js'))();
   w.__abrir = null;
@@ -170,6 +170,26 @@ grupo('el Sync de Sold');
     st.nextElementSibling === c.querySelector('.m-cf-v'));
   prueba('y abajo, "so far today"', txt(c.querySelector('.m-cf-d')) === 'so far today');
   prueba('el botón vuelve a Sync', /^Sync$/.test(txt(c.querySelector('.m-cf-b'))) && !c.querySelector('.m-cf-b').disabled);
+  await esperar(300);
+}
+{
+  // Axel, 2026-11-13: "al pulsar sync y este termina, la tarjeta
+  // desaparece por unos segundos y luego reaparece". Lo vendido se
+  // vaciaba al terminar el sync y la tarjeta se pintaba sin datos
+  // mientras se releía. Ahora sigue en "Syncing…" hasta tener lo nuevo.
+  const { w, host } = await entorno({ syncTrae: 1200 });
+  w.__lento = 200;
+  const vista = [];
+  const mirar = () => { const c = cifra(host, 'Sold'); vista.push(c ? txt(c.querySelector('.m-cf-b')) + '/' + txt(c.querySelector('.m-cf-k')) : 'NADA');
+    vista.push(host.querySelector('#mhVentas .m-ts') ? 'grande' : 'SIN GRANDE'); };
+  cifra(host, 'Sold').querySelector('.m-cf-b').click();
+  for (let k = 0; k < 12; k++) { await esperar(20); mirar(); }
+  await esperar(150);
+  prueba('mientras relee, la tarjeta no desaparece', !vista.includes('NADA'), vista.join(','));
+  prueba('ni la grande de Toast', !vista.includes('SIN GRANDE'));
+  prueba('y sigue en Syncing… hasta tener lo nuevo', !vista.includes('Sync/Sold yesterday'), vista.join(','));
+  prueba('al final, "Sold today"', txt(cifra(host, 'Sold').querySelector('.m-cf-k')) === 'Sold today');
+  await esperar(300);
 }
 {
   // Sin ventas todavía: sigue ayer, y lo dice.
