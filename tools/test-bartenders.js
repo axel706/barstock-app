@@ -106,7 +106,7 @@ async function llamar(token, action, cuerpo) {
       db.access.some(a => a.user_id === b.id && a.location_id === 'wb' && a.role === 'bartender'));
 
     const r2 = await llamar('axel', 'createBartender', { name: '  billie ', pin: '111111', locationIds: ['crown'] });
-    prueba('otro "billie" no: lo dice', !r2.ok && /already a bartender called billie/i.test(r2.error) && db.users.length === 3, r2.error);
+    prueba('otro "billie" no: lo dice', !r2.ok && /already someone called billie/i.test(r2.error) && db.users.length === 3, r2.error);
     const r3 = await llamar('axel', 'createBartender', { name: 'Marco', pin: '12345', locationIds: ['crown'] });
     const r4 = await llamar('axel', 'createBartender', { name: 'Marco', pin: '123456', locationIds: [] });
     prueba('PIN de 5 dígitos o sin locación: no crea', !r3.ok && /6 digits/.test(r3.error) && !r4.ok && /location/.test(r4.error) && db.users.length === 3);
