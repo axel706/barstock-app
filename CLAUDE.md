@@ -183,7 +183,10 @@ escáner (Axel, 2026-11-13, opción A): comparte LA MISMA regla que
 `#mBand .m-ico`, no una copia. Esa regla no puede llevar `position`: con
 su id le ganaba al `absolute` de la copia y al `fixed` de Buscar.
 Acoplada o fija va sin desenfoque propio (detrás ya está la escalera).
-Las demás barras de búsqueda, no.
+Las demás barras de búsqueda, no. Los botones de las tres cifras del
+Home y "All products" de Toast, también (opción B): su texto va suelto,
+así que el reflejo va en `z-index: -1` con `isolation`, y **Review (y
+Retry) sigue amarillo sólido**, el único que avisa.
 
 El radio de las tarjetas del carrusel (`.m-hero`) es **20px**, y es la
 referencia cuando pida "como las tarjetas".

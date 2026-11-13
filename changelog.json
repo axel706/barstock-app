@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261113-123859",
+    "items": [
+      "Home card buttons in the same glass as the header"
+    ]
+  },
+  {
     "build": "20261113-122809",
     "items": [
       "Do we have search bar in the same glass as the buttons"
@@ -187,12 +193,6 @@
     "build": "20261112-082712",
     "items": [
       "The tab bar stays at the bottom again"
-    ]
-  },
-  {
-    "build": "20261111-233342",
-    "items": [
-      "Home's three figures are centered"
     ]
   }
 ]

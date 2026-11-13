@@ -631,7 +631,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * no copiado (Axel, 2026-11-13, opción A). Lo que cambia para ella va
    * justo debajo, en "La barra de cristal". */
   body.m-shell #mBand .m-ico:not(.m-ico-alert),
-  body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio {
+  body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio,
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas) {
     -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
             backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
     background: rgba(255,255,255,.08);
@@ -645,6 +646,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   body.m-shell #mBand .m-ico:not(.m-ico-alert)::before,
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio::before,
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas)::before,
   body.m-shell .m-fab::before {
     content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
     background: radial-gradient(120% 70% at 30% 0%, rgba(255,255,255,.34), rgba(255,255,255,0) 55%);
@@ -666,6 +668,20 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * botones y la barra del Home en reposo, que no tienen otra. */
   body.m-shell #mBand .m-ico:not(.m-ico-alert),
   body.m-shell #mScreens .m-searchbar.m-vidrio:not(.m-dock-fija) { position: relative; }
+
+  /* ── Los botones de las mini tarjetas y "All products" ─────────────
+   * Axel, 2026-11-13, opción B: el mismo cristal (en la regla de
+   * arriba). Su texto va suelto ("Details", "Sync"), no en un elemento
+   * al que subirle el z-index como al icono, y el reflejo lo lavaba.
+   * Con `isolation` cada botón es su propio contexto, y el reflejo en
+   * z-index −1 queda encima de su fondo y debajo de su texto.
+   *
+   * Review (y Retry, cuando falla el Sync) sigue amarillo SÓLIDO: es el
+   * único que avisa de algo, y que sea el único sólido es lo que hace
+   * que se vea primero. Con el id delante, para ganarle al cristal. */
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas) { position: relative; isolation: isolate; }
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas)::before { z-index: -1; }
+  body.m-shell #mScreens .m-cf-am .m-cf-b { background: #fcd34d; border-color: #fcd34d; color: #3b2a04; }
   body.m-shell #mDock .m-searchbar.m-vidrio,
   body.m-shell #mScreens .m-searchbar.m-vidrio.m-dock-fija {
     -webkit-backdrop-filter: none; backdrop-filter: none;
@@ -1682,7 +1698,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     font-size: var(--m-meta); font-weight: 800; color: #fff;
     background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.2);
   }
-  body.m-shell .m-cf-am .m-cf-b { background: #fcd34d; border-color: #fcd34d; color: #3b2a04; }
+  /* El amarillo de .m-cf-am vive con el cristal, en "Los botones de las
+   * mini tarjetas": aquí perdía contra él. */
   .m-cf-b .ti { font-size: var(--m-meta); }
 
   /* La hoja de "Spent this cycle": lo que decía la tarjeta de MarginEdge. */

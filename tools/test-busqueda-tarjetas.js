@@ -136,7 +136,7 @@ grupo('la barra de "Do we have", de cristal');
   const css = leer('styles/mobile-app.css').replace(/\/\*[\s\S]*?\*\//g, '');
   // La MISMA regla que los botones, no una copia: si se toca el cristal,
   // cambian los dos.
-  const m = /body\.m-shell #mBand \.m-ico:not\(\.m-ico-alert\),\s*body\.m-shell :is\(#mScreens, #mDock\) \.m-searchbar\.m-vidrio \{([^}]*)\}/.exec(css);
+  const m = /body\.m-shell #mBand \.m-ico:not\(\.m-ico-alert\),\s*body\.m-shell :is\(#mScreens, #mDock\) \.m-searchbar\.m-vidrio(?:,[^{]*)?\s*\{([^}]*)\}/.exec(css);
   prueba('comparte la regla de cristal de los botones', !!m && /backdrop-filter: blur\(10px\)/.test(m[1]));
   // Con su id, un `position` ahí le ganaba al absolute de la copia
   // acoplada y al fixed de Buscar.
