@@ -177,6 +177,14 @@ Si necesitas algo más grande que `--m-figure`, usa `calc(var(--m-figure) *
 convenciones en la misma columna se encuentran en algún sitio y ahí el hueco
 desaparece o se dobla. Ya pasó dos veces en dos días.
 
+**La barra de "Do we have"** (Home, su copia acoplada y la de Buscar,
+marcadas `.m-vidrio`) lleva el cristal de Time Machine, la campana y el
+escáner (Axel, 2026-11-13, opción A): comparte LA MISMA regla que
+`#mBand .m-ico`, no una copia. Esa regla no puede llevar `position`: con
+su id le ganaba al `absolute` de la copia y al `fixed` de Buscar.
+Acoplada o fija va sin desenfoque propio (detrás ya está la escalera).
+Las demás barras de búsqueda, no.
+
 El radio de las tarjetas del carrusel (`.m-hero`) es **20px**, y es la
 referencia cuando pida "como las tarjetas".
 

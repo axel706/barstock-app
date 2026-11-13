@@ -126,6 +126,26 @@ grupo('la tarjeta no va dentro de otra');
   prueba('sin relleno', /padding:\s*0/.test(r), r);
 }
 
+grupo('la barra de "Do we have", de cristal');
+{
+  // Axel, 2026-11-13, opción A: el mismo cristal de Time Machine, la
+  // campana y el escáner, sólo en "Do we have" (Home) y en Buscar.
+  const home = leer('src/mobile-home.js'), bus = leer('src/mobile-search.js');
+  prueba('la del Home y la de Buscar llevan .m-vidrio',
+    /class="m-searchbar m-vidrio" id="mhSearch"/.test(home) && /class="m-searchbar on m-vidrio"/.test(bus));
+  const css = leer('styles/mobile-app.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  // La MISMA regla que los botones, no una copia: si se toca el cristal,
+  // cambian los dos.
+  const m = /body\.m-shell #mBand \.m-ico:not\(\.m-ico-alert\),\s*body\.m-shell :is\(#mScreens, #mDock\) \.m-searchbar\.m-vidrio \{([^}]*)\}/.exec(css);
+  prueba('comparte la regla de cristal de los botones', !!m && /backdrop-filter: blur\(10px\)/.test(m[1]));
+  // Con su id, un `position` ahí le ganaba al absolute de la copia
+  // acoplada y al fixed de Buscar.
+  prueba('y esa regla no pone position', !!m && !/position/.test(m[1]), m && m[1]);
+  prueba('acoplada o fija, sin desenfoque propio (ya está la escalera)',
+    /#mDock \.m-searchbar\.m-vidrio,\s*body\.m-shell #mScreens \.m-searchbar\.m-vidrio\.m-dock-fija \{\s*-webkit-backdrop-filter: none; backdrop-filter: none;/.test(css));
+  prueba('ninguna otra barra de búsqueda la lleva', (leer('src/mobile-sales.js') + leer('src/mobile-inventory.js')).indexOf('m-vidrio') < 0);
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
 })();

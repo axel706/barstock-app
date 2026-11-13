@@ -1557,7 +1557,7 @@
           ${pildora()}
         </div>
 
-        <button type="button" class="m-searchbar" id="mhSearch">
+        <button type="button" class="m-searchbar m-vidrio" id="mhSearch">
           <i class="ti ti-search" aria-hidden="true"></i>
           <span>Do we have…</span>
         </button>

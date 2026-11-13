@@ -188,7 +188,9 @@ console.log('\nlos botones de cristal');
 {
   const limpio = css.replace(/\/\*[\s\S]*?\*\//g, '');
   const bloque = (re) => (re.exec(limpio) || [])[1] || '';
-  const banda = bloque(/body\.m-shell #mBand \.m-ico:not\(\.m-ico-alert\)\s*\{([^}]*)\}/);
+  // La regla la comparte la barra de "Do we have" (.m-vidrio, 2026-11-13):
+  // el selector de la banda puede ir seguido de otros en la lista.
+  const banda = bloque(/body\.m-shell #mBand \.m-ico:not\(\.m-ico-alert\)(?:,[^{]*)?\s*\{([^}]*)\}/);
   const fab = bloque(/body\.m-shell \.m-fab\s*\{([^}]*)\}/);
   const off = bloque(/body\.m-shell \.m-fab\.off\s*\{([^}]*)\}/);
   prueba('los de la banda desenfocan lo de detras', /backdrop-filter:\s*blur\(/.test(banda), banda.trim().slice(0, 80));

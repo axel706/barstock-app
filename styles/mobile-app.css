@@ -626,8 +626,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * y sólo funcionaba porque la suya, escrita después, le devolvía el
    * `absolute`. Dos reglas para el mismo selector es como empiezan los
    * fallos que nadie encuentra. */
-  body.m-shell #mBand .m-ico:not(.m-ico-alert) {
-    position: relative;
+  /* La barra de "Do we have" (Home, su copia acoplada y la de Buscar,
+   * marcadas .m-vidrio) lleva el MISMO cristal, en esta misma regla y
+   * no copiado (Axel, 2026-11-13, opción A). Lo que cambia para ella va
+   * justo debajo, en "La barra de cristal". */
+  body.m-shell #mBand .m-ico:not(.m-ico-alert),
+  body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio {
     -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
             backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
     background: rgba(255,255,255,.08);
@@ -640,11 +644,33 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
       0 6px 18px rgba(0,0,0,.28);
   }
   body.m-shell #mBand .m-ico:not(.m-ico-alert)::before,
+  body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio::before,
   body.m-shell .m-fab::before {
     content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
     background: radial-gradient(120% 70% at 30% 0%, rgba(255,255,255,.34), rgba(255,255,255,0) 55%);
     mix-blend-mode: screen;
   }
+  /* ── La barra de cristal ─────────────────────────────────────────
+   * Lo que la barra no toma de los botones:
+   *   · el color del texto: el "Do we have…" del Home es texto del
+   *     botón, y en blanco pesaba como si ya se hubiera escrito algo;
+   *   · su propio desenfoque cuando va acoplada (la copia del Home) o
+   *     fija (la de Buscar): ahí detrás ya está la escalera de
+   *     desenfoque, y un segundo desenfoque junto a ella es lo que en el
+   *     iPhone se tragaba la copia (ver .m-dock-barra). En reposo, en
+   *     el Home, sí lo lleva: detrás está la página, nítida. */
+  body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio { color: #a9bacd; }
+  /* `relative` para el reflejo (::before), pero NO en la regla de arriba:
+   * con su id le ganaba al `absolute` de la copia acoplada y al `fixed`
+   * de la barra de Buscar, y las dos se salían de su sitio. Sólo los
+   * botones y la barra del Home en reposo, que no tienen otra. */
+  body.m-shell #mBand .m-ico:not(.m-ico-alert),
+  body.m-shell #mScreens .m-searchbar.m-vidrio:not(.m-dock-fija) { position: relative; }
+  body.m-shell #mDock .m-searchbar.m-vidrio,
+  body.m-shell #mScreens .m-searchbar.m-vidrio.m-dock-fija {
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+  body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio > * { position: relative; z-index: 1; }
   /* El icono por encima del reflejo, o el brillo lo lava. */
   body.m-shell #mBand .m-ico > .ti,
   body.m-shell .m-fab > .ti { position: relative; z-index: 1; }

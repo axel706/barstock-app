@@ -624,7 +624,7 @@
     host.innerHTML = `
       <!-- Sin encabezado propio: el logo lo pinta el armazón, fijo y en
            todas las pantallas. Dos logos era uno de más. -->
-      <div class="m-searchbar on">
+      <div class="m-searchbar on m-vidrio">
         <i class="ti ti-search" aria-hidden="true"></i>
         <input id="msInput" type="search" inputmode="search" autocomplete="off"
                placeholder="Do we have…" aria-label="Search products">
