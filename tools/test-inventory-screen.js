@@ -142,9 +142,12 @@ console.log('\nel on hand no se puede tocar desde aqui');
   // Ni campo, ni botones: la existencia sale del escaner y de recibir
   // mercancia, de ningun otro sitio.
   ok('no hay campo de on hand', !hoja.querySelector('input[id*="nHand" i]'));
-  eq('solo se pueden editar tres cosas',
+  // Nombre y código desde el 2026-11-13 (Axel: "no puedo creer que no
+  // tengamos la opción de editar un artículo"; renombrar va por la
+  // función de la base, migración 038). El on hand sigue sin campo.
+  eq('se editan nombre, código, par y precio, y nada más',
      Array.from(hoja.querySelectorAll('input')).map(i => i.id).sort(),
-     ['miPar', 'miVal']);
+     ['miCode', 'miName', 'miPar', 'miVal']);
 
   hoja.querySelector('#miSave').click();
 }
@@ -216,7 +219,7 @@ console.log('\nse guarda contra el indice del maestro');
     ok('con la silueta dibujada', !!fila && !!fila.querySelector('svg path'));
     const titulos = Array.from(hoja.querySelectorAll('.m-sheet-t')).map(t => t.textContent.trim());
     eq('debajo de Unit price', titulos.slice(-2), ['Unit price', 'Bottle']);
-    eq('y no añade campos de texto', Array.from(hoja.querySelectorAll('input')).map(i => i.id).sort(), ['miPar', 'miVal']);
+    eq('y no añade campos de texto', Array.from(hoja.querySelectorAll('input')).map(i => i.id).sort(), ['miCode', 'miName', 'miPar', 'miVal']);
 
     if (fila) fila.click();
     const sel = w.__selector;

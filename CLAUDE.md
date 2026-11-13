@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 141 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 142 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -287,6 +287,19 @@ los conteos o `locations`. Axel lo pidió así antes de la prueba y error:
 `state.master`. Cinco sitios la llaman. Lleva guardas de merma; no las
 quites.
 
+**El nombre es la llave de un producto en ~20 tablas** (lista de
+`information_schema`, 2026-11-13): inventario, historial de semanas,
+correcciones, zonas, actividad, MarginEdge, Toast, recetas, pedidos,
+alias, códigos de barras, siluetas, imágenes… Renombrar NO es cambiar un
+campo: lo hace `rename_inventory_item` (migración 038) en una sola
+transacción, por locación, y lo compartido en la cuenta (códigos de
+barras, siluetas) sólo si ninguna otra locación usa el nombre viejo.
+Probada contra un Postgres 16 de verdad. La usa la hoja de editar del
+teléfono (`src/item-edit.js`, Axel 2026-11-13, opción A: nombre, código
+y Delete con respaldo de Time Machine antes). **El renombrar del modal
+del escritorio todavía no la usa**: sólo cambia `inventory_items` y deja
+huérfano lo demás.
+
 **El par no salta de golpe:** ±2 por paso (`BarStockProductWeeks.paso`). Un
 óptimo de 9 sobre un par de 1 puede venir de un mes raro.
 
@@ -330,7 +343,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 141 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 142 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

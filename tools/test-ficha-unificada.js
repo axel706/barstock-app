@@ -202,7 +202,9 @@ grupo('Inventory sigue siendo una hoja, con todo lo que se podía tocar');
   // mercancía. Si una pantalla de edición lo toca, deja de poder
   // rastrearse de dónde salió cada número.
   const ids = Array.from(hoja.querySelectorAll('input')).map(i => i.id).sort();
-  prueba('y el on hand NO se puede editar', ids.join('|') === 'miPar|miVal', ids.join('|'));
+  // Nombre y código entraron el 2026-11-13 (renombrar va por la 038);
+  // la existencia sigue sin campo.
+  prueba('y el on hand NO se puede editar', ids.join('|') === 'miCode|miName|miPar|miVal', ids.join('|'));
 
   hoja.querySelector('#miPar').value = '21';
   hoja.querySelector('#miSave').click();

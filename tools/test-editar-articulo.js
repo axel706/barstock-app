@@ -1,0 +1,187 @@
+#!/usr/bin/env node
+/*
+ * ── Editar un artículo: nombre, código y borrar ──────────────────────
+ *
+ * Axel, 2026-11-13: "no puedo creer que a estas alturas no tengamos la
+ * opción de editar un artículo". Opción A: en la hoja de siempre.
+ *
+ *   1. La 038: renombra en TODAS las tablas que guardan el nombre (la
+ *      lista de information_schema del 2026-11-13), y no toca el nombre
+ *      de MarginEdge ni el respaldo viejo. (Probada además contra un
+ *      Postgres 16 de verdad: todo o nada, nombre repetido, lo
+ *      compartido entre locaciones.)
+ *   2. renombrar(): llama a la función con el nombre normalizado por la
+ *      MISMA normalizeName de la app, pone al día la copia del teléfono
+ *      y los alias, y un error se dice tal cual.
+ *   3. borrar(): sin respaldo no borra.
+ *   4. La hoja: nombre y código arriba; renombrar va antes que el resto
+ *      y si falla no se guarda nada; Delete pide dos toques.
+ *   5. El escritorio usa la misma función de alias; el orden de carga.
+ *
+ *   node tools/test-editar-articulo.js
+ */
+const fs = require('fs');
+const path = require('path');
+const { JSDOM } = require('jsdom');
+const RAIZ = path.join(__dirname, '..');
+const leer = f => fs.readFileSync(path.join(RAIZ, f), 'utf8');
+
+let ok = 0, mal = 0;
+function prueba(n, c, d) {
+  if (c) { ok++; console.log('  ok   ' + n); }
+  else { mal++; console.log('  MAL  ' + n + (d ? '   → ' + d : '')); }
+}
+const grupo = t => console.log('\n' + t);
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+function entorno(o) {
+  o = o || {};
+  const w = new JSDOM('<!doctype html><body></body>', { url: 'https://app.barstockpro.com/', runScripts: 'outside-only' }).window;
+  w.BARSTOCK_CONFIG = { SUPABASE_URL: 'https://sb.test', SUPABASE_KEY: 'k' };
+  w.BarStockInventoryCloud = {
+    fetchLocationId: async () => 'loc-1',
+    deleteInventoryItem: async (x) => { w.__borrado = x; return true; }
+  };
+  w.state = { master: [{ item: 'Triage House Vodka', itemNorm: 'TRIAGE HOUSE VODKA', code: 'T1', vendor: 'UNKNOWN', suggested: 12, onHand: 1, value: 5.5 },
+    { item: 'Kamora', itemNorm: 'KAMORA', code: 'K1', vendor: 'LOOP', suggested: 2, onHand: 1, value: 20 }] };
+  w.normalizeName = (s) => String(s || '').trim().toUpperCase().replace(/\s+/g, ' ');
+  w.__alias = { 'TRIAGE VODKA': 'TRIAGE HOUSE VODKA' };
+  w.bsRenombrarAliases = (v, n) => { Object.keys(w.__alias).forEach(k => { if (w.__alias[k] === v) w.__alias[k] = n; }); };
+  w.saveState = () => { w.__guardado = (w.__guardado || 0) + 1; };
+  w.__pet = [];
+  w.fetch = async (url, op) => {
+    w.__pet.push({ url: String(url), cuerpo: op && op.body ? JSON.parse(op.body) : null });
+    if (o.respuesta) return o.respuesta();
+    return { ok: true, status: 200, json: async () => ({ renamed: true, compartidas: false, inventory_items: 1 }), text: async () => '{}' };
+  };
+  w.BarStockBackup = { snapshot: async (r) => { w.__respaldo = r; return o.sinRespaldo ? { ok: false, error: 'backup down' } : { ok: true, itemCount: 2 }; } };
+  w.eval(leer('src/item-edit.js'));
+  return w;
+}
+
+(async () => {
+  grupo('1 · la migración 038');
+  {
+    const sql = fs.existsSync(path.join(RAIZ, 'database/migrations/038_rename_inventory_item.sql')) ? leer('database/migrations/038_rename_inventory_item.sql') : '';
+    const cuerpo = sql.replace(/^\s*--.*$/gm, '');
+    prueba('crea rename_inventory_item', /create or replace function public\.rename_inventory_item\(/.test(cuerpo));
+    const tablas = ['inventory_items', 'inventory_snapshots', 'count_corrections', 'count_zones', 'item_activity', 'marginedge_links',
+      'marginedge_price_log', 'no_match_items', 'quick_order_drafts', 'sales_aliases', 'sales_overrides', 'theoretical_exclusions',
+      'theoretical_sales', 'toast_item_links', 'toast_recipe_lines', 'vendor_order_items', 'inventory_aliases', 'bottle_images',
+      'item_barcodes', 'item_shapes'];
+    const faltan = tablas.filter(t => !new RegExp("'" + t + "'|public\\." + t + '\\b').test(cuerpo));
+    prueba('las 20 tablas que guardan el nombre', !faltan.length, faltan.join(' '));
+    prueba('ni el nombre de MarginEdge ni el respaldo viejo', !/marginedge_not_mine|inventory_items_backup/.test(cuerpo));
+    prueba('por locación; recetas y pedidos por su padre', /location_id::text = \$2/.test(cuerpo) &&
+      /recipe_id in \(select id from public\.toast_recipes where location_id::text = p_location\)/.test(cuerpo) &&
+      /vendor_order_id in \(select id from public\.vendor_orders where location_id::text = p_location\)/.test(cuerpo));
+    prueba('lo compartido, sólo si nadie más usa el nombre viejo', /v_shared := exists/.test(cuerpo) && /if not v_shared then/.test(cuerpo));
+    prueba('un nombre que ya existe en la locación se niega', /There is already an item called/.test(cuerpo));
+  }
+
+  grupo('2 · renombrar');
+  {
+    const w = entorno();
+    const r = w.state.master[0];
+    const res = await w.BarStockItemEdit.renombrar(r, { nombre: '  Triage  House Vodka 1L ', codigo: 'T1' });
+    const p = w.__pet[0];
+    prueba('llama a la función de la base', !!p && /\/rest\/v1\/rpc\/rename_inventory_item$/.test(p.url));
+    prueba('con la locación, el nombre viejo y el nuevo (limpio)', p.cuerpo.p_location === 'loc-1' && p.cuerpo.p_old === 'Triage House Vodka' && p.cuerpo.p_new === 'Triage House Vodka 1L');
+    prueba('normalizados con la normalizeName de la app', p.cuerpo.p_old_norm === 'TRIAGE HOUSE VODKA' && p.cuerpo.p_new_norm === 'TRIAGE HOUSE VODKA 1L');
+    prueba('el código igual va como null (no se toca)', p.cuerpo.p_new_code === null);
+    prueba('la copia del teléfono y sus alias, al día', r.item === 'Triage House Vodka 1L' && r.itemNorm === 'TRIAGE HOUSE VODKA 1L' &&
+      w.__alias['TRIAGE VODKA'] === 'TRIAGE HOUSE VODKA 1L' && w.__guardado >= 1 && res.renamed === true);
+    w.__pet.length = 0;
+    prueba('sin cambios no llama', (await w.BarStockItemEdit.renombrar(r, { nombre: 'Triage House Vodka 1L', codigo: 'T1' })) === null && !w.__pet.length);
+    await w.BarStockItemEdit.renombrar(r, { nombre: 'Triage House Vodka 1L', codigo: 'T9' });
+    prueba('sólo el código: mismo nombre y el código nuevo', w.__pet[0].cuerpo.p_new === w.__pet[0].cuerpo.p_old && w.__pet[0].cuerpo.p_new_code === 'T9' && r.code === 'T9');
+    let e0 = '';
+    try { await w.BarStockItemEdit.renombrar(r, { nombre: '   ' }); } catch (e) { e0 = e.message; }
+    prueba('un nombre vacío no se manda', /can.t be empty/.test(e0));
+
+    const w2 = entorno({ respuesta: () => ({ ok: false, status: 400, text: async () => '{"code":"P0001","message":"There is already an item called \\"Kamora\\" at Crown."}' }) });
+    let e1 = '';
+    try { await w2.BarStockItemEdit.renombrar(w2.state.master[0], { nombre: 'Kamora' }); } catch (e) { e1 = e.message; }
+    prueba('el error de la base, tal cual', e1 === 'There is already an item called "Kamora" at Crown.', e1);
+    prueba('y la copia del teléfono no cambia', w2.state.master[0].item === 'Triage House Vodka');
+    const w3 = entorno({ respuesta: () => ({ ok: false, status: 404, text: async () => '{"code":"PGRST202","message":"Could not find the function public.rename_inventory_item"}' }) });
+    let e2 = '';
+    try { await w3.BarStockItemEdit.renombrar(w3.state.master[0], { nombre: 'X' }); } catch (e) { e2 = e.message; }
+    prueba('sin la función: dice que falta la 038, sólo entonces', /migration 038/.test(e2) && !/038/.test(e1));
+  }
+
+  grupo('3 · borrar');
+  {
+    const w = entorno({ sinRespaldo: true });
+    let e = '';
+    try { await w.BarStockItemEdit.borrar(w.state.master[0]); } catch (x) { e = x.message; }
+    prueba('sin respaldo, no borra', /nothing was deleted/.test(e) && !w.__borrado && w.state.master.length === 2);
+    const w2 = entorno();
+    await w2.BarStockItemEdit.borrar(w2.state.master[0]);
+    prueba('con respaldo: primero el respaldo, luego borra', /Before deleting Triage House Vodka/.test(w2.__respaldo) &&
+      w2.__borrado && w2.__borrado.item === 'Triage House Vodka' && w2.__borrado.code === 'T1');
+    prueba('y sale de la lista del teléfono', w2.state.master.length === 1 && w2.state.master[0].item === 'Kamora');
+  }
+
+  grupo('4 · la hoja');
+  {
+    const dom = new JSDOM('<!doctype html><body></body>', { url: 'https://x.test/', runScripts: 'outside-only' });
+    const w = dom.window;
+    w.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} });
+    w.state = { master: [{ item: 'Triage House Vodka', itemNorm: 'TRIAGE HOUSE VODKA', code: '', vendor: 'UNKNOWN', onHand: 1, suggested: 12, value: 5.5, toOrder: 11 }] };
+    w.normalizeName = (s) => String(s || '').trim().toUpperCase();
+    w.getVendorsForFilter = () => ['ALL', 'UNKNOWN'];
+    w.getVendorsWithUnknown = () => ['UNKNOWN'];
+    w.parAdjustments = new Map();
+    w.__orden = [];
+    w.bsSaveItemFields = async (idx, campos) => { w.__orden.push('campos'); Object.assign(w.state.master[idx], campos); return true; };
+    let fallar = false;
+    w.BarStockItemEdit = {
+      renombrar: async (r, c) => { w.__orden.push('renombrar:' + c.nombre + '|' + c.codigo); if (fallar) throw new Error('There is already an item called "Kamora" at Crown.'); r.item = c.nombre.trim(); r.code = c.codigo.trim(); return { renamed: true }; },
+      borrar: async (r) => { w.__orden.push('borrar'); w.state.master.splice(w.state.master.indexOf(r), 1); return true; }
+    };
+    w.BarStockToast = { show: (t) => w.__orden.push('aviso:' + t) };
+    let def = null;
+    w.BarStockMobile = { register(d) { def = d; }, refrescarBadges() {} };
+    w.eval(leer('src/mobile-inventory.js'));
+    w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
+    const host = w.document.createElement('div'); host.className = 'm-screen on'; host.dataset.screen = 'inventory'; w.document.body.appendChild(host);
+    def.mount(host);
+    host.querySelector('.m-inv').click();
+    const hoja = () => w.document.querySelector('#mSheet');
+    prueba('nombre y código arriba, con lo de ahora', hoja().querySelector('#miName').value === 'Triage House Vodka' && hoja().querySelector('#miCode').value === '' &&
+      hoja().innerHTML.indexOf('miName') < hoja().innerHTML.indexOf('miVend'));
+    prueba('y "Delete item" al pie', !!hoja().querySelector('#miDel') && hoja().innerHTML.indexOf('miDel') > hoja().innerHTML.indexOf('miSave'));
+
+    fallar = true;
+    hoja().querySelector('#miName').value = 'Kamora';
+    hoja().querySelector('#miSave').click(); await esperar(20);
+    prueba('si la base no renombra: lo dice y no guarda lo demás', /Not saved: There is already an item called/.test(hoja().querySelector('#miErr').textContent) &&
+      !w.__orden.includes('campos'));
+    fallar = false; w.__orden.length = 0;
+    hoja().querySelector('#miName').value = 'Triage House Vodka 1L';
+    hoja().querySelector('#miCode').value = 'T1';
+    hoja().querySelector('#miSave').click(); await esperar(20);
+    prueba('renombrar va primero, y después lo demás', w.__orden[0] === 'renombrar:Triage House Vodka 1L|T1' && w.__orden[1] === 'campos', w.__orden.join(' / '));
+    prueba('y avisa que recarga para que todo lea el nombre nuevo', w.__orden.some(x => /Renamed everywhere/.test(x)));
+
+    host.querySelector('.m-inv').click();
+    w.__orden.length = 0;
+    hoja().querySelector('#miDel').click();
+    prueba('Delete pide un segundo toque', /Tap again to delete/.test(hoja().querySelector('#miDel').textContent) && !w.__orden.includes('borrar'));
+    hoja().querySelector('#miDel').click(); await esperar(20);
+    prueba('al segundo borra, cierra y lo dice', w.__orden.includes('borrar') && !w.document.querySelector('#mSheet') &&
+      w.__orden.some(x => /backup is in Time Machine/.test(x)));
+  }
+
+  grupo('5 · el escritorio y el orden de carga');
+  {
+    const idx = leer('index.html');
+    prueba('el modal del escritorio usa la misma función de alias', /bsRenombrarAliases\(oldNorm, itemNorm\)/.test(idx) && /function bsRenombrarAliases\(/.test(idx));
+    const p = f => idx.indexOf('src="src/' + f);
+    prueba('item-edit.js después del respaldo y antes de la pantalla', p('inventory-backup.js') < p('item-edit.js') && p('item-edit.js') < p('mobile-inventory.js') && p('item-edit.js') > 0);
+  }
+
+  console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
+  process.exit(mal ? 1 : 0);
+})().catch(e => { console.error(e); process.exit(1); });

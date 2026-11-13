@@ -462,6 +462,20 @@
              facturas. -->
         ${hero(r, p)}
 
+        <!-- Nombre y código (Axel, 2026-11-13, opción A). Renombrar lo
+             hace la base en todas las tablas a la vez (item-edit.js,
+             migración 038), no sólo aquí. -->
+        <div class="m-sheet-t">Name</div>
+        <div class="m-money m-money-txt">
+          <input id="miName" type="text" autocomplete="off" autocapitalize="words"
+                 value="${esc(r.item)}" aria-label="Product name">
+        </div>
+        <div class="m-sheet-t">Vendor code <span class="m-opt">optional</span></div>
+        <div class="m-money m-money-txt">
+          <input id="miCode" type="text" autocomplete="off" autocapitalize="characters"
+                 value="${esc(r.code || '')}" placeholder="No code" aria-label="Vendor code">
+        </div>
+
         <div class="m-sheet-t">Vendor</div>
         <div class="m-chips" id="miVend">
           ${vendors.map(v => `<button type="button" class="m-chip${actual === v ? ' on' : ''}"
@@ -498,6 +512,10 @@
         ${sig ? `<button type="button" class="m-next" id="miNext">
                    Save and next · ${esc(String(sig.item).slice(0, 26))}
                    <i class="ti ti-arrow-right" aria-hidden="true"></i></button>` : ''}
+        <div class="m-nerr" id="miErr"></div>
+        <!-- Borrar: dos toques, y antes un respaldo de Time Machine
+             (item-edit.js). Sin respaldo no borra. -->
+        <button type="button" class="m-del" id="miDel">Delete item</button>
       </div>`;
     document.body.appendChild(h);
     // El asa dice "arrastrame para cerrar". Que lo diga de verdad.
@@ -537,16 +555,69 @@
     h.querySelector('.m-sheet-bg').onclick = cerrar;
     h.querySelector('#miCancel').onclick = cerrar;
 
+    const err = (t) => { const e = h.querySelector('#miErr'); if (e) e.textContent = t || ''; };
+    const aviso = (t) => { const T = window.BarStockToast; if (T && T.show) try { T.show(t); } catch (e) {} };
+    let recargar = false;
+
     async function guardar() {
       if (typeof window.bsSaveItemFields !== 'function') return false;
+      err('');
+      // Primero el nombre y el código: si la base no puede renombrar (un
+      // nombre que ya existe, la 038 sin correr), no se guarda nada más y
+      // se dice por qué.
+      const nombre = h.querySelector('#miName').value;
+      const codigo = h.querySelector('#miCode').value;
+      const E = window.BarStockItemEdit;
+      if (E && (nombre.trim() !== String(r.item) || codigo.trim() !== String(r.code || '').trim())) {
+        let res;
+        try { res = await E.renombrar(r, { nombre, codigo }); }
+        catch (e) { err('Not saved: ' + ((e && e.message) || e)); return false; }
+        if (res && res.renamed) {
+          // El nombre une el producto con muchas cosas que este teléfono
+          // tiene guardadas (Toast, recetas, el LIVE…): se recarga la app
+          // para que todas lo lean ya con el nuevo.
+          recargar = true;
+          if (res.compartidas && window.BarStockDialog && window.BarStockDialog.avisar) {
+            await window.BarStockDialog.avisar({ titulo: 'Renamed at this location.',
+              cuerpo: 'Another location still has an item with the old name, so the barcode and bottle shape they share stay with that one. Set them again here if they differ.',
+              soloAviso: true });
+          }
+        }
+      }
       const ok = await window.bsSaveItemFields(idx, {
         vendor: vend,
         suggested: Number(par.value) || 0,
         value: Number(h.querySelector('#miVal').value) || 0
       });
       if (ok) { pintarCabecera(host); pintarLista(host); }
+      if (ok && recargar) {
+        aviso('Renamed everywhere. Reloading…');
+        setTimeout(() => { try { location.reload(); } catch (e) {} }, 900);
+      }
       return ok;
     }
+
+    const del = h.querySelector('#miDel');
+    let armado = false;
+    del.onclick = async () => {
+      if (!armado) {
+        armado = true;
+        del.textContent = 'Tap again to delete ' + String(r.item).slice(0, 28);
+        setTimeout(() => { if (armado && del.isConnected) { armado = false; del.textContent = 'Delete item'; } }, 4000);
+        return;
+      }
+      armado = false;
+      del.disabled = true; del.textContent = 'Backing up, then deleting…';
+      try {
+        await window.BarStockItemEdit.borrar(r);
+        cerrar();
+        pintarCabecera(host); pintarLista(host);
+        aviso('Deleted ' + r.item + '. A backup is in Time Machine.');
+      } catch (e) {
+        del.disabled = false; del.textContent = 'Delete item';
+        err('Not deleted: ' + ((e && e.message) || e));
+      }
+    };
 
     h.querySelector('#miSave').onclick = async () => {
       const b = h.querySelector('#miSave');

@@ -1,5 +1,13 @@
 [
   {
+    "build": "20261112-223246",
+    "items": [
+      "Edit an item's name and vendor code from the phone",
+      "Renaming carries Toast, recipes, barcodes and history along",
+      "Delete an item, with a backup in Time Machine first"
+    ]
+  },
+  {
     "build": "20261112-215912",
     "items": [
       "Settings › Toast › Pours: each restaurant sets its own pours",
@@ -187,12 +195,6 @@
     "build": "20261111-200541",
     "items": [
       "Tap a day in Sold in Toast to see that day"
-    ]
-  },
-  {
-    "build": "20261111-195302",
-    "items": [
-      "Product sheet shows its last 7 days sold in Toast"
     ]
   }
 ]

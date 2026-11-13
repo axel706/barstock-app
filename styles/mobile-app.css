@@ -5185,6 +5185,15 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   #mScreens .m-rc-nd-t { flex: 1; min-width: 0; font-size: var(--m-body); color: #cbd5e1; }
   #mScreens .m-rc-nd-t small { display: block; margin-top: 2px; font-size: var(--m-meta); color: #64748b; }
 
+  /* "Delete item" al pie de la hoja de editar (2026-11-13, opción A):
+   * en rojo y de contorno, debajo de todo, lejos de Save. Dos toques. */
+  #mSheet .m-del {
+    display: block; width: 100%; margin-top: 14px; padding: 12px; cursor: pointer; box-shadow: none;
+    font-size: var(--m-body); font-weight: 800; color: #fca5a5; background: none;
+    border: 1px solid rgba(248,113,113,.45); border-radius: 999px !important;
+  }
+  #mSheet .m-del:disabled { opacity: .6; }
+
   /* ── Settings › Toast › Pours (mobile-toast-pours.js) ──────────────
    * Opción A (Axel, 2026-11-13): una fila por medida, con − / + como el
    * editor de recetas. Lo que no tiene onzas, en ámbar y arriba. */

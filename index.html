@@ -84,7 +84,7 @@
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/chip-glow.css">
   <link rel="stylesheet" href="styles/mobile.css?v=mob5">
-  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp199">
+  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp200">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -373,7 +373,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261112-215912</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261112-223246</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -1427,6 +1427,14 @@ function saveState(){
   }
 }
 function loadAliases(){ return migrateLegacy(ALIAS_KEY, LEGACY_ALIAS_KEYS, {}); }
+// Los alias que apuntaban a un nombre, al nombre nuevo. La usan el modal
+// del escritorio y el renombrar del teléfono (src/item-edit.js):
+// `aliases` es un `let` de aquí y se reasigna al cargar, así que desde
+// fuera no se puede tocar directamente.
+function bsRenombrarAliases(viejoNorm, nuevoNorm){
+  Object.keys(aliases).forEach(k => { if(aliases[k] === viejoNorm) aliases[k] = nuevoNorm; });
+  saveAliases();
+}
 function saveAliases(){
   try{
     localStorage.setItem(ALIAS_KEY, JSON.stringify(aliases));
@@ -4546,8 +4554,7 @@ async function saveEditedItem(){
     }
 
     state.master[currentEditIndex] = updatedRow;
-    Object.keys(aliases).forEach(k => { if(aliases[k] === oldNorm) aliases[k] = itemNorm; });
-    saveAliases();
+    bsRenombrarAliases(oldNorm, itemNorm);
     saveState();
     render();
     closeEditModal();
@@ -5490,6 +5497,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/spend-by-category.js?v=sp4"></script>
 <script src="src/settings-home.js?v=sh3"></script>
 <script src="src/inventory-backup.js?v=bk1"></script>
+<script src="src/item-edit.js?v=ie1"></script>
 <script src="src/weekly-cycle.js?v=wc13"></script>
 <script src="src/count-session.js?v=cnt21"></script>
 <script src="src/count-panel.js?v=cp14"></script>
@@ -5562,7 +5570,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/mobile-home.js?v=mh54"></script>
 <script src="src/mobile-search.js?v=m25"></script>
 <script src="src/mobile-cycle.js?v=m9"></script>
-<script src="src/mobile-inventory.js?v=m23"></script>
+<script src="src/mobile-inventory.js?v=m24"></script>
 <script src="src/mobile-orders.js?v=m23"></script>
 <script src="src/mobile-quick.js?v=mqk3"></script>
 <script src="src/update-anim.js?v=upd8"></script>
