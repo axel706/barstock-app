@@ -415,79 +415,83 @@
     });
   }
 
-  // ── La hoja de producto ──────────────────────────────────────────────
+  // ── Editar un producto: una pantalla, no una hoja ───────────────────
   //
-  // Lo que se puede tocar y nada más. El "Next" de abajo es lo que
-  // convierte 118 correcciones en una sesión en vez de 118 viajes a la
-  // lista.
+  // Axel, 2026-11-13: "la tarjeta de un producto ya es muy larga, debe
+  // ser pantalla en lugar de tarjeta… y que todo entre en la pantalla".
+  // Sobre lámina eligió: la tarjeta del producto IGUAL que antes (hero),
+  // el nombre una sola vez (una fila "Name & code · Rename" que se abre
+  // ahí mismo), el proveedor como UNA fila con su color que abre la lista
+  // (opción X; "el estilo de los vendors no me encanta"), par y precio
+  // lado a lado, y Delete y Save en la misma línea. Sin "Save and next"
+  // (Axel: "no es necesario") y sin Cancel: el atrás de la banda lo es.
+  //
+  // Va fija encima de la lista, dentro de la pantalla de Inventory, y no
+  // en su lugar: la lista se queda donde estaba, con su scroll y su
+  // filtro, y al volver se ve el mismo sitio. La banda dice "Edit item"
+  // y su botón izquierdo es atrás, como en Settings.
+  //
+  // Lo que NO edita, a propósito: el on hand (sólo un conteo lo escribe).
+
+  // El color de cada proveedor, el de la app (badge() del escritorio):
+  // vendorDotColor() vive en index.html, junto a esos mismos colores.
+  const colorProv = (v) => (typeof window.vendorDotColor === 'function' ? window.vendorDotColor(v) : '#94a3b8');
+
+  function cerrarEditor(host) {
+    const ed = host && host.querySelector('.m-ed');
+    if (ed) ed.remove();
+    const M = window.BarStockMobile;
+    if (M && M.salirBanda) M.salirBanda();
+  }
 
   function hoja(host, idx) {
     const r = master()[idx];
     if (!r) return;
+    cerrarEditor(host);
 
     const p = parDe(r);
     const vendors = typeof window.getVendorsWithUnknown === 'function'
       ? window.getVendorsWithUnknown() : [];
-    const actual = String(r.vendor || 'UNKNOWN').toUpperCase();
+    let vend = String(r.vendor || 'UNKNOWN').toUpperCase();
 
-    // El siguiente de la lista TAL COMO SE VE ahora. Si se recalculara
-    // al guardar, arreglar un artículo lo sacaría del filtro y el
-    // "siguiente" saltaría dos.
-    const lista = visibles();
-    const pos = lista.indexOf(r);
-    const sig = pos >= 0 && pos + 1 < lista.length ? lista[pos + 1] : null;
-
-    const h = document.createElement('div');
-    h.className = 'm-sheet';
-    // El id no es decoracion: las reglas de esta hoja se apoyan en el
-    // para ganarle en especificidad al radio de app.css. Ver la
-    // cabecera de mobile-app.css.
-    h.id = 'mSheet';
-    h.innerHTML = `
-      <div class="m-sheet-bg"></div>
-      <div class="m-sheet-box m-edit" role="dialog" aria-label="Edit item">
-        <div class="m-sheet-grip"></div>
-
-        <!-- ── La MISMA cabecera que la ficha de búsqueda ──────────
-             Eran dos pantallas distintas para el mismo producto: la
-             de Home con silueta, número grande y color de estado; y
-             ésta con dos renglones de texto. Nadie debería aprender
-             dos veces de qué le están hablando.
-             Lo que NO cambia es que esto sigue siendo una hoja que
-             sube desde abajo: el "Save and next" es lo que convierte
-             118 correcciones en una sesión, y una pantalla completa
-             por artículo se lo cargaría.
-             El subtítulo lleva el CÓDIGO, que en la ficha de búsqueda
-             no va: aquí sí importa, es con lo que casan las
-             facturas. -->
+    const ed = document.createElement('div');
+    ed.className = 'm-ed';
+    ed.setAttribute('role', 'dialog');
+    ed.setAttribute('aria-label', 'Edit item');
+    ed.innerHTML = `
+      <div class="m-ed-in">
         ${hero(r, p)}
 
-        <!-- Nombre y código (Axel, 2026-11-13, opción A). Renombrar lo
-             hace la base en todas las tablas a la vez (item-edit.js,
-             migración 038), no sólo aquí. -->
-        <div class="m-sheet-t">Name</div>
-        <div class="m-money m-money-txt">
-          <input id="miName" type="text" autocomplete="off" autocapitalize="words"
-                 value="${esc(r.item)}" aria-label="Product name">
-        </div>
-        <div class="m-sheet-t">Vendor code <span class="m-opt">optional</span></div>
-        <div class="m-money m-money-txt">
-          <input id="miCode" type="text" autocomplete="off" autocapitalize="characters"
-                 value="${esc(r.code || '')}" placeholder="No code" aria-label="Vendor code">
+        <div id="miRenCaja">
+          <button type="button" class="m-ed-fila m-ed-ren" id="miRen">
+            <span class="m-ed-k">Name &amp; code <small>· ${esc(r.code || 'No code')}</small></span>
+            <span class="m-ed-a">Rename</span>
+          </button>
         </div>
 
-        <div class="m-sheet-t">Vendor</div>
-        <div class="m-chips" id="miVend">
-          ${vendors.map(v => `<button type="button" class="m-chip${actual === v ? ' on' : ''}"
-                                      data-nv="${esc(v)}">${esc(v)}</button>`).join('')}
-        </div>
+        <div class="m-ed-lab">Vendor</div>
+        <button type="button" class="m-ed-fila" id="miVendBtn">
+          <span class="m-ed-dot" id="miVendDot" style="background:${colorProv(vend)}"></span>
+          <span class="m-ed-k" id="miVendN">${esc(vend)}</span>
+          <span class="m-ed-a m-ed-mut">Change <i class="ti ti-chevron-right" aria-hidden="true"></i></span>
+        </button>
 
-        <div class="m-sheet-t">Par</div>
-        <div class="m-step">
-          <button type="button" id="miLess" aria-label="Lower the par">−</button>
-          <input id="miPar" type="number" inputmode="decimal" step="1" min="0"
-                 value="${num(r.suggested)}" aria-label="Par">
-          <button type="button" id="miMore" aria-label="Raise the par">+</button>
+        <div class="m-ed-dos">
+          <div>
+            <div class="m-ed-lab">Par</div>
+            <div class="m-ed-paso">
+              <button type="button" id="miLess" aria-label="Lower the par">−</button>
+              <input id="miPar" type="number" inputmode="decimal" step="1" min="0"
+                     value="${num(r.suggested)}" aria-label="Par">
+              <button type="button" id="miMore" aria-label="Raise the par">+</button>
+            </div>
+          </div>
+          <div>
+            <div class="m-ed-lab">Unit price</div>
+            <div class="m-ed-in1"><span>$</span>
+              <input id="miVal" type="number" inputmode="decimal" step="0.01" min="0"
+                     value="${num(r.value) || ''}" placeholder="0.00" aria-label="Unit price"></div>
+          </div>
         </div>
         ${p && p.suggestedOptimal != null && Number(p.suggestedOptimal) !== num(r.suggested)
           ? `<button type="button" class="m-iqline" id="miIq">
@@ -495,87 +499,106 @@
                Pour·IQ says ${esc(String(p.suggestedOptimal))} — use it</button>`
           : ''}
 
-        <div class="m-sheet-t">Unit price</div>
-        <div class="m-money">
-          <span>$</span>
-          <input id="miVal" type="number" inputmode="decimal" step="0.01" min="0"
-                 value="${num(r.value) || ''}" placeholder="0.00" aria-label="Unit price">
-        </div>
-
-        <div class="m-sheet-t">Bottle</div>
+        <div class="m-ed-lab">Bottle</div>
         <button type="button" class="m-botrow" id="miBottle">${filaBotella(r)}</button>
 
-        <div class="m-acts">
-          <button type="button" class="m-act" id="miCancel">Cancel</button>
-          <button type="button" class="m-act" id="miSave">Save</button>
-        </div>
-        ${sig ? `<button type="button" class="m-next" id="miNext">
-                   Save and next · ${esc(String(sig.item).slice(0, 26))}
-                   <i class="ti ti-arrow-right" aria-hidden="true"></i></button>` : ''}
         <div class="m-nerr" id="miErr"></div>
-        <!-- Borrar: dos toques, y antes un respaldo de Time Machine
-             (item-edit.js). Sin respaldo no borra. -->
-        <button type="button" class="m-del" id="miDel">Delete item</button>
+        <!-- Delete y Save en la misma línea (Axel). Delete pide dos
+             toques y toma antes un respaldo de Time Machine. -->
+        <div class="m-ed-acts">
+          <button type="button" class="m-ed-del" id="miDel">Delete</button>
+          <button type="button" class="m-ed-save" id="miSave">Save</button>
+        </div>
       </div>`;
-    document.body.appendChild(h);
-    // El asa dice "arrastrame para cerrar". Que lo diga de verdad.
-    if (window.BarStockSheet) window.BarStockSheet.enganchar(h, () => h.remove());
+    host.appendChild(ed);
 
-    // La forma se guarda en el selector, al elegirla, no con el Save de
-    // esta hoja: es el mismo guardado que el del conteo. Al volver se
-    // repintan la fila y la cabecera, sin cerrar la hoja.
-    const bot = h.querySelector('#miBottle');
-    if (bot) bot.onclick = () => {
+    const M = window.BarStockMobile;
+    const cerrar = () => cerrarEditor(host);
+    if (M && M.enBanda) M.enBanda('Edit item');
+    if (M && M.alVolverBanda) M.alVolverBanda(cerrar);
+
+    const q = (s) => ed.querySelector(s);
+    const err = (t) => { const e = q('#miErr'); if (e) e.textContent = t || ''; };
+    const aviso = (t) => { const T = window.BarStockToast; if (T && T.show) try { T.show(t); } catch (e) {} };
+
+    // "Rename": la fila se vuelve los dos campos ahí mismo. Hasta
+    // entonces el nombre sólo está en la tarjeta: una vez, no tres.
+    q('#miRen').onclick = () => {
+      q('#miRenCaja').innerHTML = `
+        <div class="m-ed-dos m-ed-nom">
+          <div><div class="m-ed-lab">Name</div>
+            <div class="m-ed-in1"><input id="miName" type="text" autocomplete="off" autocapitalize="words"
+              value="${esc(r.item)}" aria-label="Product name"></div></div>
+          <div><div class="m-ed-lab">Code</div>
+            <div class="m-ed-in1"><input id="miCode" type="text" autocomplete="off" autocapitalize="characters"
+              value="${esc(r.code || '')}" placeholder="—" aria-label="Vendor code"></div></div>
+        </div>`;
+      const n = q('#miName'); if (n && n.focus) n.focus();
+    };
+
+    // Proveedor: la lista en una hoja, cada uno con su color y ✓ en el
+    // actual. Tocar uno lo elige y cierra.
+    q('#miVendBtn').onclick = () => {
+      const h = document.createElement('div');
+      h.className = 'm-sheet';
+      h.id = 'mSheet';
+      h.innerHTML = `<div class="m-sheet-bg"></div>
+        <div class="m-sheet-box m-vend-hoja" role="dialog" aria-label="Vendor">
+          <div class="m-sheet-grip"></div>
+          <div class="m-edit-n">Vendor</div>
+          ${vendors.map(v => `<button type="button" class="m-vend-op${v === vend ? ' on' : ''}" data-nv="${esc(v)}">
+              <span class="m-ed-dot" style="background:${colorProv(v)}"></span>
+              <span class="m-vend-n">${esc(v)}</span>
+              ${v === vend ? '<i class="ti ti-check" aria-hidden="true"></i>' : ''}</button>`).join('')}
+        </div>`;
+      document.body.appendChild(h);
+      const fuera = () => h.remove();
+      if (window.BarStockSheet) window.BarStockSheet.enganchar(h, fuera);
+      h.querySelector('.m-sheet-bg').onclick = fuera;
+      h.querySelectorAll('[data-nv]').forEach(b => { b.onclick = () => {
+        vend = b.dataset.nv;
+        q('#miVendN').textContent = vend;
+        q('#miVendDot').style.background = colorProv(vend);
+        fuera();
+      }; });
+    };
+
+    // La forma se guarda en el selector, al elegirla, no con Save: es el
+    // mismo guardado que el del conteo. Al volver se repintan la fila y la
+    // tarjeta.
+    q('#miBottle').onclick = () => {
       const BP = window.BarStockBottlePicker;
       if (!BP || !BP.open) return;
       BP.open(r, () => {
-        const f = h.querySelector('#miBottle');
+        const f = q('#miBottle');
         if (f) f.innerHTML = filaBotella(r);
-        const fic = h.querySelector('.m-fic');
+        const fic = ed.querySelector('.m-fic');
         if (fic) fic.outerHTML = hero(r, p);
       });
     };
 
-    let vend = actual;
-    h.querySelectorAll('[data-nv]').forEach(b => {
-      b.onclick = () => {
-        vend = b.dataset.nv;
-        h.querySelectorAll('[data-nv]').forEach(x => x.classList.toggle('on', x === b));
-      };
-    });
-
-    const par = h.querySelector('#miPar');
+    const par = q('#miPar');
     const mas = (d) => { par.value = Math.max(0, (Number(par.value) || 0) + d); };
-    h.querySelector('#miLess').onclick = () => mas(-1);
-    h.querySelector('#miMore').onclick = () => mas(1);
-    const iq = h.querySelector('#miIq');
+    q('#miLess').onclick = () => mas(-1);
+    q('#miMore').onclick = () => mas(1);
+    const iq = q('#miIq');
     if (iq && p) iq.onclick = () => { par.value = Number(p.suggestedOptimal); };
 
-    const cerrar = () => h.remove();
-    h.querySelector('.m-sheet-bg').onclick = cerrar;
-    h.querySelector('#miCancel').onclick = cerrar;
-
-    const err = (t) => { const e = h.querySelector('#miErr'); if (e) e.textContent = t || ''; };
-    const aviso = (t) => { const T = window.BarStockToast; if (T && T.show) try { T.show(t); } catch (e) {} };
     let recargar = false;
-
     async function guardar() {
       if (typeof window.bsSaveItemFields !== 'function') return false;
       err('');
-      // Primero el nombre y el código: si la base no puede renombrar (un
-      // nombre que ya existe, la 038 sin correr), no se guarda nada más y
-      // se dice por qué.
-      const nombre = h.querySelector('#miName').value;
-      const codigo = h.querySelector('#miCode').value;
+      // Primero el nombre y el código (sólo si se abrió Rename): si la
+      // base no puede renombrar, no se guarda nada más y se dice por qué.
+      const nom = q('#miName'), cod = q('#miCode');
       const E = window.BarStockItemEdit;
-      if (E && (nombre.trim() !== String(r.item) || codigo.trim() !== String(r.code || '').trim())) {
+      if (E && nom && cod && (nom.value.trim() !== String(r.item) || cod.value.trim() !== String(r.code || '').trim())) {
         let res;
-        try { res = await E.renombrar(r, { nombre, codigo }); }
+        try { res = await E.renombrar(r, { nombre: nom.value, codigo: cod.value }); }
         catch (e) { err('Not saved: ' + ((e && e.message) || e)); return false; }
         if (res && res.renamed) {
-          // El nombre une el producto con muchas cosas que este teléfono
-          // tiene guardadas (Toast, recetas, el LIVE…): se recarga la app
-          // para que todas lo lean ya con el nuevo.
+          // El nombre está en cachés de este teléfono (Toast, recetas, el
+          // LIVE): se recarga la app para que todas lo lean con el nuevo.
           recargar = true;
           if (res.compartidas && window.BarStockDialog && window.BarStockDialog.avisar) {
             await window.BarStockDialog.avisar({ titulo: 'Renamed at this location.',
@@ -587,7 +610,7 @@
       const ok = await window.bsSaveItemFields(idx, {
         vendor: vend,
         suggested: Number(par.value) || 0,
-        value: Number(h.querySelector('#miVal').value) || 0
+        value: Number(q('#miVal').value) || 0
       });
       if (ok) { pintarCabecera(host); pintarLista(host); }
       if (ok && recargar) {
@@ -597,41 +620,32 @@
       return ok;
     }
 
-    const del = h.querySelector('#miDel');
+    q('#miSave').onclick = async () => {
+      const b = q('#miSave');
+      b.disabled = true;
+      if (await guardar()) cerrar(); else b.disabled = false;
+    };
+
+    const del = q('#miDel');
     let armado = false;
     del.onclick = async () => {
       if (!armado) {
         armado = true;
-        del.textContent = 'Tap again to delete ' + String(r.item).slice(0, 28);
-        setTimeout(() => { if (armado && del.isConnected) { armado = false; del.textContent = 'Delete item'; } }, 4000);
+        del.textContent = 'Tap again';
+        setTimeout(() => { if (armado && del.isConnected) { armado = false; del.textContent = 'Delete'; } }, 4000);
         return;
       }
       armado = false;
-      del.disabled = true; del.textContent = 'Backing up, then deleting…';
+      del.disabled = true; del.textContent = 'Deleting…';
       try {
         await window.BarStockItemEdit.borrar(r);
         cerrar();
         pintarCabecera(host); pintarLista(host);
         aviso('Deleted ' + r.item + '. A backup is in Time Machine.');
       } catch (e) {
-        del.disabled = false; del.textContent = 'Delete item';
+        del.disabled = false; del.textContent = 'Delete';
         err('Not deleted: ' + ((e && e.message) || e));
       }
-    };
-
-    h.querySelector('#miSave').onclick = async () => {
-      const b = h.querySelector('#miSave');
-      b.disabled = true;
-      if (await guardar()) cerrar(); else b.disabled = false;
-    };
-
-    const nx = h.querySelector('#miNext');
-    if (nx && sig) nx.onclick = async () => {
-      nx.disabled = true;
-      if (!(await guardar())) { nx.disabled = false; return; }
-      cerrar();
-      const j = master().indexOf(sig);
-      if (j >= 0) hoja(host, j);
     };
   }
 
@@ -918,7 +932,17 @@
       id: 'inventory', icon: 'ti-package', label: 'Inventory',
       tab: true, orden: 30,
       mount,
+      // El gesto del borde y el atrás: con la pantalla de editar abierta,
+      // vuelven a la lista.
+      atras(host, hacerlo) {
+        if (!host || !host.querySelector('.m-ed')) return false;
+        if (hacerlo) cerrarEditor(host);
+        return true;
+      },
       show(host) {
+        // Al volver a Inventory, la lista: una pantalla de editar que
+        // quedó abierta al irse a otra pestaña se cierra.
+        cerrarEditor(host);
         // Si alguien pidió un orden concreto al entrar, se aplica
         // aquí y se olvida.
         // 'agota' no es un orden, es el filtro de la tarjeta. Cualquier

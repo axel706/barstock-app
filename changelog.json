@@ -1,5 +1,13 @@
 [
   {
+    "build": "20261112-230227",
+    "items": [
+      "Editing an item is now a full screen, everything at a glance",
+      "Vendor shows as one row with its color; tap to change",
+      "Save and Delete side by side"
+    ]
+  },
+  {
     "build": "20261112-224342",
     "items": [
       "Deleting an item on the computer takes a backup first"
@@ -187,13 +195,6 @@
     "items": [
       "Home: On the shelf, Sold yesterday and Spent this cycle",
       "Each with its button: Details, Report, Sync"
-    ]
-  },
-  {
-    "build": "20261111-201604",
-    "items": [
-      "Full report: net sales of the day, item by item",
-      "Liquor and wine apart; beer and open bar left out"
     ]
   }
 ]

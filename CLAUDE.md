@@ -294,9 +294,16 @@ alias, códigos de barras, siluetas, imágenes… Renombrar NO es cambiar un
 campo: lo hace `rename_inventory_item` (migración 038) en una sola
 transacción, por locación, y lo compartido en la cuenta (códigos de
 barras, siluetas) sólo si ninguna otra locación usa el nombre viejo.
-Probada contra un Postgres 16 de verdad. La usa la hoja de editar del
-teléfono (`src/item-edit.js`, Axel 2026-11-13, opción A: nombre, código
-y Delete con respaldo de Time Machine antes), y el modal del escritorio
+Probada contra un Postgres 16 de verdad. La usa la pantalla de editar del
+teléfono (`src/item-edit.js`; nombre, código y Delete con respaldo de
+Time Machine antes). **Editar un producto en el teléfono es una
+PANTALLA, no una hoja** (Axel, 2026-11-13, sobre lámina): fija encima
+de la lista de Inventory (`.m-ed`, la lista no se toca), "Edit item" en
+la banda con su atrás, la tarjeta del producto igual que antes, el
+nombre una sola vez (fila "Name & code · Rename" que se abre ahí), el
+proveedor como una fila con su color (`vendorDotColor()` en
+`index.html`) que abre la lista, par y precio lado a lado, y Delete y
+Save en la misma línea. Sin "Save and next" ni Cancel, y el modal del escritorio
 (`saveEditedItem`) desde el mismo día: los dos pasan por
 `BarStockItemEdit.renombrar()`. Nada más renombra. Y borrar, en los dos,
 por `BarStockItemEdit.borrar()`: respaldo de Time Machine antes, y sin

@@ -137,15 +137,18 @@ console.log('\nel on hand no se puede tocar desde aqui');
 {
   const { w, host } = pantalla();
   host.querySelector('.m-inv').click();
-  const hoja = w.document.querySelector('.m-sheet');
-  ok('la hoja se abre', !!hoja);
+  // Una pantalla, no una hoja, desde el 2026-11-13 (Axel: "debe ser
+  // pantalla en lugar de tarjeta").
+  const hoja = w.document.querySelector('.m-ed');
+  ok('la pantalla de editar se abre', !!hoja);
   // Ni campo, ni botones: la existencia sale del escaner y de recibir
   // mercancia, de ningun otro sitio.
   ok('no hay campo de on hand', !hoja.querySelector('input[id*="nHand" i]'));
-  // Nombre y código desde el 2026-11-13 (Axel: "no puedo creer que no
-  // tengamos la opción de editar un artículo"; renombrar va por la
-  // función de la base, migración 038). El on hand sigue sin campo.
-  eq('se editan nombre, código, par y precio, y nada más',
+  eq('a la vista, par y precio', Array.from(hoja.querySelectorAll('input')).map(i => i.id).sort(), ['miPar', 'miVal']);
+  // Nombre y código desde el 2026-11-13, tras "Rename" (renombrar va por
+  // la función de la base, migración 038). El on hand sigue sin campo.
+  hoja.querySelector('#miRen').click();
+  eq('con Rename, nombre y código; y nada más',
      Array.from(hoja.querySelectorAll('input')).map(i => i.id).sort(),
      ['miCode', 'miName', 'miPar', 'miVal']);
 
@@ -163,7 +166,7 @@ console.log('\nse guarda contra el indice del maestro');
   ok('el primero de la lista no es el primero del maestro', esperado !== 0);
 
   host.querySelector('.m-inv').click();
-  const hoja = w.document.querySelector('.m-sheet');
+  const hoja = w.document.querySelector('.m-ed');
   hoja.querySelector('#miPar').value = '21';
   hoja.querySelector('#miSave').click();
   await new Promise(r => setTimeout(r, 0));
@@ -211,15 +214,15 @@ console.log('\nse guarda contra el indice del maestro');
     const { w, host } = pantalla({ formas: true });
     host.querySelector('[data-s="todo"]').click();
     host.querySelector('.m-inv').click();
-    const hoja = w.document.querySelector('#mSheet');
+    const hoja = w.document.querySelector('.m-ed');
     const fila = hoja && hoja.querySelector('#miBottle');
     ok('hay una fila Bottle en la ficha', !!fila);
     ok('dice la forma que tiene ahora', !!fila && /Vodka/.test(fila.textContent), fila && fila.textContent.trim());
     ok('y su tamaño', !!fila && /750 ml/.test(fila.textContent));
     ok('con la silueta dibujada', !!fila && !!fila.querySelector('svg path'));
-    const titulos = Array.from(hoja.querySelectorAll('.m-sheet-t')).map(t => t.textContent.trim());
+    const titulos = Array.from(hoja.querySelectorAll('.m-ed-lab')).map(t => t.textContent.trim());
     eq('debajo de Unit price', titulos.slice(-2), ['Unit price', 'Bottle']);
-    eq('y no añade campos de texto', Array.from(hoja.querySelectorAll('input')).map(i => i.id).sort(), ['miCode', 'miName', 'miPar', 'miVal']);
+    eq('y no añade campos de texto', Array.from(hoja.querySelectorAll('input')).map(i => i.id).sort(), ['miPar', 'miVal']);
 
     if (fila) fila.click();
     const sel = w.__selector;
@@ -234,8 +237,8 @@ console.log('\nse guarda contra el indice del maestro');
       const f2 = w.document.querySelector('#miBottle');
       ok('al guardar, la fila dice la nueva', !!f2 && /Carlo Rossi/.test(f2.textContent) && /4000 ml/.test(f2.textContent),
          f2 && f2.textContent.trim());
-      ok('y la cabecera dibuja la nueva, con su asa', !!w.document.querySelector('#mSheet .m-fic .m-bot-asa'));
-      ok('sin cerrar la hoja', !!w.document.querySelector('#mSheet'));
+      ok('y la cabecera dibuja la nueva, con su asa', !!w.document.querySelector('.m-ed .m-fic .m-bot-asa'));
+      ok('sin cerrar la pantalla', !!w.document.querySelector('.m-ed'));
     }
   }
 

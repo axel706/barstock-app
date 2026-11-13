@@ -123,7 +123,7 @@ function hojaInventario() {
   const fila = Array.from(host.querySelectorAll('[data-i]'))
     .find(b => /Tito/.test(b.textContent));
   fila.onclick();
-  const h = w.document.querySelector('.m-sheet');
+  const h = w.document.querySelector('.m-ed');
   return { w, host, hoja: h, fic: h.querySelector('.m-fic') };
 }
 
@@ -187,24 +187,25 @@ grupo('pero sólo Inventory lleva el código, que es lo que casa facturas');
     a.fic.querySelector('.m-fic-s').textContent);
 }
 
-grupo('Inventory sigue siendo una hoja, con todo lo que se podía tocar');
+grupo('Inventory edita en una pantalla, con todo a la vista');
 {
+  // Era una hoja que subía desde abajo y se hizo larga; desde el
+  // 2026-11-13 es una pantalla (Axel: "debe ser pantalla en lugar de
+  // tarjeta… que todo entre en la pantalla"), con la misma cabecera.
   const { w, hoja } = hojaInventario();
-  prueba('es hoja, no pantalla', !!hoja.querySelector('.m-sheet-box'));
-  prueba('sube desde abajo', !!hoja.querySelector('.m-sheet-grip'));
-  prueba('proveedores', !!hoja.querySelector('#miVend'));
+  prueba('es pantalla, no hoja', !!hoja && !hoja.querySelector('.m-sheet-box') && !hoja.querySelector('.m-sheet-grip'));
+  prueba('proveedor (una fila que abre la lista)', !!hoja.querySelector('#miVendBtn'));
   prueba('par', !!hoja.querySelector('#miPar'));
   prueba('precio', !!hoja.querySelector('#miVal'));
-  prueba('guardar', !!hoja.querySelector('#miSave'));
-  prueba('y guardar y siguiente', !!hoja.querySelector('#miNext'));
+  prueba('guardar y borrar, en la misma línea', !!hoja.querySelector('.m-ed-acts #miSave') && !!hoja.querySelector('.m-ed-acts #miDel'));
+  prueba('sin "guardar y siguiente" (Axel: no es necesario)', !hoja.querySelector('#miNext'));
 
   // La regla de siempre: el on hand viene del escáner y de recibir
   // mercancía. Si una pantalla de edición lo toca, deja de poder
-  // rastrearse de dónde salió cada número.
+  // rastrearse de dónde salió cada número. (Nombre y código salen al
+  // tocar Rename; ver test-editar-articulo.)
   const ids = Array.from(hoja.querySelectorAll('input')).map(i => i.id).sort();
-  // Nombre y código entraron el 2026-11-13 (renombrar va por la 038);
-  // la existencia sigue sin campo.
-  prueba('y el on hand NO se puede editar', ids.join('|') === 'miCode|miName|miPar|miVal', ids.join('|'));
+  prueba('y el on hand NO se puede editar', ids.join('|') === 'miPar|miVal', ids.join('|'));
 
   hoja.querySelector('#miPar').value = '21';
   hoja.querySelector('#miSave').click();

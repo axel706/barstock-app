@@ -131,7 +131,7 @@ function entorno(o) {
     w.state = { master: [{ item: 'Triage House Vodka', itemNorm: 'TRIAGE HOUSE VODKA', code: '', vendor: 'UNKNOWN', onHand: 1, suggested: 12, value: 5.5, toOrder: 11 }] };
     w.normalizeName = (s) => String(s || '').trim().toUpperCase();
     w.getVendorsForFilter = () => ['ALL', 'UNKNOWN'];
-    w.getVendorsWithUnknown = () => ['UNKNOWN'];
+    w.getVendorsWithUnknown = () => ['LOOP', 'UNKNOWN'];
     w.parAdjustments = new Map();
     w.__orden = [];
     w.bsSaveItemFields = async (idx, campos) => { w.__orden.push('campos'); Object.assign(w.state.master[idx], campos); return true; };
@@ -142,17 +142,38 @@ function entorno(o) {
     };
     w.BarStockToast = { show: (t) => w.__orden.push('aviso:' + t) };
     let def = null;
-    w.BarStockMobile = { register(d) { def = d; }, refrescarBadges() {} };
+    w.__banda = null; w.__atras = null;
+    w.BarStockMobile = { register(d) { def = d; }, refrescarBadges() {},
+      enBanda: (t) => { w.__banda = t; return true; }, alVolverBanda: (fn) => { w.__atras = fn; }, salirBanda: () => { w.__banda = null; } };
+    w.vendorDotColor = (v) => ({ LOOP: '#38bdf8', UNKNOWN: '#71717a' }[v] || '#123456');
     w.eval(leer('src/mobile-inventory.js'));
     w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
     const host = w.document.createElement('div'); host.className = 'm-screen on'; host.dataset.screen = 'inventory'; w.document.body.appendChild(host);
     def.mount(host);
     host.querySelector('.m-inv').click();
-    const hoja = () => w.document.querySelector('#mSheet');
-    prueba('nombre y código arriba, con lo de ahora', hoja().querySelector('#miName').value === 'Triage House Vodka' && hoja().querySelector('#miCode').value === '' &&
-      hoja().innerHTML.indexOf('miName') < hoja().innerHTML.indexOf('miVend'));
-    prueba('y "Delete item" al pie', !!hoja().querySelector('#miDel') && hoja().innerHTML.indexOf('miDel') > hoja().innerHTML.indexOf('miSave'));
+    const hoja = () => w.document.querySelector('.m-ed');
+    prueba('es pantalla, con "Edit item" en la banda', !!hoja() && w.__banda === 'Edit item');
+    prueba('el atrás de la banda vuelve a la lista', typeof w.__atras === 'function' && (w.__atras(), !hoja()) && w.__banda === null &&
+      !!host.querySelector('.m-inv'));
+    host.querySelector('.m-inv').click();
+    prueba('el gesto del borde también', def.atras(host) === true && (def.atras(host, true), !hoja()) && def.atras(host) === false);
+    host.querySelector('.m-inv').click();
+    // El proveedor: una fila con su color; la lista en una hoja.
+    prueba('el proveedor, en una fila con su color', /UNKNOWN/.test(hoja().querySelector('#miVendBtn').textContent) &&
+      /113, 113, 122|#71717a/.test(hoja().querySelector('#miVendDot').style.background));
+    hoja().querySelector('#miVendBtn').click();
+    const hv = w.document.querySelector('#mSheet .m-vend-hoja');
+    prueba('Change abre la lista, cada uno con su color y ✓ en el actual', !!hv && hv.querySelectorAll('[data-nv]').length === 2 &&
+      !!hv.querySelector('.m-vend-op.on .ti-check'));
 
+    prueba('el nombre, una vez: en la tarjeta; Rename abre nombre y código', !hoja().querySelector('#miName') && !!hoja().querySelector('#miRen'));
+    hoja().querySelector('#miRen').click();
+    prueba('nombre y código, con lo de ahora, antes del proveedor', hoja().querySelector('#miName').value === 'Triage House Vodka' && hoja().querySelector('#miCode').value === '' &&
+      hoja().innerHTML.indexOf('miName') < hoja().innerHTML.indexOf('miVendBtn'));
+    prueba('y Delete en la línea de Save', !!hoja().querySelector('.m-ed-acts #miDel') && !!hoja().querySelector('.m-ed-acts #miSave'));
+
+    hv.querySelector('[data-nv="LOOP"]').click();
+    prueba('elegir uno lo pone en la fila y cierra la lista', /LOOP/.test(hoja().querySelector('#miVendN').textContent) && !w.document.querySelector('#mSheet'));
     fallar = true;
     hoja().querySelector('#miName').value = 'Kamora';
     hoja().querySelector('#miSave').click(); await esperar(20);
@@ -163,14 +184,15 @@ function entorno(o) {
     hoja().querySelector('#miCode').value = 'T1';
     hoja().querySelector('#miSave').click(); await esperar(20);
     prueba('renombrar va primero, y después lo demás', w.__orden[0] === 'renombrar:Triage House Vodka 1L|T1' && w.__orden[1] === 'campos', w.__orden.join(' / '));
+    prueba('y guarda el proveedor elegido', w.state.master[0].vendor === 'LOOP');
     prueba('y avisa que recarga para que todo lea el nombre nuevo', w.__orden.some(x => /Renamed everywhere/.test(x)));
 
     host.querySelector('.m-inv').click();
     w.__orden.length = 0;
     hoja().querySelector('#miDel').click();
-    prueba('Delete pide un segundo toque', /Tap again to delete/.test(hoja().querySelector('#miDel').textContent) && !w.__orden.includes('borrar'));
+    prueba('Delete pide un segundo toque', /Tap again/.test(hoja().querySelector('#miDel').textContent) && !w.__orden.includes('borrar'));
     hoja().querySelector('#miDel').click(); await esperar(20);
-    prueba('al segundo borra, cierra y lo dice', w.__orden.includes('borrar') && !w.document.querySelector('#mSheet') &&
+    prueba('al segundo borra, cierra y lo dice', w.__orden.includes('borrar') && !w.document.querySelector('.m-ed') &&
       w.__orden.some(x => /backup is in Time Machine/.test(x)));
   }
 

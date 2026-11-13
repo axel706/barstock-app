@@ -84,7 +84,7 @@
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/chip-glow.css">
   <link rel="stylesheet" href="styles/mobile.css?v=mob5">
-  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp200">
+  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp201">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -373,7 +373,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261112-224342</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261112-230227</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -1825,6 +1825,16 @@ function vendorColorFromName(name){
   };
 }
 window.vendorColorFromName = vendorColorFromName;
+// El punto de color de un proveedor en el teléfono (la pantalla de editar
+// un producto, 2026-11-13). Los conocidos, en el tono de su .pill de
+// app.css (LOOP azul, Breakthru ámbar, Wine morado, Southern gris); los
+// demás, con el mismo color estable que badge() les da por su nombre.
+function vendorDotColor(v){
+  const upper = String(v||'').trim().toUpperCase();
+  const known = {'LOOP':'#38bdf8','SOUTHERN':'#94a3b8','BREAKTHRU':'#f59e0b','WINE MERCHANT':'#e879f9','WINE':'#e879f9','UNKNOWN':'#71717a'};
+  return known[upper] || vendorColorFromName(upper).fg;
+}
+window.vendorDotColor = vendorDotColor;
 function sanitizeForTokens(s){ return normalizeName(s).replace(/[^A-Z0-9 ]/g,' '); }
 function tokenSet(s){ return Array.from(new Set(sanitizeForTokens(s).split(/\s+/).filter(Boolean))); }
 function scoreMatch(rawName, itemName){
@@ -5596,7 +5606,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/mobile-home.js?v=mh54"></script>
 <script src="src/mobile-search.js?v=m25"></script>
 <script src="src/mobile-cycle.js?v=m9"></script>
-<script src="src/mobile-inventory.js?v=m24"></script>
+<script src="src/mobile-inventory.js?v=m25"></script>
 <script src="src/mobile-orders.js?v=m23"></script>
 <script src="src/mobile-quick.js?v=mqk3"></script>
 <script src="src/update-anim.js?v=upd8"></script>

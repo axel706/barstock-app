@@ -2688,8 +2688,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* La fila "Bottle": la misma caja que el precio y el par (fondo, borde,
    * 12px), porque es un campo más del producto. El prefijo #mSheet y el
    * !important no son decoración: sin los dos, el radio de 999px de
-   * app.css la vuelve píldora. Con sólo el ID salió píldora igual. */
-  #mSheet .m-botrow {
+   * app.css la vuelve píldora. Con sólo el ID salió píldora igual.
+   * Desde el 2026-11-13 vive también en la PANTALLA de editar (.m-ed,
+   * dentro de #mScreens): con sólo #mSheet salía sin estilo ahí. */
+  :is(#mSheet, #mScreens) .m-botrow {
     display: flex; align-items: center; gap: 12px; width: 100%; cursor: pointer;
     padding: 8px 12px; text-align: left; color: #f1f5f9;
     background: rgba(255,255,255,.10);
@@ -2698,12 +2700,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
      * dos !important gana la especificidad, que aquí es la del ID. */
     border-radius: 12px !important;
   }
-  #mSheet .m-botrow-sil { flex: 0 0 auto; }
-  #mSheet .m-botrow-sil path { fill: rgba(255,255,255,.06); stroke: rgba(255,255,255,.55); stroke-width: 1.4; }
-  #mSheet .m-botrow-t { flex: 1; min-width: 0; }
-  #mSheet .m-botrow-t b { display: block; font-size: var(--m-strong); font-weight: 700; }
-  #mSheet .m-botrow-t small { display: block; margin-top: 2px; font-size: var(--m-small); color: #94a3b8; }
-  #mSheet .m-botrow > .ti { flex: 0 0 auto; font-size: var(--m-strong); color: #94a3b8; }
+  :is(#mSheet, #mScreens) .m-botrow-sil { flex: 0 0 auto; }
+  :is(#mSheet, #mScreens) .m-botrow-sil path { fill: rgba(255,255,255,.06); stroke: rgba(255,255,255,.55); stroke-width: 1.4; }
+  :is(#mSheet, #mScreens) .m-botrow-t { flex: 1; min-width: 0; }
+  :is(#mSheet, #mScreens) .m-botrow-t b { display: block; font-size: var(--m-strong); font-weight: 700; }
+  :is(#mSheet, #mScreens) .m-botrow-t small { display: block; margin-top: 2px; font-size: var(--m-small); color: #94a3b8; }
+  :is(#mSheet, #mScreens) .m-botrow > .ti { flex: 0 0 auto; font-size: var(--m-strong); color: #94a3b8; }
   .m-edit .m-chips,
   .m-edit .m-step,
   .m-edit .m-money { margin-bottom: 0; }
@@ -5185,14 +5187,80 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   #mScreens .m-rc-nd-t { flex: 1; min-width: 0; font-size: var(--m-body); color: #cbd5e1; }
   #mScreens .m-rc-nd-t small { display: block; margin-top: 2px; font-size: var(--m-meta); color: #64748b; }
 
-  /* "Delete item" al pie de la hoja de editar (2026-11-13, opción A):
-   * en rojo y de contorno, debajo de todo, lejos de Save. Dos toques. */
-  #mSheet .m-del {
-    display: block; width: 100%; margin-top: 14px; padding: 12px; cursor: pointer; box-shadow: none;
-    font-size: var(--m-body); font-weight: 800; color: #fca5a5; background: none;
-    border: 1px solid rgba(248,113,113,.45); border-radius: 999px !important;
+  /* ── Editar un producto: pantalla (mobile-inventory.js, hoja()) ────
+   * Axel, 2026-11-13, sobre lámina: pantalla y no hoja, todo a la vista,
+   * la tarjeta del producto igual (.m-fic), el proveedor como una fila
+   * con su color (opción X) y Delete y Save en la misma línea.
+   *
+   * Fija ENCIMA de la lista, entre la banda y la barra de pestañas: la
+   * lista no se toca y al volver está donde estaba. Por debajo de la
+   * banda (9100) y de las pestañas (9000). Si en un teléfono pequeño no
+   * cabe, rueda ella sola. */
+  .m-ed {
+    position: fixed; left: 0; right: 0; z-index: 8990;
+    top: calc(52px + env(safe-area-inset-top, 0px)); bottom: 0;
+    overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+    background: #0b1220;
+    padding: 6px 16px calc(env(safe-area-inset-bottom, 0px) + 96px);
   }
-  #mSheet .m-del:disabled { opacity: .6; }
+  .m-ed-lab {
+    margin-top: 12px; font-size: var(--m-meta); font-weight: 800;
+    letter-spacing: .07em; text-transform: uppercase; color: #94a3b8;
+  }
+  #mScreens .m-ed-fila {
+    display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 6px; padding: 0 14px;
+    height: calc(var(--m-base) * 3); cursor: pointer; box-shadow: none; text-align: left;
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 14px !important;
+    font-size: var(--m-body); font-weight: 700; color: #f1f5f9;
+  }
+  #mScreens .m-ed-ren { margin-top: 10px; }
+  .m-ed-k { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .m-ed-k small { font-size: var(--m-meta); font-weight: 500; color: #94a3b8; }
+  .m-ed-a { flex: none; font-size: var(--m-small); font-weight: 800; color: #7dd3fc; }
+  .m-ed-a.m-ed-mut { color: #64748b; font-weight: 600; }
+  .m-ed-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; }
+  .m-ed-dos { display: flex; gap: 10px; }
+  .m-ed-dos > div { flex: 1; min-width: 0; }
+  .m-ed-nom > div:first-child { flex: 2; }
+  .m-ed-in1, .m-ed-paso {
+    display: flex; align-items: center; gap: 4px; margin-top: 6px; height: calc(var(--m-base) * 3);
+    padding: 0 4px 0 12px; border-radius: 12px;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.13);
+  }
+  .m-ed-paso { padding: 0 4px; }
+  .m-ed-in1 > span { color: #94a3b8; font-weight: 700; }
+  .m-ed-in1 input, .m-ed-paso input {
+    flex: 1; min-width: 0; height: 100%; padding: 0 4px; background: none; border: 0; outline: none;
+    color: #fff; font-weight: 700; font-size: max(16px, var(--m-strong)); -webkit-appearance: none; box-shadow: none;
+  }
+  .m-ed-paso input { text-align: center; -moz-appearance: textfield; }
+  .m-ed-paso input::-webkit-inner-spin-button, .m-ed-in1 input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  #mScreens .m-ed-paso button {
+    flex: none; width: calc(var(--m-base) * 2.3); height: calc(var(--m-base) * 2.3); padding: 0; cursor: pointer;
+    font-size: var(--m-strong); font-weight: 700; color: #e2e8f0; box-shadow: none;
+    background: rgba(255,255,255,.08); border: 0; border-radius: 9px !important;
+  }
+  .m-ed .m-botrow { margin-top: 6px; }
+  body.m-shell .m-ed .m-iqline { margin: 8px 0 0; }
+  .m-ed-acts { display: flex; gap: 10px; margin-top: 16px; }
+  #mScreens .m-ed-del, #mScreens .m-ed-save {
+    flex: 1; height: calc(var(--m-base) * 3.2); cursor: pointer; box-shadow: none;
+    font-size: var(--m-body); font-weight: 800; border-radius: 999px !important;
+  }
+  #mScreens .m-ed-del { flex: 0 0 38%; color: #fca5a5; background: none; border: 1px solid rgba(248,113,113,.45); }
+  #mScreens .m-ed-save { color: #0b1220; background: #38bdf8; border: 0; }
+  #mScreens .m-ed-del:disabled, #mScreens .m-ed-save:disabled { opacity: .6; }
+  /* La hoja de proveedores: una fila por proveedor, su color y ✓. */
+  #mSheet .m-vend-op {
+    display: flex; align-items: center; gap: 12px; width: 100%; height: calc(var(--m-base) * 3.1); padding: 0 6px;
+    cursor: pointer; background: none; border: 0; border-top: 1px solid rgba(255,255,255,.07); border-radius: 0 !important;
+    font-size: var(--m-body); font-weight: 700; color: #e2e8f0; box-shadow: none; text-align: left;
+  }
+  #mSheet .m-vend-op .m-vend-n { flex: 1; }
+  #mSheet .m-vend-op .ti { color: #38bdf8; font-size: var(--m-strong); }
+  /* En una sección (enBanda), sólo su nombre: el título acoplado de la
+   * lista (Inventory) no se pinta debajo de "Edit item". */
+  .m-band.m-en-seccion .m-band-titulo { opacity: 0 !important; }
 
   /* ── Settings › Toast › Pours (mobile-toast-pours.js) ──────────────
    * Opción A (Axel, 2026-11-13): una fila por medida, con − / + como el
