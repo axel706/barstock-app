@@ -1633,6 +1633,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * 2026-11-13: no bajo la cifra). Una sola línea: lo largo se corta. */
   .m-cf-s { margin-top: 2px; font-size: var(--m-meta); font-weight: 700; color: #6ee7b7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .m-cf-s.m-cf-err { color: #fca5a5; }
+  /* Un dato, no un estado: las botellas de "On the shelf". */
+  .m-cf-s.m-cf-neu { color: #c3d2e2; }
   /* Con estado, el título no guarda sus dos líneas: "Sold today" cabe en
    * una y el hueco quedaba entre él y la hora. Así la hora ocupa ese
    * hueco y el número sigue a la altura de los otros dos. */

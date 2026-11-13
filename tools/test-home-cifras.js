@@ -47,7 +47,8 @@ async function entorno(o) {
   w.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} });
   new Function(leer('src/events.js'))();
   new Function(leer('src/dialog.js'))();
-  w.state = { master: [{ item: "Tito's", vendor: 'LOOP', onHand: 4, suggested: 8, value: 25 }] };
+  w.state = { master: [{ item: "Tito's", vendor: 'LOOP', onHand: 4, suggested: 8, value: 25 },
+    { item: 'Kahlua', vendor: 'SOUTHERN', onHand: 1201.3, suggested: 2, value: 1 }] };
   global.state = w.state;
   w.parAdjustments = new Map();
   w.normalizeName = (s) => String(s || '').toLowerCase();
@@ -87,6 +88,11 @@ async function entorno(o) {
     ventasDesde: async () => (w.__lento && await esperar(w.__lento), o.sinToast ? { dias: [], ventas: [], productos: [] } : { dias, ventas, productos: [] }) };
   new Function(leer('src/run-out.js'))();
   new Function(leer('src/toast-sales.js'))();
+  // El LIVE: con `o.vivo`, Tito's (contado 4) se movió y vale 2.6.
+  if (o.vivo) w.BarStockRunOut.ahora = async () => ({ estado: 'listo', conteo: '2026-11-09T02:00:00Z', desde: '2026-11-08',
+    filas: [{ producto: "Tito's", contado: 4, llego: 0, vendido: 1.4, live: 2.6, movimiento: true, llegadas: [], viene: [] }] });
+  new Function(leer('src/live-cache.js'))();
+  if (o.vivo) await w.BarStockLiveCache.cargar();
   w.__abrir = null;
   w.BarStockMobileSales = { abrir: (x) => { w.__abrir = x; } };
   let def = null;
@@ -147,6 +153,23 @@ grupo('con algo que arreglar');
   await esperar(20);
   prueba('Review abre la hoja sin sincronizar', !!w.document.querySelector('#mSheet .m-cfh') && w.__syncs === 0, String(w.__syncs));
   prueba('y la hoja dice qué', /2 lines have no bottle/.test(txt(w.document.querySelector('#mSheet .m-cfh'))));
+}
+
+grupo('On the shelf: las botellas');
+{
+  // Axel, 2026-11-13: la segunda línea de On the shelf son las botellas,
+  // y se mueven con el LIVE. Bajo el título, como el "synced" de Sold.
+  const { host } = await entorno();
+  const c = cifra(host, 'On the shelf');
+  const st = c.querySelector('.m-cf-s');
+  prueba('sin LIVE: lo contado, sin "≈"', !!st && txt(st) === '1,205 bottles', txt(st));
+  prueba('bajo el título, antes de la cifra', !!st && st.previousElementSibling === c.querySelector('.m-cf-k') && st.nextElementSibling === c.querySelector('.m-cf-v'));
+}
+{
+  const { host } = await entorno({ vivo: true });
+  const st = cifra(host, 'On the shelf').querySelector('.m-cf-s');
+  // Tito's pasa de 4 a 2.6: 1201.3 + 2.6 = 1203.9 → 1,204.
+  prueba('con LIVE: la suma del LIVE de cada producto, con "≈"', !!st && txt(st) === '≈1,204 bottles', txt(st));
 }
 
 grupo('el Sync de Sold');

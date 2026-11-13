@@ -536,6 +536,14 @@ ES el número grande. Compacta a propósito ("que las tarjetas no crezcan
 demasiado"): 48 px de gráfica, unos 105 px más por tarjeta; con más de
 ocho días, los ocho últimos y "Since …". Prueba: `test-semana-tarjeta`.
 
+**"On the shelf" del Home lleva las botellas** bajo el título (Axel,
+2026-11-13): "≈1,204 bottles" con LIVE, lo contado sin "≈" si no. Es la
+suma del número de cada producto (`live-cache.botellas()`, con
+`cuanto()`), así que cuadra con Inventory. Todo el inventario es licor y
+vino ("no tenemos cerveza ni kegs"): sumar unidades es sumar botellas.
+Se descartó "−$X vs count": el estante es contado + llegó − vendido, y
+compararlo con el conteo mezclaba las dos cosas.
+
 **Cuándo sale la marca "Live"** (Axel, 2026-11-08): durante un conteo
 activo se enseña lo contado, sin marca. Al cerrar el conteo todo vuelve
 a cero: el número es lo contado y NO lleva "Live". La marca aparece con

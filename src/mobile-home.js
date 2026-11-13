@@ -1841,8 +1841,17 @@
         <button type="button" class="m-cf-b" data-cf="${o.id}"${o.off ? ' disabled' : ''}>${o.btn}</button>
       </div>`;
 
+    // La segunda línea de "On the shelf": las botellas (Axel,
+    // 2026-11-13). Se descartó "−$1,060 vs count": el estante es lo
+    // contado MÁS lo que llegó menos lo vendido, y comparar sólo con el
+    // conteo mezclaba las dos cosas. Con LIVE lleva "≈", como el resto.
+    const LCb = window.BarStockLiveCache;
+    const bt = e && LCb && LCb.botellas ? LCb.botellas() : null;
     const partes = [cifra({
-      id: 'estante', k: 'On the shelf', v: e ? money(e.total) : '…',
+      id: 'estante', k: 'On the shelf',
+      s: bt ? (bt.live ? '≈' : '') + Math.round(bt.total).toLocaleString('en-US') + ' bottle' + (Math.round(bt.total) === 1 ? '' : 's') : '',
+      sTono: 'm-cf-neu',
+      v: e ? money(e.total) : '…',
       d: e && e.live ? '<span class="m-cf-live">Live</span> now' : e ? 'as counted' : '&nbsp;',
       btn: 'Details'
     })];

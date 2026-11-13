@@ -191,12 +191,30 @@
     return p.length >= 2 ? p : null;
   }
 
+  // ── Las botellas del estante (Axel, 2026-11-13) ────────────────────
+  //
+  // La segunda línea de "On the shelf" en el Home: cuántas botellas hay,
+  // y que se mueva con el LIVE. Es la suma del MISMO número que enseña
+  // cada producto (cuanto: el LIVE si se movió, si no lo contado), así
+  // que cuadra con Inventory fila a fila. Todo el inventario es licor y
+  // vino (Axel: "no tenemos cerveza ni kegs"): sumar unidades es sumar
+  // botellas. `live` dice si algo de la suma viene del LIVE, para la "≈".
+  function botellas() {
+    let total = 0, live = false;
+    for (const r of (window.state && window.state.master) || []) {
+      if (!r || !r.item) continue;
+      total += cuanto(r);
+      if (vivo(r)) live = true;
+    }
+    return { total: Math.round(total * 100) / 100, live };
+  }
+
   // Las piezas de HTML, iguales en todas las pantallas del teléfono.
   const etiquetaLive = (r) => vivo(r) ? '<span class="m-live"><i></i>Live</span>' : '';
   const etiquetaAgota = (r) => { const a = agota(r); return a ? `<span class="m-out m-out-${a.tono}">${a.txt}</span>` : ''; };
 
   window.BarStockLiveCache = {
-    cargar, caducar, alCambiar, vivo, cuanto, conVivo, texto, agota, toastLoVende, medianas, llegadas, dinero, semana,
+    cargar, caducar, alCambiar, vivo, cuanto, conVivo, texto, agota, toastLoVende, medianas, llegadas, dinero, semana, botellas,
     etiquetaLive, etiquetaAgota, VIVO_MS,
     _reset: () => { _vivo = null; _agota = null; _conteo = null; _desde = null; _vivoEn = 0; _pidiendo = null; _otraVez = false; _oyentes.clear(); }
   };

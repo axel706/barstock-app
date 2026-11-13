@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261113-120115",
+    "items": [
+      "On the shelf shows how many bottles, live"
+    ]
+  },
+  {
     "build": "20261113-110139",
     "items": [
       "Do we have: Live items show this week, day by day"
@@ -187,12 +193,6 @@
     "build": "20261111-232818",
     "items": [
       "The back arrow sits centered in its circle"
-    ]
-  },
-  {
-    "build": "20261111-232503",
-    "items": [
-      "Bigger header icons: Time Machine, bell and back"
     ]
   }
 ]
