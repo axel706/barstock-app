@@ -585,9 +585,13 @@ un empaque. Es una afordancia que miente: se arregla aparte.
 
 Axel: "puede seguir viendo todo, absolutamente toda la información, pero
 no puede editar nada que no son las recetas". Elegido sobre lámina:
-login **C** (nombre y teclado numérico), dentro **1** (píldora "Guest ·
-Billie" y lo que edita desaparece), alta **A** (Settings › People ›
-Bartenders, sólo Axel).
+login **C** (nombre y teclado numérico), dentro **1** (lo que edita
+desaparece), alta **A** (Settings › People › Bartenders, sólo Axel). La
+marca es "BARTENDER MODE" en ámbar DENTRO de la banda, bajo el logo o el
+título (2026-11-13, opción A): la primera píldora colgaba por debajo y
+tapaba las pestañas de Orders. El saludo del Home usa el nombre de su
+sesión (el perfil de remitente es de la locación) y el botón del
+escáner va apagado con un aviso.
 
 - **Billie es un usuario de Supabase.** Correo sacado del nombre
   (`billie@bartenders.barstockpro.com`, nadie lo ve) y el PIN de

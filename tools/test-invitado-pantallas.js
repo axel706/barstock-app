@@ -52,6 +52,15 @@ function ventana(rol, nombre) {
     prueba('cualquier otro: nada', con(ventana('staff', 'Sam')) === '' && con(ventana()) === '');
   }
 
+  grupo('1a · la marca va DENTRO de la banda (opción A, 2026-11-13)');
+  {
+    const css = leer('styles/mobile-app.css');
+    const r = /\n  \.m-guest-pill \{([\s\S]*?)\n  \}/.exec(css);
+    prueba('anclada al fondo de la banda, no colgando por debajo', !!r && /bottom: 4px/.test(r[1]) && !/top:\s*calc\(100%/.test(r[1]), r && r[1]);
+    prueba('lo de en medio sube para dejarle sitio', /html\.bs-guest \.m-band \{ padding-bottom: 10px; \}/.test(css) &&
+      /html\.bs-guest :is\(\.m-band-titulo, \.m-band-seccion\) \{ bottom: 10px; height: 42px; line-height: 42px; \}/.test(css));
+  }
+
   grupo('1b · el saludo y el botón verde');
   {
     // El saludo, de verdad: soloNombre y saludo de mobile-home.js.

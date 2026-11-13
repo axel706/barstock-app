@@ -375,21 +375,26 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
       rgba(8,12,19,.74) 100%);
   }
 
-  /* ── "Guest · Billie" (src/guest.js, opción 1 de Axel, 2026-11-12) ─
-   * Cuelga del borde de abajo de la banda, centrada bajo el logo, en
-   * todas las pantallas. Ámbar, el color de "atención" de la app: quien
-   * mira el teléfono de Billie sabe que no está en una cuenta normal.
-   * translateZ(0) por lo mismo que el logo (abajo): fuera del alcance
-   * del desenfoque de la banda en WebKit. */
+  /* ── "BARTENDER MODE" (src/guest.js; Axel, 2026-11-13, opción A) ──
+   * Una línea en ámbar DENTRO de la banda, bajo el logo o el título, en
+   * todas las pantallas. Primero fue una píldora colgando del borde de
+   * abajo de la banda (opción 1 del 2026-11-12) y tapaba lo que había
+   * debajo: las pestañas de Orders.
+   *
+   * Para que quepa, lo de en medio sube un poco sin tocar sus
+   * transform, que los anima el scroll (band-dock.js): el logo se
+   * centra en una caja 10px más baja (padding-bottom de la banda), y el
+   * título y el nombre de la sección se quedan en 42px de alto, a 10px
+   * del suelo. translateZ(0) por lo mismo que el logo (abajo): fuera
+   * del alcance del desenfoque de la banda en WebKit. */
   .m-guest-pill {
-    position: absolute; top: calc(100% - 6px); left: 50%; z-index: 3;
-    transform: translateX(-50%) translateZ(0);
-    display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
-    padding: 4px 10px; border-radius: 999px;
-    background: rgba(56,40,8,.86); border: 1px solid rgba(251,191,36,.38);
-    color: #fbbf24; font-size: var(--m-meta); font-weight: 800; pointer-events: none;
+    position: absolute; left: 0; right: 0; bottom: 4px; z-index: 3;
+    transform: translateZ(0); text-align: center; pointer-events: none;
+    font-size: calc(var(--m-base) * .66); font-weight: 800; letter-spacing: .14em;
+    text-transform: uppercase; color: #fbbf24; text-shadow: 0 1px 8px rgba(0,0,0,.6);
   }
-  .m-guest-pill .ti { font-size: var(--m-small); }
+  html.bs-guest .m-band { padding-bottom: 10px; }
+  html.bs-guest :is(.m-band-titulo, .m-band-seccion) { bottom: 10px; height: 42px; line-height: 42px; }
 
   /* ── El desenfoque, y por qué el logo se le escapa ────────────────
    *

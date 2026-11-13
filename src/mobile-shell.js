@@ -82,7 +82,7 @@
   function pildoraInvitado() {
     const G = window.BarStockGuest;
     if (!G || !G.activo()) return '';
-    return '<span class="m-guest-pill" role="status"><i class="ti ti-eye" aria-hidden="true"></i>Bartender Mode</span>';
+    return '<span class="m-guest-pill" role="status">Bartender Mode</span>';
   }
 
   function montarBanda() {
@@ -124,10 +124,11 @@
       // El grupo de la derecha. Nace vacío: la campana la mete
       // mobile-notif.js cuando arranca.
       '<span class="m-band-ico"></span>' +
-      // El bartender invitado (src/guest.js): "Guest · Billie" bajo el
-      // logo, en todas las pantallas (Axel, 2026-11-12, opción 1). Va en
-      // la banda porque la banda está siempre; en cada pantalla habría
-      // que acordarse de ponerla.
+      // El bartender invitado (src/guest.js): "BARTENDER MODE" bajo el
+      // logo o el título, DENTRO de la banda, en todas las pantallas
+      // (Axel, 2026-11-13, opción A). Colgaba por debajo de la banda y
+      // tapaba las pestañas de Orders. Va en la banda porque la banda
+      // está siempre; en cada pantalla habría que acordarse de ponerla.
       pildoraInvitado();
     // Al principio del body: así el bloqueo de la pantalla de entrada
     // (body.auth-locked > *) también la tapa, como a todo lo demás.
