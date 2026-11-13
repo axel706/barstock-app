@@ -9,7 +9,8 @@
  *      this cycle. Cada una con título, número, una línea y su botón.
  *   2. Sold yesterday es el Net sales de ayer (toast-sales), y vender
  *      más se pinta en VERDE (las clases .m-up/.m-down son del gasto y
- *      van al revés). Report abre el Full report.
+ *      van al revés). Su botón es Sync: carga lo vendido HOY (ver
+ *      "el Sync de Sold", abajo).
  *   3. Sin Toast, no hay Sold yesterday: quedan dos.
  *   4. Spent this cycle dice desde cuándo; su botón Sync sincroniza
  *      MarginEdge y abre la hoja con lo que decía la tarjeta.
@@ -65,6 +66,23 @@ async function entorno(o) {
     dias.push({ business_date: f, complete: true, closed: true });
     ventas.push({ business_date: f, toast_item_name: "Tito's", sales_category: 'Liquor', net: k === 1 ? 3500 : 2500, quantity: 10 });
   }
+  // Lo que deja el Sync: la fila de hoy, abierta, y sus ventas.
+  const ponerHoy = (net) => {
+    dias.push({ business_date: HOY, complete: true, closed: false, fetched_at: '2026-11-11T23:12:00Z' });
+    if (net) ventas.push({ business_date: HOY, toast_item_name: "Tito's", sales_category: 'Liquor', net, quantity: 3 });
+  };
+  if (o.hoy !== undefined) ponerHoy(o.hoy);
+  w.__sync = [];
+  w.__avisos = [];
+  w.BarStockToast = { show: (m) => w.__avisos.push(m) };
+  w.BarStockInventoryCloud = { fetchLocationId: async () => 'loc-1' };
+  w.BarStockDevPanel = { llamar: async (p, a, par) => {
+    w.__sync.push([p, a, par]);
+    await esperar(30);
+    if (o.syncFalla) return { ok: false, error: o.syncFalla };
+    if (o.syncTrae !== undefined) ponerHoy(o.syncTrae);
+    return { ok: true };
+  } };
   w.BarStockToastUsage = { diaDeNegocio: () => HOY,
     ventasDesde: async () => (o.sinToast ? { dias: [], ventas: [], productos: [] } : { dias, ventas, productos: [] }) };
   new Function(leer('src/run-out.js'))();
@@ -101,8 +119,10 @@ grupo('las tres cifras');
   const sube = a.querySelector('.m-cf-d span');
   prueba('vender más, en verde (+40% vs un martes normal)', !!sube && sube.classList.contains('m-cf-sube') && /↗ 40%/.test(sube.textContent),
     sube && sube.outerHTML);
-  a.querySelector('.m-cf-b').click();
-  prueba('Report abre el Full report', w.__abrir && w.__abrir.vista === 'dinero', JSON.stringify(w.__abrir));
+  // Axel, 2026-11-13: Report pasa a ser Sync (el reporte sigue en el
+  // Full report de la tarjeta grande).
+  prueba('su botón es Sync, no Report', /^Sync$/.test(txt(a.querySelector('.m-cf-b'))), txt(a.querySelector('.m-cf-b')));
+  prueba('sin Sync todavía, sin línea de estado', !a.querySelector('.m-cf-s'));
 
   const g = cifra(host, 'Spent this cycle');
   prueba('Spent this cycle: el gasto y desde cuándo', txt(g.querySelector('.m-cf-v')) === '$3,644' && /since Nov 8/.test(txt(g)), txt(g));
@@ -127,6 +147,60 @@ grupo('con algo que arreglar');
   await esperar(20);
   prueba('Review abre la hoja sin sincronizar', !!w.document.querySelector('#mSheet .m-cfh') && w.__syncs === 0, String(w.__syncs));
   prueba('y la hoja dice qué', /2 lines have no bottle/.test(txt(w.document.querySelector('#mSheet .m-cfh'))));
+}
+
+grupo('el Sync de Sold');
+{
+  // Axel, 2026-11-13, sobre lámina: Sync carga lo vendido hoy. Con
+  // ventas, "Sold today" y la hora bajo el TÍTULO (no bajo la cifra).
+  const { w, host } = await entorno({ syncTrae: 1200 });
+  cifra(host, 'Sold').querySelector('.m-cf-b').click();
+  await esperar(5);
+  const c0 = cifra(host, 'Sold');
+  prueba('mientras, "Syncing…" y el botón apagado', /Syncing/.test(txt(c0.querySelector('.m-cf-b'))) && c0.querySelector('.m-cf-b').disabled);
+  await esperar(120);
+  prueba('llama a sync con hoy y la locación', w.__sync.length === 1 && w.__sync[0][1] === 'sync' &&
+    w.__sync[0][2].businessDate === '20261111' && w.__sync[0][2].locationId === 'loc-1', JSON.stringify(w.__sync));
+  const c = cifra(host, 'Sold');
+  prueba('pasa a "Sold today"', txt(c.querySelector('.m-cf-k')) === 'Sold today', txt(c));
+  prueba('con lo vendido hoy', txt(c.querySelector('.m-cf-v')) === '$1,200', txt(c.querySelector('.m-cf-v')));
+  const st = c.querySelector('.m-cf-s');
+  prueba('"synced" y la hora de Nueva York', !!st && txt(st) === 'synced 6:12 PM', txt(st));
+  prueba('la hora va bajo el título, antes de la cifra', !!st && st.previousElementSibling === c.querySelector('.m-cf-k') &&
+    st.nextElementSibling === c.querySelector('.m-cf-v'));
+  prueba('y abajo, "so far today"', txt(c.querySelector('.m-cf-d')) === 'so far today');
+  prueba('el botón vuelve a Sync', /^Sync$/.test(txt(c.querySelector('.m-cf-b'))) && !c.querySelector('.m-cf-b').disabled);
+}
+{
+  // Sin ventas todavía: sigue ayer, y lo dice.
+  const { host } = await entorno({ syncTrae: 0 });
+  cifra(host, 'Sold').querySelector('.m-cf-b').click();
+  await esperar(150);
+  const c = cifra(host, 'Sold');
+  prueba('sin ventas hoy: sigue "Sold yesterday" con lo de ayer', txt(c.querySelector('.m-cf-k')) === 'Sold yesterday' &&
+    txt(c.querySelector('.m-cf-v')) === '$3,500', txt(c));
+  prueba('y dice que hoy no hay nada aún', /^no sales yet$/.test(txt(c.querySelector('.m-cf-s'))), txt(c.querySelector('.m-cf-s')));
+  // Lo que queda pendiente de este Home (su relectura de ventas) pinta
+  // sobre el `document` global, que el siguiente entorno sustituye: se
+  // deja terminar antes de crear otro.
+  await esperar(300);
+}
+{
+  const { w, host } = await entorno({ syncFalla: 'Toast said 401' });
+  cifra(host, 'Sold').querySelector('.m-cf-b').click();
+  await esperar(150);
+  const c = cifra(host, 'Sold');
+  prueba('si falla: ámbar y "Sync failed"', c.classList.contains('m-cf-am') && txt(c.querySelector('.m-cf-s')) === 'Sync failed' &&
+    c.querySelector('.m-cf-s').classList.contains('m-cf-err'), txt(c));
+  prueba('los números no cambian', txt(c.querySelector('.m-cf-k')) === 'Sold yesterday' && txt(c.querySelector('.m-cf-v')) === '$3,500');
+  prueba('el botón es Retry', /^Retry$/.test(txt(c.querySelector('.m-cf-b'))));
+  prueba('y avisa con lo que dijo el servidor', w.__avisos.some(m => /Toast said 401/.test(m)), JSON.stringify(w.__avisos));
+}
+{
+  // Al abrir la app con hoy ya sincronizado: sale de los datos.
+  const { host } = await entorno({ hoy: 800 });
+  const c = cifra(host, 'Sold');
+  prueba('con hoy ya cargado, abre en "Sold today"', txt(c.querySelector('.m-cf-k')) === 'Sold today' && txt(c.querySelector('.m-cf-v')) === '$800', txt(c));
 }
 
 grupo('sin Toast');

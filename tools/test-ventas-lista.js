@@ -39,7 +39,8 @@ const AYER = sumar(HOY, -1), SAB = sumar(HOY, -4);
 // Medianas de Tito's por día de la semana: los martes 1.6.
 const MED_TITO = [1, 0, 1.6, 1, 1, 1.5, 2];
 
-async function entorno() {
+async function entorno(o) {
+  o = o || {};
   const dom = new JSDOM('<!doctype html><body></body>', { url: 'https://x.test/' });
   const w = dom.window;
   global.window = w; global.document = w.document;
@@ -55,8 +56,11 @@ async function entorno() {
     { producto: 'Nino Ardevi Prosecco', porDia: { [AYER]: 3.6, [SAB]: 5 } },
     { producto: 'Kahlua', porDia: { [AYER]: 0.6 } }
   ];
+  // Lo que deja el Sync de "Sold": hoy, abierto y a medias.
+  const deHoy = o.conHoy ? [{ business_date: HOY, toast_item_name: "Tito's", sales_category: 'Liquor', net: 120, quantity: 10 }] : [];
+  if (o.conHoy) { dias.push({ business_date: HOY, complete: true, closed: false }); productos[0].porDia[HOY] = 0.8; }
   w.BarStockToastUsage = { diaDeNegocio: () => HOY,
-    ventasDesde: async () => ({ dias, productos, ventas: [
+    ventasDesde: async () => ({ dias, productos, ventas: [...deHoy,
       { business_date: AYER, toast_item_name: 'Espresso Martini', sales_category: 'Liquor', net: 392, quantity: 28 },
       { business_date: AYER, toast_item_name: "Tito's", sales_category: 'Liquor', net: 300, quantity: 28 },
       { business_date: AYER, toast_item_name: "Tito's", sales_category: 'Liquor', net: 41, quantity: 3 },
@@ -162,6 +166,28 @@ grupo('Full report');
   prueba('sin cerveza en la lista', !filas.some(f => /IPA|Silver Bar/.test(f)));
   h.querySelector('.m-vl-r-din').click();
   prueba('un artículo de Toast no abre ficha', w.__abierto === null && !!w.document.querySelector('#mSheet'));
+}
+
+grupo('hoy, a medias');
+{
+  // Tras el Sync de "Sold": la hoja abre en hoy, llamado "Today", y no
+  // lo compara en % contra un día entero.
+  const { w, host } = await entorno({ conHoy: true });
+  host.querySelector('#mhVentas [data-v="dinero"]').click();
+  host.querySelector('#mhVentas [data-mas]').click();
+  await esperar(20);
+  const h = hoja(w);
+  const chips = [...h.querySelectorAll('.m-vl-c')];
+  prueba('siete días, el último es hoy y está elegido', chips.length === 7 && /^Today/.test(chips[6].textContent.trim()) && chips[6].classList.contains('on'),
+    chips.map(c => c.textContent.replace(/\s+/g, ' ').trim()).join(','));
+  const tot = h.querySelector('.m-vl-tot').textContent.replace(/\s+/g, ' ');
+  prueba('$120 · Today, "So far today"', /\$120\s*net · Today/.test(tot) && /So far today/.test(tot), tot);
+  w.document.querySelector('#mSheet').remove();
+  host.querySelector('#mhVentas [data-v="botellas"]').click();
+  host.querySelector('#mhVentas [data-mas]').click();
+  await esperar(20);
+  const tb = hoja(w).querySelector('.m-vl-tot').textContent.replace(/\s+/g, ' ');
+  prueba('en botellas, igual', /0\.8\s*bottles · 1 product · Today/.test(tb) && /So far today/.test(tb), tb);
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');

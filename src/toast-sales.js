@@ -97,10 +97,9 @@
 
     const ayer = sumarDias(o.hoy, -1);
     const semana = [];
-    for (let k = SEMANA - 1; k >= 0; k--) {
-      const f = sumarDias(ayer, -k);
+    const entrada = (f) => {
       const din = dinDia.get(f) || { licor: 0, vino: 0 };
-      semana.push({
+      return {
         fecha: f, dia: D[diaSemana(f)], cargado: cargado.has(f),
         botellas: r2(botDe(f)), licor: r2(din.licor), vino: r2(din.vino), dinero: r2(din.licor + din.vino),
         normalBotellas: normal(f, botDe), normalDinero: normal(f, dinDe),
@@ -108,9 +107,22 @@
         normalBotLicor: normal(f, botLic), normalBotVino: normal(f, botVin),
         normalLicor: normal(f, dinLic), normalVino: normal(f, dinVin),
         sinPrecio: sinPrecio.get(f) || 0
-      });
-    }
-    return { semana, cargados: cargado.size };
+      };
+    };
+    for (let k = SEMANA - 1; k >= 0; k--) semana.push(entrada(sumarDias(ayer, -k)));
+
+    // ── Hoy, si se cargó a mano (el Sync de la tarjeta "Sold") ──────────
+    //
+    // Axel, 2026-11-13: con ventas de hoy la tarjeta dice "Sold today" y
+    // la hora del sync. `semana` sigue acabando AYER: es la de días
+    // cerrados, y el correo de la mañana toma su último día como "ayer".
+    // Lo de hoy va aparte, `hoy`, sólo si su día está cargado (aunque sea
+    // con cero: "none today yet"), con la hora en que se cargó. Lo normal
+    // de hoy es el de un día entero; quien lo enseñe no compara un día a
+    // medias contra uno entero como si fueran lo mismo.
+    const filaHoy = (o.dias || []).find(d => d && d.business_date === o.hoy);
+    const hoy = filaHoy ? Object.assign(entrada(o.hoy), { parcial: !filaHoy.closed, sincronizado: filaHoy.fetched_at || null }) : null;
+    return { semana, cargados: cargado.size, hoy };
   }
 
   // Lo más vendido de un día, entero: la tarjeta enseña tres y "All
@@ -225,7 +237,56 @@
     return ((ahoraMs === undefined ? Date.now() : ahoraMs) - t) > VIEJA_H * 3600e3;
   }
 
-  window.BarStockToastSales = { resumir, masVendido, fuera, semanaDe, ahora, MIN_MUESTRAS, SEMANA,
+  // ── La semana que se ENSEÑA: con hoy, si hoy ya vendió ─────────────
+  //
+  // La tarjeta grande y el Full report (mobile-sales.js) eligen el día
+  // por su posición en esta lista: tiene que ser la misma en los dos, o
+  // "el último" sería hoy en uno y ayer en el otro. Con ventas de hoy
+  // cargadas, los siete días acaban hoy (el primero sale); si no, es la
+  // semana cerrada de siempre.
+  function semanaConHoy(v) {
+    if (!v || !v.semana) return [];
+    const h = v.hoy;
+    if (!h || !(h.dinero > 0 || h.botellas > 0)) return v.semana;
+    return v.semana.slice(1).concat([h]);
+  }
+
+  // ── Cargar lo vendido HOY, a mano ────────────────────────────────────
+  //
+  // Axel, 2026-11-13: el botón Sync de la tarjeta "Sold" (mobile-home).
+  // Es la acción `sync` de siempre (lib/toast.js), con el día de negocio
+  // de hoy y la locación abierta: la misma que hace la carga de la
+  // madrugada. No se encima: sync BORRA las ventas de ese día y las
+  // vuelve a escribir, así que sincronizar a las 6 y a las 10 deja lo de
+  // las 10; y la madrugada recarga el día entero porque queda sin cerrar.
+  // El LIVE resta lo cargado, y "cuándo se acaba" resta de hoy sólo lo
+  // que falta (run-out.js).
+  //
+  // Si falla, lanza con lo que dijo el servidor, tal cual: quien llama lo
+  // enseña. Si sale bien, avisa (toastSalesUpdated) y se relee todo lo
+  // que cuelga de las ventas: esto mismo, y el LIVE (live-cache.js).
+  async function sincronizarHoy() {
+    const U = window.BarStockToastUsage, D = window.BarStockDevPanel;
+    if (!U || !D || !D.llamar) throw new Error('The app is not fully loaded yet.');
+    const hoy = U.diaDeNegocio(Date.now());
+    const loc = await window.BarStockInventoryCloud.fetchLocationId();
+    const r = await D.llamar('toast', 'sync', { businessDate: hoy.replace(/-/g, ''), locationId: loc });
+    if (!r || !r.ok) {
+      const que = r ? (r.error || (r.paso ? 'step "' + r.paso + '" failed' + (r.status ? ' (' + r.status + ')' : '') : '') ||
+        (r.crudo ? String(typeof r.crudo === 'string' ? r.crudo : JSON.stringify(r.crudo)).slice(0, 160) : '')) : '';
+      throw new Error(que || 'no answer from the server');
+    }
+    olvidar();
+    if (window.BarStockEvents && window.BarStockEvents.emit) window.BarStockEvents.emit('toastSalesUpdated', { fecha: hoy });
+    return r;
+  }
+
+  // Un Sync de hoy (o cualquier carga) cambia lo vendido: se olvida lo
+  // guardado para que la próxima lectura lo traiga.
+  function olvidar() { _datos = null; _en = 0; _de = ''; }
+  if (window.BarStockEvents && window.BarStockEvents.on) window.BarStockEvents.on('toastSalesUpdated', olvidar);
+
+  window.BarStockToastSales = { resumir, masVendido, fuera, semanaDe, ahora, MIN_MUESTRAS, SEMANA, semanaConHoy, sincronizarHoy,
     ultimaCarga, textoCarga, cargaVieja, VIEJA_H,
     _reset: () => { _datos = null; _en = 0; _de = ''; _pidiendo = null; } };
 })();

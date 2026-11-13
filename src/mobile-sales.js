@@ -40,6 +40,8 @@
   const fechaCorta = (f) => { const d = new Date(f + 'T12:00:00Z'); return M[d.getUTCMonth()] + ' ' + d.getUTCDate(); };
 
   let _dia = 0, _q = '', _vista = 'botellas';
+  // Hoy cargado a medias se llama "Today", como en la tarjeta del Home.
+  const nomDia = (x) => x.parcial ? 'Today' : x.dia;
   const dinero0 = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('en-US');
 
   function cerrar() {
@@ -53,8 +55,11 @@
     const TS = window.BarStockToastSales;
     if (!TS) return;
     TS.ahora().then(V => {
-      if (!V || !V.semana || !V.semana.length) return;
-      _dia = o.dia == null || o.dia >= V.semana.length ? V.semana.length - 1 : o.dia;
+      // La misma semana que la tarjeta del Home (con hoy, si hoy vendió):
+      // el día llega por su posición y tiene que ser el mismo día.
+      const semV = window.BarStockToastSales.semanaConHoy(V);
+      if (!semV.length) return;
+      _dia = o.dia == null || o.dia >= semV.length ? semV.length - 1 : o.dia;
       _q = '';
       _vista = o.vista === 'dinero' ? 'dinero' : 'botellas';
       const din = _vista === 'dinero';
@@ -92,13 +97,13 @@
 
   function pintar(h, V) {
     const TS = window.BarStockToastSales, LC = window.BarStockLiveCache;
-    const sem = V.semana;
+    const sem = window.BarStockToastSales.semanaConHoy(V);
     const d = sem[_dia];
 
     const chips = h.querySelector('#mvChips');
     chips.innerHTML = sem.map((x, k) => `
       <span class="m-vl-c${k === _dia ? ' on' : ''}" data-d="${k}" role="button" tabindex="0">
-        ${x.dia}<small>${fechaCorta(x.fecha)}</small></span>`).join('');
+        ${nomDia(x)}<small>${fechaCorta(x.fecha)}</small></span>`).join('');
     chips.querySelectorAll('[data-d]').forEach(c => {
       const elegir = () => { _dia = Number(c.dataset.d); pintar(h, V); };
       c.onclick = elegir;
@@ -109,12 +114,15 @@
 
     const todos = TS.masVendido(V.base, d.fecha, 'botellas');
     const n = d.normalBotellas;
-    const cmp = !d.cargado ? 'No data for this day'
+    // Hoy cargado a medias (el Sync de la tarjeta "Sold"): no está
+    // cerrado, y compararlo en % contra un día entero mentiría.
+    const cmp = d.parcial ? 'So far today'
+      : !d.cargado ? 'No data for this day'
       : !d.botellas && !n ? 'Closed'
       : n ? ((d.botellas - n) / n * 100 >= 0 ? '↗ ' : '↘ ') + Math.abs(Math.round((d.botellas - n) / n * 100)) + '% vs usual ' + d.dia
       : '';
     h.querySelector('#mvTot').innerHTML = `
-      <b>${b1(d.botellas)}</b><span>bottles · ${todos.length} product${todos.length === 1 ? '' : 's'} · ${d.dia}</span>
+      <b>${b1(d.botellas)}</b><span>bottles · ${todos.length} product${todos.length === 1 ? '' : 's'} · ${nomDia(d)}</span>
       <em class="${n && cmp ? (d.botellas >= n ? 'm-ts-up' : 'm-ts-dn') : ''}">${esc(cmp)}</em>`;
 
     const t = norm(_q);
@@ -153,12 +161,15 @@
   function pintarDinero(h, V, d) {
     const TS = window.BarStockToastSales;
     const n = d.normalDinero;
-    const cmp = !d.cargado ? 'No data for this day'
+    // Hoy cargado a medias (el Sync de la tarjeta "Sold"): no está
+    // cerrado, y compararlo en % contra un día entero mentiría.
+    const cmp = d.parcial ? 'So far today'
+      : !d.cargado ? 'No data for this day'
       : !d.dinero && !n ? 'Closed'
       : n ? ((d.dinero - n) / n * 100 >= 0 ? '↗ ' : '↘ ') + Math.abs(Math.round((d.dinero - n) / n * 100)) + '% vs usual ' + d.dia
       : '';
     h.querySelector('#mvTot').innerHTML = `
-      <b>${dinero0(d.dinero)}</b><span>net · ${d.dia}</span>
+      <b>${dinero0(d.dinero)}</b><span>net · ${nomDia(d)}</span>
       <em class="${n && cmp ? (d.dinero >= n ? 'm-ts-up' : 'm-ts-dn') : ''}">${esc(cmp)}</em>`;
     h.querySelector('#mvLey').innerHTML = `
       <span><i class="licor"></i>Liquor & cocktails ${dinero0(d.licor)}</span>

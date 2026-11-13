@@ -116,6 +116,16 @@ async function home(o) {
   w.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} });
   w.__lecturas = 0;
   const D = datos();
+  // Sin hoy: como estaba antes de cualquier Sync (la carga de la
+  // madrugada sólo trae días cerrados).
+  if (o.sinHoy) {
+    D.dias = D.dias.filter(d => d.business_date !== HOY);
+    D.ventas = D.ventas.filter(v => v.business_date !== HOY);
+    D.productos.forEach(p => { delete p.porDia[HOY]; if (p.catPorDia) delete p.catPorDia[HOY]; });
+  }
+  w.__syncLlamadas = [];
+  w.BarStockInventoryCloud = { fetchLocationId: async () => 'loc-7' };
+  w.BarStockDevPanel = { llamar: async (prov, acc, par) => { w.__syncLlamadas.push([prov, acc, par]); return o.syncFalla || { ok: true }; } };
   w.BarStockToastUsage = {
     diaDeNegocio: () => HOY,
     ventasDesde: async () => { w.__lecturas++; return o.sinDatos ? { dias: [], ventas: [], productos: [] } : D; }
@@ -184,7 +194,7 @@ grupo('el encabezado: el logo de Toast y la última carga');
 
 grupo('la tarjeta del Home');
 {
-  const { w, host } = await home();
+  const { w, host } = await home({ sinHoy: true });
   const t = tarjeta(host);
   prueba('sale', !!t);
   prueba('abre en ayer (martes)', /3\.5/.test(t.querySelector('.m-ts-t b').textContent) && /Tue/.test(t.querySelector('.m-ts-t span').textContent),
@@ -218,6 +228,76 @@ grupo('la tarjeta del Home');
 {
   const { host } = await home({ sinDatos: true });
   prueba('sin Toast cargado, no hay tarjeta', !tarjeta(host));
+}
+
+grupo('hoy, cargado a medias con el Sync de "Sold"');
+{
+  // Axel, 2026-11-13: con lo de hoy sincronizado, la tarjeta grande
+  // también se pone al día. Hoy entra como último día, pero sin % contra
+  // un día entero: va "So far today".
+  const { host } = await home();
+  const t = tarjeta(host);
+  prueba('abre en hoy, llamado "Today"', /^9$/.test(t.querySelector('.m-ts-t b').textContent.trim()) && /Today/.test(t.querySelector('.m-ts-t span').textContent),
+    t.querySelector('.m-ts-t').textContent.replace(/\s+/g, ' '));
+  const pil = t.querySelector('.m-ts-pill');
+  prueba('sin %, "So far today"', !!pil && pil.textContent.trim() === 'So far today' && !pil.classList.contains('m-ts-up') && !pil.classList.contains('m-ts-dn'),
+    pil && pil.outerHTML);
+  prueba('siete barras: se cae la más vieja, la última es hoy', t.querySelectorAll('.m-ts-b').length === 7 &&
+    /Today/.test(t.querySelectorAll('.m-ts-d span')[6].textContent) && /Thu/.test(t.querySelectorAll('.m-ts-d span')[0].textContent),
+    [...t.querySelectorAll('.m-ts-d span')].map(x => x.textContent).join(','));
+  t.querySelectorAll('.m-ts-b')[5].click();
+  const t2 = tarjeta(host);
+  prueba('ayer sigue con su comparación', /3\.5/.test(t2.querySelector('.m-ts-t b').textContent) && /↗ 75% vs usual/.test(t2.querySelector('.m-ts-pill').textContent));
+}
+{
+  const { host } = await home({ sinHoy: true });
+  prueba('sin hoy cargado, ningún "Today"', !/Today/.test(tarjeta(host).textContent));
+}
+
+grupo('resumir: hoy aparte, y la semana sigue acabando ayer');
+{
+  const dom = new JSDOM('<!doctype html><body></body>', { url: 'https://x.test/' });
+  global.window = dom.window; global.document = dom.window.document;
+  cargar();
+  const TS = window.BarStockToastSales;
+  const D = datos();
+  const r = TS.resumir(Object.assign({ hoy: HOY }, D));
+  // El correo de la mañana toma el último de la semana como "ayer": no
+  // puede volverse hoy.
+  prueba('la semana no cambia', r.semana[6].fecha === '2026-11-10');
+  prueba('hoy va aparte, a medias', !!r.hoy && r.hoy.fecha === HOY && r.hoy.parcial === true && r.hoy.botellas === 9 && r.hoy.dinero === 999,
+    JSON.stringify(r.hoy));
+  const sc = TS.semanaConHoy(r);
+  prueba('semanaConHoy: siete, acabando hoy', sc.length === 7 && sc[6].fecha === HOY && sc[0].fecha === r.semana[1].fecha);
+  const sinNada = Object.assign({}, r, { hoy: Object.assign({}, r.hoy, { dinero: 0, botellas: 0 }) });
+  prueba('hoy sin ventas: la semana de siempre', TS.semanaConHoy(sinNada) === r.semana);
+  const sinHoy = TS.resumir({ hoy: HOY, productos: D.productos, ventas: D.ventas, dias: D.dias.filter(d => d.business_date !== HOY) });
+  prueba('sin fila de hoy, hoy es null', sinHoy.hoy === null);
+}
+
+grupo('sincronizarHoy');
+{
+  const { w } = await home({ sinHoy: true });
+  const TS = w.BarStockToastSales;
+  let aviso = null;
+  const antes = w.__lecturas;
+  await TS.ahora();
+  prueba('lo leído se guarda: no se vuelve a pedir', w.__lecturas === antes);
+  // El aviso lo escucha live-cache: el LIVE se rehace con lo nuevo.
+  w.BarStockEvents = { emit: (n, d) => { aviso = [n, d]; } };
+  await TS.sincronizarHoy();
+  const c = w.__syncLlamadas[0];
+  prueba('llama a sync de Toast con hoy y la locación', !!c && c[0] === 'toast' && c[1] === 'sync' &&
+    c[2].businessDate === '20261111' && c[2].locationId === 'loc-7', JSON.stringify(c));
+  prueba('avisa toastSalesUpdated', !!aviso && aviso[0] === 'toastSalesUpdated');
+  await TS.ahora();
+  prueba('y olvida lo leído: lo siguiente se pide otra vez', w.__lecturas === antes + 1, antes + ' → ' + w.__lecturas);
+}
+{
+  const { w } = await home({ syncFalla: { ok: false, error: 'Toast said 401' } });
+  let err = null;
+  try { await w.BarStockToastSales.sincronizarHoy(); } catch (e) { err = e; }
+  prueba('si falla, lanza lo que dijo el servidor', !!err && /Toast said 401/.test(err.message), err && err.message);
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');

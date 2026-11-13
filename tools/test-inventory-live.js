@@ -153,6 +153,10 @@ grupo('cuándo se vuelve a leer');
   w.BarStockEvents.emit('ordersUpdated', {});
   await esperar(20);
   prueba('y al colocar un pedido', w.__llamadas === 3);
+  // El Sync de "Sold" trae lo vendido hoy: el LIVE lo descuenta ya.
+  w.BarStockEvents.emit('toastSalesUpdated', { fecha: '2026-11-13' });
+  await esperar(20);
+  prueba('y al sincronizar lo vendido hoy en Toast', w.__llamadas === 4, String(w.__llamadas));
   // Un aviso que llega mientras se lee: al terminar, otra lectura.
   let soltar;
   w.BarStockLive.ahora = () => { w.__llamadas++; return new Promise(r => { soltar = () => r(VIVO); }); };

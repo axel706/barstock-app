@@ -1781,6 +1781,37 @@
   //                      —líneas sin botella, precios cambiados, un error
   //                      leyendo facturas— se pone ámbar y el botón dice
   //                      Review.
+  // La hora del sync, en Nueva York como el resto: "6:12 PM".
+  const horaNY = (iso) => {
+    const f = new Date(iso);
+    return isNaN(f) ? '' : f.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' });
+  };
+
+  // El estado del Sync de hoy: null, 'cargando' o { error }. Lo demás
+  // (la hora, si hubo ventas) sale de los datos: sobrevive a recargar.
+  let _syncHoy = null;
+  async function sincronizarHoy(host) {
+    const TS = window.BarStockToastSales;
+    if (!TS || !TS.sincronizarHoy || _syncHoy === 'cargando') return;
+    _syncHoy = 'cargando';
+    pintarCifras(host);
+    try {
+      await TS.sincronizarHoy();
+      _syncHoy = null;
+      // Lo vendido ya se olvidó (toast-sales escucha el aviso): se pide
+      // otra vez y, al llegar, se repintan las dos tarjetas.
+      _ventas = null;
+      cargarVentas();
+    } catch (e) {
+      const msg = String((e && e.message) || e);
+      _syncHoy = { error: msg };
+      const T = window.BarStockToast;
+      if (T && T.show) try { T.show('Toast sync failed: ' + msg); } catch (x) {}
+    }
+    const h = document.querySelector('.m-screen[data-screen="home"]') || host;
+    pintarCifras(h);
+  }
+
   function pintarCifras(host) {
     const caja = host && host.querySelector('#mhCifras');
     if (!caja) return;
@@ -1793,12 +1824,16 @@
     const E = _entregas;
     const arreglar = E ? (E.error ? 1 : (E.sueltas || 0) + (_precios || 0)) : 0;
 
+    // `s`: una línea de estado bajo el título (Axel, 2026-11-13: "va
+    // debajo del título, no debajo de la cifra"), hoy sólo la del Sync
+    // de "Sold".
     const cifra = (o) => `
       <div class="m-cf-c${o.tono ? ' m-cf-' + o.tono : ''}">
         <span class="m-cf-k">${o.k}</span>
+        ${o.s ? `<span class="m-cf-s${o.sTono ? ' ' + o.sTono : ''}">${o.s}</span>` : ''}
         <b class="m-cf-v">${o.v}</b>
         <span class="m-cf-d">${o.d}</span>
-        <button type="button" class="m-cf-b" data-cf="${o.id}">${o.btn}</button>
+        <button type="button" class="m-cf-b" data-cf="${o.id}"${o.off ? ' disabled' : ''}>${o.btn}</button>
       </div>`;
 
     const partes = [cifra({
@@ -1806,16 +1841,41 @@
       d: e && e.live ? '<span class="m-cf-live">Live</span> now' : e ? 'as counted' : '&nbsp;',
       btn: 'Details'
     })];
-    if (ayer) {
-      const n = ayer.normalDinero;
-      const pct = n ? Math.round((ayer.dinero - n) / n * 100) : null;
+    // ── "Sold": ayer, o lo de hoy tras un Sync ───────────────────────
+    //
+    // Axel, 2026-11-13, sobre lámina: el botón Report pasa a ser "↻ Sync"
+    // (el reporte sigue en el Full report de la tarjeta grande). Sync
+    // carga lo vendido HOY hasta ese momento (BarStockToastSales.
+    // sincronizarHoy). Con ventas, "Sold today" y la hora del sync bajo
+    // el título; sin ventas, sigue ayer y lo dice; si falla, ámbar,
+    // "Sync failed", Retry, y un aviso con lo que dijo el servidor. Los
+    // números no cambian por un fallo.
+    const H = V && V.hoy;
+    const conHoy = H && (H.dinero > 0 || H.botellas > 0);
+    if (ayer || H) {
+      const n = ayer && ayer.normalDinero;
+      const pct = ayer && n ? Math.round((ayer.dinero - n) / n * 100) : null;
+      const lineaAyer = ayer ? esc(ayer.dia) + (pct === null ? '' : ' · <span class="' + (pct >= 0 ? 'm-cf-sube' : 'm-cf-baja') + '">' +
+          (pct >= 0 ? '↗ ' : '↘ ') + Math.abs(pct) + '%</span>') : '&nbsp;';
+      const hora = H && H.sincronizado ? horaNY(H.sincronizado) : '';
+      const st = _syncHoy;
       partes.push(cifra({
-        id: 'ayer', k: 'Sold yesterday', v: money(ayer.dinero),
+        id: 'ayer',
+        k: conHoy ? 'Sold today' : 'Sold yesterday',
+        tono: st && st.error ? 'am' : '',
+        s: st && st.error ? 'Sync failed'
+          : conHoy ? 'synced ' + esc(hora)
+          // Corto: la tarjeta es un tercio de pantalla y la línea no
+          // parte; "none today yet · 6:12 PM" se cortaba.
+          : H ? 'no sales yet' : '',
+        sTono: st && st.error ? 'm-cf-err' : '',
+        v: conHoy ? money(H.dinero) : ayer ? money(ayer.dinero) : '—',
         // Vender más es bueno: verde arriba. (.m-up/.m-down son del gasto,
         // donde va al revés.)
-        d: esc(ayer.dia) + (pct === null ? '' : ' · <span class="' + (pct >= 0 ? 'm-cf-sube' : 'm-cf-baja') + '">' +
-          (pct >= 0 ? '↗ ' : '↘ ') + Math.abs(pct) + '%</span>'),
-        btn: 'Report'
+        d: conHoy ? 'so far today' : lineaAyer,
+        btn: st === 'cargando' ? '<i class="ti ti-loader-2 m-gira" aria-hidden="true"></i> Syncing…'
+          : '<i class="ti ti-refresh" aria-hidden="true"></i> ' + (st && st.error ? 'Retry' : 'Sync'),
+        off: st === 'cargando'
       }));
     }
     partes.push(cifra({
@@ -1830,10 +1890,7 @@
 
     const b = (id) => caja.querySelector('[data-cf="' + id + '"]');
     if (b('estante')) b('estante').onclick = () => detalleEstante();
-    if (b('ayer')) b('ayer').onclick = () => {
-      const S = window.BarStockMobileSales;
-      if (S) S.abrir({ vista: 'dinero' });
-    };
+    if (b('ayer')) b('ayer').onclick = () => sincronizarHoy(host);
     // Sync sincroniza al abrir; Review (algo que arreglar) y una
     // locación sin MarginEdge sólo abren la hoja.
     if (b('gasto')) b('gasto').onclick = () => hojaGasto(!arreglar && !(E && E.conectado === false));
@@ -1966,7 +2023,10 @@
     if (!_pidiendoVentas) cargarVentas();
     const V = _ventas;
     if (!V || !V.cargados || !V.semana || !V.semana.length) { caja.innerHTML = ''; return; }
-    const sem = V.semana;
+    // Con ventas de hoy cargadas (el Sync de "Sold"), la semana acaba hoy.
+    const TSv = window.BarStockToastSales;
+    const sem = TSv && TSv.semanaConHoy ? TSv.semanaConHoy(V) : V.semana;
+    const nomDia = (x) => x.parcial ? 'Today' : x.dia;
     const i = _diaV === null || _diaV >= sem.length ? sem.length - 1 : _diaV;
     const d = sem[i];
     const din = _vista === 'dinero';
@@ -1978,7 +2038,9 @@
     // Cómo va contra lo normal. Un día cerrado (0 y lo normal 0) lo dice;
     // un día sin cargar también, en vez de pintar un cero con cara de dato.
     const n = normal(d);
-    const cmp = !d.cargado ? 'No data for this day'
+    // Hoy a medias: no se compara en % contra un día entero.
+    const cmp = d.parcial ? 'So far today'
+      : !d.cargado ? 'No data for this day'
       : !valor(d) && !n ? 'Closed'
       : n ? ((valor(d) - n) / n * 100 >= 0 ? '↗ ' : '↘ ') + Math.abs(Math.round((valor(d) - n) / n * 100)) + '% vs usual ' + d.dia
       : '';
@@ -2017,26 +2079,26 @@
         </div>
         <div class="m-ts-t m-ts-hero">
           <b>${din ? dinero0(d.dinero) : bot1(d.botellas)}</b>
-          <span>${din ? 'net' : 'bottles'} · ${d.dia}</span>
+          <span>${din ? 'net' : 'bottles'} · ${nomDia(d)}</span>
         </div>
         ${pill}
         <div class="m-ts-g">
           ${sem.map((x, k) => `
             <div class="m-ts-b${k === i ? ' on' : ''}" data-d="${k}" role="button" tabindex="0"
-                 aria-label="${x.dia}: ${din ? dinero0(x.dinero) : bot1(x.botellas) + ' bottles'}">
+                 aria-label="${nomDia(x)}: ${din ? dinero0(x.dinero) : bot1(x.botellas) + ' bottles'}">
               ${din
                 ? `<i class="vino" style="height:${pct(x.vino)}"></i><i class="licor" style="height:${pct(x.licor)}"></i>`
                 : `<i style="height:${pct(x.botellas)}"></i>`}
               ${normal(x) !== null ? `<u style="bottom:${pct(normal(x))}"></u>` : ''}
             </div>`).join('')}
         </div>
-        <div class="m-ts-d">${sem.map((x, k) => `<span class="${k === i ? 'on' : ''}">${x.dia}</span>`).join('')}</div>
+        <div class="m-ts-d">${sem.map((x, k) => `<span class="${k === i ? 'on' : ''}">${nomDia(x)}</span>`).join('')}</div>
         ${din ? `<div class="m-ts-ley">
             <span><i class="licor"></i>Liquor & cocktails ${dinero0(d.licor)}</span>
             <span><i class="vino"></i>Wine ${dinero0(d.vino)}</span></div>` : ''}
         ${top.length ? `
           <div class="m-ts-top">
-            <div class="m-ts-top-h">Most sold · ${d.dia}</div>
+            <div class="m-ts-top-h">Most sold · ${nomDia(d)}</div>
             ${top.map(x => `<div class="m-ts-r"><span class="n">${esc(x.nombre)}</span>
               <span class="v"><b>${din ? dinero0(x.dinero) : bot1(x.botellas)}</b><small>${din
                 ? esc(String(Math.round(x.unidades))) + ' sold' : 'bottles'}</small></span></div>`).join('')}

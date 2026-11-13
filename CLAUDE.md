@@ -772,15 +772,18 @@ contestaría en segundos y nunca se corrió.
   5–9 y nueve capturas.
 - La causa raíz de las órdenes `waiting` de Crown sigue sin encontrarse; el
   enlace manual la tapa.
-- **Cargar hoy a mano desde Toast** (Axel, 2026-11-12, aplazado por él): un
-  botón que llame a `sync` con el día de hoy para que el LIVE descuente lo
-  vendido hasta ese momento; la carga automática de la madrugada ya vuelve
-  a cargar los días marcados `closed: false`, así que no se cuenta doble.
-  Propuesto en la cabecera de *Toast Sales* ("↻ Today" · "updated 10:08
-  PM"), sin dibujar todavía; Axel dijo que ahí no va (2026-11-13), falta
-  decidir dónde. **`run-out.js` ya está listo para ello** (2026-11-13):
-  el día 0 resta `max(0, mediana − lo vendido hoy)`, en `proyectar()` y
-  en `cuantoPedir()` (el correo le pasa `hoyVendido`). Las medianas ya
-  sólo usaban días cerrados y completos: un hoy a medias no las baja.
-  Cargar hoy dos veces no duplica filas: `sync` borra el día y lo vuelve
-  a escribir.
+- **Cargar hoy a mano desde Toast**: hecho (2026-11-13, sobre lámina).
+  Es el botón **Sync** de la mini tarjeta "Sold" del Home, donde estaba
+  Report (el reporte sigue en *Full report* de la tarjeta grande).
+  `BarStockToastSales.sincronizarHoy()` llama a `sync` con el día de
+  hoy y avisa `toastSalesUpdated`: toast-sales olvida lo leído y
+  live-cache rehace el LIVE. Con ventas, la tarjeta dice "Sold today"
+  con la hora del sync **bajo el título** (Axel: no bajo la cifra); sin
+  ventas sigue ayer con "no sales yet"; si falla, ámbar, "Sync failed",
+  Retry y un aviso con lo que dijo el servidor. La tarjeta grande y sus
+  hojas enseñan hoy como "Today", con "So far today" en vez de un %
+  (`semanaConHoy`); `resumir().semana` sigue acabando AYER porque el
+  correo toma su último día como "ayer". No cuenta doble: `sync` borra
+  el día y lo vuelve a escribir, y la carga de la madrugada rehace los
+  días `closed: false`. `run-out.js` ya resta lo vendido hoy del día 0.
+  El invitado no ve el botón (el servidor se lo niega igual).

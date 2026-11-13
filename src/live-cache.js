@@ -29,7 +29,8 @@
   //   · 'invoicesUpdated': el sync de MarginEdge trajo facturas (Axel:
   //     "si se trae una factura se lee en ese momento lo que llegó");
   //   · 'ordersUpdated': se colocó un pedido o un quick order;
-  //   · 'inventoryUpdated': se cerró un conteo o se tiró para recargar.
+  //   · 'inventoryUpdated': se cerró un conteo o se tiró para recargar;
+  //   · 'toastSalesUpdated': el Sync de hoy trajo ventas de Toast.
   // Lo que no avisa —la hora de llegada de un pedido que pasa sola— entra
   // en la relectura de los 30 minutos.
 
@@ -82,7 +83,9 @@
     if (_oyentes.size) cargar();
   }
   if (window.BarStockEvents && window.BarStockEvents.on) {
-    for (const ev of ['invoicesUpdated', 'ordersUpdated', 'inventoryUpdated']) window.BarStockEvents.on(ev, caducar);
+    // 'toastSalesUpdated': el Sync de hoy de la tarjeta "Sold" trajo
+    // ventas (2026-11-13): el LIVE las resta al momento.
+    for (const ev of ['invoicesUpdated', 'ordersUpdated', 'inventoryUpdated', 'toastSalesUpdated']) window.BarStockEvents.on(ev, caducar);
   }
 
   // La fila del LIVE de un producto si se MOVIÓ desde el conteo; si no, null.
