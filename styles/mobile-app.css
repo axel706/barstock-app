@@ -5172,6 +5172,19 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     background: none; border: 1px dashed rgba(125,211,252,.45); border-radius: 16px !important;
   }
 
+  /* "Not drinks · N" al final de From Toast (opción A, 2026-11-13):
+   * lo marcado como "Not a drink", con su Restore. Más apagado que las
+   * tarjetas de arriba: ya está decidido, sólo está para deshacerlo. */
+  #mScreens .m-rc-nd-lab {
+    margin-top: 18px; font-size: var(--m-meta); font-weight: 800;
+    letter-spacing: .06em; text-transform: uppercase; color: #94a3b8;
+  }
+  #mScreens .m-rc-nd { margin-top: 8px; background: rgba(15,23,42,.45); }
+  #mScreens .m-rc-nd-f { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid rgba(255,255,255,.07); }
+  #mScreens .m-rc-nd-f:first-child { border-top: 0; }
+  #mScreens .m-rc-nd-t { flex: 1; min-width: 0; font-size: var(--m-body); color: #cbd5e1; }
+  #mScreens .m-rc-nd-t small { display: block; margin-top: 2px; font-size: var(--m-meta); color: #64748b; }
+
   /* El editor: una columna, el aire por arriba como en todo el teléfono. */
   #mScreens .m-re-tit { margin-top: 4px; font-size: var(--m-title); font-weight: 800; color: #fff; }
   #mScreens .m-re-nom { margin-top: 10px; }

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261112-213230",
+    "items": [
+      "Recipes › From Toast: Not drinks list with Restore"
+    ]
+  },
+  {
     "build": "20261112-200557",
     "items": [
       "Bartender Mode label sits inside the top bar"
@@ -187,12 +193,6 @@
     "items": [
       "Toast Sales on Home: the week in bottles or dollars",
       "Tap a day to see its total and top sellers"
-    ]
-  },
-  {
-    "build": "20261111-194131",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]

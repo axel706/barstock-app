@@ -74,6 +74,10 @@ function entorno(rol) {
     prueba('pero NO emparejar un vino o un licor', !p(SB + '/rest/v1/toast_item_links', 'POST', [{ kind: 'wine', status: 'linked', item_name: 'X' }]) &&
       !p(SB + '/rest/v1/toast_item_links', 'POST', [{ kind: 'liquor', status: 'linked', item_name: 'X' }]) &&
       !p(SB + '/rest/v1/toast_item_links?id=eq.1', 'PATCH', { status: 'ignored', kind: 'liquor' }));
+    prueba('y su Restore (Not drinks): borrar sólo una fila ignored de licor', p(SB + '/rest/v1/toast_item_links?location_id=eq.l&toast_item_guid=eq.g&status=eq.ignored&kind=eq.liquor', 'DELETE'));
+    prueba('pero no un emparejamiento, ni la tabla entera', !p(SB + '/rest/v1/toast_item_links?location_id=eq.l&toast_item_guid=eq.g', 'DELETE') &&
+      !p(SB + '/rest/v1/toast_item_links?location_id=eq.l&status=eq.ignored&kind=eq.liquor', 'DELETE') &&
+      !p(SB + '/rest/v1/toast_item_links?location_id=eq.l&toast_item_guid=eq.g&status=eq.confirmed&kind=eq.wine', 'DELETE'));
     prueba('el inventario no: ni insertar, ni cambiar, ni borrar', !p(SB + '/rest/v1/inventory_items', 'POST', []) &&
       !p(SB + '/rest/v1/inventory_items?id=eq.1', 'PATCH', {}) && !p(SB + '/rest/v1/inventory_items?location_id=eq.l', 'DELETE'));
     prueba('ni pedidos, conteos, snapshots, ajustes ni facturas', ['vendor_orders', 'weekly_snapshots', 'count_sessions', 'location_settings', 'invoice_order_links']

@@ -262,6 +262,32 @@ grupo('6 · "Not a drink"');
   prueba('y ya no sale entre lo que falta', !(await R(w).sinReceta()).some(x => x.nombre === 'Fall Old Fashioned'));
 }
 
+grupo('6b · Not drinks: lo marcado, y Restore');
+{
+  const w = entorno();
+  // Tres filas 'ignored': un cóctel (Recipes), una marca de licor solo
+  // (el "Not in inventory" de Liquor from Toast) y un vino.
+  w.__db.toast_item_links.push(
+    { location_id: 'loc', toast_item_guid: 'g-lyc', toast_item_name: 'Lychee Spritz', toast_group: 'DRINKS › Seasonal', kind: 'liquor', status: 'ignored', updated_at: '2026-11-13T00:40:00Z' },
+    { location_id: 'loc', toast_item_guid: 'g-smi', toast_item_name: 'Smirnoff', toast_group: 'DRINKS › Liquor › Vodka › UP/RX', kind: 'liquor', status: 'ignored', updated_at: '2026-11-13T00:41:00Z' },
+    { location_id: 'loc', toast_item_guid: 'g-vin', toast_item_name: 'Sangria', toast_group: 'DRINKS › Wine', kind: 'wine', status: 'ignored', updated_at: '2026-11-13T00:42:00Z' },
+    { location_id: 'otra', toast_item_guid: 'g-otr', toast_item_name: 'Otra Cosa', toast_group: 'DRINKS › Cocktails', kind: 'liquor', status: 'ignored', updated_at: '2026-11-13T00:43:00Z' });
+  w.__db.toast_sales.push({ location_id: 'loc', toast_item_guid: 'g-lyc', toast_item_name: 'Lychee Spritz', toast_group: 'DRINKS › Seasonal', quantity: 7, sales_category: 'Liquor' });
+  await R(w).cargar();
+  const nd = await R(w).noBebidas();
+  prueba('sólo los cócteles marcados de esta locación: ni la marca de licor, ni el vino, ni otra locación', nd.map(x => x.nombre).join() === 'Lychee Spritz', JSON.stringify(nd));
+  prueba('con su grupo y cuándo se marcó', nd[0].grupo === 'DRINKS › Seasonal' && nd[0].cuando === '2026-11-13T00:40:00Z');
+  prueba('y no sale entre lo que falta', !(await R(w).sinReceta()).some(x => x.nombre === 'Lychee Spritz'));
+  await R(w).restaurar(nd[0]);
+  const del = w.__pet.find(p => p.metodo === 'DELETE' && p.tabla === 'toast_item_links');
+  prueba('Restore borra esa fila, filtrada por locación, guid, ignored y licor', !!del && /location_id=eq\.loc/.test(del.url) && /toast_item_guid=eq\.g-lyc/.test(del.url) &&
+    /status=eq\.ignored/.test(del.url) && /kind=eq\.liquor/.test(del.url), del && del.url);
+  prueba('y nada más: la marca de licor, el vino y la otra locación siguen', ['g-smi', 'g-vin', 'g-otr'].every(g => w.__db.toast_item_links.some(x => x.toast_item_guid === g)) &&
+    !w.__db.toast_item_links.some(x => x.toast_item_guid === 'g-lyc'));
+  prueba('el trago vuelve a lo que falta', (await R(w).sinReceta()).some(x => x.nombre === 'Lychee Spritz'));
+  prueba('y la lista queda vacía', (await R(w).noBebidas()).length === 0);
+}
+
 grupo('7 · un fallo se dice y no cambia la pantalla');
 {
   const w = entorno({ falla: 'toast_recipe_lines' });
@@ -326,6 +352,15 @@ grupo('la pantalla (Settings › Toast › Recipes)');
   tab(host, 'toast').click();
   host.querySelector('[data-ign="0"]').click(); await esperar(60);
   prueba('Not a drink lo quita de la lista', /From Toast · 0/.test(tab(host, 'toast').textContent) && w.__db.toast_item_links.some(l => l.toast_item_guid === 'g-fof' && l.status === 'ignored'));
+
+  // Not drinks (opción A, 2026-11-13): al marcar, sale abajo con su
+  // Restore; y Restore lo devuelve arriba.
+  tab(host, 'toast').click();
+  prueba('lo marcado sale al final de From Toast: "Not drinks · 1"', /Not drinks · 1/.test(host.textContent) &&
+    !!host.querySelector('.m-rc-nd [data-rest="0"]') && /Fall Old Fashioned/.test(host.querySelector('.m-rc-nd').textContent), host.textContent.slice(-300));
+  host.querySelector('[data-rest="0"]').click(); await esperar(60);
+  prueba('Restore lo devuelve a From Toast y la lista se va', /From Toast · 1/.test(tab(host, 'toast').textContent) && !host.querySelector('.m-rc-nd') &&
+    [...host.querySelectorAll('.m-rc-card')].some(c => /Fall Old Fashioned/.test(c.textContent)));
 
   // De cero: + New recipe, sin nombre no se guarda.
   ({ w, host } = await pantalla());

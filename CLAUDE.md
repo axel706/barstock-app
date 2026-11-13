@@ -519,7 +519,11 @@ que miente.
    que Toast vendió en 30 días como cóctel (categoría Liquor, fuera del
    grupo "Liquor", que es el licor solo) sin receta, con *Write recipe*,
    *Same as…* (añade el nombre a `also`) y *Not a drink* (fila
-   `ignored` en `toast_item_links`). Una receta que Toast no vende con
+   `ignored` en `toast_item_links`; lo marcado sale al final de From
+   Toast, "Not drinks · N", con *Restore*, que borra esa fila —opción A,
+   2026-11-13, tras marcar varios por accidente—; se distingue del "Not
+   in inventory" de Liquor from Toast porque no cuelga de un grupo
+   "Liquor"). Una receta que Toast no vende con
    su nombre lleva "Not in Toast · Match": emparejar cambia
    `toast_name` y guarda el tuyo en `name`. Migración 036 (`name`,
    `also`). Los datos en `src/toast-recipes.js`, la pantalla en
@@ -602,8 +606,9 @@ escáner va apagado con un aviso.
   `bartender`, pero no es lo que se lee.
 - **El candado es `src/guest.js`**, cargado justo tras `config.js`:
   envuelve `window.fetch` y para un invitado sólo deja salir lecturas,
-  `toast_recipes`, `toast_recipe_lines`, el "Not a drink" (fila
-  `ignored` de licor en `toast_item_links`) y la sesión. supabase-js
+  `toast_recipes`, `toast_recipe_lines`, el "Not a drink" y su Restore
+  (crear o borrar sólo filas `ignored` de licor en `toast_item_links`)
+  y la sesión. supabase-js
   pasa por él (`global.fetch` en `supabase-client.js`). Esconder botones
   (`html.bs-guest` en el CSS) es para que se vea limpio; lo que impide
   escribir es el candado. El servidor niega además `sync` y `send` en

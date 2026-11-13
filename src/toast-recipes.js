@@ -276,6 +276,39 @@
     return true;
   }
 
+  // ── "Not drinks": lo marcado, y devolverlo ─────────────────────────
+  //
+  // Axel, 2026-11-13: "marqué algunos cocktails como NOT A DRINK por
+  // accidente, ¿cómo los recupero?". Lo marcado desaparecía sin rastro y
+  // volver atrás era SQL. Opción A sobre lámina: al final de From Toast,
+  // "Not drinks · N", cada uno con Restore.
+  //
+  // Son las filas 'ignored' de licor de toast_item_links QUE NO cuelgan
+  // de un grupo "Liquor": ésas son el "Not in inventory" de Liquor from
+  // Toast, que usa la misma tabla y el mismo estado, y no son de aquí.
+  async function noBebidas() {
+    const loc = await locacion();
+    const filas = await window.BarStockRest.leerTodo('toast_item_links?location_id=eq.' + loc +
+      '&status=eq.ignored&kind=eq.liquor&select=toast_item_guid,toast_item_name,toast_group,updated_at&order=id.asc');
+    return filas.filter(f => !enGrupoLicor(f.toast_group))
+      .map(f => ({ guid: f.toast_item_guid, nombre: String(f.toast_item_name || '').trim() || '(no name)',
+        grupo: f.toast_group || null, cuando: f.updated_at || null }))
+      .sort((a, b) => String(b.cuando || '').localeCompare(String(a.cuando || '')));
+  }
+
+  // Restore: se borra la fila 'ignored', y nada más. Sin fila, el trago
+  // vuelve a ser "vendido sin receta" y sale otra vez en From Toast. El
+  // filtro lleva status y kind para que, con un guid equivocado, no se
+  // lleve por delante un emparejamiento de verdad.
+  async function restaurar(x) {
+    if (!x || !x.guid) throw new Error('That Toast item has no id.');
+    const loc = await locacion();
+    await pedir('toast_item_links?location_id=eq.' + loc + '&toast_item_guid=eq.' + encodeURIComponent(x.guid) +
+      '&status=eq.ignored&kind=eq.liquor', { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
+    _sinReceta = null;
+    return true;
+  }
+
   // ── Lo que Toast vende sin receta ──────────────────────────────────
   //
   // Los cócteles: ventas de categoría Liquor de los últimos 30 días que
@@ -320,7 +353,7 @@
 
   window.BarStockToastRecipes = {
     cargar, datos, recetas, grupo, porElegir, faltan, sugerida, elegir, quitar, condicion, alCambiar,
-    crear, guardarReceta, borrar, emparejar, igualQue, ignorar, sinReceta, enToast, ELECCION,
+    crear, guardarReceta, borrar, emparejar, igualQue, ignorar, noBebidas, restaurar, sinReceta, enToast, ELECCION,
     _reset: () => { _d = null; _cargando = null; }
   };
 })();

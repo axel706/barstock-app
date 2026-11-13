@@ -106,6 +106,12 @@
       const filas = Array.isArray(b) ? b : (b ? [b] : []);
       return filas.length > 0 && filas.every(f => f && f.status === 'ignored' && f.kind === 'liquor');
     }
+    // Y su Restore (Not drinks, 2026-11-13): borrar SÓLO filas ignored de
+    // licor. Quien puede marcar tiene que poder deshacerlo.
+    if (rest[1] === 'toast_item_links' && m === 'DELETE') {
+      const q = u.searchParams;
+      return q.get('status') === 'eq.ignored' && q.get('kind') === 'eq.liquor' && /^eq\./.test(q.get('toast_item_guid') || '');
+    }
     return false;
   }
 

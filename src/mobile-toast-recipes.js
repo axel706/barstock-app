@@ -37,6 +37,7 @@
   // Lo que Toast vende sin receta (toast-recipes.js, sinReceta): null
   // mientras se lee, y lo que falló si falla.
   let _sin = null, _sinError = '';
+  let _nob = [];            // "Not drinks": lo marcado, con su Restore
   // El editor abierto: null, o { id (null si es nueva), nombre, fijo (el
   // nombre es el de Toast y no se cambia), hh, lineas, borrar (armado) }.
   let _ed = null;
@@ -162,6 +163,10 @@
       if (x) { _ed = { id: null, nombre: x.nombre, fijo: true, hh: /^HH\b/i.test(x.nombre), lineas: [] }; _error = ''; pintar(); }
     }; });
     host.querySelectorAll('[data-igual]').forEach(b => { b.onclick = () => igualQue((_sin || [])[Number(b.dataset.igual)]); });
+    host.querySelectorAll('[data-rest]').forEach(b => { b.onclick = () => {
+      const x = _nob[Number(b.dataset.rest)];
+      if (x) hacer(async () => { await T().restaurar(x); aviso2(x.nombre + ': back in From Toast'); await leerSin(); })();
+    }; });
     host.querySelectorAll('[data-ign]').forEach(b => { b.onclick = () => {
       const x = (_sin || [])[Number(b.dataset.ign)];
       if (x) hacer(async () => { await T().ignorar(x); aviso2(x.nombre + ': not a drink'); await leerSin(); })();
@@ -172,6 +177,27 @@
   function pestanaToast() {
     if (_sinError) return `<div class="m-tw-aviso mal">Couldn't read Toast sales.<small>${esc(_sinError)}</small></div>`;
     if (!_sin) return '<div class="m-tw-aviso">Reading Toast sales…</div>';
+    return pendientes() + noBebidasHtml();
+  }
+
+  // "Not drinks · N" (opción A, Axel 2026-11-13): debajo de lo pendiente,
+  // lo marcado, lo último primero. Al lado de donde se marcó, para que un
+  // toque de más se vea y se deshaga ahí mismo.
+  function cuandoTxt(iso) {
+    const d = iso ? new Date(iso) : null;
+    if (!d || isNaN(d)) return '';
+    const hora = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    return d.toDateString() === new Date().toDateString() ? 'today ' + hora
+      : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+  function noBebidasHtml() {
+    if (!_nob.length) return '';
+    return `<div class="m-rc-nd-lab">Not drinks · ${_nob.length}</div><div class="m-tl-sec m-rc-nd">` +
+      _nob.map((x, i) => `<div class="m-rc-nd-f"><span class="m-rc-nd-t">${esc(x.nombre)}<small>${esc([x.grupo, cuandoTxt(x.cuando)].filter(Boolean).join(' · '))}</small></span>
+        <button type="button" class="m-rc-link" data-rest="${i}">Restore</button></div>`).join('') + '</div>';
+  }
+
+  function pendientes() {
     if (!_sin.length) return '<div class="m-tw-p">Every drink Toast sold in the last 30 days has its recipe.</div>';
     return `<div class="m-tw-p">Sold in Toast in the last 30 days, with no recipe. Until they have one, their bottles don't come out of the live count.</div>` +
       _sin.map((x, i) => `<div class="m-tl-sec m-rc-card">
@@ -187,6 +213,9 @@
   async function leerSin() {
     try { _sin = await T().sinReceta(); _sinError = ''; }
     catch (e) { _sin = null; _sinError = String((e && e.message) || e); }
+    // La lista de Not drinks no tapa la de pendientes si falla: se queda
+    // vacía y lo de arriba se enseña igual.
+    try { _nob = await T().noBebidas(); } catch (e) { _nob = []; }
     pintar();
   }
 
@@ -314,7 +343,7 @@
     // Settings el host es el mismo, y repintar ahí pisaría ese panel.
     if (!_quitar) _quitar = T().alCambiar(() => { if (_host && _host.querySelector('.m-rc')) pintar(); });
     _ed = null;
-    _sin = null; _sinError = '';
+    _sin = null; _sinError = ''; _nob = [];
     pintar(host, cab, volver);
     // Las ventas sin receta, después de las recetas: necesita saber cuáles
     // hay para no ofrecerlas.
