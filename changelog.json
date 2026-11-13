@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261113-130531",
+    "items": [
+      "Home cards follow the week: count, orders, running out",
+      "App update card always comes first"
+    ]
+  },
+  {
     "build": "20261113-123859",
     "items": [
       "Home card buttons in the same glass as the header"
@@ -187,12 +194,6 @@
     "items": [
       "Toast Sales card: Toast logo and last sync time",
       "Amber dot when Toast hasn't synced in a day"
-    ]
-  },
-  {
-    "build": "20261112-082712",
-    "items": [
-      "The tab bar stays at the bottom again"
     ]
   }
 ]

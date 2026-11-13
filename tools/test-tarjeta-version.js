@@ -14,7 +14,9 @@
  *   2. Con versión nueva, la tarjeta con su ícono, su fecha y lo que trae
  *      (tres notas como mucho; si hay más, "+ N more").
  *   3. UPDATE actualiza por el camino de siempre (la animación).
- *   4. Va primera, salvo que haya un conteo a medias: ése manda.
+ *   4. Va primera SIEMPRE, también delante de un conteo a medias
+ *      (Axel, 2026-11-13: "tarjeta de update primero siempre"). Antes
+ *      el conteo iba delante.
  *
  *   node tools/test-tarjeta-version.js
  */
@@ -145,7 +147,7 @@ grupo('3 · dónde va');
 {
   const host = pintar(entorno({ nueva: '20261109-141000', contando: true }));
   const t = tarjetas(host);
-  prueba('con un conteo a medias, la segunda: el conteo manda', /Count/.test(t[0].textContent) && t[1] === laDeVersion(host), t.map(x => x.className).join(' | '));
+  prueba('con un conteo a medias, también la primera; el conteo, detrás', t[0] === laDeVersion(host) && /Count/.test(t[1].textContent), t.map(x => x.className).join(' | '));
 }
 
 grupo('4 · se lee del mismo tamaño que sus vecinas');

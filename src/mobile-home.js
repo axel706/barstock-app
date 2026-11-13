@@ -1128,7 +1128,7 @@
         // orden por importe pondría arriba al proveedor más barato que
         // encima tiene precios, y abajo el pedido grande sin ellos.
         v.sort((a, b) => b.btl - a.btl);
-        t.push(tarjetaOrdenes(v, { total, botellas, lineas, conPrecio }));
+        t.push(Object.assign(tarjetaOrdenes(v, { total, botellas, lineas, conPrecio }), { fase: 'ordenes' }));
       } else {
         // ── Y cuando ya no queda ninguna ─────────────────────────────
         //
@@ -1198,6 +1198,7 @@
       const n = pronto.length;
 
       t.push({
+        fase: 'agota',
         tono: 'red',
         // "● Live" ANTES del título (Axel): la marca, como en todas
         // partes, sólo con algo vendido o llegado detrás.
@@ -1239,13 +1240,32 @@
     // pintar todavía no existen y de distinguir "entrar" de
     // "refrescar". Cambiar el ORDEN no depende de nada: la primera
     // tarjeta es la primera y ya está.
+    // ── La semana manda el orden (Axel, 2026-11-13) ──────────────────
+    //
+    // Domingo desde las 4 PM hasta cerrar el conteo, el ciclo; cerrado,
+    // las órdenes; colocadas, Running out el resto de la semana. La
+    // regla y sus casos viven en home-orden.js. Las demás siguen detrás
+    // en su orden de siempre.
+    const HO = window.BarStockHomeOrden;
+    if (HO && HO.primera) {
+      const quiere = HO.primera({
+        ahora: Date.now(),
+        resetAt: W && W.resetAt ? W.resetAt() : null,
+        hayOrdenes: t.some(c => c && c.fase === 'ordenes'),
+        hayAgota: t.some(c => c && c.fase === 'agota')
+      });
+      const i = quiere === 'ciclo' ? t.findIndex(c => c && c.ciclo) : t.findIndex(c => c && c.fase === quiere);
+      if (i > 0) t.unshift(t.splice(i, 1)[0]);
+    }
+
     const iFoco = t.findIndex(c => c && c.foco);
     if (iFoco > 0) t.unshift(t.splice(iFoco, 1)[0]);
 
-    // La versión nueva, primera; detrás de un conteo a medias, que es lo
-    // que estás haciendo y manda.
+    // La versión nueva, primera SIEMPRE (Axel, 2026-11-13: "tarjeta de
+    // update primero siempre"), también delante de un conteo a medias.
+    // Antes iba detrás de él.
     const ver = tarjetaVersion();
-    if (ver) t.splice(t[0] && t[0].foco ? 1 : 0, 0, ver);
+    if (ver) t.unshift(ver);
 
     // Ya no hay tarjeta de "All clear": la del ciclo está siempre, y
     // cuando no hay nada pendiente ella misma es el "todo en orden"

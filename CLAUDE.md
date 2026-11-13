@@ -109,7 +109,7 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 
 ## La arquitectura
 
-Frontend estático, sin build. `index.html` es un monolito y hay ~129 módulos
+Frontend estático, sin build. `index.html` es un monolito y hay ~133 módulos
 `src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 29 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 143 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 144 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -373,7 +373,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 143 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 144 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -554,6 +554,15 @@ suma del número de cada producto (`live-cache.botellas()`, con
 vino ("no tenemos cerveza ni kegs"): sumar unidades es sumar botellas.
 Se descartó "−$X vs count": el estante es contado + llegó − vendido, y
 compararlo con el conteo mezclaba las dos cosas.
+
+**El orden del carrusel del Home sigue la semana** (Axel, 2026-11-13,
+`src/home-orden.js`): desde el domingo a las 4:00 PM de Nueva York hasta
+que se cierra un conteo (`resetAt` en o después de ese corte), el ciclo
+primero; cerrado, las órdenes; colocadas (o si no salió ninguna), Running
+out el resto de la semana; sin nada que se acabe, el ciclo. Un conteo
+hecho el lunes cuenta igual. Un conteo a medias va delante de eso, y la
+tarjeta de update va **primera siempre**, también delante del conteo.
+Prueba: `test-home-orden`.
 
 **Cuándo sale la marca "Live"** (Axel, 2026-11-08): durante un conteo
 activo se enseña lo contado, sin marca. Al cerrar el conteo todo vuelve
