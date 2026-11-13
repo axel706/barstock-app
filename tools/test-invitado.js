@@ -43,9 +43,10 @@ function entorno(rol) {
   if (rol !== undefined) {
     w.localStorage.setItem('sb-abcdxyz-auth-token', JSON.stringify({
       access_token: 't', user: { id: 'u1', email: 'billie@bartenders.barstockpro.com',
-        app_metadata: rol ? { role: rol } : {}, user_metadata: { first_name: 'Billie' } } }));
+        app_metadata: rol && typeof rol === 'object' ? rol : rol ? { role: rol } : {}, user_metadata: { first_name: 'Billie' } } }));
   }
   w.eval(leer('src/bartender-id.js'));
+  w.eval(leer('src/permisos.js'));
   w.eval(leer('src/guest.js'));
   return w;
 }
@@ -105,6 +106,22 @@ function entorno(rol) {
     await w.fetch(SB + '/rest/v1/inventory_items?select=*');
     prueba('las recetas y las lecturas sí salen', w.__salio.length === 2, JSON.stringify(w.__salio));
 
+    // Roles (2026-11-13): el bartender recibe una marca por cada permiso
+    // que le falta, y el CSS esconde con ellas; recetas no le falta.
+    const h = w.document.documentElement.classList;
+    prueba('el bartender lleva las marcas de lo que no puede', h.contains('bs-sin-contar') && h.contains('bs-sin-ordenes') &&
+      h.contains('bs-sin-facturas') && !h.contains('bs-sin-recetas') && !h.contains('bs-sin-ver_ajustes'));
+
+    // Un manager sin "Edit items": sólo esa marca de lo que su rol da, y
+    // sin candado (escribe como siempre; lo suyo se esconde).
+    const P = require(path.join(RAIZ, 'src/permisos.js'));
+    w = entorno({ role: 'manager', off: ['editar_productos'], perms: P.efectivos('manager', [], ['editar_productos']) });
+    const hm = w.document.documentElement.classList;
+    prueba('un manager sin Edit items: su marca, sin candado', hm.contains('bs-sin-editar_productos') && !hm.contains('bs-sin-contar') &&
+      !hm.contains('bs-guest') && !w.BarStockGuest.activo() && w.BarStockGuest.puede('contar') && !w.BarStockGuest.puede('editar_productos'));
+    await w.fetch(SB + '/rest/v1/inventory_items?location_id=eq.l', { method: 'PATCH', body: '{}' });
+    prueba('y sus escrituras salen', w.__salio.length === 1);
+
     w = entorno('staff');
     await w.fetch(SB + '/rest/v1/inventory_items?location_id=eq.l', { method: 'DELETE' });
     prueba('otro rol: todo sale como siempre', w.__salio.length === 1 && !w.document.documentElement.classList.contains('bs-guest'));
@@ -149,6 +166,7 @@ function entorno(rol) {
     const pos = f => idx.indexOf('src="src/' + f);
     prueba('bartender-id.js y guest.js están cargados', pos('bartender-id.js') > 0 && pos('guest.js') > 0);
     prueba('el nombre antes que el candado', pos('bartender-id.js') < pos('guest.js'));
+    prueba('y los permisos también', pos('permisos.js') > 0 && pos('permisos.js') < pos('guest.js'));
     prueba('el candado justo después de config.js, antes de supabase-client.js', pos('config.js') < pos('guest.js') && pos('guest.js') < pos('supabase-client.js') &&
       pos('guest.js') < pos('location-access.js'));
   }

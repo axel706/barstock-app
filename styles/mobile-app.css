@@ -5510,67 +5510,74 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
 
 /* ── El bartender invitado: lo que edita, fuera de la vista ──────────
  *
- * Axel, 2026-11-12, opción 1: "Guest · Billie" en la banda y los
- * botones que cambian algo no salen; se ve de sólo lectura. Lo que
- * impide escribir NO es esto: es el candado de src/guest.js, que niega
- * cada escritura que no sea de recetas. Esto es para que no haya un
- * botón que, al tocarlo, diga que no (una afordancia que miente).
+ * Axel, 2026-11-12, opción 1: los botones que cambian algo no salen y
+ * se ve de sólo lectura. Desde los roles (2026-11-13) va POR PERMISO: a
+ * quien le falta uno, src/guest.js le pone `html.bs-sin-<permiso>` desde
+ * el primer fotograma y aquí se esconde lo de ese permiso. El bartender
+ * de siempre no tiene ninguno de estos y recibe todas las clases: ve lo
+ * mismo que antes, y no hay una segunda lista para él.
  *
- * `html.bs-guest` la pone src/guest.js desde el primer fotograma.
- * Recipes (Settings › Toast › Recipes) es lo único que sigue editable,
- * por eso nada de aquí toca .m-rc ni .m-re, y las piezas compartidas
- * (la hoja de botellas, .m-set-save, .m-hero-b) van acotadas a su
- * pantalla. Settings, además, sólo enseña al invitado lo suyo
- * (mobile-settings.js, PARA_INVITADO).
+ * Lo que impide escribir NO es esto. Para quien sólo edita recetas, es
+ * el candado de src/guest.js. Para los demás, esconder es lo que hay
+ * (hablado con Axel: un candado por permiso es la Fase 0). Esto es para
+ * que no haya un botón que, al tocarlo, diga que no.
  *
- * Los dos sitios donde mirar y editar eran el mismo toque se cambiaron
- * en JS: una fila de Inventory abre la ficha (la de Buscar) en vez de
- * la hoja de editar, y la tarjeta del ciclo del Home se marca
+ * Recipes (Settings › Toast › Recipes) no se toca aquí: nada de .m-rc ni
+ * .m-re, y las piezas compartidas (la hoja de botellas, .m-set-save,
+ * .m-hero-b) van acotadas a su pantalla. Settings enseña a cada uno sólo
+ * lo suyo (mobile-settings.js, `perm` de cada entrada).
+ *
+ * Los sitios donde mirar y editar eran el mismo toque se cambiaron en
+ * JS: una fila de Inventory abre la ficha (la de Buscar) a quien no
+ * edita productos, y la tarjeta del ciclo del Home se marca
  * data-kind="cycle" para poder quitarle los botones. Su "Cycle detail"
  * sí se queda: sólo enseña. */
 @media (max-width: 640px) {
-  /* Home: empezar, seguir, importar, reiniciar o tirar un conteo, y la
-   * sincronización de MarginEdge de "Spent this cycle". */
-  html.bs-guest #mScreens .m-hero[data-kind="cycle"] :is(.m-hero-b, .m-hero-b2),
-  html.bs-guest #mScreens .m-hero[data-kind="cycle"] .m-hero-x:has(.ti-trash),
-  html.bs-guest #mSheet #mcfSync,
-  /* El Sync de "Sold": el servidor se lo niega igual (lib/integracion.js). */
-  html.bs-guest #mScreens .m-cf-b[data-cf="ayer"],
-  /* Inventory: añadir un producto. (La fila abre la ficha.) */
-  html.bs-guest #mScreens #miNuevo,
-  /* La ficha: Add to order, Received y aplicar el par de Pour·IQ. Lo que
-   * Pour·IQ dice se queda; el botón de aplicarlo, no. */
-  html.bs-guest #mSheet .m-ficha .m-acts,
-  html.bs-guest #mSheet #msIQ,
-  /* La pantalla del ciclo. */
-  html.bs-guest #mScreens :is(#mcGo, #mcFile, #mcOtra, #mcDrop, .m-cyc-warn),
-  /* Orders › Open: Quick order, revisar y mandar, añadir, devolver,
-   * quitar una línea, deshacer y los +/−. */
-  html.bs-guest #mScreens :is(#moRun, #moSend, #moAdd, .m-ord-volver, .m-ord-x, .m-ord-undo),
-  html.bs-guest #mScreens .m-ord-q [data-q],
-  /* Orders › Sent: actualizar precios, Resend / Reopen. */
-  html.bs-guest #mScreens :is(#mhPrec, .m-hprec-n, .m-hacc, .m-hacc-conf),
-  /* Orders › Invoices: enlazar a una orden, elegir o cambiar botella,
-   * "Not mine", desenlazar, buscar y esconder. */
-  html.bs-guest #mScreens :is(#miOrdOn, #miOrdOff, .m-iatar-s, .m-ichg, .m-isug, .m-irow2, .m-ibuscar, .m-ihit, .m-idanger),
-  html.bs-guest #moCuerpo :is([data-otra], [data-no], [data-unlink]),
-  /* La campana: revisar y aplicar precios, y descartar avisos (algunos
-   * se guardan en la base). */
-  html.bs-guest #mNotifPanel :is(.m-nf-go, #mnfGo, .m-nf-nota, .m-nf-x),
-  /* Wine from Toast (su raíz es .m-tw sin .m-tl ni .m-rc) y Liquor from
-   * Toast: confirmar, ignorar, deshacer y "Confirm all". */
-  html.bs-guest #mScreens .m-tw:not(.m-tl):not(.m-rc) :is(.m-tw-acts, #mTwTodas),
-  html.bs-guest #mScreens .m-tl :is(.m-tl-todas, .m-tl-v),
-  /* Morning email: la vista se queda; mandarlo, no. */
-  html.bs-guest #mScreens .m-mr :is(#mrSend, #mrListaCaja) {
+  /* Contar: empezar, seguir, importar o tirar un conteo, desde la
+   * tarjeta del ciclo y desde su pantalla. Los botones de la tarjeta
+   * también reinician el ciclo, así que se van si falta cualquiera de
+   * los dos permisos. */
+  html.bs-sin-contar #mScreens .m-hero[data-kind="cycle"] :is(.m-hero-b, .m-hero-b2),
+  html.bs-sin-cerrar_ciclo #mScreens .m-hero[data-kind="cycle"] :is(.m-hero-b, .m-hero-b2),
+  html.bs-sin-contar #mScreens .m-hero[data-kind="cycle"] .m-hero-x:has(.ti-trash),
+  html.bs-sin-contar #mScreens :is(#mcGo, #mcFile, #mcOtra, #mcDrop, .m-cyc-warn),
+  /* Sincronizar: MarginEdge en "Spent this cycle" y Toast en "Sold". El
+   * servidor lo niega igual (lib/integracion.js). */
+  html.bs-sin-sincronizar #mSheet #mcfSync,
+  html.bs-sin-sincronizar #mScreens .m-cf-b[data-cf="ayer"],
+  /* Editar productos: añadir uno, y aplicar el par de Pour·IQ (lo que
+   * Pour·IQ dice se queda; el botón de aplicarlo, no). La fila de
+   * Inventory abre la ficha. */
+  html.bs-sin-editar_productos #mScreens #miNuevo,
+  html.bs-sin-editar_productos #mSheet #msIQ,
+  /* Órdenes: Add to order y Received de la ficha; Orders › Open (Quick
+   * order, revisar y mandar, añadir, devolver, quitar, deshacer, +/−);
+   * Resend / Reopen de Sent. */
+  html.bs-sin-ordenes #mSheet .m-ficha .m-acts,
+  html.bs-sin-ordenes #mScreens :is(#moRun, #moSend, #moAdd, .m-ord-volver, .m-ord-x, .m-ord-undo),
+  html.bs-sin-ordenes #mScreens .m-ord-q [data-q],
+  html.bs-sin-ordenes #mScreens :is(.m-hacc, .m-hacc-conf),
+  /* Facturas: actualizar precios de Sent; en Invoices, enlazar a una
+   * orden, elegir o cambiar botella, "Not mine", desenlazar, buscar y
+   * esconder; y la campana (revisar y aplicar precios, descartar). */
+  html.bs-sin-facturas #mScreens :is(#mhPrec, .m-hprec-n),
+  html.bs-sin-facturas #mScreens :is(#miOrdOn, #miOrdOff, .m-iatar-s, .m-ichg, .m-isug, .m-irow2, .m-ibuscar, .m-ihit, .m-idanger),
+  html.bs-sin-facturas #moCuerpo :is([data-otra], [data-no], [data-unlink]),
+  html.bs-sin-facturas #mNotifPanel :is(.m-nf-go, #mnfGo, .m-nf-nota, .m-nf-x),
+  /* Toast: Wine from Toast (su raíz es .m-tw sin .m-tl ni .m-rc) y
+   * Liquor from Toast: confirmar, ignorar, deshacer y "Confirm all". */
+  html.bs-sin-toast #mScreens .m-tw:not(.m-tl):not(.m-rc) :is(.m-tw-acts, #mTwTodas),
+  html.bs-sin-toast #mScreens .m-tl :is(.m-tl-todas, .m-tl-v),
+  /* Morning email: la vista se queda; mandarlo a la lista, no. */
+  html.bs-sin-ajustes_locacion #mScreens .m-mr :is(#mrSend, #mrListaCaja) {
     display: none !important;
   }
   /* Lo que ENSEÑA un dato y además lo cambia al tocarlo: se queda a la
    * vista, quieto. La cantidad de una línea de orden, el vino elegido
    * para cada artículo de Toast, la botella de cada licor. */
-  html.bs-guest #mScreens .m-ord-q input,
-  html.bs-guest #mScreens .m-tw:not(.m-tl):not(.m-rc) .m-tw-sel,
-  html.bs-guest #mScreens .m-tl .m-tl-fila {
+  html.bs-sin-ordenes #mScreens .m-ord-q input,
+  html.bs-sin-toast #mScreens .m-tw:not(.m-tl):not(.m-rc) .m-tw-sel,
+  html.bs-sin-toast #mScreens .m-tl .m-tl-fila {
     pointer-events: none;
   }
 }

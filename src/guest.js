@@ -5,7 +5,8 @@
   // Axel, 2026-11-12: "puede seguir viendo todo, absolutamente toda la
   // información, pero no puede editar nada que no son las recetas".
   //
-  // Quién es invitado: el usuario cuyo app_metadata.role es 'bartender'.
+  // Quién es invitado: quien sólo puede editar recetas (ver `activo`,
+  // más abajo; hasta los roles era app_metadata.role === 'bartender').
   // Lo pone api/admin.js al crearlo, y app_metadata sólo lo puede
   // escribir el servidor (user_metadata lo podría cambiar el propio
   // Billie). Viene dentro de la sesión que supabase-js guarda en
@@ -27,8 +28,8 @@
   // api/integrations.js que escriben o mandan (lib/integracion.js).
 
   const MENSAJE = 'Guests can only edit recipes.';
-  const ID = window.BarStockBartenderId || {};
-  const ROL = ID.ROL || 'bartender';
+  // Los permisos (src/permisos.js, cargado antes que esto).
+  const P = window.BarStockPermisos;
 
   // La sesión guardada, leída sólo cuando cambia: fetch pasa por aquí en
   // cada llamada y localStorage es barato, JSON.parse de una sesión no.
@@ -50,9 +51,38 @@
     return _usuario;
   }
 
-  function activo() {
+  // ── Los roles (2026-11-13) ────────────────────────────────────────────
+  //
+  // Una persona de PIN lleva en su sesión su rol y lo que puede
+  // (app_metadata, escrito por api/admin.js). Sin sesión, o un usuario de
+  // correo sin rol: todo, como hasta hoy.
+  function persona() {
     const u = usuario();
-    return !!(u && u.app_metadata && u.app_metadata.role === ROL);
+    if (P) return P.dePin(u);
+    return !!(u && u.app_metadata && u.app_metadata.role === 'bartender');
+  }
+  // Sin permisos.js (no debería pasar: carga antes) no se adivina: null
+  // es "no se sabe", y activo() vuelve a la regla de antes de los roles.
+  function permisos() {
+    const u = usuario();
+    if (!P) return null;
+    return u ? P.deUsuario(u) : P.TODOS.slice();
+  }
+  function puede(k) {
+    const p = permisos();
+    return !p || p.indexOf(k) >= 0;
+  }
+
+  // El candado (lo que sigue de aquí abajo) es para quien SÓLO puede
+  // editar recetas: el bartender de siempre, o un rol hecho igual. Es la
+  // única regla que se cumple de verdad en la app, porque las recetas
+  // tienen sus propias tablas. Para los demás permisos, esconder es lo que
+  // hay (hablado con Axel, 2026-11-13); un candado por permiso es la Fase 0.
+  function activo() {
+    if (!persona()) return false;
+    const p = permisos();
+    if (!p) { const u = usuario(); return u.app_metadata.role === 'bartender'; }
+    return P.soloRecetas(p);
   }
 
   function nombre() {
@@ -139,10 +169,17 @@
 
   // La marca en <html> desde el primer fotograma: el CSS esconde con
   // ella lo que edita, y así nunca se ve aparecer y desaparecer.
+  // Y una marca por cada permiso que falta (`bs-sin-contar`, …): el CSS
+  // esconde con ellas lo de cada permiso.
   function marcar() {
-    try { document.documentElement.classList.toggle('bs-guest', activo()); } catch (e) {}
+    try {
+      const h = document.documentElement;
+      h.classList.toggle('bs-guest', activo());
+      const p = permisos();
+      for (const k of (P ? P.TODOS : [])) h.classList.toggle('bs-sin-' + k, !!p && p.indexOf(k) < 0);
+    } catch (e) {}
   }
   marcar();
 
-  window.BarStockGuest = { activo, nombre, permitido, marcar, MENSAJE };
+  window.BarStockGuest = { activo, persona, permisos, puede, nombre, permitido, marcar, MENSAJE };
 })();

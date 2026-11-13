@@ -81,14 +81,27 @@
   //   · Con `perms` (escrito por el servidor): esos.
   //   · Bartender de antes de los roles (sólo role = 'bartender'): los
   //     de fábrica del bartender, que es lo que tenía.
-  //   · Sin rol: un usuario de correo de los de siempre. Todo, como
-  //     hasta hoy: no se le quita nada a nadie por actualizar la app.
+  //   · Sin rol, o con uno que no salió de aquí (sin `perms` y que no es
+  //     de fábrica, como un 'staff' viejo): un usuario de los de siempre.
+  //     Todo, como hasta hoy: no se le quita nada a nadie por actualizar
+  //     la app. Con [] se quedaba bajo el candado de sólo recetas.
   function deUsuario(u) {
     const m = (u && u.app_metadata) || {};
     if (Array.isArray(m.perms)) return limpia(m.perms);
     if (m.role === 'bartender') return FABRICA.bartender.perms.slice();
-    if (m.role) return efectivos(m.role, null, m.off);
+    if (m.role && FABRICA[m.role]) return efectivos(m.role, null, m.off);
     return TODOS.slice();
+  }
+
+  // ¿Es una persona de PIN, de las que maneja Settings › People? Con
+  // permisos calculados por el servidor, o con un rol de fábrica (el
+  // bartender de antes de los roles). Un usuario de correo con un rol
+  // viejo ('staff') NO: no se lista, no se edita ni se borra desde
+  // People, y la app lo trata como siempre. La misma regla en la app y
+  // en el servidor.
+  function dePin(u) {
+    const m = (u && u.app_metadata) || {};
+    return !!m.role && (Array.isArray(m.perms) || !!FABRICA[m.role]);
   }
 
   // ¿Sólo puede leer y escribir recetas? Entonces lleva el candado de
@@ -107,7 +120,7 @@
     return c;
   }
 
-  const api = { CATALOGO, TODOS, FABRICA, rol, efectivos, deUsuario, soloRecetas, claveDe, limpia };
+  const api = { CATALOGO, TODOS, FABRICA, rol, efectivos, deUsuario, dePin, soloRecetas, claveDe, limpia };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else raiz.BarStockPermisos = api;
 })(typeof window !== 'undefined' ? window : this);

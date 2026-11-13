@@ -44,7 +44,7 @@ module.exports = async function handler(req, res) {
     // nada, no para darle la gente.
     const yo = userData.user;
     const esAxel = yo.email === ADMIN_EMAIL;
-    const miRol = yo.app_metadata && yo.app_metadata.role;
+    const miRol = P.dePin(yo) ? yo.app_metadata.role : null;
     const misPerms = miRol ? P.deUsuario(yo) : [];
     const esOwner = esAxel || miRol === 'owner';
     const DE_PERSONAS = ['listPeople', 'createPerson', 'setPerson', 'removePerson', 'saveRole', 'removeRole',
@@ -355,7 +355,7 @@ module.exports = async function handler(req, res) {
     // equivocado no se le cambia la contraseña ni se borra a un usuario de
     // correo. Los de antes de los roles (role = 'bartender' sin perms)
     // son personas de PIN igual.
-    const esPersona = (u) => !!(u && u.app_metadata && u.app_metadata.role);
+    const esPersona = (u) => P.dePin(u);
     async function persona(userId) {
       if (!userId) return null;
       const { data, error } = await supabase.auth.admin.getUserById(userId);

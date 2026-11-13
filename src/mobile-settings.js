@@ -33,24 +33,24 @@
 
   const GRUPOS = [
     { t: 'Orders and email', items: [
-      { id: 'sender',   ico: 'ti-user-circle',    n: 'Sender',   d: 'Who signs the order' },
-      { id: 'emails',   ico: 'ti-mail',           n: 'Emails',   d: 'Reply-to and reports' },
-      { id: 'delivery', ico: 'ti-truck-delivery', n: 'Delivery', d: 'Details per vendor' }
+      { id: 'sender',   perm: 'ajustes_locacion', ico: 'ti-user-circle',    n: 'Sender',   d: 'Who signs the order' },
+      { id: 'emails',   perm: 'ajustes_locacion', ico: 'ti-mail',           n: 'Emails',   d: 'Reply-to and reports' },
+      { id: 'delivery', perm: 'ajustes_locacion', ico: 'ti-truck-delivery', n: 'Delivery', d: 'Details per vendor' }
     ]},
     { t: 'Counting', items: [
-      { id: 'zones', ico: 'ti-map-pin', n: 'Zones', d: 'Where the bottles are' }
+      { id: 'zones', perm: 'ajustes_locacion', ico: 'ti-map-pin', n: 'Zones', d: 'Where the bottles are' }
     ]},
     // El vino y el licor de Toast, emparejados con el inventario
     // (mobile-toast-wine.js y mobile-toast-liquor.js), y las recetas de
     // los cócteles, ingrediente por ingrediente (mobile-toast-recipes.js).
     { t: 'Toast', items: [
-      { id: 'toastwine', ico: 'ti-glass-full', n: 'Wine from Toast', d: 'Match to your inventory' },
-      { id: 'toastliquor', ico: 'ti-bottle', n: 'Liquor from Toast', d: 'Each brand to its bottle' },
+      { id: 'toastwine', perm: 'ver_ajustes', ico: 'ti-glass-full', n: 'Wine from Toast', d: 'Match to your inventory' },
+      { id: 'toastliquor', perm: 'ver_ajustes', ico: 'ti-bottle', n: 'Liquor from Toast', d: 'Each brand to its bottle' },
       // Cuánto sirve cada medida, por restaurante (mobile-toast-pours.js).
-      { id: 'toastpours', ico: 'ti-ruler-measure', n: 'Pours', d: 'How much each size pours' },
-      { id: 'toastrecipes', ico: 'ti-glass-cocktail', n: 'Recipes', d: 'Each ingredient to its bottle' },
+      { id: 'toastpours', perm: 'toast', ico: 'ti-ruler-measure', n: 'Pours', d: 'How much each size pours' },
+      { id: 'toastrecipes', perm: 'recetas', ico: 'ti-glass-cocktail', n: 'Recipes', d: 'Each ingredient to its bottle' },
       // El correo de la mañana, para probarlo a mano (src/morning-report.js).
-      { id: 'morning', ico: 'ti-mail-forward', n: 'Morning email', d: 'Preview it or send a test to yourself' }
+      { id: 'morning', perm: 'ver_ajustes', ico: 'ti-mail-forward', n: 'Morning email', d: 'Preview it or send a test to yourself' }
     ]},
     // Los bartenders invitados (mobile-bartenders.js): sólo para Axel,
     // como el Admin del escritorio. Esconderlo es comodidad; quien decide
@@ -61,24 +61,24 @@
     { t: 'Appearance', items: [
       { id: 'look', ico: 'ti-typography', n: 'Typeface',  d: 'The app font' },
       { id: 'size', ico: 'ti-text-size',  n: 'Text size', d: 'Default' },
-      { id: 'fondo', ico: 'ti-photo',     n: 'Background', d: 'Same as computer' }
+      { id: 'fondo', perm: 'ajustes_locacion', ico: 'ti-photo',     n: 'Background', d: 'Same as computer' }
     ]}
   ];
 
-  // El bartender invitado (src/guest.js) ve lo de Toast y las recetas
-  // (que sí edita), y lo que sólo cambia su propio teléfono (letra y
-  // tamaño). Lo demás es configuración de la locación —quién firma los
-  // pedidos, a quién van los correos, las zonas, el fondo— y no hay nada
-  // que ver ahí que no sea para cambiarlo.
-  const PARA_INVITADO = ['toastwine', 'toastliquor', 'toastrecipes', 'morning', 'look', 'size'];
 
+  // Cada entrada lleva el permiso que hace falta para verla (`perm`;
+  // sin él, la ve cualquiera: letra y tamaño, que sólo cambian este
+  // teléfono). Roles, 2026-11-13: antes había una lista aparte para el
+  // bartender (PARA_INVITADO); ahora es el mismo filtro para todos, y el
+  // bartender sale con lo mismo que veía. People: Axel o quien tenga
+  // "People and roles" (quien decide es /api/admin).
   function grupos() {
     const A = window.BarStockAdminApi;
-    const admin = !!(A && A.soyAdmin && A.soyAdmin());
     const G = window.BarStockGuest;
-    const invitado = !!(G && G.activo && G.activo());
+    const puede = (k) => !G || !G.puede || G.puede(k);
+    const admin = !!(A && A.soyAdmin && A.soyAdmin()) || (!!(G && G.persona && G.persona()) && puede('personas'));
     return GRUPOS.filter(g => !g.admin || admin)
-      .map(g => invitado ? Object.assign({}, g, { items: g.items.filter(it => PARA_INVITADO.indexOf(it.id) >= 0) }) : g)
+      .map(g => Object.assign({}, g, { items: g.items.filter(it => !it.perm || puede(it.perm)) }))
       .filter(g => g.items.length);
   }
 

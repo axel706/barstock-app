@@ -45,10 +45,15 @@ grupo('1 · el catálogo');
   prueba('el guardado manda sobre el de fábrica', JSON.stringify(P.efectivos('manager', [{ key: 'manager', perms: ['contar', 'raro'] }], [])) === '["contar"]');
   prueba('un rol que ya no existe no da nada', P.efectivos('fantasma', [], []).length === 0);
   prueba('usuario de correo sin rol: todo, como hasta hoy', P.deUsuario({ app_metadata: {} }).length === 14);
+  // Un 'staff' viejo, sin perms: con [] quedaba bajo el candado de recetas.
+  prueba('un rol viejo que no salió de aquí: todo, como hasta hoy', P.deUsuario({ app_metadata: { role: 'staff' } }).length === 14);
   prueba('bartender de antes de los roles: ver y recetas', JSON.stringify(P.deUsuario({ app_metadata: { role: 'bartender' } })) ===
     JSON.stringify(['ver_dinero', 'ver_ordenes', 'ver_ajustes', 'recetas']));
   prueba('con perms guardados, esos', JSON.stringify(P.deUsuario({ app_metadata: { role: 'manager', perms: ['contar'] } })) === '["contar"]');
   prueba('sólo recetas = el candado del bartender', P.soloRecetas(P.FABRICA.bartender.perms) && !P.soloRecetas(['recetas', 'contar']));
+  prueba('persona de PIN: con perms o rol de fábrica; un staff viejo no',
+    P.dePin({ app_metadata: { role: 'bar_lead', perms: [] } }) && P.dePin({ app_metadata: { role: 'bartender' } }) &&
+    !P.dePin({ app_metadata: { role: 'staff' } }) && !P.dePin({ app_metadata: {} }));
   prueba('la clave sale del nombre', P.claveDe('Bar Lead ñ') === 'bar_lead_n');
 }
 

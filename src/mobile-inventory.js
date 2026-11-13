@@ -314,13 +314,14 @@
         </button>`;
     }).join('');
 
-    // El bartender invitado (src/guest.js) no edita: su toque abre la
-    // ficha del producto, la misma que Buscar, que enseña todo y no
-    // cambia nada. Sin esto se abriría la hoja de editar con sus
-    // botones escondidos, una hoja vacía.
+    // Quien no puede editar productos (el bartender, o un rol sin "Edit
+    // items", src/guest.js) no edita: su toque abre la ficha del
+    // producto, la misma que Buscar, que enseña todo y no cambia nada.
+    // Sin esto se abriría la pantalla de editar con sus botones
+    // escondidos, una pantalla vacía.
     const G = window.BarStockGuest;
     const S = window.BarStockMobileSearch;
-    const invitado = !!(G && G.activo && G.activo() && S && S.abrirItem);
+    const invitado = !!(G && G.puede && !G.puede('editar_productos') && S && S.abrirItem);
     caja.querySelectorAll('.m-inv').forEach(b => {
       b.onclick = invitado
         ? () => { const r = master()[Number(b.dataset.i)]; if (r) S.abrirItem(r.item); }

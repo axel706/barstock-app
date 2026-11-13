@@ -399,6 +399,15 @@
         soloAviso: true
       } };
     }
+    // Un rol sin "Count inventory" (roles, 2026-11-13): lo mismo, dicho
+    // para cualquier rol.
+    if (G && G.puede && !G.puede('contar')) {
+      return { activo: false, dialogo: {
+        titulo: 'Counting is off for your role.',
+        cuerpo: 'Ask the owner if you need to count.',
+        soloAviso: true
+      } };
+    }
     const C = window.BarStockMobileCycle;
     if (!C || typeof C.escaneo !== 'function') return { activo: true };
     try { return C.escaneo() || { activo: true }; }

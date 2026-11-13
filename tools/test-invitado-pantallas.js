@@ -35,6 +35,7 @@ function ventana(rol, nombre) {
   if (rol) w.localStorage.setItem('sb-x-auth-token', JSON.stringify({ user: { id: 'u',
     app_metadata: { role: rol }, user_metadata: { first_name: nombre || '' } } }));
   w.eval(leer('src/bartender-id.js'));
+  w.eval(leer('src/permisos.js'));
   w.eval(leer('src/guest.js'));
   return w;
 }
@@ -126,10 +127,12 @@ function ventana(rol, nombre) {
       '.m-hero[data-kind="cycle"] :is(.m-hero-b, .m-hero-b2)', '.m-hero-x:has(.ti-trash)', '#mcfSync', '.m-cf-b[data-cf="ayer"]'];
     const faltan = escondidos.filter(x => bloque.indexOf(x) < 0);
     prueba('esconde cada control que edita', !faltan.length, faltan.join(' '));
-    prueba('todo bajo html.bs-guest', bloque.split('{')[1] && !/\n  #mScreens|\n  #mSheet/.test(bloque.split('@media (max-width: 640px) {')[1] || ''));
+    // Desde los roles (2026-11-13), por permiso: html.bs-sin-<permiso>.
+    // El bartender recibe todas las que le tocan (test-invitado).
+    prueba('todo bajo html.bs-sin-<permiso>', !/\n  (?!html\.bs-sin-[a-z_]+ )[#.a-z]/.test((bloque.split('@media (max-width: 640px) {')[1] || '').replace(/\/\*[\s\S]*?\*\//g, '')));
     prueba('nada de Recipes: ni .m-rc, ni .m-re, ni sus botones', !/\.m-rc\b|\.m-re\b|#reSave|#rcNueva/.test(bloque.replace(/\/\*[\s\S]*?\*\//g, '').replace(/:not\(\.m-rc\)/g, '')));
     prueba('lo compartido va acotado: la hoja de botellas no se toca', !/\.m-tl-hoja|\.m-tl-res|\.m-set-save/.test(bloque.replace(/\/\*[\s\S]*?\*\//g, '')));
-    prueba('la fila de licor queda quieta, no escondida (enseña la botella)', /html\.bs-guest #mScreens \.m-tl \.m-tl-fila \{?[\s\S]{0,40}/.test(bloque) &&
+    prueba('la fila de licor queda quieta, no escondida (enseña la botella)', /html\.bs-sin-toast #mScreens \.m-tl \.m-tl-fila/.test(bloque) &&
       /\.m-tl \.m-tl-fila \{\s*pointer-events: none;/.test(bloque));
   }
 

@@ -76,12 +76,13 @@
       .then(() => { _pidiendoNombre = false; });
   }
 
-  // El bartender invitado (src/guest.js) entra con SU nombre, y el
-  // perfil de remitente es el de la locación: a Billie le saludaba con
-  // el de otro (Axel, 2026-11-13). Su nombre viene en su sesión.
+  // Quien entra con PIN (src/guest.js) entra con SU nombre, y el perfil
+  // de remitente es el de la locación: a Billie le saludaba con el de
+  // otro (Axel, 2026-11-13). Su nombre viene en su sesión. Desde los
+  // roles vale para toda persona de PIN, no sólo el bartender.
   function saludo() {
     const G = window.BarStockGuest;
-    if (G && G.activo && G.activo()) {
+    if (G && (G.persona ? G.persona() : G.activo && G.activo())) {
       const n = soloNombre(G.nombre());
       return n ? 'Hello, ' + n : hoy();
     }

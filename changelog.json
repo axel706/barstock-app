@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261113-140149",
+    "items": [
+      "Behind-the-scenes: roles and permissions"
+    ]
+  },
+  {
     "build": "20261113-133832",
     "items": [
       "Bartenders: location changes show after going back"
@@ -186,13 +192,6 @@
     "items": [
       "Morning email can go to a list of people",
       "Set the list in Settings › Emails"
-    ]
-  },
-  {
-    "build": "20261112-121916",
-    "items": [
-      "Morning email: preview and send yourself a test",
-      "Settings › Toast › Morning email"
     ]
   }
 ]
