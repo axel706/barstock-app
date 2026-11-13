@@ -4023,6 +4023,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * tarjeta verde que enseña el PIN una sola vez. Los botones llevan
    * #mScreens delante: es lo que gana al radio de 999px de app.css. */
   .m-bt-p { margin-top: 12px; font-size: var(--m-small); color: #9fb0c4; line-height: 1.5; }
+  /* Las filas, con el aire POR ARRIBA. Heredaban de .m-item el
+   * margin-bottom: debajo de "Copy name and PIN" (que no deja aire
+   * abajo) la primera fila quedaba pegada al botón, 0 px, y se veía
+   * encimada (Axel, 2026-11-13). Sólo aquí: .m-item lo usan todas las
+   * listas de Settings. */
+  body.m-shell .m-bt .m-bt-fila { margin: 8px 0 0; }
   .m-bt-err { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: rgba(248,113,113,.14);
     font-size: var(--m-small); color: #fecaca; line-height: 1.45; }
   .m-bt-ini { flex: none; width: calc(var(--m-base) * 2.2); height: calc(var(--m-base) * 2.2); border-radius: 9px;

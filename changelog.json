@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261113-142345",
+    "items": [
+      "People: the list no longer runs into the Copy button"
+    ]
+  },
+  {
     "build": "20261113-140856",
     "items": [
       "Settings › People: roles, PIN for everyone",
@@ -186,12 +192,6 @@
     "build": "20261112-130845",
     "items": [
       "Toast developer tools: see which restaurants it can read"
-    ]
-  },
-  {
-    "build": "20261112-125650",
-    "items": [
-      "The morning email now arrives on its own each day"
     ]
   }
 ]

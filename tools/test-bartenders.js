@@ -237,6 +237,12 @@ async function llamar(token, action, cuerpo) {
     prueba('al segundo, Billie ya no existe', !db.users.some(u => u.id === id) && /No one yet/.test(host.textContent) &&
       w.__avisos.some(t => /can no longer sign in/.test(t)));
 
+    // Lo encimado (Axel, 2026-11-13): la primera fila pegada a "Copy name
+    // and PIN". jsdom no maqueta: se mira la regla. Medido en Chromium:
+    // 0 px antes, 8 px después.
+    const css = leer('styles/mobile-app.css').replace(/\/\*[\s\S]*?\*\//g, '');
+    prueba('las filas de People, con el aire por arriba y nada abajo', /body\.m-shell \.m-bt \.m-bt-fila \{ margin: 8px 0 0; \}/.test(css));
+
     // ── La pestaña Roles ──────────────────────────────────────────────
     q('[data-tab="roles"]').click();
     const rs = [...host.querySelectorAll('[data-r]')].map(b => b.dataset.r).join();
