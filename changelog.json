@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261113-090935",
+    "items": [
+      "Edit item: no more color seam under the top bar"
+    ]
+  },
+  {
     "build": "20261113-085511",
     "items": [
       "Edit item: last 8 weeks of use, tap a week for its number",
@@ -188,13 +194,6 @@
     "items": [
       "Home: Sales, Movement and Changes in tabs",
       "Top movers in bottles or dollars, against their usual"
-    ]
-  },
-  {
-    "build": "20261111-213544",
-    "items": [
-      "Home carousel: no more welcome, tips or MarginEdge card",
-      "MarginEdge sync now lives in Spent this cycle"
     ]
   }
 ]

@@ -5198,10 +5198,15 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * cabe, rueda ella sola. */
   .m-ed {
     position: fixed; left: 0; right: 0; z-index: 8990;
-    top: calc(52px + env(safe-area-inset-top, 0px)); bottom: 0;
+    /* Desde arriba del todo, POR DEBAJO de la banda (que va por encima,
+     * 9100), como el resto de pantallas: el degradado de la banda cae
+     * sobre este mismo fondo. Empezaba justo bajo la banda y ahí se veía
+     * un corte de tono (Axel, 2026-11-13): la banda dejaba ver la lista
+     * de detrás y aquí empezaba un fondo sólido. */
+    top: 0; bottom: 0;
     overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
     background: #0b1220;
-    padding: 6px 16px calc(env(safe-area-inset-bottom, 0px) + 96px);
+    padding: calc(52px + env(safe-area-inset-top, 0px) + 6px) 16px calc(env(safe-area-inset-bottom, 0px) + 96px);
     display: flex; flex-direction: column;
   }
   /* Delete y Save, abajo, justo encima de las pestañas, donde llega el
