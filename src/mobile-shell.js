@@ -82,9 +82,7 @@
   function pildoraInvitado() {
     const G = window.BarStockGuest;
     if (!G || !G.activo()) return '';
-    const n = String(G.nombre() || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-    return '<span class="m-guest-pill" role="status"><i class="ti ti-eye" aria-hidden="true"></i>' +
-      'Guest' + (n ? ' · ' + n : '') + '</span>';
+    return '<span class="m-guest-pill" role="status"><i class="ti ti-eye" aria-hidden="true"></i>Bartender Mode</span>';
   }
 
   function montarBanda() {
@@ -387,6 +385,19 @@
   }
 
   function escaneo() {
+    // El bartender invitado (src/guest.js) no cuenta: el candado no deja
+    // guardar nada, así que contar sería trabajo que se pierde al cerrar.
+    // Axel, 2026-11-13: "aún pueden tomar inventario desde el botón
+    // verde, debería estar bloqueado". El botón va en su estado apagado
+    // de siempre y, al tocarlo, dice por qué; no lleva al ciclo.
+    const G = window.BarStockGuest;
+    if (G && G.activo && G.activo()) {
+      return { activo: false, dialogo: {
+        titulo: 'Counting is off in Bartender Mode.',
+        cuerpo: 'You can see everything and edit recipes. The bar team does the count.',
+        soloAviso: true
+      } };
+    }
     const C = window.BarStockMobileCycle;
     if (!C || typeof C.escaneo !== 'function') return { activo: true };
     try { return C.escaneo() || { activo: true }; }

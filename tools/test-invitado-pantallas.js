@@ -47,9 +47,28 @@ function ventana(rol, nombre) {
     prueba('la banda la pinta', !!f && /'<span class="m-band-ico"><\/span>' \+[\s\S]{0,400}pildoraInvitado\(\)/.test(src));
     const con = (w) => { w.eval('window.__p = (' + f[0].replace('function pildoraInvitado()', 'function ()') + ')();'); return w.__p; };
     const b = con(ventana('bartender', 'Billie'));
-    prueba('un invitado: "Guest · Billie"', /m-guest-pill/.test(b) && /Guest · Billie/.test(b), b);
-    prueba('su nombre se escapa', /Guest · &lt;b&gt;/.test(con(ventana('bartender', '<b>'))));
+    // Axel, 2026-11-13: "en lugar de guest puede decir Bartender Mode".
+    prueba('un invitado: "Bartender Mode"', /m-guest-pill/.test(b) && /Bartender Mode/.test(b) && !/Guest/.test(b), b);
     prueba('cualquier otro: nada', con(ventana('staff', 'Sam')) === '' && con(ventana()) === '');
+  }
+
+  grupo('1b · el saludo y el botón verde');
+  {
+    // El saludo, de verdad: soloNombre y saludo de mobile-home.js.
+    const home = leer('src/mobile-home.js');
+    const sn = /function soloNombre\(n\) \{[\s\S]*?\n  \}/.exec(home)[0];
+    const sa = /function saludo\(\) \{[\s\S]*?\n  \}/.exec(home)[0];
+    const hola = (w) => { w.eval('window.__s = (function(){ const hoy = () => "Thursday"; let _nombre = "Axel"; const cargarNombre = () => {}; ' +
+      sn + sa + ' return saludo(); })();'); return w.__s; };
+    prueba('Billie: "Hello, Billie", no el remitente de la locación', hola(ventana('bartender', 'Billie Jean')) === 'Hello, Billie');
+    prueba('los demás: el de siempre', hola(ventana('staff')) === 'Hello, Axel');
+    // El botón verde: escaneo() de mobile-shell.js.
+    const sh = leer('src/mobile-shell.js');
+    const es = /function escaneo\(\) \{[\s\S]*?\n  \}/.exec(sh)[0];
+    const esc = (w) => { w.BarStockMobileCycle = { escaneo: () => ({ activo: true }) }; w.eval('window.__e = (' + es.replace('function escaneo()', 'function ()') + ')();'); return w.__e; };
+    const e = esc(ventana('bartender', 'Billie'));
+    prueba('Billie: el escáner apagado, con un aviso que dice por qué', e.activo === false && e.dialogo.soloAviso === true && /Bartender Mode/.test(e.dialogo.titulo));
+    prueba('los demás: lo que diga el ciclo', esc(ventana('staff')).activo === true);
   }
 
   grupo('2 · Settings');

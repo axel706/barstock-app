@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261112-193708",
+    "items": [
+      "Bartender Mode: the Home greets the bartender by name",
+      "Bartender Mode: the scan button is off"
+    ]
+  },
+  {
     "build": "20261112-173349",
     "items": [
       "Guest bartenders: buttons that change things are hidden",
@@ -184,12 +191,6 @@
   },
   {
     "build": "20261111-193246",
-    "items": [
-      "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261111-192248",
     "items": [
       "Behind-the-scenes fixes"
     ]

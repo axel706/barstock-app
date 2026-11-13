@@ -76,7 +76,15 @@
       .then(() => { _pidiendoNombre = false; });
   }
 
+  // El bartender invitado (src/guest.js) entra con SU nombre, y el
+  // perfil de remitente es el de la locación: a Billie le saludaba con
+  // el de otro (Axel, 2026-11-13). Su nombre viene en su sesión.
   function saludo() {
+    const G = window.BarStockGuest;
+    if (G && G.activo && G.activo()) {
+      const n = soloNombre(G.nombre());
+      return n ? 'Hello, ' + n : hoy();
+    }
     cargarNombre();
     return _nombre ? 'Hello, ' + _nombre : hoy();
   }
