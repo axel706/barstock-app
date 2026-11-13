@@ -182,6 +182,15 @@ async function llamar(token, action, cuerpo) {
     q('[data-fl="crown"]').click(); await esperar(30);
     const id = db.users.find(u => u.user_metadata.first_name === 'Billie').id;
     prueba('tocar una locación la guarda', db.access.filter(a => a.user_id === id).map(a => a.location_id).sort().join() === 'crown,wb');
+    // Axel, 2026-11-13: "lo selecciono, me salgo, regreso y solamente
+    // tiene acceso a la locación original". Se guardaba; lo que volvía
+    // era la lista leída al entrar, y la ficha se abría con ella.
+    w.__atras(); await esperar(30);
+    const fila = q('[data-b]');
+    prueba('al volver a la lista, dice las dos locaciones', !!fila && /Crown/.test(fila.textContent) && /Will's & Bill's/.test(fila.textContent),
+      fila && fila.textContent.replace(/\s+/g, ' '));
+    fila.click();
+    prueba('y al abrirla otra vez, las dos marcadas', q('[data-fl="crown"]').classList.contains('on') && q('[data-fl="wb"]').classList.contains('on'));
     q('[data-fl="crown"]').click(); await esperar(30); q('[data-fl="wb"]').click(); await esperar(30);
     prueba('quitarle la última no: lo dice y no la quita', /at least one location/.test(host.textContent) &&
       db.access.some(a => a.user_id === id && a.location_id === 'wb'));

@@ -248,7 +248,16 @@
     pintar();
   }
 
-  function aLista() { _vista = 'lista'; _nuevo = null; _ficha = null; _error = ''; pintar(); }
+  // Al volver a la lista se LEE otra vez. Antes se pintaba la que se
+  // trajo al entrar: una locación tocada en la ficha se guardaba (salía
+  // "Saved"), pero la lista y la ficha, al reabrirla, seguían con la de
+  // antes, y parecía que no se había guardado (Axel, 2026-11-13). Se
+  // pinta ya con lo que había y se repinta al llegar lo del servidor.
+  async function aLista() {
+    _vista = 'lista'; _nuevo = null; _ficha = null; _error = ''; pintar();
+    await cargar();
+    if (_vista === 'lista') pintar();
+  }
 
   async function montar(host, cab, volver) {
     _host = host; _cab = cab; _volver = volver;

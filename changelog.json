@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261113-133832",
+    "items": [
+      "Bartenders: location changes show after going back"
+    ]
+  },
+  {
     "build": "20261113-130531",
     "items": [
       "Home cards follow the week: count, orders, running out",
@@ -187,13 +193,6 @@
     "items": [
       "Morning email: preview and send yourself a test",
       "Settings › Toast › Morning email"
-    ]
-  },
-  {
-    "build": "20261112-085052",
-    "items": [
-      "Toast Sales card: Toast logo and last sync time",
-      "Amber dot when Toast hasn't synced in a day"
     ]
   }
 ]
