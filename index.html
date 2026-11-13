@@ -373,7 +373,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261112-223246</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261112-224037</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -4502,7 +4502,6 @@ async function saveEditedItem(){
 
   const oldCode = row.code || '';
   const oldItem = row.item || '';
-  const oldNorm = row.itemNorm;
 
   const code = document.getElementById('editCode').value.trim();
   const item = document.getElementById('editName').value.trim();
@@ -4537,35 +4536,62 @@ async function saveEditedItem(){
 
   try{
     setStatus(`Saving '${item}' to cloud...`);
+    if (!window.BarStockInventoryCloud) throw new Error('Inventory cloud module not available');
 
-    if (window.BarStockInventoryCloud) {
-      await window.BarStockInventoryCloud.patchInventoryItem({
-        oldCode,
-        oldItem,
-        code,
-        item,
-        vendor,
-        onHand,
-        suggested,
-        value
-      });
-    } else {
-      throw new Error('Inventory cloud module not available');
+    // ── El nombre y el código, por la función de la base ─────────────
+    //
+    // Este modal renombraba sólo inventory_items: el artículo perdía en
+    // silencio su emparejamiento con Toast, sus recetas, su código de
+    // barras, su zona y el historial de Pour·IQ. Ahora va por
+    // rename_inventory_item (migración 038, src/item-edit.js), la misma
+    // del teléfono: todas las tablas a la vez, o ninguna. Si falla, no se
+    // guarda nada más y se dice por qué. renombrar() ya pone al día la
+    // fila de memoria y los alias.
+    let renombrado = null;
+    if (item !== oldItem || code !== oldCode) {
+      if (!window.BarStockItemEdit) throw new Error('The rename module is not loaded.');
+      renombrado = await window.BarStockItemEdit.renombrar(row, { nombre: item, codigo: code });
     }
 
-    state.master[currentEditIndex] = updatedRow;
-    bsRenombrarAliases(oldNorm, itemNorm);
+    // Lo demás, contra el nombre y el código que ya tiene en la base.
+    await window.BarStockInventoryCloud.patchInventoryItem({
+      oldCode: row.code || '',
+      oldItem: row.item || '',
+      code: row.code || '',
+      item: row.item || '',
+      vendor,
+      onHand,
+      suggested,
+      value
+    });
+
+    state.master[currentEditIndex] = Object.assign(updatedRow, { item: row.item, itemNorm: row.itemNorm, code: row.code || '' });
     saveState();
     render();
     closeEditModal();
-    setStatus(`Item '${item}' updated in cloud.`);
+    setStatus(`Item '${row.item}' updated in cloud.`);
 
-    // Par Intelligence — update snapshot on_hand_start if onHand changed
+    // Par Intelligence — update snapshot on_hand_start if onHand changed.
+    // Con el nombre que ya tiene en la base, y ANTES de recargar: si se
+    // renombró, la recarga cortaría esta escritura a medias.
     if (window.BarStockParIntelligence && onHand !== row.onHand) {
-      window.BarStockParIntelligence.updateSnapshotOnHand(item, code, onHand).catch(err =>
+      await window.BarStockParIntelligence.updateSnapshotOnHand(row.item, row.code || '', onHand).catch(err =>
         console.warn('[ParIntelligence] updateSnapshotOnHand failed:', err)
       );
     }
+
+    // El nombre vive también en lo que esta pantalla tiene guardado
+    // (Toast, recetas, el LIVE): se recarga para que todo lo lea ya con
+    // el nuevo, como en el teléfono.
+    if (renombrado && renombrado.renamed) {
+      if (renombrado.compartidas) {
+        alert('Renamed at this location. Another location still has an item with the old name, so the barcode and bottle shape they share stay with that one.');
+      }
+      setStatus(`Renamed everywhere. Reloading…`);
+      setTimeout(() => { try { location.reload(); } catch (e) {} }, 700);
+      return;
+    }
+
   } catch(err){
     console.error(err);
     alert('Could not save item changes to cloud.\n\n' + (err.message || String(err)));

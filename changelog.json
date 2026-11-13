@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261112-224037",
+    "items": [
+      "Renaming on the computer now carries everything along too"
+    ]
+  },
+  {
     "build": "20261112-223246",
     "items": [
       "Edit an item's name and vendor code from the phone",
@@ -189,12 +195,6 @@
     "items": [
       "All products: every bottle sold that day",
       "Tap a product to open its sheet"
-    ]
-  },
-  {
-    "build": "20261111-200541",
-    "items": [
-      "Tap a day in Sold in Toast to see that day"
     ]
   }
 ]

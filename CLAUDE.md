@@ -296,9 +296,9 @@ transacción, por locación, y lo compartido en la cuenta (códigos de
 barras, siluetas) sólo si ninguna otra locación usa el nombre viejo.
 Probada contra un Postgres 16 de verdad. La usa la hoja de editar del
 teléfono (`src/item-edit.js`, Axel 2026-11-13, opción A: nombre, código
-y Delete con respaldo de Time Machine antes). **El renombrar del modal
-del escritorio todavía no la usa**: sólo cambia `inventory_items` y deja
-huérfano lo demás.
+y Delete con respaldo de Time Machine antes), y el modal del escritorio
+(`saveEditedItem`) desde el mismo día: los dos pasan por
+`BarStockItemEdit.renombrar()`. Nada más renombra.
 
 **El par no salta de golpe:** ±2 por paso (`BarStockProductWeeks.paso`). Un
 óptimo de 9 sobre un par de 1 puede venir de un mes raro.

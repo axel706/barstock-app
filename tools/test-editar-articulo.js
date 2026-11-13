@@ -174,10 +174,54 @@ function entorno(o) {
       w.__orden.some(x => /backup is in Time Machine/.test(x)));
   }
 
+  grupo('4b · el modal del escritorio renombra igual');
+  {
+    const idx = leer('index.html');
+    const ini = idx.indexOf('async function saveEditedItem(){');
+    const fin = idx.indexOf('\n}\n', ini);
+    const fn = idx.slice(ini, fin + 2);
+    async function modal(o) {
+      const w = new JSDOM('<!doctype html><body>' +
+        ['editCode', 'editName', 'editVendor', 'editOnHand', 'editSuggested', 'editValue', 'editFinalOrder'].map(i => '<input id="' + i + '">').join('') +
+        '</body>', { url: 'https://x.test/', runScripts: 'outside-only' }).window;
+      w.__orden = [];
+      w.state = { master: [{ item: 'Triage House Vodka', itemNorm: 'TRIAGE HOUSE VODKA', code: 'T1', vendor: 'LOOP', onHand: 3, suggested: 12, value: 5.5 }] };
+      const v = { editCode: o.code || 'T1', editName: o.nombre || 'Triage House Vodka', editVendor: 'LOOP', editOnHand: '3', editSuggested: '14', editValue: '5.5', editFinalOrder: '' };
+      for (const k in v) w.document.getElementById(k).value = v[k];
+      w.BarStockItemEdit = { renombrar: async (r, c) => {
+        w.__orden.push('renombrar:' + c.nombre + '|' + c.codigo);
+        if (o.falla) throw new Error('There is already an item called "Kamora" at Crown.');
+        r.item = c.nombre; r.itemNorm = c.nombre.toUpperCase(); r.code = c.codigo; return { renamed: c.nombre !== 'Triage House Vodka' };
+      } };
+      // El alert de jsdom no se deja pisar con una declaración: se asigna.
+      w.alert = (t) => w.__orden.push('alert:' + t);
+      w.console.error = () => {};
+      w.BarStockInventoryCloud = { patchInventoryItem: async (x) => { w.__orden.push('patch:' + x.oldItem + '>' + x.item + '|' + x.oldCode); } };
+      w.eval('var currentEditIndex = 0; function parseNum(v){ return Number(v) || 0; } function inferVendor(){ return "LOOP"; }' +
+        'function computeToOrder(a,b){ return Math.max(0,b-a); } function supportsManualFinalOrder(){ return false; }' +
+        'function normalizeName(s){ return String(s).toUpperCase(); } function saveState(){ __orden.push("saveState"); } function render(){}' +
+        'function closeEditModal(){ __orden.push("cerrar"); } function setStatus(t){ __orden.push("status:" + t); }' +
+        'function bsRenombrarAliases(){ __orden.push("aliasDirecto"); }' + fn);
+      await w.saveEditedItem();
+      return w;
+    }
+    let w = await modal({ nombre: 'Triage House Vodka 1L' });
+    prueba('renombra por la función de la base, ANTES de lo demás', w.__orden[1] === 'renombrar:Triage House Vodka 1L|T1' && /^patch:/.test(w.__orden[2]), w.__orden.join(' / '));
+    prueba('lo demás va contra el nombre que ya tiene en la base', w.__orden.includes('patch:Triage House Vodka 1L>Triage House Vodka 1L|T1'));
+    prueba('y la fila de memoria queda con el nuevo', w.state.master[0].item === 'Triage House Vodka 1L' && w.state.master[0].suggested === 14);
+    prueba('los alias los pone renombrar(), no una segunda vez aquí', !w.__orden.includes('aliasDirecto'));
+    prueba('y recarga para que todo lea el nombre nuevo', w.__orden.some(x => /Renamed everywhere/.test(x)));
+    w = await modal({ nombre: 'Kamora', falla: true });
+    prueba('si la base no renombra: lo dice y no guarda nada más', w.__orden.some(x => /alert:[\s\S]*already an item called/.test(x)) && !w.__orden.some(x => /^patch:/.test(x)) && !w.__orden.includes('cerrar'));
+    w = await modal({});
+    prueba('sin cambiar nombre ni código, no llama a renombrar', !w.__orden.some(x => /^renombrar/.test(x)) && w.__orden.includes('patch:Triage House Vodka>Triage House Vodka|T1'));
+    prueba('ya no renombra sólo inventory_items a mano', !/oldItem,\s*\n\s*code,\s*\n\s*item,/.test(fn));
+  }
+
   grupo('5 · el escritorio y el orden de carga');
   {
     const idx = leer('index.html');
-    prueba('el modal del escritorio usa la misma función de alias', /bsRenombrarAliases\(oldNorm, itemNorm\)/.test(idx) && /function bsRenombrarAliases\(/.test(idx));
+    prueba('la función de alias, una sola, en index.html', /function bsRenombrarAliases\(/.test(idx));
     const p = f => idx.indexOf('src="src/' + f);
     prueba('item-edit.js después del respaldo y antes de la pantalla', p('inventory-backup.js') < p('item-edit.js') && p('item-edit.js') < p('mobile-inventory.js') && p('item-edit.js') > 0);
   }
