@@ -373,7 +373,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261112-224037</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261112-224342</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -4661,21 +4661,19 @@ async function deleteEditedItem(){
   if(!confirm(`Delete '${row.item}' from Inventory?`)) return;
 
   try{
-    const code = String(row.code || '').trim();
     const item = String(row.item || '').trim();
 
-    if (window.BarStockInventoryCloud) {
-      await window.BarStockInventoryCloud.deleteInventoryItem({
-        code,
-        item
-      });
-    } else {
-      throw new Error('Inventory cloud module not available');
-    }
+    // ── Con respaldo, como en el teléfono ───────────────────────────
+    //
+    // Borraba directo: era el único camino que quitaba un producto sin
+    // rastro (estaba en los pendientes de CLAUDE.md). Ahora va por
+    // BarStockItemEdit.borrar() (src/item-edit.js), el mismo del
+    // teléfono: primero un respaldo de Time Machine y, si no se puede
+    // tomar, no borra. Ella misma lo quita de state.master y guarda.
+    if (!window.BarStockItemEdit) throw new Error('The delete module is not loaded.');
+    setStatus(`Backing up, then deleting '${item}'...`);
+    await window.BarStockItemEdit.borrar(row);
 
-    // local solo después de cloud OK
-    state.master.splice(currentEditIndex,1);
-    saveState();
     render();
     closeEditModal();
 
@@ -4688,11 +4686,13 @@ async function deleteEditedItem(){
       catch(e) { console.warn('no se pudo recargar el inventario tras borrar', e); }
     }
 
-    setStatus(`Item '${item}' deleted from Inventory and cloud.`);
+    setStatus(`Item '${item}' deleted. A backup from just before is in Time Machine.`);
   } catch(err){
     console.error(err);
-    alert('Could not delete inventory item from cloud.');
-    setStatus('Error deleting inventory item from cloud.');
+    // Lo que pasó, no un "no se pudo" genérico: puede ser el respaldo
+    // (y entonces no se borró nada) o la nube.
+    alert('Could not delete the item.\n\n' + (err.message || String(err)));
+    setStatus('Error deleting the item: ' + (err.message || String(err)));
   }
 }
 

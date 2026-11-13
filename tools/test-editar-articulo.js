@@ -218,6 +218,41 @@ function entorno(o) {
     prueba('ya no renombra sólo inventory_items a mano', !/oldItem,\s*\n\s*code,\s*\n\s*item,/.test(fn));
   }
 
+  grupo('4c · el Delete del escritorio, con respaldo');
+  {
+    const idx = leer('index.html');
+    const ini = idx.indexOf('async function deleteEditedItem(){');
+    const fn = idx.slice(ini, idx.indexOf('\n}\n', ini) + 2);
+    async function borrarEsc(o) {
+      const w = new JSDOM('<!doctype html><body></body>', { url: 'https://x.test/', runScripts: 'outside-only' }).window;
+      w.__orden = [];
+      w.state = { master: [{ item: 'Triage House Vodka', code: 'T1' }, { item: 'Kamora', code: 'K1' }] };
+      w.confirm = () => true;
+      w.alert = (t) => w.__orden.push('alert:' + t);
+      w.console.error = () => {};
+      w.BarStockItemEdit = { borrar: async (r) => {
+        w.__orden.push('borrar:' + r.item);
+        if (o.sinRespaldo) throw new Error('Could not take a backup first, so nothing was deleted.');
+        w.state.master.splice(w.state.master.indexOf(r), 1);
+        return true;
+      } };
+      w.BarStockInventoryCloud = { deleteInventoryItem: async () => { w.__orden.push('borradoDirecto'); } };
+      w.eval('var currentEditIndex = 0; function saveState(){} function render(){ __orden.push("render"); }' +
+        'function closeEditModal(){ __orden.push("cerrar"); } function setStatus(t){ __orden.push("status:" + t); }' +
+        'async function loadInventoryFromSupabase(){ __orden.push("recargar"); }' + fn);
+      await w.deleteEditedItem();
+      return w;
+    }
+    let w = await borrarEsc({});
+    prueba('borra por borrar(), con su respaldo; no directo a la nube', w.__orden.includes('borrar:Triage House Vodka') && !w.__orden.includes('borradoDirecto'));
+    prueba('sale de la lista, se cierra y dice dónde está el respaldo', w.state.master.length === 1 && w.__orden.includes('cerrar') &&
+      w.__orden.some(x => /backup from just before is in Time Machine/.test(x)));
+    w = await borrarEsc({ sinRespaldo: true });
+    prueba('sin respaldo: no borra, no cierra, y dice por qué', w.state.master.length === 2 && !w.__orden.includes('cerrar') &&
+      w.__orden.some(x => /alert:[\s\S]*nothing was deleted/.test(x)));
+    prueba('ya no llama a deleteInventoryItem por su cuenta', !/deleteInventoryItem/.test(fn));
+  }
+
   grupo('5 · el escritorio y el orden de carga');
   {
     const idx = leer('index.html');

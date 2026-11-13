@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261112-224342",
+    "items": [
+      "Deleting an item on the computer takes a backup first"
+    ]
+  },
+  {
     "build": "20261112-224037",
     "items": [
       "Renaming on the computer now carries everything along too"
@@ -188,13 +194,6 @@
     "items": [
       "Full report: net sales of the day, item by item",
       "Liquor and wine apart; beer and open bar left out"
-    ]
-  },
-  {
-    "build": "20261111-201252",
-    "items": [
-      "All products: every bottle sold that day",
-      "Tap a product to open its sheet"
     ]
   }
 ]

@@ -298,7 +298,10 @@ Probada contra un Postgres 16 de verdad. La usa la hoja de editar del
 teléfono (`src/item-edit.js`, Axel 2026-11-13, opción A: nombre, código
 y Delete con respaldo de Time Machine antes), y el modal del escritorio
 (`saveEditedItem`) desde el mismo día: los dos pasan por
-`BarStockItemEdit.renombrar()`. Nada más renombra.
+`BarStockItemEdit.renombrar()`. Nada más renombra. Y borrar, en los dos,
+por `BarStockItemEdit.borrar()`: respaldo de Time Machine antes, y sin
+respaldo no borra (el `Delete` del escritorio borraba sin rastro hasta
+el 2026-11-13).
 
 **El par no salta de golpe:** ±2 por paso (`BarStockProductWeeks.paso`). Un
 óptimo de 9 sobre un par de 1 puede venir de un mes raro.
@@ -748,8 +751,6 @@ contestaría en segundos y nunca se corrió.
 - **Fase 0**: las 16 políticas RLS en `using (true)` con repo público.
 - `Resend` sigue apareciendo en órdenes LOOP, que salen por CSV y nunca por
   correo.
-- El `Delete` del escritorio (`deleteEditedItem`) no toma respaldo: es el
-  único camino que borra un producto sin rastro.
 - No hay forma de abrir el panel de una botella fuera de un conteo activo.
 - El manual de usuario (`docs/manual-usuario.md`) le faltan las secciones
   5–9 y nueve capturas.
