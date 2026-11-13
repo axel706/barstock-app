@@ -67,6 +67,8 @@ function entorno(o) {
     w.__peticiones.push({ url: u, metodo: op.method || 'GET', cuerpo: op.body ? JSON.parse(op.body) : null });
     const resp = (status, body) => ({ ok: status < 400, status, text: async () => JSON.stringify(body), json: async () => body });
     if (u.includes('/rest/v1/locations')) return resp(200, [{ toast_restaurant_guid: CROWN }]);
+    // Los pours de la locación (toast-pours.js, migración 037).
+    if (u.includes('/rest/v1/location_settings')) return resp(200, o.pours ? [{ pours: o.pours }] : []);
     if (u.includes('/api/integrations')) {
       const b = JSON.parse(op.body);
       w.__acciones = (w.__acciones || []).concat(b.action);
@@ -80,7 +82,7 @@ function entorno(o) {
     }
     return resp(404, {});
   };
-  for (const f of ['src/toast-links.js', 'src/toast-liquor.js', 'src/bottle-search.js', 'src/mobile-toast-liquor.js']) if (existe(f)) w.eval(leer(f));
+  for (const f of ['src/toast-pours.js', 'src/toast-links.js', 'src/toast-liquor.js', 'src/bottle-search.js', 'src/mobile-toast-liquor.js']) if (existe(f)) w.eval(leer(f));
   return w;
 }
 const escritas = (w) => w.__peticiones.filter(p => p.metodo === 'POST' && p.url.includes('toast_item_links')).map(p => p.cuerpo);

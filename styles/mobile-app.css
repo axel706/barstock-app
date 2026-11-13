@@ -5185,6 +5185,29 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   #mScreens .m-rc-nd-t { flex: 1; min-width: 0; font-size: var(--m-body); color: #cbd5e1; }
   #mScreens .m-rc-nd-t small { display: block; margin-top: 2px; font-size: var(--m-meta); color: #64748b; }
 
+  /* ── Settings › Toast › Pours (mobile-toast-pours.js) ──────────────
+   * Opción A (Axel, 2026-11-13): una fila por medida, con − / + como el
+   * editor de recetas. Lo que no tiene onzas, en ámbar y arriba. */
+  #mScreens .m-po-lab {
+    margin-top: 16px; font-size: var(--m-meta); font-weight: 800;
+    letter-spacing: .06em; text-transform: uppercase; color: #94a3b8;
+  }
+  #mScreens .m-po-lab.falta { color: #fbbf24; }
+  #mScreens .m-po { margin-top: 8px; }
+  #mScreens .m-po-f { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid rgba(255,255,255,.07); }
+  #mScreens .m-po-f:first-child { border-top: 0; }
+  #mScreens .m-po-t { flex: 1; min-width: 0; font-size: var(--m-body); color: #e2e8f0; }
+  #mScreens .m-po-t small { display: block; margin-top: 2px; font-size: var(--m-meta); color: #64748b; }
+  #mScreens .m-po-paso { flex: none; display: inline-flex; align-items: center; gap: 4px; }
+  #mScreens .m-po-paso b { min-width: calc(var(--m-base) * 3.6); text-align: center; font-size: var(--m-body); color: #fff; }
+  #mScreens .m-po-f.falta .m-po-paso b { color: #fbbf24; }
+  #mScreens .m-po-paso button {
+    width: calc(var(--m-base) * 2.3); height: calc(var(--m-base) * 2.3); padding: 0; cursor: pointer; box-shadow: none;
+    font-size: var(--m-strong); font-weight: 700; line-height: 1; color: #e2e8f0;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); border-radius: 10px !important;
+  }
+  #mScreens .m-po-auto { flex: none; font-size: var(--m-small); color: #64748b; }
+
   /* El editor: una columna, el aire por arriba como en todo el teléfono. */
   #mScreens .m-re-tit { margin-top: 4px; font-size: var(--m-title); font-weight: 800; color: #fff; }
   #mScreens .m-re-nom { margin-top: 10px; }

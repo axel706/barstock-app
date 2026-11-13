@@ -15,28 +15,15 @@
   //
   // Los cócteles y lo de Happy Hour no pasan por aquí: van por receta.
 
-  // ── Las medidas de la casa ───────────────────────────────────────────
+  // ── Las medidas ──────────────────────────────────────────────────────
   //
-  // Las que escribió Axel en la hoja de recetas (2026-11-11, página 6,
-  // "House pours"): Single 1.5, Double 2.5, Rocks 3, Up 3, Shot 1.5. En
-  // Toast el grupo se llama "UP/RX" o "Up/Rx", que es Up o Rocks: 3. Y los
-  // grupos "2oz" / "3oz" dicen su medida en el nombre.
-  //
-  // "Mix" (licor con refresco) no estaba en la hoja y casi todas las
-  // marcas lo tienen en Toast. Axel, 2026-11-11: "1.5 en el mix", como el
-  // Single. (Lo de Happy Hour con mix va por receta, no por aquí.)
-  //
-  // Una medida que no está aquí no se adivina: devuelve undefined y el
-  // motor no guarda esa fila (vacío sería "una botella entera").
-  const MEDIDAS = { single: 1.5, double: 2.5, 'up/rx': 3, up: 3, rx: 3, rocks: 3, shot: 1.5, mix: 1.5 };
-
-  function ozDe(medida) {
-    if (medida == null) return undefined;
-    const m = String(medida).toLowerCase().replace(/\s+/g, '');
-    if (Object.prototype.hasOwnProperty.call(MEDIDAS, m)) return MEDIDAS[m];
-    const n = /^(\d+(?:\.\d+)?)oz$/.exec(m);
-    return n ? Number(n[1]) : undefined;
-  }
+  // Eran una tabla fija aquí, igual para todos los restaurantes. Desde el
+  // 2026-11-13 cada locación pone las suyas (Settings › Toast › Pours):
+  // viven en toast-pours.js, con las de siempre por defecto. Una medida
+  // sin onzas no se adivina: devuelve undefined y el motor no guarda esa
+  // fila (vacío sería "una botella entera").
+  const P = () => window.BarStockToastPours;
+  const ozDe = (medida) => P().ozDe(medida);
 
   const L = () => window.BarStockToastLinks;
   const E = L().crear({
@@ -157,9 +144,11 @@
   const medidaTexto = (m) => (m.medida || 'No size') + ' · ' + (m.oz === undefined ? '? oz' : m.oz + ' oz');
 
   window.BarStockToastLiquor = {
-    cargar: E.cargar, datos: E.datos, alCambiar: E.alCambiar,
+    // Las medidas de la locación, antes que las marcas: sin ellas, cada
+    // marca saldría "sin pour" hasta que llegaran.
+    cargar: (...a) => P().cargar().catch(() => null).then(() => E.cargar(...a)), datos: E.datos, alCambiar: E.alCambiar,
     marcas, porTipo, confirmarMarca, ignorarMarca, deshacerMarca, confirmarSugeridas,
-    ozDe, medidaTexto, MEDIDAS, DIAS: E.DIAS,
+    ozDe, medidaTexto, DIAS: E.DIAS,
     _reset: E._reset
   };
 })();

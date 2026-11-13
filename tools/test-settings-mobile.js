@@ -86,9 +86,11 @@ function entorno(guardado) {
   // from Toast, en el mismo grupo (2026-11-11). Once desde Morning email,
   // también en Toast: Axel pidió poder mandarse el correo de la mañana a
   // mano para probarlo, "en ajustes tal vez" (2026-11-12).
-  prueba('once entradas', items.length === 11, items.join(', '));
+  // Doce desde Pours, en Toast: cada restaurante pone sus medidas
+  // (Axel, 2026-11-13).
+  prueba('doce entradas', items.length === 12, items.join(', '));
   prueba('y son las acordadas',
-    items.join(',') === 'Sender,Emails,Delivery,Zones,Wine from Toast,Liquor from Toast,Recipes,Morning email,Typeface,Text size,Background',
+    items.join(',') === 'Sender,Emails,Delivery,Zones,Wine from Toast,Liquor from Toast,Pours,Recipes,Morning email,Typeface,Text size,Background',
     items.join(','));
   prueba('cada una enseña su valor', /Axel Torres/.test(host.textContent) &&
     /2 recipients/.test(host.textContent));

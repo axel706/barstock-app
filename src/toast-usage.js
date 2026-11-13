@@ -67,10 +67,12 @@
   // ── El cálculo, sin red ──────────────────────────────────────────────
   //
   // ventas:   [{ business_date, toast_item_guid, toast_item_name, mods, quantity }]
-  // enlaces:  [{ toast_item_guid, item_name, pour_oz, status, kind }]
+  // enlaces:  [{ toast_item_guid, item_name, pour_oz, status, kind, toast_group }]
   // recetas:  las de BarStockToastRecipes.recetas()
   // tamanos:  { producto: ml }
-  function calcular(ventas, enlaces, recetas, tamanos) {
+  // pourDe:   (grupo de Toast) → onzas, o undefined. Las de la locación
+  //           (toast-pours.js). Sin ella, el pour_oz guardado al emparejar.
+  function calcular(ventas, enlaces, recetas, tamanos, pourDe) {
     const porGuid = new Map((enlaces || []).map(e => [e.toast_item_guid, e]));
     const cocteles = new Map(), mods = new Map();
     // Cada receta por su nombre de Toast y por los de "Same as…" (also):
@@ -125,7 +127,19 @@
         const ms = String(v.mods || '').split(' · ').map(norm).filter(Boolean);
         const R = e.kind === 'liquor' ? ms.map(x => mods.get(x)).find(Boolean) : null;
         if (R && !R.pendiente) { aplicar(R, v, q, e.item_name); continue; }
-        const oz = e.pour_oz == null ? null : Number(e.pour_oz);
+        // El licor solo, con el pour de la locación AHORA, por la medida de
+        // su grupo de Toast (Axel, 2026-11-13: cambiar una medida
+        // recalcula también lo ya emparejado). pour_oz, el que se guardó
+        // al emparejar, sólo si la medida no se puede sacar del grupo.
+        // Una medida que la locación dejó sin onzas no se cuenta como
+        // botella entera: se dice.
+        let oz = e.pour_oz == null ? null : Number(e.pour_oz);
+        if (e.kind === 'liquor' && pourDe) {
+          const g = e.toast_group || v.toast_group;
+          const m = g ? pourDe(g) : undefined;
+          if (m !== undefined) oz = m;
+          else if (oz == null) { perder(v.toast_item_name, 'No pour for its size (' + (g || 'no group') + ')', q); continue; }
+        }
         sumar(e.item_name, v.business_date, oz == null ? q : q * oz * ML_POR_OZ / ml(e.item_name), v.toast_item_name, v.sales_category);
         continue;
       }
@@ -178,7 +192,7 @@
       // mismo. net es el Net sales de Toast (migración 034).
       R().leerTodo('toast_sales?location_id=eq.' + loc + '&business_date=gt.' + desde +
         '&select=business_date,toast_item_guid,toast_item_name,toast_group,mods,quantity,net,sales_category&order=id.asc'),
-      R().leerTodo('toast_item_links?location_id=eq.' + loc + '&select=toast_item_guid,item_name,pour_oz,status,kind&order=id.asc'),
+      R().leerTodo('toast_item_links?location_id=eq.' + loc + '&select=toast_item_guid,item_name,pour_oz,status,kind,toast_group&order=id.asc'),
       R().leerTodo('toast_sales_days?location_id=eq.' + loc + '&business_date=gt.' + desde +
         '&select=business_date,complete,closed,fetched_at&order=business_date.asc')
     ]);
@@ -187,7 +201,16 @@
     const recetas = TR ? TR.recetas() : [];
     const tamanos = {};
     for (const r of (window.state && window.state.master) || []) if (r && r.item) tamanos[r.item] = r.bottleSizeMl;
-    return Object.assign({ desde, dias, ventas }, calcular(ventas, enlaces, recetas, tamanos));
+    // Los pours de la locación. Si no se pueden leer (la migración 037 sin
+    // correr, un fallo), se sigue con los guardados al emparejar: el LIVE
+    // no se queda en blanco por esto.
+    const P = window.BarStockToastPours;
+    let pourDe = null;
+    if (P) {
+      try { await P.cargar(); pourDe = (g) => P.ozDe(P.medidaDeGrupo(g)); }
+      catch (e) { pourDe = null; }
+    }
+    return Object.assign({ desde, dias, ventas }, calcular(ventas, enlaces, recetas, tamanos, pourDe));
   }
 
   async function desdeElConteo() {

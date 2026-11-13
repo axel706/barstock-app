@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261112-215912",
+    "items": [
+      "Settings › Toast › Pours: each restaurant sets its own pours",
+      "Changing a pour recounts every liquor sold that way"
+    ]
+  },
+  {
     "build": "20261112-213230",
     "items": [
       "Recipes › From Toast: Not drinks list with Restore"
@@ -186,13 +193,6 @@
     "build": "20261111-195302",
     "items": [
       "Product sheet shows its last 7 days sold in Toast"
-    ]
-  },
-  {
-    "build": "20261111-194734",
-    "items": [
-      "Toast Sales on Home: the week in bottles or dollars",
-      "Tap a day to see its total and top sellers"
     ]
   }
 ]

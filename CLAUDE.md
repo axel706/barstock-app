@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 140 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 141 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -330,7 +330,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 140 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 141 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -402,10 +402,18 @@ tabla del escritorio y las tarjetas del teléfono). Y *Liquor from Toast*
 (`src/toast-liquor.js`, sólo en el teléfono: Settings → Toast), con el
 mismo motor (`src/toast-links.js`): en Toast el licor solo es la MARCA y
 la medida la dice el grupo del menú (`DRINKS › Liquor › Vodka › UP/RX`).
-Una fila por marca; la botella se guarda para todas sus medidas con su
-pour (Single 1.5, Double 2.5, Up/Rocks 3, Shot 1.5, "3oz" 3, de la hoja
-de Axel). Una medida desconocida no se guarda: vacío sería "botella
-entera". Los cócteles y lo de Happy Hour van por receta (pendiente). Cada vino de Toast
+Una fila por marca; la botella se guarda para todas sus medidas. **Los
+pours son de cada restaurante** (Axel, 2026-11-13, opción A): Settings ›
+Toast › *Pours* (`src/mobile-toast-pours.js`), una fila por cada medida
+que ESA locación usa en Toast, guardadas en `location_settings.pours`
+(migración 037) sólo si cambian; las de siempre (Single 1.5, Double
+2.5, Up/Rocks 3, Shot 1.5, Mix 1.5, de la hoja de Axel) por defecto, y
+"2oz"/"3oz" por su nombre. Viven en `src/toast-pours.js`. **Cambiar
+una recalcula todo**, también lo ya emparejado: `toast-usage.js` lee
+el pour al calcular, por la medida del grupo de Toast
+(`medidaDeGrupo`, la regla de `lib/toast.js`); `pour_oz` de
+`toast_item_links` queda de reserva. Una medida desconocida no se
+guarda ni se cuenta: vacío sería "botella entera". Los cócteles y lo de Happy Hour van por receta (pendiente). Cada vino de Toast
 apunta a un producto en `toast_item_links` (migración 027, corrida).
 Crown tiene su `toast_restaurant_guid`; las demás locaciones no. Axel ya
 emparejó todos los vinos de Crown. **Desde el 2026-11-12, Toast va por

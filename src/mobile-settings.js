@@ -46,6 +46,8 @@
     { t: 'Toast', items: [
       { id: 'toastwine', ico: 'ti-glass-full', n: 'Wine from Toast', d: 'Match to your inventory' },
       { id: 'toastliquor', ico: 'ti-bottle', n: 'Liquor from Toast', d: 'Each brand to its bottle' },
+      // Cuánto sirve cada medida, por restaurante (mobile-toast-pours.js).
+      { id: 'toastpours', ico: 'ti-ruler-measure', n: 'Pours', d: 'How much each size pours' },
       { id: 'toastrecipes', ico: 'ti-glass-cocktail', n: 'Recipes', d: 'Each ingredient to its bottle' },
       // El correo de la mañana, para probarlo a mano (src/morning-report.js).
       { id: 'morning', ico: 'ti-mail-forward', n: 'Morning email', d: 'Preview it or send a test to yourself' }
@@ -640,6 +642,10 @@
     }
     if (_panel === 'bartenders' && window.BarStockMobileBartenders) {
       window.BarStockMobileBartenders.montar(host, (t) => cabecera(host, t || 'Bartenders'), () => volver(host));
+      return;
+    }
+    if (_panel === 'toastpours' && window.BarStockMobileToastPours) {
+      window.BarStockMobileToastPours.montar(host, () => cabecera(host, 'Pours'), () => volver(host));
       return;
     }
     if (_panel === 'toastrecipes' && window.BarStockMobileToastRecipes) {

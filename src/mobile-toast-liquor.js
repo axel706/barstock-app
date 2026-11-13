@@ -142,10 +142,12 @@
       const decididas = todas.filter(M => M.estado === 'confirmed' || M.estado === 'ignored');
       const lista = _tab === 'review' ? todas.filter(M => M.estado === 'review') : decididas;
       const nRev = todas.filter(M => M.estado === 'review').length;
-      const P = T().MEDIDAS;
+      // Las medidas de ESTA locación (Settings › Toast › Pours), no las
+      // de siempre: cada restaurante pone las suyas desde el 2026-11-13.
+      const oz = (m) => { const v = T().ozDe(m); return v === undefined ? '?' : v; };
       cuerpo = `
         <div class="m-tw-p">One bottle per brand. Each way Toast sells it takes its own pour:
-          Single ${P.single} oz, Double ${P.double}, Up or Rocks ${P.up}, Shot ${P.shot}. Sold in the last ${T().DIAS} days.</div>
+          Single ${oz('Single')} oz, Double ${oz('Double')}, Up or Rocks ${oz('Up/Rx')}, Shot ${oz('Shot')}. Change them in Settings › Toast › Pours. Sold in the last ${T().DIAS} days.</div>
         <div class="m-tw-tabs">
           <button type="button" data-tab="review" class="${_tab === 'review' ? 'on' : ''}">To review · ${nRev}</button>
           <button type="button" data-tab="done" class="${_tab === 'done' ? 'on' : ''}">Done · ${decididas.length}</button>
