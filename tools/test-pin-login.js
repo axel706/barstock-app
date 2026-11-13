@@ -4,8 +4,10 @@
  *
  * Axel, 2026-11-12. Lo que no puede volver a pasar:
  *
- *   1. El login de siempre sigue igual, y "Bartender? Sign in with your
- *      PIN" cambia la tarjeta al nombre y el teclado.
+ *   1. El login de siempre sigue igual, y arriba las pestañas "Email |
+ *      PIN" (Axel, 2026-11-13, opción A: "no preguntar si eres
+ *      bartender", con roles el PIN es de todos). PIN cambia la tarjeta
+ *      al nombre y el teclado; en Sign up y Reset, no hay pestañas.
  *   2. Seis teclas entran solas, con el correo que sale del nombre
  *      (src/bartender-id.js, el mismo que usa api/admin.js) y el PIN.
  *   3. Entrar es el MISMO camino que con correo (BarStockAuth.login): la
@@ -69,16 +71,32 @@ function entorno(o) {
     const w = entorno();
     const d = w.document;
     prueba('sin modo guardado: el de correo, sin la clase', !d.documentElement.classList.contains('auth-pin'));
-    prueba('debajo, "Bartender? Sign in with your PIN"', /Bartender\? Sign in with your PIN/.test(d.getElementById('authPinGo').textContent));
-    d.getElementById('authPinOpen').click();
-    prueba('al tocarlo, la tarjeta pasa al PIN', d.documentElement.classList.contains('auth-pin') && d.getElementById('authTitle').textContent === 'Bartender sign in');
+    const tabs = d.getElementById('authPinTabs');
+    prueba('arriba, antes del título, las pestañas Email | PIN', !!tabs && tabs.nextElementSibling === d.getElementById('authTitle') &&
+      [...tabs.querySelectorAll('[data-modo]')].map(b => b.textContent.trim()).join('|') === 'Email|PIN' &&
+      tabs.querySelector('[data-modo="email"]').classList.contains('on'));
+    prueba('y ya no se pregunta si eres bartender', !/Bartender/i.test(d.getElementById('authCard').textContent));
+    tabs.querySelector('[data-modo="pin"]').click();
+    prueba('PIN cambia la tarjeta, sin "Bartender"', d.documentElement.classList.contains('auth-pin') &&
+      d.getElementById('authTitle').textContent === 'Welcome back' && /name and the PIN you were given/.test(d.getElementById('authSub').textContent) &&
+      tabs.querySelector('[data-modo="pin"]').classList.contains('on') && !/Bartender/i.test(d.getElementById('authCard').textContent));
     prueba('nombre, seis casillas y el teclado del 0 al 9 con borrar', !!d.getElementById('authPinName') &&
       d.querySelectorAll('#authPinBoxes i').length === 6 &&
       [...d.querySelectorAll('[data-k]')].map(b => b.dataset.k).sort().join() === '0,1,2,3,4,5,6,7,8,9,del');
     prueba('el PIN no es un campo: no sale el teclado del teléfono', !d.querySelector('#authPin input[type="password"], #authPin input[inputmode="numeric"]'));
-    d.getElementById('authPinEmail').click();
-    prueba('"Sign in with email" la devuelve', !d.documentElement.classList.contains('auth-pin') && d.getElementById('authTitle').textContent === 'Welcome back');
+    tabs.querySelector('[data-modo="email"]').click();
+    prueba('Email la devuelve', !d.documentElement.classList.contains('auth-pin') && d.getElementById('authTitle').textContent === 'Welcome back' &&
+      /Access your inventory/.test(d.getElementById('authSub').textContent));
     prueba('y lo recuerda', w.localStorage.getItem('barstock.loginMode') === 'email');
+    // En Sign up y Reset password se usa el correo: elegir PIN ahí no
+    // tiene sentido. auth.js marca <html> y el CSS esconde las pestañas.
+    // Los enlaces del pie se enganchan en `load` (auth.js).
+    w.dispatchEvent(new w.Event('load'));
+    d.getElementById('authFootAction').click();
+    prueba('en Sign up, <html> lo dice (sin pestañas)', d.documentElement.classList.contains('auth-no-login'));
+    d.getElementById('authFootAction').click();
+    prueba('de vuelta en login, sí', !d.documentElement.classList.contains('auth-no-login'));
+    prueba('el CSS las esconde fuera de login', /html\.auth-no-login #authPinTabs\s*\{\s*display:\s*none/.test(leer('styles/auth.css')));
   }
 
   grupo('2 · seis teclas entran solas');

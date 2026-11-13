@@ -1,12 +1,19 @@
 (() => {
   if (window.BarStockPinLogin) return;
-  // ── Entrar como bartender: nombre y PIN ──────────────────────────────
+  // ── Entrar con nombre y PIN ──────────────────────────────────────────
   //
   // Axel, 2026-11-12, opción C sobre lámina: el nombre y un teclado
-  // numérico grande, "como un datáfono", más rápido en la barra. Debajo
-  // del login de siempre, "Bartender? Sign in with your PIN" cambia la
-  // tarjeta; "Sign in with email" la devuelve. El teléfono recuerda el
-  // último modo: el de Billie abre ya en el PIN.
+  // numérico grande, "como un datáfono", más rápido en la barra. Nació
+  // para el bartender; desde los roles (2026-11-13) entra así cualquiera
+  // con PIN: owner, manager o bartender.
+  //
+  // Cómo se elige (Axel, 2026-11-13, opción A): arriba de la tarjeta,
+  // antes del título, las pestañas "Email | PIN", las mismas de People y
+  // de la tarjeta de Toast. Antes era un enlace abajo, "Bartender? Sign
+  // in with your PIN", y Axel: "no preguntar si eres bartender". En Sign
+  // up y Reset password no salen: ahí se usa el correo (auth.js marca
+  // <html> con auth-no-login). El teléfono recuerda el último modo: quien
+  // entra con PIN abre ya en el PIN.
   //
   // Aquí sólo se reúnen nombre y PIN. Entrar lo hace el login de
   // siempre (BarStockAuth.login), con el correo que sale del nombre
@@ -38,19 +45,32 @@
 
   function decir(t) { const m = $('authMsg'); if (m) m.textContent = t || ''; }
 
+  // La pestaña encendida, la del modo.
+  function marcarTabs(modo) {
+    const t = $('authPinTabs');
+    if (!t) return;
+    t.querySelectorAll('[data-modo]').forEach(b => {
+      const on = b.dataset.modo === modo;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-selected', String(on));
+    });
+  }
+
   function abrir() {
     raiz().classList.add('auth-pin');
     raiz().classList.remove('auth-pin-loc');
     guardarModo('pin');
+    marcarTabs('pin');
     _pin = ''; pintarCasillas(); decir('');
     const t = $('authTitle'), s = $('authSub');
-    if (t) t.textContent = 'Bartender sign in';
-    if (s) s.textContent = 'Your name and the PIN your manager gave you.';
+    if (t) t.textContent = 'Welcome back';
+    if (s) s.textContent = 'Your name and the PIN you were given.';
   }
 
   function cerrar() {
     raiz().classList.remove('auth-pin', 'auth-pin-loc');
     guardarModo('email');
+    marcarTabs('email');
     _pin = ''; decir('');
     const t = $('authTitle'), s = $('authSub');
     if (t) t.textContent = 'Welcome back';
@@ -89,8 +109,8 @@
   }
 
   function montar() {
-    const msg = $('authMsg'), foot = $('authFoot');
-    if (!msg || !foot || $('authPin')) return;
+    const msg = $('authMsg'), titulo = $('authTitle');
+    if (!msg || !titulo || $('authPin')) return;
     const bloque = document.createElement('div');
     bloque.id = 'authPin';
     bloque.innerHTML =
@@ -103,19 +123,22 @@
           ? '<span></span>'
           : '<button type="button" class="auth-pin-key' + (k === 'del' ? ' del' : '') + '" data-k="' + k + '"' +
             (k === 'del' ? ' aria-label="Delete"><i class="ti ti-backspace" aria-hidden="true"></i>' : '>' + k) + '</button>').join('') +
-      '</div>' +
-      '<div class="auth-pin-alt"><span id="authPinEmail">Sign in with email</span></div>';
+      '</div>';
     msg.parentNode.insertBefore(bloque, msg.nextSibling);
 
-    const ir = document.createElement('div');
-    ir.id = 'authPinGo';
-    ir.className = 'auth-pin-alt';
-    ir.innerHTML = 'Bartender? <span id="authPinOpen">Sign in with your PIN</span>';
-    foot.parentNode.insertBefore(ir, foot.nextSibling);
+    // Las pestañas, arriba, antes del título.
+    const tabs = document.createElement('div');
+    tabs.id = 'authPinTabs';
+    tabs.className = 'auth-tabs';
+    tabs.setAttribute('role', 'tablist');
+    tabs.innerHTML =
+      '<button type="button" role="tab" data-modo="email" class="on" aria-selected="true">Email</button>' +
+      '<button type="button" role="tab" data-modo="pin" aria-selected="false">PIN</button>';
+    titulo.parentNode.insertBefore(tabs, titulo);
 
     bloque.querySelectorAll('[data-k]').forEach(b => { b.onclick = () => tecla(b.dataset.k); });
-    $('authPinEmail').onclick = cerrar;
-    $('authPinOpen').onclick = abrir;
+    tabs.querySelector('[data-modo="email"]').onclick = cerrar;
+    tabs.querySelector('[data-modo="pin"]').onclick = abrir;
     // Con teclado físico (o el de un iPad), los números también valen.
     document.addEventListener('keydown', (e) => {
       if (!raiz().classList.contains('auth-pin') || e.target === $('authPinName')) return;

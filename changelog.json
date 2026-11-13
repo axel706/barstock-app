@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261113-143355",
+    "items": [
+      "Sign in: choose Email or PIN at the top"
+    ]
+  },
+  {
     "build": "20261113-142345",
     "items": [
       "People: the list no longer runs into the Copy button"
@@ -186,12 +192,6 @@
     "build": "20261112-132717",
     "items": [
       "Toast developer tools: ask another restaurant by GUID"
-    ]
-  },
-  {
-    "build": "20261112-130845",
-    "items": [
-      "Toast developer tools: see which restaurants it can read"
     ]
   }
 ]

@@ -343,7 +343,6 @@ html.auth-pin #authSignupFields,
 html.auth-pin #authPasswordGroup,
 html.auth-pin #authForgot,
 html.auth-pin #authFoot,
-html.auth-pin #authPinGo,
 html.auth-pin #authLoginBtn{ display:none !important; }
 /* Billie con dos locaciones: el paso de elegir es el del login de
  * siempre. Se aparta el teclado y vuelve su botón. */
@@ -376,11 +375,23 @@ html.auth-pin.auth-pin-loc #authLoginBtn{ display:block !important; }
 #authCard .auth-pin-key:active{ background:rgba(56,189,248,.28); }
 #authCard .auth-pin-key.del{ background:none; color:#cbd5e1; }
 html.auth-pin-busy .auth-pin-pad{ opacity:.45; pointer-events:none; }
-.auth-pin-alt{
-  margin-top:14px; text-align:center;
-  font-size: var(--m-small); color:#cbd5e1;
+/* Las pestañas Email | PIN, arriba de la tarjeta (Axel, 2026-11-13,
+ * opción A): las mismas de People y de la tarjeta de Toast (.m-sx-tabs).
+ * #authCard delante para ganarle al radio de 999px de app.css; aquí sí
+ * es 999px, pero lo de app.css trae también su sombra y su fondo. Fuera
+ * de login (Sign up, Reset password) no salen: ahí es con correo. */
+#authPinTabs{
+  display:flex; padding:3px; margin-bottom:18px; border-radius:999px;
+  background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.12);
 }
-.auth-pin-alt span{ color:#38bdf8; font-weight:700; cursor:pointer; }
+#authCard #authPinTabs button{
+  flex:1; padding:8px 0; border:0; cursor:pointer; box-shadow:none;
+  border-radius:999px !important; background:none;
+  font-family:inherit; font-size: var(--m-small); font-weight:700; color:#c3d2e2;
+  -webkit-tap-highlight-color:transparent;
+}
+#authCard #authPinTabs button.on{ background:#7dd3fc; color:#04283d; }
+html.auth-no-login #authPinTabs{ display:none; }
 
 #authLogoutBtn{
   display:none;

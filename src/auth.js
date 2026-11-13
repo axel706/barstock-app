@@ -388,6 +388,9 @@
     if (footAction) footAction.textContent = cfg.footAction;
     if (msg) msg.textContent = '';
     if (locationStep) locationStep.style.display = 'none';
+    // Fuera de login (Sign up, Reset password) se usa el correo: las
+    // pestañas Email | PIN de src/pin-login.js no salen (styles/auth.css).
+    document.documentElement.classList.toggle('auth-no-login', authMode !== 'login');
   }
 
   function setAuthMode(mode){

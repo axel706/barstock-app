@@ -697,8 +697,12 @@ del rol con su interruptor, lo quitado sólo a ella en ámbar ("Off for
   necesita RLS por usuario: Fase 0.
 - **Sin hacer, por dibujar:** "Money" y "Orders and invoices" salen como
   "Soon" y no se pueden tocar.
+- **El login** (2026-11-13, opción A): arriba de la tarjeta, antes del
+  título, las pestañas "Email | PIN" (`src/pin-login.js`). Sin
+  "Bartender" en ningún sitio: con PIN entra cualquiera. En Sign up y
+  Reset password no salen (`html.auth-no-login`, lo pone `auth.js`).
 - Pruebas: `test-roles`, `test-bartenders`, `test-invitado`,
-  `test-invitado-pantallas`.
+  `test-invitado-pantallas`, `test-pin-login`.
 
 ### Bartender invitado: nombre y PIN (2026-11-12)
 
