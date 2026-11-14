@@ -883,6 +883,16 @@ El plan entero, con la tabla, los patrones, las fases y las preguntas
 pendientes para Axel: **`docs/plan-esperado.md`**. La fase 2 (empezar a
 guardar) es la urgente: cada semana sin guardar es historial perdido.
 
+### La lista de compras y la verificación (2026-11-14, sin construir)
+
+Desde "Running out first", un manager confirma lo que se acaba (a una
+lista de compras compartida por locación, que se convierte en quick
+order) o dice "I have enough" CON UN NÚMERO: esa verificación corrige el
+LIVE del producto hasta el siguiente conteo, nunca toca `on_hand`, y su
+diferencia con lo que decía la app es la misma señal del esperado, a
+media semana. "Running low" desde cualquier producto para lo que la app
+no avisó. El plan y sus preguntas: **`docs/plan-lista-compras.md`**.
+
 ---
 
 ## Pendientes conocidos
