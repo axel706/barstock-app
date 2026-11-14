@@ -866,6 +866,21 @@ contestaría en segundos y nunca se corrió.
 
 ---
 
+### El esperado: el LIVE al cerrar el ciclo (2026-11-14, sin construir)
+
+Idea de Axel: el LIVE justo antes de reiniciar el ciclo es lo que
+DEBERÍA haber en la estantería. Puesto al lado de lo contado, la
+diferencia, semana tras semana, señala recetas o pours mal puestos,
+merma o robo, y errores al contar, y dice cuánto fiarse del LIVE de cada
+producto. Se guarda aparte (tabla nueva, nunca en `on_hand` ni en
+`inventory_snapshots`), en dos tiempos (provisional al cerrar el conteo,
+final cuando Toast tiene el día completo), y lo guardado no se recalcula.
+El plan entero, con la tabla, los patrones, las fases y las preguntas
+pendientes para Axel: **`docs/plan-esperado.md`**. La fase 2 (empezar a
+guardar) es la urgente: cada semana sin guardar es historial perdido.
+
+---
+
 ## Pendientes conocidos
 
 - **Fase 0**: las 16 políticas RLS en `using (true)` con repo público.
