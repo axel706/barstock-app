@@ -870,7 +870,7 @@ contestaría en segundos y nunca se corrió.
 
 ---
 
-### El esperado: el LIVE al cerrar el ciclo (2026-11-14, sin construir)
+### El esperado: el LIVE al cerrar el ciclo (2026-11-14, fase 1 hecha)
 
 Idea de Axel: el LIVE justo antes de reiniciar el ciclo es lo que
 DEBERÍA haber en la estantería. Puesto al lado de lo contado, la
@@ -882,6 +882,34 @@ final cuando Toast tiene el día completo), y lo guardado no se recalcula.
 El plan entero, con la tabla, los patrones, las fases y las preguntas
 pendientes para Axel: **`docs/plan-esperado.md`**. La fase 2 (empezar a
 guardar) es la urgente: cada semana sin guardar es historial perdido.
+
+**Dónde quedó (2026-11-14, se sigue el 2026-11-15 temprano para tenerlo
+por la tarde):**
+
+- **Fase 1 hecha** (`e099375`): migración 040 (`live_expected_cycles` y
+  `live_expected`), probada contra un Postgres 16 local; prueba
+  `test-esperado`. **Axel tiene que correrla**; no asumir que lo está.
+- **Fase 2, lo siguiente: guardar al cerrar el conteo**, en
+  `count-finish.js`, sólo cuando el conteo abre ciclo (`!yaHayCiclo`;
+  un reconteo no). El LIVE se calcula con lo de ANTES: hay que tomar
+  los `onHand` del maestro y el instante del conteo anterior
+  (`ultimoConteo()` de `toast-usage.js`, hoy privado) antes del bucle
+  que los sobrescribe. `BarStockLive.ahora()` no sirve tal cual: lee
+  `state.master` y el último conteo, y con un conteo activo contesta
+  `contando`. La idea: una función de `live-stock.js` que reciba el
+  maestro y los dos instantes, y que `ahora()` pase a usar. Ventas de
+  los días DESPUÉS del día del conteo anterior hasta el de éste
+  incluido (cada día en un solo ciclo, como ya hace el LIVE). Sólo filas
+  de lo contado; con el modo `zero`, decidir. Si guardar falla, el
+  conteo se cierra igual y se avisa con lo que pasó. Después, cerrar
+  los provisionales cuando Toast tenga el día (en `lib/morning-cron.js`,
+  que ya corre `src/` en el servidor, o al abrir la app).
+- **Pregunta abierta para Axel antes de construirla:** ¿a qué hora se
+  cuenta? Con el bar ya cerrado, la regla de arriba es exacta. Si se
+  cuenta a las 4 PM y se sigue vendiendo, lo de después saldría como
+  faltante falso (y el LIVE de la semana nueva ya empieza hoy con esas
+  botellas de más): habría que partir el día por hora con las órdenes
+  de Toast.
 
 ### La lista de compras y la verificación (2026-11-14, sin construir)
 
