@@ -186,7 +186,12 @@ Acoplada o fija va sin desenfoque propio (detrás ya está la escalera).
 Las demás barras de búsqueda, no. Los botones de las tres cifras del
 Home y "All products" de Toast, también (opción B): su texto va suelto,
 así que el reflejo va en `z-index: -1` con `isolation`, y **Review (y
-Retry) sigue amarillo sólido**, el único que avisa.
+Retry) sigue amarillo sólido**, el único que avisa. Las pestañas Sales /
+Movement / Changes (`#mhTabs`, opción B: la elegida también de cristal,
+azul) y Bottles / $ de Toast (opción A: la elegida sigue sólida), con el
+mismo cristal en el carril; a sus botones se les quita el desenfoque y la
+sombra de `app.css`, que sobre el cristal dibujaban una pastilla fantasma.
+`.m-sx-tabs` de People y Orders no se tocó.
 
 El radio de las tarjetas del carrusel (`.m-hero`) es **20px**, y es la
 referencia cuando pida "como las tarjetas".

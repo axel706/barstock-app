@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261113-224359",
+    "items": [
+      "Home tabs and Bottles / $ in glass"
+    ]
+  },
+  {
     "build": "20261113-143355",
     "items": [
       "Sign in: choose Email or PIN at the top"
@@ -186,12 +192,6 @@
     "build": "20261112-134307",
     "items": [
       "Toast works per location: Will's & Bill's too"
-    ]
-  },
-  {
-    "build": "20261112-132717",
-    "items": [
-      "Toast developer tools: ask another restaurant by GUID"
     ]
   }
 ]

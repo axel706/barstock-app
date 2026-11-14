@@ -632,7 +632,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * justo debajo, en "La barra de cristal". */
   body.m-shell #mBand .m-ico:not(.m-ico-alert),
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio,
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas) {
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas),
+  body.m-shell #mScreens :is(#mhTabs, .m-ts-seg) {
     -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
             backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
     background: rgba(255,255,255,.08);
@@ -647,6 +648,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   body.m-shell #mBand .m-ico:not(.m-ico-alert)::before,
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio::before,
   body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas)::before,
+  body.m-shell #mScreens :is(#mhTabs, .m-ts-seg)::before,
   body.m-shell .m-fab::before {
     content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
     background: radial-gradient(120% 70% at 30% 0%, rgba(255,255,255,.34), rgba(255,255,255,0) 55%);
@@ -682,6 +684,32 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas) { position: relative; isolation: isolate; }
   body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas)::before { z-index: -1; }
   body.m-shell #mScreens .m-cf-am .m-cf-b { background: #fcd34d; border-color: #fcd34d; color: #3b2a04; }
+
+  /* ── Las pestañas del Home y el Bottles / $ de Toast ──────────────
+   * Axel, 2026-11-13: el carril de los dos, del mismo cristal (en la
+   * regla de arriba), con el reflejo debajo de sus botones como en los
+   * de las cifras. La elegida, distinta en cada uno, sobre lámina:
+   *   · Sales / Movement / Changes (#mhTabs), opción B: también de
+   *     cristal, teñida de azul y con su filo de luz.
+   *   · Bottles / $ (.m-ts-seg), opción A: sigue azul sólida (su regla,
+   *     .m-ts-seg button.on, no se toca).
+   * Sólo #mhTabs: .m-sx-tabs lo usan también People y Orders › Sent, y
+   * esas no se pidieron. */
+  body.m-shell #mScreens :is(#mhTabs, .m-ts-seg) { position: relative; isolation: isolate; }
+  body.m-shell #mScreens :is(#mhTabs, .m-ts-seg)::before { z-index: -1; }
+  /* Sus botones, sin el desenfoque de 6 px ni la sombra que app.css le
+   * pone a todo <button>: sobre el carril oscuro no se veían, pero sobre
+   * el cristal dibujaban una pastilla fantasma detrás de Movement,
+   * Changes y Bottles (visto en Chromium antes de entregarlo). La
+   * elegida de las pestañas pone su propia sombra, más abajo, y gana. */
+  body.m-shell #mScreens :is(#mhTabs, .m-ts-seg) button {
+    -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none;
+  }
+  body.m-shell #mScreens #mhTabs button.on {
+    color: #fff; background: rgba(125,211,252,.32);
+    box-shadow: inset 0 0 0 1px rgba(186,230,253,.55), inset 0 1.5px 0 rgba(255,255,255,.55),
+      inset 0 0 10px rgba(125,211,252,.35), 0 2px 8px rgba(0,0,0,.25);
+  }
   body.m-shell #mDock .m-searchbar.m-vidrio,
   body.m-shell #mScreens .m-searchbar.m-vidrio.m-dock-fija {
     -webkit-backdrop-filter: none; backdrop-filter: none;
