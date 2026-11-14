@@ -967,7 +967,7 @@
       <div class="m-seg" id="miSeg"></div>
 
       <div class="m-inv-bar2">
-        <div class="m-searchbar on">
+        <div class="m-searchbar on m-vidrio">
           <!-- Lupa y no embudo: esto escribe para BUSCAR. El embudo es
                el icono de filtrar, y filtrar es lo que hace el botón
                de al lado — dos iconos distintos para dos cosas

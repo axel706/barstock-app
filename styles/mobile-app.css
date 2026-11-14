@@ -632,7 +632,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * justo debajo, en "La barra de cristal". */
   body.m-shell #mBand .m-ico:not(.m-ico-alert),
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio,
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas),
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo),
   body.m-shell #mScreens :is(#mhTabs, .m-ts-seg) {
     -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
             backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
@@ -647,7 +647,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   body.m-shell #mBand .m-ico:not(.m-ico-alert)::before,
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio::before,
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas)::before,
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo)::before,
   body.m-shell #mScreens :is(#mhTabs, .m-ts-seg)::before,
   body.m-shell .m-fab::before {
     content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
@@ -681,8 +681,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * Review (y Retry, cuando falla el Sync) sigue amarillo SÓLIDO: es el
    * único que avisa de algo, y que sea el único sólido es lo que hace
    * que se vea primero. Con el id delante, para ganarle al cristal. */
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas) { position: relative; isolation: isolate; }
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas)::before { z-index: -1; }
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo) { position: relative; isolation: isolate; }
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo)::before { z-index: -1; }
   body.m-shell #mScreens .m-cf-am .m-cf-b { background: #fcd34d; border-color: #fcd34d; color: #3b2a04; }
 
   /* ── Las pestañas del Home y el Bottles / $ de Toast ──────────────
@@ -753,6 +753,27 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     -webkit-backdrop-filter: none; backdrop-filter: none;
   }
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio > * { position: relative; z-index: 1; }
+
+  /* ── La fila de Inventory (2026-11-14) ────────────────────────────
+   * Axel, opción B sin las pestañas: la barra, el filtro y el + del
+   * mismo cristal (en la regla de arriba); "Everything / Needs fixing"
+   * se queda como estaba. El + es cristal teñido de verde, un poco más
+   * intenso que en la lámina (lo pidió así): sigue siendo el verde de
+   * "esto añade", sin ser el único botón sólido de la fila.
+   * Sin desenfoque propio, como la barra acoplada del Home: el bloque va
+   * siempre pegado bajo el header, y detrás ya está su escalera. */
+  body.m-shell #mScreens #miNuevo {
+    color: #ecfdf5; background: rgba(52, 211, 153, .42);
+    border: 1px solid rgba(167, 243, 208, .62);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255,255,255,.5),
+      inset 0 0 14px rgba(52,211,153,.45),
+      0 6px 18px rgba(0,0,0,.28);
+  }
+  body.m-shell #mScreens #miNuevo:active { background: rgba(52, 211, 153, .58); }
+  body.m-shell #mScreens #miPegado :is(.m-searchbar.m-vidrio, #miAdj, #miNuevo) {
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
   /* El icono por encima del reflejo, o el brillo lo lava. */
   body.m-shell #mBand .m-ico > .ti,
   body.m-shell .m-fab > .ti { position: relative; z-index: 1; }
@@ -2629,6 +2650,21 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
 
   .m-inv-bar2 { display: flex; gap: 7px; margin-bottom: 11px; }
   .m-inv-bar2 .m-searchbar { flex: 1; min-width: 0; margin-bottom: 0; }
+  /* Un solo alto para la barra, el filtro y el + (2026-11-14). Medían
+   * 50, 52 y 44 y el + quedaba arriba: la barra arrastraba los 2 px de
+   * margen de `.m-searchbar.on` (su regla, con body delante, le ganaba a
+   * la de aquí), la fila medía 52 y el filtro se estiraba a ella, y el +
+   * tenía 44 fijos. Ahora los tres miden --m-inv-alto, los 50 que medía
+   * la barra, y crece con la letra de Settings. Con el id delante para
+   * ganarle a .on; el relleno vertical se va porque manda el alto. */
+  .m-inv-bar2 { --m-inv-alto: calc(var(--m-strong) * 3.13); align-items: center; }
+  body.m-shell #mScreens .m-inv-bar2 .m-searchbar {
+    box-sizing: border-box; height: var(--m-inv-alto);
+    padding-top: 0; padding-bottom: 0; margin-bottom: 0;
+  }
+  body.m-shell #mScreens :is(#miAdj, #miNuevo) {
+    flex: 0 0 var(--m-inv-alto); width: var(--m-inv-alto); height: var(--m-inv-alto);
+  }
   /* El filtro de "See them" (Axel, 2026-11-11, opción B): la pastilla
    * de las del cajón de filtros, encendida, bajo el buscador. El aire va
    * por abajo como el resto de este bloque pegado (.m-inv-bar2): dos

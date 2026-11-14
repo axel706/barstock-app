@@ -143,7 +143,38 @@ grupo('la barra de "Do we have", de cristal');
   prueba('y esa regla no pone position', !!m && !/position/.test(m[1]), m && m[1]);
   prueba('acoplada o fija, sin desenfoque propio (ya está la escalera)',
     /#mDock \.m-searchbar\.m-vidrio,\s*body\.m-shell #mScreens \.m-searchbar\.m-vidrio\.m-dock-fija \{\s*-webkit-backdrop-filter: none; backdrop-filter: none;/.test(css));
-  prueba('ninguna otra barra de búsqueda la lleva', (leer('src/mobile-sales.js') + leer('src/mobile-inventory.js')).indexOf('m-vidrio') < 0);
+  // Inventory la lleva desde el 2026-11-14 (abajo). Las demás, no.
+  prueba('ninguna otra barra de búsqueda la lleva', leer('src/mobile-sales.js').indexOf('m-vidrio') < 0);
+}
+
+grupo('la fila de Inventory: cristal y un solo alto');
+{
+  // Axel, 2026-11-14, opción B sin las pestañas: la barra, el filtro y
+  // el + de cristal (el + teñido de verde, un poco más intenso que en la
+  // lámina), y los tres alineados. Medían 50, 52 y 44: la barra
+  // arrastraba los 2 px de margen de .m-searchbar.on (su regla le ganaba
+  // a la de Inventory), el filtro se estiraba a la fila y el + tenía 44
+  // fijos.
+  const inv = leer('src/mobile-inventory.js');
+  prueba('la barra de Inventory lleva .m-vidrio', /class="m-searchbar on m-vidrio"/.test(inv));
+  const css = leer('styles/mobile-app.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  const sel = /(body\.m-shell #mBand \.m-ico:not\(\.m-ico-alert\),[^{]*)\{/.exec(css);
+  prueba('el filtro y el + en la MISMA regla de cristal',
+    !!sel && /#miAdj/.test(sel[1]) && /#miNuevo/.test(sel[1]), sel && sel[1]);
+  prueba('las pestañas de Inventory no (no se pidieron)', !!sel && !/#miSeg|\.m-seg/.test(sel[1]));
+  const verde = /body\.m-shell #mScreens #miNuevo\s*\{([^}]*)\}/.exec(css);
+  prueba('el + es cristal verde, no el verde sólido',
+    !!verde && /background:\s*rgba\(52,\s*211,\s*153/.test(verde[1]), verde && verde[1]);
+  prueba('sin desenfoque propio: detrás ya está la escalera del header',
+    /#miPegado[^{]*\{\s*-webkit-backdrop-filter: none; backdrop-filter: none;/.test(css));
+  const barra = /body\.m-shell #mScreens \.m-inv-bar2 \.m-searchbar\s*\{([^}]*)\}/.exec(css);
+  prueba('la barra mide el alto de la fila, sin el margen de .on',
+    !!barra && /height:\s*var\(--m-inv-alto\)/.test(barra[1]) && /margin-bottom:\s*0/.test(barra[1]), barra && barra[1]);
+  const bot = /body\.m-shell #mScreens :is\(#miAdj, #miNuevo\)\s*\{([^}]*)\}/.exec(css);
+  prueba('el filtro y el + son cuadrados del mismo alto',
+    !!bot && /width:\s*var\(--m-inv-alto\)/.test(bot[1]) && /height:\s*var\(--m-inv-alto\)/.test(bot[1]), bot && bot[1]);
+  prueba('y ese alto cuelga de la escala, no es un número suelto',
+    /--m-inv-alto:\s*calc\(var\(--m-strong\)/.test(css));
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');

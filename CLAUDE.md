@@ -183,7 +183,11 @@ escáner (Axel, 2026-11-13, opción A): comparte LA MISMA regla que
 `#mBand .m-ico`, no una copia. Esa regla no puede llevar `position`: con
 su id le ganaba al `absolute` de la copia y al `fixed` de Buscar.
 Acoplada o fija va sin desenfoque propio (detrás ya está la escalera).
-Las demás barras de búsqueda, no. Los botones de las tres cifras del
+La de Inventory también (2026-11-14, opción B sin las pestañas), con su
+filtro y su + en la misma regla: el + de cristal verde, sin desenfoque
+propio (va pegado bajo el header), y los tres con un solo alto,
+`--m-inv-alto` (medían 50, 52 y 44: la barra arrastraba el margen de
+`.m-searchbar.on`). Las demás barras de búsqueda, no. Los botones de las tres cifras del
 Home y "All products" de Toast, también (opción B): su texto va suelto,
 así que el reflejo va en `z-index: -1` con `isolation`, y **Review (y
 Retry) sigue amarillo sólido**, el único que avisa. Las pestañas Sales /

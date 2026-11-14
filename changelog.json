@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261114-012523",
+    "items": [
+      "Inventory search, filter and + in glass",
+      "The + button lines up with the search bar"
+    ]
+  },
+  {
     "build": "20261113-232919",
     "items": [
       "Toast week selector back to the plain style"
@@ -183,14 +190,6 @@
     "items": [
       "Guest bartenders: buttons that change things are hidden",
       "Guest bartenders: Inventory rows open the product card"
-    ]
-  },
-  {
-    "build": "20261112-172621",
-    "items": [
-      "Bartenders: sign in with name and PIN",
-      "Guest bartenders see everything and edit only recipes",
-      "Settings › People › Bartenders to add them"
     ]
   }
 ]

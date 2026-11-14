@@ -281,11 +281,11 @@ grupo('los botones, de cristal');
   // products" llevan el cristal de la banda; Review sigue amarillo sólido.
   const css = leer('styles/mobile-app.css').replace(/\/\*[\s\S]*?\*\//g, '');
   const reg = /body\.m-shell #mBand \.m-ico:not\(\.m-ico-alert\),[^{]*\{([^}]*)\}/.exec(css);
-  prueba('comparten la regla de cristal de la banda', !!reg && /#mScreens :is\(\.m-cf-b, \.m-ts-mas\)\s*[,{]/.test(reg[0]) && /blur\(10px\)/.test(reg[1]));
-  prueba('y su reflejo', /#mScreens :is\(\.m-cf-b, \.m-ts-mas\)::before,/.test(css));
+  prueba('comparten la regla de cristal de la banda', !!reg && /#mScreens :is\(\.m-cf-b, \.m-ts-mas(?:, [^)]*)?\)\s*[,{]/.test(reg[0]) && /blur\(10px\)/.test(reg[1]));
+  prueba('y su reflejo', /#mScreens :is\(\.m-cf-b, \.m-ts-mas(?:, [^)]*)?\)::before,/.test(css));
   // El texto va suelto: sin esto el reflejo lo lavaba.
-  prueba('el reflejo, debajo del texto', /:is\(\.m-cf-b, \.m-ts-mas\) \{ position: relative; isolation: isolate; \}/.test(css) &&
-    /:is\(\.m-cf-b, \.m-ts-mas\)::before \{ z-index: -1; \}/.test(css));
+  prueba('el reflejo, debajo del texto', /:is\(\.m-cf-b, \.m-ts-mas(?:, [^)]*)?\) \{ position: relative; isolation: isolate; \}/.test(css) &&
+    /:is\(\.m-cf-b, \.m-ts-mas(?:, [^)]*)?\)::before \{ z-index: -1; \}/.test(css));
   // Con el id delante: sin él, el cristal (con id) le ganaba al amarillo.
   prueba('Review sigue amarillo sólido', /body\.m-shell #mScreens \.m-cf-am \.m-cf-b \{ background: #fcd34d;/.test(css));
   prueba('y no queda el amarillo viejo, que perdía', !/body\.m-shell \.m-cf-am \.m-cf-b \{/.test(css));

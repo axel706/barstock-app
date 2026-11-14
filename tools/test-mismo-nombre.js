@@ -150,7 +150,7 @@ function entorno(o) {
     // Embudo era el icono de filtrar, y filtrar es lo que hace el
     // boton de al lado: dos cosas distintas con el mismo dibujo.
     const inv = leer('src/mobile-inventory.js');
-    const barra = /<div class="m-searchbar on">([\s\S]{0,700}?)<\/div>/.exec(inv);
+    const barra = /<div class="m-searchbar on[^"]*">([\s\S]{0,700}?)<\/div>/.exec(inv);
     prueba('es una lupa', !!barra && /ti-search/.test(barra[1]), (barra && barra[1] || '').slice(0, 70));
     prueba('y no un embudo', !!barra && !/ti-filter/.test(barra[1]));
 
