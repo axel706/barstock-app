@@ -122,18 +122,101 @@
     // medias contra uno entero como si fueran lo mismo.
     const filaHoy = (o.dias || []).find(d => d && d.business_date === o.hoy);
     const hoy = filaHoy ? Object.assign(entrada(o.hoy), { parcial: !filaHoy.closed, sincronizado: filaHoy.fetched_at || null }) : null;
-    return { semana, cargados: cargado.size, hoy };
+    // `dia`: la misma entrada para cualquier fecha. La usa semanaCal()
+    // para la semana de calendario, así un martes dice lo mismo en la
+    // vista de siempre que en la de lunes a domingo.
+    return { semana, cargados: cargado.size, hoy, dia: entrada, desde: cargado.size ? [...cargado].sort()[0] : null };
+  }
+
+  // ── La semana de calendario (Axel, 2026-11-14, opción B + A) ────────
+  //
+  // La tarjeta de Toast pasa de "los últimos siete días" a una semana de
+  // LUNES A DOMINGO, la de Toast, con flechas para ir a las anteriores
+  // (hay ~13 semanas cargadas). Se sigue viendo un día; tocar el total
+  // de la semana pone la semana entera en el número grande.
+  //
+  // semanaCal(V, atras) → { lunes, etiqueta: 'Nov 3 – 9', dias: [7],
+  // total, fechas }. `atras` = 0 es la semana de hoy. Cada día es la
+  // entrada de resumir (V.dia); los que aún no llegan, `futuro`. Hoy, el
+  // de V.hoy si se cargó (a medias, `parcial`); si no, sin datos.
+  //
+  // El total es la SUMA de esos mismos días (no otro cálculo), y "lo
+  // normal" de una semana, la mediana de las semanas enteras ANTERIORES
+  // con sus siete días cargados, con al menos MIN_MUESTRAS. La semana en
+  // curso es `parcial`: no se compara en % contra una entera.
+  const MES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const lunesDe = (f) => sumarDias(f, -((diaSemana(f) + 6) % 7));
+  function etiquetaSemana(lunes) {
+    const a = new Date(lunes + 'T12:00:00Z'), b = new Date(sumarDias(lunes, 6) + 'T12:00:00Z');
+    return MES[a.getUTCMonth()] + ' ' + a.getUTCDate() + ' – ' +
+      (a.getUTCMonth() === b.getUTCMonth() ? '' : MES[b.getUTCMonth()] + ' ') + b.getUTCDate();
+  }
+  const CAMPOS = ['dinero', 'licor', 'vino', 'botellas', 'botLicor', 'botVino', 'sinPrecio'];
+  // Ojo con `hoy`: en lo que devuelve ahora(), V.hoy es la ENTRADA de hoy
+  // (la del Sync, o null) y la fecha es V.base.hoy. Se tomaba V.hoy por
+  // la fecha y las fechas salían inválidas.
+  const fechaHoy = (V) => (V.base && V.base.hoy) || (typeof V.hoy === 'string' ? V.hoy : null);
+  const entradaHoy = (V) => (V.hoy && typeof V.hoy === 'object') ? V.hoy : null;
+  function diasDe(V, lunes) {
+    const hoy = fechaHoy(V), eh = entradaHoy(V);
+    const out = [];
+    for (let k = 0; k < 7; k++) {
+      const f = sumarDias(lunes, k);
+      if (f > hoy) { out.push(Object.assign(V.dia(f), { futuro: true })); continue; }
+      if (f === hoy) { out.push(Object.assign(eh ? Object.assign({}, eh) : V.dia(f), { esHoy: true })); continue; }
+      out.push(V.dia(f));
+    }
+    return out;
+  }
+  function sumar(dias) {
+    const t = {};
+    for (const c of CAMPOS) t[c] = r2(dias.reduce((a, x) => a + (Number(x[c]) || 0), 0));
+    return t;
+  }
+  function semanaCal(V, atras) {
+    if (!V || !V.dia || !fechaHoy(V)) return null;
+    const lunes = sumarDias(lunesDe(fechaHoy(V)), -7 * (Number(atras) || 0));
+    const dias = diasDe(V, lunes);
+    const parcial = dias.some(x => x.futuro || x.esHoy);
+    // Lo normal: las semanas anteriores con sus siete días cargados.
+    const prev = { dinero: [], botellas: [] };
+    for (let j = 1; j <= 13; j++) {
+      const l = sumarDias(lunes, -7 * j);
+      if (V.desde && sumarDias(l, 6) < V.desde) break;
+      const ds = diasDe(V, l);
+      if (!ds.every(x => x.cargado && !x.futuro && !x.esHoy)) continue;
+      const t = sumar(ds);
+      prev.dinero.push(t.dinero); prev.botellas.push(t.botellas);
+    }
+    const norm = (xs) => xs.length >= MIN_MUESTRAS ? mediana(xs) : null;
+    const total = Object.assign(sumar(dias), {
+      semana: true, fecha: lunes, dia: etiquetaSemana(lunes),
+      cargado: dias.some(x => x.cargado), parcial,
+      normalDinero: parcial ? null : norm(prev.dinero),
+      normalBotellas: parcial ? null : norm(prev.botellas)
+    });
+    return { lunes, etiqueta: etiquetaSemana(lunes), dias, total, fechas: dias.filter(x => !x.futuro).map(x => x.fecha) };
+  }
+  // ¿Cuántas semanas atrás hay algo cargado? Las flechas no van más allá.
+  function semanasAtras(V) {
+    if (!V || !V.desde || !fechaHoy(V)) return 0;
+    let n = 0;
+    while (n < 52 && sumarDias(lunesDe(fechaHoy(V)), -7 * (n + 1)) >= lunesDe(V.desde)) n++;
+    return n;
   }
 
   // Lo más vendido de un día, entero: la tarjeta enseña tres y "All
   // products" enseñará el resto. Botellas por producto del inventario;
   // dinero por artículo de Toast, que es lo que se vende (un cóctel no se
   // reparte entre sus botellas).
+  // `fecha` puede ser una lista: lo más vendido de una semana entera.
+  const enFechas = (fecha) => { const s = new Set(Array.isArray(fecha) ? fecha : [fecha]); return (f) => s.has(f); };
   function masVendido(o, fecha, vista) {
+    const en = enFechas(fecha);
     if (vista === 'dinero') {
       const m = new Map();
       for (const v of o.ventas || []) {
-        if (v.business_date !== fecha) continue;
+        if (!en(v.business_date)) continue;
         if (!esLicor(v.sales_category) && !esVino(v.sales_category)) continue;
         if (v.net === null || v.net === undefined) continue;
         const k = v.toast_item_name;
@@ -147,7 +230,8 @@
       return [...m.values()].map(x => Object.assign(x, { dinero: r2(x.dinero) }))
         .filter(x => x.dinero > 0).sort((a, b) => b.dinero - a.dinero);
     }
-    return (o.productos || []).map(p => ({ nombre: p.producto, botellas: r2((p.porDia || {})[fecha] || 0) }))
+    return (o.productos || []).map(p => ({ nombre: p.producto,
+      botellas: r2(Object.entries(p.porDia || {}).reduce((a, [f, b]) => a + (en(f) ? Number(b) || 0 : 0), 0)) }))
       .filter(x => x.botellas > 0).sort((a, b) => b.botellas - a.botellas);
   }
 
@@ -155,9 +239,10 @@
   // Full report lo dice al pie, para que no desaparezca en silencio.
   // [{ categoria, dinero }] con el nombre de la categoría de Toast.
   function fuera(o, fecha) {
+    const en = enFechas(fecha);
     const m = new Map();
     for (const v of o.ventas || []) {
-      if (v.business_date !== fecha) continue;
+      if (!en(v.business_date)) continue;
       if (esLicor(v.sales_category) || esVino(v.sales_category)) continue;
       const k = v.sales_category || '(no category)';
       m.set(k, (m.get(k) || 0) + (Number(v.net) || 0));
@@ -287,6 +372,7 @@
   if (window.BarStockEvents && window.BarStockEvents.on) window.BarStockEvents.on('toastSalesUpdated', olvidar);
 
   window.BarStockToastSales = { resumir, masVendido, fuera, semanaDe, ahora, MIN_MUESTRAS, SEMANA, semanaConHoy, sincronizarHoy,
+    semanaCal, semanasAtras, etiquetaSemana,
     ultimaCarga, textoCarga, cargaVieja, VIEJA_H,
     _reset: () => { _datos = null; _en = 0; _de = ''; _pidiendo = null; } };
 })();

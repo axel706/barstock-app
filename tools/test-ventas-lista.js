@@ -112,7 +112,11 @@ grupo('la hoja');
   await esperar(20);
   const h = hoja(w);
   prueba('se abre', !!h);
-  prueba('en el día elegido (ayer)', h.querySelectorAll('.m-vl-c')[6].classList.contains('on'));
+  // Desde el 2026-11-14: la pastilla Week y lunes a domingo (HOY es el
+  // miércoles 11, así que ayer, martes, es la tercera).
+  prueba('en el día elegido (ayer)', h.querySelectorAll('.m-vl-c')[2].classList.contains('on'));
+  prueba('Week primero y lunes a domingo; lo que aún no llega, quieto', h.querySelectorAll('.m-vl-c').length === 8 &&
+    /^Week/.test(h.querySelectorAll('.m-vl-c')[0].textContent.trim()) && [...h.querySelectorAll('.m-vl-c')].slice(4).every(c => !c.dataset.d));
   prueba('todo lo vendido, del que más al que menos', JSON.stringify(nombres(w)) === JSON.stringify(['Nino Ardevi Prosecco', "Tito's Vodka 1L", 'Kahlua']), nombres(w).join(' | '));
   const tot = h.querySelector('.m-vl-tot').textContent.replace(/\s+/g, ' ');
   prueba('con el total y cuántos productos', /6\.3\s*bottles · 3 products · Tue/.test(tot), tot);
@@ -120,9 +124,12 @@ grupo('la hoja');
   prueba('contra lo normal: la mediana de run-out (2.1 − 1.6)', /↗ 0\.5/.test(tito.querySelector('.v small').textContent), tito.textContent.replace(/\s+/g, ' '));
   prueba('con su proveedor', /LOOP/.test(tito.querySelector('.n small').textContent));
 
-  h.querySelectorAll('.m-vl-c')[3].click();
-  prueba('otra pastilla, otro día', hoja(w).querySelectorAll('.m-vl-c')[3].classList.contains('on') &&
-    JSON.stringify(nombres(w)) === JSON.stringify(['Nino Ardevi Prosecco', "Tito's Vodka 1L"]), nombres(w).join(' | '));
+  h.querySelectorAll('.m-vl-c')[1].click();
+  prueba('otra pastilla, otro día (el lunes, sin ventas)', hoja(w).querySelectorAll('.m-vl-c')[1].classList.contains('on') &&
+    /Nothing sold this day/.test(hoja(w).querySelector('#mvLista').textContent));
+  hoja(w).querySelectorAll('.m-vl-c')[0].click();
+  const tw = hoja(w).querySelector('.m-vl-tot').textContent.replace(/\s+/g, ' ');
+  prueba('Week: lo de toda la semana, sin % (está en curso)', /6\.3\s*bottles · 3 products · Nov 9 – 15/.test(tw) && /So far this week/.test(tw), tw);
 
   const q = hoja(w).querySelector('#mvQ');
   q.value = 'tito'; q.oninput();
@@ -135,10 +142,17 @@ grupo('la hoja');
 {
   // Abre en el día que estaba elegido en la tarjeta, no siempre en ayer.
   const { w, host } = await entorno();
-  host.querySelectorAll('#mhVentas .m-ts-b')[3].click();
+  // En la semana entera, si eso es lo elegido…
+  host.querySelector('#mhVentas [data-semt]').click();
   host.querySelector('#mhVentas [data-mas]').click();
   await esperar(20);
-  prueba('abre en el día elegido en la tarjeta', hoja(w).querySelectorAll('.m-vl-c')[3].classList.contains('on'));
+  prueba('abre en la semana entera, si es lo elegido', hoja(w).querySelectorAll('.m-vl-c')[0].classList.contains('on'));
+  w.document.querySelector('#mSheet').remove();
+  // …y en el día, si es un día.
+  host.querySelectorAll('#mhVentas .m-ts-b')[1].click();
+  host.querySelector('#mhVentas [data-mas]').click();
+  await esperar(20);
+  prueba('abre en el día elegido en la tarjeta', hoja(w).querySelectorAll('.m-vl-c')[2].classList.contains('on'));
 }
 
 grupo('Full report');
@@ -149,7 +163,7 @@ grupo('Full report');
   await esperar(20);
   const h = hoja(w);
   prueba('se abre como Full report', !!h && /Full report/.test(h.querySelector('.m-vl-t').textContent));
-  prueba('en el día elegido (ayer)', h.querySelectorAll('.m-vl-c')[6].classList.contains('on'));
+  prueba('en el día elegido (ayer)', h.querySelectorAll('.m-vl-c')[2].classList.contains('on'));
   prueba('sin filtro: es un reporte', !h.querySelector('#mvQ'));
   const tot = h.querySelector('.m-vl-tot').textContent.replace(/\s+/g, ' ');
   prueba('Net sales del día: licor + vino', /\$1,213\s*net · Tue/.test(tot), tot);
@@ -178,7 +192,7 @@ grupo('hoy, a medias');
   await esperar(20);
   const h = hoja(w);
   const chips = [...h.querySelectorAll('.m-vl-c')];
-  prueba('siete días, el último es hoy y está elegido', chips.length === 7 && /^Today/.test(chips[6].textContent.trim()) && chips[6].classList.contains('on'),
+  prueba('hoy, en su día de la semana y elegido', chips.length === 8 && /^Today/.test(chips[3].textContent.trim()) && chips[3].classList.contains('on'),
     chips.map(c => c.textContent.replace(/\s+/g, ' ').trim()).join(','));
   const tot = h.querySelector('.m-vl-tot').textContent.replace(/\s+/g, ' ');
   prueba('$120 · Today, "So far today"', /\$120\s*net · Today/.test(tot) && /So far today/.test(tot), tot);

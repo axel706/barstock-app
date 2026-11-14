@@ -2028,7 +2028,21 @@
   // "All products" (botellas) y "Full report" ($) abren la lista entera
   // del día elegido en una hoja (mobile-sales.js).
   let _ventas = null, _pidiendoVentas = false;
-  let _vista = 'botellas', _diaV = null;
+  // La semana que se ve (0 = la de hoy; null = la de por defecto) y lo
+  // elegido en ella: un día (0 = lunes … 6 = domingo), 'sem' (la semana
+  // entera, al tocar su total) o null (el de por defecto).
+  let _vista = 'botellas', _diaV = null, _semAtras = null;
+
+  // Por defecto: hoy si el Sync trajo ventas; si no, ayer. Un lunes sin
+  // ventas de hoy, ayer es el domingo de la semana anterior: se abre ahí,
+  // no en una semana vacía.
+  function ventasPorDefecto(V, TS) {
+    const s0 = TS.semanaCal(V, 0);
+    const iHoy = s0.dias.findIndex(x => x.esHoy);
+    const H = V.hoy && typeof V.hoy === 'object' ? V.hoy : null;
+    if (H && (H.dinero > 0 || H.botellas > 0)) return { atras: 0, i: iHoy };
+    return iHoy > 0 ? { atras: 0, i: iHoy - 1 } : { atras: 1, i: 6 };
+  }
 
   function cargarVentas() {
     const TS = window.BarStockToastSales;
@@ -2057,13 +2071,28 @@
     // vuelve a la base al cambiar el día o pasada media hora.
     if (!_pidiendoVentas) cargarVentas();
     const V = _ventas;
-    if (!V || !V.cargados || !V.semana || !V.semana.length) { caja.innerHTML = ''; return; }
-    // Con ventas de hoy cargadas (el Sync de "Sold"), la semana acaba hoy.
-    const TSv = window.BarStockToastSales;
-    const sem = TSv && TSv.semanaConHoy ? TSv.semanaConHoy(V) : V.semana;
-    const nomDia = (x) => x.parcial ? 'Today' : x.dia;
-    const i = _diaV === null || _diaV >= sem.length ? sem.length - 1 : _diaV;
-    const d = sem[i];
+    const TS = window.BarStockToastSales;
+    if (!V || !V.cargados || !V.semana || !V.semana.length || !TS || !TS.semanaCal) { caja.innerHTML = ''; return; }
+
+    // ── La semana de lunes a domingo (Axel, 2026-11-14, opción B) ──────
+    //
+    // Antes eran los últimos siete días corridos. Ahora una semana de
+    // calendario (la de Toast), con ‹ › para ir a las anteriores y su
+    // total en medio (opción A del control, de cristal). Se sigue viendo
+    // UN día; tocar el total pone la semana entera en el número grande.
+    // Los números salen de toast-sales.semanaCal: los mismos días de
+    // siempre, y el total, su suma.
+    const def = ventasPorDefecto(V, TS);
+    const maxAtras = TS.semanasAtras(V);
+    const atras = _semAtras === null ? def.atras : Math.max(0, Math.min(maxAtras, _semAtras));
+    const W = TS.semanaCal(V, atras);
+    const sem = W.dias;
+    const esSem = _diaV === 'sem';
+    let i = _diaV === null || esSem ? (atras === def.atras ? def.i : 6) : _diaV;
+    // Un día que todavía no llega no se elige: el último que ya pasó.
+    while (i > 0 && sem[i].futuro) i--;
+    const d = esSem ? W.total : sem[i];
+    const nomDia = (x) => x.semana ? x.dia : x.esHoy ? 'Today' : x.dia;
     const din = _vista === 'dinero';
     const valor = (x) => din ? x.dinero : x.botellas;
     const normal = (x) => din ? x.normalDinero : x.normalBotellas;
@@ -2072,17 +2101,21 @@
 
     // Cómo va contra lo normal. Un día cerrado (0 y lo normal 0) lo dice;
     // un día sin cargar también, en vez de pintar un cero con cara de dato.
+    // Hoy a medias, o la semana en curso, no se comparan en % contra uno
+    // entero.
     const n = normal(d);
-    // Hoy a medias: no se compara en % contra un día entero.
-    const cmp = d.parcial ? 'So far today'
+    const cmp = d.semana
+      ? (d.parcial ? 'So far this week' : !d.cargado ? 'No data for this week'
+        : n ? ((valor(d) - n) / n * 100 >= 0 ? '↗ ' : '↘ ') + Math.abs(Math.round((valor(d) - n) / n * 100)) + '% vs usual' : '')
+      : d.parcial ? 'So far today'
+      : d.esHoy && !d.cargado ? 'Not synced yet today'
       : !d.cargado ? 'No data for this day'
       : !valor(d) && !n ? 'Closed'
       : n ? ((valor(d) - n) / n * 100 >= 0 ? '↗ ' : '↘ ') + Math.abs(Math.round((valor(d) - n) / n * 100)) + '% vs usual ' + d.dia
       : '';
     const sube = n && valor(d) >= n;
 
-    const TS = window.BarStockToastSales;
-    const top = TS ? TS.masVendido(V.base, d.fecha, din ? 'dinero' : 'botellas').slice(0, 3) : [];
+    const top = TS.masVendido(V.base, esSem ? W.fechas : d.fecha, din ? 'dinero' : 'botellas').slice(0, 3);
 
     // ── El encabezado (Axel, 2026-11-12, opción C sobre lámina) ──────
     //
@@ -2112,14 +2145,19 @@
             <button type="button" class="${din ? 'on' : ''}" data-v="dinero">$</button>
           </span>
         </div>
+        <div class="m-ts-sem" role="group" aria-label="Week">
+          <button type="button" class="m-ts-flecha" data-sem="1" aria-label="Previous week"${atras >= maxAtras ? ' disabled' : ''}><i class="ti ti-chevron-left" aria-hidden="true"></i></button>
+          <button type="button" class="m-ts-semt${esSem ? ' on' : ''}" data-semt aria-pressed="${esSem}">${esc(W.etiqueta)} · <b>${din ? dinero0(W.total.dinero) : bot1(W.total.botellas) + ' btl'}</b></button>
+          <button type="button" class="m-ts-flecha" data-sem="-1" aria-label="Next week"${atras <= 0 ? ' disabled' : ''}><i class="ti ti-chevron-right" aria-hidden="true"></i></button>
+        </div>
         <div class="m-ts-t m-ts-hero">
           <b>${din ? dinero0(d.dinero) : bot1(d.botellas)}</b>
           <span>${din ? 'net' : 'bottles'} · ${nomDia(d)}</span>
         </div>
         ${pill}
         <div class="m-ts-g">
-          ${sem.map((x, k) => `
-            <div class="m-ts-b${k === i ? ' on' : ''}" data-d="${k}" role="button" tabindex="0"
+          ${sem.map((x, k) => x.futuro ? `<div class="m-ts-b fut" aria-hidden="true"></div>` : `
+            <div class="m-ts-b${esSem || k === i ? ' on' : ''}" data-d="${k}" role="button" tabindex="0"
                  aria-label="${nomDia(x)}: ${din ? dinero0(x.dinero) : bot1(x.botellas) + ' bottles'}">
               ${din
                 ? `<i class="vino" style="height:${pct(x.vino)}"></i><i class="licor" style="height:${pct(x.licor)}"></i>`
@@ -2127,7 +2165,7 @@
               ${normal(x) !== null ? `<u style="bottom:${pct(normal(x))}"></u>` : ''}
             </div>`).join('')}
         </div>
-        <div class="m-ts-d">${sem.map((x, k) => `<span class="${k === i ? 'on' : ''}">${nomDia(x)}</span>`).join('')}</div>
+        <div class="m-ts-d">${sem.map((x, k) => `<span class="${x.futuro ? 'fut' : !esSem && k === i ? 'on' : ''}">${nomDia(x)}</span>`).join('')}</div>
         ${din ? `<div class="m-ts-ley">
             <span><i class="licor"></i>Liquor & cocktails ${dinero0(d.licor)}</span>
             <span><i class="vino"></i>Wine ${dinero0(d.vino)}</span></div>` : ''}
@@ -2150,10 +2188,22 @@
     const mas = caja.querySelector('[data-mas]');
     if (mas) mas.onclick = () => {
       const S = window.BarStockMobileSales;
-      if (S) S.abrir({ vista: _vista, dia: i });
+      if (S) S.abrir({ vista: _vista, atras, dia: esSem ? 'sem' : i });
     };
+    // ‹ una semana atrás, › una adelante. Al cambiar, se elige su último
+    // día que ya pasó (en la de hoy, el de por defecto).
+    caja.querySelectorAll('[data-sem]').forEach(b => {
+      b.onclick = () => {
+        if (b.disabled) return;
+        _semAtras = Math.max(0, Math.min(maxAtras, atras + Number(b.dataset.sem)));
+        _diaV = null;
+        pintarVentas(host);
+      };
+    });
+    const semt = caja.querySelector('[data-semt]');
+    if (semt) semt.onclick = () => { _semAtras = atras; _diaV = esSem ? null : 'sem'; pintarVentas(host); };
     caja.querySelectorAll('[data-d]').forEach(b => {
-      const elegir = () => { _diaV = Number(b.dataset.d); pintarVentas(host); };
+      const elegir = () => { _semAtras = atras; _diaV = Number(b.dataset.d); pintarVentas(host); };
       b.onclick = elegir;
       b.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); elegir(); } };
     });

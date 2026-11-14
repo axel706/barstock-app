@@ -127,7 +127,7 @@ async function home(o) {
   w.BarStockInventoryCloud = { fetchLocationId: async () => 'loc-7' };
   w.BarStockDevPanel = { llamar: async (prov, acc, par) => { w.__syncLlamadas.push([prov, acc, par]); return o.syncFalla || { ok: true }; } };
   w.BarStockToastUsage = {
-    diaDeNegocio: () => HOY,
+    diaDeNegocio: () => o.hoy || HOY,
     ventasDesde: async () => { w.__lecturas++; return o.sinDatos ? { dias: [], ventas: [], productos: [] } : D; }
   };
   // La hora de cada carga (fetched_at): la última, hace `o.horas` horas.
@@ -204,22 +204,49 @@ grupo('la tarjeta del Home');
   const pil = t.querySelector('.m-ts-pill');
   prueba('contra un martes normal: +75%, en su píldora', !!pil && /↗ 75% vs usual$/.test(pil.textContent.trim()) && pil.classList.contains('m-ts-up'),
     pil && pil.outerHTML);
-  prueba('siete barras, la de ayer elegida', t.querySelectorAll('.m-ts-b').length === 7 && t.querySelectorAll('.m-ts-b')[6].classList.contains('on'));
-  prueba('con la raya de lo normal', t.querySelectorAll('.m-ts-b u').length === 7);
+  // Desde el 2026-11-14 la semana es de lunes a domingo (opción B): la de
+  // HOY (miércoles 11) es Nov 9 – 15, con lo que aún no llega apagado.
+  const bs = t.querySelectorAll('.m-ts-b');
+  prueba('siete barras de lunes a domingo, el martes elegido', bs.length === 7 && bs[1].classList.contains('on') &&
+    [...t.querySelectorAll('.m-ts-d span')].map(x => x.textContent).join() === 'Mon,Tue,Today,Thu,Fri,Sat,Sun',
+    [...t.querySelectorAll('.m-ts-d span')].map(x => x.textContent).join());
+  prueba('lo que aún no llega, apagado y sin tocar', [...bs].slice(3).every(b => b.classList.contains('fut') && !b.dataset.d));
+  prueba('con la raya de lo normal en lo que ya pasó', t.querySelectorAll('.m-ts-b u').length === 3);
   prueba('lo más vendido de ese día', /Tito's Vodka 1L/.test(t.querySelector('.m-ts-top').textContent));
+  prueba('arriba, la semana y su total', /Nov 9 – 15 · 3\.5 btl/.test(t.querySelector('[data-semt]').textContent.replace(/\s+/g, ' ')),
+    t.querySelector('[data-semt]').textContent);
+  prueba('› apagada en la semana de hoy', t.querySelector('[data-sem="-1"]').disabled && !t.querySelector('[data-sem="1"]').disabled);
 
-  t.querySelectorAll('.m-ts-b')[0].click();
+  t.querySelector('[data-sem="1"]').click();
+  const tp = tarjeta(host);
+  prueba('‹ va a la semana anterior, en su domingo', /Nov 2 – 8/.test(tp.querySelector('[data-semt]').textContent) &&
+    tp.querySelectorAll('.m-ts-b')[6].classList.contains('on') && /Sun/.test(tp.querySelector('.m-ts-t span').textContent),
+    tp.querySelector('.m-ts-t').textContent.replace(/\s+/g, ' '));
+  tp.querySelectorAll('.m-ts-b')[2].click();
   const t2 = tarjeta(host);
-  prueba('tocar una barra elige ese día', t2.querySelectorAll('.m-ts-b')[0].classList.contains('on') &&
+  prueba('tocar una barra elige ese día', t2.querySelectorAll('.m-ts-b')[2].classList.contains('on') &&
     /Wed/.test(t2.querySelector('.m-ts-t span').textContent) && /^1$/.test(t2.querySelector('.m-ts-t b').textContent.trim()),
     t2.querySelector('.m-ts-t').textContent.replace(/\s+/g, ' '));
 
-  t2.querySelector('[data-v="dinero"]').click();
+  // Tocar el total: la semana entera en el número grande.
+  t2.querySelector('[data-semt]').click();
+  const tw = tarjeta(host);
+  prueba('el total pone la semana entera: 7 botellas', /^7$/.test(tw.querySelector('.m-ts-t b').textContent.trim()) &&
+    /Nov 2 – 8/.test(tw.querySelector('.m-ts-t span').textContent) && tw.querySelector('[data-semt]').classList.contains('on'),
+    tw.querySelector('.m-ts-t').textContent.replace(/\s+/g, ' '));
+  prueba('contra una semana normal', /0% vs usual/.test(tw.querySelector('.m-ts-pill').textContent), tw.querySelector('.m-ts-pill').textContent);
+  prueba('todas las barras encendidas', [...tw.querySelectorAll('.m-ts-b')].every(b => b.classList.contains('on')));
+  prueba('y lo más vendido de toda la semana', /Most sold · Nov 2 – 8/.test(tw.querySelector('.m-ts-top').textContent));
+  tw.querySelectorAll('.m-ts-b')[2].click();
+
+  tarjeta(host).querySelector('[data-v="dinero"]').click();
   const t3 = tarjeta(host);
   prueba('$: el dinero del día elegido', t3.querySelector('.m-ts-t b').textContent.trim() === '$150', t3.querySelector('.m-ts-t b').textContent);
   prueba('$: licor y vino aparte', /Liquor & cocktails \$100/.test(t3.textContent) && /Wine \$50/.test(t3.textContent));
   prueba('$: cada barra partida en dos', t3.querySelectorAll('.m-ts-b')[0].querySelectorAll('i').length === 2);
   prueba('$: sin cerveza en lo más vendido', !/IPA|Silver Bar/.test(t3.querySelector('.m-ts-top').textContent));
+  prueba('$: el total de la semana en dinero', /Nov 2 – 8 · \$1,000/.test(t3.querySelector('[data-semt]').textContent.replace(/\s+/g, ' ')),
+    t3.querySelector('[data-semt]').textContent);
 
   const antes = w.__lecturas;
   await esperar(60);
@@ -242,16 +269,50 @@ grupo('hoy, cargado a medias con el Sync de "Sold"');
   const pil = t.querySelector('.m-ts-pill');
   prueba('sin %, "So far today"', !!pil && pil.textContent.trim() === 'So far today' && !pil.classList.contains('m-ts-up') && !pil.classList.contains('m-ts-dn'),
     pil && pil.outerHTML);
-  prueba('siete barras: se cae la más vieja, la última es hoy', t.querySelectorAll('.m-ts-b').length === 7 &&
-    /Today/.test(t.querySelectorAll('.m-ts-d span')[6].textContent) && /Thu/.test(t.querySelectorAll('.m-ts-d span')[0].textContent),
+  // Desde el 2026-11-14, de lunes a domingo: hoy (miércoles) es el
+  // tercero, y lo que aún no llega va apagado.
+  prueba('hoy, en su sitio de la semana y elegido', t.querySelectorAll('.m-ts-b')[2].classList.contains('on') &&
+    t.querySelectorAll('.m-ts-d span')[2].textContent === 'Today',
     [...t.querySelectorAll('.m-ts-d span')].map(x => x.textContent).join(','));
-  t.querySelectorAll('.m-ts-b')[5].click();
+  prueba('el total de la semana suma lo de hoy: 3.5 + 9', /Nov 9 – 15 · 12\.5 btl/.test(t.querySelector('[data-semt]').textContent.replace(/\s+/g, ' ')),
+    t.querySelector('[data-semt]').textContent);
+  t.querySelector('[data-semt]').click();
+  prueba('la semana en curso: "So far this week", sin %', tarjeta(host).querySelector('.m-ts-pill').textContent.trim() === 'So far this week');
+  tarjeta(host).querySelectorAll('.m-ts-b')[1].click();
   const t2 = tarjeta(host);
   prueba('ayer sigue con su comparación', /3\.5/.test(t2.querySelector('.m-ts-t b').textContent) && /↗ 75% vs usual/.test(t2.querySelector('.m-ts-pill').textContent));
 }
 {
+  // Sin el Sync de hoy, se abre en ayer; tocar hoy dice que falta cargarlo
+  // en vez de pintar un cero con cara de dato.
   const { host } = await home({ sinHoy: true });
-  prueba('sin hoy cargado, ningún "Today"', !/Today/.test(tarjeta(host).textContent));
+  const t = tarjeta(host);
+  prueba('sin hoy cargado, abre en ayer', /Tue/.test(t.querySelector('.m-ts-t span').textContent));
+  t.querySelectorAll('.m-ts-b')[2].click();
+  prueba('y hoy dice "Not synced yet today"', tarjeta(host).querySelector('.m-ts-pill').textContent.trim() === 'Not synced yet today',
+    tarjeta(host).querySelector('.m-ts-pill').textContent);
+}
+
+{
+  // Un lunes sin ventas de hoy: ayer es el domingo de la semana anterior.
+  // Se abre ahí, no en una semana vacía.
+  const { host } = await home({ sinHoy: true, hoy: '2026-11-09' });
+  const t = tarjeta(host);
+  prueba('un lunes sin ventas: la semana anterior, en su domingo', /Nov 2 – 8/.test(t.querySelector('[data-semt]').textContent) &&
+    /Sun/.test(t.querySelector('.m-ts-t span').textContent) && !t.querySelector('[data-sem="-1"]').disabled,
+    t.querySelector('[data-semt]').textContent + ' / ' + t.querySelector('.m-ts-t span').textContent);
+}
+
+{
+  // El control de semanas, opción A: el carril y las flechas del mismo
+  // cristal que la banda; el centro elegido, azul; una flecha sin semana
+  // a la que ir, apagada de verdad (app.css pone .62 !important a todo
+  // botón apagado, y a .62 no se distingue).
+  const css = leer('styles/mobile-app.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  const reg = /body\.m-shell #mBand \.m-ico:not\(\.m-ico-alert\),[^{]*\{([^}]*)\}/.exec(css);
+  prueba('control de semanas: el cristal de la banda', !!reg && /:is\(\.m-ts-sem, \.m-ts-flecha\)\s*\{/.test(reg[0]));
+  prueba('el centro elegido, azul', /#mScreens \.m-ts-semt\.on \{[^}]*rgba\(125,211,252,\.32\)/.test(css));
+  prueba('la flecha sin semana, apagada de verdad', /\.m-ts-flecha:disabled \{ opacity: \.35 !important;/.test(css));
 }
 
 grupo('resumir: hoy aparte, y la semana sigue acabando ayer');
@@ -273,6 +334,38 @@ grupo('resumir: hoy aparte, y la semana sigue acabando ayer');
   prueba('hoy sin ventas: la semana de siempre', TS.semanaConHoy(sinNada) === r.semana);
   const sinHoy = TS.resumir({ hoy: HOY, productos: D.productos, ventas: D.ventas, dias: D.dias.filter(d => d.business_date !== HOY) });
   prueba('sin fila de hoy, hoy es null', sinHoy.hoy === null);
+}
+
+grupo('la semana de calendario: lunes a domingo (2026-11-14)');
+{
+  // Axel, 2026-11-14: ver las ventas de la semana, y de semanas
+  // anteriores. HOY es miércoles 11; su semana, lunes 9 – domingo 15.
+  const dom = new JSDOM('<!doctype html><body></body>', { url: 'https://x.test/' });
+  global.window = dom.window; global.document = dom.window.document;
+  cargar();
+  const TS = window.BarStockToastSales;
+  const D = datos();
+  // Como lo arma ahora(): la fecha en base.hoy; V.hoy es la entrada de hoy.
+  const base = Object.assign({ hoy: HOY }, D);
+  const V = Object.assign({ hoy: HOY, base }, TS.resumir(base));
+  const s0 = TS.semanaCal(V, 0);
+  prueba('la de hoy: Nov 9 – 15, de lunes a domingo', s0.lunes === '2026-11-09' && s0.etiqueta === 'Nov 9 – 15' &&
+    s0.dias.map(x => x.dia).join() === 'Mon,Tue,Wed,Thu,Fri,Sat,Sun', s0.etiqueta + ' ' + s0.dias.map(x => x.dia).join());
+  prueba('hoy, a medias; lo que viene, futuro', s0.dias[2].esHoy && s0.dias[2].parcial && s0.dias.slice(3).every(x => x.futuro));
+  prueba('cada día es el mismo de siempre (el martes, $350 y 3.5 botellas)', s0.dias[1].dinero === 350 && s0.dias[1].botellas === 3.5);
+  prueba('el total es la suma de sus días: 0 + 350 + 999', s0.total.dinero === 1349 && s0.total.parcial, JSON.stringify(s0.total));
+  prueba('la semana en curso no se compara en %', s0.total.normalDinero === null);
+  prueba('sólo lo que ya pasó cuenta para lo más vendido', s0.fechas.join() === '2026-11-09,2026-11-10,2026-11-11');
+  const s1 = TS.semanaCal(V, 1);
+  // Un lunes cerrado, un martes de $250 y cinco días de $150: $1,000.
+  prueba('la anterior: Nov 2 – 8, entera', s1.etiqueta === 'Nov 2 – 8' && s1.total.dinero === 1000 && !s1.total.parcial, JSON.stringify(s1.total));
+  prueba('y lo normal: la mediana de las semanas enteras de antes', s1.total.normalDinero === 1000, String(s1.total.normalDinero));
+  prueba('cruzando de mes: Oct 26 – Nov 1', TS.semanaCal(V, 2).etiqueta === 'Oct 26 – Nov 1');
+  prueba('hasta dónde hay datos: 13 semanas atrás', TS.semanasAtras(V) === 13, String(TS.semanasAtras(V)));
+  const mv = TS.masVendido(D, s1.fechas, 'dinero');
+  prueba('lo más vendido de la semana entera suma sus días', mv[0].nombre === "Tito's" && mv[0].dinero === 700, JSON.stringify(mv[0]));
+  const mb = TS.masVendido(D, s1.fechas, 'botellas');
+  prueba('y en botellas', mb[0].nombre === "Tito's Vodka 1L" && mb[0].botellas === 7, JSON.stringify(mb[0]));
 }
 
 grupo('sincronizarHoy');

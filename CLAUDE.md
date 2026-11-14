@@ -569,6 +569,22 @@ hecho el lunes cuenta igual. Un conteo a medias va delante de eso, y la
 tarjeta de update va **primera siempre**, también delante del conteo.
 Prueba: `test-home-orden`.
 
+**La tarjeta de Toast va por semanas de lunes a domingo** (Axel,
+2026-11-14, opción B; el control, opción A): las siete barras son una
+semana de calendario (la de Toast), con ‹ › para ir a las anteriores
+(hasta donde haya ventas cargadas, ~13 semanas) y en medio la semana y su
+total, que se toca: pone la semana entera en el número grande, con su
+licor y vino, lo más vendido de la semana y su "vs usual" (la mediana de
+las semanas ENTERAS anteriores). Se sigue viendo un día al tocar una
+barra. Lo que aún no llega de la semana de hoy, apagado. Abre en hoy si
+el Sync trajo ventas, si no en ayer (un lunes, el domingo de la semana
+anterior). Los números son `toast-sales.semanaCal()`: los mismos días de
+`resumir` (`V.dia`) y el total, su suma. Ojo: en lo que devuelve
+`ahora()`, `V.hoy` es la ENTRADA de hoy y la fecha es `V.base.hoy`.
+`resumir().semana` (los siete días hasta ayer) sigue igual para el correo.
+Las hojas (*All products* / *Full report*) abren en la misma semana y en
+lo elegido, con la pastilla *Week* primero.
+
 **Cuándo sale la marca "Live"** (Axel, 2026-11-08): durante un conteo
 activo se enseña lo contado, sin marca. Al cerrar el conteo todo vuelve
 a cero: el número es lo contado y NO lleva "Live". La marca aparece con

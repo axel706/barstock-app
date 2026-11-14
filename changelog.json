@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261113-231851",
+    "items": [
+      "Toast card: Monday to Sunday, with past weeks",
+      "Tap the week total to see the whole week"
+    ]
+  },
+  {
     "build": "20261113-224359",
     "items": [
       "Home tabs and Bottles / $ in glass"
@@ -186,12 +193,6 @@
       "Recipes: write one from scratch, edit or delete it",
       "From Toast tab: drinks Toast sells with no recipe",
       "Match a recipe to its Toast item"
-    ]
-  },
-  {
-    "build": "20261112-134307",
-    "items": [
-      "Toast works per location: Will's & Bill's too"
     ]
   }
 ]
