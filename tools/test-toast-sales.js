@@ -304,14 +304,16 @@ grupo('hoy, cargado a medias con el Sync de "Sold"');
 }
 
 {
-  // El control de semanas, opción A: el carril y las flechas del mismo
-  // cristal que la banda; el centro elegido, azul; una flecha sin semana
+  // El control de semanas: como la primera lámina (B), sin cristal —
+  // Axel, 2026-11-14: "quítale el liquid glass, hazlo como lo diseñaste
+  // al principio"—. El centro elegido, azul sólido; una flecha sin semana
   // a la que ir, apagada de verdad (app.css pone .62 !important a todo
   // botón apagado, y a .62 no se distingue).
   const css = leer('styles/mobile-app.css').replace(/\/\*[\s\S]*?\*\//g, '');
   const reg = /body\.m-shell #mBand \.m-ico:not\(\.m-ico-alert\),[^{]*\{([^}]*)\}/.exec(css);
-  prueba('control de semanas: el cristal de la banda', !!reg && /:is\(\.m-ts-sem, \.m-ts-flecha\)\s*\{/.test(reg[0]));
-  prueba('el centro elegido, azul', /#mScreens \.m-ts-semt\.on \{[^}]*rgba\(125,211,252,\.32\)/.test(css));
+  prueba('control de semanas: SIN el cristal de la banda', !!reg && !/m-ts-sem|m-ts-flecha/.test(reg[0]) && !/m-ts-sem|m-ts-flecha/.test((/[^}]*::before,[^{]*\.m-fab::before\s*\{/.exec(css) || [''])[0]));
+  prueba('un carril oscuro', /\.m-ts-sem \{[^}]*background: rgba\(0,0,0,\.22\)/.test(css));
+  prueba('el centro elegido, azul sólido', /#mScreens \.m-ts-semt\.on \{ background: #7dd3fc;/.test(css));
   prueba('la flecha sin semana, apagada de verdad', /\.m-ts-flecha:disabled \{ opacity: \.35 !important;/.test(css));
 }
 

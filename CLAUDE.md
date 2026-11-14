@@ -570,10 +570,12 @@ tarjeta de update va **primera siempre**, también delante del conteo.
 Prueba: `test-home-orden`.
 
 **La tarjeta de Toast va por semanas de lunes a domingo** (Axel,
-2026-11-14, opción B; el control, opción A): las siete barras son una
+2026-11-14, opción B): las siete barras son una
 semana de calendario (la de Toast), con ‹ › para ir a las anteriores
 (hasta donde haya ventas cargadas, ~13 semanas) y en medio la semana y su
-total, que se toca: pone la semana entera en el número grande, con su
+total, que se toca (control SIN cristal, un carril oscuro como la
+primera lámina: fue de cristal y Axel lo quitó; elegida la semana, el
+centro en azul sólido), y pone la semana entera en el número grande, con su
 licor y vino, lo más vendido de la semana y su "vs usual" (la mediana de
 las semanas ENTERAS anteriores). Se sigue viendo un día al tocar una
 barra. Lo que aún no llega de la semana de hoy, apagado. Abre en hoy si

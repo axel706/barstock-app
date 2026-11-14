@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261113-232919",
+    "items": [
+      "Toast week selector back to the plain style"
+    ]
+  },
+  {
     "build": "20261113-231851",
     "items": [
       "Toast card: Monday to Sunday, with past weeks",
@@ -185,14 +191,6 @@
       "Bartenders: sign in with name and PIN",
       "Guest bartenders see everything and edit only recipes",
       "Settings › People › Bartenders to add them"
-    ]
-  },
-  {
-    "build": "20261112-162401",
-    "items": [
-      "Recipes: write one from scratch, edit or delete it",
-      "From Toast tab: drinks Toast sells with no recipe",
-      "Match a recipe to its Toast item"
     ]
   }
 ]

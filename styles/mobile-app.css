@@ -633,8 +633,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   body.m-shell #mBand .m-ico:not(.m-ico-alert),
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio,
   body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas),
-  body.m-shell #mScreens :is(#mhTabs, .m-ts-seg),
-  body.m-shell #mScreens :is(.m-ts-sem, .m-ts-flecha) {
+  body.m-shell #mScreens :is(#mhTabs, .m-ts-seg) {
     -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
             backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
     background: rgba(255,255,255,.08);
@@ -650,7 +649,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio::before,
   body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas)::before,
   body.m-shell #mScreens :is(#mhTabs, .m-ts-seg)::before,
-  body.m-shell #mScreens :is(.m-ts-sem, .m-ts-flecha)::before,
   body.m-shell .m-fab::before {
     content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
     background: radial-gradient(120% 70% at 30% 0%, rgba(255,255,255,.34), rgba(255,255,255,0) 55%);
@@ -707,37 +705,40 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   body.m-shell #mScreens :is(#mhTabs, .m-ts-seg) button {
     -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none;
   }
-  /* ── Las semanas de la tarjeta de Toast (2026-11-14, opción A) ──────
-   * Una píldora de cristal (el carril) con las flechas dentro, en
-   * círculos del mismo cristal, y en medio la semana y su total, que se
-   * toca. Elegida la semana, el centro se tiñe de azul como Sales en las
-   * pestañas. Una flecha sin semana a la que ir se apaga. Lo que aún no
-   * llega de la semana de hoy, apagado en las barras, los días y las
-   * pastillas de las hojas. */
-  .m-ts-sem { display: flex; align-items: center; gap: 6px; margin-top: 12px; padding: 4px; border-radius: 999px; }
-  body.m-shell #mScreens :is(.m-ts-sem, .m-ts-flecha) { position: relative; isolation: isolate; }
-  body.m-shell #mScreens :is(.m-ts-sem, .m-ts-flecha)::before { z-index: -1; }
-  body.m-shell #mScreens .m-ts-flecha {
-    flex: none; width: calc(var(--m-base) * 2.4); height: calc(var(--m-base) * 2.4); padding: 0; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; color: #e0f2fe; border-radius: 50% !important;
+  /* ── Las semanas de la tarjeta de Toast (2026-11-14) ───────────────
+   * Como en la primera lámina (opción B): un carril oscuro, las flechas
+   * en círculos simples y en medio la semana y su total, que se toca.
+   * Fue de cristal (opción A) un día, y Axel lo quitó: "quítale el
+   * liquid glass, hazlo como lo diseñaste al principio". Elegida la
+   * semana, el centro va en la pastilla azul sólida de Bottles / $. Una
+   * flecha sin semana a la que ir se apaga. A sus botones se les quitan
+   * el desenfoque y la sombra de app.css (sobre el carril dibujaban una
+   * pastilla fantasma, como en las pestañas). */
+  .m-ts-sem {
+    display: flex; align-items: center; gap: 6px; margin-top: 12px; padding: 4px; border-radius: 999px;
+    background: rgba(0,0,0,.22); border: 1px solid rgba(255,255,255,.12);
   }
-  body.m-shell #mScreens .m-ts-flecha .ti { position: relative; z-index: 1; font-size: var(--m-strong); }
+  body.m-shell #mScreens .m-ts-sem button {
+    -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; border: 0;
+  }
+  body.m-shell #mScreens .m-ts-flecha {
+    flex: none; width: calc(var(--m-base) * 2.2); height: calc(var(--m-base) * 2.2); padding: 0; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; color: #e0f2fe;
+    background: rgba(255,255,255,.1); border-radius: 50% !important;
+  }
+  body.m-shell #mScreens .m-ts-flecha .ti { font-size: var(--m-strong); }
   /* !important: app.css pone `button:disabled { opacity: .62 !important }`
-   * a todo botón, y a .62 una flecha de cristal apagada casi no se
-   * distingue de una que sí va (medido en Chromium). */
+   * a todo botón, y a .62 una flecha apagada casi no se distingue de una
+   * que sí va (medido en Chromium). */
   body.m-shell #mScreens .m-ts-flecha:disabled { opacity: .35 !important; cursor: default !important; }
   body.m-shell #mScreens .m-ts-semt {
-    flex: 1; min-width: 0; padding: 8px 6px; cursor: pointer; border: 0; background: none; box-shadow: none;
-    -webkit-backdrop-filter: none; backdrop-filter: none;
+    flex: 1; min-width: 0; padding: 7px 6px; cursor: pointer; background: none;
     font-size: var(--m-small); font-weight: 700; color: #e5edf6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     border-radius: 999px !important;
   }
   body.m-shell #mScreens .m-ts-semt b { font-weight: 800; color: #fff; }
-  body.m-shell #mScreens .m-ts-semt.on {
-    background: rgba(125,211,252,.32);
-    box-shadow: inset 0 0 0 1px rgba(186,230,253,.55), inset 0 1.5px 0 rgba(255,255,255,.55),
-      inset 0 0 10px rgba(125,211,252,.35), 0 2px 8px rgba(0,0,0,.25);
-  }
+  body.m-shell #mScreens .m-ts-semt.on { background: #7dd3fc; color: #04283d; }
+  body.m-shell #mScreens .m-ts-semt.on b { color: #04283d; }
   .m-ts-b.fut { pointer-events: none; }
   .m-ts-d span.fut { opacity: .4; }
   .m-vl-c.fut { opacity: .4; pointer-events: none; }
