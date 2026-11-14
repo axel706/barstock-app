@@ -517,8 +517,10 @@ sale de marginedge_invoice_lines" de arriba):
   ordenado: hasta que se casa contra la factura, llegó lo ordenado; desde
   la factura, lo que dice la factura (corto, nada o de más).
 - **Lo ordenado empieza a contar a la hora de entrega del proveedor**, una
-  por proveedor y por locación, ajustable en una pantalla de Settings (por
-  diseñar). Crown: LOOP martes 7:00 AM (Axel lo recoge el lunes y el lunes
+  por proveedor y por locación, en Settings › Delivery (`delivery_day` y
+  `delivery_time` de cada proveedor; ya construido y configurado a mano
+  por Axel en cada locación, 2026-11-14). El pedido fija con ella su
+  `arrives_at`, que es lo que lee `live-stock.js`. Crown: LOOP martes 7:00 AM (Axel lo recoge el lunes y el lunes
   está cerrado), Breakthru martes 4:00 PM, Southern miércoles 4:00 PM, Wine
   Merchant jueves 4:00 PM.
 - **Una línea de factura sin pedido** también llegó: suma desde que entra
