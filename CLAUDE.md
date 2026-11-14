@@ -911,6 +911,33 @@ por la tarde):**
   botellas de más): habría que partir el día por hora con las órdenes
   de Toast.
 
+### El ritmo de hoy: "Out today" con lo que se lleva vendido (2026-11-14)
+
+Axel, con una fiesta a mediodía: el prosecco iba a 12.5 botellas a las
+3 PM, quedaban 6, y la app decía "Out Thu". La causa: `run-out.js` resta
+para hoy `max(0, lo de siempre − lo ya vendido)`, y como ya se había
+pasado de un sábado normal, daba el resto del día por terminado. Las
+ventas se guardaban por día, sin hora: no se sabía si 12.5 a las 3 PM era
+mucho o poco. (Se descartó antes un "factor de semana movida": sus
+conteos dicen ~30 a la semana, y esta semana era normal.)
+
+El arreglo acordado, en tres fases:
+1. **Hecha:** `sync` guarda lo vendido de bebida por HORA de Nueva York,
+   de toda la barra, en `toast_sales_days.hours` (`{ q:[24], net:[24],
+   sin_hora }`, migración 041, **sin correr**). La hora es la de la
+   línea (`createdDate`), si no la de su cuenta, si no la de su orden;
+   sin ninguna, `sin_hora`. Sin el open bar. Sin la columna, la carga
+   sigue sin horas y lo dice (`horas: false`, aviso con "041").
+   **Sin comprobar contra Toast de verdad que `createdDate` venga en las
+   líneas**: si no viene, cae a la hora de la cuenta.
+2. Recargar la historia con horas (herramienta como `bsToastHistoria`,
+   que hoy se salta lo ya cargado).
+3. `run-out.js`: lo que falta de hoy = lo vendido hasta el último Sync ×
+   lo que le suele faltar al día a esa hora (la curva, mediana por día
+   de la semana), y nunca menos que lo de siempre − lo vendido. La hora
+   que cuenta es la del Sync (`fetched_at`), no la del reloj. Cambia a
+   la vez Running out, Inventory, "Do we have" y el correo.
+
 ### La lista de compras y la verificación (2026-11-14, sin construir)
 
 Desde "Running out first", un manager confirma lo que se acaba (a una

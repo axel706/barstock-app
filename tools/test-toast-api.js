@@ -730,6 +730,89 @@ grupo('sync: guarda tambien el dinero (net sales)');
   prueba('y lo dice, sin adivinar', r2.body.dinero === false && /034/.test(r2.body.aviso || ''), JSON.stringify(r2.body).slice(0, 300));
 }
 
+grupo('sync: guarda lo vendido por hora (el ritmo del día)');
+{
+  // Axel, 2026-11-14: con una fiesta a mediodía, el prosecco iba a 12.5
+  // botellas a las 3 PM y la app decía "Out Thu". Sin la hora de las
+  // ventas no se sabe si 12.5 a esa hora es mucho o poco. Cada día
+  // cargado guarda lo vendido de bebida por hora de Nueva York, de toda
+  // la barra: con eso se aprende la curva de cada día de la semana.
+  //
+  // La hora: la de la línea (createdDate); si no la trae, la de su
+  // cuenta, y si no, la de su orden. Sin ninguna, se cuenta aparte
+  // (sin_hora): no se le inventa una. El open bar (Banquet Beverage) no
+  // entra: son personas, no tragos, y torcería la curva.
+  const LOC = '11111111-2222-3333-4444-555555555555';
+  const menu = { menus: [{ name: 'DRINKS', menuGroups: [
+    { name: 'Liquor', menuGroups: [{ name: 'Vodka', menuItems: [{ guid: 'l-tito', name: "Tito's" }] }] } ] }] };
+  const sel = (g, cat, q, extra) => Object.assign({ item: { guid: g }, displayName: g, salesCategory: { guid: cat }, quantity: q }, extra || {});
+  // 2026-11-05 es horario de invierno: Nueva York = UTC − 5.
+  const ordenes = [
+    { openedDate: '2026-11-05T23:10:00.000+0000', checks: [
+      { openedDate: '2026-11-05T22:05:00.000+0000', selections: [
+        sel('l-tito', 'c-liq', 2, { price: 20, createdDate: '2026-11-05T19:30:00.000+0000' }),   // 2 PM
+        sel('w-sb', 'c-wine', 1, { price: 12, createdDate: '2026-11-05T19:59:59.000+0000' }),    // 2 PM
+        sel('l-tito', 'c-liq', 3, { price: 30 }),                                                // su cuenta: 5 PM
+        sel('p-silver', 'c-ban', 31, { price: 806, createdDate: '2026-11-05T19:00:00.000+0000' }),
+        sel('f-burger', 'c-food', 4, { price: 60, createdDate: '2026-11-05T19:00:00.000+0000' }),
+        sel('l-tito', 'c-liq', 9, { voided: true, createdDate: '2026-11-05T19:00:00.000+0000' }) ] },
+      { selections: [sel('l-tito', 'c-liq', 1, { price: 10 })] } ] },                            // su orden: 6 PM
+    // Pasada la medianoche sigue siendo el mismo día de negocio: 1 AM.
+    { checks: [{ selections: [sel('w-sb', 'c-wine', 2, { price: 24, createdDate: '2026-11-06T06:20:00.000+0000' })] }] },
+    { checks: [{ selections: [sel('w-sb', 'c-wine', 1, { price: 12 })] }] }                      // sin hora
+  ];
+  let conColumna = true;
+  const rutas = () => ({
+    '/authentication/': LOGIN_OK,
+    '/config/v2/salesCategories': { status: 200, body: [{ guid: 'c-liq', name: 'Liquor' }, { guid: 'c-wine', name: 'Wine' },
+      { guid: 'c-ban', name: 'Banquet Beverage' }, { guid: 'c-food', name: 'Food' }] },
+    '/menus/v2/menus': { status: 200, body: menu },
+    '/orders/v2/ordersBulk': (url) => ({ status: 200, body: /page=1(&|$)/.test(url) ? ordenes : [] }),
+    'sb.test/rest/v1/locations': { status: 200, body: [{ toast_restaurant_guid: GUID }] },
+    // Sin la migración 041, PostgREST no conoce `hours`.
+    'sb.test/rest/v1/toast_sales_days': (url, op) => (!conColumna && op && op.method === 'POST' && /"hours"/.test(op.body || '')
+      ? { status: 400, body: { code: 'PGRST204', message: "Could not find the 'hours' column of 'toast_sales_days' in the schema cache" } }
+      : { status: 201, body: [] }),
+    'sb.test/rest/v1/toast_sales': { status: 201, body: [] }
+  });
+  const dias = () => peticiones.filter(p => p.metodo === 'POST' && p.url.includes('toast_sales_days'));
+
+  entorno();
+  require(path.join(RAIZ, 'lib/toast.js'))._olvidarCatalogo();
+  respuestas = rutas();
+  const r = await llamar({ accion: 'sync', params: { businessDate: '20261105', locationId: LOC } });
+  const d = dias();
+  const fin = d.length ? JSON.parse(d[d.length - 1].cuerpo) : {};
+  const H = fin.hours || {};
+  prueba('contesta bien', r.body && r.body.ok === true, JSON.stringify(r.body).slice(0, 300));
+  prueba('el día lleva sus horas, 24', Array.isArray(H.q) && H.q.length === 24 && Array.isArray(H.net) && H.net.length === 24, JSON.stringify(H));
+  prueba('a las 2 PM: 2 Tito\'s + 1 copa, por la hora de la línea', H.q && H.q[14] === 3, H.q && H.q[14]);
+  prueba('y su dinero ($20 + $12)', H.net && H.net[14] === 32, H.net && H.net[14]);
+  prueba('sin hora en la línea: la de su cuenta (5 PM)', H.q && H.q[17] === 3, H.q && H.q[17]);
+  prueba('sin cuenta con hora: la de su orden (6 PM)', H.q && H.q[18] === 1, H.q && H.q[18]);
+  prueba('pasada la medianoche, a su hora (1 AM)', H.q && H.q[1] === 2, H.q && H.q[1]);
+  prueba('sin ninguna hora: aparte, sin inventarle una', H.sin_hora === 1, H.sin_hora);
+  const total = (H.q || []).reduce((a, x) => a + x, 0);
+  prueba('ni el open bar, ni la comida, ni lo anulado', total === 9, total);
+  prueba('las horas van en el día que se marca completo', fin.complete === true);
+  prueba('y la respuesta dice que las guardó', r.body.horas === true, JSON.stringify(r.body).slice(0, 300));
+
+  // Sin la migración 041: las ventas no pueden dejar de cargarse por esto.
+  conColumna = false;
+  respuestas = rutas();
+  const r2 = await llamar({ accion: 'sync', params: { businessDate: '20261105', locationId: LOC } });
+  const d2 = dias();
+  const fin2 = d2.length ? JSON.parse(d2[d2.length - 1].cuerpo) : {};
+  prueba('sin la migración 041, la carga sigue', r2.body.ok === true, JSON.stringify(r2.body).slice(0, 300));
+  prueba('el día se marca completo sin horas', fin2.complete === true && !('hours' in fin2), JSON.stringify(fin2));
+  prueba('y lo dice, sin adivinar', r2.body.horas === false && /041/.test(r2.body.aviso || ''), JSON.stringify(r2.body).slice(0, 300));
+  const fs = require('fs');
+  const m41 = fs.existsSync(path.join(RAIZ, 'database/migrations/041_toast_sales_hours.sql'))
+    ? fs.readFileSync(path.join(RAIZ, 'database/migrations/041_toast_sales_hours.sql'), 'utf8').replace(/--.*$/gm, '') : '';
+  prueba('la migración 041 añade la columna, y se puede correr dos veces',
+    /alter table public\.toast_sales_days add column if not exists hours jsonb/.test(m41));
+}
+
 grupo('el token de Toast se guarda mientras dura');
 {
   // Al rehacer 90 días con el dinero (Axel, 2026-11-12) la carga se paró

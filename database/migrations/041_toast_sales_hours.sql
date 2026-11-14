@@ -1,0 +1,26 @@
+-- ── 041 · Lo vendido en Toast, por hora ──────────────────────────────
+--
+-- Axel, 2026-11-14: con una fiesta a mediodía el prosecco iba a 12.5
+-- botellas a las 3 PM y la app decía "Out Thu". Las ventas se guardaban
+-- por día, sin hora, y así no se sabe si 12.5 a esa hora es mucho o poco:
+-- la app daba el resto del día por terminado.
+--
+-- Cada día cargado guarda ahora lo vendido de bebida por hora de Nueva
+-- York, de toda la barra. De ahí se aprende la curva de cada día de la
+-- semana ("un sábado, a las 3 PM ya va el 30%") y con ella cuánto le
+-- falta a hoy al ritmo que lleva.
+--
+--   hours = { "q":   [24 cantidades, la hora 0 es medianoche],
+--             "net": [24 importes netos],
+--             "sin_hora": cantidad sin hora conocida }
+--
+-- Es de toda la barra, no por producto: la curva dice CUÁNDO se vende,
+-- y para eso basta con todo lo que se vende. Sin el open bar (son
+-- personas, no tragos). null en los días cargados antes de esta
+-- migración: un día sin horas es un día que no se sabe, no uno sin
+-- ventas. Se rellenan volviendo a cargar esos días.
+--
+-- La escribe la función de Toast (sync) con la llave de servicio, como el
+-- resto de la fila. Sin esta columna la carga sigue, sin horas, y lo dice.
+
+alter table public.toast_sales_days add column if not exists hours jsonb;
