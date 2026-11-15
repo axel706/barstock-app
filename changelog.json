@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261115-105848",
+    "items": [
+      "Running out: Edit order to pin your products first"
+    ]
+  },
+  {
     "build": "20261115-104035",
     "items": [
       "Edit item: same background as the rest of the app"
@@ -183,13 +189,6 @@
     "build": "20261113-133832",
     "items": [
       "Bartenders: location changes show after going back"
-    ]
-  },
-  {
-    "build": "20261113-130531",
-    "items": [
-      "Home cards follow the week: count, orders, running out",
-      "App update card always comes first"
     ]
   }
 ]

@@ -30,13 +30,47 @@
   // se acaba antes y, a igual día, el que más se mueve. Con todo a cero
   // gana el que más se mueve (test-tarjeta-pronto.js).
   //
-  // Sólo lee.
+  // Sólo lee (lo fijado, de este teléfono: ver fijar()).
 
   // Con menos de cuatro semanas de historia el promedio de Pour·IQ no
   // significa nada todavía. El mismo mínimo que el resto del Home.
   const SEMANAS_MIN = 4;
 
-  function lista() {
+  // ── Lo que cada quien fija arriba (Axel, 2026-11-15, lámina B) ──────
+  //
+  // "Edit order" en la pantalla de Running out: arrastrar a "Pinned"
+  // pone un producto primero, en el orden que uno quiera; el resto sigue
+  // debajo con el orden de la app. Es de CADA PERSONA (Axel): se guarda
+  // en su teléfono, por locación, no en la base. Lo que deja de acabarse
+  // sale de la lista y su fijado se conserva: si vuelve, vuelve a su
+  // sitio. Vale para la tarjeta del Home y la pantalla de revisión (y el
+  // filtro de Inventory), que leen esta lista; el correo de la mañana no
+  // la usa y no cambia. Sin localStorage (el servidor, un navegador
+  // privado), no hay fijados y todo sigue como antes.
+  const CLAVE = 'bs_ro_fijados_';
+  const sufijo = () => {
+    let n = null;
+    try { n = localStorage.getItem('barstock.activeLocationName'); } catch (e) {}
+    n = n || (window.BARSTOCK_CONFIG && window.BARSTOCK_CONFIG.LOCATION_NAME) || 'default';
+    return String(n).replace(/\s+/g, '_').toLowerCase();
+  };
+  function fijados() {
+    try {
+      const v = JSON.parse(localStorage.getItem(CLAVE + sufijo()) || '[]');
+      return Array.isArray(v) ? v.filter(x => typeof x === 'string' && x) : [];
+    } catch (e) { return []; }
+  }
+  function fijar(nombres) {
+    const unicos = [];
+    for (const n of nombres || []) if (typeof n === 'string' && n && unicos.indexOf(n) < 0) unicos.push(n);
+    try { localStorage.setItem(CLAVE + sufijo(), JSON.stringify(unicos)); } catch (e) { return false; }
+    if (window.BarStockEvents && window.BarStockEvents.emit) window.BarStockEvents.emit('runningOutOrder', {});
+    return true;
+  }
+
+  // `o.porFecha`: el orden de la app, sin lo fijado (lo usa "Edit order"
+  // para enseñar lo de debajo como lo pondría la app).
+  function lista(o) {
     const LC = window.BarStockLiveCache;
     const parM = window.parAdjustments;
     const master = (window.state && window.state.master) || [];
@@ -70,8 +104,16 @@
                tono: dias <= 2 ? 'r' : dias < 7 ? 'a' : 'g' } });
     }
     out.sort((a, b) => (b.fuera - a.fuera) || (a.dias - b.dias) || (b.avg - a.avg));
-    return out;
+    if (o && o.porFecha) return out;
+    // Lo fijado primero, en su orden; lo demás como estaba (sort estable).
+    const fij = fijados();
+    if (!fij.length) return out;
+    const pos = new Map(fij.map((n, i) => [n, i]));
+    for (const x of out) x.fijado = pos.has(x.item);
+    return out.map((x, i) => [x, i])
+      .sort((a, b) => ((pos.has(a[0].item) ? pos.get(a[0].item) : Infinity) - (pos.has(b[0].item) ? pos.get(b[0].item) : Infinity)) || (a[1] - b[1]))
+      .map(p => p[0]);
   }
 
-  window.BarStockRunningOut = { lista, SEMANAS_MIN };
+  window.BarStockRunningOut = { lista, fijados, fijar, SEMANAS_MIN };
 })();

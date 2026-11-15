@@ -5535,6 +5535,34 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   #mScreens > .m-screen.on:has(> .m-ed) > :not(.m-ed),
   body:has(#mScreens > .m-screen.on > .m-ed) #mDock { visibility: hidden; }
   .m-ro-sum { margin-top: 6px; font-size: var(--m-small); color: #9fb0c4; }
+  /* El resumen con "Edit order" (o "Reset") a la derecha (lámina B). */
+  .m-ro-sumf { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .m-ro-sumf .m-ro-sum { min-width: 0; }
+  :is(#mScreens) .m-ro-ord {
+    flex: 0 0 auto; padding: 4px 0; border: 0; background: none; border-radius: 0 !important; cursor: pointer;
+    font-size: var(--m-small); font-weight: 700; color: #7dd3fc;
+    -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none;
+  }
+  /* "Pinned · N" y "By date": por qué va cada cosa donde va. */
+  .m-ro-k {
+    margin-top: 16px; font-size: var(--m-meta); font-weight: 800; letter-spacing: .08em;
+    text-transform: uppercase; color: #8fa1b5;
+  }
+  /* Editando: la tarjeta sin botones, con su asa. touch-action: none en
+   * el asa para que el dedo arrastre y no ruede la pantalla. */
+  .m-ro-grip {
+    flex: 0 0 auto; width: calc(var(--m-base) * 1.7); text-align: center; cursor: grab;
+    font-size: var(--m-title); line-height: 1; color: #8fa1b5; touch-action: none; user-select: none;
+  }
+  .m-ro-arrastra {
+    position: relative; z-index: 2; border-color: rgba(125,211,252,.6) !important;
+    background: rgba(40,60,90,.92) !important; box-shadow: 0 16px 40px rgba(0,0,0,.55);
+  }
+  #mScreens .m-ro-done {
+    position: sticky; bottom: calc(env(safe-area-inset-bottom, 0px) + 100px);
+    display: block; width: 100%; margin-top: 16px; min-height: calc(var(--m-base) * 3.4);
+    font-size: var(--m-strong); box-shadow: 0 10px 30px rgba(0,0,0,.45);
+  }
   .m-ro-vacio { margin-top: 40px; text-align: center; font-size: var(--m-body); color: #8fa1b5; }
   .m-ro-c { margin-top: 10px; padding: 14px; border-radius: 20px;
     background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.10); }

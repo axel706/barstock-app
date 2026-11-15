@@ -2451,6 +2451,9 @@
   if (window.BarStockLiveCache) window.BarStockLiveCache.alCambiar(refresh);
   // La cifra de "To buy · N" cambió (alguien añadió o quitó algo).
   if (window.BarStockEvents && window.BarStockEvents.on) window.BarStockEvents.on('toBuyCounted', refresh);
+  // Alguien fijó o soltó productos de "Running out first" (Edit order):
+  // los tres de la tarjeta siguen ese orden.
+  if (window.BarStockEvents && window.BarStockEvents.on) window.BarStockEvents.on('runningOutOrder', refresh);
 
   // ── Esperar a que lleguen los datos ──────────────────────────────────
   //

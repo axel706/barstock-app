@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 152 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 153 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -385,7 +385,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 152 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 153 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -1112,6 +1112,17 @@ Tue 7 AM" hasta la llegada de SU orden (`state.orderHistory`; sin la
 orden, 8 días), calculado al leer, sin escribir nada; la pestaña sigue
 mientras haya algo pedido sin llegar. La firma es el nombre de la
 sesión: cada quien usa su teléfono (Axel). Prueba: `test-pedir-lista`.
+
+**Fijar arriba en Running out (2026-11-15, lámina B).** "Edit order"
+en la pantalla de revisión: las tarjetas sin botones y con asa (≡);
+arrastrar por encima de "By date" fija, por debajo suelta; "Reset" y
+"Done". Lo fijado va primero y en su orden, el resto por la app
+(`running-out.lista()`; `{ porFecha: true }` da el de la app). **De
+cada persona**: `localStorage`, por locación (`fijados` / `fijar`),
+sin migración. Vale para la tarjeta del Home (se repinta con
+`runningOutOrder`) y la revisión; el correo no cambia. Lo fijado que
+deja de acabarse se conserva y vuelve a su sitio. Prueba:
+`test-orden-running-out`, con el arrastre simulado.
 
 ---
 

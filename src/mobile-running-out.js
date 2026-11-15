@@ -23,6 +23,7 @@
 
   let _el = null, _quitarOyente = null, _quitarIrse = null;
   let _lista = [], _checks = new Map(), _cargando = false;
+  let _editando = false;   // "Edit order" (lámina B)
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -33,6 +34,7 @@
   const aviso = (t) => { const T = window.BarStockToast; if (T && T.show) try { T.show(t); } catch (e) {} };
   const LC = () => window.BarStockLiveCache;
   const master = () => (window.state && window.state.master) || [];
+  const RO = () => window.BarStockRunningOut;
 
   // "Wed 3:12 PM", en Nueva York.
   const cuandoNY = (iso) => {
@@ -107,17 +109,134 @@
 
   function pintar() {
     if (!_el) return;
+    if (_editando) return pintarOrden();
     const { base, todos } = productos();
     const nLista = todos.filter(x => _lista.some(l => l.item_name === x.item)).length;
     const nVisto = todos.filter(x => _checks.has(x.item)).length;
     const partes = [base.length + (base.length === 1 ? ' runs' : ' run') + ' out this week'];
     if (nLista) partes.push(nLista + ' on the list');
     if (nVisto) partes.push(nVisto + ' checked');
+    // Con algo fijado, los dos títulos dicen por qué ese orden: lo tuyo
+    // arriba y lo demás por la fecha en que se acaba.
+    const nFij = base.filter(x => x.fijado).length;
+    const cuerpo = todos.map((x, i) =>
+      (nFij && i === 0 ? `<div class="m-ro-k">Pinned &middot; ${nFij}</div>` : '') +
+      (nFij && i === nFij && i < base.length ? '<div class="m-ro-k">By date</div>' : '') +
+      tarjeta(x)).join('');
     _el.innerHTML = `
-      <div class="m-ro-sum">${partes.map(esc).join(' &middot; ')}</div>
+      <div class="m-ro-sumf"><div class="m-ro-sum">${partes.map(esc).join(' &middot; ')}</div>${
+        base.length > 1 ? '<button type="button" class="m-ro-ord" data-ro-edit>Edit order</button>' : ''}</div>
       ${_cargando && !todos.length ? '<div class="m-ro-vacio">Loading…</div>' : ''}
       ${!_cargando && !todos.length ? '<div class="m-ro-vacio">Nothing runs out this week.</div>' : ''}
-      ${todos.map(tarjeta).join('')}`;
+      ${cuerpo}`;
+  }
+
+  // ── "Edit order" (Axel, 2026-11-15, lámina B) ───────────────────────
+  //
+  // Las tarjetas sin botones, con su asa (≡). Arrastrar una por encima de
+  // "By date" la fija, en ese sitio; por debajo, la suelta. Lo de debajo
+  // va siempre en el orden de la app. "Reset" suelta todo; "Done" sale.
+  // Lo guarda running-out.js en este teléfono (fijar).
+  function compacta(x) {
+    const r = x.r;
+    const queda = LC() && LC().cuanto ? LC().cuanto(r) : Number(r.onHand) || 0;
+    const vivo = !!(LC() && LC().vivo && LC().vivo(r));
+    const out = x.out && x.out.txt ? `<span class="m-ro-out ${x.out.tono === 'r' ? 'r' : 'a'}">${esc(x.out.txt)}</span>` : '';
+    return `<div class="m-ro-c m-ro-ed" data-item="${esc(r.item)}">
+      <div class="m-ro-top">
+        <span class="m-ro-grip" data-ro-grip role="button" aria-label="Drag ${esc(r.item)}">&#8801;</span>
+        <div class="m-ro-n"><b>${esc(r.item)}</b>
+          <small>${vivo ? '<span class="m-ro-live"><i></i>Live</span>' : ''}${out}<span>${esc(r.vendor || '')}</span></small></div>
+        <div class="m-ro-v"><b>${vivo ? '&asymp;' : ''}${esc(n1(queda))}</b></div>
+      </div>
+    </div>`;
+  }
+
+  function pintarOrden() {
+    const R = RO();
+    const base = R && R.lista ? R.lista() : [];
+    const arriba = base.filter(x => x.fijado);
+    const fij = new Set(arriba.map(x => x.item));
+    const abajo = (R && R.lista ? R.lista({ porFecha: true }) : base).filter(x => !fij.has(x.item));
+    _el.innerHTML = `
+      <div class="m-ro-sumf"><div class="m-ro-sum">Drag to put yours first</div>${
+        arriba.length ? '<button type="button" class="m-ro-ord" data-ro-reset>Reset</button>' : ''}</div>
+      <div class="m-ro-orden">
+        <div class="m-ro-k" data-ro-k="pin">Pinned &middot; ${arriba.length ? arriba.length : 'drag here'}</div>
+        ${arriba.map(compacta).join('')}
+        <div class="m-ro-k" data-ro-k="fecha">By date</div>
+        ${abajo.map(compacta).join('')}
+      </div>
+      <button type="button" class="m-ro-b m-ro-go m-ro-done" data-ro-done>Done</button>`;
+  }
+
+  // Lo fijado sale del orden en pantalla: todo lo que quede entre los dos
+  // títulos. Lo fijado que ahora no se acaba (no está en pantalla) se
+  // conserva detrás, para cuando vuelva.
+  function guardarOrden(cont) {
+    const R = RO();
+    if (!R || !R.fijar) return;
+    const nuevos = [];
+    for (const el of Array.from(cont.children)) {
+      if (el.getAttribute('data-ro-k') === 'fecha') break;
+      if (el.dataset && el.dataset.item) nuevos.push(el.dataset.item);
+    }
+    const enPantalla = new Set(Array.from(cont.querySelectorAll('[data-item]')).map(e => e.dataset.item));
+    const fuera = (R.fijados ? R.fijados() : []).filter(n => !enPantalla.has(n));
+    R.fijar(nuevos.concat(fuera));
+  }
+
+  // ── Arrastrar, con el dedo ───────────────────────────────────────────
+  //
+  // Pointer events sobre el asa (touch-action: none en el CSS, para que
+  // el navegador no lo tome por un scroll). La tarjeta se mueve EN el
+  // DOM al pasar la mitad de su vecina, y un translate la deja bajo el
+  // dedo. Cerca de los bordes, la pantalla rueda sola.
+  let _arr = null;
+  function empezar(ev, card) {
+    if (ev.cancelable) ev.preventDefault();
+    const r0 = card.getBoundingClientRect();
+    _arr = { card, cont: card.parentElement, agarre: ev.clientY - r0.top };
+    card.classList.add('m-ro-arrastra');
+    window.addEventListener('pointermove', mover, { passive: false });
+    window.addEventListener('pointerup', soltar);
+    window.addEventListener('pointercancel', soltar);
+  }
+  function mover(ev) {
+    if (!_arr) return;
+    if (ev.cancelable) ev.preventDefault();
+    const { card, cont } = _arr;
+    const y = ev.clientY;
+    const prev = card.previousElementSibling;
+    // Nunca por encima del primer título ("Pinned").
+    if (prev && prev !== cont.firstElementChild) {
+      const b = prev.getBoundingClientRect();
+      if (y < b.top + b.height / 2) cont.insertBefore(card, prev);
+    }
+    const next = card.nextElementSibling;
+    if (next) {
+      const b = next.getBoundingClientRect();
+      if (y > b.top + b.height / 2) cont.insertBefore(card, next.nextSibling);
+    }
+    card.style.transform = '';
+    const nat = card.getBoundingClientRect().top;
+    card.style.transform = 'translateY(' + Math.round(y - _arr.agarre - nat) + 'px)';
+    if (_el) {
+      if (y < 150) _el.scrollTop -= 10;
+      else if (y > (window.innerHeight || 800) - 170) _el.scrollTop += 10;
+    }
+  }
+  function soltar() {
+    if (!_arr) return;
+    const { card, cont } = _arr;
+    _arr = null;
+    window.removeEventListener('pointermove', mover);
+    window.removeEventListener('pointerup', soltar);
+    window.removeEventListener('pointercancel', soltar);
+    card.style.transform = '';
+    card.classList.remove('m-ro-arrastra');
+    guardarOrden(cont);
+    pintar();
   }
 
   async function recargar() {
@@ -149,6 +268,11 @@
   }
 
   function alTocar(ev) {
+    const bo = ev.target.closest && ev.target.closest('button');
+    if (bo && bo.hasAttribute('data-ro-edit')) { _editando = true; pintar(); if (_el) _el.scrollTop = 0; return; }
+    if (bo && bo.hasAttribute('data-ro-done')) { _editando = false; pintar(); return; }
+    if (bo && bo.hasAttribute('data-ro-reset')) { const R = RO(); if (R && R.fijar) R.fijar([]); pintar(); return; }
+    if (_editando) return;
     const c = ev.target.closest && ev.target.closest('.m-ro-c');
     if (!c) return;
     const r = master().find(m => m.item === c.dataset.item);
@@ -171,6 +295,8 @@
   }
 
   function cerrar() {
+    _editando = false;
+    if (_arr) soltar();
     if (_el) _el.remove();
     _el = null;
     if (_quitarOyente) { _quitarOyente(); _quitarOyente = null; }
@@ -185,6 +311,10 @@
     _el = document.createElement('div');
     _el.className = 'm-ro';
     _el.addEventListener('click', alTocar);
+    _el.addEventListener('pointerdown', (ev) => {
+      const g = _editando && ev.target.closest && ev.target.closest('[data-ro-grip]');
+      if (g) empezar(ev, g.closest('.m-ro-c'));
+    });
     donde.appendChild(_el);
     // Sin fondo propio: mientras esté en #mScreens, lo de debajo se
     // esconde (la regla de :has en mobile-app.css) y se ve el fondo de la
