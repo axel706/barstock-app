@@ -88,9 +88,6 @@
   const MARGEN = 0.5;
   const MARGEN_PARTE = 0.25;
   const margenDe = (f) => Math.min(MARGEN, MARGEN_PARTE * Math.max(0, Number(f && f.vendido) || 0));
-  // El día de negocio empieza a las 4 AM (toast-usage.js, CORTE_H): las
-  // horas de después de medianoche van al final del día, no al principio.
-  const CORTE = 4;
 
   const diaSemana = (d) => new Date(d + 'T12:00:00Z').getUTCDay();
   const sumarDias = (d, k) => new Date(new Date(d + 'T12:00:00Z').getTime() + k * 864e5).toISOString().slice(0, 10);
@@ -120,41 +117,19 @@
   }
 
   // La hora y los minutos de un instante en Nueva York.
-  function horaMinNY(iso) {
-    const t = new Date(iso);
-    if (isNaN(t.getTime())) return null;
-    const p = {};
-    for (const x of new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hourCycle: 'h23',
-      hour: '2-digit', minute: '2-digit' }).formatToParts(t)) p[x.type] = x.value;
-    return { h: Number(p.hour) % 24, m: Number(p.minute) };
-  }
-
-  // Qué parte de un día de la semana suele llevar vendida la barra a la
-  // hora de `instante`: la mediana de los días cargados ANTES de `fecha`,
-  // del mismo día de la semana, cerrados, completos y con horas. Con
-  // menos de MIN_MUESTRAS, null: no se sabe. Un día sin ventas (cerrado)
-  // no es muestra.
+  // La cuenta de un día (qué parte se había vendido a esa hora) es
+  // toast-usage.fraccionDia, la misma que reparte el día del conteo: dos
+  // copias de la misma cuenta acaban diciendo cosas distintas.
   function fraccionDelDia(dias, fecha, instante) {
-    const hm = instante ? horaMinNY(instante) : null;
-    if (!hm || !fecha) return null;
+    const U = window.BarStockToastUsage;
+    if (!instante || !fecha || !U || !U.fraccionDia) return null;
     const w = diaSemana(fecha);
-    // La posición en el día de negocio: las horas desde las 4 AM.
-    const orden = (h) => (h - CORTE + 24) % 24;
-    const pos = orden(hm.h);
     const xs = [];
     for (const d of dias || []) {
       if (!d || !d.complete || !d.closed || !d.hours || !Array.isArray(d.hours.q)) continue;
       if (d.business_date >= fecha || diaSemana(d.business_date) !== w) continue;
-      const q = d.hours.q;
-      let total = 0, antes = 0;
-      for (let h = 0; h < 24; h++) {
-        const x = Number(q[h]) || 0;
-        total += x;
-        if (orden(h) < pos) antes += x;
-      }
-      if (!(total > 0)) continue;
-      antes += (Number(q[hm.h]) || 0) * hm.m / 60;
-      xs.push(Math.min(1, antes / total));
+      const f = U.fraccionDia(d.hours.q, instante);
+      if (f != null) xs.push(f);
     }
     return xs.length >= MIN_MUESTRAS ? mediana(xs) : null;
   }

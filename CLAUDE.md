@@ -943,12 +943,24 @@ por la tarde):**
   conteo se cierra igual y se avisa con lo que pasó. Después, cerrar
   los provisionales cuando Toast tenga el día (en `lib/morning-cron.js`,
   que ya corre `src/` en el servidor, o al abrir la app).
-- **Pregunta abierta para Axel antes de construirla:** ¿a qué hora se
-  cuenta? Con el bar ya cerrado, la regla de arriba es exacta. Si se
-  cuenta a las 4 PM y se sigue vendiendo, lo de después saldría como
-  faltante falso (y el LIVE de la semana nueva ya empieza hoy con esas
-  botellas de más): habría que partir el día por hora con las órdenes
-  de Toast.
+- **La hora del conteo (Axel, 2026-11-14):** "se cuenta después de las
+  6 o 7 pm […] sí hay ventas durante el conteo; en ocasiones después
+  del cierre". Por eso el día del conteo se PARTE por la hora:
+  `toast-usage.ventasEntre(desde, hasta)` pesa los días de las puntas
+  con la curva por hora de ESE día (`fraccionDia`, toast_sales_days.
+  hours): del día de `desde`, lo vendido después; del de `hasta`, lo de
+  antes; los de en medio, enteros. Cada botella cuenta en un solo
+  ciclo. Lo usan el LIVE (`desdeElConteo`), el esperado (`entre`) y el
+  cierre de lo provisional (desde `cycle_start` hasta `cycle_end`). Un
+  día sin horas va como antes, y un conteo después del cierre da lo
+  mismo que antes. La línea de la semana de "Do we have" ya resta el
+  día del conteo (sólo lo de después). `run-out.fraccionDelDia` usa la
+  misma `fraccionDia`. Es una aproximación: la curva es de toda la
+  barra, no de cada producto.
+- **Quién ve la merma en dinero:** managers, owners y Axel (2026-11-14).
+  Hoy no hace falta tocar nada: el bartender no tiene "contar" ni
+  "cerrar el conteo" y no llega a Finish count. Cuenta para cuando se
+  construya el permiso "Money".
 
 ### El ritmo de hoy: "Out today" con lo que se lleva vendido (2026-11-14)
 

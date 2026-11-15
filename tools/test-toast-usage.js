@@ -46,7 +46,7 @@ function ventana(o) {
     w.__peticiones.push({ url: u, metodo: (op && op.method) || 'GET' });
     const resp = (b) => ({ ok: true, status: 200, json: async () => b, text: async () => JSON.stringify(b) });
     if (u.includes('/count_sessions')) return resp(o.sesiones || []);
-    if (u.includes('/toast_sales_days')) return resp([]);
+    if (u.includes('/toast_sales_days')) return resp(o.dias || []);
     if (u.includes('/toast_sales')) return resp(o.ventas || []);
     if (u.includes('/toast_item_links')) return resp(o.enlaces || []);
     if (u.includes('/toast_recipes')) return resp([]);
@@ -146,7 +146,9 @@ grupo('el día del conteo');
   let r = await w.BarStockToastUsage.desdeElConteo();
   const ventas = w.__peticiones.find(p => p.url.includes('/toast_sales?'));
   prueba('desde el último conteo (un recuento posterior al ciclo manda)', r.desde === '2026-11-10' && r.conteo === '2026-11-11T03:30:00.000Z', r.desde);
-  prueba('y pide sólo los días DESPUÉS del día del conteo', !!ventas && /business_date=gt\.2026-11-10/.test(ventas.url), ventas && ventas.url);
+  // Desde el 2026-11-14 se pide también el día del conteo, para partirlo
+  // por la hora (abajo); sin horas ese día, su parte es cero, como antes.
+  prueba('y pide desde el día del conteo (para partirlo por la hora)', !!ventas && /business_date=gt\.2026-11-09/.test(ventas.url), ventas && ventas.url);
   prueba('paginando (PostgREST corta en 1000)', /limit=1000&offset=0/.test(ventas.url));
   prueba('no escribe nada', w.__peticiones.every(p => p.metodo === 'GET'));
 
@@ -161,6 +163,64 @@ grupo('el día del conteo');
   w = ventana({});
   r = await w.BarStockToastUsage.desdeElConteo();
   prueba('sin conteo conocido no inventa un inicio', r.estado === 'sinConteo');
+}
+
+grupo('el día del conteo, partido por la hora');
+{
+  // Axel, 2026-11-14: "se cuenta después de las 6 o 7 pm, las ventas ya
+  // empiezan a bajar pero sí hay ventas durante el conteo". Lo vendido
+  // ese día ANTES del conteo ya no está en la estantería contada; lo de
+  // DESPUÉS sí estaba, y es del ciclo nuevo. Con lo vendido por hora de
+  // ese día (toast_sales_days.hours) se reparte: el LIVE nuevo resta la
+  // parte de después; el esperado del ciclo que se cierra, la de antes.
+  // La curva es de toda la barra: una aproximación, mejor que dar el día
+  // entero a un solo lado.
+  const Q = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 65, 63, 52, 87, 157, 159, 107, 128, 48, 0, 0, 0];
+  const U0 = ventana().BarStockToastUsage;
+  // Domingo 8 a las 7:00 PM de Nueva York = 2026-11-09T00:00Z (invierno).
+  const SIETE = '2026-11-09T00:00:00Z';
+  const antes7 = (6 + 65 + 63 + 52 + 87 + 157 + 159 + 107) / 872;
+  prueba('a las 7 PM se había vendido el 80 % del día', cerca(U0.fraccionDia(Q, SIETE), antes7), String(U0.fraccionDia(Q, SIETE)));
+  prueba('a la 1 AM, todo (el conteo después del cierre)', U0.fraccionDia(Q, '2026-11-09T06:00:00Z') === 1);
+  prueba('sin horas, no se sabe', U0.fraccionDia(null, SIETE) === null && U0.fraccionDia(new Array(24).fill(0), SIETE) === null);
+
+  const DIAS = [{ business_date: '2026-11-08', complete: true, closed: true, hours: { q: Q } },
+                { business_date: '2026-11-09', complete: true, closed: true, hours: { q: Q } }];
+  const VENTAS = [v('pg-btl', 'Pinot Grigio btl', 10, '', '2026-11-08'), v('pg-btl', 'Pinot Grigio btl', 4, '', '2026-11-09')];
+  let w = ventana({ ciclo: SIETE, ventas: VENTAS, enlaces: ENLACES, dias: DIAS });
+  let r = await w.BarStockToastUsage.desdeElConteo();
+  const pg = r.productos.find(x => x.producto === 'Pinot Grigio') || { porDia: {}, botellas: 0 };
+  prueba('el LIVE resta lo vendido el domingo DESPUÉS del conteo (20 % de 10)', cerca(pg.porDia['2026-11-08'], 10 * (1 - antes7)), JSON.stringify(pg.porDia));
+  prueba('y el lunes entero', cerca(pg.porDia['2026-11-09'], 4) && cerca(pg.botellas, 4 + 10 * (1 - antes7)), String(pg.botellas));
+  prueba('el día del conteo sigue siendo el del conteo', r.desde === '2026-11-08', r.desde);
+
+  // Contar después del cierre: exactamente lo de antes.
+  w = ventana({ ciclo: '2026-11-09T06:00:00Z', ventas: VENTAS, enlaces: ENLACES, dias: DIAS });
+  r = await w.BarStockToastUsage.desdeElConteo();
+  const pg2 = r.productos.find(x => x.producto === 'Pinot Grigio') || { porDia: {}, botellas: 0 };
+  prueba('contando después del cierre, nada del domingo (como antes)', !(pg2.porDia['2026-11-08'] > 0) && cerca(pg2.botellas, 4), JSON.stringify(pg2.porDia));
+  // Sin horas del día del conteo: como antes.
+  w = ventana({ ciclo: SIETE, ventas: VENTAS, enlaces: ENLACES, dias: [{ business_date: '2026-11-08', complete: true, closed: true, hours: null }, DIAS[1]] });
+  r = await w.BarStockToastUsage.desdeElConteo();
+  const pg3 = r.productos.find(x => x.producto === 'Pinot Grigio') || { porDia: {}, botellas: 0 };
+  prueba('sin horas del domingo, nada del domingo (como antes)', !(pg3.porDia['2026-11-08'] > 0) && cerca(pg3.botellas, 4), JSON.stringify(pg3.porDia));
+
+  // El ciclo que se cierra (el esperado): del conteo anterior al de hoy.
+  // El domingo 8 del principio, la parte de después de su conteo; el
+  // lunes 9 del final, la parte de antes de este conteo (a las 7 PM).
+  const SIETE_LUNES = '2026-11-10T00:00:00Z';
+  w = ventana({ ventas: VENTAS, enlaces: ENLACES, dias: DIAS });
+  r = await w.BarStockToastUsage.ventasEntre(SIETE, SIETE_LUNES);
+  const pg4 = r.productos.find(x => x.producto === 'Pinot Grigio') || { porDia: {} };
+  prueba('el ciclo que se cierra: del primer día, lo de después de su conteo',
+    cerca(pg4.porDia['2026-11-08'], 10 * (1 - antes7)), JSON.stringify(pg4.porDia));
+  prueba('del último, lo de antes de este conteo', cerca(pg4.porDia['2026-11-09'], 4 * antes7), JSON.stringify(pg4.porDia));
+  // Cada botella en un solo ciclo: lo de después del conteo del lunes es
+  // del ciclo siguiente.
+  r = await w.BarStockToastUsage.ventasEntre(SIETE_LUNES, null);
+  const pg5 = r.productos.find(x => x.producto === 'Pinot Grigio') || { porDia: {} };
+  prueba('cada botella cuenta en un solo ciclo', cerca((pg4.porDia['2026-11-09'] || 0) + (pg5.porDia['2026-11-09'] || 0), 4),
+    (pg4.porDia['2026-11-09'] || 0) + ' + ' + (pg5.porDia['2026-11-09'] || 0));
 }
 
 grupo('está en la app');

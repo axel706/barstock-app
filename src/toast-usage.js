@@ -57,6 +57,40 @@
       year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(t));
   }
 
+  // ── Qué parte de un día se había vendido a una hora ──────────────────
+  //
+  // Con lo vendido por hora de ESE día (toast_sales_days.hours.q, de toda
+  // la barra, migración 041): lo vendido antes de `instante` entre lo
+  // vendido en todo el día. Las horas se ordenan desde el corte (4 AM),
+  // así que la madrugada va al final del día y no al principio. null si
+  // el día no tiene horas o no vendió nada: no se sabe. La usan el
+  // reparto del día del conteo (ventasEntre) y el ritmo de hoy
+  // (run-out.fraccionDelDia), la misma cuenta en un solo sitio.
+  function horaMinNY(iso) {
+    const t = new Date(iso);
+    if (isNaN(t.getTime())) return null;
+    const p = {};
+    for (const x of new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hourCycle: 'h23',
+      hour: '2-digit', minute: '2-digit' }).formatToParts(t)) p[x.type] = x.value;
+    return { h: Number(p.hour) % 24, m: Number(p.minute) };
+  }
+  function fraccionDia(q, instante) {
+    if (!Array.isArray(q)) return null;
+    const hm = instante ? horaMinNY(instante) : null;
+    if (!hm) return null;
+    const orden = (h) => (h - CORTE_H + 24) % 24;
+    const pos = orden(hm.h);
+    let total = 0, antes = 0;
+    for (let h = 0; h < 24; h++) {
+      const x = Number(q[h]) || 0;
+      total += x;
+      if (orden(h) < pos) antes += x;
+    }
+    if (!(total > 0)) return null;
+    antes += (Number(q[hm.h]) || 0) * hm.m / 60;
+    return Math.min(1, antes / total);
+  }
+
   // ¿Cuenta esta línea de receta con estos modificadores?
   function vale(l, mods) {
     if (l.soloCon && !mods.has(bajo(l.soloCon))) return false;
@@ -213,14 +247,64 @@
     return Object.assign({ desde, dias, ventas }, calcular(ventas, enlaces, recetas, tamanos, pourDe));
   }
 
+  // ── Lo vendido entre dos instantes (Axel, 2026-11-14) ────────────────
+  //
+  // "Se cuenta después de las 6 o 7 pm […] sí hay ventas durante el
+  // conteo." Toast guarda por día, y el día del conteo se repartía
+  // entero a un solo lado: el LIVE nuevo lo dejaba fuera (y empezaba la
+  // semana con las botellas vendidas el domingo por la noche de más) y
+  // el esperado lo restaba entero (y lo vendido después de contar salía
+  // como "More than expected").
+  //
+  // Ahora cada día de las puntas va por la hora, con su propia curva:
+  //   · el día de `desde`, sólo lo vendido DESPUÉS (1 − fracción);
+  //   · el día de `hasta`, sólo lo vendido ANTES (fracción);
+  //   · los de en medio, enteros; sin `hasta`, hasta hoy.
+  // Así cada botella cuenta en un solo ciclo. Un día de punta sin horas
+  // va como antes: el de `desde` fuera, el de `hasta` entero. Y un
+  // conteo después del cierre da exactamente lo de antes (fracción 1).
+  const masDia = (d, k) => new Date(Date.parse(d + 'T12:00:00Z') + k * 864e5).toISOString().slice(0, 10);
+  async function ventasEntre(desde, hasta) {
+    const dDesde = diaDeNegocio(desde);
+    const r = await ventasDesde(masDia(dDesde, -1));
+    const horas = new Map((r.dias || []).map(d => [d.business_date, d && d.hours && d.hours.q]));
+    const fD = fraccionDia(horas.get(dDesde), desde);
+    const dHasta = hasta != null ? diaDeNegocio(hasta) : null;
+    const fH = dHasta ? fraccionDia(horas.get(dHasta), hasta) : null;
+    const peso = (d) => {
+      if (d < dDesde || (dHasta && d > dHasta)) return 0;
+      const ini = d === dDesde ? (fD == null ? 1 : fD) : 0;   // lo ya vendido al empezar
+      const fin = dHasta && d === dHasta ? (fH == null ? 1 : fH) : 1;
+      return Math.max(0, fin - ini);
+    };
+    const r3 = (n) => Math.round(n * 1000) / 1000;
+    const productos = (r.productos || []).map(P => {
+      const porDia = {}, catPorDia = {};
+      let total = 0;
+      for (const [d, b] of Object.entries(P.porDia || {})) {
+        const x = (Number(b) || 0) * peso(d);
+        if (!(x > 0)) continue;
+        porDia[d] = x; total += x;
+        const c = (P.catPorDia || {})[d];
+        if (c) catPorDia[d] = Object.fromEntries(Object.entries(c).map(([k, v]) => [k, (Number(v) || 0) * peso(d)]));
+      }
+      // `de` (de qué se vendió) no va por día: se escala con el total.
+      const viejo = Number(P.botellas) || 0;
+      const de = {};
+      for (const [k, b] of Object.entries(P.de || {})) de[k] = viejo > 0 ? b * total / viejo : 0;
+      return Object.assign({}, P, { porDia, catPorDia, de, botellas: r3(total) });
+    }).filter(P => P.botellas > 0).sort((a, b) => b.botellas - a.botellas);
+    return Object.assign({}, r, { desde: dDesde, productos });
+  }
+
   async function desdeElConteo() {
     const W = window.BarStockWeeklyCycle;
     if (W && W.estado && W.estado() === 'counting') return { estado: 'contando' };
     const conteo = await ultimoConteo();
     if (!conteo) return { estado: 'sinConteo' };
-    const r = await ventasDesde(diaDeNegocio(conteo));
+    const r = await ventasEntre(conteo, null);
     return Object.assign({ estado: 'listo', conteo: conteo.toISOString() }, r);
   }
 
-  window.BarStockToastUsage = { calcular, ventasDesde, desdeElConteo, ultimoConteo, diaDeNegocio, ML_POR_OZ, ML_SIN_TAMANO, CORTE_H };
+  window.BarStockToastUsage = { calcular, ventasDesde, ventasEntre, fraccionDia, desdeElConteo, ultimoConteo, diaDeNegocio, ML_POR_OZ, ML_SIN_TAMANO, CORTE_H };
 })();

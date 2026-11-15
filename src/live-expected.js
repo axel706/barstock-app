@@ -222,17 +222,22 @@
       const loc = await window.BarStockInventoryCloud.fetchLocationId();
       if (!loc) return { ok: false, error: 'No location open.' };
       const ciclos = await R.leerTodo('live_expected_cycles?location_id=eq.' + loc +
-        '&status=eq.provisional&select=id,start_day,end_day&order=cycle_end.asc');
+        '&status=eq.provisional&select=id,start_day,end_day,cycle_start,cycle_end&order=cycle_end.asc');
       let cerrados = 0;
       for (const c of ciclos) {
-        const v = await U.ventasDesde(c.start_day);
+        // Del conteo anterior a éste, con los días de las puntas partidos
+        // por la hora (ventasEntre): lo mismo que se guardó al cerrar.
+        const v = U.ventasEntre && c.cycle_start && c.cycle_end
+          ? await U.ventasEntre(c.cycle_start, c.cycle_end) : await U.ventasDesde(c.start_day);
         const dias = [];
         for (let d = masDia(c.start_day, 1); d <= c.end_day && dias.length < 60; d = masDia(d, 1)) dias.push(d);
         const cargado = new Map((v.dias || []).map(d => [d.business_date, d]));
         if (!dias.length || !dias.every(d => { const x = cargado.get(d); return x && x.complete && x.closed; })) continue;
         const filas = await R.leerTodo('live_expected?cycle_id=eq.' + c.id +
           '&select=id,cycle_id,location_id,item_name,start_count,counted&order=id.asc');
-        const dentro = new Set(dias);
+        // El primer día entra con su parte (lo de después del conteo
+        // anterior); ventasEntre ya la pesó.
+        const dentro = new Set([c.start_day].concat(dias));
         const porProd = new Map((v.productos || []).map(p => [p.producto, p]));
         const r3 = (n) => Math.round(n * 1000) / 1000;
         const nuevas = filas.map(f => {

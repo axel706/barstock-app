@@ -30,6 +30,7 @@ function prueba(n, c, d) {
 const grupo = t => console.log('\n' + t);
 
 const w = new JSDOM('<!doctype html><body></body>', { runScripts: 'outside-only' }).window;
+w.eval(leer('src/toast-usage.js'));
 w.eval(leer('src/run-out.js'));
 const R = w.BarStockRunOut;
 

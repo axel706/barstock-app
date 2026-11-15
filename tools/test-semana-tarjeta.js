@@ -70,7 +70,10 @@ grupo('día a día desde el conteo');
   prueba('una llegada sin hora cuenta hoy, y sigue cuadrando', sinHora[5].llego === 2 && sinHora[2].llego === 0 && sinHora[5].queda === 17.5,
     JSON.stringify(sinHora[5]));
   const conVenta = L.diaADia(Object.assign({}, f, { porDia: Object.assign({ [DESDE]: 5 }, f.porDia) }), DESDE, HOY, diaDe);
-  prueba('lo vendido el día del conteo no se resta (no está en el LIVE)', conVenta[0].queda === 18);
+  // Desde el 2026-11-14 el día del conteo lleva sólo lo vendido DESPUÉS
+  // de contar (toast-usage.ventasEntre), y el LIVE lo resta: la línea
+  // también, o su último punto dejaría de ser el número grande.
+  prueba('del día del conteo se resta lo de después de contar (como el LIVE)', conVenta[0].queda === 13, JSON.stringify(conVenta[0]));
 }
 
 function lista(o) {

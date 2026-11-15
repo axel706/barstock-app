@@ -176,11 +176,11 @@
   // El LIVE de un ciclo que se cierra (el esperado, live-expected.js):
   // con el maestro de ANTES del conteo, desde el conteo anterior y hasta
   // el cierre. Sin mirar si hay un conteo activo: se llama justo al
-  // cerrarlo. Los mismos días que el LIVE: desde el día SIGUIENTE al del
-  // conteo anterior (toast-usage, ventasDesde).
+  // cerrarlo. Lo vendido, de un instante a otro con los días de las
+  // puntas partidos por la hora (toast-usage.ventasEntre), como el LIVE.
   async function entre({ master, conteo, inicioCiclo, ahora: hasta }) {
     const U = window.BarStockToastUsage;
-    const uso = await U.ventasDesde(U.diaDeNegocio(conteo));
+    const uso = await U.ventasEntre(conteo, hasta == null ? Date.now() : hasta);
     const filas = await armarFilas({ master, uso, conteo, inicioCiclo, ahora: hasta });
     return { desde: uso.desde, dias: uso.dias, filas, sinConvertir: uso.sinConvertir };
   }
@@ -213,9 +213,10 @@
     const r2 = (n) => Math.round(n * 100) / 100;
     let q = Number(f.contado) || 0;
     return dias.map((d, i) => {
-      // Lo vendido el día del conteo ya no está en la estantería contada
-      // (toast-usage lee desde el día SIGUIENTE): no se resta.
-      const v = i === 0 ? 0 : (Number(f.porDia && f.porDia[d]) || 0);
+      // El día del conteo lleva sólo lo vendido DESPUÉS de contar
+      // (toast-usage.ventasEntre, 2026-11-14): lo de antes ya no estaba
+      // en la estantería contada. Antes se saltaba el día entero.
+      const v = Number(f.porDia && f.porDia[d]) || 0;
       const ll = llego[d] || 0;
       q += ll - v;
       return { fecha: d, queda: r2(q), vendido: r2(v), llego: r2(ll) };

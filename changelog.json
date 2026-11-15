@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261114-230738",
+    "items": [
+      "Live counts sales made after you count",
+      "Counting at 7 PM no longer skews the week"
+    ]
+  },
+  {
     "build": "20261114-225140",
     "items": [
       "Behind-the-scenes fixes"
@@ -181,14 +188,6 @@
     "items": [
       "Edit item: last 8 weeks of use, tap a week for its number",
       "Save and Delete sit at the bottom, within thumb reach"
-    ]
-  },
-  {
-    "build": "20261112-230227",
-    "items": [
-      "Editing an item is now a full screen, everything at a glance",
-      "Vendor shows as one row with its color; tap to change",
-      "Save and Delete side by side"
     ]
   }
 ]

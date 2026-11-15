@@ -223,6 +223,25 @@ grupo('3b · cerrar lo provisional cuando Toast tiene los días');
     esc.indexOf(fin) > esc.indexOf(up), JSON.stringify(fin && fin.cuerpo));
   prueba('con los días con los que se cerró', fin && fin.cuerpo.sales_days.length === 7 && fin.cuerpo.sales_days.every(d => d.closed), JSON.stringify(fin && fin.cuerpo.sales_days));
 
+  // Con el reparto por hora (2026-11-14): se lee del conteo anterior a
+  // éste con ventasEntre, y el primer día entra con su parte.
+  w = montar();
+  let entre = null;
+  w.BarStockRest.leerTodo = (orig => async (ruta) => /^live_expected_cycles/.test(ruta)
+    ? [{ id: 'ciclo-1', start_day: '2026-11-08', end_day: '2026-11-15', cycle_start: '2026-11-09T00:00:00Z', cycle_end: '2026-11-16T00:00:00Z' }]
+    : orig(ruta))(w.BarStockRest.leerTodo);
+  w.BarStockToastUsage.ventasEntre = async (a, b) => {
+    entre = [a, b];
+    const v = await w.BarStockToastUsage.ventasDesde('2026-11-08');
+    v.productos[0].porDia['2026-11-08'] = 0.7;   // lo de después del conteo anterior
+    return v;
+  };
+  r = await w.BarStockLiveExpected.cerrarPendientes();
+  const up2 = w.__pet.filter(p => p.metodo !== 'GET').find(p => /live_expected\?on_conflict=id/.test(p.url));
+  const t2 = up2 ? up2.cuerpo.find(f => f.item_name === "Tito's") : {};
+  prueba('con el reparto: lee del conteo anterior a éste', entre && entre[0] === '2026-11-09T00:00:00Z' && entre[1] === '2026-11-16T00:00:00Z', JSON.stringify(entre));
+  prueba('y el primer día entra con su parte (0.7 + 2 + 1.5)', t2 && t2.sold === 4.2 && t2.sold_by_day['2026-11-08'] === 0.7, JSON.stringify(t2));
+
   w = montar({ abierto: true });
   r = await w.BarStockLiveExpected.cerrarPendientes();
   prueba('con el día del cierre todavía abierto: no toca nada', r.ok === true && r.cerrados === 0 && !w.__pet.some(p => p.metodo !== 'GET'), JSON.stringify(r));
