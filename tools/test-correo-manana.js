@@ -253,6 +253,20 @@ grupo('a la lista de la locación (Settings › Emails)');
   enviados.length = 0;
   r = await llamar({ accion: 'send', params: { datos: BASE } });
   prueba('sin "lista", sigue yendo sólo a ti', JSON.stringify((enviados[0] || {}).to) === JSON.stringify(['axel@crown.test']));
+
+  // Axel, 2026-11-15: "Send to me" se mandó al correo con el que inicia
+  // sesión y no al reply-to, y él lo buscaba donde llega el automático.
+  // La prueba va ahora al reply-to de la locación, leído de la base.
+  TABLAS.location_settings = [{ location_id: 'loc-1', reply_to_email: 'barra@crown.test', morning_recipients: 'gm@crown.test' }];
+  enviados.length = 0;
+  r = await llamar({ accion: 'send', params: { datos: BASE, para: 'replyto', cuenta: 'wjm-hospitality', to: 'otro@fuera.test' } });
+  prueba('la prueba va al reply-to de la locación', r.body && r.body.ok && JSON.stringify((enviados[0] || {}).to) === JSON.stringify(['barra@crown.test']), JSON.stringify(r.body) + ' ' + JSON.stringify((enviados[0] || {}).to));
+  prueba('marcada como prueba', /^\[Test\] /.test((enviados[0] || {}).subject || ''));
+  prueba('y dice a dónde', r.body.to === 'barra@crown.test');
+  TABLAS.location_settings = [{ location_id: 'loc-1', reply_to_email: '' }];
+  enviados.length = 0;
+  r = await llamar({ accion: 'send', params: { datos: BASE, para: 'replyto', cuenta: 'wjm-hospitality' } });
+  prueba('sin reply-to: lo dice y no manda', r.code === 400 && /reply-to/i.test(r.body.error || '') && /Settings › Emails/.test(r.body.error || '') && enviados.length === 0, JSON.stringify(r.body));
 }
 
 grupo('la migración y Settings › Emails');
@@ -428,11 +442,11 @@ grupo('en la app: los números salen de los mismos módulos');
     host.innerHTML.slice(0, 300));
   prueba('con los datos de la app', !!(w.__llamadas[0].prm && w.__llamadas[0].prm.datos && w.__llamadas[0].prm.datos.ayer));
   const bt = host.querySelector('#mrSend');
-  prueba('el botón dice a quién va: a ti', !!bt && /Send to me/.test(bt.textContent));
+  prueba('el botón dice lo que hace: una prueba', !!bt && /Send a test/.test(bt.textContent), bt && bt.textContent);
   bt.click();
   await new Promise(r => setTimeout(r, 20));
   const env = w.__llamadas.find(x => x.a === 'send');
-  prueba('Send to me lo manda, con los mismos datos', !!env && !!env.prm.datos && !('to' in env.prm), JSON.stringify(env && env.prm).slice(0, 120));
+  prueba('lo manda al reply-to, con los mismos datos y sin direcciones', !!env && !!env.prm.datos && env.prm.para === 'replyto' && !!env.prm.cuenta && !('to' in env.prm), JSON.stringify(env && env.prm).slice(0, 160));
   prueba('y dice a dónde se mandó', /axel@crown\.test/.test(host.textContent + ' ' + (w.__toast || '')), host.textContent.slice(0, 200));
 
   // A la lista: el botón dice a cuántos, y manda "lista", no direcciones.

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261115-144048",
+    "items": [
+      "Morning email test goes to the reply-to address"
+    ]
+  },
+  {
     "build": "20261115-140148",
     "items": [
       "Morning email for every Toast location"
@@ -179,12 +185,6 @@
     "build": "20261114-221606",
     "items": [
       "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261114-213937",
-    "items": [
-      "Running out first: slow movers are out again"
     ]
   }
 ]

@@ -5,8 +5,9 @@
   // Axel, 2026-11-12: "constrúyelo y dame una opción de enviarlo
   // manualmente para fines de prueba, en ajustes tal vez". Vive en
   // Settings › Toast › Morning email: al entrar se ve el correo tal cual
-  // saldría, y "Send to me" lo manda al correo de quien tiene la sesión
-  // (el servidor no acepta otro destinatario; lib/morning-report.js).
+  // saldría, y "Send a test" lo manda al reply-to de la locación, donde
+  // llega el automático (el servidor lo lee de la base y no acepta otro
+  // destinatario; lib/morning-report.js).
   //
   // Aquí sólo se REÚNEN los números, con los mismos módulos que enseñan
   // el Home y la ficha, para que no se calculen en dos sitios:
@@ -71,7 +72,7 @@
   async function montar(host, cab, volver) {
     host.innerHTML = cab() +
       '<div class="m-mr">' +
-        '<button type="button" class="m-set-save" id="mrSend" disabled>Send to me</button>' +
+        '<button type="button" class="m-set-save" id="mrSend" disabled>Send a test</button>' +
         '<div id="mrListaCaja"></div>' +
         '<div class="m-mr-estado" id="mrEstado">Building this morning\'s report…</div>' +
         // Sin scripts: el correo no lleva ninguno. allow-same-origin para
@@ -114,7 +115,12 @@
     };
     if (boton) {
       boton.disabled = false;
-      boton.onclick = () => mandar(boton, 'Send to me', {}, ' Check your inbox.');
+      // Al reply-to de la locación (Settings › Emails), donde llega el
+      // automático: el servidor lo lee de la base. Iba al correo con el
+      // que se inicia sesión, y Axel lo esperaba en el reply-to
+      // (2026-11-15). "Send to me" ya no era verdad: dice "a test".
+      boton.onclick = () => mandar(boton, 'Send a test',
+        { para: 'replyto', cuenta: (window.BARSTOCK_CONFIG || {}).ACCOUNT_ID || 'wjm-hospitality' }, ' Check that inbox.');
     }
 
     // ── A la lista de la locación (Settings › Emails) ──────────────────
