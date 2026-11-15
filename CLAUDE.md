@@ -1037,7 +1037,7 @@ count.
 **Fase 1 hecha (2026-11-14): la verificación, sin pantalla.** Migración
 042 (`stock_checks`: `counted`, `live_said`, `checked_by`,
 `checked_at`; insertar y leer, sin editar ni borrar; trigger para
-renombrar), probada contra Postgres 16 y **sin correr en Supabase**.
+renombrar), probada contra Postgres 16 y **corrida por Axel el 2026-11-15**.
 `src/stock-checks.js` (`guardar`, `leer`), cargado antes de
 `live-stock.js`. `live-stock.calcular` recibe `verificaciones`,
 `fraccion` y `diaDe`: con una verificación después del conteo, LIVE =
