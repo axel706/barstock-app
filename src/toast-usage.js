@@ -292,7 +292,11 @@
       const viejo = Number(P.botellas) || 0;
       const de = {};
       for (const [k, b] of Object.entries(P.de || {})) de[k] = viejo > 0 ? b * total / viejo : 0;
-      return Object.assign({}, P, { porDia, catPorDia, de, botellas: r3(total) });
+      // porDiaBruto: lo vendido cada día SIN partir, para poder partir
+      // otro día por otra hora (la verificación de live-stock.js).
+      const porDiaBruto = {};
+      for (const [d, b] of Object.entries(P.porDia || {})) if (d >= dDesde && (!dHasta || d <= dHasta)) porDiaBruto[d] = Number(b) || 0;
+      return Object.assign({}, P, { porDia, porDiaBruto, catPorDia, de, botellas: r3(total) });
     }).filter(P => P.botellas > 0).sort((a, b) => b.botellas - a.botellas);
     return Object.assign({}, r, { desde: dDesde, productos });
   }

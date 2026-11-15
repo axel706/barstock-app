@@ -124,15 +124,60 @@
       f.vendido += v.botellas;
       // Lo vendido cada día, para la gráfica de la semana (diaADia).
       for (const [d, b] of Object.entries(v.porDia || {})) f.porDia[d] = (f.porDia[d] || 0) + (Number(b) || 0);
+      // Y sin partir el día del conteo, para poder partir otro día por
+      // otra hora (la verificación, abajo).
+      f.porDiaBruto = f.porDiaBruto || {};
+      for (const [d, b] of Object.entries(v.porDiaBruto || v.porDia || {})) f.porDiaBruto[d] = (f.porDiaBruto[d] || 0) + (Number(b) || 0);
+    }
+
+    // ── La verificación (docs/plan-lista-compras.md, 2026-11-14) ───────
+    //
+    // Alguien miró la estantería a media semana y dijo "hay 6": desde ese
+    // momento el LIVE de ese producto es 6 + lo que llegó DESPUÉS − lo
+    // vendido DESPUÉS. Gana la última; una de antes del conteo o de
+    // después de `ahora` no cuenta. El día de la verificación se parte
+    // por la hora, como el del conteo (o.fraccion(día, instante): la
+    // parte del día vendida antes; sin saberlo, el día entero antes).
+    // Lo contado, lo que llegó y lo vendido desde el conteo no cambian:
+    // on_hand es lo que se contó.
+    const ult = new Map();
+    for (const c of o.verificaciones || []) {
+      const t = c && c.checked_at ? new Date(c.checked_at).getTime() : NaN;
+      if (!c || !c.item_name || isNaN(t) || !(t > o.conteo) || t > ahora) continue;
+      const prev = ult.get(c.item_name);
+      if (!prev || t >= prev.t) ult.set(c.item_name, { t, c });
+    }
+    for (const { t, c } of ult.values()) {
+      const f = fila(c.item_name);
+      const dT = o.diaDe ? o.diaDe(t) : new Date(t).toISOString().slice(0, 10);
+      const antes = o.fraccion ? o.fraccion(dT, t) : null;
+      const porDiaVerif = {};
+      let vendidoVerif = 0;
+      for (const [d, b] of Object.entries(f.porDiaBruto || {})) {
+        const x = d > dT ? Number(b) || 0 : d === dT ? (Number(b) || 0) * (1 - (antes == null ? 1 : antes)) : 0;
+        if (x > 0) { porDiaVerif[d] = x; vendidoVerif += x; }
+      }
+      let llegoVerif = 0;
+      for (const l of f.llegadas) {
+        const cuando = l.cuando == null ? ahora : new Date(l.cuando).getTime();
+        if (cuando > t) llegoVerif += Number(l.n) || 0;
+      }
+      f.verificado = { n: Number(c.counted) || 0, cuando: t, dia: dT,
+        decia: c.live_said == null ? null : Number(c.live_said), por: c.checked_by || null };
+      f.porDiaVerif = porDiaVerif;
+      f.vendidoVerif = vendidoVerif;
+      f.llegoVerif = llegoVerif;
     }
 
     const r2 = (n) => Math.round(n * 100) / 100;
     return [...filas.values()].map(f => Object.assign(f, {
       llego: r2(f.llego), vendido: r2(f.vendido),
-      live: r2(f.contado + f.llego - f.vendido),
+      live: f.verificado ? r2(f.verificado.n + f.llegoVerif - f.vendidoVerif) : r2(f.contado + f.llego - f.vendido),
+      vendidoVerif: f.verificado ? r2(f.vendidoVerif) : undefined,
       // La marca "Live" sólo con algo sumado o restado detrás: si no, es
-      // lo contado y decir "Live" sería una afordancia que miente.
-      movimiento: f.llego !== 0 || f.vendido !== 0
+      // lo contado y decir "Live" sería una afordancia que miente. Una
+      // verificación también es algo detrás.
+      movimiento: f.llego !== 0 || f.vendido !== 0 || !!f.verificado
     })).sort((a, b) => a.producto.localeCompare(b.producto));
   }
 
@@ -150,11 +195,23 @@
     const recibos = RC().recibosDe(datos.facturas, datos.enlaces, dueno);
     const repartido = RC().repartir({ recortadas: datos.recortadas, lineas: datos.lineas, recibos,
       inicioCiclo: inicioCiclo || 0 });
+    // Las verificaciones desde el conteo (stock-checks.js). Si no se
+    // pueden leer (la migración 042 sin correr, un fallo), el LIVE sigue
+    // sin ellas y se dice: no puede quedarse en blanco por esto.
+    let verificaciones = [];
+    const SC = window.BarStockStockChecks;
+    if (SC && SC.leer) {
+      try { verificaciones = await SC.leer(conteo); }
+      catch (e) { console.warn('[live] sin verificaciones:', e && e.message || e); verificaciones = []; }
+    }
+    const U = window.BarStockToastUsage;
+    const horas = new Map((uso.dias || []).map(d => [d.business_date, d && d.hours && d.hours.q]));
     return calcular({
       master: master || [],
       ordenes: datos.recortadas, repartido, recibos,
       conteo: new Date(conteo).getTime(), diaConteo: uso.desde,
-      vendido: uso.productos, ahora: hasta
+      vendido: uso.productos, ahora: hasta, verificaciones,
+      diaDe: U && U.diaDeNegocio, fraccion: (d, t) => (U && U.fraccionDia ? U.fraccionDia(horas.get(d), t) : null)
     });
   }
 
@@ -212,7 +269,30 @@
     }
     const r2 = (n) => Math.round(n * 100) / 100;
     let q = Number(f.contado) || 0;
+    // Con una verificación (2026-11-14), su día acaba en lo verificado
+    // más lo que llegó y menos lo vendido DESPUÉS de verificar, y de ahí
+    // en adelante sigue igual: el último punto es el LIVE.
+    const V = f.verificado;
+    let verifDia = null, verifLlego = {};
+    if (V) {
+      const llegoTras = {};
+      for (const l of f.llegadas || []) {
+        if (!l || !(Number(l.n) > 0)) continue;
+        const cuando = l.cuando == null ? null : new Date(l.cuando).getTime();
+        if (cuando != null && cuando <= V.cuando) continue;
+        let d = cuando != null && diaDe ? diaDe(cuando) : hoy;
+        if (!d || d > hoy) d = hoy;
+        llegoTras[d] = (llegoTras[d] || 0) + Number(l.n);
+      }
+      verifDia = V.dia; verifLlego = llegoTras;
+    }
     return dias.map((d, i) => {
+      if (V && d === verifDia) {
+        const v = Number(f.porDiaVerif && f.porDiaVerif[d]) || 0;
+        const ll = verifLlego[d] || 0;
+        q = V.n + ll - v;
+        return { fecha: d, queda: r2(q), vendido: r2(Number(f.porDia && f.porDia[d]) || 0), llego: r2(llego[d] || 0), verificado: V.n };
+      }
       // El día del conteo lleva sólo lo vendido DESPUÉS de contar
       // (toast-usage.ventasEntre, 2026-11-14): lo de antes ya no estaba
       // en la estantería contada. Antes se saltaba el día entero.

@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 147 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 148 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -382,7 +382,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 147 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 148 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -1033,6 +1033,22 @@ el 2026-11-14: pestaña "To buy" en Orders con resumen en el Home; los
 bartenders avisan y sólo quien pide compra (permiso nuevo); "I have
 enough" pide siempre el número; las verificaciones salen en Finish
 count.
+
+**Fase 1 hecha (2026-11-14): la verificación, sin pantalla.** Migración
+042 (`stock_checks`: `counted`, `live_said`, `checked_by`,
+`checked_at`; insertar y leer, sin editar ni borrar; trigger para
+renombrar), probada contra Postgres 16 y **sin correr en Supabase**.
+`src/stock-checks.js` (`guardar`, `leer`), cargado antes de
+`live-stock.js`. `live-stock.calcular` recibe `verificaciones`,
+`fraccion` y `diaDe`: con una verificación después del conteo, LIVE =
+lo verificado + lo que llegó DESPUÉS − lo vendido DESPUÉS (su día
+partido por la hora; gana la última; `contado`, `llego` y `vendido`
+siguen siendo desde el conteo). `armarFilas` las lee y, si no puede,
+sigue sin ellas. `diaADia` salta a lo verificado ese día.
+`run-out.margenDe` mide la duda desde la verificación (`vendidoVerif`).
+`toast-usage.ventasEntre` devuelve también `porDiaBruto`. Nada las crea
+todavía: eso es la fase 2 (la pantalla, sobre lámina). Prueba:
+`test-verificar`.
 
 ---
 

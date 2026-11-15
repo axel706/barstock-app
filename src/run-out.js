@@ -87,7 +87,10 @@
   // tampoco: su número es lo contado.
   const MARGEN = 0.5;
   const MARGEN_PARTE = 0.25;
-  const margenDe = (f) => Math.min(MARGEN, MARGEN_PARTE * Math.max(0, Number(f && f.vendido) || 0));
+  // Con una verificación (2026-11-14), la duda empieza en ella: lo
+  // vendido DESPUÉS de que alguien miró la estantería.
+  const margenDe = (f) => Math.min(MARGEN, MARGEN_PARTE * Math.max(0,
+    Number(f && (f.verificado ? f.vendidoVerif : f.vendido)) || 0));
 
   const diaSemana = (d) => new Date(d + 'T12:00:00Z').getUTCDay();
   const sumarDias = (d, k) => new Date(new Date(d + 'T12:00:00Z').getTime() + k * 864e5).toISOString().slice(0, 10);

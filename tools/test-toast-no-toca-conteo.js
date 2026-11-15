@@ -42,6 +42,8 @@ const ARCHIVOS = [
   'src/live-stock.js', 'src/order-receipts.js', 'src/run-out.js', 'src/live-cache.js',
   // El esperado: guarda el LIVE junto a lo contado, en sus propias tablas.
   'src/live-expected.js',
+  // La verificación: escribe sólo en stock_checks, nunca en on_hand.
+  'src/stock-checks.js',
   ...fs.readdirSync(path.join(RAIZ, 'lib')).filter(f => /^toast.*\.js$/.test(f)).map(f => 'lib/' + f),
   'tools/toast.js'
 ];
