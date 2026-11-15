@@ -286,7 +286,7 @@ grupo('3c · antes de cerrar: lo que se aleja de lo que esperaba el LIVE');
 grupo('4 · en el cierre del conteo');
 {
   const cf = leer('src/count-finish.js');
-  const iAntes = cf.indexOf('BarStockLiveExpected.antes');
+  const iAntes = cf.indexOf('.antes(master)');
   const iBucle = cf.indexOf('r.onHand = S().bottlesFor');
   prueba('lo de antes se toma ANTES del bucle que escribe el on hand', iAntes > 0 && iBucle > 0 && iAntes < iBucle, iAntes + ' / ' + iBucle);
   const iGuardar = cf.indexOf('BarStockLiveExpected.guardar');
@@ -294,7 +294,8 @@ grupo('4 · en el cierre del conteo');
   prueba('se guarda después de saber si el conteo abre ciclo', iGuardar > iYa && iYa > 0);
   prueba('sólo si abre ciclo (un reconteo no)', /!yaHayCiclo[^\n]*\n?[^\n]*BarStockLiveExpected\.guardar|if \(!yaHayCiclo && [^)]*\)[\s\S]{0,120}BarStockLiveExpected\.guardar/.test(cf));
   prueba('sin esperarlo: el conteo no depende de esto', !/await\s+window\.BarStockLiveExpected\.guardar/.test(cf) && /BarStockLiveExpected\.guardar\([\s\S]{0,300}\.catch\(/.test(cf));
-  prueba('tomar lo de antes no puede tumbar el conteo', /try\s*\{[^}]*BarStockLiveExpected\.antes/.test(cf));
+  prueba('tomar lo de antes no puede tumbar el conteo (dentro de un try, con tope de tiempo)',
+    /try\s*\{[\s\S]{0,200}LE\.antes\(master\)/.test(cf) && /Promise\.race\(\[\s*LE\.antes\(master\)/.test(cf));
   const html = leer('index.html');
   const pos = f => html.indexOf('src/' + f + '?v=');
   prueba('se carga después del LIVE y antes del cierre del conteo',

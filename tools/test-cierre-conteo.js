@@ -474,6 +474,22 @@ grupo('el esperado no puede tumbar el cierre');
   prueba('y la pantalla llega al final', !!w.document.getElementById('cfGoOrder'), txt(b).slice(0, 120));
 }
 {
+  // Si tomar lo de antes se queda colgado (la red no contesta), el
+  // cierre no puede quedarse esperando: hay un tope (ESPERA) y se sigue
+  // sin el esperado. En la app son 5 s; aquí, 50 ms.
+  const { w, b } = await abrir({ contados: 3, desdeCero: false });
+  let guardado = false;
+  w.BarStockInventoryCloud = { replaceInventoryMaster: async () => { guardado = true; } };
+  global.state = w.state;
+  w.BarStockMobile = { montado: () => false, ir() {} };
+  w.bsOpenSection = () => {};
+  w.BarStockLiveExpected = { ESPERA: 50, antes: () => new Promise(() => {}), guardar: async () => ({ ok: true }) };
+  b.querySelector('#cfGo').click();
+  await esperar(300);
+  prueba('con lo de antes colgado, el conteo se guarda igual', guardado);
+  prueba('y la pantalla llega al final', /Count closed/.test(txt(w.document.getElementById('cfBody'))));
+}
+{
   // Lo de antes se toma con los números viejos: el fixture tiene 2 en
   // los contados y bottlesFor devuelve 1 al cerrar.
   const { w, b } = await abrir({ contados: 3, desdeCero: false });

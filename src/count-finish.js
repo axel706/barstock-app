@@ -762,8 +762,18 @@
       // anterior. Con eso, al cerrar, se guarda el LIVE de la semana que
       // se cierra junto a lo que se acaba de contar. Si esto falla, el
       // conteo sigue: no puede depender de ello.
+      // Con TOPE: un fallo ya se atrapaba, pero una red que no contesta
+      // dejaba el cierre esperando para siempre (visto en la prueba antes
+      // de entregarlo). A los 5 s se sigue sin el esperado.
       let esperadoAntes = null;
-      try { if (window.BarStockLiveExpected) esperadoAntes = await window.BarStockLiveExpected.antes(master); }
+      try {
+        const LE = window.BarStockLiveExpected;
+        if (LE) esperadoAntes = await Promise.race([
+          LE.antes(master),
+          new Promise(res => setTimeout(() => res(null), LE.ESPERA || 5000))
+        ]);
+        if (!esperadoAntes) console.warn('conteo: lo de antes para el esperado no llegó a tiempo; se cierra sin él');
+      }
       catch (e) { console.warn('conteo: no se pudo tomar lo de antes para el esperado', e); }
 
       $('cfBody').innerHTML = `<div class="cf-status">Applying ${s.counted} counts…</div>`;
