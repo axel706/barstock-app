@@ -110,7 +110,7 @@ grupo('1 · el botón, dentro de la tarjeta');
   b.click(); await esperar(10);
   prueba('tocarlo abre el teclado, no la ficha', !!w.document.querySelector('#mSheet .m-kp') && !w.document.querySelector('#mSheet .m-ficha'));
   prueba('pregunta cuántas quedan, con lo que dice el LIVE', /How many are left\? Live says ≈4\.2/.test(txt(w.document.querySelector('#mSheet .m-kp-s'))), txt(w.document.querySelector('#mSheet .m-kp-s')));
-  prueba('sin <input> (sin zoom de iOS), con ".5"', !w.document.querySelector('#mSheet input') && !!w.document.querySelector('#mSheet [data-k=".5"]'));
+  prueba('sin <input> (sin zoom de iOS), con el punto', !w.document.querySelector('#mSheet input') && !!w.document.querySelector('#mSheet [data-k="."]') && !w.document.querySelector('#mSheet [data-k=".5"]'));
 }
 
 grupo('2 · guarda la verificación y la línea');

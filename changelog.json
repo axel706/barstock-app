@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261115-131221",
+    "items": [
+      "Bottle keypad: a dot for any decimal (.2, .5, .7)"
+    ]
+  },
+  {
     "build": "20261115-130117",
     "items": [
       "Tell the team it's low: a softer orange"
@@ -181,12 +187,6 @@
     "items": [
       "Running out follows today's pace",
       "A busy day can now say Out today"
-    ]
-  },
-  {
-    "build": "20261114-204124",
-    "items": [
-      "Toast sales now load hour by hour"
     ]
   }
 ]

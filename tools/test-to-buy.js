@@ -16,7 +16,7 @@
  *   5. Una lectura que llega tarde no pinta la lista encima de Open.
  *   6. La lista: cambiar la cantidad y cuánto pedir de un producto.
  *   7. El teclado: el número de partida se sustituye al primer toque; una
- *      cantidad no admite 0 ni ".5".
+ *      cantidad no admite 0 ni decimales (sin la tecla del punto).
  *
  *   node tools/test-to-buy.js
  */
@@ -126,7 +126,7 @@ grupo('2 · las líneas: cuánto, quién, por qué, y ajustar');
   prueba('− no baja de 1: quitar es la ✕', w.__pet.length === n, w.__pet.length + ' peticiones');
   linea(host, "Dad's Hat Rye").querySelector('[data-tb-num]').click(); await esperar(10);
   const kp = w.document.getElementById('mSheet');
-  prueba('tocar el número abre el teclado, sin ".5"', !!kp && !kp.querySelector('[data-k=".5"]'));
+  prueba('tocar el número abre el teclado, sin el punto', !!kp && !kp.querySelector('[data-k="."]') && !kp.querySelector('[data-k=".5"]'));
   kp.querySelector('[data-k="6"]').click();
   prueba('el número de partida se sustituye al primer toque', txt(kp.querySelector('.m-kp-n')) === '6', txt(kp.querySelector('.m-kp-n')));
   kp.querySelector('#mKpSave').click(); await esperar(20);

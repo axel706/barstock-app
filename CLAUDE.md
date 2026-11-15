@@ -1080,7 +1080,7 @@ producto (LIVE, "Out", "Order N" de `live-cache.pedir`, el mismo del
 correo) y dos botones: "Add N to list" (permiso `ordenes`) e "I have
 enough" (permiso `contar`), que abre la hoja del número (teclado de
 botones, sin campo de texto: nada de zoom de iOS; ".5" para la botella
-abierta). Lo decidido se queda en la tarjeta con quién y cuándo: "On the
+abierta; desde el 2026-11-15 un punto con UN decimal: .2, .5, .7). Lo decidido se queda en la tarjeta con quién y cuándo: "On the
 list · 2 by Ana · Undo" y "Checked: 6 on the shelf · Wed 3:12 PM · Mia ·
 Change" (CHANGE, no Undo: una verificación no se deshace, se corrige con
 otra). Lo revisado sigue en la pantalla aunque deje de acabarse. La

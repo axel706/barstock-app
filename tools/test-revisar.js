@@ -148,8 +148,20 @@ grupo('3 · la pantalla: "See them" → revisar');
     const tecla = (k) => hoja.querySelector('[data-k="' + k + '"]').click();
     const save = () => hoja.querySelector('#mKpSave');
     prueba('sin número, no se puede guardar', save().disabled === true);
-    tecla('6'); tecla('.5');
-    prueba('".5" para la botella abierta', /6\.5/.test(txt(hoja.querySelector('.m-kp-n'))), txt(hoja.querySelector('.m-kp-n')));
+    // El punto, con un decimal (Axel, 2026-11-15: "no necesito el .5,
+    // sólo el punto, para poner .5 .7 .2 a necesidad").
+    tecla('6'); tecla('.'); tecla('7');
+    prueba('el punto para la botella abierta: 6.7', /6\.7/.test(txt(hoja.querySelector('.m-kp-n'))), txt(hoja.querySelector('.m-kp-n')));
+    tecla('3');
+    prueba('un decimal nada más', txt(hoja.querySelector('.m-kp-n')) === '6.7', txt(hoja.querySelector('.m-kp-n')));
+    tecla('del');
+    prueba('borrar quita el decimal', txt(hoja.querySelector('.m-kp-n')) === '6.', txt(hoja.querySelector('.m-kp-n')));
+    tecla('del'); tecla('del');
+    tecla('.'); tecla('2');
+    prueba('".2" sin nada delante es 0.2', txt(hoja.querySelector('.m-kp-n')) === '0.2', txt(hoja.querySelector('.m-kp-n')));
+    tecla('.');
+    prueba('un solo punto', txt(hoja.querySelector('.m-kp-n')) === '0.2', txt(hoja.querySelector('.m-kp-n')));
+    tecla('del'); tecla('del'); tecla('del'); tecla('6'); tecla('.'); tecla('5');
     tecla('del');
     prueba('borrar quita lo último', /^6\b/.test(txt(hoja.querySelector('.m-kp-n'))), txt(hoja.querySelector('.m-kp-n')));
     prueba('el botón dice exactamente lo que guarda', /Save · 6 on the shelf/.test(txt(save())), txt(save()));

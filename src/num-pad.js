@@ -4,8 +4,10 @@
   // ── El teclado de botellas ───────────────────────────────────────────
   //
   // Una hoja con un teclado de botones, no un campo de texto: el de iOS
-  // hace zoom por debajo de 16 px y tapa media pantalla. ".5" es la
-  // botella abierta.
+  // hace zoom por debajo de 16 px y tapa media pantalla. El punto, para la
+  // botella abierta con UN decimal: 6.5, 0.7, .2 (Axel, 2026-11-15: "no
+  // necesito el .5, sólo el punto, para poner .5 .7 .2 a necesidad"; antes
+  // era una tecla ".5" fija).
   //
   // Nació dentro de la revisión de "Running out" ("I have enough") y lo
   // necesitaban también la cantidad de la lista de compras y "Running
@@ -15,7 +17,7 @@
   //   abrir({
   //     titulo, sub,                 el producto y la pregunta
   //     inicial,                     lo que sale escrito al abrir ('' = nada)
-  //     medias,                      false: sin ".5" (una cantidad a pedir)
+  //     medias,                      false: sin el punto (una cantidad a pedir)
   //     cero,                        false: 0 no se guarda
   //     unidad,                      'bottles' por defecto
   //     boton: (v) => 'Save · 6 on the shelf',   el texto del botón con v
@@ -35,7 +37,7 @@
     // Lo de abrir con un número puesto: el primer toque lo sustituye en
     // vez de añadirle cifras (abrir con 4 y tocar 6 es 6, no 46).
     let virgen = !!v;
-    const teclas = ['1', '2', '3', '4', '5', '6', '7', '8', '9', medias ? '.5' : '', '0', 'del'];
+    const teclas = ['1', '2', '3', '4', '5', '6', '7', '8', '9', medias ? '.' : '', '0', 'del'];
     const h = document.createElement('div');
     h.className = 'm-sheet';
     h.id = 'mSheet';
@@ -67,15 +69,20 @@
     const pinta = () => {
       num.textContent = v || '–';
       save.disabled = !valido();
-      save.textContent = valido() ? etiqueta(v) : 'Save';
+      // El botón dice el número limpio: "6." a medio escribir es 6.
+      save.textContent = valido() ? etiqueta(String(Number(v))) : 'Save';
     };
     h.querySelectorAll('[data-k]').forEach(b => { b.onclick = () => {
       const k = b.dataset.k;
       if (virgen && k !== 'del') v = '';
       virgen = false;
-      if (k === 'del') v = v.endsWith('.5') ? v.slice(0, -2) : v.slice(0, -1);
-      else if (k === '.5') { if (v.indexOf('.') < 0) v = (v || '0') + '.5'; }
-      else if (v.indexOf('.') < 0 && v.length < 3) v = v === '0' ? k : v + k;
+      const punto = v.indexOf('.');
+      if (k === 'del') v = v.slice(0, -1);
+      // Un solo punto; sin nada delante, "0." (".2" es 0.2).
+      else if (k === '.') { if (punto < 0) v = (v || '0') + '.'; }
+      // Tras el punto, un decimal y nada más; antes, tres cifras.
+      else if (punto >= 0) { if (v.length - punto - 1 < 1) v = v + k; }
+      else if (v.length < 3) v = v === '0' ? k : v + k;
       pinta();
     }; });
     save.onclick = async () => {
