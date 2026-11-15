@@ -253,10 +253,25 @@ grupo('la fecha prudente: media botella de margen');
   prueba('sin pedirlo, sin margen (como antes)', p && p.dia === '2026-11-22', JSON.stringify(p));
 
   const ro = leer('src/run-out.js'), mr = leer('src/morning-report.js'), ru = leer('src/running-out.js');
-  prueba('ahora() calcula la fecha con el margen', /proyectar\(\{[^}]*margen: MARGEN/.test(ro));
-  prueba('y lo deja en la fila para el correo', /margen: MARGEN[^)]*\)\s*:\s*null;[\s\S]{0,200}margen/.test(ro) || /Object\.assign\(\{\}, f, \{[^}]*margen/.test(ro));
+  prueba('ahora() calcula la fecha con el margen de cada fila', /proyectar\(\{[^}]*margen\b/.test(ro) && /margenDe\(f\)/.test(ro));
+  prueba('y lo deja en la fila para el correo', /Object\.assign\(\{\}, f, \{[^}]*margen/.test(ro));
   prueba('el correo pide con el mismo margen', /cuantoPedir\(\{[^}]*margen: f\.margen/.test(mr));
-  prueba('lo que Toast no vende (Pour·IQ) también lleva el margen', /MARGEN/.test(ru));
+  // Axel, 2026-11-14, con la lista ya en producción: "avisarme que Don
+  // Julio se acaba en 19 días, Luccio en 8 […] exactamente de qué me
+  // sirve? Eso no debería ni aparecer junto con Running out first". La
+  // media botella fija los metía: 0.5 − 0.5 = 0. Dos correcciones:
+  //   · lo que Toast no descuenta (Pour·IQ) va SIN margen: su número es
+  //     lo contado, no un estimado;
+  //   · lo que Toast sí, con un margen del tamaño de la duda: una parte
+  //     de lo que se restó desde el conteo, nunca más de MARGEN.
+  prueba('lo que Toast no vende (Pour·IQ) va sin margen', !/MARGEN/.test(ru));
+  prueba('el margen de una fila es una parte de lo vendido, hasta MARGEN',
+    R.margenDe({ vendido: 6 }) === 0.5 && Math.abs(R.margenDe({ vendido: 0.4 }) - 0.4 * R.MARGEN_PARTE) < 1e-9 && R.margenDe({ vendido: 0 }) === 0,
+    [R.margenDe({ vendido: 6 }), R.margenDe({ vendido: 0.4 }), R.margenDe({ vendido: 0 })].join(','));
+  // Un producto lento casi sin vender: 0.5 en la estantería, 0.02 al día.
+  const lento = [0.02, 0, 0.02, 0.02, 0.02, 0.02, 0.02];
+  p = R.proyectar({ stock: 0.5, med: lento, viene: [], hoy: '2026-11-14', margen: R.margenDe({ vendido: 0.1 }) });
+  prueba('un producto lento no se da por acabado por el margen', p === null || p.enDias >= 7, JSON.stringify(p));
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');

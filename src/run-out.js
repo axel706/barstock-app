@@ -76,7 +76,18 @@
   // margen para que no se contradigan. Cuando haya semanas guardadas,
   // este número fijo lo sustituye el de cada producto: lo que ese
   // producto suele fallar, que se encoge solo si sus recetas se arreglan.
+  //
+  // Del tamaño de la duda, no fijo (el mismo día): media botella para
+  // todos metía en "Running out first" lo que casi no se mueve (Don
+  // Julio a ≈0.5: 0.5 − 0.5 = 0, mientras su fila decía "19 days").
+  // Axel: "exactamente de qué me sirve? Eso no debería ni aparecer". La
+  // duda del LIVE es lo que Toast le restó desde el conteo: el margen es
+  // MARGEN_PARTE de eso, nunca más de MARGEN. Lo que no se ha movido no
+  // lleva margen; lo que Toast no descuenta (running-out.js, Pour·IQ)
+  // tampoco: su número es lo contado.
   const MARGEN = 0.5;
+  const MARGEN_PARTE = 0.25;
+  const margenDe = (f) => Math.min(MARGEN, MARGEN_PARTE * Math.max(0, Number(f && f.vendido) || 0));
   // El día de negocio empieza a las 4 AM (toast-usage.js, CORTE_H): las
   // horas de después de medianoche van al final del día, no al principio.
   const CORTE = 4;
@@ -232,11 +243,12 @@
     const filas = vivo.filas.map(f => {
       const med = M.porProducto.get(f.producto) || null;
       const hoyVendido = hoyDe.get(f.producto) || 0;
-      const fin = M.suficiente && med ? proyectar({ stock: f.live, med, viene: f.viene, hoy, hoyVendido, hoyFrac, margen: MARGEN }) : null;
-      return Object.assign({}, f, { med, hoyVendido, hoyFrac, margen: MARGEN, agota: fin ? fin.dia : null, enDias: fin ? fin.enDias : null });
+      const margen = margenDe(f);
+      const fin = M.suficiente && med ? proyectar({ stock: f.live, med, viene: f.viene, hoy, hoyVendido, hoyFrac, margen }) : null;
+      return Object.assign({}, f, { med, hoyVendido, hoyFrac, margen, agota: fin ? fin.dia : null, enDias: fin ? fin.enDias : null });
     });
     return { estado: 'listo', hoy, conteo: vivo.conteo, desde: vivo.desde, muestras: M.muestras, suficiente: M.suficiente, filas };
   }
 
-  window.BarStockRunOut = { medianas, proyectar, cuantoPedir, mediana, fraccionDelDia, ahora, DIAS_HISTORIA, HORIZONTE, MIN_MUESTRAS, FRAC_MIN, MARGEN };
+  window.BarStockRunOut = { medianas, proyectar, cuantoPedir, mediana, fraccionDelDia, ahora, DIAS_HISTORIA, HORIZONTE, MIN_MUESTRAS, FRAC_MIN, MARGEN, MARGEN_PARTE, margenDe };
 })();

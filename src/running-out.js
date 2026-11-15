@@ -56,11 +56,10 @@
       const avg = Number(p.avgUsed) || 0;
       if (avg <= 0 || (p.normalWeeks || 0) < SEMANAS_MIN) continue;
       const queda = LC ? LC.cuanto(r) : (Number(r.onHand) || 0);
-      // Con el mismo margen que lo que vende Toast (run-out.js, MARGEN):
-      // la fecha prudente. `fuera` sigue mirando el estante de verdad.
-      const R = window.BarStockRunOut;
-      const margen = R && R.MARGEN ? R.MARGEN : 0;
-      const dias = Math.max(0, Math.round((queda - margen) / avg * 7));
+      // Sin margen: lo que Toast no descuenta enseña lo contado, no un
+      // estimado. Con la media botella de run-out.js, lo que casi no se
+      // mueve salía aquí ("Don Julio, 19 days") y su fila decía otra cosa.
+      const dias = Math.max(0, Math.round(queda / avg * 7));
       if (dias > 7) continue;
       // `fuera` mira el estante, no el redondeo: media botella de algo
       // que se mueve mucho también da "0 days", y decir que está fuera

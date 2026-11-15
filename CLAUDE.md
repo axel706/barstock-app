@@ -967,11 +967,17 @@ El arreglo acordado, en tres fases:
 Axel, con el Dad's Hat a ≈1.0 un sábado por la noche y "Out Wed": "no
 sé si hay más de una, pero puede haber menos de una". El LIVE es un
 estimado y la fecha se calculaba como si fuera exacto. `run-out.js`
-`MARGEN = 0.5`: `proyectar` y `cuantoPedir` reciben `margen` (0 si no
-se pasa) y restan esas botellas a lo que queda; `ahora()` pasa `MARGEN`
-y lo deja en la fila, el correo se lo pasa a `cuantoPedir` (la fecha y
-el "Order N" con el mismo margen, o se contradirían), y la rama de
-Pour·IQ de `running-out.js` también. El número grande NO cambia, ni
+`proyectar` y `cuantoPedir` reciben `margen` (0 si no se pasa) y restan
+esas botellas a lo que queda; `ahora()` pasa el de cada fila y lo deja
+en ella, y el correo se lo pasa a `cuantoPedir` (la fecha y el "Order
+N" con el mismo margen, o se contradirían). **El margen es del tamaño de
+la duda** (`margenDe`): `MARGEN_PARTE` (0.25) de lo que Toast restó
+desde el conteo, nunca más de `MARGEN` (0.5). La primera versión, media
+botella fija para todo y también en la rama de Pour·IQ de
+`running-out.js`, metía en "Running out first" lo que casi no se mueve
+(Don Julio ≈0.5 con su fila diciendo "19 days"; Axel: "exactamente de
+qué me sirve?"). Lo que Toast no descuenta va SIN margen: su número es
+lo contado. El número grande NO cambia, ni
 `fuera` ("Out now" mira el estante). **Es provisional:** cuando el
 esperado tenga ~4 semanas de un producto, su margen pasa a ser lo que
 ese producto suele fallar por el lado de "había menos" (algo como el

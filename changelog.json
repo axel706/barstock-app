@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261114-213937",
+    "items": [
+      "Running out first: slow movers are out again"
+    ]
+  },
+  {
     "build": "20261114-212913",
     "items": [
       "Closing a count now saves what Live expected"
@@ -183,13 +189,6 @@
       "Edit an item's name and vendor code from the phone",
       "Renaming carries Toast, recipes, barcodes and history along",
       "Delete an item, with a backup in Time Machine first"
-    ]
-  },
-  {
-    "build": "20261112-215912",
-    "items": [
-      "Settings › Toast › Pours: each restaurant sets its own pours",
-      "Changing a pour recounts every liquor sold that way"
     ]
   }
 ]
