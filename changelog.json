@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261115-122849",
+    "items": [
+      "Finish count shows the mid-week checks",
+      "Checked this week, after closing"
+    ]
+  },
+  {
     "build": "20261115-122311",
     "items": [
       "Behind-the-scenes fixes"
@@ -182,12 +189,6 @@
     "items": [
       "Toast card: Monday to Sunday, with past weeks",
       "Tap the week total to see the whole week"
-    ]
-  },
-  {
-    "build": "20261113-224359",
-    "items": [
-      "Home tabs and Bottles / $ in glass"
     ]
   }
 ]

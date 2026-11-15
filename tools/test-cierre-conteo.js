@@ -450,6 +450,55 @@ grupo('lo que se aleja del LIVE, antes y después de cerrar');
   // Sin Toast (Jockey, Harvest): la tarjeta vieja sigue, nada nuevo.
   ({ w, b } = await preparar({ sinToast: true }));
   prueba('sin Toast: ni tarjeta nueva', !b.querySelector('[data-ir="esperado"]'));
+
+  // ── Las verificaciones de media semana (Axel, 2026-11-15, A y B) ──
+  // Item 1 se verificó el jueves 12 (está lejos); Item 2 el jueves y
+  // quedó cerca (no sale en la lista de arriba, sí en "Checked").
+  const V1 = { n: 6, cuando: Date.parse('2026-11-12T20:12:00Z'), decia: 8.1, por: 'Mia' };
+  const V2 = { n: 2, cuando: Date.parse('2026-11-13T22:00:00Z'), decia: 4.2, por: 'Leo' };
+  const conVerif = async () => {
+    const r = await preparar();
+    const P = r.w.BarStockLiveExpected.previo;
+    r.w.BarStockLiveExpected.previo = async () => {
+      const x = await P();
+      x.filas = x.filas.map(f => f.producto === 'Item 1' ? Object.assign({}, f, { verificado: V1 })
+        : f.producto === 'Item 2' ? Object.assign({}, f, { verificado: V2 }) : f);
+      return x;
+    };
+    r.w.BarStockCountFinish.open(() => {}, () => {});
+    await esperar(40);
+    return { w: r.w, b: r.w.document.getElementById('cfBody') };
+  };
+  ({ w, b } = await conVerif());
+  b.querySelector('[data-ir="esperado"]').click(); await esperar(10);
+  b = w.document.getElementById('cfBody');
+  const f1 = [...b.querySelectorAll('[data-esp]')].find(x => /Item 1/.test(x.textContent));
+  prueba('A, antes de cerrar: la fila lleva su verificación, con día, hora, lo que decía la app y quién',
+    f1 && /Checked Thu 3:12 PM: 6 \(Live said ≈8\.1\) · Mia/.test(f1.textContent.replace(/\s+/g, ' ')), f1 && f1.textContent.replace(/\s+/g, ' '));
+  prueba('sólo en la verificada', [...b.querySelectorAll('[data-esp]')].filter(x => /Checked/.test(x.textContent)).length === 1);
+
+  ({ w, b } = await conVerif());
+  w.BarStockInventoryCloud = { replaceInventoryMaster: async () => {} };
+  w.BarStockMobile = { montado: () => false, ir() {} };
+  w.bsOpenSection = () => {};
+  b.querySelector('#cfGo').click(); await esperar(60);
+  b = w.document.getElementById('cfBody');
+  const secs = [...b.querySelectorAll('.cf-ex-sec')];
+  const vivo = secs.find(x => /Live vs count/.test(x.textContent));
+  prueba('A, después de cerrar: también en "Live vs count", con el día', vivo && /Checked Thu: 6 \(Live said ≈8\.1\) · Mia/.test(vivo.textContent.replace(/\s+/g, ' ')), vivo && vivo.textContent.replace(/\s+/g, ' ').slice(0, 200));
+  const chk = secs.find(x => /Checked this week/.test(x.textContent));
+  prueba('B: "Checked this week · 2", también lo que quedó cerca', chk && /Checked this week · 2/.test(chk.textContent) && /Item 2/.test(chk.textContent), chk && chk.textContent.replace(/\s+/g, ' '));
+  const t1 = chk ? [...chk.querySelectorAll('.cf-ex')].find(x => /Item 1/.test(x.textContent)) : null;
+  prueba('cada una: cuándo, quién, cuántas, qué decía la app y lo contado', t1 && /Checked Thu · Mia: 6 \(Live said ≈8\.1\) · counted 1/.test(t1.textContent.replace(/\s+/g, ' ')), t1 && t1.textContent.replace(/\s+/g, ' '));
+  prueba('con la diferencia desde la verificación', t1 && /−6/.test(t1.textContent) && /since check/.test(t1.textContent));
+  prueba('B va después de "Live vs count" y antes del siguiente paso',
+    b.innerHTML.indexOf('Live vs count') < b.innerHTML.indexOf('Checked this week') && b.innerHTML.indexOf('Checked this week') < b.innerHTML.indexOf('cf-next-card'));
+  ({ w, b } = await preparar());
+  w.BarStockInventoryCloud = { replaceInventoryMaster: async () => {} };
+  w.BarStockMobile = { montado: () => false, ir() {} };
+  w.bsOpenSection = () => {};
+  b.querySelector('#cfGo').click(); await esperar(60);
+  prueba('sin verificaciones, sin sección', !/Checked this week/.test(w.document.getElementById('cfBody').textContent));
 }
 
 grupo('el esperado no puede tumbar el cierre');

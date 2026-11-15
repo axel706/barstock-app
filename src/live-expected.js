@@ -201,6 +201,31 @@
   // ventas que restar, todo lo usado parecería faltar.
   const UMBRAL = 1, PARTE = 0.25;
   // contado(item) → lo contado, o null si no se contó.
+  // La verificación de media semana de una fila del LIVE, para enseñarla
+  // (Axel, 2026-11-15, fase 5): cuántas, cuándo, qué decía la app y
+  // quién. El esperado de la fila YA parte de ella.
+  const verifDe = (f) => f && f.verificado ? {
+    n: Number(f.verificado.n) || 0, cuando: f.verificado.cuando, decia: f.verificado.decia, por: f.verificado.por || ''
+  } : null;
+
+  // "Checked this week" (opción B): TODO lo verificado y contado, cuadre o
+  // no, con lo contado contra lo que esperaba el LIVE desde la
+  // verificación. Lo que más se separó primero.
+  function verificados({ previo: P, contado }) {
+    const r2 = (n) => Math.round(n * 100) / 100;
+    const out = [];
+    for (const f of (P && P.filas) || []) {
+      const v = verifDe(f);
+      if (!v) continue;
+      const c = contado(f.producto);
+      if (c == null) continue;
+      const esperado = r2(Number(f.live) || 0);
+      out.push(Object.assign({ item: f.producto, contado: r2(Number(c)), esperado, dif: r2(Number(c) - esperado) }, v));
+    }
+    out.sort((a, b) => Math.abs(b.dif) - Math.abs(a.dif) || a.item.localeCompare(b.item));
+    return out;
+  }
+
   function comparar({ previo: P, contado }) {
     const r2 = (n) => Math.round(n * 100) / 100;
     const lista = [];
@@ -216,7 +241,7 @@
       if (!(Math.abs(dif) > UMBRAL && Math.abs(dif) > PARTE * vendido)) continue;
       const precio = P.precio[f.producto] > 0 ? P.precio[f.producto] : 0;
       lista.push({ item: f.producto, contado: r2(Number(c)), esperado: r2(esperado), dif, vendido,
-        dinero: precio ? r2(dif * precio) : null });
+        dinero: precio ? r2(dif * precio) : null, verificado: verifDe(f) });
     }
     // Lo que más dinero pesa primero; sin precio, por botellas.
     lista.sort((a, b) => Math.abs(b.dinero || 0) - Math.abs(a.dinero || 0) || Math.abs(b.dif) - Math.abs(a.dif));
@@ -309,5 +334,5 @@
     if (typeof setInterval === 'function') setInterval(cerrarSolo, 30 * 60 * 1000);
   }
 
-  window.BarStockLiveExpected = { antes, armar, guardar, cerrarPendientes, previo, comparar, UMBRAL, PARTE };
+  window.BarStockLiveExpected = { antes, armar, guardar, cerrarPendientes, previo, comparar, verificados, UMBRAL, PARTE };
 })();

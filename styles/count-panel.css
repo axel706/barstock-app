@@ -1536,6 +1536,8 @@ button.cf-ex{ cursor:pointer; }
 .cf-ex-n b{ display:block; font-size:var(--m-small); font-weight:800;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .cf-ex-n small{ display:block; margin-top:3px; font-size:var(--m-meta); color:#8aa0b4; }
+/* La verificación de media semana bajo la fila (fase 5, opción A). */
+.cf-ex-n small.cf-ex-chk{ color:#7dd3fc; }
 .cf-ex-v{ flex:0 0 auto; text-align:right; font-variant-numeric:tabular-nums; }
 .cf-ex-v b{ display:block; font-size:var(--m-body); font-weight:800; }
 .cf-ex-v small{ display:block; margin-top:2px; font-size:var(--m-meta); font-weight:600; }

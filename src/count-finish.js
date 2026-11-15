@@ -310,13 +310,32 @@
   // Los números con su signo de verdad (−, no -) y sin ceros de sobra.
   const conSigno = (x) => (x > 0 ? '+' : x < 0 ? '\u2212' : '') + n2(Math.abs(x));
   const dineroSigno = (x) => (x > 0 ? '+' : x < 0 ? '\u2212' : '') + dinero(Math.abs(x));
+  // ── La verificación de media semana (Axel, 2026-11-15, fase 5) ────
+  //
+  // Si alguien verificó un producto ("I have enough" o "Running low"), su
+  // LIVE volvió a empezar desde ese número, y el "expected" de aquí ya
+  // parte de ella. Se enseña (opción A) bajo la fila: al decidir si se
+  // recuenta, ayuda saber que alguien lo vio el miércoles.
+  const diaNY = (t, conHora) => {
+    const d = new Date(t);
+    if (isNaN(d.getTime())) return '';
+    return new Intl.DateTimeFormat('en-US', conHora
+      ? { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' }
+      : { timeZone: 'America/New_York', weekday: 'short' }).format(d).replace(',', '');
+  };
+  function lineaVerif(v, conHora) {
+    if (!v) return '';
+    return `<small class="cf-ex-chk">&#10003; Checked ${esc(diaNY(v.cuando, conHora))}: ${esc(n2(v.n))}${
+      v.decia != null ? ' (Live said &asymp;' + esc(n2(v.decia)) + ')' : ''}${v.por ? ' &middot; ' + esc(v.por) : ''}</small>`;
+  }
+
   // Una fila: el nombre, lo contado contra lo esperado, y la diferencia.
   // Botón antes de cerrar (abre su conteo), texto después.
   function filaEsperado(x, i, boton) {
     const tono = x.dif < 0 ? 'neg' : 'pos';
     const dentro = `
       <span class="cf-ex-n"><b>${esc(x.item)}</b>
-        <small>counted ${esc(n2(x.contado))} &middot; expected &asymp;${esc(n2(x.esperado))}</small></span>
+        <small>counted ${esc(n2(x.contado))} &middot; expected &asymp;${esc(n2(x.esperado))}</small>${lineaVerif(x.verificado, boton)}</span>
       <span class="cf-ex-v"><b class="${tono}">${esc(conSigno(x.dif))}</b>${
         x.dinero != null ? `<small class="${tono}">${esc(dineroSigno(x.dinero))}</small>` : ''}</span>`;
     return boton
@@ -967,6 +986,30 @@
           <div class="cf-ex-k">Live vs count</div>
           <div class="cf-ex-pie">Every count is close to what Live expected &middot; final tomorrow</div>
         </div>`) : '';
+      // "Checked this week" (opción B): todo lo verificado, cuadre o no,
+      // con lo contado contra lo que esperaba el LIVE desde la
+      // verificación. Es el registro de la semana; la lista de arriba
+      // sólo trae lo que se alejó.
+      const LEx = window.BarStockLiveExpected;
+      let verifFin = [];
+      if (_exp && typeof _exp === 'object' && LEx && LEx.verificados) {
+        try {
+          verifFin = LEx.verificados({ previo: _exp, contado: (item) => counted.has(item)
+            ? Number((master.find(r => r.item === item) || {}).onHand) || 0 : null });
+        } catch (e) { console.warn('[conteo] las verificaciones', e); verifFin = []; }
+      }
+      const seccionVerif = verifFin.length ? `
+        <div class="cf-ex-sec">
+          <div class="cf-ex-k">Checked this week &middot; ${verifFin.length}</div>
+          ${verifFin.map(v => {
+            const tono = v.dif < 0 ? 'neg' : 'pos';
+            return `<div class="cf-ex"><span class="cf-ex-n"><b>${esc(v.item)}</b>
+              <small>Checked ${esc(diaNY(v.cuando, false))}${v.por ? ' &middot; ' + esc(v.por) : ''}: ${esc(n2(v.n))}${
+                v.decia != null ? ' (Live said &asymp;' + esc(n2(v.decia)) + ')' : ''} &middot; counted ${esc(n2(v.contado))}</small></span>
+              <span class="cf-ex-v"><b class="${tono}">${esc(conSigno(v.dif))}</b><small class="${tono}">since check</small></span></div>`;
+          }).join('')}
+          <div class="cf-ex-pie">A check resets Live for that product. What you counted is compared with what Live expected after the check.</div>
+        </div>` : '';
       const compara = antes && antes.active_ms >= MINIMO_PARA_COMPARAR
                       && s.activeMs >= MINIMO_PARA_COMPARAR
         ? comparar(s.activeMs, antes.active_ms) : '';
@@ -1003,6 +1046,7 @@
           </div>` : ''}
 
         ${seccionVivo}
+        ${seccionVerif}
 
         <!-- El siguiente paso, con su número ya puesto.
 

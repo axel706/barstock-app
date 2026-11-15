@@ -941,6 +941,14 @@ por la tarde):**
   cambiarla. Sin la columna, `guardar` repite sin ella y lo dice
   (`aviso`, "044"). Probada contra Postgres 16. Prueba: "2b" de
   `test-esperado-guardar`.
+- **Las verificaciones en Finish count (2026-11-15, A y B sobre
+  lámina):** (A) bajo cada fila de "Far from Live" (antes de cerrar, con
+  día y hora) y de "Live vs count" (después, con el día): "✓ Checked Thu
+  3:12 PM: 6 (Live said ≈8.1) · Mia"; el expected de esa fila ya parte de
+  la verificación. (B) Después de cerrar, "Checked this week · N": TODO
+  lo verificado y contado, cuadre o no, con "since check"
+  (`live-expected.verificados`). Pruebas: el final del grupo "lo que se
+  aleja del LIVE" de `test-cierre-conteo`.
 - **Falta:** la ficha del producto (su historial), los patrones y el
   resumen semanal (fases 4 en adelante del plan), sobre lámina.
 - *(Lo de abajo es lo que se planeó; ya construido.)* **Guardar al cerrar el conteo**, en
