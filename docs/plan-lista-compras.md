@@ -72,7 +72,18 @@ Dos tablas nuevas (migración; la corre Axel):
 4. De la lista a la quick order, con "Ordered".
 5. El correo de la mañana y la campana.
 
-## 5. Preguntas para Axel
+## 5. Decidido con Axel (2026-11-14)
+
+1. **Dónde:** una pestaña **To buy** en Orders, junto a Open / Sent /
+   Invoices, con su resumen en el Home ("3 to buy · 2 ordered").
+2. **Quién:** los bartenders avisan ("Running low", con cuántos hay);
+   sólo quien tenga "Make and send orders" lo convierte en compra. Un
+   permiso nuevo en People: "Report running low".
+3. **"I have enough" pide siempre el número.**
+4. **Las verificaciones salen en Finish count**, en la lista de "Far
+   from Live": "Tito's: checked Wed 6, counted Sun 4".
+
+## 6. Las preguntas que había (contestadas arriba)
 
 1. ¿La lista vive en una pestaña "To buy" de Orders, más su resumen en
    el Home?

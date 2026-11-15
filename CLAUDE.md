@@ -1028,7 +1028,11 @@ order) o dice "I have enough" CON UN NÚMERO: esa verificación corrige el
 LIVE del producto hasta el siguiente conteo, nunca toca `on_hand`, y su
 diferencia con lo que decía la app es la misma señal del esperado, a
 media semana. "Running low" desde cualquier producto para lo que la app
-no avisó. El plan y sus preguntas: **`docs/plan-lista-compras.md`**.
+no avisó. El plan: **`docs/plan-lista-compras.md`**. Decidido con Axel
+el 2026-11-14: pestaña "To buy" en Orders con resumen en el Home; los
+bartenders avisan y sólo quien pide compra (permiso nuevo); "I have
+enough" pide siempre el número; las verificaciones salen en Finish
+count.
 
 ---
 
