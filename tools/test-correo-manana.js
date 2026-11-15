@@ -301,7 +301,7 @@ grupo('cada mañana, solo: Vercel lo manda al reply-to');
   const fetchViejo = global.fetch;
   global.fetch = async (u, o) => {
     u = String(u); pedidas.push({ u, metodo: (o && o.method) || 'GET', llave: o && o.headers && (o.headers.apikey || o.headers.Authorization) });
-    const filas = /\/locations\?/.test(u) ? (/toast_restaurant_guid=eq\.guid-crown/.test(u) ? [{ id: 'loc-1', name: 'The Crown Tavern', account_id: 'wjm-hospitality' }] : [])
+    const filas = /\/locations\?/.test(u) ? (/toast_restaurant_guid=not\.is\.null/.test(u) ? [{ id: 'loc-1', name: 'The Crown Tavern', account_id: 'wjm-hospitality', toast_restaurant_guid: 'guid-crown' }] : [])
       : /\/location_settings\?/.test(u) ? ajustes
       : /\/inventory_items\?/.test(u) ? [{ code: 'T1', item_name: "Tito's", vendor: 'LOOP', on_hand: 2, suggested: 4, value: 20, bottle_size_ml: 1000 }]
       : [];
@@ -331,12 +331,38 @@ grupo('cada mañana, solo: Vercel lo manda al reply-to');
   prueba('los números salen de Supabase con la llave del servidor', pedidas.some(p => /toast_sales\?/.test(p.u)) && pedidas.some(p => /inventory_items\?/.test(p.u)) &&
     pedidas.filter(p => p.u.startsWith(SB)).every(p => p.llave === 'srv' || p.llave === 'Bearer srv'), [...new Set(pedidas.map(p => p.u.split('?')[0]))].join(', '));
   prueba('y sólo LEE: ni una escritura', pedidas.every(p => p.metodo === 'GET'), pedidas.filter(p => p.metodo !== 'GET').map(p => p.metodo + ' ' + p.u).join(' | '));
-  prueba('dice a quién y qué', r.body.to === 'axel@crown.test' && typeof r.body.asunto === 'string');
+  prueba('dice a quién y qué', r.body.enviados === 1 && r.body.locaciones[0].to === 'axel@crown.test' && typeof r.body.locaciones[0].asunto === 'string', JSON.stringify(r.body).slice(0, 300));
 
   ajustes = [{ location_id: 'loc-1', reply_to_email: '', morning_recipients: 'gm@crown.test' }];
   enviados.length = 0;
   r = await llamarCron('Bearer cron-ok');
   prueba('sin reply-to: no manda, y lo dice', r.code === 500 && /reply-to/i.test(r.body.error) && enviados.length === 0, JSON.stringify(r.body));
+
+  // Axel, 2026-11-15: "también necesitamos ya configurarlo para Will's &
+  // Bill's". Cada locación enlazada a Toast recibe el SUYO, con sus
+  // números, en su reply-to; una sin reply-to no tumba a las demás.
+  global.fetch = async (u, o) => {
+    u = String(u); pedidas.push({ u, metodo: (o && o.method) || 'GET' });
+    const loc = (/location_id=eq\.([^&]+)/.exec(u) || [])[1];
+    const filas = /\/locations\?/.test(u) ? (/toast_restaurant_guid=not\.is\.null/.test(u) ? [
+        { id: 'loc-1', name: 'The Crown Tavern', account_id: 'wjm', toast_restaurant_guid: 'guid-crown' },
+        { id: 'loc-2', name: "Will's & Bill's", account_id: 'wjm', toast_restaurant_guid: 'guid-wb' },
+        { id: 'loc-3', name: 'Jockey Tavern', account_id: 'wjm', toast_restaurant_guid: 'guid-jt' }] : [])
+      : /\/location_settings\?/.test(u) ? ({ 'loc-1': [{ reply_to_email: 'axel@crown.test' }], 'loc-2': [{ reply_to_email: 'axel@wb.test' }], 'loc-3': [{ reply_to_email: '' }] }[loc] || [])
+      : /\/inventory_items\?/.test(u) ? [{ code: 'T1', item_name: loc === 'loc-2' ? 'Jameson' : "Tito's", vendor: 'LOOP', on_hand: 2, suggested: 4, value: 20, bottle_size_ml: 1000 }]
+      : [];
+    return { ok: true, status: 200, headers: { get: (k) => /content-range/i.test(k) ? '0-' + (filas.length - 1) + '/' + filas.length : null },
+      json: async () => filas, text: async () => JSON.stringify(filas) };
+  };
+  enviados.length = 0; pedidas.length = 0;
+  r = await llamarCron('Bearer cron-ok');
+  const aWB = enviados.find(x => /^Will's & Bill's/.test(x.subject || ''));
+  prueba("Will's & Bill's recibe el suyo, en su reply-to", !!aWB && JSON.stringify(aWB.to) === JSON.stringify(['axel@wb.test']), JSON.stringify(enviados.map(x => [x.subject, x.to])));
+  prueba('y Crown el suyo, sin mezclarse', enviados.some(x => /^The Crown Tavern/.test(x.subject || '') && JSON.stringify(x.to) === JSON.stringify(['axel@crown.test'])) && enviados.length === 2, JSON.stringify(enviados.map(x => [x.subject, x.to])));
+  prueba('cada uno con su inventario', pedidas.some(p => /inventory_items\?location_id=eq\.loc-2/.test(p.u)) && pedidas.some(p => /inventory_items\?location_id=eq\.loc-1/.test(p.u)));
+  const jt = ((r.body && r.body.locaciones) || []).find(x => /Jockey/.test(x.local || ''));
+  prueba('la que no tiene reply-to no se manda, se dice cuál y no tumba a las demás', !!jt && !jt.ok && /reply-to/i.test(jt.error || '') && enviados.length === 2, JSON.stringify(r.body).slice(0, 400));
+  prueba('y la respuesta no da por bueno lo que falló', r.body && r.body.ok === false && r.body.enviados === 2, JSON.stringify(r.body).slice(0, 300));
   global.fetch = fetchViejo;
 
   const v = JSON.parse(require('fs').readFileSync(path.join(RAIZ, 'vercel.json'), 'utf8'));

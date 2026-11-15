@@ -488,8 +488,8 @@ abre aunque no tenga "Restaurants: read"). `toast-links.js` manda el de
 la locación abierta en cada llamada, `sync` carga el de su locación (con
 el menú guardado por restaurante), y la carga diaria recorre todas las
 locaciones enlazadas. `TOAST_RESTAURANT_GUID` de Vercel sigue siendo el
-de por defecto (Crown) para el panel y el correo de la mañana, que de
-momento sólo sale para Crown. Copa = 6 oz siempre; se venden
+de por defecto (Crown) para el panel; el correo de la mañana ya no lo
+usa (2026-11-15: sale para cada locación enlazada). Copa = 6 oz siempre; se venden
 botellas. La lista de opciones es el inventario entero: casi nada tiene
 categoría.
 
@@ -688,8 +688,10 @@ que miente.
    **Automático (2026-11-12), sólo para Axel:** Vercel lo llama cada día
    a las 13 UTC (`vercel.json`; Hobby lo dispara dentro de esa hora: 8–9
    AM en Nueva York en invierno, 9–10 en verano), después de las cargas
-   de Toast, y va **sólo al reply-to** de la locación de Toast (Settings
-   › Emails). La lista de *Morning email recipients* todavía no se usa
+   de Toast, y va **sólo al reply-to** de cada locación enlazada a
+   Toast (Settings › Emails), cada una con sus números (2026-11-15, para
+   Will's & Bill's; antes sólo Crown). Una sin reply-to se salta y la
+   respuesta dice cuál; las demás salen igual. La lista de *Morning email recipients* todavía no se usa
    en el automático: es para cuando él lo diga. `lib/morning-cron.js`
    corre en el servidor **los mismos archivos de `src/`** (vm, con un
    `window` de mentira) y llama a `BarStockMorningReport.datos()`: un

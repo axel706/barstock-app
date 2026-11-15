@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261115-140148",
+    "items": [
+      "Morning email for every Toast location"
+    ]
+  },
+  {
     "build": "20261115-135651",
     "items": [
       "Morning email: varied wording, date on its own line"
@@ -179,12 +185,6 @@
     "build": "20261114-213937",
     "items": [
       "Running out first: slow movers are out again"
-    ]
-  },
-  {
-    "build": "20261114-212913",
-    "items": [
-      "Closing a count now saves what Live expected"
     ]
   }
 ]
