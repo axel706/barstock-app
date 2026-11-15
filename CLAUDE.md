@@ -745,6 +745,17 @@ del rol con su interruptor, lo quitado sólo a ella en ámbar ("Off for
   título, las pestañas "Email | PIN" (`src/pin-login.js`). Sin
   "Bartender" en ningún sitio: con PIN entra cualquiera. En Sign up y
   Reset password no salen (`html.auth-no-login`, lo pone `auth.js`).
+- **Pausar el acceso sin borrar** (2026-11-15, opción A sobre lámina;
+  login opción 1): "Access · Can sign in", arriba de la ficha.
+  `setPerson { pausar }` bloquea en Supabase (`ban_duration`, 100 años;
+  `'none'` lo quita) y guarda quién y cuándo en `app_metadata.pausa`;
+  nada más cambia, y el mismo PIN vuelve a funcionar. La app abierta
+  pierde la sesión al renovarla (una hora como mucho). En el login,
+  `auth.js` ve `user_banned` y `pin-login.pausado(nombre)` pone la
+  tarjeta "Hi Leo, your access is paused" en lugar del teclado.
+  **Supabase mira el bloqueo ANTES que la contraseña**: la tarjeta sale
+  con cualquier PIN para ese nombre (comprobado en `token.go` de
+  supabase/auth). Nadie se pausa a sí mismo; a un Owner, sólo otro.
 - Pruebas: `test-roles`, `test-bartenders`, `test-invitado`,
   `test-invitado-pantallas`, `test-pin-login`.
 

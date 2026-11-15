@@ -115,7 +115,12 @@ require.cache[rutaSb] = { id: rutaSb, filename: rutaSb, loaded: true, exports: {
           app_metadata: o.app_metadata || {}, user_metadata: o.user_metadata || {} };
         db.users.push(u); return { data: { user: u }, error: null };
       },
-      updateUserById: async (id, o) => { const u = db.users.find(x => x.id === id); Object.assign(u, o); return { data: { user: u }, error: null }; },
+      // Como Supabase: ban_duration no se guarda tal cual, pone banned_until.
+      updateUserById: async (id, o) => {
+        const u = db.users.find(x => x.id === id); o = Object.assign({}, o);
+        if ('ban_duration' in o) { u.banned_until = o.ban_duration === 'none' ? null : '2126-01-01T00:00:00Z'; delete o.ban_duration; }
+        Object.assign(u, o); return { data: { user: u }, error: null };
+      },
       deleteUser: async (id) => { db.users = db.users.filter(u => u.id !== id); return { error: null }; }
     }
   }
@@ -228,6 +233,32 @@ grupo('3b · un permiso nuevo llega a quien ya tenía el rol (2026-11-15)');
   db.roles = leer;
   prueba('si los roles no se pudieron leer, no se cambia a nadie', l2.ok && JSON.stringify(u('Ana').app_metadata.perms) === '["contar","recetas"]', JSON.stringify(u('Ana').app_metadata.perms));
   Object.assign(db, guardado);
+}
+
+grupo('3c · pausar el acceso, sin borrar (Axel, 2026-11-15)');
+{
+  // "No eliminarlo, solamente quitarle el acceso": Supabase lo bloquea
+  // al entrar (ban), y nada más cambia. Al volver, el mismo PIN.
+  const id = u('Maria').id;
+  const antes = JSON.stringify({ p: u('Maria').password, r: u('Maria').app_metadata.role, perms: u('Maria').app_metadata.perms,
+    a: db.access.filter(x => x.user_id === id).map(x => x.location_id + x.role) });
+  const r = await llamar('axel', 'setPerson', { userId: id, pausar: true });
+  prueba('Axel le pausa el acceso a Maria', r.ok && !!u('Maria').banned_until, JSON.stringify(r));
+  prueba('con quién y cuándo', !!(u('Maria').app_metadata.pausa && u('Maria').app_metadata.pausa.at && u('Maria').app_metadata.pausa.by === 'Axel'), JSON.stringify(u('Maria').app_metadata.pausa));
+  const l = await llamar('axel', 'listPeople');
+  const m = (l.people || []).find(x => x.id === id) || {};
+  prueba('People lo enseña', !!m.pausado && m.pausado.by === 'Axel' && !!m.pausado.at, JSON.stringify(m.pausado));
+  const yo = await llamar(id, 'setPerson', { userId: id, pausar: false });
+  prueba('nadie se cambia a sí mismo el acceso', !yo.ok);
+  const own = await llamar(id, 'setPerson', { userId: u('Olga').id, pausar: true });
+  prueba('el de un Owner sólo lo pausa otro Owner', own.codigo === 403 && !u('Olga').banned_until);
+  const v = await llamar('axel', 'setPerson', { userId: id, pausar: false });
+  prueba('se le devuelve', v.ok && !u('Maria').banned_until && !u('Maria').app_metadata.pausa);
+  const l2 = await llamar('axel', 'listPeople');
+  prueba('y People ya no lo marca', !((l2.people || []).find(x => x.id === id) || {}).pausado);
+  const despues = JSON.stringify({ p: u('Maria').password, r: u('Maria').app_metadata.role, perms: u('Maria').app_metadata.perms,
+    a: db.access.filter(x => x.user_id === id).map(x => x.location_id + x.role) });
+  prueba('nada más cambió: el mismo PIN, rol, permisos y locaciones', antes === despues, antes + ' / ' + despues);
 }
 
 grupo('4 · el servidor de las integraciones');

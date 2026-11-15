@@ -87,7 +87,7 @@
     raiz().classList.add('auth-pin-busy');
     decir('Signing in…');
     try {
-      await window.BarStockAuth.login({ email: ID.correo(nombre), password: _pin, pin: true });
+      await window.BarStockAuth.login({ email: ID.correo(nombre), password: _pin, pin: true, nombre: nombre.trim() });
     } finally {
       _ocupado = false;
       raiz().classList.remove('auth-pin-busy');
@@ -100,8 +100,38 @@
     }
   }
 
+  // ── El acceso pausado (Axel, 2026-11-15, opción 1 sobre lámina) ────
+  //
+  // Quien lo pausó desde People no la borró: Supabase la bloquea y
+  // contesta "User is banned". En vez de ese texto o de un error rojo, la
+  // tarjeta con su nombre y qué hacer. Supabase mira el bloqueo ANTES que
+  // la contraseña, así que sale con cualquier PIN para ese nombre: decir
+  // "That name and PIN don't match" sería mentir (fallo nº 6 de
+  // CLAUDE.md). La llama auth.js; "Not Leo?" deja entrar a otra persona.
+  function pausado(nombre) {
+    const t = $('authPinPausa');
+    if (!t) return;
+    const n = String(nombre || '').trim();
+    const esc = (x) => x.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    t.innerHTML = '<i class="ti ti-lock" aria-hidden="true"></i>' +
+      '<b>Hi ' + esc(n) + ', your access is paused</b>' +
+      '<p>Talk to a manager to get back in. Your PIN will work again as soon as they turn it on.</p>' +
+      '<button type="button" data-pausa-otro>Not ' + esc(n) + '? Sign in as someone else</button>';
+    t.querySelector('[data-pausa-otro]').onclick = () => {
+      quitarPausa();
+      const c = $('authPinName');
+      if (c) { c.value = ''; c.focus(); }
+    };
+    raiz().classList.add('auth-pin-pausa');
+    decir('');
+  }
+  function quitarPausa() {
+    raiz().classList.remove('auth-pin-pausa');
+    _pin = ''; pintarCasillas(); decir('');
+  }
+
   function tecla(d) {
-    if (_ocupado) return;
+    if (_ocupado || raiz().classList.contains('auth-pin-pausa')) return;
     if (d === 'del') _pin = _pin.slice(0, -1);
     else if (_pin.length < LARGO) _pin += d;
     pintarCasillas();
@@ -123,7 +153,9 @@
           ? '<span></span>'
           : '<button type="button" class="auth-pin-key' + (k === 'del' ? ' del' : '') + '" data-k="' + k + '"' +
             (k === 'del' ? ' aria-label="Delete"><i class="ti ti-backspace" aria-hidden="true"></i>' : '>' + k) + '</button>').join('') +
-      '</div>';
+      '</div>' +
+      // El acceso pausado: sale en lugar de las casillas y el teclado.
+      '<div id="authPinPausa" role="status"></div>';
     msg.parentNode.insertBefore(bloque, msg.nextSibling);
 
     // Las pestañas, arriba, antes del título.
@@ -146,6 +178,8 @@
       else if (e.key === 'Backspace') tecla('del');
     });
     const n = $('authPinName');
+    // Cambiar el nombre quita la tarjeta: es otra persona.
+    n.addEventListener('input', () => { if (raiz().classList.contains('auth-pin-pausa')) quitarPausa(); });
     n.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); n.blur(); } });
     pintarCasillas();
     if (modoGuardado() === 'pin') abrir();
@@ -154,5 +188,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', montar);
   else montar();
 
-  window.BarStockPinLogin = { montar, abrir, cerrar, tecla, LARGO };
+  window.BarStockPinLogin = { montar, abrir, cerrar, tecla, pausado, LARGO };
 })();

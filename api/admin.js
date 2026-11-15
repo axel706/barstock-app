@@ -405,8 +405,12 @@ module.exports = async function handler(req, res) {
     }
     function publicaPersona(u, access, locs) {
       const m = u.app_metadata || {};
+      // Pausado: lo dice Supabase (banned_until en el futuro); quién y
+      // cuándo, lo que se guardó al pausar.
+      const bloqueado = !!u.banned_until && new Date(u.banned_until).getTime() > Date.now();
       return Object.assign(publicUser(u, access, locs), {
-        role: m.role, off: P.limpia(m.off), perms: P.deUsuario(u)
+        role: m.role, off: P.limpia(m.off), perms: P.deUsuario(u),
+        pausado: bloqueado ? { at: (m.pausa && m.pausa.at) || null, by: (m.pausa && m.pausa.by) || '' } : null
       });
     }
 
@@ -494,7 +498,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (accion === 'setPerson') {
-      const { userId, pin, locationIds, role, off } = req.body || {};
+      const { userId, pin, locationIds, role, off, pausar } = req.body || {};
       const u = await persona(userId);
       if (!u || (soloBartenders && u.app_metadata.role !== BID.ROL)) {
         return res.status(404).json({ ok: false, error: 'That person was not found.' });
@@ -503,6 +507,26 @@ module.exports = async function handler(req, res) {
       // se quedaría fuera de la pantalla desde la que se arregla.
       if (u.id === yo.id && (role !== undefined || off !== undefined)) {
         return res.status(400).json({ ok: false, error: 'You can’t change your own role or permissions.' });
+      }
+      // ── Pausar el acceso, sin borrar (Axel, 2026-11-15) ──────────────
+      //
+      // "No eliminarlo, solamente quitarle el acceso". Lo hace Supabase:
+      // un usuario bloqueado (ban) no puede entrar ni renovar la sesión,
+      // así que una app abierta lo pierde en una hora como mucho. No se
+      // toca nada más: el PIN, el rol, los permisos y las locaciones
+      // siguen igual, y al devolverlo el mismo PIN vuelve a funcionar.
+      // Quién y cuándo, en app_metadata.pausa, para que People lo diga.
+      if (pausar !== undefined) {
+        if (u.id === yo.id) return res.status(400).json({ ok: false, error: 'You can’t pause your own access.' });
+        if (u.app_metadata.role === 'owner' && !esOwner) return res.status(403).json({ ok: false, error: 'Only an owner can pause an owner.' });
+        const m0 = Object.assign({}, u.app_metadata || {});
+        const quien = ((yo.user_metadata || {}).first_name || String(yo.email || '').split('@')[0] || '').trim();
+        if (pausar) m0.pausa = { at: new Date().toISOString(), by: quien };
+        else delete m0.pausa;
+        // 100 años: Supabase no tiene "para siempre"; 'none' lo quita.
+        const { error } = await supabase.auth.admin.updateUserById(u.id, { ban_duration: pausar ? '876000h' : 'none', app_metadata: m0 });
+        if (error) throw error;
+        u.app_metadata = m0;
       }
       if (pin !== undefined) {
         if (!BID.pinValido(pin)) return res.status(400).json({ ok: false, error: 'The PIN has to be 6 digits.' });

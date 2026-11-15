@@ -79,7 +79,12 @@ require.cache[rutaSb] = { id: rutaSb, filename: rutaSb, loaded: true, exports: {
           app_metadata: o.app_metadata || {}, user_metadata: o.user_metadata || {} };
         db.users.push(u); return { data: { user: u }, error: null };
       },
-      updateUserById: async (id, o) => { const u = db.users.find(x => x.id === id); Object.assign(u, o); return { data: { user: u }, error: null }; },
+      // Como Supabase: ban_duration no se guarda tal cual, pone banned_until.
+      updateUserById: async (id, o) => {
+        const u = db.users.find(x => x.id === id); o = Object.assign({}, o);
+        if ('ban_duration' in o) { u.banned_until = o.ban_duration === 'none' ? null : '2126-01-01T00:00:00Z'; delete o.ban_duration; }
+        Object.assign(u, o); return { data: { user: u }, error: null };
+      },
       deleteUser: async (id, suave) => { db.borrados.push({ id, suave: !!suave }); db.users = db.users.filter(u => u.id !== id); return { error: null }; }
     }
   }
@@ -223,6 +228,28 @@ async function llamar(token, action, cuerpo) {
     fallar = 'setPerson';
     q('[data-fl="crown"]').click(); await esperar(30);
     prueba('un fallo se dice tal cual y la píldora vuelve atrás', /Not saved: boom from Supabase/.test(host.textContent) && !q('[data-fl="crown"]').classList.contains('on'));
+    fallar = null;
+
+    // ── Pausar el acceso (Axel, 2026-11-15, opción A sobre lámina) ────
+    const acc = () => q('[data-acceso]');
+    prueba('A: el interruptor de acceso, arriba de la ficha y encendido', !!acc() && acc().classList.contains('on') &&
+      host.querySelector('.m-bt [data-acceso]') === host.querySelector('.m-bt .m-pp-sw') && /Can sign in/.test(acc().parentNode.textContent));
+    acc().click(); await esperar(40);
+    prueba('apagarlo la pausa de verdad, sin borrarla', !!billie() && !!billie().banned_until && billie().password === '324324' &&
+      billie().app_metadata.role === 'bartender');
+    prueba('y dice desde cuándo y quién', !acc().classList.contains('on') && /Off since .+ · Axel/.test(acc().parentNode.textContent),
+      acc().parentNode.textContent);
+    prueba('con lo que verá al entrar', /your access is paused/i.test(host.textContent));
+    w.__atras(); await esperar(30);
+    const fp = q('[data-b]');
+    prueba('en la lista: apagada, "Access off" y OFF en lugar del rol', !!fp && fp.classList.contains('m-bt-pausa') && /Access off/.test(fp.textContent) &&
+      /^Off$/i.test(fp.querySelector('.m-pp-rol').textContent.trim()), fp && fp.innerHTML);
+    fp.click();
+    acc().click(); await esperar(40);
+    prueba('encenderlo se lo devuelve, con el mismo PIN', !billie().banned_until && acc().classList.contains('on') && billie().password === '324324');
+    fallar = 'setPerson';
+    acc().click(); await esperar(30);
+    prueba('un fallo se dice y el interruptor vuelve', /Not saved: boom/.test(host.textContent) && acc().classList.contains('on') && !billie().banned_until);
     fallar = null;
 
     q('#btPinCambiar').click();

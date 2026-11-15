@@ -47,6 +47,8 @@ function entorno(o) {
   w.supabaseAuth = { auth: {
     signInWithPassword: async (c) => {
       w.__entradas.push(c);
+      // Supabase mira el bloqueo ANTES que la contraseña: con cualquier PIN.
+      if (/^leo@/.test(c.email)) return { error: { message: 'User is banned', code: 'user_banned', status: 400 } };
       return c.password === '324324' ? { error: null } : { error: { message: 'Invalid login credentials' } };
     },
     signOut: async () => ({}),
@@ -126,6 +128,31 @@ function entorno(o) {
     prueba('dice que no casan, no "Invalid login credentials"', /name and PIN don.t match/.test(d.getElementById('authMsg').textContent), d.getElementById('authMsg').textContent);
     prueba('y las casillas se vacían para volver a probar', d.querySelectorAll('#authPinBoxes i.on').length === 0);
     prueba('el login de correo no cambia su mensaje', /Invalid login credentials/.test(leer('src/auth.js')) && /conPin && \/invalid login credentials\/i/.test(leer('src/auth.js')));
+  }
+
+  grupo('3b · el acceso pausado (Axel, 2026-11-15, opción 1)');
+  {
+    const w = entorno({ modo: 'pin' });
+    const d = w.document;
+    d.getElementById('authPinName').value = 'Leo';
+    '111111'.split('').forEach(x => d.querySelector('[data-k="' + x + '"]').click());
+    await esperar(30);
+    const t = d.getElementById('authPinPausa');
+    prueba('la tarjeta sustituye al teclado', d.documentElement.classList.contains('auth-pin-pausa') && !!t, d.getElementById('authMsg').textContent);
+    prueba('con su nombre y qué hacer', !!t && /Hi Leo, your access is paused/.test(t.textContent) && /manager/.test(t.textContent), t && t.textContent);
+    prueba('sin "User is banned" ni el error rojo', !/banned/i.test(d.getElementById('authMsg').textContent) && !/don.t match/.test(d.getElementById('authMsg').textContent), d.getElementById('authMsg').textContent);
+    prueba('no entra', w.__recargas === 0 && !w.__loc);
+    const otro = t && t.querySelector('[data-pausa-otro]');
+    prueba('"Not Leo?" para que entre otra persona', !!otro && /Not Leo\?/.test(otro.textContent));
+    if (otro) otro.click();
+    prueba('y vuelve el teclado, con el nombre vacío', !d.documentElement.classList.contains('auth-pin-pausa') && d.getElementById('authPinName').value === '' &&
+      d.querySelectorAll('#authPinBoxes i.on').length === 0);
+    d.getElementById('authPinName').value = 'Billie';
+    '324324'.split('').forEach(x => d.querySelector('[data-k="' + x + '"]').click());
+    await esperar(30);
+    prueba('Billie entra como siempre después', w.__loc === "Will's & Bill's");
+    const css = leer('styles/auth.css');
+    prueba('el CSS esconde las casillas y el teclado con la tarjeta', /auth-pin-pausa[^{]*auth-pin-pad|auth-pin-pausa[^{]*#authPinBoxes/.test(css));
   }
 
   grupo('4 · Billie en dos locaciones');

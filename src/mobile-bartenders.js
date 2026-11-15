@@ -169,11 +169,15 @@
       // "N off": lo que el rol da y a esta persona se le quitó.
       const r = rolDe(b.role);
       const off = (b.off || []).filter(k => r && (r.perms || []).indexOf(k) >= 0).length;
-      return '<button type="button" class="m-item m-bt-fila" data-b="' + esc(b.id) + '">' +
+      // Pausada: la fila apagada, "Access off" y OFF en lugar del rol.
+      const pz = !!b.pausado;
+      return '<button type="button" class="m-item m-bt-fila' + (pz ? ' m-bt-pausa' : '') + '" data-b="' + esc(b.id) + '">' +
         '<span class="m-bt-ini">' + esc((b.name || '?').charAt(0).toUpperCase()) + '</span>' +
         '<span class="m-item-t">' + esc(b.name || '—') +
-          '<small>' + esc(b.access.map(a => a.name).join(', ') || 'No location') + (off ? ' · ' + off + ' off' : '') + ' · ' + esc(cuando(b.lastSignIn)) + '</small>' +
-        '</span><span class="m-pp-rol m-pp-rol-' + esc(b.role) + '">' + esc(nombreRol(b.role)) + '</span></button>';
+          '<small>' + esc(b.access.map(a => a.name).join(', ') || 'No location') +
+            (pz ? ' · <b class="m-bt-off">Access off</b>' : (off ? ' · ' + off + ' off' : '') + ' · ' + esc(cuando(b.lastSignIn))) + '</small>' +
+        '</span>' + (pz ? '<span class="m-pp-rol m-pp-rol-pausa">Off</span>'
+          : '<span class="m-pp-rol m-pp-rol-' + esc(b.role) + '">' + esc(nombreRol(b.role)) + '</span>') + '</button>';
     }).join('');
     return tabs + err + creado +
       (filas || (!_creado ? '<div class="m-bt-p">No one yet.</div>' : '')) +
@@ -238,7 +242,18 @@
           '<small>The old PIN stops working when you save.</small></div>' +
         '<button type="button" class="m-set-save" id="btPinGuardar">Save PIN</button>'
       : '<button type="button" class="m-bt-sec" id="btPinCambiar">Change PIN</button>';
-    return '<div class="m-set-f"><label>Role</label>' + chipsRol(f.rol, 'data-fr') +
+    // El acceso, arriba (Axel, 2026-11-15, opción A sobre lámina):
+    // pausarlo no borra nada; la persona ve en el login que está pausada.
+    // A uno mismo no: se quedaría fuera.
+    const corto = String(f.nombre || '').split(' ')[0];
+    const acceso = soyYo(f.id) ? '' :
+      '<div class="m-set-f"><label>Access</label><div class="m-pp-lista"><div class="m-pp-perm"><span>Can sign in<small>' +
+        (f.pausado ? '<span class="m-bt-off">Off since ' + esc(cuandoPausa(f.pausado.at)) + (f.pausado.by ? ' · ' + esc(f.pausado.by) : '') + '</span>'
+          : 'Off: the PIN stops working. Nothing is deleted.') + '</small></span>' +
+        sw('data-acceso', '1', f.pausado ? 'off' : 'on', f.rol === 'owner' && !soyOwner()) + '</div></div>' +
+        (f.pausado ? '<small>' + esc(corto) + ' sees “Hi ' + esc(corto) + ', your access is paused” on sign in. Turn it back on and the same PIN works again.</small>' : '') +
+      '</div>';
+    return acceso + '<div class="m-set-f"><label>Role</label>' + chipsRol(f.rol, 'data-fr') +
         (f.rol === 'owner' && !soyOwner() ? '<small>Only an owner can change an owner.</small>' : '') + '</div>' +
       '<div class="m-set-f"><label>Locations</label>' + chips(f.locs, 'data-fl') + '</div>' +
       permisosDe(f) +
@@ -296,7 +311,7 @@
       const x = (_lista || []).find(y => y.id === b.dataset.b);
       if (!x) return;
       _ficha = { id: x.id, nombre: x.name, rol: x.role, off: new Set(x.off || []),
-        locs: new Set(x.access.map(a => a.locationId)), pin: null, borrar: false };
+        locs: new Set(x.access.map(a => a.locationId)), pin: null, borrar: false, pausado: x.pausado || null };
       _creado = null; _error = ''; _vista = 'ficha'; pintar();
     }; });
     host.querySelectorAll('[data-r]').forEach(b => { b.onclick = () => {
@@ -334,6 +349,7 @@
     host.querySelectorAll('[data-fl]').forEach(b => { b.onclick = () => cambiarLocs(b.dataset.fl); });
     host.querySelectorAll('[data-fr]').forEach(b => { b.onclick = () => cambiarRol(b.dataset.fr); });
     host.querySelectorAll('[data-fp]').forEach(b => { b.onclick = () => cambiarPermiso(b.dataset.fp); });
+    if (q('[data-acceso]')) q('[data-acceso]').onclick = cambiarAcceso;
     if (q('#btPinCambiar')) q('#btPinCambiar').onclick = () => { _ficha.pin = generar(); _error = ''; pintar(); };
     if (q('#btPinGuardar')) q('#btPinGuardar').onclick = guardarPin;
     if (q('#btQuitar')) q('#btQuitar').onclick = quitar;
@@ -410,6 +426,32 @@
     if (!r || !r.ok) { f.off = antes; _error = 'Not saved: ' + ((r && r.error) || 'no answer'); return pintar(); }
     const p = P().CATALOGO.find(x => x.k === k);
     aviso((f.off.has(k) ? 'Off for ' : 'Back on for ') + f.nombre + ': ' + (p ? p.n : k));
+  }
+
+  // "Sun 3:12 PM": cuándo se pausó, en la hora del teléfono.
+  function cuandoPausa(at) {
+    const d = at ? new Date(at) : null;
+    if (!d || isNaN(d)) return 'now';
+    return d.toLocaleDateString('en-US', { weekday: 'short' }) + ' ' +
+      d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+
+  async function cambiarAcceso() {
+    const f = _ficha;
+    const antes = f.pausado;
+    const pausar = !antes;
+    // Se pinta ya; si el servidor dice que no, vuelve atrás.
+    f.pausado = pausar ? { at: new Date().toISOString(), by: '' } : null;
+    _error = ''; pintar();
+    const r = await A().llamar('setPerson', { userId: f.id, pausar }).catch(fallo);
+    if (!r || !r.ok) { f.pausado = antes; _error = 'Not saved: ' + ((r && r.error) || 'no answer'); return pintar(); }
+    aviso(pausar ? f.nombre + ' can’t sign in now. Nothing was deleted.' : f.nombre + ' can sign in again.');
+    // Quién y cuándo, como lo guardó el servidor.
+    const id = f.id;
+    await cargar();
+    const x = (_lista || []).find(y => y.id === id);
+    if (x && _vista === 'ficha' && _ficha && _ficha.id === id) _ficha.pausado = x.pausado || null;
+    pintar();
   }
 
   async function guardarPin() {

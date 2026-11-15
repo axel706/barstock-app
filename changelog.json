@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261115-151523",
+    "items": [
+      "People: pause someone's access without removing them",
+      "Paused people see a clear message when they sign in"
+    ]
+  },
+  {
     "build": "20261115-144048",
     "items": [
       "Morning email test goes to the reply-to address"
@@ -179,12 +186,6 @@
       "Finish count shows counts far from Live",
       "Recount them before closing",
       "After closing: the week's gaps in $"
-    ]
-  },
-  {
-    "build": "20261114-221606",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]

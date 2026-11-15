@@ -231,6 +231,13 @@
         if (conPin && /invalid login credentials/i.test(error.message || '')) {
           throw new Error('That name and PIN don\u2019t match.');
         }
+        // Pausado desde People (2026-11-15): no es un error de quien
+        // entra. La tarjeta la pinta pin-login.js, con su nombre.
+        if (conPin && (error.code === 'user_banned' || /user is banned/i.test(error.message || '')) &&
+            window.BarStockPinLogin && window.BarStockPinLogin.pausado) {
+          window.BarStockPinLogin.pausado(cred.nombre || '');
+          return;
+        }
         throw error;
       }
       // Sesión nueva, corte nuevo: el de una sesión anterior la cerraría
