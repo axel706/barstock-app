@@ -947,6 +947,23 @@ El arreglo acordado, en tres fases:
    `ahora()` lo calcula y lo deja en cada fila, y el correo lo pasa a
    `cuantoPedir`. Prueba: `test-run-out` ("el ritmo de hoy").
 
+### La fecha prudente: media botella de margen (2026-11-14)
+
+Axel, con el Dad's Hat a ≈1.0 un sábado por la noche y "Out Wed": "no
+sé si hay más de una, pero puede haber menos de una". El LIVE es un
+estimado y la fecha se calculaba como si fuera exacto. `run-out.js`
+`MARGEN = 0.5`: `proyectar` y `cuantoPedir` reciben `margen` (0 si no
+se pasa) y restan esas botellas a lo que queda; `ahora()` pasa `MARGEN`
+y lo deja en la fila, el correo se lo pasa a `cuantoPedir` (la fecha y
+el "Order N" con el mismo margen, o se contradirían), y la rama de
+Pour·IQ de `running-out.js` también. El número grande NO cambia, ni
+`fuera` ("Out now" mira el estante). **Es provisional:** cuando el
+esperado tenga ~4 semanas de un producto, su margen pasa a ser lo que
+ese producto suele fallar por el lado de "había menos" (algo como el
+80 % de las últimas ~8 semanas), y se encoge solo si sus recetas se
+arreglan. Hablado y aceptado así con Axel. Prueba: `test-run-out`
+("la fecha prudente").
+
 ### La lista de compras y la verificación (2026-11-14, sin construir)
 
 Desde "Running out first", un manager confirma lo que se acaba (a una

@@ -63,6 +63,20 @@
   const MIN_MUESTRAS = 4;
   // Antes de esta parte del día no se extrapola el ritmo.
   const FRAC_MIN = 0.15;
+
+  // ── La fecha prudente (Axel, 2026-11-14) ─────────────────────────────
+  //
+  // Con el Dad's Hat a ≈1.0 un sábado por la noche la app decía "Out
+  // Wed". Axel: "no sé si hay más de una, pero puede haber menos de una".
+  // El LIVE es un estimado, y la fecha se calculaba como si fuera exacto.
+  // Hasta que el esperado mida cuánto falla el LIVE de cada producto
+  // (docs/plan-esperado.md), la fecha y lo que hay que pedir se calculan
+  // con MARGEN botellas menos: avisar antes es el lado seguro. El número
+  // grande no cambia; sólo la fecha y el "Order N", los dos con el mismo
+  // margen para que no se contradigan. Cuando haya semanas guardadas,
+  // este número fijo lo sustituye el de cada producto: lo que ese
+  // producto suele fallar, que se encoge solo si sus recetas se arreglan.
+  const MARGEN = 0.5;
   // El día de negocio empieza a las 4 AM (toast-usage.js, CORTE_H): las
   // horas de después de medianoche van al final del día, no al principio.
   const CORTE = 4;
@@ -150,9 +164,11 @@
   // hoyVendido: lo de hoy que el LIVE ya restó (0 si hoy no está cargado)
   // hoyFrac:    qué parte del día suele ir vendida a la hora del Sync
   //             (fraccionDelDia), o null si no se sabe
-  function proyectar({ stock, med, viene, hoy, horizonte, hoyVendido, hoyFrac }) {
+  // margen:     botellas que se restan a lo que queda (la fecha prudente);
+  //             0 si no se pasa
+  function proyectar({ stock, med, viene, hoy, horizonte, hoyVendido, hoyFrac, margen }) {
     if (!med || !med.some(x => x > 0)) return null;
-    let s = Number(stock) || 0;
+    let s = (Number(stock) || 0) - (Number(margen) || 0);
     const llegan = new Map();
     for (const v of viene || []) {
       const d = diaNY(v.cuando);
@@ -185,14 +201,14 @@
   // puede pedir 9.
   //
   // Hoy, como en proyectar(): sólo lo que falta por venderse hoy.
-  function cuantoPedir({ stock, med, viene, hoy, hoyVendido, hoyFrac }) {
+  function cuantoPedir({ stock, med, viene, hoy, hoyVendido, hoyFrac, margen }) {
     const faltanDias = (7 - diaSemana(hoy)) % 7;
     const hasta = sumarDias(hoy, faltanDias);
     let vende = 0;
     for (let k = 0; k <= faltanDias; k++) vende += med ? restaDia(med, sumarDias(hoy, k), k, hoyVendido, hoyFrac) : 0;
     let llega = 0;
     for (const v of viene || []) if (diaNY(v.cuando) <= hasta) llega += Number(v.n) || 0;
-    const falta = vende - Math.max(0, Number(stock) || 0) - llega;
+    const falta = vende - Math.max(0, (Number(stock) || 0) - (Number(margen) || 0)) - llega;
     const pedir = falta > 1e-6 ? Math.ceil(falta - 1e-6) : 0;
     return { hasta, vende, llega, pedir };
   }
@@ -216,11 +232,11 @@
     const filas = vivo.filas.map(f => {
       const med = M.porProducto.get(f.producto) || null;
       const hoyVendido = hoyDe.get(f.producto) || 0;
-      const fin = M.suficiente && med ? proyectar({ stock: f.live, med, viene: f.viene, hoy, hoyVendido, hoyFrac }) : null;
-      return Object.assign({}, f, { med, hoyVendido, hoyFrac, agota: fin ? fin.dia : null, enDias: fin ? fin.enDias : null });
+      const fin = M.suficiente && med ? proyectar({ stock: f.live, med, viene: f.viene, hoy, hoyVendido, hoyFrac, margen: MARGEN }) : null;
+      return Object.assign({}, f, { med, hoyVendido, hoyFrac, margen: MARGEN, agota: fin ? fin.dia : null, enDias: fin ? fin.enDias : null });
     });
     return { estado: 'listo', hoy, conteo: vivo.conteo, desde: vivo.desde, muestras: M.muestras, suficiente: M.suficiente, filas };
   }
 
-  window.BarStockRunOut = { medianas, proyectar, cuantoPedir, mediana, fraccionDelDia, ahora, DIAS_HISTORIA, HORIZONTE, MIN_MUESTRAS, FRAC_MIN };
+  window.BarStockRunOut = { medianas, proyectar, cuantoPedir, mediana, fraccionDelDia, ahora, DIAS_HISTORIA, HORIZONTE, MIN_MUESTRAS, FRAC_MIN, MARGEN };
 })();

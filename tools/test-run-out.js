@@ -225,5 +225,39 @@ grupo('el ritmo de hoy: lo que falta, por la hora del Sync');
   prueba('los días cargados se leen con sus horas', /select=business_date,complete,closed,fetched_at,hours/.test(tu));
 }
 
+grupo('la fecha prudente: media botella de margen');
+{
+  // Axel, 2026-11-14, con el Dad's Hat: ≈1.0 en la estantería un sábado
+  // por la noche y "Out Wed". "No sé si hay más de una, pero puede haber
+  // menos de una." El LIVE es un estimado y la fecha se calculaba como si
+  // fuera exacto. Hasta que el esperado mida cuánto falla cada producto,
+  // la fecha se calcula con media botella menos: avisar antes es el lado
+  // seguro. Lo que queda (el número grande) no cambia.
+  // El Dad's Hat: ~0.6 los días abiertos, el lunes cerrado.
+  const med = [0.6, 0, 0.6, 0.6, 0.6, 0.6, 0.6];
+  // Sábado 14 a última hora: lo de hoy ya está vendido.
+  let p = R.proyectar({ stock: 1.0, med, viene: [], hoy: '2026-11-14', hoyVendido: 0.6 });
+  prueba('sin margen: dura hasta el martes', p && p.dia === '2026-11-17', JSON.stringify(p));
+  p = R.proyectar({ stock: 1.0, med, viene: [], hoy: '2026-11-14', hoyVendido: 0.6, margen: R.MARGEN });
+  prueba('con media botella de margen: el domingo', p && p.dia === '2026-11-15', JSON.stringify(p));
+  prueba('el margen es media botella', R.MARGEN === 0.5, String(R.MARGEN));
+  // Cuánto pedir cuadra con la fecha: si dice que se acaba el domingo,
+  // el correo no puede decir "Order 0".
+  let c = R.cuantoPedir({ stock: 1.0, med, viene: [], hoy: '2026-11-14', hoyVendido: 0.6 });
+  prueba('sin margen, para llegar al domingo no hace falta pedir', c.pedir === 0, JSON.stringify(c));
+  c = R.cuantoPedir({ stock: 1.0, med, viene: [], hoy: '2026-11-14', hoyVendido: 0.6, margen: R.MARGEN });
+  prueba('con margen, pide 1: cuadra con "Out Sun"', c.pedir === 1, JSON.stringify(c));
+  // Sin margen, lo de siempre: el resto de las pruebas de arriba no
+  // cambian, y quien no lo pide no lo recibe.
+  p = R.proyectar({ stock: 2.6, med: R.medianas([{ producto: 'T', porDia }], dias).porProducto.get('T'), viene: [], hoy: '2026-11-19' });
+  prueba('sin pedirlo, sin margen (como antes)', p && p.dia === '2026-11-22', JSON.stringify(p));
+
+  const ro = leer('src/run-out.js'), mr = leer('src/morning-report.js'), ru = leer('src/running-out.js');
+  prueba('ahora() calcula la fecha con el margen', /proyectar\(\{[^}]*margen: MARGEN/.test(ro));
+  prueba('y lo deja en la fila para el correo', /margen: MARGEN[^)]*\)\s*:\s*null;[\s\S]{0,200}margen/.test(ro) || /Object\.assign\(\{\}, f, \{[^}]*margen/.test(ro));
+  prueba('el correo pide con el mismo margen', /cuantoPedir\(\{[^}]*margen: f\.margen/.test(mr));
+  prueba('lo que Toast no vende (Pour·IQ) también lleva el margen', /MARGEN/.test(ru));
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
