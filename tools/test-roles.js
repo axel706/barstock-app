@@ -90,6 +90,7 @@ function tabla(nombre) {
       return { error: null };
     },
     then: (res) => {
+      if (nombre === 'roles' && db.roles === null) return res({ data: null, error: { message: 'roles unavailable' } });
       const pasa = r => filtros.every(f => f(r));
       if (q._borrar) {
         if (nombre === 'roles') db.roles = db.roles.filter(r => !pasa(r)); else db.access = db.access.filter(r => !pasa(r));
@@ -188,6 +189,45 @@ grupo('3 · excepciones y roles');
   prueba('sin nadie, sí', q2.ok && !db.roles.some(x => x.key === 'bar_lead'));
   const b = await llamar('axel', 'removePerson', { userId: 'sam' });
   prueba('a un usuario de correo no se le borra desde aquí', b.codigo === 404 && db.users.some(x => x.id === 'sam'));
+}
+
+grupo('3b · un permiso nuevo llega a quien ya tenía el rol (2026-11-15)');
+{
+  // Billie se creó antes de "Report running low": sus permisos guardados
+  // no lo traen, aunque su rol (el de fábrica) sí. Al abrir People se
+  // rehacen y le llega con su próxima sesión.
+  // El grupo 4 sigue con lo que dejó el 3 (Maria): se guarda y se
+  // devuelve al acabar.
+  const guardado = JSON.parse(JSON.stringify(db));
+  reiniciar();
+  db.roles = db.roles.filter(r => r.key !== 'bartender');   // el de fábrica, sin guardar
+  const viejos = ['ver_dinero', 'ver_ordenes', 'ver_ajustes', 'recetas'];
+  db.users.push({ id: 'billie', email: 'billie@bartenders.barstockpro.com', app_metadata: { role: 'bartender', off: [], perms: viejos.slice() }, user_metadata: { first_name: 'Billie' } });
+  const l = await llamar('axel', 'listPeople');
+  prueba('al abrir People, Billie recibe el permiso nuevo de su rol', l.ok && u('Billie').app_metadata.perms.indexOf('avisar_bajo') >= 0, JSON.stringify(u('Billie').app_metadata.perms));
+  prueba('y la lista ya lo dice', l.people.find(x => x.name === 'Billie').perms.indexOf('avisar_bajo') >= 0);
+  // Sus excepciones se respetan.
+  reiniciar();
+  db.roles = db.roles.filter(r => r.key !== 'bartender');
+  db.users.push({ id: 'leo', email: 'leo@bartenders.barstockpro.com', app_metadata: { role: 'bartender', off: ['avisar_bajo'], perms: viejos.slice() }, user_metadata: { first_name: 'Leo' } });
+  await llamar('axel', 'listPeople');
+  prueba('lo que se le quitó a una persona sigue quitado', u('Leo').app_metadata.perms.indexOf('avisar_bajo') < 0);
+  // Un rol guardado SIN el permiso: no se inventa.
+  reiniciar();
+  db.users.push({ id: 'mia', email: 'mia@bartenders.barstockpro.com', app_metadata: { role: 'bartender', off: [], perms: viejos.slice() }, user_metadata: { first_name: 'Mia' } });
+  db.roles.find(r => r.key === 'bartender').perms = viejos.slice();
+  await llamar('axel', 'listPeople');
+  prueba('si el rol guardado no lo da, no se le da', u('Mia').app_metadata.perms.indexOf('avisar_bajo') < 0);
+  // Los roles sin leer: no se toca a nadie (con la lista vacía, un rol
+  // creado por Axel daría "ningún permiso").
+  reiniciar();
+  db.users.push({ id: 'ana', email: 'ana@bartenders.barstockpro.com', app_metadata: { role: 'bar_lead', off: [], perms: ['contar', 'recetas'] }, user_metadata: { first_name: 'Ana' } });
+  db.roles.push({ account_id: 'wjm-hospitality', key: 'bar_lead', name: 'Bar Lead', perms: ['contar', 'recetas'] });
+  const leer = db.roles; db.roles = null;
+  const l2 = await llamar('axel', 'listPeople');
+  db.roles = leer;
+  prueba('si los roles no se pudieron leer, no se cambia a nadie', l2.ok && JSON.stringify(u('Ana').app_metadata.perms) === '["contar","recetas"]', JSON.stringify(u('Ana').app_metadata.perms));
+  Object.assign(db, guardado);
 }
 
 grupo('4 · el servidor de las integraciones');

@@ -420,13 +420,39 @@ module.exports = async function handler(req, res) {
     if (accion === 'listPeople') {
       const todos = await todasLasPersonas();
       const ids = todos.map(u => u.id);
+      let rolesLeidos = true;
       const [{ data: access, error: aErr }, { data: locs, error: lErr }, roles] = await Promise.all([
         ids.length ? supabase.from('user_location_access').select('user_id, location_id, role').in('user_id', ids) : Promise.resolve({ data: [] }),
         supabase.from('locations').select('id, name').eq('account_id', ACCOUNT_ID),
-        leerRoles().catch(() => [])
+        leerRoles().catch(() => { rolesLeidos = false; return []; })
       ]);
       if (aErr) throw aErr;
       if (lErr) throw lErr;
+      // ── Permisos guardados que se quedaron atrás ─────────────────────
+      //
+      // Los permisos de cada persona se calculan al guardarla o al
+      // guardar su rol, y viajan en su sesión. Un permiso NUEVO en el
+      // catálogo que su rol ya da (de fábrica: "Report running low",
+      // 2026-11-15) no les llegaba: People enseñaba el rol con él
+      // encendido y la persona no lo tenía. Axel: "no le puedo activar el
+      // permiso", porque ya salía activado. Al abrir People se rehacen
+      // los que no cuadran con su rol; llegan con su próxima sesión.
+      //
+      // Sólo con los roles leídos de verdad y un rol que existe: con la
+      // lista vacía de un fallo, un rol creado por Axel daría "ningún
+      // permiso" y se le quitaría todo a quien lo tiene.
+      if (rolesLeidos) {
+        const igual = (a, b) => JSON.stringify(P.limpia(a).slice().sort()) === JSON.stringify(P.limpia(b).slice().sort());
+        for (const u of todos) {
+          const m = u.app_metadata || {};
+          if (!m.role || !Array.isArray(m.perms) || !P.rol(m.role, roles)) continue;
+          const debe = metadata(m.role, roles, m.off);
+          if (igual(debe.perms, m.perms)) continue;
+          const { error: eU } = await supabase.auth.admin.updateUserById(u.id, { app_metadata: Object.assign({}, m, debe) });
+          if (eU) { console.warn('[admin] no se pudieron rehacer los permisos de ' + u.id + ':', eU.message || eU); continue; }
+          u.app_metadata = Object.assign({}, m, debe);
+        }
+      }
       const people = todos
         .filter(u => !soloBartenders || u.app_metadata.role === BID.ROL)
         .map(u => publicaPersona(u, (access || []).filter(a => a.user_id === u.id), locs))

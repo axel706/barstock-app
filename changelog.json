@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261115-124649",
+    "items": [
+      "People: new permissions reach everyone with the role"
+    ]
+  },
+  {
     "build": "20261115-122849",
     "items": [
       "Finish count shows the mid-week checks",
@@ -182,13 +188,6 @@
     "build": "20261113-232919",
     "items": [
       "Toast week selector back to the plain style"
-    ]
-  },
-  {
-    "build": "20261113-231851",
-    "items": [
-      "Toast card: Monday to Sunday, with past weeks",
-      "Tap the week total to see the whole week"
     ]
   }
 ]
