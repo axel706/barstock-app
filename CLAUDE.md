@@ -935,7 +935,7 @@ El arreglo acordado, en tres fases:
 2. **La herramienta está:** `await bsToastHistoria(90, { sinHoras: true
    })` vuelve a cargar sólo los días sin horas (`tools/toast.js`), y se
    para si la función contesta que guardó sin ellas. **Corrida en una
-   locación (2026-11-14, 92 días, 8,903 filas); falta Will's & Bill's.**
+   locación (2026-11-14, 92 días, 8,903 filas) y en Will's & Bill's.**
 3. **Hecha:** `run-out.js` → `fraccionDelDia(dias, fecha, instante)`:
    qué parte del día suele llevar vendida la barra a esa hora (mediana
    de los mismos días de la semana, cerrados, completos y con horas;
