@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261115-115951",
+    "items": [
+      "Running out: no tab lit while it is open"
+    ]
+  },
+  {
     "build": "20261115-113600",
     "items": [
       "Edit order: Done sits right on top of the tabs"
@@ -182,13 +188,6 @@
     "build": "20261113-142345",
     "items": [
       "People: the list no longer runs into the Copy button"
-    ]
-  },
-  {
-    "build": "20261113-140856",
-    "items": [
-      "Settings › People: roles, PIN for everyone",
-      "Turn off single permissions per person"
     ]
   }
 ]

@@ -245,6 +245,21 @@ grupo('7 · las pestañas sacan de la revisión (Axel, 2026-11-15)');
   M.alVolverBanda(() => { w.__otro = true; });
   M.ir('inventory'); await esperar(10);
   prueba('cerrada con atrás, no deja nada enganchado que cierre otra cosa después', !abierta() && M.activa() === 'inventory');
+
+  // Axel, 2026-11-15: con la revisión abierta desde el Home, "Home"
+  // seguía encendido en la barra.
+  const encendida = () => Array.from(w.document.querySelectorAll('.m-tab.on')).map(b => b.dataset.m).join(',');
+  M.ir('home'); await esperar(10);
+  prueba('en el Home, Home encendido', encendida() === 'home', encendida());
+  await R.abrir(); await esperar(20);
+  prueba('con la revisión abierta, ninguna pestaña encendida', encendida() === '', encendida());
+  M.refrescarBadges();
+  prueba('tampoco al repintar la barra (un contador que cambia)', encendida() === '', encendida());
+  w.document.getElementById('mBandAtras').click(); await esperar(10);
+  prueba('atrás: vuelve a encenderse Home', encendida() === 'home', encendida());
+  await R.abrir(); await esperar(20);
+  M.ir('inventory'); await esperar(10);
+  prueba('una pestaña la cierra y se enciende esa', encendida() === 'inventory' && !abierta(), encendida());
 }
 
 grupo('8 · el fondo de la app, no uno opaco (Axel, 2026-11-15)');

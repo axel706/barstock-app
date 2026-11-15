@@ -303,6 +303,8 @@
     if (_quitarIrse) { _quitarIrse(); _quitarIrse = null; }
     const M = window.BarStockMobile;
     if (M && M.salirBanda) M.salirBanda();
+    // La barra vuelve a marcar la pantalla de debajo.
+    if (M && M.sinPestana) M.sinPestana(false);
   }
 
   async function abrir(host) {
@@ -325,6 +327,10 @@
     // Cualquier pestaña la cierra y lleva a la suya (Axel, 2026-11-15):
     // va fija encima de todo y ir() no la ve.
     if (M && M.alIrse) _quitarIrse = M.alIrse(cerrar);
+    // No es de ninguna pestaña: ninguna encendida mientras esté abierta
+    // (Axel, 2026-11-15: "Home resaltado, dando a entender que estamos
+    // en Home cuando no es así").
+    if (M && M.sinPestana) M.sinPestana(true);
     // Si el LIVE se rehace (una venta, una factura, una verificación),
     // las tarjetas también.
     if (LC() && LC().alCambiar) _quitarOyente = LC().alCambiar(pintar);

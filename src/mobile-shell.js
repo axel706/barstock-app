@@ -40,6 +40,7 @@
 
   const _pant = new Map();   // id -> definicion
   let _activa = null;
+  let _sinPestana = false;   // ver sinPestana()
   let _montado = false;
   let _entrado = false;      // ¿ya se decidió por dónde se entra?
   let _host = null;          // contenedor de las pantallas propias
@@ -296,9 +297,10 @@
       // veía en la captura— rompe la retícula: al cambiar de sección
       // una palabra aparece y otra desaparece, y ese salto se ve.
       const etiqueta = p.label || p.id;
-      return `<button type="button" class="m-tab${_activa === p.id ? ' on' : ''}"
+      const on = !_sinPestana && _activa === p.id;
+      return `<button type="button" class="m-tab${on ? ' on' : ''}"
                       data-m="${esc(p.id)}" role="tab"
-                      aria-selected="${_activa === p.id}" aria-label="${esc(etiqueta)}">
+                      aria-selected="${on}" aria-label="${esc(etiqueta)}">
                 <i class="ti ${esc(p.icon || 'ti-point')}" aria-hidden="true"></i>
                 <span class="m-tab-lab">${esc(etiqueta)}</span>
                 ${n ? '<span class="m-dot"></span>' : ''}
@@ -414,14 +416,33 @@
     catch (e) { return { activo: true }; }
   }
 
+  // ── Una pantalla encima que no es de ninguna pestaña ────────────────
+  //
+  // Axel, 2026-11-15, con Running out abierta desde el Home: la barra
+  // dejaba "Home" encendido, "dando a entender que estamos en home
+  // cuando no es así". Las pantallas que no son pestaña y pasan por ir()
+  // (Search, Quick order, Settings) ya salían sin ninguna encendida; las
+  // que van ENCIMA de otra (la revisión de Running out) no pasan por
+  // ir(), y la barra seguía marcando la de debajo. Esas lo dicen con
+  // sinPestana(true) y la barra no enciende ninguna hasta que se cierran
+  // (sinPestana(false)) o se toca una pestaña: ir() lo quita siempre.
+  // `_activa` NO cambia: sigue siendo la pantalla de debajo, la que
+  // vuelve al cerrar.
   function marcarActiva(id) {
     _activa = id;
+    pintarMarcas();
+  }
+  function pintarMarcas() {
     if (!_barra) return;
     _barra.querySelectorAll('.m-tab').forEach(b => {
-      const on = b.dataset.m === id;
+      const on = !_sinPestana && b.dataset.m === _activa;
       b.classList.toggle('on', on);
       b.setAttribute('aria-selected', String(on));
     });
+  }
+  function sinPestana(si) {
+    _sinPestana = !!si;
+    pintarMarcas();
   }
 
   // Lo llaman las pantallas cuando su contador cambia, para que el
@@ -458,6 +479,7 @@
     const p = _pant.get(id);
     if (!p || !_montado) return;
     cerrarEncima();
+    _sinPestana = false;
     salirBanda();
 
     // Sólo se recuerda al ENTRAR en una pantalla que no es pestaña: al
@@ -876,7 +898,7 @@
   window.BarStockMobile = {
     register, ir, volver, nombreAnterior, refrescarBadges, refrescarActiva,
     esMovil, montado: () => _montado, activa: () => _activa,
-    cabecera, alVolver, enBanda, alVolverBanda, salirBanda, alIrse,
+    cabecera, alVolver, enBanda, alVolverBanda, salirBanda, alIrse, sinPestana,
     ANCHO
   };
 })();
