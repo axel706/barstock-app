@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 146 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 147 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -382,7 +382,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 146 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 147 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -890,7 +890,22 @@ por la tarde):**
   `live_expected`), probada contra un Postgres 16 local; prueba
   `test-esperado`. **Corrida por Axel el 2026-11-15** (comprobada en
   `information_schema`).
-- **Fase 2, lo siguiente: guardar al cerrar el conteo**, en
+- **Fase 2 hecha (2026-11-14, guardar):** `src/live-expected.js`.
+  `count-finish` llama a `antes(master)` ANTES del bucle que escribe el
+  on hand (on hand y precio copiados, y `ultimoConteo()` de
+  toast-usage, ya exportado), y tras cerrar, sólo si `!yaHayCiclo`, a
+  `guardar()` SIN esperarla, con `.catch`. `guardar` pide el LIVE a
+  `live-stock.entre()` (el maestro de antes, desde el conteo anterior,
+  hasta el cierre), que arma con `armarFilas`, la MISMA función que
+  `ahora()`. Escribe el ciclo (`provisional`, `return=representation`
+  para su id) y luego sus filas, sólo de lo contado; si algo falla, dice
+  lo que contestó el servidor y no escribe filas sueltas. Pruebas:
+  `test-esperado-guardar` y "el esperado no puede tumbar el cierre" en
+  `test-cierre-conteo`. **Sin estrenar contra la base de verdad.**
+- **Falta:** cerrar los provisionales cuando Toast tenga el día del
+  cierre completo (la tarea de la mañana o al abrir la app), y todo lo
+  que lo enseña (fases 3 en adelante del plan).
+- *(Lo de abajo es lo que se planeó; ya construido.)* **Guardar al cerrar el conteo**, en
   `count-finish.js`, sólo cuando el conteo abre ciclo (`!yaHayCiclo`;
   un reconteo no). El LIVE se calcula con lo de ANTES: hay que tomar
   los `onHand` del maestro y el instante del conteo anterior

@@ -40,6 +40,8 @@ const ARCHIVOS = [
   'src/bottle-search.js', 'src/dev-panel.js',
   // El LIVE y el reparto que usa: leen el conteo, nunca lo escriben.
   'src/live-stock.js', 'src/order-receipts.js', 'src/run-out.js', 'src/live-cache.js',
+  // El esperado: guarda el LIVE junto a lo contado, en sus propias tablas.
+  'src/live-expected.js',
   ...fs.readdirSync(path.join(RAIZ, 'lib')).filter(f => /^toast.*\.js$/.test(f)).map(f => 'lib/' + f),
   'tools/toast.js'
 ];

@@ -137,6 +137,27 @@
   }
 
   // ── Leer y calcular ──────────────────────────────────────────────────
+  //
+  // Las filas, a partir de lo vendido (`uso`, de toast-usage), los
+  // pedidos y las facturas. La usan ahora() (el LIVE de la app) y
+  // entre() (el de un ciclo que se cierra, para el esperado): el mismo
+  // cálculo, o el esperado y el "≈" de Inventory dirían cosas distintas.
+  async function armarFilas({ master, uso, conteo, inicioCiclo, ahora: hasta }) {
+    const c = window.BARSTOCK_CONFIG || {};
+    const locId = await window.BarStockInventoryCloud.fetchLocationId();
+    const datos = await RC().leer({ url: c.SUPABASE_URL, key: c.SUPABASE_KEY, locId });
+    const dueno = new Map(datos.manuales.map(m => [String(m.order_id), String(m.vendor_order_id)]));
+    const recibos = RC().recibosDe(datos.facturas, datos.enlaces, dueno);
+    const repartido = RC().repartir({ recortadas: datos.recortadas, lineas: datos.lineas, recibos,
+      inicioCiclo: inicioCiclo || 0 });
+    return calcular({
+      master: master || [],
+      ordenes: datos.recortadas, repartido, recibos,
+      conteo: new Date(conteo).getTime(), diaConteo: uso.desde,
+      vendido: uso.productos, ahora: hasta
+    });
+  }
+
   async function ahora() {
     const U = window.BarStockToastUsage;
     if (!U) return { estado: 'error', error: 'The Toast usage module is not loaded.' };
@@ -144,23 +165,24 @@
     // Con un conteo activo se enseña lo contado; sin conteo conocido no
     // hay desde dónde empezar. Se dice tal cual.
     if (uso.estado !== 'listo') return { estado: uso.estado };
-    const c = window.BARSTOCK_CONFIG || {};
-    const locId = await window.BarStockInventoryCloud.fetchLocationId();
-    const datos = await RC().leer({ url: c.SUPABASE_URL, key: c.SUPABASE_KEY, locId });
-    const dueno = new Map(datos.manuales.map(m => [String(m.order_id), String(m.vendor_order_id)]));
-    const recibos = RC().recibosDe(datos.facturas, datos.enlaces, dueno);
     const C = window.BarStockCycle;
     const ini = C && C.startedAt && C.startedAt();
-    const repartido = RC().repartir({ recortadas: datos.recortadas, lineas: datos.lineas, recibos,
-      inicioCiclo: ini ? ini.getTime() : 0 });
-    const filas = calcular({
-      master: (window.state && window.state.master) || [],
-      ordenes: datos.recortadas, repartido, recibos,
-      conteo: new Date(uso.conteo).getTime(), diaConteo: uso.desde,
-      vendido: uso.productos
-    });
+    const filas = await armarFilas({ master: (window.state && window.state.master) || [], uso,
+      conteo: uso.conteo, inicioCiclo: ini ? ini.getTime() : 0 });
     return { estado: 'listo', conteo: uso.conteo, desde: uso.desde, dias: uso.dias,
       filas, sinConvertir: uso.sinConvertir };
+  }
+
+  // El LIVE de un ciclo que se cierra (el esperado, live-expected.js):
+  // con el maestro de ANTES del conteo, desde el conteo anterior y hasta
+  // el cierre. Sin mirar si hay un conteo activo: se llama justo al
+  // cerrarlo. Los mismos días que el LIVE: desde el día SIGUIENTE al del
+  // conteo anterior (toast-usage, ventasDesde).
+  async function entre({ master, conteo, inicioCiclo, ahora: hasta }) {
+    const U = window.BarStockToastUsage;
+    const uso = await U.ventasDesde(U.diaDeNegocio(conteo));
+    const filas = await armarFilas({ master, uso, conteo, inicioCiclo, ahora: hasta });
+    return { desde: uso.desde, dias: uso.dias, filas, sinConvertir: uso.sinConvertir };
   }
 
   // ── La semana de un producto, día a día (Axel, 2026-11-13, opción A) ─
@@ -200,5 +222,5 @@
     });
   }
 
-  window.BarStockLive = { calcular, ahora, diaADia };
+  window.BarStockLive = { calcular, ahora, entre, diaADia };
 })();

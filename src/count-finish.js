@@ -660,6 +660,17 @@
       // unico que devuelve el inventario a donde estaba.
       if (window.BarStockBackup) await window.BarStockBackup.snapshot('scan-count');
 
+      // ── El esperado (live-expected.js, docs/plan-esperado.md) ──────────
+      //
+      // Lo de ANTES de que el bucle de abajo escriba el on hand nuevo: lo
+      // contado al abrir el ciclo, su precio y cuándo fue el conteo
+      // anterior. Con eso, al cerrar, se guarda el LIVE de la semana que
+      // se cierra junto a lo que se acaba de contar. Si esto falla, el
+      // conteo sigue: no puede depender de ello.
+      let esperadoAntes = null;
+      try { if (window.BarStockLiveExpected) esperadoAntes = await window.BarStockLiveExpected.antes(master); }
+      catch (e) { console.warn('conteo: no se pudo tomar lo de antes para el esperado', e); }
+
       $('cfBody').innerHTML = `<div class="cf-status">Applying ${s.counted} counts…</div>`;
 
       const counted = new Set(S().countedItems());
@@ -705,6 +716,8 @@
       // Si la lista local llego corta, se para aqui en vez de borrar la
       // diferencia. El conteo no se pierde — esta en la sesion.
       await window.BarStockInventoryCloud.replaceInventoryMaster(master, { exacto: true });
+      // El instante del cierre: hasta aquí llega el ciclo que se cierra.
+      const cerrado = Date.now();
 
       // ── El ciclo ─────────────────────────────────────────────────────
       //
@@ -767,6 +780,17 @@
       // limpia en vez de arrastrar las marcas del ciclo anterior.
       if (typeof window.rebuildPlacedOrdersFromHistory === 'function') {
         await window.rebuildPlacedOrdersFromHistory();
+      }
+
+      // El esperado: sólo cuando este conteo abre ciclo (un reconteo del
+      // jueves no cierra ninguna semana) y sólo lo que se contó. SIN
+      // esperarlo: el conteo ya está guardado, y la pantalla de "Y ahora
+      // qué" no tiene por qué esperar a esto. Si falla, se dice lo que
+      // pasó en la consola; el conteo no se toca.
+      if (!yaHayCiclo && esperadoAntes && window.BarStockLiveExpected) {
+        window.BarStockLiveExpected.guardar({ antes: esperadoAntes, master, contados: [...counted], hasta: cerrado })
+          .then(r => { if (!r || !r.ok) console.warn('conteo: el esperado no se guardó:', r && r.error); })
+          .catch(e => console.warn('conteo: el esperado no se guardó:', e));
       }
 
       if (typeof saveState === 'function') saveState();

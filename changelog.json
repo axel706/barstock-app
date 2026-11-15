@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261114-212913",
+    "items": [
+      "Closing a count now saves what Live expected"
+    ]
+  },
+  {
     "build": "20261114-211622",
     "items": [
       "Out dates leave half a bottle of margin",
@@ -184,12 +190,6 @@
     "items": [
       "Settings › Toast › Pours: each restaurant sets its own pours",
       "Changing a pour recounts every liquor sold that way"
-    ]
-  },
-  {
-    "build": "20261112-213230",
-    "items": [
-      "Recipes › From Toast: Not drinks list with Restore"
     ]
   }
 ]

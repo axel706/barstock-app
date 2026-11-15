@@ -371,6 +371,46 @@ grupo('Open Ordering, en el telefono, lleva a Orders');
   prueba('y no toca el shell movil', w.__irMovil.length === 0, JSON.stringify(w.__irMovil));
 }
 
+grupo('el esperado no puede tumbar el cierre');
+{
+  // El esperado (live-expected.js) se toma antes del bucle que escribe el
+  // on hand y se guarda sin esperarlo. Aquí: que falle de todas las
+  // formas posibles y el conteo se cierre igual.
+  const { w, b } = await abrir({ contados: 3, desdeCero: false });
+  w.state.master.forEach((r, i) => { r.toOrder = i < 2 ? 2 : 0; r.value = 10; });
+  let guardado = false;
+  w.BarStockInventoryCloud = { replaceInventoryMaster: async () => { guardado = true; } };
+  global.state = w.state;
+  w.BarStockMobile = { montado: () => false, ir() {} };
+  w.bsOpenSection = () => {};
+  w.BarStockLiveExpected = {
+    antes: async () => { throw new Error('sin red'); },
+    guardar: () => Promise.reject(new Error('tampoco'))
+  };
+  b.querySelector('#cfGo').click();
+  await esperar(60);
+  prueba('con el esperado roto, el conteo se guarda', guardado);
+  prueba('y la pantalla llega al final', !!w.document.getElementById('cfGoOrder'), txt(b).slice(0, 120));
+}
+{
+  // Lo de antes se toma con los números viejos: el fixture tiene 2 en
+  // los contados y bottlesFor devuelve 1 al cerrar.
+  const { w, b } = await abrir({ contados: 3, desdeCero: false });
+  w.BarStockInventoryCloud = { replaceInventoryMaster: async () => {} };
+  global.state = w.state;
+  w.BarStockMobile = { montado: () => false, ir() {} };
+  w.bsOpenSection = () => {};
+  let visto = null;
+  w.BarStockLiveExpected = {
+    antes: async (m) => { visto = m[0].onHand; return { desde: '2026-11-09T02:30:00.000Z', onHand: {}, precio: {} }; },
+    guardar: async () => ({ ok: true })
+  };
+  b.querySelector('#cfGo').click();
+  await esperar(60);
+  prueba('lo de antes ve el on hand viejo (2), no el nuevo (1)', visto === 2, String(visto));
+  prueba('y el nuevo sí quedó escrito', w.state.master[0].onHand === 1, String(w.state.master[0].onHand));
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') +
             '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);

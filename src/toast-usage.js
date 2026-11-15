@@ -222,5 +222,5 @@
     return Object.assign({ estado: 'listo', conteo: conteo.toISOString() }, r);
   }
 
-  window.BarStockToastUsage = { calcular, ventasDesde, desdeElConteo, diaDeNegocio, ML_POR_OZ, ML_SIN_TAMANO, CORTE_H };
+  window.BarStockToastUsage = { calcular, ventasDesde, desdeElConteo, ultimoConteo, diaDeNegocio, ML_POR_OZ, ML_SIN_TAMANO, CORTE_H };
 })();
