@@ -41,6 +41,12 @@ function prueba(n, c, d) {
   else { mal++; console.log('  MAL  ' + n + (d ? '   → ' + d : '')); }
 }
 const grupo = t => console.log('\n' + t);
+// La lista de selectores de la regla del cristal (la que empieza por
+// `#mBand .m-ico`). Se lee la lista y no línea por línea: cada botón que
+// entra en ella rompía las pruebas que miraban qué línea venía después.
+const reglaCristal = (css) => (/(body\.m-shell #mBand \.m-ico:not\(\.m-ico-alert\),[^{]*)\{\s*-webkit-backdrop-filter/.exec(css) || [])[1] || '';
+const reflejoCristal = (css) => (/(body\.m-shell #mBand \.m-ico:not\(\.m-ico-alert\)::before,[^{]*)\{/.exec(css) || [])[1] || '';
+
 
 // La regla del botón activo: desde el 2026-11-15 es la del tinte del
 // cristal de "Done" (Axel: "exactamente igual"), compartida con él.
@@ -55,8 +61,7 @@ grupo('el relleno de la pestaña activa (el cristal de "Done", 2026-11-15)');
 
   prueba('es el cristal azul de "Done", la misma regla', /background:\s*rgba\(56,\s*189,\s*248/i.test(r), r.trim());
   prueba('y entra en la regla del cristal (desenfoque y reflejo)',
-    /body\.m-shell #mTabs \.m-tab\.on,\s*\n\s*body\.m-shell #mScreens :is\(#mhTabs/.test(css) &&
-    /body\.m-shell #mTabs \.m-tab\.on::before,/.test(css));
+    /#mTabs \.m-tab\.on/.test(reglaCristal(css)) && /#mTabs \.m-tab\.on::before/.test(reflejoCristal(css)));
   prueba('sin la regla vieja de azul sólido debajo', !/body\.m-shell \.m-tab\.on \{ background/.test(css));
 
   // El fallo original: blanco translúcido sobre vidrio oscuro = gris.

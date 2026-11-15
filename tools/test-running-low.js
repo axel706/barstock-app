@@ -98,7 +98,14 @@ grupo('1 · el botón, dentro de la tarjeta');
   await esperar(30);
   const c = tarjeta(host, 'White Haven Sauvignon Blanc');
   const b = c && c.querySelector('[data-low]');
-  prueba('cada tarjeta lleva "Running low"', !!b && txt(b) === 'Running low' && host.querySelectorAll('[data-low]').length === 2);
+  // Axel, 2026-11-15, opción B en naranja: "Running low" se leía como un
+  // estado del producto, no como algo que se puede hacer.
+  prueba('cada tarjeta lleva "Tell the team it’s low", con su megáfono', !!b && txt(b) === 'Tell the team it’s low' &&
+    !!b.querySelector('.ti-speakerphone') && host.querySelectorAll('[data-low]').length === 2, b && txt(b));
+  const cssL = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8');
+  prueba('de cristal (la regla compartida) y teñido de naranja',
+    /body\.m-shell #mScreens \.m-low-b,/.test(cssL) && /body\.m-shell #mScreens \.m-low-b::before,/.test(cssL) &&
+    /body\.m-shell #mScreens \.m-res \.m-low-b \{[^}]*rgba\(249, 115, 22/.test(cssL));
   prueba('dentro de la tarjeta, no debajo', !!(b && b.closest('.m-fic')));
   b.click(); await esperar(10);
   prueba('tocarlo abre el teclado, no la ficha', !!w.document.querySelector('#mSheet .m-kp') && !w.document.querySelector('#mSheet .m-ficha'));

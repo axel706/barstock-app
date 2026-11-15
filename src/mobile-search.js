@@ -233,7 +233,10 @@
         puede('ordenes') ? `<button type="button" class="m-low-x" data-low-x="${esc(l.id)}" data-low-r="${mi}">Remove</button>` : ''}</div>`;
     }
     if (!puede('avisar_bajo')) return '';
-    return `<button type="button" class="m-low-b" data-low="${mi}">Running low</button>`;
+    // "Tell the team it's low" con su megáfono (Axel, 2026-11-15, B en
+    // naranja): "Running low" se leía como el estado del producto, no
+    // como algo que se puede hacer.
+    return `<button type="button" class="m-low-b" data-low="${mi}"><i class="ti ti-speakerphone" aria-hidden="true"></i>Tell the team it’s low</button>`;
   }
 
   function avisarBajo(host, r) {

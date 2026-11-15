@@ -759,7 +759,7 @@ escáner va apagado con un aviso.
   envuelve `window.fetch` y para un invitado sólo deja salir lecturas,
   `toast_recipes`, `toast_recipe_lines`, el "Not a drink" y su Restore
   (crear o borrar sólo filas `ignored` de licor en `toast_item_links`),
-  "Running low" con su permiso (añadir UNA fila a `stock_checks` y una
+  "Tell the team it’s low" (antes "Running low") con su permiso (añadir UNA fila a `stock_checks` y una
   de persona a `shopping_list`; ni cambiar ni quitar) y la sesión. Va
   bajo el candado quien sólo puede recetas y avisar
   (`permisos.bajoCandado`, antes `soloRecetas`). supabase-js
