@@ -1090,7 +1090,10 @@ está cargada, "See them" abre Inventory filtrado como antes. Prueba:
   "Remove" (sólo quien compra; quita la línea, no la verificación).
   Permiso nuevo **"Report running low"** (`avisar_bajo`), de fábrica en
   Bartender. Prueba: `test-running-low`.
-- Falta el botón del Home ("To buy · N", blanco, opción B).
+- **El Home** (opción 1, botón B): "To buy · N" en blanco al lado de
+  "See them" de "Running out first", sólo con algo en la lista; lleva
+  a la pestaña. Sin nada que se acabe no hay tarjeta, y tampoco botón.
+  Prueba: el último grupo de `test-tarjeta-pronto`.
 
 ---
 

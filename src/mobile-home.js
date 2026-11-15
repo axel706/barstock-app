@@ -1182,6 +1182,11 @@
     // lado, la tarjeta y la lista dejarían de decir lo mismo.
     const RO = window.BarStockRunningOut;
     const pronto = RO ? RO.lista() : [];
+    // Lo que hay por comprar. La primera vez se lee; después la lista
+    // avisa sola (toBuyCounted, abajo) y el Home se repinta.
+    const TBy = window.BarStockMobileToBuy;
+    const nBuy = TBy && TBy.cuantos ? TBy.cuantos() : null;
+    if (TBy && nBuy === null && TBy.cargar) TBy.cargar();
 
     if (pronto.length) {
       // Ya viene ordenada: lo que está fuera, después el que se acaba
@@ -1220,6 +1225,18 @@
           ? 'and ' + resto + ' more ' + (ultimo === 0 ? 'today' : ultimo < 7 ? 'by ' + dia(ultimo) : 'this week')
           : n + ' this week',
         btn: 'See them',
+        // ── "To buy · N" (Axel, 2026-11-15, opción 1 con el botón
+        // blanco, B) ────────────────────────────────────────────────
+        // Lo que hay en la lista de compras, al lado de "See them", y
+        // SÓLO si hay algo: lleva a la pestaña To buy de Orders. Blanco
+        // para que se vea sin competir con el rojo de "See them". La
+        // cifra es la de mobile-to-buy.js, la misma de la pestaña.
+        btn2: nBuy > 0 ? 'To buy · ' + nBuy : '',
+        btn2Tono: 'blanco',
+        go2: () => {
+          const O = window.BarStockMobileOrders;
+          if (O && O.abrirSeccion) O.abrirSeccion('buy');
+        },
         // A la pantalla de revisión (Axel, 2026-11-14, lámina B): los
         // mismos productos y en el mismo orden (running-out.js), cada uno
         // con "Add to list" e "I have enough". Antes abría Inventory
@@ -1412,7 +1429,7 @@
           ${c.vs ? `<span class="m-hero-vs">${esc(c.vs)}</span>` : ''}
           ${c.btn ? `<button type="button" class="m-hero-b${c.btnTono ? ' m-hero-b-' + esc(c.btnTono) : ''}"
                              data-go="${i}">${esc(c.btn)}</button>` : ''}
-          ${c.btn2 ? `<button type="button" class="m-hero-b2" data-go2="${i}">${esc(c.btn2)}</button>` : ''}
+          ${c.btn2 ? `<button type="button" class="m-hero-b2${c.btn2Tono ? ' m-hero-b2-' + esc(c.btn2Tono) : ''}" data-go2="${i}">${esc(c.btn2)}</button>` : ''}
           <!-- El tercero. Va con data-gob3 y no con data-go3 porque
                ese ultimo ya es el del boton de icono de mas abajo. -->
           ${c.btn3 ? `<button type="button" class="m-hero-b2" data-gob3="${i}">${esc(c.btn3)}</button>` : ''}
@@ -2432,6 +2449,8 @@
     if (host && host.classList.contains('on')) render(host);
   }
   if (window.BarStockLiveCache) window.BarStockLiveCache.alCambiar(refresh);
+  // La cifra de "To buy · N" cambió (alguien añadió o quitó algo).
+  if (window.BarStockEvents && window.BarStockEvents.on) window.BarStockEvents.on('toBuyCounted', refresh);
 
   // ── Esperar a que lleguen los datos ──────────────────────────────────
   //

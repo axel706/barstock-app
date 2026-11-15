@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261115-094606",
+    "items": [
+      "Home: To buy button on Running out first"
+    ]
+  },
+  {
     "build": "20261115-093945",
     "items": [
       "Do we have: Running low on every card",
@@ -183,13 +189,6 @@
     "build": "20261113-104120",
     "items": [
       "Sold card no longer blinks out after Sync"
-    ]
-  },
-  {
-    "build": "20261113-095747",
-    "items": [
-      "Home: Sync button on Sold to load today's sales",
-      "Sold today and the big Toast card show today so far"
     ]
   }
 ]

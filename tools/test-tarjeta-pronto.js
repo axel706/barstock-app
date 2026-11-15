@@ -227,6 +227,27 @@ const nombres = (h) => filas(h).map(f => f.querySelector('.n').textContent);
     prueba('sin la revisión: inventario filtrado, como antes', w.__ido.includes('inventory') && w.__orden === 'agota', String(w.__orden));
   }
 
+  grupo('"To buy · N", blanco, sólo con algo en la lista (2026-11-15)');
+  {
+    let w = entorno([{ item: 'A', onHand: 0, avg: 5 }]);
+    let pedidas = 0;
+    w.BarStockMobileToBuy = { cuantos: () => null, cargar: () => { pedidas++; return Promise.resolve([]); } };
+    let h = pintar(w);
+    prueba('sin leer la lista: sin botón, y la pide', !tarjeta(h).querySelector('[data-go2]') && pedidas === 1);
+    w.BarStockMobileToBuy.cuantos = () => 0;
+    h = pintar(w);
+    prueba('lista vacía: sin botón', !tarjeta(h).querySelector('[data-go2]'));
+    w.BarStockMobileToBuy.cuantos = () => 3;
+    h = pintar(w);
+    const b = tarjeta(h).querySelector('[data-go2]');
+    prueba('con algo: "To buy · 3", al lado de See them', !!b && b.textContent.trim() === 'To buy · 3' && !!tarjeta(h).querySelector('.m-hero-b'));
+    prueba('blanco (opción B)', !!b && b.classList.contains('m-hero-b2-blanco'));
+    let sec = null;
+    w.BarStockMobileOrders = { abrirSeccion: (x) => { sec = x; } };
+    if (b) b.click();
+    prueba('lleva a la pestaña To buy de Orders', sec === 'buy', String(sec));
+  }
+
   console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +
     '   ·   ' + (ok + mal) + ' comprobaciones');
   process.exit(mal ? 1 : 0);

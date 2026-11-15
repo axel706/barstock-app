@@ -1587,6 +1587,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     background: rgba(0,0,0,.20);
     border: 1px solid rgba(255,255,255,.18);
   }
+  /* "To buy · N" en "Running out first" (Axel, 2026-11-15, opción B):
+   * blanco, para que se vea al lado del "See them" rojo sin competir
+   * con él. El texto en el rojo oscuro de la tarjeta. */
+  body.m-shell .m-hero-b2.m-hero-b2-blanco {
+    background: #fff; color: #7f1d1d; border-color: transparent;
+  }
   /* Reiniciar el ciclo es la única acción de la app sin deshacer, y es
    * la principal de su tarjeta. Rojo sólido, igual que el "See them"
    * de la tarjeta roja: translúcido se leía como secundario, y no lo
