@@ -1061,7 +1061,7 @@ abierta). Lo decidido se queda en la tarjeta con quién y cuándo: "On the
 list · 2 by Ana · Undo" y "Checked: 6 on the shelf · Wed 3:12 PM · Mia ·
 Change" (CHANGE, no Undo: una verificación no se deshace, se corrige con
 otra). Lo revisado sigue en la pantalla aunque deje de acabarse. La
-lista vive en `shopping_list` (migración 043, **sin correr**: probada
+lista vive en `shopping_list` (migración 043, **corrida por Axel el 2026-11-15**: probada
 contra Postgres 16; quitar pasa a `removed`, no borra) y
 `src/shopping-list.js` (`anadir`, `quitar`, `leer`). Si la revisión no
 está cargada, "See them" abre Inventory filtrado como antes. Prueba:
