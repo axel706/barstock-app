@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261114-221606",
+    "items": [
+      "Behind-the-scenes fixes"
+    ]
+  },
+  {
     "build": "20261114-213937",
     "items": [
       "Running out first: slow movers are out again"
@@ -181,14 +187,6 @@
     "build": "20261112-224037",
     "items": [
       "Renaming on the computer now carries everything along too"
-    ]
-  },
-  {
-    "build": "20261112-223246",
-    "items": [
-      "Edit an item's name and vendor code from the phone",
-      "Renaming carries Toast, recipes, barcodes and history along",
-      "Delete an item, with a backup in Time Machine first"
     ]
   }
 ]

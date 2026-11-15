@@ -165,6 +165,76 @@ grupo('3 · lo que no se guarda');
   prueba('sin nada contado: nada que guardar', r.ok === false && !w.__pet.some(p => p.metodo === 'POST'), JSON.stringify(r));
 }
 
+grupo('3b · cerrar lo provisional cuando Toast tiene los días');
+{
+  // Al cerrar el conteo, el día del cierre puede no estar cargado entero
+  // (la carga de la madrugada lo trae al día siguiente). El ciclo queda
+  // `provisional`; cuando TODOS sus días (después de start_day, hasta
+  // end_day) están cargados, completos y cerrados, se recalcula lo
+  // vendido de cada fila con esos días y el ciclo pasa a `final`.
+  const DIAS = ['2026-11-09', '2026-11-10', '2026-11-11', '2026-11-12', '2026-11-13', '2026-11-14', '2026-11-15'];
+  const montar = (o) => {
+    o = o || {};
+    const w = entorno();
+    w.__pet = [];
+    w.BarStockRest = { leerTodo: async (ruta) => {
+      w.__pet.push({ url: ruta, metodo: 'GET' });
+      if (/^live_expected_cycles/.test(ruta)) return o.sinCiclos ? [] : [{ id: 'ciclo-1', start_day: '2026-11-08', end_day: '2026-11-15' }];
+      if (/^live_expected\?/.test(ruta)) return [
+        { id: 7, cycle_id: 'ciclo-1', location_id: 'L', item_name: "Tito's", start_count: 3, counted: 1 },
+        { id: 8, cycle_id: 'ciclo-1', location_id: 'L', item_name: 'Baileys', start_count: 2, counted: 2 } ];
+      return [];
+    } };
+    w.BarStockToastUsage.ventasDesde = async (desde) => {
+      w.__desde = desde;
+      const dias = DIAS.filter(d => d !== o.falta).map(d => ({ business_date: d, complete: true, closed: !(o.abierto && d === '2026-11-15') }));
+      dias.push({ business_date: '2026-11-16', complete: true, closed: false });
+      return { dias, productos: [
+        // El 16 es del ciclo nuevo: no cuenta.
+        { producto: "Tito's", porDia: { '2026-11-10': 2, '2026-11-15': 1.5, '2026-11-16': 9 } }
+      ], sinConvertir: [] };
+    };
+    const fetchViejo = w.fetch;
+    w.fetch = async (url, op) => {
+      const r = await fetchViejo(url, op);
+      if (/live_expected\?on_conflict=id/.test(String(url))) return { ok: true, status: 201, text: async () => '', json: async () => null };
+      if (/live_expected_cycles\?id=eq\./.test(String(url))) return { ok: true, status: 204, text: async () => '', json: async () => null };
+      return r;
+    };
+    return w;
+  };
+  let w = montar();
+  prueba('existe cerrarPendientes', typeof w.BarStockLiveExpected.cerrarPendientes === 'function');
+  let r = await w.BarStockLiveExpected.cerrarPendientes();
+  const esc = w.__pet.filter(p => p.metodo !== 'GET');
+  prueba('contesta y dice cuántos cerró', r && r.ok === true && r.cerrados === 1, JSON.stringify(r));
+  prueba('lee lo vendido desde el día del conteo anterior', w.__desde === '2026-11-08', w.__desde);
+  const up = esc.find(p => /live_expected\?on_conflict=id/.test(p.url));
+  const filas = up ? up.cuerpo : [];
+  const t = filas.find(f => f.item_name === "Tito's") || {};
+  prueba('las filas se rehacen de una vez, por su id', !!up && /merge-duplicates/.test(JSON.stringify(up.cabeceras)) && filas.length === 2, up && up.url);
+  prueba("Tito's: 2 + 1.5, sin el 9 del ciclo nuevo", t.sold === 3.5 && t.id === 7, JSON.stringify(t));
+  prueba('con lo vendido por día de esos días', t.sold_by_day && t.sold_by_day['2026-11-15'] === 1.5 && !('2026-11-16' in t.sold_by_day), JSON.stringify(t.sold_by_day));
+  prueba('lo que no se vendió queda en 0', (filas.find(f => f.item_name === 'Baileys') || {}).sold === 0);
+  prueba('lo contado y lo de antes no cambian', t.counted === 1 && t.start_count === 3);
+  prueba('la cuenta sigue sin escribirse', !('expected' in t) && !('difference' in t));
+  const fin = esc.find(p => /live_expected_cycles\?id=eq\.ciclo-1/.test(p.url));
+  prueba('y el ciclo pasa a final, después de sus filas', !!fin && fin.metodo === 'PATCH' && fin.cuerpo.status === 'final' && !!fin.cuerpo.finalized_at &&
+    esc.indexOf(fin) > esc.indexOf(up), JSON.stringify(fin && fin.cuerpo));
+  prueba('con los días con los que se cerró', fin && fin.cuerpo.sales_days.length === 7 && fin.cuerpo.sales_days.every(d => d.closed), JSON.stringify(fin && fin.cuerpo.sales_days));
+
+  w = montar({ abierto: true });
+  r = await w.BarStockLiveExpected.cerrarPendientes();
+  prueba('con el día del cierre todavía abierto: no toca nada', r.ok === true && r.cerrados === 0 && !w.__pet.some(p => p.metodo !== 'GET'), JSON.stringify(r));
+  w = montar({ falta: '2026-11-12' });
+  r = await w.BarStockLiveExpected.cerrarPendientes();
+  prueba('con un día sin cargar: tampoco (no se sabe qué pasó ese día)', r.cerrados === 0 && !w.__pet.some(p => p.metodo !== 'GET'), JSON.stringify(r));
+  w = montar({ sinCiclos: true });
+  r = await w.BarStockLiveExpected.cerrarPendientes();
+  prueba('sin nada provisional: una lectura y nada más', r.ok === true && r.cerrados === 0 && w.__pet.length === 1, JSON.stringify(w.__pet.map(p => p.url)));
+  prueba('se lanza solo al abrir la app, sin esperarlo', /setTimeout\(\s*cerrarSolo/.test(leer('src/live-expected.js')));
+}
+
 grupo('4 · en el cierre del conteo');
 {
   const cf = leer('src/count-finish.js');

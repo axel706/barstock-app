@@ -82,10 +82,10 @@
 
   // Dice lo que contestó el servidor, tal cual: un mensaje que adivina
   // ("corre la migración 040") manda a buscar donde no es.
-  async function escribir(ruta, cuerpo, prefer) {
+  async function escribir(ruta, cuerpo, prefer, metodo) {
     const c = cfg();
     const r = await fetch(c.SUPABASE_URL + '/rest/v1/' + ruta, {
-      method: 'POST',
+      method: metodo || 'POST',
       headers: { 'Content-Type': 'application/json', apikey: c.SUPABASE_KEY, Authorization: 'Bearer ' + c.SUPABASE_KEY, Prefer: prefer },
       body: JSON.stringify(cuerpo)
     });
@@ -134,5 +134,81 @@
     }
   }
 
-  window.BarStockLiveExpected = { antes, armar, guardar };
+  // ── Cerrar lo provisional ────────────────────────────────────────────
+  //
+  // Al cerrar el conteo, el día del cierre casi nunca está cargado entero
+  // en Toast: la carga de la madrugada lo trae al día siguiente. Por eso
+  // el ciclo se guarda `provisional`. Cuando TODOS sus días (los de
+  // después de start_day, hasta end_day) están cargados, completos y
+  // cerrados, lo vendido de cada fila se rehace con esos días, y sólo
+  // esos: lo del ciclo nuevo no cuenta. Después el ciclo pasa a `final`
+  // y desde ahí no se mueve (el trigger de la migración 040).
+  //
+  // Un día que falta (la carga falló) deja el ciclo esperando: no se sabe
+  // qué pasó ese día, y cerrarlo así daría por merma lo que no se cargó.
+  // Lo de antes (lo contado al abrir, lo que llegó, lo contado) no se
+  // toca: es lo que la app sabía al cerrar.
+  const masDia = (d, k) => new Date(Date.parse(d + 'T12:00:00Z') + k * 864e5).toISOString().slice(0, 10);
+  async function cerrarPendientes() {
+    const U = window.BarStockToastUsage, R = window.BarStockRest;
+    if (!U || !U.ventasDesde || !R) return { ok: false, error: 'The Toast usage modules are not loaded.' };
+    try {
+      const loc = await window.BarStockInventoryCloud.fetchLocationId();
+      if (!loc) return { ok: false, error: 'No location open.' };
+      const ciclos = await R.leerTodo('live_expected_cycles?location_id=eq.' + loc +
+        '&status=eq.provisional&select=id,start_day,end_day&order=cycle_end.asc');
+      let cerrados = 0;
+      for (const c of ciclos) {
+        const v = await U.ventasDesde(c.start_day);
+        const dias = [];
+        for (let d = masDia(c.start_day, 1); d <= c.end_day && dias.length < 60; d = masDia(d, 1)) dias.push(d);
+        const cargado = new Map((v.dias || []).map(d => [d.business_date, d]));
+        if (!dias.length || !dias.every(d => { const x = cargado.get(d); return x && x.complete && x.closed; })) continue;
+        const filas = await R.leerTodo('live_expected?cycle_id=eq.' + c.id +
+          '&select=id,cycle_id,location_id,item_name,start_count,counted&order=id.asc');
+        const dentro = new Set(dias);
+        const porProd = new Map((v.productos || []).map(p => [p.producto, p]));
+        const r3 = (n) => Math.round(n * 1000) / 1000;
+        const nuevas = filas.map(f => {
+          const p = porProd.get(f.item_name);
+          const porDia = {};
+          let sold = 0;
+          for (const [d, b] of Object.entries((p && p.porDia) || {})) {
+            if (!dentro.has(d)) continue;
+            porDia[d] = r3(Number(b) || 0);
+            sold += Number(b) || 0;
+          }
+          // Las columnas que una inserción exige van también: el upsert
+          // por id sólo cambia lo vendido, pero PostgREST arma un INSERT.
+          return { id: f.id, cycle_id: f.cycle_id, location_id: f.location_id, item_name: f.item_name,
+            start_count: f.start_count, counted: f.counted, sold: r3(sold), sold_by_day: porDia };
+        });
+        if (nuevas.length) await escribir('live_expected?on_conflict=id', nuevas, 'resolution=merge-duplicates,return=minimal');
+        await escribir('live_expected_cycles?id=eq.' + c.id, {
+          status: 'final', finalized_at: new Date().toISOString(),
+          sales_days: dias.map(d => ({ d, complete: true, closed: true }))
+        }, 'return=minimal', 'PATCH');
+        cerrados++;
+      }
+      return { ok: true, cerrados };
+    } catch (e) {
+      return { ok: false, error: String(e && e.message || e) };
+    }
+  }
+
+  // Solo, sin que nadie lo pida: unos segundos después de abrir la app
+  // (que la sesión y la locación estén listas) y cada media hora mientras
+  // siga abierta. Casi siempre es una lectura que no encuentra nada. Si
+  // falla (sin sesión, un invitado que no puede escribir), se dice en la
+  // consola y se vuelve a intentar a la siguiente.
+  async function cerrarSolo() {
+    const r = await cerrarPendientes();
+    if (r && !r.ok) console.warn('[esperado] lo provisional no se cerró:', r.error);
+  }
+  if (typeof setTimeout === 'function') {
+    setTimeout(cerrarSolo, 20000);
+    if (typeof setInterval === 'function') setInterval(cerrarSolo, 30 * 60 * 1000);
+  }
+
+  window.BarStockLiveExpected = { antes, armar, guardar, cerrarPendientes };
 })();

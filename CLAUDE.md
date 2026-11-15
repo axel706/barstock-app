@@ -902,9 +902,16 @@ por la tarde):**
   lo que contestó el servidor y no escribe filas sueltas. Pruebas:
   `test-esperado-guardar` y "el esperado no puede tumbar el cierre" en
   `test-cierre-conteo`. **Sin estrenar contra la base de verdad.**
-- **Falta:** cerrar los provisionales cuando Toast tenga el día del
-  cierre completo (la tarea de la mañana o al abrir la app), y todo lo
-  que lo enseña (fases 3 en adelante del plan).
+- **Cerrar lo provisional, hecho:** `cerrarPendientes()` en
+  `live-expected.js`, solo (`cerrarSolo`: 20 s después de abrir la app y
+  cada 30 min). Busca los ciclos `provisional` de la locación; si TODOS
+  sus días (después de `start_day`, hasta `end_day`) están cargados,
+  completos y cerrados, rehace `sold` y `sold_by_day` de cada fila con
+  esos días (upsert por `id`, con las columnas que exige un INSERT) y
+  pasa el ciclo a `final`. Un día sin cargar lo deja esperando. Lo de
+  antes no se toca.
+- **Falta:** todo lo que lo enseña (fases 3 en adelante del plan):
+  primero Count closed, sobre lámina.
 - *(Lo de abajo es lo que se planeó; ya construido.)* **Guardar al cerrar el conteo**, en
   `count-finish.js`, sólo cuando el conteo abre ciclo (`!yaHayCiclo`;
   un reconteo no). El LIVE se calcula con lo de ANTES: hay que tomar
