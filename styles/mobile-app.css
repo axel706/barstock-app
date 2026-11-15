@@ -2738,17 +2738,21 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * Antes la cifra vivía en la primera línea junto al nombre y quedaba
    * colgada arriba — es el dato que se viene a mirar y parecía una
    * nota al margen. */
+  /* Del tamaño de las tarjetas de "Running out" (Axel, 2026-11-15,
+   * opción B: la tarjeta de Running out con la fracción de siempre):
+   * radio de 20 px, el nombre en negrita y grande, la cifra en
+   * --m-figure. El aire va por arriba (antes margin-bottom). */
   body.m-shell .m-inv {
     position: relative; overflow: hidden; width: 100%;
-    display: flex; align-items: center; gap: 11px;
+    display: flex; align-items: center; gap: 12px;
     text-align: left; cursor: pointer;
-    padding: 13px 13px 14px; margin-bottom: 7px; border-radius: 15px;
-    background: rgba(255,255,255,.10);
-    border: 1px solid rgba(255,255,255,.14);
+    padding: 14px; margin: 10px 0 0; border-radius: 20px; line-height: 1.4;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.10);
   }
   .m-inv-l { flex: 1; min-width: 0; }
   .m-inv-n {
-    display: block; font-size: var(--m-body); font-weight: 500; color: #eef4fb;
+    display: block; font-size: var(--m-strong); font-weight: 700; color: #f1f5f9;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   /* La fracción pegada a la cifra y en su misma línea base: el 2.04
@@ -2757,13 +2761,15 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     flex: 0 0 auto; display: flex; align-items: baseline; gap: 1px;
     line-height: 1;
   }
-  .m-inv-v b { font-size: var(--m-screen); font-weight: 800; letter-spacing: -.7px; }
+  .m-inv-v b { font-size: var(--m-figure); font-weight: 800; letter-spacing: -.7px; }
   .m-inv-v i { font-style: normal; font-size: var(--m-body); font-weight: 700; color: #8ea3b8; }
 
+  /* Una sola línea, como en Running out: lo que no cabe se corta. */
   .m-inv-meta {
-    display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
-    margin-top: 7px; font-size: var(--m-meta); color: #a9bacd;
+    display: flex; align-items: center; flex-wrap: nowrap; gap: 6px; overflow: hidden;
+    margin-top: 4px; font-size: var(--m-small); color: #9fb0c4; white-space: nowrap;
   }
+  .m-inv-meta :is(.m-out, .m-flag) { font-size: var(--m-small); padding: 1px 7px; border-radius: 7px; }
   /* La etiqueta es el motivo por el que ese renglón está arriba. */
   .m-flag {
     font-style: normal; padding: 2px 6px; border-radius: 5px;
@@ -3821,7 +3827,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
 
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-seg { border-radius: 15px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-seg button { border-radius: 11px !important; }
-  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-inv { border-radius: 15px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-inv { border-radius: 20px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ordv { border-radius: 15px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ord-add { border-radius: 999px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ord-x { border-radius: 50% !important; }

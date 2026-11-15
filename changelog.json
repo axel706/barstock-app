@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261115-102005",
+    "items": [
+      "Inventory: bigger cards, like Running out"
+    ]
+  },
+  {
     "build": "20261115-100807",
     "items": [
       "To buy: Order the list in one go",
@@ -184,12 +190,6 @@
     "build": "20261113-120115",
     "items": [
       "On the shelf shows how many bottles, live"
-    ]
-  },
-  {
-    "build": "20261113-110139",
-    "items": [
-      "Do we have: Live items show this week, day by day"
     ]
   }
 ]

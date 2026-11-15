@@ -198,7 +198,10 @@ sombra de `app.css`, que sobre el cristal dibujaban una pastilla fantasma.
 `.m-sx-tabs` de People y Orders no se tocó.
 
 El radio de las tarjetas del carrusel (`.m-hero`) es **20px**, y es la
-referencia cuando pida "como las tarjetas".
+referencia cuando pida "como las tarjetas". Las filas de Inventory (`.m-inv`) son
+del tamaño de las tarjetas de Running out (Axel, 2026-11-15, opción B):
+radio 20, el nombre en `--m-strong` negrita, la cifra en `--m-figure`
+con su "/par" pegado, y la línea de abajo en una sola fila.
 
 ### El header al hacer scroll (patrón para todas las secciones)
 
