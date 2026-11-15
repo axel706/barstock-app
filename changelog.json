@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261115-093945",
+    "items": [
+      "Do we have: Running low on every card",
+      "Say how many are left; it goes to To buy"
+    ]
+  },
+  {
     "build": "20261115-093320",
     "items": [
       "Orders: a To buy tab when the list has something",
@@ -183,12 +190,6 @@
     "items": [
       "Home: Sync button on Sold to load today's sales",
       "Sold today and the big Toast card show today so far"
-    ]
-  },
-  {
-    "build": "20261113-093623",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]

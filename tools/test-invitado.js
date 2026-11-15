@@ -93,6 +93,23 @@ function entorno(rol) {
     prueba('lo que no se puede leer, no se adivina: no sale', !p('/api/integrations?provider=toast', 'POST', undefined));
   }
 
+  grupo('2b · "Running low" (2026-11-15): sólo con su permiso, y sólo añadir');
+  {
+    const G = entorno('bartender').BarStockGuest;
+    const p = (u, m, b) => G.permitido(u, m, b === undefined ? undefined : JSON.stringify(b));
+    prueba('sigue bajo el candado (recetas y avisar no lo apagan)', G.activo());
+    prueba('una verificación, sí', p(SB + '/rest/v1/stock_checks', 'POST', { item_name: 'X', counted: 1 }));
+    prueba('una línea de persona a la lista, sí', p(SB + '/rest/v1/shopping_list', 'POST', { item_name: 'X', qty: 2, reason: 'person' }));
+    prueba('pero no una de la app, ni ya pedida', !p(SB + '/rest/v1/shopping_list', 'POST', { item_name: 'X', qty: 2, reason: 'app' }) &&
+      !p(SB + '/rest/v1/shopping_list', 'POST', { item_name: 'X', qty: 2, reason: 'person', status: 'ordered' }));
+    prueba('ni cambiar ni quitar líneas (es de quien compra)', !p(SB + '/rest/v1/shopping_list?id=eq.4', 'PATCH', { status: 'removed' }) &&
+      !p(SB + '/rest/v1/shopping_list?id=eq.4', 'DELETE') && !p(SB + '/rest/v1/stock_checks?id=eq.4', 'PATCH', { counted: 9 }));
+    prueba('ni varias de golpe', !p(SB + '/rest/v1/stock_checks', 'POST', [{ counted: 1 }, { counted: 2 }]));
+    const S = entorno({ role: 'solo_recetas', perms: ['recetas'] }).BarStockGuest;
+    prueba('sin el permiso, nada de eso', S.activo() && !S.permitido(SB + '/rest/v1/stock_checks', 'POST', JSON.stringify({ counted: 1 })) &&
+      !S.permitido(SB + '/rest/v1/shopping_list', 'POST', JSON.stringify({ reason: 'person', qty: 1 })));
+  }
+
   grupo('3 · el candado en fetch');
   {
     let w = entorno('bartender');
@@ -101,7 +118,7 @@ function entorno(rol) {
     let r = await w.fetch(SB + '/rest/v1/inventory_items?location_id=eq.l', { method: 'DELETE' });
     prueba('borrar el inventario no sale', !w.__salio.some(x => /inventory_items/.test(x[1])), JSON.stringify(w.__salio));
     const cuerpo = await r.json();
-    prueba('y vuelve un 403 que dice por qué', r.status === 403 && cuerpo.message === 'Guests can only edit recipes.');
+    prueba('y vuelve un 403 que dice por qué', r.status === 403 && cuerpo.message === 'Your role can only edit recipes and report running low.');
     await w.fetch(SB + '/rest/v1/toast_recipes', { method: 'POST', body: '{}' });
     await w.fetch(SB + '/rest/v1/inventory_items?select=*');
     prueba('las recetas y las lecturas sí salen', w.__salio.length === 2, JSON.stringify(w.__salio));

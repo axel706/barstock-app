@@ -2538,6 +2538,30 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-fic-conlive .m-fic-n { padding-right: calc(var(--m-base) * 3.6); }
   .m-fic-x { display: flex; margin-top: 7px; }
 
+  /* ── "Running low" en la tarjeta de "Do we have" (2026-11-15, lámina 1)
+   * Una fila entera al final de la tarjeta (.m-fic-pie), como la semana:
+   * la tarjeta se parte en dos. El botón vence el radio de app.css con el
+   * id. Ya en la lista, una banda azul con quién y "Remove". */
+  .m-fic-conpie { flex-wrap: wrap; }
+  .m-fic-pie { flex: 0 0 100%; min-width: 0; }
+  :is(#mScreens) .m-low-b {
+    display: block; width: 100%; min-height: calc(var(--m-base) * 2.6); padding: 0 12px;
+    border-radius: 999px !important; cursor: pointer;
+    font-size: var(--m-small); font-weight: 700; color: #eaf2fb;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18);
+  }
+  .m-low-hecho {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 9px 12px; border-radius: 12px;
+    font-size: var(--m-small); background: rgba(56,189,248,.12); color: #7dd3fc;
+  }
+  .m-low-hecho span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m-low-pedido { background: rgba(52,211,153,.12); color: #6ee7b7; }
+  :is(#mScreens) .m-low-x {
+    flex: 0 0 auto; padding: 4px 2px; border: 0; background: none; cursor: pointer;
+    border-radius: 0 !important; font-size: var(--m-small); font-weight: 700; color: #7dd3fc;
+  }
+
   /* ── La semana en la tarjeta de "Do we have" (Axel, 2026-11-13, A) ──
    * Sólo con LIVE (product-hero.js semana). La tarjeta es una fila
    * flexible; con la semana se parte en dos y la gráfica ocupa la

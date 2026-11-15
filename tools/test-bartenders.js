@@ -201,7 +201,7 @@ async function llamar(token, action, cuerpo) {
 
     // ── La lista entera de permisos (3A) ─────────────────────────────
     const sw = (k) => q('[data-fp="' + k + '"]');
-    prueba('3A: todos los permisos, con su interruptor', host.querySelectorAll('[data-fp]').length === 14);
+    prueba('3A: todos los permisos, con su interruptor', host.querySelectorAll('[data-fp]').length === 15);
     prueba('lo que da el rol, encendido; lo que no, gris y quieto', sw('recetas').classList.contains('on') && !sw('recetas').disabled &&
       !sw('contar').classList.contains('on') && sw('contar').disabled && /Not in Bartender/.test(sw('contar').parentNode.textContent));
     prueba('Money y Orders: "Soon", sin poder tocarse', sw('ver_dinero').disabled && /Soon/.test(sw('ver_dinero').parentNode.textContent));
@@ -248,7 +248,7 @@ async function llamar(token, action, cuerpo) {
     const rs = [...host.querySelectorAll('[data-r]')].map(b => b.dataset.r).join();
     prueba('Roles: Owner, Manager y Bartender', rs === 'owner,manager,bartender', rs);
     q('[data-r="owner"]').click();
-    prueba('Owner: todo encendido, nada se toca, sin Save', host.querySelectorAll('[data-rp].on').length === 14 &&
+    prueba('Owner: todo encendido, nada se toca, sin Save', host.querySelectorAll('[data-rp].on').length === 15 &&
       [...host.querySelectorAll('[data-rp]')].every(b => b.disabled) && !q('#ppRolGuardar'));
     w.__atras(); await esperar(30);
     q('[data-tab="roles"]').click(); q('[data-r="manager"]').click();

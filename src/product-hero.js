@@ -268,9 +268,13 @@
     // La semana, sólo donde se pide (la lista de "Do we have") y sólo
     // con LIVE: semana() devuelve '' si no.
     const sem = o.semana ? semana(r, k.c) : '';
+    // `pie`: una fila entera al final de la tarjeta, dentro de ella. La
+    // usa "Do we have" para "Running low" (2026-11-15); lo trae ya
+    // escapado quien llama.
+    const pie = o.pie ? `<div class="m-fic-pie">${o.pie}</div>` : '';
 
     return `
-      <div class="m-fic m-fic-${clase(k)}${v ? ' m-fic-conlive' : ''}${sem ? ' m-fic-consem' : ''}">
+      <div class="m-fic m-fic-${clase(k)}${v ? ' m-fic-conlive' : ''}${sem ? ' m-fic-consem' : ''}${pie ? ' m-fic-conpie' : ''}">
         ${silueta(rv, k.c)}
         <div class="m-fic-d">
           <div class="m-fic-n">${esc(r.item)}</div>
@@ -285,6 +289,7 @@
         ${o.hueco ? '<div class="m-fic-g"></div>' : ''}
         ${v ? '<span class="m-live m-fic-live"><i></i>Live</span>' : ''}
         ${sem}
+        ${pie}
       </div>`;
   }
 

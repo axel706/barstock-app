@@ -152,7 +152,10 @@ grupo('las dos pantallas pintan la misma cabecera');
   const col = (c) => c.querySelector('.m-fic-big b').getAttribute('style');
   prueba('mismo color de estado en las dos', col(a.fic) === col(b.fic),
     col(a.fic) + ' vs ' + col(b.fic));
-  prueba('y la misma clase de tono', a.fic.className === b.fic.className,
+  // Sólo el tono (m-fic-bien / -ojo / -mal): la tarjeta de la lista
+  // lleva además "Running low" abajo (m-fic-conpie), y la ficha no.
+  const tonoDe = (c) => Array.from(c.classList).filter(k => /^m-fic-(bien|ojo|mal)$/.test(k)).join(' ');
+  prueba('y la misma clase de tono', !!tonoDe(a.fic) && tonoDe(a.fic) === tonoDe(b.fic),
     a.fic.className + ' vs ' + b.fic.className);
 }
 

@@ -68,11 +68,15 @@
   // suele gastar (lo que Toast no vende), hasta el par. Uno como mínimo:
   // si alguien lo pone en la lista, es que hace falta algo. Vivía en la
   // revisión de "Running out"; "Running low" necesita el mismo número.
-  function sugerido(r) {
+  //
+  // `quedan` (opcional): lo que alguien acaba de decir que hay ("Running
+  // low"). Manda sobre el LIVE en las dos cuentas.
+  function sugerido(r, quedan) {
     const LC = window.BarStockLiveCache;
-    const p = LC && LC.pedir ? LC.pedir(r) : null;
+    const dicho = quedan != null && isFinite(Number(quedan));
+    const p = LC && LC.pedir ? LC.pedir(r, dicho ? Number(quedan) : undefined) : null;
     if (p != null && p > 0) return p;
-    const queda = LC && LC.cuanto ? LC.cuanto(r) : Number(r && r.onHand) || 0;
+    const queda = dicho ? Number(quedan) : LC && LC.cuanto ? LC.cuanto(r) : Number(r && r.onHand) || 0;
     return Math.max(1, Math.ceil((Number(r && r.suggested) || 0) - queda));
   }
 

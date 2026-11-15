@@ -179,5 +179,9 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', enganchar);
   else enganchar();
 
-  window.BarStockMobileToBuy = { montar, cargar, cuantos, pedidos };
+  // La línea viva de un producto (por comprar o pedida), o null. La
+  // tarjeta de "Do we have" la usa para decir que ya está en la lista.
+  const deProducto = (item) => _lista.find(x => x.item_name === item && (x.status === 'to_buy' || x.status === 'ordered')) || null;
+
+  window.BarStockMobileToBuy = { montar, cargar, cuantos, pedidos, deProducto };
 })();

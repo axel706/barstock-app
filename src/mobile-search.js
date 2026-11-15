@@ -167,7 +167,7 @@
       const mi = master().indexOf(r);
       if (H && H.html) {
         return `<div class="m-res m-res-fic" data-i="${mi}" role="button" tabindex="0">
-          ${H.html(r, { par: parDe(r), semana: true })}</div>`;
+          ${H.html(r, { par: parDe(r), semana: true, pie: bajo(r, mi) })}</div>`;
       }
       // Sin el módulo, la fila de antes: fea, pero dice qué hay.
       const k = tono(r);
@@ -187,6 +187,92 @@
 
     caja.querySelectorAll('.m-res').forEach(b => {
       b.onclick = () => ficha(host, Number(b.dataset.i));
+    });
+    // Los botones de "Running low" viven DENTRO de la tarjeta, que abre la
+    // ficha al tocarla: sin parar el toque, abrirían las dos cosas.
+    caja.querySelectorAll('[data-low], [data-low-x]').forEach(b => {
+      b.onclick = (ev) => {
+        ev.stopPropagation();
+        const r = master()[Number(b.dataset.low != null ? b.dataset.low : b.dataset.lowR)];
+        if (!r) return;
+        if (b.hasAttribute('data-low')) avisarBajo(host, r);
+        else quitarDeLista(host, b);
+      };
+    });
+  }
+
+  // ── "Running low" (Axel, 2026-11-15, lámina 1) ───────────────────────
+  //
+  // Desde cualquier tarjeta, también lo que la app no avisó. Pide
+  // CUÁNTAS quedan (el teclado de num-pad.js) y hace dos cosas:
+  //   1. Una verificación (stock-checks.js): el LIVE de ese producto parte
+  //      de ese número hasta el siguiente conteo, igual que "I have
+  //      enough". Axel: "el número del bartender sí corrige". on_hand no
+  //      se toca.
+  //   2. Una línea de persona en To buy, con el "Order N" calculado con
+  //      ESE número (shopping-list.sugerido) y la nota "only N left".
+  // Pide el permiso "Report running low"; el bartender lo tiene de
+  // fábrica, y el candado de guest.js le deja escribir justo esas dos
+  // filas. Ya en la lista, la tarjeta lo dice con quién; "Remove" sólo
+  // para quien compra ("Make and send orders"), y quita la línea, no la
+  // verificación: por eso no se llama "Undo".
+  const G = () => window.BarStockGuest;
+  const puede = (k) => { const g = G(); return !g || !g.puede || g.puede(k); };
+  const quien = () => { const g = G(); return (g && g.nombre && g.nombre()) || ''; };
+  const TB = () => window.BarStockMobileToBuy;
+  const n1 = (x) => (Math.round((Number(x) || 0) * 10) / 10).toFixed(1);
+
+  function bajo(r, mi) {
+    const l = TB() && TB().deProducto ? TB().deProducto(r.item) : null;
+    if (l && l.status === 'ordered') {
+      return `<div class="m-low-hecho m-low-pedido"><span>Ordered${l.order_ref ? ' · ' + esc(l.order_ref) : ''}</span></div>`;
+    }
+    if (l) {
+      const dice = l.reason === 'app' ? 'Running out' : (l.note || 'Running low');
+      return `<div class="m-low-hecho"><span>On the list · ${esc(l.added_by ? l.added_by + ': ' : '')}${esc(dice)}</span>${
+        puede('ordenes') ? `<button type="button" class="m-low-x" data-low-x="${esc(l.id)}" data-low-r="${mi}">Remove</button>` : ''}</div>`;
+    }
+    if (!puede('avisar_bajo')) return '';
+    return `<button type="button" class="m-low-b" data-low="${mi}">Running low</button>`;
+  }
+
+  function avisarBajo(host, r) {
+    const LC = window.BarStockLiveCache;
+    const queda = LC && LC.cuanto ? LC.cuanto(r) : Number(r.onHand) || 0;
+    const vivo = !!(LC && LC.vivo && LC.vivo(r));
+    window.BarStockNumPad.abrir({
+      titulo: r.item,
+      sub: 'How many are left? ' + (vivo ? 'Live says &asymp;' : 'The count says ') + esc(n1(queda)),
+      boton: (v) => 'Add to the list · ' + v + ' left',
+      nota: 'Live starts from this until the next count. The count itself does not change.',
+      guardar: async (n) => {
+        const SC = window.BarStockStockChecks, SL = window.BarStockShoppingList;
+        if (!SC || !SL) return { ok: false, error: 'Not loaded.' };
+        const c = await SC.guardar({ item: r.item, n, decia: queda, por: quien() });
+        if (!c.ok) return c;
+        const qty = SL.sugerido(r, n);
+        const a = await SL.anadir({ item: r.item, qty, motivo: 'person', por: quien(),
+          nota: n > 0 ? 'only ' + n + ' left' : 'none left' });
+        if (LC && LC.caducar) LC.caducar();
+        // La verificación ya está guardada: si la lista falla, se dice
+        // así, no como si no se hubiera guardado nada.
+        if (!a.ok) return { ok: false, error: 'the count of ' + n + ' was saved, but it was not added to the list (' + (a.error || 'unknown error') + ')' };
+        if (TB() && TB().cargar) TB().cargar().then(() => pintarLista(host));
+        return { ok: true };
+      }
+    });
+  }
+
+  function quitarDeLista(host, b) {
+    const SL = window.BarStockShoppingList;
+    b.disabled = true;
+    SL.quitar(b.dataset.lowX, quien()).then(x => {
+      if (!x.ok) {
+        b.disabled = false;
+        if (window.BarStockToast) window.BarStockToast.show('Not removed: ' + (x.error || 'unknown error'));
+        return;
+      }
+      if (TB() && TB().cargar) TB().cargar().then(() => pintarLista(host));
     });
   }
 
@@ -673,6 +759,8 @@
     // pidió aún (se entró directo aquí, sin pasar por Inventory), se pide
     // ahora y alLive() repinta al llegar.
     if (window.BarStockLiveCache) window.BarStockLiveCache.cargar();
+    // La lista de compras, para que cada tarjeta diga si ya está en ella.
+    if (TB() && TB().cargar) TB().cargar().then(() => { if (host.classList.contains('on') && !hojaAbierta()) pintarLista(host); });
     pintarLista(host);
     fijarBarra(host);
     if (_sinTeclado) { _sinTeclado = false; return; }

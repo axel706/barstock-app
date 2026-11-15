@@ -5,6 +5,10 @@
   // Axel, 2026-11-12: "puede seguir viendo todo, absolutamente toda la
   // información, pero no puede editar nada que no son las recetas".
   //
+  // Desde 2026-11-15 también avisa de lo que se acaba ("Running low",
+  // permiso avisar_bajo): eso escribe una verificación (stock_checks) y
+  // una línea de la lista (shopping_list), y sólo eso pasa, abajo.
+  //
   // Quién es invitado: quien sólo puede editar recetas (ver `activo`,
   // más abajo; hasta los roles era app_metadata.role === 'bartender').
   // Lo pone api/admin.js al crearlo, y app_metadata sólo lo puede
@@ -27,7 +31,7 @@
   // se niega en el servidor: api/admin.js (sólo Axel) y las acciones de
   // api/integrations.js que escriben o mandan (lib/integracion.js).
 
-  const MENSAJE = 'Guests can only edit recipes.';
+  const MENSAJE = 'Your role can only edit recipes and report running low.';
   // Los permisos (src/permisos.js, cargado antes que esto).
   const P = window.BarStockPermisos;
 
@@ -93,7 +97,7 @@
     if (!persona()) return false;
     const p = permisos();
     if (!p) { const u = usuario(); return u.app_metadata.role === 'bartender'; }
-    return P.soloRecetas(p);
+    return P.bajoCandado(p);
   }
 
   function nombre() {
@@ -152,6 +156,15 @@
     if (rest[1] === 'toast_item_links' && m === 'DELETE') {
       const q = u.searchParams;
       return q.get('status') === 'eq.ignored' && q.get('kind') === 'eq.liquor' && /^eq\./.test(q.get('toast_item_guid') || '');
+    }
+    // "Running low" (2026-11-15), sólo con su permiso: AÑADIR una
+    // verificación y una línea de persona a la lista, una fila cada vez.
+    // Nada de cambiar ni quitar: eso es de quien compra.
+    if ((rest[1] === 'stock_checks' || rest[1] === 'shopping_list') && m === 'POST' && puede('avisar_bajo')) {
+      const b = json(cuerpo);
+      if (!b || typeof b !== 'object' || Array.isArray(b)) return false;
+      if (rest[1] === 'stock_checks') return true;
+      return b.reason === 'person' && (b.status == null || b.status === 'to_buy');
     }
     return false;
   }

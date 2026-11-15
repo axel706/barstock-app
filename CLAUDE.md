@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 150 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 151 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -382,7 +382,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 150 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 151 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -704,7 +704,7 @@ del rol con su interruptor, lo quitado sólo a ella en ámbar ("Off for
 …"), lo que el rol no da en gris.
 
 - **El catálogo y la cuenta viven en `src/permisos.js`** (navegador y
-  servidor, como `bartender-id.js`): 14 permisos; lo que puede una
+  servidor, como `bartender-id.js`): 15 permisos; lo que puede una
   persona = su rol − sus excepciones. `dePin()` dice quién es persona de
   PIN, una sola regla para la app y el servidor.
 - **Los roles en la tabla `roles`** (migración 039): nombre y permisos.
@@ -755,8 +755,11 @@ escáner va apagado con un aviso.
 - **El candado es `src/guest.js`**, cargado justo tras `config.js`:
   envuelve `window.fetch` y para un invitado sólo deja salir lecturas,
   `toast_recipes`, `toast_recipe_lines`, el "Not a drink" y su Restore
-  (crear o borrar sólo filas `ignored` de licor en `toast_item_links`)
-  y la sesión. supabase-js
+  (crear o borrar sólo filas `ignored` de licor en `toast_item_links`),
+  "Running low" con su permiso (añadir UNA fila a `stock_checks` y una
+  de persona a `shopping_list`; ni cambiar ni quitar) y la sesión. Va
+  bajo el candado quien sólo puede recetas y avisar
+  (`permisos.bajoCandado`, antes `soloRecetas`). supabase-js
   pasa por él (`global.fetch` en `supabase-client.js`). Esconder botones
   (`html.bs-guest` en el CSS) es para que se vea limpio; lo que impide
   escribir es el candado. El servidor niega además `sync` y `send` en
@@ -1065,8 +1068,29 @@ lista vive en `shopping_list` (migración 043, **corrida por Axel el 2026-11-15*
 contra Postgres 16; quitar pasa a `removed`, no borra) y
 `src/shopping-list.js` (`anadir`, `quitar`, `leer`). Si la revisión no
 está cargada, "See them" abre Inventory filtrado como antes. Prueba:
-`test-revisar`. Falta la fase 3: la pestaña "To buy" de Orders y
-"Running low" desde cualquier producto.
+`test-revisar`.
+
+**Fase 3 (2026-11-15, sobre lámina):**
+- **To buy** (`src/mobile-to-buy.js`): pestaña de Orders ANTES de Open
+  y SÓLO con algo por comprar; vacía, las tres de siempre. Una sola
+  lista, sin agrupar por proveedor: la orden de la fase 4 irá entera
+  como LOOP (Axel). Cada línea con quién, cuándo y por qué, −/+ y el
+  número que abre el teclado (el "Order N" se propone y se ajusta), ✕
+  que pasa a `removed`. Lo pedido, aparte y sin botones. El cuerpo de
+  Orders es el mismo elemento para las cuatro: lleva `data-sec` y To
+  buy sólo pinta si es la suya. Prueba: `test-to-buy`.
+- **El teclado** vive en `src/num-pad.js` (lo usan la revisión, To buy
+  y Running low) y **cuánto pedir** en `shopping-list.sugerido(r,
+  quedan)`, con `live-cache.pedir(r, quedan)`.
+- **Running low** en cada tarjeta de "Do we have" (dentro de la
+  tarjeta: `product-hero.html(r, { pie })`). Pide cuántas quedan,
+  guarda la verificación (corrige el LIVE: "el número del bartender sí
+  corrige") y una línea de persona con el "Order N" de ese número y
+  "only N left". Ya en la lista, "On the list · Leo: only 1 left" y
+  "Remove" (sólo quien compra; quita la línea, no la verificación).
+  Permiso nuevo **"Report running low"** (`avisar_bajo`), de fábrica en
+  Bartender. Prueba: `test-running-low`.
+- Falta el botón del Home ("To buy · N", blanco, opción B).
 
 ---
 

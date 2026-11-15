@@ -31,6 +31,10 @@
     { k: 'ver_ordenes',      ver: true, n: 'Orders and invoices' },
     { k: 'ver_ajustes',      ver: true, n: 'Settings' },
     { k: 'contar',                      n: 'Count inventory' },
+    // "Running low" desde "Do we have" (Axel, 2026-11-15): dice cuántas
+    // quedan (corrige el LIVE, como "I have enough") y lo pone en To buy.
+    // Los bartenders avisan; comprar es "Make and send orders".
+    { k: 'avisar_bajo',                 n: 'Report running low',           d: 'Say how many are left; adds it to To buy' },
     { k: 'cerrar_ciclo',                n: 'Close the count, restart the cycle' },
     { k: 'editar_productos',            n: 'Edit items',                   d: 'Name, par, price, delete' },
     { k: 'ordenes',                     n: 'Make and send orders' },
@@ -48,12 +52,13 @@
   // Bartender se guardan en `roles` y Axel los puede cambiar; esto es con
   // lo que nacen (y lo que vale si la tabla no se pudo leer).
   //   · Manager: todo, menos lo que toca la locación entera o a la gente.
-  //   · Bartender: lo de 2026-11-12, "ve todo, sólo edita recetas".
+  //   · Bartender: lo de 2026-11-12, "ve todo, sólo edita recetas", y
+  //     desde 2026-11-15 avisa de lo que se acaba ("Running low").
   const FABRICA = {
     owner:     { key: 'owner',     name: 'Owner',     perms: TODOS.slice(), fijo: true },
     manager:   { key: 'manager',   name: 'Manager',
                  perms: TODOS.filter(k => ['ajustes_locacion', 'time_machine', 'personas'].indexOf(k) < 0) },
-    bartender: { key: 'bartender', name: 'Bartender', perms: ['ver_dinero', 'ver_ordenes', 'ver_ajustes', 'recetas'] }
+    bartender: { key: 'bartender', name: 'Bartender', perms: ['ver_dinero', 'ver_ordenes', 'ver_ajustes', 'recetas', 'avisar_bajo'] }
   };
 
   const limpia = (xs) => Array.isArray(xs) ? xs.filter(k => TODOS.indexOf(k) >= 0) : [];
@@ -104,12 +109,19 @@
     return !!m.role && (Array.isArray(m.perms) || !!FABRICA[m.role]);
   }
 
-  // ¿Sólo puede leer y escribir recetas? Entonces lleva el candado de
-  // guest.js: es la única regla que se puede cumplir de verdad en la app,
-  // porque las recetas tienen sus propias tablas.
-  function soloRecetas(perms) {
+  // ¿Lleva el candado de guest.js? Quien no puede HACER nada más que
+  // recetas y avisar de lo que se acaba: las dos cosas escriben en sus
+  // propias tablas (recetas; stock_checks y shopping_list), así que el
+  // candado puede dejar pasar justo eso y nada más. Es la única regla que
+  // se puede cumplir de verdad en la app.
+  //
+  // Se llamaba soloRecetas: con "Running low" (2026-11-15) el bartender
+  // ya no es sólo recetas, y con el nombre viejo el candado se habría
+  // apagado para todos los bartenders sin que nada lo dijera.
+  const BAJO_CANDADO = ['recetas', 'avisar_bajo'];
+  function bajoCandado(perms) {
     const hacer = limpia(perms).filter(k => !CATALOGO.find(p => p.k === k).ver);
-    return hacer.every(k => k === 'recetas');
+    return hacer.every(k => BAJO_CANDADO.indexOf(k) >= 0);
   }
 
   // Una clave para un rol nuevo, sacada de su nombre: "Bar Lead" →
@@ -120,7 +132,7 @@
     return c;
   }
 
-  const api = { CATALOGO, TODOS, FABRICA, rol, efectivos, deUsuario, dePin, soloRecetas, claveDe, limpia };
+  const api = { CATALOGO, TODOS, FABRICA, BAJO_CANDADO, rol, efectivos, deUsuario, dePin, bajoCandado, claveDe, limpia };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else raiz.BarStockPermisos = api;
 })(typeof window !== 'undefined' ? window : this);

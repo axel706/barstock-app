@@ -36,21 +36,22 @@ const P = require(path.join(RAIZ, 'src/permisos.js'));
 
 grupo('1 · el catálogo');
 {
-  prueba('catorce permisos, sin repetir', P.TODOS.length === 14 && new Set(P.TODOS).size === 14);
-  prueba('Owner: todo', P.efectivos('owner', [], ['contar']).length === 14);
+  prueba('quince permisos, sin repetir', P.TODOS.length === 15 && new Set(P.TODOS).size === 15);
+  prueba('Owner: todo', P.efectivos('owner', [], ['contar']).length === 15);
   const man = P.efectivos('manager', [], []);
   prueba('Manager de fábrica: sin ajustes de la locación, Time Machine ni gente',
     man.indexOf('ajustes_locacion') < 0 && man.indexOf('time_machine') < 0 && man.indexOf('personas') < 0 && man.indexOf('contar') >= 0);
   prueba('las excepciones se restan', P.efectivos('manager', [], ['editar_productos']).indexOf('editar_productos') < 0);
   prueba('el guardado manda sobre el de fábrica', JSON.stringify(P.efectivos('manager', [{ key: 'manager', perms: ['contar', 'raro'] }], [])) === '["contar"]');
   prueba('un rol que ya no existe no da nada', P.efectivos('fantasma', [], []).length === 0);
-  prueba('usuario de correo sin rol: todo, como hasta hoy', P.deUsuario({ app_metadata: {} }).length === 14);
+  prueba('usuario de correo sin rol: todo, como hasta hoy', P.deUsuario({ app_metadata: {} }).length === 15);
   // Un 'staff' viejo, sin perms: con [] quedaba bajo el candado de recetas.
-  prueba('un rol viejo que no salió de aquí: todo, como hasta hoy', P.deUsuario({ app_metadata: { role: 'staff' } }).length === 14);
-  prueba('bartender de antes de los roles: ver y recetas', JSON.stringify(P.deUsuario({ app_metadata: { role: 'bartender' } })) ===
-    JSON.stringify(['ver_dinero', 'ver_ordenes', 'ver_ajustes', 'recetas']));
+  prueba('un rol viejo que no salió de aquí: todo, como hasta hoy', P.deUsuario({ app_metadata: { role: 'staff' } }).length === 15);
+  prueba('bartender de antes de los roles: ver, recetas y avisar de lo que se acaba', JSON.stringify(P.deUsuario({ app_metadata: { role: 'bartender' } })) ===
+    JSON.stringify(['ver_dinero', 'ver_ordenes', 'ver_ajustes', 'recetas', 'avisar_bajo']));
   prueba('con perms guardados, esos', JSON.stringify(P.deUsuario({ app_metadata: { role: 'manager', perms: ['contar'] } })) === '["contar"]');
-  prueba('sólo recetas = el candado del bartender', P.soloRecetas(P.FABRICA.bartender.perms) && !P.soloRecetas(['recetas', 'contar']));
+  prueba('recetas y avisar = el candado del bartender', P.bajoCandado(P.FABRICA.bartender.perms) && P.bajoCandado(['recetas']) &&
+    !P.bajoCandado(['recetas', 'contar']) && !P.bajoCandado(['avisar_bajo', 'ordenes']));
   prueba('persona de PIN: con perms o rol de fábrica; un staff viejo no',
     P.dePin({ app_metadata: { role: 'bar_lead', perms: [] } }) && P.dePin({ app_metadata: { role: 'bartender' } }) &&
     !P.dePin({ app_metadata: { role: 'staff' } }) && !P.dePin({ app_metadata: {} }));
@@ -146,7 +147,7 @@ grupo('2 · quién administra la gente');
   prueba('la lista trae a Maria con su rol y los roles', l.ok && l.people.length === 1 && l.people[0].role === 'manager' &&
     l.roles.map(r => r.key).join() === 'owner,manager,bartender');
   const o = await llamar('axel', 'createPerson', { name: 'Olga', pin: '111222', role: 'owner', locationIds: ['crown'] });
-  prueba('Axel crea a Olga, owner', o.ok && u('Olga').app_metadata.perms.length === 14);
+  prueba('Axel crea a Olga, owner', o.ok && u('Olga').app_metadata.perms.length === 15);
   const lo = await llamar(u('Olga').id, 'listPeople');
   prueba('Olga (owner de PIN) sí entra', lo.ok && lo.people.length === 2);
   const otro = await llamar(u('Olga').id, 'listUsers');

@@ -217,11 +217,17 @@
   // Cuánto pedir para llegar al domingo: el MISMO "Order N" del correo de
   // la mañana (run-out.cuantoPedir, con el ritmo de hoy y el margen de la
   // fila). null si de este producto no se sabe lo que se suele gastar.
-  function pedir(r) {
+  // `quedan` (opcional): cuánto pedir si en la estantería hay ESO, no lo
+  // que dice el LIVE. Es "Running low": alguien dice cuántas quedan y la
+  // línea de la lista sale con ese número, sin esperar a que el LIVE se
+  // rehaga con la verificación. Sin margen: un número contado no es un
+  // estimado (el mismo criterio de run-out.margenDe tras verificar).
+  function pedir(r, quedan) {
     const a = agotaDe(r), R = window.BarStockRunOut;
     if (!a || !a.med || !_hoy || !R || !R.cuantoPedir) return null;
-    return R.cuantoPedir({ stock: a.live, med: a.med, viene: a.viene, hoy: _hoy,
-      hoyVendido: a.hoyVendido, hoyFrac: a.hoyFrac, margen: a.margen }).pedir;
+    const contado = quedan != null && isFinite(Number(quedan));
+    return R.cuantoPedir({ stock: contado ? Number(quedan) : a.live, med: a.med, viene: a.viene, hoy: _hoy,
+      hoyVendido: a.hoyVendido, hoyFrac: a.hoyFrac, margen: contado ? 0 : a.margen }).pedir;
   }
   // El instante del conteo desde el que corre el LIVE.
   const conteo = () => _conteo;
