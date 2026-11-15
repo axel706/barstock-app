@@ -55,8 +55,9 @@ function entorno(o) {
     return { desde: '2026-11-08', dias: [{ business_date: '2026-11-09', complete: true, closed: true }],
       sinConvertir: [{ nombre: 'Spicy Marg', motivo: 'Recipe missing', unidades: 4 }],
       filas: [
-        { producto: "Tito's", contado: 3, llego: 5, vendido: 6.5, live: 1.5, porDia: { '2026-11-10': 2, '2026-11-11': 4.5 },
+        Object.assign({ producto: "Tito's", contado: 3, llego: 5, vendido: 6.5, live: 1.5, porDia: { '2026-11-10': 2, '2026-11-11': 4.5 },
           de: [], llegadas: [{ n: 5, cuando: Date.parse('2026-11-11T12:00:00Z'), de: 'LOOP · CT-0211' }] },
+          o.verificado ? { verificado: { n: 6, cuando: Date.parse('2026-11-12T20:12:00Z'), dia: '2026-11-12', decia: 8.1, por: 'Mia' }, live: 4.3 } : {}),
         { producto: 'Baileys', contado: 2, llego: 0, vendido: 0, live: 2, porDia: {}, de: [], llegadas: [] },
         { producto: 'Sin contar', contado: 4, llego: 0, vendido: 1, live: 3, porDia: {}, de: [], llegadas: [] }
       ] };
@@ -72,6 +73,9 @@ function entorno(o) {
     }
     if (/live_expected\b/.test(p.url)) {
       if (o.filasFallan) return { ok: false, status: 400, text: async () => '{"message":"boom"}', json: async () => ({}) };
+      // Sin la 044: PostgREST nombra la columna que no encuentra.
+      if (o.sinChecked && JSON.stringify(p.cuerpo).indexOf('"checked"') >= 0)
+        return { ok: false, status: 400, text: async () => '{"code":"PGRST204","message":"Could not find the \'checked\' column of \'live_expected\' in the schema cache"}', json: async () => ({}) };
       return { ok: true, status: 201, text: async () => '', json: async () => null };
     }
     return { ok: false, status: 404, text: async () => 'no route', json: async () => ({}) };
@@ -138,6 +142,37 @@ grupo('2 · guardar: el ciclo y sus filas');
   prueba('Toast lo vende', t.in_toast === true && filas.find(f => f.item_name === 'Baileys').in_toast === false);
   prueba('la cuenta no se escribe: la hace Postgres', !('expected' in t) && !('difference' in t));
   prueba('dice cuántas filas guardó', r.filas === 2, JSON.stringify(r));
+}
+
+grupo('2b · la verificación de media semana también se guarda (044)');
+{
+  let w = entorno({ verificado: true });
+  let a = await w.BarStockLiveExpected.antes(MASTER());
+  let r = await w.BarStockLiveExpected.guardar({ antes: a, master: MASTER(), contados: ["Tito's", 'Baileys'], hasta: Date.parse('2026-11-16T02:00:00Z') });
+  let filas = (w.__pet.filter(p => p.metodo === 'POST')[1] || {}).cuerpo || [];
+  const t = filas.find(f => f.item_name === "Tito's") || {};
+  prueba('Tito\'s lleva su verificación: cuántas, cuándo, qué decía la app, quién',
+    t.checked && t.checked.n === 6 && t.checked.at === '2026-11-12T20:12:00.000Z' && t.checked.live_said === 8.1 && t.checked.by === 'Mia', JSON.stringify(t.checked));
+  prueba('y lo que esperaba el LIVE desde ella (lo que enseñó Finish count)', t.checked && t.checked.expected === 4.3);
+  prueba('la semana entera no cambia: abrió 3, llegaron 5, se vendieron 6.5', t.start_count === 3 && t.arrived === 5 && t.sold === 6.5);
+  prueba('sin verificación, null', (filas.find(f => f.item_name === 'Baileys') || {}).checked === null);
+
+  w = entorno({ verificado: true, sinChecked: true });
+  a = await w.BarStockLiveExpected.antes(MASTER());
+  r = await w.BarStockLiveExpected.guardar({ antes: a, master: MASTER(), contados: ["Tito's"], hasta: Date.now() });
+  const intentos = w.__pet.filter(p => p.metodo === 'POST' && /\/live_expected(\?|$)/.test(p.url));
+  prueba('sin la 044: se guarda igual, sin la verificación', r.ok === true && intentos.length === 2 && !('checked' in intentos[1].cuerpo[0]), JSON.stringify(r));
+  prueba('y lo dice, nombrando la migración', /044/.test(r.aviso || ''), r.aviso);
+
+  w = entorno({ verificado: true, filasFallan: true });
+  a = await w.BarStockLiveExpected.antes(MASTER());
+  r = await w.BarStockLiveExpected.guardar({ antes: a, master: MASTER(), contados: ["Tito's"], hasta: Date.now() });
+  prueba('otro fallo no se toma por la 044: no reintenta, lo dice', r.ok === false && /boom/.test(r.error || '') &&
+    w.__pet.filter(p => p.metodo === 'POST' && /\/live_expected(\?|$)/.test(p.url)).length === 1, JSON.stringify(r));
+
+  const sql = leer('database/migrations/044_live_expected_checked.sql').replace(/--.*$/gm, '');
+  prueba('la 044: la columna, y un ciclo final no la deja cambiar',
+    /add column if not exists checked jsonb/.test(sql) && /new\.checked is distinct from old\.checked/.test(sql));
 }
 
 grupo('3 · lo que no se guarda');

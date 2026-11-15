@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261115-122311",
+    "items": [
+      "Behind-the-scenes fixes"
+    ]
+  },
+  {
     "build": "20261115-120412",
     "items": [
       "The selected tab is now blue glass, like Done"
@@ -182,12 +188,6 @@
     "build": "20261113-224359",
     "items": [
       "Home tabs and Bottles / $ in glass"
-    ]
-  },
-  {
-    "build": "20261113-143355",
-    "items": [
-      "Sign in: choose Email or PIN at the top"
     ]
   }
 ]

@@ -74,11 +74,28 @@
         sold_by_day: f.porDia || {},
         counted: r2(nuevo.get(item)),
         unit_price: A.precio[item] > 0 ? A.precio[item] : null,
-        in_toast: !!(enToast && enToast(item, f))
+        in_toast: !!(enToast && enToast(item, f)),
+        // La última verificación de media semana (migración 044), o null.
+        // `expected` es el LIVE al cerrar partiendo de ella: lo que Finish
+        // count enseñó. Los expected/difference de la fila siguen siendo
+        // los de la semana entera (los calcula Postgres), que es lo que
+        // sirve para recetas y merma.
+        checked: f.verificado ? {
+          n: r2(f.verificado.n),
+          at: f.verificado.cuando != null ? new Date(f.verificado.cuando).toISOString() : null,
+          live_said: f.verificado.decia != null ? r2(f.verificado.decia) : null,
+          by: f.verificado.por || null,
+          expected: r2(f.live)
+        } : null
       });
     }
     return out;
   }
+
+  // ¿La base aún no tiene `checked` (la 044 sin correr)? PostgREST lo dice
+  // nombrando la columna. Se mira el nombre, no cualquier error: con otro
+  // fallo se repetiría a ciegas.
+  const faltaChecked = (m) => /checked/.test(String(m || '')) && /column|schema cache|PGRST204|42703/i.test(String(m || ''));
 
   // Dice lo que contestó el servidor, tal cual: un mensaje que adivina
   // ("corre la migración 040") manda a buscar donde no es.
@@ -127,8 +144,19 @@
       const porNombre = new Map((o.master || []).map(x => [x.item, x]));
       const filas = armar({ antes: A, vivo: v.filas, contados, master: o.master, cicloId, loc,
         enToast: (item, f) => (Number(f && f.vendido) > 0) || !!(LC && LC.toastLoVende && LC.toastLoVende(porNombre.get(item))) });
-      if (filas.length) await escribir('live_expected', filas, 'return=minimal');
-      return { ok: true, ciclo: cicloId, filas: filas.length };
+      let aviso = null;
+      if (filas.length) {
+        try { await escribir('live_expected', filas, 'return=minimal'); }
+        catch (e) {
+          if (!faltaChecked(e && e.message)) throw e;
+          // Sin la 044: se guarda sin la verificación (mejor el esperado sin
+          // ella que sin esperado) y se dice.
+          await escribir('live_expected', filas.map(f => { const c = Object.assign({}, f); delete c.checked; return c; }), 'return=minimal');
+          aviso = 'Saved without the mid-week checks: the checked column is missing (migration 044).';
+          console.warn('[esperado] ' + aviso);
+        }
+      }
+      return { ok: true, ciclo: cicloId, filas: filas.length, aviso };
     } catch (e) {
       return { ok: false, error: String(e && e.message || e) };
     }

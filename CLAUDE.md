@@ -932,6 +932,15 @@ por la tarde):**
   esconde). Estilos `.cf-ex*` en `count-panel.css`. Pruebas: "3c" en
   `test-esperado-guardar` y "lo que se aleja del LIVE" en
   `test-cierre-conteo`.
+- **La verificación también se guarda (2026-11-15, migración 044,
+  SIN CORRER hasta que Axel diga):** `live_expected.checked` (jsonb) con
+  la última verificación del ciclo (`n`, `at`, `live_said`, `by`, y
+  `expected`: el LIVE al cerrar partiendo de ella, lo que enseñó Finish
+  count). `expected`/`difference` de la fila siguen siendo los de la
+  semana entera, la cuenta para recetas y merma. Un ciclo final no deja
+  cambiarla. Sin la columna, `guardar` repite sin ella y lo dice
+  (`aviso`, "044"). Probada contra Postgres 16. Prueba: "2b" de
+  `test-esperado-guardar`.
 - **Falta:** la ficha del producto (su historial), los patrones y el
   resumen semanal (fases 4 en adelante del plan), sobre lámina.
 - *(Lo de abajo es lo que se planeó; ya construido.)* **Guardar al cerrar el conteo**, en
