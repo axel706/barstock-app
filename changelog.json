@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261115-120412",
+    "items": [
+      "The selected tab is now blue glass, like Done"
+    ]
+  },
+  {
     "build": "20261115-115951",
     "items": [
       "Running out: no tab lit while it is open"
@@ -182,12 +188,6 @@
     "build": "20261113-143355",
     "items": [
       "Sign in: choose Email or PIN at the top"
-    ]
-  },
-  {
-    "build": "20261113-142345",
-    "items": [
-      "People: the list no longer runs into the Copy button"
     ]
   }
 ]

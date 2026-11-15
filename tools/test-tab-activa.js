@@ -42,17 +42,22 @@ function prueba(n, c, d) {
 }
 const grupo = t => console.log('\n' + t);
 
-// La regla del botón activo, aislada.
-const mActiva = /body\.m-shell\s+\.m-tab\.on\s*\{([^}]*)\}/.exec(css);
+// La regla del botón activo: desde el 2026-11-15 es la del tinte del
+// cristal de "Done" (Axel: "exactamente igual"), compartida con él.
+const mActiva = /body\.m-shell #mScreens #mRoDone,\s*body\.m-shell #mTabs \.m-tab\.on\s*\{([^}]*)\}/.exec(css);
 // La regla del icono dentro del botón activo.
 const mIcono = /body\.m-shell\s+\.m-tab\.on\s+\.ti\s*\{([^}]*)\}/.exec(css);
 
-grupo('el relleno de la pestaña activa');
+grupo('el relleno de la pestaña activa (el cristal de "Done", 2026-11-15)');
 {
   prueba('la regla existe', !!mActiva);
   const r = mActiva ? mActiva[1] : '';
 
-  prueba('es azul sólido', /background:\s*#38bdf8/i.test(r), r.trim());
+  prueba('es el cristal azul de "Done", la misma regla', /background:\s*rgba\(56,\s*189,\s*248/i.test(r), r.trim());
+  prueba('y entra en la regla del cristal (desenfoque y reflejo)',
+    /body\.m-shell #mTabs \.m-tab\.on,\s*\n\s*body\.m-shell #mScreens :is\(#mhTabs/.test(css) &&
+    /body\.m-shell #mTabs \.m-tab\.on::before,/.test(css));
+  prueba('sin la regla vieja de azul sólido debajo', !/body\.m-shell \.m-tab\.on \{ background/.test(css));
 
   // El fallo original: blanco translúcido sobre vidrio oscuro = gris.
   prueba('no volvió al blanco translúcido',
@@ -62,8 +67,8 @@ grupo('el relleno de la pestaña activa');
   prueba('el azul no depende del tema',
     !/background:[^;]*var\(\s*--accent/i.test(r), r.trim());
 
-  prueba('el icono encima va en tono oscuro',
-    /color:\s*#0[0-9a-f]{5}/i.test(r), r.trim());
+  prueba('el icono y el nombre, claros sobre el cristal',
+    /color:\s*#f0f9ff/i.test(r), r.trim());
 }
 
 grupo('el grosor del icono activo');
