@@ -5424,6 +5424,72 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   #mScreens .m-rc-nd-t { flex: 1; min-width: 0; font-size: var(--m-body); color: #cbd5e1; }
   #mScreens .m-rc-nd-t small { display: block; margin-top: 2px; font-size: var(--m-meta); color: #64748b; }
 
+  /* ── Revisar lo que se acaba (mobile-running-out.js, 2026-11-14) ───
+   * Axel, lámina B: "See them" abre esta pantalla. Fija encima de lo que
+   * había, como la de editar (.m-ed): desde arriba del todo, por debajo
+   * de la banda (9100) y de las pestañas (9000). Una tarjeta por
+   * producto (radio 20 px, el de las tarjetas), su LIVE y "Order N" a la
+   * derecha, dos botones de tamaño de dedo, y lo ya decidido debajo con
+   * quién y cuándo. El aire va por arriba. */
+  .m-ro {
+    position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 8990;
+    overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+    background: #0b1220;
+    padding: calc(52px + env(safe-area-inset-top, 0px) + 6px) 16px calc(env(safe-area-inset-bottom, 0px) + 110px);
+  }
+  .m-ro-sum { margin-top: 6px; font-size: var(--m-small); color: #9fb0c4; }
+  .m-ro-vacio { margin-top: 40px; text-align: center; font-size: var(--m-body); color: #8fa1b5; }
+  .m-ro-c { margin-top: 10px; padding: 14px; border-radius: 20px;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.10); }
+  .m-ro-top { display: flex; align-items: center; gap: 12px; }
+  .m-ro-n { flex: 1; min-width: 0; }
+  .m-ro-n b { display: block; font-size: var(--m-strong); font-weight: 700; color: #f1f5f9;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-ro-n small { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: var(--m-small); color: #9fb0c4; }
+  .m-ro-live { display: inline-flex; align-items: center; gap: 4px; color: #34d399; font-weight: 700; }
+  .m-ro-live i { width: 7px; height: 7px; border-radius: 50%; background: #34d399; }
+  .m-ro-out { padding: 1px 7px; border-radius: 7px; font-weight: 700; }
+  .m-ro-out.r { background: rgba(248,113,113,.18); color: #fca5a5; }
+  .m-ro-out.a { background: rgba(251,191,36,.18); color: #fcd34d; }
+  .m-ro-v { flex: 0 0 auto; text-align: right; font-variant-numeric: tabular-nums; }
+  .m-ro-v b { display: block; font-size: var(--m-figure); font-weight: 800; color: #fbbf24; line-height: 1; }
+  .m-ro-v small { display: block; margin-top: 6px; font-size: var(--m-small); color: #9fb0c4; font-weight: 600; }
+  .m-ro-btns { display: flex; gap: 8px; margin-top: 12px; }
+  .m-ro-hecho { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    margin-top: 12px; padding: 9px 12px; border-radius: 12px; font-size: var(--m-small); }
+  .m-ro-hecho span { min-width: 0; }
+  .m-ro-lista { background: rgba(56,189,248,.12); color: #7dd3fc; }
+  .m-ro-visto { background: rgba(52,211,153,.12); color: #6ee7b7; }
+  /* Con el id delante: app.css pone 999px !important, desenfoque y
+   * sombra a todo <button> (ver la nota de las trampas de CSS). */
+  :is(#mScreens, #mSheet) .m-ro-b { flex: 1; min-height: 44px; padding: 0 12px; border-radius: 999px !important;
+    font-size: var(--m-body); font-weight: 700; cursor: pointer; border: 0;
+    -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+  :is(#mScreens, #mSheet) .m-ro-go { background: #38bdf8; color: #04283d; }
+  :is(#mScreens, #mSheet) .m-ro-gh { background: rgba(255,255,255,.08); color: #eaf2fb; border: 1px solid rgba(255,255,255,.18); }
+  :is(#mScreens, #mSheet) .m-ro-b:disabled { opacity: .5 !important; }
+  :is(#mScreens, #mSheet) .m-ro-x { flex: 0 0 auto; background: none; border: 0; padding: 4px 2px; border-radius: 0 !important;
+    color: inherit; font-size: var(--m-small); font-weight: 700; text-decoration: underline; cursor: pointer;
+    -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+  /* La hoja del número. */
+  .m-kp-hoja { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); }
+  .m-kp-t { font-size: var(--m-title); font-weight: 800; color: #f1f5f9; }
+  .m-kp-s { margin-top: 4px; font-size: var(--m-small); color: #9fb0c4; }
+  .m-kp-d { margin-top: 12px; height: calc(var(--m-figure) * 2.4); border-radius: 16px;
+    background: rgba(255,255,255,.06); border: 2px solid #38bdf8;
+    display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .m-kp-n { font-size: calc(var(--m-figure) * 1.4); font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; }
+  .m-kp-d small { font-size: var(--m-body); color: #9fb0c4; font-weight: 600; }
+  .m-kp { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+  #mSheet .m-kp-k { height: calc(var(--m-figure) * 1.75); border-radius: 14px !important; border: 0;
+    background: rgba(255,255,255,.07); color: #f1f5f9; font-size: var(--m-title); font-weight: 600; cursor: pointer;
+    -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+  #mSheet .m-kp-k:active { background: rgba(255,255,255,.16); }
+  .m-kp-err { margin-top: 8px; min-height: 0; font-size: var(--m-small); color: #fca5a5; }
+  .m-kp-err:empty { display: none; }
+  #mSheet .m-kp-save { display: block; width: 100%; margin-top: 12px; min-height: 50px; font-size: var(--m-strong); }
+  .m-kp-nota { margin-top: 10px; text-align: center; font-size: var(--m-small); color: #8fa1b5; line-height: 1.45; }
+
   /* ── Editar un producto: pantalla (mobile-inventory.js, hoja()) ────
    * Axel, 2026-11-13, sobre lámina: pantalla y no hoja, todo a la vista,
    * la tarjeta del producto igual (.m-fic), el proveedor como una fila

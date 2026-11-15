@@ -44,6 +44,8 @@ const ARCHIVOS = [
   'src/live-expected.js',
   // La verificación: escribe sólo en stock_checks, nunca en on_hand.
   'src/stock-checks.js',
+  // La lista de compras y su pantalla: sólo shopping_list y stock_checks.
+  'src/shopping-list.js', 'src/mobile-running-out.js',
   ...fs.readdirSync(path.join(RAIZ, 'lib')).filter(f => /^toast.*\.js$/.test(f)).map(f => 'lib/' + f),
   'tools/toast.js'
 ];

@@ -1220,12 +1220,14 @@
           ? 'and ' + resto + ' more ' + (ultimo === 0 ? 'today' : ultimo < 7 ? 'by ' + dia(ultimo) : 'this week')
           : n + ' this week',
         btn: 'See them',
-        // A Inventory FILTRADO a estos productos y en este orden
-        // (Axel, 2026-11-11, opción B). Antes abría "Closest to empty",
-        // que ordena por lo que queda contra el par: con quince
-        // productos a cero empatados salían en el orden del inventario
-        // y la lista no se parecía a la tarjeta.
+        // A la pantalla de revisión (Axel, 2026-11-14, lámina B): los
+        // mismos productos y en el mismo orden (running-out.js), cada uno
+        // con "Add to list" e "I have enough". Antes abría Inventory
+        // filtrado (2026-11-11, opción B), que sigue siendo el plan B si
+        // la revisión no está cargada.
         go: () => {
+          const P = window.BarStockRunningOutReview;
+          if (P && P.abrir) { P.abrir(); return; }
           const I = window.BarStockMobileInventory;
           if (I && I.abrirCon) I.abrirCon('agota');
           else if (window.BarStockMobile) window.BarStockMobile.ir('inventory');

@@ -37,7 +37,7 @@
   const VIVO_MS = 30 * 60 * 1000;
   let _vivo = null, _agota = null, _vivoEn = 0, _pidiendo = null;
   // El instante del último conteo, para decir "Counted Sun Nov 8".
-  let _conteo = null, _desde = null;
+  let _conteo = null, _desde = null, _hoy = null;
   // Un aviso que llega MIENTRAS se lee: la lectura en curso empezó antes
   // de la factura y daría el número de antes, guardado 30 minutos. Se
   // apunta y se vuelve a leer al terminar.
@@ -64,6 +64,7 @@
       _agota = new Map(filas.map(f => [f.producto, f]));
       _conteo = r && r.estado === 'listo' && r.conteo ? r.conteo : null;
       _desde = r && r.estado === 'listo' ? r.desde || null : null;
+      _hoy = r && r.estado === 'listo' ? r.hoy || null : null;
     }).catch(e => {
       console.warn('[live] sin LIVE', e);
       _vivo = new Map();
@@ -213,9 +214,22 @@
   const etiquetaLive = (r) => vivo(r) ? '<span class="m-live"><i></i>Live</span>' : '';
   const etiquetaAgota = (r) => { const a = agota(r); return a ? `<span class="m-out m-out-${a.tono}">${a.txt}</span>` : ''; };
 
+  // Cuánto pedir para llegar al domingo: el MISMO "Order N" del correo de
+  // la mañana (run-out.cuantoPedir, con el ritmo de hoy y el margen de la
+  // fila). null si de este producto no se sabe lo que se suele gastar.
+  function pedir(r) {
+    const a = agotaDe(r), R = window.BarStockRunOut;
+    if (!a || !a.med || !_hoy || !R || !R.cuantoPedir) return null;
+    return R.cuantoPedir({ stock: a.live, med: a.med, viene: a.viene, hoy: _hoy,
+      hoyVendido: a.hoyVendido, hoyFrac: a.hoyFrac, margen: a.margen }).pedir;
+  }
+  // El instante del conteo desde el que corre el LIVE.
+  const conteo = () => _conteo;
+
   window.BarStockLiveCache = {
+    pedir, conteo,
     cargar, caducar, alCambiar, vivo, cuanto, conVivo, texto, agota, toastLoVende, medianas, llegadas, dinero, semana, botellas,
     etiquetaLive, etiquetaAgota, VIVO_MS,
-    _reset: () => { _vivo = null; _agota = null; _conteo = null; _desde = null; _vivoEn = 0; _pidiendo = null; _otraVez = false; _oyentes.clear(); }
+    _reset: () => { _vivo = null; _agota = null; _conteo = null; _desde = null; _hoy = null; _vivoEn = 0; _pidiendo = null; _otraVez = false; _oyentes.clear(); }
   };
 })();

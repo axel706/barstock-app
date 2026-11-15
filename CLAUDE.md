@@ -109,7 +109,7 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 
 ## La arquitectura
 
-Frontend estático, sin build. `index.html` es un monolito y hay ~133 módulos
+Frontend estático, sin build. `index.html` es un monolito y hay ~138 módulos
 `src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 29 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 148 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 149 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -382,7 +382,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 148 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 149 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -1046,9 +1046,27 @@ partido por la hora; gana la última; `contado`, `llego` y `vendido`
 siguen siendo desde el conteo). `armarFilas` las lee y, si no puede,
 sigue sin ellas. `diaADia` salta a lo verificado ese día.
 `run-out.margenDe` mide la duda desde la verificación (`vendidoVerif`).
-`toast-usage.ventasEntre` devuelve también `porDiaBruto`. Nada las crea
-todavía: eso es la fase 2 (la pantalla, sobre lámina). Prueba:
+`toast-usage.ventasEntre` devuelve también `porDiaBruto`. Prueba:
 `test-verificar`.
+
+**Fase 2 hecha (2026-11-14, lámina B): revisar lo que se acaba.** "See
+them" de la tarjeta "Running out first" abre `src/mobile-running-out.js`
+(`BarStockRunningOutReview.abrir`): una PANTALLA fija (`.m-ro`, como
+`.m-ed`) con "Running out" en la banda y su atrás, una tarjeta por
+producto (LIVE, "Out", "Order N" de `live-cache.pedir`, el mismo del
+correo) y dos botones: "Add N to list" (permiso `ordenes`) e "I have
+enough" (permiso `contar`), que abre la hoja del número (teclado de
+botones, sin campo de texto: nada de zoom de iOS; ".5" para la botella
+abierta). Lo decidido se queda en la tarjeta con quién y cuándo: "On the
+list · 2 by Ana · Undo" y "Checked: 6 on the shelf · Wed 3:12 PM · Mia ·
+Change" (CHANGE, no Undo: una verificación no se deshace, se corrige con
+otra). Lo revisado sigue en la pantalla aunque deje de acabarse. La
+lista vive en `shopping_list` (migración 043, **sin correr**: probada
+contra Postgres 16; quitar pasa a `removed`, no borra) y
+`src/shopping-list.js` (`anadir`, `quitar`, `leer`). Si la revisión no
+está cargada, "See them" abre Inventory filtrado como antes. Prueba:
+`test-revisar`. Falta la fase 3: la pestaña "To buy" de Orders y
+"Running low" desde cualquier producto.
 
 ---
 

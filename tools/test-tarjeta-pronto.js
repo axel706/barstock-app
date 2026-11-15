@@ -214,13 +214,17 @@ const nombres = (h) => filas(h).map(f => f.querySelector('.n').textContent);
     w.BarStockMobileInventory = {
       abrirCon: (o) => { w.__orden = o; w.__ido.push('inventory'); }
     };
+    // Desde el 2026-11-14 (lámina B) abre la pantalla de revisión, con
+    // los mismos productos en el mismo orden; Inventory filtrado queda de
+    // plan B si la revisión no está cargada.
+    let revisar = 0;
+    w.BarStockRunningOutReview = { abrir: () => { revisar++; } };
     tarjeta(h).querySelector('.m-hero-b').click();
-    // Antes caía en los 264 artículos ordenados por valor en el
-    // estante, donde lo que acababas de leer no aparecía.
-    prueba('abre inventario', w.__ido.includes('inventory'), w.__ido.join(','));
-    // Filtrado a la lista de la tarjeta, no "Closest to empty": con todo
-    // a cero ese orden era el del inventario (test-ver-agota.js).
-    prueba('filtrado a lo que dice la tarjeta', w.__orden === 'agota', String(w.__orden));
+    prueba('abre la revisión de lo que se acaba', revisar === 1 && !w.__ido.includes('inventory'), revisar + ' / ' + w.__ido.join(','));
+    delete w.BarStockRunningOutReview;
+    tarjeta(h).querySelector('.m-hero-b').click();
+    // Sin ella, como antes: Inventory filtrado a lo que dice la tarjeta.
+    prueba('sin la revisión: inventario filtrado, como antes', w.__ido.includes('inventory') && w.__orden === 'agota', String(w.__orden));
   }
 
   console.log('\n' + (mal ? mal + ' fallos' : 'todo bien') +

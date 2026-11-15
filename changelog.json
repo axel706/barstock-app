@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261115-082115",
+    "items": [
+      "Running out: review each item",
+      "Add it to the list, or say how many you have"
+    ]
+  },
+  {
     "build": "20261115-074615",
     "items": [
       "Behind-the-scenes fixes"
@@ -181,12 +188,6 @@
     "build": "20261113-091334",
     "items": [
       "Edit item: spacing evened out on taller phones"
-    ]
-  },
-  {
-    "build": "20261113-090935",
-    "items": [
-      "Edit item: no more color seam under the top bar"
     ]
   }
 ]
