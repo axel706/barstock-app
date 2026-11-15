@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 153 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 154 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -196,6 +196,16 @@ azul) y Bottles / $ de Toast (opción A: la elegida sigue sólida), con el
 mismo cristal en el carril; a sus botones se les quita el desenfoque y la
 sombra de `app.css`, que sobre el cristal dibujaban una pastilla fantasma.
 `.m-sx-tabs` de People y Orders no se tocó.
+
+**Las filas de las listas no llevan desenfoque** (2026-11-15, a prueba:
+"si no me gusta lo eliminamos"). `app.css` le pone `blur(6px)` a todo
+`<button>`, y las filas son botones: cada fila visible se desenfocaba en
+cada fotograma del scroll. Una regla en `mobile-app.css` lo quita en
+`#mScreens` salvo a los botones de cristal (en su `:not`, o con id).
+Medido en Chromium: ~100 → ~140 fotogramas en 3 s. Un botón de cristal
+nuevo en las pantallas tiene que entrar en ese `:not` (o llevar id).
+Prueba: `test-listas-sin-blur`. Lo que queda: las escaleras del
+desenfoque progresivo (6 capas cada una), por lámina.
 
 El radio de las tarjetas del carrusel (`.m-hero`) es **20px**, y es la
 referencia cuando pida "como las tarjetas". Las filas de Inventory (`.m-inv`) son
@@ -385,7 +395,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 153 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 154 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

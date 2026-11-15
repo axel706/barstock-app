@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261115-133646",
+    "items": [
+      "Smoother scrolling in the lists"
+    ]
+  },
+  {
     "build": "20261115-131221",
     "items": [
       "Bottle keypad: a dot for any decimal (.2, .5, .7)"
@@ -180,13 +186,6 @@
     "items": [
       "Out dates leave half a bottle of margin",
       "Running out warns earlier, to be safe"
-    ]
-  },
-  {
-    "build": "20261114-205550",
-    "items": [
-      "Running out follows today's pace",
-      "A busy day can now say Out today"
     ]
   }
 ]

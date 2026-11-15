@@ -675,6 +675,21 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   body.m-shell #mBand .m-ico:not(.m-ico-alert),
   body.m-shell #mScreens .m-searchbar.m-vidrio:not(.m-dock-fija) { position: relative; }
 
+  /* ── Las filas de las listas, sin desenfoque propio ─────────────────
+   * Axel, 2026-11-15: "el scroll de casi todas las listas se siente
+   * laggy". app.css le pone `backdrop-filter: blur(6px)` a TODO <button>,
+   * y las filas de las listas (Inventory, To buy, Orders…) son botones:
+   * cada fila visible se volvía a desenfocar en cada fotograma. Medido en
+   * Chromium con la lista real (120 filas, CPU 4× más lenta): ~100
+   * fotogramas en 3 s con él, ~150 sin él. A la vista no cambia: el fondo
+   * ya va desenfocado detrás. Los botones de CRISTAL lo conservan (están
+   * en el :not; los de id —el + y el filtro de Inventory— le ganan igual
+   * a esta regla). Sólo en las pantallas del teléfono: el escritorio no
+   * se toca. "Probemos y si no me gusta lo eliminamos." */
+  body.m-shell #mScreens button:not(.m-low-b):not(.m-cf-b):not(.m-ts-mas):not(.m-ro-done) {
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+
   /* ── Los botones de las mini tarjetas y "All products" ─────────────
    * Axel, 2026-11-13, opción B: el mismo cristal (en la regla de
    * arriba). Su texto va suelto ("Details", "Sync"), no en un elemento
