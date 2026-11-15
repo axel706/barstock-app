@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261115-103731",
+    "items": [
+      "Running out: smaller buttons on each card"
+    ]
+  },
+  {
     "build": "20261115-102920",
     "items": [
       "Running out: same background as the rest of the app"
@@ -184,12 +190,6 @@
     "build": "20261113-123859",
     "items": [
       "Home card buttons in the same glass as the header"
-    ]
-  },
-  {
-    "build": "20261113-122809",
-    "items": [
-      "Do we have search bar in the same glass as the buttons"
     ]
   }
 ]

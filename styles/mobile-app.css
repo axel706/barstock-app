@@ -5543,7 +5543,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-ro-v { flex: 0 0 auto; text-align: right; font-variant-numeric: tabular-nums; }
   .m-ro-v b { display: block; font-size: var(--m-figure); font-weight: 800; color: #fbbf24; line-height: 1; }
   .m-ro-v small { display: block; margin-top: 6px; font-size: var(--m-small); color: #9fb0c4; font-weight: 600; }
-  .m-ro-btns { display: flex; gap: 8px; margin-top: 12px; }
+  .m-ro-btns { display: flex; gap: 8px; margin-top: 10px; }
   .m-ro-hecho { display: flex; align-items: center; justify-content: space-between; gap: 10px;
     margin-top: 12px; padding: 9px 12px; border-radius: 12px; font-size: var(--m-small); }
   .m-ro-hecho span { min-width: 0; }
@@ -5557,6 +5557,11 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   :is(#mScreens, #mSheet) .m-ro-go { background: #38bdf8; color: #04283d; }
   :is(#mScreens, #mSheet) .m-ro-gh { background: rgba(255,255,255,.08); color: #eaf2fb; border: 1px solid rgba(255,255,255,.18); }
   :is(#mScreens, #mSheet) .m-ro-b:disabled { opacity: .5 !important; }
+  /* Los dos de cada tarjeta, más bajos (Axel, 2026-11-15: "hacen que la
+   * tarjeta crezca mucho"). Un alto fijo y no min-height: app.css le
+   * suma relleno a todo <button> y con min-height salían de ~46 px. El
+   * "Save" del teclado (también .m-ro-b, en #mSheet) no cambia. */
+  #mScreens .m-ro-btns .m-ro-b { min-height: 0; height: calc(var(--m-base) * 2.5); padding: 0 12px; font-size: var(--m-small); }
   :is(#mScreens, #mSheet) .m-ro-x { flex: 0 0 auto; background: none; border: 0; padding: 4px 2px; border-radius: 0 !important;
     color: inherit; font-size: var(--m-small); font-weight: 700; text-decoration: underline; cursor: pointer;
     -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
