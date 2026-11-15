@@ -5516,16 +5516,24 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
     /* Sin fondo propio (Axel, 2026-11-15): tenía #0b1220 para tapar la
      * pantalla de debajo, y se veía un fondo distinto al de la app. Lo
-     * de debajo se esconde con body.m-ro-abierta (abajo) y aquí se ve
+     * de debajo se esconde con la regla de :has (abajo) y aquí se ve
      * la foto y el velo del body, como en todas las pantallas. */
     background: none;
     padding: calc(52px + env(safe-area-inset-top, 0px) + 6px) 16px calc(env(safe-area-inset-bottom, 0px) + 110px);
   }
-  /* Mientras está abierta: las pantallas y la barra de búsqueda
-   * acoplada (#mDock, que cuelga del body) no se ven. visibility y no
-   * display: la pantalla de debajo conserva su scroll y su estado. */
-  body.m-ro-abierta #mScreens > .m-screen,
-  body.m-ro-abierta #mDock { visibility: hidden; }
+  /* ── Lo de debajo de una pantalla encima (Running out, Edit item) ──
+   * Las dos van fijas sobre todo y ya no tienen fondo propio: lo de
+   * debajo se esconde y se ve el fondo de la app (la foto y el velo del
+   * body). Con :has y no con una marca en el body: no hay nada que poner
+   * ni quitar, y cambiar de pestaña no puede dejar una pantalla
+   * escondida (Edit item vive DENTRO de Inventory y se queda abierta al
+   * salir; al volver, vuelve igual). visibility y no display: lo de
+   * debajo conserva su scroll. #mDock es la barra de búsqueda acoplada,
+   * que cuelga del body. */
+  body:has(#mScreens > .m-ro) #mScreens > .m-screen,
+  body:has(#mScreens > .m-ro) #mDock,
+  #mScreens > .m-screen.on:has(> .m-ed) > :not(.m-ed),
+  body:has(#mScreens > .m-screen.on > .m-ed) #mDock { visibility: hidden; }
   .m-ro-sum { margin-top: 6px; font-size: var(--m-small); color: #9fb0c4; }
   .m-ro-vacio { margin-top: 40px; text-align: center; font-size: var(--m-body); color: #8fa1b5; }
   .m-ro-c { margin-top: 10px; padding: 14px; border-radius: 20px;
@@ -5602,7 +5610,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
      * de detrás y aquí empezaba un fondo sólido. */
     top: 0; bottom: 0;
     overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
-    background: #0b1220;
+    /* Sin fondo propio (Axel, 2026-11-15): lo de debajo se esconde (la
+     * regla de :has, junto a .m-ro) y se ve el fondo de la app. */
+    background: none;
     padding: calc(52px + env(safe-area-inset-top, 0px) + 6px) 16px calc(env(safe-area-inset-bottom, 0px) + 96px);
     display: flex; flex-direction: column;
   }

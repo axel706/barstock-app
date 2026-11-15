@@ -249,19 +249,21 @@ grupo('7 · las pestañas sacan de la revisión (Axel, 2026-11-15)');
 
 grupo('8 · el fondo de la app, no uno opaco (Axel, 2026-11-15)');
 {
-  // Llevaba un fondo sólido (#0b1220) para tapar la pantalla de debajo.
-  // Ahora es transparente y lo de debajo se esconde mientras está abierta.
-  const w = entorno();
-  const marca = () => w.document.body.classList.contains('m-ro-abierta');
-  await w.BarStockRunningOutReview.abrir(w.document.getElementById('mHome')); await esperar(20);
-  prueba('abierta: el body lo dice, para esconder lo de debajo', marca());
-  w.BarStockRunningOutReview.cerrar();
-  prueba('cerrada: se quita', !marca());
+  // Running out y Edit item llevaban un fondo sólido (#0b1220) para tapar
+  // lo de debajo, y tapaban también el de la app. Ahora no tienen fondo,
+  // y lo de debajo se esconde con UNA regla (:has), sin marcas que poner
+  // y quitar: cambiar de pestaña no puede dejar nada escondido.
   const css = leer('styles/mobile-app.css');
-  const regla = (/\n  \.m-ro \{([^}]*)\}/.exec(css) || [])[1] || '';
-  prueba('.m-ro sin fondo propio', !!regla && !/background:\s*#/.test(regla) && /background:\s*(none|transparent)/.test(regla), regla.trim().slice(0, 120));
-  prueba('lo de debajo se esconde mientras está abierta (las pantallas y la barra acoplada)',
-    /body\.m-ro-abierta[^{]*\.m-screen[^{]*\{[^}]*visibility:\s*hidden/.test(css) && /body\.m-ro-abierta[^{]*#mDock/.test(css));
+  const regla = (sel) => (new RegExp('\\n  \\' + sel + ' \\{([^}]*)\\}').exec(css) || [])[1] || '';
+  for (const sel of ['.m-ro', '.m-ed']) {
+    const r = regla(sel);
+    prueba(sel + ' sin fondo propio', !!r && !/background:\s*#/.test(r) && /background:\s*(none|transparent)/.test(r), r.trim().slice(0, 100));
+  }
+  prueba('con Running out abierta, las pantallas y la barra acoplada no se ven',
+    /body:has\(#mScreens > \.m-ro\) #mScreens > \.m-screen/.test(css) && /body:has\(#mScreens > \.m-ro\) #mDock/.test(css));
+  prueba('con Edit item abierta, el resto de Inventory y la barra acoplada no se ven',
+    /\.m-screen\.on:has\(> \.m-ed\) > :not\(\.m-ed\)/.test(css) && /body:has\(#mScreens > \.m-screen\.on > \.m-ed\) #mDock/.test(css));
+  prueba('sin la marca de antes en el body', !/m-ro-abierta/.test(css + leer('src/mobile-running-out.js')));
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
