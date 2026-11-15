@@ -80,6 +80,11 @@
   let _fallo = '';
   let _hecho = null;        // { vendor, botellas, total } tras guardar
   let _host = null;
+  // Las líneas de la lista de compras de las que salió este borrador
+  // (precargar): nombre del producto → id de la línea. Al guardar, las
+  // que sigan en el borrador pasan a "Ordered". Cambiar de proveedor
+  // vacía el borrador y con él esto.
+  let _deLista = null;
 
   const repintar = () => pintar(_host);
 
@@ -97,6 +102,7 @@
   const total = () => _items.reduce((s, r) => s + num(r.qty) * num(r.value), 0);
 
   function limpiar() {
+    _deLista = null;
     _llegada = undefined;
     _momento = null;
     _items = [];
@@ -186,8 +192,21 @@
       _hecho = {
         vendor: _vendor,
         botellas: e ? num(e.totalUnits) : botellas(),
-        total: e ? num(e.subtotal) : total()
+        total: e ? num(e.subtotal) : total(),
+        deLista: !!_deLista
       };
+      // ── Las líneas de To buy, a "Ordered" ──────────────────────────
+      // La orden YA existe: si marcar falla, se dice así, porque las
+      // líneas seguirían por comprar y alguien las compraría dos veces.
+      if (_deLista && e) {
+        const lineas = _items.filter(x => _deLista.has(x.item))
+          .map(x => ({ id: _deLista.get(x.item), qty: num(x.qty) }));
+        const SL = window.BarStockShoppingList;
+        const g = window.BarStockGuest;
+        const por = (g && g.nombre && g.nombre()) || '';
+        const m = SL && SL.marcarPedidas ? await SL.marcarPedidas(lineas, e.id, por) : { ok: false, error: 'Not loaded.' };
+        if (!m.ok) _hecho.avisoLista = 'Saved, but the To buy list was not updated (' + (m.error || 'unknown error') + '). Remove those lines by hand so nobody buys them twice.';
+      }
       limpiar();
     } catch (err) {
       // Se dice, y el borrador se QUEDA. Vaciarlo tras un fallo de red
@@ -296,13 +315,16 @@
         '<div class="m-rev-ok-s">' + n2(h.botellas) + ' bottles · ' + money(h.total) + '</div>' +
         '<div class="m-rev-ok-n">It is in History with the rest of your orders. ' +
           esc(h.vendor) + ' does not take orders by email, so nothing was sent.</div>' +
+        (h.avisoLista ? '<div class="m-rev-ok-n m-qk-aviso">' + esc(h.avisoLista) + '</div>' : '') +
         '<button type="button" class="m-rev-go" id="mqDone">Done</button>' +
       '</div>';
     host.querySelector('#mqDone').onclick = () => {
+      const deLista = h.deLista;
       _hecho = null;
       // A Sent, que es donde acaba de aparecer. Devolver a Open sería
-      // dejarte buscando dónde quedó lo que acabas de apuntar.
-      if (O() && O().abrirSeccion) O().abrirSeccion('sent');
+      // dejarte buscando dónde quedó lo que acabas de apuntar. Si vino
+      // de To buy, a To buy: ahí se ven las líneas ya pedidas.
+      if (O() && O().abrirSeccion) O().abrirSeccion(deLista ? 'buy' : 'sent');
       else if (M()) M().ir('orders');
     };
   }
@@ -498,6 +520,7 @@
         }
         _vendor = b.dataset.qv;
         _items = [];
+        _deLista = null;
         _elegido = null; _busca = ''; _fallo = '';
         repintar();
       };
@@ -587,7 +610,47 @@
     });
   }
 
-  window.BarStockMobileQuick = { limpiar, pintar: () => repintar() };
+  // ── Desde To buy (fase 4, Axel 2026-11-15, opción A) ────────────────
+  //
+  // "Order N items" abre esta pantalla ya rellena con la lista, como
+  // LOOP: a media semana lo que falta se recoge en LOOP. NO cambia el
+  // proveedor de ningún producto: LOOP va sólo en la línea de ESTA
+  // orden, como cualquier línea de Quick order (Axel lo preguntó). Aquí
+  // se puede cambiar cualquier cosa antes de guardar, y la pregunta del
+  // LIVE sale igual que siempre.
+  //   filas: [{ id, item, qty }] (las líneas de la lista)
+  //   → { ok, faltan: [nombres que ya no están en el inventario] }
+  function precargar(filas) {
+    limpiar();
+    _hecho = null;
+    const vs = proveedores();
+    _vendor = vs.includes('LOOP') ? 'LOOP' : (vs[0] || 'LOOP');
+    const faltan = [];
+    _deLista = new Map();
+    for (const f of filas || []) {
+      const r = master().find(m => m.item === f.item);
+      if (!r) { faltan.push(f.item); continue; }
+      const cant = Math.max(0, num(f.qty));
+      if (!(cant > 0)) continue;
+      // La MISMA forma de línea que agregar().
+      _items.push({
+        code: String(r.code || '').trim(),
+        item: String(r.item || ''),
+        vendor: _vendor,
+        onHand: Math.max(0, num(r.onHand)),
+        suggested: Math.max(0, num(r.suggested)),
+        value: Math.max(0, num(r.value)),
+        qty: cant, toOrder: cant, orderOverride: cant, finalOrder: cant,
+        quickOrder: true
+      });
+      _deLista.set(r.item, f.id);
+    }
+    _nota = 'To buy list';
+    if (M() && M().ir) M().ir('quick');
+    return { ok: _items.length > 0, faltan };
+  }
+
+  window.BarStockMobileQuick = { limpiar, precargar, pintar: () => repintar() };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', registrar);
   else registrar();

@@ -37,12 +37,37 @@
   };
 
   const porComprar = () => _lista.filter(x => x.status === 'to_buy');
-  const pedidas = () => _lista.filter(x => x.status === 'ordered');
+
+  // ── Lo pedido, hasta que llega (fase 4) ──────────────────────────────
+  //
+  // Una línea pedida se enseña como "Ordered" hasta la hora de llegada
+  // de SU orden (state.orderHistory, por el id de la orden en
+  // order_ref): desde ahí ya está en el LIVE y deja de estar pendiente.
+  // No se escribe nada al llegar (el bartender no podría: el candado no
+  // le deja cambiar líneas); se calcula al leer. Si la orden no está en
+  // lo cargado, la línea se deja de enseñar a los 8 días: una línea que
+  // no se va nunca acabaría siendo ruido.
+  const ESPERA_MAX = 8 * 864e5;
+  const ordenDe = (x) => {
+    const h = (window.state && window.state.orderHistory) || [];
+    return x.order_ref ? h.find(o => String(o.id) === String(x.order_ref)) || null : null;
+  };
+  function llego(x, ahora) {
+    const o = ordenDe(x);
+    if (o && o.arrivesAt) return new Date(o.arrivesAt).getTime() <= ahora;
+    const t = new Date(x.status_at || x.added_at).getTime();
+    return !isNaN(t) && ahora - t > ESPERA_MAX;
+  }
+  const pedidas = () => { const t = Date.now(); return _lista.filter(x => x.status === 'ordered' && !llego(x, t)); };
 
   // Cuántas líneas hay por comprar. Es lo que decide si la pestaña sale
   // y su contador; null mientras no se ha leído nunca.
   const cuantos = () => (_cargada ? porComprar().length : null);
   const pedidos = () => (_cargada ? pedidas().length : null);
+  // ¿Sale la pestaña? Con algo por comprar, o con algo pedido que aún no
+  // llega: si no, al pedirlo todo la pestaña se iría con lo pedido
+  // dentro y no se vería (Axel, 2026-11-15).
+  const visible = () => !!_cargada && (porComprar().length > 0 || pedidas().length > 0);
 
   // Lee la lista. Si la cifra cambia, avisa a Orders (la pestaña sale o
   // se va) y al Home (su botón). Dos lecturas a la vez son una.
@@ -79,6 +104,23 @@
     return partes.join(' · ');
   }
 
+  // "LOOP · CT-0220 · Sun 2:10 PM · Axel · arrives Tue 7 AM": de qué
+  // orden, cuándo y quién la pidió, y cuándo llega.
+  function pedidaTxt(x) {
+    const o = ordenDe(x);
+    const partes = [];
+    if (o) { partes.push(o.vendor || ''); if (o.poNumber) partes.push(o.poNumber); }
+    else partes.push('Ordered');
+    const c = cuandoNY(x.status_at);
+    if (c) partes.push(c);
+    if (x.status_by) partes.push(x.status_by);
+    if (o && o.arrivesAt) {
+      const t = new Date(o.arrivesAt).getTime();
+      partes.push(t - Date.now() < 5 * 60e3 ? 'arrives now' : 'arrives ' + cuandoNY(o.arrivesAt));
+    }
+    return partes.filter(Boolean).join(' · ');
+  }
+
   function linea(x, ordenada) {
     const editar = !ordenada && puede('ordenes');
     return `<div class="m-tb-l${ordenada ? ' es-pedida' : ''}" data-tb="${esc(x.id)}">
@@ -87,7 +129,7 @@
         ${editar ? `<button type="button" class="m-tb-x" data-tb-x aria-label="Remove from the list">
             <i class="ti ti-x" aria-hidden="true"></i></button>` : ''}
       </div>
-      <div class="m-tb-s${x.reason === 'app' ? '' : ' de-persona'}">${esc(ordenada ? 'Ordered' + (x.order_ref ? ' · ' + x.order_ref : '') : porque(x))}</div>
+      <div class="m-tb-s${x.reason === 'app' ? '' : ' de-persona'}">${esc(ordenada ? pedidaTxt(x) : porque(x))}</div>
       ${editar ? `<div class="m-ord-q m-tb-q">
           <button type="button" data-tb-q="-1" aria-label="One less">−</button>
           <button type="button" class="m-tb-num" data-tb-num aria-label="Change the amount">${esc(num(x.qty))}</button>
@@ -112,7 +154,12 @@
         <b>Nothing to buy</b><small>Add products from Running out, or with Running low on any product.</small></div>`;
       return;
     }
-    host.innerHTML = `
+    // "Order N items" (fase 4, opción A): toda la lista a Quick order,
+    // como LOOP, para revisar y guardar. Lo que no se quiera pedir se
+    // quita antes con la ✕. Sólo quien compra.
+    const ir = a.length && puede('ordenes')
+      ? `<button type="button" class="m-tb-go" data-tb-go>Order ${a.length} item${a.length === 1 ? '' : 's'}</button>` : '';
+    host.innerHTML = `${ir}
       ${a.length ? `<div class="m-tb-k">To buy · ${a.length}</div>${a.map(x => linea(x, false)).join('')}` : ''}
       ${b.length ? `<div class="m-tb-k">Ordered · ${b.length}</div>${b.map(x => linea(x, true)).join('')}` : ''}`;
   }
@@ -127,8 +174,16 @@
     return r;
   }
 
+  function pedirTodo() {
+    const Q = window.BarStockMobileQuick;
+    if (!Q || !Q.precargar) { aviso('Quick order is not ready yet. Try again in a moment.'); return; }
+    const r = Q.precargar(porComprar().map(x => ({ id: x.id, item: x.item_name, qty: x.qty })));
+    if (r && r.faltan && r.faltan.length) aviso('Not in the inventory anymore: ' + r.faltan.join(', '));
+  }
+
   function alTocar(ev) {
     const b = ev.target.closest && ev.target.closest('button');
+    if (b && b.hasAttribute('data-tb-go')) { if (puede('ordenes')) pedirTodo(); return; }
     const l = ev.target.closest && ev.target.closest('[data-tb]');
     if (!b || !l || !puede('ordenes')) return;
     const x = _lista.find(y => String(y.id) === l.dataset.tb);
@@ -181,7 +236,7 @@
 
   // La línea viva de un producto (por comprar o pedida), o null. La
   // tarjeta de "Do we have" la usa para decir que ya está en la lista.
-  const deProducto = (item) => _lista.find(x => x.item_name === item && (x.status === 'to_buy' || x.status === 'ordered')) || null;
+  const deProducto = (item) => porComprar().find(x => x.item_name === item) || pedidas().find(x => x.item_name === item) || null;
 
-  window.BarStockMobileToBuy = { montar, cargar, cuantos, pedidos, deProducto };
+  window.BarStockMobileToBuy = { montar, cargar, cuantos, pedidos, visible, deProducto };
 })();

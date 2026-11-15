@@ -943,7 +943,9 @@
   // La lista de compras (mobile-to-buy.js) va ANTES de Open y SÓLO
   // cuando tiene algo por comprar: vacía, Orders enseña las tres de
   // siempre. Si se vacía estando en ella, se vuelve a Open.
-  const hayToBuy = () => { const t = TB(); return !!(t && t.cuantos && t.cuantos() > 0); };
+  // Sale con algo por comprar o con algo pedido que aún no llega
+  // (fase 4): si no, al pedirlo todo se iría con lo pedido dentro.
+  const hayToBuy = () => { const t = TB(); return !!(t && (t.visible ? t.visible() : t.cuantos && t.cuantos() > 0)); };
   const secciones = () => hayToBuy() ? [{ id: 'buy', n: 'To buy' }].concat(SECCIONES) : SECCIONES;
 
   // ¿La sección activa está dentro de un detalle? Entonces el
@@ -1029,7 +1031,7 @@
     const vs = proveedores();
     const nPend = vs.length;
     const nSin = (I() && I().resumen && (I().resumen() || {}).sueltas) || 0;
-    const nBuy = hayToBuy() ? TB().cuantos() : 0;
+    const nBuy = hayToBuy() ? (TB().cuantos() || 0) : 0;
 
     peg.innerHTML =
       '<div class="m-seg" id="moSeg">' +

@@ -38,7 +38,7 @@ const txt = (el) => el ? el.textContent.replace(/\s+/g, ' ').trim() : '';
 const LINEAS = () => [
   { id: 11, item_name: "Dad's Hat Rye", qty: 2, reason: 'app', note: null, added_by: 'Mia', added_at: '2026-11-15T02:40:00Z', status: 'to_buy' },
   { id: 12, item_name: 'White Haven Sauvignon Blanc', qty: 3, reason: 'person', note: 'only 1 left', added_by: 'Ana', added_at: '2026-11-15T00:15:00Z', status: 'to_buy' },
-  { id: 13, item_name: 'Buffalo Trace', qty: 1, reason: 'app', note: null, added_by: 'Mia', added_at: '2026-11-14T20:00:00Z', status: 'ordered', order_ref: 'CT-0214' }
+  { id: 13, item_name: 'Buffalo Trace', qty: 1, reason: 'app', note: null, added_by: 'Mia', added_at: '2026-11-14T20:00:00Z', status: 'ordered', order_ref: 'ord-14' }
 ];
 
 function montar(o) {
@@ -48,7 +48,7 @@ function montar(o) {
   w.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} });
   w.scrollTo = () => {};
   w.BARSTOCK_CONFIG = { SUPABASE_URL: 'https://db.test', SUPABASE_KEY: 'k' };
-  w.state = { master: [] };
+  w.state = { master: [], orderHistory: [{ id: 'ord-14', vendor: 'LOOP', poNumber: 'CT-0214', arrivesAt: new Date(Date.now() + 864e5).toISOString() }] };
   w.getActiveVendors = () => [];
   w.getOrderRowsForVendor = () => [];
   w.computeOrderSubtotal = () => 0;
@@ -152,7 +152,7 @@ grupo('4 · lo pedido, y sin permiso');
   await esperar(20);
   host.querySelector('[data-sec="buy"]').click(); await esperar(20);
   const b = linea(host, 'Buffalo Trace');
-  prueba('lo pedido sale aparte, con su orden', !!b && /Ordered · CT-0214/.test(txt(b)) && /Ordered · 1/.test(txt(host)), txt(b));
+  prueba('lo pedido sale aparte, con su orden', !!b && /LOOP · CT-0214/.test(txt(b)) && /Ordered · 1/.test(txt(host)), txt(b));
   prueba('sin ✕ ni −/+: sale solo cuando llega', !b.querySelector('button') && /1 ordered/.test(txt(b)), txt(b));
   ({ host } = montar({ sin: ['ordenes'] }));
   await esperar(20);

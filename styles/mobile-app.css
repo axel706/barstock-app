@@ -3515,6 +3515,14 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * líneas de una orden (.m-ord-l) y su −/+ (.m-ord-q). El número del
    * medio es un BOTÓN que abre el teclado de num-pad.js, no un <input>:
    * nada de zoom de iOS. El aire va por arriba. */
+  /* "Order N items" (fase 4, opción A): el botón principal de la
+   * pestaña, azul sólido como "Review and send" de un proveedor. */
+  :is(#mScreens) .m-tb-go {
+    display: block; width: 100%; margin-top: 14px; min-height: calc(var(--m-base) * 3.4);
+    border: 0; border-radius: 14px !important; cursor: pointer;
+    background: #38bdf8; color: #04283d; font-size: var(--m-strong); font-weight: 800;
+  }
+  .m-qk-aviso { color: #fcd34d; }
   .m-tb-k {
     margin-top: 16px; font-size: var(--m-meta); font-weight: 800; letter-spacing: .08em;
     text-transform: uppercase; color: #8fa1b5;

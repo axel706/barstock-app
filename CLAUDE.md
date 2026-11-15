@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 151 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 152 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -382,7 +382,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 151 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 152 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -1094,6 +1094,21 @@ está cargada, "See them" abre Inventory filtrado como antes. Prueba:
   "See them" de "Running out first", sólo con algo en la lista; lleva
   a la pestaña. Sin nada que se acabe no hay tarjeta, y tampoco botón.
   Prueba: el último grupo de `test-tarjeta-pronto`.
+
+**Fase 4 (2026-11-15, opción A): de la lista a la compra.** "Order N
+items" arriba de To buy (sólo con "Make and send orders") abre Quick
+order YA RELLENA como LOOP (`BarStockMobileQuick.precargar`), con la
+pregunta del LIVE de siempre; al guardar, las líneas que siguen en el
+borrador pasan a `ordered` con `order_ref` = el id de la orden y la
+cantidad pedida de verdad (`shopping-list.marcarPedidas`). **No cambia
+el proveedor de ningún producto**: LOOP va sólo en la línea de esa
+orden (Axel lo preguntó). Cambiar de proveedor vacía el borrador y
+suelta la lista. Si marcar falla, la pantalla de hecho lo dice. Lo
+pedido se enseña como "LOOP · CT-0220 · Sun 2:10 PM · Axel · arrives
+Tue 7 AM" hasta la llegada de SU orden (`state.orderHistory`; sin la
+orden, 8 días), calculado al leer, sin escribir nada; la pestaña sigue
+mientras haya algo pedido sin llegar. La firma es el nombre de la
+sesión: cada quien usa su teléfono (Axel). Prueba: `test-pedir-lista`.
 
 ---
 

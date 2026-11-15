@@ -63,6 +63,33 @@
     } catch (e) { return { ok: false, error: String(e && e.message || e) }; }
   }
 
+  // De la lista a la compra (fase 4, Axel 2026-11-15, opción A): las
+  // líneas que salieron en una orden pasan a `ordered`, con la orden
+  // (`order_ref` = el id de la orden, app_order_id) y la cantidad que se
+  // pidió de verdad, que pudo cambiarse en Quick order: decir "4
+  // ordered" cuando se pidieron 6 sería mentir. Una petición por línea:
+  // son pocas, y cada una lleva su cantidad.
+  //   lineas: [{ id, qty }] → { ok, hechas } | { ok: false, error, hechas }
+  async function marcarPedidas(lineas, ref, por) {
+    const hechas = [];
+    const ahora = new Date().toISOString();
+    try {
+      for (const l of lineas || []) {
+        const q = Number(l && l.qty);
+        const cambio = { status: 'ordered', order_ref: ref ? String(ref) : null,
+          status_by: por ? String(por).slice(0, 80) : null, status_at: ahora };
+        if (isFinite(q) && q > 0) cambio.qty = q;
+        await pedir('shopping_list?id=eq.' + encodeURIComponent(l.id), 'PATCH', cambio);
+        hechas.push(l.id);
+      }
+      avisar();
+      return { ok: true, hechas };
+    } catch (e) {
+      if (hechas.length) avisar();
+      return { ok: false, error: String(e && e.message || e), hechas };
+    }
+  }
+
   // Cuánto pedir de un producto al ponerlo en la lista: el "Order N" de
   // la app (live-cache.pedir, el mismo del correo), y sin lo que se
   // suele gastar (lo que Toast no vende), hasta el par. Uno como mínimo:
@@ -87,5 +114,5 @@
       '&status=in.(to_buy,ordered)&select=id,item_name,qty,reason,note,added_by,added_at,status,status_by,status_at,order_ref&order=added_at.asc');
   }
 
-  window.BarStockShoppingList = { anadir, quitar, cambiar, leer, sugerido };
+  window.BarStockShoppingList = { anadir, quitar, cambiar, marcarPedidas, leer, sugerido };
 })();
