@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261115-135651",
+    "items": [
+      "Morning email: varied wording, date on its own line"
+    ]
+  },
+  {
     "build": "20261115-133646",
     "items": [
       "Smoother scrolling in the lists"
@@ -179,13 +185,6 @@
     "build": "20261114-212913",
     "items": [
       "Closing a count now saves what Live expected"
-    ]
-  },
-  {
-    "build": "20261114-211622",
-    "items": [
-      "Out dates leave half a bottle of margin",
-      "Running out warns earlier, to be safe"
     ]
   }
 ]

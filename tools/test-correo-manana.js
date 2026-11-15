@@ -90,9 +90,12 @@ grupo('un día movido');
   const t = texto(html);
   prueba('el asunto dice el día, el dinero y cuántos no llegan',
     asunto === "The Crown Tavern · Wed $3,717 · 3 won't make it to Sunday", asunto);
-  prueba('el saludo cuenta el día', /Thursday, Nov 12\. Wednesday was a good night, and 3 things won't make it to Sunday\./.test(t), t.slice(0, 300));
-  prueba('ayer, con palabras', /You did \$3,717 in drinks, 17% more than a usual Wednesday\./.test(t), t.slice(0, 500));
-  prueba('quién lo llevó', /Liquor, cocktails included, carried most of it\./.test(t));
+  // Varias frases por situación (Axel, 2026-11-15): se acepta cualquiera
+  // de las de "un buen día"; lo que no puede cambiar es lo que dicen.
+  prueba('la fecha de hoy va sola, arriba, antes del saludo', /Thursday · Nov 12 (Good morning|Morning|Rise and shine)/.test(t) && !/Thursday, Nov 12\./.test(t), t.slice(0, 200));
+  prueba('el saludo cuenta el día', /Wednesday (was a good night|came in strong|beat a usual Wednesday|was a busy one), and 3 things won't make it to Sunday\./.test(t), t.slice(0, 300));
+  prueba('ayer, con palabras', /\$3,717 in drinks, 17% more than a usual Wednesday\.|Drinks came to \$3,717, 17% above a usual Wednesday\.|\$3,717 in drinks: 17% over what a Wednesday usually brings\./.test(t), t.slice(0, 500));
+  prueba('quién lo llevó', /Liquor, cocktails included, carried most of it\.|Most of it was liquor, cocktails included\.|Liquor led the way, cocktails included\./.test(t));
   prueba('las seis cifras', ['$3,717', '$2,144', '$1,573', '40.5', '22.1', '18.4'].every(x => t.includes(x)));
   prueba('con su comparación en cada una', /↗ 17%/.test(t) && /↗ 22%/.test(t) && /↗ 11%/.test(t) && /↗ 64%/.test(t) && /↗ 71%/.test(t) && /↗ 56%/.test(t), t.slice(0, 900));
   prueba('dicho una vez debajo', (t.match(/Arrows compare with a usual Wednesday/g) || []).length === 1);
@@ -108,7 +111,7 @@ grupo('un día movido');
   prueba('sin lo más vendido', !/Most sold|led again/.test(t));
   prueba('sin "What stood out"', !/stood out/i.test(t));
   prueba('sin la etiqueta "from LOOP"', !/from LOOP/.test(t));
-  prueba('el molde del correo de órdenes', /Sent via BarStock Pro/.test(t) && /Open BarStock/.test(t) && /Have a good shift/.test(t));
+  prueba('el molde del correo de órdenes', /Sent via BarStock Pro/.test(t) && /Open BarStock/.test(t) && /Have a good shift|Have a great service|Good luck tonight/.test(t));
 }
 
 grupo('un día tranquilo');
@@ -116,14 +119,29 @@ grupo('un día tranquilo');
   const { asunto, html } = M.armar(Object.assign({}, BASE, { agotan: [],
     ayer: Object.assign({}, AYER, { dinero: 3000, licor: 1700, vino: 1300 }) }));
   const t = texto(html);
-  prueba('el saludo lo dice', /Wednesday was a normal night, and nothing runs out before Sunday\./.test(t), t.slice(0, 300));
+  prueba('el saludo lo dice', /Wednesday (was a normal night|was right on pace|looked like a usual Wednesday), and nothing runs out before Sunday\./.test(t), t.slice(0, 300));
   prueba('sin la sección', !/Won't make it/.test(t) && !/Order \d/.test(t));
   prueba('el asunto también', /· nothing runs out$/.test(asunto), asunto);
-  prueba('cerca de lo normal, se dice así', /right around a usual Wednesday/.test(t), t.slice(0, 500));
+  prueba('cerca de lo normal, se dice así', /right around a usual Wednesday|about what a Wednesday usually does|in line with a usual Wednesday/.test(t), t.slice(0, 500));
 }
 {
   const t = texto(M.armar(Object.assign({}, BASE, { ayer: Object.assign({}, AYER, { dinero: 2400, licor: 1300, vino: 1100 }) })).html);
-  prueba('por debajo: a slow night', /Wednesday was a slow night/.test(t) && /24% less than a usual Wednesday/.test(t), t.slice(0, 500));
+  prueba('por debajo: a slow night', /Wednesday (was a slow night|came in light|was quieter than usual)/.test(t) && /24% (less than a usual|below a usual|under what a) Wednesday/.test(t), t.slice(0, 500));
+}
+
+grupo('no dice siempre lo mismo (Axel, 2026-11-15)');
+{
+  // Los mismos números en días distintos: las frases cambian. El mismo
+  // día, siempre igual (la vista previa y el automático coinciden).
+  const dia = (hoy) => texto(M.armar(Object.assign({}, BASE, { hoy })).html);
+  const corta = (t) => (/Wednesday (was a good night|came in strong|beat a usual Wednesday|was a busy one)/.exec(t) || [])[1];
+  const saludo = (t) => (/(Good morning ☀️|Morning ☕|Good morning 👋|Rise and shine ☀️)/.exec(t) || [])[1];
+  const dias = ['2026-11-12', '2026-11-13', '2026-11-14', '2026-11-15', '2026-11-16', '2026-11-17', '2026-11-18'];
+  const cortas = new Set(dias.map(d => corta(dia(d))));
+  const saludos = new Set(dias.map(d => saludo(dia(d))));
+  prueba('en una semana, la frase de ayer cambia', cortas.size >= 3 && !cortas.has(undefined), JSON.stringify([...cortas]));
+  prueba('y el saludo también', saludos.size >= 3 && !saludos.has(undefined), JSON.stringify([...saludos]));
+  prueba('el mismo día, siempre lo mismo', dia('2026-11-14') === dia('2026-11-14'));
 }
 
 grupo('lo que no se sabe no se pinta');
