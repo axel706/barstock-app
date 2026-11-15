@@ -247,6 +247,23 @@ grupo('7 · las pestañas sacan de la revisión (Axel, 2026-11-15)');
   prueba('cerrada con atrás, no deja nada enganchado que cierre otra cosa después', !abierta() && M.activa() === 'inventory');
 }
 
+grupo('8 · el fondo de la app, no uno opaco (Axel, 2026-11-15)');
+{
+  // Llevaba un fondo sólido (#0b1220) para tapar la pantalla de debajo.
+  // Ahora es transparente y lo de debajo se esconde mientras está abierta.
+  const w = entorno();
+  const marca = () => w.document.body.classList.contains('m-ro-abierta');
+  await w.BarStockRunningOutReview.abrir(w.document.getElementById('mHome')); await esperar(20);
+  prueba('abierta: el body lo dice, para esconder lo de debajo', marca());
+  w.BarStockRunningOutReview.cerrar();
+  prueba('cerrada: se quita', !marca());
+  const css = leer('styles/mobile-app.css');
+  const regla = (/\n  \.m-ro \{([^}]*)\}/.exec(css) || [])[1] || '';
+  prueba('.m-ro sin fondo propio', !!regla && !/background:\s*#/.test(regla) && /background:\s*(none|transparent)/.test(regla), regla.trim().slice(0, 120));
+  prueba('lo de debajo se esconde mientras está abierta (las pantallas y la barra acoplada)',
+    /body\.m-ro-abierta[^{]*\.m-screen[^{]*\{[^}]*visibility:\s*hidden/.test(css) && /body\.m-ro-abierta[^{]*#mDock/.test(css));
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
 })();

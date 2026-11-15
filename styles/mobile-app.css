@@ -5514,9 +5514,18 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-ro {
     position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 8990;
     overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
-    background: #0b1220;
+    /* Sin fondo propio (Axel, 2026-11-15): tenía #0b1220 para tapar la
+     * pantalla de debajo, y se veía un fondo distinto al de la app. Lo
+     * de debajo se esconde con body.m-ro-abierta (abajo) y aquí se ve
+     * la foto y el velo del body, como en todas las pantallas. */
+    background: none;
     padding: calc(52px + env(safe-area-inset-top, 0px) + 6px) 16px calc(env(safe-area-inset-bottom, 0px) + 110px);
   }
+  /* Mientras está abierta: las pantallas y la barra de búsqueda
+   * acoplada (#mDock, que cuelga del body) no se ven. visibility y no
+   * display: la pantalla de debajo conserva su scroll y su estado. */
+  body.m-ro-abierta #mScreens > .m-screen,
+  body.m-ro-abierta #mDock { visibility: hidden; }
   .m-ro-sum { margin-top: 6px; font-size: var(--m-small); color: #9fb0c4; }
   .m-ro-vacio { margin-top: 40px; text-align: center; font-size: var(--m-body); color: #8fa1b5; }
   .m-ro-c { margin-top: 10px; padding: 14px; border-radius: 20px;

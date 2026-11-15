@@ -175,6 +175,7 @@
     _el = null;
     if (_quitarOyente) { _quitarOyente(); _quitarOyente = null; }
     if (_quitarIrse) { _quitarIrse(); _quitarIrse = null; }
+    document.body.classList.remove('m-ro-abierta');
     const M = window.BarStockMobile;
     if (M && M.salirBanda) M.salirBanda();
   }
@@ -186,6 +187,10 @@
     _el.className = 'm-ro';
     _el.addEventListener('click', alTocar);
     donde.appendChild(_el);
+    // Sin fondo propio: lo de debajo se esconde (mobile-app.css) y se ve
+    // el fondo de la app, como en el resto de pantallas (Axel,
+    // 2026-11-15: "tiene fondo opaco, no usa el fondo de la app").
+    document.body.classList.add('m-ro-abierta');
     const M = window.BarStockMobile;
     if (M && M.enBanda) M.enBanda('Running out');
     if (M && M.alVolverBanda) M.alVolverBanda(cerrar);
