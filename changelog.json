@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261115-113600",
+    "items": [
+      "Edit order: Done sits right on top of the tabs"
+    ]
+  },
+  {
     "build": "20261115-110727",
     "items": [
       "Edit order: Done sits above the tabs, in glass"
@@ -183,12 +189,6 @@
     "items": [
       "Settings › People: roles, PIN for everyone",
       "Turn off single permissions per person"
-    ]
-  },
-  {
-    "build": "20261113-140149",
-    "items": [
-      "Behind-the-scenes: roles and permissions"
     ]
   }
 ]

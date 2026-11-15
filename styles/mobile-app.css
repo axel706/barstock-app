@@ -5573,11 +5573,13 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     position: relative; z-index: 2; border-color: rgba(125,211,252,.6) !important;
     background: rgba(40,60,90,.92) !important; box-shadow: 0 16px 40px rgba(0,0,0,.55);
   }
-  /* `bottom: 0` y no 100 px: el sticky cuenta desde el relleno de .m-ro
-   * (que ya deja sitio a las pestañas y a la zona segura). Con 100 px
-   * más flotaba a media pantalla en el iPhone (Axel, 2026-11-15). */
+  /* Fijo, justo encima de la barra de pestañas (Axel, 2026-11-15: "fijo
+   * pero un poco más abajo, sobre la barra de menú inferior"). El sticky
+   * cuenta desde el relleno de .m-ro (la zona segura + 110 px); la barra
+   * mide 62 px sobre la zona segura, así que −38 px lo deja 10 px por
+   * encima de ella. Con 100 px de más flotaba a media pantalla. */
   #mScreens .m-ro-done {
-    position: sticky; bottom: 0;
+    position: sticky; bottom: calc(var(--m-base) * -2.7);
     display: block; width: 100%; margin-top: 16px; min-height: calc(var(--m-base) * 3.4);
     font-size: var(--m-strong);
   }
