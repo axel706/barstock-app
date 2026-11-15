@@ -1453,6 +1453,8 @@ body.light .cp-read .cp-down { color: #b91c1c; }
 #cfPanel .cf-card { border-radius: 20px !important; }
 #cfPanel .cf-row-b { border-radius: 0 !important; }
 #cfPanel .cf-b    { border-radius: 999px !important; }
+#cfPanel .cf-ex    { border-radius: 14px !important; }
+#cfPanel .cf-ex-mas { border-radius: 0 !important; }
 
 .cf-title-s{ display:block; font-size: var(--m-meta); color:#8aa0b4;
   font-weight:600; margin-top:2px; letter-spacing:0; text-transform:none; }
@@ -1518,6 +1520,34 @@ body.light .cp-read .cp-down { color: #b91c1c; }
 
 .cf-cat{ font-size:var(--m-eyebrow); font-weight:800; letter-spacing:.1em;
   text-transform:uppercase; color:#7f93a8; margin:18px 2px 2px; }
+
+/* ── Lo contado contra lo que esperaba el LIVE (2026-11-14) ───────────
+ * Axel, sobre lámina: antes de cerrar, la lista para recontar (filas que
+ * se tocan); después, los tres que más pesan. La misma fila en los dos
+ * sitios: el nombre y "counted 1 · expected ≈5" a la izquierda, la
+ * diferencia en botellas y en dinero a la derecha, rojo lo que falta y
+ * verde lo que sobra. El aire va por arriba, como el resto. */
+.cf-ex{ display:flex; align-items:center; gap:12px; width:100%; box-sizing:border-box;
+  margin-top:8px; padding:12px 14px; text-align:left; font-family:inherit; color:#e8eef7;
+  background:rgba(255,255,255,.055); border:1px solid rgba(255,255,255,.09); }
+button.cf-ex{ cursor:pointer; }
+.cf-ex[hidden]{ display:none; }
+.cf-ex-n{ flex:1; min-width:0; }
+.cf-ex-n b{ display:block; font-size:var(--m-small); font-weight:800;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cf-ex-n small{ display:block; margin-top:3px; font-size:var(--m-meta); color:#8aa0b4; }
+.cf-ex-v{ flex:0 0 auto; text-align:right; font-variant-numeric:tabular-nums; }
+.cf-ex-v b{ display:block; font-size:var(--m-body); font-weight:800; }
+.cf-ex-v small{ display:block; margin-top:2px; font-size:var(--m-meta); font-weight:600; }
+.cf-ex .neg{ color:#f87171; }
+.cf-ex .pos{ color:#34d399; }
+.cf-ex-sec{ margin-top:22px; }
+.cf-ex-k{ font-size:var(--m-eyebrow); font-weight:800; letter-spacing:.1em;
+  text-transform:uppercase; color:#7f93a8; margin:0 2px; }
+.cf-ex-pie{ margin-top:10px; padding:0 2px; font-size:var(--m-meta); color:#8aa0b4; line-height:1.5; }
+.cf-ex-mas{ background:none; border:0; padding:0; margin:0; font:inherit; font-weight:700;
+  color:#7dd3fc; text-decoration:underline; cursor:pointer; }
+.cf-ex-mas[hidden]{ display:none; }
 
 .cf-busca{ display:flex; align-items:center; gap:9px; padding:0 13px; height:46px;
   border-radius:14px; background:rgba(255,255,255,.06);

@@ -134,6 +134,72 @@
     }
   }
 
+  // ── Antes de cerrar: lo que se aleja del LIVE ────────────────────────
+  //
+  // Axel, 2026-11-14, sobre lámina (1, 2 y C): en "Finish count", ANTES
+  // de cerrar, una tarjeta con los conteos que se alejan de lo que
+  // esperaba el LIVE, que se tocan para recontar (cuando todavía no
+  // cuesta nada); y después de cerrar, los tres que más pesan.
+  //
+  // previo() calcula lo esperado con lo MISMO que se guarda al cerrar
+  // (live-stock.entre, el maestro de antes, desde el conteo anterior).
+  // Primero hace el Sync de hoy: sin él, todo lo vendido hoy parecería
+  // faltar. Si el Sync falla (una locación sin Toast, sin red), se
+  // calcula con lo que haya y se dice (`sincronizado: false`).
+  async function previo(master) {
+    let sincronizado = false;
+    const TS = window.BarStockToastSales;
+    if (TS && TS.sincronizarHoy) {
+      try { await TS.sincronizarHoy(); sincronizado = true; }
+      catch (e) { console.warn('[esperado] sin el Sync de hoy:', e && e.message || e); }
+    }
+    const A = await antes(master);
+    if (!A.desde) return { sincronizado, filas: [], precio: A.precio, enToast: () => false };
+    const masterAntes = (master || []).filter(r => r && r.item)
+      .map(r => Object.assign({}, r, { onHand: A.onHand[r.item] != null ? A.onHand[r.item] : 0 }));
+    const v = await window.BarStockLive.entre({ master: masterAntes, conteo: A.desde, inicioCiclo: Date.parse(A.desde), ahora: Date.now() });
+    const LC = window.BarStockLiveCache;
+    const porNombre = new Map((master || []).map(x => [x.item, x]));
+    const vendido = new Map((v.filas || []).map(f => [f.producto, Number(f.vendido) || 0]));
+    return {
+      sincronizado, filas: v.filas || [], precio: A.precio, desde: A.desde,
+      enToast: (item) => (vendido.get(item) || 0) > 0 || !!(LC && LC.toastLoVende && LC.toastLoVende(porNombre.get(item)))
+    };
+  }
+
+  // Qué sale en la lista. Más de UMBRAL botellas Y más de PARTE de lo
+  // vendido en la semana: medio litro de algo que vende 40 no es nada, y
+  // en algo que vende 2 es mucho. Lo que Toast no vende no sale: sin
+  // ventas que restar, todo lo usado parecería faltar.
+  const UMBRAL = 1, PARTE = 0.25;
+  // contado(item) → lo contado, o null si no se contó.
+  function comparar({ previo: P, contado }) {
+    const r2 = (n) => Math.round(n * 100) / 100;
+    const lista = [];
+    let hayToast = false;
+    for (const f of (P && P.filas) || []) {
+      if (!P.enToast(f.producto)) continue;
+      hayToast = true;
+      const c = contado(f.producto);
+      if (c == null) continue;
+      const esperado = Number(f.live) || 0;
+      const dif = r2(Number(c) - esperado);
+      const vendido = Number(f.vendido) || 0;
+      if (!(Math.abs(dif) > UMBRAL && Math.abs(dif) > PARTE * vendido)) continue;
+      const precio = P.precio[f.producto] > 0 ? P.precio[f.producto] : 0;
+      lista.push({ item: f.producto, contado: r2(Number(c)), esperado: r2(esperado), dif, vendido,
+        dinero: precio ? r2(dif * precio) : null });
+    }
+    // Lo que más dinero pesa primero; sin precio, por botellas.
+    lista.sort((a, b) => Math.abs(b.dinero || 0) - Math.abs(a.dinero || 0) || Math.abs(b.dif) - Math.abs(a.dif));
+    return {
+      lista, hayToast,
+      cortos: lista.filter(x => x.dif < 0).length,
+      sobran: lista.filter(x => x.dif > 0).length,
+      dinero: r2(lista.reduce((t, x) => t + (x.dinero || 0), 0))
+    };
+  }
+
   // ── Cerrar lo provisional ────────────────────────────────────────────
   //
   // Al cerrar el conteo, el día del cierre casi nunca está cargado entero
@@ -210,5 +276,5 @@
     if (typeof setInterval === 'function') setInterval(cerrarSolo, 30 * 60 * 1000);
   }
 
-  window.BarStockLiveExpected = { antes, armar, guardar, cerrarPendientes };
+  window.BarStockLiveExpected = { antes, armar, guardar, cerrarPendientes, previo, comparar, UMBRAL, PARTE };
 })();

@@ -910,8 +910,24 @@ por la tarde):**
   esos días (upsert por `id`, con las columnas que exige un INSERT) y
   pasa el ciclo a `final`. Un día sin cargar lo deja esperando. Lo de
   antes no se toca.
-- **Falta:** todo lo que lo enseña (fases 3 en adelante del plan):
-  primero Count closed, sobre lámina.
+- **Fase 3, en "Finish count" (2026-11-14, sobre lámina: 1, 2 y C):**
+  `live-expected.previo()` hace el Sync de hoy (si falla, sigue y lo
+  dice con `sincronizado: false`) y calcula lo esperado con lo mismo
+  que se guarda (`entre`); `comparar()` decide qué sale: más de
+  `UMBRAL` (1) botella Y más de `PARTE` (¼) de lo vendido en la semana,
+  sólo lo que Toast vende, ordenado por dinero. En `count-finish`:
+  (1) antes de cerrar, la tarjeta "N counts far from what Live
+  expected" ("Tap to recount" primero) SUSTITUYE a "do not look right"
+  cuando hay Toast; sin Toast, sigue la vieja. (2) Su vista
+  `esperado`: "Less than expected" y "More than expected", filas
+  `.cf-ex` que abren su panel de conteo. (C) Después de cerrar, "Live
+  vs count · −$X this week", los tres que más pesan y "See all N" que
+  despliega el resto ahí mismo (el separador va dentro de lo que se
+  esconde). Estilos `.cf-ex*` en `count-panel.css`. Pruebas: "3c" en
+  `test-esperado-guardar` y "lo que se aleja del LIVE" en
+  `test-cierre-conteo`.
+- **Falta:** la ficha del producto (su historial), los patrones y el
+  resumen semanal (fases 4 en adelante del plan), sobre lámina.
 - *(Lo de abajo es lo que se planeó; ya construido.)* **Guardar al cerrar el conteo**, en
   `count-finish.js`, sólo cuando el conteo abre ciclo (`!yaHayCiclo`;
   un reconteo no). El LIVE se calcula con lo de ANTES: hay que tomar

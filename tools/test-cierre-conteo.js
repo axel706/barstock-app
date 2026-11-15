@@ -371,6 +371,87 @@ grupo('Open Ordering, en el telefono, lleva a Orders');
   prueba('y no toca el shell movil', w.__irMovil.length === 0, JSON.stringify(w.__irMovil));
 }
 
+grupo('lo que se aleja del LIVE, antes y después de cerrar');
+{
+  // Axel, 2026-11-14, sobre lámina: (1) antes de cerrar, una tarjeta con
+  // los conteos lejos de lo que esperaba el LIVE; (2) tocarla abre la
+  // lista, cortos y sobrantes, y tocar uno lo recuenta; (C) después de
+  // cerrar, los tres que más pesan y "See all" que despliega el resto.
+  const preparar = async (o) => {
+    o = o || {};
+    const { w, b } = await abrir({ contados: 6, desdeCero: false });
+    w.state.master.forEach(r => { r.value = 10; });
+    global.state = w.state;
+    new Function(fs.readFileSync(path.join(RAIZ, 'src/live-expected.js'), 'utf8'))();
+    // Lo que esperaba el LIVE: el conteo pone 1 a cada contado.
+    const filas = o.sinToast ? [{ producto: 'Item 0', live: 5, vendido: 0 }] : [
+      { producto: 'Item 0', live: 5, vendido: 6 },     // −4 · $40
+      { producto: 'Item 1', live: 7, vendido: 3 },     // −6 · $60
+      { producto: 'Item 2', live: 1.2, vendido: 2 },   // 0.2: nada
+      { producto: 'Item 3', live: 3.5, vendido: 4 },   // −2.5 · $25
+      { producto: 'Item 4', live: 3, vendido: 1 },     // −2 · $20
+      { producto: 'Item 5', live: -2, vendido: 8 }     // +3 · $30
+    ];
+    w.BarStockLiveExpected.previo = async () => ({ sincronizado: true, filas,
+      precio: Object.fromEntries(w.state.master.map(r => [r.item, 10])),
+      enToast: () => !o.sinToast });
+    // Se reabre para que la carga pase con el previo de mentira.
+    w.BarStockCountFinish.open(() => {}, () => {});
+    await esperar(40);
+    return { w, b: w.document.getElementById('cfBody') };
+  };
+
+  let { w, b } = await preparar();
+  const card = b.querySelector('[data-ir="esperado"]');
+  prueba('antes de cerrar: la tarjeta', !!card, txt(b).slice(0, 300));
+  prueba('dice cuántos y de qué', card && /5 counts far from what Live expected/.test(card.textContent), card && card.textContent.replace(/\s+/g, ' '));
+  prueba('con los dos que más pesan, y "Tap to recount" primero', card && /Tap to recount · Item 1 1 vs ≈7/.test(card.textContent.replace(/\s+/g, ' ')) && /Item 1 1 vs ≈7/.test(card.textContent.replace(/\s+/g, ' ')) && /Item 0 1 vs ≈5/.test(card.textContent.replace(/\s+/g, ' ')), card && card.textContent.replace(/\s+/g, ' '));
+  prueba('y la tarjeta vieja de "do not look right" ya no', !b.querySelector('[data-ir="raros"]'));
+
+  card.click();
+  await esperar(10);
+  b = w.document.getElementById('cfBody');
+  const t = txt(b);
+  prueba('la lista: primero lo que falta', /Less than expected/.test(t) && t.indexOf('Less than expected') < t.indexOf('More than expected'), t.slice(0, 300));
+  const filasL = [...b.querySelectorAll('[data-esp]')];
+  prueba('una fila por cada uno', filasL.length === 5, String(filasL.length));
+  prueba('con lo contado, lo esperado, la diferencia y el dinero',
+    filasL[0] && /Item 1/.test(filasL[0].textContent) && /counted 1/.test(filasL[0].textContent) && /expected ≈7/.test(filasL[0].textContent) &&
+    /−6/.test(filasL[0].textContent) && /−\$60/.test(filasL[0].textContent), filasL[0] && filasL[0].textContent.replace(/\s+/g, ' '));
+  prueba('lo que sobra, en verde y aparte', /More than expected[\s\S]*Item 5[\s\S]*\+3/.test(t) && !!b.querySelector('[data-esp] .pos'));
+  let abierto = null;
+  w.BarStockCountPanel = { open: (row, fin) => { abierto = row.item; } };
+  filasL[0].click();
+  prueba('tocar uno abre SU panel de conteo para recontarlo', abierto === 'Item 1', String(abierto));
+
+  // Después de cerrar: los tres que más pesan y "See all".
+  ({ w, b } = await preparar());
+  w.BarStockInventoryCloud = { replaceInventoryMaster: async () => {} };
+  w.BarStockMobile = { montado: () => false, ir() {} };
+  w.bsOpenSection = () => {};
+  b.querySelector('#cfGo').click();
+  await esperar(60);
+  b = w.document.getElementById('cfBody');
+  const sec = b.querySelector('.cf-ex-sec');
+  prueba('después de cerrar: la sección', !!sec, txt(b).slice(0, 400));
+  prueba('con el total de la semana', sec && /Live vs count/.test(sec.textContent) && /−\$115 this week/.test(sec.textContent), sec && sec.textContent.replace(/\s+/g, ' '));
+  const vis = sec ? [...sec.querySelectorAll('.cf-ex')].filter(x => !x.hidden) : [];
+  prueba('los tres que más pesan, a la vista', vis.length === 3 && /Item 1/.test(vis[0].textContent), vis.map(x => x.textContent.replace(/\s+/g, ' ').trim()).join(' | '));
+  prueba('cuántos faltan, cuántos sobran, y que es final mañana', sec && /4 short · 1 over/.test(sec.textContent) && /final tomorrow/i.test(sec.textContent), sec && sec.textContent.replace(/\s+/g, ' '));
+  const mas = sec && sec.querySelector('.cf-ex-mas');
+  prueba('"See all 5"', !!mas && /See all 5/.test(mas.textContent), mas && mas.textContent);
+  if (mas) mas.click();
+  const vis2 = sec ? [...sec.querySelectorAll('.cf-ex')].filter(x => !x.hidden) : [];
+  prueba('que despliega el resto ahí mismo', vis2.length === 5 && !sec.querySelector('.cf-ex-mas:not([hidden])'), String(vis2.length));
+  const sep = w.document.getElementById('cfExMasS');
+  prueba('el separador se esconde con el botón (sin "· ·" al desplegar)', !!sep && sep.hidden === true && sep.contains(mas), String(sep && sep.hidden));
+  prueba('y el siguiente paso sigue debajo', b.innerHTML.indexOf('cf-ex-sec') < b.innerHTML.indexOf('cf-next-card'));
+
+  // Sin Toast (Jockey, Harvest): la tarjeta vieja sigue, nada nuevo.
+  ({ w, b } = await preparar({ sinToast: true }));
+  prueba('sin Toast: ni tarjeta nueva', !b.querySelector('[data-ir="esperado"]'));
+}
+
 grupo('el esperado no puede tumbar el cierre');
 {
   // El esperado (live-expected.js) se toma antes del bucle que escribe el

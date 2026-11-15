@@ -235,6 +235,54 @@ grupo('3b · cerrar lo provisional cuando Toast tiene los días');
   prueba('se lanza solo al abrir la app, sin esperarlo', /setTimeout\(\s*cerrarSolo/.test(leer('src/live-expected.js')));
 }
 
+grupo('3c · antes de cerrar: lo que se aleja de lo que esperaba el LIVE');
+{
+  // Axel, 2026-11-14, sobre lámina (1, 2 y C): antes de cerrar, una
+  // tarjeta con los conteos lejos de lo esperado, que se tocan para
+  // recontar; después de cerrar, los tres que más pesan. La regla de qué
+  // sale (la propuesta, aceptada): más de 1 botella Y más de un cuarto
+  // de lo vendido en la semana. Lo que Toast no vende no sale: sin
+  // ventas que restar, todo lo usado parecería faltar.
+  const w = entorno();
+  const E = w.BarStockLiveExpected;
+  prueba('existe comparar', typeof E.comparar === 'function');
+  const previo = {
+    precio: { "Tito's": 21.5, 'Baileys': 30, 'Whitehaven': 15, 'Chico': 20, 'Cerveza': 5, 'Mucho': 10 },
+    filas: [
+      { producto: "Tito's", live: 5, vendido: 6 },          // contó 1: −4, $86
+      { producto: 'Baileys', live: 2, vendido: 0.2 },       // contó 1.5: −0.5, poco: no
+      { producto: 'Whitehaven', live: 6, vendido: 3 },      // contó 9: +3
+      { producto: 'Chico', live: 3.4, vendido: 2 },         // contó 2: −1.4 (> 1 y > 0.5): sí
+      { producto: 'Cerveza', live: 10, vendido: 0 },        // Toast no lo vende: no
+      { producto: 'Mucho', live: 30, vendido: 40 }          // contó 28: −2, pero < 10 (¼ de 40): no
+    ],
+    enToast: (item) => item !== 'Cerveza'
+  };
+  const contado = { "Tito's": 1, 'Baileys': 1.5, 'Whitehaven': 9, 'Chico': 2, 'Cerveza': 2, 'Mucho': 28, 'SinContar': null };
+  const c = E.comparar({ previo, contado: (i) => contado[i] });
+  const nombres = c.lista.map(x => x.item);
+  prueba("salen Tito's, Whitehaven y Chico", nombres.length === 3 && ["Tito's", 'Whitehaven', 'Chico'].every(n => nombres.includes(n)), nombres.join(','));
+  prueba('media botella no es nada', !nombres.includes('Baileys'));
+  prueba('lo que Toast no vende no sale', !nombres.includes('Cerveza'));
+  prueba('2 botellas de algo que vende 40 a la semana tampoco', !nombres.includes('Mucho'));
+  prueba('ordenado por dinero', nombres[0] === "Tito's" && nombres[1] === 'Whitehaven', nombres.join(','));
+  const t = c.lista[0];
+  prueba("Tito's: contado 1, esperado 5, −4, −$86", t.contado === 1 && t.esperado === 5 && t.dif === -4 && t.dinero === -86, JSON.stringify(t));
+  prueba('cuenta los cortos y los que sobran', c.cortos === 2 && c.sobran === 1, JSON.stringify(c));
+  prueba('y el dinero de lo que salió', Math.abs(c.dinero - (-86 + 45 - 28)) < 1e-9, String(c.dinero));
+  prueba('sabe si hay datos de Toast', c.hayToast === true);
+  const sin = E.comparar({ previo: { precio: {}, filas: [{ producto: 'Cerveza', live: 3, vendido: 0 }], enToast: () => false }, contado: () => 1 });
+  prueba('sin nada que Toast venda: hayToast falso (la tarjeta vieja se queda)', sin.hayToast === false && sin.lista.length === 0);
+  // previo(): el Sync de hoy primero, y aunque falle, se sigue.
+  const w2 = entorno();
+  let sync = 0;
+  w2.BarStockToastSales = { sincronizarHoy: async () => { sync++; throw new Error('sin restaurante'); } };
+  const p2 = await w2.BarStockLiveExpected.previo(MASTER());
+  prueba('previo hace el Sync de hoy antes de calcular', sync === 1);
+  prueba('y si falla, calcula igual y lo dice', p2 && Array.isArray(p2.filas) && p2.filas.length === 3 && p2.sincronizado === false, JSON.stringify(p2 && { s: p2.sincronizado, n: p2.filas && p2.filas.length }));
+  prueba('con lo de antes y desde el conteo anterior', w2.__entre && w2.__entre.conteo === '2026-11-09T02:30:00.000Z');
+}
+
 grupo('4 · en el cierre del conteo');
 {
   const cf = leer('src/count-finish.js');

@@ -188,6 +188,7 @@
     _busca = '';
     _ins = null;
     _zonas = null;
+    _exp = null;
     $('cfPanel').classList.add('on');
     render();
   }
@@ -210,6 +211,9 @@
   let _ins = null;        // lo que devolvió BarStockCountInsight
   let _zonas = null;      // { filas, sinZona, estado }
   let _busca = '';        // el filtro de la lista de los que faltan
+  // Lo que esperaba el LIVE (live-expected.previo): null sin pedir,
+  // 'cargando', false si no se pudo, o el objeto.
+  let _exp = null;
 
   const n2 = (x) => String(Math.round((Number(x) || 0) * 100) / 100);
 
@@ -275,9 +279,56 @@
     pintar();
   }
 
+  // ── Lo que esperaba el LIVE (Axel, 2026-11-14, sobre lámina) ────────
+  //
+  // En segundo plano, como los avisos: hace el Sync de hoy y calcula lo
+  // esperado con lo mismo que se guarda al cerrar. Si no se puede, la
+  // pantalla sigue como siempre, con la tarjeta vieja de "do not look
+  // right".
+  async function cargarEsperado() {
+    const LE = window.BarStockLiveExpected;
+    if (!LE || !LE.previo) { _exp = false; return; }
+    _exp = 'cargando';
+    try { _exp = await LE.previo((window.state && window.state.master) || []); }
+    catch (e) { console.warn('[conteo] sin lo esperado del LIVE', e); _exp = false; }
+    repintar();
+  }
+
+  // La comparación con lo contado. `contado(item)` → número o null.
+  function compararCon(contado) {
+    const LE = window.BarStockLiveExpected;
+    if (!_exp || typeof _exp !== 'object' || !LE || !LE.comparar) return null;
+    try { return LE.comparar({ previo: _exp, contado }); }
+    catch (e) { console.warn('[conteo] comparar con el LIVE', e); return null; }
+  }
+  // Antes de cerrar, lo contado está en la sesión, no en el maestro.
+  function contadoSesion() {
+    const hechos = new Set(S().countedItems());
+    const tam = new Map(((window.state && window.state.master) || []).map(r => [r.item, Number(r.bottleSizeMl) || 750]));
+    return (item) => hechos.has(item) ? S().bottlesFor(item, tam.get(item) || 750) : null;
+  }
+  // Los números con su signo de verdad (−, no -) y sin ceros de sobra.
+  const conSigno = (x) => (x > 0 ? '+' : x < 0 ? '\u2212' : '') + n2(Math.abs(x));
+  const dineroSigno = (x) => (x > 0 ? '+' : x < 0 ? '\u2212' : '') + dinero(Math.abs(x));
+  // Una fila: el nombre, lo contado contra lo esperado, y la diferencia.
+  // Botón antes de cerrar (abre su conteo), texto después.
+  function filaEsperado(x, i, boton) {
+    const tono = x.dif < 0 ? 'neg' : 'pos';
+    const dentro = `
+      <span class="cf-ex-n"><b>${esc(x.item)}</b>
+        <small>counted ${esc(n2(x.contado))} &middot; expected &asymp;${esc(n2(x.esperado))}</small></span>
+      <span class="cf-ex-v"><b class="${tono}">${esc(conSigno(x.dif))}</b>${
+        x.dinero != null ? `<small class="${tono}">${esc(dineroSigno(x.dinero))}</small>` : ''}</span>`;
+    return boton
+      ? `<button class="cf-ex" type="button" data-esp="${i}">${dentro}
+           <i class="ti ti-chevron-right cf-card-go" aria-hidden="true"></i></button>`
+      : `<div class="cf-ex"${i >= 3 ? ' hidden' : ''}>${dentro}</div>`;
+  }
+
   function render() {
     pintar();
     // En segundo plano, y sólo una vez por apertura.
+    if (_exp === null) cargarEsperado();
     if (_ins === null) cargarInsight();
     if (_zonas === null) cargarZonas().catch(e => console.warn('[zonas] cierre', e));
   }
@@ -291,6 +342,7 @@
     const T = {
       movers: ['Moves every week', (_ins && _ins.faltan.length || 0) + ' not counted'],
       raros:  ['Does not look right', (_ins && _ins.raros.length || 0) + ' to check'],
+      esperado: ['Far from Live', ((compararCon(contadoSesion()) || { lista: [] }).lista.length) + ' to check'],
       faltan: ['What is missing', S().summary().missing + ' of ' + S().summary().total],
       zonas:  ['By zone', (_zonas && _zonas.filas.length || 0) + ' zones']
     };
@@ -306,6 +358,7 @@
     if (!b) return;
     if (_vista === 'movers')      { vistaMovers(b); return; }
     if (_vista === 'raros')       { vistaRaros(b);  return; }
+    if (_vista === 'esperado')    { vistaEsperado(b); return; }
     if (_vista === 'faltan')      { vistaFaltan(b); return; }
     if (_vista === 'zonas')       { vistaZonas(b);  return; }
     vistaResumen(b);
@@ -371,7 +424,13 @@
            Pick below what happens to them.`;
 
     const nMov = _ins && _ins.listo ? _ins.faltan.length : 0;
-    const nRar = _ins && _ins.listo ? _ins.raros.length : 0;
+    // Con lo que esperaba el LIVE, la tarjeta nueva sustituye a la vieja
+    // ("do not look right", que estimaba con el uso de siempre, de antes
+    // de Toast). Sin Toast en esta locación, se queda la vieja.
+    const cmp = compararCon(contadoSesion());
+    const conVivo = !!(cmp && cmp.hayToast);
+    const nEsp = conVivo ? cmp.lista.length : 0;
+    const nRar = !conVivo && _ins && _ins.listo ? _ins.raros.length : 0;
     const nZon = _zonas ? _zonas.filas.length : 0;
 
     b.innerHTML = `
@@ -387,6 +446,12 @@
           nMov + ' fast mover' + (nMov === 1 ? '' : 's') + ' not counted',
           _ins.faltan.slice(0, 3).map(x => esc(x.item) + ' ' + x.semanal.toFixed(1) + '/wk')
             .join(' · ')) : ''}
+
+      ${nEsp ? tarjeta('esperado', 'urge', 'activity',
+          nEsp + ' count' + (nEsp === 1 ? '' : 's') + ' far from what Live expected',
+          // "Tap to recount" primero: al final lo cortaba el ancho.
+          'Tap to recount &middot; ' + cmp.lista.slice(0, 2).map(x => esc(x.item) + ' ' + esc(n2(x.contado)) + ' vs &asymp;' + esc(n2(x.esperado)))
+            .join(' &middot; ')) : ''}
 
       ${nRar ? tarjeta('raros', 'urge', 'help-circle',
           nRar + ' count' + (nRar === 1 ? '' : 's') + ' do not look right',
@@ -491,6 +556,36 @@
           // conteo, así que se vuelve a analizar con lo que ya hay.
           cargarInsight();
         });
+      };
+    });
+  }
+
+  // ── Lejos de lo que esperaba el LIVE ─────────────────────────────────
+  //
+  // Lo que falta primero, después lo que sobra; dentro, por dinero. Tocar
+  // uno abre SU panel de conteo con lo que ya se había puesto; al volver,
+  // se compara otra vez: si ya cuadra, desaparece solo.
+  function vistaEsperado(b) {
+    const cmp = compararCon(contadoSesion());
+    const lista = cmp ? cmp.lista : [];
+    const cortos = lista.filter(x => x.dif < 0), sobran = lista.filter(x => x.dif > 0);
+    const fila = (x) => filaEsperado(x, lista.indexOf(x), true);
+    b.innerHTML = `
+      <div class="cf-sub">Expected = what Live said was on the shelf: the last
+        count, plus what arrived, minus what Toast sold.${
+        _exp && _exp.sincronizado === false ? ' Today&rsquo;s sales could not be synced, so they may be missing.' : ''}
+        Tap one to count it again before closing.</div>
+      ${cortos.length ? `<div class="cf-cat">Less than expected</div>${cortos.map(fila).join('')}` : ''}
+      ${sobran.length ? `<div class="cf-cat">More than expected</div>${sobran.map(fila).join('')}` : ''}
+      ${lista.length ? '' : '<div class="cf-empty">Every count is close to what Live expected.</div>'}
+      ${pieDetalle('')}`;
+    colgarPie(b);
+    b.querySelectorAll('[data-esp]').forEach(x => {
+      x.onclick = () => {
+        const d = lista[Number(x.dataset.esp)];
+        const row = ((window.state && window.state.master) || []).find(m => m.item === d.item);
+        if (!row || !window.BarStockCountPanel) return;
+        window.BarStockCountPanel.open(row, () => repintar());
       };
     });
   }
@@ -841,6 +936,27 @@
       // cierre se resume en tres números y el siguiente paso trae el
       // suyo, en vez de mandarte a buscarlo.
       const pedir = loPorPedir();
+
+      // Lo que se alejó del LIVE (opción C): los tres que más pesan a la
+      // vista y "See all" que despliega el resto ahí mismo. Con lo que
+      // quedó escrito, no con la sesión, que ya se vació. Final mañana:
+      // el día de hoy puede no estar entero en Toast todavía.
+      const cmpFin = compararCon((item) => counted.has(item)
+        ? Number((master.find(r => r.item === item) || {}).onHand) || 0 : null);
+      const seccionVivo = cmpFin && cmpFin.hayToast ? (cmpFin.lista.length ? `
+        <div class="cf-ex-sec">
+          <div class="cf-ex-k">Live vs count${cmpFin.dinero ? ' &middot; ' + esc(dineroSigno(cmpFin.dinero)) + ' this week' : ''}</div>
+          ${cmpFin.lista.map((x, i) => filaEsperado(x, i, false)).join('')}
+          <div class="cf-ex-pie">${cmpFin.cortos} short &middot; ${cmpFin.sobran} over${
+            // El separador va DENTRO de lo que se esconde: fuera, al
+            // desplegar quedaba "2 over · · final tomorrow".
+            cmpFin.lista.length > 3 ? `<span id="cfExMasS"> &middot; <button class="cf-ex-mas" id="cfExMas" type="button">See all ${cmpFin.lista.length}</button></span>` : ''}
+            &middot; final tomorrow</div>
+        </div>` : `
+        <div class="cf-ex-sec">
+          <div class="cf-ex-k">Live vs count</div>
+          <div class="cf-ex-pie">Every count is close to what Live expected &middot; final tomorrow</div>
+        </div>`) : '';
       const compara = antes && antes.active_ms >= MINIMO_PARA_COMPARAR
                       && s.activeMs >= MINIMO_PARA_COMPARAR
         ? comparar(s.activeMs, antes.active_ms) : '';
@@ -875,6 +991,8 @@
             app will flag what is missing that you actually use, and any
             count that does not match your history.
           </div>` : ''}
+
+        ${seccionVivo}
 
         <!-- El siguiente paso, con su número ya puesto.
 
@@ -932,6 +1050,11 @@
       // antes de engancharlo. Sin esto, un bar al dia con sus pedidos
       // reventaba aqui y se quedaba sin pantalla de cierre.
       const al = (id, fn) => { const b = $(id); if (b) b.onclick = fn; };
+      al('cfExMas', () => {
+        $('cfBody').querySelectorAll('.cf-ex-sec .cf-ex').forEach(x => { x.hidden = false; });
+        $('cfExMas').hidden = true;
+        $('cfExMasS').hidden = true;
+      });
       al('cfEnd', () => close(false));
       al('cfGoOrder', () => { close(false); irA('vendor'); });
       al('cfGoSales', () => { close(false); irA('consumption'); });
