@@ -2577,7 +2577,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* El botón de avisar (Axel, 2026-11-15, B en naranja): el cristal de
    * los botones de la app (regla compartida, arriba) teñido de naranja,
    * como el + va de verde y "Done" de azul: es algo que se HACE, no un
-   * estado. Aquí sólo la forma. */
+   * estado. Al 30 % y no al 42 % del azul: Axel lo pidió "un poquito
+   * más tenue". Aquí sólo la forma; el tinte, debajo. */
   :is(#mScreens) .m-low-b {
     display: flex; align-items: center; justify-content: center; gap: 8px;
     width: 100%; min-height: calc(var(--m-base) * 2.6); padding: 0 12px;
@@ -2587,15 +2588,15 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   :is(#mScreens) .m-low-b .ti { font-size: var(--m-strong); }
   body.m-shell #mScreens .m-res .m-low-b {
     position: relative; isolation: isolate;
-    color: #fff7ed; background: rgba(249, 115, 22, .42);
-    border: 1px solid rgba(254, 215, 170, .62);
+    color: #fff7ed; background: rgba(249, 115, 22, .30);
+    border: 1px solid rgba(254, 215, 170, .48);
     box-shadow:
       inset 0 1.5px 0 rgba(255,255,255,.5),
-      inset 0 0 14px rgba(249,115,22,.45),
+      inset 0 0 14px rgba(249,115,22,.32),
       0 6px 18px rgba(0,0,0,.28);
   }
   body.m-shell #mScreens .m-res .m-low-b::before { z-index: -1; }
-  body.m-shell #mScreens .m-res .m-low-b:active { background: rgba(249, 115, 22, .58); }
+  body.m-shell #mScreens .m-res .m-low-b:active { background: rgba(249, 115, 22, .44); }
   .m-low-hecho {
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
     padding: 9px 12px; border-radius: 12px;
