@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261114-204124",
+    "items": [
+      "Toast sales now load hour by hour"
+    ]
+  },
+  {
     "build": "20261114-012523",
     "items": [
       "Inventory search, filter and + in glass",
@@ -183,13 +189,6 @@
     "items": [
       "Bartender Mode: the Home greets the bartender by name",
       "Bartender Mode: the scan button is off"
-    ]
-  },
-  {
-    "build": "20261112-173349",
-    "items": [
-      "Guest bartenders: buttons that change things are hidden",
-      "Guest bartenders: Inventory rows open the product card"
     ]
   }
 ]

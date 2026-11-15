@@ -34,6 +34,9 @@
  *                                      más viejo; se salta lo ya cargado
  *        await bsToastHistoria(7, { otraVez: true })   vuelve a cargar
  *                                      también lo ya cargado
+ *        await bsToastHistoria(90, { sinHoras: true })  vuelve a cargar
+ *                                      sólo los días que no tienen lo
+ *                                      vendido por hora (migración 041)
  *        bsToastParar = true           lo para después del día en curso
  *
  *        await bsLive()                el LIVE: contado + llegó − vendido
@@ -99,6 +102,10 @@
   // en paralelo: Toast limita la velocidad.
   // `{ otraVez: true }` vuelve a cargar también lo ya cargado: si cambia
   // qué se guarda, los días viejos se quedarían sin lo nuevo.
+  // `{ sinHoras: true }` (2026-11-15) es eso mismo, pero sólo para los
+  // días que no tienen lo vendido por hora: la curva de cada día de la
+  // semana necesita la historia, y rehacer TODO sería pedirle a Toast
+  // también lo que ya está bien.
   window.bsToastHistoria = async function (dias, op) {
     op = op || {};
     dias = Math.max(1, Math.min(400, Number(dias) || 7));
@@ -115,10 +122,10 @@
 
     // Lo que ya está cargado, completo y cerrado no se vuelve a pedir.
     const { data, error } = await window.BarStockSupabase.getClient()
-      .from('toast_sales_days').select('business_date,complete,closed')
+      .from('toast_sales_days').select(op.sinHoras ? 'business_date,complete,closed,hours' : 'business_date,complete,closed')
       .eq('location_id', locationId).gte('business_date', lista[lista.length - 1]).limit(1000);
     if (error) { console.warn('Supabase dijo:', error.message); return null; }
-    const hecho = new Set((data || []).filter(d => d.complete && d.closed).map(d => d.business_date));
+    const hecho = new Set((data || []).filter(d => d.complete && d.closed && (!op.sinHoras || d.hours != null)).map(d => d.business_date));
     const faltan = op.otraVez ? lista : lista.filter(d => !hecho.has(d));
     console.log(faltan.length + ' días por cargar de ' + lista.length + ' (' + hecho.size + ' ya estaban).');
 
@@ -126,7 +133,7 @@
     // enseñaba sólo las del primero, y así no salió "Banquet Beverage",
     // que sólo aparece los días con evento.
     const guardadas = new Set(), fuera = new Set();
-    const res = { cargados: 0, filas: 0, incompletos: [], sinDinero: [], categorias: null };
+    const res = { cargados: 0, filas: 0, incompletos: [], sinDinero: [], sinHoras: [], categorias: null };
     for (let i = 0; i < faltan.length; i++) {
       if (window.bsToastParar) { console.log('Parado. Lo cargado se queda.'); break; }
       const d = faltan[i];
@@ -151,6 +158,13 @@
       if (j.dinero === false) {
         res.sinDinero.push(d);
         console.warn(d + ' se guardó SIN dinero: ' + (j.aviso || '') + ' Corre la 034 y vuelve a llamar.');
+        break;
+      }
+      // Lo mismo con las horas (migración 041, o una versión vieja de la
+      // función desplegada): rehacer la historia sin ellas no sirve.
+      if (j.horas === false) {
+        res.sinHoras.push(d);
+        console.warn(d + ' se guardó SIN horas: ' + (j.aviso || '') + ' ¿Está corrida la 041 y desplegado main?');
         break;
       }
       for (const c of (j.categorias && j.categorias.guardadas) || []) guardadas.add(c);

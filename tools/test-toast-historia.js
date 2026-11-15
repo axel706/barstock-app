@@ -47,7 +47,7 @@ function entorno(o) {
     // primero: así se escondió "Banquet Beverage" la primera vez.
     const evento = w.__llamadas.length === 2;
     const j = (o.falla === d) ? { ok: false, paso: 'orders', status: 500 }
-      : { ok: true, filas: 10, ordenes: 50, diaCompleto: true, dinero: !o.sinDinero,
+      : { ok: true, filas: 10, ordenes: 50, diaCompleto: true, dinero: !o.sinDinero, horas: !o.sinHoras,
           aviso: o.sinDinero ? 'Sales saved without money (migration 034).' : undefined,
           categorias: evento ? { guardadas: ['Banquet Beverage', 'Liquor'], fuera: ['Food'] } : { guardadas: ['Liquor'], fuera: ['Food'] } };
     return { status: 200, json: async () => j };
@@ -107,6 +107,33 @@ grupo('sin la migracion 034: se para y lo dice');
   const w = entorno();
   const r = await w.bsToastHistoria(3);
   prueba('con la 034, nada que apuntar', r.sinDinero.length === 0 && w.__llamadas.length === 4, JSON.stringify(r));
+}
+
+grupo('sinHoras: carga otra vez sólo los días que no tienen horas');
+{
+  // Axel, 2026-11-15: la carga guarda ya lo vendido por hora (migración
+  // 041), pero los 90 días de antes no lo tienen, y sin ellos la curva
+  // de cada día de la semana tarda cuatro semanas en servir. Con
+  // `sinHoras` se vuelven a cargar SOLO esos: lo que ya trae sus horas no
+  // se pide otra vez.
+  const w = entorno({ cargados: [
+    { business_date: ayer, complete: true, closed: true, hours: { q: [] } },
+    { business_date: antier, complete: true, closed: true, hours: null } ] });
+  const r = await w.bsToastHistoria(2, { sinHoras: true });
+  const dias = w.__llamadas.map(p => p.params.businessDate);
+  prueba('ayer, con horas, no se pide', !dias.includes(ayer.replace(/-/g, '')), dias.join(','));
+  prueba('antier, cerrado pero sin horas, sí', dias.includes(antier.replace(/-/g, '')), dias.join(','));
+  prueba('hoy, abierto, también', dias.includes(hoy.replace(/-/g, '')), dias.join(','));
+  prueba('cuenta lo cargado', r.cargados === 2, JSON.stringify(r));
+}
+{
+  // Si la función contesta que guardó sin horas (la 041 sin correr, o una
+  // versión vieja desplegada), rehacer los 90 días no sirve de nada: se
+  // para en el primero y lo dice.
+  const w = entorno({ sinHoras: true });
+  const r = await w.bsToastHistoria(5, { sinHoras: true });
+  prueba('sin horas en la respuesta: se para en el primer día', w.__llamadas.length === 1, String(w.__llamadas.length));
+  prueba('y lo apunta', r.sinHoras && r.sinHoras.length === 1, JSON.stringify(r));
 }
 
 grupo('se para en el primer error');

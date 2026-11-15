@@ -929,10 +929,13 @@ El arreglo acordado, en tres fases:
    línea (`createdDate`), si no la de su cuenta, si no la de su orden;
    sin ninguna, `sin_hora`. Sin el open bar. Sin la columna, la carga
    sigue sin horas y lo dice (`horas: false`, aviso con "041").
-   **Sin comprobar contra Toast de verdad que `createdDate` venga en las
-   líneas**: si no viene, cae a la hora de la cuenta.
-2. Recargar la historia con horas (herramienta como `bsToastHistoria`,
-   que hoy se salta lo ya cargado).
+   **Comprobado contra Toast** (2026-11-14, Crown): las horas llegan,
+   `sin_hora` 0; un sábado va de las 11 AM a las 8 PM, con el pico de 4
+   a 7 PM.
+2. **La herramienta está:** `await bsToastHistoria(90, { sinHoras: true
+   })` vuelve a cargar sólo los días sin horas (`tools/toast.js`), y se
+   para si la función contesta que guardó sin ellas. Falta que Axel la
+   corra en la consola del escritorio, en cada locación con Toast.
 3. `run-out.js`: lo que falta de hoy = lo vendido hasta el último Sync ×
    lo que le suele faltar al día a esa hora (la curva, mediana por día
    de la semana), y nunca menos que lo de siempre − lo vendido. La hora
