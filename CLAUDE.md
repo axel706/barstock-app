@@ -888,7 +888,8 @@ por la tarde):**
 
 - **Fase 1 hecha** (`e099375`): migración 040 (`live_expected_cycles` y
   `live_expected`), probada contra un Postgres 16 local; prueba
-  `test-esperado`. **Axel tiene que correrla**; no asumir que lo está.
+  `test-esperado`. **Corrida por Axel el 2026-11-15** (comprobada en
+  `information_schema`).
 - **Fase 2, lo siguiente: guardar al cerrar el conteo**, en
   `count-finish.js`, sólo cuando el conteo abre ciclo (`!yaHayCiclo`;
   un reconteo no). El LIVE se calcula con lo de ANTES: hay que tomar
@@ -924,7 +925,7 @@ conteos dicen ~30 a la semana, y esta semana era normal.)
 El arreglo acordado, en tres fases:
 1. **Hecha:** `sync` guarda lo vendido de bebida por HORA de Nueva York,
    de toda la barra, en `toast_sales_days.hours` (`{ q:[24], net:[24],
-   sin_hora }`, migración 041, **sin correr**). La hora es la de la
+   sin_hora }`, migración 041, **corrida el 2026-11-15**). La hora es la de la
    línea (`createdDate`), si no la de su cuenta, si no la de su orden;
    sin ninguna, `sin_hora`. Sin el open bar. Sin la columna, la carga
    sigue sin horas y lo dice (`horas: false`, aviso con "041").
