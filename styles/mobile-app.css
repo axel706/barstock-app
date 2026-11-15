@@ -632,7 +632,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * justo debajo, en "La barra de cristal". */
   body.m-shell #mBand .m-ico:not(.m-ico-alert),
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio,
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo),
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone),
   body.m-shell #mScreens :is(#mhTabs, .m-ts-seg) {
     -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
             backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
@@ -647,7 +647,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   body.m-shell #mBand .m-ico:not(.m-ico-alert)::before,
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio::before,
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo)::before,
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone)::before,
   body.m-shell #mScreens :is(#mhTabs, .m-ts-seg)::before,
   body.m-shell .m-fab::before {
     content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
@@ -771,6 +771,21 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
       0 6px 18px rgba(0,0,0,.28);
   }
   body.m-shell #mScreens #miNuevo:active { background: rgba(52, 211, 153, .58); }
+  /* "Done" de Edit order (Axel, 2026-11-15: "dale estilo liquid
+   * glass"): el mismo cristal (regla de arriba), teñido de azul como el
+   * + de verde. No entra en la regla de `position: relative` de los
+   * botones de cristal: es sticky, y sticky ya hace de contexto para
+   * que el reflejo quede debajo del texto. */
+  body.m-shell #mScreens #mRoDone {
+    color: #f0f9ff; background: rgba(56, 189, 248, .42);
+    border: 1px solid rgba(186, 230, 253, .62);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255,255,255,.5),
+      inset 0 0 14px rgba(56,189,248,.45),
+      0 10px 30px rgba(0,0,0,.45);
+  }
+  body.m-shell #mScreens #mRoDone::before { z-index: -1; }
+  body.m-shell #mScreens #mRoDone:active { background: rgba(56, 189, 248, .58); }
   body.m-shell #mScreens #miPegado :is(.m-searchbar.m-vidrio, #miAdj, #miNuevo) {
     -webkit-backdrop-filter: none; backdrop-filter: none;
   }
@@ -5558,10 +5573,13 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     position: relative; z-index: 2; border-color: rgba(125,211,252,.6) !important;
     background: rgba(40,60,90,.92) !important; box-shadow: 0 16px 40px rgba(0,0,0,.55);
   }
+  /* `bottom: 0` y no 100 px: el sticky cuenta desde el relleno de .m-ro
+   * (que ya deja sitio a las pestañas y a la zona segura). Con 100 px
+   * más flotaba a media pantalla en el iPhone (Axel, 2026-11-15). */
   #mScreens .m-ro-done {
-    position: sticky; bottom: calc(env(safe-area-inset-bottom, 0px) + 100px);
+    position: sticky; bottom: 0;
     display: block; width: 100%; margin-top: 16px; min-height: calc(var(--m-base) * 3.4);
-    font-size: var(--m-strong); box-shadow: 0 10px 30px rgba(0,0,0,.45);
+    font-size: var(--m-strong);
   }
   .m-ro-vacio { margin-top: 40px; text-align: center; font-size: var(--m-body); color: #8fa1b5; }
   .m-ro-c { margin-top: 10px; padding: 14px; border-radius: 20px;

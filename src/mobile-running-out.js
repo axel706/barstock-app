@@ -167,7 +167,7 @@
         <div class="m-ro-k" data-ro-k="fecha">By date</div>
         ${abajo.map(compacta).join('')}
       </div>
-      <button type="button" class="m-ro-b m-ro-go m-ro-done" data-ro-done>Done</button>`;
+      <button type="button" class="m-ro-b m-ro-go m-ro-done" id="mRoDone" data-ro-done>Done</button>`;
   }
 
   // Lo fijado sale del orden en pantalla: todo lo que quede entre los dos

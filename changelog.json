@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261115-110727",
+    "items": [
+      "Edit order: Done sits above the tabs, in glass"
+    ]
+  },
+  {
     "build": "20261115-105848",
     "items": [
       "Running out: Edit order to pin your products first"
@@ -183,12 +189,6 @@
     "build": "20261113-140149",
     "items": [
       "Behind-the-scenes: roles and permissions"
-    ]
-  },
-  {
-    "build": "20261113-133832",
-    "items": [
-      "Bartenders: location changes show after going back"
     ]
   }
 ]

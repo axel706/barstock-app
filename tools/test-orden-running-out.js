@@ -140,6 +140,16 @@ grupo('4 · un toque en el asa no hace nada fuera de la edición');
   prueba('fuera de la edición no hay asas', !w.document.querySelector('[data-ro-grip]'));
 }
 
+grupo('4b · "Done": abajo, de cristal (Axel, 2026-11-15)');
+{
+  const css = leer('styles/mobile-app.css');
+  const r = (/#mScreens \.m-ro-done \{([^}]*)\}/.exec(css) || [])[1] || '';
+  prueba('pegado abajo con bottom: 0 (con 100 px flotaba a media pantalla)', /position:\s*sticky/.test(r) && /bottom:\s*0;/.test(r), r.trim().slice(0, 80));
+  prueba('en la regla del cristal, la misma de los botones de la app', /:is\([^)]*#mRoDone[^)]*\)\s*,\s*\n\s*body\.m-shell #mScreens :is\(#mhTabs/.test(css));
+  prueba('teñido de azul, como el + verde', /#mScreens #mRoDone \{[^}]*rgba\(56, 189, 248/.test(css));
+  prueba('el botón lleva su id', /id="mRoDone"/.test(leer('src/mobile-running-out.js')));
+}
+
 grupo('5 · el Home sigue el orden');
 {
   const home = leer('src/mobile-home.js');
