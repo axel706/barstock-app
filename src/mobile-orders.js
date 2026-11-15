@@ -936,11 +936,21 @@
 
   const H = () => window.BarStockMobileHistory;
   const I = () => window.BarStockMobileInvoices;
+  const TB = () => window.BarStockMobileToBuy;
+
+  // ── To buy, la cuarta, delante (Axel, 2026-11-15) ──────────────────
+  //
+  // La lista de compras (mobile-to-buy.js) va ANTES de Open y SÓLO
+  // cuando tiene algo por comprar: vacía, Orders enseña las tres de
+  // siempre. Si se vacía estando en ella, se vuelve a Open.
+  const hayToBuy = () => { const t = TB(); return !!(t && t.cuantos && t.cuantos() > 0); };
+  const secciones = () => hayToBuy() ? [{ id: 'buy', n: 'To buy' }].concat(SECCIONES) : SECCIONES;
 
   // ¿La sección activa está dentro de un detalle? Entonces el
   // segmentado estorba: un detalle es otro nivel, y dejar ahí tres
   // pestañas invita a saltar de sección perdiendo lo que mirabas.
   function enDetalle() {
+    if (_sec === 'buy') return false;
     if (_sec === 'open') return !!_vendor || !!_revisar;
     const m = _sec === 'sent' ? H() : I();
     return !!(m && m.enDetalle && m.enDetalle());
@@ -1019,15 +1029,16 @@
     const vs = proveedores();
     const nPend = vs.length;
     const nSin = (I() && I().resumen && (I().resumen() || {}).sueltas) || 0;
+    const nBuy = hayToBuy() ? TB().cuantos() : 0;
 
     peg.innerHTML =
       '<div class="m-seg" id="moSeg">' +
-        SECCIONES.map(x => {
+        secciones().map(x => {
           // El contador solo donde significa algo: proveedores con
-          // pedido esperando, y líneas de factura sin enlazar. Un
-          // contador en "Sent" seria el total del historial, que no
-          // pide nada.
-          const n = x.id === 'open' ? nPend : x.id === 'inv' ? nSin : 0;
+          // pedido esperando, líneas de factura sin enlazar y lo que
+          // hay por comprar. Un contador en "Sent" seria el total del
+          // historial, que no pide nada.
+          const n = x.id === 'open' ? nPend : x.id === 'inv' ? nSin : x.id === 'buy' ? nBuy : 0;
           return '<button type="button" class="' + (x.id === _sec ? 'on' : '') + '"' +
             ' data-sec="' + x.id + '">' + esc(x.n) +
             (n ? ' <b>' + n + '</b>' : '') + '</button>';
@@ -1094,7 +1105,12 @@
   function pintar(host) {
     if (!host) return;
     _host = host;
+    // To buy sin nada que comprar ya no tiene pestaña: a Open.
+    if (_sec === 'buy' && !hayToBuy() && TB() && TB().cuantos() !== null) _sec = 'open';
     const cuerpo = marco(host);
+    // El cuerpo es el mismo para las cuatro: se marca cuál está puesta
+    // para que una lectura tardía de To buy no pinte encima de otra.
+    cuerpo.dataset.sec = _sec;
 
     // El `aviso` es cómo la sección le dice al marco que cambió de
     // nivel. Sin él, el detalle se pintaba dentro y el segmentado
@@ -1102,6 +1118,7 @@
     //
     // Redibuja SOLO la cabecera. Volver a montar la sección aquí
     // dispararía otra carga de red por cada vez que abres un detalle.
+    if (_sec === 'buy')  { if (TB()) TB().montar(cuerpo); return; }
     if (_sec === 'sent') { if (H()) H().montar(cuerpo, refrescarMarco); return; }
     if (_sec === 'inv')  { if (I()) I().montar(cuerpo, refrescarMarco); return; }
 
@@ -1157,7 +1174,7 @@
   // sin saber que viven dentro de Orders. Antes se hacía con
   // `BarStockMobile.ir('invoices')`, que ya no existe como pantalla.
   function abrirSeccion(id) {
-    _secPedida = (id === 'sent' || id === 'inv') ? id : 'open';
+    _secPedida = (id === 'sent' || id === 'inv' || id === 'buy') ? id : 'open';
     if (window.BarStockMobile) window.BarStockMobile.ir('orders');
   }
 
@@ -1280,6 +1297,9 @@
         // una petición explícita y manda.
         _sec = _secPedida || 'open';
         _secPedida = null;
+        // La lista se vuelve a leer al entrar: otro manager pudo añadir
+        // algo. Si cambia la cifra, la pestaña aparece (o se va) sola.
+        if (TB() && TB().cargar) TB().cargar();
         if (H() && H().reiniciar) H().reiniciar();
         if (I() && I().reiniciar) I().reiniciar();
         _vendor = _pedida || null;

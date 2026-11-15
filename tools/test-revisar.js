@@ -83,7 +83,7 @@ function entorno(o) {
     caducar: () => { w.__caducado = (w.__caducado || 0) + 1; }, alCambiar: () => () => {} };
   w.BarStockGuest = { puede: (k) => (o.sin || []).indexOf(k) < 0, nombre: () => 'Ana' };
   w.BarStockMobile = { enBanda: (t) => { w.__banda = t; return true; }, alVolverBanda: (f) => { w.__atras = f; }, salirBanda: () => { w.__salio = true; } };
-  for (const f of ['src/shopping-list.js', 'src/stock-checks.js', 'src/mobile-running-out.js']) if (existe(f)) w.eval(leer(f));
+  for (const f of ['src/shopping-list.js', 'src/stock-checks.js', 'src/num-pad.js', 'src/mobile-running-out.js']) if (existe(f)) w.eval(leer(f));
   return w;
 }
 const txt = (el) => (el ? el.textContent.replace(/\s+/g, ' ').trim() : '');

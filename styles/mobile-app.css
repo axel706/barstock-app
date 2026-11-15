@@ -3480,6 +3480,42 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-ord-q input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .m-ord-l-t { flex: 0 0 58px; text-align: right; font-size: var(--m-body); font-weight: 800; color: #fff; }
 
+  /* ── To buy (Axel, 2026-11-15, lámina A sin agrupar) ─────────────────
+   * La lista de compras, una línea por producto con el molde de las
+   * líneas de una orden (.m-ord-l) y su −/+ (.m-ord-q). El número del
+   * medio es un BOTÓN que abre el teclado de num-pad.js, no un <input>:
+   * nada de zoom de iOS. El aire va por arriba. */
+  .m-tb-k {
+    margin-top: 16px; font-size: var(--m-meta); font-weight: 800; letter-spacing: .08em;
+    text-transform: uppercase; color: #8fa1b5;
+  }
+  .m-tb-l {
+    margin-top: 8px; padding: 12px; border-radius: 15px;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.14);
+  }
+  .m-tb-l.es-pedida { opacity: .72; }
+  .m-tb-top { display: flex; align-items: center; gap: 8px; }
+  .m-tb-n {
+    flex: 1; min-width: 0; font-size: var(--m-body); font-weight: 600; color: #eef4fb;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .m-tb-s { margin-top: 4px; font-size: var(--m-small); color: #fcd34d; }
+  .m-tb-s.de-persona { color: #c4b5fd; }
+  .m-tb-l.es-pedida .m-tb-s { color: #6ee7b7; }
+  .m-tb-fija { margin-top: 8px; font-size: var(--m-small); color: #a9bacd; }
+  .m-tb-fija b { font-size: var(--m-strong); color: #fff; }
+  .m-tb-vacio { margin-top: 40px; text-align: center; font-size: var(--m-body); color: #8fa1b5; }
+  body.m-shell .m-tb-q .m-tb-num {
+    flex: 1; min-width: 0; font-size: var(--m-strong); font-weight: 700; color: #fff;
+    font-variant-numeric: tabular-nums;
+  }
+  :is(#mScreens) .m-tb-x {
+    flex: 0 0 auto; width: calc(var(--m-base) * 2.15); height: calc(var(--m-base) * 2.15);
+    display: inline-flex; align-items: center; justify-content: center; padding: 0;
+    border-radius: 50% !important; border: 0; cursor: pointer;
+    background: rgba(255,255,255,.08); color: #a9bacd; font-size: var(--m-body);
+  }
+
   body.m-shell .m-ord-undo {
     margin-top: 8px; font-size: var(--m-meta); color: #7dd3fc; cursor: pointer; text-align: left;
   }

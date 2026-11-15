@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261115-093320",
+    "items": [
+      "Orders: a To buy tab when the list has something",
+      "Change the amount on each line, or remove it"
+    ]
+  },
+  {
     "build": "20261115-085116",
     "items": [
       "Running out: the bottom tabs take you out of it"
@@ -182,12 +189,6 @@
     "build": "20261113-093623",
     "items": [
       "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261113-092111",
-    "items": [
-      "Edit item: Save keeps you on the item instead of the list"
     ]
   }
 ]

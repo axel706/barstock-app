@@ -73,13 +73,8 @@
     return { base, todos: base.concat(extra) };
   }
 
-  function cuantoPedir(r) {
-    const p = LC() && LC().pedir ? LC().pedir(r) : null;
-    if (p != null && p > 0) return p;
-    // Sin lo que se suele gastar (lo que Toast no vende): hasta el par.
-    const queda = LC() && LC().cuanto ? LC().cuanto(r) : Number(r.onHand) || 0;
-    return Math.max(1, Math.ceil((Number(r.suggested) || 0) - queda));
-  }
+  // El "Order N" vive en shopping-list.js: "Running low" pide el mismo.
+  const cuantoPedir = (r) => window.BarStockShoppingList.sugerido(r);
 
   function tarjeta(x) {
     const r = x.r;
@@ -132,62 +127,25 @@
 
   // ── El número: "I have enough" ──────────────────────────────────────
   //
-  // Un teclado de botones, no un campo de texto: el de iOS haría zoom por
-  // debajo de 16 px y taparía media pantalla. ".5" es la botella abierta.
+  // El teclado vive en num-pad.js: lo usan también la lista de compras y
+  // "Running low".
   function teclado(r) {
-    const vieja = document.getElementById('mSheet');
-    if (vieja) vieja.remove();
     const queda = LC() && LC().cuanto ? LC().cuanto(r) : Number(r.onHand) || 0;
-    let v = '';
-    const h = document.createElement('div');
-    h.className = 'm-sheet';
-    h.id = 'mSheet';
-    h.innerHTML = `<div class="m-sheet-bg"></div>
-      <div class="m-sheet-box m-kp-hoja" role="dialog" aria-label="How many are on the shelf">
-        <div class="m-sheet-grip"></div>
-        <div class="m-kp-t">${esc(r.item)}</div>
-        <div class="m-kp-s">How many are on the shelf right now? Live says &asymp;${esc(n1(queda))}</div>
-        <div class="m-kp-d"><span class="m-kp-n"></span><small>bottles</small></div>
-        <div class="m-kp">
-          ${['1', '2', '3', '4', '5', '6', '7', '8', '9', '.5', '0', 'del'].map(k =>
-            `<button type="button" class="m-kp-k" data-k="${k}" aria-label="${k === 'del' ? 'Delete' : k}">${k === 'del' ? '&#9003;' : k}</button>`).join('')}
-        </div>
-        <div class="m-kp-err" aria-live="polite"></div>
-        <button type="button" class="m-ro-b m-ro-go m-kp-save" id="mKpSave" disabled>Save</button>
-        <div class="m-kp-nota">Live starts from this until the next count. The count itself does not change.</div>
-      </div>`;
-    document.body.appendChild(h);
-    const cerrar = () => h.remove();
-    if (window.BarStockSheet && window.BarStockSheet.enganchar) window.BarStockSheet.enganchar(h, cerrar);
-    h.querySelector('.m-sheet-bg').onclick = cerrar;
-    const num = h.querySelector('.m-kp-n'), save = h.querySelector('#mKpSave'), err = h.querySelector('.m-kp-err');
-    const pinta = () => {
-      num.textContent = v || '–';
-      save.disabled = !v;
-      save.textContent = v ? 'Save · ' + v + ' on the shelf' : 'Save';
-    };
-    h.querySelectorAll('[data-k]').forEach(b => { b.onclick = () => {
-      const k = b.dataset.k;
-      if (k === 'del') v = v.endsWith('.5') ? v.slice(0, -2) : v.slice(0, -1);
-      else if (k === '.5') { if (v.indexOf('.') < 0) v = (v || '0') + '.5'; }
-      else if (v.indexOf('.') < 0 && v.length < 3) v = v === '0' ? k : v + k;
-      pinta();
-    }; });
-    save.onclick = async () => {
-      if (!v || save.dataset.ocupado) return;
-      save.dataset.ocupado = '1';
-      err.textContent = '';
-      const n = Number(v);
-      const SC = window.BarStockStockChecks;
-      const r2 = SC ? await SC.guardar({ item: r.item, n, decia: queda, por: quien() }) : { ok: false, error: 'Not loaded.' };
-      delete save.dataset.ocupado;
-      if (!r2.ok) { err.textContent = 'Not saved: ' + (r2.error || 'unknown error'); return; }
-      _checks.set(r.item, { item_name: r.item, counted: n, live_said: queda, checked_by: quien(), checked_at: new Date().toISOString() });
-      cerrar();
-      if (LC() && LC().caducar) LC().caducar();
-      pintar();
-    };
-    pinta();
+    window.BarStockNumPad.abrir({
+      titulo: r.item,
+      sub: 'How many are on the shelf right now? Live says &asymp;' + esc(n1(queda)),
+      boton: (v) => 'Save · ' + v + ' on the shelf',
+      nota: 'Live starts from this until the next count. The count itself does not change.',
+      guardar: async (n) => {
+        const SC = window.BarStockStockChecks;
+        const r2 = SC ? await SC.guardar({ item: r.item, n, decia: queda, por: quien() }) : { ok: false, error: 'Not loaded.' };
+        if (!r2.ok) return r2;
+        _checks.set(r.item, { item_name: r.item, counted: n, live_said: queda, checked_by: quien(), checked_at: new Date().toISOString() });
+        if (LC() && LC().caducar) LC().caducar();
+        pintar();
+        return { ok: true };
+      }
+    });
   }
 
   function alTocar(ev) {
