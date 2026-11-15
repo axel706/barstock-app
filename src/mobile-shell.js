@@ -457,6 +457,7 @@
   function ir(id) {
     const p = _pant.get(id);
     if (!p || !_montado) return;
+    cerrarEncima();
     salirBanda();
 
     // Sólo se recuerda al ENTRAR en una pantalla que no es pestaña: al
@@ -838,6 +839,31 @@
     _bandaAtras = null;
   }
 
+  // ── Lo que va fijo encima de las pantallas ──────────────────────────
+  //
+  // Una pantalla que se monta fija sobre todo (la revisión de "Running
+  // out", .m-ro) no vive dentro de ninguna caja de pantalla, así que
+  // ir() no la escondía: tocar una pestaña quitaba sólo la banda, la
+  // pantalla se quedaba encima sin su atrás y no había forma de salir
+  // sin cerrar la app (Axel, 2026-11-15). Quien se monta así registra
+  // aquí cómo cerrarse, y cualquier pestaña la cierra antes de ir,
+  // también la pestaña en la que ya estabas.
+  //
+  // No se reutiliza el atrás de la banda (_bandaAtras): en Settings ese
+  // atrás navega, y llamarlo desde ir() navegaría dentro de una
+  // navegación.
+  const _encima = new Set();
+  function alIrse(fn) {
+    if (typeof fn !== 'function') return () => {};
+    _encima.add(fn);
+    return () => _encima.delete(fn);
+  }
+  function cerrarEncima() {
+    const fns = Array.from(_encima);
+    _encima.clear();
+    fns.forEach(f => { try { f(); } catch (e) { console.warn('[movil] cerrar encima', e); } });
+  }
+
   // Engancha el botón de la cabecera. Devuelve false si no hay, para
   // que quien llama pueda decidir.
   function alVolver(host, fn) {
@@ -850,7 +876,7 @@
   window.BarStockMobile = {
     register, ir, volver, nombreAnterior, refrescarBadges, refrescarActiva,
     esMovil, montado: () => _montado, activa: () => _activa,
-    cabecera, alVolver, enBanda, alVolverBanda, salirBanda,
+    cabecera, alVolver, enBanda, alVolverBanda, salirBanda, alIrse,
     ANCHO
   };
 })();

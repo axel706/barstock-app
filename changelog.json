@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261115-085116",
+    "items": [
+      "Running out: the bottom tabs take you out of it"
+    ]
+  },
+  {
     "build": "20261115-082115",
     "items": [
       "Running out: review each item",
@@ -182,12 +188,6 @@
     "build": "20261113-092111",
     "items": [
       "Edit item: Save keeps you on the item instead of the list"
-    ]
-  },
-  {
-    "build": "20261113-091334",
-    "items": [
-      "Edit item: spacing evened out on taller phones"
     ]
   }
 ]

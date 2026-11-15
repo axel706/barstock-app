@@ -21,7 +21,7 @@
   // Es una PANTALLA, como la de editar un producto: fija encima de lo
   // que había, con su título en la banda y su atrás.
 
-  let _el = null, _quitarOyente = null;
+  let _el = null, _quitarOyente = null, _quitarIrse = null;
   let _lista = [], _checks = new Map(), _cargando = false;
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
@@ -216,6 +216,7 @@
     if (_el) _el.remove();
     _el = null;
     if (_quitarOyente) { _quitarOyente(); _quitarOyente = null; }
+    if (_quitarIrse) { _quitarIrse(); _quitarIrse = null; }
     const M = window.BarStockMobile;
     if (M && M.salirBanda) M.salirBanda();
   }
@@ -230,6 +231,9 @@
     const M = window.BarStockMobile;
     if (M && M.enBanda) M.enBanda('Running out');
     if (M && M.alVolverBanda) M.alVolverBanda(cerrar);
+    // Cualquier pestaña la cierra y lleva a la suya (Axel, 2026-11-15):
+    // va fija encima de todo y ir() no la ve.
+    if (M && M.alIrse) _quitarIrse = M.alIrse(cerrar);
     // Si el LIVE se rehace (una venta, una factura, una verificación),
     // las tarjetas también.
     if (LC() && LC().alCambiar) _quitarOyente = LC().alCambiar(pintar);

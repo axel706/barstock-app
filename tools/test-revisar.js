@@ -209,6 +209,44 @@ grupo('6 · en la app');
   prueba('el teclado no es un <input> (sin zoom de iOS)', !/<input/.test(existe('src/mobile-running-out.js') ? leer('src/mobile-running-out.js') : '<input'));
 }
 
+grupo('7 · las pestañas sacan de la revisión (Axel, 2026-11-15)');
+{
+  // Con el armazón DE VERDAD: la revisión va fija encima de todo, y
+  // tocar una pestaña sólo quitaba la banda. Se quedaba la pantalla,
+  // sin atrás, y no había forma de salir sin cerrar la app.
+  const w = entorno();
+  w.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} });
+  w.scrollTo = () => {};
+  w.CSS = { escape: (s) => String(s) };
+  w.BarStockEvents = { on() {}, emit() {} };
+  w.document.body.innerHTML = '';
+  delete w.BarStockMobile;
+  w.BarStockGuest.activo = () => false;
+  w.eval(leer('src/mobile-shell.js'));
+  w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
+  const M = w.BarStockMobile;
+  M.register({ id: 'home', icon: 'ti-home', label: 'Home', tab: true, orden: 1, mount(h) { h.innerHTML = '<div>Home</div>'; } });
+  M.register({ id: 'inventory', icon: 'ti-box', label: 'Inventory', tab: true, orden: 2, mount(h) { h.innerHTML = '<div>Inv</div>'; } });
+  const R = w.BarStockRunningOutReview;
+  const abierta = () => !!w.document.querySelector('.m-ro');
+  M.ir('home');
+  await R.abrir(); await esperar(20);
+  prueba('abre, con su atrás en la banda', abierta() && !!w.document.getElementById('mBandAtras'));
+  M.ir('inventory'); await esperar(10);
+  prueba('Inventory la cierra y te lleva a Inventory', !abierta() && M.activa() === 'inventory');
+  await R.abrir(); await esperar(20);
+  M.ir('inventory'); await esperar(10);
+  prueba('la pestaña en la que ya estabas también la cierra', !abierta());
+  await R.abrir(); await esperar(20);
+  w.document.getElementById('mBandAtras').click(); await esperar(10);
+  prueba('atrás sigue cerrándola', !abierta());
+  M.ir('home'); await R.abrir(); await esperar(20);
+  w.document.getElementById('mBandAtras').click(); await esperar(10);
+  M.alVolverBanda(() => { w.__otro = true; });
+  M.ir('inventory'); await esperar(10);
+  prueba('cerrada con atrás, no deja nada enganchado que cierre otra cosa después', !abierta() && M.activa() === 'inventory');
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
 })();
