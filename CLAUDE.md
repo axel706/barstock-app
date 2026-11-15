@@ -933,7 +933,7 @@ por la tarde):**
   `test-esperado-guardar` y "lo que se aleja del LIVE" en
   `test-cierre-conteo`.
 - **La verificación también se guarda (2026-11-15, migración 044,
-  SIN CORRER hasta que Axel diga):** `live_expected.checked` (jsonb) con
+  corrida y verificada por Axel el mismo día):** `live_expected.checked` (jsonb) con
   la última verificación del ciclo (`n`, `at`, `live_said`, `by`, y
   `expected`: el LIVE al cerrar partiendo de ella, lo que enseñó Finish
   count). `expected`/`difference` de la fila siguen siendo los de la
