@@ -934,13 +934,18 @@ El arreglo acordado, en tres fases:
    a 7 PM.
 2. **La herramienta está:** `await bsToastHistoria(90, { sinHoras: true
    })` vuelve a cargar sólo los días sin horas (`tools/toast.js`), y se
-   para si la función contesta que guardó sin ellas. Falta que Axel la
-   corra en la consola del escritorio, en cada locación con Toast.
-3. `run-out.js`: lo que falta de hoy = lo vendido hasta el último Sync ×
-   lo que le suele faltar al día a esa hora (la curva, mediana por día
-   de la semana), y nunca menos que lo de siempre − lo vendido. La hora
-   que cuenta es la del Sync (`fetched_at`), no la del reloj. Cambia a
-   la vez Running out, Inventory, "Do we have" y el correo.
+   para si la función contesta que guardó sin ellas. **Corrida en una
+   locación (2026-11-14, 92 días, 8,903 filas); falta Will's & Bill's.**
+3. **Hecha:** `run-out.js` → `fraccionDelDia(dias, fecha, instante)`:
+   qué parte del día suele llevar vendida la barra a esa hora (mediana
+   de los mismos días de la semana, cerrados, completos y con horas;
+   mínimo 4; las horas desde las 4 AM, así que la madrugada va al
+   final). El resto de hoy (`restaDia`, día 0) = lo MAYOR de lo de
+   siempre − lo vendido y lo vendido × (1 − f) / f; con f por debajo del
+   15 % (`FRAC_MIN`) no se extrapola. La hora es la del último Sync de
+   hoy (`fetched_at`). `proyectar` y `cuantoPedir` reciben `hoyFrac`;
+   `ahora()` lo calcula y lo deja en cada fila, y el correo lo pasa a
+   `cuantoPedir`. Prueba: `test-run-out` ("el ritmo de hoy").
 
 ### La lista de compras y la verificación (2026-11-14, sin construir)
 

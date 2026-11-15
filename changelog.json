@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261114-205550",
+    "items": [
+      "Running out follows today's pace",
+      "A busy day can now say Out today"
+    ]
+  },
+  {
     "build": "20261114-204124",
     "items": [
       "Toast sales now load hour by hour"
@@ -182,13 +189,6 @@
     "build": "20261112-200557",
     "items": [
       "Bartender Mode label sits inside the top bar"
-    ]
-  },
-  {
-    "build": "20261112-193708",
-    "items": [
-      "Bartender Mode: the Home greets the bartender by name",
-      "Bartender Mode: the scan button is off"
     ]
   }
 ]

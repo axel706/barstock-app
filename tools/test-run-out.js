@@ -156,5 +156,74 @@ grupo('hoy cargado a medias no se cuenta dos veces');
   prueba('ahora() lo saca de la misma lectura que el LIVE', /p\.porDia && p\.porDia\[hoy\]/.test(ro) && /proyectar\(\{[^}]*hoyVendido/.test(ro));
 }
 
+grupo('el ritmo de hoy: lo que falta, por la hora del Sync');
+{
+  // Axel, 2026-11-14: con una fiesta a mediodía el prosecco iba a 12.5
+  // botellas a las 3 PM, quedaban 6, y la app decía "Out Thu": como ya
+  // se había pasado de un sábado normal, daba el resto del día por
+  // terminado. "El problema es que la app no pueda decir SE TE ACABA HOY
+  // con el ritmo de ventas que lleva."
+  //
+  // Con lo vendido por hora (toast_sales_days.hours, migración 041) se
+  // sabe qué parte del día suele llevar vendida la barra a esa hora: la
+  // mediana de los mismos días de la semana. Lo que falta de hoy es lo
+  // MAYOR entre lo de siempre − lo vendido (como antes) y lo vendido ×
+  // lo que le falta al día a esa hora.
+  //
+  // La curva del sábado de Crown (2026-11-14), de las 11 AM a las 8 PM.
+  const Q = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 65, 63, 52, 87, 157, 159, 107, 128, 48, 0, 0, 0];
+  const conHoras = (desde, n, cual) => {
+    const out = [];
+    for (let k = 0; k < n; k++) {
+      const d = new Date(Date.parse(desde + 'T12:00:00Z') + k * 7 * 864e5).toISOString().slice(0, 10);
+      out.push({ business_date: d, complete: true, closed: true, hours: cual === null ? null : { q: Q, net: Q, sin_hora: 0 } });
+    }
+    return out;
+  };
+  // Cuatro sábados antes del 14 de noviembre.
+  const sab = conHoras('2026-10-17', 4);
+  // A las 3:00 PM de Nueva York (20:00 UTC en invierno) un sábado lleva
+  // 6 + 65 + 63 + 52 = 186 de 872: el 21.3 %.
+  const f = R.fraccionDelDia(sab, '2026-11-14', '2026-11-14T20:00:00Z');
+  prueba('a las 3 PM un sábado lleva el 21 % del día', f != null && Math.abs(f - 186 / 872) < 1e-9, String(f));
+  const f2 = R.fraccionDelDia(sab, '2026-11-14', '2026-11-14T20:30:00Z');
+  prueba('a las 3:30, media hora más de su curva', f2 != null && Math.abs(f2 - (186 + 87 / 2) / 872) < 1e-9, String(f2));
+  prueba('con menos de cuatro sábados, no se sabe', R.fraccionDelDia(sab.slice(1), '2026-11-14', '2026-11-14T20:00:00Z') === null);
+  prueba('los días sin horas no cuentan como muestra',
+    R.fraccionDelDia(sab.slice(1).concat(conHoras('2026-10-10', 1, null)), '2026-11-14', '2026-11-14T20:00:00Z') === null);
+  prueba('otro día de la semana no es muestra de un sábado', R.fraccionDelDia(conHoras('2026-10-16', 4), '2026-11-14', '2026-11-14T20:00:00Z') === null);
+  prueba('el mismo día (hoy, a medias) no es muestra de sí mismo',
+    R.fraccionDelDia(sab.slice(1).concat([{ business_date: '2026-11-14', complete: true, closed: false, hours: { q: Q } }]), '2026-11-14', '2026-11-14T20:00:00Z') === null);
+  // Pasada la medianoche sigue siendo el mismo día de negocio.
+  const tarde = R.fraccionDelDia(sab, '2026-11-14', '2026-11-15T06:30:00Z');
+  prueba('a la 1:30 AM del día de negocio, todo vendido', tarde === 1, String(tarde));
+
+  // El prosecco: mediana del sábado 4, quedan 6, vendidas 12.5 a las 3 PM.
+  const med = [3, 0, 1, 1, 2, 3, 4];
+  let p = R.proyectar({ stock: 6, med, viene: [], hoy: '2026-11-14', hoyVendido: 12.5 });
+  prueba('sin el ritmo, da hoy por terminado (lo de antes)', p && p.enDias > 0, JSON.stringify(p));
+  p = R.proyectar({ stock: 6, med, viene: [], hoy: '2026-11-14', hoyVendido: 12.5, hoyFrac: f });
+  prueba('con el ritmo: Out today', p && p.enDias === 0 && p.dia === '2026-11-14', JSON.stringify(p));
+  // Un día flojo no retrasa el aviso: manda lo de siempre − lo vendido.
+  p = R.proyectar({ stock: 3.4, med, viene: [], hoy: '2026-11-14', hoyVendido: 0.5, hoyFrac: f });
+  prueba('un día flojo: lo de siempre − lo vendido sigue mandando (3.5 > 3.4: hoy)', p && p.enDias === 0, JSON.stringify(p));
+  // Demasiado pronto para extrapolar (a las 11:30, el 0.3 % del día): un
+  // trago vendido no puede volverse 300.
+  const pronto = R.fraccionDelDia(sab, '2026-11-14', '2026-11-14T16:30:00Z');
+  p = R.proyectar({ stock: 6, med, viene: [], hoy: '2026-11-14', hoyVendido: 1, hoyFrac: pronto });
+  prueba('antes del 15 % del día no se extrapola', p && p.enDias > 0, JSON.stringify({ pronto, p }));
+
+  // Cuánto pedir hasta el domingo, con el mismo resto de hoy.
+  let c = R.cuantoPedir({ stock: 6, med, viene: [], hoy: '2026-11-14', hoyVendido: 12.5, hoyFrac: f });
+  const resto = 12.5 * (1 - f) / f;
+  prueba('cuánto pedir usa el mismo resto de hoy', Math.abs(c.vende - (resto + 3)) < 1e-9, JSON.stringify(c));
+
+  const ro = leer('src/run-out.js'), mr = leer('src/morning-report.js'), tu = leer('src/toast-usage.js');
+  prueba('ahora() pasa el ritmo a proyectar', /proyectar\(\{[^}]*hoyFrac/.test(ro));
+  prueba('…con la hora del Sync de hoy, no la del reloj', /fetched_at/.test(ro));
+  prueba('el correo de la mañana se lo pasa a cuantoPedir', /cuantoPedir\(\{[^}]*hoyFrac: f\.hoyFrac/.test(mr));
+  prueba('los días cargados se leen con sus horas', /select=business_date,complete,closed,fetched_at,hours/.test(tu));
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
