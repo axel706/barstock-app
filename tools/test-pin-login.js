@@ -38,17 +38,30 @@ const TARJETA = IDX.slice(IDX.indexOf('<div id="authOverlay">'), IDX.indexOf('<d
 
 function entorno(o) {
   o = o || {};
-  const w = new JSDOM('<!doctype html><body>' + TARJETA + '</body>', { url: 'https://app.barstockpro.com/', runScripts: 'outside-only' }).window;
+  const w = new JSDOM('<!doctype html><body>' + TARJETA + '</body>', { url: o.url || 'https://app.barstockpro.com/', runScripts: 'outside-only' }).window;
   if (o.modo) w.localStorage.setItem('barstock.loginMode', o.modo);
   w.BARSTOCK_CONFIG = { SUPABASE_URL: 'https://sb.test', SUPABASE_KEY: 'k' };
   w.__entradas = []; w.__avisos = []; w.__recargas = 0;
-  w.fetch = async (u, op) => { w.__avisos.push(String(u)); return { ok: true, json: async () => ({}) }; };
+  // /api/admin sin sesión (alta sin PIN): Nia tiene el código 482913.
+  w.__altas = []; w.__pinNia = null;
+  w.fetch = async (u, op) => {
+    w.__avisos.push(String(u));
+    if (/\/api\/admin$/.test(String(u))) {
+      const b = JSON.parse(op.body); w.__altas.push(b);
+      const casa = String(b.name || '').trim().toLowerCase() === 'nia' && b.code === '482913' && !w.__pinNia;
+      const j = !casa ? { ok: false, error: 'That name and code don\u2019t match.' }
+        : b.action === 'altaReclamar' ? (w.__pinNia = b.pin, { ok: true }) : { ok: true, name: 'Nia' };
+      return { ok: true, status: 200, json: async () => j };
+    }
+    return { ok: true, json: async () => ({}) };
+  };
   w.supabase = {};
   w.supabaseAuth = { auth: {
     signInWithPassword: async (c) => {
       w.__entradas.push(c);
       // Supabase mira el bloqueo ANTES que la contraseña: con cualquier PIN.
       if (/^leo@/.test(c.email)) return { error: { message: 'User is banned', code: 'user_banned', status: 400 } };
+      if (/^nia@/.test(c.email)) return w.__pinNia && c.password === w.__pinNia ? { error: null } : { error: { message: 'Invalid login credentials' } };
       return c.password === '324324' ? { error: null } : { error: { message: 'Invalid login credentials' } };
     },
     signOut: async () => ({}),
@@ -153,6 +166,44 @@ function entorno(o) {
     prueba('Billie entra como siempre después', w.__loc === "Will's & Bill's");
     const css = leer('styles/auth.css');
     prueba('el CSS esconde las casillas y el teclado con la tarjeta', /auth-pin-pausa[^{]*auth-pin-pad|auth-pin-pausa[^{]*#authPinBoxes/.test(css));
+  }
+
+  grupo('3c · alta sin PIN: nombre + código, y crea el suyo (Axel, 2026-11-16, C)');
+  {
+    const w = entorno({ modo: 'pin' });
+    const d = w.document;
+    const teclea = (t) => t.split('').forEach(x => d.querySelector('[data-k="' + x + '"]').click());
+    d.getElementById('authPinName').value = 'Nia';
+    teclea('482913'); await esperar(40);
+    prueba('con el código en las casillas, pasa a crear su PIN', d.documentElement.classList.contains('auth-pin-crear') &&
+      /Hi Nia/.test(d.getElementById('authTitle').textContent) && /Create your PIN/.test(d.getElementById('authSub').textContent),
+      d.getElementById('authTitle').textContent + ' | ' + d.getElementById('authMsg').textContent);
+    prueba('lo comprobó sin sesión, con nombre y código', w.__altas.length === 1 && w.__altas[0].action === 'altaVerificar' && w.__altas[0].code === '482913');
+    teclea('135790'); await esperar(20);
+    prueba('pide repetirlo', /again/i.test(d.getElementById('authSub').textContent) && d.querySelectorAll('#authPinBoxes i.on').length === 0);
+    teclea('135791'); await esperar(20);
+    prueba('si no son iguales, lo dice y vuelve a empezar', /didn.t match/i.test(d.getElementById('authMsg').textContent) && /Create your PIN/.test(d.getElementById('authSub').textContent));
+    teclea('135790'); await esperar(20); teclea('135790'); await esperar(60);
+    const rec = w.__altas.find(x => x.action === 'altaReclamar');
+    prueba('lo guarda con su código', !!rec && rec.pin === '135790' && rec.code === '482913' && rec.name === 'Nia');
+    prueba('y entra con él', w.__loc === "Will's & Bill's" && !d.documentElement.classList.contains('auth-pin-crear'));
+
+    const w2 = entorno({ modo: 'pin' });
+    w2.document.getElementById('authPinName').value = 'Billie';
+    '777777'.split('').forEach(x => w2.document.querySelector('[data-k="' + x + '"]').click());
+    await esperar(40);
+    prueba('un PIN malo de alguien con PIN: lo de siempre, nada más', /name and PIN don.t match/.test(w2.document.getElementById('authMsg').textContent) &&
+      !w2.document.documentElement.classList.contains('auth-pin-crear'));
+
+    const w3 = entorno({ url: 'https://app.barstockpro.com/?alta=Nia&c=482913' });
+    await esperar(60);
+    prueba('el QR abre directo en crear su PIN, con su nombre', w3.document.documentElement.classList.contains('auth-pin-crear') &&
+      w3.document.getElementById('authPinName').value === 'Nia' && /Hi Nia/.test(w3.document.getElementById('authTitle').textContent));
+    prueba('y el código sale de la dirección', !/c=482913/.test(w3.location.href) && !/alta=/.test(w3.location.href), w3.location.href);
+    const w4 = entorno({ url: 'https://app.barstockpro.com/?alta=Nia&c=000000' });
+    await esperar(60);
+    prueba('un QR viejo lo dice y deja el login normal', /ask your manager for a new one/i.test(w4.document.getElementById('authMsg').textContent) &&
+      !w4.document.documentElement.classList.contains('auth-pin-crear') && w4.document.documentElement.classList.contains('auth-pin'));
   }
 
   grupo('4 · Billie en dos locaciones');

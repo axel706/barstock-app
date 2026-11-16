@@ -261,6 +261,58 @@ grupo('3c · pausar el acceso, sin borrar (Axel, 2026-11-15)');
   prueba('nada más cambió: el mismo PIN, rol, permisos y locaciones', antes === despues, antes + ' / ' + despues);
 }
 
+grupo('3d · alta sin PIN: la persona crea el suyo con un código (Axel, 2026-11-16, C)');
+{
+  const sinSesion = (accion, cuerpo) => llamar('', accion, cuerpo);
+  const c = await llamar('axel', 'createPerson', { name: 'Leo', role: 'bartender', locationIds: ['crown'] });
+  const leo = () => u('Leo');
+  prueba('crear sin PIN: un código de 6 dígitos y hasta cuándo vale', c.ok && /^\d{6}$/.test(c.code || '') && !!c.expira &&
+    new Date(c.expira).getTime() - Date.now() > 23 * 3600e3 && new Date(c.expira).getTime() - Date.now() <= 24 * 3600e3 + 5e3, JSON.stringify(c));
+  prueba('su contraseña es una al azar, no el código', !!leo() && String(leo().password || '').length >= 24 && leo().password !== c.code);
+  prueba('el código no se guarda tal cual', !!leo().app_metadata.alta && JSON.stringify(leo().app_metadata).indexOf(c.code) < 0, JSON.stringify(leo().app_metadata.alta));
+  let l = await llamar('axel', 'listPeople');
+  prueba('People: esperando su PIN, con hasta cuándo', !!((l.people || []).find(x => x.name === 'Leo') || {}).pendiente &&
+    ((l.people || []).find(x => x.name === 'Leo').pendiente.expira === c.expira));
+  prueba('y sin el código en la lista', JSON.stringify(l).indexOf(c.code) < 0);
+
+  const mal = await sinSesion('altaVerificar', { name: 'Leo', code: c.code === '000000' ? '111111' : '000000' });
+  const nadie = await sinSesion('altaVerificar', { name: 'Nadie', code: c.code });
+  const maria = await sinSesion('altaVerificar', { name: 'Maria', code: c.code });
+  prueba('sin sesión: un código malo, un nombre que no existe y alguien con PIN contestan IGUAL',
+    !mal.ok && JSON.stringify(mal) === JSON.stringify(nadie) && JSON.stringify(nadie) === JSON.stringify(maria), JSON.stringify([mal, nadie, maria]));
+  const bien = await sinSesion('altaVerificar', { name: ' leo ', code: c.code });
+  prueba('con el nombre y el código, sí (sin gastarlo)', bien.ok && !!leo().app_metadata.alta, JSON.stringify(bien));
+  const corto = await sinSesion('altaReclamar', { name: 'Leo', code: c.code, pin: '12' });
+  prueba('un PIN que no es de 6 dígitos, no', !corto.ok && /6 digits/.test(corto.error || '') && !!leo().app_metadata.alta);
+  const r = await sinSesion('altaReclamar', { name: 'Leo', code: c.code, pin: '135790' });
+  prueba('Leo crea su PIN', r.ok && leo().password === '135790' && !leo().app_metadata.alta, JSON.stringify(r));
+  prueba('y conserva su rol y sus permisos', leo().app_metadata.role === 'bartender' && Array.isArray(leo().app_metadata.perms) && leo().app_metadata.perms.length > 0);
+  const otra = await sinSesion('altaReclamar', { name: 'Leo', code: c.code, pin: '246802' });
+  prueba('el código sirve una vez', !otra.ok && leo().password === '135790');
+  l = await llamar('axel', 'listPeople');
+  prueba('People ya no lo marca', !((l.people || []).find(x => x.name === 'Leo') || {}).pendiente);
+
+  // Caduca, se anula con 5 intentos y se rehace desde People.
+  const z = await llamar('axel', 'createPerson', { name: 'Zoe', role: 'bartender', locationIds: ['crown'] });
+  u('Zoe').app_metadata.alta.exp = new Date(Date.now() - 1000).toISOString();
+  prueba('caducado no sirve', !(await sinSesion('altaVerificar', { name: 'Zoe', code: z.code })).ok);
+  const n = await llamar('axel', 'nuevoCodigo', { userId: u('Zoe').id });
+  prueba('"Show code again" da uno nuevo', n.ok && /^\d{6}$/.test(n.code || '') && (await sinSesion('altaVerificar', { name: 'Zoe', code: n.code })).ok);
+  prueba('sam (sin People) no saca códigos', (await llamar('sam', 'nuevoCodigo', { userId: u('Zoe').id })).codigo === 403);
+  const otroCod = n.code === '999999' ? '888888' : '999999';
+  for (let i = 0; i < 5; i++) await sinSesion('altaVerificar', { name: 'Zoe', code: otroCod });
+  prueba('con 5 intentos malos, el bueno ya no sirve', !(await sinSesion('altaVerificar', { name: 'Zoe', code: n.code })).ok &&
+    !(await sinSesion('altaReclamar', { name: 'Zoe', code: n.code, pin: '112233' })).ok && u('Zoe').password !== '112233');
+  const n2 = await llamar('axel', 'nuevoCodigo', { userId: u('Zoe').id });
+  prueba('y uno nuevo vuelve a empezar', (await sinSesion('altaVerificar', { name: 'Zoe', code: n2.code })).ok);
+  const sp = await llamar('axel', 'setPerson', { userId: u('Zoe').id, pin: '445566' });
+  prueba('ponerle el PIN desde People también cierra el alta', sp.ok && u('Zoe').password === '445566' && !u('Zoe').app_metadata.alta &&
+    !(await sinSesion('altaVerificar', { name: 'Zoe', code: n2.code })).ok);
+  prueba('sin sesión, nada más que esas dos', (await sinSesion('listPeople')).codigo === 401);
+  await llamar('axel', 'removePerson', { userId: u('Zoe').id });
+  await llamar('axel', 'removePerson', { userId: u('Leo').id });
+}
+
 grupo('4 · el servidor de las integraciones');
 {
   const I = require(path.join(RAIZ, 'lib/integracion.js'));

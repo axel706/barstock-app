@@ -77,7 +77,70 @@
     if (s) s.textContent = 'Access your inventory and ordering workspace.';
   }
 
+  // ── Alta sin PIN: el código y crear el suyo (Axel, 2026-11-16, C) ───
+  //
+  // Quien la creó en People le dio un código de 6 dígitos (o el QR, que
+  // lo trae). Se escribe en las MISMAS casillas del PIN: si el login
+  // normal falla, auth.js prueba esos 6 dígitos como código. Así nada en
+  // la pantalla dice qué nombres existen o esperan su PIN: con un código
+  // malo sale el "That name and PIN don't match" de siempre. Con uno
+  // bueno, "Hi Nia · Create your PIN", dos veces, y entra con él.
+  // /api/admin contesta esto sin sesión (altaVerificar / altaReclamar).
+  let _alta = null;   // { nombre, code, paso: 1 | 2, primero }
+
+  async function llamarAlta(cuerpo) {
+    try {
+      const r = await fetch('/api/admin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) });
+      return await r.json();
+    } catch (e) { return { ok: false, error: String((e && e.message) || e) }; }
+  }
+  function titulos(t, sub) {
+    const a = $('authTitle'), b = $('authSub');
+    if (a) a.textContent = t;
+    if (b) b.textContent = sub;
+  }
+  async function probarAlta(nombre, code) {
+    nombre = String(nombre || '').trim();
+    if (!nombre || !/^\d{6}$/.test(String(code || ''))) return false;
+    const r = await llamarAlta({ action: 'altaVerificar', name: nombre, code: String(code) });
+    if (!r || !r.ok) return false;
+    _alta = { nombre: r.name || nombre, code: String(code), paso: 1, primero: '' };
+    raiz().classList.add('auth-pin-crear');
+    titulos('Hi ' + _alta.nombre, 'Create your PIN · 6 digits');
+    _pin = ''; pintarCasillas(); decir('');
+    return true;
+  }
+  function salirAlta() {
+    _alta = null;
+    raiz().classList.remove('auth-pin-crear');
+    titulos('Welcome back', 'Your name and the PIN you were given.');
+  }
+  async function pasoAlta() {
+    const a = _alta;
+    if (a.paso === 1) {
+      a.primero = _pin; a.paso = 2; _pin = ''; pintarCasillas();
+      titulos('Hi ' + a.nombre, 'Type it again to confirm'); decir('');
+      return;
+    }
+    if (_pin !== a.primero) {
+      a.paso = 1; a.primero = ''; _pin = ''; pintarCasillas();
+      titulos('Hi ' + a.nombre, 'Create your PIN · 6 digits');
+      decir('They didn\u2019t match. Create your PIN again.');
+      return;
+    }
+    const pin = _pin, nombre = a.nombre;
+    _ocupado = true; raiz().classList.add('auth-pin-busy'); decir('Saving your PIN…');
+    const r = await llamarAlta({ action: 'altaReclamar', name: nombre, code: a.code, pin });
+    _ocupado = false; raiz().classList.remove('auth-pin-busy');
+    _pin = ''; pintarCasillas();
+    if (!r || !r.ok) { salirAlta(); decir('Your PIN was not saved: ' + ((r && r.error) || 'no answer')); return; }
+    salirAlta();
+    _pin = pin;
+    await entrar();
+  }
+
   async function entrar() {
+    if (_alta) return pasoAlta();
     if (_ocupado) return;
     const nombre = ($('authPinName') && $('authPinName').value) || '';
     const ID = window.BarStockBartenderId;
@@ -179,14 +242,37 @@
     });
     const n = $('authPinName');
     // Cambiar el nombre quita la tarjeta: es otra persona.
-    n.addEventListener('input', () => { if (raiz().classList.contains('auth-pin-pausa')) quitarPausa(); });
+    n.addEventListener('input', () => {
+      if (raiz().classList.contains('auth-pin-pausa')) quitarPausa();
+      if (_alta) { salirAlta(); _pin = ''; pintarCasillas(); decir(''); }
+    });
     n.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); n.blur(); } });
     pintarCasillas();
     if (modoGuardado() === 'pin') abrir();
+
+    // El QR de People: ?alta=Nombre&c=código. Se borra de la dirección
+    // en cuanto se lee, para que no quede en el historial ni en una
+    // captura, y se prueba como si se hubiera tecleado.
+    let qs = null;
+    try { qs = new URLSearchParams(window.location.search); } catch (e) {}
+    const an = qs && qs.get('alta');
+    if (an) {
+      const ac = qs.get('c') || '';
+      try {
+        qs.delete('alta'); qs.delete('c');
+        const resto = qs.toString();
+        window.history.replaceState(null, '', window.location.pathname + (resto ? '?' + resto : '') + window.location.hash);
+      } catch (e) {}
+      abrir();
+      n.value = an;
+      probarAlta(an, ac).then(ok => {
+        if (!ok) decir('This code doesn\u2019t work anymore. Ask your manager for a new one.');
+      });
+    }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', montar);
   else montar();
 
-  window.BarStockPinLogin = { montar, abrir, cerrar, tecla, pausado, LARGO };
+  window.BarStockPinLogin = { montar, abrir, cerrar, tecla, pausado, probarAlta, LARGO };
 })();

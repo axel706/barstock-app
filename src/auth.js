@@ -229,6 +229,11 @@
         // esto: ese nombre con ese PIN no existe. Cualquier otro error se
         // dice tal cual.
         if (conPin && /invalid login credentials/i.test(error.message || '')) {
+          // ¿Eran los 6 dígitos de un código de alta? (alta sin PIN,
+          // 2026-11-16). Si lo son, pin-login.js pasa a crear el PIN; si
+          // no, el mismo mensaje de siempre: nada dice si el nombre existe.
+          const P = window.BarStockPinLogin;
+          if (P && P.probarAlta && await P.probarAlta(cred.nombre || '', password)) return;
           throw new Error('That name and PIN don\u2019t match.');
         }
         // Pausado desde People (2026-11-15): no es un error de quien

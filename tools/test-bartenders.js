@@ -163,6 +163,7 @@ async function llamar(token, action, cuerpo) {
       if (fallar === a) return { ok: false, error: 'boom from Supabase' };
       const r = await llamar('axel', a, p); return JSON.parse(JSON.stringify(r));
     }, soyAdmin: () => true };
+    w.eval(leer('src/qrcode.js'));
     w.eval(leer('src/mobile-bartenders.js'));
     const host = w.document.createElement('div'); w.document.body.appendChild(host);
     await w.BarStockMobileBartenders.montar(host, (t) => '<div class="cab">' + t + '</div>', () => {});
@@ -170,6 +171,10 @@ async function llamar(token, action, cuerpo) {
     prueba('sin nadie: lo dice, y el botón para agregar', /No one yet/.test(host.textContent) && !!q('#btNuevo'));
 
     q('#btNuevo').click();
+    // Alta sin PIN (Axel, 2026-11-16, C): de entrada, la persona pone el suyo.
+    prueba('Add person: de entrada "They set it", sin campo de PIN', !!q('[data-pinmodo="ellos"].on') && !q('#btPin') &&
+      /They create their own PIN/.test(host.textContent));
+    q('[data-pinmodo="ahora"]').click();
     prueba('Add person: nombre, PIN ya generado y la locación abierta marcada', !!q('#btNom') && /^\d{6}$/.test(q('#btPin').value) &&
       q('[data-nl="wb"]').classList.contains('on') && !q('[data-nl="crown"]').classList.contains('on'));
     // Bartender de entrada: el rol que menos puede.
@@ -203,6 +208,58 @@ async function llamar(token, action, cuerpo) {
       fila && fila.textContent.replace(/\s+/g, ' '));
     fila.click();
     prueba('y al abrirla otra vez, las dos marcadas', q('[data-fl="crown"]').classList.contains('on') && q('[data-fl="wb"]').classList.contains('on'));
+
+    // ── Alta sin PIN: el QR y el código (Axel, 2026-11-16, opción C) ──
+    {
+      w.__atras(); await esperar(30);
+      q('#btNuevo').click();
+      const nm = q('#btNom'); nm.value = 'Leo'; nm.dispatchEvent(new w.Event('input'));
+      q('#btCrear').click(); await esperar(40);
+      const leo = db.users.find(x => x.user_metadata.first_name === 'Leo');
+      const panel = q('.m-bt-alta');
+      prueba('crea a Leo sin PIN y enseña su QR', !!leo && !!leo.app_metadata.alta && !!panel && !!panel.querySelector('svg') &&
+        /Leo is ready to set a PIN/.test(panel.textContent), panel && panel.textContent);
+      const cod = (panel && panel.querySelector('big') || {}).textContent || '';
+      prueba('con el código, partido en dos, y una sola vez', /^\d{3} \d{3}$/.test(cod.trim()) && /Works once · until /.test(panel.textContent), cod);
+      const qr = panel && panel.querySelector('[data-alta-url]');
+      prueba('el QR lleva al login con su nombre y el código', !!qr && /^https:\/\/app\.barstockpro\.com\/\?alta=Leo&c=\d{6}$/.test(qr.dataset.altaUrl) &&
+        qr.dataset.altaUrl.endsWith(cod.replace(' ', '')), qr && qr.dataset.altaUrl);
+      q('#btAltaOk').click();
+      prueba('Done lo cierra, y ya no se ve el código', !q('.m-bt-alta') && host.textContent.indexOf(cod) < 0);
+      const fila = [...host.querySelectorAll('[data-b]')].find(b => /Leo/.test(b.textContent));
+      prueba('en la lista: "Waiting for PIN"', !!fila && /Waiting for PIN/.test(fila.textContent), fila && fila.textContent);
+      fila.click();
+      prueba('su ficha lo dice, con los dos botones', /Waiting for PIN/.test(host.textContent) && !!q('#btAltaOtra') &&
+        /Set the PIN for Leo/.test((q('#btPinCambiar') || {}).textContent || ''));
+      q('#btAltaOtra').click(); await esperar(40);
+      const cod2 = ((q('.m-bt-alta big') || {}).textContent || '').trim();
+      prueba('"Show code and QR again": uno nuevo', /^\d{3} \d{3}$/.test(cod2) && !!q('.m-bt-alta svg'), host.textContent.slice(0, 200));
+      q('#btAltaOk').click();
+      // Un servidor que no devuelve código: se dice, sin reventar.
+      const llamarViejo = w.BarStockAdminApi.llamar;
+      w.BarStockAdminApi.llamar = async (x, pp) => x === 'createPerson' ? { ok: true, userId: 'zz', name: 'Ivy' } : llamarViejo(x, pp);
+      q('#btAltaOk') && q('#btAltaOk').click();
+      w.__atras(); await esperar(20);
+      q('#btNuevo').click();
+      const ni = q('#btNom'); ni.value = 'Ivy'; ni.dispatchEvent(new w.Event('input'));
+      q('#btCrear').click(); await esperar(40);
+      prueba('sin código de vuelta: lo dice y no revienta', /Ivy was created, but no code came back/.test(host.textContent) && !q('.m-bt-alta'), host.textContent.slice(0, 200));
+      w.BarStockAdminApi.llamar = llamarViejo;
+      w.__atras(); await esperar(20);
+      [...host.querySelectorAll('[data-b]')].find(b => /Leo/.test(b.textContent)).click();
+      q('#btAltaOtra').click(); await esperar(40);
+      q('#btAltaOk').click();
+      // Sin la librería del QR, el código igual sale.
+      const qrViejo = w.qrcode; w.qrcode = undefined;
+      [...host.querySelectorAll('[data-b]')].find(b => /Leo/.test(b.textContent)).click();
+      q('#btAltaOtra').click(); await esperar(40);
+      prueba('sin el QR, el código sigue saliendo', !!q('.m-bt-alta') && !q('.m-bt-alta svg') && /^\d{3} \d{3}$/.test(((q('.m-bt-alta big') || {}).textContent || '').trim()));
+      w.qrcode = qrViejo;
+      q('#btAltaOk').click();
+      await llamar('axel', 'removePerson', { userId: leo.id });
+      await w.BarStockMobileBartenders.montar(host, (t) => '<div class="cab">' + t + '</div>', () => {});
+      [...host.querySelectorAll('[data-b]')].find(b => /Billie/.test(b.textContent)).click();
+    }
 
     // ── La lista entera de permisos (3A) ─────────────────────────────
     const sw = (k) => q('[data-fp="' + k + '"]');

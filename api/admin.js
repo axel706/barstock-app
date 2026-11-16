@@ -5,8 +5,64 @@ const BID = require('../src/bartender-id.js');
 // Los roles y sus permisos: el mismo catálogo que usa la app.
 const P = require('../src/permisos.js');
 
+const crypto = require('crypto');
+
 const ADMIN_EMAIL = 'axeltorressalgado@icloud.com';
 const ACCOUNT_ID = 'wjm-hospitality';
+
+// ── Alta sin PIN (Axel, 2026-11-16, opción C sobre lámina) ────────────
+//
+// Quien crea a una persona puede dejar que ella ponga su PIN. La cuenta
+// nace con una contraseña al azar que nadie conoce, y en
+// app_metadata.alta un código de 6 dígitos de un solo uso: sólo su
+// huella (sha256 con el id de la persona), hasta cuándo vale (24 h) y
+// los intentos fallidos (con 5, se anula). Lo ve sólo quien la crea, en
+// su teléfono, con el QR que lo lleva dentro.
+//
+// Reclamarlo es lo ÚNICO de este archivo que va sin sesión: la persona
+// aún no puede entrar. Por eso contesta lo mismo a un código malo, a un
+// nombre que no existe y a alguien que ya tiene PIN: el login es
+// público, y una respuesta distinta diría qué nombres existen.
+const ALTA_HORAS = 24;
+const ALTA_INTENTOS = 5;
+const huellaAlta = (id, code) => crypto.createHash('sha256').update(String(id) + ':' + String(code)).digest('hex');
+function nuevoAlta(id) {
+  const code = String(crypto.randomInt(0, 1e6)).padStart(6, '0');
+  const exp = new Date(Date.now() + ALTA_HORAS * 3600e3).toISOString();
+  return { code, alta: { h: huellaAlta(id, code), exp, n: 0 } };
+}
+const contrasenaAlAzar = () => crypto.randomBytes(24).toString('base64url');
+
+async function altaSinSesion(supabase, body, res) {
+  const NO = { ok: false, error: 'That name and code don\u2019t match.' };
+  const nombre = String(body.name || '').trim();
+  const code = String(body.code || '');
+  if (!BID.nombreValido(nombre) || !/^\d{6}$/.test(code)) return res.status(200).json(NO);
+  const email = BID.correo(nombre);
+  let u = null;
+  for (let page = 1; page <= 40 && !u; page++) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 50 });
+    if (error) throw error;
+    const users = (data && data.users) || [];
+    u = users.find(x => (x.email || '').toLowerCase() === email) || null;
+    if (users.length < 50) break;
+  }
+  const m = (u && u.app_metadata) || {};
+  const a = m.alta;
+  if (!u || !P.dePin(u) || !a || a.anulado || !(new Date(a.exp).getTime() > Date.now())) return res.status(200).json(NO);
+  const bien = a.h.length === 64 && crypto.timingSafeEqual(Buffer.from(a.h), Buffer.from(huellaAlta(u.id, code)));
+  if (!bien) {
+    const n = (Number(a.n) || 0) + 1;
+    await supabase.auth.admin.updateUserById(u.id, { app_metadata: Object.assign({}, m, { alta: Object.assign({}, a, { n, anulado: n >= ALTA_INTENTOS }) }) });
+    return res.status(200).json(NO);
+  }
+  if (body.action === 'altaVerificar') return res.status(200).json({ ok: true, name: (u.user_metadata || {}).first_name || nombre });
+  if (!BID.pinValido(body.pin)) return res.status(400).json({ ok: false, error: 'The PIN has to be 6 digits.' });
+  const sin = Object.assign({}, m); delete sin.alta;
+  const { error } = await supabase.auth.admin.updateUserById(u.id, { password: String(body.pin), app_metadata: sin });
+  if (error) throw error;
+  return res.status(200).json({ ok: true });
+}
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -17,6 +73,10 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "Method not allowed" });
 
   try {
+    const libre = (req.body || {}).action;
+    if (libre === 'altaVerificar' || libre === 'altaReclamar') {
+      return await altaSinSesion(createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY), req.body || {}, res);
+    }
     const token = (req.headers.authorization || '').replace('Bearer ', '');
     if (!token) return res.status(401).json({ ok: false, error: "Missing token" });
 
@@ -47,7 +107,7 @@ module.exports = async function handler(req, res) {
     const miRol = P.dePin(yo) ? yo.app_metadata.role : null;
     const misPerms = miRol ? P.deUsuario(yo) : [];
     const esOwner = esAxel || miRol === 'owner';
-    const DE_PERSONAS = ['listPeople', 'createPerson', 'setPerson', 'removePerson', 'saveRole', 'removeRole',
+    const DE_PERSONAS = ['listPeople', 'createPerson', 'setPerson', 'removePerson', 'saveRole', 'removeRole', 'nuevoCodigo',
       'listBartenders', 'createBartender', 'setBartender', 'removeBartender', 'listLocations'];
     const puedePersonas = esAxel || misPerms.indexOf('personas') >= 0;
     if (DE_PERSONAS.indexOf(action) >= 0 ? !puedePersonas : !esAxel) {
@@ -410,7 +470,10 @@ module.exports = async function handler(req, res) {
       const bloqueado = !!u.banned_until && new Date(u.banned_until).getTime() > Date.now();
       return Object.assign(publicUser(u, access, locs), {
         role: m.role, off: P.limpia(m.off), perms: P.deUsuario(u),
-        pausado: bloqueado ? { at: (m.pausa && m.pausa.at) || null, by: (m.pausa && m.pausa.by) || '' } : null
+        pausado: bloqueado ? { at: (m.pausa && m.pausa.at) || null, by: (m.pausa && m.pausa.by) || '' } : null,
+        // Esperando a que ponga su PIN: hasta cuándo vale el código, y si
+        // ya no sirve (caducado o con 5 intentos malos). Nunca el código.
+        pendiente: m.alta ? { expira: m.alta.exp, vencido: !!m.alta.anulado || !(new Date(m.alta.exp).getTime() > Date.now()) } : null
       });
     }
 
@@ -469,7 +532,9 @@ module.exports = async function handler(req, res) {
       const rolKey = soloBartenders ? BID.ROL : String((req.body || {}).role || '');
       const nombre = String(name || '').trim();
       if (!BID.nombreValido(nombre)) return res.status(400).json({ ok: false, error: 'Enter a name.' });
-      if (!BID.pinValido(pin)) return res.status(400).json({ ok: false, error: 'The PIN has to be 6 digits.' });
+      // Sin PIN: la persona pone el suyo con un código (alta sin PIN).
+      const sinPin = pin === undefined || pin === null || pin === '';
+      if (!sinPin && !BID.pinValido(pin)) return res.status(400).json({ ok: false, error: 'The PIN has to be 6 digits.' });
       if (!Array.isArray(locationIds) || !locationIds.length) {
         return res.status(400).json({ ok: false, error: 'Choose at least one location.' });
       }
@@ -482,7 +547,7 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ ok: false, error: 'There is already someone called ' + nombre + '. Use another name.' });
       }
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email, password: String(pin), email_confirm: true,
+        email, password: sinPin ? contrasenaAlAzar() : String(pin), email_confirm: true,
         user_metadata: { first_name: nombre },
         app_metadata: metadata(rolKey, roles, [])
       });
@@ -494,7 +559,27 @@ module.exports = async function handler(req, res) {
         await supabase.auth.admin.deleteUser(userId).catch(() => {});
         throw e;
       }
+      if (sinPin) {
+        // El id hace falta para la huella: el código se pone después.
+        const nv = nuevoAlta(userId);
+        const { error: eA } = await supabase.auth.admin.updateUserById(userId, {
+          app_metadata: Object.assign({}, metadata(rolKey, roles, []), { alta: nv.alta }) });
+        if (eA) { await supabase.auth.admin.deleteUser(userId).catch(() => {}); throw eA; }
+        return res.status(200).json({ ok: true, userId, name: nombre, code: nv.code, expira: nv.alta.exp });
+      }
       return res.status(200).json({ ok: true, userId, name: nombre });
+    }
+
+    // "Show code and QR again": uno nuevo; el de antes deja de servir.
+    if (accion === 'nuevoCodigo') {
+      const u = await persona((req.body || {}).userId);
+      if (!u) return res.status(404).json({ ok: false, error: 'That person was not found.' });
+      if (u.app_metadata.role === 'owner' && !esOwner) return res.status(403).json({ ok: false, error: 'Only an owner can change an owner.' });
+      if (!u.app_metadata.alta) return res.status(400).json({ ok: false, error: 'They already have a PIN. Use Change PIN.' });
+      const nv = nuevoAlta(u.id);
+      const { error } = await supabase.auth.admin.updateUserById(u.id, { app_metadata: Object.assign({}, u.app_metadata, { alta: nv.alta }) });
+      if (error) throw error;
+      return res.status(200).json({ ok: true, code: nv.code, expira: nv.alta.exp, name: (u.user_metadata || {}).first_name || '' });
     }
 
     if (accion === 'setPerson') {
@@ -530,8 +615,12 @@ module.exports = async function handler(req, res) {
       }
       if (pin !== undefined) {
         if (!BID.pinValido(pin)) return res.status(400).json({ ok: false, error: 'The PIN has to be 6 digits.' });
-        const { error } = await supabase.auth.admin.updateUserById(u.id, { password: String(pin) });
+        // Ponerle el PIN cierra un alta pendiente: el código ya no sirve.
+        const cambio = { password: String(pin) };
+        if (u.app_metadata.alta) { const sin = Object.assign({}, u.app_metadata); delete sin.alta; cambio.app_metadata = sin; }
+        const { error } = await supabase.auth.admin.updateUserById(u.id, cambio);
         if (error) throw error;
+        if (cambio.app_metadata) u.app_metadata = cambio.app_metadata;
       }
       const m = u.app_metadata || {};
       let rolKey = m.role;

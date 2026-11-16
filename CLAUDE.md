@@ -756,6 +756,21 @@ del rol con su interruptor, lo quitado sólo a ella en ámbar ("Off for
   **Supabase mira el bloqueo ANTES que la contraseña**: la tarjeta sale
   con cualquier PIN para ese nombre (comprobado en `token.go` de
   supabase/auth). Nadie se pausa a sí mismo; a un Owner, sólo otro.
+- **Alta sin PIN** (2026-11-16, opción C sobre lámina): en Add person,
+  "They set it" (de entrada) o "Set it now". Sin PIN, la cuenta nace con
+  una contraseña al azar y `app_metadata.alta` (huella sha256 con el id,
+  24 h, 5 intentos; nunca el código). Quien la crea ve el QR
+  (`?alta=Nombre&c=código`, `src/qrcode.js`, MIT, en el repo) y el
+  código; People dice "Waiting for PIN" y la ficha "Show code and QR
+  again" (`nuevoCodigo`, uno nuevo) o "Set the PIN for …" (cierra el
+  alta). En el login, **el código va en las casillas del PIN**: si el
+  login falla, `auth.js` prueba esos dígitos con `altaVerificar`, y con
+  uno bueno `pin-login.js` pide crear el PIN dos veces
+  (`altaReclamar`) y entra. `altaVerificar`/`altaReclamar` son lo único
+  de `api/admin.js` sin sesión, y contestan IGUAL a un código malo, a un
+  nombre que no existe y a quien ya tiene PIN: el login es público. El
+  QR se borra de la dirección al leerlo. Prueba: 3d de `test-roles`, la
+  pantalla en `test-bartenders`, 3c de `test-pin-login`.
 - Pruebas: `test-roles`, `test-bartenders`, `test-invitado`,
   `test-invitado-pantallas`, `test-pin-login`.
 

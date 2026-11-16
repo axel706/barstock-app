@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261115-235640",
+    "items": [
+      "New people can set their own PIN with a code or QR"
+    ]
+  },
+  {
     "build": "20261115-151523",
     "items": [
       "People: pause someone's access without removing them",
@@ -178,14 +184,6 @@
     "build": "20261114-225140",
     "items": [
       "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261114-224406",
-    "items": [
-      "Finish count shows counts far from Live",
-      "Recount them before closing",
-      "After closing: the week's gaps in $"
     ]
   }
 ]

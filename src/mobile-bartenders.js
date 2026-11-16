@@ -158,7 +158,7 @@
       '<button type="button" data-tab="roles" class="' + (_tab === 'roles' ? 'on' : '') + '">Roles</button></div>';
     if (_lista === null) return tabs + '<div class="m-bt-p">Loading…</div>';
     if (_tab === 'roles') return tabs + err + vistaRoles();
-    const creado = _creado ? '<div class="m-bt-ok">' +
+    const creado = _creado && _creado.code ? panelAlta(_creado) : _creado && _creado.pin ? '<div class="m-bt-ok">' +
         '<b>' + esc(_creado.nombre) + ' can sign in now</b>' +
         '<big>' + esc(_creado.pin) + '</big>' +
         '<small>Name: ' + esc(_creado.nombre) + ' · ' + esc(_creado.locs.join(', ')) + '</small>' +
@@ -175,7 +175,9 @@
         '<span class="m-bt-ini">' + esc((b.name || '?').charAt(0).toUpperCase()) + '</span>' +
         '<span class="m-item-t">' + esc(b.name || '—') +
           '<small>' + esc(b.access.map(a => a.name).join(', ') || 'No location') +
-            (pz ? ' · <b class="m-bt-off">Access off</b>' : (off ? ' · ' + off + ' off' : '') + ' · ' + esc(cuando(b.lastSignIn))) + '</small>' +
+            (pz ? ' · <b class="m-bt-off">Access off</b>'
+              : b.pendiente ? ' · <b class="m-bt-espera">' + (b.pendiente.vencido ? 'Code expired' : 'Waiting for PIN') + '</b>'
+              : (off ? ' · ' + off + ' off' : '') + ' · ' + esc(cuando(b.lastSignIn))) + '</small>' +
         '</span>' + (pz ? '<span class="m-pp-rol m-pp-rol-pausa">Off</span>'
           : '<span class="m-pp-rol m-pp-rol-' + esc(b.role) + '">' + esc(nombreRol(b.role)) + '</span>') + '</button>';
     }).join('');
@@ -202,9 +204,14 @@
         '<small>What they type to sign in. Capitals and spaces don\'t matter.</small></div>' +
       '<div class="m-set-f"><label>Role</label>' + chipsRol(n.rol, 'data-nr') + '</div>' +
       '<div class="m-set-f"><label>Locations</label>' + chips(n.locs, 'data-nl') + '</div>' +
-      '<div class="m-set-f"><label for="btPin">PIN · 6 digits</label>' +
-        '<div class="m-bt-pinf"><input id="btPin" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" value="' + esc(n.pin) + '">' +
-        '<button type="button" class="m-bt-gen" id="btGen">Generate</button></div></div>' +
+      '<div class="m-set-f"><label>PIN</label>' +
+        '<div class="m-sx-tabs m-pp-tabs m-bt-pinmodo" role="tablist">' +
+          '<button type="button" data-pinmodo="ellos" class="' + (n.sinPin ? 'on' : '') + '">They set it</button>' +
+          '<button type="button" data-pinmodo="ahora" class="' + (n.sinPin ? '' : 'on') + '">Set it now</button></div>' +
+        (n.sinPin
+          ? '<small>They create their own PIN the first time, with a one-time code from you.</small>'
+          : '<div class="m-bt-pinf"><input id="btPin" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" value="' + esc(n.pin) + '">' +
+            '<button type="button" class="m-bt-gen" id="btGen">Generate</button></div>') + '</div>' +
       err +
       '<button type="button" class="m-set-save" id="btCrear">' + esc('Create ' + (n.nombre.trim() || 'person')) + '</button>';
   }
@@ -241,7 +248,15 @@
           '<button type="button" class="m-bt-gen" id="btGen">Generate</button></div>' +
           '<small>The old PIN stops working when you save.</small></div>' +
         '<button type="button" class="m-set-save" id="btPinGuardar">Save PIN</button>'
-      : '<button type="button" class="m-bt-sec" id="btPinCambiar">Change PIN</button>';
+      : '<button type="button" class="m-bt-sec" id="btPinCambiar">' + (f.pendiente ? 'Set the PIN for ' + esc(f.nombre) : 'Change PIN') + '</button>';
+    // Esperando su PIN (alta sin PIN): hasta cuándo vale el código y
+    // cómo enseñarlo otra vez. El código mismo no se guarda en ningún
+    // sitio que se pueda leer: "otra vez" es uno nuevo.
+    const espera = !f.pendiente ? '' :
+      '<div class="m-set-f"><div class="m-pp-lista"><div class="m-pp-perm"><span>' +
+        (f.pendiente.vencido ? 'Code expired' : 'Waiting for PIN') +
+        '<small>' + (f.pendiente.vencido ? 'Show a new one to let ' + esc(f.nombre) + ' set a PIN.' : 'Code works until ' + esc(cuandoPausa(f.pendiente.expira))) + '</small></span></div></div>' +
+        '<button type="button" class="m-bt-sec" id="btAltaOtra">Show code and QR again</button></div>';
     // El acceso, arriba (Axel, 2026-11-15, opción A sobre lámina):
     // pausarlo no borra nada; la persona ve en el login que está pausada.
     // A uno mismo no: se quedaría fuera.
@@ -253,7 +268,7 @@
         sw('data-acceso', '1', f.pausado ? 'off' : 'on', f.rol === 'owner' && !soyOwner()) + '</div></div>' +
         (f.pausado ? '<small>' + esc(corto) + ' sees “Hi ' + esc(corto) + ', your access is paused” on sign in. Turn it back on and the same PIN works again.</small>' : '') +
       '</div>';
-    return acceso + '<div class="m-set-f"><label>Role</label>' + chipsRol(f.rol, 'data-fr') +
+    return espera + acceso + '<div class="m-set-f"><label>Role</label>' + chipsRol(f.rol, 'data-fr') +
         (f.rol === 'owner' && !soyOwner() ? '<small>Only an owner can change an owner.</small>' : '') + '</div>' +
       '<div class="m-set-f"><label>Locations</label>' + chips(f.locs, 'data-fl') + '</div>' +
       permisosDe(f) +
@@ -297,7 +312,8 @@
     if (q('#btNuevo')) q('#btNuevo').onclick = () => {
       const activa = (_locs || []).find(l => l.name === (window.BARSTOCK_CONFIG || {}).LOCATION_NAME);
       // Bartender de entrada: el rol que menos puede. Se cambia con un toque.
-      _nuevo = { nombre: '', pin: generar(), rol: 'bartender', locs: new Set(activa ? [activa.id] : []) };
+      // sinPin de entrada (Axel, 2026-11-16, opción C): la persona pone el suyo.
+      _nuevo = { nombre: '', pin: generar(), rol: 'bartender', locs: new Set(activa ? [activa.id] : []), sinPin: true };
       _creado = null; _error = ''; _vista = 'nuevo'; pintar();
     };
     if (q('#btCopiar')) q('#btCopiar').onclick = async () => {
@@ -311,7 +327,8 @@
       const x = (_lista || []).find(y => y.id === b.dataset.b);
       if (!x) return;
       _ficha = { id: x.id, nombre: x.name, rol: x.role, off: new Set(x.off || []),
-        locs: new Set(x.access.map(a => a.locationId)), pin: null, borrar: false, pausado: x.pausado || null };
+        locs: new Set(x.access.map(a => a.locationId)), pin: null, borrar: false, pausado: x.pausado || null,
+        pendiente: x.pendiente || null };
       _creado = null; _error = ''; _vista = 'ficha'; pintar();
     }; });
     host.querySelectorAll('[data-r]').forEach(b => { b.onclick = () => {
@@ -350,6 +367,9 @@
     host.querySelectorAll('[data-fr]').forEach(b => { b.onclick = () => cambiarRol(b.dataset.fr); });
     host.querySelectorAll('[data-fp]').forEach(b => { b.onclick = () => cambiarPermiso(b.dataset.fp); });
     if (q('[data-acceso]')) q('[data-acceso]').onclick = cambiarAcceso;
+    host.querySelectorAll('[data-pinmodo]').forEach(b => { b.onclick = () => { _nuevo.sinPin = b.dataset.pinmodo === 'ellos'; _error = ''; pintar(); }; });
+    if (q('#btAltaOtra')) q('#btAltaOtra').onclick = otroCodigo;
+    if (q('#btAltaOk')) q('#btAltaOk').onclick = () => { _creado = null; pintar(); };
     if (q('#btPinCambiar')) q('#btPinCambiar').onclick = () => { _ficha.pin = generar(); _error = ''; pintar(); };
     if (q('#btPinGuardar')) q('#btPinGuardar').onclick = guardarPin;
     if (q('#btQuitar')) q('#btQuitar').onclick = quitar;
@@ -371,15 +391,24 @@
     const n = _nuevo, b = _host.querySelector('#btCrear');
     const nombre = n.nombre.trim();
     _error = !ID().nombreValido(nombre) ? 'Enter a name.'
-      : !ID().pinValido(n.pin) ? 'The PIN has to be 6 digits.'
+      : !n.sinPin && !ID().pinValido(n.pin) ? 'The PIN has to be 6 digits.'
       : !n.locs.size ? 'Choose at least one location.' : '';
     if (_error) return pintar();
     if (b) { b.disabled = true; b.textContent = 'Creating…'; }
-    const r = await A().llamar('createPerson', { name: nombre, pin: n.pin, role: n.rol, locationIds: Array.from(n.locs) }).catch(fallo);
+    const cuerpo = { name: nombre, role: n.rol, locationIds: Array.from(n.locs) };
+    if (!n.sinPin) cuerpo.pin = n.pin;
+    const r = await A().llamar('createPerson', cuerpo).catch(fallo);
     if (!r || !r.ok) { _error = 'Not created: ' + ((r && r.error) || 'no answer'); return pintar(); }
-    _creado = { nombre, pin: n.pin, locs: nombresDe(n.locs) };
+    _creado = n.sinPin ? { nombre: r.name || nombre, code: r.code, expira: r.expira }
+      : { nombre, pin: n.pin, locs: nombresDe(n.locs) };
+    // Creada, pero sin código de vuelta (un servidor sin el alta): se
+    // dice lo que pasó y cómo sacarlo, en vez de un panel vacío.
+    const sinCodigo = n.sinPin && !r.code;
+    if (sinCodigo) _creado = null;
     _nuevo = null; _vista = 'lista'; _tab = 'people';
     await cargar();
+    // Después de cargar, que limpia el error.
+    if (sinCodigo) _error = nombre + ' was created, but no code came back. Open ' + nombre + ' and tap “Show code and QR again”.';
     pintar();
   }
 
@@ -451,6 +480,45 @@
     await cargar();
     const x = (_lista || []).find(y => y.id === id);
     if (x && _vista === 'ficha' && _ficha && _ficha.id === id) _ficha.pausado = x.pausado || null;
+    pintar();
+  }
+
+  // ── El panel del alta: QR y código (opción C, 2026-11-16) ───────────
+  //
+  // El QR abre el login con el nombre y el código (pin-login.js lo lee y
+  // lo borra de la dirección). Sin la librería del QR (src/qrcode.js),
+  // el código sale igual: con nombre y código se entra desde el login.
+  function urlAlta(c) {
+    const base = (window.location && /^https?:/.test(window.location.origin || '')) ? window.location.origin : 'https://app.barstockpro.com';
+    return base + '/?alta=' + encodeURIComponent(c.nombre) + '&c=' + c.code;
+  }
+  function qrDe(url) {
+    try {
+      if (typeof window.qrcode !== 'function') return '';
+      const qr = window.qrcode(0, 'M'); qr.addData(url); qr.make();
+      return qr.createSvgTag(5, 2);
+    } catch (e) { return ''; }
+  }
+  function panelAlta(c) {
+    const url = urlAlta(c), svg = qrDe(url);
+    return '<div class="m-bt-ok m-bt-alta"><b>' + esc(c.nombre) + ' is ready to set a PIN</b>' +
+        (svg ? '<div class="m-bt-qr" data-alta-url="' + esc(url) + '">' + svg + '</div><small>Scan with ' + esc(c.nombre) + '’s phone</small>'
+          : '<span data-alta-url="' + esc(url) + '"></span>') +
+        '<small>' + (svg ? 'or at sign in, name + this code' : 'At sign in: name + this code') + '</small>' +
+        '<big>' + esc(String(c.code).slice(0, 3) + ' ' + String(c.code).slice(3)) + '</big>' +
+        '<small>Works once · until ' + esc(cuandoPausa(c.expira)) + '</small>' +
+      '</div><button type="button" class="m-set-save" id="btAltaOk">Done</button>';
+  }
+
+  async function otroCodigo() {
+    const f = _ficha;
+    const b = _host.querySelector('#btAltaOtra');
+    if (b) { b.disabled = true; b.textContent = 'Making a new code…'; }
+    const r = await A().llamar('nuevoCodigo', { userId: f.id }).catch(fallo);
+    if (!r || !r.ok) { _error = 'Not done: ' + ((r && r.error) || 'no answer'); return pintar(); }
+    _creado = { nombre: f.nombre, code: r.code, expira: r.expira };
+    _ficha = null; _vista = 'lista'; _tab = 'people';
+    await cargar();
     pintar();
   }
 

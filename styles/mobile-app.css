@@ -4300,6 +4300,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.35); }
   .m-bt-ok b { display: block; font-size: var(--m-small); color: #86efac; }
   .m-bt-ok big { display: block; margin-top: 6px; font-size: var(--m-figure); font-weight: 800; letter-spacing: .2em; color: #fff; }
+  /* Alta sin PIN (2026-11-16, opción C): el QR en blanco, para que lo lea
+   * cualquier cámara, y el código debajo. */
+  .m-bt-alta .m-bt-qr { display: inline-block; margin-top: 12px; padding: 8px; border-radius: 14px; background: #fff; line-height: 0; }
+  .m-bt-alta .m-bt-qr svg { width: calc(var(--m-base) * 13); height: auto; }
+  .m-bt-alta small { display: block; margin-top: 8px; }
+  .m-bt-espera { color: #fcd34d; font-weight: 600; }
   .m-bt-ok small { display: block; margin-top: 4px; font-size: var(--m-meta); color: #cbd5e1; }
 
   /* ── People con roles (2026-11-13, lámina 3A) ─────────────────────
