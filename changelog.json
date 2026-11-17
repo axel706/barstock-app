@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261117-094950",
+    "items": [
+      "Morning email: Daily | Weekly, and send it to anyone",
+      "Choose who gets it every morning"
+    ]
+  },
+  {
     "build": "20261117-085225",
     "items": [
       "Monday's email says what Sunday's count found and why"
@@ -174,12 +181,6 @@
     "build": "20261115-103731",
     "items": [
       "Running out: smaller buttons on each card"
-    ]
-  },
-  {
-    "build": "20261115-102920",
-    "items": [
-      "Running out: same background as the rest of the app"
     ]
   }
 ]

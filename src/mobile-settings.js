@@ -50,7 +50,7 @@
       { id: 'toastpours', perm: 'toast', ico: 'ti-ruler-measure', n: 'Pours', d: 'How much each size pours' },
       { id: 'toastrecipes', perm: 'recetas', ico: 'ti-glass-cocktail', n: 'Recipes', d: 'Each ingredient to its bottle' },
       // El correo de la mañana, para probarlo a mano (src/morning-report.js).
-      { id: 'morning', perm: 'ver_ajustes', ico: 'ti-mail-forward', n: 'Morning email', d: 'Preview it or send a test to yourself' }
+      { id: 'morning', perm: 'ver_ajustes', ico: 'ti-mail-forward', n: 'Morning email', d: 'Preview it, send a test or send it to others' }
     ]},
     // Los bartenders invitados (mobile-bartenders.js): sólo para Axel,
     // como el Admin del escritorio. Esconderlo es comodidad; quien decide

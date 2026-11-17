@@ -700,7 +700,7 @@ que miente.
    ("Yesterday · Sunday"), lo más vendido, lo que suele dar esta semana
    día por día (lo de siempre de cada día; cero es "closed") y lo que no
    llega al domingo. `datos()` lo reúne el lunes, o con `{ semanal: true }`
-   desde *Send last week's summary (test)* (al reply-to, con "[Test]").
+   desde Weekly en Settings (abajo).
    Lo escribe `armarSemana` de `lib/morning-report.js`.
    **Live vs count** va dentro (2026-11-17, "que sugiera qué estuvo
    mal"): del último ciclo de `live_expected` cerrado desde el lunes de
@@ -713,8 +713,18 @@ que miente.
    likely" desde 3), cuadraba 3 semanas y falta (merma); si no, "too
    early to tell". El ciclo no guarda de qué tragos salió cada botella:
    no se dice "va en cócteles". Lo vendido sin receta se dice del ciclo,
-   sin colgárselo a un producto. Prueba: `test-live-diagnostico`. La lista de *Morning email recipients* todavía no se usa
-   en el automático: es para cuando él lo diga. `lib/morning-cron.js`
+   sin colgárselo a un producto. Prueba: `test-live-diagnostico`.
+   **A quién (2026-11-17, lámina B):** el automático va al reply-to y a
+   la lista *Morning email recipients* ("Every morning"), sin repetir
+   (`partirLista`, la regla de leerla). En Settings › Toast › Morning
+   email: Daily | Weekly arriba (la vista cambia; un lunes abre en
+   Weekly), "Send a test" (al reply-to, "[Test]") y "Send to…": una hoja
+   con la lista puesta, quitar y añadir correos, y "Every morning"
+   (apagado de entrada) la guarda. Guarda con TODO lo de la locación:
+   `saveSettings` pone a vacío lo que no le llega y borraría el
+   reply-to. `para: 'otros'` es lo único que acepta direcciones de la
+   petición: con `ajustes_locacion`, válidas y 10 como mucho, sin
+   "[Test]". `lib/morning-cron.js`
    corre en el servidor **los mismos archivos de `src/`** (vm, con un
    `window` de mentira) y llama a `BarStockMorningReport.datos()`: un
    solo cálculo. No carga `inventory-cloud.js` (trae los borrados);

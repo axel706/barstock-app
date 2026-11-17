@@ -123,7 +123,7 @@ function ventana(rol, nombre) {
     const bloque = i >= 0 ? css.slice(i) : '';
     prueba('el bloque existe, dentro del teléfono', /@media \(max-width: 640px\) \{/.test(bloque));
     const escondidos = ['#mcGo', '#mcDrop', '#miNuevo', '.m-ficha .m-acts', '#msIQ', '#moRun', '#moSend', '#moAdd', '.m-ord-x', '.m-ord-q [data-q]',
-      '#mhPrec', '.m-hacc', '#miOrdOn', '.m-ichg', '.m-idanger', '[data-unlink]', '#mnfGo', '.m-nf-x', '#mTwTodas', '.m-tl-todas', '#mrSend', '#mrListaCaja',
+      '#mhPrec', '.m-hacc', '#miOrdOn', '.m-ichg', '.m-idanger', '[data-unlink]', '#mnfGo', '.m-nf-x', '#mTwTodas', '.m-tl-todas', '#mrSend', '#mrOtros',
       '.m-hero[data-kind="cycle"] :is(.m-hero-b, .m-hero-b2)', '.m-hero-x:has(.ti-trash)', '#mcfSync', '.m-cf-b[data-cf="ayer"]'];
     const faltan = escondidos.filter(x => bloque.indexOf(x) < 0);
     prueba('esconde cada control que edita', !faltan.length, faltan.join(' '));

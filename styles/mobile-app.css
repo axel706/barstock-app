@@ -4365,11 +4365,54 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * es blanco porque el correo lo es: en el fondo oscuro de la app se
    * lee como una hoja aparte. Su alto lo pone el script al cargar. */
   .m-mr-estado { margin-top: 10px; font-size: var(--m-small); color: #9fb0c4; line-height: 1.5; }
-  /* A la lista: el mismo botón, de contorno. "Send to me" es la prueba de
-   * siempre; éste manda un correo de verdad a varias personas. */
-  /* El resumen de la semana (el correo del lunes), también de contorno:
-   * es una prueba aparte, no el botón principal. */
-  body.m-shell .m-set-save:is(.m-mr-lista, .m-mr-semana) { margin-top: 10px; background: transparent; color: #7dd3fc; border-color: rgba(125,211,252,.55); }
+  /* Daily | Weekly (lámina B, 2026-11-17): el .m-seg de siempre. Los dos
+   * botones debajo, pegados a él: el aire va por arriba. */
+  .m-mr-tipo { margin-bottom: 0; }
+  /* La elegida en azul, como la lámina: aquí decide qué correo sale. */
+  body.m-shell #mScreens .m-mr-tipo button.on { background: #0284c7; }
+  body.m-shell .m-set-save.m-mr-test { margin-top: 12px; }
+  /* "Send to…" de contorno: manda el correo de verdad, a quien elijas. */
+  body.m-shell .m-set-save.m-mr-otros { margin-top: 10px; background: transparent; color: #7dd3fc; border-color: rgba(125,211,252,.55); }
+
+  /* La hoja "Send to…". Con #mSheet delante: el id le gana al radio que
+   * app.css fuerza en todo <button> (cabecera de este archivo). */
+  #mSheet .m-mr-hoja { padding-left: 16px; padding-right: 16px; }
+  #mSheet .m-mr-ht { font-size: var(--m-strong); font-weight: 800; color: #f1f5f9; padding: 0 4px; }
+  #mSheet .m-mr-to { margin-top: 12px; }
+  #mSheet .m-mr-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 2px; }
+  #mSheet .m-mr-chip {
+    display: inline-flex; align-items: center; gap: 4px; max-width: 100%;
+    padding: 5px 4px 5px 11px; border-radius: 999px; background: #0c4a6e; color: #bae6fd;
+    font-size: var(--m-small); overflow-wrap: anywhere;
+  }
+  #mSheet .m-mr-chip button {
+    width: 26px; height: 26px; flex: none; border-radius: 999px !important; padding: 0;
+    background: transparent; border: 0; color: #bae6fd; font-size: var(--m-small); cursor: pointer;
+  }
+  #mSheet .m-mr-add {
+    display: block; width: 100%; box-sizing: border-box; margin-top: 10px; padding: 12px 13px;
+    border-radius: 12px; border: 1px solid #334155; background: #050a14; color: #e2e8f0;
+    /* iOS hace zoom en un campo de menos de 16px y no se sale de ahí. La
+     * hoja sólo existe en el teléfono, así que el suelo va directo. */
+    font-size: max(16px, var(--m-body));
+  }
+  #mSheet .m-mr-err { margin-top: 8px; padding: 0 4px; font-size: var(--m-small); color: #fca5a5; }
+  #mSheet .m-mr-siempre {
+    display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 12px; padding: 12px 13px;
+    border-radius: 14px !important; text-align: left; cursor: pointer;
+    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.10); color: #e2e8f0;
+    font-size: var(--m-body);
+  }
+  #mSheet .m-mr-siempre b { display: block; font-weight: 700; }
+  #mSheet .m-mr-siempre small { display: block; margin-top: 2px; color: #94a3b8; font-size: var(--m-small); }
+  #mSheet .m-mr-ck {
+    width: 20px; height: 20px; flex: none; border-radius: 6px; border: 2px solid #38bdf8;
+    box-sizing: border-box; display: flex; align-items: center; justify-content: center;
+  }
+  #mSheet .m-mr-siempre.on .m-mr-ck { background: #38bdf8; }
+  #mSheet .m-mr-siempre.on .m-mr-ck::after { content: '✓'; color: #0b1220; font-size: var(--m-small); font-weight: 800; }
+  #mSheet .m-mr-nota { margin-top: 10px; padding: 0 4px; font-size: var(--m-small); color: #94a3b8; line-height: 1.45; }
+  #mSheet .m-mr-mandar { margin-top: 14px; }
   .m-mr-vista {
     display: block; width: 100%; margin-top: 12px; height: calc(var(--m-base) * 40);
     border: 1px solid rgba(255,255,255,.14); border-radius: 14px; background: #fff;
@@ -5994,8 +6037,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * Liquor from Toast: confirmar, ignorar, deshacer y "Confirm all". */
   html.bs-sin-toast #mScreens .m-tw:not(.m-tl):not(.m-rc) :is(.m-tw-acts, #mTwTodas),
   html.bs-sin-toast #mScreens .m-tl :is(.m-tl-todas, .m-tl-v),
-  /* Morning email: la vista se queda; mandarlo a la lista, no. */
-  html.bs-sin-ajustes_locacion #mScreens .m-mr :is(#mrSend, #mrSemana, #mrListaCaja) {
+  /* Morning email: la vista se queda; mandarlo, no. */
+  html.bs-sin-ajustes_locacion #mScreens .m-mr :is(#mrSend, #mrOtros) {
     display: none !important;
   }
   /* Lo que ENSEÑA un dato y además lo cambia al tocarlo: se queda a la

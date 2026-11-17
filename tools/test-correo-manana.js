@@ -50,7 +50,10 @@ const consulta = (t) => {
 require.cache[rutaSb] = { id: rutaSb, filename: rutaSb, loaded: true, exports: {
   createClient: () => ({ auth: { getUser: async (t) => (t === 'sesion-buena'
     ? { data: { user: { id: 'u1', email: 'axel@crown.test' } }, error: null }
-    : { data: {}, error: { message: 'bad' } }) }, from: consulta })
+    // Un manager sin "Location settings": ve el correo, no escribe direcciones.
+    : t === 'sesion-sin-ajustes'
+      ? { data: { user: { id: 'u2', email: 'mgr@crown.test', app_metadata: { role: 'manager', perms: ['ver_ajustes', 'contar'] } } }, error: null }
+      : { data: {}, error: { message: 'bad' } }) }, from: consulta })
 } };
 // Resend de mentira: apunta lo que se le manda.
 const enviados = [];
@@ -357,6 +360,25 @@ grupo('a la lista de la locación (Settings › Emails)');
   enviados.length = 0;
   r = await llamar({ accion: 'send', params: { datos: BASE, para: 'replyto', cuenta: 'wjm-hospitality' } });
   prueba('sin reply-to: lo dice y no manda', r.code === 400 && /reply-to/i.test(r.body.error || '') && /Settings › Emails/.test(r.body.error || '') && enviados.length === 0, JSON.stringify(r.body));
+
+  // Axel, 2026-11-17 (lámina B): "quiero mandar cualquiera de los 2 a
+  // distintos correos si lo necesito". Escritos en la pantalla: sólo con
+  // el permiso de ajustes de la locación, correos válidos y como mucho 10.
+  enviados.length = 0;
+  r = await llamar({ accion: 'send', params: { datos: BASE, para: 'otros', to: ['gm@crown.test', 'Chef@Crown.test', 'chef@crown.test'] } });
+  prueba('a otros correos: a esos, sin repetir', r.body && r.body.ok && JSON.stringify((enviados[0] || {}).to) === JSON.stringify(['gm@crown.test', 'Chef@Crown.test']), JSON.stringify(r.body) + ' ' + JSON.stringify((enviados[0] || {}).to));
+  prueba('es el correo de verdad: sin "[Test]"', /^The Crown Tavern/.test((enviados[0] || {}).subject || ''), (enviados[0] || {}).subject);
+  enviados.length = 0;
+  r = await llamar({ accion: 'send', params: { datos: BASE, para: 'otros', to: ['gm@crown.test', 'no es correo'] } });
+  prueba('uno que no es un correo: lo dice y no manda a nadie', r.code === 400 && /no es correo/.test(r.body.error || '') && enviados.length === 0, JSON.stringify(r.body));
+  r = await llamar({ accion: 'send', params: { datos: BASE, para: 'otros', to: Array.from({ length: 11 }, (_, i) => 'p' + i + '@x.test') } });
+  prueba('más de 10: no', r.code === 400 && /10/.test(r.body.error || '') && enviados.length === 0, JSON.stringify(r.body));
+  r = await llamar({ accion: 'send', params: { datos: BASE, para: 'otros', to: [] } });
+  prueba('sin nadie: lo dice', r.code === 400 && enviados.length === 0, JSON.stringify(r.body));
+  r = await llamar({ accion: 'send', token: 'Bearer sesion-sin-ajustes', params: { datos: BASE, para: 'otros', to: ['gm@crown.test'] } });
+  prueba('sin el permiso de ajustes de la locación: 403 y nada', r.code === 403 && enviados.length === 0, JSON.stringify(r.body));
+  r = await llamar({ accion: 'send', token: 'Bearer sesion-sin-ajustes', params: { datos: BASE, para: 'replyto', cuenta: 'wjm-hospitality' } });
+  prueba('el test al reply-to sí puede (no escribe direcciones)', r.code !== 403, JSON.stringify(r.body));
 }
 
 grupo('la migración y Settings › Emails');
@@ -429,13 +451,15 @@ grupo('cada mañana, solo: Vercel lo manda al reply-to');
   r = await llamarCron('Bearer cron-ok');
   const e = enviados[0] || {};
   prueba('lo manda', r.code === 200 && r.body.ok && enviados.length === 1, JSON.stringify(r.body).slice(0, 300));
-  prueba('SÓLO al reply-to, no a la lista (de momento)', JSON.stringify(e.to) === JSON.stringify(['axel@crown.test']), JSON.stringify(e.to));
+  // Axel, 2026-11-17: "configurar algunos a los que siempre se envía".
+  // El automático va al reply-to y a la lista "Every morning", sin repetir.
+  prueba('al reply-to y a la lista de siempre', JSON.stringify(e.to) === JSON.stringify(['axel@crown.test', 'gm@crown.test', 'bar@crown.test']), JSON.stringify(e.to));
   prueba('es el de verdad: sin "[Test]"', /^The Crown Tavern/.test(e.subject || ''), e.subject);
   prueba('el mismo correo de la app', /Good morning|Morning ☕|Rise and shine/.test(e.html || '') && /Sent via BarStock Pro/.test(e.html || ''));
   prueba('los números salen de Supabase con la llave del servidor', pedidas.some(p => /toast_sales\?/.test(p.u)) && pedidas.some(p => /inventory_items\?/.test(p.u)) &&
     pedidas.filter(p => p.u.startsWith(SB)).every(p => p.llave === 'srv' || p.llave === 'Bearer srv'), [...new Set(pedidas.map(p => p.u.split('?')[0]))].join(', '));
   prueba('y sólo LEE: ni una escritura', pedidas.every(p => p.metodo === 'GET'), pedidas.filter(p => p.metodo !== 'GET').map(p => p.metodo + ' ' + p.u).join(' | '));
-  prueba('dice a quién y qué', r.body.enviados === 1 && r.body.locaciones[0].to === 'axel@crown.test' && typeof r.body.locaciones[0].asunto === 'string', JSON.stringify(r.body).slice(0, 300));
+  prueba('dice a quién y qué', r.body.enviados === 1 && r.body.locaciones[0].to === 'axel@crown.test, gm@crown.test, bar@crown.test' && typeof r.body.locaciones[0].asunto === 'string', JSON.stringify(r.body).slice(0, 300));
 
   ajustes = [{ location_id: 'loc-1', reply_to_email: '', morning_recipients: 'gm@crown.test' }];
   enviados.length = 0;
@@ -552,7 +576,7 @@ grupo('en la app: los números salen de los mismos módulos');
   // El panel de Settings: la vista sale sola al entrar; "Send to me" la manda.
   w = await app();
   const host = w.document.createElement('div'); w.document.body.appendChild(host);
-  await w.BarStockMorningReport.montar(host, () => '<div class="cab"></div>', () => {});
+  await w.BarStockMorningReport.montar(host, () => '<div class="cab"></div>', () => {}, { tipo: 'daily' });
   await new Promise(r => setTimeout(r, 20));
   const fr = host.querySelector('iframe.m-mr-vista');
   prueba('al entrar, la vista del correo', !!fr && /vista/.test(fr.getAttribute('srcdoc') || '') && w.__llamadas[0].a === 'preview' && w.__llamadas[0].p === 'report',
@@ -566,29 +590,66 @@ grupo('en la app: los números salen de los mismos módulos');
   prueba('lo manda al reply-to, con los mismos datos y sin direcciones', !!env && !!env.prm.datos && env.prm.para === 'replyto' && !!env.prm.cuenta && !('to' in env.prm), JSON.stringify(env && env.prm).slice(0, 160));
   prueba('y dice a dónde se mandó', /axel@crown\.test/.test(host.textContent + ' ' + (w.__toast || '')), host.textContent.slice(0, 200));
 
-  // A la lista: el botón dice a cuántos, y manda "lista", no direcciones.
-  w = await app();
-  w.BarStockLocationSettings = { getSettings: async () => ({ morning_recipients: 'gm@crown.test, bar@crown.test' }) };
-  const h2 = w.document.createElement('div'); w.document.body.appendChild(h2);
-  await w.BarStockMorningReport.montar(h2, () => '', () => {});
-  await new Promise(r => setTimeout(r, 20));
-  const bl = h2.querySelector('#mrLista');
-  prueba('con lista, un botón que dice a cuántos', !!bl && /Send to the list · 2 people/.test(bl.textContent), h2.innerHTML.slice(0, 400));
-  // Es un correo de verdad a varias personas: el primer toque pide el
-  // segundo, como Reopen en Sent.
-  bl.click();
-  await new Promise(r => setTimeout(r, 20));
-  prueba('un toque no lo manda: pide otro', !w.__llamadas.some(x => x.a === 'send') && /Tap again to send to 2 people/.test(bl.textContent), bl.textContent);
-  bl.click();
-  await new Promise(r => setTimeout(r, 20));
-  const env2 = w.__llamadas.filter(x => x.a === 'send').pop();
-  prueba('manda "lista" con la cuenta, no las direcciones', !!env2 && env2.prm.para === 'lista' && !!env2.prm.cuenta && !('to' in env2.prm), JSON.stringify(env2 && env2.prm).slice(0, 160));
-  w = await app();
-  w.BarStockLocationSettings = { getSettings: async () => ({ morning_recipients: '' }) };
-  const h3 = w.document.createElement('div'); w.document.body.appendChild(h3);
-  await w.BarStockMorningReport.montar(h3, () => '', () => {});
-  await new Promise(r => setTimeout(r, 20));
-  prueba('sin lista, sin botón y dice dónde se pone', !h3.querySelector('#mrLista') && /Settings › Emails/.test(h3.textContent), h3.textContent.slice(0, 200));
+  // "Send to…" (Axel, 2026-11-17, lámina B): una hoja con la lista de
+  // siempre puesta; se quita o se añade, y "Every morning" la guarda.
+  const abrirHoja = async (st, op) => {
+    const w3 = await app();
+    w3.__guardado = null;
+    w3.BarStockLocationSettings = { getSettings: async () => Object.assign({}, st),
+      saveSettings: async (x) => { if (op && op.fallaGuardar) throw new Error('HTTP 500: nope'); w3.__guardado = x; } };
+    const h = w3.document.createElement('div'); w3.document.body.appendChild(h);
+    await w3.BarStockMorningReport.montar(h, () => '', () => {}, { tipo: 'daily' });
+    await new Promise(r => setTimeout(r, 20));
+    h.querySelector('#mrOtros').click();
+    await new Promise(r => setTimeout(r, 20));
+    return { w3, h, hoja: w3.document.getElementById('mSheet') };
+  };
+  const chips = (hoja) => [...hoja.querySelectorAll('.m-mr-chip')].map(c => c.firstChild.textContent);
+  const escribir = (w3, hoja, t) => { const c = hoja.querySelector('#mrAdd'); c.value = t; c.dispatchEvent(new w3.KeyboardEvent('keydown', { key: 'Enter' })); };
+  const ST = { reply_to_email: 'axel@crown.test', report_recipients: 'orders@crown.test', morning_recipients: 'gm@crown.test; bar@crown.test, malo' };
+  {
+    let { w3, h, hoja } = await abrirHoja(ST);
+    prueba('"Send to…" abre la hoja con el tipo que se ve', !!hoja && /Send the daily email/.test(hoja.textContent), h.innerHTML.slice(0, 300));
+    prueba('con la lista de siempre puesta (sólo los correos)', JSON.stringify(chips(hoja)) === JSON.stringify(['gm@crown.test', 'bar@crown.test']), JSON.stringify(chips(hoja)));
+    prueba('y dice que el reply-to también lo recibe', /also goes to the reply-to, axel@crown\.test/.test(hoja.textContent));
+    hoja.querySelector('.m-mr-chip button').click();                     // quita gm
+    escribir(w3, hoja, 'chef@crown.test');
+    prueba('quitar y añadir', JSON.stringify(chips(hoja)) === JSON.stringify(['bar@crown.test', 'chef@crown.test']), JSON.stringify(chips(hoja)));
+    escribir(w3, hoja, 'no-es-correo');
+    prueba('lo que no es un correo no entra, y lo dice', chips(hoja).length === 2 && /Not an email address: no-es-correo/.test(hoja.textContent));
+    hoja.querySelector('#mrAdd').value = '';
+    prueba('el botón dice a cuántos', /Send to 2/.test(hoja.querySelector('#mrMandar').textContent));
+    prueba('"Every morning" empieza apagado: mandar a alguien una vez no cambia la lista', hoja.querySelector('#mrSiempre').getAttribute('aria-pressed') === 'false');
+    hoja.querySelector('#mrMandar').click();
+    await new Promise(r => setTimeout(r, 20));
+    const e1 = w3.__llamadas.filter(x => x.a === 'send').pop();
+    prueba('manda "otros" con esas direcciones y los datos que se ven', !!e1 && e1.prm.para === 'otros' && JSON.stringify(e1.prm.to) === JSON.stringify(['bar@crown.test', 'chef@crown.test']) && !!e1.prm.datos.ayer, JSON.stringify(e1 && e1.prm).slice(0, 200));
+    prueba('sin "Every morning" no guarda nada', w3.__guardado === null);
+    prueba('la hoja se cierra y dice a quién', !w3.document.getElementById('mSheet') && /Sent the daily email to/.test(h.textContent + (w3.__toast || '')));
+
+    ({ w3, h, hoja } = await abrirHoja(ST));
+    escribir(w3, hoja, 'chef@crown.test');
+    hoja.querySelector('#mrSiempre').click();
+    hoja.querySelector('#mrMandar').click();
+    await new Promise(r => setTimeout(r, 20));
+    const g = w3.__guardado || {};
+    prueba('con "Every morning", guarda esa lista', g.morning_recipients === 'gm@crown.test, bar@crown.test, chef@crown.test', JSON.stringify(g));
+    prueba('sin borrar el reply-to ni lo demás de la locación', g.reply_to_email === 'axel@crown.test' && g.report_recipients === 'orders@crown.test', JSON.stringify(g));
+    prueba('y luego la manda', w3.__llamadas.some(x => x.a === 'send' && x.prm.para === 'otros'));
+
+    ({ w3, h, hoja } = await abrirHoja(ST, { fallaGuardar: true }));
+    hoja.querySelector('#mrSiempre').click();
+    hoja.querySelector('#mrMandar').click();
+    await new Promise(r => setTimeout(r, 20));
+    prueba('si no se puede guardar la lista: lo dice y no manda', !w3.__llamadas.some(x => x.a === 'send') && /Could not save the every-morning list: HTTP 500: nope/.test(hoja.textContent), hoja.textContent.slice(0, 300));
+  }
+  {
+    // Daily | Weekly: lo que se manda es lo que se ve.
+    const css = leer('styles/mobile-app.css');
+    prueba('sin el permiso de ajustes, no se ve ni la prueba ni "Send to…"', /bs-sin-ajustes_locacion #mScreens \.m-mr :is\(#mrSend, #mrOtros\)/.test(css));
+    prueba('el campo no hace zoom en iOS', /#mSheet \.m-mr-add \{[^}]*font-size: max\(16px/.test(css));
+    prueba('los botones viejos ya no están', !/mrSemana|mrLista/.test(leer('src/morning-report.js')));
+  }
 
   // El lunes: datos() reúne la semana con la MISMA toast-sales del Home.
   {
@@ -624,20 +685,22 @@ grupo('en la app: los números salen de los mismos módulos');
     prueba('un martes, no (es el correo de cada día)', !(await w2.BarStockMorningReport.datos()).semanal);
     prueba('un martes con op.semanal, sí: la misma semana pasada', ((await w2.BarStockMorningReport.datos({ semanal: true })).semanal || {}).lunes === '2026-11-16');
 
-    // El botón de prueba: lo reúne con op.semanal y lo manda al reply-to.
+    // Weekly: la vista pasa al resumen, y "Send a test" manda ése.
     const h4 = w2.document.createElement('div'); w2.document.body.appendChild(h4);
-    await w2.BarStockMorningReport.montar(h4, () => '', () => {});
+    await w2.BarStockMorningReport.montar(h4, () => '', () => {}, { tipo: 'daily' });
     await new Promise(r => setTimeout(r, 20));
-    const bs = h4.querySelector('#mrSemana');
-    prueba('Settings tiene el botón del resumen de la semana', !!bs && /Send last week's summary \(test\)/.test(bs.textContent), h4.innerHTML.slice(0, 300));
+    prueba('abre en Daily, con el correo de cada día', h4.querySelector('#mrTipo .on').dataset.t === 'daily' && !w2.__llamadas.filter(z => z.a === 'preview').pop().prm.datos.semanal);
     w2.__llamadas.length = 0;
-    bs.click();
+    h4.querySelector('#mrTipo [data-t="weekly"]').click();
+    await new Promise(r => setTimeout(r, 30));
+    prueba('Weekly enseña el resumen de la semana', h4.querySelector('#mrTipo .on').dataset.t === 'weekly' && !!(w2.__llamadas.find(z => z.a === 'preview') || { prm: { datos: {} } }).prm.datos.semanal);
+    h4.querySelector('#mrSend').click();
     await new Promise(r => setTimeout(r, 30));
     const env3 = w2.__llamadas.find(z => z.a === 'send');
-    prueba('lo manda con la semana, al reply-to y sin direcciones', !!env3 && !!(env3.prm.datos && env3.prm.datos.semanal) && env3.prm.para === 'replyto' && !('to' in env3.prm), String(JSON.stringify(env3 && env3.prm)).slice(0, 200));
-    prueba('y dice a dónde', /Weekly summary sent to axel@crown\.test/.test(h4.textContent), h4.textContent.slice(0, 300));
-    const css = leer('styles/mobile-app.css');
-    prueba('sin el permiso de ajustes, el botón se esconde como los otros', /bs-sin-ajustes_locacion #mScreens \.m-mr :is\(#mrSend, #mrSemana, #mrListaCaja\)/.test(css));
+    prueba('y "Send a test" manda la semana, al reply-to y sin direcciones', !!env3 && !!(env3.prm.datos && env3.prm.datos.semanal) && env3.prm.para === 'replyto' && !('to' in env3.prm), String(JSON.stringify(env3 && env3.prm)).slice(0, 200));
+    // Un lunes, Daily manda el de cada día, no el semanal que sale solo.
+    const wl = await mk('2026-11-23');
+    prueba('un lunes con op.diario, el de cada día', !(await wl.BarStockMorningReport.datos({ diario: true })).semanal);
   }
 
   const ms = leer('src/mobile-settings.js');
