@@ -87,7 +87,9 @@ function entorno(o) {
     const d = w.document;
     prueba('sin modo guardado: el de correo, sin la clase', !d.documentElement.classList.contains('auth-pin'));
     const tabs = d.getElementById('authPinTabs');
-    prueba('arriba, antes del título, las pestañas Email | PIN', !!tabs && tabs.nextElementSibling === d.getElementById('authTitle') &&
+    prueba('arriba, antes del título, las pestañas Email | PIN', !!tabs && (tabs.nextElementSibling === d.getElementById('authTitle') ||
+      // entre los dos sólo cabe el ✓ de crear el PIN (escondido salvo en ese paso)
+      (tabs.nextElementSibling.id === 'authPinOk' && tabs.nextElementSibling.nextElementSibling === d.getElementById('authTitle'))) &&
       [...tabs.querySelectorAll('[data-modo]')].map(b => b.textContent.trim()).join('|') === 'Email|PIN' &&
       tabs.querySelector('[data-modo="email"]').classList.contains('on'));
     prueba('y ya no se pregunta si eres bartender', !/Bartender/i.test(d.getElementById('authCard').textContent));
@@ -176,17 +178,25 @@ function entorno(o) {
     d.getElementById('authPinName').value = 'Nia';
     teclea('482913'); await esperar(40);
     prueba('con el código en las casillas, pasa a crear su PIN', d.documentElement.classList.contains('auth-pin-crear') &&
-      /Hi Nia/.test(d.getElementById('authTitle').textContent) && /Create your PIN/.test(d.getElementById('authSub').textContent),
+      /Welcome, Nia/.test(d.getElementById('authTitle').textContent) && /Now create your own 6-digit PIN/.test(d.getElementById('authSub').textContent),
       d.getElementById('authTitle').textContent + ' | ' + d.getElementById('authMsg').textContent);
     prueba('lo comprobó sin sesión, con nombre y código', w.__altas.length === 1 && w.__altas[0].action === 'altaVerificar' && w.__altas[0].code === '482913');
+    // La pantalla de crear el PIN, opción C (Axel, 2026-11-17): Drew no la
+    // vio porque sólo cambiaba el título. Ahora es otro momento.
+    prueba('C: sale el ✓ de código aceptado', !!d.getElementById('authPinOk') && /\u2713/.test(d.getElementById('authPinOk').textContent));
+    const css = leer('styles/auth.css');
+    prueba('C: el ✓ sólo en ese paso, y el nombre se esconde', /#authPinOk\s*\{[^}]*display:\s*none/.test(css) &&
+      /html\.auth-pin-crear #authPinOk\s*\{[^}]*display:\s*(flex|block)/.test(css) &&
+      /html\.auth-pin-crear[^{]*label\[for="authPinName"\][^{]*\{[^}]*display:\s*none/.test(css.replace(/\n/g, ' ')), '');
+    prueba('C: el nombre va escapado en el título', (() => { const t = d.getElementById('authTitle'); return t.children.length === 0; })());
     teclea('482913'); await esperar(20);
     prueba('el código otra vez no vale como PIN: lo dice y sigue pidiendo uno', /That.s your code/.test(d.getElementById('authMsg').textContent) &&
-      /Create your PIN/.test(d.getElementById('authSub').textContent) && d.querySelectorAll('#authPinBoxes i.on').length === 0 &&
+      /Now create your own 6-digit PIN/.test(d.getElementById('authSub').textContent) && d.querySelectorAll('#authPinBoxes i.on').length === 0 &&
       !w.__altas.some(x => x.action === 'altaReclamar'), d.getElementById('authMsg').textContent);
     teclea('135790'); await esperar(20);
     prueba('pide repetirlo', /again/i.test(d.getElementById('authSub').textContent) && d.querySelectorAll('#authPinBoxes i.on').length === 0);
     teclea('135791'); await esperar(20);
-    prueba('si no son iguales, lo dice y vuelve a empezar', /didn.t match/i.test(d.getElementById('authMsg').textContent) && /Create your PIN/.test(d.getElementById('authSub').textContent));
+    prueba('si no son iguales, lo dice y vuelve a empezar', /didn.t match/i.test(d.getElementById('authMsg').textContent) && /Now create your own 6-digit PIN/.test(d.getElementById('authSub').textContent));
     teclea('135790'); await esperar(20); teclea('135790'); await esperar(60);
     const rec = w.__altas.find(x => x.action === 'altaReclamar');
     prueba('lo guarda con su código', !!rec && rec.pin === '135790' && rec.code === '482913' && rec.name === 'Nia');
@@ -202,7 +212,7 @@ function entorno(o) {
     const w3 = entorno({ url: 'https://app.barstockpro.com/?alta=Nia&c=482913' });
     await esperar(60);
     prueba('el QR abre directo en crear su PIN, con su nombre', w3.document.documentElement.classList.contains('auth-pin-crear') &&
-      w3.document.getElementById('authPinName').value === 'Nia' && /Hi Nia/.test(w3.document.getElementById('authTitle').textContent));
+      w3.document.getElementById('authPinName').value === 'Nia' && /Welcome, Nia/.test(w3.document.getElementById('authTitle').textContent));
     prueba('y el código sale de la dirección', !/c=482913/.test(w3.location.href) && !/alta=/.test(w3.location.href), w3.location.href);
     const w4 = entorno({ url: 'https://app.barstockpro.com/?alta=Nia&c=000000' });
     await esperar(60);

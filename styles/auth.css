@@ -375,6 +375,21 @@ html.auth-pin.auth-pin-loc #authLoginBtn{ display:block !important; }
 #authCard .auth-pin-key:active{ background:rgba(56,189,248,.28); }
 #authCard .auth-pin-key.del{ background:none; color:#cbd5e1; }
 html.auth-pin-busy .auth-pin-pad{ opacity:.45; pointer-events:none; }
+/* Crear el PIN tras el código (Axel, 2026-11-17, opción C sobre
+ * lámina): otro momento, no la misma pantalla con otro título. El ✓,
+ * "Welcome, Drew" en grande y sin el campo del nombre, que ya no hace
+ * falta. Drew no vio el paso y su PIN quedó igual al código. */
+#authPinOk{ display:none; }
+html.auth-pin-crear #authPinOk{
+  display:flex; align-items:center; justify-content:center;
+  width:calc(var(--m-base) * 4); height:calc(var(--m-base) * 4); margin:0 auto calc(var(--m-base) * 0.85);
+  border-radius:50%; background:rgba(52,211,153,.18); color:#6ee7b7;
+  font-size:calc(var(--m-base) * 2); font-weight:800;
+}
+html.auth-pin-crear #authPin label[for="authPinName"],
+html.auth-pin-crear #authPin .auth-field{ display:none; }
+html.auth-pin-crear #authTitle{ font-size:calc(var(--m-base) * 1.85); }
+html.auth-pin-crear #authSub b{ color:#f8fafc; }
 /* El acceso pausado (Axel, 2026-11-15, opción 1 sobre lámina): la
  * tarjeta sustituye a las casillas y al teclado; el nombre se queda.
  * Sin rojo: no es un error de quien entra. El enlace es <button>: el

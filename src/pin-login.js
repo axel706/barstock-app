@@ -106,10 +106,25 @@
     if (!r || !r.ok) return false;
     _alta = { nombre: r.name || nombre, code: String(code), paso: 1, primero: '' };
     raiz().classList.add('auth-pin-crear');
-    titulos('Hi ' + _alta.nombre, 'Create your PIN · 6 digits');
+    pasoCrear(1);
     _pin = ''; pintarCasillas(); decir('');
     return true;
   }
+  // La pantalla de crear el PIN, opción C sobre lámina (Axel,
+  // 2026-11-17). Antes sólo cambiaba el título ("Hi Drew · Create your
+  // PIN") en la misma pantalla, y Drew creyó que le volvían a pedir el
+  // código: lo escribió dos veces y su PIN quedó igual al código. Ahora es
+  // otro momento: el ✓ (#authPinOk), "Welcome, Drew" en grande y sin el
+  // campo del nombre (auth.css, html.auth-pin-crear). El nombre va como
+  // texto; la negrita de la línea es fija, no lleva nada del usuario.
+  function pasoCrear(n) {
+    const t = $('authTitle'), b = $('authSub');
+    if (t) t.textContent = 'Welcome, ' + _alta.nombre;
+    if (b) b.innerHTML = n === 1
+      ? 'Code accepted. <b>Now create your own 6-digit PIN</b>. Don\u2019t reuse the code.'
+      : 'Type your new PIN <b>again</b> to confirm.';
+  }
+
   function salirAlta() {
     _alta = null;
     raiz().classList.remove('auth-pin-crear');
@@ -127,12 +142,12 @@
         return;
       }
       a.primero = _pin; a.paso = 2; _pin = ''; pintarCasillas();
-      titulos('Hi ' + a.nombre, 'Type it again to confirm'); decir('');
+      pasoCrear(2); decir('');
       return;
     }
     if (_pin !== a.primero) {
       a.paso = 1; a.primero = ''; _pin = ''; pintarCasillas();
-      titulos('Hi ' + a.nombre, 'Create your PIN · 6 digits');
+      pasoCrear(1);
       decir('They didn\u2019t match. Create your PIN again.');
       return;
     }
@@ -238,6 +253,12 @@
       '<button type="button" role="tab" data-modo="email" class="on" aria-selected="true">Email</button>' +
       '<button type="button" role="tab" data-modo="pin" aria-selected="false">PIN</button>';
     titulo.parentNode.insertBefore(tabs, titulo);
+    // El ✓ de "código aceptado": sólo se ve al crear el PIN (auth.css).
+    const ok = document.createElement('div');
+    ok.id = 'authPinOk';
+    ok.setAttribute('aria-hidden', 'true');
+    ok.textContent = '\u2713';
+    titulo.parentNode.insertBefore(ok, titulo);
 
     bloque.querySelectorAll('[data-k]').forEach(b => { b.onclick = () => tecla(b.dataset.k); });
     tabs.querySelector('[data-modo="email"]').onclick = cerrar;

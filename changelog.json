@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261116-202122",
+    "items": [
+      "Clearer step to create your PIN after the code"
+    ]
+  },
+  {
     "build": "20261116-201621",
     "items": [
       "New PIN can't be the same as the sign-in code"
@@ -174,13 +180,6 @@
     "build": "20261115-094606",
     "items": [
       "Home: To buy button on Running out first"
-    ]
-  },
-  {
-    "build": "20261115-093945",
-    "items": [
-      "Do we have: Running low on every card",
-      "Say how many are left; it goes to To buy"
     ]
   }
 ]

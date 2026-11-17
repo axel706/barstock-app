@@ -768,7 +768,10 @@ del rol con su interruptor, lo quitado sólo a ella en ámbar ("Off for
   alta). En el login, **el código va en las casillas del PIN**: si el
   login falla, `auth.js` prueba esos dígitos con `altaVerificar`, y con
   uno bueno `pin-login.js` pide crear el PIN dos veces
-  (`altaReclamar`) y entra. `altaVerificar`/`altaReclamar` son lo único
+  (`altaReclamar`) y entra. Ese paso es otra pantalla (2026-11-17,
+  opción C): el ✓, "Welcome, Drew" y sin el campo del nombre; Drew no
+  vio el de antes y su PIN quedó igual al código. El código no vale
+  como PIN, ni en la app ni en el servidor. `altaVerificar`/`altaReclamar` son lo único
   de `api/admin.js` sin sesión, y contestan IGUAL a un código malo, a un
   nombre que no existe y a quien ya tiene PIN: el login es público. El
   QR se borra de la dirección al leerlo. Prueba: 3d de `test-roles`, la
