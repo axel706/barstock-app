@@ -693,7 +693,16 @@ que miente.
    Will's & Bill's; antes sólo Crown). Una sin reply-to se salta y la
    respuesta dice cuál; las demás salen igual. Si ayer está cargado y no tuvo
    ni una venta (el lunes cerrado), no sale correo (2026-11-17); sin
-   cargar, sí: un lunes abierto por un evento tiene ventas y sale. La lista de *Morning email recipients* todavía no se usa
+   cargar, sí: un lunes abierto por un evento tiene ventas y sale.
+   **El del lunes es el resumen de la semana** (2026-11-17, sobre
+   lámina): sustituye al de cada día. La semana pasada de lunes a
+   domingo (`semanaCal(V, 1)`, con su "vs usual"), el domingo en su caja
+   ("Yesterday · Sunday"), lo más vendido, lo que suele dar esta semana
+   día por día (lo de siempre de cada día; cero es "closed") y lo que no
+   llega al domingo. `datos()` lo reúne el lunes, o con `{ semanal: true }`
+   desde *Send last week's summary (test)* (al reply-to, con "[Test]").
+   Lo escribe `armarSemana` de `lib/morning-report.js`. "Live vs count"
+   (lo que encontró el conteo) va dentro cuando se construya. La lista de *Morning email recipients* todavía no se usa
    en el automático: es para cuando él lo diga. `lib/morning-cron.js`
    corre en el servidor **los mismos archivos de `src/`** (vm, con un
    `window` de mentira) y llama a `BarStockMorningReport.datos()`: un

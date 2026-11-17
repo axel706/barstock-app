@@ -185,6 +185,54 @@ grupo('el domingo');
   prueba('y en el asunto', /1 won't make it through today/.test(asunto), asunto);
 }
 
+grupo('el lunes: el resumen de la semana (Axel, 2026-11-17, sobre lámina)');
+{
+  // El lunes no se abre: su correo es la semana pasada de lunes a
+  // domingo, con el domingo en su caja, lo que suele dar esta semana y lo
+  // que no llega al domingo. Un solo correo, no dos.
+  const SEM = { lunes: '2026-11-16', cargados: 7,
+    total: { dinero: 24310, licor: 14120, vino: 10190, botellas: 289, botLicor: 151, botVino: 138,
+      normalDinero: 22509, normalLicor: 12720, normalVino: 9893, normalBotellas: 272.6, normalBotLicor: 138.5, normalBotVino: 140.8 },
+    mejor: { fecha: '2026-11-21', dinero: 6486 },
+    top: [{ nombre: 'Nino Ardevi Prosecco', botellas: 43 }, { nombre: "Tito's", botellas: 18 }, { nombre: 'Casamigos Blanco', botellas: 9 }],
+    domingo: { fecha: '2026-11-22', cargado: true, dinero: 3440, normalDinero: 3276, top: { nombre: 'Nino Ardevi Prosecco', botellas: 9 } },
+    plan: [['2026-11-23', 0, 0], ['2026-11-24', 2180, 25], ['2026-11-25', 2640, 31], ['2026-11-26', 3050, 36],
+      ['2026-11-27', 5210, 62], ['2026-11-28', 5980, 70], ['2026-11-29', 3440, 41]].map(([fecha, dinero, botellas]) => ({ fecha, dinero, botellas })) };
+  const LUNES = { local: 'The Crown Tavern', hoy: '2026-11-23', semanal: SEM,
+    ayer: Object.assign({}, AYER, { fecha: '2026-11-22', dia: 'Sun', dinero: 3440, normalDinero: 3276 }),
+    agotan: [{ producto: "Tito's Handmade Vodka", queda: 6, agota: '2026-11-26', vende: 19, llega: 0, pedir: 13 },
+      { producto: 'Aperol Aperitivo', queda: 7, agota: '2026-11-27', vende: 11, llega: 0, pedir: 4 }] };
+  const { asunto, html } = M.armar(LUNES);
+  // Una etiqueta deja un espacio antes de la coma: "$3,440 ,".
+  const t = texto(html).replace(/ ([,.])/g, '$1');
+  prueba('la etiqueta dice que es el semanal', /Monday · Nov 23 · Weekly/i.test(t), t.slice(0, 160));
+  prueba('la frase de arriba: la semana contra una semana normal', /Last week did \$24,310 in drinks, 8% more than a usual week\./.test(t), t.slice(0, 400));
+  prueba('el rótulo con sus fechas', /Last week · Mon Nov 16 – Sun Nov 22/.test(t), t.slice(0, 600));
+  prueba('la caja del domingo, como ayer', /Yesterday · Sunday/i.test(t) && /Sunday did \$3,440, 5% more than a usual Sunday\. Top seller: Nino Ardevi Prosecco \(9\)\./.test(t), t.slice(0, 900));
+  prueba('la semana entera en palabras', /The whole week: Saturday carried it with \$6,486, and liquor, cocktails included, was 58% of it\./.test(t), t.slice(0, 1200));
+  prueba('las seis cifras de la semana con su flecha', ['$24,310', '$14,120', '$10,190', '289', '151', '138'].every(x => t.includes(x)) &&
+    /↗ 8%/.test(t) && /↗ 11%/.test(t) && /↗ 3%/.test(t) && /↗ 6%/.test(t) && /↗ 9%/.test(t) && /↘ 2%/.test(t), t.slice(0, 1600));
+  prueba('las flechas, contra una semana normal', /Arrows compare with a usual week/.test(t));
+  prueba('lo más vendido de la semana', /Top sellers: Nino Ardevi Prosecco \(43 btl\), Tito's \(18\), Casamigos Blanco \(9\)\./.test(t));
+  prueba('esta semana: lo que suele dar', /This week · what to plan for/.test(t) && /A usual week like this one does about \$22,500 and 265 bottles\./.test(t), t);
+  prueba('día por día, con el lunes cerrado', /Mon closed/.test(t) && /Tue \$2,180/.test(t) && /Sat \$5,980/.test(t), t);
+  prueba('lo que no llega al domingo, de lunes a domingo', /Won't make it to Sunday/.test(t) && /6\.0 left · Mon–Sun usually sells 19\.0/.test(t) && /Order 13 through Sunday/.test(t), t);
+  prueba('sin la tarjeta diaria de ayer (va en la caja del domingo)', !/Yesterday · Sun, Nov 22/.test(t) && (t.match(/\$3,440/g) || []).length === 2, t);
+  prueba('un solo correo, que se despide por la semana', /Have a great week\./.test(t) && /Weekly report/.test(t));
+  prueba('el asunto lo dice', /^The Crown Tavern · Weekly · Nov 16–22 \$24,310 · 2 won't make it to Sunday$/.test(asunto), asunto);
+  // Sin historia para comparar: se dice la cifra, sin inventar el %.
+  const sinN = M.armar(Object.assign({}, LUNES, { semanal: Object.assign({}, SEM, { total: Object.assign({}, SEM.total, { normalDinero: null, normalBotellas: null }) }) }));
+  prueba('sin semanas para comparar, sin porcentaje', /Last week did \$24,310 in drinks\./.test(texto(sinN.html)) && !/more than a usual week/.test(texto(sinN.html)));
+  // Una semana a medio cargar no se presenta como entera.
+  const media = texto(M.armar(Object.assign({}, LUNES, { semanal: Object.assign({}, SEM, { cargados: 5 }) })).html);
+  prueba('a medio cargar, lo dice', /only 5 of its 7 days/.test(media), media.slice(0, 500));
+  // El botón de prueba lo pide un martes: la caja no dice "yesterday".
+  const martes = texto(M.armar(Object.assign({}, LUNES, { hoy: '2026-11-24' })).html).replace(/ ([,.])/g, '$1');
+  prueba('otro día, la caja dice "Sunday", no "yesterday"', !/Yesterday · Sunday/i.test(martes) && /Sunday did \$3,440/.test(martes), martes.slice(0, 700));
+  const raro = M.armar(Object.assign({}, LUNES, { semanal: Object.assign({}, SEM, { top: [{ nombre: '<script>x', botellas: 2 }] }) })).html;
+  prueba('los nombres, escapados', !/<script>x/.test(raro));
+}
+
 grupo('lo de fuera, escapado');
 {
   const { html } = M.armar(Object.assign({}, BASE, { local: 'Crown <b>', agotan: [{ producto: '<img src=x onerror=alert(1)>', queda: 1, agota: '2026-11-12', vende: 3, llega: 0, pedir: 2 }] }));
@@ -341,7 +389,7 @@ grupo('cada mañana, solo: Vercel lo manda al reply-to');
   prueba('lo manda', r.code === 200 && r.body.ok && enviados.length === 1, JSON.stringify(r.body).slice(0, 300));
   prueba('SÓLO al reply-to, no a la lista (de momento)', JSON.stringify(e.to) === JSON.stringify(['axel@crown.test']), JSON.stringify(e.to));
   prueba('es el de verdad: sin "[Test]"', /^The Crown Tavern/.test(e.subject || ''), e.subject);
-  prueba('el mismo correo de la app', /Good morning/.test(e.html || '') && /Sent via BarStock Pro/.test(e.html || ''));
+  prueba('el mismo correo de la app', /Good morning|Morning ☕|Rise and shine/.test(e.html || '') && /Sent via BarStock Pro/.test(e.html || ''));
   prueba('los números salen de Supabase con la llave del servidor', pedidas.some(p => /toast_sales\?/.test(p.u)) && pedidas.some(p => /inventory_items\?/.test(p.u)) &&
     pedidas.filter(p => p.u.startsWith(SB)).every(p => p.llave === 'srv' || p.llave === 'Bearer srv'), [...new Set(pedidas.map(p => p.u.split('?')[0]))].join(', '));
   prueba('y sólo LEE: ni una escritura', pedidas.every(p => p.metodo === 'GET'), pedidas.filter(p => p.metodo !== 'GET').map(p => p.metodo + ' ' + p.u).join(' | '));
@@ -499,6 +547,56 @@ grupo('en la app: los números salen de los mismos módulos');
   await w.BarStockMorningReport.montar(h3, () => '', () => {});
   await new Promise(r => setTimeout(r, 20));
   prueba('sin lista, sin botón y dice dónde se pone', !h3.querySelector('#mrLista') && /Settings › Emails/.test(h3.textContent), h3.textContent.slice(0, 200));
+
+  // El lunes: datos() reúne la semana con la MISMA toast-sales del Home.
+  {
+    const sum = (d, k) => new Date(new Date(d + 'T12:00:00Z').getTime() + k * 864e5).toISOString().slice(0, 10);
+    const dw = (d) => new Date(d + 'T12:00:00Z').getUTCDay();
+    const dias = [], ventas = [], porDia = {};
+    for (let k = 1; k <= 70; k++) {
+      const f = sum('2026-11-23', -k);
+      dias.push({ business_date: f, complete: true, closed: true });
+      if (dw(f) === 1) continue;                       // el lunes, cerrado
+      const extra = f >= '2026-11-16' ? 1.1 : 1;       // la semana pasada, 10 % más
+      ventas.push({ business_date: f, sales_category: 'Liquor', net: 100 * (dw(f) + 1) * extra, toast_item_name: 'Tito' });
+      porDia[f] = 2;
+    }
+    const mk = async (hoy) => {
+      const w2 = await app({ estado: 'listo', hoy, suficiente: true, filas: [] });
+      delete w2.BarStockToastSales;   // el de mentira de app(): aquí va el de verdad
+      w2.eval(leer('src/toast-sales.js'));
+      const TS = w2.BarStockToastSales;
+      const base = { productos: [{ producto: "Tito's", porDia }], ventas, dias, hoy };
+      TS.ahora = async () => Object.assign({ hoy: null, base }, TS.resumir(base));
+      return w2;
+    };
+    let w2 = await mk('2026-11-23');
+    const x = await w2.BarStockMorningReport.datos();
+    const S = x.semanal || {};
+    prueba('el lunes, datos() trae la semana pasada', S.lunes === '2026-11-16' && S.cargados === 7 && x.hoy === '2026-11-23', JSON.stringify(S).slice(0, 200));
+    prueba('su total y lo de una semana normal, de semanaCal', S.total && Math.round(S.total.dinero) === 2860 && Math.round(S.total.normalDinero) === 2600 && S.total.normalLicor > 0, JSON.stringify(S.total));
+    prueba('el mejor día y lo más vendido', S.mejor && S.mejor.fecha === '2026-11-21' && S.top[0] && S.top[0].nombre === "Tito's" && S.top[0].botellas === 12, JSON.stringify([S.mejor, S.top]));
+    prueba('el domingo, con su normal', S.domingo && S.domingo.fecha === '2026-11-22' && Math.round(S.domingo.dinero) === 110 && S.domingo.normalDinero === 100, JSON.stringify(S.domingo));
+    prueba('esta semana, día por día, con el lunes en cero', (S.plan || []).length === 7 && S.plan[0].dinero === 0 && S.plan[5].dinero === 700, JSON.stringify(S.plan));
+    w2 = await mk('2026-11-24');
+    prueba('un martes, no (es el correo de cada día)', !(await w2.BarStockMorningReport.datos()).semanal);
+    prueba('un martes con op.semanal, sí: la misma semana pasada', ((await w2.BarStockMorningReport.datos({ semanal: true })).semanal || {}).lunes === '2026-11-16');
+
+    // El botón de prueba: lo reúne con op.semanal y lo manda al reply-to.
+    const h4 = w2.document.createElement('div'); w2.document.body.appendChild(h4);
+    await w2.BarStockMorningReport.montar(h4, () => '', () => {});
+    await new Promise(r => setTimeout(r, 20));
+    const bs = h4.querySelector('#mrSemana');
+    prueba('Settings tiene el botón del resumen de la semana', !!bs && /Send last week's summary \(test\)/.test(bs.textContent), h4.innerHTML.slice(0, 300));
+    w2.__llamadas.length = 0;
+    bs.click();
+    await new Promise(r => setTimeout(r, 30));
+    const env3 = w2.__llamadas.find(z => z.a === 'send');
+    prueba('lo manda con la semana, al reply-to y sin direcciones', !!env3 && !!(env3.prm.datos && env3.prm.datos.semanal) && env3.prm.para === 'replyto' && !('to' in env3.prm), String(JSON.stringify(env3 && env3.prm)).slice(0, 200));
+    prueba('y dice a dónde', /Weekly summary sent to axel@crown\.test/.test(h4.textContent), h4.textContent.slice(0, 300));
+    const css = leer('styles/mobile-app.css');
+    prueba('sin el permiso de ajustes, el botón se esconde como los otros', /bs-sin-ajustes_locacion #mScreens \.m-mr :is\(#mrSend, #mrSemana, #mrListaCaja\)/.test(css));
+  }
 
   const ms = leer('src/mobile-settings.js');
   prueba('Settings › Toast lo ofrece', /id: 'morning'[^}]*n: 'Morning email'/.test(ms) && /_panel === 'morning'[\s\S]{0,120}BarStockMorningReport/.test(ms));

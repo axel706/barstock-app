@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261117-084242",
+    "items": [
+      "Monday's email is now last week's summary",
+      "Send last week's summary as a test (Morning email)"
+    ]
+  },
+  {
     "build": "20261117-083700",
     "items": [
       "No morning email after a day with no sales"
@@ -173,13 +180,6 @@
     "build": "20261115-102005",
     "items": [
       "Inventory: bigger cards, like Running out"
-    ]
-  },
-  {
-    "build": "20261115-100807",
-    "items": [
-      "To buy: Order the list in one go",
-      "Ordered items show until they arrive"
     ]
   }
 ]

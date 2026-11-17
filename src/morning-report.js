@@ -29,7 +29,42 @@
     return !!(m && (Number(m.suggested) || 0) > 0);
   };
 
-  async function datos() {
+  // ── El resumen de la semana (el correo del lunes) ──────────────────
+  //
+  // Axel, 2026-11-17, sobre lámina: el lunes no se abre, así que el
+  // correo del lunes es el resumen de la semana pasada (de lunes a
+  // domingo, con el domingo en su caja), lo que suele dar esta semana día
+  // por día, y lo que no llega al domingo. Los números son los de la
+  // tarjeta de Toast del Home: semanaCal (la semana y su "vs usual", la
+  // mediana de las semanas enteras anteriores), masVendido y la entrada
+  // de cada día (V.dia: lo de siempre de ese día de la semana). Nada se
+  // calcula aquí que no se calcule ya allí.
+  const SEM_FIJOS = ['dinero', 'licor', 'vino', 'botellas', 'botLicor', 'botVino',
+    'normalDinero', 'normalLicor', 'normalVino', 'normalBotellas', 'normalBotLicor', 'normalBotVino'];
+  function semanal(V, TS) {
+    const W = TS.semanaCal(V, 1);
+    if (!W) return null;
+    const total = {};
+    for (const k of SEM_FIJOS) total[k] = W.total[k];
+    const mejor = W.dias.reduce((m, x) => (!m || (x.dinero || 0) > (m.dinero || 0) ? x : m), null);
+    const top = (f) => TS.masVendido(V.base, f, 'botellas').slice(0, 3).map(x => ({ nombre: x.nombre, botellas: x.botellas }));
+    const dom = W.dias[6];
+    const W0 = TS.semanaCal(V, 0);
+    return {
+      lunes: W.lunes, cargados: W.dias.filter(x => x.cargado).length, total,
+      mejor: mejor && mejor.dinero > 0 ? { fecha: mejor.fecha, dinero: mejor.dinero } : null,
+      top: top(W.fechas),
+      domingo: { fecha: dom.fecha, cargado: dom.cargado, dinero: dom.dinero, normalDinero: dom.normalDinero, top: top(dom.fecha)[0] || null },
+      // Esta semana: lo de siempre de cada día (la mediana de ese día de
+      // la semana en lo cargado, ~13 semanas). Un día que siempre da cero
+      // es un día cerrado.
+      plan: W0 ? W0.dias.map(x => ({ fecha: x.fecha, dinero: x.normalDinero, botellas: x.normalBotellas })) : []
+    };
+  }
+
+  // op.semanal: el resumen de la semana aunque no sea lunes (el botón de
+  // prueba de Settings). Un lunes sale siempre: es el correo de ese día.
+  async function datos(op) {
     const TS = window.BarStockToastSales, R = window.BarStockRunOut;
     const out = { local: (window.BARSTOCK_CONFIG || {}).LOCATION_NAME || '', hoy: null, ayer: null,
       agotan: [], prevision: 'ok', detalle: '' };
@@ -37,7 +72,14 @@
     const v = TS && TS.ahora ? await TS.ahora().catch(() => null) : null;
     const sem = (v && v.semana) || [];
     const a = sem[sem.length - 1];
-    if (v && v.hoy) out.hoy = v.hoy;
+    // La FECHA de hoy es v.base.hoy: v.hoy es la entrada de hoy (la del
+    // Sync), no una fecha (toast-sales.js, semanaCal).
+    const hoyF = v && ((v.base && v.base.hoy) || (typeof v.hoy === 'string' ? v.hoy : null));
+    if (hoyF) out.hoy = hoyF;
+    const lunes = hoyF && new Date(hoyF + 'T12:00:00Z').getUTCDay() === 1;
+    if (v && TS.semanaCal && ((op && op.semanal) || lunes)) {
+      try { out.semanal = semanal(v, TS); } catch (e) { out.semanal = null; }
+    }
     if (a) {
       out.ayer = {};
       for (const k of ['fecha', 'cargado', 'dinero', 'licor', 'vino', 'normalDinero', 'normalLicor', 'normalVino',
@@ -73,6 +115,10 @@
     host.innerHTML = cab() +
       '<div class="m-mr">' +
         '<button type="button" class="m-set-save" id="mrSend" disabled>Send a test</button>' +
+        // El correo del lunes, para verlo sin esperar al lunes (Axel,
+        // 2026-11-17: "dame la opción de mandar un test del resumen de la
+        // semana pasada").
+        '<button type="button" class="m-set-save m-mr-semana" id="mrSemana">Send last week\'s summary (test)</button>' +
         '<div id="mrListaCaja"></div>' +
         '<div class="m-mr-estado" id="mrEstado">Building this morning\'s report…</div>' +
         // Sin scripts: el correo no lleva ninguno. allow-same-origin para
@@ -121,6 +167,31 @@
       // (2026-11-15). "Send to me" ya no era verdad: dice "a test".
       boton.onclick = () => mandar(boton, 'Send a test',
         { para: 'replyto', cuenta: (window.BARSTOCK_CONFIG || {}).ACCOUNT_ID || 'wjm-hospitality' }, ' Check that inbox.');
+    }
+
+    // El resumen de la semana, al reply-to con "[Test]": los números se
+    // reúnen con op.semanal (lo mismo que el lunes) y la vista pasa a
+    // enseñar ese correo, el que se acaba de mandar.
+    const bs = host.querySelector('#mrSemana');
+    if (bs) {
+      bs.onclick = async () => {
+        bs.disabled = true;
+        bs.textContent = 'Sending…';
+        let s;
+        try {
+          const ds = await datos({ semanal: true });
+          if (!ds.semanal) throw new Error('there is no full week of Toast sales to summarize yet');
+          const pv = await D().llamar('report', 'preview', { datos: ds });
+          if (pv && pv.ok && marco) marco.setAttribute('srcdoc', '<base target="_blank">' + pv.html);
+          s = await D().llamar('report', 'send', { datos: ds, para: 'replyto',
+            cuenta: (window.BARSTOCK_CONFIG || {}).ACCOUNT_ID || 'wjm-hospitality' });
+        } catch (e) { s = { ok: false, error: (e && e.message) || String(e) }; }
+        bs.disabled = false;
+        bs.textContent = 'Send last week\'s summary (test)';
+        const t = s && s.ok ? 'Weekly summary sent to ' + s.to + '. Check that inbox.' : 'Could not send: ' + ((s && s.error) || 'no answer');
+        decir(t);
+        if (window.BarStockToast) window.BarStockToast.show(t);
+      };
     }
 
     // ── A la lista de la locación (Settings › Emails) ──────────────────

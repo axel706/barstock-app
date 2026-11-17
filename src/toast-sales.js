@@ -179,21 +179,29 @@
     const dias = diasDe(V, lunes);
     const parcial = dias.some(x => x.futuro || x.esHoy);
     // Lo normal: las semanas anteriores con sus siete días cargados.
-    const prev = { dinero: [], botellas: [] };
+    // También licor y vino, en dinero y en botellas: el correo semanal
+    // del lunes enseña las seis cifras con su flecha, como el diario.
+    const NORM = ['dinero', 'botellas', 'licor', 'vino', 'botLicor', 'botVino'];
+    const prev = {};
+    for (const c of NORM) prev[c] = [];
     for (let j = 1; j <= 13; j++) {
       const l = sumarDias(lunes, -7 * j);
       if (V.desde && sumarDias(l, 6) < V.desde) break;
       const ds = diasDe(V, l);
       if (!ds.every(x => x.cargado && !x.futuro && !x.esHoy)) continue;
       const t = sumar(ds);
-      prev.dinero.push(t.dinero); prev.botellas.push(t.botellas);
+      for (const c of NORM) prev[c].push(t[c]);
     }
     const norm = (xs) => xs.length >= MIN_MUESTRAS ? mediana(xs) : null;
     const total = Object.assign(sumar(dias), {
       semana: true, fecha: lunes, dia: etiquetaSemana(lunes),
       cargado: dias.some(x => x.cargado), parcial,
       normalDinero: parcial ? null : norm(prev.dinero),
-      normalBotellas: parcial ? null : norm(prev.botellas)
+      normalBotellas: parcial ? null : norm(prev.botellas),
+      normalLicor: parcial ? null : norm(prev.licor),
+      normalVino: parcial ? null : norm(prev.vino),
+      normalBotLicor: parcial ? null : norm(prev.botLicor),
+      normalBotVino: parcial ? null : norm(prev.botVino)
     });
     return { lunes, etiqueta: etiquetaSemana(lunes), dias, total, fechas: dias.filter(x => !x.futuro).map(x => x.fecha) };
   }
