@@ -233,6 +233,48 @@ grupo('el lunes: el resumen de la semana (Axel, 2026-11-17, sobre lámina)');
   prueba('los nombres, escapados', !/<script>x/.test(raro));
 }
 
+grupo('el lunes: Live vs count, con lo que podría ser (Axel, 2026-11-17)');
+{
+  // "Que no sólo ponga el dato sino que sugiera qué estuvo mal, qué
+  // artículos, si es receta, si tuvo más o menos de lo esperado." Las
+  // frases dicen sólo lo que los datos dicen, y siempre "could be".
+  const CONTEO = { hay: true, fin: '2026-11-22', provisional: false, total: 5, mas: 0, corto: 112, sobra: 118,
+    lista: [
+      { item: "Tito's Handmade Vodka", esperado: 8.5, contado: 6, dif: -2.5, vendido: 18, parte: 14, dinero: -54, proveedor: 'LOOP', causa: 'receta', semanas: 3, desvio: 14 },
+      { item: 'Aperol Aperitivo', esperado: 1, contado: 7, dif: 6, vendido: 4, parte: 150, dinero: 118, proveedor: 'Southern', causa: 'caja', caja: 6 },
+      { item: 'Casamigos Blanco', esperado: 3.1, contado: 2, dif: -1.1, vendido: 2.2, parte: 50, dinero: -58, proveedor: '', causa: 'pronto' },
+      { item: 'Jameson', esperado: 4, contado: 6.5, dif: 2.5, vendido: 6, parte: 42, dinero: 60, proveedor: '', causa: 'conteo', antes: -2.4 },
+      { item: 'Hendricks', esperado: 5, contado: 3, dif: -2, vendido: 4, parte: 50, dinero: -70, proveedor: '', causa: 'merma', cuadro: 3 },
+      { item: 'Aperol Spritz base', esperado: 2, contado: 4, dif: 2, vendido: 6, parte: 33, dinero: 20, proveedor: '', causa: 'receta', semanas: 2, desvio: 30 }],
+    sinConvertir: [{ nombre: 'Espresso Martini', unidades: 14 }] };
+  const base = { local: 'The Crown Tavern', hoy: '2026-11-23', agotan: [],
+    semanal: { lunes: '2026-11-16', cargados: 7, total: { dinero: 24310, normalDinero: 22509 }, top: [], plan: [], conteo: CONTEO } };
+  const t = texto(M.armar(base).html).replace(/ ([,.:])/g, '$1');
+  prueba('arriba lo anuncia', /what Sunday's count found, and what to plan for this week/.test(t), t.slice(0, 400));
+  prueba('su rótulo', /Live vs count · what Sunday's count found/.test(t));
+  prueba('el resumen: cuántos, faltante y sobrante', /Six products came out far from what the app expected: \$112 short and \$118 over\. Here's what each could be\./.test(t), t);
+  prueba('cada uno dice si tuvo más o menos', (t.match(/Less than expected/g) || []).length === 3 && (t.match(/More than expected/g) || []).length === 3);
+  prueba('la línea de números', /Expected ≈8\.5, counted 6 · 2\.5 bottles short \(−\$54\) · about 14% of the 18 it sold/.test(t), t);
+  prueba('receta, tres semanas: very likely, con cuánto se usa de más', /very likely a recipe or pour\. It's been short by a similar share of what it sold 3 weeks in a row: the bottles really used were about 14% more than the recipes and pours say\./.test(t), t);
+  prueba('receta, dos semanas: aún no "very likely", y lo dice', /could be: a recipe or pour\. It's been over by a similar share of what it sold 2 weeks in a row: the bottles really used were about 30% less than the recipes and pours say\./.test(t) && /If next Sunday is the same, it's very likely the recipe/.test(t), t);
+  prueba('una caja justa: sin factura, y de qué proveedor', /exactly 6 more \(\+\$118\)/.test(t) && /a case that arrived without an order or invoice\. 6 is exactly one case\./.test(t) && /Check if Southern dropped off Aperol Aperitivo/.test(t), t);
+  prueba('una semana sola: demasiado pronto, y qué dirá el domingo', /could be: too early to tell/.test(t) && /We'll know next Sunday: a recipe repeats by a similar share, a counting slip comes back the other way, and a loss doesn't\./.test(t));
+  prueba('deshace la semana anterior: error al contar', /a counting slip\. Last week it came out 2\.4 short, and this week about the same the other way/.test(t), t);
+  prueba('cuadraba y de pronto falta: merma, con su dinero', /a bottle that went missing, or one that wasn't counted\. It came out close to what the app expected the 3 weeks before/.test(t) && /that's \$70 gone/.test(t), t);
+  prueba('siempre "could be", nunca "it is"', (t.match(/What it could be:/g) || []).length === 6);
+  prueba('lo vendido sin receta, del ciclo y sin colgárselo a un producto', /Toast also sold drinks with no recipe yet: Espresso Martini \(14\)\. The bottles in them weren't subtracted, so anything that goes into them can look short/.test(t), t);
+
+  const sin = (c) => texto(M.armar(Object.assign({}, base, { semanal: Object.assign({}, base.semanal, { conteo: c }) })).html).replace(/ ([,.:])/g, '$1');
+  prueba('sin conteo cerrado la semana pasada: lo dice', /No count was closed last week, so there's nothing to compare yet\./.test(sin({ hay: false })));
+  prueba('todo cerca: lo dice', /Everything Toast sells came out close to what the app expected\./.test(sin(Object.assign({}, CONTEO, { lista: [], total: 0, corto: 0, sobra: 0, sinConvertir: [] }))));
+  prueba('un error: lo que pasó, sin adivinar', /Couldn't read what the count found: HTTP 500: boom/.test(sin({ error: 'HTTP 500: boom' })) && !/migration/.test(sin({ error: 'HTTP 500: boom' })));
+  prueba('provisional: lo avisa', /may not have been complete/.test(sin(Object.assign({}, CONTEO, { provisional: true }))));
+  prueba('más de seis: cuántos quedan', /And 3 smaller ones\./.test(sin(Object.assign({}, CONTEO, { mas: 3, total: 9 }))));
+  prueba('los nombres, escapados', !/<b>x/.test(M.armar(Object.assign({}, base, { semanal: Object.assign({}, base.semanal,
+    { conteo: Object.assign({}, CONTEO, { lista: [Object.assign({}, CONTEO.lista[0], { item: '<b>x' })] }) }) })).html));
+  prueba('una causa que no existe no entra', !/undefined/.test(sin(Object.assign({}, CONTEO, { lista: [Object.assign({}, CONTEO.lista[0], { causa: 'otra' })] }))));
+}
+
 grupo('lo de fuera, escapado');
 {
   const { html } = M.armar(Object.assign({}, BASE, { local: 'Crown <b>', agotan: [{ producto: '<img src=x onerror=alert(1)>', queda: 1, agota: '2026-11-12', vende: 3, llega: 0, pedir: 2 }] }));

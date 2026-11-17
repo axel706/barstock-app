@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 155 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 156 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -395,7 +395,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 155 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 156 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -701,8 +701,19 @@ que miente.
    día por día (lo de siempre de cada día; cero es "closed") y lo que no
    llega al domingo. `datos()` lo reúne el lunes, o con `{ semanal: true }`
    desde *Send last week's summary (test)* (al reply-to, con "[Test]").
-   Lo escribe `armarSemana` de `lib/morning-report.js`. "Live vs count"
-   (lo que encontró el conteo) va dentro cuando se construya. La lista de *Morning email recipients* todavía no se usa
+   Lo escribe `armarSemana` de `lib/morning-report.js`.
+   **Live vs count** va dentro (2026-11-17, "que sugiera qué estuvo
+   mal"): del último ciclo de `live_expected` cerrado desde el lunes de
+   la semana pasada, lo que se alejó (la regla de Finish count, que vive
+   en `src/live-diagnostico.js` y `live-expected.js` usa) con "Less/More
+   than expected" y "What it could be", por la tabla de
+   `docs/plan-esperado.md`: caja justa (6/12) sin factura, una semana que
+   deshace la anterior (error al contar), la misma parte de lo vendido
+   2+ semanas (receta o pour, con cuánto más o menos se usa; "very
+   likely" desde 3), cuadraba 3 semanas y falta (merma); si no, "too
+   early to tell". El ciclo no guarda de qué tragos salió cada botella:
+   no se dice "va en cócteles". Lo vendido sin receta se dice del ciclo,
+   sin colgárselo a un producto. Prueba: `test-live-diagnostico`. La lista de *Morning email recipients* todavía no se usa
    en el automático: es para cuando él lo diga. `lib/morning-cron.js`
    corre en el servidor **los mismos archivos de `src/`** (vm, con un
    `window` de mentira) y llama a `BarStockMorningReport.datos()`: un

@@ -195,11 +195,12 @@
     };
   }
 
-  // Qué sale en la lista. Más de UMBRAL botellas Y más de PARTE de lo
-  // vendido en la semana: medio litro de algo que vende 40 no es nada, y
-  // en algo que vende 2 es mucho. Lo que Toast no vende no sale: sin
-  // ventas que restar, todo lo usado parecería faltar.
-  const UMBRAL = 1, PARTE = 0.25;
+  // Qué sale en la lista: la regla vive en live-diagnostico.js (más de
+  // UMBRAL botellas Y más de PARTE de lo vendido), la misma que el correo
+  // del lunes; aquí se usa, no se copia. Lo que Toast no vende no sale:
+  // sin ventas que restar, todo lo usado parecería faltar.
+  const DG = window.BarStockLiveDiag;
+  const UMBRAL = DG.UMBRAL, PARTE = DG.PARTE;
   // contado(item) → lo contado, o null si no se contó.
   // La verificación de media semana de una fila del LIVE, para enseñarla
   // (Axel, 2026-11-15, fase 5): cuántas, cuándo, qué decía la app y
@@ -238,7 +239,7 @@
       const esperado = Number(f.live) || 0;
       const dif = r2(Number(c) - esperado);
       const vendido = Number(f.vendido) || 0;
-      if (!(Math.abs(dif) > UMBRAL && Math.abs(dif) > PARTE * vendido)) continue;
+      if (!DG.seAleja(dif, vendido)) continue;
       const precio = P.precio[f.producto] > 0 ? P.precio[f.producto] : 0;
       lista.push({ item: f.producto, contado: r2(Number(c)), esperado: r2(esperado), dif, vendido,
         dinero: precio ? r2(dif * precio) : null, verificado: verifDe(f) });

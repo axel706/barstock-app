@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261117-085225",
+    "items": [
+      "Monday's email says what Sunday's count found and why"
+    ]
+  },
+  {
     "build": "20261117-084242",
     "items": [
       "Monday's email is now last week's summary",
@@ -174,12 +180,6 @@
     "build": "20261115-102920",
     "items": [
       "Running out: same background as the rest of the app"
-    ]
-  },
-  {
-    "build": "20261115-102005",
-    "items": [
-      "Inventory: bigger cards, like Running out"
     ]
   }
 ]

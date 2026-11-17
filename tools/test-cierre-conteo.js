@@ -382,6 +382,7 @@ grupo('lo que se aleja del LIVE, antes y después de cerrar');
     const { w, b } = await abrir({ contados: 6, desdeCero: false });
     w.state.master.forEach(r => { r.value = 10; });
     global.state = w.state;
+    new Function(fs.readFileSync(path.join(RAIZ, 'src/live-diagnostico.js'), 'utf8'))();
     new Function(fs.readFileSync(path.join(RAIZ, 'src/live-expected.js'), 'utf8'))();
     // Lo que esperaba el LIVE: el conteo pone 1 a cada contado.
     const filas = o.sinToast ? [{ producto: 'Item 0', live: 5, vendido: 0 }] : [

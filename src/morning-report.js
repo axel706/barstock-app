@@ -79,6 +79,14 @@
     const lunes = hoyF && new Date(hoyF + 'T12:00:00Z').getUTCDay() === 1;
     if (v && TS.semanaCal && ((op && op.semanal) || lunes)) {
       try { out.semanal = semanal(v, TS); } catch (e) { out.semanal = null; }
+      // Live vs count: lo que encontró el último conteo de la semana
+      // pasada, con lo que podría ser (live-diagnostico.js). Un fallo
+      // aquí no tumba el resumen: se dice lo que pasó.
+      const DG = window.BarStockLiveDiag;
+      if (out.semanal && DG && DG.semana) {
+        try { out.semanal.conteo = await DG.semana(out.semanal.lunes); }
+        catch (e) { out.semanal.conteo = { error: String((e && e.message) || e) }; }
+      }
     }
     if (a) {
       out.ayer = {};

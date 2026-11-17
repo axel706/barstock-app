@@ -80,6 +80,7 @@ function entorno(o) {
     }
     return { ok: false, status: 404, text: async () => 'no route', json: async () => ({}) };
   };
+  w.eval(leer('src/live-diagnostico.js'));
   if (fs.existsSync(path.join(RAIZ, 'src/live-expected.js'))) w.eval(leer('src/live-expected.js'));
   return w;
 }

@@ -42,6 +42,8 @@ const ARCHIVOS = [
   'src/live-stock.js', 'src/order-receipts.js', 'src/run-out.js', 'src/live-cache.js',
   // El esperado: guarda el LIVE junto a lo contado, en sus propias tablas.
   'src/live-expected.js',
+  // Live vs count, para el correo del lunes: sólo lee lo guardado.
+  'src/live-diagnostico.js',
   // La verificación: escribe sólo en stock_checks, nunca en on_hand.
   'src/stock-checks.js',
   // La lista de compras y su pantalla: sólo shopping_list y stock_checks.
