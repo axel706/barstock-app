@@ -1040,51 +1040,10 @@
     }
   }
 
-
-  // ── La versión nueva ─────────────────────────────────────────────
-  //
-  // Antes era un aviso arriba que se recogía solo a los 8 segundos y se
-  // perdía fácil (Axel, 2026-11-09). Ahora es una tarjeta del carrusel:
-  // sale sólo si hay una versión para actualizar (version-check.js) y se
-  // va al pulsar UPDATE, aunque la app se cierre y se abra entre medias
-  // y ya haya cargado la nueva (Axel, 2026-11-09: la ilusión de que es
-  // quien la usa el que actualiza).
-  // La campana ya no la lleva: la tarjeta basta.
-  //
-  // Diseño que eligió (la C, "como en la App Store" con el brillo del
-  // ícono): el ícono de la app, "BarStock Pro", el build en una
-  // píldora, UPDATE, y lo que trae con palomitas. Lo que trae se pide
-  // aparte (changelog.json sin caché) y repinta al llegar; mientras, una
-  // línea honesta en vez de una lista vacía.
-  let _notasVer = null;          // { de: build, lista: [] }
-  let _pidiendoVer = null;
-  function cargarNotasVersion(nueva) {
-    if ((_notasVer && _notasVer.de === nueva) || _pidiendoVer === nueva) return;
-    const C = window.BarStockVersionCenter, V = window.BarStockVersion;
-    if (!C || !C.notasDe) return;
-    _pidiendoVer = nueva;
-    // Desde la última vista, no desde la cargada: si la app ya cargó la
-    // nueva al abrir, la cargada ES la nueva y no saldría nada.
-    const desde = (C.visto && C.visto()) || (V && V.actual ? V.actual() : null);
-    Promise.resolve(C.notasDe(nueva, desde))
-      .then(l => { _notasVer = { de: nueva, lista: Array.isArray(l) ? l : [] }; refresh(); })
-      .catch(() => {})
-      .then(() => { _pidiendoVer = null; });
-  }
-  function tarjetaVersion() {
-    const V = window.BarStockVersion;
-    // pendiente(), no nueva(): también la que ya se cargó al abrir sin
-    // pulsar UPDATE (version-check.js). La tarjeta se va al pulsarlo.
-    const nueva = V ? (V.pendiente ? V.pendiente() : (V.nueva ? V.nueva() : null)) : null;
-    if (!nueva) return null;
-    cargarNotasVersion(nueva);
-    return {
-      tipo: 'version', tono: 'app', nueva,
-      notas: (_notasVer && _notasVer.de === nueva) ? _notasVer.lista : null,
-      go: () => { if (V && V._recargar) V._recargar(); }
-    };
-  }
-
+  // La tarjeta de versión nueva salió del carrusel (Axel, 2026-11-17:
+  // "eliminemos la tarjeta de update del carrusel, sólo conservemos los
+  // datos de la versión y todo como está en More"). Actualizar vive en
+  // More (version-center.js, "Update now").
   function tarjetas() {
     // ── La carga va AQUÍ, no dentro de una tarjeta ──────────────────
     //
@@ -1281,12 +1240,6 @@
     const iFoco = t.findIndex(c => c && c.foco);
     if (iFoco > 0) t.unshift(t.splice(iFoco, 1)[0]);
 
-    // La versión nueva, primera SIEMPRE (Axel, 2026-11-13: "tarjeta de
-    // update primero siempre"), también delante de un conteo a medias.
-    // Antes iba detrás de él.
-    const ver = tarjetaVersion();
-    if (ver) t.unshift(ver);
-
     // Ya no hay tarjeta de "All clear": la del ciclo está siempre, y
     // cuando no hay nada pendiente ella misma es el "todo en orden"
     // —dice desde cuándo está abierto y cuántos artículos se contaron—.
@@ -1296,33 +1249,7 @@
     return t;
   }
 
-  // La de la versión tiene otra forma (ícono, píldora, palomitas) y no
-  // pasa por la plantilla común. El botón lleva data-go como las demás,
-  // así que se engancha por el mismo sitio.
-  function pintarVersion(c, i) {
-    const n = c.notas;
-    let lista;
-    if (!n || !n.length) lista = ['The latest fixes and features'];
-    else if (n.length > 3) lista = n.slice(0, 2).concat('+ ' + (n.length - 2) + ' more');
-    else lista = n;
-    const chk = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
-    return `
-      <article class="m-hero m-hero-app" data-hero="${i}">
-        <div class="m-app-halo" aria-hidden="true"></div>
-        <div class="m-app-top">
-          <img class="m-app-ico" src="assets/icons/icon-192.png" alt="">
-          <!-- "BarStock Pro", sin fecha y con el build en una píldora:
-               así lo pidió Axel al ver la primera de verdad. -->
-          <div class="m-app-nm"><b>BarStock Pro</b><span class="m-app-build">BUILD-${esc(c.nueva)}</span></div>
-          <button type="button" class="m-app-up" data-go="${i}">UPDATE</button>
-        </div>
-        <ul class="m-app-l">${lista.map(t =>
-          `<li>${/^\+ \d+ more$/.test(t) ? '' : chk}<span>${esc(t)}</span></li>`).join('')}</ul>
-      </article>`;
-  }
-
   function pintarTarjeta(c, i) {
-    if (c && c.tipo === 'version') return pintarVersion(c, i);
     return `
       <article class="m-hero m-hero-${c.tono}" data-hero="${i}"${c.ciclo ? ' data-kind="cycle"' : ''}>
         <!-- Arriba el texto y la cifra, en dos columnas. Abajo, una

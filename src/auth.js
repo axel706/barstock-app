@@ -59,8 +59,8 @@
     if (overlay) overlay.classList.add('auth-ok');
     levantarCortina();
     // Con la app a la vista: la primera vez en un teléfono apunta la
-    // versión. What's new ya no sale aquí; lo saca el UPDATE de la
-    // tarjeta del Home (version-center.js, alEntrar).
+    // versión. What's new ya no sale aquí; lo saca "Update now" de More
+    // (version-center.js, alEntrar).
     try { if (window.BarStockVersionCenter && window.BarStockVersionCenter.alEntrar) window.BarStockVersionCenter.alEntrar(); } catch (e) {}
   }
 

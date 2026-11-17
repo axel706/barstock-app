@@ -72,8 +72,8 @@ grupo('compara el sello cargado contra el del servidor');
 grupo('hay version nueva: la tarjeta del Home, no el aviso de arriba');
 {
   // Axel, 2026-11-09: el aviso de 8 segundos de arriba se perdía fácil.
-  // Ahora es una tarjeta en el carrusel del Home que se queda hasta que
-  // actualizas (mobile-home.js).
+  // Fue una tarjeta en el carrusel del Home; desde el 2026-11-17 la
+  // versión vive sólo en More (version-center.js, "Update now").
   const { w, V } = entorno({ remoto: '20261106-120000' });
   if (V) {
     let repintados = 0;
@@ -84,7 +84,8 @@ grupo('hay version nueva: la tarjeta del Home, no el aviso de arriba');
       ((w.__pedidos[0] || {}).op || {}).cache === 'no-store', u);
     prueba('sabe que hay una nueva', V.nueva() === '20261106-120000', V.nueva());
     prueba('ya no salta el aviso de arriba', !w.document.getElementById('mVer'));
-    prueba('repinta el Home para que salga la tarjeta', repintados >= 1, String(repintados));
+    // 2026-11-17: la tarjeta salió del carrusel; la versión vive en More.
+    prueba('ya no toca el Home (no hay tarjeta que sacar)', repintados === 0, String(repintados));
     // Axel, 2026-11-09: la tarjeta basta; la campana ya no lleva la
     // versión nueva (ni su entrada ni el punto azul).
     prueba('la campana ya no lleva la versión nueva', !(V.aviso && V.aviso()));

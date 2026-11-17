@@ -584,9 +584,10 @@ compararlo con el conteo mezclaba las dos cosas.
 que se cierra un conteo (`resetAt` en o después de ese corte), el ciclo
 primero; cerrado, las órdenes; colocadas (o si no salió ninguna), Running
 out el resto de la semana; sin nada que se acabe, el ciclo. Un conteo
-hecho el lunes cuenta igual. Un conteo a medias va delante de eso, y la
-tarjeta de update va **primera siempre**, también delante del conteo.
-Prueba: `test-home-orden`.
+hecho el lunes cuenta igual. Un conteo a medias va delante de eso. La
+tarjeta de update ya no está en el carrusel (Axel, 2026-11-17): la
+versión y "Update now" viven sólo en More (`version-center.js`).
+Prueba: `test-home-orden` y `test-tarjeta-version`.
 
 **La tarjeta de Toast va por semanas de lunes a domingo** (Axel,
 2026-11-14, opción B): las siete barras son una

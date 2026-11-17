@@ -69,9 +69,8 @@
   function tarjeta() {
     const v = V();
     const cargada = v ? v.actual() : null;
-    // La pendiente, como la tarjeta del Home: si la app ya cargó una
-    // nueva al abrir pero no se pulsó UPDATE, aquí tampoco dice "Up to
-    // date". La tuya es entonces la última que viste.
+    // La pendiente (version-check.js): si la app ya cargó una nueva al
+    // abrir pero no se pulsó UPDATE, no dice "Up to date". La tuya es entonces la última que viste.
     const nueva = v ? (v.pendiente ? v.pendiente() : v.nueva()) : null;
     const hayNueva = !!nueva;
     const mia = hayNueva && nueva === cargada ? (visto() || cargada) : cargada;
@@ -262,7 +261,7 @@
   // ── La última versión que viste ────────────────────────────────────
   //
   // Se apunta en el teléfono al terminar la animación de UPDATE. Mientras
-  // la cargada sea más nueva que ésta, la tarjeta del Home sigue
+  // la cargada sea más nueva que ésta, la tarjeta de More sigue
   // ofreciendo actualizar, y What's new junta lo de todas las que se
   // saltaron desde aquí.
   const VISTO = 'barstock.buildVisto';
@@ -270,11 +269,9 @@
   function marcarVisto(build) {
     if (!SELLO.test(String(build || ''))) return;
     try { localStorage.setItem(VISTO, build); } catch (e) {}
-    // La tarjeta del Home y la de More dependen de esto (pendiente(), en
-    // version-check.js): al apuntarla, que se vayan ya, no al siguiente
+    // La tarjeta de More depende de esto (pendiente(), en
+    // version-check.js): al apuntarla, que cambie ya, no al siguiente
     // repintado.
-    const H = window.BarStockMobileHome;
-    if (H && H.refresh) { try { H.refresh(); } catch (e) {} }
     try { pintar(); } catch (e) {}
   }
 
@@ -285,11 +282,11 @@
   //
   // Antes, con una versión nueva cargada al abrir en frío, sacaba aquí
   // What's new y la apuntaba como vista. Axel (2026-11-09) la quiere
-  // como si la actualización la hiciera quien usa la app: la tarjeta del
-  // Home se queda hasta pulsar UPDATE, y la hoja la saca la animación de
-  // ese UPDATE (update-anim.js), que es la que apunta la versión. Si se
-  // apuntara aquí, la tarjeta se iría sola al volver a abrir, que es
-  // justo lo que vio.
+  // como si la actualización la hiciera quien usa la app: la versión
+  // sigue pendiente en More hasta pulsar "Update now", y la hoja la saca
+  // la animación de ese UPDATE (update-anim.js), que es la que apunta la
+  // versión. Si se apuntara aquí, se daría por actualizada sola al
+  // volver a abrir.
   async function alEntrar() {
     if (window.__bsUpd) return;
     const actual = V() && V().actual ? V().actual() : null;

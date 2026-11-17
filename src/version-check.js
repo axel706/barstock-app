@@ -14,14 +14,14 @@
   // se sube a mano en cada commit que cambia la app (tools/test-sello.js
   // lo vigila), así que no hace falta llevar la cuenta de nada más.
   //
-  // Si son distintos, sale una tarjeta en el carrusel del Home
-  // (mobile-home.js, tarjetaVersion) que se queda hasta actualizar. Y
-  // también si la app ya cargó una nueva al abrir pero no se pulsó
-  // UPDATE: ver pendiente(), más abajo. Antes
-  // era un aviso que saltaba arriba y se recogía solo a los 8 segundos,
-  // más una entrada en la campana con su punto azul; Axel quitó los dos
-  // (2026-11-09): la tarjeta basta. La recarga la decide quien está
-  // usando la app: nunca a mitad de un conteo sin que lo pida.
+  // Si son distintos, la tarjeta de versión de More lo dice, con "Update
+  // now" (version-center.js), hasta actualizar. Y también si la app ya
+  // cargó una nueva al abrir pero no se pulsó UPDATE: ver pendiente(),
+  // más abajo. Fue un aviso arriba que se recogía a los 8 s, y luego una
+  // tarjeta en el carrusel del Home, que Axel quitó el 2026-11-17 ("sólo
+  // conservemos los datos de la versión y todo como está en More"). La
+  // recarga la decide quien está usando la app: nunca a mitad de un
+  // conteo sin que lo pida.
 
   const MINIMO_MS = 60 * 1000;      // como mucho una pregunta por minuto
   const ARRANQUE_MS = 5000;         // la primera, cuando la app ya pintó
@@ -84,16 +84,13 @@
     // "Up to date" con una versión nueva ya sabida.
     const C = window.BarStockVersionCenter;
     if (C && C.pintar) { try { C.pintar(); } catch (e) {} }
-    // Y el Home, para que salga (o se quede) la tarjeta de la versión.
-    const H = window.BarStockMobileHome;
-    if (H && H.refresh) { try { H.refresh(); } catch (e) {} }
   }
 
   // ── La que queda por "instalar" ────────────────────────────────────
   //
   // Al abrir en frío la app ya carga la versión más nueva, quiera o no
-  // quien la usa. Axel (2026-11-09): aun así, la tarjeta del Home se
-  // queda hasta que se pulse UPDATE, aunque se cierre y se abra la app,
+  // quien la usa. Axel (2026-11-09): aun así, la versión sigue pendiente
+  // en More hasta que se pulse UPDATE, aunque se cierre y se abra la app,
   // y la animación y What's new salen al pulsarlo. Da la ilusión de que
   // es quien la usa el que actualiza, y por eso se juntan las notas de
   // todas las versiones que se saltó.

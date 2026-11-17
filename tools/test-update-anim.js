@@ -413,10 +413,9 @@ grupo('17 · al abrir en frío: la hoja no sale sola, espera al UPDATE');
   await esperar(300);
   prueba('la saca la animación al terminar', !!w.document.getElementById('mSheet'));
   prueba('y apunta la versión', w.localStorage.getItem('barstock.buildVisto') === BUILD);
-  // El Home se pintó debajo de la animación con la tarjeta todavía
-  // puesta (la versión aún no estaba vista): al apuntarla se repinta, o
-  // la tarjeta seguiría ahí después de actualizar.
-  prueba('y repinta el Home, para que la tarjeta se vaya', repintos > 0, String(repintos));
+  // 2026-11-17: el Home ya no lleva tarjeta de versión, así que apuntarla
+  // no tiene por qué repintarlo.
+  prueba('y ya no repinta el Home (no lleva tarjeta de versión)', repintos === 0, String(repintos));
 }
 {
   const auth = leer('src/auth.js');

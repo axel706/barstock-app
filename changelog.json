@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261117-162059",
+    "items": [
+      "No more update card on Home: updates live in More"
+    ]
+  },
+  {
     "build": "20261117-153259",
     "items": [
       "People shows each person’s last sign-in",
@@ -177,12 +183,6 @@
     "build": "20261115-113600",
     "items": [
       "Edit order: Done sits right on top of the tabs"
-    ]
-  },
-  {
-    "build": "20261115-110727",
-    "items": [
-      "Edit order: Done sits above the tabs, in glass"
     ]
   }
 ]

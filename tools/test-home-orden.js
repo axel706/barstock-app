@@ -119,11 +119,14 @@ grupo('en el Home');
 }
 {
   const t = home({ ahora: T('2026-11-16T15:00:00Z'), resetAt: '2026-11-16T00:30:00Z', ordenes: true, nueva: '20261116-100000' });
-  prueba('la de update, delante de todo', t[0].classList.contains('m-hero-app'));
+  // Axel, 2026-11-17: la tarjeta de update sale del carrusel; la versión
+  // vive en More. Con una nueva, el orden es el de siempre.
+  prueba('con una versión nueva, no hay tarjeta de update y el orden no cambia', !t.some(x => x.classList.contains('m-hero-app')) &&
+    /order/i.test(t[0].textContent), t.map(x => x.className).join(' | '));
 }
 {
   const t = home({ ahora: T('2026-11-16T15:00:00Z'), resetAt: '2026-11-16T00:30:00Z', ordenes: true, contando: true, nueva: '20261116-100000' });
-  prueba('también delante de un conteo a medias, que va segundo', t[0].classList.contains('m-hero-app') && /Count/.test(t[1].textContent),
+  prueba('con un conteo a medias, el conteo primero', /Count/.test(t[0].textContent) && !t.some(x => x.classList.contains('m-hero-app')),
     t.map(x => x.className).join(' | '));
 }
 {
