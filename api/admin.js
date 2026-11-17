@@ -431,6 +431,36 @@ module.exports = async function handler(req, res) {
       })));
       if (error) throw error;
     }
+    // ── El código por correo (Axel, 2026-11-17, sobre lámina) ──────────
+    //
+    // Quien crea a alguien con "They set it" puede darle un correo: la
+    // app le manda su código (lib/alta-email.js) en vez de copiarlo a
+    // mano. El código sólo existe al crearlo (se guarda su huella), así
+    // que el correo sale aquí o con un código nuevo, nunca después. El
+    // correo queda en app_metadata.contacto, sólo para reenviar códigos.
+    // Si el envío falla, la persona se crea igual y se dice lo que pasó:
+    // el código sigue en la pantalla para dárselo en persona.
+    const CORREO = /^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/;
+    async function mandarAlta(dest, nombre, code, expira, rolKey, roles, locationIds) {
+      if (!String(process.env.RESEND_API_KEY || '').trim()) return { envioError: 'RESEND_API_KEY is not set in this deployment.' };
+      try {
+        const rol = (listaRoles(roles).find(r => r.key === rolKey) || {}).name || rolKey;
+        let locs = [];
+        if (locationIds && locationIds.length) {
+          const { data } = await supabase.from('locations').select('id, name').in('id', locationIds);
+          locs = locationIds.map(id => ((data || []).find(l => l.id === id) || {}).name).filter(Boolean);
+        }
+        const quien = String((yo.user_metadata || {}).first_name || '').trim();
+        const { asunto, html } = require('../lib/alta-email').armar({ nombre, quien, rol, locaciones: locs, code, expira });
+        const { Resend } = require('resend');
+        const r = await new Resend(process.env.RESEND_API_KEY).emails.send({
+          from: 'BarStock <reports@barstockpro.com>', to: [dest], subject: asunto, html });
+        if (r && r.error) return { envioError: r.error.message || 'it did not send' };
+        return { enviado: dest };
+      } catch (e) {
+        return { envioError: String((e && e.message) || e) };
+      }
+    }
     async function leerRoles() {
       const { data, error } = await supabase.from('roles').select('key, name, perms').eq('account_id', ACCOUNT_ID);
       if (error) throw error;
@@ -473,7 +503,8 @@ module.exports = async function handler(req, res) {
         pausado: bloqueado ? { at: (m.pausa && m.pausa.at) || null, by: (m.pausa && m.pausa.by) || '' } : null,
         // Esperando a que ponga su PIN: hasta cuándo vale el código, y si
         // ya no sirve (caducado o con 5 intentos malos). Nunca el código.
-        pendiente: m.alta ? { expira: m.alta.exp, vencido: !!m.alta.anulado || !(new Date(m.alta.exp).getTime() > Date.now()) } : null
+        pendiente: m.alta ? { expira: m.alta.exp, vencido: !!m.alta.anulado || !(new Date(m.alta.exp).getTime() > Date.now()) } : null,
+        contacto: m.contacto || null
       });
     }
 
@@ -530,6 +561,8 @@ module.exports = async function handler(req, res) {
     if (accion === 'createPerson') {
       const { name, pin, locationIds } = req.body || {};
       const rolKey = soloBartenders ? BID.ROL : String((req.body || {}).role || '');
+      const contacto = String((req.body || {}).email || '').trim();
+      if (contacto && !CORREO.test(contacto)) return res.status(400).json({ ok: false, error: 'That email doesn’t look right. Check it and try again.' });
       const nombre = String(name || '').trim();
       if (!BID.nombreValido(nombre)) return res.status(400).json({ ok: false, error: 'Enter a name.' });
       // Sin PIN: la persona pone el suyo con un código (alta sin PIN).
@@ -562,10 +595,12 @@ module.exports = async function handler(req, res) {
       if (sinPin) {
         // El id hace falta para la huella: el código se pone después.
         const nv = nuevoAlta(userId);
+        const extra = contacto ? { alta: nv.alta, contacto } : { alta: nv.alta };
         const { error: eA } = await supabase.auth.admin.updateUserById(userId, {
-          app_metadata: Object.assign({}, metadata(rolKey, roles, []), { alta: nv.alta }) });
+          app_metadata: Object.assign({}, metadata(rolKey, roles, []), extra) });
         if (eA) { await supabase.auth.admin.deleteUser(userId).catch(() => {}); throw eA; }
-        return res.status(200).json({ ok: true, userId, name: nombre, code: nv.code, expira: nv.alta.exp });
+        const envio = contacto ? await mandarAlta(contacto, nombre, nv.code, nv.alta.exp, rolKey, roles, locationIds) : {};
+        return res.status(200).json(Object.assign({ ok: true, userId, name: nombre, code: nv.code, expira: nv.alta.exp }, envio));
       }
       return res.status(200).json({ ok: true, userId, name: nombre });
     }
@@ -576,10 +611,25 @@ module.exports = async function handler(req, res) {
       if (!u) return res.status(404).json({ ok: false, error: 'That person was not found.' });
       if (u.app_metadata.role === 'owner' && !esOwner) return res.status(403).json({ ok: false, error: 'Only an owner can change an owner.' });
       if (!u.app_metadata.alta) return res.status(400).json({ ok: false, error: 'They already have a PIN. Use Change PIN.' });
+      // "Email a new code": al correo que se dé, o al guardado. Sin
+      // ninguno no se gasta un código: se dice antes.
+      const enviar = !!(req.body || {}).enviar;
+      const otro = String((req.body || {}).email || '').trim();
+      if (otro && !CORREO.test(otro)) return res.status(400).json({ ok: false, error: 'That email doesn’t look right. Check it and try again.' });
+      const dest = otro || u.app_metadata.contacto || '';
+      if (enviar && !dest) return res.status(400).json({ ok: false, error: 'There is no email saved for this person. Add one, or show the code instead.' });
       const nv = nuevoAlta(u.id);
-      const { error } = await supabase.auth.admin.updateUserById(u.id, { app_metadata: Object.assign({}, u.app_metadata, { alta: nv.alta }) });
+      const meta = Object.assign({}, u.app_metadata, { alta: nv.alta }, otro ? { contacto: otro } : {});
+      const { error } = await supabase.auth.admin.updateUserById(u.id, { app_metadata: meta });
       if (error) throw error;
-      return res.status(200).json({ ok: true, code: nv.code, expira: nv.alta.exp, name: (u.user_metadata || {}).first_name || '' });
+      const nombre = (u.user_metadata || {}).first_name || '';
+      let envio = {};
+      if (enviar) {
+        const roles = await leerRoles().catch(() => []);
+        const { data: acc } = await supabase.from('user_location_access').select('location_id').eq('user_id', u.id);
+        envio = await mandarAlta(dest, nombre, nv.code, nv.alta.exp, u.app_metadata.role, roles, (acc || []).map(a => a.location_id));
+      }
+      return res.status(200).json(Object.assign({ ok: true, code: nv.code, expira: nv.alta.exp, name: nombre }, envio));
     }
 
     if (accion === 'setPerson') {

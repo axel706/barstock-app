@@ -125,6 +125,14 @@ require.cache[rutaSb] = { id: rutaSb, filename: rutaSb, loaded: true, exports: {
     }
   }
 }) } };
+// Resend de mentira (como en test-correo-manana): lo mandado queda en
+// `enviados`; con `fallaResend` contesta un error.
+const enviados = []; let fallaResend = null;
+const rutaRs = require.resolve('resend', { paths: [RAIZ] });
+require.cache[rutaRs] = { id: rutaRs, filename: rutaRs, loaded: true, exports: {
+  Resend: class { constructor() { this.emails = { send: async (m) => fallaResend ? { error: { message: fallaResend } } : (enviados.push(m), { data: { id: 'm' + enviados.length } }) }; } }
+} };
+process.env.RESEND_API_KEY = 'k-test';
 process.env.SUPABASE_URL = 'https://sb.test';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'srv';
 const handler = require(path.join(RAIZ, 'api/admin.js'));
@@ -311,6 +319,47 @@ grupo('3d · alta sin PIN: la persona crea el suyo con un código (Axel, 2026-11
   prueba('sin sesión, nada más que esas dos', (await sinSesion('listPeople')).codigo === 401);
   await llamar('axel', 'removePerson', { userId: u('Zoe').id });
   await llamar('axel', 'removePerson', { userId: u('Leo').id });
+}
+
+grupo('3e · el código por correo (Axel, 2026-11-17, sobre lámina)');
+{
+  const sinSesion = (accion, cuerpo) => llamar('', accion, cuerpo);
+  enviados.length = 0;
+  const malo = await llamar('axel', 'createPerson', { name: 'Ivo', role: 'bartender', locationIds: ['crown'], email: 'ivo-at-crown' });
+  prueba('un correo mal escrito: lo dice, no crea y no manda', malo.codigo === 400 && /email/i.test(malo.error || '') && !u('Ivo') && enviados.length === 0, JSON.stringify(malo));
+  const c = await llamar('axel', 'createPerson', { name: 'Nia', role: 'bartender', locationIds: ['crown', 'wb'], email: ' nia@crown.test ' });
+  const m = enviados[0] || {};
+  prueba('crear con correo: se lo manda', c.ok && enviados.length === 1 && JSON.stringify(m.to) === '["nia@crown.test"]' && c.enviado === 'nia@crown.test', JSON.stringify(c));
+  prueba('con su código (el mismo que enseña la pantalla)', /^\d{6}$/.test(c.code || '') && (m.html || '').indexOf(c.code.slice(0, 3) + ' ' + c.code.slice(3)) >= 0);
+  prueba('con su tipo de cuenta, sus locaciones y quién la creó', /Bartender/.test(m.html || '') && /Crown/.test(m.html || '') && /Will(&#39;|')s &amp; Bill(&#39;|')s/.test(m.html || '') && /Axel/.test(m.html || ''), (m.html || '').length);
+  prueba('el asunto, con su nombre', m.subject === 'Your BarStock account is ready, Nia', m.subject);
+  prueba('desde reports@barstockpro.com', /<reports@barstockpro\.com>$/.test(m.from || ''), m.from);
+  prueba('el correo se guarda para reenviar códigos', u('Nia').app_metadata.contacto === 'nia@crown.test');
+  prueba('y el código sigue sirviendo', (await sinSesion('altaVerificar', { name: 'Nia', code: c.code })).ok);
+  const l = await llamar('axel', 'listPeople');
+  prueba('People enseña a dónde se mandó', ((l.people || []).find(x => x.name === 'Nia') || {}).contacto === 'nia@crown.test');
+
+  enviados.length = 0;
+  const n = await llamar('axel', 'nuevoCodigo', { userId: u('Nia').id, enviar: true });
+  prueba('"Email a new code": uno nuevo, al correo guardado', n.ok && enviados.length === 1 && JSON.stringify(enviados[0].to) === '["nia@crown.test"]' &&
+    (enviados[0].html || '').indexOf(n.code.slice(0, 3) + ' ' + n.code.slice(3)) >= 0 && n.enviado === 'nia@crown.test', JSON.stringify(n));
+  prueba('y el de antes ya no sirve', n.code === c.code || !(await sinSesion('altaVerificar', { name: 'Nia', code: c.code })).ok);
+
+  enviados.length = 0;
+  const z = await llamar('axel', 'createPerson', { name: 'Zed', role: 'bartender', locationIds: ['crown'] });
+  const sin = await llamar('axel', 'nuevoCodigo', { userId: u('Zed').id, enviar: true });
+  prueba('sin correo guardado ni dado: lo dice y no manda', sin.codigo === 400 && /email/i.test(sin.error || '') && enviados.length === 0, JSON.stringify(sin));
+  prueba('sin correo, crear no manda nada', z.ok && !z.enviado && enviados.length === 0);
+
+  fallaResend = 'domain not verified';
+  const f = await llamar('axel', 'createPerson', { name: 'Fay', role: 'bartender', locationIds: ['crown'], email: 'fay@crown.test' });
+  fallaResend = null;
+  prueba('si el envío falla: la crea igual, lo dice, y el código sigue en pantalla', f.ok && !!u('Fay') && /domain not verified/.test(f.envioError || '') && !f.enviado && /^\d{6}$/.test(f.code || ''), JSON.stringify(f));
+
+  enviados.length = 0;
+  const p = await llamar('axel', 'createPerson', { name: 'Pia', role: 'bartender', locationIds: ['crown'], pin: '121212', email: 'pia@crown.test' });
+  prueba('con "Set it now" no se manda código (no hay)', p.ok && enviados.length === 0 && !p.enviado);
+  for (const x of ['Nia', 'Zed', 'Fay', 'Pia']) await llamar('axel', 'removePerson', { userId: u(x).id });
 }
 
 grupo('4 · el servidor de las integraciones');

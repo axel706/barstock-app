@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261116-191618",
+    "items": [
+      "People: email someone their sign-in code"
+    ]
+  },
+  {
     "build": "20261115-235640",
     "items": [
       "New people can set their own PIN with a code or QR"
@@ -178,12 +184,6 @@
     "items": [
       "Live counts sales made after you count",
       "Counting at 7 PM no longer skews the week"
-    ]
-  },
-  {
-    "build": "20261114-225140",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]

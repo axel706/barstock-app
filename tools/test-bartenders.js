@@ -89,6 +89,13 @@ require.cache[rutaSb] = { id: rutaSb, filename: rutaSb, loaded: true, exports: {
     }
   }
 }) } };
+// Resend de mentira: lo mandado queda en `enviados`.
+const enviados = []; let fallaResend = null;
+const rutaRs = require.resolve('resend', { paths: [RAIZ] });
+require.cache[rutaRs] = { id: rutaRs, filename: rutaRs, loaded: true, exports: {
+  Resend: class { constructor() { this.emails = { send: async (m) => fallaResend ? { error: { message: fallaResend } } : (enviados.push(m), { data: { id: 'm' + enviados.length } }) }; } }
+} };
+process.env.RESEND_API_KEY = 'k-test';
 process.env.SUPABASE_URL = 'https://sb.test';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'srv';
 const handler = require(path.join(RAIZ, 'api/admin.js'));
@@ -208,6 +215,46 @@ async function llamar(token, action, cuerpo) {
       fila && fila.textContent.replace(/\s+/g, ' '));
     fila.click();
     prueba('y al abrirla otra vez, las dos marcadas', q('[data-fl="crown"]').classList.contains('on') && q('[data-fl="wb"]').classList.contains('on'));
+
+    // ── El código por correo (Axel, 2026-11-17, sobre lámina) ──────────
+    {
+      w.__atras(); await esperar(30);
+      q('#btNuevo').click();
+      prueba('con "They set it", el campo de correo (opcional)', !!q('#btMail') && /optional/i.test(q('#btMail').closest('.m-set-f').textContent));
+      q('[data-pinmodo="ahora"]').click();
+      prueba('con "Set it now" no hay correo que mandar', !q('#btMail'));
+      q('[data-pinmodo="ellos"]').click();
+      const nm = q('#btNom'); nm.value = 'Nia'; nm.dispatchEvent(new w.Event('input'));
+      const ml = q('#btMail'); ml.value = 'nia@crown.test'; ml.dispatchEvent(new w.Event('input'));
+      enviados.length = 0;
+      q('#btCrear').click(); await esperar(60);
+      prueba('crear la manda por correo', enviados.length === 1 && JSON.stringify(enviados[0].to) === '["nia@crown.test"]', JSON.stringify(enviados.map(e => e.to)));
+      prueba('y el panel lo dice', !!q('.m-bt-alta') && /Code sent to nia@crown\.test/.test(q('.m-bt-alta').textContent), q('.m-bt-alta') && q('.m-bt-alta').textContent);
+      prueba('el código sigue en pantalla', /^\d{3} \d{3}$/.test(((q('.m-bt-alta big') || {}).textContent || '').trim()));
+      q('#btAltaOk').click();
+      [...host.querySelectorAll('[data-b]')].find(b => /Nia/.test(b.textContent)).click();
+      prueba('su ficha dice a dónde se mandó', /Code emailed to nia@crown\.test/.test(host.textContent) && !!q('#btAltaMail'), host.textContent.slice(0, 300));
+      enviados.length = 0;
+      q('#btAltaMail').click(); await esperar(60);
+      prueba('"Email a new code" manda uno nuevo', enviados.length === 1 && /Code sent to nia@crown\.test/.test(host.textContent));
+      q('#btAltaOk').click();
+
+      // Si el envío falla, la persona se crea igual y el código se ve.
+      q('#btNuevo').click();
+      const n2 = q('#btNom'); n2.value = 'Fay'; n2.dispatchEvent(new w.Event('input'));
+      const m2 = q('#btMail'); m2.value = 'fay@crown.test'; m2.dispatchEvent(new w.Event('input'));
+      fallaResend = 'domain not verified';
+      q('#btCrear').click(); await esperar(60);
+      fallaResend = null;
+      prueba('si falla el envío: lo dice y el código sigue ahí', !!q('.m-bt-alta') && /Couldn.t send the email/.test(q('.m-bt-alta').textContent) &&
+        /domain not verified/.test(q('.m-bt-alta').textContent) && /^\d{3} \d{3}$/.test(((q('.m-bt-alta big') || {}).textContent || '').trim()), q('.m-bt-alta') && q('.m-bt-alta').textContent);
+      q('#btAltaOk').click();
+      [...host.querySelectorAll('[data-b]')].find(b => /Fay/.test(b.textContent)).click();
+      prueba('y en su ficha se puede reintentar', !!q('#btAltaMail'));
+      for (const x of ['Nia', 'Fay']) { const uu = db.users.find(y => y.user_metadata.first_name === x); if (uu) await llamar('axel', 'removePerson', { userId: uu.id }); }
+      await w.BarStockMobileBartenders.montar(host, (t) => '<div class="cab">' + t + '</div>', () => {});
+      [...host.querySelectorAll('[data-b]')].find(b => /Billie/.test(b.textContent)).click();
+    }
 
     // ── Alta sin PIN: el QR y el código (Axel, 2026-11-16, opción C) ──
     {

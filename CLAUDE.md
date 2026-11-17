@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 154 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 155 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -395,7 +395,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 154 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 155 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -771,6 +771,17 @@ del rol con su interruptor, lo quitado sólo a ella en ámbar ("Off for
   nombre que no existe y a quien ya tiene PIN: el login es público. El
   QR se borra de la dirección al leerlo. Prueba: 3d de `test-roles`, la
   pantalla en `test-bartenders`, 3c de `test-pin-login`.
+- **El código por correo** (2026-11-17, sobre lámina: texto 1, pasos en
+  estilo B y YOUR ACCOUNT antes del código): con "They set it", un campo
+  **Email · optional**. Al crear, `createPerson { email }` lo manda con
+  `lib/alta-email.js` (el marco de `email-shell.js`; la línea de los
+  pasos es una celda de 2 px, no un degradado, por Outlook) y lo guarda
+  en `app_metadata.contacto` sólo para reenviar. La ficha: "Code emailed
+  to …" y **Email a new code** (`nuevoCodigo { enviar }`). El código
+  sólo existe al crearlo: el correo sale ahí o con uno nuevo, nunca
+  después. Si Resend falla, la persona se crea igual, el panel lo dice y
+  el código sigue en pantalla. Prueba: `test-alta-correo`, 3e de
+  `test-roles` y la pantalla en `test-bartenders`.
 - Pruebas: `test-roles`, `test-bartenders`, `test-invitado`,
   `test-invitado-pantallas`, `test-pin-login`.
 

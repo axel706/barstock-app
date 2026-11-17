@@ -209,7 +209,11 @@
           '<button type="button" data-pinmodo="ellos" class="' + (n.sinPin ? 'on' : '') + '">They set it</button>' +
           '<button type="button" data-pinmodo="ahora" class="' + (n.sinPin ? '' : 'on') + '">Set it now</button></div>' +
         (n.sinPin
-          ? '<small>They create their own PIN the first time, with a one-time code from you.</small>'
+          ? '<small>They create their own PIN the first time, with a one-time code from you.</small>' +
+            // El código por correo (Axel, 2026-11-17, sobre lámina): opcional.
+            '<div class="m-set-f m-bt-mail"><label for="btMail">Email <span>· optional</span></label>' +
+              '<input id="btMail" type="email" inputmode="email" autocomplete="off" autocapitalize="off" spellcheck="false" value="' + esc(n.correo || '') + '" placeholder="name@crowntavern.com">' +
+              '<small>We email them their code and how to set up. Leave it empty to give it to them yourself.</small></div>'
           : '<div class="m-bt-pinf"><input id="btPin" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" value="' + esc(n.pin) + '">' +
             '<button type="button" class="m-bt-gen" id="btGen">Generate</button></div>') + '</div>' +
       err +
@@ -255,8 +259,11 @@
     const espera = !f.pendiente ? '' :
       '<div class="m-set-f"><div class="m-pp-lista"><div class="m-pp-perm"><span>' +
         (f.pendiente.vencido ? 'Code expired' : 'Waiting for PIN') +
-        '<small>' + (f.pendiente.vencido ? 'Show a new one to let ' + esc(f.nombre) + ' set a PIN.' : 'Code works until ' + esc(cuandoPausa(f.pendiente.expira))) + '</small></span></div></div>' +
-        '<button type="button" class="m-bt-sec" id="btAltaOtra">Show code and QR again</button></div>';
+        '<small>' + (f.pendiente.vencido ? 'Make a new one to let ' + esc(f.nombre) + ' set a PIN.'
+          : (f.contacto ? 'Code emailed to ' + esc(f.contacto) + ' · works until ' : 'Code works until ') + esc(cuandoPausa(f.pendiente.expira))) + '</small></span></div></div>' +
+        (f.contacto ? '<button type="button" class="m-bt-sec" id="btAltaMail">Email a new code</button>' : '') +
+        '<button type="button" class="m-bt-sec" id="btAltaOtra">Show code and QR again</button>' +
+        (f.contacto ? '<small>Either one makes a new code; the old one stops working.</small>' : '') + '</div>';
     // El acceso, arriba (Axel, 2026-11-15, opción A sobre lámina):
     // pausarlo no borra nada; la persona ve en el login que está pausada.
     // A uno mismo no: se quedaría fuera.
@@ -328,7 +335,7 @@
       if (!x) return;
       _ficha = { id: x.id, nombre: x.name, rol: x.role, off: new Set(x.off || []),
         locs: new Set(x.access.map(a => a.locationId)), pin: null, borrar: false, pausado: x.pausado || null,
-        pendiente: x.pendiente || null };
+        pendiente: x.pendiente || null, contacto: x.contacto || '' };
       _creado = null; _error = ''; _vista = 'ficha'; pintar();
     }; });
     host.querySelectorAll('[data-r]').forEach(b => { b.onclick = () => {
@@ -368,7 +375,10 @@
     host.querySelectorAll('[data-fp]').forEach(b => { b.onclick = () => cambiarPermiso(b.dataset.fp); });
     if (q('[data-acceso]')) q('[data-acceso]').onclick = cambiarAcceso;
     host.querySelectorAll('[data-pinmodo]').forEach(b => { b.onclick = () => { _nuevo.sinPin = b.dataset.pinmodo === 'ellos'; _error = ''; pintar(); }; });
-    if (q('#btAltaOtra')) q('#btAltaOtra').onclick = otroCodigo;
+    if (q('#btAltaOtra')) q('#btAltaOtra').onclick = () => otroCodigo(false);
+    if (q('#btAltaMail')) q('#btAltaMail').onclick = () => otroCodigo(true);
+    const ml = q('#btMail');
+    if (ml) ml.oninput = () => { _nuevo.correo = ml.value; };
     if (q('#btAltaOk')) q('#btAltaOk').onclick = () => { _creado = null; pintar(); };
     if (q('#btPinCambiar')) q('#btPinCambiar').onclick = () => { _ficha.pin = generar(); _error = ''; pintar(); };
     if (q('#btPinGuardar')) q('#btPinGuardar').onclick = guardarPin;
@@ -397,9 +407,10 @@
     if (b) { b.disabled = true; b.textContent = 'Creating…'; }
     const cuerpo = { name: nombre, role: n.rol, locationIds: Array.from(n.locs) };
     if (!n.sinPin) cuerpo.pin = n.pin;
+    else if ((n.correo || '').trim()) cuerpo.email = n.correo.trim();
     const r = await A().llamar('createPerson', cuerpo).catch(fallo);
     if (!r || !r.ok) { _error = 'Not created: ' + ((r && r.error) || 'no answer'); return pintar(); }
-    _creado = n.sinPin ? { nombre: r.name || nombre, code: r.code, expira: r.expira }
+    _creado = n.sinPin ? { nombre: r.name || nombre, code: r.code, expira: r.expira, enviado: r.enviado || '', envioError: r.envioError || '' }
       : { nombre, pin: n.pin, locs: nombresDe(n.locs) };
     // Creada, pero sin código de vuelta (un servidor sin el alta): se
     // dice lo que pasó y cómo sacarlo, en vez de un panel vacío.
@@ -501,7 +512,9 @@
   }
   function panelAlta(c) {
     const url = urlAlta(c), svg = qrDe(url);
-    return '<div class="m-bt-ok m-bt-alta"><b>' + esc(c.nombre) + ' is ready to set a PIN</b>' +
+    const envio = c.enviado ? '<div class="m-bt-enviado">✓ Code sent to ' + esc(c.enviado) + '</div>'
+      : c.envioError ? '<div class="m-bt-envio-mal">Couldn’t send the email: ' + esc(c.envioError) + '. Give ' + esc(c.nombre) + ' this code yourself, or try again from their profile.</div>' : '';
+    return '<div class="m-bt-ok m-bt-alta"><b>' + esc(c.nombre) + ' is ready to set a PIN</b>' + envio +
         (svg ? '<div class="m-bt-qr" data-alta-url="' + esc(url) + '">' + svg + '</div><small>Scan with ' + esc(c.nombre) + '’s phone</small>'
           : '<span data-alta-url="' + esc(url) + '"></span>') +
         '<small>' + (svg ? 'or at sign in, name + this code' : 'At sign in: name + this code') + '</small>' +
@@ -510,13 +523,14 @@
       '</div><button type="button" class="m-set-save" id="btAltaOk">Done</button>';
   }
 
-  async function otroCodigo() {
+  // enviar: "Email a new code" (al correo guardado); si no, sólo se enseña.
+  async function otroCodigo(enviar) {
     const f = _ficha;
-    const b = _host.querySelector('#btAltaOtra');
-    if (b) { b.disabled = true; b.textContent = 'Making a new code…'; }
-    const r = await A().llamar('nuevoCodigo', { userId: f.id }).catch(fallo);
+    const b = _host.querySelector(enviar ? '#btAltaMail' : '#btAltaOtra');
+    if (b) { b.disabled = true; b.textContent = enviar ? 'Sending a new code…' : 'Making a new code…'; }
+    const r = await A().llamar('nuevoCodigo', enviar ? { userId: f.id, enviar: true } : { userId: f.id }).catch(fallo);
     if (!r || !r.ok) { _error = 'Not done: ' + ((r && r.error) || 'no answer'); return pintar(); }
-    _creado = { nombre: f.nombre, code: r.code, expira: r.expira };
+    _creado = { nombre: f.nombre, code: r.code, expira: r.expira, enviado: r.enviado || '', envioError: r.envioError || '' };
     _ficha = null; _vista = 'lista'; _tab = 'people';
     await cargar();
     pintar();

@@ -4306,6 +4306,11 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-bt-alta .m-bt-qr svg { width: calc(var(--m-base) * 13); height: auto; }
   .m-bt-alta small { display: block; margin-top: 8px; }
   .m-bt-espera { color: #fcd34d; font-weight: 600; }
+  /* El código por correo (2026-11-17): el aviso de enviado, o de que no salió. */
+  .m-bt-alta .m-bt-enviado { display: inline-block; margin-top: 10px; padding: 6px 12px; border-radius: 999px; background: rgba(56,189,248,.14); color: #7dd3fc; font-weight: 600; font-size: var(--m-small); }
+  .m-bt-alta .m-bt-envio-mal { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: rgba(252,211,77,.12); border: 1px solid rgba(252,211,77,.4); color: #fde68a; font-size: var(--m-small); text-align: left; }
+  .m-bt-mail { margin-top: 14px; }
+  .m-bt-mail label span { color: #64748b; font-weight: 500; }
   .m-bt-ok small { display: block; margin-top: 4px; font-size: var(--m-meta); color: #cbd5e1; }
 
   /* ── People con roles (2026-11-13, lámina 3A) ─────────────────────
