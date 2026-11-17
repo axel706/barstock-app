@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261117-142014",
+    "items": [
+      "Running out: delivered items can go on the list again",
+      "Ordered items say “Ordered”"
+    ]
+  },
+  {
     "build": "20261117-094950",
     "items": [
       "Morning email: Daily | Weekly, and send it to anyone",
@@ -175,12 +182,6 @@
     "build": "20261115-104035",
     "items": [
       "Edit item: same background as the rest of the app"
-    ]
-  },
-  {
-    "build": "20261115-103731",
-    "items": [
-      "Running out: smaller buttons on each card"
     ]
   }
 ]

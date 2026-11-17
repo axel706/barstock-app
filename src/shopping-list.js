@@ -114,5 +114,36 @@
       '&status=in.(to_buy,ordered)&select=id,item_name,qty,reason,note,added_by,added_at,status,status_by,status_at,order_ref&order=added_at.asc');
   }
 
-  window.BarStockShoppingList = { anadir, quitar, cambiar, marcarPedidas, leer, sugerido };
+  // ── Lo pedido, hasta que llega (fase 4) ──────────────────────────────
+  //
+  // Una línea pedida está pendiente hasta la hora de llegada de SU orden
+  // (state.orderHistory, por el id de la orden en order_ref): desde ahí ya
+  // está en el LIVE y deja de estar pendiente. No se escribe nada al
+  // llegar (el bartender no podría: el candado no le deja cambiar
+  // líneas); se calcula al leer. Si la orden no está en lo cargado, deja
+  // de estar pendiente a los 8 días: una línea que no se va nunca acaba
+  // siendo ruido.
+  //
+  // Vivía en mobile-to-buy.js y la revisión de Running out leía la lista
+  // entera: lo que Axel pidió el domingo y ya había llegado seguía "On
+  // the list" en la revisión, sin "Add" para volver a pedirlo, y no se
+  // habría ido nunca (2026-11-17). Ahora es una regla para las dos.
+  const ESPERA_MAX = 8 * 864e5;
+  const ordenDe = (x) => {
+    const h = (window.state && window.state.orderHistory) || [];
+    return x && x.order_ref ? h.find(o => String(o.id) === String(x.order_ref)) || null : null;
+  };
+  function llego(x, ahora) {
+    const o = ordenDe(x);
+    if (o && o.arrivesAt) return new Date(o.arrivesAt).getTime() <= ahora;
+    const t = new Date(x.status_at || x.added_at).getTime();
+    return !isNaN(t) && ahora - t > ESPERA_MAX;
+  }
+  // Lo que sigue pendiente: por comprar, o pedido y sin llegar.
+  function vigentes(lineas, ahora) {
+    const t = ahora == null ? Date.now() : ahora;
+    return (lineas || []).filter(x => x && (x.status === 'to_buy' || (x.status === 'ordered' && !llego(x, t))));
+  }
+
+  window.BarStockShoppingList = { anadir, quitar, cambiar, marcarPedidas, leer, sugerido, llego, vigentes, ordenDe, ESPERA_MAX };
 })();

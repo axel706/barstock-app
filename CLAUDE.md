@@ -1216,7 +1216,11 @@ suelta la lista. Si marcar falla, la pantalla de hecho lo dice. Lo
 pedido se enseña como "LOOP · CT-0220 · Sun 2:10 PM · Axel · arrives
 Tue 7 AM" hasta la llegada de SU orden (`state.orderHistory`; sin la
 orden, 8 días), calculado al leer, sin escribir nada; la pestaña sigue
-mientras haya algo pedido sin llegar. La firma es el nombre de la
+mientras haya algo pedido sin llegar. La regla vive en `shopping-list.js`
+(`llego`, `vigentes`) y la usan To buy y la revisión de Running out:
+ésta leía la lista entera y lo pedido que ya llegó seguía "On the list"
+sin "Add" para siempre (2026-11-17). Pedido sin llegar: "Ordered", sin
+Undo. La firma es el nombre de la
 sesión: cada quien usa su teléfono (Axel). Prueba: `test-pedir-lista`.
 
 **Fijar arriba en Running out (2026-11-15, lámina B).** "Edit order"

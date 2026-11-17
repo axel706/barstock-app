@@ -46,7 +46,9 @@
 
   async function cargarDatos() {
     const SL = window.BarStockShoppingList, SC = window.BarStockStockChecks;
-    try { _lista = SL ? await SL.leer() : []; }
+    // Sólo lo pendiente: lo pedido que ya llegó no puede seguir "On the
+    // list" (shopping-list.vigentes, la regla de To buy).
+    try { _lista = SL ? SL.vigentes(await SL.leer()) : []; }
     catch (e) { console.warn('[running out] sin la lista:', e && e.message || e); _lista = []; }
     _checks = new Map();
     const desde = LC() && LC().conteo ? LC().conteo() : null;
@@ -87,9 +89,13 @@
     const visto = _checks.get(r.item);
     const out = x.out && x.out.txt ? `<span class="m-ro-out ${x.out.tono === 'r' ? 'r' : 'a'}">${esc(x.out.txt)}</span>` : '';
     const estados = [];
+    // Pedido y aún sin llegar: "Ordered", sin Undo. Quitar de la lista
+    // algo que ya salió en una orden no deshace la orden: un Undo ahí
+    // sería un botón que miente.
+    const pedido = !!enLista && enLista.status === 'ordered';
     if (enLista) estados.push(`<div class="m-ro-hecho m-ro-lista">
-        <span>&#10003; On the list &middot; ${esc(n1(enLista.qty).replace(/\.0$/, ''))}${enLista.added_by ? ' by ' + esc(enLista.added_by) : ''}</span>
-        ${puede('ordenes') ? `<button type="button" class="m-ro-x" data-ro-undo="${esc(enLista.id)}">Undo</button>` : ''}</div>`);
+        <span>&#10003; ${pedido ? 'Ordered' : 'On the list'} &middot; ${esc(n1(enLista.qty).replace(/\.0$/, ''))}${enLista.added_by ? ' by ' + esc(enLista.added_by) : ''}</span>
+        ${!pedido && puede('ordenes') ? `<button type="button" class="m-ro-x" data-ro-undo="${esc(enLista.id)}">Undo</button>` : ''}</div>`);
     if (visto) estados.push(`<div class="m-ro-hecho m-ro-visto">
         <span>&#10003; Checked: ${esc(n1(visto.counted).replace(/\.0$/, ''))} on the shelf &middot; ${esc(cuandoNY(visto.checked_at))}${visto.checked_by ? ' &middot; ' + esc(visto.checked_by) : ''}</span>
         ${puede('contar') ? '<button type="button" class="m-ro-x" data-ro-cambiar>Change</button>' : ''}</div>`);

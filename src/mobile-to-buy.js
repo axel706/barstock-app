@@ -38,26 +38,11 @@
 
   const porComprar = () => _lista.filter(x => x.status === 'to_buy');
 
-  // ── Lo pedido, hasta que llega (fase 4) ──────────────────────────────
-  //
-  // Una línea pedida se enseña como "Ordered" hasta la hora de llegada
-  // de SU orden (state.orderHistory, por el id de la orden en
-  // order_ref): desde ahí ya está en el LIVE y deja de estar pendiente.
-  // No se escribe nada al llegar (el bartender no podría: el candado no
-  // le deja cambiar líneas); se calcula al leer. Si la orden no está en
-  // lo cargado, la línea se deja de enseñar a los 8 días: una línea que
-  // no se va nunca acabaría siendo ruido.
-  const ESPERA_MAX = 8 * 864e5;
-  const ordenDe = (x) => {
-    const h = (window.state && window.state.orderHistory) || [];
-    return x.order_ref ? h.find(o => String(o.id) === String(x.order_ref)) || null : null;
-  };
-  function llego(x, ahora) {
-    const o = ordenDe(x);
-    if (o && o.arrivesAt) return new Date(o.arrivesAt).getTime() <= ahora;
-    const t = new Date(x.status_at || x.added_at).getTime();
-    return !isNaN(t) && ahora - t > ESPERA_MAX;
-  }
+  // Lo pedido, hasta que llega: la regla vive en shopping-list.js
+  // (llego), la misma que usa la revisión de Running out.
+  const SLx = () => window.BarStockShoppingList;
+  const ordenDe = (x) => SLx().ordenDe(x);
+  const llego = (x, ahora) => SLx().llego(x, ahora);
   const pedidas = () => { const t = Date.now(); return _lista.filter(x => x.status === 'ordered' && !llego(x, t)); };
 
   // Cuántas líneas hay por comprar. Es lo que decide si la pestaña sale

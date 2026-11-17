@@ -195,6 +195,29 @@ grupo('4 · lo de otros, al abrir');
   prueba('el resumen lo cuenta todo', /1 on the list · 1 checked/.test(txt(w.document.querySelector('.m-ro-sum'))), txt(w.document.querySelector('.m-ro-sum')));
 }
 
+grupo('4b · lo pedido que ya llegó no se queda "On the list" (Axel, 2026-11-17)');
+{
+  // Lo puso en To buy el domingo, lo pidió y llegó; el producto sigue
+  // bajo y la tarjeta seguía "On the list · 12 · Undo", sin "Add": la
+  // revisión leía la lista entera, con lo pedido que ya llegó. La MISMA
+  // regla que To buy: pedido sigue mientras su orden no llega (sin la
+  // orden, 8 días).
+  const hace = (h) => new Date(Date.now() - h * 3600e3).toISOString();
+  const w = entorno({ lista: [
+    { id: 7, item_name: "Dad's Hat Rye", qty: 2, added_by: 'Axel', status: 'ordered', order_ref: 'o-llego', status_at: hace(60) },
+    { id: 8, item_name: 'St Elder', qty: 2, added_by: 'Axel', status: 'ordered', order_ref: 'o-viene', status_at: hace(2) },
+    { id: 9, item_name: 'Baileys', qty: 1, added_by: 'Axel', status: 'ordered', order_ref: 'o-perdida', status_at: hace(24 * 9) }] });
+  w.state.orderHistory = [{ id: 'o-llego', arrivesAt: hace(30) }, { id: 'o-viene', arrivesAt: new Date(Date.now() + 864e5).toISOString() }];
+  await w.BarStockRunningOutReview.abrir(w.document.getElementById('mHome'));
+  await esperar(20);
+  const c = (n) => w.document.querySelector('.m-ro-c[data-item="' + n + '"]');
+  prueba('su orden ya llegó: vuelve "Add to list"', !!c("Dad's Hat Rye").querySelector('[data-ro-add]') && !/On the list/.test(txt(c("Dad's Hat Rye"))), txt(c("Dad's Hat Rye")));
+  prueba('sin la orden, a los 8 días también', !!c('Baileys').querySelector('[data-ro-add]'), txt(c('Baileys')));
+  prueba('lo que aún no llega dice "Ordered", sin "Add"', /Ordered · 2/.test(txt(c('St Elder'))) && !c('St Elder').querySelector('[data-ro-add]'), txt(c('St Elder')));
+  prueba('y sin Undo: lo pedido ya no se quita de una lista', !c('St Elder').querySelector('[data-ro-undo]'), txt(c('St Elder')));
+  prueba('To buy usa la misma regla, no una copia', !/function llego/.test(leer('src/mobile-to-buy.js')) && /llego/.test(leer('src/shopping-list.js')));
+}
+
 grupo('5 · sin permiso, sin botón');
 {
   let w = entorno({ sin: ['ordenes'] });
