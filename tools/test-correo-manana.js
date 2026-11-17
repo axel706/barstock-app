@@ -377,6 +377,33 @@ grupo('cada mañana, solo: Vercel lo manda al reply-to');
   const jt = ((r.body && r.body.locaciones) || []).find(x => /Jockey/.test(x.local || ''));
   prueba('la que no tiene reply-to no se manda, se dice cuál y no tumba a las demás', !!jt && !jt.ok && /reply-to/i.test(jt.error || '') && enviados.length === 2, JSON.stringify(r.body).slice(0, 400));
   prueba('y la respuesta no da por bueno lo que falló', r.body && r.body.ok === false && r.body.enviados === 2, JSON.stringify(r.body).slice(0, 300));
+  // Axel, 2026-11-17: el lunes no se abre, y el martes llegaba un
+  // correo que sólo decía "Monday was closed". Un día CARGADO y sin
+  // ninguna venta no manda correo; uno sin cargar sí (no se sabe si se
+  // abrió, y un lunes de evento tiene que llegar). Así un lunes abierto
+  // por una ocasión especial manda su correo sin tocar ningún ajuste.
+  const ayerNY = (() => { const t = new Date(Date.now() - 4 * 3600e3 - 864e5);
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(t); })();
+  const conAyer = (dias) => async (u, o) => {
+    u = String(u); pedidas.push({ u, metodo: (o && o.method) || 'GET' });
+    const filas = /\/locations\?/.test(u) ? [{ id: 'loc-1', name: 'The Crown Tavern', account_id: 'wjm', toast_restaurant_guid: 'guid-crown' }]
+      : /\/location_settings\?/.test(u) ? [{ reply_to_email: 'axel@crown.test' }]
+      : /\/toast_sales_days\?/.test(u) ? dias
+      : /\/inventory_items\?/.test(u) ? [{ code: 'T1', item_name: "Tito's", vendor: 'LOOP', on_hand: 2, suggested: 4, value: 20, bottle_size_ml: 1000 }]
+      : [];
+    return { ok: true, status: 200, headers: { get: (k) => /content-range/i.test(k) ? '0-' + (filas.length - 1) + '/' + filas.length : null },
+      json: async () => filas, text: async () => JSON.stringify(filas) };
+  };
+  global.fetch = conAyer([{ business_date: ayerNY, complete: true, closed: true, fetched_at: new Date().toISOString() }]);
+  enviados.length = 0;
+  r = await llamarCron('Bearer cron-ok');
+  const om = ((r.body && r.body.locaciones) || [])[0] || {};
+  prueba('ayer cargado y sin ninguna venta: no manda', enviados.length === 0, JSON.stringify(enviados.map(x => x.subject)));
+  prueba('y lo dice, sin contarlo como fallo', r.code === 200 && r.body.ok === true && om.omitido && /no sales/i.test(om.omitido), JSON.stringify(r.body).slice(0, 300));
+  global.fetch = conAyer([]);
+  enviados.length = 0;
+  r = await llamarCron('Bearer cron-ok');
+  prueba('ayer sin cargar: sí manda (no se sabe si se abrió)', enviados.length === 1, JSON.stringify(r.body).slice(0, 300));
   global.fetch = fetchViejo;
 
   const v = JSON.parse(require('fs').readFileSync(path.join(RAIZ, 'vercel.json'), 'utf8'));

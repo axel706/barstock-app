@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261117-083700",
+    "items": [
+      "No morning email after a day with no sales"
+    ]
+  },
+  {
     "build": "20261116-202122",
     "items": [
       "Clearer step to create your PIN after the code"
@@ -174,12 +180,6 @@
     "items": [
       "To buy: Order the list in one go",
       "Ordered items show until they arrive"
-    ]
-  },
-  {
-    "build": "20261115-094606",
-    "items": [
-      "Home: To buy button on Running out first"
     ]
   }
 ]

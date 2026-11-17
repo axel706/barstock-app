@@ -691,7 +691,9 @@ que miente.
    de Toast, y va **sólo al reply-to** de cada locación enlazada a
    Toast (Settings › Emails), cada una con sus números (2026-11-15, para
    Will's & Bill's; antes sólo Crown). Una sin reply-to se salta y la
-   respuesta dice cuál; las demás salen igual. La lista de *Morning email recipients* todavía no se usa
+   respuesta dice cuál; las demás salen igual. Si ayer está cargado y no tuvo
+   ni una venta (el lunes cerrado), no sale correo (2026-11-17); sin
+   cargar, sí: un lunes abierto por un evento tiene ventas y sale. La lista de *Morning email recipients* todavía no se usa
    en el automático: es para cuando él lo diga. `lib/morning-cron.js`
    corre en el servidor **los mismos archivos de `src/`** (vm, con un
    `window` de mentira) y llama a `BarStockMorningReport.datos()`: un
