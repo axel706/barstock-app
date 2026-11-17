@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261116-200128",
+    "items": [
+      "Clearer note when counting is turned off"
+    ]
+  },
+  {
     "build": "20261116-195903",
     "items": [
       "People: turn off permissions for an Owner too"
@@ -176,12 +182,6 @@
     "items": [
       "Orders: a To buy tab when the list has something",
       "Change the amount on each line, or remove it"
-    ]
-  },
-  {
-    "build": "20261115-085116",
-    "items": [
-      "Running out: the bottom tabs take you out of it"
     ]
   }
 ]

@@ -401,11 +401,12 @@
         soloAviso: true
       } };
     }
-    // Un rol sin "Count inventory" (roles, 2026-11-13): lo mismo, dicho
-    // para cualquier rol.
+    // Sin "Count inventory" (roles, 2026-11-13): lo mismo, para cualquiera.
+    // Dice "your account" y no "your role": desde las excepciones por
+    // persona (también a un Owner, 2026-11-17) puede no ser cosa del rol.
     if (G && G.puede && !G.puede('contar')) {
       return { activo: false, dialogo: {
-        titulo: 'Counting is off for your role.',
+        titulo: 'Counting is off for your account.',
         cuerpo: 'Ask the owner if you need to count.',
         soloAviso: true
       } };

@@ -394,6 +394,15 @@ grupo('3f · excepciones para un Owner (Axel, 2026-11-17)');
   prueba('devolvérselas: todo otra vez', v.ok && olga().app_metadata.perms.length === 15 && olga().app_metadata.off.length === 0);
 }
 
+grupo('3g · el aviso de contar no culpa al rol (Axel, 2026-11-17)');
+{
+  // Sin "Count inventory", el escáner avisa. El permiso se lo pueden
+  // quitar a una sola persona (una excepción), así que "for your role"
+  // sería una afordancia que miente: el aviso habla de su cuenta.
+  const shell = require('fs').readFileSync(path.join(RAIZ, 'src/mobile-shell.js'), 'utf8');
+  prueba('el escáner dice "for your account", no "for your role"', /Counting is off for your account\./.test(shell) && !/off for your role/.test(shell));
+}
+
 grupo('4 · el servidor de las integraciones');
 {
   const I = require(path.join(RAIZ, 'lib/integracion.js'));
