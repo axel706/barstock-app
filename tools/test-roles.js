@@ -359,6 +359,17 @@ grupo('3e · el código por correo (Axel, 2026-11-17, sobre lámina)');
   enviados.length = 0;
   const p = await llamar('axel', 'createPerson', { name: 'Pia', role: 'bartender', locationIds: ['crown'], pin: '121212', email: 'pia@crown.test' });
   prueba('con "Set it now" no se manda código (no hay)', p.ok && enviados.length === 0 && !p.enviado);
+  // Quien crea sin nombre en su sesión (Axel es cuenta de correo): el que
+  // manda la app, el mismo del saludo del Home. Con nombre, el suyo.
+  const axel = db.users.find(x => x.id === 'axel'); const meta = axel.user_metadata; axel.user_metadata = {};
+  enviados.length = 0;
+  await llamar('axel', 'createPerson', { name: 'Ole', role: 'bartender', locationIds: ['crown'], email: 'ole@crown.test', quien: 'Axel' });
+  prueba('sin nombre en la sesión, firma con el del perfil', /See you in the app,<br><strong>Axel<\/strong>/.test((enviados[0] || {}).html || '') && !/BarStock just set up/.test((enviados[0] || {}).html || ''));
+  axel.user_metadata = meta;
+  enviados.length = 0;
+  await llamar('axel', 'nuevoCodigo', { userId: u('Ole').id, enviar: true, quien: 'Otro' });
+  prueba('con nombre en la sesión, manda el suyo', /<strong>Axel<\/strong>/.test((enviados[0] || {}).html || '') && !/Otro/.test((enviados[0] || {}).html || ''));
+  await llamar('axel', 'removePerson', { userId: u('Ole').id });
   for (const x of ['Nia', 'Zed', 'Fay', 'Pia']) await llamar('axel', 'removePerson', { userId: u(x).id });
 }
 

@@ -227,7 +227,12 @@ async function llamar(token, action, cuerpo) {
       const nm = q('#btNom'); nm.value = 'Nia'; nm.dispatchEvent(new w.Event('input'));
       const ml = q('#btMail'); ml.value = 'nia@crown.test'; ml.dispatchEvent(new w.Event('input'));
       enviados.length = 0;
+      w.BarStockSenderProfile = { getProfile: async () => ({ name: 'Axel Torres' }) };
+      const pedidas = []; const llamarAntes = w.BarStockAdminApi.llamar;
+      w.BarStockAdminApi.llamar = async (x, pp) => { pedidas.push({ x, pp }); return llamarAntes(x, pp); };
       q('#btCrear').click(); await esperar(60);
+      w.BarStockAdminApi.llamar = llamarAntes;
+      prueba('manda quién la crea: el nombre del saludo', ((pedidas.find(z => z.x === 'createPerson') || {}).pp || {}).quien === 'Axel', JSON.stringify(pedidas.map(z => z.pp)));
       prueba('crear la manda por correo', enviados.length === 1 && JSON.stringify(enviados[0].to) === '["nia@crown.test"]', JSON.stringify(enviados.map(e => e.to)));
       prueba('y el panel lo dice', !!q('.m-bt-alta') && /Code sent to nia@crown\.test/.test(q('.m-bt-alta').textContent), q('.m-bt-alta') && q('.m-bt-alta').textContent);
       prueba('el código sigue en pantalla', /^\d{3} \d{3}$/.test(((q('.m-bt-alta big') || {}).textContent || '').trim()));

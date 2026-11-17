@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261116-193822",
+    "items": [
+      "Sign-in code email: signed by you, details at the end"
+    ]
+  },
+  {
     "build": "20261116-191618",
     "items": [
       "People: email someone their sign-in code"
@@ -177,13 +183,6 @@
     "build": "20261115-074615",
     "items": [
       "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261114-230738",
-    "items": [
-      "Live counts sales made after you count",
-      "Counting at 7 PM no longer skews the week"
     ]
   }
 ]

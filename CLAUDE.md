@@ -780,7 +780,10 @@ del rol con su interruptor, lo quitado sólo a ella en ámbar ("Off for
   to …" y **Email a new code** (`nuevoCodigo { enviar }`). El código
   sólo existe al crearlo: el correo sale ahí o con uno nuevo, nunca
   después. Si Resend falla, la persona se crea igual, el panel lo dice y
-  el código sigue en pantalla. Prueba: `test-alta-correo`, 3e de
+  el código sigue en pantalla. Lo firma quien la crea: el nombre de su
+  sesión o, en una cuenta de correo, el del perfil de remitente (el del
+  saludo del Home); sin ninguno no firma "BarStock". YOUR ACCOUNT va
+  al pie, y el encabezado nombra la locación sólo si es una. Prueba: `test-alta-correo`, 3e de
   `test-roles` y la pantalla en `test-bartenders`.
 - Pruebas: `test-roles`, `test-bartenders`, `test-invitado`,
   `test-invitado-pantallas`, `test-pin-login`.

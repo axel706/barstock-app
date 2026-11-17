@@ -32,7 +32,7 @@ const t = texto(html);
 
 console.log('\nlo que dice');
 prueba('el asunto, con su nombre', asunto === 'Your BarStock account is ready, Maria', asunto);
-prueba('el saludo y quién la creó', /Hi Maria, welcome to BarStock/.test(t) && /Axel just set up your account at The Crown Tavern/.test(t), t.slice(0, 200));
+prueba('el saludo y quién la creó', /Hi Maria, welcome to BarStock/.test(t) && /Axel just set up your account\. It takes about 5 minutes/.test(t), t.slice(0, 200));
 prueba('YOUR ACCOUNT: tipo, locaciones y con qué entra', /Your account/i.test(t) && /Account type Manager/.test(t) &&
   /Locations The Crown Tavern · Will's & Bill's/.test(t) && /Sign in with Your name \(Maria\) and your own PIN/.test(t), t);
 prueba('el código, partido en dos', /482 913/.test(t));
@@ -48,9 +48,25 @@ console.log('\nlo que no se rompe');
 prueba('la línea de los pasos es una celda, no un degradado', !/linear-gradient/.test(html) && (html.match(/background:#bae6fd/g) || []).length === 3);
 const raro = M.armar(Object.assign({}, D, { nombre: 'Li <b>', quien: '' }));
 prueba('un nombre con "<" no rompe el HTML', raro.html.indexOf('Li <b>') < 0 && raro.html.indexOf('Li &lt;b&gt;') >= 0);
-prueba('sin quién, firma BarStock', /See you in the app, BarStock/.test(texto(raro.html)));
+prueba('sin quién, firma sin nombre', /See you in the app\./.test(texto(raro.html)) && !/See you in the app, BarStock/.test(texto(raro.html)));
 prueba('el enlace codifica el nombre', M.enlace('Ana María', '000123') === 'https://app.barstockpro.com/?alta=Ana%20Mar%C3%ADa&c=000123');
 prueba('en verano, la hora también es la de Nueva York', M.cuando('2026-07-01T22:00:00Z') === 'Wed, Jul 1 at 6:00 PM', M.cuando('2026-07-01T22:00:00Z'));
+
+console.log('\nlo que vio Axel en su correo (2026-11-17)');
+{
+  // Los datos de la cuenta, al pie: después del botón, antes de la firma.
+  const iBoton = html.indexOf('Set up my account'), iCuenta = html.indexOf('Account type'), iFirma = html.indexOf('See you in the app');
+  prueba('YOUR ACCOUNT va al pie, después del botón y antes de la firma', iBoton > 0 && iCuenta > iBoton && iFirma > iCuenta, [iBoton, iCuenta, iFirma].join(' '));
+  // Con varias locaciones, el encabezado no puede decir sólo una.
+  const tres = M.armar(Object.assign({}, D, { locaciones: ['The Crown Tavern', 'DEVELOP', 'Harvest Seasonal Grill'] }));
+  const cab = (h) => (h.match(/<span style="font-size:13px;color:#475569;font-weight:500">([^<]*)<\/span>/) || [])[1];
+  prueba('con varias locaciones, el encabezado no nombra una sola', cab(tres.html) === '', cab(tres.html));
+  prueba('con una, sí', cab(M.armar(Object.assign({}, D, { locaciones: ['The Crown Tavern'] })).html) === 'The Crown Tavern');
+  prueba('el saludo no nombra una locación (los datos van al pie)', !/set up your account at/.test(texto(tres.html)) && /Axel just set up your account\./.test(texto(tres.html)), texto(tres.html).slice(0, 160));
+  // Sin saber quién, no se inventa "BarStock" como si fuera una persona.
+  const nadie = texto(M.armar(Object.assign({}, D, { quien: '' })).html);
+  prueba('sin quién: ni "BarStock just set up" ni firma de BarStock', !/BarStock just set up/.test(nadie) && !/See you in the app, BarStock/.test(nadie) && /Your account is ready/.test(nadie), nadie.slice(0, 200));
+}
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);

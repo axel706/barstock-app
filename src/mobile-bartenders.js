@@ -397,6 +397,20 @@
 
   // Lo que se comprueba aquí es para decirlo antes de llamar; lo que
   // manda es la misma regla en el servidor (src/bartender-id.js).
+  // Quién crea a la persona, para firmar su correo: el mismo nombre del
+  // saludo del Home (el de la sesión de PIN, o el perfil de remitente si
+  // es una cuenta de correo). Sólo el primer nombre, como allí.
+  async function quienSoy() {
+    const primero = (n) => String(n || '').trim().split(/\s+/)[0] || '';
+    try {
+      const G = window.BarStockGuest;
+      if (G && (G.persona ? G.persona() : G.activo && G.activo())) return primero(G.nombre());
+      const S = window.BarStockSenderProfile;
+      if (S && S.getProfile) return primero(((await S.getProfile()) || {}).name);
+    } catch (e) { /* sin nombre, el correo no firma con uno inventado */ }
+    return '';
+  }
+
   async function crear() {
     const n = _nuevo, b = _host.querySelector('#btCrear');
     const nombre = n.nombre.trim();
@@ -407,7 +421,7 @@
     if (b) { b.disabled = true; b.textContent = 'Creating…'; }
     const cuerpo = { name: nombre, role: n.rol, locationIds: Array.from(n.locs) };
     if (!n.sinPin) cuerpo.pin = n.pin;
-    else if ((n.correo || '').trim()) cuerpo.email = n.correo.trim();
+    else if ((n.correo || '').trim()) { cuerpo.email = n.correo.trim(); cuerpo.quien = await quienSoy(); }
     const r = await A().llamar('createPerson', cuerpo).catch(fallo);
     if (!r || !r.ok) { _error = 'Not created: ' + ((r && r.error) || 'no answer'); return pintar(); }
     _creado = n.sinPin ? { nombre: r.name || nombre, code: r.code, expira: r.expira, enviado: r.enviado || '', envioError: r.envioError || '' }
@@ -528,7 +542,7 @@
     const f = _ficha;
     const b = _host.querySelector(enviar ? '#btAltaMail' : '#btAltaOtra');
     if (b) { b.disabled = true; b.textContent = enviar ? 'Sending a new code…' : 'Making a new code…'; }
-    const r = await A().llamar('nuevoCodigo', enviar ? { userId: f.id, enviar: true } : { userId: f.id }).catch(fallo);
+    const r = await A().llamar('nuevoCodigo', enviar ? { userId: f.id, enviar: true, quien: await quienSoy() } : { userId: f.id }).catch(fallo);
     if (!r || !r.ok) { _error = 'Not done: ' + ((r && r.error) || 'no answer'); return pintar(); }
     _creado = { nombre: f.nombre, code: r.code, expira: r.expira, enviado: r.enviado || '', envioError: r.envioError || '' };
     _ficha = null; _vista = 'lista'; _tab = 'people';

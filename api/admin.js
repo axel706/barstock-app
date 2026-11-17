@@ -450,7 +450,12 @@ module.exports = async function handler(req, res) {
           const { data } = await supabase.from('locations').select('id, name').in('id', locationIds);
           locs = locationIds.map(id => ((data || []).find(l => l.id === id) || {}).name).filter(Boolean);
         }
-        const quien = String((yo.user_metadata || {}).first_name || '').trim();
+        // Quién la crea: el nombre de su sesión (las personas de PIN lo
+        // tienen); si no (Axel entra con correo y su sesión no trae
+        // nombre), el que manda la app, el mismo del saludo del Home. Sin
+        // ninguno, el correo no inventa uno.
+        const um = yo.user_metadata || {};
+        const quien = String(um.first_name || um.full_name || um.name || (req.body || {}).quien || '').trim().split(/\s+/)[0].slice(0, 40);
         const { asunto, html } = require('../lib/alta-email').armar({ nombre, quien, rol, locaciones: locs, code, expira });
         const { Resend } = require('resend');
         const r = await new Resend(process.env.RESEND_API_KEY).emails.send({
