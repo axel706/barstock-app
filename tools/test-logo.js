@@ -170,6 +170,20 @@ grupo('"Stock" viaja de verde a azul, y no desaparece si no se puede');
   const correo = fs.existsSync(path.join(__dirname, '..', 'lib', 'email-shell.js'))
     ? fs.readFileSync(path.join(__dirname, '..', 'lib', 'email-shell.js'), 'utf8') : '';
   prueba('no se coló en los correos', !/background-clip/.test(correo));
+
+  // El degradado en los correos (Axel, 2026-11-17, opción B sobre
+  // lámina): "para que se pueda ver en todos los correos". Ningún lector
+  // pinta un degradado en texto, así que cada letra de "Stock" lleva su
+  // tono, del verde al azul de --bs-stock-grad. "Bar" sigue blanco.
+  const S = require(path.join(__dirname, '..', 'lib', 'email-shell.js'));
+  const html = S.shell({ right: 'The Crown Tavern', footer: 'Your account', body: '' });
+  const letras = [...html.matchAll(/<span style="[^"]*color:(#[0-9a-f]{6})[^"]*">([A-Za-z]+)<\/span>/g)].map(m => [m[2], m[1]]);
+  const stock = letras.filter(([l]) => l.length === 1).map(([l]) => l).join('');
+  prueba('en los correos, "Stock" va letra por letra', stock === 'Stock', JSON.stringify(letras));
+  const tonos = letras.filter(([l]) => l.length === 1).map(([, c]) => c);
+  prueba('del verde al azul de la marca', tonos[0] === '#6ee7b7' && tonos[tonos.length - 1] === '#38bdf8' && new Set(tonos).size === 5, JSON.stringify(tonos));
+  prueba('"Bar" sigue blanco', letras.some(([l, c]) => l === 'Bar' && c === '#f1f5f9'));
+  prueba('sin degradados de CSS ni imágenes en el logo', !/linear-gradient|<img/.test(html.slice(0, html.indexOf('PRO'))));
 }
 
 grupo('ninguna pantalla se guarda un renglón para volver');

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261116-194525",
+    "items": [
+      "Emails: the BarStock logo now has its colors"
+    ]
+  },
+  {
     "build": "20261116-193822",
     "items": [
       "Sign-in code email: signed by you, details at the end"
@@ -177,12 +183,6 @@
     "items": [
       "Running out: review each item",
       "Add it to the list, or say how many you have"
-    ]
-  },
-  {
-    "build": "20261115-074615",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]
