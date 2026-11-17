@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261116-195903",
+    "items": [
+      "People: turn off permissions for an Owner too"
+    ]
+  },
+  {
     "build": "20261116-194525",
     "items": [
       "Emails: the BarStock logo now has its colors"
@@ -176,13 +182,6 @@
     "build": "20261115-085116",
     "items": [
       "Running out: the bottom tabs take you out of it"
-    ]
-  },
-  {
-    "build": "20261115-082115",
-    "items": [
-      "Running out: review each item",
-      "Add it to the list, or say how many you have"
     ]
   }
 ]

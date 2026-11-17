@@ -724,7 +724,9 @@ del rol con su interruptor, lo quitado sólo a ella en ámbar ("Off for
   PIN, una sola regla para la app y el servidor.
 - **Los roles en la tabla `roles`** (migración 039): nombre y permisos.
   Sólo lectura con la llave pública; la escribe el servidor. Owner no
-  está: todo, fijo.
+  está: el rol da todo, fijo. Pero a cada Owner se le pueden quitar
+  permisos como a un Manager (2026-11-17, "mientras aprenden"), y sólo
+  otro Owner (o Axel) toca sus excepciones.
 - **De cada persona, en `app_metadata`** (sólo el servidor): `role`,
   `off` y `perms` ya calculados. Cambiar un rol se lo recalcula a quien lo
   tiene; llega con su próxima sesión (una hora como mucho).

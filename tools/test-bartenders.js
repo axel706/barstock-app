@@ -379,6 +379,22 @@ async function llamar(token, action, cuerpo) {
     const css = leer('styles/mobile-app.css').replace(/\/\*[\s\S]*?\*\//g, '');
     prueba('las filas de People, con el aire por arriba y nada abajo', /body\.m-shell \.m-bt \.m-bt-fila \{ margin: 8px 0 0; \}/.test(css));
 
+    // ── Excepciones para un Owner (Axel, 2026-11-17) ─────────────────
+    {
+      await llamar('axel', 'createPerson', { name: 'Olga', pin: '111222', role: 'owner', locationIds: ['crown'] });
+      await w.BarStockMobileBartenders.montar(host, (t) => '<div class="cab">' + t + '</div>', () => {});
+      [...host.querySelectorAll('[data-b]')].find(b => /Olga/.test(b.textContent)).click();
+      const so = (k) => q('[data-fp="' + k + '"]');
+      prueba('en la ficha de un Owner, los permisos se pueden apagar', !!so('contar') && so('contar').classList.contains('on') && !so('contar').disabled &&
+        !/Owners can do everything/.test(host.textContent), host.textContent.slice(0, 200));
+      so('contar').click(); await esperar(40);
+      const olga = db.users.find(x => x.user_metadata.first_name === 'Olga');
+      prueba('apagar "Count inventory" a Olga se guarda sólo para ella', olga.app_metadata.role === 'owner' && olga.app_metadata.perms.indexOf('contar') < 0 &&
+        /Off for Olga/i.test(so('contar').parentNode.textContent));
+      await llamar('axel', 'removePerson', { userId: olga.id });
+      await w.BarStockMobileBartenders.montar(host, (t) => '<div class="cab">' + t + '</div>', () => {});
+    }
+
     // ── La pestaña Roles ──────────────────────────────────────────────
     q('[data-tab="roles"]').click();
     const rs = [...host.querySelectorAll('[data-r]')].map(b => b.dataset.r).join();

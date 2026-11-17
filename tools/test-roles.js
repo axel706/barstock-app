@@ -37,7 +37,10 @@ const P = require(path.join(RAIZ, 'src/permisos.js'));
 grupo('1 · el catálogo');
 {
   prueba('quince permisos, sin repetir', P.TODOS.length === 15 && new Set(P.TODOS).size === 15);
-  prueba('Owner: todo', P.efectivos('owner', [], ['contar']).length === 15);
+  prueba('Owner: todo', P.efectivos('owner', [], []).length === 15);
+  // Excepciones también para un Owner (Axel, 2026-11-17: "aunque sean
+  // Owner o Manager debo poder apagarles contar mientras aprenden").
+  prueba('a un Owner también se le puede quitar algo', P.efectivos('owner', [], ['contar']).length === 14 && P.efectivos('owner', [], ['contar']).indexOf('contar') < 0);
   const man = P.efectivos('manager', [], []);
   prueba('Manager de fábrica: sin ajustes de la locación, Time Machine ni gente',
     man.indexOf('ajustes_locacion') < 0 && man.indexOf('time_machine') < 0 && man.indexOf('personas') < 0 && man.indexOf('contar') >= 0);
@@ -371,6 +374,24 @@ grupo('3e · el código por correo (Axel, 2026-11-17, sobre lámina)');
   prueba('con nombre en la sesión, manda el suyo', /<strong>Axel<\/strong>/.test((enviados[0] || {}).html || '') && !/Otro/.test((enviados[0] || {}).html || ''));
   await llamar('axel', 'removePerson', { userId: u('Ole').id });
   for (const x of ['Nia', 'Zed', 'Fay', 'Pia']) await llamar('axel', 'removePerson', { userId: u(x).id });
+}
+
+grupo('3f · excepciones para un Owner (Axel, 2026-11-17)');
+{
+  const olga = () => u('Olga');
+  const r = await llamar('axel', 'setPerson', { userId: olga().id, off: ['contar', 'cerrar_ciclo'] });
+  prueba('Axel le quita contar y reiniciar el ciclo a Olga (Owner)', r.ok && olga().app_metadata.role === 'owner' &&
+    olga().app_metadata.perms.indexOf('contar') < 0 && olga().app_metadata.perms.indexOf('cerrar_ciclo') < 0 &&
+    olga().app_metadata.perms.length === 13, JSON.stringify(olga().app_metadata));
+  prueba('y lo demás lo sigue pudiendo', olga().app_metadata.perms.indexOf('personas') >= 0 && olga().app_metadata.perms.indexOf('ordenes') >= 0);
+  await llamar('axel', 'listPeople');
+  prueba('abrir People no se lo devuelve (el resync respeta la excepción)', olga().app_metadata.perms.indexOf('contar') < 0);
+  const mar = await llamar(u('Maria').id, 'setPerson', { userId: olga().id, off: [] });
+  prueba('un Manager no toca las excepciones de un Owner', mar.codigo === 403 && olga().app_metadata.perms.indexOf('contar') < 0);
+  const yo = await llamar(olga().id, 'setPerson', { userId: olga().id, off: [] });
+  prueba('ni ella misma se las quita', !yo.ok && olga().app_metadata.perms.indexOf('contar') < 0);
+  const v = await llamar('axel', 'setPerson', { userId: olga().id, off: [] });
+  prueba('devolvérselas: todo otra vez', v.ok && olga().app_metadata.perms.length === 15 && olga().app_metadata.off.length === 0);
 }
 
 grupo('4 · el servidor de las integraciones');

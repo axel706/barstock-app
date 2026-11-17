@@ -234,10 +234,13 @@
       return '<div class="m-pp-perm' + (!da || pronto ? ' gris' : '') + '"><span>' + esc(p.n) +
           (quitado ? '<em>Off for ' + esc(corto) + '</em>' : '') +
           (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>' +
-        sw('data-fp', p.k, estado, !da || pronto || yo || f.rol === 'owner') + '</div>';
+        // Un Owner también lleva excepciones (2026-11-17); sólo otro Owner
+        // las toca, como su rol.
+        sw('data-fp', p.k, estado, !da || pronto || yo || (f.rol === 'owner' && !soyOwner())) + '</div>';
     };
     const C = P().CATALOGO;
-    const nota = f.rol === 'owner' ? 'Owners can do everything.' : yo ? 'You can\'t change your own permissions.' : 'Changes save as you tap.';
+    const nota = yo ? 'You can\'t change your own permissions.'
+      : f.rol === 'owner' && !soyOwner() ? 'Only an owner can change an owner.' : 'Changes save as you tap.';
     return '<div class="m-set-f"><label>What ' + esc(corto) + ' can do</label>' +
       '<div class="m-pp-lista">' + C.filter(p => p.ver).map(fila).join('') + '</div>' +
       '<div class="m-pp-lista">' + C.filter(p => !p.ver).map(fila).join('') + '</div>' +

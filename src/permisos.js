@@ -75,7 +75,11 @@
   // Lo que puede una persona: los permisos de su rol menos los quitados.
   // Un rol que ya no existe no da nada: mejor sin permisos que con todos.
   function efectivos(key, roles, off) {
-    if (key === 'owner') return TODOS.slice();
+    // El rol Owner lo da todo, pero a cada Owner se le pueden quitar
+    // cosas igual que a un Manager (Axel, 2026-11-17: "aunque sean Owner
+    // o Manager debo poder apagarles contar mientras aprenden"). Antes un
+    // Owner era todo, fijo, y sus excepciones se ignoraban.
+    if (key === 'owner') { const q = limpia(off); return TODOS.filter(k => q.indexOf(k) < 0); }
     const r = rol(key, roles);
     if (!r) return [];
     const quitados = limpia(off);
