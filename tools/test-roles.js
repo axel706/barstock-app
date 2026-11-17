@@ -122,6 +122,17 @@ require.cache[rutaSb] = { id: rutaSb, filename: rutaSb, loaded: true, exports: {
       updateUserById: async (id, o) => {
         const u = db.users.find(x => x.id === id); o = Object.assign({}, o);
         if ('ban_duration' in o) { u.banned_until = o.ban_duration === 'none' ? null : '2126-01-01T00:00:00Z'; delete o.ban_duration; }
+        // Y como Supabase (GoTrue, UpdateAppMetaData): app_metadata se
+        // MEZCLA con lo que había; una clave que no se manda se queda, y
+        // sólo `null` la borra. El simulacro lo reemplazaba entero, y así
+        // pasaba la prueba de quitar el alta con un código que en Supabase
+        // la dejaba puesta: Una puso su PIN y People seguía diciendo
+        // "Waiting for PIN" (2026-11-17).
+        if (o.app_metadata) {
+          const m = Object.assign({}, u.app_metadata || {});
+          for (const [k, v] of Object.entries(o.app_metadata)) { if (v === null) delete m[k]; else m[k] = v; }
+          o.app_metadata = m;
+        }
         Object.assign(u, o); return { data: { user: u }, error: null };
       },
       deleteUser: async (id) => { db.users = db.users.filter(u => u.id !== id); return { error: null }; }
@@ -306,6 +317,18 @@ grupo('3d · alta sin PIN: la persona crea el suyo con un código (Axel, 2026-11
   prueba('el código sirve una vez', !otra.ok && leo().password === '135790');
   l = await llamar('axel', 'listPeople');
   prueba('People ya no lo marca', !((l.people || []).find(x => x.name === 'Leo') || {}).pendiente);
+  // Lo que quedó guardado ANTES del arreglo (Una): el alta sigue en
+  // app_metadata, pero entró después de recibir su código, y con un alta
+  // pendiente la contraseña es al azar: ya puso su PIN. People no la marca.
+  const una = { id: 'una', email: 'una@bartenders.barstockpro.com', password: 'x', last_sign_in_at: new Date(Date.now() - 3600e3).toISOString(),
+    app_metadata: { role: 'bartender', perms: ['ver'], alta: { h: 'z', exp: new Date(Date.now() + 20 * 3600e3).toISOString(), n: 0 } },
+    user_metadata: { first_name: 'Una' } };
+  const sinEntrar = Object.assign({}, una, { id: 'una2', email: 'una2@bartenders.barstockpro.com', last_sign_in_at: null, user_metadata: { first_name: 'Ana' } });
+  db.users.push(una, sinEntrar);
+  l = await llamar('axel', 'listPeople');
+  prueba('el alta vieja de quien ya entró después del código no dice "Waiting for PIN"', !((l.people || []).find(x => x.id === 'una') || {}).pendiente, JSON.stringify((l.people || []).find(x => x.id === 'una')));
+  prueba('quien no ha entrado sigue esperando', !!((l.people || []).find(x => x.id === 'una2') || {}).pendiente);
+  db.users = db.users.filter(x => x.id !== 'una' && x.id !== 'una2');
 
   // Caduca, se anula con 5 intentos y se rehace desde People.
   const z = await llamar('axel', 'createPerson', { name: 'Zoe', role: 'bartender', locationIds: ['crown'] });

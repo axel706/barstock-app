@@ -803,7 +803,15 @@ del rol con su interruptor, lo quitado sólo a ella en ámbar ("Off for
   (`altaReclamar`) y entra. Ese paso es otra pantalla (2026-11-17,
   opción C): el ✓, "Welcome, Drew" y sin el campo del nombre; Drew no
   vio el de antes y su PIN quedó igual al código. El código no vale
-  como PIN, ni en la app ni en el servidor. `altaVerificar`/`altaReclamar` son lo único
+  como PIN, ni en la app ni en el servidor. **Supabase MEZCLA
+  `app_metadata`**: una clave que no se manda se queda, sólo `null` la
+  borra. Quitar el alta con `delete` dejaba "Waiting for PIN" a quien ya
+  lo había puesto (Una, 2026-11-17); ahora va `alta: null` (y `pausa:
+  null`), el simulacro de `test-roles` mezcla como Supabase, y People
+  no marca a quien entró después de recibir su código (así se arreglan
+  las altas que quedaron puestas). La fila de People dice su último
+  login ("Last in today 3:12 PM", "Never signed in"), no sus
+  locaciones, que están en la ficha. `altaVerificar`/`altaReclamar` son lo único
   de `api/admin.js` sin sesión, y contestan IGUAL a un código malo, a un
   nombre que no existe y a quien ya tiene PIN: el login es público. El
   QR se borra de la dirección al leerlo. Prueba: 3d de `test-roles`, la

@@ -62,14 +62,19 @@
     return String(a[0] % 1000000).padStart(6, '0');
   }
 
+  // El último login, para la fila de People (Axel, 2026-11-17: "en lugar
+  // de mostrarme sus locaciones ahí, muéstrame su último login"). Hoy y
+  // en la última semana con la hora; antes, la fecha.
   function cuando(iso) {
-    if (!iso) return 'never signed in';
-    const d = new Date(iso);
-    if (isNaN(d)) return 'never signed in';
-    const hoy = new Date();
+    const d = iso ? new Date(iso) : null;
+    if (!d || isNaN(d)) return 'Never signed in';
     const hora = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    if (d.toDateString() === hoy.toDateString()) return 'last in today ' + hora;
-    return 'last in ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const hoy = new Date();
+    if (d.toDateString() === hoy.toDateString()) return 'Last in today ' + hora;
+    const ayer = new Date(hoy.getTime() - 864e5);
+    if (d.toDateString() === ayer.toDateString()) return 'Last in yesterday ' + hora;
+    if (hoy - d < 6 * 864e5) return 'Last in ' + d.toLocaleDateString('en-US', { weekday: 'short' }) + ' ' + hora;
+    return 'Last in ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
   const nombresDe = (ids) => (_locs || []).filter(l => ids.has(l.id)).map(l => l.name);
@@ -174,10 +179,11 @@
       return '<button type="button" class="m-item m-bt-fila' + (pz ? ' m-bt-pausa' : '') + '" data-b="' + esc(b.id) + '">' +
         '<span class="m-bt-ini">' + esc((b.name || '?').charAt(0).toUpperCase()) + '</span>' +
         '<span class="m-item-t">' + esc(b.name || '—') +
-          '<small>' + esc(b.access.map(a => a.name).join(', ') || 'No location') +
+          // Su último login; las locaciones están en su ficha.
+          '<small>' + esc(cuando(b.lastSignIn)) +
             (pz ? ' · <b class="m-bt-off">Access off</b>'
               : b.pendiente ? ' · <b class="m-bt-espera">' + (b.pendiente.vencido ? 'Code expired' : 'Waiting for PIN') + '</b>'
-              : (off ? ' · ' + off + ' off' : '') + ' · ' + esc(cuando(b.lastSignIn))) + '</small>' +
+              : (off ? ' · ' + off + ' off' : '')) + '</small>' +
         '</span>' + (pz ? '<span class="m-pp-rol m-pp-rol-pausa">Off</span>'
           : '<span class="m-pp-rol m-pp-rol-' + esc(b.role) + '">' + esc(nombreRol(b.role)) + '</span>') + '</button>';
     }).join('');

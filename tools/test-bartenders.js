@@ -211,7 +211,9 @@ async function llamar(token, action, cuerpo) {
     // era la lista leída al entrar, y la ficha se abría con ella.
     w.__atras(); await esperar(30);
     const fila = q('[data-b]');
-    prueba('al volver a la lista, dice las dos locaciones', !!fila && /Crown/.test(fila.textContent) && /Will's & Bill's/.test(fila.textContent),
+    // La fila ya no lleva las locaciones (2026-11-17: el último login en
+    // su lugar); que la lista se relee lo comprueba la ficha, abajo.
+    prueba('al volver a la lista, la fila dice su último login', !!fila && /Never signed in/.test(fila.textContent) && !/Crown/.test(fila.textContent),
       fila && fila.textContent.replace(/\s+/g, ' '));
     fila.click();
     prueba('y al abrirla otra vez, las dos marcadas', q('[data-fl="crown"]').classList.contains('on') && q('[data-fl="wb"]').classList.contains('on'));
@@ -280,6 +282,11 @@ async function llamar(token, action, cuerpo) {
       prueba('Done lo cierra, y ya no se ve el código', !q('.m-bt-alta') && host.textContent.indexOf(cod) < 0);
       const fila = [...host.querySelectorAll('[data-b]')].find(b => /Leo/.test(b.textContent));
       prueba('en la lista: "Waiting for PIN"', !!fila && /Waiting for PIN/.test(fila.textContent), fila && fila.textContent);
+      // Axel, 2026-11-17: "en lugar de mostrarme sus locaciones ahí,
+      // muéstrame su último login". Las locaciones siguen en la ficha.
+      const sub = fila && fila.querySelector('small');
+      prueba('la fila dice cuándo entró por última vez, no sus locaciones', !!sub && /^Never signed in · Waiting for PIN$/.test(sub.textContent.trim()) &&
+        !/Crown|Tavern|No location/.test(sub.textContent), sub && sub.textContent);
       fila.click();
       prueba('su ficha lo dice, con los dos botones', /Waiting for PIN/.test(host.textContent) && !!q('#btAltaOtra') &&
         /Set the PIN for Leo/.test((q('#btPinCambiar') || {}).textContent || ''));

@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261117-153259",
+    "items": [
+      "People shows each person’s last sign-in",
+      "“Waiting for PIN” goes away once they set it"
+    ]
+  },
+  {
     "build": "20261117-144237",
     "items": [
       "Live vs count now measures from last week’s count"
@@ -176,12 +183,6 @@
     "build": "20261115-110727",
     "items": [
       "Edit order: Done sits above the tabs, in glass"
-    ]
-  },
-  {
-    "build": "20261115-105848",
-    "items": [
-      "Running out: Edit order to pin your products first"
     ]
   }
 ]

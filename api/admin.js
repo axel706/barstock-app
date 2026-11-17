@@ -62,7 +62,11 @@ async function altaSinSesion(supabase, body, res) {
   // escribió el código otra vez y su PIN quedó igual al código, que ya
   // había viajado por correo). Se dice antes de gastarlo.
   if (String(body.pin) === code) return res.status(400).json({ ok: false, error: 'That’s your code. Choose a different PIN.' });
-  const sin = Object.assign({}, m); delete sin.alta;
+  // `alta: null` y no borrar la clave: Supabase MEZCLA app_metadata con
+  // lo que había, y una clave que no se manda se queda. Con `delete` el
+  // PIN se guardaba pero el alta seguía, y People decía "Waiting for PIN"
+  // a quien ya lo había puesto (Una, 2026-11-17).
+  const sin = Object.assign({}, m, { alta: null });
   const { error } = await supabase.auth.admin.updateUserById(u.id, { password: String(body.pin), app_metadata: sin });
   if (error) throw error;
   return res.status(200).json({ ok: true });
@@ -512,7 +516,12 @@ module.exports = async function handler(req, res) {
         pausado: bloqueado ? { at: (m.pausa && m.pausa.at) || null, by: (m.pausa && m.pausa.by) || '' } : null,
         // Esperando a que ponga su PIN: hasta cuándo vale el código, y si
         // ya no sirve (caducado o con 5 intentos malos). Nunca el código.
-        pendiente: m.alta ? { expira: m.alta.exp, vencido: !!m.alta.anulado || !(new Date(m.alta.exp).getTime() > Date.now()) } : null,
+        // Con un alta pendiente la contraseña es al azar: si entró DESPUÉS
+        // de que se le dio el código (exp − ALTA_HORAS), ya puso su PIN.
+        // Así se arreglan solas las altas que el `delete` de antes dejó
+        // puestas (Una, 2026-11-17), sin tocar la base.
+        pendiente: m.alta && !(u.last_sign_in_at && new Date(u.last_sign_in_at).getTime() > new Date(m.alta.exp).getTime() - ALTA_HORAS * 3600e3)
+          ? { expira: m.alta.exp, vencido: !!m.alta.anulado || !(new Date(m.alta.exp).getTime() > Date.now()) } : null,
         contacto: m.contacto || null
       });
     }
@@ -666,7 +675,7 @@ module.exports = async function handler(req, res) {
         const m0 = Object.assign({}, u.app_metadata || {});
         const quien = ((yo.user_metadata || {}).first_name || String(yo.email || '').split('@')[0] || '').trim();
         if (pausar) m0.pausa = { at: new Date().toISOString(), by: quien };
-        else delete m0.pausa;
+        else m0.pausa = null;   // null: Supabase mezcla app_metadata, y sin él la clave se quedaba
         // 100 años: Supabase no tiene "para siempre"; 'none' lo quita.
         const { error } = await supabase.auth.admin.updateUserById(u.id, { ban_duration: pausar ? '876000h' : 'none', app_metadata: m0 });
         if (error) throw error;
@@ -676,7 +685,8 @@ module.exports = async function handler(req, res) {
         if (!BID.pinValido(pin)) return res.status(400).json({ ok: false, error: 'The PIN has to be 6 digits.' });
         // Ponerle el PIN cierra un alta pendiente: el código ya no sirve.
         const cambio = { password: String(pin) };
-        if (u.app_metadata.alta) { const sin = Object.assign({}, u.app_metadata); delete sin.alta; cambio.app_metadata = sin; }
+        // `alta: null`: Supabase mezcla app_metadata; sin el null la clave se queda.
+        if (u.app_metadata.alta) cambio.app_metadata = Object.assign({}, u.app_metadata, { alta: null });
         const { error } = await supabase.auth.admin.updateUserById(u.id, cambio);
         if (error) throw error;
         if (cambio.app_metadata) u.app_metadata = cambio.app_metadata;
