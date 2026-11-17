@@ -43,7 +43,7 @@
     const R = window.BarStockRest;
     const desde = sumarDias(desdeDia, -7 * SEMANAS);
     const ciclos = await R.leerTodo('live_expected_cycles?location_id=eq.' + encodeURIComponent(loc) +
-      '&end_day=gte.' + desde + '&select=id,cycle_end,end_day,status,unconverted&order=cycle_end.desc');
+      '&end_day=gte.' + desde + '&select=id,cycle_start,cycle_end,end_day,status,unconverted&order=cycle_end.desc');
     if (!ciclos.length || ciclos[0].end_day < desdeDia) return { ciclos: [], filas: [] };
     const filas = await R.leerTodo('live_expected?cycle_id=in.(' + ciclos.map(c => c.id).join(',') + ')' +
       '&select=cycle_id,item_name,sold,counted,expected,difference,unit_price,in_toast&order=id.asc');
@@ -54,8 +54,20 @@
   //
   // ciclos: del más nuevo al más viejo (el primero es el que se cuenta).
   // filas:  las de todos esos ciclos. proveedor(item) → nombre o ''.
+  // Un ciclo de menos de MIN_HORAS no es una semana: el del 2026-11-15
+  // de Crown se guardó midiendo desde el reinicio a cero de ese mismo
+  // domingo (live-expected.antes, ya corregido) y duró dos horas. Con él,
+  // Tito's salía "8.4 bottles more, 8350% of the 0.1 it sold". Un ciclo
+  // así no se diagnostica ni cuenta como historia: se dice.
+  const MIN_HORAS = 72;
+  const horasDe = (c) => (Date.parse(c.cycle_end) - Date.parse(c.cycle_start)) / 3600e3;
+  const corto = (c) => !!(c && c.cycle_start && c.cycle_end && !(horasDe(c) >= MIN_HORAS));
+
   function diagnosticar({ ciclos, filas, proveedor }) {
     if (!ciclos || !ciclos.length) return { hay: false };
+    if (corto(ciclos[0])) return { hay: true, invalido: true, fin: ciclos[0].end_day, horas: Math.max(0, Math.round(horasDe(ciclos[0]))) };
+    // La historia sigue sin los ciclos cortos: no dicen nada de una semana.
+    ciclos = ciclos.filter((c, i) => i === 0 || !corto(c));
     const ult = ciclos[0];
     const orden = new Map(ciclos.map((c, i) => [c.id, i]));
     const porItem = new Map();
@@ -140,5 +152,5 @@
     return diagnosticar({ ciclos, filas, proveedor: (i) => prov.get(i) || '' });
   }
 
-  window.BarStockLiveDiag = { UMBRAL, PARTE, seAleja, leer, diagnosticar, causa, semana, MAX };
+  window.BarStockLiveDiag = { UMBRAL, PARTE, seAleja, leer, diagnosticar, causa, semana, MAX, MIN_HORAS };
 })();

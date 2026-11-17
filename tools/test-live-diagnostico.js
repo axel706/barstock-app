@@ -83,6 +83,21 @@ grupo('las causas');
   prueba('una semana sin Toast corta la historia', x && x.causa === 'pronto', JSON.stringify(x));
 }
 
+grupo('un ciclo que no cubrió una semana no se diagnostica (Crown, 2026-11-15)');
+{
+  // Medido desde el reinicio a cero de ese domingo: dos horas, Tito's
+  // "0 + 0 − 0.1" contra 8.3 contados.
+  const C2 = [Object.assign({}, CICLOS[0], { cycle_start: '2026-11-16T00:03:45Z', cycle_end: '2026-11-16T02:37:04Z' })].concat(CICLOS.slice(1));
+  const r = DG.diagnosticar({ ciclos: C2, filas: hist("Tito's", [[8.35, 0.1]]), proveedor: () => '' });
+  prueba('no saca conclusiones: lo marca, con sus horas', r.hay === true && r.invalido === true && r.horas === 3 && !r.lista, JSON.stringify(r));
+  // Y como historia tampoco cuenta: el ciclo corto de en medio no hace de semana.
+  const C3 = CICLOS.map((c, i) => Object.assign({}, c, i === 1
+    ? { cycle_start: '2026-11-15T20:00:00Z', cycle_end: '2026-11-15T22:00:00Z' }
+    : { cycle_start: '2026-10-01T00:00:00Z', cycle_end: '2026-10-08T00:00:00Z' }));
+  const x = DG.diagnosticar({ ciclos: C3, filas: hist('Jameson', [[2.5, 6], [-2.4, 6]]), proveedor: () => '' }).lista[0];
+  prueba('un ciclo corto en la historia no cuenta como la semana anterior', x && x.causa !== 'conteo', JSON.stringify(x));
+}
+
 grupo('el resumen');
 {
   const filas = [].concat(hist('A', [[-2, 6]], { unit_price: 10 }), hist('B', [[-3, 6]], { unit_price: 30 }), hist('C', [[6, 4]], { unit_price: 5 }));

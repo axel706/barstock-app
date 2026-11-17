@@ -269,6 +269,8 @@ grupo('el lunes: Live vs count, con lo que podría ser (Axel, 2026-11-17)');
 
   const sin = (c) => texto(M.armar(Object.assign({}, base, { semanal: Object.assign({}, base.semanal, { conteo: c }) })).html).replace(/ ([,.:])/g, '$1');
   prueba('sin conteo cerrado la semana pasada: lo dice', /No count was closed last week, so there's nothing to compare yet\./.test(sin({ hay: false })));
+  prueba('un ciclo de horas, no de una semana: no se compara y lo dice', /Sunday's count can't be compared: the cycle it closed only covered 3 hours, not a week of sales\./.test(sin({ hay: true, invalido: true, fin: '2026-11-15', horas: 3 })) &&
+    !/More than expected|Less than expected/.test(sin({ hay: true, invalido: true, fin: '2026-11-15', horas: 3 })));
   prueba('todo cerca: lo dice', /Everything Toast sells came out close to what the app expected\./.test(sin(Object.assign({}, CONTEO, { lista: [], total: 0, corto: 0, sobra: 0, sinConvertir: [] }))));
   prueba('un error: lo que pasó, sin adivinar', /Couldn't read what the count found: HTTP 500: boom/.test(sin({ error: 'HTTP 500: boom' })) && !/migration/.test(sin({ error: 'HTTP 500: boom' })));
   prueba('provisional: lo avisa', /may not have been complete/.test(sin(Object.assign({}, CONTEO, { provisional: true }))));

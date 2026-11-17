@@ -42,18 +42,45 @@
   const cfg = () => window.BARSTOCK_CONFIG || {};
   const num = (v) => (typeof window.parseNum === 'function' ? window.parseNum(v) : Number(v) || 0);
 
-  // Lo de antes del conteo: el conteo anterior y, por producto, lo que
-  // había y su precio. Copiado: el conteo escribe encima del maestro.
+  // ── Lo de antes: el conteo de la semana anterior ─────────────────────
+  //
+  // El ciclo que se cierra empezó en el conteo de la semana ANTERIOR: su
+  // hora y lo que se contó. Ni el maestro de ahora ni ultimoConteo():
+  // el paso 1 de cada domingo, "Start new cycle" (resetOnHand), pone todo
+  // a 0 y mueve weekly_reset_at a la hora en que se empieza a contar.
+  // Con ellos, el ciclo del 2026-11-15 de Crown midió dos horas desde 0:
+  // Tito's "0 + 0 − 0.1 = −0.1" contra 8.3 contados, y el correo del
+  // lunes lo daba por "8.4 bottles more" (Axel, 2026-11-17).
+  //
+  // Las dos cosas son del MISMO conteo, el primer cierre de su semana:
+  //   · cuándo: count_sessions, el primer finished_at de la última semana
+  //     anterior a la que se cierra (un reconteo del jueves escribe otra
+  //     fila en la misma semana, y no abre ciclo).
+  //   · qué había: inventory_snapshots.on_hand_start de esa semana, que
+  //     runCycle escribió con lo contado al cerrarlo (y un reconteo no
+  //     reescribe, cicloYaCorrio).
+  // Sin las dos no hay desde dónde medir: se dice, y no se guarda nada.
+  // El precio sí es el del maestro: el reinicio no lo toca.
   async function antes(master) {
-    const U = window.BarStockToastUsage;
-    const desde = U && U.ultimoConteo ? await U.ultimoConteo() : null;
-    const onHand = {}, precio = {};
-    for (const r of master || []) {
-      if (!r || !r.item) continue;
-      onHand[r.item] = Number(r.onHand) || 0;
-      precio[r.item] = num(r.value);
-    }
-    return { desde: desde ? new Date(desde).toISOString() : null, onHand, precio };
+    const precio = {};
+    for (const r of master || []) if (r && r.item) precio[r.item] = num(r.value);
+    const sin = (motivo) => ({ desde: null, onHand: {}, precio, motivo });
+    const W = window.BarStockWeek, R = window.BarStockRest;
+    if (!W || !W.cycleWeekKey || !R || !R.leerTodo) return sin('The week modules are not loaded.');
+    const semana = W.cycleWeekKey();
+    const sesiones = await R.leerTodo('count_sessions?location_name=eq.' + encodeURIComponent(cfg().LOCATION_NAME || '') +
+      '&week_key=lt.' + semana + '&select=week_key,finished_at&order=finished_at.desc');
+    const previa = sesiones[0] && sesiones[0].week_key;
+    if (!previa) return sin('No count from last week was found to measure from.');
+    const desde = sesiones.filter(x => x.week_key === previa && x.finished_at)
+      .map(x => new Date(x.finished_at)).filter(d => !isNaN(d.getTime())).sort((a, b) => a - b)[0];
+    const loc = await window.BarStockInventoryCloud.fetchLocationId();
+    const fotos = await R.leerTodo('inventory_snapshots?location_id=eq.' + loc + '&week_start=eq.' + previa +
+      '&select=item_name,on_hand_start&order=id.asc');
+    if (!desde || !fotos.length) return sin('What was counted last week (' + previa + ') was not found to measure from.');
+    const onHand = {};
+    for (const f of fotos) if (f && f.item_name) onHand[f.item_name] = Number(f.on_hand_start) || 0;
+    return { desde: desde.toISOString(), onHand, precio, semana: previa };
   }
 
   // Las filas, sin red. vivo: las de live-stock (con contado = lo de antes).
@@ -115,7 +142,7 @@
   // → { ok, ciclo, filas } o { ok: false, error }
   async function guardar(o) {
     const A = o && o.antes;
-    if (!A || !A.desde) return { ok: false, error: 'No previous count is known: there is nothing to measure the cycle from.' };
+    if (!A || !A.desde) return { ok: false, error: (A && A.motivo) || 'No count from last week is known: there is nothing to measure the cycle from.' };
     const contados = (o.contados || []).filter(Boolean);
     if (!contados.length) return { ok: false, error: 'Nothing was counted.' };
     const U = window.BarStockToastUsage, L = window.BarStockLive;

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261117-144237",
+    "items": [
+      "Live vs count now measures from last week’s count"
+    ]
+  },
+  {
     "build": "20261117-142014",
     "items": [
       "Running out: delivered items can go on the list again",
@@ -176,12 +182,6 @@
     "build": "20261115-105848",
     "items": [
       "Running out: Edit order to pin your products first"
-    ]
-  },
-  {
-    "build": "20261115-104035",
-    "items": [
-      "Edit item: same background as the rest of the app"
     ]
   }
 ]

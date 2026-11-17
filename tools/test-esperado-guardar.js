@@ -45,8 +45,24 @@ function entorno(o) {
   w.BARSTOCK_CONFIG = { SUPABASE_URL: 'https://sb.test', SUPABASE_KEY: 'k', LOCATION_NAME: 'Crown' };
   w.parseNum = (v) => Number(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')) || 0;
   w.BarStockInventoryCloud = { fetchLocationId: async () => '11111111-2222-3333-4444-555555555555' };
+  // El conteo de la semana anterior: cuándo se cerró (count_sessions, el
+  // PRIMER cierre de su semana; el de las 05:00 es un reconteo) y lo que
+  // se contó (inventory_snapshots.on_hand_start de esa semana).
+  w.BarStockWeek = { cycleWeekKey: () => '2026-11-16' };
+  w.__leidas = [];
+  w.BarStockRest = { leerTodo: async (ruta) => {
+    w.__leidas.push(ruta);
+    if (/^count_sessions/.test(ruta)) return o.sinConteo ? [] : [
+      { week_key: '2026-11-09', finished_at: '2026-11-09T05:00:00+00:00' },
+      { week_key: '2026-11-09', finished_at: '2026-11-09T02:30:00+00:00' },
+      { week_key: '2026-11-02', finished_at: '2026-11-02T04:48:17+00:00' }];
+    if (/^inventory_snapshots/.test(ruta)) return o.sinFoto ? [] :
+      [{ item_name: "Tito's", on_hand_start: 3 }, { item_name: 'Baileys', on_hand_start: 2 }, { item_name: 'Sin contar', on_hand_start: 4 }];
+    return [];
+  } };
   w.BarStockToastUsage = {
-    ultimoConteo: async () => (o.sinConteo ? null : new Date('2026-11-09T02:30:00Z')),
+    // Ya no lo usa el esperado: daría el reinicio a cero de este domingo.
+    ultimoConteo: async () => new Date('2026-11-16T00:03:45Z'),
     diaDeNegocio: (t) => new Date(new Date(t).getTime() - 4 * 3600e3).toISOString().slice(0, 10)
   };
   // El LIVE de la semana que se cierra, como lo devolvería live-stock.
@@ -104,6 +120,25 @@ grupo('1 · lo de antes del conteo');
   prueba('guarda el conteo anterior', a && a.desde === '2026-11-09T02:30:00.000Z', a && a.desde);
   prueba('y el on hand de ANTES, copiado', a && a.onHand["Tito's"] === 3, a && JSON.stringify(a.onHand));
   prueba('y el precio de ese momento', a && a.precio["Tito's"] === 21.5, a && JSON.stringify(a.precio));
+}
+
+grupo('1b · el reinicio a cero del domingo no es "lo de antes" (Axel, 2026-11-17)');
+{
+  // "Start new cycle" pone todo a 0 y mueve weekly_reset_at a la hora en
+  // que se empieza a contar. Con eso, Tito's salía "0 + 0 − 0.1 = −0.1"
+  // contra 8.3 contados: el ciclo medía 2 horas, no la semana.
+  const w = entorno();
+  const cero = MASTER().map(r => Object.assign(r, { onHand: 0 }));
+  const a = await w.BarStockLiveExpected.antes(cero);
+  prueba('desde el cierre del conteo de la semana anterior, no desde el reinicio', a && a.desde === '2026-11-09T02:30:00.000Z', a && a.desde);
+  prueba('lo de al abrir, lo que se contó entonces (no el 0 del reinicio)', a && a.onHand["Tito's"] === 3 && a.onHand.Baileys === 2, a && JSON.stringify(a.onHand));
+  prueba('de la semana anterior a la que se cierra', w.__leidas.some(r => /count_sessions\?.*week_key=lt\.2026-11-16/.test(r)) &&
+    w.__leidas.some(r => /inventory_snapshots\?.*week_start=eq\.2026-11-09/.test(r)), w.__leidas.join(' | '));
+  const w2 = entorno({ sinFoto: true });
+  const b = await w2.BarStockLiveExpected.antes(cero);
+  prueba('sin lo contado la semana anterior: no hay desde dónde medir (y no se inventa con el maestro)', b && b.desde === null && !!b.motivo, JSON.stringify(b));
+  const r = await w2.BarStockLiveExpected.guardar({ antes: b, master: cero, contados: ["Tito's"], hasta: Date.now() });
+  prueba('y no se guarda un ciclo, diciendo por qué', r && r.ok === false && /last week/i.test(r.error || '') && !w2.__pet.some(p => p.metodo === 'POST'), JSON.stringify(r));
 }
 
 grupo('2 · guardar: el ciclo y sus filas');
@@ -182,7 +217,7 @@ grupo('3 · lo que no se guarda');
   let a = await w.BarStockLiveExpected.antes(MASTER());
   let r = await w.BarStockLiveExpected.guardar({ antes: a, master: MASTER(), contados: ["Tito's"], hasta: Date.now() });
   prueba('sin conteo anterior: no escribe nada', r.ok === false && !w.__pet.some(p => p.metodo === 'POST'), JSON.stringify(r));
-  prueba('y lo dice', /previous count/i.test(r.error || ''), r.error);
+  prueba('y lo dice', /count from last week/i.test(r.error || ''), r.error);
 
   w = entorno({ cicloFalla: true });
   a = await w.BarStockLiveExpected.antes(MASTER());

@@ -996,7 +996,18 @@ por la tarde):**
   para su id) y luego sus filas, sólo de lo contado; si algo falla, dice
   lo que contestó el servidor y no escribe filas sueltas. Pruebas:
   `test-esperado-guardar` y "el esperado no puede tumbar el cierre" en
-  `test-cierre-conteo`. **Sin estrenar contra la base de verdad.**
+  `test-cierre-conteo`.
+  **Corregido el 2026-11-17:** `antes()` usaba `ultimoConteo()` y el on
+  hand del maestro, y el paso 1 de cada domingo ("Start new cycle",
+  `resetOnHand`) pone todo a 0 y mueve `weekly_reset_at` a la hora en
+  que se empieza a contar: el ciclo del 15 de Crown midió 2 horas desde
+  0 (Tito's −0.1 esperado contra 8.3). Ahora mide desde el conteo de la
+  semana ANTERIOR: el primer `count_sessions.finished_at` de la última
+  semana antes de la que se cierra, y lo contado entonces,
+  `inventory_snapshots.on_hand_start` de esa semana. Sin los dos, no
+  guarda y lo dice. Y `live-diagnostico` no diagnostica un ciclo de
+  menos de 72 h (`MIN_HORAS`) ni lo usa como historia: el correo dice
+  que no se puede comparar.
 - **Cerrar lo provisional, hecho:** `cerrarPendientes()` en
   `live-expected.js`, solo (`cerrarSolo`: 20 s después de abrir la app y
   cada 30 min). Busca los ciclos `provisional` de la locación; si TODOS
