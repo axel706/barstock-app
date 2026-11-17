@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261116-201621",
+    "items": [
+      "New PIN can't be the same as the sign-in code"
+    ]
+  },
+  {
     "build": "20261116-200128",
     "items": [
       "Clearer note when counting is turned off"
@@ -175,13 +181,6 @@
     "items": [
       "Do we have: Running low on every card",
       "Say how many are left; it goes to To buy"
-    ]
-  },
-  {
-    "build": "20261115-093320",
-    "items": [
-      "Orders: a To buy tab when the list has something",
-      "Change the amount on each line, or remove it"
     ]
   }
 ]

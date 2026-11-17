@@ -58,6 +58,10 @@ async function altaSinSesion(supabase, body, res) {
   }
   if (body.action === 'altaVerificar') return res.status(200).json({ ok: true, name: (u.user_metadata || {}).first_name || nombre });
   if (!BID.pinValido(body.pin)) return res.status(400).json({ ok: false, error: 'The PIN has to be 6 digits.' });
+  // El código no vale como PIN (Drew, 2026-11-17: al pedirle el PIN
+  // escribió el código otra vez y su PIN quedó igual al código, que ya
+  // había viajado por correo). Se dice antes de gastarlo.
+  if (String(body.pin) === code) return res.status(400).json({ ok: false, error: 'That’s your code. Choose a different PIN.' });
   const sin = Object.assign({}, m); delete sin.alta;
   const { error } = await supabase.auth.admin.updateUserById(u.id, { password: String(body.pin), app_metadata: sin });
   if (error) throw error;

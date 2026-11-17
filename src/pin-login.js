@@ -118,6 +118,14 @@
   async function pasoAlta() {
     const a = _alta;
     if (a.paso === 1) {
+      // El código no vale como PIN: Drew (2026-11-17) lo escribió otra
+      // vez creyendo que se lo volvían a pedir, y su PIN quedó igual al
+      // código del correo. El servidor también lo rechaza.
+      if (_pin === a.code) {
+        _pin = ''; pintarCasillas();
+        decir('That\u2019s your code. Choose a different PIN.');
+        return;
+      }
       a.primero = _pin; a.paso = 2; _pin = ''; pintarCasillas();
       titulos('Hi ' + a.nombre, 'Type it again to confirm'); decir('');
       return;

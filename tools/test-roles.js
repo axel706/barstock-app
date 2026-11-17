@@ -295,6 +295,10 @@ grupo('3d · alta sin PIN: la persona crea el suyo con un código (Axel, 2026-11
   prueba('con el nombre y el código, sí (sin gastarlo)', bien.ok && !!leo().app_metadata.alta, JSON.stringify(bien));
   const corto = await sinSesion('altaReclamar', { name: 'Leo', code: c.code, pin: '12' });
   prueba('un PIN que no es de 6 dígitos, no', !corto.ok && /6 digits/.test(corto.error || '') && !!leo().app_metadata.alta);
+  // Drew (2026-11-17) escribió el código otra vez al pedirle el PIN, y su
+  // PIN quedó igual al código. Ya no se acepta, y no gasta el código.
+  const igual = await sinSesion('altaReclamar', { name: 'Leo', code: c.code, pin: c.code });
+  prueba('el código no vale como PIN, y no se gasta', !igual.ok && /your code/i.test(igual.error || '') && !!leo().app_metadata.alta && leo().password !== c.code, JSON.stringify(igual));
   const r = await sinSesion('altaReclamar', { name: 'Leo', code: c.code, pin: '135790' });
   prueba('Leo crea su PIN', r.ok && leo().password === '135790' && !leo().app_metadata.alta, JSON.stringify(r));
   prueba('y conserva su rol y sus permisos', leo().app_metadata.role === 'bartender' && Array.isArray(leo().app_metadata.perms) && leo().app_metadata.perms.length > 0);

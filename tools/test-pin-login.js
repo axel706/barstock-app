@@ -179,6 +179,10 @@ function entorno(o) {
       /Hi Nia/.test(d.getElementById('authTitle').textContent) && /Create your PIN/.test(d.getElementById('authSub').textContent),
       d.getElementById('authTitle').textContent + ' | ' + d.getElementById('authMsg').textContent);
     prueba('lo comprobó sin sesión, con nombre y código', w.__altas.length === 1 && w.__altas[0].action === 'altaVerificar' && w.__altas[0].code === '482913');
+    teclea('482913'); await esperar(20);
+    prueba('el código otra vez no vale como PIN: lo dice y sigue pidiendo uno', /That.s your code/.test(d.getElementById('authMsg').textContent) &&
+      /Create your PIN/.test(d.getElementById('authSub').textContent) && d.querySelectorAll('#authPinBoxes i.on').length === 0 &&
+      !w.__altas.some(x => x.action === 'altaReclamar'), d.getElementById('authMsg').textContent);
     teclea('135790'); await esperar(20);
     prueba('pide repetirlo', /again/i.test(d.getElementById('authSub').textContent) && d.querySelectorAll('#authPinBoxes i.on').length === 0);
     teclea('135791'); await esperar(20);
