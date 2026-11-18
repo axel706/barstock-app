@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-141457",
+    "items": [
+      "MarginEdge Sync now always responds and says what happened"
+    ]
+  },
+  {
     "build": "20261118-140407",
     "items": [
       "Quick order: full screen with back button",
@@ -181,12 +187,6 @@
     "items": [
       "Morning email: Daily | Weekly, and send it to anyone",
       "Choose who gets it every morning"
-    ]
-  },
-  {
-    "build": "20261117-085225",
-    "items": [
-      "Monday's email says what Sunday's count found and why"
     ]
   }
 ]

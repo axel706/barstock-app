@@ -934,24 +934,44 @@
   // moverse se pulsa dos veces, y cada pulsación son peticiones a una
   // API que contesta 429 a la segunda por segundo.
   let _sincronizando = false;
+  // Los botones que giran por la búsqueda en curso: el de la hoja que la
+  // lanzó y el de cualquier hoja abierta después mientras sigue. Todos
+  // paran juntos.
+  const _botonesSync = new Set();
+  let _syncDesde = 0;
 
   // Lo llama "Sync now" de la hoja de Spent this cycle (era el botón de
   // la tarjeta de MarginEdge del carrusel). `pie` es el elemento donde
   // se dice por dónde va y, al acabar, cuándo se sincronizó.
   async function sincronizarMarginEdge(btn, pie) {
-    if (_sincronizando) return;
-    _sincronizando = true;
-
     const avisar = (t) => { if (window.BarStockToast) window.BarStockToast.show(t); };
 
+    // ── Ya hay una buscando ─────────────────────────────────────────
+    //
+    // Antes esto era un `return` mudo (Axel, 2026-11-18: "no pasa nada,
+    // no gira, no sincroniza"): con una búsqueda colgada de antes, cada
+    // toque salía sin girar ni decir nada. Ahora el botón gira con la
+    // que sigue y se dice desde cuándo.
+    if (_sincronizando) {
+      if (btn) { btn.classList.add('girando'); btn.disabled = true; _botonesSync.add(btn); }
+      const seg = Math.max(1, Math.round((Date.now() - _syncDesde) / 1000));
+      avisar('Already syncing with MarginEdge · started ' + (seg < 60 ? seg + ' s' : Math.round(seg / 60) + ' min') + ' ago');
+      return;
+    }
+    _sincronizando = true;
+    _syncDesde = Date.now();
+    if (btn) _botonesSync.add(btn);
+
     // `parar()` en TODAS las salidas —éxito, nada nuevo, error,
-    // MarginEdge sin configurar—, que es donde se quedaba pegado el giro.
+    // MarginEdge sin configurar, sin respuesta—, que es donde se quedaba
+    // pegado el giro.
     const parar = () => {
-      if (btn) { btn.classList.remove('girando'); btn.disabled = false; }
+      _botonesSync.forEach(b => { b.classList.remove('girando'); b.disabled = false; });
+      _botonesSync.clear();
       _sincronizando = false;
     };
 
-    if (btn) { btn.classList.add('girando'); btn.disabled = true; }
+    _botonesSync.forEach(b => { b.classList.add('girando'); b.disabled = true; });
 
     const C = window.BarStockMarginEdgeConnect;
     if (!C || !C.buscarFacturas) {
@@ -993,8 +1013,29 @@
     const devolverPie = () => { if (pie && pie.isConnected) pie.textContent = pieAntes; };
     avance(0, 0);
 
+    // ── Si nadie contesta, se deja de esperar ───────────────────────
+    //
+    // Cada llamada a MarginEdge pasa por la sesión de Supabase y por la
+    // función de Vercel, y ninguna lleva tiempo límite: si una no
+    // vuelve, la búsqueda no termina nunca y el botón queda tomado. El
+    // recorrido legítimo tarda minutos, así que no se mide el total sino
+    // el silencio: sin un solo aviso de avance en ESPERA, se para y se
+    // dice. Lo que ya se hubiera guardado, guardado queda.
+    const ESPERA = window.BarStockSyncEspera || 90000;
+    let ultimo = Date.now(), vigila = null;
+    const avanceVivo = (pedidos, hechos) => { ultimo = Date.now(); avance(pedidos, hechos); };
+    const silencio = new Promise((_, rechazar) => {
+      vigila = setInterval(() => {
+        if (Date.now() - ultimo < ESPERA) return;
+        clearInterval(vigila);
+        rechazar(new Error('MarginEdge did not answer for ' + Math.round(ESPERA / 1000) + ' s · stopped waiting, try again'));
+      }, Math.min(1000, Math.max(50, ESPERA / 4)));
+    });
+
     try {
-      const r = await C.buscarFacturas(avance);
+      let r;
+      try { r = await Promise.race([C.buscarFacturas(avanceVivo), silencio]); }
+      finally { clearInterval(vigila); }
       const falta = MINIMO_MS - (Date.now() - t0);
       if (falta > 0) await new Promise(res => setTimeout(res, falta));
 
@@ -1943,6 +1984,8 @@
         </div>`;
       const sync = caja.querySelector('#mcfSync');
       if (sync) sync.onclick = (ev) => sincronizarHoja(ev.currentTarget);
+      // Repintada mientras sigue una búsqueda: su botón gira con ella.
+      if (sync && _sincronizando) { sync.classList.add('girando'); sync.disabled = true; _botonesSync.add(sync); }
       caja.querySelector('#mcfGo').onclick = () => {
         cerrar();
         if (precios) {

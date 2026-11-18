@@ -106,6 +106,32 @@ grupo('Sync busca, gira y dice qué pasó');
   prueba('y se puede volver a pulsar', !hoja(w).querySelector('#mcfSync').disabled);
 }
 
+grupo('una sincronización que no contesta no deja el botón mudo (Axel, 2026-11-18: "no pasa nada, no gira")');
+{
+  // MarginEdge (o la sesión) no contesta nunca. Antes, el primer toque
+  // giraba para siempre y los siguientes salían sin hacer ni decir nada.
+  const { w, host } = entorno({ entregas: ENT, buscar: () => new Promise(() => {}) });
+  w.BarStockSyncEspera = 300;
+  await esperar(60);
+  boton(host).click();
+  await esperar(20);
+  prueba('el primer toque busca y gira', w.__llamado === 1 && hoja(w).querySelector('#mcfSync').classList.contains('girando'));
+  // Se cierra la hoja y se vuelve a abrir mientras sigue buscando.
+  w.document.getElementById('mSheet').remove();
+  boton(host).click();
+  await esperar(20);
+  const b2 = hoja(w).querySelector('#mcfSync');
+  prueba('otro toque mientras busca: gira también y lo dice', b2.classList.contains('girando') && /already syncing/i.test(w.__toast), w.__toast);
+  prueba('y no lanza otra búsqueda encima', w.__llamado === 1, String(w.__llamado));
+  await esperar(500);
+  prueba('sin respuesta, se para y dice lo que pasó', /did not answer/i.test(w.__toast), w.__toast);
+  const b3 = hoja(w).querySelector('#mcfSync');
+  prueba('el botón deja de girar y se puede volver a pulsar', !b3.classList.contains('girando') && !b3.disabled);
+  b3.click();
+  await esperar(20);
+  prueba('y vuelve a buscar de verdad', w.__llamado === 2, String(w.__llamado));
+}
+
 grupo('la cifra no depende del estado del conteo');
 for (const estado of ['step1', 'step2', 'counting', 'done']) {
   const { host } = entorno({ entregas: ENT, estado });
