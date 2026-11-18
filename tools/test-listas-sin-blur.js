@@ -67,6 +67,17 @@ console.log('\nTinta: el fondo de las tarjetas');
     /\.m-cf-c \{[^}]*background: var\(--tinta\); border: 1px solid var\(--tinta-borde\);/.test(css) &&
     /\.m-cf-c\.m-cf-am \{ background: linear-gradient\(135deg, rgba\(245,158,11,\.16\), var\(--tinta\) 55%\), var\(--tinta\);/.test(css) &&
     !/body\.m-shell \.m-cf-b \{[^}]*var\(--tinta\)/.test(css));
+  {
+    // Orders, las tres pestañas y To buy (Axel, 2026-11-18: "todas las
+    // pantallas de orders necesitan tinta").
+    const fondo = (sel) => { const m = new RegExp(sel.replace(/[.]/g, '\\.') + ' \\{([^}]*)\\}').exec(css); return m ? m[1] : ''; };
+    const lisas = ['body.m-shell .m-ordv', '  .m-ord-l', '  .m-tb-l', 'body.m-shell .m-hcard', '  .m-hlist', '  .m-iatar', '  .m-itot', '  .m-icard'];
+    const sin = lisas.filter(sel => !/background: var\(--tinta\);/.test(fondo(sel)));
+    prueba('Orders (Open, To buy, Sent, Invoices), de Tinta', !sin.length, sin.join(', '));
+    prueba('lo que avisa en Orders conserva su ámbar sobre la tinta (proveedor y línea sin precio)',
+      /\.m-ordv\.aviso \{\s*background: linear-gradient\(135deg, rgba\(245,158,11,\.16\), var\(--tinta\) 55%\), var\(--tinta\);/.test(css) &&
+      /\.m-ord-l\.sinprecio \{ background: linear-gradient\(135deg, rgba\(245,158,11,\.16\), var\(--tinta\) 55%\), var\(--tinta\);/.test(css));
+  }
   prueba('From Toast (la de referencia) usa la misma variable', /#mScreens \.m-tl-sec \{[^}]*background: var\(--tinta\)/.test(css));
   const conTinta = css.split('}').filter(b => /var\(--tinta\)/.test(b));
   prueba('ninguna regla de Tinta lleva desenfoque', conTinta.length >= 4 && !conTinta.some(b => /backdrop-filter:\s*blur/.test(b)), conTinta.length + ' reglas');

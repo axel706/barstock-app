@@ -219,7 +219,9 @@ Lo que avisa conserva su borde ámbar o rojo y un toque de su color en
 la esquina, sobre la tinta (`.m-fic-ojo` / `.m-fic-mal`). Ya la llevan
 Inventory (`.m-inv`), las tarjetas de Do we have y la ficha (`.m-fic`),
 Running out (`.m-ro-c`), las tres cifras del Home (`.m-cf-c`, sin
-sus botones) y Recipes. Cuando Axel diga "ponle Tinta" a una pantalla, es esto:
+sus botones), Orders entero (Open `.m-ordv`/`.m-ord-l`, To buy
+`.m-tb-l`, Sent `.m-hcard`/`.m-hlist`, Invoices `.m-icard`/`.m-iatar`/
+`.m-itot`) y Recipes. Cuando Axel diga "ponle Tinta" a una pantalla, es esto:
 **las variables, nunca el color copiado**; `test-listas-sin-blur`
 falla si el color aparece fuera de `:root` o si una regla de Tinta
 lleva desenfoque.

@@ -3651,11 +3651,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     display: flex; align-items: center; gap: 11px; width: 100%;
     padding: 14px 13px; margin-bottom: 8px; border-radius: 15px;
     text-align: left; cursor: pointer;
-    background: rgba(255,255,255,.10);
-    border: 1px solid rgba(255,255,255,.14);
+    /* Tinta (Axel, 2026-11-18: "todas las pantallas de orders"). */
+    background: var(--tinta);
+    border: 1px solid var(--tinta-borde);
   }
   body.m-shell .m-ordv.aviso {
-    background: rgba(245,158,11,.12);
+    background: linear-gradient(135deg, rgba(245,158,11,.16), var(--tinta) 55%), var(--tinta);
     border-color: rgba(252,211,77,.26);
   }
   .m-ordv-l { flex: 1; min-width: 0; }
@@ -3672,11 +3673,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
 
   .m-ord-l {
     padding: 12px; margin-bottom: 8px; border-radius: 15px;
-    background: rgba(255,255,255,.10);
-    border: 1px solid rgba(255,255,255,.14);
+    /* Tinta: ver --tinta en :root. */
+    background: var(--tinta);
+    border: 1px solid var(--tinta-borde);
   }
   .m-ord-l.editada   { border-color: rgba(56,189,248,.34); }
-  .m-ord-l.sinprecio { background: rgba(245,158,11,.11); border-color: rgba(252,211,77,.26); }
+  .m-ord-l.sinprecio { background: linear-gradient(135deg, rgba(245,158,11,.16), var(--tinta) 55%), var(--tinta); border-color: rgba(252,211,77,.26); }
   .m-ord-l.mal       { background: rgba(239,68,68,.12);  border-color: rgba(248,113,113,.38); }
 
   .m-ord-l-top { display: flex; align-items: baseline; gap: 8px; }
@@ -3730,7 +3732,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * (Axel, 2026-11-18: "están encimados"): .m-ord-l lleva su aire por
    * abajo, de antes, y nada por arriba. Aquí el aire va por arriba. */
   .m-ord-k + .m-ord-l { margin-top: 10px; }
-  .m-ord-l.m-ord-extra { background: rgba(56,189,248,.06); border-style: dashed; border-color: rgba(125,211,252,.35); }
+  .m-ord-l.m-ord-extra { background: linear-gradient(135deg, rgba(56,189,248,.12), var(--tinta) 55%), var(--tinta); border-style: dashed; border-color: rgba(125,211,252,.35); }
   .m-ord-l-top .m-ord-add-sg { align-self: center; }
   .m-ord-why { margin-top: 5px; font-size: var(--m-meta); color: #7f93ab; }
 
@@ -3753,7 +3755,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   .m-tb-l {
     margin-top: 8px; padding: 12px; border-radius: 15px;
-    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.14);
+    /* Tinta: ver --tinta en :root. */
+    background: var(--tinta); border: 1px solid var(--tinta-borde);
   }
   .m-tb-l.es-pedida { opacity: .72; }
   .m-tb-top { display: flex; align-items: center; gap: 8px; }
@@ -4270,8 +4273,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     width: 100%; display: flex; align-items: center; gap: 11px;
     text-align: left; cursor: pointer;
     padding: 13px 14px; margin-bottom: 7px; border-radius: 15px;
-    background: rgba(255,255,255,.10);
-    border: 1px solid rgba(255,255,255,.14);
+    /* Tinta: ver --tinta en :root. */
+    background: var(--tinta);
+    border: 1px solid var(--tinta-borde);
   }
   body.m-shell .m-hcard:active { background: rgba(255,255,255,.15); }
   .m-hcard-l { flex: 1; min-width: 0; }
@@ -4316,8 +4320,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* En el DETALLE sí es una lista continua: son las líneas de UNA
    * orden, y separarlas en tarjetas las haría parecer independientes. */
   .m-hlist {
-    background: rgba(255,255,255,.04);
-    border: 1px solid rgba(255,255,255,.08);
+    /* Tinta: ver --tinta en :root. */
+    background: var(--tinta);
+    border: 1px solid var(--tinta-borde);
     border-radius: 16px; overflow: hidden; margin-bottom: 18px;
   }
 
@@ -5100,8 +5105,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * factura entera, no sobre un producto. */
   .m-iatar {
     margin: 2px 0 14px; padding: 12px 13px; border-radius: 14px;
-    background: rgba(255,255,255,.05);
-    border: 1px solid rgba(255,255,255,.10);
+    /* Tinta: ver --tinta en :root. */
+    background: var(--tinta);
+    border: 1px solid var(--tinta-borde);
   }
   .m-iatar.on {
     background: rgba(52,211,153,.12);
@@ -5189,8 +5195,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-itot {
     display: flex; margin: 14px 0 14px;
     border-radius: 16px;
-    background: rgba(255,255,255,.055);
-    border: 1px solid rgba(255,255,255,.10);
+    /* Tinta: ver --tinta en :root. */
+    background: var(--tinta);
+    border: 1px solid var(--tinta-borde);
   }
   .m-itot > div { flex: 1; padding: 11px 2px; text-align: center; }
   .m-itot > div + div { border-left: 1px solid rgba(255,255,255,.09); }
@@ -5205,7 +5212,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * para el historial. En lista continua no se ve dónde acaba una. */
   .m-icard {
     padding: 12px 13px; margin-bottom: 7px; border-radius: 15px;
-    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.14);
+    /* Tinta: ver --tinta en :root. */
+    background: var(--tinta); border: 1px solid var(--tinta-borde);
   }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-icard { border-radius: 15px !important; }
 

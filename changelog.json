@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-134755",
+    "items": [
+      "Darker cards in Orders: Open, To buy, Sent and Invoices"
+    ]
+  },
+  {
     "build": "20261118-134042",
     "items": [
       "Darker cards for the three numbers on Home"
@@ -180,12 +186,6 @@
     "build": "20261117-083700",
     "items": [
       "No morning email after a day with no sales"
-    ]
-  },
-  {
-    "build": "20261116-202122",
-    "items": [
-      "Clearer step to create your PIN after the code"
     ]
   }
 ]
