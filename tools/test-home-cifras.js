@@ -164,7 +164,7 @@ grupo('On the shelf: las botellas');
   const c = cifra(host, 'On the shelf');
   const st = c.querySelector('.m-cf-s');
   prueba('sin LIVE: lo contado, sin "≈"', !!st && txt(st) === '1,205 bottles', txt(st));
-  prueba('bajo el título, antes de la cifra', !!st && st.previousElementSibling === c.querySelector('.m-cf-k') && st.nextElementSibling === c.querySelector('.m-cf-v'));
+  prueba('bajo el título, antes de la cifra', !!st && st.previousElementSibling === c.querySelector('.m-cf-k') && st.parentElement.nextElementSibling === c.querySelector('.m-cf-v'));
 }
 {
   const { host } = await entorno({ vivo: true });
@@ -191,7 +191,7 @@ grupo('el Sync de Sold');
   const st = c.querySelector('.m-cf-s');
   prueba('"synced" y la hora de Nueva York', !!st && txt(st) === 'synced 6:12 PM', txt(st));
   prueba('la hora va bajo el título, antes de la cifra', !!st && st.previousElementSibling === c.querySelector('.m-cf-k') &&
-    st.nextElementSibling === c.querySelector('.m-cf-v'));
+    st.parentElement.nextElementSibling === c.querySelector('.m-cf-v'));
   prueba('y abajo, "so far today"', txt(c.querySelector('.m-cf-d')) === 'so far today');
   prueba('el botón vuelve a Sync', /^Sync$/.test(txt(c.querySelector('.m-cf-b'))) && !c.querySelector('.m-cf-b').disabled);
   await esperar(300);
@@ -274,6 +274,23 @@ grupo('centradas');
   const hijos = ['.m-cf-k', '.m-cf-v', '.m-cf-d'].filter(k =>
     new RegExp(k.replace('.', '\\.') + '\\s*\\{[^}]*text-align\\s*:\\s*(left|start)').test(css));
   prueba('y ninguno de los tres se vuelve a la izquierda', hijos.length === 0, hijos.join(', '));
+}
+
+grupo('alineadas fila a fila (Axel, 2026-11-18: "no están bien alineados")');
+{
+  // Con el logo de MarginEdge encima de "Spent this cycle" las cabeceras
+  // dejaron de medir lo mismo y las cifras no caían a la misma altura.
+  // Las tres comparten filas con subgrid: cabecera, cifra, línea, botón.
+  const { host } = await entorno();
+  const cs = cifras(host);
+  prueba('cada tarjeta: cabecera, cifra, línea y botón, en ese orden', cs.length >= 2 && cs.every(c =>
+    [...c.children].map(x => x.className.split(' ')[0]).join(',') === 'm-cf-cab,m-cf-v,m-cf-d,m-cf-b'),
+    cs.map(c => [...c.children].map(x => x.className.split(' ')[0]).join(',')).join(' | '));
+  const css = leer('styles/mobile-app.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  prueba('la fila de tarjetas tiene cuatro filas y cada tarjeta las comparte (subgrid)',
+    /\.m-cf \{[^}]*grid-template-rows: auto auto auto auto;[^}]*row-gap: 0/.test(css) &&
+    /\.m-cf-c \{[^}]*display: grid; grid-row: span 4; grid-template-rows: subgrid;/.test(css));
+  prueba('y ya no se reservan dos líneas de título', !/\.m-cf-k \{[^}]*min-height/.test(css) && !/\.m-cf-k:has/.test(css));
 }
 
 grupo('los botones, de cristal');

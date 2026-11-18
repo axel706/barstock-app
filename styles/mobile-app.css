@@ -1812,16 +1812,22 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
 
   /* ── Las tres cifras (Axel, 2026-11-12, sobre lámina) ─────────────
    * Sustituyen al par Spent / On the shelf. Título, número, una línea y
-   * su botón, las tres de la misma altura: el título reserva dos líneas
-   * para que los números queden alineados aunque uno quepa en una. Con
-   * Toast desconectado no hay "Sold yesterday" y quedan dos.
+   * su botón, las tres de la misma altura y alineadas fila a fila (el
+   * subgrid de abajo). Con Toast desconectado no hay "Sold yesterday" y
+   * quedan dos.
    * Centradas (Axel, opción B): título, número y línea sobre el mismo
    * eje que el botón, que ya iba centrado. Se pone en la tarjeta y lo
    * heredan los tres. */
-  .m-cf { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+  /* Las tres tarjetas comparten cuatro filas —cabecera, cifra, su línea,
+   * botón— con subgrid (Axel, 2026-11-18: "no están bien alineados"):
+   * cada fila mide lo de la más alta, y la cifra de las tres cae a la
+   * misma altura aunque una cabecera lleve logo y otra un estado. Antes
+   * el título reservaba dos líneas (min-height) y con el logo dejó de
+   * cuadrar. */
+  .m-cf { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto auto auto; column-gap: 8px; row-gap: 0; margin-top: 12px; }
   .m-cf.dos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .m-cf-c {
-    display: flex; flex-direction: column; min-width: 0; text-align: center;
+    display: grid; grid-row: span 4; grid-template-rows: subgrid; min-width: 0; text-align: center;
     padding: 11px 10px 10px; border-radius: 17px;
     /* Tinta (Axel, 2026-11-18: "a las 3 tarjetas, no los botones"):
      * ver --tinta en :root. Los botones (.m-cf-b) siguen de cristal. */
@@ -1831,8 +1837,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * color sobre la tinta, como .m-fic-ojo. */
   .m-cf-c.m-cf-am { background: linear-gradient(135deg, rgba(245,158,11,.16), var(--tinta) 55%), var(--tinta);
     border-color: rgba(252,211,77,.45); }
+  .m-cf-cab { display: flex; flex-direction: column; min-width: 0; }
   .m-cf-k {
-    min-height: 2.5em; line-height: 1.25;
+    line-height: 1.25;
     font-size: var(--m-meta); font-weight: 800; letter-spacing: .06em;
     text-transform: uppercase; color: #c3d2e2;
   }
@@ -1843,23 +1850,19 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* Medido con Manrope y Plus Jakarta: a .85 y .02em no cabía en un
    * iPhone de 375 px (89 px de texto en 83). Así cabe, usando 6 px del
    * relleno de la tarjeta a cada lado. */
-  .m-cf-k.m-cf-k1 { min-height: 0; margin: 0 -6px; white-space: nowrap; font-size: calc(var(--m-meta) * .82); letter-spacing: .01em; }
+  .m-cf-k.m-cf-k1 { margin: 0 -6px; white-space: nowrap; font-size: calc(var(--m-meta) * .82); letter-spacing: .01em; }
   /* La línea de estado del Sync de "Sold", bajo el título (Axel,
    * 2026-11-13: no bajo la cifra). Una sola línea: lo largo se corta. */
   .m-cf-s { margin-top: 2px; font-size: var(--m-meta); font-weight: 700; color: #6ee7b7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .m-cf-s.m-cf-err { color: #fca5a5; }
   /* Un dato, no un estado: las botellas de "On the shelf". */
   .m-cf-s.m-cf-neu { color: #c3d2e2; }
-  /* Con estado, el título no guarda sus dos líneas: "Sold today" cabe en
-   * una y el hueco quedaba entre él y la hora. Así la hora ocupa ese
-   * hueco y el número sigue a la altura de los otros dos. */
-  .m-cf-k:has(+ .m-cf-s) { min-height: 0; }
   .m-cf-b .m-gira { animation: mSyncGira 1s linear infinite; }
   body.m-shell .m-cf-b:disabled { opacity: .7; cursor: default; }
   .m-cf-v { margin-top: 6px; font-size: var(--m-title); font-weight: 800; color: #fff; letter-spacing: -.4px; white-space: nowrap; }
-  /* La línea crece y empuja el botón al pie: así las tres acaban a la
-   * misma altura aunque una línea sea más corta. */
-  .m-cf-d { flex: 1 0 auto; margin-top: 2px; font-size: var(--m-meta); color: #a9bacd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* La línea bajo la cifra; su fila y la del botón las alinea el
+   * subgrid de .m-cf. */
+  .m-cf-d { margin-top: 2px; font-size: var(--m-meta); color: #a9bacd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .m-cf-live { color: #6ee7b7; font-weight: 800; }
   .m-cf-live::before { content: '● '; }
   .m-cf-sube { color: #86efac; }

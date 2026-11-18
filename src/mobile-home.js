@@ -1853,11 +1853,19 @@
     // `logo`: la marca de donde sale la cifra, en su primera fila, y el
     // título pasa a una sola línea más pequeña (Axel, 2026-11-18, opción
     // B: MarginEdge en blanco sobre "Spent this cycle").
+    //
+    // La cabecera (logo, título y estado) va en UN bloque: las tres
+    // tarjetas comparten filas (subgrid, mobile-app.css) y cada fila mide
+    // lo de la más alta, así que las cifras, su línea y los botones caen
+    // a la misma altura tenga cada cabecera lo que tenga (Axel,
+    // 2026-11-18: "los contenidos no están bien alineados").
     const cifra = (o) => `
       <div class="m-cf-c${o.tono ? ' m-cf-' + o.tono : ''}">
-        ${o.logo || ''}
-        <span class="m-cf-k${o.logo ? ' m-cf-k1' : ''}">${o.k}</span>
-        ${o.s ? `<span class="m-cf-s${o.sTono ? ' ' + o.sTono : ''}">${o.s}</span>` : ''}
+        <div class="m-cf-cab">
+          ${o.logo || ''}
+          <span class="m-cf-k${o.logo ? ' m-cf-k1' : ''}">${o.k}</span>
+          ${o.s ? `<span class="m-cf-s${o.sTono ? ' ' + o.sTono : ''}">${o.s}</span>` : ''}
+        </div>
         <b class="m-cf-v">${o.v}</b>
         <span class="m-cf-d">${o.d}</span>
         <button type="button" class="m-cf-b" data-cf="${o.id}"${o.off ? ' disabled' : ''}>${o.btn}</button>
