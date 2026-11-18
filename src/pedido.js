@@ -106,7 +106,7 @@
   //         cerradas y completas] } o null.
   // hoy:    el día de negocio de hoy; sólo cuenta lo de ANTES.
   //
-  // → { porDia: [7], semanal, sigma, tendencia, reciente, fuente }
+  // → { porDia: [7], semanal, sigma, tendencia, reciente, fuente, cv }
   function demanda({ pouriq, toast, hoy }) {
     const cargados = ((toast && toast.cargados) || []).filter(d => d < hoy).sort();
     const v = (d) => Number((toast && toast.porDia && toast.porDia[d]) || 0);
@@ -156,7 +156,37 @@
 
     const porDia = forma ? forma.map(f => f * semanal) : [0, 1, 2, 3, 4, 5, 6].map(() => semanal / 7);
 
-    return { porDia, semanal, sigma, tendencia, reciente, fuente };
+    return { porDia, semanal, sigma, tendencia, reciente, fuente, cv: variacionDiaria(cargados, v) };
+  }
+
+  // ── Cuánto varía un producto de un día a otro (Axel, 2026-11-18) ─────
+  //
+  // El coeficiente de variación de lo que vende cada día, contra lo que
+  // suele vender ESE día de la semana: los días de las últimas 13 semanas
+  // (cerrados y completos, los sin ventas cuentan como 0), cada uno
+  // dividido entre la media de su día de la semana, y la desviación de
+  // esos cocientes. Lo usa run-out.ritmoHoy para decidir cuánto creerle a
+  // lo vendido hoy hasta el Sync.
+  //
+  // Es lo que distingue, sin listas a mano, un producto que se vende
+  // parejo (las copas de la casa, ~0.3–0.5: un día se parece a otro) de
+  // uno que va a saltos (un vino de 0.4 al día que un día vende 0 y otro
+  // una botella entera a una mesa, ~1–1.5). Con el Laboure Roi de Crown
+  // (0.71 vendidas a las 5 PM de un miércoles de 0.40) la regla de antes
+  // multiplicaba esas tres copas por 4.5 y decía "Out today".
+  //
+  // Con menos de MIN_DIAS_CV días útiles, CV_DEF: no se sabe, y 1 es lo
+  // de un producto que vende de a poco. Entre CV_MIN y CV_MAX: un CV de 0
+  // (siempre lo mismo) haría creerle a una sola copa.
+  const CV_DEF = 1, CV_MIN = 0.25, CV_MAX = 2, MIN_DIAS_CV = 14;
+  function variacionDiaria(cargados, v) {
+    const dias = cargados.slice(-SEMANAS_TOAST * 7);
+    const suma = [0, 0, 0, 0, 0, 0, 0], n = [0, 0, 0, 0, 0, 0, 0];
+    for (const d of dias) { suma[dow(d)] += v(d); n[dow(d)]++; }
+    const media = suma.map((x, i) => n[i] ? x / n[i] : 0);
+    const r = dias.filter(d => media[dow(d)] > 0).map(d => v(d) / media[dow(d)]);
+    if (r.length < MIN_DIAS_CV) return CV_DEF;
+    return Math.max(CV_MIN, Math.min(CV_MAX, desviacion(r)));
   }
 
   // Lo que se usa entre dos instantes, con lo de cada día de la semana y
@@ -298,6 +328,6 @@
     return { dias: out, fin: finAl, falta };
   }
 
-  window.BarStockPedido = { demanda, consumoEntre, cuantoPedir, seAcaba, recorrido, multiploPara, redondeoPara, colchonDe, HOLGURA, SIGMA_MAX, fraccionLineal, inicio, diaDe,
+  window.BarStockPedido = { demanda, variacionDiaria, CV_DEF, CV_MIN, CV_MAX, consumoEntre, cuantoPedir, seAcaba, recorrido, multiploPara, redondeoPara, colchonDe, HOLGURA, SIGMA_MAX, fraccionLineal, inicio, diaDe,
     mediana, percentil, Z, SEMANAS_TENDENCIA, TENDENCIA_MIN, TENDENCIA_MAX };
 })();

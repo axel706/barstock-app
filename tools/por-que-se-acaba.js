@@ -2,7 +2,7 @@
  *
  * SÓLO LECTURA. No hace ni un GET propio: lee lo que la app ya calculó
  * (BarStockLiveCache.fila, la fila de run-out) y rehace la cuenta con
- * las MISMAS funciones (run-out.restaDia, pedido.recorrido, colchonDe).
+ * las MISMAS funciones (run-out.ritmoHoy, pedido.recorrido, colchonDe).
  * No escribe nada.
  *
  *   1. Abre app.barstockpro.com en la locación, en el Home (que el LIVE
@@ -27,7 +27,7 @@
 
   window.bsSeAcaba = async function (texto) {
     const LC = window.BarStockLiveCache, R = window.BarStockRunOut, P = window.BarStockPedido;
-    if (!LC || !R || !P || !R.restaDia) { console.log('Faltan módulos (¿app sin recargar?): LiveCache, RunOut.restaDia o Pedido.'); return; }
+    if (!LC || !R || !P || !R.ritmoHoy) { console.log('Faltan módulos (¿app sin recargar?): LiveCache, RunOut.ritmoHoy o Pedido.'); return; }
     const master = (window.state && window.state.master) || [];
     const q = norm(texto);
     const hay = master.filter(r => r && r.item && norm(r.item).includes(q));
@@ -46,9 +46,9 @@
     const usualHoy = Number(dem.porDia[w]) || 0;
     const v = Number(f.hoyVendido) || 0;
     const fr = f.hoyFrac;
-    const deSiempre = Math.max(0, usualHoy - v);
-    const ritmo = v > 0 && fr >= R.FRAC_MIN && fr < 1 ? v * (1 - fr) / fr : null;
-    const hoyResta = R.restaDia(dem.porDia, hoy, 0, v, fr);
+    const rh = R.ritmoHoy(dem.porDia, hoy, v, fr, dem.cv);
+    const deSiempre = rh.deSiempre;
+    const hoyResta = rh.resto;
     const viene = (f.viene || []).map(x => ({ cuando: Date.parse(x.cuando), n: Number(x.n) || 0 }));
     const base = { dem, stock: (Number(f.live) || 0) - (Number(f.margen) || 0), viene, ahora, dias: 7, hoyResta };
 
@@ -61,9 +61,11 @@
     console.log('HOY (' + D3[w] + '): lo de siempre ' + n2(usualHoy) + ', vendido ' + n2(v) +
       ' al Sync de ' + hora(f.hoySync ? Date.parse(f.hoySync) : null) + ', parte del día a esa hora ' +
       (fr == null ? '— (sin curva)' : Math.round(fr * 100) + '%'));
-    console.log('  lo que falta de hoy = max(siempre − vendido = ' + n2(deSiempre) + ', ritmo vendido×(1−f)/f = ' +
-      (ritmo == null ? 'no aplica' : n2(ritmo)) + ') = ' + n2(hoyResta) +
-      (ritmo != null && ritmo > deSiempre ? '  ← manda el RITMO' : '  ← manda lo de siempre'));
+    console.log('  cuánto varía de un día a otro (cv): ' + n2(dem.cv) + (dem.cv == null ? ' (sin dato: se usa 1)' : ''));
+    console.log('  a hoy se le cree Z = f/(f+cv) = ' + Math.round(rh.z * 100) + '%; va a ×' + n2(rh.rho) +
+      ' de lo normal → ritmo creído λ = 1 + Z(ρ−1) = ×' + n2(rh.lambda));
+    console.log('  lo que falta de hoy = max(siempre − vendido = ' + n2(deSiempre) + ', siempre×(1−f)×λ) = ' + n2(hoyResta) +
+      (rh.usaRitmo ? '  ← manda el RITMO' : '  ← manda lo de siempre'));
 
     const rec = P.recorrido(base);
     console.log('Colchón (Z ' + P.Z + ' · σ · √(uso/semanal)): con lo de hoy, ' + n2(P.colchonDe(dem, hoyResta)) +

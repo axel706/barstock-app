@@ -137,16 +137,63 @@
     return xs.length >= MIN_MUESTRAS ? mediana(xs) : null;
   }
 
-  // Lo que se resta un día: lo de siempre; el día 0, sólo lo que falta
-  // (y, con la curva del día, nunca menos que el ritmo que lleva hoy).
-  const restaDia = (med, d, k, hoyVendido, hoyFrac) => {
+  // ── Cuánto creerle a lo vendido hoy (Axel, 2026-11-18) ──────────────
+  //
+  // La primera versión del ritmo (2026-11-14) extrapolaba lo vendido
+  // tal cual: resto = vendido × (1 − f) / f. Con el prosecco de la fiesta
+  // (12.5 a las 3 PM) acertaba; con un vino lento, no. El Laboure Roi de
+  // Crown llevaba 0.71 (unas tres copas) a las 5 PM de un miércoles en
+  // que vende 0.40, a esa hora la barra lleva el 22 % del día, y salía
+  // 2.5 botellas más esa noche: "Out today" con 2.4 en la estantería y
+  // entrega el jueves. Tres copas no son una tendencia. Axel: que no se
+  // parchen esos productos, que el motor reconozca ese tipo de producto.
+  //
+  // Ahora es una mezcla (credibilidad): el ritmo de hoy frente a lo de
+  // siempre, y lo de hoy pesa
+  //
+  //     Z = f / (f + cv)
+  //
+  // f: la parte del día que suele llevar la barra a la hora del Sync.
+  // cv: cuánto varía ESE producto de un día a otro (pedido.demanda, de
+  //     sus 13 semanas de Toast). Un producto parejo (cv 0.4) a mitad del
+  //     día (f 0.5) le cree a hoy al 56 %; uno que va a saltos (cv 1.3) a
+  //     las 5 PM (f 0.22), al 14 %. Cuanto más avanza el día, más pesa.
+  //
+  //     ρ = vendido / (lo de siempre × f)     lo que va hoy contra lo normal
+  //     λ = 1 + Z (ρ − 1)                     el ritmo que se le cree
+  //     resto = lo de siempre × (1 − f) × λ
+  //
+  // El Laboure (cv ~1): λ ≈ 2.3, resto ≈ 0.7, llega al jueves. El
+  // prosecco (12.5 contra 4 a las 3 PM, cv 1): λ ≈ 3.4, resto ≈ 10.7
+  // con 6 en la estantería: "Out today", como debe.
+  //
+  // Lo que no cambia: un día flojo no retrasa el aviso (lo mínimo es lo de
+  // siempre − lo vendido), y antes de FRAC_MIN no se extrapola.
+  //
+  // → { resto, z, rho, lambda, deSiempre, usaRitmo }
+  function ritmoHoy(med, d, hoyVendido, hoyFrac, cv) {
     const m = med[diaSemana(d)] || 0;
-    if (k !== 0) return m;
     const v = Number(hoyVendido) || 0;
     const deSiempre = Math.max(0, m - v);
     const f = Number(hoyFrac);
-    if (!(v > 0) || !(f >= FRAC_MIN) || f >= 1) return deSiempre;
-    return Math.max(deSiempre, v * (1 - f) / f);
+    const nada = { resto: deSiempre, z: 0, rho: null, lambda: 1, deSiempre, usaRitmo: false };
+    if (!(v > 0) || !(f >= FRAC_MIN) || f >= 1) return nada;
+    const P = window.BarStockPedido;
+    const c = Number(cv) > 0 ? Number(cv) : (P && P.CV_DEF) || 1;
+    const z = f / (f + c);
+    // Lo de siempre 0 (un día que casi nunca vende): sólo lo vendido dice
+    // algo, y con el peso de Z.
+    const esperado = m * f;
+    const rho = esperado > 0 ? v / esperado : null;
+    const lambda = rho != null ? 1 + z * (rho - 1) : 1;
+    const ritmo = esperado > 0 ? m * (1 - f) * lambda : z * v * (1 - f) / f;
+    return { resto: Math.max(deSiempre, ritmo), z, rho, lambda, deSiempre, usaRitmo: ritmo > deSiempre };
+  }
+  // Lo que se resta un día: lo de siempre; el día 0, sólo lo que falta
+  // (ritmoHoy).
+  const restaDia = (med, d, k, hoyVendido, hoyFrac, cv) => {
+    if (k !== 0) return med[diaSemana(d)] || 0;
+    return ritmoHoy(med, d, hoyVendido, hoyFrac, cv).resto;
   };
 
   // ── De cuándo se acaba a pedido.js (fase 2 de docs/plan-pedido.md) ──
@@ -175,7 +222,7 @@
       dem: d, stock: (Number(stock) || 0) - (Number(margen) || 0),
       viene: (viene || []).map(v => ({ cuando: Date.parse(v.cuando), n: Number(v.n) || 0 })),
       ahora: ahora != null ? ahora : P.inicio(hoy), dias: horizonte || HORIZONTE,
-      hoyResta: restaDia(d.porDia, hoy, 0, hoyVendido, hoyFrac)
+      hoyResta: restaDia(d.porDia, hoy, 0, hoyVendido, hoyFrac, d.cv)
     });
     return r ? { dia: r.dia, enDias: r.enDias } : null;
   }
@@ -214,7 +261,7 @@
     const faltanDias = (7 - diaSemana(hoy)) % 7;
     const hasta = sumarDias(hoy, faltanDias);
     let vende = 0;
-    for (let k = 0; k <= faltanDias; k++) vende += med ? restaDia(med, sumarDias(hoy, k), k, hoyVendido, hoyFrac) : 0;
+    for (let k = 0; k <= faltanDias; k++) vende += med ? restaDia(med, sumarDias(hoy, k), k, hoyVendido, hoyFrac, dem && dem.cv) : 0;
     let llega = 0;
     for (const v of viene || []) if (diaNY(v.cuando) <= hasta) llega += Number(v.n) || 0;
     const colchon = dem && window.BarStockPedido ? window.BarStockPedido.colchonDe(dem, vende) : 0;
@@ -230,7 +277,7 @@
     const base = {
       dem, stock: (Number(stock) || 0) - (Number(margen) || 0),
       viene: (viene || []).map(v => ({ cuando: Date.parse(v.cuando), n: Number(v.n) || 0 })),
-      ahora: t, dias: 14, hoyResta: restaDia(dem.porDia, hoy, 0, hoyVendido, hoyFrac)
+      ahora: t, dias: 14, hoyResta: restaDia(dem.porDia, hoy, 0, hoyVendido, hoyFrac, dem.cv)
     };
     const r = P.recorrido(base);
     if (!r.fin) return null;
@@ -314,7 +361,7 @@
       dem: f.dem, stock: (Number(f.live) || 0) - (Number(f.margen) || 0),
       viene: (f.viene || []).map(v => ({ cuando: Date.parse(v.cuando), n: Number(v.n) || 0 })),
       ahora: f.ahoraMs || Date.now(), dias: dias || DIAS_BARRAS,
-      hoyResta: restaDia(f.dem.porDia, hoy, 0, f.hoyVendido, f.hoyFrac)
+      hoyResta: restaDia(f.dem.porDia, hoy, 0, f.hoyVendido, f.hoyFrac, f.dem.cv)
     });
   }
 
@@ -360,5 +407,5 @@
     return { tipo: 'normal', texto: tramo + ' ' + viene };
   }
 
-  window.BarStockRunOut = { recorridoDe, porQue, restaDia, DIAS_BARRAS, medianas, proyectar, cuantoPedir, mediana, fraccionDelDia, ahora, DIAS_HISTORIA, HORIZONTE, MIN_MUESTRAS, FRAC_MIN, MARGEN, MARGEN_PARTE, margenDe };
+  window.BarStockRunOut = { recorridoDe, porQue, restaDia, ritmoHoy, DIAS_BARRAS, medianas, proyectar, cuantoPedir, mediana, fraccionDelDia, ahora, DIAS_HISTORIA, HORIZONTE, MIN_MUESTRAS, FRAC_MIN, MARGEN, MARGEN_PARTE, margenDe };
 })();

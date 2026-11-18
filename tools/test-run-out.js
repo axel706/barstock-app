@@ -257,14 +257,68 @@ grupo('el ritmo de hoy: lo que falta, por la hora del Sync');
 
   // Cuánto pedir hasta el domingo, con el mismo resto de hoy.
   let c = R.cuantoPedir({ stock: 6, med, viene: [], hoy: '2026-11-14', hoyVendido: 12.5, hoyFrac: f });
-  const resto = 12.5 * (1 - f) / f;
-  prueba('cuánto pedir usa el mismo resto de hoy', Math.abs(c.vende - (resto + 3)) < 1e-9, JSON.stringify(c));
+  const resto = R.ritmoHoy ? R.ritmoHoy(med, '2026-11-14', 12.5, f).resto : NaN;
+  prueba('cuánto pedir usa el mismo resto de hoy (ritmoHoy)', Math.abs(c.vende - (resto + 3)) < 1e-9, JSON.stringify(c));
 
   const ro = leer('src/run-out.js'), mr = leer('src/morning-report.js'), tu = leer('src/toast-usage.js');
   prueba('ahora() pasa el ritmo a proyectar', /proyectar\(\{[^}]*hoyFrac/.test(ro));
   prueba('…con la hora del Sync de hoy, no la del reloj', /fetched_at/.test(ro));
   prueba('el correo de la mañana se lo pasa a cuantoPedir', /cuantoPedir\(\{[^}]*hoyFrac: f\.hoyFrac/.test(mr));
   prueba('los días cargados se leen con sus horas', /select=business_date,complete,closed,fetched_at,hours/.test(tu));
+}
+
+grupo('cuánto creerle a hoy: el ritmo pesa según cuánto varía el producto (2026-11-18)');
+{
+  // El Laboure Roi de Crown, con los números de la consola de Axel
+  // (bsSeAcaba, miércoles 18 a las 5:05 PM): LIVE 2.44, margen 0.18,
+  // 0.71 vendidas al Sync de las 5:00 PM, a esa hora la barra lleva el
+  // 22 % del día, un miércoles vende 0.40, llegan 3 el jueves a las 4 PM.
+  // La regla de antes: 0.71 × 0.78 / 0.22 = 2.5 botellas más esa noche,
+  // "Out today". Tres copas no son una tendencia.
+  const P = w.BarStockPedido;
+  const NY = (s) => { const [d, h] = s.split(' '); return Date.parse(d + 'T' + h + ':00Z') + 5 * 3600e3; };
+  const dem = { porDia: [0.20, 0, 0.26, 0.40, 0.43, 0.57, 0.99], semanal: 2.84, sigma: 1.30, tendencia: 2, reciente: 2.84 };
+  const lab = (o) => R.proyectar(Object.assign({ stock: 2.44, margen: 0.18, dem, hoy: '2026-11-18', ahora: NY('2026-11-18 17:05'),
+    viene: [{ cuando: new Date(NY('2026-11-19 16:00')).toISOString(), n: 3 }], hoyVendido: 0.71, hoyFrac: 0.22 }, o || {}));
+  const p1 = lab();
+  prueba('el Laboure, sin saber cuánto varía (cv 1): ya no se acaba hoy', !!R.ritmoHoy && (!p1 || p1.enDias > 0), JSON.stringify(p1));
+  const rh = R.ritmoHoy ? R.ritmoHoy(dem.porDia, '2026-11-18', 0.71, 0.22, 1) : {};
+  prueba('…lo que falta de hoy ≈ 0.7, no 2.5', Math.abs(rh.resto - 0.4 * 0.78 * (1 + (0.22 / 1.22) * (0.71 / 0.088 - 1))) < 1e-9 && rh.resto < 0.8, JSON.stringify(rh));
+  prueba('…y el ritmo sigue contando (más que lo de siempre − lo vendido)', rh.usaRitmo === true && rh.resto > 0);
+
+  // El mismo día en un producto PAREJO (cv 0.3): a la misma hora y con
+  // el mismo exceso, a hoy se le cree más. Y uno a saltos (cv 1.5), menos.
+  const parejo = R.ritmoHoy ? R.ritmoHoy([4, 0, 3, 4, 4, 5, 8], '2026-11-18', 2.5, 0.22, 0.3).resto : 0;
+  const saltos = R.ritmoHoy ? R.ritmoHoy([4, 0, 3, 4, 4, 5, 8], '2026-11-18', 2.5, 0.22, 1.5).resto : 0;
+  prueba('con el mismo exceso, al parejo se le cree más que al que va a saltos', parejo > saltos + 1, JSON.stringify({ parejo, saltos }));
+  prueba('…y cuanto más avanza el día, más pesa hoy',
+    R.ritmoHoy && R.ritmoHoy([4, 0, 3, 4, 4, 5, 8], '2026-11-18', 4, 0.6, 1).z > R.ritmoHoy([4, 0, 3, 4, 4, 5, 8], '2026-11-18', 1.5, 0.22, 1).z);
+
+  // El prosecco de la fiesta (2026-11-14) sigue saliendo hoy aunque vaya
+  // a saltos: 12.5 contra 4 a las 3 PM es demasiado para ser casualidad.
+  const sab = { porDia: [3, 0, 1, 1, 2, 3, 4], semanal: 14, sigma: 0 };
+  const pr = R.proyectar({ stock: 6, dem: sab, viene: [], hoy: '2026-11-14', ahora: NY('2026-11-14 15:00'), hoyVendido: 12.5, hoyFrac: 0.213 });
+  prueba('el prosecco de la fiesta: Out today', pr && pr.enDias === 0, JSON.stringify(pr));
+  const pr2 = R.proyectar({ stock: 6, dem: Object.assign({}, sab, { cv: P.CV_MAX }), viene: [], hoy: '2026-11-14', ahora: NY('2026-11-14 15:00'), hoyVendido: 12.5, hoyFrac: 0.213 });
+  prueba('…también con la variación más alta (cv 2)', pr2 && pr2.enDias === 0, JSON.stringify(pr2));
+
+  // Todas las cuentas del día 0 pasan el cv: la fecha, Order N, las barras.
+  const ro = leer('src/run-out.js');
+  prueba('proyectar, cuantoPedir, hastaLaEntrega y recorridoDe pasan el cv',
+    (ro.match(/restaDia\(.*\.cv\)/g) || []).length === 4, String((ro.match(/restaDia\(.*\.cv\)/g) || []).length));
+
+  // cuánto varía, aprendido de lo vendido (pedido.variacionDiaria).
+  const dias = [];
+  for (let k = 0; k < 91; k++) dias.push(new Date(Date.parse('2026-08-17T12:00:00Z') + k * 864e5).toISOString().slice(0, 10));
+  const parejos = {}, aSaltos = {};
+  dias.forEach((d, i) => { parejos[d] = 2 + (i % 3 === 0 ? 0.3 : -0.15); aSaltos[d] = i % 3 === 0 ? 1.2 : 0; });
+  const cvP = P.variacionDiaria ? P.variacionDiaria(dias, d => parejos[d] || 0) : null;
+  const cvS = P.variacionDiaria ? P.variacionDiaria(dias, d => aSaltos[d] || 0) : null;
+  prueba('uno que vende parejo: cv bajo (el mínimo)', cvP === P.CV_MIN, String(cvP));
+  prueba('uno que vende a saltos (una botella cada tres días): cv alto', cvS > 1.2, String(cvS));
+  prueba('con pocos días, no se sabe: CV_DEF', P.variacionDiaria && P.variacionDiaria(dias.slice(-10), d => aSaltos[d] || 0) === P.CV_DEF);
+  const d2 = P.demanda({ pouriq: null, toast: { porDia: aSaltos, cargados: dias }, hoy: '2026-11-18' });
+  prueba('pedido.demanda lo devuelve en `cv`', d2.cv === cvS, JSON.stringify(d2.cv));
 }
 
 grupo('la fecha prudente: media botella de margen');

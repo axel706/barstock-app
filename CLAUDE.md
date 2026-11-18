@@ -461,6 +461,8 @@ en la consola: la llamada va dentro de `(async () => { ... })();`.
   dice "waiting"
 - `forense.js` → `await bsCuando('Baileys')` — qué le pasó a un producto
 - `existe.js` — si un producto está en la nube
+- `por-que-se-acaba.js` → `await bsSeAcaba('Laboure')` — por qué un producto
+  dice que se acaba: cada pieza de la cuenta y la fecha sin cada una
 - `toast.js` → `await bsToast('ping')` — qué contesta Toast (`ping`,
   `restaurant`, `menu`, `orders`, `drinks`, `wine`, `sales`), a través de `api/integrations.js`.
   `await bsToastVentas('liquor')` es el DINERO vendido hoy por categoría
@@ -1176,6 +1178,19 @@ El arreglo acordado, en tres fases:
    hoy (`fetched_at`). `proyectar` y `cuantoPedir` reciben `hoyFrac`;
    `ahora()` lo calcula y lo deja en cada fila, y el correo lo pasa a
    `cuantoPedir`. Prueba: `test-run-out` ("el ritmo de hoy").
+4. **Cuánto creerle a hoy (2026-11-18):** extrapolar lo vendido tal
+   cual convertía tres copas del Laboure Roi (0.71 a las 5 PM, f 22 %,
+   un miércoles de 0.40) en 2.5 botellas esa noche y "Out today". Axel:
+   nada de parchar productos, que el motor reconozca el tipo. Ahora
+   `run-out.ritmoHoy`: a hoy se le cree Z = f / (f + cv), con `cv` lo
+   que ESE producto varía de un día a otro (`pedido.variacionDiaria`,
+   sus 13 semanas, en `dem.cv`; sin datos, 1; entre 0.25 y 2); λ = 1 +
+   Z(ρ − 1), ρ = vendido / (lo de siempre × f); resto = lo de siempre ×
+   (1 − f) × λ, nunca menos que lo de siempre − lo vendido. Parejo y
+   tarde → se le cree a hoy; a saltos y temprano → manda lo de siempre.
+   El prosecco de la fiesta sigue "Out today". Diagnóstico de un
+   producto: `tools/por-que-se-acaba.js` → `bsSeAcaba('Laboure')`.
+   Prueba: "cuánto creerle a hoy" en `test-run-out`.
 
 ### La fecha prudente: media botella de margen (2026-11-14)
 

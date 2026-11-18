@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-172100",
+    "items": [
+      "Fewer false Out today alerts on slow sellers"
+    ]
+  },
+  {
     "build": "20261118-165957",
     "items": [
       "Behind-the-scenes fixes"
@@ -177,12 +183,6 @@
     "build": "20261118-111745",
     "items": [
       "Transfers count in Live, Sent and Pour·IQ"
-    ]
-  },
-  {
-    "build": "20261118-111004",
-    "items": [
-      "Transfers between locations, confirmed by the other"
     ]
   }
 ]
