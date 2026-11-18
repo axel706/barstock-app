@@ -406,7 +406,22 @@ console.log('\nlo que se guarda sale del constructor del escritorio');
        malos.map(i => i.id || i.type).join(','));
   }
 
-  console.log('\n' + (falla ? falla + ' MAL   ·   ' : 'todo bien   ·   ') +
+  // ── Como una subsección de Settings (Axel, 2026-11-18) ──────────────
+// "Quick order" en la banda con el atrás donde estaba Time Machine, y
+// el botón principal es el de Done: mismo cristal, fijo sobre las
+// pestañas.
+{
+  const fuente = require('fs').readFileSync(require('path').join(__dirname, '../src/mobile-quick.js'), 'utf8');
+  const css = require('fs').readFileSync(require('path').join(__dirname, '../styles/mobile-app.css'), 'utf8');
+  ok('"Quick order" va en la banda, y su atrás lleva a Orders',
+    /M\(\)\.enBanda\('Quick order'\)/.test(fuente) && /alVolverBanda\(\(\) => M\(\)\.ir\('orders'\)\)/.test(fuente));
+  ok('el botón principal es el de Done: en su cristal azul y fijo en el sitio de Done',
+    /id="mqMain"/.test(fuente) && !/class="m-rev-go" id="mqMain"/.test(fuente) &&
+    /:is\(#mRoDone, #mTxGo, #miOrdOn, #mqMain\),\n\s*body\.m-shell #mTabs \.m-tab\.on \{/.test(css) &&
+    /#mScreens :is\(#mTxGo, #mqMain\) \{\s*position: fixed;/.test(css));
+}
+
+console.log('\n' + (falla ? falla + ' MAL   ·   ' : 'todo bien   ·   ') +
               pasa + ' comprobaciones');
   process.exit(falla ? 1 : 0);
 })();

@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261118-140407",
+    "items": [
+      "Quick order: full screen with back button",
+      "Save button above the tabs, like Done"
+    ]
+  },
+  {
     "build": "20261118-135822",
     "items": [
       "Darker cards in More and Settings",
@@ -180,13 +187,6 @@
     "build": "20261117-085225",
     "items": [
       "Monday's email says what Sunday's count found and why"
-    ]
-  },
-  {
-    "build": "20261117-084242",
-    "items": [
-      "Monday's email is now last week's summary",
-      "Send last week's summary as a test (Morning email)"
     ]
   }
 ]

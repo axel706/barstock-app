@@ -338,7 +338,7 @@ grupo('5 · la sección Transfers (src/mobile-transfers.js, lámina B)');
     prueba('"Transfer N bottles" es el botón de Done (mismo cristal, fijo en su sitio), al final',
       !!host.querySelector('#mTxGo') && host.lastElementChild === host.querySelector('#mTxGo') &&
       /#mScreens :is\(#mRoDone, #mTxGo[^)]*\),\n\s*body\.m-shell #mTabs \.m-tab\.on \{/.test(leer('styles/mobile-app.css')) &&
-      /#mScreens #mTxGo \{\s*position: fixed;[^}]*bottom: calc\(env\(safe-area-inset-bottom, 0px\) \+ 110px - var\(--m-base\) \* 2\.7\)/.test(leer('styles/mobile-app.css')));
+      /#mScreens :is\(#mTxGo[^)]*\) \{\s*position: fixed;[^}]*bottom: calc\(env\(safe-area-inset-bottom, 0px\) \+ 110px - var\(--m-base\) \* 2\.7\)/.test(leer('styles/mobile-app.css')));
     host.querySelector('[data-dir="in"]').click();
     prueba('sin productos no deja transferir', host.querySelector('#mTxGo').disabled && /Add a product/.test(txt(host.querySelector('#mTxGo'))));
     host.querySelector('#mTxAdd').click();
@@ -425,9 +425,9 @@ grupo('6 · la factura (fase 4)');
   {
     const css = leer('styles/mobile-app.css');
     prueba('los dos de la factura, de cristal (lámina B): en la regla del cristal y con su reflejo',
-      /:is\([^)]*#miOrdOn, #miAntes\),\n/.test(css) && /:is\([^)]*#miOrdOn, #miAntes\)::before,/.test(css));
+      /:is\([^)]*#miOrdOn, #miAntes[^)]*\),\n/.test(css) && /:is\([^)]*#miOrdOn, #miAntes[^)]*\)::before,/.test(css));
     prueba('"Link to an order" azul (el de Done) y "It arrived before the count" violeta',
-      /:is\(#mRoDone, #mTxGo, #miOrdOn\),\n\s*body\.m-shell #mTabs \.m-tab\.on \{/.test(css) &&
+      /:is\(#mRoDone, #mTxGo, #miOrdOn[^)]*\),\n\s*body\.m-shell #mTabs \.m-tab\.on \{/.test(css) &&
       /#mScreens #miAntes \{[^}]*rgba\(139, 92, 246/.test(css));
     prueba('centrados en la tarjeta', /\.m-iatar \{ text-align: center; \}/.test(css));
   }

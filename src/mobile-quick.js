@@ -340,15 +340,18 @@
     const correo = porCorreo(_vendor);
     const res = resultados();
     const cab = (M() && M().cabecera) ? M().cabecera : null;
+    const sub = correo
+      ? 'Off-cycle. Goes out by email like any other order.'
+      : 'Off-cycle. ' + _vendor + ' is a log — nothing gets sent.';
+    // Como una subsección de Settings (Axel, 2026-11-18): "Quick order"
+    // en la banda y el botón de Time Machine pasa a ser atrás, a Orders.
+    // La página empieza con la línea de debajo, sin título grande.
+    const enBanda = !!(M() && M().enBanda && M().enBanda('Quick order'));
+    if (enBanda && M().alVolverBanda) M().alVolverBanda(() => M().ir('orders'));
 
     host.innerHTML =
-      (cab ? cab({
-        volverA: 'Orders',
-        titulo: 'Quick order',
-        sub: correo
-          ? 'Off-cycle. Goes out by email like any other order.'
-          : 'Off-cycle. ' + esc(_vendor) + ' is a log — nothing gets sent.'
-      }) : '') +
+      (enBanda ? '<div class="m-hsub m-set-intro">' + esc(sub) + '</div>'
+        : cab ? cab({ volverA: 'Orders', titulo: 'Quick order', sub: esc(sub) }) : '') +
 
       '<div class="m-sheet-t">Vendor</div>' +
       '<div class="m-chips" id="mqVend">' +
@@ -456,7 +459,11 @@
                 ' from ' + esc(_vendor) + '</span>' +
               '<b>' + money(total()) + '</b>' +
             '</div>' +
-            '<button type="button" class="m-rev-go" id="mqMain"' +
+            // El botón de Done de Running out, en su sitio: fijo justo
+            // encima de las pestañas (Axel, 2026-11-18). El hueco deja
+            // ver el total por encima de él.
+            '<div class="m-tx-hueco" aria-hidden="true"></div>' +
+            '<button type="button" id="mqMain"' +
               (_guardando ? ' disabled' : '') + '>' +
               (_guardando ? 'Saving…' : correo ? 'Review and send' : 'Save to history') +
             '</button>' +
