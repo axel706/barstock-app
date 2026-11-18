@@ -230,6 +230,8 @@
     // vendido que el LIVE conoce es lo de esa hora, no lo de ahora.
     const diaHoy = (h.dias || []).find(d => d && d.business_date === hoy);
     const hoyFrac = diaHoy && diaHoy.fetched_at ? fraccionDelDia(h.dias, hoy, diaHoy.fetched_at) : null;
+    // La hora del Sync de hoy, para decir "12.5 sold today by 3 PM".
+    const hoySync = diaHoy && diaHoy.fetched_at ? diaHoy.fetched_at : null;
     // La demanda de cada producto que Toast vende (pedido.demanda): Pour·IQ
     // de window.parAdjustments, que la app calcula al cargar y el correo
     // en el servidor (lib/morning-cron.js); sin él, Toast solo.
@@ -253,10 +255,73 @@
       const hoyVendido = hoyDe.get(f.producto) || 0;
       const margen = margenDe(f);
       const fin = dem ? proyectar({ stock: f.live, dem, viene: f.viene, hoy, ahora: t, hoyVendido, hoyFrac, margen }) : null;
-      return Object.assign({}, f, { med, dem, hoyVendido, hoyFrac, margen, agota: fin ? fin.dia : null, enDias: fin ? fin.enDias : null });
+      return Object.assign({}, f, { med, dem, hoyVendido, hoyFrac, hoySync, ahoraMs: t, margen, agota: fin ? fin.dia : null, enDias: fin ? fin.enDias : null });
     });
     return { estado: 'listo', hoy, conteo: vivo.conteo, desde: vivo.desde, muestras: M.muestras, suficiente: M.suficiente, filas };
   }
 
-  window.BarStockRunOut = { medianas, proyectar, cuantoPedir, mediana, fraccionDelDia, ahora, DIAS_HISTORIA, HORIZONTE, MIN_MUESTRAS, FRAC_MIN, MARGEN, MARGEN_PARTE, margenDe };
+  // ── El por qué (fase 3 de docs/plan-pedido.md, Axel 2026-11-18, E) ──
+  //
+  // Bajo cada producto de Running out: lo que quedará al final de cada
+  // día (recorridoDe) y una frase (porQue). Las dos salen de la fila de
+  // ahora(), con la misma cuenta que su "Out" (pedido.recorrido), y la
+  // frase de plantillas que eligen los números: nunca dice lo que los
+  // datos no dicen. Sin `dem` (lo que Toast no vende) no hay ni una ni
+  // otra: no se sabe nada día por día.
+  const DIAS_BARRAS = 5;
+  function recorridoDe(f, dias) {
+    const P = window.BarStockPedido;
+    if (!P || !f || !f.dem || !f.dem.porDia) return null;
+    const hoy = P.diaDe(f.ahoraMs || Date.now());
+    return P.recorrido({
+      dem: f.dem, stock: (Number(f.live) || 0) - (Number(f.margen) || 0),
+      viene: (f.viene || []).map(v => ({ cuando: Date.parse(v.cuando), n: Number(v.n) || 0 })),
+      ahora: f.ahoraMs || Date.now(), dias: dias || DIAS_BARRAS,
+      hoyResta: restaDia(f.dem.porDia, hoy, 0, f.hoyVendido, f.hoyFrac)
+    });
+  }
+
+  const D3 = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const DL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const uno = (n) => (Math.round(n * 10) / 10).toFixed(1).replace(/\.0$/, '');
+  const horaNY = (iso) => new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' })
+    .format(new Date(iso)).replace(':00', '').replace(/\s/g, ' ');
+  // Por encima de esto, hoy "va muy por encima" o "se vende más".
+  const MUCHO = 1.3;
+
+  // → { texto, tipo: 'hoy' | 'sube' | 'normal' } o null.
+  // Las razones, por orden (lámina): (1) hoy va muy por encima de un día
+  // normal, sola porque ya dice su "usual"; (2) se vende más que de
+  // costumbre, con (3) lo que se suele usar hasta que se acaba; si no,
+  // (3) con (4) lo que viene o no.
+  function porQue(f) {
+    if (!f || !f.dem || !f.dem.porDia) return null;
+    const P = window.BarStockPedido;
+    const hoy = P ? P.diaDe(f.ahoraMs || Date.now()) : null;
+    if (!hoy) return null;
+    const usualHoy = Number(f.dem.porDia[diaSemana(hoy)]) || 0;
+    const v = Number(f.hoyVendido) || 0;
+    if (f.hoySync && v >= 1 && v > usualHoy * MUCHO) {
+      return { tipo: 'hoy', texto: uno(v) + ' sold today by ' + horaNY(f.hoySync) + '. A ' + DL[diaSemana(hoy)] +
+        ' usually sells ' + uno(usualHoy) + '.' };
+    }
+    // Lo que se suele usar desde hoy hasta el día en que se acaba (o la
+    // semana, si no se acaba en ella).
+    const hasta = f.agota && f.agota >= hoy ? f.agota : sumarDias(hoy, 6);
+    let usa = 0, k = 0;
+    for (let d = hoy; d <= hasta && k < 14; d = sumarDias(d, 1), k++) usa += Number(f.dem.porDia[diaSemana(d)]) || 0;
+    const tramo = hasta === hoy ? 'A ' + DL[diaSemana(hoy)] + ' uses ' + uno(usa) + '.'
+      : D3[diaSemana(hoy)] + '–' + D3[diaSemana(hasta)] + ' usually use ' + uno(usa) + '.';
+    const t = Number(f.dem.tendencia) || 1;
+    if (t >= MUCHO && f.dem.reciente > 0) {
+      return { tipo: 'sube', texto: 'Selling ' + uno(t) + '× its usual. ' + tramo };
+    }
+    const llega = (f.viene || []).filter(x => x && Date.parse(x.cuando) > (f.ahoraMs || 0)).sort((a, b) => Date.parse(a.cuando) - Date.parse(b.cuando));
+    const viene = llega.length
+      ? uno(llega.reduce((a, x) => a + (Number(x.n) || 0), 0)) + ' arrive ' + D3[new Date(Date.parse(diaNY(llega[0].cuando) + 'T12:00:00Z')).getUTCDay()] + ' ' + horaNY(llega[0].cuando) + '.'
+      : 'Nothing on the way.';
+    return { tipo: 'normal', texto: tramo + ' ' + viene };
+  }
+
+  window.BarStockRunOut = { recorridoDe, porQue, DIAS_BARRAS, medianas, proyectar, cuantoPedir, mediana, fraccionDelDia, ahora, DIAS_HISTORIA, HORIZONTE, MIN_MUESTRAS, FRAC_MIN, MARGEN, MARGEN_PARTE, margenDe };
 })();

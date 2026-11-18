@@ -80,6 +80,44 @@
   // El "Order N" vive en shopping-list.js: "Running low" pide el mismo.
   const cuantoPedir = (r) => window.BarStockShoppingList.sugerido(r);
 
+  // ── El por qué (Axel, 2026-11-18, lámina E) ──────────────────────────
+  //
+  // Bajo el nombre, lo que quedará al final de cada día (hoy en ámbar, el
+  // día que llega a 0 en rojo, una entrega ya pedida en azul con su
+  // "+N", un día cerrado apagado), y debajo la frase en una franja
+  // ámbar. Las dos salen de run-out (recorridoDe, porQue) sobre la fila
+  // de live-cache: la misma cuenta que el "Out" de la tarjeta. Sin fila
+  // con demanda (lo que Toast no vende), no sale nada: no se sabe nada
+  // día por día, y unas barras inventadas serían una afordancia que
+  // miente.
+  const D3 = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const ICONO = { hoy: '&#9889;', sube: '&#8599;', normal: '&#9679;' };
+  function porQueHtml(r) {
+    const R = window.BarStockRunOut;
+    const f = LC() && LC().fila ? LC().fila(r) : null;
+    if (!R || !R.porQue || !R.recorridoDe || !f) return '';
+    const pq = R.porQue(f), rec = R.recorridoDe(f);
+    if (!pq || !rec || !rec.dias.length) return '';
+    const max = Math.max(1, ...rec.dias.map(d => d.seguro));
+    let cero = false;
+    const dias = rec.dias.map((d, i) => {
+      const nombre = i === 0 ? 'Today' : D3[new Date(d.dia + 'T12:00:00Z').getUTCDay()];
+      const vacio = d.seguro <= 0;
+      // Después de un 0, lo que sigue en 0 va apagado y sin número:
+      // repetir "0" no dice nada nuevo. Si una entrega lo levanta y se
+      // vuelve a acabar (el Nino: hoy, y otra vez el sábado tras la del
+      // jueves), ese nuevo 0 sí va en rojo.
+      if (vacio && cero) return `<div class="m-ro-dia nada"><div class="m-ro-barra"></div><b>${nombre}</b></div>`;
+      cero = vacio;
+      const cls = [i === 0 ? 'hoy' : '', vacio ? 'cero' : '', d.llega > 0 ? 'llega' : '', d.cerrado && i > 0 ? 'cerrado' : ''].filter(Boolean).join(' ');
+      const alto = vacio ? 6 : Math.round(10 + 45 * d.seguro / max);
+      return `<div class="m-ro-dia ${cls}"><div class="m-ro-barra"><em>${vacio ? '0' : esc(n1(d.seguro))}</em>${
+        d.llega > 0 ? `<small>+${esc(n1(d.llega).replace(/\.0$/, ''))}</small>` : ''}<span style="height:${alto}%"></span></div><b>${nombre}</b></div>`;
+    }).join('');
+    return `<div class="m-ro-dias">${dias}</div>
+      <div class="m-ro-why"><i>${ICONO[pq.tipo] || ICONO.normal}</i><span>${esc(pq.texto)}</span></div>`;
+  }
+
   function tarjeta(x) {
     const r = x.r;
     const queda = LC() && LC().cuanto ? LC().cuanto(r) : Number(r.onHand) || 0;
@@ -108,6 +146,7 @@
           <small>${vivo ? '<span class="m-ro-live"><i></i>Live</span>' : ''}${out}<span>${esc(r.vendor || '')}</span></small></div>
         <div class="m-ro-v"><b>${vivo ? '&asymp;' : ''}${esc(n1(queda))}</b><small>Order ${esc(pedir)}</small></div>
       </div>
+      ${porQueHtml(r)}
       ${botones.length ? `<div class="m-ro-btns">${botones.join('')}</div>` : ''}
       ${estados.join('')}
     </div>`;

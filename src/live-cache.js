@@ -235,8 +235,12 @@
   // El instante del conteo desde el que corre el LIVE.
   const conteo = () => _conteo;
 
+  // La fila de run-out de un producto, tal cual: el por qué y las barras
+  // de Running out (run-out.porQue / recorridoDe) se calculan sobre ella.
+  const fila = (r) => agotaDe(r);
+
   window.BarStockLiveCache = {
-    pedir, conteo,
+    pedir, conteo, fila,
     cargar, caducar, alCambiar, vivo, cuanto, conVivo, texto, agota, toastLoVende, medianas, llegadas, dinero, semana, botellas,
     etiquetaLive, etiquetaAgota, VIVO_MS,
     _reset: () => { _vivo = null; _agota = null; _conteo = null; _desde = null; _hoy = null; _vivoEn = 0; _pidiendo = null; _otraVez = false; _oyentes.clear(); }

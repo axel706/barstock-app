@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261117-234230",
+    "items": [
+      "Running out shows why, and the days ahead",
+      "The morning email says why it runs out"
+    ]
+  },
+  {
     "build": "20261117-230701",
     "items": [
       "Running out warns sooner, using Pour·IQ",
@@ -178,12 +185,6 @@
     "build": "20261115-125820",
     "items": [
       "Do we have: Tell the team it's low, in orange"
-    ]
-  },
-  {
-    "build": "20261115-124649",
-    "items": [
-      "People: new permissions reach everyone with the role"
     ]
   }
 ]

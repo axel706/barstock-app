@@ -105,7 +105,8 @@ demás sólo si al múltiplo le falta una botella o menos.
 2. **El aviso corregido:** Running out y el correo usan la demanda nueva
    y la hora de la entrega. Se ve en qué entra, no cómo se ve. **Hecha
    (2026-11-18).**
-3. **El por qué** en la tarjeta y en el correo. Lámina.
+3. **El por qué** en la tarjeta y en el correo. Lámina. **Hecha
+   (2026-11-18, opción E).**
 4. **La sugerencia en Orders**, al lado del par al principio ("Par 6 ·
    Suggested 9") para comparar unas semanas. Lámina.
 5. **Eventos con número**, cuando esté la lista de paquetes.

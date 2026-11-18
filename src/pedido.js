@@ -233,37 +233,63 @@
   // calcula con lo ya vendido y el ritmo del día: un hoy cargado a media
   // tarde ya está restado). Se reparte en lo que queda del día desde
   // `ahora`. Sin él, lo típico de hoy desde `ahora`.
-  function seAcaba({ dem, stock, viene, ahora, dias, frac, z, hoyResta }) {
+  function seAcaba(op) {
+    if (!((op.dem && op.dem.porDia) || []).some(x => x > 0)) return null;
+    return recorrido(op).fin;
+  }
+
+  // ── El recorrido día por día: la MISMA cuenta que seAcaba ────────────
+  //
+  // Axel, 2026-11-18 (fase 3, lámina E): bajo cada producto de Running
+  // out, lo que quedará al final de cada día. seAcaba es esto mismo
+  // parado en el primer cruce; las barras salen de aquí para que no haya
+  // dos cuentas que digan cosas distintas.
+  //
+  // Lo que se enseña de cada día (`seguro`) es lo que queda MENOS el
+  // colchón, como mucho 0: lo que se puede dar por seguro. Así la barra
+  // llega a 0 justo el día del "Out", que se calcula con el colchón. Con
+  // lo típico a secas, el día del "Out" diría "0.6" y la barra mentiría.
+  //
+  // → { dias: [{ dia, seguro, llega, cerrado, agotado }], fin }, con
+  //   `fin` como seAcaba ({ dia, enDias, en } o null).
+  function recorrido({ dem, stock, viene, ahora, dias, frac, z, hoyResta }) {
     const f = frac || fraccionLineal;
     const zz = z == null ? Z : z;
-    if (!(dem.porDia || []).some(x => x > 0)) return null;
+    const porDia = (dem && dem.porDia) || [];
     let s = Math.max(0, Number(stock) || 0);
     const hoy = diaDe(ahora);
-    if (s <= 1e-9) return { dia: hoy, enDias: 0, en: ahora };
+    let finAl = s <= 1e-9 ? { dia: hoy, enDias: 0, en: ahora } : null;
     const llegadas = (viene || []).map(x => ({ t: Number(x.cuando), n: Number(x.n) || 0 }))
       .filter(x => x.t > ahora).sort((a, b) => a.t - b.t);
     let usado = 0;
+    const out = [];
     for (let k = 0; k < (dias || 7); k++) {
-      const d = sumarDias(hoy, k), q = Number(dem.porDia[dow(d)]) || 0;
+      const d = sumarDias(hoy, k), q = Number(porDia[dow(d)]) || 0;
       // Los cortes de este día: desde ahora (o el inicio del día), cada
       // llegada de ese día, y el final del día. Se mira justo ANTES de
       // cada llegada: lo que llega a las 4 PM no salva el mediodía.
       const desde = k === 0 ? ahora : inicio(d);
       const fin = inicio(sumarDias(d, 1));
       const puntos = [desde].concat(llegadas.filter(x => x.t > desde && x.t < fin).map(x => x.t), [fin]);
+      let llega = 0, agotado = false;
       for (let i = 0; i < puntos.length - 1; i++) {
         const tramo = Math.max(0, f(d, puntos[i + 1]) - f(d, puntos[i]));
         const gasto = k === 0 && hoyResta != null
           ? Math.max(0, Number(hoyResta) || 0) * tramo / Math.max(1e-9, 1 - f(d, ahora))
           : q * tramo;
         s -= gasto; usado += gasto;
-        if (s - colchonDe(dem, usado, zz) <= 1e-9) return { dia: d, enDias: k, en: puntos[i + 1] };
-        for (const x of llegadas) if (x.t === puntos[i + 1]) s += x.n;
+        if (s - colchonDe(dem, usado, zz) <= 1e-9) {
+          agotado = true;
+          if (!finAl && porDia.some(x => x > 0)) finAl = { dia: d, enDias: k, en: puntos[i + 1] };
+        }
+        for (const x of llegadas) if (x.t === puntos[i + 1]) { s += x.n; llega += x.n; }
       }
+      if (k === 0 && finAl && finAl.enDias === 0) agotado = true;
+      out.push({ dia: d, seguro: Math.max(0, s - colchonDe(dem, usado, zz)), llega, cerrado: !(q > 0), agotado });
     }
-    return null;
+    return { dias: out, fin: finAl };
   }
 
-  window.BarStockPedido = { demanda, consumoEntre, cuantoPedir, seAcaba, multiploPara, redondeoPara, colchonDe, HOLGURA, SIGMA_MAX, fraccionLineal, inicio, diaDe,
+  window.BarStockPedido = { demanda, consumoEntre, cuantoPedir, seAcaba, recorrido, multiploPara, redondeoPara, colchonDe, HOLGURA, SIGMA_MAX, fraccionLineal, inicio, diaDe,
     mediana, percentil, Z, SEMANAS_TENDENCIA, TENDENCIA_MIN, TENDENCIA_MAX };
 })();

@@ -5650,6 +5650,24 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-ro-v b { display: block; font-size: var(--m-figure); font-weight: 800; color: #fbbf24; line-height: 1; }
   .m-ro-v small { display: block; margin-top: 6px; font-size: var(--m-small); color: #9fb0c4; font-weight: 600; }
   .m-ro-btns { display: flex; gap: 8px; margin-top: 10px; }
+  /* El por qué (2026-11-18, lámina E): los días y la frase. */
+  .m-ro-dias { display: flex; gap: 6px; margin-top: 12px; }
+  .m-ro-dia { flex: 1; min-width: 0; text-align: center; font-size: var(--m-meta); color: #cbd5e1; }
+  .m-ro-dia b { display: block; margin-top: 3px; font-weight: 600; }
+  .m-ro-barra { height: calc(var(--m-base) * 3.3); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+  .m-ro-barra em { font-style: normal; font-weight: 700; color: #f1f5f9; }
+  .m-ro-barra small { font-weight: 600; color: #7dd3fc; font-size: var(--m-meta); }
+  .m-ro-barra span { width: 62%; margin-top: 2px; border-radius: 4px 4px 2px 2px; background: rgba(253,230,138,.55); }
+  .m-ro-dia.hoy { color: #fde68a; }
+  .m-ro-dia.hoy b { font-weight: 800; }
+  .m-ro-dia.cero em { color: #fca5a5; }
+  .m-ro-dia.cero span { background: #f87171; }
+  .m-ro-dia.llega { color: #7dd3fc; }
+  .m-ro-dia.llega span { background: rgba(56,189,248,.65); }
+  .m-ro-dia.cerrado, .m-ro-dia.nada { opacity: .35; }
+  .m-ro-why { display: flex; gap: 8px; margin-top: 8px; padding: 8px 11px; border-radius: 12px;
+    background: rgba(251,191,36,.10); color: #fde68a; font-size: var(--m-small); line-height: 1.35; }
+  .m-ro-why i { font-style: normal; font-weight: 800; }
   .m-ro-hecho { display: flex; align-items: center; justify-content: space-between; gap: 10px;
     margin-top: 12px; padding: 9px 12px; border-radius: 12px; font-size: var(--m-small); }
   .m-ro-hecho span { min-width: 0; }

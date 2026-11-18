@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 157 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 158 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -395,7 +395,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 157 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 158 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -1189,8 +1189,21 @@ la fila lleva `dem` y `med` = su `porDia`. El "Order N" hasta el domingo
 `window.parAdjustments`: la app avisa `parAdjustmentsUpdated` al tenerlo
 (llega 2.5 s tarde) y `live-cache` se rehace; el correo lo calcula en el
 servidor (`week` y `par-intelligence` en `MODULOS`; si falla, Toast
-solo). Pruebas: `test-pedido` y "fase 2" de `test-run-out`. Sigue: el
-por qué (fase 3) y la sugerencia en Orders (fase 4), sobre lámina.
+solo). Pruebas: `test-pedido` y "fase 2" de `test-run-out`.
+**Fase 3 hecha (2026-11-18, lámina E):** en cada tarjeta de la revisión
+de Running out, bajo el nombre, lo que quedará al final de cada día (5
+días: hoy en ámbar, el 0 en rojo, una entrega pedida en azul con su
+"+N", un día cerrado o lo que sigue en 0 apagado) y debajo la frase en
+una franja ámbar. Las barras son `pedido.recorrido` (seAcaba sin
+pararse: una sola cuenta) y enseñan lo que queda MENOS el colchón, así
+que llegan a 0 el día del "Out". La frase es `run-out.porQue`, de
+plantillas: hoy muy por encima de lo normal (×1.3 y 1 botella, sola) ›
+"Selling N× its usual" (`dem.tendencia` ≥ 1.3) + lo que se usa hasta
+que se acaba › lo que se usa + lo que viene o "Nothing on the way". La
+lee `live-cache.fila(r)`. El correo lleva la misma frase bajo cada
+producto (`porque`, recortada a 160). Sin demanda (lo que Toast no
+vende), ni barras ni frase. Estilos `.m-ro-dia*` y `.m-ro-why`. Prueba:
+`test-por-que`. Sigue: la sugerencia en Orders (fase 4), sobre lámina.
 
 ### La lista de compras y la verificación (2026-11-14, sin construir)
 

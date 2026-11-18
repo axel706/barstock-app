@@ -109,8 +109,11 @@
       if (!f || !f.med || !f.med.some(x => x > 0) || !conPar(f.producto)) continue;
       const c = R.cuantoPedir({ stock: f.live, med: f.med, dem: f.dem, viene: f.viene, hoy: out.hoy, hoyVendido: f.hoyVendido, hoyFrac: f.hoyFrac, margen: f.margen });
       if (!(c.pedir > 0)) continue;
+      // El por qué (fase 3 de docs/plan-pedido.md): la misma frase que la
+      // tarjeta de Running out, de la misma fila.
+      const pq = R.porQue ? R.porQue(f) : null;
       out.agotan.push({ producto: f.producto, queda: f.live, agota: f.agota || c.hasta,
-        vende: c.vende, llega: c.llega, pedir: c.pedir });
+        vende: c.vende, llega: c.llega, pedir: c.pedir, porque: pq ? pq.texto : '' });
     }
     return out;
   }
