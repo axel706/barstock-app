@@ -63,6 +63,10 @@ console.log('\nTinta: el fondo de las tarjetas');
     /\.m-fic-ojo\s+\{ background: linear-gradient\(135deg, rgba\(245,158,11,\.16\), var\(--tinta\) 55%\), var\(--tinta\);\s*border: 1px solid rgba\(252,211,77,\.32\);/.test(css) &&
     /\.m-fic-mal\s+\{ background: linear-gradient\(135deg, rgba\(239,68,68,\.16\), var\(--tinta\) 55%\), var\(--tinta\);\s*border: 1px solid rgba\(248,113,113,\.32\);/.test(css));
   prueba('las tarjetas de Running out, de Tinta', /\.m-ro-c \{[^}]*background: var\(--tinta\); border: 1px solid var\(--tinta-borde\);/.test(css));
+  prueba('las tres cifras del Home, de Tinta; la que avisa con su ámbar; sus botones no',
+    /\.m-cf-c \{[^}]*background: var\(--tinta\); border: 1px solid var\(--tinta-borde\);/.test(css) &&
+    /\.m-cf-c\.m-cf-am \{ background: linear-gradient\(135deg, rgba\(245,158,11,\.16\), var\(--tinta\) 55%\), var\(--tinta\);/.test(css) &&
+    !/body\.m-shell \.m-cf-b \{[^}]*var\(--tinta\)/.test(css));
   prueba('From Toast (la de referencia) usa la misma variable', /#mScreens \.m-tl-sec \{[^}]*background: var\(--tinta\)/.test(css));
   const conTinta = css.split('}').filter(b => /var\(--tinta\)/.test(b));
   prueba('ninguna regla de Tinta lleva desenfoque', conTinta.length >= 4 && !conTinta.some(b => /backdrop-filter:\s*blur/.test(b)), conTinta.length + ' reglas');

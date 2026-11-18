@@ -193,8 +193,12 @@ grupo('lo de abajo del Home habla el mismo idioma');
   // Desde 2026-11-12 son tres (.m-cf-c, "On the shelf", "Sold
   // yesterday", "Spent this cycle"), con la misma regla.
   const stat = /\.m-cf-c\s*\{([^}]*)\}/.exec(css);
-  prueba('las cifras siguen en vidrio liso',
-    !!stat && /background:\s*rgba\(255,255,255,\.09\)/.test(stat[1]),
+  // Desde el 2026-11-18 el panel liso es Tinta (Axel: "pongámosle tinta
+  // a las 3 tarjetas"), el estándar de las tarjetas: sigue fuera de la
+  // paleta del carrusel y sin degradado; sólo cambia el blanco al 9 %
+  // por la tinta.
+  prueba('las cifras van en un panel liso (Tinta), fuera de la paleta del carrusel',
+    !!stat && /background:\s*var\(--tinta\)/.test(stat[1]),
     (stat && stat[1] || '').trim().slice(0, 70));
   prueba('sin degradado', !!stat && !/linear-gradient/.test(stat[1]));
   prueba('y su rótulo conserva el gris de antes',

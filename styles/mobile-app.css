@@ -1823,9 +1823,14 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-cf-c {
     display: flex; flex-direction: column; min-width: 0; text-align: center;
     padding: 11px 10px 10px; border-radius: 17px;
-    background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.12);
+    /* Tinta (Axel, 2026-11-18: "a las 3 tarjetas, no los botones"):
+     * ver --tinta en :root. Los botones (.m-cf-b) siguen de cristal. */
+    background: var(--tinta); border: 1px solid var(--tinta-borde);
   }
-  .m-cf-c.m-cf-am { background: rgba(245,158,11,.12); border-color: rgba(252,211,77,.45); }
+  /* La que avisa ("13 to fix") conserva su borde ámbar y un toque de su
+   * color sobre la tinta, como .m-fic-ojo. */
+  .m-cf-c.m-cf-am { background: linear-gradient(135deg, rgba(245,158,11,.16), var(--tinta) 55%), var(--tinta);
+    border-color: rgba(252,211,77,.45); }
   .m-cf-k {
     min-height: 2.5em; line-height: 1.25;
     font-size: var(--m-meta); font-weight: 800; letter-spacing: .06em;

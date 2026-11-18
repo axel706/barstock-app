@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-134042",
+    "items": [
+      "Darker cards for the three numbers on Home"
+    ]
+  },
+  {
     "build": "20261118-133341",
     "items": [
       "Darker cards in Running out"
@@ -180,12 +186,6 @@
     "build": "20261116-202122",
     "items": [
       "Clearer step to create your PIN after the code"
-    ]
-  },
-  {
-    "build": "20261116-201621",
-    "items": [
-      "New PIN can't be the same as the sign-in code"
     ]
   }
 ]
