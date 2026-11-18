@@ -169,6 +169,9 @@ grupo('3 · cargado y en orden');
   prueba('no escribe nada: sin fetch ni updateFinalOrder', !/fetch\(|updateFinalOrder|saveState|persist/.test(leer('src/sugerencia.js').replace(/\/\/.*$/gm, '')));
 }
 
+grupo('el título de "Not on this order" no va pegado a la primera tarjeta');
+prueba('aire por arriba de la primera tarjeta tras el título', /\.m-ord-k \+ \.m-ord-l \{ margin-top: 10px; \}/.test(require('fs').readFileSync(require('path').join(__dirname, '../styles/mobile-app.css'), 'utf8')));
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
 })();

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-130109",
+    "items": [
+      "Orders: space above \"Not on this order\" cards"
+    ]
+  },
+  {
     "build": "20261118-125656",
     "items": [
       "Invoice: glass buttons to link it or mark a transfer"
@@ -180,12 +186,6 @@
     "build": "20261116-194525",
     "items": [
       "Emails: the BarStock logo now has its colors"
-    ]
-  },
-  {
-    "build": "20261116-193822",
-    "items": [
-      "Sign-in code email: signed by you, details at the end"
     ]
   }
 ]
