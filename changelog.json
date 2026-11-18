@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-133341",
+    "items": [
+      "Darker cards in Running out"
+    ]
+  },
+  {
     "build": "20261118-131649",
     "items": [
       "Darker, easier-to-read cards in Inventory and Do we have"
@@ -180,12 +186,6 @@
     "build": "20261116-201621",
     "items": [
       "New PIN can't be the same as the sign-in code"
-    ]
-  },
-  {
-    "build": "20261116-200128",
-    "items": [
-      "Clearer note when counting is turned off"
     ]
   }
 ]

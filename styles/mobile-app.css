@@ -5818,8 +5818,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   #mScreens #mTxGo:disabled { opacity: .55 !important; }
   .m-tx-hueco { height: calc(var(--m-base) * 5); }
   .m-ro-vacio { margin-top: 40px; text-align: center; font-size: var(--m-body); color: #8fa1b5; }
+  /* Tinta (Axel, 2026-11-18: "necesita tinta"): ver --tinta en :root. */
   .m-ro-c { margin-top: 10px; padding: 14px; border-radius: 20px;
-    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.10); }
+    background: var(--tinta); border: 1px solid var(--tinta-borde); }
   .m-ro-top { display: flex; align-items: center; gap: 12px; }
   .m-ro-n { flex: 1; min-width: 0; }
   .m-ro-n b { display: block; font-size: var(--m-strong); font-weight: 700; color: #f1f5f9;

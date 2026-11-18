@@ -218,7 +218,7 @@ lag de las listas no venía de ahí: las filas ya iban sin desenfoque).
 Lo que avisa conserva su borde ámbar o rojo y un toque de su color en
 la esquina, sobre la tinta (`.m-fic-ojo` / `.m-fic-mal`). Ya la llevan
 Inventory (`.m-inv`), las tarjetas de Do we have y la ficha (`.m-fic`),
-y Recipes. Cuando Axel diga "ponle Tinta" a una pantalla, es esto:
+Running out (`.m-ro-c`) y Recipes. Cuando Axel diga "ponle Tinta" a una pantalla, es esto:
 **las variables, nunca el color copiado**; `test-listas-sin-blur`
 falla si el color aparece fuera de `:root` o si una regla de Tinta
 lleva desenfoque.
