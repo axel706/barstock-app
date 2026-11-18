@@ -127,7 +127,9 @@
 
   // ── New transfer (la tercera lámina) ─────────────────────────────────
   function abrirNuevo(item) {
-    _nuevo = { entra: true, otra: null, antes: false, lineas: item ? [{ item, qty: 1 }] : [] };
+    // "Out of" primero y de entrada (Axel, 2026-11-18): lo normal es que
+    // registre quien da las botellas.
+    _nuevo = { entra: false, otra: null, antes: false, lineas: item ? [{ item, qty: 1 }] : [] };
     _vista = 'nuevo';
     pintar();
   }
@@ -147,8 +149,8 @@
 
     h.innerHTML = cabecera('New transfer', () => { _vista = 'lista'; pintar(); }) + `
       <div class="m-tr-seg m-tx-seg" role="group">
-        <button type="button" data-dir="in" class="${_nuevo.entra ? 'on' : ''}">Into ${esc(mia)}</button>
         <button type="button" data-dir="out" class="${_nuevo.entra ? '' : 'on'}">Out of ${esc(mia)}</button>
+        <button type="button" data-dir="in" class="${_nuevo.entra ? 'on' : ''}">Into ${esc(mia)}</button>
       </div>
       <div class="m-lab">${_nuevo.entra ? 'FROM' : 'TO'}</div>
       <div class="m-tr-locs">${otras.map(l => `<button type="button" data-loc="${esc(l.id)}" class="m-tr-loc${_nuevo.otra === l.id ? ' on' : ''}">${esc(l.name)}</button>`).join('')}</div>
@@ -167,9 +169,10 @@
       </div>
       ${_nuevo.antes ? '<div class="m-tx-nota">They were already on the shelf when you counted: Live won’t add them again.</div>' : ''}
       <div class="m-kp-err" aria-live="polite">${error ? esc(error) : ''}</div>
-      <button type="button" class="m-tx-nuevo" id="mTxGo" ${listo ? '' : 'disabled'}>${
-        !_nuevo.otra ? 'Choose the other location' : !_nuevo.lineas.length ? 'Add a product' : 'Transfer ' + esc(n(total)) + (total === 1 ? ' bottle' : ' bottles')}</button>
-      ${_nuevo.otra ? `<div class="m-tx-nota">${esc(t.nombreDe(locs, _nuevo.otra))} sees it and confirms it.</div>` : ''}`;
+      ${_nuevo.otra ? `<div class="m-tx-nota">${esc(t.nombreDe(locs, _nuevo.otra))} sees it and confirms it.</div>` : ''}
+      <div class="m-tx-hueco" aria-hidden="true"></div>
+      <button type="button" id="mTxGo" ${listo ? '' : 'disabled'}>${
+        !_nuevo.otra ? 'Choose the other location' : !_nuevo.lineas.length ? 'Add a product' : 'Transfer ' + esc(n(total)) + (total === 1 ? ' bottle' : ' bottles')}</button>`;
 
     h.querySelectorAll('[data-dir]').forEach(b => { b.onclick = () => { _nuevo.entra = b.dataset.dir === 'in'; pintar(); }; });
     h.querySelectorAll('[data-loc]').forEach(b => { b.onclick = () => { _nuevo.otra = b.dataset.loc; pintar(); }; });

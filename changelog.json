@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-122043",
+    "items": [
+      "New transfer: \"Out of\" first, button above the tabs"
+    ]
+  },
+  {
     "build": "20261118-120835",
     "items": [
       "Transfers: product search stays above the keyboard"
@@ -180,13 +186,6 @@
     "build": "20261115-235640",
     "items": [
       "New people can set their own PIN with a code or QR"
-    ]
-  },
-  {
-    "build": "20261115-151523",
-    "items": [
-      "People: pause someone's access without removing them",
-      "Paused people see a clear message when they sign in"
     ]
   }
 ]

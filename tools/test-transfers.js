@@ -332,6 +332,14 @@ grupo('5 · la sección Transfers (src/mobile-transfers.js, lámina B)');
     prueba('sin nada esta semana, lo dice', /No transfers this week/.test(txt(host)), txt(host));
     host.querySelector('#mTxNew').click();
     prueba('"New transfer" en la banda; con una sola otra locación, ya elegida', w.__banda === 'New transfer' && !!host.querySelector('[data-loc].on'));
+    const dirs = [...host.querySelectorAll('[data-dir]')];
+    prueba('"Out of" a la izquierda y elegido de entrada; "Into" a la derecha (Axel, 2026-11-18)',
+      dirs.length === 2 && dirs[0].dataset.dir === 'out' && dirs[0].classList.contains('on') && dirs[1].dataset.dir === 'in');
+    prueba('"Transfer N bottles" es el botón de Done (mismo cristal, fijo en su sitio), al final',
+      !!host.querySelector('#mTxGo') && host.lastElementChild === host.querySelector('#mTxGo') &&
+      /#mScreens :is\(#mRoDone, #mTxGo\),\n\s*body\.m-shell #mTabs \.m-tab\.on \{/.test(leer('styles/mobile-app.css')) &&
+      /#mScreens #mTxGo \{\s*position: fixed;[^}]*bottom: calc\(env\(safe-area-inset-bottom, 0px\) \+ 110px - var\(--m-base\) \* 2\.7\)/.test(leer('styles/mobile-app.css')));
+    host.querySelector('[data-dir="in"]').click();
     prueba('sin productos no deja transferir', host.querySelector('#mTxGo').disabled && /Add a product/.test(txt(host.querySelector('#mTxGo'))));
     host.querySelector('#mTxAdd').click();
     let hoja = w.document.getElementById('mSheet');
