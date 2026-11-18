@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-124513",
+    "items": [
+      "Invoice: the two link buttons no longer overlap"
+    ]
+  },
+  {
     "build": "20261118-122043",
     "items": [
       "New transfer: \"Out of\" first, button above the tabs"
@@ -180,12 +186,6 @@
     "build": "20261116-191618",
     "items": [
       "People: email someone their sign-in code"
-    ]
-  },
-  {
-    "build": "20261115-235640",
-    "items": [
-      "New people can set their own PIN with a code or QR"
     ]
   }
 ]

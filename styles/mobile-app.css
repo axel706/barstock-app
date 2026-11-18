@@ -5078,6 +5078,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     font-size: var(--m-small); font-weight: 700; color: #6ee7b7;
   }
   .m-iatar-s { margin-top: 8px; font-size: var(--m-meta); color: #8aa0b4; }
+  /* El segundo botón ("It arrived before the count", 2026-11-18) iba
+   * pegado a la nota del primero: sin aire entre los dos pares, la nota
+   * de arriba parecía el título del de abajo. El aire va por arriba. */
+  .m-iatar .m-iatar-s + .m-ialt { margin-top: 16px; }
 
   /* Una orden candidata. Proveedor y PO a la izquierda, importe a la
    * derecha: es lo que se mira para reconocerla. */

@@ -422,6 +422,8 @@ grupo('6 · la factura (fase 4)');
   prueba('crea UN transfer "antes del conteo" con todas las líneas, desde la locación elegida', /TR\.crear\(\{ otra, entra: true, antes: true, conteo, por[^}]*\n?\s*lineas: lineas\.map/.test(mi));
   prueba('y enlaza la factura a la orden del transfer', /guardarEnlaceOrden\(f\.id, ord\[0\]\.id\)/.test(mi));
   prueba('lo que no se pudo, se dice', /Fixed, but not everything/.test(mi));
+  prueba('el segundo botón no va pegado a la nota del primero (Axel: "están encimados")',
+    /\.m-iatar \.m-iatar-s \+ \.m-ialt \{ margin-top: 16px; \}/.test(leer('styles/mobile-app.css')));
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
