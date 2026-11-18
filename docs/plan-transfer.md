@@ -51,3 +51,8 @@ en el Home, campana y chip en la ficha).
    en el LIVE, y Pour·IQ.
 4. **(Hecha.) La factura:** enlazarla sola, y "It arrived before the count" (el
    camino 2) que crea el transfer desde la factura.
+5. **(Hecha, 2026-11-18.) La sección:** More › *Transfers* a pantalla completa
+   (`src/mobile-transfers.js`): "New transfer" con varios productos (−/+, "Add a
+   product", Now / Before the count), "To confirm" por grupo con "Confirm all" y
+   "This week" con su estado y Undo. El botón ⇄ de la ficha se quitó. Migración
+   046 (`group_id`) para agrupar las filas de un mismo envío.

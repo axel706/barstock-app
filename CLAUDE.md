@@ -1336,8 +1336,10 @@ como estaba (Axel: su conteo de hace 15 días ya salió bajo).
 
 **Transfers entre locaciones (2026-11-18, fases 1–4 hechas; plan en
 `docs/plan-transfer.md`).** Migración 045 (`location_transfers`),
-corrida por Axel. Quien lo registra (ficha › "⇄ Transfer",
-`src/mobile-transfer.js`) lo aplica al momento en SU locación; la otra lo
+corrida por Axel. Quien lo registra (More › *Transfers*,
+`src/mobile-transfers.js`, 2026-11-18: lista B con la pantalla A, como
+las subsecciones de Settings: "New transfer", "To confirm" y "This
+week" con Undo; la ficha ya no lleva botón) lo aplica al momento en SU locación; la otra lo
 confirma sin mover un dedo (`src/transfer-confirm.js`: la primera tarjeta
 del Home, la campana y el bloque "Transfers" de la ficha) o dice "Not
 right", que llega a la campana de quien lo mandó. Cada lado pone SU
@@ -1354,7 +1356,11 @@ factura de "Internal Transfers"; la que DA resta en el LIVE
 (`live-stock` › `salidas`). Undo (mientras no haya un conteo después) y
 "Not right" quitan lo aplicado y borran la orden. `transfers.js` va antes
 de `live-stock.js` y también en `MODULOS` del correo. Pruebas:
-`test-transfers`, `test-transfer-confirm`. **Fase 4 (la factura):** el
+`test-transfers`, `test-transfer-confirm`. **Varios productos en un
+transfer** (migración 046, `group_id`): las filas del mismo envío
+comparten grupo, se confirman o se rechazan juntas ("Confirm all") y
+la que recibe tiene UNA orden TRANSFER con todas las líneas. Un
+transfer de un solo producto no manda `group_id` (funciona sin la 046). **Fase 4 (la factura):** el
 enlace automático (`invoice-order-auto.proponer`) tiene en cuenta las
 órdenes TRANSFER aunque sean de antes del ciclo (las demás no: el pasado
 no se mueve), y la factura sin enlazar ofrece "It arrived before the

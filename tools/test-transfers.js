@@ -42,7 +42,13 @@ function entorno(o) {
     const u = String(url), m = (op && op.method) || 'GET';
     const cuerpo = op && op.body ? JSON.parse(op.body) : null;
     w.__pet.push({ url: u, metodo: m, cuerpo, prefer: op && op.headers && op.headers.Prefer });
-    if (m === 'POST') { const f = Object.assign({ id: 'tr-' + (w.__filas.length + 1), status: 'pending', created_at: new Date().toISOString() }, cuerpo); w.__filas.push(f); return { ok: true, status: 201, text: async () => JSON.stringify([f]) }; }
+    if (m === 'POST' && /location_transfers/.test(u)) {
+      const hechas = (Array.isArray(cuerpo) ? cuerpo : [cuerpo]).map(c => {
+        const f = Object.assign({ id: 'tr-' + (w.__filas.length + 1), status: 'pending', created_at: new Date().toISOString() }, c);
+        w.__filas.push(f); return f;
+      });
+      return { ok: true, status: 201, text: async () => JSON.stringify(hechas) };
+    }
     if (m === 'PATCH' && /inventory_snapshots/.test(u)) {
       const id = decodeURIComponent((u.match(/id=eq\.([^&]+)/) || [])[1] || '');
       (w.__snaps || []).filter(x => x.id === id).forEach(x => Object.assign(x, cuerpo));
@@ -50,10 +56,12 @@ function entorno(o) {
     }
     if (m === 'DELETE') return { ok: true, status: 204, text: async () => '' };
     if (m === 'PATCH') {
-      const id = decodeURIComponent((u.match(/id=eq\.([^&]+)/) || [])[1] || '');
+      const uno = decodeURIComponent((u.match(/[?&]id=eq\.([^&]+)/) || [])[1] || '');
+      const varios = ((u.match(/[?&]id=in\.\(([^)]*)\)/) || [])[1] || '').split(',').filter(Boolean);
+      const ids = uno ? [uno] : varios;
       const solo = (u.match(/status=(eq|in)\.([^&]+)/) || [])[2];
       const vale = (s) => !solo || (solo.startsWith('(') ? solo.slice(1, -1).split(',').includes(s) : s === solo);
-      const hechas = w.__filas.filter(f => f.id === id && vale(f.status));
+      const hechas = w.__filas.filter(f => ids.includes(f.id) && vale(f.status));
       hechas.forEach(f => Object.assign(f, cuerpo));
       return { ok: true, status: 200, text: async () => JSON.stringify(hechas) };
     }
@@ -230,6 +238,48 @@ grupo('4b · las cuentas: Pour·IQ, la orden en Sent, deshacer (fase 3)');
   prueba('si Pour·IQ no se pudo, el transfer queda y lo dice', r.ok && /Pour·IQ/.test(r.aviso || ''), JSON.stringify(r));
 }
 
+grupo('4d · un transfer, varias líneas (migración 046)');
+{
+  const SN = [
+    { id: 's-tv', loc: CROWN, item: 'Triage Vodka', week_start: '2026-11-16', ordered: null, used: null, on_hand_end: null },
+    { id: 's-ti', loc: CROWN, item: 'Tito', week_start: '2026-11-16', ordered: null, used: null, on_hand_end: null },
+    { id: 's-wtv', loc: WB, item: 'Triage House Vodka', week_start: '2026-11-16', ordered: null, used: null, on_hand_end: null },
+    { id: 's-wti', loc: WB, item: "Tito's", week_start: '2026-11-16', ordered: null, used: null, on_hand_end: null }
+  ];
+  let w = entorno({ snaps: SN });
+  w.state.master.push({ item: 'Tito', code: 'T1', value: 20 });
+  let r = await w.BarStockTransfers.crear({ otra: WB, entra: true, por: 'Axel',
+    lineas: [{ item: 'Triage Vodka', otroItem: 'Triage House Vodka', qty: 12 }, { item: 'Tito', qty: 4 }] });
+  const p = w.__pet.find(x => x.metodo === 'POST' && /location_transfers/.test(x.url));
+  prueba('dos líneas: dos filas en UN POST, con el mismo group_id', r.ok && Array.isArray(p.cuerpo) && p.cuerpo.length === 2 &&
+    p.cuerpo[0].group_id && p.cuerpo[0].group_id === p.cuerpo[1].group_id, JSON.stringify(p && p.cuerpo));
+  prueba('UNA orden en Sent con las dos líneas', w.__ordenes.length === 1 && w.__ordenes[0].items.length === 2 &&
+    w.__ordenes[0].items[1].item === 'Tito' && w.__ordenes[0].items[1].value === 20, JSON.stringify(w.__ordenes));
+  prueba('las dos filas apuntan a esa orden', w.__filas.every(f => f.vendor_order_id === 'ord_1'));
+  prueba('y Pour·IQ, cada producto en su semana', w.__snaps.find(x => x.id === 's-tv').ordered === 12 && w.__snaps.find(x => x.id === 's-ti').ordered === 4);
+  const un = entorno({ snaps: SN });
+  await un.BarStockTransfers.crear({ otra: WB, entra: true, item: 'Triage Vodka', qty: 1 });
+  const p1 = un.__pet.find(x => x.metodo === 'POST' && /location_transfers/.test(x.url));
+  prueba('un producto va solo, sin group_id (entra aunque falte la 046)', p1 && !Array.isArray(p1.cuerpo) && !('group_id' in p1.cuerpo));
+  prueba('grupos() los junta por group_id, y lo de antes va solo', w.BarStockTransfers.grupos(w.__filas.concat([{ id: 'x-1' }])).map(g => g.length).join(',') === '2,1');
+
+  // W+B confirma el grupo: cada una con SU producto, una sola vez.
+  const w2 = entorno({ loc: WB, snaps: SN, filas: w.__filas.map(f => Object.assign({}, f)) });
+  r = await w2.BarStockTransfers.confirmar(w2.__filas, { [w2.__filas[0].id]: 'Triage House Vodka', [w2.__filas[1].id]: "Tito's" }, 'Mia');
+  prueba('confirmar el grupo: las dos, cada una con su producto, y −qty en cada semana de W+B',
+    r.ok && w2.__filas.every(f => f.status === 'confirmed') && w2.__filas[1].from_item === "Tito's" &&
+    w2.__snaps.find(x => x.id === 's-wtv').ordered === -12 && w2.__snaps.find(x => x.id === 's-wti').ordered === -4 && !w2.__ordenes.length, JSON.stringify(w2.__filas));
+  prueba('sin producto para alguna, no confirma ninguna', (await entorno({ loc: WB, filas: w.__filas.map(f => Object.assign({}, f)) })
+    .BarStockTransfers.confirmar(w.__filas, { [w.__filas[0].id]: 'Triage House Vodka' }, 'Mia')).ok === false);
+
+  // Deshacer el grupo confirmado: todo a 0 y la orden borrada UNA vez.
+  const w3 = entorno({ snaps: SN.map(x => Object.assign({}, x, { ordered: { 's-tv': 12, 's-ti': 4, 's-wtv': -12, 's-wti': -4 }[x.id] })),
+    filas: w2.__filas.map(f => Object.assign({}, f, { created_at: new Date().toISOString() })) });
+  r = await w3.BarStockTransfers.deshacer(w3.__filas, 'Axel', '2026-11-16T02:30:00Z');
+  const borra = w3.__pet.filter(x => x.metodo === 'DELETE' && /vendor_orders\?/.test(x.url));
+  prueba('Undo del grupo: los cuatro a 0 y su orden borrada una sola vez', r.ok && w3.__snaps.every(x => x.ordered === 0) && borra.length === 1, JSON.stringify([w3.__snaps, borra.length]));
+}
+
 grupo('4c · el LIVE de la que da (live-stock.js)');
 {
   const v = new JSDOM('<!doctype html><body></body>', { runScripts: 'outside-only' }).window;
@@ -251,38 +301,59 @@ grupo('4c · el LIVE de la que da (live-stock.js)');
   prueba('y el correo del servidor lo carga antes también', (() => { const m = require(path.join(RAIZ, 'lib/morning-cron.js')).MODULOS; return m.indexOf('transfers') >= 0 && m.indexOf('transfers') < m.indexOf('live-stock'); })());
 }
 
-grupo('5 · la hoja "⇄ Transfer" (src/mobile-transfer.js)');
+grupo('5 · la sección Transfers (src/mobile-transfers.js, lámina B)');
 {
-  const w = entorno();
+  const w = entorno({ snaps: [] });
   w.BarStockLiveCache = { conteo: () => '2026-11-16T02:30:00Z', caducar: () => { w.__cad = (w.__cad || 0) + 1; } };
   w.BarStockToast = { show: (t) => { w.__toast = t; } };
-  if (existe('src/mobile-transfer.js')) w.eval(leer('src/mobile-transfer.js'));
-  const M = w.BarStockMobileTransfer;
-  prueba('existe', !!M && typeof M.abrir === 'function');
-  if (M) {
-    let hecho = null;
-    await M.abrir({ item: 'Triage Vodka' }, (t) => { hecho = t; });
-    const hoja = w.document.getElementById('mSheet');
+  w.BarStockDialog = { preguntar: async () => true };
+  w.state.master.push({ item: 'Tito', code: 'T1', value: 20 });
+  let def = null;
+  w.BarStockMobile = { register: (d) => { def = d; }, enBanda: (t) => { w.__banda = t; return true; },
+    alVolverBanda: (f) => { w.__atras = f; }, volver: () => { w.__volvio = true; }, ir: (id) => { w.__ido = id; } };
+  w.eval(leer('src/transfer-confirm.js'));
+  if (existe('src/mobile-transfers.js')) w.eval(leer('src/mobile-transfers.js'));
+  w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
+  prueba('existe y se registra como pantalla (no pestaña)', !!def && def.id === 'transfers' && def.tab === false);
+  if (def) {
+    const host = w.document.createElement('div');
+    host.className = 'm-screen on'; w.document.body.appendChild(host);
+    def.mount(host);
+    await new Promise(r => setTimeout(r, 30));
     const txt = (el) => (el ? el.textContent.replace(/\s+/g, ' ').trim() : '');
-    prueba('"Into" y "Out of" con el nombre corto de la locación', /Into Crown Tavern/.test(txt(hoja)) && /Out of Crown Tavern/.test(txt(hoja)), txt(hoja));
-    prueba('con una sola otra locación, ya elegida', !!hoja.querySelector('[data-loc].on') && !hoja.querySelector('#mTrGo').disabled);
-    prueba('"Before the count" con el día del conteo', /Before the count · Sun Nov 15/.test(txt(hoja)), txt(hoja));
-    hoja.querySelector('[data-n="12"]').click();
-    hoja.querySelector('[data-cuando="antes"]').click();
-    prueba('el botón dice cuántas', /Transfer 12/.test(txt(hoja.querySelector('#mTrGo'))));
-    hoja.querySelector('#mTrGo').click();
-    await new Promise(r => setTimeout(r, 20));
-    const p = w.__pet.find(x => x.metodo === 'POST');
-    prueba('guarda: 12 de W+B a Crown, antes del conteo', p && p.cuerpo.qty === 12 && p.cuerpo.from_location === WB && p.cuerpo.to_location === CROWN &&
-      p.cuerpo.before_count === true && p.cuerpo.to_item === 'Triage Vodka' && p.cuerpo.created_by === 'Axel', JSON.stringify(p && p.cuerpo));
-    prueba('cierra, avisa y vuelve a quien la abrió', !w.document.getElementById('mSheet') && /Transfer saved/.test(w.__toast || '') && !!hecho && w.__cad === 1);
+    prueba('"Transfers" en la banda, con atrás, y "New transfer" arriba', w.__banda === 'Transfers' && !!w.__atras && !!host.querySelector('#mTxNew'));
+    prueba('sin nada esta semana, lo dice', /No transfers this week/.test(txt(host)), txt(host));
+    host.querySelector('#mTxNew').click();
+    prueba('"New transfer" en la banda; con una sola otra locación, ya elegida', w.__banda === 'New transfer' && !!host.querySelector('[data-loc].on'));
+    prueba('sin productos no deja transferir', host.querySelector('#mTxGo').disabled && /Add a product/.test(txt(host.querySelector('#mTxGo'))));
+    host.querySelector('#mTxAdd').click();
+    let hoja = w.document.getElementById('mSheet');
+    prueba('"Add a product" abre mis productos con buscador', !!hoja && !!hoja.querySelector('.m-tr-buscar') && hoja.querySelectorAll('[data-item]').length === 2);
+    hoja.querySelector('[data-item="Triage Vodka"]').click();
+    host.querySelector('#mTxAdd').click();
+    hoja = w.document.getElementById('mSheet');
+    prueba('lo ya puesto no vuelve a salir', hoja.querySelectorAll('[data-item]').length === 1);
+    hoja.querySelector('[data-item="Tito"]').click();
+    for (let k = 0; k < 11; k++) host.querySelector('[data-q="0"][data-d="1"]').click();
+    host.querySelector('[data-q="1"][data-d="1"]').click();
+    host.querySelector('[data-cuando="antes"]').click();
+    prueba('el botón dice el total ("Transfer 14 bottles")', /Transfer 14 bottles/.test(txt(host.querySelector('#mTxGo'))), txt(host.querySelector('#mTxGo')));
+    host.querySelector('#mTxGo').click();
+    await new Promise(r => setTimeout(r, 40));
+    const p = w.__pet.find(x => x.metodo === 'POST' && /location_transfers/.test(x.url));
+    prueba('guarda UN transfer de dos líneas, de W+B a Crown, antes del conteo', p && Array.isArray(p.cuerpo) && p.cuerpo.length === 2 &&
+      p.cuerpo[0].to_item === 'Triage Vodka' && p.cuerpo[0].qty === 12 && p.cuerpo[1].to_item === 'Tito' && p.cuerpo[1].qty === 2 &&
+      p.cuerpo.every(x => x.before_count && x.from_location === WB), JSON.stringify(p && p.cuerpo));
+    prueba('y vuelve a la lista, avisando', w.__banda === 'Transfers' && /Transfer saved/.test(w.__toast || ''));
   }
-  const ms = leer('src/mobile-search.js');
-  prueba('la ficha lleva "⇄ Transfer" en su propia fila y abre la hoja', /id="msTrf"/.test(ms) && /BarStockMobileTransfer\.abrir\(r, \(\) => ficha\(host, idx\)\)/.test(ms));
+  const ms = leer('src/mobile-search.js'), tabs = leer('src/mobile-tabs.js');
+  prueba('la ficha ya no lleva "⇄ Transfer" (Axel: fuera de Do we have)', !/id="msTrf"/.test(ms) && !/BarStockMobileTransfer\./.test(ms) && !existe('src/mobile-transfer.js'));
+  prueba('More lleva "Transfers" con su número, sólo con permiso de órdenes', /id="mMoreTrf"/.test(tabs) && /id="mMoreTrfN"/.test(tabs) &&
+    /BarStockTransfers\.puede\(\)/.test(tabs) && /ir\('transfers'\)/.test(tabs));
   const idx = leer('index.html');
   const pos = (f) => idx.indexOf('src/' + f + '?');
-  prueba('transfers.js y mobile-transfer.js antes de mobile-search', pos('transfers.js') > 0 && pos('transfers.js') < pos('mobile-transfer.js') && pos('mobile-transfer.js') < pos('mobile-search.js'));
-  prueba('quien no hace órdenes no lo ve (la fila es .m-acts, ya escondida)', /html\.bs-sin-ordenes #mSheet \.m-ficha \.m-acts/.test(leer('styles/mobile-app.css')) && /class="m-acts m-acts-trf"/.test(ms));
+  prueba('transfers → transfer-confirm → mobile-transfers → mobile-tabs', pos('transfers.js') > 0 && pos('transfers.js') < pos('transfer-confirm.js') &&
+    pos('transfer-confirm.js') < pos('mobile-transfers.js') && pos('mobile-transfers.js') < pos('mobile-tabs.js') && pos('mobile-transfer.js') === -1);
 }
 
 grupo('6 · la factura (fase 4)');
@@ -308,7 +379,7 @@ grupo('6 · la factura (fase 4)');
   const mi = leer('src/mobile-invoices.js');
   prueba('en la factura sin enlazar: "It arrived before the count", con permiso, conteo y líneas con producto',
     /id="miAntes"/.test(mi) && /TR\.puede\(\) && LC && LC\.conteo && LC\.conteo\(\) && f\.lineas\.some\(l => l\.item && l\.qty > 0\)/.test(mi));
-  prueba('crea el transfer "antes del conteo" por línea, desde la locación elegida', /TR\.crear\(\{ otra, entra: true, item: l\.item, qty: l\.qty, antes: true, conteo/.test(mi));
+  prueba('crea UN transfer "antes del conteo" con todas las líneas, desde la locación elegida', /TR\.crear\(\{ otra, entra: true, antes: true, conteo, por[^}]*\n?\s*lineas: lineas\.map/.test(mi));
   prueba('y enlaza la factura a la orden del transfer', /guardarEnlaceOrden\(f\.id, ord\[0\]\.id\)/.test(mi));
   prueba('lo que no se pudo, se dice', /Fixed, but not everything/.test(mi));
 }

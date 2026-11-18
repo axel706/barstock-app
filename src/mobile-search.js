@@ -675,9 +675,7 @@
         <button type="button" class="m-act" id="msAdd"><i class="ti ti-plus" aria-hidden="true"></i> Add to order</button>
         <button type="button" class="m-act" id="msRecv"><i class="ti ti-truck-delivery" aria-hidden="true"></i> Received</button>
       </div>
-      ${window.BarStockMobileTransfer ? `<div class="m-acts m-acts-trf">
-        <button type="button" class="m-act m-act-trf" id="msTrf"><i class="ti ti-arrows-exchange" aria-hidden="true"></i> Transfer</button>
-      </div>` : ''}`;
+`;
 
 
     // ── Aplicar el par ───────────────────────────────────────────────
@@ -722,10 +720,6 @@
     if (recv) recv.onclick = () => {
       if (window.BarStockStockIn) window.BarStockStockIn.open(r, () => ficha(host, idx));
     };
-    // ⇄ Transfer (docs/plan-transfer.md): la hoja sustituye a la ficha y,
-    // al guardar, la ficha vuelve con el chip del transfer.
-    const trf = caja.querySelector('#msTrf');
-    if (trf) trf.onclick = () => window.BarStockMobileTransfer.abrir(r, () => ficha(host, idx));
     // El lápiz de la cabecera y su "Change" (check-shelf.js). Delegado en
     // la caja: alLive() cambia la cabecera entera cuando se rehace el
     // LIVE, y un onclick puesto en el botón viejo se perdería con ella.

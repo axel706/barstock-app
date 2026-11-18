@@ -2728,11 +2728,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   .m-act .ti { font-size: var(--m-strong); color: #7dd3fc; }
   .m-act:first-child .ti { color: #04283d; }
-  /* ⇄ Transfer (2026-11-18): su propia fila, bajo Add y Received, sin el
-   * azul sólido del primero (lo es de su fila, no de la ficha). */
-  body.m-shell .m-acts-trf .m-act-trf { background: transparent; border-color: rgba(125,211,252,.45); color: #7dd3fc; }
-  .m-acts-trf .m-act-trf .ti { color: #7dd3fc; }
-  /* La hoja del transfer: el molde de la del número (.m-kp-*). */
+  /* Las hojas de transfers (elegir producto, "It arrived before the
+   * count"): el molde de la del número (.m-kp-*). */
   .m-tr-k { margin-top: 14px; font-size: var(--m-meta); letter-spacing: .12em; text-transform: uppercase; color: #7f93ab; font-weight: 700; }
   .m-tr-seg { display: flex; gap: 4px; margin-top: 6px; padding: 3px; border-radius: 999px; background: rgba(255,255,255,.06); }
   #mSheet .m-tr-seg button { flex: 1; min-height: calc(var(--m-base) * 2.6); padding: 4px 8px; border: 0; border-radius: 999px !important;
@@ -2752,6 +2749,63 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
   .m-tr-n { flex: 1; text-align: center; font-size: var(--m-figure); font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; }
   .m-tr-nota { text-align: left; }
+  /* ── La sección Transfers (2026-11-18, lámina B con el aspecto de A) ─
+   * Pantalla de More como las subsecciones de Settings. Los botones con
+   * id delante: app.css pone 999px !important y desenfoque. */
+  .m-item-n { flex: 0 0 auto; min-width: 20px; padding: 1px 7px; border-radius: 999px; background: #ef4444; color: #fff;
+    font-size: var(--m-meta); font-weight: 800; text-align: center; }
+  .m-item-n[hidden] { display: none; }
+  #mScreens .m-tx-nuevo { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 12px;
+    min-height: calc(var(--m-base) * 3.3); border: 0; border-radius: 14px !important; cursor: pointer;
+    background: #38bdf8; color: #04283d; font-size: var(--m-body); font-weight: 800;
+    -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+  #mScreens .m-tx-nuevo:disabled { opacity: .5; }
+  .m-tx { margin-top: 8px; padding: 12px; border-radius: 16px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); }
+  .m-tx-pend { border: 1px dashed #7dd3fc; }
+  .m-tx-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #f1f5f9; font-size: var(--m-body); }
+  .m-tx-sub { margin-top: 3px; font-size: var(--m-small); color: #9fb0c4; }
+  .m-tx-st { flex: 0 0 auto; padding: 2px 7px; border-radius: 6px; font-size: var(--m-meta); font-weight: 800; }
+  .m-tx-st.in { background: rgba(56,189,248,.18); color: #7dd3fc; }
+  .m-tx-st.w { background: rgba(251,191,36,.18); color: #fcd34d; }
+  .m-tx-st.ok { background: rgba(52,211,153,.16); color: #6ee7b7; }
+  .m-tx-st.no { background: rgba(248,113,113,.16); color: #fca5a5; }
+  .m-tx-st.off { background: rgba(255,255,255,.08); color: #9fb0c4; }
+  .m-tx-l { display: flex; justify-content: space-between; gap: 8px; margin-top: 7px; padding-top: 7px;
+    border-top: 1px solid rgba(255,255,255,.08); font-size: var(--m-small); color: #dbe5f0; }
+  .m-tx-mio { color: #9fb0c4; text-align: right; }
+  .m-tx-b { display: flex; gap: 8px; margin-top: 10px; }
+  #mScreens .m-tx-b button { flex: 1; min-height: calc(var(--m-base) * 2.7); border-radius: 999px !important; cursor: pointer;
+    font-size: var(--m-small); font-weight: 800; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+  #mScreens .m-tx-ok { background: #34d399; border: 0; color: #053b28; }
+  #mScreens .m-tx-no { background: transparent; border: 1px solid rgba(255,255,255,.22); color: #eaf2fb; }
+  #mScreens .m-tx-undo { padding: 0; border: 0; background: none; color: #7dd3fc; font-weight: 700; font-size: var(--m-small); cursor: pointer;
+    border-radius: 0 !important; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+  .m-tx-vacio { margin-top: 30px; text-align: center; color: #8fa1b5; font-size: var(--m-small); line-height: 1.5; }
+  .m-tx-nota { margin-top: 8px; font-size: var(--m-small); color: #8fa1b5; line-height: 1.45; }
+  .m-tx-seg { margin-top: 12px; }
+  #mScreens .m-tx-seg button { flex: 1; min-height: calc(var(--m-base) * 2.6); padding: 4px 8px; border: 0; border-radius: 999px !important;
+    background: transparent; color: #9fb0c4; font-size: var(--m-small); font-weight: 700; cursor: pointer; line-height: 1.2;
+    -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+  #mScreens .m-tx-seg button.on { background: #0284c7; color: #fff; }
+  #mScreens .m-tr-loc { min-height: calc(var(--m-base) * 3); padding: 0 14px; text-align: left; border-radius: 14px !important; cursor: pointer;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); color: #eaf2fb; font-size: var(--m-body); font-weight: 600;
+    -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+  #mScreens .m-tr-loc.on { border-color: #38bdf8; background: rgba(56,189,248,.14); }
+  .m-tx-p { display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 10px 12px; border-radius: 14px;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); }
+  .m-tx-pn { flex: 1; min-width: 0; color: #f1f5f9; font-size: var(--m-body); }
+  .m-tx-pn b { display: block; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-tx-pn small { display: block; margin-top: 2px; font-size: var(--m-meta); color: #9fb0c4; }
+  .m-tx-q { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; }
+  .m-tx-q span { min-width: calc(var(--m-base) * 2); text-align: center; font-weight: 800; font-size: var(--m-strong); color: #fff; }
+  #mScreens .m-tx-q button { width: calc(var(--m-base) * 2.4); height: calc(var(--m-base) * 2.4); padding: 0; border: 0; border-radius: 10px !important;
+    background: rgba(255,255,255,.10); color: #f1f5f9; font-size: var(--m-strong); cursor: pointer;
+    -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+  #mScreens .m-tx-q .m-tx-x { background: transparent; color: #9fb0c4; }
+  #mScreens .m-tx-add { display: block; width: 100%; margin-top: 8px; padding: 12px; text-align: left; border-radius: 14px !important; cursor: pointer;
+    border: 1px dashed rgba(125,211,252,.45); background: rgba(56,189,248,.06); color: #7dd3fc; font-size: var(--m-body); font-weight: 700;
+    -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+
   /* El bloque "Transfers" de la ficha. */
   .m-trf { margin-top: 10px; padding: 12px 14px; border-radius: 18px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); }
   .m-trf-k { font-size: var(--m-meta); letter-spacing: .12em; text-transform: uppercase; color: #9fb0c4; font-weight: 700; }

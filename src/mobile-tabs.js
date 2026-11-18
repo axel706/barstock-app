@@ -44,6 +44,15 @@
             <span class="m-item-t">${esc(m.label)}</span>
             <i class="ti ti-chevron-right m-chev" aria-hidden="true"></i>
           </button>`).join('')}
+        <!-- Transfers (Axel, 2026-11-18, lámina B): su sección, con el
+             número de lo que espera que esta locación lo confirme. -->
+        ${window.BarStockMobileTransfers && window.BarStockTransfers && window.BarStockTransfers.puede() ? `
+        <button type="button" class="m-item" id="mMoreTrf">
+          <i class="ti ti-arrows-exchange" aria-hidden="true"></i>
+          <span class="m-item-t">Transfers</span>
+          <span class="m-item-n" id="mMoreTrfN"></span>
+          <i class="ti ti-chevron-right m-chev" aria-hidden="true"></i>
+        </button>` : ''}
         <button type="button" class="m-item" id="mMoreSet">
           <i class="ti ti-settings" aria-hidden="true"></i>
           <span class="m-item-t">Settings</span>
@@ -72,6 +81,21 @@
     // porque no abre una sección, abre una pantalla del armazón.
     const vc = host.querySelector('#mVerCenter');
     if (vc && window.BarStockVersionCenter) window.BarStockVersionCenter.montar(vc);
+
+    const trf = host.querySelector('#mMoreTrf');
+    if (trf) {
+      trf.onclick = () => { if (window.BarStockMobile) window.BarStockMobile.ir('transfers'); };
+      // El número llega cuando transfer-confirm termina de leer.
+      const num = () => {
+        const el = host.querySelector('#mMoreTrfN');
+        const k = window.BarStockMobileTransfers.pendientes();
+        if (el) { el.textContent = k ? String(k) : ''; el.hidden = !k; }
+      };
+      num();
+      const TC = window.BarStockTransferConfirm;
+      if (TC && TC.cargar) Promise.resolve(TC.cargar()).then(num);
+      if (TC && TC.alCambiar && !montarMas._oyente) { montarMas._oyente = true; TC.alCambiar(() => { const h = document.querySelector('.m-screen[data-screen="more"]'); if (h && h.querySelector('#mMoreTrfN')) { const k = window.BarStockMobileTransfers.pendientes(); const el = h.querySelector('#mMoreTrfN'); el.textContent = k ? String(k) : ''; el.hidden = !k; } }); }
+    }
 
     const set = host.querySelector('#mMoreSet');
     if (set) set.onclick = () => {

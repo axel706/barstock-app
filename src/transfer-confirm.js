@@ -70,26 +70,49 @@
   const _elegido = new Map();   // id → el producto elegido con "Change"
   const productoDe = (t) => _elegido.get(t.id) || miProducto(t);
 
+  // ── Un transfer es un GRUPO de filas (migración 046) ─────────────────
+  //
+  // Se confirma o se rechaza entero: todas sus líneas a la vez, cada una
+  // con mi producto. Las de un producto (o de antes de la 046) son un
+  // grupo de una.
+  const gruposPend = () => (T() ? T().grupos(porConfirmar()) : []);
+  const grupoDe = (x) => {
+    if (Array.isArray(x)) return x;
+    const k = T().grupoDe(x);
+    const g = porConfirmar().filter(t => T().grupoDe(t) === k);
+    return g.length ? g : [x];
+  };
+  const botellas = (g) => g.reduce((a, t) => a + (Number(t.qty) || 0), 0);
+
   // ── Confirmar / Not right ────────────────────────────────────────────
-  async function confirmar(t) {
-    const mio = productoDe(t);
-    if (!mio) return elegir(t, () => confirmar(t));
-    const r = await T().confirmar(t, mio, quien());
+  // Si a alguna línea le falta mi producto, se elige (una a una) y se
+  // sigue; nunca se confirma a ciegas.
+  async function confirmar(x) {
+    const g = grupoDe(x);
+    const falta = g.find(t => !productoDe(t));
+    if (falta) return elegir(falta, () => confirmar(g));
+    const items = {};
+    for (const t of g) items[t.id] = productoDe(t);
+    const r = await T().confirmar(g, items, quien());
+    const que = g.length === 1 ? n(g[0].qty) + ' ' + items[g[0].id] : g.length + ' items · ' + n(botellas(g)) + ' bottles';
     toast(!r.ok ? 'Not confirmed: ' + (r.error || 'unknown error')
       : r.aviso ? 'Confirmed, but not everything: ' + r.aviso
-      : 'Confirmed · ' + n(t.qty) + ' ' + mio + (T().entra(t, _loc) ? ' from ' : ' to ') + deDonde(t));
+      : 'Confirmed · ' + que + (T().entra(g[0], _loc) ? ' from ' : ' to ') + deDonde(g[0]));
     if (r.ok) { const LC = window.BarStockLiveCache; if (LC && LC.caducar) LC.caducar(); }
   }
-  async function noEsAsi(t) {
+  async function noEsAsi(x) {
+    const g = grupoDe(x);
+    const t = g[0];
+    const que = g.length === 1 ? n(t.qty) + ' ' + (T().suItem(t, _loc) || 'bottles') : g.length + ' items';
     const D = window.BarStockDialog;
     const ok = D && D.preguntar ? await D.preguntar({
       titulo: 'Not right?',
-      cuerpo: n(t.qty) + ' ' + (T().suItem(t, _loc) || 'bottles') + ' from ' + deDonde(t) + ' will not count here, and ' +
+      cuerpo: que + ' from ' + deDonde(t) + ' will not count here, and ' +
         deDonde(t) + ' sees that you said it is not right.',
       ok: 'Not right', cancelar: 'Cancel', peligro: true
     }) : window.confirm('Mark this transfer as not right?');
     if (!ok) return;
-    const r = await T().rechazar(t, 'Not right at ' + T().nombreDe(_locs, _loc), quien());
+    const r = await T().rechazar(g, 'Not right at ' + T().nombreDe(_locs, _loc), quien());
     toast(!r.ok ? 'Not saved: ' + (r.error || 'unknown error')
       : r.aviso ? 'Marked not right, but not everything was undone: ' + r.aviso
       : 'Marked not right · ' + deDonde(t) + ' will see it');
@@ -150,9 +173,12 @@
   // La tarjeta del Home: el primero pendiente; si hay más, lo dice abajo.
   function tarjeta() {
     if (!puede()) return null;
-    const ps = porConfirmar();
-    if (!ps.length) return null;
-    const t = ps[0];
+    const gs = gruposPend();
+    if (!gs.length) return null;
+    const g = gs[0];
+    if (g.length > 1) return tarjetaGrupo(g, gs.length);
+    const ps = gs;
+    const t = g[0];
     const mio = productoDe(t);
     const cuando = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' })
       .format(new Date(t.moved_at)).replace(',', '');
@@ -177,15 +203,42 @@
     };
   }
 
+  // Varios productos: una línea por producto (como las de una orden) y
+  // "Confirm all". Si a alguno le falta mi producto, "Choose yours".
+  function tarjetaGrupo(g, cuantos) {
+    const t = g[0];
+    const cuando = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' })
+      .format(new Date(t.moved_at)).replace(',', '');
+    const todos = g.every(x => productoDe(x));
+    return {
+      tono: 'blue', transfer: true,
+      k: '⇄ Transfer to confirm',
+      tt: g.length + ' items · ' + n(botellas(g)) + ' bottles',
+      sub: (T().entra(t, _loc) ? 'from ' : 'to ') + corta(deDonde(t)) + ' · ' + cuando + (t.created_by ? ' · ' + t.created_by : '') +
+        (t.before_count ? ' · before the count' : ''),
+      filas: g.slice(0, 3).map(x => ({ q: n(x.qty), n: productoDe(x) || T().suItem(x, _loc) || '—', v: productoDe(x) ? '' : 'choose' })),
+      mas: [g.length > 3 ? 'and ' + (g.length - 3) + ' more items' : '', cuantos > 1 ? (cuantos - 1) + ' more to confirm' : ''].filter(Boolean).join(' · '),
+      btn: todos ? 'Confirm all' : 'Choose yours',
+      go: () => confirmar(g),
+      btn2: 'Not right', go2: () => noEsAsi(g)
+    };
+  }
+
   // Las líneas de la campana: { clave, titulo, sub, confirmar, noEsAsi }.
   function avisos() {
     if (!puede()) return [];
-    return porConfirmar().map(t => ({
-      clave: 'transfer:' + t.id,
-      titulo: '⇄ ' + n(t.qty) + ' ' + (T().suItem(t, _loc) || 'bottles') + (T().entra(t, _loc) ? ' from ' : ' to ') + deDonde(t),
-      sub: productoDe(t) ? 'As your ' + productoDe(t) : 'Choose which product is yours',
-      confirmar: () => confirmar(t), noEsAsi: () => noEsAsi(t), boton: productoDe(t) ? 'Confirm ' + n(t.qty) : 'Choose yours'
-    }));
+    return gruposPend().map(g => {
+      const t = g[0], uno = g.length === 1, todos = g.every(x => productoDe(x));
+      return {
+        clave: 'transfer:' + T().grupoDe(t),
+        titulo: '⇄ ' + (uno ? n(t.qty) + ' ' + (T().suItem(t, _loc) || 'bottles') : g.length + ' items · ' + n(botellas(g)) + ' bottles') +
+          (T().entra(t, _loc) ? ' from ' : ' to ') + deDonde(t),
+        sub: uno ? (productoDe(t) ? 'As your ' + productoDe(t) : 'Choose which product is yours')
+          : g.map(x => n(x.qty) + ' ' + (productoDe(x) || T().suItem(x, _loc))).join(', '),
+        confirmar: () => confirmar(g), noEsAsi: () => noEsAsi(g),
+        boton: todos ? (uno ? 'Confirm ' + n(t.qty) : 'Confirm all') : 'Choose yours'
+      };
+    });
   }
 
   // Lo que registré yo y la otra dijo "Not right", de la última semana:
@@ -260,6 +313,7 @@
     }; });
   }
 
-  window.BarStockTransferConfirm = { cargar, alCambiar, tarjeta, avisos, rechazados, deProducto, confirmar, noEsAsi, elegir, miProducto, parecido, ficha, enganchar,
+  window.BarStockTransferConfirm = { cargar, alCambiar, tarjeta, avisos, rechazados, deProducto, gruposPend, productoDe,
+    estado: () => ({ filas: _filas, loc: _loc, locs: _locs }), confirmar, noEsAsi, elegir, miProducto, parecido, ficha, enganchar,
     _reset: () => { _filas = null; _loc = null; _locs = null; _pidiendo = null; _elegido.clear(); _oyentes.clear(); } };
 })();

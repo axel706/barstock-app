@@ -928,10 +928,9 @@
 
   // ── "It arrived before the count" (camino 2 del Transfer) ────────────
   //
-  // Crea un transfer "antes del conteo" por cada línea con producto, de la
-  // locación que se elija, y enlaza la factura a la orden del primero: la
-  // factura deja de sumar sola. Las demás líneas las reclaman sus órdenes
-  // por producto (order-receipts.repartir).
+  // Crea UN transfer "antes del conteo" con todas las líneas con producto,
+  // de la locación que se elija, y enlaza la factura a su orden (una, con
+  // todas las líneas): la factura deja de sumar sola.
   async function llegoAntes(host, f) {
     const TR = window.BarStockTransfers, LC = window.BarStockLiveCache;
     const conteo = LC && LC.conteo ? LC.conteo() : null;
@@ -971,13 +970,13 @@
         const G = window.BarStockGuest;
         const por = (G && G.nombre && G.nombre()) || '';
         const avisos = [];
-        let primera = null;
-        for (const l of lineas) {
-          const r = await TR.crear({ otra, entra: true, item: l.item, qty: l.qty, antes: true, conteo, por, nota: 'From invoice ' + (f.numero || f.id) });
-          if (!r.ok) return pinta(r.error || 'It was not saved.');
-          if (r.aviso) avisos.push(r.aviso);
-          if (!primera) primera = r.transfer;
-        }
+        // UN transfer con todas sus líneas (migración 046): una orden en
+        // Sent, a la que se enlaza la factura entera.
+        const r = await TR.crear({ otra, entra: true, antes: true, conteo, por, nota: 'From invoice ' + (f.numero || f.id),
+          lineas: lineas.map(l => ({ item: l.item, qty: l.qty })) });
+        if (!r.ok) return pinta(r.error || 'It was not saved.');
+        if (r.aviso) avisos.push(r.aviso);
+        const primera = r.transfer;
         // La orden que creó el primero, para enlazarle la factura.
         try {
           const filas = await TR.leer({ fresco: true });

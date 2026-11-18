@@ -47,8 +47,9 @@ function entorno(o) {
   const T = w.BarStockTransfers;
   T.leer = async () => (o.filas || [PEND]).map(x => Object.assign({}, x));
   T.locaciones = async () => [{ id: CROWN, name: 'The Crown Tavern' }, { id: WB, name: "Will's & Bill's" }];
-  T.confirmar = async (t, item, por) => { w.__conf.push({ id: t.id, item, por }); return { ok: true }; };
-  T.rechazar = async (t, nota, por) => { w.__rech.push({ id: t.id, nota, por }); return { ok: true }; };
+  // Desde la 046 confirman y rechazan un GRUPO: [filas] y { id: producto }.
+  T.confirmar = async (ts, items, por) => { for (const t of ts) w.__conf.push({ id: t.id, item: items[t.id], por }); return { ok: true }; };
+  T.rechazar = async (ts, nota, por) => { for (const t of ts) w.__rech.push({ id: t.id, nota, por }); return { ok: true }; };
   if (existe('src/transfer-confirm.js')) w.eval(leer('src/transfer-confirm.js'));
   return w;
 }
@@ -148,6 +149,28 @@ grupo('5 · el bloque "Transfers" de la ficha');
   d.querySelector('[data-trf-ok]').click();
   await esperar(10);
   prueba('Confirm desde la ficha confirma', w.__conf.length === 1);
+}
+
+grupo('5b · un transfer de varios productos (grupo)');
+{
+  const g1 = Object.assign({}, PEND, { id: 'g-a', group_id: 'G1' });
+  const g2 = Object.assign({}, PEND, { id: 'g-b', group_id: 'G1', from_item: 'Tito', qty: 4 });
+  const w = entorno({ filas: [g1, g2], master: ['Triage Vodka', 'Tito'] });
+  const TC = w.BarStockTransferConfirm;
+  await TC.cargar();
+  const c = TC.tarjeta();
+  prueba('una sola tarjeta: "2 items · 16 bottles", una línea por producto', c && c.tt === '2 items · 16 bottles' && c.filas.length === 2 &&
+    c.filas[1].n === 'Tito' && c.filas[1].q === '4', JSON.stringify(c && [c.tt, c.filas]));
+  prueba('con "Choose yours" mientras a alguno le falte el mío', c.btn === 'Choose yours' && c.filas[0].v === 'choose');
+  prueba('la campana: un aviso por transfer, no por línea', TC.avisos().length === 1 && /2 items · 16 bottles from Will's & Bill's/.test(TC.avisos()[0].titulo));
+  await c.go();
+  const hoja = w.document.getElementById('mSheet');
+  prueba('pide el que falta (Triage) y no confirma todavía', !!hoja && /Which is yours/.test(txt(hoja)) && w.__conf.length === 0);
+  hoja.querySelector('[data-item="Triage Vodka"]').click();
+  await esperar(10);
+  prueba('elegido, confirma el grupo entero, cada uno con el suyo', w.__conf.length === 2 && w.__conf[0].item === 'Triage Vodka' && w.__conf[1].item === 'Tito', JSON.stringify(w.__conf));
+  await TC.tarjeta().go2();
+  prueba('"Not right" rechaza el grupo entero', w.__rech.length === 2);
 }
 
 grupo('6 · conectado');

@@ -139,61 +139,98 @@
     await pedir('vendor_orders' + q, 'DELETE');
   }
 
-  async function aplicar(t, loc) {
-    const yoRecibo = t.to_location === loc;
-    const item = yoRecibo ? t.to_item : t.from_item;
-    const qty = Number(t.qty) || 0;
+  // ── Un transfer, varias líneas (migración 046, 2026-11-18) ───────────
+  //
+  // Cada producto es su fila; las de un mismo transfer comparten
+  // `group_id` (las de un producto, y las de antes de la 046, van solas:
+  // su grupo es su id). Se registran, se confirman, se rechazan y se
+  // deshacen a la vez, y la que recibe tiene UNA orden con todas.
+  const grupoDe = (t) => t.group_id || t.id;
+  function grupos(filas) {
+    const m = new Map();
+    for (const t of filas || []) {
+      const k = grupoDe(t);
+      if (!m.has(k)) m.set(k, []);
+      m.get(k).push(t);
+    }
+    return [...m.values()];
+  }
+  const lista = (x) => (Array.isArray(x) ? x : x ? [x] : []);
+  const uuid = () => (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID()
+    : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); }));
+
+  // Aplica MI lado de las filas de un grupo.
+  async function aplicar(filas, loc) {
+    filas = lista(filas);
     const errores = [];
-    try { await ajustarSemana(loc, item, yoRecibo ? qty : -qty, !!t.before_count); }
-    catch (e) { errores.push('Pour·IQ: ' + (e && e.message || e)); }
+    if (!filas.length) return errores;
+    const yoRecibo = filas[0].to_location === loc;
+    for (const t of filas) {
+      const item = yoRecibo ? t.to_item : t.from_item;
+      const qty = Number(t.qty) || 0;
+      try { await ajustarSemana(loc, item, yoRecibo ? qty : -qty, !!t.before_count); }
+      catch (e) { errores.push('Pour·IQ: ' + (e && e.message || e)); }
+    }
     if (yoRecibo) {
       try {
         const Q = window.BarStockQuickOrder;
         if (!Q || !Q.save) throw new Error('orders are not loaded');
-        const r = (window.state && window.state.master || []).find(x => x && x.item === item) || { item };
+        const master = (window.state && window.state.master) || [];
         const locs = await locaciones().catch(() => []);
-        const de = nombreDe(locs, t.from_location);
-        const res = await Q.save({ vendor: 'TRANSFER', when: new Date(t.moved_at), arrivesAt: t.moved_at,
-          note: 'Transfer from ' + de, items: [{ item, code: r.code || '', value: Number(r.value) || 0, qty }] });
+        const t0 = filas[0];
+        const items = filas.map(t => {
+          const r = master.find(x => x && x.item === t.to_item) || {};
+          return { item: t.to_item, code: r.code || '', value: Number(r.value) || 0, qty: Number(t.qty) || 0 };
+        });
+        const res = await Q.save({ vendor: 'TRANSFER', when: new Date(t0.moved_at), arrivesAt: t0.moved_at,
+          note: 'Transfer from ' + nombreDe(locs, t0.from_location), items });
         const id = res && res.entrada && res.entrada.id;
-        if (id) await pedir('location_transfers?id=eq.' + encodeURIComponent(t.id), 'PATCH', { vendor_order_id: String(id) });
+        if (id) await pedir('location_transfers?id=in.(' + filas.map(t => t.id).join(',') + ')', 'PATCH', { vendor_order_id: String(id) });
       } catch (e) { errores.push('Orders: ' + (e && e.message || e)); }
     }
     return errores;
   }
 
-  // lados: qué lados estaban aplicados ('from', 'to').
-  async function revertir(t, lados) {
+  // Quita de las filas lo aplicado en `lados` ('from', 'to').
+  async function revertir(filas, lados) {
+    filas = lista(filas);
     const errores = [];
-    const qty = Number(t.qty) || 0;
-    for (const l of lados) {
-      const loc = l === 'to' ? t.to_location : t.from_location;
-      const item = l === 'to' ? t.to_item : t.from_item;
-      try { await ajustarSemana(loc, item, l === 'to' ? -qty : qty, !!t.before_count); }
-      catch (e) { errores.push('Pour·IQ: ' + (e && e.message || e)); }
-      if (l === 'to' && t.vendor_order_id) {
-        try { await borrarOrden(t.vendor_order_id); } catch (e) { errores.push('Orders: ' + (e && e.message || e)); }
+    for (const t of filas) {
+      const qty = Number(t.qty) || 0;
+      for (const l of lados) {
+        const loc = l === 'to' ? t.to_location : t.from_location;
+        const item = l === 'to' ? t.to_item : t.from_item;
+        try { await ajustarSemana(loc, item, l === 'to' ? -qty : qty, !!t.before_count); }
+        catch (e) { errores.push('Pour·IQ: ' + (e && e.message || e)); }
+      }
+    }
+    if (lados.includes('to')) {
+      for (const id of new Set(filas.map(t => t.vendor_order_id).filter(Boolean))) {
+        try { await borrarOrden(id); } catch (e) { errores.push('Orders: ' + (e && e.message || e)); }
       }
     }
     if (window.loadOrdersFromCloud) { try { await window.loadOrdersFromCloud(); } catch (e) {} }
     return errores;
   }
   const ladoDe = (t, loc) => (t.to_location === loc ? 'to' : 'from');
-  const conAviso = (r, errores) => (errores && errores.length ? Object.assign(r, { aviso: errores.join(' · ') }) : r);
+  const ladoDeQuienLoRegistro = (t) => (t.started_at === t.to_location ? 'to' : 'from');
+  const conAviso = (r, errores) => (errores && errores.length ? Object.assign(r, { aviso: [...new Set(errores)].join(' · ') }) : r);
 
   // ── Escribir ─────────────────────────────────────────────────────────
   //
-  // o = { otra, entra: true|false, item, otroItem, qty, antes, conteo, por }
+  // o = { otra, entra: true|false, lineas: [{ item, otroItem, qty }], antes, conteo, por }
+  //   (o, de un producto: item, otroItem y qty sueltos)
   //   entra:  true si llegan a mi locación, false si salen de ella.
   //   antes:  llegaron antes del último conteo (el camino 2): moved_at es
   //           un minuto antes de ese conteo, y no suma al LIVE.
   async function crear(o) {
     if (!puede()) return { ok: false, error: 'Transfers need "Make and send orders".' };
-    const item = String((o && o.item) || '').trim();
-    const qty = Number(o && o.qty);
-    if (!item) return { ok: false, error: 'No item.' };
+    o = o || {};
+    const lineas = (o.lineas || [{ item: o.item, otroItem: o.otroItem, qty: o.qty }])
+      .map(l => ({ item: String((l && l.item) || '').trim(), otroItem: l && l.otroItem ? String(l.otroItem).trim() : null, qty: Number(l && l.qty) }));
+    if (!lineas.length || lineas.some(l => !l.item)) return { ok: false, error: 'No item.' };
     if (!o.otra) return { ok: false, error: 'Choose the other location.' };
-    if (!isFinite(qty) || qty <= 0) return { ok: false, error: 'The amount has to be more than zero.' };
+    if (lineas.some(l => !isFinite(l.qty) || l.qty <= 0)) return { ok: false, error: 'The amount has to be more than zero.' };
     let movido = new Date().toISOString();
     if (o.antes) {
       const c = o.conteo ? Date.parse(o.conteo) : NaN;
@@ -204,71 +241,89 @@
       const loc = await miLoc();
       if (o.otra === loc) return { ok: false, error: 'Choose a different location.' };
       const yoEntro = o.entra !== false;
-      const otroItem = o.otroItem ? String(o.otroItem).trim() : null;
-      const fila = {
+      // Un producto, sin grupo: así entra aunque la 046 no esté corrida.
+      const grupo = lineas.length > 1 ? uuid() : null;
+      const filas = lineas.map(l => Object.assign({
         account_id: cfg().ACCOUNT_ID || '',
         from_location: yoEntro ? o.otra : loc, to_location: yoEntro ? loc : o.otra,
-        from_item: yoEntro ? otroItem : item, to_item: yoEntro ? item : otroItem,
-        qty, moved_at: movido, before_count: !!o.antes, started_at: loc,
+        from_item: yoEntro ? l.otroItem : l.item, to_item: yoEntro ? l.item : l.otroItem,
+        qty: l.qty, moved_at: movido, before_count: !!o.antes, started_at: loc,
         created_by: corto(o.por), note: corto(o.nota, 200)
-      };
-      const r = await pedir('location_transfers', 'POST', fila, 'return=representation');
-      const t = Array.isArray(r) ? r[0] : r;
-      const errores = t ? await aplicar(t, loc) : [];
+      }, grupo ? { group_id: grupo } : {}));
+      const r = await pedir('location_transfers', 'POST', filas.length > 1 ? filas : filas[0], 'return=representation');
+      const hechas = lista(r);
+      const errores = hechas.length ? await aplicar(hechas, loc) : [];
       olvidar(); avisar();
-      return conAviso({ ok: true, transfer: t }, errores);
+      return conAviso({ ok: true, transfer: hechas[0], transfers: hechas }, errores);
     } catch (e) { return { ok: false, error: String(e && e.message || e) }; }
   }
 
-  // Confirmar desde la otra locación, con SU producto. Sólo si sigue
-  // pendiente: dos teléfonos confirmando a la vez no lo hacen dos veces.
-  async function confirmar(t, item, por) {
+  // Confirmar desde la otra locación las filas de un grupo, cada una con
+  // SU producto. `items`: el producto para todas (una), o { id: producto }.
+  // Sólo si siguen pendientes: dos teléfonos no lo aplican dos veces.
+  async function confirmar(ts, items, por) {
     if (!puede()) return { ok: false, error: 'Confirming needs "Make and send orders".' };
-    const mio = String(item || '').trim();
-    if (!t || !t.id) return { ok: false, error: 'No transfer.' };
-    if (!mio) return { ok: false, error: 'Choose your product.' };
+    ts = lista(ts);
+    if (!ts.length || !ts[0].id) return { ok: false, error: 'No transfer.' };
+    const de = (t) => String((typeof items === 'string' ? items : items && items[t.id]) || '').trim();
+    if (ts.some(t => !de(t))) return { ok: false, error: 'Choose your product.' };
     try {
       const loc = await miLoc();
-      const cambio = { status: 'confirmed', status_by: corto(por), status_at: new Date().toISOString() };
-      cambio[entra(t, loc) ? 'to_item' : 'from_item'] = mio;
-      const r = await pedir('location_transfers?id=eq.' + encodeURIComponent(t.id) + '&status=eq.pending', 'PATCH', cambio, 'return=representation');
-      if (!Array.isArray(r) || !r.length) { olvidar(); avisar(); return { ok: false, error: 'It was already confirmed, undone or marked not right.' }; }
-      const errores = await aplicar(r[0], loc);
+      const hechas = [];
+      for (const t of ts) {
+        const cambio = { status: 'confirmed', status_by: corto(por), status_at: new Date().toISOString() };
+        cambio[entra(t, loc) ? 'to_item' : 'from_item'] = de(t);
+        const r = await pedir('location_transfers?id=eq.' + encodeURIComponent(t.id) + '&status=eq.pending', 'PATCH', cambio, 'return=representation');
+        if (Array.isArray(r) && r.length) hechas.push(r[0]);
+      }
+      if (!hechas.length) { olvidar(); avisar(); return { ok: false, error: 'It was already confirmed, undone or marked not right.' }; }
+      const errores = await aplicar(hechas, loc);
       olvidar(); avisar();
-      return conAviso({ ok: true, transfer: r[0] }, errores);
+      return conAviso({ ok: true, transfer: hechas[0], transfers: hechas }, errores);
     } catch (e) { return { ok: false, error: String(e && e.message || e) }; }
   }
 
-  async function rechazar(t, nota, por) {
+  async function rechazar(ts, nota, por) {
     if (!puede()) return { ok: false, error: 'This needs "Make and send orders".' };
-    if (!t || !t.id) return { ok: false, error: 'No transfer.' };
+    ts = lista(ts);
+    if (!ts.length || !ts[0].id) return { ok: false, error: 'No transfer.' };
     try {
-      const r = await pedir('location_transfers?id=eq.' + encodeURIComponent(t.id) + '&status=eq.pending', 'PATCH',
-        { status: 'rejected', status_by: corto(por), status_at: new Date().toISOString(), note: corto(nota, 200) }, 'return=representation');
-      if (!Array.isArray(r) || !r.length) { olvidar(); avisar(); return { ok: false, error: 'It was already confirmed or undone.' }; }
+      const hechas = [];
+      for (const t of ts) {
+        const r = await pedir('location_transfers?id=eq.' + encodeURIComponent(t.id) + '&status=eq.pending', 'PATCH',
+          { status: 'rejected', status_by: corto(por), status_at: new Date().toISOString(), note: corto(nota, 200) }, 'return=representation');
+        if (Array.isArray(r) && r.length) hechas.push(r[0]);
+      }
+      if (!hechas.length) { olvidar(); avisar(); return { ok: false, error: 'It was already confirmed or undone.' }; }
       // Pendiente, sólo estaba aplicado en quien lo registró: se le quita.
-      const errores = await revertir(r[0], [r[0].started_at === r[0].to_location ? 'to' : 'from']);
+      const errores = await revertir(hechas, [ladoDeQuienLoRegistro(hechas[0])]);
       olvidar(); avisar();
       return conAviso({ ok: true }, errores);
     } catch (e) { return { ok: false, error: String(e && e.message || e) }; }
   }
 
-  async function deshacer(t, por, conteoIso) {
+  async function deshacer(ts, por, conteoIso) {
     if (!puede()) return { ok: false, error: 'This needs "Make and send orders".' };
-    if (!deshacible(t, conteoIso)) return { ok: false, error: 'There was a count after it: it can no longer be undone.' };
+    ts = lista(ts);
+    if (!ts.length || ts.some(t => !deshacible(t, conteoIso))) return { ok: false, error: 'There was a count after it: it can no longer be undone.' };
     // Lo que estaba aplicado se mira ANTES de escribir 'undone': después,
     // el estado ya no dice si llegó a confirmarse.
-    const eraConfirmado = t.status === 'confirmed';
-    const ordenAntes = t.vendor_order_id;
+    const antes = new Map(ts.map(t => [t.id, { confirmado: t.status === 'confirmed', orden: t.vendor_order_id }]));
     try {
-      const r = await pedir('location_transfers?id=eq.' + encodeURIComponent(t.id) + '&status=in.(pending,confirmed)', 'PATCH',
-        { status: 'undone', status_by: corto(por), status_at: new Date().toISOString() }, 'return=representation');
-      if (!Array.isArray(r) || !r.length) { olvidar(); avisar(); return { ok: false, error: 'It was already undone or marked not right.' }; }
+      const conf = [], pend = [];
+      for (const t of ts) {
+        const r = await pedir('location_transfers?id=eq.' + encodeURIComponent(t.id) + '&status=in.(pending,confirmed)', 'PATCH',
+          { status: 'undone', status_by: corto(por), status_at: new Date().toISOString() }, 'return=representation');
+        if (!Array.isArray(r) || !r.length) continue;
+        const a = antes.get(t.id);
+        const fila = Object.assign({}, r[0], { vendor_order_id: r[0].vendor_order_id || a.orden });
+        (a.confirmado ? conf : pend).push(fila);
+      }
+      if (!conf.length && !pend.length) { olvidar(); avisar(); return { ok: false, error: 'It was already undone or marked not right.' }; }
       // Confirmado: aplicado en los dos lados; pendiente, sólo en quien lo
-      // registró. Lo que se deshace es lo que había (t, como se leyó).
-      const antes = r[0];
-      const lados = eraConfirmado ? ['from', 'to'] : [antes.started_at === antes.to_location ? 'to' : 'from'];
-      const errores = await revertir(Object.assign({}, antes, { vendor_order_id: antes.vendor_order_id || ordenAntes }), lados);
+      // registró.
+      const errores = (conf.length ? await revertir(conf, ['from', 'to']) : [])
+        .concat(pend.length ? await revertir(pend, [ladoDeQuienLoRegistro(pend[0])]) : []);
       olvidar(); avisar();
       return conAviso({ ok: true }, errores);
     } catch (e) { return { ok: false, error: String(e && e.message || e) }; }
@@ -276,6 +331,7 @@
 
   window.BarStockTransfers = {
     leer, olvidar, locaciones, productosDe, nombreDe, crear, confirmar, rechazar, deshacer, aplicar, revertir, ajustarSemana, ladoDe,
+    grupos, grupoDe,
     entra, miItem, suItem, otraLoc, loRegistre, porConfirmar, cuentaAqui, pareja, miPareja, deshacible, puede, DIAS
   };
 })();

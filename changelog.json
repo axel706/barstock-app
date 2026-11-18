@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261118-115722",
+    "items": [
+      "Transfers section in More",
+      "Several products in one transfer"
+    ]
+  },
+  {
     "build": "20261118-112152",
     "items": [
       "Invoices: \"It arrived before the count\""
@@ -180,12 +187,6 @@
     "build": "20261115-144048",
     "items": [
       "Morning email test goes to the reply-to address"
-    ]
-  },
-  {
-    "build": "20261115-140148",
-    "items": [
-      "Morning email for every Toast location"
     ]
   }
 ]
