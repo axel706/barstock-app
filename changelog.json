@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-131649",
+    "items": [
+      "Darker, easier-to-read cards in Inventory and Do we have"
+    ]
+  },
+  {
     "build": "20261118-130450",
     "items": [
       "Orders: \"BarStock would add\" instead of \"the app\""
@@ -180,12 +186,6 @@
     "build": "20261116-200128",
     "items": [
       "Clearer note when counting is turned off"
-    ]
-  },
-  {
-    "build": "20261116-195903",
-    "items": [
-      "People: turn off permissions for an Owner too"
     ]
   }
 ]

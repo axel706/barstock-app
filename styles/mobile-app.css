@@ -1,6 +1,17 @@
 :root {
   --m-base: 14px;
 
+  /* ── Tinta: el fondo de las tarjetas (Axel, 2026-11-18, lámina B) ──
+   * El de "From Toast" en Recipes, desde ahora el estándar de las
+   * tarjetas: un panel azul marino casi opaco sobre la foto (que ya va
+   * desenfocada detrás), con un borde fino. SIN backdrop-filter: se lee
+   * mejor que el blanco al 6–12 % y no cuesta nada al rodar. Lo que
+   * avisa (ámbar, rojo) conserva su borde y un toque de su color en la
+   * esquina sobre la tinta. Las pantallas se pasan a ella una a una,
+   * usando estas variables, nunca copiando el color. */
+  --tinta: rgba(15,23,42,.62);
+  --tinta-borde: rgba(255,255,255,.1);
+
   --m-meta:    calc(var(--m-base) * 0.79);   /* 11.0  pies, unidades  */
   --m-small:   calc(var(--m-base) * 0.89);   /* 12.5  texto de apoyo  */
   --m-eyebrow: calc(var(--m-base) * 0.89);   /* 12.5  encabezados     */
@@ -2568,10 +2579,11 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     display: flex; align-items: center; gap: 14px;
     padding: 15px; border-radius: 18px;
   }
-  .m-fic-bien { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.17); }
-  .m-fic-ojo  { background: linear-gradient(135deg, rgba(245,158,11,.20), rgba(245,158,11,.06));
+  /* Tinta (2026-11-18, lámina B): ver --tinta en :root. */
+  .m-fic-bien { background: var(--tinta); border: 1px solid var(--tinta-borde); }
+  .m-fic-ojo  { background: linear-gradient(135deg, rgba(245,158,11,.16), var(--tinta) 55%), var(--tinta);
                 border: 1px solid rgba(252,211,77,.32); }
-  .m-fic-mal  { background: linear-gradient(135deg, rgba(239,68,68,.20), rgba(239,68,68,.06));
+  .m-fic-mal  { background: linear-gradient(135deg, rgba(239,68,68,.16), var(--tinta) 55%), var(--tinta);
                 border: 1px solid rgba(248,113,113,.32); }
 
   .m-bot { flex: 0 0 52px; text-align: center; }
@@ -2926,8 +2938,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     display: flex; align-items: center; gap: 12px;
     text-align: left; cursor: pointer;
     padding: 14px; margin: 10px 0 0; border-radius: 20px; line-height: 1.4;
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.10);
+    /* Tinta (2026-11-18): ver --tinta en :root. */
+    background: var(--tinta);
+    border: 1px solid var(--tinta-borde);
   }
   .m-inv-l { flex: 1; min-width: 0; }
   .m-inv-n {
@@ -5613,7 +5626,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * entera (Axel, 2026-11-11). */
   #mScreens .m-tl-sec {
     margin-top: 12px; border-radius: 16px; overflow: hidden;
-    background: rgba(15,23,42,.62); border: 1px solid rgba(255,255,255,.1);
+    background: var(--tinta); border: 1px solid var(--tinta-borde);
   }
   #mScreens .m-tl-sec-h { display: flex; align-items: center; gap: 8px; padding: 11px 12px; }
   #mScreens .m-tl-sec-h b { font-size: var(--m-strong); color: #fff; }
@@ -6059,7 +6072,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   #mScreens .m-re-fila {
     display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; padding: 8px 10px;
-    border-radius: 14px; background: rgba(15,23,42,.62); border: 1px solid rgba(255,255,255,.1);
+    border-radius: 14px; background: var(--tinta); border: 1px solid var(--tinta-borde);
   }
   #mScreens .m-re-bot {
     flex: 1 1 0; min-width: 0; padding: 6px 2px; text-align: left; cursor: pointer; box-shadow: none;
@@ -6084,7 +6097,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   #mScreens .m-re-tog {
     display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px;
-    padding: 12px; border-radius: 14px; background: rgba(15,23,42,.62); border: 1px solid rgba(255,255,255,.1);
+    padding: 12px; border-radius: 14px; background: var(--tinta); border: 1px solid var(--tinta-borde);
     font-size: var(--m-body); color: #e2e8f0;
   }
   #mScreens .m-re-tog input { width: calc(var(--m-base) * 1.4); height: calc(var(--m-base) * 1.4); accent-color: #0284c7; }

@@ -43,5 +43,29 @@ for (const k of ['m-low-b', 'm-cf-b', 'm-ts-mas', 'm-ro-done']) prueba('deja el 
 // aquí: jsdom no calcula backdrop-filter, y una comprobación así pasaba
 // también sin el cambio. Se mide en Chromium (ver el commit).
 
+// ── Tinta (Axel, 2026-11-18, lámina B) ─────────────────────────────
+// El fondo de las tarjetas: el de "From Toast" en Recipes, desde ahora
+// el estándar. Lo que no puede volver a pasar: que se copie el color en
+// cada pantalla (se toca uno y dejan de decir lo mismo), que una
+// tarjeta de Tinta lleve desenfoque, y que lo que avisa pierda su color.
+console.log('\nTinta: el fondo de las tarjetas');
+{
+  const raiz = (/:root \{([\s\S]*?)\n\}/.exec(css) || [])[1] || '';
+  prueba('--tinta y --tinta-borde viven en :root', /--tinta: rgba\(15,23,42,\.62\);/.test(raiz) && /--tinta-borde: rgba\(255,255,255,\.1\);/.test(raiz));
+  const fuera = css.replace(raiz, '');
+  prueba('el color de la tinta no está copiado en ninguna regla (se usa la variable)', !/rgba\(15,\s*23,\s*42,\s*\.62\)/.test(fuera),
+    (fuera.match(/[^\n]*rgba\(15,\s*23,\s*42,\s*\.62\)[^\n]*/) || [''])[0].trim());
+  const regla = (re) => (re.exec(css) || [])[1] || '';
+  const inv = regla(/body\.m-shell \.m-inv \{([^}]*)\}/);
+  prueba('las filas de Inventory, de Tinta', /background: var\(--tinta\);/.test(inv) && /border: 1px solid var\(--tinta-borde\);/.test(inv), inv.trim().slice(0, 120));
+  prueba('las tarjetas de Do we have, de Tinta', /\.m-fic-bien \{ background: var\(--tinta\); border: 1px solid var\(--tinta-borde\); \}/.test(css));
+  prueba('lo que avisa conserva su borde y un toque de su color sobre la tinta',
+    /\.m-fic-ojo\s+\{ background: linear-gradient\(135deg, rgba\(245,158,11,\.16\), var\(--tinta\) 55%\), var\(--tinta\);\s*border: 1px solid rgba\(252,211,77,\.32\);/.test(css) &&
+    /\.m-fic-mal\s+\{ background: linear-gradient\(135deg, rgba\(239,68,68,\.16\), var\(--tinta\) 55%\), var\(--tinta\);\s*border: 1px solid rgba\(248,113,113,\.32\);/.test(css));
+  prueba('From Toast (la de referencia) usa la misma variable', /#mScreens \.m-tl-sec \{[^}]*background: var\(--tinta\)/.test(css));
+  const conTinta = css.split('}').filter(b => /var\(--tinta\)/.test(b));
+  prueba('ninguna regla de Tinta lleva desenfoque', conTinta.length >= 4 && !conTinta.some(b => /backdrop-filter:\s*blur/.test(b)), conTinta.length + ' reglas');
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);

@@ -207,6 +207,22 @@ nuevo en las pantallas tiene que entrar en ese `:not` (o llevar id).
 Prueba: `test-listas-sin-blur`. Lo que queda: las escaleras del
 desenfoque progresivo (6 capas cada una), por lámina.
 
+**Tinta es el fondo de las tarjetas, desde ahora el estándar** (Axel,
+2026-11-18, lámina B: "vamos a ir ajustando las distintas pantallas a
+él"). Es el de *From Toast* en Recipes: un panel azul marino casi opaco
+(`--tinta`, `rgba(15,23,42,.62)`) con borde fino (`--tinta-borde`), en
+`:root` de `mobile-app.css`. **No lleva `backdrop-filter`**: lo que se
+ve borroso detrás es la foto del fondo, que ya viene desenfocada. Se lee
+mejor que el blanco al 6–12 % de antes y no cuesta nada al rodar (el
+lag de las listas no venía de ahí: las filas ya iban sin desenfoque).
+Lo que avisa conserva su borde ámbar o rojo y un toque de su color en
+la esquina, sobre la tinta (`.m-fic-ojo` / `.m-fic-mal`). Ya la llevan
+Inventory (`.m-inv`), las tarjetas de Do we have y la ficha (`.m-fic`),
+y Recipes. Cuando Axel diga "ponle Tinta" a una pantalla, es esto:
+**las variables, nunca el color copiado**; `test-listas-sin-blur`
+falla si el color aparece fuera de `:root` o si una regla de Tinta
+lleva desenfoque.
+
 El radio de las tarjetas del carrusel (`.m-hero`) es **20px**, y es la
 referencia cuando pida "como las tarjetas". Las filas de Inventory (`.m-inv`) son
 del tamaño de las tarjetas de Running out (Axel, 2026-11-15, opción B):
