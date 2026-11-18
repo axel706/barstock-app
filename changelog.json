@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261117-222241",
+    "items": [
+      "Behind-the-scenes fixes"
+    ]
+  },
+  {
     "build": "20261117-212041",
     "items": [
       "Monday invoices link to this week’s orders",
@@ -178,12 +184,6 @@
     "build": "20261115-120412",
     "items": [
       "The selected tab is now blue glass, like Done"
-    ]
-  },
-  {
-    "build": "20261115-115951",
-    "items": [
-      "Running out: no tab lit while it is open"
     ]
   }
 ]

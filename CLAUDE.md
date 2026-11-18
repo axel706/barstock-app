@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 156 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 157 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -395,7 +395,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 156 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 157 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -1159,6 +1159,22 @@ ese producto suele fallar por el lado de "había menos" (algo como el
 80 % de las últimas ~8 semanas), y se encoge solo si sus recetas se
 arreglan. Hablado y aceptado así con Axel. Prueba: `test-run-out`
 ("la fecha prudente").
+
+### Cuánto pedir, de entrega a entrega (2026-11-18, fase 1 hecha)
+
+Axel: "que la app me enseñe a ordenar sin overstock, que duren de orden
+a orden de proveedor", y que avise con al menos dos días si algo se
+acaba, con su por qué. El plan entero: **`docs/plan-pedido.md`**.
+Decidido: colchón del 80 % (0.84 σ, LOOP cubre lo demás), botellas, el
+vino en múltiplos de 3 (Wine Merchant o vino), tendencia con la MEDIANA
+de las 4 últimas semanas contra las 13 (de ½ a 3×). Sin frases tipo
+"Order by Tue" ni "LOOP today": el aviso sólo dice que se acaba.
+**Fase 1 hecha:** `src/pedido.js`, puro y sin cargar en la app todavía:
+`demanda` (Pour·IQ × tendencia de Toast, forma de la semana de Toast, el
+día fuerte para avisar), `cuantoPedir` (uso de la vuelta + colchón − lo
+que habrá al llegar) y `seAcaba` (día fuerte, entregas a su hora).
+Prueba: `test-pedido`, con los días del Nino Ardevi. Sigue: la fase 2
+(Running out y el correo con esto), antes una tabla de nueva contra vieja.
 
 ### La lista de compras y la verificación (2026-11-14, sin construir)
 
