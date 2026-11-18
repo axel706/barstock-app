@@ -204,7 +204,7 @@
     const h = document.createElement('div');
     h.className = 'm-sheet'; h.id = 'mSheet';
     h.innerHTML = `<div class="m-sheet-bg"></div>
-      <div class="m-sheet-box m-kp-hoja m-tr" role="dialog" aria-label="Add a product">
+      <div class="m-sheet-box m-kp-hoja m-tr m-sheet-busca" role="dialog" aria-label="Add a product">
         <div class="m-sheet-grip"></div>
         <div class="m-kp-t">Add a product</div>
         <input type="search" class="m-tr-buscar" placeholder="Search your products" aria-label="Search your products">
@@ -213,6 +213,7 @@
     document.body.appendChild(h);
     const cerrar = () => h.remove();
     if (window.BarStockSheet && window.BarStockSheet.enganchar) window.BarStockSheet.enganchar(h, cerrar);
+    if (window.BarStockSheet && window.BarStockSheet.alTeclado) window.BarStockSheet.alTeclado(h);
     h.querySelector('.m-sheet-bg').onclick = cerrar;
     const caja = h.querySelector('.m-tr-prods'), inp = h.querySelector('.m-tr-buscar');
     const pinta = () => {

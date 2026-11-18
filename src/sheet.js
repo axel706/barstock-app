@@ -217,5 +217,35 @@
     return !!document.querySelector('.m-sheet');
   }
 
-  window.BarStockSheet = { enganchar, hayAlguna, UMBRAL };
+  // ── Una hoja con buscador y el teclado de iOS ─────────────────────────
+  //
+  // La hoja va pegada al fondo de la pantalla, y en el iPhone el teclado
+  // NO encoge la pantalla: la tapa. Con un buscador eso rompía las dos
+  // cosas (Axel, 2026-11-18, al añadir un producto a un transfer): al
+  // escribir, la lista se encogía, la hoja bajaba y quedaba detrás del
+  // teclado; al borrar, crecía y el campo se iba por arriba. Aquí la
+  // hoja entera se ajusta a lo que se VE (visualViewport), así su fondo
+  // queda justo encima del teclado; el alto fijo de la caja lo pone el
+  // CSS (.m-sheet-busca), para que filtrar no la mueva. Se suelta sola
+  // cuando la hoja sale del documento, la cierre quien la cierre.
+  function alTeclado(hoja) {
+    const vv = window.visualViewport;
+    if (!hoja || !vv) return () => {};
+    const ajustar = () => {
+      if (!hoja.isConnected) return soltar();
+      hoja.style.top = vv.offsetTop + 'px';
+      hoja.style.height = vv.height + 'px';
+      hoja.style.bottom = 'auto';
+    };
+    function soltar() {
+      vv.removeEventListener('resize', ajustar);
+      vv.removeEventListener('scroll', ajustar);
+    }
+    vv.addEventListener('resize', ajustar);
+    vv.addEventListener('scroll', ajustar);
+    ajustar();
+    return soltar;
+  }
+
+  window.BarStockSheet = { enganchar, hayAlguna, alTeclado, UMBRAL };
 })();

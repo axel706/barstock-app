@@ -311,6 +311,13 @@ grupo('5 · la sección Transfers (src/mobile-transfers.js, lámina B)');
   let def = null;
   w.BarStockMobile = { register: (d) => { def = d; }, enBanda: (t) => { w.__banda = t; return true; },
     alVolverBanda: (f) => { w.__atras = f; }, volver: () => { w.__volvio = true; }, ir: (id) => { w.__ido = id; } };
+  // El teclado de iOS: la parte visible es 300 px de alto y la página
+  // se ha desplazado 40 px (visualViewport, como en el iPhone).
+  const vvOyentes = {};
+  Object.defineProperty(w, 'visualViewport', { configurable: true, value: { offsetTop: 40, height: 300,
+    addEventListener: (e, f) => { (vvOyentes[e] = vvOyentes[e] || []).push(f); },
+    removeEventListener: (e, f) => { vvOyentes[e] = (vvOyentes[e] || []).filter(x => x !== f); } } });
+  w.eval(leer('src/sheet.js'));
   w.eval(leer('src/transfer-confirm.js'));
   if (existe('src/mobile-transfers.js')) w.eval(leer('src/mobile-transfers.js'));
   w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
@@ -329,6 +336,18 @@ grupo('5 · la sección Transfers (src/mobile-transfers.js, lámina B)');
     host.querySelector('#mTxAdd').click();
     let hoja = w.document.getElementById('mSheet');
     prueba('"Add a product" abre mis productos con buscador', !!hoja && !!hoja.querySelector('.m-tr-buscar') && hoja.querySelectorAll('[data-item]').length === 2);
+    // Axel, 2026-11-18: al escribir la lista se encogía, la hoja bajaba
+    // detrás del teclado; al borrar crecía y el campo se iba por arriba.
+    prueba('la hoja del buscador va encima del teclado (lo visible), no al fondo de la pantalla',
+      hoja.style.top === '40px' && hoja.style.height === '300px', hoja.style.top + ' ' + hoja.style.height);
+    w.visualViewport.offsetTop = 0; w.visualViewport.height = 520;
+    (vvOyentes.resize || []).forEach(f => f());
+    prueba('y lo sigue cuando el teclado se va', hoja.style.height === '520px', hoja.style.height);
+    const inp = hoja.querySelector('.m-tr-buscar');
+    inp.value = 'triag'; inp.dispatchEvent(new w.Event('input'));
+    prueba('filtrar no le cambia el alto: la caja es de alto fijo (.m-sheet-busca)',
+      hoja.querySelector('.m-sheet-box').classList.contains('m-sheet-busca') && hoja.style.height === '520px');
+    inp.value = ''; inp.dispatchEvent(new w.Event('input'));
     hoja.querySelector('[data-item="Triage Vodka"]').click();
     host.querySelector('#mTxAdd').click();
     hoja = w.document.getElementById('mSheet');
@@ -345,6 +364,19 @@ grupo('5 · la sección Transfers (src/mobile-transfers.js, lámina B)');
       p.cuerpo[0].to_item === 'Triage Vodka' && p.cuerpo[0].qty === 12 && p.cuerpo[1].to_item === 'Tito' && p.cuerpo[1].qty === 2 &&
       p.cuerpo.every(x => x.before_count && x.from_location === WB), JSON.stringify(p && p.cuerpo));
     prueba('y vuelve a la lista, avisando', w.__banda === 'Transfers' && /Transfer saved/.test(w.__toast || ''));
+  }
+  const css = leer('styles/mobile-app.css');
+  prueba('el CSS de la hoja con buscador: alto fijo, sólo la lista rueda',
+    /#mSheet \.m-sheet-busca \{[^}]*height: min\(560px, calc\(100% - 24px\)\)/.test(css) &&
+    /#mSheet \.m-sheet-busca \.m-tr-prods \{[^}]*flex: 1 1 auto; min-height: 0/.test(css));
+  prueba('"Which is yours?" al confirmar usa la misma hoja', /m-sheet-busca/.test(leer('src/transfer-confirm.js')) && /alTeclado\(h\)/.test(leer('src/transfer-confirm.js')));
+  {
+    // Cerrar la hoja suelta el teclado: nada sigue escuchando.
+    const antes = (vvOyentes.resize || []).length;
+    const hh = w.document.createElement('div'); w.document.body.appendChild(hh);
+    if (w.BarStockSheet.alTeclado) w.BarStockSheet.alTeclado(hh); hh.remove();
+    (vvOyentes.resize || []).slice().forEach(f => f());
+    prueba('una hoja cerrada deja de escuchar al teclado', (vvOyentes.resize || []).length <= antes, (vvOyentes.resize || []).length + ' vs ' + antes);
   }
   const ms = leer('src/mobile-search.js'), tabs = leer('src/mobile-tabs.js');
   prueba('la ficha ya no lleva "⇄ Transfer" (Axel: fuera de Do we have)', !/id="msTrf"/.test(ms) && !/BarStockMobileTransfer\./.test(ms) && !existe('src/mobile-transfer.js'));
