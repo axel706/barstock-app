@@ -5667,6 +5667,19 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-ro-v b { display: block; font-size: var(--m-figure); font-weight: 800; color: #fbbf24; line-height: 1; }
   .m-ro-v small { display: block; margin-top: 6px; font-size: var(--m-small); color: #9fb0c4; font-weight: 600; }
   .m-ro-btns { display: flex; gap: 8px; margin-top: 10px; }
+  /* Check the shelf (2026-11-18, lámina C): el lápiz junto al número
+   * grande y la línea de lo verificado. Con id delante: app.css pone
+   * 999px !important, desenfoque y sombra a todo <button>. */
+  :is(#mScreens, #mSheet) .m-fic-lapiz { display: inline-flex; align-items: center; justify-content: center;
+    width: calc(var(--m-base) * 1.9); height: calc(var(--m-base) * 1.9); margin-left: 4px; padding: 0; align-self: center;
+    border-radius: 999px !important; border: 1px solid rgba(255,255,255,.25); background: transparent; color: #cbd5e1;
+    font-size: var(--m-body); cursor: pointer; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+  .m-fic-conchk { flex-wrap: wrap; }
+  .m-fic-chk { flex: 0 0 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    margin-top: 10px; padding: 8px 12px; border-radius: 12px; background: rgba(52,211,153,.12); color: #6ee7b7; font-size: var(--m-small); }
+  .m-fic-chk span { min-width: 0; }
+  :is(#mScreens, #mSheet) .m-fic-chk-x { flex: 0 0 auto; padding: 0; border: 0; background: none; color: #7dd3fc; font-weight: 700;
+    font-size: var(--m-small); cursor: pointer; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
   /* El por qué (2026-11-18, lámina E): los días y la frase. */
   .m-ro-dias { display: flex; gap: 6px; margin-top: 12px; }
   .m-ro-dia { flex: 1; min-width: 0; text-align: center; font-size: var(--m-meta); color: #cbd5e1; }

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-103035",
+    "items": [
+      "Pencil by the number: say how many are there"
+    ]
+  },
+  {
     "build": "20261118-003041",
     "items": [
       "Orders suggest how much to order, with Use",
@@ -180,12 +186,6 @@
     "build": "20261115-131221",
     "items": [
       "Bottle keypad: a dot for any decimal (.2, .5, .7)"
-    ]
-  },
-  {
-    "build": "20261115-130117",
-    "items": [
-      "Tell the team it's low: a softer orange"
     ]
   }
 ]

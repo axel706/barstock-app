@@ -292,22 +292,15 @@
   // ── El número: "I have enough" ──────────────────────────────────────
   //
   // El teclado vive en num-pad.js: lo usan también la lista de compras y
-  // "Running low".
+  // "Running low"; el de "cuántas hay", en check-shelf.js.
   function teclado(r) {
-    const queda = LC() && LC().cuanto ? LC().cuanto(r) : Number(r.onHand) || 0;
-    window.BarStockNumPad.abrir({
-      titulo: r.item,
-      sub: 'How many are on the shelf right now? Live says &asymp;' + esc(n1(queda)),
-      boton: (v) => 'Save · ' + v + ' on the shelf',
-      nota: 'Live starts from this until the next count. The count itself does not change.',
-      guardar: async (n) => {
-        const SC = window.BarStockStockChecks;
-        const r2 = SC ? await SC.guardar({ item: r.item, n, decia: queda, por: quien() }) : { ok: false, error: 'Not loaded.' };
-        if (!r2.ok) return r2;
+    // El teclado y el guardado son los de check-shelf.js: el mismo que
+    // abre el lápiz de cualquier producto. Aquí sólo se apunta en la
+    // tarjeta sin esperar a releer.
+    window.BarStockCheckShelf.abrir(r, {
+      alGuardar: (n, queda) => {
         _checks.set(r.item, { item_name: r.item, counted: n, live_said: queda, checked_by: quien(), checked_at: new Date().toISOString() });
-        if (LC() && LC().caducar) LC().caducar();
         pintar();
-        return { ok: true };
       }
     });
   }

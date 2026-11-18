@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 159 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 160 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -395,7 +395,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 159 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 160 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -1313,6 +1313,26 @@ mientras haya algo pedido sin llegar. La regla vive en `shopping-list.js`
 sin "Add" para siempre (2026-11-17). Pedido sin llegar: "Ordered", sin
 Undo. La firma es el nombre de la
 sesión: cada quien usa su teléfono (Axel). Prueba: `test-pedir-lista`.
+
+**Check the shelf: el lápiz junto al número (2026-11-18, lámina C).**
+Un transfer de Will's & Bill's contado el domingo en Crown, con su
+factura de "Internal Transfers" del lunes, dejó Triage Vodka con 12 de
+más en el LIVE, y "I have enough" sólo sale en lo que se acaba. Ahora un
+lápiz junto al número grande de la tarjeta de "Do we have" y de la ficha
+abre "cuántas hay" en CUALQUIER producto: la misma verificación de
+`stock_checks` (corrige el LIVE hasta el siguiente conteo, on_hand no se
+toca, sale en Finish count) y nada en la lista de compras. Lo verificado
+se queda en la tarjeta: "✓ Checked 19.8 · Wed 10:30 AM · Axel · Change",
+y la semana dice "checked N". El teclado y el guardado viven en
+`src/check-shelf.js` (`abrir`, `lapiz`, `linea`); "I have enough" de
+Running out lo usa también. `product-hero.html(r, { lapiz: i })` (el
+índice del maestro) sólo donde se pide: en Inventory la fila es un botón.
+Permiso "Count" (`contar`). Prueba: `test-check-shelf`. **Pendiente, por
+lámina ya enseñada:** el Transfer entre locaciones (ficha, chips en las
+dos locaciones, enlazar la factura de "Internal Transfers"); Axel aún no
+lo ha confirmado. Lo de Crown se arregló a mano (semana del 9 de
+noviembre de Triage Vodka: `ordered` 12, `used` 20.85); W+B se dejó
+como estaba (Axel: su conteo de hace 15 días ya salió bajo).
 
 **Fijar arriba en Running out (2026-11-15, lámina B).** "Edit order"
 en la pantalla de revisión: las tarjetas sin botones y con asa (≡);

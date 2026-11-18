@@ -81,7 +81,7 @@
     // semanas. La llena `pintarSemanas` cuando llegue la consulta.
     // Sin `aviso`: lo decide product-hero, que sabe si hay LIVE y si
     // Toast lo vende ("Out Fri" en vez de los días de Pour·IQ).
-    if (H && H.html) return H.html(r, { par, hueco: true });
+    if (H && H.html) return H.html(r, { par, hueco: true, lapiz: master().indexOf(r) });
     const k = tono(r);
     return `<div class="m-fic m-fic-bien"><div class="m-fic-d">
       <div class="m-fic-n">${esc(r.item)}</div>
@@ -167,7 +167,7 @@
       const mi = master().indexOf(r);
       if (H && H.html) {
         return `<div class="m-res m-res-fic" data-i="${mi}" role="button" tabindex="0">
-          ${H.html(r, { par: parDe(r), semana: true, pie: bajo(r, mi) })}</div>`;
+          ${H.html(r, { par: parDe(r), semana: true, pie: bajo(r, mi), lapiz: mi })}</div>`;
       }
       // Sin el módulo, la fila de antes: fea, pero dice qué hay.
       const k = tono(r);
@@ -190,6 +190,14 @@
     });
     // Los botones de "Running low" viven DENTRO de la tarjeta, que abre la
     // ficha al tocarla: sin parar el toque, abrirían las dos cosas.
+    // El lápiz y "Change" (check-shelf.js) también viven dentro.
+    caja.querySelectorAll('[data-check]').forEach(b => {
+      b.onclick = (ev) => {
+        ev.stopPropagation();
+        const r = master()[Number(b.dataset.check)];
+        if (r && window.BarStockCheckShelf) window.BarStockCheckShelf.abrir(r);
+      };
+    });
     caja.querySelectorAll('[data-low], [data-low-x]').forEach(b => {
       b.onclick = (ev) => {
         ev.stopPropagation();
@@ -698,6 +706,15 @@
     if (recv) recv.onclick = () => {
       if (window.BarStockStockIn) window.BarStockStockIn.open(r, () => ficha(host, idx));
     };
+    // El lápiz de la cabecera y su "Change" (check-shelf.js). Delegado en
+    // la caja: alLive() cambia la cabecera entera cuando se rehace el
+    // LIVE, y un onclick puesto en el botón viejo se perdería con ella.
+    caja.addEventListener('click', (ev) => {
+      const b = ev.target.closest && ev.target.closest('[data-check]');
+      if (!b || !window.BarStockCheckShelf) return;
+      const rr = master()[Number(b.dataset.check)];
+      if (rr) window.BarStockCheckShelf.abrir(rr);
+    });
 
     pintarZonas(caja, r.item);
     pintarVentasFicha(caja, r);

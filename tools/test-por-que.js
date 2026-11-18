@@ -108,7 +108,7 @@ grupo('3 · la tarjeta de Running out (opción E)');
     vivo: () => true, conteo: () => null, caducar() {}, alCambiar: () => () => {}, fila: (r) => filas[r.item] };
   t.BarStockGuest = { puede: () => true, nombre: () => 'Ana' };
   t.BarStockMobile = { enBanda: () => true, alVolverBanda() {}, salirBanda() {} };
-  for (const f of ['src/shopping-list.js', 'src/stock-checks.js', 'src/num-pad.js', 'src/mobile-running-out.js']) t.eval(leer(f));
+  for (const f of ['src/shopping-list.js', 'src/stock-checks.js', 'src/num-pad.js', 'src/check-shelf.js', 'src/mobile-running-out.js']) t.eval(leer(f));
   await t.BarStockRunningOutReview.abrir(t.document.getElementById('mHome'));
   await esperar(20);
   const card = (n) => t.document.querySelector(`.m-ro-c[data-item="${n}"]`);

@@ -235,7 +235,8 @@
     const dia = (d, i) => i === n - 1 ? 'Today' : DSEM[new Date(d.fecha + 'T12:00:00Z').getUTCDay()];
     return `
       <div class="m-dad" style="--sem:${color}">
-        <div class="m-dad-k">${titulo}<i>started ${n1(v.contado)}${llego > 0 ? ' · +' + n1(llego) + ' in' : ''} · used ${usado}</i></div>
+        <div class="m-dad-k">${titulo}<i>started ${n1(v.contado)}${llego > 0 ? ' · +' + n1(llego) + ' in' : ''} · used ${usado}${
+          v.verificado ? ' · checked ' + n1(v.verificado.n) : ''}</i></div>
         <div class="m-dad-g" role="img" aria-label="${titulo}: ${p.map((d, i) => dia(d, i) + ' ' + n1(d.queda)).join(', ')}">
           <svg viewBox="0 0 100 ${ALTO}" preserveAspectRatio="none">
             <path d="${area}" class="m-dad-a"/>
@@ -272,16 +273,24 @@
     // usa "Do we have" para "Running low" (2026-11-15); lo trae ya
     // escapado quien llama.
     const pie = o.pie ? `<div class="m-fic-pie">${o.pie}</div>` : '';
+    // `lapiz`: el índice del maestro (Axel, 2026-11-18, lámina C). Un
+    // lápiz junto al número grande abre "cuántas hay" (check-shelf.js),
+    // y lo ya verificado desde el conteo sale en su línea. Sólo donde se
+    // pide (Do we have y la ficha): en Inventory la fila entera es un
+    // botón, y un botón dentro de otro no se puede tocar.
+    const CS = o.lapiz != null ? window.BarStockCheckShelf : null;
+    const lap = CS ? CS.lapiz(r, o.lapiz) : '';
+    const chk = CS ? CS.linea(r, o.lapiz) : '';
 
     return `
-      <div class="m-fic m-fic-${clase(k)}${v ? ' m-fic-conlive' : ''}${sem ? ' m-fic-consem' : ''}${pie ? ' m-fic-conpie' : ''}">
+      <div class="m-fic m-fic-${clase(k)}${v ? ' m-fic-conlive' : ''}${sem ? ' m-fic-consem' : ''}${pie ? ' m-fic-conpie' : ''}${chk ? ' m-fic-conchk' : ''}">
         ${silueta(rv, k.c)}
         <div class="m-fic-d">
           <div class="m-fic-n">${esc(r.item)}</div>
           <div class="m-fic-s">${esc(sub)}</div>
           <div class="m-fic-big">
             <b style="color:${k.c}">${v ? '\u2248' + v.live.toFixed(1) : n2(r.onHand)}</b>
-            <span>${Number(r.suggested) > 0 ? 'of ' + n2(r.suggested) : 'on hand'}</span>
+            <span>${Number(r.suggested) > 0 ? 'of ' + n2(r.suggested) : 'on hand'}</span>${lap}
           </div>
           ${out ? `<div class="m-fic-x">${out}</div>` : ''}
           ${av ? `<div class="m-fic-av" style="color:${k.c}">${esc(av)}</div>` : ''}
@@ -289,6 +298,7 @@
         ${o.hueco ? '<div class="m-fic-g"></div>' : ''}
         ${v ? '<span class="m-live m-fic-live"><i></i>Live</span>' : ''}
         ${sem}
+        ${chk}
         ${pie}
       </div>`;
   }

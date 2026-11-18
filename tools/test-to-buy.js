@@ -191,7 +191,11 @@ grupo('7 · en la app');
   prueba('num-pad antes de quien lo usa', pos('num-pad.js') > 0 && pos('num-pad.js') < pos('mobile-running-out.js') && pos('num-pad.js') < pos('mobile-to-buy.js'));
   prueba('To buy antes de Orders', pos('mobile-to-buy.js') > 0 && pos('mobile-to-buy.js') < pos('mobile-orders.js'));
   const ro = leer('src/mobile-running-out.js');
-  prueba('la revisión usa el teclado compartido, sin copia propia', /BarStockNumPad\.abrir/.test(ro) && !/m-kp-k/.test(ro));
+  // Desde el 2026-11-18 "I have enough" pasa por check-shelf.js (el
+  // lápiz de cualquier producto), que es quien abre num-pad.
+  const cs = leer('src/check-shelf.js');
+  prueba('la revisión usa el teclado compartido, sin copia propia',
+    /BarStockCheckShelf\.abrir/.test(ro) && /BarStockNumPad\.abrir/.test(cs) && !/m-kp-k/.test(ro) && !/m-kp-k/.test(cs));
   prueba('y el mismo "Order N"', /BarStockShoppingList\.sugerido/.test(ro));
 }
 
