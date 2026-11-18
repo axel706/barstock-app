@@ -271,7 +271,7 @@
       <div id="moList">${v.filas.map(linea).join('')}</div>
 
       ${extra.length ? `
-        <div class="m-ord-k">Not on this order &middot; the app would add ${extra.length}</div>
+        <div class="m-ord-k">Not on this order &middot; BarStock would add ${extra.length}</div>
         ${extra.map(({ r, sg }) => {
           const i = master().indexOf(r);
           return `

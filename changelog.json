@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-130450",
+    "items": [
+      "Orders: \"BarStock would add\" instead of \"the app\""
+    ]
+  },
+  {
     "build": "20261118-130109",
     "items": [
       "Orders: space above \"Not on this order\" cards"
@@ -180,12 +186,6 @@
     "build": "20261116-195903",
     "items": [
       "People: turn off permissions for an Owner too"
-    ]
-  },
-  {
-    "build": "20261116-194525",
-    "items": [
-      "Emails: the BarStock logo now has its colors"
     ]
   }
 ]

@@ -141,7 +141,7 @@ const txt = (el) => (el ? el.textContent.replace(/\s+/g, ' ').trim() : '');
   prueba('"Use 9" pone 9 a mano, por updateFinalOrder', v.__guardados.length === 1 && v.__guardados[0].i === 0 && v.__guardados[0].n === 9, JSON.stringify(v.__guardados));
 
   const k = host.querySelector('.m-ord-k');
-  prueba('al final, "Not on this order · the app would add 1"', /Not on this order · the app would add 1/.test(txt(k)), txt(k));
+  prueba('al final, "Not on this order · BarStock would add 1"', /Not on this order · BarStock would add 1/.test(txt(k)), txt(k));
   const extra = Array.from(host.querySelectorAll('.m-ord-extra')).map(e => txt(e.querySelector('.m-ord-l-n')));
   prueba('sólo lo que está en su par y la app pediría (Kentucky)', extra.join(',') === 'Kentucky', extra.join(','));
   prueba('no lo excluido a mano, ni lo ya colocado, ni lo de otro proveedor', !extra.includes('Fuera') && !extra.includes('Puesto') && !extra.includes('Otro'));

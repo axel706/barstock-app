@@ -1208,7 +1208,7 @@ vende), ni barras ni frase. Estilos `.m-ro-dia*` y `.m-ro-why`. Prueba:
 de Orders › Open, cada línea lleva bajo la cantidad una franja azul con
 "Suggested N" y su cuenta ("to last until next Tue 4 PM: uses 6.6 +
 cushion 1.4, 0.6 left Tue") y "Use N" si no coincide; al final, "Not
-on this order · the app would add N": lo de ese proveedor que está en
+on this order · BarStock would add N": lo de ese proveedor que está en
 su par (no sale en la orden) y la app pediría, con "Add N". Ni lo
 excluido a mano ni lo ya colocado. "Use"/"Add" ponen la cantidad a
 mano por `updateFinalOrder` (sale "edited" y su undo); mirar no cambia
