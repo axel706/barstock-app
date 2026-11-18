@@ -68,6 +68,12 @@ viernes cuesta un viaje, no una venta perdida. El colchón propuesto: el
 que cubre ~80 % de las vueltas (0.84 σ del uso de esa vuelta), sin el
 1.35. **Decisión de Axel.**
 
+Decidido: 80 %. Ajustes tras la tabla de Crown (2026-11-18): el colchón
+crece con lo que se USA, no con el reloj (un lunes cerrado no lo
+agranda), la σ es la de los conteos sin escalar a lo reciente y como
+mucho media semana. Vino: de 3 en 3 siempre en Wine Merchant; en los
+demás sólo si al múltiplo le falta una botella o menos.
+
 ## 5. El aviso entre semana (lo que ya es Running out, corregido)
 
 - La misma demanda (Pour·IQ + forma y tendencia de Toast), día por día

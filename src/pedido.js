@@ -53,6 +53,7 @@
   // días fuertes seguidos no pasan, y el White Haven con 23 botellas y 20
   // a la semana salía "se acaba el domingo" (Crown, 2026-11-18).
 
+  const SIGMA_MAX = 0.5;          // la variación, como mucho media semana
   const Z = 0.84;               // ~80 % de las vueltas
   const SEMANAS_TOAST = 13;
   const SEMANAS_TENDENCIA = 4;
@@ -136,14 +137,22 @@
     if (conPouriq) {
       const avg = Number(pouriq.avg);
       semanal = Math.max(avg, reciente);
-      // La variación de los conteos, a escala de lo que se usa ahora.
-      sigma = (Number(pouriq.sd) || 0) * (semanal / avg);
+      // La variación de los conteos, SIN escalar a lo de ahora: lo que
+      // Toast vende de más es tendencia, no ruido. Escalada, el Cinzano
+      // Dry (Pour·IQ 0.3, Toast 1.6) pedía un colchón de 4.5 botellas
+      // para usar 1.6 (tabla de Crown, 2026-11-18).
+      sigma = Number(pouriq.sd) || 0;
       fuente = reciente > avg ? 'toast-recent' : 'pouriq';
     } else if (totales.length) {
       semanal = reciente || m13;
       sigma = desviacion(totales.slice(-SEMANAS_TENDENCIA * 2));
       fuente = 'toast';
     }
+    // Nunca más de media semana de variación. La de Pour·IQ sale de
+    // conteos, y un conteo mal hecho sale dos veces (una semana de más y
+    // la siguiente de menos): el Kamora, con 11.3 a la semana, traía un
+    // colchón de 7.9.
+    sigma = Math.min(sigma, SIGMA_MAX * semanal);
 
     const porDia = forma ? forma.map(f => f * semanal) : [0, 1, 2, 3, 4, 5, 6].map(() => semanal / 7);
 
@@ -167,7 +176,26 @@
   // Botellas, o múltiplos de 3 en el vino (Axel, 2026-11-18: "en los
   // vinos intentar que sean múltiplos de 3, en especial si son de Wine
   // Merchant"; Breakthru acepta cualquier número).
-  const multiploPara = ({ vendor, vino }) => (vino || /wine\s*merchant/i.test(String(vendor || ''))) ? 3 : 1;
+  // "Intentar": en Wine Merchant siempre de 3 en 3; en el vino de los
+  // demás, sólo si llegar al múltiplo cuesta HOLGURA botellas o menos. Con
+  // el múltiplo a secas, el Red Schooner (0.3 a la semana) pedía 3 para
+  // cubrir media botella: diez semanas de estante.
+  const HOLGURA = 1;
+  function redondeoPara({ vendor, vino }) {
+    if (/wine\s*merchant/i.test(String(vendor || ''))) return { multiplo: 3, holgura: Infinity };
+    return vino ? { multiplo: 3, holgura: HOLGURA } : { multiplo: 1, holgura: Infinity };
+  }
+  const multiploPara = (x) => redondeoPara(x).multiplo;
+
+  // El colchón crece con lo que se USA, no con el reloj: z · σ ·
+  // √(uso / semanal). Con el reloj, un lunes cerrado lo hacía crecer sin
+  // vender nada y el White Haven (23.1, 19 a la semana) salía "se acaba
+  // el lunes" (tabla de Crown, 2026-11-18). En una vuelta de una semana
+  // da lo mismo que antes: z · σ.
+  function colchonDe(dem, uso, z) {
+    if (!(dem.semanal > 0) || !(uso > 0)) return 0;
+    return (z == null ? Z : z) * (dem.sigma || 0) * Math.sqrt(uso / dem.semanal);
+  }
 
   // ── Cuánto pedir para una vuelta del proveedor ───────────────────────
   //
@@ -176,7 +204,8 @@
   // viene:    [{ cuando: ms, n }] lo que ya viene de otros pedidos
   // ahora, llegada, siguiente: instantes (ms). `llegada` es cuándo llega
   //           ESTE pedido; `siguiente`, el siguiente del mismo proveedor.
-  function cuantoPedir({ dem, stock, viene, ahora, llegada, siguiente, multiplo, z, frac }) {
+  // multiplo, holgura: redondeoPara(). Sin holgura, siempre al múltiplo.
+  function cuantoPedir({ dem, stock, viene, ahora, llegada, siguiente, multiplo, holgura, z, frac }) {
     const k = multiplo > 1 ? multiplo : 1;
     const antes = consumoEntre(dem.porDia, ahora, llegada, frac);
     let llegaAntes = 0, llegaDurante = 0;
@@ -186,15 +215,18 @@
     }
     const queda = Math.max(0, Math.max(0, Number(stock) || 0) + llegaAntes - antes);
     const uso = consumoEntre(dem.porDia, llegada, siguiente, frac);
-    const colchon = (z == null ? Z : z) * (dem.sigma || 0) * Math.sqrt(Math.max(0, siguiente - llegada) / (7 * DIA));
+    const colchon = colchonDe(dem, uso, z);
     const falta = uso + colchon - queda - llegaDurante;
-    const pedir = falta > 1e-6 ? Math.ceil((falta - 1e-6) / k) * k : 0;
-    return { pedir, uso, colchon, queda, antes, llegaAntes, llegaDurante, multiplo: k };
+    const botellas = falta > 1e-6 ? Math.ceil(falta - 1e-6) : 0;
+    const alMultiplo = falta > 1e-6 ? Math.ceil((falta - 1e-6) / k) * k : 0;
+    const usa = alMultiplo - botellas <= (holgura == null ? Infinity : holgura);
+    const pedir = usa ? alMultiplo : botellas;
+    return { pedir, uso, colchon, queda, antes, llegaAntes, llegaDurante, multiplo: usa ? k : 1 };
   }
 
   // ── Cuándo se acaba, para avisar ─────────────────────────────────────
   //
-  // Lo típico de cada día más el colchón (z · σ · √(días/7)), con las
+  // Lo típico de cada día más el colchón (colchonDe), con las
   // entregas a su hora. → { dia, enDias, en } o null.
   function seAcaba({ dem, stock, viene, ahora, dias, frac, z }) {
     const f = frac || fraccionLineal;
@@ -205,7 +237,7 @@
     if (s <= 1e-9) return { dia: hoy, enDias: 0, en: ahora };
     const llegadas = (viene || []).map(x => ({ t: Number(x.cuando), n: Number(x.n) || 0 }))
       .filter(x => x.t > ahora).sort((a, b) => a.t - b.t);
-    const colchon = (t) => zz * (dem.sigma || 0) * Math.sqrt(Math.max(0, t - ahora) / (7 * DIA));
+    let usado = 0;
     for (let k = 0; k < (dias || 7); k++) {
       const d = sumarDias(hoy, k), q = Number(dem.porDia[dow(d)]) || 0;
       // Los cortes de este día: desde ahora (o el inicio del día), cada
@@ -215,14 +247,15 @@
       const fin = inicio(sumarDias(d, 1));
       const puntos = [desde].concat(llegadas.filter(x => x.t > desde && x.t < fin).map(x => x.t), [fin]);
       for (let i = 0; i < puntos.length - 1; i++) {
-        s -= q * Math.max(0, f(d, puntos[i + 1]) - f(d, puntos[i]));
-        if (s - colchon(puntos[i + 1]) <= 1e-9) return { dia: d, enDias: k, en: puntos[i + 1] };
+        const gasto = q * Math.max(0, f(d, puntos[i + 1]) - f(d, puntos[i]));
+        s -= gasto; usado += gasto;
+        if (s - colchonDe(dem, usado, zz) <= 1e-9) return { dia: d, enDias: k, en: puntos[i + 1] };
         for (const x of llegadas) if (x.t === puntos[i + 1]) s += x.n;
       }
     }
     return null;
   }
 
-  window.BarStockPedido = { demanda, consumoEntre, cuantoPedir, seAcaba, multiploPara, fraccionLineal, inicio, diaDe,
+  window.BarStockPedido = { demanda, consumoEntre, cuantoPedir, seAcaba, multiploPara, redondeoPara, colchonDe, HOLGURA, SIGMA_MAX, fraccionLineal, inicio, diaDe,
     mediana, percentil, Z, SEMANAS_TENDENCIA, TENDENCIA_MIN, TENDENCIA_MAX };
 })();

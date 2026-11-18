@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261117-224510",
+    "items": [
+      "Behind-the-scenes fixes"
+    ]
+  },
+  {
     "build": "20261117-223412",
     "items": [
       "Behind-the-scenes fixes"
@@ -178,12 +184,6 @@
     "items": [
       "Finish count shows the mid-week checks",
       "Checked this week, after closing"
-    ]
-  },
-  {
-    "build": "20261115-122311",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]
