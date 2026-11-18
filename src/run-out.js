@@ -360,5 +360,5 @@
     return { tipo: 'normal', texto: tramo + ' ' + viene };
   }
 
-  window.BarStockRunOut = { recorridoDe, porQue, DIAS_BARRAS, medianas, proyectar, cuantoPedir, mediana, fraccionDelDia, ahora, DIAS_HISTORIA, HORIZONTE, MIN_MUESTRAS, FRAC_MIN, MARGEN, MARGEN_PARTE, margenDe };
+  window.BarStockRunOut = { recorridoDe, porQue, restaDia, DIAS_BARRAS, medianas, proyectar, cuantoPedir, mediana, fraccionDelDia, ahora, DIAS_HISTORIA, HORIZONTE, MIN_MUESTRAS, FRAC_MIN, MARGEN, MARGEN_PARTE, margenDe };
 })();
