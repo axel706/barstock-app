@@ -1568,6 +1568,14 @@
 
     const cards = tarjetas();
 
+    // Las cifras y la tarjeta de Toast se CONSERVAN entre repintados: el
+    // Home se rehace entero cada vez que llega algo (el LIVE, Toast, la
+    // lista…), y rehacerlas creaba sus logos de nuevo: en el iPhone
+    // parpadeaban y la tarjeta saltaba al entrar a la app (Axel,
+    // 2026-11-18, en vídeo). Se apartan antes y vuelven a su sitio
+    // después; sus pintar*() sólo reescriben si algo cambió.
+    const guardadas = ['mhCifras', 'mhVentas'].map(id => host.querySelector('#' + id)).filter(Boolean);
+
     host.innerHTML = `
       <div class="m-body">
         <div class="m-daterow">
@@ -1610,6 +1618,11 @@
           <div id="mhCamb"></div>
         </div>
       </div>`;
+
+    guardadas.forEach(viejo => {
+      const nuevo = host.querySelector('#' + viejo.id);
+      if (nuevo) nuevo.replaceWith(viejo);
+    });
 
     enganchar(host, cards);
     pintarCifras(host);
@@ -1926,14 +1939,22 @@
       id: 'gasto', k: 'Spent this cycle', v: g ? money(g.total) : '…',
       // El archivo que dio Axel, tal cual (assets/brands/, como el de
       // Toast); el blanco lo pone el CSS.
-      logo: '<img class="m-cf-logo" src="assets/brands/marginedge.png?v=1" alt="MarginEdge">',
+      // width/height: el tamaño del archivo, para que el hueco exista
+      // antes de que cargue. Sin ellos el logo medía 0 al pintar, la
+      // cabecera se encogía y todo saltaba al llegar (Axel, 2026-11-18,
+      // en vídeo: "glitchean cada que entras a la app").
+      logo: '<img class="m-cf-logo" src="assets/brands/marginedge.png?v=1" width="480" height="65" alt="MarginEdge">',
       tono: arreglar ? 'am' : '',
       d: arreglar ? '<span class="m-cf-fix">' + arreglar + ' to fix</span>' : (fecha ? 'since ' + esc(fecha) : '&nbsp;'),
       btn: arreglar ? 'Review' : E && E.conectado === false ? 'MarginEdge'
         : '<i class="ti ti-refresh" aria-hidden="true"></i> Sync'
     }));
     caja.classList.toggle('dos', partes.length === 2);
-    caja.innerHTML = partes.join('');
+    // Al arrancar se pinta varias veces seguidas (llegan el LIVE, Toast,
+    // las facturas…). Si lo de dentro no cambió no se reescribe: rehacerlo
+    // crea el logo de nuevo y en el iPhone parpadeaba en cada pasada.
+    const html = partes.join('');
+    if (caja._html !== html) { caja.innerHTML = html; caja._html = html; }
 
     const b = (id) => caja.querySelector('[data-cf="' + id + '"]');
     if (b('estante')) b('estante').onclick = () => detalleEstante();
@@ -2086,7 +2107,7 @@
     if (!_pidiendoVentas) cargarVentas();
     const V = _ventas;
     const TS = window.BarStockToastSales;
-    if (!V || !V.cargados || !V.semana || !V.semana.length || !TS || !TS.semanaCal) { caja.innerHTML = ''; return; }
+    if (!V || !V.cargados || !V.semana || !V.semana.length || !TS || !TS.semanaCal) { caja.innerHTML = ''; caja._html = ''; return; }
 
     // ── La semana de lunes a domingo (Axel, 2026-11-14, opción B) ──────
     //
@@ -2147,11 +2168,13 @@
     const pill = !cmp ? ''
       : `<em class="m-ts-pill${d.cargado && n ? (sube ? ' m-ts-up' : ' m-ts-dn') : ''}">${esc(cmp.replace(/ vs usual \w+$/, ' vs usual'))}</em>`;
 
-    caja.innerHTML = `
+    // Igual que las cifras: si no cambió nada no se reescribe, o el logo
+    // de Toast se crea de nuevo y parpadea al arrancar (Axel, 2026-11-18).
+    const html = `
       <div class="m-ts">
         <div class="m-ts-h m-ts-marca">
           <span class="m-ts-ti">
-            <img class="m-ts-logo" src="assets/brands/toast.png" alt="Toast">
+            <img class="m-ts-logo" src="assets/brands/toast.png" width="307" height="78" alt="Toast">
             ${sync}
           </span>
           <span class="m-ts-seg" role="group" aria-label="Show bottles or money">
@@ -2194,6 +2217,7 @@
             <button type="button" class="m-ts-mas" data-mas>${din ? 'Full report' : 'All products'} <i class="ti ti-chevron-right" aria-hidden="true"></i></button>
           </div>` : ''}
       </div>`;
+    if (caja._html !== html) { caja.innerHTML = html; caja._html = html; }
 
     caja.querySelectorAll('[data-v]').forEach(b => {
       b.onclick = () => { _vista = b.dataset.v; pintarVentas(host); };

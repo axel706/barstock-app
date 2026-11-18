@@ -134,7 +134,8 @@ grupo('una sincronización que no contesta no deja el botón mudo (Axel, 2026-11
 
 grupo('el logo de MarginEdge encima de "Spent this cycle" (Axel, 2026-11-18, opción B)');
 {
-  const { host } = entorno({ entregas: ENT });
+  const { w, host } = entorno({ entregas: ENT });
+  let w2;
   await esperar(60);
   const c = cifra(host);
   const img = c.querySelector('img.m-cf-logo');
@@ -144,6 +145,16 @@ grupo('el logo de MarginEdge encima de "Spent this cycle" (Axel, 2026-11-18, opc
   const css = require('fs').readFileSync(require('path').join(__dirname, '../styles/mobile-app.css'), 'utf8');
   prueba('en blanco y el título sin partirse', /\.m-cf-logo \{[^}]*filter: brightness\(0\) invert\(1\)/.test(css) && /\.m-cf-k\.m-cf-k1 \{[^}]*white-space: nowrap/.test(css));
   prueba('el archivo existe', require('fs').existsSync(require('path').join(__dirname, '../assets/brands/marginedge.png')));
+  // Axel, 2026-11-18, en vídeo: al entrar a la app la tarjeta saltaba.
+  // El logo medía 0 hasta cargar y la cabecera se encogía; y cada
+  // repintado lo creaba de nuevo.
+  prueba('el logo lleva su tamaño: el hueco existe antes de que cargue', img.getAttribute('width') === '480' && img.getAttribute('height') === '65');
+  w2 = w;
+  w.BarStockMobileHome.refresh && w.BarStockMobileHome.refresh();
+  await esperar(60);
+  prueba('repintar sin cambios no vuelve a crear el logo', cifra(host).querySelector('img.m-cf-logo') === img);
+  const src = require('fs').readFileSync(require('path').join(__dirname, '../src/mobile-home.js'), 'utf8');
+  prueba('el de Toast también lleva su tamaño', /<img class="m-ts-logo" src="assets\/brands\/toast\.png" width="307" height="78"/.test(src));
 }
 
 grupo('la cifra no depende del estado del conteo');
