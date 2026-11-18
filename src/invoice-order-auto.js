@@ -207,7 +207,12 @@
       const cands = [];
       ordenes.forEach(o => {
         if (!o.items.size) return;
-        if (desde && cuando(o.fecha) < desde) return;
+        // Las órdenes TRANSFER (transfers.js) sí, aunque sean de antes del
+        // ciclo: un transfer de "antes del conteo" tiene su orden fechada
+        // antes del cierre y su factura de "Internal Transfers" llega
+        // después (Triage Vodka, 2026-11-16). Sin esto la factura se
+        // quedaba suelta y sumaba otra vez al LIVE.
+        if (desde && cuando(o.fecha) < desde && o.proveedor !== 'TRANSFER') return;
         cands.push(Object.assign({ orden: o.id, etiqueta: o.etiqueta }, puntuar(f, o)));
       });
       cands.sort((a, b) => b.puntos - a.puntos);

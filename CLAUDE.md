@@ -1334,7 +1334,7 @@ lo ha confirmado. Lo de Crown se arregló a mano (semana del 9 de
 noviembre de Triage Vodka: `ordered` 12, `used` 20.85); W+B se dejó
 como estaba (Axel: su conteo de hace 15 días ya salió bajo).
 
-**Transfers entre locaciones (2026-11-18, fases 1–3 hechas; plan en
+**Transfers entre locaciones (2026-11-18, fases 1–4 hechas; plan en
 `docs/plan-transfer.md`).** Migración 045 (`location_transfers`),
 corrida por Axel. Quien lo registra (ficha › "⇄ Transfer",
 `src/mobile-transfer.js`) lo aplica al momento en SU locación; la otra lo
@@ -1354,8 +1354,14 @@ factura de "Internal Transfers"; la que DA resta en el LIVE
 (`live-stock` › `salidas`). Undo (mientras no haya un conteo después) y
 "Not right" quitan lo aplicado y borran la orden. `transfers.js` va antes
 de `live-stock.js` y también en `MODULOS` del correo. Pruebas:
-`test-transfers`, `test-transfer-confirm`. **Falta la fase 4:** enlazar
-sola la factura y "It arrived before the count" desde la factura.
+`test-transfers`, `test-transfer-confirm`. **Fase 4 (la factura):** el
+enlace automático (`invoice-order-auto.proponer`) tiene en cuenta las
+órdenes TRANSFER aunque sean de antes del ciclo (las demás no: el pasado
+no se mueve), y la factura sin enlazar ofrece "It arrived before the
+count" (`mobile-invoices.llegoAntes`): elige de qué locación, crea un
+transfer "antes del conteo" por línea con producto y enlaza la factura a
+la orden del primero. Sin enlace, el reparto ya se la daba a la orden
+TRANSFER por producto (no exige proveedor).
 
 **Fijar arriba en Running out (2026-11-15, lámina B).** "Edit order"
 en la pantalla de revisión: las tarjetas sin botones y con asa (≡);

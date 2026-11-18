@@ -285,6 +285,34 @@ grupo('5 · la hoja "⇄ Transfer" (src/mobile-transfer.js)');
   prueba('quien no hace órdenes no lo ve (la fila es .m-acts, ya escondida)', /html\.bs-sin-ordenes #mSheet \.m-ficha \.m-acts/.test(leer('styles/mobile-app.css')) && /class="m-acts m-acts-trf"/.test(ms));
 }
 
+grupo('6 · la factura (fase 4)');
+{
+  const v = new JSDOM('<!doctype html><body></body>', { runScripts: 'outside-only' }).window;
+  v.console = { log() {}, warn() {}, error() {} };
+  v.eval(leer('src/order-receipts.js'));
+  v.eval(leer('src/invoice-order-auto.js'));
+  const A = v.BarStockInvoiceOrderAuto;
+  // El ciclo abrió el domingo 15 por la noche; la factura del lunes 16.
+  const d = (ordenes) => ({
+    desde: '2026-11-16T02:30:00Z',
+    lineas: [{ order_id: 'METF_1116', product_id: 'p-tv', quantity: 12, unit_price: 5.5, invoice_date: '2026-11-16', vendor_name: 'McKenzie Brew House - GFS - Internal Transfers' }],
+    enlaces: [{ product_id: 'p-tv', item_name: 'Triage Vodka' }],
+    ordenes, lineasOrden: ordenes.map(o => ({ vendor_order_id: o.id, item_name: 'Triage Vodka' })), yaEnlazadas: []
+  });
+  const antes = '2026-11-16T02:29:00Z';
+  let r = A.proponer(d([{ id: 'o-tr', vendor: 'TRANSFER', subtotal: 66, created_at: antes, po_number: 'CT-0230' }]));
+  prueba('la orden TRANSFER de antes del conteo se queda con la factura de "Internal Transfers"', r[0] && r[0].enlaza === 'o-tr', JSON.stringify(r));
+  r = A.proponer(d([{ id: 'o-loop', vendor: 'LOOP', subtotal: 66, created_at: antes, po_number: 'CT-0229' }]));
+  prueba('una orden normal de antes del ciclo, no (el pasado no se mueve)', r[0] && r[0].enlaza === null, JSON.stringify(r));
+
+  const mi = leer('src/mobile-invoices.js');
+  prueba('en la factura sin enlazar: "It arrived before the count", con permiso, conteo y líneas con producto',
+    /id="miAntes"/.test(mi) && /TR\.puede\(\) && LC && LC\.conteo && LC\.conteo\(\) && f\.lineas\.some\(l => l\.item && l\.qty > 0\)/.test(mi));
+  prueba('crea el transfer "antes del conteo" por línea, desde la locación elegida', /TR\.crear\(\{ otra, entra: true, item: l\.item, qty: l\.qty, antes: true, conteo/.test(mi));
+  prueba('y enlaza la factura a la orden del transfer', /guardarEnlaceOrden\(f\.id, ord\[0\]\.id\)/.test(mi));
+  prueba('lo que no se pudo, se dice', /Fixed, but not everything/.test(mi));
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
 })();

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-112152",
+    "items": [
+      "Invoices: \"It arrived before the count\""
+    ]
+  },
+  {
     "build": "20261118-111745",
     "items": [
       "Transfers count in Live, Sent and Pour·IQ"
@@ -180,12 +186,6 @@
     "build": "20261115-140148",
     "items": [
       "Morning email for every Toast location"
-    ]
-  },
-  {
-    "build": "20261115-135651",
-    "items": [
-      "Morning email: varied wording, date on its own line"
     ]
   }
 ]

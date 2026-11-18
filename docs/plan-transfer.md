@@ -49,5 +49,5 @@ en el Home, campana y chip en la ficha).
    la tarjeta del Home, la campana y el chip; "Not right" y Undo.
 3. **(Hecha.) Las cuentas:** la orden en Sent al confirmar, el −qty de la que da
    en el LIVE, y Pour·IQ.
-4. **La factura:** enlazarla sola, y "It arrived before the count" (el
+4. **(Hecha.) La factura:** enlazarla sola, y "It arrived before the count" (el
    camino 2) que crea el transfer desde la factura.

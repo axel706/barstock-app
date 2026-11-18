@@ -908,12 +908,97 @@
       '</div>';
     }
 
+    // "It arrived before the count" (docs/plan-transfer.md, camino 2): lo
+    // que vino de otra locación, se contó, y su factura llegó después.
+    // Sólo con transfers cargados, un conteo detrás, líneas con su
+    // producto y permiso de órdenes.
+    const TR = window.BarStockTransfers, LC = window.BarStockLiveCache;
+    const antes = TR && TR.puede() && LC && LC.conteo && LC.conteo() && f.lineas.some(l => l.item && l.qty > 0);
     return '<div class="m-iatar">' +
       '<button type="button" class="m-ialt" id="miOrdOn">' +
         '<i class="ti ti-link" aria-hidden="true"></i> Link to an order</button>' +
       '<div class="m-iatar-s">For when the invoice comes from a different ' +
         'vendor than the order — a store run, say.</div>' +
+      (antes ? '<button type="button" class="m-ialt" id="miAntes">' +
+        '<i class="ti ti-arrows-exchange" aria-hidden="true"></i> It arrived before the count</button>' +
+        '<div class="m-iatar-s">From another location, and it was already on the shelf when you counted. ' +
+        'Live stops adding it and Pour·IQ puts it in that week.</div>' : '') +
     '</div>';
+  }
+
+  // ── "It arrived before the count" (camino 2 del Transfer) ────────────
+  //
+  // Crea un transfer "antes del conteo" por cada línea con producto, de la
+  // locación que se elija, y enlaza la factura a la orden del primero: la
+  // factura deja de sumar sola. Las demás líneas las reclaman sus órdenes
+  // por producto (order-receipts.repartir).
+  async function llegoAntes(host, f) {
+    const TR = window.BarStockTransfers, LC = window.BarStockLiveCache;
+    const conteo = LC && LC.conteo ? LC.conteo() : null;
+    const lineas = f.lineas.filter(l => l.item && l.qty > 0);
+    if (!TR || !conteo || !lineas.length) return;
+    let loc, locs;
+    try { [loc, locs] = await Promise.all([locationId(), TR.locaciones()]); }
+    catch (e) { return fallo(e); }
+    const otras = (locs || []).filter(l => l.id !== loc);
+    if (!otras.length) return fallo(new Error('There is no other location in this account.'));
+    const vieja = document.getElementById('mSheet');
+    if (vieja) vieja.remove();
+    const h = document.createElement('div');
+    h.className = 'm-sheet'; h.id = 'mSheet';
+    let otra = otras.length === 1 ? otras[0].id : null;
+    const dn = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short', month: 'short', day: 'numeric' }).format(new Date(conteo));
+    const pinta = (error) => {
+      h.innerHTML = '<div class="m-sheet-bg"></div>' +
+        '<div class="m-sheet-box m-kp-hoja m-tr" role="dialog" aria-label="It arrived before the count">' +
+          '<div class="m-sheet-grip"></div>' +
+          '<div class="m-kp-t">It arrived before the count</div>' +
+          '<div class="m-kp-s">Already on the shelf when you counted (' + esc(dn) + '). From which location?</div>' +
+          '<div class="m-tr-locs">' + otras.map(l => '<button type="button" data-loc="' + esc(l.id) + '" class="m-tr-loc' + (otra === l.id ? ' on' : '') + '">' + esc(l.name) + '</button>').join('') + '</div>' +
+          '<div class="m-tr-k">What came</div>' +
+          lineas.map(l => '<div class="m-tr-par"><b>' + n1(l.qty) + '</b> ' + esc(l.item) + '</div>').join('') +
+          '<div class="m-kp-err" aria-live="polite">' + (error ? esc(error) : '') + '</div>' +
+          '<button type="button" class="m-ro-b m-ro-go m-kp-save" id="miAntesGo"' + (otra ? '' : ' disabled') + '>' +
+            (otra ? 'Fix it' : 'Choose the location') + '</button>' +
+          '<div class="m-kp-nota">The other location sees the transfer and confirms it.</div>' +
+        '</div>';
+      const cerrar = () => h.remove();
+      h.querySelector('.m-sheet-bg').onclick = cerrar;
+      h.querySelectorAll('[data-loc]').forEach(b => { b.onclick = () => { otra = b.dataset.loc; pinta(); }; });
+      const go = h.querySelector('#miAntesGo');
+      go.onclick = async () => {
+        go.disabled = true;
+        const G = window.BarStockGuest;
+        const por = (G && G.nombre && G.nombre()) || '';
+        const avisos = [];
+        let primera = null;
+        for (const l of lineas) {
+          const r = await TR.crear({ otra, entra: true, item: l.item, qty: l.qty, antes: true, conteo, por, nota: 'From invoice ' + (f.numero || f.id) });
+          if (!r.ok) return pinta(r.error || 'It was not saved.');
+          if (r.aviso) avisos.push(r.aviso);
+          if (!primera) primera = r.transfer;
+        }
+        // La orden que creó el primero, para enlazarle la factura.
+        try {
+          const filas = await TR.leer({ fresco: true });
+          const t = filas.find(x => x.id === primera.id);
+          const { url, key } = cfg();
+          const ord = t && t.vendor_order_id ? await window.BarStockOrderReceipts.leerTodo(url, key,
+            'vendor_orders?app_order_id=eq.' + encodeURIComponent(t.vendor_order_id) + '&select=id') : [];
+          if (!ord[0]) throw new Error('its order was not found');
+          await guardarEnlaceOrden(f.id, ord[0].id);
+        } catch (e) { avisos.push('the invoice was not linked (' + (e && e.message || e) + ')'); }
+        cerrar();
+        const T0 = window.BarStockToast;
+        if (T0) T0.show(avisos.length ? 'Fixed, but not everything: ' + avisos.join(' · ') : 'Fixed · this invoice no longer adds to Live');
+        if (LC && LC.caducar) LC.caducar();
+        _abierta = null;
+        await montar(host);
+      };
+    };
+    document.body.appendChild(h);
+    if (window.BarStockSheet && window.BarStockSheet.enganchar) window.BarStockSheet.enganchar(h, () => h.remove());
+    pinta();
   }
 
   function pintarDetalle(host, f) {
@@ -1131,6 +1216,8 @@
 
     // Corregir una línea ya enlazada: abre el picker en su sitio.
     // ── Los botones del enlace con la orden ───────────────────────
+    const ant = host.querySelector('#miAntes');
+    if (ant) ant.onclick = () => llegoAntes(host, f);
     const on = host.querySelector('#miOrdOn');
     if (on) on.onclick = () => { _eligiendoOrden = true; pintar(host); };
     const x = host.querySelector('#miOrdX');
