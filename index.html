@@ -374,7 +374,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261117-224510</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261117-230701</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -2840,6 +2840,10 @@ async function refreshParAdjustments(){
   if(!window.BarStockParIntelligence || !state.master.length) return;
   parAdjustments = await window.BarStockParIntelligence.getPendingAdjustments(state.master);
   window.parAdjustments = parAdjustments;
+  // Cuándo se acaba usa Pour·IQ (run-out.js → pedido.demanda), y estos
+  // ajustes llegan 2.5 s después del primer cálculo: sin el aviso, el LIVE
+  // se quedaba 30 minutos con la demanda sólo de Toast.
+  if (window.BarStockEvents && window.BarStockEvents.emit) window.BarStockEvents.emit('parAdjustmentsUpdated', {});
 }
 
 function getParChipHtml(row){
@@ -5592,13 +5596,14 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/num-pad.js?v=np2"></script>
 <script src="src/mobile-to-buy.js?v=tb6"></script>
 <script src="src/live-stock.js?v=ls6edv"></script>
-<script src="src/run-out.js?v=ro5hpmdv"></script>
-<script src="src/live-cache.js?v=lc8"></script>
+<script src="src/pedido.js?v=pd1"></script>
+<script src="src/run-out.js?v=ro6pd"></script>
+<script src="src/live-cache.js?v=lc9"></script>
 <script src="src/live-diagnostico.js?v=ld2"></script>
 <script src="src/live-expected.js?v=le4"></script>
 <script src="src/running-out.js?v=rof3"></script>
 <script src="src/toast-sales.js?v=ts8"></script>
-<script src="src/morning-report.js?v=mr7"></script>
+<script src="src/morning-report.js?v=mr8"></script>
 <script src="src/mobile-sales.js?v=msl4"></script>
 <!-- La cabecera de producto que comparten la ficha de busqueda y la
      hoja de Inventory. Va ANTES que las dos: ambas la piden al

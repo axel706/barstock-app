@@ -39,6 +39,7 @@ const w = new JSDOM('<!doctype html><body></body>', { url: 'https://app.barstock
 w.eval(leer('src/order-receipts.js'));
 w.eval(leer('src/live-stock.js'));
 w.eval(leer('src/toast-usage.js'));
+w.eval(leer('src/pedido.js'));
 w.eval(leer('src/run-out.js'));
 const L = w.BarStockLive, R = w.BarStockRunOut;
 

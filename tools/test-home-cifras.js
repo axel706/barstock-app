@@ -86,6 +86,7 @@ async function entorno(o) {
   } };
   w.BarStockToastUsage = { diaDeNegocio: () => HOY,
     ventasDesde: async () => (w.__lento && await esperar(w.__lento), o.sinToast ? { dias: [], ventas: [], productos: [] } : { dias, ventas, productos: [] }) };
+  new Function(leer('src/pedido.js'))();
   new Function(leer('src/run-out.js'))();
   new Function(leer('src/toast-sales.js'))();
   // El LIVE: con `o.vivo`, Tito's (contado 4) se movió y vale 2.6.

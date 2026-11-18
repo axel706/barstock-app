@@ -544,6 +544,7 @@ grupo('en la app: los números salen de los mismos módulos');
     w.BARSTOCK_CONFIG = { LOCATION_NAME: 'The Crown Tavern' };
     w.state = { master: [{ item: "Tito's", suggested: 4 }, { item: 'Sin par', suggested: 0 }, { item: 'Sobra', suggested: 4 }] };
     w.BarStockToastSales = { ahora: async () => ({ hoy: '2026-11-12', semana: [{ fecha: '2026-11-10' }, Object.assign({}, AYER)] }) };
+    w.eval(leer('src/pedido.js'));
     w.eval(leer('src/run-out.js'));
     const MED = [1.2, 0, 0.5, 0.8, 1.4, 2.6, 3.1];
     w.BarStockRunOut.ahora = typeof ro === 'function' ? ro : async () => (ro || { estado: 'listo', hoy: '2026-11-12', suficiente: true, filas: [

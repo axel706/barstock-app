@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261117-230701",
+    "items": [
+      "Running out warns sooner, using Pour·IQ",
+      "Deliveries count at their hour"
+    ]
+  },
+  {
     "build": "20261117-224510",
     "items": [
       "Behind-the-scenes fixes"
@@ -177,13 +184,6 @@
     "build": "20261115-124649",
     "items": [
       "People: new permissions reach everyone with the role"
-    ]
-  },
-  {
-    "build": "20261115-122849",
-    "items": [
-      "Finish count shows the mid-week checks",
-      "Checked this week, after closing"
     ]
   }
 ]

@@ -157,6 +157,18 @@ grupo('5 · el aviso: lo típico más el colchón, y la entrega a su hora');
   prueba('el colchón crece con lo que se usa: cero sin usar', P.colchonDe(whd, 0) === 0 && Math.abs(P.colchonDe(whd, 19) - 0.84 * 6.5) < 1e-9);
 }
 
+grupo('5b · hoy, lo que el LIVE dice que falta (hoyResta)');
+{
+  // 2 al día, 3 botellas, miércoles a mediodía. Sin hoyResta, lo que
+  // queda del día (8 de 24 h → 4/3). Con un hoy ya vendido de más (el
+  // ritmo de run-out dice que faltan 3), se acaba hoy.
+  const dem = { porDia: [2, 2, 2, 2, 2, 2, 2], semanal: 14, sigma: 0 };
+  const a = P.seAcaba({ dem, stock: 2.5, viene: [], ahora: NY('2026-11-18 12:00') });
+  const b = P.seAcaba({ dem, stock: 2.5, viene: [], ahora: NY('2026-11-18 12:00'), hoyResta: 3 });
+  prueba('sin hoyResta, lo típico del resto del día: no se acaba hoy', a && a.enDias === 1, JSON.stringify(a));
+  prueba('con hoyResta 3 (el ritmo de hoy), se acaba hoy', b && b.enDias === 0, JSON.stringify(b));
+}
+
 grupo('6 · el Nino del 18 de noviembre');
 {
   // 3.1 botellas el miércoles a las 10 AM (comprobado en la barra), sin

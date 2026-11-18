@@ -30,7 +30,8 @@
   //     "si se trae una factura se lee en ese momento lo que llegó");
   //   · 'ordersUpdated': se colocó un pedido o un quick order;
   //   · 'inventoryUpdated': se cerró un conteo o se tiró para recargar;
-  //   · 'toastSalesUpdated': el Sync de hoy trajo ventas de Toast.
+  //   · 'toastSalesUpdated': el Sync de hoy trajo ventas de Toast;
+  //   · 'parAdjustmentsUpdated': llegó Pour·IQ (cuándo se acaba lo usa).
   // Lo que no avisa —la hora de llegada de un pedido que pasa sola— entra
   // en la relectura de los 30 minutos.
 
@@ -87,7 +88,9 @@
   if (window.BarStockEvents && window.BarStockEvents.on) {
     // 'toastSalesUpdated': el Sync de hoy de la tarjeta "Sold" trajo
     // ventas (2026-11-13): el LIVE las resta al momento.
-    for (const ev of ['invoicesUpdated', 'ordersUpdated', 'inventoryUpdated', 'toastSalesUpdated']) window.BarStockEvents.on(ev, caducar);
+    // 'parAdjustmentsUpdated': llegó Pour·IQ, la mitad de la demanda con
+    // la que se calcula cuándo se acaba (2026-11-18).
+    for (const ev of ['invoicesUpdated', 'ordersUpdated', 'inventoryUpdated', 'toastSalesUpdated', 'parAdjustmentsUpdated']) window.BarStockEvents.on(ev, caducar);
   }
 
   // La fila del LIVE de un producto si se MOVIÓ desde el conteo; si no, null.
@@ -226,7 +229,7 @@
     const a = agotaDe(r), R = window.BarStockRunOut;
     if (!a || !a.med || !_hoy || !R || !R.cuantoPedir) return null;
     const contado = quedan != null && isFinite(Number(quedan));
-    return R.cuantoPedir({ stock: contado ? Number(quedan) : a.live, med: a.med, viene: a.viene, hoy: _hoy,
+    return R.cuantoPedir({ stock: contado ? Number(quedan) : a.live, med: a.med, dem: a.dem, viene: a.viene, hoy: _hoy,
       hoyVendido: a.hoyVendido, hoyFrac: a.hoyFrac, margen: contado ? 0 : a.margen }).pedir;
   }
   // El instante del conteo desde el que corre el LIVE.

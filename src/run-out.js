@@ -149,27 +149,35 @@
     return Math.max(deSiempre, v * (1 - f) / f);
   };
 
-  // stock: el LIVE de hoy · med: [7 medianas, domingo = 0] · viene: [{ cuando, n }]
-  // hoyVendido: lo de hoy que el LIVE ya restó (0 si hoy no está cargado)
-  // hoyFrac:    qué parte del día suele ir vendida a la hora del Sync
-  //             (fraccionDelDia), o null si no se sabe
-  // margen:     botellas que se restan a lo que queda (la fecha prudente);
-  //             0 si no se pasa
-  function proyectar({ stock, med, viene, hoy, horizonte, hoyVendido, hoyFrac, margen }) {
-    if (!med || !med.some(x => x > 0)) return null;
-    let s = (Number(stock) || 0) - (Number(margen) || 0);
-    const llegan = new Map();
-    for (const v of viene || []) {
-      const d = diaNY(v.cuando);
-      llegan.set(d, (llegan.get(d) || 0) + (Number(v.n) || 0));
-    }
-    for (let k = 0; k < (horizonte || HORIZONTE); k++) {
-      const d = sumarDias(hoy, k);
-      s += llegan.get(d) || 0;
-      s -= restaDia(med, d, k, hoyVendido, hoyFrac);
-      if (s <= 0) return { dia: d, enDias: k };
-    }
-    return null;
+  // ── De cuándo se acaba a pedido.js (fase 2 de docs/plan-pedido.md) ──
+  //
+  // La cuenta día por día vive en BarStockPedido.seAcaba, una sola. Lo
+  // que cambia contra la de antes (Axel, 2026-11-18, con el Nino a 3.1 un
+  // miércoles que vende 4, fuera de Running out):
+  //   · lo de cada día es la demanda de pedido.demanda(): lo MAYOR de
+  //     Pour·IQ y lo vendido en Toast las 4 últimas semanas, con la forma
+  //     de la semana de Toast. La mediana de 13 semanas no seguía al
+  //     producto que se dispara.
+  //   · más un colchón del 80 % (Axel), que crece con lo que se usa.
+  //   · una entrega cuenta a SU hora: la de las 4 PM no salva el mediodía.
+  // Lo de hoy (restaDia, con el ritmo) y el margen de la fecha prudente
+  // siguen aquí y entran igual.
+  //
+  // stock: el LIVE de hoy · med: [7, domingo = 0] (sin dem: lo de cada día
+  //        sin colchón) · dem: pedido.demanda() · viene: [{ cuando, n }]
+  // ahora: el instante (ms); sin él, el principio del día `hoy`
+  // hoyVendido, hoyFrac, margen: como en restaDia y margenDe
+  function proyectar({ stock, med, dem, viene, hoy, ahora, horizonte, hoyVendido, hoyFrac, margen }) {
+    const P = window.BarStockPedido;
+    const d = dem || (med ? { porDia: med, semanal: med.reduce((a, b) => a + (Number(b) || 0), 0), sigma: 0 } : null);
+    if (!P || !d || !d.porDia || !d.porDia.some(x => x > 0)) return null;
+    const r = P.seAcaba({
+      dem: d, stock: (Number(stock) || 0) - (Number(margen) || 0),
+      viene: (viene || []).map(v => ({ cuando: Date.parse(v.cuando), n: Number(v.n) || 0 })),
+      ahora: ahora != null ? ahora : P.inicio(hoy), dias: horizonte || HORIZONTE,
+      hoyResta: restaDia(d.porDia, hoy, 0, hoyVendido, hoyFrac)
+    });
+    return r ? { dia: r.dia, enDias: r.enDias } : null;
   }
 
   // ── Cuánto pedir para llegar al domingo ──────────────────────────────
@@ -189,17 +197,21 @@
   // corto. El margen al redondear es para la coma flotante: 8.3 − 0.3 no
   // puede pedir 9.
   //
-  // Hoy, como en proyectar(): sólo lo que falta por venderse hoy.
-  function cuantoPedir({ stock, med, viene, hoy, hoyVendido, hoyFrac, margen }) {
+  // Hoy, como en proyectar(): sólo lo que falta por venderse hoy. Con
+  // `dem` (pedido.demanda), lo de cada día es el suyo y lleva el mismo
+  // colchón que el aviso: si no, la tarjeta diría "Out Thu" y "Order 0".
+  function cuantoPedir({ stock, med, dem, viene, hoy, hoyVendido, hoyFrac, margen }) {
+    if (dem && dem.porDia) med = dem.porDia;
     const faltanDias = (7 - diaSemana(hoy)) % 7;
     const hasta = sumarDias(hoy, faltanDias);
     let vende = 0;
     for (let k = 0; k <= faltanDias; k++) vende += med ? restaDia(med, sumarDias(hoy, k), k, hoyVendido, hoyFrac) : 0;
     let llega = 0;
     for (const v of viene || []) if (diaNY(v.cuando) <= hasta) llega += Number(v.n) || 0;
-    const falta = vende - Math.max(0, (Number(stock) || 0) - (Number(margen) || 0)) - llega;
+    const colchon = dem && window.BarStockPedido ? window.BarStockPedido.colchonDe(dem, vende) : 0;
+    const falta = vende + colchon - Math.max(0, (Number(stock) || 0) - (Number(margen) || 0)) - llega;
     const pedir = falta > 1e-6 ? Math.ceil(falta - 1e-6) : 0;
-    return { hasta, vende, llega, pedir };
+    return { hasta, vende, colchon, llega, pedir };
   }
 
   // ── Leer y calcular ──────────────────────────────────────────────────
@@ -218,12 +230,30 @@
     // vendido que el LIVE conoce es lo de esa hora, no lo de ahora.
     const diaHoy = (h.dias || []).find(d => d && d.business_date === hoy);
     const hoyFrac = diaHoy && diaHoy.fetched_at ? fraccionDelDia(h.dias, hoy, diaHoy.fetched_at) : null;
+    // La demanda de cada producto que Toast vende (pedido.demanda): Pour·IQ
+    // de window.parAdjustments, que la app calcula al cargar y el correo
+    // en el servidor (lib/morning-cron.js); sin él, Toast solo.
+    const P = window.BarStockPedido;
+    const cargados = (h.dias || []).filter(d => d && d.complete && d.closed).map(d => d.business_date);
+    const porProd = new Map((h.productos || []).map(p => [p.producto, p]));
+    const master = new Map((((window.state && window.state.master) || [])).filter(r => r && r.item).map(r => [r.item, r]));
+    const pa = window.parAdjustments;
+    const pouriqDe = (item) => {
+      const r = master.get(item);
+      const a = r && pa && pa.get ? pa.get(r.item + '||' + (r.code || '')) : null;
+      return a && a.status === 'active' ? { avg: a.avgUsed, sd: a.stdDev, semanas: a.normalWeeks } : null;
+    };
+    const t = Date.now();
     const filas = vivo.filas.map(f => {
-      const med = M.porProducto.get(f.producto) || null;
+      const vende = M.porProducto.get(f.producto) || null;
+      const p = porProd.get(f.producto);
+      const dem = M.suficiente && vende && vende.some(x => x > 0) && P && p
+        ? P.demanda({ pouriq: pouriqDe(f.producto), toast: { porDia: p.porDia || {}, cargados }, hoy }) : null;
+      const med = dem ? dem.porDia : vende;
       const hoyVendido = hoyDe.get(f.producto) || 0;
       const margen = margenDe(f);
-      const fin = M.suficiente && med ? proyectar({ stock: f.live, med, viene: f.viene, hoy, hoyVendido, hoyFrac, margen }) : null;
-      return Object.assign({}, f, { med, hoyVendido, hoyFrac, margen, agota: fin ? fin.dia : null, enDias: fin ? fin.enDias : null });
+      const fin = dem ? proyectar({ stock: f.live, dem, viene: f.viene, hoy, ahora: t, hoyVendido, hoyFrac, margen }) : null;
+      return Object.assign({}, f, { med, dem, hoyVendido, hoyFrac, margen, agota: fin ? fin.dia : null, enDias: fin ? fin.enDias : null });
     });
     return { estado: 'listo', hoy, conteo: vivo.conteo, desde: vivo.desde, muestras: M.muestras, suficiente: M.suficiente, filas };
   }

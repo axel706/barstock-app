@@ -1169,17 +1169,28 @@ Decidido: colchón del 80 % (0.84 σ, LOOP cubre lo demás), botellas, el
 vino en múltiplos de 3 (Wine Merchant o vino), tendencia con la MEDIANA
 de las 4 últimas semanas contra las 13 (de ½ a 3×). Sin frases tipo
 "Order by Tue" ni "LOOP today": el aviso sólo dice que se acaba.
-**Fase 1 hecha:** `src/pedido.js`, puro y sin cargar en la app todavía:
+**Fase 1 hecha:** `src/pedido.js`, puro:
 `demanda` (lo MAYOR de Pour·IQ y la mediana de Toast de las 4 últimas
-semanas, repartido con la forma de la semana de Toast), `cuantoPedir`
-(uso de la vuelta + colchón − lo que habrá al llegar) y `seAcaba` (lo
-típico más el colchón, que crece con √días, y entregas a su hora). La
-primera versión multiplicaba Pour·IQ por la tendencia (contaba lo
-reciente dos veces: el Nino a 42/semana) y avisaba con un día fuerte
-CADA día (White Haven "se acaba en 4 días"): la tabla de Crown del
-2026-11-18 los sacó.
-Prueba: `test-pedido`, con los días del Nino Ardevi. Sigue: la fase 2
-(Running out y el correo con esto), antes una tabla de nueva contra vieja.
+semanas, repartido con la forma de la semana de Toast; la σ de los
+conteos sin escalar, como mucho media semana), `cuantoPedir` (uso de la
+vuelta + colchón − lo que habrá al llegar; vino de 3 en 3 en Wine
+Merchant, en los demás sólo si cuesta una botella o menos:
+`redondeoPara`) y `seAcaba` (lo típico más el colchón, que crece con lo
+que se USA —un lunes cerrado no lo agranda—, y entregas a su hora). Las
+dos tablas de Crown del 2026-11-18 sacaron: Pour·IQ × tendencia (el Nino
+a 42/semana), un día fuerte CADA día, el colchón con el reloj (White
+Haven "Mon"), la σ escalada (Cinzano Dry) y el vino siempre ×3 (Red
+Schooner). Triage no tiene día de entrega fijo (Axel): sin sugerido.
+**Fase 2 hecha (2026-11-18):** `run-out.proyectar` es `pedido.seAcaba`
+(una sola cuenta), con la demanda de `pedido.demanda` en `ahora()` para
+lo que Toast vende, el ritmo de hoy (`hoyResta`) y el margen de antes;
+la fila lleva `dem` y `med` = su `porDia`. El "Order N" hasta el domingo
+(`run-out.cuantoPedir` con `dem`) lleva el mismo colchón. Pour·IQ es
+`window.parAdjustments`: la app avisa `parAdjustmentsUpdated` al tenerlo
+(llega 2.5 s tarde) y `live-cache` se rehace; el correo lo calcula en el
+servidor (`week` y `par-intelligence` en `MODULOS`; si falla, Toast
+solo). Pruebas: `test-pedido` y "fase 2" de `test-run-out`. Sigue: el
+por qué (fase 3) y la sugerencia en Orders (fase 4), sobre lámina.
 
 ### La lista de compras y la verificación (2026-11-14, sin construir)
 

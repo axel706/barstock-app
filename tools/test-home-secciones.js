@@ -64,6 +64,7 @@ async function entorno(o) {
   }
   w.BarStockToastUsage = { diaDeNegocio: () => HOY,
     ventasDesde: async () => (o.sinToast ? { dias: [], ventas: [], productos: [] } : { dias, ventas, productos: [] }) };
+  new Function(leer('src/pedido.js'))();
   new Function(leer('src/run-out.js'))();
   new Function(leer('src/toast-sales.js'))();
   w.__ir = []; w.__ficha = null;

@@ -67,6 +67,7 @@ function datos() {
 }
 
 function cargar(w) {
+  new Function(leer('src/pedido.js'))();
   new Function(leer('src/run-out.js'))();
   new Function(leer('src/toast-sales.js'))();
 }

@@ -99,11 +99,12 @@ demás sólo si al múltiplo le falta una botella o menos.
 
 ## 7. Fases
 
-1. **El motor, sin pantalla.** `src/pedido.js`: demanda por día (sección
+1. **(Hecha.) El motor, sin pantalla.** `src/pedido.js`: demanda por día (sección
    3), cuánto pedir por producto y proveedor (2 y 4), y la proyección
    para el aviso (5). Funciones puras con su prueba. Nada cambia en la app.
 2. **El aviso corregido:** Running out y el correo usan la demanda nueva
-   y la hora de la entrega. Se ve en qué entra, no cómo se ve.
+   y la hora de la entrega. Se ve en qué entra, no cómo se ve. **Hecha
+   (2026-11-18).**
 3. **El por qué** en la tarjeta y en el correo. Lámina.
 4. **La sugerencia en Orders**, al lado del par al principio ("Par 6 ·
    Suggested 9") para comparar unas semanas. Lámina.

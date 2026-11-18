@@ -228,7 +228,12 @@
   //
   // Lo típico de cada día más el colchón (colchonDe), con las
   // entregas a su hora. → { dia, enDias, en } o null.
-  function seAcaba({ dem, stock, viene, ahora, dias, frac, z }) {
+  //
+  // hoyResta: lo que falta por venderse HOY según el LIVE (run-out lo
+  // calcula con lo ya vendido y el ritmo del día: un hoy cargado a media
+  // tarde ya está restado). Se reparte en lo que queda del día desde
+  // `ahora`. Sin él, lo típico de hoy desde `ahora`.
+  function seAcaba({ dem, stock, viene, ahora, dias, frac, z, hoyResta }) {
     const f = frac || fraccionLineal;
     const zz = z == null ? Z : z;
     if (!(dem.porDia || []).some(x => x > 0)) return null;
@@ -247,7 +252,10 @@
       const fin = inicio(sumarDias(d, 1));
       const puntos = [desde].concat(llegadas.filter(x => x.t > desde && x.t < fin).map(x => x.t), [fin]);
       for (let i = 0; i < puntos.length - 1; i++) {
-        const gasto = q * Math.max(0, f(d, puntos[i + 1]) - f(d, puntos[i]));
+        const tramo = Math.max(0, f(d, puntos[i + 1]) - f(d, puntos[i]));
+        const gasto = k === 0 && hoyResta != null
+          ? Math.max(0, Number(hoyResta) || 0) * tramo / Math.max(1e-9, 1 - f(d, ahora))
+          : q * tramo;
         s -= gasto; usado += gasto;
         if (s - colchonDe(dem, usado, zz) <= 1e-9) return { dia: d, enDias: k, en: puntos[i + 1] };
         for (const x of llegadas) if (x.t === puntos[i + 1]) s += x.n;

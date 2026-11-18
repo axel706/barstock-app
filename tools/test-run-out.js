@@ -31,6 +31,7 @@ const grupo = t => console.log('\n' + t);
 
 const w = new JSDOM('<!doctype html><body></body>', { runScripts: 'outside-only' }).window;
 w.eval(leer('src/toast-usage.js'));
+w.eval(leer('src/pedido.js'));
 w.eval(leer('src/run-out.js'));
 const R = w.BarStockRunOut;
 
@@ -275,5 +276,50 @@ grupo('la fecha prudente: media botella de margen');
   prueba('un producto lento no se da por acabado por el margen', p === null || p.enDias >= 7, JSON.stringify(p));
 }
 
-console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
-process.exit(mal ? 1 : 0);
+grupo('fase 2 de docs/plan-pedido.md: la demanda de pedido.js, con Pour·IQ');
+// El Nino del 2026-11-18: 3.1 botellas un miércoles que vende 4, y la
+// mediana de 13 semanas lo daba por durar. Ahora lo de cada día es lo
+// MAYOR de Pour·IQ y lo reciente de Toast, con un colchón del 80 %.
+(async () => {
+  const U = w.BarStockToastUsage;
+  const guarda = { ventasDesde: U.ventasDesde, diaDeNegocio: U.diaDeNegocio, now: w.Date.now };
+  const NY10 = Date.parse('2026-11-18T15:00:00Z');   // miércoles, 10 AM en Nueva York
+  U.ventasDesde = async () => ({ productos: [{ producto: 'T', porDia }], dias });
+  U.diaDeNegocio = () => '2026-11-18';
+  w.Date.now = () => NY10;
+  w.state = { master: [{ item: 'T', code: '' }] };
+  w.BarStockLive = { ahora: async () => ({ estado: 'listo', conteo: null, desde: null,
+    filas: [{ producto: 'T', live: 2.6, viene: [], vendido: 0 }] }) };
+  try {
+    w.parAdjustments = null;
+    const sin = (await R.ahora()).filas[0];
+    w.parAdjustments = new Map([['T||', { status: 'active', avgUsed: 14, stdDev: 2, normalWeeks: 10 }]]);
+    const con = (await R.ahora()).filas[0];
+    prueba('sin Pour·IQ, la demanda de Toast (≈4.5 a la semana): aguanta hasta el fin de semana', sin.dem && sin.dem.fuente === 'toast' && sin.enDias >= 2, JSON.stringify([sin.agota, sin.enDias, sin.dem && sin.dem.fuente]));
+    prueba('con Pour·IQ a 14, se acaba hoy o mañana', con.dem && con.dem.fuente === 'pouriq' && con.enDias != null && con.enDias <= 1, JSON.stringify([con.agota, con.enDias, con.dem && con.dem.semanal]));
+    prueba('la fila lleva lo de cada día de la demanda (med) y la demanda (dem)', con.med === con.dem.porDia && Math.abs(con.med.reduce((a, b) => a + b, 0) - 14) < 1e-9);
+    const c0 = R.cuantoPedir({ stock: 2.6, med: con.med, viene: [], hoy: '2026-11-18' });
+    const c1 = R.cuantoPedir({ stock: 2.6, dem: con.dem, viene: [], hoy: '2026-11-18' });
+    prueba('"Order N" lleva el mismo colchón que el aviso', c1.colchon > 0 && c1.pedir > c0.pedir, JSON.stringify([c0, c1]));
+  } catch (e) { prueba('ahora() con la demanda nueva', false, String(e && e.stack || e)); }
+  finally { U.ventasDesde = guarda.ventasDesde; U.diaDeNegocio = guarda.diaDeNegocio; w.Date.now = guarda.now; }
+
+  // La entrega cuenta a SU hora: 0.8 botellas un jueves que gasta 2 y
+  // 12 llegan a las 4 PM. Antes la entrega se sumaba al empezar el día.
+  const p = R.proyectar({ stock: 0.8, med: [2, 2, 2, 2, 2, 2, 2], viene: [{ cuando: '2026-11-19T21:00:00Z', n: 12 }], hoy: '2026-11-19' });
+  prueba('lo que llega a las 4 PM no salva el mediodía', p && p.dia === '2026-11-19', JSON.stringify(p));
+
+  const ro = leer('src/run-out.js'), idx = leer('index.html'), cron = leer('lib/morning-cron.js'), lc = leer('src/live-cache.js'), mr = leer('src/morning-report.js');
+  prueba('una sola cuenta: proyectar() usa pedido.seAcaba', /P\.seAcaba\(/.test(ro) && !/s -= restaDia/.test(ro));
+  const pos = (f) => idx.indexOf('src/' + f + '?');
+  prueba('pedido.js se carga antes que run-out.js', pos('pedido.js') > 0 && pos('pedido.js') < pos('run-out.js'));
+  const mods = (cron.match(/const MODULOS = \[([\s\S]*?)\]/) || [])[1] || '';
+  const im = (m) => mods.indexOf("'" + m + "'");
+  prueba('el correo en el servidor carga Pour·IQ y pedido antes de run-out', im('par-intelligence') > 0 && im('pedido') > 0 && im('week') >= 0 && im('week') < im('par-intelligence') && im('pedido') < im('run-out'), mods);
+  prueba('y calcula parAdjustments antes de los datos', /ctx\.parAdjustments = await ctx\.BarStockParIntelligence\.getPendingAdjustments/.test(cron));
+  prueba('Pour·IQ llega tarde en la app: avisa y el LIVE se rehace', /emit\('parAdjustmentsUpdated'/.test(idx) && /'parAdjustmentsUpdated'\]\) window\.BarStockEvents\.on\(ev, caducar\)/.test(lc));
+  prueba('el correo y la lista piden con la demanda', /dem: f\.dem/.test(mr) && /dem: a\.dem/.test(lc));
+
+  console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
+  process.exit(mal ? 1 : 0);
+})();
