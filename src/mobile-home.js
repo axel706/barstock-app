@@ -1557,6 +1557,39 @@
     } catch (e) { return null; }
   }
 
+  // ── Los logos: un solo elemento cada uno ──────────────────────────────
+  //
+  // Axel, 2026-11-18, en dos vídeos: al entrar a la app los logos de
+  // MarginEdge y Toast parpadeaban. Con el hueco reservado ya no saltaba
+  // nada, pero cada vez que su tarjeta se reescribía el <img> era NUEVO,
+  // y en el iPhone uno nuevo tarda unos cuadros en verse aunque el
+  // archivo esté en caché. Cada logo se crea una vez, al cargar este
+  // archivo (así ya está descodificado al primer pintado), y cada pasada
+  // mueve ESE elemento a su sitio en vez de usar el que trae el HTML.
+  const _logos = new Map();
+  function conservarLogos(caja) {
+    caja.querySelectorAll('img[data-logo]').forEach(nuevo => {
+      const viejo = _logos.get(nuevo.dataset.logo);
+      if (viejo && viejo !== nuevo) nuevo.replaceWith(viejo);
+      else if (!viejo) _logos.set(nuevo.dataset.logo, nuevo);
+    });
+  }
+  function prepararLogo(clave, html) {
+    if (_logos.has(clave) || typeof document === 'undefined') return;
+    // Un <div> suelto del documento, no un <template>: lo de un template
+    // es inerte y la imagen no se descargaría hasta insertarla.
+    const d = document.createElement('div');
+    d.innerHTML = html.trim();
+    const img = d.firstElementChild;
+    if (!img) return;
+    _logos.set(clave, img);
+    if (img.decode) img.decode().catch(() => {});
+  }
+  const LOGO_ME = '<img class="m-cf-logo" data-logo="marginedge" src="assets/brands/marginedge.png?v=1" width="480" height="65" alt="MarginEdge">';
+  const LOGO_TOAST = '<img class="m-ts-logo" data-logo="toast" src="assets/brands/toast.png" width="307" height="78" alt="Toast">';
+  prepararLogo('marginedge', LOGO_ME);
+  prepararLogo('toast', LOGO_TOAST);
+
   // ── Pintar ───────────────────────────────────────────────────────────
 
   function render(host) {
@@ -1943,7 +1976,7 @@
       // antes de que cargue. Sin ellos el logo medía 0 al pintar, la
       // cabecera se encogía y todo saltaba al llegar (Axel, 2026-11-18,
       // en vídeo: "glitchean cada que entras a la app").
-      logo: '<img class="m-cf-logo" src="assets/brands/marginedge.png?v=1" width="480" height="65" alt="MarginEdge">',
+      logo: LOGO_ME,
       tono: arreglar ? 'am' : '',
       d: arreglar ? '<span class="m-cf-fix">' + arreglar + ' to fix</span>' : (fecha ? 'since ' + esc(fecha) : '&nbsp;'),
       btn: arreglar ? 'Review' : E && E.conectado === false ? 'MarginEdge'
@@ -1954,7 +1987,7 @@
     // las facturas…). Si lo de dentro no cambió no se reescribe: rehacerlo
     // crea el logo de nuevo y en el iPhone parpadeaba en cada pasada.
     const html = partes.join('');
-    if (caja._html !== html) { caja.innerHTML = html; caja._html = html; }
+    if (caja._html !== html) { caja.innerHTML = html; caja._html = html; conservarLogos(caja); }
 
     const b = (id) => caja.querySelector('[data-cf="' + id + '"]');
     if (b('estante')) b('estante').onclick = () => detalleEstante();
@@ -2174,7 +2207,7 @@
       <div class="m-ts">
         <div class="m-ts-h m-ts-marca">
           <span class="m-ts-ti">
-            <img class="m-ts-logo" src="assets/brands/toast.png" width="307" height="78" alt="Toast">
+            ${LOGO_TOAST}
             ${sync}
           </span>
           <span class="m-ts-seg" role="group" aria-label="Show bottles or money">
@@ -2217,7 +2250,7 @@
             <button type="button" class="m-ts-mas" data-mas>${din ? 'Full report' : 'All products'} <i class="ti ti-chevron-right" aria-hidden="true"></i></button>
           </div>` : ''}
       </div>`;
-    if (caja._html !== html) { caja.innerHTML = html; caja._html = html; }
+    if (caja._html !== html) { caja.innerHTML = html; caja._html = html; conservarLogos(caja); }
 
     caja.querySelectorAll('[data-v]').forEach(b => {
       b.onclick = () => { _vista = b.dataset.v; pintarVentas(host); };

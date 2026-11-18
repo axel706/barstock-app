@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-152944",
+    "items": [
+      "Home: MarginEdge and Toast logos stay put"
+    ]
+  },
+  {
     "build": "20261118-152245",
     "items": [
       "Home: logos no longer flicker when the app opens"
@@ -178,12 +184,6 @@
     "items": [
       "Running out warns sooner, using Pour·IQ",
       "Deliveries count at their hour"
-    ]
-  },
-  {
-    "build": "20261117-224510",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]

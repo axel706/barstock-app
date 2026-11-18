@@ -153,8 +153,18 @@ grupo('el logo de MarginEdge encima de "Spent this cycle" (Axel, 2026-11-18, opc
   w.BarStockMobileHome.refresh && w.BarStockMobileHome.refresh();
   await esperar(60);
   prueba('repintar sin cambios no vuelve a crear el logo', cifra(host).querySelector('img.m-cf-logo') === img);
+  // Segundo vídeo (Axel, 2026-11-18): aun con el hueco reservado, el
+  // logo desaparecía unos cuadros cuando la tarjeta SÍ se reescribía:
+  // un <img> nuevo tarda en verse en el iPhone. El logo es un solo
+  // elemento que se mueve de una pasada a otra, no uno nuevo cada vez.
+  cifra(host).parentElement._html = 'forzar';
+  w.BarStockMobileHome.refresh();
+  await esperar(60);
+  prueba('aunque la tarjeta se reescriba, el logo es el mismo elemento', cifra(host).querySelector('img.m-cf-logo') === img);
   const src = require('fs').readFileSync(require('path').join(__dirname, '../src/mobile-home.js'), 'utf8');
-  prueba('el de Toast también lleva su tamaño', /<img class="m-ts-logo" src="assets\/brands\/toast\.png" width="307" height="78"/.test(src));
+  prueba('el de Toast también lleva su tamaño, y los dos son un solo elemento (data-logo)',
+    /LOGO_TOAST = '<img class="m-ts-logo" data-logo="toast" src="assets\/brands\/toast\.png" width="307" height="78"/.test(src) &&
+    /LOGO_ME = '<img class="m-cf-logo" data-logo="marginedge"[^']*width="480" height="65"/.test(src));
 }
 
 grupo('la cifra no depende del estado del conteo');
