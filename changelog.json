@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-165535",
+    "items": [
+      "\"Out tomorrow\" instead of the day name"
+    ]
+  },
+  {
     "build": "20261118-161403",
     "items": [
       "Running out: no more \"Covered\" next to \"Out\"",
@@ -177,13 +183,6 @@
     "build": "20261118-103035",
     "items": [
       "Pencil by the number: say how many are there"
-    ]
-  },
-  {
-    "build": "20261118-003041",
-    "items": [
-      "Orders suggest how much to order, with Use",
-      "Items at par that won't last, with Add"
     ]
   }
 ]

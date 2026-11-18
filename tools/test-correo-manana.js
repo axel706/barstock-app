@@ -106,7 +106,7 @@ grupo('un día movido');
 
   prueba('una sola sección para lo que no llega', /Won't make it to Sunday/.test(t) && !/Needs attention today|Later this week/.test(t));
   prueba('su frase, en orden', /Tito's Handmade Vodka and Aperol Aperitivo run out today\. Casamigos Blanco goes on Friday\./.test(t), t);
-  const i1 = t.indexOf("Tito's Handmade Vodka Out today"), i2 = t.indexOf('Aperol Aperitivo Out today'), i3 = t.indexOf('Casamigos Blanco Out Fri');
+  const i1 = t.indexOf("Tito's Handmade Vodka Out today"), i2 = t.indexOf('Aperol Aperitivo Out today'), i3 = t.indexOf('Casamigos Blanco Out tomorrow');
   prueba('las filas por el día en que se acaban, y a igual día el que más pide', i1 > 0 && i1 < i2 && i2 < i3, [i1, i2, i3].join(','));
   prueba('cada una con lo que queda y lo que se suele vender', /0\.6 left · Thu–Sun usually sells 8\.3/.test(t));
   prueba('y cuánto pedir hasta el domingo', /Order 8 through Sunday/.test(t) && /Order 4 through Sunday/.test(t) && /Order 2 through Sunday/.test(t));

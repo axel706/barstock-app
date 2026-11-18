@@ -152,6 +152,19 @@ const nombres = (h) => filas(h).map(f => f.querySelector('.n').textContent);
       /3 this week/.test(txt(h)), txt(h));
   }
 
+  grupo('mañana se dice "tomorrow" (Axel, 2026-11-18)');
+  {
+    // "Out Thu" para mañana jueves se leía como el jueves de la semana
+    // que viene. Hoy "Out today", mañana "Out tomorrow", y después el día.
+    const w = entorno([{ item: 'A', onHand: 1, avg: 7 }, { item: 'B', onHand: 2, avg: 7 }]);
+    const h = pintar(w);
+    const pills = filas(h).map(f => ((f.querySelector('.m-out') || {}).textContent || '').trim());
+    prueba('a un día: "Out tomorrow"; a dos, el nombre del día', pills[0] === 'Out tomorrow' && /^Out (Sun|Mon|Tue|Wed|Thu|Fri|Sat)$/.test(pills[1]), pills.join(' | '));
+    const lc = fs.readFileSync(path.join(__dirname, '..', 'src', 'live-cache.js'), 'utf8');
+    const mr = fs.readFileSync(path.join(__dirname, '..', 'lib', 'morning-report.js'), 'utf8');
+    prueba('lo de Toast (live-cache.agota) y el correo, igual', /enDias === 1 \? 'Out tomorrow'/.test(lc) && /'Out tomorrow'/.test(mr));
+  }
+
   grupo('sin nada fuera, el titular vuelve al total');
   {
     const w = entorno([

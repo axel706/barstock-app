@@ -74,6 +74,7 @@
   // Nueva York; dentro de la semana, el nombre; más allá, la fecha.
   function diaTxt(dias) {
     if (!dias) return 'Out today';
+    if (dias === 1) return 'Out tomorrow';
     const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
     const f = new Date(hoy + 'T12:00:00Z');
     f.setUTCDate(f.getUTCDate() + dias);

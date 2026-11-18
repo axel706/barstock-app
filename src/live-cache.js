@@ -130,6 +130,9 @@
     const f = new Date(a.agota + 'T12:00:00Z');
     const txt = cuanto(r) <= 0 ? 'Out now'
       : a.enDias === 0 ? 'Out today'
+        // Mañana se dice "tomorrow": "Out Thu" para mañana jueves se leía
+        // como el jueves de la semana que viene (Axel, 2026-11-18).
+        : a.enDias === 1 ? 'Out tomorrow'
         : a.enDias < 7 ? 'Out ' + D[f.getUTCDay()]
           : 'Out ' + M[f.getUTCMonth()] + ' ' + f.getUTCDate();
     return { txt, tono: a.enDias <= 2 ? 'r' : a.enDias < 7 ? 'a' : 'g', enDias: a.enDias, dia: a.agota };
