@@ -1836,6 +1836,14 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     font-size: var(--m-meta); font-weight: 800; letter-spacing: .06em;
     text-transform: uppercase; color: #c3d2e2;
   }
+  /* Con logo (Spent this cycle, Axel 2026-11-18, opción B): el logo de
+   * MarginEdge en blanco en la primera fila y el título en UNA línea,
+   * más pequeño. Los dos ocupan lo que ocupaban las dos líneas. */
+  .m-cf-logo { display: block; width: 100%; max-width: calc(var(--m-base) * 8); height: auto; margin: 1px auto 4px; filter: brightness(0) invert(1); }
+  /* Medido con Manrope y Plus Jakarta: a .85 y .02em no cabía en un
+   * iPhone de 375 px (89 px de texto en 83). Así cabe, usando 6 px del
+   * relleno de la tarjeta a cada lado. */
+  .m-cf-k.m-cf-k1 { min-height: 0; margin: 0 -6px; white-space: nowrap; font-size: calc(var(--m-meta) * .82); letter-spacing: .01em; }
   /* La línea de estado del Sync de "Sold", bajo el título (Axel,
    * 2026-11-13: no bajo la cifra). Una sola línea: lo largo se corta. */
   .m-cf-s { margin-top: 2px; font-size: var(--m-meta); font-weight: 700; color: #6ee7b7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -1850,9 +1850,13 @@
     // `s`: una línea de estado bajo el título (Axel, 2026-11-13: "va
     // debajo del título, no debajo de la cifra"), hoy sólo la del Sync
     // de "Sold".
+    // `logo`: la marca de donde sale la cifra, en su primera fila, y el
+    // título pasa a una sola línea más pequeña (Axel, 2026-11-18, opción
+    // B: MarginEdge en blanco sobre "Spent this cycle").
     const cifra = (o) => `
       <div class="m-cf-c${o.tono ? ' m-cf-' + o.tono : ''}">
-        <span class="m-cf-k">${o.k}</span>
+        ${o.logo || ''}
+        <span class="m-cf-k${o.logo ? ' m-cf-k1' : ''}">${o.k}</span>
         ${o.s ? `<span class="m-cf-s${o.sTono ? ' ' + o.sTono : ''}">${o.s}</span>` : ''}
         <b class="m-cf-v">${o.v}</b>
         <span class="m-cf-d">${o.d}</span>
@@ -1912,6 +1916,9 @@
     }
     partes.push(cifra({
       id: 'gasto', k: 'Spent this cycle', v: g ? money(g.total) : '…',
+      // El archivo que dio Axel, tal cual (assets/brands/, como el de
+      // Toast); el blanco lo pone el CSS.
+      logo: '<img class="m-cf-logo" src="assets/brands/marginedge.png?v=1" alt="MarginEdge">',
       tono: arreglar ? 'am' : '',
       d: arreglar ? '<span class="m-cf-fix">' + arreglar + ' to fix</span>' : (fecha ? 'since ' + esc(fecha) : '&nbsp;'),
       btn: arreglar ? 'Review' : E && E.conectado === false ? 'MarginEdge'

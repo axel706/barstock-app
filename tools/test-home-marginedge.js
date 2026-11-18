@@ -132,6 +132,20 @@ grupo('una sincronización que no contesta no deja el botón mudo (Axel, 2026-11
   prueba('y vuelve a buscar de verdad', w.__llamado === 2, String(w.__llamado));
 }
 
+grupo('el logo de MarginEdge encima de "Spent this cycle" (Axel, 2026-11-18, opción B)');
+{
+  const { host } = entorno({ entregas: ENT });
+  await esperar(60);
+  const c = cifra(host);
+  const img = c.querySelector('img.m-cf-logo');
+  prueba('el logo va primero, del archivo de assets/brands', !!img && /assets\/brands\/marginedge\.png/.test(img.getAttribute('src')) &&
+    img.alt === 'MarginEdge' && c.firstElementChild === img);
+  prueba('y el título, en una sola línea', c.querySelector('.m-cf-k').classList.contains('m-cf-k1'));
+  const css = require('fs').readFileSync(require('path').join(__dirname, '../styles/mobile-app.css'), 'utf8');
+  prueba('en blanco y el título sin partirse', /\.m-cf-logo \{[^}]*filter: brightness\(0\) invert\(1\)/.test(css) && /\.m-cf-k\.m-cf-k1 \{[^}]*white-space: nowrap/.test(css));
+  prueba('el archivo existe', require('fs').existsSync(require('path').join(__dirname, '../assets/brands/marginedge.png')));
+}
+
 grupo('la cifra no depende del estado del conteo');
 for (const estado of ['step1', 'step2', 'counting', 'done']) {
   const { host } = entorno({ entregas: ENT, estado });

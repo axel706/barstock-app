@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-150220",
+    "items": [
+      "MarginEdge logo on Spent this cycle"
+    ]
+  },
+  {
     "build": "20261118-145018",
     "items": [
       "Wine from Toast: search instead of the wheel"
@@ -178,13 +184,6 @@
     "build": "20261117-222241",
     "items": [
       "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261117-212041",
-    "items": [
-      "Monday invoices link to this week’s orders",
-      "Fewer orders stuck on “waiting”"
     ]
   }
 ]
