@@ -240,7 +240,8 @@ pestañas se esconden mientras está abierto), con el campo y Cancel
 arriba, la sugerida, la lista con su scroll y las salidas al
 final (`pie`: "Not mine", "Unlink"); sólo elige, guarda quien lo abre.
 Ya lo usan la factura (`mobile-invoices.abrirBuscador`), Transfers
-("Add a product" y "Which is yours?"), Liquor from Toast y Recipes: es
+("Add a product" y "Which is yours?"), Liquor from Toast, Recipes y
+Wine from Toast (que tenía la rueda nativa, un `<select>`): es
 la ÚNICA forma de `BarStockBottleSearch.abrir` (la hoja de abajo de
 antes, `.m-tl-hoja`, se quitó). La línea de debajo de cada botella es
 `BarStockBottleSearch.ficha()`, la misma en todos. **Un buscador nuevo no se

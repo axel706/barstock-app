@@ -8,9 +8,11 @@
   // pidió las dos vistas. La lógica es la de toast-wine.js: aquí solo se
   // pinta. Se abre desde Settings, grupo "Toast" (mobile-settings.js).
   //
-  // Cambiar el vino es un <select> nativo: en el iPhone abre la rueda del
-  // sistema, que con cuarenta vinos es más rápida que cualquier lista
-  // dibujada a mano. Va a 16px en táctil, o Safari amplía la pantalla.
+  // Cambiar el vino abre el buscador de toda la app, a pantalla completa
+  // (bottle-search.js, Axel 2026-11-18, lámina A). Fue un <select> nativo:
+  // la rueda del iPhone con el inventario entero, y el resto de la app
+  // ya elige escribiendo. Elegir en el buscador confirma, como en Liquor
+  // from Toast; "Confirm" confirma la sugerida sin abrir nada.
 
   const W = () => window.BarStockToastWine;
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c =>
@@ -42,10 +44,9 @@
     const n = NIVEL[f.nivel] || NIVEL.none;
     return `<div class="m-tw-card">
       <div class="m-tw-r1"><b>${esc(f.nombre)}</b><span class="m-tw-n ${n[1]}">${n[0]}</span></div>${meta}
-      <select class="m-tw-sel" data-g="${esc(f.guid)}" aria-label="Inventory wine for ${esc(f.nombre)}">
-        <option value="">— Choose a wine —</option>
-        ${productos.map(p => `<option value="${esc(p)}"${p === f.producto ? ' selected' : ''}>${esc(p)}</option>`).join('')}
-      </select>
+      <button type="button" class="m-tw-elige" data-g="${esc(f.guid)}" aria-label="Inventory wine for ${esc(f.nombre)}">
+        ${f.producto ? '<span>' + esc(f.producto) + '</span><small>Change</small>' : '<span class="m-tw-mut">Choose a wine</span><small>Search</small>'}
+      </button>
       <div class="m-tw-acts">
         <button type="button" class="m-tw-b2" data-ig="${esc(f.guid)}">Ignore</button>
         <button type="button" class="m-tw-b" data-ok="${esc(f.guid)}">Confirm</button>
@@ -93,11 +94,29 @@
       _error = '';
       try { await fn(); } catch (e) { _error = 'Not saved: ' + String((e && e.message) || e); pintar(); }
     };
+    const fila = (g) => (d.filas || []).find(f => f.guid === g);
+    const elegir = (g) => {
+      const f = fila(g), B = window.BarStockBottleSearch;
+      if (!f || !B || !B.abrir) return;
+      B.abrir({
+        titulo: f.nombre,
+        sub: W().servicioTexto(f) + ' · ' + f.vendido + ' sold',
+        productos: d.productos || [],
+        pista: f.nombre,
+        sugerida: f.producto || null,
+        que: 'wines',
+        pie: [{ id: 'ignorar', texto: 'Not an inventory wine', sub: 'Ignore it' }],
+        alElegir: (p) => { B.cerrar(); hacer(() => W().confirmar(g, p))(); },
+        alPie: () => { B.cerrar(); hacer(() => W().ignorar(g))(); }
+      });
+    };
+    host.querySelectorAll('.m-tw-elige').forEach(b => { b.onclick = () => elegir(b.dataset.g); });
     host.querySelectorAll('[data-ok]').forEach(b => {
       b.onclick = hacer(async () => {
-        const sel = [...host.querySelectorAll('.m-tw-sel')].find(x => x.dataset.g === b.dataset.ok);
-        if (!sel || !sel.value) { _error = 'Choose a wine first.'; pintar(); return; }
-        await W().confirmar(b.dataset.ok, sel.value);
+        const f = fila(b.dataset.ok);
+        // Sin sugerida no hay nada que confirmar: se abre el buscador.
+        if (!f || !f.producto) return elegir(b.dataset.ok);
+        await W().confirmar(b.dataset.ok, f.producto);
       });
     });
     host.querySelectorAll('[data-ig]').forEach(b => { b.onclick = hacer(() => W().ignorar(b.dataset.ig)); });

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-145018",
+    "items": [
+      "Wine from Toast: search instead of the wheel"
+    ]
+  },
+  {
     "build": "20261118-144725",
     "items": [
       "Liquor from Toast and Recipes: full-screen search"
@@ -179,12 +185,6 @@
     "items": [
       "Monday invoices link to this week’s orders",
       "Fewer orders stuck on “waiting”"
-    ]
-  },
-  {
-    "build": "20261117-162059",
-    "items": [
-      "No more update card on Home: updates live in More"
     ]
   }
 ]

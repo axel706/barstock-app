@@ -5607,11 +5607,15 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   #mScreens .m-tw-dest { margin-top: 9px; font-size: var(--m-body); color: #64748b; }
   #mScreens .m-tw-dest span { color: #e2e8f0; font-weight: 700; }
   #mScreens .m-tw-mut { color: #94a3b8 !important; font-weight: 600 !important; }
-  #mScreens .m-tw-sel {
-    display: block; width: 100%; margin-top: 10px; padding: 10px 12px; height: auto;
-    font-size: max(16px, var(--m-body)); color: #f1f5f9; background: rgba(255,255,255,.08);
+  /* El vino elegido, que abre el buscador (2026-11-18; era un <select>). */
+  #mScreens .m-tw-elige {
+    display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; margin-top: 10px; padding: 10px 12px;
+    text-align: left; cursor: pointer; font-size: var(--m-body); color: #f1f5f9; background: rgba(255,255,255,.08);
     border: 1px solid rgba(255,255,255,.16); border-radius: 12px !important; box-shadow: none;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
   }
+  #mScreens .m-tw-elige span { flex: 1; min-width: 0; }
+  #mScreens .m-tw-elige small { flex: 0 0 auto; font-size: var(--m-small); font-weight: 700; color: #7dd3fc; }
   #mScreens .m-tw-acts { display: flex; gap: 8px; margin-top: 10px; }
   #mScreens .m-tw-b, #mScreens .m-tw-b2 {
     flex: 1; padding: 10px; cursor: pointer; font-size: var(--m-body); font-weight: 800;
@@ -6237,7 +6241,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * vista, quieto. La cantidad de una línea de orden, el vino elegido
    * para cada artículo de Toast, la botella de cada licor. */
   html.bs-sin-ordenes #mScreens .m-ord-q input,
-  html.bs-sin-toast #mScreens .m-tw:not(.m-tl):not(.m-rc) .m-tw-sel,
+  html.bs-sin-toast #mScreens .m-tw:not(.m-tl):not(.m-rc) .m-tw-elige,
   html.bs-sin-toast #mScreens .m-tl .m-tl-fila {
     pointer-events: none;
   }
