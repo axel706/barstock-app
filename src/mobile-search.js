@@ -326,6 +326,18 @@
       '</div>';
   }
 
+  // El bloque "Transfers" de la ficha (transfer-confirm.js): lee, pinta
+  // y engancha. Al tocar algo se lee otra vez y se repinta sólo el bloque.
+  async function pintarTransfers(caja, item) {
+    const el = caja.querySelector('#msTrfs');
+    const TC = window.BarStockTransferConfirm;
+    if (!el || !TC) return;
+    const pinta = () => { el.innerHTML = TC.ficha(item); TC.enganchar(el, () => TC.cargar().then(pinta)); };
+    pinta();
+    await TC.cargar();
+    pinta();
+  }
+
   async function pintarZonas(caja, item) {
     const el = caja.querySelector('#msZonas');
     const Z = window.BarStockZones;
@@ -631,6 +643,7 @@
       ${cabecera(r, par, aviso)}
 
       <div id="msZonas"></div>
+      <div id="msTrfs"></div>
       <div id="msVentas"></div>
 
       <div class="m-card m-rows">
@@ -661,7 +674,10 @@
       <div class="m-acts">
         <button type="button" class="m-act" id="msAdd"><i class="ti ti-plus" aria-hidden="true"></i> Add to order</button>
         <button type="button" class="m-act" id="msRecv"><i class="ti ti-truck-delivery" aria-hidden="true"></i> Received</button>
-      </div>`;
+      </div>
+      ${window.BarStockMobileTransfer ? `<div class="m-acts m-acts-trf">
+        <button type="button" class="m-act m-act-trf" id="msTrf"><i class="ti ti-arrows-exchange" aria-hidden="true"></i> Transfer</button>
+      </div>` : ''}`;
 
 
     // ── Aplicar el par ───────────────────────────────────────────────
@@ -706,6 +722,10 @@
     if (recv) recv.onclick = () => {
       if (window.BarStockStockIn) window.BarStockStockIn.open(r, () => ficha(host, idx));
     };
+    // ⇄ Transfer (docs/plan-transfer.md): la hoja sustituye a la ficha y,
+    // al guardar, la ficha vuelve con el chip del transfer.
+    const trf = caja.querySelector('#msTrf');
+    if (trf) trf.onclick = () => window.BarStockMobileTransfer.abrir(r, () => ficha(host, idx));
     // El lápiz de la cabecera y su "Change" (check-shelf.js). Delegado en
     // la caja: alLive() cambia la cabecera entera cuando se rehace el
     // LIVE, y un onclick puesto en el botón viejo se perdería con ella.
@@ -717,6 +737,7 @@
     });
 
     pintarZonas(caja, r.item);
+    pintarTransfers(caja, r.item);
     pintarVentasFicha(caja, r);
     pintarOrigenPrecio(caja, r.item);
     pintarSemanas(caja, r.item);

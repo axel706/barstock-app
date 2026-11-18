@@ -198,9 +198,23 @@
     let esperando = [];
     try { esperando = await preciosPendientes(); } catch (e) {}
 
-    _avisos = esperando.concat(lista).filter(a => !_descartadas.has(a.clave))
+    // Los transfers por confirmar (transfer-confirm.js, lámina C), arriba
+    // de todo: son algo que hay que hacer y otra locación espera. No se
+    // descartan: se confirman o se dicen "Not right".
+    let transfers = [];
+    const TC = window.BarStockTransferConfirm;
+    if (TC) {
+      try { await TC.cargar(); } catch (e) {}
+      transfers = TC.avisos().map(x => ({ clave: x.clave, grupo: 'To confirm', orden: '~', ico: 'ti-arrows-exchange', tono: 'azul',
+        t: esc(x.titulo), d: esc(x.sub), transfer: x }));
+      // Y lo que la otra dijo "Not right": un aviso que se lee y se cierra.
+      transfers = transfers.concat(TC.rechazados().filter(x => !_descartadas.has(x.clave)).map(x => ({ clave: x.clave, grupo: 'To confirm',
+        orden: '~', ico: 'ti-arrows-exchange', tono: 'rojo', t: esc(x.titulo), d: esc(x.sub) })));
+    }
+
+    _avisos = transfers.concat(esperando.concat(lista).filter(a => !_descartadas.has(a.clave))
       .concat(fallosApp())
-      .sort((a, b) => String(b.orden).localeCompare(String(a.orden)))
+      .sort((a, b) => String(b.orden).localeCompare(String(a.orden))))
       .slice(0, MAX);
     return _avisos;
   }
@@ -341,7 +355,11 @@
           // Un aviso que se puede ATENDER lleva su acción en vez de la
           // X. Cerrar algo que hay que hacer no es una salida: es
           // esconderlo.
-          (a.accion
+          // Un transfer lleva sus dos botones: confirmar y "Not right".
+          (a.transfer
+            ? '<span class="m-nf-tr"><button type="button" class="m-nf-go" data-tc="' + esc(a.clave) + '">' + esc(a.transfer.boton) + '</button>' +
+              '<button type="button" class="m-nf-no" data-tn="' + esc(a.clave) + '">Not right</button></span>'
+          : a.accion
             ? '<button type="button" class="m-nf-go" data-ver="' + esc(a.clave) + '">' +
                 esc(a.accion) + '</button>'
             : '<button type="button" class="m-nf-x" data-x="' + esc(a.clave) + '" ' +
@@ -353,6 +371,16 @@
       b.onclick = () => {
         const a = _avisos.find(x => x.clave === b.dataset.x);
         if (a) descartar(a);
+      };
+    });
+
+    caja.querySelectorAll('[data-tc], [data-tn]').forEach(b => {
+      b.onclick = async () => {
+        const a = _avisos.find(x => x.clave === (b.dataset.tc || b.dataset.tn));
+        if (!a || !a.transfer) return;
+        cerrar();
+        await (b.dataset.tc ? a.transfer.confirmar() : a.transfer.noEsAsi());
+        refrescar();
       };
     });
 

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-111004",
+    "items": [
+      "Transfers between locations, confirmed by the other"
+    ]
+  },
+  {
     "build": "20261118-103035",
     "items": [
       "Pencil by the number: say how many are there"
@@ -180,12 +186,6 @@
     "build": "20261115-133646",
     "items": [
       "Smoother scrolling in the lists"
-    ]
-  },
-  {
-    "build": "20261115-131221",
-    "items": [
-      "Bottle keypad: a dot for any decimal (.2, .5, .7)"
     ]
   }
 ]

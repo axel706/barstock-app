@@ -2728,6 +2728,56 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   .m-act .ti { font-size: var(--m-strong); color: #7dd3fc; }
   .m-act:first-child .ti { color: #04283d; }
+  /* ⇄ Transfer (2026-11-18): su propia fila, bajo Add y Received, sin el
+   * azul sólido del primero (lo es de su fila, no de la ficha). */
+  body.m-shell .m-acts-trf .m-act-trf { background: transparent; border-color: rgba(125,211,252,.45); color: #7dd3fc; }
+  .m-acts-trf .m-act-trf .ti { color: #7dd3fc; }
+  /* La hoja del transfer: el molde de la del número (.m-kp-*). */
+  .m-tr-k { margin-top: 14px; font-size: var(--m-meta); letter-spacing: .12em; text-transform: uppercase; color: #7f93ab; font-weight: 700; }
+  .m-tr-seg { display: flex; gap: 4px; margin-top: 6px; padding: 3px; border-radius: 999px; background: rgba(255,255,255,.06); }
+  #mSheet .m-tr-seg button { flex: 1; min-height: calc(var(--m-base) * 2.6); padding: 4px 8px; border: 0; border-radius: 999px !important;
+    background: transparent; color: #9fb0c4; font-size: var(--m-small); font-weight: 700; cursor: pointer; line-height: 1.2;
+    -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+  #mSheet .m-tr-seg button.on { background: #0284c7; color: #fff; }
+  .m-tr-locs { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+  #mSheet .m-tr-loc { min-height: calc(var(--m-base) * 3); padding: 0 14px; text-align: left; border-radius: 14px !important; cursor: pointer;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); color: #eaf2fb; font-size: var(--m-body); font-weight: 600;
+    -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+  #mSheet .m-tr-loc.on { border-color: #38bdf8; background: rgba(56,189,248,.14); }
+  .m-tr-par { margin-top: 8px; font-size: var(--m-small); color: #9fb0c4; }
+  .m-tr-par b { color: #eaf2fb; }
+  .m-tr-q { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  #mSheet .m-tr-q button { flex: 0 0 calc(var(--m-base) * 3.2); height: calc(var(--m-base) * 3.2); border-radius: 14px !important; border: 0;
+    background: rgba(255,255,255,.08); color: #f1f5f9; font-size: var(--m-title); cursor: pointer;
+    -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+  .m-tr-n { flex: 1; text-align: center; font-size: var(--m-figure); font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; }
+  .m-tr-nota { text-align: left; }
+  /* El bloque "Transfers" de la ficha. */
+  .m-trf { margin-top: 10px; padding: 12px 14px; border-radius: 18px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); }
+  .m-trf-k { font-size: var(--m-meta); letter-spacing: .12em; text-transform: uppercase; color: #9fb0c4; font-weight: 700; }
+  .m-trf-l { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px;
+    padding: 8px 10px; border-radius: 12px; font-size: var(--m-small); color: #dbe5f0; }
+  .m-trf-pend { border: 1px dashed #7dd3fc; color: #bae6fd; }
+  .m-trf-in { background: rgba(52,211,153,.10); }
+  .m-trf-in b { color: #6ee7b7; }
+  .m-trf-out { background: rgba(248,113,113,.10); }
+  .m-trf-out b { color: #fca5a5; }
+  .m-trf-b { flex: 0 0 auto; display: flex; gap: 6px; }
+  #mSheet .m-trf-b button { padding: 5px 10px; border-radius: 999px !important; cursor: pointer; font-size: var(--m-meta); font-weight: 800;
+    border: 1px solid rgba(255,255,255,.22); background: transparent; color: #eaf2fb;
+    -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+  #mSheet .m-trf-b [data-trf-ok] { background: #34d399; border-color: #34d399; color: #053b28; }
+  .m-tr-cajas { display: flex; gap: 6px; margin-top: 8px; }
+  /* Elegir mi producto al confirmar: buscador y lista. 16 px como los
+   * demás campos del teléfono (el zoom de iOS); este archivo sólo vive
+   * en el teléfono. */
+  .m-tr-buscar { display: block; width: 100%; box-sizing: border-box; margin-top: 12px; padding: 10px 12px; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.06); color: #f1f5f9; font-size: max(16px, var(--m-body)); }
+  .m-tr-prods { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; max-height: 50vh; overflow-y: auto; }
+  #mSheet .m-tr-cajas button { flex: 1; min-height: calc(var(--m-base) * 2.4); border-radius: 999px !important; cursor: pointer;
+    background: transparent; border: 1px solid rgba(255,255,255,.18); color: #cbd5e1; font-size: var(--m-small); font-weight: 700;
+    -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+  #mSheet .m-tr-cajas button.on { border-color: #38bdf8; color: #7dd3fc; }
 
   /* ── Inventario ─────────────────────────────────────────────────── */
 
@@ -4836,6 +4886,11 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     color: #04283d; background: #38bdf8; border: 0;
   }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-nf-go { border-radius: 9px !important; }
+  /* Un transfer por confirmar (2026-11-18): confirmar y "Not right". */
+  .m-nf-tr { flex: 0 0 auto; display: flex; flex-direction: column; gap: 6px; align-self: center; }
+  body.m-shell .m-nf-no { cursor: pointer; padding: 6px 12px; font-family: inherit; font-size: var(--m-meta); font-weight: 700;
+    color: #eaf2fb; background: transparent; border: 1px solid rgba(255,255,255,.22); }
+  #mNotifPanel :is(.m-nf-go, .m-nf-no) { border-radius: 9px !important; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
 
   /* ── La lista de precios, dentro del propio panel ────────────────
    *

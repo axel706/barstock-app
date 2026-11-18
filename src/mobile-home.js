@@ -1240,6 +1240,16 @@
     const iFoco = t.findIndex(c => c && c.foco);
     if (iFoco > 0) t.unshift(t.splice(iFoco, 1)[0]);
 
+    // Un transfer que otra locación espera que confirmes va delante de
+    // todo (Axel, 2026-11-18, lámina C: "imposible de pasar por alto").
+    // Lo lee transfer-confirm.js; al llegar algo, repinta (alCambiar).
+    const TC = window.BarStockTransferConfirm;
+    if (TC) {
+      TC.cargar();
+      const ct = TC.tarjeta();
+      if (ct) t.unshift(ct);
+    }
+
     // Ya no hay tarjeta de "All clear": la del ciclo está siempre, y
     // cuando no hay nada pendiente ella misma es el "todo en orden"
     // —dice desde cuándo está abierto y cuántos artículos se contaron—.
@@ -2371,6 +2381,7 @@
   // Lo llama quien termina de cargar datos: el Home se pinta antes de
   // que lleguen el inventario y las ordenes, y sin esto se queda con los
   // huecos puestos hasta que cambias de pestaña y vuelves.
+  if (window.BarStockTransferConfirm) window.BarStockTransferConfirm.alCambiar(() => refresh());
   function refresh() {
     const host = document.querySelector('.m-screen[data-screen="home"]');
     if (host && host.classList.contains('on')) render(host);
