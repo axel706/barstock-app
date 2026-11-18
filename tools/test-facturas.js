@@ -96,6 +96,7 @@ function entorno(opts) {
 
   new Function(leer('src/marginedge-match.js'))();
   new Function(leer('src/marginedge-unclaimed.js'))();
+  new Function(leer('src/bottle-search.js'))();
   new Function(leer('src/mobile-invoices.js'))();
   return w;
 }
@@ -320,23 +321,29 @@ const txt = (h) => h.textContent.replace(/\s+/g, ' ');
 
     prueba('la línea enlazada lleva su lápiz', !!h.querySelector('[data-chg]'));
     h.querySelector('[data-chg]').click();
-    prueba('se abre el buscador en su sitio', !!h.querySelector('[data-q]'));
-    prueba('con la salida de soltarla', !!h.querySelector('[data-unlink]'));
+    // Axel, 2026-11-18: el campo dentro de la factura desplazaba la
+    // página en el iPhone. Ahora es el buscador a pantalla completa.
+    const bus = w.document.querySelector('#mSheet.m-bus');
+    prueba('se abre el buscador a pantalla completa, no un campo en la página', !!bus && !!bus.querySelector('.m-bus-in') && !h.querySelector('input[type="search"]'));
+    prueba('dice para qué línea es', /For: 1× Tito’s Handmade Vodka/.test(bus.textContent), bus.textContent.slice(0, 80));
+    prueba('con la salida de soltarla, en la página y al final del buscador', !!h.querySelector('[data-unlink]') && /Unlink/.test(bus.querySelector('.m-bus-lista').textContent));
 
-    const inp = h.querySelector('[data-q]');
+    const inp = bus.querySelector('.m-bus-in');
     inp.value = 'tito';
-    inp.oninput();
-    prueba('encuentra la botella correcta', !!h.querySelector('[data-h]'),
-      (h.querySelector('.m-ires') || {}).textContent);
+    inp.dispatchEvent(new w.Event('input'));
+    const hit = bus.querySelector('.m-bus-lista [data-p="Tito’s Vodka 1.75L"]');
+    prueba('encuentra la botella correcta, con su categoría, proveedor y lo que hay', !!hit && /on hand/.test(hit.textContent),
+      bus.querySelector('.m-bus-lista').textContent);
 
-    h.querySelector('[data-h]').click();
+    hit.click();
     await esperar(40);
+    prueba('elegir cierra el buscador', !w.document.querySelector('#mSheet'));
     const esc = w.__escrito.filter(e => /marginedge_links/.test(e.u));
     prueba('reasigna el producto', esc.length === 1 && esc[0].cuerpo.product_id === 'p1',
       JSON.stringify(w.__escrito));
     prueba('a la botella elegida',
       esc[0] && esc[0].cuerpo.item_name === 'Tito’s Vodka 1.75L', esc[0] && esc[0].cuerpo.item_name);
-    prueba('y el buscador se cierra', !h.querySelector('[data-q]'));
+    prueba('y la línea vuelve a su sitio, sin buscador', !h.querySelector('[data-bus]') && !h.querySelector('[data-unlink]'));
   }
 
   grupo('y se puede soltar del todo');

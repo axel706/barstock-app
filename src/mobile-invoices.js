@@ -1059,9 +1059,8 @@
           '<div class="m-isin" data-sin="' + k + '">' +
             '<div class="m-iln" style="padding-top:0">' + cuerpo + '</div>' +
             '<div class="m-iask">Pick the right bottle</div>' +
-            '<input type="search" class="m-ibuscar" data-q="' + k + '" ' +
-              'placeholder="Search your bottles…" autocomplete="off">' +
-            '<div class="m-ires" data-res="' + k + '"></div>' +
+            '<button type="button" class="m-ibus" data-bus="' + k + '">' +
+              '<i class="ti ti-search" aria-hidden="true"></i> Search your bottles…</button>' +
             '<div class="m-irow2">' +
               (l.item
                 ? '<button type="button" class="m-ialt" data-unlink="' + k + '">Unlink</button>'
@@ -1090,9 +1089,8 @@
                 '<button type="button" class="m-ialt" data-otra="' + k + '">Another bottle</button>' +
                 '<button type="button" class="m-ino" data-no="' + k + '">Not mine</button>' +
               '</div>'
-            : '<input type="search" class="m-ibuscar" data-q="' + k + '" ' +
-                'placeholder="Search your bottles…" autocomplete="off">' +
-              '<div class="m-ires" data-res="' + k + '"></div>' +
+            : '<button type="button" class="m-ibus" data-bus="' + k + '">' +
+                '<i class="ti ti-search" aria-hidden="true"></i> Search your bottles…</button>' +
               '<div class="m-irow2">' +
                 '<button type="button" class="m-ino" data-no="' + k + '">Not mine</button>' +
               '</div>') +
@@ -1208,8 +1206,7 @@
         if (!f.lineas[k]) return;
         f.lineas[k].sugerida = null;
         pintarDetalle(host, f);
-        const inp = document.querySelector('[data-q="' + k + '"]');
-        if (inp) inp.focus();
+        abrirBuscador(host, f, k);
       };
     });
 
@@ -1284,8 +1281,7 @@
         if (!f.lineas[k]) return;
         f.lineas[k].editando = true;
         pintarDetalle(host, f);
-        const inp = document.querySelector('[data-q="' + k + '"]');
-        if (inp) inp.focus();
+        abrirBuscador(host, f, k);
       };
     });
 
@@ -1323,8 +1319,8 @@
       };
     });
 
-    host.querySelectorAll('[data-q]').forEach(inp => {
-      inp.oninput = () => buscar(host, f, Number(inp.dataset.q), inp.value);
+    host.querySelectorAll('[data-bus]').forEach(b => {
+      b.onclick = () => abrirBuscador(host, f, Number(b.dataset.bus));
     });
 
     // ── Ocultar ─────────────────────────────────────────────────────
@@ -1451,41 +1447,58 @@
     return true;
   }
 
-  function buscar(host, f, k, q) {
-    const caja = document.querySelector('[data-res="' + k + '"]');
-    if (!caja) return;
-    const t = String(q || '').trim().toUpperCase();
-    if (t.length < 2) { caja.innerHTML = ''; return; }
+  // ── Elegir la botella de una línea ───────────────────────────────
+  //
+  // Era un campo DENTRO de la factura, y en el iPhone escribir en él
+  // desplazaba la página entera: se iba la banda y la lista quedaba
+  // flotando (Axel, 2026-11-18). Ahora abre el buscador de toda la app
+  // a pantalla completa (bottle-search.js, lámina A), con lo que antes
+  // estaba aquí: cada botella con su categoría, proveedor y lo que hay,
+  // y la salida de la línea al final ("Not mine" o "Unlink").
+  function abrirBuscador(host, f, k) {
+    const l = f.lineas[k];
+    const B = window.BarStockBottleSearch;
+    if (!l || !B || !B.abrir) return;
+    const filas = master().filter(r => r && r.item);
+    const deNombre = new Map(filas.map(r => [r.item, r]));
+    const pie = l.suelto && !l.editando
+      ? [{ id: 'no', texto: 'Not mine', sub: 'This line is not a bar bottle' }]
+      : (l.item ? [{ id: 'unlink', texto: 'Unlink', sub: 'Leave this line without a bottle' }] : []);
+    B.abrir({
+      pantalla: true,
+      titulo: l.nombre || '',
+      sub: 'For: ' + n1(l.qty) + '× ' + (l.nombre || ''),
+      productos: filas.map(r => r.item).sort((a, b) => a.localeCompare(b)),
+      pista: l.nombre || '',
+      actual: l.item || '',
+      detalle: (p) => { const r = deNombre.get(p); return r ? ficha(r) : ''; },
+      pie,
+      alElegir: (p) => {
+        B.cerrar();
+        const r = deNombre.get(p);
+        if (r) enlazar(host, f, k, r);
+      },
+      alPie: (id) => {
+        B.cerrar();
+        const b = host.querySelector('[data-' + (id === 'no' ? 'no' : 'unlink') + '="' + k + '"]');
+        if (b) b.click();
+      }
+    });
+  }
 
-    const hits = master()
-      .filter(r => String(r.item || '').toUpperCase().includes(t))
-      .slice(0, 6);
-
-    if (!hits.length) { caja.innerHTML = '<div class="m-ivacio2">Nothing matches.</div>'; return; }
-
-    caja.innerHTML = hits.map((r, i) =>
-      '<button type="button" class="m-ihit" data-h="' + i + '">' +
-        '<span class="t">' + esc(r.item) +
-          '<small>' + esc(ficha(r)) + '</small></span></button>').join('');
-
-    caja.querySelectorAll('[data-h]').forEach(b => {
-      b.onclick = () => {
-        const r = hits[Number(b.dataset.h)];
-        const l = f.lineas[k];
-        if (!r || !l) return;
-        conBloqueo(k, async () => {
-          b.disabled = true;
-          avisar(k, 'Linking…');
-          const u = U();
-          if (!u || !u.asignar) throw new Error('Linking is not available right now.');
-          await u.asignar(l.pid, r, l.nombre);
-          l.item = r.item;
-          l.suelto = false;
-          l.editando = false;
-          f.sueltas = f.lineas.filter(x => x.suelto).length;
-          pintarDetalle(host, f);
-        });
-      };
+  function enlazar(host, f, k, r) {
+    const l = f.lineas[k];
+    if (!r || !l) return;
+    conBloqueo(k, async () => {
+      avisar(k, 'Linking…');
+      const u = U();
+      if (!u || !u.asignar) throw new Error('Linking is not available right now.');
+      await u.asignar(l.pid, r, l.nombre);
+      l.item = r.item;
+      l.suelto = false;
+      l.editando = false;
+      f.sueltas = f.lineas.filter(x => x.suelto).length;
+      pintarDetalle(host, f);
     });
   }
 

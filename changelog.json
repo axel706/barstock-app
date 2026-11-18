@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-142507",
+    "items": [
+      "Invoices: full-screen bottle search"
+    ]
+  },
+  {
     "build": "20261118-141457",
     "items": [
       "MarginEdge Sync now always responds and says what happened"
@@ -180,13 +186,6 @@
     "items": [
       "Running out: delivered items can go on the list again",
       "Ordered items say “Ordered”"
-    ]
-  },
-  {
-    "build": "20261117-094950",
-    "items": [
-      "Morning email: Daily | Weekly, and send it to anyone",
-      "Choose who gets it every morning"
     ]
   }
 ]

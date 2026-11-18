@@ -5309,10 +5309,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     color: #04283d; font-size: var(--m-meta); font-weight: 800; flex: 0 0 17px;
     display: flex; align-items: center; justify-content: center;
   }
-  .m-isug .t, .m-ihit .t {
+  .m-isug .t {
     flex: 1; min-width: 0; font-size: var(--m-small); font-weight: 700; color: #fff;
   }
-  .m-isug .t small, .m-ihit .t small {
+  .m-isug .t small {
     display: block; font-weight: 500; font-size: var(--m-meta); color: #93a5b8; margin-top: 1px;
   }
   .m-irow2 { display: flex; gap: 7px; margin-top: 7px; }
@@ -5324,27 +5324,21 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   body.m-shell .m-ino { color: #9fb0c4; }
   body.m-shell .m-ialt:disabled, body.m-shell .m-ino:disabled { opacity: .55; }
 
-  /* 16px CLAVADOS. A --m-small son 12,46 y Safari hace zoom al
-   * enfocar; con el zoom bloqueado no hay forma de volver y la app
-   * se queda ampliada hasta que la cierras. Pasó emparejando una
-   * línea de factura. */
-  .m-ibuscar {
-    width: 100%; box-sizing: border-box; font-size: max(16px, var(--m-small));
-    border: 1px solid rgba(255,255,255,.2); border-radius: 11px;
-    padding: 9px 11px; background: transparent; color: #fff;
-  }
-  .m-ires { display: flex; flex-direction: column; gap: 6px; margin-top: 7px; }
-  body.m-shell .m-ihit {
-    display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
-    border: 1px solid rgba(255,255,255,.16); border-radius: 10px;
-    padding: 9px 11px; background: rgba(255,255,255,.06); cursor: pointer;
+  /* El botón que abre el buscador de la línea (2026-11-18, lámina A).
+   * Era un <input> dentro de la factura, de 16 px por el zoom de iOS;
+   * ahora el campo vive en el buscador a pantalla completa
+   * (bottle-search.js) y aquí sólo se lo llama. */
+  #mScreens .m-ibus {
+    display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; margin-top: 2px;
+    padding: 10px 12px; border-radius: 11px !important; cursor: pointer; text-align: left;
+    font-size: var(--m-small); color: #93a5b8; background: transparent;
+    border: 1px solid rgba(255,255,255,.2); box-shadow: none;
   }
 
   .m-iav:empty { display: none; }
   .m-iav { font-size: var(--m-meta); color: #93a5b8; margin-top: 8px; }
   .m-iav.mal { color: #fca5a5; }
 
-  .m-ivacio2 { font-size: var(--m-meta); color: #93a5b8; margin-top: 7px; }
   /* El vacío se dice con palabras: una lista en blanco se lee como
    * que algo no cargó. */
   .m-ivacio {
@@ -6155,6 +6149,41 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     border-bottom: 1px solid rgba(255,255,255,.07); border-radius: 0 !important; box-shadow: none;
   }
   #mSheet .m-tl-res.on { color: #7dd3fc; font-weight: 800; }
+  /* ── El buscador a pantalla completa (bottle-search.js, Axel
+   * 2026-11-18, lámina A). Ocupa sólo lo que se ve encima del teclado
+   * (BarStockSheet.alTeclado le pone top y alto), así que el iPhone no
+   * tiene nada que desplazar. Arriba el campo y Cancel, la sugerida, y
+   * la lista con su propio scroll; las salidas van al final de ella. */
+  #mSheet.m-bus { background: rgba(5,9,16,.6); }
+  #mSheet .m-bus-box {
+    position: absolute; inset: 0; display: flex; flex-direction: column; box-sizing: border-box;
+    padding: calc(env(safe-area-inset-top, 0px) + 12px) 14px 0; background: #0b1220;
+  }
+  #mSheet .m-bus-top { display: flex; align-items: center; gap: 10px; }
+  #mSheet .m-bus-in {
+    flex: 1; min-width: 0; box-sizing: border-box; padding: 11px 13px;
+    font-size: max(16px, var(--m-body)); color: #f1f5f9; background: rgba(255,255,255,.08);
+    border: 1px solid rgba(56,189,248,.6); border-radius: 12px !important; box-shadow: none; -webkit-appearance: none;
+  }
+  #mSheet .m-bus-x {
+    flex: 0 0 auto; padding: 8px 2px; border: 0; background: none; cursor: pointer;
+    color: #7dd3fc; font-size: var(--m-body); font-weight: 700;
+    border-radius: 0 !important; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+  #mSheet .m-bus-sub { margin-top: 8px; font-size: var(--m-small); color: #94a3b8; }
+  #mSheet .m-bus-sug {
+    display: block; width: 100%; box-sizing: border-box; margin-top: 10px; padding: 10px 12px; text-align: left; cursor: pointer;
+    color: #f1f5f9; font-size: var(--m-body); background: rgba(56,189,248,.08);
+    border: 1px solid rgba(56,189,248,.5); border-radius: 12px !important;
+    box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+  #mSheet .m-bus-sug small:first-child {
+    display: block; margin-bottom: 2px; font-size: var(--m-meta); font-weight: 800;
+    letter-spacing: .06em; text-transform: uppercase; color: #7dd3fc;
+  }
+  #mSheet .m-bus-lista { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin-top: 6px; padding-bottom: 12px; }
+  #mSheet .m-bus-det { display: block; margin-top: 2px; font-size: var(--m-meta); font-weight: 400; color: #94a3b8; }
+  #mSheet .m-bus-pie { color: #cbd5e1; }
   #mSheet .m-tl-sug {
     margin-top: 10px; padding: 11px 13px; border: 1px solid rgba(56,189,248,.45);
     background: rgba(56,189,248,.12); border-radius: 12px !important; font-weight: 800; color: #e0f2fe;
@@ -6220,7 +6249,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * orden, elegir o cambiar botella, "Not mine", desenlazar, buscar y
    * esconder; y la campana (revisar y aplicar precios, descartar). */
   html.bs-sin-facturas #mScreens :is(#mhPrec, .m-hprec-n),
-  html.bs-sin-facturas #mScreens :is(#miOrdOn, #miOrdOff, .m-iatar-s, .m-ichg, .m-isug, .m-irow2, .m-ibuscar, .m-ihit, .m-idanger),
+  html.bs-sin-facturas #mScreens :is(#miOrdOn, #miOrdOff, .m-iatar-s, .m-ichg, .m-isug, .m-irow2, .m-ibus, .m-idanger),
   html.bs-sin-facturas #moCuerpo :is([data-otra], [data-no], [data-unlink]),
   html.bs-sin-facturas #mNotifPanel :is(.m-nf-go, #mnfGo, .m-nf-nota, .m-nf-x),
   /* Toast: Wine from Toast (su raíz es .m-tw sin .m-tl ni .m-rc) y

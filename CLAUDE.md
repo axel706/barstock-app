@@ -227,6 +227,19 @@ tarjeta de versión, `.m-hero-ver`, con su azul) y Recipes. Cuando Axel diga "po
 falla si el color aparece fuera de `:root` o si una regla de Tinta
 lleva desenfoque.
 
+**Buscar un producto escribiendo es UN buscador, a pantalla completa**
+(Axel, 2026-11-18, lámina A): `BarStockBottleSearch.abrir({ pantalla:
+true, … })` de `src/bottle-search.js`. Un campo DENTRO de la página no
+sirve en el iPhone: al escribir, Safari desplaza la página para ver el
+campo, se lleva la banda y la lista queda flotando sobre un hueco
+(pasaba en la factura y en Transfers). El buscador ocupa sólo lo que se
+ve encima del teclado (`BarStockSheet.alTeclado`), con el campo y
+Cancel arriba, la sugerida, la lista con su scroll y las salidas al
+final (`pie`: "Not mine", "Unlink"); sólo elige, guarda quien lo abre.
+Ya lo usa la factura (`mobile-invoices.abrirBuscador`); Transfers, Liquor
+from Toast y Recipes pasan a él uno por uno. **Un buscador nuevo no se
+escribe: se abre éste.**
+
 El radio de las tarjetas del carrusel (`.m-hero`) es **20px**, y es la
 referencia cuando pida "como las tarjetas". Las filas de Inventory (`.m-inv`) son
 del tamaño de las tarjetas de Running out (Axel, 2026-11-15, opción B):
