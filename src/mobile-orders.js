@@ -199,10 +199,46 @@
       !window.isRowPlaced(r));
   }
 
+  // ── La sugerencia (Axel, 2026-11-18, lámina C) ─────────────────────
+  //
+  // Cada línea lleva "Suggested N" con su cuenta y "Use N"; al final, lo
+  // que está en su par pero no llega a la siguiente entrega, con "Add N".
+  // La cuenta vive en sugerencia.js; aquí sólo se pinta. Necesita el LIVE
+  // y el horario del proveedor leídos: la primera vez se piden y, al
+  // llegar, se repinta UNA vez (si no, cada pintado pediría otro).
+  const S = () => window.BarStockSugerencia;
+  const _sugListo = new Set();
+  function prepararSugerencia(vendor) {
+    if (!S() || _sugListo.has(vendor)) return;
+    _sugListo.add(vendor);
+    S().preparar(vendor).then(() => { if (_vendor === vendor) repintar(); }).catch(() => {});
+  }
+  const sugerencia = (r) => (S() && _sugListo.has(r.vendor) ? S().para(r) : null);
+  function sugHtml(r, q, puede) {
+    const sg = sugerencia(r);
+    if (!sg) return '';
+    return `<div class="m-ord-sg"><span>Suggested <b>${esc(n2(sg.pedir))}</b> &middot; ${esc(sg.texto)}</span>${
+      puede && sg.pedir !== q ? `<button type="button" class="m-ord-use" data-use="${master().indexOf(r)}" data-n="${sg.pedir}">Use ${esc(n2(sg.pedir))}</button>` : ''}</div>`;
+  }
+  // Lo que no sale en la orden (está en su par) y la app pediría: ni
+  // excluido a mano ("dije que no"), ni ya colocado este ciclo.
+  function noEnLaOrden(v, fuera) {
+    if (!S() || !_sugListo.has(v.nombre) || !ajustable({ vendor: v.nombre })) return [];
+    const dentro = new Set(v.filas), no = new Set(fuera);
+    return master().filter(r => r && r.vendor === v.nombre && !dentro.has(r) && !no.has(r) &&
+      !(r.orderOverride !== '' && r.orderOverride !== null && r.orderOverride !== undefined && Number(r.orderOverride) === 0) &&
+      !(hay('isRowPlaced') && window.isRowPlaced(r)))
+      .map(r => ({ r, sg: sugerencia(r) }))
+      .filter(x => x.sg && x.sg.pedir > 0)
+      .sort((a, b) => b.sg.pedir - a.sg.pedir);
+  }
+
   function pintarDetalle(host) {
     const v = proveedores().find(x => x.nombre === _vendor);
     if (!v) { _vendor = null; return pintarResumen(host); }
     const fuera = excluidas(v.nombre);
+    prepararSugerencia(v.nombre);
+    const extra = noEnLaOrden(v, fuera);
 
     // El mismo orden que el escritorio: lo más urgente arriba. Repasar
     // un pedido es mirar las primeras líneas, así que el orden ES la
@@ -233,6 +269,21 @@
         </button>` : ''}
 
       <div id="moList">${v.filas.map(linea).join('')}</div>
+
+      ${extra.length ? `
+        <div class="m-ord-k">Not on this order &middot; the app would add ${extra.length}</div>
+        ${extra.map(({ r, sg }) => {
+          const i = master().indexOf(r);
+          return `
+            <div class="m-ord-l m-ord-extra" data-i="${i}">
+              <div class="m-ord-l-top">
+                <span class="m-ord-l-n">${esc(r.item)}</span>
+                <button type="button" class="m-ord-use m-ord-add-sg" data-use="${i}" data-n="${sg.pedir}">Add ${esc(n2(sg.pedir))}</button>
+              </div>
+              <div class="m-ord-l-s">${n2(r.onHand)} of ${n2(r.suggested)} on hand &middot; ${num(r.onHand) > num(r.suggested) ? 'above' : 'at'} par</div>
+              <div class="m-ord-why">${esc(sg.texto)}</div>
+            </div>`;
+        }).join('')}` : ''}
 
       ${fuera.length ? `
         <div class="m-ord-fuera">
@@ -873,16 +924,28 @@
           </div>
           ${editada ? `<button type="button" class="m-ord-undo">
              Auto was ${n2(r.toOrder)} · <b>undo</b></button>` : ''}
+          ${sugHtml(r, q, true)}
         ` : `
           <div class="m-ord-auto">
             <b>${n2(q)}</b>
             <span>automatic · this vendor has no manual override</span>
             <span class="m-ord-l-t">${conPrecio ? money(q * precio) : '—'}</span>
-          </div>`}
+          </div>
+          ${sugHtml(r, q, false)}`}
       </div>`;
   }
 
   function enganchar(host) {
+    // "Use N" y "Add N": la cantidad a mano, como el −/+ (updateFinalOrder).
+    host.querySelectorAll('[data-use]').forEach(b => {
+      b.onclick = () => {
+        if (!hay('updateFinalOrder')) return;
+        const i = Number(b.dataset.use);
+        _fallos.delete(clave(master()[i] || {}));
+        window.updateFinalOrder(i, Number(b.dataset.n) || 0);
+        repintar();
+      };
+    });
     host.querySelectorAll('.m-ord-l').forEach(caja => {
       const i = Number(caja.dataset.i);
       const inp = caja.querySelector('input');

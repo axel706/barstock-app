@@ -109,7 +109,7 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 
 ## La arquitectura
 
-Frontend estático, sin build. `index.html` es un monolito y hay ~140 módulos
+Frontend estático, sin build. `index.html` es un monolito y hay ~144 módulos
 `src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 29 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 158 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 159 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -395,7 +395,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 158 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 159 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -1203,7 +1203,25 @@ que se acaba › lo que se usa + lo que viene o "Nothing on the way". La
 lee `live-cache.fila(r)`. El correo lleva la misma frase bajo cada
 producto (`porque`, recortada a 160). Sin demanda (lo que Toast no
 vende), ni barras ni frase. Estilos `.m-ro-dia*` y `.m-ro-why`. Prueba:
-`test-por-que`. Sigue: la sugerencia en Orders (fase 4), sobre lámina.
+`test-por-que`.
+**Fase 4 hecha (2026-11-18, lámina C):** en el detalle de un proveedor
+de Orders › Open, cada línea lleva bajo la cantidad una franja azul con
+"Suggested N" y su cuenta ("to last until next Tue 4 PM: uses 6.6 +
+cushion 1.4, 0.6 left Tue") y "Use N" si no coincide; al final, "Not
+on this order · the app would add N": lo de ese proveedor que está en
+su par (no sale en la orden) y la app pediría, con "Add N". Ni lo
+excluido a mano ni lo ya colocado. "Use"/"Add" ponen la cantidad a
+mano por `updateFinalOrder` (sale "edited" y su undo); mirar no cambia
+nada, y el par no se toca. La cuenta vive en `src/sugerencia.js`
+(`preparar(vendor)`, `para(r)`): `pedido.cuantoPedir` de la siguiente
+entrega del proveedor a la de después (Settings › Delivery), con la
+demanda, `viene` y `vino` de la fila de run-out (`live-cache.fila`) y
+lo que hay de `live-cache.cuanto`; lo que Toast no vende, con Pour·IQ
+solo. Sin horario (Triage, UNKNOWN), nada. `.m-ord-use` está en el
+bloque `bs-sin-ordenes`. Un proveedor sin ninguna línea por debajo del
+par no sale en Open, así que su "Not on this order" tampoco. Prueba:
+`test-sugerencia`. Sigue: los eventos (fase 5), cuando esté la lista
+de paquetes de bar.
 
 ### La lista de compras y la verificación (2026-11-14, sin construir)
 

@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261118-003041",
+    "items": [
+      "Orders suggest how much to order, with Use",
+      "Items at par that won't last, with Add"
+    ]
+  },
+  {
     "build": "20261117-234230",
     "items": [
       "Running out shows why, and the days ahead",
@@ -179,12 +186,6 @@
     "build": "20261115-130117",
     "items": [
       "Tell the team it's low: a softer orange"
-    ]
-  },
-  {
-    "build": "20261115-125820",
-    "items": [
-      "Do we have: Tell the team it's low, in orange"
     ]
   }
 ]

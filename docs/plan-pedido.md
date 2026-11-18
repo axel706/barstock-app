@@ -108,7 +108,8 @@ demás sólo si al múltiplo le falta una botella o menos.
 3. **El por qué** en la tarjeta y en el correo. Lámina. **Hecha
    (2026-11-18, opción E).**
 4. **La sugerencia en Orders**, al lado del par al principio ("Par 6 ·
-   Suggested 9") para comparar unas semanas. Lámina.
+   Suggested 9") para comparar unas semanas. Lámina. **Hecha (2026-11-18, opción C):** franja
+   "Suggested N" con "Use N", y lo que el par no pide con "Add N".
 5. **Eventos con número**, cuando esté la lista de paquetes.
 
 Antes de las fases 2 y 4: una tabla con lo que diría la regla nueva

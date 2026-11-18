@@ -255,7 +255,10 @@
       const hoyVendido = hoyDe.get(f.producto) || 0;
       const margen = margenDe(f);
       const fin = dem ? proyectar({ stock: f.live, dem, viene: f.viene, hoy, ahora: t, hoyVendido, hoyFrac, margen }) : null;
-      return Object.assign({}, f, { med, dem, hoyVendido, hoyFrac, hoySync, ahoraMs: t, margen, agota: fin ? fin.dia : null, enDias: fin ? fin.enDias : null });
+      // Vino si Toast lo vende como vino: el redondeo de 3 en 3 de la
+      // sugerencia lo necesita, y casi nada del maestro tiene categoría.
+      const vino = !!(p && Object.values(p.catPorDia || {}).some(c => Object.keys(c || {}).some(k => /wine/i.test(k))));
+      return Object.assign({}, f, { med, dem, vino, hoyVendido, hoyFrac, hoySync, ahoraMs: t, margen, agota: fin ? fin.dia : null, enDias: fin ? fin.enDias : null });
     });
     return { estado: 'listo', hoy, conteo: vivo.conteo, desde: vivo.desde, muestras: M.muestras, suficiente: M.suficiente, filas };
   }

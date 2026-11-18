@@ -3572,6 +3572,23 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-ord-q input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .m-ord-l-t { flex: 0 0 58px; text-align: right; font-size: var(--m-body); font-weight: 800; color: #fff; }
 
+  /* ── La sugerencia en la orden (2026-11-18, lámina C) ───────────────
+   * Una franja azul bajo la cantidad con "Suggested N", su cuenta y "Use
+   * N"; al final, lo que está en su par y la app pediría, con "Add N".
+   * Los botones con id delante: app.css pone 999px !important y blur. */
+  .m-ord-sg { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 8px 10px; border-radius: 11px;
+    background: rgba(56,189,248,.10); color: #bae6fd; font-size: var(--m-small); line-height: 1.3; }
+  .m-ord-sg span { flex: 1; min-width: 0; }
+  :is(#mScreens, #mSheet) .m-ord-use { flex: 0 0 auto; padding: 6px 12px; border: 0; border-radius: 999px !important; cursor: pointer;
+    background: #38bdf8; color: #04283d; font-size: var(--m-small); font-weight: 800;
+    -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+  :is(#mScreens, #mSheet) .m-ord-add-sg { background: rgba(56,189,248,.18); color: #7dd3fc; }
+  .m-ord-k { margin-top: 18px; padding: 0 4px; font-size: var(--m-meta); letter-spacing: .1em; text-transform: uppercase;
+    color: #7f93ab; font-weight: 700; }
+  .m-ord-l.m-ord-extra { background: rgba(56,189,248,.06); border-style: dashed; border-color: rgba(125,211,252,.35); }
+  .m-ord-l-top .m-ord-add-sg { align-self: center; }
+  .m-ord-why { margin-top: 5px; font-size: var(--m-meta); color: #7f93ab; }
+
   /* ── To buy (Axel, 2026-11-15, lámina A sin agrupar) ─────────────────
    * La lista de compras, una línea por producto con el molde de las
    * líneas de una orden (.m-ord-l) y su −/+ (.m-ord-q). El número del
@@ -5990,7 +6007,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * order, revisar y mandar, añadir, devolver, quitar, deshacer, +/−);
    * Resend / Reopen de Sent. */
   html.bs-sin-ordenes #mSheet .m-ficha .m-acts,
-  html.bs-sin-ordenes #mScreens :is(#moRun, #moSend, #moAdd, .m-ord-volver, .m-ord-x, .m-ord-undo),
+  html.bs-sin-ordenes #mScreens :is(#moRun, #moSend, #moAdd, .m-ord-volver, .m-ord-x, .m-ord-undo, .m-ord-use),
   html.bs-sin-ordenes #mScreens .m-ord-q [data-q],
   html.bs-sin-ordenes #mScreens :is(.m-hacc, .m-hacc-conf),
   /* Facturas: actualizar precios de Sent; en Invoices, enlazar a una
