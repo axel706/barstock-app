@@ -20,13 +20,20 @@
   //   · La forma de la semana, de Toast: qué parte de lo semanal se va
   //     cada día de la semana. Sin ella no se puede contar "hasta el
   //     martes a las 4 PM".
-  //   · La tendencia, de Toast: la mediana de las últimas 4 semanas
-  //     enteras contra la de las 13. Pour·IQ cuenta el pasado y llega
-  //     tarde: el Nino Ardevi vendía 1.3 un miércoles en las 13 semanas y
-  //     3.3 en las últimas 4, y la app lo daba por durar (2026-11-18).
-  //     La MEDIANA de 4 y no el promedio: una semana de fiesta (el sábado
-  //     de 19.7 botellas) no puede mover sola lo que se pide. Y con
-  //     topes, de la mitad al triple.
+  //   · Lo reciente, de Toast: la MEDIANA de las últimas 4 semanas
+  //     enteras. Pour·IQ cuenta el pasado y llega tarde: el Nino Ardevi
+  //     vendía 1.3 un miércoles en 13 semanas y 3.3 en las últimas 4, y la
+  //     app lo daba por durar (2026-11-18). Mediana y no promedio: una
+  //     semana de fiesta (el sábado de 19.7) no mueve sola lo que se pide.
+  //   · Lo que se usa por semana es lo MAYOR de los dos. La primera
+  //     versión MULTIPLICABA Pour·IQ por la tendencia de Toast (las 4
+  //     últimas contra las 13), y eso la contaba dos veces: Pour·IQ ya
+  //     pesa más lo reciente (EWMA). Con los datos de Crown el Nino salía
+  //     a 42 por semana vendiendo ~25-30, y sugería 15 de más. Lo mayor
+  //     de los dos no multiplica nada: si algo se dispara, Toast lo sube;
+  //     si Toast no ve todo (open bar, merma), mandan los conteos.
+  //     `tendencia` (4 contra 13, de ½ a 3×) queda como dato para decir
+  //     el por qué, no entra en la cuenta.
   //   · Sin Pour·IQ (menos de 4 semanas), Toast solo; sin Toast, Pour·IQ
   //     repartido por igual en la semana.
   //
@@ -39,16 +46,17 @@
   //
   // ── El aviso ─────────────────────────────────────────────────────────
   //
-  // Para avisar se planea con un día FUERTE (el 75 % de los mismos días
-  // de las últimas 6 semanas, nunca menos que el típico), y las entregas
-  // cuentan a SU hora: lo que llega el jueves a las 4 PM no cubre lo que
-  // se vende el jueves al mediodía.
+  // Lo típico de cada día más el mismo colchón del 80 %, que crece con la
+  // raíz de los días (z · σ · √(días/7)), y las entregas a SU hora: lo que
+  // llega el jueves a las 4 PM no cubre lo que se vende al mediodía.
+  // La primera versión restaba un día FUERTE (el 75 %) CADA día: siete
+  // días fuertes seguidos no pasan, y el White Haven con 23 botellas y 20
+  // a la semana salía "se acaba el domingo" (Crown, 2026-11-18).
 
   const Z = 0.84;               // ~80 % de las vueltas
   const SEMANAS_TOAST = 13;
   const SEMANAS_TENDENCIA = 4;
-  const SEMANAS_FUERTE = 6;
-  const TENDENCIA_MIN = 0.5, TENDENCIA_MAX = 3;
+    const TENDENCIA_MIN = 0.5, TENDENCIA_MAX = 3;
   const MIN_SEMANAS_POURIQ = 4;
   const CORTE_H = 4;            // el día de negocio empieza a las 4 AM
   const DIA = 864e5;
@@ -97,7 +105,7 @@
   //         cerradas y completas] } o null.
   // hoy:    el día de negocio de hoy; sólo cuenta lo de ANTES.
   //
-  // → { porDia: [7], fuerte: [7], semanal, sigma, tendencia, fuente }
+  // → { porDia: [7], semanal, sigma, tendencia, reciente, fuente }
   function demanda({ pouriq, toast, hoy }) {
     const cargados = ((toast && toast.cargados) || []).filter(d => d < hoy).sort();
     const v = (d) => Number((toast && toast.porDia && toast.porDia[d]) || 0);
@@ -123,26 +131,23 @@
       ? Math.max(TENDENCIA_MIN, Math.min(TENDENCIA_MAX, m4 / m13)) : 1;
 
     let semanal = 0, sigma = 0, fuente = 'none';
-    if (pouriq && (pouriq.semanas || 0) >= MIN_SEMANAS_POURIQ && Number(pouriq.avg) > 0) {
-      semanal = Number(pouriq.avg) * tendencia;
-      sigma = (Number(pouriq.sd) || 0) * tendencia;
-      fuente = tendencia === 1 ? 'pouriq' : 'pouriq+trend';
+    const reciente = totales.length >= SEMANAS_TENDENCIA ? m4 : 0;
+    const conPouriq = pouriq && (pouriq.semanas || 0) >= MIN_SEMANAS_POURIQ && Number(pouriq.avg) > 0;
+    if (conPouriq) {
+      const avg = Number(pouriq.avg);
+      semanal = Math.max(avg, reciente);
+      // La variación de los conteos, a escala de lo que se usa ahora.
+      sigma = (Number(pouriq.sd) || 0) * (semanal / avg);
+      fuente = reciente > avg ? 'toast-recent' : 'pouriq';
     } else if (totales.length) {
-      semanal = m4 || m13;
+      semanal = reciente || m13;
       sigma = desviacion(totales.slice(-SEMANAS_TENDENCIA * 2));
       fuente = 'toast';
     }
 
     const porDia = forma ? forma.map(f => f * semanal) : [0, 1, 2, 3, 4, 5, 6].map(() => semanal / 7);
 
-    // Para avisar: un día fuerte de las últimas 6 semanas, nunca menos
-    // que el típico.
-    const fuerte = porDia.map((t, w) => {
-      const xs = cargados.filter(d => dow(d) === w).slice(-SEMANAS_FUERTE).map(v);
-      return Math.max(t, xs.length >= 3 ? percentil(xs, 0.75) : 0);
-    });
-
-    return { porDia, fuerte, semanal, sigma, tendencia, fuente };
+    return { porDia, semanal, sigma, tendencia, reciente, fuente };
   }
 
   // Lo que se usa entre dos instantes, con lo de cada día de la semana y
@@ -189,24 +194,29 @@
 
   // ── Cuándo se acaba, para avisar ─────────────────────────────────────
   //
-  // Con el día fuerte y las entregas a su hora. → { dia, enDias, en } o null.
-  function seAcaba({ dem, stock, viene, ahora, dias, frac }) {
+  // Lo típico de cada día más el colchón (z · σ · √(días/7)), con las
+  // entregas a su hora. → { dia, enDias, en } o null.
+  function seAcaba({ dem, stock, viene, ahora, dias, frac, z }) {
     const f = frac || fraccionLineal;
+    const zz = z == null ? Z : z;
+    if (!(dem.porDia || []).some(x => x > 0)) return null;
     let s = Math.max(0, Number(stock) || 0);
-    if (!(dem.fuerte || []).some(x => x > 0)) return null;
     const hoy = diaDe(ahora);
+    if (s <= 1e-9) return { dia: hoy, enDias: 0, en: ahora };
     const llegadas = (viene || []).map(x => ({ t: Number(x.cuando), n: Number(x.n) || 0 }))
       .filter(x => x.t > ahora).sort((a, b) => a.t - b.t);
+    const colchon = (t) => zz * (dem.sigma || 0) * Math.sqrt(Math.max(0, t - ahora) / (7 * DIA));
     for (let k = 0; k < (dias || 7); k++) {
-      const d = sumarDias(hoy, k), q = Number(dem.fuerte[dow(d)]) || 0;
+      const d = sumarDias(hoy, k), q = Number(dem.porDia[dow(d)]) || 0;
       // Los cortes de este día: desde ahora (o el inicio del día), cada
-      // llegada de ese día, y el final del día.
+      // llegada de ese día, y el final del día. Se mira justo ANTES de
+      // cada llegada: lo que llega a las 4 PM no salva el mediodía.
       const desde = k === 0 ? ahora : inicio(d);
       const fin = inicio(sumarDias(d, 1));
       const puntos = [desde].concat(llegadas.filter(x => x.t > desde && x.t < fin).map(x => x.t), [fin]);
       for (let i = 0; i < puntos.length - 1; i++) {
         s -= q * Math.max(0, f(d, puntos[i + 1]) - f(d, puntos[i]));
-        if (s <= 1e-9) return { dia: d, enDias: k, en: puntos[i + 1] };
+        if (s - colchon(puntos[i + 1]) <= 1e-9) return { dia: d, enDias: k, en: puntos[i + 1] };
         for (const x of llegadas) if (x.t === puntos[i + 1]) s += x.n;
       }
     }
@@ -214,5 +224,5 @@
   }
 
   window.BarStockPedido = { demanda, consumoEntre, cuantoPedir, seAcaba, multiploPara, fraccionLineal, inicio, diaDe,
-    mediana, percentil, Z, SEMANAS_TENDENCIA, SEMANAS_FUERTE, TENDENCIA_MIN, TENDENCIA_MAX };
+    mediana, percentil, Z, SEMANAS_TENDENCIA, TENDENCIA_MIN, TENDENCIA_MAX };
 })();

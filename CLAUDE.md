@@ -1170,9 +1170,14 @@ vino en múltiplos de 3 (Wine Merchant o vino), tendencia con la MEDIANA
 de las 4 últimas semanas contra las 13 (de ½ a 3×). Sin frases tipo
 "Order by Tue" ni "LOOP today": el aviso sólo dice que se acaba.
 **Fase 1 hecha:** `src/pedido.js`, puro y sin cargar en la app todavía:
-`demanda` (Pour·IQ × tendencia de Toast, forma de la semana de Toast, el
-día fuerte para avisar), `cuantoPedir` (uso de la vuelta + colchón − lo
-que habrá al llegar) y `seAcaba` (día fuerte, entregas a su hora).
+`demanda` (lo MAYOR de Pour·IQ y la mediana de Toast de las 4 últimas
+semanas, repartido con la forma de la semana de Toast), `cuantoPedir`
+(uso de la vuelta + colchón − lo que habrá al llegar) y `seAcaba` (lo
+típico más el colchón, que crece con √días, y entregas a su hora). La
+primera versión multiplicaba Pour·IQ por la tendencia (contaba lo
+reciente dos veces: el Nino a 42/semana) y avisaba con un día fuerte
+CADA día (White Haven "se acaba en 4 días"): la tabla de Crown del
+2026-11-18 los sacó.
 Prueba: `test-pedido`, con los días del Nino Ardevi. Sigue: la fase 2
 (Running out y el correo con esto), antes una tabla de nueva contra vieja.
 

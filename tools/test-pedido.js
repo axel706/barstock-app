@@ -8,11 +8,13 @@
  *
  *   1. La tendencia sigue lo reciente (el Nino vende más que en agosto),
  *      pero una semana de fiesta sola no la mueve (mediana de 4).
- *   2. El total sale de Pour·IQ cuando lo hay, con la tendencia encima.
+ *   2. Lo que se usa: lo MAYOR de Pour·IQ y lo reciente de Toast, sin
+ *      multiplicar (la primera versión contaba lo reciente dos veces).
  *   3. Se pide lo de UNA vuelta del proveedor: uso + colchón − lo que
  *      habrá al llegar. Nunca negativo. Vino en múltiplos de 3.
  *   4. El colchón cubre ~80 % (0.84 σ, a escala de la vuelta).
- *   5. La entrega cuenta a su hora: la de las 4 PM no cubre el mediodía.
+ *   5. El aviso: lo típico más el colchón (no un día fuerte cada día), y
+ *      la entrega a su hora: la de las 4 PM no cubre el mediodía.
  *   6. Con los números del Nino del 18 de noviembre (3.1 botellas un
  *      miércoles), se acaba hoy o mañana: la regla vieja no lo veía.
  *
@@ -70,19 +72,23 @@ grupo('1 · la tendencia');
   prueba('sin Toast suficiente, 1', P.demanda({ pouriq: { avg: 10, sd: 2, semanas: 8 }, toast: null, hoy: HOY }).tendencia === 1);
 }
 
-grupo('2 · el total: Pour·IQ con la tendencia encima; Toast si no hay Pour·IQ');
+grupo('2 · lo que se usa por semana: lo MAYOR de Pour·IQ y lo reciente de Toast, sin multiplicar');
 {
-  const d = P.demanda({ pouriq: { avg: 16, sd: 4, semanas: 10 }, toast: { porDia: NINO, cargados }, hoy: HOY });
-  prueba('Pour·IQ × tendencia', Math.abs(d.semanal - 16 * d.tendencia) < 1e-9 && d.fuente === 'pouriq+trend', d.semanal + ' ' + d.fuente);
-  prueba('y su σ también', Math.abs(d.sigma - 4 * d.tendencia) < 1e-9);
+  // Lo reciente de Toast del Nino: la mediana de las 4 últimas, 23.2.
+  const d = P.demanda({ pouriq: { avg: 28.9, sd: 6, semanas: 10 }, toast: { porDia: NINO, cargados }, hoy: HOY });
+  // La primera versión multiplicaba 28.9 × 1.42 = 41: el Nino a 42 por
+  // semana en la tabla de Crown (2026-11-18), contando dos veces lo reciente.
+  prueba('Pour·IQ más alto: manda Pour·IQ, sin la tendencia encima (no 41)', Math.abs(d.semanal - 28.9) < 1e-9 && d.fuente === 'pouriq', d.semanal + ' ' + d.fuente);
+  const r = P.demanda({ pouriq: { avg: 12, sd: 3, semanas: 10 }, toast: { porDia: NINO, cargados }, hoy: HOY });
+  prueba('lo reciente de Toast más alto: manda Toast (el producto se disparó)', Math.abs(r.semanal - 23.245) < 0.01 && r.fuente === 'toast-recent', r.semanal + ' ' + r.fuente);
+  prueba('y la σ de los conteos, a escala de lo de ahora', Math.abs(r.sigma - 3 * r.semanal / 12) < 1e-9);
+  prueba('la tendencia queda como dato, no entra en la cuenta', d.tendencia > 1.35 && Math.abs(d.semanal - 28.9) < 1e-9);
   prueba('la semana se reparte con la forma de Toast (el lunes, 0)', d.porDia[1] === 0 && d.porDia[6] > d.porDia[3], JSON.stringify(d.porDia.map(x => +x.toFixed(2))));
   prueba('y suma lo de la semana', Math.abs(d.porDia.reduce((a, b) => a + b, 0) - d.semanal) < 1e-9);
   const t = P.demanda({ pouriq: { avg: 16, sd: 4, semanas: 2 }, toast: { porDia: NINO, cargados }, hoy: HOY });
   prueba('Pour·IQ con menos de 4 semanas: Toast (mediana de las 4 últimas)', t.fuente === 'toast' && Math.abs(t.semanal - 23.245) < 0.01, t.fuente + ' ' + t.semanal);
-  const s = P.demanda({ pouriq: { avg: 14, sd: 2, semanas: 6 }, toast: null, hoy: HOY });
-  prueba('sin Toast: Pour·IQ repartido por igual', s.fuente === 'pouriq' && s.porDia.every(x => Math.abs(x - 2) < 1e-9));
-  prueba('el día fuerte del miércoles: el 75 % de los 6 últimos (≈3.8), no la mediana de 13 (1.3)', Math.abs(t.fuerte[3] - 3.84) < 0.01, String(t.fuerte[3]));
-  prueba('el fuerte nunca es menos que el típico', t.fuerte.every((x, i) => x >= t.porDia[i] - 1e-9));
+  const s2 = P.demanda({ pouriq: { avg: 14, sd: 2, semanas: 6 }, toast: null, hoy: HOY });
+  prueba('sin Toast: Pour·IQ repartido por igual', s2.fuente === 'pouriq' && s2.porDia.every(x => Math.abs(x - 2) < 1e-9));
 }
 
 grupo('3 y 4 · cuánto pedir para una vuelta del proveedor');
@@ -107,15 +113,24 @@ grupo('3 y 4 · cuánto pedir para una vuelta del proveedor');
     P.multiploPara({ vendor: 'WINE MERCHANT' }) === 3 && P.multiploPara({ vendor: 'Breakthru', vino: true }) === 3 && P.multiploPara({ vendor: 'BREAKTHRU' }) === 1);
 }
 
-grupo('5 · la entrega cuenta a su hora');
+grupo('5 · el aviso: lo típico más el colchón, y la entrega a su hora');
 {
-  // 2 al día; llegan 12 el jueves a las 4 PM (medio día de negocio).
-  const dem = { porDia: [2, 2, 2, 2, 2, 2, 2], fuerte: [2, 2, 2, 2, 2, 2, 2] };
+  // 2 al día, sin variación; llegan 12 el jueves a las 4 PM (medio día).
+  const dem = { porDia: [2, 2, 2, 2, 2, 2, 2], sigma: 0 };
   const viene = [{ cuando: NY('2026-11-19 16:00'), n: 12 }];
   const aguanta = P.seAcaba({ dem, stock: 1.5, viene, ahora: P.inicio('2026-11-19') });
   prueba('con 1.5 llega a la entrega (gasta 1 antes de las 4 PM) y no se acaba en la semana', aguanta === null || aguanta.enDias > 3, JSON.stringify(aguanta));
   const corto = P.seAcaba({ dem, stock: 0.8, viene, ahora: P.inicio('2026-11-19') });
   prueba('con 0.8 se acaba el jueves ANTES de que llegue (la regla vieja sumaba la entrega al empezar el día)', !!corto && corto.dia === '2026-11-19' && corto.en <= NY('2026-11-19 16:00'), JSON.stringify(corto));
+  prueba('en cero, se acaba ya', P.seAcaba({ dem, stock: 0, viene: [], ahora: P.inicio('2026-11-19') }).enDias === 0);
+  // El colchón adelanta el aviso: con σ, antes que sin σ.
+  const sin = P.seAcaba({ dem: { porDia: [1, 1, 1, 1, 1, 1, 1], sigma: 0 }, stock: 5, viene: [], ahora: P.inicio('2026-11-16') });
+  const con = P.seAcaba({ dem: { porDia: [1, 1, 1, 1, 1, 1, 1], sigma: 3 }, stock: 5, viene: [], ahora: P.inicio('2026-11-16') });
+  prueba('el colchón adelanta el aviso', !!sin && !!con && con.enDias < sin.enDias, JSON.stringify([sin, con]));
+  // White Haven en la tabla de Crown: 23.1 botellas, ~20 a la semana. Con
+  // un "día fuerte" cada día salía "se acaba el domingo" (4 días).
+  const wh = P.seAcaba({ dem: { porDia: [20 / 7, 20 / 7, 20 / 7, 20 / 7, 20 / 7, 20 / 7, 20 / 7], sigma: 5 }, stock: 23.1, viene: [], ahora: NY('2026-11-18 10:00') });
+  prueba('White Haven: no "se acaba en 4 días" (seis o más, o nada)', wh === null || wh.enDias >= 6, JSON.stringify(wh));
 }
 
 grupo('6 · el Nino del 18 de noviembre');
