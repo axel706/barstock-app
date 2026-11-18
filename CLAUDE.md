@@ -967,10 +967,18 @@ mío:
   y el botón de aplicar Pour·IQ.
 - `On the shelf` del Home, que ahora suma lo facturado desde el conteo.
 
-**Lo que sigue sin resolverse** de todo esto: por qué dos órdenes de Crown
-decían `waiting` teniendo factura. El enlace manual lo tapa, pero la causa
-raíz no se encontró. `await bsPorQue('CT-0207','CT-0204')` en la consola lo
-contestaría en segundos y nunca se corrió.
+**Estrenado el 2026-11-18, y no enlazaba nada:** MarginEdge da
+`invoice_date` sin hora, y `new Date('2026-11-16')` es la medianoche
+UTC, el DÍA ANTERIOR a las 7 PM en Nueva York. El conteo cierra el
+domingo por la noche (lunes ~02:30 UTC), así que una factura del lunes
+quedaba "antes del ciclo": el automático no la miraba (PLCB 2716029
+casaba al 100 % con CT-0219) y el reparto no se la daba a una orden
+colocada después del cierre, que decía `waiting` con su factura delante.
+Ahora una fecha sin hora es el mediodía de ese día en Nueva York
+(`order-receipts.fechaFactura`), y la usan el reparto y el automático.
+Es muy probablemente la causa de las órdenes `waiting` de Crown
+(CT-0207/CT-0204, entregas del lunes), sin comprobar con sus datos.
+Prueba: los dos grupos del 2026-11-16 en `test-enlace-auto`.
 
 ---
 
@@ -1264,8 +1272,9 @@ deja de acabarse se conserva y vuelve a su sitio. Prueba:
 - No hay forma de abrir el panel de una botella fuera de un conteo activo.
 - El manual de usuario (`docs/manual-usuario.md`) le faltan las secciones
   5–9 y nueve capturas.
-- La causa raíz de las órdenes `waiting` de Crown sigue sin encontrarse; el
-  enlace manual la tapa.
+- Las órdenes `waiting` de Crown: muy probablemente la fecha de factura
+  sin hora (arreglado el 2026-11-18, ver "Estrenado el 2026-11-18");
+  confirmarlo cuando una entrega del lunes llegue sin enlace a mano.
 - **Cargar hoy a mano desde Toast**: hecho (2026-11-13, sobre lámina).
   Es el botón **Sync** de la mini tarjeta "Sold" del Home, donde estaba
   Report (el reporte sigue en *Full report* de la tarjeta grande).

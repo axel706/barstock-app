@@ -145,6 +145,31 @@
     }
   }
 
+  // ── La fecha de una factura ──────────────────────────────────────────
+  //
+  // MarginEdge da la fecha de la factura sin hora ("2026-11-16"). Leída
+  // con new Date() es la medianoche UTC, que en Nueva York es el DÍA
+  // ANTERIOR a las 7 u 8 PM. El conteo cierra el domingo por la noche
+  // (9:37 PM el 15 de Crown, lunes 02:37 UTC), así que una factura del
+  // lunes quedaba "antes del ciclo": la orden decía "waiting" con su
+  // factura delante y el enlace automático ni la miraba (Axel,
+  // 2026-11-18: PLCB 2716029 casaba al 100 % con CT-0219 y no se
+  // enlazaba). Una fecha sin hora es el MEDIODÍA de ese día en Nueva
+  // York: dentro de su día, después de un conteo del domingo por la
+  // noche si es del lunes, y antes si es del domingo. La usan el reparto
+  // y el enlace automático: una sola regla.
+  const SOLO_FECHA = /^\d{4}-\d{2}-\d{2}$/;
+  function fechaFactura(x) {
+    const t = String(x == null ? '' : x).trim();
+    if (!t) return 0;
+    if (!SOLO_FECHA.test(t)) { const v = Date.parse(t); return isFinite(v) ? v : 0; }
+    // Las 12:00 de Nueva York: se prueba 17:00 UTC (invierno) y se
+    // corrige por la hora que de verdad marca Nueva York (16:00 en verano).
+    const g = Date.parse(t + 'T17:00:00Z');
+    const h = Number(new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', hourCycle: 'h23' }).format(new Date(g)));
+    return g - (h - 12) * 3600e3;
+  }
+
   // factura → recibos por artículo. `dueno` es factura → orden (los
   // enlaces a mano y los automáticos).
   function recibosDe(facturas, enlaces, dueno) {
@@ -169,7 +194,7 @@
         // recibido por el precio de TU catálogo: una orden de $55.78
         // en la factura aparecía como $71.98 recibidos.
         precio: Number(f.unit_price) || 0,
-        fecha: f.invoice_date ? new Date(f.invoice_date).getTime() : 0,
+        fecha: fechaFactura(f.invoice_date),
         factura: f.invoice_number || ''
       });
     }
@@ -286,5 +311,5 @@
     return resultado;
   }
 
-  window.BarStockOrderReceipts = { leer, recibosDe, repartir, leerTodo, norm, mismoNombre, MAX_ORDENES, PAGINA };
+  window.BarStockOrderReceipts = { leer, recibosDe, repartir, leerTodo, norm, mismoNombre, fechaFactura, MAX_ORDENES, PAGINA };
 })();

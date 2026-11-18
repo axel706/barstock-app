@@ -35,8 +35,11 @@ function prueba(n, c, d) {
 }
 const grupo = t => console.log('\n' + t);
 
-const w = { console: { warn() {} } };
+const w = { console: { warn() {} }, Intl, Date };
 global.window = w;
+// La fecha de una factura la decide order-receipts.js (fechaFactura),
+// que en la app se carga antes: el reparto y el enlace, una sola regla.
+new Function('window', fs.readFileSync(path.join(RAIZ, 'src/order-receipts.js'), 'utf8'))(w);
 // `fetch` se inyecta como parametro y se delega a `w.fetch` en cada
 // llamada: dentro del modulo se resuelve del ambito, no de `window`,
 // asi que reasignar `w.fetch` a mitad del test no le llegaria.
@@ -118,6 +121,52 @@ grupo('el proveedor distinto no estorba');
   });
   prueba('casa igual', r[0].enlaza === 'O-LOOP', String(r[0].enlaza));
   prueba('y consta que el proveedor no coincide', r[0].candidatas[0].prov === 0);
+}
+
+grupo('una factura del lunes es de la semana que abrió el conteo del domingo (Crown, 2026-11-16)');
+{
+  // El conteo cerró el domingo 15 a las 9:37 PM de Nueva York (lunes
+  // 02:37 UTC). La factura 2716029 de PLCB dice "2026-11-16", sin hora:
+  // leída como medianoche UTC era el DOMINGO a las 7 PM en Nueva York,
+  // "antes del ciclo", y no se miraba. Casaba al 100 % con CT-0219.
+  const r = A.proponer({ desde: '2026-11-16T02:37:08.374Z', enlaces: enlaces(),
+    lineas: factura('2716029', '2026-11-16', 'Pennsylvania Liquor Control Board (PLCB)',
+      [['Tito Vodka', 6, 27], ['Bombay', 3, 22], ['Jameson', 2, 31]]),
+    ordenes: [orden('CT-0219', '2026-11-16T15:00:00Z', 'BREAKTHRU', 265)],
+    lineasOrden: lineasDe('CT-0219', [['Tito Vodka', 6, 27], ['Bombay', 3, 22], ['Jameson', 2, 31]]) });
+  prueba('la factura del lunes se mira y se enlaza', r.length === 1 && r[0].enlaza === 'CT-0219', JSON.stringify(r.map(x => [x.factura, x.enlaza, x.porQueNo])));
+  // Y una del domingo, el día del conteo, sigue fuera: lo que llegó el
+  // domingo estaba en la estantería al contar.
+  const d = A.proponer({ desde: '2026-11-16T02:37:08.374Z', enlaces: enlaces(),
+    lineas: factura('DOM', '2026-11-15', 'LOOP', [['Tito Vodka', 6, 27]]),
+    ordenes: [orden('CT-0219', '2026-11-16T15:00:00Z', 'BREAKTHRU', 162)],
+    lineasOrden: lineasDe('CT-0219', [['Tito Vodka', 6, 27]]) });
+  prueba('la del domingo del conteo, no', d.length === 0, JSON.stringify(d.map(x => x.factura)));
+}
+
+grupo('el reparto: una orden del ciclo reclama la factura del lunes, sin enlace (el "waiting" de Crown)');
+{
+  // Sin ningún enlace: el reparto decide por fecha. La orden se colocó
+  // después del cierre, así que su suelo es el arranque del ciclo, y la
+  // factura del lunes leída como medianoche UTC quedaba debajo: "waiting"
+  // con la factura delante.
+  const RC = w.BarStockOrderReceipts;
+  const ini = Date.parse('2026-11-16T02:37:08.374Z');
+  const recibos = RC.recibosDe(factura('2716029', '2026-11-16', 'PLCB', [['Tito Vodka', 6, 27]]), enlaces(), new Map());
+  const rep = RC.repartir({ recortadas: [orden('CT-0219', '2026-11-16T15:00:00Z', 'BREAKTHRU', 162)],
+    lineas: lineasDe('CT-0219', [['Tito Vodka', 6, 27]]), recibos, inicioCiclo: ini });
+  const l = (rep.get('CT-0219') || [])[0] || {};
+  prueba('la orden recibe lo de la factura del lunes', l.recibido === 6, JSON.stringify(l));
+  const dom = RC.recibosDe(factura('DOM', '2026-11-15', 'LOOP', [['Tito Vodka', 6, 27]]), enlaces(), new Map());
+  const rep2 = RC.repartir({ recortadas: [orden('CT-0219', '2026-11-16T15:00:00Z', 'BREAKTHRU', 162)],
+    lineas: lineasDe('CT-0219', [['Tito Vodka', 6, 27]]), recibos: dom, inicioCiclo: ini });
+  prueba('y no la del domingo del conteo', ((rep2.get('CT-0219') || [])[0] || {}).recibido === 0);
+  // Una fecha sin hora es el mediodía de ese día en Nueva York, en
+  // invierno y en verano.
+  prueba('mediodía de Nueva York (invierno)', RC.fechaFactura('2026-11-16') === Date.parse('2026-11-16T17:00:00Z'), new Date(RC.fechaFactura('2026-11-16')).toISOString());
+  prueba('mediodía de Nueva York (verano)', RC.fechaFactura('2026-07-01') === Date.parse('2026-07-01T16:00:00Z'));
+  prueba('una fecha con hora se respeta', RC.fechaFactura('2026-11-16T09:30:00Z') === Date.parse('2026-11-16T09:30:00Z'));
+  prueba('sin fecha, 0', RC.fechaFactura('') === 0 && RC.fechaFactura(null) === 0);
 }
 
 grupo('EL PASADO NO SE TOCA');

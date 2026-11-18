@@ -91,8 +91,15 @@
 
   const n = (x) => Number(x) || 0;
 
+  // Una fecha sin hora ("2026-11-16") es el mediodía de ese día en Nueva
+  // York: la regla de order-receipts.js (fechaFactura), la misma que el
+  // reparto. Con Date.parse era la medianoche UTC, el día anterior a las
+  // 7 PM allí, y una factura del lunes quedaba antes de un conteo del
+  // domingo por la noche: no se miraba (PLCB 2716029, 2026-11-18).
+  const cuando = (x) => window.BarStockOrderReceipts.fechaFactura(x);
+
   function dias(a, b) {
-    const ta = Date.parse(a || ''), tb = Date.parse(b || '');
+    const ta = cuando(a) || NaN, tb = cuando(b) || NaN;
     if (!isFinite(ta) || !isFinite(tb)) return DIAS_LEJOS;
     return Math.abs(ta - tb) / 86400000;
   }
@@ -194,13 +201,13 @@
     facturas.forEach(f => {
       if (ya.has(f.id)) return;
       // Sólo el ciclo abierto. Lo de antes ya está bien y no se toca.
-      if (desde && Date.parse(f.fecha || '') < desde) return;
+      if (desde && cuando(f.fecha) < desde) return;
       if (!f.items.size) return;   // ningún producto identificable
 
       const cands = [];
       ordenes.forEach(o => {
         if (!o.items.size) return;
-        if (desde && Date.parse(o.fecha || '') < desde) return;
+        if (desde && cuando(o.fecha) < desde) return;
         cands.push(Object.assign({ orden: o.id, etiqueta: o.etiqueta }, puntuar(f, o)));
       });
       cands.sort((a, b) => b.puntos - a.puntos);
