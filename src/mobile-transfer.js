@@ -104,7 +104,11 @@
         const x = await t.crear({ otra: e.otra, entra: e.entra, item: r.item, otroItem: pareja, qty: e.qty, antes: e.antes, conteo, por: quien() });
         if (!x.ok) { pintar(x.error || 'It was not saved.'); return; }
         cerrar();
-        if (window.BarStockToast) window.BarStockToast.show('Transfer saved · ' + t.nombreDe(locs, e.otra) + ' will confirm it');
+        // Si una de las cuentas no se pudo (Pour·IQ, la orden), se dice: el
+        // transfer está guardado, pero no todo lo que cuelga de él.
+        if (window.BarStockToast) window.BarStockToast.show(x.aviso
+          ? 'Transfer saved, but not everything: ' + x.aviso
+          : 'Transfer saved · ' + t.nombreDe(locs, e.otra) + ' will confirm it');
         if (LC && LC.caducar) LC.caducar();
         if (alTerminar) alTerminar(x.transfer);
       };

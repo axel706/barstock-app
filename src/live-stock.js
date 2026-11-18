@@ -118,6 +118,21 @@
       f.llegadas.push({ n: r.qty, cuando: r.fecha, de: '' });
     }
 
+    // ── Lo que salió a otra locación (transfers, 2026-11-18) ───────────
+    //
+    // Lo que entra de otra locación llega como una orden (transfers.js
+    // la crea en la que recibe) y suma arriba con las demás. Lo que SALE
+    // no tiene orden ni factura: se resta aquí, desde su hora, si es de
+    // después del conteo. Uno de antes del conteo ya no estaba al contar.
+    for (const sx of o.salidas || []) {
+      const cuando = sx && sx.cuando ? new Date(sx.cuando).getTime() : NaN;
+      if (!sx || !(sx.n > 0) || isNaN(cuando) || !(cuando > o.conteo) || cuando > ahora) continue;
+      const f = fila(sx.item);
+      f.llego -= sx.n;
+      f.de.push('transfer to ' + (sx.a || 'another location') + ' −' + sx.n);
+      f.llegadas.push({ n: -sx.n, cuando, de: 'Transfer to ' + (sx.a || 'another location') });
+    }
+
     for (const v of o.vendido || []) {
       if (!v || !v.botellas) continue;
       const f = fila(v.producto);
@@ -204,11 +219,23 @@
       try { verificaciones = await SC.leer(conteo); }
       catch (e) { console.warn('[live] sin verificaciones:', e && e.message || e); verificaciones = []; }
     }
+    // Lo que salió a otra locación (transfers.js): lo registrado aquí o
+    // confirmado aquí. Sin la tabla (o sin el módulo, en el servidor
+    // antes de cargarlo) sigue sin ello y lo dice.
+    let salidas = [];
+    const TR = window.BarStockTransfers;
+    if (TR && TR.leer) {
+      try {
+        const [filas, locs] = await Promise.all([TR.leer(), TR.locaciones().catch(() => [])]);
+        salidas = filas.filter(t => t.from_location === locId && TR.cuentaAqui(t, locId) && !t.before_count && t.from_item)
+          .map(t => ({ item: t.from_item, n: Number(t.qty) || 0, cuando: t.moved_at, a: TR.nombreDe(locs, t.to_location) }));
+      } catch (e) { console.warn('[live] sin transfers:', e && e.message || e); salidas = []; }
+    }
     const U = window.BarStockToastUsage;
     const horas = new Map((uso.dias || []).map(d => [d.business_date, d && d.hours && d.hours.q]));
     return calcular({
       master: master || [],
-      ordenes: datos.recortadas, repartido, recibos,
+      ordenes: datos.recortadas, repartido, recibos, salidas,
       conteo: new Date(conteo).getTime(), diaConteo: uso.desde,
       vendido: uso.productos, ahora: hasta, verificaciones,
       diaDe: U && U.diaDeNegocio, fraccion: (d, t) => (U && U.fraccionDia ? U.fraccionDia(horas.get(d), t) : null)

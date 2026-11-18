@@ -1334,6 +1334,29 @@ lo ha confirmado. Lo de Crown se arregló a mano (semana del 9 de
 noviembre de Triage Vodka: `ordered` 12, `used` 20.85); W+B se dejó
 como estaba (Axel: su conteo de hace 15 días ya salió bajo).
 
+**Transfers entre locaciones (2026-11-18, fases 1–3 hechas; plan en
+`docs/plan-transfer.md`).** Migración 045 (`location_transfers`),
+corrida por Axel. Quien lo registra (ficha › "⇄ Transfer",
+`src/mobile-transfer.js`) lo aplica al momento en SU locación; la otra lo
+confirma sin mover un dedo (`src/transfer-confirm.js`: la primera tarjeta
+del Home, la campana y el bloque "Transfers" de la ficha) o dice "Not
+right", que llega a la campana de quien lo mandó. Cada lado pone SU
+producto (Triage Vodka en Crown, Triage House Vodka en W+B); la pareja se
+recuerda; sin pareja ni nombre igual, se elige de una lista (nunca a
+ciegas). Sólo con "Make and send orders". **Las cuentas**
+(`src/transfers.js`, `aplicar`/`revertir`): cada app aplica su lado al
+registrar o confirmar. Pour·IQ ±qty en `ordered` de su semana (con
+"Before the count", en la semana que cerró el conteo, también `used`);
+la que RECIBE tiene una orden "TRANSFER" (quick-order.save, sin
+proveedor en sus líneas: no marca el suyo como colocado) que llega a la
+hora del transfer: sale en Sent, suma al LIVE y es a lo que se enlaza la
+factura de "Internal Transfers"; la que DA resta en el LIVE
+(`live-stock` › `salidas`). Undo (mientras no haya un conteo después) y
+"Not right" quitan lo aplicado y borran la orden. `transfers.js` va antes
+de `live-stock.js` y también en `MODULOS` del correo. Pruebas:
+`test-transfers`, `test-transfer-confirm`. **Falta la fase 4:** enlazar
+sola la factura y "It arrived before the count" desde la factura.
+
 **Fijar arriba en Running out (2026-11-15, lámina B).** "Edit order"
 en la pantalla de revisión: las tarjetas sin botones y con asa (≡);
 arrastrar por encima de "By date" fija, por debajo suelta; "Reset" y

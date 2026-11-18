@@ -75,7 +75,9 @@
     const mio = productoDe(t);
     if (!mio) return elegir(t, () => confirmar(t));
     const r = await T().confirmar(t, mio, quien());
-    toast(r.ok ? 'Confirmed · ' + n(t.qty) + ' ' + mio + ' from ' + deDonde(t) : 'Not confirmed: ' + (r.error || 'unknown error'));
+    toast(!r.ok ? 'Not confirmed: ' + (r.error || 'unknown error')
+      : r.aviso ? 'Confirmed, but not everything: ' + r.aviso
+      : 'Confirmed · ' + n(t.qty) + ' ' + mio + (T().entra(t, _loc) ? ' from ' : ' to ') + deDonde(t));
     if (r.ok) { const LC = window.BarStockLiveCache; if (LC && LC.caducar) LC.caducar(); }
   }
   async function noEsAsi(t) {
@@ -88,7 +90,9 @@
     }) : window.confirm('Mark this transfer as not right?');
     if (!ok) return;
     const r = await T().rechazar(t, 'Not right at ' + T().nombreDe(_locs, _loc), quien());
-    toast(r.ok ? 'Marked not right · ' + deDonde(t) + ' will see it' : 'Not saved: ' + (r.error || 'unknown error'));
+    toast(!r.ok ? 'Not saved: ' + (r.error || 'unknown error')
+      : r.aviso ? 'Marked not right, but not everything was undone: ' + r.aviso
+      : 'Marked not right · ' + deDonde(t) + ' will see it');
   }
   const toast = (x) => { if (window.BarStockToast) window.BarStockToast.show(x); };
 

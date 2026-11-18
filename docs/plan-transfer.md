@@ -43,11 +43,11 @@ en el Home, campana y chip en la ficha).
 
 ## Fases
 
-1. **Migración 045** (`location_transfers`) — escrita y probada contra
+1. **(Hecha.) Migración 045** (`location_transfers`) — escrita y probada contra
    Postgres 16. La corre Axel.
-2. **Registrar y confirmar:** el botón ⇄ Transfer en la ficha, la hoja,
+2. **(Hecha.) Registrar y confirmar:** el botón ⇄ Transfer en la ficha, la hoja,
    la tarjeta del Home, la campana y el chip; "Not right" y Undo.
-3. **Las cuentas:** la orden en Sent al confirmar, el −qty de la que da
+3. **(Hecha.) Las cuentas:** la orden en Sent al confirmar, el −qty de la que da
    en el LIVE, y Pour·IQ.
 4. **La factura:** enlazarla sola, y "It arrived before the count" (el
    camino 2) que crea el transfer desde la factura.

@@ -43,6 +43,12 @@ function entorno(o) {
     const cuerpo = op && op.body ? JSON.parse(op.body) : null;
     w.__pet.push({ url: u, metodo: m, cuerpo, prefer: op && op.headers && op.headers.Prefer });
     if (m === 'POST') { const f = Object.assign({ id: 'tr-' + (w.__filas.length + 1), status: 'pending', created_at: new Date().toISOString() }, cuerpo); w.__filas.push(f); return { ok: true, status: 201, text: async () => JSON.stringify([f]) }; }
+    if (m === 'PATCH' && /inventory_snapshots/.test(u)) {
+      const id = decodeURIComponent((u.match(/id=eq\.([^&]+)/) || [])[1] || '');
+      (w.__snaps || []).filter(x => x.id === id).forEach(x => Object.assign(x, cuerpo));
+      return { ok: true, status: 204, text: async () => '' };
+    }
+    if (m === 'DELETE') return { ok: true, status: 204, text: async () => '' };
     if (m === 'PATCH') {
       const id = decodeURIComponent((u.match(/id=eq\.([^&]+)/) || [])[1] || '');
       const solo = (u.match(/status=(eq|in)\.([^&]+)/) || [])[2];
@@ -58,8 +64,20 @@ function entorno(o) {
     if (/^location_transfers/.test(ruta)) return w.__filas.slice();
     if (/^locations/.test(ruta)) return [{ id: CROWN, name: 'The Crown Tavern' }, { id: WB, name: "Will's & Bill's" }];
     if (/^inventory_items/.test(ruta)) return [{ item_name: 'Triage House Vodka' }, { item_name: 'Tito' }, { item_name: 'Tito' }];
+    if (/^inventory_snapshots/.test(ruta)) {
+      const loc = (ruta.match(/location_id=eq\.([^&]+)/) || [])[1];
+      const item = decodeURIComponent((ruta.match(/item_name=eq\.([^&]+)/) || [])[1] || '');
+      const cerrada = /on_hand_end=not\.is\.null/.test(ruta);
+      return (w.__snaps || []).filter(x => x.loc === loc && x.item === item && (cerrada ? x.on_hand_end != null : x.on_hand_end == null))
+        .sort((a, b) => (a.week_start < b.week_start ? 1 : -1));
+    }
     return [];
   } };
+  w.__snaps = (o.snaps || []).map(x => Object.assign({}, x));
+  w.__ordenes = [];
+  w.state = { master: [{ item: 'Triage Vodka', code: 'TV1', value: 5.5 }] };
+  w.BarStockQuickOrder = { save: async (d) => { w.__ordenes.push(d); return { entrada: { id: 'ord_' + w.__ordenes.length } }; } };
+  w.loadOrdersFromCloud = async () => { w.__recargas = (w.__recargas || 0) + 1; };
   if (existe('src/transfers.js')) w.eval(leer('src/transfers.js'));
   return w;
 }
@@ -158,6 +176,79 @@ grupo('4 · leer');
   prueba('los productos de la otra, sin repetir', prods.join(',') === 'Triage House Vodka,Tito');
   const locs = await T.locaciones();
   prueba('las locaciones de la cuenta', locs.length === 2 && w.__pet.some(x => /^locations\?account_id=eq\.wjm-hospitality/.test(x.url)));
+}
+
+grupo('4b · las cuentas: Pour·IQ, la orden en Sent, deshacer (fase 3)');
+{
+  const SN = [
+    { id: 's-c-abierta', loc: CROWN, item: 'Triage Vodka', week_start: '2026-11-16', ordered: null, used: null, on_hand_end: null },
+    { id: 's-c-cerrada', loc: CROWN, item: 'Triage Vodka', week_start: '2026-11-09', ordered: null, used: 8.85, on_hand_end: 21.95 },
+    { id: 's-w-abierta', loc: WB, item: 'Triage House Vodka', week_start: '2026-11-16', ordered: null, used: null, on_hand_end: null },
+    { id: 's-w-cerrada', loc: WB, item: 'Triage House Vodka', week_start: '2026-11-09', ordered: null, used: 14.4, on_hand_end: 55.5 }
+  ];
+  const snap = (w, id) => w.__snaps.find(x => x.id === id);
+  // Crown lo registra "Into Crown, Now": su lado se aplica ya.
+  let w = entorno({ snaps: SN });
+  let T = w.BarStockTransfers;
+  let r = await T.crear({ otra: WB, entra: true, item: 'Triage Vodka', otroItem: 'Triage House Vodka', qty: 12, por: 'Axel' });
+  prueba('Now: +12 a lo pedido de la semana ABIERTA de Crown (used sale al cerrarla)', snap(w, 's-c-abierta').ordered === 12 && snap(w, 's-c-abierta').used == null &&
+    snap(w, 's-c-cerrada').ordered == null, JSON.stringify(w.__snaps.slice(0, 2)));
+  prueba('W+B no se toca hasta que confirme', snap(w, 's-w-abierta').ordered == null);
+  const o = w.__ordenes[0];
+  prueba('en Crown, una orden TRANSFER que llega a la hora del transfer (Orders › Sent)', !!o && o.vendor === 'TRANSFER' &&
+    o.arrivesAt === w.__filas[0].moved_at && o.items.length === 1 && o.items[0].item === 'Triage Vodka' && o.items[0].qty === 12 &&
+    o.items[0].value === 5.5 && !('vendor' in o.items[0]) && /Transfer from Will's & Bill's/.test(o.note), JSON.stringify(o));
+  prueba('y el transfer apunta a su orden', w.__filas[0].vendor_order_id === 'ord_1');
+  // W+B confirma: su lado (la que da) se aplica.
+  const w2 = entorno({ loc: WB, snaps: SN, filas: [Object.assign({}, w.__filas[0])] });
+  r = await w2.BarStockTransfers.confirmar(w2.__filas[0], 'Triage House Vodka', 'Mia');
+  prueba('al confirmar W+B: −12 en su semana abierta, y ninguna orden (la que da no espera factura)', r.ok && snap(w2, 's-w-abierta').ordered === -12 && !w2.__ordenes.length);
+
+  // "Before the count", registrado en Crown: la semana que cerró el conteo, y su used.
+  w = entorno({ snaps: SN });
+  r = await w.BarStockTransfers.crear({ otra: WB, entra: true, item: 'Triage Vodka', qty: 12, antes: true, conteo: '2026-11-16T02:30:00Z' });
+  prueba('Before the count: +12 a lo pedido y a lo usado de la semana CERRADA (8.85 → 20.85)', snap(w, 's-c-cerrada').ordered === 12 &&
+    snap(w, 's-c-cerrada').used === 20.85 && snap(w, 's-c-abierta').ordered == null, JSON.stringify(snap(w, 's-c-cerrada')));
+  prueba('su orden llega antes del conteo (el LIVE no la suma)', w.__ordenes[0] && Date.parse(w.__ordenes[0].arrivesAt) < Date.parse('2026-11-16T02:30:00Z'));
+
+  // Deshacer un confirmado: los dos lados vuelven, y la orden se borra.
+  w = entorno({ snaps: SN.map(x => Object.assign({}, x, { ordered: x.id === 's-c-abierta' ? 12 : x.id === 's-w-abierta' ? -12 : x.ordered })),
+    filas: [Object.assign({}, BASE, { status: 'confirmed', to_item: 'Triage Vodka', vendor_order_id: 'ord_7', created_at: new Date().toISOString() })] });
+  r = await w.BarStockTransfers.deshacer(w.__filas[0], 'Axel', '2026-11-16T02:30:00Z');
+  const borra = w.__pet.filter(x => x.metodo === 'DELETE').map(x => x.url);
+  prueba('Undo de un confirmado: los dos lados a 0 y su orden borrada', r.ok && snap(w, 's-c-abierta').ordered === 0 && snap(w, 's-w-abierta').ordered === 0 &&
+    borra.some(u => /vendor_orders\?app_order_id=eq\.ord_7/.test(u)) && borra.some(u => /vendor_order_items\?app_order_id=eq\.ord_7/.test(u)), JSON.stringify([w.__snaps, borra]));
+
+  // "Not right" de un pendiente: sólo se quita lo de quien lo registró (W+B).
+  w = entorno({ snaps: SN.map(x => Object.assign({}, x, { ordered: x.id === 's-w-abierta' ? -12 : x.ordered })), filas: [Object.assign({}, BASE)] });
+  r = await w.BarStockTransfers.rechazar(w.__filas[0], 'no', 'Axel');
+  prueba('"Not right": W+B (que lo registró) vuelve a 0; Crown no se toca', r.ok && snap(w, 's-w-abierta').ordered === 0 && snap(w, 's-c-abierta').ordered == null);
+
+  // Sin semana de Pour·IQ: el transfer queda, y se dice.
+  w = entorno({ snaps: [] });
+  r = await w.BarStockTransfers.crear({ otra: WB, entra: false, item: 'Tito', qty: 2 });
+  prueba('si Pour·IQ no se pudo, el transfer queda y lo dice', r.ok && /Pour·IQ/.test(r.aviso || ''), JSON.stringify(r));
+}
+
+grupo('4c · el LIVE de la que da (live-stock.js)');
+{
+  const v = new JSDOM('<!doctype html><body></body>', { runScripts: 'outside-only' }).window;
+  v.console = { log() {}, warn() {}, error() {} };
+  v.eval(leer('src/order-receipts.js'));
+  v.eval(leer('src/live-stock.js'));
+  const L = v.BarStockLive;
+  const base = { master: [{ item: 'Tito', onHand: 10 }], ordenes: [], repartido: new Map(), recibos: [], vendido: [],
+    conteo: Date.parse('2026-11-16T02:30:00Z'), diaConteo: '2026-11-15', ahora: Date.parse('2026-11-18T20:00:00Z') };
+  const f = (o) => L.calcular(Object.assign({}, base, o)).find(x => x.producto === 'Tito');
+  const sal = f({ salidas: [{ item: 'Tito', n: 2, cuando: '2026-11-17T18:00:00Z', a: "Will's & Bill's" }] });
+  prueba('lo que salió después del conteo resta (10 − 2 = 8)', sal.live === 8 && sal.llego === -2 && sal.movimiento === true, JSON.stringify(sal));
+  prueba('y queda dicho de dónde', sal.de.some(x => /transfer to Will's & Bill's −2/.test(x)) && sal.llegadas.some(x => x.n === -2));
+  prueba('lo de antes del conteo, no', f({ salidas: [{ item: 'Tito', n: 2, cuando: '2026-11-15T20:00:00Z' }] }).live === 10);
+  const ls = leer('src/live-stock.js');
+  prueba('armarFilas lee las salidas que cuentan aquí, sin las de antes del conteo', /salidas = filas\.filter\(t => t\.from_location === locId && TR\.cuentaAqui\(t, locId\) && !t\.before_count/.test(ls));
+  const idx = leer('index.html');
+  prueba('transfers.js antes de live-stock.js', idx.indexOf('src/transfers.js?') > 0 && idx.indexOf('src/transfers.js?') < idx.indexOf('src/live-stock.js?'));
+  prueba('y el correo del servidor lo carga antes también', (() => { const m = require(path.join(RAIZ, 'lib/morning-cron.js')).MODULOS; return m.indexOf('transfers') >= 0 && m.indexOf('transfers') < m.indexOf('live-stock'); })());
 }
 
 grupo('5 · la hoja "⇄ Transfer" (src/mobile-transfer.js)');

@@ -101,6 +101,86 @@
     return !(c > Date.parse(t.created_at));
   }
 
+  // ── Las cuentas de cada lado (fase 3) ────────────────────────────────
+  //
+  // Un lado se APLICA cuando el transfer empieza a contar en él: el que lo
+  // registra, al registrarlo; el otro, al confirmar. Cada app aplica SU
+  // lado (la locación abierta), con su maestro:
+  //   · Pour·IQ: ±qty en `ordered` de su semana en inventory_snapshots
+  //     (lo que hace "Received" con una entrega: no es consumo). Con
+  //     `before_count`, en la semana que cerró el conteo, y su `used` se
+  //     rehace (+qty en la que recibe, −qty en la que da: el SQL del
+  //     2026-11-18 de Triage Vodka). Si no, en la semana abierta, y `used`
+  //     sale al cerrarla.
+  //   · La que RECIBE: una orden "TRANSFER" con la misma función que la
+  //     Quick order (quick-order.save), que llega a la hora del transfer.
+  //     Es lo que se ve en Orders › Sent, a lo que se enlaza la factura
+  //     de "Internal Transfers" y lo que suma al LIVE. Sus líneas van sin
+  //     proveedor: no cuentan como "pedido colocado" del suyo.
+  //   · La que DA: nada que escribir; live-stock resta lo que sale.
+  // Deshacer o "Not right" lo quitan del lado que se aplicó.
+  //
+  // Un fallo aquí no deshace el transfer: se dice qué no se pudo.
+  async function ajustarSemana(locId, item, delta, cerrada) {
+    if (!item || !delta) return;
+    const base = 'inventory_snapshots?location_id=eq.' + locId + '&item_name=eq.' + encodeURIComponent(item);
+    const filas = await window.BarStockRest.leerTodo(base + '&on_hand_end=' + (cerrada ? 'not.is.null' : 'is.null') +
+      '&select=id,ordered,used,on_hand_end,week_start&order=week_start.desc');
+    const f = filas[0];
+    if (!f) throw new Error('No week of ' + item + ' to put it in (Pour·IQ).');
+    const cambio = { ordered: Math.round(((Number(f.ordered) || 0) + delta) * 100) / 100 };
+    if (cerrada && f.used != null) cambio.used = Math.round(((Number(f.used) || 0) + delta) * 100) / 100;
+    await pedir('inventory_snapshots?id=eq.' + encodeURIComponent(f.id), 'PATCH', cambio);
+  }
+  async function borrarOrden(appId) {
+    if (!appId) return;
+    const q = '?app_order_id=eq.' + encodeURIComponent(appId);
+    await pedir('vendor_order_items' + q, 'DELETE');
+    await pedir('vendor_orders' + q, 'DELETE');
+  }
+
+  async function aplicar(t, loc) {
+    const yoRecibo = t.to_location === loc;
+    const item = yoRecibo ? t.to_item : t.from_item;
+    const qty = Number(t.qty) || 0;
+    const errores = [];
+    try { await ajustarSemana(loc, item, yoRecibo ? qty : -qty, !!t.before_count); }
+    catch (e) { errores.push('Pour·IQ: ' + (e && e.message || e)); }
+    if (yoRecibo) {
+      try {
+        const Q = window.BarStockQuickOrder;
+        if (!Q || !Q.save) throw new Error('orders are not loaded');
+        const r = (window.state && window.state.master || []).find(x => x && x.item === item) || { item };
+        const locs = await locaciones().catch(() => []);
+        const de = nombreDe(locs, t.from_location);
+        const res = await Q.save({ vendor: 'TRANSFER', when: new Date(t.moved_at), arrivesAt: t.moved_at,
+          note: 'Transfer from ' + de, items: [{ item, code: r.code || '', value: Number(r.value) || 0, qty }] });
+        const id = res && res.entrada && res.entrada.id;
+        if (id) await pedir('location_transfers?id=eq.' + encodeURIComponent(t.id), 'PATCH', { vendor_order_id: String(id) });
+      } catch (e) { errores.push('Orders: ' + (e && e.message || e)); }
+    }
+    return errores;
+  }
+
+  // lados: qué lados estaban aplicados ('from', 'to').
+  async function revertir(t, lados) {
+    const errores = [];
+    const qty = Number(t.qty) || 0;
+    for (const l of lados) {
+      const loc = l === 'to' ? t.to_location : t.from_location;
+      const item = l === 'to' ? t.to_item : t.from_item;
+      try { await ajustarSemana(loc, item, l === 'to' ? -qty : qty, !!t.before_count); }
+      catch (e) { errores.push('Pour·IQ: ' + (e && e.message || e)); }
+      if (l === 'to' && t.vendor_order_id) {
+        try { await borrarOrden(t.vendor_order_id); } catch (e) { errores.push('Orders: ' + (e && e.message || e)); }
+      }
+    }
+    if (window.loadOrdersFromCloud) { try { await window.loadOrdersFromCloud(); } catch (e) {} }
+    return errores;
+  }
+  const ladoDe = (t, loc) => (t.to_location === loc ? 'to' : 'from');
+  const conAviso = (r, errores) => (errores && errores.length ? Object.assign(r, { aviso: errores.join(' · ') }) : r);
+
   // ── Escribir ─────────────────────────────────────────────────────────
   //
   // o = { otra, entra: true|false, item, otroItem, qty, antes, conteo, por }
@@ -133,8 +213,10 @@
         created_by: corto(o.por), note: corto(o.nota, 200)
       };
       const r = await pedir('location_transfers', 'POST', fila, 'return=representation');
+      const t = Array.isArray(r) ? r[0] : r;
+      const errores = t ? await aplicar(t, loc) : [];
       olvidar(); avisar();
-      return { ok: true, transfer: Array.isArray(r) ? r[0] : r };
+      return conAviso({ ok: true, transfer: t }, errores);
     } catch (e) { return { ok: false, error: String(e && e.message || e) }; }
   }
 
@@ -150,9 +232,10 @@
       const cambio = { status: 'confirmed', status_by: corto(por), status_at: new Date().toISOString() };
       cambio[entra(t, loc) ? 'to_item' : 'from_item'] = mio;
       const r = await pedir('location_transfers?id=eq.' + encodeURIComponent(t.id) + '&status=eq.pending', 'PATCH', cambio, 'return=representation');
+      if (!Array.isArray(r) || !r.length) { olvidar(); avisar(); return { ok: false, error: 'It was already confirmed, undone or marked not right.' }; }
+      const errores = await aplicar(r[0], loc);
       olvidar(); avisar();
-      if (!Array.isArray(r) || !r.length) return { ok: false, error: 'It was already confirmed, undone or marked not right.' };
-      return { ok: true, transfer: r[0] };
+      return conAviso({ ok: true, transfer: r[0] }, errores);
     } catch (e) { return { ok: false, error: String(e && e.message || e) }; }
   }
 
@@ -162,25 +245,37 @@
     try {
       const r = await pedir('location_transfers?id=eq.' + encodeURIComponent(t.id) + '&status=eq.pending', 'PATCH',
         { status: 'rejected', status_by: corto(por), status_at: new Date().toISOString(), note: corto(nota, 200) }, 'return=representation');
+      if (!Array.isArray(r) || !r.length) { olvidar(); avisar(); return { ok: false, error: 'It was already confirmed or undone.' }; }
+      // Pendiente, sólo estaba aplicado en quien lo registró: se le quita.
+      const errores = await revertir(r[0], [r[0].started_at === r[0].to_location ? 'to' : 'from']);
       olvidar(); avisar();
-      if (!Array.isArray(r) || !r.length) return { ok: false, error: 'It was already confirmed or undone.' };
-      return { ok: true };
+      return conAviso({ ok: true }, errores);
     } catch (e) { return { ok: false, error: String(e && e.message || e) }; }
   }
 
   async function deshacer(t, por, conteoIso) {
     if (!puede()) return { ok: false, error: 'This needs "Make and send orders".' };
     if (!deshacible(t, conteoIso)) return { ok: false, error: 'There was a count after it: it can no longer be undone.' };
+    // Lo que estaba aplicado se mira ANTES de escribir 'undone': después,
+    // el estado ya no dice si llegó a confirmarse.
+    const eraConfirmado = t.status === 'confirmed';
+    const ordenAntes = t.vendor_order_id;
     try {
-      await pedir('location_transfers?id=eq.' + encodeURIComponent(t.id) + '&status=in.(pending,confirmed)', 'PATCH',
-        { status: 'undone', status_by: corto(por), status_at: new Date().toISOString() });
+      const r = await pedir('location_transfers?id=eq.' + encodeURIComponent(t.id) + '&status=in.(pending,confirmed)', 'PATCH',
+        { status: 'undone', status_by: corto(por), status_at: new Date().toISOString() }, 'return=representation');
+      if (!Array.isArray(r) || !r.length) { olvidar(); avisar(); return { ok: false, error: 'It was already undone or marked not right.' }; }
+      // Confirmado: aplicado en los dos lados; pendiente, sólo en quien lo
+      // registró. Lo que se deshace es lo que había (t, como se leyó).
+      const antes = r[0];
+      const lados = eraConfirmado ? ['from', 'to'] : [antes.started_at === antes.to_location ? 'to' : 'from'];
+      const errores = await revertir(Object.assign({}, antes, { vendor_order_id: antes.vendor_order_id || ordenAntes }), lados);
       olvidar(); avisar();
-      return { ok: true };
+      return conAviso({ ok: true }, errores);
     } catch (e) { return { ok: false, error: String(e && e.message || e) }; }
   }
 
   window.BarStockTransfers = {
-    leer, olvidar, locaciones, productosDe, nombreDe, crear, confirmar, rechazar, deshacer,
+    leer, olvidar, locaciones, productosDe, nombreDe, crear, confirmar, rechazar, deshacer, aplicar, revertir, ajustarSemana, ladoDe,
     entra, miItem, suItem, otraLoc, loRegistre, porConfirmar, cuentaAqui, pareja, miPareja, deshacible, puede, DIAS
   };
 })();
