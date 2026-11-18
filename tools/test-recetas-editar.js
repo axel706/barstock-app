@@ -318,7 +318,7 @@ grupo('la pantalla (Settings › Toast › Recipes)');
   const tab = (host, k) => host.querySelector('[data-tab="' + k + '"]');
   // Como en el teléfono: se escribe en el buscador de la hoja y se toca.
   const elegirEnHoja = async (w, texto) => {
-    const q = w.document.querySelector('#mSheet .m-tl-busca');
+    const q = w.document.querySelector('#mSheet .m-bus-in');
     if (q && ![...w.document.querySelectorAll('#mSheet [data-p]')].some(x => x.dataset.p === texto)) {
       q.value = texto.split(' ')[0]; q.dispatchEvent(new w.Event('input'));
     }

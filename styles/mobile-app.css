@@ -6115,21 +6115,11 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   #mScreens .m-re-del { color: #fca5a5; border: 1px solid rgba(248,113,113,.45); }
   #mScreens .m-re-cancel { color: #94a3b8; border: 0; }
 
-  /* ── La hoja: elegir la botella escribiendo ──
+  /* ── El buscador de toda la app (bottle-search.js) ──
    * Vive en <body> (#mSheet), como todas las hojas: de ahí el prefijo,
-   * que también es lo que gana al radio de 999px de app.css. La caja no
-   * se desplaza entera: arriba el buscador, en medio la lista con su
-   * propio scroll, abajo los botones, como el selector de siluetas. */
-  #mSheet .m-tl-hoja { display: flex; flex-direction: column; max-height: 82dvh; overflow: hidden; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
-  #mSheet .m-tl-hoja-t { padding: 2px 4px 0; }
-  #mSheet .m-tl-hoja-t b { display: block; font-size: var(--m-title); color: #fff; }
-  #mSheet .m-tl-hoja-t span { display: block; margin-top: 3px; font-size: var(--m-small); color: #94a3b8; }
-  #mSheet .m-tl-busca {
-    display: block; width: 100%; margin-top: 12px; padding: 11px 13px; box-sizing: border-box;
-    font-size: max(16px, var(--m-body)); color: #f1f5f9; background: rgba(255,255,255,.08);
-    border: 1px solid rgba(255,255,255,.16); border-radius: 12px !important; box-shadow: none; -webkit-appearance: none;
-  }
-  #mSheet .m-tl-lista { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin-top: 6px; }
+   * que también es lo que gana al radio de 999px de app.css. Fue una
+   * hoja de abajo (.m-tl-hoja) hasta el 2026-11-18; desde entonces es
+   * sólo la pantalla completa de abajo (.m-bus). Cada resultado: */
   #mSheet .m-tl-res {
     display: block; width: 100%; text-align: left; cursor: pointer; padding: 12px 6px;
     font-size: var(--m-body); color: #e2e8f0; background: none; border: 0;
@@ -6137,10 +6127,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   #mSheet .m-tl-res.on { color: #7dd3fc; font-weight: 800; }
   /* ── El buscador a pantalla completa (bottle-search.js, Axel
-   * 2026-11-18, lámina A). Ocupa sólo lo que se ve encima del teclado
-   * (BarStockSheet.alTeclado le pone top y alto), así que el iPhone no
-   * tiene nada que desplazar. Arriba el campo y Cancel, la sugerida, y
-   * la lista con su propio scroll; las salidas van al final de ella. */
+   * 2026-11-18, lámina A). Arriba el campo y Cancel, la sugerida, y la
+   * lista con su propio scroll; las salidas van al final de ella. */
   /* Un velo transparente sobre el FONDO de la app (Axel, 2026-11-18:
    * "no lo que está debajo, justo detrás, sino el fondo de la app"):
    * sin fondo propio, y lo de debajo —la página, la banda, las pestañas,
@@ -6164,6 +6152,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     border-radius: 0 !important; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
   }
   #mSheet .m-bus-sub { margin-top: 8px; font-size: var(--m-small); color: #94a3b8; }
+  #mSheet .m-bus-sub b { color: #f1f5f9; font-weight: 800; }
   #mSheet .m-bus-sug {
     display: block; width: 100%; box-sizing: border-box; margin-top: 10px; padding: 10px 12px; text-align: left; cursor: pointer;
     color: #f1f5f9; font-size: var(--m-body); background: rgba(56,189,248,.08);
@@ -6178,16 +6167,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   #mSheet .m-bus-lista { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin-top: 6px; padding-bottom: calc(var(--teclado, 0px) + 12px); }
   #mSheet .m-bus-det { display: block; margin-top: 2px; font-size: var(--m-meta); font-weight: 400; color: #94a3b8; }
   #mSheet .m-bus-pie { color: #cbd5e1; }
-  #mSheet .m-tl-sug {
-    margin-top: 10px; padding: 11px 13px; border: 1px solid rgba(56,189,248,.45);
-    background: rgba(56,189,248,.12); border-radius: 12px !important; font-weight: 800; color: #e0f2fe;
-  }
-  #mSheet .m-tl-sug small { display: block; margin-bottom: 2px; font-size: var(--m-meta); font-weight: 800; color: #7dd3fc; letter-spacing: .04em; text-transform: uppercase; }
-  #mSheet .m-tl-hoja-pie { display: flex; gap: 8px; margin-top: 10px; }
-  #mSheet .m-tl-hoja-pie .m-tw-b2 {
-    flex: 1; padding: 10px; cursor: pointer; font-size: var(--m-body); font-weight: 800; color: #e2e8f0;
-    background: none; border: 1px solid rgba(255,255,255,.18); border-radius: 12px !important; box-shadow: none;
-  }
 }
 
 /* ── El bartender invitado: lo que edita, fuera de la vista ──────────

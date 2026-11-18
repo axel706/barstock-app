@@ -120,10 +120,11 @@ grupo('elegir la botella de una línea');
   // lista se escribe otra botella.
   tarjeta(host, 'Hugo 75').querySelector('[data-l="23"]').click(); await esperar(10);
   const busca = w.document.querySelector('#mSheet input[type="search"]');
+  prueba('el buscador a pantalla completa (lámina A), no la hoja de abajo', w.document.getElementById('mSheet').classList.contains('m-bus'));
   busca.value = 'irish cream'; busca.dispatchEvent(new w.Event('input'));
-  const r = [...w.document.querySelectorAll('#mSheet .m-tl-lista [data-p]')].map(b => b.dataset.p);
+  const r = [...w.document.querySelectorAll('#mSheet .m-bus-lista [data-p]')].map(b => b.dataset.p);
   prueba('el buscador encuentra la botella escribiendo', r.length === 1 && r[0] === 'Baileys Irish Cream 1L', r.join(','));
-  w.document.querySelector('#mSheet .m-tl-lista [data-p]').click(); await esperar(30);
+  w.document.querySelector('#mSheet .m-bus-lista [data-p]').click(); await esperar(30);
   prueba('elegir de la lista también guarda', parches(w).length === 2 && parches(w)[1].cuerpo.item_name === 'Baileys Irish Cream 1L');
   prueba('no toca las otras recetas', parches(w).every(x => /id=eq\.(22|23)$/.test(x.url)));
 }
@@ -180,7 +181,7 @@ grupo('está en la app');
   const ms = leer('src/mobile-settings.js');
   prueba('en Settings → Toast', /id:\s*'toastrecipes'/.test(ms) && /BarStockMobileToastRecipes\.montar/.test(ms));
   const pt = leer('src/mobile-toast-recipes.js');
-  prueba('usa la hoja compartida, no otra copia', /BarStockBottleSearch/.test(pt) && !/m-tl-busca/.test(pt));
+  prueba('usa la hoja compartida, no otra copia', /BarStockBottleSearch/.test(pt) && !/m-tl-busca|m-bus-in/.test(pt));
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');

@@ -3,9 +3,9 @@
 
   // ── Elegir una botella del inventario, escribiendo ───────────────────
   //
-  // La hoja de abajo con buscador: la sugerida arriba, y escribiendo se
-  // encuentra cualquier botella. Elegir ES confirmar: no hay un segundo
-  // botón que olvidar.
+  // Un buscador a pantalla completa (desde el 2026-11-18; antes una hoja
+  // de abajo): la sugerida arriba, y escribiendo se encuentra cualquier
+  // botella. Elegir ES confirmar: no hay un segundo botón que olvidar.
   //
   // Nació en Liquor from Toast (mobile-toast-liquor.js), donde sustituyó
   // a una rueda nativa que en Crown no servía: con todo el inventario en
@@ -62,44 +62,10 @@
   function abrir(o) {
     cerrar();
     const productos = o.productos || [];
-    if (o.pantalla) return abrirPantalla(o, productos);
-    const h = document.createElement('div');
-    h.className = 'm-sheet';
-    // El id es el de todas las hojas del teléfono: las reglas que les
-    // ganan el radio a app.css se apoyan en él.
-    h.id = 'mSheet';
-    const sugerida = o.sugerida
-      ? `<button type="button" class="m-tl-res m-tl-sug" data-sug="1" data-p="${esc(o.sugerida)}"><small>Suggested</small>${esc(o.sugerida)}</button>` : '';
-    const pie = (o.pie || []).map(b => `<button type="button" class="m-tw-b2" data-pie="${esc(b.id)}">${esc(b.texto)}</button>`).join('');
-    h.innerHTML = `
-      <div class="m-sheet-bg"></div>
-      <div class="m-sheet-box m-tl-hoja" role="dialog" aria-label="${o.que ? 'Choose for' : 'Bottle for'} ${esc(o.titulo)}">
-        <div class="m-sheet-grip"></div>
-        <div class="m-tl-hoja-t"><b>${esc(o.titulo)}</b><span>${esc(o.sub || '')}</span></div>
-        <input class="m-tl-busca" type="search" inputmode="search" autocomplete="off" autocapitalize="off" spellcheck="false"
-          placeholder="Search ${productos.length} ${esc(o.que || 'bottles')}" aria-label="Search ${esc(o.que || 'bottles')}">
-        ${sugerida}
-        <div class="m-tl-lista"></div>
-        ${pie ? `<div class="m-tl-hoja-pie">${pie}</div>` : ''}
-      </div>`;
-    document.body.appendChild(h);
-    if (window.BarStockSheet) window.BarStockSheet.enganchar(h, cerrar);
-    h.querySelector('.m-sheet-bg').onclick = cerrar;
-
-    const lista = h.querySelector('.m-tl-lista');
-    const busca = h.querySelector('.m-tl-busca');
-    const pintarLista = () => { lista.innerHTML = resultados(busca.value.trim(), Object.assign({}, o, { productos })); };
-    busca.addEventListener('input', pintarLista);
-    pintarLista();
-
-    // Un escuchador para toda la hoja: la lista se repinta al escribir.
-    h.addEventListener('click', (e) => {
-      const b = e.target.closest && e.target.closest('button');
-      if (!b) return;
-      if (b.dataset.p && o.alElegir) return o.alElegir(b.dataset.p);
-      if (b.dataset.pie && o.alPie) return o.alPie(b.dataset.pie);
-    });
-    return h;
+    // Una sola forma desde el 2026-11-18: la pantalla completa (lámina
+    // A). La hoja de abajo de antes se movía al escribir en el iPhone.
+    // `pantalla` se sigue aceptando de quien ya lo pasa.
+    return abrirPantalla(o, productos);
   }
 
   // ── A pantalla completa (Axel, 2026-11-18, lámina A) ────────────────
@@ -131,6 +97,10 @@
   function abrirPantalla(o, productos) {
     // Sin `detalle`, la del inventario: es lo que se elige casi siempre.
     if (!o.detalle) o = Object.assign({}, o, { detalle: ficha });
+    // Qué se elige: el título (la marca, el ingrediente) delante del
+    // sub, salvo que el sub ya lo diga ("For: 12× …" de la factura).
+    const tit = String(o.titulo || ''), sub = String(o.sub || '');
+    const cabeza = [tit && !sub.includes(tit) ? `<b>${esc(tit)}</b>` : '', sub ? esc(sub) : ''].filter(Boolean).join(' · ');
     const h = document.createElement('div');
     h.className = 'm-sheet m-bus';
     h.id = 'mSheet';
@@ -145,7 +115,7 @@
             placeholder="Search ${productos.length} ${esc(o.que || 'bottles')}" aria-label="Search ${esc(o.que || 'bottles')}">
           <button type="button" class="m-bus-x" data-cerrar="1">Cancel</button>
         </div>
-        ${o.sub ? `<div class="m-bus-sub">${esc(o.sub)}</div>` : ''}
+        ${cabeza ? `<div class="m-bus-sub">${cabeza}</div>` : ''}
         ${sugerida}
         <div class="m-bus-lista"></div>
       </div>`;

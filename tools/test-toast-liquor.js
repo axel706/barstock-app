@@ -234,14 +234,18 @@ grupo('la pantalla: tocar la fila abre un buscador');
   const h = w.document.getElementById('mSheet');
   const busca = h && h.querySelector('input[type="search"]');
   prueba('se abre una hoja con buscador', !!h && !!busca);
+  // Axel, 2026-11-18, lámina A: el buscador de toda la app, a pantalla
+  // completa; la hoja de abajo se movía al escribir en el iPhone.
+  prueba('es el buscador a pantalla completa, con la marca que se elige', h.classList.contains('m-bus') && !h.querySelector('.m-tl-hoja') &&
+    /Grey Goose/.test((h.querySelector('.m-bus-sub b') || {}).textContent || ''), (h.querySelector('.m-bus-sub') || {}).textContent);
   const sug = h && h.querySelector('[data-sug]');
   prueba('la sugerida, arriba', !!sug && /Grey Goose Vodka 750/.test(sug.textContent));
 
   busca.value = 'pedro'; busca.dispatchEvent(new w.Event('input'));
-  const res = [...h.querySelectorAll('.m-tl-lista [data-p]')].map(b => b.dataset.p);
+  const res = [...h.querySelectorAll('.m-bus-lista [data-p]')].map(b => b.dataset.p);
   prueba('escribir "pedro" encuentra Pedro Morales', res.length === 1 && res[0] === 'Pedro Morales Tequila 1L', res.join(','));
   busca.value = 'vodka 1l'; busca.dispatchEvent(new w.Event('input'));
-  const res2 = [...h.querySelectorAll('.m-tl-lista [data-p]')].map(b => b.dataset.p);
+  const res2 = [...h.querySelectorAll('.m-bus-lista [data-p]')].map(b => b.dataset.p);
   prueba('varias palabras, todas', res2.includes("Tito's Handmade Vodka 1L") && res2.includes('Ketel One Vodka 1L') && !res2.includes('Grey Goose Vodka 750'), res2.join(','));
 
   sug.click(); await esperar(30);

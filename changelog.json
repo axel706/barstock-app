@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-144725",
+    "items": [
+      "Liquor from Toast and Recipes: full-screen search"
+    ]
+  },
+  {
     "build": "20261118-144017",
     "items": [
       "Search fills the screen, keyboard on top",
@@ -179,13 +185,6 @@
     "build": "20261117-162059",
     "items": [
       "No more update card on Home: updates live in More"
-    ]
-  },
-  {
-    "build": "20261117-153259",
-    "items": [
-      "People shows each person’s last sign-in",
-      "“Waiting for PIN” goes away once they set it"
     ]
   }
 ]

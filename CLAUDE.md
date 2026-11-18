@@ -239,9 +239,10 @@ velo transparente sobre el FONDO de la app (la página, la banda y las
 pestañas se esconden mientras está abierto), con el campo y Cancel
 arriba, la sugerida, la lista con su scroll y las salidas al
 final (`pie`: "Not mine", "Unlink"); sólo elige, guarda quien lo abre.
-Ya lo usan la factura (`mobile-invoices.abrirBuscador`) y Transfers
-("Add a product" y "Which is yours?"); Liquor from Toast y Recipes
-pasan a él uno por uno. La línea de debajo de cada botella es
+Ya lo usan la factura (`mobile-invoices.abrirBuscador`), Transfers
+("Add a product" y "Which is yours?"), Liquor from Toast y Recipes: es
+la ÚNICA forma de `BarStockBottleSearch.abrir` (la hoja de abajo de
+antes, `.m-tl-hoja`, se quitó). La línea de debajo de cada botella es
 `BarStockBottleSearch.ficha()`, la misma en todos. **Un buscador nuevo no se
 escribe: se abre éste.**
 
