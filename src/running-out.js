@@ -68,6 +68,20 @@
     return true;
   }
 
+  // Lo de Pour·IQ dice el día, como lo de Toast ("Out Fri", la regla de
+  // live-cache.agota): el Laurent Perrier decía "6 days" en una lista que
+  // decía "Out Fri" (Axel, 2026-11-18). Los días cuentan desde hoy en
+  // Nueva York; dentro de la semana, el nombre; más allá, la fecha.
+  function diaTxt(dias) {
+    if (!dias) return 'Out today';
+    const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    const f = new Date(hoy + 'T12:00:00Z');
+    f.setUTCDate(f.getUTCDate() + dias);
+    const D = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return dias < 7 ? 'Out ' + D[f.getUTCDay()] : 'Out ' + M[f.getUTCMonth()] + ' ' + f.getUTCDate();
+  }
+
   // `o.porFecha`: el orden de la app, sin lo fijado (lo usa "Edit order"
   // para enseñar lo de debajo como lo pondría la app).
   function lista(o) {
@@ -100,7 +114,7 @@
       // cuando queda media es mentira.
       const fuera = queda <= 0;
       out.push({ r, item: r.item, dias, avg, vivo, fuera,
-        out: { txt: fuera ? 'Out now' : dias + (dias === 1 ? ' day' : ' days'),
+        out: { txt: fuera ? 'Out now' : diaTxt(dias),
                tono: dias <= 2 ? 'r' : dias < 7 ? 'a' : 'g' } });
     }
     out.sort((a, b) => (b.fuera - a.fuera) || (a.dias - b.dias) || (b.avg - a.avg));

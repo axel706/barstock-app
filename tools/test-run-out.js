@@ -141,8 +141,21 @@ grupo('Order N: lo que falta para llegar a la entrega que ya viene (Axel, 2026-1
   const c = R.cuantoPedir({ stock: 2.0, dem, viene, hoy: '2026-11-18', ahora });
   prueba('con 24 en camino, no 15: sólo lo que falta hasta el jueves 4 PM', c.pedir >= 1 && c.pedir <= 4 && c.hasta === '2026-11-19', JSON.stringify(c));
   prueba('y dice qué entrega espera', c.entrega && c.entrega.n === 24, JSON.stringify(c.entrega));
-  const ya = R.cuantoPedir({ stock: 4.0, dem, viene, hoy: '2026-11-18', ahora });
+  // Con 5 llega a la entrega con su colchón (con 4.0 no: el motor dice
+  // "Out Thu", y el 1 que pide es lo coherente).
+  const ya = R.cuantoPedir({ stock: 5.0, dem, viene, hoy: '2026-11-18', ahora });
   prueba('si llega a esa entrega con su colchón, cero (no el par − lo que hay)', ya.pedir === 0, JSON.stringify(ya));
+  // El Nino de Crown (2026-11-18): ≈7.1, "Out Thu" y "Covered to Sun" a
+  // la vez. El cruce caía JUSTO a la hora de la entrega (se mira antes de
+  // sumarla) y se buscaba una entrega estrictamente después: no la
+  // encontraba y caía a la cuenta hasta el domingo, que con los 48 da 0.
+  const demN = { porDia: [3, 3, 3, 3.6, 3.7, 6, 5], semanal: 27.3, sigma: 5 };
+  const ahN = Date.parse('2026-11-18T21:09:00Z');
+  const viN = [{ cuando: '2026-11-19T21:00:00Z', n: 48 }];
+  const outN = R.proyectar({ stock: 7.1, dem: demN, viene: viN, hoy: '2026-11-18', ahora: ahN });
+  const cN = R.cuantoPedir({ stock: 7.1, dem: demN, viene: viN, hoy: '2026-11-18', ahora: ahN });
+  prueba('si se acaba justo a la hora de la entrega, pide lo que falta hasta ella (no "Covered")',
+    outN && outN.dia === '2026-11-19' && cN.entrega && cN.entrega.n === 48 && cN.pedir > 0, JSON.stringify([outN && outN.dia, cN]));
   // Sin nada en camino, como siempre (hasta el domingo).
   const sin = R.cuantoPedir({ stock: 0.7, dem, viene: [], hoy: '2026-11-18', ahora });
   prueba('sin nada en camino, la cuenta de siempre', sin.hasta === '2026-11-22' && !sin.entrega && sin.pedir > 4, JSON.stringify(sin));

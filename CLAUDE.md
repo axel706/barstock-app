@@ -1231,7 +1231,10 @@ aguantar. El Canyon Oaks pedía 15 con 24 llegando al día siguiente: la
 cuenta hasta el domingo daba 0 y `shopping-list.sugerido` tomaba el 0
 por "no hay" y caía al par − lo que hay. Ahora un 0 vale 0 ("Covered to
 Sun", sin "Add"); el par sólo cuando la cuenta no puede hacerse. Sin
-nada en camino, sigue hasta el domingo. Prueba: el grupo "Order N" de
+nada en camino, sigue hasta el domingo. La entrega que se busca es la
+que llega EN el momento del cruce o después (`>=`): `recorrido` mira
+justo antes de sumar cada llegada y el cruce suele caer en su hora (el
+Nino, 7.1 con 48 a las 4 PM, decía "Out Thu" y "Covered to Sun"). Prueba: el grupo "Order N" de
 `test-run-out`.
 **Fase 2 hecha (2026-11-18):** `run-out.proyectar` es `pedido.seAcaba`
 (una sola cuenta), con la demanda de `pedido.demanda` en `ahora()` para

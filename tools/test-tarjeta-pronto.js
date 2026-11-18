@@ -163,6 +163,12 @@ const nombres = (h) => filas(h).map(f => f.querySelector('.n').textContent);
     prueba('ninguna dice "Out now"', filas(h).every(f => !/Out now/.test(f.textContent)));
     const amt = tarjeta(h).querySelector('.m-hero-amt').textContent.replace(/\s/g, '');
     prueba('y la esquina lo dice con su unidad', amt === '2thisweek', amt);
+    // Axel, 2026-11-18: el Laurent Perrier decía "6 days" mientras todo lo
+    // demás decía "Out Fri". Lo que no vende Toast (Pour·IQ) también va
+    // con el día, la misma regla que el resto.
+    const pills = filas(h).map(f => ((f.querySelector('.m-out') || {}).textContent || '').trim());
+    prueba('lo de Pour·IQ dice el día ("Out Sat"), no "N days"', pills.length === 2 &&
+      pills.every(t => /^Out (today|Sun|Mon|Tue|Wed|Thu|Fri|Sat)$/.test(t)), pills.join(' | '));
   }
 
   grupo('los nombres ya no se parten a lo bruto');

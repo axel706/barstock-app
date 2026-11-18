@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261118-161403",
+    "items": [
+      "Running out: no more \"Covered\" next to \"Out\"",
+      "Every item shows the day it runs out"
+    ]
+  },
+  {
     "build": "20261118-154935",
     "items": [
       "Running out: Order N counts what is on the way",
@@ -177,13 +184,6 @@
     "items": [
       "Orders suggest how much to order, with Use",
       "Items at par that won't last, with Add"
-    ]
-  },
-  {
-    "build": "20261117-234230",
-    "items": [
-      "Running out shows why, and the days ahead",
-      "The morning email says why it runs out"
     ]
   }
 ]

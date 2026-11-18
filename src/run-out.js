@@ -234,9 +234,13 @@
     };
     const r = P.recorrido(base);
     if (!r.fin) return null;
-    // La primera entrega que llega DESPUÉS de que se acabe: la que no se
-    // alcanza. Si ninguna, no hay a qué llegar: la cuenta de siempre.
-    const sig = base.viene.filter(v => v.n > 0 && v.cuando > r.fin.en).sort((a, b) => a.cuando - b.cuando)[0];
+    // La primera entrega que llega en el momento en que se acaba o
+    // después: la que no se alcanza. Con `>=`: recorrido mira justo ANTES
+    // de sumar cada llegada, así que el cruce cae muchas veces EN su hora
+    // (el Nino de Crown, 7.1 con 48 llegando a las 4 PM: con `>` no la
+    // encontraba, caía a la cuenta del domingo y decía "Covered to Sun"
+    // junto a "Out Thu"). Si ninguna, la cuenta de siempre.
+    const sig = base.viene.filter(v => v.n > 0 && v.cuando >= r.fin.en).sort((a, b) => a.cuando - b.cuando)[0];
     if (!sig) return null;
     const falta = P.recorrido(Object.assign({}, base, { hasta: sig.cuando })).falta;
     const pedir = falta > 1e-6 ? Math.ceil(falta - 1e-6) : 0;
