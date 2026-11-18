@@ -200,7 +200,16 @@
   // Hoy, como en proyectar(): sólo lo que falta por venderse hoy. Con
   // `dem` (pedido.demanda), lo de cada día es el suyo y lleva el mismo
   // colchón que el aviso: si no, la tarjeta diría "Out Thu" y "Order 0".
-  function cuantoPedir({ stock, med, dem, viene, hoy, hoyVendido, hoyFrac, margen }) {
+  //
+  // Con una entrega YA en camino que llega después de que se acabe (Axel,
+  // 2026-11-18: el Canyon Oaks pedía 15 con 24 llegando mañana), lo que
+  // se pide es lo que FALTA hasta ella: la compra de LOOP para aguantar,
+  // no la semana entera. Sale de pedido.recorrido, la cuenta de las
+  // barras, así que el número y las barras dicen lo mismo. Sin nada en
+  // camino, como siempre: hasta el domingo.
+  function cuantoPedir({ stock, med, dem, viene, hoy, hoyVendido, hoyFrac, margen, ahora }) {
+    const puente = hastaLaEntrega({ stock, dem, viene, hoy, hoyVendido, hoyFrac, margen, ahora });
+    if (puente) return puente;
     if (dem && dem.porDia) med = dem.porDia;
     const faltanDias = (7 - diaSemana(hoy)) % 7;
     const hasta = sumarDias(hoy, faltanDias);
@@ -212,6 +221,27 @@
     const falta = vende + colchon - Math.max(0, (Number(stock) || 0) - (Number(margen) || 0)) - llega;
     const pedir = falta > 1e-6 ? Math.ceil(falta - 1e-6) : 0;
     return { hasta, vende, colchon, llega, pedir };
+  }
+
+  function hastaLaEntrega({ stock, dem, viene, hoy, hoyVendido, hoyFrac, margen, ahora }) {
+    const P = window.BarStockPedido;
+    if (!P || !P.recorrido || !dem || !dem.porDia || !(viene || []).length) return null;
+    const t = ahora || Date.now();
+    const base = {
+      dem, stock: (Number(stock) || 0) - (Number(margen) || 0),
+      viene: (viene || []).map(v => ({ cuando: Date.parse(v.cuando), n: Number(v.n) || 0 })),
+      ahora: t, dias: 14, hoyResta: restaDia(dem.porDia, hoy, 0, hoyVendido, hoyFrac)
+    };
+    const r = P.recorrido(base);
+    if (!r.fin) return null;
+    // La primera entrega que llega DESPUÉS de que se acabe: la que no se
+    // alcanza. Si ninguna, no hay a qué llegar: la cuenta de siempre.
+    const sig = base.viene.filter(v => v.n > 0 && v.cuando > r.fin.en).sort((a, b) => a.cuando - b.cuando)[0];
+    if (!sig) return null;
+    const falta = P.recorrido(Object.assign({}, base, { hasta: sig.cuando })).falta;
+    const pedir = falta > 1e-6 ? Math.ceil(falta - 1e-6) : 0;
+    return { hasta: diaNY(sig.cuando), vende: null, colchon: null, llega: 0, pedir,
+      entrega: { cuando: new Date(sig.cuando).toISOString(), n: sig.n } };
   }
 
   // ── Leer y calcular ──────────────────────────────────────────────────

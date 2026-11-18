@@ -252,7 +252,14 @@
   //
   // → { dias: [{ dia, seguro, llega, cerrado, agotado }], fin }, con
   //   `fin` como seAcaba ({ dia, enDias, en } o null).
-  function recorrido({ dem, stock, viene, ahora, dias, frac, z, hoyResta }) {
+  //
+  // `hasta` (un instante, opcional): además, `falta` = lo mínimo que habría
+  // que tener de más AHORA para no bajar del colchón en ningún momento
+  // antes de `hasta` (mirando justo antes de cada llegada, como el resto).
+  // Es la compra de LOOP para aguantar hasta una entrega que ya viene
+  // (run-out.cuantoPedir, Axel 2026-11-18): sale de esta MISMA cuenta para
+  // que el número y las barras no se contradigan.
+  function recorrido({ dem, stock, viene, ahora, dias, frac, z, hoyResta, hasta }) {
     const f = frac || fraccionLineal;
     const zz = z == null ? Z : z;
     const porDia = (dem && dem.porDia) || [];
@@ -261,7 +268,7 @@
     let finAl = s <= 1e-9 ? { dia: hoy, enDias: 0, en: ahora } : null;
     const llegadas = (viene || []).map(x => ({ t: Number(x.cuando), n: Number(x.n) || 0 }))
       .filter(x => x.t > ahora).sort((a, b) => a.t - b.t);
-    let usado = 0;
+    let usado = 0, falta = 0;
     const out = [];
     for (let k = 0; k < (dias || 7); k++) {
       const d = sumarDias(hoy, k), q = Number(porDia[dow(d)]) || 0;
@@ -278,6 +285,7 @@
           ? Math.max(0, Number(hoyResta) || 0) * tramo / Math.max(1e-9, 1 - f(d, ahora))
           : q * tramo;
         s -= gasto; usado += gasto;
+        if (hasta != null && puntos[i + 1] <= hasta) falta = Math.max(falta, colchonDe(dem, usado, zz) - s);
         if (s - colchonDe(dem, usado, zz) <= 1e-9) {
           agotado = true;
           if (!finAl && porDia.some(x => x > 0)) finAl = { dia: d, enDias: k, en: puntos[i + 1] };
@@ -287,7 +295,7 @@
       if (k === 0 && finAl && finAl.enDias === 0) agotado = true;
       out.push({ dia: d, seguro: Math.max(0, s - colchonDe(dem, usado, zz)), llega, cerrado: !(q > 0), agotado });
     }
-    return { dias: out, fin: finAl };
+    return { dias: out, fin: finAl, falta };
   }
 
   window.BarStockPedido = { demanda, consumoEntre, cuantoPedir, seAcaba, recorrido, multiploPara, redondeoPara, colchonDe, HOLGURA, SIGMA_MAX, fraccionLineal, inicio, diaDe,

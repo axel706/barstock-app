@@ -102,7 +102,11 @@
     const LC = window.BarStockLiveCache;
     const dicho = quedan != null && isFinite(Number(quedan));
     const p = LC && LC.pedir ? LC.pedir(r, dicho ? Number(quedan) : undefined) : null;
-    if (p != null && p > 0) return p;
+    // Un 0 de la cuenta ES la respuesta ("alcanza hasta la entrega"):
+    // antes se tomaba por "no hay" y caía al par − lo que hay, que no mira
+    // lo que llega (Axel, 2026-11-18: 15 y 33 con 24 y 48 en camino). El
+    // par sólo vale cuando la cuenta no puede hacerse.
+    if (p != null) return p;
     const queda = dicho ? Number(quedan) : LC && LC.cuanto ? LC.cuanto(r) : Number(r && r.onHand) || 0;
     return Math.max(1, Math.ceil((Number(r && r.suggested) || 0) - queda));
   }

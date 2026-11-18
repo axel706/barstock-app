@@ -138,13 +138,15 @@
         <span>&#10003; Checked: ${esc(n1(visto.counted).replace(/\.0$/, ''))} on the shelf &middot; ${esc(cuandoNY(visto.checked_at))}${visto.checked_by ? ' &middot; ' + esc(visto.checked_by) : ''}</span>
         ${puede('contar') ? '<button type="button" class="m-ro-x" data-ro-cambiar>Change</button>' : ''}</div>`);
     const botones = [];
-    if (!enLista && puede('ordenes')) botones.push(`<button type="button" class="m-ro-b m-ro-go" data-ro-add>Add ${esc(pedir)} to list</button>`);
+    // 0 es una respuesta (2026-11-18): lo que ya viene en camino le alcanza
+    // hasta el domingo. Ni "Order 0" ni "Add 0 to list".
+    if (!enLista && puede('ordenes') && pedir > 0) botones.push(`<button type="button" class="m-ro-b m-ro-go" data-ro-add>Add ${esc(pedir)} to list</button>`);
     if (!visto && puede('contar')) botones.push('<button type="button" class="m-ro-b m-ro-gh" data-ro-ok>I have enough</button>');
     return `<div class="m-ro-c" data-item="${esc(r.item)}">
       <div class="m-ro-top">
         <div class="m-ro-n"><b>${esc(r.item)}</b>
           <small>${vivo ? '<span class="m-ro-live"><i></i>Live</span>' : ''}${out}<span>${esc(r.vendor || '')}</span></small></div>
-        <div class="m-ro-v"><b>${vivo ? '&asymp;' : ''}${esc(n1(queda))}</b><small>Order ${esc(pedir)}</small></div>
+        <div class="m-ro-v"><b>${vivo ? '&asymp;' : ''}${esc(n1(queda))}</b><small>${pedir > 0 ? 'Order ' + esc(pedir) : 'Covered to Sun'}</small></div>
       </div>
       ${porQueHtml(r)}
       ${botones.length ? `<div class="m-ro-btns">${botones.join('')}</div>` : ''}

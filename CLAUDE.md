@@ -1221,6 +1221,18 @@ dos tablas de Crown del 2026-11-18 sacaron: Pour·IQ × tendencia (el Nino
 a 42/semana), un día fuerte CADA día, el colchón con el reloj (White
 Haven "Mon"), la σ escalada (Cinzano Dry) y el vino siempre ×3 (Red
 Schooner). Triage no tiene día de entrega fijo (Axel): sin sugerido.
+**La fuga del "Order N" (2026-11-18, tarde):** con una entrega YA en
+camino que llega después de que se acabe, el "Order N" de Running out,
+de "Tell the team it's low" y del correo es lo que FALTA hasta esa
+entrega (`run-out.hastaLaEntrega` → `pedido.recorrido({ hasta })
+.falta`: lo mínimo de más para no bajar del colchón antes de que
+llegue; la misma cuenta que las barras), la compra de LOOP para
+aguantar. El Canyon Oaks pedía 15 con 24 llegando al día siguiente: la
+cuenta hasta el domingo daba 0 y `shopping-list.sugerido` tomaba el 0
+por "no hay" y caía al par − lo que hay. Ahora un 0 vale 0 ("Covered to
+Sun", sin "Add"); el par sólo cuando la cuenta no puede hacerse. Sin
+nada en camino, sigue hasta el domingo. Prueba: el grupo "Order N" de
+`test-run-out`.
 **Fase 2 hecha (2026-11-18):** `run-out.proyectar` es `pedido.seAcaba`
 (una sola cuenta), con la demanda de `pedido.demanda` en `ahora()` para
 lo que Toast vende, el ritmo de hoy (`hoyResta`) y el margen de antes;

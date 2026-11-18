@@ -261,7 +261,10 @@
         if (!SC || !SL) return { ok: false, error: 'Not loaded.' };
         const c = await SC.guardar({ item: r.item, n, decia: queda, por: quien() });
         if (!c.ok) return c;
-        const qty = SL.sugerido(r, n);
+        // Quien avisa quiere que alguien lo mire: aunque lo que viene en
+        // camino alcance (la cuenta da 0), la línea va con 1, que se
+        // cambia en To buy.
+        const qty = Math.max(1, SL.sugerido(r, n) || 0);
         const a = await SL.anadir({ item: r.item, qty, motivo: 'person', por: quien(),
           nota: n > 0 ? 'only ' + n + ' left' : 'none left' });
         if (LC && LC.caducar) LC.caducar();

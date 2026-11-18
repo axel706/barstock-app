@@ -127,6 +127,33 @@ grupo('cuánto pedir para llegar al domingo');
   prueba('una suma exacta no sube una botella por la coma flotante', c.pedir === 8, String(c.pedir));
 }
 
+grupo('Order N: lo que falta para llegar a la entrega que ya viene (Axel, 2026-11-18)');
+{
+  // El Canyon Oaks de Crown: ≈4.0, unos 2.3 al día, "Out today" y 24 que
+  // llegan el jueves a las 4 PM. Pedía 15: la cuenta hasta el domingo
+  // daba 0 (con los 24 le sobra) y la lista caía al par − lo que hay.
+  // Lo que se quiere: si no llega a esa entrega, lo que le falta HASTA
+  // ella, de la misma cuenta que dibuja las barras.
+  const dem = { porDia: [2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3], semanal: 16.1, sigma: 3 };
+  const ahora = Date.parse('2026-11-18T20:38:00Z');   // miércoles 3:38 PM
+  const viene = [{ cuando: '2026-11-19T21:00:00Z', n: 24 }];   // jueves 4 PM
+  // Con 2.0 no llega: hoy gasta 2.3 y la entrega es mañana a las 4 PM.
+  const c = R.cuantoPedir({ stock: 2.0, dem, viene, hoy: '2026-11-18', ahora });
+  prueba('con 24 en camino, no 15: sólo lo que falta hasta el jueves 4 PM', c.pedir >= 1 && c.pedir <= 4 && c.hasta === '2026-11-19', JSON.stringify(c));
+  prueba('y dice qué entrega espera', c.entrega && c.entrega.n === 24, JSON.stringify(c.entrega));
+  const ya = R.cuantoPedir({ stock: 4.0, dem, viene, hoy: '2026-11-18', ahora });
+  prueba('si llega a esa entrega con su colchón, cero (no el par − lo que hay)', ya.pedir === 0, JSON.stringify(ya));
+  // Sin nada en camino, como siempre (hasta el domingo).
+  const sin = R.cuantoPedir({ stock: 0.7, dem, viene: [], hoy: '2026-11-18', ahora });
+  prueba('sin nada en camino, la cuenta de siempre', sin.hasta === '2026-11-22' && !sin.entrega && sin.pedir > 4, JSON.stringify(sin));
+  // La lista (shopping-list.sugerido) tomaba un 0 de la cuenta por "no
+  // hay respuesta" y caía al par − lo que hay: así salían 15 y 33.
+  const SL = leer('src/shopping-list.js');
+  const MRO = leer('src/mobile-running-out.js');
+  prueba('con 0, la tarjeta dice "Covered to Sun" y no ofrece "Add 0 to list"', /pedir > 0 \? 'Order ' \+ esc\(pedir\) : 'Covered to Sun'/.test(MRO) && /puede\('ordenes'\) && pedir > 0\)/.test(MRO));
+  prueba('la lista acepta el 0 de la cuenta (no cae al par)', /if \(p != null\) return p;/.test(SL) && !/p != null && p > 0/.test(SL));
+}
+
 grupo('hoy cargado a medias no se cuenta dos veces');
 {
   // Axel, 2026-11-13, antes del "sync" manual de hoy: si lo de hoy ya
