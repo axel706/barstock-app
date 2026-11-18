@@ -232,9 +232,12 @@ lleva desenfoque.
 true, … })` de `src/bottle-search.js`. Un campo DENTRO de la página no
 sirve en el iPhone: al escribir, Safari desplaza la página para ver el
 campo, se lleva la banda y la lista queda flotando sobre un hueco
-(pasaba en la factura y en Transfers). El buscador ocupa sólo lo que se
-ve encima del teclado (`BarStockSheet.alTeclado`), con el campo y
-Cancel arriba, la sugerida, la lista con su scroll y las salidas al
+(pasaba en la factura y en Transfers). El buscador ocupa la pantalla
+entera con el teclado encima (`BarStockSheet.alTeclado(h, { completo:
+true })`; medir sólo lo de encima del teclado dejaba un hueco), es un
+velo transparente sobre el FONDO de la app (la página, la banda y las
+pestañas se esconden mientras está abierto), con el campo y Cancel
+arriba, la sugerida, la lista con su scroll y las salidas al
 final (`pie`: "Not mine", "Unlink"); sólo elige, guarda quien lo abre.
 Ya lo usan la factura (`mobile-invoices.abrirBuscador`) y Transfers
 ("Add a product" y "Which is yours?"); Liquor from Toast y Recipes

@@ -110,9 +110,11 @@
   // emparejando una línea de factura y en Transfers). Aquí todo lo que
   // se ve es el buscador: el campo arriba con Cancel, la sugerida, la
   // lista con su propio scroll y, al final de ella, las salidas (`pie`,
-  // p. ej. "Not mine"). Se ajusta a lo que queda encima del teclado
-  // (BarStockSheet.alTeclado), así que no hay nada que desplazar, y la
-  // página de detrás no se mueve. Mismo contrato que la hoja: sólo
+  // p. ej. "Not mine"). Ocupa la pantalla entera con el teclado encima
+  // (BarStockSheet.alTeclado, `completo`): medir sólo lo de encima del
+  // teclado dejaba un hueco por el que asomaba la página. Es un velo
+  // transparente sobre el FONDO de la app: la página, la banda y las
+  // pestañas se esconden mientras está abierto (mobile-app.css). Mismo contrato que la hoja: sólo
   // elige; guardar lo hace quien la abre.
   // La segunda línea de cada botella: categoría, proveedor y lo que hay.
   // Una sola vez aquí: la factura la tenía como `ficha()` y Transfers
@@ -148,7 +150,7 @@
         <div class="m-bus-lista"></div>
       </div>`;
     document.body.appendChild(h);
-    if (window.BarStockSheet && window.BarStockSheet.alTeclado) window.BarStockSheet.alTeclado(h);
+    if (window.BarStockSheet && window.BarStockSheet.alTeclado) window.BarStockSheet.alTeclado(h, { completo: true });
     // Fuera de la lista no se rueda nada: en iOS el dedo sobre el campo
     // o el hueco arrastraba la página de detrás.
     h.addEventListener('touchmove', (e) => {

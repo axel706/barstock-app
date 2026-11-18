@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261118-144017",
+    "items": [
+      "Search fills the screen, keyboard on top",
+      "Search shows the app background, not the page"
+    ]
+  },
+  {
     "build": "20261118-143445",
     "items": [
       "Transfers: full-screen product search"
@@ -179,12 +186,6 @@
     "items": [
       "People shows each person’s last sign-in",
       "“Waiting for PIN” goes away once they set it"
-    ]
-  },
-  {
-    "build": "20261117-144237",
-    "items": [
-      "Live vs count now measures from last week’s count"
     ]
   }
 ]

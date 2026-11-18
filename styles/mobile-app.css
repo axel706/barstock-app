@@ -6141,11 +6141,17 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * (BarStockSheet.alTeclado le pone top y alto), así que el iPhone no
    * tiene nada que desplazar. Arriba el campo y Cancel, la sugerida, y
    * la lista con su propio scroll; las salidas van al final de ella. */
-  #mSheet.m-bus { background: rgba(5,9,16,.6); }
+  /* Un velo transparente sobre el FONDO de la app (Axel, 2026-11-18:
+   * "no lo que está debajo, justo detrás, sino el fondo de la app"):
+   * sin fondo propio, y lo de debajo —la página, la banda, las pestañas,
+   * la barra acoplada— se esconde mientras está abierto, como con
+   * Running out. Ocupa la pantalla entera y el teclado va encima. */
+  #mSheet.m-bus { background: none; }
   #mSheet .m-bus-box {
     position: absolute; inset: 0; display: flex; flex-direction: column; box-sizing: border-box;
-    padding: calc(env(safe-area-inset-top, 0px) + 12px) 14px 0; background: #0b1220;
+    padding: calc(env(safe-area-inset-top, 0px) + 12px) 14px 0; background: none;
   }
+  body:has(#mSheet.m-bus) :is(#mScreens, #mBand, #mTabs, #mFloor, #mDock, #mPull) { visibility: hidden; }
   #mSheet .m-bus-top { display: flex; align-items: center; gap: 10px; }
   #mSheet .m-bus-in {
     flex: 1; min-width: 0; box-sizing: border-box; padding: 11px 13px;
@@ -6168,7 +6174,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     display: block; margin-bottom: 2px; font-size: var(--m-meta); font-weight: 800;
     letter-spacing: .06em; text-transform: uppercase; color: #7dd3fc;
   }
-  #mSheet .m-bus-lista { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin-top: 6px; padding-bottom: 12px; }
+  /* Al final, el aire del teclado: lo último queda por encima de él. */
+  #mSheet .m-bus-lista { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin-top: 6px; padding-bottom: calc(var(--teclado, 0px) + 12px); }
   #mSheet .m-bus-det { display: block; margin-top: 2px; font-size: var(--m-meta); font-weight: 400; color: #94a3b8; }
   #mSheet .m-bus-pie { color: #cbd5e1; }
   #mSheet .m-tl-sug {

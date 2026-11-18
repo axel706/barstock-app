@@ -348,11 +348,16 @@ grupo('5 · la sección Transfers (src/mobile-transfers.js, lámina B)');
     // completa (bottle-search.js), no una hoja propia que se movía.
     prueba('"Add a product" abre el buscador a pantalla completa, con mis productos', !!hoja && hoja.classList.contains('m-bus') &&
       !!hoja.querySelector('.m-bus-in') && hoja.querySelectorAll('.m-bus-lista [data-p]').length === 2, hoja && hoja.textContent.slice(0, 90));
-    prueba('va encima del teclado (lo visible), no al fondo de la pantalla',
-      hoja.style.top === '40px' && hoja.style.height === '300px', hoja.style.top + ' ' + hoja.style.height);
-    w.visualViewport.offsetTop = 0; w.visualViewport.height = 520;
+    // Axel, 2026-11-18: medir sólo lo de encima del teclado dejaba un
+    // hueco. Ocupa la pantalla entera; el teclado va encima y la lista
+    // deja al final el aire de lo que tapa.
+    const alto = w.innerHeight;
+    prueba('ocupa la pantalla entera, sin hueco sobre el teclado; la lista sabe cuánto tapa',
+      hoja.style.top === '40px' && hoja.style.height === alto + 'px' && hoja.style.getPropertyValue('--teclado') === (alto - 300) + 'px',
+      hoja.style.top + ' ' + hoja.style.height + ' ' + hoja.style.getPropertyValue('--teclado'));
+    w.visualViewport.offsetTop = 0; w.visualViewport.height = alto;
     (vvOyentes.resize || []).forEach(f => f());
-    prueba('y lo sigue cuando el teclado se va', hoja.style.height === '520px', hoja.style.height);
+    prueba('y lo sigue cuando el teclado se va', hoja.style.getPropertyValue('--teclado') === '0px', hoja.style.getPropertyValue('--teclado'));
     const inp = hoja.querySelector('.m-bus-in');
     inp.value = 'triag'; inp.dispatchEvent(new w.Event('input'));
     prueba('escribir filtra', hoja.querySelectorAll('.m-bus-lista [data-p]').length === 1);
@@ -373,6 +378,13 @@ grupo('5 · la sección Transfers (src/mobile-transfers.js, lámina B)');
       p.cuerpo[0].to_item === 'Triage Vodka' && p.cuerpo[0].qty === 12 && p.cuerpo[1].to_item === 'Tito' && p.cuerpo[1].qty === 2 &&
       p.cuerpo.every(x => x.before_count && x.from_location === WB), JSON.stringify(p && p.cuerpo));
     prueba('y vuelve a la lista, avisando', w.__banda === 'Transfers' && /Transfer saved/.test(w.__toast || ''));
+  }
+  {
+    const css = leer('styles/mobile-app.css');
+    prueba('el buscador es un velo transparente sobre el fondo de la app: lo de debajo se esconde',
+      /#mSheet\.m-bus \{ background: none; \}/.test(css) && /#mSheet \.m-bus-box \{[^}]*background: none;/.test(css) &&
+      /body:has\(#mSheet\.m-bus\) :is\(#mScreens, #mBand, #mTabs, #mFloor, #mDock, #mPull\) \{ visibility: hidden; \}/.test(css));
+    prueba('la lista deja al final el aire del teclado', /\.m-bus-lista \{[^}]*padding-bottom: calc\(var\(--teclado, 0px\) \+ 12px\)/.test(css));
   }
   prueba('"Which is yours?" al confirmar usa el mismo buscador', /BarStockBottleSearch/.test(leer('src/transfer-confirm.js')) &&
     /pantalla: true/.test(leer('src/transfer-confirm.js')) && !/m-tr-buscar/.test(leer('src/transfer-confirm.js') + leer('src/mobile-transfers.js')));

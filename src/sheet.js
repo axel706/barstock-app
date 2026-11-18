@@ -228,14 +228,28 @@
   // queda justo encima del teclado; el alto fijo de la caja lo pone el
   // CSS (.m-sheet-busca), para que filtrar no la mueva. Se suelta sola
   // cuando la hoja sale del documento, la cierre quien la cierre.
-  function alTeclado(hoja) {
+  //
+  // `{ completo: true }` (el buscador a pantalla completa, Axel
+  // 2026-11-18): la hoja NO se encoge a lo visible. Medir sólo lo de
+  // encima del teclado dejaba un hueco entre ella y el teclado por el
+  // que asomaba la página. Ocupa la pantalla entera, el teclado va
+  // encima, y `--teclado` dice cuánto tapa para que la lista deje ese
+  // aire al final y lo último se pueda alcanzar.
+  function alTeclado(hoja, op) {
     const vv = window.visualViewport;
     if (!hoja || !vv) return () => {};
+    const completo = !!(op && op.completo);
     const ajustar = () => {
       if (!hoja.isConnected) return soltar();
       hoja.style.top = vv.offsetTop + 'px';
-      hoja.style.height = vv.height + 'px';
       hoja.style.bottom = 'auto';
+      if (completo) {
+        const alto = window.innerHeight || vv.height;
+        hoja.style.height = alto + 'px';
+        hoja.style.setProperty('--teclado', Math.max(0, Math.round(alto - vv.height)) + 'px');
+      } else {
+        hoja.style.height = vv.height + 'px';
+      }
     };
     function soltar() {
       vv.removeEventListener('resize', ajustar);
