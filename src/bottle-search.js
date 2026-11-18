@@ -114,7 +114,21 @@
   // (BarStockSheet.alTeclado), así que no hay nada que desplazar, y la
   // página de detrás no se mueve. Mismo contrato que la hoja: sólo
   // elige; guardar lo hace quien la abre.
+  // La segunda línea de cada botella: categoría, proveedor y lo que hay.
+  // Una sola vez aquí: la factura la tenía como `ficha()` y Transfers
+  // iba a escribir la suya.
+  function fichaFila(r) {
+    if (!r) return '';
+    return [r.category, r.vendor, (Number(r.onHand) || 0) + ' on hand'].filter(Boolean).join(' · ');
+  }
+  function ficha(nombre) {
+    const m = (window.state && window.state.master) || [];
+    return fichaFila(m.find(r => r && r.item === nombre));
+  }
+
   function abrirPantalla(o, productos) {
+    // Sin `detalle`, la del inventario: es lo que se elige casi siempre.
+    if (!o.detalle) o = Object.assign({}, o, { detalle: ficha });
     const h = document.createElement('div');
     h.className = 'm-sheet m-bus';
     h.id = 'mSheet';
@@ -162,5 +176,5 @@
     return h;
   }
 
-  window.BarStockBottleSearch = { abrir, cerrar, buscar, MAX_RES };
+  window.BarStockBottleSearch = { abrir, cerrar, buscar, ficha, fichaFila, MAX_RES };
 })();

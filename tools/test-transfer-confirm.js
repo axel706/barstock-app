@@ -50,6 +50,7 @@ function entorno(o) {
   // Desde la 046 confirman y rechazan un GRUPO: [filas] y { id: producto }.
   T.confirmar = async (ts, items, por) => { for (const t of ts) w.__conf.push({ id: t.id, item: items[t.id], por }); return { ok: true }; };
   T.rechazar = async (ts, nota, por) => { for (const t of ts) w.__rech.push({ id: t.id, nota, por }); return { ok: true }; };
+  w.eval(leer('src/bottle-search.js'));
   if (existe('src/transfer-confirm.js')) w.eval(leer('src/transfer-confirm.js'));
   return w;
 }
@@ -90,15 +91,15 @@ grupo('2 · mi producto: pareja, mismo nombre, o se elige');
   prueba('sin pareja ni nombre igual: "Choose yours", sin confirmar a ciegas', c.btn === 'Choose yours' && c.filas[1].v === 'Choose' && !c.btn3);
   await c.go();
   const hoja = w2.document.getElementById('mSheet');
-  prueba('abre la lista de mis productos, el parecido primero', !!hoja && /Which is yours/.test(txt(hoja)) &&
-    hoja.querySelector('[data-item]').dataset.item === 'Triage Vodka 1L', txt(hoja));
+  prueba('abre el buscador a pantalla completa con mis productos, el parecido primero', !!hoja && hoja.classList.contains('m-bus') &&
+    /Which is yours/.test(txt(hoja)) && hoja.querySelector('.m-bus-lista [data-p]').dataset.p === 'Triage Vodka 1L', txt(hoja));
   prueba('no confirmó nada todavía', w2.__conf.length === 0);
-  const inp = hoja.querySelector('.m-tr-buscar');
-  prueba('el buscador no hace zoom en iOS (16 px)', /\.m-tr-buscar \{[^}]*font-size: max\(16px/.test(leer('styles/mobile-app.css')));
-  inp.value = 'tito'; inp.oninput();
-  prueba('busca', hoja.querySelectorAll('[data-item]').length === 1);
-  inp.value = ''; inp.oninput();
-  hoja.querySelector('[data-item="Triage Vodka 1L"]').click();
+  const inp = hoja.querySelector('.m-bus-in');
+  prueba('el buscador no hace zoom en iOS (16 px)', /#mSheet \.m-bus-in \{[^}]*font-size: max\(16px/.test(leer('styles/mobile-app.css')));
+  inp.value = 'tito'; inp.dispatchEvent(new w2.Event('input'));
+  prueba('busca', hoja.querySelectorAll('.m-bus-lista [data-p]').length === 1);
+  inp.value = ''; inp.dispatchEvent(new w2.Event('input'));
+  hoja.querySelector('[data-p="Triage Vodka 1L"]').click();
   await esperar(10);
   prueba('elegido: confirma con ése', w2.__conf.length === 1 && w2.__conf[0].item === 'Triage Vodka 1L', JSON.stringify(w2.__conf));
 }
@@ -166,7 +167,7 @@ grupo('5b · un transfer de varios productos (grupo)');
   await c.go();
   const hoja = w.document.getElementById('mSheet');
   prueba('pide el que falta (Triage) y no confirma todavía', !!hoja && /Which is yours/.test(txt(hoja)) && w.__conf.length === 0);
-  hoja.querySelector('[data-item="Triage Vodka"]').click();
+  hoja.querySelector('.m-bus-lista [data-p="Triage Vodka"]').click();
   await esperar(10);
   prueba('elegido, confirma el grupo entero, cada uno con el suyo', w.__conf.length === 2 && w.__conf[0].item === 'Triage Vodka' && w.__conf[1].item === 'Tito', JSON.stringify(w.__conf));
   await TC.tarjeta().go2();

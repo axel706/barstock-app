@@ -236,8 +236,10 @@ campo, se lleva la banda y la lista queda flotando sobre un hueco
 ve encima del teclado (`BarStockSheet.alTeclado`), con el campo y
 Cancel arriba, la sugerida, la lista con su scroll y las salidas al
 final (`pie`: "Not mine", "Unlink"); sólo elige, guarda quien lo abre.
-Ya lo usa la factura (`mobile-invoices.abrirBuscador`); Transfers, Liquor
-from Toast y Recipes pasan a él uno por uno. **Un buscador nuevo no se
+Ya lo usan la factura (`mobile-invoices.abrirBuscador`) y Transfers
+("Add a product" y "Which is yours?"); Liquor from Toast y Recipes
+pasan a él uno por uno. La línea de debajo de cada botella es
+`BarStockBottleSearch.ficha()`, la misma en todos. **Un buscador nuevo no se
 escribe: se abre éste.**
 
 El radio de las tarjetas del carrusel (`.m-hero`) es **20px**, y es la

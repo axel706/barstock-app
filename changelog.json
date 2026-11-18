@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-143445",
+    "items": [
+      "Transfers: full-screen product search"
+    ]
+  },
+  {
     "build": "20261118-142507",
     "items": [
       "Invoices: full-screen bottle search"
@@ -179,13 +185,6 @@
     "build": "20261117-144237",
     "items": [
       "Live vs count now measures from last week’s count"
-    ]
-  },
-  {
-    "build": "20261117-142014",
-    "items": [
-      "Running out: delivered items can go on the list again",
-      "Ordered items say “Ordered”"
     ]
   }
 ]

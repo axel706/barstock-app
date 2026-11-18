@@ -197,41 +197,27 @@
     };
   }
 
-  // Añadir un producto: mis productos con un buscador (16 px: el zoom de
-  // iOS), sin los que ya están.
+  // Añadir un producto: el buscador de toda la app a pantalla completa
+  // (bottle-search.js, lámina A; era una hoja propia que en el iPhone se
+  // movía al escribir), sin los que ya están. Sin escribir, la lista
+  // entera por orden alfabético, como antes.
   function elegirProducto() {
+    const B = window.BarStockBottleSearch;
+    if (!B || !B.abrir) return;
     const ya = new Set(_nuevo.lineas.map(l => l.item));
-    const lista = master().filter(r => r && r.item && !ya.has(r.item)).map(r => r.item).sort((a, b) => a.localeCompare(b));
-    const vieja = document.getElementById('mSheet');
-    if (vieja) vieja.remove();
-    const h = document.createElement('div');
-    h.className = 'm-sheet'; h.id = 'mSheet';
-    h.innerHTML = `<div class="m-sheet-bg"></div>
-      <div class="m-sheet-box m-kp-hoja m-tr m-sheet-busca" role="dialog" aria-label="Add a product">
-        <div class="m-sheet-grip"></div>
-        <div class="m-kp-t">Add a product</div>
-        <input type="search" class="m-tr-buscar" placeholder="Search your products" aria-label="Search your products">
-        <div class="m-tr-prods"></div>
-      </div>`;
-    document.body.appendChild(h);
-    const cerrar = () => h.remove();
-    if (window.BarStockSheet && window.BarStockSheet.enganchar) window.BarStockSheet.enganchar(h, cerrar);
-    if (window.BarStockSheet && window.BarStockSheet.alTeclado) window.BarStockSheet.alTeclado(h);
-    h.querySelector('.m-sheet-bg').onclick = cerrar;
-    const caja = h.querySelector('.m-tr-prods'), inp = h.querySelector('.m-tr-buscar');
-    const pinta = () => {
-      const q = inp.value.trim().toLowerCase();
-      const vis = lista.filter(x => !q || x.toLowerCase().includes(q)).slice(0, 40);
-      caja.innerHTML = vis.map(x => `<button type="button" class="m-tr-loc" data-item="${esc(x)}">${esc(x)}</button>`).join('') ||
-        '<div class="m-kp-s">Nothing with that name.</div>';
-      caja.querySelectorAll('[data-item]').forEach(b => { b.onclick = () => {
-        _nuevo.lineas.push({ item: b.dataset.item, qty: 1 });
-        cerrar();
+    B.abrir({
+      pantalla: true,
+      titulo: 'Add a product',
+      sub: 'Add a product to this transfer',
+      productos: master().filter(r => r && r.item && !ya.has(r.item)).map(r => r.item).sort((a, b) => a.localeCompare(b)),
+      que: 'products',
+      verTodo: true,
+      alElegir: (p) => {
+        B.cerrar();
+        _nuevo.lineas.push({ item: p, qty: 1 });
         pintar();
-      }; });
-    };
-    inp.oninput = pinta;
-    pinta();
+      }
+    });
   }
 
   // ── Pintar y releer ──────────────────────────────────────────────────

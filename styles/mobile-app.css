@@ -2851,19 +2851,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
   #mSheet .m-trf-b [data-trf-ok] { background: #34d399; border-color: #34d399; color: #053b28; }
   .m-tr-cajas { display: flex; gap: 6px; margin-top: 8px; }
-  /* Elegir mi producto al confirmar: buscador y lista. 16 px como los
-   * demás campos del teléfono (el zoom de iOS); este archivo sólo vive
-   * en el teléfono. */
-  .m-tr-buscar { display: block; width: 100%; box-sizing: border-box; margin-top: 12px; padding: 10px 12px; border-radius: 12px;
-    border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.06); color: #f1f5f9; font-size: max(16px, var(--m-body)); }
-  .m-tr-prods { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; max-height: 50vh; overflow-y: auto; }
-  /* Una hoja con buscador tiene alto FIJO: si siguiera a la lista, cada
-   * letra la encogía y el campo bajaba detrás del teclado (src/sheet.js,
-   * alTeclado, la ajusta a lo que se ve). Arriba el buscador, la lista
-   * con su scroll en lo que queda. */
-  #mSheet .m-sheet-busca { display: flex; flex-direction: column; height: min(560px, calc(100% - 24px)); box-sizing: border-box; overflow: hidden; }
-  #mSheet .m-sheet-busca .m-tr-prods { flex: 1 1 auto; min-height: 0; max-height: none; overscroll-behavior: contain; }
-  #mSheet .m-sheet-busca .m-tr-prods > * { flex: 0 0 auto; }
   #mSheet .m-tr-cajas button { flex: 1; min-height: calc(var(--m-base) * 2.4); border-radius: 999px !important; cursor: pointer;
     background: transparent; border: 1px solid rgba(255,255,255,.18); color: #cbd5e1; font-size: var(--m-small); font-weight: 700;
     -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }

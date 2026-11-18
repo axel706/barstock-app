@@ -121,52 +121,28 @@
 
   // ── Elegir mi producto ("Change") ────────────────────────────────────
   //
-  // Una hoja con mis productos: primero los que se parecen al suyo
-  // (palabras en común), con un buscador. El campo va a 16 px en el
-  // teléfono (el zoom de iOS), como todos.
-  function parecido(a, b) {
-    const pal = (s) => new Set(String(s || '').toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 2));
-    const A = pal(a), B = pal(b);
-    let k = 0; for (const w of A) if (B.has(w)) k++;
-    return k;
-  }
+  // El buscador de toda la app a pantalla completa (bottle-search.js,
+  // Axel 2026-11-18, lámina A): era una hoja propia que en el iPhone
+  // hacía lo mismo que el campo de la factura. La pista es SU producto:
+  // sin escribir salen los míos que comparten palabras con él.
   function elegir(t, despues) {
+    const B = window.BarStockBottleSearch;
+    if (!B || !B.abrir) return;
     const suyo = T().suItem(t, _loc) || '';
-    const lista = master().filter(r => r && r.item)
-      .map(r => ({ item: r.item, p: parecido(r.item, suyo) }))
-      .sort((a, b) => b.p - a.p || a.item.localeCompare(b.item));
-    const vieja = document.getElementById('mSheet');
-    if (vieja) vieja.remove();
-    const h = document.createElement('div');
-    h.className = 'm-sheet'; h.id = 'mSheet';
-    h.innerHTML = `<div class="m-sheet-bg"></div>
-      <div class="m-sheet-box m-kp-hoja m-tr m-sheet-busca" role="dialog" aria-label="Your product">
-        <div class="m-sheet-grip"></div>
-        <div class="m-kp-t">Which is yours?</div>
-        <div class="m-kp-s">${esc(deDonde(t))} sent ${esc(n(t.qty))} ${esc(suyo || 'bottles')}.</div>
-        <input type="search" class="m-tr-buscar" placeholder="Search your products" aria-label="Search your products">
-        <div class="m-tr-prods"></div>
-      </div>`;
-    document.body.appendChild(h);
-    const cerrar = () => h.remove();
-    if (window.BarStockSheet && window.BarStockSheet.enganchar) window.BarStockSheet.enganchar(h, cerrar);
-    if (window.BarStockSheet && window.BarStockSheet.alTeclado) window.BarStockSheet.alTeclado(h);
-    h.querySelector('.m-sheet-bg').onclick = cerrar;
-    const caja = h.querySelector('.m-tr-prods'), inp = h.querySelector('.m-tr-buscar');
-    const pinta = () => {
-      const q = inp.value.trim().toLowerCase();
-      const vis = lista.filter(x => !q || x.item.toLowerCase().includes(q)).slice(0, 40);
-      caja.innerHTML = vis.map(x => `<button type="button" class="m-tr-loc" data-item="${esc(x.item)}">${esc(x.item)}</button>`).join('') ||
-        '<div class="m-kp-s">Nothing with that name.</div>';
-      caja.querySelectorAll('[data-item]').forEach(b => { b.onclick = () => {
-        _elegido.set(t.id, b.dataset.item);
-        cerrar();
+    B.abrir({
+      pantalla: true,
+      titulo: 'Which is yours?',
+      sub: deDonde(t) + ' sent ' + n(t.qty) + ' ' + (suyo || 'bottles') + '. Which is yours?',
+      productos: master().filter(r => r && r.item).map(r => r.item).sort((a, b) => a.localeCompare(b)),
+      pista: suyo,
+      que: 'products',
+      alElegir: (p) => {
+        B.cerrar();
+        _elegido.set(t.id, p);
         avisar();
         if (despues) despues();
-      }; });
-    };
-    inp.oninput = pinta;
-    pinta();
+      }
+    });
   }
 
   // ── Lo que pintan los demás ──────────────────────────────────────────
@@ -315,6 +291,6 @@
   }
 
   window.BarStockTransferConfirm = { cargar, alCambiar, tarjeta, avisos, rechazados, deProducto, gruposPend, productoDe,
-    estado: () => ({ filas: _filas, loc: _loc, locs: _locs }), confirmar, noEsAsi, elegir, miProducto, parecido, ficha, enganchar,
+    estado: () => ({ filas: _filas, loc: _loc, locs: _locs }), confirmar, noEsAsi, elegir, miProducto, ficha, enganchar,
     _reset: () => { _filas = null; _loc = null; _locs = null; _pidiendo = null; _elegido.clear(); _oyentes.clear(); } };
 })();

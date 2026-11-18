@@ -318,6 +318,7 @@ grupo('5 · la sección Transfers (src/mobile-transfers.js, lámina B)');
     addEventListener: (e, f) => { (vvOyentes[e] = vvOyentes[e] || []).push(f); },
     removeEventListener: (e, f) => { vvOyentes[e] = (vvOyentes[e] || []).filter(x => x !== f); } } });
   w.eval(leer('src/sheet.js'));
+  w.eval(leer('src/bottle-search.js'));
   w.eval(leer('src/transfer-confirm.js'));
   if (existe('src/mobile-transfers.js')) w.eval(leer('src/mobile-transfers.js'));
   w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
@@ -343,24 +344,24 @@ grupo('5 · la sección Transfers (src/mobile-transfers.js, lámina B)');
     prueba('sin productos no deja transferir', host.querySelector('#mTxGo').disabled && /Add a product/.test(txt(host.querySelector('#mTxGo'))));
     host.querySelector('#mTxAdd').click();
     let hoja = w.document.getElementById('mSheet');
-    prueba('"Add a product" abre mis productos con buscador', !!hoja && !!hoja.querySelector('.m-tr-buscar') && hoja.querySelectorAll('[data-item]').length === 2);
-    // Axel, 2026-11-18: al escribir la lista se encogía, la hoja bajaba
-    // detrás del teclado; al borrar crecía y el campo se iba por arriba.
-    prueba('la hoja del buscador va encima del teclado (lo visible), no al fondo de la pantalla',
+    // Axel, 2026-11-18, lámina A: el buscador de toda la app a pantalla
+    // completa (bottle-search.js), no una hoja propia que se movía.
+    prueba('"Add a product" abre el buscador a pantalla completa, con mis productos', !!hoja && hoja.classList.contains('m-bus') &&
+      !!hoja.querySelector('.m-bus-in') && hoja.querySelectorAll('.m-bus-lista [data-p]').length === 2, hoja && hoja.textContent.slice(0, 90));
+    prueba('va encima del teclado (lo visible), no al fondo de la pantalla',
       hoja.style.top === '40px' && hoja.style.height === '300px', hoja.style.top + ' ' + hoja.style.height);
     w.visualViewport.offsetTop = 0; w.visualViewport.height = 520;
     (vvOyentes.resize || []).forEach(f => f());
     prueba('y lo sigue cuando el teclado se va', hoja.style.height === '520px', hoja.style.height);
-    const inp = hoja.querySelector('.m-tr-buscar');
+    const inp = hoja.querySelector('.m-bus-in');
     inp.value = 'triag'; inp.dispatchEvent(new w.Event('input'));
-    prueba('filtrar no le cambia el alto: la caja es de alto fijo (.m-sheet-busca)',
-      hoja.querySelector('.m-sheet-box').classList.contains('m-sheet-busca') && hoja.style.height === '520px');
-    inp.value = ''; inp.dispatchEvent(new w.Event('input'));
-    hoja.querySelector('[data-item="Triage Vodka"]').click();
+    prueba('escribir filtra', hoja.querySelectorAll('.m-bus-lista [data-p]').length === 1);
+    hoja.querySelector('[data-p="Triage Vodka"]').click();
+    prueba('elegir lo cierra y lo añade', !w.document.getElementById('mSheet') && /Triage Vodka/.test(txt(host)));
     host.querySelector('#mTxAdd').click();
     hoja = w.document.getElementById('mSheet');
-    prueba('lo ya puesto no vuelve a salir', hoja.querySelectorAll('[data-item]').length === 1);
-    hoja.querySelector('[data-item="Tito"]').click();
+    prueba('lo ya puesto no vuelve a salir', hoja.querySelectorAll('.m-bus-lista [data-p]').length === 1);
+    hoja.querySelector('[data-p="Tito"]').click();
     for (let k = 0; k < 11; k++) host.querySelector('[data-q="0"][data-d="1"]').click();
     host.querySelector('[data-q="1"][data-d="1"]').click();
     host.querySelector('[data-cuando="antes"]').click();
@@ -373,11 +374,8 @@ grupo('5 · la sección Transfers (src/mobile-transfers.js, lámina B)');
       p.cuerpo.every(x => x.before_count && x.from_location === WB), JSON.stringify(p && p.cuerpo));
     prueba('y vuelve a la lista, avisando', w.__banda === 'Transfers' && /Transfer saved/.test(w.__toast || ''));
   }
-  const css = leer('styles/mobile-app.css');
-  prueba('el CSS de la hoja con buscador: alto fijo, sólo la lista rueda',
-    /#mSheet \.m-sheet-busca \{[^}]*height: min\(560px, calc\(100% - 24px\)\)/.test(css) &&
-    /#mSheet \.m-sheet-busca \.m-tr-prods \{[^}]*flex: 1 1 auto; min-height: 0/.test(css));
-  prueba('"Which is yours?" al confirmar usa la misma hoja', /m-sheet-busca/.test(leer('src/transfer-confirm.js')) && /alTeclado\(h\)/.test(leer('src/transfer-confirm.js')));
+  prueba('"Which is yours?" al confirmar usa el mismo buscador', /BarStockBottleSearch/.test(leer('src/transfer-confirm.js')) &&
+    /pantalla: true/.test(leer('src/transfer-confirm.js')) && !/m-tr-buscar/.test(leer('src/transfer-confirm.js') + leer('src/mobile-transfers.js')));
   {
     // Cerrar la hoja suelta el teclado: nada sigue escuchando.
     const antes = (vvOyentes.resize || []).length;

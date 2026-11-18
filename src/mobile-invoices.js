@@ -860,9 +860,10 @@
   function cabecera() { return ''; }
   function salirDeLaRaiz() {}
 
+  // La de bottle-search.js: la misma línea aquí y en el buscador.
   function ficha(r) {
-    return [r.category, r.vendor, (Number(r.onHand) || 0) + ' on hand']
-      .filter(Boolean).join(' · ');
+    const B = window.BarStockBottleSearch;
+    return B && B.fichaFila ? B.fichaFila(r) : '';
   }
 
   // ── "Esta factura es de esta orden" ─────────────────────────────
@@ -1471,7 +1472,6 @@
       productos: filas.map(r => r.item).sort((a, b) => a.localeCompare(b)),
       pista: l.nombre || '',
       actual: l.item || '',
-      detalle: (p) => { const r = deNombre.get(p); return r ? ficha(r) : ''; },
       pie,
       alElegir: (p) => {
         B.cerrar();
