@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261118-135822",
+    "items": [
+      "Darker cards in More and Settings",
+      "Transfers and Settings rows as tall as the rest"
+    ]
+  },
+  {
     "build": "20261118-134755",
     "items": [
       "Darker cards in Orders: Open, To buy, Sent and Invoices"
@@ -180,12 +187,6 @@
     "items": [
       "Monday's email is now last week's summary",
       "Send last week's summary as a test (Morning email)"
-    ]
-  },
-  {
-    "build": "20261117-083700",
-    "items": [
-      "No morning email after a day with no sales"
     ]
   }
 ]

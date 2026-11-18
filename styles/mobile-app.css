@@ -3931,8 +3931,17 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     display: flex; align-items: center; gap: 10px; width: 100%;
     padding: 11px 12px; margin-bottom: 6px; text-align: left; cursor: pointer;
     border-radius: 13px; color: #f1f5f9;
-    background: rgba(255,255,255,.09);
-    border: 1px solid rgba(255,255,255,.12);
+    /* Tinta (Axel, 2026-11-18: More y Settings): ver --tinta en :root. */
+    background: var(--tinta);
+    border: 1px solid var(--tinta-borde);
+  }
+  /* More: sus filas no llevan subtítulo y medían 41 px contra los 58
+   * de Settings (Axel: "el tamaño de las opciones dentro del sub").
+   * Mismo alto que una fila con título y subtítulo, en la escala: el
+   * renglón del título, el del subtítulo, sus 3 px, el relleno (2 × 11)
+   * y el borde. Salir (.m-item-out) no es una opción de la lista. */
+  .m-screen[data-screen="more"] .m-item:not(.m-item-out) {
+    min-height: calc(var(--m-body) * 1.25 + var(--m-meta) * 1.25 + 27px);
   }
   .m-item > i:first-child { font-size: var(--m-strong); color: #9fb0c4; flex: 0 0 16px; }
   .m-item-t { flex: 1; min-width: 0; font-size: var(--m-body); font-weight: 500; line-height: 1.25; }
@@ -4757,8 +4766,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * una tarjeta del carrusel. Lleva el azul claro del aviso de versión
    * y del punto de la campana, que es lo que sí es. */
   .m-vc-wrap { margin-top: 22px; }
+  /* Sobre Tinta (2026-11-18), con su azul en la esquina y en el borde. */
   .m-hero-ver {
-    background: linear-gradient(135deg, rgba(56,189,248,.16), rgba(56,189,248,.05));
+    background: linear-gradient(135deg, rgba(56,189,248,.16), var(--tinta) 55%), var(--tinta);
     border: 1px solid rgba(125,211,252,.28);
   }
   .m-vc-k { display: flex; align-items: center; justify-content: space-between; color: #9fb3c8; }

@@ -78,6 +78,11 @@ console.log('\nTinta: el fondo de las tarjetas');
       /\.m-ordv\.aviso \{\s*background: linear-gradient\(135deg, rgba\(245,158,11,\.16\), var\(--tinta\) 55%\), var\(--tinta\);/.test(css) &&
       /\.m-ord-l\.sinprecio \{ background: linear-gradient\(135deg, rgba\(245,158,11,\.16\), var\(--tinta\) 55%\), var\(--tinta\);/.test(css));
   }
+  prueba('More y Settings: sus filas (.m-item) de Tinta, y la tarjeta de versión sobre Tinta con su azul',
+    /body\.m-shell \.m-item \{[^}]*background: var\(--tinta\);\s*border: 1px solid var\(--tinta-borde\);/.test(css) &&
+    /\.m-hero-ver \{\s*background: linear-gradient\(135deg, rgba\(56,189,248,\.16\), var\(--tinta\) 55%\), var\(--tinta\);/.test(css));
+  prueba('las filas de More, del alto de las de Settings (título + subtítulo)',
+    /\.m-screen\[data-screen="more"\] \.m-item:not\(\.m-item-out\) \{\s*min-height: calc\(var\(--m-body\) \* 1\.25 \+ var\(--m-meta\) \* 1\.25 \+ 27px\);/.test(css));
   prueba('From Toast (la de referencia) usa la misma variable', /#mScreens \.m-tl-sec \{[^}]*background: var\(--tinta\)/.test(css));
   const conTinta = css.split('}').filter(b => /var\(--tinta\)/.test(b));
   prueba('ninguna regla de Tinta lleva desenfoque', conTinta.length >= 4 && !conTinta.some(b => /backdrop-filter:\s*blur/.test(b)), conTinta.length + ' reglas');
