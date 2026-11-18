@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-125656",
+    "items": [
+      "Invoice: glass buttons to link it or mark a transfer"
+    ]
+  },
+  {
     "build": "20261118-124513",
     "items": [
       "Invoice: the two link buttons no longer overlap"
@@ -180,12 +186,6 @@
     "build": "20261116-193822",
     "items": [
       "Sign-in code email: signed by you, details at the end"
-    ]
-  },
-  {
-    "build": "20261116-191618",
-    "items": [
-      "People: email someone their sign-in code"
     ]
   }
 ]
