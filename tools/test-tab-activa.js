@@ -50,7 +50,7 @@ const reflejoCristal = (css) => (/(body\.m-shell #mBand \.m-ico:not\(\.m-ico-ale
 
 // La regla del botón activo: desde el 2026-11-15 es la del tinte del
 // cristal de "Done" (Axel: "exactamente igual"), compartida con él.
-const mActiva = /body\.m-shell #mScreens #mRoDone,\s*body\.m-shell #mTabs \.m-tab\.on\s*\{([^}]*)\}/.exec(css);
+const mActiva = /body\.m-shell #mScreens (?:#mRoDone|:is\(#mRoDone, #mTxGo\)),\s*body\.m-shell #mTabs \.m-tab\.on\s*\{([^}]*)\}/.exec(css);
 // La regla del icono dentro del botón activo.
 const mIcono = /body\.m-shell\s+\.m-tab\.on\s+\.ti\s*\{([^}]*)\}/.exec(css);
 
