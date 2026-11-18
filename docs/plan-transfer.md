@@ -55,4 +55,4 @@ en el Home, campana y chip en la ficha).
    (`src/mobile-transfers.js`): "New transfer" con varios productos (−/+, "Add a
    product", Now / Before the count), "To confirm" por grupo con "Confirm all" y
    "This week" con su estado y Undo. El botón ⇄ de la ficha se quitó. Migración
-   046 (`group_id`) para agrupar las filas de un mismo envío.
+   046 (`group_id`, corrida) para agrupar las filas de un mismo envío.
