@@ -1316,6 +1316,24 @@ lo resta (sólo se descarta lo anulado). Los eventos grandes de Crown dan
 invitados, +413), y lo que falta en los licores de la casa NO depende del
 open bar. La tabla y lo que falta para pasarlo a botellas, en
 `docs/plan-pedido.md` § 6. Herramientas: `bsOpenBar`, `bsOpenBarDias`.
+**Cuánto fiarse del LIVE, la conclusión (2026-11-19).** Medido con
+`bsDemanda`, `bsCocteles`, `bsOpenBar` y `bsSinBotella`: el motor cuenta
+bien; lo que falla es lo que le entra. Vinos y licores pedidos por marca
+cuadran con los conteos (White Haven 19.0/18.3, Tito's 12.2/12.4, Villa
+Brici, Canyon Oaks, Grey Goose, Maker's: dentro de un 10–20 %). Lo que va
+en cócteles no: Toast ve un 40–60 % (Kentucky Tavern, Pedro Morales,
+triple sec, Kamora, Cinzano Sweet, los gins, Smirnoff Vanilla; el Nino
+por la Mimosa, 92 al mes sin receta), así que su LIVE resta de menos y
+el "Out" llega tarde; Cinzano Dry (martini a 0.5 oz, de verdad ~0.15) y
+Mirabeau restan de más. El "cuánto pedir" ya va protegido (lo MAYOR de
+Pour·IQ y Toast); la fecha no. Lo que queda tras las recetas (~3
+botellas/semana en los de la casa, igual con o sin open bar) es servir de
+más o merma. **Decidido con Axel: esperar ~2 ciclos de `live_expected`
+(Live vs count) mientras él escribe las recetas** (Mimosa, las 6 vacías:
+Bloody Mary, Margarita, Old Fashioned Well, Moscow Mule, LIT - House,
+Seasonal Martini; el martini a 0.25), y con eso decidir, sobre lámina,
+si la app corrige el LIVE con lo que Toast ve de cada producto o marca
+dónde no es de fiar. Hoy el "≈ Live" enseña la misma seguridad en todos.
 
 ### La lista de compras y la verificación (2026-11-14, sin construir)
 
