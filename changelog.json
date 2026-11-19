@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261119-083401",
+    "items": [
+      "Running out: only this cycle, until Sunday count",
+      "Later dates say Out next Tue"
+    ]
+  },
+  {
     "build": "20261118-203015",
     "items": [
       "From Toast lists every cocktail, Mimosa included"
@@ -176,12 +183,6 @@
     "build": "20261118-122043",
     "items": [
       "New transfer: \"Out of\" first, button above the tabs"
-    ]
-  },
-  {
-    "build": "20261118-120835",
-    "items": [
-      "Transfers: product search stays above the keyboard"
     ]
   }
 ]

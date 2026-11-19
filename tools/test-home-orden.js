@@ -134,5 +134,25 @@ grupo('en el Home');
   prueba('home-orden carga antes que el Home', html.indexOf('src/home-orden.js?v=') > 0 && html.indexOf('src/home-orden.js?v=') < html.indexOf('src/mobile-home.js?v='));
 }
 
+grupo('hasta cuándo es "esta semana": el domingo del ciclo (Axel, 2026-11-19)');
+{
+  // Running out decía "10 run out this week" un jueves y todos se
+  // acababan el martes o miércoles SIGUIENTE: contaba 7 días desde hoy.
+  const f = (ahora, resetAt) => HO.finCiclo ? HO.finCiclo({ ahora: T(ahora), resetAt }) : null;
+  const cerradoDom15 = '2026-11-16T03:00:00Z';     // domingo 15, 10 PM NY
+  prueba('jueves 19 con el conteo del 15 cerrado → domingo 22', f('2026-11-19T13:15:00Z', cerradoDom15) === '2026-11-22', f('2026-11-19T13:15:00Z', cerradoDom15));
+  prueba('sábado 21 a las 10 PM → domingo 22', f('2026-11-22T03:00:00Z', cerradoDom15) === '2026-11-22');
+  prueba('domingo 22 a las 6 PM, sin contar → ese domingo', f('2026-11-22T23:00:00Z', cerradoDom15) === '2026-11-22');
+  prueba('domingo 22, contado a las 9 PM → el domingo siguiente (29)', f('2026-11-23T02:30:00Z', '2026-11-23T02:00:00Z') === '2026-11-29');
+  prueba('lunes 23 sin contar todavía → el domingo 29, no una lista vacía', f('2026-11-23T15:00:00Z', cerradoDom15) === '2026-11-29');
+  prueba('el domingo por la mañana, antes del corte → ese domingo', f('2026-11-22T15:00:00Z', cerradoDom15) === '2026-11-22');
+}
+{
+  const html = leer('index.html');
+  const i = (f) => html.indexOf('src/' + f + '?v=');
+  prueba('home-orden carga antes que running-out y live-cache, que la usan', i('home-orden.js') > 0 &&
+    i('home-orden.js') < i('running-out.js') && i('home-orden.js') < i('live-cache.js'));
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);

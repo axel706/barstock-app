@@ -90,13 +90,21 @@
     const parM = window.parAdjustments;
     const master = (window.state && window.state.master) || [];
     const out = [];
+    // Hasta el conteo del domingo (home-orden.finCiclo, Axel 2026-11-19):
+    // lo de después se ve al abrir el ciclo. Sin el módulo, los siete días
+    // de antes.
+    const HO = window.BarStockHomeOrden;
+    const fin = HO && HO.finCicloAhora ? HO.finCicloAhora() : null;
+    const P = window.BarStockPedido;
+    const hoy = P && P.diaDe ? P.diaDe(Date.now()) : null;
+    const hastaFin = fin && hoy ? Math.round((Date.parse(fin) - Date.parse(hoy)) / 864e5) : null;
     for (const r of master) {
       if (!r || !r.item) continue;
       if (!((Number(r.suggested) || 0) > 0)) continue;   // sin par: no se pide
       const vivo = !!(LC && LC.vivo(r));
       if (LC && LC.toastLoVende(r)) {
         const a = LC.agota(r);
-        if (!a || a.enDias >= 7) continue;
+        if (!a || (fin ? !(a.dia <= fin) : a.enDias >= 7)) continue;
         out.push({ r, item: r.item, dias: a.enDias, out: a, vivo, fuera: LC.cuanto(r) <= 0, avg: 0 });
         continue;
       }
@@ -109,7 +117,7 @@
       // estimado. Con la media botella de run-out.js, lo que casi no se
       // mueve salía aquí ("Don Julio, 19 days") y su fila decía otra cosa.
       const dias = Math.max(0, Math.round(queda / avg * 7));
-      if (dias > 7) continue;
+      if (hastaFin != null ? dias > hastaFin : dias > 7) continue;
       // `fuera` mira el estante, no el redondeo: media botella de algo
       // que se mueve mucho también da "0 days", y decir que está fuera
       // cuando queda media es mentira.

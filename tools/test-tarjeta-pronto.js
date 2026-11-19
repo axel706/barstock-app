@@ -165,6 +165,26 @@ const nombres = (h) => filas(h).map(f => f.querySelector('.n').textContent);
     prueba('lo de Toast (live-cache.agota) y el correo, igual', /enDias === 1 \? 'Out tomorrow'/.test(lc) && /'Out tomorrow'/.test(mr));
   }
 
+  grupo('"this week" es la semana del ciclo, no los 7 días que vienen (Axel, 2026-11-19)');
+  {
+    // Jueves 19 a las 8:15 AM, el conteo del domingo 15 cerrado. A ≈0.43
+    // botellas por día (3 a la semana): A con 1.3 se acaba el domingo 22
+    // (3 días), B con 2.1 el martes 24 (5 días): la semana que viene.
+    const ahoraReal = Date.now;
+    Date.now = () => Date.parse('2026-11-19T13:15:00Z');
+    try {
+      const w = entorno([{ item: 'A', onHand: 1.3, avg: 3 }, { item: 'B', onHand: 2.1, avg: 3 }]);
+      w.BarStockWeeklyCycle.resetAt = () => '2026-11-16T03:00:00Z';
+      new Function(fs.readFileSync(path.join(__dirname, '..', 'src', 'pedido.js'), 'utf8'))();
+      new Function(fs.readFileSync(path.join(__dirname, '..', 'src', 'home-orden.js'), 'utf8'))();
+      const h = pintar(w);
+      prueba('el martes de la semana que viene no entra en "this week"', /1 runs out this week/.test(txt(h)) && !nombres(h).includes('B'), txt(h).slice(0, 80));
+      prueba('el domingo de este ciclo sí', nombres(h)[0] === 'A', JSON.stringify(nombres(h)));
+    } finally { Date.now = ahoraReal; }
+    const lc = fs.readFileSync(path.join(__dirname, '..', 'src', 'live-cache.js'), 'utf8');
+    prueba('después del domingo del ciclo, la etiqueta dice "Out next Tue" (live-cache.agota)', /'next '/.test(lc) && /finCiclo\(\)/.test(lc));
+  }
+
   grupo('sin nada fuera, el titular vuelve al total');
   {
     const w = entorno([

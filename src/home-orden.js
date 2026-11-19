@@ -73,5 +73,39 @@
     return 'ciclo';
   }
 
-  window.BarStockHomeOrden = { primera, corte, HORA };
+  // ── Hasta cuándo es "esta semana" (Axel, 2026-11-19) ────────────────
+  //
+  // Running out decía "10 run out this week" un jueves, y todos se
+  // acababan el martes o el miércoles de la semana SIGUIENTE: contaba los
+  // próximos 7 días desde hoy, no la semana del ciclo. Lo que se acaba
+  // después del conteo del domingo es cosa del pedido que se hace al
+  // abrir el ciclo, no de "esta semana".
+  //
+  // → 'AAAA-MM-DD', el domingo en que se cierra el ciclo de ahora:
+  //   · cerrado el conteo de este domingo (resetAt en o después del
+  //     corte), el domingo SIGUIENTE: desde el domingo por la noche ya se
+  //     ve la semana nueva (Axel eligió eso al lunes: es cuando se piensa
+  //     el pedido);
+  //   · el domingo después de las 4 PM sin cerrar, ese mismo domingo;
+  //   · cualquier otro día, el domingo que viene (un conteo que se
+  //     retrasa al lunes no deja la lista vacía).
+  function finCiclo(o) {
+    const c = corte(o.ahora);
+    const r = o.resetAt ? new Date(o.resetAt).getTime() : NaN;
+    const cerrado = !isNaN(r) && r >= c;
+    const pc = partes(c), ph = partes(o.ahora);
+    const ymd = (p) => Date.UTC(p.y, p.m - 1, p.d);
+    const domingo = ymd(pc);
+    const fin = (!cerrado && ymd(ph) === domingo) ? domingo : domingo + 7 * 864e5;
+    return new Date(fin).toISOString().slice(0, 10);
+  }
+  // El de ahora, con el resetAt del ciclo. null sin el módulo del ciclo:
+  // quien llama sigue como antes (los siete días).
+  function finCicloAhora() {
+    const W = window.BarStockWeeklyCycle;
+    if (!W || !W.resetAt) return null;
+    return finCiclo({ ahora: Date.now(), resetAt: W.resetAt() });
+  }
+
+  window.BarStockHomeOrden = { primera, corte, finCiclo, finCicloAhora, HORA };
 })();

@@ -122,6 +122,7 @@
   // menos, ámbar dentro de la semana, gris más allá. Más de seis días se
   // dice con la fecha: "Out Sat" sería ambiguo entre este sábado y el
   // siguiente.
+  const finCiclo = () => { const HO = window.BarStockHomeOrden; return HO && HO.finCicloAhora ? HO.finCicloAhora() : null; };
   function agota(r) {
     const a = agotaDe(r);
     if (!a || !a.agota) return null;
@@ -133,7 +134,11 @@
         // Mañana se dice "tomorrow": "Out Thu" para mañana jueves se leía
         // como el jueves de la semana que viene (Axel, 2026-11-18).
         : a.enDias === 1 ? 'Out tomorrow'
-        : a.enDias < 7 ? 'Out ' + D[f.getUTCDay()]
+        // Después del conteo del domingo es la semana que viene, y se
+        // dice: "Out Tue" un jueves se leía como "esta semana" (Axel,
+        // 2026-11-19). El fin del ciclo es home-orden.finCiclo, el mismo
+        // corte de la lista de Running out.
+        : a.enDias < 7 ? 'Out ' + (finCiclo() && a.agota > finCiclo() ? 'next ' : '') + D[f.getUTCDay()]
           : 'Out ' + M[f.getUTCMonth()] + ' ' + f.getUTCDate();
     return { txt, tono: a.enDias <= 2 ? 'r' : a.enDias < 7 ? 'a' : 'g', enDias: a.enDias, dia: a.agota };
   }

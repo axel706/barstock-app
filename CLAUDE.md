@@ -1481,6 +1481,20 @@ transfer "antes del conteo" por línea con producto y enlaza la factura a
 la orden del primero. Sin enlace, el reparto ya se la daba a la orden
 TRANSFER por producto (no exige proveedor).
 
+**"This week" es la semana del ciclo (2026-11-19).** Running out decía
+"10 run out this week" un jueves y todos se acababan el martes o el
+miércoles SIGUIENTE: `running-out.lista()` contaba los 7 días desde hoy.
+Ahora entra lo que se acaba hasta el domingo del ciclo
+(`home-orden.finCiclo`: cerrado el conteo del domingo, el domingo
+siguiente; el domingo desde las 4 PM sin cerrar, ese domingo; si no, el
+que viene). Desde el domingo por la noche ya se ve la semana nueva (Axel
+lo eligió frente al lunes: es cuando se piensa el pedido). Fuera de esa
+ventana, la etiqueta dice "Out next Tue" (`live-cache.agota`). Lo que se
+acaba la semana que viene tiene que avisarse al hacer la orden (Orders ›
+Open), por lámina. `home-orden.js` carga antes de `live-cache` y
+`running-out`. Pruebas: el último grupo de `test-home-orden` y "this
+week es la semana del ciclo" en `test-tarjeta-pronto`.
+
 **Fijar arriba en Running out (2026-11-15, lámina B).** "Edit order"
 en la pantalla de revisión: las tarjetas sin botones y con asa (≡);
 arrastrar por encima de "By date" fija, por debajo suelta; "Reset" y
