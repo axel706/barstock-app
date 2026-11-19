@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-203015",
+    "items": [
+      "From Toast lists every cocktail, Mimosa included"
+    ]
+  },
+  {
     "build": "20261118-200326",
     "items": [
       "Behind-the-scenes fixes"
@@ -176,13 +182,6 @@
     "build": "20261118-120835",
     "items": [
       "Transfers: product search stays above the keyboard"
-    ]
-  },
-  {
-    "build": "20261118-115722",
-    "items": [
-      "Transfers section in More",
-      "Several products in one transfer"
     ]
   }
 ]

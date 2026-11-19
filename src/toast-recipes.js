@@ -311,20 +311,30 @@
 
   // ── Lo que Toast vende sin receta ──────────────────────────────────
   //
-  // Los cócteles: ventas de categoría Liquor de los últimos 30 días que
-  // NO están bajo el grupo "Liquor" del menú (ése es el licor solo, que
-  // empareja Liquor from Toast con la misma regla que lib/toast.js), sin
-  // emparejar ni ignorar en toast_item_links, y sin receta por su nombre
-  // ni por "also". El más vendido primero.
+  // Los cócteles: ventas de los últimos 30 días de categoría Liquor O
+  // colgadas de un grupo "Cocktails" del menú, que NO están bajo el grupo
+  // "Liquor" (ése es el licor solo, que empareja Liquor from Toast con la
+  // misma regla que lib/toast.js), sin emparejar ni ignorar en
+  // toast_item_links, y sin receta por su nombre ni por "also". El más
+  // vendido primero.
+  //
+  // Lo de "Cocktails" (Axel, 2026-11-19): sólo se miraba la categoría
+  // Liquor, y la Mimosa de Crown es categoría Wine en Toast aunque cuelgue
+  // de DRINKS › Cocktails › Classic Cocktails. Vendía 92 al mes sin
+  // receta, nunca salió aquí, y su prosecco (el Nino) no se restaba del
+  // LIVE. El vino y la cerveza de siempre no cuelgan de Cocktails y
+  // siguen fuera. El filtro va en la consulta (para no leer toda la
+  // cerveza) y otra vez aquí, que es lo que decide.
   const DIAS_TOAST = 30;
   let _sinReceta = null;       // { vendidos: Set de nombres normalizados }
   const enGrupoLicor = (g) => String(g || '').split('›').map(x => x.trim()).some(x => /^liquor$/i.test(x));
+  const esCoctel = (v) => /liquor/i.test(String(v.sales_category || '')) || /cocktail/i.test(String(v.toast_group || ''));
   async function sinReceta() {
     const loc = await locacion();
     const desde = new Date(Date.now() - DIAS_TOAST * 864e5).toISOString().slice(0, 10);
     const [ventas, enlaces] = await Promise.all([
       window.BarStockRest.leerTodo('toast_sales?location_id=eq.' + loc + '&business_date=gte.' + desde +
-        '&sales_category=ilike.*liquor*&select=toast_item_guid,toast_item_name,toast_group,quantity&order=id.asc'),
+        '&or=(sales_category.ilike.*liquor*,toast_group.ilike.*cocktail*)&select=toast_item_guid,toast_item_name,toast_group,quantity,sales_category&order=id.asc'),
       window.BarStockRest.leerTodo('toast_item_links?location_id=eq.' + loc + '&select=toast_item_guid,status&order=id.asc')
     ]);
     const tocados = new Set(enlaces.map(e => e.toast_item_guid));
@@ -333,7 +343,7 @@
     const vendidos = new Set(), por = new Map();
     for (const v of ventas) {
       const n = String(v.toast_item_name || '').trim();
-      if (!n) continue;
+      if (!n || !esCoctel(v)) continue;
       vendidos.add(L().norm(n));
       if (enGrupoLicor(v.toast_group) || tocados.has(v.toast_item_guid) || conReceta.has(L().norm(n))) continue;
       const k = v.toast_item_guid || n;

@@ -65,6 +65,9 @@ function base() {
       { toast_item_guid: 'g-ign', toast_item_name: 'Bar Snack Bitters', toast_group: 'DRINKS › Cocktails', quantity: 5, sales_category: 'Liquor' },
       // Vino y cerveza: no son cócteles.
       { toast_item_guid: 'g-vin', toast_item_name: 'Sangria', toast_group: 'DRINKS › Wine', quantity: 9, sales_category: 'Wine' },
+      // …salvo que cuelguen de Cocktails: la Mimosa de Crown es categoría
+      // Wine en Toast y no salía (92 al mes sin receta, 2026-11-19).
+      { toast_item_guid: 'g-mim', toast_item_name: 'Mimosa', toast_group: 'DRINKS › Cocktails › Classic Cocktails', quantity: 15, sales_category: 'Wine' },
       { toast_item_guid: 'g-ipa', toast_item_name: 'IPA', toast_group: 'DRINKS › Beer', quantity: 30, sales_category: 'Beer' }
     ],
     sigId: 100
@@ -160,10 +163,13 @@ grupo('1 · lo que Toast vende sin receta');
   await R(w).cargar();
   const s = await R(w).sinReceta();
   prueba('sólo los cócteles sin receta, el más vendido primero',
-    JSON.stringify(s.map(x => x.nombre)) === JSON.stringify(['Spicy Paloma', 'Fall Old Fashioned']), JSON.stringify(s.map(x => x.nombre)));
+    JSON.stringify(s.map(x => x.nombre)) === JSON.stringify(['Spicy Paloma', 'Mimosa', 'Fall Old Fashioned']), JSON.stringify(s.map(x => x.nombre)));
   const p = s[0] || {};
   prueba('con su grupo del menú, su guid y cuánto se vendió', p.grupo === 'DRINKS › Cocktails' && p.guid === 'g-pal' && p.vendidos === 30, JSON.stringify(p));
-  prueba('se leen sólo las ventas de licor de los últimos 30 días', w.__pet.some(x => x.tabla === 'toast_sales' && /sales_category=ilike\.\*liquor\*/i.test(decodeURIComponent(x.url)) && /business_date=gte\./.test(x.url)));
+  prueba('se leen las ventas de licor Y lo que cuelga de Cocktails, de los últimos 30 días', w.__pet.some(x => x.tabla === 'toast_sales' &&
+    /or=\(sales_category\.ilike\.\*liquor\*,toast_group\.ilike\.\*cocktail\*\)/i.test(decodeURIComponent(x.url)) && /business_date=gte\./.test(x.url)));
+  prueba('un cóctel de categoría Wine (la Mimosa) sale; el vino y la cerveza, no',
+    s.some(x => x.nombre === 'Mimosa') && !s.some(x => x.nombre === 'Sangria' || x.nombre === 'IPA'));
   prueba('una receta que Toast vende: "en Toast"', R(w).enToast(receta(w, 'House Cosmo')) === true);
   prueba('una que no se vendió en 30 días: no', R(w).enToast(receta(w, 'Espresso Martini')) === false);
 }
@@ -327,10 +333,10 @@ grupo('la pantalla (Settings › Toast › Recipes)');
   };
 
   let { w, host } = await pantalla();
-  prueba('cuatro pestañas; From Toast con cuántos', /From Toast · 2/.test(tab(host, 'toast').textContent), tab(host, 'toast').textContent);
+  prueba('cuatro pestañas; From Toast con cuántos', /From Toast · 3/.test(tab(host, 'toast').textContent), tab(host, 'toast').textContent);
   tab(host, 'toast').click();
   const cards = [...host.querySelectorAll('.m-rc-card')];
-  prueba('una tarjeta por trago, con su grupo y lo vendido', cards.length === 2 && /Spicy Paloma/.test(cards[0].textContent) && /64|30 sold/.test(cards[0].textContent), cards.map(c => c.textContent.replace(/\s+/g, ' ')).join(' | '));
+  prueba('una tarjeta por trago, con su grupo y lo vendido', cards.length === 3 && /Spicy Paloma/.test(cards[0].textContent) && /64|30 sold/.test(cards[0].textContent), cards.map(c => c.textContent.replace(/\s+/g, ' ')).join(' | '));
   prueba('y sus tres botones', !!cards[0].querySelector('[data-escribir]') && !!cards[0].querySelector('[data-igual]') && !!cards[0].querySelector('[data-ign]'));
 
   // Write recipe: el editor con el nombre de Toast, fijo.
@@ -346,12 +352,13 @@ grupo('la pantalla (Settings › Toast › Recipes)');
   host.querySelector('#reSave').click(); await esperar(60);
   const nueva = w.__db.toast_recipes.find(x => x.toast_name === 'Spicy Paloma');
   prueba('Save guarda la receta y sus líneas', !!nueva && w.__db.toast_recipe_lines.filter(l => l.recipe_id === nueva.id).length === 2);
-  prueba('vuelve a la lista, y From Toast baja a 1', !host.querySelector('.m-re') && /From Toast · 1/.test(tab(host, 'toast').textContent), tab(host, 'toast') && tab(host, 'toast').textContent);
+  prueba('vuelve a la lista, y From Toast baja a 2', !host.querySelector('.m-re') && /From Toast · 2/.test(tab(host, 'toast').textContent), tab(host, 'toast') && tab(host, 'toast').textContent);
 
   // Not a drink
   tab(host, 'toast').click();
-  host.querySelector('[data-ign="0"]').click(); await esperar(60);
-  prueba('Not a drink lo quita de la lista', /From Toast · 0/.test(tab(host, 'toast').textContent) && w.__db.toast_item_links.some(l => l.toast_item_guid === 'g-fof' && l.status === 'ignored'));
+  // El Fall Old Fashioned es el segundo: la Mimosa (15) va antes.
+  host.querySelector('[data-ign="1"]').click(); await esperar(60);
+  prueba('Not a drink lo quita de la lista', /From Toast · 1/.test(tab(host, 'toast').textContent) && w.__db.toast_item_links.some(l => l.toast_item_guid === 'g-fof' && l.status === 'ignored'));
 
   // Not drinks (opción A, 2026-11-13): al marcar, sale abajo con su
   // Restore; y Restore lo devuelve arriba.
@@ -359,7 +366,7 @@ grupo('la pantalla (Settings › Toast › Recipes)');
   prueba('lo marcado sale al final de From Toast: "Not drinks · 1"', /Not drinks · 1/.test(host.textContent) &&
     !!host.querySelector('.m-rc-nd [data-rest="0"]') && /Fall Old Fashioned/.test(host.querySelector('.m-rc-nd').textContent), host.textContent.slice(-300));
   host.querySelector('[data-rest="0"]').click(); await esperar(60);
-  prueba('Restore lo devuelve a From Toast y la lista se va', /From Toast · 1/.test(tab(host, 'toast').textContent) && !host.querySelector('.m-rc-nd') &&
+  prueba('Restore lo devuelve a From Toast y la lista se va', /From Toast · 2/.test(tab(host, 'toast').textContent) && !host.querySelector('.m-rc-nd') &&
     [...host.querySelectorAll('.m-rc-card')].some(c => /Fall Old Fashioned/.test(c.textContent)));
 
   // De cero: + New recipe, sin nombre no se guarda.

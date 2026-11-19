@@ -694,8 +694,10 @@ que miente.
    **Escribirlas desde la app (2026-11-12, opción A):** Settings › Toast
    › Recipes. "+ New recipe" (de cero), Edit en cada tarjeta (onzas de
    0.25 en 0.25, borrar con dos toques), y la pestaña *From Toast*: lo
-   que Toast vendió en 30 días como cóctel (categoría Liquor, fuera del
-   grupo "Liquor", que es el licor solo) sin receta, con *Write recipe*,
+   que Toast vendió en 30 días como cóctel (categoría Liquor, o colgado
+   de un grupo "Cocktails" en cualquier categoría —la Mimosa es Wine y no
+   salía, 2026-11-19—, fuera del grupo "Liquor", que es el licor solo)
+   sin receta, con *Write recipe*,
    *Same as…* (añade el nombre a `also`) y *Not a drink* (fila
    `ignored` en `toast_item_links`; lo marcado sale al final de From
    Toast, "Not drinks · N", con *Restore*, que borra esa fila —opción A,
