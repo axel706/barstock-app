@@ -79,6 +79,29 @@ if (S) {
   prueba('sin Pour·IQ ni Toast, nada', S.para({ item: 'Solo', vendor: 'BREAKTHRU', code: '' }, DOMINGO) === null);
 }
 
+grupo('1b · se acaba antes de que llegue la orden (lámina C, 2026-11-19)');
+{
+  // Lunes 23 a las 10 AM. Wine Merchant entrega el jueves a las 4 PM.
+  const w2 = new JSDOM('<!doctype html><body></body>', { runScripts: 'outside-only' }).window;
+  w2.console = { log() {}, warn() {}, error() {} };
+  for (const f of ['src/pedido.js', 'src/vendor-delivery.js', 'src/toast-usage.js', 'src/run-out.js', 'src/sugerencia.js']) w2.eval(leer(f));
+  const S2 = w2.BarStockSugerencia;
+  const AHORA = NY('2026-11-23 10:00');
+  const d2 = { porDia: [0.5, 0, 0.5, 0.5, 0.5, 0.8, 1], semanal: 3.8, sigma: 1, tendencia: 1, reciente: 3.8, cv: 1 };
+  const fila = (live) => ({ dem: d2, live, margen: 0, viene: [], ahoraMs: AHORA, hoyVendido: 0, hoyFrac: null });
+  const F = { Corto: fila(1.2), Largo: fila(10), Solo: { dem: null, live: 1, viene: [] } };
+  w2.BarStockVendorDefaults = { getDefaults: async () => ({ delivery_day: 4, delivery_time: '16:00' }) };
+  w2.BarStockLiveCache = { cargar: () => null, fila: (r) => F[r.item] || null, cuanto: (r) => (F[r.item] || {}).live, agota: () => null };
+  await S2.preparar('WINE MERCHANT');
+  const c = S2.antes && S2.antes({ item: 'Corto', vendor: 'WINE MERCHANT' }, AHORA);
+  prueba('se acaba antes del jueves 4 PM: lo dice, con cuánto de LOOP', !!c && c.fin && c.fin.en < NY('2026-11-26 16:00') && c.loop >= 1 && c.llegaTxt === 'Thu 4 PM' && /^Out /.test(c.outTxt), JSON.stringify(c));
+  prueba('…y el porqué de la sugerencia lo dice ("short this week")', /^short this week · to last until next Thu 4 PM/.test((S2.para({ item: 'Corto', vendor: 'WINE MERCHANT' }, AHORA) || {}).texto || ''),
+    (S2.para({ item: 'Corto', vendor: 'WINE MERCHANT' }, AHORA) || {}).texto);
+  prueba('lo que llega a la entrega, no', S2.antes && S2.antes({ item: 'Largo', vendor: 'WINE MERCHANT' }, AHORA) === null);
+  prueba('…ni su sugerencia dice "short"', !/short/.test((S2.para({ item: 'Largo', vendor: 'WINE MERCHANT' }, AHORA) || {}).texto || 'x'));
+  prueba('sin la demanda día por día (lo que Toast no vende), nada', S2.antes && S2.antes({ item: 'Solo', vendor: 'WINE MERCHANT' }, AHORA) === null);
+}
+
 grupo('2 · la pantalla de la orden (opción C)');
 // item, vendor, onHand, par, toOrder, override
 const FILAS = [
@@ -91,6 +114,13 @@ const FILAS = [
   ['Otro', 'SOUTHERN', 5, 5, 0, '']
 ];
 const SUG = { Daou: 9, Pedro: 2, Kentucky: 4, Quieto: 0, Fuera: 5, Puesto: 3, Otro: 6 };
+// Lo que se acaba antes de que llegue su orden (sugerencia.antes).
+const ANTES = {
+  Pedro: { fin: { dia: '2026-11-25', en: 1 }, loop: 2, outTxt: 'Out Wed', llegaTxt: 'Tue 4 PM' },
+  Otro: { fin: { dia: '2026-11-24', en: 0 }, loop: 1, outTxt: 'Out Tue', llegaTxt: 'Wed 4 PM' },
+  Quieto: { fin: { dia: '2026-11-26', en: 2 }, loop: 1, outTxt: 'Out Thu', llegaTxt: 'Tue 4 PM' }
+};
+let EN_LISTA = ['Quieto'];   // ya en To buy: no sale en ningún sitio
 function pantalla(conS) {
   const dom = new JSDOM('<!doctype html><body></body>', { url: 'https://x.test/' });
   const v = dom.window;
@@ -109,7 +139,11 @@ function pantalla(conS) {
   v.resetFinalOrder = () => {};
   v.BarStockVendorDefaults = { getDefaults: async () => ({}) };
   if (conS) v.BarStockSugerencia = { preparar: async () => {},
-    para: (r) => (r.item in SUG ? { pedir: SUG[r.item], texto: 'to last until next Tue 4 PM: uses 1 + cushion 1, 1 left Tue' } : null) };
+    para: (r) => (r.item in SUG ? { pedir: SUG[r.item], texto: 'to last until next Tue 4 PM: uses 1 + cushion 1, 1 left Tue' } : null),
+    antes: (r) => (conS === 'antes' && ANTES[r.item]) || null };
+  v.__anadidos = [];
+  v.BarStockShoppingList = { anadir: async (o) => { v.__anadidos.push(o); return { ok: true }; } };
+  v.BarStockMobileToBuy = { cuantos: () => 0, cargar() {}, montar() {}, deProducto: (item) => (EN_LISTA.includes(item) ? { item_name: item } : null) };
   let def = null;
   v.BarStockMobile = Object.assign({ register(d) { def = d; }, refrescarBadges() {}, ir() {} }, require('./lib-cabecera'));
   new Function(leer('src/mobile-orders.js'))();
@@ -156,6 +190,53 @@ const txt = (el) => (el ? el.textContent.replace(/\s+/g, ' ').trim() : '');
   abrir(host, 'BREAKTHRU');
   await esperar(10);
   prueba('sin sugerencia cargada, la orden como siempre', !host.querySelector('.m-ord-sg') && !host.querySelector('.m-ord-k') && host.querySelectorAll('#moList .m-ord-l').length === 2);
+}
+
+grupo('2b · lo que no llega a su entrega: arriba del proveedor y en LOOP (lámina C)');
+{
+  const { v, host } = pantalla('antes');
+  await esperar(20);
+  const loopCard = Array.from(host.querySelectorAll('.m-ordv')).find(x => txt(x.querySelector('.m-ordv-n')) === 'LOOP');
+  prueba('LOOP sale en Open aunque no tenga líneas propias', !!loopCard && /2 won't last until delivery/.test(txt(loopCard)), loopCard ? txt(loopCard) : Array.from(host.querySelectorAll('.m-ordv')).map(txt).join(' | '));
+  abrir(host, 'BREAKTHRU');
+  await esperar(10);
+  const b = host.querySelector('.m-ord-pte');
+  prueba('arriba del proveedor: lo suyo que se acaba antes de que llegue', !!b && /1 runs out before this order arrives \(Tue 4 PM\)/.test(txt(b)) && /Pedro\s*Out Wed · 2 from LOOP/.test(txt(b)), txt(b));
+  prueba('…no lo de otro proveedor, ni lo que ya está en To buy', !!b && !/Otro|Quieto/.test(txt(b)));
+  prueba('…y va antes de las líneas', !!b && (b.compareDocumentPosition(host.querySelector('#moList')) & v.Node.DOCUMENT_POSITION_FOLLOWING) > 0);
+  host.querySelector('.m-ord-volver, [data-volver-ordenes]');
+}
+{
+  const { v, host } = pantalla('antes');
+  await esperar(20);
+  abrir(host, 'LOOP');
+  await esperar(10);
+  const b = host.querySelector('.m-ord-pte');
+  prueba('en LOOP, lo de TODOS los proveedores, con su proveedor y su entrega', !!b && /2 won't last until their delivery/.test(txt(b)) &&
+    /Otro\s*Out Tue · SOUTHERN Wed 4 PM · 1 from LOOP/.test(txt(b)) && /Pedro\s*Out Wed · BREAKTHRU Tue 4 PM · 2 from LOOP/.test(txt(b)), txt(b));
+  prueba('el que se acaba antes, primero', !!b && txt(b).indexOf('Otro') < txt(b).indexOf('Pedro'));
+  prueba('sin líneas propias, sin "Review and send"', !host.querySelector('#moSend'));
+  if (process.env.VOLCAR2) fs.writeFileSync(process.env.VOLCAR2, host.innerHTML);
+  const btn = Array.from(b.querySelectorAll('[data-tb]')).find(x => /Pedro/.test(txt(x.parentNode)));
+  btn.click();
+  await esperar(10);
+  prueba('"To buy" lo manda a la lista de compras con lo de LOOP y el porqué', v.__anadidos.length === 1 && v.__anadidos[0].item === 'Pedro' &&
+    v.__anadidos[0].qty === 2 && v.__anadidos[0].motivo === 'app' && /Out Wed · before BREAKTHRU Tue 4 PM/.test(v.__anadidos[0].nota), JSON.stringify(v.__anadidos));
+  const b2 = host.querySelector('.m-ord-pte');
+  prueba('y desaparece de LOOP', !!b2 && !/Pedro/.test(txt(b2)) && /1 won't last until its delivery/.test(txt(b2)), txt(b2));
+  host.querySelector('.m-back, [data-back], .m-ord-back');
+}
+{
+  // Ya en la lista (To buy lo dice): tampoco en su proveedor.
+  EN_LISTA = ['Quieto', 'Pedro'];
+  const { host } = pantalla('antes');
+  await esperar(20);
+  abrir(host, 'BREAKTHRU');
+  await esperar(10);
+  prueba('lo que ya está en To buy no sale en su proveedor', !host.querySelector('.m-ord-pte'));
+  const daou = Array.from(host.querySelectorAll('#moList .m-ord-l')).find(l => /^Daou/.test(txt(l.querySelector('.m-ord-l-n'))));
+  prueba('la sugerencia de la línea sigue', !!daou && !!daou.querySelector('.m-ord-sg'));
+  EN_LISTA = ['Quieto'];
 }
 
 grupo('3 · cargado y en orden');

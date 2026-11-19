@@ -124,6 +124,11 @@
 
   function pintarResumen(host) {
     const vs = proveedores();
+    // LOOP sale aunque no tenga líneas propias si hay algo de otro
+    // proveedor que no llega a su entrega (lámina C, 2026-11-19).
+    prepararTodos();
+    const nLoop = puentes('LOOP').length;
+    if (nLoop && !vs.some(v => esLoop(v.nombre))) vs.push({ nombre: 'LOOP', filas: [], total: 0, sinPrecio: 0 });
     const total = vs.reduce((s, v) => s + v.total, 0);
 
     if (!vs.length) {
@@ -165,8 +170,9 @@
         <button type="button" class="m-ordv${v.sinPrecio ? ' aviso' : ''}" data-v="${i}">
           <span class="m-ordv-l">
             <span class="m-ordv-n">${esc(v.nombre)}</span>
-            <small>${v.filas.length} line${v.filas.length === 1 ? '' : 's'}${
-              v.sinPrecio ? ' · ' + v.sinPrecio + ' without price' : ' · all priced'}</small>
+            <small>${esLoop(v.nombre) && nLoop ? nLoop + " won't last until delivery" + (v.filas.length ? ' · ' : '') : ''}${
+              v.filas.length || !esLoop(v.nombre) ? v.filas.length + ' line' + (v.filas.length === 1 ? '' : 's') +
+              (v.sinPrecio ? ' · ' + v.sinPrecio + ' without price' : ' · all priced') : ''}</small>
           </span>
           <b>${money(v.total)}</b>
           <i class="ti ti-chevron-right m-chev" aria-hidden="true"></i>
@@ -220,6 +226,83 @@
     return `<div class="m-ord-sg"><span>Suggested <b>${esc(n2(sg.pedir))}</b> &middot; ${esc(sg.texto)}</span>${
       puede && sg.pedir !== q ? `<button type="button" class="m-ord-use" data-use="${master().indexOf(r)}" data-n="${sg.pedir}">Use ${esc(n2(sg.pedir))}</button>` : ''}</div>`;
   }
+  // ── Lo que no llega a su entrega (Axel, 2026-11-19, lámina C) ──────
+  //
+  // Arriba del detalle de un proveedor, lo suyo que se acaba ANTES de
+  // que llegue esta orden, con cuánto traer de LOOP para llegar
+  // (sugerencia.antes: la cuenta de Running out hasta su entrega). Y en
+  // LOOP, lo mismo de TODOS los demás proveedores: "cualquier vendor se
+  // resurte en LOOP", y es ahí donde Axel quiere verlo junto. "To buy" lo
+  // manda a la lista de compras; ya en la lista, desaparece de los dos
+  // sitios. El "short this week" de la sugerencia de la línea se queda:
+  // es el porqué de pedir más.
+  //
+  // Para LOOP hacen falta los horarios de todos los proveedores: se piden
+  // juntos una vez y se repinta UNA vez al tenerlos.
+  const esLoop = (v) => String(v || '').toUpperCase() === 'LOOP';
+  const SL = () => window.BarStockShoppingList;
+  const _anadidos = new Set();   // lo mandado a To buy antes de releer la lista
+  let _todos = null;             // la promesa de los horarios de todos
+  function vendoresConPar() {
+    return [...new Set(master().filter(r => r && r.vendor && num(r.suggested) > 0).map(r => r.vendor))]
+      .filter(v => String(v).toUpperCase() !== 'UNKNOWN');
+  }
+  function prepararTodos() {
+    if (!S() || _todos) return;
+    const vs = vendoresConPar().filter(v => !_sugListo.has(v));
+    vs.forEach(v => _sugListo.add(v));
+    _todos = Promise.all(vs.map(v => S().preparar(v).catch(() => {}))).then(() => refresh());
+  }
+  const enLista = (item) => _anadidos.has(item) || !!(TB() && TB().deProducto && TB().deProducto(item));
+  function puentes(vendor) {
+    if (!S() || !S().antes) return [];
+    const loop = esLoop(vendor);
+    return master().filter(r => r && r.item && r.vendor && num(r.suggested) > 0 && _sugListo.has(r.vendor) &&
+        String(r.vendor).toUpperCase() !== 'UNKNOWN' && (loop ? !esLoop(r.vendor) : r.vendor === vendor) && !enLista(r.item))
+      .map(r => ({ r, x: S().antes(r) }))
+      .filter(p => p.x)
+      .sort((a, b) => a.x.fin.en - b.x.fin.en);
+  }
+  function puentesHtml(vendor) {
+    const ps = puentes(vendor);
+    if (!ps.length) return '';
+    const loop = esLoop(vendor), n = ps.length;
+    const titulo = loop
+      ? n + " won't last until " + (n === 1 ? 'its' : 'their') + ' delivery'
+      : n + (n === 1 ? ' runs' : ' run') + ' out before this order arrives (' + ps[0].x.llegaTxt + ')';
+    return `
+      <div class="m-ord-pte">
+        <div class="m-ord-pte-h">${esc(titulo)}</div>
+        ${ps.map(({ r, x }) => `
+          <div class="m-ord-pte-i">
+            <span><b>${esc(r.item)}</b><small>${esc(x.outTxt)}${loop ? ' · ' + esc(r.vendor) + ' ' + esc(x.llegaTxt) : ''} · ${x.loop} from LOOP</small></span>
+            <button type="button" class="m-ord-use m-ord-tb" data-tb="${master().indexOf(r)}" data-n="${x.loop}"
+              data-nota="${esc(x.outTxt + ' · before ' + r.vendor + ' ' + x.llegaTxt)}">To buy</button>
+          </div>`).join('')}
+      </div>`;
+  }
+  function engancharPuentes(host) {
+    host.querySelectorAll('[data-tb]').forEach(b => {
+      b.onclick = () => {
+        const r = master()[Number(b.dataset.tb)];
+        if (!r || !SL() || !SL().anadir) return;
+        b.disabled = true;
+        const g = window.BarStockGuest;
+        SL().anadir({ item: r.item, qty: Number(b.dataset.n) || 1, motivo: 'app', nota: b.dataset.nota || '',
+          por: (g && g.nombre && g.nombre()) || '' }).then(res => {
+          if (!res || !res.ok) {
+            b.disabled = false;
+            const T = window.BarStockToast;
+            if (T && T.show) T.show('Not added: ' + ((res && res.error) || 'unknown error'));
+            return;
+          }
+          _anadidos.add(r.item);
+          repintar();
+        });
+      };
+    });
+  }
+
   // Lo que no sale en la orden (está en su par) y la app pediría: ni
   // excluido a mano ("dije que no"), ni ya colocado este ciclo.
   function noEnLaOrden(v, fuera) {
@@ -234,7 +317,10 @@
   }
 
   function pintarDetalle(host) {
-    const v = proveedores().find(x => x.nombre === _vendor);
+    let v = proveedores().find(x => x.nombre === _vendor);
+    if (esLoop(_vendor)) prepararTodos();
+    // LOOP sin líneas propias, sólo con lo que no llega a su entrega.
+    if (!v && esLoop(_vendor) && puentes('LOOP').length) v = { nombre: _vendor, filas: [], total: 0, sinPrecio: 0 };
     if (!v) { _vendor = null; return pintarResumen(host); }
     const fuera = excluidas(v.nombre);
     prepararSugerencia(v.nombre);
@@ -247,7 +333,9 @@
       ${cab({
         volverA: 'All orders',
         titulo: v.nombre,
-        der: `<div class="m-ord-tot">${money(v.total)}
+        // LOOP sin líneas propias (sólo lo que no llega a su entrega): sin
+        // "$0 · 0 lines", que no dice nada.
+        der: !v.filas.length ? '' : `<div class="m-ord-tot">${money(v.total)}
           <small>${v.filas.length} line${v.filas.length === 1 ? '' : 's'}${
             v.sinPrecio ? ' · ' + v.sinPrecio + ' without price' : ''}</small></div>`
       })}
@@ -256,9 +344,11 @@
            sólo se podía hacer desde el escritorio; ahora vive el botón,
            en el mismo sitio y por la misma razón: con noventa líneas,
            lo que está al final no se encuentra. -->
-      <button type="button" class="m-ord-enviar" id="moSend">
+      ${puentesHtml(v.nombre)}
+
+      ${v.filas.length ? `<button type="button" class="m-ord-enviar" id="moSend">
         Review and send
-      </button>
+      </button>` : ''}
 
       <!-- Sólo si este proveedor admite ajuste manual: añadir una
            línea ES poner una cantidad a mano, así que en los demás el
@@ -302,6 +392,7 @@
         </div>` : ''}`;
 
     volverCon(host, () => { _vendor = null; repintar(); });
+    engancharPuentes(host);
     const env = host.querySelector('#moSend');
     if (env) env.onclick = () => {
       salirRevision();

@@ -366,6 +366,26 @@
     });
   }
 
+  // ── ¿Llega a un instante? (Axel, 2026-11-19, lámina C) ─────────────
+  //
+  // La misma cuenta que las barras y el "Out" (recorridoDe), hasta
+  // `hasta` (ms): `fin` (cuándo se acaba, con el colchón) y `falta` (lo
+  // mínimo de más para no bajar del colchón antes de `hasta`). Lo usa
+  // sugerencia.antes para "se acaba antes de que llegue esta orden".
+  function antesDe(f, hasta) {
+    const P = window.BarStockPedido;
+    if (!P || !f || !f.dem || !f.dem.porDia || !(hasta > 0)) return null;
+    const ahora = f.ahoraMs || Date.now();
+    const dias = Math.max(1, Math.ceil((hasta - ahora) / 864e5) + 1);
+    const r = P.recorrido({
+      dem: f.dem, stock: (Number(f.live) || 0) - (Number(f.margen) || 0),
+      viene: (f.viene || []).map(v => ({ cuando: Date.parse(v.cuando), n: Number(v.n) || 0 })),
+      ahora, dias, hasta,
+      hoyResta: restaDia(f.dem.porDia, P.diaDe(ahora), 0, f.hoyVendido, f.hoyFrac, f.dem.cv)
+    });
+    return { fin: r.fin, falta: r.falta };
+  }
+
   const D3 = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const DL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const uno = (n) => (Math.round(n * 10) / 10).toFixed(1).replace(/\.0$/, '');
@@ -408,5 +428,5 @@
     return { tipo: 'normal', texto: tramo + ' ' + viene };
   }
 
-  window.BarStockRunOut = { recorridoDe, porQue, restaDia, ritmoHoy, DIAS_BARRAS, medianas, proyectar, cuantoPedir, mediana, fraccionDelDia, ahora, DIAS_HISTORIA, HORIZONTE, MIN_MUESTRAS, FRAC_MIN, MARGEN, MARGEN_PARTE, margenDe };
+  window.BarStockRunOut = { recorridoDe, antesDe, porQue, restaDia, ritmoHoy, DIAS_BARRAS, medianas, proyectar, cuantoPedir, mediana, fraccionDelDia, ahora, DIAS_HISTORIA, HORIZONTE, MIN_MUESTRAS, FRAC_MIN, MARGEN, MARGEN_PARTE, margenDe };
 })();

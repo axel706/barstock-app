@@ -82,10 +82,42 @@
     const c = p.cuantoPedir(Object.assign({ dem, stock, viene, ahora: t, llegada: Date.parse(a), siguiente: Date.parse(b) },
       p.redondeoPara({ vendor: r.vendor, vino: !!(fila && fila.vino) })));
     const sig = cuando(Date.parse(b)), lleg = cuando(Date.parse(a));
-    const texto = 'to last until next ' + sig.dia + ' ' + sig.hora + ': uses ' + uno(c.uso) +
+    // Si esta vuelta se queda corta (se acaba antes de que llegue esta
+    // orden), la sugerencia lo dice: es POR ESO que pide más que el par.
+    const corto = antes(r, t);
+    const texto = (corto ? 'short this week · ' : '') + 'to last until next ' + sig.dia + ' ' + sig.hora + ': uses ' + uno(c.uso) +
       ' + cushion ' + uno(c.colchon) + ', ' + uno(c.queda) + ' left ' + lleg.dia;
     return { pedir: c.pedir, uso: c.uso, colchon: c.colchon, queda: c.queda, llegada: a, siguiente: b, multiplo: c.multiplo, texto };
   }
 
-  window.BarStockSugerencia = { preparar, olvidar, para };
+  // ── Se acaba antes de que llegue esta orden (Axel, 2026-11-19, C) ──
+  //
+  // "Un vino de Wine Merchant que llegó el jueves y no llega al jueves
+  // siguiente (se acaba martes o miércoles)": cuando se pide, la orden
+  // tiene que decirlo y cuánto traer de LOOP para llegar. La cuenta es la
+  // de Running out (run-out.antesDe: el LIVE con su margen, el ritmo de
+  // hoy, el colchón y lo que ya viene) hasta la SIGUIENTE entrega de su
+  // proveedor (Settings › Delivery). Sólo lo que Toast vende: sin la
+  // demanda día por día no se sabe el día.
+  //
+  // → { fin: { dia, en }, llegada (ISO), loop (botellas, entero ≥ 1),
+  //     outTxt: 'Out Wed', llegaTxt: 'Thu 4 PM' } o null.
+  function antes(r, ahora) {
+    const vd = VD(), lc = LC(), R = window.BarStockRunOut;
+    if (!vd || !lc || !lc.fila || !R || !R.antesDe || !r || !r.vendor) return null;
+    const horario = _horario.get(r.vendor);
+    if (!horario) return null;
+    const t = ahora == null ? Date.now() : ahora;
+    const a = vd.siguienteEntrega(horario, t);
+    if (!a) return null;
+    const fila = lc.fila(r);
+    const x = R.antesDe(fila, Date.parse(a));
+    if (!x || !x.fin || !(x.fin.en < Date.parse(a))) return null;
+    const ag = lc.agota ? lc.agota(r) : null;
+    const ll = cuando(Date.parse(a));
+    return { fin: x.fin, llegada: a, loop: Math.max(1, Math.ceil((Number(x.falta) || 0) - 1e-6)),
+      outTxt: ag && ag.txt ? ag.txt : 'Out ' + cuando(x.fin.en).dia, llegaTxt: ll.dia + ' ' + ll.hora };
+  }
+
+  window.BarStockSugerencia = { preparar, olvidar, para, antes };
 })();

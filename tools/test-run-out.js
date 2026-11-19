@@ -304,8 +304,8 @@ grupo('cuánto creerle a hoy: el ritmo pesa según cuánto varía el producto (2
 
   // Todas las cuentas del día 0 pasan el cv: la fecha, Order N, las barras.
   const ro = leer('src/run-out.js');
-  prueba('proyectar, cuantoPedir, hastaLaEntrega y recorridoDe pasan el cv',
-    (ro.match(/restaDia\(.*\.cv\)/g) || []).length === 4, String((ro.match(/restaDia\(.*\.cv\)/g) || []).length));
+  prueba('proyectar, cuantoPedir, hastaLaEntrega, recorridoDe y antesDe pasan el cv',
+    (ro.match(/restaDia\(.*\.cv\)/g) || []).length === 5, String((ro.match(/restaDia\(.*\.cv\)/g) || []).length));
 
   // cuánto varía, aprendido de lo vendido (pedido.variacionDiaria).
   const dias = [];

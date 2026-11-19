@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261119-084852",
+    "items": [
+      "Orders: what runs out before its delivery",
+      "LOOP lists them from every vendor, with To buy"
+    ]
+  },
+  {
     "build": "20261119-083401",
     "items": [
       "Running out: only this cycle, until Sunday count",
@@ -177,12 +184,6 @@
     "build": "20261118-124513",
     "items": [
       "Invoice: the two link buttons no longer overlap"
-    ]
-  },
-  {
-    "build": "20261118-122043",
-    "items": [
-      "New transfer: \"Out of\" first, button above the tabs"
     ]
   }
 ]

@@ -1491,9 +1491,26 @@ que viene). Desde el domingo por la noche ya se ve la semana nueva (Axel
 lo eligió frente al lunes: es cuando se piensa el pedido). Fuera de esa
 ventana, la etiqueta dice "Out next Tue" (`live-cache.agota`). Lo que se
 acaba la semana que viene tiene que avisarse al hacer la orden (Orders ›
-Open), por lámina. `home-orden.js` carga antes de `live-cache` y
+Open), por lámina (hecho, abajo). `home-orden.js` carga antes de `live-cache` y
 `running-out`. Pruebas: el último grupo de `test-home-orden` y "this
 week es la semana del ciclo" en `test-tarjeta-pronto`.
+
+**Lo que no llega a su entrega, al hacer la orden (2026-11-19, lámina
+C).** Arriba del detalle de un proveedor en Orders › Open, un bloque
+ámbar sobre Tinta (`.m-ord-pte`): lo suyo que se acaba ANTES de que
+llegue esta orden ("Out Wed · 2 from LOOP") con "To buy". Y en **LOOP**,
+lo mismo de TODOS los demás proveedores, con su proveedor y su entrega
+(Axel: "cualquier vendor se resurte en LOOP"); LOOP sale en Open aunque
+no tenga líneas propias. "To buy" lo manda a la lista de compras
+(`shopping-list.anadir`, con la nota "Out Wed · before BREAKTHRU Tue 4
+PM"); ya en la lista (`mobile-to-buy.deProducto`), desaparece de los dos
+sitios. La sugerencia de la línea se queda y lleva el porqué: "short
+this week · to last until next Thu…". La cuenta es
+`sugerencia.antes(r)` → `run-out.antesDe(fila, llegada)`: la misma de
+Running out (LIVE con margen, ritmo de hoy, colchón, lo que viene) hasta
+la siguiente entrega del proveedor; sólo lo que Toast vende. Los
+horarios de todos los proveedores se piden juntos una vez
+(`prepararTodos`). Prueba: "1b" y "2b" de `test-sugerencia`.
 
 **Fijar arriba en Running out (2026-11-15, lámina B).** "Edit order"
 en la pantalla de revisión: las tarjetas sin botones y con asa (≡);

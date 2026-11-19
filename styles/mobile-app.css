@@ -3724,6 +3724,19 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     background: #38bdf8; color: #04283d; font-size: var(--m-small); font-weight: 800;
     -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
   :is(#mScreens, #mSheet) .m-ord-add-sg { background: rgba(56,189,248,.18); color: #7dd3fc; }
+  /* ── Lo que no llega a su entrega (2026-11-19, lámina C) ───────────
+   * Un bloque arriba del detalle del proveedor (y en LOOP, de todos):
+   * Tinta con el toque ámbar de lo que avisa, como .m-fic-ojo. El botón
+   * "To buy" es .m-ord-use (así lo esconde el bloque bs-sin-ordenes),
+   * en ámbar y sin relleno. */
+  .m-ord-pte { margin-top: 12px; padding: 12px; border-radius: 16px; display: grid; gap: 10px;
+    background: linear-gradient(135deg, rgba(245,158,11,.16), var(--tinta) 55%), var(--tinta);
+    border: 1px solid rgba(245,176,65,.5); }
+  .m-ord-pte-h { font-size: var(--m-small); font-weight: 800; color: #fbbf24; }
+  .m-ord-pte-i { display: flex; align-items: center; gap: 10px; }
+  .m-ord-pte-i > span { flex: 1; min-width: 0; font-size: var(--m-small); color: #fff; }
+  .m-ord-pte-i small { display: block; margin-top: 2px; color: #cbd5e1; font-size: var(--m-meta); }
+  :is(#mScreens, #mSheet) .m-ord-use.m-ord-tb { background: transparent; color: #fbbf24; box-shadow: inset 0 0 0 1px rgba(251,191,36,.6); }
   .m-ord-k { margin-top: 18px; padding: 0 4px; font-size: var(--m-meta); letter-spacing: .1em; text-transform: uppercase;
     color: #7f93ab; font-weight: 700; }
   /* El título de la sección iba pegado al borde de la primera tarjeta
