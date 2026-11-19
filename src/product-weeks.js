@@ -86,13 +86,20 @@
     // se recalcula: lo que había + lo que entró - lo corregido. Sin
     // esto la gráfica cuenta una historia y la columna Usage otra sobre
     // el mismo producto.
-    return filas.map(x => {
-      const adj = x.on_hand_end_adjusted;
-      const usado = (adj !== null && adj !== undefined && x.on_hand_start !== null)
-        ? Number(x.on_hand_start || 0) + Number(x.ordered || 0) - Number(adj)
-        : Number(x.used || 0);
-      return { semana: x.week_start, usado: Math.max(0, usado) };
-    }).reverse();
+    return filas.map(x => ({ semana: x.week_start, usado: usadoDe(x) })).reverse();
+  }
+
+  // Lo usado de una fila de inventory_snapshots, con la corrección del
+  // conteo de cierre si la hay. Fuera de semanas() porque tools/open-bar.js
+  // necesita la misma regla con las semanas de evento incluidas: escrita
+  // allí aparte, la gráfica y la herramienta acabarían diciendo dos
+  // consumos distintos del mismo producto.
+  function usadoDe(x) {
+    const adj = x.on_hand_end_adjusted;
+    const usado = (adj !== null && adj !== undefined && x.on_hand_start !== null)
+      ? Number(x.on_hand_start || 0) + Number(x.ordered || 0) - Number(adj)
+      : Number(x.used || 0);
+    return Math.max(0, usado);
   }
 
   // ── Hacia dónde va ───────────────────────────────────────────────────
@@ -170,5 +177,5 @@
     return destino;
   }
 
-  window.BarStockProductWeeks = { semanas, rumbo, paso, aplicarPar, TOPE };
+  window.BarStockProductWeeks = { semanas, usadoDe, rumbo, paso, aplicarPar, TOPE };
 })();

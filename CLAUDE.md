@@ -469,6 +469,9 @@ en la consola: la llamada va dentro de `(async () => { ... })();`.
 - `cocteles.js` → `await bsCocteles()` — en qué recetas va cada producto
   (onzas, vendidos y onzas en 30 días), las líneas sin botella y lo que
   Toast vendió como cóctel sin receta
+- `open-bar.js` → `await bsOpenBar()` — si lo que falta en los licores de
+  la casa (conteos − Toast) sube con los invitados de open bar de cada
+  semana ("Banquet Beverage"): base, botellas por invitado y r
 - `toast.js` → `await bsToast('ping')` — qué contesta Toast (`ping`,
   `restaurant`, `menu`, `orders`, `drinks`, `wine`, `sales`), a través de `api/integrations.js`.
   `await bsToastVentas('liquor')` es el DINERO vendido hoy por categoría

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-200326",
+    "items": [
+      "Behind-the-scenes fixes"
+    ]
+  },
+  {
     "build": "20261118-193426",
     "items": [
       "Behind-the-scenes fixes"
@@ -177,12 +183,6 @@
     "items": [
       "Transfers section in More",
       "Several products in one transfer"
-    ]
-  },
-  {
-    "build": "20261118-112152",
-    "items": [
-      "Invoices: \"It arrived before the count\""
     ]
   }
 ]
