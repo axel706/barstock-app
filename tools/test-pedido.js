@@ -72,6 +72,10 @@ grupo('1 · la tendencia');
   const loco = {}; for (const k of Object.keys(NINO)) loco[k] = k >= '2026-10-19' ? NINO[k] * 20 : NINO[k];
   prueba('con tope: nunca más de 3×', P.demanda({ pouriq: null, toast: { porDia: loco, cargados }, hoy: HOY }).tendencia === 3);
   prueba('sin Toast suficiente, 1', P.demanda({ pouriq: { avg: 10, sd: 2, semanas: 8 }, toast: null, hoy: HOY }).tendencia === 1);
+  // Las semanas con las que decidió, para tools/demanda.js (sin recalcular).
+  prueba('devuelve sus semanas (totales) y la mediana de las 13 (m13)',
+    Array.isArray(d.totales) && d.totales.length >= 8 && Math.abs(d.m13 - 16.4) < 0.1 && d.reciente === P.mediana(d.totales.slice(-4)),
+    JSON.stringify({ n: d.totales && d.totales.length, m13: d.m13 }));
 }
 
 grupo('2 · lo que se usa por semana: lo MAYOR de Pour·IQ y lo reciente de Toast, sin multiplicar');

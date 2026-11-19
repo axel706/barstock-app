@@ -330,8 +330,9 @@
     const filas = vivo.filas.map(f => {
       const vende = M.porProducto.get(f.producto) || null;
       const p = porProd.get(f.producto);
+      const pouriq = pouriqDe(f.producto);
       const dem = M.suficiente && vende && vende.some(x => x > 0) && P && p
-        ? P.demanda({ pouriq: pouriqDe(f.producto), toast: { porDia: p.porDia || {}, cargados }, hoy }) : null;
+        ? P.demanda({ pouriq, toast: { porDia: p.porDia || {}, cargados }, hoy }) : null;
       const med = dem ? dem.porDia : vende;
       const hoyVendido = hoyDe.get(f.producto) || 0;
       const margen = margenDe(f);
@@ -339,7 +340,7 @@
       // Vino si Toast lo vende como vino: el redondeo de 3 en 3 de la
       // sugerencia lo necesita, y casi nada del maestro tiene categoría.
       const vino = !!(p && Object.values(p.catPorDia || {}).some(c => Object.keys(c || {}).some(k => /wine/i.test(k))));
-      return Object.assign({}, f, { med, dem, vino, hoyVendido, hoyFrac, hoySync, ahoraMs: t, margen, agota: fin ? fin.dia : null, enDias: fin ? fin.enDias : null });
+      return Object.assign({}, f, { med, dem, pouriq, vino, hoyVendido, hoyFrac, hoySync, ahoraMs: t, margen, agota: fin ? fin.dia : null, enDias: fin ? fin.enDias : null });
     });
     return { estado: 'listo', hoy, conteo: vivo.conteo, desde: vivo.desde, muestras: M.muestras, suficiente: M.suficiente, filas };
   }

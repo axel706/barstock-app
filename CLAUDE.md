@@ -463,6 +463,9 @@ en la consola: la llamada va dentro de `(async () => { ... })();`.
 - `existe.js` — si un producto está en la nube
 - `por-que-se-acaba.js` → `await bsSeAcaba('Laboure')` — por qué un producto
   dice que se acaba: cada pieza de la cuenta y la fecha sin cada una
+- `demanda.js` → `await bsDemanda()` / `bsDemanda('Laboure')` — de dónde sale
+  la demanda semanal de cada producto (Pour·IQ o lo reciente de Toast),
+  cuánto subió y si el salto es casualidad
 - `toast.js` → `await bsToast('ping')` — qué contesta Toast (`ping`,
   `restaurant`, `menu`, `orders`, `drinks`, `wine`, `sales`), a través de `api/integrations.js`.
   `await bsToastVentas('liquor')` es el DINERO vendido hoy por categoría

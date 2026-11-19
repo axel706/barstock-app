@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261118-193426",
+    "items": [
+      "Behind-the-scenes fixes"
+    ]
+  },
+  {
     "build": "20261118-172100",
     "items": [
       "Fewer false Out today alerts on slow sellers"
@@ -177,12 +183,6 @@
     "build": "20261118-112152",
     "items": [
       "Invoices: \"It arrived before the count\""
-    ]
-  },
-  {
-    "build": "20261118-111745",
-    "items": [
-      "Transfers count in Live, Sent and Pour·IQ"
     ]
   }
 ]

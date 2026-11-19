@@ -106,7 +106,7 @@
   //         cerradas y completas] } o null.
   // hoy:    el día de negocio de hoy; sólo cuenta lo de ANTES.
   //
-  // → { porDia: [7], semanal, sigma, tendencia, reciente, fuente, cv }
+  // → { porDia: [7], semanal, sigma, tendencia, reciente, fuente, cv, totales, m13 }
   function demanda({ pouriq, toast, hoy }) {
     const cargados = ((toast && toast.cargados) || []).filter(d => d < hoy).sort();
     const v = (d) => Number((toast && toast.porDia && toast.porDia[d]) || 0);
@@ -156,7 +156,11 @@
 
     const porDia = forma ? forma.map(f => f * semanal) : [0, 1, 2, 3, 4, 5, 6].map(() => semanal / 7);
 
-    return { porDia, semanal, sigma, tendencia, reciente, fuente, cv: variacionDiaria(cargados, v) };
+    // `totales` y `m13` no entran en ninguna cuenta: son las semanas con
+    // las que se decidió, para que tools/demanda.js enseñe lo que usa el
+    // motor y no lo recalcule por su cuenta (dos cuentas acaban diciendo
+    // cosas distintas).
+    return { porDia, semanal, sigma, tendencia, reciente, fuente, cv: variacionDiaria(cargados, v), totales, m13 };
   }
 
   // ── Cuánto varía un producto de un día a otro (Axel, 2026-11-18) ─────
