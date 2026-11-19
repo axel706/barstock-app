@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261119-150606",
+    "items": [
+      "An order whose invoice came early stays on the way"
+    ]
+  },
+  {
     "build": "20261119-084852",
     "items": [
       "Orders: what runs out before its delivery",
@@ -178,12 +184,6 @@
     "build": "20261118-125656",
     "items": [
       "Invoice: glass buttons to link it or mark a transfer"
-    ]
-  },
-  {
-    "build": "20261118-124513",
-    "items": [
-      "Invoice: the two link buttons no longer overlap"
     ]
   }
 ]

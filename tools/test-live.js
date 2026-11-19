@@ -88,6 +88,24 @@ grupo('corto o de más: manda la factura');
   prueba('pidió 5, llegaron 7: 10', titos(r).live === 10, JSON.stringify(titos(r)));
 }
 
+grupo('la factura llega antes que el pedido (Wine Merchant, 2026-11-19)');
+{
+  // Axel, jueves 3 PM: el Nino decía "Nothing on the way" y "Out today"
+  // con la entrega de Wine Merchant a las 4 PM. Su factura ya estaba en
+  // MarginEdge antes de la hora de entrega: con factura, el pedido no
+  // entraba en "viene" (que exigía no tenerla) ni en "llegó" (que exige
+  // que haya pasado su hora). Desaparecía.
+  const enlaces = [{ product_id: 't', item_name: "Tito's Vodka 1L" }];
+  const fac = (q) => [{ order_id: 'F1', product_id: 't', quantity: q, unit_price: 20, invoice_date: '2026-11-16' }];
+  let r = live({ ahora: '2026-11-16T20:00:00Z', enlaces, facturas: fac(5) });
+  prueba('antes de su hora, con factura: sigue en camino, a su hora', titos(r).live === 3 && titos(r).viene.length === 1 &&
+    titos(r).viene[0].n === 5 && titos(r).viene[0].cuando === '2026-11-17T12:00:00.000Z', JSON.stringify(titos(r).viene));
+  r = live({ ahora: '2026-11-16T20:00:00Z', enlaces, facturas: fac(3) });
+  prueba('…con lo que dice la factura (pidió 5, factura 3: vienen 3)', titos(r).viene.length === 1 && titos(r).viene[0].n === 3, JSON.stringify(titos(r).viene));
+  r = live({ ahora: '2026-11-17T13:00:00Z', enlaces, facturas: fac(3) });
+  prueba('pasada su hora, llegó lo de la factura: 6', titos(r).live === 6 && !titos(r).viene.length, JSON.stringify(titos(r)));
+}
+
 grupo('lo que no suma');
 {
   const antes = Object.assign({}, ORD, { created_at: '2026-11-12T20:00:00Z', arrives_at: '2026-11-13T21:00:00Z' });

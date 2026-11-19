@@ -83,8 +83,17 @@
       if (llega != null) {
         // Todavía no ha llegado: no suma, pero se apunta cuándo llega,
         // para que "cuándo se acaba" lo sume ese día (run-out.js).
-        if (llega > ahora && !conFactura) {
-          for (const i of items) if (i.pedido) fila(i.item).viene.push({ cuando: new Date(llega).toISOString(), n: i.pedido });
+        // Con o sin factura: antes de su hora sigue EN CAMINO. Exigir "sin
+        // factura" hacía desaparecer el pedido cuya factura entra antes de
+        // la entrega (Wine Merchant, 2026-11-19: el Nino "Nothing on the
+        // way" a las 3 PM con la entrega a las 4): ni venía ni había
+        // llegado. Con factura, viene lo que dice ella (la regla de
+        // Axel: desde la factura, manda la factura).
+        if (llega > ahora) {
+          for (const i of items) {
+            const n = conFactura ? i.recibido : i.pedido;
+            if (n) fila(i.item).viene.push({ cuando: new Date(llega).toISOString(), n });
+          }
           continue;
         }
         if (!(llega > o.conteo && llega <= ahora)) continue;

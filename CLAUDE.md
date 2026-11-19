@@ -598,6 +598,12 @@ sale de marginedge_invoice_lines" de arriba):
   Merchant jueves 4:00 PM.
 - **Una línea de factura sin pedido** también llegó: suma desde que entra
   la factura.
+- **Antes de su hora de entrega, un pedido sigue en camino aunque ya
+  tenga factura** (con lo que dice la factura). Hasta el 2026-11-19 la
+  factura que entraba antes de la entrega lo hacía desaparecer: ni
+  "viene" ni "llegó" (el Nino, "Nothing on the way" a las 3 PM con Wine
+  Merchant a las 4). Prueba: "la factura llega antes que el pedido" en
+  `test-live`.
 - **Quick order:** antes de enviar pregunta si se añade al LIVE ya. Sí =
   cuenta desde ese momento (ya llegó, o viene un proveedor de emergencia);
   no = cuenta desde la siguiente entrega del proveedor. Después la factura
