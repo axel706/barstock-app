@@ -97,6 +97,43 @@ demás sólo si al múltiplo le falta una botella o menos.
 - Las semanas de evento ya se excluyen del promedio de Pour·IQ: el evento
   se suma aparte, no se mezcla con lo normal.
 
+### Lo medido del open bar (Crown, 2026-11-19)
+
+Cómo se hace (Axel): los tragos del open bar se timbran uno por uno, como
+cualquier venta, y al pagar se DESCUENTA el cheque con "Open Bar" como
+concepto. Lo que se cobra es el paquete por persona, "Banquet Beverage"
+en Toast (`quantity` = invitados; 382 invitados = $10,412, ~$27 cada uno,
+el Silver Open Bar de $26). `lib/toast.js` deja fuera sólo lo anulado:
+**los tragos descontados entran y el LIVE ya los resta.**
+
+Medido con `bsOpenBarDias` (tools/open-bar.js), días con open bar contra
+la mediana del mismo día de la semana sin él, agosto–noviembre:
+
+| Día | Invitados | Tragos de más | Por invitado |
+|---|---|---|---|
+| Sat 10-17 | 187 | +413 | 2.21 |
+| Thu 10-01 | 152 | +331 | 2.18 |
+| Sat 09-19 | 94 | +225 | 2.39 |
+| Sat 08-22 | 56 | +115 | 2.05 |
+| Fri 10-16 | 101 | +140 | 1.39 |
+| Sat 10-24 | 95 | +147 | 1.55 |
+
+**~2.2 tragos de más por invitado en los eventos grandes**, muy parejo
+(1.4–2.4 de 95 invitados para arriba). Los eventos chicos (30–65) salen
+entre −4 y +7: menos que lo que un día cambia solo; varios negativos,
+probablemente porque el evento ocupa el sitio de la clientela de siempre.
+No hay señales de tragos anulados en vez de descontados.
+
+Y con `bsOpenBar`: lo que falta en los licores de la casa (conteos −
+Toast, ~3 botellas a la semana de Kentucky Tavern, Pedro Morales, Cinzano
+Sweet) NO sube con los invitados (r ≈ 0). El open bar no lo explica.
+
+**Para la fase 5:** un evento de N invitados ≈ 2.2 × N tragos de más ese
+día. Falta saber QUÉ se sirve (qué parte licor de la casa, vino, cerveza)
+para pasarlo a botellas de cada producto: medirlo de los eventos pasados,
+producto por producto (lo vendido en Toast esos días contra un día
+normal), y separarlo por paquete cuando esté la lista del coordinador.
+
 ## 7. Fases
 
 1. **(Hecha.) El motor, sin pantalla.** `src/pedido.js`: demanda por día (sección

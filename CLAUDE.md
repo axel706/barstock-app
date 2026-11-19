@@ -472,6 +472,11 @@ en la consola: la llamada va dentro de `(async () => { ... })();`.
 - `open-bar.js` → `await bsOpenBar()` — si lo que falta en los licores de
   la casa (conteos − Toast) sube con los invitados de open bar de cada
   semana ("Banquet Beverage"): base, botellas por invitado y r
+  · `bsOpenBarDias()`: los días con open bar, tragos en Toast contra un día
+  normal del mismo día de la semana (¿los tragos descontados entran?)
+- `sin-botella.js` → `await bsSinBotella()` — lo que Toast vende y la cuenta
+  del LIVE no resta de ninguna botella, con su motivo, y lo marcado "no es
+  del inventario" con lo que vendió
 - `toast.js` → `await bsToast('ping')` — qué contesta Toast (`ping`,
   `restaurant`, `menu`, `orders`, `drinks`, `wine`, `sales`), a través de `api/integrations.js`.
   `await bsToastVentas('liquor')` es el DINERO vendido hoy por categoría
@@ -1301,6 +1306,14 @@ bloque `bs-sin-ordenes`. Un proveedor sin ninguna línea por debajo del
 par no sale en Open, así que su "Not on this order" tampoco. Prueba:
 `test-sugerencia`. Sigue: los eventos (fase 5), cuando esté la lista
 de paquetes de bar.
+**El open bar, medido (2026-11-19):** los tragos se timbran uno por uno
+y el cheque se DESCUENTA; Toast cobra el paquete como "Banquet Beverage"
+(`quantity` = invitados). Lo descontado entra en `toast_sales` y el LIVE
+lo resta (sólo se descarta lo anulado). Los eventos grandes de Crown dan
+**~2.2 tragos de más por invitado** contra un día normal (Sat 10-17: 187
+invitados, +413), y lo que falta en los licores de la casa NO depende del
+open bar. La tabla y lo que falta para pasarlo a botellas, en
+`docs/plan-pedido.md` § 6. Herramientas: `bsOpenBar`, `bsOpenBarDias`.
 
 ### La lista de compras y la verificación (2026-11-14, sin construir)
 
