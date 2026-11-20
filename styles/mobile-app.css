@@ -643,7 +643,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * justo debajo, en "La barra de cristal". */
   body.m-shell #mBand .m-ico:not(.m-ico-alert),
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio,
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain),
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd),
   body.m-shell #mTabs .m-tab.on,
   body.m-shell #mScreens .m-low-b,
   body.m-shell #mScreens :is(#mhTabs, .m-ts-seg) {
@@ -660,7 +660,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   body.m-shell #mBand .m-ico:not(.m-ico-alert)::before,
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio::before,
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain)::before,
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd)::before,
   body.m-shell #mTabs .m-tab.on::before,
   body.m-shell #mScreens .m-low-b::before,
   body.m-shell #mScreens :is(#mhTabs, .m-ts-seg)::before,
@@ -811,7 +811,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * estilo liquid glass de ese botón Done"): misma regla, no una copia.
    * Antes era azul sólido con el texto oscuro (.m-tab.on, más abajo:
    * con el id, ésta le gana). */
-  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain),
+  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moAdd),
   body.m-shell #mTabs .m-tab.on {
     color: #f0f9ff; background: rgba(56, 189, 248, .42);
     border: 1px solid rgba(186, 230, 253, .62);
@@ -820,12 +820,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
       inset 0 0 14px rgba(56,189,248,.45),
       0 10px 30px rgba(0,0,0,.45);
   }
-  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain)::before,
+  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd)::before,
   body.m-shell #mTabs .m-tab.on::before { z-index: -1; }
   /* La pestaña ya es relative; con isolation, su reflejo queda bajo el
    * icono y el nombre, no encima. */
   body.m-shell #mTabs .m-tab.on { isolation: isolate; }
-  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain):active { background: rgba(56, 189, 248, .58); }
+  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moAdd):active { background: rgba(56, 189, 248, .58); }
   /* "It arrived before the count" de la factura (Axel, 2026-11-18,
    * lámina B): el mismo cristal, en violeta, para que no se confunda
    * con "Link to an order" (azul, el de Done) que va justo encima. */
@@ -3743,10 +3743,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-ord-pte-top > b { flex: 1; min-width: 0; font-size: var(--m-body); font-weight: 700; color: #fff; line-height: 1.3; }
   .m-ord-pte-i small { font-size: var(--m-small); color: #a9bacd; line-height: 1.45; }
   .m-ord-pte-dia { color: #fbbf24; font-weight: 800; }
-  /* El aire de la lámina B: lo que sigue al bloque va 22 px más abajo
-   * (la regla de .m-ord-add lleva su margen en un atajo de antes; ésta
-   * gana por llevar el bloque delante). */
-  body.m-shell .m-ord-pte + .m-ord-add,
+  /* El aire de la lámina B: "Review and send" va 22 px debajo del bloque
+   * (su regla lleva el margen en un atajo de antes; ésta gana por llevar
+   * el bloque delante). */
   body.m-shell .m-ord-pte + .m-ord-enviar { margin-top: 22px; }
   :is(#mScreens, #mSheet) .m-ord-use.m-ord-tb { background: transparent; color: #fbbf24; box-shadow: inset 0 0 0 1px rgba(251,191,36,.6); }
   .m-ord-k { margin-top: 22px; padding: 0 4px; font-size: var(--m-meta); letter-spacing: .1em; text-transform: uppercase;
@@ -3815,13 +3814,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-ord-auto > b { font-size: var(--m-strong); font-weight: 800; color: #fff; }
   .m-ord-auto > span:not(.m-ord-l-t) { flex: 1; min-width: 0; font-size: var(--m-meta); color: #a9bacd; line-height: 1.3; }
 
-  body.m-shell .m-ord-add {
-    display: flex; align-items: center; justify-content: center; gap: 7px;
-    width: 100%; margin: 4px 0 14px; padding: 13px; border-radius: 999px;
-    cursor: pointer; font-size: var(--m-body); font-weight: 700; color: #dbe6f2;
-    background: rgba(255,255,255,.09);
-    border: 1px solid rgba(255,255,255,.15);
-  }
+  /* "Add a product" de la orden ya no es esta pastilla: es #moAdd, el
+   * botón de Done (2026-11-20). */
 
 
   /* ── El ciclo ───────────────────────────────────────────────────── */
@@ -4082,7 +4076,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-seg button { border-radius: 11px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-inv { border-radius: 20px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ordv { border-radius: 15px !important; }
-  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ord-add { border-radius: 999px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ord-x { border-radius: 50% !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ord-volver { border-radius: 999px !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-zon-t { border-radius: 999px !important; }
@@ -5855,7 +5848,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * del final (.m-tx-hueco) deja ver lo último por encima de él. */
   /* "Save to history" / "Review and send" de Quick order también
    * (#mqMain, Axel 2026-11-18): el mismo botón en el mismo sitio. */
-  #mScreens :is(#mTxGo, #mqMain) {
+  /* "Add a product" de una orden (#moAdd, Axel 2026-11-20), también. */
+  #mScreens :is(#mTxGo, #mqMain, #moAdd) {
     position: fixed; z-index: 50; left: 16px; right: 16px;
     bottom: calc(env(safe-area-inset-bottom, 0px) + 110px - var(--m-base) * 2.7);
     display: block; width: auto; margin: 0; min-height: calc(var(--m-base) * 3.4);

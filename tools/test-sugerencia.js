@@ -121,7 +121,7 @@ const ANTES = {
   Quieto: { fin: { dia: '2026-11-26', en: 2 }, loop: 1, outTxt: 'Out Thu', llegaTxt: 'Tue 4 PM' }
 };
 let EN_LISTA = ['Quieto'];   // ya en To buy: no sale en ningún sitio
-function pantalla(conS) {
+function pantalla(conS, conBanda) {
   const dom = new JSDOM('<!doctype html><body></body>', { url: 'https://x.test/' });
   const v = dom.window;
   global.window = v; global.document = v.document;
@@ -145,7 +145,13 @@ function pantalla(conS) {
   v.BarStockShoppingList = { anadir: async (o) => { v.__anadidos.push(o); return { ok: true }; } };
   v.BarStockMobileToBuy = { cuantos: () => 0, cargar() {}, montar() {}, deProducto: (item) => (EN_LISTA.includes(item) ? { item_name: item } : null) };
   let def = null;
-  v.BarStockMobile = Object.assign({ register(d) { def = d; }, refrescarBadges() {}, ir() {} }, require('./lib-cabecera'));
+  v.__banda = { titulo: null, atras: null, salidas: 0 };
+  const bandaFns = conBanda ? {
+    enBanda: (t) => { v.__banda.titulo = t; return true; },
+    alVolverBanda: (fn) => { v.__banda.atras = fn; },
+    salirBanda: () => { v.__banda.titulo = null; v.__banda.atras = null; v.__banda.salidas++; }
+  } : {};
+  v.BarStockMobile = Object.assign({ register(d) { def = d; }, refrescarBadges() {}, ir() {} }, require('./lib-cabecera'), bandaFns);
   new Function(leer('src/mobile-orders.js'))();
   v.document.dispatchEvent(new v.Event('DOMContentLoaded'));
   const host = v.document.createElement('div');
@@ -245,6 +251,37 @@ grupo('2b · lo que no llega a su entrega: arriba del proveedor y en LOOP (lámi
   const daou = Array.from(host.querySelectorAll('#moList .m-ord-l')).find(l => /^Daou/.test(txt(l.querySelector('.m-ord-l-n'))));
   prueba('la sugerencia de la línea sigue', !!daou && !!daou.querySelector('.m-ord-sg'));
   EN_LISTA = ['Quieto'];
+}
+
+grupo('2c · el detalle como una subsección de Settings (Axel, 2026-11-20)');
+{
+  // "Vendor en el header, el chevron de atrás ocupando el botón de Time
+  // Machine, y Add a product a posición fija y con el estilo de Done."
+  const { v, host } = pantalla(true, true);
+  abrir(host, 'BREAKTHRU');
+  await esperar(10);
+  prueba('el proveedor va a la banda', v.__banda.titulo === 'BREAKTHRU', String(v.__banda.titulo));
+  prueba('la página no repite el título ni su chevron', !host.querySelector('.m-inv-t') && !host.querySelector('#mAtras'));
+  const sub = host.querySelector('.m-ord-sub');
+  prueba('el total y las líneas, en una línea debajo de la banda', !!sub && /\$\d.* · 2 lines/.test(txt(sub)), txt(sub));
+  const add = host.querySelector('#moAdd');
+  prueba('"Add a product" es el botón de Done (sin la pastilla de antes)', !!add && !add.classList.contains('m-ord-add') && /Add a product/.test(txt(add)));
+  prueba('…al final, con su hueco para que no tape lo último', !!add && !!host.querySelector('.m-tx-hueco') &&
+    (host.querySelector('#moList').compareDocumentPosition(add) & v.Node.DOCUMENT_POSITION_FOLLOWING) > 0);
+  prueba('el atrás de la banda vuelve a la lista de Orders', typeof v.__banda.atras === 'function');
+  if (typeof v.__banda.atras === "function") v.__banda.atras();
+  await esperar(10);
+  prueba('…y la banda suelta el nombre', v.__banda.titulo === null && v.__banda.salidas > 0 && !!host.querySelector('.m-ordv'));
+  const css = leer('styles/mobile-app.css');
+  prueba('#moAdd va fijo donde Done, con su cristal', /#mScreens :is\(#mTxGo, #mqMain, #moAdd\) \{\s*position: fixed/.test(css) &&
+    /body\.m-shell #mScreens :is\(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moAdd\),/.test(css));
+}
+{
+  // Sin el armazón (escritorio, pruebas viejas), la cabecera de antes.
+  const { host } = pantalla(true, false);
+  abrir(host, 'BREAKTHRU');
+  await esperar(10);
+  prueba('sin banda, la cabecera de siempre con su título', /BREAKTHRU/.test(txt(host.querySelector('.m-inv-t') || host.querySelector('h2') || host)));
 }
 
 grupo('3 · cargado y en orden');

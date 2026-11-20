@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261120-140740",
+    "items": [
+      "Orders: vendor name up top, back where Time Machine is",
+      "Add a product sits where Done does"
+    ]
+  },
+  {
     "build": "20261120-140012",
     "items": [
       "Orders: roomier won't-last block, with the count"
@@ -178,12 +185,6 @@
     "build": "20261118-131649",
     "items": [
       "Darker, easier-to-read cards in Inventory and Do we have"
-    ]
-  },
-  {
-    "build": "20261118-130450",
-    "items": [
-      "Orders: \"BarStock would add\" instead of \"the app\""
     ]
   }
 ]

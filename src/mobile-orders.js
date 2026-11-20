@@ -83,10 +83,15 @@
   const cab = (o) => (window.BarStockMobile && window.BarStockMobile.cabecera)
     ? window.BarStockMobile.cabecera(o)
     : '<div class="m-inv-t">' + esc(o.titulo || '') + '</div>';
+  // Con el nombre en la banda (el detalle de un proveedor, como una
+  // subsección de Settings) la página no tiene chevron: el atrás es el
+  // botón de la banda. La misma regla que mobile-history.
   const volverCon = (host, fn) => {
-    if (window.BarStockMobile && window.BarStockMobile.alVolver) {
-      window.BarStockMobile.alVolver(host, fn);
-    }
+    const M = window.BarStockMobile;
+    if (!M) return false;
+    if (M.alVolver && M.alVolver(host, fn)) return true;
+    if (M.alVolverBanda) { M.alVolverBanda(fn); return true; }
+    return false;
   };
 
   function proveedores() {
@@ -340,8 +345,16 @@
     // El mismo orden que el escritorio: lo más urgente arriba. Repasar
     // un pedido es mirar las primeras líneas, así que el orden ES la
     // información.
+    // Como una subsección de Settings (Axel, 2026-11-20): el proveedor en
+    // la banda, y el botón de Time Machine pasa a ser atrás. El total y
+    // las líneas, en una línea debajo. Sin el armazón, la cabecera de
+    // antes.
+    const M = window.BarStockMobile;
+    const enB = !!(M && M.enBanda && M.enBanda(v.nombre));
+    const tot = v.filas.length ? money(v.total) + ' · ' + v.filas.length + ' line' + (v.filas.length === 1 ? '' : 's') +
+      (v.sinPrecio ? ' · ' + v.sinPrecio + ' without price' : '') : '';
     host.innerHTML = `
-      ${cab({
+      ${enB ? (tot ? `<div class="m-hsub m-set-intro m-ord-sub">${esc(tot)}</div>` : '') : cab({
         volverA: 'All orders',
         titulo: v.nombre,
         // LOOP sin líneas propias (sólo lo que no llega a su entrega): sin
@@ -360,14 +373,6 @@
       ${v.filas.length ? `<button type="button" class="m-ord-enviar" id="moSend">
         Review and send
       </button>` : ''}
-
-      <!-- Sólo si este proveedor admite ajuste manual: añadir una
-           línea ES poner una cantidad a mano, así que en los demás el
-           botón abriría un diálogo que no puede guardar nada. -->
-      ${hay('supportsManualFinalOrder') && window.supportsManualFinalOrder(v.nombre) ? `
-        <button type="button" class="m-ord-add" id="moAdd">
-          <i class="ti ti-plus" aria-hidden="true"></i> Add a product
-        </button>` : ''}
 
       <div id="moList">${v.filas.map(linea).join('')}</div>
 
@@ -400,7 +405,18 @@
                 <button type="button" class="m-ord-volver" data-volver="${i}">Bring back</button>
               </div>`;
           }).join('')}
-        </div>` : ''}`;
+        </div>` : ''}
+
+      <!-- Sólo si este proveedor admite ajuste manual: añadir una
+           línea ES poner una cantidad a mano, así que en los demás el
+           botón abriría un diálogo que no puede guardar nada. Fijo
+           donde Done, con su cristal (Axel, 2026-11-20); el hueco deja
+           ver lo último por encima de él. -->
+      ${hay('supportsManualFinalOrder') && window.supportsManualFinalOrder(v.nombre) ? `
+        <div class="m-tx-hueco"></div>
+        <button type="button" id="moAdd">
+          <i class="ti ti-plus" aria-hidden="true"></i> Add a product
+        </button>` : ''}`;
 
     volverCon(host, () => { _vendor = null; repintar(); });
     engancharPuentes(host);

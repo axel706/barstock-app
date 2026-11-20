@@ -417,8 +417,8 @@ console.log('\nlo que se guarda sale del constructor del escritorio');
     /M\(\)\.enBanda\('Quick order'\)/.test(fuente) && /alVolverBanda\(\(\) => M\(\)\.ir\('orders'\)\)/.test(fuente));
   ok('el botón principal es el de Done: en su cristal azul y fijo en el sitio de Done',
     /id="mqMain"/.test(fuente) && !/class="m-rev-go" id="mqMain"/.test(fuente) &&
-    /:is\(#mRoDone, #mTxGo, #miOrdOn, #mqMain\),\n\s*body\.m-shell #mTabs \.m-tab\.on \{/.test(css) &&
-    /#mScreens :is\(#mTxGo, #mqMain\) \{\s*position: fixed;/.test(css));
+    /:is\(#mRoDone, #mTxGo, #miOrdOn, #mqMain[^)]*\),\n\s*body\.m-shell #mTabs \.m-tab\.on \{/.test(css) &&
+    /#mScreens :is\(#mTxGo, #mqMain[^)]*\) \{\s*position: fixed;/.test(css));
 }
 
 console.log('\n' + (falla ? falla + ' MAL   ·   ' : 'todo bien   ·   ') +
