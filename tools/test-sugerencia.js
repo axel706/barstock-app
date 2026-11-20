@@ -201,7 +201,11 @@ grupo('2b · lo que no llega a su entrega: arriba del proveedor y en LOOP (lámi
   abrir(host, 'BREAKTHRU');
   await esperar(10);
   const b = host.querySelector('.m-ord-pte');
-  prueba('arriba del proveedor: lo suyo que se acaba antes de que llegue', !!b && /1 runs out before this order arrives \(Tue 4 PM\)/.test(txt(b)) && /Pedro\s*Out Wed · 2 from LOOP/.test(txt(b)), txt(b));
+  const num = (el) => txt(el && el.querySelector('.m-ord-pte-n'));
+  const que = (el) => txt(el && el.querySelector('.m-ord-pte-t'));
+  const renglones = (el) => Array.from((el && el.querySelectorAll('.m-ord-pte-i')) || []).map(txt);
+  prueba('arriba del proveedor: lo suyo que se acaba antes de que llegue (opción B: el número y lo que dice)', !!b && num(b) === '1' &&
+    /^runs out before this order arrivesTue 4 PM · get it from LOOP to bridge$/.test(que(b)) && renglones(b).join('|') === 'Pedro To buy Out Wed · 2 from LOOP', [num(b), que(b), renglones(b).join('|')].join(' / '));
   prueba('…no lo de otro proveedor, ni lo que ya está en To buy', !!b && !/Otro|Quieto/.test(txt(b)));
   prueba('…y va antes de las líneas', !!b && (b.compareDocumentPosition(host.querySelector('#moList')) & v.Node.DOCUMENT_POSITION_FOLLOWING) > 0);
   host.querySelector('.m-ord-volver, [data-volver-ordenes]');
@@ -212,8 +216,12 @@ grupo('2b · lo que no llega a su entrega: arriba del proveedor y en LOOP (lámi
   abrir(host, 'LOOP');
   await esperar(10);
   const b = host.querySelector('.m-ord-pte');
-  prueba('en LOOP, lo de TODOS los proveedores, con su proveedor y su entrega', !!b && /2 won't last until their delivery/.test(txt(b)) &&
-    /Otro\s*Out Tue · SOUTHERN Wed 4 PM · 1 from LOOP/.test(txt(b)) && /Pedro\s*Out Wed · BREAKTHRU Tue 4 PM · 2 from LOOP/.test(txt(b)), txt(b));
+  const num = (el) => txt(el && el.querySelector('.m-ord-pte-n'));
+  const que = (el) => txt(el && el.querySelector('.m-ord-pte-t'));
+  const renglones = (el) => Array.from((el && el.querySelectorAll('.m-ord-pte-i')) || []).map(txt);
+  prueba('en LOOP, lo de TODOS los proveedores, con su proveedor y su entrega', !!b && num(b) === '2' && /^won't last until their delivery/.test(que(b)) &&
+    renglones(b).join('|') === 'Otro To buy Out Tue · Southern Wed 4 PM · 1 from LOOP|Pedro To buy Out Wed · Breakthru Tue 4 PM · 2 from LOOP', [num(b), que(b), renglones(b).join('|')].join(' / '));
+  prueba('…cada uno separado por una línea fina', !!b && b.querySelectorAll('.m-ord-pte-sep').length === 2);
   prueba('el que se acaba antes, primero', !!b && txt(b).indexOf('Otro') < txt(b).indexOf('Pedro'));
   prueba('sin líneas propias, sin "Review and send"', !host.querySelector('#moSend'));
   if (process.env.VOLCAR2) fs.writeFileSync(process.env.VOLCAR2, host.innerHTML);
@@ -223,7 +231,7 @@ grupo('2b · lo que no llega a su entrega: arriba del proveedor y en LOOP (lámi
   prueba('"To buy" lo manda a la lista de compras con lo de LOOP y el porqué', v.__anadidos.length === 1 && v.__anadidos[0].item === 'Pedro' &&
     v.__anadidos[0].qty === 2 && v.__anadidos[0].motivo === 'app' && /Out Wed · before BREAKTHRU Tue 4 PM/.test(v.__anadidos[0].nota), JSON.stringify(v.__anadidos));
   const b2 = host.querySelector('.m-ord-pte');
-  prueba('y desaparece de LOOP', !!b2 && !/Pedro/.test(txt(b2)) && /1 won't last until its delivery/.test(txt(b2)), txt(b2));
+  prueba('y desaparece de LOOP', !!b2 && !/Pedro/.test(txt(b2)) && num(b2) === '1' && /^won't last until its delivery/.test(que(b2)), txt(b2));
   host.querySelector('.m-back, [data-back], .m-ord-back');
 }
 {

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261120-140012",
+    "items": [
+      "Orders: roomier won't-last block, with the count"
+    ]
+  },
+  {
     "build": "20261119-215443",
     "items": [
       "Every vendor takes a manual order amount"
@@ -178,12 +184,6 @@
     "build": "20261118-130450",
     "items": [
       "Orders: \"BarStock would add\" instead of \"the app\""
-    ]
-  },
-  {
-    "build": "20261118-130109",
-    "items": [
-      "Orders: space above \"Not on this order\" cards"
     ]
   }
 ]

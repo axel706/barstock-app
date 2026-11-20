@@ -263,21 +263,32 @@
       .filter(p => p.x)
       .sort((a, b) => a.x.fin.en - b.x.fin.en);
   }
+  // Opción B (Axel, 2026-11-20): una tarjeta resumen con el número grande
+  // arriba y cada producto separado por una línea fina; el día en ámbar
+  // al principio de su renglón. La primera versión (un título y una
+  // lista apretada) "necesitaba respirar".
+  const titular = (v) => String(v || '').toLowerCase().replace(/\b[a-z]/g, c => c.toUpperCase());
   function puentesHtml(vendor) {
     const ps = puentes(vendor);
     if (!ps.length) return '';
     const loop = esLoop(vendor), n = ps.length;
-    const titulo = loop
-      ? n + " won't last until " + (n === 1 ? 'its' : 'their') + ' delivery'
-      : n + (n === 1 ? ' runs' : ' run') + ' out before this order arrives (' + ps[0].x.llegaTxt + ')';
+    const que = loop
+      ? "won't last until " + (n === 1 ? 'its' : 'their') + ' delivery'
+      : (n === 1 ? 'runs' : 'run') + ' out before this order arrives';
+    const pie = loop ? 'Get ' + (n === 1 ? 'it' : 'them') + ' from LOOP to bridge'
+      : ps[0].x.llegaTxt + ' · get ' + (n === 1 ? 'it' : 'them') + ' from LOOP to bridge';
     return `
       <div class="m-ord-pte">
-        <div class="m-ord-pte-h">${esc(titulo)}</div>
+        <div class="m-ord-pte-sum"><span class="m-ord-pte-n">${n}</span><span class="m-ord-pte-t">${esc(que)}<small>${esc(pie)}</small></span></div>
         ${ps.map(({ r, x }) => `
+          <div class="m-ord-pte-sep"></div>
           <div class="m-ord-pte-i">
-            <span><b>${esc(r.item)}</b><small>${esc(x.outTxt)}${loop ? ' · ' + esc(r.vendor) + ' ' + esc(x.llegaTxt) : ''} · ${x.loop} from LOOP</small></span>
-            <button type="button" class="m-ord-use m-ord-tb" data-tb="${master().indexOf(r)}" data-n="${x.loop}"
-              data-nota="${esc(x.outTxt + ' · before ' + r.vendor + ' ' + x.llegaTxt)}">To buy</button>
+            <div class="m-ord-pte-top">
+              <b>${esc(r.item)}</b>
+              <button type="button" class="m-ord-use m-ord-tb" data-tb="${master().indexOf(r)}" data-n="${x.loop}"
+                data-nota="${esc(x.outTxt + ' · before ' + r.vendor + ' ' + x.llegaTxt)}">To buy</button>
+            </div>
+            <small><span class="m-ord-pte-dia">${esc(x.outTxt)}</span>${loop ? ' · ' + esc(titular(r.vendor)) + ' ' + esc(x.llegaTxt) : ''} · ${x.loop} from LOOP</small>
           </div>`).join('')}
       </div>`;
   }

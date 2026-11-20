@@ -1504,7 +1504,12 @@ week es la semana del ciclo" en `test-tarjeta-pronto`.
 **Lo que no llega a su entrega, al hacer la orden (2026-11-19, lámina
 C).** Arriba del detalle de un proveedor en Orders › Open, un bloque
 ámbar sobre Tinta (`.m-ord-pte`): lo suyo que se acaba ANTES de que
-llegue esta orden ("Out Wed · 2 from LOOP") con "To buy". Y en **LOOP**,
+llegue esta orden ("Out Wed · 2 from LOOP") con "To buy". Rediseñado el
+2026-11-20 (lámina B, "el contenido necesita respirar"): una tarjeta
+resumen con el número grande arriba ("2 won't last until their
+delivery"), cada producto separado por una línea fina con el día en
+ámbar al principio de su renglón, 16 px dentro y 22 px hasta lo que
+sigue; las tarjetas de "Not on this order" también a 16 px. Y en **LOOP**,
 lo mismo de TODOS los demás proveedores, con su proveedor y su entrega
 (Axel: "cualquier vendor se resurte en LOOP"); LOOP sale en Open aunque
 no tenga líneas propias. "To buy" lo manda a la lista de compras
