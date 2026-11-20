@@ -75,7 +75,7 @@ console.log('\nTinta: el fondo de las tarjetas');
     const sin = lisas.filter(sel => !/background: var\(--tinta\);/.test(fondo(sel)));
     prueba('Orders (Open, To buy, Sent, Invoices), de Tinta', !sin.length, sin.join(', '));
     prueba('lo que avisa en Orders conserva su ámbar sobre la tinta (proveedor y línea sin precio)',
-      /\.m-ordv\.aviso \{\s*background: linear-gradient\(135deg, rgba\(245,158,11,\.16\), var\(--tinta\) 55%\), var\(--tinta\);/.test(css) &&
+      /\.m-ordv\.aviso(?:,[^{]*)? \{\s*background: linear-gradient\(135deg, rgba\(245,158,11,\.16\), var\(--tinta\) 55%\), var\(--tinta\);/.test(css) &&
       /\.m-ord-l\.sinprecio \{ background: linear-gradient\(135deg, rgba\(245,158,11,\.16\), var\(--tinta\) 55%\), var\(--tinta\);/.test(css));
   }
   prueba('More y Settings: sus filas (.m-item) de Tinta, y la tarjeta de versión sobre Tinta con su azul',

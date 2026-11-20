@@ -643,7 +643,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * justo debajo, en "La barra de cristal". */
   body.m-shell #mBand .m-ico:not(.m-ico-alert),
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio,
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd),
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun),
   body.m-shell #mTabs .m-tab.on,
   body.m-shell #mScreens .m-low-b,
   body.m-shell #mScreens :is(#mhTabs, .m-ts-seg) {
@@ -660,7 +660,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   body.m-shell #mBand .m-ico:not(.m-ico-alert)::before,
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio::before,
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd)::before,
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun)::before,
   body.m-shell #mTabs .m-tab.on::before,
   body.m-shell #mScreens .m-low-b::before,
   body.m-shell #mScreens :is(#mhTabs, .m-ts-seg)::before,
@@ -820,7 +820,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
       inset 0 0 14px rgba(56,189,248,.45),
       0 10px 30px rgba(0,0,0,.45);
   }
-  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd)::before,
+  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun)::before,
   body.m-shell #mTabs .m-tab.on::before { z-index: -1; }
   /* La pestaña ya es relative; con isolation, su reflejo queda bajo el
    * icono y el nombre, no encima. */
@@ -838,6 +838,19 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
       0 10px 30px rgba(0,0,0,.45);
   }
   body.m-shell #mScreens #miAntes:active { background: rgba(139, 92, 246, .56); }
+  /* "Quick order" de Orders › Open (Axel, 2026-11-20, opción 2): fijo
+   * donde Done, el mismo cristal, en el verde del + de Inventory: es
+   * "añadir algo", no "terminar". Los colores son los de #miNuevo; la
+   * sombra, la de los botones fijos. */
+  body.m-shell #mScreens #moRun {
+    color: #ecfdf5; background: rgba(52, 211, 153, .42);
+    border: 1px solid rgba(167, 243, 208, .62);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255,255,255,.5),
+      inset 0 0 14px rgba(52,211,153,.45),
+      0 10px 30px rgba(0,0,0,.45);
+  }
+  body.m-shell #mScreens #moRun:active { background: rgba(52, 211, 153, .58); }
   body.m-shell #mScreens #miPegado :is(.m-searchbar.m-vidrio, #miAdj, #miNuevo) {
     -webkit-backdrop-filter: none; backdrop-filter: none;
   }
@@ -3653,7 +3666,27 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     background: var(--tinta);
     border: 1px solid var(--tinta-borde);
   }
-  body.m-shell .m-ordv.aviso {
+  /* Cada proveedor con su color (Axel, 2026-11-20, "combina A y C"):
+   * el tinte en la esquina (C) y la insignia con sus iniciales (A). El
+   * color llega en --vc, puesto por la fila (vendorDotColor, el del
+   * escritorio). Sobre Tinta y sin desenfoque, como toda tarjeta. Sin
+   * color-mix (iOS < 16.2) queda la Tinta lisa de arriba. */
+  body.m-shell .m-ordv[style*="--vc"] {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--vc) 22%, transparent), var(--tinta) 55%), var(--tinta);
+    border-color: color-mix(in srgb, var(--vc) 26%, var(--tinta-borde));
+  }
+  .m-ordv-av {
+    flex: 0 0 auto; display: grid; place-items: center;
+    width: calc(var(--m-base) * 2.9); height: calc(var(--m-base) * 2.9);
+    border-radius: 13px; background: var(--vc, #94a3b8); color: #0b1220;
+    font-size: var(--m-strong); font-weight: 800; letter-spacing: .02em;
+    box-shadow: 0 0 16px color-mix(in srgb, var(--vc, #94a3b8) 45%, transparent);
+  }
+  /* Lo que avisa conserva su ámbar sobre la Tinta: un pedido sin
+   * precios pesa más que el color del proveedor (la insignia lo sigue
+   * diciendo). Va después de la regla del color para ganarle. */
+  body.m-shell .m-ordv.aviso,
+  body.m-shell .m-ordv.aviso[style*="--vc"] {
     background: linear-gradient(135deg, rgba(245,158,11,.16), var(--tinta) 55%), var(--tinta);
     border-color: rgba(252,211,77,.26);
   }
@@ -4040,19 +4073,6 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-nuevo { border-radius: 50% !important; }
   :is(#mScreens, #mTabs, #mBand, #mSheet) .m-adj.on::after { border-radius: 50% !important; }
 
-  /* Apuntar una compra ya hecha. Borde discontinuo y sin relleno
-   * sólido: no es la acción principal de la pantalla —esa es repasar
-   * lo que hay que pedir— sino una salida lateral. */
-  body.m-shell .m-ord-run {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    width: 100%; height: 46px; margin-bottom: 14px; cursor: pointer;
-    background: rgba(255,255,255,.06);
-    border: 1px dashed rgba(255,255,255,.26);
-    color: #cfe8fb; font-family: inherit;
-    font-size: var(--m-small); font-weight: 800;
-  }
-  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-ord-run { border-radius: 13px !important; }
-  body.m-shell .m-ord-run:active { background: rgba(255,255,255,.12); }
 
   /* El filtro puesto, visible y quitable sin abrir el cajón. Un icono
    * encendido avisa de que algo filtra, pero no de qué. */
@@ -5849,7 +5869,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* "Save to history" / "Review and send" de Quick order también
    * (#mqMain, Axel 2026-11-18): el mismo botón en el mismo sitio. */
   /* "Add a product" de una orden (#moAdd, Axel 2026-11-20), también. */
-  #mScreens :is(#mTxGo, #mqMain, #moAdd) {
+  #mScreens :is(#mTxGo, #mqMain, #moAdd, #moRun) {
     position: fixed; z-index: 50; left: 16px; right: 16px;
     bottom: calc(env(safe-area-inset-bottom, 0px) + 110px - var(--m-base) * 2.7);
     display: block; width: auto; margin: 0; min-height: calc(var(--m-base) * 3.4);

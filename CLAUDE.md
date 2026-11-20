@@ -308,7 +308,11 @@ deshacía lo pegado. El detalle de un proveedor en Open, igual desde el
 la banda, el atrás en el sitio de Time Machine, el total en una línea
 (`.m-ord-sub`) y "Add a product" (`#moAdd`) fijo donde Done, con su
 cristal (las reglas de `#mTxGo` / `#mqMain`). La revisión de enviar
-sigue con su cabecera. Prueba: "2c" de `test-sugerencia`. En Sent, la fila del
+sigue con su cabecera. Prueba: "2c" de `test-sugerencia`. La lista de
+Open (2026-11-20, "combina A y C"): cada proveedor con su insignia de
+iniciales y la tarjeta teñida en la esquina, los dos del color de
+`vendorDotColor()` (en `--vc`; sin precio, el ámbar gana), y "Quick
+order" (`#moRun`) fijo donde Done, en cristal verde. En Sent, la fila del
 buscador y los filtros también se queda, debajo de las pestañas: la
 pinta la sección, así que se pasa con `tambien` (una función). **Lo que se pega tiene
 que colgar directamente de la lista**: un sticky sólo dura lo que su

@@ -75,6 +75,8 @@ function pantalla(extra) {
     (s, r) => s + w.getEffectiveOrder(r) * (Number(r.value) || 0), 0);
 
   w.isRowPlaced = () => false;
+  // Los colores de index.html, los conocidos tal cual.
+  w.vendorDotColor = (v) => ({ LOOP: '#38bdf8', SOUTHERN: '#94a3b8' })[String(v).toUpperCase()] || '#a78bfa';
 
   w.__abierto = [];
   w.BarStockAddToOrder = { open(v) {
@@ -261,6 +263,20 @@ console.log('\nel resumen');
   const loop = host.querySelector('.m-ordv');
   ok('LOOP avisa de la linea sin precio', loop.classList.contains('aviso'));
   ok('y dice cuantas son', /1 without price/.test(loop.textContent));
+
+  // ── Cada proveedor con su color (Axel, 2026-11-20, "combina A y C") ──
+  // La insignia con sus iniciales (A) y la tarjeta tenida (C) salen del
+  // MISMO color, el de vendorDotColor() del escritorio: si cada pieza
+  // eligiera el suyo, LOOP seria azul en Inventory y otro aqui.
+  const avs = Array.from(host.querySelectorAll('.m-ordv .m-ordv-av'));
+  eq('cada proveedor lleva su insignia', avs.length, 3);
+  eq('con sus iniciales', avs.map(e => e.textContent.trim()), ['LO', 'SO', 'PE']);
+  const cards = Array.from(host.querySelectorAll('.m-ordv'));
+  ok('la tarjeta lleva el color del proveedor',
+     cards.every(c => /--vc:\s*#/.test(c.getAttribute('style') || '')),
+     cards.map(c => c.getAttribute('style')).join(' | '));
+  ok('y es el de vendorDotColor', /--vc:\s*#38bdf8/.test(cards[0].getAttribute('style') || ''),
+     cards[0].getAttribute('style'));
 }
 
 console.log('\nel detalle');
@@ -579,6 +595,22 @@ console.log('\nQuick order, sin cabecera encima');
   // ese es una rejilla de cinco columnas con un `datalist`.
   ok('abre la pantalla del movil', w.__ido.includes('quick'), w.__ido.join(','));
   ok('y no el dialogo del escritorio', w.__quick === 0);
+
+  // Abajo, fijo donde va Done, y en cristal verde (Axel, 2026-11-20):
+  // ya no sube con la lista desde #moTras. Detras de el, el hueco para
+  // que la ultima tarjeta no quede tapada.
+  ok('ya no va arriba de la lista', !host.querySelector('#moTras #moRun'));
+  ok('va al final del cuerpo, tras el hueco',
+     !!host.querySelector('#moCuerpo .m-tx-hueco + #moRun'));
+  const css = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8');
+  ok('fijo como Done', /#mScreens :is\([^)]*#moRun[^)]*\) \{\s*position: fixed;/.test(css));
+  ok('en cristal verde', /#mScreens #moRun \{\s*color: #[0-9a-f]+; background: rgba\(52, 211, 153/.test(css));
+  ok('sin el estilo viejo de borde discontinuo', !/\.m-ord-run/.test(css));
+
+  // Dentro de un proveedor, no: ahi el boton de abajo es "Add a product".
+  abrir(host, 'LOOP');
+  ok('dentro de un proveedor no sale', !host.querySelector('#moRun'));
+  def_de(host).atras(host, true);
 
   // Solo en Open: en Sent y en Invoices no pinta nada.
   host.querySelectorAll('#moSeg button')[1].click();

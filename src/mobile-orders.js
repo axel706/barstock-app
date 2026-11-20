@@ -127,6 +127,24 @@
 
   // ── Resumen ──────────────────────────────────────────────────────────
 
+  // El color de cada proveedor es el del escritorio (vendorDotColor de
+  // index.html: los conocidos fijos y los demás sacados del nombre, el
+  // mismo siempre). La insignia y el tinte de la tarjeta salen de él;
+  // un color propio aquí haría que LOOP fuese de dos colores.
+  const colorDe = (v) => {
+    const c = typeof window.vendorDotColor === 'function' ? window.vendorDotColor(v) : '';
+    // Va dentro de un style: sólo un color con forma de color.
+    return /^#[0-9a-f]{3,8}$|^rgba?\([\d.,\s%]+\)$|^hsla?\([\d.,\s%deg]+\)$/i.test(String(c)) ? c : '#94a3b8';
+  };
+  // Las iniciales de la insignia: de dos palabras, la primera de cada
+  // una (WINE MERCHANT → WM); de una, sus dos primeras letras (LOOP →
+  // LO). Una regla que cualquiera adivina, y no una por proveedor.
+  const iniciales = (v) => {
+    const ps = String(v || '').toUpperCase().split(/[^A-Z0-9]+/).filter(Boolean);
+    if (!ps.length) return '?';
+    return ps.length > 1 ? ps[0][0] + ps[1][0] : ps[0].slice(0, 2);
+  };
+
   function pintarResumen(host) {
     const vs = proveedores();
     // LOOP sale aunque no tenga líneas propias si hay algo de otro
@@ -172,7 +190,8 @@
            proveedor, que es donde se repasa antes de mandar. -->
       ${''}
       ${vs.map((v, i) => `
-        <button type="button" class="m-ordv${v.sinPrecio ? ' aviso' : ''}" data-v="${i}">
+        <button type="button" class="m-ordv${v.sinPrecio ? ' aviso' : ''}" data-v="${i}" style="--vc:${colorDe(v.nombre)}">
+          <span class="m-ordv-av" aria-hidden="true">${esc(iniciales(v.nombre))}</span>
           <span class="m-ordv-l">
             <span class="m-ordv-n">${esc(v.nombre)}</span>
             <small>${esLoop(v.nombre) && nLoop ? nLoop + " won't last until delivery" + (v.filas.length ? ' · ' : '') : ''}${
@@ -181,7 +200,25 @@
           </span>
           <b>${money(v.total)}</b>
           <i class="ti ti-chevron-right m-chev" aria-hidden="true"></i>
-        </button>`).join('')}`;
+        </button>`).join('')}
+      <div class="m-tx-hueco"></div>
+      <button type="button" id="moRun"><i class="ti ti-plus" aria-hidden="true"></i> Quick order</button>`;
+
+    // Se llamó "Log a store run" mientras creíamos que sólo apuntaba una
+    // compra ya hecha; salvo LOOP, de aquí sale un correo al proveedor
+    // con su PDF, igual que de una orden normal: es una ORDEN. Vive en
+    // Open porque es donde se entra a pensar en comprar, aunque lo que
+    // guarde aparezca en Sent.
+    const run = host.querySelector('#moRun');
+    if (run) run.onclick = () => {
+      // La pantalla del teléfono, no el diálogo del escritorio: ése
+      // es una rejilla de cinco columnas con un `datalist`, y en un
+      // iPhone no se puede usar.
+      if (window.BarStockMobile && window.BarStockMobile.ir) {
+        return window.BarStockMobile.ir('quick');
+      }
+      if (window.BarStockToast) window.BarStockToast.show('Not available right now.');
+    };
 
     host.querySelectorAll('[data-v]').forEach(b => {
       b.onclick = () => { _vendor = vs[Number(b.dataset.v)].nombre; repintar(); };
@@ -1144,7 +1181,7 @@
   // escribiría sobre un elemento que ya no está en el documento y la
   // sección se quedaría en blanco.
   function marco(host) {
-    // ── Tres piezas dentro de una lista con su propio scroll ───────
+    // ── Dos piezas dentro de una lista con su propio scroll ────────
     //
     // Entra ya acoplada: "Orders" en el header en el sitio del logo y
     // las pestañas pegadas debajo, con el desenfoque progresivo, desde
@@ -1153,7 +1190,6 @@
     // hace band-dock.js con `siempre`.
     //
     //   #moPeg     las pestañas: lo que se queda pegado.
-    //   #moTras    "Quick order": es contenido de Open, sube con él.
     //   #moCuerpo  la sección.
     //
     // Encima de las pestañas iba #moCab, con el título, el subtítulo de
@@ -1166,12 +1202,11 @@
     let cuerpo = host.querySelector('#moCuerpo');
     if (!cuerpo) {
       host.innerHTML = '<div id="moScroll"><div id="moPeg"></div>' +
-        '<div id="moTras"></div><div id="moCuerpo"></div></div>';
+        '<div id="moCuerpo"></div></div>';
       cuerpo = host.querySelector('#moCuerpo');
     }
 
     const peg = host.querySelector('#moPeg');
-    const tras = host.querySelector('#moTras');
     // Se engancha en los dos casos, con las pestañas ya pintadas.
     // Dentro de un detalle va sin nombre y sin `siempre`: no hay
     // pestañas, y el header conserva el logo.
@@ -1198,7 +1233,7 @@
     // cosas en el mismo instante (lo cazó test-detalle-banda con Orders
     // y Sent de verdad; con secciones de mentira no se ve).
     if (enDetalle()) {
-      peg.innerHTML = ''; tras.innerHTML = ''; acoplar('');
+      peg.innerHTML = ''; acoplar('');
       const fijo = cuerpo.querySelector(':scope > .m-det-fijo');
       const D = window.BarStockBandDock;
       if (fijo && D && D.fijar) D.fijar(fijo);
@@ -1228,32 +1263,10 @@
         }).join('') +
       '</div>';
 
-    tras.innerHTML =
-      // ── Una orden fuera del ciclo ───────────────────────────────
-      //
-      // Se llamó "Log a store run" mientras creíamos que sólo
-      // apuntaba una compra ya hecha. No es eso: salvo LOOP, de aquí
-      // sale un correo al proveedor con su PDF, igual que de una
-      // orden normal. Eso es una ORDEN, y llamarla "log" hacía
-      // esperar un registro y mandar un pedido.
-      //
-      // Vive en Open porque es donde se entra a pensar en comprar,
-      // aunque lo que guarde aparezca en Sent.
-      (_sec === 'open'
-        ? '<button type="button" class="m-ord-run" id="moRun">' +
-            '<i class="ti ti-plus" aria-hidden="true"></i> Quick order</button>'
-        : '');
-
-    const run = tras.querySelector('#moRun');
-    if (run) run.onclick = () => {
-      // La pantalla del teléfono, no el diálogo del escritorio: ése
-      // es una rejilla de cinco columnas con un `datalist`, y en un
-      // iPhone no se puede usar.
-      if (window.BarStockMobile && window.BarStockMobile.ir) {
-        return window.BarStockMobile.ir('quick');
-      }
-      if (window.BarStockToast) window.BarStockToast.show('Not available right now.');
-    };
+    // "Quick order" vivía aquí (#moTras), arriba de la lista de Open, y
+    // subía con ella. Desde el 2026-11-20 (Axel, opción 2: cristal
+    // verde) va fijo donde Done, al final del resumen (pintarResumen):
+    // es la acción de la pantalla, no una fila más.
 
     peg.querySelectorAll('[data-sec]').forEach(b => {
       b.onclick = () => {

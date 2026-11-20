@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261120-142348",
+    "items": [
+      "Orders: each vendor with its color and initials",
+      "Quick order sits where Done does, in green"
+    ]
+  },
+  {
     "build": "20261120-140740",
     "items": [
       "Orders: vendor name up top, back where Time Machine is",
@@ -179,12 +186,6 @@
     "build": "20261118-133341",
     "items": [
       "Darker cards in Running out"
-    ]
-  },
-  {
-    "build": "20261118-131649",
-    "items": [
-      "Darker, easier-to-read cards in Inventory and Do we have"
     ]
   }
 ]
