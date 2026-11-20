@@ -3675,9 +3675,16 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     background: linear-gradient(135deg, color-mix(in srgb, var(--vc) 22%, transparent), var(--tinta) 55%), var(--tinta);
     border-color: color-mix(in srgb, var(--vc) 26%, var(--tinta-borde));
   }
-  .m-ordv-av {
-    flex: 0 0 auto; display: grid; place-items: center;
+  /* El logo del proveedor (vendor-logo.js), en Open, Sent e Invoices:
+   * "el logo solo", sin recuadro (Axel, 2026-11-20), del tamaño de la
+   * insignia de iniciales, que es lo que sale si no hay logo. */
+  .m-vlogo {
+    flex: 0 0 auto; display: block;
     width: calc(var(--m-base) * 2.9); height: calc(var(--m-base) * 2.9);
+    object-fit: contain;
+  }
+  .m-vlogo-ini {
+    display: grid; place-items: center;
     border-radius: 13px; background: var(--vc, #94a3b8); color: #0b1220;
     font-size: var(--m-strong); font-weight: 800; letter-spacing: .02em;
     box-shadow: 0 0 16px color-mix(in srgb, var(--vc, #94a3b8) 45%, transparent);

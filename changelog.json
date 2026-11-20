@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261120-143537",
+    "items": [
+      "Orders, Sent and Invoices show each vendor’s logo"
+    ]
+  },
+  {
     "build": "20261120-142348",
     "items": [
       "Orders: each vendor with its color and initials",
@@ -180,12 +186,6 @@
     "build": "20261118-134042",
     "items": [
       "Darker cards for the three numbers on Home"
-    ]
-  },
-  {
-    "build": "20261118-133341",
-    "items": [
-      "Darker cards in Running out"
     ]
   }
 ]

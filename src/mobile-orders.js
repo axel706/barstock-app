@@ -127,23 +127,11 @@
 
   // ── Resumen ──────────────────────────────────────────────────────────
 
-  // El color de cada proveedor es el del escritorio (vendorDotColor de
-  // index.html: los conocidos fijos y los demás sacados del nombre, el
-  // mismo siempre). La insignia y el tinte de la tarjeta salen de él;
-  // un color propio aquí haría que LOOP fuese de dos colores.
-  const colorDe = (v) => {
-    const c = typeof window.vendorDotColor === 'function' ? window.vendorDotColor(v) : '';
-    // Va dentro de un style: sólo un color con forma de color.
-    return /^#[0-9a-f]{3,8}$|^rgba?\([\d.,\s%]+\)$|^hsla?\([\d.,\s%deg]+\)$/i.test(String(c)) ? c : '#94a3b8';
-  };
-  // Las iniciales de la insignia: de dos palabras, la primera de cada
-  // una (WINE MERCHANT → WM); de una, sus dos primeras letras (LOOP →
-  // LO). Una regla que cualquiera adivina, y no una por proveedor.
-  const iniciales = (v) => {
-    const ps = String(v || '').toUpperCase().split(/[^A-Z0-9]+/).filter(Boolean);
-    if (!ps.length) return '?';
-    return ps.length > 1 ? ps[0][0] + ps[1][0] : ps[0].slice(0, 2);
-  };
+  // El logo del proveedor (o sus iniciales) y su color: los pone
+  // vendor-logo.js, el mismo de Sent e Invoices.
+  const VL = () => window.BarStockVendorLogo;
+  const logo = (v) => (VL() ? VL().html(v) : '');
+  const colorDe = (v) => (VL() ? VL().color(v) : '#94a3b8');
 
   function pintarResumen(host) {
     const vs = proveedores();
@@ -191,7 +179,7 @@
       ${''}
       ${vs.map((v, i) => `
         <button type="button" class="m-ordv${v.sinPrecio ? ' aviso' : ''}" data-v="${i}" style="--vc:${colorDe(v.nombre)}">
-          <span class="m-ordv-av" aria-hidden="true">${esc(iniciales(v.nombre))}</span>
+          ${logo(v.nombre)}
           <span class="m-ordv-l">
             <span class="m-ordv-n">${esc(v.nombre)}</span>
             <small>${esLoop(v.nombre) && nLoop ? nLoop + " won't last until delivery" + (v.filas.length ? ' · ' : '') : ''}${

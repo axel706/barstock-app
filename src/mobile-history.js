@@ -236,12 +236,17 @@
            (n ? n + ' ' : '') + esc(txt) + '</span>';
   }
 
+  // El logo del proveedor, o sus iniciales (vendor-logo.js, el mismo
+  // de Open e Invoices).
+  const logo = (v) => (window.BarStockVendorLogo ? window.BarStockVendorLogo.html(v) : '');
+
   function fila(o, i) {
     // El dinero que se enseña es lo RECIBIDO cuando ya se sabe. Una
     // orden no puede vivir diciendo que gastaste 1.422 si llegaron
     // 1.208.
     const importe = o.estado === 'waiting' ? o.pedidoDinero : o.recibidoDinero;
     return '<button type="button" class="m-hcard" data-o="' + i + '">' +
+      logo(o.vendor) +
       '<span class="m-hcard-l">' +
         '<span class="m-hcard-v">' + esc(o.vendor) + '</span>' +
         '<span class="m-hcard-m">' +

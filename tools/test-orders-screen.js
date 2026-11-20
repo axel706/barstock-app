@@ -220,6 +220,8 @@ function pantalla(extra) {
       ir(id) { w.__ido.push(String(id)); } },
     require('./lib-cabecera'));
 
+  // El modulo de los logos, el de verdad, antes que quien lo usa.
+  new Function(fs.readFileSync(path.join(RAIZ, 'src/vendor-logo.js'), 'utf8'))();
   new Function(fs.readFileSync(path.join(RAIZ, 'src/mobile-orders.js'), 'utf8'))();
   w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
 
@@ -268,15 +270,50 @@ console.log('\nel resumen');
   // La insignia con sus iniciales (A) y la tarjeta tenida (C) salen del
   // MISMO color, el de vendorDotColor() del escritorio: si cada pieza
   // eligiera el suyo, LOOP seria azul en Inventory y otro aqui.
-  const avs = Array.from(host.querySelectorAll('.m-ordv .m-ordv-av'));
-  eq('cada proveedor lleva su insignia', avs.length, 3);
-  eq('con sus iniciales', avs.map(e => e.textContent.trim()), ['LO', 'SO', 'PE']);
+  // Desde el mismo dia, con su LOGO donde lo hay (Axel: "el logo solo",
+  // sin recuadro): LOOP y Southern lo llevan; uno sin logo (PEQUENO)
+  // sigue con sus iniciales.
+  const avs = Array.from(host.querySelectorAll('.m-ordv .m-vlogo'));
+  eq('cada proveedor lleva su logo o su insignia', avs.length, 3);
+  eq('el logo de LOOP y el de Southern', avs.slice(0, 2).map(e => e.tagName + ' ' + (e.getAttribute('src') || '').split('?')[0]),
+     ['IMG assets/vendors/loop.png', 'IMG assets/vendors/southern.png']);
+  eq('y el que no tiene, sus iniciales', avs[2].tagName + ' ' + avs[2].textContent.trim(), 'SPAN PE');
   const cards = Array.from(host.querySelectorAll('.m-ordv'));
   ok('la tarjeta lleva el color del proveedor',
      cards.every(c => /--vc:\s*#/.test(c.getAttribute('style') || '')),
      cards.map(c => c.getAttribute('style')).join(' | '));
   ok('y es el de vendorDotColor', /--vc:\s*#38bdf8/.test(cards[0].getAttribute('style') || ''),
      cards[0].getAttribute('style'));
+}
+
+console.log('\nlos logos de los proveedores');
+{
+  // Una sola regla para todas las pantallas (Open, Sent, Invoices): el
+  // nombre de una factura de MarginEdge no es el de la orden ("PLCB",
+  // "Southern Glazer's Wine & Spirits of PA"), y tiene que dar el mismo.
+  const { w } = pantalla();
+  const L = w.BarStockVendorLogo;
+  const de = (v) => (L.de(v) || '').split('?')[0].replace('assets/vendors/', '');
+  eq('LOOP, PLCB y el Liquor Control Board son el mismo',
+     ['LOOP', 'PLCB', 'Pennsylvania Liquor Control Board'].map(de), ['loop.png', 'loop.png', 'loop.png']);
+  eq('Breakthru', [de('BREAKTHRU'), de('Breakthru Beverage Pennsylvania')], ['breakthru.png', 'breakthru.png']);
+  eq('Southern', [de('SOUTHERN'), de("Southern Glazer's Wine & Spirits")], ['southern.png', 'southern.png']);
+  eq('Wine Merchant es Masciarelli', [de('WINE MERCHANT'), de('Masciarelli Wine Co.'), de('WINE')],
+     ['wine-merchant.png', 'wine-merchant.png', 'wine-merchant.png']);
+  eq('uno cualquiera no tiene', [de('BOTANERY'), de('Wine Spectator'), de('')], ['', '', '']);
+  for (const f of ['loop', 'breakthru', 'southern', 'wine-merchant']) {
+    ok('el archivo ' + f + '.png existe', fs.existsSync(path.join(RAIZ, 'assets/vendors', f + '.png')));
+  }
+  // Sent e Invoices pintan la misma pieza, no una copia.
+  for (const f of ['mobile-history.js', 'mobile-invoices.js']) {
+    const t = fs.readFileSync(path.join(RAIZ, 'src', f), 'utf8');
+    ok(f + ' pinta el logo con el modulo', /BarStockVendorLogo/.test(t) && /logo\(/.test(t));
+  }
+  // Y se carga antes que quien lo usa.
+  const idx = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8');
+  const pos = (f) => idx.indexOf('src/' + f);
+  ok('vendor-logo.js se carga antes que Orders, Sent e Invoices',
+     pos('vendor-logo.js') > 0 && ['mobile-orders.js', 'mobile-history.js', 'mobile-invoices.js'].every(f => pos('vendor-logo.js') < pos(f)));
 }
 
 console.log('\nel detalle');

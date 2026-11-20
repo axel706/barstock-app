@@ -151,8 +151,14 @@
   // Un BOTÓN, no un div. Eran divs y por eso no se podía entrar al
   // detalle de una factura de un ciclo anterior — ni enlazarla a una
   // orden, que es justo para lo que se mira esa lista.
+  // El logo del proveedor, o sus iniciales (vendor-logo.js, el mismo
+  // de Open y Sent). El nombre de MarginEdge no es el de la orden
+  // ("PLCB" y no "LOOP"): la regla de reconocerlo vive allí.
+  const logo = (v) => (window.BarStockVendorLogo ? window.BarStockVendorLogo.html(v) : '');
+
   function tarjetaFactura(f) {
     return '<button type="button" class="m-hcard" data-vieja="' + esc(String(f.id)) + '">' +
+      logo(f.vendor) +
       '<span class="m-hcard-l">' +
         '<span class="m-hcard-v">' + esc(f.vendor || 'Unknown vendor') + '</span>' +
         '<span class="m-hcard-m">' +
@@ -597,6 +603,7 @@
       // del resto de la app se veían de otro programa.
       html +=
         '<button type="button" class="m-hcard" data-inv="' + i + '">' +
+          logo(f.vendor) +
           '<span class="m-hcard-l">' +
             '<span class="m-hcard-v">' + esc(f.vendor || 'Unknown vendor') + '</span>' +
             '<span class="m-hcard-m">' +

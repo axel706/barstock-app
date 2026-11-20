@@ -312,7 +312,13 @@ sigue con su cabecera. Prueba: "2c" de `test-sugerencia`. La lista de
 Open (2026-11-20, "combina A y C"): cada proveedor con su insignia de
 iniciales y la tarjeta teñida en la esquina, los dos del color de
 `vendorDotColor()` (en `--vc`; sin precio, el ámbar gana), y "Quick
-order" (`#moRun`) fijo donde Done, en cristal verde. En Sent, la fila del
+order" (`#moRun`) fijo donde Done, en cristal verde. Ese mismo día, la
+insignia pasó a ser el LOGO del proveedor donde lo hay ("el logo solo",
+sin recuadro), en Open, Sent e Invoices: `src/vendor-logo.js`
+(`BarStockVendorLogo.html(v)`), una sola regla para reconocerlo (la
+factura dice "PLCB", la orden "LOOP"); sin logo, las iniciales. Los
+archivos en `assets/vendors/` (LCB para LOOP, de Breakthru sólo la
+flecha); si se cambia uno, se sube `V` en el módulo. En Sent, la fila del
 buscador y los filtros también se queda, debajo de las pestañas: la
 pinta la sección, así que se pasa con `tambien` (una función). **Lo que se pega tiene
 que colgar directamente de la lista**: un sticky sólo dura lo que su
