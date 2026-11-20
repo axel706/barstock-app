@@ -15,11 +15,12 @@
   //
   // ── Los dos casos que no se pueden dejar en silencio ─────────────────
   //
-  // 1. `supportsManualFinalOrder` solo acepta SOUTHERN, BREAKTHRU, WINE
-  //    MERCHANT y LOOP. En otro proveedor, escribir orderOverride no
-  //    hace nada: getEffectiveOrder lo ignora y se cae al toOrder. Por
-  //    eso el boton se deshabilita en ALL y UNKNOWN en vez de aceptar el
-  //    clic y no hacer nada.
+  // 1. `supportsManualFinalOrder` no acepta UNKNOWN ni ALL (desde el
+  //    2026-11-20 acepta cualquier otro proveedor; antes, sólo los cuatro
+  //    de Crown). Ahí escribir orderOverride no hace nada:
+  //    getEffectiveOrder lo ignora y se cae al toOrder. Por eso el boton
+  //    se deshabilita en ALL y UNKNOWN en vez de aceptar el clic y no
+  //    hacer nada.
   //
   // 2. Si el producto YA se coloco en este ciclo, isRowPlaced lo saca de
   //    la tabla pase lo que pase el override. Agregarlo se veria como

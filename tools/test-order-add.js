@@ -279,5 +279,18 @@ console.log('\nlo que no puede pasar en silencio');
   ok('en ALL el panel ni se abre', !$(w, 'atoBg'));
 }
 
+// ── Cualquier proveedor de la locación admite cantidad a mano ─────────
+// (Axel, 2026-11-20: "no puedo ponerle override cero a BOTANERY en Will's
+// & Bill's"). La lista de verdad es la de cada locación (vendor_mappings);
+// la regla estaba escrita con los cuatro de Crown.
+{
+  const html = require('fs').readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
+  const m = /function supportsManualFinalOrder\(vendor\)\{[^\n]*\}/.exec(html);
+  const f = m ? new Function(m[0] + '; return supportsManualFinalOrder;')() : () => false;
+  ok('un proveedor de otra locación (BOTANERY) admite cantidad a mano', f('BOTANERY') === true && f('botanery') === true);
+  ok('los de Crown siguen', ['SOUTHERN', 'BREAKTHRU', 'WINE MERCHANT', 'LOOP'].every(v => f(v)));
+  ok('UNKNOWN (sin proveedor), ALL y vacío, no', !f('UNKNOWN') && !f('ALL') && !f('') && !f(null) && !f('  '));
+}
+
 console.log('\n' + (falla ? falla + ' FALLO(S)' : 'todo bien') + '   ·   ' + pasa + ' comprobaciones');
 process.exit(falla ? 1 : 0);

@@ -374,7 +374,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261119-150606</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261119-215443</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -1586,7 +1586,12 @@ function roundOnHand(v){
   return frac >= 0.60 ? Math.ceil(n) : Math.floor(n);
 }
 function computeToOrder(onHand,suggested){ return Math.max(0, parseNum(suggested) - roundOnHand(onHand)); }
-function supportsManualFinalOrder(vendor){ return ['SOUTHERN','BREAKTHRU','WINE MERCHANT','LOOP'].includes(String(vendor||'').toUpperCase()); }
+// Cualquier proveedor real admite cantidad a mano; UNKNOWN (lo que aún no
+// tiene proveedor) y ALL (el filtro) no son proveedores. Estaba escrito
+// con los cuatro de Crown, de cuando sólo existían ésos: en Will's & Bill's
+// BOTANERY no dejaba ni poner 0 (Axel, 2026-11-20). Los proveedores de
+// cada locación salen de vendor_mappings (getActiveVendors).
+function supportsManualFinalOrder(vendor){ const v = String(vendor||'').trim().toUpperCase(); return !!v && v !== 'UNKNOWN' && v !== 'ALL'; }
 function getEffectiveOrder(row){
   if(supportsManualFinalOrder(row.vendor) && row.orderOverride !== '' && row.orderOverride !== null && row.orderOverride !== undefined){
     return Math.max(0, parseNum(row.orderOverride));
@@ -5545,7 +5550,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/barcode-fix.js?v=bf5"></script>
 <script src="src/dialog.js?v=dlg3"></script>
 <script src="src/stock-in.js?v=si1"></script>
-<script src="src/add-to-order.js?v=ato5"></script>
+<script src="src/add-to-order.js?v=ato6"></script>
 <script src="src/dormant-items.js?v=dorm1"></script>
 <script src="src/zones.js?v=zon8"></script>
 <script src="src/settings-zones.js?v=zon2"></script>
