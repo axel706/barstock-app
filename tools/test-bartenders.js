@@ -176,6 +176,9 @@ async function llamar(token, action, cuerpo) {
     await w.BarStockMobileBartenders.montar(host, (t) => '<div class="cab">' + t + '</div>', () => {});
     const q = s => host.querySelector(s);
     prueba('sin nadie: lo dice, y el botón para agregar', /No one yet/.test(host.textContent) && !!q('#btNuevo'));
+    // Abajo, fijo donde Done (Axel, 2026-11-21): al final, tras su hueco.
+    prueba('Add person al final, tras su hueco', !!q('#btNuevo') && !q('#btNuevo').nextElementSibling &&
+      q('#btNuevo').previousElementSibling && q('#btNuevo').previousElementSibling.classList.contains('m-tx-hueco'));
 
     q('#btNuevo').click();
     // Alta sin PIN (Axel, 2026-11-16, C): de entrada, la persona pone el suyo.
@@ -191,6 +194,8 @@ async function llamar(token, action, cuerpo) {
     prueba('sin nombre: lo dice y no crea', /Enter a name/.test(host.textContent) && db.users.length === 2);
     const nom = q('#btNom'); nom.value = 'Billie'; nom.dispatchEvent(new w.Event('input'));
     prueba('el botón dice a quién crea', q('#btCrear').textContent === 'Create Billie');
+    prueba('Create, al final y tras su hueco', !q('#btCrear').nextElementSibling &&
+      q('#btCrear').previousElementSibling && q('#btCrear').previousElementSibling.classList.contains('m-tx-hueco'));
     const pin = q('#btPin'); pin.value = '32a4-324'; pin.dispatchEvent(new w.Event('input'));
     prueba('el PIN sólo acepta dígitos', pin.value === '324324', pin.value);
     q('#btCrear').click(); await esperar(40);

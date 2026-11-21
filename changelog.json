@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261120-223930",
+    "items": [
+      "Settings: Save sits where Done does, in glass",
+      "People: Add person and Create too"
+    ]
+  },
+  {
     "build": "20261120-223308",
     "items": [
       "Fine Wine & Good Spirits logo in Orders and Invoices"
@@ -180,12 +187,6 @@
     "build": "20261118-143445",
     "items": [
       "Transfers: full-screen product search"
-    ]
-  },
-  {
-    "build": "20261118-142507",
-    "items": [
-      "Invoices: full-screen bottle search"
     ]
   }
 ]

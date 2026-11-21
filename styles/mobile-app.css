@@ -643,7 +643,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * justo debajo, en "La barra de cristal". */
   body.m-shell #mBand .m-ico:not(.m-ico-alert),
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio,
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #mhAbrir, #mhSi, #mhNo),
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #mhAbrir, #mhSi, #mhNo, #msSave, #btNuevo, #ppNuevoRol, #btCrear),
   body.m-shell #mTabs .m-tab.on,
   body.m-shell #mScreens .m-low-b,
   body.m-shell #mScreens :is(#mhTabs, .m-ts-seg) {
@@ -660,7 +660,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   body.m-shell #mBand .m-ico:not(.m-ico-alert)::before,
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio::before,
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #mhAbrir, #mhSi, #mhNo)::before,
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #mhAbrir, #mhSi, #mhNo, #msSave, #btNuevo, #ppNuevoRol, #btCrear)::before,
   body.m-shell #mTabs .m-tab.on::before,
   body.m-shell #mScreens .m-low-b::before,
   body.m-shell #mScreens :is(#mhTabs, .m-ts-seg)::before,
@@ -811,7 +811,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * estilo liquid glass de ese botón Done"): misma regla, no una copia.
    * Antes era azul sólido con el texto oscuro (.m-tab.on, más abajo:
    * con el id, ésta le gana). */
-  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moAdd, #mhRe),
+  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moAdd, #mhRe, #msSave, #btNuevo, #ppNuevoRol, #btCrear),
   body.m-shell #mTabs .m-tab.on {
     color: #f0f9ff; background: rgba(56, 189, 248, .42);
     border: 1px solid rgba(186, 230, 253, .62);
@@ -820,12 +820,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
       inset 0 0 14px rgba(56,189,248,.45),
       0 10px 30px rgba(0,0,0,.45);
   }
-  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #mhAbrir, #mhSi, #mhNo)::before,
+  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #mhAbrir, #mhSi, #mhNo, #msSave, #btNuevo, #ppNuevoRol, #btCrear)::before,
   body.m-shell #mTabs .m-tab.on::before { z-index: -1; }
   /* La pestaña ya es relative; con isolation, su reflejo queda bajo el
    * icono y el nombre, no encima. */
   body.m-shell #mTabs .m-tab.on { isolation: isolate; }
-  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moAdd, #mhRe):active { background: rgba(56, 189, 248, .58); }
+  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moAdd, #mhRe, #msSave, #btNuevo, #ppNuevoRol, #btCrear):active { background: rgba(56, 189, 248, .58); }
   /* "It arrived before the count" de la factura (Axel, 2026-11-18,
    * lámina B): el mismo cristal, en violeta, para que no se confunda
    * con "Link to an order" (azul, el de Done) que va justo encima. */
@@ -5917,13 +5917,16 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* "Save to history" / "Review and send" de Quick order también
    * (#mqMain, Axel 2026-11-18): el mismo botón en el mismo sitio. */
   /* "Add a product" de una orden (#moAdd, Axel 2026-11-20), también. */
-  #mScreens :is(#mTxGo, #mqMain, #moAdd, #moRun, #mhAcc) {
+  /* Los Save de Settings (#msSave: Sender, Emails, Zones, la ficha de
+   * Delivery) y los de People (Add person, New role, Create), también
+   * (Axel, 2026-11-21: "como Done"). Cada uno lleva su hueco delante. */
+  #mScreens :is(#mTxGo, #mqMain, #moAdd, #moRun, #mhAcc, #msSave, #btNuevo, #ppNuevoRol, #btCrear) {
     position: fixed; z-index: 50; left: 16px; right: 16px;
     bottom: calc(env(safe-area-inset-bottom, 0px) + 110px - var(--m-base) * 2.7);
     display: block; width: auto; margin: 0; min-height: calc(var(--m-base) * 3.4);
     font-size: var(--m-strong); font-weight: 800; cursor: pointer;
   }
-  #mScreens :is(#mTxGo, #mqMain):disabled { opacity: .55 !important; }
+  #mScreens :is(#mTxGo, #mqMain, #msSave, #btCrear):disabled { opacity: .55 !important; }
   /* Resend / Reopen de Sent van juntos en un bloque (#mhAcc), fijo con
    * la regla de arriba: el bloque reparte, los botones llevan el alto
    * de Done. Reopen, redondo: tan ancho como alto. Confirmando, el

@@ -189,8 +189,10 @@
     }).join('');
     return tabs + err + creado +
       (filas || (!_creado ? '<div class="m-bt-p">No one yet.</div>' : '')) +
-      '<button type="button" class="m-bt-nueva" id="btNuevo">+ Add person</button>' +
-      '<div class="m-bt-p">Everyone here signs in with their name and PIN. "off" counts what was taken away from that person.</div>';
+      '<div class="m-bt-p">Everyone here signs in with their name and PIN. "off" counts what was taken away from that person.</div>' +
+      // Abajo, fijo donde Done, con su cristal (Axel, 2026-11-21, como
+      // los Save de Settings): al final, tras su hueco.
+      '<div class="m-tx-hueco"></div><button type="button" class="m-bt-nueva" id="btNuevo">+ Add person</button>';
   }
 
   function vistaRoles() {
@@ -199,8 +201,9 @@
           '<small>' + (r.key === 'owner' ? 'Everything' : (r.perms || []).length + ' of ' + P().TODOS.length) + ' · ' +
             (_lista || []).filter(b => b.role === r.key).length + ' people</small>' +
         '</span><span class="m-pp-rol m-pp-rol-' + esc(r.key) + '">' + esc(r.name) + '</span></button>').join('');
-    return filas + (soyOwner() ? '<button type="button" class="m-bt-nueva" id="ppNuevoRol">+ New role</button>' : '') +
-      '<div class="m-bt-p">' + (soyOwner() ? 'Changes reach each person the next time they open the app.' : 'Only an owner can change roles.') + '</div>';
+    return filas +
+      '<div class="m-bt-p">' + (soyOwner() ? 'Changes reach each person the next time they open the app.' : 'Only an owner can change roles.') + '</div>' +
+      (soyOwner() ? '<div class="m-tx-hueco"></div><button type="button" class="m-bt-nueva" id="ppNuevoRol">+ New role</button>' : '');
   }
 
   function vistaNuevo(err) {
@@ -223,7 +226,7 @@
           : '<div class="m-bt-pinf"><input id="btPin" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" value="' + esc(n.pin) + '">' +
             '<button type="button" class="m-bt-gen" id="btGen">Generate</button></div>') + '</div>' +
       err +
-      '<button type="button" class="m-set-save" id="btCrear">' + esc('Create ' + (n.nombre.trim() || 'person')) + '</button>';
+      '<div class="m-tx-hueco"></div><button type="button" class="m-set-save" id="btCrear">' + esc('Create ' + (n.nombre.trim() || 'person')) + '</button>';
   }
 
   // La lista entera de permisos (3A).

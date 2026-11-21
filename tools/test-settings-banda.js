@@ -79,11 +79,19 @@ function montar() {
   banda().querySelector('#mBandAtras').click(); await esperar(10);
   prueba('atrás desde la lista vuelve a Settings', nombre() === 'Settings' && !!caja().querySelector('[data-p="delivery"]'));
 
-  for (const id of ['zones', 'size', 'emails']) {
+  for (const id of ['zones', 'size', 'emails', 'sender']) {
     const b = caja().querySelector('[data-p="' + id + '"]');
     if (!b) { prueba(id + ': existe', false); continue; }
     b.click(); await esperar(10);
     prueba(id + ': también en la banda', enSeccion() && nombre().length > 0 && !caja().querySelector('#mAtras'), nombre());
+    // Save abajo, fijo donde Done y con su cristal (Axel, 2026-11-21:
+    // "Sender, Emails, Zones, People deberían tener el botón abajo en
+    // liquid glass, como Done"). Al final, tras su hueco.
+    if (id !== 'size') {
+      const sv = caja().querySelector('#msSave');
+      prueba(id + ': Save al final, tras su hueco', !!sv && !!sv.previousElementSibling &&
+        sv.previousElementSibling.classList.contains('m-tx-hueco'), sv ? sv.outerHTML : 'sin #msSave');
+    }
     banda().querySelector('#mBandAtras').click(); await esperar(10);
   }
 
@@ -111,6 +119,10 @@ function montar() {
   prueba('salir de la banda la quita también', !banda().classList.contains('m-con-sub'));
 
   const css = leer('styles/mobile-app.css');
+  prueba('CSS: los Save de Settings y People, fijos donde Done',
+    /#mScreens :is\([^)]*#msSave[^)]*#btNuevo[^)]*#btCrear[^)]*\) \{\s*position: fixed;/.test(css));
+  prueba('CSS: con el cristal azul de Done',
+    /body\.m-shell #mScreens :is\(#mRoDone, [^)]*#msSave[^)]*\),\s*body\.m-shell #mTabs \.m-tab\.on \{\s*color: #f0f9ff; background: rgba\(56, 189, 248/.test(css));
   prueba('CSS: la línea sale sólo con m-con-sub, y el nombre sube', /\.m-band\.m-en-seccion\.m-con-sub \.m-band-sub \{ opacity: 1; \}/.test(css) && /\.m-band\.m-con-sub \.m-band-seccion \{[^}]*bottom:/.test(css));
   prueba('CSS: atrás escondido fuera de una sección', /body\.m-shell #mBand #mBandAtras \{ display: none; \}/.test(css));
   prueba('CSS: en una sección, atrás sí y Time Machine no', /#mBand\.m-en-seccion #mBandAtras \{ display: flex; \}/.test(css) && /#mBand\.m-en-seccion #mTime \{ display: none; \}/.test(css));

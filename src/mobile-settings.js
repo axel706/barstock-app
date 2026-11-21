@@ -204,7 +204,7 @@
       campo('ms_title', 'Title',     p.title, 'Optional. Prints under your name.') +
       campo('ms_email', 'Email',     p.email, '', 'email') +
       campo('ms_phone', 'Phone',     p.phone, 'Optional.', 'tel') +
-      '<button type="button" class="m-set-save" id="msSave">Save</button>';
+      '<div class="m-tx-hueco"></div><button type="button" class="m-set-save" id="msSave">Save</button>';
 
     volver(host);
     guardar(host, 'Sender saved', () =>
@@ -232,7 +232,7 @@
       // una lista propia). La lee el servidor al mandar.
       campo('ms_morn', 'Morning email recipients', s.morning_recipients,
         'Who gets the morning report. Separate several with commas.') +
-      '<button type="button" class="m-set-save" id="msSave">Save</button>';
+      '<div class="m-tx-hueco"></div><button type="button" class="m-set-save" id="msSave">Save</button>';
 
     volver(host);
     guardar(host, 'Emails saved', () =>
@@ -384,7 +384,7 @@
       campo('ms_win',    'Delivery window', d.delivery_window, 'Optional. e.g. 8am – 2pm') +
       campo('ms_addr',   'Delivery address', d.delivery_address, 'Optional.') +
       campo('ms_note',   'Special instructions', d.special_instructions, 'Optional.') +
-      '<button type="button" class="m-set-save" id="msSave">Save</button>';
+      '<div class="m-tx-hueco"></div><button type="button" class="m-set-save" id="msSave">Save</button>';
 
     // El atrás de esta ficha vuelve a la LISTA de proveedores, no al
     // menú: salir del todo desde aquí perdería el sitio.
@@ -426,7 +426,7 @@
         '<input id="ms_zona" type="text" placeholder="New zone…" autocomplete="off">' +
         '<button type="button" id="msZAdd">Add</button>' +
       '</div>' +
-      '<button type="button" class="m-set-save" id="msSave">Save zones</button>';
+      '<div class="m-tx-hueco"></div><button type="button" class="m-set-save" id="msSave">Save zones</button>';
 
     volver(host);
 

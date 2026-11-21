@@ -322,7 +322,10 @@ sigue con su cabecera. Prueba: "2c" de `test-sugerencia`. La lista de
 Open (2026-11-20, "combina A y C"): cada proveedor con su insignia de
 iniciales y la tarjeta teñida en la esquina, los dos del color de
 `vendorDotColor()` (en `--vc`; sin precio, el ámbar gana), y "Quick
-order" (`#moRun`) fijo donde Done, en cristal verde. Ese mismo día, la
+order" (`#moRun`) fijo donde Done, en cristal verde. Y en Settings (2026-11-21, "como Done"): los
+Save (`#msSave` de Sender, Emails, Zones y la ficha de Delivery) y en
+People "+ Add person", "+ New role" y "Create …", fijos donde Done con
+el cristal azul, cada uno tras su `.m-tx-hueco`. Ese mismo día, la
 insignia pasó a ser el LOGO del proveedor donde lo hay ("el logo solo",
 sin recuadro), en Open, Sent e Invoices: `src/vendor-logo.js`
 (`BarStockVendorLogo.html(v)`), una sola regla para reconocerlo (la
