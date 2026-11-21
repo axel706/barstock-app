@@ -546,6 +546,7 @@
           ${P().asaFor && P().asaFor(key, VB.w, VB.h, VB.pad) ? `<path class="cp-glass" d="${P().asaFor(key, VB.w, VB.h, VB.pad)}" stroke-width="2" stroke-linejoin="round"/>` : ''}
           <g clip-path="url(#cpClip)">
             <rect class="cp-liquid" x="0" y="${yToPx(key, y)}" width="${VB.w}" height="${VB.h}"/>
+            ${P().marcasFor ? P().marcasFor(key, VB.w, VB.h, VB.pad) : ''}
           </g>
           <line class="cp-fullline" x1="14" y1="${yToPx(key, prof.yFull)}"
                 x2="${VB.w - 14}" y2="${yToPx(key, prof.yFull)}"

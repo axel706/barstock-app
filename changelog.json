@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261121-095240",
+    "items": [
+      "Counting: label guides on three bottles"
+    ]
+  },
+  {
     "build": "20261121-091408",
     "items": [
       "Woodford Reserve gets its own bottle shape"
@@ -180,13 +186,6 @@
     "build": "20261118-144725",
     "items": [
       "Liquor from Toast and Recipes: full-screen search"
-    ]
-  },
-  {
-    "build": "20261118-144017",
-    "items": [
-      "Search fills the screen, keyboard on top",
-      "Search shows the app background, not the page"
     ]
   }
 ]

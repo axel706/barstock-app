@@ -710,7 +710,15 @@
       // los hombros: es de la botella, no de la foto, y es continua.
       // Hombro del 55 % al 73 %. yFull .72 medida viendo el liquido en la
       // foto.
-      p: [[0,0.4778], [0.0156,0.7456], [0.0469,0.8208], [0.0781,0.8363], [0.1094,0.8545], [0.1406,0.8685], [0.1719,0.8842], [0.2031,0.9006], [0.2344,0.9159], [0.2656,0.9318], [0.2969,0.9473], [0.3281,0.9602], [0.3594,0.9749], [0.3906,0.9892], [0.4219,0.9992], [0.4531,1], [0.4844,1], [0.5156,0.9988], [0.5469,0.9872], [0.5781,0.962], [0.6094,0.9122], [0.6406,0.8289], [0.6719,0.704], [0.7031,0.5247], [0.7344,0.3932], [0.7656,0.3341], [0.7969,0.2917], [0.8281,0.277], [0.8594,0.2774], [0.8906,0.3267], [0.9219,0.4097], [0.9531,0.3999], [0.9844,0.3481], [1,0.1838]]
+      p: [[0,0.4778], [0.0156,0.7456], [0.0469,0.8208], [0.0781,0.8363], [0.1094,0.8545], [0.1406,0.8685], [0.1719,0.8842], [0.2031,0.9006], [0.2344,0.9159], [0.2656,0.9318], [0.2969,0.9473], [0.3281,0.9602], [0.3594,0.9749], [0.3906,0.9892], [0.4219,0.9992], [0.4531,1], [0.4844,1], [0.5156,0.9988], [0.5469,0.9872], [0.5781,0.962], [0.6094,0.9122], [0.6406,0.8289], [0.6719,0.704], [0.7031,0.5247], [0.7344,0.3932], [0.7656,0.3341], [0.7969,0.2917], [0.8281,0.277], [0.8594,0.2774], [0.8906,0.3267], [0.9219,0.4097], [0.9531,0.3999], [0.9844,0.3481], [1,0.1838]],
+      // Las marcas (Axel, 2026-11-21, A2·7): el nombre (dos renglones), lo de debajo del nombre y la etiqueta de abajo.
+      // Alturas de la foto con que se midio la silueta; de cada renglon,
+      // el grueso de sus letras y cuantas letras tiene cada palabra.
+      marcas: [
+        {tipo: 'texto', y: [0.44, 0.61], ancho: 0.8, renglones: [{g: 0.0384, largo: 0.683, palabras: [6]}, {g: 0.0384, largo: 0.569, palabras: [5]}]},
+        {tipo: 'texto', y: [0.31, 0.415], ancho: 0.62, renglones: [{g: 0.0295, largo: 0.92, palabras: [5, 5]}, {g: 0.0295, largo: 0.432, palabras: [4]}]},
+        {tipo: 'etiqueta', y: [0.05, 0.19], ancho: 0.8, renglones: [{g: 0.0259, largo: 0.84, palabras: [6, 2, 7]}, {g: 0.0259, largo: 0.679, palabras: [2, 5]}]}
+      ]
     },
     don_julio_blanco: {
       // La botella redonda. Se midió de una foto de la de 1.75 L, y un
@@ -745,7 +753,16 @@
       // (ver arriba). Cuerpo recto hasta la mitad, hombro redondo del 52 %
       // al 70 %, cuello corto con su tapa. yFull .66 medida viendo el
       // bourbon en la foto, justo antes del hombro.
-      p: [[0,0.4932], [0.0156,0.8056], [0.0469,0.9805], [0.0781,1.0], [0.1094,1.0], [0.1406,1.0], [0.1719,1.0], [0.2031,1.0], [0.2344,1.0], [0.2656,1.0], [0.2969,0.9974], [0.3281,0.9981], [0.3594,0.9969], [0.3906,0.9967], [0.4219,0.9937], [0.4531,0.9937], [0.4844,0.9937], [0.5156,0.9918], [0.5469,0.9771], [0.5781,0.9432], [0.6094,0.8845], [0.6406,0.7807], [0.6719,0.6102], [0.7031,0.3197], [0.7344,0.245], [0.7656,0.2445], [0.7969,0.249], [0.8281,0.2673], [0.8594,0.2674], [0.8906,0.2665], [0.9219,0.2681], [0.9531,0.2696], [0.9844,0.2264], [1,0.0627]]
+      p: [[0,0.4932], [0.0156,0.8056], [0.0469,0.9805], [0.0781,1.0], [0.1094,1.0], [0.1406,1.0], [0.1719,1.0], [0.2031,1.0], [0.2344,1.0], [0.2656,1.0], [0.2969,0.9974], [0.3281,0.9981], [0.3594,0.9969], [0.3906,0.9967], [0.4219,0.9937], [0.4531,0.9937], [0.4844,0.9937], [0.5156,0.9918], [0.5469,0.9771], [0.5781,0.9432], [0.6094,0.8845], [0.6406,0.7807], [0.6719,0.6102], [0.7031,0.3197], [0.7344,0.245], [0.7656,0.2445], [0.7969,0.249], [0.8281,0.2673], [0.8594,0.2674], [0.8906,0.2665], [0.9219,0.2681], [0.9531,0.2696], [0.9844,0.2264], [1,0.0627]],
+      // Las marcas (Axel, 2026-11-21, A2·7): la etiqueta del cuello, el sello, el nombre y la etiqueta de abajo.
+      // Alturas de la foto con que se midio la silueta; de cada renglon,
+      // el grueso de sus letras y cuantas letras tiene cada palabra.
+      marcas: [
+        {tipo: 'etiqueta', y: [0.74, 0.81], ancho: 0.92, renglones: [{g: 0.0276, largo: 0.84, palabras: [4, 4]}]},
+        {tipo: 'sello', y: 0.615, r: 0.05, renglones: [{g: 0.03, largo: 1.0, palabras: [2]}]},
+        {tipo: 'texto', y: [0.43, 0.47], ancho: 0.86, renglones: [{g: 0.0225, largo: 0.685, palabras: [8, 7]}]},
+        {tipo: 'etiqueta', y: [0.13, 0.22], ancho: 0.8, renglones: [{g: 0.0253, largo: 0.72, palabras: [3, 2, 1, 5]}, {g: 0.0253, largo: 0.668, palabras: [5, 7]}]}
+      ]
     },
     basil_hayden: {
       name: "Basil Hayden", asp: 3.92, yFull: 0.7, pourable: true,
@@ -757,7 +774,16 @@
       // hombro. Desajuste de area 3.32 %, casi todo de la banda que se dejo
       // fuera. Hombro del 58 % al 70 %. yFull .70 medida viendo el liquido
       // en la foto, debajo de la etiqueta del cuello.
-      p: [[0,0.9442], [0.0156,0.9442], [0.0469,0.9442], [0.0781,0.9461], [0.1094,0.9495], [0.1406,0.9528], [0.1719,0.9562], [0.2031,0.9596], [0.2344,0.963], [0.2656,0.9663], [0.2969,0.9697], [0.3281,0.973], [0.3594,0.9765], [0.3906,0.9798], [0.4219,0.9832], [0.4531,0.9865], [0.4844,0.9899], [0.5156,0.9933], [0.5469,0.9967], [0.5781,1], [0.6094,0.9097], [0.6406,0.7275], [0.6719,0.4919], [0.7031,0.4237], [0.7344,0.4079], [0.7656,0.3965], [0.7969,0.3847], [0.8281,0.3751], [0.8594,0.3644], [0.8906,0.3776], [0.9219,0.3779], [0.9531,0.3883], [0.9844,0.3822], [1,0.1382]]
+      p: [[0,0.9442], [0.0156,0.9442], [0.0469,0.9442], [0.0781,0.9461], [0.1094,0.9495], [0.1406,0.9528], [0.1719,0.9562], [0.2031,0.9596], [0.2344,0.963], [0.2656,0.9663], [0.2969,0.9697], [0.3281,0.973], [0.3594,0.9765], [0.3906,0.9798], [0.4219,0.9832], [0.4531,0.9865], [0.4844,0.9899], [0.5156,0.9933], [0.5469,0.9967], [0.5781,1], [0.6094,0.9097], [0.6406,0.7275], [0.6719,0.4919], [0.7031,0.4237], [0.7344,0.4079], [0.7656,0.3965], [0.7969,0.3847], [0.8281,0.3751], [0.8594,0.3644], [0.8906,0.3776], [0.9219,0.3779], [0.9531,0.3883], [0.9844,0.3822], [1,0.1382]],
+      // Las marcas (Axel, 2026-11-21, A2·7): la etiqueta del cuello, la grande del frente, la banda y el nombre.
+      // Alturas de la foto con que se midio la silueta; de cada renglon,
+      // el grueso de sus letras y cuantas letras tiene cada palabra.
+      marcas: [
+        {tipo: 'etiqueta', y: [0.71, 0.86], ancho: 0.96, renglones: [{g: 0.0287, largo: 0.84, palabras: [4, 6]}]},
+        {tipo: 'etiqueta', y: [0.04, 0.57], ancho: 0.9, renglones: []},
+        {tipo: 'etiqueta', y: [0.29, 0.35], ancho: 1.06, renglones: []},
+        {tipo: 'texto', y: [0.4, 0.46], ancho: 0.78, renglones: [{g: 0.0337, largo: 0.92, palabras: [5, 6]}]}
+      ]
     },
     skrewball: {
       name: "Skrewball", asp: 3.37, yFull: 0.75, pourable: true,
@@ -1248,6 +1274,70 @@
     return 'M ' + seq.map(P).join(' L ') + ' Z';
   }
 
+  // ── Las marcas de la botella ─────────────────────────────────────────
+  //
+  // Axel, 2026-11-21 (lámina A2·7): dónde van las etiquetas, el sello y
+  // los renglones de texto, para contar con "llega al nombre" en vez de
+  // adivinar un porcentaje. Como el asa, se DIBUJAN y no CUENTAN: viven
+  // aparte de `p`, y ni radiusAt ni el volumen las ven.
+  //
+  // Ninguna palabra real (Axel: "no dejes eso como palabra real"): cada
+  // renglón, el nombre incluido, es una barra por palabra, del grueso de
+  // sus letras (`g`, de la altura útil) y tan larga como letras tiene. Las
+  // etiquetas y el sello, un contorno; el texto suelto, sin contorno. El
+  // color y el punteado los pone el CSS (cp-marca / cp-barra), para que
+  // el modo claro los alcance. Misma caja que `pathFor`. Sin marcas,
+  // cadena vacía.
+  function marcasFor(x, w, h, pad) {
+    const prof = profOf(x);
+    const ms = prof && prof.marcas;
+    if (!Array.isArray(ms) || !ms.length) return '';
+    const { maxR, usable, cx, base } = boxFor(x, w, h, pad);
+    const Y = (y) => base - y * usable;
+    const f = (n) => n.toFixed(2);
+    let out = '';
+    // Los renglones, repartidos a partes iguales en el alto de su marca;
+    // cada palabra, en proporción a sus letras, con un hueco de 1.2.
+    const renglones = (rs, top, alto, ancho) => {
+      const paso = alto / rs.length;
+      rs.forEach((r, i) => {
+        const g = r.g * usable;
+        const largo = ancho * r.largo;
+        const tot = r.palabras.reduce((s, n) => s + n, 0) + (r.palabras.length - 1) * 1.2;
+        const yc = top + paso * (i + 0.5);
+        let x0 = cx - largo / 2;
+        for (const n of r.palabras) {
+          const lw = largo * n / tot;
+          out += '<rect class="cp-barra" x="' + f(x0) + '" y="' + f(yc - g / 2) + '" width="' + f(Math.max(lw, g)) +
+                 '" height="' + f(g) + '" rx="' + f(g / 2.5) + '"/>';
+          x0 += lw + largo * 1.2 / tot;
+        }
+      });
+    };
+    for (const m of ms) {
+      if (m.tipo === 'sello') {
+        const rr = m.r * usable, cy = Y(m.y);
+        out += '<circle class="cp-marca" cx="' + f(cx) + '" cy="' + f(cy) + '" r="' + f(rr) + '"/>';
+        // Las iniciales: una barra corta en el centro.
+        for (const r of m.renglones || []) {
+          const g = r.g * usable;
+          out += '<rect class="cp-barra" x="' + f(cx - rr / 2) + '" y="' + f(cy - g / 2) + '" width="' + f(rr) +
+                 '" height="' + f(g) + '" rx="' + f(g / 2.5) + '"/>';
+        }
+        continue;
+      }
+      const [y0, y1] = m.y;
+      const ancho = Math.min(radiusAt(x, y0), radiusAt(x, y1)) * 2 * maxR * m.ancho;
+      const top = Y(y1), alto = Y(y0) - top;
+      if (m.tipo !== 'texto') {
+        out += '<rect class="cp-marca" x="' + f(cx - ancho / 2) + '" y="' + f(top) + '" width="' + f(ancho) +
+               '" height="' + f(alto) + '" rx="3"/>';
+      }
+      if (Array.isArray(m.renglones) && m.renglones.length) renglones(m.renglones, top, alto, ancho);
+    }
+    return out;
+  }
+
   // Un perfil que no venga de este archivo entra al cálculo igual, así que
   // se valida antes de creérselo. Un perfil mal formado no da error: da un
   // número plausible y equivocado.
@@ -1283,7 +1373,7 @@
 
   window.BarStockBottleProfiles = {
     PROFILES, ALIAS, keys, pickable, get, profOf, resolveKey, forSize,
-    pathFor, asaFor, yToPx, boxFor, isValidProfile,
+    pathFor, asaFor, marcasFor, yToPx, boxFor, isValidProfile,
     radiusAt, volumeTo, fractionAt, heightFor
   };
 })();

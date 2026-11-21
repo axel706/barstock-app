@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 163 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 164 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -420,6 +420,18 @@ por `BarStockItemEdit.borrar()`: respaldo de Time Machine antes, y sin
 respaldo no borra (el `Delete` del escritorio borraba sin rastro hasta
 el 2026-11-13).
 
+**Las marcas de la botella** (Axel, 2026-11-21, lámina A2·7): una
+silueta puede llevar `marcas` (etiquetas, sello, renglones de texto, a
+su altura), y el panel de conteo las pinta sobre el líquido para contar
+con "llega al nombre". Etiquetas y sello, contorno punteado tenue y sin
+relleno; cada renglón, el nombre incluido, barras del grueso de sus
+letras cortadas por palabras. **Ninguna palabra real** ("no dejes eso
+como palabra real"): los datos sólo dicen cuántas letras tiene cada
+palabra. Como el asa, se dibujan y no cuentan (`marcasFor` en
+`bottle-profiles.js`, aparte de `p`). Las llevan Woodford, Elijah Craig
+y Basil Hayden; las demás se añaden botella por botella con su foto.
+Prueba: `test-silueta-marcas`.
+
 **El par no salta de golpe:** ±2 por paso (`BarStockProductWeeks.paso`). Un
 óptimo de 9 sobre un par de 1 puede venir de un mes raro.
 
@@ -463,7 +475,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 163 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 164 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
