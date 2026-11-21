@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261121-104044",
+    "items": [
+      "Home: transfers show where from and where to"
+    ]
+  },
+  {
     "build": "20261121-103731",
     "items": [
       "Home: the cycle shows the week and when to count",
@@ -182,12 +188,6 @@
     "build": "20261118-152245",
     "items": [
       "Home: logos no longer flicker when the app opens"
-    ]
-  },
-  {
-    "build": "20261118-151148",
-    "items": [
-      "Home: the three numbers line up again"
     ]
   }
 ]

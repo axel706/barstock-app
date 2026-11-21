@@ -51,6 +51,7 @@ function entorno(o) {
   T.confirmar = async (ts, items, por) => { for (const t of ts) w.__conf.push({ id: t.id, item: items[t.id], por }); return { ok: true }; };
   T.rechazar = async (ts, nota, por) => { for (const t of ts) w.__rech.push({ id: t.id, nota, por }); return { ok: true }; };
   w.eval(leer('src/bottle-search.js'));
+  if (o.dibujo) w.eval(leer('src/home-cartas.js'));
   if (existe('src/transfer-confirm.js')) w.eval(leer('src/transfer-confirm.js'));
   return w;
 }
@@ -77,6 +78,30 @@ grupo('1 · la tarjeta del Home');
     await c.go2();
     prueba('"Not right" pregunta y lo marca, diciendo dónde', w.__rech.length === 1 && /Not right at The Crown Tavern/.test(w.__rech[0].nota));
   }
+}
+
+grupo('1b · el dibujo de la tarjeta (lámina de las siete)');
+{
+  const w = entorno({ dibujo: true, filas: [PEND, Object.assign({}, PEND, { id: 'tr-1', status: 'confirmed', to_item: 'Triage Vodka', moved_at: '2026-11-01T19:00:00Z' })] });
+  await w.BarStockTransferConfirm.cargar();
+  const c = w.BarStockTransferConfirm.tarjeta();
+  const d = w.document.createElement('div');
+  d.innerHTML = (c && c.libre) || '';
+  const locs = Array.from(d.querySelectorAll('.m-hc-loc b')).map(x => x.textContent);
+  prueba('de dónde a dónde: de W+B a Crown', locs.join(' → ') === "Will's & Bill's → The Crown Tavern", locs.join(' → '));
+  prueba('la cantidad grande y MI producto', txt(d.querySelector('.m-hc-trq b')) === '12' && txt(d.querySelector('.m-hc-trq span')) === 'Triage Vodka',
+    txt(d.querySelector('.m-hc-trq')));
+  // Sin mi producto, el suyo y que hay que elegir.
+  const w2 = entorno({ dibujo: true, master: ['Tito'] });
+  await w2.BarStockTransferConfirm.cargar();
+  const c2 = w2.BarStockTransferConfirm.tarjeta();
+  const d2 = w2.document.createElement('div');
+  d2.innerHTML = (c2 && c2.libre) || '';
+  prueba('sin el mío: el suyo, "choose yours"', txt(d2.querySelector('.m-hc-trq span')) === 'Triage House Vodka · choose yours' && c2.btn === 'Choose yours',
+    txt(d2.querySelector('.m-hc-trq')));
+  prueba('la hora y quién arriba a la derecha', !!c && c.kr === 'Wed 2:10 PM · Mia', c && c.kr);
+  prueba('los botones de siempre', !!c && c.btn === 'Confirm 12' && c.btn2 === 'Not right');
+  prueba('sin el módulo, la plantilla', !entorno().BarStockHomeCartas);
 }
 
 grupo('2 · mi producto: pareja, mismo nombre, o se elige');

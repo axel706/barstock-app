@@ -145,6 +145,24 @@
     });
   }
 
+  // ── El dibujo de la tarjeta (Axel, 2026-11-21, lámina de las siete) ──
+  //
+  // De dónde a dónde en dos cajas, la cantidad grande y el producto;
+  // la hora y quién, arriba a la derecha. Lo dibuja home-cartas.js;
+  // aquí sólo se decide qué va. Sin el módulo, la plantilla de antes.
+  function dibujo(t, cantidad, producto, cuando, pie) {
+    const HC = window.BarStockHomeCartas;
+    if (!HC) return {};
+    const aqui = T().nombreDe(_locs, _loc) || 'Here';
+    const alla = deDonde(t);
+    const entra = T().entra(t, _loc);
+    return {
+      libre: HC.traslado({ de: entra ? alla : aqui, a: entra ? aqui : alla, cantidad, producto }),
+      kr: cuando + (t.created_by ? ' · ' + t.created_by : ''),
+      vs: pie
+    };
+  }
+
   // ── Lo que pintan los demás ──────────────────────────────────────────
   //
   // La tarjeta del Home: el primero pendiente; si hay más, lo dice abajo.
@@ -163,7 +181,11 @@
       { n: 'Their product', v: T().suItem(t, _loc) || '—' },
       { n: 'Yours', v: mio || 'Choose' }
     ];
-    return {
+    // Sin mi producto todavía, el suyo con "choose yours": confirmar
+    // empieza por elegirlo.
+    const pieT = [t.before_count ? 'Before the count' : '', ps.length > 1 ? 'and ' + (ps.length - 1) + ' more to confirm' : '']
+      .filter(Boolean).join(' · ');
+    return Object.assign({
       tono: 'blue', transfer: true,
       k: '⇄ Transfer to confirm',
       tt: n(t.qty) + ' ' + (mio || T().suItem(t, _loc) || 'bottles'),
@@ -177,7 +199,7 @@
       go: () => confirmar(t),
       btn2: 'Not right', go2: () => noEsAsi(t),
       btn3: mio ? 'Change' : '', goB3: () => elegir(t)
-    };
+    }, dibujo(t, n(t.qty), mio || ((T().suItem(t, _loc) || 'bottles') + ' · choose yours'), cuando, pieT));
   }
 
   // Varios productos: una línea por producto (como las de una orden) y
@@ -187,7 +209,10 @@
     const cuando = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' })
       .format(new Date(t.moved_at)).replace(',', '');
     const todos = g.every(x => productoDe(x));
-    return {
+    const nombres = g.map(x => productoDe(x) || T().suItem(x, _loc) || '—');
+    const pieG = [t.before_count ? 'Before the count' : '', cuantos > 1 ? (cuantos - 1) + ' more to confirm' : '']
+      .filter(Boolean).join(' · ');
+    return Object.assign({
       tono: 'blue', transfer: true,
       k: '⇄ Transfer to confirm',
       tt: g.length + ' items · ' + n(botellas(g)) + ' bottles',
@@ -198,7 +223,7 @@
       btn: todos ? 'Confirm all' : 'Choose yours',
       go: () => confirmar(g),
       btn2: 'Not right', go2: () => noEsAsi(g)
-    };
+    }, dibujo(t, n(botellas(g)), g.length + ' items · ' + nombres.slice(0, 2).join(', ') + (g.length > 2 ? '…' : ''), cuando, pieG));
   }
 
   // Las líneas de la campana: { clave, titulo, sub, confirmar, noEsAsi }.

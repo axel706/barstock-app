@@ -68,10 +68,10 @@ grupo('el orden de carga');
 {
   const idx = leer('index.html');
   const pos = (f) => idx.indexOf('src/' + f);
-  prueba('siluetas y logos antes de los dibujos, los dibujos antes del Home',
+  prueba('siluetas y logos antes de los dibujos, los dibujos antes del Home y del transfer',
     pos('bottle-profiles.js') > 0 && pos('vendor-logo.js') > 0 && pos('home-cartas.js') > 0 &&
     pos('bottle-profiles.js') < pos('home-cartas.js') && pos('vendor-logo.js') < pos('home-cartas.js') &&
-    pos('home-cartas.js') < pos('mobile-home.js'));
+    pos('home-cartas.js') < pos('mobile-home.js') && pos('home-cartas.js') < pos('transfer-confirm.js'));
 }
 
 grupo('la tarjeta libre');
