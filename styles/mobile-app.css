@@ -5910,12 +5910,33 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     font-family: inherit; font-size: var(--m-strong); font-weight: 800;
   }
   #mScreens #mhAcc #mhAbrir { flex: 0 0 calc(var(--m-base) * 3.4); padding: 0; font-size: var(--m-title); }
+  /* El aviso FLOTA sobre la lista, así que no es Tinta: con su 62 %
+   * las líneas de debajo se leían a través de él y se mezclaban con su
+   * texto (captura de Axel, 2026-11-21). Opaco, el fondo de las hojas
+   * (.m-sheet-box), con el toque rojo de lo que avisa en la esquina. Y
+   * su letra: heredaba de la regla de lo fijo el 800 grande de Done.
+   * Sube desde donde estaban los botones (Axel: "la acción necesita
+   * ser animada"); Cancel los devuelve con la animación de vuelta. */
   #mScreens #mhAcc.m-hacc-conf {
     display: block; padding: 14px; border-radius: 18px;
-    background: linear-gradient(135deg, rgba(239,68,68,.16), var(--tinta) 55%), var(--tinta);
+    background: linear-gradient(135deg, rgba(239,68,68,.18), rgba(239,68,68,0) 55%), #0b1220;
     border: 1px solid rgba(248,113,113,.4);
-    box-shadow: 0 10px 30px rgba(0,0,0,.45);
+    box-shadow: 0 -6px 24px rgba(0,0,0,.35), 0 10px 30px rgba(0,0,0,.45);
+    font-size: var(--m-small); font-weight: 500; line-height: 1.45; color: #fde0e0;
+    transform-origin: 50% 100%;
+    animation: mHaccSube .24s cubic-bezier(.2,.8,.2,1);
   }
+  #mScreens #mhAcc.vuelve { animation: mHaccVuelve .2s ease-out; }
+  @keyframes mHaccSube {
+    from { opacity: 0; transform: translateY(14px) scale(.97); }
+    to   { opacity: 1; transform: none; }
+  }
+  @keyframes mHaccVuelve {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+  }
+  /* Con la clase: sin ella, el id solo pierde contra la regla del aviso. */
+  @media (prefers-reduced-motion: reduce) { #mScreens #mhAcc.m-hacc-conf, #mScreens #mhAcc.vuelve { animation: none; } }
   #mScreens #mhAcc.m-hacc-conf .m-hacc { display: flex; gap: 10px; margin: 12px 0 0; }
   #mScreens #mhAcc .m-hacc-busy {
     border-radius: 999px; background: var(--tinta); border: 1px solid var(--tinta-borde);

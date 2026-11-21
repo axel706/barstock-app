@@ -159,12 +159,29 @@ grupo('Sent: el nombre en el header y los dos botones pegados');
   prueba('y tampoco se pega nada', w.__fijados.length === 0);
   conf.querySelector('#mhNo').click();
   prueba('Cancel vuelve a Resend y Reopen', !!host.querySelector('#mhAcc #mhRe'));
+  // Al volver, los botones entran animados; al abrir el detalle, no
+  // (Axel, 2026-11-21: "la acción necesita ser animada").
+  prueba('y vuelven con su animación', host.querySelector('#mhAcc').classList.contains('vuelve'));
 
   const css = leer('styles/mobile-app.css');
+  // El aviso flota sobre la lista: con la Tinta (62 %) se leían las
+  // líneas de debajo a través de él, y heredaba el 800 grande de los
+  // botones (captura de Axel, 2026-11-21). Opaco como las hojas, con su
+  // letra, y sube desde los botones.
+  const conf2 = (/#mScreens #mhAcc\.m-hacc-conf \{([^}]*)\}/.exec(css) || [])[1] || '';
+  prueba('el aviso es opaco, como las hojas', /#0b1220/.test(conf2) && !/var\(--tinta\)/.test(conf2), conf2.trim());
+  prueba('con la letra de un texto, no la de los botones', /font-size: var\(--m-small\)/.test(conf2) && /font-weight: 500/.test(conf2));
+  prueba('y sube animado desde los botones', /animation: mHaccSube/.test(conf2) && /@keyframes mHaccSube/.test(css));
+  prueba('los botones vuelven animados', /#mScreens #mhAcc\.vuelve \{[^}]*animation: mHaccVuelve/.test(css) && /@keyframes mHaccVuelve/.test(css));
+  prueba('sin animación si se pide menos movimiento', /prefers-reduced-motion: reduce\) \{[^}]*#mhAcc[^}]*animation: none/.test(css));
   prueba('fijos donde Done', /#mScreens :is\([^)]*#mhAcc[^)]*\) \{\s*position: fixed;/.test(css));
   prueba('Resend con el cristal azul de Done', /body\.m-shell #mScreens :is\(#mRoDone, [^)]*#mhRe[^)]*\),\s*body\.m-shell #mTabs \.m-tab\.on \{\s*color: #f0f9ff; background: rgba\(56, 189, 248/.test(css));
   prueba('Reopen y Delete and reopen en cristal rojo', /body\.m-shell #mScreens :is\(#mhAbrir, #mhSi\) \{\s*color: #[0-9a-f]+; background: rgba\(239, 68, 68/.test(css));
 
+  // Un repintado cualquiera (aquí, salir y volver a entrar) ya no la lleva.
+  if (w.__banda.atras) w.__banda.atras();
+  abrir('LOOP');
+  prueba('un repintado después ya no anima', !!host.querySelector('#mhAcc') && !host.querySelector('#mhAcc.vuelve'));
   prueba('el atrás de la banda está puesto', typeof w.__banda.atras === 'function');
   if (w.__banda.atras) w.__banda.atras();
   prueba('y vuelve a la lista', !!host.querySelector('.m-hcard'));

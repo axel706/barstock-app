@@ -685,6 +685,7 @@
   // están cruzadas contra facturas, que es otra cosa.
 
   let _confirmando = false;   // el Reopen pide un segundo toque
+  let _vuelve = false;        // Cancel: los botones entran animados, una vez
   let _trabajando = '';       // '' | 'enviar' | 'reabrir'
 
   function laDelEscritorio(id) {
@@ -717,7 +718,11 @@
         '<div class="m-hacc"><button type="button" id="mhNo">Cancel</button>' +
         '<button type="button" id="mhSi" class="mal">Delete and reopen</button></div></div>';
     }
-    return '<div class="m-hacc"' + id + '>' +
+    // `vuelve` sólo en el pintado que sigue a Cancel: la animación es la
+    // de deshacer el aviso, no la de entrar al detalle.
+    const vuelve = abajo && _vuelve ? ' vuelve' : '';
+    _vuelve = false;
+    return '<div class="m-hacc' + vuelve + '"' + id + '>' +
       '<button type="button" id="mhRe">Resend</button>' +
       (abajo
         ? '<button type="button" id="mhAbrir" class="mal" aria-label="Reopen">' +
@@ -734,7 +739,7 @@
     const si = host.querySelector('#mhSi');
 
     if (ab) ab.onclick = () => { _confirmando = true; pintar(host); };
-    if (no) no.onclick = () => { _confirmando = false; pintar(host); };
+    if (no) no.onclick = () => { _confirmando = false; _vuelve = true; pintar(host); };
 
     if (re) re.onclick = async () => {
       const orden = laDelEscritorio(o.appId);

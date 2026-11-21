@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261120-213958",
+    "items": [
+      "Sent: the Reopen warning is easier to read",
+      "It slides up from the buttons"
+    ]
+  },
+  {
     "build": "20261120-212326",
     "items": [
       "Sent: Resend and Reopen sit where Done does, in glass"
@@ -180,12 +187,6 @@
     "items": [
       "Darker cards in More and Settings",
       "Transfers and Settings rows as tall as the rest"
-    ]
-  },
-  {
-    "build": "20261118-134755",
-    "items": [
-      "Darker cards in Orders: Open, To buy, Sent and Invoices"
     ]
   }
 ]
