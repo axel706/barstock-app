@@ -273,11 +273,29 @@
                amt: '…', vs: '', btn: '' };
     }
 
+    // ── Los tres pasos del domingo (lámina de las siete, Axel,
+    // 2026-11-21) ─────────────────────────────────────────────────────
+    // El paso 1 y el 2 enseñan los tres pasos como losetas, la de ahora
+    // más grande. Los mismos tres pasos que la pantalla del ciclo.
+    const HCc = window.BarStockHomeCartas;
+    const pasosDomingo = (ahora, linea) => HCc ? HCc.pasos({
+      pasos: [
+        { u: ahora === 1 ? '1 · Now' : '1 · Done', t: 'New cycle', estado: ahora === 1 ? 'now' : 'ok' },
+        { u: ahora === 2 ? '2 · Now' : '2', t: 'Count the bottles', estado: ahora === 2 ? 'now' : '' },
+        { u: '3', t: 'Close', estado: '' }
+      ],
+      linea
+    }) : '';
+
     if (st === 'step1') {
       return {
+        libre: pasosDomingo(1, 'Sets on hand to zero so the count starts clean'),
+        kr: 'step 1 of 3',
         tono: 'calm', k: 'No cycle yet', tt: 'Start the week',
         sub: 'Sets on hand to zero so the count starts clean',
-        amt: '1', vs: 'of 3',
+        // "1 of 3" es la esquina de la plantilla; con los pasos dibujados
+        // ya va arriba a la derecha y el pie queda vacío.
+        amt: '1', vs: HCc ? '' : 'of 3',
         btn: 'Start new cycle',
         // La misma función del botón del escritorio: en el paso 1 llama
         // a resetOnHand, que pide su propia confirmación.
@@ -311,13 +329,15 @@
         // y al avanzar de paso parecía que el carrusel había saltado a
         // otra tarjeta.
         tono: 'teal',
-        k: 'Cycle open' + (fecha ? ' · ' + fecha : ''),
+        libre: pasosDomingo(2, 'Scan them, or import the sheet'),
+        kr: 'step 2 of 3',
+        k: HCc ? 'Sunday count' : 'Cycle open' + (fecha ? ' · ' + fecha : ''),
         tt: 'Load the count',
         sub: 'Scan the bottles, or import the sheet',
-        amt: '2', vs: 'of 3',
+        amt: '2', vs: HCc ? '' : 'of 3',
         btn: 'Count now',
         go: () => { if (window.BarStockScanCount) window.BarStockScanCount.open(); },
-        btn2: 'Import a file',
+        btn2: HCc ? 'Import' : 'Import a file',
         // El mismo <input type=file> de siempre, el que usa el modal
         // del escritorio. No hay un segundo camino de importación.
         go2: () => { const f = document.getElementById('countFile'); if (f) f.click(); },
@@ -427,15 +447,21 @@
       // Las zonas donde todavía no has entrado. Es la pregunta de quien
       // retoma un conteo pausado, y hoy hay que abrir el escáner para
       // contestarla.
-      const sinEmpezar = () => {
+      // null: no se sabe (sin zonas o sin el módulo); [] ninguna.
+      const zonasSin = () => {
         const Z = window.BarStockZones;
-        if (!Z || !Z.lista || !S || !S.zonesUsed) return '';
+        if (!Z || !Z.lista || !S || !S.zonesUsed) return null;
         let todas = [], usadas = [];
-        try { todas = Z.lista() || []; usadas = S.zonesUsed() || []; } catch (e) { return ''; }
+        try { todas = Z.lista() || []; usadas = S.zonesUsed() || []; } catch (e) { return null; }
+        if (!todas.length) return null;
         const hechas = new Set(usadas.map(x => String(x).toLowerCase()));
-        const faltan2 = todas.map(z => (z && z.nombre) ? z.nombre : String(z))
+        return todas.map(z => (z && z.nombre) ? z.nombre : String(z))
           .filter(x => x && !hechas.has(x.toLowerCase()));
-        if (!faltan2.length) return todas.length ? 'none left' : '';
+      };
+      const sinEmpezar = () => {
+        const faltan2 = zonasSin();
+        if (faltan2 === null) return '';
+        if (!faltan2.length) return 'none left';
         const corte = 3;
         return faltan2.slice(0, corte).join(' · ') +
                (faltan2.length > corte ? ' +' + (faltan2.length - corte) : '');
@@ -500,7 +526,37 @@
         ];
       }
 
-      return {
+      // ── El anillo (lámina de las siete) ──────────────────────────
+      // Lo contado contra lo esperado (lo contado + lo que falta, de
+      // bottleProgress: la misma cuenta que los diez tramos), lo que
+      // queda a tu ritmo y lo que aún no has pisado: cerca del final,
+      // los productos que faltan; si no, las zonas. Sin conteo anterior
+      // no hay con qué comparar: el anillo va vacío con las botellas
+      // dentro, nunca un porcentaje inventado.
+      let libreConteo = '';
+      if (HCc && bp) {
+        const esperado = contadas + faltan;
+        const pctR = hayAntes && esperado > 0 ? contadas / esperado : null;
+        const fiable = hayAntes && contadas >= FIABLE && ms > 0;
+        const zs = zonasSin();
+        const chipsDe = (xs) => xs.length > 2 ? xs.slice(0, 2).concat('+' + (xs.length - 2)) : xs;
+        const filasR = [
+          ['Bottles', hayAntes ? redondo(contadas) + ' of ~' + redondo(esperado) : redondo(contadas)],
+          ['Left', !hayAntes ? '—' : faltan < 0.5 ? 'nothing from last time'
+            : fiable ? 'about ' + dur((ms / contadas) * faltan) : '≈' + redondo(faltan) + ' bottles']
+        ];
+        const chips = pendientes.length ? chipsDe(pendientes) : (zs && zs.length ? chipsDe(zs) : []);
+        if (!chips.length) filasR.push(['Not yet', zs === null ? '—' : 'none left']);
+        libreConteo = HCc.anillo({
+          pct: pctR,
+          centro: pctR == null ? redondo(contadas) : Math.round(pctR * 100) + '%',
+          filas: filasR,
+          chips
+        });
+      }
+      const ultimo = [zona, hace()].filter(Boolean).join(' · ');
+
+      return Object.assign({
         filas: cuerpo,
         // Con un conteo a medias, ESTA es la tarjeta que tiene que
         // estar delante: o lo retomas, o al menos ves que quedó
@@ -560,7 +616,12 @@
         ico: 'trash',
         icot: 'Discard this count',
         go3: () => descartar(n)
-      };
+      }, libreConteo ? {
+        libre: libreConteo,
+        kr: viejo ? (hace() ? 'untouched ' + hace().replace(/ ago$/, '') : '') : (desde() ? 'started ' + desde() : ''),
+        vs: ultimo ? 'Last scan: ' + ultimo : '',
+        btn: viejo ? 'Pick it up' : 'Continue'
+      } : {});
     }
 
     // done
@@ -620,7 +681,42 @@
       }
     }
 
-    return {
+    // ── La pista de la semana (lámina de las siete) ──────────────────
+    // Los siete días del ciclo, de lunes al domingo que lo cierra (el
+    // de home-orden.finCiclo: la misma semana de "Running out this
+    // week"), llenos hasta hoy, y encima cuándo toca contar. El pie,
+    // qué día es y cómo van las órdenes. Sin home-orden, la de antes.
+    let libreCiclo = '', vsCiclo = '';
+    const HO = window.BarStockHomeOrden;
+    const fin = HCc && HO && HO.finCicloAhora ? HO.finCicloAhora() : null;
+    if (fin) {
+      const finMs = Date.parse(fin + 'T00:00:00Z');
+      const hoyK = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
+      const fmtU = (ms, o) => new Intl.DateTimeFormat('en-US', Object.assign({ timeZone: 'UTC' }, o)).format(new Date(ms));
+      const diasP = [];
+      for (let k = 6; k >= 0; k--) {
+        const ms2 = finMs - k * 864e5;
+        const key = new Date(ms2).toISOString().slice(0, 10);
+        diasP.push({ u: fmtU(ms2, { weekday: 'short' }), hecho: key < hoyK, hoy: key === hoyK });
+      }
+      const iHoy = diasP.findIndex(d => d.hoy);
+      const faltanD = Math.round((finMs - Date.parse(hoyK + 'T00:00:00Z')) / 864e5);
+      const hora = (HO.HORA != null ? (HO.HORA % 12 || 12) + (HO.HORA < 12 ? ' AM' : ' PM') : '4 PM');
+      let titulo, sub;
+      if (viejo) { titulo = 'Open ' + dias + ' days'; sub = 'usage keeps adding up'; }
+      else if (faltanD <= 0) { titulo = 'Count today'; sub = 'from ' + hora; }
+      else if (faltanD === 1) { titulo = 'Count tomorrow'; sub = 'Sun · from ' + hora; }
+      else { titulo = 'Count Sunday'; sub = fmtU(finMs, { month: 'short', day: 'numeric' }) + ' · from ' + hora; }
+      libreCiclo = HCc.pista({ titulo, sub, dias: diasP });
+      const pend = lineasPendientes();
+      const ords = pend === null ? '' : pend > 0 ? pend + (pend === 1 ? ' line' : ' lines') + ' to order'
+        : colocados().length ? 'all orders sent' : '';
+      vsCiclo = [iHoy >= 0 ? 'Day ' + (iHoy + 1) + ' of 7' : '', ords].filter(Boolean).join(' · ');
+    }
+    const desdeK = inicio ? new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short', month: 'short', day: 'numeric' })
+      .format(new Date(inicio)).replace(',', '') : '';
+
+    return Object.assign({
       tono: viejo ? 'amber' : 'teal',
       k: 'Cycle open',
       tt: fecha ? 'Since ' + fecha : 'Open',
@@ -642,7 +738,7 @@
       ico: 'list-details',
       icot: 'Cycle detail',
       go3: irAlCiclo
-    };
+    }, libreCiclo ? { libre: libreCiclo, kr: desdeK ? 'since ' + desdeK : '', vs: vsCiclo, btn: 'Restart' } : {});
   }
 
   // Pregunta antes, y dice lo que de verdad va a pasar. "¿Reiniciar el

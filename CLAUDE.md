@@ -257,7 +257,11 @@ de alto. Running out ya lo usa (cada botella con la silueta del conteo,
 `formaDe`, llena contra su par), Orders waiting (una columna por
 proveedor con su logo) y Orders placed (la semana desde hoy con cada
 logo en el día en que llega su orden, `arrivesAt`; sin llegadas, la
-plantilla); las otras cuatro, en camino. Prueba:
+plantilla), el ciclo (la pista de lunes al domingo de
+`home-orden.finCiclo`, "Count tomorrow", "Day N of 7"), los pasos del
+domingo (1 y 2, como losetas) y el conteo (el anillo contra lo esperado
+de `bottleProgress`; sin conteo anterior, sin arco). Falta el transfer.
+Prueba:
 `test-carrusel-cartas`.
 
 El radio de las tarjetas del carrusel (`.m-hero`) es **20px**, y es la

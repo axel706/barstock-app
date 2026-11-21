@@ -50,7 +50,7 @@ function entorno(items, extra) {
   };
   w.BarStockMobile = { ir() {} };
   if (extra) extra(w);
-  for (const f of ['src/bottle-profiles.js', 'src/vendor-logo.js', 'src/running-out.js', 'src/home-cartas.js', 'src/mobile-home.js']) {
+  for (const f of ['src/home-orden.js', 'src/bottle-profiles.js', 'src/vendor-logo.js', 'src/running-out.js', 'src/home-cartas.js', 'src/mobile-home.js']) {
     if (fs.existsSync(path.join(RAIZ, f))) new Function(leer(f))();
   }
   return w;
@@ -215,6 +215,85 @@ grupo('Orders placed: la semana con cada llegada');
   });
   const c2 = tarjeta(pintar(w2), /Orders placed/i);
   prueba('sin llegadas, "You are up to date" de siempre', !!c2 && !c2.classList.contains('m-hero-libre') && /up to date/.test(c2.textContent));
+}
+
+grupo('Cycle open: la pista de la semana');
+{
+  const w = entorno([], (w) => {
+    w.BarStockWeeklyCycle.resetAt = () => new Date(Date.now() - 2 * 864e5).toISOString();
+    w.getActiveVendors = () => ['LOOP'];
+    w.getOrderRowsForVendor = () => [];
+    w.computeOrderSubtotal = () => 0;
+  });
+  const c = tarjeta(pintar(w), /Cycle open/i);
+  prueba('es libre', !!c && c.classList.contains('m-hero-libre'), c && c.className);
+  const seg = c ? Array.from(c.querySelectorAll('.m-hc-pista i')) : [];
+  const et = c ? Array.from(c.querySelectorAll('.m-hc-pistal span')).map(x => x.textContent) : [];
+  prueba('siete tramos, de lunes a domingo', seg.length === 7 && et[0] === 'Mon' && et[6] === 'Sun', et.join(','));
+  const iHoy = seg.findIndex(x => x.classList.contains('hoy'));
+  const hoyU = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short' }).format(new Date());
+  // El domingo después del corte ya es la semana siguiente: hoy no sale.
+  prueba('hoy marcado en su día, lo de antes lleno', iHoy === -1 ? hoyU === 'Sun' :
+    et[iHoy] === hoyU && seg.slice(0, iHoy).every(x => x.classList.contains('on')) && seg.slice(iHoy + 1).every(x => !x.className),
+    seg.map(x => x.className || '·').join(','));
+  const big = c && c.querySelector('.m-hc-big');
+  prueba('cuándo se cuenta', !!big && /^Count (today|tomorrow|Sunday)/.test(big.textContent) && /from 4 PM/.test(big.textContent), big && big.textContent);
+  prueba('"since" a la derecha', !!c && /^since \w{3} \w{3} \d+$/.test((c.querySelector('.m-hero-kr') || {}).textContent || ''),
+    c && (c.querySelector('.m-hero-kr') || {}).textContent);
+  const vs = c ? ((c.querySelector('.m-hero-vs') || {}).textContent || '') : '';
+  prueba('el pie: el día del ciclo', iHoy === -1 || new RegExp('^Day ' + (iHoy + 1) + ' of 7').test(vs), vs);
+  prueba('Restart sigue', !!c && /Restart/.test(c.querySelector('.m-hero-acts').textContent));
+}
+
+grupo('Load the count: los tres pasos');
+{
+  const w = entorno([], (w) => { w.BarStockWeeklyCycle.estado = () => 'step2'; });
+  const c = tarjeta(pintar(w), /Sunday count/i);
+  prueba('es libre', !!c && c.classList.contains('m-hero-libre'), c && c.className);
+  const ps = c ? Array.from(c.querySelectorAll('.m-hc-paso')) : [];
+  prueba('tres pasos, el 1 hecho y el 2 ahora', ps.length === 3 && ps[0].classList.contains('ok') && ps[1].classList.contains('now'),
+    ps.map(x => x.className).join(','));
+  prueba('"step 2 of 3" a la derecha', !!c && /step 2 of 3/.test((c.querySelector('.m-hero-kr') || {}).textContent || ''));
+  const acts = c ? c.querySelector('.m-hero-acts').textContent : '';
+  prueba('Import y Count now (y Start over)', /Import/.test(acts) && /Count now/.test(acts) && /Start over/.test(acts), acts);
+
+  const w1 = entorno([], (w) => { w.BarStockWeeklyCycle.estado = () => 'step1'; });
+  const c1 = tarjeta(pintar(w1), /No cycle yet/i);
+  const p1 = c1 ? Array.from(c1.querySelectorAll('.m-hc-paso')) : [];
+  prueba('en el paso 1, el 1 es el de ahora', p1.length === 3 && p1[0].classList.contains('now') && !p1[1].classList.contains('now'));
+}
+
+grupo('Counting: el anillo');
+{
+  const sesion = (bp) => (w) => {
+    w.BarStockWeeklyCycle.estado = () => 'counting';
+    w.BarStockCountSession = {
+      progress: () => ({ counted: 120, total: 170 }),
+      bottleProgress: () => bp,
+      activeMs: () => 40 * 60000,
+      fmtDur: (ms) => Math.round(ms / 60000) + ' min',
+      cronoDesde: () => '2026-11-21T00:12:00Z',
+      updatedAt: () => new Date(Date.now() - 2 * 60000).toISOString(),
+      zonesUsed: () => ['Front bar'],
+      missingRows: () => []
+    };
+    w.BarStockZones = { activas: () => true, paraPasada: () => 'Front bar',
+      lista: () => [{ nombre: 'Front bar' }, { nombre: 'Walk-in' }, { nombre: 'Back bar' }] };
+  };
+  let c = tarjeta(pintar(entorno([], sesion({ contadas: 612, faltan: 178, antes: 790 }))), /Counting/i);
+  prueba('es libre', !!c && c.classList.contains('m-hero-libre'), c && c.className);
+  const txt = (sel) => c ? Array.from(c.querySelectorAll(sel)).map(x => x.textContent).join(' | ') : '';
+  prueba('el anillo con el porcentaje', /77%/.test(txt('.m-hc-ring text')) && !!(c && c.querySelector('.m-hc-ring .arco')), txt('.m-hc-ring text'));
+  prueba('botellas contra lo esperado', /Bottles612 of ~790/.test(txt('.m-hc-dat > div')), txt('.m-hc-dat > div'));
+  prueba('lo que queda a tu ritmo', /Leftabout 12 min/.test(txt('.m-hc-dat > div')), txt('.m-hc-dat > div'));
+  prueba('las zonas sin pisar, en pastillas', txt('.m-hc-chip') === 'Walk-in | Back bar', txt('.m-hc-chip'));
+  prueba('el pie: el último escaneo', /^Last scan: Front bar · 2 min ago$/.test(txt('.m-hero-vs')), txt('.m-hero-vs'));
+  prueba('Continue', /Continue/.test(txt('.m-hero-acts')));
+  // Sin conteo anterior: ni porcentaje ni arco inventados.
+  c = tarjeta(pintar(entorno([], sesion({ contadas: 40, faltan: 0, antes: 0 }))), /Counting/i);
+  prueba('sin conteo anterior, sin arco y las botellas dentro',
+    !!c && !!c.querySelector('.m-hc-ring text') && !c.querySelector('.m-hc-ring .arco') && c.querySelector('.m-hc-ring text').textContent === '40' && !/%/.test(c.textContent),
+    c && c.querySelector('.m-hc-ring') && c.querySelector('.m-hc-ring').outerHTML.slice(0, 200));
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');

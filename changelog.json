@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261121-103731",
+    "items": [
+      "Home: the cycle shows the week and when to count",
+      "Home: Sunday steps and a ring while counting"
+    ]
+  },
+  {
     "build": "20261121-103309",
     "items": [
       "Home: orders show each vendor with its logo",
@@ -181,12 +188,6 @@
     "build": "20261118-151148",
     "items": [
       "Home: the three numbers line up again"
-    ]
-  },
-  {
-    "build": "20261118-150220",
-    "items": [
-      "MarginEdge logo on Spent this cycle"
     ]
   }
 ]
