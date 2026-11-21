@@ -1651,6 +1651,94 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   .m-hero-acts .m-hero-vs { margin-right: auto; text-align: left; }
 
+  /* ── Las tarjetas libres (home-cartas.js; Axel, 2026-11-21) ─────────
+   * Cada tarjeta dibuja lo suyo. El cuerpo mide lo mismo que el título
+   * y los tres renglones de la plantilla, así el carril no crece: las
+   * libres y las de siempre siguen igual de altas. El color de cada
+   * detalle sale del tono de la tarjeta (--hc-ac, --hc-liq). */
+  .m-hero-libre { --hc-ac: rgba(255,255,255,.85); --hc-liq: rgba(255,255,255,.8); }
+  .m-hero-red.m-hero-libre   { --hc-ac: #fecaca; --hc-liq: #fda4af; }
+  .m-hero-blue.m-hero-libre  { --hc-ac: #bae6fd; --hc-liq: #7dd3fc; }
+  .m-hero-teal.m-hero-libre  { --hc-ac: #99f6e4; --hc-liq: #5eead4; }
+  .m-hero-amber.m-hero-libre { --hc-ac: #fde68a; --hc-liq: #fcd34d; }
+  .m-hero-kl { display: flex; align-items: center; gap: 6px; }
+  .m-hero-kl > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m-hero-kr {
+    margin-left: auto; flex: 0 0 auto; letter-spacing: 0; text-transform: none;
+    font-weight: 700; color: rgba(255,255,255,.82);
+  }
+  .m-hero-libre-c {
+    height: calc(var(--m-head) * 1.25 + 4px + var(--m-ren) * 3 + 9px);
+    overflow: hidden; display: flex; flex-direction: column; min-width: 0;
+  }
+  .m-hc-uno { margin-top: 8px; font-size: var(--m-small); color: rgba(255,255,255,.88); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-hc-uno b { color: #fff; }
+  /* Running out: las botellas. */
+  .m-hc-bots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 6px; align-items: end; flex: 1; }
+  .m-hc-bot { display: grid; justify-items: center; gap: 2px; min-width: 0; }
+  .m-hc-bot svg { height: calc(var(--m-ren) * 3.4); width: auto; }
+  .m-hc-vid { fill: rgba(255,255,255,.08); stroke: rgba(255,255,255,.5); stroke-width: 1.2; }
+  .m-hc-liq { fill: var(--hc-liq); }
+  .m-hc-bot b { font-size: var(--m-meta); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--hc-ac); }
+  .m-hc-bot small { font-size: var(--m-meta); color: rgba(255,255,255,.85); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Orders waiting: una columna por proveedor. */
+  .m-hc-tot { display: flex; align-items: baseline; gap: 8px; margin-top: 2px; }
+  .m-hc-tot b { font-size: var(--m-head); font-weight: 800; letter-spacing: -.5px; color: #fff; }
+  .m-hc-tot span { font-size: var(--m-small); color: rgba(255,255,255,.8); }
+  .m-hc-provs { display: grid; gap: 6px; margin-top: 6px; }
+  .m-hc-pv { display: grid; justify-items: center; gap: 2px; border-radius: 14px; padding: 6px 2px; background: rgba(255,255,255,.08); min-width: 0; }
+  .m-hc-pv .m-vlogo { width: calc(var(--m-base) * 1.9); height: calc(var(--m-base) * 1.9); }
+  .m-hc-pv .m-vlogo-ini { border-radius: 9px; font-size: var(--m-meta); }
+  .m-hc-pv b { font-size: var(--m-body); font-weight: 800; color: #fff; }
+  .m-hc-pv small { font-size: var(--m-meta); color: rgba(255,255,255,.78); white-space: nowrap; }
+  /* Orders placed: la semana con cada llegada. */
+  .m-hc-sem { position: relative; display: grid; grid-template-columns: repeat(7, 1fr); margin-top: 12px; }
+  .m-hc-sem::before { content: ""; position: absolute; left: 5%; right: 5%; top: calc(var(--m-base) * 2.1 + 7px); height: 2px; background: rgba(255,255,255,.25); }
+  .m-hc-d7 { position: relative; display: grid; justify-items: center; gap: 4px; }
+  .m-hc-d7 .lg { height: calc(var(--m-base) * 2.1); display: flex; gap: 1px; align-items: center; }
+  .m-hc-d7 .lg .m-vlogo { width: calc(var(--m-base) * 1.85); height: calc(var(--m-base) * 1.85); }
+  .m-hc-d7 .lg .m-vlogo-ini { border-radius: 7px; font-size: var(--m-meta); }
+  .m-hc-d7 i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.4); }
+  .m-hc-d7.on i { background: var(--hc-ac); box-shadow: 0 0 8px var(--hc-liq); }
+  .m-hc-d7.hoy i { background: #fff; outline: 3px solid rgba(255,255,255,.3); }
+  .m-hc-d7 u { text-decoration: none; font-size: var(--m-meta); font-weight: 800; letter-spacing: .06em; color: rgba(255,255,255,.75); }
+  .m-hc-d7.hoy u { color: #fff; }
+  /* Cycle open: los siete días. */
+  .m-hc-big { font-size: var(--m-head); font-weight: 800; letter-spacing: -.5px; color: #fff; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-hc-big small { font-size: var(--m-small); font-weight: 600; letter-spacing: 0; color: rgba(255,255,255,.8); }
+  .m-hc-pista { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 12px; }
+  .m-hc-pista i { height: 10px; border-radius: 99px; background: rgba(255,255,255,.16); }
+  .m-hc-pista i.on { background: rgba(255,255,255,.75); }
+  .m-hc-pista i.hoy { background: #fff; box-shadow: 0 0 10px rgba(255,255,255,.7); }
+  .m-hc-pistal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 5px; font-size: var(--m-meta); font-weight: 800; letter-spacing: .04em; color: rgba(255,255,255,.65); text-align: center; }
+  .m-hc-pistal .hoy { color: #fff; }
+  /* Load the count: los tres pasos. */
+  .m-hc-pasos { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 6px; margin-top: 8px; }
+  .m-hc-paso { border-radius: 14px; padding: 8px 10px; background: rgba(255,255,255,.08); font-size: var(--m-small); font-weight: 700; color: #fff; min-width: 0; }
+  .m-hc-paso u { display: block; text-decoration: none; font-size: var(--m-meta); letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.7); }
+  .m-hc-paso.ok { opacity: .75; }
+  .m-hc-paso.now { background: rgba(255,255,255,.24); outline: 1px solid rgba(255,255,255,.5); }
+  /* Counting: el anillo. */
+  .m-hc-cnt { display: flex; gap: 14px; align-items: center; margin-top: 6px; }
+  .m-hc-ring { flex: 0 0 auto; width: calc(var(--m-base) * 5.6); height: calc(var(--m-base) * 5.6); }
+  .m-hc-ring .fondo { fill: none; stroke: rgba(255,255,255,.2); stroke-width: 8; }
+  .m-hc-ring .arco { fill: none; stroke: #fff; stroke-width: 8; stroke-linecap: round; }
+  .m-hc-ring text { fill: #fff; font-size: var(--m-strong); font-weight: 800; }
+  .m-hc-dat { display: grid; gap: 5px; font-size: var(--m-small); min-width: 0; flex: 1; }
+  .m-hc-dat > div { display: flex; gap: 8px; min-width: 0; }
+  .m-hc-dat span { color: rgba(255,255,255,.75); flex: 0 0 calc(var(--m-base) * 5); }
+  .m-hc-dat b { color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-hc-chip { display: inline-block; font-style: normal; font-size: var(--m-meta); font-weight: 700; padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,.16); margin-right: 3px; }
+  /* Transfer: de dónde a dónde. */
+  .m-hc-tr { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .m-hc-loc { flex: 1; border-radius: 14px; padding: 8px 10px; background: rgba(255,255,255,.1); min-width: 0; }
+  .m-hc-loc u { display: block; text-decoration: none; font-size: var(--m-meta); letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.7); }
+  .m-hc-loc b { display: block; font-size: var(--m-small); color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-hc-fl { font-size: var(--m-title); font-weight: 800; color: var(--hc-ac); }
+  .m-hc-trq { display: flex; align-items: baseline; gap: 8px; margin-top: 8px; min-width: 0; }
+  .m-hc-trq b { font-size: var(--m-head); font-weight: 800; color: #fff; }
+  .m-hc-trq span { font-size: var(--m-body); color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
   /* ── Tres botones en la fila ──────────────────────────────────────
    *
    * El paso 2 del ciclo lleva tres: contar, importar y empezar la

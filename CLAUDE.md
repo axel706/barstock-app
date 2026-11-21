@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 164 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 165 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -246,6 +246,16 @@ la ÚNICA forma de `BarStockBottleSearch.abrir` (la hoja de abajo de
 antes, `.m-tl-hoja`, se quitó). La línea de debajo de cada botella es
 `BarStockBottleSearch.ficha()`, la misma en todos. **Un buscador nuevo no se
 escribe: se abre éste.**
+
+**Cada tarjeta del carrusel dibuja lo suyo** (Axel, 2026-11-21, lámina
+de las siete; Running out R2): los dibujos viven en `src/home-cartas.js`
+(`BarStockHomeCartas`), sólo HTML con datos ya calculados, y
+`mobile-home.js` los pasa en `libre` a `pintarTarjeta`, que pone el
+encabezado (con `kr` a la derecha) y los botones de siempre. El cuerpo
+libre mide lo mismo que los tres renglones de la plantilla: todas iguales
+de alto. Running out ya lo usa (cada botella con la silueta del conteo,
+`formaDe`, llena contra su par); las otras seis, en camino. Prueba:
+`test-carrusel-cartas`.
 
 El radio de las tarjetas del carrusel (`.m-hero`) es **20px**, y es la
 referencia cuando pida "como las tarjetas". Las filas de Inventory (`.m-inv`) son
@@ -475,7 +485,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 164 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 165 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

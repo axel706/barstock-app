@@ -155,7 +155,10 @@
 
   // El perfil ya ajustado al formato. Es lo que se dibuja y lo que se
   // integra: una sola geometría, como siempre.
+  // La regla vive en bottle-profiles (formaDe): la usa también el Home
+  // para dibujar las botellas de Running out con la misma silueta.
   function profileOf(row) {
+    if (P() && P().formaDe) return P().formaDe(row, sizeOf(row));
     return (P() && P().forSize) ? P().forSize(shapeOf(row), sizeOf(row)) : shapeOf(row);
   }
 

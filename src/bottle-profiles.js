@@ -1274,6 +1274,21 @@
     return 'M ' + seq.map(P).join(' L ') + ' Z';
   }
 
+  // ── La silueta de un producto ────────────────────────────────────────
+  //
+  // La forma que tiene asignada (o la genérica si no tiene, o la que tiene
+  // ya no existe), ajustada a su tamaño (forSize: una magnum, el Don Julio
+  // de 1.75 L). Una sola regla: la usan el panel de conteo y las botellas
+  // de Running out del Home, y si cada uno la escribiera, un día el Home
+  // dibujaría una botella y el conteo otra. `ml`, si se pasa, gana sobre
+  // el tamaño del producto (el conteo cuenta a veces otro formato).
+  function formaDe(row, ml) {
+    const k = row && row.bottleShape;
+    const clave = (k && PROFILES[resolveKey(k)] && resolveKey(k) !== 'generic') ? resolveKey(k) : 'generic';
+    const tam = Number(ml) || Number(row && row.bottleSizeMl) || 750;
+    return forSize ? forSize(clave, tam) : clave;
+  }
+
   // ── Las marcas de la botella ─────────────────────────────────────────
   //
   // Axel, 2026-11-21 (lámina A2·7): dónde van las etiquetas, el sello y
@@ -1373,7 +1388,7 @@
 
   window.BarStockBottleProfiles = {
     PROFILES, ALIAS, keys, pickable, get, profOf, resolveKey, forSize,
-    pathFor, asaFor, marcasFor, yToPx, boxFor, isValidProfile,
+    pathFor, asaFor, marcasFor, formaDe, yToPx, boxFor, isValidProfile,
     radiusAt, volumeTo, fractionAt, heightFor
   };
 })();

@@ -1203,9 +1203,30 @@
       const ultimo = Math.max(...pronto.map(x => x.dias));
       const n = pronto.length;
 
+      // ── Las botellas (Axel, 2026-11-21, lámina R2) ────────────────
+      // Cada producto con su silueta (la del conteo: formaDe), llena
+      // contra su par, con el día en que se acaba y su nombre. Lo que
+      // dice cada una sale de la misma lista de siempre (pronto).
+      const HC = window.BarStockHomeCartas;
+      const BP = window.BarStockBottleProfiles;
+      const LCh = window.BarStockLiveCache;
+      const libreAgota = HC && BP && BP.formaDe ? HC.botellas(pronto.slice(0, 4).map(x => {
+        const par = Number(x.r && x.r.suggested) || 0;
+        const hay = LCh && LCh.cuanto ? LCh.cuanto(x.r) : (Number(x.r && x.r.onHand) || 0);
+        return {
+          forma: BP.formaDe(x.r),
+          lleno: par > 0 ? hay / par : 0,
+          // "Out now" → "Now": el día solo, en mayúsculas pequeñas.
+          dia: String((x.out && x.out.txt) || '').replace(/^Out\s+/i, '').replace(/^./, m => m.toUpperCase()),
+          nombre: x.item
+        };
+      })) : '';
+
       t.push({
         fase: 'agota',
         tono: 'red',
+        libre: libreAgota,
+        kr: n + ' before Sun',
         // "● Live" ANTES del título (Axel): la marca, como en todas
         // partes, sólo con algo vendido o llegado detrás.
         kHtml: true,
@@ -1221,9 +1242,12 @@
         // no espera al siguiente pedido. Si no hay, el total.
         amt: String(fuera || urgentes || n),
         amtPie: fuera ? 'out now' : urgentes ? 'by ' + dia(2) : 'this week',
-        vs: resto
-          ? 'and ' + resto + ' more ' + (ultimo === 0 ? 'today' : ultimo < 7 ? 'by ' + dia(ultimo) : 'this week')
-          : n + ' this week',
+        // Con las botellas caben cuatro, y el total ya va arriba a la
+        // derecha: el pie sólo dice lo que no se dibujó (la lámina lo deja
+        // vacío si caben todas). Sin ellas, la plantilla de tres.
+        vs: (libreAgota ? n > 4 : resto)
+          ? 'and ' + (libreAgota ? n - 4 : resto) + ' more ' + (ultimo === 0 ? 'today' : ultimo < 7 ? 'by ' + dia(ultimo) : 'this week')
+          : libreAgota ? '' : n + ' this week',
         btn: 'See them',
         // ── "To buy · N" (Axel, 2026-11-15, opción 1 con el botón
         // blanco, B) ────────────────────────────────────────────────
@@ -1300,7 +1324,42 @@
     return t;
   }
 
+  // La fila de abajo (el pie y los botones), la misma para todas: la
+  // usan la plantilla de siempre y la libre.
+  function acciones(c, i) {
+    return `
+        <div class="m-hero-acts">
+          ${c.vs ? `<span class="m-hero-vs">${esc(c.vs)}</span>` : ''}
+          ${c.btn ? `<button type="button" class="m-hero-b${c.btnTono ? ' m-hero-b-' + esc(c.btnTono) : ''}"
+                             data-go="${i}">${esc(c.btn)}</button>` : ''}
+          ${c.btn2 ? `<button type="button" class="m-hero-b2${c.btn2Tono ? ' m-hero-b2-' + esc(c.btn2Tono) : ''}" data-go2="${i}">${esc(c.btn2)}</button>` : ''}
+          <!-- El tercero. Va con data-gob3 y no con data-go3 porque
+               ese ultimo ya es el del boton de icono de mas abajo. -->
+          ${c.btn3 ? `<button type="button" class="m-hero-b2" data-gob3="${i}">${esc(c.btn3)}</button>` : ''}
+          ${c.ico ? `<button type="button" class="m-hero-x" data-go3="${i}"
+                             aria-label="${esc(c.icot || '')}">
+                       <i class="ti ti-${esc(c.ico)}" aria-hidden="true"></i>
+                     </button>` : ''}
+        </div>`;
+  }
+
   function pintarTarjeta(c, i) {
+    // ── Libre: el cuerpo lo dibuja la tarjeta (home-cartas.js) ───────
+    //
+    // Axel, 2026-11-21 ("una tarjeta para cada tarea"): las que traen
+    // `libre` ya no pasan por título + tres renglones + cifra; dibujan
+    // lo suyo. El encabezado (con su texto a la derecha, `kr`) y la fila
+    // de botones son los de siempre, y el cuerpo mide lo mismo que el
+    // título y los tres renglones de la plantilla (.m-hero-libre-c):
+    // todas las tarjetas del carril siguen igual de altas.
+    if (c.libre) {
+      return `
+      <article class="m-hero m-hero-${c.tono} m-hero-libre" data-hero="${i}"${c.ciclo ? ' data-kind="cycle"' : ''}>
+        <div class="m-hero-k m-hero-kl"><span>${c.kHtml ? c.k : esc(c.k)}</span>${c.kr ? `<span class="m-hero-kr">${esc(c.kr)}</span>` : ''}</div>
+        <div class="m-hero-libre-c">${c.libre}</div>
+        ${acciones(c, i)}
+      </article>`;
+    }
     return `
       <article class="m-hero m-hero-${c.tono}" data-hero="${i}"${c.ciclo ? ' data-kind="cycle"' : ''}>
         <!-- Arriba el texto y la cifra, en dos columnas. Abajo, una
@@ -1403,19 +1462,7 @@
           </div>
         </div>
 
-        <div class="m-hero-acts">
-          ${c.vs ? `<span class="m-hero-vs">${esc(c.vs)}</span>` : ''}
-          ${c.btn ? `<button type="button" class="m-hero-b${c.btnTono ? ' m-hero-b-' + esc(c.btnTono) : ''}"
-                             data-go="${i}">${esc(c.btn)}</button>` : ''}
-          ${c.btn2 ? `<button type="button" class="m-hero-b2${c.btn2Tono ? ' m-hero-b2-' + esc(c.btn2Tono) : ''}" data-go2="${i}">${esc(c.btn2)}</button>` : ''}
-          <!-- El tercero. Va con data-gob3 y no con data-go3 porque
-               ese ultimo ya es el del boton de icono de mas abajo. -->
-          ${c.btn3 ? `<button type="button" class="m-hero-b2" data-gob3="${i}">${esc(c.btn3)}</button>` : ''}
-          ${c.ico ? `<button type="button" class="m-hero-x" data-go3="${i}"
-                             aria-label="${esc(c.icot || '')}">
-                       <i class="ti ti-${esc(c.ico)}" aria-hidden="true"></i>
-                     </button>` : ''}
-        </div>
+        ${acciones(c, i)}
       </article>`;
   }
 
