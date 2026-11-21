@@ -138,6 +138,16 @@ const txt = (h) => h.textContent.replace(/\s+/g, ' ');
     await esperar(30);
     prueba('se pintan las dos', h.querySelectorAll('.m-hcard').length === 2);
     prueba('con la pastilla de lo que falta', /1 unlinked/.test(txt(h)), txt(h).slice(0, 160));
+    // Siempre en el MISMO sitio, bajo el importe (Axel, 2026-11-21:
+    // junto al número de la factura, con uno largo bajaba de renglón y
+    // se encimaba). Es donde va la pastilla de estado en Sent. Y la
+    // línea del número no se parte: se corta con "…".
+    const flag = h.querySelector('.m-iflag');
+    prueba('la pastilla va bajo el importe, no en la línea del número',
+      !!flag && !!flag.closest('.m-hcard-r') && !flag.closest('.m-hcard-m'), flag && flag.parentElement.className);
+    const css = require('fs').readFileSync(require('path').join(__dirname, '..', 'styles/mobile-app.css'), 'utf8');
+    prueba('la línea del número de una factura no se parte',
+      /\.m-hcard\[data-inv\] \.m-hcard-m \{[^}]*white-space: nowrap;[^}]*text-overflow: ellipsis;/.test(css));
     prueba('y agrupadas por día', h.querySelectorAll('.m-iday').length === 2);
   }
 

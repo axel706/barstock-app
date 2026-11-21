@@ -5259,10 +5259,18 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* Lo que falta por enlazar. Es lo que te hace abrirla: sin esto,
    * una factura completa y una a la que le falta una botella se ven
    * exactamente igual. */
+  /* Bajo el importe, en su propio renglón y alineada a la derecha, como
+   * la pastilla de estado de Sent (.m-hs): siempre en el mismo sitio. */
   .m-iflag {
+    display: inline-block; margin-top: 5px;
     font-style: normal; font-size: var(--m-meta); font-weight: 800; color: #fcd34d;
     background: rgba(252,211,77,.15); border: 1px solid rgba(252,211,77,.3);
-    border-radius: 999px; padding: 1px 7px; white-space: nowrap; margin-left: 4px;
+    border-radius: 999px; padding: 1px 7px; white-space: nowrap;
+  }
+  /* El número de una factura puede tener 21 cifras: la línea se corta
+   * con "…" en vez de partirse y empujar lo de debajo. */
+  .m-hcard[data-inv] .m-hcard-m {
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
 
   /* ── Los tres totales ──────────────────────────────────────────────

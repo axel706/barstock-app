@@ -609,13 +609,16 @@
             '<span class="m-hcard-m">' +
               (f.numero ? esc(f.numero) + ' &middot; ' : '') +
               f.lineas.length + (f.lineas.length === 1 ? ' line' : ' lines') +
-              // La pastilla es lo que te hace abrirla: sin ella una
-              // factura completa y una a la que le falta una botella
-              // se ven igual.
-              (f.sueltas ? ' <i class="m-iflag">' + f.sueltas + ' unlinked</i>' : '') +
             '</span>' +
           '</span>' +
-          '<span class="m-hcard-r"><span class="m-hcard-a">' + dinero(f.total) + '</span></span>' +
+          // La pastilla es lo que te hace abrirla: sin ella una factura
+          // completa y una a la que le falta una botella se ven igual.
+          // Va bajo el importe, donde Sent pone la suya, y no al lado del
+          // número: con uno largo (los de 21 cifras de Fine Wine) bajaba
+          // de renglón y se encimaba (Axel, 2026-11-21).
+          '<span class="m-hcard-r"><span class="m-hcard-a">' + dinero(f.total) + '</span>' +
+            (f.sueltas ? '<i class="m-iflag">' + f.sueltas + ' unlinked</i>' : '') +
+          '</span>' +
           '<i class="ti ti-chevron-right m-chev" aria-hidden="true"></i>' +
         '</button>';
     }

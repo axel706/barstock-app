@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261120-221249",
+    "items": [
+      "Invoices: the unlinked tag sits under the amount"
+    ]
+  },
+  {
     "build": "20261120-220435",
     "items": [
       "Sent orders show the totals strip, like Invoices",
@@ -180,13 +186,6 @@
     "build": "20261118-141457",
     "items": [
       "MarginEdge Sync now always responds and says what happened"
-    ]
-  },
-  {
-    "build": "20261118-140407",
-    "items": [
-      "Quick order: full screen with back button",
-      "Save button above the tabs, like Done"
     ]
   }
 ]
