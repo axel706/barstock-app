@@ -1674,9 +1674,13 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-hc-uno { margin-top: 8px; font-size: var(--m-small); color: rgba(255,255,255,.88); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .m-hc-uno b { color: #fff; }
   /* Running out: las botellas. */
-  .m-hc-bots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 6px; align-items: end; flex: 1; }
-  .m-hc-bot { display: grid; justify-items: center; gap: 2px; min-width: 0; }
-  .m-hc-bot svg { height: calc(var(--m-ren) * 3.4); width: auto; }
+  /* La botella se queda con el alto que SOBRA, no con uno fijo: el
+     día y el nombre van primero. Con un alto fijo (3.4 renglones), en
+     el teléfono —su letra mide más que en Chromium— el día y el nombre
+     se pasaban del cuerpo y el overflow los cortaba por abajo. */
+  .m-hc-bots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 6px; flex: 1; min-height: 0; }
+  .m-hc-bot { display: grid; grid-template-rows: minmax(0, 1fr) auto auto; justify-items: center; gap: 2px; min-width: 0; min-height: 0; line-height: 1.25; }
+  .m-hc-bot svg { height: 100%; width: auto; min-height: 0; }
   .m-hc-vid { fill: rgba(255,255,255,.08); stroke: rgba(255,255,255,.5); stroke-width: 1.2; }
   .m-hc-liq { fill: var(--hc-liq); }
   .m-hc-bot b { font-size: var(--m-meta); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--hc-ac); }
@@ -1685,9 +1689,11 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-hc-tot { display: flex; align-items: baseline; gap: 8px; margin-top: 2px; }
   .m-hc-tot b { font-size: var(--m-head); font-weight: 800; letter-spacing: -.5px; color: #fff; }
   .m-hc-tot span { font-size: var(--m-small); color: rgba(255,255,255,.8); }
-  .m-hc-provs { display: grid; gap: 6px; margin-top: 6px; }
-  .m-hc-pv { display: grid; justify-items: center; gap: 2px; border-radius: 14px; padding: 6px 2px; background: rgba(255,255,255,.08); min-width: 0; }
-  .m-hc-pv .m-vlogo { width: calc(var(--m-base) * 1.9); height: calc(var(--m-base) * 1.9); }
+  /* Como las botellas: el logo cede su alto al dinero y a las botellas
+     (con la letra del teléfono, "14 btl" quedaba fuera del cuerpo). */
+  .m-hc-provs { display: grid; gap: 6px; margin-top: 6px; flex: 0 1 auto; min-height: 0; }
+  .m-hc-pv { display: grid; grid-template-rows: minmax(calc(var(--m-base) * 1.3), auto) auto auto; justify-items: center; gap: 2px; border-radius: 14px; padding: 6px 2px; background: rgba(255,255,255,.08); min-width: 0; min-height: 0; line-height: 1.25; }
+  .m-hc-pv .m-vlogo { width: calc(var(--m-base) * 1.9); height: calc(var(--m-base) * 1.9); max-height: 100%; min-height: 0; object-fit: contain; }
   .m-hc-pv .m-vlogo-ini { border-radius: 9px; font-size: var(--m-meta); }
   .m-hc-pv b { font-size: var(--m-body); font-weight: 800; color: #fff; }
   .m-hc-pv small { font-size: var(--m-meta); color: rgba(255,255,255,.78); white-space: nowrap; }

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261121-105925",
+    "items": [
+      "Home: names under the bottles no longer cut off"
+    ]
+  },
+  {
     "build": "20261121-104044",
     "items": [
       "Home: transfers show where from and where to"
@@ -182,12 +188,6 @@
     "build": "20261118-152944",
     "items": [
       "Home: MarginEdge and Toast logos stay put"
-    ]
-  },
-  {
-    "build": "20261118-152245",
-    "items": [
-      "Home: logos no longer flicker when the app opens"
     ]
   }
 ]

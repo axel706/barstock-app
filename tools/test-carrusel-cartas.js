@@ -81,6 +81,15 @@ grupo('la tarjeta libre');
   prueba('el cuerpo mide el título y los tres renglones de la plantilla',
     /height:\s*calc\(var\(--m-head\) \* 1\.25 \+ 4px \+ var\(--m-ren\) \* 3 \+ 9px\)/.test(regla), regla.trim());
   prueba('y no se sale', /overflow:\s*hidden/.test(regla));
+  // La botella se queda con lo que sobra, no con un alto fijo: con la
+  // letra del teléfono, el día y el nombre medían más que en Chromium y
+  // el overflow del cuerpo los cortaba (Axel, 2026-11-21, captura).
+  const bot = (/\.m-hc-bot \{([^}]*)\}/.exec(css) || [])[1] || '';
+  const svg = (/\.m-hc-bot svg \{([^}]*)\}/.exec(css) || [])[1] || '';
+  prueba('la botella cede su alto al texto', /grid-template-rows:\s*minmax\(0,\s*1fr\) auto auto/.test(bot) &&
+    /height:\s*100%/.test(svg) && !/var\(--m-ren\)/.test(svg), bot.trim() + ' | ' + svg.trim());
+  const bots = (/\.m-hc-bots \{([^}]*)\}/.exec(css) || [])[1] || '';
+  prueba('y las columnas ocupan todo el alto del cuerpo', /min-height:\s*0/.test(bots) && !/align-items:\s*end/.test(bots), bots.trim());
 }
 
 grupo('los dibujos escapan lo que viene de fuera');
