@@ -26,7 +26,13 @@
   // El orden importa poco (no se pisan), pero va del más corto al más
   // largo de reconocer. "WINE" solo es Wine Merchant: así lo trata ya
   // vendorDotColor(); "Wine Spectator" no.
+  // Fine Wine & Good Spirits (Axel, 2026-11-21) va primero: lleva "Wine"
+  // en el nombre y no es Wine Merchant. Su sello es de un solo color
+  // sobre blanco, con textura gastada: el blanco se pasó a transparente
+  // por lo claro, no rellenando desde el borde (se colaba por los huecos
+  // del anillo).
   const LOGOS = [
+    [/FINE WINE|\bFWGS\b/, 'fine-wine'],
     [/\bLOOP\b|\bPLCB\b|LIQUOR CONTROL|^LCB\b/, 'loop'],
     [/BREAKTHRU|BREAK THRU/, 'breakthru'],
     [/\bSOUTHERN\b/, 'southern'],

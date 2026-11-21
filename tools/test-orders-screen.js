@@ -300,8 +300,12 @@ console.log('\nlos logos de los proveedores');
   eq('Southern', [de('SOUTHERN'), de("Southern Glazer's Wine & Spirits")], ['southern.png', 'southern.png']);
   eq('Wine Merchant es Masciarelli', [de('WINE MERCHANT'), de('Masciarelli Wine Co.'), de('WINE')],
      ['wine-merchant.png', 'wine-merchant.png', 'wine-merchant.png']);
+  // Fine Wine & Good Spirits (Axel, 2026-11-21): con "Wine" en el nombre,
+  // y no es Wine Merchant.
+  eq('Fine Wine & Good Spirits', [de('Fine Wine & Good Spirits'), de('FINE WINE AND GOOD SPIRITS'), de('FWGS')],
+     ['fine-wine.png', 'fine-wine.png', 'fine-wine.png']);
   eq('uno cualquiera no tiene', [de('BOTANERY'), de('Wine Spectator'), de('')], ['', '', '']);
-  for (const f of ['loop', 'breakthru', 'southern', 'wine-merchant']) {
+  for (const f of ['loop', 'breakthru', 'southern', 'wine-merchant', 'fine-wine']) {
     ok('el archivo ' + f + '.png existe', fs.existsSync(path.join(RAIZ, 'assets/vendors', f + '.png')));
   }
   // Sent e Invoices pintan la misma pieza, no una copia.

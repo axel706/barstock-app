@@ -328,7 +328,7 @@ sin recuadro), en Open, Sent e Invoices: `src/vendor-logo.js`
 (`BarStockVendorLogo.html(v)`), una sola regla para reconocerlo (la
 factura dice "PLCB", la orden "LOOP"); sin logo, las iniciales. Los
 archivos en `assets/vendors/` (LCB para LOOP, de Breakthru sólo la
-flecha); si se cambia uno, se sube `V` en el módulo. En Sent, la fila del
+flecha; el sello de Fine Wine & Good Spirits desde el 2026-11-21); si se cambia uno, se sube `V` en el módulo. En Sent, la fila del
 buscador y los filtros también se queda, debajo de las pestañas: la
 pinta la sección, así que se pasa con `tambien` (una función). **Lo que se pega tiene
 que colgar directamente de la lista**: un sticky sólo dura lo que su

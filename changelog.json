@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261120-223308",
+    "items": [
+      "Fine Wine & Good Spirits logo in Orders and Invoices"
+    ]
+  },
+  {
     "build": "20261120-221249",
     "items": [
       "Invoices: the unlinked tag sits under the amount"
@@ -180,12 +186,6 @@
     "build": "20261118-142507",
     "items": [
       "Invoices: full-screen bottle search"
-    ]
-  },
-  {
-    "build": "20261118-141457",
-    "items": [
-      "MarginEdge Sync now always responds and says what happened"
     ]
   }
 ]
