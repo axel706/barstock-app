@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261121-103309",
+    "items": [
+      "Home: orders show each vendor with its logo",
+      "Home: placed orders show the day each arrives"
+    ]
+  },
+  {
     "build": "20261121-102853",
     "items": [
       "Home: Running out shows each bottle and its day"
@@ -180,12 +187,6 @@
     "build": "20261118-150220",
     "items": [
       "MarginEdge logo on Spent this cycle"
-    ]
-  },
-  {
-    "build": "20261118-145018",
-    "items": [
-      "Wine from Toast: search instead of the wheel"
     ]
   }
 ]

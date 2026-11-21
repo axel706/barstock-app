@@ -254,7 +254,10 @@ de las siete; Running out R2): los dibujos viven en `src/home-cartas.js`
 encabezado (con `kr` a la derecha) y los botones de siempre. El cuerpo
 libre mide lo mismo que los tres renglones de la plantilla: todas iguales
 de alto. Running out ya lo usa (cada botella con la silueta del conteo,
-`formaDe`, llena contra su par); las otras seis, en camino. Prueba:
+`formaDe`, llena contra su par), Orders waiting (una columna por
+proveedor con su logo) y Orders placed (la semana desde hoy con cada
+logo en el día en que llega su orden, `arrivesAt`; sin llegadas, la
+plantilla); las otras cuatro, en camino. Prueba:
 `test-carrusel-cartas`.
 
 El radio de las tarjetas del carrusel (`.m-hero`) es **20px**, y es la

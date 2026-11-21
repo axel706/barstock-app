@@ -34,7 +34,7 @@ function prueba(n, c, d) {
 }
 const grupo = t => console.log('\n' + t);
 
-function entorno(items) {
+function entorno(items, extra) {
   const dom = new JSDOM('<!doctype html><body></body>', { url: 'https://x.test/' });
   const w = dom.window;
   global.window = w; global.document = w.document;
@@ -49,6 +49,7 @@ function entorno(items) {
     fmtDate: () => 'Oct 25', edadCiclo: () => 2 * 86400000, cicloViejo: () => false
   };
   w.BarStockMobile = { ir() {} };
+  if (extra) extra(w);
   for (const f of ['src/bottle-profiles.js', 'src/vendor-logo.js', 'src/running-out.js', 'src/home-cartas.js', 'src/mobile-home.js']) {
     if (fs.existsSync(path.join(RAIZ, f))) new Function(leer(f))();
   }
@@ -141,6 +142,79 @@ grupo('Running out: el pie sólo dice lo que no cabe');
   c = tarjeta(h, /Running out/i);
   prueba('cuatro botellas', !!c && c.querySelectorAll('.m-hc-bot').length === 4);
   prueba('"and 1 more", contando desde cuatro', /^and 1 more/.test(vs(c)), vs(c));
+}
+
+grupo('Orders waiting: una columna por proveedor');
+{
+  // Cinco proveedores: se dibujan cuatro y el pie dice el quinto.
+  const ords = {
+    LOOP: [{ item: 'A', toOrder: 6, value: 20 }, { item: 'B', toOrder: 4, value: 0 }],
+    SOUTHERN: [{ item: 'C', toOrder: 3, value: 30 }],
+    BREAKTHRU: [{ item: 'D', toOrder: 2, value: 0 }],
+    'WINE MERCHANT': [{ item: 'E', toOrder: 1, value: 15 }],
+    BOTANERY: [{ item: 'F', toOrder: 1, value: 0 }]
+  };
+  const w = entorno([], (w) => {
+    w.getActiveVendors = () => Object.keys(ords);
+    w.getOrderRowsForVendor = (v) => ords[v] || [];
+    w.computeOrderSubtotal = (fs) => fs.reduce((s, r) => s + (Number(r.value) || 0) * r.toOrder, 0);
+  });
+  const c = tarjeta(pintar(w), /Orders waiting/i);
+  prueba('es libre', !!c && c.classList.contains('m-hero-libre'), c && c.className);
+  const tot = c && c.querySelector('.m-hc-tot');
+  prueba('el total arriba: dinero y botellas', !!tot && /\$225/.test(tot.textContent) && /17 bottles/.test(tot.textContent), tot && tot.textContent);
+  const pv = c ? Array.from(c.querySelectorAll('.m-hc-pv')) : [];
+  prueba('cuatro columnas, la que más botellas primero', pv.length === 4 && /\$120/.test(pv[0].textContent) && /10 btl/.test(pv[0].textContent),
+    pv.map(x => x.textContent).join(' | '));
+  prueba('cada una con su logo', pv.length === 4 && pv.every(x => !!x.querySelector('.m-vlogo')));
+  prueba('sin precio, botellas y líneas (nunca "$0")', pv.some(x => /^2 btl1 line$/.test(x.textContent)) && !/\$0\b/.test(c.textContent),
+    pv.map(x => x.textContent).join(' | '));
+  prueba('"5 vendors" a la derecha', !!c && /5 vendors/.test((c.querySelector('.m-hero-kr') || {}).textContent || ''));
+  prueba('el pie: "and 1 more"', !!c && ((c.querySelector('.m-hero-vs') || {}).textContent || '') === 'and 1 more');
+}
+
+grupo('Orders placed: la semana con cada llegada');
+{
+  const H = 3600e3;
+  const ahora = Date.now();
+  const iso = (ms) => new Date(ms).toISOString();
+  const fila = { item: 'A', code: 'A', vendor: 'LOOP', onHand: 4, suggested: 4 };
+  const w = entorno([], (w) => {
+    w.state.master = [fila];
+    w.getActiveVendors = () => ['LOOP'];
+    w.getOrderRowsForVendor = () => [];
+    w.computeOrderSubtotal = () => 0;
+    w.isRowPlaced = () => true;
+    w.state.orderHistory = [
+      { vendor: 'LOOP', arrivesAt: iso(ahora + 2 * 24 * H), totalUnits: 14 },
+      { vendor: 'SOUTHERN', arrivesAt: iso(ahora + 3 * 24 * H), totalUnits: 9 },
+      { vendor: 'TRANSFER', arrivesAt: iso(ahora + 1 * 24 * H), totalUnits: 3 },
+      { vendor: 'BREAKTHRU', arrivesAt: iso(ahora + 20 * 24 * H), totalUnits: 5 }
+    ];
+  });
+  const c = tarjeta(pintar(w), /Orders placed/i);
+  prueba('es libre', !!c && c.classList.contains('m-hero-libre'), c && c.className);
+  const d7 = c ? Array.from(c.querySelectorAll('.m-hc-d7')) : [];
+  prueba('siete días, hoy el primero', d7.length === 7 && d7[0].classList.contains('hoy'));
+  prueba('LOOP en su día y SOUTHERN en el suyo; el transfer y lo de dentro de 20 días no',
+    d7.length === 7 && d7[2].classList.contains('on') && d7[3].classList.contains('on') &&
+    !d7[1].classList.contains('on') && d7.filter(d => d.classList.contains('on')).length === 2,
+    d7.map(d => d.className).join(','));
+  const uno = c && c.querySelector('.m-hc-uno');
+  prueba('"Next:" la primera que llega, con sus botellas', !!uno && /Next:\s*LOOP .* · 14 bottles/.test(uno.textContent), uno && uno.textContent);
+  prueba('"all sent" a la derecha', !!c && /all sent/.test((c.querySelector('.m-hero-kr') || {}).textContent || ''));
+
+  // Sin ninguna llegada en la semana: la plantilla de siempre.
+  const w2 = entorno([], (w) => {
+    w.state.master = [fila];
+    w.getActiveVendors = () => ['LOOP'];
+    w.getOrderRowsForVendor = () => [];
+    w.computeOrderSubtotal = () => 0;
+    w.isRowPlaced = () => true;
+    w.state.orderHistory = [];
+  });
+  const c2 = tarjeta(pintar(w2), /Orders placed/i);
+  prueba('sin llegadas, "You are up to date" de siempre', !!c2 && !c2.classList.contains('m-hero-libre') && /up to date/.test(c2.textContent));
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');

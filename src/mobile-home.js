@@ -737,6 +737,49 @@
 
   // Proveedores con alguna línea ya colocada en este ciclo. Es lo que
   // distingue "ya se pidió todo" de "nunca hizo falta pedir nada".
+  // ── Orders placed: cuándo llega cada orden (lámina de las siete) ──
+  //
+  // Los siete días desde hoy, en Nueva York, con el logo de cada
+  // proveedor en el día en que llega su orden (arrivesAt, la hora de
+  // Settings › Delivery que se fijó al enviarla: la misma que lee el
+  // LIVE) y, debajo, la próxima en palabras. Los transfers no: tienen
+  // su tarjeta. Sin ninguna llegada en esos días, null: la tarjeta se
+  // queda con la plantilla ("You are up to date"), que no miente.
+  function semanaLlegadas(ahoraMs) {
+    const HC = window.BarStockHomeCartas;
+    const hist = (window.state && Array.isArray(window.state.orderHistory)) ? window.state.orderHistory : [];
+    if (!HC) return null;
+    const ahora = ahoraMs || Date.now();
+    const clave = (ms) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date(ms));
+    const corto = (ms) => new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short' }).format(new Date(ms));
+    const dias = [];
+    for (let k = 0; k < 7; k++) {
+      const ms = ahora + k * 864e5;
+      dias.push({ c: clave(ms), u: corto(ms), hoy: k === 0, provs: [] });
+    }
+    const porClave = new Map(dias.map(d => [d.c, d]));
+    const proximas = [];
+    for (const o of hist) {
+      const v = String(o.vendor || '').toUpperCase();
+      if (!o.arrivesAt || !v || v === 'TRANSFER' || v === 'UNKNOWN') continue;
+      const t = new Date(o.arrivesAt).getTime();
+      if (!isFinite(t)) continue;
+      const d = porClave.get(clave(t));
+      if (!d) continue;
+      if (!d.provs.includes(v)) d.provs.push(v);
+      if (t >= ahora) proximas.push({ v, t, u: Number(o.totalUnits) || 0 });
+    }
+    if (!dias.some(d => d.provs.length)) return null;
+    proximas.sort((a, b) => a.t - b.t);
+    const p = proximas[0];
+    const hora = (ms) => new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short',
+      hour: 'numeric', minute: '2-digit' }).format(new Date(ms)).replace(',', '').replace(':00', '');
+    return HC.llegadas({
+      dias,
+      siguiente: p ? p.v + ' ' + hora(p.t) + (p.u ? ' · ' + p.u + (p.u === 1 ? ' bottle' : ' bottles') : '') : 'Everything arrived'
+    });
+  }
+
   function colocados() {
     if (typeof window.isRowPlaced !== 'function') return [];
     const s = new Set();
@@ -827,6 +870,26 @@
       vs: pie
     };
 
+    // ── Una columna por proveedor (Axel, 2026-11-21, lámina de las
+    // siete) ──────────────────────────────────────────────────────────
+    // Arriba el total; debajo cada proveedor con su logo, su dinero y
+    // sus botellas, como mucho cuatro. Sin precio no hay "$0" (es "no
+    // lo sé", ver arriba): manda lo que siempre se sabe, las botellas.
+    const HC = window.BarStockHomeCartas;
+    if (HC) {
+      const btl = (n) => n + (n === 1 ? ' bottle' : ' bottles');
+      base.libre = HC.proveedores({
+        total: tot.total > 0 ? money(tot.total) : btl(tot.botellas),
+        botellas: tot.total > 0 ? btl(tot.botellas) : tot.lineas + (tot.lineas === 1 ? ' line' : ' lines'),
+        provs: v.slice(0, 4).map(x => x.sub > 0
+          ? { nombre: x.nombre, dinero: money(x.sub), detalle: x.btl + ' btl' }
+          : { nombre: x.nombre, dinero: x.btl + ' btl', detalle: x.filas.length + (x.filas.length === 1 ? ' line' : ' lines') })
+      });
+      base.kr = v.length + (v.length === 1 ? ' vendor' : ' vendors');
+      // El total ya va arriba: el pie sólo dice lo que no cabe.
+      base.vsLibre = v.length > 4 ? 'and ' + (v.length - 4) + ' more' : '';
+    }
+
     if (v.length === 1) {
       const u = v[0];
       return Object.assign(base, {
@@ -845,7 +908,7 @@
           : pie,
         btn: 'Review the order',
         go: irA(u.nombre)
-      });
+      }, base.libre ? { vs: base.vsLibre } : {});
     }
 
     return Object.assign(base, {
@@ -869,7 +932,7 @@
       btn: 'Review all',
       btnTono: 'suave',
       go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('orders'); }
-    });
+    }, base.libre ? { vs: base.vsLibre } : {});
   }
 
   // ── Lo que llegó de los proveedores ──────────────────────────────────
@@ -1142,7 +1205,8 @@
         // entera de una orden colocada en el escritorio.
         const puestos = colocados();
         if (puestos.length) {
-          t.push({
+          const sem = semanaLlegadas();
+          t.push(Object.assign({
             // Azul: esta tarjeta es de ÓRDENES y sustituye a la de
             // "Orders waiting" cuando no queda ninguna. Que cambie de
             // familia al quedarse vacía haría pensar que es otra cosa.
@@ -1155,7 +1219,7 @@
             amt: '',
             btn: 'See orders',
             go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('orders'); }
-          });
+          }, sem ? { libre: sem, kr: 'all sent', vs: '' } : {}));
         }
       }
     }

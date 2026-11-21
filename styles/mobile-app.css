@@ -1695,8 +1695,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-hc-sem { position: relative; display: grid; grid-template-columns: repeat(7, 1fr); margin-top: 12px; }
   .m-hc-sem::before { content: ""; position: absolute; left: 5%; right: 5%; top: calc(var(--m-base) * 2.1 + 7px); height: 2px; background: rgba(255,255,255,.25); }
   .m-hc-d7 { position: relative; display: grid; justify-items: center; gap: 4px; }
-  .m-hc-d7 .lg { height: calc(var(--m-base) * 2.1); display: flex; gap: 1px; align-items: center; }
-  .m-hc-d7 .lg .m-vlogo { width: calc(var(--m-base) * 1.85); height: calc(var(--m-base) * 1.85); }
+  .m-hc-d7 .lg { height: calc(var(--m-base) * 2.1); display: flex; gap: 1px; align-items: center; max-width: 100%; }
+  /* Dos proveedores el mismo día no caben a su tamaño en un séptimo
+     del ancho: encogen, sin salirse a la columna de al lado. */
+  .m-hc-d7 .lg .m-vlogo { width: calc(var(--m-base) * 1.85); height: calc(var(--m-base) * 1.85); min-width: 0; flex: 0 1 auto; object-fit: contain; }
   .m-hc-d7 .lg .m-vlogo-ini { border-radius: 7px; font-size: var(--m-meta); }
   .m-hc-d7 i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.4); }
   .m-hc-d7.on i { background: var(--hc-ac); box-shadow: 0 0 8px var(--hc-liq); }
