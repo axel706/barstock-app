@@ -57,7 +57,7 @@
   // `disaronno`, `tullamore`, `elijah_craig`, `basil_hayden`, `skrewball`,
   // `dewars`, `bulleit`, `buffalo_trace`, `bols`, `t1800`, `frangelico`,
   // `st_elder`, `st_germain`, `two_gingers`, `averna`, `blade_and_bow`,
-  // `campari` y `captain_morgan`, medidas viendo el líquido en la foto. `smirnoff`, `patron`,
+  // `campari`, `captain_morgan` y `woodford`, medidas viendo el líquido en la foto. `smirnoff`, `patron`,
   // `belvedere`, `ketel_one`, `jura`, `macallan`, `glenfiddich`,
   // `drambuie`, `fireball`, `cointreau`, `grey_goose`, `ciroc`, `jameson`,
   // `don_julio_blanco`, `michters`, `malibu`, `bacardi`, `v360`, `mozart`
@@ -736,6 +736,16 @@
       // hasta el 63 % y justo debajo ya hay liquido: yFull .63 por el
       // criterio de botanist.
       p: [[0,0.7204], [0.0156,0.8834], [0.0469,0.9829], [0.0781,0.9817], [0.1094,0.977], [0.1406,0.977], [0.1719,0.977], [0.2031,0.977], [0.2344,0.977], [0.2656,0.9805], [0.2969,0.972], [0.3281,0.9585], [0.3594,0.9792], [0.3906,0.9868], [0.4219,0.9913], [0.4531,0.9995], [0.4844,1], [0.5156,0.9823], [0.5469,0.9076], [0.5781,0.7242], [0.6094,0.4828], [0.6406,0.41], [0.6719,0.4051], [0.7031,0.3966], [0.7344,0.3997], [0.7656,0.3883], [0.7969,0.3719], [0.8281,0.3716], [0.8594,0.4096], [0.8906,0.3905], [0.9219,0.3716], [0.9531,0.3594], [0.9844,0.3098], [1,0.0976]]
+    },
+    woodford: {
+      name: "Woodford Reserve", asp: 1.89, yFull: 0.66, pourable: true,
+      // La de Woodford Reserve (foto de Axel, 2026-11-21). 603 px de alto
+      // por 319 de ancho maximo, desajuste de area 0.48 %. La petaca ancha
+      // y plana: la seccion no es redonda, pero la fraccion se cancela
+      // (ver arriba). Cuerpo recto hasta la mitad, hombro redondo del 52 %
+      // al 70 %, cuello corto con su tapa. yFull .66 medida viendo el
+      // bourbon en la foto, justo antes del hombro.
+      p: [[0,0.4932], [0.0156,0.8056], [0.0469,0.9805], [0.0781,1.0], [0.1094,1.0], [0.1406,1.0], [0.1719,1.0], [0.2031,1.0], [0.2344,1.0], [0.2656,1.0], [0.2969,0.9974], [0.3281,0.9981], [0.3594,0.9969], [0.3906,0.9967], [0.4219,0.9937], [0.4531,0.9937], [0.4844,0.9937], [0.5156,0.9918], [0.5469,0.9771], [0.5781,0.9432], [0.6094,0.8845], [0.6406,0.7807], [0.6719,0.6102], [0.7031,0.3197], [0.7344,0.245], [0.7656,0.2445], [0.7969,0.249], [0.8281,0.2673], [0.8594,0.2674], [0.8906,0.2665], [0.9219,0.2681], [0.9531,0.2696], [0.9844,0.2264], [1,0.0627]]
     },
     basil_hayden: {
       name: "Basil Hayden", asp: 3.92, yFull: 0.7, pourable: true,

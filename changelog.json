@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261121-091408",
+    "items": [
+      "Woodford Reserve gets its own bottle shape"
+    ]
+  },
+  {
     "build": "20261120-223930",
     "items": [
       "Settings: Save sits where Done does, in glass",
@@ -181,12 +187,6 @@
     "items": [
       "Search fills the screen, keyboard on top",
       "Search shows the app background, not the page"
-    ]
-  },
-  {
-    "build": "20261118-143445",
-    "items": [
-      "Transfers: full-screen product search"
     ]
   }
 ]

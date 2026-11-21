@@ -151,6 +151,9 @@
     // la de vodka (por ser ron). De Dewar's, el White Label: los de 12
     // anos y mas van en otra botella. Malibu Splash y los RTD van en lata
     // y se cuentan enteros: sin la excepcion esta regla les pondria nivel.
+    // Woodford Reserve caia en la de whiskey. Bourbon, Double Oaked y Rye
+    // van en la misma botella (2026-11-21).
+    [/\bwoodford\b/i,                               'woodford'],
     [/\bbasil\s*hayden'?s?\b/i,                     'basil_hayden'],
     [/\bskrewball\b/i,                              'skrewball'],
     [/\bmalibu\b(?![\s\S]*\b(splash|seltzer|can|rtd)\b)/i, 'malibu'],
