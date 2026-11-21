@@ -46,9 +46,9 @@ function banda(w) {
   w.BarStockBandDock = { fijar: (el) => w.__fijados.push(el) };
   return Object.assign({
     register() {}, ir() {}, refrescarBadges() {},
-    enBanda: (t) => { w.__banda.titulo = t; return true; },
+    enBanda: (t, sub) => { w.__banda.titulo = t; w.__banda.sub = sub || ''; return true; },
     alVolverBanda: (fn) => { w.__banda.atras = fn; },
-    salirBanda: () => { w.__banda.titulo = null; w.__banda.atras = null; w.__banda.salidas++; }
+    salirBanda: () => { w.__banda.titulo = null; w.__banda.sub = ''; w.__banda.atras = null; w.__banda.salidas++; }
   }, require('./lib-cabecera'));
 }
 
@@ -137,9 +137,16 @@ grupo('Sent: el nombre en el header y los dos botones pegados');
   // Resend y Reopen bajaron a donde va Done, en cristal (Axel,
   // 2026-11-21, opción B): Resend a lo ancho, Reopen redondo con su
   // icono. Arriba ya no se pega nada: la línea del PO es lo primero.
+  // Arriba, la tira de totales de Invoices (Axel, 2026-11-21, opción B):
+  // lo recibido, lo pedido y los productos, pegada bajo el header. La
+  // línea chica del PO sube a la banda, bajo el nombre, con el estado.
   const prim = host.firstElementChild;
-  prueba('la línea del PO es lo primero', !!prim && /PO CT-0213 · sent/.test(txt(prim)), prim && prim.outerHTML.slice(0, 80));
-  prueba('y no se pega nada arriba', w.__fijados.length === 0, String(w.__fijados.length));
+  prueba('la tira de totales es lo primero', !!prim && prim.classList.contains('m-itot'), prim && prim.outerHTML.slice(0, 80));
+  prueba('con lo recibido, lo pedido y los productos', !!prim && /received/.test(txt(prim)) && /ordered/.test(txt(prim)) && /items?/.test(txt(prim)), txt(prim));
+  prueba('y se pega, marcada para Orders', w.__fijados[w.__fijados.length - 1] === prim && prim.classList.contains('m-det-fijo'));
+  prueba('la línea del PO va a la banda, bajo el nombre', /^CT-0213 · \w{3} \w{3} \d+ · /.test(w.__banda.sub || ''), w.__banda.sub);
+  prueba('y no se repite en la página', !host.querySelector('.m-hsub') && !/PO CT-0213/.test(txt(host)));
+  prueba('los totales de abajo se fueron (están en la tira)', !host.querySelector('.m-htot'));
   const acc = host.querySelector('#mhAcc');
   prueba('los botones van al final, tras su hueco',
     !!acc && host.lastElementChild === acc && !!acc.previousElementSibling && acc.previousElementSibling.classList.contains('m-tx-hueco'));
@@ -156,7 +163,7 @@ grupo('Sent: el nombre en el header y los dos botones pegados');
   prueba('confirmar Reopen, abajo en el mismo sitio',
     !!conf && host.lastElementChild === conf && conf.classList.contains('m-hacc-conf') &&
     !!conf.querySelector('#mhSi') && !!conf.querySelector('#mhNo') && /Reopen deletes this order/.test(txt(conf)));
-  prueba('y tampoco se pega nada', w.__fijados.length === 0);
+  prueba('y la tira sigue pegada', w.__fijados[w.__fijados.length - 1] === host.firstElementChild);
   conf.querySelector('#mhNo').click();
   prueba('Cancel vuelve a Resend y Reopen', !!host.querySelector('#mhAcc #mhRe'));
   // Al volver, los botones entran animados; al abrir el detalle, no
@@ -189,7 +196,7 @@ grupo('Sent: el nombre en el header y los dos botones pegados');
 {
   const { w, host, abrir } = await sent();
   abrir('SOUTHERN');
-  prueba('una orden vieja, sin botones: su nota y nada abajo', w.__fijados.length === 0 && !!host.querySelector('.m-hacc-no') && !host.querySelector('#mhAcc'));
+  prueba('una orden vieja, sin botones: su nota y nada abajo', !!host.querySelector('.m-hacc-no') && !host.querySelector('#mhAcc'));
   prueba('pero su nombre sí va a la banda', w.__banda.titulo === 'SOUTHERN');
 }
 
@@ -203,8 +210,8 @@ grupo('Invoices: el proveedor en el header y los totales pegados');
   prueba('los tres totales son lo primero', !!prim && prim.classList.contains('m-itot'), prim && prim.className);
   prueba('y se piden pegados', w.__fijados[w.__fijados.length - 1] === prim);
   prueba('marcados para que Orders los vuelva a pegar tras su aviso', !!prim && prim.classList.contains('m-det-fijo'));
-  const sub = prim && prim.nextElementSibling;
-  prueba('la línea de la factura va justo debajo', !!sub && /invoice 2689338/.test(txt(sub)), txt(sub));
+  prueba('la línea de la factura va a la banda, bajo el nombre', /^#2689338 · /.test(w.__banda.sub || ''), w.__banda.sub);
+  prueba('y no se repite en la página', !host.querySelector('.m-hsub'));
   if (w.__banda.atras) w.__banda.atras();
   prueba('el atrás de la banda vuelve a la lista', !!host.querySelector('.m-hcard') && !host.querySelector('.m-itot'));
 }

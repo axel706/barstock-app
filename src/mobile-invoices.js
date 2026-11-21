@@ -1017,8 +1017,8 @@
     // Los tres totales existen para una sola cosa: cuadrar contra el
     // papel que tienes en la mano. Por eso, con el proveedor en la
     // banda, son lo primero y se quedan pegados bajo el header mientras
-    // bajas por las líneas (Axel, 2026-11-12, eligió esa de dos); la
-    // línea de la factura va debajo y se va con la lista.
+    // bajas por las líneas (Axel, 2026-11-12, eligió esa de dos). La
+    // línea de la factura iba debajo; desde el 2026-11-21 va a la banda.
     const totales = (fijo) =>
       '<div class="m-itot' + (fijo ? ' m-det-fijo' : '') + '">' +
         '<div><b>' + dinero(f.total) + '</b><span>total</span></div>' +
@@ -1026,10 +1026,15 @@
           (f.lineas.length === 1 ? 'line' : 'lines') + '</span></div>' +
         '<div><b>' + n1(f.unidades) + '</b><span>units</span></div>' +
       '</div>';
-    const enBanda = !!(M && M.enBanda && M.enBanda(titulo));
+    // La línea chica de debajo se fue a la banda, bajo el nombre (Axel,
+    // 2026-11-21, opción B): "#1296630 · Thu Nov 19 · Closed".
+    const linea = [f.numero ? '#' + f.numero : '', dia(f.fecha).txt.replace(',', ''),
+      f.status ? String(f.status).charAt(0).toUpperCase() + String(f.status).slice(1).toLowerCase() : '']
+      .filter(Boolean).join(' \u00b7 ');
+    const enBanda = !!(M && M.enBanda && M.enBanda(titulo, linea));
     let html =
       (enBanda
-        ? totales(true) + '<div class="m-hsub">' + esc(sub) + '</div>'
+        ? totales(true)
         : cab({ volverA: 'Invoices', titulo, sub }) + totales(false)) +
       bloqueOrden(f);
 

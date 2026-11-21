@@ -95,7 +95,23 @@ function montar() {
   M.ir('home'); await esperar(10);
   prueba('ir a otra pantalla devuelve la banda', !enSeccion());
 
+  // ── La línea chica bajo el nombre (Axel, 2026-11-21, opción B) ──
+  // Los detalles de Sent e Invoices ponen su número, fecha y estado bajo
+  // el nombre del proveedor. La siguiente sección sin línea la quita:
+  // si no, "CT-0221 · …" se quedaría bajo "Delivery".
+  const sub = () => banda().querySelector('.m-band-sub');
+  M.enBanda('LOOP', 'CT-0221 · Tue Nov 18 · All in');
+  prueba('enBanda con línea: el nombre y la línea debajo',
+    nombre() === 'LOOP' && !!sub() && sub().textContent === 'CT-0221 · Tue Nov 18 · All in' && banda().classList.contains('m-con-sub'));
+  M.enBanda('Delivery');
+  prueba('la siguiente sin línea la quita', !banda().classList.contains('m-con-sub') && (!sub() || sub().textContent === ''));
+  M.enBanda('LOOP', '<b>x</b>');
+  prueba('la línea es texto, no HTML', !!sub() && !sub().querySelector('b'));
+  M.salirBanda();
+  prueba('salir de la banda la quita también', !banda().classList.contains('m-con-sub'));
+
   const css = leer('styles/mobile-app.css');
+  prueba('CSS: la línea sale sólo con m-con-sub, y el nombre sube', /\.m-band\.m-en-seccion\.m-con-sub \.m-band-sub \{ opacity: 1; \}/.test(css) && /\.m-band\.m-con-sub \.m-band-seccion \{[^}]*bottom:/.test(css));
   prueba('CSS: atrás escondido fuera de una sección', /body\.m-shell #mBand #mBandAtras \{ display: none; \}/.test(css));
   prueba('CSS: en una sección, atrás sí y Time Machine no', /#mBand\.m-en-seccion #mBandAtras \{ display: flex; \}/.test(css) && /#mBand\.m-en-seccion #mTime \{ display: none; \}/.test(css));
   prueba('CSS: el logo se va y el nombre entra', /\.m-band\.m-en-seccion \.m-logo \{ opacity: 0; \}/.test(css) && /\.m-band\.m-en-seccion \.m-band-seccion \{ opacity: 1; \}/.test(css));

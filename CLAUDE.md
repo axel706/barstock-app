@@ -300,7 +300,13 @@ acopladas (`siempre`): el bloque empieza justo donde se pega, sin
 recorrido. Dentro de un detalle de Sent o de Invoices (2026-11-12), el
 nombre del proveedor va a la banda con `enBanda` (el botón de Time
 Machine pasa a ser atrás, como Settings) y la sección pega su bloque
-con `BarStockBandDock.fijar(el)`: los tres totales de la factura
+con `BarStockBandDock.fijar(el)`: la tira de tres totales (`.m-itot`;
+en Invoices total, líneas y unidades; en Sent, desde el 2026-11-21,
+recibido, pedido y productos, y los totales del final de la lista se
+fueron a ella). La línea chica de debajo ("PO · sent · invoice") se
+quitó en las dos y va a la banda bajo el nombre, con el estado:
+`enBanda(titulo, sub)` ("CT-0221 · Tue Nov 18 · All in", "#1296630 ·
+Thu Nov 19 · Closed"; opción B); cada llamada la pone o la quita
 (Resend / Reopen de Sent iban pegados así hasta el 2026-11-21; desde
 entonces van fijos donde Done en `#mhAcc`, opción B: Resend en el
 cristal azul a lo ancho y Reopen redondo en cristal rojo, con su icono;

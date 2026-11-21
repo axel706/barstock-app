@@ -828,7 +828,11 @@
   // de quitarlo dejaría su nombre en el Home.
   let _bandaAtras = null;
 
-  function enBanda(titulo) {
+  // `sub`: una línea chica bajo el nombre (Axel, 2026-11-21, opción B):
+  // el número, la fecha y el estado del detalle de una orden de Sent o
+  // de una factura. Texto, nunca HTML. Cada llamada la pone o la quita:
+  // una sección sin línea no hereda la del detalle de antes.
+  function enBanda(titulo, sub) {
     if (!_banda) return false;
     let t = _banda.querySelector('.m-band-seccion');
     if (!t) {
@@ -837,6 +841,14 @@
       _banda.appendChild(t);
     }
     if (t.textContent !== (titulo || '')) t.textContent = titulo || '';
+    let l = _banda.querySelector('.m-band-sub');
+    if (!l && sub) {
+      l = document.createElement('span');
+      l.className = 'm-band-sub';
+      _banda.appendChild(l);
+    }
+    if (l && l.textContent !== (sub || '')) l.textContent = sub || '';
+    _banda.classList.toggle('m-con-sub', !!sub);
     let b = _banda.querySelector('#mBandAtras');
     if (!b) {
       b = document.createElement('button');
@@ -858,7 +870,7 @@
   function alVolverBanda(fn) { _bandaAtras = typeof fn === 'function' ? fn : null; }
 
   function salirBanda() {
-    if (_banda) _banda.classList.remove('m-en-seccion');
+    if (_banda) _banda.classList.remove('m-en-seccion', 'm-con-sub');
     _bandaAtras = null;
   }
 

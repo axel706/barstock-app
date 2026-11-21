@@ -229,6 +229,19 @@
   const viene = (o, ahora) => o.estado === 'waiting' && !!o.llegada &&
     new Date(o.llegada).getTime() > (ahora == null ? Date.now() : ahora);
 
+  // La línea de la banda en el detalle: "CT-0221 · Tue Nov 18 · All in".
+  // El estado con las mismas palabras que la etiqueta de la tarjeta.
+  function lineaBanda(o) {
+    const [txt] = viene(o) ? ETIQ.coming : (ETIQ[o.estado] || ETIQ.waiting);
+    const n = o.estado === 'short' ? o.cortos : o.estado === 'over' ? o.sobras : 0;
+    const estado = n ? n + ' ' + txt : txt.charAt(0).toUpperCase() + txt.slice(1);
+    const d = o.fecha ? new Date(o.fecha) : null;
+    const fecha = d && !isNaN(d.getTime())
+      ? d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).replace(',', '')
+      : '';
+    return [o.po, fecha, estado].filter(Boolean).join(' · ');
+  }
+
   function etiqueta(o) {
     const [txt, cls] = viene(o) ? ETIQ.coming : (ETIQ[o.estado] || ETIQ.waiting);
     const n = o.estado === 'short' ? o.cortos : o.estado === 'over' ? o.sobras : 0;
@@ -525,20 +538,41 @@
     // pegados bajo el header; desde el 2026-11-21 (opción B) bajan a
     // donde va Done, en cristal, como Add a product y Quick order:
     // Resend a lo ancho y Reopen redondo, con su icono, porque BORRA la
-    // orden y no debe pesar lo mismo bajo el pulgar. Arriba queda la
-    // línea del PO, que se va con la lista.
+    // orden y no debe pesar lo mismo bajo el pulgar. Arriba va la tira
+    // de totales (abajo, "la tira de totales").
     //
     // Una orden vieja no tiene botones, sólo una nota: ésa va arriba.
     // Sin banda (fuera del armazón) queda la cabecera de antes, con los
     // botones arriba.
+    // ── La tira de totales arriba; la línea, a la banda ──────────
+    //
+    // Axel, 2026-11-21, opción B: la tira de tres totales de Invoices
+    // (le gusta cómo se funde con el header) también aquí, pegada bajo
+    // el header: lo recibido, lo pedido y los productos. Los dos totales
+    // que iban al final de la lista suben a ella: con treinta productos
+    // no se veían sin bajar. La línea chica ("PO · sent · invoice") se
+    // quita de la página y sube a la banda, bajo el nombre, con el
+    // estado de la orden. El número de factura no cabe ahí (el de LOOP
+    // tiene 21 cifras) y se queda fuera.
     const M = window.BarStockMobile;
     const sub = (o.po ? 'PO ' + o.po + ' · ' : '') + 'sent ' + dia(o.fecha) +
                 (o.factura ? ' · invoice ' + o.factura : '');
-    const enBanda = !!(M && M.enBanda && M.enBanda(o.vendor));
+    const enBanda = !!(M && M.enBanda && M.enBanda(o.vendor, lineaBanda(o)));
     const conBotones = !!laDelEscritorio(o.appId);
+    const espera = o.estado === 'waiting';
+    // Sin precio de factura, lo recibido es una estimación con los
+    // tuyos: decirlo en su etiqueta. Un número que parece dato y es
+    // cálculo es peor que no darlo.
+    const tira =
+      '<div class="m-itot m-det-fijo">' +
+        '<div><b>' + (espera ? '—' : money(o.recibidoDinero)) + '</b><span>' +
+          (espera || o.precioReal ? 'received' : 'received, est.') + '</span></div>' +
+        '<div><b>' + money(o.pedidoDinero) + '</b><span>ordered</span></div>' +
+        '<div><b>' + o.items.length + '</b><span>' + (o.items.length === 1 ? 'item' : 'items') + '</span></div>' +
+      '</div>';
     host.innerHTML =
       (enBanda
-        ? '<div class="m-hsub">' + esc(sub) + '</div>' + (conBotones ? '' : acciones(o))
+        ? tira + (conBotones ? '' : acciones(o))
         : cab({ volverA: 'Order history', titulo: o.vendor, sub }) + acciones(o)) +
 
       '<div class="m-hlist">' + lineas + '</div>' +
@@ -580,21 +614,27 @@
           '</div>'
         : '') +
 
-      '<div class="m-htot"><span>Ordered</span><b>' + money(o.pedidoDinero) + '</b></div>' +
-      (o.estado !== 'waiting'
-        ? '<div class="m-htot"><span>Received' +
-          // Sin precio de factura, lo que se enseña es una estimación
-          // con los tuyos. Decirlo: un número que parece dato y es
-          // cálculo es peor que no darlo.
-          (o.precioReal ? '' : ' <small>at your prices</small>') +
-          '</span><b>' + money(o.recibidoDinero) + '</b></div>'
-        : '') +
+      // Sin banda, los totales siguen al final; con ella, van en la tira.
+      (enBanda ? '' :
+        '<div class="m-htot"><span>Ordered</span><b>' + money(o.pedidoDinero) + '</b></div>' +
+        (o.estado !== 'waiting'
+          ? '<div class="m-htot"><span>Received' +
+            // Sin precio de factura, lo que se enseña es una estimación
+            // con los tuyos. Decirlo: un número que parece dato y es
+            // cálculo es peor que no darlo.
+            (o.precioReal ? '' : ' <small>at your prices</small>') +
+            '</span><b>' + money(o.recibidoDinero) + '</b></div>'
+          : '')) +
 
       // Abajo, fijos: el hueco para que lo último no quede tapado.
       (enBanda && conBotones ? '<div class="m-tx-hueco"></div>' + acciones(o, true) : '');
 
     volverCon(host, () => { _orden = null; pintar(host); cambioDeNivel(); });
     engancharAcciones(host, o);
+    // En cada pintado: confirmar Reopen repinta aquí sin pasar por el
+    // marco de Orders, y la tira es otro elemento.
+    const fijo = host.querySelector(':scope > .m-det-fijo');
+    if (fijo && window.BarStockBandDock && window.BarStockBandDock.fijar) window.BarStockBandDock.fijar(fijo);
 
     const bp = host.querySelector('#mhPrec');
     if (bp) bp.onclick = async () => {

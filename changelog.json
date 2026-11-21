@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261120-220435",
+    "items": [
+      "Sent orders show the totals strip, like Invoices",
+      "Order and invoice number move under the name"
+    ]
+  },
+  {
     "build": "20261120-213958",
     "items": [
       "Sent: the Reopen warning is easier to read",
@@ -180,13 +187,6 @@
     "items": [
       "Quick order: full screen with back button",
       "Save button above the tabs, like Done"
-    ]
-  },
-  {
-    "build": "20261118-135822",
-    "items": [
-      "Darker cards in More and Settings",
-      "Transfers and Settings rows as tall as the rest"
     ]
   }
 ]
