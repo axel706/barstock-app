@@ -104,7 +104,7 @@ grupo('los dibujos escapan lo que viene de fuera');
       HC.llegadas({ dias: [{ u: 'Tue', provs: ['<b>'] }], siguiente: '<b>next</b>' }),
       HC.pista({ titulo: '<b>', sub: '<i>', dias: [{ u: '<b>' }] }),
       HC.pasos({ pasos: [{ u: '1', t: '<b>' }], linea: '<i>' }),
-      HC.anillo({ pct: 0.5, centro: '<b>', filas: [['a', '<b>']], chips: ['<b>'] }),
+      HC.columnas({ cols: [{ n: '<b>', l: '<i>' }], pct: 0.5, chips: ['<b>'] }),
       HC.traslado({ de: '<b>', a: '<i>', cantidad: '1', producto: '<b>' })
     ].join('');
     prueba('ningún nombre llega como HTML', !/<b>x|a<b>|<b>next/.test(todo));
@@ -272,7 +272,7 @@ grupo('Load the count: los tres pasos');
   prueba('en el paso 1, el 1 es el de ahora', p1.length === 3 && p1[0].classList.contains('now') && !p1[1].classList.contains('now'));
 }
 
-grupo('Counting: el anillo');
+grupo('Counting: tres columnas (lámina D)');
 {
   const sesion = (bp) => (w) => {
     w.BarStockWeeklyCycle.estado = () => 'counting';
@@ -289,20 +289,26 @@ grupo('Counting: el anillo');
     w.BarStockZones = { activas: () => true, paraPasada: () => 'Front bar',
       lista: () => [{ nombre: 'Front bar' }, { nombre: 'Walk-in' }, { nombre: 'Back bar' }] };
   };
+  const cols = (c) => c ? Array.from(c.querySelectorAll('.m-hc-col')).map(x => x.textContent.replace(/\s+/g, ' ').trim()) : [];
+  const vs = (c) => c ? ((c.querySelector('.m-hero-vs') || {}).textContent || '') : '';
+  // Con conteo anterior: botellas contra lo esperado, el tiempo y lo que
+  // falta a tu ritmo (40 min por 612 botellas, faltan 178 → 12 min).
   let c = tarjeta(pintar(entorno([], sesion({ contadas: 612, faltan: 178, antes: 790 }))), /Counting/i);
   prueba('es libre', !!c && c.classList.contains('m-hero-libre'), c && c.className);
-  const txt = (sel) => c ? Array.from(c.querySelectorAll(sel)).map(x => x.textContent).join(' | ') : '';
-  prueba('el anillo con el porcentaje', /77%/.test(txt('.m-hc-ring text')) && !!(c && c.querySelector('.m-hc-ring .arco')), txt('.m-hc-ring text'));
-  prueba('botellas contra lo esperado', /Bottles612 of ~790/.test(txt('.m-hc-dat > div')), txt('.m-hc-dat > div'));
-  prueba('lo que queda a tu ritmo', /Leftabout 12 min/.test(txt('.m-hc-dat > div')), txt('.m-hc-dat > div'));
-  prueba('las zonas sin pisar, en pastillas', txt('.m-hc-chip') === 'Walk-in | Back bar', txt('.m-hc-chip'));
-  prueba('el pie: el último escaneo', /^Last scan: Front bar · 2 min ago$/.test(txt('.m-hero-vs')), txt('.m-hero-vs'));
-  prueba('Continue', /Continue/.test(txt('.m-hero-acts')));
-  // Sin conteo anterior: ni porcentaje ni arco inventados.
-  c = tarjeta(pintar(entorno([], sesion({ contadas: 40, faltan: 0, antes: 0 }))), /Counting/i);
-  prueba('sin conteo anterior, sin arco y las botellas dentro',
-    !!c && !!c.querySelector('.m-hc-ring text') && !c.querySelector('.m-hc-ring .arco') && c.querySelector('.m-hc-ring text').textContent === '40' && !/%/.test(c.textContent),
-    c && c.querySelector('.m-hc-ring') && c.querySelector('.m-hc-ring').outerHTML.slice(0, 200));
+  prueba('tres columnas: botellas, tiempo y lo que falta', cols(c).join(' | ') === '612 of ~790 | 40m counting | 12m left', cols(c).join(' | '));
+  const barra = c && c.querySelector('.m-hc-barra i');
+  prueba('la barra hacia el último conteo', !!barra && /width:\s*77%/.test(barra.getAttribute('style') || ''), barra && barra.getAttribute('style'));
+  prueba('las zonas sin pisar, en pastillas', !!c && Array.from(c.querySelectorAll('.m-hc-chip')).map(x => x.textContent).join(' | ') === 'Walk-in | Back bar');
+  prueba('el pie: dónde y cuándo fue el último', vs(c) === 'Front bar · 2 min ago', vs(c));
+  prueba('Continue', !!c && /Continue/.test(c.querySelector('.m-hero-acts').textContent));
+  prueba('ya no hay anillo', !!c && !c.querySelector('.m-hc-ring'));
+  // Con pocas botellas, lo que falta va en botellas, no en minutos que bailan.
+  c = tarjeta(pintar(entorno([], sesion({ contadas: 20, faltan: 178, antes: 198 }))), /Counting/i);
+  prueba('con menos de 30 contadas, lo que falta en botellas', cols(c)[2] === '≈178 btl left', cols(c).join(' | '));
+  // Sin conteo anterior (DEVELOP): sin barra, y la tercera son las zonas.
+  c = tarjeta(pintar(entorno([], sesion({ contadas: 13, faltan: 0, antes: 0 }))), /Counting/i);
+  prueba('sin conteo anterior: botellas, tiempo y zonas que faltan', cols(c).join(' | ') === '13 bottles | 40m counting | 2 zones left', cols(c).join(' | '));
+  prueba('sin conteo anterior, sin barra ni porcentaje', !!c && !c.querySelector('.m-hc-barra') && !/%/.test(c.textContent));
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');

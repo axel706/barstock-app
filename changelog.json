@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261121-150915",
+    "items": [
+      "Home: counting card shows bottles, time and left"
+    ]
+  },
+  {
     "build": "20261121-105925",
     "items": [
       "Home: names under the bottles no longer cut off"
@@ -182,12 +188,6 @@
     "items": [
       "Running out: Order N counts what is on the way",
       "Covered products no longer suggest a full order"
-    ]
-  },
-  {
-    "build": "20261118-152944",
-    "items": [
-      "Home: MarginEdge and Toast logos stay put"
     ]
   }
 ]

@@ -259,8 +259,11 @@ proveedor con su logo), Orders placed (la semana desde hoy con cada
 logo en el día en que llega su orden, `arrivesAt`; sin llegadas, la
 plantilla), el ciclo (la pista de lunes al domingo de
 `home-orden.finCiclo`, "Count tomorrow", "Day N of 7"), los pasos del
-domingo (1 y 2, como losetas) y el conteo (el anillo contra lo esperado
-de `bottleProgress`; sin conteo anterior, sin arco) y el transfer (de
+domingo (1 y 2, como losetas), el conteo (lámina D, 2026-11-21: tres
+columnas iguales, botellas, tiempo y lo que falta, con una barra hacia lo
+esperado de `bottleProgress`; sin conteo anterior, la tercera son las
+zonas y no hay barra; el anillo de antes amontonaba todo a la izquierda
+y perdió el tiempo) y el transfer (de
 dónde a dónde, en `transfer-confirm.js`, por eso `home-cartas.js` carga
 antes que él). Pruebas:
 `test-carrusel-cartas` y 1b de `test-transfer-confirm`.

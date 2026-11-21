@@ -8,7 +8,7 @@
  * dibuja ahora lo suyo: Running out las botellas con su nivel (R2), las
  * órdenes una columna por proveedor con su logo, las colocadas la
  * semana con cada logo en su día de entrega, el ciclo sus siete días,
- * el domingo sus tres pasos, el conteo un anillo y el transfer de dónde
+ * el domingo sus tres pasos, el conteo sus tres cifras y el transfer de dónde
  * a dónde.
  *
  * Aquí sólo se DIBUJA: cada función recibe datos ya calculados (los
@@ -97,21 +97,25 @@
       '</div>' + (o.linea ? '<div class="m-hc-uno">' + esc(o.linea) + '</div>' : '');
   }
 
-  // ── Counting: el anillo ─────────────────────────────────────────────
-  // `pct` (0..1, o null si no hay conteo anterior con qué comparar),
-  // `centro` (lo que va dentro), `filas`: [[nombre, valor]], `chips`.
-  function anillo(o) {
-    const r = 30, c = 2 * Math.PI * r;
+  // ── Counting: tres columnas (lámina D, Axel 2026-11-21) ─────────────
+  // Botellas, tiempo y lo que falta, del mismo tamaño y separadas por una
+  // línea fina, como las tres cifras de arriba del Home. Primero fue un
+  // anillo con renglones al lado: todo se amontonaba a la izquierda, el
+  // tiempo desapareció y sin conteo anterior quedaba "Left —" sobre un
+  // hueco ("ninguno está bien distribuido").
+  // `cols`: [{ n, u, l }] (dos o tres); `pct` (0..1) dibuja la barra
+  // hacia el último conteo, null sin conteo anterior; `chips`, lo que
+  // aún no se ha pisado.
+  function columnas(o) {
+    const cs = (o.cols || []).slice(0, 3);
     const p = o.pct == null ? null : Math.max(0, Math.min(1, o.pct));
-    const svg = '<svg class="m-hc-ring" viewBox="0 0 78 78" aria-hidden="true">' +
-      '<circle cx="39" cy="39" r="' + r + '" class="fondo"/>' +
-      (p == null ? '' : '<circle cx="39" cy="39" r="' + r + '" class="arco" stroke-dasharray="' + num(c * p, 1) + ' ' + num(c, 1) +
-        '" transform="rotate(-90 39 39)"/>') +
-      '<text x="39" y="44" text-anchor="middle">' + esc(o.centro) + '</text></svg>';
-    return '<div class="m-hc-cnt">' + svg + '<div class="m-hc-dat">' +
-      (o.filas || []).map(f => '<div><span>' + esc(f[0]) + '</span><b>' + esc(f[1]) + '</b></div>').join('') +
-      ((o.chips || []).length ? '<div><span>Not yet</span><b>' + o.chips.map(z => '<i class="m-hc-chip">' + esc(z) + '</i>').join('') + '</b></div>' : '') +
-      '</div></div>';
+    // Centrado en el cuerpo: sin conteo anterior no hay barra y lo de
+    // arriba dejaba un hueco abajo.
+    return '<div class="m-hc-centro"><div class="m-hc-tres" style="grid-template-columns:repeat(' + Math.max(1, cs.length) + ',1fr)">' +
+      cs.map(c => '<div class="m-hc-col"><b>' + esc(c.n) + (c.u ? '<u>' + esc(c.u) + '</u>' : '') + '</b> <span>' + esc(c.l) + '</span></div>').join('') +
+      '</div>' +
+      (p == null ? '' : '<div class="m-hc-barra"><i style="width:' + Math.round(p * 100) + '%"></i></div>') +
+      ((o.chips || []).length ? '<div class="m-hc-zonas">Not yet ' + o.chips.map(z => '<i class="m-hc-chip">' + esc(z) + '</i>').join('') + '</div>' : '') + '</div>';
   }
 
   // ── Transfer: de dónde a dónde ──────────────────────────────────────
@@ -122,5 +126,5 @@
       '<div class="m-hc-trq"><b>' + esc(o.cantidad) + '</b><span>' + esc(o.producto) + '</span></div>';
   }
 
-  window.BarStockHomeCartas = { botellas, proveedores, llegadas, pista, pasos, anillo, traslado, esc };
+  window.BarStockHomeCartas = { botellas, proveedores, llegadas, pista, pasos, columnas, traslado, esc };
 })();

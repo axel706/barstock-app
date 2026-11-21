@@ -1726,16 +1726,17 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-hc-paso u { display: block; text-decoration: none; font-size: var(--m-meta); letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.7); }
   .m-hc-paso.ok { opacity: .75; }
   .m-hc-paso.now { background: rgba(255,255,255,.24); outline: 1px solid rgba(255,255,255,.5); }
-  /* Counting: el anillo. */
-  .m-hc-cnt { display: flex; gap: 14px; align-items: center; margin-top: 6px; }
-  .m-hc-ring { flex: 0 0 auto; width: calc(var(--m-base) * 5.6); height: calc(var(--m-base) * 5.6); }
-  .m-hc-ring .fondo { fill: none; stroke: rgba(255,255,255,.2); stroke-width: 8; }
-  .m-hc-ring .arco { fill: none; stroke: #fff; stroke-width: 8; stroke-linecap: round; }
-  .m-hc-ring text { fill: #fff; font-size: var(--m-strong); font-weight: 800; }
-  .m-hc-dat { display: grid; gap: 5px; font-size: var(--m-small); min-width: 0; flex: 1; }
-  .m-hc-dat > div { display: flex; gap: 8px; min-width: 0; }
-  .m-hc-dat span { color: rgba(255,255,255,.75); flex: 0 0 calc(var(--m-base) * 5); }
-  .m-hc-dat b { color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Counting: tres columnas iguales, como las tres cifras del Home. */
+  .m-hc-centro { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; }
+  .m-hc-tres { display: grid; }
+  .m-hc-col { display: grid; justify-items: center; gap: 3px; padding-inline: 6px; min-width: 0; text-align: center; line-height: 1.15; }
+  .m-hc-col + .m-hc-col { border-left: 1px solid rgba(255,255,255,.18); }
+  .m-hc-col b { font-size: var(--m-head); font-weight: 800; letter-spacing: -.5px; color: #fff; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .m-hc-col b u { text-decoration: none; font-size: var(--m-small); font-weight: 700; letter-spacing: 0; color: rgba(255,255,255,.72); margin-left: 1px; }
+  .m-hc-col span { font-size: var(--m-meta); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.72); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .m-hc-barra { height: 5px; margin-top: 10px; border-radius: 9px; background: rgba(255,255,255,.2); overflow: hidden; }
+  .m-hc-barra i { display: block; height: 100%; border-radius: 9px; background: #fff; }
+  .m-hc-zonas { margin-top: 8px; display: flex; align-items: center; gap: 6px; font-size: var(--m-small); color: rgba(255,255,255,.75); white-space: nowrap; overflow: hidden; }
   .m-hc-chip { display: inline-block; font-style: normal; font-size: var(--m-meta); font-weight: 700; padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,.16); margin-right: 3px; }
   /* Transfer: de dónde a dónde. */
   .m-hc-tr { display: flex; align-items: center; gap: 10px; margin-top: 8px; }

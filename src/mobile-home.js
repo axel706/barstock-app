@@ -526,32 +526,39 @@
         ];
       }
 
-      // ── El anillo (lámina de las siete) ──────────────────────────
-      // Lo contado contra lo esperado (lo contado + lo que falta, de
-      // bottleProgress: la misma cuenta que los diez tramos), lo que
-      // queda a tu ritmo y lo que aún no has pisado: cerca del final,
-      // los productos que faltan; si no, las zonas. Sin conteo anterior
-      // no hay con qué comparar: el anillo va vacío con las botellas
-      // dentro, nunca un porcentaje inventado.
+      // ── Tres columnas (Axel, 2026-11-21, lámina D) ──────────────
+      // Botellas (contra lo esperado: lo contado + lo que falta de
+      // bottleProgress, la cuenta de los diez tramos), el tiempo activo y
+      // lo que falta: a tu ritmo en minutos desde 30 botellas (con menos,
+      // baila) y en botellas antes. Sin conteo anterior no hay qué
+      // faltaría: la tercera son las zonas sin pisar, y no hay barra.
+      // Lo que aún no has pisado va en pastillas: cerca del final, los
+      // productos que faltan; si no, las zonas.
       let libreConteo = '';
       if (HCc && bp) {
         const esperado = contadas + faltan;
-        const pctR = hayAntes && esperado > 0 ? contadas / esperado : null;
         const fiable = hayAntes && contadas >= FIABLE && ms > 0;
         const zs = zonasSin();
-        const chipsDe = (xs) => xs.length > 2 ? xs.slice(0, 2).concat('+' + (xs.length - 2)) : xs;
-        const filasR = [
-          ['Bottles', hayAntes ? redondo(contadas) + ' of ~' + redondo(esperado) : redondo(contadas)],
-          ['Left', !hayAntes ? '—' : faltan < 0.5 ? 'nothing from last time'
-            : fiable ? 'about ' + dur((ms / contadas) * faltan) : '≈' + redondo(faltan) + ' bottles']
+        const minutos = (x) => {
+          const m = Math.round(x / 60000);
+          return m < 60 ? { n: String(m), u: 'm' } : { n: Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0'), u: 'h' };
+        };
+        const cols = [
+          hayAntes ? { n: redondo(contadas), l: 'of ~' + redondo(esperado) } : { n: redondo(contadas), l: contadas === 1 ? 'bottle' : 'bottles' },
+          ms > 0 ? Object.assign(minutos(ms), { l: 'counting' }) : { n: '—', l: 'counting' }
         ];
-        const chips = pendientes.length ? chipsDe(pendientes) : (zs && zs.length ? chipsDe(zs) : []);
-        if (!chips.length) filasR.push(['Not yet', zs === null ? '—' : 'none left']);
-        libreConteo = HCc.anillo({
-          pct: pctR,
-          centro: pctR == null ? redondo(contadas) : Math.round(pctR * 100) + '%',
-          filas: filasR,
-          chips
+        if (hayAntes) {
+          cols.push(faltan < 0.5 ? { n: '0', l: 'left' }
+            : fiable ? Object.assign(minutos((ms / contadas) * faltan), { l: 'left' })
+            : { n: '≈' + redondo(faltan), l: 'btl left' });
+        } else if (zs !== null) {
+          cols.push({ n: String(zs.length), l: zs.length === 1 ? 'zone left' : 'zones left' });
+        }
+        const chipsDe = (xs) => xs.length > 2 ? xs.slice(0, 2).concat('+' + (xs.length - 2)) : xs;
+        libreConteo = HCc.columnas({
+          cols,
+          pct: hayAntes && esperado > 0 ? contadas / esperado : null,
+          chips: pendientes.length ? chipsDe(pendientes) : (zs && zs.length ? chipsDe(zs) : [])
         });
       }
       const ultimo = [zona, hace()].filter(Boolean).join(' · ');
@@ -619,7 +626,8 @@
       }, libreConteo ? {
         libre: libreConteo,
         kr: viejo ? (hace() ? 'untouched ' + hace().replace(/ ago$/, '') : '') : (desde() ? 'started ' + desde() : ''),
-        vs: ultimo ? 'Last scan: ' + ultimo : '',
+        // Dónde y cuándo fue el último escaneo, sin rótulo (lámina D).
+        vs: ultimo,
         btn: viejo ? 'Pick it up' : 'Continue'
       } : {});
     }
