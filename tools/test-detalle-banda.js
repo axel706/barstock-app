@@ -134,22 +134,36 @@ grupo('Sent: el nombre en el header y los dos botones pegados');
   abrir('LOOP');
   prueba('"LOOP" va a la banda', w.__banda.titulo === 'LOOP', String(w.__banda.titulo));
   prueba('la página no repite el título ni su chevron', !host.querySelector('.m-inv-t') && !host.querySelector('#mAtras'));
+  // Resend y Reopen bajaron a donde va Done, en cristal (Axel,
+  // 2026-11-21, opción B): Resend a lo ancho, Reopen redondo con su
+  // icono. Arriba ya no se pega nada: la línea del PO es lo primero.
   const prim = host.firstElementChild;
-  prueba('Resend y Reopen son lo primero', !!prim && !!prim.querySelector('#mhRe') && !!prim.querySelector('#mhAbrir'), prim && prim.outerHTML.slice(0, 80));
-  prueba('y se piden pegados', w.__fijados.length > 0 && w.__fijados[w.__fijados.length - 1] === prim);
-  // El bloque MISMO, sin caja alrededor: con caja, el margen de arriba de
-  // los botones la atravesaba y en reposo iban 14 px por debajo de donde
-  // se pegan (121 → 107 en Chromium).
-  prueba('lo pegado es el bloque de los botones, sin caja alrededor', !!prim && prim.classList.contains('m-hacc'), prim && prim.className);
-  prueba('marcados para que Orders los vuelva a pegar tras su aviso', !!prim && prim.classList.contains('m-det-fijo'));
-  const sub = prim && prim.nextElementSibling;
-  prueba('la línea del PO va justo debajo', !!sub && /PO CT-0213 · sent/.test(txt(sub)), txt(sub));
-  prueba('y no se pega', !w.__fijados.includes(sub));
+  prueba('la línea del PO es lo primero', !!prim && /PO CT-0213 · sent/.test(txt(prim)), prim && prim.outerHTML.slice(0, 80));
+  prueba('y no se pega nada arriba', w.__fijados.length === 0, String(w.__fijados.length));
+  const acc = host.querySelector('#mhAcc');
+  prueba('los botones van al final, tras su hueco',
+    !!acc && host.lastElementChild === acc && !!acc.previousElementSibling && acc.previousElementSibling.classList.contains('m-tx-hueco'));
+  prueba('Resend y Reopen dentro', !!acc && !!acc.querySelector('#mhRe') && !!acc.querySelector('#mhAbrir'));
+  const ab = host.querySelector('#mhAbrir');
+  prueba('Reopen es el redondo: su icono y su nombre para quien no ve',
+    !!ab && !!ab.querySelector('.ti') && ab.getAttribute('aria-label') === 'Reopen' && !txt(ab), ab && ab.outerHTML);
+  prueba('siguen escondidos sin permiso de órdenes (clase m-hacc)', !!acc && acc.classList.contains('m-hacc'));
 
-  // Reopen pide confirmar: lo que se pega es el mismo bloque, repintado.
+  // Reopen pide confirmar EN EL MISMO SITIO: el aviso y Cancel /
+  // Delete and reopen abajo.
   host.querySelector('#mhAbrir').click();
-  const conf = host.firstElementChild;
-  prueba('confirmar Reopen sigue arriba y pegado', !!conf.querySelector('#mhSi') && w.__fijados[w.__fijados.length - 1] === conf);
+  const conf = host.querySelector('#mhAcc');
+  prueba('confirmar Reopen, abajo en el mismo sitio',
+    !!conf && host.lastElementChild === conf && conf.classList.contains('m-hacc-conf') &&
+    !!conf.querySelector('#mhSi') && !!conf.querySelector('#mhNo') && /Reopen deletes this order/.test(txt(conf)));
+  prueba('y tampoco se pega nada', w.__fijados.length === 0);
+  conf.querySelector('#mhNo').click();
+  prueba('Cancel vuelve a Resend y Reopen', !!host.querySelector('#mhAcc #mhRe'));
+
+  const css = leer('styles/mobile-app.css');
+  prueba('fijos donde Done', /#mScreens :is\([^)]*#mhAcc[^)]*\) \{\s*position: fixed;/.test(css));
+  prueba('Resend con el cristal azul de Done', /body\.m-shell #mScreens :is\(#mRoDone, [^)]*#mhRe[^)]*\),\s*body\.m-shell #mTabs \.m-tab\.on \{\s*color: #f0f9ff; background: rgba\(56, 189, 248/.test(css));
+  prueba('Reopen y Delete and reopen en cristal rojo', /body\.m-shell #mScreens :is\(#mhAbrir, #mhSi\) \{\s*color: #[0-9a-f]+; background: rgba\(239, 68, 68/.test(css));
 
   prueba('el atrás de la banda está puesto', typeof w.__banda.atras === 'function');
   if (w.__banda.atras) w.__banda.atras();
@@ -158,7 +172,7 @@ grupo('Sent: el nombre en el header y los dos botones pegados');
 {
   const { w, host, abrir } = await sent();
   abrir('SOUTHERN');
-  prueba('una orden vieja, sin botones: nada pegado', w.__fijados.length === 0 && !!host.querySelector('.m-hacc-no'));
+  prueba('una orden vieja, sin botones: su nota y nada abajo', w.__fijados.length === 0 && !!host.querySelector('.m-hacc-no') && !host.querySelector('#mhAcc'));
   prueba('pero su nombre sí va a la banda', w.__banda.titulo === 'SOUTHERN');
 }
 
@@ -210,9 +224,10 @@ grupo('dentro de Orders, de verdad: Orders y Sent juntos');
   await esperar(10);
   const bloque = host.querySelector('#moCuerpo').firstElementChild;
   prueba('después del aviso, "LOOP" sigue en la banda', w.__banda.titulo === 'LOOP', String(w.__banda.titulo));
-  prueba('y lo que queda pegado son los botones, no las pestañas',
-    !!w.__ultimo && w.__ultimo.pegado === bloque && !!bloque.querySelector('#mhRe') && w.__ultimo.siempre,
-    w.__ultimo && (w.__ultimo.pegado ? w.__ultimo.pegado.id || w.__ultimo.pegado.className : 'nada'));
+  // Sin bloque pegado: el aviso no tiene nada que volver a pegar, y los
+  // botones siguen abajo.
+  prueba('y los botones siguen abajo, sin pestañas encima',
+    !!host.querySelector('#moCuerpo > #mhAcc #mhRe') && !host.querySelector('#moSeg') && !!bloque && !bloque.querySelector('#mhRe'));
   w.__banda.atras && w.__banda.atras();
   await esperar(10);
   prueba('al volver a la lista, la banda suelta el nombre', w.__banda.titulo === null && !!host.querySelector('#moSeg'));

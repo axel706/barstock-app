@@ -274,7 +274,7 @@ grupo('2c · el detalle como una subsección de Settings (Axel, 2026-11-20)');
   prueba('…y la banda suelta el nombre', v.__banda.titulo === null && v.__banda.salidas > 0 && !!host.querySelector('.m-ordv'));
   const css = leer('styles/mobile-app.css');
   prueba('#moAdd va fijo donde Done, con su cristal', /#mScreens :is\(#mTxGo, #mqMain, #moAdd[^)]*\) \{\s*position: fixed/.test(css) &&
-    /body\.m-shell #mScreens :is\(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moAdd\),/.test(css));
+    /body\.m-shell #mScreens :is\(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moAdd[^)]*\),/.test(css));
 }
 {
   // Sin el armazón (escritorio, pruebas viejas), la cabecera de antes.

@@ -517,16 +517,20 @@
         '</span></div>';
     }).join('');
 
-    // ── El nombre en el header, los dos botones pegados ──────────
+    // ── El nombre en el header, los dos botones abajo ────────────
     //
     // Axel, 2026-11-12, sobre su captura ("la misma historia para Sent
     // e Invoices"): el proveedor ocupa el sitio del logo y el botón de
-    // la izquierda pasa a ser atrás, como Settings. Resend / Reopen son
-    // lo primero y se quedan pegados bajo el header desde que entras; la
-    // línea del PO va debajo y se va con la lista (eligió esa de tres).
+    // la izquierda pasa a ser atrás, como Settings. Resend / Reopen iban
+    // pegados bajo el header; desde el 2026-11-21 (opción B) bajan a
+    // donde va Done, en cristal, como Add a product y Quick order:
+    // Resend a lo ancho y Reopen redondo, con su icono, porque BORRA la
+    // orden y no debe pesar lo mismo bajo el pulgar. Arriba queda la
+    // línea del PO, que se va con la lista.
     //
-    // Una orden vieja no tiene botones, sólo una nota: ésa no se pega.
-    // Sin banda (fuera del armazón) queda la cabecera de antes.
+    // Una orden vieja no tiene botones, sólo una nota: ésa va arriba.
+    // Sin banda (fuera del armazón) queda la cabecera de antes, con los
+    // botones arriba.
     const M = window.BarStockMobile;
     const sub = (o.po ? 'PO ' + o.po + ' · ' : '') + 'sent ' + dia(o.fecha) +
                 (o.factura ? ' · invoice ' + o.factura : '');
@@ -534,8 +538,7 @@
     const conBotones = !!laDelEscritorio(o.appId);
     host.innerHTML =
       (enBanda
-        ? acciones(o, conBotones) +
-          '<div class="m-hsub">' + esc(sub) + '</div>'
+        ? '<div class="m-hsub">' + esc(sub) + '</div>' + (conBotones ? '' : acciones(o))
         : cab({ volverA: 'Order history', titulo: o.vendor, sub }) + acciones(o)) +
 
       '<div class="m-hlist">' + lineas + '</div>' +
@@ -585,14 +588,13 @@
           // cálculo es peor que no darlo.
           (o.precioReal ? '' : ' <small>at your prices</small>') +
           '</span><b>' + money(o.recibidoDinero) + '</b></div>'
-        : '');
+        : '') +
+
+      // Abajo, fijos: el hueco para que lo último no quede tapado.
+      (enBanda && conBotones ? '<div class="m-tx-hueco"></div>' + acciones(o, true) : '');
 
     volverCon(host, () => { _orden = null; pintar(host); cambioDeNivel(); });
     engancharAcciones(host, o);
-    // En cada pintado: confirmar Reopen repinta aquí sin pasar por el
-    // marco de Orders, y el bloque es otro elemento.
-    const fijo = host.querySelector(':scope > .m-det-fijo');
-    if (fijo && window.BarStockBandDock && window.BarStockBandDock.fijar) window.BarStockBandDock.fijar(fijo);
 
     const bp = host.querySelector('#mhPrec');
     if (bp) bp.onclick = async () => {
@@ -690,13 +692,13 @@
     return h.find(x => String(x.id) === String(id)) || null;
   }
 
-  // `fijo`: el bloque va pegado bajo el header (el detalle con su nombre
-  // en la banda). La marca va en el MISMO bloque, no en una caja
-  // alrededor: con caja, su margen de arriba la atravesaba y en reposo
-  // los botones iban 14 px más abajo de donde se pegan (medido en
-  // Chromium, 121 → 107 al primer scroll).
-  function acciones(o, fijo) {
-    const f = fijo ? 'm-det-fijo ' : '';
+  // `abajo`: los botones van fijos donde Done (el detalle con su nombre
+  // en la banda), en un bloque con id (#mhAcc) que la regla de lo fijo
+  // de mobile-app.css reconoce. Ocupado y confirmando van en el MISMO
+  // sitio: el aviso de Reopen crece hacia arriba desde ahí, y Cancel /
+  // Delete and reopen quedan donde estaban Resend / Reopen.
+  function acciones(o, abajo) {
+    const id = abajo ? ' id="mhAcc"' : '';
     if (!laDelEscritorio(o.appId)) {
       // Órdenes viejas que ya no están cargadas. Decirlo es mejor que
       // dos botones que fallarían al pulsarlos.
@@ -704,20 +706,24 @@
              'loaded. Resend it from a computer.</div>';
     }
     if (_trabajando) {
-      return '<div class="' + f + 'm-hacc"><div class="m-hacc-busy">' +
+      return '<div class="m-hacc"' + id + '><div class="m-hacc-busy">' +
         (_trabajando === 'enviar' ? 'Building the PDF and sending…' : 'Reopening…') +
         '</div></div>';
     }
     if (_confirmando) {
-      return '<div class="' + f + 'm-hacc-conf">' +
+      return '<div class="m-hacc-conf"' + id + '>' +
         '<b>Reopen deletes this order.</b> Its lines come back to Ordering ' +
         'and the vendor keeps whatever you already sent them.' +
         '<div class="m-hacc"><button type="button" id="mhNo">Cancel</button>' +
         '<button type="button" id="mhSi" class="mal">Delete and reopen</button></div></div>';
     }
-    return '<div class="' + f + 'm-hacc">' +
+    return '<div class="m-hacc"' + id + '>' +
       '<button type="button" id="mhRe">Resend</button>' +
-      '<button type="button" id="mhAbrir" class="mal">Reopen</button></div>';
+      (abajo
+        ? '<button type="button" id="mhAbrir" class="mal" aria-label="Reopen">' +
+            '<i class="ti ti-arrow-back-up" aria-hidden="true"></i></button>'
+        : '<button type="button" id="mhAbrir" class="mal">Reopen</button>') +
+      '</div>';
   }
 
   function engancharAcciones(host, o) {

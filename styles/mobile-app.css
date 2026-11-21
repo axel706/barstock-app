@@ -643,7 +643,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * justo debajo, en "La barra de cristal". */
   body.m-shell #mBand .m-ico:not(.m-ico-alert),
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio,
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun),
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #mhAbrir, #mhSi, #mhNo),
   body.m-shell #mTabs .m-tab.on,
   body.m-shell #mScreens .m-low-b,
   body.m-shell #mScreens :is(#mhTabs, .m-ts-seg) {
@@ -660,7 +660,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   body.m-shell #mBand .m-ico:not(.m-ico-alert)::before,
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio::before,
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun)::before,
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #mhAbrir, #mhSi, #mhNo)::before,
   body.m-shell #mTabs .m-tab.on::before,
   body.m-shell #mScreens .m-low-b::before,
   body.m-shell #mScreens :is(#mhTabs, .m-ts-seg)::before,
@@ -811,7 +811,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * estilo liquid glass de ese botón Done"): misma regla, no una copia.
    * Antes era azul sólido con el texto oscuro (.m-tab.on, más abajo:
    * con el id, ésta le gana). */
-  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moAdd),
+  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moAdd, #mhRe),
   body.m-shell #mTabs .m-tab.on {
     color: #f0f9ff; background: rgba(56, 189, 248, .42);
     border: 1px solid rgba(186, 230, 253, .62);
@@ -820,12 +820,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
       inset 0 0 14px rgba(56,189,248,.45),
       0 10px 30px rgba(0,0,0,.45);
   }
-  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun)::before,
+  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #mhAbrir, #mhSi, #mhNo)::before,
   body.m-shell #mTabs .m-tab.on::before { z-index: -1; }
   /* La pestaña ya es relative; con isolation, su reflejo queda bajo el
    * icono y el nombre, no encima. */
   body.m-shell #mTabs .m-tab.on { isolation: isolate; }
-  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moAdd):active { background: rgba(56, 189, 248, .58); }
+  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moAdd, #mhRe):active { background: rgba(56, 189, 248, .58); }
   /* "It arrived before the count" de la factura (Axel, 2026-11-18,
    * lámina B): el mismo cristal, en violeta, para que no se confunda
    * con "Link to an order" (azul, el de Done) que va justo encima. */
@@ -851,6 +851,21 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
       0 10px 30px rgba(0,0,0,.45);
   }
   body.m-shell #mScreens #moRun:active { background: rgba(52, 211, 153, .58); }
+  /* Reopen de una orden de Sent, y su "Delete and reopen" (Axel,
+   * 2026-11-21, opción B): el mismo cristal, en rojo. Borra la orden:
+   * Reopen va redondo y sólo con su icono al lado de Resend, para que
+   * no pese lo mismo bajo el pulgar; el segundo toque sigue. Cancel
+   * lleva el cristal claro de la regla de arriba, sin tinte. */
+  body.m-shell #mScreens :is(#mhAbrir, #mhSi) {
+    color: #fff1f2; background: rgba(239, 68, 68, .36);
+    border: 1px solid rgba(254, 202, 202, .55);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255,255,255,.5),
+      inset 0 0 14px rgba(248,113,113,.45),
+      0 10px 30px rgba(0,0,0,.45);
+  }
+  body.m-shell #mScreens :is(#mhAbrir, #mhSi):active { background: rgba(239, 68, 68, .52); }
+  body.m-shell #mScreens #mhNo { box-shadow: inset 0 1.5px 0 rgba(255,255,255,.5), 0 10px 30px rgba(0,0,0,.45); }
   body.m-shell #mScreens #miPegado :is(.m-searchbar.m-vidrio, #miAdj, #miNuevo) {
     -webkit-backdrop-filter: none; backdrop-filter: none;
   }
@@ -3590,7 +3605,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     background: #38bdf8; color: #04283d;
     font-family: inherit; font-size: var(--m-body); font-weight: 800;
   }
-  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hacc button { border-radius: 13px !important; }
+  :is(#mScreens, #mTabs, #mBand, #mSheet) .m-hacc:not(#mhAcc):not(#mhAcc .m-hacc) button { border-radius: 13px !important; }
   /* Borrar algo no se viste igual que mandarlo otra vez. Rojo pleno,
    * y el segundo toque de confirmación es lo que lo hace seguro
    * estando tan arriba. */
@@ -5876,13 +5891,35 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* "Save to history" / "Review and send" de Quick order también
    * (#mqMain, Axel 2026-11-18): el mismo botón en el mismo sitio. */
   /* "Add a product" de una orden (#moAdd, Axel 2026-11-20), también. */
-  #mScreens :is(#mTxGo, #mqMain, #moAdd, #moRun) {
+  #mScreens :is(#mTxGo, #mqMain, #moAdd, #moRun, #mhAcc) {
     position: fixed; z-index: 50; left: 16px; right: 16px;
     bottom: calc(env(safe-area-inset-bottom, 0px) + 110px - var(--m-base) * 2.7);
     display: block; width: auto; margin: 0; min-height: calc(var(--m-base) * 3.4);
     font-size: var(--m-strong); font-weight: 800; cursor: pointer;
   }
   #mScreens :is(#mTxGo, #mqMain):disabled { opacity: .55 !important; }
+  /* Resend / Reopen de Sent van juntos en un bloque (#mhAcc), fijo con
+   * la regla de arriba: el bloque reparte, los botones llevan el alto
+   * de Done. Reopen, redondo: tan ancho como alto. Confirmando, el
+   * bloque es el aviso con sus dos botones debajo y crece hacia arriba
+   * desde el mismo sitio. */
+  #mScreens #mhAcc { display: flex; gap: 10px; min-height: 0; }
+  #mScreens #mhAcc :is(#mhRe, #mhSi, #mhNo) { flex: 1; }
+  #mScreens #mhAcc :is(#mhRe, #mhAbrir, #mhSi, #mhNo) {
+    height: calc(var(--m-base) * 3.4); margin: 0; cursor: pointer;
+    font-family: inherit; font-size: var(--m-strong); font-weight: 800;
+  }
+  #mScreens #mhAcc #mhAbrir { flex: 0 0 calc(var(--m-base) * 3.4); padding: 0; font-size: var(--m-title); }
+  #mScreens #mhAcc.m-hacc-conf {
+    display: block; padding: 14px; border-radius: 18px;
+    background: linear-gradient(135deg, rgba(239,68,68,.16), var(--tinta) 55%), var(--tinta);
+    border: 1px solid rgba(248,113,113,.4);
+    box-shadow: 0 10px 30px rgba(0,0,0,.45);
+  }
+  #mScreens #mhAcc.m-hacc-conf .m-hacc { display: flex; gap: 10px; margin: 12px 0 0; }
+  #mScreens #mhAcc .m-hacc-busy {
+    border-radius: 999px; background: var(--tinta); border: 1px solid var(--tinta-borde);
+  }
   .m-tx-hueco { height: calc(var(--m-base) * 5); }
   .m-ro-vacio { margin-top: 40px; text-align: center; font-size: var(--m-body); color: #8fa1b5; }
   /* Tinta (Axel, 2026-11-18: "necesita tinta"): ver --tinta en :root. */

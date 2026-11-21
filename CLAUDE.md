@@ -300,8 +300,12 @@ acopladas (`siempre`): el bloque empieza justo donde se pega, sin
 recorrido. Dentro de un detalle de Sent o de Invoices (2026-11-12), el
 nombre del proveedor va a la banda con `enBanda` (el botón de Time
 Machine pasa a ser atrás, como Settings) y la sección pega su bloque
-con `BarStockBandDock.fijar(el)`: Resend / Reopen, o los tres totales
-de la factura. Lo marca con `.m-det-fijo` porque su aviso rehace el
+con `BarStockBandDock.fijar(el)`: los tres totales de la factura
+(Resend / Reopen de Sent iban pegados así hasta el 2026-11-21; desde
+entonces van fijos donde Done en `#mhAcc`, opción B: Resend en el
+cristal azul a lo ancho y Reopen redondo en cristal rojo, con su icono;
+el aviso de confirmar sale en el mismo sitio, Cancel / Delete and
+reopen debajo). Lo marca con `.m-det-fijo` porque su aviso rehace el
 marco de Orders, y el marco lo vuelve a pegar; sin la marca, el aviso
 deshacía lo pegado. El detalle de un proveedor en Open, igual desde el
 2026-11-20 (Axel: "estilo de un submenú de Settings"): el proveedor en

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261120-212326",
+    "items": [
+      "Sent: Resend and Reopen sit where Done does, in glass"
+    ]
+  },
+  {
     "build": "20261120-143537",
     "items": [
       "Orders, Sent and Invoices show each vendor’s logo"
@@ -180,12 +186,6 @@
     "build": "20261118-134755",
     "items": [
       "Darker cards in Orders: Open, To buy, Sent and Invoices"
-    ]
-  },
-  {
-    "build": "20261118-134042",
-    "items": [
-      "Darker cards for the three numbers on Home"
     ]
   }
 ]
