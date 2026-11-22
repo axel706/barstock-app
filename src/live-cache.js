@@ -43,6 +43,9 @@
   // de la factura y daría el número de antes, guardado 30 minutos. Se
   // apunta y se vuelve a leer al terminar.
   let _otraVez = false;
+  // Cuántos resultados seguidos se han tirado por llegar viejos (arriba).
+  let _descartes = 0;
+  const MAX_DESCARTES = 3;
   const _oyentes = new Set();
   const num = (v) => Number(v) || 0;
 
@@ -59,6 +62,14 @@
     if (!fuente || _pidiendo) return _pidiendo;
     if (_vivo && _vivoEn && Date.now() - _vivoEn < VIVO_MS) return null;
     _pidiendo = fuente.ahora().then(r => {
+      // Llegó un aviso MIENTRAS se calculaba (el inventario de la base al
+      // arrancar, una factura): este resultado ya se sabe viejo y no se
+      // publica; se vuelve a calcular. Se publicaba igual y "On the shelf"
+      // enseñaba dos cifras seguidas al entrar (Axel, 2026-11-22, en vídeo:
+      // ≈645 y a los dos segundos ≈693). Con un tope: una racha de avisos
+      // no puede dejar la pantalla esperando para siempre.
+      if (_otraVez && _descartes < MAX_DESCARTES) { _descartes++; return; }
+      _descartes = 0;
       // Con un conteo activo, o sin conteo conocido, se enseña lo contado.
       const filas = r && r.estado === 'listo' ? r.filas : [];
       _vivo = new Map(filas.filter(f => f.movimiento).map(f => [f.producto, f]));
@@ -73,7 +84,8 @@
     }).finally(() => {
       _vivoEn = _otraVez ? 0 : Date.now();
       _pidiendo = null;
-      avisar();
+      // Descartado, no se avisa: nada cambió para quien lo enseña.
+      if (!(_otraVez && _descartes > 0)) avisar();
       if (_otraVez) { _otraVez = false; cargar(); }
     });
     return _pidiendo;

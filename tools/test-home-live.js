@@ -70,7 +70,7 @@ async function entorno(o) {
   new Function(leer('src/dialog.js'))();
   // `lento`: el LIVE llega DESPUÉS del resto de lo que repinta el Home
   // (el resumen de facturas), para que sólo lo repinte alCambiar.
-  w.BarStockRunOut = { ahora: async () => (o.lento ? await esperar(60) : null, o.contando ? { estado: 'contando' } : { estado: 'listo', hoy: HOY, conteo: '2026-11-09T04:30:00Z', filas: FILAS }) };
+  w.BarStockRunOut = { ahora: o.ahora || (async () => (o.lento ? await esperar(60) : null, o.contando ? { estado: 'contando' } : { estado: 'listo', hoy: HOY, conteo: '2026-11-09T04:30:00Z', filas: FILAS })) };
   new Function(leer('src/live-cache.js'))();
   new Function(leer('src/running-out.js'))();
   const m = (item, onHand, suggested, value) => ({ item, vendor: 'LOOP', code: '', category: 'Liquor', onHand, suggested, value });
@@ -197,6 +197,35 @@ grupo('el LIVE llega con el Home pintado');
   await esperar(60);
   prueba('el Home lo pide al pintarse y se repinta al llegar', !!estante(host).querySelector('.m-cf-live') &&
     valor(estante(host)) === '$550', estante(host).textContent.replace(/\s+/g, ' '));
+}
+
+grupo('un LIVE que ya se sabe viejo no se enseña');
+{
+  // Axel, 2026-11-22, en vídeo: al entrar, "On the shelf" pasaba de
+  // ≈645 a ≈693 botellas en dos segundos. El Home pide el LIVE al
+  // pintarse; mientras se calcula llega el inventario de la base
+  // (inventoryUpdated), y el cálculo en curso, hecho con el maestro de
+  // antes, se enseñaba igual antes de recalcular. Aquí el primer cálculo
+  // da $999 (viejo) y el segundo $550: sólo puede verse "…" y luego $550.
+  // El primer cálculo, el que se pide al pintar, es el viejo: da otras
+  // filas (de más). El segundo, tras el aviso, el bueno ($550).
+  let llamadas = 0;
+  const bueno = { estado: 'listo', hoy: HOY, conteo: '2026-11-09T04:30:00Z', filas: FILAS };
+  const viejo = { estado: 'listo', hoy: HOY, conteo: '2026-11-09T04:30:00Z',
+    filas: FILAS.map(f => Object.assign({}, f, { llego: f.llego + 10, live: f.live + 10, movimiento: true })) };
+  const ahora = async () => { llamadas++; await esperar(60); return llamadas === 1 ? viejo : bueno; };
+  const { w, host } = await entorno({ sinCargar: true, ahora });
+  const vistos = new Set();
+  const mirar = () => { const e = estante(host); if (e) vistos.add(valor(e)); };
+  mirar();
+  const obs = new w.MutationObserver(mirar); obs.observe(host, { subtree: true, childList: true, characterData: true });
+  await esperar(10);
+  global.CustomEvent = w.CustomEvent;
+  w.BarStockEvents.emit('inventoryUpdated', {});
+  await esperar(250);
+  mirar(); obs.disconnect();
+  prueba('sólo se ve "…" y la cifra buena, nunca la del cálculo viejo', [...vistos].every(v => v === '…' || v === '$550') && vistos.has('$550'),
+    [...vistos].join(' → '));
 }
 
 grupo('el aviso acepta filas');

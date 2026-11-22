@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261122-121736",
+    "items": [
+      "Home: On the shelf no longer shows an outdated number first"
+    ]
+  },
+  {
     "build": "20261122-120844",
     "items": [
       "App icon back to the flat B"
@@ -181,12 +187,6 @@
     "items": [
       "Settings: Save sits where Done does, in glass",
       "People: Add person and Create too"
-    ]
-  },
-  {
-    "build": "20261120-223308",
-    "items": [
-      "Fine Wine & Good Spirits logo in Orders and Invoices"
     ]
   }
 ]
