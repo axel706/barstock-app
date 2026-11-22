@@ -6049,21 +6049,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   #mScreens #moAcc #moAdd { flex: 0 0 calc(var(--m-base) * 3.4); padding: 0; font-size: var(--m-title); }
   #mScreens #moAcc #moAdd i { display: block; transition: transform .45s cubic-bezier(.4,0,.2,1), opacity .45s; }
   #mScreens #moAcc #moAdd.gira i { transform: rotate(135deg) scale(.8); opacity: .2; }
-  /* El cristal que crece desde el + hasta la pantalla entera (ver
-   * crecerYAbrir en mobile-orders.js). Va en el body, por debajo del
-   * diálogo de añadir, que se abre encima cuando termina. */
-  .m-ord-crece {
-    position: fixed; z-index: 900; pointer-events: none;
-    left: var(--x); top: var(--y); width: var(--w); height: var(--h);
-    border-radius: calc(var(--m-base) * 1.7);
-    background: rgba(16, 120, 90, .7); border: 1px solid rgba(167, 243, 208, .6);
-    transition: left .45s cubic-bezier(.4,0,.2,1), top .45s cubic-bezier(.4,0,.2,1),
-      width .45s cubic-bezier(.4,0,.2,1), height .45s cubic-bezier(.4,0,.2,1),
-      border-radius .45s, background .45s, border-color .45s, opacity .25s;
-  }
-  .m-ord-crece.on { left: 0; top: 0; width: 100vw; height: 100dvh; border-radius: 0; background: rgba(6, 20, 18, .94); border-color: transparent; }
-  .m-ord-crece.fuera { opacity: 0; }
-  @media (prefers-reduced-motion: reduce) { .m-ord-crece { transition: none; } #mScreens #moAcc #moAdd i { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { #mScreens #moAcc #moAdd i { transition: none; } }
   #mScreens #mhAcc :is(#mhRe, #mhSi, #mhNo) { flex: 1; }
   #mScreens #mhAcc :is(#mhRe, #mhAbrir, #mhSi, #mhNo) {
     height: calc(var(--m-base) * 3.4); margin: 0; cursor: pointer;
@@ -6418,7 +6404,18 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     position: absolute; inset: 0; display: flex; flex-direction: column; box-sizing: border-box;
     padding: calc(env(safe-area-inset-top, 0px) + 12px) 14px 0; background: none;
   }
-  body:has(#mSheet.m-bus) :is(#mScreens, #mBand, #mTabs, #mFloor, #mDock, #mPull) { visibility: hidden; }
+  body:has(#mSheet.m-bus:not(.m-bus-sale)) :is(#mScreens, #mBand, #mTabs, #mFloor, #mDock, #mPull) { visibility: hidden; }
+  /* Saliendo de un botón (el + de una orden de Open, Axel 2026-11-22):
+   * el buscador crece en un círculo desde él. Mientras tanto la página
+   * no se esconde (regla de arriba) y el propio buscador la desenfoca y
+   * oscurece, que se parece al fondo de la app que queda al terminar. */
+  #mSheet.m-bus.m-bus-sale {
+    clip-path: circle(var(--sale-r) at var(--sale-x) var(--sale-y));
+    transition: clip-path .44s cubic-bezier(.4, 0, .2, 1);
+    background: rgba(11, 18, 32, .35);
+    -webkit-backdrop-filter: blur(28px) saturate(140%);
+            backdrop-filter: blur(28px) saturate(140%);
+  }
   #mSheet .m-bus-top { display: flex; align-items: center; gap: 10px; }
   #mSheet .m-bus-in {
     flex: 1; min-width: 0; box-sizing: border-box; padding: 11px 13px;

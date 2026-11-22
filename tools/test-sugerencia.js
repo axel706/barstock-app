@@ -278,24 +278,28 @@ grupo('2c · el detalle como una subsección de Settings (Axel, 2026-11-20)');
   prueba('ya no hay botón de enviar arriba de la lista', !host.querySelector('.m-ord-enviar'));
   prueba('…al final, con su hueco para que no tape lo último', !!acc && !!host.querySelector('.m-tx-hueco') &&
     (host.querySelector('#moList').compareDocumentPosition(acc) & v.Node.DOCUMENT_POSITION_FOLLOWING) > 0);
-  // El + crece en su cristal verde y DESPUÉS abre el buscador a
-  // pantalla completa de la app (Axel, 2026-11-22, lámina A sin el
-  // teclado): el recuadro de antes flotaba sobre la página y su campo,
-  // por debajo de 16 px, hacía zoom en el iPhone.
+  // El buscador SALE del + (Axel, 2026-11-22): se abre al momento y
+  // crece en un círculo desde el botón. Antes un cristal verde crecía
+  // solo y el buscador "aparecía" al final, de golpe.
   let bus = null; v.__cerrados = 0;
-  v.BarStockBottleSearch = { abrir(o) { bus = o; }, cerrar() { v.__cerrados++; } };
+  v.BarStockBottleSearch = {
+    abrir(o) { bus = o; const h = v.document.createElement('div'); h.id = 'mSheet'; h.className = 'm-sheet m-bus'; v.document.body.appendChild(h); },
+    cerrar() { v.__cerrados++; const h = v.document.getElementById('mSheet'); if (h) h.remove(); }
+  };
   v.BarStockAddToOrder = { open() { v.__viejo = true; } };
+  const hoja = () => v.document.getElementById('mSheet');
   add.click();
-  prueba('con reducir movimiento, abre el buscador sin animar', !!bus && !v.document.querySelector('.m-ord-crece'));
-  bus = null;
+  prueba('con reducir movimiento, abre el buscador sin animar', !!bus && !!hoja() && !hoja().classList.contains('m-bus-sale'));
+  v.BarStockBottleSearch.cerrar(); bus = null;
   const mmAntes = v.matchMedia;
   v.matchMedia = (q) => ({ matches: !/reduced-motion/.test(q), addEventListener() {}, removeEventListener() {} });
   add.click();
-  prueba('el + no abre de golpe: primero crece', !bus && !!v.document.querySelector('.m-ord-crece'));
+  prueba('el buscador se abre al momento, no al final de la animación', !!bus && !v.__viejo);
+  prueba('…saliendo del +: crece en un círculo desde el botón', !!hoja() && hoja().classList.contains('m-bus-sale') &&
+    /px$/.test(hoja().style.getPropertyValue('--sale-r')) && /px$/.test(hoja().style.getPropertyValue('--sale-x')), hoja() && hoja().getAttribute('style'));
+  prueba('sin la pantalla verde de antes', !v.document.querySelector('.m-ord-crece'));
   await esperar(700);
-  prueba('…y luego abre el buscador a pantalla completa, no el recuadro', !!bus && !v.__viejo);
-  await esperar(400);
-  prueba('…y el cristal que creció se va', !v.document.querySelector('.m-ord-crece'));
+  prueba('…y al llenar la pantalla queda como siempre', !!hoja() && !hoja().classList.contains('m-bus-sale') && !hoja().style.getPropertyValue('--sale-r'));
   v.matchMedia = mmAntes;
   const ps = (bus && bus.productos) || [];
   prueba('sólo los de este proveedor, sin lo ya colocado', ps.includes('Kentucky') && ps.includes('Daou') && !ps.includes('Otro') && !ps.includes('Puesto'), ps.join());

@@ -383,7 +383,9 @@ grupo('5 · la sección Transfers (src/mobile-transfers.js, lámina B)');
     const css = leer('styles/mobile-app.css');
     prueba('el buscador es un velo transparente sobre el fondo de la app: lo de debajo se esconde',
       /#mSheet\.m-bus \{ background: none; \}/.test(css) && /#mSheet \.m-bus-box \{[^}]*background: none;/.test(css) &&
-      /body:has\(#mSheet\.m-bus\) :is\(#mScreens, #mBand, #mTabs, #mFloor, #mDock, #mPull\) \{ visibility: hidden; \}/.test(css));
+      // Salvo mientras sale de un botón (.m-bus-sale, el + de una orden):
+      // entonces la página sigue detrás, desenfocada por el buscador.
+      /body:has\(#mSheet\.m-bus:not\(\.m-bus-sale\)\) :is\(#mScreens, #mBand, #mTabs, #mFloor, #mDock, #mPull\) \{ visibility: hidden; \}/.test(css));
     prueba('la lista deja al final el aire del teclado', /\.m-bus-lista \{[^}]*padding-bottom: calc\(var\(--teclado, 0px\) \+ 12px\)/.test(css));
   }
   prueba('"Which is yours?" al confirmar usa el mismo buscador', /BarStockBottleSearch/.test(leer('src/transfer-confirm.js')) &&

@@ -343,9 +343,11 @@ total y las líneas van en la banda bajo el proveedor (`enBanda(titulo,
 sub, aviso)`, "8 without price" en ámbar), y abajo, donde Done, `#moAcc`
 como `#mhAcc` de Sent: "Review and send" (`#moSend`) a lo ancho en el
 cristal azul, sin el total, y el + (`#moAdd`) redondo, verde como Quick
-order, a la DERECHA; al tocarlo su cristal crece hasta la pantalla
-(`crecerYAbrir`, sin animar con reducir movimiento) y abre el buscador
-a pantalla completa (`buscarParaAnadir`, lámina A sin el teclado, el
+order, a la DERECHA; al tocarlo el buscador a pantalla completa SALE
+de él (`salirDelBoton`: se abre al momento y crece en un círculo desde
+el +, `.m-bus-sale` con `--sale-*`; un cristal verde que crecía y
+dejaba aparecer el buscador al final "no sale del botón"; sin animar
+con reducir movimiento) (`buscarParaAnadir`, lámina A sin el teclado, el
 mismo día: el recuadro de `add-to-order.js` flotaba tras la animación y
 su campo hacía zoom): sólo lo de ese proveedor sin colocar; lo elegido
 entra con 1 y se ajusta con el −/+ de su línea, marcada "added"; lo que

@@ -476,7 +476,7 @@
     // Se le pasa el proveedor. Sin él, el diálogo mira la pestaña del
     // escritorio —que aquí no significa nada— y se cierra solo.
     const abrirAdd = () => { if (window.BarStockAddToOrder) window.BarStockAddToOrder.open(v.nombre); };
-    if (add) add.onclick = () => (add.closest('#moAcc') ? crecerYAbrir(add, () => buscarParaAnadir(v)) : abrirAdd());
+    if (add) add.onclick = () => (add.closest('#moAcc') ? salirDelBoton(add, () => buscarParaAnadir(v)) : abrirAdd());
     host.querySelectorAll('[data-volver]').forEach(b => {
       b.onclick = () => {
         // Vuelve a automático, no a la cantidad que tuviera antes: el
@@ -493,16 +493,6 @@
       _recien = null;
     }
   }
-
-  // ── El + que crece (Axel, 2026-11-22, lámina B ajustada) ────────────
-  //
-  // Al tocar el + verde, el + gira hacia una × y su cristal crece desde
-  // donde está hasta cubrir la pantalla; entonces se abre el diálogo de
-  // añadir, y el cristal se desvanece debajo de él. Una copia fija con la
-  // posición del botón (no el botón mismo, que va dentro del bloque fijo
-  // y se quedaría a mitad de camino). Sin movimiento si el teléfono lo
-  // pide: se abre al momento.
-  const CRECE_MS = 480;
 
   // ── Añadir con el buscador a pantalla completa (Axel, 2026-11-22,
   // lámina A sin el teclado) ────────────────────────────────────────────
@@ -551,29 +541,43 @@
       }
     });
   }
-  function crecerYAbrir(btn, abrir) {
+  // ── El buscador sale del + (Axel, 2026-11-22) ────────────────────────
+  //
+  // Primero fue un cristal verde que crecía hasta la pantalla y, al
+  // terminar, el buscador aparecía de golpe: "es como si el círculo se
+  // animara en una pantalla verde", no como si la búsqueda saliera del
+  // botón. Ahora el buscador se abre AL MOMENTO y crece en un círculo
+  // desde el centro del + (clip-path con --sale-*, la transición en
+  // mobile-app.css). Mientras crece, la página sigue detrás, desenfocada
+  // y oscurecida por el propio buscador (.m-bus-sale), que es lo que
+  // se parece al fondo de la app; al llenar la pantalla se quita la
+  // clase y la página se esconde como en cualquier búsqueda. Sin
+  // movimiento si el teléfono lo pide.
+  const SALE_MS = 460;
+  function salirDelBoton(btn, abrir) {
     const quieto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (quieto || document.querySelector('.m-ord-crece')) { abrir(); return; }
     const r = btn.getBoundingClientRect();
-    const c = document.createElement('div');
-    c.className = 'm-ord-crece';
-    c.style.setProperty('--x', r.left + 'px');
-    c.style.setProperty('--y', r.top + 'px');
-    c.style.setProperty('--w', r.width + 'px');
-    c.style.setProperty('--h', r.height + 'px');
-    document.body.appendChild(c);
+    abrir();
+    const h = document.getElementById('mSheet');
+    if (quieto || !h || !h.classList.contains('m-bus')) return;
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const W = window.innerWidth || 0, H = window.innerHeight || 0;
+    const R = Math.ceil(Math.hypot(Math.max(cx, W - cx), Math.max(cy, H - cy)));
+    h.style.setProperty('--sale-x', cx + 'px');
+    h.style.setProperty('--sale-y', cy + 'px');
+    h.style.setProperty('--sale-r', Math.max(1, r.width / 2) + 'px');
+    h.classList.add('m-bus-sale');
     btn.classList.add('gira');
-    // Dos fotogramas: el primero pinta la copia en el sitio del botón, el
-    // segundo la manda crecer (con uno solo el navegador junta los dos y
-    // no hay transición).
+    // Un fotograma con el círculo del tamaño del botón y, después, el de
+    // la pantalla: con los dos en el mismo, no hay transición.
+    void h.offsetWidth;
     const raf = window.requestAnimationFrame || ((f) => setTimeout(f, 16));
-    raf(() => raf(() => c.classList.add('on')));
+    raf(() => h.style.setProperty('--sale-r', R + 'px'));
     setTimeout(() => {
-      abrir();
+      h.classList.remove('m-bus-sale');
+      ['--sale-x', '--sale-y', '--sale-r'].forEach(k => h.style.removeProperty(k));
       btn.classList.remove('gira');
-      c.classList.add('fuera');
-      setTimeout(() => c.remove(), 300);
-    }, CRECE_MS);
+    }, SALE_MS);
   }
 
   // ── Revisión ─────────────────────────────────────────────────────────
