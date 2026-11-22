@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261122-101414",
+    "items": [
+      "Counting: Red Label and Bulleit guides measured from photos"
+    ]
+  },
+  {
     "build": "20261122-100813",
     "items": [
       "Counting: Bulleit, Fireball and Red Label guides fixed"
@@ -181,13 +187,6 @@
     "items": [
       "Orders: what runs out before its delivery",
       "LOOP lists them from every vendor, with To buy"
-    ]
-  },
-  {
-    "build": "20261119-083401",
-    "items": [
-      "Running out: only this cycle, until Sunday count",
-      "Later dates say Out next Tue"
     ]
   }
 ]

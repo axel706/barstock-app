@@ -600,13 +600,13 @@
       // a mitad del hombro: encima, cuello vacio y la tapa dorada.
       p: [[0,0.8015], [0.0156,0.9416], [0.0469,0.9987], [0.0781,1], [0.1094,1], [0.1406,1], [0.1719,1], [0.2031,1], [0.2344,1], [0.2656,1], [0.2969,1], [0.3281,1], [0.3594,1], [0.3906,1], [0.4219,1], [0.4531,1], [0.4844,1], [0.5156,1], [0.5469,1], [0.5781,1], [0.6094,1], [0.6406,1], [0.6719,1], [0.7031,0.9516], [0.7344,0.7971], [0.7656,0.6116], [0.7969,0.471], [0.8281,0.3936], [0.8594,0.3663], [0.8906,0.404], [0.9219,0.4079], [0.9531,0.4005], [0.9844,0.369], [1,0.1838]],
       // Las marcas (Axel, 2026-11-22, tanda 1, estilo A2·7, corregidas sobre
-      // la lámina): el escudo, la banda roja a 32° que cruza la botella de lado a lado (la recorta la silueta) con sus cuatro renglones juntos, y la etiqueta de abajo.
+      // la lámina): el escudo, la banda roja a 19° (medida en la foto por sus píxeles rojos: sube 19°, centrada al 47.7 % y de 16 % de grueso) que cruza la botella de lado a lado (la recorta la silueta), con sus cuatro renglones a las alturas medidas, y la etiqueta de abajo.
       // Alturas de la foto con que se midio la silueta; de cada renglon,
       // el grueso de sus letras y cuantas letras tiene cada palabra.
       marcas: [
         {tipo: 'sello', y: 0.63, r: 0.04, renglones: []},
-        {tipo: 'etiqueta', y: [0.42, 0.56], ancho: 1.8, rot: 32, renglones: []},
-        {tipo: 'texto', y: [0.415, 0.575], ancho: 0.95, rot: 32, renglones: [{g: 0.013, largo: 0.5, palabras: [7, 6]}, {g: 0.028, largo: 0.72, palabras: [3, 5]}, {g: 0.009, largo: 0.62, palabras: [7, 6, 6]}, {g: 0.016, largo: 0.7, palabras: [4, 6, 1, 4]}]},
+        {tipo: 'etiqueta', y: [0.396, 0.558], ancho: 1.8, rot: 19, renglones: []},
+        {tipo: 'texto', y: [0.3975, 0.5535], ancho: 1.0, rot: 19, renglones: [{g: 0.014, largo: 0.62, palabras: [7, 6]}, {g: 0.027, largo: 0.85, palabras: [3, 5]}, {g: 0.009, largo: 0.78, palabras: [7, 6, 6]}, {g: 0.02, largo: 0.82, palabras: [4, 6, 1, 4]}]},
         {tipo: 'etiqueta', y: [0.06, 0.13], ancho: 0.6, renglones: [{g: 0.012, largo: 0.8, palabras: [11, 4]}]}
       ]
     },
@@ -878,11 +878,12 @@
       // viendo el liquido en la foto.
       p: [[0,0.5185], [0.0156,0.8351], [0.0469,0.9446], [0.0781,0.9386], [0.1094,0.9499], [0.1406,0.9556], [0.1719,0.9556], [0.2031,0.9631], [0.2344,0.9644], [0.2656,0.9668], [0.2969,0.9663], [0.3281,0.9686], [0.3594,0.9733], [0.3906,0.9754], [0.4219,0.9822], [0.4531,0.9822], [0.4844,0.9822], [0.5156,0.9875], [0.5469,0.9911], [0.5781,0.9942], [0.6094,1], [0.6406,1], [0.6719,0.9946], [0.7031,0.9566], [0.7344,0.8708], [0.7656,0.6773], [0.7969,0.3427], [0.8281,0.2837], [0.8594,0.3043], [0.8906,0.3133], [0.9219,0.3156], [0.9531,0.3022], [0.9844,0.2905], [1,0.2059]],
       // Las marcas (Axel, 2026-11-22, tanda 1, estilo A2·7, corregidas sobre
-      // la lámina): el nombre y "Frontier Whiskey" en relieve (en arco suave, no de plátano), la banda oscura diagonal de arriba de la etiqueta y sus cuatro renglones.
+      // la lámina): BULLEIT en relieve en arco suave y BOURBON recto (en la botella sólo el de arriba se curva), la banda oscura diagonal de arriba de la etiqueta y sus cuatro renglones.
       // Alturas de la foto con que se midio la silueta; de cada renglon,
       // el grueso de sus letras y cuantas letras tiene cada palabra.
       marcas: [
-        {tipo: 'texto', y: [0.49, 0.63], ancho: 0.85, arco: 0.04, renglones: [{g: 0.05, largo: 0.8, palabras: [7]}, {g: 0.05, largo: 0.82, palabras: [7]}]},
+        {tipo: 'texto', y: [0.565, 0.635], ancho: 0.85, arco: 0.05, renglones: [{g: 0.05, largo: 0.8, palabras: [7]}]},
+        {tipo: 'texto', y: [0.49, 0.56], ancho: 0.85, renglones: [{g: 0.05, largo: 0.82, palabras: [7]}]},
         {tipo: 'texto', y: [0.365, 0.455], ancho: 0.8, renglones: [{g: 0.026, largo: 0.68, palabras: [8]}, {g: 0.026, largo: 0.64, palabras: [7]}]},
         {tipo: 'etiqueta', y: [0.29, 0.335], ancho: 1.4, rot: 3, renglones: []},
         {tipo: 'etiqueta', y: [0.04, 0.29], ancho: 0.98, renglones: []},
