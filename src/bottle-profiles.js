@@ -696,33 +696,40 @@
       p: [[0,0.6496], [0.0156,0.8763], [0.0469,0.983], [0.0781,0.9773], [0.1094,0.9773], [0.1406,0.9773], [0.1719,0.9836], [0.2031,0.9886], [0.2344,0.9886], [0.2656,0.9886], [0.2969,0.9886], [0.3281,0.9886], [0.3594,0.9886], [0.3906,0.9933], [0.4219,0.9943], [0.4531,0.9943], [0.4844,0.9943], [0.5156,0.995], [0.5469,1], [0.5781,1], [0.6094,1], [0.6406,0.9923], [0.6719,0.9391], [0.7031,0.8145], [0.7344,0.5521], [0.7656,0.3952], [0.7969,0.3864], [0.8281,0.381], [0.8594,0.3737], [0.8906,0.3832], [0.9219,0.4071], [0.9531,0.4017], [0.9844,0.3783], [1,0.303]]
     },
     grey_goose: {
-      name: 'Grey Goose', asp: 4.46, yFull: 0.68, pourable: true,
-      // La de Grey Goose. 1000 px de alto por 224 de ancho maximo. La foto
-      // traia un escalon a media botella: de la mitad para abajo salia un
-      // 7 % mas ancha, de golpe, en unas 30 filas. Es del recorte, no de
-      // la botella, y Axel lo vio en la lamina: "debe ser continuo". Se
-      // eligio entre dos arreglos dibujados; el suyo es este, el cuerpo
-      // que se estrecha en linea recta de la base (r 1) al arranque del
-      // hombro (r .928, lo medido ahi). Desajuste de area contra la foto
-      // 1.98 %, casi todo el escalon que se quito.
+      name: 'Grey Goose', asp: 4.76, yFull: 0.68, pourable: true,
+      // La de Grey Goose, medida de la foto de frente que mandó Axel el
+      // 2026-11-22 (fondo transparente: el borde exacto por el canal alfa,
+      // fila por fila; 564 px de alto). Desajuste de área 0.33 %.
       //
-      // Hombro del 59 % al 69 %, cuello largo. El vidrio esmerilado no deja
+      // Axel: "en la parte de abajo ni siquiera te estás acercando a la
+      // forma correcta". La de antes salía de otra foto, de 1000 px, con un
+      // escalón a media botella: de la mitad para abajo un 7 % más ancha.
+      // Se arregló con un cono (r 1 en la base a .928 en el hombro), pero lo
+      // verdadero era la mitad de ARRIBA: el cuerpo es un cilindro (0.995
+      // del 3 al 55 %, con un píxel de ruido: va a 1) y la base se redondea
+      // en el primer 2.5 % (de ahí los puntos extra en 0.005, 0.01 y 0.025).
+      // Con el ancho de arriba, la foto vieja daba 1000/208 = 4.8 de
+      // esbeltez; ésta, 4.76. El cono contaba de más hasta 2.7 % de botella
+      // a media altura.
+      //
+      // Hombro del 58 % al 70 %, cuello largo. El vidrio esmerilado no deja
       // ver el liquido: yFull .68 sigue el criterio de botanist.
-      p: [[0,0.994], [0.0156,0.9994], [0.0469,1], [0.0781,0.9958], [0.1094,0.9915], [0.1406,0.9873], [0.1719,0.9831], [0.2031,0.9788], [0.2344,0.9746], [0.2656,0.9704], [0.2969,0.9661], [0.3281,0.9619], [0.3594,0.9576], [0.3906,0.9534], [0.4219,0.9492], [0.4531,0.9449], [0.4844,0.9407], [0.5156,0.9365], [0.5469,0.9322], [0.5781,0.928], [0.6094,0.8874], [0.6406,0.729], [0.6719,0.4726], [0.7031,0.3807], [0.7344,0.375], [0.7656,0.3664], [0.7969,0.3661], [0.8281,0.3635], [0.8594,0.3511], [0.8906,0.3478], [0.9219,0.3584], [0.9531,0.3687], [0.9844,0.3167], [1,0.1354]],
+      p: [[0,0.1886], [0.005,0.6874], [0.01,0.8963], [0.025,0.9935], [0.0469,1], [0.0781,1], [0.1094,1], [0.1406,1], [0.1719,1], [0.2031,1], [0.2344,1], [0.2656,1], [0.2969,1], [0.3281,1], [0.3594,1], [0.3906,1], [0.4219,1], [0.4531,1], [0.4844,1], [0.5156,1], [0.5469,1], [0.5781,0.9952], [0.6094,0.9495], [0.6406,0.7948], [0.6719,0.5107], [0.7031,0.4238], [0.7344,0.4086], [0.7656,0.4], [0.7969,0.3945], [0.8281,0.3988], [0.8594,0.3913], [0.8906,0.3821], [0.9219,0.3743], [0.9531,0.4007], [0.9844,0.3846], [1,0.2067]],
       // Las marcas (tanda 2, 2026-11-22, medidas sobre la foto con tools/marcas):
-      // la cápsula azul del cuello con su nombre; el lago (un óvalo, algo
-      // corrido a la derecha en la foto); GREY GOOSE y VODKA, DISTILLED AND
-      // BOTTLED, FRANCE e IMPORTED, impresos en el vidrio esmerilado (sin
-      // papel). Los gansos son trazos sueltos sin forma que dibujar: no van.
+      // medidas sobre la foto de frente de Axel (2026-11-22), la misma de la
+      // silueta: la cápsula azul del cuello con su nombre; el lago (un óvalo);
+      // GREY GOOSE, VODKA, DISTILLED AND BOTTLED, FRANCE e IMPORTED, impresos
+      // en el vidrio esmerilado (sin papel; los tres de abajo, algo a la
+      // derecha: x). Los gansos y la bandera no van.
       marcas: [
-        {tipo: 'etiqueta', y: [0.807, 0.947], ancho: 1, renglones: []},
-        {tipo: 'texto', y: [0.906, 0.919], ancho: 0.6, renglones: [{g: 0.013, largo: 1, palabras: [4, 5]}]},
-        {tipo: 'etiqueta', y: [0.305, 0.435], ancho: 0.89, forma: 'ovalo', renglones: []},
-        {tipo: 'texto', y: [0.222, 0.26], ancho: 0.9, arco: -0.02, renglones: [{g: 0.036, largo: 1, palabras: [4, 5]}]},
-        {tipo: 'texto', y: [0.189, 0.211], ancho: 0.54, renglones: [{g: 0.022, largo: 1, palabras: [5]}]},
-        {tipo: 'texto', y: [0.161, 0.171], ancho: 0.61, renglones: [{g: 0.01, largo: 1, palabras: [9, 3, 7]}]},
-        {tipo: 'texto', y: [0.131, 0.145], ancho: 0.26, renglones: [{g: 0.014, largo: 1, palabras: [6]}]},
-        {tipo: 'texto', y: [0.075, 0.09], ancho: 0.6, arco: -0.03, renglones: [{g: 0.013, largo: 1, palabras: [8]}]}
+        {tipo: 'etiqueta', y: [0.802, 0.942], ancho: 1, renglones: []},
+        {tipo: 'texto', y: [0.909, 0.919], ancho: 0.6, renglones: [{g: 0.01, largo: 1, palabras: [4, 5]}]},
+        {tipo: 'etiqueta', y: [0.31, 0.41], ancho: 0.9, forma: 'ovalo', renglones: []},
+        {tipo: 'texto', y: [0.208, 0.242], ancho: 0.91, arco: -0.02, renglones: [{g: 0.034, largo: 1, palabras: [4, 5]}]},
+        {tipo: 'texto', y: [0.176, 0.195], ancho: 0.53, x: 0.03, renglones: [{g: 0.019, largo: 1, palabras: [5]}]},
+        {tipo: 'texto', y: [0.149, 0.158], ancho: 0.58, x: 0.06, renglones: [{g: 0.009, largo: 1, palabras: [9, 3, 7]}]},
+        {tipo: 'texto', y: [0.121, 0.133], ancho: 0.27, x: 0.07, renglones: [{g: 0.012, largo: 1, palabras: [6]}]},
+        {tipo: 'texto', y: [0.067, 0.08], ancho: 0.58, x: 0.06, arco: -0.02, renglones: [{g: 0.012, largo: 1, palabras: [8]}]}
       ]
     },
     ciroc: {

@@ -43,7 +43,7 @@ new Function(fs.readFileSync(path.join(RAIZ, 'src/bottle-profiles.js'), 'utf8'))
 const B = window.BarStockBottleProfiles;
 const E = [
   ['nikka_coffey', 'Nikka Coffey', 3.15, 0.71],
-  ['grey_goose', 'Grey Goose', 4.46, 0.68],
+  ['grey_goose', 'Grey Goose', 4.76, 0.68],
   ['ciroc', 'Cîroc', 4.47, 0.81],
   ['whistlepig', 'WhistlePig', 2.05, 0.72]
 ];
@@ -56,24 +56,23 @@ for (const [k, n, asp, yf] of E) {
     P && (P.asp + ' / ' + P.yFull));
 }
 
-console.log('\nGrey Goose, continua de la base al hombro');
+console.log('\nGrey Goose, recta de la base al hombro y con la base redonda');
+// Axel, 2026-11-22, con una foto de la botella de frente: "en la parte de
+// abajo ni siquiera te estás acercando a la forma correcta". La de antes
+// era un cono (r 1 en la base a .928 en el hombro), el arreglo de un
+// escalón de la foto vieja: su mitad de abajo salía un 7 % más ancha y lo
+// verdadero era la de arriba. Con la foto de Axel (fondo transparente,
+// borde por el canal alfa) el cuerpo es un cilindro y la base se redondea
+// en el primer 2.5 %.
 {
   const P = B.PROFILES.grey_goose;
-  const tramo = P ? P.p.filter(([y]) => y >= 0.0469 && y <= 0.5781) : [];
-  let baja = tramo.length > 10, iguales = tramo.length > 10;
-  const pasos = [];
-  for (let i = 1; i < tramo.length; i++) {
-    const d = tramo[i - 1][1] - tramo[i][1];
-    pasos.push(d);
-    if (d < 0) baja = false;
-  }
-  const max = Math.max(...pasos), min = Math.min(...pasos);
-  // Con el escalón de la foto, un paso era de .03 y los demás de cero.
-  iguales = iguales && max - min < 0.002;
-  prueba('el radio solo baja', baja, pasos.map(d => d.toFixed(3)).join(' '));
-  prueba('sin escalon: todos los pasos iguales', iguales, min.toFixed(4) + ' … ' + max.toFixed(4));
-  prueba('de r 1 en la base a .928 en el hombro', tramo.length && tramo[0][1] === 1 && tramo[tramo.length - 1][1] === 0.928,
-    tramo.length && (tramo[0][1] + ' → ' + tramo[tramo.length - 1][1]));
+  const cuerpo = P ? P.p.filter(([y]) => y >= 0.0469 && y <= 0.5469) : [];
+  prueba('el cuerpo es recto: el mismo ancho de la base al hombro', cuerpo.length > 10 && cuerpo.every(([, r]) => r === 1),
+    cuerpo.map(([, r]) => r).join(' '));
+  prueba('la base es redonda, no una esquina', !!P && P.p[0][1] < 0.3 && B.radiusAt('grey_goose', 0.01) < 0.95 && B.radiusAt('grey_goose', 0.03) > 0.98,
+    P && (P.p[0][1] + ' · ' + B.radiusAt('grey_goose', 0.01).toFixed(3)));
+  prueba('el hombro empieza donde en la foto (todavía ancha al 58 %, a media bajada al 64 %)', B.radiusAt('grey_goose', 0.578) > 0.98 && Math.abs(B.radiusAt('grey_goose', 0.6406) - 0.79) < 0.03,
+    B.radiusAt('grey_goose', 0.578).toFixed(3) + ' / ' + B.radiusAt('grey_goose', 0.6406).toFixed(3));
 }
 
 console.log('\ncada una conserva lo suyo');

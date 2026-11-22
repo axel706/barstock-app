@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261122-113015",
+    "items": [
+      "Counting: Grey Goose bottle shape fixed",
+      "Straight body and round base, as the real bottle"
+    ]
+  },
+  {
     "build": "20261122-111304",
     "items": [
       "Counting: label guides on 9 more bottles",
@@ -179,13 +186,6 @@
     "build": "20261120-143537",
     "items": [
       "Orders, Sent and Invoices show each vendor’s logo"
-    ]
-  },
-  {
-    "build": "20261120-142348",
-    "items": [
-      "Orders: each vendor with its color and initials",
-      "Quick order sits where Done does, in green"
     ]
   }
 ]
