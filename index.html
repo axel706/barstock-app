@@ -28,7 +28,12 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <!-- ?v en el icono también: Safari lo guarda por su dirección, y sin
        cambiarla, quitar la app y volver a añadirla puede traer el viejo. -->
-  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=2">
+  <!-- El icono es la B de cristal (Axel, 2026-11-22; su original de
+       1024 px, assets/icons/cristal-1024.jpg). Los anteriores se guardan
+       para volver a ellos: la B plana en assets/icons/plano/ (con su
+       favicon) y la primera en assets/icons/blanco/. Volver es copiarlos
+       encima y subir el ?v de aquí y de manifest.json. -->
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=3">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -54,7 +59,7 @@
 <script src="src/login-background.js?v=lb4"></script>
 
   <link rel="stylesheet" href="styles/theme.css?v=th4">
-  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="icon" type="image/png" href="assets/favicon.png?v=2">
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/tables.css">
   <link rel="stylesheet" href="styles/buttons.css">
@@ -374,7 +379,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261122-113741</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261122-114743</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">

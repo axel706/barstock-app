@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261122-114743",
+    "items": [
+      "New app icon: the glass B"
+    ]
+  },
+  {
     "build": "20261122-113741",
     "items": [
       "People: give anyone a permission their role lacks",
@@ -181,12 +187,6 @@
     "items": [
       "Sent: the Reopen warning is easier to read",
       "It slides up from the buttons"
-    ]
-  },
-  {
-    "build": "20261120-212326",
-    "items": [
-      "Sent: Resend and Reopen sit where Done does, in glass"
     ]
   }
 ]
