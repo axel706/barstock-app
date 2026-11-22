@@ -468,8 +468,8 @@ palabra. Como el asa, se dibujan y no cuentan (`marcasFor` en
 `bottle-profiles.js`, aparte de `p`). Las llevan Woodford, Elijah Craig
 y Basil Hayden, la tanda 1 (aprobada y en main el 2026-11-22): Jameson,
 Buffalo Trace, Bulleit, Fireball, Red Label, Dewar's, Bacardí, Campari,
-Aperol y Baileys, y la tanda 2 (2026-11-22, en `develop` a la espera de
-su lámina): Grey Goose, Ketel One, Captain Morgan, Malibu, Cointreau,
+Aperol y Baileys, y la tanda 2 (aprobada y en main el 2026-11-22; Grey Goose
+rehecha, silueta incluida, sobre una foto de frente de Axel): Grey Goose, Ketel One, Captain Morgan, Malibu, Cointreau,
 Disaronno, Patrón, Don Julio Blanco y 1800. Smirnoff se dejó fuera: su
 silueta salió de la foto de Vanilla y la comparten los sabores, y la
 No. 21 tiene otra etiqueta. Las
