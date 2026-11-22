@@ -316,6 +316,34 @@
   }
 
 
+  // ─── A qué fila va lo pedido ──────────────────────────────────────
+  //
+  // A la de la semana de la orden. Pero esa fila la abre un conteo, y si
+  // esa semana no se contó (Axel, 2026-11-22: "¿qué pasa cuando una
+  // locación NO PUEDE HACER SU CONTEO?") no existe. Antes la suma se
+  // tiraba sin aviso, y la fila que seguía abierta —la del último conteo,
+  // la que cierra el siguiente con inicio + pedido − final— salía con el
+  // used de menos justo lo pedido.
+  //
+  // Sin fila de su semana, va a la fila ABIERTA más reciente de antes:
+  // es la que cerrará el próximo conteo, así que ahí esas botellas entran
+  // en la resta. Nunca a una cerrada: su used ya está calculado, y cambiar
+  // su pedido sin rehacerlo dejaría las dos columnas diciendo cosas
+  // distintas. Sumar y restar (borrar o reabrir la orden) pasan por aquí,
+  // así que restan de la misma fila a la que se sumó.
+  async function filaDelPedido(locationId, weekStart, itemName, code) {
+    const { url, key } = getConfig();
+    const h = { headers: { apikey: key, Authorization: `Bearer ${key}` } };
+    let base = `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&item_name=eq.${encodeURIComponent(itemName)}`;
+    if (code) base += `&code=eq.${encodeURIComponent(code)}`;
+    const suya = await (await fetch(`${base}&week_start=eq.${weekStart}&select=id,ordered`, h)).json();
+    if (Array.isArray(suya) && suya.length) return suya[0];
+    const abierta = await (await fetch(
+      `${base}&week_start=lt.${weekStart}&on_hand_end=is.null&order=week_start.desc&limit=1&select=id,ordered`, h)).json();
+    return Array.isArray(abierta) && abierta.length ? abierta[0] : null;
+  }
+
+
   // ─── updateSnapshotOrdered ────────────────────────────────────────
   // Called after a vendor order is placed — adds ordered qty to snapshot
   async function updateSnapshotOrdered(rows) {
@@ -330,18 +358,8 @@
         const qty = Number(row.finalOrder || 0);
         if (!itemName || qty <= 0) continue;
 
-        // Find existing snapshot for this week + item
-        let filterUrl = `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&week_start=eq.${weekStart}&item_name=eq.${encodeURIComponent(itemName)}`;
-        if (code) filterUrl += `&code=eq.${encodeURIComponent(code)}`;
-        filterUrl += '&select=id,ordered';
-
-        const res = await fetch(filterUrl, {
-          headers: { apikey: key, Authorization: `Bearer ${key}` }
-        });
-        const snaps = await res.json();
-        if (!snaps?.length) continue;
-
-        const snap = snaps[0];
+        const snap = await filaDelPedido(locationId, weekStart, itemName, code);
+        if (!snap) continue;
         const currentOrdered = Number(snap.ordered || 0);
         const newOrdered = currentOrdered + qty;
 
@@ -386,17 +404,8 @@
         const qty = Number(row.finalOrder || 0);
         if (!itemName || qty <= 0) continue;
 
-        let filterUrl = `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&week_start=eq.${weekStart}&item_name=eq.${encodeURIComponent(itemName)}`;
-        if (code) filterUrl += `&code=eq.${encodeURIComponent(code)}`;
-        filterUrl += '&select=id,ordered';
-
-        const res = await fetch(filterUrl, {
-          headers: { apikey: key, Authorization: `Bearer ${key}` }
-        });
-        const snaps = await res.json();
-        if (!snaps?.length) continue;
-
-        const snap = snaps[0];
+        const snap = await filaDelPedido(locationId, weekStart, itemName, code);
+        if (!snap) continue;
         const currentOrdered = Number(snap.ordered || 0);
         const newOrdered = Math.max(0, currentOrdered - qty);
 
