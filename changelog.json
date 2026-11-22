@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261122-111304",
+    "items": [
+      "Counting: label guides on 9 more bottles",
+      "Grey Goose, Ketel One, Captain Morgan, Malibu and more"
+    ]
+  },
+  {
     "build": "20261122-104434",
     "items": [
       "Counting: Bacardí’s lower label guide is straight"
@@ -179,13 +186,6 @@
     "items": [
       "Orders: each vendor with its color and initials",
       "Quick order sits where Done does, in green"
-    ]
-  },
-  {
-    "build": "20261120-140740",
-    "items": [
-      "Orders: vendor name up top, back where Time Machine is",
-      "Add a product sits where Done does"
     ]
   }
 ]

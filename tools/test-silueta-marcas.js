@@ -43,14 +43,17 @@ const B = window.BarStockBottleProfiles;
 const W = 200, H = 260, PAD = 12;
 
 console.log('\nlas que las llevan');
-// Las tres de la lámina A2·7 y la tanda 1 (2026-11-22, pendiente de que
-// Axel la revise sobre su lámina): las mismas reglas para todas.
+// Las tres de la lámina A2·7, la tanda 1 (aprobada por Axel el
+// 2026-11-22) y la tanda 2 (pendiente de su lámina): las mismas reglas
+// para todas.
 const TANDA1 = ['jameson', 'buffalo_trace', 'bulleit', 'fireball', 'red_label', 'dewars', 'bacardi', 'campari', 'aperol', 'baileys'];
-for (const k of ['woodford', 'elijah_craig', 'basil_hayden'].concat(TANDA1)) {
+const TANDA2 = ['grey_goose', 'ketel_one', 'captain_morgan', 'malibu', 'cointreau', 'disaronno', 'patron', 'don_julio_blanco', 't1800'];
+for (const k of ['woodford', 'elijah_craig', 'basil_hayden'].concat(TANDA1, TANDA2)) {
   const P = B.PROFILES[k];
   const ms = P && P.marcas;
   prueba(k + ': lleva marcas', Array.isArray(ms) && ms.length >= 3, ms && ms.length);
   prueba(k + ': bien formadas (alturas dentro de la botella, de abajo arriba)', Array.isArray(ms) && ms.every(m =>
+    (m.x === undefined || (typeof m.x === 'number' && Math.abs(m.x) < 1)) &&
     (m.tipo === 'sello' ? (m.y > 0 && m.y < 1 && m.r > 0 && m.r < 0.2)
       : (Array.isArray(m.y) && m.y[0] >= 0 && m.y[1] <= 1 && m.y[0] < m.y[1] && m.ancho > 0 && m.ancho <= (m.tipo === 'etiqueta' && m.rot ? 2 : 1.1))) &&
     Array.isArray(m.renglones) && m.renglones.every(r => r.g > 0 && r.g < 0.1 && r.largo > 0 && r.largo <= 1 &&
@@ -75,6 +78,28 @@ console.log('\ninclinadas, curvas y con su forma (Axel: "hay botellas con etique
   const box = B.boxFor('aperol', W, H, PAD);
   const sello = /<circle class="cp-marca" cx="([\d.]+)"/.exec(dib('aperol'));
   prueba('un sello puede ir corrido del eje (el medallón de Aperol, a la derecha)', !!sello && Number(sello[1]) > box.cx + 1, sello && sello[1] + ' vs ' + box.cx);
+  // Un texto y una etiqueta también (tanda 2): TEQUILA / BLANCO de Don
+  // Julio van a la derecha del sello, no al centro; dibujados en el eje
+  // tapaban el sello y mentían dónde está el texto. Se prueba con una
+  // silueta de mentira: una barra con x 0.5 va centrada a la derecha del
+  // eje, y la misma sin x, en el eje.
+  {
+    const P = B.PROFILES;
+    const base = { name: 'Prueba', asp: 3, yFull: 0.7, p: P.woodford.p };
+    const barra = (x) => {
+      P.__prueba_x = Object.assign({}, base, { marcas: [{ tipo: 'texto', y: [0.3, 0.32], ancho: 0.4, x, renglones: [{ g: 0.02, largo: 1, palabras: [5] }] },
+                                                        { tipo: 'etiqueta', y: [0.2, 0.25], ancho: 0.3, x, renglones: [] }] });
+      const s = B.marcasFor('__prueba_x', W, H, PAD);
+      delete P.__prueba_x;
+      const r = /class="cp-barra" x="([\d.]+)" y="[\d.]+" width="([\d.]+)"/.exec(s);
+      const e = /class="cp-marca" x="([\d.]+)" y="[\d.]+" width="([\d.]+)"/.exec(s);
+      return { texto: r ? Number(r[1]) + Number(r[2]) / 2 : NaN, etiqueta: e ? Number(e[1]) + Number(e[2]) / 2 : NaN, cx: B.boxFor('woodford', W, H, PAD).cx };
+    };
+    const corrida = barra(0.5), centrada = barra(undefined);
+    prueba('un texto puede ir corrido del eje (x), como el sello', corrida.texto > corrida.cx + 5, corrida.texto + ' vs ' + corrida.cx);
+    prueba('y una etiqueta también', corrida.etiqueta > corrida.cx + 5, corrida.etiqueta + ' vs ' + corrida.cx);
+    prueba('sin x, en el eje', Math.abs(centrada.texto - centrada.cx) < 0.6 && Math.abs(centrada.etiqueta - centrada.cx) < 0.6, centrada.texto + ' / ' + centrada.etiqueta + ' vs ' + centrada.cx);
+  }
   // Bordes con su propia inclinación (Axel, con trazos sobre la foto): la
   // etiqueta de Bulleit no es un rectángulo girado, sus bordes suben
   // distinto, y la tira oscura de encima es una cuña.

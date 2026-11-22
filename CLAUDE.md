@@ -466,9 +466,13 @@ letras cortadas por palabras. **Ninguna palabra real** ("no dejes eso
 como palabra real"): los datos sólo dicen cuántas letras tiene cada
 palabra. Como el asa, se dibujan y no cuentan (`marcasFor` en
 `bottle-profiles.js`, aparte de `p`). Las llevan Woodford, Elijah Craig
-y Basil Hayden, y la tanda 1 (2026-11-22, en `develop` a la espera de que
-Axel la revise sobre su lámina): Jameson, Buffalo Trace, Bulleit,
-Fireball, Red Label, Dewar's, Bacardí, Campari, Aperol y Baileys. Las
+y Basil Hayden, la tanda 1 (aprobada y en main el 2026-11-22): Jameson,
+Buffalo Trace, Bulleit, Fireball, Red Label, Dewar's, Bacardí, Campari,
+Aperol y Baileys, y la tanda 2 (2026-11-22, en `develop` a la espera de
+su lámina): Grey Goose, Ketel One, Captain Morgan, Malibu, Cointreau,
+Disaronno, Patrón, Don Julio Blanco y 1800. Smirnoff se dejó fuera: su
+silueta salió de la foto de Vanilla y la comparten los sabores, y la
+No. 21 tiene otra etiqueta. Las
 demás se añaden por tandas, de las fotos que Axel ya mandó para las
 siluetas (siguen en la sesión), cada tanda con su lámina foto/dibujo.
 Sólo en siluetas propias: en las genéricas mentirían. Cada marca puede
@@ -476,8 +480,9 @@ ir inclinada (`rot`, grados, positivo sube a la derecha: la banda de Red
 Label), en arco (`arco`: en un texto, la flecha del renglón; en una
 etiqueta, [arriba, abajo]; negativo es ∪, el borde de Dewar's), con cada borde
 inclinado por su lado (`pend`: [arriba, abajo] en grados: la etiqueta
-de Bulleit, y una cuña si son opuestos), un sello corrido del eje (`x`:
-el medallón de Aperol) y con su forma (`forma`: 'ovalo', 'roto'):
+de Bulleit, y una cuña si son opuestos), corrida del eje (`x`: el
+medallón de Aperol; desde la tanda 2 también un texto o una etiqueta,
+TEQUILA / BLANCO de Don Julio a la derecha de su sello) y con su forma (`forma`: 'ovalo', 'roto'):
 Axel, 2026-11-22, "hay botellas con etiquetas diagonales o textos
 curvos y todos los estás poniendo planos". **Se mide, no se estima**:
 dos rondas a ojo salieron mal (Red Label a 32° cuando eran 19°).
@@ -493,8 +498,21 @@ la que se cuenta: una etiqueta corrida es un conteo mal hecho.
    la foto tienen la misma proporción, así que una altura o un ángulo
    medido en la foto vale igual en el dibujo. `cajas.json` en la
    carpeta de la tanda: la caja de la botella en cada foto.
+   - `rejilla.py`: una franja ampliada con rejilla del 1 %: para NOMBRAR
+     lo que hay. Las cifras salen de las demás (a ojo sobre la foto
+     entera, Grey Goose salía 0.02–0.03 corrido).
+   - `renglones.py`: cada renglón de texto de una franja, con su alto,
+     su grueso y su largo (comparado con el vidrio de encima, para que
+     la sombra de los lados no cuente).
+   - `cortes.py`: los bordes en una columna; con tres columnas se ve si
+     un borde va recto, inclinado o curvo.
+   - `muestra.py`: el color a una altura, para dárselo a `color.py` y
+     `borde.py`.
    - `color.py`: los dos bordes de una etiqueta o banda por su color,
      altura e inclinación (Red Label 19°, Aperol 14°).
+   - `borde.py`: la forma de un borde de color columna por columna, con
+     su inclinación y su flecha (el `arco`), descartando lo que no es
+     borde.
    - `bordes.py`: candidatos de bordes horizontales (ruidoso: se mira
      encima antes de creerlo).
    - `trazos.py`: los trazos que Axel hace sobre la lámina, pasados a
@@ -508,6 +526,14 @@ la que se cuenta: una etiqueta corrida es un conteo mal hecho.
    sus letras, con sus palabras y su curva; sellos en su sitio (`x`) y
    con su forma (`forma`). Lo que no se pueda medir, se dice en la
    lámina; no se rellena a ojo.
+   **Una marca por renglón**: los renglones de una marca se reparten a
+   partes iguales en su alto, así que cada renglón medido es su propia
+   marca `texto` con su banda exacta, `g` su grueso y `ancho` como parte
+   del ancho de la botella A ESA ALTURA (`radiusAt`). Un texto en arco
+   se coloca por la altura de sus PUNTAS: el centro sube la flecha
+   (MALIBU salió alto por centrarlo en el medio).
+   Lo que es plano en el vidrio (impreso) cuenta; lo grabado en relieve,
+   los dibujos sueltos y las firmas no van, y la lámina lo dice.
 3. **La inclinación de un trazo a mano no es la de la etiqueta**
    (Bacardí: su etiqueta de abajo salió inclinada por el trazo y es
    recta). Una inclinación se confirma en la foto o se pregunta.

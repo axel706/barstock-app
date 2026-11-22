@@ -5,7 +5,8 @@
 // su tamaño.
 //
 // Uso: node tools/marcas/lamina.js <carpeta> <n.º de tanda> clave [clave…]
-// Lee <carpeta>/cajas.json (con `nombre` opcional en cada clave) y escribe
+// Lee <carpeta>/cajas.json (con `nombre` y `nota` opcionales en cada
+// clave: la nota dice lo que no se dibujó y por qué) y escribe
 // <carpeta>/lamina-marcas-<n>.html. Correr antes encima.js con las mismas
 // claves.
 const fs = require('fs');
@@ -27,8 +28,9 @@ const tarjeta = (k) => {
   const svg = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true"><defs><clipPath id="c-${k}"><path d="${d}"/></clipPath></defs>
    <path d="${d}" class="vid"/><g clip-path="url(#c-${k})"><rect class="liq" x="0" y="${y.toFixed(1)}" width="${W}" height="${H}"/>${B.marcasFor(k, W, H, P)}</g><path d="${d}" class="borde"/></svg>`;
   const nom = esc(cajas[k].nombre || k);
-  return `<figure><figcaption>${nom}</figcaption><div class="par"><img src="${datos(cajas[k].f)}" alt="${nom}" style="height:${H}px"><div class="dib">${svg}</div><img src="${datos(path.join(D, 'enc-' + k + '.png'))}" alt="" style="height:${H}px"></div></figure>`;
+  return `<figure><figcaption>${nom}</figcaption><div class="par"><img src="${datos(cajas[k].f)}" alt="${nom}" style="height:${H}px"><div class="dib">${svg}</div><img src="${datos(path.join(D, 'enc-' + k + '.png'))}" alt="" style="height:${H}px"></div>${cajas[k].nota ? '<p class="nota">' + esc(cajas[k].nota) + '</p>' : ''}</figure>`;
 };
+const intro = process.env.INTRO ? `<p>${esc(process.env.INTRO)}</p>` : '';
 const html = `<title>Bottle labels batch ${esc(n)}</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap">
@@ -41,6 +43,7 @@ p{color:var(--note);max-width:66ch;line-height:1.5;font-size:14px;margin:8px 0 0
 .lote{display:flex;flex-wrap:wrap;gap:16px;margin-top:20px}
 figure{margin:0;background:var(--tinta);border:1px solid var(--borde);border-radius:20px;padding:12px 14px;display:grid;gap:10px;min-width:0;max-width:100%}
 figcaption{font-weight:800;font-size:14px}
+.nota{font-size:12.5px;max-width:52ch;margin:0}
 .par{display:flex;gap:14px;align-items:flex-end;overflow-x:auto}
 .par img{border-radius:10px;display:block;flex:0 0 auto}
 .dib{background:#0f172a;border-radius:12px;padding:4px;flex:0 0 auto}
@@ -52,7 +55,7 @@ figcaption{font-weight:800;font-size:14px}
 .cp-barra-arco{fill:none;stroke:#fde68a;stroke-opacity:.5;stroke-linecap:round}
 </style>
 <h1>Bottle labels · batch ${esc(n)}, measured</h1>
-<p>Each bottle: the photo, the drawing as the count panel shows it, and the drawing ON the photo at the same scale (labels in green, text in pink). The third picture is the check: every label and line of text has to fall on the real one, at its real height, size, tilt and curve.</p>
+<p>Each bottle: the photo, the drawing as the count panel shows it, and the drawing ON the photo at the same scale (labels in green, text in pink). The third picture is the check: every label and line of text has to fall on the real one, at its real height, size, tilt and curve.</p>${intro}
 <div class="lote">${claves.map(tarjeta).join('')}</div>`;
 fs.writeFileSync(path.join(D, 'lamina-marcas-' + n + '.html'), html);
 console.log('lamina-marcas-' + n + '.html');
