@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261122-102909",
+    "items": [
+      "Counting: Bulleit and Dewar’s label shapes fixed"
+    ]
+  },
+  {
     "build": "20261122-102147",
     "items": [
       "Counting: Aperol, Bulleit, Fireball and Dewar’s guides fixed"
@@ -180,12 +186,6 @@
     "build": "20261119-215443",
     "items": [
       "Every vendor takes a manual order amount"
-    ]
-  },
-  {
-    "build": "20261119-150606",
-    "items": [
-      "An order whose invoice came early stays on the way"
     ]
   }
 ]

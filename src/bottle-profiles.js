@@ -858,12 +858,12 @@
       // base y el pie se abre otra vez. yFull .78 medida viendo el liquido,
       // hasta la etiqueta roja del cuello.
       p: [[0,0.6086], [0.0156,0.8571], [0.0469,0.9882], [0.0781,0.9515], [0.1094,0.9155], [0.1406,0.8997], [0.1719,0.8991], [0.2031,0.8991], [0.2344,0.8991], [0.2656,0.9004], [0.2969,0.9102], [0.3281,0.916], [0.3594,0.9174], [0.3906,0.9312], [0.4219,0.9391], [0.4531,0.9482], [0.4844,0.9561], [0.5156,0.9633], [0.5469,0.9797], [0.5781,0.983], [0.6094,0.9902], [0.6406,0.9528], [0.6719,0.8363], [0.7031,0.6022], [0.7344,0.5098], [0.7656,0.5131], [0.7969,0.4705], [0.8281,0.4227], [0.8594,0.3709], [0.8906,0.3834], [0.9219,0.3965], [0.9531,0.3912], [0.9844,0.386], [1,0.3517]],
-      // Las marcas (Axel, 2026-11-22, tanda 1, estilo A2·7): la etiqueta del cuello, la grande con el nombre y "White Label", y la de abajo.
+      // Las marcas (Axel, 2026-11-22, tanda 1, estilo A2·7): la etiqueta del cuello, la grande (con el borde de arriba hundido en el centro, ∪) con el nombre y "White Label", y la de abajo.
       // Alturas de la foto con que se midio la silueta; de cada renglon,
       // el grueso de sus letras y cuantas letras tiene cada palabra.
       marcas: [
         {tipo: 'etiqueta', y: [0.8, 0.95], ancho: 0.95, renglones: []},
-        {tipo: 'etiqueta', y: [0.33, 0.6], ancho: 0.95, renglones: []},
+        {tipo: 'etiqueta', y: [0.33, 0.6], ancho: 0.95, arco: [-0.12, 0], renglones: []},
         {tipo: 'texto', y: [0.45, 0.53], ancho: 0.78, renglones: [{g: 0.045, largo: 0.78, palabras: [6]}]},
         {tipo: 'texto', y: [0.4, 0.455], ancho: 0.75, renglones: [{g: 0.03, largo: 0.75, palabras: [5, 5]}]},
         {tipo: 'etiqueta', y: [0.1, 0.28], ancho: 0.95, renglones: [{g: 0.018, largo: 0.85, palabras: [4, 5, 1, 4, 3]}]}
@@ -878,16 +878,16 @@
       // viendo el liquido en la foto.
       p: [[0,0.5185], [0.0156,0.8351], [0.0469,0.9446], [0.0781,0.9386], [0.1094,0.9499], [0.1406,0.9556], [0.1719,0.9556], [0.2031,0.9631], [0.2344,0.9644], [0.2656,0.9668], [0.2969,0.9663], [0.3281,0.9686], [0.3594,0.9733], [0.3906,0.9754], [0.4219,0.9822], [0.4531,0.9822], [0.4844,0.9822], [0.5156,0.9875], [0.5469,0.9911], [0.5781,0.9942], [0.6094,1], [0.6406,1], [0.6719,0.9946], [0.7031,0.9566], [0.7344,0.8708], [0.7656,0.6773], [0.7969,0.3427], [0.8281,0.2837], [0.8594,0.3043], [0.8906,0.3133], [0.9219,0.3156], [0.9531,0.3022], [0.9844,0.2905], [1,0.2059]],
       // Las marcas (Axel, 2026-11-22, tanda 1, estilo A2·7, corregidas sobre
-      // la lámina): BULLEIT en relieve en arco suave y BOURBON recto (en la botella sólo el de arriba se curva), la banda oscura diagonal de arriba de la etiqueta y sus cuatro renglones.
+      // la lámina): BULLEIT en relieve en arco suave y BOURBON recto (en la botella sólo el de arriba se curva), la tira oscura de borde roto (una cuña: su borde de arriba baja a la derecha) y la etiqueta, cuyos bordes suben 4.3° y 6° (de los trazos de Axel sobre la foto), con sus cuatro renglones a 5°.
       // Alturas de la foto con que se midio la silueta; de cada renglon,
       // el grueso de sus letras y cuantas letras tiene cada palabra.
       marcas: [
         {tipo: 'texto', y: [0.565, 0.635], ancho: 0.85, arco: 0.05, renglones: [{g: 0.05, largo: 0.8, palabras: [7]}]},
         {tipo: 'texto', y: [0.49, 0.56], ancho: 0.85, renglones: [{g: 0.05, largo: 0.82, palabras: [7]}]},
         {tipo: 'texto', y: [0.365, 0.455], ancho: 0.8, renglones: [{g: 0.026, largo: 0.68, palabras: [8]}, {g: 0.026, largo: 0.64, palabras: [7]}]},
-        {tipo: 'etiqueta', y: [0.297, 0.345], ancho: 1.0, forma: 'roto', renglones: []},
-        {tipo: 'etiqueta', y: [0.075, 0.297], ancho: 0.98, renglones: []},
-        {tipo: 'texto', y: [0.13, 0.26], ancho: 0.9, renglones: [{g: 0.011, largo: 0.9, palabras: [9, 3, 4, 2, 3, 7, 6]}, {g: 0.028, largo: 0.82, palabras: [7, 7]}, {g: 0.013, largo: 0.6, palabras: [8, 7]}, {g: 0.012, largo: 0.85, palabras: [8, 8, 7, 7]}]}
+        {tipo: 'etiqueta', y: [0.266, 0.306], ancho: 1.0, forma: 'roto', pend: [-4.7, 4.3], renglones: []},
+        {tipo: 'etiqueta', y: [0.089, 0.266], ancho: 1.0, pend: [4.3, 6], renglones: []},
+        {tipo: 'texto', y: [0.137, 0.245], ancho: 0.9, rot: 5, renglones: [{g: 0.011, largo: 0.9, palabras: [9, 3, 4, 2, 3, 7, 6]}, {g: 0.028, largo: 0.82, palabras: [7, 7]}, {g: 0.013, largo: 0.6, palabras: [8, 7]}, {g: 0.012, largo: 0.85, palabras: [8, 8, 7, 7]}]}
       ]
     },
     buffalo_trace: {
@@ -1414,6 +1414,8 @@
   //     En una etiqueta, [arriba, abajo]: cuánto se curva cada borde.
   //   · `forma`: 'ovalo' (la ilustración de Baileys) o 'roto' (el papel
   //     rasgado de Buffalo Trace, el borde quemado de Fireball).
+  //   · en una etiqueta, `pend`: [arriba, abajo], la inclinación de cada
+  //     borde por separado (la de Bulleit; una cuña si son opuestas).
   //   · en un sello, `x`: corrido del eje (el medallón de Aperol).
   // Sin ninguna, lo de antes: rectángulo y renglones rectos.
   function marcasFor(x, w, h, pad) {
@@ -1456,6 +1458,14 @@
     // El contorno de una etiqueta según su forma.
     const contorno = (m, l, top, ancho, alto) => {
       const r = l + ancho, bot = top + alto, ccx = l + ancho / 2;
+      // `pend`: [arriba, abajo], la inclinación de cada borde en grados
+      // (positivo sube a la derecha), sobre el eje; los lados siguen
+      // verticales. Para lo que no es un rectángulo girado: los bordes de
+      // la etiqueta de Bulleit suben distinto y la tira oscura de encima
+      // es una cuña (su borde de arriba baja a la derecha).
+      const [pa, pb] = Array.isArray(m.pend) ? m.pend : [0, 0];
+      const ya = (xx) => top - Math.tan(pa * Math.PI / 180) * (xx - ccx);
+      const yb = (xx) => bot - Math.tan(pb * Math.PI / 180) * (xx - ccx);
       if (m.forma === 'ovalo') {
         return '<ellipse class="cp-marca" cx="' + f(ccx) + '" cy="' + f(top + alto / 2) + '" rx="' + f(ancho / 2) + '" ry="' + f(alto / 2) + '"/>';
       }
@@ -1464,20 +1474,22 @@
         // mismos: el dibujo no puede cambiar de un pintado a otro).
         const amp = Math.min(alto * 0.08, ancho * 0.05), n = 9;
         const diente = (k) => [0.2, 0.9, 0.4, 1, 0.1, 0.7, 0.5, 0.95, 0.3, 0.6][k % 10];
-        let d = 'M' + f(l) + ' ' + f(top);
-        for (let k = 1; k <= n; k++) d += ' L' + f(l + ancho * k / n) + ' ' + f(top + amp * diente(k));
-        d += ' L' + f(r) + ' ' + f(bot);
-        for (let k = n - 1; k >= 0; k--) d += ' L' + f(l + ancho * k / n) + ' ' + f(bot - amp * diente(k + 3));
+        let d = 'M' + f(l) + ' ' + f(ya(l));
+        for (let k = 1; k <= n; k++) { const xx = l + ancho * k / n; d += ' L' + f(xx) + ' ' + f(ya(xx) + amp * diente(k)); }
+        d += ' L' + f(r) + ' ' + f(yb(r));
+        for (let k = n - 1; k >= 0; k--) { const xx = l + ancho * k / n; d += ' L' + f(xx) + ' ' + f(yb(xx) - amp * diente(k + 3)); }
         return '<path class="cp-marca" d="' + d + ' Z"/>';
       }
       const [sa, sb] = Array.isArray(m.arco) ? m.arco : [0, 0];
-      if (!sa && !sb) {
+      if (!sa && !sb && !pa && !pb) {
         return '<rect class="cp-marca" x="' + f(l) + '" y="' + f(top) + '" width="' + f(ancho) + '" height="' + f(alto) + '" rx="3"/>';
       }
-      // Bordes curvos: una cuadrática por borde, con la flecha como parte
-      // del ancho (el punto de control va al doble de la flecha).
-      return '<path class="cp-marca" d="M' + f(l) + ' ' + f(top) + ' Q' + f(ccx) + ' ' + f(top - 2 * sa * ancho) + ' ' + f(r) + ' ' + f(top) +
-             ' L' + f(r) + ' ' + f(bot) + ' Q' + f(ccx) + ' ' + f(bot - 2 * sb * ancho) + ' ' + f(l) + ' ' + f(bot) + ' Z"/>';
+      // Bordes curvos y/o inclinados: una cuadrática por borde, con la
+      // flecha como parte del ancho (el punto de control va al doble de
+      // la flecha, sobre la recta inclinada del borde). Negativa es ∪ (el
+      // borde de arriba de la etiqueta de Dewar's).
+      return '<path class="cp-marca" d="M' + f(l) + ' ' + f(ya(l)) + ' Q' + f(ccx) + ' ' + f(ya(ccx) - 2 * sa * ancho) + ' ' + f(r) + ' ' + f(ya(r)) +
+             ' L' + f(r) + ' ' + f(yb(r)) + ' Q' + f(ccx) + ' ' + f(yb(ccx) - 2 * sb * ancho) + ' ' + f(l) + ' ' + f(yb(l)) + ' Z"/>';
     };
     for (const m of ms) {
       if (m.tipo === 'sello') {

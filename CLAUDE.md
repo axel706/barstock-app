@@ -474,9 +474,17 @@ siluetas (siguen en la sesión), cada tanda con su lámina foto/dibujo.
 Sólo en siluetas propias: en las genéricas mentirían. Cada marca puede
 ir inclinada (`rot`, grados, positivo sube a la derecha: la banda de Red
 Label), en arco (`arco`: en un texto, la flecha del renglón; en una
-etiqueta, [arriba, abajo]) y con su forma (`forma`: 'ovalo', 'roto'):
+etiqueta, [arriba, abajo]; negativo es ∪, el borde de Dewar's), con cada borde
+inclinado por su lado (`pend`: [arriba, abajo] en grados: la etiqueta
+de Bulleit, y una cuña si son opuestos), un sello corrido del eje (`x`:
+el medallón de Aperol) y con su forma (`forma`: 'ovalo', 'roto'):
 Axel, 2026-11-22, "hay botellas con etiquetas diagonales o textos
-curvos y todos los estás poniendo planos".
+curvos y todos los estás poniendo planos". **Se mide, no se estima**:
+dos rondas a ojo salieron mal (Red Label a 32° cuando eran 19°). Una
+herramienta del scratchpad pone el dibujo encima de la foto a la misma
+escala (la silueta y la foto tienen la misma proporción), y lo que se
+puede se mide por color (la banda roja, el azul de Aperol) o con los
+trazos que Axel hace sobre la foto de la lámina.
 Prueba: `test-silueta-marcas`.
 
 **El par no salta de golpe:** ±2 por paso (`BarStockProductWeeks.paso`). Un

@@ -56,7 +56,7 @@ for (const k of ['woodford', 'elijah_craig', 'basil_hayden'].concat(TANDA1)) {
     Array.isArray(m.renglones) && m.renglones.every(r => r.g > 0 && r.g < 0.1 && r.largo > 0 && r.largo <= 1 &&
       Array.isArray(r.palabras) && r.palabras.length >= 1 && r.palabras.every(n => Number.isInteger(n) && n > 0))));
   prueba(k + ': en los datos no hay palabras, sólo cuántas letras', Array.isArray(ms) &&
-    !JSON.stringify(ms).match(/[A-Za-z]{3,}/g).some(w => !['tipo', 'etiqueta', 'sello', 'texto', 'ancho', 'renglones', 'largo', 'palabras', 'rot', 'arco', 'forma', 'ovalo', 'roto'].includes(w)),
+    !JSON.stringify(ms).match(/[A-Za-z]{3,}/g).some(w => !['tipo', 'etiqueta', 'sello', 'texto', 'ancho', 'renglones', 'largo', 'palabras', 'rot', 'arco', 'forma', 'ovalo', 'roto', 'pend'].includes(w)),
     String(JSON.stringify(ms)).slice(0, 120));
 }
 
@@ -75,6 +75,14 @@ console.log('\ninclinadas, curvas y con su forma (Axel: "hay botellas con etique
   const box = B.boxFor('aperol', W, H, PAD);
   const sello = /<circle class="cp-marca" cx="([\d.]+)"/.exec(dib('aperol'));
   prueba('un sello puede ir corrido del eje (el medallón de Aperol, a la derecha)', !!sello && Number(sello[1]) > box.cx + 1, sello && sello[1] + ' vs ' + box.cx);
+  // Bordes con su propia inclinación (Axel, con trazos sobre la foto): la
+  // etiqueta de Bulleit no es un rectángulo girado, sus bordes suben
+  // distinto, y la tira oscura de encima es una cuña.
+  const bul = B.PROFILES.bulleit.marcas.filter(m => Array.isArray(m.pend));
+  prueba('Bulleit: la tira oscura es una cuña (un borde baja y el otro sube)', bul.some(m => m.pend[0] < 0 && m.pend[1] > 0));
+  prueba('Bulleit: los bordes de su etiqueta suben distinto', bul.some(m => m.pend[0] > 0 && m.pend[1] > 0 && m.pend[0] !== m.pend[1]));
+  prueba('…y se dibujan inclinados, no como un rectángulo', (dib('bulleit').match(/<path class="cp-marca" d="M[^"]* Q/g) || []).length >= 1);
+  prueba("Dewar's: el borde de arriba de su etiqueta se hunde (∪)", B.PROFILES.dewars.marcas.some(m => Array.isArray(m.arco) && m.arco[0] < 0));
   prueba('el trazo curvo tiene su color en el panel', /\.cp-barra-arco\s*\{[^}]*stroke:/.test(leer('styles/count-panel.css')));
 }
 
