@@ -2010,13 +2010,17 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * subgrid de .m-cf. */
   .m-cf-d { margin-top: 2px; font-size: var(--m-meta); color: #a9bacd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .m-cf-live { color: #6ee7b7; font-weight: 800; }
-  /* "On the shelf" mientras el LIVE contesta (2026-11-22, lámina B con
-     "Counting"): un aro azul que gira en el sitio de la cifra, del alto
-     de ella, para que nada salte al llegar el número. */
-  .m-cf-v .m-cf-aro { display: inline-block; width: calc(var(--m-title) * 1.05); height: calc(var(--m-title) * 1.05); border-radius: 50%;
-    border: 2.5px solid rgba(255,255,255,.18); border-top-color: #38bdf8; animation: m-cf-gira .8s linear infinite; vertical-align: middle; }
-  @keyframes m-cf-gira { to { transform: rotate(360deg); } }
-  @media (prefers-reduced-motion: reduce) { .m-cf-v .m-cf-aro { animation: none; } }
+  /* "On the shelf" mientras el LIVE contesta (2026-11-22, lámina A con
+     "Counting"): una barra del tamaño de la cifra y otra fina donde van
+     las botellas, con un brillo que las cruza, para que nada salte al
+     llegar el número. */
+  .m-cf-esq { display: inline-block; vertical-align: middle; border-radius: 7px;
+    background: linear-gradient(90deg, rgba(255,255,255,.08) 0%, rgba(255,255,255,.22) 50%, rgba(255,255,255,.08) 100%);
+    background-size: 200% 100%; animation: m-cf-brillo 1.3s linear infinite; }
+  .m-cf-esq-v { width: calc(var(--m-title) * 3.8); height: calc(var(--m-title) * 1.05); }
+  .m-cf-esq-s { width: calc(var(--m-meta) * 4.7); height: calc(var(--m-meta) * .8); border-radius: 5px; }
+  @keyframes m-cf-brillo { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+  @media (prefers-reduced-motion: reduce) { .m-cf-esq { animation: none; } }
   /* Details apagado mientras tanto: que se vea que todavía no se toca. */
   body.m-shell #mScreens .m-cf-b:disabled { opacity: .45; }
   .m-cf-live::before { content: '● '; }

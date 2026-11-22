@@ -2144,15 +2144,17 @@
     const LCb = window.BarStockLiveCache;
     const bt = e && LCb && LCb.botellas ? LCb.botellas() : null;
     // Mientras el LIVE no ha contestado la primera vez (estante() espera):
-    // un aro que gira donde va la cifra y "Counting" debajo, con Details
-    // apagado para que la tarjeta no cambie de tamaño al llegar (Axel,
-    // 2026-11-22, lámina: la B con la palabra de la C).
+    // una barra con brillo donde va la cifra y otra fina donde van las
+    // botellas, "Counting" debajo y Details apagado, para que la tarjeta
+    // no cambie de tamaño al llegar (Axel, 2026-11-22, lámina: la A con
+    // la palabra de la C; primero eligió la B, el aro: "me equivoqué").
     const contando = !e && LCb && LCb.listo && !LCb.listo();
     const partes = [cifra({
       id: 'estante', k: 'On the shelf',
-      s: bt ? (bt.live ? '≈' : '') + Math.round(bt.total).toLocaleString('en-US') + ' bottle' + (Math.round(bt.total) === 1 ? '' : 's') : '',
+      s: bt ? (bt.live ? '≈' : '') + Math.round(bt.total).toLocaleString('en-US') + ' bottle' + (Math.round(bt.total) === 1 ? '' : 's')
+        : contando ? '<span class="m-cf-esq m-cf-esq-s"></span>' : '',
       sTono: 'm-cf-neu',
-      v: e ? money(e.total) : contando ? '<span class="m-cf-aro" aria-label="Counting"></span>' : '…',
+      v: e ? money(e.total) : contando ? '<span class="m-cf-esq m-cf-esq-v" aria-label="Counting"></span>' : '…',
       d: e && e.live ? '<span class="m-cf-live">Live</span> now' : e ? 'as counted' : contando ? 'Counting' : '&nbsp;',
       btn: 'Details', off: contando
     })];

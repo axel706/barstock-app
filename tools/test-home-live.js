@@ -194,10 +194,14 @@ grupo('el LIVE llega con el Home pintado');
   // contestado ni una vez, ni cifra ni botellas.
   prueba('antes de que conteste el LIVE, ni cifra ni botellas', !/\$/.test(valor(estante(host))) &&
     !/bottle/.test(estante(host).textContent), estante(host).textContent.replace(/\s+/g, ' '));
-  // Lámina, opción B con la palabra de C (Axel, 2026-11-22): el aro que
-  // gira donde va la cifra, "Counting" debajo y Details apagado hasta
-  // que llega, para que la tarjeta no cambie de tamaño.
-  prueba('mientras, el aro donde va la cifra y "Counting" debajo', !!estante(host).querySelector('.m-cf-v .m-cf-aro') &&
+  // Lámina, opción A con la palabra de C (Axel, 2026-11-22; primero
+  // eligió la B, el aro, y luego: "me equivoqué, era A"): una barra con
+  // brillo donde va la cifra y otra fina donde van las botellas,
+  // "Counting" debajo y Details apagado hasta que llega, para que la
+  // tarjeta no cambie de tamaño.
+  prueba('mientras, la barra con brillo donde va la cifra, otra donde van las botellas, y "Counting"',
+    !!estante(host).querySelector('.m-cf-v .m-cf-esq') && !!estante(host).querySelector('.m-cf-s .m-cf-esq') &&
+    !estante(host).querySelector('.m-cf-aro') &&
     estante(host).querySelector('.m-cf-d').textContent.trim() === 'Counting', estante(host).innerHTML.replace(/\s+/g, ' '));
   prueba('y Details apagado', estante(host).querySelector('.m-cf-b').disabled);
   await esperar(60);
@@ -222,7 +226,7 @@ grupo('un LIVE que ya se sabe viejo no se enseña');
   const ahora = async () => { llamadas++; await esperar(60); return llamadas === 1 ? viejo : bueno; };
   const { w, host } = await entorno({ sinCargar: true, ahora });
   const vistos = new Set();
-  const mirar = () => { const e = estante(host); if (e) vistos.add(e.querySelector('.m-cf-aro') ? 'aro' : valor(e)); };
+  const mirar = () => { const e = estante(host); if (e) vistos.add(e.querySelector('.m-cf-esq') ? 'esq' : valor(e)); };
   mirar();
   const obs = new w.MutationObserver(mirar); obs.observe(host, { subtree: true, childList: true, characterData: true });
   await esperar(10);
@@ -230,7 +234,7 @@ grupo('un LIVE que ya se sabe viejo no se enseña');
   w.BarStockEvents.emit('inventoryUpdated', {});
   await esperar(250);
   mirar(); obs.disconnect();
-  prueba('sólo se ve el aro y la cifra buena, nunca la del cálculo viejo', [...vistos].every(v => v === 'aro' || v === '$550') && vistos.has('$550'),
+  prueba('sólo se ve la barra de espera y la cifra buena, nunca la del cálculo viejo', [...vistos].every(v => v === 'esq' || v === '$550') && vistos.has('$550'),
     [...vistos].join(' → '));
 }
 
