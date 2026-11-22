@@ -466,7 +466,12 @@ letras cortadas por palabras. **Ninguna palabra real** ("no dejes eso
 como palabra real"): los datos sólo dicen cuántas letras tiene cada
 palabra. Como el asa, se dibujan y no cuentan (`marcasFor` en
 `bottle-profiles.js`, aparte de `p`). Las llevan Woodford, Elijah Craig
-y Basil Hayden; las demás se añaden botella por botella con su foto.
+y Basil Hayden, y la tanda 1 (2026-11-22, en `develop` a la espera de que
+Axel la revise sobre su lámina): Jameson, Buffalo Trace, Bulleit,
+Fireball, Red Label, Dewar's, Bacardí, Campari, Aperol y Baileys. Las
+demás se añaden por tandas, de las fotos que Axel ya mandó para las
+siluetas (siguen en la sesión), cada tanda con su lámina foto/dibujo.
+Sólo en siluetas propias: en las genéricas mentirían.
 Prueba: `test-silueta-marcas`.
 
 **El par no salta de golpe:** ±2 por paso (`BarStockProductWeeks.paso`). Un

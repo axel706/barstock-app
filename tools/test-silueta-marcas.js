@@ -42,8 +42,11 @@ new Function(leer('src/bottle-profiles.js'))();
 const B = window.BarStockBottleProfiles;
 const W = 200, H = 260, PAD = 12;
 
-console.log('\nlas tres que las llevan');
-for (const k of ['woodford', 'elijah_craig', 'basil_hayden']) {
+console.log('\nlas que las llevan');
+// Las tres de la lámina A2·7 y la tanda 1 (2026-11-22, pendiente de que
+// Axel la revise sobre su lámina): las mismas reglas para todas.
+const TANDA1 = ['jameson', 'buffalo_trace', 'bulleit', 'fireball', 'red_label', 'dewars', 'bacardi', 'campari', 'aperol', 'baileys'];
+for (const k of ['woodford', 'elijah_craig', 'basil_hayden'].concat(TANDA1)) {
   const P = B.PROFILES[k];
   const ms = P && P.marcas;
   prueba(k + ': lleva marcas', Array.isArray(ms) && ms.length >= 3, ms && ms.length);

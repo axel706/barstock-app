@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261122-004308",
+    "items": [
+      "Counting: label guides on 10 more bottles"
+    ]
+  },
+  {
     "build": "20261122-001441",
     "items": [
       "Orders: the + search lists the vendor’s products"
@@ -180,12 +186,6 @@
   },
   {
     "build": "20261118-200326",
-    "items": [
-      "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261118-193426",
     "items": [
       "Behind-the-scenes fixes"
     ]
