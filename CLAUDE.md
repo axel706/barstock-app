@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 165 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 166 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -206,6 +206,18 @@ Medido en Chromium: ~100 → ~140 fotogramas en 3 s. Un botón de cristal
 nuevo en las pantallas tiene que entrar en ese `:not` (o llevar id).
 Prueba: `test-listas-sin-blur`. Lo que queda: las escaleras del
 desenfoque progresivo (6 capas cada una), por lámina.
+
+**Los fondos animados** (Axel, 2026-11-22, lámina: Aurora, Liquid y
+Bokeh; "si hay mucho lag, pongo uno estático"): `src/fondo-vivo.js`, en
+el selector del teléfono tras las fotos. Se guardan como `anim:aurora`
+en `mobile_background_src` y `fondo.js` los pinta DENTRO de `#bgLayer`.
+**Con uno puesto, el velo (`body.m-shell::after`) va SIN
+`backdrop-filter`** (`body.fondo-vivo`): desenfocar algo que se mueve
+rehace el blur de la pantalla entera en cada fotograma. Los colores ya
+son suaves de por sí, sólo se anima `transform`, se pausan con la app
+escondida (`fondo-pausa`) y se quedan quietos con reducir movimiento.
+Lo que sí sigue desenfocando encima: la escalera de la banda (6 capas,
+sólo arriba). Prueba: `test-fondo-vivo`.
 
 **Tinta es el fondo de las tarjetas, desde ahora el estándar** (Axel,
 2026-11-18, lámina B: "vamos a ir ajustando las distintas pantallas a
@@ -585,7 +597,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 165 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 166 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

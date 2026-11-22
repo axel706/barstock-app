@@ -69,6 +69,21 @@
     { id: 'movil-spritz',       label: 'Spritz',       src: 'assets/backgrounds/movil-spritz.jpg' }
   ];
 
+  // ── Los animados (Axel, 2026-11-22, sobre lámina: los tres) ─────────
+  //
+  // No son una imagen: `src` es un nombre ("anim:aurora") que guarda la
+  // misma columna, y los pinta src/fondo-vivo.js dentro de #bgLayer.
+  // `mini` es la miniatura del selector, un degradado quieto con sus
+  // colores (no hay archivo que enseñar).
+  const ANIMADOS = [
+    { id: 'vivo-aurora', label: 'Aurora', src: 'anim:aurora', anim: true,
+      mini: 'radial-gradient(circle at 25% 25%, rgba(56,189,248,.85), transparent 55%), radial-gradient(circle at 80% 55%, rgba(52,211,153,.7), transparent 55%), radial-gradient(circle at 35% 85%, rgba(168,85,247,.6), transparent 55%), #0b1220' },
+    { id: 'vivo-liquid', label: 'Liquid', src: 'anim:liquid', anim: true,
+      mini: 'conic-gradient(from 30deg, #0b1220, rgba(56,189,248,.8), #0e1a2e, rgba(52,211,153,.7), #0e1a2e, rgba(168,85,247,.65), #0b1220)' },
+    { id: 'vivo-bokeh', label: 'Bokeh', src: 'anim:bokeh', anim: true,
+      mini: 'radial-gradient(circle at 20% 70%, rgba(56,189,248,.8) 0 14%, transparent 15%), radial-gradient(circle at 70% 40%, rgba(52,211,153,.7) 0 18%, transparent 19%), radial-gradient(circle at 45% 20%, rgba(168,85,247,.6) 0 10%, transparent 11%), #0b1220' }
+  ];
+
   // Las del catálogo general que tienen sentido en vertical. Fuera las
   // tres versiones apaisadas del patrón: en un teléfono se recortan y se
   // ven igual que "Neon".
@@ -78,9 +93,9 @@
   // "Upload" sin ensuciar el catálogo del otro.
   window.BarStockBackgrounds = {
     lista: () => IMAGENES.map(x => Object.assign({}, x)),
-    // Lo que se ofrece en el teléfono: primero las suyas, luego las
-    // generales que funcionan en vertical.
-    listaMovil: () => SOLO_MOVIL.concat(IMAGENES.filter(x => !APAISADAS.includes(x.id)))
+    // Lo que se ofrece en el teléfono: primero las suyas, luego los
+    // animados, luego las generales que funcionan en vertical.
+    listaMovil: () => SOLO_MOVIL.concat(ANIMADOS, IMAGENES.filter(x => !APAISADAS.includes(x.id)))
       .map(x => Object.assign({}, x)),
     tiene: (src) => IMAGENES.some(x => x.src === src)
   };

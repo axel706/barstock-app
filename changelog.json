@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261122-143217",
+    "items": [
+      "Three animated phone backgrounds",
+      "Aurora, Liquid and Bokeh in Settings › Background"
+    ]
+  },
+  {
     "build": "20261122-142710",
     "items": [
       "Running out card in a deeper crimson red"
@@ -180,13 +187,6 @@
     "build": "20261121-104044",
     "items": [
       "Home: transfers show where from and where to"
-    ]
-  },
-  {
-    "build": "20261121-103731",
-    "items": [
-      "Home: the cycle shows the week and when to count",
-      "Home: Sunday steps and a ring while counting"
     ]
   }
 ]

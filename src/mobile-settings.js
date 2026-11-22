@@ -593,9 +593,11 @@
         '<button type="button" class="m-set-bg m-set-bg-pc' + (!act ? ' on' : '') + '" data-bg=""' + mini(delPc) + '>' +
           (!act ? '<i class="ti ti-check" aria-hidden="true"></i>' : '') +
           '<span>Same as computer</span></button>' +
+        // Un fondo animado no tiene archivo: su miniatura es un degradado
+        // quieto con sus colores (f.mini, en backgrounds.js).
         fondos().map(f =>
           '<button type="button" class="m-set-bg' + (f.src === act ? ' on' : '') + '"' +
-            ' data-bg="' + esc(f.src) + '"' + mini(f.src) + '>' +
+            ' data-bg="' + esc(f.src) + '"' + (f.anim ? ' style="background:' + esc(f.mini || '') + '"' : mini(f.src)) + '>' +
             (f.src === act ? '<i class="ti ti-check" aria-hidden="true"></i>' : '') +
             '<span>' + esc(f.label) + '</span></button>').join('') +
       '</div>';

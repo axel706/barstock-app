@@ -39,6 +39,20 @@
   function aplicar(src) {
     const layer = document.getElementById('bgLayer');
     if (!layer) return;
+    // Un fondo animado ("anim:aurora") no es una imagen: lo pinta
+    // fondo-vivo.js dentro de la capa. Cualquier otro deja la capa vacía
+    // por dentro (lo animado se quita) y sigue como siempre. Un "anim:"
+    // que no existe se trata como sin fondo.
+    const V = window.BarStockFondoVivo;
+    if (V && V.nombre(src)) {
+      layer.style.backgroundImage = '';
+      V.pintar(layer, src);
+      layer.classList.add('active');
+      document.body.classList.add('has-custom-bg');
+      return;
+    }
+    if (V) V.quitar(layer);
+    if (/^anim:/.test(String(src || ''))) src = '';
     if (!src || src === 'default') {
       layer.style.backgroundImage = '';
       layer.classList.remove('active');
