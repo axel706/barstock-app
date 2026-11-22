@@ -239,7 +239,8 @@ velo transparente sobre el FONDO de la app (la página, la banda y las
 pestañas se esconden mientras está abierto), con el campo y Cancel
 arriba, la sugerida, la lista con su scroll y las salidas al
 final (`pie`: "Not mine", "Unlink"); sólo elige, guarda quien lo abre.
-Ya lo usan la factura (`mobile-invoices.abrirBuscador`), Transfers
+Ya lo usan la factura (`mobile-invoices.abrirBuscador`), el + de una
+orden de Open (`mobile-orders.buscarParaAnadir`), Transfers
 ("Add a product" y "Which is yours?"), Liquor from Toast, Recipes y
 Wine from Toast (que tenía la rueda nativa, un `<select>`): es
 la ÚNICA forma de `BarStockBottleSearch.abrir` (la hoja de abajo de
@@ -343,8 +344,12 @@ sub, aviso)`, "8 without price" en ámbar), y abajo, donde Done, `#moAcc`
 como `#mhAcc` de Sent: "Review and send" (`#moSend`) a lo ancho en el
 cristal azul, sin el total, y el + (`#moAdd`) redondo, verde como Quick
 order, a la DERECHA; al tocarlo su cristal crece hasta la pantalla
-(`crecerYAbrir`, sin animar con reducir movimiento) y abre el diálogo de
-añadir (`add-to-order.js`, aún no el buscador a pantalla completa). La revisión de enviar
+(`crecerYAbrir`, sin animar con reducir movimiento) y abre el buscador
+a pantalla completa (`buscarParaAnadir`, lámina A sin el teclado, el
+mismo día: el recuadro de `add-to-order.js` flotaba tras la animación y
+su campo hacía zoom): sólo lo de ese proveedor sin colocar; lo elegido
+entra con 1 y se ajusta con el −/+ de su línea, marcada "added"; lo que
+ya estaba sólo lleva a su línea. La revisión de enviar
 sigue con su cabecera. Prueba: "2c" de `test-sugerencia`. La lista de
 Open (2026-11-20, "combina A y C"): cada proveedor con su insignia de
 iniciales y la tarjeta teñida en la esquina, los dos del color de

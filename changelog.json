@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261121-232312",
+    "items": [
+      "Orders: + opens the full-screen search, no zoom",
+      "Added products start at 1, adjust on their line"
+    ]
+  },
+  {
     "build": "20261121-230623",
     "items": [
       "Orders: Review and send and a green + at the bottom",
@@ -181,13 +188,6 @@
     "build": "20261118-165535",
     "items": [
       "\"Out tomorrow\" instead of the day name"
-    ]
-  },
-  {
-    "build": "20261118-161403",
-    "items": [
-      "Running out: no more \"Covered\" next to \"Out\"",
-      "Every item shows the day it runs out"
     ]
   }
 ]

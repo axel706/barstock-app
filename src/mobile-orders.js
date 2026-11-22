@@ -476,7 +476,7 @@
     // Se le pasa el proveedor. Sin él, el diálogo mira la pestaña del
     // escritorio —que aquí no significa nada— y se cierra solo.
     const abrirAdd = () => { if (window.BarStockAddToOrder) window.BarStockAddToOrder.open(v.nombre); };
-    if (add) add.onclick = () => (add.closest('#moAcc') ? crecerYAbrir(add, abrirAdd) : abrirAdd());
+    if (add) add.onclick = () => (add.closest('#moAcc') ? crecerYAbrir(add, () => buscarParaAnadir(v)) : abrirAdd());
     host.querySelectorAll('[data-volver]').forEach(b => {
       b.onclick = () => {
         // Vuelve a automático, no a la cantidad que tuviera antes: el
@@ -485,6 +485,13 @@
       };
     });
     enganchar(host);
+    // A la línea que se acaba de elegir con el +, y se suelta la marca
+    // para el siguiente pintado.
+    if (_recien) {
+      const l = host.querySelector('.m-ord-nuevo');
+      if (l && l.scrollIntoView) l.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      _recien = null;
+    }
   }
 
   // ── El + que crece (Axel, 2026-11-22, lámina B ajustada) ────────────
@@ -496,6 +503,54 @@
   // y se quedaría a mitad de camino). Sin movimiento si el teléfono lo
   // pide: se abre al momento.
   const CRECE_MS = 480;
+
+  // ── Añadir con el buscador a pantalla completa (Axel, 2026-11-22,
+  // lámina A sin el teclado) ────────────────────────────────────────────
+  //
+  // El + abría el recuadro del escritorio (add-to-order.js): flotaba
+  // sobre la página justo después de que el cristal creciera a pantalla
+  // completa, y su campo, por debajo de 16 px, hacía zoom en el iPhone,
+  // del que no se sale. Ahora abre el buscador de la app (el de Invoices,
+  // Transfers y Recipes), con sólo lo de este proveedor que no se ha
+  // colocado ya. Lo elegido entra con 1 ("la cantidad se ajusta desde
+  // ahí", con el −/+ de su línea) y se marca; lo que ya estaba en la
+  // orden no cambia de cantidad: sólo se va a su línea.
+  let _recien = null;   // la línea recién añadida o elegida, para marcarla
+  function buscarParaAnadir(v) {
+    const B = window.BarStockBottleSearch;
+    if (!B || !B.abrir) {
+      if (window.BarStockAddToOrder) window.BarStockAddToOrder.open(v.nombre);
+      return;
+    }
+    const V = String(v.nombre).toUpperCase();
+    const placed = (r) => hay('isRowPlaced') && window.isRowPlaced(r);
+    const suyos = master().filter(r => r && r.item && String(r.vendor || '').toUpperCase() === V && !placed(r));
+    const dentro = new Set(v.filas.map(r => r.item));
+    const porNombre = new Map(suyos.map(r => [r.item, r]));
+    B.abrir({
+      pantalla: true,
+      titulo: v.nombre,
+      sub: 'Add to ' + v.nombre,
+      que: 'products',
+      productos: suyos.map(r => r.item).sort((a, b) => a.localeCompare(b)),
+      detalle: (p) => {
+        const r = porNombre.get(p);
+        if (!r) return '';
+        return dentro.has(p) ? 'in this order · ' + n2(cantidad(r)) + ' to order'
+          : [r.category, n2(r.onHand) + ' on hand', 'par ' + n2(r.suggested)].filter(Boolean).join(' · ');
+      },
+      alElegir: (p) => {
+        if (B.cerrar) B.cerrar();
+        const r = porNombre.get(p);
+        if (!r) return;
+        if (!dentro.has(p) && hay('updateFinalOrder')) window.updateFinalOrder(master().indexOf(r), 1);
+        const nueva = !dentro.has(p);
+        _recien = { item: p, nueva };
+        repintar();   // pinta la línea marcada y suelta _recien
+        if (nueva && window.BarStockToast) window.BarStockToast.show('Added 1 · ' + p);
+      }
+    });
+  }
   function crecerYAbrir(btn, abrir) {
     const quieto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (quieto || document.querySelector('.m-ord-crece')) { abrir(); return; }
@@ -1089,12 +1144,15 @@
       : editada ? '<span class="m-ord-ed">edited</span>'
       : agotado ? '<span class="m-ord-out">out</span>' : '';
 
+    // La recién elegida en el buscador del +: marcada, "added" si entró
+    // ahora. Se ve una vez: el siguiente pintado ya no la marca.
+    const recien = !!(_recien && _recien.item === r.item);
     return `
-      <div class="m-ord-l${!conPrecio ? ' sinprecio' : ''}${editada ? ' editada' : ''}${falló ? ' mal' : ''}"
+      <div class="m-ord-l${!conPrecio ? ' sinprecio' : ''}${editada ? ' editada' : ''}${falló ? ' mal' : ''}${recien ? ' m-ord-nuevo' : ''}"
            data-i="${i}">
         <div class="m-ord-l-top">
           <span class="m-ord-l-n">${esc(r.item)}</span>
-          ${marca}
+          ${recien && _recien.nueva ? '<span class="m-ord-added">added</span>' : marca}
           ${ajustable(r) ? `<button type="button" class="m-ord-x" data-fuera="${i}"
                                     aria-label="Leave out of this order">
                               <i class="ti ti-x" aria-hidden="true"></i>

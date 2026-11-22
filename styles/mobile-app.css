@@ -3851,6 +3851,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-ord-l.editada   { border-color: rgba(56,189,248,.34); }
   .m-ord-l.sinprecio { background: linear-gradient(135deg, rgba(245,158,11,.16), var(--tinta) 55%), var(--tinta); border-color: rgba(252,211,77,.26); }
   .m-ord-l.mal       { background: rgba(239,68,68,.12);  border-color: rgba(248,113,113,.38); }
+  /* La recién elegida con el + (Axel, 2026-11-22): borde verde, el del +,
+   * y "added" donde va su estado. Sólo en el pintado que sigue a elegirla. */
+  .m-ord-l.m-ord-nuevo { border-color: rgba(52,211,153,.7); box-shadow: 0 0 0 2px rgba(52,211,153,.25); }
+  .m-ord-added { flex: 0 0 auto; font-size: var(--m-meta); font-weight: 800; color: #34d399; }
 
   .m-ord-l-top { display: flex; align-items: baseline; gap: 8px; }
   .m-ord-l-n {

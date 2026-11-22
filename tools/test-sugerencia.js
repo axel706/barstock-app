@@ -278,23 +278,43 @@ grupo('2c · el detalle como una subsección de Settings (Axel, 2026-11-20)');
   prueba('ya no hay botón de enviar arriba de la lista', !host.querySelector('.m-ord-enviar'));
   prueba('…al final, con su hueco para que no tape lo último', !!acc && !!host.querySelector('.m-tx-hueco') &&
     (host.querySelector('#moList').compareDocumentPosition(acc) & v.Node.DOCUMENT_POSITION_FOLLOWING) > 0);
-  // El + crece en su cristal verde hasta cubrir la pantalla y DESPUÉS
-  // abre: el diálogo no sale antes de la animación.
-  v.__abierto = [];
-  v.BarStockAddToOrder = { open(x) { v.__abierto.push(x); } };
-  // Con "reducir movimiento" del teléfono, abre al momento.
+  // El + crece en su cristal verde y DESPUÉS abre el buscador a
+  // pantalla completa de la app (Axel, 2026-11-22, lámina A sin el
+  // teclado): el recuadro de antes flotaba sobre la página y su campo,
+  // por debajo de 16 px, hacía zoom en el iPhone.
+  let bus = null; v.__cerrados = 0;
+  v.BarStockBottleSearch = { abrir(o) { bus = o; }, cerrar() { v.__cerrados++; } };
+  v.BarStockAddToOrder = { open() { v.__viejo = true; } };
   add.click();
-  prueba('con reducir movimiento, abre sin animar', v.__abierto.join() === 'BREAKTHRU' && !v.document.querySelector('.m-ord-crece'));
-  v.__abierto = [];
+  prueba('con reducir movimiento, abre el buscador sin animar', !!bus && !v.document.querySelector('.m-ord-crece'));
+  bus = null;
   const mmAntes = v.matchMedia;
   v.matchMedia = (q) => ({ matches: !/reduced-motion/.test(q), addEventListener() {}, removeEventListener() {} });
   add.click();
-  prueba('el + no abre de golpe: primero crece', v.__abierto.length === 0 && !!v.document.querySelector('.m-ord-crece'));
+  prueba('el + no abre de golpe: primero crece', !bus && !!v.document.querySelector('.m-ord-crece'));
   await esperar(700);
-  prueba('…y luego abre para su proveedor', v.__abierto.join() === 'BREAKTHRU', v.__abierto.join());
+  prueba('…y luego abre el buscador a pantalla completa, no el recuadro', !!bus && !v.__viejo);
   await esperar(400);
   prueba('…y el cristal que creció se va', !v.document.querySelector('.m-ord-crece'));
   v.matchMedia = mmAntes;
+  const ps = (bus && bus.productos) || [];
+  prueba('sólo los de este proveedor, sin lo ya colocado', ps.includes('Kentucky') && ps.includes('Daou') && !ps.includes('Otro') && !ps.includes('Puesto'), ps.join());
+  prueba('lo que ya está en la orden lo dice', /in this order/.test((bus && bus.detalle && bus.detalle('Daou')) || ''), bus && bus.detalle && bus.detalle('Daou'));
+  // Elegir lo que no está: entra con 1 y se ajusta desde su línea.
+  v.__guardados = [];
+  bus.alElegir('Kentucky');
+  await esperar(10);
+  prueba('elegido: entra con 1, por updateFinalOrder', v.__guardados.length === 1 && v.__guardados[0].n === 1 && v.state.master[v.__guardados[0].i].item === 'Kentucky',
+    JSON.stringify(v.__guardados));
+  prueba('…cierra el buscador', v.__cerrados >= 1);
+  const nueva = Array.from(host.querySelectorAll('#moList .m-ord-l')).find(l => /^Kentucky/.test(txt(l.querySelector('.m-ord-l-n'))));
+  prueba('…y su línea sale en la orden, marcada', !!nueva && nueva.classList.contains('m-ord-nuevo') && /added/.test(txt(nueva)), nueva && nueva.className);
+  // Lo que ya está: no se toca su cantidad, sólo se va a su línea.
+  v.__guardados = [];
+  const bus2 = bus; bus = null;
+  bus2.alElegir('Daou');
+  await esperar(10);
+  prueba('lo que ya estaba no cambia de cantidad', v.__guardados.length === 0);
   prueba('el atrás de la banda vuelve a la lista de Orders', typeof v.__banda.atras === 'function');
   if (typeof v.__banda.atras === "function") v.__banda.atras();
   await esperar(10);
