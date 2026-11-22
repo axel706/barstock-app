@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261122-120213",
+    "items": [
+      "Home: On the shelf shows one number when the app opens",
+      "It no longer jumps while the data loads"
+    ]
+  },
+  {
     "build": "20261122-115529",
     "items": [
       "Counting: the line’s handles moved to the edges",
@@ -180,13 +187,6 @@
     "build": "20261120-221249",
     "items": [
       "Invoices: the unlinked tag sits under the amount"
-    ]
-  },
-  {
-    "build": "20261120-220435",
-    "items": [
-      "Sent orders show the totals strip, like Invoices",
-      "Order and invoice number move under the name"
     ]
   }
 ]

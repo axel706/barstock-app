@@ -201,6 +201,40 @@ grupo('la marca "Live" y el reparto');
   prueba('el horario carga antes que el reparto, que lo usa', p('vendor-defaults-cloud.js') > 0 && p('vendor-defaults-cloud.js') < p('vendor-delivery.js') && p('vendor-delivery.js') < p('order-receipts.js'));
 }
 
+// ── El inicio del ciclo, esperado (Axel, 2026-11-22, en vídeo) ──────
+//
+// Al entrar o cambiar de locación, "On the shelf" enseñaba hasta tres
+// cifras (≈645 botellas, luego ≈693). ahora() tomaba
+// BarStockCycle.startedAt() sin esperar a que se leyera: si el LIVE se
+// pedía antes, el reparto de facturas corría con inicio 0 (otro
+// reparto, otro "llegó"), y al volver a calcular con el ciclo ya leído
+// salía otro número.
+grupo('el LIVE espera al inicio del ciclo');
+{
+  const w2 = new JSDOM('<!doctype html><body></body>', { runScripts: 'outside-only' }).window;
+  w2.eval(leer('src/order-receipts.js'));
+  w2.eval(leer('src/live-stock.js'));
+  const INI = T('2026-11-16T02:00:00Z');
+  let inicio = null, leido = false;
+  w2.BarStockCycle = {
+    startedAt: () => leido ? new Date(INI) : null,
+    isLoaded: () => leido,
+    load: () => new Promise(r => setTimeout(() => { leido = true; r(new Date(INI)); }, 20))
+  };
+  w2.BarStockToastUsage = { desdeElConteo: async () => ({ estado: 'listo', conteo: CONTEO, desde: DIA, dias: [], productos: [] }),
+    diaDeNegocio: () => DIA, fraccionDia: () => null };
+  w2.BarStockInventoryCloud = { fetchLocationId: async () => 'loc' };
+  w2.BARSTOCK_CONFIG = {};
+  const R2 = w2.BarStockOrderReceipts;
+  R2.leer = async () => ({ manuales: [], facturas: [], enlaces: [], recortadas: [], lineas: [] });
+  const rep = R2.repartir;
+  R2.repartir = (o) => { inicio = o.inicioCiclo; return rep(o); };
+  w2.state = { master: MASTER };
+  const r = await w2.BarStockLive.ahora();
+  prueba('pedido antes de leer el ciclo, reparte con el inicio de verdad (no con 0)', r.estado === 'listo' && inicio === INI,
+    'inicioCiclo ' + inicio + ' vs ' + INI);
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
 })();

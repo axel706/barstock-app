@@ -79,6 +79,16 @@
     return _pidiendo;
   }
 
+  // ¿Ya contestó el LIVE al menos una vez (o no hay de dónde sacarlo)?
+  // Mientras no, quien enseña una cifra hecha con él espera en vez de
+  // enseñar otra cuenta (Axel, 2026-11-22, en vídeo: "On the shelf"
+  // pasaba de $16,062 "as counted" a $10,824 al llegar el LIVE). Sin
+  // fuente cuenta como listo: si no, esperaría para siempre.
+  function listo() {
+    const R = window.BarStockRunOut, L = window.BarStockLive;
+    return _vivo !== null || !((R && R.ahora) || (L && L.ahora));
+  }
+
   function caducar() {
     if (_pidiendo) _otraVez = true;
     _vivoEn = 0;
@@ -249,7 +259,7 @@
 
   window.BarStockLiveCache = {
     pedir, conteo, fila,
-    cargar, caducar, alCambiar, vivo, cuanto, conVivo, texto, agota, toastLoVende, medianas, llegadas, dinero, semana, botellas,
+    cargar, caducar, listo, alCambiar, vivo, cuanto, conVivo, texto, agota, toastLoVende, medianas, llegadas, dinero, semana, botellas,
     etiquetaLive, etiquetaAgota, VIVO_MS,
     _reset: () => { _vivo = null; _agota = null; _conteo = null; _desde = null; _hoy = null; _vivoEn = 0; _pidiendo = null; _otraVez = false; _oyentes.clear(); }
   };

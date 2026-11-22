@@ -258,7 +258,16 @@
     // Con un conteo activo se enseña lo contado; sin conteo conocido no
     // hay desde dónde empezar. Se dice tal cual.
     if (uso.estado !== 'listo') return { estado: uso.estado };
+    // El inicio del ciclo se ESPERA (Axel, 2026-11-22, en vídeo: "On the
+    // shelf" enseñaba hasta tres cifras al entrar). Con startedAt() a
+    // secas, un LIVE pedido antes de leer el ciclo repartía las facturas
+    // con inicio 0, otro reparto y otro "llegó"; al recalcular con el
+    // ciclo leído salía otro número. Si no se puede leer, sigue sin él,
+    // como antes.
     const C = window.BarStockCycle;
+    if (C && C.load && !(C.isLoaded && C.isLoaded())) {
+      try { await C.load(); } catch (e) { console.warn('[live] sin inicio del ciclo:', e && e.message || e); }
+    }
     const ini = C && C.startedAt && C.startedAt();
     const filas = await armarFilas({ master: (window.state && window.state.master) || [], uso,
       conteo: uso.conteo, inicioCiclo: ini ? ini.getTime() : 0 });

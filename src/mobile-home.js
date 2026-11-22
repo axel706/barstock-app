@@ -1761,6 +1761,11 @@
       // aviso cuadre con lo que el Home decía antes. Sin LIVE (conteo
       // activo, nada movido), lo de antes: contado + facturado.
       const LC = window.BarStockLiveCache;
+      // Hasta que el LIVE conteste la primera vez, nada: la cuenta de
+      // abajo (contado + todo lo facturado, sin restar ventas) es otra, y
+      // enseñarla primero hacía saltar la tarjeta entre dos cifras que
+      // no se pueden comparar (Axel, 2026-11-22, en vídeo).
+      if (LC && LC.listo && !LC.listo()) return null;
       const dl = LC && LC.dinero ? LC.dinero() : null;
       if (dl) {
         return { live: true, total: dl.total, contado: dl.contado, llego: dl.llego,

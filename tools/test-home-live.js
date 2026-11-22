@@ -187,6 +187,13 @@ grupo('el LIVE llega con el Home pintado');
   const { w, host } = await entorno({ sinCargar: true, lento: true });
   await esperar(30);
   prueba('antes, sin marca', !estante(host).querySelector('.m-cf-live'));
+  // Axel, 2026-11-22, en vídeo: al entrar, "On the shelf" enseñaba
+  // primero la cuenta de reserva (contado + todo lo facturado, sin restar
+  // ventas: $16,062 y 593 botellas) y después el LIVE ($10,824, ≈645):
+  // dos cifras que no son la misma cuenta. Mientras el LIVE no ha
+  // contestado ni una vez, ni cifra ni botellas.
+  prueba('antes de que conteste el LIVE, ni cifra ni botellas', valor(estante(host)) === '…' &&
+    !/bottle/.test(estante(host).textContent), estante(host).textContent.replace(/\s+/g, ' '));
   await esperar(60);
   prueba('el Home lo pide al pintarse y se repinta al llegar', !!estante(host).querySelector('.m-cf-live') &&
     valor(estante(host)) === '$550', estante(host).textContent.replace(/\s+/g, ' '));
