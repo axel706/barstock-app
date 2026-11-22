@@ -832,7 +832,10 @@
   // el número, la fecha y el estado del detalle de una orden de Sent o
   // de una factura. Texto, nunca HTML. Cada llamada la pone o la quita:
   // una sección sin línea no hereda la del detalle de antes.
-  function enBanda(titulo, sub) {
+  // `aviso` (opcional) va al final de la línea de abajo, en ámbar: lo que
+  // avisa dentro de ella ("8 without price" en Orders › Open, Axel
+  // 2026-11-22). Texto, como lo demás: nunca HTML.
+  function enBanda(titulo, sub, aviso) {
     if (!_banda) return false;
     let t = _banda.querySelector('.m-band-seccion');
     if (!t) {
@@ -842,13 +845,24 @@
     }
     if (t.textContent !== (titulo || '')) t.textContent = titulo || '';
     let l = _banda.querySelector('.m-band-sub');
-    if (!l && sub) {
+    const linea = [sub, aviso].filter(Boolean).join(' · ');
+    if (!l && linea) {
       l = document.createElement('span');
       l.className = 'm-band-sub';
       _banda.appendChild(l);
     }
-    if (l && l.textContent !== (sub || '')) l.textContent = sub || '';
-    _banda.classList.toggle('m-con-sub', !!sub);
+    // Se rehace sólo si cambia: comparar el texto entero (con el aviso)
+    // basta, porque el aviso siempre va al final.
+    if (l && l.textContent !== linea) {
+      l.textContent = sub && aviso ? sub + ' · ' : (sub || '');
+      if (aviso) {
+        const e = document.createElement('em');
+        e.className = 'm-band-aviso';
+        e.textContent = aviso;
+        l.appendChild(e);
+      }
+    }
+    _banda.classList.toggle('m-con-sub', !!linea);
     let b = _banda.querySelector('#mBandAtras');
     if (!b) {
       b = document.createElement('button');

@@ -147,7 +147,7 @@ function pantalla(conS, conBanda) {
   let def = null;
   v.__banda = { titulo: null, atras: null, salidas: 0 };
   const bandaFns = conBanda ? {
-    enBanda: (t) => { v.__banda.titulo = t; return true; },
+    enBanda: (t, sub, aviso) => { v.__banda.titulo = t; v.__banda.sub = sub || ''; v.__banda.aviso = aviso || ''; return true; },
     alVolverBanda: (fn) => { v.__banda.atras = fn; },
     salirBanda: () => { v.__banda.titulo = null; v.__banda.atras = null; v.__banda.salidas++; }
   } : {};
@@ -262,19 +262,49 @@ grupo('2c · el detalle como una subsección de Settings (Axel, 2026-11-20)');
   await esperar(10);
   prueba('el proveedor va a la banda', v.__banda.titulo === 'BREAKTHRU', String(v.__banda.titulo));
   prueba('la página no repite el título ni su chevron', !host.querySelector('.m-inv-t') && !host.querySelector('#mAtras'));
-  const sub = host.querySelector('.m-ord-sub');
-  prueba('el total y las líneas, en una línea debajo de la banda', !!sub && /\$\d.* · 2 lines/.test(txt(sub)), txt(sub));
-  const add = host.querySelector('#moAdd');
-  prueba('"Add a product" es el botón de Done (sin la pastilla de antes)', !!add && !add.classList.contains('m-ord-add') && /Add a product/.test(txt(add)));
-  prueba('…al final, con su hueco para que no tape lo último', !!add && !!host.querySelector('.m-tx-hueco') &&
-    (host.querySelector('#moList').compareDocumentPosition(add) & v.Node.DOCUMENT_POSITION_FOLLOWING) > 0);
+  // Axel, 2026-11-22 (lámina B ajustada): "Review and send" y "Add a
+  // product" competían como dos botones principales. Los detalles van a
+  // la banda bajo el proveedor; abajo, donde Done, Review and send a lo
+  // ancho (sin el total) y el + verde redondo a la derecha.
+  prueba('los detalles de la orden van a la banda, bajo el proveedor',
+    /^\$\d.* · 2 lines$/.test(v.__banda.sub) && !host.querySelector('.m-ord-sub'), v.__banda.sub);
+  const acc = host.querySelector('#moAcc');
+  const env = acc && acc.querySelector('#moSend');
+  const add = acc && acc.querySelector('#moAdd');
+  prueba('abajo, juntos: Review and send y el +, en ese orden', !!env && !!add &&
+    (env.compareDocumentPosition(add) & v.Node.DOCUMENT_POSITION_FOLLOWING) > 0);
+  prueba('Review and send sólo dice eso', !!env && txt(env) === 'Review and send', env && txt(env));
+  prueba('el + es sólo el icono, con su nombre para el lector', !!add && !txt(add) && add.getAttribute('aria-label') === 'Add a product');
+  prueba('ya no hay botón de enviar arriba de la lista', !host.querySelector('.m-ord-enviar'));
+  prueba('…al final, con su hueco para que no tape lo último', !!acc && !!host.querySelector('.m-tx-hueco') &&
+    (host.querySelector('#moList').compareDocumentPosition(acc) & v.Node.DOCUMENT_POSITION_FOLLOWING) > 0);
+  // El + crece en su cristal verde hasta cubrir la pantalla y DESPUÉS
+  // abre: el diálogo no sale antes de la animación.
+  v.__abierto = [];
+  v.BarStockAddToOrder = { open(x) { v.__abierto.push(x); } };
+  // Con "reducir movimiento" del teléfono, abre al momento.
+  add.click();
+  prueba('con reducir movimiento, abre sin animar', v.__abierto.join() === 'BREAKTHRU' && !v.document.querySelector('.m-ord-crece'));
+  v.__abierto = [];
+  const mmAntes = v.matchMedia;
+  v.matchMedia = (q) => ({ matches: !/reduced-motion/.test(q), addEventListener() {}, removeEventListener() {} });
+  add.click();
+  prueba('el + no abre de golpe: primero crece', v.__abierto.length === 0 && !!v.document.querySelector('.m-ord-crece'));
+  await esperar(700);
+  prueba('…y luego abre para su proveedor', v.__abierto.join() === 'BREAKTHRU', v.__abierto.join());
+  await esperar(400);
+  prueba('…y el cristal que creció se va', !v.document.querySelector('.m-ord-crece'));
+  v.matchMedia = mmAntes;
   prueba('el atrás de la banda vuelve a la lista de Orders', typeof v.__banda.atras === 'function');
   if (typeof v.__banda.atras === "function") v.__banda.atras();
   await esperar(10);
   prueba('…y la banda suelta el nombre', v.__banda.titulo === null && v.__banda.salidas > 0 && !!host.querySelector('.m-ordv'));
   const css = leer('styles/mobile-app.css');
-  prueba('#moAdd va fijo donde Done, con su cristal', /#mScreens :is\(#mTxGo, #mqMain, #moAdd[^)]*\) \{\s*position: fixed/.test(css) &&
-    /body\.m-shell #mScreens :is\(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moAdd[^)]*\),/.test(css));
+  const fijos = (/#mScreens :is\(([^)]*)\) \{\s*position: fixed/.exec(css) || [])[1] || '';
+  prueba('el bloque va fijo donde Done (y no el + suelto)', /#moAcc/.test(fijos) && !/#moAdd/.test(fijos), fijos);
+  const azul = (/body\.m-shell #mScreens :is\(#mRoDone([^)]*)\),\s*body\.m-shell #mTabs \.m-tab\.on \{/.exec(css) || [])[1] || '';
+  prueba('Review and send con el cristal azul de Done', /#moSend/.test(azul) && !/#moAdd/.test(azul), azul);
+  prueba('el + con el cristal verde de Quick order', /body\.m-shell #mScreens :is\(#moRun, #moAdd\) \{/.test(css));
 }
 {
   // Sin el armazón (escritorio, pruebas viejas), la cabecera de antes.

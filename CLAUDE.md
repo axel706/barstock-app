@@ -336,9 +336,15 @@ reopen debajo). Lo marca con `.m-det-fijo` porque su aviso rehace el
 marco de Orders, y el marco lo vuelve a pegar; sin la marca, el aviso
 deshacía lo pegado. El detalle de un proveedor en Open, igual desde el
 2026-11-20 (Axel: "estilo de un submenú de Settings"): el proveedor en
-la banda, el atrás en el sitio de Time Machine, el total en una línea
-(`.m-ord-sub`) y "Add a product" (`#moAdd`) fijo donde Done, con su
-cristal (las reglas de `#mTxGo` / `#mqMain`). La revisión de enviar
+la banda, el atrás en el sitio de Time Machine. Desde el 2026-11-22
+(lámina B ajustada: "Review and send" y "Add a product" competían) el
+total y las líneas van en la banda bajo el proveedor (`enBanda(titulo,
+sub, aviso)`, "8 without price" en ámbar), y abajo, donde Done, `#moAcc`
+como `#mhAcc` de Sent: "Review and send" (`#moSend`) a lo ancho en el
+cristal azul, sin el total, y el + (`#moAdd`) redondo, verde como Quick
+order, a la DERECHA; al tocarlo su cristal crece hasta la pantalla
+(`crecerYAbrir`, sin animar con reducir movimiento) y abre el diálogo de
+añadir (`add-to-order.js`, aún no el buscador a pantalla completa). La revisión de enviar
 sigue con su cabecera. Prueba: "2c" de `test-sugerencia`. La lista de
 Open (2026-11-20, "combina A y C"): cada proveedor con su insignia de
 iniciales y la tarjeta teñida en la esquina, los dos del color de

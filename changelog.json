@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261121-230623",
+    "items": [
+      "Orders: Review and send and a green + at the bottom",
+      "Order totals now sit under the vendor name"
+    ]
+  },
+  {
     "build": "20261121-150915",
     "items": [
       "Home: counting card shows bottles, time and left"
@@ -181,13 +188,6 @@
     "items": [
       "Running out: no more \"Covered\" next to \"Out\"",
       "Every item shows the day it runs out"
-    ]
-  },
-  {
-    "build": "20261118-154935",
-    "items": [
-      "Running out: Order N counts what is on the way",
-      "Covered products no longer suggest a full order"
     ]
   }
 ]

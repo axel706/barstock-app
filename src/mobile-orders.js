@@ -374,12 +374,16 @@
     // la banda, y el botón de Time Machine pasa a ser atrás. El total y
     // las líneas, en una línea debajo. Sin el armazón, la cabecera de
     // antes.
+    // Desde el 2026-11-22 (lámina B ajustada) la línea de los detalles
+    // va a la banda bajo el proveedor, con lo que no tiene precio en
+    // ámbar, y no encima de la lista.
     const M = window.BarStockMobile;
-    const enB = !!(M && M.enBanda && M.enBanda(v.nombre));
-    const tot = v.filas.length ? money(v.total) + ' · ' + v.filas.length + ' line' + (v.filas.length === 1 ? '' : 's') +
-      (v.sinPrecio ? ' · ' + v.sinPrecio + ' without price' : '') : '';
+    const tot = v.filas.length ? money(v.total) + ' · ' + v.filas.length + ' line' + (v.filas.length === 1 ? '' : 's') : '';
+    const sinP = v.filas.length && v.sinPrecio ? v.sinPrecio + ' without price' : '';
+    const enB = !!(M && M.enBanda && M.enBanda(v.nombre, tot, sinP));
+    const conAdd = hay('supportsManualFinalOrder') && window.supportsManualFinalOrder(v.nombre);
     host.innerHTML = `
-      ${enB ? (tot ? `<div class="m-hsub m-set-intro m-ord-sub">${esc(tot)}</div>` : '') : cab({
+      ${enB ? '' : cab({
         volverA: 'All orders',
         titulo: v.nombre,
         // LOOP sin líneas propias (sólo lo que no llega a su entrega): sin
@@ -395,7 +399,7 @@
            lo que está al final no se encuentra. -->
       ${puentesHtml(v.nombre)}
 
-      ${v.filas.length ? `<button type="button" class="m-ord-enviar" id="moSend">
+      ${!enB && v.filas.length ? `<button type="button" class="m-ord-enviar" id="moSend">
         Review and send
       </button>` : ''}
 
@@ -437,7 +441,17 @@
            botón abriría un diálogo que no puede guardar nada. Fijo
            donde Done, con su cristal (Axel, 2026-11-20); el hueco deja
            ver lo último por encima de él. -->
-      ${hay('supportsManualFinalOrder') && window.supportsManualFinalOrder(v.nombre) ? `
+      ${enB ? ((v.filas.length || conAdd) ? `
+        <!-- Un solo botón principal (Axel, 2026-11-22): Review and send
+             y Add a product competían, uno arriba en azul sólido y otro
+             abajo en cristal. Ahora van juntos donde Done, como Resend y
+             Reopen en Sent: enviar a lo ancho, sin el total (ya está en
+             la banda), y el + redondo y verde a la derecha. -->
+        <div class="m-tx-hueco"></div>
+        <div id="moAcc">
+          ${v.filas.length ? '<button type="button" id="moSend">Review and send</button>' : ''}
+          ${conAdd ? '<button type="button" id="moAdd" aria-label="Add a product"><i class="ti ti-plus" aria-hidden="true"></i></button>' : ''}
+        </div>` : '') : conAdd ? `
         <div class="m-tx-hueco"></div>
         <button type="button" id="moAdd">
           <i class="ti ti-plus" aria-hidden="true"></i> Add a product
@@ -459,11 +473,10 @@
       repintar();
     };
     const add = host.querySelector('#moAdd');
-    if (add) add.onclick = () => {
-      // Se le pasa el proveedor. Sin él, el diálogo mira la pestaña
-      // del escritorio —que aquí no significa nada— y se cierra solo.
-      if (window.BarStockAddToOrder) window.BarStockAddToOrder.open(v.nombre);
-    };
+    // Se le pasa el proveedor. Sin él, el diálogo mira la pestaña del
+    // escritorio —que aquí no significa nada— y se cierra solo.
+    const abrirAdd = () => { if (window.BarStockAddToOrder) window.BarStockAddToOrder.open(v.nombre); };
+    if (add) add.onclick = () => (add.closest('#moAcc') ? crecerYAbrir(add, abrirAdd) : abrirAdd());
     host.querySelectorAll('[data-volver]').forEach(b => {
       b.onclick = () => {
         // Vuelve a automático, no a la cantidad que tuviera antes: el
@@ -472,6 +485,40 @@
       };
     });
     enganchar(host);
+  }
+
+  // ── El + que crece (Axel, 2026-11-22, lámina B ajustada) ────────────
+  //
+  // Al tocar el + verde, el + gira hacia una × y su cristal crece desde
+  // donde está hasta cubrir la pantalla; entonces se abre el diálogo de
+  // añadir, y el cristal se desvanece debajo de él. Una copia fija con la
+  // posición del botón (no el botón mismo, que va dentro del bloque fijo
+  // y se quedaría a mitad de camino). Sin movimiento si el teléfono lo
+  // pide: se abre al momento.
+  const CRECE_MS = 480;
+  function crecerYAbrir(btn, abrir) {
+    const quieto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (quieto || document.querySelector('.m-ord-crece')) { abrir(); return; }
+    const r = btn.getBoundingClientRect();
+    const c = document.createElement('div');
+    c.className = 'm-ord-crece';
+    c.style.setProperty('--x', r.left + 'px');
+    c.style.setProperty('--y', r.top + 'px');
+    c.style.setProperty('--w', r.width + 'px');
+    c.style.setProperty('--h', r.height + 'px');
+    document.body.appendChild(c);
+    btn.classList.add('gira');
+    // Dos fotogramas: el primero pinta la copia en el sitio del botón, el
+    // segundo la manda crecer (con uno solo el navegador junta los dos y
+    // no hay transición).
+    const raf = window.requestAnimationFrame || ((f) => setTimeout(f, 16));
+    raf(() => raf(() => c.classList.add('on')));
+    setTimeout(() => {
+      abrir();
+      btn.classList.remove('gira');
+      c.classList.add('fuera');
+      setTimeout(() => c.remove(), 300);
+    }, CRECE_MS);
   }
 
   // ── Revisión ─────────────────────────────────────────────────────────

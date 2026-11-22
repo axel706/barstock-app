@@ -645,7 +645,7 @@ console.log('\nQuick order, sin cabecera encima');
      !!host.querySelector('#moCuerpo .m-tx-hueco + #moRun'));
   const css = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8');
   ok('fijo como Done', /#mScreens :is\([^)]*#moRun[^)]*\) \{\s*position: fixed;/.test(css));
-  ok('en cristal verde', /#mScreens #moRun \{\s*color: #[0-9a-f]+; background: rgba\(52, 211, 153/.test(css));
+  ok('en cristal verde', /#mScreens :is\(#moRun, #moAdd\) \{\s*color: #[0-9a-f]+; background: rgba\(52, 211, 153/.test(css));
   ok('sin el estilo viejo de borde discontinuo', !/\.m-ord-run/.test(css));
 
   // Dentro de un proveedor, no: ahi el boton de abajo es "Add a product".

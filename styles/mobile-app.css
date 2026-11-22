@@ -643,7 +643,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * justo debajo, en "La barra de cristal". */
   body.m-shell #mBand .m-ico:not(.m-ico-alert),
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio,
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #mhAbrir, #mhSi, #mhNo, #msSave, #btNuevo, #ppNuevoRol, #btCrear),
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #moSend, #mhAbrir, #mhSi, #mhNo, #msSave, #btNuevo, #ppNuevoRol, #btCrear),
   body.m-shell #mTabs .m-tab.on,
   body.m-shell #mScreens .m-low-b,
   body.m-shell #mScreens :is(#mhTabs, .m-ts-seg) {
@@ -660,7 +660,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   body.m-shell #mBand .m-ico:not(.m-ico-alert)::before,
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio::before,
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #mhAbrir, #mhSi, #mhNo, #msSave, #btNuevo, #ppNuevoRol, #btCrear)::before,
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #moSend, #mhAbrir, #mhSi, #mhNo, #msSave, #btNuevo, #ppNuevoRol, #btCrear)::before,
   body.m-shell #mTabs .m-tab.on::before,
   body.m-shell #mScreens .m-low-b::before,
   body.m-shell #mScreens :is(#mhTabs, .m-ts-seg)::before,
@@ -811,7 +811,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * estilo liquid glass de ese botón Done"): misma regla, no una copia.
    * Antes era azul sólido con el texto oscuro (.m-tab.on, más abajo:
    * con el id, ésta le gana). */
-  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moAdd, #mhRe, #msSave, #btNuevo, #ppNuevoRol, #btCrear),
+  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moSend, #mhRe, #msSave, #btNuevo, #ppNuevoRol, #btCrear),
   body.m-shell #mTabs .m-tab.on {
     color: #f0f9ff; background: rgba(56, 189, 248, .42);
     border: 1px solid rgba(186, 230, 253, .62);
@@ -820,12 +820,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
       inset 0 0 14px rgba(56,189,248,.45),
       0 10px 30px rgba(0,0,0,.45);
   }
-  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #mhAbrir, #mhSi, #mhNo, #msSave, #btNuevo, #ppNuevoRol, #btCrear)::before,
+  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #moSend, #mhAbrir, #mhSi, #mhNo, #msSave, #btNuevo, #ppNuevoRol, #btCrear)::before,
   body.m-shell #mTabs .m-tab.on::before { z-index: -1; }
   /* La pestaña ya es relative; con isolation, su reflejo queda bajo el
    * icono y el nombre, no encima. */
   body.m-shell #mTabs .m-tab.on { isolation: isolate; }
-  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moAdd, #mhRe, #msSave, #btNuevo, #ppNuevoRol, #btCrear):active { background: rgba(56, 189, 248, .58); }
+  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moSend, #mhRe, #msSave, #btNuevo, #ppNuevoRol, #btCrear):active { background: rgba(56, 189, 248, .58); }
   /* "It arrived before the count" de la factura (Axel, 2026-11-18,
    * lámina B): el mismo cristal, en violeta, para que no se confunda
    * con "Link to an order" (azul, el de Done) que va justo encima. */
@@ -842,7 +842,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * donde Done, el mismo cristal, en el verde del + de Inventory: es
    * "añadir algo", no "terminar". Los colores son los de #miNuevo; la
    * sombra, la de los botones fijos. */
-  body.m-shell #mScreens #moRun {
+  /* El + de una orden de Open (#moAdd, Axel 2026-11-22), el mismo verde:
+   * también es "añadir algo". */
+  body.m-shell #mScreens :is(#moRun, #moAdd) {
     color: #ecfdf5; background: rgba(52, 211, 153, .42);
     border: 1px solid rgba(167, 243, 208, .62);
     box-shadow:
@@ -850,7 +852,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
       inset 0 0 14px rgba(52,211,153,.45),
       0 10px 30px rgba(0,0,0,.45);
   }
-  body.m-shell #mScreens #moRun:active { background: rgba(52, 211, 153, .58); }
+  body.m-shell #mScreens :is(#moRun, #moAdd):active { background: rgba(52, 211, 153, .58); }
   /* Reopen de una orden de Sent, y su "Delete and reopen" (Axel,
    * 2026-11-21, opción B): el mismo cristal, en rojo. Borra la orden:
    * Reopen va redondo y sólo con su icono al lado de Resend, para que
@@ -1211,6 +1213,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
     opacity: 0; transform: translateZ(0);
   }
   .m-band.m-en-seccion.m-con-sub .m-band-sub { opacity: 1; }
+  .m-band-sub .m-band-aviso { font-style: normal; color: #fbbf24; }
   .m-band.m-con-sub .m-band-seccion { bottom: 18px; height: 34px; line-height: 34px; }
   /* Con la marca de BARTENDER MODE debajo, todo sube sus 10 px. */
   html.bs-guest .m-band.m-con-sub .m-band-seccion { bottom: 28px; }
@@ -6017,7 +6020,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* Los Save de Settings (#msSave: Sender, Emails, Zones, la ficha de
    * Delivery) y los de People (Add person, New role, Create), también
    * (Axel, 2026-11-21: "como Done"). Cada uno lleva su hueco delante. */
-  #mScreens :is(#mTxGo, #mqMain, #moAdd, #moRun, #mhAcc, #msSave, #btNuevo, #ppNuevoRol, #btCrear) {
+  #mScreens :is(#mTxGo, #mqMain, #moAcc, #moRun, #mhAcc, #msSave, #btNuevo, #ppNuevoRol, #btCrear) {
     position: fixed; z-index: 50; left: 16px; right: 16px;
     bottom: calc(env(safe-area-inset-bottom, 0px) + 110px - var(--m-base) * 2.7);
     display: block; width: auto; margin: 0; min-height: calc(var(--m-base) * 3.4);
@@ -6030,6 +6033,33 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * bloque es el aviso con sus dos botones debajo y crece hacia arriba
    * desde el mismo sitio. */
   #mScreens #mhAcc { display: flex; gap: 10px; min-height: 0; }
+  /* El detalle de un proveedor en Open (#moAcc, Axel 2026-11-22), igual:
+   * Review and send a lo ancho y el + redondo, a la DERECHA. Sin líneas
+   * (LOOP con sólo lo que no llega), el + solo, en su sitio. */
+  #mScreens #moAcc { display: flex; gap: 10px; min-height: 0; justify-content: flex-end; }
+  #mScreens #moAcc #moSend { flex: 1; }
+  #mScreens #moAcc :is(#moSend, #moAdd) {
+    height: calc(var(--m-base) * 3.4); margin: 0; cursor: pointer;
+    font-family: inherit; font-size: var(--m-strong); font-weight: 800;
+  }
+  #mScreens #moAcc #moAdd { flex: 0 0 calc(var(--m-base) * 3.4); padding: 0; font-size: var(--m-title); }
+  #mScreens #moAcc #moAdd i { display: block; transition: transform .45s cubic-bezier(.4,0,.2,1), opacity .45s; }
+  #mScreens #moAcc #moAdd.gira i { transform: rotate(135deg) scale(.8); opacity: .2; }
+  /* El cristal que crece desde el + hasta la pantalla entera (ver
+   * crecerYAbrir en mobile-orders.js). Va en el body, por debajo del
+   * diálogo de añadir, que se abre encima cuando termina. */
+  .m-ord-crece {
+    position: fixed; z-index: 900; pointer-events: none;
+    left: var(--x); top: var(--y); width: var(--w); height: var(--h);
+    border-radius: calc(var(--m-base) * 1.7);
+    background: rgba(16, 120, 90, .7); border: 1px solid rgba(167, 243, 208, .6);
+    transition: left .45s cubic-bezier(.4,0,.2,1), top .45s cubic-bezier(.4,0,.2,1),
+      width .45s cubic-bezier(.4,0,.2,1), height .45s cubic-bezier(.4,0,.2,1),
+      border-radius .45s, background .45s, border-color .45s, opacity .25s;
+  }
+  .m-ord-crece.on { left: 0; top: 0; width: 100vw; height: 100dvh; border-radius: 0; background: rgba(6, 20, 18, .94); border-color: transparent; }
+  .m-ord-crece.fuera { opacity: 0; }
+  @media (prefers-reduced-motion: reduce) { .m-ord-crece { transition: none; } #mScreens #moAcc #moAdd i { transition: none; } }
   #mScreens #mhAcc :is(#mhRe, #mhSi, #mhNo) { flex: 1; }
   #mScreens #mhAcc :is(#mhRe, #mhAbrir, #mhSi, #mhNo) {
     height: calc(var(--m-base) * 3.4); margin: 0; cursor: pointer;
