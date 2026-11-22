@@ -414,6 +414,9 @@ module.exports = async function handler(req, res) {
     // escribe desde aquí (ella no puede tocarlo):
     //   role   la clave de su rol ('manager', 'bartender', …)
     //   off    los permisos que se le quitaron a ELLA (excepciones, 3A)
+    //   on     los que se le añadieron a ELLA aunque su rol no los dé
+    //          (Axel, 2026-11-22: "a quien yo quiera aunque su rol sea
+    //          barrendero")
     //   perms  lo que puede, ya calculado (src/permisos.js efectivos):
     //          la app y lib/integracion.js lo leen de la sesión.
     // En user_location_access va también la clave del rol, para que se
@@ -489,9 +492,9 @@ module.exports = async function handler(req, res) {
       for (const r of guardados) out.push({ key: r.key, name: r.name, perms: P.limpia(r.perms) });
       return out;
     }
-    function metadata(rolKey, roles, off) {
-      const quitados = P.limpia(off);
-      return { role: rolKey, off: quitados, perms: P.efectivos(rolKey, roles, quitados) };
+    function metadata(rolKey, roles, off, on) {
+      const quitados = P.limpia(off), mas = P.limpia(on);
+      return { role: rolKey, off: quitados, on: mas, perms: P.efectivos(rolKey, roles, quitados, mas) };
     }
     async function todasLasPersonas() {
       const todos = [];
@@ -512,7 +515,7 @@ module.exports = async function handler(req, res) {
       // cuándo, lo que se guardó al pausar.
       const bloqueado = !!u.banned_until && new Date(u.banned_until).getTime() > Date.now();
       return Object.assign(publicUser(u, access, locs), {
-        role: m.role, off: P.limpia(m.off), perms: P.deUsuario(u),
+        role: m.role, off: P.limpia(m.off), on: P.limpia(m.on), perms: P.deUsuario(u),
         pausado: bloqueado ? { at: (m.pausa && m.pausa.at) || null, by: (m.pausa && m.pausa.by) || '' } : null,
         // Esperando a que ponga su PIN: hasta cuándo vale el código, y si
         // ya no sirve (caducado o con 5 intentos malos). Nunca el código.
@@ -562,7 +565,7 @@ module.exports = async function handler(req, res) {
         for (const u of todos) {
           const m = u.app_metadata || {};
           if (!m.role || !Array.isArray(m.perms) || !P.rol(m.role, roles)) continue;
-          const debe = metadata(m.role, roles, m.off);
+          const debe = metadata(m.role, roles, m.off, m.on);
           if (igual(debe.perms, m.perms)) continue;
           const { error: eU } = await supabase.auth.admin.updateUserById(u.id, { app_metadata: Object.assign({}, m, debe) });
           if (eU) { console.warn('[admin] no se pudieron rehacer los permisos de ' + u.id + ':', eU.message || eU); continue; }
@@ -651,7 +654,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (accion === 'setPerson') {
-      const { userId, pin, locationIds, role, off, pausar } = req.body || {};
+      const { userId, pin, locationIds, role, off, on, pausar } = req.body || {};
       const u = await persona(userId);
       if (!u || (soloBartenders && u.app_metadata.role !== BID.ROL)) {
         return res.status(404).json({ ok: false, error: 'That person was not found.' });
@@ -693,7 +696,7 @@ module.exports = async function handler(req, res) {
       }
       const m = u.app_metadata || {};
       let rolKey = m.role;
-      if (role !== undefined || off !== undefined) {
+      if (role !== undefined || off !== undefined || on !== undefined) {
         const roles = await leerRoles().catch(() => []);
         rolKey = role !== undefined ? String(role) : m.role;
         if (!P.rol(rolKey, roles)) return res.status(400).json({ ok: false, error: 'Choose a role.' });
@@ -701,10 +704,13 @@ module.exports = async function handler(req, res) {
         if ((rolKey === 'owner' || m.role === 'owner') && !esOwner) {
           return res.status(403).json({ ok: false, error: 'Only an owner can change an owner.' });
         }
-        // Al cambiar de rol, las excepciones del rol de antes no valen.
-        const quitados = off !== undefined ? off : (role !== undefined && rolKey !== m.role ? [] : m.off);
+        // Al cambiar de rol, las excepciones del rol de antes no valen: ni
+        // lo quitado ni lo añadido.
+        const nuevoRol = role !== undefined && rolKey !== m.role;
+        const quitados = off !== undefined ? off : (nuevoRol ? [] : m.off);
+        const mas = on !== undefined ? on : (nuevoRol ? [] : m.on);
         const { error } = await supabase.auth.admin.updateUserById(u.id, {
-          app_metadata: Object.assign({}, m, metadata(rolKey, roles, quitados))
+          app_metadata: Object.assign({}, m, metadata(rolKey, roles, quitados, mas))
         });
         if (error) throw error;
       }
@@ -766,7 +772,7 @@ module.exports = async function handler(req, res) {
         const m = u.app_metadata || {};
         if (m.role !== clave) continue;
         const { error: e2 } = await supabase.auth.admin.updateUserById(u.id, {
-          app_metadata: Object.assign({}, m, metadata(clave, nuevos, m.off))
+          app_metadata: Object.assign({}, m, metadata(clave, nuevos, m.off, m.on))
         });
         if (e2) throw e2;
         cambiados++;

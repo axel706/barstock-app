@@ -52,7 +52,7 @@
   let _lista = null, _roles = null, _locs = null, _error = '';
   let _nuevo = null;       // { nombre, pin, rol, locs:Set }
   let _creado = null;      // { nombre, pin, locs:[nombres] } — se enseña una vez
-  let _ficha = null;       // { id, nombre, rol, off:Set, locs:Set, pin:null|string, borrar }
+  let _ficha = null;       // { id, nombre, rol, off:Set, on:Set, locs:Set, pin:null|string, borrar }
   let _rol = null;         // { key|null, nombre, perms:Set, fijo, borrar }
 
   // Seis dígitos al azar, del generador del navegador y no de Math.random.
@@ -171,9 +171,11 @@
       '</div>' +
       '<button type="button" class="m-set-save" id="btCopiar">Copy name and PIN</button>' : '';
     const filas = _lista.map(b => {
-      // "N off": lo que el rol da y a esta persona se le quitó.
+      // "N off": lo que el rol da y a esta persona se le quitó; "N added":
+      // lo que el rol no da y se le dio a ella.
       const r = rolDe(b.role);
       const off = (b.off || []).filter(k => r && (r.perms || []).indexOf(k) >= 0).length;
+      const mas = b.role === 'owner' ? 0 : (b.on || []).filter(k => !r || (r.perms || []).indexOf(k) < 0).length;
       // Pausada: la fila apagada, "Access off" y OFF en lugar del rol.
       const pz = !!b.pausado;
       return '<button type="button" class="m-item m-bt-fila' + (pz ? ' m-bt-pausa' : '') + '" data-b="' + esc(b.id) + '">' +
@@ -183,13 +185,13 @@
           '<small>' + esc(cuando(b.lastSignIn)) +
             (pz ? ' · <b class="m-bt-off">Access off</b>'
               : b.pendiente ? ' · <b class="m-bt-espera">' + (b.pendiente.vencido ? 'Code expired' : 'Waiting for PIN') + '</b>'
-              : (off ? ' · ' + off + ' off' : '')) + '</small>' +
+              : (off ? ' · ' + off + ' off' : '') + (mas ? ' · ' + mas + ' added' : '')) + '</small>' +
         '</span>' + (pz ? '<span class="m-pp-rol m-pp-rol-pausa">Off</span>'
           : '<span class="m-pp-rol m-pp-rol-' + esc(b.role) + '">' + esc(nombreRol(b.role)) + '</span>') + '</button>';
     }).join('');
     return tabs + err + creado +
       (filas || (!_creado ? '<div class="m-bt-p">No one yet.</div>' : '')) +
-      '<div class="m-bt-p">Everyone here signs in with their name and PIN. "off" counts what was taken away from that person.</div>' +
+      '<div class="m-bt-p">Everyone here signs in with their name and PIN. "off" counts what was taken away from that person, "added" what they got beyond their role.</div>' +
       // Abajo, fijo donde Done, con su cristal (Axel, 2026-11-21, como
       // los Save de Settings): al final, tras su hueco.
       '<div class="m-tx-hueco"></div><button type="button" class="m-bt-nueva" id="btNuevo">+ Add person</button>';
@@ -238,14 +240,19 @@
       const pronto = PRONTO.indexOf(p.k) >= 0;
       const da = f.rol === 'owner' || (r.perms || []).indexOf(p.k) >= 0;
       const quitado = da && f.off.has(p.k);
-      const estado = !da ? 'gris' : quitado ? 'off' : 'on';
+      // Lo que el rol no da también se puede encender, sólo para ella
+      // (Axel, 2026-11-22: "a quien yo quiera aunque su rol sea
+      // barrendero"). Antes salía gris y quieto.
+      const anadido = !da && f.on.has(p.k);
+      const estado = pronto ? 'gris' : (da ? !quitado : anadido) ? 'on' : 'off';
       const sub = pronto ? 'Soon' : !da ? 'Not in ' + r.name : p.d || '';
-      return '<div class="m-pp-perm' + (!da || pronto ? ' gris' : '') + '"><span>' + esc(p.n) +
+      return '<div class="m-pp-perm' + (pronto ? ' gris' : '') + '"><span>' + esc(p.n) +
           (quitado ? '<em>Off for ' + esc(corto) + '</em>' : '') +
+          (anadido ? '<em class="m-pp-mas">Added for ' + esc(corto) + '</em>' : '') +
           (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>' +
         // Un Owner también lleva excepciones (2026-11-17); sólo otro Owner
         // las toca, como su rol.
-        sw('data-fp', p.k, estado, !da || pronto || yo || (f.rol === 'owner' && !soyOwner())) + '</div>';
+        sw('data-fp', p.k, estado, pronto || yo || (f.rol === 'owner' && !soyOwner())) + '</div>';
     };
     const C = P().CATALOGO;
     const nota = yo ? 'You can\'t change your own permissions.'
@@ -345,7 +352,7 @@
     host.querySelectorAll('[data-b]').forEach(b => { b.onclick = () => {
       const x = (_lista || []).find(y => y.id === b.dataset.b);
       if (!x) return;
-      _ficha = { id: x.id, nombre: x.name, rol: x.role, off: new Set(x.off || []),
+      _ficha = { id: x.id, nombre: x.name, rol: x.role, off: new Set(x.off || []), on: new Set(x.on || []),
         locs: new Set(x.access.map(a => a.locationId)), pin: null, borrar: false, pausado: x.pausado || null,
         pendiente: x.pendiente || null, contacto: x.contacto || '' };
       _creado = null; _error = ''; _vista = 'ficha'; pintar();
@@ -456,7 +463,7 @@
     await cargar();
     const x = (_lista || []).find(y => y.id === id);
     if (x && _vista === 'ficha' && _ficha && _ficha.id === id) {
-      Object.assign(_ficha, { rol: x.role, off: new Set(x.off || []), locs: new Set(x.access.map(a => a.locationId)) });
+      Object.assign(_ficha, { rol: x.role, off: new Set(x.off || []), on: new Set(x.on || []), locs: new Set(x.access.map(a => a.locationId)) });
     }
   }
 
@@ -474,8 +481,8 @@
   async function cambiarRol(key) {
     const f = _ficha;
     if (key === f.rol) return;
-    const antes = { rol: f.rol, off: f.off };
-    f.rol = key; f.off = new Set(); _error = ''; pintar();
+    const antes = { rol: f.rol, off: f.off, on: f.on };
+    f.rol = key; f.off = new Set(); f.on = new Set(); _error = ''; pintar();
     const r = await A().llamar('setPerson', { userId: f.id, role: key }).catch(fallo);
     if (!r || !r.ok) { Object.assign(f, antes); _error = 'Not saved: ' + ((r && r.error) || 'no answer'); return pintar(); }
     aviso('Saved: ' + f.nombre + ' is ' + nombreRol(key));
@@ -483,15 +490,20 @@
     pintar();
   }
 
+  // Lo que su rol da se le QUITA (off); lo que no da se le AÑADE (on).
   async function cambiarPermiso(k) {
     const f = _ficha;
-    const antes = new Set(f.off);
-    f.off.has(k) ? f.off.delete(k) : f.off.add(k);
+    const r0 = rolDe(f.rol) || { perms: [] };
+    const da = f.rol === 'owner' || (r0.perms || []).indexOf(k) >= 0;
+    const lista = da ? 'off' : 'on';
+    const antes = new Set(f[lista]);
+    f[lista].has(k) ? f[lista].delete(k) : f[lista].add(k);
     _error = ''; pintar();
-    const r = await A().llamar('setPerson', { userId: f.id, off: Array.from(f.off) }).catch(fallo);
-    if (!r || !r.ok) { f.off = antes; _error = 'Not saved: ' + ((r && r.error) || 'no answer'); return pintar(); }
+    const r = await A().llamar('setPerson', { userId: f.id, [lista]: Array.from(f[lista]) }).catch(fallo);
+    if (!r || !r.ok) { f[lista] = antes; _error = 'Not saved: ' + ((r && r.error) || 'no answer'); return pintar(); }
     const p = P().CATALOGO.find(x => x.k === k);
-    aviso((f.off.has(k) ? 'Off for ' : 'Back on for ') + f.nombre + ': ' + (p ? p.n : k));
+    const tiene = da ? !f.off.has(k) : f.on.has(k);
+    aviso((da ? (tiene ? 'Back on for ' : 'Off for ') : (tiene ? 'Added for ' : 'Removed for ')) + f.nombre + ': ' + (p ? p.n : k));
   }
 
   // "Sun 3:12 PM": cuándo se pausó, en la hora del teléfono.

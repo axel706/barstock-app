@@ -15,8 +15,9 @@
 //   · La definición de cada rol (sus permisos): tabla `roles`
 //     (migración 039). Owner no está ahí: tiene todo y no se edita.
 //   · De cada persona, en app_metadata (sólo lo escribe el servidor):
-//     `role` (la clave del rol), `off` (lo que se le quitó) y `perms`
-//     (lo que puede, ya calculado con efectivos()). Va dentro de su
+//     `role` (la clave del rol), `off` (lo que se le quitó), `on` (lo
+//     que se le añadió aunque su rol no lo dé) y `perms` (lo que puede,
+//     ya calculado con efectivos()). Va dentro de su
 //     sesión: la app lo sabe al instante, sin preguntar.
 //
 // Lo que esto garantiza, y lo que no (hablado con Axel el 2026-11-13):
@@ -72,9 +73,15 @@
     return FABRICA[key] || null;
   }
 
-  // Lo que puede una persona: los permisos de su rol menos los quitados.
-  // Un rol que ya no existe no da nada: mejor sin permisos que con todos.
-  function efectivos(key, roles, off) {
+  // Lo que puede una persona: los permisos de su rol, MÁS lo que se le
+  // añadió a ella, MENOS lo que se le quitó. Lo añadido es de Axel,
+  // 2026-11-22: "debo poder darle acceso a lo que yo quiera a quien yo
+  // quiera aunque su rol sea barrendero"; antes sólo se podía quitar y lo
+  // que el rol no daba salía gris y quieto. Si algo está en las dos
+  // listas, gana lo quitado.
+  // Un rol que ya no existe no da nada, ni lo añadido: mejor sin permisos
+  // que con todos.
+  function efectivos(key, roles, off, on) {
     // El rol Owner lo da todo, pero a cada Owner se le pueden quitar
     // cosas igual que a un Manager (Axel, 2026-11-17: "aunque sean Owner
     // o Manager debo poder apagarles contar mientras aprenden"). Antes un
@@ -82,8 +89,9 @@
     if (key === 'owner') { const q = limpia(off); return TODOS.filter(k => q.indexOf(k) < 0); }
     const r = rol(key, roles);
     if (!r) return [];
-    const quitados = limpia(off);
-    return r.perms.filter(k => quitados.indexOf(k) < 0);
+    const quitados = limpia(off), mas = limpia(on);
+    // En el orden del catálogo, como siempre.
+    return TODOS.filter(k => (r.perms.indexOf(k) >= 0 || mas.indexOf(k) >= 0) && quitados.indexOf(k) < 0);
   }
 
   // Los permisos de un usuario de Supabase, leídos de su app_metadata.
@@ -98,7 +106,7 @@
     const m = (u && u.app_metadata) || {};
     if (Array.isArray(m.perms)) return limpia(m.perms);
     if (m.role === 'bartender') return FABRICA.bartender.perms.slice();
-    if (m.role && FABRICA[m.role]) return efectivos(m.role, null, m.off);
+    if (m.role && FABRICA[m.role]) return efectivos(m.role, null, m.off, m.on);
     return TODOS.slice();
   }
 

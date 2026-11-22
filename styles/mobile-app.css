@@ -4701,6 +4701,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-pp-perm > span { min-width: 0; }
   .m-pp-perm small { display: block; margin-top: 2px; font-size: var(--m-meta); color: #8fa3b8; }
   .m-pp-perm em { margin-left: 6px; font-style: normal; font-size: var(--m-meta); font-weight: 800; color: #fcd34d; text-transform: uppercase; }
+  /* Lo añadido a una persona fuera de su rol (2026-11-22): como "Off for",
+     en el verde de los interruptores encendidos. */
+  .m-pp-perm em.m-pp-mas { color: #6ee7b7; }
   .m-pp-perm.gris > span { opacity: .45; }
   #mScreens .m-pp-sw {
     flex: none; position: relative; width: calc(var(--m-base) * 3); height: calc(var(--m-base) * 1.8);

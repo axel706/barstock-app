@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261122-113741",
+    "items": [
+      "People: give anyone a permission their role lacks",
+      "Shown as “Added for …” on their page"
+    ]
+  },
+  {
     "build": "20261122-113015",
     "items": [
       "Counting: Grey Goose bottle shape fixed",
@@ -180,12 +187,6 @@
     "build": "20261120-212326",
     "items": [
       "Sent: Resend and Reopen sit where Done does, in glass"
-    ]
-  },
-  {
-    "build": "20261120-143537",
-    "items": [
-      "Orders, Sent and Invoices show each vendor’s logo"
     ]
   }
 ]

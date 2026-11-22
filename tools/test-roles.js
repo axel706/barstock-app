@@ -47,6 +47,15 @@ grupo('1 · el catálogo');
   prueba('las excepciones se restan', P.efectivos('manager', [], ['editar_productos']).indexOf('editar_productos') < 0);
   prueba('el guardado manda sobre el de fábrica', JSON.stringify(P.efectivos('manager', [{ key: 'manager', perms: ['contar', 'raro'] }], [])) === '["contar"]');
   prueba('un rol que ya no existe no da nada', P.efectivos('fantasma', [], []).length === 0);
+  // Axel, 2026-11-22: "debo poder darle acceso a lo que yo quiera a quien
+  // yo quiera aunque su rol sea barrendero". Lo que puede = rol + lo
+  // añadido a ELLA − lo quitado.
+  prueba('lo añadido a una persona se suma a su rol', P.efectivos('bartender', [], [], ['contar']).indexOf('contar') >= 0 &&
+    P.efectivos('bartender', [], [], ['contar']).indexOf('recetas') >= 0);
+  prueba('lo añadido no inventa permisos', P.efectivos('bartender', [], [], ['inventado']).indexOf('inventado') < 0);
+  prueba('y con el rol que no da nada, sólo lo añadido', JSON.stringify(P.efectivos('barrendero', [{ key: 'barrendero', name: 'Barrendero', perms: [] }], [], ['contar'])) === '["contar"]');
+  prueba('quien sólo tiene lo añadido de contar ya no va bajo el candado de recetas', !P.bajoCandado(P.efectivos('bartender', [], [], ['contar'])));
+  prueba('sin rol que exista, tampoco lo añadido (mejor nada que todo)', P.efectivos('fantasma', [], [], ['contar']).length === 0);
   prueba('usuario de correo sin rol: todo, como hasta hoy', P.deUsuario({ app_metadata: {} }).length === 15);
   // Un 'staff' viejo, sin perms: con [] quedaba bajo el candado de recetas.
   prueba('un rol viejo que no salió de aquí: todo, como hasta hoy', P.deUsuario({ app_metadata: { role: 'staff' } }).length === 15);
@@ -189,6 +198,12 @@ grupo('3 · excepciones y roles');
   prueba('quitarle Edit items y orders a Maria', r.ok && u('Maria').app_metadata.perms.indexOf('editar_productos') < 0 &&
     u('Maria').app_metadata.perms.indexOf('ordenes') < 0 && u('Maria').app_metadata.perms.indexOf('contar') >= 0);
   prueba('y lo quitado se guarda aparte', JSON.stringify(u('Maria').app_metadata.off) === '["editar_productos","ordenes"]');
+  // Lo que el rol Manager no da, a Maria sí: "People and roles".
+  const on = await llamar('axel', 'setPerson', { userId: id, on: ['time_machine'] });
+  prueba('darle a Maria algo que su rol no da', on.ok && u('Maria').app_metadata.perms.indexOf('time_machine') >= 0 &&
+    JSON.stringify(u('Maria').app_metadata.on) === '["time_machine"]' && u('Maria').app_metadata.perms.indexOf('editar_productos') < 0);
+  const lista = await llamar('axel', 'listPeople');
+  prueba('la lista dice lo añadido', lista.ok && JSON.stringify((lista.people.find(x => x.id === id) || {}).on) === '["time_machine"]');
   // Axel le da "People and roles" al rol Manager: Maria lo recibe, menos sus excepciones.
   const s = await llamar('axel', 'saveRole', { key: 'manager', name: 'Manager', perms: P.FABRICA.manager.perms.concat(['personas']) });
   prueba('cambiar el rol se lo cambia a quien lo tiene', s.ok && s.people === 1 && u('Maria').app_metadata.perms.indexOf('personas') >= 0 &&
@@ -205,7 +220,7 @@ grupo('3 · excepciones y roles');
   prueba('otro con el mismo nombre no', !dup.ok && /already a role/.test(dup.error));
   const c = await llamar('axel', 'setPerson', { userId: id, role: 'bar_lead' });
   prueba('cambiar de rol borra las excepciones del de antes', c.ok && u('Maria').app_metadata.role === 'bar_lead' &&
-    u('Maria').app_metadata.off.length === 0 && JSON.stringify(u('Maria').app_metadata.perms) === '["contar","recetas"]' &&
+    u('Maria').app_metadata.off.length === 0 && (u('Maria').app_metadata.on || []).length === 0 && JSON.stringify(u('Maria').app_metadata.perms) === '["contar","recetas"]' &&
     db.access.filter(a => a.user_id === id).every(a => a.role === 'bar_lead'));
   const q = await llamar('axel', 'removeRole', { key: 'bar_lead' });
   prueba('un rol en uso no se borra', !q.ok && /1 person has this role/.test(q.error));

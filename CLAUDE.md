@@ -962,12 +962,17 @@ orden de carga): Owner, Manager, Bartender y los roles que Axel cree,
 **todos con nombre y PIN**, el mismo rol en todas sus locaciones, y por
 persona las excepciones ("aun cuando tengan el rol de manager pueda yo
 quitarle acceso a ciertas funciones"): la ficha enseña TODOS los permisos
-del rol con su interruptor, lo quitado sólo a ella en ámbar ("Off for
-…"), lo que el rol no da en gris.
+con su interruptor, lo quitado sólo a ella en ámbar ("Off for …") y lo
+que el rol no da, apagado y "Not in …", que se le puede dar a ella.
 
 - **El catálogo y la cuenta viven en `src/permisos.js`** (navegador y
   servidor, como `bartender-id.js`): 15 permisos; lo que puede una
-  persona = su rol − sus excepciones. `dePin()` dice quién es persona de
+  persona = su rol + lo añadido a ella − lo quitado a ella (`on` y
+  `off` en `app_metadata`). Lo añadido es del 2026-11-22: "debo poder
+  darle acceso a lo que yo quiera a quien yo quiera aunque su rol sea
+  barrendero"; hasta entonces lo que el rol no daba salía gris y quieto.
+  En la ficha, "Added for …" en verde junto a "Not in Manager"; en la
+  lista, "N added". Cambiar de rol borra las dos listas. `dePin()` dice quién es persona de
   PIN, una sola regla para la app y el servidor.
 - **Los roles en la tabla `roles`** (migración 039): nombre y permisos.
   Sólo lectura con la llave pública; la escribe el servidor. Owner no

@@ -328,8 +328,8 @@ async function llamar(token, action, cuerpo) {
     // ── La lista entera de permisos (3A) ─────────────────────────────
     const sw = (k) => q('[data-fp="' + k + '"]');
     prueba('3A: todos los permisos, con su interruptor', host.querySelectorAll('[data-fp]').length === 15);
-    prueba('lo que da el rol, encendido; lo que no, gris y quieto', sw('recetas').classList.contains('on') && !sw('recetas').disabled &&
-      !sw('contar').classList.contains('on') && sw('contar').disabled && /Not in Bartender/.test(sw('contar').parentNode.textContent));
+    prueba('lo que da el rol, encendido; lo que no, apagado pero se puede tocar', sw('recetas').classList.contains('on') && !sw('recetas').disabled &&
+      !sw('contar').classList.contains('on') && !sw('contar').disabled && /Not in Bartender/.test(sw('contar').parentNode.textContent));
     prueba('Money y Orders: "Soon", sin poder tocarse', sw('ver_dinero').disabled && /Soon/.test(sw('ver_dinero').parentNode.textContent));
     sw('recetas').click(); await esperar(30);
     const billie = () => db.users.find(u => u.id === id);
@@ -337,6 +337,13 @@ async function llamar(token, action, cuerpo) {
       !sw('recetas').classList.contains('on') && /Off for Billie/i.test(sw('recetas').parentNode.textContent));
     sw('recetas').click(); await esperar(30);
     prueba('y encenderlo se lo devuelve', billie().app_metadata.off.length === 0 && billie().app_metadata.perms.indexOf('recetas') >= 0);
+    // Axel, 2026-11-22: darle a quien quiera lo que su rol no da.
+    sw('contar').click(); await esperar(30);
+    prueba('encender lo que el rol no da se lo da sólo a Billie', billie().app_metadata.perms.indexOf('contar') >= 0 &&
+      (billie().app_metadata.on || []).join() === 'contar' && sw('contar').classList.contains('on') &&
+      /Added for Billie/i.test(sw('contar').parentNode.textContent) && /Not in Bartender/.test(sw('contar').parentNode.textContent));
+    sw('contar').click(); await esperar(30);
+    prueba('y apagarlo se lo quita otra vez', billie().app_metadata.perms.indexOf('contar') < 0 && (billie().app_metadata.on || []).length === 0);
     q('[data-fr="manager"]').click(); await esperar(40);
     prueba('cambiarla a Manager: su rol y sus permisos nuevos', billie().app_metadata.role === 'manager' &&
       billie().app_metadata.perms.indexOf('contar') >= 0 && sw('contar').classList.contains('on') && !sw('contar').disabled);
