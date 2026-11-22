@@ -522,6 +522,10 @@
       titulo: v.nombre,
       sub: 'Add to ' + v.nombre,
       que: 'products',
+      // La lista entera sin escribir: es lo de UN proveedor (Transfers y
+      // Recipes hacen igual). Sin esto LOOP abría en "Type to search."
+      // con 82 productos detrás (vídeo de Axel, 2026-11-22).
+      verTodo: true,
       productos: suyos.map(r => r.item).sort((a, b) => a.localeCompare(b)),
       detalle: (p) => {
         const r = porNombre.get(p);

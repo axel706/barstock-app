@@ -313,6 +313,9 @@ grupo('2c · el detalle como una subsección de Settings (Axel, 2026-11-20)');
   v.matchMedia = mmAntes;
   const ps = (bus && bus.productos) || [];
   prueba('sólo los de este proveedor, sin lo ya colocado', ps.includes('Kentucky') && ps.includes('Daou') && !ps.includes('Otro') && !ps.includes('Puesto'), ps.join());
+  // Sin escribir, la lista entera del proveedor (Axel, vídeo del
+  // 2026-11-22: LOOP decía "Type to search." con 82 productos detrás).
+  prueba('sin escribir, la lista entera del proveedor', !!bus && bus.verTodo === true);
   prueba('lo que ya está en la orden lo dice', /in this order/.test((bus && bus.detalle && bus.detalle('Daou')) || ''), bus && bus.detalle && bus.detalle('Daou'));
   // Elegir lo que no está: entra con 1 y se ajusta desde su línea.
   v.__guardados = [];

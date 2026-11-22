@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261122-001441",
+    "items": [
+      "Orders: the + search lists the vendor’s products"
+    ]
+  },
+  {
     "build": "20261122-001126",
     "items": [
       "Orders: smoother search opening from the + button"
@@ -182,12 +188,6 @@
     "build": "20261118-193426",
     "items": [
       "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261118-172100",
-    "items": [
-      "Fewer false Out today alerts on slow sellers"
     ]
   }
 ]
