@@ -344,10 +344,13 @@ sub, aviso)`, "8 without price" en ámbar), y abajo, donde Done, `#moAcc`
 como `#mhAcc` de Sent: "Review and send" (`#moSend`) a lo ancho en el
 cristal azul, sin el total, y el + (`#moAdd`) redondo, verde como Quick
 order, a la DERECHA; al tocarlo el buscador a pantalla completa SALE
-de él (`salirDelBoton`: se abre al momento y crece en un círculo desde
-el +, `.m-bus-sale` con `--sale-*`; un cristal verde que crecía y
-dejaba aparecer el buscador al final "no sale del botón"; sin animar
-con reducir movimiento) (`buscarParaAnadir`, lámina A sin el teclado, el
+de él (`salirDelBoton`: se abre al momento y la PÁGINA se abre en un
+agujero que crece desde el + —máscara en cada pieza con su centro en
+`--mx/--my`, radio `--sale-r` en el body movido por JS—, por el que se
+ve el fondo de verdad de la app con el buscador encima recortado al
+mismo círculo; un cristal verde que crecía "no sale del botón", y un
+buscador que se desenfocaba solo enseñaba "un fondo distinto" hasta
+terminar; sin animar con reducir movimiento) (`buscarParaAnadir`, lámina A sin el teclado, el
 mismo día: el recuadro de `add-to-order.js` flotaba tras la animación y
 su campo hacía zoom): sólo lo de ese proveedor sin colocar; lo elegido
 entra con 1 y se ajusta con el −/+ de su línea, marcada "added"; lo que

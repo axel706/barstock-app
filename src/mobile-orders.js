@@ -544,16 +544,23 @@
   // ── El buscador sale del + (Axel, 2026-11-22) ────────────────────────
   //
   // Primero fue un cristal verde que crecía hasta la pantalla y, al
-  // terminar, el buscador aparecía de golpe: "es como si el círculo se
-  // animara en una pantalla verde", no como si la búsqueda saliera del
-  // botón. Ahora el buscador se abre AL MOMENTO y crece en un círculo
-  // desde el centro del + (clip-path con --sale-*, la transición en
-  // mobile-app.css). Mientras crece, la página sigue detrás, desenfocada
-  // y oscurecida por el propio buscador (.m-bus-sale), que es lo que
-  // se parece al fondo de la app; al llenar la pantalla se quita la
-  // clase y la página se esconde como en cualquier búsqueda. Sin
-  // movimiento si el teléfono lo pide.
-  const SALE_MS = 460;
+  // terminar, el buscador aparecía de golpe ("no es como si la búsqueda
+  // saliera del botón"). Después el buscador crecía en un círculo, pero
+  // dentro del círculo se veía la página desenfocada, y al terminar el
+  // fondo de la app: "se alcanza a ver un fondo distinto debajo del blur".
+  //
+  // Ahora el buscador se abre AL MOMENTO y la PÁGINA se abre en un
+  // agujero que crece desde el centro del +: por él se ve el fondo de
+  // verdad de la app (el que queda al terminar) con el buscador encima,
+  // recortado al mismo círculo. La máscara de cada pieza de la página
+  // lleva su centro en coordenadas de esa pieza (--mx/--my), porque la
+  // lista rueda y las barras son fijas; el radio (--sale-r) va en el body
+  // y lo heredan todas. El radio lo mueve JS, fotograma a fotograma: una
+  // variable sin registrar no se transiciona en una máscara. Al llenar la
+  // pantalla se suelta todo y la página se esconde como en cualquier
+  // búsqueda. Sin movimiento si el teléfono lo pide.
+  const SALE_MS = 440;
+  const PAGINA = ['mScreens', 'mBand', 'mTabs', 'mFloor', 'mDock', 'mPull'];
   function salirDelBoton(btn, abrir) {
     const quieto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const r = btn.getBoundingClientRect();
@@ -562,22 +569,45 @@
     if (quieto || !h || !h.classList.contains('m-bus')) return;
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
     const W = window.innerWidth || 0, H = window.innerHeight || 0;
+    const R0 = Math.max(1, r.width / 2);
     const R = Math.ceil(Math.hypot(Math.max(cx, W - cx), Math.max(cy, H - cy)));
+    const piezas = PAGINA.map(id => document.getElementById(id)).filter(Boolean);
+    piezas.forEach(el => {
+      const b = el.getBoundingClientRect();
+      el.style.setProperty('--mx', (cx - b.left) + 'px');
+      el.style.setProperty('--my', (cy - b.top) + 'px');
+    });
     h.style.setProperty('--sale-x', cx + 'px');
     h.style.setProperty('--sale-y', cy + 'px');
-    h.style.setProperty('--sale-r', Math.max(1, r.width / 2) + 'px');
+    const body = document.body;
+    body.style.setProperty('--sale-r', R0 + 'px');
+    body.classList.add('m-sale');
     h.classList.add('m-bus-sale');
     btn.classList.add('gira');
-    // Un fotograma con el círculo del tamaño del botón y, después, el de
-    // la pantalla: con los dos en el mismo, no hay transición.
-    void h.offsetWidth;
     const raf = window.requestAnimationFrame || ((f) => setTimeout(f, 16));
-    raf(() => h.style.setProperty('--sale-r', R + 'px'));
+    const ahora = () => (window.performance && performance.now ? performance.now() : Date.now());
+    const t0 = ahora();
+    // Sale rápido y frena al llegar (la misma curva que las hojas).
+    const curva = (t) => 1 - Math.pow(1 - t, 3);
+    let fin = false;
+    const paso = () => {
+      if (fin) return;
+      const t = Math.min(1, (ahora() - t0) / SALE_MS);
+      body.style.setProperty('--sale-r', (R0 + (R - R0) * curva(t)) + 'px');
+      if (t < 1) raf(paso);
+    };
+    raf(paso);
+    // El final va por reloj y no por el último fotograma: si el teléfono
+    // se salta fotogramas (o la pestaña se esconde), igual se suelta.
     setTimeout(() => {
+      fin = true;
       h.classList.remove('m-bus-sale');
-      ['--sale-x', '--sale-y', '--sale-r'].forEach(k => h.style.removeProperty(k));
+      body.classList.remove('m-sale');
+      body.style.removeProperty('--sale-r');
+      ['--sale-x', '--sale-y'].forEach(k => h.style.removeProperty(k));
+      piezas.forEach(el => { el.style.removeProperty('--mx'); el.style.removeProperty('--my'); });
       btn.classList.remove('gira');
-    }, SALE_MS);
+    }, SALE_MS + 20);
   }
 
   // ── Revisión ─────────────────────────────────────────────────────────

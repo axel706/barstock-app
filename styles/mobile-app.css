@@ -6406,16 +6406,17 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   body:has(#mSheet.m-bus:not(.m-bus-sale)) :is(#mScreens, #mBand, #mTabs, #mFloor, #mDock, #mPull) { visibility: hidden; }
   /* Saliendo de un botón (el + de una orden de Open, Axel 2026-11-22):
-   * el buscador crece en un círculo desde él. Mientras tanto la página
-   * no se esconde (regla de arriba) y el propio buscador la desenfoca y
-   * oscurece, que se parece al fondo de la app que queda al terminar. */
-  #mSheet.m-bus.m-bus-sale {
-    clip-path: circle(var(--sale-r) at var(--sale-x) var(--sale-y));
-    transition: clip-path .44s cubic-bezier(.4, 0, .2, 1);
-    background: rgba(11, 18, 32, .35);
-    -webkit-backdrop-filter: blur(28px) saturate(140%);
-            backdrop-filter: blur(28px) saturate(140%);
+   * la página se abre en un agujero que crece desde el botón (por él se
+   * ve el fondo de verdad de la app) y el buscador, recortado al mismo
+   * círculo, va encima. Sin desenfoque propio: con él, dentro del círculo
+   * se veía la página borrosa y al terminar el fondo, dos fondos
+   * distintos. Centro de la máscara en coordenadas de cada pieza
+   * (--mx/--my) y radio en el body (--sale-r): ver salirDelBoton. */
+  body.m-sale :is(#mScreens, #mBand, #mTabs, #mFloor, #mDock, #mPull) {
+    -webkit-mask-image: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), transparent var(--sale-r), #000 calc(var(--sale-r) + 1px));
+            mask-image: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), transparent var(--sale-r), #000 calc(var(--sale-r) + 1px));
   }
+  #mSheet.m-bus.m-bus-sale { clip-path: circle(var(--sale-r) at var(--sale-x) var(--sale-y)); }
   #mSheet .m-bus-top { display: flex; align-items: center; gap: 10px; }
   #mSheet .m-bus-in {
     flex: 1; min-width: 0; box-sizing: border-box; padding: 11px 13px;

@@ -293,13 +293,23 @@ grupo('2c · el detalle como una subsección de Settings (Axel, 2026-11-20)');
   v.BarStockBottleSearch.cerrar(); bus = null;
   const mmAntes = v.matchMedia;
   v.matchMedia = (q) => ({ matches: !/reduced-motion/.test(q), addEventListener() {}, removeEventListener() {} });
+  if (!v.document.getElementById('mScreens')) host.id = 'mScreens';   // la página, como en la app
   add.click();
   prueba('el buscador se abre al momento, no al final de la animación', !!bus && !v.__viejo);
   prueba('…saliendo del +: crece en un círculo desde el botón', !!hoja() && hoja().classList.contains('m-bus-sale') &&
-    /px$/.test(hoja().style.getPropertyValue('--sale-r')) && /px$/.test(hoja().style.getPropertyValue('--sale-x')), hoja() && hoja().getAttribute('style'));
+    /px$/.test(v.document.body.style.getPropertyValue('--sale-r')) && /px$/.test(hoja().style.getPropertyValue('--sale-x')),
+    v.document.body.getAttribute('style') + ' | ' + (hoja() && hoja().getAttribute('style')));
+  // Y por el agujero se ve el FONDO de la app, no la página desenfocada
+  // (Axel: "mientras se abre se alcanza a ver un fondo distinto debajo
+  // del blur y al terminar se ve el actual de la app"): la página lleva
+  // un agujero que crece desde el + (máscara con su centro en ella).
+  prueba('…la página se abre en un agujero desde el + (sin desenfoque propio del buscador)',
+    v.document.body.classList.contains('m-sale') && /px$/.test(host.style.getPropertyValue('--mx')) &&
+    !/#mSheet\.m-bus\.m-bus-sale \{[^}]*backdrop-filter/.test(leer('styles/mobile-app.css')), host.getAttribute('style'));
   prueba('sin la pantalla verde de antes', !v.document.querySelector('.m-ord-crece'));
   await esperar(700);
-  prueba('…y al llenar la pantalla queda como siempre', !!hoja() && !hoja().classList.contains('m-bus-sale') && !hoja().style.getPropertyValue('--sale-r'));
+  prueba('…y al llenar la pantalla queda como siempre', !!hoja() && !hoja().classList.contains('m-bus-sale') &&
+    !v.document.body.classList.contains('m-sale') && !v.document.body.style.getPropertyValue('--sale-r') && !host.style.getPropertyValue('--mx'));
   v.matchMedia = mmAntes;
   const ps = (bus && bus.productos) || [];
   prueba('sólo los de este proveedor, sin lo ya colocado', ps.includes('Kentucky') && ps.includes('Daou') && !ps.includes('Otro') && !ps.includes('Puesto'), ps.join());
