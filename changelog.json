@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261122-142710",
+    "items": [
+      "Running out card in a deeper crimson red"
+    ]
+  },
+  {
     "build": "20261122-140450",
     "items": [
       "Four new phone backgrounds",
@@ -181,13 +187,6 @@
     "items": [
       "Home: the cycle shows the week and when to count",
       "Home: Sunday steps and a ring while counting"
-    ]
-  },
-  {
-    "build": "20261121-103309",
-    "items": [
-      "Home: orders show each vendor with its logo",
-      "Home: placed orders show the day each arrives"
     ]
   }
 ]

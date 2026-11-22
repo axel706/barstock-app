@@ -85,8 +85,12 @@ grupo('todos arrancan con el mismo brío');
   }
   const vals = luz.map(x => x[1]);
   const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
-  // calm es gris a propósito y queda por debajo; se le perdona.
-  const sinCalm = luz.filter(x => x[0] !== 'calm').map(x => x[1]);
+  // calm es gris a propósito y queda por debajo; se le perdona. Y el
+  // rojo, desde el 2026-11-22: Axel eligió el de la lámina de los fondos
+  // ("el tono rojo está espectacular"), un carmesí más profundo
+  // (#be123c, luminancia 74) que arranca más oscuro que los demás. Se
+  // comprueba aparte, abajo.
+  const sinCalm = luz.filter(x => x[0] !== 'calm' && x[0] !== 'red').map(x => x[1]);
   const dMin = Math.min.apply(null, sinCalm), dMax = Math.max.apply(null, sinCalm);
   prueba('ninguno sale demasiado oscuro', dMin >= 90,
     luz.map(x => x[0] + ':' + x[1]).join(' '));
@@ -106,6 +110,22 @@ grupo('todos arrancan con el mismo brío');
     const L = ult ? Math.round(.299 * +ult[1] + .587 * +ult[2] + .114 * +ult[3]) : 999;
     prueba(t + ' · cae a casi negro', L <= 30, 'luminancia ' + L);
   }
+}
+
+grupo('el rojo de Running out es el de la lámina (Axel, 2026-11-22)');
+{
+  // "Me encantó el tono rojo degradado que pusiste para Running out first
+  // […] tal vez un poquito más oscuro en el lado derecho". El de la
+  // lámina: de #be123c a #7f1d1d, opaco; a la derecha, más oscuro que
+  // #7f1d1d.
+  const m = /\.m-hero-red\s*\{([^}]*)\}/.exec(css);
+  const grad = /linear-gradient\(([^;]*)\)/.exec(m ? m[1] : '');
+  const todas = ((grad ? grad[1] : '').match(/rgba\((\d+),(\d+),(\d+),\s*([\d.]+)\)/g) || []).map(x => x.match(/[\d.]+/g).map(Number));
+  const L = (c) => .299 * c[0] + .587 * c[1] + .114 * c[2];
+  prueba('arranca en el carmesí de la lámina (#be123c), opaco', !!todas[0] && todas[0][0] === 190 && todas[0][1] === 18 && todas[0][2] === 60 && todas[0][3] === 1,
+    JSON.stringify(todas[0]));
+  const ult = todas[todas.length - 1];
+  prueba('y a la derecha, más oscuro que el #7f1d1d de la lámina', !!ult && L(ult) < L([127, 29, 29]) && ult[3] === 1, JSON.stringify(ult));
 }
 
 grupo('el encabezado se lee sobre la esquina viva');

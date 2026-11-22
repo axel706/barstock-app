@@ -1863,7 +1863,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-hero-teal   { background: linear-gradient(135deg, rgba(20,184,166,.82) 0%, rgba(20,184,166,.40) 42%, rgba(3,18,20,.94) 100%);  border: 1px solid rgba(94,234,212,.48); }
   .m-hero-violet { background: linear-gradient(135deg, rgba(139,92,246,.84) 0%, rgba(139,92,246,.42) 42%, rgba(12,7,26,.94) 100%);  border: 1px solid rgba(196,181,253,.50); }
   .m-hero-blue   { background: linear-gradient(135deg, rgba(14,165,233,.82) 0%, rgba(14,165,233,.40) 42%, rgba(3,14,24,.94) 100%);  border: 1px solid rgba(125,211,252,.48); }
-  .m-hero-red    { background: linear-gradient(135deg, rgba(244,63,94,.82) 0%,  rgba(244,63,94,.40) 42%,  rgba(22,5,9,.94) 100%);   border: 1px solid rgba(253,164,175,.48); }
+  /* El rojo, aparte (Axel, 2026-11-22): el de la lámina de los fondos
+   * ("el tono rojo está espectacular"), un carmesí opaco de #be123c al
+   * #7f1d1d de la lámina, y a la derecha "un poquito más oscuro". No
+   * arranca con el brío de los demás: es más profundo, y eso era lo que
+   * le gustó. */
+  .m-hero-red    { background: linear-gradient(135deg, rgba(190,18,60,1) 0%, rgba(127,29,29,1) 58%, rgba(64,12,16,1) 100%);   border: 1px solid rgba(253,164,175,.48); }
   .m-hero-amber  { background: linear-gradient(135deg, rgba(245,158,11,.84) 0%, rgba(245,158,11,.42) 42%, rgba(22,13,3,.94) 100%);  border: 1px solid rgba(252,211,77,.50); }
   .m-hero-calm   { background: linear-gradient(135deg, rgba(100,116,139,.78) 0%, rgba(100,116,139,.38) 42%, rgba(8,12,18,.94) 100%); border: 1px solid rgba(203,213,225,.28); }
 
