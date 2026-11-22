@@ -52,7 +52,7 @@ for (const k of ['woodford', 'elijah_craig', 'basil_hayden'].concat(TANDA1)) {
   prueba(k + ': lleva marcas', Array.isArray(ms) && ms.length >= 3, ms && ms.length);
   prueba(k + ': bien formadas (alturas dentro de la botella, de abajo arriba)', Array.isArray(ms) && ms.every(m =>
     (m.tipo === 'sello' ? (m.y > 0 && m.y < 1 && m.r > 0 && m.r < 0.2)
-      : (Array.isArray(m.y) && m.y[0] >= 0 && m.y[1] <= 1 && m.y[0] < m.y[1] && m.ancho > 0 && m.ancho <= 1.1)) &&
+      : (Array.isArray(m.y) && m.y[0] >= 0 && m.y[1] <= 1 && m.y[0] < m.y[1] && m.ancho > 0 && m.ancho <= (m.tipo === 'etiqueta' && m.rot ? 2 : 1.1))) &&
     Array.isArray(m.renglones) && m.renglones.every(r => r.g > 0 && r.g < 0.1 && r.largo > 0 && r.largo <= 1 &&
       Array.isArray(r.palabras) && r.palabras.length >= 1 && r.palabras.every(n => Number.isInteger(n) && n > 0))));
   prueba(k + ': en los datos no hay palabras, sólo cuántas letras', Array.isArray(ms) &&
@@ -63,7 +63,9 @@ for (const k of ['woodford', 'elijah_craig', 'basil_hayden'].concat(TANDA1)) {
 console.log('\ninclinadas, curvas y con su forma (Axel: "hay botellas con etiquetas diagonales o textos curvos")');
 {
   const dib = (k) => B.marcasFor(k, W, H, PAD);
-  prueba('la banda de Red Label va inclinada, con sus renglones', /<g transform="rotate\(-24\.00 [^"]+">[\s\S]*cp-marca[\s\S]*<\/g>/.test(dib('red_label')));
+  // Una banda inclinada cruza la botella de lado a lado (Red Label): puede
+  // ser más ancha que ella, la silueta la recorta. Sólo las inclinadas.
+  prueba('la banda de Red Label va inclinada (sube a la derecha), con sus renglones', /<g transform="rotate\(-\d+\.\d+ [^"]+">[\s\S]*cp-marca[\s\S]*<\/g>/.test(dib('red_label')));
   prueba('el nombre de Baileys va en arco (un trazo curvo, no una barra recta)', /class="cp-barra-arco"/.test(dib('baileys')));
   prueba('su ilustración es un óvalo', /<ellipse class="cp-marca"/.test(dib('baileys')));
   prueba('el papel rasgado de Buffalo Trace tiene el borde roto', /<path class="cp-marca" d="M[^"]*Z"/.test(dib('buffalo_trace')));
