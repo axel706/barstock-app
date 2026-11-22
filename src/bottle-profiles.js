@@ -926,14 +926,14 @@
       // Recta y alta, hombro del 64 % al 73 %. El ron es transparente:
       // yFull .71 por el criterio de botanist.
       p: [[0,0.261], [0.0156,0.7735], [0.0469,0.961], [0.0781,0.9526], [0.1094,0.9341], [0.1406,0.9311], [0.1719,0.9332], [0.2031,0.9366], [0.2344,0.9406], [0.2656,0.9447], [0.2969,0.9507], [0.3281,0.9529], [0.3594,0.9539], [0.3906,0.9553], [0.4219,0.9599], [0.4531,0.961], [0.4844,0.9609], [0.5156,0.9643], [0.5469,0.9633], [0.5781,0.9657], [0.6094,0.9841], [0.6406,0.9942], [0.6719,0.9262], [0.7031,0.6386], [0.7344,0.4226], [0.7656,0.4018], [0.7969,0.4011], [0.8281,0.402], [0.8594,0.4], [0.8906,0.3999], [0.9219,0.3942], [0.9531,0.3946], [0.9844,0.3763], [1,0.173]],
-      // Las marcas (Axel, 2026-11-22, tanda 1, estilo A2·7): la etiqueta del cuello, la grande (del 28.3 al 55.9 %, con el medallón del murciélago montado sobre su borde de arriba), el nombre, "Superior" y la pequeña de abajo ("Establecido en Cuba"), medidas con los trazos de Axel.
+      // Las marcas (Axel, 2026-11-22, tanda 1, estilo A2·7): la etiqueta del cuello, la grande (del 28.3 al 55.9 %, con el medallón del murciélago montado sobre su borde de arriba), el nombre, "Superior" y la pequeña de abajo ("Establecido en Cuba", recta: Axel, la inclinación de sus trazos era del trazo, no de la etiqueta), medidas con los trazos de Axel.
       // Alturas de la foto con que se midio la silueta; de cada renglon,
       // el grueso de sus letras y cuantas letras tiene cada palabra.
       marcas: [
         {tipo: 'etiqueta', y: [0.79, 0.84], ancho: 0.9, renglones: [{g: 0.02, largo: 0.7, palabras: [5, 3]}]},
         {tipo: 'etiqueta', y: [0.283, 0.559], ancho: 0.92, renglones: []},
         {tipo: 'sello', y: 0.553, r: 0.043, renglones: []},
-        {tipo: 'etiqueta', y: [0.155, 0.227], ancho: 0.92, pend: [3, 3], renglones: []},
+        {tipo: 'etiqueta', y: [0.155, 0.227], ancho: 0.92, renglones: []},
         {tipo: 'texto', y: [0.43, 0.49], ancho: 0.8, renglones: [{g: 0.05, largo: 0.8, palabras: [7]}]},
         {tipo: 'texto', y: [0.39, 0.42], ancho: 0.5, renglones: [{g: 0.02, largo: 0.5, palabras: [8]}]}
       ]

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261122-104434",
+    "items": [
+      "Counting: Bacardí’s lower label guide is straight"
+    ]
+  },
+  {
     "build": "20261122-103512",
     "items": [
       "Counting: label guides sized like the real labels"
@@ -180,12 +186,6 @@
     "items": [
       "Orders: vendor name up top, back where Time Machine is",
       "Add a product sits where Done does"
-    ]
-  },
-  {
-    "build": "20261120-140012",
-    "items": [
-      "Orders: roomier won't-last block, with the count"
     ]
   }
 ]
