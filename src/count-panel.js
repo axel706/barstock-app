@@ -443,6 +443,21 @@
   // JavaScript es un color que el tema no puede cambiar.
   const VB = { w: 200, h: 260, pad: 12 };
 
+  // Una pestaña de la agarradera: de la orilla (con las esquinas
+  // redondeadas) a su punta, que toca la línea. dir 1 es la izquierda
+  // (apunta a la derecha), -1 la derecha.
+  const ASA = { orilla: 2, punta: 26, alto: 18, pico: 9, r: 4 };
+  function asa(y, dir) {
+    const f = (n) => n.toFixed(2);
+    const X = (d) => dir > 0 ? d : VB.w - d;
+    const { orilla: o, punta: t, alto: h, pico: k, r } = ASA;
+    const a = y - h / 2, b = y + h / 2;
+    return '<path class="cp-grip" d="M' + f(X(o + r)) + ' ' + f(a) + ' L' + f(X(t - k)) + ' ' + f(a) +
+      ' L' + f(X(t)) + ' ' + f(y) + ' L' + f(X(t - k)) + ' ' + f(b) + ' L' + f(X(o + r)) + ' ' + f(b) +
+      ' Q' + f(X(o)) + ' ' + f(b) + ' ' + f(X(o)) + ' ' + f(b - r) + ' L' + f(X(o)) + ' ' + f(a + r) +
+      ' Q' + f(X(o)) + ' ' + f(a) + ' ' + f(X(o + r)) + ' ' + f(a) + ' Z"/>';
+  }
+
   // El trazado vive en bottle-profiles y lo comparten el panel y la
   // parrilla de revision: la silueta que apruebas es la misma que cuenta.
   function bottlePath(key) {
@@ -573,11 +588,16 @@
                Aquí no hay nada que medir. La línea está en las mismas
                coordenadas que el vidrio, así que no pueden separarse.
                -->
-          <line class="cp-dragline" x1="0" y1="${yToPx(key, y)}"
-                x2="${VB.w}" y2="${yToPx(key, y)}"
+          <!-- La agarradera, en las orillas (Axel, 2026-11-22, lámina B):
+               en el centro tapaba justo el nivel que se está marcando.
+               Una pestaña en punta en cada orilla, señalando la línea, y
+               la línea empieza y acaba en sus puntas: "que no se vea
+               línea blanca en el extremo exterior de cada pointer". Sólo
+               se dibuja; se arrastra desde cualquier punto del visor. -->
+          <line class="cp-dragline" x1="${ASA.punta}" y1="${yToPx(key, y)}"
+                x2="${VB.w - ASA.punta}" y2="${yToPx(key, y)}"
                 stroke-width="3" vector-effect="non-scaling-stroke"/>
-          <rect class="cp-grip" x="${(VB.w - 42) / 2}" y="${yToPx(key, y) - 10}"
-                width="42" height="20" rx="10"/>
+          ${asa(yToPx(key, y), 1)}${asa(yToPx(key, y), -1)}
         </svg>
       </div>
       <div class="cp-read">

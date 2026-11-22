@@ -342,6 +342,35 @@ console.log('\npreguntar el tamaño solo cuando puede cambiar');
      redondear(0.95) - redondear(0.45) > 0.49);
 }
 
+// ── La agarradera, en las orillas ────────────────────────────────────
+//
+// Axel, 2026-11-22: "ese handle del centro debe estar en las orillas: en
+// el centro no deja ver bien a qué nivel estamos poniendo la marca".
+// Lámina, opción B: una pestaña en punta en cada orilla, señalando la
+// línea, y "que no se vea línea blanca en el extremo exterior de cada
+// pointer": la línea empieza y acaba en sus puntas.
+console.log('\nla agarradera, en las orillas');
+{
+  const w2 = montar();
+  const BLT = { item: 'Baileys', bottleSizeMl: 750, bottleShape: 'baileys', onHand: 0 };
+  w2.state.master = [BLT];
+  w2.BarStockCountPanel.open(BLT, () => {}, '0456');
+  const svg = w2.document.querySelector('#cpStage svg');
+  const vb = svg.getAttribute('viewBox').split(' ').map(Number), W = vb[2];
+  const linea = svg.querySelector('.cp-dragline');
+  const grips = [...svg.querySelectorAll('.cp-grip')];
+  const xs = (g) => (g.getAttribute('d') || '').match(/-?[\d.]+/g) || [];
+  ok('dos agarraderas, una por orilla', grips.length === 2, grips.length);
+  ok('ninguna en el centro de la botella', grips.every(g => g.tagName.toLowerCase() === 'path'), grips.map(g => g.tagName).join());
+  const x1 = Number(linea.getAttribute('x1')), x2 = Number(linea.getAttribute('x2'));
+  ok('la línea no asoma por fuera de las puntas', x1 > 10 && x2 < W - 10, x1 + ' … ' + x2 + ' de ' + W);
+  // Las puntas tocan la línea: la izquierda acaba en x1 y la derecha
+  // empieza en x2, a la altura de la línea.
+  const y = Number(linea.getAttribute('y1'));
+  const tocan = (g, x) => new RegExp('L' + x.toFixed(2) + ' ' + y.toFixed(2) + '\\b|\\b' + x.toFixed(2) + ' ' + y.toFixed(2)).test(g.getAttribute('d'));
+  ok('las puntas tocan la línea, a su altura', grips.length === 2 && tocan(grips[0], x1) && tocan(grips[1], x2), grips.map(g => g.getAttribute('d')).join(' | '));
+}
+
 console.log('\n' + (falla ? falla + ' FALLO(S)' : 'todo bien') + '   ·   ' + pasa + ' comprobaciones');
   process.exit(falla ? 1 : 0);
 })();

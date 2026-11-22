@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261122-115529",
+    "items": [
+      "Counting: the line’s handles moved to the edges",
+      "The level in the bottle stays in view"
+    ]
+  },
+  {
     "build": "20261122-114743",
     "items": [
       "New app icon: the glass B"
@@ -180,13 +187,6 @@
     "items": [
       "Sent orders show the totals strip, like Invoices",
       "Order and invoice number move under the name"
-    ]
-  },
-  {
-    "build": "20261120-213958",
-    "items": [
-      "Sent: the Reopen warning is easier to read",
-      "It slides up from the buttons"
     ]
   }
 ]
