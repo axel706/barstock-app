@@ -726,8 +726,11 @@ body.light .cp-hint{
    barras del grueso de sus letras. Encima del líquido, dentro del vidrio. */
 .cp-marca{ fill: none; stroke: #fde68a; stroke-opacity: .32; stroke-width: 1; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
 .cp-barra{ fill: #fde68a; fill-opacity: .5; }
+/* Un renglón curvo: cada palabra es un trazo del grueso de sus letras. */
+.cp-barra-arco{ fill: none; stroke: #fde68a; stroke-opacity: .5; stroke-linecap: round; }
 body.light .cp-marca{ stroke: #92400e; stroke-opacity: .4; }
 body.light .cp-barra{ fill: #92400e; fill-opacity: .4; }
+body.light .cp-barra-arco{ stroke: #92400e; stroke-opacity: .4; }
 .cp-fullline{ stroke: rgba(255,255,255,.30); }
 
 body.light .cp-glass{

@@ -471,7 +471,12 @@ Axel la revise sobre su lámina): Jameson, Buffalo Trace, Bulleit,
 Fireball, Red Label, Dewar's, Bacardí, Campari, Aperol y Baileys. Las
 demás se añaden por tandas, de las fotos que Axel ya mandó para las
 siluetas (siguen en la sesión), cada tanda con su lámina foto/dibujo.
-Sólo en siluetas propias: en las genéricas mentirían.
+Sólo en siluetas propias: en las genéricas mentirían. Cada marca puede
+ir inclinada (`rot`, grados, positivo sube a la derecha: la banda de Red
+Label), en arco (`arco`: en un texto, la flecha del renglón; en una
+etiqueta, [arriba, abajo]) y con su forma (`forma`: 'ovalo', 'roto'):
+Axel, 2026-11-22, "hay botellas con etiquetas diagonales o textos
+curvos y todos los estás poniendo planos".
 Prueba: `test-silueta-marcas`.
 
 **El par no salta de golpe:** ±2 por paso (`BarStockProductWeeks.paso`). Un

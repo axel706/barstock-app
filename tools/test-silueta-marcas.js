@@ -56,8 +56,20 @@ for (const k of ['woodford', 'elijah_craig', 'basil_hayden'].concat(TANDA1)) {
     Array.isArray(m.renglones) && m.renglones.every(r => r.g > 0 && r.g < 0.1 && r.largo > 0 && r.largo <= 1 &&
       Array.isArray(r.palabras) && r.palabras.length >= 1 && r.palabras.every(n => Number.isInteger(n) && n > 0))));
   prueba(k + ': en los datos no hay palabras, sólo cuántas letras', Array.isArray(ms) &&
-    !JSON.stringify(ms).match(/[A-Za-z]{3,}/g).some(w => !['tipo', 'etiqueta', 'sello', 'texto', 'ancho', 'renglones', 'largo', 'palabras'].includes(w)),
+    !JSON.stringify(ms).match(/[A-Za-z]{3,}/g).some(w => !['tipo', 'etiqueta', 'sello', 'texto', 'ancho', 'renglones', 'largo', 'palabras', 'rot', 'arco', 'forma', 'ovalo', 'roto'].includes(w)),
     String(JSON.stringify(ms)).slice(0, 120));
+}
+
+console.log('\ninclinadas, curvas y con su forma (Axel: "hay botellas con etiquetas diagonales o textos curvos")');
+{
+  const dib = (k) => B.marcasFor(k, W, H, PAD);
+  prueba('la banda de Red Label va inclinada, con sus renglones', /<g transform="rotate\(-24\.00 [^"]+">[\s\S]*cp-marca[\s\S]*<\/g>/.test(dib('red_label')));
+  prueba('el nombre de Baileys va en arco (un trazo curvo, no una barra recta)', /class="cp-barra-arco"/.test(dib('baileys')));
+  prueba('su ilustración es un óvalo', /<ellipse class="cp-marca"/.test(dib('baileys')));
+  prueba('el papel rasgado de Buffalo Trace tiene el borde roto', /<path class="cp-marca" d="M[^"]*Z"/.test(dib('buffalo_trace')));
+  prueba('la etiqueta de Jameson tiene el borde de arriba curvo', /<path class="cp-marca" d="M[^"]* Q/.test(dib('jameson')));
+  prueba('lo que no lleva nada de eso se dibuja como antes (Woodford, sin giros ni arcos)', !/rotate|cp-barra-arco|<ellipse|<path/.test(dib('woodford')));
+  prueba('el trazo curvo tiene su color en el panel', /\.cp-barra-arco\s*\{[^}]*stroke:/.test(leer('styles/count-panel.css')));
 }
 
 console.log('\nse dibujan, sin palabras');

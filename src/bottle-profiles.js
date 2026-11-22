@@ -265,9 +265,9 @@
       // el grueso de sus letras y cuantas letras tiene cada palabra.
       marcas: [
         {tipo: 'etiqueta', y: [0.85, 0.91], ancho: 0.9, renglones: [{g: 0.02, largo: 0.7, palabras: [6]}]},
-        {tipo: 'etiqueta', y: [0.3, 0.54], ancho: 0.95, renglones: []},
-        {tipo: 'texto', y: [0.43, 0.5], ancho: 0.85, renglones: [{g: 0.055, largo: 0.85, palabras: [6]}]},
-        {tipo: 'texto', y: [0.38, 0.415], ancho: 0.8, renglones: [{g: 0.016, largo: 0.8, palabras: [9, 5, 4]}]},
+        {tipo: 'etiqueta', y: [0.3, 0.54], ancho: 0.95, rot: 8, renglones: []},
+        {tipo: 'texto', y: [0.43, 0.5], ancho: 0.85, rot: 8, renglones: [{g: 0.055, largo: 0.85, palabras: [6]}]},
+        {tipo: 'texto', y: [0.38, 0.415], ancho: 0.8, rot: 8, renglones: [{g: 0.016, largo: 0.8, palabras: [9, 5, 4]}]},
         {tipo: 'sello', y: 0.18, r: 0.045, renglones: []}
       ]
     },
@@ -555,8 +555,8 @@
       // el grueso de sus letras y cuantas letras tiene cada palabra.
       marcas: [
         {tipo: 'etiqueta', y: [0.8, 0.87], ancho: 0.8, renglones: []},
-        {tipo: 'etiqueta', y: [0.17, 0.59], ancho: 0.92, renglones: []},
-        {tipo: 'texto', y: [0.46, 0.56], ancho: 0.85, renglones: [{g: 0.055, largo: 0.85, palabras: [8]}]},
+        {tipo: 'etiqueta', y: [0.17, 0.59], ancho: 0.92, forma: 'roto', renglones: []},
+        {tipo: 'texto', y: [0.46, 0.56], ancho: 0.85, rot: 10, arco: 0.07, renglones: [{g: 0.055, largo: 0.85, palabras: [8]}]},
         {tipo: 'texto', y: [0.22, 0.26], ancho: 0.75, renglones: [{g: 0.02, largo: 0.7, palabras: [8, 6]}]}
       ]
     },
@@ -603,9 +603,9 @@
       // el grueso de sus letras y cuantas letras tiene cada palabra.
       marcas: [
         {tipo: 'sello', y: 0.63, r: 0.04, renglones: []},
-        {tipo: 'etiqueta', y: [0.37, 0.56], ancho: 1.0, renglones: []},
-        {tipo: 'texto', y: [0.515, 0.535], ancho: 0.85, renglones: [{g: 0.015, largo: 0.7, palabras: [7, 6]}]},
-        {tipo: 'texto', y: [0.465, 0.505], ancho: 0.85, renglones: [{g: 0.03, largo: 0.85, palabras: [3, 5]}]},
+        {tipo: 'etiqueta', y: [0.4, 0.53], ancho: 1.06, rot: 24, renglones: []},
+        {tipo: 'texto', y: [0.5, 0.52], ancho: 0.85, rot: 24, renglones: [{g: 0.015, largo: 0.7, palabras: [7, 6]}]},
+        {tipo: 'texto', y: [0.455, 0.495], ancho: 0.85, rot: 24, renglones: [{g: 0.03, largo: 0.85, palabras: [3, 5]}]},
         {tipo: 'etiqueta', y: [0.06, 0.13], ancho: 0.6, renglones: [{g: 0.012, largo: 0.8, palabras: [11, 4]}]}
       ]
     },
@@ -723,8 +723,8 @@
       // el grueso de sus letras y cuantas letras tiene cada palabra.
       marcas: [
         {tipo: 'sello', y: 0.74, r: 0.035, renglones: [{g: 0.015, largo: 1.0, palabras: [3]}]},
-        {tipo: 'etiqueta', y: [0.29, 0.575], ancho: 0.95, renglones: []},
-        {tipo: 'texto', y: [0.49, 0.555], ancho: 0.9, renglones: [{g: 0.05, largo: 0.92, palabras: [7]}]},
+        {tipo: 'etiqueta', y: [0.29, 0.575], ancho: 0.95, arco: [0.07, 0], renglones: []},
+        {tipo: 'texto', y: [0.49, 0.555], ancho: 0.9, arco: 0.06, renglones: [{g: 0.05, largo: 0.92, palabras: [7]}]},
         {tipo: 'texto', y: [0.31, 0.355], ancho: 0.75, renglones: [{g: 0.016, largo: 0.85, palabras: [6, 9]}, {g: 0.016, largo: 0.7, palabras: [5, 7]}]},
         {tipo: 'etiqueta', y: [0.17, 0.225], ancho: 1.0, renglones: [{g: 0.018, largo: 0.6, palabras: [4, 9]}]}
       ]
@@ -880,8 +880,8 @@
       // Alturas de la foto con que se midio la silueta; de cada renglon,
       // el grueso de sus letras y cuantas letras tiene cada palabra.
       marcas: [
-        {tipo: 'texto', y: [0.49, 0.63], ancho: 0.85, renglones: [{g: 0.05, largo: 0.8, palabras: [7]}, {g: 0.05, largo: 0.8, palabras: [7]}]},
-        {tipo: 'texto', y: [0.36, 0.46], ancho: 0.8, renglones: [{g: 0.03, largo: 0.7, palabras: [8]}, {g: 0.03, largo: 0.6, palabras: [7]}]},
+        {tipo: 'texto', y: [0.49, 0.63], ancho: 0.85, arco: 0.1, renglones: [{g: 0.05, largo: 0.8, palabras: [7]}, {g: 0.05, largo: 0.8, palabras: [7]}]},
+        {tipo: 'texto', y: [0.36, 0.46], ancho: 0.8, arco: 0.06, renglones: [{g: 0.03, largo: 0.7, palabras: [8]}, {g: 0.03, largo: 0.6, palabras: [7]}]},
         {tipo: 'etiqueta', y: [0.06, 0.33], ancho: 0.95, renglones: []},
         {tipo: 'texto', y: [0.19, 0.23], ancho: 0.9, renglones: [{g: 0.025, largo: 0.8, palabras: [7, 7]}]}
       ]
@@ -897,7 +897,7 @@
       // Alturas de la foto con que se midio la silueta; de cada renglon,
       // el grueso de sus letras y cuantas letras tiene cada palabra.
       marcas: [
-        {tipo: 'etiqueta', y: [0.28, 0.45], ancho: 0.95, renglones: []},
+        {tipo: 'etiqueta', y: [0.28, 0.45], ancho: 0.95, forma: 'roto', rot: 4, renglones: []},
         {tipo: 'texto', y: [0.19, 0.235], ancho: 0.92, renglones: [{g: 0.04, largo: 0.9, palabras: [7, 5]}]},
         {tipo: 'texto', y: [0.11, 0.17], ancho: 0.7, renglones: [{g: 0.012, largo: 0.6, palabras: [8]}, {g: 0.012, largo: 0.9, palabras: [8, 7]}, {g: 0.012, largo: 0.55, palabras: [7]}]}
       ]
@@ -1028,8 +1028,8 @@
       // el grueso de sus letras y cuantas letras tiene cada palabra.
       marcas: [
         {tipo: 'sello', y: 0.61, r: 0.035, renglones: [{g: 0.015, largo: 1.0, palabras: [2]}]},
-        {tipo: 'texto', y: [0.4, 0.5], ancho: 0.9, renglones: [{g: 0.055, largo: 0.9, palabras: [7]}]},
-        {tipo: 'etiqueta', y: [0.32, 0.4], ancho: 0.7, renglones: []},
+        {tipo: 'texto', y: [0.4, 0.5], ancho: 0.9, arco: 0.14, renglones: [{g: 0.055, largo: 0.9, palabras: [7]}]},
+        {tipo: 'etiqueta', y: [0.32, 0.4], ancho: 0.7, forma: 'ovalo', renglones: []},
         {tipo: 'texto', y: [0.215, 0.3], ancho: 0.6, renglones: [{g: 0.015, largo: 0.3, palabras: [3]}, {g: 0.022, largo: 0.8, palabras: [8]}, {g: 0.018, largo: 0.75, palabras: [5, 5]}]},
         {tipo: 'texto', y: [0.14, 0.19], ancho: 0.8, renglones: [{g: 0.012, largo: 0.6, palabras: [7, 2, 7]}, {g: 0.012, largo: 0.8, palabras: [7, 3, 3]}]}
       ]
@@ -1398,6 +1398,19 @@
   // color y el punteado los pone el CSS (cp-marca / cp-barra), para que
   // el modo claro los alcance. Misma caja que `pathFor`. Sin marcas,
   // cadena vacía.
+  // ── Inclinadas, curvas y con su forma (Axel, 2026-11-22) ────────────
+  //
+  // La tanda 1 salió toda plana y "hay botellas con etiquetas diagonales o
+  // textos curvos". Cada marca puede llevar, además:
+  //   · `rot`: grados, positivo sube hacia la derecha (la banda de Red
+  //     Label, la etiqueta de Aperol). Gira la marca entera, con sus
+  //     renglones, sobre su centro.
+  //   · `arco`: en un texto, la flecha del arco de sus renglones como
+  //     parte de su largo (BAILEYS, BULLEIT; positivo es ∩, negativo ∪).
+  //     En una etiqueta, [arriba, abajo]: cuánto se curva cada borde.
+  //   · `forma`: 'ovalo' (la ilustración de Baileys) o 'roto' (el papel
+  //     rasgado de Buffalo Trace, el borde quemado de Fireball).
+  // Sin ninguna, lo de antes: rectángulo y renglones rectos.
   function marcasFor(x, w, h, pad) {
     const prof = profOf(x);
     const ms = prof && prof.marcas;
@@ -1407,22 +1420,59 @@
     const f = (n) => n.toFixed(2);
     let out = '';
     // Los renglones, repartidos a partes iguales en el alto de su marca;
-    // cada palabra, en proporción a sus letras, con un hueco de 1.2.
-    const renglones = (rs, top, alto, ancho) => {
+    // cada palabra, en proporción a sus letras, con un hueco de 1.2. Con
+    // arco, cada palabra es un trazo que sigue la parábola del renglón
+    // (del grueso de sus letras); sin él, la barra de siempre.
+    const renglones = (rs, top, alto, ancho, arco) => {
       const paso = alto / rs.length;
       rs.forEach((r, i) => {
         const g = r.g * usable;
         const largo = ancho * r.largo;
         const tot = r.palabras.reduce((s, n) => s + n, 0) + (r.palabras.length - 1) * 1.2;
         const yc = top + paso * (i + 0.5);
+        const flecha = (arco || 0) * largo;
+        const yEn = (xx) => { const t = (xx - cx) / (largo / 2); return yc - flecha * (1 - t * t); };
         let x0 = cx - largo / 2;
         for (const n of r.palabras) {
           const lw = largo * n / tot;
-          out += '<rect class="cp-barra" x="' + f(x0) + '" y="' + f(yc - g / 2) + '" width="' + f(Math.max(lw, g)) +
-                 '" height="' + f(g) + '" rx="' + f(g / 2.5) + '"/>';
+          if (flecha) {
+            const a = x0 + g / 2, b = x0 + Math.max(lw, g) - g / 2;
+            let d = '';
+            for (let k = 0; k <= 6; k++) { const xx = a + (b - a) * k / 6; d += (k ? ' L' : 'M') + f(xx) + ' ' + f(yEn(xx)); }
+            out += '<path class="cp-barra-arco" d="' + d + '" stroke-width="' + f(g) + '"/>';
+          } else {
+            out += '<rect class="cp-barra" x="' + f(x0) + '" y="' + f(yc - g / 2) + '" width="' + f(Math.max(lw, g)) +
+                   '" height="' + f(g) + '" rx="' + f(g / 2.5) + '"/>';
+          }
           x0 += lw + largo * 1.2 / tot;
         }
       });
+    };
+    // El contorno de una etiqueta según su forma.
+    const contorno = (m, l, top, ancho, alto) => {
+      const r = l + ancho, bot = top + alto, ccx = l + ancho / 2;
+      if (m.forma === 'ovalo') {
+        return '<ellipse class="cp-marca" cx="' + f(ccx) + '" cy="' + f(top + alto / 2) + '" rx="' + f(ancho / 2) + '" ry="' + f(alto / 2) + '"/>';
+      }
+      if (m.forma === 'roto') {
+        // Bordes de arriba y abajo en dientes irregulares (siempre los
+        // mismos: el dibujo no puede cambiar de un pintado a otro).
+        const amp = Math.min(alto * 0.08, ancho * 0.05), n = 9;
+        const diente = (k) => [0.2, 0.9, 0.4, 1, 0.1, 0.7, 0.5, 0.95, 0.3, 0.6][k % 10];
+        let d = 'M' + f(l) + ' ' + f(top);
+        for (let k = 1; k <= n; k++) d += ' L' + f(l + ancho * k / n) + ' ' + f(top + amp * diente(k));
+        d += ' L' + f(r) + ' ' + f(bot);
+        for (let k = n - 1; k >= 0; k--) d += ' L' + f(l + ancho * k / n) + ' ' + f(bot - amp * diente(k + 3));
+        return '<path class="cp-marca" d="' + d + ' Z"/>';
+      }
+      const [sa, sb] = Array.isArray(m.arco) ? m.arco : [0, 0];
+      if (!sa && !sb) {
+        return '<rect class="cp-marca" x="' + f(l) + '" y="' + f(top) + '" width="' + f(ancho) + '" height="' + f(alto) + '" rx="3"/>';
+      }
+      // Bordes curvos: una cuadrática por borde, con la flecha como parte
+      // del ancho (el punto de control va al doble de la flecha).
+      return '<path class="cp-marca" d="M' + f(l) + ' ' + f(top) + ' Q' + f(ccx) + ' ' + f(top - 2 * sa * ancho) + ' ' + f(r) + ' ' + f(top) +
+             ' L' + f(r) + ' ' + f(bot) + ' Q' + f(ccx) + ' ' + f(bot - 2 * sb * ancho) + ' ' + f(l) + ' ' + f(bot) + ' Z"/>';
     };
     for (const m of ms) {
       if (m.tipo === 'sello') {
@@ -1439,11 +1489,13 @@
       const [y0, y1] = m.y;
       const ancho = Math.min(radiusAt(x, y0), radiusAt(x, y1)) * 2 * maxR * m.ancho;
       const top = Y(y1), alto = Y(y0) - top;
-      if (m.tipo !== 'texto') {
-        out += '<rect class="cp-marca" x="' + f(cx - ancho / 2) + '" y="' + f(top) + '" width="' + f(ancho) +
-               '" height="' + f(alto) + '" rx="3"/>';
+      const rot = Number(m.rot) || 0;
+      if (rot) out += '<g transform="rotate(' + f(-rot) + ' ' + f(cx) + ' ' + f(top + alto / 2) + ')">';
+      if (m.tipo !== 'texto') out += contorno(m, cx - ancho / 2, top, ancho, alto);
+      if (Array.isArray(m.renglones) && m.renglones.length) {
+        renglones(m.renglones, top, alto, ancho, m.tipo === 'texto' && typeof m.arco === 'number' ? m.arco : 0);
       }
-      if (Array.isArray(m.renglones) && m.renglones.length) renglones(m.renglones, top, alto, ancho);
+      if (rot) out += '</g>';
     }
     return out;
   }
