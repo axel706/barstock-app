@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261122-125522",
+    "items": [
+      "Home: the three cards are in place as soon as the app opens",
+      "Each one shimmers until its number arrives"
+    ]
+  },
+  {
     "build": "20261122-122827",
     "items": [
       "Home: On the shelf shimmers while it counts"
@@ -180,12 +187,6 @@
     "build": "20261121-102853",
     "items": [
       "Home: Running out shows each bottle and its day"
-    ]
-  },
-  {
-    "build": "20261121-095240",
-    "items": [
-      "Counting: label guides on three bottles"
     ]
   }
 ]

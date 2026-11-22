@@ -193,6 +193,40 @@
   }
 
 
+  // Mira cada poco si el ciclo semanal ya se leyó y repinta: entonces
+  // tarjetas() pide las facturas con su fecha. Una sola espera a la vez,
+  // y con un tope (10 s): si no llega, se piden sin ciclo, como antes.
+  let _esperandoCiclo = false;
+  function esperarCiclo() {
+    if (_esperandoCiclo) return;
+    _esperandoCiclo = true;
+    const t0 = Date.now();
+    const mirar = () => {
+      const W = window.BarStockWeeklyCycle;
+      const listo = !W || !W.estado || W.estado() !== 'loading';
+      if (listo || Date.now() - t0 > 10000) {
+        _esperandoCiclo = false;
+        if (listo) refresh();
+        else cargarEntregas((W && W.resetAt && W.resetAt()) || '');
+        return;
+      }
+      setTimeout(mirar, 120);
+    };
+    setTimeout(mirar, 120);
+  }
+
+  // ¿La locación abierta vende por Toast? Se recuerda en este teléfono,
+  // por locación (una comodidad: si falla el almacenamiento, se supone que
+  // sí y la tarjeta sale cargando). true / false / null (no se sabe).
+  const claveToast = () => 'bs-home-toast:' + ((window.BARSTOCK_CONFIG && window.BARSTOCK_CONFIG.LOCATION_NAME) || '');
+  function conToastAqui() {
+    try { const v = localStorage.getItem(claveToast()); return v === '1' ? true : v === '0' ? false : null; }
+    catch (e) { return null; }
+  }
+  function recordarToast(si) {
+    try { localStorage.setItem(claveToast(), si ? '1' : '0'); } catch (e) {}
+  }
+
   // Se vuelve a pedir cuando cambia el arranque del ciclo, no cada vez
   // que se pinta el Home: reiniciar la semana es lo único que cambia la
   // respuesta, y el Home se repinta decenas de veces por sesión.
@@ -1263,7 +1297,11 @@
     // Que la tarjeta de MarginEdge dependa del estado del conteo no
     // tiene ningún sentido: son dos cosas distintas.
     const W = window.BarStockWeeklyCycle;
-    cargarEntregas((W && W.resetAt && W.resetAt()) || '');
+    // Con el ciclo aún leyéndose no se piden: la primera lectura salía con
+    // otra ventana y, al leerse el ciclo, se repetía con otro número
+    // ("17 to fix" y luego "11 to fix", Axel, 2026-11-22, en vídeo).
+    if (W && W.estado && W.estado() === 'loading') esperarCiclo();
+    else cargarEntregas((W && W.resetAt && W.resetAt()) || '');
     cargarPrecios();
 
     // `ciclo` marca la tarjeta (data-kind="cycle"): sus botones empiezan,
@@ -2137,6 +2175,17 @@
         <button type="button" class="m-cf-b" data-cf="${o.id}"${o.off ? ' disabled' : ''}>${o.btn}</button>
       </div>`;
 
+    // Una cifra que todavía no sabe su número: la barra que brilla donde
+    // va la cifra y otra donde va su línea, "Loading" y el botón apagado,
+    // del mismo tamaño que la de verdad (las tres en su sitio desde que se
+    // abre la app; la de "On the shelf", lámina A, 2026-11-22).
+    const cifraCargando = (o) => cifra(Object.assign({
+      s: '<span class="m-cf-esq m-cf-esq-s"></span>',
+      v: '<span class="m-cf-esq m-cf-esq-v" aria-label="Loading"></span>',
+      d: 'Loading', btn: o.id === 'gasto' ? '<i class="ti ti-refresh" aria-hidden="true"></i> Sync' : o.id === 'ayer' ? '<i class="ti ti-refresh" aria-hidden="true"></i> Sync' : 'Details',
+      off: true
+    }, o));
+
     // La segunda línea de "On the shelf": las botellas (Axel,
     // 2026-11-13). Se descartó "−$1,060 vs count": el estante es lo
     // contado MÁS lo que llegó menos lo vendido, y comparar sólo con el
@@ -2169,6 +2218,14 @@
     // números no cambian por un fallo.
     const H = V && V.hoy;
     const conHoy = H && (H.dinero > 0 || H.botellas > 0);
+    // ¿Esta locación vende por Toast? Se apunta en este teléfono al saber
+    // la respuesta, para que la próxima vez la fila salga ya con sus
+    // tarjetas (Axel, 2026-11-22, en vídeo: Sold today aparecía después
+    // y empujaba a las otras, "da más página web cargando que app").
+    const TS = window.BarStockToastSales;
+    if (V) recordarToast(!!(ayer || H));
+    const sabeVentas = !!V || !TS;
+    if (!sabeVentas && conToastAqui() !== false) partes.push(cifraCargando({ id: 'ayer', k: 'Sold' }));
     if (ayer || H) {
       const n = ayer && ayer.normalDinero;
       const pct = ayer && n ? Math.round((ayer.dinero - n) / n * 100) : null;
@@ -2195,7 +2252,13 @@
         off: st === 'cargando'
       }));
     }
-    partes.push(cifra({
+    // Sin las facturas (o sin los precios) aún, la barra que brilla: lo de
+    // antes ("since Nov 15 · Sync" y luego "17 to fix", "11 to fix") eran
+    // cifras provisionales que cambiaban al llegar.
+    const Pm = window.BarStockMarginEdgePurchases;
+    const gastoCargando = E === null || (Pm && typeof Pm.calcularPrecios === 'function' && !_preciosLeidos);
+    if (gastoCargando) partes.push(cifraCargando({ id: 'gasto', k: 'Spent this cycle', logo: LOGO_ME }));
+    else partes.push(cifra({
       id: 'gasto', k: 'Spent this cycle', v: g ? money(g.total) : '…',
       // El archivo que dio Axel, tal cual (assets/brands/, como el de
       // Toast); el blanco lo pone el CSS.

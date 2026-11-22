@@ -54,10 +54,21 @@ async function entorno(o) {
   w.normalizeName = (s) => String(s || '').toLowerCase();
   new Function(leer('src/inventory-value.js'))();
   w.BarStockSpend = { compute: () => ({ now: { total: 3644 }, prev: { total: 4530 }, totalDelta: -886 }) };
-  w.BarStockWeeklyCycle = { estado: () => 'done', resetAt: () => '2026-11-08T05:00:00Z', fmtDate: () => 'Nov 8',
+  // `o.cicloTarda`: el ciclo semanal sigue en 'loading' esos ms (como al
+  // abrir la app). `w.__resumenes` cuenta cuántas veces se pidieron las
+  // facturas y en qué estado del ciclo.
+  const t0 = Date.now();
+  const cicloListo = () => !o.cicloTarda || Date.now() - t0 >= o.cicloTarda;
+  w.BarStockWeeklyCycle = { estado: () => cicloListo() ? 'done' : 'loading',
+    resetAt: () => cicloListo() ? '2026-11-08T05:00:00Z' : null, fmtDate: () => 'Nov 8',
     edadCiclo: () => 3 * 864e5, cicloViejo: () => false };
-  w.BarStockMobileInvoices = { resumen: async () => ({ n: 6, unidades: 142, dinero: 3644,
-    sueltas: o.sueltas || 0, ultima: '' }) };
+  w.__resumenes = [];
+  w.BarStockMobileInvoices = { resumen: async () => {
+    w.__resumenes.push(cicloListo() ? 'listo' : 'sin ciclo');
+    if (o.lentoFacturas) await esperar(o.lentoFacturas);
+    return { n: 6, unidades: 142, dinero: 3644, sueltas: o.sueltas || 0, ultima: '' };
+  } };
+  if (o.lentoVentas) w.__lento = o.lentoVentas;
   w.__syncs = 0;
   w.BarStockMarginEdgeConnect = { buscarFacturas: async () => { w.__syncs++; return { lineas: 0 }; } };
   // Toast: una semana con ayer (martes) a $3,500 y los martes de antes a $2,500.
@@ -104,7 +115,8 @@ async function entorno(o) {
   host.className = 'm-screen on'; host.dataset.screen = 'home';
   w.document.body.appendChild(host);
   def.mount(host);
-  await esperar(60);
+  // `o.alAbrir`: se mira la pantalla tal como sale, sin esperar.
+  if (!o.alAbrir) await esperar(60);
   return { w, host };
 }
 const cifras = (h) => [...h.querySelectorAll('#mhCifras .m-cf-c')];
@@ -112,6 +124,36 @@ const cifra = (h, t) => cifras(h).find(c => new RegExp(t, 'i').test(c.querySelec
 const txt = (el) => el ? el.textContent.replace(/\s+/g, ' ').trim() : '';
 
 (async () => {
+
+grupo('al abrir, las tres en su sitio (Axel, 2026-11-22: "da más página web cargando que app")');
+{
+  // En vídeo: al abrir había DOS tarjetas (On the shelf y MarginEdge, a
+  // lo ancho) y Sold today aparecía después empujándolas; MarginEdge
+  // pasaba de "since Nov 15 · Sync" a "17 to fix" y a "11 to fix".
+  // Este grupo va PRIMERO: los Home de los entornos anteriores siguen
+  // vivos y pintan con el `document` global, que sería el de éste.
+  const { w, host } = await entorno({ alAbrir: true, lentoVentas: 200, lentoFacturas: 200 });
+  await esperar(5);
+  prueba('al abrir ya están las tres, en su orden', cifras(host).length === 3 && !host.querySelector('#mhCifras').classList.contains('dos') &&
+    /On the shelf/.test(txt(cifras(host)[0])) && /Sold/.test(txt(cifras(host)[1])) && /Spent this cycle/.test(txt(cifras(host)[2])),
+    cifras(host).map(txt).join(' | '));
+  const sold = cifras(host)[1], spent = cifras(host)[2];
+  prueba('Sold, sin ventas todavía: la barra que brilla y su botón apagado', !!(sold && sold.querySelector('.m-cf-v .m-cf-esq')) &&
+    sold.querySelector('.m-cf-b').disabled && !/\$/.test(txt(sold.querySelector('.m-cf-v'))), txt(sold));
+  prueba('Spent, sin facturas todavía: igual, sin "since" ni "to fix"', !!(spent && spent.querySelector('.m-cf-v .m-cf-esq')) &&
+    spent.querySelector('.m-cf-b').disabled && !/since|to fix/.test(txt(spent)), txt(spent));
+  await esperar(400);
+  prueba('y al llegar, sus cifras, en el mismo sitio', /\$/.test(txt(cifras(host)[1].querySelector('.m-cf-v'))) &&
+    /\$3,644/.test(txt(cifras(host)[2])) && cifras(host).length === 3, cifras(host).map(txt).join(' | '));
+}
+{
+  // El "17 to fix → 11 to fix": las facturas se pedían con el ciclo aún
+  // sin leer (otra ventana) y otra vez al leerlo.
+  const { w } = await entorno({ cicloTarda: 150 });
+  await esperar(500);
+  prueba('las facturas no se piden antes de saber cuándo empezó el ciclo, y se piden una vez',
+    w.__resumenes.length === 1 && w.__resumenes[0] === 'listo', JSON.stringify(w.__resumenes));
+}
 
 grupo('las tres cifras');
 {
