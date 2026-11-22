@@ -2010,6 +2010,15 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * subgrid de .m-cf. */
   .m-cf-d { margin-top: 2px; font-size: var(--m-meta); color: #a9bacd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .m-cf-live { color: #6ee7b7; font-weight: 800; }
+  /* "On the shelf" mientras el LIVE contesta (2026-11-22, lámina B con
+     "Counting"): un aro azul que gira en el sitio de la cifra, del alto
+     de ella, para que nada salte al llegar el número. */
+  .m-cf-v .m-cf-aro { display: inline-block; width: calc(var(--m-title) * 1.05); height: calc(var(--m-title) * 1.05); border-radius: 50%;
+    border: 2.5px solid rgba(255,255,255,.18); border-top-color: #38bdf8; animation: m-cf-gira .8s linear infinite; vertical-align: middle; }
+  @keyframes m-cf-gira { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .m-cf-v .m-cf-aro { animation: none; } }
+  /* Details apagado mientras tanto: que se vea que todavía no se toca. */
+  body.m-shell #mScreens .m-cf-b:disabled { opacity: .45; }
   .m-cf-live::before { content: '● '; }
   .m-cf-sube { color: #86efac; }
   .m-cf-baja { color: #fca5a5; }
