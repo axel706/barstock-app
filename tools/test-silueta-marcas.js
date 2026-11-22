@@ -71,6 +71,10 @@ console.log('\ninclinadas, curvas y con su forma (Axel: "hay botellas con etique
   prueba('el papel rasgado de Buffalo Trace tiene el borde roto', /<path class="cp-marca" d="M[^"]*Z"/.test(dib('buffalo_trace')));
   prueba('la etiqueta de Jameson tiene el borde de arriba curvo', /<path class="cp-marca" d="M[^"]* Q/.test(dib('jameson')));
   prueba('lo que no lleva nada de eso se dibuja como antes (Woodford, sin giros ni arcos)', !/rotate|cp-barra-arco|<ellipse|<path/.test(dib('woodford')));
+  // El medallón de Aperol va a la derecha del eje, no al centro (x).
+  const box = B.boxFor('aperol', W, H, PAD);
+  const sello = /<circle class="cp-marca" cx="([\d.]+)"/.exec(dib('aperol'));
+  prueba('un sello puede ir corrido del eje (el medallón de Aperol, a la derecha)', !!sello && Number(sello[1]) > box.cx + 1, sello && sello[1] + ' vs ' + box.cx);
   prueba('el trazo curvo tiene su color en el panel', /\.cp-barra-arco\s*\{[^}]*stroke:/.test(leer('styles/count-panel.css')));
 }
 

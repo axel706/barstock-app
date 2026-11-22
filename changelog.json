@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261122-102147",
+    "items": [
+      "Counting: Aperol, Bulleit, Fireball and Dewar’s guides fixed"
+    ]
+  },
+  {
     "build": "20261122-101414",
     "items": [
       "Counting: Red Label and Bulleit guides measured from photos"
@@ -180,13 +186,6 @@
     "build": "20261119-150606",
     "items": [
       "An order whose invoice came early stays on the way"
-    ]
-  },
-  {
-    "build": "20261119-084852",
-    "items": [
-      "Orders: what runs out before its delivery",
-      "LOOP lists them from every vendor, with To buy"
     ]
   }
 ]
