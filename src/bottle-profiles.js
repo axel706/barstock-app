@@ -607,7 +607,7 @@
         {tipo: 'sello', y: 0.63, r: 0.04, renglones: []},
         {tipo: 'etiqueta', y: [0.396, 0.558], ancho: 1.8, rot: 19, renglones: []},
         {tipo: 'texto', y: [0.3975, 0.5535], ancho: 1.0, rot: 19, renglones: [{g: 0.014, largo: 0.62, palabras: [7, 6]}, {g: 0.027, largo: 0.85, palabras: [3, 5]}, {g: 0.009, largo: 0.78, palabras: [7, 6, 6]}, {g: 0.02, largo: 0.82, palabras: [4, 6, 1, 4]}]},
-        {tipo: 'etiqueta', y: [0.06, 0.13], ancho: 0.6, renglones: [{g: 0.012, largo: 0.8, palabras: [11, 4]}]}
+        {tipo: 'etiqueta', y: [0.083, 0.133], ancho: 0.6, renglones: [{g: 0.012, largo: 0.8, palabras: [11, 4]}]}
       ]
     },
     dads_hat: {
@@ -724,7 +724,7 @@
       // el grueso de sus letras y cuantas letras tiene cada palabra.
       marcas: [
         {tipo: 'sello', y: 0.74, r: 0.035, renglones: [{g: 0.015, largo: 1.0, palabras: [3]}]},
-        {tipo: 'etiqueta', y: [0.29, 0.575], ancho: 0.95, arco: [0.07, 0], renglones: []},
+        {tipo: 'etiqueta', y: [0.279, 0.571], ancho: 0.95, arco: [0.07, 0], renglones: []},
         {tipo: 'texto', y: [0.49, 0.555], ancho: 0.9, arco: 0.06, renglones: [{g: 0.05, largo: 0.92, palabras: [7]}]},
         {tipo: 'texto', y: [0.31, 0.355], ancho: 0.75, renglones: [{g: 0.016, largo: 0.85, palabras: [6, 9]}, {g: 0.016, largo: 0.7, palabras: [5, 7]}]},
         {tipo: 'etiqueta', y: [0.17, 0.225], ancho: 1.0, renglones: [{g: 0.018, largo: 0.6, palabras: [4, 9]}]}
@@ -863,10 +863,10 @@
       // el grueso de sus letras y cuantas letras tiene cada palabra.
       marcas: [
         {tipo: 'etiqueta', y: [0.8, 0.95], ancho: 0.95, renglones: []},
-        {tipo: 'etiqueta', y: [0.33, 0.6], ancho: 0.95, arco: [-0.12, 0], renglones: []},
+        {tipo: 'etiqueta', y: [0.33, 0.573], ancho: 0.95, arco: [-0.1, 0], renglones: []},
         {tipo: 'texto', y: [0.45, 0.53], ancho: 0.78, renglones: [{g: 0.045, largo: 0.78, palabras: [6]}]},
         {tipo: 'texto', y: [0.4, 0.455], ancho: 0.75, renglones: [{g: 0.03, largo: 0.75, palabras: [5, 5]}]},
-        {tipo: 'etiqueta', y: [0.1, 0.28], ancho: 0.95, renglones: [{g: 0.018, largo: 0.85, palabras: [4, 5, 1, 4, 3]}]}
+        {tipo: 'etiqueta', y: [0.123, 0.265], ancho: 0.95, renglones: [{g: 0.018, largo: 0.85, palabras: [4, 5, 1, 4, 3]}]}
       ]
     },
     bulleit: {
@@ -926,13 +926,14 @@
       // Recta y alta, hombro del 64 % al 73 %. El ron es transparente:
       // yFull .71 por el criterio de botanist.
       p: [[0,0.261], [0.0156,0.7735], [0.0469,0.961], [0.0781,0.9526], [0.1094,0.9341], [0.1406,0.9311], [0.1719,0.9332], [0.2031,0.9366], [0.2344,0.9406], [0.2656,0.9447], [0.2969,0.9507], [0.3281,0.9529], [0.3594,0.9539], [0.3906,0.9553], [0.4219,0.9599], [0.4531,0.961], [0.4844,0.9609], [0.5156,0.9643], [0.5469,0.9633], [0.5781,0.9657], [0.6094,0.9841], [0.6406,0.9942], [0.6719,0.9262], [0.7031,0.6386], [0.7344,0.4226], [0.7656,0.4018], [0.7969,0.4011], [0.8281,0.402], [0.8594,0.4], [0.8906,0.3999], [0.9219,0.3942], [0.9531,0.3946], [0.9844,0.3763], [1,0.173]],
-      // Las marcas (Axel, 2026-11-22, tanda 1, estilo A2·7): la etiqueta del cuello, la grande con el murciélago, el nombre y "Superior".
+      // Las marcas (Axel, 2026-11-22, tanda 1, estilo A2·7): la etiqueta del cuello, la grande (del 28.3 al 55.9 %, con el medallón del murciélago montado sobre su borde de arriba), el nombre, "Superior" y la pequeña de abajo ("Establecido en Cuba"), medidas con los trazos de Axel.
       // Alturas de la foto con que se midio la silueta; de cada renglon,
       // el grueso de sus letras y cuantas letras tiene cada palabra.
       marcas: [
         {tipo: 'etiqueta', y: [0.79, 0.84], ancho: 0.9, renglones: [{g: 0.02, largo: 0.7, palabras: [5, 3]}]},
-        {tipo: 'etiqueta', y: [0.25, 0.61], ancho: 0.92, renglones: []},
-        {tipo: 'sello', y: 0.56, r: 0.045, renglones: []},
+        {tipo: 'etiqueta', y: [0.283, 0.559], ancho: 0.92, renglones: []},
+        {tipo: 'sello', y: 0.553, r: 0.043, renglones: []},
+        {tipo: 'etiqueta', y: [0.155, 0.227], ancho: 0.92, pend: [3, 3], renglones: []},
         {tipo: 'texto', y: [0.43, 0.49], ancho: 0.8, renglones: [{g: 0.05, largo: 0.8, palabras: [7]}]},
         {tipo: 'texto', y: [0.39, 0.42], ancho: 0.5, renglones: [{g: 0.02, largo: 0.5, palabras: [8]}]}
       ]
@@ -1027,12 +1028,13 @@
       // hombro largo y caido, del 52 % al 72 %, cuello largo. Vidrio negro:
       // yFull .70 por el criterio de botanist.
       p: [[0,0.2447], [0.0156,0.6995], [0.0469,0.8752], [0.0781,0.8835], [0.1094,0.8909], [0.1406,0.9007], [0.1719,0.9079], [0.2031,0.9186], [0.2344,0.9255], [0.2656,0.9327], [0.2969,0.9434], [0.3281,0.9508], [0.3594,0.961], [0.3906,0.9686], [0.4219,0.9762], [0.4531,0.987], [0.4844,0.9938], [0.5156,0.9967], [0.5469,0.9601], [0.5781,0.8594], [0.6094,0.7265], [0.6406,0.5863], [0.6719,0.4551], [0.7031,0.3674], [0.7344,0.3312], [0.7656,0.3214], [0.7969,0.3167], [0.8281,0.3228], [0.8594,0.3228], [0.8906,0.3228], [0.9219,0.3196], [0.9531,0.3146], [0.9844,0.3005], [1,0.1688]],
-      // Las marcas (Axel, 2026-11-22, tanda 1, estilo A2·7): el monograma, el nombre en arco, la ilustración, "The Original Irish Cream" y lo de abajo.
+      // Las marcas (Axel, 2026-11-22, tanda 1, estilo A2·7): el monograma, el escudo (la banda en arco ∩ y la punta de abajo ∪, del 35 al 46.4 % en las esquinas), el nombre en arco, la ilustración, "The Original Irish Cream" y lo de abajo.
       // Alturas de la foto con que se midio la silueta; de cada renglon,
       // el grueso de sus letras y cuantas letras tiene cada palabra.
       marcas: [
         {tipo: 'sello', y: 0.61, r: 0.035, renglones: [{g: 0.015, largo: 1.0, palabras: [2]}]},
-        {tipo: 'texto', y: [0.4, 0.5], ancho: 0.9, arco: 0.14, renglones: [{g: 0.055, largo: 0.9, palabras: [7]}]},
+        {tipo: 'etiqueta', y: [0.35, 0.464], ancho: 0.82, arco: [0.13, -0.15], renglones: []},
+        {tipo: 'texto', y: [0.365, 0.465], ancho: 0.9, arco: 0.14, renglones: [{g: 0.055, largo: 0.9, palabras: [7]}]},
         {tipo: 'etiqueta', y: [0.32, 0.4], ancho: 0.7, forma: 'ovalo', renglones: []},
         {tipo: 'texto', y: [0.215, 0.3], ancho: 0.6, renglones: [{g: 0.015, largo: 0.3, palabras: [3]}, {g: 0.022, largo: 0.8, palabras: [8]}, {g: 0.018, largo: 0.75, palabras: [5, 5]}]},
         {tipo: 'texto', y: [0.14, 0.19], ancho: 0.8, renglones: [{g: 0.012, largo: 0.6, palabras: [7, 2, 7]}, {g: 0.012, largo: 0.8, palabras: [7, 3, 3]}]}

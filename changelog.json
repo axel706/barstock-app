@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261122-103512",
+    "items": [
+      "Counting: label guides sized like the real labels"
+    ]
+  },
+  {
     "build": "20261122-102909",
     "items": [
       "Counting: Bulleit and Dewar’s label shapes fixed"
@@ -180,12 +186,6 @@
     "build": "20261120-140012",
     "items": [
       "Orders: roomier won't-last block, with the count"
-    ]
-  },
-  {
-    "build": "20261119-215443",
-    "items": [
-      "Every vendor takes a manual order amount"
     ]
   }
 ]
