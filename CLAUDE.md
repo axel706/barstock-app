@@ -480,11 +480,40 @@ de Bulleit, y una cuña si son opuestos), un sello corrido del eje (`x`:
 el medallón de Aperol) y con su forma (`forma`: 'ovalo', 'roto'):
 Axel, 2026-11-22, "hay botellas con etiquetas diagonales o textos
 curvos y todos los estás poniendo planos". **Se mide, no se estima**:
-dos rondas a ojo salieron mal (Red Label a 32° cuando eran 19°). Una
-herramienta del scratchpad pone el dibujo encima de la foto a la misma
-escala (la silueta y la foto tienen la misma proporción), y lo que se
-puede se mide por color (la banda roja, el azul de Aperol) o con los
-trazos que Axel hace sobre la foto de la lámina.
+dos rondas a ojo salieron mal (Red Label a 32° cuando eran 19°).
+
+**El estándar de cada tanda** (Axel, 2026-11-22, al aprobar la tanda 1:
+"los dibujos deben ser precisos y calcados en proporción con la real
+[…] si las pones más arriba, más abajo, más grandes o más pequeñas,
+vamos a mentir" sobre lo lleno que está). Las marcas son la regla con
+la que se cuenta: una etiqueta corrida es un conteo mal hecho.
+
+1. **Cada marca se mide en la foto**, con `tools/marcas/` (las fotos
+   viven en el scratchpad, nunca en el repo: es público). La silueta y
+   la foto tienen la misma proporción, así que una altura o un ángulo
+   medido en la foto vale igual en el dibujo. `cajas.json` en la
+   carpeta de la tanda: la caja de la botella en cada foto.
+   - `color.py`: los dos bordes de una etiqueta o banda por su color,
+     altura e inclinación (Red Label 19°, Aperol 14°).
+   - `bordes.py`: candidatos de bordes horizontales (ruidoso: se mira
+     encima antes de creerlo).
+   - `trazos.py`: los trazos que Axel hace sobre la lámina, pasados a
+     alturas con las barras rosas de las dos imágenes.
+   - `encima.js`: el dibujo ENCIMA de la foto a la misma escala.
+   - `lamina.js`: la lámina de la tanda (foto, dibujo, encima).
+2. **Lo que se comprueba en cada botella, encima de la foto**, antes de
+   enseñarla: la altura de arriba y de abajo de cada etiqueta, su ancho,
+   su inclinación (`rot`, o `pend` si cada borde va por su lado) y su
+   curva (`arco`); cada renglón de texto sobre su renglón, del grueso de
+   sus letras, con sus palabras y su curva; sellos en su sitio (`x`) y
+   con su forma (`forma`). Lo que no se pueda medir, se dice en la
+   lámina; no se rellena a ojo.
+3. **La inclinación de un trazo a mano no es la de la etiqueta**
+   (Bacardí: su etiqueta de abajo salió inclinada por el trazo y es
+   recta). Una inclinación se confirma en la foto o se pregunta.
+4. **Lámina antes que main**: la tanda va a `develop` y a main sólo
+   cuando Axel la aprueba sobre la lámina.
+
 Prueba: `test-silueta-marcas`.
 
 **El par no salta de golpe:** ±2 por paso (`BarStockProductWeeks.paso`). Un
