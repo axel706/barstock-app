@@ -215,6 +215,14 @@ grupo('"Order N items" en el cristal azul de los botones de abajo');
   prueba('en la regla del cristal, junto a Review and send', /#tbGo/.test(cristal) && /#moSend/.test(cristal), cristal.slice(0, 80));
   prueba('y en la del azul, la misma de los Save', /#tbGo/.test(azul) && /#msSave/.test(azul), azul.slice(0, 80));
   prueba('sin el azul sólido de antes', !/\.m-tb-go\s*\{[^}]*background:\s*#38bdf8/.test(css));
+  // Y abajo, fijo donde Done (Axel, el mismo día: "debe ir abajo como
+  // Done, te dije"), como Quick order: en la regla que fija los botones
+  // y al final de la pestaña, con su hueco delante para que la última
+  // línea no quede tapada.
+  const fijos = lista(/#mScreens :is\(([^)]*)\) \{\s*position: fixed; z-index: 50;/);
+  prueba('fijo abajo, en la regla de Done y Quick order', /#tbGo/.test(fijos) && /#moRun/.test(fijos), fijos);
+  prueba('al final de la pestaña, tras su hueco', /\$\{ir \? '<div class="m-tx-hueco"><\/div>' \+ ir : ''\}`;/.test(js) ||
+    /<div class="m-tx-hueco"><\/div>\$\{ir\}/.test(js));
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');

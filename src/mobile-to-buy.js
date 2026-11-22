@@ -142,11 +142,14 @@
     // "Order N items" (fase 4, opción A): toda la lista a Quick order,
     // como LOOP, para revisar y guardar. Lo que no se quiera pedir se
     // quita antes con la ✕. Sólo quien compra.
+    // Abajo, fijo donde Done, en el cristal azul (Axel, 2026-11-22: "debe
+    // ir abajo como Done"), como Quick order de Open: va al FINAL, tras su
+    // hueco, para que la última línea se pueda leer por encima de él.
     const ir = a.length && puede('ordenes')
       ? `<button type="button" class="m-tb-go" id="tbGo" data-tb-go>Order ${a.length} item${a.length === 1 ? '' : 's'}</button>` : '';
-    host.innerHTML = `${ir}
-      ${a.length ? `<div class="m-tb-k">To buy · ${a.length}</div>${a.map(x => linea(x, false)).join('')}` : ''}
-      ${b.length ? `<div class="m-tb-k">Ordered · ${b.length}</div>${b.map(x => linea(x, true)).join('')}` : ''}`;
+    host.innerHTML = `${a.length ? `<div class="m-tb-k">To buy · ${a.length}</div>${a.map(x => linea(x, false)).join('')}` : ''}
+      ${b.length ? `<div class="m-tb-k">Ordered · ${b.length}</div>${b.map(x => linea(x, true)).join('')}` : ''}
+      ${ir ? '<div class="m-tx-hueco"></div>' + ir : ''}`;
   }
 
   async function guardarQty(x, q) {

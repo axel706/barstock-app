@@ -754,7 +754,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * Review (y Retry, cuando falla el Sync) sigue amarillo SÓLIDO: es el
    * único que avisa de algo, y que sea el único sólido es lo que hace
    * que se vea primero. Con el id delante, para ganarle al cristal. */
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #miOrdOn, #miAntes, #tbGo) { position: relative; isolation: isolate; }
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #miOrdOn, #miAntes) { position: relative; isolation: isolate; }
   body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo)::before { z-index: -1; }
   body.m-shell #mScreens .m-cf-am .m-cf-b { background: #fcd34d; border-color: #fcd34d; color: #3b2a04; }
 
@@ -4005,12 +4005,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * pestaña. Desde el 2026-11-22, en el cristal azul de los botones de
    * abajo (Axel: "debería tener el estilo de los botones Liquid Glass
    * que hemos puesto en la parte inferior"): va por id (#tbGo) en las
-   * mismas reglas que Review and send y los Save, no copiado. Aquí sólo
-   * su sitio y su tamaño; sigue arriba de la lista, no fijo abajo. */
-  :is(#mScreens) .m-tb-go {
-    display: block; width: 100%; margin-top: 14px; min-height: calc(var(--m-base) * 3.4);
-    cursor: pointer; font-size: var(--m-strong); font-weight: 800;
-  }
+   * mismas reglas que Review and send y los Save, no copiado. Y abajo,
+   * fijo donde Done (el mismo día: "debe ir abajo como Done"): su sitio
+   * lo pone la regla de los botones fijos, con #mTxGo y #moRun. */
   .m-qk-aviso { color: #fcd34d; }
   .m-tb-k {
     margin-top: 16px; font-size: var(--m-meta); font-weight: 800; letter-spacing: .08em;
@@ -6091,7 +6088,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* Los Save de Settings (#msSave: Sender, Emails, Zones, la ficha de
    * Delivery) y los de People (Add person, New role, Create), también
    * (Axel, 2026-11-21: "como Done"). Cada uno lleva su hueco delante. */
-  #mScreens :is(#mTxGo, #mqMain, #moAcc, #moRun, #mhAcc, #msSave, #btNuevo, #ppNuevoRol, #btCrear) {
+  /* "Order N items" de To buy (#tbGo, 2026-11-22), también. */
+  #mScreens :is(#mTxGo, #mqMain, #moAcc, #moRun, #mhAcc, #msSave, #btNuevo, #ppNuevoRol, #btCrear, #tbGo) {
     position: fixed; z-index: 50; left: 16px; right: 16px;
     bottom: calc(env(safe-area-inset-bottom, 0px) + 110px - var(--m-base) * 2.7);
     display: block; width: auto; margin: 0; min-height: calc(var(--m-base) * 3.4);

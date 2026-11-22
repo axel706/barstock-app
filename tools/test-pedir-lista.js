@@ -161,7 +161,10 @@ grupo('6 · To buy: el botón, y lo pedido hasta que llega');
   const host = w.document.createElement('div'); host.dataset.sec = 'buy'; w.document.body.appendChild(host);
   TB.montar(host); await esperar(30);
   const b = host.querySelector('[data-tb-go]');
-  prueba('"Order 1 item", arriba', !!b && txt(b) === 'Order 1 item' && host.firstElementChild === b, b ? txt(b) : 'sin botón');
+  // Abajo, fijo donde Done (Axel, 2026-11-22: "debe ir abajo como
+  // Done"): el último de la pestaña, tras su hueco. Antes iba arriba.
+  prueba('"Order 1 item", al final, tras su hueco', !!b && txt(b) === 'Order 1 item' && host.lastElementChild === b &&
+    !!b.previousElementSibling && b.previousElementSibling.classList.contains('m-tx-hueco'), b ? txt(b) : 'sin botón');
   b.click();
   prueba('abre Quick order con lo que hay por comprar', w.__pre && w.__pre.length === 1 && w.__pre[0].id === 1 && w.__pre[0].qty === 2, JSON.stringify(w.__pre));
   const pedidas = Array.from(host.querySelectorAll('.es-pedida'));
