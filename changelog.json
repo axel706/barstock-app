@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261122-140450",
+    "items": [
+      "Four new phone backgrounds",
+      "Red Shelf, Bar Cart, Wood Bar and Spritz"
+    ]
+  },
+  {
     "build": "20261122-125522",
     "items": [
       "Home: the three cards are in place as soon as the app opens",
@@ -181,12 +188,6 @@
     "items": [
       "Home: orders show each vendor with its logo",
       "Home: placed orders show the day each arrives"
-    ]
-  },
-  {
-    "build": "20261121-102853",
-    "items": [
-      "Home: Running out shows each bottle and its day"
     ]
   }
 ]

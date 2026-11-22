@@ -72,11 +72,13 @@ console.log('\ncada imagen existe y no pesa de mas');
 
 console.log('\nlos del telefono');
 {
-  // Siete dibujos en vertical que trajo Axel, sólo para el teléfono.
+  // Los siete dibujos en vertical que trajo Axel y, desde el 2026-11-22,
+  // cuatro fotos más (estantería roja, carrito, barra de madera y el
+  // cóctel naranja), sólo para el teléfono.
   const movil = w.BarStockBackgrounds.listaMovil();
   const soloMovil = movil.filter(b => /^movil-/.test(b.id));
-  ok('estan las siete', soloMovil.length === 7, soloMovil.map(b => b.id).join(','));
-  ok('y van primero', movil.slice(0, 7).every(b => /^movil-/.test(b.id)));
+  ok('estan las once', soloMovil.length === 11, soloMovil.map(b => b.id).join(','));
+  ok('y van primero', movil.slice(0, 11).every(b => /^movil-/.test(b.id)));
   // El escritorio y la pantalla de entrada leen `lista()`: verticales en
   // un monitor apaisado se recortarían por la mitad.
   ok('no salen en el escritorio ni en la entrada', !lista.some(b => /^movil-/.test(b.id)));

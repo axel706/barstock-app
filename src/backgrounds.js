@@ -43,7 +43,8 @@
 
   // ── Sólo para el teléfono ──────────────────────────────────────────
   //
-  // Dibujos en vertical que trajo Axel para el fondo del teléfono. No
+  // Dibujos (y desde el 2026-11-22 también fotos) en vertical que trajo
+  // Axel para el fondo del teléfono. No
   // sirven en una pantalla apaisada, así que NO están en `lista()`: el
   // selector del escritorio y la pantalla de entrada siguen viendo
   // exactamente lo de antes.
@@ -58,7 +59,14 @@
     { id: 'movil-groovy',       label: 'Groovy',       src: 'assets/backgrounds/movil-groovy.jpg' },
     { id: 'movil-watercolor',   label: 'Watercolor',   src: 'assets/backgrounds/movil-watercolor.jpg' },
     { id: 'movil-happy-hour',   label: 'Happy Hour',   src: 'assets/backgrounds/movil-happy-hour.jpg' },
-    { id: 'movil-last-call',    label: 'Last Call',    src: 'assets/backgrounds/movil-last-call.jpg' }
+    { id: 'movil-last-call',    label: 'Last Call',    src: 'assets/backgrounds/movil-last-call.jpg' },
+    // Cuatro fotos que mandó Axel el 2026-11-22, vistas antes bajo el velo
+    // real del teléfono en una lámina. La del carrito trae la marca de agua
+    // de un blog y etiquetas de marcas: se le dijo, y la quiso igual.
+    { id: 'movil-red-shelf',    label: 'Red Shelf',    src: 'assets/backgrounds/movil-red-shelf.jpg' },
+    { id: 'movil-bar-cart',     label: 'Bar Cart',     src: 'assets/backgrounds/movil-bar-cart.jpg' },
+    { id: 'movil-wood-bar',     label: 'Wood Bar',     src: 'assets/backgrounds/movil-wood-bar.jpg' },
+    { id: 'movil-spritz',       label: 'Spritz',       src: 'assets/backgrounds/movil-spritz.jpg' }
   ];
 
   // Las del catálogo general que tienen sentido en vertical. Fuera las
