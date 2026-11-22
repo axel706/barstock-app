@@ -686,7 +686,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * justo debajo, en "La barra de cristal". */
   body.m-shell #mBand .m-ico:not(.m-ico-alert),
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio,
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #moSend, #mhAbrir, #mhSi, #mhNo, #msSave, #btNuevo, #ppNuevoRol, #btCrear),
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #moSend, #mhAbrir, #mhSi, #mhNo, #msSave, #btNuevo, #ppNuevoRol, #btCrear, #tbGo),
   body.m-shell #mTabs .m-tab.on,
   body.m-shell #mScreens .m-low-b,
   body.m-shell #mScreens :is(#mhTabs, .m-ts-seg) {
@@ -703,7 +703,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   }
   body.m-shell #mBand .m-ico:not(.m-ico-alert)::before,
   body.m-shell :is(#mScreens, #mDock) .m-searchbar.m-vidrio::before,
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #moSend, #mhAbrir, #mhSi, #mhNo, #msSave, #btNuevo, #ppNuevoRol, #btCrear)::before,
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #moSend, #mhAbrir, #mhSi, #mhNo, #msSave, #btNuevo, #ppNuevoRol, #btCrear, #tbGo)::before,
   body.m-shell #mTabs .m-tab.on::before,
   body.m-shell #mScreens .m-low-b::before,
   body.m-shell #mScreens :is(#mhTabs, .m-ts-seg)::before,
@@ -754,7 +754,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * Review (y Retry, cuando falla el Sync) sigue amarillo SÓLIDO: es el
    * único que avisa de algo, y que sea el único sólido es lo que hace
    * que se vea primero. Con el id delante, para ganarle al cristal. */
-  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #miOrdOn, #miAntes) { position: relative; isolation: isolate; }
+  body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #miOrdOn, #miAntes, #tbGo) { position: relative; isolation: isolate; }
   body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo)::before { z-index: -1; }
   body.m-shell #mScreens .m-cf-am .m-cf-b { background: #fcd34d; border-color: #fcd34d; color: #3b2a04; }
 
@@ -854,7 +854,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * estilo liquid glass de ese botón Done"): misma regla, no una copia.
    * Antes era azul sólido con el texto oscuro (.m-tab.on, más abajo:
    * con el id, ésta le gana). */
-  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moSend, #mhRe, #msSave, #btNuevo, #ppNuevoRol, #btCrear),
+  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moSend, #mhRe, #msSave, #btNuevo, #ppNuevoRol, #btCrear, #tbGo),
   body.m-shell #mTabs .m-tab.on {
     color: #f0f9ff; background: rgba(56, 189, 248, .42);
     border: 1px solid rgba(186, 230, 253, .62);
@@ -863,12 +863,12 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
       inset 0 0 14px rgba(56,189,248,.45),
       0 10px 30px rgba(0,0,0,.45);
   }
-  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #moSend, #mhAbrir, #mhSi, #mhNo, #msSave, #btNuevo, #ppNuevoRol, #btCrear)::before,
+  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #moSend, #mhAbrir, #mhSi, #mhNo, #msSave, #btNuevo, #ppNuevoRol, #btCrear, #tbGo)::before,
   body.m-shell #mTabs .m-tab.on::before { z-index: -1; }
   /* La pestaña ya es relative; con isolation, su reflejo queda bajo el
    * icono y el nombre, no encima. */
   body.m-shell #mTabs .m-tab.on { isolation: isolate; }
-  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moSend, #mhRe, #msSave, #btNuevo, #ppNuevoRol, #btCrear):active { background: rgba(56, 189, 248, .58); }
+  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moSend, #mhRe, #msSave, #btNuevo, #ppNuevoRol, #btCrear, #tbGo):active { background: rgba(56, 189, 248, .58); }
   /* "It arrived before the count" de la factura (Axel, 2026-11-18,
    * lámina B): el mismo cristal, en violeta, para que no se confunda
    * con "Link to an order" (azul, el de Done) que va justo encima. */
@@ -4002,11 +4002,14 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * medio es un BOTÓN que abre el teclado de num-pad.js, no un <input>:
    * nada de zoom de iOS. El aire va por arriba. */
   /* "Order N items" (fase 4, opción A): el botón principal de la
-   * pestaña, azul sólido como "Review and send" de un proveedor. */
+   * pestaña. Desde el 2026-11-22, en el cristal azul de los botones de
+   * abajo (Axel: "debería tener el estilo de los botones Liquid Glass
+   * que hemos puesto en la parte inferior"): va por id (#tbGo) en las
+   * mismas reglas que Review and send y los Save, no copiado. Aquí sólo
+   * su sitio y su tamaño; sigue arriba de la lista, no fijo abajo. */
   :is(#mScreens) .m-tb-go {
     display: block; width: 100%; margin-top: 14px; min-height: calc(var(--m-base) * 3.4);
-    border: 0; border-radius: 14px !important; cursor: pointer;
-    background: #38bdf8; color: #04283d; font-size: var(--m-strong); font-weight: 800;
+    cursor: pointer; font-size: var(--m-strong); font-weight: 800;
   }
   .m-qk-aviso { color: #fcd34d; }
   .m-tb-k {

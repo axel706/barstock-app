@@ -199,6 +199,24 @@ grupo('7 · en la app');
   prueba('y el mismo "Order N"', /BarStockShoppingList\.sugerido/.test(ro));
 }
 
+grupo('"Order N items" en el cristal azul de los botones de abajo');
+{
+  // Axel, 2026-11-22: "ese Order 1 item debería tener el estilo de los
+  // botones Liquid Glass que hemos puesto en la parte inferior". Era azul
+  // sólido. Va por id en LAS MISMAS reglas que Review and send y los
+  // Save (#moSend, #msSave), no copiado.
+  const fs2 = require('fs'), path2 = require('path');
+  const js = fs2.readFileSync(path2.join(__dirname, '..', 'src/mobile-to-buy.js'), 'utf8');
+  const css = fs2.readFileSync(path2.join(__dirname, '..', 'styles/mobile-app.css'), 'utf8');
+  prueba('el botón lleva su id', /id="tbGo"[^>]*data-tb-go|data-tb-go[^>]*id="tbGo"/.test(js));
+  const lista = (re) => { const m = re.exec(css); return m ? m[1] : ''; };
+  const cristal = lista(/body\.m-shell #mScreens :is\(([^)]*)\),\s*body\.m-shell #mTabs \.m-tab\.on,\s*body\.m-shell #mScreens \.m-low-b/);
+  const azul = lista(/body\.m-shell #mScreens :is\(([^)]*)\),\s*body\.m-shell #mTabs \.m-tab\.on \{\s*color: #f0f9ff/);
+  prueba('en la regla del cristal, junto a Review and send', /#tbGo/.test(cristal) && /#moSend/.test(cristal), cristal.slice(0, 80));
+  prueba('y en la del azul, la misma de los Save', /#tbGo/.test(azul) && /#msSave/.test(azul), azul.slice(0, 80));
+  prueba('sin el azul sólido de antes', !/\.m-tb-go\s*\{[^}]*background:\s*#38bdf8/.test(css));
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
 })();

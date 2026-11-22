@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261122-151204",
+    "items": [
+      "To buy: Order button in the blue glass style"
+    ]
+  },
+  {
     "build": "20261122-143217",
     "items": [
       "Three animated phone backgrounds",
@@ -181,12 +187,6 @@
     "build": "20261121-105925",
     "items": [
       "Home: names under the bottles no longer cut off"
-    ]
-  },
-  {
-    "build": "20261121-104044",
-    "items": [
-      "Home: transfers show where from and where to"
     ]
   }
 ]
