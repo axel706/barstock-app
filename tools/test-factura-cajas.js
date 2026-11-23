@@ -62,6 +62,29 @@ grupo('la caja se reconoce en la línea');
   }
 }
 
+grupo('sin "case" en el nombre: el precio dice la caja');
+{
+  // Blood Orange llegó como "Triage Blood Orange Vodka", 10 a $72, sin
+  // decir caja; la botella vale $6.50 en el inventario: 72 / 6.5 = 11.1,
+  // una caja de 12. Sólo si cae a un 10 % de 6, 12 o 24 botellas.
+  const enl = [{ product_id: 'p2', item_name: 'Triage Blood Orange Vodka' }];
+  const master = [{ item: 'Triage Blood Orange Vodka', value: 6.5 }];
+  const de = (precio, valor) => RC.recibosDe([linea({ product_id: 'p2', vendor_item_name: 'Triage Blood Orange Vodka', quantity: 10, unit_price: precio })],
+    enl, new Map(), [{ item: 'Triage Blood Orange Vodka', value: valor }])[0];
+  const r = de(72, 6.5);
+  prueba('10 a $72 con la botella a $6.50: 120 botellas', r && r.qty === 120, r && r.qty);
+  prueba('y el dinero es el de la factura ($720)', r && Math.round(r.qty * r.precio) === 720);
+  prueba('una línea a 1× es una botella', de(6.5, 6.5).qty === 10);
+  prueba('a 3.5× no adivina: suma tal cual', de(22.75, 6.5).qty === 10, de(22.75, 6.5).qty);
+  prueba('a 6× es una caja de 6', de(39, 6.5).qty === 60, de(39, 6.5).qty);
+  prueba('sin precio de la botella no adivina', de(72, 0).qty === 10);
+  const [m] = RC.recibosDe([linea({ vendor_item_name: 'Triage Vodka [case/12]', quantity: 45, unit_price: 66 })], enlaces, new Map(),
+    [{ item: 'Triage House Vodka', value: 66 }]);
+  prueba('lo que dice el nombre gana al precio', m && m.qty === 540, m && m.qty);
+  prueba('el LIVE y Sent le pasan el inventario', /recibosDe\([^)]*master/.test(leer('src/live-stock.js')) &&
+    /recibosDe\([^)]*state/.test(leer('src/mobile-history.js')));
+}
+
 grupo('el LIVE suma las 540 y el transfer las resta');
 {
   const recibos = RC.recibosDe([linea({ vendor_item_name: 'Triage Vodka [case/12]', quantity: 45, unit_price: 66 })], enlaces, new Map());

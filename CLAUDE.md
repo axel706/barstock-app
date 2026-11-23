@@ -796,7 +796,11 @@ sale de marginedge_invoice_lines" de arriba):
   del producto (MarginEdge factura la misma Triage en cajas y a $5.50 por
   botella): `order-receipts.botellasPorUnidad(vendor_item_name)` cree
   sólo un número pegado a "case"/"cs" ("case/12", "12/case", "case of
-  12"); la cantidad × N y el precio ÷ N. El precio del PRODUCTO tiene que
+  12"); la cantidad × N y el precio ÷ N. Sin "case" en el nombre, el
+  precio: si la línea cuesta a un 10 % de 6, 12 o 24 veces la botella del
+  producto (`recibosDe(…, master)`), es esa caja ("Triage Blood Orange
+  Vodka", 10 a $72 con la botella a $6.50 → 120); si no, no adivina. Lo
+  que dice el nombre gana. El precio del PRODUCTO tiene que
   ser el de la botella: Triage a $66 (el de la caja) hacía las 540 valer
   $35 mil. Prueba: `test-factura-cajas`. La protección de "4× el precio
   de la botella → a revisar" sigue sin construir.

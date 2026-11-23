@@ -145,7 +145,7 @@
       for (const f of nuevos) dueno.set(String(f.order_id), String(f.vendor_order_id));
     }
 
-    const recibos = RC.recibosDe(facturas, enlaces, dueno);
+    const recibos = RC.recibosDe(facturas, enlaces, dueno, (window.state && window.state.master) || []);
 
     // Cortes de ciclo, del más reciente al más viejo. `C` e `ini` se
     // leyeron arriba: el enlace automático los necesitaba antes.

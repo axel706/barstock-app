@@ -182,17 +182,35 @@
   // que la caja no es del producto: es de la LÍNEA, y la línea lo dice en
   // su nombre. Sólo se cree un número que va pegado a "case"/"cs" (o
   // "case of N"): un "1.75L", un "750ml" o un año no son cajas.
-  function botellasPorUnidad(nombre) {
+  //
+  // Sin "case" en el nombre, lo dice el precio (Axel, el mismo día:
+  // "Triage Blood Orange Vodka", 10 a $72, también cajas, con la botella
+  // a $6.50 en el inventario). Sólo si la línea cuesta a un 10 % de 6, 12
+  // o 24 botellas: 72 / 6.5 = 11.1 → caja de 12. Lo demás no se adivina
+  // y suma tal cual. Lo que dice el nombre gana: el precio del producto
+  // puede estar mal (Triage House estaba a $66, el de la caja).
+  const CAJAS = [6, 12, 24];
+  function botellasPorUnidad(nombre, precioLinea, precioBotella) {
     const t = String(nombre || '');
     const m = /\b(?:case|cs)\s*(?:\/|of)\s*(\d{1,3})\b/i.exec(t) || /\b(\d{1,3})\s*\/\s*(?:case|cs)\b/i.exec(t);
     const n = m ? Number(m[1]) : 1;
-    return n >= 2 && n <= 48 ? n : 1;
+    if (n >= 2 && n <= 48) return n;
+    const p = Number(precioLinea) || 0, b = Number(precioBotella) || 0;
+    if (p > 0 && b > 0) {
+      const r = p / b;
+      const c = CAJAS.find(k => Math.abs(r / k - 1) <= 0.10);
+      if (c) return c;
+    }
+    return 1;
   }
 
   // factura → recibos por artículo. `dueno` es factura → orden (los
   // enlaces a mano y los automáticos).
-  function recibosDe(facturas, enlaces, dueno) {
+  // `master` (opcional): el inventario, para el precio de la botella de
+  // cada producto (ver botellasPorUnidad).
+  function recibosDe(facturas, enlaces, dueno, master) {
     const deQuien = new Map((enlaces || []).map(e => [String(e.product_id), e.item_name || '']));
+    const precioDe = new Map((master || []).filter(r => r && r.item).map(r => [r.item, Number(r.value) || 0]));
     // Recibido por artículo y por día. La orden reclama lo recibido
     // desde su fecha en adelante: una factura anterior pertenece a una
     // orden anterior.
@@ -202,7 +220,7 @@
       if (!item) continue;
       // En botellas, que es en lo que cuenta el inventario: 45 cajas de
       // 12 son 540 a $5.50, el mismo dinero que la línea.
-      const n = botellasPorUnidad(f.vendor_item_name);
+      const n = botellasPorUnidad(f.vendor_item_name, f.unit_price, precioDe.get(item));
       recibos.push({
         item,
         // De qué factura sale, y si esa factura está reservada para una

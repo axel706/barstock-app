@@ -216,7 +216,7 @@
     const locId = await window.BarStockInventoryCloud.fetchLocationId();
     const datos = await RC().leer({ url: c.SUPABASE_URL, key: c.SUPABASE_KEY, locId });
     const dueno = new Map(datos.manuales.map(m => [String(m.order_id), String(m.vendor_order_id)]));
-    const recibos = RC().recibosDe(datos.facturas, datos.enlaces, dueno);
+    const recibos = RC().recibosDe(datos.facturas, datos.enlaces, dueno, master);
     const repartido = RC().repartir({ recortadas: datos.recortadas, lineas: datos.lineas, recibos,
       inicioCiclo: inicioCiclo || 0 });
     // Las verificaciones desde el conteo (stock-checks.js). Si no se
