@@ -728,7 +728,7 @@
     // de home-orden.finCiclo: la misma semana de "Running out this
     // week"), llenos hasta hoy, y encima cuándo toca contar. El pie,
     // qué día es y cómo van las órdenes. Sin home-orden, la de antes.
-    let libreCiclo = '', vsCiclo = '';
+    let libreCiclo = '', vsCiclo = '', diaDeContar = false;
     const HO = window.BarStockHomeOrden;
     const fin = HCc && HO && HO.finCicloAhora ? HO.finCicloAhora() : null;
     if (fin) {
@@ -743,6 +743,7 @@
       }
       const iHoy = diasP.findIndex(d => d.hoy);
       const faltanD = Math.round((finMs - Date.parse(hoyK + 'T00:00:00Z')) / 864e5);
+      diaDeContar = faltanD <= 0;
       const hora = (HO.HORA != null ? (HO.HORA % 12 || 12) + (HO.HORA < 12 ? ' AM' : ' PM') : '4 PM');
       let titulo, sub;
       if (viejo) { titulo = 'Open ' + dias + ' days'; sub = 'usage keeps adding up'; }
@@ -758,8 +759,33 @@
     const desdeK = inicio ? new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short', month: 'short', day: 'numeric' })
       .format(new Date(inicio)).replace(',', '') : '';
 
+    // ── Skip this week (Axel, 2026-11-23, lámina, opción A) ────────────
+    // El día de contar (o con el ciclo viejo), a quien puede contar. Con
+    // la semana ya saltada, la tarjeta lo dice y ofrece deshacerlo hasta
+    // que salga la primera orden. La regla vive en count-skip.js; aquí
+    // sólo se pinta. Los saltos se leen una vez por locación y repintan.
+    const SK = window.BarStockCountSkip;
+    const loc = (window.BARSTOCK_CONFIG && window.BARSTOCK_CONFIG.LOCATION_NAME) || '';
+    if (SK && SK.leer && _saltosDe !== loc) {
+      _saltosDe = loc;
+      SK.leer().then(() => refresh()).catch(() => {});
+    }
+    const salto = SK && SK.actualYa ? SK.actualYa() : null;
+    const G = window.BarStockGuest;
+    const cuenta = !G || !G.puede || G.puede('contar');
+    const conSalto = {};
+    if (salto) {
+      const antes = salto.prev_reset_at ? new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York',
+        weekday: 'short', month: 'short', day: 'numeric' }).format(new Date(salto.prev_reset_at)).replace(',', '') : '';
+      conSalto.k = 'Count skipped';
+      if (antes) conSalto.kr = 'on hand from ' + antes;
+      if (cuenta && SK.puedeDeshacer(salto)) Object.assign(conSalto, { btn2: 'Undo skip', btn2Tono: 'saltar', go2: deshacerSalto });
+    } else if (cuenta && SK && (diaDeContar || viejo)) {
+      Object.assign(conSalto, { btn2: 'Skip this week', btn2Tono: 'saltar', go2: saltarSemana });
+    }
+
     return Object.assign({
-      tono: viejo ? 'amber' : 'teal',
+      tono: viejo && !salto ? 'amber' : 'teal',
       k: 'Cycle open',
       tt: fecha ? 'Since ' + fecha : 'Open',
       linea,
@@ -780,7 +806,56 @@
       ico: 'list-details',
       icot: 'Cycle detail',
       go3: irAlCiclo
-    }, libreCiclo ? { libre: libreCiclo, kr: desdeK ? 'since ' + desdeK : '', vs: vsCiclo, btn: 'Restart' } : {});
+    }, libreCiclo ? { libre: libreCiclo, kr: desdeK ? 'since ' + desdeK : '', vs: vsCiclo, btn: 'Restart' } : {}, conSalto);
+  }
+  let _saltosDe = null;
+
+  // ── Saltar la semana / deshacerlo ──────────────────────────────────
+  // Lo que pasa, dicho antes de decidir: el on hand NO se toca (eso es
+  // lo que lo distingue de Restart), las órdenes se abren y el LIVE
+  // sigue. Si algo falla, se dice lo que contestó el servidor.
+  async function saltarSemana() {
+    const W = window.BarStockWeeklyCycle;
+    const fecha = (W && W.resetAt && W.fmtDate && W.resetAt()) ? W.fmtDate(W.resetAt()) : '';
+    const ok = await preguntar({
+      titulo: "Skip this week's count?",
+      cuerpo: 'For a week that cannot be counted.',
+      filas: [
+        { k: 'On hand', v: fecha ? 'stays as counted ' + fecha : 'stays as counted' },
+        { k: 'Orders', v: 'everything opens again' },
+        { k: 'Live', v: 'keeps counting' }
+      ],
+      nota: 'You can undo it until the first order goes out.',
+      ok: 'Skip this week', cancelar: 'Not now'
+    });
+    if (!ok) return;
+    const SK = window.BarStockCountSkip;
+    const r = SK ? await SK.saltar() : { ok: false, error: 'Not loaded.' };
+    if (!r.ok) avisarFallo('Could not skip the count', r.error);
+    refresh();
+  }
+
+  async function deshacerSalto() {
+    const SK = window.BarStockCountSkip;
+    const s = SK && SK.actualYa ? SK.actualYa() : null;
+    const antes = s && s.prev_reset_at ? new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York',
+      weekday: 'short', month: 'short', day: 'numeric' }).format(new Date(s.prev_reset_at)).replace(',', '') : '';
+    const ok = await preguntar({
+      titulo: 'Undo the skip?',
+      cuerpo: 'The cycle goes back to the one ' + (antes ? 'from ' + antes : 'before') + ', as if this week had not been skipped.',
+      ok: 'Undo skip', cancelar: 'Keep it'
+    });
+    if (!ok) return;
+    const r = SK ? await SK.deshacer() : { ok: false, error: 'Not loaded.' };
+    if (!r.ok) avisarFallo('Could not undo the skip', r.error);
+    else if (r.aviso) avisarFallo('The skip was undone, but not marked', r.aviso);
+    refresh();
+  }
+
+  function avisarFallo(titulo, error) {
+    const D = window.BarStockDialog;
+    if (D && D.avisar) D.avisar({ titulo, peligro: true, cuerpo: String(error || ''), ok: 'Got it' });
+    else console.warn('[home]', titulo, error);
   }
 
   // Pregunta antes, y dice lo que de verdad va a pasar. "¿Reiniciar el

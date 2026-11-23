@@ -116,7 +116,13 @@
         console.warn('[facturas] falta la tabla cycle_periods. Corre la migracion 021.');
         _ciclos = [];
       } else {
-        _ciclos = filas.map(f => f.started_at).filter(Boolean);
+        // Un "Skip this week" deshecho dejó su fila (la tabla no deja
+        // borrar), pero ese ciclo no existió: no parte las facturas.
+        const S = window.BarStockCountSkip;
+        let fuera = [];
+        if (S && S.deshechos) { try { fuera = await S.deshechos(); } catch (e) { fuera = []; } }
+        _ciclos = filas.map(f => f.started_at).filter(Boolean)
+          .filter(iso => !fuera.includes(Date.parse(iso)));
       }
     } catch (e) {
       console.warn('[facturas] no se pudieron leer los ciclos', e);

@@ -92,7 +92,7 @@
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/chip-glow.css">
   <link rel="stylesheet" href="styles/mobile.css?v=mob5">
-  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp287">
+  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp288">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -381,7 +381,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261122-185619</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261122-191419</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5522,6 +5522,9 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/week.js?v=wk1"></script>
 <script src="src/cycle.js?v=cy1"></script>
 <script src="src/cycle-open.js?v=cyo2"></script>
+<!-- Saltar la semana sin contar: antes que toast-usage (el LIVE sigue el
+     salto hacia atrás) y que mobile-home (su tarjeta). -->
+<script src="src/count-skip.js?v=sk1"></script>
 <script src="src/focus-stats.js?v=cm4"></script>
 <script src="src/toast.js?v=t6"></script>
 <script src="src/empty-state.js"></script>
@@ -5589,7 +5592,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <!-- Lectura paginada de PostgREST, compartida. Va antes que las
      pantallas del telefono porque son ellas las que la usan. -->
 <script src="src/rest-paginado.js?v=rp1"></script>
-<script src="src/toast-usage.js?v=tu7hedv"></script>
+<script src="src/toast-usage.js?v=tu8skip"></script>
 <script src="src/mobile-shell.js?v=msh35"></script>
 <!-- El gesto de las hojas: arrastrar para cerrar, y que el fondo no se
      mueva. Lo piden CUATRO pantallas (home, search, inventory, history),
@@ -5637,7 +5640,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/product-weeks.js?v=pw2"></script>
 <script src="src/band-dock.js?v=dock16"></script>
 <script src="src/mobile-running-out.js?v=mro12"></script>
-<script src="src/mobile-home.js?v=mh78"></script>
+<script src="src/mobile-home.js?v=mh79"></script>
 <script src="src/mobile-search.js?v=m33"></script>
 <script src="src/mobile-cycle.js?v=m9"></script>
 <script src="src/mobile-inventory.js?v=m29g"></script>
@@ -5651,7 +5654,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
      Lo llama el historial al repartir, asi que va ANTES que el. -->
 <script src="src/invoice-order-auto.js?v=ioa4"></script>
 <script src="src/mobile-history.js?v=mhis27"></script>
-<script src="src/mobile-invoices.js?v=miv27"></script>
+<script src="src/mobile-invoices.js?v=miv28"></script>
 <script src="src/mobile-toast-wine.js?v=mtw2"></script>
 <script src="src/mobile-toast-liquor.js?v=mtq6"></script>
 <script src="src/mobile-toast-pours.js?v=mtp1"></script>

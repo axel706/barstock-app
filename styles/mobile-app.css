@@ -6541,7 +6541,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * también reinician el ciclo, así que se van si falta cualquiera de
    * los dos permisos. */
   html.bs-sin-contar #mScreens .m-hero[data-kind="cycle"] :is(.m-hero-b, .m-hero-b2),
-  html.bs-sin-cerrar_ciclo #mScreens .m-hero[data-kind="cycle"] :is(.m-hero-b, .m-hero-b2),
+  /* "Skip this week" / "Undo skip" (.m-hero-b2-saltar) sólo piden
+   * contar: no reinician el on hand (Axel, 2026-11-23). */
+  html.bs-sin-cerrar_ciclo #mScreens .m-hero[data-kind="cycle"] :is(.m-hero-b, .m-hero-b2:not(.m-hero-b2-saltar)),
   html.bs-sin-contar #mScreens .m-hero[data-kind="cycle"] .m-hero-x:has(.ti-trash),
   html.bs-sin-contar #mScreens :is(#mcGo, #mcFile, #mcOtra, #mcDrop, .m-cyc-warn),
   /* Sincronizar: MarginEdge en "Spent this cycle" y Toast en "Sold". El

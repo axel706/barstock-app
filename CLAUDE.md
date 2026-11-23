@@ -109,7 +109,7 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 
 ## La arquitectura
 
-Frontend estático, sin build. `index.html` es un monolito y hay ~148 módulos
+Frontend estático, sin build. `index.html` es un monolito y hay ~152 módulos
 `src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 29 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 167 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 168 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -562,6 +562,20 @@ Prueba: `test-silueta-marcas`.
 `rebuildPlacedOrdersFromHistory()` contra la frontera NUEVA. `cycleWeekFor()`
 es lunes-base y mete el domingo en la semana del lunes *siguiente*.
 
+**Saltar una semana sin contar** (Axel, 2026-11-23, lámina, opción
+A): "Skip this week" en la tarjeta del ciclo, el día de contar o con
+el ciclo viejo, para quien tiene "Count inventory". Abre el ciclo de
+PEDIDOS (`weekly_reset_at`) sin tocar el on hand, y queda en
+`count_skips` (migración 047) con el inicio de antes: el LIVE sigue
+desde ahí (`BarStockCountSkip.ancla`, en `toast-usage.ultimoConteo`;
+también en el correo). Undo hasta que sale la primera orden del ciclo
+saltado. Desde el paso 2 (on hand ya a 0) no se salta: "si se pierde se
+pierde", nada de reponer el conteo viejo. Pendiente, por partes: el
+interruptor "Live ≈ | Empty shelf" arriba de Open y dejar la semana
+saltada fuera de Pour·IQ. Prueba: `test-saltar-conteo`. Lo pedido en
+una semana sin fila de Pour·IQ va a la fila abierta de antes
+(`filaDelPedido`, `test-snapshot-pedido`).
+
 **El emparejamiento factura↔orden** va línea por línea y el primero que pide
 un recibo se lo queda. `src/invoice-order-auto.js` decide una sola vez de
 qué orden es cada factura y lo escribe como enlace, **sólo del ciclo
@@ -597,7 +611,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 167 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 168 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

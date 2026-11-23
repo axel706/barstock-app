@@ -200,7 +200,15 @@
   // El instante del último conteo, o null si no se sabe.
   async function ultimoConteo() {
     const C = window.BarStockCycle;
-    const ciclo = C && C.load ? await C.load() : null;
+    let ciclo = C && C.load ? await C.load() : null;
+    // Un ciclo abierto con "Skip this week" no es un conteo: el LIVE
+    // sigue desde el inicio de antes (count-skip.js). Sin seguirlo,
+    // volvería a empezar en el salto desde el on hand viejo y se
+    // olvidaría de lo vendido en la semana.
+    const S = window.BarStockCountSkip;
+    if (ciclo && S && S.ancla) {
+      try { ciclo = await S.ancla(ciclo); } catch (e) { console.warn('[toast-usage] salto:', e && e.message || e); }
+    }
     const filas = await R().leerTodo('count_sessions?location_name=eq.' + encodeURIComponent(cfg().LOCATION_NAME || '') +
       '&select=finished_at&order=finished_at.desc');
     // Sin `limit=1`: leerTodo pone el suyo para paginar, y dos `limit` en

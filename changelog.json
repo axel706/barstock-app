@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261122-191419",
+    "items": [
+      "Skip this week: for a week that can not be counted",
+      "On hand stays, orders open, Live keeps counting"
+    ]
+  },
+  {
     "build": "20261122-185619",
     "items": [
       "Behind-the-scenes fixes"
@@ -180,13 +187,6 @@
     "items": [
       "Orders: + opens the full-screen search, no zoom",
       "Added products start at 1, adjust on their line"
-    ]
-  },
-  {
-    "build": "20261121-230623",
-    "items": [
-      "Orders: Review and send and a green + at the bottom",
-      "Order totals now sit under the vendor name"
     ]
   }
 ]
