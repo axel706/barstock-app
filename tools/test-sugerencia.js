@@ -365,6 +365,13 @@ grupo('3 · cargado y en orden');
 grupo('el título de "Not on this order" no va pegado a la primera tarjeta');
 prueba('aire por arriba de la primera tarjeta tras el título', /\.m-ord-k \+ \.m-ord-l \{ margin-top: 10px; \}/.test(require('fs').readFileSync(require('path').join(__dirname, '../styles/mobile-app.css'), 'utf8')));
 
+// La tarjeta ámbar de lo que no llega a su entrega llevaba 22 px hasta
+// "Review and send"; cuando el botón se fue abajo (donde Done), lo que la
+// sigue es la lista, y la regla ya no aplicaba: quedaban pegadas (Axel,
+// 2026-11-22, en el teléfono).
+grupo('la tarjeta ámbar no va pegada a la primera línea');
+prueba('22 px entre la tarjeta y la lista', /\.m-ord-pte \+ :is\([^)]*#moList[^)]*\) \{ margin-top: 22px; \}/.test(require('fs').readFileSync(require('path').join(__dirname, '../styles/mobile-app.css'), 'utf8')));
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);
 })();
