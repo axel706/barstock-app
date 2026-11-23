@@ -21,6 +21,8 @@
  *      esas botellas entran).
  *   3. Nunca a una fila ya cerrada: su used ya está calculado y cambiar
  *      el pedido sin rehacerlo los dejaría diciendo cosas distintas.
+ *   5. La fila que cierra con dos semanas por un "Skip this week" sale de
+ *      Pour·IQ (is_event_week), sin quitar nunca una marca puesta a mano.
  *   4. Borrar o reabrir la orden (reverseSnapshotOrdered) resta de la
  *      MISMA fila a la que se sumó.
  *
@@ -142,6 +144,36 @@ const fila = (id, semana, item, o = {}) => ({
       id: 'o1', createdAt: '2026-11-25T18:00:00Z', items: [{ item: "Tito's", code: '', finalOrder: 5 }]
     });
     prueba('resta de la fila abierta a la que se sumó', filas[0].ordered === 2, 'ordered ' + filas[0].ordered);
+  }
+
+  grupo('la semana que abarcó un "Skip this week" sale de Pour·IQ');
+  {
+    // Contó el 15 (fila del 16, abierta), saltó el 22, cuenta el 29: esa
+    // fila cierra con DOS semanas de consumo. Se marca como las semanas
+    // que Pour·IQ no mira (is_event_week), la misma puerta de siempre.
+    const filas = [fila('a', '2026-11-16', "Tito's", { is_event_week: false }), fila('b', '2026-11-16', 'Aperol', { is_event_week: false })];
+    const w = entorno(filas, '2026-11-30');
+    w.BarStockCountSkip = { leer: async () => [{ skipped_at: '2026-11-22T22:00:00Z', undone_at: null }] };
+    await w.BarStockParIntelligence.completeSnapshot([{ item: "Tito's", code: '', onHand: 4 }, { item: 'Aperol', code: '', onHand: 2 }]);
+    prueba('se cierra igual, con su used: 3 + 0 − 4', filas[0].used === -1, 'used ' + filas[0].used);
+    prueba('y queda fuera de Pour·IQ', filas[0].is_event_week === true && filas[1].is_event_week === true,
+      filas.map(f => f.is_event_week).join());
+  }
+  {
+    const filas = [fila('a', '2026-11-16', "Tito's", { is_event_week: false })];
+    const w = entorno(filas, '2026-11-23');
+    // El salto deshecho no cuenta, y uno de una semana ANTERIOR tampoco.
+    w.BarStockCountSkip = { leer: async () => [{ skipped_at: '2026-11-22T22:00:00Z', undone_at: '2026-11-22T23:00:00Z' },
+      { skipped_at: '2026-11-08T22:00:00Z', undone_at: null }] };
+    await w.BarStockParIntelligence.completeSnapshot([{ item: "Tito's", code: '', onHand: 4 }]);
+    prueba('una semana normal no se toca', filas[0].is_event_week === false && filas[0].on_hand_end === 4);
+  }
+  {
+    // Una marca que Axel puso a mano no se quita al cerrar.
+    const filas = [fila('a', '2026-11-16', "Tito's", { is_event_week: true })];
+    const w = entorno(filas, '2026-11-23');
+    await w.BarStockParIntelligence.completeSnapshot([{ item: "Tito's", code: '', onHand: 4 }]);
+    prueba('y la marca de evento puesta a mano se queda', filas[0].is_event_week === true);
   }
 
   console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');

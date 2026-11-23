@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261122-195422",
+    "items": [
+      "A skipped week stays out of Pour·IQ pars"
+    ]
+  },
+  {
     "build": "20261122-194346",
     "items": [
       "Skipped week: order from Live or an empty shelf",
@@ -181,12 +187,6 @@
     "build": "20261122-001126",
     "items": [
       "Orders: smoother search opening from the + button"
-    ]
-  },
-  {
-    "build": "20261121-233620",
-    "items": [
-      "Orders: the search grows out of the + button"
     ]
   }
 ]

@@ -576,8 +576,12 @@ Open y de cada proveedor; de cada teléfono y de cada salto, en
 `localStorage`): `autoOrder` de `index.html` → `BarStockCountSkip.
 aPedir` (par − el LIVE, lo contado en lo que Toast no vende, o el par
 entero), así que `getEffectiveOrder` lo da igual en Open, el Home y el
-escritorio; lo puesto a mano sigue mandando. Pendiente: dejar la
-semana saltada fuera de Pour·IQ. Prueba: `test-saltar-conteo`. Lo pedido en
+escritorio; lo puesto a mano sigue mandando. La fila de Pour·IQ que
+cierra con dos semanas (la abrió el conteo de antes del salto) sale de
+los pares: `completeSnapshot` le pone `is_event_week` (la misma puerta
+de las semanas de evento, sólo a true; sale con ⚡ en Theoretical
+Usage). Pruebas: `test-saltar-conteo` y el último grupo de
+`test-snapshot-pedido`. Lo pedido en
 una semana sin fila de Pour·IQ va a la fila abierta de antes
 (`filaDelPedido`, `test-snapshot-pedido`).
 

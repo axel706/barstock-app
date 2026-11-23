@@ -145,7 +145,7 @@
 
       // Find open snapshots (on_hand_end is null) from previous weeks
       const openSnapshots = await fetchAllSnapshotRows(
-        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&on_hand_end=is.null&week_start=neq.${weekStart}&select=id,item_name,code,on_hand_start,ordered`
+        `${url}/rest/v1/inventory_snapshots?location_id=eq.${locationId}&on_hand_end=is.null&week_start=neq.${weekStart}&select=id,item_name,code,on_hand_start,ordered,week_start`
       );
       if (!openSnapshots?.length) return;
 
@@ -172,6 +172,29 @@
       // Por eso este PATCH ya no escribe is_event_week: cerrar la semana no
       // debe tocar una marca que puso (o no puso) Axel.
 
+      // ── La semana que abarcó un "Skip this week" (Axel, 2026-11-23) ──
+      // Esa fila la abrió el conteo de ANTES del salto y la cierra éste:
+      // su used son dos semanas de consumo como si fueran una, y subiría
+      // los pares. Se deja fuera de Pour·IQ por la misma puerta que las
+      // semanas de evento (is_event_week, la que leen todos los cálculos),
+      // sólo poniéndola en true: nunca quita una marca puesta a mano (lo de
+      // arriba sigue valiendo). Abarca un salto si hay uno vigente después
+      // del inicio de su semana (un día de margen: el conteo del domingo
+      // abre la semana del lunes). Sin poder leer los saltos, se cierra
+      // como siempre.
+      const conSalto = new Set();
+      const SK = window.BarStockCountSkip;
+      if (SK && SK.leer) {
+        try {
+          const saltos = (await SK.leer(true)).filter(x => x && !x.undone_at)
+            .map(x => Date.parse(x.skipped_at)).filter(isFinite);
+          for (const ws of new Set(openSnapshots.map(x => x.week_start).filter(Boolean))) {
+            const desde = Date.parse(ws + 'T00:00:00Z') - 86400000;
+            if (saltos.some(t => t > desde)) conSalto.add(ws);
+          }
+        } catch (e) { console.warn('[ParIntelligence] saltos:', e && e.message || e); }
+      }
+
       // Patch all open snapshots in parallel
       const patches = [];
       for (const snap of openSnapshots) {
@@ -191,10 +214,10 @@
             Authorization: `Bearer ${key}`,
             Prefer: 'return=minimal'
           },
-          body: JSON.stringify({
+          body: JSON.stringify(Object.assign({
             on_hand_end: dec2(onHandEnd),
             used: dec2(used)
-          })
+          }, conSalto.has(snap.week_start) ? { is_event_week: true } : {}))
         }));
       }
       await Promise.all(patches);
