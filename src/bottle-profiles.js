@@ -514,7 +514,27 @@
       //
       // yFull .59: cubre la cupula hasta el cuello. Se propuso .56 (el
       // criterio de patron) y Axel la quiso "un poco mas llena".
-      p: [[0,0.3483], [0.0156,0.5818], [0.0469,0.739], [0.0781,0.8074], [0.1094,0.8717], [0.1406,0.9297], [0.1719,0.9813], [0.2031,0.9971], [0.2344,1], [0.2656,1], [0.2969,1], [0.3281,1], [0.3594,1], [0.3906,0.9978], [0.4219,0.9951], [0.4531,0.9647], [0.4844,0.8958], [0.5156,0.8196], [0.5469,0.7282], [0.5781,0.579], [0.6094,0.3322], [0.6406,0.31], [0.6719,0.3109], [0.7031,0.3109], [0.7344,0.3134], [0.7656,0.4098], [0.7969,0.4562], [0.8281,0.4391], [0.8594,0.3474], [0.8906,0.3547], [0.9219,0.2502], [0.9531,0.2963], [0.9844,0.1971], [1,0.0462]]
+      p: [[0,0.3483], [0.0156,0.5818], [0.0469,0.739], [0.0781,0.8074], [0.1094,0.8717], [0.1406,0.9297], [0.1719,0.9813], [0.2031,0.9971], [0.2344,1], [0.2656,1], [0.2969,1], [0.3281,1], [0.3594,1], [0.3906,0.9978], [0.4219,0.9951], [0.4531,0.9647], [0.4844,0.8958], [0.5156,0.8196], [0.5469,0.7282], [0.5781,0.579], [0.6094,0.3322], [0.6406,0.31], [0.6719,0.3109], [0.7031,0.3109], [0.7344,0.3134], [0.7656,0.4098], [0.7969,0.4562], [0.8281,0.4391], [0.8594,0.3474], [0.8906,0.3547], [0.9219,0.2502], [0.9531,0.2963], [0.9844,0.1971], [1,0.0462]],
+      // Las marcas (tanda 3, 2026-11-23, medidas sobre la foto con tools/marcas):
+      // la etiqueta del cuello con Blanton's, THE ORIGINAL, SINGLE BARREL,
+      // BOURBON WHISKEY; la del cuerpo con sus tres renglones en cursiva (lo
+      // impreso y lo escrito a mano juntos: fecha, barril, bodega, estante y
+      // graduación) y STRAIGHT BOURBON WHISKEY / 46½% ALC./VOL. (93 PROOF).
+      // Las dos llevan el borde ondulado, dibujado con el estilo roto. No van:
+      // el caballo con el jinete del tapón y el lacre de debajo.
+      marcas: [
+        {tipo: 'etiqueta', y: [0.634, 0.789], ancho: 1, renglones: [], forma: 'roto'},
+        {tipo: 'texto', y: [0.721, 0.758], ancho: 0.77, renglones: [{g: 0.037, largo: 1, palabras: [8]}], x: -0.1},
+        {tipo: 'texto', y: [0.701, 0.71], ancho: 0.59, renglones: [{g: 0.009, largo: 1, palabras: [3, 8]}], x: -0.08},
+        {tipo: 'texto', y: [0.685, 0.695], ancho: 0.66, renglones: [{g: 0.01, largo: 1, palabras: [6, 6]}], x: -0.07},
+        {tipo: 'texto', y: [0.667, 0.678], ancho: 0.78, renglones: [{g: 0.011, largo: 1, palabras: [7, 7]}], x: -0.07},
+        {tipo: 'etiqueta', y: [0.205, 0.385], ancho: 1, renglones: [], forma: 'roto'},
+        {tipo: 'texto', y: [0.328, 0.35], ancho: 0.94, renglones: [{g: 0.022, largo: 1, palabras: [4, 7, 6, 2, 8, 4, 6, 2, 3]}]},
+        {tipo: 'texto', y: [0.292, 0.312], ancho: 0.73, renglones: [{g: 0.018, largo: 1, palabras: [6, 2, 9, 1, 2, 4, 3, 1]}], x: -0.12},
+        {tipo: 'texto', y: [0.255, 0.277], ancho: 0.84, renglones: [{g: 0.02, largo: 1, palabras: [8, 8, 3, 7, 2, 4, 2, 2, 5]}], x: -0.05},
+        {tipo: 'texto', y: [0.221, 0.231], ancho: 0.31, renglones: [{g: 0.01, largo: 1, palabras: [8, 7, 7]}], x: -0.63},
+        {tipo: 'texto', y: [0.221, 0.231], ancho: 0.37, renglones: [{g: 0.01, largo: 1, palabras: [4, 8, 3, 6]}], x: 0.44}
+      ]
     },
     jura: {
       name: 'Jura', asp: 2.87, yFull: 0.68, pourable: true,
@@ -547,7 +567,30 @@
       // trata como redonda. Lo que se pierde ahi es una constante que no
       // cambia el nivel relativo. Alta y recta, hombro corto del 64 % al
       // 77 % y cuello recto. yFull .75: cubre el hombro.
-      p: [[0,0.1622], [0.0156,0.7267], [0.0469,0.9886], [0.0781,0.9686], [0.1094,0.93], [0.1406,0.9299], [0.1719,0.9324], [0.2031,0.936], [0.2344,0.9392], [0.2656,0.9425], [0.2969,0.9447], [0.3281,0.9485], [0.3594,0.9522], [0.3906,0.9546], [0.4219,0.9605], [0.4531,0.9637], [0.4844,0.9673], [0.5156,0.9731], [0.5469,0.9789], [0.5781,0.9845], [0.6094,0.9892], [0.6406,0.9905], [0.6719,0.9421], [0.7031,0.7296], [0.7344,0.5135], [0.7656,0.4541], [0.7969,0.4626], [0.8281,0.4462], [0.8594,0.4236], [0.8906,0.4142], [0.9219,0.4339], [0.9531,0.4314], [0.9844,0.4197], [1,0.3412]]
+      p: [[0,0.1622], [0.0156,0.7267], [0.0469,0.9886], [0.0781,0.9686], [0.1094,0.93], [0.1406,0.9299], [0.1719,0.9324], [0.2031,0.936], [0.2344,0.9392], [0.2656,0.9425], [0.2969,0.9447], [0.3281,0.9485], [0.3594,0.9522], [0.3906,0.9546], [0.4219,0.9605], [0.4531,0.9637], [0.4844,0.9673], [0.5156,0.9731], [0.5469,0.9789], [0.5781,0.9845], [0.6094,0.9892], [0.6406,0.9905], [0.6719,0.9421], [0.7031,0.7296], [0.7344,0.5135], [0.7656,0.4541], [0.7969,0.4626], [0.8281,0.4462], [0.8594,0.4236], [0.8906,0.4142], [0.9219,0.4339], [0.9531,0.4314], [0.9844,0.4197], [1,0.3412]],
+      // Las marcas (tanda 3, 2026-11-23, medidas sobre la foto con tools/marcas):
+      // el escudo rojo del cuello; la etiqueta blanca con Glenfiddich, SINGLE
+      // MALT SCOTCH WHISKY, OUR ORIGINAL TWELVE, sus tres renglones y el 12
+      // grande detrás, From the Valley of the Deer; la banda oscura de abajo
+      // con sus dos renglones. No van: el ciervo (un dibujo en el vidrio), la
+      // firma de la cápsula y la letra chica de los lados. Los renglones se
+      // ven curvos en la foto sólo porque la etiqueta rodea la botella: van
+      // rectos.
+      marcas: [
+        {tipo: 'etiqueta', y: [0.81, 0.881], ancho: 0.24, renglones: []},
+        {tipo: 'etiqueta', y: [0.158, 0.407], ancho: 1, renglones: []},
+        {tipo: 'etiqueta', y: [0.122, 0.158], ancho: 1, renglones: []},
+        {tipo: 'texto', y: [0.333, 0.388], ancho: 0.71, renglones: [{g: 0.055, largo: 1, palabras: [11]}]},
+        {tipo: 'texto', y: [0.309, 0.319], ancho: 0.86, renglones: [{g: 0.01, largo: 1, palabras: [6, 4, 6, 6]}]},
+        {tipo: 'texto', y: [0.267, 0.277], ancho: 0.69, renglones: [{g: 0.01, largo: 1, palabras: [3, 8, 6]}]},
+        {tipo: 'texto', y: [0.249, 0.256], ancho: 0.71, renglones: [{g: 0.006, largo: 1, palabras: [4, 6, 3, 8, 6, 4, 2, 7]}]},
+        {tipo: 'texto', y: [0.235, 0.241], ancho: 0.75, renglones: [{g: 0.006, largo: 1, palabras: [3, 2, 5, 2, 7, 6, 3, 7, 5]}]},
+        {tipo: 'texto', y: [0.22, 0.225], ancho: 0.58, renglones: [{g: 0.005, largo: 1, palabras: [6, 9, 2, 3, 7, 5]}]},
+        {tipo: 'texto', y: [0.205, 0.288], ancho: 0.4, renglones: [{g: 0.083, largo: 1, palabras: [2]}]},
+        {tipo: 'texto', y: [0.17, 0.187], ancho: 0.52, renglones: [{g: 0.016, largo: 1, palabras: [4, 3, 6, 2, 3, 4]}]},
+        {tipo: 'texto', y: [0.139, 0.146], ancho: 0.83, renglones: [{g: 0.007, largo: 1, palabras: [3, 11, 10, 8, 10, 8]}]},
+        {tipo: 'texto', y: [0.132, 0.138], ancho: 0.5, renglones: [{g: 0.006, largo: 1, palabras: [4, 5, 2, 7, 5, 1, 6]}]}
+      ]
     },
     casa_noble: {
       name: 'Casa Noble', asp: 4.1, yFull: 0.73, pourable: true,
@@ -558,7 +601,28 @@
       // yFull .73 no es a ojo: es donde empieza el liquido naranja en la
       // foto, fila por fila, justo donde terminan los hombros. Por la
       // categoria caia en la de vodka, que tiene el hombro mas alto.
-      p: [[0,0.828], [0.0156,0.8789], [0.0469,0.9148], [0.0781,0.9447], [0.1094,0.9703], [0.1406,0.9746], [0.1719,0.9762], [0.2031,0.9789], [0.2344,0.9792], [0.2656,0.9823], [0.2969,0.9831], [0.3281,0.9845], [0.3594,0.9869], [0.3906,0.9875], [0.4219,0.9905], [0.4531,0.9915], [0.4844,0.9938], [0.5156,0.9958], [0.5469,0.9965], [0.5781,0.9995], [0.6094,1], [0.6406,0.9884], [0.6719,0.9424], [0.7031,0.807], [0.7344,0.4777], [0.7656,0.4017], [0.7969,0.4017], [0.8281,0.4017], [0.8594,0.4116], [0.8906,0.5185], [0.9219,0.5354], [0.9531,0.5203], [0.9844,0.3283], [1,0.0747]]
+      p: [[0,0.828], [0.0156,0.8789], [0.0469,0.9148], [0.0781,0.9447], [0.1094,0.9703], [0.1406,0.9746], [0.1719,0.9762], [0.2031,0.9789], [0.2344,0.9792], [0.2656,0.9823], [0.2969,0.9831], [0.3281,0.9845], [0.3594,0.9869], [0.3906,0.9875], [0.4219,0.9905], [0.4531,0.9915], [0.4844,0.9938], [0.5156,0.9958], [0.5469,0.9965], [0.5781,0.9995], [0.6094,1], [0.6406,0.9884], [0.6719,0.9424], [0.7031,0.807], [0.7344,0.4777], [0.7656,0.4017], [0.7969,0.4017], [0.8281,0.4017], [0.8594,0.4116], [0.8906,0.5185], [0.9219,0.5354], [0.9531,0.5203], [0.9844,0.3283], [1,0.0747]],
+      // Las marcas (tanda 3, 2026-11-23, medidas sobre la foto con tools/marcas):
+      // la etiqueta del cuello con el sello del centro, los dos sellos de los
+      // lados y REPOSADO; el medallón de metal del hombro; las dos etiquetas
+      // de borde roto con CASA NOBLE, TEQUILA, REPOSADO, la línea de 750ml /
+      // 100% AGAVE AZUL / 40% y MAESTRO TEQUILERO. No van: la firma, el corcho
+      // y el tapón de vidrio, y la raya fina bajo TEQUILA.
+      marcas: [
+        {tipo: 'etiqueta', y: [0.756, 0.846], ancho: 1, renglones: []},
+        {tipo: 'sello', y: 0.814, r: 0.029, renglones: []},
+        {tipo: 'sello', y: 0.816, r: 0.0195, renglones: [], x: -0.7},
+        {tipo: 'sello', y: 0.816, r: 0.0195, renglones: [], x: 0.7},
+        {tipo: 'texto', y: [0.771, 0.78], ancho: 0.62, renglones: [{g: 0.009, largo: 1, palabras: [8]}]},
+        {tipo: 'sello', y: 0.56, r: 0.054, renglones: []},
+        {tipo: 'etiqueta', y: [0.186, 0.289], ancho: 0.76, renglones: [], forma: 'roto'},
+        {tipo: 'etiqueta', y: [0.121, 0.167], ancho: 0.76, renglones: [], forma: 'roto'},
+        {tipo: 'texto', y: [0.253, 0.275], ancho: 0.64, renglones: [{g: 0.022, largo: 1, palabras: [4, 5]}]},
+        {tipo: 'texto', y: [0.239, 0.246], ancho: 0.19, renglones: [{g: 0.007, largo: 1, palabras: [7]}]},
+        {tipo: 'texto', y: [0.208, 0.215], ancho: 0.23, renglones: [{g: 0.007, largo: 1, palabras: [8]}]},
+        {tipo: 'texto', y: [0.197, 0.207], ancho: 0.69, renglones: [{g: 0.007, largo: 1, palabras: [5, 4, 5, 4, 3, 4, 4]}]},
+        {tipo: 'texto', y: [0.129, 0.134], ancho: 0.26, renglones: [{g: 0.005, largo: 1, palabras: [7, 9]}]}
+      ]
     },
     drambuie: {
       name: 'Drambuie', asp: 2.44, yFull: 0.72, pourable: true,
@@ -602,7 +666,30 @@
       // Baja y ancha, hombro del 52 % al 66 %. yFull .65 medida viendo el
       // liquido en la foto: empieza al 64 %, encima hay vidrio vacio y la
       // capsula gris.
-      p: [[0,0.1643], [0.0156,0.7979], [0.0469,0.9996], [0.0781,0.9898], [0.1094,0.9858], [0.1406,0.9858], [0.1719,0.9858], [0.2031,0.9858], [0.2344,0.9858], [0.2656,0.9858], [0.2969,0.9858], [0.3281,0.9858], [0.3594,0.9858], [0.3906,0.9858], [0.4219,0.9836], [0.4531,0.9837], [0.4844,1], [0.5156,0.9919], [0.5469,0.9455], [0.5781,0.8578], [0.6094,0.706], [0.6406,0.4474], [0.6719,0.356], [0.7031,0.3577], [0.7344,0.3791], [0.7656,0.3791], [0.7969,0.3791], [0.8281,0.3739], [0.8594,0.3421], [0.8906,0.3606], [0.9219,0.3649], [0.9531,0.3649], [0.9844,0.3544], [1,0.2622]]
+      p: [[0,0.1643], [0.0156,0.7979], [0.0469,0.9996], [0.0781,0.9898], [0.1094,0.9858], [0.1406,0.9858], [0.1719,0.9858], [0.2031,0.9858], [0.2344,0.9858], [0.2656,0.9858], [0.2969,0.9858], [0.3281,0.9858], [0.3594,0.9858], [0.3906,0.9858], [0.4219,0.9836], [0.4531,0.9837], [0.4844,1], [0.5156,0.9919], [0.5469,0.9455], [0.5781,0.8578], [0.6094,0.706], [0.6406,0.4474], [0.6719,0.356], [0.7031,0.3577], [0.7344,0.3791], [0.7656,0.3791], [0.7969,0.3791], [0.8281,0.3739], [0.8594,0.3421], [0.8906,0.3606], [0.9219,0.3649], [0.9531,0.3649], [0.9844,0.3544], [1,0.2622]],
+      // Las marcas (tanda 3, 2026-11-23, medidas sobre la foto con tools/marcas):
+      // el borde de la cápsula impresa con THE ORIGINAL; la etiqueta de arriba
+      // con MONKEY, SHOULDER, BLENDED MALT SCOTCH WHISKY y el renglón BATCH 27
+      // / THE ORIGINAL; la de abajo con sus dos bloques de tres renglones. No
+      // van: los tres monos de metal del hombro (un adorno), los monos
+      // dibujados de la etiqueta de abajo, la firma y SELECTED BY OUR MALT
+      // MASTER, las rayas punteadas y las líneas de 750ml / 43%.
+      marcas: [
+        {tipo: 'etiqueta', y: [0.713, 0.99], ancho: 1, renglones: []},
+        {tipo: 'texto', y: [0.907, 0.918], ancho: 0.54, renglones: [{g: 0.011, largo: 1, palabras: [3, 8]}]},
+        {tipo: 'etiqueta', y: [0.244, 0.443], ancho: 0.92, renglones: []},
+        {tipo: 'etiqueta', y: [0.107, 0.213], ancho: 0.92, renglones: []},
+        {tipo: 'texto', y: [0.376, 0.421], ancho: 0.65, renglones: [{g: 0.045, largo: 1, palabras: [6]}]},
+        {tipo: 'texto', y: [0.325, 0.371], ancho: 0.72, renglones: [{g: 0.045, largo: 1, palabras: [8]}]},
+        {tipo: 'texto', y: [0.301, 0.315], ancho: 0.79, renglones: [{g: 0.014, largo: 1, palabras: [7, 4, 6, 6]}]},
+        {tipo: 'texto', y: [0.262, 0.28], ancho: 0.55, renglones: [{g: 0.018, largo: 1, palabras: [5, 2, 3, 8]}], x: -0.2},
+        {tipo: 'texto', y: [0.192, 0.2], ancho: 0.28, renglones: [{g: 0.007, largo: 1, palabras: [6, 8, 2, 7, 2, 5]}], x: -0.61},
+        {tipo: 'texto', y: [0.18, 0.189], ancho: 0.28, renglones: [{g: 0.008, largo: 1, palabras: [7, 2, 9, 6, 6, 4]}], x: -0.61},
+        {tipo: 'texto', y: [0.169, 0.177], ancho: 0.28, renglones: [{g: 0.008, largo: 1, palabras: [9, 4, 7, 9]}], x: -0.61},
+        {tipo: 'texto', y: [0.192, 0.2], ancho: 0.29, renglones: [{g: 0.007, largo: 1, palabras: [5, 6, 3, 7, 3, 8]}], x: 0.62},
+        {tipo: 'texto', y: [0.18, 0.189], ancho: 0.29, renglones: [{g: 0.008, largo: 1, palabras: [5, 2, 4, 6, 2, 2, 6, 3]}], x: 0.62},
+        {tipo: 'texto', y: [0.169, 0.177], ancho: 0.29, renglones: [{g: 0.008, largo: 1, palabras: [3, 8, 6, 2, 5, 5]}], x: 0.62}
+      ]
     },
     oban: {
       name: 'Oban', asp: 3.95, yFull: 0.71, pourable: true,
@@ -740,7 +827,26 @@
       // un hombro brusco al 80 %: por eso la linea va tan alta. Vidrio
       // esmerilado, el liquido no se ve: yFull .81 por el criterio de
       // botanist.
-      p: [[0,0.414], [0.0156,0.8015], [0.0469,1], [0.0781,1], [0.1094,1], [0.1406,0.9962], [0.1719,0.9853], [0.2031,0.9824], [0.2344,0.9758], [0.2656,0.9696], [0.2969,0.9592], [0.3281,0.9462], [0.3594,0.9355], [0.3906,0.9317], [0.4219,0.9274], [0.4531,0.9194], [0.4844,0.9122], [0.5156,0.9075], [0.5469,0.9032], [0.5781,0.8952], [0.6094,0.8871], [0.6406,0.8838], [0.6719,0.879], [0.7031,0.87], [0.7344,0.8629], [0.7656,0.8566], [0.7969,0.8373], [0.8281,0.5389], [0.8594,0.4379], [0.8906,0.4413], [0.9219,0.463], [0.9531,0.4597], [0.9844,0.444], [1,0.3522]]
+      p: [[0,0.414], [0.0156,0.8015], [0.0469,1], [0.0781,1], [0.1094,1], [0.1406,0.9962], [0.1719,0.9853], [0.2031,0.9824], [0.2344,0.9758], [0.2656,0.9696], [0.2969,0.9592], [0.3281,0.9462], [0.3594,0.9355], [0.3906,0.9317], [0.4219,0.9274], [0.4531,0.9194], [0.4844,0.9122], [0.5156,0.9075], [0.5469,0.9032], [0.5781,0.8952], [0.6094,0.8871], [0.6406,0.8838], [0.6719,0.879], [0.7031,0.87], [0.7344,0.8629], [0.7656,0.8566], [0.7969,0.8373], [0.8281,0.5389], [0.8594,0.4379], [0.8906,0.4413], [0.9219,0.463], [0.9531,0.4597], [0.9844,0.444], [1,0.3522]],
+      // Las marcas (tanda 3, 2026-11-23, medidas sobre la foto con tools/marcas):
+      // Cîroc Apple va impreso directo en el vidrio: CÎROC en el cuello, el
+      // medallón de la manzana, CÎROC y APPLE, los tres renglones de debajo,
+      // PRODUCT OF FRANCE y los tres renglones de abajo. No van: las uvas (en
+      // relieve), el verde del cuello (es el vidrio, no una etiqueta) y el
+      // acento de la Î.
+      marcas: [
+        {tipo: 'texto', y: [0.883, 0.896], ancho: 0.55, renglones: [{g: 0.013, largo: 1, palabras: [5]}]},
+        {tipo: 'sello', y: 0.704, r: 0.048, renglones: []},
+        {tipo: 'texto', y: [0.562, 0.597], ancho: 0.8, renglones: [{g: 0.035, largo: 1, palabras: [5]}]},
+        {tipo: 'texto', y: [0.532, 0.553], ancho: 0.4, renglones: [{g: 0.021, largo: 1, palabras: [5]}]},
+        {tipo: 'texto', y: [0.438, 0.448], ancho: 0.32, renglones: [{g: 0.01, largo: 1, palabras: [4, 4, 2]}]},
+        {tipo: 'texto', y: [0.423, 0.434], ancho: 0.49, renglones: [{g: 0.011, largo: 1, palabras: [9, 5, 4]}]},
+        {tipo: 'texto', y: [0.409, 0.418], ancho: 0.45, renglones: [{g: 0.009, largo: 1, palabras: [4, 6, 6]}]},
+        {tipo: 'texto', y: [0.161, 0.172], ancho: 0.68, renglones: [{g: 0.011, largo: 1, palabras: [7, 2, 6]}]},
+        {tipo: 'texto', y: [0.121, 0.132], ancho: 0.57, renglones: [{g: 0.011, largo: 1, palabras: [5, 7, 4, 5]}]},
+        {tipo: 'texto', y: [0.107, 0.118], ancho: 0.58, renglones: [{g: 0.011, largo: 1, palabras: [3, 5, 7, 7]}]},
+        {tipo: 'texto', y: [0.08, 0.096], ancho: 0.55, renglones: [{g: 0.016, largo: 1, palabras: [3, 9, 3, 2]}]}
+      ]
     },
     whistlepig: {
       name: 'WhistlePig', asp: 2.05, yFull: 0.72, pourable: true,
@@ -755,7 +861,25 @@
       // desajuste de area 0.68 %. Hombro redondo y ancho del 48 % al 64 %,
       // cuello con la etiqueta roja. yFull .75 medida viendo el liquido en
       // la foto: se ve hasta debajo de esa etiqueta.
-      p: [[0,0.4622], [0.0156,0.8466], [0.0469,0.9773], [0.0781,0.9663], [0.1094,0.9705], [0.1406,0.9724], [0.1719,0.9749], [0.2031,0.9785], [0.2344,0.9785], [0.2656,0.9805], [0.2969,0.9847], [0.3281,0.9847], [0.3594,0.9847], [0.3906,0.99], [0.4219,0.9962], [0.4531,0.9989], [0.4844,0.9978], [0.5156,0.9701], [0.5469,0.9041], [0.5781,0.7842], [0.6094,0.5969], [0.6406,0.4431], [0.6719,0.4394], [0.7031,0.4612], [0.7344,0.4485], [0.7656,0.4155], [0.7969,0.3807], [0.8281,0.3491], [0.8594,0.3447], [0.8906,0.3483], [0.9219,0.3499], [0.9531,0.3458], [0.9844,0.334], [1,0.2843]]
+      p: [[0,0.4622], [0.0156,0.8466], [0.0469,0.9773], [0.0781,0.9663], [0.1094,0.9705], [0.1406,0.9724], [0.1719,0.9749], [0.2031,0.9785], [0.2344,0.9785], [0.2656,0.9805], [0.2969,0.9847], [0.3281,0.9847], [0.3594,0.9847], [0.3906,0.99], [0.4219,0.9962], [0.4531,0.9989], [0.4844,0.9978], [0.5156,0.9701], [0.5469,0.9041], [0.5781,0.7842], [0.6094,0.5969], [0.6406,0.4431], [0.6719,0.4394], [0.7031,0.4612], [0.7344,0.4485], [0.7656,0.4155], [0.7969,0.3807], [0.8281,0.3491], [0.8594,0.3447], [0.8906,0.3483], [0.9219,0.3499], [0.9531,0.3458], [0.9844,0.334], [1,0.2843]],
+      // Las marcas (tanda 3, 2026-11-23, medidas sobre la foto con tools/marcas):
+      // la banda de la cápsula con ESTABLISHED 1801 ABERDEEN; el escudo como
+      // su caja; CHIVAS REGAL en la cinta, en arco hacia arriba; el óvalo con
+      // el 12; BLENDED SCOTCH WHISKY en su cinta, en arco hacia abajo. No van:
+      // el emblema del hombro (en relieve), la corona, lanzas y volutas del
+      // escudo (dibujos), los AGED / YEARS chicos junto al 12, PRODUCE OF
+      // SCOTLAND y la línea de 75cl. Las dos curvas de las cintas se leyeron
+      // en la rejilla del 1 %: las herramientas de color daban ruido sobre la
+      // plata grabada.
+      marcas: [
+        {tipo: 'etiqueta', y: [0.763, 0.803], ancho: 1, renglones: []},
+        {tipo: 'texto', y: [0.773, 0.798], ancho: 0.9, renglones: [{g: 0.012, largo: 1, palabras: [11, 4, 8]}]},
+        {tipo: 'etiqueta', y: [0.137, 0.398], ancho: 0.8, renglones: []},
+        {tipo: 'texto', y: [0.312, 0.342], ancho: 0.72, renglones: [{g: 0.03, largo: 1, palabras: [6, 5]}], arco: 0.07},
+        {tipo: 'etiqueta', y: [0.255, 0.302], ancho: 0.29, renglones: [], forma: 'ovalo'},
+        {tipo: 'texto', y: [0.262, 0.295], ancho: 0.11, renglones: [{g: 0.033, largo: 1, palabras: [2]}]},
+        {tipo: 'texto', y: [0.212, 0.227], ancho: 0.66, renglones: [{g: 0.015, largo: 1, palabras: [7, 6, 6]}], arco: -0.05}
+      ]
     },
     empress: {
       name: 'Empress 1908', asp: 3.29, yFull: 0.72, pourable: true,
@@ -763,7 +887,27 @@
       // desajuste de area 0.90 %. Recta, hombro corto del 67 % al 73 %.
       // yFull .72 medida viendo el liquido (morado) en la foto: llega
       // justo a donde empieza el cuello, que esta vacio.
-      p: [[0,0.4364], [0.0156,0.7508], [0.0469,0.9465], [0.0781,0.9793], [0.1094,0.9793], [0.1406,0.9818], [0.1719,0.9818], [0.2031,0.9857], [0.2344,0.9879], [0.2656,0.9879], [0.2969,0.9868], [0.3281,0.9818], [0.3594,0.9818], [0.3906,0.9818], [0.4219,0.9818], [0.4531,0.9818], [0.4844,0.9864], [0.5156,0.9936], [0.5469,0.9943], [0.5781,1], [0.6094,0.9932], [0.6406,0.9857], [0.6719,0.9551], [0.7031,0.7045], [0.7344,0.3676], [0.7656,0.354], [0.7969,0.3558], [0.8281,0.3601], [0.8594,0.3636], [0.8906,0.3679], [0.9219,0.3882], [0.9531,0.3754], [0.9844,0.3239], [1,0.1333]]
+      p: [[0,0.4364], [0.0156,0.7508], [0.0469,0.9465], [0.0781,0.9793], [0.1094,0.9793], [0.1406,0.9818], [0.1719,0.9818], [0.2031,0.9857], [0.2344,0.9879], [0.2656,0.9879], [0.2969,0.9868], [0.3281,0.9818], [0.3594,0.9818], [0.3906,0.9818], [0.4219,0.9818], [0.4531,0.9818], [0.4844,0.9864], [0.5156,0.9936], [0.5469,0.9943], [0.5781,1], [0.6094,0.9932], [0.6406,0.9857], [0.6719,0.9551], [0.7031,0.7045], [0.7344,0.3676], [0.7656,0.354], [0.7969,0.3558], [0.8281,0.3601], [0.8594,0.3636], [0.8906,0.3679], [0.9219,0.3882], [0.9531,0.3754], [0.9844,0.3239], [1,0.1333]],
+      // Las marcas (tanda 3, 2026-11-23, medidas sobre la foto con tools/marcas):
+      // las dos etiquetas, las dos inclinadas (7° y 8°, leídas en la rejilla
+      // del 1 %: las dos etiquetas blancas casi se tocan y las herramientas de
+      // color las mezclaban): la de arriba con EMPRESS y 1908, la de abajo con
+      // INDIGO GIN; y la banda oscura impresa de abajo con sus tres renglones.
+      // No van: la punta en cola de golondrina de la etiqueta de arriba (va
+      // recta), la letra chica de la etiqueta de abajo y su lado derecho
+      // (demasiado chicos y borrosos para contar palabras), y la tapa de
+      // cobre.
+      marcas: [
+        {tipo: 'etiqueta', y: [0.529, 0.626], ancho: 0.84, renglones: [], x: -0.16, rot: 7},
+        {tipo: 'texto', y: [0.57, 0.592], ancho: 0.45, renglones: [{g: 0.022, largo: 1, palabras: [7]}], rot: 7},
+        {tipo: 'texto', y: [0.543, 0.565], ancho: 0.22, renglones: [{g: 0.02, largo: 1, palabras: [4]}], x: -0.21, rot: 7},
+        {tipo: 'etiqueta', y: [0.4, 0.499], ancho: 0.775, renglones: [], x: 0.225, rot: 8},
+        {tipo: 'texto', y: [0.469, 0.488], ancho: 0.37, renglones: [{g: 0.019, largo: 1, palabras: [6, 3]}], x: -0.09, rot: 8},
+        {tipo: 'etiqueta', y: [0.132, 0.228], ancho: 1, renglones: []},
+        {tipo: 'texto', y: [0.188, 0.199], ancho: 0.67, renglones: [{g: 0.011, largo: 1, palabras: [5, 5, 7, 2, 5]}], x: 0.04},
+        {tipo: 'texto', y: [0.173, 0.184], ancho: 0.78, renglones: [{g: 0.011, largo: 1, palabras: [6, 9, 3, 7, 2, 6]}]},
+        {tipo: 'texto', y: [0.163, 0.173], ancho: 0.79, renglones: [{g: 0.01, largo: 1, palabras: [8, 11, 7, 8]}]}
+      ]
     },
     disaronno: {
       name: 'Disaronno', asp: 2.06, yFull: 0.72, pourable: true,
@@ -834,7 +978,30 @@
       //
       // Hombro del 64 % al 77 %. yFull .75 medida viendo el liquido en la
       // foto, justo debajo del cuello vacio.
-      p: [[0,0.358], [0.0156,0.6886], [0.0469,0.935], [0.0781,0.9964], [0.1094,0.9941], [0.1406,0.9917], [0.1719,0.9893], [0.2031,0.987], [0.2344,0.9846], [0.2656,0.9823], [0.2969,0.9799], [0.3281,0.9775], [0.3594,0.9752], [0.3906,0.9728], [0.4219,0.9704], [0.4531,0.9681], [0.4844,0.9657], [0.5156,0.9634], [0.5469,0.961], [0.5781,0.9586], [0.6094,0.9563], [0.6406,0.954], [0.6719,0.8884], [0.7031,0.7219], [0.7344,0.4771], [0.7656,0.3703], [0.7969,0.3176], [0.8281,0.2838], [0.8594,0.2884], [0.8906,0.2849], [0.9219,0.2856], [0.9531,0.2862], [0.9844,0.2624], [1,0.1571]]
+      p: [[0,0.358], [0.0156,0.6886], [0.0469,0.935], [0.0781,0.9964], [0.1094,0.9941], [0.1406,0.9917], [0.1719,0.9893], [0.2031,0.987], [0.2344,0.9846], [0.2656,0.9823], [0.2969,0.9799], [0.3281,0.9775], [0.3594,0.9752], [0.3906,0.9728], [0.4219,0.9704], [0.4531,0.9681], [0.4844,0.9657], [0.5156,0.9634], [0.5469,0.961], [0.5781,0.9586], [0.6094,0.9563], [0.6406,0.954], [0.6719,0.8884], [0.7031,0.7219], [0.7344,0.4771], [0.7656,0.3703], [0.7969,0.3176], [0.8281,0.2838], [0.8594,0.2884], [0.8906,0.2849], [0.9219,0.2856], [0.9531,0.2862], [0.9844,0.2624], [1,0.1571]],
+      // Las marcas (tanda 3, 2026-11-23, medidas sobre la foto con tools/marcas):
+      // la cápsula verde del cuello (hasta donde la tapa empieza a
+      // redondearse); la etiqueta verde con TULLAMORE, D.E.W., DANIEL E. y
+      // WILLIAMS, EST. y 1829, IRISH WHISKEY, TRIPLE BLEND, TRIPLE DISTILLED,
+      // MADE, MATURED & / BOTTLED IN IRELAND, y 1.75L y 40% alc./vol. a los
+      // lados. No van: el perro (un dibujo), la firma de la cápsula, y
+      // TULLAMORE / HEART OF IRELAND de abajo (en relieve).
+      marcas: [
+        {tipo: 'etiqueta', y: [0.823, 0.98], ancho: 1, renglones: []},
+        {tipo: 'etiqueta', y: [0.262, 0.573], ancho: 1, renglones: []},
+        {tipo: 'texto', y: [0.503, 0.546], ancho: 0.85, renglones: [{g: 0.043, largo: 1, palabras: [9]}]},
+        {tipo: 'texto', y: [0.454, 0.495], ancho: 0.35, renglones: [{g: 0.041, largo: 1, palabras: [3]}]},
+        {tipo: 'texto', y: [0.473, 0.48], ancho: 0.155, renglones: [{g: 0.007, largo: 1, palabras: [6, 1]}], x: -0.55},
+        {tipo: 'texto', y: [0.473, 0.48], ancho: 0.15, renglones: [{g: 0.007, largo: 1, palabras: [8]}], x: 0.56},
+        {tipo: 'texto', y: [0.391, 0.409], ancho: 0.155, renglones: [{g: 0.018, largo: 1, palabras: [3]}], x: -0.5},
+        {tipo: 'texto', y: [0.391, 0.409], ancho: 0.17, renglones: [{g: 0.018, largo: 1, palabras: [4]}], x: 0.5},
+        {tipo: 'texto', y: [0.328, 0.345], ancho: 0.655, renglones: [{g: 0.017, largo: 1, palabras: [5, 7]}]},
+        {tipo: 'texto', y: [0.311, 0.321], ancho: 0.645, renglones: [{g: 0.01, largo: 1, palabras: [6, 5, 6, 9]}]},
+        {tipo: 'texto', y: [0.287, 0.295], ancho: 0.32, renglones: [{g: 0.008, largo: 1, palabras: [4, 7, 1]}]},
+        {tipo: 'texto', y: [0.276, 0.284], ancho: 0.37, renglones: [{g: 0.008, largo: 1, palabras: [7, 2, 7]}]},
+        {tipo: 'texto', y: [0.278, 0.293], ancho: 0.05, renglones: [{g: 0.015, largo: 1, palabras: [5]}], x: -0.58},
+        {tipo: 'texto', y: [0.278, 0.293], ancho: 0.11, renglones: [{g: 0.015, largo: 1, palabras: [3, 9]}], x: 0.66}
+      ]
     },
     elijah_craig: {
       name: "Elijah Craig", asp: 2.51, yFull: 0.72, pourable: true,
@@ -1218,7 +1385,32 @@
       // sellos rojos de los costados (del 27 % al 43 %) no son vidrio y
       // dejaban un bulto: en esas filas el borde va en linea recta entre el
       // de debajo y el de encima. Vidrio verde: yFull .66 por el hombro.
-      p: [[0,0.4837], [0.0156,0.6735], [0.0469,0.8646], [0.0781,0.9329], [0.1094,0.9657], [0.1406,0.9804], [0.1719,0.9891], [0.2031,0.9936], [0.2344,0.9996], [0.2656,1], [0.2969,0.9996], [0.3281,0.9951], [0.3594,0.991], [0.3906,0.9876], [0.4219,0.9853], [0.4531,0.9853], [0.4844,0.9815], [0.5156,0.9695], [0.5469,0.948], [0.5781,0.911], [0.6094,0.845], [0.6406,0.7025], [0.6719,0.4529], [0.7031,0.3273], [0.7344,0.2998], [0.7656,0.3186], [0.7969,0.3092], [0.8281,0.3088], [0.8594,0.3088], [0.8906,0.3296], [0.9219,0.3164], [0.9531,0.3096], [0.9844,0.306], [1,0.219]]
+      p: [[0,0.4837], [0.0156,0.6735], [0.0469,0.8646], [0.0781,0.9329], [0.1094,0.9657], [0.1406,0.9804], [0.1719,0.9891], [0.2031,0.9936], [0.2344,0.9996], [0.2656,1], [0.2969,0.9996], [0.3281,0.9951], [0.3594,0.991], [0.3906,0.9876], [0.4219,0.9853], [0.4531,0.9853], [0.4844,0.9815], [0.5156,0.9695], [0.5469,0.948], [0.5781,0.911], [0.6094,0.845], [0.6406,0.7025], [0.6719,0.4529], [0.7031,0.3273], [0.7344,0.2998], [0.7656,0.3186], [0.7969,0.3092], [0.8281,0.3088], [0.8594,0.3088], [0.8906,0.3296], [0.9219,0.3164], [0.9531,0.3096], [0.9844,0.306], [1,0.219]],
+      // Las marcas (tanda 3, 2026-11-23, medidas sobre la foto con tools/marcas):
+      // la cápsula roja del cuello con su sello (hasta donde la tapa empieza a
+      // redondearse); BUCHANAN'S y DeLUXE impresos en el vidrio; la etiqueta
+      // crema con EST 1884, Blended Scotch Whisky, AGED 12 YEARS y sus cuatro
+      // renglones chicos; la banda oscura de debajo. No van: el escudo (un
+      // dibujo), la firma, la letra chica de la banda oscura (ilegible), y
+      // JAMES BUCHANAN & CO. / SCOTLAND de abajo y las asas de los lados (en
+      // relieve).
+      marcas: [
+        {tipo: 'etiqueta', y: [0.795, 0.98], ancho: 1, renglones: []},
+        {tipo: 'sello', y: 0.873, r: 0.022, renglones: []},
+        {tipo: 'texto', y: [0.495, 0.528], ancho: 0.65, renglones: [{g: 0.033, largo: 1, palabras: [9]}]},
+        {tipo: 'texto', y: [0.443, 0.478], ancho: 0.37, renglones: [{g: 0.035, largo: 1, palabras: [6]}]},
+        {tipo: 'etiqueta', y: [0.138, 0.401], ancho: 0.71, renglones: []},
+        {tipo: 'texto', y: [0.358, 0.365], ancho: 0.3, renglones: [{g: 0.007, largo: 1, palabras: [3, 4]}]},
+        {tipo: 'texto', y: [0.295, 0.321], ancho: 0.61, renglones: [{g: 0.026, largo: 1, palabras: [7, 6, 6]}]},
+        {tipo: 'texto', y: [0.247, 0.286], ancho: 0.095, renglones: [{g: 0.039, largo: 1, palabras: [2]}]},
+        {tipo: 'texto', y: [0.258, 0.267], ancho: 0.115, renglones: [{g: 0.009, largo: 1, palabras: [4]}], x: -0.24},
+        {tipo: 'texto', y: [0.258, 0.267], ancho: 0.125, renglones: [{g: 0.009, largo: 1, palabras: [5]}], x: 0.265},
+        {tipo: 'texto', y: [0.218, 0.226], ancho: 0.37, renglones: [{g: 0.008, largo: 1, palabras: [3, 6, 5, 2, 7]}]},
+        {tipo: 'texto', y: [0.199, 0.206], ancho: 0.59, renglones: [{g: 0.007, largo: 1, palabras: [2, 3, 7, 7, 3, 1, 7, 9]}]},
+        {tipo: 'texto', y: [0.181, 0.188], ancho: 0.44, renglones: [{g: 0.007, largo: 1, palabras: [6, 4, 7, 1, 10]}]},
+        {tipo: 'texto', y: [0.163, 0.172], ancho: 0.21, renglones: [{g: 0.009, largo: 1, palabras: [3, 7, 2]}], x: -0.27},
+        {tipo: 'etiqueta', y: [0.113, 0.137], ancho: 0.71, renglones: []}
+      ]
     },
     campari: {
       name: "Campari", asp: 4.04, yFull: 0.76, pourable: true,

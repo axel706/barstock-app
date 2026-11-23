@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261123-014338",
+    "items": [
+      "Count panel: label marks on 9 more bottles"
+    ]
+  },
+  {
     "build": "20261122-230438",
     "items": [
       "Orders: room under the run-out card"
@@ -183,12 +189,6 @@
     "build": "20261122-103512",
     "items": [
       "Counting: label guides sized like the real labels"
-    ]
-  },
-  {
-    "build": "20261122-102909",
-    "items": [
-      "Counting: Bulleit and Dewar’s label shapes fixed"
     ]
   }
 ]

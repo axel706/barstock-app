@@ -48,7 +48,9 @@ console.log('\nlas que las llevan');
 // para todas.
 const TANDA1 = ['jameson', 'buffalo_trace', 'bulleit', 'fireball', 'red_label', 'dewars', 'bacardi', 'campari', 'aperol', 'baileys'];
 const TANDA2 = ['grey_goose', 'ketel_one', 'captain_morgan', 'malibu', 'cointreau', 'disaronno', 'patron', 'don_julio_blanco', 't1800'];
-for (const k of ['woodford', 'elijah_craig', 'basil_hayden'].concat(TANDA1, TANDA2)) {
+// La tanda 3 (2026-11-23, en develop pendiente de su lámina).
+const TANDA3 = ['casa_noble', 'glenfiddich', 'chivas', 'monkey_shoulder', 'ciroc', 'empress', 'buchanans', 'tullamore', 'blantons'];
+for (const k of ['woodford', 'elijah_craig', 'basil_hayden'].concat(TANDA1, TANDA2, TANDA3)) {
   const P = B.PROFILES[k];
   const ms = P && P.marcas;
   prueba(k + ': lleva marcas', Array.isArray(ms) && ms.length >= 3, ms && ms.length);

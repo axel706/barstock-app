@@ -482,7 +482,13 @@ y Basil Hayden, la tanda 1 (aprobada y en main el 2026-11-22): Jameson,
 Buffalo Trace, Bulleit, Fireball, Red Label, Dewar's, Bacardí, Campari,
 Aperol y Baileys, y la tanda 2 (aprobada y en main el 2026-11-22; Grey Goose
 rehecha, silueta incluida, sobre una foto de frente de Axel): Grey Goose, Ketel One, Captain Morgan, Malibu, Cointreau,
-Disaronno, Patrón, Don Julio Blanco y 1800. Smirnoff se dejó fuera: su
+Disaronno, Patrón, Don Julio Blanco y 1800, y la tanda 3 (2026-11-23, en
+develop, pendiente de que Axel la apruebe sobre la lámina): Casa Noble,
+Glenfiddich, Chivas Regal, Monkey Shoulder, Cîroc, Empress, Buchanan's,
+Tullamore D.E.W. y Blanton's (Belvedere y Macallan, fuera: sus fotos son
+demasiado chicas para medir el grueso de las letras; las cápsulas del
+cuello terminan donde la tapa se redondea, porque el ancho de una
+etiqueta es el del radio más estrecho entre sus dos bordes). Smirnoff se dejó fuera: su
 silueta salió de la foto de Vanilla y la comparten los sabores, y la
 No. 21 tiene otra etiqueta. Las
 demás se añaden por tandas, de las fotos que Axel ya mandó para las
