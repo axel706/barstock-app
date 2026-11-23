@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261122-200454",
+    "items": [
+      "Cycle card: shorter Skip week button"
+    ]
+  },
+  {
     "build": "20261122-200220",
     "items": [
       "Orders › Open: room under the Count skipped note"
@@ -181,12 +187,6 @@
     "build": "20261122-004308",
     "items": [
       "Counting: label guides on 10 more bottles"
-    ]
-  },
-  {
-    "build": "20261122-001441",
-    "items": [
-      "Orders: the + search lists the vendor’s products"
     ]
   }
 ]

@@ -781,7 +781,9 @@
       if (antes) conSalto.kr = 'on hand from ' + antes;
       if (cuenta && SK.puedeDeshacer(salto)) Object.assign(conSalto, { btn2: 'Undo skip', btn2Tono: 'saltar', go2: deshacerSalto });
     } else if (cuenta && SK && (diaDeContar || viejo)) {
-      Object.assign(conSalto, { btn2: 'Skip this week', btn2Tono: 'saltar', go2: saltarSemana });
+      // "Skip week" y no "Skip this week": la larga partía el botón en dos
+      // renglones junto a Restart (Axel, en el teléfono; lámina, opción A).
+      Object.assign(conSalto, { btn2: 'Skip week', btn2Tono: 'saltar', go2: saltarSemana });
     }
 
     return Object.assign({

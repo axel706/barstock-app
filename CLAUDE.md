@@ -563,7 +563,8 @@ Prueba: `test-silueta-marcas`.
 es lunes-base y mete el domingo en la semana del lunes *siguiente*.
 
 **Saltar una semana sin contar** (Axel, 2026-11-23, lámina, opción
-A): "Skip this week" en la tarjeta del ciclo, el día de contar o con
+A): "Skip week" (opción A de la segunda lámina: la larga partía el
+botón en dos renglones) en la tarjeta del ciclo, el día de contar o con
 el ciclo viejo, para quien tiene "Count inventory". Abre el ciclo de
 PEDIDOS (`weekly_reset_at`) sin tocar el on hand, y queda en
 `count_skips` (migración 047) con el inicio de antes: el LIVE sigue
