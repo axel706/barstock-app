@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261122-215925",
+    "items": [
+      "Invoices in cases count as bottles (case/12 = 12)"
+    ]
+  },
+  {
     "build": "20261122-211353",
     "items": [
       "Skipped week: On the shelf no longer counts",
@@ -182,12 +188,6 @@
     "build": "20261122-100813",
     "items": [
       "Counting: Bulleit, Fireball and Red Label guides fixed"
-    ]
-  },
-  {
-    "build": "20261122-004908",
-    "items": [
-      "Counting: label guides follow tilted and curved labels"
     ]
   }
 ]

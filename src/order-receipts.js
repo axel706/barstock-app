@@ -86,7 +86,7 @@
     try {
       facturas = await leerTodo(url, key,
         `marginedge_invoice_lines?location_id=eq.${locId}` +
-        `&select=order_id,product_id,quantity,unit_price,invoice_date,invoice_number,vendor_name` +
+        `&select=order_id,product_id,quantity,unit_price,invoice_date,invoice_number,vendor_name,vendor_item_name` +
         `&order=order_id.asc`);
       enlaces = await leerTodo(url, key,
         `marginedge_links?location_id=eq.${locId}` +
@@ -172,6 +172,23 @@
     return g - (h - 12) * 3600e3;
   }
 
+  // ── Una línea en cajas ───────────────────────────────────────────────
+  //
+  // Axel, 2026-11-22, Will's & Bill's: Thistle Finch facturó "Triage
+  // Vodka [case/12]", 45 a $66, y el LIVE sumaba 45 BOTELLAS cuando
+  // llegaron 540 (que luego se reparten a las otras locaciones con
+  // transfers, que las restan). MarginEdge factura el mismo producto en
+  // cajas y en botellas —la misma Triage va a $5.50 en un transfer—, así
+  // que la caja no es del producto: es de la LÍNEA, y la línea lo dice en
+  // su nombre. Sólo se cree un número que va pegado a "case"/"cs" (o
+  // "case of N"): un "1.75L", un "750ml" o un año no son cajas.
+  function botellasPorUnidad(nombre) {
+    const t = String(nombre || '');
+    const m = /\b(?:case|cs)\s*(?:\/|of)\s*(\d{1,3})\b/i.exec(t) || /\b(\d{1,3})\s*\/\s*(?:case|cs)\b/i.exec(t);
+    const n = m ? Number(m[1]) : 1;
+    return n >= 2 && n <= 48 ? n : 1;
+  }
+
   // factura → recibos por artículo. `dueno` es factura → orden (los
   // enlaces a mano y los automáticos).
   function recibosDe(facturas, enlaces, dueno) {
@@ -183,6 +200,9 @@
     for (const f of facturas || []) {
       const item = deQuien.get(String(f.product_id));
       if (!item) continue;
+      // En botellas, que es en lo que cuenta el inventario: 45 cajas de
+      // 12 son 540 a $5.50, el mismo dinero que la línea.
+      const n = botellasPorUnidad(f.vendor_item_name);
       recibos.push({
         item,
         // De qué factura sale, y si esa factura está reservada para una
@@ -191,11 +211,11 @@
         // más".
         factId: String(f.order_id || ''),
         reservado: (dueno && dueno.get(String(f.order_id || ''))) || '',
-        qty: Number(f.quantity) || 0,
+        qty: (Number(f.quantity) || 0) * n,
         // Lo que de verdad costó. Sin esto, "Received" multiplicaba lo
         // recibido por el precio de TU catálogo: una orden de $55.78
         // en la factura aparecía como $71.98 recibidos.
-        precio: Number(f.unit_price) || 0,
+        precio: (Number(f.unit_price) || 0) / n,
         fecha: fechaFactura(f.invoice_date),
         factura: f.invoice_number || ''
       });
@@ -313,5 +333,5 @@
     return resultado;
   }
 
-  window.BarStockOrderReceipts = { leer, recibosDe, repartir, leerTodo, norm, mismoNombre, fechaFactura, MAX_ORDENES, PAGINA };
+  window.BarStockOrderReceipts = { leer, recibosDe, botellasPorUnidad, repartir, leerTodo, norm, mismoNombre, fechaFactura, MAX_ORDENES, PAGINA };
 })();

@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 168 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 169 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -627,7 +627,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 168 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 169 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -790,6 +790,16 @@ sale de marginedge_invoice_lines" de arriba):
   Merchant jueves 4:00 PM.
 - **Una línea de factura sin pedido** también llegó: suma desde que entra
   la factura.
+- **Una línea en cajas suma botellas** (Axel, 2026-11-22, Will's &
+  Bill's: "Triage Vodka [case/12]", 45 a $66, que el LIVE sumaba como 45
+  botellas; se reparten luego con transfers). La caja es de la LÍNEA, no
+  del producto (MarginEdge factura la misma Triage en cajas y a $5.50 por
+  botella): `order-receipts.botellasPorUnidad(vendor_item_name)` cree
+  sólo un número pegado a "case"/"cs" ("case/12", "12/case", "case of
+  12"); la cantidad × N y el precio ÷ N. El precio del PRODUCTO tiene que
+  ser el de la botella: Triage a $66 (el de la caja) hacía las 540 valer
+  $35 mil. Prueba: `test-factura-cajas`. La protección de "4× el precio
+  de la botella → a revisar" sigue sin construir.
 - **Antes de su hora de entrega, un pedido sigue en camino aunque ya
   tenga factura** (con lo que dice la factura). Hasta el 2026-11-19 la
   factura que entraba antes de la entrega lo hacía desaparecer: ni
