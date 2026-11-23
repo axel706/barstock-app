@@ -191,6 +191,50 @@ const fila = (o) => Object.assign({ id: 1, skipped_at: SALTO, prev_reset_at: DOM
     prueba('con el cristal de las pestañas del Home', /:is\(#mhTabs, #moBase\) button\.on/.test(leer('styles/mobile-app.css')));
   }
 
+  grupo('saltar no infla el LIVE: las facturas de la semana no se cuentan dos veces');
+  {
+    // Axel, 2026-11-22, Will's & Bill's: tras el salto On the shelf pasó
+    // de ~$11–12 mil a $15 mil. Una compra de LOOP facturada el martes 17
+    // y apuntada el jueves 19: dentro del ciclo la orden se queda con su
+    // factura de antes; con el inicio del salto ya no, y la orden contaba
+    // lo pedido Y la factura contaba otra vez "sin orden".
+    const { w } = entorno({ saltos: [fila()] });
+    for (const f of ['order-receipts', 'live-stock']) {
+      new Function('window', 'fetch', 'console', 'document', 'state', leer('src/' + f + '.js'))(w, w.fetch, w.console, w.document, w.state);
+    }
+    const RC = w.BarStockOrderReceipts, L = w.BarStockLive;
+    const ordenes = [{ id: 'o1', vendor: 'LOOP', po_number: 'WB-1', created_at: '2026-11-19T18:00:00Z', arrives_at: '2026-11-19T18:00:00Z' }];
+    const lineas = [{ vendor_order_id: 'o1', item_name: "Tito's", quantity: 12, unit_price: 20 }];
+    const llego = (ini) => {
+      const recibos = RC.recibosDe([{ order_id: 'f1', product_id: 'p1', quantity: 12, unit_price: 20, invoice_date: '2026-11-17', invoice_number: 'F1' }],
+        [{ product_id: 'p1', item_name: "Tito's" }], new Map());
+      const rep = RC.repartir({ recortadas: ordenes, lineas, recibos, inicioCiclo: ini });
+      const f = L.calcular({ master: [{ item: "Tito's", onHand: 5 }], ordenes, repartido: rep, recibos,
+        conteo: Date.parse(DOM_15), diaConteo: '2026-11-15', vendido: [], ahora: Date.parse('2026-11-23T02:00:00Z') });
+      return f.find(x => x.producto === "Tito's").llego;
+    };
+    prueba('el mecanismo: con el inicio del salto se cuenta dos veces', llego(Date.parse(SALTO)) === 24, llego(Date.parse(SALTO)));
+    await w.BarStockCountSkip.leer();
+    const real = await w.BarStockCountSkip.inicioReal();
+    prueba('inicioReal es el de antes del salto', real && real.toISOString() === DOM_15, real && real.toISOString());
+    prueba('inicioRealYa, lo mismo sin esperar', (w.BarStockCountSkip.inicioRealYa() || {}).toISOString && w.BarStockCountSkip.inicioRealYa().toISOString() === DOM_15);
+    prueba('y con él llegan 12, una vez', llego(real.getTime()) === 12, llego(real.getTime()));
+
+    // Lo que pasa el LIVE al reparto (live-stock.ahora), con el reparto
+    // de mentira para ver qué inicio recibe.
+    let recibido = null;
+    w.BarStockToastUsage = Object.assign(w.BarStockToastUsage, {
+      desdeElConteo: async () => ({ estado: 'listo', conteo: DOM_15, desde: '2026-11-15', dias: [], productos: [] })
+    });
+    w.BarStockOrderReceipts = { leer: async () => ({ manuales: [], facturas: [], enlaces: [], recortadas: [], lineas: [] }),
+      recibosDe: () => [], repartir: (o) => { recibido = o.inicioCiclo; return new Map(); }, mismoNombre: (a, b) => a === b };
+    await w.BarStockLive.ahora();
+    prueba('el LIVE reparte desde el inicio de verdad, no desde el salto', recibido === Date.parse(DOM_15),
+      recibido && new Date(recibido).toISOString());
+    prueba('Sent también (mobile-history)', /SK\.inicioReal\(\)/.test(leer('src/mobile-history.js')));
+    prueba('y las llegadas calculadas (order-receipts)', /SK\.inicioRealYa\(\)/.test(leer('src/order-receipts.js')));
+  }
+
   grupo('quién, y dónde se carga');
   {
     const css = leer('styles/mobile-app.css');

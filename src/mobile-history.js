@@ -98,8 +98,12 @@
     // necesita antes: es su frontera, lo que deja el pasado fuera.
     // Calcularlo dos veces sería tener dos respuestas posibles a
     // "cuándo empezó esta semana".
-    const C = window.BarStockCycle;
-    const ini = C && C.startedAt && C.startedAt();
+    // Con una semana saltada, el inicio de antes del salto (count-skip
+    // .inicioReal): el mismo del LIVE, o Sent y On the shelf repartirían
+    // las facturas de la semana de dos formas distintas.
+    const C = window.BarStockCycle, SK = window.BarStockCountSkip;
+    let ini = C && C.startedAt && C.startedAt();
+    if (ini && SK && SK.inicioReal) { try { ini = await SK.inicioReal(); } catch (e) {} }
 
     // ── Y las que decide la app sola ────────────────────────────────
     //

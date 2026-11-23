@@ -131,8 +131,10 @@
   // regla de la opción a.
   async function completarLlegadas(ordenes) {
     const VD = window.BarStockVendorDelivery, V = window.BarStockVendorDefaults;
-    const C = window.BarStockCycle;
-    const ini = C && C.startedAt && C.startedAt();
+    const C = window.BarStockCycle, SK = window.BarStockCountSkip;
+    // Con una semana saltada, desde el inicio de antes del salto: las
+    // órdenes de esa semana siguen siendo de este ciclo (count-skip).
+    const ini = SK && SK.inicioRealYa ? SK.inicioRealYa() : (C && C.startedAt && C.startedAt());
     const desde = ini ? ini.getTime() : Date.now();
     const faltan = (ordenes || []).filter(o => !o.arrives_at && new Date(o.created_at).getTime() >= desde);
     if (!faltan.length || !VD || !VD.siguienteEntrega || !V || !V.getAllDefaults) return;

@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261122-211353",
+    "items": [
+      "Skipped week: On the shelf no longer counts",
+      "the same delivery twice"
+    ]
+  },
+  {
     "build": "20261122-200454",
     "items": [
       "Cycle card: shorter Skip week button"
@@ -181,12 +188,6 @@
     "build": "20261122-004908",
     "items": [
       "Counting: label guides follow tilted and curved labels"
-    ]
-  },
-  {
-    "build": "20261122-004308",
-    "items": [
-      "Counting: label guides on 10 more bottles"
     ]
   }
 ]

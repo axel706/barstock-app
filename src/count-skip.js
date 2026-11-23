@@ -74,9 +74,7 @@
   // ── Desde dónde cuenta el LIVE ───────────────────────────────────────
   // El inicio del ciclo, o, si lo puso un salto, el que había antes
   // (y así hacia atrás si se saltaron dos semanas seguidas).
-  async function ancla(inicio) {
-    if (!inicio) return inicio;
-    const filas = await leer();
+  function seguir(filas, inicio) {
     let d = inicio instanceof Date ? inicio : new Date(inicio);
     for (let i = 0; i < 20; i++) {
       const s = deEse(filas, d);
@@ -85,6 +83,37 @@
       d = new Date(s.prev_reset_at);
     }
     return d;
+  }
+  async function ancla(inicio) {
+    if (!inicio) return inicio;
+    return seguir(await leer(), inicio);
+  }
+
+  // ── El inicio de verdad del ciclo, para repartir facturas ────────────
+  //
+  // Axel, 2026-11-22, en Will's & Bill's: tras saltar, On the shelf pasó
+  // de ~$11–12 mil a $15 mil. El reparto factura↔orden (order-receipts)
+  // deja que una orden DEL CICLO se quede con una factura de antes de
+  // colocarla (la compra de LOOP apuntada después), y "del ciclo" lo
+  // decide su inicio. Con el inicio del salto, las órdenes de la semana
+  // saltada dejaban de reclamar esas facturas: la orden contaba lo pedido
+  // como llegado Y la factura sumaba otra vez como "sin orden". Lo mismo
+  // contado dos veces. El reparto, el LIVE y Sent miran desde aquí: el
+  // inicio del ciclo seguido hacia atrás por los saltos, el mismo desde
+  // el que cuenta el LIVE. Sin saltos, el de siempre.
+  async function inicioReal() {
+    const C = window.BarStockCycle;
+    if (!C) return null;
+    if (C.load && !(C.isLoaded && C.isLoaded())) { try { await C.load(); } catch (e) {} }
+    const ini = C.startedAt && C.startedAt();
+    return ini ? ancla(ini) : ini;
+  }
+  // Sin esperar, con los saltos ya leídos (si no, el de siempre).
+  function inicioRealYa() {
+    const C = window.BarStockCycle;
+    const ini = C && C.startedAt && C.startedAt();
+    if (!ini || !_filas || _de !== (cfg().LOCATION_NAME || '')) return ini;
+    return seguir(_filas, ini);
   }
 
   // El salto que abrió el ciclo de ahora, o null.
@@ -248,6 +277,6 @@
     return v ? '≈' + v.live.toFixed(1) + ' on the shelf' : 'counted ' + (Number(r && r.onHand) || 0);
   }
 
-  window.BarStockCountSkip = { leer, ancla, actual, actualYa, puedeDeshacer, saltar, deshacer, deshechos,
+  window.BarStockCountSkip = { leer, ancla, inicioReal, inicioRealYa, actual, actualYa, puedeDeshacer, saltar, deshacer, deshechos,
     modo, fijarModo, aPedir, deDonde };
 })();

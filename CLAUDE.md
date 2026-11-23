@@ -569,8 +569,14 @@ el ciclo viejo, para quien tiene "Count inventory". Abre el ciclo de
 PEDIDOS (`weekly_reset_at`) sin tocar el on hand, y queda en
 `count_skips` (migración 047) con el inicio de antes: el LIVE sigue
 desde ahí (`BarStockCountSkip.ancla`, en `toast-usage.ultimoConteo`;
-también en el correo). Undo hasta que sale la primera orden del ciclo
-saltado. Desde el paso 2 (on hand ya a 0) no se salta: "si se pierde se
+también en el correo). **El reparto factura↔orden también mira desde
+ahí** (`BarStockCountSkip.inicioReal`/`inicioRealYa`, en `live-stock.
+ahora`, Sent y `order-receipts.completarLlegadas`): con el inicio del
+salto, las órdenes de la semana saltada dejaban de quedarse con sus
+facturas de antes (las compras de LOOP) y lo mismo se contaba dos veces,
+orden "llegada" más factura "sin orden"; en Will's & Bill's, On the
+shelf de ~$11–12 mil a $15 mil (2026-11-22). Undo hasta que sale la
+primera orden del ciclo saltado. Desde el paso 2 (on hand ya a 0) no se salta: "si se pierde se
 pierde", nada de reponer el conteo viejo. En la semana saltada, Open
 pide con el interruptor "Live ≈ | Empty shelf" (`#moBase`, arriba de
 Open y de cada proveedor; de cada teléfono y de cada salto, en

@@ -268,7 +268,14 @@
     if (C && C.load && !(C.isLoaded && C.isLoaded())) {
       try { await C.load(); } catch (e) { console.warn('[live] sin inicio del ciclo:', e && e.message || e); }
     }
-    const ini = C && C.startedAt && C.startedAt();
+    // El inicio de verdad: con una semana saltada, el de antes del salto
+    // (count-skip.inicioReal). Con el del salto, las facturas de la
+    // semana se contaban dos veces (ver allí).
+    const SK = window.BarStockCountSkip;
+    let ini = C && C.startedAt && C.startedAt();
+    if (ini && SK && SK.inicioReal) {
+      try { ini = await SK.inicioReal(); } catch (e) { console.warn('[live] salto:', e && e.message || e); }
+    }
     const filas = await armarFilas({ master: (window.state && window.state.master) || [], uso,
       conteo: uso.conteo, inicioCiclo: ini ? ini.getTime() : 0 });
     return { estado: 'listo', conteo: uso.conteo, desde: uso.desde, dias: uso.dias,
