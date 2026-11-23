@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261122-200220",
+    "items": [
+      "Orders › Open: room under the Count skipped note"
+    ]
+  },
+  {
     "build": "20261122-195422",
     "items": [
       "A skipped week stays out of Pour·IQ pars"
@@ -181,12 +187,6 @@
     "build": "20261122-001441",
     "items": [
       "Orders: the + search lists the vendor’s products"
-    ]
-  },
-  {
-    "build": "20261122-001126",
-    "items": [
-      "Orders: smoother search opening from the + button"
     ]
   }
 ]

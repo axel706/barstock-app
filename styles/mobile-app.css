@@ -3978,6 +3978,10 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-ord-salto-t { padding: 10px 12px; border-radius: 16px; background: var(--tinta);
     border: 1px solid rgba(251,191,36,.5); font-size: var(--m-small); line-height: 1.4; color: #a9bacd; }
   .m-ord-salto-t b { color: #fcd34d; }
+  /* El aire va por arriba: lo de debajo (los proveedores de Open, la
+   * lista o "Review and send" del detalle) se separaba con su propio
+   * margin-bottom y quedaba pegado al aviso (Axel, en el teléfono). */
+  body.m-shell .m-ord-salto + :is(.m-ordv, #moList, .m-ord-enviar) { margin-top: 12px; }
   .m-ord-pte { margin-top: 16px; padding: 16px; border-radius: 18px; display: grid; gap: 14px;
     background: linear-gradient(135deg, rgba(245,158,11,.16), var(--tinta) 55%), var(--tinta);
     border: 1px solid rgba(245,176,65,.5); }
