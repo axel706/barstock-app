@@ -118,6 +118,12 @@
   function cantidad(r) {
     return hay('getEffectiveOrder') ? num(window.getEffectiveOrder(r)) : num(r.toOrder);
   }
+  // Lo que el automático pide (en una semana saltada, con el interruptor
+  // de arriba: autoOrder de index.html). "Auto was N" y "auto wanted N"
+  // tienen que decir lo mismo que la cantidad, no el toOrder de siempre.
+  function auto(r) {
+    return hay('autoOrder') ? num(window.autoOrder(r)) : num(r.toOrder);
+  }
   function aMano(r) {
     return r.orderOverride !== '' && r.orderOverride !== null && r.orderOverride !== undefined;
   }
@@ -177,6 +183,7 @@
            frase sería mentira: el camino está dentro de cada
            proveedor, que es donde se repasa antes de mandar. -->
       ${''}
+      ${baseHtml()}
       ${vs.map((v, i) => `
         <button type="button" class="m-ordv${v.sinPrecio ? ' aviso' : ''}" data-v="${i}" style="--vc:${colorDe(v.nombre)}">
           ${logo(v.nombre)}
@@ -211,6 +218,47 @@
     host.querySelectorAll('[data-v]').forEach(b => {
       b.onclick = () => { _vendor = vs[Number(b.dataset.v)].nombre; repintar(); };
     });
+    engancharBase(host);
+  }
+
+  // ── Live o Empty shelf, en una semana saltada (Axel, 2026-11-23,
+  // lámina A) ────────────────────────────────────────────────────────
+  // Arriba de Open y del detalle de cada proveedor, sólo con la semana
+  // saltada ("Skip this week"). Cambia TODA la lista de una vez: la
+  // cuenta vive en count-skip.js (aPedir) y entra por getEffectiveOrder.
+  // Lo puesto a mano no se toca: sigue siendo de quien lo puso.
+  const SK = () => window.BarStockCountSkip;
+  function baseHtml() {
+    const m = SK() && SK().modo ? SK().modo() : null;
+    if (!m) return '';
+    return `
+      <div class="m-ord-salto">
+        <div class="m-sx-tabs" id="moBase" role="tablist" aria-label="Order from">
+          <button type="button" role="tab" data-base="live" class="${m === 'live' ? 'on' : ''}" aria-selected="${m === 'live'}">Live ≈</button>
+          <button type="button" role="tab" data-base="vacio" class="${m === 'vacio' ? 'on' : ''}" aria-selected="${m === 'vacio'}">Empty shelf</button>
+        </div>
+        <div class="m-ord-salto-t"><b>Count skipped.</b> ${m === 'live'
+          ? 'Quantities use Live: the last count, plus deliveries, minus Toast sales.'
+          : 'Quantities are the full par, as if everything were at 0.'}</div>
+      </div>`;
+  }
+  let _esperaLive = null;
+  function engancharBase(host) {
+    host.querySelectorAll('[data-base]').forEach(b => {
+      b.onclick = () => {
+        SK().fijarModo(b.dataset.base);
+        if (typeof window.render === 'function') { try { window.render(); } catch (e) {} }
+        repintar();
+      };
+    });
+    // Con Live y el LIVE aún sin leer, las cantidades salen de lo contado:
+    // se pide y se repinta UNA vez al tenerlo.
+    const L = window.BarStockLiveCache;
+    // Una sola vez: si la lectura falla, no se reintenta en cada pintado
+    // (cada uno pediría otra y repintaría otra vez).
+    if (SK() && SK().modo && SK().modo() === 'live' && L && L.listo && !L.listo() && !_esperaLive && L.cargar) {
+      _esperaLive = Promise.resolve(L.cargar()).then(() => refresh(), () => {});
+    }
   }
 
   // ── Detalle ──────────────────────────────────────────────────────────
@@ -231,7 +279,7 @@
     return master().filter(r =>
       r.vendor === vendor &&
       Number(r.orderOverride) === 0 && r.orderOverride !== '' && r.orderOverride !== null &&
-      num(r.toOrder) > 0 &&
+      auto(r) > 0 &&
       !window.isRowPlaced(r));
   }
 
@@ -397,6 +445,7 @@
            sólo se podía hacer desde el escritorio; ahora vive el botón,
            en el mismo sitio y por la misma razón: con noventa líneas,
            lo que está al final no se encuentra. -->
+      ${baseHtml()}
       ${puentesHtml(v.nombre)}
 
       ${!enB && v.filas.length ? `<button type="button" class="m-ord-enviar" id="moSend">
@@ -430,7 +479,7 @@
             return `
               <div class="m-ord-fl">
                 <span class="m-ord-fl-n">${esc(r.item)}</span>
-                <small>auto wanted ${n2(r.toOrder)}</small>
+                <small>auto wanted ${n2(auto(r))}</small>
                 <button type="button" class="m-ord-volver" data-volver="${i}">Bring back</button>
               </div>`;
           }).join('')}
@@ -459,6 +508,7 @@
 
     volverCon(host, () => { _vendor = null; repintar(); });
     engancharPuentes(host);
+    engancharBase(host);
     const env = host.querySelector('#moSend');
     if (env) env.onclick = () => {
       salirRevision();
@@ -1196,7 +1246,7 @@
                               <i class="ti ti-x" aria-hidden="true"></i>
                             </button>` : ''}
         </div>
-        <div class="m-ord-l-s">${n2(r.onHand)} of ${n2(r.suggested)} on hand${
+        <div class="m-ord-l-s">${SK() && SK().modo() ? esc(SK().deDonde(r)) + ' · par ' + n2(r.suggested) : n2(r.onHand) + ' of ' + n2(r.suggested) + ' on hand'}${
           conPrecio ? ' · ' + money(precio) + ' each'
                     : ' · won’t count toward the total'}</div>
 
@@ -1209,7 +1259,7 @@
             <span class="m-ord-l-t">${conPrecio ? money(q * precio) : '—'}</span>
           </div>
           ${editada ? `<button type="button" class="m-ord-undo">
-             Auto was ${n2(r.toOrder)} · <b>undo</b></button>` : ''}
+             Auto was ${n2(auto(r))} · <b>undo</b></button>` : ''}
           ${sugHtml(r, q, true)}
         ` : `
           <div class="m-ord-auto">

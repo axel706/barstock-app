@@ -92,7 +92,7 @@
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/chip-glow.css">
   <link rel="stylesheet" href="styles/mobile.css?v=mob5">
-  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp288">
+  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp289">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -381,7 +381,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261122-191419</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261122-194346</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -1603,7 +1603,15 @@ function getEffectiveOrder(row){
   if(supportsManualFinalOrder(row.vendor) && row.orderOverride !== '' && row.orderOverride !== null && row.orderOverride !== undefined){
     return Math.max(0, parseNum(row.orderOverride));
   }
-  return Math.max(0, parseNum(row.toOrder));
+  return Math.max(0, parseNum(autoOrder(row)));
+}
+// Lo que el automático pide. En una semana saltada ("Skip this week")
+// no es toOrder (par − el conteo de la semana pasada): es par − el LIVE,
+// o el par entero, según el interruptor de Open (src/count-skip.js).
+function autoOrder(row){
+  const S = window.BarStockCountSkip;
+  const v = S && S.aPedir ? S.aPedir(row) : null;
+  return v === null || v === undefined ? row.toOrder : v;
 }
 function toOrderClass(v, suggested, onHand){
   const sug = parseNum(suggested);
@@ -5524,7 +5532,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/cycle-open.js?v=cyo2"></script>
 <!-- Saltar la semana sin contar: antes que toast-usage (el LIVE sigue el
      salto hacia atrás) y que mobile-home (su tarjeta). -->
-<script src="src/count-skip.js?v=sk1"></script>
+<script src="src/count-skip.js?v=sk2"></script>
 <script src="src/focus-stats.js?v=cm4"></script>
 <script src="src/toast.js?v=t6"></script>
 <script src="src/empty-state.js"></script>
@@ -5644,7 +5652,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/mobile-search.js?v=m33"></script>
 <script src="src/mobile-cycle.js?v=m9"></script>
 <script src="src/mobile-inventory.js?v=m29g"></script>
-<script src="src/mobile-orders.js?v=m37"></script>
+<script src="src/mobile-orders.js?v=m38"></script>
 <script src="src/mobile-quick.js?v=mqk5"></script>
 <script src="src/update-anim.js?v=upd8"></script>
 <script src="src/version-check.js?v=ver7"></script>

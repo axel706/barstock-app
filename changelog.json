@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261122-194346",
+    "items": [
+      "Skipped week: order from Live or an empty shelf",
+      "Switch at the top of Orders › Open"
+    ]
+  },
+  {
     "build": "20261122-191419",
     "items": [
       "Skip this week: for a week that can not be counted",
@@ -180,13 +187,6 @@
     "build": "20261121-233620",
     "items": [
       "Orders: the search grows out of the + button"
-    ]
-  },
-  {
-    "build": "20261121-232312",
-    "items": [
-      "Orders: + opens the full-screen search, no zoom",
-      "Added products start at 1, adjust on their line"
     ]
   }
 ]

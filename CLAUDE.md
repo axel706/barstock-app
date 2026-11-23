@@ -570,9 +570,14 @@ PEDIDOS (`weekly_reset_at`) sin tocar el on hand, y queda en
 desde ahí (`BarStockCountSkip.ancla`, en `toast-usage.ultimoConteo`;
 también en el correo). Undo hasta que sale la primera orden del ciclo
 saltado. Desde el paso 2 (on hand ya a 0) no se salta: "si se pierde se
-pierde", nada de reponer el conteo viejo. Pendiente, por partes: el
-interruptor "Live ≈ | Empty shelf" arriba de Open y dejar la semana
-saltada fuera de Pour·IQ. Prueba: `test-saltar-conteo`. Lo pedido en
+pierde", nada de reponer el conteo viejo. En la semana saltada, Open
+pide con el interruptor "Live ≈ | Empty shelf" (`#moBase`, arriba de
+Open y de cada proveedor; de cada teléfono y de cada salto, en
+`localStorage`): `autoOrder` de `index.html` → `BarStockCountSkip.
+aPedir` (par − el LIVE, lo contado en lo que Toast no vende, o el par
+entero), así que `getEffectiveOrder` lo da igual en Open, el Home y el
+escritorio; lo puesto a mano sigue mandando. Pendiente: dejar la
+semana saltada fuera de Pour·IQ. Prueba: `test-saltar-conteo`. Lo pedido en
 una semana sin fila de Pour·IQ va a la fila abierta de antes
 (`filaDelPedido`, `test-snapshot-pedido`).
 

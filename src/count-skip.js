@@ -199,5 +199,55 @@
     return (await leer()).filter(f => f.undone_at).map(f => t(f.skipped_at));
   }
 
-  window.BarStockCountSkip = { leer, ancla, actual, actualYa, puedeDeshacer, saltar, deshacer, deshechos };
+  // ── Con qué se pide en la semana saltada (Axel, 2026-11-23, lámina A)
+  //
+  // Open pide `par − on hand`, y el on hand es el conteo de la semana
+  // pasada: sin más, pediría como si no se hubiera vendido nada. Quien
+  // pide elige, con un interruptor arriba de Open:
+  //   · 'live'  — par − el LIVE (lo que debería haber hoy). Lo que Toast
+  //               no vende va con lo contado. Es lo de entrada.
+  //   · 'vacio' — el par entero, como si todo estuviera a 0.
+  // La elección es de este teléfono y de ESTE salto (localStorage): es
+  // una comodidad de quien pide, no un dato. Sin salto, null: Open pide
+  // como siempre. Lo usa getEffectiveOrder (index.html), así que vale
+  // para Open, el Home y el escritorio por igual.
+  const claveModo = (s) => 'bs-salto-modo:' + (cfg().LOCATION_NAME || '') + ':' + t(s.skipped_at);
+  function modo() {
+    const s = actualYa();
+    if (!s) return null;
+    try { return window.localStorage.getItem(claveModo(s)) === 'vacio' ? 'vacio' : 'live'; } catch (e) { return 'live'; }
+  }
+  function fijarModo(m) {
+    const s = actualYa();
+    if (!s) return;
+    try { window.localStorage.setItem(claveModo(s), m === 'vacio' ? 'vacio' : 'live'); } catch (e) {}
+  }
+  const LC = () => window.BarStockLiveCache;
+  // Lo que se toma por "lo que hay" para pedir. Sin el LIVE leído todavía,
+  // lo contado (y Open se repinta al llegar: mobile-orders).
+  function base(r) {
+    const m = modo();
+    if (!m) return null;
+    if (m === 'vacio') return 0;
+    const L = LC();
+    return L && L.listo && L.listo() && L.cuanto ? L.cuanto(r) : Number(r && r.onHand) || 0;
+  }
+  function aPedir(r) {
+    const b = base(r);
+    if (b === null) return null;
+    if (typeof window.computeToOrder === 'function') return window.computeToOrder(b, r.suggested);
+    return Math.max(0, (Number(r.suggested) || 0) - Math.round(b));
+  }
+  // La línea de cada producto en Open: de dónde sale lo que se pide.
+  function deDonde(r) {
+    const m = modo();
+    if (!m) return '';
+    if (m === 'vacio') return 'empty shelf';
+    const L = LC();
+    const v = L && L.listo && L.listo() && L.vivo ? L.vivo(r) : null;
+    return v ? '≈' + v.live.toFixed(1) + ' on the shelf' : 'counted ' + (Number(r && r.onHand) || 0);
+  }
+
+  window.BarStockCountSkip = { leer, ancla, actual, actualYa, puedeDeshacer, saltar, deshacer, deshechos,
+    modo, fijarModo, aPedir, deDonde };
 })();

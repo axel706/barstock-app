@@ -689,7 +689,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #moSend, #mhAbrir, #mhSi, #mhNo, #msSave, #btNuevo, #ppNuevoRol, #btCrear, #tbGo),
   body.m-shell #mTabs .m-tab.on,
   body.m-shell #mScreens .m-low-b,
-  body.m-shell #mScreens :is(#mhTabs, .m-ts-seg) {
+  body.m-shell #mScreens :is(#mhTabs, #moBase, .m-ts-seg) {
     -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
             backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
     background: rgba(255,255,255,.08);
@@ -706,7 +706,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #moSend, #mhAbrir, #mhSi, #mhNo, #msSave, #btNuevo, #ppNuevoRol, #btCrear, #tbGo)::before,
   body.m-shell #mTabs .m-tab.on::before,
   body.m-shell #mScreens .m-low-b::before,
-  body.m-shell #mScreens :is(#mhTabs, .m-ts-seg)::before,
+  body.m-shell #mScreens :is(#mhTabs, #moBase, .m-ts-seg)::before,
   body.m-shell .m-fab::before {
     content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
     background: radial-gradient(120% 70% at 30% 0%, rgba(255,255,255,.34), rgba(255,255,255,0) 55%);
@@ -768,14 +768,14 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    *     .m-ts-seg button.on, no se toca).
    * Sólo #mhTabs: .m-sx-tabs lo usan también People y Orders › Sent, y
    * esas no se pidieron. */
-  body.m-shell #mScreens :is(#mhTabs, .m-ts-seg) { position: relative; isolation: isolate; }
-  body.m-shell #mScreens :is(#mhTabs, .m-ts-seg)::before { z-index: -1; }
+  body.m-shell #mScreens :is(#mhTabs, #moBase, .m-ts-seg) { position: relative; isolation: isolate; }
+  body.m-shell #mScreens :is(#mhTabs, #moBase, .m-ts-seg)::before { z-index: -1; }
   /* Sus botones, sin el desenfoque de 6 px ni la sombra que app.css le
    * pone a todo <button>: sobre el carril oscuro no se veían, pero sobre
    * el cristal dibujaban una pastilla fantasma detrás de Movement,
    * Changes y Bottles (visto en Chromium antes de entregarlo). La
    * elegida de las pestañas pone su propia sombra, más abajo, y gana. */
-  body.m-shell #mScreens :is(#mhTabs, .m-ts-seg) button {
+  body.m-shell #mScreens :is(#mhTabs, #moBase, .m-ts-seg) button {
     -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none;
   }
   /* ── Las semanas de la tarjeta de Toast (2026-11-14) ───────────────
@@ -816,7 +816,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   .m-ts-d span.fut { opacity: .4; }
   .m-vl-c.fut { opacity: .4; pointer-events: none; }
 
-  body.m-shell #mScreens #mhTabs button.on {
+  /* El interruptor Live / Empty shelf de Open (#moBase, 2026-11-23,
+   * lámina A) es el mismo carril y la misma elegida. */
+  body.m-shell #mScreens :is(#mhTabs, #moBase) button.on {
     color: #fff; background: rgba(125,211,252,.32);
     box-shadow: inset 0 0 0 1px rgba(186,230,253,.55), inset 0 1.5px 0 rgba(255,255,255,.55),
       inset 0 0 10px rgba(125,211,252,.35), 0 2px 8px rgba(0,0,0,.25);
@@ -3967,6 +3969,15 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * Tinta con el toque ámbar de lo que avisa, como .m-fic-ojo. El botón
    * "To buy" es .m-ord-use (así lo esconde el bloque bs-sin-ordenes),
    * en ámbar y sin relleno. */
+  /* ── La semana saltada, arriba de Open (2026-11-23, lámina A) ─────
+   * El interruptor (#moBase) lleva el cristal de las pestañas del Home;
+   * debajo, sobre Tinta con borde ámbar, de dónde salen las cantidades. */
+  .m-ord-salto { margin-top: 12px; display: grid; gap: 10px; }
+  body.m-shell #mScreens #moBase { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; }
+  body.m-shell #mScreens #moBase button { font-size: var(--m-small); font-weight: 800; padding: 8px 6px; }
+  .m-ord-salto-t { padding: 10px 12px; border-radius: 16px; background: var(--tinta);
+    border: 1px solid rgba(251,191,36,.5); font-size: var(--m-small); line-height: 1.4; color: #a9bacd; }
+  .m-ord-salto-t b { color: #fcd34d; }
   .m-ord-pte { margin-top: 16px; padding: 16px; border-radius: 18px; display: grid; gap: 14px;
     background: linear-gradient(135deg, rgba(245,158,11,.16), var(--tinta) 55%), var(--tinta);
     border: 1px solid rgba(245,176,65,.5); }

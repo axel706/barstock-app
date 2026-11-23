@@ -14,6 +14,10 @@
  *      mueve nada (sin él, el LIVE perdería la semana).
  *   3. Undo sólo mientras no haya salido una orden del ciclo saltado, y
  *      devuelve el ciclo al inicio de antes.
+
+ *   5. En la semana saltada, Open pide con el LIVE o con el estante
+ *      vacío (el interruptor de arriba, lámina A); lo puesto a mano
+ *      sigue mandando, y sin salto nada cambia.
  *   4. Lo pide "Count inventory", no "Close the count, restart the
  *      cycle"; el correo de la mañana también sigue el salto.
  *
@@ -141,6 +145,50 @@ const fila = (o) => Object.assign({ id: 1, skipped_at: SALTO, prev_reset_at: DOM
     const { w } = entorno({ saltos: [fila()], ordenes: [{ id: 'o0', createdAt: '2026-11-17T15:00:00Z' }] });
     const s = await w.BarStockCountSkip.actual();
     prueba('las órdenes de la semana de antes no lo impiden', w.BarStockCountSkip.puedeDeshacer(s));
+  }
+
+  grupo('el interruptor de Open: Live o Empty shelf');
+  {
+    // getEffectiveOrder y autoOrder tal cual están en index.html.
+    const html = leer('index.html');
+    const trozo = (n) => { const m = new RegExp('function ' + n + '\\(row\\)\\{[\\s\\S]*?\\n\\}').exec(html); return m ? m[0] : ''; };
+    const fuente = trozo('getEffectiveOrder') + '\n' + trozo('autoOrder');
+    prueba('index.html tiene autoOrder y getEffectiveOrder la usa', /autoOrder\(row\)/.test(trozo('getEffectiveOrder')) && !!trozo('autoOrder'));
+    const { w } = entorno({ saltos: [fila()] });
+    await w.BarStockCountSkip.leer();
+    let listo = true;
+    w.BarStockLiveCache = { listo: () => listo, cuanto: (r) => r.item === "Tito's" ? 4.2 : Number(r.onHand),
+      vivo: (r) => r.item === "Tito's" ? { live: 4.2 } : null };
+    w.computeToOrder = (o, sug) => Math.max(0, Number(sug) - Math.round(o));
+    const efectivo = new Function('window', 'supportsManualFinalOrder', 'parseNum', fuente + '; return { getEffectiveOrder, autoOrder };')(
+      w, () => true, (x) => Number(x) || 0);
+    const tito = { item: "Tito's", vendor: 'SOUTHERN', onHand: 9, suggested: 12, toOrder: 3, orderOverride: '' };
+    prueba('de entrada, Live: par − el LIVE (12 − ≈4.2 = 8)', efectivo.getEffectiveOrder(tito) === 8, efectivo.getEffectiveOrder(tito));
+    prueba('y su línea lo dice', w.BarStockCountSkip.deDonde(tito) === '≈4.2 on the shelf', w.BarStockCountSkip.deDonde(tito));
+    const aperol = { item: 'Aperol', vendor: 'SOUTHERN', onHand: 4, suggested: 6, toOrder: 2, orderOverride: '' };
+    prueba('lo que Toast no vende, con lo contado', efectivo.getEffectiveOrder(aperol) === 2 && w.BarStockCountSkip.deDonde(aperol) === 'counted 4');
+    listo = false;
+    prueba('sin el LIVE leído todavía, con lo contado', efectivo.getEffectiveOrder(tito) === 3, efectivo.getEffectiveOrder(tito));
+    listo = true;
+    w.BarStockCountSkip.fijarModo('vacio');
+    prueba('Empty shelf: el par entero', efectivo.getEffectiveOrder(tito) === 12 && w.BarStockCountSkip.deDonde(tito) === 'empty shelf');
+    prueba('lo puesto a mano sigue mandando', efectivo.getEffectiveOrder(Object.assign({}, tito, { orderOverride: '5' })) === 5);
+    w.BarStockCountSkip.fijarModo('live');
+    prueba('y vuelve a Live', efectivo.getEffectiveOrder(tito) === 8);
+  }
+  {
+    // Sin semana saltada, nada cambia: ni interruptor ni cantidades.
+    const { w } = entorno({ resetAt: DOM_15, saltos: [] });
+    await w.BarStockCountSkip.leer();
+    prueba('sin salto, no hay modo y Open pide como siempre', w.BarStockCountSkip.modo() === null &&
+      w.BarStockCountSkip.aPedir({ item: 'x', onHand: 1, suggested: 4 }) === null);
+  }
+  {
+    const mo = leer('src/mobile-orders.js');
+    prueba('el interruptor va arriba de Open y del detalle', (mo.match(/\$\{baseHtml\(\)\}/g) || []).length === 2);
+    prueba('"Auto was" y "auto wanted" dicen lo mismo que la cantidad',
+      /Auto was \$\{n2\(auto\(r\)\)\}/.test(mo) && /auto wanted \$\{n2\(auto\(r\)\)\}/.test(mo) && !/n2\(r\.toOrder\)/.test(mo));
+    prueba('con el cristal de las pestañas del Home', /:is\(#mhTabs, #moBase\) button\.on/.test(leer('styles/mobile-app.css')));
   }
 
   grupo('quién, y dónde se carga');
