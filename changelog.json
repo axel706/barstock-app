@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261122-221546",
+    "items": [
+      "Skipped week: Sent shows only this week in This cycle"
+    ]
+  },
+  {
     "build": "20261122-220445",
     "items": [
       "Invoices in cases count as bottles",
@@ -183,12 +189,6 @@
     "build": "20261122-102147",
     "items": [
       "Counting: Aperol, Bulleit, Fireball and Dewar’s guides fixed"
-    ]
-  },
-  {
-    "build": "20261122-101414",
-    "items": [
-      "Counting: Red Label and Bulleit guides measured from photos"
     ]
   }
 ]

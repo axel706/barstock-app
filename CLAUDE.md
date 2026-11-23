@@ -575,7 +575,9 @@ ahora`, Sent y `order-receipts.completarLlegadas`): con el inicio del
 salto, las órdenes de la semana saltada dejaban de quedarse con sus
 facturas de antes (las compras de LOOP) y lo mismo se contaba dos veces,
 orden "llegada" más factura "sin orden"; en Will's & Bill's, On the
-shelf de ~$11–12 mil a $15 mil (2026-11-22). Undo hasta que sale la
+shelf de ~$11–12 mil a $15 mil (2026-11-22). Pero Sent AGRUPA por el
+ciclo de pedidos: "This cycle" empieza en el salto (`iniPedidos`), y las
+órdenes de la semana saltada van a su mes. Undo hasta que sale la
 primera orden del ciclo saltado. Desde el paso 2 (on hand ya a 0) no se salta: "si se pierde se
 pierde", nada de reponer el conteo viejo. En la semana saltada, Open
 pide con el interruptor "Live ≈ | Empty shelf" (`#moBase`, arriba de

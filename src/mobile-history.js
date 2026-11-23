@@ -101,8 +101,13 @@
     // Con una semana saltada, el inicio de antes del salto (count-skip
     // .inicioReal): el mismo del LIVE, o Sent y On the shelf repartirían
     // las facturas de la semana de dos formas distintas.
+    // Pero en PANTALLA el ciclo es el de pedidos (iniPedidos, el del
+    // salto): "This cycle" son las órdenes de esta semana, no también las
+    // de la semana saltada, que se van a su mes como un ciclo cerrado
+    // (Axel, 2026-11-22: "se van a confundir con el ciclo anterior").
     const C = window.BarStockCycle, SK = window.BarStockCountSkip;
-    let ini = C && C.startedAt && C.startedAt();
+    const iniPedidos = C && C.startedAt && C.startedAt();
+    let ini = iniPedidos;
     if (ini && SK && SK.inicioReal) { try { ini = await SK.inicioReal(); } catch (e) {} }
 
     // ── Y las que decide la app sola ────────────────────────────────
@@ -150,7 +155,7 @@
     // Cortes de ciclo, del más reciente al más viejo. `C` e `ini` se
     // leyeron arriba: el enlace automático los necesitaba antes.
     const cortes = [];
-    if (ini) cortes.push({ id: 'abierto', titulo: 'This cycle', desde: ini.getTime() });
+    if (iniPedidos) cortes.push({ id: 'abierto', titulo: 'This cycle', desde: iniPedidos.getTime() });
 
     // El reparto, línea por línea (order-receipts.js: por qué va de la
     // orden más nueva a la más vieja y por qué el suelo es el ciclo).
@@ -195,8 +200,8 @@
         // proveedor no tenía horario: entonces no se dice nada.
         llegada: o.arrives_at || null,
         // Colocado en el ciclo anterior y llega en éste: lleva la nota.
-        delAnterior: !!(ini && o.arrives_at && new Date(o.created_at).getTime() < ini.getTime() &&
-          new Date(o.arrives_at).getTime() >= ini.getTime()),
+        delAnterior: !!(iniPedidos && o.arrives_at && new Date(o.created_at).getTime() < iniPedidos.getTime() &&
+          new Date(o.arrives_at).getTime() >= iniPedidos.getTime()),
         items, estado, cortos, sobras,
         pedidoDinero, recibidoDinero, precioReal,
         factura: (items.find(i => i.factura) || {}).factura || '',

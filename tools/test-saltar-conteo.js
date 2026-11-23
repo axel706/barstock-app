@@ -232,6 +232,14 @@ const fila = (o) => Object.assign({ id: 1, skipped_at: SALTO, prev_reset_at: DOM
     prueba('el LIVE reparte desde el inicio de verdad, no desde el salto', recibido === Date.parse(DOM_15),
       recibido && new Date(recibido).toISOString());
     prueba('Sent también (mobile-history)', /SK\.inicioReal\(\)/.test(leer('src/mobile-history.js')));
+    // Pero Sent AGRUPA por el ciclo de pedidos: "This cycle" son las
+    // órdenes desde el salto; las de la semana saltada van a su mes
+    // (Axel: "se van a confundir con el ciclo anterior").
+    const mh = leer('src/mobile-history.js');
+    prueba('Sent: "This cycle" empieza en el salto, no en el conteo',
+      /cortes\.push\(\{ id: 'abierto', titulo: 'This cycle', desde: iniPedidos\.getTime\(\) \}\)/.test(mh));
+    prueba('y el reparto y el enlace automático siguen desde el conteo',
+      /inicioCiclo: ini \? ini\.getTime\(\) : 0/.test(mh) && /desde: ini \? ini\.toISOString\(\) : ''/.test(mh));
     prueba('y las llegadas calculadas (order-receipts)', /SK\.inicioRealYa\(\)/.test(leer('src/order-receipts.js')));
   }
 
