@@ -492,8 +492,8 @@ etiqueta es el del radio más estrecho entre sus dos bordes), y la tanda 4
 (aprobada y en main el 2026-11-24, con la etiqueta de WhistlePig rehecha:
 en arco y envolviendo la botella),
 la primera CALCADA: Oban, Boulard, Balvenie, Michter's, Skrewball, Bols,
-2 Gingers, Dad's Hat y WhistlePig; y la tanda 5 (2026-11-24, en develop,
-pendiente de que Axel la apruebe sobre la lámina): Frangelico, St-Germain,
+2 Gingers, Dad's Hat y WhistlePig; y la tanda 5 (aprobada y en main el 2026-11-24, con la F de Frangelico
+dentro de su panel: un renglón `justo` lleva el ancho medido de su letra): Frangelico, St-Germain,
 Mozart, Averna, Blade and Bow, Don Julio Añejo (de su foto, `dj.png`; la de
 `djrepo` es la silueta `don_julio`, Blanco y Reposado), Nikka Coffey Grain,
 Jura y Drambuie. Smirnoff se dejó fuera: su
