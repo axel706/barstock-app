@@ -492,7 +492,11 @@ etiqueta es el del radio más estrecho entre sus dos bordes), y la tanda 4
 (aprobada y en main el 2026-11-24, con la etiqueta de WhistlePig rehecha:
 en arco y envolviendo la botella),
 la primera CALCADA: Oban, Boulard, Balvenie, Michter's, Skrewball, Bols,
-2 Gingers, Dad's Hat y WhistlePig. Smirnoff se dejó fuera: su
+2 Gingers, Dad's Hat y WhistlePig; y la tanda 5 (2026-11-24, en develop,
+pendiente de que Axel la apruebe sobre la lámina): Frangelico, St-Germain,
+Mozart, Averna, Blade and Bow, Don Julio Añejo (de su foto, `dj.png`; la de
+`djrepo` es la silueta `don_julio`, Blanco y Reposado), Nikka Coffey Grain,
+Jura y Drambuie. Smirnoff se dejó fuera: su
 silueta salió de la foto de Vanilla y la comparten los sabores, y la
 No. 21 tiene otra etiqueta. Las
 demás se añaden por tandas, de las fotos que Axel ya mandó para las
@@ -520,7 +524,13 @@ oscuro, un relieve) o lo que de verdad es un rectángulo, y la lámina lo
 dice. El texto sigue siendo barras: calcar letras pondría palabras
 reales. Las tandas 1–3 se quedan como están salvo la botella que Axel
 señale. `marcasFor` redondea cada vértice sólo en sus 3 px: redondear
-entre puntos medios le comía las esquinas a un rectángulo.
+entre puntos medios le comía las esquinas a un rectángulo. **Lo que da la
+vuelta a la botella la ENVUELVE** (Axel, 2026-11-24, sobre WhistlePig:
+"debe envolver la botella, no cortarse"): etiquetas que llegan al canto,
+cápsulas, fundas y bandas del cuello van con sus lados más allá del borde
+y la silueta las recorta; sólo queda por dentro lo que en la foto es más
+angosto que la botella. Y cada calco se mira también como el dibujo SOLO,
+recortado por la silueta: es lo que ve Axel en la lámina.
 
 **El estándar de cada tanda** (Axel, 2026-11-22, al aprobar la tanda 1:
 "los dibujos deben ser precisos y calcados en proporción con la real
@@ -555,7 +565,11 @@ la que se cuenta: una etiqueta corrida es un conteo mal hecho.
    - `calcar.py`: el contorno de una marca sacado de la foto, por
      color (RGB, `hsv:` por tono, o los dos sumados con `+`), listo para
      pegar como `{tipo: 'dibujo', puntos}`. Deja `calco-<clave>.png`
-     para mirarlo antes de creérselo.
+     para mirarlo antes de creérselo. `--envuelve` para lo que da la
+     vuelta a la botella: mide sólo su borde de arriba y el de abajo,
+     cada uno dentro del ancho de la botella A SU ALTURA, y lleva los
+     lados a ±1.15 (la silueta lo recorta). `--espejo izq|der` calca la
+     mitad limpia y la refleja cuando la sombra muerde un lado.
    - `encima.js`: el dibujo ENCIMA de la foto a la misma escala.
    - `lamina.js`: la lámina de la tanda (foto, dibujo, encima).
 2. **Lo que se comprueba en cada botella, encima de la foto**, antes de

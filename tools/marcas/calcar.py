@@ -19,6 +19,17 @@
 #   --min N      el área mínima de una pieza, en px (por defecto: sólo la
 #                más grande; con --min salen todas las que pasen)
 #   --simple N   tolerancia al simplificar el borde, en px (1.2)
+#   --envuelve   una etiqueta que da la VUELTA a la botella: de frente llega
+#                de borde a borde, así que sus lados van a ±1.15 (más allá
+#                del borde) y la silueta la recorta. Sólo se calcan su borde
+#                de arriba y el de abajo, columna por columna dentro de
+#                --lados (0.9), con una mediana de 7 columnas que quita las
+#                muescas de brillos y sombras. WhistlePig salió cortada por
+#                dentro (Axel: "debe envolver la botella, no cortarse").
+#   --lados N    hasta qué x se mide el borde con --envuelve (0.9: más allá,
+#                el vidrio del canto se confunde con la etiqueta)
+#   --espejo L   L = izq o der: calca sólo esa mitad y la refleja (una
+#                etiqueta simétrica con la sombra mordiendo un lado)
 #
 # Imprime una marca `dibujo` por pieza, lista para bottle-profiles.js:
 #   {tipo: 'dibujo', puntos: [[x, y], …]}
@@ -43,6 +54,10 @@ xs = opcion('--x', None)
 cerrar = int(opcion('--cerrar', 2))
 minimo = opcion('--min', None)
 simple = float(opcion('--simple', 1.2))
+envuelve = '--envuelve' in args
+if envuelve: args.remove('--envuelve')
+lados = float(opcion('--lados', 0.9))
+espejo = opcion('--espejo', None)
 D, k, desde, hasta, color = args[0], args[1], float(args[2]), float(args[3]), args[4]
 
 c = json.load(open(D + '/cajas.json'))[k]
@@ -91,11 +106,65 @@ vista = Image.fromarray(franja.astype('uint8')).convert('RGB')
 esc = max(1, round(900 / max(franja.shape)))
 vista = vista.resize((franja.shape[1] * esc, franja.shape[0] * esc))
 capa = ImageDraw.Draw(vista, 'RGBA')
+def mediana(v, n=7):
+    h = n // 2
+    return np.array([np.median(v[max(0, i - h):i + h + 1]) for i in range(len(v))])
+def simplificar(xy):
+    if len(xy) < 3: return xy
+    return [tuple(q) for q in measure.approximate_polygon(np.array(xy, float), simple)]
 for p in elegidas:
     pieza = morphology.remove_small_holes(lab == p.label, max_size=200)
-    borde = max(measure.find_contours(np.pad(pieza, 2).astype(float), 0.5), key=len) - 2
-    pol = measure.approximate_polygon(borde, simple)[:-1]
-    pts = [[round((q[1] - cx) / medio, 3), round((c['bot'] - (q[0] + r0)) / H, 4)] for q in pol]
+    if envuelve:
+        # Sus dos bordes, columna por columna (en píxeles de la franja).
+        # Cada borde se mide dentro del ancho de la botella A SU ALTURA (del
+        # alfa de la foto): en una botella que se estrecha (Frangelico), las
+        # columnas de los lados bajaban por el canto y el borde de arriba
+        # caía en las esquinas.
+        alfa = np.asarray(Image.open(c['f']).convert('RGBA'))[..., 3] > 40
+        def radio(fila_franja):
+            f = alfa[int(fila_franja) + r0]; xs_ = np.nonzero(f)[0]
+            return (xs_.max() - xs_.min()) / 2 / medio if len(xs_) else 1
+        def borde_col(cual):
+            centro = [x for x in range(pieza.shape[1]) if abs((x - cx) / medio) <= 0.3 and pieza[:, x].any()]
+            f0 = np.median([(np.nonzero(pieza[:, x])[0].min() if cual == 'arr' else np.nonzero(pieza[:, x])[0].max()) for x in centro])
+            lim = lados * radio(f0)
+            cols = [x for x in range(pieza.shape[1]) if abs((x - cx) / medio) <= lim and pieza[:, x].any()]
+            if espejo == 'izq': cols = [x for x in cols if x <= cx]
+            if espejo == 'der': cols = [x for x in cols if x >= cx]
+            v = np.array([(np.nonzero(pieza[:, x])[0].min() if cual == 'arr' else np.nonzero(pieza[:, x])[0].max() + 1) for x in cols], float)
+            return [(x - cx) / medio for x in cols], mediana(v)
+        def con_espejo(X, v):
+            if not espejo: return X, v
+            if espejo == 'der': X, v = [-q for q in X][::-1], v[::-1]
+            return X + [-q for q in X[::-1]], np.concatenate([v, v[::-1]])
+        Xa, arr = con_espejo(*borde_col('arr'))
+        Xb, aba = con_espejo(*borde_col('aba'))
+        alto = lambda r: (c['bot'] - (r + r0)) / H
+        top = simplificar([(x * medio, r) for x, r in zip(Xa, arr)])
+        bot = simplificar([(x * medio, r) for x, r in zip(Xb, aba)])
+        pts = ([[-1.15, round(alto(top[0][1]), 4)]] + [[round(x / medio, 3), round(alto(r), 4)] for x, r in top] +
+               [[1.15, round(alto(top[-1][1]), 4)], [1.15, round(alto(bot[-1][1]), 4)]] +
+               [[round(x / medio, 3), round(alto(r), 4)] for x, r in bot[::-1]] + [[-1.15, round(alto(bot[0][1]), 4)]])
+        pol = [((c['bot'] - y * H) - r0, cx + x * medio) for x, y in pts]
+    else:
+        borde = max(measure.find_contours(np.pad(pieza, 2).astype(float), 0.5), key=len) - 2
+        pol = measure.approximate_polygon(borde, simple)[:-1]
+        pts = [[round((q[1] - cx) / medio, 3), round((c['bot'] - (q[0] + r0)) / H, 4)] for q in pol]
+        if espejo:
+            # La mitad tiene que ir SEGUIDA: el contorno empieza en cualquier
+            # punto, y tomar los de un lado sin más los desordenaba (el
+            # reflejo salía cruzado). Se rota para empezar donde entra a
+            # esa mitad.
+            lado = (lambda q: q[0] <= 0) if espejo == 'izq' else (lambda q: q[0] >= 0)
+            n = len(pts)
+            i0 = next((i for i in range(n) if lado(pts[i]) and not lado(pts[i - 1])), 0)
+            pts = pts[i0:] + pts[:i0]
+            mitad = []
+            for q in pts:
+                if not lado(q): break
+                mitad.append(q)
+            pts = mitad + [[-x, y] for x, y in mitad[::-1] if x != 0]
+            pol = [((c['bot'] - y * H) - r0, cx + x * medio) for x, y in pts]
     print("{tipo: 'dibujo', puntos: [" + ', '.join('[%s, %s]' % (a, b) for a, b in pts) + ']},')
     print('  // %d puntos · alto %.3f–%.3f · x %.2f a %.2f · %d px' % (
         len(pts), min(q[1] for q in pts), max(q[1] for q in pts), min(q[0] for q in pts), max(q[0] for q in pts), p.area), file=sys.stderr)

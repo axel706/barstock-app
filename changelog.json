@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261124-141241",
+    "items": [
+      "Counting: label guides on 9 more bottles",
+      "Frangelico, St-Germain, Mozart, Averna, Jura and more"
+    ]
+  },
+  {
     "build": "20261124-111501",
     "items": [
       "Counting: WhistlePig label wraps the bottle"
@@ -183,12 +190,6 @@
     "items": [
       "Counting: the line’s handles moved to the edges",
       "The level in the bottle stays in view"
-    ]
-  },
-  {
-    "build": "20261122-114743",
-    "items": [
-      "New app icon: the glass B"
     ]
   }
 ]

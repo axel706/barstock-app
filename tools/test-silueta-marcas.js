@@ -50,15 +50,21 @@ const TANDA1 = ['jameson', 'buffalo_trace', 'bulleit', 'fireball', 'red_label', 
 const TANDA2 = ['grey_goose', 'ketel_one', 'captain_morgan', 'malibu', 'cointreau', 'disaronno', 'patron', 'don_julio_blanco', 't1800'];
 // La tanda 3 (2026-11-23, en develop pendiente de su lámina).
 const TANDA3 = ['casa_noble', 'glenfiddich', 'chivas', 'monkey_shoulder', 'ciroc', 'empress', 'buchanans', 'tullamore', 'blantons'];
-for (const k of ['woodford', 'elijah_craig', 'basil_hayden'].concat(TANDA1, TANDA2, TANDA3)) {
+// Las tandas 4 y 5, calcadas: también tienen que estar bien formadas.
+const TANDA4 = ['oban', 'boulard', 'balvenie', 'michters', 'skrewball', 'bols', 'two_gingers', 'dads_hat', 'whistlepig'];
+const TANDA5 = ['frangelico', 'st_germain', 'mozart', 'averna', 'blade_and_bow', 'don_julio_anejo', 'nikka_coffey', 'jura', 'drambuie'];
+for (const k of ['woodford', 'elijah_craig', 'basil_hayden'].concat(TANDA1, TANDA2, TANDA3, TANDA4, TANDA5)) {
   const P = B.PROFILES[k];
   const ms = P && P.marcas;
   prueba(k + ': lleva marcas', Array.isArray(ms) && ms.length >= 3, ms && ms.length);
+  // Una marca girada (`rot`) puede ser más larga que el ancho de la
+  // botella: su ancho corre por el giro (ST-GERMAIN va de arriba abajo por
+  // su tira, 1.27; la banda de Red Label la cruza en diagonal).
   prueba(k + ': bien formadas (alturas dentro de la botella, de abajo arriba)', Array.isArray(ms) && ms.every(m =>
     (m.x === undefined || (typeof m.x === 'number' && Math.abs(m.x) < 1)) &&
     (m.tipo === 'dibujo' ? (Array.isArray(m.puntos) && m.puntos.length >= 3 && m.puntos.every(([px, py]) => Math.abs(px) <= 1.2 && py > 0 && py < 1))
       : m.tipo === 'sello' ? (m.y > 0 && m.y < 1 && m.r > 0 && m.r < 0.2)
-      : (Array.isArray(m.y) && m.y[0] >= 0 && m.y[1] <= 1 && m.y[0] < m.y[1] && m.ancho > 0 && m.ancho <= (m.tipo === 'etiqueta' && m.rot ? 2 : 1.1))) &&
+      : (Array.isArray(m.y) && m.y[0] >= 0 && m.y[1] <= 1 && m.y[0] < m.y[1] && m.ancho > 0 && m.ancho <= (m.rot ? 2 : 1.1))) &&
     (m.tipo === 'dibujo' || Array.isArray(m.renglones)) && (m.renglones || []).every(r => r.g > 0 && r.g < 0.1 && r.largo > 0 && r.largo <= 1 &&
       Array.isArray(r.palabras) && r.palabras.length >= 1 && r.palabras.every(n => Number.isInteger(n) && n > 0))));
   prueba(k + ': en los datos no hay palabras, sólo cuántas letras', Array.isArray(ms) &&
@@ -224,7 +230,6 @@ console.log('\ntanda 4: calcada (Axel, 2026-11-24: "calcarlas")');
   }
   // Desde la tanda 4 las etiquetas se calcan de la foto: cada botella
   // lleva al menos un `dibujo` con su contorno.
-  const TANDA4 = ['oban', 'boulard', 'balvenie', 'michters', 'skrewball', 'bols', 'two_gingers', 'dads_hat', 'whistlepig'];
   for (const k of TANDA4) {
     const ms = (B.PROFILES[k] && B.PROFILES[k].marcas) || [];
     prueba(k + ': lleva una etiqueta calcada (un dibujo de 12 puntos o más)', ms.some(m => m.tipo === 'dibujo' && m.puntos.length >= 12));
@@ -258,6 +263,29 @@ console.log('\ntanda 4: calcada (Axel, 2026-11-24: "calcarlas")');
   const cerca = xy.length > 0 && lejos <= 2;
   prueba('un rectángulo calcado conserva sus esquinas (a 2 px)', cerca, lejos.toFixed(1) + ' px');
   delete P.__prueba_d;
+}
+
+console.log('\ntanda 5: calcada, y lo que envuelve llega al borde');
+{
+  // Las que se calcaron llevan su contorno; Mozart (la medalla, del mismo
+  // tono que el aluminio), Averna (un rombo de bordes rectos) y Jura (dos
+  // rectángulos) van con sus esquinas o su óvalo medidos, y lo dice su
+  // comentario.
+  const CALCADAS = ['frangelico', 'st_germain', 'blade_and_bow', 'don_julio_anejo', 'nikka_coffey', 'drambuie'];
+  for (const k of CALCADAS) {
+    const ms = (B.PROFILES[k] && B.PROFILES[k].marcas) || [];
+    prueba(k + ': lleva una etiqueta calcada (un dibujo de 12 puntos o más)', ms.some(m => m.tipo === 'dibujo' && m.puntos.length >= 12));
+  }
+  // Lo que da la vuelta a la botella (etiquetas, cápsulas, fundas, el
+  // cordón de Frangelico) llega de borde a borde: sus lados pasan del
+  // borde y la silueta lo recorta (Axel, sobre WhistlePig: "debe envolver
+  // la botella, no cortarse").
+  const ENVUELVEN = ['frangelico', 'mozart', 'averna', 'blade_and_bow', 'don_julio_anejo', 'nikka_coffey', 'jura', 'drambuie'];
+  for (const k of ENVUELVEN) {
+    const ms = (B.PROFILES[k] && B.PROFILES[k].marcas) || [];
+    prueba(k + ': lo que envuelve llega al borde por los dos lados', ms.some(m => m.tipo === 'dibujo' &&
+      Math.min(...m.puntos.map(q => q[0])) <= -1 && Math.max(...m.puntos.map(q => q[0])) >= 1));
+  }
 }
 
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');

@@ -319,7 +319,35 @@
       // ancho no lo distingue. El corcho entra por el cuello, asi que la
       // linea va donde termina el hombro y empieza el cuello: .70, donde
       // ya cabe el 98 % de lo que hay hasta el tapon.
-      p: [[0,0.4971], [0.0156,0.8117], [0.0469,0.9177], [0.0781,0.9258], [0.1094,0.9352], [0.1406,0.9433], [0.1719,0.9501], [0.2031,0.9561], [0.2344,0.9605], [0.2656,0.9633], [0.2969,0.9693], [0.3281,0.974], [0.3594,0.9781], [0.3906,0.9825], [0.4219,0.9868], [0.4531,0.9926], [0.4844,0.9956], [0.5156,0.9991], [0.5469,0.9949], [0.5781,0.9676], [0.6094,0.8762], [0.6406,0.6093], [0.6719,0.3451], [0.7031,0.3266], [0.7344,0.3246], [0.7656,0.3236], [0.7969,0.3229], [0.8281,0.4207], [0.8594,0.4437], [0.8906,0.4248], [0.9219,0.4426], [0.9531,0.416], [0.9844,0.2908], [1,0.1564]]
+      p: [[0,0.4971], [0.0156,0.8117], [0.0469,0.9177], [0.0781,0.9258], [0.1094,0.9352], [0.1406,0.9433], [0.1719,0.9501], [0.2031,0.9561], [0.2344,0.9605], [0.2656,0.9633], [0.2969,0.9693], [0.3281,0.974], [0.3594,0.9781], [0.3906,0.9825], [0.4219,0.9868], [0.4531,0.9926], [0.4844,0.9956], [0.5156,0.9991], [0.5469,0.9949], [0.5781,0.9676], [0.6094,0.8762], [0.6406,0.6093], [0.6719,0.3451], [0.7031,0.3266], [0.7344,0.3246], [0.7656,0.3236], [0.7969,0.3229], [0.8281,0.4207], [0.8594,0.4437], [0.8906,0.4248], [0.9219,0.4426], [0.9531,0.416], [0.9844,0.2908], [1,0.1564]],
+      // Las marcas (tanda 5, 2026-11-24, calcadas de la foto del Añejo, dj.png, con
+      // tools/marcas/calcar.py): la etiqueta crema, calcada de la mitad derecha y
+      // reflejada (por la izquierda se pegaba a las letras en relieve), más angosta
+      // que la botella porque la rodea el marco oscuro del vidrio, con 1942,
+      // TEQUILA, DonJulio y AÑEJO en su pastilla; TEQUILA DON JULIO en relieve, en
+      // arco sobre la etiqueta (grande: va); y la banda de cuero del cuello, que
+      // ENVUELVE, con AÑEJO y TEQUILA. No van: el sombrero y el sello dorado
+      // (dibujos chicos), RESERVA DE, la línea de 100% de agave, la firma y el
+      // número de botella (letra chica), ni el 1942 chico de los lados del cuello.
+      marcas: [
+        // La etiqueta crema, calcada (la mitad derecha reflejada: por la
+        // izquierda se pegaba a las letras en relieve del hombro). Es más
+        // angosta que la botella: el marco oscuro del vidrio la rodea.
+        {tipo: 'dibujo', puntos: [[0.0, 0.508], [0.031, 0.5059], [0.216, 0.5083], [0.242, 0.5012], [0.304, 0.5012], [0.401, 0.4894], [0.454, 0.48], [0.564, 0.4481], [0.634, 0.4009], [0.643, 0.2594], [0.634, 0.2406], [0.608, 0.2288], [0.608, 0.2123], [0.52, 0.1745], [0.427, 0.1521], [0.26, 0.1333], [0.11, 0.1262], [-0.11, 0.1262], [-0.26, 0.1333], [-0.427, 0.1521], [-0.52, 0.1745], [-0.608, 0.2123], [-0.608, 0.2288], [-0.634, 0.2406], [-0.643, 0.2594], [-0.634, 0.4009], [-0.564, 0.4481], [-0.454, 0.48], [-0.401, 0.4894], [-0.304, 0.5012], [-0.242, 0.5012], [-0.216, 0.5083], [-0.031, 0.5059], [-0.004, 0.513]]},
+        // La banda de cuero del cuello ENVUELVE, de 0.70 a 0.815.
+        {tipo: 'dibujo', puntos: [[-1.15, 0.7], [1.15, 0.7], [1.15, 0.815], [-1.15, 0.815]]},
+        // La pastilla roja de AÑEJO, medida en la rejilla.
+        {tipo: 'etiqueta', y: [0.193, 0.218], ancho: 0.205, x: 0.128, renglones: []},
+        // TEQUILA DON JULIO en relieve, en arco sobre la etiqueta: grande,
+        // va (se coloca por sus puntas).
+        {tipo: 'texto', y: [0.435, 0.455], ancho: 0.283, renglones: [{g: 0.02, largo: 1, palabras: [2, 2]}]},
+        {tipo: 'texto', y: [0.398, 0.412], ancho: 0.263, renglones: [{g: 0.014, largo: 1, palabras: [7]}]},
+        {tipo: 'texto', y: [0.305, 0.37], ancho: 0.582, renglones: [{g: 0.065, largo: 1, palabras: [3, 5]}]},
+        {tipo: 'texto', y: [0.199, 0.213], ancho: 0.163, x: 0.124, renglones: [{g: 0.014, largo: 1, palabras: [5]}]},
+        {tipo: 'texto', y: [0.445, 0.475], ancho: 0.781, arco: 0.217, renglones: [{g: 0.03, largo: 1, palabras: [7, 3, 5]}]},
+        {tipo: 'texto', y: [0.768, 0.787], ancho: 0.519, x: -0.076, renglones: [{g: 0.019, largo: 1, palabras: [5]}]},
+        {tipo: 'texto', y: [0.722, 0.742], ancho: 0.544, x: 0.143, renglones: [{g: 0.02, largo: 1, palabras: [7]}]}
+      ],
     },
     bluecoat: {
       name: 'Bluecoat', asp: 3.44, yFull: 0.73, pourable: true,
@@ -544,7 +572,32 @@
       //
       // Cuerpo con una cintura suave entre la base y el hombro, hombro corto
       // del 65 % al 75 % y cuello recto. yFull .68, a media bajada.
-      p: [[0,0.4953], [0.0156,0.7592], [0.0469,0.923], [0.0781,0.9735], [0.1094,0.9961], [0.1406,0.9968], [0.1719,0.9901], [0.2031,0.9751], [0.2344,0.9523], [0.2656,0.929], [0.2969,0.91], [0.3281,0.8965], [0.3594,0.8927], [0.3906,0.8927], [0.4219,0.8987], [0.4531,0.9181], [0.4844,0.9389], [0.5156,0.9647], [0.5469,0.9869], [0.5781,0.9944], [0.6094,0.9876], [0.6406,0.9421], [0.6719,0.81], [0.7031,0.5516], [0.7344,0.4615], [0.7656,0.4477], [0.7969,0.4147], [0.8281,0.3715], [0.8594,0.3482], [0.8906,0.339], [0.9219,0.3552], [0.9531,0.3616], [0.9844,0.3469], [1,0.2448]]
+      p: [[0,0.4953], [0.0156,0.7592], [0.0469,0.923], [0.0781,0.9735], [0.1094,0.9961], [0.1406,0.9968], [0.1719,0.9901], [0.2031,0.9751], [0.2344,0.9523], [0.2656,0.929], [0.2969,0.91], [0.3281,0.8965], [0.3594,0.8927], [0.3906,0.8927], [0.4219,0.8987], [0.4531,0.9181], [0.4844,0.9389], [0.5156,0.9647], [0.5469,0.9869], [0.5781,0.9944], [0.6094,0.9876], [0.6406,0.9421], [0.6719,0.81], [0.7031,0.5516], [0.7344,0.4615], [0.7656,0.4477], [0.7969,0.4147], [0.8281,0.3715], [0.8594,0.3482], [0.8906,0.339], [0.9219,0.3552], [0.9531,0.3616], [0.9844,0.3469], [1,0.2448]],
+      // Las marcas (tanda 5, 2026-11-24, medidas sobre la foto con tools/marcas):
+      // las dos etiquetas del frente, más angostas que la botella, con sus cuatro
+      // esquinas medidas sobre el calco (son rectángulos; la sombra de la izquierda
+      // dentaba el calco), con JURA, SINGLE MALT SCOTCH WHISKY, el 12 y SHERRY CASK
+      // FINISH; la cápsula granate del cuello, que ENVUELVE, con su JURA; y THE
+      // ISLE OF JURA en relieve en el hombro (grande: va). No van: AGED / YEARS, las
+      // notas de cata, el texto de la etiqueta de abajo y la firma (letra chica), ni
+      // el DISTILLERY CO en relieve de abajo (tenue).
+      marcas: [
+        // Las dos etiquetas del frente, más angostas que la botella: son
+        // rectángulos y van con sus cuatro esquinas, medidas sobre el calco
+        // (la sombra de la izquierda mordía el borde: con el calco tal cual
+        // salía dentado).
+        {tipo: 'dibujo', puntos: [[-0.607, 0.308], [0.584, 0.308], [0.584, 0.532], [-0.607, 0.532]]},
+        {tipo: 'dibujo', puntos: [[-0.607, 0.205], [0.584, 0.205], [0.584, 0.288], [-0.607, 0.288]]},
+        // La cápsula granate del cuello ENVUELVE, de 0.792 a la boca.
+        {tipo: 'dibujo', puntos: [[-1.15, 0.792], [1.15, 0.792], [1.15, 0.995], [-1.15, 0.995]]},
+        // THE ISLE OF JURA, en relieve en el hombro: grande, va.
+        {tipo: 'texto', y: [0.465, 0.511], ancho: 0.564, renglones: [{g: 0.046, largo: 1, palabras: [4]}]},
+        {tipo: 'texto', y: [0.44, 0.453], ancho: 0.618, renglones: [{g: 0.013, largo: 1, palabras: [6, 4, 6, 6]}]},
+        {tipo: 'texto', y: [0.37, 0.424], ancho: 0.17, renglones: [{g: 0.054, largo: 1, palabras: [2]}]},
+        {tipo: 'texto', y: [0.343, 0.353], ancho: 0.44, renglones: [{g: 0.01, largo: 1, palabras: [6, 4, 6]}]},
+        {tipo: 'texto', y: [0.638, 0.66], ancho: 0.784, renglones: [{g: 0.022, largo: 1, palabras: [3, 4, 2, 4]}]},
+        {tipo: 'texto', y: [0.808, 0.827], ancho: 0.604, renglones: [{g: 0.019, largo: 1, palabras: [4]}]}
+      ],
     },
     macallan: {
       name: 'Macallan', asp: 3.87, yFull: 0.75, pourable: true,
@@ -637,7 +690,33 @@
       // 73 %, cuello con la capsula. Por la categoria caia en liqueur_slim,
       // que es esbelta: la mitad de ancha para la misma altura. yFull
       // .72: cubre el hombro.
-      p: [[0,0.7935], [0.0156,0.8405], [0.0469,0.8872], [0.0781,0.9011], [0.1094,0.9122], [0.1406,0.9213], [0.1719,0.9296], [0.2031,0.9387], [0.2344,0.9447], [0.2656,0.9518], [0.2969,0.9607], [0.3281,0.9662], [0.3594,0.9716], [0.3906,0.9798], [0.4219,0.9826], [0.4531,0.9902], [0.4844,0.9902], [0.5156,0.9951], [0.5469,1], [0.5781,0.9936], [0.6094,0.945], [0.6406,0.8439], [0.6719,0.6793], [0.7031,0.4667], [0.7344,0.3756], [0.7656,0.3629], [0.7969,0.3503], [0.8281,0.3393], [0.8594,0.347], [0.8906,0.3561], [0.9219,0.3828], [0.9531,0.428], [0.9844,0.415], [1,0.348]]
+      p: [[0,0.7935], [0.0156,0.8405], [0.0469,0.8872], [0.0781,0.9011], [0.1094,0.9122], [0.1406,0.9213], [0.1719,0.9296], [0.2031,0.9387], [0.2344,0.9447], [0.2656,0.9518], [0.2969,0.9607], [0.3281,0.9662], [0.3594,0.9716], [0.3906,0.9798], [0.4219,0.9826], [0.4531,0.9902], [0.4844,0.9902], [0.5156,0.9951], [0.5469,1], [0.5781,0.9936], [0.6094,0.945], [0.6406,0.8439], [0.6719,0.6793], [0.7031,0.4667], [0.7344,0.3756], [0.7656,0.3629], [0.7969,0.3503], [0.8281,0.3393], [0.8594,0.347], [0.8906,0.3561], [0.9219,0.3828], [0.9531,0.428], [0.9844,0.415], [1,0.348]],
+      // Las marcas (tanda 5, 2026-11-24, calcadas de la foto con tools/marcas/calcar.py):
+      // la banda blanca con su medallón redondo arriba, calcada, con DRAMBUIE; el
+      // pergamino de debajo, más angosto que la botella, con sus cuatro esquinas
+      // medidas sobre el calco (es un rectángulo; calcado, se le pegaba un pico de
+      // la banda), con THE ISLE of SKYE, LIQUEUR, AGED SCOTCH WHISKY, HEATHER HONEY
+      // y HERBS & SPICES; y la banda roja del cuello, que ENVUELVE, con SINCE 1745.
+      // No van: SINCE 1745 y A UNIQUE BLEND OF del pergamino, las líneas de abajo
+      // (letra chica), el enrejado de letras de la banda del cuello (adorno) ni la
+      // tapa gris.
+      marcas: [
+        // La banda blanca con su medallón redondo arriba, calcada.
+        {tipo: 'dibujo', puntos: [[0.775, 0.3216], [0.76, 0.3226], [0.77, 0.3667], [0.725, 0.3758], [0.382, 0.3758], [0.225, 0.3477], [0.059, 0.3377], [-0.118, 0.3437], [-0.216, 0.3537], [-0.314, 0.3737], [-0.471, 0.3758], [-0.676, 0.3758], [-0.711, 0.3707], [-0.711, 0.3226], [-0.725, 0.3216], [-0.74, 0.3667], [-0.765, 0.3737], [-0.809, 0.3768], [-0.828, 0.4609], [-0.814, 0.4639], [-0.324, 0.4639], [-0.206, 0.486], [-0.02, 0.5], [0.069, 0.5], [0.216, 0.492], [0.382, 0.4639], [0.853, 0.4639], [0.848, 0.3788], [0.779, 0.3667]]},
+        // El pergamino de debajo: un rectángulo (su borde de arriba queda
+        // bajo la banda), con sus cuatro esquinas medidas sobre el calco:
+        // calcado, se le pegaba un pico de la banda y el borde salía ondulado.
+        {tipo: 'dibujo', puntos: [[-0.706, 0.114], [0.752, 0.114], [0.752, 0.372], [-0.706, 0.372]]},
+        // La banda roja del cuello ENVUELVE, de 0.756 a 0.862.
+        {tipo: 'dibujo', puntos: [[-1.15, 0.756], [1.15, 0.756], [1.15, 0.862], [-1.15, 0.862]]},
+        {tipo: 'texto', y: [0.395, 0.435], ancho: 0.755, x: 0.03, renglones: [{g: 0.04, largo: 1, palabras: [8]}]},
+        {tipo: 'texto', y: [0.285, 0.302], ancho: 0.574, x: 0.037, renglones: [{g: 0.017, largo: 1, palabras: [3, 4, 2, 4]}]},
+        {tipo: 'texto', y: [0.258, 0.275], ancho: 0.318, x: 0.037, renglones: [{g: 0.017, largo: 1, palabras: [7]}]},
+        {tipo: 'texto', y: [0.212, 0.226], ancho: 0.476, x: 0.035, renglones: [{g: 0.014, largo: 1, palabras: [4, 6, 6]}]},
+        {tipo: 'texto', y: [0.195, 0.209], ancho: 0.356, x: 0.031, renglones: [{g: 0.014, largo: 1, palabras: [7, 5]}]},
+        {tipo: 'texto', y: [0.177, 0.191], ancho: 0.398, renglones: [{g: 0.014, largo: 1, palabras: [5, 1, 6]}]},
+        {tipo: 'texto', y: [0.771, 0.784], ancho: 0.572, x: 0.241, renglones: [{g: 0.013, largo: 1, palabras: [5, 4]}]}
+      ],
     },
     fireball: {
       name: 'Fireball', asp: 3.06, yFull: 0.75, pourable: true,
@@ -876,7 +955,31 @@
       // desajuste de area 0.53 %. Recta, hombro del 64 % al 77 %, cuello
       // recto. yFull .71 medida viendo el liquido en la foto, justo debajo
       // de la franja de vidrio vacio.
-      p: [[0,0.6496], [0.0156,0.8763], [0.0469,0.983], [0.0781,0.9773], [0.1094,0.9773], [0.1406,0.9773], [0.1719,0.9836], [0.2031,0.9886], [0.2344,0.9886], [0.2656,0.9886], [0.2969,0.9886], [0.3281,0.9886], [0.3594,0.9886], [0.3906,0.9933], [0.4219,0.9943], [0.4531,0.9943], [0.4844,0.9943], [0.5156,0.995], [0.5469,1], [0.5781,1], [0.6094,1], [0.6406,0.9923], [0.6719,0.9391], [0.7031,0.8145], [0.7344,0.5521], [0.7656,0.3952], [0.7969,0.3864], [0.8281,0.381], [0.8594,0.3737], [0.8906,0.3832], [0.9219,0.4071], [0.9531,0.4017], [0.9844,0.3783], [1,0.303]]
+      p: [[0,0.6496], [0.0156,0.8763], [0.0469,0.983], [0.0781,0.9773], [0.1094,0.9773], [0.1406,0.9773], [0.1719,0.9836], [0.2031,0.9886], [0.2344,0.9886], [0.2656,0.9886], [0.2969,0.9886], [0.3281,0.9886], [0.3594,0.9886], [0.3906,0.9933], [0.4219,0.9943], [0.4531,0.9943], [0.4844,0.9943], [0.5156,0.995], [0.5469,1], [0.5781,1], [0.6094,1], [0.6406,0.9923], [0.6719,0.9391], [0.7031,0.8145], [0.7344,0.5521], [0.7656,0.3952], [0.7969,0.3864], [0.8281,0.381], [0.8594,0.3737], [0.8906,0.3832], [0.9219,0.4071], [0.9531,0.4017], [0.9844,0.3783], [1,0.303]],
+      // Las marcas (tanda 5, 2026-11-24, calcadas de la foto con tools/marcas/calcar.py):
+      // la etiqueta rosa, que ENVUELVE la botella (calcada por su tono, de la mitad
+      // izquierda reflejada: la sombra de la derecha la lleva a otro color), con
+      // NIKKA, COFFEY GRAIN, WHISKY, el renglón en katakana y el sello rojo; y la
+      // cápsula negra del cuello, que también envuelve, con sus tres renglones. No
+      // van: PRODUCED BY… y la línea de abajo (alc. 45%, NIKKA WHISKY, en letra
+      // chica) ni la raya de debajo de JAPAN.
+      marcas: [
+        // La etiqueta rosa ENVUELVE la botella (de 0.297 a 0.564): calcada
+        // por su tono, de la mitad izquierda reflejada (la sombra de la
+        // derecha la oscurece hasta otro color).
+        {tipo: 'dibujo', puntos: [[-1.15, 0.5642], [-0.897, 0.5642], [0.897, 0.5642], [1.15, 0.5642], [1.15, 0.3002], [0.886, 0.3002], [0.669, 0.2966], [0.577, 0.3002], [0.246, 0.3002], [0.177, 0.2966], [-0.177, 0.2966], [-0.246, 0.3002], [-0.577, 0.3002], [-0.669, 0.2966], [-0.886, 0.3002], [-1.15, 0.3002]]},
+        // La cápsula negra del cuello ENVUELVE, de 0.798 a la boca.
+        {tipo: 'dibujo', puntos: [[-1.15, 0.798], [1.15, 0.798], [1.15, 0.995], [-1.15, 0.995]]},
+        // El sello rojo de la derecha.
+        {tipo: 'sello', y: 0.415, r: 0.033, x: 0.64, renglones: []},
+        {tipo: 'texto', y: [0.508, 0.528], ancho: 0.335, x: -0.417, renglones: [{g: 0.02, largo: 1, palabras: [5]}]},
+        {tipo: 'texto', y: [0.477, 0.498], ancho: 0.771, renglones: [{g: 0.021, largo: 1, palabras: [6, 5]}]},
+        {tipo: 'texto', y: [0.447, 0.468], ancho: 0.425, x: -0.328, renglones: [{g: 0.021, largo: 1, palabras: [6]}]},
+        {tipo: 'texto', y: [0.362, 0.383], ancho: 0.315, x: -0.442, renglones: [{g: 0.021, largo: 1, palabras: [7]}]},
+        {tipo: 'texto', y: [0.846, 0.854], ancho: 0.432, x: -0.532, renglones: [{g: 0.008, largo: 1, palabras: [5]}]},
+        {tipo: 'texto', y: [0.83, 0.84], ancho: 0.985, renglones: [{g: 0.01, largo: 1, palabras: [6, 5]}]},
+        {tipo: 'texto', y: [0.813, 0.823], ancho: 0.53, x: -0.427, renglones: [{g: 0.01, largo: 1, palabras: [6]}]}
+      ],
     },
     grey_goose: {
       name: 'Grey Goose', asp: 4.76, yFull: 0.68, pourable: true,
@@ -1493,7 +1596,31 @@
       // la cintura donde va el cordon es angosta y la capucha, encima, es
       // mas ancha: ese escalon es de la botella. yFull .83 medida viendo el
       // liquido, ya en el cuello.
-      p: [[0,0.3577], [0.0156,0.7825], [0.0469,0.9785], [0.0781,0.9634], [0.1094,0.9465], [0.1406,0.9247], [0.1719,0.9082], [0.2031,0.8852], [0.2344,0.8659], [0.2656,0.8465], [0.2969,0.8286], [0.3281,0.8035], [0.3594,0.7862], [0.3906,0.7712], [0.4219,0.7554], [0.4531,0.7188], [0.4844,0.7647], [0.5156,0.9448], [0.5469,0.9925], [0.5781,0.9498], [0.6094,0.9053], [0.6406,0.8594], [0.6719,0.8137], [0.7031,0.7661], [0.7344,0.7217], [0.7656,0.6755], [0.7969,0.5674], [0.8281,0.3357], [0.8594,0.33], [0.8906,0.3449], [0.9219,0.3544], [0.9531,0.3644], [0.9844,0.3293], [1,0.1423]]
+      p: [[0,0.3577], [0.0156,0.7825], [0.0469,0.9785], [0.0781,0.9634], [0.1094,0.9465], [0.1406,0.9247], [0.1719,0.9082], [0.2031,0.8852], [0.2344,0.8659], [0.2656,0.8465], [0.2969,0.8286], [0.3281,0.8035], [0.3594,0.7862], [0.3906,0.7712], [0.4219,0.7554], [0.4531,0.7188], [0.4844,0.7647], [0.5156,0.9448], [0.5469,0.9925], [0.5781,0.9498], [0.6094,0.9053], [0.6406,0.8594], [0.6719,0.8137], [0.7031,0.7661], [0.7344,0.7217], [0.7656,0.6755], [0.7969,0.5674], [0.8281,0.3357], [0.8594,0.33], [0.8906,0.3449], [0.9219,0.3544], [0.9531,0.3644], [0.9844,0.3293], [1,0.1423]],
+      // Las marcas (tanda 5, 2026-11-24, calcadas de la foto con tools/marcas/calcar.py):
+      // la etiqueta de abajo, que ENVUELVE la botella (de borde a borde, la silueta la
+      // recorta), con Frangelico, LIQUEUR, la tira de WITH HAZELNUT DISTILLATE y el
+      // sello de la derecha; el cordón blanco de la cintura, que da la vuelta; el panel
+      // de la F (calcado de la mitad izquierda y reflejado: la sombra mordía la
+      // derecha) y su F, y la cápsula negra del cuello, que también envuelve. No van: el párrafo de la leyenda y las líneas de 20% / 750 ML
+      // (letra chica), el texto de la cápsula del cuello (oscuro y chico) ni el
+      // relieve del vidrio alrededor del panel.
+      marcas: [
+        // La etiqueta de abajo, calcada, ENVUELVE la botella (de 0.07 a 0.457).
+        {tipo: 'dibujo', puntos: [[-1.15, 0.4575], [-0.632, 0.4575], [0.632, 0.4575], [1.15, 0.4575], [1.15, 0.0714], [0.865, 0.0714], [0.755, 0.0741], [0.718, 0.0705], [0.656, 0.0705], [0.607, 0.0651], [0.362, 0.0615], [0.178, 0.0615], [0.092, 0.0669], [-0.031, 0.0669], [-0.08, 0.0615], [-0.448, 0.0615], [-0.632, 0.0651], [-0.681, 0.0705], [-0.779, 0.0723], [-0.865, 0.072], [-1.15, 0.072]]},
+        // El cordón de la cintura, blanco, da la vuelta: va de borde a borde.
+        {tipo: 'dibujo', puntos: [[-1.15, 0.474], [1.15, 0.474], [1.15, 0.487], [-1.15, 0.487]]},
+        // El panel de la F, calcado (la mitad izquierda reflejada).
+        {tipo: 'dibujo', puntos: [[-0.166, 0.5995], [-0.264, 0.6049], [-0.344, 0.6166], [-0.368, 0.7179], [-0.356, 0.7342], [-0.313, 0.7405], [-0.19, 0.7441], [-0.043, 0.7369], [0.043, 0.7369], [0.19, 0.7441], [0.313, 0.7405], [0.356, 0.7342], [0.368, 0.7179], [0.344, 0.6166], [0.264, 0.6049], [0.166, 0.5995]]},
+        {tipo: 'texto', y: [0.62, 0.71], ancho: 0.2, x: 0.1, renglones: [{g: 0.09, largo: 1, palabras: [1]}]},
+        {tipo: 'texto', y: [0.328, 0.392], ancho: 0.91, renglones: [{g: 0.064, largo: 1, palabras: [10]}]},
+        {tipo: 'texto', y: [0.297, 0.31], ancho: 0.375, x: 0.6, renglones: [{g: 0.013, largo: 1, palabras: [7]}]},
+        {tipo: 'etiqueta', y: [0.108, 0.134], ancho: 0.715, x: -0.14, renglones: []},
+        {tipo: 'texto', y: [0.116, 0.125], ancho: 0.67, x: -0.145, renglones: [{g: 0.009, largo: 1, palabras: [4, 8, 10]}]},
+        {tipo: 'sello', y: 0.12, r: 0.027, x: 0.75, renglones: []},
+        // La cápsula negra del cuello ENVUELVE, de 0.843 (encima, licor) a la boca.
+        {tipo: 'dibujo', puntos: [[-1.15, 0.843], [1.15, 0.843], [1.15, 0.995], [-1.15, 0.995]]}
+      ],
     },
     st_elder: {
       name: 'St. Elder', asp: 3.79, yFull: 0.78, pourable: true,
@@ -1514,7 +1641,29 @@
       // pellizco del cuello al 88 % y la tapa mas ancha que el cuello. Las
       // facetas del vidrio no salen: no cambian el contorno.
       // yFull .84 medida viendo el liquido, casi hasta la tapa.
-      p: [[0,0.411], [0.0018,0.5137], [0.0036,0.5137], [0.0054,0.6712], [0.0073,0.7877], [0.0091,0.8151], [0.02,0.8425], [0.1089,0.8014], [0.2432,0.774], [0.265,0.7808], [0.274,0.7671], [0.4301,0.774], [0.4319,0.7877], [0.4755,0.7877], [0.5336,0.8151], [0.5535,0.8356], [0.5789,0.8356], [0.5826,0.8493], [0.5953,0.8493], [0.6007,0.863], [0.6171,0.863], [0.6207,0.8767], [0.6534,0.8904], [0.6588,0.911], [0.6951,0.9315], [0.7078,0.9589], [0.726,0.9658], [0.7405,0.9932], [0.755,1], [0.7804,0.9658], [0.7822,0.9521], [0.8004,0.9178], [0.8076,0.8836], [0.8149,0.8767], [0.8221,0.8288], [0.8276,0.8288], [0.8312,0.7877], [0.8385,0.7603], [0.8439,0.7055], [0.8566,0.6096], [0.8639,0.5274], [0.8657,0.4932], [0.8675,0.4932], [0.8693,0.4726], [0.8711,0.4041], [0.8748,0.3493], [0.8784,0.3493], [0.882,0.3973], [0.8857,0.4178], [0.9583,0.4452], [0.9619,0.4589], [0.9691,0.4589], [0.9855,0.5], [0.9927,0.5], [0.9946,0.4795], [0.9964,0.4315], [1,0.4247]]
+      p: [[0,0.411], [0.0018,0.5137], [0.0036,0.5137], [0.0054,0.6712], [0.0073,0.7877], [0.0091,0.8151], [0.02,0.8425], [0.1089,0.8014], [0.2432,0.774], [0.265,0.7808], [0.274,0.7671], [0.4301,0.774], [0.4319,0.7877], [0.4755,0.7877], [0.5336,0.8151], [0.5535,0.8356], [0.5789,0.8356], [0.5826,0.8493], [0.5953,0.8493], [0.6007,0.863], [0.6171,0.863], [0.6207,0.8767], [0.6534,0.8904], [0.6588,0.911], [0.6951,0.9315], [0.7078,0.9589], [0.726,0.9658], [0.7405,0.9932], [0.755,1], [0.7804,0.9658], [0.7822,0.9521], [0.8004,0.9178], [0.8076,0.8836], [0.8149,0.8767], [0.8221,0.8288], [0.8276,0.8288], [0.8312,0.7877], [0.8385,0.7603], [0.8439,0.7055], [0.8566,0.6096], [0.8639,0.5274], [0.8657,0.4932], [0.8675,0.4932], [0.8693,0.4726], [0.8711,0.4041], [0.8748,0.3493], [0.8784,0.3493], [0.882,0.3973], [0.8857,0.4178], [0.9583,0.4452], [0.9619,0.4589], [0.9691,0.4589], [0.9855,0.5], [0.9927,0.5], [0.9946,0.4795], [0.9964,0.4315], [1,0.4247]],
+      // Las marcas (tanda 5, 2026-11-24, calcadas de la foto con tools/marcas/calcar.py):
+      // la tira azul del frente (con su punta abajo y la cresta arriba), los dos
+      // paneles de los lados (el derecho calcado y el izquierdo su reflejo: calcado,
+      // se pegaba a la tira), la tira del cuello, la de la cápsula y la placa de
+      // abajo (ATELIER No.), y ST-GERMAIN, que se lee de arriba abajo (girado 90°).
+      // No van: el texto chico vertical del cuello, el de los paneles y el de la
+      // placa (letra chica), ni los arcos y columnas en relieve del vidrio.
+      marcas: [
+        // La tira azul del frente, calcada (de 0.255 en su punta a 0.652).
+        {tipo: 'dibujo', puntos: [[0.014, 0.2568], [-0.055, 0.2604], [-0.11, 0.2731], [-0.151, 0.2713], [-0.199, 0.2777], [-0.158, 0.2886], [-0.158, 0.6225], [-0.199, 0.6298], [-0.137, 0.6379], [-0.096, 0.6343], [0.0, 0.6525], [0.075, 0.6443], [0.075, 0.6388], [0.11, 0.6343], [0.151, 0.6379], [0.212, 0.6298], [0.171, 0.6225], [0.158, 0.5644], [0.158, 0.2868], [0.199, 0.2759], [0.151, 0.2713], [0.11, 0.2731]]},
+        // Los dos paneles de los lados: el derecho calcado; el izquierdo, su
+        // reflejo (calcado, se pegaba a la tira).
+        {tipo: 'dibujo', puntos: [[0.384, 0.3929], [0.233, 0.3947], [0.212, 0.3993], [0.226, 0.4374], [0.253, 0.4465], [0.226, 0.4737], [0.233, 0.5145], [0.384, 0.5145], [0.452, 0.5036], [0.548, 0.5073], [0.596, 0.5009], [0.582, 0.4864], [0.61, 0.4719], [0.61, 0.4428], [0.582, 0.412], [0.548, 0.4074], [0.452, 0.4074]]},
+        {tipo: 'dibujo', puntos: [[-0.452, 0.4074], [-0.548, 0.4074], [-0.582, 0.412], [-0.61, 0.4428], [-0.61, 0.4719], [-0.582, 0.4864], [-0.596, 0.5009], [-0.548, 0.5073], [-0.452, 0.5036], [-0.384, 0.5145], [-0.233, 0.5145], [-0.226, 0.4737], [-0.253, 0.4465], [-0.226, 0.4374], [-0.212, 0.3993], [-0.233, 0.3947], [-0.384, 0.3929]]},
+        // La tira del cuello y la de la cápsula.
+        {tipo: 'dibujo', puntos: [[-0.014, 0.6742], [-0.103, 0.6824], [-0.089, 0.6951], [-0.144, 0.7005], [-0.158, 0.8603], [-0.103, 0.8657], [-0.123, 0.8721], [0.0, 0.8811], [0.075, 0.873], [0.062, 0.8639], [0.13, 0.853], [0.13, 0.8457], [0.103, 0.8421], [0.089, 0.8294], [0.089, 0.7005], [0.048, 0.6933], [0.062, 0.6824]]},
+        {tipo: 'dibujo', puntos: [[-0.014, 0.8866], [-0.199, 0.9002], [-0.158, 0.9111], [-0.158, 0.9419], [-0.212, 0.9474], [-0.137, 0.961], [0.123, 0.961], [0.171, 0.9492], [0.089, 0.9383], [0.116, 0.9347], [0.116, 0.9147], [0.171, 0.9038], [0.137, 0.8975]]},
+        // La placa de abajo (ATELIER No.), calcada.
+        {tipo: 'dibujo', puntos: [[0.479, 0.1497], [0.356, 0.1552], [-0.411, 0.1552], [-0.479, 0.1515], [-0.568, 0.1815], [-0.479, 0.2078], [-0.37, 0.2024], [0.219, 0.2024], [0.274, 0.2096], [0.301, 0.2042], [0.384, 0.2024], [0.493, 0.2078], [0.582, 0.1851], [0.582, 0.176]]},
+        // ST-GERMAIN, de arriba abajo por la tira: girado 90°.
+        {tipo: 'texto', y: [0.478, 0.507], ancho: 1.272, rot: -90, renglones: [{g: 0.029, largo: 1, palabras: [2, 7]}]}
+      ],
     },
     mozart: {
       name: 'Mozart', asp: 1.45, yFull: 0.66, pourable: true,
@@ -1522,7 +1671,31 @@
       // cuello largo. 554 px de alto, desajuste de area 0.67 %. El papel
       // dorado no deja ver el liquido: yFull .66 por el criterio de
       // botanist, donde la bola se cierra en el cuello.
-      p: [[0,0.2663], [0.0156,0.5762], [0.0469,0.697], [0.0781,0.7073], [0.1094,0.78], [0.1406,0.8444], [0.1719,0.8956], [0.2031,0.934], [0.2344,0.9629], [0.2656,0.9848], [0.2969,0.9966], [0.3281,1], [0.3594,0.9977], [0.3906,0.9862], [0.4219,0.969], [0.4531,0.943], [0.4844,0.9118], [0.5156,0.8678], [0.5469,0.804], [0.5781,0.7255], [0.6094,0.6337], [0.6406,0.515], [0.6719,0.3738], [0.7031,0.3211], [0.7344,0.3211], [0.7656,0.3211], [0.7969,0.3179], [0.8281,0.3185], [0.8594,0.3182], [0.8906,0.3159], [0.9219,0.3139], [0.9531,0.3133], [0.9844,0.3], [1,0.2037]]
+      p: [[0,0.2663], [0.0156,0.5762], [0.0469,0.697], [0.0781,0.7073], [0.1094,0.78], [0.1406,0.8444], [0.1719,0.8956], [0.2031,0.934], [0.2344,0.9629], [0.2656,0.9848], [0.2969,0.9966], [0.3281,1], [0.3594,0.9977], [0.3906,0.9862], [0.4219,0.969], [0.4531,0.943], [0.4844,0.9118], [0.5156,0.8678], [0.5469,0.804], [0.5781,0.7255], [0.6094,0.6337], [0.6406,0.515], [0.6719,0.3738], [0.7031,0.3211], [0.7344,0.3211], [0.7656,0.3211], [0.7969,0.3179], [0.8281,0.3185], [0.8594,0.3182], [0.8906,0.3159], [0.9219,0.3139], [0.9531,0.3133], [0.9844,0.3], [1,0.2037]],
+      // Las marcas (tanda 5, 2026-11-24, medidas sobre la foto con tools/marcas):
+      // las dos fundas de papel del cuello, que ENVUELVEN (de borde a borde; la
+      // silueta las recorta), con MOZART, chocolate y LIQUEUR; la medalla redonda
+      // del frente, medida en la rejilla (calcada por color, se la comía el papel de
+      // aluminio, que tiene su mismo tono), con MOZART, chocolate, WHITE, ALL
+      // NATURAL INGREDIENTS en arco y Gluten free. No van: el texto en arco de abajo
+      // de la medalla (letra chica), la silueta de Mozart y las hojas de cacao
+      // (dibujos chicos) ni las arrugas del aluminio.
+      marcas: [
+        // Las dos fundas de papel del cuello ENVUELVEN: de borde a borde.
+        {tipo: 'dibujo', puntos: [[-1.15, 0.688], [1.15, 0.688], [1.15, 0.787], [-1.15, 0.787]]},
+        {tipo: 'dibujo', puntos: [[-1.15, 0.797], [1.15, 0.797], [1.15, 0.985], [-1.15, 0.985]]},
+        // La medalla redonda del frente, medida en la rejilla (el calco por
+        // color se la comía con el papel de aluminio, del mismo tono).
+        {tipo: 'etiqueta', y: [0.205, 0.62], ancho: 1.023, forma: 'ovalo', renglones: []},
+        {tipo: 'texto', y: [0.398, 0.448], ancho: 0.427, renglones: [{g: 0.05, largo: 1, palabras: [6]}]},
+        {tipo: 'texto', y: [0.357, 0.392], ancho: 0.36, renglones: [{g: 0.035, largo: 1, palabras: [9]}]},
+        {tipo: 'texto', y: [0.333, 0.348], ancho: 0.177, renglones: [{g: 0.015, largo: 1, palabras: [5]}]},
+        {tipo: 'texto', y: [0.556, 0.572], ancho: 0.502, arco: 0.156, renglones: [{g: 0.016, largo: 1, palabras: [3, 7, 11]}]},
+        {tipo: 'texto', y: [0.573, 0.588], ancho: 0.195, renglones: [{g: 0.015, largo: 1, palabras: [6, 4]}]},
+        {tipo: 'texto', y: [0.875, 0.895], ancho: 0.754, renglones: [{g: 0.02, largo: 1, palabras: [6]}]},
+        {tipo: 'texto', y: [0.855, 0.872], ancho: 0.613, renglones: [{g: 0.017, largo: 1, palabras: [9]}]},
+        {tipo: 'texto', y: [0.828, 0.838], ancho: 0.311, renglones: [{g: 0.01, largo: 1, palabras: [7]}]}
+      ],
     },
     two_gingers: {
       name: '2 Gingers', asp: 3.79, yFull: 0.79, pourable: true,
@@ -1551,7 +1724,37 @@
       // area 0.91 %. Alta y delgada, con un pie un poco mas ancho en la base
       // (es de la botella), hombro del 70 % al 77 %. yFull .76 medida viendo
       // el liquido oscuro, debajo de la franja clara bajo la tapa.
-      p: [[0,0.5149], [0.0156,0.8284], [0.0469,0.9923], [0.0781,0.9756], [0.1094,0.9264], [0.1406,0.9024], [0.1719,0.9024], [0.2031,0.9115], [0.2344,0.9164], [0.2656,0.9225], [0.2969,0.9268], [0.3281,0.9268], [0.3594,0.9297], [0.3906,0.9378], [0.4219,0.9536], [0.4531,0.9557], [0.4844,0.9598], [0.5156,0.9675], [0.5469,0.9675], [0.5781,0.9708], [0.6094,0.9794], [0.6406,0.9837], [0.6719,0.9887], [0.7031,0.9837], [0.7344,0.7054], [0.7656,0.4679], [0.7969,0.4314], [0.8281,0.4409], [0.8594,0.4371], [0.8906,0.4309], [0.9219,0.4333], [0.9531,0.4261], [0.9844,0.4237], [1,0.3279]]
+      p: [[0,0.5149], [0.0156,0.8284], [0.0469,0.9923], [0.0781,0.9756], [0.1094,0.9264], [0.1406,0.9024], [0.1719,0.9024], [0.2031,0.9115], [0.2344,0.9164], [0.2656,0.9225], [0.2969,0.9268], [0.3281,0.9268], [0.3594,0.9297], [0.3906,0.9378], [0.4219,0.9536], [0.4531,0.9557], [0.4844,0.9598], [0.5156,0.9675], [0.5469,0.9675], [0.5781,0.9708], [0.6094,0.9794], [0.6406,0.9837], [0.6719,0.9887], [0.7031,0.9837], [0.7344,0.7054], [0.7656,0.4679], [0.7969,0.4314], [0.8281,0.4409], [0.8594,0.4371], [0.8906,0.4309], [0.9219,0.4333], [0.9531,0.4261], [0.9844,0.4237], [1,0.3279]],
+      // Las marcas (tanda 5, 2026-11-24, medidas sobre la foto con tools/marcas):
+      // el rombo dorado con su banda blanca, que ENVUELVE la botella (la banda y los
+      // picos llegan al borde; la silueta lo recorta), armado con sus vértices
+      // medidos sobre el calco: sus bordes son rectos, y calcado salía dentado por
+      // el filo cobrizo contra el vidrio oscuro. La placa gris de abajo, medida en
+      // la rejilla (oscuro sobre oscuro). Los renglones: 1868, AMARO, AVERNA,
+      // SICILIANO, el LIQUEUR de la placa y el AVERNA de la cápsula dorada del
+      // cuello, que también envuelve. No van: la letra chica del rombo, de la placa
+      // y de la cápsula, la firma ni la trinacria.
+      marcas: [
+        // El rombo con su banda blanca, de vértice a vértice (0.292 a 0.622).
+        // Sus bordes son rectos y se armó con sus vértices, medidos sobre el
+        // calco: calcado, el filo cobrizo se confundía con el vidrio oscuro
+        // y salía dentado. La banda y los picos del rombo llegan al borde de
+        // la botella (de −0.92 a +0.95, su ancho a esa altura): ENVUELVE, así
+        // que sus lados van más allá del borde y la silueta la recorta.
+        {tipo: 'dibujo', puntos: [[0.024, 0.622], [0.952, 0.531], [1.15, 0.531], [1.15, 0.388], [0.952, 0.388], [-0.016, 0.292], [-0.923, 0.398], [-1.15, 0.398], [-1.15, 0.527], [-0.843, 0.527]]},
+        // La placa gris de abajo, medida en la rejilla: oscuro sobre oscuro,
+        // el calco se comía los brillos del vidrio.
+        {tipo: 'etiqueta', y: [0.148, 0.219], ancho: 0.759, renglones: []},
+        {tipo: 'texto', y: [0.536, 0.553], ancho: 0.204, renglones: [{g: 0.017, largo: 1, palabras: [4]}]},
+        {tipo: 'texto', y: [0.485, 0.505], ancho: 0.473, renglones: [{g: 0.02, largo: 1, palabras: [5]}]},
+        {tipo: 'texto', y: [0.426, 0.478], ancho: 0.921, renglones: [{g: 0.052, largo: 1, palabras: [6]}]},
+        {tipo: 'texto', y: [0.401, 0.42], ancho: 0.656, x: 0.032, renglones: [{g: 0.019, largo: 1, palabras: [9]}]},
+        {tipo: 'texto', y: [0.157, 0.166], ancho: 0.266, x: -0.066, renglones: [{g: 0.009, largo: 1, palabras: [7]}]},
+        // La cápsula dorada del cuello, impresa, ENVUELVE (de 0.812 a 0.99),
+        // con su AVERNA.
+        {tipo: 'dibujo', puntos: [[-1.15, 0.812], [1.15, 0.812], [1.15, 0.99], [-1.15, 0.99]]},
+        {tipo: 'texto', y: [0.845, 0.858], ancho: 0.615, x: 0.123, renglones: [{g: 0.013, largo: 1, palabras: [6]}]}
+      ],
     },
     baileys: {
       name: 'Baileys', asp: 3.28, yFull: 0.7, pourable: true,
@@ -1580,7 +1783,29 @@
       // Cuadrada (tratada como redonda, como Red Label), ancha y baja, base
       // biselada, hombro corto del 58 % al 66 %. yFull .63 medida viendo el
       // liquido, que llega al final del hombro: el cuello va vacio.
-      p: [[0,0.3966], [0.0156,0.6009], [0.0469,0.7541], [0.0781,0.82], [0.1094,0.8859], [0.1406,0.8889], [0.1719,0.8991], [0.2031,0.9077], [0.2344,0.9138], [0.2656,0.9224], [0.2969,0.9295], [0.3281,0.9371], [0.3594,0.9437], [0.3906,0.9523], [0.4219,0.9604], [0.4531,0.967], [0.4844,0.9758], [0.5156,0.9828], [0.5469,0.9904], [0.5781,0.9706], [0.6094,0.6947], [0.6406,0.4579], [0.6719,0.36], [0.7031,0.3342], [0.7344,0.3222], [0.7656,0.3256], [0.7969,0.3235], [0.8281,0.319], [0.8594,0.3124], [0.8906,0.3256], [0.9219,0.3311], [0.9531,0.3362], [0.9844,0.2996], [1,0.1322]]
+      p: [[0,0.3966], [0.0156,0.6009], [0.0469,0.7541], [0.0781,0.82], [0.1094,0.8859], [0.1406,0.8889], [0.1719,0.8991], [0.2031,0.9077], [0.2344,0.9138], [0.2656,0.9224], [0.2969,0.9295], [0.3281,0.9371], [0.3594,0.9437], [0.3906,0.9523], [0.4219,0.9604], [0.4531,0.967], [0.4844,0.9758], [0.5156,0.9828], [0.5469,0.9904], [0.5781,0.9706], [0.6094,0.6947], [0.6406,0.4579], [0.6719,0.36], [0.7031,0.3342], [0.7344,0.3222], [0.7656,0.3256], [0.7969,0.3235], [0.8281,0.319], [0.8594,0.3124], [0.8906,0.3256], [0.9219,0.3311], [0.9531,0.3362], [0.9844,0.2996], [1,0.1322]],
+      // Las marcas (tanda 5, 2026-11-24, calcadas de la foto con tools/marcas/calcar.py):
+      // la medalla azul del frente, calcada, con BLADE en arco (∩) arriba y AND BOW
+      // en arco (∪) abajo; la cápsula azul del cuello, que ENVUELVE (la silueta la
+      // recorta); y lo impreso en blanco sobre el vidrio abajo: KENTUCKY STRAIGHT,
+      // BOURBON WHISKEY, STITZEL-WELLER DISTILLING CO., LOUISVILLE, KENTUCKY. No
+      // van: el monograma y el anillo de texto chico del centro de la medalla, la
+      // línea de 45.5% / 750 ml (letra chica), la firma de la cápsula, la llave
+      // colgada (un objeto, no está impresa) ni el texto en relieve de los cantos.
+      marcas: [
+        // La medalla azul, calcada.
+        {tipo: 'dibujo', puntos: [[0.091, 0.2769], [-0.082, 0.2769], [-0.177, 0.2806], [-0.351, 0.2991], [-0.511, 0.3407], [-0.563, 0.3648], [-0.589, 0.3944], [-0.58, 0.4463], [-0.528, 0.4593], [-0.519, 0.4685], [-0.459, 0.487], [-0.307, 0.5157], [-0.169, 0.5287], [-0.152, 0.5269], [-0.082, 0.5324], [-0.048, 0.5306], [-0.004, 0.5361], [0.056, 0.5306], [0.221, 0.525], [0.359, 0.5083], [0.459, 0.487], [0.537, 0.4556], [0.58, 0.4463], [0.563, 0.437], [0.58, 0.4259], [0.589, 0.3926], [0.554, 0.3611], [0.511, 0.3389], [0.351, 0.2972]]},
+        // La cápsula azul del cuello ENVUELVE, de 0.763 a la boca.
+        {tipo: 'dibujo', puntos: [[-1.15, 0.763], [1.15, 0.763], [1.15, 0.995], [-1.15, 0.995]]},
+        // BLADE en arco por arriba de la medalla y AND BOW por abajo,
+        // colocados por la altura de sus puntas; y lo impreso en blanco abajo.
+        {tipo: 'texto', y: [0.439, 0.47], ancho: 0.434, arco: 0.223, renglones: [{g: 0.031, largo: 1, palabras: [5]}]},
+        {tipo: 'texto', y: [0.34, 0.371], ancho: 0.46, arco: -0.207, renglones: [{g: 0.031, largo: 1, palabras: [3, 3]}]},
+        {tipo: 'texto', y: [0.183, 0.193], ancho: 0.452, renglones: [{g: 0.01, largo: 1, palabras: [8, 8]}]},
+        {tipo: 'texto', y: [0.163, 0.178], ancho: 0.447, renglones: [{g: 0.015, largo: 1, palabras: [7, 7]}]},
+        {tipo: 'texto', y: [0.145, 0.155], ancho: 0.45, renglones: [{g: 0.01, largo: 1, palabras: [14, 10, 2]}]},
+        {tipo: 'texto', y: [0.124, 0.141], ancho: 0.45, renglones: [{g: 0.017, largo: 1, palabras: [10, 8]}]}
+      ],
     },
     don_julio: {
       name: "Don Julio", asp: 1.73, yFull: 0.66, pourable: true,
