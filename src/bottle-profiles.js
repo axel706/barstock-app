@@ -589,7 +589,13 @@
         {tipo: 'texto', y: [0.205, 0.288], ancho: 0.4, renglones: [{g: 0.083, largo: 1, palabras: [2]}]},
         {tipo: 'texto', y: [0.17, 0.187], ancho: 0.52, renglones: [{g: 0.016, largo: 1, palabras: [4, 3, 6, 2, 3, 4]}]},
         {tipo: 'texto', y: [0.139, 0.146], ancho: 0.83, renglones: [{g: 0.007, largo: 1, palabras: [3, 11, 10, 8, 10, 8]}]},
-        {tipo: 'texto', y: [0.132, 0.138], ancho: 0.5, renglones: [{g: 0.006, largo: 1, palabras: [4, 5, 2, 7, 5, 1, 6]}]}
+        {tipo: 'texto', y: [0.132, 0.138], ancho: 0.5, renglones: [{g: 0.006, largo: 1, palabras: [4, 5, 2, 7, 5, 1, 6]}]},
+        // El venado dorado (Axel, 2026-11-24: un dibujo que sí va: es grande
+        // y se ve). Dos óvalos a su medida en la rejilla: las astas, de 0.548
+        // a 0.623 y de −0.25 a +0.50 del radio, y la cabeza con el cuello, de
+        // 0.483 a 0.565 y de −0.29 a +0.20 (un solo óvalo taparía aire).
+        {tipo: 'etiqueta', y: [0.548, 0.623], ancho: 0.375, x: 0.125, forma: 'ovalo', renglones: []},
+        {tipo: 'etiqueta', y: [0.483, 0.565], ancho: 0.245, x: -0.045, forma: 'ovalo', renglones: []}
       ]
     },
     casa_noble: {
@@ -874,7 +880,17 @@
       marcas: [
         {tipo: 'etiqueta', y: [0.763, 0.803], ancho: 1, renglones: []},
         {tipo: 'texto', y: [0.773, 0.798], ancho: 0.9, renglones: [{g: 0.012, largo: 1, palabras: [11, 4, 8]}]},
-        {tipo: 'etiqueta', y: [0.137, 0.398], ancho: 0.8, renglones: []},
+        // La etiqueta no es un rectángulo (Axel, 2026-11-24: "la etiqueta no
+        // es cuadrada, es irregular"): un escudo de plata más angosto, con la
+        // cresta arriba y el borde de abajo hacia abajo, y las dos cintas
+        // rojas que salen por los lados, la de arriba en arco (∩) y la de
+        // abajo hundida (∪). Leído en la rejilla (las herramientas de color
+        // se confunden con los adornos rojos; en las puntas de la cinta de
+        // arriba dan 0.348/0.342 contra 0.345 de la rejilla). Las espadas
+        // cruzadas no van.
+        {tipo: 'etiqueta', y: [0.15, 0.405], ancho: 0.595, arco: [0.114, -0.092], renglones: []},
+        {tipo: 'etiqueta', y: [0.297, 0.345], ancho: 0.755, arco: [0.047, 0.018], renglones: []},
+        {tipo: 'etiqueta', y: [0.205, 0.26], ancho: 0.75, arco: [-0.073, -0.073], renglones: []},
         {tipo: 'texto', y: [0.312, 0.342], ancho: 0.72, renglones: [{g: 0.03, largo: 1, palabras: [6, 5]}], arco: 0.07},
         {tipo: 'etiqueta', y: [0.255, 0.302], ancho: 0.29, renglones: [], forma: 'ovalo'},
         {tipo: 'texto', y: [0.262, 0.295], ancho: 0.11, renglones: [{g: 0.033, largo: 1, palabras: [2]}]},
@@ -1000,7 +1016,13 @@
         {tipo: 'texto', y: [0.287, 0.295], ancho: 0.32, renglones: [{g: 0.008, largo: 1, palabras: [4, 7, 1]}]},
         {tipo: 'texto', y: [0.276, 0.284], ancho: 0.37, renglones: [{g: 0.008, largo: 1, palabras: [7, 2, 7]}]},
         {tipo: 'texto', y: [0.278, 0.293], ancho: 0.05, renglones: [{g: 0.015, largo: 1, palabras: [5]}], x: -0.58},
-        {tipo: 'texto', y: [0.278, 0.293], ancho: 0.11, renglones: [{g: 0.015, largo: 1, palabras: [3, 9]}], x: 0.66}
+        {tipo: 'texto', y: [0.278, 0.293], ancho: 0.11, renglones: [{g: 0.015, largo: 1, palabras: [3, 9]}], x: 0.66},
+        // El grabado de abajo, TULLAMORE / HEART of IRELAND (Axel, 2026-11-24:
+        // "es muy grande para dejarlo fuera como referencia"): lo único en
+        // relieve que va, por su tamaño. Leído en la rejilla: el relieve no
+        // tiene contraste de color para renglones.py ni cortes.py.
+        {tipo: 'texto', y: [0.188, 0.232], ancho: 0.825, x: 0.005, renglones: [{g: 0.044, largo: 1, palabras: [9]}]},
+        {tipo: 'texto', y: [0.147, 0.18], ancho: 0.81, x: 0.02, renglones: [{g: 0.033, largo: 1, palabras: [5, 2, 7]}]}
       ]
     },
     elijah_craig: {

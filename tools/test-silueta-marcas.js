@@ -152,5 +152,21 @@ console.log('\nen el panel de conteo');
   prueba('las barras tienen su color', /\.cp-barra\s*\{[^}]*fill:/.test(css));
 }
 
+// Lo que Axel pidió al revisar la tanda 3 (2026-11-24): lo grande va
+// aunque sea un dibujo o un relieve, y una etiqueta irregular va en piezas.
+console.log('\ntanda 3, revisada: lo grande y lo irregular');
+{
+  const M = (k) => B.PROFILES[k].marcas;
+  prueba('Glenfiddich: el venado, dos óvalos entre 0.48 y 0.63',
+    M('glenfiddich').filter(m => m.forma === 'ovalo' && m.y[0] >= 0.48 && m.y[1] <= 0.63).length === 2);
+  const chv = M('chivas').filter(m => m.tipo === 'etiqueta' && Array.isArray(m.arco) && m.y[0] >= 0.14 && m.y[1] <= 0.41);
+  prueba('Chivas: el escudo y sus dos cintas, cada uno con su arco', chv.length === 3, chv.length);
+  prueba('Chivas: la cinta de abajo se hunde (∪) y el escudo sube en cresta',
+    chv.some(m => m.arco[0] < 0 && m.arco[1] < 0) && chv.some(m => m.arco[0] > 0.1));
+  prueba('Chivas: ningún rectángulo tapa la etiqueta entera', !M('chivas').some(m => m.tipo === 'etiqueta' && !m.arco && !m.forma && m.y[1] - m.y[0] > 0.2));
+  prueba('Tullamore: TULLAMORE / HEART of IRELAND, debajo de la etiqueta',
+    M('tullamore').filter(m => m.tipo === 'texto' && m.y[1] < 0.24).length === 2);
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);

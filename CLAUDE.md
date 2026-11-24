@@ -551,7 +551,12 @@ la que se cuenta: una etiqueta corrida es un conteo mal hecho.
    se coloca por la altura de sus PUNTAS: el centro sube la flecha
    (MALIBU salió alto por centrarlo en el medio).
    Lo que es plano en el vidrio (impreso) cuenta; lo grabado en relieve,
-   los dibujos sueltos y las firmas no van, y la lámina lo dice.
+   los dibujos sueltos y las firmas no van, y la lámina lo dice. **Salvo
+   lo GRANDE** (Axel, 2026-11-24, al revisar la tanda 3): un dibujo o un
+   relieve que domina la botella es referencia y va —el venado de
+   Glenfiddich (dos óvalos a su medida), TULLAMORE / HEART of IRELAND—.
+   Una etiqueta que no es un rectángulo se dibuja en sus piezas (el
+   escudo de Chivas y sus dos cintas, cada una con su ancho y su arco).
 3. **La inclinación de un trazo a mano no es la de la etiqueta**
    (Bacardí: su etiqueta de abajo salió inclinada por el trazo y es
    recta). Una inclinación se confirma en la foto o se pregunta.
