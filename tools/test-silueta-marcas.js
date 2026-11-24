@@ -204,5 +204,45 @@ console.log('\ntanda 3, revisada: lo grande y lo irregular');
     M('tullamore').filter(m => m.tipo === 'texto' && m.y[1] < 0.24).length === 2);
 }
 
+console.log('\ntanda 4: calcada (Axel, 2026-11-24: "calcarlas")');
+{
+  // Desde la tanda 4 las etiquetas se calcan de la foto: cada botella
+  // lleva al menos un `dibujo` con su contorno.
+  const TANDA4 = ['oban', 'boulard', 'balvenie', 'michters', 'skrewball', 'bols', 'two_gingers', 'dads_hat', 'whistlepig'];
+  for (const k of TANDA4) {
+    const ms = (B.PROFILES[k] && B.PROFILES[k].marcas) || [];
+    prueba(k + ': lleva una etiqueta calcada (un dibujo de 12 puntos o más)', ms.some(m => m.tipo === 'dibujo' && m.puntos.length >= 12));
+  }
+  // Un contorno de pocos puntos (una etiqueta recta) no puede perder sus
+  // esquinas: suavizar con curvas entre los puntos MEDIOS redondeaba un
+  // rectángulo hasta la mitad de cada lado (la etiqueta de Skrewball salía
+  // con la parte de arriba en arco).
+  const P = B.PROFILES;
+  P.__prueba_d = { name: 'Prueba', asp: 3, yFull: 0.7, p: P.woodford.p,
+    marcas: [{ tipo: 'dibujo', puntos: [[-0.6, 0.2], [0.6, 0.2], [0.6, 0.45], [-0.6, 0.45]] }] };
+  const box = B.boxFor('__prueba_d', W, H, PAD);
+  const d = /class="cp-marca cp-dibujo" d="([^"]*)"/.exec(B.marcasFor('__prueba_d', W, H, PAD));
+  // Los puntos por donde pasa la curva: el de inicio y, en cada Q, su
+  // punto medio (t = ½: ¼ del anterior, ½ del control y ¼ del final) y
+  // su final. El control en sí no se dibuja: no cuenta.
+  const xy = [];
+  if (d) {
+    const tok = d[1].match(/[MQLZ]|-?\d+\.?\d*/g); let i = 0, cur = null;
+    while (i < tok.length) {
+      const c = tok[i++];
+      if (c === 'M' || c === 'L') { cur = [+tok[i++], +tok[i++]]; xy.push(cur); }
+      else if (c === 'Q') {
+        const k = [+tok[i++], +tok[i++]], fin = [+tok[i++], +tok[i++]];
+        xy.push([(cur[0] + 2 * k[0] + fin[0]) / 4, (cur[1] + 2 * k[1] + fin[1]) / 4], fin); cur = fin;
+      }
+    }
+  }
+  const esquinas = [[-0.6, 0.2], [0.6, 0.2], [0.6, 0.45], [-0.6, 0.45]].map(([x, y]) => [box.cx + x * box.maxR, box.base - y * box.usable]);
+  const lejos = Math.max(...esquinas.map(([ex, ey]) => Math.min(...xy.map(([x, y]) => Math.hypot(x - ex, y - ey)))));
+  const cerca = xy.length > 0 && lejos <= 2;
+  prueba('un rectángulo calcado conserva sus esquinas (a 2 px)', cerca, lejos.toFixed(1) + ' px');
+  delete P.__prueba_d;
+}
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);

@@ -99,6 +99,10 @@ for p in elegidas:
     print("{tipo: 'dibujo', puntos: [" + ', '.join('[%s, %s]' % (a, b) for a, b in pts) + ']},')
     print('  // %d puntos · alto %.3f–%.3f · x %.2f a %.2f · %d px' % (
         len(pts), min(q[1] for q in pts), max(q[1] for q in pts), min(q[0] for q in pts), max(q[0] for q in pts), p.area), file=sys.stderr)
-    capa.polygon([(q[1] * esc, q[0] * esc) for q in pol], fill=(255, 220, 0, 70), outline=(255, 0, 255, 255))
+    # Relleno y borde gruesos: con un borde de 1 px y el relleno tenue no se
+    # veía dónde acababa una etiqueta clara sobre el licor.
+    xy = [(q[1] * esc, q[0] * esc) for q in pol]
+    capa.polygon(xy, fill=(0, 255, 255, 60))
+    capa.line(xy + xy[:1], fill=(255, 0, 255, 255), width=3)
 vista.save(D + '/calco-' + k + '.png')
 print(D + '/calco-' + k + '.png', file=sys.stderr)

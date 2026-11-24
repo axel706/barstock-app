@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261124-090202",
+    "items": [
+      "Counting: label guides on 9 more bottles, traced",
+      "Oban, Balvenie, Michter’s, WhistlePig and more"
+    ]
+  },
+  {
     "build": "20261124-083742",
     "items": [
       "Count panel: the Glenfiddich stag, traced",
@@ -184,13 +191,6 @@
     "items": [
       "Counting: Grey Goose bottle shape fixed",
       "Straight body and round base, as the real bottle"
-    ]
-  },
-  {
-    "build": "20261122-111304",
-    "items": [
-      "Counting: label guides on 9 more bottles",
-      "Grey Goose, Ketel One, Captain Morgan, Malibu and more"
     ]
   }
 ]

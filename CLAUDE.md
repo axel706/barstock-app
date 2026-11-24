@@ -482,13 +482,16 @@ y Basil Hayden, la tanda 1 (aprobada y en main el 2026-11-22): Jameson,
 Buffalo Trace, Bulleit, Fireball, Red Label, Dewar's, Bacardí, Campari,
 Aperol y Baileys, y la tanda 2 (aprobada y en main el 2026-11-22; Grey Goose
 rehecha, silueta incluida, sobre una foto de frente de Axel): Grey Goose, Ketel One, Captain Morgan, Malibu, Cointreau,
-Disaronno, Patrón, Don Julio Blanco y 1800, y la tanda 3 (2026-11-23, en
-develop, pendiente de que Axel la apruebe sobre la lámina): Casa Noble,
+Disaronno, Patrón, Don Julio Blanco y 1800, la tanda 3 (aprobada y en
+main el 2026-11-24, con el venado y las cintas de Chivas revisados): Casa Noble,
 Glenfiddich, Chivas Regal, Monkey Shoulder, Cîroc, Empress, Buchanan's,
 Tullamore D.E.W. y Blanton's (Belvedere y Macallan, fuera: sus fotos son
 demasiado chicas para medir el grueso de las letras; las cápsulas del
 cuello terminan donde la tapa se redondea, porque el ancho de una
-etiqueta es el del radio más estrecho entre sus dos bordes). Smirnoff se dejó fuera: su
+etiqueta es el del radio más estrecho entre sus dos bordes), y la tanda 4
+(2026-11-24, en develop, pendiente de que Axel la apruebe sobre la lámina),
+la primera CALCADA: Oban, Boulard, Balvenie, Michter's, Skrewball, Bols,
+2 Gingers, Dad's Hat y WhistlePig. Smirnoff se dejó fuera: su
 silueta salió de la foto de Vanilla y la comparten los sabores, y la
 No. 21 tiene otra etiqueta. Las
 demás se añaden por tandas, de las fotos que Axel ya mandó para las
@@ -504,6 +507,19 @@ TEQUILA / BLANCO de Don Julio a la derecha de su sello) y con su forma (`forma`:
 Axel, 2026-11-22, "hay botellas con etiquetas diagonales o textos
 curvos y todos los estás poniendo planos". **Se mide, no se estima**:
 dos rondas a ojo salieron mal (Red Label a 32° cuando eran 19°).
+
+**Desde la tanda 4, las etiquetas se CALCAN** (Axel, 2026-11-24: "¿por
+qué no haces con las etiquetas lo que hiciste con el venado?
+Calcarlas"): etiquetas, bandas, sellos, cápsulas impresas y dibujos
+grandes van como `dibujo`, su contorno sacado de la foto con `calcar.py`,
+en las mismas medidas de la silueta (salen de la misma foto: no se
+redimensiona nada). Describir con números (alto, ancho, arco, cuña) es
+para lo que no se puede calcar limpio (blanco sobre vidrio, oscuro sobre
+oscuro, un relieve) o lo que de verdad es un rectángulo, y la lámina lo
+dice. El texto sigue siendo barras: calcar letras pondría palabras
+reales. Las tandas 1–3 se quedan como están salvo la botella que Axel
+señale. `marcasFor` redondea cada vértice sólo en sus 3 px: redondear
+entre puntos medios le comía las esquinas a un rectángulo.
 
 **El estándar de cada tanda** (Axel, 2026-11-22, al aprobar la tanda 1:
 "los dibujos deben ser precisos y calcados en proporción con la real
@@ -535,6 +551,10 @@ la que se cuenta: una etiqueta corrida es un conteo mal hecho.
      encima antes de creerlo).
    - `trazos.py`: los trazos que Axel hace sobre la lámina, pasados a
      alturas con las barras rosas de las dos imágenes.
+   - `calcar.py`: el contorno de una marca sacado de la foto, por
+     color (RGB, `hsv:` por tono, o los dos sumados con `+`), listo para
+     pegar como `{tipo: 'dibujo', puntos}`. Deja `calco-<clave>.png`
+     para mirarlo antes de creérselo.
    - `encima.js`: el dibujo ENCIMA de la foto a la misma escala.
    - `lamina.js`: la lámina de la tanda (foto, dibujo, encima).
 2. **Lo que se comprueba en cada botella, encima de la foto**, antes de
