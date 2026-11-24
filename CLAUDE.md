@@ -496,8 +496,8 @@ la primera CALCADA: Oban, Boulard, Balvenie, Michter's, Skrewball, Bols,
 dentro de su panel: un renglón `justo` lleva el ancho medido de su letra): Frangelico, St-Germain,
 Mozart, Averna, Blade and Bow, Don Julio Añejo (de su foto, `dj.png`; la de
 `djrepo` es la silueta `don_julio`, Blanco y Reposado), Nikka Coffey Grain,
-Jura y Drambuie; y la tanda 6 (2026-11-24, en develop, pendiente de que
-Axel la apruebe sobre la lámina), de fotos chicas (103 a 233 px de ancho):
+Jura y Drambuie; y la tanda 6 (aprobada y en main el
+2026-11-24), de fotos chicas (103 a 233 px de ancho):
 360 Double Chocolate (`v360`), Carlo Rossi (el eje es el de la silueta,
 x=117.4, no el centro de la caja: el asa va a la derecha), Bluecoat y The
 Botanist (sus once renglones de nombres en relieve van, como lo GRANDE de
