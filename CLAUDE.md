@@ -489,7 +489,8 @@ Tullamore D.E.W. y Blanton's (Belvedere y Macallan, fuera: sus fotos son
 demasiado chicas para medir el grueso de las letras; las cápsulas del
 cuello terminan donde la tapa se redondea, porque el ancho de una
 etiqueta es el del radio más estrecho entre sus dos bordes), y la tanda 4
-(2026-11-24, en develop, pendiente de que Axel la apruebe sobre la lámina),
+(aprobada y en main el 2026-11-24, con la etiqueta de WhistlePig rehecha:
+en arco y envolviendo la botella),
 la primera CALCADA: Oban, Boulard, Balvenie, Michter's, Skrewball, Bols,
 2 Gingers, Dad's Hat y WhistlePig. Smirnoff se dejó fuera: su
 silueta salió de la foto de Vanilla y la comparten los sabores, y la
