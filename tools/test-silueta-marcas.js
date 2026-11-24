@@ -56,7 +56,7 @@ for (const k of ['woodford', 'elijah_craig', 'basil_hayden'].concat(TANDA1, TAND
   prueba(k + ': lleva marcas', Array.isArray(ms) && ms.length >= 3, ms && ms.length);
   prueba(k + ': bien formadas (alturas dentro de la botella, de abajo arriba)', Array.isArray(ms) && ms.every(m =>
     (m.x === undefined || (typeof m.x === 'number' && Math.abs(m.x) < 1)) &&
-    (m.tipo === 'dibujo' ? (Array.isArray(m.puntos) && m.puntos.length >= 3 && m.puntos.every(([px, py]) => Math.abs(px) <= 1 && py > 0 && py < 1))
+    (m.tipo === 'dibujo' ? (Array.isArray(m.puntos) && m.puntos.length >= 3 && m.puntos.every(([px, py]) => Math.abs(px) <= 1.2 && py > 0 && py < 1))
       : m.tipo === 'sello' ? (m.y > 0 && m.y < 1 && m.r > 0 && m.r < 0.2)
       : (Array.isArray(m.y) && m.y[0] >= 0 && m.y[1] <= 1 && m.y[0] < m.y[1] && m.ancho > 0 && m.ancho <= (m.tipo === 'etiqueta' && m.rot ? 2 : 1.1))) &&
     (m.tipo === 'dibujo' || Array.isArray(m.renglones)) && (m.renglones || []).every(r => r.g > 0 && r.g < 0.1 && r.largo > 0 && r.largo <= 1 &&
@@ -216,6 +216,10 @@ console.log('\ntanda 4: calcada (Axel, 2026-11-24: "calcarlas")');
     prueba('WhistlePig: la etiqueta sube en arco (0.43 o más en el eje, 0.39 o menos en las esquinas)',
       arriba(-0.1, 0.1) >= 0.43 && arriba(-0.9, -0.8) <= 0.39 && arriba(0.8, 0.9) <= 0.39,
       arriba(-0.1, 0.1) + ' / ' + arriba(-0.9, -0.8) + ' / ' + arriba(0.8, 0.9));
+    // Envuelve la botella: sus lados pasan del borde y la silueta la
+    // recorta (dentro del borde se veía cortada por los lados).
+    prueba('WhistlePig: la etiqueta llega al borde de la botella (y lo pasa)',
+      Math.min(...et.puntos.map((q) => q[0])) <= -1 && Math.max(...et.puntos.map((q) => q[0])) >= 1);
     prueba('WhistlePig: simétrica', et.puntos.every(([x, y]) => et.puntos.some(([x2, y2]) => Math.abs(x2 + x) < 0.002 && Math.abs(y2 - y) < 0.002)));
   }
   // Desde la tanda 4 las etiquetas se calcan de la foto: cada botella

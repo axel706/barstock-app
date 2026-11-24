@@ -955,8 +955,10 @@
       // correcto": el primer calco la cortaba plana arriba y es un ARCO, con
       // su filo dorado, de 0.38 en las esquinas a 0.442 al centro; el borde
       // de abajo, 0.11, medido por color en dos columnas. Calcada la mitad
-      // izquierda y reflejada: la sombra del lado derecho mordía el calco, y
-      // las dos muescas que dejaba en las esquinas y los lados se quitaron), y la placa oscura de abajo, con su contorno. Del cuello,
+      // izquierda y reflejada: la sombra del lado derecho mordía el calco.
+      // Y la etiqueta ENVUELVE la botella (Axel: "debe envolver la botella,
+      // no cortarse"): sus lados van más allá del borde, a ±1.15, y la
+      // silueta la recorta; el arco sigue bajando hasta 0.37 en el borde), y la placa oscura de abajo, con su contorno. Del cuello,
       // la banda (rectángulo) y el medallón (óvalo) medidos en la rejilla: oscuro
       // sobre oscuro, el calco se comía la banda. El 100 en su rombo (girado 45°).
       // El WP en relieve del vidrio es grande y va como su caja, medida en la foto:
@@ -965,7 +967,7 @@
       // los dos de la placa. No van: el cerdo de encima del nombre (dibujo de línea
       // fina) ni la letra chica de los lados.
       marcas: [
-        {tipo: 'dibujo', puntos: [[0.0, 0.4421], [-0.151, 0.4421], [-0.506, 0.4222], [-0.653, 0.406], [-0.697, 0.4042], [-0.742, 0.3933], [-0.786, 0.3879], [-0.88, 0.381], [-0.885, 0.24], [-0.862, 0.18], [-0.81, 0.11], [0.0, 0.11], [0.81, 0.11], [0.862, 0.18], [0.885, 0.24], [0.88, 0.381], [0.786, 0.3879], [0.742, 0.3933], [0.697, 0.4042], [0.653, 0.406], [0.506, 0.4222], [0.151, 0.4421]]},
+        {tipo: 'dibujo', puntos: [[0.0, 0.4421], [-0.151, 0.4421], [-0.506, 0.4222], [-0.653, 0.406], [-0.697, 0.4042], [-0.742, 0.3933], [-0.786, 0.3879], [-0.88, 0.381], [-1.15, 0.37], [-1.15, 0.11], [0.0, 0.11], [1.15, 0.11], [1.15, 0.37], [0.88, 0.381], [0.786, 0.3879], [0.742, 0.3933], [0.697, 0.4042], [0.653, 0.406], [0.506, 0.4222], [0.151, 0.4421]]},
         {tipo: 'dibujo', puntos: [[0.454, 0.0588], [-0.446, 0.0606], [-0.45, 0.0995], [-0.472, 0.1139], [-0.458, 0.1193], [-0.465, 0.1302], [0.498, 0.1329], [0.502, 0.1212], [0.524, 0.1139], [0.502, 0.0995], [0.502, 0.0615]]},
         {tipo: 'etiqueta', y: [0.79, 0.876], ancho: 1, renglones: []},
         {tipo: 'etiqueta', y: [0.773, 0.888], ancho: 0.686, forma: 'ovalo', renglones: []},

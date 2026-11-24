@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261124-111501",
+    "items": [
+      "Counting: WhistlePig label wraps the bottle"
+    ]
+  },
+  {
     "build": "20261124-090913",
     "items": [
       "Counting: WhistlePig label now has its arched top"
@@ -183,13 +189,6 @@
     "build": "20261122-114743",
     "items": [
       "New app icon: the glass B"
-    ]
-  },
-  {
-    "build": "20261122-113741",
-    "items": [
-      "People: give anyone a permission their role lacks",
-      "Shown as “Added for …” on their page"
     ]
   }
 ]
