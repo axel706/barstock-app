@@ -206,6 +206,18 @@ console.log('\ntanda 3, revisada: lo grande y lo irregular');
 
 console.log('\ntanda 4: calcada (Axel, 2026-11-24: "calcarlas")');
 {
+  // La etiqueta crema de WhistlePig termina arriba en un ARCO (Axel: "no
+  // tiene el shape correcto"; el primer calco la cortaba plana): alta en
+  // el eje, más baja en las esquinas, y simétrica.
+  {
+    const et = B.PROFILES.whistlepig.marcas.filter((m) => m.tipo === 'dibujo')
+      .sort((a, b) => Math.max(...b.puntos.map((q) => q[1])) - Math.max(...a.puntos.map((q) => q[1])))[0];
+    const arriba = (x0, x1) => Math.max(...et.puntos.filter(([x]) => x >= x0 && x <= x1).map((q) => q[1]));
+    prueba('WhistlePig: la etiqueta sube en arco (0.43 o más en el eje, 0.39 o menos en las esquinas)',
+      arriba(-0.1, 0.1) >= 0.43 && arriba(-0.9, -0.8) <= 0.39 && arriba(0.8, 0.9) <= 0.39,
+      arriba(-0.1, 0.1) + ' / ' + arriba(-0.9, -0.8) + ' / ' + arriba(0.8, 0.9));
+    prueba('WhistlePig: simétrica', et.puntos.every(([x, y]) => et.puntos.some(([x2, y2]) => Math.abs(x2 + x) < 0.002 && Math.abs(y2 - y) < 0.002)));
+  }
   // Desde la tanda 4 las etiquetas se calcan de la foto: cada botella
   // lleva al menos un `dibujo` con su contorno.
   const TANDA4 = ['oban', 'boulard', 'balvenie', 'michters', 'skrewball', 'bols', 'two_gingers', 'dads_hat', 'whistlepig'];

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261124-090913",
+    "items": [
+      "Counting: WhistlePig label now has its arched top"
+    ]
+  },
+  {
     "build": "20261124-090202",
     "items": [
       "Counting: label guides on 9 more bottles, traced",
@@ -184,13 +190,6 @@
     "items": [
       "People: give anyone a permission their role lacks",
       "Shown as “Added for …” on their page"
-    ]
-  },
-  {
-    "build": "20261122-113015",
-    "items": [
-      "Counting: Grey Goose bottle shape fixed",
-      "Straight body and round base, as the real bottle"
     ]
   }
 ]
