@@ -554,9 +554,13 @@ la que se cuenta: una etiqueta corrida es un conteo mal hecho.
    los dibujos sueltos y las firmas no van, y la lámina lo dice. **Salvo
    lo GRANDE** (Axel, 2026-11-24, al revisar la tanda 3): un dibujo o un
    relieve que domina la botella es referencia y va —el venado de
-   Glenfiddich (dos óvalos a su medida), TULLAMORE / HEART of IRELAND—.
+   Glenfiddich, TULLAMORE / HEART of IRELAND—. Un dibujo va con SU
+   contorno, sacado de la foto (`tipo: 'dibujo'`, `puntos`; el venado,
+   de sus píxeles dorados): dos óvalos "no se parecían".
    Una etiqueta que no es un rectángulo se dibuja en sus piezas (el
    escudo de Chivas y sus dos cintas, cada una con su ancho y su arco).
+   El texto de una cinta va DENTRO de ella y sigue su línea media;
+   medidos aparte, cada uno con su curva, no quedaba centrado.
 3. **La inclinación de un trazo a mano no es la de la etiqueta**
    (Bacardí: su etiqueta de abajo salió inclinada por el trazo y es
    recta). Una inclinación se confirma en la foto o se pregunta.

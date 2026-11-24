@@ -572,8 +572,8 @@
       // el escudo rojo del cuello; la etiqueta blanca con Glenfiddich, SINGLE
       // MALT SCOTCH WHISKY, OUR ORIGINAL TWELVE, sus tres renglones y el 12
       // grande detrás, From the Valley of the Deer; la banda oscura de abajo
-      // con sus dos renglones. No van: el ciervo (un dibujo en el vidrio), la
-      // firma de la cápsula y la letra chica de los lados. Los renglones se
+      // con sus dos renglones; el venado (al final). No van: la firma de la
+      // cápsula y la letra chica de los lados. Los renglones se
       // ven curvos en la foto sólo porque la etiqueta rodea la botella: van
       // rectos.
       marcas: [
@@ -591,11 +591,11 @@
         {tipo: 'texto', y: [0.139, 0.146], ancho: 0.83, renglones: [{g: 0.007, largo: 1, palabras: [3, 11, 10, 8, 10, 8]}]},
         {tipo: 'texto', y: [0.132, 0.138], ancho: 0.5, renglones: [{g: 0.006, largo: 1, palabras: [4, 5, 2, 7, 5, 1, 6]}]},
         // El venado dorado (Axel, 2026-11-24: un dibujo que sí va: es grande
-        // y se ve). Dos óvalos a su medida en la rejilla: las astas, de 0.548
-        // a 0.623 y de −0.25 a +0.50 del radio, y la cabeza con el cuello, de
-        // 0.483 a 0.565 y de −0.29 a +0.20 (un solo óvalo taparía aire).
-        {tipo: 'etiqueta', y: [0.548, 0.623], ancho: 0.375, x: 0.125, forma: 'ovalo', renglones: []},
-        {tipo: 'etiqueta', y: [0.483, 0.565], ancho: 0.245, x: -0.045, forma: 'ovalo', renglones: []}
+        // y se ve). Su contorno, sacado de la foto: los píxeles dorados
+        // (R ≥ 0.95 G, R > 110, R − B > 45) entre 0.48 y 0.626, la mancha
+        // más grande, su borde simplificado a 1.2 px. Dos óvalos fueron la
+        // primera versión y Axel pidió "una shape más cercana al venado".
+        {tipo: 'dibujo', puntos: [[0.122, 0.4849], [0.078, 0.4948], [0.02, 0.5022], [-0.061, 0.5073], [-0.17, 0.5099], [-0.282, 0.5095], [-0.245, 0.5142], [-0.184, 0.5185], [-0.082, 0.5185], [-0.034, 0.5297], [-0.017, 0.5241], [0.099, 0.5103], [0.122, 0.5047], [0.146, 0.5103], [0.146, 0.5164], [0.126, 0.5232], [0.075, 0.5314], [0.0, 0.5374], [-0.112, 0.5404], [-0.112, 0.5456], [-0.126, 0.5482], [-0.119, 0.5534], [-0.061, 0.5555], [-0.017, 0.5602], [-0.136, 0.5676], [-0.248, 0.5826], [-0.248, 0.5921], [-0.221, 0.5972], [-0.221, 0.6059], [-0.17, 0.6132], [-0.18, 0.6059], [-0.194, 0.6041], [-0.194, 0.5998], [-0.177, 0.5985], [-0.15, 0.6089], [-0.095, 0.6106], [-0.058, 0.6145], [-0.054, 0.6175], [-0.017, 0.6136], [-0.092, 0.605], [-0.082, 0.6011], [-0.054, 0.6028], [-0.017, 0.6024], [-0.051, 0.5981], [-0.054, 0.5951], [-0.082, 0.5951], [-0.105, 0.5921], [-0.102, 0.5891], [-0.122, 0.5917], [-0.139, 0.5904], [-0.139, 0.5792], [-0.109, 0.5744], [-0.099, 0.5757], [-0.112, 0.5783], [-0.105, 0.5835], [-0.075, 0.5891], [-0.071, 0.5783], [-0.024, 0.5688], [0.041, 0.5633], [0.065, 0.5663], [0.037, 0.5775], [0.061, 0.5891], [0.071, 0.5886], [0.065, 0.5818], [0.078, 0.5757], [0.116, 0.571], [0.15, 0.571], [0.207, 0.5818], [0.207, 0.5878], [0.231, 0.596], [0.262, 0.5929], [0.255, 0.5826], [0.241, 0.5809], [0.252, 0.577], [0.299, 0.5796], [0.323, 0.5835], [0.35, 0.5921], [0.354, 0.5985], [0.378, 0.5981], [0.371, 0.5861], [0.381, 0.5848], [0.398, 0.5869], [0.418, 0.5904], [0.418, 0.6007], [0.405, 0.6041], [0.34, 0.6089], [0.279, 0.6089], [0.241, 0.6119], [0.286, 0.6157], [0.333, 0.6132], [0.364, 0.6145], [0.333, 0.6183], [0.296, 0.6179], [0.327, 0.6244], [0.391, 0.6188], [0.442, 0.608], [0.452, 0.6093], [0.442, 0.6244], [0.473, 0.6188], [0.486, 0.6093], [0.459, 0.5955], [0.469, 0.5942], [0.5, 0.5955], [0.473, 0.5869], [0.401, 0.577], [0.293, 0.5693], [0.269, 0.5697], [0.323, 0.574], [0.313, 0.577], [0.224, 0.5744], [0.218, 0.5787], [0.18, 0.5714], [0.187, 0.5688], [0.197, 0.5676], [0.211, 0.5693], [0.252, 0.5693], [0.255, 0.568], [0.163, 0.565], [0.133, 0.5594], [0.143, 0.5572], [0.197, 0.5607], [0.265, 0.5607], [0.269, 0.5559], [0.211, 0.5486], [0.163, 0.5486], [0.153, 0.5473], [0.214, 0.5258], [0.214, 0.506], [0.18, 0.4948]]}
       ]
     },
     casa_noble: {
@@ -889,12 +889,19 @@
         // arriba dan 0.348/0.342 contra 0.345 de la rejilla). Las espadas
         // cruzadas no van.
         {tipo: 'etiqueta', y: [0.15, 0.405], ancho: 0.595, arco: [0.114, -0.092], renglones: []},
-        {tipo: 'etiqueta', y: [0.297, 0.345], ancho: 0.755, arco: [0.047, 0.018], renglones: []},
-        {tipo: 'etiqueta', y: [0.205, 0.26], ancho: 0.75, arco: [-0.073, -0.073], renglones: []},
-        {tipo: 'texto', y: [0.312, 0.342], ancho: 0.72, renglones: [{g: 0.03, largo: 1, palabras: [6, 5]}], arco: 0.07},
+        // El texto de cada cinta va DENTRO de ella y sigue su línea media
+        // (Axel, 2026-11-24: "el texto no está centrado en las bandas").
+        // Medidos aparte, cada uno con su curva (CHIVAS REGAL con 0.07,
+        // su cinta con 0.047 y 0.018), el texto se pegaba a un borde. Y
+        // las cintas, vueltas a medir en la rejilla sin sus puntas
+        // enrolladas: la de arriba, de 0.335 en las puntas a 0.364 al centro
+        // por arriba y de 0.295 a 0.316 por abajo (sa = dy·asp/(ancho·r));
+        // la de abajo, de 0.244 a 0.229 y de 0.207 a 0.188. Con las puntas
+        // dentro, la curva salía casi plana y el texto caía bajo sus letras.
+        {tipo: 'etiqueta', y: [0.295, 0.335], ancho: 0.76, arco: [0.104, 0.075], renglones: [{g: 0.03, largo: 0.92, palabras: [6, 5]}]},
+        {tipo: 'etiqueta', y: [0.207, 0.244], ancho: 0.66, arco: [-0.062, -0.078], renglones: [{g: 0.016, largo: 0.925, palabras: [7, 6, 6]}]},
         {tipo: 'etiqueta', y: [0.255, 0.302], ancho: 0.29, renglones: [], forma: 'ovalo'},
         {tipo: 'texto', y: [0.262, 0.295], ancho: 0.11, renglones: [{g: 0.033, largo: 1, palabras: [2]}]},
-        {tipo: 'texto', y: [0.212, 0.227], ancho: 0.66, renglones: [{g: 0.015, largo: 1, palabras: [7, 6, 6]}], arco: -0.05}
       ]
     },
     empress: {
@@ -1803,6 +1810,10 @@
   //   · `x`: corrida del eje, como parte del radio a su altura (el
   //     medallón de Aperol; desde la tanda 2 también un texto o una
   //     etiqueta: TEQUILA / BLANCO de Don Julio, a la derecha del sello).
+  //   · `tipo: 'dibujo'`, con `puntos`: el contorno de un dibujo grande
+  //     (el venado de Glenfiddich, 2026-11-24), sacado de la foto.
+  //   · en una etiqueta con `arco`, sus renglones siguen su línea media
+  //     (el texto de las cintas de Chivas).
   // Sin ninguna, lo de antes: rectángulo y renglones rectos.
   function marcasFor(x, w, h, pad) {
     const prof = profOf(x);
@@ -1816,7 +1827,10 @@
     // cada palabra, en proporción a sus letras, con un hueco de 1.2. Con
     // arco, cada palabra es un trazo que sigue la parábola del renglón
     // (del grueso de sus letras); sin él, la barra de siempre.
-    const renglones = (rs, top, alto, ancho, arco, mcx) => {
+    // `curva`: en una etiqueta con `arco`, sus renglones siguen la línea
+    // media de la etiqueta (la mitad de sus dos bordes) en vez de su arco
+    // propio: el texto de una cinta tiene que ir centrado en ella.
+    const renglones = (rs, top, alto, ancho, arco, mcx, curva) => {
       const paso = alto / rs.length;
       rs.forEach((r, i) => {
         const g = r.g * usable;
@@ -1824,11 +1838,13 @@
         const tot = r.palabras.reduce((s, n) => s + n, 0) + (r.palabras.length - 1) * 1.2;
         const yc = top + paso * (i + 0.5);
         const flecha = (arco || 0) * largo;
-        const yEn = (xx) => { const t = (xx - mcx) / (largo / 2); return yc - flecha * (1 - t * t); };
+        const yEn = curva
+          ? (xx) => { const t = (xx - mcx) / curva.medio; return yc - curva.flecha * (1 - t * t); }
+          : (xx) => { const t = (xx - mcx) / (largo / 2); return yc - flecha * (1 - t * t); };
         let x0 = mcx - largo / 2;
         for (const n of r.palabras) {
           const lw = largo * n / tot;
-          if (flecha) {
+          if (flecha || curva) {
             const a = x0 + g / 2, b = x0 + Math.max(lw, g) - g / 2;
             let d = '';
             for (let k = 0; k <= 6; k++) { const xx = a + (b - a) * k / 6; d += (k ? ' L' : 'M') + f(xx) + ' ' + f(yEn(xx)); }
@@ -1878,6 +1894,20 @@
              ' L' + f(r) + ' ' + f(yb(r)) + ' Q' + f(ccx) + ' ' + f(yb(ccx) - 2 * sb * ancho) + ' ' + f(l) + ' ' + f(yb(l)) + ' Z"/>';
     };
     for (const m of ms) {
+      if (m.tipo === 'dibujo') {
+        // Un dibujo que domina la botella (el venado de Glenfiddich): su
+        // contorno, `puntos` [x, y] con x como parte del radio máximo
+        // (desde el eje) e y como altura. Suavizado con curvas entre los
+        // puntos medios para que no salga en escalones de píxel.
+        const P = (m.puntos || []).map(([px, py]) => [cx + px * maxR, Y(py)]);
+        if (P.length < 3) continue;
+        const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+        const m0 = mid(P[P.length - 1], P[0]);
+        let d = 'M' + f(m0[0]) + ' ' + f(m0[1]);
+        P.forEach((q, i) => { const n = mid(q, P[(i + 1) % P.length]); d += ' Q' + f(q[0]) + ' ' + f(q[1]) + ' ' + f(n[0]) + ' ' + f(n[1]); });
+        out += '<path class="cp-marca cp-dibujo" d="' + d + ' Z"/>';
+        continue;
+      }
       if (m.tipo === 'sello') {
         // `x`: corrido del eje, como parte del radio de la botella a su
         // altura (el medallón de Aperol va a la derecha; positivo es
@@ -1904,7 +1934,9 @@
       if (rot) out += '<g transform="rotate(' + f(-rot) + ' ' + f(mcx) + ' ' + f(top + alto / 2) + ')">';
       if (m.tipo !== 'texto') out += contorno(m, mcx - ancho / 2, top, ancho, alto);
       if (Array.isArray(m.renglones) && m.renglones.length) {
-        renglones(m.renglones, top, alto, ancho, m.tipo === 'texto' && typeof m.arco === 'number' ? m.arco : 0, mcx);
+        const [sa, sb] = m.tipo !== 'texto' && Array.isArray(m.arco) ? m.arco : [0, 0];
+        renglones(m.renglones, top, alto, ancho, m.tipo === 'texto' && typeof m.arco === 'number' ? m.arco : 0, mcx,
+          sa || sb ? { flecha: (sa + sb) / 2 * ancho, medio: ancho / 2 } : null);
       }
       if (rot) out += '</g>';
     }

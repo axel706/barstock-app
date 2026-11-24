@@ -56,12 +56,13 @@ for (const k of ['woodford', 'elijah_craig', 'basil_hayden'].concat(TANDA1, TAND
   prueba(k + ': lleva marcas', Array.isArray(ms) && ms.length >= 3, ms && ms.length);
   prueba(k + ': bien formadas (alturas dentro de la botella, de abajo arriba)', Array.isArray(ms) && ms.every(m =>
     (m.x === undefined || (typeof m.x === 'number' && Math.abs(m.x) < 1)) &&
-    (m.tipo === 'sello' ? (m.y > 0 && m.y < 1 && m.r > 0 && m.r < 0.2)
+    (m.tipo === 'dibujo' ? (Array.isArray(m.puntos) && m.puntos.length >= 3 && m.puntos.every(([px, py]) => Math.abs(px) <= 1 && py > 0 && py < 1))
+      : m.tipo === 'sello' ? (m.y > 0 && m.y < 1 && m.r > 0 && m.r < 0.2)
       : (Array.isArray(m.y) && m.y[0] >= 0 && m.y[1] <= 1 && m.y[0] < m.y[1] && m.ancho > 0 && m.ancho <= (m.tipo === 'etiqueta' && m.rot ? 2 : 1.1))) &&
-    Array.isArray(m.renglones) && m.renglones.every(r => r.g > 0 && r.g < 0.1 && r.largo > 0 && r.largo <= 1 &&
+    (m.tipo === 'dibujo' || Array.isArray(m.renglones)) && (m.renglones || []).every(r => r.g > 0 && r.g < 0.1 && r.largo > 0 && r.largo <= 1 &&
       Array.isArray(r.palabras) && r.palabras.length >= 1 && r.palabras.every(n => Number.isInteger(n) && n > 0))));
   prueba(k + ': en los datos no hay palabras, sólo cuántas letras', Array.isArray(ms) &&
-    !JSON.stringify(ms).match(/[A-Za-z]{3,}/g).some(w => !['tipo', 'etiqueta', 'sello', 'texto', 'ancho', 'renglones', 'largo', 'palabras', 'rot', 'arco', 'forma', 'ovalo', 'roto', 'pend'].includes(w)),
+    !JSON.stringify(ms).match(/[A-Za-z]{3,}/g).some(w => !['tipo', 'etiqueta', 'sello', 'texto', 'ancho', 'renglones', 'largo', 'palabras', 'rot', 'arco', 'forma', 'ovalo', 'roto', 'pend', 'dibujo', 'puntos'].includes(w)),
     String(JSON.stringify(ms)).slice(0, 120));
 }
 
@@ -157,8 +158,43 @@ console.log('\nen el panel de conteo');
 console.log('\ntanda 3, revisada: lo grande y lo irregular');
 {
   const M = (k) => B.PROFILES[k].marcas;
-  prueba('Glenfiddich: el venado, dos óvalos entre 0.48 y 0.63',
-    M('glenfiddich').filter(m => m.forma === 'ovalo' && m.y[0] >= 0.48 && m.y[1] <= 0.63).length === 2);
+  // El venado es un dibujo con su contorno (Axel, 2026-11-24: "una shape
+  // más cercana al venado, en lugar de 2 óvalos"), sacado de la foto.
+  const ven = M('glenfiddich').filter(m => m.tipo === 'dibujo');
+  prueba('Glenfiddich: el venado es UN dibujo con su contorno (30 puntos o más)',
+    ven.length === 1 && ven[0].puntos.length >= 30, ven.length && ven[0].puntos.length);
+  prueba('Glenfiddich: sus puntos van entre 0.48 y 0.63 de alto', ven.length === 1 &&
+    ven[0].puntos.every(([px, py]) => py >= 0.48 && py <= 0.63 && Math.abs(px) <= 1));
+  prueba('Glenfiddich: ya no lleva los óvalos', !M('glenfiddich').some(m => m.forma === 'ovalo'));
+  prueba('el dibujo se pinta: un trazo cerrado con todos sus puntos',
+    (B.marcasFor('glenfiddich', W, H, PAD).match(/<path class="cp-marca cp-dibujo" d="M[^"]*Z"/g) || []).length === 1);
+  // El texto de una cinta va en la cinta y sigue su línea media: medidos
+  // aparte, cada uno con su curva, el texto quedaba pegado a un borde.
+  const cintas = M('chivas').filter(m => m.tipo === 'etiqueta' && Array.isArray(m.arco) && (m.renglones || []).length);
+  prueba('Chivas: las dos cintas llevan su texto dentro', cintas.length === 2, cintas.length);
+  prueba('Chivas: ningún texto suelto encima de una cinta', !M('chivas').some(m => m.tipo === 'texto' && m.y[0] >= 0.2 && m.y[1] <= 0.35 && m.ancho > 0.5));
+  {
+    // Cada palabra, a la mitad entre los dos bordes de su cinta.
+    const s = B.marcasFor('chivas', W, H, PAD);
+    const num = (t) => t.match(/-?\d+\.?\d*/g).map(Number);
+    const bandas = (s.match(/<path class="cp-marca" d="M[^"]*Q[^"]*Q[^"]*Z"/g) || []).map((d) => {
+      const [l, ya, cx, ca, r, , , yb, , cb] = num(d);
+      const q = (p0, c, p2, t) => (1 - t) * (1 - t) * p0 + 2 * t * (1 - t) * c + t * t * p2;
+      // x es lineal en t (el control va al centro): t = (x − l) / (r − l).
+      return { l, r, mitad: (x) => { const t = (x - l) / (r - l); return (q(ya, ca, ya, t) + q(yb, cb, yb, t)) / 2; } };
+    });
+    const palabras = (s.match(/<path class="cp-barra-arco" d="[^"]*"/g) || []).map((d) => {
+      const n = num(d); const pts = []; for (let i = 0; i + 1 < n.length; i += 2) pts.push([n[i], n[i + 1]]); return pts;
+    });
+    let peor = 0, vistas = 0;
+    for (const b of bandas) for (const pts of palabras) {
+      if (!pts.every(([x]) => x > b.l && x < b.r)) continue;
+      const y0 = Math.min(...pts.map((p) => p[1])); if (Math.abs(y0 - b.mitad(pts[0][0])) > 12) continue;
+      vistas++;
+      for (const [x, y] of pts) peor = Math.max(peor, Math.abs(y - b.mitad(x)));
+    }
+    prueba('Chivas: el texto de las cintas va por su línea media (a medio px)', vistas >= 5 && peor < 0.5, vistas + ' palabras, ' + peor.toFixed(2) + ' px');
+  }
   const chv = M('chivas').filter(m => m.tipo === 'etiqueta' && Array.isArray(m.arco) && m.y[0] >= 0.14 && m.y[1] <= 0.41);
   prueba('Chivas: el escudo y sus dos cintas, cada uno con su arco', chv.length === 3, chv.length);
   prueba('Chivas: la cinta de abajo se hunde (∪) y el escudo sube en cresta',

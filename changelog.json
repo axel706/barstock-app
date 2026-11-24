@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261124-083742",
+    "items": [
+      "Count panel: the Glenfiddich stag, traced",
+      "Chivas: text centered in its ribbons"
+    ]
+  },
+  {
     "build": "20261124-082755",
     "items": [
       "Count panel: Glenfiddich stag, Chivas shield",
@@ -184,12 +191,6 @@
     "items": [
       "Counting: label guides on 9 more bottles",
       "Grey Goose, Ketel One, Captain Morgan, Malibu and more"
-    ]
-  },
-  {
-    "build": "20261122-104434",
-    "items": [
-      "Counting: Bacardí’s lower label guide is straight"
     ]
   }
 ]
