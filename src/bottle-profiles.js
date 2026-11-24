@@ -1612,7 +1612,10 @@
         {tipo: 'dibujo', puntos: [[-1.15, 0.474], [1.15, 0.474], [1.15, 0.487], [-1.15, 0.487]]},
         // El panel de la F, calcado (la mitad izquierda reflejada).
         {tipo: 'dibujo', puntos: [[-0.166, 0.5995], [-0.264, 0.6049], [-0.344, 0.6166], [-0.368, 0.7179], [-0.356, 0.7342], [-0.313, 0.7405], [-0.19, 0.7441], [-0.043, 0.7369], [0.043, 0.7369], [0.19, 0.7441], [0.313, 0.7405], [0.356, 0.7342], [0.368, 0.7179], [0.344, 0.6166], [0.264, 0.6049], [0.166, 0.5995]]},
-        {tipo: 'texto', y: [0.62, 0.71], ancho: 0.2, x: 0.1, renglones: [{g: 0.09, largo: 1, palabras: [1]}]},
+        // La F, medida en la foto: de −0.10 a 0.24 del radio máximo y de 0.621
+        // a 0.712 (ancho 0.34 / (2 × 0.753) = 0.226, centro 0.07 / 0.822 =
+        // 0.085). `justo`: alta y angosta, como barra normal se salía del panel.
+        {tipo: 'texto', y: [0.621, 0.712], ancho: 0.226, x: 0.085, renglones: [{g: 0.091, largo: 1, palabras: [1], justo: true}]},
         {tipo: 'texto', y: [0.328, 0.392], ancho: 0.91, renglones: [{g: 0.064, largo: 1, palabras: [10]}]},
         {tipo: 'texto', y: [0.297, 0.31], ancho: 0.375, x: 0.6, renglones: [{g: 0.013, largo: 1, palabras: [7]}]},
         {tipo: 'etiqueta', y: [0.108, 0.134], ancho: 0.715, x: -0.14, renglones: []},
@@ -2262,8 +2265,13 @@
             for (let k = 0; k <= 6; k++) { const xx = a + (b - a) * k / 6; d += (k ? ' L' : 'M') + f(xx) + ' ' + f(yEn(xx)); }
             out += '<path class="cp-barra-arco" d="' + d + '" stroke-width="' + f(g) + '"/>';
           } else {
-            out += '<rect class="cp-barra" x="' + f(x0) + '" y="' + f(yc - g / 2) + '" width="' + f(Math.max(lw, g)) +
-                   '" height="' + f(g) + '" rx="' + f(g / 2.5) + '"/>';
+            // Una barra no es más angosta que alta (una palabra corta sale
+            // como pastilla), salvo un renglón `justo`: una letra alta y
+            // angosta, la F del panel de Frangelico, salía el triple de ancha
+            // y se le escapaba al panel. `justo` lleva el ancho medido.
+            const bw = r.justo ? lw : Math.max(lw, g);
+            out += '<rect class="cp-barra" x="' + f(x0) + '" y="' + f(yc - g / 2) + '" width="' + f(bw) +
+                   '" height="' + f(g) + '" rx="' + f(Math.min(g / 2.5, bw / 2)) + '"/>';
           }
           x0 += lw + largo * 1.2 / tot;
         }

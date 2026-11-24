@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261124-145624",
+    "items": [
+      "Counting: the Frangelico F sits inside its panel"
+    ]
+  },
+  {
     "build": "20261124-141241",
     "items": [
       "Counting: label guides on 9 more bottles",
@@ -183,13 +189,6 @@
     "items": [
       "Home: On the shelf shows one number when the app opens",
       "It no longer jumps while the data loads"
-    ]
-  },
-  {
-    "build": "20261122-115529",
-    "items": [
-      "Counting: the line’s handles moved to the edges",
-      "The level in the bottle stays in view"
     ]
   }
 ]

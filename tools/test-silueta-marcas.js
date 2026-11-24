@@ -68,7 +68,7 @@ for (const k of ['woodford', 'elijah_craig', 'basil_hayden'].concat(TANDA1, TAND
     (m.tipo === 'dibujo' || Array.isArray(m.renglones)) && (m.renglones || []).every(r => r.g > 0 && r.g < 0.1 && r.largo > 0 && r.largo <= 1 &&
       Array.isArray(r.palabras) && r.palabras.length >= 1 && r.palabras.every(n => Number.isInteger(n) && n > 0))));
   prueba(k + ': en los datos no hay palabras, sólo cuántas letras', Array.isArray(ms) &&
-    !JSON.stringify(ms).match(/[A-Za-z]{3,}/g).some(w => !['tipo', 'etiqueta', 'sello', 'texto', 'ancho', 'renglones', 'largo', 'palabras', 'rot', 'arco', 'forma', 'ovalo', 'roto', 'pend', 'dibujo', 'puntos'].includes(w)),
+    !JSON.stringify(ms).match(/[A-Za-z]{3,}/g).some(w => !['tipo', 'etiqueta', 'sello', 'texto', 'ancho', 'renglones', 'largo', 'palabras', 'rot', 'arco', 'forma', 'ovalo', 'roto', 'pend', 'dibujo', 'puntos', 'justo', 'true'].includes(w)),
     String(JSON.stringify(ms)).slice(0, 120));
 }
 
@@ -267,6 +267,20 @@ console.log('\ntanda 4: calcada (Axel, 2026-11-24: "calcarlas")');
 
 console.log('\ntanda 5: calcada, y lo que envuelve llega al borde');
 {
+  // La F de Frangelico, dentro de su panel (Axel: "la F no va fuera de
+  // la etiqueta"). Una barra nunca era más angosta que alta, y la F es
+  // alta y angosta: salía casi el triple de ancha. Medida en la foto, de
+  // −0.10 a 0.24 del radio máximo.
+  {
+    const bx = B.boxFor('frangelico', W, H, PAD);
+    const enX = (px) => (px - bx.cx) / bx.maxR;
+    const yDe = (y) => bx.base - y * bx.usable;
+    const f = [...B.marcasFor('frangelico', W, H, PAD).matchAll(/<rect class="cp-barra" x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/g)]
+      .map((m) => m.slice(1).map(Number)).find(([, y, , h]) => y < yDe(0.66) && y + h > yDe(0.66));
+    prueba('Frangelico: la F va donde está en la foto (de −0.10 a 0.24, a 0.03)', !!f &&
+      Math.abs(enX(f[0]) + 0.10) < 0.03 && Math.abs(enX(f[0] + f[2]) - 0.24) < 0.03,
+      f && enX(f[0]).toFixed(2) + ' a ' + enX(f[0] + f[2]).toFixed(2));
+  }
   // Las que se calcaron llevan su contorno; Mozart (la medalla, del mismo
   // tono que el aluminio), Averna (un rombo de bordes rectos) y Jura (dos
   // rectángulos) van con sus esquinas o su óvalo medidos, y lo dice su
