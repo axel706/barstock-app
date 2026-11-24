@@ -367,7 +367,21 @@
       // (donde termina el hombro y empieza el cuello) quedaba al 75 %, y
       // Axel la vio "un poco, solo un poco" alta: .73, en lo alto del
       // hombro.
-      p: [[0,0.8763], [0.0156,0.9147], [0.0469,0.9107], [0.0781,0.9032], [0.1094,0.9032], [0.1406,0.9088], [0.1719,0.8976], [0.2031,0.9032], [0.2344,0.9078], [0.2656,0.9113], [0.2969,0.9237], [0.3281,0.9274], [0.3594,0.9305], [0.3906,0.9392], [0.4219,0.946], [0.4531,0.9516], [0.4844,0.9622], [0.5156,0.969], [0.5469,0.977], [0.5781,0.9882], [0.6094,0.9919], [0.6406,0.9957], [0.6719,0.9631], [0.7031,0.7177], [0.7344,0.4237], [0.7656,0.3514], [0.7969,0.3368], [0.8281,0.3189], [0.8594,0.299], [0.8906,0.2823], [0.9219,0.3089], [0.9531,0.3226], [0.9844,0.322], [1,0.2608]]
+      p: [[0,0.8763], [0.0156,0.9147], [0.0469,0.9107], [0.0781,0.9032], [0.1094,0.9032], [0.1406,0.9088], [0.1719,0.8976], [0.2031,0.9032], [0.2344,0.9078], [0.2656,0.9113], [0.2969,0.9237], [0.3281,0.9274], [0.3594,0.9305], [0.3906,0.9392], [0.4219,0.946], [0.4531,0.9516], [0.4844,0.9622], [0.5156,0.969], [0.5469,0.977], [0.5781,0.9882], [0.6094,0.9919], [0.6406,0.9957], [0.6719,0.9631], [0.7031,0.7177], [0.7344,0.4237], [0.7656,0.3514], [0.7969,0.3368], [0.8281,0.3189], [0.8594,0.299], [0.8906,0.2823], [0.9219,0.3089], [0.9531,0.3226], [0.9844,0.322], [1,0.2608]],
+      // Las marcas (tanda 6, 2026-11-24, medidas sobre la foto con tools/marcas;
+      // 123 px de ancho). No lleva etiqueta: lo impreso va en blanco sobre el vidrio
+      // azul. Bluecoat, AMERICAN y DRY GIN (renglones medidos por su tinta), el
+      // sello cobrizo del hombro (su disco, de 0.638 a 0.678) y el rombo blanco de
+      // abajo, con sus cuatro vértices medidos en la rejilla (bordes rectos). No
+      // van: el bloque de texto en relieve del cuerpo (párrafos chicos), el texto
+      // dentro del rombo (chico) y la tira del cuello.
+      marcas: [
+        {tipo: 'texto', y: [0.522, 0.581], ancho: 0.891, x: 0.026, renglones: [{g: 0.059, largo: 1, palabras: [8]}]},
+        {tipo: 'texto', y: [0.499, 0.511], ancho: 0.367, x: 0.026, renglones: [{g: 0.012, largo: 1, palabras: [8]}]},
+        {tipo: 'texto', y: [0.475, 0.492], ancho: 0.62, x: 0.016, renglones: [{g: 0.017, largo: 1, palabras: [3, 3]}]},
+        {tipo: 'sello', y: 0.658, r: 0.021, x: 0.045, renglones: []},
+        {tipo: 'dibujo', puntos: [[0.03, 0.1745], [0.53, 0.139], [0.03, 0.104], [-0.465, 0.139]]}
+      ],
     },
     botanist: {
       name: 'The Botanist', asp: 3.1, yFull: 0.69, pourable: true,
@@ -386,7 +400,34 @@
       // Aqui la regla se pasaba por ARRIBA: 75 %, ya dentro del cuello.
       // Se ajusto sobre la lamina con Axel: 71 % "muy arriba", 67 % le
       // faltaba "que cubra los hombros", .69 si.
-      p: [[0,0.4624], [0.0156,0.8192], [0.0469,0.9899], [0.0781,0.9758], [0.1094,0.9805], [0.1406,0.9825], [0.1719,0.9758], [0.2031,0.9819], [0.2344,0.9839], [0.2656,0.9839], [0.2969,0.9839], [0.3281,0.9886], [0.3594,0.9919], [0.3906,0.9866], [0.4219,0.9839], [0.4531,0.9839], [0.4844,0.9839], [0.5156,0.9852], [0.5469,0.9919], [0.5781,0.9919], [0.6094,0.9919], [0.6406,0.9926], [0.6719,0.9805], [0.7031,0.5155], [0.7344,0.3495], [0.7656,0.3448], [0.7969,0.371], [0.8281,0.371], [0.8594,0.371], [0.8906,0.373], [0.9219,0.3952], [0.9531,0.3878], [0.9844,0.3837], [1,0.3522]]
+      p: [[0,0.4624], [0.0156,0.8192], [0.0469,0.9899], [0.0781,0.9758], [0.1094,0.9805], [0.1406,0.9825], [0.1719,0.9758], [0.2031,0.9819], [0.2344,0.9839], [0.2656,0.9839], [0.2969,0.9839], [0.3281,0.9886], [0.3594,0.9919], [0.3906,0.9866], [0.4219,0.9839], [0.4531,0.9839], [0.4844,0.9839], [0.5156,0.9852], [0.5469,0.9919], [0.5781,0.9919], [0.6094,0.9919], [0.6406,0.9926], [0.6719,0.9805], [0.7031,0.5155], [0.7344,0.3495], [0.7656,0.3448], [0.7969,0.371], [0.8281,0.371], [0.8594,0.371], [0.8906,0.373], [0.9219,0.3952], [0.9531,0.3878], [0.9844,0.3837], [1,0.3522]],
+      // Las marcas (tanda 6, 2026-11-24, medidas sobre la foto con tools/marcas;
+      // 123 px de ancho). El panel blanco esmerilado, que ENVUELVE (de 0.47 a 0.648,
+      // de borde a borde), con THE BOTANIST, ISLAY DRY GIN y el 22; la banda roja
+      // del cuello, que también envuelve. Y los once renglones de nombres de
+      // plantas EN RELIEVE que cubren el cuerpo: son lo GRANDE de esta botella (como
+      // TULLAMORE), van de canto a canto y la silueta los recorta. Sus alturas, de
+      // la textura de cada fila; sus palabras, las letras que se leen de frente (el
+      // texto sigue por los lados). No van: la letra chica de encima y de debajo del
+      // nombre ni el relieve de plantas del cuello.
+      marcas: [
+        {tipo: 'dibujo', puntos: [[-1.15, 0.648], [1.15, 0.648], [1.15, 0.47], [-1.15, 0.47]]},
+        {tipo: 'dibujo', puntos: [[-1.15, 0.944], [1.15, 0.944], [1.15, 0.9335], [-1.15, 0.9335]]},
+        {tipo: 'texto', y: [0.562, 0.594], ancho: 0.806, renglones: [{g: 0.032, largo: 1, palabras: [3, 8]}]},
+        {tipo: 'texto', y: [0.542, 0.555], ancho: 0.378, renglones: [{g: 0.013, largo: 1, palabras: [5, 3, 3]}]},
+        {tipo: 'texto', y: [0.51, 0.526], ancho: 0.081, x: -0.01, renglones: [{g: 0.016, largo: 1, palabras: [2]}]},
+        {tipo: 'texto', y: [0.438, 0.461], ancho: 1, renglones: [{g: 0.023, largo: 1, palabras: [7, 5]}]},
+        {tipo: 'texto', y: [0.401, 0.424], ancho: 1, renglones: [{g: 0.023, largo: 1, palabras: [6, 6]}]},
+        {tipo: 'texto', y: [0.365, 0.388], ancho: 1, renglones: [{g: 0.023, largo: 1, palabras: [4, 10]}]},
+        {tipo: 'texto', y: [0.331, 0.352], ancho: 1, renglones: [{g: 0.021, largo: 1, palabras: [4, 9]}]},
+        {tipo: 'texto', y: [0.292, 0.315], ancho: 1, renglones: [{g: 0.023, largo: 1, palabras: [5, 1, 6]}]},
+        {tipo: 'texto', y: [0.258, 0.279], ancho: 1, renglones: [{g: 0.021, largo: 1, palabras: [4, 8]}]},
+        {tipo: 'texto', y: [0.221, 0.242], ancho: 1, renglones: [{g: 0.021, largo: 1, palabras: [7, 5]}]},
+        {tipo: 'texto', y: [0.185, 0.206], ancho: 1, renglones: [{g: 0.021, largo: 1, palabras: [4, 7]}]},
+        {tipo: 'texto', y: [0.148, 0.169], ancho: 1, renglones: [{g: 0.021, largo: 1, palabras: [5, 7]}]},
+        {tipo: 'texto', y: [0.112, 0.135], ancho: 1, renglones: [{g: 0.023, largo: 1, palabras: [7, 7]}]},
+        {tipo: 'texto', y: [0.076, 0.099], ancho: 1, renglones: [{g: 0.023, largo: 1, palabras: [5, 7]}]}
+      ],
     },
     carlo_rossi: {
       name: 'Carlo Rossi', asp: 1.95, yFull: 0.79, pourable: true,
@@ -418,7 +459,20 @@
         borde:    [[0.896,0.426], [0.8827,0.572], [0.8673,0.632], [0.854,0.658], [0.8385,0.667], [0.8252,0.675], [0.8097,0.675], [0.7965,0.675], [0.781,0.675], [0.7677,0.667], [0.7522,0.658], [0.7389,0.649], [0.7235,0.632], [0.7102,0.615]],
         interior: [[0.854,0.486], [0.8407,0.529], [0.8252,0.538], [0.8119,0.546], [0.7965,0.546], [0.7832,0.538], [0.7699,0.521], [0.7544,0.495], [0.7412,0.435]]
       },
-      p: [[0,0.3728], [0.0156,0.6581], [0.0469,0.8496], [0.0781,0.9116], [0.1094,0.9497], [0.1406,0.9669], [0.1719,0.9742], [0.2031,0.9742], [0.2344,0.9742], [0.2656,0.9742], [0.2969,0.9742], [0.3281,0.9742], [0.3594,0.9797], [0.3906,0.9828], [0.4219,0.9896], [0.4531,0.9914], [0.4844,0.9914], [0.5156,0.9937], [0.5469,1], [0.5781,0.9963], [0.6094,0.9662], [0.6406,0.9073], [0.6719,0.8048], [0.7031,0.6306], [0.7344,0.4268], [0.7656,0.339], [0.7969,0.309], [0.8281,0.285], [0.8594,0.2574], [0.8906,0.2353], [0.9219,0.2298], [0.9531,0.2261], [0.9844,0.2145], [1,0.138]]
+      p: [[0,0.3728], [0.0156,0.6581], [0.0469,0.8496], [0.0781,0.9116], [0.1094,0.9497], [0.1406,0.9669], [0.1719,0.9742], [0.2031,0.9742], [0.2344,0.9742], [0.2656,0.9742], [0.2969,0.9742], [0.3281,0.9742], [0.3594,0.9797], [0.3906,0.9828], [0.4219,0.9896], [0.4531,0.9914], [0.4844,0.9914], [0.5156,0.9937], [0.5469,1], [0.5781,0.9963], [0.6094,0.9662], [0.6406,0.9073], [0.6719,0.8048], [0.7031,0.6306], [0.7344,0.4268], [0.7656,0.339], [0.7969,0.309], [0.8281,0.285], [0.8594,0.2574], [0.8906,0.2353], [0.9219,0.2298], [0.9531,0.2261], [0.9844,0.2145], [1,0.138]],
+      // Las marcas (tanda 6, 2026-11-24, calcadas de la foto con tools/marcas/calcar.py;
+      // el eje es el de la silueta, x=117.4, no el centro de la caja: el asa va a
+      // la derecha). La etiqueta blanca, más angosta que el garrafón (va pegada al
+      // frente, no da la vuelta), la cinta roja de BURGUNDY y el sello rojo del 40.
+      // Texto: Carlo Rossi y BURGUNDY. No van: el dibujo de Carlo y la viña, la
+      // línea de debajo de la cinta, el párrafo y el código de barras (letra chica).
+      marcas: [
+        {tipo: 'dibujo', puntos: [[0.332, 0.1405], [-0.304, 0.1405], [-0.678, 0.146], [-0.682, 0.5166], [0.082, 0.5188], [0.649, 0.5166], [0.671, 0.5133], [0.671, 0.146]]},
+        {tipo: 'dibujo', puntos: [[0.375, 0.2732], [-0.407, 0.2732], [-0.433, 0.2777], [-0.485, 0.2777], [-0.506, 0.292], [-0.497, 0.3031], [-0.476, 0.3086], [-0.424, 0.3108], [0.495, 0.3108], [0.516, 0.2987], [0.499, 0.2788]]},
+        {tipo: 'dibujo', puntos: [[0.555, 0.3241], [0.469, 0.3263], [0.396, 0.3473], [0.405, 0.3827], [0.46, 0.3971], [0.521, 0.4015], [0.581, 0.3971], [0.611, 0.3894], [0.645, 0.3695], [0.645, 0.354], [0.619, 0.3363]]},
+        {tipo: 'texto', y: [0.427, 0.491], ancho: 0.545, renglones: [{g: 0.064, largo: 1, palabras: [5, 5]}]},
+        {tipo: 'texto', y: [0.283, 0.299], ancho: 0.267, x: -0.01, renglones: [{g: 0.016, largo: 1, palabras: [8]}]}
+      ],
     },
     smirnoff: {
       name: 'Smirnoff', asp: 3.93, yFull: 0.75, pourable: true,
@@ -1586,7 +1640,26 @@
       // abajo, donde el borde se ve limpio; contra la foto el desajuste es
       // 3.34 %, casi todo ese escalon. Es transparente: yFull .73 por el
       // criterio de botanist.
-      p: [[0,0.5321], [0.0156,0.7959], [0.0469,0.963], [0.0781,0.9586], [0.1094,1], [0.1406,1], [0.1719,1], [0.2031,1], [0.2344,1], [0.2656,1], [0.2969,1], [0.3281,1], [0.3594,1], [0.3906,1], [0.4219,1], [0.4531,1], [0.4844,1], [0.5156,1], [0.5469,1], [0.5781,1], [0.6094,1], [0.6406,0.96], [0.6719,0.8536], [0.7031,0.774], [0.7344,0.5518], [0.7656,0.3787], [0.7969,0.3654], [0.8281,0.3609], [0.8594,0.3654], [0.8906,0.3654], [0.9219,0.3654], [0.9531,0.3654], [0.9844,0.3654], [1,0.3397]]
+      p: [[0,0.5321], [0.0156,0.7959], [0.0469,0.963], [0.0781,0.9586], [0.1094,1], [0.1406,1], [0.1719,1], [0.2031,1], [0.2344,1], [0.2656,1], [0.2969,1], [0.3281,1], [0.3594,1], [0.3906,1], [0.4219,1], [0.4531,1], [0.4844,1], [0.5156,1], [0.5469,1], [0.5781,1], [0.6094,1], [0.6406,0.96], [0.6719,0.8536], [0.7031,0.774], [0.7344,0.5518], [0.7656,0.3787], [0.7969,0.3654], [0.8281,0.3609], [0.8594,0.3654], [0.8906,0.3654], [0.9219,0.3654], [0.9531,0.3654], [0.9844,0.3654], [1,0.3397]],
+      // Las marcas (tanda 6, 2026-11-24, calcadas de la foto con tools/marcas/calcar.py;
+      // foto de 103 px de ancho). Todo va impreso en el vidrio: el medallón del 360
+      // (calcada la mitad izquierda y reflejada: el brillo de la derecha la mordía;
+      // su base va detrás de la cinta), la cinta de Double Chocolate, que ENVUELVE
+      // (arriba medida columna a columna, de 0.42 en el canto a 0.436 al centro;
+      // abajo 0.358 en los lados, y al centro la tapan los bombones: 0.366 es la
+      // misma curva), el panel marrón de abajo (calcada la mitad derecha: los
+      // rayos mordían la izquierda) y el tubo dorado del cuello, que va por DENTRO
+      // del vidrio (el vidrio claro se ve a sus lados: no envuelve). Texto: 360 y
+      // Double Chocolate en arco. No van: los bombones (una foto), los rayos, el
+      // texto del panel (letra chica) y el medallón del cuello (relieve chico).
+      marcas: [
+        {tipo: 'dibujo', puntos: [[-0.5, 0.433], [-0.56, 0.46], [-0.583, 0.486], [-0.563, 0.509], [-0.485, 0.5355], [-0.301, 0.5611], [-0.087, 0.5733], [0.087, 0.5733], [0.301, 0.5611], [0.485, 0.5355], [0.563, 0.509], [0.583, 0.486], [0.56, 0.46], [0.5, 0.433]]},
+        {tipo: 'dibujo', puntos: [[-1.15, 0.42], [-0.85, 0.425], [-0.6, 0.43], [-0.3, 0.434], [0, 0.436], [0.3, 0.434], [0.6, 0.43], [0.85, 0.425], [1.15, 0.42], [1.15, 0.355], [0.85, 0.358], [0.5, 0.363], [0, 0.366], [-0.5, 0.363], [-0.85, 0.358], [-1.15, 0.355]]},
+        {tipo: 'dibujo', puntos: [[-0.447, 0.211], [0.447, 0.211], [0.447, 0.1027], [0.408, 0.0978], [0.398, 0.0819], [-0.398, 0.0819], [-0.408, 0.0978], [-0.447, 0.1027]]},
+        {tipo: 'dibujo', puntos: [[0, 0.787], [-0.146, 0.7787], [-0.233, 0.7815], [-0.233, 0.94], [-0.2, 0.958], [-0.12, 0.967], [0, 0.9694], [0.12, 0.967], [0.2, 0.958], [0.233, 0.94], [0.233, 0.7815], [0.146, 0.7787]]},
+        {tipo: 'texto', y: [0.448, 0.537], ancho: 0.4675, x: 0.0275, renglones: [{g: 0.089, largo: 1, palabras: [3]}]},
+        {tipo: 'texto', y: [0.3835, 0.4085], ancho: 0.815, x: -0.025, arco: 0.053, renglones: [{g: 0.025, largo: 1, palabras: [6, 9]}]}
+      ],
     },
     frangelico: {
       name: 'Frangelico', asp: 3.38, yFull: 0.83, pourable: true,

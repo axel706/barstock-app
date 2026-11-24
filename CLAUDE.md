@@ -496,7 +496,17 @@ la primera CALCADA: Oban, Boulard, Balvenie, Michter's, Skrewball, Bols,
 dentro de su panel: un renglón `justo` lleva el ancho medido de su letra): Frangelico, St-Germain,
 Mozart, Averna, Blade and Bow, Don Julio Añejo (de su foto, `dj.png`; la de
 `djrepo` es la silueta `don_julio`, Blanco y Reposado), Nikka Coffey Grain,
-Jura y Drambuie. Smirnoff se dejó fuera: su
+Jura y Drambuie; y la tanda 6 (2026-11-24, en develop, pendiente de que
+Axel la apruebe sobre la lámina), de fotos chicas (103 a 233 px de ancho):
+360 Double Chocolate (`v360`), Carlo Rossi (el eje es el de la silueta,
+x=117.4, no el centro de la caja: el asa va a la derecha), Bluecoat y The
+Botanist (sus once renglones de nombres en relieve van, como lo GRANDE de
+la botella). Fuera de la 6: St. Elder (la foto es la contraetiqueta, hace
+falta una del frente), Clase Azul (pintada a mano, sin un borde que
+calcar) y `don_julio` (la foto es del Reposado y la silueta la comparte el
+Blanco de 750; sin foto del Blanco no se puede comprobar que su etiqueta
+sea igual). En `cajas.json`, `w` y `h` son el tamaño de la IMAGEN, no de
+la caja: `encima.js` los usa para dibujar la foto. Smirnoff se dejó fuera: su
 silueta salió de la foto de Vanilla y la comparten los sabores, y la
 No. 21 tiene otra etiqueta. Las
 demás se añaden por tandas, de las fotos que Axel ya mandó para las

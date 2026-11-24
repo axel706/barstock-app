@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261124-150853",
+    "items": [
+      "Counting: label guides on 4 more bottles",
+      "360, Carlo Rossi, Bluecoat and The Botanist"
+    ]
+  },
+  {
     "build": "20261124-145624",
     "items": [
       "Counting: the Frangelico F sits inside its panel"
@@ -182,13 +189,6 @@
     "build": "20261122-120844",
     "items": [
       "App icon back to the flat B"
-    ]
-  },
-  {
-    "build": "20261122-120213",
-    "items": [
-      "Home: On the shelf shows one number when the app opens",
-      "It no longer jumps while the data loads"
     ]
   }
 ]

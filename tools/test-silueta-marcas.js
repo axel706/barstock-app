@@ -53,7 +53,8 @@ const TANDA3 = ['casa_noble', 'glenfiddich', 'chivas', 'monkey_shoulder', 'ciroc
 // Las tandas 4 y 5, calcadas: también tienen que estar bien formadas.
 const TANDA4 = ['oban', 'boulard', 'balvenie', 'michters', 'skrewball', 'bols', 'two_gingers', 'dads_hat', 'whistlepig'];
 const TANDA5 = ['frangelico', 'st_germain', 'mozart', 'averna', 'blade_and_bow', 'don_julio_anejo', 'nikka_coffey', 'jura', 'drambuie'];
-for (const k of ['woodford', 'elijah_craig', 'basil_hayden'].concat(TANDA1, TANDA2, TANDA3, TANDA4, TANDA5)) {
+const TANDA6 = ['v360', 'carlo_rossi', 'bluecoat', 'botanist'];
+for (const k of ['woodford', 'elijah_craig', 'basil_hayden'].concat(TANDA1, TANDA2, TANDA3, TANDA4, TANDA5, TANDA6)) {
   const P = B.PROFILES[k];
   const ms = P && P.marcas;
   prueba(k + ': lleva marcas', Array.isArray(ms) && ms.length >= 3, ms && ms.length);
@@ -299,6 +300,56 @@ console.log('\ntanda 5: calcada, y lo que envuelve llega al borde');
     const ms = (B.PROFILES[k] && B.PROFILES[k].marcas) || [];
     prueba(k + ': lo que envuelve llega al borde por los dos lados', ms.some(m => m.tipo === 'dibujo' &&
       Math.min(...m.puntos.map(q => q[0])) <= -1 && Math.max(...m.puntos.map(q => q[0])) >= 1));
+  }
+}
+
+console.log('\ntanda 6: calcada, de fotos chicas');
+{
+  // Fotos de 126 a 235 px de ancho: entra lo que se calca limpio o se mide
+  // en la rejilla, nunca la letra chica. St. Elder (la foto es la
+  // contraetiqueta), Clase Azul (pintada a mano, sin un borde que calcar) y
+  // Don Julio (foto del Reposado; la silueta la comparte el Blanco de 750 y
+  // no hay foto para comprobar que su etiqueta sea igual) quedaron fuera.
+  for (const k of TANDA6) {
+    const ms = (B.PROFILES[k] && B.PROFILES[k].marcas) || [];
+    prueba(k + ': lleva al menos una marca calcada o medida como dibujo', ms.some(m => m.tipo === 'dibujo' && m.puntos.length >= 4));
+  }
+  prueba('Carlo Rossi y V360: su etiqueta o su medallón, calcados (8 puntos o más)',
+    ['carlo_rossi', 'v360'].every(k => ((B.PROFILES[k] && B.PROFILES[k].marcas) || []).some(m => m.tipo === 'dibujo' && m.puntos.length >= 8)));
+  // Lo que da la vuelta (la cinta de Double Chocolate, el panel blanco y
+  // la banda roja del cuello de The Botanist) llega de borde a borde.
+  for (const k of ['v360', 'botanist']) {
+    const ms = (B.PROFILES[k] && B.PROFILES[k].marcas) || [];
+    prueba(k + ': lo que envuelve llega al borde por los dos lados', ms.some(m => m.tipo === 'dibujo' &&
+      Math.min(...m.puntos.map(q => q[0])) <= -1 && Math.max(...m.puntos.map(q => q[0])) >= 1));
+  }
+  // Ninguna barra se sale del dibujo que la contiene (la F de Frangelico se
+  // salía de su panel): cada barra cuyo centro cae dentro de un dibujo
+  // tiene que caber en el ancho de ese dibujo a su altura.
+  const corte = (pts, y) => {
+    const xs = [];
+    for (let i = 0; i < pts.length; i++) {
+      const [x1, y1] = pts[i], [x2, y2] = pts[(i + 1) % pts.length];
+      if ((y1 <= y && y2 > y) || (y2 <= y && y1 > y)) xs.push(x1 + (y - y1) * (x2 - x1) / (y2 - y1));
+    }
+    return xs.sort((a, b) => a - b);
+  };
+  for (const k of TANDA6) {
+    const P = B.PROFILES[k]; if (!P || !P.marcas) continue;
+    const bx = B.boxFor(k, W, H, PAD);
+    const dib = P.marcas.filter(m => m.tipo === 'dibujo').map(m => m.puntos.map(([x, y]) => [bx.cx + x * bx.maxR, bx.base - y * bx.usable]));
+    const barras = [...B.marcasFor(k, W, H, PAD).matchAll(/<rect class="cp-barra" x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/g)].map(m => m.slice(1).map(Number));
+    let fuera = 0;
+    for (const [x, y, w, h] of barras) {
+      const yc = y + h / 2, xc = x + w / 2;
+      for (const d of dib) {
+        const xs = corte(d, yc);
+        for (let i = 0; i + 1 < xs.length; i += 2) {
+          if (xc > xs[i] && xc < xs[i + 1] && (x < xs[i] - 0.5 || x + w > xs[i + 1] + 0.5)) fuera++;
+        }
+      }
+    }
+    prueba(k + ': ninguna barra se sale de la etiqueta que la contiene', fuera === 0, fuera);
   }
 }
 
