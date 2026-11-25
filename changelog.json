@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261125-133822",
+    "items": [
+      "Desktop: button to hide or show the sidebar"
+    ]
+  },
+  {
     "build": "20261125-133304",
     "items": [
       "iPad app: top bar and sidebar no longer under the clock"
@@ -190,12 +196,6 @@
     "build": "20261122-200454",
     "items": [
       "Cycle card: shorter Skip week button"
-    ]
-  },
-  {
-    "build": "20261122-200220",
-    "items": [
-      "Orders › Open: room under the Count skipped note"
     ]
   }
 ]

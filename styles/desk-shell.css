@@ -12,6 +12,8 @@
  */
 
 #dkLado { display: none; }
+/* El botón de esconder la barra no existe en el teléfono. */
+body.dk .bs-header #dkMenu { display: none; }
 
 @media (min-width: 641px) {
   :root { --dk-lado: 232px; }
@@ -157,6 +159,7 @@
   body.dk .wrap {
     max-width: none;
     margin-left: var(--dk-lado);
+    transition: margin-left .22s ease;
     padding-left: 24px !important;
     padding-right: 24px !important;
   }
@@ -205,6 +208,26 @@
     /* El centro de lo que se ve, debajo de la barra de estado. */
     top: calc(50% + env(safe-area-inset-top) / 2);
   }
+
+  /* ── Esconder la barra lateral (opción A) ──
+     Se va entera hacia la izquierda y la página ocupa el ancho. El botón
+     (#dkMenu) va antes del saludo, en los dos estados. */
+  body.dk #dkLado { transition: transform .22s ease, visibility .22s; }
+  body.dk.dk-sin-lado #dkLado { transform: translateX(-100%); visibility: hidden; }
+  body.dk.dk-sin-lado .wrap { margin-left: 0; }
+  body.dk .bs-header #dkMenu {
+    order: 0; flex: none;
+    width: 38px; height: 38px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 12px !important;
+    font-size: 20px; color: #e2e8f0;
+    background: rgba(255, 255, 255, .08);
+    border: 1px solid rgba(255, 255, 255, .18);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2);
+    cursor: pointer;
+  }
+  body.dk .bs-header #dkMenu:hover { background: rgba(255, 255, 255, .16); }
+  body.light.dk .bs-header #dkMenu { color: #0f172a; background: rgba(255, 255, 255, .6); border-color: rgba(15, 23, 42, .12); }
 
   /* El saludo, a la izquierda. Se recorta antes de llegar a la locación. */
   body.dk .bs-header .dk-saludo {
@@ -269,4 +292,8 @@
   body.dk .inventory-controls-top .tabs { flex: 1 1 100%; flex-wrap: wrap; }
   body.dk .inventory-controls-top .inventory-tools { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
   body.dk .inventory-controls-top .inventory-tools button { min-width: 0 !important; flex: 1 1 calc(50% - 6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.dk #dkLado, body.dk .wrap { transition: none; }
 }

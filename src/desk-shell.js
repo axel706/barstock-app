@@ -140,6 +140,34 @@
     if (el._html !== html) { el.innerHTML = html; el._html = html; }
   }
 
+  // ── Esconder la barra lateral (Axel, 2026-11-25, opción A) ──────────
+  //
+  // Del todo: el contenido ocupa el ancho entero y el botón de la
+  // izquierda del saludo la vuelve a sacar. Escondida, el ciclo y Count
+  // no se ven hasta abrirla (lo eligió así frente a dejar los iconos).
+  // Lo que se eligió se recuerda en ESTE dispositivo (localStorage): es
+  // una comodidad de cada pantalla, no un dato. Sin almacenamiento
+  // (navegación privada), funciona igual y sólo se olvida al recargar.
+  const CLAVE_OCULTO = 'bs-dk-lado-oculto';
+  function leerOculto() {
+    try { return localStorage.getItem(CLAVE_OCULTO) === '1'; } catch (e) { return false; }
+  }
+  function esconderLado(oculto, sinGuardar) {
+    document.body.classList.toggle('dk-sin-lado', !!oculto);
+    const b = document.getElementById('dkMenu');
+    if (b) {
+      b.setAttribute('aria-label', oculto ? 'Show the sidebar' : 'Hide the sidebar');
+      b.title = oculto ? 'Show the sidebar' : 'Hide the sidebar';
+      b.setAttribute('aria-expanded', String(!oculto));
+      const i = b.querySelector('i');
+      if (i) i.className = 'ti ' + (oculto ? 'ti-layout-sidebar-left-expand' : 'ti-layout-sidebar-left-collapse');
+    }
+    if (_lado) _lado.setAttribute('aria-hidden', String(!!oculto));
+    if (!sinGuardar) {
+      try { localStorage.setItem(CLAVE_OCULTO, oculto ? '1' : '0'); } catch (e) {}
+    }
+  }
+
   function montar() {
     if (_lado || !document.body) return;
     const header = document.querySelector('.bs-header');
@@ -181,11 +209,19 @@
     const ciclo = document.getElementById('cycleBtn');
     if (ciclo) _lado.querySelector('#dkCiclo').appendChild(ciclo);
 
-    // El saludo, primero en la barra de arriba.
+    // El saludo, primero en la barra de arriba, y antes que él el botón
+    // que esconde o saca la barra lateral.
     const saludo = document.createElement('div');
     saludo.id = 'dkSaludo';
     saludo.className = 'dk-saludo';
     header.insertBefore(saludo, header.firstChild);
+    const menu = document.createElement('button');
+    menu.type = 'button';
+    menu.id = 'dkMenu';
+    menu.innerHTML = '<i class="ti ti-layout-sidebar-left-collapse" aria-hidden="true"></i>';
+    header.insertBefore(menu, header.firstChild);
+    menu.addEventListener('click', () => esconderLado(!document.body.classList.contains('dk-sin-lado')));
+    esconderLado(leerOculto(), true);
     pintarSaludo();
     const MH = window.BarStockMobileHome;
     // El nombre llega tarde (el perfil de remitente se pide a la nube):
@@ -221,5 +257,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', montar);
   else montar();
 
-  window.BarStockDeskShell = { montar, ir, activa, desdeMovil, ITEMS };
+  window.BarStockDeskShell = { montar, ir, activa, desdeMovil, esconderLado, ITEMS };
 })();

@@ -497,6 +497,14 @@ sección de hoy vive tal cual dentro del armazón.
   la izquierda las suyas); sin eso, el logo, el ciclo, el saludo, la
   locación y Import/Export/More quedaban debajo, sin poder tocarse. En
   Chromium vale 0: se mira sirviendo la hoja con 24 px en su lugar.
+- **Esconder la barra lateral** (Axel, 2026-11-25, opción A frente a
+  dejar los iconos): el botón `#dkMenu`, antes del saludo, la esconde
+  DEL TODO (sale por la izquierda) y la página ocupa el ancho; el mismo
+  botón la vuelve a sacar. Escondida, el ciclo y Count no se ven hasta
+  abrirla: así lo eligió. Se recuerda por dispositivo
+  (`localStorage`, `bs-dk-lado-oculto`, con try/catch: sin almacenamiento
+  funciona y sólo se olvida al recargar). Sin animación con reducir
+  movimiento.
 
 ## Reglas del dominio que no son obvias
 

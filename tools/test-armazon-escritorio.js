@@ -166,7 +166,8 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   grupo('8. En el teléfono no existe');
   const fuera = CSS.split('@media')[0];
   prueba('fuera de las media queries, #dkLado va escondido', /#dkLado\s*\{\s*display:\s*none/.test(fuera));
-  prueba('fuera de las media queries no hay más reglas', fuera.replace(/\/\*[\s\S]*?\*\//g, '').replace(/#dkLado\s*\{\s*display:\s*none;\s*\}/, '').trim() === '');
+  prueba('fuera de las media queries sólo se esconde (la barra y su botón)', fuera.replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/#dkLado\s*\{\s*display:\s*none;\s*\}/, '').replace(/body\.dk \.bs-header #dkMenu \{ display: none; \}/, '').trim() === '');
   prueba('la barra se enseña sólo desde 641 px', /@media \(min-width: 641px\)\s*\{[\s\S]*body\.dk #dkLado\s*\{\s*display:\s*flex/.test(CSS));
 
   grupo('8b. Vidrio en los dos modos (Axel, 2026-11-25: "TODO necesita blur")');
@@ -193,7 +194,7 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   prueba('y conserva su clic (el de weekly-cycle)', clicsCiclo === 1);
   const hdr = D.querySelector('.bs-header');
   const sal = D.getElementById('dkSaludo');
-  prueba('el saludo es lo primero de la barra de arriba', !!sal && hdr.firstElementChild === sal);
+  prueba('el saludo va al principio de la barra de arriba (tras el botón del panel)', !!sal && hdr.firstElementChild.id === 'dkMenu' && hdr.children[1] === sal);
   prueba('sin nombre, la fecha entera', /day/.test(sal.textContent) && !/Hello/.test(sal.textContent), sal.textContent);
   nombre = 'Axel';
   oyentesMH.forEach(f => f());
@@ -206,6 +207,21 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   prueba('la barra lateral empieza bajo la zona segura', /body\.dk #dkLado \{[^}]*padding: calc\(16px \+ env\(safe-area-inset-top\)\)/.test(CSS));
   prueba('también en la barra de iconos', /body\.dk #dkLado \{\s*padding: calc\(14px \+ env\(safe-area-inset-top\)\)/.test(CSS));
   prueba('el header empieza bajo la zona segura', /body\.dk \.wrap > \.bs-header \{[^}]*padding: calc\(12px \+ env\(safe-area-inset-top\)\)/.test(CSS));
+
+  grupo('8e. Esconder la barra lateral (opción A)');
+  const menu = D.getElementById('dkMenu');
+  prueba('el botón va antes del saludo', !!menu && menu.nextElementSibling === D.getElementById('dkSaludo'));
+  prueba('de entrada, la barra se ve', !D.body.classList.contains('dk-sin-lado'));
+  menu.click();
+  prueba('tocarlo la esconde', D.body.classList.contains('dk-sin-lado'));
+  prueba('y se recuerda en este dispositivo', w.localStorage.getItem('bs-dk-lado-oculto') === '1');
+  prueba('el botón dice lo que hará', menu.getAttribute('aria-label') === 'Show the sidebar' && menu.getAttribute('aria-expanded') === 'false');
+  prueba('la barra escondida no se lee', lado.getAttribute('aria-hidden') === 'true');
+  menu.click();
+  prueba('otra vez la saca', !D.body.classList.contains('dk-sin-lado') && w.localStorage.getItem('bs-dk-lado-oculto') === '0');
+  prueba('escondida, la barra sale de la pantalla', /body\.dk\.dk-sin-lado #dkLado \{ transform: translateX\(-100%\); visibility: hidden; \}/.test(CSS));
+  prueba('y el contenido ocupa el ancho', /body\.dk\.dk-sin-lado \.wrap \{ margin-left: 0; \}/.test(CSS));
+  prueba('sin animación con reducir movimiento', /prefers-reduced-motion: reduce\)\s*\{\s*body\.dk #dkLado, body\.dk \.wrap \{ transition: none; \}/.test(CSS));
 
   grupo('9. El orden de carga');
   const iMod = INDEX.indexOf('src/desk-shell.js');
