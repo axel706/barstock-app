@@ -2970,7 +2970,7 @@
   }
 
   window.BarStockMobileHome = {
-    render, refresh, datos, vigilar, detalleEstante,
+    render, refresh, datos, vigilar, detalleEstante, saludo,
     sincronizarHoy: () => sincronizarHoy(null),
     alCambiar(fn) { _oyentes.add(fn); return () => _oyentes.delete(fn); }
   };

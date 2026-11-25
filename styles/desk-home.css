@@ -31,15 +31,6 @@
     color: #f8fafc;
   }
 
-  #dkHome .dkh-tit { display: flex; align-items: baseline; gap: 12px; }
-  /* El saludo va suelto sobre el fondo: una sombra suave lo separa de
-     lo que haya detrás, en cada modo con su color. */
-  #dkHome .dkh-tit h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -.3px; color: #f8fafc;
-    text-shadow: 0 1px 2px rgba(2, 6, 23, .6), 0 0 18px rgba(2, 6, 23, .55); }
-  #dkHome .dkh-tit span { color: #e2e8f0; font-size: 13px; font-weight: 700; text-shadow: 0 1px 2px rgba(2, 6, 23, .7), 0 0 12px rgba(2, 6, 23, .6); }
-  body.light #dkHome .dkh-tit h1 { color: #0f172a; text-shadow: 0 0 2px rgba(255, 255, 255, .9), 0 0 18px rgba(255, 255, 255, .85); }
-  body.light #dkHome .dkh-tit span { color: #1e293b; text-shadow: 0 0 2px rgba(255, 255, 255, .9), 0 0 12px rgba(255, 255, 255, .85); }
-
   /* ── El vidrio de todo lo de esta pantalla ── */
   #dkHome .dkh-cf, #dkHome .dkh-card {
     backdrop-filter: blur(16px) saturate(150%);

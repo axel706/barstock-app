@@ -22,6 +22,13 @@
   //   · En el teléfono no existe: la hoja sólo actúa por encima de 640 px,
   //     el mismo ANCHO de mobile-shell.js.
   //
+  // La barra de arriba (Axel, 2026-11-25, tras ver el Home): el saludo a
+  // la izquierda, la locación en el centro y, a la derecha, Import,
+  // Export, More, el tema y Logout. El botón del ciclo vive en la barra
+  // lateral, bajo el logo y antes de las secciones: se MUEVE el mismo
+  // #cycleBtn (weekly-cycle.js lo busca por id y le puso su clic al
+  // arrancar; moverlo no le quita ninguna de las dos cosas).
+  //
   // Lo que el escritorio aún no tiene (Running out, Transfers, Sales,
   // Counts) sale como "Soon", apagado: Axel lo eligió frente a
   // esconderlo, para que se vea lo que viene.
@@ -116,6 +123,23 @@
     mio.style.display = fuente.style.display === 'none' ? 'none' : '';
   }
 
+  // El saludo es el del Home del teléfono (mobile-home: el nombre de la
+  // sesión de PIN o el del perfil de remitente). Sin nombre, mobile-home
+  // dice el día ("Wednesday"): entonces va la fecha entera, sin repetir.
+  function pintarSaludo() {
+    const el = document.getElementById('dkSaludo');
+    if (!el) return;
+    const MH = window.BarStockMobileHome;
+    let s = '';
+    try { s = MH && MH.saludo ? MH.saludo() : ''; } catch (e) { s = ''; }
+    const fmt = (o) => new Intl.DateTimeFormat('en-US', Object.assign({ timeZone: 'America/New_York' }, o)).format(new Date());
+    const con = /^Hello/.test(s);
+    const titulo = con ? s : fmt({ weekday: 'long', month: 'short', day: 'numeric' });
+    const fecha = con ? fmt({ weekday: 'short', month: 'short', day: 'numeric' }).replace(',', '') : '';
+    const html = `<b>${esc(titulo)}</b>${fecha ? `<span>${esc(fecha)}</span>` : ''}`;
+    if (el._html !== html) { el.innerHTML = html; el._html = html; }
+  }
+
   function montar() {
     if (_lado || !document.body) return;
     const header = document.querySelector('.bs-header');
@@ -131,6 +155,7 @@
 
     _lado.innerHTML =
       `<div class="dk-logo brand-logo-type">${logoHtml}</div>` +
+      `<div class="dk-ciclo" id="dkCiclo"></div>` +
       `<div class="dk-lista">${ITEMS.map(itemHtml).join('')}</div>` +
       `<div class="dk-pie">` +
         `<button type="button" class="dk-contar" id="dkContar" title="Count"><i class="ti ti-scan" aria-hidden="true"></i><span class="dk-lbl">Count</span></button>` +
@@ -153,6 +178,20 @@
     // El estado del maestro y el sello del build, al pie. Se MUEVEN (son
     // los mismos elementos: quien los escribe sigue encontrándolos por su
     // id).
+    const ciclo = document.getElementById('cycleBtn');
+    if (ciclo) _lado.querySelector('#dkCiclo').appendChild(ciclo);
+
+    // El saludo, primero en la barra de arriba.
+    const saludo = document.createElement('div');
+    saludo.id = 'dkSaludo';
+    saludo.className = 'dk-saludo';
+    header.insertBefore(saludo, header.firstChild);
+    pintarSaludo();
+    const MH = window.BarStockMobileHome;
+    // El nombre llega tarde (el perfil de remitente se pide a la nube):
+    // mobile-home avisa al tenerlo, como avisa al Home.
+    if (MH && MH.alCambiar) MH.alCambiar(pintarSaludo);
+
     const pie = _lado.querySelector('#dkEstado');
     ['bsStatusRow', 'buildBadge'].forEach(id => {
       const el = document.getElementById(id);

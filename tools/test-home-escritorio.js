@@ -104,8 +104,9 @@ const H = () => D.getElementById('dkHome');
 
   grupo('2. Las cuatro cifras, primera fila');
   prueba('el Home se monta', !!H());
-  const primero = H() && H().querySelector('.dkh-tit + *');
-  prueba('lo primero tras el saludo son las cifras', !!primero && primero.classList.contains('dkh-cifras'));
+  const primero = H() && H().firstElementChild;
+  prueba('lo primero del Home son las cifras', !!primero && primero.classList.contains('dkh-cifras'));
+  prueba('el saludo no va en el Home (va en la barra de arriba)', !/saludo/.test(H().innerHTML));
   const ks = [...H().querySelectorAll('.dkh-cf-k > span')].map(e => e.textContent.trim());
   prueba('en su orden: shelf, sold, spent, Live vs count',
     JSON.stringify(ks) === JSON.stringify(['On the shelf', 'Sold today', 'Spent this cycle', 'Live vs count']), JSON.stringify(ks));
@@ -186,7 +187,6 @@ const H = () => D.getElementById('dkHome');
   prueba('cifras y tarjetas llevan desenfoque', /#dkHome \.dkh-cf, #dkHome \.dkh-card \{[^}]*backdrop-filter: blur\(\d+px\)/.test(CSS_DH));
   prueba('en el claro, lo de Tinta pasa a vidrio claro con texto oscuro',
     /body\.light #dkHome \.dkh-cf,[\s\S]{0,120}\{[^}]*background: rgba\(255, 255, 255, \.\d+\)[^}]*backdrop-filter: blur[^}]*color: #0f172a/.test(CSS_DH));
-  prueba('el saludo lleva su sombra en cada modo', /\.dkh-tit h1 \{[^}]*text-shadow/.test(CSS_DH) && /body\.light #dkHome \.dkh-tit h1 \{[^}]*text-shadow/.test(CSS_DH));
 
   grupo('8. Una pantalla del teléfono, en el escritorio');
   const SH = leer('src/mobile-shell.js');

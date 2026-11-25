@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-132422",
+    "items": [
+      "Desktop: greeting in the top bar, location centered",
+      "Cycle button now under the logo in the sidebar"
+    ]
+  },
+  {
     "build": "20261125-131745",
     "items": [
       "Desktop: glass blur on the sidebar, top bar and Home",
@@ -189,13 +196,6 @@
     "build": "20261122-195422",
     "items": [
       "A skipped week stays out of Pour·IQ pars"
-    ]
-  },
-  {
-    "build": "20261122-194346",
-    "items": [
-      "Skipped week: order from Live or an empty shelf",
-      "Switch at the top of Orders › Open"
     ]
   }
 ]

@@ -60,6 +60,22 @@
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
   #dkLado .dk-lista { display: flex; flex-direction: column; gap: 2px; }
+
+  /* El ciclo, bajo el logo y antes de las secciones. Es el #cycleBtn de
+     siempre, con los colores de cada estado de weekly-cycle.css; aquí
+     sólo ocupa el ancho de la barra. */
+  #dkLado .dk-ciclo { margin: 0 0 16px; }
+  #dkLado .dk-ciclo:empty { display: none; }
+  #dkLado #cycleBtn {
+    display: flex; width: 100%;
+    min-height: 44px;
+    padding: 0 14px !important;
+    border-radius: 12px !important;
+    font-size: 13.5px !important;
+    justify-content: flex-start;
+  }
+  #dkLado #cycleBtn > span:not(.cyc-num):not(.cyc-bar) { overflow: hidden; text-overflow: ellipsis; }
+  #dkLado #cycleBtn .cyc-again { margin-left: auto; }
   #dkLado .dk-grupo {
     margin: 14px 12px 4px;
     font-size: 10.5px; font-weight: 800; letter-spacing: .08em;
@@ -174,12 +190,29 @@
   body.dk .bs-header .bs-header-line4,
   body.dk .bs-header.collapsed .bs-header-line4 { display: none !important; }
 
-  /* app.css centra el chip con position:absolute al 50 % de la línea 1;
-     en la fila del armazón va al principio, como uno más. */
+  /* La locación, en el centro de la barra (Axel, 2026-11-25). app.css ya
+     la centraba en la línea 1; con la línea en `display: contents`, el
+     centro es el de la barra entera (el header, que es sticky, es su
+     caja de referencia). */
   body.dk .bs-header .bs-header-line1 > .bs-loc-wrap {
-    order: 1; position: relative; left: auto; transform: none;
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
   }
-  body.dk .bs-header #cycleBtn { order: 2; }
+
+  /* El saludo, a la izquierda. Se recorta antes de llegar a la locación. */
+  body.dk .bs-header .dk-saludo {
+    order: 0;
+    display: flex; align-items: baseline; gap: 10px;
+    max-width: calc(50% - 150px);
+    min-width: 0;
+    white-space: nowrap;
+  }
+  body.dk .bs-header .dk-saludo b {
+    font-size: 20px; font-weight: 800; letter-spacing: -.3px; color: #f8fafc;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  body.dk .bs-header .dk-saludo span { font-size: 13px; font-weight: 700; color: #cbd5e1; flex: none; }
+  body.light.dk .bs-header .dk-saludo b { color: #0f172a; }
+  body.light.dk .bs-header .dk-saludo span { color: #334155; }
   body.dk .bs-header .dk-imp { order: 4; margin-left: auto; }
   body.dk .bs-header .dk-exp { order: 5; }
   body.dk .bs-header .dk-mas { order: 6; margin-left: 0 !important; }
@@ -206,6 +239,11 @@
   #dkLado .dk-nav { justify-content: center; padding: 10px 0; }
   #dkLado .dk-nav.dk-sub { padding-left: 0; }
   #dkLado .dk-nav.dk-sub i { display: block; font-size: 15px; }
+  /* El ciclo, sólo con su número o su icono. */
+  #dkLado #cycleBtn { justify-content: center; padding: 0 !important; }
+  #dkLado #cycleBtn > span:not(.cyc-num):not(.cyc-bar),
+  #dkLado #cycleBtn .cyc-again { display: none; }
+  body.dk .bs-header .dk-saludo span { display: none; }
 }
 
 /* Las secciones de hoy deciden su forma por el ancho de la VENTANA

@@ -3,6 +3,9 @@
 
   // ── El Home del escritorio (Axel, 2026-11-25, lámina H1) ─────────────
   //
+  // El saludo no va aquí: vive en la barra de arriba (desk-shell.js),
+  // en todas las pantallas.
+  //
   // "Lo de ahora primero", con las cuatro cifras como PRIMERA fila (Axel
   // lo corrigió sobre la lámina): On the shelf, Sold, Spent this cycle y
   // Live vs count. Debajo, ancha, la tarjeta que la semana pone primero
@@ -241,16 +244,8 @@
     const demas = resto.filter(x => x !== hero && x !== lado);
     const pintaHero = (x) => x.c.fase === 'agota' ? tarjetaAgota(x.c, x.i) : tarjeta(x.c, x.i, 'dkh-hero');
 
-    // Sin nombre, mobile-home saluda con el día de la semana ("Wednesday");
-    // entonces el título es la fecha entera y no se repite debajo.
-    const hoyTxt = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short', month: 'short', day: 'numeric' })
-      .format(new Date()).replace(',', '');
-    const conNombre = /^Hello/.test(d.saludo || '');
-    const saludo = conNombre ? d.saludo : new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'short', day: 'numeric' }).format(new Date());
-    const fecha = conNombre ? hoyTxt : '';
 
     _host.innerHTML = `
-      <div class="dkh-tit"><h1>${esc(saludo)}</h1>${fecha ? `<span>${esc(fecha)}</span>` : ''}</div>
       <div class="dkh-cifras">${cifras.map(htmlCifra).join('')}</div>
       <div class="dkh-ahora${lado ? '' : ' solo'}">
         ${hero ? pintaHero(hero) : ''}

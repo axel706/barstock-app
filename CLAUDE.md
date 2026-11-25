@@ -481,6 +481,15 @@ sección de hoy vive tal cual dentro del armazón.
   "Stock" en un degradado más hondo en el claro (el de la marca no se
   lee sobre blanco). Nada se apaga con opacidad: un renglón "Soon" va
   en gris legible.
+- **La barra de arriba y el ciclo** (Axel, 2026-11-25, sobre el Home
+  ya hecho): el saludo a la izquierda (`#dkSaludo`, el de
+  `BarStockMobileHome.saludo`; sin nombre, la fecha entera), la locación
+  en el CENTRO de la barra (absoluta al 50 % del header), y a la derecha
+  Import, Export, More, el tema y Logout. El saludo ya no va en el Home.
+  El botón del ciclo (`#cycleBtn`, con todos sus estados) vive en la
+  barra lateral, bajo el logo y antes de las secciones: se MUEVE el
+  mismo elemento, que `weekly-cycle.js` encuentra por id y cuyo clic se
+  puso al arrancar. En la barra de iconos, sólo su número o su icono.
 
 ## Reglas del dominio que no son obvias
 

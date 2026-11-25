@@ -76,6 +76,11 @@ w.bsCloseSection = () => {
   w.document.querySelectorAll('.section-card').forEach(e => e.classList.remove('bs-active-section'));
 };
 w.openSettingsModal = () => llamadas.push('settings');
+let nombre = '';
+const oyentesMH = [];
+w.BarStockMobileHome = { saludo: () => nombre ? 'Hello, ' + nombre : 'Wednesday', alCambiar: (fn) => oyentesMH.push(fn) };
+let clicsCiclo = 0;
+w.document.getElementById('cycleBtn').addEventListener('click', () => clicsCiclo++);
 w.document.getElementById('takeInventoryBtn').addEventListener('click', () => llamadas.push('contar'));
 w.eval(leer('src/desk-shell.js'));
 const D = w.document;
@@ -147,9 +152,12 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   prueba('sólo hay uno de cada', D.querySelectorAll('#buildBadge').length === 1 && D.querySelectorAll('#bsStatusRow').length === 1);
 
   grupo('7. Nada del header se esconde');
-  const escondidos = [...CSS.matchAll(/([^{}]+)\{[^}]*display:\s*none/g)].map(m => m[1]).join(' ');
+  const escondidos = [...CSS.matchAll(/([^{}]+)\{[^{}]*display:\s*none/g)].map(m => m[1]).join(',');
   for (const id of ['importMenuBtn', 'exportMenuBtn', 'bsMoreBtn', 'cycleBtn', 'headerLocationSelect', 'themeToggle', 'authLogoutBtn', 'importMenu', 'exportMenu', 'bsMoreMenu']) {
-    prueba(`#${id} no lleva display:none`, !new RegExp('#' + id + '\\b').test(escondidos));
+    // Lo escondido es el elemento mismo cuando el selector TERMINA en él;
+    // "#cycleBtn .cyc-again" esconde un icono de dentro, no el botón.
+    const partes = escondidos.split(',').map(x => x.trim());
+    prueba(`#${id} no lleva display:none`, !partes.some(x => new RegExp('#' + id + '$').test(x)));
   }
   prueba('Settings del header se esconde porque está en la barra', /#settingsBtn/.test(escondidos) && !!item('settings'));
   prueba('los grupos de Import, Export y More llevan su marca',
@@ -169,6 +177,28 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   prueba('el header tiene su claro', /background:\s*rgba\(255, 255, 255/.test(regla('body.light.dk .wrap > .bs-header')));
   prueba('el logo lleva su color en cada modo', /body\.light #dkLado \.dk-logo \{ color: #0f172a/.test(CSS) && /#dkLado \.dk-logo \{[^}]*color: #f8fafc/.test(CSS));
   prueba('ningún renglón de la barra se apaga con opacidad', !/#dkLado[^{]*\{[^}]*opacity:\s*\.[0-4]/.test(CSS));
+
+  grupo('8c. Saludo a la izquierda, locación al centro, ciclo en la barra lateral');
+  const ciclo = D.getElementById('cycleBtn');
+  prueba('el botón del ciclo vive en la barra lateral', !!lado.querySelector('#cycleBtn'));
+  prueba('bajo el logo y antes de las secciones', (() => {
+    const hijos = [...lado.children];
+    const iLogo = hijos.findIndex(e => e.classList.contains('dk-logo'));
+    const iCiclo = hijos.findIndex(e => e.contains(ciclo));
+    const iLista = hijos.findIndex(e => e.classList.contains('dk-lista'));
+    return iLogo >= 0 && iLogo < iCiclo && iCiclo < iLista;
+  })());
+  prueba('sólo hay uno', D.querySelectorAll('#cycleBtn').length === 1);
+  ciclo.click();
+  prueba('y conserva su clic (el de weekly-cycle)', clicsCiclo === 1);
+  const hdr = D.querySelector('.bs-header');
+  const sal = D.getElementById('dkSaludo');
+  prueba('el saludo es lo primero de la barra de arriba', !!sal && hdr.firstElementChild === sal);
+  prueba('sin nombre, la fecha entera', /day/.test(sal.textContent) && !/Hello/.test(sal.textContent), sal.textContent);
+  nombre = 'Axel';
+  oyentesMH.forEach(f => f());
+  prueba('con nombre, "Hello, Axel" y la fecha', /^Hello, Axel/.test(sal.textContent) && sal.querySelector('span'), sal.textContent);
+  prueba('la locación, al centro de la barra', /\.bs-loc-wrap \{\s*position: absolute; left: 50%;[^}]*translate\(-50%, -50%\)/.test(CSS));
 
   grupo('9. El orden de carga');
   const iMod = INDEX.indexOf('src/desk-shell.js');
