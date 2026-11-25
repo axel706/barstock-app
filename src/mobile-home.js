@@ -2557,6 +2557,15 @@
   function pintarVentas(host) {
     const caja = host && host.querySelector('#mhVentas');
     if (!caja) return;
+    pintarVentasEn(caja, () => pintarVentas(host));
+  }
+
+  // La tarjeta en `caja`, y `repintar` para cuando se toca algo. La usan
+  // el Home del teléfono (#mhVentas) y el del escritorio (desk-home.js,
+  // lámina A del 2026-11-25: "como el teléfono", con el logo de Toast más
+  // grande): una sola tarjeta, con lo elegido (Bottles / $, la semana, el
+  // día) compartido.
+  function pintarVentasEn(caja, repintar) {
     // Pide cada vez que se pinta: toast-sales guarda lo leído y sólo
     // vuelve a la base al cambiar el día o pasada media hora.
     if (!_pidiendoVentas) cargarVentas();
@@ -2675,7 +2684,7 @@
     if (caja._html !== html) { caja.innerHTML = html; caja._html = html; conservarLogos(caja); }
 
     caja.querySelectorAll('[data-v]').forEach(b => {
-      b.onclick = () => { _vista = b.dataset.v; pintarVentas(host); };
+      b.onclick = () => { _vista = b.dataset.v; repintar(); };
     });
     // La lista entera del día elegido, o el reporte en $ (mobile-sales.js).
     const mas = caja.querySelector('[data-mas]');
@@ -2690,13 +2699,13 @@
         if (b.disabled) return;
         _semAtras = Math.max(0, Math.min(maxAtras, atras + Number(b.dataset.sem)));
         _diaV = null;
-        pintarVentas(host);
+        repintar();
       };
     });
     const semt = caja.querySelector('[data-semt]');
-    if (semt) semt.onclick = () => { _semAtras = atras; _diaV = esSem ? null : 'sem'; pintarVentas(host); };
+    if (semt) semt.onclick = () => { _semAtras = atras; _diaV = esSem ? null : 'sem'; repintar(); };
     caja.querySelectorAll('[data-d]').forEach(b => {
-      const elegir = () => { _semAtras = atras; _diaV = Number(b.dataset.d); pintarVentas(host); };
+      const elegir = () => { _semAtras = atras; _diaV = Number(b.dataset.d); repintar(); };
       b.onclick = elegir;
       b.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); elegir(); } };
     });
@@ -3027,7 +3036,9 @@
     // Tras actualizar precios en el escritorio: volver a contar los que
     // esperan, para que "N to fix" y Review dejen de decirlo.
     releerPrecios: () => { _preciosLeidos = false; cargarPrecios(); },
-    alCambiar(fn) { _oyentes.add(fn); return () => _oyentes.delete(fn); }
+    alCambiar(fn) { _oyentes.add(fn); return () => _oyentes.delete(fn); },
+    // La tarjeta de Toast, pintada en otra caja (el Home del escritorio).
+    ventas: (caja, repintar) => pintarVentasEn(caja, repintar || (() => pintarVentasEn(caja)))
   };
 
   function registrar() {

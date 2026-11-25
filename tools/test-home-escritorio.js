@@ -78,8 +78,12 @@ const cifras = [
   { id: 'gasto', k: 'Spent this cycle', v: '$6,880', d: '3 to fix', btn: 'Review', tono: 'am' }
 ];
 let oyente = null;
+const ventasPintadas = [];
 w.BarStockMobileHome = {
   datos: () => ({ saludo: 'Hello, Axel', tarjetas: cards, cifras, ventas: null }),
+  // La tarjeta de Toast es la del teléfono: aquí se ve en qué caja y con
+  // qué se pidió.
+  ventas: (caja, repintar) => { ventasPintadas.push({ caja, repintar }); caja.innerHTML = '<div class="m-ts"><img class="m-ts-logo" data-logo="toast"></div>'; },
   alCambiar: (fn) => { oyente = fn; },
   vigilar: () => {},
   detalleEstante: () => llamadas.push('detalle'),
@@ -315,6 +319,24 @@ const H = () => D.getElementById('dkHome');
   prueba('#dkHome es un contenedor', /#dkHome \{[^}]*container: dkhome \/ inline-size/.test(CSS_DH));
   prueba('las dos columnas, por el ancho del Home', /@container dkhome \(max-width: 960px\) \{[^}]*\.dkh-cifras/.test(CSS_DH));
   prueba('ninguna regla de columnas mira la ventana', !/@media[^{]*max-width: 1240px/.test(CSS_DH));
+
+  grupo('7d. Las ventas de Toast: la tarjeta del teléfono (lámina A)');
+  {
+    const MH2 = leer('src/mobile-home.js');
+    const CSSG = leer('styles/desk-ficha.css');
+    const caja = H().querySelector('#dkVentas');
+    prueba('el Home tiene su caja, ancha', !!caja && caja.classList.contains('dkh-ventas') && /\.dkh-ventas \{[^}]*grid-column: span 2/.test(CSS_DH));
+    prueba('la pinta mobile-home.ventas, en esa caja', ventasPintadas.length > 0 && ventasPintadas[ventasPintadas.length - 1].caja === caja);
+    prueba('con su repintado', typeof (ventasPintadas.slice(-1)[0] || {}).repintar === 'function');
+    prueba('desk-home no pinta ventas por su cuenta', !/semanaCal|masVendido|dkh-vts|dkh-vt-b/.test(DH));
+    prueba('el teléfono pinta con la misma función', /function pintarVentas\(host\)[\s\S]{0,200}pintarVentasEn\(caja, \(\) => pintarVentas\(host\)\)/.test(MH2)
+      && /ventas: \(caja, repintar\) => pintarVentasEn\(/.test(MH2));
+    prueba('sus estilos, generados del teléfono bajo #dkVentas', /#dkVentas \.m-ts \{/.test(CSSG) && /#dkVentas \.m-ts-sem \{/.test(CSSG) && /#dkVentas \.m-ts-seg/.test(CSSG));
+    prueba('el logo de Toast, más grande que en el teléfono', /#dkVentas \.m-ts-logo \{ height: 30px/.test(CSS_DH));
+    prueba('un solo marco: la caja sin fondo, la tarjeta con su vidrio', /\.dkh-ventas \{[^}]*background: none/.test(CSS_DH) && /#dkVentas > \.m-ts \{[^}]*backdrop-filter: blur\(16px\)/.test(CSS_DH));
+    prueba('sin Toast, la caja vacía no se ve', /\.dkh-ventas:empty \{ display: none; \}/.test(CSS_DH));
+    prueba('All products / Full report en la ventana del escritorio (m-vl en #mSheet)', /body\.dk #mSheet \.m-vl-/.test(CSSG));
+  }
 
   grupo('8. Una pantalla del teléfono, en el escritorio');
   const SH = leer('src/mobile-shell.js');

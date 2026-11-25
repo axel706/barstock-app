@@ -478,6 +478,20 @@ sección de hoy vive tal cual dentro del armazón.
   1180 va a cuatro con la barra escondida (~1130 px) y a dos con ella
   (~900). Es lo que pide "las reglas de ancho miran la VENTANA" de arriba
   para cada sección que se rehaga.
+- **Las ventas de Toast en el Home del escritorio** (Axel, 2026-11-25,
+  lámina A: "no tienen el icono de Toast ni las opciones para ver
+  botellas/dinero o la semana completa, semanas pasadas"; "el icono un
+  poco más prominente"): es LA tarjeta del teléfono,
+  `BarStockMobileHome.ventas(caja, repintar)` (el cuerpo de su
+  `pintarVentas`, que el teléfono llama con `#mhVentas`), en `#dkVentas`,
+  dos columnas de ancho. Lo elegido (Bottles / $, la semana, el día) es
+  uno para los dos. Sus estilos, GENERADOS bajo `#dkVentas`; la caja va
+  sin marco propio (la tarjeta trae el suyo) y la tarjeta lleva el vidrio
+  de 16 px del Home; el logo de Toast a 30 px. Va oscura también en el
+  claro, como las de color. All products / Full report (mobile-sales.js)
+  salen en la ventana centrada de `#mSheet`: el generador acota a
+  `body.dk #mSheet` todo lo de dentro de la hoja (teclado, lista, su
+  buscador), para que no toque nada más del escritorio.
 - **Running out en el Home del escritorio** (Axel, 2026-11-25, lámina A:
   "más similar al del teléfono, siluetas, pero al tener espacio podemos
   seguir incluyendo el estimado en número"): las botellas del teléfono

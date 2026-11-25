@@ -417,27 +417,24 @@
       </article>`;
   }
 
-  // ── Las ventas de Toast: la semana de lunes a domingo ───────────────
-  function tarjetaVentas(V) {
-    const TS = window.BarStockToastSales;
-    if (!V || !V.cargados || !TS || !TS.semanaCal) return '';
-    const W = TS.semanaCal(V, 0);
-    if (!W) return '';
-    const dias = W.dias;
-    const tope = Math.max(1e-9, ...dias.map(x => Math.max(Number(x.dinero) || 0, Number(x.normalDinero) || 0)));
-    const top = TS.masVendido(V.base, W.fechas, 'dinero').slice(0, 3);
-    const barras = dias.map(x => `
-      <div class="dkh-vt${x.esHoy ? ' hoy' : ''}${x.futuro ? ' fut' : ''}">
-        <span class="dkh-vt-b"><i style="height:${Math.max(0, Math.min(100, (Number(x.dinero) || 0) / tope * 100)).toFixed(1)}%"></i>${x.normalDinero ? `<s style="bottom:${Math.min(100, x.normalDinero / tope * 100).toFixed(1)}%"></s>` : ''}</span>
-        <u>${esc(String(x.dia || '').slice(0, 3))}</u>
-      </div>`).join('');
-    return `
-      <article class="dkh-card dkh-ventas">
-        <div class="dkh-k"><span>Sales · Toast</span><i>${esc(W.etiqueta || '')}</i></div>
-        <h3>${money(W.total && W.total.dinero)}<small>${W.total && W.total.parcial ? 'so far this week' : 'this week'}</small></h3>
-        <div class="dkh-vts">${barras}</div>
-        ${top.length ? `<p class="dkh-sub">Most sold: ${top.map(x => esc(x.nombre)).join(' · ')}</p>` : ''}
-      </article>`;
+  // ── Las ventas de Toast: la tarjeta del teléfono ────────────────────
+  //
+  // Axel, 2026-11-25, lámina A: "no tienen el icono de Toast ni las
+  // opciones para ver botellas/dinero o la semana completa, semanas
+  // pasadas". La primera versión era una tarjeta escrita aquí, sólo la
+  // semana en dinero. Ahora es LA del teléfono (mobile-home.ventas: el
+  // logo y su sync, Bottles / $, ‹ › semanas, el total que da la semana
+  // entera, un día por barra, Most sold y All products / Full report), en
+  // su caja; sus estilos salen generados del teléfono (#dkVentas en
+  // desk-ficha.css). Sin Toast, la caja queda vacía y no se ve.
+  function tarjetaVentas() {
+    return '<article class="dkh-card dkh-ventas" id="dkVentas"></article>';
+  }
+  function pintarVentas() {
+    const caja = _host && _host.querySelector('#dkVentas');
+    const M = MH();
+    if (!caja || !M || !M.ventas) return;
+    M.ventas(caja, pintarVentas);
   }
 
   // ── Los reportes de la portada de antes ────────────────────────────
@@ -506,7 +503,7 @@
       </div>
       <div class="dkh-resto">
         ${demas.map(x => x.c.fase === 'agota' ? tarjetaAgota(x.c, x.i) : tarjeta(x.c, x.i)).join('')}
-        ${tarjetaVentas(d.ventas)}
+        ${tarjetaVentas()}
       </div>
       ${reportes()}`;
 
@@ -516,6 +513,7 @@
       if (el && caja) caja.appendChild(el);
     }));
     moverReportes();
+    pintarVentas();
     enganchar();
   }
 

@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-163746",
+    "items": [
+      "Desktop: Toast sales card like the phone",
+      "Bottles / $, past weeks and All products on desktop"
+    ]
+  },
+  {
     "build": "20261125-162308",
     "items": [
       "Desktop: Home › Section at the top to go back",
@@ -192,13 +199,6 @@
     "build": "20261124-145624",
     "items": [
       "Counting: the Frangelico F sits inside its panel"
-    ]
-  },
-  {
-    "build": "20261124-141241",
-    "items": [
-      "Counting: label guides on 9 more bottles",
-      "Frangelico, St-Germain, Mozart, Averna, Jura and more"
     ]
   }
 ]
