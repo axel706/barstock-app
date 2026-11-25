@@ -110,7 +110,7 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 ## La arquitectura
 
 Frontend estático, sin build. `index.html` es un monolito y hay ~152 módulos
-`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 29 hojas
+`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 30 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
 12 funciones en `api/` sobre Vercel. **El tope del plan son 12, y está lleno**
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 172 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 173 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -417,6 +417,41 @@ header va en una de las dos; si lee una posición, es `medir()`.
 `tools/test-banda-acoplada.js`.
 
 ---
+
+## El escritorio nuevo (2026-11-25, por pasos)
+
+Axel eligió la opción A1 sobre lámina: **una app que crece**, madre e
+hija del teléfono. La barra de pestañas del teléfono es una barra
+lateral con los mismos nombres; lo del header de siempre (locación,
+ciclo, Import, Export, More, tema, Logout) va arriba en UNA fila. El
+mapa de TODAS las funciones (las ~130 del escritorio y las 33 que sólo
+tiene el teléfono) y a dónde va cada una está en la lámina "Desktop
+map": **ninguna función del escritorio se pierde** (Axel: "te estás
+cargando opciones de escritorio como el import y export"). Se rehace
+**una sección a la vez**, cada una con su lámina; mientras tanto, cada
+sección de hoy vive tal cual dentro del armazón.
+
+- **Paso 1, el armazón (hecho):** `src/desk-shell.js` y
+  `styles/desk-shell.css`. Los botones del header NO se mueven del DOM:
+  sus líneas pasan a `display: contents` (toolbar-pills.css los estila
+  por `.bs-header-line3 …`); sólo `#bsStatusRow` y `#buildBadge` se
+  mueven al pie de la barra. La barra llama a `bsOpenSection` /
+  `bsCloseSection`, no las envuelve, y lo encendido sigue a
+  `.bs-active-section`. Count = clic en `#takeInventoryBtn` (su
+  comprobación del ciclo). Admin copia la visibilidad de
+  `#bsAdminNavTab`. Running out, Transfers, Sales y Counts salen
+  "Soon", apagados y sin ser botones (Axel lo eligió frente a
+  esconderlos). Entre 641 y 1100 px, sólo iconos. **Las reglas de
+  ancho de las secciones miran la VENTANA**, no lo que queda junto a la
+  barra: la de 980 de Inventory se repite con el ancho de la barra
+  sumado; las demás (~18) se arreglan al rehacer cada sección. Prueba:
+  `test-armazon-escritorio`.
+- **Paso 2, el Home (por construir), H1 sobre lámina:** primera fila,
+  las cuatro cifras (On the shelf, Sold today, Spent this cycle, Live vs
+  count); debajo, ancho y con sus botones, lo que pide la semana (la
+  regla de `home-orden`: el conteo, las órdenes o Running out) con el
+  transfer por confirmar al lado; después la semana día por día y las
+  ventas; Movement y los reportes al final.
 
 ## Reglas del dominio que no son obvias
 
@@ -759,7 +794,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 172 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 173 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

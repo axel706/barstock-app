@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-125119",
+    "items": [
+      "New desktop layout: sections in a sidebar",
+      "Location, cycle, Import, Export and More in one top bar"
+    ]
+  },
+  {
     "build": "20261125-120340",
     "items": [
       "Changing a delivery day now moves orders on the way",
@@ -188,12 +195,6 @@
     "build": "20261122-185619",
     "items": [
       "Behind-the-scenes fixes"
-    ]
-  },
-  {
-    "build": "20261122-154604",
-    "items": [
-      "To buy: the Order button sits at the bottom, like Done"
     ]
   }
 ]

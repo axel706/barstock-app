@@ -1,0 +1,184 @@
+/* ── El armazón del escritorio (Axel, 2026-11-25, opción A1) ──────────
+ *
+ * Barra lateral (#dkLado, la escribe src/desk-shell.js) y el header de
+ * siempre puesto en UNA fila arriba. Todo vive dentro de la media query:
+ * por debajo de 640 px manda el teléfono (mobile-shell.js usa el mismo
+ * ancho) y #dkLado no se ve aunque exista.
+ *
+ * Los botones del header no se mueven del DOM: sus contenedores de línea
+ * pasan a `display: contents` y el header es una fila flex. Así siguen
+ * valiendo las reglas de toolbar-pills.css (`.bs-header-line3 …`) que les
+ * dan su forma, y quien los busca por id los encuentra donde siempre.
+ */
+
+#dkLado { display: none; }
+
+@media (min-width: 641px) {
+  :root { --dk-lado: 232px; }
+
+  body.dk #dkLado {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    position: fixed;
+    top: 0; bottom: 0; left: 0;
+    width: var(--dk-lado);
+    padding: 16px 12px 14px;
+    z-index: 45;
+    /* Sin desenfoque: un panel casi opaco no lo necesita, y desenfocar
+       detrás de algo fijo cuesta en cada scroll. */
+    background: rgba(8, 13, 24, .82);
+    border-right: 1px solid rgba(255, 255, 255, .08);
+    overflow-y: auto;
+  }
+  body.light.dk #dkLado {
+    background: rgba(255, 255, 255, .9);
+    border-right-color: rgba(15, 23, 42, .08);
+  }
+
+  #dkLado .dk-logo { font-size: 19px; padding: 2px 10px 14px; white-space: nowrap; }
+  #dkLado .dk-lista { display: flex; flex-direction: column; gap: 2px; }
+  #dkLado .dk-grupo {
+    margin: 14px 12px 4px;
+    font-size: 10.5px; font-weight: 800; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--sub); opacity: .75;
+  }
+
+  /* app.css fuerza `border-radius: 999px !important` sobre todo <button>
+     (0,21,1): sólo un prefijo de id le gana. Por eso todas estas reglas
+     empiezan por #dkLado. */
+  #dkLado .dk-nav {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid transparent;
+    border-radius: 11px !important;
+    background: transparent;
+    color: var(--sub);
+    font: inherit; font-size: 13.5px; font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: none;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  #dkLado .dk-nav i { font-size: 18px; flex: none; }
+  #dkLado .dk-nav.dk-sub { padding-left: 40px; font-size: 12.5px; font-weight: 600; }
+  #dkLado .dk-nav.dk-sub i { display: none; }
+  #dkLado button.dk-nav:hover { background: rgba(255, 255, 255, .06); color: var(--text); }
+  body.light #dkLado button.dk-nav:hover { background: rgba(15, 23, 42, .05); }
+  /* Lo elegido, en el cristal azul de la barra de pestañas del teléfono. */
+  #dkLado .dk-nav.on {
+    color: #f0f9ff;
+    background: rgba(56, 189, 248, .32);
+    border-color: rgba(186, 230, 253, .5);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35);
+  }
+  body.light #dkLado .dk-nav.on { color: #0c4a6e; background: rgba(56, 189, 248, .18); border-color: rgba(14, 116, 144, .3); }
+  #dkLado .dk-nav.dk-pronto { cursor: default; opacity: .45; }
+  #dkLado .dk-soon {
+    margin-left: auto;
+    font-size: 10px; font-weight: 800; letter-spacing: .05em;
+    padding: 1px 7px; border-radius: 99px;
+    background: rgba(255, 255, 255, .1);
+  }
+  body.light #dkLado .dk-soon { background: rgba(15, 23, 42, .08); }
+
+  #dkLado .dk-pie { margin-top: auto; padding-top: 14px; display: grid; gap: 10px; }
+  #dkLado .dk-contar {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 11px;
+    border-radius: 999px !important;
+    font: inherit; font-size: 13.5px; font-weight: 800;
+    color: #f0f9ff;
+    background: rgba(56, 189, 248, .42);
+    border: 1px solid rgba(186, 230, 253, .6);
+    box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .45);
+    cursor: pointer;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  #dkLado .dk-contar i { font-size: 17px; }
+  body.light #dkLado .dk-contar { color: #0c4a6e; background: rgba(56, 189, 248, .3); border-color: rgba(14, 116, 144, .35); }
+  #dkLado .dk-estado { display: grid; gap: 6px; padding: 0 6px; font-size: 11px; color: var(--sub); }
+  #dkLado #bsStatusRow { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; position: static; transform: none; }
+  #dkLado #bsStatusRow .bs-status-badge { font-size: 11px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #dkLado #buildBadge { margin: 0; font-size: 10.5px; }
+
+  /* ── La página se corre a la derecha de la barra ── */
+  body.dk .wrap {
+    max-width: none;
+    margin-left: var(--dk-lado);
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+
+  /* ── El header: una fila ──
+     El scroll de index.html le pone .collapsed (y esconde la línea 3) y
+     un margin-bottom en línea: en el armazón no se pliega, no hay nada
+     que plegar. */
+  body.dk .wrap > .bs-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 -24px 18px !important;
+    padding: 12px 24px;
+    border-radius: 0;
+    border-width: 0 0 1px;
+  }
+  body.dk .bs-header.collapsed::after { display: none; }
+  body.dk .bs-header .bs-header-line1,
+  body.dk .bs-header .bs-header-line3,
+  body.dk .bs-header.collapsed .bs-header-line3,
+  body.dk .bs-header .bs-header-controls { display: contents !important; }
+  body.dk .bs-header #headerLogo,
+  body.dk .bs-header .bs-spacer,
+  body.dk .bs-header #settingsBtn,
+  body.dk .bs-header .bs-header-line4,
+  body.dk .bs-header.collapsed .bs-header-line4 { display: none !important; }
+
+  /* app.css centra el chip con position:absolute al 50 % de la línea 1;
+     en la fila del armazón va al principio, como uno más. */
+  body.dk .bs-header .bs-header-line1 > .bs-loc-wrap {
+    order: 1; position: relative; left: auto; transform: none;
+  }
+  body.dk .bs-header #cycleBtn { order: 2; }
+  body.dk .bs-header .dk-imp { order: 4; margin-left: auto; }
+  body.dk .bs-header .dk-exp { order: 5; }
+  body.dk .bs-header .dk-mas { order: 6; margin-left: 0 !important; }
+  body.dk .bs-header #themeToggle { order: 7; }
+  body.dk .bs-header #authLogoutBtn { order: 8; }
+
+  /* La navegación de antes la hace la barra: fuera la mini barra de abajo
+     de cada sección y el "← Overview". La portada se queda hasta que el
+     Home nuevo la sustituya. */
+  body.dk .bs-focus-mininav,
+  body.dk #bsNavBackBtn { display: none !important; }
+}
+
+/* Entre 641 y 1100 px (un iPad, una ventana estrecha): sólo iconos. */
+@media (min-width: 641px) and (max-width: 1100px) {
+  :root { --dk-lado: 72px; }
+  body.dk #dkLado { padding: 14px 10px; align-items: stretch; }
+  #dkLado .dk-logo { font-size: 0; padding: 4px 0 12px; text-align: center; }
+  #dkLado .dk-logo::before { content: "B"; font-size: 22px; font-weight: 900; }
+  #dkLado .dk-lbl,
+  #dkLado .dk-soon,
+  #dkLado .dk-grupo,
+  #dkLado .dk-estado { display: none; }
+  #dkLado .dk-nav { justify-content: center; padding: 10px 0; }
+  #dkLado .dk-nav.dk-sub { padding-left: 0; }
+  #dkLado .dk-nav.dk-sub i { display: block; font-size: 15px; }
+}
+
+/* Las secciones de hoy deciden su forma por el ancho de la VENTANA
+   (app.css: 980, 1150, 1200, 1280…), pero junto a la barra lateral les
+   queda la ventana menos la barra. Entre 981 y ~1230 px eso dejaba los
+   cuatro botones de Inventory (220 px cada uno, sin saltar de línea)
+   saliéndose por la izquierda. Aquí va la regla de 980 de app.css con
+   el ancho de la barra sumado. Lo demás se arregla al rehacer cada
+   sección. */
+@media (min-width: 641px) and (max-width: 1232px) {
+  body.dk .inventory-controls-top { flex-wrap: wrap; }
+  body.dk .inventory-controls-top .tabs { flex: 1 1 100%; flex-wrap: wrap; }
+  body.dk .inventory-controls-top .inventory-tools { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+  body.dk .inventory-controls-top .inventory-tools button { min-width: 0 !important; flex: 1 1 calc(50% - 6px); }
+}

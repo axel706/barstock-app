@@ -93,6 +93,9 @@
   <link rel="stylesheet" href="styles/chip-glow.css">
   <link rel="stylesheet" href="styles/mobile.css?v=mob5">
   <link rel="stylesheet" href="styles/mobile-app.css?v=mapp292">
+  <!-- El armazón del escritorio: barra lateral y header en una fila.
+       Va tras app.css y toolbar-pills.css, que es a quienes corrige. -->
+  <link rel="stylesheet" href="styles/desk-shell.css?v=dk1">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -381,7 +384,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261125-120340</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261125-125119</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -6363,6 +6366,8 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   }, { passive: true });
 })();
 </script>
+<!-- Después de bsOpenSection/bsCloseSection, que son lo que llama. -->
+<script src="src/desk-shell.js?v=dk1"></script>
 <script>
 // ===== BACKGROUND SELECTOR =====
 (function(){
