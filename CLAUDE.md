@@ -480,8 +480,15 @@ sección de hoy vive tal cual dentro del armazón.
   y llegan por `alSync`, que repinta SÓLO esa cifra y la ventana. Review
   abre una ventana (`#dkGasto`) con los renglones de la hoja del
   teléfono, que salen de UNA función (`filasGasto`, la usan las dos):
-  "Fix ›" → Settings › Match products (`meMatch`), "Review prices" o
-  "What came in" → `mePurchases` (con su "Update N prices"), y Sync now.
+  "Fix ›" → Settings › Match products (`meMatch`), y Sync now. **"Review
+  prices" NO manda a Settings** (Axel: "me lleva a settings"; el
+  teléfono nunca lo hizo: "mandar a alguien allí es perderlo"): la lista
+  sale en la misma ventana, cada producto con su precio de antes, el de
+  su última factura y el %, y "Update N prices" con su avance; con
+  `calcularPrecios`/`aplicarPrecios` de marginedge-purchases (los de la
+  campana), y después relee el catálogo y vuelve a contar
+  (`releerPrecios`). Sin precios cambiados, "What came in" sí lleva a
+  Settings (`mePurchases`).
 
 - **Todo lleva vidrio, en los dos modos** (Axel, 2026-11-25, con un
   fondo dibujado y nítido detrás: "TODO necesita blur, tanto light como

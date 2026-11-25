@@ -332,3 +332,35 @@ body.light #dkGasto .dkg-r { background: rgba(15, 23, 42, .05); color: #1e293b; 
 body.light #dkGasto .dkg-r.dkg-am { background: rgba(245, 158, 11, .16); color: #92400e; }
 body.light #dkGasto .dkg-b, body.light #dkGasto .dkg-x { color: #0f172a; background: rgba(15, 23, 42, .06); border-color: rgba(15, 23, 42, .14); }
 body.light #dkGasto .dkg-b.dkg-am { background: #f59e0b; color: #1f1300; border-color: #f59e0b; }
+
+/* La lista de precios dentro de la ventana (como la campana del teléfono). */
+#dkGasto h3 { display: flex; align-items: center; gap: 6px; }
+#dkGasto .dkg-atras {
+  width: 30px; height: 30px; padding: 0; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px !important; font-size: 18px; color: inherit;
+  background: transparent; border: 0; box-shadow: none;
+  backdrop-filter: none; -webkit-backdrop-filter: none; cursor: pointer;
+}
+#dkGasto .dkg-atras:hover { background: rgba(255, 255, 255, .1); }
+#dkGasto .dkg-lista { display: flex; flex-direction: column; max-height: min(52vh, 420px); overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
+#dkGasto .dkg-pr {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 9px 2px; border-top: 1px solid rgba(255, 255, 255, .08); font-size: 13px;
+}
+#dkGasto .dkg-pr:first-child { border-top: 0; }
+#dkGasto .dkg-pr-n { display: flex; flex-direction: column; min-width: 0; }
+#dkGasto .dkg-pr-n b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#dkGasto .dkg-pr small { font-size: 11.5px; color: #a9bacd; }
+#dkGasto .dkg-pr-v { flex: none; text-align: right; display: flex; flex-direction: column; color: #cbd5e1; }
+#dkGasto .dkg-pr-v.up small { color: #fca5a5; }
+#dkGasto .dkg-pr-v.dn small { color: #86efac; }
+#dkGasto .dkg-ok { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 0 6px; text-align: center; font-size: 14px; }
+#dkGasto .dkg-ok i { font-size: 34px; color: #4ade80; }
+body.light #dkGasto .dkg-atras:hover { background: rgba(15, 23, 42, .06); }
+body.light #dkGasto .dkg-pr { border-top-color: rgba(15, 23, 42, .08); }
+body.light #dkGasto .dkg-pr small { color: #475569; }
+body.light #dkGasto .dkg-pr-v { color: #334155; }
+body.light #dkGasto .dkg-pr-v.up small { color: #b91c1c; }
+body.light #dkGasto .dkg-pr-v.dn small { color: #15803d; }
+body.light #dkGasto .dkg-ok i { color: #16a34a; }

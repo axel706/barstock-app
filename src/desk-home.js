@@ -172,6 +172,7 @@
   let _ventana = null;
   function abrirVentana() {
     cerrarVentana();
+    _vista = 'resumen';
     _ventana = document.createElement('div');
     _ventana.id = 'dkGasto';
     _ventana.innerHTML = '<div class="dkg-bg"></div><div class="dkg-box" role="dialog" aria-modal="true" aria-label="Spent this cycle"></div>';
@@ -187,9 +188,102 @@
     document.removeEventListener('keydown', alTeclado);
   }
   function alTeclado(ev) { if (ev.key === 'Escape') cerrarVentana(); }
+  // ── Review prices, DENTRO de la ventana (Axel, 2026-11-25) ──────────
+  //
+  // La primera versión mandaba a Settings › What came in, y Axel lo
+  // notó: "review > review prices me lleva a settings". El teléfono
+  // nunca lo hizo (mobile-notif.pintarPrecios: "mandar a alguien allí
+  // desde una notificación es perderlo. Aquí se ve la lista, se aprueba,
+  // y se acabó"). Aquí igual: la lista de lo que cambió, cada producto
+  // con su precio de antes y el de su última factura, y "Update N
+  // prices". La cuenta y el guardado son los de marginedge-purchases
+  // (calcularPrecios, aplicarPrecios): los mismos que usan la campana y
+  // What came in.
+  let _vista = 'resumen';         // 'resumen' | 'precios'
+  let _precios = null;            // null = leyendo · { cambios } · { error }
+  let _aplicando = null;          // null · { n, tot } · { hecho, ok, problemas } · { error }
+
+  async function verPrecios() {
+    _vista = 'precios'; _precios = null; _aplicando = null;
+    pintarVentana();
+    const P = window.BarStockMarginEdgePurchases;
+    try {
+      if (!P || !P.calcularPrecios) throw new Error('Prices are not loaded.');
+      const r = await P.calcularPrecios();
+      _precios = { cambios: (r && r.cambios) || [] };
+    } catch (e) { _precios = { error: String((e && e.message) || e) }; }
+    pintarVentana();
+  }
+
+  async function actualizarPrecios() {
+    const P = window.BarStockMarginEdgePurchases;
+    const cambios = (_precios && _precios.cambios) || [];
+    if (!P || !P.aplicarPrecios || !cambios.length || (_aplicando && !_aplicando.error && !_aplicando.hecho)) return;
+    _aplicando = { n: 0, tot: cambios.length };
+    pintarVentana();
+    try {
+      const r = await P.aplicarPrecios(cambios, (n, tot) => { _aplicando = { n, tot }; pintarVentana(); });
+      _aplicando = { hecho: true, ok: r.ok || 0, problemas: (r.problemas || []).length };
+      pintarVentana();
+      // El catálogo se relee ANTES de volver a contar los precios: la
+      // cuenta compara cada factura con el catálogo en memoria y, sin
+      // releerlo, volvería a decir que cambiaron los que se acaban de
+      // actualizar (lo mismo que hace la campana del teléfono).
+      const RT = window.BarStockInventoryRealtime;
+      if (RT && RT.recargar) { try { await RT.recargar(); } catch (e) { console.warn('[desk-home] no se pudo releer el catálogo', e); } }
+      const M = MH();
+      if (M && M.releerPrecios) M.releerPrecios();
+    } catch (e) {
+      _aplicando = { error: String((e && e.message) || e) };
+      pintarVentana();
+    }
+  }
+
+  function htmlPrecios() {
+    const dinero = (n) => '$' + (Number(n) || 0).toFixed(2);
+    const pct = (c) => c.antes ? Math.round(((c.precio - c.antes) / c.antes) * 100) : 0;
+    const A = _aplicando;
+    const cab = `
+      <button type="button" class="dkg-x" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+      <h3><button type="button" class="dkg-atras" data-accion="atras" aria-label="Back"><i class="ti ti-chevron-left" aria-hidden="true"></i></button>${
+        _precios && _precios.cambios ? _precios.cambios.length + (_precios.cambios.length === 1 ? ' price changed' : ' prices changed') : 'Prices'}</h3>`;
+    if (!_precios) return cab + '<p class="dkg-s">Reading the latest invoice of each item…</p>';
+    if (_precios.error) return cab + `<div class="dkg-r dkg-am"><span>Could not read prices: ${esc(_precios.error)}</span></div>`;
+    if (A && A.hecho) {
+      return cab + `<div class="dkg-ok"><i class="ti ti-circle-check" aria-hidden="true"></i>${A.ok} price${A.ok === 1 ? '' : 's'} updated.${
+        A.problemas ? `<br>${A.problemas} could not be saved.` : ''}</div>
+        <div class="dkg-bs"><button type="button" class="dkg-b" data-accion="atras">Done</button></div>`;
+    }
+    const cambios = _precios.cambios;
+    if (!cambios.length) return cab + '<p class="dkg-s">Every price already matches its latest invoice.</p>';
+    const corriendo = A && !A.error && !A.hecho;
+    return cab + `
+      <p class="dkg-s">From the latest invoice of each item</p>
+      ${A && A.error ? `<div class="dkg-r dkg-am"><span>${esc(A.error)}</span></div>` : ''}
+      <div class="dkg-lista">${cambios.map(c => `
+        <div class="dkg-pr">
+          <span class="dkg-pr-n"><b>${esc(c.item)}</b><small>${esc(c.vendor || '')}${c.factura ? ' · invoice ' + esc(c.factura) : ''}${c.fecha ? ' · ' + esc(c.fecha) : ''}</small></span>
+          <span class="dkg-pr-v ${c.precio > c.antes ? 'up' : 'dn'}">${dinero(c.antes)} → <b>${dinero(c.precio)}</b><small>${pct(c) > 0 ? '+' : ''}${pct(c)}%</small></span>
+        </div>`).join('')}</div>
+      <div class="dkg-bs">
+        <button type="button" class="dkg-b dkg-am" data-accion="actualizar"${corriendo ? ' disabled' : ''}>${
+          corriendo ? 'Updating… ' + A.n + ' of ' + A.tot : 'Update ' + cambios.length + (cambios.length === 1 ? ' price' : ' prices')}</button>
+      </div>
+      <p class="dkg-s">Only these change. Everything else keeps the price you typed — nothing is cleared.</p>`;
+  }
+
   function pintarVentana() {
     const M = MH();
     if (!_ventana || !M) return;
+    if (_vista === 'precios') {
+      const caja = _ventana.querySelector('.dkg-box');
+      caja.innerHTML = htmlPrecios();
+      caja.querySelector('.dkg-x').onclick = cerrarVentana;
+      caja.querySelectorAll('[data-accion="atras"]').forEach(b => { b.onclick = () => { _vista = 'resumen'; pintarVentana(); }; });
+      const up = caja.querySelector('[data-accion="actualizar"]');
+      if (up) up.onclick = actualizarPrecios;
+      return;
+    }
     const G = M.estadoGasto ? M.estadoGasto() : {};
     const fg = M.filasGasto ? M.filasGasto() : { conectada: true, filas: [] };
     const a = G.avance || {};
@@ -197,7 +291,7 @@
       ? (!a.pedidos ? 'Looking for invoices…' : a.hechos ? a.hechos + ' of ' + a.pedidos + ' invoices…' : a.pedidos + ' invoices found…')
       : (G.hace ? 'synced ' + G.hace : 'never synced');
     const filas = fg.filas.map(f => {
-      const ir = f.que === 'fix' ? 'meMatch' : f.que === 'precios' ? 'mePurchases' : '';
+      const ir = f.que === 'fix' ? 'meMatch' : f.que === 'precios' ? 'precios' : '';
       const der = f.que === 'fix' ? 'Fix ›' : f.que === 'precios' ? 'Review ›' : (f.v || '');
       return ir
         ? `<button type="button" class="dkg-r dkg-am" data-ir="${ir}"><span>${esc(f.t)}</span><b>${esc(der)}</b></button>`
@@ -212,13 +306,15 @@
       ${filas}
       <div class="dkg-bs">
         ${fg.conectada ? `<button type="button" class="dkg-b" data-accion="sync"${G.sincronizando ? ' disabled' : ''}>${G.sincronizando ? '<span class="dkh-gira"></span> Syncing' : '<i class="ti ti-refresh" aria-hidden="true"></i> Sync now'}</button>` : ''}
-        <button type="button" class="dkg-b${precios ? ' dkg-am' : ''}" data-ir="${fg.conectada ? 'mePurchases' : 'integrations'}">${!fg.conectada ? 'Connect MarginEdge' : precios ? 'Review prices' : 'What came in'}</button>
+        <button type="button" class="dkg-b${precios ? ' dkg-am' : ''}" data-ir="${!fg.conectada ? 'integrations' : precios ? 'precios' : 'mePurchases'}">${!fg.conectada ? 'Connect MarginEdge' : precios ? 'Review prices' : 'What came in'}</button>
       </div>`;
     const caja = _ventana.querySelector('.dkg-box');
     caja.querySelector('.dkg-x').onclick = cerrarVentana;
     const sy = caja.querySelector('[data-accion="sync"]');
     if (sy) sy.onclick = sincronizar;
-    caja.querySelectorAll('[data-ir]').forEach(b => { b.onclick = () => irAjustes(b.dataset.ir); });
+    caja.querySelectorAll('[data-ir]').forEach(b => {
+      b.onclick = () => b.dataset.ir === 'precios' ? verPrecios() : irAjustes(b.dataset.ir);
+    });
   }
 
   function htmlCifra(o) {

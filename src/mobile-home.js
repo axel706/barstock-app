@@ -3024,6 +3024,9 @@
     }),
     alSync(fn) { _oyentesSync.add(fn); return () => _oyentesSync.delete(fn); },
     filasGasto: () => filasGasto(_entregas, _precios),
+    // Tras actualizar precios en el escritorio: volver a contar los que
+    // esperan, para que "N to fix" y Review dejen de decirlo.
+    releerPrecios: () => { _preciosLeidos = false; cargarPrecios(); },
     alCambiar(fn) { _oyentes.add(fn); return () => _oyentes.delete(fn); }
   };
 

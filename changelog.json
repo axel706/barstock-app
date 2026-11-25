@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261125-143215",
+    "items": [
+      "Review prices opens the list right there, not Settings"
+    ]
+  },
+  {
     "build": "20261125-141515",
     "items": [
       "Desktop Home: Sync and Review on Spent this cycle",
@@ -190,13 +196,6 @@
     "build": "20261122-221546",
     "items": [
       "Skipped week: Sent shows only this week in This cycle"
-    ]
-  },
-  {
-    "build": "20261122-220445",
-    "items": [
-      "Invoices in cases count as bottles",
-      "even when the line does not say case"
     ]
   }
 ]

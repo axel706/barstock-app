@@ -49,7 +49,11 @@ prueba('mobile-home tiene cifras()', /function cifras\(\)/.test(MH));
 prueba('el teléfono las pinta desde cifras()', /function pintarCifras[\s\S]{0,200}cifras\(\)/.test(MH));
 prueba('el escritorio las recibe de cifras() por datos()', /function datos\(\)[\s\S]{0,300}cifras\(\)\.partes/.test(MH));
 prueba('desk-home no lee los módulos de dinero por su cuenta',
-  !/BarStockInventoryValue|BarStockSpend|calcularPrecios|\.dinero\(\)/.test(DH));
+  !/BarStockInventoryValue|BarStockSpend|\.dinero\(\)/.test(DH));
+// Los precios cambiados sí se piden, pero a la función COMPARTIDA (la de
+// la campana del teléfono y What came in), nunca con una cuenta propia.
+prueba('los precios, con calcularPrecios/aplicarPrecios de marginedge-purchases',
+  /P\.calcularPrecios\(\)/.test(DH) && /P\.aplicarPrecios\(/.test(DH) && !/marginedge_invoice_lines|unit_price/.test(DH));
 
 // ── El escenario ────────────────────────────────────────────────────
 const dom = new JSDOM(`<!doctype html><body class="dk"><div class="wrap">
@@ -86,11 +90,28 @@ w.BarStockMobileHome = {
     { t: '4 invoices · 134 units', v: '$4,876' },
     { t: '1 line has no bottle', v: 'fix', am: true, que: 'fix' },
     { t: '3 prices changed', v: 'review', am: true, que: 'precios' }] }),
-  alSync: (fn) => { oyenteSync = fn; }
+  alSync: (fn) => { oyenteSync = fn; },
+  releerPrecios: () => llamadas.push('releer')
 };
 let oyenteSync = null;
 let gEstado = { sincronizando: false, avance: null, error: null, precios: 3, total: 4876, desde: 'Nov 22', hace: '12 minutes ago' };
 const ajustes = [];
+const aplicados = [];
+let precioFalla = null;
+w.BarStockMarginEdgePurchases = {
+  calcularPrecios: async () => {
+    if (precioFalla) throw new Error(precioFalla);
+    return { cambios: [
+      { item: "Tito's Vodka", antes: 29, precio: 31, vendor: 'LOOP', factura: '53975', fecha: '2026-11-24' },
+      { item: 'Aperol', antes: 21, precio: 20, vendor: 'Southern' },
+      { item: 'Campari', antes: 26, precio: 27.5, vendor: 'Southern' }] };
+  },
+  aplicarPrecios: async (cambios, avisar) => {
+    cambios.forEach((c, i) => { aplicados.push(c.item); if (avisar) avisar(i + 1, cambios.length); });
+    return { ok: cambios.length, problemas: [] };
+  }
+};
+w.BarStockInventoryRealtime = { recargar: async () => { llamadas.push('recargar'); } };
 w.openSettingsModal = () => ajustes.push('abrir');
 w.showSettingsPanel = (p) => ajustes.push(p);
 w.BarStockLiveDiag = { semana: () => diag instanceof Error ? Promise.reject(diag) : Promise.resolve(diag) };
@@ -151,9 +172,31 @@ const H = () => D.getElementById('dkHome');
   V().querySelector('[data-ir="meMatch"]').click();
   prueba('"Fix ›" lleva a Settings › Match products', ajustes.join(',') === 'abrir,meMatch', ajustes.join(','));
   prueba('y cierra la ventana', !V());
+  // Review prices: la lista DENTRO de la ventana, como la campana del
+  // teléfono; nada de mandar a Settings (Axel: "me lleva a settings").
   gb().click(); ajustes.length = 0;
   V().querySelector('.dkg-b.dkg-am').click();
-  prueba('"Review prices" lleva a What came in', ajustes.join(',') === 'abrir,mePurchases', ajustes.join(','));
+  await espera(10);
+  prueba('"Review prices" no manda a Settings', ajustes.length === 0, ajustes.join(','));
+  prueba('enseña la lista en la misma ventana', !!V() && /3 prices changed/.test(V().querySelector('h3').textContent) && V().querySelectorAll('.dkg-pr').length === 3);
+  prueba('cada producto con su precio de antes y el nuevo', /Tito's Vodka/.test(V().textContent) && /\$29\.00 → \$31\.00/.test(V().textContent) && /\+7%/.test(V().textContent), V().textContent.replace(/\s+/g, ' ').slice(0, 200));
+  V().querySelector('[data-accion="actualizar"]').click();
+  await espera(5);
+  prueba('"Update 3 prices" guarda con aplicarPrecios', aplicados.length === 3, String(aplicados.length));
+  await espera(20);
+  prueba('y dice cuántos', /3 prices updated/.test(V().textContent), V().textContent.replace(/\s+/g, ' '));
+  prueba('relee el catálogo y vuelve a contar los precios', llamadas.includes('recargar') && llamadas.indexOf('recargar') < llamadas.indexOf('releer'), llamadas.join(','));
+  V().querySelector('[data-accion="atras"]').click();
+  prueba('atrás vuelve al resumen', /Spent this cycle/.test(V().querySelector('h3').textContent));
+  w.BarStockDeskHome.cerrarVentana();
+  // Un fallo al leer los precios se dice, con lo que pasó.
+  precioFalla = 'permission denied for table marginedge_links';
+  gb().click();
+  V().querySelector('.dkg-b.dkg-am').click();
+  await espera(10);
+  prueba('si no puede leerlos, lo dice', /Could not read prices: permission denied/.test(V().textContent));
+  precioFalla = null;
+  w.BarStockDeskHome.cerrarVentana();
   gb().click(); llamadas.length = 0;
   V().querySelector('[data-accion="sync"]').click();
   prueba('Sync now es el Sync del teléfono', llamadas.includes('syncME'));
