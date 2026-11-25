@@ -333,6 +333,9 @@ const H = () => D.getElementById('dkHome');
     prueba('compacta en el escritorio', ((ventasPintadas.slice(-1)[0] || {}).opts || {}).compacta === true);
     prueba('compacta: sin Most sold ni su pie', /\$\{top\.length && !compacta \? `\s*<div class="m-ts-top">/.test(MH2) && /\$\{top\.length && !compacta \? `<div class="m-ts-pie">/.test(MH2));
     prueba('compacta: All products arriba, junto a Bottles / $', /<span class="m-ts-acc">\s*\$\{compacta && top\.length \? `<button type="button" class="m-ts-mas" data-mas>/.test(MH2));
+    prueba('compacta: la leyenda de licor y vino va en el renglón de la píldora', /\$\{compacta \? `<div class="m-ts-fila">\$\{pill\}\$\{din \? leyenda : ''\}<\/div>` : pill\}/.test(MH2)
+      && /\$\{din && !compacta \? leyenda : ''\}/.test(MH2));
+    prueba('y ese renglón tiene alto fijo: la tarjeta no crece al pasar a $', /#dkVentas \.m-ts-fila \{[^}]*min-height: 32px/.test(CSS_DH));
     prueba('la tarjeta empieza a ras de su fila (le gana al margin-top generado)', /#dkHome #dkVentas > \.m-ts \{[^}]*margin: 0/.test(CSS_DH));
     prueba('desk-home no pinta ventas por su cuenta', !/semanaCal|masVendido|dkh-vts|dkh-vt-b/.test(DH));
     prueba('el teléfono pinta con la misma función', /function pintarVentas\(host\)[\s\S]{0,200}pintarVentasEn\(caja, \(\) => pintarVentas\(host\)\)/.test(MH2)

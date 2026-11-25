@@ -210,6 +210,15 @@
   #dkVentas .m-ts-logo { height: 30px; width: auto; }
   /* All products / Full report, arriba junto a Bottles / $ (compacta). */
   #dkVentas .m-ts-acc .m-ts-mas { margin: 0; }
+  /* La píldora y, en $, la leyenda de licor y vino en UN renglón de alto
+     fijo: así la tarjeta mide lo mismo en Bottles y en $ (Axel,
+     2026-11-25: "no debería crecer al pulsar el botón de vista"). */
+  #dkVentas .m-ts-fila {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px 14px;
+    min-height: 32px; margin-top: 8px;
+  }
+  #dkVentas .m-ts-fila .m-ts-pill { margin: 0; }
+  #dkVentas .m-ts-fila .m-ts-ley { margin: 0; justify-content: flex-end; }
 
   /* ── Los reportes de la portada de antes ── */
   #dkHome .dkh-reps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }

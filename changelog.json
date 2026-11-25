@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261125-165654",
+    "items": [
+      "Desktop: Toast card keeps its size in Bottles and $"
+    ]
+  },
+  {
     "build": "20261125-164758",
     "items": [
       "Desktop: shorter Toast sales card, All products on top"
@@ -192,13 +198,6 @@
     "items": [
       "Counting: label guides on Belvedere, St. Elder",
       "and Macallan"
-    ]
-  },
-  {
-    "build": "20261124-150853",
-    "items": [
-      "Counting: label guides on 4 more bottles",
-      "360, Carlo Rossi, Bluecoat and The Botanist"
     ]
   }
 ]

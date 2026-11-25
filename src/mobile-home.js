@@ -2636,6 +2636,14 @@
     const pill = !cmp ? ''
       : `<em class="m-ts-pill${d.cargado && n ? (sube ? ' m-ts-up' : ' m-ts-dn') : ''}">${esc(cmp.replace(/ vs usual \w+$/, ' vs usual'))}</em>`;
 
+    // Qué es azul y qué morado en $. En la compacta (el escritorio) va en
+    // el renglón de la píldora, a la derecha: debajo de las barras era un
+    // renglón que sólo existía en $ y la tarjeta crecía al cambiar de
+    // vista (Axel, 2026-11-25).
+    const leyenda = `<div class="m-ts-ley">
+            <span><i class="licor"></i>Liquor & cocktails ${dinero0(d.licor)}</span>
+            <span><i class="vino"></i>Wine ${dinero0(d.vino)}</span></div>`;
+
     // Igual que las cifras: si no cambió nada no se reescribe, o el logo
     // de Toast se crea de nuevo y parpadea al arrancar (Axel, 2026-11-18).
     const html = `
@@ -2662,7 +2670,7 @@
           <b>${din ? dinero0(d.dinero) : bot1(d.botellas)}</b>
           <span>${din ? 'net' : 'bottles'} · ${nomDia(d)}</span>
         </div>
-        ${pill}
+        ${compacta ? `<div class="m-ts-fila">${pill}${din ? leyenda : ''}</div>` : pill}
         <div class="m-ts-g">
           ${sem.map((x, k) => x.futuro ? `<div class="m-ts-b fut" aria-hidden="true"></div>` : `
             <div class="m-ts-b${esSem || k === i ? ' on' : ''}" data-d="${k}" role="button" tabindex="0"
@@ -2674,9 +2682,7 @@
             </div>`).join('')}
         </div>
         <div class="m-ts-d">${sem.map((x, k) => `<span class="${x.futuro ? 'fut' : !esSem && k === i ? 'on' : ''}">${nomDia(x)}</span>`).join('')}</div>
-        ${din ? `<div class="m-ts-ley">
-            <span><i class="licor"></i>Liquor & cocktails ${dinero0(d.licor)}</span>
-            <span><i class="vino"></i>Wine ${dinero0(d.vino)}</span></div>` : ''}
+        ${din && !compacta ? leyenda : ''}
         ${top.length && !compacta ? `
           <div class="m-ts-top">
             <div class="m-ts-top-h">Most sold · ${nomDia(d)}</div>

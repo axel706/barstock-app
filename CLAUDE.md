@@ -490,7 +490,10 @@ sección de hoy vive tal cual dentro del armazón.
   de 16 px del Home; el logo de Toast a 30 px. Va oscura también en el
   claro, como las de color. **Compacta** (Axel, el mismo día: "creció
   demasiado"; `{ compacta: true }`): sin Most sold, y All products / Full
-  report arriba junto a Bottles / $; 356 px en vez de 524. La regla del
+  report arriba junto a Bottles / $, y la leyenda de licor y vino en el
+  renglón de la píldora, de alto fijo (`.m-ts-fila`): debajo de las barras
+  sólo existía en $ y la tarjeta crecía al cambiar de vista; mide lo mismo
+  en las dos (362 px, antes 524). La regla del
   margen de arriba lleva `#dkHome` delante: la generada (desk-ficha.css)
   carga después y le ganaba. All products / Full report (mobile-sales.js)
   salen en la ventana centrada de `#mSheet`: el generador acota a
