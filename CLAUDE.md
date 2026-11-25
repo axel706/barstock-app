@@ -109,8 +109,8 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 
 ## La arquitectura
 
-Frontend estático, sin build. `index.html` es un monolito y hay ~156 módulos
-`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 33 hojas
+Frontend estático, sin build. `index.html` es un monolito y hay ~157 módulos
+`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 34 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
 12 funciones en `api/` sobre Vercel. **El tope del plan son 12, y está lleno**
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 175 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 176 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -486,7 +486,25 @@ sección de hoy vive tal cual dentro del armazón.
   `BarStockHomeCartas.silueta(forma, lleno, id)`, la que usan también
   las botellas del carrusel del teléfono (`formaDe`, llena contra su
   par). El líquido, ámbar; rojo con menos de un tercio del par; vacía,
-  el borde en rojo. "See all" llega con la sección Running out.
+  el borde en rojo. "See all N ›" abre la sección Running out.
+- **La sección Running out** (Axel, 2026-11-25, lámina A: "falta
+  pantalla para ver todos los items running out y las respectivas
+  acciones"): en la barra lateral, ya sin "Soon". **Es la pantalla del
+  teléfono**, `BarStockRunningOutReview.abrir(host, { escritorio: true
+  })`, dentro de `#runningOutSection`, que crea `src/desk-running-out.js`
+  ANTES de que arranque desk-shell (el armazón vigila las secciones que
+  encuentra al montar) y que monta la pantalla al abrirse la sección y la
+  suelta al salir. En modo escritorio: sin la banda ni las pestañas del
+  teléfono, cada fila con su silueta (`home-cartas.silueta`) y su par
+  junto al número, y al arrastrar rueda la página. Las mismas acciones:
+  Add N to list, I have enough (el teclado de check-shelf, en ventana),
+  Undo / Change y Edit order con el ratón (la misma lista de fijados).
+  Sus estilos son los del teléfono GENERADOS por compartir-ficha.js bajo
+  `#dkRo` (sin el contenedor fijo `.m-ro`); la fila ancha (silueta ·
+  nombre · número · cinco días · el por qué y sus botones, con la
+  cabecera del teléfono en `display: contents`) en
+  `styles/desk-running-out.css`, que se apila con `@container dkro
+  (max-width: 900px)`. Prueba: `test-running-out-escritorio`.
 - **Spent this cycle en el escritorio** (Axel, 2026-11-25, lámina A:
   "como el teléfono"): UN botón, Sync, o Review en ámbar con algo que
   arreglar, o "MarginEdge" sin conectar (→ Settings › `integrations`).
@@ -942,7 +960,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 175 suites · ~2380 comprobaciones. Tienen que pasar enteras.
+`npm test` · 176 suites · ~2430 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

@@ -70,6 +70,13 @@ function trozos(css) {
   return out;
 }
 
+// Running out (desk-running-out.js, lámina A del 2026-11-25): la pantalla
+// de revisión del teléfono (mobile-running-out.js) dentro de su sección,
+// en #dkRo. Todas sus clases empiezan por m-ro-; el contenedor del
+// teléfono (.m-ro, fijo a pantalla completa) no entra: en el escritorio
+// es .m-ro-dk, dentro de la sección.
+const reRo = /\.m-ro-[A-Za-z0-9_-]+/;
+
 // El teclado numérico de ✎ Check the shelf y 📣 Tell the team it's low
 // (num-pad.js): una hoja #mSheet colgada del body, con sus clases m-kp.
 const TECLADO = ['m-sheet', 'm-kp', 'm-ro-b', 'm-ro-go'];
@@ -107,7 +114,7 @@ function aTeclado(s) {
 
 function generar() {
   const css = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8');
-  const reglas = [], teclado = [];
+  const reglas = [], teclado = [], ro = [];
   for (const r of trozos(css)) {
     if (!r.sel || r.sel.startsWith('@')) continue;          // las @media de dentro (reducir movimiento) se quedan fuera
     if (/\{/.test(r.decl)) continue;                          // nada anidado
@@ -122,8 +129,13 @@ function generar() {
       if (ch === ',' && prof === 0) { sel.push(cur.trim()); cur = ''; } else cur += ch;
     }
     if (cur.trim()) sel.push(cur.trim());
-    const nuevos = [];
+    const nuevos = [], deRo = [];
     for (let s of sel) {
+      if (reRo.test(s) && !/:has\(|m-txt-|bs-guest|bs-sin-|fondo-vivo/.test(s)) {
+        let t = s, q = true;
+        while (q) { q = false; for (const a of ARMAZON) { if (a.test(t)) { t = t.replace(a, ''); q = true; } } }
+        if (!/^(html|body)\b/.test(t)) deRo.push('#dkRo ' + t);
+      }
       if (!reClase.test(s)) continue;
       // Lo que depende del tamaño de letra del teléfono o del modo invitado
       // no aplica en el escritorio.
@@ -141,6 +153,7 @@ function generar() {
     const decl = r.decl.split(';').map(d => d.trim()).filter(Boolean).map(d => '    ' + d + ';').join('\n');
     if (!decl) continue;
     if (nuevos.length) reglas.push('  ' + nuevos.join(',\n  ') + ' {\n' + decl + '\n  }');
+    if (deRo.length) ro.push('  ' + deRo.join(',\n  ') + ' {\n' + decl + '\n  }');
     const tec = sel.map(aTeclado).filter(Boolean);
     if (tec.length) teclado.push('  ' + tec.join(',\n  ') + ' {\n' + decl + '\n  }');
   }
@@ -148,8 +161,11 @@ function generar() {
     ' * No se edita a mano: se cambia la regla del teléfono y se vuelve a correr\n' +
     ' * `node tools/compartir-ficha.js`. test-buscador-escritorio falla si no\n' +
     ' * está al día. Son la tarjeta y la ficha de "Do we have", colgadas del\n' +
-    ' * panel del buscador del escritorio (#dkBuscar). */\n' +
+    ' * panel del buscador del escritorio (#dkBuscar), y la pantalla de\n' +
+    ' * Running out, en su sección (#dkRo). */\n' +
     '@media (min-width: 641px) {\n' + reglas.join('\n') + '\n\n' +
+    '  /* Running out (mobile-running-out.js), en la sección del escritorio. */\n' +
+    ro.join('\n') + '\n\n' +
     '  /* El teclado numérico (num-pad.js), en la hoja #mSheet del body. */\n' +
     teclado.join('\n') + '\n}\n';
 }

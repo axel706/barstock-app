@@ -1,0 +1,97 @@
+/* ── Running out en el escritorio (Axel, 2026-11-25, lámina A) ──────────
+ *
+ * La pantalla del teléfono (mobile-running-out.js) dentro de su sección
+ * (#runningOutSection, src/desk-running-out.js). Las reglas de la tarjeta,
+ * los días, el por qué y los botones son las del teléfono, GENERADAS en
+ * styles/desk-ficha.css (#dkRo). Aquí sólo el reparto: una fila ancha por
+ * producto, silueta · nombre · número · los cinco días · el por qué y sus
+ * botones, como en la lámina; y la silueta, que en el teléfono no sale.
+ */
+
+#runningOutSection { display: none; }
+
+@media (min-width: 641px) {
+  body.dk .wrap.bs-focus-mode > #runningOutSection.bs-active-section { display: block; }
+  /* Un panel de vidrio, como en la lámina: sobre la foto del fondo el
+     título y el resumen no se leían. Las filas van dentro con su Tinta
+     (sin desenfoque propio, como en el teléfono). !important por .card
+     (app.css le pone fondo y borde con !important en el claro). */
+  body.dk #runningOutSection {
+    background: rgba(11, 18, 32, .72) !important;
+    border: 1px solid rgba(255, 255, 255, .1) !important;
+    border-radius: 22px !important;
+    box-shadow: none !important;
+    backdrop-filter: blur(16px) saturate(140%) !important; -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+    padding: 18px 18px 22px !important;
+    margin-bottom: 28px;
+    color: #f8fafc;
+    container: dkro / inline-size;
+  }
+  #runningOutSection .dk-ro-t { margin: 4px 0 2px; font-size: 26px; font-weight: 800; letter-spacing: -.4px; color: #f8fafc; }
+  #dkRo .m-ro-sumf { margin-bottom: 4px; }
+  #dkRo .m-ro-sum { font-size: 13.5px; color: #a9bacd; }
+  /* Más fuerte que "#dkRo .m-ro-v small" del teléfono (display: block). */
+  #dkRo .m-ro-v b small.m-ro-par { display: inline; margin: 0; font-size: .5em; font-weight: 700; color: #a9bacd; }
+  /* "Edit order" / "Reset" del teléfono son un enlace; aquí, un botón de
+     cristal como los del Home. Con id: app.css fuerza el radio. */
+  #dkRo .m-ro-ord {
+    padding: 7px 14px; border-radius: 999px !important; font-size: 13px;
+    background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .2); color: #e2e8f0;
+  }
+
+  /* ── La fila ──
+     La cabecera del teléfono (.m-ro-top) se abre con display: contents,
+     y el nombre y el número pasan a ser columnas. El por qué, los botones
+     y lo ya decidido van apilados en la última. */
+  #dkRo .m-ro-c:not(.m-ro-ed) {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1.4fr) 120px minmax(0, 1.3fr) minmax(0, 1.7fr);
+    column-gap: 18px; row-gap: 8px; align-items: center;
+    padding: 12px 18px;
+  }
+  #dkRo .m-ro-c:not(.m-ro-ed) > .m-ro-top { display: contents; }
+  #dkRo .m-ro-c:not(.m-ro-ed) .m-ro-sil { grid-column: 1; grid-row: 1 / span 4; }
+  #dkRo .m-ro-c:not(.m-ro-ed) .m-ro-n { grid-column: 2; grid-row: 1 / span 4; }
+  #dkRo .m-ro-c:not(.m-ro-ed) .m-ro-v { grid-column: 3; grid-row: 1 / span 4; text-align: left; }
+  #dkRo .m-ro-c:not(.m-ro-ed) .m-ro-dias { grid-column: 4; grid-row: 1 / span 4; margin-top: 0; }
+  #dkRo .m-ro-c:not(.m-ro-ed) .m-ro-why,
+  #dkRo .m-ro-c:not(.m-ro-ed) .m-ro-btns,
+  #dkRo .m-ro-c:not(.m-ro-ed) .m-ro-hecho { grid-column: 5; margin-top: 0; }
+  /* El nombre entero (en el teléfono se corta en un renglón). */
+  #dkRo .m-ro-c:not(.m-ro-ed) .m-ro-n b { white-space: normal; }
+  #dkRo .m-ro-n small { flex-wrap: wrap; }
+  #dkRo .m-ro-btns .m-ro-b { min-height: 0; height: 34px; font-size: 13px; }
+
+  /* La silueta, la de home-cartas: sus clases sólo tienen estilo en el
+     teléfono. Los mismos tonos que la tarjeta del Home. */
+  #dkRo .m-ro-sil { display: flex; justify-content: center; }
+  #dkRo .m-ro-sil svg { height: 72px; width: auto; }
+  #dkRo .m-ro-ed .m-ro-sil svg { height: 44px; }
+  #dkRo .m-ro-sil .m-hc-vid { fill: rgba(255, 255, 255, .08); stroke: rgba(255, 255, 255, .55); stroke-width: 1.2; }
+  #dkRo .m-ro-sil .m-hc-liq { fill: #fbbf24; }
+  #dkRo .m-ro-sil-bajo .m-hc-liq { fill: #f87171; }
+  #dkRo .m-ro-sil-cero .m-hc-vid { stroke: rgba(248, 113, 113, .75); }
+
+  /* Editando el orden: la lista estrecha, el asa a mano y Done en su
+     sitio (en el teléfono va pegado sobre las pestañas). */
+  #dkRo .m-ro-orden { max-width: 720px; }
+  #dkRo .m-ro-grip { cursor: grab; font-size: 22px; }
+  #dkRo .m-ro-done {
+    position: static; width: 100%; max-width: 720px; display: block; margin-top: 16px;
+    height: 44px; min-height: 0; font-size: 14px;
+  }
+
+  /* Poco sitio (un iPad con la barra a la vista): la silueta, el nombre y
+     el número arriba; los días, el por qué y los botones debajo, a lo
+     ancho. */
+  @container dkro (max-width: 900px) {
+    #dkRo .m-ro-c:not(.m-ro-ed) { grid-template-columns: 48px minmax(0, 1fr) auto; }
+    #dkRo .m-ro-c:not(.m-ro-ed) .m-ro-sil { grid-row: 1; }
+    #dkRo .m-ro-c:not(.m-ro-ed) .m-ro-n { grid-row: 1; }
+    #dkRo .m-ro-c:not(.m-ro-ed) .m-ro-v { grid-row: 1; text-align: right; }
+    #dkRo .m-ro-c:not(.m-ro-ed) .m-ro-dias { grid-column: 1 / -1; grid-row: auto; }
+    #dkRo .m-ro-c:not(.m-ro-ed) .m-ro-why,
+    #dkRo .m-ro-c:not(.m-ro-ed) .m-ro-btns,
+    #dkRo .m-ro-c:not(.m-ro-ed) .m-ro-hecho { grid-column: 1 / -1; }
+  }
+}

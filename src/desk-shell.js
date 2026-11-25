@@ -29,8 +29,8 @@
   // #cycleBtn (weekly-cycle.js lo busca por id y le puso su clic al
   // arrancar; moverlo no le quita ninguna de las dos cosas).
   //
-  // Lo que el escritorio aún no tiene (Running out, Transfers, Sales,
-  // Counts) sale como "Soon", apagado: Axel lo eligió frente a
+  // Lo que el escritorio aún no tiene (Transfers, Sales, Counts) sale
+  // como "Soon", apagado: Axel lo eligió frente a
   // esconderlo, para que se vea lo que viene.
 
   const ITEMS = [
@@ -39,7 +39,7 @@
     { id: 'noMatch', label: 'Unmatched', icon: 'ti-alert-circle', sec: 'noMatch', sub: true },
     { id: 'vendor', label: 'Orders', icon: 'ti-shopping-cart', sec: 'vendor' },
     { id: 'history', label: 'History', icon: 'ti-history', sec: 'history', sub: true },
-    { id: 'runningOut', label: 'Running out', icon: 'ti-hourglass-low', pronto: true },
+    { id: 'runningOut', label: 'Running out', icon: 'ti-hourglass-low', sec: 'runningOut' },
     { id: 'transfers', label: 'Transfers', icon: 'ti-arrows-exchange', pronto: true },
     { grupo: 'Reports' },
     { id: 'sales', label: 'Sales', icon: 'ti-chart-line', pronto: true },
@@ -105,7 +105,7 @@
   // Las pantallas del teléfono que tienen su sección en el escritorio.
   // Lo demás (Buscar, el ciclo, To buy…) aún no existe aquí y no hace
   // nada: el Home del escritorio no enseña los botones que llevan ahí.
-  const DESDE_MOVIL = { home: 'home', inventory: 'inventory', orders: 'vendor', history: 'history' };
+  const DESDE_MOVIL = { home: 'home', inventory: 'inventory', orders: 'vendor', history: 'history', runningOut: 'runningOut' };
   function desdeMovil(id) {
     const a = DESDE_MOVIL[id];
     if (!a) return false;

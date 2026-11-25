@@ -151,6 +151,8 @@
   #dkHome .dkh-out-g { color: #86efac; }
   #dkHome .dkh-acts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: auto; padding-top: 4px; }
   #dkHome .dkh-vs, #dkHome .dkh-nota { font-size: 12px; color: rgba(241, 245, 249, .75); margin-right: auto; }
+  /* "See all" a la derecha aunque no haya "and N more" delante. */
+  #dkHome .dkh-agota [data-ro-todo] { margin-left: auto; }
 
   /* ── Lo de ahora: ancha, con el transfer (u otra) al lado ── */
   #dkHome .dkh-ahora { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); gap: 14px; }

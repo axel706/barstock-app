@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-155003",
+    "items": [
+      "Desktop: Running out section with every product",
+      "Add to list, I have enough and Edit order on desktop"
+    ]
+  },
+  {
     "build": "20261125-154149",
     "items": [
       "Desktop Home: Running out shows bottles and numbers"
@@ -190,13 +197,6 @@
     "build": "20261124-090913",
     "items": [
       "Counting: WhistlePig label now has its arched top"
-    ]
-  },
-  {
-    "build": "20261124-090202",
-    "items": [
-      "Counting: label guides on 9 more bottles, traced",
-      "Oban, Balvenie, Michter’s, WhistlePig and more"
     ]
   }
 ]

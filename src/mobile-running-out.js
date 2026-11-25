@@ -24,6 +24,11 @@
   let _el = null, _quitarOyente = null, _quitarIrse = null;
   let _lista = [], _checks = new Map(), _cargando = false;
   let _editando = false;   // "Edit order" (lámina B)
+  // En el escritorio (desk-running-out.js, Axel, 2026-11-25, lámina A) la
+  // misma pantalla vive dentro de su sección: sin la banda ni las
+  // pestañas del teléfono, con la silueta de cada producto delante (allí
+  // hay sitio) y rodando con la página, no con su propio scroll.
+  let _escritorio = false;
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -118,6 +123,24 @@
       <div class="m-ro-why"><i>${ICONO[pq.tipo] || ICONO.normal}</i><span>${esc(pq.texto)}</span></div>`;
   }
 
+  // La silueta del conteo, llena contra su par: sólo en el escritorio.
+  // Es la de home-cartas (la misma del Home y del carrusel del teléfono).
+  let _nSil = 0;
+  function silueta(r, queda) {
+    if (!_escritorio) return '';
+    const HC = window.BarStockHomeCartas, BP = window.BarStockBottleProfiles;
+    if (!HC || !HC.silueta || !BP || !BP.formaDe) return '';
+    const par = Number(r.suggested) || 0;
+    const lleno = par > 0 ? Math.max(0, Math.min(1, queda / par)) : 0;
+    const tono = queda <= 0 ? 'cero' : lleno < 1 / 3 ? 'bajo' : 'medio';
+    return `<div class="m-ro-sil m-ro-sil-${tono}">${HC.silueta(BP.formaDe(r), lleno, 'mRoS' + (_nSil++))}</div>`;
+  }
+
+  // Junto al número, su par ("≈1.6/2"): sólo en el escritorio, que tiene
+  // sitio (la lámina A); en el teléfono el número va solo, como siempre.
+  const par = (r) => _escritorio && Number(r.suggested) > 0
+    ? `<small class="m-ro-par">/${esc(String(Math.round(Number(r.suggested) * 10) / 10))}</small>` : '';
+
   function tarjeta(x) {
     const r = x.r;
     const queda = LC() && LC().cuanto ? LC().cuanto(r) : Number(r.onHand) || 0;
@@ -143,10 +166,11 @@
     if (!enLista && puede('ordenes') && pedir > 0) botones.push(`<button type="button" class="m-ro-b m-ro-go" data-ro-add>Add ${esc(pedir)} to list</button>`);
     if (!visto && puede('contar')) botones.push('<button type="button" class="m-ro-b m-ro-gh" data-ro-ok>I have enough</button>');
     return `<div class="m-ro-c" data-item="${esc(r.item)}">
+      ${silueta(r, queda)}
       <div class="m-ro-top">
         <div class="m-ro-n"><b>${esc(r.item)}</b>
           <small>${vivo ? '<span class="m-ro-live"><i></i>Live</span>' : ''}${out}<span>${esc(r.vendor || '')}</span></small></div>
-        <div class="m-ro-v"><b>${vivo ? '&asymp;' : ''}${esc(n1(queda))}</b><small>${pedir > 0 ? 'Order ' + esc(pedir) : 'Covered to Sun'}</small></div>
+        <div class="m-ro-v"><b>${vivo ? '&asymp;' : ''}${esc(n1(queda))}${par(r)}</b><small>${pedir > 0 ? 'Order ' + esc(pedir) : 'Covered to Sun'}</small></div>
       </div>
       ${porQueHtml(r)}
       ${botones.length ? `<div class="m-ro-btns">${botones.join('')}</div>` : ''}
@@ -156,6 +180,7 @@
 
   function pintar() {
     if (!_el) return;
+    _nSil = 0;
     if (_editando) return pintarOrden();
     const { base, todos } = productos();
     const nLista = todos.filter(x => _lista.some(l => l.item_name === x.item)).length;
@@ -192,6 +217,7 @@
     return `<div class="m-ro-c m-ro-ed" data-item="${esc(r.item)}">
       <div class="m-ro-top">
         <span class="m-ro-grip" data-ro-grip role="button" aria-label="Drag ${esc(r.item)}">&#8801;</span>
+        ${silueta(r, queda)}
         <div class="m-ro-n"><b>${esc(r.item)}</b>
           <small>${vivo ? '<span class="m-ro-live"><i></i>Live</span>' : ''}${out}<span>${esc(r.vendor || '')}</span></small></div>
         <div class="m-ro-v"><b>${vivo ? '&asymp;' : ''}${esc(n1(queda))}</b></div>
@@ -268,9 +294,11 @@
     card.style.transform = '';
     const nat = card.getBoundingClientRect().top;
     card.style.transform = 'translateY(' + Math.round(y - _arr.agarre - nat) + 'px)';
-    if (_el) {
-      if (y < 150) _el.scrollTop -= 10;
-      else if (y > (window.innerHeight || 800) - 170) _el.scrollTop += 10;
+    // En el teléfono rueda la pantalla; en el escritorio, la página.
+    const caja = _escritorio ? (document.scrollingElement || document.documentElement) : _el;
+    if (caja) {
+      if (y < 150) caja.scrollTop -= 10;
+      else if (y > (window.innerHeight || 800) - 170) caja.scrollTop += 10;
     }
   }
   function soltar() {
@@ -309,7 +337,7 @@
 
   function alTocar(ev) {
     const bo = ev.target.closest && ev.target.closest('button');
-    if (bo && bo.hasAttribute('data-ro-edit')) { _editando = true; pintar(); if (_el) _el.scrollTop = 0; return; }
+    if (bo && bo.hasAttribute('data-ro-edit')) { _editando = true; pintar(); if (_el && !_escritorio) _el.scrollTop = 0; return; }
     if (bo && bo.hasAttribute('data-ro-done')) { _editando = false; pintar(); return; }
     if (bo && bo.hasAttribute('data-ro-reset')) { const R = RO(); if (R && R.fijar) R.fijar([]); pintar(); return; }
     if (_editando) return;
@@ -341,23 +369,34 @@
     _el = null;
     if (_quitarOyente) { _quitarOyente(); _quitarOyente = null; }
     if (_quitarIrse) { _quitarIrse(); _quitarIrse = null; }
+    if (_escritorio) { _escritorio = false; return; }
     const M = window.BarStockMobile;
     if (M && M.salirBanda) M.salirBanda();
     // La barra vuelve a marcar la pantalla de debajo.
     if (M && M.sinPestana) M.sinPestana(false);
   }
 
-  async function abrir(host) {
+  async function abrir(host, opts) {
     cerrar();
+    _escritorio = !!(opts && opts.escritorio);
     const donde = host || document.getElementById('mScreens') || document.body;
     _el = document.createElement('div');
-    _el.className = 'm-ro';
+    _el.className = _escritorio ? 'm-ro-dk' : 'm-ro';
     _el.addEventListener('click', alTocar);
     _el.addEventListener('pointerdown', (ev) => {
       const g = _editando && ev.target.closest && ev.target.closest('[data-ro-grip]');
       if (g) empezar(ev, g.closest('.m-ro-c'));
     });
     donde.appendChild(_el);
+    if (_escritorio) {
+      if (LC() && LC().alCambiar) _quitarOyente = LC().alCambiar(pintar);
+      _cargando = true;
+      pintar();
+      await cargarDatos();
+      _cargando = false;
+      pintar();
+      return;
+    }
     // Sin fondo propio: mientras esté en #mScreens, lo de debajo se
     // esconde (la regla de :has en mobile-app.css) y se ve el fondo de la
     // app (Axel, 2026-11-15: "tiene fondo opaco, no usa el fondo").
@@ -381,5 +420,5 @@
     pintar();
   }
 
-  window.BarStockRunningOutReview = { abrir, cerrar };
+  window.BarStockRunningOutReview = { abrir, cerrar, abierta: () => !!_el };
 })();

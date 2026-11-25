@@ -404,12 +404,16 @@
         </div>`;
     }).join('');
     const mas = lista.length > 6 ? `<span class="dkh-vs">and ${lista.length - 6} more</span>` : '';
+    // "See all" abre la sección Running out (desk-running-out.js): toda la
+    // lista con sus acciones. Sólo con la sección montada.
+    const todo = lista.length && document.getElementById('runningOutSection')
+      ? `<button type="button" class="dkh-b dkh-b1" data-ro-todo>See all ${lista.length} ›</button>` : '';
     return `
       <article class="dkh-card dkh-red dkh-agota dkh-hero">
         <div class="dkh-k"><span>${c.kHtml ? c.k : esc(c.k)}</span>${c.kr ? `<i>${esc(c.kr)}</i>` : ''}</div>
         <h3>${esc(c.tt)}</h3>
         <div class="dkh-ros">${cols}</div>
-        ${mas ? `<div class="dkh-acts">${mas}</div>` : ''}
+        ${mas || todo ? `<div class="dkh-acts">${mas}${todo}</div>` : ''}
       </article>`;
   }
 
@@ -533,6 +537,9 @@
     if (cf('estante') && M.detalleEstante) cf('estante').onclick = () => M.detalleEstante();
     if (cf('ayer') && M.sincronizarHoy) cf('ayer').onclick = () => M.sincronizarHoy();
     engancharGasto();
+    _host.querySelectorAll('[data-ro-todo]').forEach(b => {
+      b.onclick = () => { const S = window.BarStockDeskShell; if (S && S.ir) S.ir('runningOut'); };
+    });
     _host.querySelectorAll('.dkh-rep[data-sec]').forEach(t => {
       const abrir = () => { if (typeof window.bsOpenSection === 'function') window.bsOpenSection(t.dataset.sec); };
       // El botón de dentro ("Report last week") hace lo suyo y para el
