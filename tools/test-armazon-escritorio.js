@@ -208,7 +208,9 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   prueba('y conserva su clic (el de weekly-cycle)', clicsCiclo === 1);
   const hdr = D.querySelector('.bs-header');
   const sal = D.getElementById('dkSaludo');
-  prueba('el saludo va al principio de la barra de arriba (tras el botón del panel)', !!sal && hdr.firstElementChild.id === 'dkMenu' && hdr.children[1] === sal);
+  // Entre el botón y el saludo va la ruta (#dkMiga), que sólo se ve dentro
+  // de una sección (lámina C): en el Home el saludo es lo primero que se ve.
+  prueba('el saludo va al principio de la barra de arriba (tras el botón del panel y la ruta)', !!sal && hdr.firstElementChild.id === 'dkMenu' && hdr.children[1].id === 'dkMiga' && hdr.children[2] === sal);
   prueba('sin nombre, la fecha entera', /day/.test(sal.textContent) && !/Hello/.test(sal.textContent), sal.textContent);
   nombre = 'Axel';
   oyentesMH.forEach(f => f());
@@ -225,7 +227,7 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
 
   grupo('8e. Esconder la barra lateral (opción A)');
   const menu = D.getElementById('dkMenu');
-  prueba('el botón va antes del saludo', !!menu && menu.nextElementSibling === D.getElementById('dkSaludo'));
+  prueba('el botón va antes de la ruta y el saludo', !!menu && menu.nextElementSibling === D.getElementById('dkMiga') && menu.nextElementSibling.nextElementSibling === D.getElementById('dkSaludo'));
   prueba('de entrada, la barra se ve', !D.body.classList.contains('dk-sin-lado'));
   menu.click();
   prueba('tocarlo la esconde', D.body.classList.contains('dk-sin-lado'));
@@ -267,6 +269,35 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   grupo('8i. Sin el renglón de estado de antes');
   prueba('"Orders loaded" y compañía no salen en el escritorio (ya son avisos)', /body\.dk #statusBar \{ display: none !important; \}/.test(CSS));
   prueba('setStatus lo sigue escribiendo y toast.js lo enseña', /function setStatus\(msg\)\{\s*const bar = document\.getElementById\('statusBar'\)/.test(INDEX) && /window\.setStatus = function \(msg\)[\s\S]{0,200}show\(msg\)/.test(leer('src/toast.js')));
+
+  grupo('8j. Dónde estás y cómo volver (lámina C)');
+  {
+    const miga = D.getElementById('dkMiga');
+    const tecla = (key, en) => (en || D.body).dispatchEvent(new w.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+    const espera = () => new Promise(r => setTimeout(r, 20));
+    S.ir('home'); await espera();
+    prueba('la ruta existe y va antes del saludo', !!miga && miga.nextElementSibling === D.getElementById('dkSaludo'));
+    prueba('en el Home no se ve: el saludo de siempre', !D.body.classList.contains('dk-en-seccion') && miga.textContent === '');
+    S.ir('pourIq'); await espera();
+    prueba('en una sección: "Home › Pour·IQ"', D.body.classList.contains('dk-en-seccion') && /^Home\s*›\s*Pour·IQ$/.test(miga.textContent.trim()), miga.textContent);
+    prueba('el saludo se esconde en las secciones', /body\.dk\.dk-en-seccion \.bs-header \.dk-saludo \{ display: none; \}/.test(CSS));
+    llamadas.length = 0;
+    D.getElementById('dkMigaHome').click(); await espera();
+    prueba('Home lleva al Home', llamadas.includes('close') && !D.body.classList.contains('dk-en-seccion'), llamadas.join(','));
+    S.ir('noMatch'); await espera();
+    prueba('una subsección, con su nombre', /Unmatched/.test(miga.textContent));
+    const hoja = D.createElement('div'); hoja.id = 'mSheet'; D.body.appendChild(hoja);
+    tecla('Escape'); await espera();
+    prueba('Esc con una hoja abierta encima no se va', D.body.classList.contains('dk-en-seccion'));
+    hoja.remove();
+    const campo = D.createElement('input'); D.body.appendChild(campo); campo.focus();
+    tecla('Escape', campo); await espera();
+    prueba('Esc escribiendo en un campo no se va', D.body.classList.contains('dk-en-seccion'));
+    campo.remove();
+    tecla('Escape'); await espera();
+    prueba('Esc vuelve al Home', !D.body.classList.contains('dk-en-seccion'));
+    prueba('el buscador mide la ruta (no se mete bajo la locación)', /getElementById\('dkMiga'\)\]\.forEach/.test(leer('src/desk-search.js')) && /#dkMiga b/.test(leer('src/desk-search.js')));
+  }
 
   grupo('9. El orden de carga');
   const iMod = INDEX.indexOf('src/desk-shell.js');

@@ -582,6 +582,16 @@ sección de hoy vive tal cual dentro del armazón.
   tapaba todo el header. Unmatched e History llevan su icono y el tamaño
   de las demás ("todo con su icono, tamaños de texto"), sólo un poco
   metidas.
+- **Dónde estás y cómo volver** (Axel, 2026-11-25, lámina C: "desde esta
+  misma pantalla debería haber una opción para regresar al home sin
+  entrar al menú lateral"): dentro de una sección, el saludo deja su
+  sitio a la ruta `#dkMiga`, "Home › Running out", con Home como enlace
+  (`ir('home')`); en el Home, el saludo. La pinta `desk-shell.pintarMiga`
+  en cada `marcar()` y marca el body con `dk-en-seccion`. Esc hace lo
+  mismo, salvo escribiendo en un campo o con algo abierto encima (la hoja
+  del teclado, un modal, el buscador, la ventana de Spent). El buscador
+  mide también la ruta y, sin sitio (1180 con la barra), el nombre de la
+  sección cede con "…"; "Home ›" queda entero.
 - **El header va FIJO** (Axel, 2026-11-25, en el iPad: al tirar hacia
   abajo "el contenido del header se viene hacia abajo, mientras la barra
   permanece en su sitio"). Era sticky, y en el rebote de iOS lo sticky

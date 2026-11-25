@@ -81,7 +81,42 @@
     return open.id.replace(/Section$/, '');
   }
 
+  // ── Dónde estás y cómo volver (Axel, 2026-11-25, lámina C) ──────────
+  //
+  // "Desde esta misma pantalla debería haber una opción para regresar al
+  // home sin tener que entrar al menú lateral." Dentro de una sección, el
+  // saludo deja su sitio a la ruta: "Home › Running out", con Home como
+  // enlace. En el Home, el saludo de siempre. Esc hace lo mismo que Home
+  // (salvo con algo abierto encima, que es de quien lo abrió).
+  function pintarMiga() {
+    const el = document.getElementById('dkMiga');
+    if (!el) return;
+    const a = activa();
+    const enSeccion = a !== 'home';
+    document.body.classList.toggle('dk-en-seccion', enSeccion);
+    if (!enSeccion) { if (el._a !== a) { el.innerHTML = ''; el._a = a; } return; }
+    const it = ITEMS.find(x => x.id === a || x.sec === a);
+    const sec = document.getElementById(a + 'Section');
+    const boton = sec && sec.querySelector('.focus-max-btn');
+    const nombre = (it && it.label) || (boton && boton.dataset.label) || a;
+    if (el._a === a && el._n === nombre) return;
+    el._a = a; el._n = nombre;
+    el.innerHTML = `<button type="button" id="dkMigaHome">Home</button><i aria-hidden="true">›</i><b>${esc(nombre)}</b>`;
+    el.querySelector('#dkMigaHome').addEventListener('click', () => ir('home'));
+  }
+
+  function alEscape(ev) {
+    if (ev.key !== 'Escape' || ev.defaultPrevented || !document.body.classList.contains('dk-en-seccion')) return;
+    const t = ev.target;
+    if (t && (t.isContentEditable || /^(input|textarea|select)$/i.test(t.tagName || ''))) return;
+    // Lo que esté abierto encima se cierra con su propio Esc.
+    if (document.body.classList.contains('dk-buscando') || document.getElementById('mSheet') ||
+        document.querySelector('.modalbg:not(.hidden), #dkGasto:not([hidden])')) return;
+    ir('home');
+  }
+
   function marcar() {
+    pintarMiga();
     if (!_lado) return;
     const a = activa();
     _lado.querySelectorAll('.dk-nav[data-dk]').forEach(b => {
@@ -236,6 +271,14 @@
     saludo.id = 'dkSaludo';
     saludo.className = 'dk-saludo';
     header.insertBefore(saludo, header.firstChild);
+    // La ruta va antes del saludo (y el buscador, después: desk-search lo
+    // pone tras el saludo). Dentro de una sección, el saludo se esconde.
+    const miga = document.createElement('nav');
+    miga.id = 'dkMiga';
+    miga.className = 'dk-miga';
+    miga.setAttribute('aria-label', 'Where you are');
+    header.insertBefore(miga, saludo);
+    document.addEventListener('keydown', alEscape);
     const menu = document.createElement('button');
     menu.type = 'button';
     menu.id = 'dkMenu';

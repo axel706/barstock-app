@@ -58,8 +58,20 @@
     // Sin sitio (una ventana de ~1180 con la barra lateral entera), la
     // fecha del saludo se va antes que el campo se meta bajo la locación.
     document.body.classList.remove('dkb-apretado');
+    const nombre = document.querySelector('#dkMiga b');
+    if (nombre) nombre.style.maxWidth = '';
     let ancho = medir();
     if (ancho < 170) { document.body.classList.add('dkb-apretado'); ancho = medir(); }
+    // Dentro de una sección, la ruta ("Home › Running out") está donde el
+    // saludo y no tiene fecha que quitar: lo que cede es el nombre de la
+    // sección, con "…". "Home ›" se queda entero: es el botón de volver.
+    // 130: el campo más corto que aún se lee ("Do we have…"); así los
+    // nombres cortos (Pour·IQ, Costs) salen enteros a 1180 con la barra.
+    if (ancho < 130 && nombre && nombre.offsetParent) {
+      const w = nombre.getBoundingClientRect().width;
+      nombre.style.maxWidth = Math.max(60, Math.floor(w - (130 - ancho))) + 'px';
+      ancho = medir();
+    }
     ancho = Math.max(120, Math.min(340, ancho));
     cont.style.setProperty('--dkb-ancho', ancho + 'px');
   }
@@ -241,8 +253,14 @@
     // esconder la barra lateral mueve los dos: se vuelve a medir entonces.
     if (window.ResizeObserver) {
       const ro = new ResizeObserver(() => requestAnimationFrame(ajustarAncho));
-      [saludo, header, document.querySelector('.bs-header .bs-loc-wrap')].forEach(e => { if (e) ro.observe(e); });
+      // La ruta de una sección (#dkMiga, desk-shell) ocupa el sitio del
+      // saludo dentro de las secciones, y cambia de ancho de una a otra.
+      [saludo, header, document.querySelector('.bs-header .bs-loc-wrap'), document.getElementById('dkMiga')].forEach(e => { if (e) ro.observe(e); });
     }
+    // Recortada, la ruta mide lo mismo en cada sección y el ResizeObserver
+    // no se entera de que cambió el nombre: se mide también al cambiar.
+    const miga = document.getElementById('dkMiga');
+    if (miga) new MutationObserver(() => requestAnimationFrame(ajustarAncho)).observe(miga, { childList: true });
     ajustarAncho();
     // Ir a otra sección con el panel abierto lo cierra: lo que se busca ya
     // no está delante.

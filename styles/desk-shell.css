@@ -290,6 +290,26 @@ body.dk .bs-header #dkMenu { display: none; }
   body.dk .bs-header #dkMenu:hover { background: rgba(255, 255, 255, .16); }
   body.light.dk .bs-header #dkMenu { color: #0f172a; background: rgba(255, 255, 255, .6); border-color: rgba(15, 23, 42, .12); }
 
+  /* Dentro de una sección, la ruta en lugar del saludo (lámina C,
+     2026-11-25): "Home › Running out", Home como enlace. Del tamaño del
+     saludo, para que la barra no salte al entrar y salir. */
+  body.dk .bs-header #dkMiga { display: none; }
+  body.dk.dk-en-seccion .bs-header #dkMiga {
+    order: 0; display: flex; align-items: baseline; gap: 10px;
+    min-width: 0; white-space: nowrap; font-size: 20px; font-weight: 800; letter-spacing: -.3px;
+  }
+  body.dk.dk-en-seccion .bs-header .dk-saludo { display: none; }
+  body.dk .bs-header #dkMiga #dkMigaHome {
+    padding: 0; border: 0; background: none; box-shadow: none; border-radius: 0 !important;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+    font: inherit; color: #7dd3fc; cursor: pointer;
+  }
+  body.dk .bs-header #dkMiga #dkMigaHome:hover { text-decoration: underline; }
+  body.dk .bs-header #dkMiga i { font-style: normal; color: #64748b; }
+  body.dk .bs-header #dkMiga b { display: inline-block; min-width: 0; color: #f8fafc; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+  body.light.dk .bs-header #dkMiga #dkMigaHome { color: #0369a1; }
+  body.light.dk .bs-header #dkMiga b { color: #0f172a; }
+
   /* El saludo, a la izquierda. Se recorta antes de llegar a la locación. */
   body.dk .bs-header .dk-saludo {
     order: 0;

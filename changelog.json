@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-162308",
+    "items": [
+      "Desktop: Home › Section at the top to go back",
+      "Esc goes back to the Home"
+    ]
+  },
+  {
     "build": "20261125-161551",
     "items": [
       "iPad: the top bar stays put when you pull down",
@@ -192,12 +199,6 @@
     "items": [
       "Counting: label guides on 9 more bottles",
       "Frangelico, St-Germain, Mozart, Averna, Jura and more"
-    ]
-  },
-  {
-    "build": "20261124-111501",
-    "items": [
-      "Counting: WhistlePig label wraps the bottle"
     ]
   }
 ]

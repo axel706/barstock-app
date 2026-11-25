@@ -95,7 +95,7 @@
   <link rel="stylesheet" href="styles/mobile-app.css?v=mapp293">
   <!-- El armazón del escritorio: barra lateral y header en una fila.
        Va tras app.css y toolbar-pills.css, que es a quienes corrige. -->
-  <link rel="stylesheet" href="styles/desk-shell.css?v=dk10">
+  <link rel="stylesheet" href="styles/desk-shell.css?v=dk11">
   <link rel="stylesheet" href="styles/desk-home.css?v=dkh8">
   <!-- "Do we have" del escritorio: la tarjeta y la ficha generadas de las
        del teléfono (tools/compartir-ficha.js), y el campo y su panel. -->
@@ -390,7 +390,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261125-161551</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261125-162308</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -6377,13 +6377,13 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
      las secciones que encuentra al montar. -->
 <script src="src/desk-running-out.js?v=dkr1"></script>
 <!-- Después de bsOpenSection/bsCloseSection, que son lo que llama. -->
-<script src="src/desk-shell.js?v=dk6"></script>
+<script src="src/desk-shell.js?v=dk7"></script>
 <!-- El Home del escritorio: pinta con los datos de mobile-home.js (más
      arriba) dentro del armazón de desk-shell.js. -->
 <script src="src/desk-home.js?v=dkh6"></script>
 <!-- El buscador del escritorio: la búsqueda, la tarjeta y la ficha de
      mobile-search.js (más arriba), en un panel bajo la barra de arriba. -->
-<script src="src/desk-search.js?v=dks2"></script>
+<script src="src/desk-search.js?v=dks3"></script>
 <script>
 // ===== BACKGROUND SELECTOR =====
 (function(){
