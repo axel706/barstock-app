@@ -140,7 +140,7 @@ const textos = (w, sel) => [...w.document.querySelectorAll(sel)].map(x => x.text
     const av = E.w.document.querySelector('.sc-bn-aviso');
     prueba('un aviso "✓ Bulleit Bourbon · 2.4" con Undo', av.classList.contains('on') && /Bulleit Bourbon · 2\.4/.test(av.textContent) && !!av.querySelector('.sc-bn-undo'));
     prueba('el aviso va justo bajo el buscador (abajo lo taparía el teclado)',
-      av.previousElementSibling && av.previousElementSibling.classList.contains('sc-bn-busca'));
+      av.previousElementSibling && av.previousElementSibling.classList.contains('sc-bn-fila'));
     prueba('volver del panel no enciende la cámara', E.pedidas() === 0, E.pedidas());
     av.querySelector('.sc-bn-undo').click(); await esperar();
     prueba('Undo la quita del conteo', !E.w.BarStockCountSession.has('Bulleit Bourbon'));
@@ -167,6 +167,17 @@ const textos = (w, sel) => [...w.document.querySelectorAll(sel)].map(x => x.text
     grupo('escanear UNA botella desde la lista (lámina "Scan from the list", A)');
     const esc = E.w.document.querySelector('.sc-bn-esc');
     prueba('la barra de búsqueda lleva el botón de escanear', !!esc);
+    // Lámina "Scan button options", A: AL LADO de la barra, no dentro
+    // (dentro se encimaba con su borde), y con el cristal azul de la app
+    // —la misma regla de mobile-app.css, no una copia—.
+    prueba('el botón va al lado del buscador, no dentro', !!esc && !esc.closest('.sc-bn-busca') &&
+      esc.parentElement === E.w.document.querySelector('.sc-bn-busca').parentElement);
+    {
+      const css = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8');
+      const azul = css.slice(css.indexOf('EXACTAMENTE el mismo cristal azul'));
+      prueba('con el cristal de la app (la misma regla)', /#scBnEsc/.test(css.slice(css.indexOf('── Cristal ──'), css.indexOf('── La barra de cristal'))));
+      prueba('teñido del azul de Done (la misma regla)', /#scBnEsc/.test(azul.slice(0, azul.indexOf('{'))));
+    }
     esc && esc.click(); await esperar();
     prueba('lo toca: la cámara se enciende', E.pedidas() === 1 && E.vivas() === 1, E.pedidas());
     prueba('y el visor es la cámara, con "← List"', $('scOverlay').classList.contains('sc-una') &&

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261125-114014",
+    "items": [
+      "Count by name: the scan button sits beside the search"
+    ]
+  },
+  {
     "build": "20261125-112626",
     "items": [
       "Count by name: scan button in the search bar",
@@ -188,12 +194,6 @@
     "items": [
       "Three animated phone backgrounds",
       "Aurora, Liquid and Bokeh in Settings › Background"
-    ]
-  },
-  {
-    "build": "20261122-142710",
-    "items": [
-      "Running out card in a deeper crimson red"
     ]
   }
 ]

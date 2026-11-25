@@ -183,17 +183,22 @@
     _q = '';
     _aviso = null;
     host.innerHTML = `
-      <label class="sc-bn-busca">
-        <i class="ti ti-search" aria-hidden="true"></i>
-        <input class="sc-bn-q" type="search" placeholder="Search a bottle…"
-               autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <div class="sc-bn-fila">
+        <label class="sc-bn-busca">
+          <i class="ti ti-search" aria-hidden="true"></i>
+          <input class="sc-bn-q" type="search" placeholder="Search a bottle…"
+                 autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        </label>
         <!-- Escanear UNA botella sin dejar de contar por nombre (Axel,
              2026-11-25, lámina "Scan from the list", A: "¿y si dentro de
              esa pantalla necesito ESCANEAR una botella?"). La cámara la
-             pone el escáner, y sólo mientras lee. -->
-        ${opts && opts.escanear ? `<button type="button" class="sc-bn-esc" aria-label="Scan a bottle">
+             pone el escáner, y sólo mientras lee. AL LADO de la barra, en
+             cristal azul y de su mismo alto, como el + de Inventory
+             (lámina "Scan button options", A): dentro de la pastilla se
+             encimaba con su borde ("el botón está mal hecho"). -->
+        ${opts && opts.escanear ? `<button type="button" class="sc-bn-esc" id="scBnEsc" aria-label="Scan a bottle">
           <i class="ti ti-barcode" aria-hidden="true"></i></button>` : ''}
-      </label>
+      </div>
       <div class="sc-bn-aviso" role="status"></div>
       <div class="sc-bn-lista"></div>`;
     host.querySelector('.sc-bn-q').addEventListener('input', (e) => { _q = e.target.value; pintarLista(); });

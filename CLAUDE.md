@@ -715,7 +715,10 @@ teclado. Las filas, del tamaño de las de Inventory (`.m-inv`): "los
 resultados están muy chicos". **Escanear UNA botella desde la lista**
 (Axel, 2026-11-25, lámina "Scan from the list", A: "¿y si dentro de esa
 pantalla necesito ESCANEAR una botella?"): un botón con el código de
-barras dentro del buscador abre la cámara para una botella (`sc-una`,
+barras AL LADO del buscador (en cristal azul, la misma regla de
+"Done" con `#scBnEsc`, del alto de la barra; dentro de la pastilla se
+encimaba con su borde: lámina "Scan button options", A) abre la cámara
+para una botella (`sc-una`,
 `escanearUna`); leerla abre su panel y, al cerrarlo, de vuelta a la lista
 con la cámara apagada (`trasPanel` → `volverDeUna`); "← List" vuelve sin
 leer. El modo del conteo sigue siendo por nombre. La cámara no se pide NUNCA por nombre:

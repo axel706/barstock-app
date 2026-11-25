@@ -689,7 +689,8 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   body.m-shell #mScreens :is(.m-cf-b, .m-ts-mas, #miAdj, #miNuevo, #mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #moSend, #mhAbrir, #mhSi, #mhNo, #msSave, #btNuevo, #ppNuevoRol, #btCrear, #tbGo),
   body.m-shell #mTabs .m-tab.on,
   body.m-shell #mScreens .m-low-b,
-  body.m-shell #mScreens :is(#mhTabs, #moBase, .m-ts-seg) {
+  body.m-shell #mScreens :is(#mhTabs, #moBase, .m-ts-seg),
+  body.m-shell #scOverlay #scBnEsc {
     -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
             backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
     background: rgba(255,255,255,.08);
@@ -707,6 +708,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   body.m-shell #mTabs .m-tab.on::before,
   body.m-shell #mScreens .m-low-b::before,
   body.m-shell #mScreens :is(#mhTabs, #moBase, .m-ts-seg)::before,
+  body.m-shell #scOverlay #scBnEsc::before,
   body.m-shell .m-fab::before {
     content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
     background: radial-gradient(120% 70% at 30% 0%, rgba(255,255,255,.34), rgba(255,255,255,0) 55%);
@@ -856,6 +858,7 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * estilo liquid glass de ese botón Done"): misma regla, no una copia.
    * Antes era azul sólido con el texto oscuro (.m-tab.on, más abajo:
    * con el id, ésta le gana). */
+  body.m-shell #scOverlay #scBnEsc,
   body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moSend, #mhRe, #msSave, #btNuevo, #ppNuevoRol, #btCrear, #tbGo),
   body.m-shell #mTabs .m-tab.on {
     color: #f0f9ff; background: rgba(56, 189, 248, .42);
@@ -866,11 +869,13 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
       0 10px 30px rgba(0,0,0,.45);
   }
   body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #miAntes, #mqMain, #moAdd, #moRun, #mhRe, #moSend, #mhAbrir, #mhSi, #mhNo, #msSave, #btNuevo, #ppNuevoRol, #btCrear, #tbGo)::before,
+  body.m-shell #scOverlay #scBnEsc::before,
   body.m-shell #mTabs .m-tab.on::before { z-index: -1; }
   /* La pestaña ya es relative; con isolation, su reflejo queda bajo el
    * icono y el nombre, no encima. */
   body.m-shell #mTabs .m-tab.on { isolation: isolate; }
-  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moSend, #mhRe, #msSave, #btNuevo, #ppNuevoRol, #btCrear, #tbGo):active { background: rgba(56, 189, 248, .58); }
+  body.m-shell #mScreens :is(#mRoDone, #mTxGo, #miOrdOn, #mqMain, #moSend, #mhRe, #msSave, #btNuevo, #ppNuevoRol, #btCrear, #tbGo):active,
+  body.m-shell #scOverlay #scBnEsc:active { background: rgba(56, 189, 248, .58); }
   /* "It arrived before the count" de la factura (Axel, 2026-11-18,
    * lámina B): el mismo cristal, en violeta, para que no se confunda
    * con "Link to an order" (azul, el de Done) que va justo encima. */
