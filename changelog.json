@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261125-140138",
+    "items": [
+      "iPad app: top bar sits below the iOS haze and blends in"
+    ]
+  },
+  {
     "build": "20261125-134738",
     "items": [
       "iPad app: the top edge blends in, no more glare",
@@ -190,13 +196,6 @@
     "build": "20261122-215925",
     "items": [
       "Invoices in cases count as bottles (case/12 = 12)"
-    ]
-  },
-  {
-    "build": "20261122-211353",
-    "items": [
-      "Skipped week: On the shelf no longer counts",
-      "the same delivery twice"
     ]
   }
 ]

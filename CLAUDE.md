@@ -504,6 +504,15 @@ sección de hoy vive tal cual dentro del armazón.
   tono, denso (90 %), en la zona segura, que se funde con el vidrio en
   64 px. El claro del header necesita `!important`: es una `.card` y
   app.css le pone `rgba(255,255,255,.21) !important`.
+  **El velo es de iOS y no se quita** (Axel, el mismo día): con
+  black-translucent, iOS pinta su propio velo detrás de la hora y la
+  batería, de cerca del DOBLE de la zona segura (24 pt de zona, ~55 de
+  velo en sus capturas). La alternativa (`default`) es una barra sólida
+  aparte, y la etiqueta es la misma del teléfono. Así que el contenido de
+  las dos barras empieza debajo del velo (`--dk-velo`, dos zonas
+  seguras) y su vidrio se espesa en él y se funde en 48 px: "que velo y
+  header se mezclen dando ilusión de ser lo mismo". La locación se
+  centra en la fila del saludo (`50% + una zona`).
 - **Esconder la barra lateral** (Axel, 2026-11-25, opción A frente a
   dejar los iconos): el botón `#dkMenu`, antes del saludo, la esconde
   DEL TODO (sale por la izquierda) y la página ocupa el ancho; el mismo

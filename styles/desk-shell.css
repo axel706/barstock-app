@@ -16,7 +16,16 @@
 body.dk .bs-header #dkMenu { display: none; }
 
 @media (min-width: 641px) {
-  :root { --dk-lado: 232px; }
+  /* --dk-velo: lo que tapa el velo de iOS arriba, en la app instalada
+     del iPad. iOS pinta su propio velo detrás de la hora y la batería
+     (black-translucent) y desde la página no se quita; mide cerca del
+     DOBLE de la zona segura (medido en las capturas de Axel, 2026-11-25:
+     24 pt de zona, ~55 de velo). El contenido de las barras empieza
+     debajo de él, y el vidrio se espesa ahí para fundirse con el velo
+     como si fueran lo mismo ("que velo y header se mezclen dando
+     ilusión de ser lo mismo; el contenido debe bajar un poco más").
+     En el navegador la zona vale 0: nada cambia. */
+  :root { --dk-lado: 232px; --dk-velo: calc(env(safe-area-inset-top) * 2); }
 
   body.dk #dkLado {
     display: flex;
@@ -30,7 +39,7 @@ body.dk .bs-header #dkMenu { display: none; }
        viewport-fit=cover, en index.html), y sin esto el logo y el ciclo
        quedaban debajo de ella, sin poder tocarse (Axel, 2026-11-25, en
        el iPad). En el navegador valen 0. */
-    padding: calc(16px + env(safe-area-inset-top)) 12px calc(14px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
+    padding: calc(16px + var(--dk-velo)) 12px calc(14px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
     z-index: 45;
     /* El vidrio de la app (Axel, 2026-11-25: "TODO necesita blur, tanto
        light como dark, como la app anterior"). La primera versión iba
@@ -40,8 +49,8 @@ body.dk .bs-header #dkMenu { display: none; }
        dos son un marco y la barra de estado cruza los dos. */
     background: linear-gradient(to bottom,
       rgba(9, 14, 26, .9) 0,
-      rgba(9, 14, 26, .9) env(safe-area-inset-top),
-      rgba(15, 23, 42, .52) calc(env(safe-area-inset-top) + 64px));
+      rgba(9, 14, 26, .9) var(--dk-velo),
+      rgba(15, 23, 42, .52) calc(var(--dk-velo) + 48px));
     border-right: 1px solid rgba(255, 255, 255, .12);
     box-shadow: inset -1px 0 0 rgba(255, 255, 255, .04);
     backdrop-filter: blur(18px) saturate(150%);
@@ -54,8 +63,8 @@ body.dk .bs-header #dkMenu { display: none; }
   body.light.dk #dkLado {
     background: linear-gradient(to bottom,
       rgba(246, 249, 253, .92) 0,
-      rgba(246, 249, 253, .92) env(safe-area-inset-top),
-      rgba(255, 255, 255, .55) calc(env(safe-area-inset-top) + 64px));
+      rgba(246, 249, 253, .92) var(--dk-velo),
+      rgba(255, 255, 255, .55) calc(var(--dk-velo) + 48px));
     border-right-color: rgba(255, 255, 255, .6);
     box-shadow: 1px 0 24px rgba(15, 23, 42, .08);
     color: #0f172a;
@@ -182,7 +191,7 @@ body.dk .bs-header #dkMenu { display: none; }
     gap: 10px;
     margin: 0 -24px 18px !important;
     /* La barra de estado de iOS va encima (ver #dkLado). */
-    padding: calc(12px + env(safe-area-inset-top)) calc(24px + env(safe-area-inset-right)) 12px 24px;
+    padding: calc(12px + var(--dk-velo)) calc(24px + env(safe-area-inset-right)) 12px 24px;
     border-radius: 0;
     border-width: 0 0 1px;
     /* El mismo vidrio que la barra lateral: son un solo marco.
@@ -195,8 +204,8 @@ body.dk .bs-header #dkMenu { display: none; }
        navegador la zona vale 0 y sólo queda el degradado de 0 px. */
     background: linear-gradient(to bottom,
       rgba(9, 14, 26, .9) 0,
-      rgba(9, 14, 26, .9) env(safe-area-inset-top),
-      rgba(15, 23, 42, .52) calc(env(safe-area-inset-top) + 64px));
+      rgba(9, 14, 26, .9) var(--dk-velo),
+      rgba(15, 23, 42, .52) calc(var(--dk-velo) + 48px));
     border-color: rgba(255, 255, 255, .12);
     backdrop-filter: blur(18px) saturate(150%);
     -webkit-backdrop-filter: blur(18px) saturate(150%);
@@ -207,8 +216,8 @@ body.dk .bs-header #dkMenu { display: none; }
   body.light.dk .wrap > .bs-header {
     background: linear-gradient(to bottom,
       rgba(246, 249, 253, .92) 0,
-      rgba(246, 249, 253, .92) env(safe-area-inset-top),
-      rgba(255, 255, 255, .55) calc(env(safe-area-inset-top) + 64px)) !important;
+      rgba(246, 249, 253, .92) var(--dk-velo),
+      rgba(255, 255, 255, .55) calc(var(--dk-velo) + 48px)) !important;
     border-color: rgba(255, 255, 255, .6) !important;
     box-shadow: 0 8px 24px rgba(15, 23, 42, .08) !important;
   }
@@ -229,8 +238,10 @@ body.dk .bs-header #dkMenu { display: none; }
      caja de referencia). */
   body.dk .bs-header .bs-header-line1 > .bs-loc-wrap {
     position: absolute; left: 50%; transform: translate(-50%, -50%);
-    /* El centro de lo que se ve, debajo de la barra de estado. */
-    top: calc(50% + env(safe-area-inset-top) / 2);
+    /* El centro de la fila del saludo, debajo del velo: con el padding de
+       arriba en 12 px + 2 zonas, ese centro cae una zona más abajo que el
+       50 % del header. */
+    top: calc(50% + env(safe-area-inset-top));
   }
 
   /* ── Esconder la barra lateral (opción A) ──
@@ -285,7 +296,7 @@ body.dk .bs-header #dkMenu { display: none; }
 @media (min-width: 641px) and (max-width: 1100px) {
   :root { --dk-lado: 72px; }
   body.dk #dkLado {
-    padding: calc(14px + env(safe-area-inset-top)) 10px calc(14px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
+    padding: calc(14px + var(--dk-velo)) 10px calc(14px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
     align-items: stretch;
   }
   #dkLado .dk-logo { font-size: 0; padding: 4px 0 12px; text-align: center; }

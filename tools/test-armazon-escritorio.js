@@ -204,9 +204,10 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   grupo('8d. La barra de estado del iPad (app instalada)');
   prueba('el viewport es cover y la barra de estado translúcida (la razón de lo de abajo)',
     /viewport-fit=cover/.test(INDEX) && /status-bar-style" content="black-translucent"/.test(INDEX));
-  prueba('la barra lateral empieza bajo la zona segura', /body\.dk #dkLado \{[^}]*padding: calc\(16px \+ env\(safe-area-inset-top\)\)/.test(CSS));
-  prueba('también en la barra de iconos', /body\.dk #dkLado \{\s*padding: calc\(14px \+ env\(safe-area-inset-top\)\)/.test(CSS));
-  prueba('el header empieza bajo la zona segura', /body\.dk \.wrap > \.bs-header \{[^}]*padding: calc\(12px \+ env\(safe-area-inset-top\)\)/.test(CSS));
+  prueba('la barra lateral empieza bajo el velo de iOS', /body\.dk #dkLado \{[^}]*padding: calc\(16px \+ var\(--dk-velo\)\)/.test(CSS));
+  prueba('también en la barra de iconos', /body\.dk #dkLado \{\s*padding: calc\(14px \+ var\(--dk-velo\)\)/.test(CSS));
+  prueba('el header empieza bajo el velo de iOS', /body\.dk \.wrap > \.bs-header \{[^}]*padding: calc\(12px \+ var\(--dk-velo\)\)/.test(CSS));
+  prueba('el velo mide dos zonas seguras (y 0 en el navegador)', /--dk-velo: calc\(env\(safe-area-inset-top\) \* 2\)/.test(CSS));
 
   grupo('8e. Esconder la barra lateral (opción A)');
   const menu = D.getElementById('dkMenu');
@@ -224,7 +225,7 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   prueba('sin animación con reducir movimiento', /prefers-reduced-motion: reduce\)\s*\{\s*body\.dk #dkLado, body\.dk \.wrap \{ transition: none; \}/.test(CSS));
 
   grupo('8f. La franja de la hora, integrada (sin el brillo)');
-  const franja = (sel) => new RegExp(sel + ' \\{[^}]*background: linear-gradient\\(to bottom,[^;]*env\\(safe-area-inset-top\\),[^;]*calc\\(env\\(safe-area-inset-top\\) \\+ \\d+px\\)').test(CSS);
+  const franja = (sel) => new RegExp(sel + ' \\{[^}]*background: linear-gradient\\(to bottom,[^;]*var\\(--dk-velo\\),[^;]*calc\\(var\\(--dk-velo\\) \\+ \\d+px\\)').test(CSS);
   prueba('el header espesa su vidrio bajo la hora', franja('body\\.dk \\.wrap > \\.bs-header'));
   prueba('y en el claro', franja('body\\.light\\.dk \\.wrap > \\.bs-header'));
   prueba('la barra lateral también', franja('body\\.dk #dkLado'));
