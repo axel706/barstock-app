@@ -582,6 +582,17 @@ sección de hoy vive tal cual dentro del armazón.
   tapaba todo el header. Unmatched e History llevan su icono y el tamaño
   de las demás ("todo con su icono, tamaños de texto"), sólo un poco
   metidas.
+- **El header va FIJO** (Axel, 2026-11-25, en el iPad: al tirar hacia
+  abajo "el contenido del header se viene hacia abajo, mientras la barra
+  permanece en su sitio"). Era sticky, y en el rebote de iOS lo sticky
+  baja con la página y lo fijo (la barra lateral, `#dkMarco`) se queda.
+  Ahora `position: fixed` desde `--dk-x` (sigue a la barra al
+  esconderla), y `.wrap` deja su hueco: `padding-top: calc(var(--dk-alto)
+  + 18px)`. No se ve en Chromium (no rebota): se mira en el iPad.
+- **Sin el renglón de estado de antes**: `#statusBar` ("Orders loaded",
+  "Could not load No Match from cloud.") salía suelto encima de las
+  secciones. Se esconde en el escritorio (sigue en el DOM); lo mismo ya
+  sale como aviso, porque toast.js envuelve `setStatus`.
 - **Esconder la barra lateral** (Axel, 2026-11-25, opción A frente a
   dejar los iconos): el botón `#dkMenu`, antes del saludo, la esconde
   DEL TODO (sale por la izquierda) y la página ocupa el ancho; el mismo

@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-161551",
+    "items": [
+      "iPad: the top bar stays put when you pull down",
+      "Desktop: no more stray status line above sections"
+    ]
+  },
+  {
     "build": "20261125-155003",
     "items": [
       "Desktop: Running out section with every product",
@@ -191,12 +198,6 @@
     "build": "20261124-111501",
     "items": [
       "Counting: WhistlePig label wraps the bottle"
-    ]
-  },
-  {
-    "build": "20261124-090913",
-    "items": [
-      "Counting: WhistlePig label now has its arched top"
     ]
   }
 ]

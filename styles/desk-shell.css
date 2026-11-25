@@ -203,17 +203,31 @@ body.dk .bs-header #dkMenu { display: none; }
     transition: margin-left .22s ease;
     padding-left: 24px !important;
     padding-right: 24px !important;
+    /* El hueco del header, que va fijo (abajo): su alto medido y los 18 px
+       que antes eran su margen. */
+    padding-top: calc(var(--dk-alto) + 18px) !important;
   }
 
   /* ── El header: una fila ──
      El scroll de index.html le pone .collapsed (y esconde la línea 3) y
      un margin-bottom en línea: en el armazón no se pliega, no hay nada
      que plegar. */
+  /* FIJO, como la barra lateral y el marco (Axel, 2026-11-25, en el iPad:
+     "si haces pull hacia abajo para refrescar, el contenido del header se
+     viene hacia abajo mientras la barra permanece en su sitio"). Era
+     sticky: en el rebote de iOS lo sticky baja con la página y lo fijo se
+     queda, así que el saludo y los botones se separaban de su vidrio
+     (#dkMarco, fijo). Fijo, los tres se quedan juntos. Empieza donde
+     acaba la barra lateral (--dk-x; 0 escondida) y la página deja su
+     hueco arriba (.wrap). */
   body.dk .wrap > .bs-header {
+    position: fixed;
+    top: 0; left: var(--dk-x); right: 0;
+    transition: left .22s ease;
     display: flex;
     align-items: center;
     gap: 10px;
-    margin: 0 -24px 18px !important;
+    margin: 0 !important;
     /* La barra de estado de iOS va encima (ver #dkLado). */
     padding: calc(12px + var(--dk-velo)) calc(24px + env(safe-area-inset-right)) 12px 24px;
     border-radius: 0;
@@ -302,6 +316,13 @@ body.dk .bs-header #dkMenu { display: none; }
      Home nuevo la sustituya. */
   body.dk .bs-focus-mininav,
   body.dk #bsNavBackBtn { display: none !important; }
+
+  /* El renglón de estado de la app de antes ("Orders loaded", "Could not
+     load No Match from cloud."): salía suelto encima de la sección, sin
+     decir de dónde venía (Axel, 2026-11-25: "¿qué es ese mensaje?"). Lo
+     mismo ya sale como aviso flotante (toast.js envuelve setStatus), así
+     que aquí sobra. Sólo se esconde: sigue en el DOM por si algo lo lee. */
+  body.dk #statusBar { display: none !important; }
 }
 
 /* Entre 641 y 1100 px (un iPad, una ventana estrecha): sólo iconos. */
@@ -341,5 +362,5 @@ body.dk .bs-header #dkMenu { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body.dk #dkLado, body.dk .wrap, body.dk #dkMarco { transition: none; }
+  body.dk #dkLado, body.dk .wrap, body.dk #dkMarco, body.dk .wrap > .bs-header { transition: none; }
 }

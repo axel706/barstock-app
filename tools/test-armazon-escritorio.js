@@ -236,7 +236,7 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   prueba('otra vez la saca', !D.body.classList.contains('dk-sin-lado') && w.localStorage.getItem('bs-dk-lado-oculto') === '0');
   prueba('escondida, la barra sale de la pantalla', /body\.dk\.dk-sin-lado #dkLado \{ transform: translateX\(-100%\); visibility: hidden; \}/.test(CSS));
   prueba('y el contenido ocupa el ancho', /body\.dk\.dk-sin-lado \.wrap \{ margin-left: 0; \}/.test(CSS));
-  prueba('sin animación con reducir movimiento', /prefers-reduced-motion: reduce\)\s*\{\s*body\.dk #dkLado, body\.dk \.wrap, body\.dk #dkMarco \{ transition: none; \}/.test(CSS));
+  prueba('sin animación con reducir movimiento', /prefers-reduced-motion: reduce\)\s*\{\s*body\.dk #dkLado, body\.dk \.wrap, body\.dk #dkMarco, body\.dk \.wrap > \.bs-header \{ transition: none; \}/.test(CSS));
 
   grupo('8f. La franja de la hora, integrada (sin el brillo)');
   const franja = (sel) => new RegExp(sel + ' \\{[^}]*background: linear-gradient\\(to bottom,[^;]*var\\(--dk-velo\\),[^;]*calc\\(var\\(--dk-velo\\) \\+ \\d+px\\)').test(CSS);
@@ -254,6 +254,19 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   prueba('su alto se mide del header, no al rodar', /ResizeObserver\(medirAlto\)\.observe\(header\)/.test(JS) && !/addEventListener\('scroll'[^)]*medirAlto/.test(JS));
   prueba('Unmatched e History con su icono, del mismo tamaño', !/\.dk-sub i \{ display: none/.test(CSS) && !/\.dk-nav\.dk-sub \{[^}]*font-size/.test(CSS)
     && !!D.querySelector('.dk-nav.dk-sub i.ti'));
+
+  grupo('8h. El header no se separa de su vidrio al tirar (iPad)');
+  // En el rebote de iOS lo sticky baja con la página y lo fijo se queda:
+  // el header tiene que ser fijo como la barra lateral y el marco.
+  prueba('el header va fijo', /position: fixed;\s*top: 0; left: var\(--dk-x\); right: 0;/.test(regla('body.dk .wrap > .bs-header')));
+  prueba('la página deja su hueco arriba (alto medido + 18)', /padding-top: calc\(var\(--dk-alto\) \+ 18px\) !important/.test(regla('body.dk .wrap')));
+  prueba('sin margen propio (ya no está en el flujo)', /margin: 0 !important/.test(regla('body.dk .wrap > .bs-header')));
+  prueba('sigue a la barra al esconderla, sin animar con reducir movimiento',
+    /transition: left \.22s ease/.test(regla('body.dk .wrap > .bs-header')) && /body\.dk \.wrap > \.bs-header \{ transition: none; \}/.test(CSS));
+
+  grupo('8i. Sin el renglón de estado de antes');
+  prueba('"Orders loaded" y compañía no salen en el escritorio (ya son avisos)', /body\.dk #statusBar \{ display: none !important; \}/.test(CSS));
+  prueba('setStatus lo sigue escribiendo y toast.js lo enseña', /function setStatus\(msg\)\{\s*const bar = document\.getElementById\('statusBar'\)/.test(INDEX) && /window\.setStatus = function \(msg\)[\s\S]{0,200}show\(msg\)/.test(leer('src/toast.js')));
 
   grupo('9. El orden de carga');
   const iMod = INDEX.indexOf('src/desk-shell.js');
