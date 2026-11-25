@@ -488,7 +488,11 @@ sección de hoy vive tal cual dentro del armazón.
   uno para los dos. Sus estilos, GENERADOS bajo `#dkVentas`; la caja va
   sin marco propio (la tarjeta trae el suyo) y la tarjeta lleva el vidrio
   de 16 px del Home; el logo de Toast a 30 px. Va oscura también en el
-  claro, como las de color. All products / Full report (mobile-sales.js)
+  claro, como las de color. **Compacta** (Axel, el mismo día: "creció
+  demasiado"; `{ compacta: true }`): sin Most sold, y All products / Full
+  report arriba junto a Bottles / $; 356 px en vez de 524. La regla del
+  margen de arriba lleva `#dkHome` delante: la generada (desk-ficha.css)
+  carga después y le ganaba. All products / Full report (mobile-sales.js)
   salen en la ventana centrada de `#mSheet`: el generador acota a
   `body.dk #mSheet` todo lo de dentro de la hoja (teclado, lista, su
   buscador), para que no toque nada más del escritorio.

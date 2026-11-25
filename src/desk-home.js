@@ -434,7 +434,9 @@
     const caja = _host && _host.querySelector('#dkVentas');
     const M = MH();
     if (!caja || !M || !M.ventas) return;
-    M.ventas(caja, pintarVentas);
+    // Compacta: sin Most sold y con All products arriba, para que no
+    // estire la fila del Home (Axel, 2026-11-25).
+    M.ventas(caja, pintarVentas, { compacta: true });
   }
 
   // ── Los reportes de la portada de antes ────────────────────────────

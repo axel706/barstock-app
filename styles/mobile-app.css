@@ -2181,6 +2181,9 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * verde, y ámbar si la carga de la mañana no corrió (toast-sales.js,
    * cargaVieja). */
   .m-ts-marca { align-items: flex-start; }
+  /* Bottles / $ (y, en el escritorio, All products) a la derecha del
+     logo. Una caja flex y no un span suelto: así no suma alto de renglón. */
+  .m-ts-acc { display: flex; align-items: center; gap: 10px; }
   .m-ts-ti { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
   .m-ts-logo { display: block; height: var(--m-screen); width: auto; }
   .m-ts-sync {

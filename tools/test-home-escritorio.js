@@ -83,7 +83,7 @@ w.BarStockMobileHome = {
   datos: () => ({ saludo: 'Hello, Axel', tarjetas: cards, cifras, ventas: null }),
   // La tarjeta de Toast es la del teléfono: aquí se ve en qué caja y con
   // qué se pidió.
-  ventas: (caja, repintar) => { ventasPintadas.push({ caja, repintar }); caja.innerHTML = '<div class="m-ts"><img class="m-ts-logo" data-logo="toast"></div>'; },
+  ventas: (caja, repintar, opts) => { ventasPintadas.push({ caja, repintar, opts }); caja.innerHTML = '<div class="m-ts"><img class="m-ts-logo" data-logo="toast"></div>'; },
   alCambiar: (fn) => { oyente = fn; },
   vigilar: () => {},
   detalleEstante: () => llamadas.push('detalle'),
@@ -328,9 +328,15 @@ const H = () => D.getElementById('dkHome');
     prueba('el Home tiene su caja, ancha', !!caja && caja.classList.contains('dkh-ventas') && /\.dkh-ventas \{[^}]*grid-column: span 2/.test(CSS_DH));
     prueba('la pinta mobile-home.ventas, en esa caja', ventasPintadas.length > 0 && ventasPintadas[ventasPintadas.length - 1].caja === caja);
     prueba('con su repintado', typeof (ventasPintadas.slice(-1)[0] || {}).repintar === 'function');
+    // Axel, 2026-11-25: "creció demasiado […] cortarle Most Sold y el botón
+    // ponerlo arriba".
+    prueba('compacta en el escritorio', ((ventasPintadas.slice(-1)[0] || {}).opts || {}).compacta === true);
+    prueba('compacta: sin Most sold ni su pie', /\$\{top\.length && !compacta \? `\s*<div class="m-ts-top">/.test(MH2) && /\$\{top\.length && !compacta \? `<div class="m-ts-pie">/.test(MH2));
+    prueba('compacta: All products arriba, junto a Bottles / $', /<span class="m-ts-acc">\s*\$\{compacta && top\.length \? `<button type="button" class="m-ts-mas" data-mas>/.test(MH2));
+    prueba('la tarjeta empieza a ras de su fila (le gana al margin-top generado)', /#dkHome #dkVentas > \.m-ts \{[^}]*margin: 0/.test(CSS_DH));
     prueba('desk-home no pinta ventas por su cuenta', !/semanaCal|masVendido|dkh-vts|dkh-vt-b/.test(DH));
     prueba('el teléfono pinta con la misma función', /function pintarVentas\(host\)[\s\S]{0,200}pintarVentasEn\(caja, \(\) => pintarVentas\(host\)\)/.test(MH2)
-      && /ventas: \(caja, repintar\) => pintarVentasEn\(/.test(MH2));
+      && /ventas: \(caja, repintar, opts\) => pintarVentasEn\(/.test(MH2));
     prueba('sus estilos, generados del teléfono bajo #dkVentas', /#dkVentas \.m-ts \{/.test(CSSG) && /#dkVentas \.m-ts-sem \{/.test(CSSG) && /#dkVentas \.m-ts-seg/.test(CSSG));
     prueba('el logo de Toast, más grande que en el teléfono', /#dkVentas \.m-ts-logo \{ height: 30px/.test(CSS_DH));
     prueba('un solo marco: la caja sin fondo, la tarjeta con su vidrio', /\.dkh-ventas \{[^}]*background: none/.test(CSS_DH) && /#dkVentas > \.m-ts \{[^}]*backdrop-filter: blur\(16px\)/.test(CSS_DH));

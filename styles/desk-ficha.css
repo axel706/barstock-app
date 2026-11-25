@@ -1359,6 +1359,11 @@
   #dkVentas .m-ts-marca {
     align-items: flex-start;
   }
+  #dkVentas .m-ts-acc {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
   #dkVentas .m-ts-ti {
     display: flex;
     flex-direction: column;

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261125-164758",
+    "items": [
+      "Desktop: shorter Toast sales card, All products on top"
+    ]
+  },
+  {
     "build": "20261125-163746",
     "items": [
       "Desktop: Toast sales card like the phone",
@@ -193,12 +199,6 @@
     "items": [
       "Counting: label guides on 4 more bottles",
       "360, Carlo Rossi, Bluecoat and The Botanist"
-    ]
-  },
-  {
-    "build": "20261124-145624",
-    "items": [
-      "Counting: the Frangelico F sits inside its panel"
     ]
   }
 ]

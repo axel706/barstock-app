@@ -2565,7 +2565,11 @@
   // lámina A del 2026-11-25: "como el teléfono", con el logo de Toast más
   // grande): una sola tarjeta, con lo elegido (Bottles / $, la semana, el
   // día) compartido.
-  function pintarVentasEn(caja, repintar) {
+  // `compacta` (el escritorio, Axel 2026-11-25: "creció demasiado […]
+  // hay que cortarle Most Sold y el botón ponerlo arriba"): sin la lista
+  // de lo más vendido, y All products / Full report junto a Bottles / $.
+  function pintarVentasEn(caja, repintar, opts) {
+    const compacta = !!(opts && opts.compacta);
     // Pide cada vez que se pinta: toast-sales guarda lo leído y sólo
     // vuelve a la base al cambiar el día o pasada media hora.
     if (!_pidiendoVentas) cargarVentas();
@@ -2641,9 +2645,12 @@
             ${LOGO_TOAST}
             ${sync}
           </span>
-          <span class="m-ts-seg" role="group" aria-label="Show bottles or money">
-            <button type="button" class="${din ? '' : 'on'}" data-v="botellas">Bottles</button>
-            <button type="button" class="${din ? 'on' : ''}" data-v="dinero">$</button>
+          <span class="m-ts-acc">
+            ${compacta && top.length ? `<button type="button" class="m-ts-mas" data-mas>${din ? 'Full report' : 'All products'} <i class="ti ti-chevron-right" aria-hidden="true"></i></button>` : ''}
+            <span class="m-ts-seg" role="group" aria-label="Show bottles or money">
+              <button type="button" class="${din ? '' : 'on'}" data-v="botellas">Bottles</button>
+              <button type="button" class="${din ? 'on' : ''}" data-v="dinero">$</button>
+            </span>
           </span>
         </div>
         <div class="m-ts-sem" role="group" aria-label="Week">
@@ -2670,14 +2677,14 @@
         ${din ? `<div class="m-ts-ley">
             <span><i class="licor"></i>Liquor & cocktails ${dinero0(d.licor)}</span>
             <span><i class="vino"></i>Wine ${dinero0(d.vino)}</span></div>` : ''}
-        ${top.length ? `
+        ${top.length && !compacta ? `
           <div class="m-ts-top">
             <div class="m-ts-top-h">Most sold · ${nomDia(d)}</div>
             ${top.map(x => `<div class="m-ts-r"><span class="n">${esc(x.nombre)}</span>
               <span class="v"><b>${din ? dinero0(x.dinero) : bot1(x.botellas)}</b><small>${din
                 ? esc(String(Math.round(x.unidades))) + ' sold' : 'bottles'}</small></span></div>`).join('')}
           </div>` : ''}
-        ${top.length ? `<div class="m-ts-pie">
+        ${top.length && !compacta ? `<div class="m-ts-pie">
             <button type="button" class="m-ts-mas" data-mas>${din ? 'Full report' : 'All products'} <i class="ti ti-chevron-right" aria-hidden="true"></i></button>
           </div>` : ''}
       </div>`;
@@ -3038,7 +3045,7 @@
     releerPrecios: () => { _preciosLeidos = false; cargarPrecios(); },
     alCambiar(fn) { _oyentes.add(fn); return () => _oyentes.delete(fn); },
     // La tarjeta de Toast, pintada en otra caja (el Home del escritorio).
-    ventas: (caja, repintar) => pintarVentasEn(caja, repintar || (() => pintarVentasEn(caja)))
+    ventas: (caja, repintar, opts) => pintarVentasEn(caja, repintar || (() => pintarVentasEn(caja, null, opts)), opts)
   };
 
   function registrar() {

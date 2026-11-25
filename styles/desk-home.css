@@ -199,12 +199,17 @@
   /* Con el vidrio de las demás tarjetas del Home (16 px): en el teléfono
      va sin desenfoque porque la foto ya llega borrosa; aquí llega nítida
      y se leía a través ("TODO necesita blur"). */
-  #dkVentas > .m-ts {
+  /* Con #dkHome delante: la regla generada (#dkVentas .m-ts, margin-top
+     16px, la del teléfono) va en desk-ficha.css, que carga después y le
+     ganaba a ésta; la tarjeta empezaba 16 px más abajo que la de al lado. */
+  #dkHome #dkVentas > .m-ts {
     height: 100%; margin: 0; box-sizing: border-box;
     backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%);
   }
   #dkHome .dkh-ventas:empty { display: none; }
   #dkVentas .m-ts-logo { height: 30px; width: auto; }
+  /* All products / Full report, arriba junto a Bottles / $ (compacta). */
+  #dkVentas .m-ts-acc .m-ts-mas { margin: 0; }
 
   /* ── Los reportes de la portada de antes ── */
   #dkHome .dkh-reps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
