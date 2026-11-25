@@ -478,6 +478,25 @@ sección de hoy vive tal cual dentro del armazón.
   1180 va a cuatro con la barra escondida (~1130 px) y a dos con ella
   (~900). Es lo que pide "las reglas de ancho miran la VENTANA" de arriba
   para cada sección que se rehaga.
+- **LAS TARJETAS DEL HOME DEL ESCRITORIO: SITIO FIJO Y TAMAÑO FIJO**
+  (Axel, 2026-11-25: "sabes que odio eso"; "lo que hay que diseñar es
+  contenido que se adapte al tamaño actual de la tarjeta, no una tarjeta
+  nueva con el contenido que quieres mostrar").
+  - **Sitio fijo**: las cuatro cifras; Running out ancha con el ciclo a
+    su lado; debajo las órdenes (waiting o placed), lo demás (el
+    transfer por confirmar) y Toast; los reportes. La urgencia de
+    `home-orden` (quién va primero) es SÓLO del teléfono: siguiéndola, en
+    Will's & Bill's las órdenes ocupaban el sitio ancho y Running out no
+    cabía en el suyo. Sin nada que se acabe, el sitio ancho es de las
+    órdenes. Cada tarjeta se reconoce por su tipo (`fase`: agota,
+    ordenes, puestas; `ciclo`; `transfer`).
+  - **Tamaño fijo**: una tarjeta nunca estira su fila ni cambia de
+    alto al tocar algo (Toast en Bottles / $). Las que llenan su alto con
+    su contenido (el ciclo, Orders placed) llevan `.dkh-fija`
+    (`contain: size`): miden lo que la tarjeta grande de al lado, y su
+    contenido se reparte en ese alto y se corta (un renglón por día con
+    "…", tres órdenes con el pie contando todas). Antes de añadir algo a
+    una tarjeta, medir que cabe en su alto de siempre.
 - **El ciclo, día por día, en el Home del escritorio** (Axel,
   2026-11-25, lámina "Cycle and Orders cards", 1A: "tarjetas de count y
   orders necesitan diseño con contenido adaptado al nuevo tamaño"): la

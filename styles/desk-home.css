@@ -159,6 +159,22 @@
   #dkHome .dkh-ahora.solo { grid-template-columns: minmax(0, 1fr); }
   #dkHome .dkh-hero h3 { font-size: 24px; }
 
+  /* ── Tamaño fijo (Axel, 2026-11-25: "las tarjetas una vez en su
+     posición deben tener un tamaño fijo […] lo que hay que diseñar es
+     contenido que se adapte al tamaño actual de la tarjeta") ──
+     El ciclo (junto a Running out) y Orders placed (junto a Toast) NO
+     cuentan para el alto de su fila: contain: size les quita su alto
+     propio y la fila mide lo que la tarjeta grande de al lado. Su
+     contenido se reparte en ese alto y lo que no cabe se corta. Con la
+     semana entera, el ciclo estiraba Running out hasta dejarla vacía.
+     min-height para cuando están solas en su fila (sin Toast, o el iPad
+     en dos columnas). */
+  #dkHome .dkh-card.dkh-fija { contain: size; overflow: hidden; }
+  /* Su título, en un renglón: en dos le quitaba sitio a la lista. */
+  #dkHome .dkh-fija h3 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Sola en su fila no tiene a quién copiarle el alto: el suyo. */
+  #dkHome .dkh-resto:not(:has(.dkh-ventas:not(:empty))) .dkh-fija { min-height: 330px; }
+
   /* El ciclo, día por día (lámina "Cycle and Orders cards" 1A): un
      renglón por día, con un punto en una línea que los une; lo pasado
      lleno, hoy en amarillo, el domingo de contar en anillo, lo que viene
@@ -166,13 +182,15 @@
   /* Con la semana, la cabecera mide lo suyo y el alto se lo queda la
      semana (.dkh-top crece por defecto para empujar los botones abajo). */
   #dkHome .dkh-card:has(> .dkh-semana) > .dkh-top { flex: 0 0 auto; }
-  #dkHome .dkh-semana { list-style: none; margin: 4px 0 8px; padding: 0; display: flex; flex-direction: column; justify-content: space-between; flex: 1; }
-  #dkHome .dkh-semana li { display: grid; grid-template-columns: 54px 14px minmax(0, 1fr); gap: 8px; align-items: center; min-height: 28px; font-size: 13px; position: relative; }
+  #dkHome .dkh-semana { list-style: none; margin: 4px 0 8px; padding: 0; display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; }
+  /* Los días se reparten el alto que haya (flex 1 1 0), cada uno en UN
+     renglón: lo que no cabe acaba en "…" y entero en su title. */
+  #dkHome .dkh-semana li { display: grid; grid-template-columns: 54px 14px minmax(0, 1fr); gap: 8px; align-items: center; flex: 1 1 0; min-height: 0; max-height: 34px; font-size: 13px; position: relative; }
   #dkHome .dkh-semana u { text-decoration: none; font-weight: 800; color: rgba(255, 255, 255, .72); white-space: nowrap; }
   #dkHome .dkh-semana i { width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, .35); justify-self: center; position: relative; }
-  #dkHome .dkh-semana i::after { content: ""; position: absolute; left: 4px; top: 10px; width: 2px; height: 20px; background: rgba(255, 255, 255, .25); }
+  #dkHome .dkh-semana i::after { content: ""; position: absolute; left: 4px; top: 10px; width: 2px; height: 24px; background: rgba(255, 255, 255, .25); }
   #dkHome .dkh-semana li:last-child i::after { display: none; }
-  #dkHome .dkh-semana p { margin: 0; color: rgba(255, 255, 255, .92); line-height: 1.3; }
+  #dkHome .dkh-semana p { margin: 0; color: rgba(255, 255, 255, .92); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #dkHome .dkh-semana p em { font-style: normal; font-weight: 800; }
   #dkHome .dkh-semana .hecho i { background: #fff; }
   #dkHome .dkh-semana .hoy u { color: #fff; }
@@ -183,12 +201,12 @@
   /* Orders placed (lámina 2A): los siete días con el logo de lo que
      llega, y cada orden del ciclo con su estado. */
   #dkHome .dkh-osem { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-top: 8px; }
-  #dkHome .dkh-osem > div { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 2px; min-height: 64px; border-radius: 10px; background: rgba(255, 255, 255, .08); }
+  #dkHome .dkh-osem > div { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 2px; min-height: 50px; border-radius: 10px; background: rgba(255, 255, 255, .08); }
   #dkHome .dkh-osem > div.hoy { background: rgba(255, 255, 255, .2); }
   #dkHome .dkh-osem u { text-decoration: none; font-size: 10.5px; font-weight: 800; color: rgba(255, 255, 255, .85); }
   #dkHome .dkh-osem img, #dkHome .dkh-ologo img { max-width: 34px; max-height: 20px; width: auto; height: auto; object-fit: contain; }
-  #dkHome .dkh-olist { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 8px; flex: 1; }
-  #dkHome .dkh-ofila { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 12px; background: rgba(0, 0, 0, .18); }
+  #dkHome .dkh-olist { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 6px; flex: 1 1 0; min-height: 0; overflow: hidden; }
+  #dkHome .dkh-ofila { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 10px; flex: none; border-radius: 12px; background: rgba(0, 0, 0, .18); }
   #dkHome .dkh-ologo { display: flex; align-items: center; justify-content: center; min-height: 24px; }
   #dkHome .dkh-otx b { display: block; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #dkHome .dkh-otx small { display: block; font-size: 11.5px; color: rgba(255, 255, 255, .78); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -278,6 +296,10 @@
    iPad va a cuatro con la barra escondida y a dos con ella a la vista
    (~900 px: cuatro cifras de ~214 no caben). */
 @container dkhome (max-width: 960px) {
+  /* En dos columnas, el ciclo y Orders placed van solos en su renglón
+     (Toast ocupa el ancho entero). */
+  #dkHome .dkh-ahora .dkh-fija,
+  #dkHome .dkh-resto .dkh-fija { min-height: 330px; }
   #dkHome .dkh-cifras,
   #dkHome .dkh-resto,
   #dkHome .dkh-reps { grid-template-columns: repeat(2, minmax(0, 1fr)); }

@@ -1110,7 +1110,8 @@
     const prox = ordenes.find(o => o.estado === 'viene');
     return {
       ordenes, dias,
-      siguiente: prox ? prox.vendor.charAt(0) + prox.vendor.slice(1).toLowerCase() + ' ' + prox.cuando : '',
+      // Sólo el día: la hora va en su fila, y el título cabe en un renglón.
+      siguiente: prox ? prox.vendor.charAt(0) + prox.vendor.slice(1).toLowerCase() + ' · ' + prox.cuando.split(' ')[0] : '',
       total: ordenes.reduce((s, o) => s + o.dinero, 0)
     };
   }
@@ -1574,6 +1575,8 @@
             // "Orders waiting" cuando no queda ninguna. Que cambie de
             // familia al quedarse vacía haría pensar que es otra cosa.
             tono: 'blue',
+            // El escritorio pone cada tarjeta en su sitio por su tipo.
+            fase: 'puestas',
             k: 'Orders placed',
             tt: 'You are up to date',
             sub: 'Nothing waiting. New lines show up when a count drops something below par.',

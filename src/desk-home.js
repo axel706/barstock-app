@@ -373,7 +373,7 @@
     if (!dias) return '';
     return `<ol class="dkh-semana">${dias.map(x =>
       `<li class="${[x.hecho ? 'hecho' : '', x.hoy ? 'hoy' : '', x.cuenta ? 'cuenta' : '', !x.hecho && !x.hoy ? 'fut' : ''].filter(Boolean).join(' ')}">` +
-      `<u>${esc(x.u)}</u><i aria-hidden="true"></i><p>${x.ev.join(' · ')}</p></li>`).join('')}</ol>`;
+      `<u>${esc(x.u)}</u><i aria-hidden="true"></i><p title="${esc(x.ev.join(' · ').replace(/<[^>]+>/g, ''))}">${x.ev.join(' · ')}</p></li>`).join('')}</ol>`;
   }
 
   // Orders placed: la semana con lo que llega cada día y las órdenes del
@@ -387,7 +387,9 @@
     const nombre = (v) => v.charAt(0) + v.slice(1).toLowerCase();
     const dias = `<div class="dkh-osem">${O.dias.map(d =>
       `<div class="${d.hoy ? 'hoy' : ''}"><u>${esc(d.u)}</u>${d.provs.map(logo).join('')}</div>`).join('')}</div>`;
-    const filas = `<div class="dkh-olist">${O.ordenes.map(o => `
+    // Caben tres en el alto de la tarjeta (el de Toast, a su lado); el
+    // pie cuenta todas ("5 orders · $…") y See orders las enseña.
+    const filas = `<div class="dkh-olist">${O.ordenes.slice(0, 3).map(o => `
       <div class="dkh-ofila"${o.enviada ? ` title="Placed ${esc(o.enviada)}"` : ''}><span class="dkh-ologo">${logo(o.vendor)}</span>
         <span class="dkh-otx"><b>${esc(nombre(o.vendor))}</b>
           <small>${[o.unidades ? Math.round(o.unidades) + (o.unidades === 1 ? ' bottle' : ' bottles') : '', o.dinero ? money(o.dinero) : ''].filter(Boolean).map(esc).join(' · ')}</small></span>
@@ -398,7 +400,7 @@
   function tarjeta(c, i, clase) {
     const amt = c.amt ? `<div class="dkh-amt">${esc(c.amt)}${c.amtPie ? `<small>${esc(c.amtPie)}</small>` : ''}</div>` : '';
     return `
-      <article class="dkh-card dkh-${esc(c.tono || 'calm')} ${clase || ''}">
+      <article class="dkh-card dkh-${esc(c.tono || 'calm')} ${clase || ''}${c.ciclo || c.fase === 'puestas' ? ' dkh-fija' : ''}">
         <div class="dkh-k"><span>${c.kHtml ? c.k : esc(c.k)}</span>${c.kr ? `<i>${esc(c.kr)}</i>` : ''}</div>
         <div class="dkh-top">
           <div class="dkh-txt">
@@ -531,11 +533,20 @@
     const cifras = (d.cifras || []).slice();
     cifras.push(cifraDiag());
 
-    const iTr = _cards.findIndex(c => c && c.transfer);
-    const resto = _cards.map((c, i) => ({ c, i })).filter(x => x.c && !x.c.transfer);
-    const hero = resto[0];
-    const lado = iTr >= 0 ? { c: _cards[iTr], i: iTr } : resto[1];
-    const demas = resto.filter(x => x !== hero && x !== lado);
+    // ── Cada tarjeta en SU sitio (Axel, 2026-11-25) ──────────────────
+    // El teléfono ordena el carrusel por urgencia (home-orden); el
+    // escritorio no: "deben tener la posición que ya tenemos". Siguiendo
+    // el orden del teléfono, en Will's & Bill's las órdenes ocupaban el
+    // sitio ancho y Running out se iba a su hueco, donde no cabía.
+    // Fijo: Running out ancho, el ciclo a su lado; debajo las órdenes,
+    // lo demás (el transfer por confirmar) y Toast. Sin nada que se
+    // acabe, el sitio ancho es de las órdenes.
+    const todas = _cards.map((c, i) => ({ c, i })).filter(x => x.c);
+    const es = (x, f) => x.c.fase === f;
+    const hero = todas.find(x => es(x, 'agota')) || todas.find(x => es(x, 'ordenes')) || todas.find(x => es(x, 'puestas'));
+    const lado = todas.find(x => x.c.ciclo && x !== hero) || null;
+    const rango = (x) => es(x, 'ordenes') ? 0 : es(x, 'puestas') ? 1 : x.c.transfer ? 2 : 3;
+    const demas = todas.filter(x => x !== hero && x !== lado).sort((a, b) => rango(a) - rango(b) || a.i - b.i);
     const pintaHero = (x) => x.c.fase === 'agota' ? tarjetaAgota(x.c, x.i) : tarjeta(x.c, x.i, 'dkh-hero');
 
 

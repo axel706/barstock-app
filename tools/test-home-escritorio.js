@@ -244,10 +244,16 @@ const H = () => D.getElementById('dkHome');
   prueba('la hoja del teléfono y la ventana leen los mismos renglones (filasGasto)',
     /function filasGasto\(E, precios\)/.test(MH) && /const fg = filasGasto\(E, _precios\)/.test(MH));
 
-  grupo('3. Lo de ahora, ancho, con el transfer al lado');
+  // Cada tarjeta en SU sitio (Axel, 2026-11-25): el teléfono ordena por
+  // urgencia, el escritorio no. Aquí el teléfono pone el transfer primero.
+  grupo('3. Cada tarjeta en su sitio, sea cual sea el orden del teléfono');
   const ahora = H().querySelector('.dkh-ahora');
-  prueba('la primera tarjeta que no es transfer es la ancha', !!ahora.querySelector('.dkh-agota.dkh-hero'));
-  prueba('el transfer va al lado', /Transfer/.test((ahora.querySelector('.dkh-lado') || {}).textContent || ''));
+  prueba('Running out es la ancha', !!ahora.querySelector('.dkh-agota.dkh-hero'));
+  prueba('el ciclo va a su lado', /Cycle open/.test((ahora.querySelector('.dkh-lado') || {}).textContent || ''));
+  prueba('y lleva la marca de tamaño fijo', !!ahora.querySelector('.dkh-lado.dkh-fija'));
+  const resto = [...H().querySelectorAll('.dkh-resto > *')].map(e => e.textContent.replace(/\s+/g, ' '));
+  prueba('debajo: las órdenes, luego el transfer, y Toast al final', /Orders waiting/.test(resto[0] || '') && /Transfer/.test(resto[1] || '') && H().querySelector('.dkh-resto > :last-child').id === 'dkVentas', resto.map(x => x.slice(0, 20)).join(' | '));
+  prueba('sin nada que se acabe, el sitio ancho es de las órdenes', /todas\.find\(x => es\(x, 'agota'\)\) \|\| todas\.find\(x => es\(x, 'ordenes'\)\)/.test(DH));
 
   grupo('4. Nada lleva a lo que el escritorio no tiene');
   const agota = H().querySelector('.dkh-agota');
@@ -264,7 +270,7 @@ const H = () => D.getElementById('dkHome');
   prueba('poca (menos de un tercio del par) lleva su tono', !agota.querySelector('.dkh-ro-bajo') && !!agota.querySelector('.dkh-ro-medio'));
   prueba('ya no hay barra', !agota.querySelector('.dkh-ro-bar'));
   prueba('desk-home no dibuja la botella por su cuenta', !/pathFor|clipPath/.test(DH));
-  const tr = H().querySelector('.dkh-lado');
+  const tr = [...H().querySelectorAll('.dkh-resto > .dkh-card')].find(e => /Transfer/.test(e.textContent));
   prueba('el transfer sin "Choose yours"', !/>Choose yours</.test(tr.innerHTML));
   prueba('y lo dice', /Choose your product on your phone/.test(tr.textContent));
   prueba('el transfer sin "Change"', !/>Change</.test(tr.innerHTML));
@@ -317,7 +323,7 @@ const H = () => D.getElementById('dkHome');
 
   grupo('7c. Las columnas miran el sitio del Home, no la ventana (iPad horizontal)');
   prueba('#dkHome es un contenedor', /#dkHome \{[^}]*container: dkhome \/ inline-size/.test(CSS_DH));
-  prueba('las dos columnas, por el ancho del Home', /@container dkhome \(max-width: 960px\) \{[^}]*\.dkh-cifras/.test(CSS_DH));
+  prueba('las dos columnas, por el ancho del Home', /@container dkhome \(max-width: 960px\) \{[\s\S]{0,400}\.dkh-cifras/.test(CSS_DH));
   prueba('ninguna regla de columnas mira la ventana', !/@media[^{]*max-width: 1240px/.test(CSS_DH));
 
   grupo('7d. Las ventas de Toast: la tarjeta del teléfono (lámina A)');
@@ -403,6 +409,15 @@ const H = () => D.getElementById('dkHome');
     prueba('con "Next: …" de título y el total al pie', /'Next: ' \+ c\.ordenes\.siguiente/.test(DH) && /' orders'\) \+ \(O\.total \? ' · ' \+ money\(O\.total\)/.test(DH));
     prueba('el teléfono no cambia (ordenes sólo la pinta el escritorio)', !/dkh-olist|ordenesHtml/.test(leer('src/mobile-home.js')));
   }
+
+  grupo('7g. Tamaño fijo: el contenido se adapta a la tarjeta');
+  prueba('el ciclo y Orders placed no estiran su fila (contain: size)', /\.dkh-card\.dkh-fija \{ contain: size; overflow: hidden; \}/.test(CSS_DH)
+    && /c\.ciclo \|\| c\.fase === 'puestas' \? ' dkh-fija'/.test(DH));
+  prueba('solas en su fila (sin Toast, o en dos columnas), su propio alto', /\.dkh-resto:not\(:has\(\.dkh-ventas:not\(:empty\)\)\) \.dkh-fija \{ min-height: 330px; \}/.test(CSS_DH)
+    && /@container dkhome \(max-width: 960px\) \{[\s\S]{0,300}\.dkh-resto \.dkh-fija \{ min-height: 330px; \}/.test(CSS_DH));
+  prueba('los días se reparten el alto, un renglón cada uno', /\.dkh-semana li \{[^}]*flex: 1 1 0; min-height: 0/.test(CSS_DH) && /\.dkh-semana p \{[^}]*white-space: nowrap; overflow: hidden; text-overflow: ellipsis/.test(CSS_DH));
+  prueba('de Orders placed, tres órdenes (el pie cuenta todas)', /O\.ordenes\.slice\(0, 3\)/.test(DH));
+  prueba('su título, en un renglón', /\.dkh-fija h3 \{ white-space: nowrap;/.test(CSS_DH));
 
   grupo('8. Una pantalla del teléfono, en el escritorio');
   const SH = leer('src/mobile-shell.js');
