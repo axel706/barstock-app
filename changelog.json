@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-131745",
+    "items": [
+      "Desktop: glass blur on the sidebar, top bar and Home",
+      "Bigger logo, readable text in light and dark"
+    ]
+  },
+  {
     "build": "20261125-130559",
     "items": [
       "New desktop Home: figures, running out, week and sales",
@@ -189,13 +196,6 @@
     "items": [
       "Skipped week: order from Live or an empty shelf",
       "Switch at the top of Orders › Open"
-    ]
-  },
-  {
-    "build": "20261122-191419",
-    "items": [
-      "Skip this week: for a week that can not be counted",
-      "On hand stays, orders open, Live keeps counting"
     ]
   }
 ]

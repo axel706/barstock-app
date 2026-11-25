@@ -182,6 +182,12 @@ const H = () => D.getElementById('dkHome');
   prueba('la hoja lo esconde con una sección abierta', /body\.dk \.wrap:not\(\.bs-focus-mode\) > #dkHome \{ display: grid; \}/.test(CSS_DH));
   prueba('y a la portada de antes', /body\.dk \.wrap > #bsFocusGrid \{ display: none !important; \}/.test(CSS_DH));
 
+  grupo('7b. Vidrio en los dos modos');
+  prueba('cifras y tarjetas llevan desenfoque', /#dkHome \.dkh-cf, #dkHome \.dkh-card \{[^}]*backdrop-filter: blur\(\d+px\)/.test(CSS_DH));
+  prueba('en el claro, lo de Tinta pasa a vidrio claro con texto oscuro',
+    /body\.light #dkHome \.dkh-cf,[\s\S]{0,120}\{[^}]*background: rgba\(255, 255, 255, \.\d+\)[^}]*backdrop-filter: blur[^}]*color: #0f172a/.test(CSS_DH));
+  prueba('el saludo lleva su sombra en cada modo', /\.dkh-tit h1 \{[^}]*text-shadow/.test(CSS_DH) && /body\.light #dkHome \.dkh-tit h1 \{[^}]*text-shadow/.test(CSS_DH));
+
   grupo('8. Una pantalla del teléfono, en el escritorio');
   const SH = leer('src/mobile-shell.js');
   prueba('mobile-shell.ir sin montar se lo pasa al armazón', /if \(!_montado\) \{[\s\S]{0,200}desdeMovil\(id\)/.test(SH));

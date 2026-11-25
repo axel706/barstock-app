@@ -468,8 +468,19 @@ sección de hoy vive tal cual dentro del armazón.
   enough" por producto, que son de la sección Running out), el transfer
   sin "Choose yours" / "Change" (dice que se elige en el teléfono), sin
   el icono de Cycle detail, Spent this cycle sin botón. Al construir
-  cada cosa, su botón vuelve. Siempre oscuro, como el teléfono. Prueba:
-  `test-home-escritorio`.
+  cada cosa, su botón vuelve. Prueba: `test-home-escritorio`.
+- **Todo lleva vidrio, en los dos modos** (Axel, 2026-11-25, con un
+  fondo dibujado y nítido detrás: "TODO necesita blur, tanto light como
+  dark, como la app anterior"). La barra lateral y el header, el mismo
+  vidrio (16–18 px); las cifras y tarjetas del Home, 16 px. En el
+  teléfono Tinta va sin desenfoque porque su foto ya llega desenfocada;
+  en el escritorio el fondo llega tal cual. En el claro, lo de Tinta
+  (cifras, ventas, reportes) pasa al vidrio claro de app.css con texto
+  oscuro; las tarjetas de color siguen oscuras con su texto blanco. El
+  logo de la barra a 28 px, con "Bar" y PRO de su color en cada modo y
+  "Stock" en un degradado más hondo en el claro (el de la marca no se
+  lee sobre blanco). Nada se apaga con opacidad: un renglón "Soon" va
+  en gris legible.
 
 ## Reglas del dominio que no son obvias
 

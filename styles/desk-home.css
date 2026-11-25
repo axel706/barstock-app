@@ -3,8 +3,15 @@
  * Lo pinta src/desk-home.js con los datos del Home del teléfono. Los
  * colores son los del teléfono, de sus variables de :root (Tinta y los
  * tonos de cada tarjeta, --hero-*): madre e hija, y nunca el color
- * copiado. Siempre oscuro, como el teléfono: las tarjetas van sobre la
- * foto del fondo, no sobre el tema.
+ * copiado.
+ *
+ * TODO lleva desenfoque, en los dos modos (Axel, 2026-11-25, con un
+ * fondo dibujado y nítido detrás: "TODO necesita blur, tanto light como
+ * dark, como la app anterior"). En el teléfono Tinta va sin él porque
+ * su foto ya llega desenfocada por el velo; en el escritorio el fondo
+ * llega tal cual. Las tarjetas de color (los tonos) son oscuras en los
+ * dos modos, con su texto blanco; las de Tinta pasan, en el claro, al
+ * vidrio claro de app.css con texto oscuro.
  *
  * Todas las reglas empiezan por #dkHome: app.css fuerza el radio de
  * 999px a cualquier <button> con 21 :not() y sólo un id le gana.
@@ -25,8 +32,20 @@
   }
 
   #dkHome .dkh-tit { display: flex; align-items: baseline; gap: 12px; }
-  #dkHome .dkh-tit h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -.3px; color: #f8fafc; }
-  #dkHome .dkh-tit span { color: #a9bacd; font-size: 13px; font-weight: 600; }
+  /* El saludo va suelto sobre el fondo: una sombra suave lo separa de
+     lo que haya detrás, en cada modo con su color. */
+  #dkHome .dkh-tit h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -.3px; color: #f8fafc;
+    text-shadow: 0 1px 2px rgba(2, 6, 23, .6), 0 0 18px rgba(2, 6, 23, .55); }
+  #dkHome .dkh-tit span { color: #e2e8f0; font-size: 13px; font-weight: 700; text-shadow: 0 1px 2px rgba(2, 6, 23, .7), 0 0 12px rgba(2, 6, 23, .6); }
+  body.light #dkHome .dkh-tit h1 { color: #0f172a; text-shadow: 0 0 2px rgba(255, 255, 255, .9), 0 0 18px rgba(255, 255, 255, .85); }
+  body.light #dkHome .dkh-tit span { color: #1e293b; text-shadow: 0 0 2px rgba(255, 255, 255, .9), 0 0 12px rgba(255, 255, 255, .85); }
+
+  /* ── El vidrio de todo lo de esta pantalla ── */
+  #dkHome .dkh-cf, #dkHome .dkh-card {
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    box-shadow: 0 16px 38px rgba(2, 6, 23, .28), inset 0 1px 0 rgba(255, 255, 255, .08);
+  }
 
   /* ── Las cifras: la primera fila ── */
   #dkHome .dkh-cifras { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
@@ -186,4 +205,54 @@
   #dkHome .dkh-reps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #dkHome .dkh-ahora { grid-template-columns: minmax(0, 1fr); }
   #dkHome .dkh-ros { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ── El modo claro: lo que va en Tinta pasa al vidrio claro ──────────
+   Las de color (los tonos) se quedan oscuras con su texto blanco: se
+   leen igual en los dos modos. Las de Tinta (las cifras, las ventas, los
+   reportes) toman el vidrio claro de app.css, con texto oscuro. */
+@media (min-width: 641px) {
+  body.light #dkHome .dkh-cf,
+  body.light #dkHome .dkh-ventas,
+  body.light #dkHome .dkh-rep {
+    background: rgba(255, 255, 255, .55);
+    border-color: rgba(255, 255, 255, .65);
+    box-shadow: 0 16px 34px rgba(15, 23, 42, .10), inset 0 1px 0 rgba(255, 255, 255, .7);
+    backdrop-filter: blur(18px) saturate(152%);
+    -webkit-backdrop-filter: blur(18px) saturate(152%);
+    color: #0f172a;
+  }
+  body.light #dkHome .dkh-cf.dkh-am { border-color: rgba(217, 119, 6, .55); }
+  body.light #dkHome .dkh-cf-k,
+  body.light #dkHome .dkh-ventas .dkh-k,
+  body.light #dkHome .dkh-rep .dkh-k { color: #334155; }
+  body.light #dkHome .dkh-ventas .dkh-k i,
+  body.light #dkHome .dkh-rep .dkh-k i { color: #475569; }
+  body.light #dkHome .dkh-cf-v,
+  body.light #dkHome .dkh-ventas h3 { color: #0f172a; }
+  body.light #dkHome .dkh-ventas h3 small { color: #475569; }
+  body.light #dkHome .dkh-cf-d,
+  body.light #dkHome .dkh-ventas .dkh-sub,
+  body.light #dkHome .dkh-rep .bs-focus-sub { color: #334155; }
+  /* El logo de MarginEdge es blanco a propósito (filtro); en el claro,
+     en negro. */
+  body.light #dkHome .m-cf-logo { filter: brightness(0); opacity: .8; }
+  body.light #dkHome .m-cf-sube { color: #15803d; }
+  body.light #dkHome .m-cf-baja { color: #b91c1c; }
+  body.light #dkHome .m-cf-fix,
+  body.light #dkHome .dkh-cf-k i.m-cf-err { color: #b45309; }
+  body.light #dkHome .dkh-cf-b {
+    color: #0f172a; background: rgba(255, 255, 255, .7);
+    border-color: rgba(15, 23, 42, .12); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9);
+  }
+  body.light #dkHome .dkh-vt u { color: #334155; }
+  body.light #dkHome .dkh-vt.hoy u { color: #0f172a; }
+  body.light #dkHome .dkh-vt-b i { background: rgba(13, 148, 136, .65); }
+  body.light #dkHome .dkh-vt.hoy .dkh-vt-b i { background: #0d9488; }
+  body.light #dkHome .dkh-vt.fut .dkh-vt-b i { background: rgba(15, 23, 42, .08); }
+  body.light #dkHome .dkh-vt-b s { border-top-color: rgba(15, 23, 42, .4); }
+  body.light #dkHome .m-cf-esq, body.light #dkHome .dkh-esq {
+    background: linear-gradient(90deg, rgba(15,23,42,.06), rgba(15,23,42,.14), rgba(15,23,42,.06));
+    background-size: 200% 100%;
+  }
 }

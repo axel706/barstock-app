@@ -161,6 +161,15 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   prueba('fuera de las media queries no hay más reglas', fuera.replace(/\/\*[\s\S]*?\*\//g, '').replace(/#dkLado\s*\{\s*display:\s*none;\s*\}/, '').trim() === '');
   prueba('la barra se enseña sólo desde 641 px', /@media \(min-width: 641px\)\s*\{[\s\S]*body\.dk #dkLado\s*\{\s*display:\s*flex/.test(CSS));
 
+  grupo('8b. Vidrio en los dos modos (Axel, 2026-11-25: "TODO necesita blur")');
+  const regla = (sel) => { const m = CSS.match(new RegExp(sel.replace(/[.#]/g, c => '\\' + c) + '\\s*\\{([^}]*)\\}')); return m ? m[1] : ''; };
+  prueba('la barra lateral lleva desenfoque', /backdrop-filter:\s*blur\(\d+px\)/.test(regla('body.dk #dkLado')));
+  prueba('el header lleva desenfoque', /backdrop-filter:\s*blur\(\d+px\)/.test(regla('body.dk .wrap > .bs-header')));
+  prueba('la barra lateral tiene su claro', /background:\s*rgba\(255, 255, 255/.test(regla('body.light.dk #dkLado')));
+  prueba('el header tiene su claro', /background:\s*rgba\(255, 255, 255/.test(regla('body.light.dk .wrap > .bs-header')));
+  prueba('el logo lleva su color en cada modo', /body\.light #dkLado \.dk-logo \{ color: #0f172a/.test(CSS) && /#dkLado \.dk-logo \{[^}]*color: #f8fafc/.test(CSS));
+  prueba('ningún renglón de la barra se apaga con opacidad', !/#dkLado[^{]*\{[^}]*opacity:\s*\.[0-4]/.test(CSS));
+
   grupo('9. El orden de carga');
   const iMod = INDEX.indexOf('src/desk-shell.js');
   const iOpen = INDEX.indexOf('window.bsOpenSection = function');

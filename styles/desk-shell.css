@@ -25,24 +25,47 @@
     width: var(--dk-lado);
     padding: 16px 12px 14px;
     z-index: 45;
-    /* Sin desenfoque: un panel casi opaco no lo necesita, y desenfocar
-       detrás de algo fijo cuesta en cada scroll. */
-    background: rgba(8, 13, 24, .82);
-    border-right: 1px solid rgba(255, 255, 255, .08);
+    /* El vidrio de la app (Axel, 2026-11-25: "TODO necesita blur, tanto
+       light como dark, como la app anterior"). La primera versión iba
+       casi opaca y sin desenfoque: sobre un fondo dibujado y nítido se
+       veía el dibujo pasar por detrás del texto. */
+    background: rgba(15, 23, 42, .52);
+    border-right: 1px solid rgba(255, 255, 255, .12);
+    box-shadow: inset -1px 0 0 rgba(255, 255, 255, .04);
+    backdrop-filter: blur(18px) saturate(150%);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    color: #e2e8f0;
     overflow-y: auto;
   }
+  /* El claro: el vidrio claro de app.css (body.light .card), con más
+     blanco porque aquí va texto pequeño. */
   body.light.dk #dkLado {
-    background: rgba(255, 255, 255, .9);
-    border-right-color: rgba(15, 23, 42, .08);
+    background: rgba(255, 255, 255, .55);
+    border-right-color: rgba(255, 255, 255, .6);
+    box-shadow: 1px 0 24px rgba(15, 23, 42, .08);
+    color: #0f172a;
   }
 
-  #dkLado .dk-logo { font-size: 19px; padding: 2px 10px 14px; white-space: nowrap; }
+  /* El logo, con protagonismo (Axel, 2026-11-25): del tamaño del header
+     de antes (20–26 px), no una etiqueta. "Bar" y PRO llevan su color en
+     cada modo: heredaban el del tema y en el claro "Bar" salía blanco. */
+  #dkLado .dk-logo { font-size: 28px; padding: 6px 10px 20px; white-space: nowrap; color: #f8fafc; }
+  #dkLado .dk-logo .brand-logo-pro { color: #94a3b8; }
+  body.light #dkLado .dk-logo { color: #0f172a; }
+  body.light #dkLado .dk-logo .brand-logo-pro { color: #475569; }
+  /* "Stock" en el claro: el degradado de la marca (menta → azul cielo)
+     sobre vidrio blanco no se lee. El mismo recorrido, más hondo. */
+  body.light #dkLado .dk-logo .bs-stock {
+    background: linear-gradient(95deg, #059669 0%, #0d9488 45%, #0284c7 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
   #dkLado .dk-lista { display: flex; flex-direction: column; gap: 2px; }
   #dkLado .dk-grupo {
     margin: 14px 12px 4px;
     font-size: 10.5px; font-weight: 800; letter-spacing: .08em;
-    text-transform: uppercase; color: var(--sub); opacity: .75;
+    text-transform: uppercase; color: #94a3b8;
   }
+  body.light #dkLado .dk-grupo { color: #475569; }
 
   /* app.css fuerza `border-radius: 999px !important` sobre todo <button>
      (0,21,1): sólo un prefijo de id le gana. Por eso todas estas reglas
@@ -54,8 +77,8 @@
     border: 1px solid transparent;
     border-radius: 11px !important;
     background: transparent;
-    color: var(--sub);
-    font: inherit; font-size: 13.5px; font-weight: 700;
+    color: #cbd5e1;
+    font: inherit; font-size: 14px; font-weight: 700;
     text-align: left;
     cursor: pointer;
     box-shadow: none;
@@ -64,8 +87,9 @@
   #dkLado .dk-nav i { font-size: 18px; flex: none; }
   #dkLado .dk-nav.dk-sub { padding-left: 40px; font-size: 12.5px; font-weight: 600; }
   #dkLado .dk-nav.dk-sub i { display: none; }
-  #dkLado button.dk-nav:hover { background: rgba(255, 255, 255, .06); color: var(--text); }
-  body.light #dkLado button.dk-nav:hover { background: rgba(15, 23, 42, .05); }
+  body.light #dkLado .dk-nav { color: #1e293b; }
+  #dkLado button.dk-nav:hover { background: rgba(255, 255, 255, .08); color: #f8fafc; }
+  body.light #dkLado button.dk-nav:hover { background: rgba(255, 255, 255, .55); color: #0f172a; }
   /* Lo elegido, en el cristal azul de la barra de pestañas del teléfono. */
   #dkLado .dk-nav.on {
     color: #f0f9ff;
@@ -74,14 +98,18 @@
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35);
   }
   body.light #dkLado .dk-nav.on { color: #0c4a6e; background: rgba(56, 189, 248, .18); border-color: rgba(14, 116, 144, .3); }
-  #dkLado .dk-nav.dk-pronto { cursor: default; opacity: .45; }
+  /* Apagado, pero legible: con opacidad .45 sobre el vidrio claro se
+     perdía en el fondo. */
+  #dkLado .dk-nav.dk-pronto { cursor: default; color: #8291a6; }
+  body.light #dkLado .dk-nav.dk-pronto { color: #5b6b80; }
   #dkLado .dk-soon {
     margin-left: auto;
     font-size: 10px; font-weight: 800; letter-spacing: .05em;
     padding: 1px 7px; border-radius: 99px;
-    background: rgba(255, 255, 255, .1);
+    background: rgba(255, 255, 255, .14);
+    color: #cbd5e1;
   }
-  body.light #dkLado .dk-soon { background: rgba(15, 23, 42, .08); }
+  body.light #dkLado .dk-soon { background: rgba(15, 23, 42, .08); color: #334155; }
 
   #dkLado .dk-pie { margin-top: auto; padding-top: 14px; display: grid; gap: 10px; }
   #dkLado .dk-contar {
@@ -98,7 +126,8 @@
   }
   #dkLado .dk-contar i { font-size: 17px; }
   body.light #dkLado .dk-contar { color: #0c4a6e; background: rgba(56, 189, 248, .3); border-color: rgba(14, 116, 144, .35); }
-  #dkLado .dk-estado { display: grid; gap: 6px; padding: 0 6px; font-size: 11px; color: var(--sub); }
+  #dkLado .dk-estado { display: grid; gap: 6px; padding: 0 6px; font-size: 11px; color: #94a3b8; }
+  body.light #dkLado .dk-estado { color: #334155; }
   #dkLado #bsStatusRow { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; position: static; transform: none; }
   #dkLado #bsStatusRow .bs-status-badge { font-size: 11px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #dkLado #buildBadge { margin: 0; font-size: 10.5px; }
@@ -123,6 +152,16 @@
     padding: 12px 24px;
     border-radius: 0;
     border-width: 0 0 1px;
+    /* El mismo vidrio que la barra lateral: son un solo marco. */
+    background: rgba(15, 23, 42, .52);
+    border-color: rgba(255, 255, 255, .12);
+    backdrop-filter: blur(18px) saturate(150%);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+  }
+  body.light.dk .wrap > .bs-header {
+    background: rgba(255, 255, 255, .55);
+    border-color: rgba(255, 255, 255, .6);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, .08);
   }
   body.dk .bs-header.collapsed::after { display: none; }
   body.dk .bs-header .bs-header-line1,
