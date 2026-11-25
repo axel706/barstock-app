@@ -109,8 +109,8 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 
 ## La arquitectura
 
-Frontend estático, sin build. `index.html` es un monolito y hay ~158 módulos
-`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 35 hojas
+Frontend estático, sin build. `index.html` es un monolito y hay ~159 módulos
+`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 36 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
 12 funciones en `api/` sobre Vercel. **El tope del plan son 12, y está lleno**
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 177 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 178 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -749,6 +749,34 @@ sección de hoy vive tal cual dentro del armazón.
   (`noRodarDetras`); `overscroll-behavior` no basta con una lista corta,
   y no se fija el `<html>` (la barra de pestañas del teléfono).
   Prueba: `test-buscador-escritorio`.
+- **Inventory en el escritorio** (Axel, 2026-11-25, láminas "Inventory
+  toolbar" C y "Product panel" A): `src/desk-inventory.js` y
+  `styles/desk-inventory.css`, con el estándar de las secciones
+  (`dk-pantalla`). Lo de antes (`.section-header-row` y
+  `#inventorySectionBody`) se ESCONDE, no se quita: `render()` de
+  index.html sigue escribiendo ahí y el conteo, los modales y el
+  tiempo real cuelgan de eso. La cabeza: Count (clic en
+  `#takeInventoryBtn`), Add item, categorías y botellas automáticas, el
+  conteo en curso (`#countResumeHost`, movido) y cuatro cifras (dinero,
+  items, Needs fixing, Running out). La barra C, pegada: Everything /
+  Needs fixing / Running out, proveedor, orden, buscador y los títulos
+  de las columnas, que también ordenan. **Las reglas de las filas son
+  las del teléfono**: `BarStockMobileInventory.filtrar` y `faltas`. El
+  panel A a la derecha (cajón por encima con menos de 1000 px de
+  sección): Rename (`BarStockItemEdit.renombrar`), proveedor, categoría,
+  botella, par con −/+, precio, Order override (`updateFinalOrder`),
+  luego la ficha de Do we have (`llenarFicha`, estilos generados bajo
+  `#dkiPanel`) y Pour·IQ history, Received, Zero par, Delete (dos
+  clics, `BarStockItemEdit.borrar`) y Save (`bsSaveItemFields`).
+  **Quitado por Axel**: el On Hand a mano (también al crear: empieza en
+  0), Scan Price Invoice (los precios vienen de MarginEdge) y el modo
+  focus. **El tiempo real no se toca**: inventory-realtime sigue
+  reemplazando `state.master`, llamando a `render()` y avisando
+  `inventoryUpdated`; el Inventory nuevo escucha ese aviso (y
+  `ordersUpdated`, `parAdjustmentsUpdated` y el LIVE), recuerda el
+  producto abierto por su NOMBRE (la recarga cambia los objetos) y,
+  con algo a medio editar, repinta la lista pero no el panel. Prueba:
+  `test-inventario-escritorio`.
 
 ## Reglas del dominio que no son obvias
 
@@ -1091,7 +1119,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 177 suites · ~2470 comprobaciones. Tienen que pasar enteras.
+`npm test` · 178 suites · ~2470 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

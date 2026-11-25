@@ -168,7 +168,9 @@ function generar() {
         }
       }
       if (/^(html|body)\b/.test(s)) continue;               // otras raíces: no son de la ficha
-      nuevos.push('#dkBuscar ' + s);
+      // La misma ficha vive en el buscador (#dkBuscar) y en el panel del
+      // producto de Inventory (#dkiPanel, desk-inventory.js).
+      nuevos.push('#dkBuscar ' + s, '#dkiPanel ' + s);
     }
     const decl = r.decl.split(';').map(d => d.trim()).filter(Boolean).map(d => '    ' + d + ';').join('\n');
     if (!decl) continue;
@@ -182,7 +184,8 @@ function generar() {
     ' * No se edita a mano: se cambia la regla del teléfono y se vuelve a correr\n' +
     ' * `node tools/compartir-ficha.js`. test-buscador-escritorio falla si no\n' +
     ' * está al día. Son la tarjeta y la ficha de "Do we have", colgadas del\n' +
-    ' * panel del buscador del escritorio (#dkBuscar), y la pantalla de\n' +
+    ' * panel del buscador del escritorio (#dkBuscar) y del producto de\n' +
+    ' * Inventory (#dkiPanel), y la pantalla de\n' +
     ' * Running out, en su sección (#dkRo), y las ventas de Toast del Home\n' +
     ' * (#dkVentas). */\n' +
     '@media (min-width: 641px) {\n' + reglas.join('\n') + '\n\n' +

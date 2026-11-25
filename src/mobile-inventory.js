@@ -208,6 +208,18 @@
   // del conteo, en `src/count-session.js` — ahí esconder un producto
   // muerto no es mentir, es no pedirte que cuentes lo que no existe.
   function visibles() {
+    return filtrar({ q: _q, filtro: _filtro, vendor: _vendor, solo: _solo, orden: _orden });
+  }
+
+  // Qué filas y en qué orden, sin tocar la pantalla. La usan el teléfono
+  // (visibles) y el Inventory del escritorio (desk-inventory.js, Axel
+  // 2026-11-25): las mismas reglas de "Needs fixing", "Running out first",
+  // proveedor, búsqueda y orden en los dos.
+  //   o = { q, filtro: 'agota'|null, vendor: 'ALL'|…, solo: 'fix'|…,
+  //         orden: 'valor'|'falta'|'nombre' }
+  function filtrar(o) {
+    const _q = o.q || '', _filtro = o.filtro || null, _vendor = o.vendor || 'ALL',
+      _solo = o.solo || 'todo', _orden = o.orden || 'valor';
     const t = norm(_q);
 
     // El filtro de la tarjeta manda sobre el resto: sus productos, en su
@@ -1048,7 +1060,7 @@
     if (window.BarStockMobile) window.BarStockMobile.ir('inventory');
   }
 
-  window.BarStockMobileInventory = { refresh, abrirCon, reabrirTrasRecargar };
+  window.BarStockMobileInventory = { refresh, abrirCon, reabrirTrasRecargar, filtrar, faltas };
 
   function registrar() {
     if (!window.BarStockMobile) return;

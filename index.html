@@ -99,10 +99,11 @@
   <link rel="stylesheet" href="styles/desk-home.css?v=dkh14">
   <!-- "Do we have" del escritorio: la tarjeta y la ficha generadas de las
        del teléfono (tools/compartir-ficha.js), y el campo y su panel. -->
-  <link rel="stylesheet" href="styles/desk-ficha.css?v=dkf4">
+  <link rel="stylesheet" href="styles/desk-ficha.css?v=dkf5">
   <link rel="stylesheet" href="styles/desk-search.css?v=dks2">
   <link rel="stylesheet" href="styles/desk-running-out.css?v=dkr2">
   <link rel="stylesheet" href="styles/desk-sales.css?v=dksa3">
+  <link rel="stylesheet" href="styles/desk-inventory.css?v=dki2">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -391,7 +392,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261125-181239</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261125-184346</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5661,7 +5662,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/mobile-home.js?v=mh90"></script>
 <script src="src/mobile-search.js?v=m34"></script>
 <script src="src/mobile-cycle.js?v=m9"></script>
-<script src="src/mobile-inventory.js?v=m29g"></script>
+<script src="src/mobile-inventory.js?v=m29h"></script>
 <script src="src/mobile-orders.js?v=m38"></script>
 <script src="src/mobile-quick.js?v=mqk5"></script>
 <script src="src/update-anim.js?v=upd8"></script>
@@ -6381,6 +6382,10 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
      mobile-sales.js (más arriba) en su .section-card. También antes de
      desk-shell.js. -->
 <script src="src/desk-sales.js?v=dksl3"></script>
+<!-- Inventory del escritorio: la sección de siempre (#inventorySection) con
+     la pantalla nueva dentro; usa mobile-inventory, live-cache y la ficha
+     de mobile-search (más arriba). También antes de desk-shell.js. -->
+<script src="src/desk-inventory.js?v=dki2"></script>
 <!-- Después de bsOpenSection/bsCloseSection, que son lo que llama. -->
 <script src="src/desk-shell.js?v=dk8"></script>
 <!-- El Home del escritorio: pinta con los datos de mobile-home.js (más

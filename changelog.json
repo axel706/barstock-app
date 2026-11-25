@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-184346",
+    "items": [
+      "Desktop: new Inventory screen with filters",
+      "Product panel: edit, details and actions together"
+    ]
+  },
+  {
     "build": "20261125-181239",
     "items": [
       "Desktop Home: every card keeps its place and size"
@@ -186,12 +193,6 @@
     "items": [
       "Changing a delivery day now moves orders on the way",
       "Running out and the orders card follow it"
-    ]
-  },
-  {
-    "build": "20261125-115544",
-    "items": [
-      "Counting: the bottle box is a touch lighter"
     ]
   }
 ]
