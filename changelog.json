@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-120340",
+    "items": [
+      "Changing a delivery day now moves orders on the way",
+      "Running out and the orders card follow it"
+    ]
+  },
+  {
     "build": "20261125-115544",
     "items": [
       "Counting: the bottle box is a touch lighter"
@@ -187,12 +194,6 @@
     "build": "20261122-154604",
     "items": [
       "To buy: the Order button sits at the bottom, like Done"
-    ]
-  },
-  {
-    "build": "20261122-151204",
-    "items": [
-      "To buy: Order button in the blue glass style"
     ]
   }
 ]

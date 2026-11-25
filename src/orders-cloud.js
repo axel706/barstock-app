@@ -516,7 +516,63 @@
   window.rebuildPlacedOrdersFromHistory = rebuildPlacedOrdersFromHistory;
   window.loadOrdersFromCloud = loadOrdersFromCloud;
   window.initOrdersModule = initOrdersModule;
-  window.BarStockOrdersCloud = { deleteAllOrders, replaceOrders, loadOrdersFromCloud };
+  // ── Un horario de entrega nuevo, en los pedidos que están en camino ──
+  // Lo llama Settings › Delivery al guardar (Axel, 2026-11-25). La cuenta
+  // es vendor-delivery.reprogramar; aquí se leen los pedidos de la nube
+  // que aún no llegan (arrives_at > ahora), se reescribe la llegada de los
+  // que cambian por app_order_id y locación, se cambia en memoria (la
+  // tarjeta de pedidos del Home lee state.orderHistory) y se avisa
+  // 'ordersUpdated' (el LIVE y Running out se rehacen con eso). Devuelve
+  // { movidos } o { movidos, error } con lo que contestó la nube: el
+  // horario ya quedó guardado y quien lo llama tiene que poder decirlo.
+  async function reprogramarLlegadas(vendor) {
+    const VD = window.BarStockVendorDelivery;
+    const VF = window.BarStockVendorDefaults;
+    if (!VD || !VD.reprogramar || !VF || !VF.getDefaults || !vendor) return { movidos: 0 };
+    const C = window.BarStockOrdersConfig();
+    const H = { apikey: C.key, Authorization: `Bearer ${C.key}` };
+    try {
+      const fila = await VF.getDefaults(vendor);
+      if (!fila) return { movidos: 0 };
+      // getOrdersLocationId devuelve la FILA (con weekly_reset_at), no el id.
+      const locationId = (await getOrdersLocationId()).id;
+      const ahora = new Date().toISOString();
+      // Pocas filas (sólo lo que aún no llega), pero se pagina igual:
+      // PostgREST corta en 1000 sin avisar.
+      const filas = [];
+      for (let desde = 0; ; desde += 1000) {
+        const res = await fetch(
+          `${C.url}/rest/v1/vendor_orders?location_id=eq.${locationId}` +
+          `&arrives_at=gt.${encodeURIComponent(ahora)}&select=app_order_id,vendor,created_at,arrives_at` +
+          `&order=app_order_id.asc&limit=1000&offset=${desde}`, { headers: H });
+        if (!res.ok) throw new Error('vendor_orders ' + res.status + ' · ' + (await res.text()).slice(0, 160));
+        const pag = await res.json();
+        filas.push(...(pag || []));
+        if (!Array.isArray(pag) || pag.length < 1000) break;
+      }
+      const cambios = VD.reprogramar(
+        filas.map(f => ({ id: String(f.app_order_id), vendor: f.vendor, created_at: f.created_at, arrives_at: f.arrives_at })),
+        Object.assign({}, fila, { vendor }), Date.now());
+      let movidos = 0;
+      for (const c of cambios) {
+        const res = await fetch(
+          `${C.url}/rest/v1/vendor_orders?location_id=eq.${locationId}&app_order_id=eq.${encodeURIComponent(c.id)}`,
+          { method: 'PATCH', headers: Object.assign({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }, H),
+            body: JSON.stringify({ arrives_at: c.despues }) });
+        if (!res.ok) throw new Error('PATCH ' + res.status + ' · ' + (await res.text()).slice(0, 160));
+        movidos++;
+        const o = ((window.state && window.state.orderHistory) || []).find(x => String(x.id) === c.id);
+        if (o) o.arrivesAt = c.despues;
+      }
+      if (movidos && window.BarStockEvents) window.BarStockEvents.emit('ordersUpdated', { reprogramados: movidos, vendor });
+      return { movidos };
+    } catch (e) {
+      console.warn('[ordenes] no se pudo mover la llegada de lo que está en camino', e);
+      return { movidos: 0, error: String(e && e.message || e) };
+    }
+  }
+
+  window.BarStockOrdersCloud = { deleteAllOrders, replaceOrders, loadOrdersFromCloud, reprogramarLlegadas };
 
   window.addEventListener('load', () => {
     setTimeout(() => {

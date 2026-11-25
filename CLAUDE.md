@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 171 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 172 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -759,7 +759,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 171 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 172 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -955,6 +955,16 @@ sale de marginedge_invoice_lines" de arriba):
   un pedido normal colocado tarde (Breakthru el miércoles, después de su
   entrega del martes, llega el martes siguiente). El conteo del domingo no
   lo incluye porque no estaba en la estantería: no se cuenta dos veces.
+  **Cambiar el horario de un proveedor mueve lo que está en camino**
+  (Axel, 2026-11-25: cambiarlo "no lo cambia en la tarjeta running out ni
+  en la de pedidos", porque las dos leen el `arrives_at` del pedido). Al
+  guardar en Settings › Delivery, los pedidos de ese proveedor que AÚN NO
+  HAN LLEGADO se recalculan desde la hora en que se enviaron con el
+  horario nuevo (`vendor-delivery.reprogramar`, la cuenta;
+  `orders-cloud.reprogramarLlegadas`, la nube, la memoria y
+  `ordersUpdated`), y el aviso dice cuántos. Lo que ya llegó, el quick
+  order dado por llegado y un proveedor sin día no se tocan. Prueba:
+  `test-reprogramar-entrega`.
 - Sin pedido no hay nada que sumar, y lo contado sólo pasa a LIVE al
   descontar la primera venta.
 - Ejemplo de Axel: contó 3 Tito's el domingo, ordenó 5 → martes 7 AM, 8 →

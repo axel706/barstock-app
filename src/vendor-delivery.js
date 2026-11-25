@@ -105,5 +105,34 @@
     return DIAS[p.dia] + ' ' + mes + ' ' + p.d + ' · ' + hora(String(p.h).padStart(2, '0') + ':' + String(p.mi).padStart(2, '0'));
   }
 
-  window.BarStockVendorDelivery = { DIAS, HORAS, hora, corta, texto, siguienteEntrega, llegadaDe, fecha, ZONA };
+  // ── Un horario nuevo mueve lo que está en camino ───────────────────
+  // Axel, 2026-11-25: "cambiar la fecha y hora de entrega de un vendor no
+  // lo cambia en la tarjeta running out ni en la de pedidos". La llegada
+  // se fijaba al enviar el pedido y no volvía a mirarse. Ahora, al guardar
+  // un horario, los pedidos de ese proveedor que TODAVÍA NO HAN LLEGADO se
+  // recalculan con él, desde la hora en que se enviaron (un pedido
+  // colocado tarde sigue yendo a la entrega de la semana siguiente).
+  //
+  // Puro: recibe los pedidos ({ id, vendor, created_at, arrives_at }), la
+  // fila del horario y la hora, y dice cuáles cambian y a qué. No se toca:
+  // lo que ya llegó (el pasado no se mueve; incluye el quick order que se
+  // dio por llegado al enviarlo), lo de otro proveedor, lo que ya está en
+  // la llegada nueva, y nada si el proveedor se quedó sin horario
+  // (siguienteEntrega da null: "no se sabe" no es una llegada).
+  function reprogramar(ordenes, fila, ahora) {
+    const yo = String((fila && fila.vendor) || '').trim().toUpperCase();
+    const t = Number(ahora == null ? Date.now() : ahora);
+    const salen = [];
+    for (const o of ordenes || []) {
+      if (!o || String(o.vendor || '').trim().toUpperCase() !== yo) continue;
+      const llega = o.arrives_at ? new Date(o.arrives_at).getTime() : NaN;
+      if (!(llega > t)) continue;
+      const nueva = siguienteEntrega(fila, o.created_at);
+      if (!nueva || new Date(nueva).getTime() === llega) continue;
+      salen.push({ id: o.id, antes: o.arrives_at, despues: nueva });
+    }
+    return salen;
+  }
+
+  window.BarStockVendorDelivery = { DIAS, HORAS, hora, corta, texto, siguienteEntrega, llegadaDe, fecha, ZONA, reprogramar };
 })();

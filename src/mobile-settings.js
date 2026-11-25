@@ -363,8 +363,20 @@
       _horarios = _horarios || {};
       _horarios[v] = Object.assign({}, _horarios[v] || {}, { vendor: v,
         delivery_day: d === '' ? null : Number(d), delivery_time: d === '' ? null : t });
+      // Lo que ya está en camino de este proveedor pasa al horario nuevo
+      // (Axel, 2026-11-25: cambiarlo "no lo cambia en la tarjeta running
+      // out ni en la de pedidos"). Sin día no se mueve nada. Si falla, el
+      // horario ya quedó guardado: se dice lo que contestó la nube.
+      let mov = { movidos: 0 };
+      if (d !== '' && window.BarStockOrdersCloud && window.BarStockOrdersCloud.reprogramarLlegadas) {
+        ok.disabled = true; ok.textContent = 'Saving…';
+        mov = await window.BarStockOrdersCloud.reprogramarLlegadas(v);
+        ok.disabled = false; ok.textContent = antes;
+      }
       cerrarHorario();
-      aviso(d === '' ? v + ': no delivery day' : v + ' arrives ' + VD().texto(_horarios[v]));
+      const enCamino = mov.error ? ' · orders on the way not updated: ' + mov.error
+        : mov.movidos ? ' · ' + mov.movidos + ' order' + (mov.movidos === 1 ? '' : 's') + ' on the way updated' : '';
+      aviso((d === '' ? v + ': no delivery day' : v + ' arrives ' + VD().texto(_horarios[v])) + enCamino);
       pintarDeliveryLista(host);
     };
   }
