@@ -478,6 +478,19 @@ sección de hoy vive tal cual dentro del armazón.
   1180 va a cuatro con la barra escondida (~1130 px) y a dos con ella
   (~900). Es lo que pide "las reglas de ancho miran la VENTANA" de arriba
   para cada sección que se rehaga.
+- **El ciclo, día por día, en el Home del escritorio** (Axel,
+  2026-11-25, lámina "Cycle and Orders cards", 1A: "tarjetas de count y
+  orders necesitan diseño con contenido adaptado al nuevo tamaño"): la
+  tarjeta del ciclo es tan alta como Running out y los tres renglones
+  del teléfono dejaban un hueco. Ahora "Count Sunday" de título y, a lo
+  ancho, un renglón por día desde que se abrió el ciclo hasta el domingo
+  de contar, con lo que ya se sabe de ese día: lo contado, las entregas
+  (por la fecha de su factura: `resumen().porDia` de mobile-invoices),
+  las órdenes enviadas (`createdAt`, sin transfers), lo que llega
+  (`arrivesAt`, sólo lo que no ha llegado), lo que falta pedir hoy y el
+  conteo "from 4 PM". Un día sin nada no se rellena. La cuenta es
+  `diasDelCiclo` de mobile-home (en la tarjeta, `semana`); el teléfono
+  sigue con su pista.
 - **Las ventas de Toast en el Home del escritorio** (Axel, 2026-11-25,
   lámina A: "no tienen el icono de Toast ni las opciones para ver
   botellas/dinero o la semana completa, semanas pasadas"; "el icono un

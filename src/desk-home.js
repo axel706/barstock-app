@@ -343,8 +343,14 @@
     const partes = [];
     if (c.sub) partes.push(`<p class="dkh-sub">${esc(c.sub)}</p>`);
     if (c.lista) partes.push(`<div class="dkh-lista">${c.lista.map(x => '<span>' + x + '</span>').join('')}</div>`);
+    // El ciclo, día por día (lámina "Cycle and Orders cards" 1A): la
+    // semana entera llena el alto de la tarjeta. La arma mobile-home
+    // (diasDelCiclo) con <em> y números ya puestos; si no está, los tres
+    // renglones de siempre.
+    // (La semana va fuera, a lo ancho: semanaHtml, en tarjeta().)
+    if (semanaDe(c)) { /* nada aquí */ }
     // La línea del ciclo trae <em> armado con números por mobile-home.
-    if (c.linea) partes.push(`<ul class="dkh-linea">${c.linea.map(x =>
+    else if (c.linea) partes.push(`<ul class="dkh-linea">${c.linea.map(x =>
       `<li class="${x.hoy ? 'hoy' : ''}"><u>${esc(x.d)}</u><p>${x.t}</p></li>`).join('')}</ul>`);
     if (c.filas) partes.push(`<div class="dkh-filas">${c.filas.map(x => `
       <div class="dkh-fila"><span class="izq">${x.q ? `<b>${esc(x.q)}</b>` : ''}${esc(x.n)}</span>
@@ -355,6 +361,17 @@
     return partes.join('');
   }
 
+  const semanaDe = (c) => c && c.semana && c.semana.dias && c.semana.dias.length ? c.semana.dias : null;
+  // Va debajo del título y del número ("3d"), a lo ancho de la tarjeta:
+  // al lado del número quedaba en media columna y cada día en dos renglones.
+  function semanaHtml(c) {
+    const dias = semanaDe(c);
+    if (!dias) return '';
+    return `<ol class="dkh-semana">${dias.map(x =>
+      `<li class="${[x.hecho ? 'hecho' : '', x.hoy ? 'hoy' : '', x.cuenta ? 'cuenta' : '', !x.hecho && !x.hoy ? 'fut' : ''].filter(Boolean).join(' ')}">` +
+      `<u>${esc(x.u)}</u><i aria-hidden="true"></i><p>${x.ev.join(' · ')}</p></li>`).join('')}</ol>`;
+  }
+
   function tarjeta(c, i, clase) {
     const amt = c.amt ? `<div class="dkh-amt">${esc(c.amt)}${c.amtPie ? `<small>${esc(c.amtPie)}</small>` : ''}</div>` : '';
     return `
@@ -362,11 +379,12 @@
         <div class="dkh-k"><span>${c.kHtml ? c.k : esc(c.k)}</span>${c.kr ? `<i>${esc(c.kr)}</i>` : ''}</div>
         <div class="dkh-top">
           <div class="dkh-txt">
-            <h3>${esc(c.tt)}${c.ttU ? ` <small>${esc(c.ttU)}</small>` : ''}</h3>
+            <h3>${esc((c.semana && c.semana.titulo) || c.tt)}${c.ttU ? ` <small>${esc(c.ttU)}</small>` : ''}</h3>
             ${cuerpo(c, i)}
           </div>
           ${amt}
         </div>
+        ${semanaHtml(c)}
         ${botones(c, i)}
       </article>`;
   }

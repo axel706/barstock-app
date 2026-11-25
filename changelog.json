@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261125-175656",
+    "items": [
+      "Desktop: the cycle card shows the week day by day"
+    ]
+  },
+  {
     "build": "20261125-174017",
     "items": [
       "Desktop: Running out is a full screen too"
@@ -187,13 +193,6 @@
     "items": [
       "Count by name: scan button in the search bar",
       "Scan one bottle, then back to the list"
-    ]
-  },
-  {
-    "build": "20261125-111237",
-    "items": [
-      "Count by name: the keyboard stays open after a search",
-      "Bigger rows, the size of Inventory"
     ]
   }
 ]

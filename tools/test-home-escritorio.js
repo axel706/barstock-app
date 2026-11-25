@@ -347,6 +347,38 @@ const H = () => D.getElementById('dkHome');
     prueba('All products / Full report en la ventana del escritorio (m-vl en #mSheet)', /body\.dk #mSheet \.m-vl-/.test(CSSG));
   }
 
+  grupo('7e. El ciclo, día por día (lámina "Cycle and Orders cards" 1A)');
+  {
+    const w2 = new JSDOM('<!doctype html><body></body>', { runScripts: 'outside-only', url: 'https://x.test/' }).window;
+    w2.console = { log() {}, warn() {}, error() {} };
+    const hora = 3600e3, dia = 864e5, ahora = Date.now();
+    w2.state = { master: [], orderHistory: [
+      { vendor: 'SOUTHERN', createdAt: new Date(ahora - 60e3).toISOString(), arrivesAt: new Date(ahora + dia).toISOString() },
+      { vendor: 'BREAKTHRU', createdAt: new Date(ahora - 2 * dia).toISOString(), arrivesAt: new Date(ahora - dia).toISOString() },
+      { vendor: 'TRANSFER', createdAt: new Date(ahora - 60e3).toISOString() } ] };
+    w2.eval(leer('src/mobile-home.js'));
+    const kNY = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date(ahora + d * dia));
+    const D = w2.BarStockMobileHome._diasDelCiclo(new Date(ahora - 3 * dia).toISOString(), kNY(4),
+      { contados: 153, salto: false, pend: 0, entregas: { [kNY(-1)]: 4 }, hora: '4 PM' });
+    const de = (d) => (D || []).find(x => x.k === kNY(d)) || { ev: [] };
+    const t = (x) => x.ev.join(' · ').replace(/<[^>]+>/g, '');
+    prueba('un renglón por día, del que abrió el ciclo al domingo de contar', !!D && D.length === 8 && D[0].k === kNY(-3) && D[7].k === kNY(4), D && D.length);
+    prueba('el primero: lo contado', /153 items counted/.test(t(de(-3))));
+    prueba('las entregas en su día', /4 deliveries in/.test(t(de(-1))));
+    prueba('las órdenes en el día en que se enviaron (sin transfers)', /Ordered Breakthru/.test(t(de(-2))) && /Ordered Southern/.test(t(de(0))) && !/Transfer/i.test(t(de(0))));
+    prueba('lo que viene, en el día en que llega', /Southern arrives/.test(t(de(1))));
+    prueba('lo que ya llegó no se anuncia', !D.some(x => /Breakthru arrives/.test(t(x))));
+    prueba('hoy se llama Today y va marcado', de(0).u === 'Today' && de(0).hoy && !de(0).hecho);
+    prueba('el último: el conteo, con su hora', de(4).cuenta && /Count · from 4 PM/.test(t(de(4))));
+    prueba('un día sin nada no se rellena', de(2).ev.length === 0);
+    prueba('con la semana saltada, lo dice', /Count skipped/.test(w2.BarStockMobileHome._diasDelCiclo(new Date(ahora - dia).toISOString(), kNY(2),
+      { contados: 0, salto: true, pend: 3, hora: '4 PM' })[0].ev.join('').replace(/<[^>]+>/g, '')));
+    prueba('las facturas dicen cuántas hubo cada día', /porDia\[k\] = \(porDia\[k\] \|\| 0\) \+ 1/.test(leer('src/mobile-invoices.js')) && /ultima, porDia,/.test(leer('src/mobile-invoices.js')));
+    prueba('el teléfono sigue con su pista (la semana sólo la pinta el escritorio)', /libre: libreCiclo/.test(leer('src/mobile-home.js')) && !/dkh-semana|semana\.dias/.test(leer('src/mobile-home.js').replace(/semanaDias/g, '')));
+    prueba('el escritorio la pinta a lo ancho, con "Count Sunday" de título', /function semanaHtml\(c\)/.test(DH) && /\$\{semanaHtml\(c\)\}/.test(DH) && /c\.semana && c\.semana\.titulo\) \|\| c\.tt/.test(DH));
+    prueba('y su estilo: hecho, hoy, el domingo de contar', /\.dkh-semana \.hoy i \{/.test(CSS_DH) && /\.dkh-semana \.cuenta i \{/.test(CSS_DH));
+  }
+
   grupo('8. Una pantalla del teléfono, en el escritorio');
   const SH = leer('src/mobile-shell.js');
   prueba('mobile-shell.ir sin montar se lo pasa al armazón', /if \(!_montado\) \{[\s\S]{0,200}desdeMovil\(id\)/.test(SH));

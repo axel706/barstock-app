@@ -786,6 +786,17 @@
       Object.assign(conSalto, { btn2: 'Skip week', btn2Tono: 'saltar', go2: saltarSemana });
     }
 
+    // La semana día por día, para el escritorio (diasDelCiclo, abajo).
+    const tituloSem = libreCiclo ? (viejo ? 'Open ' + dias + ' days'
+      : (() => { const hoyK = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
+          const f = fin ? Math.round((Date.parse(fin + 'T00:00:00Z') - Date.parse(hoyK + 'T00:00:00Z')) / 864e5) : null;
+          return f === null ? '' : f <= 0 ? 'Count today' : f === 1 ? 'Count tomorrow' : 'Count Sunday'; })()) : '';
+    const semanaDias = diasDelCiclo(inicio, fin, {
+      contados: contados(), salto: !!salto, pend: lineasPendientes(),
+      entregas: _entregas && _entregas.porDia ? _entregas.porDia : null,
+      hora: HO && HO.HORA != null ? (HO.HORA % 12 || 12) + (HO.HORA < 12 ? ' AM' : ' PM') : '4 PM'
+    });
+
     return Object.assign({
       tono: viejo && !salto ? 'amber' : 'teal',
       k: 'Cycle open',
@@ -808,7 +819,58 @@
       ico: 'list-details',
       icot: 'Cycle detail',
       go3: irAlCiclo
-    }, libreCiclo ? { libre: libreCiclo, kr: desdeK ? 'since ' + desdeK : '', vs: vsCiclo, btn: 'Restart' } : {}, conSalto);
+    }, libreCiclo ? { libre: libreCiclo, kr: desdeK ? 'since ' + desdeK : '', vs: vsCiclo, btn: 'Restart' } : {},
+      semanaDias ? { semana: { titulo: tituloSem, dias: semanaDias } } : {}, conSalto);
+  }
+
+  // ── La semana del ciclo, día por día (el escritorio, Axel 2026-11-25,
+  // lámina "Cycle and Orders cards", 1A) ─────────────────────────────────
+  //
+  // En el escritorio la tarjeta del ciclo es tan alta como Running out, y
+  // los tres renglones del teléfono dejaban un hueco. Se llena con la
+  // semana misma: un renglón por día, desde el día en que se abrió el
+  // ciclo hasta el domingo de contar (home-orden.finCiclo), y en cada uno
+  // lo que la app ya sabe de ese día: lo contado, las entregas (por la
+  // fecha de su factura), las órdenes enviadas (createdAt), lo que llega
+  // (arrivesAt, sólo lo que aún no llegó), lo que falta pedir hoy y el
+  // conteo. Un día sin nada no se rellena. El teléfono sigue con su pista.
+  function diasDelCiclo(inicio, fin, o) {
+    if (!inicio || !fin) return null;
+    const enNY = (ms) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date(ms));
+    const k0 = enNY(Date.parse(inicio));
+    if (!k0 || !/^\d{4}-\d{2}-\d{2}$/.test(fin) || k0 > fin) return null;
+    const hoyK = enNY(Date.now());
+    const ahora = Date.now();
+    const cap = (v) => String(v || '').toLowerCase().replace(/(^|[\s-])\S/g, m => m.toUpperCase());
+    const horaDe = (ms) => new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' })
+      .format(new Date(ms)).replace(':00', '');
+    const hist = (window.state && Array.isArray(window.state.orderHistory)) ? window.state.orderHistory : [];
+    const dias = [];
+    for (let ms = Date.parse(k0 + 'T12:00:00Z'); dias.length < 15; ms += 864e5) {
+      const k = new Date(ms).toISOString().slice(0, 10);
+      if (k > fin) break;
+      const u = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', weekday: 'short' }).format(new Date(ms)) + ' ' + Number(k.slice(8));
+      const ev = [];
+      if (k === k0) ev.push(o.salto ? 'Count <em>skipped</em>' : '<em>' + o.contados + ' items</em> counted');
+      const ent = o.entregas && o.entregas[k];
+      if (ent) ev.push('<em>' + ent + (ent === 1 ? ' delivery' : ' deliveries') + '</em> in');
+      const pedidos = [], llegan = [];
+      for (const x of hist) {
+        const v = String(x.vendor || '').toUpperCase();
+        if (!v || v === 'TRANSFER' || v === 'UNKNOWN') continue;
+        const c = x.createdAt ? Date.parse(x.createdAt) : NaN;
+        if (isFinite(c) && enNY(c) === k && k >= k0 && !pedidos.includes(v)) pedidos.push(v);
+        const a = x.arrivesAt ? Date.parse(x.arrivesAt) : NaN;
+        if (isFinite(a) && a >= ahora && enNY(a) === k) llegan.push(cap(v) + ' arrives ' + horaDe(a));
+      }
+      if (pedidos.length) ev.push('Ordered <em>' + pedidos.map(cap).join(', ') + '</em>');
+      llegan.forEach(t => ev.push(t));
+      if (k === hoyK && o.pend > 0) ev.push('<em>' + o.pend + (o.pend === 1 ? ' line' : ' lines') + '</em> waiting to order');
+      else if (k === hoyK && !ev.length && o.pend === 0) ev.push('Nothing waiting to order');
+      if (k === fin) ev.push('<em>Count</em> · from ' + o.hora);
+      dias.push({ k, u: k === hoyK ? 'Today' : u, hecho: k < hoyK, hoy: k === hoyK, cuenta: k === fin, ev });
+    }
+    return dias;
   }
   let _saltosDe = null;
 
@@ -3050,6 +3112,9 @@
     // esperan, para que "N to fix" y Review dejen de decirlo.
     releerPrecios: () => { _preciosLeidos = false; cargarPrecios(); },
     alCambiar(fn) { _oyentes.add(fn); return () => _oyentes.delete(fn); },
+    // La semana del ciclo día por día (la cuenta de la tarjeta del ciclo
+    // del escritorio), para las pruebas.
+    _diasDelCiclo: diasDelCiclo,
     // La tarjeta de Toast, pintada en otra caja (el Home del escritorio).
     ventas: (caja, repintar, opts) => pintarVentasEn(caja, repintar || (() => pintarVentasEn(caja, null, opts)), opts)
   };

@@ -1610,13 +1610,18 @@
     const prods = await contar(url, key,
       `marginedge_products?location_id=eq.${locId}&select=product_id`);
     let unidades = 0, dinero = 0, sueltas = 0, ultima = '';
+    // Cuántas facturas hubo cada día ('YYYY-MM-DD'): la semana del ciclo
+    // del escritorio las pone en su día (mobile-home.diasDelCiclo).
+    const porDia = {};
     for (const f of fs_) {
       unidades += f.unidades;
       dinero += f.total;
       sueltas += f.sueltas;
       if (f.fecha && f.fecha > ultima) ultima = f.fecha;
+      const k = String(f.fecha || '').slice(0, 10);
+      if (k) porDia[k] = (porDia[k] || 0) + 1;
     }
-    return { n: fs_.length, unidades: Math.round(unidades), dinero, sueltas, ultima,
+    return { n: fs_.length, unidades: Math.round(unidades), dinero, sueltas, ultima, porDia,
              conectado: prods > 0 };
   }
 
