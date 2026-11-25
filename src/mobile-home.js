@@ -2194,6 +2194,7 @@
     if (!TS || !TS.sincronizarHoy || _syncHoy === 'cargando') return;
     _syncHoy = 'cargando';
     pintarCifras(host);
+    avisarOyentes();
     try {
       await TS.sincronizarHoy();
       // Lo vendido ya se olvidó en toast-sales (escucha el aviso): se
@@ -2214,11 +2215,13 @@
     }
     const h = document.querySelector('.m-screen[data-screen="home"]') || host;
     pintarCifras(h);
+    avisarOyentes();
   }
 
-  function pintarCifras(host) {
-    const caja = host && host.querySelector('#mhCifras');
-    if (!caja) return;
+  // Lo que dice cada cifra, sin pintar: la usa pintarCifras y el Home del
+  // escritorio (desk-home.js), que la pinta a su manera. Así el número, su
+  // línea y su estado se deciden en UN sitio.
+  function cifras() {
     const e = estante();
     const g = gasto();
     const W = window.BarStockWeeklyCycle;
@@ -2228,29 +2231,9 @@
     const E = _entregas;
     const arreglar = E ? (E.error ? 1 : (E.sueltas || 0) + (_precios || 0)) : 0;
 
-    // `s`: una línea de estado bajo el título (Axel, 2026-11-13: "va
-    // debajo del título, no debajo de la cifra"), hoy sólo la del Sync
-    // de "Sold".
-    // `logo`: la marca de donde sale la cifra, en su primera fila, y el
-    // título pasa a una sola línea más pequeña (Axel, 2026-11-18, opción
-    // B: MarginEdge en blanco sobre "Spent this cycle").
-    //
-    // La cabecera (logo, título y estado) va en UN bloque: las tres
-    // tarjetas comparten filas (subgrid, mobile-app.css) y cada fila mide
-    // lo de la más alta, así que las cifras, su línea y los botones caen
-    // a la misma altura tenga cada cabecera lo que tenga (Axel,
-    // 2026-11-18: "los contenidos no están bien alineados").
-    const cifra = (o) => `
-      <div class="m-cf-c${o.tono ? ' m-cf-' + o.tono : ''}">
-        <div class="m-cf-cab">
-          ${o.logo || ''}
-          <span class="m-cf-k${o.logo ? ' m-cf-k1' : ''}">${o.k}</span>
-          ${o.s ? `<span class="m-cf-s${o.sTono ? ' ' + o.sTono : ''}">${o.s}</span>` : ''}
-        </div>
-        <b class="m-cf-v">${o.v}</b>
-        <span class="m-cf-d">${o.d}</span>
-        <button type="button" class="m-cf-b" data-cf="${o.id}"${o.off ? ' disabled' : ''}>${o.btn}</button>
-      </div>`;
+    // Cada cifra es un objeto ({ id, k, s, v, d, btn, … }); su HTML lo
+    // pone htmlCifra, más abajo.
+    const cifra = (o) => o;
 
     // Una cifra que todavía no sabe su número: la barra que brilla donde
     // va la cifra y otra donde va su línea, "Loading" y el botón apagado,
@@ -2349,6 +2332,38 @@
       btn: arreglar ? 'Review' : E && E.conectado === false ? 'MarginEdge'
         : '<i class="ti ti-refresh" aria-hidden="true"></i> Sync'
     }));
+    return { partes, arreglar, E };
+  }
+
+  // `s`: una línea de estado bajo el título (Axel, 2026-11-13: "va
+  // debajo del título, no debajo de la cifra"), hoy sólo la del Sync
+  // de "Sold".
+  // `logo`: la marca de donde sale la cifra, en su primera fila, y el
+  // título pasa a una sola línea más pequeña (Axel, 2026-11-18, opción
+  // B: MarginEdge en blanco sobre "Spent this cycle").
+  //
+  // La cabecera (logo, título y estado) va en UN bloque: las tres
+  // tarjetas comparten filas (subgrid, mobile-app.css) y cada fila mide
+  // lo de la más alta, así que las cifras, su línea y los botones caen
+  // a la misma altura tenga cada cabecera lo que tenga (Axel,
+  // 2026-11-18: "los contenidos no están bien alineados").
+  const htmlCifra = (o) => `
+      <div class="m-cf-c${o.tono ? ' m-cf-' + o.tono : ''}">
+        <div class="m-cf-cab">
+          ${o.logo || ''}
+          <span class="m-cf-k${o.logo ? ' m-cf-k1' : ''}">${o.k}</span>
+          ${o.s ? `<span class="m-cf-s${o.sTono ? ' ' + o.sTono : ''}">${o.s}</span>` : ''}
+        </div>
+        <b class="m-cf-v">${o.v}</b>
+        <span class="m-cf-d">${o.d}</span>
+        <button type="button" class="m-cf-b" data-cf="${o.id}"${o.off ? ' disabled' : ''}>${o.btn}</button>
+      </div>`;
+
+  function pintarCifras(host) {
+    const caja = host && host.querySelector('#mhCifras');
+    if (!caja) return;
+    const { partes: lista, arreglar, E } = cifras();
+    const partes = lista.map(htmlCifra);
     caja.classList.toggle('dos', partes.length === 2);
     // Al arrancar se pinta varias veces seguidas (llegan el LIVE, Toast,
     // las facturas…). Si lo de dentro no cambió no se reescribe: rehacerlo
@@ -2493,6 +2508,7 @@
         _pidiendoVentas = false;
         const host = document.querySelector('.m-screen[data-screen="home"]');
         if (cambio && host) { pintarCifras(host); pintarVentas(host); pintarSecciones(host); }
+        if (cambio) avisarOyentes();
       });
   }
 
@@ -2867,6 +2883,19 @@
   function refresh() {
     const host = document.querySelector('.m-screen[data-screen="home"]');
     if (host && host.classList.contains('on')) render(host);
+    avisarOyentes();
+  }
+
+  // ── Quien más escucha: el Home del escritorio (2026-11-25) ──────────
+  //
+  // El escritorio pinta sus propias tarjetas (desk-home.js) con los
+  // MISMOS datos de aquí: las tarjetas de tarjetas(), las cifras, las
+  // ventas. Se entera de que algo cambió por aquí, en el mismo sitio en
+  // que se entera el Home del teléfono: dos caminos para enterarse
+  // acabarían diciendo cosas distintas.
+  const _oyentes = new Set();
+  function avisarOyentes() {
+    _oyentes.forEach(fn => { try { fn(); } catch (e) { console.warn('[home] oyente', e); } });
   }
   if (window.BarStockLiveCache) window.BarStockLiveCache.alCambiar(refresh);
   // La cifra de "To buy · N" cambió (alguien añadió o quitó algo).
@@ -2931,7 +2960,20 @@
     }, VIGILA_CADA);
   }
 
-  window.BarStockMobileHome = { render, refresh };
+  // Lo que el escritorio lee para su Home: los mismos números, sin
+  // pintar nada. Pedirlos pone en marcha las mismas cargas que pintar el
+  // Home del teléfono (el LIVE, Toast, las facturas, los precios).
+  function datos() {
+    if (window.BarStockLiveCache) window.BarStockLiveCache.cargar();
+    if (!_pidiendoVentas) cargarVentas();
+    return { saludo: saludo(), tarjetas: tarjetas(), cifras: cifras().partes, ventas: _ventas };
+  }
+
+  window.BarStockMobileHome = {
+    render, refresh, datos, vigilar, detalleEstante,
+    sincronizarHoy: () => sincronizarHoy(null),
+    alCambiar(fn) { _oyentes.add(fn); return () => _oyentes.delete(fn); }
+  };
 
   function registrar() {
     if (!window.BarStockMobile) return;

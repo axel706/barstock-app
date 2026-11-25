@@ -477,8 +477,18 @@
   }
 
   function ir(id) {
+    // En el escritorio el armazón del teléfono no está montado, pero las
+    // tarjetas del Home (las mismas en los dos, desk-home.js) llaman aquí
+    // para ir a Orders o a Inventory. Se le pasa al armazón del
+    // escritorio, que abre SU sección: una sola tabla de equivalencias,
+    // en desk-shell.js, y no un "si es escritorio" en cada tarjeta.
+    if (!_montado) {
+      const D = window.BarStockDeskShell;
+      if (D && D.desdeMovil) D.desdeMovil(id);
+      return;
+    }
     const p = _pant.get(id);
-    if (!p || !_montado) return;
+    if (!p) return;
     cerrarEncima();
     _sinPestana = false;
     salirBanda();

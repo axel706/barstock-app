@@ -95,6 +95,17 @@
     marcar();
   }
 
+  // Las pantallas del teléfono que tienen su sección en el escritorio.
+  // Lo demás (Buscar, el ciclo, To buy…) aún no existe aquí y no hace
+  // nada: el Home del escritorio no enseña los botones que llevan ahí.
+  const DESDE_MOVIL = { home: 'home', inventory: 'inventory', orders: 'vendor', history: 'history' };
+  function desdeMovil(id) {
+    const a = DESDE_MOVIL[id];
+    if (!a) return false;
+    ir(a);
+    return true;
+  }
+
   // Admin sale para quien auth.js se lo enseña: se copia lo que dice su
   // pastilla de siempre (#bsAdminNavTab), sin repetir la regla de quién
   // es admin.
@@ -171,5 +182,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', montar);
   else montar();
 
-  window.BarStockDeskShell = { montar, ir, activa, ITEMS };
+  window.BarStockDeskShell = { montar, ir, activa, desdeMovil, ITEMS };
 })();

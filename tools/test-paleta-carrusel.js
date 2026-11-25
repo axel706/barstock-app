@@ -43,7 +43,15 @@ const path = require('path');
 
 const RAIZ = path.join(__dirname, '..');
 const leer = f => fs.readFileSync(path.join(RAIZ, f), 'utf8');
-const css = leer('styles/mobile-app.css').replace(/\/\*[\s\S]*?\*\//g, '');
+const cssCrudo = leer('styles/mobile-app.css').replace(/\/\*[\s\S]*?\*\//g, '');
+// Desde el 2026-11-25 cada tono vive en una variable de :root (--hero-*),
+// la misma que usa el Home del escritorio. Las reglas dicen
+// `var(--hero-red)`: se sustituye por su valor para medir el degradado de
+// verdad, el que se pinta. Una variable que no existe se queda como está
+// y la regla sale sin paradas: la prueba falla, como debe.
+const defs = {};
+for (const m of cssCrudo.matchAll(/--(hero-[a-z]+(?:-borde)?):\s*([^;]+);/g)) defs[m[1]] = m[2].trim();
+const css = cssCrudo.replace(/var\(--(hero-[a-z]+(?:-borde)?)\)/g, (x, k) => defs[k] || x);
 const js = leer('src/mobile-home.js');
 const jsLimpio = js.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 

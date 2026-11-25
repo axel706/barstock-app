@@ -12,6 +12,26 @@
   --tinta: rgba(15,23,42,.62);
   --tinta-borde: rgba(255,255,255,.1);
 
+  /* Los tonos de las tarjetas del Home, aquí y no en sus reglas: los usa
+   * también el Home del escritorio (desk-home.css). Lo que significa
+   * cada uno, en .m-hero-* (más abajo, dentro de la media query). */
+  --hero-verde: linear-gradient(135deg, rgba(16,185,129,.82) 0%, rgba(16,185,129,.40) 42%, rgba(4,18,14,.94) 100%);
+  --hero-verde-borde: rgba(110,231,183,.50);
+  --hero-green: linear-gradient(135deg, rgba(16,185,129,.82) 0%, rgba(16,185,129,.40) 42%, rgba(4,18,14,.94) 100%);
+  --hero-green-borde: rgba(110,231,183,.50);
+  --hero-teal: linear-gradient(135deg, rgba(20,184,166,.82) 0%, rgba(20,184,166,.40) 42%, rgba(3,18,20,.94) 100%);
+  --hero-teal-borde: rgba(94,234,212,.48);
+  --hero-violet: linear-gradient(135deg, rgba(139,92,246,.84) 0%, rgba(139,92,246,.42) 42%, rgba(12,7,26,.94) 100%);
+  --hero-violet-borde: rgba(196,181,253,.50);
+  --hero-blue: linear-gradient(135deg, rgba(14,165,233,.82) 0%, rgba(14,165,233,.40) 42%, rgba(3,14,24,.94) 100%);
+  --hero-blue-borde: rgba(125,211,252,.48);
+  --hero-red: linear-gradient(135deg, rgba(190,18,60,1) 0%, rgba(127,29,29,1) 58%, rgba(64,12,16,1) 100%);
+  --hero-red-borde: rgba(253,164,175,.48);
+  --hero-amber: linear-gradient(135deg, rgba(245,158,11,.84) 0%, rgba(245,158,11,.42) 42%, rgba(22,13,3,.94) 100%);
+  --hero-amber-borde: rgba(252,211,77,.50);
+  --hero-calm: linear-gradient(135deg, rgba(100,116,139,.78) 0%, rgba(100,116,139,.38) 42%, rgba(8,12,18,.94) 100%);
+  --hero-calm-borde: rgba(203,213,225,.28);
+
   --m-meta:    calc(var(--m-base) * 0.79);   /* 11.0  pies, unidades  */
   --m-small:   calc(var(--m-base) * 0.89);   /* 12.5  texto de apoyo  */
   --m-eyebrow: calc(var(--m-base) * 0.89);   /* 12.5  encabezados     */
@@ -1908,19 +1928,19 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * la derecha, donde caen los tres renglones y los botones, va el
    * casi negro y deja LEER. El ángulo de 135° pone cada cosa donde le
    * sirve. */
-  .m-hero-verde  { background: linear-gradient(135deg, rgba(16,185,129,.82) 0%, rgba(16,185,129,.40) 42%, rgba(4,18,14,.94) 100%);  border: 1px solid rgba(110,231,183,.50); }
-  .m-hero-green  { background: linear-gradient(135deg, rgba(16,185,129,.82) 0%, rgba(16,185,129,.40) 42%, rgba(4,18,14,.94) 100%);  border: 1px solid rgba(110,231,183,.50); }
-  .m-hero-teal   { background: linear-gradient(135deg, rgba(20,184,166,.82) 0%, rgba(20,184,166,.40) 42%, rgba(3,18,20,.94) 100%);  border: 1px solid rgba(94,234,212,.48); }
-  .m-hero-violet { background: linear-gradient(135deg, rgba(139,92,246,.84) 0%, rgba(139,92,246,.42) 42%, rgba(12,7,26,.94) 100%);  border: 1px solid rgba(196,181,253,.50); }
-  .m-hero-blue   { background: linear-gradient(135deg, rgba(14,165,233,.82) 0%, rgba(14,165,233,.40) 42%, rgba(3,14,24,.94) 100%);  border: 1px solid rgba(125,211,252,.48); }
+  .m-hero-verde  { background: var(--hero-verde); border: 1px solid var(--hero-verde-borde); }
+  .m-hero-green  { background: var(--hero-green); border: 1px solid var(--hero-green-borde); }
+  .m-hero-teal   { background: var(--hero-teal); border: 1px solid var(--hero-teal-borde); }
+  .m-hero-violet { background: var(--hero-violet); border: 1px solid var(--hero-violet-borde); }
+  .m-hero-blue   { background: var(--hero-blue); border: 1px solid var(--hero-blue-borde); }
   /* El rojo, aparte (Axel, 2026-11-22): el de la lámina de los fondos
    * ("el tono rojo está espectacular"), un carmesí opaco de #be123c al
    * #7f1d1d de la lámina, y a la derecha "un poquito más oscuro". No
    * arranca con el brío de los demás: es más profundo, y eso era lo que
    * le gustó. */
-  .m-hero-red    { background: linear-gradient(135deg, rgba(190,18,60,1) 0%, rgba(127,29,29,1) 58%, rgba(64,12,16,1) 100%);   border: 1px solid rgba(253,164,175,.48); }
-  .m-hero-amber  { background: linear-gradient(135deg, rgba(245,158,11,.84) 0%, rgba(245,158,11,.42) 42%, rgba(22,13,3,.94) 100%);  border: 1px solid rgba(252,211,77,.50); }
-  .m-hero-calm   { background: linear-gradient(135deg, rgba(100,116,139,.78) 0%, rgba(100,116,139,.38) 42%, rgba(8,12,18,.94) 100%); border: 1px solid rgba(203,213,225,.28); }
+  .m-hero-red    { background: var(--hero-red); border: 1px solid var(--hero-red-borde); }
+  .m-hero-amber  { background: var(--hero-amber); border: 1px solid var(--hero-amber-borde); }
+  .m-hero-calm   { background: var(--hero-calm); border: 1px solid var(--hero-calm-borde); }
 
   /* El encabezado en blanco, no en el tinte pálido de su familia.
    * Los tintes (#fde68a sobre ámbar, #fecaca sobre rojo) funcionaban

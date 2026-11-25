@@ -1,0 +1,189 @@
+/* ── El Home del escritorio (Axel, 2026-11-25, lámina H1) ─────────────
+ *
+ * Lo pinta src/desk-home.js con los datos del Home del teléfono. Los
+ * colores son los del teléfono, de sus variables de :root (Tinta y los
+ * tonos de cada tarjeta, --hero-*): madre e hija, y nunca el color
+ * copiado. Siempre oscuro, como el teléfono: las tarjetas van sobre la
+ * foto del fondo, no sobre el tema.
+ *
+ * Todas las reglas empiezan por #dkHome: app.css fuerza el radio de
+ * 999px a cualquier <button> con 21 :not() y sólo un id le gana.
+ */
+
+#dkHome { display: none; }
+
+@media (min-width: 641px) {
+  body.dk .wrap:not(.bs-focus-mode) > #dkHome { display: grid; }
+  /* La portada de antes: sus números viven ahora en el Home (los de los
+     reportes, movidos con su id). */
+  body.dk .wrap > #bsFocusGrid { display: none !important; }
+
+  #dkHome {
+    gap: 16px;
+    padding-bottom: 28px;
+    color: #f8fafc;
+  }
+
+  #dkHome .dkh-tit { display: flex; align-items: baseline; gap: 12px; }
+  #dkHome .dkh-tit h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -.3px; color: #f8fafc; }
+  #dkHome .dkh-tit span { color: #a9bacd; font-size: 13px; font-weight: 600; }
+
+  /* ── Las cifras: la primera fila ── */
+  #dkHome .dkh-cifras { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  #dkHome .dkh-cf {
+    border-radius: 20px;
+    background: var(--tinta);
+    border: 1px solid var(--tinta-borde);
+    padding: 12px 16px 12px;
+    display: flex; flex-direction: column; gap: 4px;
+    min-width: 0;
+  }
+  #dkHome .dkh-cf.dkh-am { border-color: rgba(252, 211, 77, .5); }
+  #dkHome .dkh-cf-k {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #a9bacd;
+    min-width: 0;
+  }
+  #dkHome .dkh-cf-k > span { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+  #dkHome .dkh-cf-k i { font-style: normal; letter-spacing: 0; text-transform: none; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #dkHome .dkh-cf-k i.m-cf-err { color: #fcd34d; }
+  #dkHome .m-cf-logo { height: 11px; width: auto; filter: brightness(0) invert(1); opacity: .9; }
+  #dkHome .dkh-cf-v { font-size: 30px; font-weight: 800; letter-spacing: -.6px; line-height: 1.1; color: #f8fafc; }
+  #dkHome .dkh-cf-d { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12.5px; color: #a9bacd; min-height: 28px; }
+  #dkHome .dkh-cf-d > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #dkHome .m-cf-live::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #22c55e; margin-right: 5px; vertical-align: 1px; }
+  #dkHome .m-cf-sube { color: #4ade80; font-weight: 800; }
+  #dkHome .m-cf-baja { color: #f87171; font-weight: 800; }
+  #dkHome .m-cf-fix { color: #fcd34d; font-weight: 800; }
+  #dkHome .m-cf-esq, #dkHome .dkh-esq {
+    display: inline-block; height: 22px; width: 120px; border-radius: 8px;
+    background: linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.16), rgba(255,255,255,.06));
+    background-size: 200% 100%; animation: dkhBrilla 1.4s linear infinite; vertical-align: middle;
+  }
+  #dkHome .m-cf-esq-s { height: 10px; width: 70px; }
+  @keyframes dkhBrilla { to { background-position: -200% 0; } }
+
+  /* ── Botones (con id delante: le ganan al radio y al blur de app.css) ── */
+  #dkHome .dkh-cf-b, #dkHome .dkh-b {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 30px; padding: 0 13px;
+    border-radius: 999px !important;
+    font: inherit; font-size: 12.5px; font-weight: 800; color: #f8fafc;
+    background: rgba(255, 255, 255, .12);
+    border: 1px solid rgba(255, 255, 255, .25);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3);
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+    cursor: pointer; white-space: nowrap; flex: none;
+  }
+  #dkHome .dkh-b.dkh-b1 { background: rgba(255, 255, 255, .92); color: #0b1220; border-color: transparent; }
+  #dkHome .dkh-cf-b:disabled { opacity: .5; cursor: default; }
+
+  /* ── Las tarjetas ── */
+  #dkHome .dkh-card {
+    border-radius: 20px;
+    padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 8px;
+    min-width: 0;
+    background: var(--tinta);
+    border: 1px solid var(--tinta-borde);
+  }
+  #dkHome .dkh-calm   { background: var(--hero-calm);   border-color: var(--hero-calm-borde); }
+  #dkHome .dkh-blue   { background: var(--hero-blue);   border-color: var(--hero-blue-borde); }
+  #dkHome .dkh-red    { background: var(--hero-red);    border-color: var(--hero-red-borde); }
+  #dkHome .dkh-amber  { background: var(--hero-amber);  border-color: var(--hero-amber-borde); }
+  #dkHome .dkh-green  { background: var(--hero-green);  border-color: var(--hero-green-borde); }
+  #dkHome .dkh-verde  { background: var(--hero-verde);  border-color: var(--hero-verde-borde); }
+  #dkHome .dkh-teal   { background: var(--hero-teal);   border-color: var(--hero-teal-borde); }
+  #dkHome .dkh-violet { background: var(--hero-violet); border-color: var(--hero-violet-borde); }
+
+  #dkHome .dkh-k {
+    display: flex; justify-content: space-between; gap: 8px;
+    font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #f1f5f9;
+  }
+  #dkHome .dkh-k i { font-style: normal; letter-spacing: 0; text-transform: none; font-weight: 700; color: rgba(241, 245, 249, .8); }
+  #dkHome .m-live { display: inline-flex; align-items: center; gap: 4px; margin-right: 8px; color: #bbf7d0; }
+  #dkHome .m-live i { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; display: inline-block; }
+  #dkHome .dkh-top { display: flex; gap: 12px; flex: 1 1 auto; }
+  #dkHome .dkh-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  #dkHome .dkh-card h3 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -.3px; color: #f8fafc; }
+  #dkHome .dkh-card h3 small { font-size: 12.5px; font-weight: 700; color: rgba(241, 245, 249, .75); margin-left: 6px; }
+  #dkHome .dkh-sub, #dkHome .dkh-mas { margin: 0; font-size: 12.5px; line-height: 1.45; color: #cbd5e1; }
+  #dkHome .dkh-amt { font-size: 30px; font-weight: 800; text-align: right; line-height: 1; color: #f8fafc; }
+  #dkHome .dkh-amt small { display: block; font-size: 11px; font-weight: 700; color: rgba(241, 245, 249, .75); margin-top: 4px; }
+  #dkHome .dkh-lista { display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; color: #e2e8f0; }
+  #dkHome .dkh-linea { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+  #dkHome .dkh-linea li { display: flex; gap: 10px; color: #cbd5e1; }
+  #dkHome .dkh-linea li.hoy { color: #f8fafc; font-weight: 700; }
+  #dkHome .dkh-linea u { text-decoration: none; width: 44px; flex: none; color: rgba(241, 245, 249, .7); }
+  #dkHome .dkh-linea p { margin: 0; }
+  #dkHome .dkh-filas { display: flex; flex-direction: column; }
+  #dkHome .dkh-fila {
+    display: flex; justify-content: space-between; gap: 10px;
+    padding: 5px 0; font-size: 13px; color: #f1f5f9;
+    border-top: 1px solid rgba(255, 255, 255, .1);
+  }
+  #dkHome .dkh-fila:first-child { border-top: 0; }
+  #dkHome .dkh-fila .izq { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+  #dkHome .dkh-fila .izq b { margin-right: 6px; }
+  #dkHome .dkh-fila .der { flex: none; color: #cbd5e1; }
+  #dkHome .dkh-pv {
+    width: 100%; background: none; border: 0; border-top: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 0 !important; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+    font: inherit; font-size: 13px; color: #f1f5f9; text-align: left; cursor: pointer;
+  }
+  #dkHome .dkh-pv:hover .izq { text-decoration: underline; }
+  #dkHome [class^="dkh-out-"], #dkHome [class*=" dkh-out-"] { font-style: normal; font-weight: 800; }
+  #dkHome .dkh-out-r { color: #fca5a5; }
+  #dkHome .dkh-out-a { color: #fcd34d; }
+  #dkHome .dkh-out-g { color: #86efac; }
+  #dkHome .dkh-acts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: auto; padding-top: 4px; }
+  #dkHome .dkh-vs, #dkHome .dkh-nota { font-size: 12px; color: rgba(241, 245, 249, .75); margin-right: auto; }
+
+  /* ── Lo de ahora: ancha, con el transfer (u otra) al lado ── */
+  #dkHome .dkh-ahora { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); gap: 14px; }
+  #dkHome .dkh-ahora.solo { grid-template-columns: minmax(0, 1fr); }
+  #dkHome .dkh-hero h3 { font-size: 24px; }
+
+  /* Running out, cada producto en su columna */
+  #dkHome .dkh-ros { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+  #dkHome .dkh-ro {
+    border-radius: 14px; background: rgba(0, 0, 0, .25); padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 5px; min-width: 0;
+  }
+  #dkHome .dkh-ro-n { font-size: 13px; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #dkHome .dkh-ro-v { font-size: 22px; font-weight: 800; color: #f8fafc; }
+  #dkHome .dkh-ro-v small { font-size: 12px; color: rgba(241, 245, 249, .7); font-weight: 700; }
+  #dkHome .dkh-ro-bar { height: 6px; border-radius: 99px; background: rgba(255, 255, 255, .14); overflow: hidden; }
+  #dkHome .dkh-ro-bar i { display: block; height: 100%; background: #fcd34d; border-radius: 99px; }
+  #dkHome .dkh-ro-d { font-size: 12px; color: #e2e8f0; }
+
+  /* ── Lo demás y las ventas ── */
+  #dkHome .dkh-resto { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  #dkHome .dkh-resto:empty { display: none; }
+  #dkHome .dkh-ventas { grid-column: span 2; }
+  #dkHome .dkh-vts { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; height: 120px; }
+  #dkHome .dkh-vt { display: flex; flex-direction: column; gap: 4px; align-items: stretch; min-height: 0; }
+  #dkHome .dkh-vt-b { flex: 1; position: relative; display: flex; align-items: flex-end; }
+  #dkHome .dkh-vt-b i { display: block; width: 100%; border-radius: 6px 6px 3px 3px; background: rgba(110, 231, 183, .7); }
+  #dkHome .dkh-vt.hoy .dkh-vt-b i { background: #6ee7b7; }
+  #dkHome .dkh-vt.fut .dkh-vt-b i { background: rgba(255, 255, 255, .12); }
+  #dkHome .dkh-vt-b s { position: absolute; left: -2px; right: -2px; border-top: 1.5px dashed rgba(255, 255, 255, .5); text-decoration: none; }
+  #dkHome .dkh-vt u { text-decoration: none; text-align: center; font-size: 11px; color: #a9bacd; }
+  #dkHome .dkh-vt.hoy u { color: #f8fafc; font-weight: 800; }
+
+  /* ── Los reportes de la portada de antes ── */
+  #dkHome .dkh-reps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  #dkHome .dkh-rep { cursor: pointer; }
+  #dkHome .dkh-rep:hover { border-color: rgba(125, 211, 252, .45); }
+  #dkHome .dkh-rep .bs-focus-sub { color: #a9bacd; font-size: 12.5px; margin: 0; }
+  #dkHome .dkh-rep .bs-focus-stats { display: flex; gap: 8px; flex-wrap: wrap; }
+}
+
+/* Una ventana estrecha (o un iPad): dos columnas. */
+@media (min-width: 641px) and (max-width: 1240px) {
+  #dkHome .dkh-cifras,
+  #dkHome .dkh-resto,
+  #dkHome .dkh-reps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #dkHome .dkh-ahora { grid-template-columns: minmax(0, 1fr); }
+  #dkHome .dkh-ros { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

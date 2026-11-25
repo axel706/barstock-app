@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-130559",
+    "items": [
+      "New desktop Home: figures, running out, week and sales",
+      "Live vs count on the desktop Home"
+    ]
+  },
+  {
     "build": "20261125-125119",
     "items": [
       "New desktop layout: sections in a sidebar",
@@ -189,12 +196,6 @@
     "items": [
       "Skip this week: for a week that can not be counted",
       "On hand stays, orders open, Live keeps counting"
-    ]
-  },
-  {
-    "build": "20261122-185619",
-    "items": [
-      "Behind-the-scenes fixes"
     ]
   }
 ]

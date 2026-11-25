@@ -110,7 +110,7 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 ## La arquitectura
 
 Frontend estático, sin build. `index.html` es un monolito y hay ~152 módulos
-`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 30 hojas
+`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 31 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
 12 funciones en `api/` sobre Vercel. **El tope del plan son 12, y está lleno**
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 173 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 174 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -446,12 +446,30 @@ sección de hoy vive tal cual dentro del armazón.
   barra: la de 980 de Inventory se repite con el ancho de la barra
   sumado; las demás (~18) se arreglan al rehacer cada sección. Prueba:
   `test-armazon-escritorio`.
-- **Paso 2, el Home (por construir), H1 sobre lámina:** primera fila,
-  las cuatro cifras (On the shelf, Sold today, Spent this cycle, Live vs
-  count); debajo, ancho y con sus botones, lo que pide la semana (la
-  regla de `home-orden`: el conteo, las órdenes o Running out) con el
-  transfer por confirmar al lado; después la semana día por día y las
-  ventas; Movement y los reportes al final.
+- **Paso 2, el Home (hecho), H1 sobre lámina:** `src/desk-home.js` y
+  `styles/desk-home.css`. Primera fila, las cuatro cifras (On the
+  shelf, Sold, Spent this cycle, Live vs count); debajo, ancha, la
+  tarjeta que la semana pone primera (la regla de `home-orden`) con el
+  transfer por confirmar al lado; después las demás tarjetas y las
+  ventas de Toast; al final los reportes de la portada de antes
+  (Pour·IQ, Costs con su "Report last week", Variance, Unmatched).
+  **Los datos son los del Home del teléfono**:
+  `BarStockMobileHome.datos()` da las mismas tarjetas (`tarjetas()`) y
+  las cifras ya decididas (`cifras()`, que pinta también el teléfono), y
+  `alCambiar` avisa al escritorio donde se repinta el teléfono. Live vs
+  count es `BarStockLiveDiag.semana` (la del correo del lunes). Los
+  reportes de la portada se MUEVEN con su id (`#fgSub-…`, `#fgStats-…`):
+  los sigue escribiendo `focus-stats.js`. Los tonos de las tarjetas son
+  variables de `:root` (`--hero-*`, en `mobile-app.css`), las mismas en
+  los dos. `BarStockMobile.ir()` sin el armazón del teléfono montado se
+  lo pasa a `BarStockDeskShell.desdeMovil` (orders → Orders, inventory →
+  Inventory). **Lo que aún no existe en el escritorio no se ofrece**:
+  Running out sin "See them" ni "To buy" (y sin "Add to list" / "I have
+  enough" por producto, que son de la sección Running out), el transfer
+  sin "Choose yours" / "Change" (dice que se elige en el teléfono), sin
+  el icono de Cycle detail, Spent this cycle sin botón. Al construir
+  cada cosa, su botón vuelve. Siempre oscuro, como el teléfono. Prueba:
+  `test-home-escritorio`.
 
 ## Reglas del dominio que no son obvias
 
@@ -794,7 +812,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 173 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 174 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
