@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261125-173600",
+    "items": [
+      "Desktop: Sales is a full screen, controls stay on top"
+    ]
+  },
+  {
     "build": "20261125-172100",
     "items": [
       "Sales: taller day bars; today shows its sales"
@@ -190,13 +196,6 @@
       "Count by name: no camera, search or go down the list",
       "Asked once when you start a count",
       "The count number at the top updates again"
-    ]
-  },
-  {
-    "build": "20261125-105312",
-    "items": [
-      "Counting: the camera turns off while you search by name",
-      "After 30 s without a scan it sleeps: tap to scan"
     ]
   }
 ]

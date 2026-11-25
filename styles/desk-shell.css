@@ -337,6 +337,31 @@ body.dk .bs-header #dkMenu { display: none; }
   body.dk .bs-focus-mininav,
   body.dk #bsNavBackBtn { display: none !important; }
 
+  /* ── LA FORMA DE LAS SECCIONES (el estándar, CLAUDE.md; Axel,
+     2026-11-25, lámina "Section screens" A) ──
+     Una sección con .dk-pantalla ES la pantalla, no una caja: sin borde ni
+     radio, pegada a la barra de arriba (se come el hueco de 18 px y el
+     relleno de .wrap) y de alto, al menos, la pantalla.
+     Su vidrio es una capa FIJA detrás de ella (::before), del tamaño de la
+     ventana bajo la barra: con el desenfoque en la sección misma, al bajar
+     por una lista larga se veía la foto nítida entre las filas (Chromium
+     no desenfoca lo que queda fuera de la pantalla de algo tan alto). La
+     sección es su propio contexto de apilado (z-index 0) para que la capa
+     quede detrás de su contenido y delante de la foto. */
+  body.dk .wrap > .section-card.dk-pantalla {
+    position: relative; z-index: 0;
+    margin: -18px -24px 0 !important;
+    min-height: calc(100vh - var(--dk-alto));
+    background: none !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  }
+  body.dk .wrap > .section-card.dk-pantalla::before {
+    content: ""; position: fixed; z-index: -1; pointer-events: none;
+    top: var(--dk-alto); right: 0; bottom: 0; left: var(--dk-x);
+    background: rgba(11, 18, 32, .62);
+    backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%);
+  }
+
   /* El renglón de estado de la app de antes ("Orders loaded", "Could not
      load No Match from cloud."): salía suelto encima de la sección, sin
      decir de dónde venía (Axel, 2026-11-25: "¿qué es ese mensaje?"). Lo

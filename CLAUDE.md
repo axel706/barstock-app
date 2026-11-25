@@ -519,6 +519,25 @@ sección de hoy vive tal cual dentro del armazón.
   líneas sin precio). Ojo: una clase suelta para un color (`.bot`) pintó
   la tabla entera; los colores van sólo en barras y puntos. Prueba:
   `test-sales-escritorio`.
+- **EL ESTÁNDAR DE LAS SECCIONES DEL ESCRITORIO** (Axel, 2026-11-25,
+  lámina "Section screens", opción A: "márcalo como el estándar de aquí
+  en adelante para las pantallas de secciones y subsecciones"). Sólo el
+  Home es un tablero de tarjetas. Al entrar a una sección (Sales, Running
+  out, Inventory, Orders, History…) **la sección ES la pantalla**: no una
+  caja con una tabla dentro.
+  - Una sola lámina de vidrio de borde a borde bajo la barra de arriba
+    (sin margen ni radio, hasta abajo): sobre la foto nítida del
+    escritorio el texto suelto no se leería.
+  - Arriba, la cabeza de la página: el título grande y lo que resume la
+    sección (cifras, días…), sin cajas alrededor de cada cosa.
+  - Cada elemento de la lista es su propia fila (Tinta, una por
+    producto, como las listas del teléfono), no celdas de una tabla
+    enmarcada. Rueda la PÁGINA, no una caja.
+  - Al bajar, la cabeza se va y **los controles (cambios, filtro,
+    semana…) y los títulos de las columnas se quedan pegados bajo la
+    barra de arriba** (sticky a `--dk-alto`), con el mismo vidrio.
+  - Cada sección se rehace una a la vez, con su lámina para lo que
+    enseña; ésta es la forma de todas.
 - **Running out en el Home del escritorio** (Axel, 2026-11-25, lámina A:
   "más similar al del teléfono, siluetas, pero al tener espacio podemos
   seguir incluyendo el estimado en número"): las botellas del teléfono

@@ -266,6 +266,14 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   prueba('sigue a la barra al esconderla, sin animar con reducir movimiento',
     /transition: left \.22s ease/.test(regla('body.dk .wrap > .bs-header')) && /body\.dk \.wrap > \.bs-header \{ transition: none; \}/.test(CSS));
 
+  grupo('8k. La forma de las secciones (el estándar, lámina "Section screens" A)');
+  prueba('.dk-pantalla: sin caja, pegada a la barra y del alto de la pantalla',
+    /\.section-card\.dk-pantalla \{[^}]*margin: -18px -24px 0 !important;[^}]*min-height: calc\(100vh - var\(--dk-alto\)\);[^}]*border-radius: 0 !important/.test(CSS));
+  prueba('su vidrio es una capa fija detrás (no se ve la foto nítida al bajar)',
+    /\.dk-pantalla::before \{[^}]*position: fixed; z-index: -1;[^}]*top: var\(--dk-alto\); right: 0; bottom: 0; left: var\(--dk-x\);[^}]*backdrop-filter: blur/.test(CSS)
+    && /\.section-card\.dk-pantalla \{[^}]*position: relative; z-index: 0;[^}]*backdrop-filter: none !important/.test(CSS));
+  prueba('CLAUDE.md lo dice como el estándar', /EL ESTÁNDAR DE LAS SECCIONES DEL ESCRITORIO/.test(leer('CLAUDE.md')));
+
   grupo('8i. Sin el renglón de estado de antes');
   prueba('"Orders loaded" y compañía no salen en el escritorio (ya son avisos)', /body\.dk #statusBar \{ display: none !important; \}/.test(CSS));
   prueba('setStatus lo sigue escribiendo y toast.js lo enseña', /function setStatus\(msg\)\{\s*const bar = document\.getElementById\('statusBar'\)/.test(INDEX) && /window\.setStatus = function \(msg\)[\s\S]{0,200}show\(msg\)/.test(leer('src/toast.js')));

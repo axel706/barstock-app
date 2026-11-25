@@ -98,7 +98,7 @@ function entorno(clase) {
   w.BarStockDeskSales.abrir({ vista: 'dinero', atras: 0, dia: 'sem' });
   await esperar(30);
   const S = () => w.document.getElementById('dkSales');
-  prueba('el logo de Toast y su sync', !!S().querySelector('img.dks-logo') && /synced 3:06 PM/.test(txt(S().querySelector('.dks-sync'))));
+  prueba('el logo de Toast y su sync', !!S().querySelector('img.dks-logo') && /synced 3:06 PM/i.test(txt(S().querySelector('.dks-sync'))));
   prueba('cinco cifras', S().querySelectorAll('.dks-k').length === 5);
   prueba('neto, botellas, licor, vino y el mejor día', /Net/.test(txt(S().querySelector('.dks-cifras'))) && /Bottles/.test(txt(S().querySelector('.dks-cifras')))
     && /Liquor & cocktails/.test(txt(S().querySelector('.dks-cifras'))) && /Wine/.test(txt(S().querySelector('.dks-cifras'))) && /Best day[\s\S]*Tue/.test(txt(S().querySelector('.dks-cifras'))));
@@ -154,7 +154,11 @@ function entorno(clase) {
   const pos = (f) => INDEX.indexOf(f);
   prueba('se carga antes que desk-shell y después de mobile-sales', pos('src/desk-sales.js') > pos('src/mobile-sales.js') && pos('src/desk-sales.js') < pos('src/desk-shell.js') && pos('src/desk-sales.js') > 0);
   prueba('su hoja, con versión', /styles\/desk-sales\.css\?v=/.test(INDEX));
-  prueba('el panel con vidrio', /#salesSection \{[^}]*backdrop-filter: blur\(\d+px\)/.test(CSS));
+  // La forma de las secciones (el estándar, lámina "Section screens" A).
+  prueba('es una pantalla del estándar (.dk-pantalla), no una caja', w.document.getElementById('salesSection').classList.contains('dk-pantalla') && !/#salesSection \{[^}]*(border-radius|background: rgba)/.test(CSS));
+  prueba('cabeza de la página: título, cifras y días', !!S().querySelector('header.dks-cabeza h2.dks-t') && !!S().querySelector('.dks-cabeza .dks-cifras') && !!S().querySelector('.dks-cabeza .dks-dias'));
+  prueba('controles y títulos de columnas, pegados bajo la barra al bajar', !!S().querySelector('.dks-pega .dks-fil') && !!S().querySelector('.dks-pega .dks-thr') && /\.dks-pega \{[^}]*position: sticky; top: var\(--dk-alto\)/.test(CSS));
+  prueba('cada artículo, su fila (no una tabla enmarcada)', !!S().querySelector('.dks-filas > .dks-tr') && !/dks-tabla/.test(DSL) && /\.dks-tr \{[^}]*background: var\(--tinta\)/.test(CSS));
   prueba('los colores sólo en barras y puntos (no pintan la tabla)', !/#dkSales \.(licor|vino|bot) \{/.test(CSS));
   prueba('con poco sitio se apila (por el ancho de la sección)', /@container dksales \(max-width: 900px\)/.test(CSS));
 

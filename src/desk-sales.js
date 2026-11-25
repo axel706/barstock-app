@@ -68,14 +68,14 @@
     const caja = _sec && _sec.querySelector('#dkSales');
     if (!caja) return;
     const T = TS(), M = MS();
-    if (!_V) { caja.innerHTML = '<p class="dks-nada">Loading sales…</p>'; cargar(); return; }
-    if (_V.error) { caja.innerHTML = `<p class="dks-nada">Could not read the sales: ${esc(_V.error.message || _V.error)}</p>`; return; }
-    if (!T || !M || !_V.cargados || !T.semanaCal) { caja.innerHTML = '<p class="dks-nada">This location has no Toast sales loaded.</p>'; return; }
+    if (!_V) { caja.innerHTML = '<h2 class="dks-t">Sales</h2><p class="dks-nada">Loading sales…</p>'; cargar(); return; }
+    if (_V.error) { caja.innerHTML = `<h2 class="dks-t">Sales</h2><p class="dks-nada">Could not read the sales: ${esc(_V.error.message || _V.error)}</p>`; return; }
+    if (!T || !M || !_V.cargados || !T.semanaCal) { caja.innerHTML = '<h2 class="dks-t">Sales</h2><p class="dks-nada">This location has no Toast sales loaded.</p>'; return; }
 
     const maxAtras = T.semanasAtras ? T.semanasAtras(_V) : 0;
     _atras = Math.max(0, Math.min(maxAtras, _atras));
     const W = T.semanaCal(_V, _atras);
-    if (!W) { caja.innerHTML = '<p class="dks-nada">No sales for this week.</p>'; return; }
+    if (!W) { caja.innerHTML = '<h2 class="dks-t">Sales</h2><p class="dks-nada">No sales for this week.</p>'; return; }
     const sem = W.dias;
     if (_dia !== 'sem' && (!sem[_dia] || sem[_dia].futuro)) _dia = 'sem';
     const esSem = _dia === 'sem';
@@ -84,7 +84,7 @@
     const nom = (x) => M.nomDia(x);
 
     const carga = T.ultimaCarga ? T.ultimaCarga(_V.base && _V.base.dias) : null;
-    const sync = carga ? `synced ${esc(T.textoCarga(carga))}<i class="${T.cargaVieja(carga) ? 'vieja' : ''}"></i>` : 'never synced<i class="vieja"></i>';
+    const sync = carga ? `Synced ${esc(T.textoCarga(carga))}<i class="${T.cargaVieja(carga) ? 'vieja' : ''}"></i>` : 'Never synced<i class="vieja"></i>';
 
     // ── Las cinco cifras ──
     const cD = M.comparar(d, 'dinero'), cB = M.comparar(d, 'botellas');
@@ -165,30 +165,39 @@
         </div>`).join('');
     const pies = din ? M.pies(_V, fechas, d) : [];
 
+    // La forma de las secciones del escritorio (Axel, 2026-11-25, lámina
+    // "Section screens" A, el estándar): la cabeza de la página (título,
+    // cifras, días), y debajo los controles y los títulos de las columnas,
+    // que se quedan pegados bajo la barra de arriba al bajar (.dks-pega),
+    // y una fila por artículo. Rueda la página, no una caja.
+    const tcls = din ? 'dks-tdin' : 'dks-tbot';
     caja.innerHTML = `
-      <div class="dks-top">
-        <span class="dks-marca"><img class="dks-logo" src="assets/brands/toast.png" width="307" height="78" alt="Toast"><span class="dks-sync">Sales · ${sync}</span></span>
-        <span class="dks-semana" role="group" aria-label="Week">
-          <button type="button" class="dks-f" data-sem="1" aria-label="Previous week"${_atras >= maxAtras ? ' disabled' : ''}><i class="ti ti-chevron-left" aria-hidden="true"></i></button>
-          <b>${esc(W.etiqueta)}</b>
-          <button type="button" class="dks-f" data-sem="-1" aria-label="Next week"${_atras <= 0 ? ' disabled' : ''}><i class="ti ti-chevron-right" aria-hidden="true"></i></button>
-        </span>
-      </div>
-      <div class="dks-cifras">${cifras}</div>
-      <div class="dks-dias">${dias}</div>
-      <div class="dks-fil">
-        <span class="dks-tabs" role="group" aria-label="Table">
-          <button type="button" class="${din ? 'on' : ''}" data-vista="dinero">Money <small>what Toast sold</small></button>
-          <button type="button" class="${din ? '' : 'on'}" data-vista="botellas">Bottles <small>what left the shelf</small></button>
-        </span>
-        <label class="dks-q"><i class="ti ti-search" aria-hidden="true"></i><input id="dksQ" type="search" autocomplete="off" placeholder="${din ? 'Filter items' : 'Filter products'}" value="${esc(_q)}"></label>
-        ${din ? `<span class="dks-cats">${[['todo', 'All'], ['licor', 'Liquor & cocktails'], ['vino', 'Wine']].map(([k, x]) =>
-          `<button type="button" class="${_cat === k ? 'on' : ''}" data-cat="${k}">${x}</button>`).join('')}</span>` : ''}
-      </div>
-      <div class="dks-tabla ${din ? 'dks-tdin' : 'dks-tbot'}">
+      <header class="dks-cabeza">
+        <div class="dks-top">
+          <h2 class="dks-t">Sales</h2>
+          <span class="dks-marca"><img class="dks-logo" src="assets/brands/toast.png" width="307" height="78" alt="Toast"><span class="dks-sync">${sync}</span></span>
+        </div>
+        <div class="dks-cifras">${cifras}</div>
+        <div class="dks-dias">${dias}</div>
+      </header>
+      <div class="dks-pega ${tcls}">
+        <div class="dks-fil">
+          <span class="dks-tabs" role="group" aria-label="Table">
+            <button type="button" class="${din ? 'on' : ''}" data-vista="dinero">Money <small>what Toast sold</small></button>
+            <button type="button" class="${din ? '' : 'on'}" data-vista="botellas">Bottles <small>what left the shelf</small></button>
+          </span>
+          <label class="dks-q"><i class="ti ti-search" aria-hidden="true"></i><input id="dksQ" type="search" autocomplete="off" placeholder="${din ? 'Filter items' : 'Filter products'}" value="${esc(_q)}"></label>
+          ${din ? `<span class="dks-cats">${[['todo', 'All'], ['licor', 'Liquor & cocktails'], ['vino', 'Wine']].map(([k, x]) =>
+            `<button type="button" class="${_cat === k ? 'on' : ''}" data-cat="${k}">${x}</button>`).join('')}</span>` : ''}
+          <span class="dks-semana" role="group" aria-label="Week">
+            <button type="button" class="dks-f" data-sem="1" aria-label="Previous week"${_atras >= maxAtras ? ' disabled' : ''}><i class="ti ti-chevron-left" aria-hidden="true"></i></button>
+            <b>${esc(W.etiqueta)}</b>
+            <button type="button" class="dks-f" data-sem="-1" aria-label="Next week"${_atras <= 0 ? ' disabled' : ''}><i class="ti ti-chevron-right" aria-hidden="true"></i></button>
+          </span>
+        </div>
         <div class="dks-thr">${cab}</div>
-        ${cuerpo}
       </div>
+      <div class="dks-filas ${tcls}">${cuerpo}</div>
       ${pies.length ? `<p class="dks-pie">${pies.map(esc).join(' · ')}</p>` : ''}
       ${!din ? '<p class="dks-pie">Bottles come from recipes and pours. A cocktail counts in the bottles it uses.</p>' : ''}`;
     enganchar(caja, maxAtras);
@@ -245,9 +254,11 @@
     const wrap = document.querySelector('.wrap');
     if (!wrap) return;
     _sec = document.createElement('section');
-    _sec.className = 'card section-card dk-sales-sec';
+    // dk-pantalla: la forma de las secciones (desk-shell.css).
+    _sec.className = 'card section-card dk-sales-sec dk-pantalla';
     _sec.id = 'salesSection';
-    _sec.innerHTML = '<h2 class="dks-t">Sales</h2><div id="dkSales"></div>';
+    // El título va dentro de la cabeza de la página (lo pinta pintar()).
+    _sec.innerHTML = '<div id="dkSales"><h2 class="dks-t">Sales</h2></div>';
     wrap.appendChild(_sec);
     // Al abrirse, se lee (toast-sales guarda lo leído media hora) y se pinta.
     new MutationObserver(() => { if (abierta()) { _V = null; pintar(); } })
