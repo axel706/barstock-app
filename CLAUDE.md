@@ -490,6 +490,13 @@ sección de hoy vive tal cual dentro del armazón.
   barra lateral, bajo el logo y antes de las secciones: se MUEVE el
   mismo elemento, que `weekly-cycle.js` encuentra por id y cuyo clic se
   puso al arrancar. En la barra de iconos, sólo su número o su icono.
+- **La barra de estado del iPad** (2026-11-25): la app instalada usa
+  `black-translucent` con `viewport-fit=cover`, así que la página
+  empieza DETRÁS de la hora y la batería. La barra lateral y el header
+  suman `env(safe-area-inset-top)` a su padding (y la lateral, abajo y a
+  la izquierda las suyas); sin eso, el logo, el ciclo, el saludo, la
+  locación y Import/Export/More quedaban debajo, sin poder tocarse. En
+  Chromium vale 0: se mira sirviendo la hoja con 24 px en su lugar.
 
 ## Reglas del dominio que no son obvias
 

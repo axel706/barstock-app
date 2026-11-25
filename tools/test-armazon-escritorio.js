@@ -200,6 +200,13 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   prueba('con nombre, "Hello, Axel" y la fecha', /^Hello, Axel/.test(sal.textContent) && sal.querySelector('span'), sal.textContent);
   prueba('la locación, al centro de la barra', /\.bs-loc-wrap \{\s*position: absolute; left: 50%;[^}]*translate\(-50%, -50%\)/.test(CSS));
 
+  grupo('8d. La barra de estado del iPad (app instalada)');
+  prueba('el viewport es cover y la barra de estado translúcida (la razón de lo de abajo)',
+    /viewport-fit=cover/.test(INDEX) && /status-bar-style" content="black-translucent"/.test(INDEX));
+  prueba('la barra lateral empieza bajo la zona segura', /body\.dk #dkLado \{[^}]*padding: calc\(16px \+ env\(safe-area-inset-top\)\)/.test(CSS));
+  prueba('también en la barra de iconos', /body\.dk #dkLado \{\s*padding: calc\(14px \+ env\(safe-area-inset-top\)\)/.test(CSS));
+  prueba('el header empieza bajo la zona segura', /body\.dk \.wrap > \.bs-header \{[^}]*padding: calc\(12px \+ env\(safe-area-inset-top\)\)/.test(CSS));
+
   grupo('9. El orden de carga');
   const iMod = INDEX.indexOf('src/desk-shell.js');
   const iOpen = INDEX.indexOf('window.bsOpenSection = function');
