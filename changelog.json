@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261125-115544",
+    "items": [
+      "Counting: the bottle box is a touch lighter"
+    ]
+  },
+  {
     "build": "20261125-114014",
     "items": [
       "Count by name: the scan button sits beside the search"
@@ -187,13 +193,6 @@
     "build": "20261122-151204",
     "items": [
       "To buy: Order button in the blue glass style"
-    ]
-  },
-  {
-    "build": "20261122-143217",
-    "items": [
-      "Three animated phone backgrounds",
-      "Aurora, Liquid and Bokeh in Settings › Background"
     ]
   }
 ]

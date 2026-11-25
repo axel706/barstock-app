@@ -625,10 +625,15 @@ body.light .cp-sheet-x{ border-color: rgba(15,23,42,.16); color: #0f172a; }
    panel se queda opaco a propósito: son pantallas de trabajo a una mano
    y el cristal translúcido sobre una cámara resta legibilidad. */
 
-.cp-block,
-.cp-sealed{
-  background: rgba(17,24,39,.86);
-  border: 1px solid rgba(255,255,255,.08);
+/* El cuadro de la botella, un poco más claro que el fondo (Axel,
+   2026-11-25, lámina "Count panel tone", A): con rgba(17,24,39,.86)
+   sobre #0b1220 apenas se separaba del fondo. El vidrio de la botella es
+   una capa blanca encima (.cp-glass), así que se aclara con él y sigue
+   destacando. Va solo: compartía la regla con .cp-sealed, que de todas
+   formas se quita el fondo y el borde más abajo ("sin caja"). */
+.cp-block{
+  background: #151e30;
+  border: 1px solid rgba(255,255,255,.09);
   border-radius: 16px;
   padding: 14px;
   margin: 0 0 12px;
