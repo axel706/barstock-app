@@ -491,6 +491,15 @@ sección de hoy vive tal cual dentro del armazón.
   conteo "from 4 PM". Un día sin nada no se rellena. La cuenta es
   `diasDelCiclo` de mobile-home (en la tarjeta, `semana`); el teléfono
   sigue con su pista.
+- **Orders placed en el escritorio** (lámina 2A, el mismo día): "Next:
+  Southern Thu 4 PM" de título, los siete días desde hoy con el logo de
+  lo que llega cada uno, y cada orden del ciclo (enviada en él o que
+  llega en él; sin transfers) con su logo, botellas, dinero y estado: la
+  hora si aún no llega, "Arrived Tue" si ya pasó su hora (la regla del
+  LIVE). Al pie, "3 orders · $1,562". **"No invoice" no sale aquí**: lo
+  decide Sent, y su carga escribe los enlaces automáticos factura ↔
+  orden; el Home no la dispara. La cuenta es `ordenesDelCiclo` de
+  mobile-home (en la tarjeta, `ordenes`); el teléfono no cambia.
 - **Las ventas de Toast en el Home del escritorio** (Axel, 2026-11-25,
   lámina A: "no tienen el icono de Toast ni las opciones para ver
   botellas/dinero o la semana completa, semanas pasadas"; "el icono un

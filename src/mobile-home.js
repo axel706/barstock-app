@@ -1057,6 +1057,64 @@
     });
   }
 
+  // ── Orders placed en el escritorio (Axel, 2026-11-25, lámina "Cycle
+  // and Orders cards", 2A) ─────────────────────────────────────────────
+  //
+  // La tarjeta es tan alta como la de Toast, y "You are up to date" con
+  // una frase dejaba un hueco. Se llena con las órdenes del ciclo:
+  // arriba los siete días desde hoy con lo que llega cada uno (la misma
+  // cuenta que la pista del teléfono), y debajo cada orden con su
+  // proveedor, botellas, dinero, cuándo se envió y cuándo llega.
+  //
+  // "Llegó" es la hora de entrega (arrivesAt): la regla del LIVE, que
+  // cuenta lo ordenado como llegado a su hora hasta que la factura diga
+  // otra cosa. "No invoice" no sale aquí: lo decide Sent, cuya carga
+  // escribe los enlaces automáticos factura ↔ orden, y el Home no la
+  // dispara. Los transfers tienen su tarjeta.
+  function ordenesDelCiclo(ahoraMs) {
+    const hist = (window.state && Array.isArray(window.state.orderHistory)) ? window.state.orderHistory : [];
+    const W = window.BarStockWeeklyCycle;
+    const ini = W && W.resetAt ? Date.parse(W.resetAt()) : NaN;
+    if (!isFinite(ini)) return null;
+    const ahora = ahoraMs || Date.now();
+    const clave = (ms) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date(ms));
+    const corto = (ms) => new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short' }).format(new Date(ms));
+    const hora = (ms) => new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short',
+      hour: 'numeric', minute: '2-digit' }).format(new Date(ms)).replace(',', '').replace(':00', '');
+    const ordenes = [];
+    for (const o of hist) {
+      const v = String(o.vendor || '').toUpperCase();
+      if (!v || v === 'TRANSFER' || v === 'UNKNOWN') continue;
+      const c = Date.parse(o.createdAt || o.date || '');
+      const a = o.arrivesAt ? Date.parse(o.arrivesAt) : NaN;
+      // Del ciclo: enviada en él, o que llega en él (cada pedido es del
+      // ciclo en que LLEGA).
+      if (!(c >= ini || a >= ini)) continue;
+      ordenes.push({
+        vendor: v, unidades: Number(o.totalUnits) || 0, dinero: Number(o.subtotal) || 0,
+        enviada: isFinite(c) ? corto(c) : '',
+        llega: isFinite(a) ? a : null,
+        estado: !isFinite(a) ? 'sin' : a > ahora ? 'viene' : 'llego',
+        cuando: !isFinite(a) ? '' : a > ahora ? hora(a) : 'Arrived ' + corto(a)
+      });
+    }
+    if (!ordenes.length) return null;
+    // Lo que viene primero (por cuándo llega), después lo que llegó.
+    ordenes.sort((x, y) => (x.estado === 'viene' ? 0 : 1) - (y.estado === 'viene' ? 0 : 1) || (x.llega || 0) - (y.llega || 0));
+    const dias = [];
+    for (let k = 0; k < 7; k++) {
+      const ms = ahora + k * 864e5;
+      const kk = clave(ms);
+      dias.push({ u: corto(ms), hoy: k === 0, provs: [...new Set(ordenes.filter(o => o.llega && clave(o.llega) === kk).map(o => o.vendor))] });
+    }
+    const prox = ordenes.find(o => o.estado === 'viene');
+    return {
+      ordenes, dias,
+      siguiente: prox ? prox.vendor.charAt(0) + prox.vendor.slice(1).toLowerCase() + ' ' + prox.cuando : '',
+      total: ordenes.reduce((s, o) => s + o.dinero, 0)
+    };
+  }
+
   function colocados() {
     if (typeof window.isRowPlaced !== 'function') return [];
     const s = new Set();
@@ -1523,7 +1581,9 @@
             vs: puestos.length + (puestos.length === 1 ? ' vendor' : ' vendors'),
             amt: '',
             btn: 'See orders',
-            go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('orders'); }
+            go: () => { if (window.BarStockMobile) window.BarStockMobile.ir('orders'); },
+            // Las órdenes del ciclo, para el escritorio (ordenesDelCiclo).
+            ordenes: ordenesDelCiclo()
           }, sem ? { libre: sem, kr: 'all sent', vs: '' } : {}));
         }
       }
@@ -3115,6 +3175,7 @@
     // La semana del ciclo día por día (la cuenta de la tarjeta del ciclo
     // del escritorio), para las pruebas.
     _diasDelCiclo: diasDelCiclo,
+    _ordenesDelCiclo: ordenesDelCiclo,
     // La tarjeta de Toast, pintada en otra caja (el Home del escritorio).
     ventas: (caja, repintar, opts) => pintarVentasEn(caja, repintar || (() => pintarVentasEn(caja, null, opts)), opts)
   };

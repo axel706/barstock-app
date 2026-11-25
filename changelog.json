@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261125-180132",
+    "items": [
+      "Desktop: Orders placed lists the cycle orders"
+    ]
+  },
+  {
     "build": "20261125-175656",
     "items": [
       "Desktop: the cycle card shows the week day by day"
@@ -186,13 +192,6 @@
     "build": "20261125-114014",
     "items": [
       "Count by name: the scan button sits beside the search"
-    ]
-  },
-  {
-    "build": "20261125-112626",
-    "items": [
-      "Count by name: scan button in the search bar",
-      "Scan one bottle, then back to the list"
     ]
   }
 ]

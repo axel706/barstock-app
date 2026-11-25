@@ -180,6 +180,25 @@
   #dkHome .dkh-semana .cuenta i { background: transparent; border: 2px solid #fff; }
   #dkHome .dkh-semana .fut p { color: rgba(255, 255, 255, .7); }
 
+  /* Orders placed (lámina 2A): los siete días con el logo de lo que
+     llega, y cada orden del ciclo con su estado. */
+  #dkHome .dkh-osem { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-top: 8px; }
+  #dkHome .dkh-osem > div { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 2px; min-height: 64px; border-radius: 10px; background: rgba(255, 255, 255, .08); }
+  #dkHome .dkh-osem > div.hoy { background: rgba(255, 255, 255, .2); }
+  #dkHome .dkh-osem u { text-decoration: none; font-size: 10.5px; font-weight: 800; color: rgba(255, 255, 255, .85); }
+  #dkHome .dkh-osem img, #dkHome .dkh-ologo img { max-width: 34px; max-height: 20px; width: auto; height: auto; object-fit: contain; }
+  #dkHome .dkh-olist { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 8px; flex: 1; }
+  #dkHome .dkh-ofila { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 12px; background: rgba(0, 0, 0, .18); }
+  #dkHome .dkh-ologo { display: flex; align-items: center; justify-content: center; min-height: 24px; }
+  #dkHome .dkh-otx b { display: block; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #dkHome .dkh-otx small { display: block; font-size: 11.5px; color: rgba(255, 255, 255, .78); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Sin logo, sus iniciales en su color (vendor-logo: --vc). */
+  #dkHome .m-vlogo-ini { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 20px; border-radius: 6px;
+    font-size: 9.5px; font-weight: 900; color: #fff; background: var(--vc, #475569); }
+  #dkHome .dkh-oest { font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 999px; background: rgba(255, 255, 255, .16); color: #fff; white-space: nowrap; }
+  #dkHome .dkh-oest.llego { background: rgba(74, 222, 128, .22); color: #bbf7d0; }
+  #dkHome .dkh-card:has(> .dkh-olist) > .dkh-top { flex: 0 0 auto; }
+
   /* Running out: las botellas del teléfono en fila, con su número debajo
      (lámina A, 2026-11-25). La silueta es la de home-cartas.silueta; sus
      clases (m-hc-vid, m-hc-liq) sólo tienen estilo en el teléfono, así

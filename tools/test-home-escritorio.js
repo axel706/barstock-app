@@ -375,8 +375,33 @@ const H = () => D.getElementById('dkHome');
       { contados: 0, salto: true, pend: 3, hora: '4 PM' })[0].ev.join('').replace(/<[^>]+>/g, '')));
     prueba('las facturas dicen cuántas hubo cada día', /porDia\[k\] = \(porDia\[k\] \|\| 0\) \+ 1/.test(leer('src/mobile-invoices.js')) && /ultima, porDia,/.test(leer('src/mobile-invoices.js')));
     prueba('el teléfono sigue con su pista (la semana sólo la pinta el escritorio)', /libre: libreCiclo/.test(leer('src/mobile-home.js')) && !/dkh-semana|semana\.dias/.test(leer('src/mobile-home.js').replace(/semanaDias/g, '')));
-    prueba('el escritorio la pinta a lo ancho, con "Count Sunday" de título', /function semanaHtml\(c\)/.test(DH) && /\$\{semanaHtml\(c\)\}/.test(DH) && /c\.semana && c\.semana\.titulo\) \|\| c\.tt/.test(DH));
+    prueba('el escritorio la pinta a lo ancho, con "Count Sunday" de título', /function semanaHtml\(c\)/.test(DH) && /\$\{semanaHtml\(c\)\}/.test(DH) && /\(c\.semana && c\.semana\.titulo\) \|\|/.test(DH));
     prueba('y su estilo: hecho, hoy, el domingo de contar', /\.dkh-semana \.hoy i \{/.test(CSS_DH) && /\.dkh-semana \.cuenta i \{/.test(CSS_DH));
+  }
+
+  grupo('7f. Orders placed: las órdenes del ciclo (lámina 2A)');
+  {
+    const w3 = new JSDOM('<!doctype html><body></body>', { runScripts: 'outside-only', url: 'https://x.test/' }).window;
+    w3.console = { log() {}, warn() {}, error() {} };
+    const h = 3600e3, d = 864e5, n = Date.now();
+    w3.state = { master: [], orderHistory: [
+      { vendor: 'SOUTHERN', createdAt: new Date(n - h).toISOString(), arrivesAt: new Date(n + d).toISOString(), totalUnits: 18, subtotal: 612 },
+      { vendor: 'BREAKTHRU', createdAt: new Date(n - 2 * d).toISOString(), arrivesAt: new Date(n - d).toISOString(), totalUnits: 24, subtotal: 740 },
+      { vendor: 'TRANSFER', createdAt: new Date(n - h).toISOString(), totalUnits: 3 },
+      { vendor: 'LOOP', createdAt: new Date(n - 20 * d).toISOString(), arrivesAt: new Date(n - 19 * d).toISOString(), totalUnits: 5, subtotal: 90 } ] };
+    w3.BarStockWeeklyCycle = { resetAt: () => new Date(n - 3 * d).toISOString() };
+    w3.eval(leer('src/mobile-home.js'));
+    const O = w3.BarStockMobileHome._ordenesDelCiclo();
+    prueba('las órdenes del ciclo (no las de antes ni los transfers)', !!O && O.ordenes.map(x => x.vendor).join(',') === 'SOUTHERN,BREAKTHRU', O && O.ordenes.map(x => x.vendor).join(','));
+    prueba('lo que viene primero, con su hora', O.ordenes[0].estado === 'viene' && !!O.ordenes[0].cuando && O.siguiente.indexOf('Southern') === 0);
+    prueba('lo que ya pasó su hora: "Arrived" (la regla del LIVE)', O.ordenes[1].estado === 'llego' && /^Arrived /.test(O.ordenes[1].cuando));
+    prueba('con sus botellas y su dinero, y el total', O.ordenes[0].unidades === 18 && O.ordenes[0].dinero === 612 && O.total === 1352);
+    prueba('los siete días desde hoy, con quién llega cada uno', O.dias.length === 7 && O.dias[0].hoy && O.dias[1].provs.includes('SOUTHERN'));
+    prueba('sin ciclo, nada (no se inventa)', (() => { w3.BarStockWeeklyCycle.resetAt = () => ''; return w3.BarStockMobileHome._ordenesDelCiclo() === null; })());
+    prueba('"No invoice" no se decide aquí (la carga de Sent escribe enlaces)', !/BarStockMobileHistory|invoice_order_links/.test(leer('src/mobile-home.js').slice(leer('src/mobile-home.js').indexOf('function ordenesDelCiclo'), leer('src/mobile-home.js').indexOf('function colocados'))));
+    prueba('el escritorio la pinta: la semana con logos y una fila por orden', /function ordenesHtml\(c\)/.test(DH) && /\$\{ordenesHtml\(c\)\}/.test(DH) && /BarStockVendorLogo/.test(DH));
+    prueba('con "Next: …" de título y el total al pie', /'Next: ' \+ c\.ordenes\.siguiente/.test(DH) && /' orders'\) \+ \(O\.total \? ' · ' \+ money\(O\.total\)/.test(DH));
+    prueba('el teléfono no cambia (ordenes sólo la pinta el escritorio)', !/dkh-olist|ordenesHtml/.test(leer('src/mobile-home.js')));
   }
 
   grupo('8. Una pantalla del teléfono, en el escritorio');

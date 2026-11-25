@@ -336,12 +336,16 @@
     if (c.btn2 && c.fase !== 'agota') bs.push(`<button type="button" class="dkh-b" data-go2="${i}">${esc(c.btn2)}</button>`);
     if (c.btn3 && !c.transfer) bs.push(`<button type="button" class="dkh-b" data-gob3="${i}">${esc(c.btn3)}</button>`);
     const nota = elegir ? '<span class="dkh-nota">Choose your product on your phone</span>' : '';
-    return (bs.length || nota || c.vs) ? `<div class="dkh-acts">${c.vs ? `<span class="dkh-vs">${esc(c.vs)}</span>` : ''}${nota}${bs.join('')}</div>` : '';
+    // Con sus órdenes, el pie las cuenta: "3 orders · $1,562".
+    const O = c.ordenes && c.ordenes.ordenes && c.ordenes.ordenes.length ? c.ordenes : null;
+    const vs = O ? O.ordenes.length + (O.ordenes.length === 1 ? ' order' : ' orders') + (O.total ? ' · ' + money(O.total) : '') : c.vs;
+    return (bs.length || nota || vs) ? `<div class="dkh-acts">${vs ? `<span class="dkh-vs">${esc(vs)}</span>` : ''}${nota}${bs.join('')}</div>` : '';
   }
 
   function cuerpo(c, i) {
     const partes = [];
-    if (c.sub) partes.push(`<p class="dkh-sub">${esc(c.sub)}</p>`);
+    // Con la lista de órdenes, la frase de "You are up to date" sobra.
+    if (c.sub && !(c.ordenes && c.ordenes.ordenes && c.ordenes.ordenes.length)) partes.push(`<p class="dkh-sub">${esc(c.sub)}</p>`);
     if (c.lista) partes.push(`<div class="dkh-lista">${c.lista.map(x => '<span>' + x + '</span>').join('')}</div>`);
     // El ciclo, día por día (lámina "Cycle and Orders cards" 1A): la
     // semana entera llena el alto de la tarjeta. La arma mobile-home
@@ -372,6 +376,25 @@
       `<u>${esc(x.u)}</u><i aria-hidden="true"></i><p>${x.ev.join(' · ')}</p></li>`).join('')}</ol>`;
   }
 
+  // Orders placed: la semana con lo que llega cada día y las órdenes del
+  // ciclo (lámina "Cycle and Orders cards" 2A). Los datos, de
+  // mobile-home (ordenesDelCiclo); el logo, de vendor-logo.js.
+  function ordenesHtml(c) {
+    const O = c && c.ordenes;
+    if (!O || !O.ordenes || !O.ordenes.length) return '';
+    const VL = window.BarStockVendorLogo;
+    const logo = (v) => VL && VL.html ? VL.html(v) : `<span class="dkh-ini">${esc(String(v).slice(0, 2))}</span>`;
+    const nombre = (v) => v.charAt(0) + v.slice(1).toLowerCase();
+    const dias = `<div class="dkh-osem">${O.dias.map(d =>
+      `<div class="${d.hoy ? 'hoy' : ''}"><u>${esc(d.u)}</u>${d.provs.map(logo).join('')}</div>`).join('')}</div>`;
+    const filas = `<div class="dkh-olist">${O.ordenes.map(o => `
+      <div class="dkh-ofila"${o.enviada ? ` title="Placed ${esc(o.enviada)}"` : ''}><span class="dkh-ologo">${logo(o.vendor)}</span>
+        <span class="dkh-otx"><b>${esc(nombre(o.vendor))}</b>
+          <small>${[o.unidades ? Math.round(o.unidades) + (o.unidades === 1 ? ' bottle' : ' bottles') : '', o.dinero ? money(o.dinero) : ''].filter(Boolean).map(esc).join(' · ')}</small></span>
+        ${o.cuando ? `<span class="dkh-oest ${o.estado}">${esc(o.cuando)}</span>` : ''}</div>`).join('')}</div>`;
+    return dias + filas;
+  }
+
   function tarjeta(c, i, clase) {
     const amt = c.amt ? `<div class="dkh-amt">${esc(c.amt)}${c.amtPie ? `<small>${esc(c.amtPie)}</small>` : ''}</div>` : '';
     return `
@@ -379,12 +402,13 @@
         <div class="dkh-k"><span>${c.kHtml ? c.k : esc(c.k)}</span>${c.kr ? `<i>${esc(c.kr)}</i>` : ''}</div>
         <div class="dkh-top">
           <div class="dkh-txt">
-            <h3>${esc((c.semana && c.semana.titulo) || c.tt)}${c.ttU ? ` <small>${esc(c.ttU)}</small>` : ''}</h3>
+            <h3>${esc((c.semana && c.semana.titulo) || (c.ordenes && c.ordenes.siguiente ? 'Next: ' + c.ordenes.siguiente : '') || c.tt)}${c.ttU ? ` <small>${esc(c.ttU)}</small>` : ''}</h3>
             ${cuerpo(c, i)}
           </div>
           ${amt}
         </div>
         ${semanaHtml(c)}
+        ${ordenesHtml(c)}
         ${botones(c, i)}
       </article>`;
   }
