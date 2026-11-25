@@ -551,7 +551,24 @@
       // pero no iguales".
       //
       // yFull .68, a media bajada del hombro (el criterio de botanist).
-      p: [[0,0.767], [0.0156,0.9255], [0.0469,0.9892], [0.0781,0.9892], [0.1094,0.9892], [0.1406,0.9892], [0.1719,0.9892], [0.2031,0.9892], [0.2344,0.9892], [0.2656,0.9892], [0.2969,0.9892], [0.3281,0.9892], [0.3594,0.9892], [0.3906,0.9892], [0.4219,0.9892], [0.4531,0.9923], [0.4844,1], [0.5156,1], [0.5469,1], [0.5781,0.9969], [0.6094,0.9962], [0.6406,0.9439], [0.6719,0.7834], [0.7031,0.5046], [0.7344,0.4094], [0.7656,0.4194], [0.7969,0.4194], [0.8281,0.4147], [0.8594,0.4009], [0.8906,0.3978], [0.9219,0.3986], [0.9531,0.4378], [0.9844,0.4359], [1,0.4014]]
+      p: [[0,0.767], [0.0156,0.9255], [0.0469,0.9892], [0.0781,0.9892], [0.1094,0.9892], [0.1406,0.9892], [0.1719,0.9892], [0.2031,0.9892], [0.2344,0.9892], [0.2656,0.9892], [0.2969,0.9892], [0.3281,0.9892], [0.3594,0.9892], [0.3906,0.9892], [0.4219,0.9892], [0.4531,0.9923], [0.4844,1], [0.5156,1], [0.5469,1], [0.5781,0.9969], [0.6094,0.9962], [0.6406,0.9439], [0.6719,0.7834], [0.7031,0.5046], [0.7344,0.4094], [0.7656,0.4194], [0.7969,0.4194], [0.8281,0.4147], [0.8594,0.4009], [0.8906,0.3978], [0.9219,0.3986], [0.9531,0.4378], [0.9844,0.4359], [1,0.4014]],
+      // Las marcas (tanda 7, 2026-11-25, de la foto de Total Wine que mandó
+      // Axel, 220 × 220 con la botella de 48 px de ancho: el grueso de las
+      // letras es aproximado por el tamaño). La foto es la ORGANIC: su renglón
+      // ORGANIC (de 0.21 a 0.23) no va, porque la normal no lo lleva. Todo va
+      // impreso en el vidrio esmerilado: el palacio (lo GRANDE de la botella,
+      // calcado por su gris, la mitad izquierda reflejada), BELVEDERE y VODKA,
+      // la tira vertical del cuello (girada 90°) y la cápsula de arriba, que
+      // ENVUELVE, de 0.925 a la punta (medida en la rejilla: sólo se ven sus
+      // cantos dorados, el centro es un brillo). No van: los árboles del
+      // palacio (muy tenues) ni la letra chica de abajo.
+      marcas: [
+        {tipo: 'dibujo', puntos: [[-0.787, 0.2854], [-0.851, 0.2968], [-0.809, 0.3562], [-0.894, 0.3699], [-0.66, 0.3904], [-0.362, 0.3858], [-0.021, 0.4041], [0.021, 0.4041], [0.362, 0.3858], [0.66, 0.3904], [0.894, 0.3699], [0.809, 0.3562], [0.851, 0.2968], [0.787, 0.2854]]},
+        {tipo: 'dibujo', puntos: [[-1.15, 0.925], [1.15, 0.925], [1.15, 0.998], [-1.15, 0.998]]},
+        {tipo: 'texto', y: [0.233, 0.282], ancho: 0.87, renglones: [{g: 0.04, largo: 1, palabras: [9]}]},
+        {tipo: 'texto', y: [0.192, 0.208], ancho: 0.4, x: -0.01, renglones: [{g: 0.016, largo: 1, palabras: [5]}]},
+        {tipo: 'texto', y: [0.885, 0.915], ancho: 1.09, rot: 90, renglones: [{g: 0.025, largo: 1, palabras: [9]}]}
+      ],
     },
     ketel_one: {
       name: 'Ketel One', asp: 4.63, yFull: 0.75, pourable: true,
@@ -662,7 +679,31 @@
       //
       // Recta y alta, hombro corto del 72 % al 80 % y cuello recto. yFull
       // .75, a media bajada del hombro.
-      p: [[0,0.383], [0.0156,0.5709], [0.0469,0.8298], [0.0781,0.8298], [0.1094,0.8298], [0.1406,0.8298], [0.1719,0.8426], [0.2031,0.8511], [0.2344,0.8723], [0.2656,0.8723], [0.2969,0.8865], [0.3281,0.8936], [0.3594,0.8936], [0.3906,0.8936], [0.4219,0.9149], [0.4531,0.9362], [0.4844,0.9362], [0.5156,0.9362], [0.5469,0.9617], [0.5781,0.9787], [0.6094,0.9787], [0.6406,0.9787], [0.6719,0.9965], [0.7031,0.9645], [0.7344,0.8], [0.7656,0.5213], [0.7969,0.3901], [0.8281,0.383], [0.8594,0.3723], [0.8906,0.3617], [0.9219,0.3617], [0.9531,0.3617], [0.9844,0.3574], [1,0.2695]]
+      p: [[0,0.383], [0.0156,0.5709], [0.0469,0.8298], [0.0781,0.8298], [0.1094,0.8298], [0.1406,0.8298], [0.1719,0.8426], [0.2031,0.8511], [0.2344,0.8723], [0.2656,0.8723], [0.2969,0.8865], [0.3281,0.8936], [0.3594,0.8936], [0.3906,0.8936], [0.4219,0.9149], [0.4531,0.9362], [0.4844,0.9362], [0.5156,0.9362], [0.5469,0.9617], [0.5781,0.9787], [0.6094,0.9787], [0.6406,0.9787], [0.6719,0.9965], [0.7031,0.9645], [0.7344,0.8], [0.7656,0.5213], [0.7969,0.3901], [0.8281,0.383], [0.8594,0.3723], [0.8906,0.3617], [0.9219,0.3617], [0.9531,0.3617], [0.9844,0.3574], [1,0.2695]],
+      // Las marcas (tanda 7, 2026-11-25, de la foto de Total Wine que mandó
+      // Axel, Macallan 12 Double Cask, 281 × 1017; calcadas con
+      // tools/marcas/calcar.py): la etiqueta entera, que ENVUELVE (blanca, con
+      // la banda azul y dorada arriba y abajo: arriba en arco, de 0.581 en
+      // ±0.89 a 0.590 en el eje; abajo de 0.175 a 0.171; el calco salía con
+      // dientes por los puntos dorados de la banda y se dejó en ese arco
+      // medido), la cápsula dorada del cuello (de 0.81 a la punta, envuelve)
+      // y el triángulo azul del hombro, armado por sus tres vértices medidos en
+      // los píxeles (un triángulo; calcado se comía el licor, del mismo tono
+      // que su filo dorado). Los renglones: The, MACALLAN, HIGHLAND SINGLE
+      // MALT, SCOTCH WHISKY, el 12 y DOUBLE CASK. No van: el castillo (chico),
+      // YEARS OLD y el párrafo (letra chica), los barriles y el 12 del
+      // triángulo (no se separa de él en la foto).
+      marcas: [
+        {tipo: 'dibujo', puntos: [[-1.15, 0.581], [-0.889, 0.581], [-0.6, 0.5859], [-0.3, 0.589], [0, 0.59], [0.3, 0.589], [0.6, 0.5859], [0.889, 0.581], [1.15, 0.581], [1.15, 0.1752], [0.779, 0.1752], [0.4, 0.1723], [0, 0.1712], [-0.4, 0.1723], [-0.779, 0.1752], [-1.15, 0.1752]]},
+        {tipo: 'dibujo', puntos: [[-1.15, 0.81], [1.15, 0.81], [1.15, 0.998], [-1.15, 0.998]]},
+        {tipo: 'dibujo', puntos: [[-0.47, 0.748], [0.33, 0.748], [-0.05, 0.665]]},
+        {tipo: 'texto', y: [0.474, 0.504], ancho: 0.16, x: -0.043, renglones: [{g: 0.029, largo: 1, palabras: [3]}]},
+        {tipo: 'texto', y: [0.437, 0.468], ancho: 0.77, x: -0.011, renglones: [{g: 0.031, largo: 1, palabras: [8]}]},
+        {tipo: 'texto', y: [0.417, 0.427], ancho: 0.635, x: -0.022, renglones: [{g: 0.01, largo: 1, palabras: [8, 6, 4]}]},
+        {tipo: 'texto', y: [0.404, 0.414], ancho: 0.475, x: -0.011, renglones: [{g: 0.01, largo: 1, palabras: [6, 6]}]},
+        {tipo: 'texto', y: [0.345, 0.385], ancho: 0.2, x: 0.022, renglones: [{g: 0.04, largo: 1, palabras: [2]}]},
+        {tipo: 'texto', y: [0.278, 0.29], ancho: 0.42, renglones: [{g: 0.012, largo: 1, palabras: [6, 4]}]}
+      ],
     },
     glenfiddich: {
       name: 'Glenfiddich', asp: 3.93, yFull: 0.75, pourable: true,
@@ -1703,7 +1744,26 @@
       // La de St. Elder. 424 px de alto, desajuste de area 0.93 %. Recta,
       // hombro corto del 70 % al 77 %. yFull .78 medida viendo el liquido,
       // que llega al cuello debajo de la capsula verde.
-      p: [[0,0.3929], [0.0156,0.8036], [0.0469,0.9835], [0.0781,0.9725], [0.1094,0.9176], [0.1406,0.8897], [0.1719,0.897], [0.2031,0.9011], [0.2344,0.9018], [0.2656,0.9107], [0.2969,0.9196], [0.3281,0.921], [0.3594,0.9272], [0.3906,0.9334], [0.4219,0.9375], [0.4531,0.9444], [0.4844,0.9554], [0.5156,0.9554], [0.5469,0.9615], [0.5781,0.9649], [0.6094,0.9725], [0.6406,0.9746], [0.6719,0.9815], [0.7031,0.9483], [0.7344,0.671], [0.7656,0.4258], [0.7969,0.3819], [0.8281,0.3757], [0.8594,0.375], [0.8906,0.375], [0.9219,0.3709], [0.9531,0.3777], [0.9844,0.3626], [1,0.3274]]
+      p: [[0,0.3929], [0.0156,0.8036], [0.0469,0.9835], [0.0781,0.9725], [0.1094,0.9176], [0.1406,0.8897], [0.1719,0.897], [0.2031,0.9011], [0.2344,0.9018], [0.2656,0.9107], [0.2969,0.9196], [0.3281,0.921], [0.3594,0.9272], [0.3906,0.9334], [0.4219,0.9375], [0.4531,0.9444], [0.4844,0.9554], [0.5156,0.9554], [0.5469,0.9615], [0.5781,0.9649], [0.6094,0.9725], [0.6406,0.9746], [0.6719,0.9815], [0.7031,0.9483], [0.7344,0.671], [0.7656,0.4258], [0.7969,0.3819], [0.8281,0.3757], [0.8594,0.375], [0.8906,0.375], [0.9219,0.3709], [0.9531,0.3777], [0.9844,0.3626], [1,0.3274]],
+      // Las marcas (tanda 7, 2026-11-25, de la foto del FRENTE de Total Wine
+      // que mandó Axel, 220 × 220 con la botella de 57 px de ancho; la de
+      // antes era la contraetiqueta). El crema del cuerpo es el licor, no una
+      // etiqueta. Calcado: el escudo adornado del centro (de 0.121 a 0.673, la
+      // mitad izquierda reflejada: arriba a la derecha lo mordía el brillo) y
+      // la cápsula verde del cuello, que ENVUELVE, de 0.805 a la punta (recta:
+      // el calco salía con un diente por la franja clara de su letrero). Los
+      // renglones, leídos en la rejilla del 1 % (la tinta crema sobre verde
+      // engañaba a renglones.py): ST. ELDER, NATURAL, ELDERFLOWER y LIQUEUR,
+      // con el grueso aproximado por el tamaño de la foto. No van: la letra
+      // chica de debajo de LIQUEUR ni el árbol (chico).
+      marcas: [
+        {tipo: 'dibujo', puntos: [[-0.214, 0.1347], [-0.5, 0.1621], [-0.625, 0.1507], [-0.679, 0.121], [-0.839, 0.1233], [-0.857, 0.6735], [-0.732, 0.6667], [-0.732, 0.6347], [-0.571, 0.6142], [-0.286, 0.6553], [-0.179, 0.6598], [0.0, 0.6461], [0.179, 0.6598], [0.286, 0.6553], [0.571, 0.6142], [0.732, 0.6347], [0.732, 0.6667], [0.857, 0.6735], [0.839, 0.1233], [0.679, 0.121], [0.625, 0.1507], [0.5, 0.1621], [0.214, 0.1347]]},
+        {tipo: 'dibujo', puntos: [[-1.15, 0.805], [1.15, 0.805], [1.15, 0.998], [-1.15, 0.998]]},
+        {tipo: 'texto', y: [0.365, 0.425], ancho: 0.8, renglones: [{g: 0.055, largo: 1, palabras: [2, 5]}]},
+        {tipo: 'texto', y: [0.333, 0.343], ancho: 0.345, renglones: [{g: 0.01, largo: 1, palabras: [7]}]},
+        {tipo: 'texto', y: [0.305, 0.33], ancho: 0.73, renglones: [{g: 0.022, largo: 1, palabras: [11]}]},
+        {tipo: 'texto', y: [0.283, 0.298], ancho: 0.38, renglones: [{g: 0.014, largo: 1, palabras: [7]}]}
+      ],
     },
     st_germain: {
       name: 'St-Germain', asp: 3.78, yFull: 0.84, pourable: true,

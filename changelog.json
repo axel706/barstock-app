@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-102935",
+    "items": [
+      "Counting: label guides on Belvedere, St. Elder",
+      "and Macallan"
+    ]
+  },
+  {
     "build": "20261124-150853",
     "items": [
       "Counting: label guides on 4 more bottles",
@@ -183,12 +190,6 @@
     "build": "20261122-121736",
     "items": [
       "Home: On the shelf no longer shows an outdated number first"
-    ]
-  },
-  {
-    "build": "20261122-120844",
-    "items": [
-      "App icon back to the flat B"
     ]
   }
 ]

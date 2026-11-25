@@ -54,7 +54,8 @@ const TANDA3 = ['casa_noble', 'glenfiddich', 'chivas', 'monkey_shoulder', 'ciroc
 const TANDA4 = ['oban', 'boulard', 'balvenie', 'michters', 'skrewball', 'bols', 'two_gingers', 'dads_hat', 'whistlepig'];
 const TANDA5 = ['frangelico', 'st_germain', 'mozart', 'averna', 'blade_and_bow', 'don_julio_anejo', 'nikka_coffey', 'jura', 'drambuie'];
 const TANDA6 = ['v360', 'carlo_rossi', 'bluecoat', 'botanist'];
-for (const k of ['woodford', 'elijah_craig', 'basil_hayden'].concat(TANDA1, TANDA2, TANDA3, TANDA4, TANDA5, TANDA6)) {
+const TANDA7 = ['belvedere', 'st_elder', 'macallan'];
+for (const k of ['woodford', 'elijah_craig', 'basil_hayden'].concat(TANDA1, TANDA2, TANDA3, TANDA4, TANDA5, TANDA6, TANDA7)) {
   const P = B.PROFILES[k];
   const ms = P && P.marcas;
   prueba(k + ': lleva marcas', Array.isArray(ms) && ms.length >= 3, ms && ms.length);
@@ -336,6 +337,55 @@ console.log('\ntanda 6: calcada, de fotos chicas');
   };
   for (const k of TANDA6) {
     const P = B.PROFILES[k]; if (!P || !P.marcas) continue;
+    const bx = B.boxFor(k, W, H, PAD);
+    const dib = P.marcas.filter(m => m.tipo === 'dibujo').map(m => m.puntos.map(([x, y]) => [bx.cx + x * bx.maxR, bx.base - y * bx.usable]));
+    const barras = [...B.marcasFor(k, W, H, PAD).matchAll(/<rect class="cp-barra" x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/g)].map(m => m.slice(1).map(Number));
+    let fuera = 0;
+    for (const [x, y, w, h] of barras) {
+      const yc = y + h / 2, xc = x + w / 2;
+      for (const d of dib) {
+        const xs = corte(d, yc);
+        for (let i = 0; i + 1 < xs.length; i += 2) {
+          if (xc > xs[i] && xc < xs[i + 1] && (x < xs[i] - 0.5 || x + w > xs[i + 1] + 0.5)) fuera++;
+        }
+      }
+    }
+    prueba(k + ': ninguna barra se sale de la etiqueta que la contiene', fuera === 0, fuera);
+  }
+}
+
+console.log('\ntanda 7: calcada, de las fotos de Total Wine');
+{
+  // Axel mandó fotos de Total Wine (2026-11-25). Entraron Belvedere (la
+  // foto es la Organic: su renglón ORGANIC no va), St. Elder (ahora el
+  // frente) y Macallan 12 Double Cask. Fuera: Don Julio Blanco (la foto
+  // calza con la silueta redonda, `don_julio_blanco`, no con `don_julio`)
+  // y Smirnoff No. 21 (la silueta es la compartida con los sabores).
+  for (const k of TANDA7) {
+    const ms = (B.PROFILES[k] && B.PROFILES[k].marcas) || [];
+    prueba(k + ': lleva al menos una marca calcada o medida como dibujo', ms.some(m => m.tipo === 'dibujo' && m.puntos.length >= 3));
+  }
+  // La etiqueta de Macallan, su cápsula y las de St. Elder y Belvedere dan
+  // la vuelta: llegan de borde a borde.
+  for (const k of TANDA7) {
+    const ms = (B.PROFILES[k] && B.PROFILES[k].marcas) || [];
+    prueba(k + ': lo que envuelve llega al borde por los dos lados', ms.some(m => m.tipo === 'dibujo' &&
+      Math.min(...m.puntos.map(q => q[0])) <= -1 && Math.max(...m.puntos.map(q => q[0])) >= 1));
+  }
+  prueba('Belvedere: sin el renglón ORGANIC (de 0.21 a 0.23), que la normal no lleva',
+    !((B.PROFILES.belvedere.marcas || []).some(m => m.tipo === 'texto' && m.y[0] >= 0.205 && m.y[1] <= 0.235)));
+  prueba('Smirnoff: la silueta compartida sigue sin marcas', !B.PROFILES.smirnoff.marcas);
+  prueba('Don Julio de 750 (`don_julio`) sigue sin marcas', !B.PROFILES.don_julio.marcas);
+  const corte = (pts, y) => {
+    const xs = [];
+    for (let i = 0; i < pts.length; i++) {
+      const [x1, y1] = pts[i], [x2, y2] = pts[(i + 1) % pts.length];
+      if ((y1 <= y && y2 > y) || (y2 <= y && y1 > y)) xs.push(x1 + (y - y1) * (x2 - x1) / (y2 - y1));
+    }
+    return xs.sort((a, b) => a - b);
+  };
+  for (const k of TANDA7) {
+    const P = B.PROFILES[k]; if (!P || !P.marcas) { prueba(k + ': ninguna barra se sale de la etiqueta que la contiene', false, 'sin marcas'); continue; }
     const bx = B.boxFor(k, W, H, PAD);
     const dib = P.marcas.filter(m => m.tipo === 'dibujo').map(m => m.puntos.map(([x, y]) => [bx.cx + x * bx.maxR, bx.base - y * bx.usable]));
     const barras = [...B.marcasFor(k, W, H, PAD).matchAll(/<rect class="cp-barra" x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/g)].map(m => m.slice(1).map(Number));

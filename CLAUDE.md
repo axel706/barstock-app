@@ -506,7 +506,22 @@ falta una del frente), Clase Azul (pintada a mano, sin un borde que
 calcar) y `don_julio` (la foto es del Reposado y la silueta la comparte el
 Blanco de 750; sin foto del Blanco no se puede comprobar que su etiqueta
 sea igual). En `cajas.json`, `w` y `h` son el tamaño de la IMAGEN, no de
-la caja: `encima.js` los usa para dibujar la foto. Smirnoff se dejó fuera: su
+la caja: `encima.js` los usa para dibujar la foto. La tanda 7 (2026-11-25,
+en develop, pendiente de que Axel la apruebe sobre la lámina), de fotos de
+Total Wine que mandó Axel (la red de la sesión no deja bajarlas: su página
+contesta con un captcha): Belvedere (la foto es la ORGANIC; su renglón
+ORGANIC no va), St. Elder (ahora el frente) y Macallan 12 Double Cask.
+Fuera de la 7: **Don Julio Blanco de 750**, cuya foto calza con la silueta
+REDONDA, `don_julio_blanco` (error medio 0.007), y no con `don_julio`
+(0.065): o la foto es la de 1.75 L, o el Blanco de 750 es la botella
+redonda y la regla de `bottle-assign.js` que manda "Don Julio Blanco" a
+`don_julio` le da la forma del Reposado (eso cambia el conteo: lo decide
+Axel, con una foto suya del Blanco de 750). Y Smirnoff No. 21: su forma
+es la de la silueta compartida (0.021), así que unas marcas propias piden
+una clave `smirnoff_21` con la misma forma, cambiar qué nombre va a cuál
+(`test-silueta-smirnoff` exige hoy que "SMIRNOFF NO. 21" y "Smirnoff
+Vodka" vayan a `smirnoff`) y reasignar a mano lo que ya tiene su forma
+guardada. Smirnoff: su
 silueta salió de la foto de Vanilla y la comparten los sabores, y la
 No. 21 tiene otra etiqueta. Las
 demás se añaden por tandas, de las fotos que Axel ya mandó para las
