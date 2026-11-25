@@ -39,7 +39,7 @@ const B = window.BarStockBottleProfiles;
 const E = [
   ['blantons', "Blanton's", 1.98, 0.59],
   ['jura', 'Jura', 2.87, 0.68],
-  ['macallan', 'Macallan', 3.87, 0.75]
+  ['macallan', 'Macallan', 3.94, 0.75]
 ];
 
 console.log('\nexisten y se ofrecen, con su esbeltez y su linea de llena');
@@ -59,7 +59,7 @@ prueba("Blanton's: el tapon con relieve, mas ancho que el cuello", r('blantons',
 prueba('Jura: cintura entre la base y el hombro', r('jura', 0.3) < r('jura', 0.15) - 0.05 && r('jura', 0.3) < r('jura', 0.58) - 0.05,
   [0.15, 0.3, 0.58].map(y => r('jura', y).toFixed(2)).join(' '));
 prueba('Jura: hombro corto', r('jura', 0.62) > 0.95 && r('jura', 0.75) < 0.5, r('jura', 0.62).toFixed(2) + ' → ' + r('jura', 0.75).toFixed(2));
-prueba('Macallan: recta y alta, hombro arriba', r('macallan', 0.7) > 0.95 && r('macallan', 0.8) < 0.42, r('macallan', 0.7).toFixed(2) + ' → ' + r('macallan', 0.8).toFixed(2));
+prueba('Macallan: alta, hombro arriba', r('macallan', 0.7) > 0.95 && r('macallan', 0.8) < 0.42, r('macallan', 0.7).toFixed(2) + ' → ' + r('macallan', 0.8).toFixed(2));
 
 console.log('\npor nombre');
 {

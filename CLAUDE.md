@@ -509,8 +509,16 @@ sea igual). En `cajas.json`, `w` y `h` son el tamaño de la IMAGEN, no de
 la caja: `encima.js` los usa para dibujar la foto. La tanda 7 (2026-11-25,
 en develop, pendiente de que Axel la apruebe sobre la lámina), de fotos de
 Total Wine que mandó Axel (la red de la sesión no deja bajarlas: su página
-contesta con un captcha): Belvedere (la foto es la ORGANIC; su renglón
-ORGANIC no va), St. Elder (ahora el frente) y Macallan 12 Double Cask.
+contesta con un captcha): Belvedere (la ORGANIC, la que tienen, con su
+renglón ORGANIC), St. Elder (ahora el frente) y Macallan 12 Double Cask.
+Corregida el mismo día sobre la lámina: ORGANIC entre BELVEDERE y VODKA;
+la etiqueta de St. Elder, CALCADA (un cartucho con corona arriba y abajo,
+no el rectángulo con muescas de la primera versión; sin color propio, se
+calcó por exclusión del licor crema, con los cantos fuera); y la SILUETA
+de Macallan rehecha desde esa foto (desajuste 0.61 % contra 1.20 % de la
+vieja, que salía de una foto de 47 px y era una escalera; la fracción a
+cada altura cambia 1.2 puntos como mucho), con YEARS OLD y la letra chica
+de abajo en bloques ("lo puedes concentrar como un solo bloque").
 Fuera de la 7: **Don Julio Blanco de 750**, cuya foto calza con la silueta
 REDONDA, `don_julio_blanco` (error medio 0.007), y no con `don_julio`
 (0.065): o la foto es la de 1.75 L, o el Blanco de 750 es la botella

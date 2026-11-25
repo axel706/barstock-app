@@ -554,10 +554,12 @@
       p: [[0,0.767], [0.0156,0.9255], [0.0469,0.9892], [0.0781,0.9892], [0.1094,0.9892], [0.1406,0.9892], [0.1719,0.9892], [0.2031,0.9892], [0.2344,0.9892], [0.2656,0.9892], [0.2969,0.9892], [0.3281,0.9892], [0.3594,0.9892], [0.3906,0.9892], [0.4219,0.9892], [0.4531,0.9923], [0.4844,1], [0.5156,1], [0.5469,1], [0.5781,0.9969], [0.6094,0.9962], [0.6406,0.9439], [0.6719,0.7834], [0.7031,0.5046], [0.7344,0.4094], [0.7656,0.4194], [0.7969,0.4194], [0.8281,0.4147], [0.8594,0.4009], [0.8906,0.3978], [0.9219,0.3986], [0.9531,0.4378], [0.9844,0.4359], [1,0.4014]],
       // Las marcas (tanda 7, 2026-11-25, de la foto de Total Wine que mandó
       // Axel, 220 × 220 con la botella de 48 px de ancho: el grueso de las
-      // letras es aproximado por el tamaño). La foto es la ORGANIC: su renglón
-      // ORGANIC (de 0.21 a 0.23) no va, porque la normal no lo lleva. Todo va
-      // impreso en el vidrio esmerilado: el palacio (lo GRANDE de la botella,
-      // calcado por su gris, la mitad izquierda reflejada), BELVEDERE y VODKA,
+      // letras es aproximado por el tamaño). La foto es la ORGANIC, la que
+      // tienen (Axel, 2026-11-25: "le falta el texto organic que está entre
+      // las 2 líneas"). Todo va impreso en el vidrio esmerilado: el palacio
+      // (lo GRANDE de la botella, calcado por su gris, la mitad izquierda
+      // reflejada), BELVEDERE, ORGANIC (de 0.211 a 0.226, la mitad del ancho,
+      // leído en la rejilla del 1 %) y VODKA,
       // la tira vertical del cuello (girada 90°) y la cápsula de arriba, que
       // ENVUELVE, de 0.925 a la punta (medida en la rejilla: sólo se ven sus
       // cantos dorados, el centro es un brillo). No van: los árboles del
@@ -566,6 +568,7 @@
         {tipo: 'dibujo', puntos: [[-0.787, 0.2854], [-0.851, 0.2968], [-0.809, 0.3562], [-0.894, 0.3699], [-0.66, 0.3904], [-0.362, 0.3858], [-0.021, 0.4041], [0.021, 0.4041], [0.362, 0.3858], [0.66, 0.3904], [0.894, 0.3699], [0.809, 0.3562], [0.851, 0.2968], [0.787, 0.2854]]},
         {tipo: 'dibujo', puntos: [[-1.15, 0.925], [1.15, 0.925], [1.15, 0.998], [-1.15, 0.998]]},
         {tipo: 'texto', y: [0.233, 0.282], ancho: 0.87, renglones: [{g: 0.04, largo: 1, palabras: [9]}]},
+        {tipo: 'texto', y: [0.211, 0.226], ancho: 0.5, renglones: [{g: 0.014, largo: 1, palabras: [7]}]},
         {tipo: 'texto', y: [0.192, 0.208], ancho: 0.4, x: -0.01, renglones: [{g: 0.016, largo: 1, palabras: [5]}]},
         {tipo: 'texto', y: [0.885, 0.915], ancho: 1.09, rot: 90, renglones: [{g: 0.025, largo: 1, palabras: [9]}]}
       ],
@@ -671,15 +674,22 @@
       ],
     },
     macallan: {
-      name: 'Macallan', asp: 3.87, yFull: 0.75, pourable: true,
-      // La de Macallan; Axel: "todos los Macallan son iguales". Medida de
-      // una foto DIMINUTA (la edicion David Carson), 182 px de alto por 47
-      // de ancho: cada pixel de ancho pesa mas del 2 %. Desajuste de area
-      // 1.20 %. Si llega una foto mas grande, se vuelve a medir.
+      name: 'Macallan', asp: 3.94, yFull: 0.75, pourable: true,
+      // La de Macallan; Axel: "todos los Macallan son iguales". Rehecha el
+      // 2026-11-25 de la foto de Total Wine que mandó Axel (Macallan 12
+      // Double Cask, 281 × 1017, fondo transparente; la botella mide 1000 px
+      // de alto por 254 de ancho máximo, asp 3.94): desajuste de área 0.61 %.
+      // La de antes salía de una foto DIMINUTA (la edición David Carson, 182
+      // px de alto por 47 de ancho, 1.20 %), y cada píxel era un escalón:
+      // Axel, "la botella tiene contorno muy irregular". La de verdad se
+      // ABRE hacia arriba (0.85 en la base, 1.0 a 0.67) antes del hombro, que
+      // va del 70 % al 80 %, y el cuello es recto. Con la nueva, la fracción
+      // de la botella a cada altura cambia 1.2 puntos como mucho (al 10 % de
+      // alto, 9.6 % → 10.8 %; al 50 %, 62.0 % → 63.1 %).
       //
-      // Recta y alta, hombro corto del 72 % al 80 % y cuello recto. yFull
-      // .75, a media bajada del hombro.
-      p: [[0,0.383], [0.0156,0.5709], [0.0469,0.8298], [0.0781,0.8298], [0.1094,0.8298], [0.1406,0.8298], [0.1719,0.8426], [0.2031,0.8511], [0.2344,0.8723], [0.2656,0.8723], [0.2969,0.8865], [0.3281,0.8936], [0.3594,0.8936], [0.3906,0.8936], [0.4219,0.9149], [0.4531,0.9362], [0.4844,0.9362], [0.5156,0.9362], [0.5469,0.9617], [0.5781,0.9787], [0.6094,0.9787], [0.6406,0.9787], [0.6719,0.9965], [0.7031,0.9645], [0.7344,0.8], [0.7656,0.5213], [0.7969,0.3901], [0.8281,0.383], [0.8594,0.3723], [0.8906,0.3617], [0.9219,0.3617], [0.9531,0.3617], [0.9844,0.3574], [1,0.2695]],
+      // yFull .75: el licor se ve en la foto hasta 0.755, a media bajada del
+      // hombro; encima, el vidrio vacío del cuello.
+      p: [[0, 0.2815], [0.0156, 0.8307], [0.0469, 0.8543], [0.0781, 0.8543], [0.1094, 0.8583], [0.1406, 0.8661], [0.1719, 0.8661], [0.2031, 0.874], [0.2344, 0.8819], [0.2656, 0.8898], [0.2969, 0.9042], [0.3281, 0.9121], [0.3594, 0.9213], [0.3906, 0.9318], [0.4219, 0.9409], [0.4531, 0.9528], [0.4844, 0.9606], [0.5156, 0.9685], [0.5469, 0.9764], [0.5781, 0.9843], [0.6094, 0.9882], [0.6406, 0.9961], [0.6719, 1.0], [0.7031, 0.9829], [0.7344, 0.8071], [0.7656, 0.5472], [0.7969, 0.3911], [0.8281, 0.3701], [0.8594, 0.3583], [0.8906, 0.3583], [0.9219, 0.3583], [0.9531, 0.3622], [0.9844, 0.3622], [1, 0.122]],
       // Las marcas (tanda 7, 2026-11-25, de la foto de Total Wine que mandó
       // Axel, Macallan 12 Double Cask, 281 × 1017; calcadas con
       // tools/marcas/calcar.py): la etiqueta entera, que ENVUELVE (blanca, con
@@ -690,8 +700,8 @@
       // y el triángulo azul del hombro, armado por sus tres vértices medidos en
       // los píxeles (un triángulo; calcado se comía el licor, del mismo tono
       // que su filo dorado). Los renglones: The, MACALLAN, HIGHLAND SINGLE
-      // MALT, SCOTCH WHISKY, el 12 y DOUBLE CASK. No van: el castillo (chico),
-      // YEARS OLD y el párrafo (letra chica), los barriles y el 12 del
+      // MALT, SCOTCH WHISKY, el 12 y DOUBLE CASK, y lo chico en bloques (al
+      // final). No van: el castillo (chico), los barriles y el 12 del
       // triángulo (no se separa de él en la foto).
       marcas: [
         {tipo: 'dibujo', puntos: [[-1.15, 0.581], [-0.889, 0.581], [-0.6, 0.5859], [-0.3, 0.589], [0, 0.59], [0.3, 0.589], [0.6, 0.5859], [0.889, 0.581], [1.15, 0.581], [1.15, 0.1752], [0.779, 0.1752], [0.4, 0.1723], [0, 0.1712], [-0.4, 0.1723], [-0.779, 0.1752], [-1.15, 0.1752]]},
@@ -702,7 +712,26 @@
         {tipo: 'texto', y: [0.417, 0.427], ancho: 0.635, x: -0.022, renglones: [{g: 0.01, largo: 1, palabras: [8, 6, 4]}]},
         {tipo: 'texto', y: [0.404, 0.414], ancho: 0.475, x: -0.011, renglones: [{g: 0.01, largo: 1, palabras: [6, 6]}]},
         {tipo: 'texto', y: [0.345, 0.385], ancho: 0.2, x: 0.022, renglones: [{g: 0.04, largo: 1, palabras: [2]}]},
-        {tipo: 'texto', y: [0.278, 0.29], ancho: 0.42, renglones: [{g: 0.012, largo: 1, palabras: [6, 4]}]}
+        {tipo: 'texto', y: [0.278, 0.29], ancho: 0.42, renglones: [{g: 0.012, largo: 1, palabras: [6, 4]}]},
+        // Lo chico de la etiqueta, en bloques (Axel, 2026-11-25: "le falta
+        // texto, en especial el inferior de la etiqueta; sé que es muy
+        // pequeño pero lo puedes concentrar como un solo bloque"). Leído en la
+        // rejilla del 1 %: YEARS OLD bajo el 12; el párrafo MATURED
+        // EXCLUSIVELY… en sus tres renglones, de 0.240 a 0.264 (un bloque,
+        // los renglones a partes iguales: medidos, caen a 0.2615, 0.2515 y
+        // 0.2425); NATURAL COLOUR / PRODUCT OF SCOTLAND, de 0.200 a 0.214
+        // (otro bloque: entre los dos hay un hueco limpio de 0.214 a 0.240), y
+        // a los lados el 700ml y el abv.
+        {tipo: 'texto', y: [0.336, 0.343], ancho: 0.205, renglones: [{g: 0.007, largo: 1, palabras: [5, 3]}]},
+        {tipo: 'texto', y: [0.24, 0.264], ancho: 0.713, renglones: [
+          {g: 0.005, largo: 0.868, palabras: [7, 11, 2, 3, 7]},
+          {g: 0.005, largo: 1, palabras: [7, 2, 11, 6, 8]},
+          {g: 0.005, largo: 0.841, palabras: [8, 3, 8, 3, 5]}]},
+        {tipo: 'texto', y: [0.2, 0.214], ancho: 0.389, renglones: [
+          {g: 0.005, largo: 0.759, palabras: [7, 6]},
+          {g: 0.005, largo: 1, palabras: [7, 2, 8]}]},
+        {tipo: 'texto', y: [0.205, 0.215], ancho: 0.103, x: -0.86, renglones: [{g: 0.009, largo: 1, palabras: [5]}]},
+        {tipo: 'texto', y: [0.205, 0.215], ancho: 0.12, x: 0.846, renglones: [{g: 0.009, largo: 1, palabras: [4, 3, 3]}]}
       ],
     },
     glenfiddich: {
@@ -1747,17 +1776,27 @@
       p: [[0,0.3929], [0.0156,0.8036], [0.0469,0.9835], [0.0781,0.9725], [0.1094,0.9176], [0.1406,0.8897], [0.1719,0.897], [0.2031,0.9011], [0.2344,0.9018], [0.2656,0.9107], [0.2969,0.9196], [0.3281,0.921], [0.3594,0.9272], [0.3906,0.9334], [0.4219,0.9375], [0.4531,0.9444], [0.4844,0.9554], [0.5156,0.9554], [0.5469,0.9615], [0.5781,0.9649], [0.6094,0.9725], [0.6406,0.9746], [0.6719,0.9815], [0.7031,0.9483], [0.7344,0.671], [0.7656,0.4258], [0.7969,0.3819], [0.8281,0.3757], [0.8594,0.375], [0.8906,0.375], [0.9219,0.3709], [0.9531,0.3777], [0.9844,0.3626], [1,0.3274]],
       // Las marcas (tanda 7, 2026-11-25, de la foto del FRENTE de Total Wine
       // que mandó Axel, 220 × 220 con la botella de 57 px de ancho; la de
-      // antes era la contraetiqueta). El crema del cuerpo es el licor, no una
-      // etiqueta. Calcado: el escudo adornado del centro (de 0.121 a 0.673, la
-      // mitad izquierda reflejada: arriba a la derecha lo mordía el brillo) y
-      // la cápsula verde del cuello, que ENVUELVE, de 0.805 a la punta (recta:
-      // el calco salía con un diente por la franja clara de su letrero). Los
-      // renglones, leídos en la rejilla del 1 % (la tinta crema sobre verde
-      // engañaba a renglones.py): ST. ELDER, NATURAL, ELDERFLOWER y LIQUEUR,
-      // con el grueso aproximado por el tamaño de la foto. No van: la letra
-      // chica de debajo de LIQUEUR ni el árbol (chico).
+      // antes era la contraetiqueta). La etiqueta, CALCADA (Axel, 2026-11-25:
+      // "la etiqueta de st elder no es como la estás dibujando, dijimos
+      // calcar"; la primera versión era un rectángulo con muescas): un
+      // cartucho con corona arriba y abajo y los lados ondulados, de 0.139 a
+      // 0.655. No tiene un color propio (dorado, marrón y gris verdoso) pero
+      // el licor crema sí: se calcó por EXCLUSIÓN, lo que no es licor, con
+      // 4 px de los cantos fuera (la sombra del vidrio se pegaba a ella) y la
+      // mitad DERECHA reflejada (por la izquierda la sombra la mordía). Dentro,
+      // el panel verde, calcado por su tono; la franja crema de ST. ELDER lo
+      // cruza y lo partía en dos, así que va su envolvente convexa (de 0.222
+      // a 0.569). No envuelve: es más angosta que la botella. La cápsula verde
+      // del cuello sí ENVUELVE, de 0.805 a la punta (recta: el calco salía con
+      // un diente por la franja clara de su letrero); lo blanco de debajo
+      // (0.77 a 0.80) es el aire del cuello, no una etiqueta. Los renglones,
+      // leídos en la rejilla del 1 % (la tinta crema sobre verde engañaba a
+      // renglones.py): ST. ELDER, NATURAL, ELDERFLOWER y LIQUEUR, con el
+      // grueso aproximado por el tamaño de la foto. No van: la letra chica de
+      // debajo de LIQUEUR ni el árbol (chico).
       marcas: [
-        {tipo: 'dibujo', puntos: [[-0.214, 0.1347], [-0.5, 0.1621], [-0.625, 0.1507], [-0.679, 0.121], [-0.839, 0.1233], [-0.857, 0.6735], [-0.732, 0.6667], [-0.732, 0.6347], [-0.571, 0.6142], [-0.286, 0.6553], [-0.179, 0.6598], [0.0, 0.6461], [0.179, 0.6598], [0.286, 0.6553], [0.571, 0.6142], [0.732, 0.6347], [0.732, 0.6667], [0.857, 0.6735], [0.839, 0.1233], [0.679, 0.121], [0.625, 0.1507], [0.5, 0.1621], [0.214, 0.1347]]},
+        {tipo: 'dibujo', puntos: [[0.321, 0.1393], [0.071, 0.1393], [0.036, 0.1438], [-0.036, 0.1438], [-0.071, 0.1393], [-0.321, 0.1393], [-0.554, 0.1781], [-0.589, 0.1918], [-0.768, 0.21], [-0.768, 0.2283], [-0.732, 0.2329], [-0.768, 0.274], [-0.732, 0.2785], [-0.732, 0.2877], [-0.768, 0.2922], [-0.768, 0.3333], [-0.804, 0.3379], [-0.804, 0.4384], [-0.768, 0.4429], [-0.804, 0.4475], [-0.804, 0.4612], [-0.732, 0.4703], [-0.732, 0.484], [-0.768, 0.4886], [-0.732, 0.516], [-0.768, 0.5251], [-0.696, 0.5342], [-0.839, 0.5479], [-0.804, 0.5571], [-0.839, 0.5616], [-0.839, 0.5753], [-0.589, 0.6027], [-0.554, 0.621], [-0.446, 0.6347], [-0.357, 0.6553], [-0.071, 0.6553], [-0.036, 0.6507], [0.036, 0.6507], [0.071, 0.6553], [0.357, 0.6553], [0.446, 0.6347], [0.554, 0.621], [0.589, 0.6027], [0.839, 0.5753], [0.839, 0.5616], [0.804, 0.5571], [0.839, 0.5479], [0.696, 0.5342], [0.768, 0.5251], [0.732, 0.516], [0.732, 0.5068], [0.768, 0.5023], [0.732, 0.4703], [0.804, 0.4612], [0.804, 0.4475], [0.768, 0.4429], [0.804, 0.4384], [0.804, 0.3379], [0.768, 0.3333], [0.768, 0.2922], [0.732, 0.2877], [0.732, 0.2785], [0.768, 0.274], [0.768, 0.2603], [0.732, 0.2557], [0.768, 0.21], [0.589, 0.1918], [0.554, 0.1781]]},
+        {tipo: 'dibujo', puntos: [[-0.768, 0.3425], [-0.625, 0.2785], [-0.071, 0.2215], [0.071, 0.2215], [0.625, 0.2785], [0.768, 0.3425], [0.661, 0.5023], [0.464, 0.532], [0.071, 0.5685], [-0.071, 0.5685], [-0.464, 0.532], [-0.661, 0.5023]]},
         {tipo: 'dibujo', puntos: [[-1.15, 0.805], [1.15, 0.805], [1.15, 0.998], [-1.15, 0.998]]},
         {tipo: 'texto', y: [0.365, 0.425], ancho: 0.8, renglones: [{g: 0.055, largo: 1, palabras: [2, 5]}]},
         {tipo: 'texto', y: [0.333, 0.343], ancho: 0.345, renglones: [{g: 0.01, largo: 1, palabras: [7]}]},

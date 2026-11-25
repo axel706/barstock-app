@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-104403",
+    "items": [
+      "Counting: new Macallan outline, more label text",
+      "St. Elder label traced, ORGANIC on Belvedere"
+    ]
+  },
+  {
     "build": "20261125-102935",
     "items": [
       "Counting: label guides on Belvedere, St. Elder",
@@ -184,12 +191,6 @@
     "build": "20261122-122535",
     "items": [
       "Home: On the shelf shows “Counting” while it loads"
-    ]
-  },
-  {
-    "build": "20261122-121736",
-    "items": [
-      "Home: On the shelf no longer shows an outdated number first"
     ]
   }
 ]

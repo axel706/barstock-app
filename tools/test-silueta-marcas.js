@@ -357,7 +357,7 @@ console.log('\ntanda 6: calcada, de fotos chicas');
 console.log('\ntanda 7: calcada, de las fotos de Total Wine');
 {
   // Axel mandó fotos de Total Wine (2026-11-25). Entraron Belvedere (la
-  // foto es la Organic: su renglón ORGANIC no va), St. Elder (ahora el
+  // Organic, la que tienen), St. Elder (ahora el
   // frente) y Macallan 12 Double Cask. Fuera: Don Julio Blanco (la foto
   // calza con la silueta redonda, `don_julio_blanco`, no con `don_julio`)
   // y Smirnoff No. 21 (la silueta es la compartida con los sabores).
@@ -372,8 +372,41 @@ console.log('\ntanda 7: calcada, de las fotos de Total Wine');
     prueba(k + ': lo que envuelve llega al borde por los dos lados', ms.some(m => m.tipo === 'dibujo' &&
       Math.min(...m.puntos.map(q => q[0])) <= -1 && Math.max(...m.puntos.map(q => q[0])) >= 1));
   }
-  prueba('Belvedere: sin el renglón ORGANIC (de 0.21 a 0.23), que la normal no lleva',
-    !((B.PROFILES.belvedere.marcas || []).some(m => m.tipo === 'texto' && m.y[0] >= 0.205 && m.y[1] <= 0.235)));
+  // Las correcciones de Axel sobre la lámina (2026-11-25).
+  // Belvedere: tienen la Organic, y su renglón ORGANIC va entre BELVEDERE
+  // (0.233) y VODKA (0.208).
+  prueba('Belvedere: lleva ORGANIC entre BELVEDERE y VODKA',
+    (B.PROFILES.belvedere.marcas || []).some(m => m.tipo === 'texto' && m.y[0] >= 0.205 && m.y[1] <= 0.235));
+  // St. Elder: la etiqueta es un cartucho con corona arriba y abajo (se
+  // estrecha en las puntas), no un rectángulo con muescas; y dentro, su
+  // panel verde.
+  {
+    const ds = (B.PROFILES.st_elder.marcas || []).filter(m => m.tipo === 'dibujo' && Math.min(...m.puntos.map(q => q[1])) < 0.5);
+    const et = ds.find(m => Math.max(...m.puntos.map(q => q[1])) - Math.min(...m.puntos.map(q => q[1])) > 0.45);
+    const arriba = et ? Math.max(...et.puntos.filter(q => q[1] > 0.63).map(q => Math.abs(q[0]))) : 9;
+    const abajo = et ? Math.max(...et.puntos.filter(q => q[1] < 0.16).map(q => Math.abs(q[0]))) : 9;
+    prueba('St. Elder: la etiqueta se estrecha en la corona de arriba y de abajo (|x| < 0.55)', !!et && arriba < 0.55 && abajo < 0.55,
+      et ? arriba.toFixed(2) + ' / ' + abajo.toFixed(2) : 'sin etiqueta');
+    prueba('St. Elder: dentro, el panel verde (de 0.2 a 0.6)', ds.some(m => m !== et &&
+      Math.min(...m.puntos.map(q => q[1])) > 0.2 && Math.max(...m.puntos.map(q => q[1])) < 0.6));
+  }
+  // Macallan: la silueta se rehizo de la foto grande. La de antes salía de
+  // una foto de 47 px de ancho y era una escalera (el mismo radio en cuatro
+  // alturas seguidas); la de verdad se abre hacia el hombro.
+  {
+    const p = B.PROFILES.macallan.p.filter(([y]) => y > 0.03 && y < 0.68);
+    let escalon = 0;
+    for (let i = 2; i < p.length; i++) if (p[i][1] === p[i - 1][1] && p[i][1] === p[i - 2][1]) escalon++;
+    prueba('Macallan: la silueta sin escalones (nunca tres radios iguales seguidos)', escalon === 0, escalon + ' escalones');
+    prueba('Macallan: se abre hacia el hombro (0.85 abajo, 1.0 a 0.67)',
+      B.radiusAt('macallan', 0.08) < 0.87 && B.radiusAt('macallan', 0.3) > 0.895 && B.radiusAt('macallan', 0.67) > 0.99,
+      [0.08, 0.3, 0.67].map(y => B.radiusAt('macallan', y).toFixed(3)).join(' '));
+    const tx = (B.PROFILES.macallan.marcas || []).filter(m => m.tipo === 'texto');
+    prueba('Macallan: el párrafo de abajo, un bloque de tres renglones (de 0.24 a 0.264)',
+      tx.some(m => m.y[0] >= 0.235 && m.y[1] <= 0.27 && m.renglones.length === 3));
+    prueba('Macallan: NATURAL COLOUR / PRODUCT OF SCOTLAND, y YEARS OLD bajo el 12',
+      tx.some(m => m.y[0] >= 0.195 && m.y[1] <= 0.22 && m.renglones.length === 2) && tx.some(m => m.y[0] >= 0.33 && m.y[1] <= 0.345));
+  }
   prueba('Smirnoff: la silueta compartida sigue sin marcas', !B.PROFILES.smirnoff.marcas);
   prueba('Don Julio de 750 (`don_julio`) sigue sin marcas', !B.PROFILES.don_julio.marcas);
   const corte = (pts, y) => {
