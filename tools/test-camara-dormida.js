@@ -64,6 +64,7 @@ const grupo = t => console.log('\n' + t);
   Object.defineProperty(globalThis, 'navigator', { value: w.navigator, configurable: true });
   w.BarcodeDetector = class { detect() { return Promise.resolve([]); } };
   w.HTMLMediaElement.prototype.play = function () { return Promise.resolve(); };
+  w.HTMLCanvasElement.prototype.getContext = () => ({ drawImage() {} });   // jsdom no trae lienzo
   // Los temporizadores largos se apuntan: el de 30 s es el sueño.
   // Los de Node: el módulo corre con los globales de Node, como el navigator.
   const largos = [];

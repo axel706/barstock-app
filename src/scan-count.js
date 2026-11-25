@@ -219,6 +219,8 @@
         <!-- Contar por nombre y la pregunta del principio ocupan el
              visor: el marco (progreso, zonas, hoja) es el mismo. -->
         <div class="sc-nombre" id="scNombre"></div>
+        <button type="button" class="sc-a-lista" id="scALista">
+          <i class="ti ti-arrow-left" aria-hidden="true"></i> List</button>
         <div class="sc-elige" id="scElige"></div>
       </div>
 
@@ -306,12 +308,13 @@
     $('scFinish').addEventListener('click', () => {
       if (window.BarStockCountFinish) {
         apagar();
-        window.BarStockCountFinish.open(() => encender(), close);
+        window.BarStockCountFinish.open(trasPanel, close);
       }
     });
     // Etiqueta rota, botella rellenable o destileria pequeña sin codigo:
     // sin esta salida el conteo se para en seco.
     $('scFind').addEventListener('click', () => askAssign(null));
+    $('scALista').addEventListener('click', () => volverDeUna());
 
     $('scGrab').addEventListener('click', toggleSheet);
     $('scGrab').addEventListener('keydown', (e) => {
@@ -722,7 +725,7 @@
     // El cuarto argumento es el tamaño de ESTE codigo. Sin el, el panel
     // usa el del producto, que es lo correcto al contar por nombre.
     window.BarStockCountPanel.open(
-      row, () => { stats(); encender(); }, upc, sizeMl || null);
+      row, trasPanel, upc, sizeMl || null);
   }
 
   // `seguir` en false cuando lo que viene es el panel de la botella: la
@@ -782,7 +785,7 @@
       // la que se esta contando.
       if (found.row && window.BarStockCountPanel) {
         apagar();
-        window.BarStockCountPanel.open(found.row, () => { stats(); encender(); }, text, found.sizeMl);   // el upc viaja —el panel ofrece corregirlo
+        window.BarStockCountPanel.open(found.row, trasPanel, text, found.sizeMl);   // el upc viaja —el panel ofrece corregirlo
                                   //  si esta mal— y con el su tamaño
       }
     } else {
@@ -835,7 +838,7 @@
         if (!f || !f.row || !window.BarStockCountPanel) return;
         apagar();
         el.classList.remove('on');
-        window.BarStockCountPanel.open(f.row, () => { stats(); encender(); }, upc, f.sizeMl);
+        window.BarStockCountPanel.open(f.row, trasPanel, upc, f.sizeMl);
       };
     }
   }
@@ -1234,8 +1237,43 @@
     const ov = $('scOverlay');
     ov.classList.add('sc-por-nombre');
     if (window.BarStockCountByName) {
-      window.BarStockCountByName.abrir($('scNombre'), { alCerrar: stats });
+      window.BarStockCountByName.abrir($('scNombre'), { alCerrar: stats, escanear: escanearUna });
     }
+  }
+
+  // ── Escanear UNA botella sin dejar de contar por nombre ─────────────
+  // Axel, 2026-11-25: "¿y si dentro de esa pantalla necesito ESCANEAR una
+  // botella? Ya no tengo opción para prender la cámara de nuevo". Lámina
+  // "Scan from the list", opción A: el botón de la barra de búsqueda abre
+  // la cámara para una botella; leerla abre su panel, y al cerrarlo se
+  // vuelve a la lista con la cámara apagada. "← List" vuelve sin leer. El
+  // conteo sigue por nombre: no cambia el modo.
+  function escanearUna() {
+    const ov = $('scOverlay');
+    ov.classList.remove('sc-por-nombre');
+    ov.classList.add('sc-una');
+    arrancarEscaner();
+  }
+
+  function volverDeUna() {
+    const ov = $('scOverlay');
+    if (!ov || !ov.classList.contains('sc-una')) return false;
+    apagar();
+    despertar();
+    ov.classList.remove('sc-una');
+    ov.classList.add('sc-por-nombre');
+    stats();
+    if (window.BarStockCountByName) window.BarStockCountByName.refrescar();
+    return true;
+  }
+
+  // Lo que pasa al cerrar el panel de una botella (o Finish count): si se
+  // vino a escanear UNA desde la lista, de vuelta a la lista; si no, la
+  // cámara otra vez (encender() ya sabe que por nombre no la hay).
+  function trasPanel() {
+    if (volverDeUna()) return;
+    stats();
+    encender();
   }
 
   async function arrancarEscaner() {
@@ -1300,7 +1338,7 @@
     const o = $('scOverlay');
     if (o) {
       o.classList.remove('on'); o.classList.remove('sheet-up');
-      o.classList.remove('sc-por-nombre'); o.classList.remove('sc-eligiendo');
+      o.classList.remove('sc-por-nombre'); o.classList.remove('sc-eligiendo'); o.classList.remove('sc-una');
     }
     if (window.BarStockCountByName) window.BarStockCountByName.cerrar();
     document.body.classList.remove('sc-locked');
@@ -1364,5 +1402,7 @@
     __askAssign: askAssign,
     // Solo para tools/test-camara-dormida.js: lo que hace leer un código
     // con el sueño (lo llama onHit), sin simular una lectura.
-    __leido: armarSueno };
+    __leido: armarSueno,
+    // Solo para tools/test-contar-por-nombre.js: una lectura sin cámara.
+    __leer: (t) => onHit(String(t), 'test') };
 })();

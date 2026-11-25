@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-112626",
+    "items": [
+      "Count by name: scan button in the search bar",
+      "Scan one bottle, then back to the list"
+    ]
+  },
+  {
     "build": "20261125-111237",
     "items": [
       "Count by name: the keyboard stays open after a search",
@@ -187,13 +194,6 @@
     "build": "20261122-142710",
     "items": [
       "Running out card in a deeper crimson red"
-    ]
-  },
-  {
-    "build": "20261122-140450",
-    "items": [
-      "Four new phone backgrounds",
-      "Red Shelf, Bar Cart, Wood Bar and Spritz"
     ]
   }
 ]

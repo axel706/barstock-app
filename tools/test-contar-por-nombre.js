@@ -42,7 +42,7 @@ const MASTER = [
   { item: 'Bulleit Bourbon', vendor: 'Southern', bottleSizeMl: 750, onHand: 0, par: 2 },
   { item: 'Bulleit Rye', vendor: 'Southern', bottleSizeMl: 750, onHand: 0, par: 2 },
   { item: 'Canyon Oaks Chardonnay', vendor: 'Wine Merchant', bottleSizeMl: 750, onHand: 0, par: 6 },
-  { item: 'Campari', vendor: 'Southern', bottleSizeMl: 750, onHand: 0, par: 2 }
+  { item: 'Campari', vendor: 'Southern', bottleSizeMl: 750, onHand: 0, par: 2, code: '0805' }
 ];
 
 async function escenario({ sesion, zonas } = {}) {
@@ -162,14 +162,34 @@ const textos = (w, sel) => [...w.document.querySelectorAll(sel)].map(x => x.text
     grupo('Finish count, de ida y vuelta, sin cámara');
     E.w.document.getElementById('scFinish').click();
     E.panel().cb(); await esperar();
-    prueba('ninguna cámara pedida en todo el conteo por nombre', E.pedidas() === 0, E.pedidas());
+    prueba('ninguna cámara pedida en el conteo por nombre (sin escanear)', E.pedidas() === 0, E.pedidas());
+
+    grupo('escanear UNA botella desde la lista (lámina "Scan from the list", A)');
+    const esc = E.w.document.querySelector('.sc-bn-esc');
+    prueba('la barra de búsqueda lleva el botón de escanear', !!esc);
+    esc && esc.click(); await esperar();
+    prueba('lo toca: la cámara se enciende', E.pedidas() === 1 && E.vivas() === 1, E.pedidas());
+    prueba('y el visor es la cámara, con "← List"', $('scOverlay').classList.contains('sc-una') &&
+      !$('scOverlay').classList.contains('sc-por-nombre') && !!$('scALista'));
+    $('scALista') && $('scALista').click(); await esperar();
+    prueba('"← List" sin escanear: cámara apagada', E.vivas() === 0, E.vivas());
+    prueba('y de vuelta en la lista', $('scOverlay').classList.contains('sc-por-nombre') && !$('scOverlay').classList.contains('sc-una'));
+    esc && esc.click(); await esperar();
+    E.w.BarStockScanCount.__leer && E.w.BarStockScanCount.__leer('0805');
+    prueba('leer un código abre el panel de esa botella', E.panel() && E.panel().row && E.panel().row.item === 'Campari');
+    prueba('con la cámara apagada mientras se cuenta', E.vivas() === 0, E.vivas());
+    E.panel().cb(true); await esperar();
+    prueba('al cerrar el panel: vuelve a la lista', $('scOverlay').classList.contains('sc-por-nombre') && !$('scOverlay').classList.contains('sc-una'));
+    prueba('y la cámara sigue apagada', E.vivas() === 0, E.vivas());
+    prueba('el conteo sigue por nombre', E.w.BarStockCountSession.modo() === 'nombre');
+    const yaPedidas = E.pedidas();
 
     grupo('cerrar y volver a abrir: sigue por nombre, sin preguntar');
     E.w.BarStockScanCount.close();
     await E.w.BarStockScanCount.open(); await esperar();
     prueba('no pregunta', !/How do you want/.test(E.w.document.getElementById('scElige').textContent));
     prueba('abre la lista', E.w.document.getElementById('scOverlay').classList.contains('sc-por-nombre'));
-    prueba('y sin cámara', E.pedidas() === 0, E.pedidas());
+    prueba('y sin cámara', E.pedidas() === yaPedidas, E.pedidas());
   }
 
   grupo('con zonas: primero lo de la zona donde estás (orden 2)');
