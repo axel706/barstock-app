@@ -726,22 +726,27 @@ body.light .bf-go:disabled{ background: rgba(15,23,42,.06); color: #94a3b8; }
 .sc-bn-lista{
   flex: 1; min-height: 0;
   overflow-y: auto; -webkit-overflow-scrolling: touch;
-  padding: 4px 14px 72px;
-  display: flex; flex-direction: column; gap: 6px;
+  padding: 0 14px 24px;
+  display: flex; flex-direction: column; gap: 10px;
 }
 .sc-bn-k{
   display: flex; justify-content: space-between;
-  margin-top: 10px;
+  margin-top: 14px;
   font-size: var(--m-small); font-weight: 800;
   letter-spacing: .08em; text-transform: uppercase;
   color: #a9bacd;
 }
 .sc-bn-k u{ text-decoration: none; color: #f8fafc; }
+/* Del tamaño de una fila de Inventory (.m-inv en mobile-app.css; Axel,
+   2026-11-25: "los resultados están muy chicos"): 14 px dentro, radio 20,
+   el nombre en --m-strong, el proveedor debajo y la cifra en --m-figure. */
 #scOverlay .sc-bn-it{
-  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  flex: none;
   width: 100%;
-  padding: 12px 14px;
-  border-radius: 14px !important;
+  padding: 14px;
+  border-radius: 20px !important;
+  line-height: 1.4;
   background: var(--tinta);
   border: 1px solid var(--tinta-borde);
   -webkit-backdrop-filter: none; backdrop-filter: none;
@@ -750,19 +755,31 @@ body.light .bf-go:disabled{ background: rgba(15,23,42,.06); color: #94a3b8; }
   font-family: inherit; font-size: var(--m-body); font-weight: 700;
   text-align: left;
 }
-#scOverlay .sc-bn-it span{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#scOverlay .sc-bn-it em{
-  flex: none;
-  font-style: normal; font-weight: 600; font-size: var(--m-small); color: #a9bacd;
+#scOverlay .sc-bn-l{ flex: 1; min-width: 0; display: block; }
+#scOverlay .sc-bn-nm{
+  display: block;
+  font-size: var(--m-strong); font-weight: 700; color: #f1f5f9;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#scOverlay .sc-bn-m{
+  display: block; margin-top: 4px;
+  font-size: var(--m-small); font-weight: 600; color: #9fb0c4;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 #scOverlay .sc-bn-it.hecho{ border-color: rgba(110,231,183,.45); }
-.sc-bn-n{ flex: none; color: #6ee7b7; font-variant-numeric: tabular-nums; }
+.sc-bn-n{
+  flex: none; line-height: 1;
+  color: #6ee7b7; font-size: var(--m-figure); font-weight: 800; letter-spacing: -.7px;
+  font-variant-numeric: tabular-nums;
+}
 .sc-bn-vacio{ padding: 14px 4px; color: #a9bacd; font-size: var(--m-small); }
 
-/* El aviso de lo recién contado, abajo, encima de la hoja: arriba tapaba
-   el buscador (lámina, "Back to the list"). */
+/* El aviso de lo recién contado, justo bajo el buscador y en su propio
+   renglón. En la lámina flotaba encima del buscador y lo tapaba; abajo,
+   sobre la hoja, lo tapaba el teclado, que ahora se queda abierto entre
+   búsqueda y búsqueda (Axel, 2026-11-25). */
 .sc-bn-aviso{
-  position: absolute; left: 14px; right: 14px; bottom: 12px;
+  margin: 10px 14px 0;
   display: none; justify-content: space-between; align-items: center; gap: 10px;
   padding: 10px 12px;
   border-radius: 14px;

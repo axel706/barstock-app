@@ -78,13 +78,17 @@
     return s.bottlesFor(item, (row && row.bottleSizeMl) || 750);
   }
 
+  // Del tamaño de una fila de Inventory (Axel, 2026-11-25, en el
+  // teléfono: "los resultados están muy chicos"): el nombre grande en
+  // negrita, el proveedor en una línea chica debajo y, en lo contado, la
+  // cifra grande a la derecha.
   function fila(r) {
     const n = contadas(r.item, r);
-    const lado = n == null
-      ? `<em>${esc(r.vendor || '')}</em>`
-      : `<b class="sc-bn-n">✓ ${esc(num(n))}</b>`;
     return `<button type="button" class="sc-bn-it${n == null ? '' : ' hecho'}" data-item="${esc(r.item)}">
-      <span>${esc(r.item)}</span>${lado}</button>`;
+      <span class="sc-bn-l"><b class="sc-bn-nm">${esc(r.item)}</b>` +
+      (r.vendor ? `<span class="sc-bn-m">${esc(r.vendor)}</span>` : '') + `</span>` +
+      (n == null ? '' : `<b class="sc-bn-n">✓ ${esc(num(n))}</b>`) +
+      `</button>`;
   }
 
   function bloque(titulo, n, filas) {
@@ -145,6 +149,11 @@
     if (!row || !s || !CP) return;
     const habia = s.has(item);
     const antes = JSON.stringify(s.get(item) || null);
+    // Si se llegó buscando, al volver el buscador recupera el foco y el
+    // teclado sigue arriba (Axel: "hay que estar tocando la barra de
+    // búsqueda todo el tiempo"). Elegida bajando por la lista, no: el
+    // teclado taparía la lista que se estaba recorriendo.
+    const buscaba = !!String(_q || '').trim();
     CP.open(row, () => {
       // Se compara la sesión: el panel avisa al cerrarse, haya guardado
       // o no ("Back" también llama). Sólo un cambio de verdad lleva aviso.
@@ -157,6 +166,11 @@
       const inp = _host && _host.querySelector('.sc-bn-q');
       if (inp) inp.value = '';
       pintarLista();
+      // AQUÍ, sin setTimeout: este aviso llega dentro del toque con el
+      // que se cierra el panel, y iOS sólo abre el teclado con un focus()
+      // que ocurra dentro de un toque. Diferido, el campo quedaría
+      // enfocado sin teclado.
+      if (buscaba && inp) { try { inp.focus({ preventScroll: true }); } catch (e) { inp.focus(); } }
       if (_alCerrar) _alCerrar();
     }, null, null);
   }
@@ -174,8 +188,8 @@
         <input class="sc-bn-q" type="search" placeholder="Search a bottle…"
                autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
       </label>
-      <div class="sc-bn-lista"></div>
-      <div class="sc-bn-aviso" role="status"></div>`;
+      <div class="sc-bn-aviso" role="status"></div>
+      <div class="sc-bn-lista"></div>`;
     host.querySelector('.sc-bn-q').addEventListener('input', (e) => { _q = e.target.value; pintarLista(); });
     window.addEventListener('barstock-zona', enZona);
     pintarLista();

@@ -112,16 +112,16 @@ const textos = (w, sel) => [...w.document.querySelectorAll(sel)].map(x => x.text
     prueba('el visor es la lista', $('scOverlay').classList.contains('sc-por-nombre') && !!E.w.document.querySelector('.sc-bn-q'));
     prueba('sin zonas: "Left to count", de la A a la Z',
       textos(E.w, '.sc-bn-k span')[0] === 'Left to count' &&
-      textos(E.w, '.sc-bn-it span').join('|') === 'Aperol|Bulleit Bourbon|Bulleit Rye|Campari|Canyon Oaks Chardonnay',
-      textos(E.w, '.sc-bn-it span').join('|'));
+      textos(E.w, '.sc-bn-it .sc-bn-nm').join('|') === 'Aperol|Bulleit Bourbon|Bulleit Rye|Campari|Canyon Oaks Chardonnay',
+      textos(E.w, '.sc-bn-it .sc-bn-nm').join('|'));
     prueba('sigue sin cámara', E.pedidas() === 0, E.pedidas());
 
     grupo('buscar: palabras en cualquier orden');
     const q = E.w.document.querySelector('.sc-bn-q');
     q.value = 'bul'; q.dispatchEvent(new E.w.Event('input'));
-    prueba('"bul" da los dos Bulleit', textos(E.w, '.sc-bn-it span').join('|') === 'Bulleit Bourbon|Bulleit Rye', textos(E.w, '.sc-bn-it span').join('|'));
+    prueba('"bul" da los dos Bulleit', textos(E.w, '.sc-bn-it .sc-bn-nm').join('|') === 'Bulleit Bourbon|Bulleit Rye', textos(E.w, '.sc-bn-it .sc-bn-nm').join('|'));
     q.value = 'rye bulleit'; q.dispatchEvent(new E.w.Event('input'));
-    prueba('"rye bulleit" da el Rye', textos(E.w, '.sc-bn-it span').join('|') === 'Bulleit Rye');
+    prueba('"rye bulleit" da el Rye', textos(E.w, '.sc-bn-it .sc-bn-nm').join('|') === 'Bulleit Rye');
 
     grupo('tocar una botella, contarla y volver');
     q.value = 'bul'; q.dispatchEvent(new E.w.Event('input'));
@@ -130,16 +130,21 @@ const textos = (w, sel) => [...w.document.querySelectorAll(sel)].map(x => x.text
     E.w.BarStockCountSession.addPass('Bulleit Bourbon', 2, [0.4], 750, '');
     E.panel().cb(true); await esperar();
     prueba('la búsqueda se limpia', E.w.document.querySelector('.sc-bn-q').value === '');
+    prueba('y el buscador recupera el foco (el teclado sigue abierto)',
+      E.w.document.activeElement === E.w.document.querySelector('.sc-bn-q'));
     const k = textos(E.w, '.sc-bn-k span');
     prueba('pasa a "Counted" con su número',
-      k.includes('Counted') && textos(E.w, '.sc-bn-it.hecho').join('|') === 'Bulleit Bourbon✓ 2.4', textos(E.w, '.sc-bn-it.hecho').join('|'));
-    prueba('y ya no está en lo que falta', !textos(E.w, '.sc-bn-it:not(.hecho) span').includes('Bulleit Bourbon'));
+      k.includes('Counted') && textos(E.w, '.sc-bn-it.hecho .sc-bn-nm').join('|') === 'Bulleit Bourbon' &&
+      textos(E.w, '.sc-bn-it.hecho .sc-bn-n').join('|') === '✓ 2.4', textos(E.w, '.sc-bn-it.hecho').join('|'));
+    prueba('y ya no está en lo que falta', !textos(E.w, '.sc-bn-it:not(.hecho) .sc-bn-nm').includes('Bulleit Bourbon'));
     const av = E.w.document.querySelector('.sc-bn-aviso');
     prueba('un aviso "✓ Bulleit Bourbon · 2.4" con Undo', av.classList.contains('on') && /Bulleit Bourbon · 2\.4/.test(av.textContent) && !!av.querySelector('.sc-bn-undo'));
+    prueba('el aviso va justo bajo el buscador (abajo lo taparía el teclado)',
+      av.previousElementSibling && av.previousElementSibling.classList.contains('sc-bn-busca'));
     prueba('volver del panel no enciende la cámara', E.pedidas() === 0, E.pedidas());
     av.querySelector('.sc-bn-undo').click(); await esperar();
     prueba('Undo la quita del conteo', !E.w.BarStockCountSession.has('Bulleit Bourbon'));
-    prueba('y vuelve a lo que falta', textos(E.w, '.sc-bn-it:not(.hecho) span').includes('Bulleit Bourbon'));
+    prueba('y vuelve a lo que falta', textos(E.w, '.sc-bn-it:not(.hecho) .sc-bn-nm').includes('Bulleit Bourbon'));
 
     grupo('recontar no lleva Undo; volver sin contar no avisa');
     E.w.BarStockCountSession.addPass('Campari', 1, [], 750, '');
@@ -147,8 +152,11 @@ const textos = (w, sel) => [...w.document.querySelectorAll(sel)].map(x => x.text
     E.w.BarStockCountSession.addPass('Campari', 1, [], 750, '');
     E.panel().cb(true); await esperar();
     prueba('recontado: aviso sin Undo', /Campari · 2/.test(av.textContent) && !av.querySelector('.sc-bn-undo'));
+    E.w.document.querySelector('.sc-bn-q').blur();
     [...E.w.document.querySelectorAll('.sc-bn-it')].find(b => b.dataset.item === 'Aperol').click();
     E.panel().cb(false); await esperar();
+    prueba('elegida de la lista, sin buscar: no se abre el teclado',
+      E.w.document.activeElement !== E.w.document.querySelector('.sc-bn-q'));
     prueba('"Back" sin contar: el aviso no habla de Aperol', !/Aperol/.test(av.textContent));
 
     grupo('Finish count, de ida y vuelta, sin cámara');
@@ -172,11 +180,11 @@ const textos = (w, sel) => [...w.document.querySelectorAll(sel)].map(x => x.text
     const k = textos(E.w, '.sc-bn-k');
     prueba('"In the Cellar last time · 2" y luego "Everything else left · 3"',
       k[0] === 'In the Cellar last time2' && k[1] === 'Everything else left3', k.join(' / '));
-    prueba('arriba lo del Cellar, de la A a la Z', textos(E.w, '.sc-bn-it span').slice(0, 2).join('|') === 'Campari|Canyon Oaks Chardonnay',
-      textos(E.w, '.sc-bn-it span').join('|'));
+    prueba('arriba lo del Cellar, de la A a la Z', textos(E.w, '.sc-bn-it .sc-bn-nm').slice(0, 2).join('|') === 'Campari|Canyon Oaks Chardonnay',
+      textos(E.w, '.sc-bn-it .sc-bn-nm').join('|'));
     E.w.BarStockZones.setActiva('Back bar'); await esperar();
     prueba('cambiar de zona reordena', textos(E.w, '.sc-bn-k')[0] === 'In the Back bar last time2' &&
-      textos(E.w, '.sc-bn-it span').slice(0, 2).join('|') === 'Aperol|Campari', textos(E.w, '.sc-bn-k').join(' / '));
+      textos(E.w, '.sc-bn-it .sc-bn-nm').slice(0, 2).join('|') === 'Aperol|Campari', textos(E.w, '.sc-bn-k').join(' / '));
   }
 
   grupo('escanear sigue igual, y un conteo de antes no pregunta');

@@ -704,9 +704,15 @@ arriba lo que la última vez se contó en la zona donde estás
 (`zones.ultimas()`, paginada, de `count_zones`; cambiar de zona reordena
 por el evento `barstock-zona` de `setActiva`) y luego lo demás, de la A a
 la Z; lo contado abajo con su número. Tocar abre el mismo panel de
-conteo; al volver se limpia la búsqueda y un aviso verde, abajo sobre la
-hoja, dice "✓ … · 2.4" con Undo (sólo si no estaba contado; recontado no
-tiene un "antes" que devolver). La cámara no se pide NUNCA por nombre:
+conteo; al volver se limpia la búsqueda y, si se llegó BUSCANDO, el
+buscador recupera el foco y el teclado sigue arriba (Axel, en el
+teléfono: "hay que estar tocando la barra de búsqueda todo el tiempo";
+el focus() va dentro del toque que cierra el panel, sin setTimeout, o iOS
+no abre el teclado; elegida bajando por la lista, no se abre). Un aviso
+verde justo bajo el buscador dice "✓ … · 2.4" con Undo (sólo si no estaba
+contado; recontado no tiene un "antes" que devolver): abajo lo tapaba el
+teclado. Las filas, del tamaño de las de Inventory (`.m-inv`): "los
+resultados están muy chicos". La cámara no se pide NUNCA por nombre:
 `encender()` lo mira. Prueba: `test-contar-por-nombre`.
 
 **El emparejamiento factura↔orden** va línea por línea y el primero que pide
