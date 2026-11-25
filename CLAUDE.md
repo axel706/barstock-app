@@ -467,8 +467,22 @@ sección de hoy vive tal cual dentro del armazón.
   Running out sin "See them" ni "To buy" (y sin "Add to list" / "I have
   enough" por producto, que son de la sección Running out), el transfer
   sin "Choose yours" / "Change" (dice que se elige en el teléfono), sin
-  el icono de Cycle detail, Spent this cycle sin botón. Al construir
-  cada cosa, su botón vuelve. Prueba: `test-home-escritorio`.
+  el icono de Cycle detail. Al construir cada cosa, su botón vuelve.
+  Prueba: `test-home-escritorio`.
+- **Spent this cycle en el escritorio** (Axel, 2026-11-25, lámina A:
+  "como el teléfono"): UN botón, Sync, o Review en ámbar con algo que
+  arreglar, o "MarginEdge" sin conectar (→ Settings › `integrations`).
+  Sincronizando, la barra de avance, "3 of 12 invoices…" y el botón
+  girando y apagado; si falla, la cifra en ámbar (`--hero-amber`) con
+  "Sync failed · lo que dijo" y Retry. El Sync es el del teléfono
+  (`BarStockMobileHome.sincronizarGasto`): el avance y el error viven
+  como DATO en mobile-home (`_avanceSync`, `_errorSync`, `estadoGasto()`)
+  y llegan por `alSync`, que repinta SÓLO esa cifra y la ventana. Review
+  abre una ventana (`#dkGasto`) con los renglones de la hoja del
+  teléfono, que salen de UNA función (`filasGasto`, la usan las dos):
+  "Fix ›" → Settings › Match products (`meMatch`), "Review prices" o
+  "What came in" → `mePurchases` (con su "Update N prices"), y Sync now.
+
 - **Todo lleva vidrio, en los dos modos** (Axel, 2026-11-25, con un
   fondo dibujado y nítido detrás: "TODO necesita blur, tanto light como
   dark, como la app anterior"). La barra lateral y el header, el mismo

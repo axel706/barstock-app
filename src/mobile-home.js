@@ -1218,6 +1218,22 @@
   const _botonesSync = new Set();
   let _syncDesde = 0;
 
+  // ── El estado del Sync, para quien no tiene sus botones ────────────
+  //
+  // El escritorio (desk-home.js, 2026-11-25, lámina "Spent this cycle",
+  // A) pinta la misma cifra con su propio botón y se repinta entero
+  // cuando algo cambia: un botón de aquí apuntado en _botonesSync se le
+  // quedaría viejo a media búsqueda. Así que el avance, y el error si
+  // lo hubo, viven también aquí como DATO (`_avanceSync`, `_errorSync`)
+  // y se avisa a quien escuche (alSync) en cada tanda. El teléfono sigue
+  // como estaba: sus botones y su pie.
+  let _avanceSync = null;       // null = no busca · { pedidos, hechos }
+  let _errorSync = null;        // lo que dijo el último Sync que falló
+  const _oyentesSync = new Set();
+  function avisarSync() {
+    _oyentesSync.forEach(fn => { try { fn(); } catch (e) { console.warn('[home] oyente del sync', e); } });
+  }
+
   // Lo llama "Sync now" de la hoja de Spent this cycle (era el botón de
   // la tarjeta de MarginEdge del carrusel). `pie` es el elemento donde
   // se dice por dónde va y, al acabar, cuándo se sincronizó.
@@ -1238,6 +1254,9 @@
     }
     _sincronizando = true;
     _syncDesde = Date.now();
+    _errorSync = null;
+    _avanceSync = { pedidos: 0, hechos: 0 };
+    avisarSync();
     if (btn) _botonesSync.add(btn);
 
     // `parar()` en TODAS las salidas —éxito, nada nuevo, error,
@@ -1247,6 +1266,8 @@
       _botonesSync.forEach(b => { b.classList.remove('girando'); b.disabled = false; });
       _botonesSync.clear();
       _sincronizando = false;
+      _avanceSync = null;
+      avisarSync();
     };
 
     _botonesSync.forEach(b => { b.classList.add('girando'); b.disabled = true; });
@@ -1282,6 +1303,8 @@
     // tanda reconstruiría la hoja en mitad de la espera.
     const pieAntes = pie ? pie.textContent : '';
     const avance = (pedidos, hechos) => {
+      _avanceSync = { pedidos: pedidos || 0, hechos: hechos || 0 };
+      avisarSync();
       if (!pie) return;
       if (!pedidos) { pie.textContent = 'looking for invoices…'; return; }
       pie.textContent = hechos
@@ -1354,8 +1377,9 @@
       refresh();
     } catch (e) {
       devolverPie();
+      _errorSync = String(e && e.message || e);
       parar();
-      avisar(String(e && e.message || e));
+      avisar(_errorSync);
     }
   }
 
@@ -2379,6 +2403,33 @@
     if (b('gasto')) b('gasto').onclick = () => hojaGasto(!arreglar && !(E && E.conectado === false));
   }
 
+  // ── Lo que dice la hoja de "Spent this cycle", renglón por renglón ──
+  //
+  // Las mismas reglas que tenía la tarjeta de MarginEdge:
+  //   · una lectura que falla se DICE, con su error, y se puede
+  //     reintentar: esconderlo es indistinguible de "no hay nada";
+  //   · sin conectar no es lo mismo que sin facturas, y sin conectar
+  //     no hay Sync now, que no haría nada: se dice dónde se conecta;
+  //   · con cero facturas sí hay Sync now: es justo cuando se espera
+  //     una entrega.
+  // La usan la hoja del teléfono y la ventana del escritorio
+  // (desk-home.js): una sola lista de lo que se dice. `que` es adónde
+  // lleva el renglón ('fix': las líneas sin botella; 'precios').
+  function filasGasto(E, precios) {
+    const conectada = !(E && !E.error && E.conectado === false);
+    const filas = [];
+    if (!E) filas.push({ t: 'Reading invoices…' });
+    else if (E.error) filas.push({ t: 'Could not read invoices: ' + E.error, am: true });
+    else if (!conectada) filas.push({ t: 'Not connected yet. This location has no MarginEdge catalog: connect it from Settings › Connections on a computer.' });
+    else if (!E.n) filas.push({ t: 'Nothing new yet · no invoices since the cycle opened' });
+    else {
+      filas.push({ t: E.n + ' invoice' + (E.n === 1 ? '' : 's') + ' · ' + E.unidades + ' unit' + (E.unidades === 1 ? '' : 's'), v: E.dinero ? money(E.dinero) : '' });
+      if (E.sueltas) filas.push({ t: E.sueltas + ' line' + (E.sueltas === 1 ? ' has' : 's have') + ' no bottle', v: 'fix', am: true, que: 'fix' });
+      if (precios > 0) filas.push({ t: precios + ' price' + (precios === 1 ? '' : 's') + ' changed', v: 'review', am: true, que: 'precios' });
+    }
+    return { conectada, filas };
+  }
+
   // ── La hoja de "Spent this cycle": lo que decía la tarjeta de MarginEdge
   //
   // Las facturas del ciclo, sus unidades y su dinero; lo que hay que
@@ -2405,24 +2456,12 @@
       const E = _entregas, g = gasto();
       const W = window.BarStockWeeklyCycle;
       const fecha = (W && W.resetAt && W.fmtDate && W.resetAt()) ? W.fmtDate(W.resetAt()) : '';
-      const filas = [];
-      // Las mismas reglas que tenía la tarjeta de MarginEdge:
-      //   · una lectura que falla se DICE, con su error, y se puede
-      //     reintentar: esconderlo es indistinguible de "no hay nada";
-      //   · sin conectar no es lo mismo que sin facturas, y sin conectar
-      //     no hay Sync now, que no haría nada: se dice dónde se conecta;
-      //   · con cero facturas sí hay Sync now: es justo cuando se espera
-      //     una entrega.
-      const conectada = !(E && !E.error && E.conectado === false);
-      if (!E) filas.push('<div class="m-cfh-r"><span>Reading invoices…</span></div>');
-      else if (E.error) filas.push(`<div class="m-cfh-r am"><span>Could not read invoices: ${esc(E.error)}</span></div>`);
-      else if (!conectada) filas.push('<div class="m-cfh-r"><span>Not connected yet. This location has no MarginEdge catalog: connect it from Settings › Connections on a computer.</span></div>');
-      else if (!E.n) filas.push('<div class="m-cfh-r"><span>Nothing new yet · no invoices since the cycle opened</span></div>');
-      else {
-        filas.push(`<div class="m-cfh-r"><span>${E.n} invoice${E.n === 1 ? '' : 's'} · ${E.unidades} unit${E.unidades === 1 ? '' : 's'}</span><b>${E.dinero ? money(E.dinero) : ''}</b></div>`);
-        if (E.sueltas) filas.push(`<div class="m-cfh-r am"><span>${E.sueltas} line${E.sueltas === 1 ? ' has' : 's have'} no bottle</span><b>fix</b></div>`);
-        if (_precios > 0) filas.push(`<div class="m-cfh-r am"><span>${_precios} price${_precios === 1 ? '' : 's'} changed</span><b>review</b></div>`);
-      }
+      // Los renglones los decide filasGasto (más abajo), que usa también
+      // la ventana del escritorio: los dos dicen lo mismo.
+      const fg = filasGasto(E, _precios);
+      const conectada = fg.conectada;
+      const filas = fg.filas.map(f =>
+        `<div class="m-cfh-r${f.am ? ' am' : ''}"><span>${esc(f.t)}</span>${f.v !== undefined ? `<b>${esc(f.v)}</b>` : ''}</div>`);
       const precios = _precios > 0;
       caja.innerHTML = `
         <div class="m-sheet-grip"></div>
@@ -2972,6 +3011,19 @@
   window.BarStockMobileHome = {
     render, refresh, datos, vigilar, detalleEstante, saludo,
     sincronizarHoy: () => sincronizarHoy(null),
+    // La cifra de MarginEdge en el escritorio: su Sync (el mismo de
+    // aquí, sin botón propio: el avance llega por alSync) y lo que dice
+    // la hoja de "Spent this cycle" (facturas, líneas sin botella,
+    // precios cambiados, cuándo se habló con MarginEdge).
+    sincronizarGasto: () => sincronizarMarginEdge(null, null),
+    estadoGasto: () => ({
+      sincronizando: _sincronizando, avance: _avanceSync, error: _errorSync,
+      entregas: _entregas, precios: _precios || 0, total: (gasto() || {}).total || 0,
+      desde: (() => { const W = window.BarStockWeeklyCycle; return (W && W.resetAt && W.fmtDate && W.resetAt()) ? W.fmtDate(W.resetAt()) : ''; })(),
+      hace: (_entregas && _entregas.revisado) ? hace(_entregas.revisado) : ''
+    }),
+    alSync(fn) { _oyentesSync.add(fn); return () => _oyentesSync.delete(fn); },
+    filasGasto: () => filasGasto(_entregas, _precios),
     alCambiar(fn) { _oyentes.add(fn); return () => _oyentes.delete(fn); }
   };
 

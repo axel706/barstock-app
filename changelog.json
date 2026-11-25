@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-141515",
+    "items": [
+      "Desktop Home: Sync and Review on Spent this cycle",
+      "Shows invoice progress while it syncs"
+    ]
+  },
+  {
     "build": "20261125-140138",
     "items": [
       "iPad app: top bar sits below the iOS haze and blends in"
@@ -190,12 +197,6 @@
     "items": [
       "Invoices in cases count as bottles",
       "even when the line does not say case"
-    ]
-  },
-  {
-    "build": "20261122-215925",
-    "items": [
-      "Invoices in cases count as bottles (case/12 = 12)"
     ]
   }
 ]

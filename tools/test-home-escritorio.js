@@ -71,7 +71,7 @@ let diag = null;
 const cifras = [
   { id: 'estante', k: 'On the shelf', v: '$18,420', d: 'Live now', btn: 'Details' },
   { id: 'ayer', k: 'Sold today', v: '$1,640', d: 'so far today', btn: 'Sync' },
-  { id: 'gasto', k: 'Spent this cycle', v: '$6,880', d: '3 to fix', btn: 'Review' }
+  { id: 'gasto', k: 'Spent this cycle', v: '$6,880', d: '3 to fix', btn: 'Review', tono: 'am' }
 ];
 let oyente = null;
 w.BarStockMobileHome = {
@@ -79,8 +79,20 @@ w.BarStockMobileHome = {
   alCambiar: (fn) => { oyente = fn; },
   vigilar: () => {},
   detalleEstante: () => llamadas.push('detalle'),
-  sincronizarHoy: () => llamadas.push('sync')
+  sincronizarHoy: () => llamadas.push('sync'),
+  sincronizarGasto: () => llamadas.push('syncME'),
+  estadoGasto: () => gEstado,
+  filasGasto: () => ({ conectada: true, filas: [
+    { t: '4 invoices · 134 units', v: '$4,876' },
+    { t: '1 line has no bottle', v: 'fix', am: true, que: 'fix' },
+    { t: '3 prices changed', v: 'review', am: true, que: 'precios' }] }),
+  alSync: (fn) => { oyenteSync = fn; }
 };
+let oyenteSync = null;
+let gEstado = { sincronizando: false, avance: null, error: null, precios: 3, total: 4876, desde: 'Nov 22', hace: '12 minutes ago' };
+const ajustes = [];
+w.openSettingsModal = () => ajustes.push('abrir');
+w.showSettingsPanel = (p) => ajustes.push(p);
 w.BarStockLiveDiag = { semana: () => diag instanceof Error ? Promise.reject(diag) : Promise.resolve(diag) };
 w.BarStockRunningOut = { lista: () => [{ r: { item: 'Cointreau', suggested: 2 }, item: 'Cointreau', vivo: true, out: { txt: 'Out Thu', tono: 'r' } }] };
 w.BarStockLiveCache = { cuanto: () => 0.8, pedir: () => 2 };
@@ -112,7 +124,8 @@ const H = () => D.getElementById('dkHome');
     JSON.stringify(ks) === JSON.stringify(['On the shelf', 'Sold today', 'Spent this cycle', 'Live vs count']), JSON.stringify(ks));
   const diagTxt = () => H().querySelectorAll('.dkh-cf')[3].textContent.replace(/\s+/g, ' ');
   prueba('Live vs count: lo que faltó, en dinero', /−\$412/.test(diagTxt()) && /3 far off/.test(diagTxt()), diagTxt());
-  prueba('Spent this cycle va sin botón (su hoja es del teléfono)', !H().querySelector('[data-cf="gasto"]'));
+  const gb = () => H().querySelector('[data-gasto]');
+  const gt = () => H().querySelector('[data-cifra="gasto"]').textContent.replace(/\s+/g, ' ');
   H().querySelector('[data-cf="estante"]').click();
   H().querySelector('[data-cf="ayer"]').click();
   prueba('Details y Sync llaman a lo del teléfono', llamadas.includes('detalle') && llamadas.includes('sync'));
@@ -126,6 +139,58 @@ const H = () => D.getElementById('dkHome');
   w.BarStockDeskHome._diag({ hay: false });
   w.BarStockDeskHome.pintar();
   prueba('sin ciclo cerrado lo dice', /No closed cycle yet/.test(diagTxt()), diagTxt());
+
+  grupo('2b. Spent this cycle: Sync, Review y sus estados (lámina A)');
+  prueba('con algo que arreglar, Review', !!gb() && gb().textContent.trim() === 'Review' && gb().dataset.gasto === 'review');
+  gb().click();
+  const V = () => D.getElementById('dkGasto');
+  prueba('Review abre la ventana', !!V());
+  prueba('con los renglones de la hoja del teléfono', /4 invoices · 134 units/.test(V().textContent) && /1 line has no bottle/.test(V().textContent) && /3 prices changed/.test(V().textContent));
+  prueba('y Review prices en ámbar (hay precios cambiados)', /Review prices/.test(V().querySelector('.dkg-b.dkg-am').textContent));
+  ajustes.length = 0;
+  V().querySelector('[data-ir="meMatch"]').click();
+  prueba('"Fix ›" lleva a Settings › Match products', ajustes.join(',') === 'abrir,meMatch', ajustes.join(','));
+  prueba('y cierra la ventana', !V());
+  gb().click(); ajustes.length = 0;
+  V().querySelector('.dkg-b.dkg-am').click();
+  prueba('"Review prices" lleva a What came in', ajustes.join(',') === 'abrir,mePurchases', ajustes.join(','));
+  gb().click(); llamadas.length = 0;
+  V().querySelector('[data-accion="sync"]').click();
+  prueba('Sync now es el Sync del teléfono', llamadas.includes('syncME'));
+  // Sincronizando: el avance llega por alSync y sólo se repinta la cifra.
+  const antesHome = H().querySelector('.dkh-ahora');
+  gEstado = Object.assign({}, gEstado, { sincronizando: true, avance: { pedidos: 12, hechos: 3 } });
+  oyenteSync && oyenteSync();
+  prueba('sincronizando dice por dónde va', /3 of 12 invoices…/.test(gt()), gt());
+  prueba('con su barra de avance', !!H().querySelector('[data-cifra="gasto"] .dkh-gbar i'));
+  prueba('y el botón girando y apagado', gb().disabled && /Syncing/.test(gb().textContent));
+  prueba('la ventana dice lo mismo', /3 of 12 invoices…/.test(V().textContent) && V().querySelector('[data-accion="sync"]').disabled);
+  prueba('el avance no rehace el Home entero', H().querySelector('.dkh-ahora') === antesHome);
+  w.BarStockDeskHome.cerrarVentana();
+  // Falló: ámbar, lo que dijo y Retry.
+  gEstado = Object.assign({}, gEstado, { sincronizando: false, avance: null, error: 'MarginEdge did not answer for 90 s · stopped waiting, try again' });
+  oyenteSync && oyenteSync();
+  prueba('si falla, "Sync failed" y lo que dijo', /Sync failed/.test(gt()) && /did not answer for 90 s/.test(gt()), gt());
+  prueba('en ámbar', H().querySelector('[data-cifra="gasto"]').classList.contains('dkh-err'));
+  llamadas.length = 0;
+  gb().click();
+  prueba('Retry vuelve a sincronizar', gb().textContent.trim() === 'Retry' || llamadas.includes('syncME'));
+  prueba('…y llama al Sync', llamadas.includes('syncME'));
+  // Nada que arreglar: Sync, con cuándo fue el último.
+  gEstado = Object.assign({}, gEstado, { error: null });
+  cifras[2] = { id: 'gasto', k: 'Spent this cycle', v: '$6,880', d: 'since Nov 22', btn: 'Sync' };
+  w.BarStockDeskHome.pintar();
+  prueba('sin nada que arreglar, Sync', gb().dataset.gasto === 'sync' && /Sync/.test(gb().textContent));
+  prueba('y cuándo se sincronizó', /synced 12 minutes ago/.test(gt()), gt());
+  // Sin conectar: lleva a la conexión.
+  cifras[2] = { id: 'gasto', k: 'Spent this cycle', v: '…', d: 'since Nov 22', btn: 'MarginEdge' };
+  w.BarStockDeskHome.pintar(); ajustes.length = 0;
+  gb().click();
+  prueba('sin MarginEdge, el botón lleva a conectarlo', ajustes.join(',') === 'abrir,integrations', ajustes.join(','));
+  cifras[2] = { id: 'gasto', k: 'Spent this cycle', v: '$6,880', d: '3 to fix', btn: 'Review', tono: 'am' };
+  w.BarStockDeskHome.pintar();
+  prueba('la hoja del teléfono y la ventana leen los mismos renglones (filasGasto)',
+    /function filasGasto\(E, precios\)/.test(MH) && /const fg = filasGasto\(E, _precios\)/.test(MH));
 
   grupo('3. Lo de ahora, ancho, con el transfer al lado');
   const ahora = H().querySelector('.dkh-ahora');

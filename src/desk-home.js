@@ -79,7 +79,150 @@
     };
   }
 
+  // ── Spent this cycle (Axel, 2026-11-25, lámina "Spent this cycle", A) ──
+  //
+  // Como en el teléfono: UN botón. Sync, o Review en ámbar con algo que
+  // arreglar, o "MarginEdge" sin conectar. Mientras sincroniza, la barra
+  // de avance y "3 of 12 invoices…" con el botón girando y apagado; si
+  // falla, ámbar, "Sync failed", lo que dijo y Retry. El Sync es el del
+  // teléfono (mobile-home.sincronizarGasto): el avance y el error llegan
+  // como dato por alSync, y sólo se repinta esta cifra.
+  let _oGasto = null;
+  function htmlGasto(o) {
+    const M = MH();
+    const G = M && M.estadoGasto ? M.estadoGasto() : null;
+    const cargando = /m-cf-esq/.test(String(o.v));
+    let tono = o.tono || '', s = o.s || '', sTono = o.sTono || '', d = o.d, btn = '', que = '', barra = '';
+    if (G && G.sincronizando) {
+      const a = G.avance || {};
+      d = !a.pedidos ? 'Looking for invoices…'
+        : a.hechos ? a.hechos + ' of ' + a.pedidos + ' invoices…'
+        : a.pedidos + (a.pedidos === 1 ? ' invoice found…' : ' invoices found…');
+      const parte = a.pedidos ? Math.max(4, Math.min(100, (a.hechos || 0) / a.pedidos * 100)) : 0;
+      barra = `<span class="dkh-gbar${a.pedidos ? '' : ' sin'}"><i style="width:${parte.toFixed(0)}%"></i></span>`;
+      btn = '<span class="dkh-gira"></span> Syncing';
+      que = 'nada';
+    } else if (G && G.error) {
+      // "Sync failed" va al principio de la línea, no en la cabecera: ahí,
+      // junto al logo y el título, se cortaba en "Sy…". Y la línea puede
+      // ocupar dos renglones: lo que dijo MarginEdge se lee entero.
+      tono = 'err';
+      d = '<b class="m-cf-err">Sync failed</b> · ' + esc(G.error);
+      btn = '<i class="ti ti-refresh" aria-hidden="true"></i> Retry'; que = 'sync';
+    } else if (cargando) {
+      que = '';
+    } else if (o.btn === 'Review') {
+      btn = 'Review'; que = 'review';
+    } else if (o.btn === 'MarginEdge') {
+      btn = 'MarginEdge'; que = 'conectar';
+    } else {
+      d = o.d + (G && G.hace ? ' · synced ' + esc(G.hace) : '');
+      btn = '<i class="ti ti-refresh" aria-hidden="true"></i> Sync'; que = 'sync';
+    }
+    return `
+      <div class="dkh-cf dkh-gasto${tono ? ' dkh-' + esc(tono) : ''}" data-cifra="gasto">
+        <div class="dkh-cf-k"><span>${o.logo || ''}${o.k}</span>${s ? `<i class="${esc(sTono)}">${s}</i>` : ''}</div>
+        <b class="dkh-cf-v">${o.v}</b>
+        ${barra}
+        <div class="dkh-cf-d"><span>${d}</span>${btn ? `<button type="button" class="dkh-cf-b${que === 'review' ? ' dkh-am' : ''}" data-gasto="${que}"${que === 'nada' ? ' disabled' : ''}>${btn}</button>` : ''}</div>
+      </div>`;
+  }
+
+  // El avance del Sync repinta SÓLO esta cifra (y la ventana, si está
+  // abierta): rehacer el Home entero en cada tanda de facturas es mucho.
+  function pintarGasto() {
+    if (_oGasto && _host) {
+      const viejo = _host.querySelector('[data-cifra="gasto"]');
+      if (viejo) {
+        const t = document.createElement('div');
+        t.innerHTML = htmlGasto(_oGasto).trim();
+        viejo.replaceWith(t.firstElementChild);
+        engancharGasto();
+      }
+    }
+    if (_ventana) pintarVentana();
+  }
+
+  function sincronizar() {
+    const M = MH();
+    if (M && M.sincronizarGasto) M.sincronizarGasto();
+  }
+
+  // A Settings, al panel que se pide: 'meMatch' (Match products, las
+  // líneas sin botella), 'mePurchases' (What came in, con su "Update N
+  // prices") o 'integrations' (la conexión de MarginEdge).
+  function irAjustes(panel) {
+    cerrarVentana();
+    if (typeof window.openSettingsModal === 'function') window.openSettingsModal();
+    if (typeof window.showSettingsPanel === 'function') window.showSettingsPanel(panel);
+  }
+
+  function engancharGasto() {
+    const b = _host && _host.querySelector('[data-gasto]');
+    if (!b) return;
+    const que = b.dataset.gasto;
+    b.onclick = () => {
+      if (que === 'sync') sincronizar();
+      else if (que === 'review') abrirVentana();
+      else if (que === 'conectar') irAjustes('integrations');
+    };
+  }
+
+  // ── La ventana de Review: lo de la hoja del teléfono ────────────────
+  let _ventana = null;
+  function abrirVentana() {
+    cerrarVentana();
+    _ventana = document.createElement('div');
+    _ventana.id = 'dkGasto';
+    _ventana.innerHTML = '<div class="dkg-bg"></div><div class="dkg-box" role="dialog" aria-modal="true" aria-label="Spent this cycle"></div>';
+    document.body.appendChild(_ventana);
+    _ventana.querySelector('.dkg-bg').onclick = cerrarVentana;
+    document.addEventListener('keydown', alTeclado);
+    pintarVentana();
+  }
+  function cerrarVentana() {
+    if (!_ventana) return;
+    _ventana.remove();
+    _ventana = null;
+    document.removeEventListener('keydown', alTeclado);
+  }
+  function alTeclado(ev) { if (ev.key === 'Escape') cerrarVentana(); }
+  function pintarVentana() {
+    const M = MH();
+    if (!_ventana || !M) return;
+    const G = M.estadoGasto ? M.estadoGasto() : {};
+    const fg = M.filasGasto ? M.filasGasto() : { conectada: true, filas: [] };
+    const a = G.avance || {};
+    const sub = G.sincronizando
+      ? (!a.pedidos ? 'Looking for invoices…' : a.hechos ? a.hechos + ' of ' + a.pedidos + ' invoices…' : a.pedidos + ' invoices found…')
+      : (G.hace ? 'synced ' + G.hace : 'never synced');
+    const filas = fg.filas.map(f => {
+      const ir = f.que === 'fix' ? 'meMatch' : f.que === 'precios' ? 'mePurchases' : '';
+      const der = f.que === 'fix' ? 'Fix ›' : f.que === 'precios' ? 'Review ›' : (f.v || '');
+      return ir
+        ? `<button type="button" class="dkg-r dkg-am" data-ir="${ir}"><span>${esc(f.t)}</span><b>${esc(der)}</b></button>`
+        : `<div class="dkg-r${f.am ? ' dkg-am' : ''}"><span>${esc(f.t)}</span>${der ? `<b>${esc(der)}</b>` : ''}</div>`;
+    }).join('');
+    const precios = (G.precios || 0) > 0;
+    _ventana.querySelector('.dkg-box').innerHTML = `
+      <button type="button" class="dkg-x" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+      <h3>Spent this cycle${G.total ? ' · ' + money(G.total) : ''}</h3>
+      <p class="dkg-s">${G.desde ? 'Since ' + esc(G.desde) + ' · ' : ''}MarginEdge · ${esc(sub)}</p>
+      ${G.error && !G.sincronizando ? `<div class="dkg-r dkg-am"><span>Last sync failed: ${esc(G.error)}</span></div>` : ''}
+      ${filas}
+      <div class="dkg-bs">
+        ${fg.conectada ? `<button type="button" class="dkg-b" data-accion="sync"${G.sincronizando ? ' disabled' : ''}>${G.sincronizando ? '<span class="dkh-gira"></span> Syncing' : '<i class="ti ti-refresh" aria-hidden="true"></i> Sync now'}</button>` : ''}
+        <button type="button" class="dkg-b${precios ? ' dkg-am' : ''}" data-ir="${fg.conectada ? 'mePurchases' : 'integrations'}">${!fg.conectada ? 'Connect MarginEdge' : precios ? 'Review prices' : 'What came in'}</button>
+      </div>`;
+    const caja = _ventana.querySelector('.dkg-box');
+    caja.querySelector('.dkg-x').onclick = cerrarVentana;
+    const sy = caja.querySelector('[data-accion="sync"]');
+    if (sy) sy.onclick = sincronizar;
+    caja.querySelectorAll('[data-ir]').forEach(b => { b.onclick = () => irAjustes(b.dataset.ir); });
+  }
+
   function htmlCifra(o) {
+    if (o.id === 'gasto') { _oGasto = o; return htmlGasto(o); }
     const btn = o.id === 'estante' ? 'Details' : o.id === 'ayer' ? o.btn : '';
     return `
       <div class="dkh-cf${o.tono ? ' dkh-' + esc(o.tono) : ''}">
@@ -283,6 +426,7 @@
     const cf = (id) => _host.querySelector(`[data-cf="${id}"]`);
     if (cf('estante') && M.detalleEstante) cf('estante').onclick = () => M.detalleEstante();
     if (cf('ayer') && M.sincronizarHoy) cf('ayer').onclick = () => M.sincronizarHoy();
+    engancharGasto();
     _host.querySelectorAll('.dkh-rep[data-sec]').forEach(t => {
       const abrir = () => { if (typeof window.bsOpenSection === 'function') window.bsOpenSection(t.dataset.sec); };
       // El botón de dentro ("Report last week") hace lo suyo y para el
@@ -303,6 +447,7 @@
 
     const M = MH();
     if (M && M.alCambiar) M.alCambiar(pintar);
+    if (M && M.alSync) M.alSync(pintarGasto);
     // Al volver al Home (se quita .bs-focus-mode) se repinta: el ciclo y
     // las órdenes pueden haber cambiado en la sección de la que vienes.
     const wrap = document.querySelector('.wrap');
@@ -331,5 +476,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(() => arrancar(0), 0));
   else setTimeout(() => arrancar(0), 0);
 
-  window.BarStockDeskHome = { pintar, montar, cifraDiag, _diag: (d) => { _diag = d; } };
+  window.BarStockDeskHome = { pintar, montar, cifraDiag, abrirVentana, cerrarVentana, _diag: (d) => { _diag = d; } };
 })();

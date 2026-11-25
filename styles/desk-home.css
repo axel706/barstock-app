@@ -247,3 +247,88 @@
     background-size: 200% 100%;
   }
 }
+
+/* ── Spent this cycle: su botón, el avance y el error (lámina A) ──── */
+@media (min-width: 641px) {
+  /* El ámbar de las tarjetas del teléfono (--hero-amber): un aviso. */
+  #dkHome .dkh-cf.dkh-err { background: var(--hero-amber); border-color: var(--hero-amber-borde); }
+  #dkHome .dkh-cf .m-cf-err { color: #fcd34d; }
+  #dkHome .dkh-cf.dkh-err .dkh-cf-d > span { color: #fff7e6; }
+  #dkHome .dkh-cf.dkh-err .m-cf-err { color: #fff; }
+  /* La línea de la cifra de MarginEdge dice cosas largas (el error tal
+     cual, "synced 12 minutes ago"): hasta dos renglones, sin cortarla. */
+  #dkHome .dkh-gasto .dkh-cf-d > span {
+    white-space: normal; line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  }
+  /* Review avisa: ámbar sólido, como en el teléfono. */
+  #dkHome .dkh-cf-b.dkh-am { background: #f59e0b; color: #1f1300; border-color: #f59e0b; box-shadow: none; }
+  /* La barra de avance: con el total sabido, crece; sin él ("Looking for
+     invoices…"), una franja que va y viene. */
+  #dkHome .dkh-gbar { display: block; height: 5px; border-radius: 99px; background: rgba(255, 255, 255, .14); overflow: hidden; }
+  #dkHome .dkh-gbar i { display: block; height: 100%; border-radius: 99px; background: #38bdf8; transition: width .3s ease; }
+  #dkHome .dkh-gbar.sin i { width: 30% !important; animation: dkhVaiven 1.2s ease-in-out infinite alternate; }
+  @keyframes dkhVaiven { from { transform: translateX(-10%); } to { transform: translateX(240%); } }
+  #dkHome .dkh-gira, #dkGasto .dkh-gira {
+    display: inline-block; width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, .35); border-top-color: #fff;
+    animation: dkhGira .8s linear infinite;
+  }
+  @keyframes dkhGira { to { transform: rotate(360deg); } }
+  body.light #dkHome .dkh-cf.dkh-err { background: rgba(253, 230, 138, .72); border-color: rgba(217, 119, 6, .55); }
+  body.light #dkHome .dkh-cf .m-cf-err,
+  body.light #dkHome .dkh-cf.dkh-err .m-cf-err { color: #92400e; }
+  body.light #dkHome .dkh-cf.dkh-err .dkh-cf-d > span { color: #422006; }
+  /* Review sigue ámbar sólido en el claro: el botón claro de las cifras
+     (body.light … .dkh-cf-b) le ganaba. */
+  body.light #dkHome .dkh-cf-b.dkh-am { background: #f59e0b; color: #1f1300; border-color: #f59e0b; box-shadow: none; }
+  body.light #dkHome .dkh-gbar { background: rgba(15, 23, 42, .1); }
+  body.light #dkHome .dkh-gbar i { background: #0284c7; }
+  body.light #dkHome .dkh-gira { border-color: rgba(15, 23, 42, .25); border-top-color: #0f172a; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #dkHome .dkh-gbar.sin i, #dkHome .dkh-gira, #dkGasto .dkh-gira { animation: none; }
+}
+
+/* ── La ventana de Review (lo de la hoja del teléfono) ───────────────
+   Fuera de #dkHome: cuelga del body. Con su id delante, le gana al
+   radio y al desenfoque que app.css pone a todo <button>. */
+#dkGasto { position: fixed; inset: 0; z-index: 9000; display: grid; place-items: center; padding: 16px; }
+#dkGasto .dkg-bg { position: absolute; inset: 0; background: rgba(2, 6, 23, .45); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+#dkGasto .dkg-box {
+  position: relative; width: min(440px, 100%);
+  border-radius: 20px; padding: 20px;
+  background: rgba(15, 23, 42, .92); border: 1px solid rgba(255, 255, 255, .14);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .5);
+  backdrop-filter: blur(18px) saturate(150%); -webkit-backdrop-filter: blur(18px) saturate(150%);
+  display: flex; flex-direction: column; gap: 10px; color: #f8fafc;
+}
+#dkGasto h3 { margin: 0; padding-right: 36px; font-size: 18px; font-weight: 800; }
+#dkGasto .dkg-s { margin: 0; font-size: 12.5px; color: #a9bacd; }
+#dkGasto .dkg-r {
+  display: flex; justify-content: space-between; gap: 12px; width: 100%;
+  padding: 10px 12px; border-radius: 12px !important;
+  background: rgba(255, 255, 255, .06); border: 0; box-shadow: none;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  font: inherit; font-size: 13px; color: #e2e8f0; text-align: left;
+}
+#dkGasto .dkg-r b { flex: none; }
+#dkGasto .dkg-r.dkg-am { background: rgba(245, 158, 11, .16); color: #fde68a; }
+#dkGasto button.dkg-r { cursor: pointer; }
+#dkGasto button.dkg-r:hover { background: rgba(245, 158, 11, .26); }
+#dkGasto .dkg-bs { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+#dkGasto .dkg-b, #dkGasto .dkg-x {
+  display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px;
+  border-radius: 999px !important; font: inherit; font-size: 13px; font-weight: 800; color: #f8fafc;
+  background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .25);
+  box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; cursor: pointer;
+}
+#dkGasto .dkg-b.dkg-am { background: #f59e0b; color: #1f1300; border-color: #f59e0b; }
+#dkGasto .dkg-b:disabled { opacity: .6; cursor: default; }
+#dkGasto .dkg-x { position: absolute; top: 14px; right: 14px; width: 32px; height: 32px; padding: 0; justify-content: center; }
+body.light #dkGasto .dkg-box { background: rgba(255, 255, 255, .92); border-color: rgba(15, 23, 42, .1); color: #0f172a; box-shadow: 0 24px 60px rgba(15, 23, 42, .25); }
+body.light #dkGasto .dkg-s { color: #475569; }
+body.light #dkGasto .dkg-r { background: rgba(15, 23, 42, .05); color: #1e293b; }
+body.light #dkGasto .dkg-r.dkg-am { background: rgba(245, 158, 11, .16); color: #92400e; }
+body.light #dkGasto .dkg-b, body.light #dkGasto .dkg-x { color: #0f172a; background: rgba(15, 23, 42, .06); border-color: rgba(15, 23, 42, .14); }
+body.light #dkGasto .dkg-b.dkg-am { background: #f59e0b; color: #1f1300; border-color: #f59e0b; }
