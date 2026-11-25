@@ -174,8 +174,8 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   const regla = (sel) => { const m = CSS.match(new RegExp(sel.replace(/[.#]/g, c => '\\' + c) + '\\s*\\{([^}]*)\\}')); return m ? m[1] : ''; };
   prueba('la barra lateral lleva desenfoque', /backdrop-filter:\s*blur\(\d+px\)/.test(regla('body.dk #dkLado')));
   prueba('el header lleva desenfoque', /backdrop-filter:\s*blur\(\d+px\)/.test(regla('body.dk .wrap > .bs-header')));
-  prueba('la barra lateral tiene su claro', /background:\s*rgba\(255, 255, 255/.test(regla('body.light.dk #dkLado')));
-  prueba('el header tiene su claro', /background:\s*rgba\(255, 255, 255/.test(regla('body.light.dk .wrap > .bs-header')));
+  prueba('la barra lateral tiene su claro', /background:[^;]*rgba\((?:24\d|25\d), (?:24\d|25\d), (?:25\d)/.test(regla('body.light.dk #dkLado')));
+  prueba('el header tiene su claro', /background:[^;]*rgba\((?:24\d|25\d), (?:24\d|25\d), (?:25\d)/.test(regla('body.light.dk .wrap > .bs-header')));
   prueba('el logo lleva su color en cada modo', /body\.light #dkLado \.dk-logo \{ color: #0f172a/.test(CSS) && /#dkLado \.dk-logo \{[^}]*color: #f8fafc/.test(CSS));
   prueba('ningún renglón de la barra se apaga con opacidad', !/#dkLado[^{]*\{[^}]*opacity:\s*\.[0-4]/.test(CSS));
 
@@ -222,6 +222,14 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   prueba('escondida, la barra sale de la pantalla', /body\.dk\.dk-sin-lado #dkLado \{ transform: translateX\(-100%\); visibility: hidden; \}/.test(CSS));
   prueba('y el contenido ocupa el ancho', /body\.dk\.dk-sin-lado \.wrap \{ margin-left: 0; \}/.test(CSS));
   prueba('sin animación con reducir movimiento', /prefers-reduced-motion: reduce\)\s*\{\s*body\.dk #dkLado, body\.dk \.wrap \{ transition: none; \}/.test(CSS));
+
+  grupo('8f. La franja de la hora, integrada (sin el brillo)');
+  const franja = (sel) => new RegExp(sel + ' \\{[^}]*background: linear-gradient\\(to bottom,[^;]*env\\(safe-area-inset-top\\),[^;]*calc\\(env\\(safe-area-inset-top\\) \\+ \\d+px\\)').test(CSS);
+  prueba('el header espesa su vidrio bajo la hora', franja('body\\.dk \\.wrap > \\.bs-header'));
+  prueba('y en el claro', franja('body\\.light\\.dk \\.wrap > \\.bs-header'));
+  prueba('la barra lateral también', franja('body\\.dk #dkLado'));
+  prueba('y en el claro', franja('body\\.light\\.dk #dkLado'));
+  prueba('el claro del header le gana al !important de .card en app.css', /body\.light\.dk \.wrap > \.bs-header \{[^}]*\) !important;/.test(CSS));
 
   grupo('9. El orden de carga');
   const iMod = INDEX.indexOf('src/desk-shell.js');

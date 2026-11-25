@@ -36,7 +36,12 @@ body.dk .bs-header #dkMenu { display: none; }
        light como dark, como la app anterior"). La primera versión iba
        casi opaca y sin desenfoque: sobre un fondo dibujado y nítido se
        veía el dibujo pasar por detrás del texto. */
-    background: rgba(15, 23, 42, .52);
+    /* Arriba, el mismo espesor que el header bajo la hora del iPad: los
+       dos son un marco y la barra de estado cruza los dos. */
+    background: linear-gradient(to bottom,
+      rgba(9, 14, 26, .9) 0,
+      rgba(9, 14, 26, .9) env(safe-area-inset-top),
+      rgba(15, 23, 42, .52) calc(env(safe-area-inset-top) + 64px));
     border-right: 1px solid rgba(255, 255, 255, .12);
     box-shadow: inset -1px 0 0 rgba(255, 255, 255, .04);
     backdrop-filter: blur(18px) saturate(150%);
@@ -47,7 +52,10 @@ body.dk .bs-header #dkMenu { display: none; }
   /* El claro: el vidrio claro de app.css (body.light .card), con más
      blanco porque aquí va texto pequeño. */
   body.light.dk #dkLado {
-    background: rgba(255, 255, 255, .55);
+    background: linear-gradient(to bottom,
+      rgba(246, 249, 253, .92) 0,
+      rgba(246, 249, 253, .92) env(safe-area-inset-top),
+      rgba(255, 255, 255, .55) calc(env(safe-area-inset-top) + 64px));
     border-right-color: rgba(255, 255, 255, .6);
     box-shadow: 1px 0 24px rgba(15, 23, 42, .08);
     color: #0f172a;
@@ -177,16 +185,32 @@ body.dk .bs-header #dkMenu { display: none; }
     padding: calc(12px + env(safe-area-inset-top)) calc(24px + env(safe-area-inset-right)) 12px 24px;
     border-radius: 0;
     border-width: 0 0 1px;
-    /* El mismo vidrio que la barra lateral: son un solo marco. */
-    background: rgba(15, 23, 42, .52);
+    /* El mismo vidrio que la barra lateral: son un solo marco.
+       Arriba, donde va la hora del iPad, el vidrio se espesa y se funde
+       hacia abajo (Axel, 2026-11-25: "que no se vea como un brillo ahí
+       encima"). El desenfoque no tiene nada que mezclar por encima del
+       borde de la pantalla y ese borde salía lavado, gris claro; con la
+       franja de la zona segura en el mismo tono, más denso, la barra de
+       estado queda dentro del header, como en las barras de iOS. En el
+       navegador la zona vale 0 y sólo queda el degradado de 0 px. */
+    background: linear-gradient(to bottom,
+      rgba(9, 14, 26, .9) 0,
+      rgba(9, 14, 26, .9) env(safe-area-inset-top),
+      rgba(15, 23, 42, .52) calc(env(safe-area-inset-top) + 64px));
     border-color: rgba(255, 255, 255, .12);
     backdrop-filter: blur(18px) saturate(150%);
     -webkit-backdrop-filter: blur(18px) saturate(150%);
   }
+  /* !important porque el header es también una .card, y app.css le
+     pone en el claro `background: rgba(255,255,255,.21) !important`:
+     sin esto el claro se quedaba con un velo gris sobre la foto. */
   body.light.dk .wrap > .bs-header {
-    background: rgba(255, 255, 255, .55);
-    border-color: rgba(255, 255, 255, .6);
-    box-shadow: 0 8px 24px rgba(15, 23, 42, .08);
+    background: linear-gradient(to bottom,
+      rgba(246, 249, 253, .92) 0,
+      rgba(246, 249, 253, .92) env(safe-area-inset-top),
+      rgba(255, 255, 255, .55) calc(env(safe-area-inset-top) + 64px)) !important;
+    border-color: rgba(255, 255, 255, .6) !important;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, .08) !important;
   }
   body.dk .bs-header.collapsed::after { display: none; }
   body.dk .bs-header .bs-header-line1,

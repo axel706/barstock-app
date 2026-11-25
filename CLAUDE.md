@@ -497,6 +497,13 @@ sección de hoy vive tal cual dentro del armazón.
   la izquierda las suyas); sin eso, el logo, el ciclo, el saludo, la
   locación y Import/Export/More quedaban debajo, sin poder tocarse. En
   Chromium vale 0: se mira sirviendo la hoja con 24 px en su lugar.
+  **Y sin el brillo** (Axel, el mismo día, en el iPad: "que no se vea
+  como un brillo ahí encima"): el desenfoque no tiene nada que mezclar
+  por encima del borde de la pantalla y la franja de la hora salía
+  lavada. El header y la barra lateral llevan un degradado: el mismo
+  tono, denso (90 %), en la zona segura, que se funde con el vidrio en
+  64 px. El claro del header necesita `!important`: es una `.card` y
+  app.css le pone `rgba(255,255,255,.21) !important`.
 - **Esconder la barra lateral** (Axel, 2026-11-25, opción A frente a
   dejar los iconos): el botón `#dkMenu`, antes del saludo, la esconde
   DEL TODO (sale por la izquierda) y la página ocupa el ancho; el mismo
