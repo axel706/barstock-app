@@ -534,6 +534,18 @@ sección de hoy vive tal cual dentro del armazón.
   seguras) y su vidrio se espesa en él y se funde en 48 px: "que velo y
   header se mezclen dando ilusión de ser lo mismo". La locación se
   centra en la fila del saludo (`50% + una zona`).
+- **UN vidrio para la barra y el header** (Axel, 2026-11-25: "esa parte
+  no debe tener una línea, el blur debe integrar ambos blur como uno
+  mismo"). Eran dos `backdrop-filter` y en la esquina se veía la costura.
+  Ahora es `#dkMarco`, una capa fija en L (`clip-path` hasta `--dk-alto`,
+  el alto del header que mide desk-shell con un ResizeObserver, y
+  `--dk-x`, el ancho de la barra o 0 escondida) con el degradado de la
+  hora y el desenfoque; la barra y el header van TRANSPARENTES encima,
+  sin sombra, y la línea de la barra empieza bajo el header. **Cuelga de
+  `.wrap`**, con z-index 39: `.wrap` lleva z-index 1 y colgado del body
+  tapaba todo el header. Unmatched e History llevan su icono y el tamaño
+  de las demás ("todo con su icono, tamaños de texto"), sólo un poco
+  metidas.
 - **Esconder la barra lateral** (Axel, 2026-11-25, opción A frente a
   dejar los iconos): el botón `#dkMenu`, antes del saludo, la esconde
   DEL TODO (sale por la izquierda) y la página ocupa el ancho; el mismo

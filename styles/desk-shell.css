@@ -11,7 +11,7 @@
  * dan su forma, y quien los busca por id los encuentra donde siempre.
  */
 
-#dkLado { display: none; }
+#dkLado, #dkMarco { display: none; }
 /* El botón de esconder la barra no existe en el teléfono. */
 body.dk .bs-header #dkMenu { display: none; }
 
@@ -41,33 +41,55 @@ body.dk .bs-header #dkMenu { display: none; }
        el iPad). En el navegador valen 0. */
     padding: calc(16px + var(--dk-velo)) 12px calc(14px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
     z-index: 45;
-    /* El vidrio de la app (Axel, 2026-11-25: "TODO necesita blur, tanto
-       light como dark, como la app anterior"). La primera versión iba
-       casi opaca y sin desenfoque: sobre un fondo dibujado y nítido se
-       veía el dibujo pasar por detrás del texto. */
-    /* Arriba, el mismo espesor que el header bajo la hora del iPad: los
-       dos son un marco y la barra de estado cruza los dos. */
-    background: linear-gradient(to bottom,
-      rgba(9, 14, 26, .9) 0,
-      rgba(9, 14, 26, .9) var(--dk-velo),
-      rgba(15, 23, 42, .52) calc(var(--dk-velo) + 48px));
-    border-right: 1px solid rgba(255, 255, 255, .12);
-    box-shadow: inset -1px 0 0 rgba(255, 255, 255, .04);
-    backdrop-filter: blur(18px) saturate(150%);
-    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    /* Sin vidrio propio: lo pone #dkMarco, el mismo para la barra y el
+       header (ver abajo). Sólo la línea de su borde, desde debajo del
+       header: en la esquina no hay línea. */
+    background: linear-gradient(var(--dk-linea), var(--dk-linea)) right var(--dk-alto) / 1px calc(100% - var(--dk-alto)) no-repeat;
+    border: 0;
+    box-shadow: none;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
     color: #e2e8f0;
     overflow-y: auto;
   }
   /* El claro: el vidrio claro de app.css (body.light .card), con más
      blanco porque aquí va texto pequeño. */
-  body.light.dk #dkLado {
+  body.light.dk #dkLado { color: #0f172a; }
+
+  /* ── UN vidrio para la barra lateral y el header (Axel, 2026-11-25:
+     "esa parte no debe tener una línea, el blur debe integrar ambos blur
+     como uno mismo") ──
+     Eran dos vidrios, cada uno con su backdrop-filter, y en la esquina se
+     veía la costura: el borde de la barra cruzaba el header y cada
+     desenfoque acababa en su canto. Ahora es UNA capa fija en forma de L
+     (clip-path), detrás de las dos, con el degradado y el desenfoque; la
+     barra y el header van transparentes encima. Su alto es el del header,
+     que desk-shell mide (--dk-alto); al esconder la barra la L se vuelve
+     sólo la franja de arriba, a la vez que la barra sale.
+     Arriba, el vidrio se espesa bajo la hora del iPad (--dk-velo) y se
+     funde hacia abajo: la barra de estado cruza todo el marco. */
+  :root { --dk-alto: calc(63px + var(--dk-velo)); --dk-linea: rgba(255, 255, 255, .12); }
+  body.light { --dk-linea: rgba(255, 255, 255, .6); }
+  body.dk { --dk-x: var(--dk-lado); }
+  body.dk.dk-sin-lado { --dk-x: 0px; }
+  body.dk #dkMarco {
+    display: block;
+    position: fixed; inset: 0;
+    z-index: 39;                      /* dentro de .wrap: bajo el header (40), sobre la página; la barra (45) va encima */
+    pointer-events: none;
+    background: linear-gradient(to bottom,
+      rgba(9, 14, 26, .9) 0,
+      rgba(9, 14, 26, .9) var(--dk-velo),
+      rgba(15, 23, 42, .52) calc(var(--dk-velo) + 48px));
+    backdrop-filter: blur(18px) saturate(150%);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    clip-path: polygon(0 0, 100% 0, 100% var(--dk-alto), var(--dk-x) var(--dk-alto), var(--dk-x) 100%, 0 100%);
+    transition: clip-path .22s ease;
+  }
+  body.light.dk #dkMarco {
     background: linear-gradient(to bottom,
       rgba(246, 249, 253, .92) 0,
       rgba(246, 249, 253, .92) var(--dk-velo),
       rgba(255, 255, 255, .55) calc(var(--dk-velo) + 48px));
-    border-right-color: rgba(255, 255, 255, .6);
-    box-shadow: 1px 0 24px rgba(15, 23, 42, .08);
-    color: #0f172a;
   }
 
   /* El logo, con protagonismo (Axel, 2026-11-25): del tamaño del header
@@ -125,8 +147,10 @@ body.dk .bs-header #dkMenu { display: none; }
     backdrop-filter: none; -webkit-backdrop-filter: none;
   }
   #dkLado .dk-nav i { font-size: 18px; flex: none; }
-  #dkLado .dk-nav.dk-sub { padding-left: 40px; font-size: 12.5px; font-weight: 600; }
-  #dkLado .dk-nav.dk-sub i { display: none; }
+  /* Unmatched e History, como las demás: con su icono y del mismo tamaño
+     (Axel, 2026-11-25: "todo con su icono, tamaños de texto"). Sólo
+     entran un poco, para que se lea de quién cuelgan. */
+  #dkLado .dk-nav.dk-sub { padding-left: 26px; }
   body.light #dkLado .dk-nav { color: #1e293b; }
   #dkLado button.dk-nav:hover { background: rgba(255, 255, 255, .08); color: #f8fafc; }
   body.light #dkLado button.dk-nav:hover { background: rgba(255, 255, 255, .55); color: #0f172a; }
@@ -194,33 +218,21 @@ body.dk .bs-header #dkMenu { display: none; }
     padding: calc(12px + var(--dk-velo)) calc(24px + env(safe-area-inset-right)) 12px 24px;
     border-radius: 0;
     border-width: 0 0 1px;
-    /* El mismo vidrio que la barra lateral: son un solo marco.
-       Arriba, donde va la hora del iPad, el vidrio se espesa y se funde
-       hacia abajo (Axel, 2026-11-25: "que no se vea como un brillo ahí
-       encima"). El desenfoque no tiene nada que mezclar por encima del
-       borde de la pantalla y ese borde salía lavado, gris claro; con la
-       franja de la zona segura en el mismo tono, más denso, la barra de
-       estado queda dentro del header, como en las barras de iOS. En el
-       navegador la zona vale 0 y sólo queda el degradado de 0 px. */
-    background: linear-gradient(to bottom,
-      rgba(9, 14, 26, .9) 0,
-      rgba(9, 14, 26, .9) var(--dk-velo),
-      rgba(15, 23, 42, .52) calc(var(--dk-velo) + 48px));
-    border-color: rgba(255, 255, 255, .12);
-    backdrop-filter: blur(18px) saturate(150%);
-    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    /* Sin vidrio propio: es el de #dkMarco (arriba), el mismo de la barra
+       lateral. La línea de abajo sigue, y empieza donde empieza el header:
+       con la de la barra forman el canto de dentro de la L. Sin sombra:
+       caía sobre la barra, que ya no tapa nada. Arriba, donde va la hora
+       del iPad, el marco se espesa y se funde (Axel, 2026-11-25: "que no
+       se vea como un brillo ahí encima"). */
+    background: transparent !important;
+    border-color: var(--dk-linea) !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
-  /* !important porque el header es también una .card, y app.css le
-     pone en el claro `background: rgba(255,255,255,.21) !important`:
-     sin esto el claro se quedaba con un velo gris sobre la foto. */
-  body.light.dk .wrap > .bs-header {
-    background: linear-gradient(to bottom,
-      rgba(246, 249, 253, .92) 0,
-      rgba(246, 249, 253, .92) var(--dk-velo),
-      rgba(255, 255, 255, .55) calc(var(--dk-velo) + 48px)) !important;
-    border-color: rgba(255, 255, 255, .6) !important;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, .08) !important;
-  }
+  /* Los !important de arriba son por el claro: el header es también una
+     .card, y app.css le pone `background: rgba(255,255,255,.21)
+     !important`; con él se veía un segundo vidrio sobre el marco. */
   body.dk .bs-header.collapsed::after { display: none; }
   body.dk .bs-header .bs-header-line1,
   body.dk .bs-header .bs-header-line3,
@@ -307,7 +319,6 @@ body.dk .bs-header #dkMenu { display: none; }
   #dkLado .dk-estado { display: none; }
   #dkLado .dk-nav { justify-content: center; padding: 10px 0; }
   #dkLado .dk-nav.dk-sub { padding-left: 0; }
-  #dkLado .dk-nav.dk-sub i { display: block; font-size: 15px; }
   /* El ciclo, sólo con su número o su icono. */
   #dkLado #cycleBtn { justify-content: center; padding: 0 !important; }
   #dkLado #cycleBtn > span:not(.cyc-num):not(.cyc-bar),
@@ -330,5 +341,5 @@ body.dk .bs-header #dkMenu { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body.dk #dkLado, body.dk .wrap { transition: none; }
+  body.dk #dkLado, body.dk .wrap, body.dk #dkMarco { transition: none; }
 }

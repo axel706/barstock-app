@@ -165,17 +165,26 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
 
   grupo('8. En el teléfono no existe');
   const fuera = CSS.split('@media')[0];
-  prueba('fuera de las media queries, #dkLado va escondido', /#dkLado\s*\{\s*display:\s*none/.test(fuera));
-  prueba('fuera de las media queries sólo se esconde (la barra y su botón)', fuera.replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/#dkLado\s*\{\s*display:\s*none;\s*\}/, '').replace(/body\.dk \.bs-header #dkMenu \{ display: none; \}/, '').trim() === '');
+  prueba('fuera de las media queries, #dkLado y #dkMarco van escondidos', /#dkLado, #dkMarco\s*\{\s*display:\s*none/.test(fuera));
+  prueba('fuera de las media queries sólo se esconde (la barra, el marco y su botón)', fuera.replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/#dkLado, #dkMarco\s*\{\s*display:\s*none;\s*\}/, '').replace(/body\.dk \.bs-header #dkMenu \{ display: none; \}/, '').trim() === '');
   prueba('la barra se enseña sólo desde 641 px', /@media \(min-width: 641px\)\s*\{[\s\S]*body\.dk #dkLado\s*\{\s*display:\s*flex/.test(CSS));
 
   grupo('8b. Vidrio en los dos modos (Axel, 2026-11-25: "TODO necesita blur")');
   const regla = (sel) => { const m = CSS.match(new RegExp(sel.replace(/[.#]/g, c => '\\' + c) + '\\s*\\{([^}]*)\\}')); return m ? m[1] : ''; };
-  prueba('la barra lateral lleva desenfoque', /backdrop-filter:\s*blur\(\d+px\)/.test(regla('body.dk #dkLado')));
-  prueba('el header lleva desenfoque', /backdrop-filter:\s*blur\(\d+px\)/.test(regla('body.dk .wrap > .bs-header')));
-  prueba('la barra lateral tiene su claro', /background:[^;]*rgba\((?:24\d|25\d), (?:24\d|25\d), (?:25\d)/.test(regla('body.light.dk #dkLado')));
-  prueba('el header tiene su claro', /background:[^;]*rgba\((?:24\d|25\d), (?:24\d|25\d), (?:25\d)/.test(regla('body.light.dk .wrap > .bs-header')));
+  // UN vidrio para las dos barras (Axel, 2026-11-25: "el blur debe
+  // integrar ambos blur como uno mismo"): el desenfoque es de #dkMarco, y
+  // ni la barra ni el header llevan uno propio (dos se veían como dos).
+  prueba('el marco lleva desenfoque', /backdrop-filter:\s*blur\(\d+px\)/.test(regla('body.dk #dkMarco')));
+  prueba('la barra lateral NO lleva uno propio', /backdrop-filter:\s*none/.test(regla('body.dk #dkLado')) && !/blur\(/.test(regla('body.dk #dkLado')));
+  prueba('el header tampoco', /backdrop-filter:\s*none !important/.test(regla('body.dk .wrap > .bs-header')) && !/blur\(/.test(regla('body.dk .wrap > .bs-header')));
+  prueba('el marco tiene su claro', /background:[^;]*rgba\((?:24\d|25\d), (?:24\d|25\d), (?:25\d)/.test(regla('body.light.dk #dkMarco')));
+  prueba('el marco es una L: hasta el alto del header y el ancho de la barra',
+    /clip-path: polygon\(0 0, 100% 0, 100% var\(--dk-alto\), var\(--dk-x\) var\(--dk-alto\), var\(--dk-x\) 100%, 0 100%\)/.test(regla('body.dk #dkMarco')));
+  prueba('escondida la barra, la L se vuelve sólo la franja de arriba', /body\.dk\.dk-sin-lado \{ --dk-x: 0px; \}/.test(CSS));
+  prueba('la línea de la barra empieza bajo el header (en la esquina no hay línea)',
+    /background: linear-gradient\(var\(--dk-linea\), var\(--dk-linea\)\) right var\(--dk-alto\)/.test(regla('body.dk #dkLado')) && /border: 0/.test(regla('body.dk #dkLado')));
+  prueba('el header sin sombra (caía sobre la barra)', /box-shadow: none !important/.test(regla('body.dk .wrap > .bs-header')));
   prueba('el logo lleva su color en cada modo', /body\.light #dkLado \.dk-logo \{ color: #0f172a/.test(CSS) && /#dkLado \.dk-logo \{[^}]*color: #f8fafc/.test(CSS));
   prueba('ningún renglón de la barra se apaga con opacidad', !/#dkLado[^{]*\{[^}]*opacity:\s*\.[0-4]/.test(CSS));
 
@@ -222,15 +231,24 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   prueba('otra vez la saca', !D.body.classList.contains('dk-sin-lado') && w.localStorage.getItem('bs-dk-lado-oculto') === '0');
   prueba('escondida, la barra sale de la pantalla', /body\.dk\.dk-sin-lado #dkLado \{ transform: translateX\(-100%\); visibility: hidden; \}/.test(CSS));
   prueba('y el contenido ocupa el ancho', /body\.dk\.dk-sin-lado \.wrap \{ margin-left: 0; \}/.test(CSS));
-  prueba('sin animación con reducir movimiento', /prefers-reduced-motion: reduce\)\s*\{\s*body\.dk #dkLado, body\.dk \.wrap \{ transition: none; \}/.test(CSS));
+  prueba('sin animación con reducir movimiento', /prefers-reduced-motion: reduce\)\s*\{\s*body\.dk #dkLado, body\.dk \.wrap, body\.dk #dkMarco \{ transition: none; \}/.test(CSS));
 
   grupo('8f. La franja de la hora, integrada (sin el brillo)');
   const franja = (sel) => new RegExp(sel + ' \\{[^}]*background: linear-gradient\\(to bottom,[^;]*var\\(--dk-velo\\),[^;]*calc\\(var\\(--dk-velo\\) \\+ \\d+px\\)').test(CSS);
-  prueba('el header espesa su vidrio bajo la hora', franja('body\\.dk \\.wrap > \\.bs-header'));
-  prueba('y en el claro', franja('body\\.light\\.dk \\.wrap > \\.bs-header'));
-  prueba('la barra lateral también', franja('body\\.dk #dkLado'));
-  prueba('y en el claro', franja('body\\.light\\.dk #dkLado'));
-  prueba('el claro del header le gana al !important de .card en app.css', /body\.light\.dk \.wrap > \.bs-header \{[^}]*\) !important;/.test(CSS));
+  prueba('el marco espesa su vidrio bajo la hora', franja('body\\.dk #dkMarco'));
+  prueba('y en el claro', franja('body\\.light\\.dk #dkMarco'));
+  prueba('el header le gana al !important de .card en app.css (transparente)', /body\.dk \.wrap > \.bs-header \{[^}]*background: transparent !important;/.test(CSS));
+
+  grupo('8g. Un solo marco, y cada renglón con su icono');
+  const JS = leer('src/desk-shell.js');
+  const marcoEl = D.getElementById('dkMarco');
+  prueba('el marco existe y no se lee', !!marcoEl && marcoEl.getAttribute('aria-hidden') === 'true');
+  // .wrap lleva z-index 1: colgado del body, el marco tapaba el header.
+  prueba('cuelga de .wrap, no del body', !!marcoEl && marcoEl.parentElement === D.querySelector('.wrap'));
+  prueba('va bajo el header (39 contra 40)', /z-index: 39;/.test(regla('body.dk #dkMarco')));
+  prueba('su alto se mide del header, no al rodar', /ResizeObserver\(medirAlto\)\.observe\(header\)/.test(JS) && !/addEventListener\('scroll'[^)]*medirAlto/.test(JS));
+  prueba('Unmatched e History con su icono, del mismo tamaño', !/\.dk-sub i \{ display: none/.test(CSS) && !/\.dk-nav\.dk-sub \{[^}]*font-size/.test(CSS)
+    && !!D.querySelector('.dk-nav.dk-sub i.ti'));
 
   grupo('9. El orden de carga');
   const iMod = INDEX.indexOf('src/desk-shell.js');

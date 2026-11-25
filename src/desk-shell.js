@@ -191,6 +191,27 @@
       `</div>`;
     document.body.appendChild(_lado);
 
+    // UN vidrio para la barra y el header (styles/desk-shell.css, #dkMarco):
+    // una capa en L detrás de los dos, cortada al alto del header. Ese alto
+    // cambia con la zona segura del iPad y con lo que lleve la fila, así
+    // que se mide cuando cambia el tamaño del header, nunca al rodar.
+    const marco = document.createElement('div');
+    marco.id = 'dkMarco';
+    marco.setAttribute('aria-hidden', 'true');
+    // Dentro de .wrap: .wrap lleva z-index 1 y es su propio contexto de
+    // apilado; colgado del body, el marco (39) quedaba ENCIMA de toda la
+    // página y tapaba el saludo, el buscador y los botones del header.
+    // Dentro, va bajo el header (40) y sobre lo demás de la página.
+    const wrap = header.closest('.wrap') || document.body;
+    wrap.insertBefore(marco, wrap.firstChild);
+    const medirAlto = () => {
+      const h = Math.round(header.getBoundingClientRect().height);
+      if (h > 0) document.documentElement.style.setProperty('--dk-alto', h + 'px');
+    };
+    medirAlto();
+    if (window.ResizeObserver) new ResizeObserver(medirAlto).observe(header);
+    else window.addEventListener('resize', medirAlto, { passive: true });
+
     _lado.querySelectorAll('button.dk-nav[data-dk]').forEach(b => {
       b.addEventListener('click', () => ir(b.dataset.dk));
     });

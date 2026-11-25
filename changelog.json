@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-151857",
+    "items": [
+      "Desktop: sidebar and top bar are one glass",
+      "Unmatched and History show their icons"
+    ]
+  },
+  {
     "build": "20261125-150716",
     "items": [
       "Desktop search window is centered",
@@ -192,12 +199,6 @@
     "items": [
       "Count panel: Glenfiddich stag, Chivas shield",
       "and the Tullamore embossing"
-    ]
-  },
-  {
-    "build": "20261123-014338",
-    "items": [
-      "Count panel: label marks on 9 more bottles"
     ]
   }
 ]
