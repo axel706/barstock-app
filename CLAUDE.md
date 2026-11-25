@@ -469,6 +469,15 @@ sección de hoy vive tal cual dentro del armazón.
   sin "Choose yours" / "Change" (dice que se elige en el teléfono), sin
   el icono de Cycle detail. Al construir cada cosa, su botón vuelve.
   Prueba: `test-home-escritorio`.
+- **Las columnas del Home miran el sitio del Home, no la ventana**
+  (Axel, 2026-11-25, en el iPad horizontal: "puede tener el mismo layout
+  que el escritorio, hay espacio"). `#dkHome` es un contenedor
+  (`container: dkhome / inline-size`) y pasa a dos columnas con
+  `@container dkhome (max-width: 960px)`, el mismo corte que antes daba
+  la ventana de 1240 con la barra: el escritorio no cambia, y el iPad de
+  1180 va a cuatro con la barra escondida (~1130 px) y a dos con ella
+  (~900). Es lo que pide "las reglas de ancho miran la VENTANA" de arriba
+  para cada sección que se rehaga.
 - **Spent this cycle en el escritorio** (Axel, 2026-11-25, lámina A:
   "como el teléfono"): UN botón, Sync, o Review en ámbar con algo que
   arreglar, o "MarginEdge" sin conectar (→ Settings › `integrations`).

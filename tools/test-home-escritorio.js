@@ -296,6 +296,11 @@ const H = () => D.getElementById('dkHome');
   prueba('en el claro, lo de Tinta pasa a vidrio claro con texto oscuro',
     /body\.light #dkHome \.dkh-cf,[\s\S]{0,120}\{[^}]*background: rgba\(255, 255, 255, \.\d+\)[^}]*backdrop-filter: blur[^}]*color: #0f172a/.test(CSS_DH));
 
+  grupo('7c. Las columnas miran el sitio del Home, no la ventana (iPad horizontal)');
+  prueba('#dkHome es un contenedor', /#dkHome \{[^}]*container: dkhome \/ inline-size/.test(CSS_DH));
+  prueba('las dos columnas, por el ancho del Home', /@container dkhome \(max-width: 960px\) \{[^}]*\.dkh-cifras/.test(CSS_DH));
+  prueba('ninguna regla de columnas mira la ventana', !/@media[^{]*max-width: 1240px/.test(CSS_DH));
+
   grupo('8. Una pantalla del teléfono, en el escritorio');
   const SH = leer('src/mobile-shell.js');
   prueba('mobile-shell.ir sin montar se lo pasa al armazón', /if \(!_montado\) \{[\s\S]{0,200}desdeMovil\(id\)/.test(SH));

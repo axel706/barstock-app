@@ -26,6 +26,9 @@
   body.dk .wrap > #bsFocusGrid { display: none !important; }
 
   #dkHome {
+    /* Las columnas se deciden por el ancho del HOME, no de la ventana
+       (ver la @container de abajo). */
+    container: dkhome / inline-size;
     gap: 16px;
     padding-bottom: 28px;
     color: #f8fafc;
@@ -189,8 +192,16 @@
   #dkHome .dkh-rep .bs-focus-stats { display: flex; gap: 8px; flex-wrap: wrap; }
 }
 
-/* Una ventana estrecha (o un iPad): dos columnas. */
-@media (min-width: 641px) and (max-width: 1240px) {
+/* Poco sitio: dos columnas. Se mide el HOME, no la ventana (Axel,
+   2026-11-25, en el iPad horizontal: "puede tener el mismo layout que el
+   escritorio, hay espacio"). Con la ventana (max-width: 1240px), un iPad
+   de 1180 iba siempre a dos columnas aunque, con la barra lateral
+   escondida, al Home le quedaran ~1130 px: más que a un escritorio de
+   1241 con la barra (~961), que ya iba a cuatro. 960 es ese mismo corte
+   de antes, medido ahora donde importa: el escritorio no cambia, y el
+   iPad va a cuatro con la barra escondida y a dos con ella a la vista
+   (~900 px: cuatro cifras de ~214 no caben). */
+@container dkhome (max-width: 960px) {
   #dkHome .dkh-cifras,
   #dkHome .dkh-resto,
   #dkHome .dkh-reps { grid-template-columns: repeat(2, minmax(0, 1fr)); }

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261125-152752",
+    "items": [
+      "iPad landscape: desktop Home layout with sidebar hidden"
+    ]
+  },
+  {
     "build": "20261125-151857",
     "items": [
       "Desktop: sidebar and top bar are one glass",
@@ -192,13 +198,6 @@
     "items": [
       "Count panel: the Glenfiddich stag, traced",
       "Chivas: text centered in its ribbons"
-    ]
-  },
-  {
-    "build": "20261124-082755",
-    "items": [
-      "Count panel: Glenfiddich stag, Chivas shield",
-      "and the Tullamore embossing"
     ]
   }
 ]
