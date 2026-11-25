@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-150716",
+    "items": [
+      "Desktop search window is centered",
+      "The page behind the search no longer scrolls"
+    ]
+  },
+  {
     "build": "20261125-145621",
     "items": [
       "Desktop: Do we have search in the top bar",
@@ -191,12 +198,6 @@
     "build": "20261123-014338",
     "items": [
       "Count panel: label marks on 9 more bottles"
-    ]
-  },
-  {
-    "build": "20261122-230438",
-    "items": [
-      "Orders: room under the run-out card"
     ]
   }
 ]

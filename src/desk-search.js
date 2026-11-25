@@ -62,7 +62,6 @@
     if (ancho < 170) { document.body.classList.add('dkb-apretado'); ancho = medir(); }
     ancho = Math.max(120, Math.min(340, ancho));
     cont.style.setProperty('--dkb-ancho', ancho + 'px');
-    cont.classList.toggle('dkb-corto', ancho < 200);
   }
 
   function abrir() {
@@ -157,6 +156,35 @@
     }
   }
 
+  // Con el panel abierto, la página de detrás no rueda (Axel, en el iPad:
+  // deslizar el dedo sobre el velo movía la pantalla de atrás; con la
+  // rueda del ratón pasaba igual). Sólo la lista y la ficha ruedan, y sólo
+  // si les queda recorrido en ese sentido: un gesto que no puede mover a
+  // nadie de dentro se para aquí, en vez de encadenarse al documento.
+  // overscroll-behavior no basta: una lista corta no rueda y el gesto
+  // pasa directo a la página. Y no se fija el <html>: ese camino rompió
+  // la barra de pestañas del teléfono tres veces.
+  function puedeRodar(t, dy) {
+    const caja = t && t.closest && t.closest('#dkbLista, #dkbFicha');
+    if (!caja || !dy) return false;
+    if (dy > 0) return caja.scrollTop + caja.clientHeight < caja.scrollHeight - 1;
+    return caja.scrollTop > 0;
+  }
+  function noRodarDetras(panel) {
+    panel.addEventListener('wheel', (ev) => {
+      if (!puedeRodar(ev.target, ev.deltaY)) ev.preventDefault();
+    }, { passive: false });
+    let y0 = null;
+    panel.addEventListener('touchstart', (ev) => { y0 = ev.touches[0] ? ev.touches[0].clientY : null; }, { passive: true });
+    panel.addEventListener('touchmove', (ev) => {
+      const y = ev.touches[0] ? ev.touches[0].clientY : null;
+      if (y0 == null || y == null) { ev.preventDefault(); return; }
+      // El dedo baja → el contenido sube (se rueda hacia arriba).
+      if (!puedeRodar(ev.target, y0 - y)) ev.preventDefault();
+      y0 = y;
+    }, { passive: false });
+  }
+
   function montar() {
     if (_campo || !document.body.classList.contains('dk')) return;
     const header = document.querySelector('.wrap > .bs-header');
@@ -171,7 +199,7 @@
       <input id="dkBuscaIn" type="search" autocomplete="off" spellcheck="false"
              placeholder="Do we have…" aria-label="Search products">
       <button type="button" id="dkBuscaX" aria-label="Clear" hidden><i class="ti ti-x" aria-hidden="true"></i></button>
-      <kbd aria-hidden="true">/</kbd>`;
+`;
     saludo.insertAdjacentElement('afterend', cont);
     _campo = cont.querySelector('input');
     _campo.addEventListener('input', alEscribir);
@@ -204,6 +232,7 @@
       </section>`;
     document.body.appendChild(_panel);
     _panel.querySelector('.dkb-velo').onclick = cerrar;
+    noRodarDetras(_panel);
     vaciarFicha();
 
     document.addEventListener('keydown', alTeclado);

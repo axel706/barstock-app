@@ -562,6 +562,13 @@ sección de hoy vive tal cual dentro del armazón.
   `absolute` y el flex no la esquiva: el ancho del campo se MIDE contra
   ella (`ajustarAncho`, al montar y con un ResizeObserver, nunca al
   escribir), y sin sitio la fecha del saludo se va (`dkb-apretado`).
+  Sin pista de teclado en el campo (Axel: "¿qué es ese / en la barra?";
+  el atajo sigue). La ventana va CENTRADA junto a la barra lateral
+  (`left`/`right` con `max-width` y `margin-inline: auto`). **Detrás no
+  rueda nada** (Axel, en el iPad): un `wheel`/`touchmove` en el panel se
+  para salvo que la lista o la ficha tengan recorrido en ese sentido
+  (`noRodarDetras`); `overscroll-behavior` no basta con una lista corta,
+  y no se fija el `<html>` (la barra de pestañas del teléfono).
   Prueba: `test-buscador-escritorio`.
 
 ## Reglas del dominio que no son obvias

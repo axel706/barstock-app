@@ -153,6 +153,28 @@ w.eval(DS);
   await espera(10);
   prueba('abrir una sección cierra el panel', panel.hidden);
 
+  grupo('4b. Detrás del panel no rueda nada (Axel, en el iPad)');
+  escribir('tit');
+  const rueda = (en, dy) => { const e = new w.WheelEvent('wheel', { deltaY: dy, bubbles: true, cancelable: true }); en.dispatchEvent(e); return e.defaultPrevented; };
+  prueba('la rueda sobre el velo se para', rueda(panel.querySelector('.dkb-velo'), 300));
+  prueba('sobre la cabecera de la caja también', rueda(D.getElementById('dkbCnt'), 300));
+  const lista = D.getElementById('dkbLista');
+  Object.defineProperty(lista, 'scrollHeight', { value: 2000, configurable: true });
+  Object.defineProperty(lista, 'clientHeight', { value: 500, configurable: true });
+  prueba('una lista con recorrido rueda', !rueda(lista.querySelector('.m-res') || lista, 300));
+  lista.scrollTop = 0;
+  prueba('arriba del todo, hacia arriba se para', rueda(lista, -300));
+  Object.defineProperty(lista, 'scrollHeight', { value: 400, configurable: true });
+  prueba('una lista corta no le pasa el gesto a la página', rueda(lista, 300));
+  prueba('el dedo, igual que la rueda (touchmove sin pasivo)', /addEventListener\('touchmove'[\s\S]{0,300}preventDefault[\s\S]{0,120}passive: false/.test(DS));
+  prueba('el velo no deja gestos al navegador', /\.dkb-velo \{[^}]*touch-action: none/.test(CSS));
+  prueba('no se fija el html (rompió la barra de pestañas del teléfono)', !/documentElement\.style\.overflow|html\.[\w-]*\{[^}]*overflow: hidden/.test(DS + CSS));
+
+  grupo('4c. Sin el "/" en el campo, y la ventana centrada');
+  prueba('el campo no enseña la tecla', !D.querySelector('#dkBusca kbd') && !/kbd/.test(CSS));
+  prueba('la caja se centra (left y right, max-width y margin auto)',
+    /\.dkb-caja \{[\s\S]{0,600}left: 24px; right: 24px[\s\S]{0,80}max-width: 1180px; margin-inline: auto/.test(CSS));
+
   grupo('5. El campo no pasa bajo la locación');
   prueba('el ancho se mide contra la locación', /function ajustarAncho[\s\S]{0,600}bs-loc-wrap[\s\S]{0,400}getBoundingClientRect\(\)\.left/.test(DS));
   prueba('el CSS usa el ancho medido', /#dkBusca \{[\s\S]{0,200}width: var\(--dkb-ancho/.test(CSS));
