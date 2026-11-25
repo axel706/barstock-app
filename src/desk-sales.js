@@ -105,13 +105,20 @@
     const nor = (x) => din ? x.normalDinero : x.normalBotellas;
     const tope = Math.max(1e-9, ...sem.map(x => Math.max(val(x) || 0, nor(x) || 0)));
     const alto = (n) => Math.max(0, Math.min(100, (n / tope) * 100)).toFixed(1) + '%';
+    // Lo que dice cada casilla. Lo vendido primero: hoy, cargado a medias
+    // con el Sync, no está "cargado" (no está cerrado) y decía "No data"
+    // con sus ventas en la barra (Axel, 2026-11-25).
+    const etiquetaDia = (x) => x.futuro ? '—'
+      : val(x) > 0 ? (din ? dinero0(x.dinero) : b1(x.botellas) + ' btl')
+      : !x.cargado ? (x.esHoy ? 'Not synced yet' : 'No data')
+      : !nor(x) ? 'Closed' : (din ? '$0' : '0 btl');
     const dias = `<button type="button" class="dks-dia dks-sem${esSem ? ' on' : ''}" data-dia="sem"><b>Week</b><small>${esc(W.etiqueta)}</small></button>` +
       sem.map((x, k) => `
         <button type="button" class="dks-dia${!esSem && k === _dia ? ' on' : ''}${x.futuro ? ' fut' : ''}" data-dia="${k}"${x.futuro ? ' disabled' : ''}>
           <span class="dks-g">${x.futuro ? '' : din
             ? `<i class="vino" style="height:${alto(x.vino)}"></i><i class="licor" style="height:${alto(x.licor)}"></i>`
             : `<i class="bot" style="height:${alto(x.botellas)}"></i>`}${nor(x) ? `<s style="bottom:${alto(nor(x))}"></s>` : ''}</span>
-          <b>${esc(nom(x))}</b><small>${x.futuro ? '—' : !x.cargado ? 'No data' : !val(x) && !nor(x) ? 'Closed' : din ? dinero0(x.dinero) : b1(x.botellas) + ' btl'}</small>
+          <b>${esc(nom(x))}</b><small>${etiquetaDia(x)}</small>
         </button>`).join('');
 
     // ── La tabla ──

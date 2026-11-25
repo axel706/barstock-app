@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261125-172100",
+    "items": [
+      "Sales: taller day bars; today shows its sales"
+    ]
+  },
+  {
     "build": "20261125-170949",
     "items": [
       "Desktop: new Sales screen in the sidebar",
@@ -191,13 +197,6 @@
     "items": [
       "Counting: the camera turns off while you search by name",
       "After 30 s without a scan it sleeps: tap to scan"
-    ]
-  },
-  {
-    "build": "20261125-104403",
-    "items": [
-      "Counting: new Macallan outline, more label text",
-      "St. Elder label traced, ORGANIC on Belvedere"
     ]
   }
 ]

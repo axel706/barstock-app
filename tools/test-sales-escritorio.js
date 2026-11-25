@@ -47,7 +47,7 @@ function entorno(clase) {
   const mk = (dia, fecha, b, din, o) => Object.assign({ dia, fecha, botellas: b, dinero: din, licor: din * .6, vino: din * .4,
     normalBotellas: b || 1, normalDinero: din || 100, cargado: true, futuro: false, esHoy: false, parcial: false }, o || {});
   const semana = (k) => {
-    const dias = [mk('Mon', '2026-11-23', 0, 0), mk('Tue', '2026-11-24', 9, 1500), mk('Wed', '2026-11-25', 6, 600, { esHoy: k === 0, parcial: k === 0 }),
+    const dias = [mk('Mon', '2026-11-23', 0, 0), mk('Tue', '2026-11-24', 9, 1500), mk('Wed', '2026-11-25', 6, 600, { esHoy: k === 0, parcial: k === 0, cargado: k !== 0 }),
       mk('Thu', '2026-11-26', 0, 0, { futuro: !k }), mk('Fri', '2026-11-27', 0, 0, { futuro: !k }), mk('Sat', '2026-11-28', 0, 0, { futuro: !k }), mk('Sun', '2026-11-29', 0, 0, { futuro: !k })];
     return { etiqueta: k ? 'Nov 16 – 22' : 'Nov 23 – 29', dias, fechas: dias.filter(x => !x.futuro).map(x => x.fecha),
       total: { semana: true, dia: 'Nov 23 – 29', fecha: '2026-11-23', botellas: 15, dinero: 2100, licor: 1260, vino: 840, normalBotellas: 60, normalDinero: 9000, cargado: true, parcial: !k } };
@@ -105,6 +105,9 @@ function entorno(clase) {
   prueba('la semana en curso dice "So far this week" (no compara a medias)', /So far this week/.test(txt(S().querySelector('.dks-cifras'))));
   prueba('la semana entera y sus siete días', S().querySelectorAll('.dks-dia').length === 8 && !!S().querySelector('.dks-dia.dks-sem.on'));
   prueba('lo que no ha llegado no se elige', S().querySelectorAll('.dks-dia.fut[disabled]').length === 4);
+  // Hoy, cargado a medias con el Sync: no está cerrado, pero tiene ventas.
+  prueba('hoy, a medias, enseña lo vendido (no "No data")', /Today\s*\$600/.test(txt(S().querySelector('[data-dia="2"]'))), txt(S().querySelector('[data-dia="2"]')));
+  prueba('las barras de los días, altas (120 px)', /\.dks-g \{[^}]*height: 120px/.test(CSS));
   S().querySelector('[data-dia="1"]').click(); await esperar(10);
   prueba('tocar un día lo elige', /Tue/.test(txt(S().querySelector('.dks-dia.on'))) && /Net · Tue/.test(txt(S().querySelector('.dks-cifras'))));
   S().querySelector('[data-sem="1"]').click(); await esperar(10);

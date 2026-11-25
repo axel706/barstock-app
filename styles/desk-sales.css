@@ -70,7 +70,10 @@
   #dkSales .dks-dia.dks-sem { justify-content: center; }
   #dkSales .dks-dia b { font-size: 12.5px; }
   #dkSales .dks-dia small { font-size: 11.5px; color: #a9bacd; }
-  #dkSales .dks-g { position: relative; height: 64px; width: 62%; display: flex; flex-direction: column; justify-content: flex-end; }
+  /* 120 px de alto: con 64 la escala la ponía lo normal de un sábado y un
+     martes de $1,549 quedaba en una raya (Axel, 2026-11-25: "súper
+     planas, ni se entienden como gráficas"). */
+  #dkSales .dks-g { position: relative; height: 120px; width: 62%; display: flex; flex-direction: column; justify-content: flex-end; }
   #dkSales .dks-g i { display: block; border-radius: 4px 4px 1px 1px; }
   #dkSales .dks-g s { position: absolute; left: -14%; right: -14%; border-top: 1.5px dashed rgba(255, 255, 255, .4); text-decoration: none; }
 
