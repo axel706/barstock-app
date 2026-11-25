@@ -674,3 +674,131 @@ body.light .bf-go:disabled{ background: rgba(15,23,42,.06); color: #94a3b8; }
   border-color: rgba(245, 158, 11, .55);
   color: #fbbf24;
 }
+
+/* ── Contar por nombre, y la pregunta del principio ────────────────────
+   Axel, 2026-11-25 (lámina "Count by name", orden 2; "Count without the
+   camera", opción B). El mismo marco del escáner: arriba el progreso y
+   las zonas, abajo la hoja con Finish count; en el visor, la lista en vez
+   de la cámara (src/count-by-name.js). Los botones llevan el id delante:
+   app.css le pone a todo <button> radio de pastilla y desenfoque con
+   !important, y sólo un id le gana. */
+.sc-nombre, .sc-elige{ display: none; }
+.sc-overlay.sc-por-nombre .sc-stage,
+.sc-overlay.sc-eligiendo .sc-stage{ background: #05080f; }
+.sc-overlay.sc-por-nombre .sc-stage video,
+.sc-overlay.sc-por-nombre .sc-guide,
+.sc-overlay.sc-por-nombre .sc-hit,
+.sc-overlay.sc-eligiendo .sc-stage video,
+.sc-overlay.sc-eligiendo .sc-guide{ display: none; }
+/* Por nombre no hay linterna ni "Find by name": la lista ya lo es. */
+.sc-overlay.sc-por-nombre .sc-btns,
+.sc-overlay.sc-eligiendo .sc-btns{ display: none; }
+
+.sc-overlay.sc-por-nombre .sc-nombre{
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+}
+.sc-bn-busca{
+  margin: 10px 14px 0;
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  color: #a9bacd;
+}
+.sc-bn-busca:focus-within{ border-color: rgba(56,189,248,.6); }
+/* Con el id: app.css le da a los campos su propio borde, fondo y
+   sombra, y dentro de la pastilla salía un segundo recuadro. */
+#scOverlay .sc-bn-q{
+  flex: 1; min-width: 0;
+  height: 42px;
+  margin: 0; padding: 0;
+  border: 0 !important; outline: 0; box-shadow: none !important;
+  background: transparent !important; border-radius: 0 !important;
+  color: #f8fafc;
+  font-family: inherit; font-size: var(--m-body);
+}
+.sc-bn-q::placeholder{ color: #a9bacd; }
+/* iOS hace zoom en un campo de menos de 16 px; sólo en el teléfono. */
+@media (pointer: coarse){ #scOverlay .sc-bn-q{ font-size: max(16px, var(--m-body)); } }
+
+.sc-bn-lista{
+  flex: 1; min-height: 0;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 4px 14px 72px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.sc-bn-k{
+  display: flex; justify-content: space-between;
+  margin-top: 10px;
+  font-size: var(--m-small); font-weight: 800;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: #a9bacd;
+}
+.sc-bn-k u{ text-decoration: none; color: #f8fafc; }
+#scOverlay .sc-bn-it{
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px !important;
+  background: var(--tinta);
+  border: 1px solid var(--tinta-borde);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  box-shadow: none;
+  color: #f8fafc;
+  font-family: inherit; font-size: var(--m-body); font-weight: 700;
+  text-align: left;
+}
+#scOverlay .sc-bn-it span{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#scOverlay .sc-bn-it em{
+  flex: none;
+  font-style: normal; font-weight: 600; font-size: var(--m-small); color: #a9bacd;
+}
+#scOverlay .sc-bn-it.hecho{ border-color: rgba(110,231,183,.45); }
+.sc-bn-n{ flex: none; color: #6ee7b7; font-variant-numeric: tabular-nums; }
+.sc-bn-vacio{ padding: 14px 4px; color: #a9bacd; font-size: var(--m-small); }
+
+/* El aviso de lo recién contado, abajo, encima de la hoja: arriba tapaba
+   el buscador (lámina, "Back to the list"). */
+.sc-bn-aviso{
+  position: absolute; left: 14px; right: 14px; bottom: 12px;
+  display: none; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(22,163,74,.94);
+  box-shadow: 0 6px 18px rgba(0,0,0,.45);
+  color: #fff; font-size: var(--m-small); font-weight: 700;
+}
+.sc-bn-aviso.on{ display: flex; }
+#scOverlay .sc-bn-undo{
+  border: 0; border-radius: 10px !important;
+  background: rgba(255,255,255,.18);
+  -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none;
+  color: #fff; font-family: inherit; font-size: var(--m-small); font-weight: 800;
+  padding: 6px 12px;
+}
+
+/* La pregunta del principio. */
+.sc-overlay.sc-eligiendo .sc-elige{
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; justify-content: center;
+  gap: 10px;
+  padding: 0 18px;
+}
+.sc-el-t{ font-size: var(--m-strong); color: #f8fafc; }
+.sc-el-s{ font-size: var(--m-small); color: #a9bacd; margin-bottom: 6px; }
+#scOverlay .sc-el-b{
+  display: flex; align-items: center; gap: 14px;
+  width: 100%;
+  padding: 16px;
+  border-radius: 18px !important;
+  background: var(--tinta);
+  border: 1px solid var(--tinta-borde);
+  -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none;
+  color: #f8fafc; font-family: inherit; text-align: left;
+}
+#scOverlay .sc-el-b > i{ font-size: var(--m-figure); color: #38bdf8; flex: none; }
+#scOverlay .sc-el-b span{ display: grid; gap: 3px; }
+#scOverlay .sc-el-b b{ font-size: var(--m-body); }
+#scOverlay .sc-el-b em{ font-style: normal; font-size: var(--m-small); color: #a9bacd; }

@@ -1,5 +1,13 @@
 [
   {
+    "build": "20261125-110404",
+    "items": [
+      "Count by name: no camera, search or go down the list",
+      "Asked once when you start a count",
+      "The count number at the top updates again"
+    ]
+  },
+  {
     "build": "20261125-105312",
     "items": [
       "Counting: the camera turns off while you search by name",
@@ -186,12 +194,6 @@
     "items": [
       "Home: the three cards are in place as soon as the app opens",
       "Each one shimmers until its number arrives"
-    ]
-  },
-  {
-    "build": "20261122-122827",
-    "items": [
-      "Home: On the shelf shimmers while it counts"
     ]
   }
 ]

@@ -216,6 +216,10 @@
              que dura dos segundos. Y es tocable: el caso de "se abrio el
              producto equivocado" se resuelve sin salir de la pantalla. -->
         <div class="sc-hit" id="scHit"></div>
+        <!-- Contar por nombre y la pregunta del principio ocupan el
+             visor: el marco (progreso, zonas, hoja) es el mismo. -->
+        <div class="sc-nombre" id="scNombre"></div>
+        <div class="sc-elige" id="scElige"></div>
       </div>
 
       <!-- ── La hoja ──────────────────────────────────────────────────
@@ -778,7 +782,7 @@
       // la que se esta contando.
       if (found.row && window.BarStockCountPanel) {
         apagar();
-        window.BarStockCountPanel.open(found.row, () => encender(), text, found.sizeMl);   // el upc viaja —el panel ofrece corregirlo
+        window.BarStockCountPanel.open(found.row, () => { stats(); encender(); }, text, found.sizeMl);   // el upc viaja —el panel ofrece corregirlo
                                   //  si esta mal— y con el su tamaño
       }
     } else {
@@ -831,7 +835,7 @@
         if (!f || !f.row || !window.BarStockCountPanel) return;
         apagar();
         el.classList.remove('on');
-        window.BarStockCountPanel.open(f.row, () => encender(), upc, f.sizeMl);
+        window.BarStockCountPanel.open(f.row, () => { stats(); encender(); }, upc, f.sizeMl);
       };
     }
   }
@@ -1021,6 +1025,13 @@
   async function encender() {
     despertar();
     if (!$('scOverlay') || !$('scOverlay').classList.contains('on')) return;
+    // Contando por nombre no hay cámara: volver de un panel o de Finish
+    // count sólo repinta la lista.
+    if ($('scOverlay').classList.contains('sc-por-nombre')) {
+      stats();
+      if (window.BarStockCountByName) window.BarStockCountByName.refrescar();
+      return;
+    }
     if (stream) { mark(); startLoop(); armarSueno(); return; }
     const mio = ++camGen;
     let s2;
@@ -1171,6 +1182,63 @@
       }).catch(() => {});
     }
 
+    // El contador de arriba se refresca solo. Se perdió el 2026-11-25 al
+    // sacar el arranque de la cámara a encender(), y "N / M" se quedaba
+    // quieto tras contar una botella hasta la siguiente lectura.
+    clearInterval(hudTimer);
+    hudTimer = setInterval(stats, 500);
+
+    // ── ¿Escanear o por nombre? ───────────────────────────────────────
+    // Se pregunta al empezar un conteo, una vez (lámina "Count without
+    // the camera", opción B), y vale para todo ese conteo. Un conteo ya
+    // empezado antes de esto no tiene modo y sigue escaneando.
+    const SS = window.BarStockCountSession;
+    const modo = SS && SS.modo ? SS.modo() : '';
+    if (modo === 'nombre') return porNombre();
+    if (!modo && !(SS && SS.exists && SS.exists()) && window.BarStockCountByName) return elegir();
+    return arrancarEscaner();
+  }
+
+  // La pregunta del principio, en el visor. Sin cámara: hasta elegir no
+  // hay nada que leer.
+  function elegir() {
+    const ov = $('scOverlay');
+    ov.classList.add('sc-eligiendo');
+    const box = $('scElige');
+    box.innerHTML = `
+      <b class="sc-el-t">How do you want to count?</b>
+      <span class="sc-el-s">You can pick the other one next time.</span>
+      <button type="button" class="sc-el-b" data-m="escaner">
+        <i class="ti ti-barcode" aria-hidden="true"></i>
+        <span><b>Scan barcodes</b><em>Uses the camera. Fastest with a full shelf.</em></span>
+      </button>
+      <button type="button" class="sc-el-b" data-m="nombre">
+        <i class="ti ti-search" aria-hidden="true"></i>
+        <span><b>Search by name</b><em>No camera. Type a few letters, or go down the list.</em></span>
+      </button>`;
+    box.querySelectorAll('.sc-el-b').forEach(b => {
+      b.onclick = () => {
+        const SS = window.BarStockCountSession;
+        if (SS && SS.setModo) SS.setModo(b.dataset.m);
+        ov.classList.remove('sc-eligiendo');
+        box.innerHTML = '';
+        if (b.dataset.m === 'nombre') porNombre(); else arrancarEscaner();
+      };
+    });
+  }
+
+  // Por nombre: la lista en el visor y la cámara NUNCA se pide. Lo que
+  // en el escáner vuelve a encenderla (cerrar el panel, Finish count)
+  // aquí sólo repinta la lista: encender() lo mira.
+  function porNombre() {
+    const ov = $('scOverlay');
+    ov.classList.add('sc-por-nombre');
+    if (window.BarStockCountByName) {
+      window.BarStockCountByName.abrir($('scNombre'), { alCerrar: stats });
+    }
+  }
+
+  async function arrancarEscaner() {
     if (!window.isSecureContext) return diag('Connection is not secure, the camera cannot start.', 'sc-bad');
     if (!navigator.mediaDevices?.getUserMedia) return diag('This browser gives no camera access.', 'sc-bad');
 
@@ -1230,7 +1298,11 @@
     const a = $('scAssign');
     if (a) a.classList.remove('on');
     const o = $('scOverlay');
-    if (o) { o.classList.remove('on'); o.classList.remove('sheet-up'); }
+    if (o) {
+      o.classList.remove('on'); o.classList.remove('sheet-up');
+      o.classList.remove('sc-por-nombre'); o.classList.remove('sc-eligiendo');
+    }
+    if (window.BarStockCountByName) window.BarStockCountByName.cerrar();
     document.body.classList.remove('sc-locked');
     // Las DOS cosas que muestran que hay un conteo a medias: la barra de
     // Inventory y el boton del ciclo. Al boton no lo avisaba nadie —no

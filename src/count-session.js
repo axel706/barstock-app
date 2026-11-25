@@ -372,6 +372,24 @@
 
   function isPaused() { return !!data().pausedAt; }
 
+  // ── Cómo se cuenta: escaneando o por nombre ──────────────────────────
+  //
+  // Axel, 2026-11-23, lámina "Count without the camera", opción B: al
+  // empezar un conteo se pregunta UNA vez, escanear o por nombre, y vale
+  // para todo ese conteo (retomarlo lo abre igual). Vive en la sesión
+  // porque es de ESTE conteo: el siguiente empieza en blanco y pregunta
+  // otra vez ("You can pick the other one next time"). Un conteo de antes
+  // de esto no lo tiene, y se abre escaneando, como siempre.
+  function modo() { const m = data().modo; return m === 'nombre' || m === 'escaner' ? m : ''; }
+  function setModo(m) {
+    data().modo = m === 'nombre' ? 'nombre' : 'escaner';
+    // Sólo en el teléfono, no con save(): save() avisa a la nube de que
+    // el conteo sigue vivo, y elegir cómo contar todavía no es contar.
+    if (!_key) _key = locationKey();
+    try { localStorage.setItem(_key, JSON.stringify(_data)); return true; }
+    catch (e) { return false; }
+  }
+
   // Última escritura de la sesión. Es lo que decide si se abandonó.
   function updatedAt() { return data().updatedAt || data().startedAt || null; }
   function pausedAt() { return data().pausedAt || null; }
@@ -708,6 +726,7 @@
     passesOf, addPass, replacePass, removePass,
     mlFor, bottlesFor, countedItems, size, startedAt, summary,
     pause, resume, isPaused, pausedAt, exists, progress, missingRows, bottleProgress,
+    modo, setModo,
     bottlesByZone, zonesUsed,
     updatedAt,
     activeMs, cronoDesde, fmtDur, CRONO_HUECO_MS

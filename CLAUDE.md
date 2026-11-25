@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 170 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 171 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -689,8 +689,25 @@ tarde se suelta, `camGen`), y 30 s sin leer la duermen (`dormir()`,
 30 s. Con la hoja subida sigue encendida (a propósito: volver a escanear
 sería un arranque cada vez). Sin probar todavía en el iPhone si volver a
 pedir la cámara repite el permiso en la app instalada. Prueba:
-`test-camara-dormida`. Lo siguiente, ya elegido (lámina "Count by name",
-opción B, orden 2): la pantalla de contar por nombre sin cámara.
+`test-camara-dormida`.
+
+**Contar por nombre, sin cámara** (Axel, 2026-11-25; lámina "Count without
+the camera" opción B y "Count by name" orden 2). Al empezar un conteo, el
+escáner pregunta UNA vez: "Scan barcodes" o "Search by name"; vale para
+todo ese conteo (`count-session.modo()`/`setModo`, sólo en el teléfono:
+elegir todavía no es contar y no toca la nube) y el siguiente vuelve a
+preguntar. Un conteo empezado antes, sin modo, sigue escaneando. Por
+nombre es `src/count-by-name.js` (`BarStockCountByName`) dentro del MISMO
+marco del escáner (progreso, zonas, hoja con Finish count): en el visor,
+el buscador (palabras en cualquier orden, lo contado incluido) y la lista;
+arriba lo que la última vez se contó en la zona donde estás
+(`zones.ultimas()`, paginada, de `count_zones`; cambiar de zona reordena
+por el evento `barstock-zona` de `setActiva`) y luego lo demás, de la A a
+la Z; lo contado abajo con su número. Tocar abre el mismo panel de
+conteo; al volver se limpia la búsqueda y un aviso verde, abajo sobre la
+hoja, dice "✓ … · 2.4" con Undo (sólo si no estaba contado; recontado no
+tiene un "antes" que devolver). La cámara no se pide NUNCA por nombre:
+`encender()` lo mira. Prueba: `test-contar-por-nombre`.
 
 **El emparejamiento factura↔orden** va línea por línea y el primero que pide
 un recibo se lo queda. `src/invoice-order-auto.js` decide una sola vez de
@@ -727,7 +744,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 170 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 171 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

@@ -158,6 +158,9 @@
       if (t) localStorage.setItem(claveLocal(), t);
       else localStorage.removeItem(claveLocal());
     } catch (e) {}
+    // Contar por nombre ordena la lista por la zona en la que estás: se
+    // entera por aquí, venga el cambio de un toque o del carrusel.
+    try { window.dispatchEvent(new window.CustomEvent('barstock-zona')); } catch (e) {}
   }
 
   // La zona con la que se guarda una pasada. Devuelve '' cuando la
@@ -275,6 +278,42 @@
       return { zonas, at: filas[0].counted_at || null };
     } catch (e) {
       console.warn('[zonas] no se pudo leer el reparto de ' + itemName, e);
+      return null;
+    }
+  }
+
+  // ── En qué zona se contó cada producto la última vez ─────────────────
+  //
+  // Para contar por nombre (Axel, 2026-11-25, lámina "Count by name",
+  // orden 2): arriba de la lista, lo que la última vez se contó en la
+  // zona donde estás. Un Map de producto → zonas. Se pagina: PostgREST
+  // corta en 1000 filas EN SILENCIO, y 300 productos repartidos en
+  // varias zonas pasan de ahí; una lectura corta haría que un producto
+  // "no estuviera" en su zona sin avisar. Si falla, null: la lista sale
+  // de la A a la Z, sin inventar zonas.
+  async function ultimas() {
+    const { url, key } = cfg();
+    const id = await locationId();
+    if (!url || !key || !id) return null;
+    const mapa = new Map();
+    try {
+      for (let desde = 0; ; desde += 1000) {
+        const res = await fetch(
+          `${url}/rest/v1/count_zones?location_id=eq.${id}&select=item_name,zone&order=item_name,zone` +
+          `&limit=1000&offset=${desde}`,
+          { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+        if (!res.ok) throw new Error(res.status + ' · ' + (await res.text()).slice(0, 160));
+        const filas = await res.json();
+        for (const f of filas || []) {
+          if (!f || !f.item_name || !f.zone) continue;
+          if (!mapa.has(f.item_name)) mapa.set(f.item_name, new Set());
+          mapa.get(f.item_name).add(f.zone);
+        }
+        if (!Array.isArray(filas) || filas.length < 1000) break;
+      }
+      return mapa;
+    } catch (e) {
+      console.warn('[zonas] no se pudo leer el reparto para contar por nombre', e);
       return null;
     }
   }
@@ -402,6 +441,6 @@
     // es el panel lateral— y al hacerlo se habia dejado fuera la fecha:
     // "1 en el closet" de un conteo de hace cinco dias manda a alguien
     // a buscar algo que ya se acabo.
-    sincronizar, donde, pintarEn, invalidate, cuando
+    sincronizar, donde, pintarEn, invalidate, cuando, ultimas
   };
 })();
