@@ -48,6 +48,52 @@
   const nomDia = (x) => x.semana ? x.dia : x.esHoy ? 'Today' : x.dia;
   const dinero0 = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('en-US');
 
+  // ── Las cuentas que comparten la hoja y la pantalla Sales del
+  // escritorio (desk-sales.js, Axel 2026-11-25, lámina A) ────────────────
+  //
+  // Cómo va un día (o la semana) contra lo normal. Hoy cargado a medias,
+  // o la semana en curso, no están cerrados: compararlos en % contra uno
+  // entero mentiría. Devuelve { txt, tono } (tono: 'up', 'dn' o '').
+  function comparar(d, vista) {
+    const din = vista === 'dinero';
+    const v = din ? d.dinero : d.botellas;
+    const n = din ? d.normalDinero : d.normalBotellas;
+    const txt = d.semana && d.parcial ? 'So far this week'
+      : d.parcial ? 'So far today'
+      : d.esHoy && !d.cargado ? 'Not synced yet today'
+      : !d.cargado ? (d.semana ? 'No data for this week' : 'No data for this day')
+      : !v && !n ? 'Closed'
+      : n ? ((v - n) / n * 100 >= 0 ? '↗ ' : '↘ ') + Math.abs(Math.round((v - n) / n * 100)) + '% vs usual' + (d.semana ? '' : ' ' + d.dia)
+      : '';
+    return { txt, tono: n && txt && !d.parcial && d.cargado ? (v >= n ? 'up' : 'dn') : '' };
+  }
+
+  // Un producto contra lo normal: la mediana de run-out para ese día de la
+  // semana (live-cache.medianas), o la suma de las siete para la semana
+  // entera; la semana en curso no se compara. { txt, tono, usual, r }.
+  function vsUsual(nombre, botellas, d) {
+    const LC = window.BarStockLiveCache;
+    const r = master().find(m => m && m.item === nombre);
+    const med = r && LC && LC.medianas ? LC.medianas(r) : null;
+    const w = new Date(d.fecha + 'T12:00:00Z').getUTCDay();
+    const usual = !med ? null : d.semana ? (d.parcial ? null : med.reduce((a, b) => a + (Number(b) || 0), 0)) : med[w];
+    const dif = usual === null || usual === undefined ? null : botellas - usual;
+    const txt = dif === null ? '' : Math.abs(dif) < 0.05 ? '— usual' : (dif > 0 ? '↗ ' : '↘ ') + b1(Math.abs(dif));
+    const tono = dif === null || Math.abs(dif) < 0.05 ? 'eq' : dif > 0 ? 'up' : 'dn';
+    return { txt, tono, usual, dif, r };
+  }
+
+  // Lo que el dinero deja fuera (la cerveza, el open bar) y las líneas sin
+  // precio, en palabras: no desaparecen en silencio.
+  function pies(V, fechas, d) {
+    const TS = window.BarStockToastSales;
+    const fuera = TS && TS.fuera ? TS.fuera(V.base, fechas) : [];
+    const out = [];
+    if (fuera.length) out.push('Not in this report: ' + fuera.map(x => x.categoria + ' ' + dinero0(x.dinero)).join(' · '));
+    if (d.sinPrecio) out.push(d.sinPrecio + ' line' + (d.sinPrecio === 1 ? '' : 's') + ' came without a price and ' + (d.sinPrecio === 1 ? 'is' : 'are') + ' not counted.');
+    return out;
+  }
+
   function cerrar() {
     const h = document.getElementById('mSheet');
     if (h) h.remove();
@@ -56,6 +102,12 @@
   // o = { vista: 'botellas' | 'dinero', atras: semana, dia: 0–6 | 'sem' }
   function abrir(o) {
     o = o || {};
+    // En el escritorio, su pantalla (desk-sales.js), no la hoja del
+    // teléfono metida en una ventana (Axel, 2026-11-25: "no tiene una
+    // pantalla dedicada de escritorio"). El escritorio es donde no está el
+    // armazón del teléfono (body.m-shell).
+    const DS = window.BarStockDeskSales;
+    if (DS && DS.abrir && document.body && !document.body.classList.contains('m-shell')) return DS.abrir(o);
     const TS = window.BarStockToastSales;
     if (!TS) return;
     TS.ahora().then(V => {
@@ -129,16 +181,7 @@
 
     const todos = TS.masVendido(V.base, fechas, 'botellas');
     const n = d.normalBotellas;
-    // Hoy cargado a medias (el Sync de la tarjeta "Sold"), o la semana en
-    // curso: no están cerrados, y compararlos en % contra uno entero
-    // mentiría.
-    const cmp = d.semana && d.parcial ? 'So far this week'
-      : d.parcial ? 'So far today'
-      : d.esHoy && !d.cargado ? 'Not synced yet today'
-      : !d.cargado ? (d.semana ? 'No data for this week' : 'No data for this day')
-      : !d.botellas && !n ? 'Closed'
-      : n ? ((d.botellas - n) / n * 100 >= 0 ? '↗ ' : '↘ ') + Math.abs(Math.round((d.botellas - n) / n * 100)) + '% vs usual' + (d.semana ? '' : ' ' + d.dia)
-      : '';
+    const cmp = comparar(d, 'botellas').txt;
     h.querySelector('#mvTot').innerHTML = `
       <b>${b1(d.botellas)}</b><span>bottles · ${todos.length} product${todos.length === 1 ? '' : 's'} · ${esc(nomDia(d))}</span>
       <em class="${n && cmp ? (d.botellas >= n ? 'm-ts-up' : 'm-ts-dn') : ''}">${esc(cmp)}</em>`;
@@ -151,17 +194,10 @@
       lista.innerHTML = `<div class="m-vl-nada">${todos.length ? 'Nothing matches.' : d.semana ? 'Nothing sold this week.' : 'Nothing sold this day.'}</div>`;
       return;
     }
-    // Lo normal de cada producto: la mediana de su día de la semana; para
-    // la semana entera, la suma de las siete. La semana en curso no se
-    // compara (no está entera).
-    const w = new Date(d.fecha + 'T12:00:00Z').getUTCDay();
+    // Lo normal de cada producto (vsUsual, la cuenta que usa también la
+    // pantalla Sales del escritorio).
     lista.innerHTML = filas.map(x => {
-      const r = master().find(m => m && m.item === x.nombre);
-      const med = r && LC && LC.medianas ? LC.medianas(r) : null;
-      const usual = !med ? null : d.semana ? (d.parcial ? null : med.reduce((a, b) => a + (Number(b) || 0), 0)) : med[w];
-      const dif = usual === null ? null : x.botellas - usual;
-      const txt = dif === null ? '' : Math.abs(dif) < 0.05 ? '— usual' : (dif > 0 ? '↗ ' : '↘ ') + b1(Math.abs(dif));
-      const tono = dif === null || Math.abs(dif) < 0.05 ? 'eq' : dif > 0 ? 'up' : 'dn';
+      const { txt, tono, r } = vsUsual(x.nombre, x.botellas, d);
       return `
         <div class="m-vl-r" data-item="${esc(x.nombre)}" role="button" tabindex="0">
           <span class="n">${esc(x.nombre)}<small>${esc((r && r.vendor) || '')}</small>
@@ -183,15 +219,7 @@
   function pintarDinero(h, V, d, fechas) {
     const TS = window.BarStockToastSales;
     const n = d.normalDinero;
-    // Hoy cargado a medias, o la semana en curso: no se comparan en %
-    // contra uno entero.
-    const cmp = d.semana && d.parcial ? 'So far this week'
-      : d.parcial ? 'So far today'
-      : d.esHoy && !d.cargado ? 'Not synced yet today'
-      : !d.cargado ? (d.semana ? 'No data for this week' : 'No data for this day')
-      : !d.dinero && !n ? 'Closed'
-      : n ? ((d.dinero - n) / n * 100 >= 0 ? '↗ ' : '↘ ') + Math.abs(Math.round((d.dinero - n) / n * 100)) + '% vs usual' + (d.semana ? '' : ' ' + d.dia)
-      : '';
+    const cmp = comparar(d, 'dinero').txt;
     h.querySelector('#mvTot').innerHTML = `
       <b>${dinero0(d.dinero)}</b><span>net · ${esc(nomDia(d))}</span>
       <em class="${n && cmp ? (d.dinero >= n ? 'm-ts-up' : 'm-ts-dn') : ''}">${esc(cmp)}</em>`;
@@ -201,12 +229,14 @@
 
     const todos = TS.masVendido(V.base, fechas, 'dinero');
     const lista = h.querySelector('#mvLista');
-    const fuera = TS.fuera(V.base, fechas);
-    const pieFuera = fuera.length
-      ? `<div class="m-vl-pie">Not in this report: ${fuera.map(x => esc(x.categoria) + ' ' + dinero0(x.dinero)).join(' · ')}</div>` : '';
-    // Una línea sin precio no suma como $0: se dice cuántas hubo.
-    const pieSin = d.sinPrecio
-      ? `<div class="m-vl-pie">${d.sinPrecio} line${d.sinPrecio === 1 ? '' : 's'} came without a price and ${d.sinPrecio === 1 ? 'is' : 'are'} not counted.</div>` : '';
+    // Lo que el dinero deja fuera y las líneas sin precio (pies, también
+    // del escritorio).
+    const [pieFuera, pieSin] = (() => {
+      const ps = pies(V, fechas, d);
+      const fuera = ps.find(x => /^Not in this report/.test(x));
+      const sin = ps.find(x => /without a price/.test(x));
+      return [fuera ? `<div class="m-vl-pie">${esc(fuera)}</div>` : '', sin ? `<div class="m-vl-pie">${esc(sin)}</div>` : ''];
+    })();
     if (!todos.length) {
       lista.innerHTML = '<div class="m-vl-nada">' + (d.semana ? 'Nothing sold this week.' : 'Nothing sold this day.') + '</div>' + pieFuera + pieSin;
       return;
@@ -228,5 +258,5 @@
     lista.innerHTML = seccion('licor', 'Liquor & cocktails', d.licor) + seccion('vino', 'Wine', d.vino) + pieFuera + pieSin;
   }
 
-  window.BarStockMobileSales = { abrir, cerrar };
+  window.BarStockMobileSales = { abrir, cerrar, comparar, vsUsual, pies, nomDia, fechaCorta };
 })();

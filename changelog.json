@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-170949",
+    "items": [
+      "Desktop: new Sales screen in the sidebar",
+      "Full report opens it, with money and bottles tables"
+    ]
+  },
+  {
     "build": "20261125-165654",
     "items": [
       "Desktop: Toast card keeps its size in Bottles and $"
@@ -191,13 +198,6 @@
     "items": [
       "Counting: new Macallan outline, more label text",
       "St. Elder label traced, ORGANIC on Belvedere"
-    ]
-  },
-  {
-    "build": "20261125-102935",
-    "items": [
-      "Counting: label guides on Belvedere, St. Elder",
-      "and Macallan"
     ]
   }
 ]

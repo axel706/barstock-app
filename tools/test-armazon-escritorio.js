@@ -101,7 +101,7 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   prueba('Running out ya no es "Soon": es un botón que abre su sección', !!item('runningOut') && item('runningOut').tagName === 'BUTTON' && !/Soon/.test(item('runningOut').textContent));
   // Las secciones de hoy están en index.html; las que se rehacen para el
   // escritorio las crea su módulo (Running out: desk-running-out.js).
-  const PROPIAS = { runningOut: 'src/desk-running-out.js' };
+  const PROPIAS = { runningOut: 'src/desk-running-out.js', sales: 'src/desk-sales.js' };
   for (const it of S.ITEMS.filter(x => x.sec)) {
     const donde = PROPIAS[it.sec];
     prueba(`${it.label} apunta a una sección (#${it.sec}Section)` + (donde ? ' de ' + donde : ' de index.html'),
@@ -109,14 +109,14 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   }
 
   grupo('2. Lo que aún no hay sale "Soon" y no es un botón');
-  for (const id of ['transfers', 'sales', 'counts']) {
+  for (const id of ['transfers', 'counts']) {
     const e = item(id);
     prueba(id + ' sale con "Soon"', !!e && /Soon/.test(e.textContent));
     prueba(id + ' no es un botón', !!e && e.tagName !== 'BUTTON');
   }
   llamadas.length = 0;
   item('transfers') && item('transfers').click();
-  S.ir('sales');
+  S.ir('counts');
   prueba('tocar un "Soon" no hace nada', llamadas.length === 0, llamadas.join(','));
 
   grupo('3. Cada renglón llama a lo de siempre');

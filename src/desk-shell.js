@@ -29,8 +29,8 @@
   // #cycleBtn (weekly-cycle.js lo busca por id y le puso su clic al
   // arrancar; moverlo no le quita ninguna de las dos cosas).
   //
-  // Lo que el escritorio aún no tiene (Transfers, Sales, Counts) sale
-  // como "Soon", apagado: Axel lo eligió frente a
+  // Lo que el escritorio aún no tiene (Transfers, Counts) sale como
+  // "Soon", apagado: Axel lo eligió frente a
   // esconderlo, para que se vea lo que viene.
 
   const ITEMS = [
@@ -42,7 +42,7 @@
     { id: 'runningOut', label: 'Running out', icon: 'ti-hourglass-low', sec: 'runningOut' },
     { id: 'transfers', label: 'Transfers', icon: 'ti-arrows-exchange', pronto: true },
     { grupo: 'Reports' },
-    { id: 'sales', label: 'Sales', icon: 'ti-chart-line', pronto: true },
+    { id: 'sales', label: 'Sales', icon: 'ti-chart-line', sec: 'sales' },
     { id: 'pourIq', label: 'Pour·IQ', icon: 'ti-brain', sec: 'pourIq' },
     { id: 'consumption', label: 'Variance', icon: 'ti-chart-histogram', sec: 'consumption' },
     { id: 'costReport', label: 'Costs', icon: 'ti-chart-bar', sec: 'costReport' },

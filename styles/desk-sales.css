@@ -1,0 +1,132 @@
+/* ── Sales en el escritorio (Axel, 2026-11-25, lámina A) ────────────────
+ *
+ * La pantalla de src/desk-sales.js, en #salesSection. Hecha para el
+ * escritorio (no es la hoja del teléfono): arriba la semana, cinco
+ * cifras y los días; debajo una tabla ordenable, de dinero o de
+ * botellas. Con id delante: app.css fuerza el radio, el fondo y el
+ * desenfoque de todo <button> e <input>.
+ */
+
+#salesSection { display: none; }
+
+@media (min-width: 641px) {
+  body.dk .wrap.bs-focus-mode > #salesSection.bs-active-section { display: block; }
+  /* El panel con vidrio, como Running out (sobre la foto no se leería). */
+  body.dk #salesSection {
+    background: rgba(11, 18, 32, .72) !important;
+    border: 1px solid rgba(255, 255, 255, .1) !important;
+    border-radius: 22px !important;
+    box-shadow: none !important;
+    backdrop-filter: blur(16px) saturate(140%) !important; -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+    padding: 18px 18px 22px !important;
+    margin-bottom: 28px;
+    color: #f8fafc;
+    container: dksales / inline-size;
+  }
+  #salesSection .dks-t { margin: 4px 0 10px; font-size: 26px; font-weight: 800; letter-spacing: -.4px; color: #f8fafc; }
+  #salesSection .dks-nada { color: #a9bacd; font-size: 14px; margin: 20px 0; }
+
+  /* La marca y la semana */
+  #dkSales .dks-top { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+  #dkSales .dks-marca { display: flex; align-items: center; gap: 14px; }
+  #dkSales .dks-logo { height: 30px; width: auto; }
+  #dkSales .dks-sync { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #a9bacd; display: inline-flex; align-items: center; gap: 6px; }
+  #dkSales .dks-sync i { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; }
+  #dkSales .dks-sync i.vieja { background: #fbbf24; }
+  #dkSales .dks-semana { display: inline-flex; align-items: center; gap: 10px; padding: 4px; border-radius: 999px; background: rgba(0, 0, 0, .25); border: 1px solid rgba(255, 255, 255, .1); }
+  #dkSales .dks-semana b { font-size: 14px; min-width: 110px; text-align: center; }
+  #dkSales .dks-f {
+    width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 999px !important; border: 0; background: rgba(255, 255, 255, .08); color: #e2e8f0; cursor: pointer;
+    box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; font-size: 16px;
+  }
+  #dkSales .dks-f:disabled { opacity: .35; cursor: default; }
+
+  /* Las cinco cifras */
+  #dkSales .dks-cifras { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+  #dkSales .dks-k { border-radius: 16px; background: var(--tinta); border: 1px solid var(--tinta-borde); padding: 12px 14px; min-width: 0; }
+  #dkSales .dks-k u { text-decoration: none; font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #94a3b8; display: flex; align-items: center; gap: 6px; }
+  #dkSales .dks-k b { display: block; font-size: 24px; font-weight: 800; margin-top: 4px; letter-spacing: -.3px; }
+  #dkSales .dks-k small { display: block; font-size: 12px; font-weight: 800; color: #a9bacd; margin-top: 2px; min-height: 1.2em; }
+  #dkSales .dks-k small.up { color: #86efac; }
+  #dkSales .dks-k small.dn { color: #fca5a5; }
+  #dkSales .dks-pt { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+  /* Los colores de licor, vino y botellas: sólo en sus barras y puntos
+     (una clase suelta, .bot, pintó una vez la tabla entera). */
+  #dkSales :is(.dks-pt, .dks-g i, .dks-n i).licor { background: #38bdf8; }
+  #dkSales :is(.dks-pt, .dks-g i, .dks-n i).vino { background: #c084fc; }
+  #dkSales :is(.dks-pt, .dks-g i, .dks-n i).bot { background: #5eead4; }
+
+  /* Los días: la semana entera y los siete */
+  #dkSales .dks-dias { display: grid; grid-template-columns: minmax(90px, .9fr) repeat(7, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+  #dkSales .dks-dia {
+    display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 6px 10px;
+    border-radius: 14px !important; border: 1px solid rgba(255, 255, 255, .07); background: rgba(255, 255, 255, .04);
+    color: #f8fafc; cursor: pointer; font: inherit; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  #dkSales .dks-dia:hover:not(:disabled) { border-color: rgba(125, 211, 252, .4); }
+  #dkSales .dks-dia.on { border-color: rgba(125, 211, 252, .75); background: rgba(56, 189, 248, .12); }
+  #dkSales .dks-dia.fut { cursor: default; opacity: .4; }
+  #dkSales .dks-dia.dks-sem { justify-content: center; }
+  #dkSales .dks-dia b { font-size: 12.5px; }
+  #dkSales .dks-dia small { font-size: 11.5px; color: #a9bacd; }
+  #dkSales .dks-g { position: relative; height: 64px; width: 62%; display: flex; flex-direction: column; justify-content: flex-end; }
+  #dkSales .dks-g i { display: block; border-radius: 4px 4px 1px 1px; }
+  #dkSales .dks-g s { position: absolute; left: -14%; right: -14%; border-top: 1.5px dashed rgba(255, 255, 255, .4); text-decoration: none; }
+
+  /* El cambio de tabla, el buscador y el filtro */
+  #dkSales .dks-fil { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  #dkSales .dks-tabs, #dkSales .dks-cats { display: inline-flex; gap: 4px; padding: 3px; border-radius: 999px; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .12); }
+  #dkSales .dks-tabs button, #dkSales .dks-cats button {
+    padding: 7px 14px; border-radius: 999px !important; border: 0; background: none; color: #cbd5e1;
+    font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  #dkSales .dks-tabs button small { font-weight: 600; color: inherit; opacity: .75; margin-left: 4px; }
+  #dkSales .dks-tabs button.on { background: #7dd3fc; color: #0b1220; }
+  #dkSales .dks-cats button.on { background: #f8fafc; color: #0b1220; }
+  #dkSales .dks-q {
+    flex: 1; min-width: 180px; max-width: 340px; height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 14px;
+    border-radius: 999px; border: 1px solid rgba(255, 255, 255, .2); background: rgba(255, 255, 255, .06); color: #a9bacd;
+  }
+  #dkSales #dksQ {
+    flex: 1; min-width: 0; height: 100%; border: 0 !important; background: none !important; box-shadow: none !important; outline: none;
+    border-radius: 0 !important; padding: 0 !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+    font: inherit; font-size: 14px; color: #f8fafc;
+  }
+  #dkSales #dksQ::placeholder { color: #94a3b8; }
+
+  /* La tabla */
+  #dkSales .dks-tabla { margin-top: 12px; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255, 255, 255, .08); }
+  #dkSales .dks-thr, #dkSales .dks-tr { display: grid; gap: 12px; align-items: center; padding: 9px 16px; }
+  #dkSales .dks-tdin .dks-thr, #dkSales .dks-tdin .dks-tr { grid-template-columns: minmax(0, 2.6fr) minmax(0, 1.2fr) 100px 80px 80px; }
+  #dkSales .dks-tbot .dks-thr, #dkSales .dks-tbot .dks-tr { grid-template-columns: minmax(0, 2.6fr) minmax(0, 1.2fr) 100px 110px; }
+  #dkSales .dks-thr { background: rgba(255, 255, 255, .06); padding-top: 6px; padding-bottom: 6px; }
+  #dkSales .dks-th {
+    padding: 4px 0; border: 0; background: none; color: #94a3b8; text-align: left; cursor: pointer; border-radius: 0 !important;
+    font: inherit; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+    box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  #dkSales .dks-th.on { color: #7dd3fc; }
+  #dkSales .dks-th.num { text-align: right; }
+  #dkSales .dks-tr { border-top: 1px solid rgba(255, 255, 255, .06); font-size: 13.5px; }
+  #dkSales .dks-tr:nth-child(odd) { background: rgba(255, 255, 255, .02); }
+  #dkSales .dks-abre { cursor: pointer; }
+  #dkSales .dks-abre:hover { background: rgba(56, 189, 248, .08); }
+  #dkSales .dks-n { display: flex; flex-direction: column; gap: 5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #dkSales .dks-n i { display: block; height: 4px; border-radius: 2px; opacity: .75; }
+  #dkSales .dks-s { color: #a9bacd; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #dkSales .num { text-align: right; font-variant-numeric: tabular-nums; }
+  #dkSales .up { color: #86efac; }
+  #dkSales .dn { color: #fca5a5; }
+  #dkSales .eq { color: #94a3b8; }
+  #dkSales .dks-vacio { padding: 22px 16px; color: #a9bacd; text-align: center; }
+  #dkSales .dks-pie { margin: 10px 2px 0; font-size: 12.5px; color: #94a3b8; }
+
+  /* Poco sitio (el iPad con la barra a la vista): las cifras de tres en
+     tres y los días en dos renglones. */
+  @container dksales (max-width: 900px) {
+    #dkSales .dks-cifras { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    #dkSales .dks-dias { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    #dkSales .dks-tdin .dks-thr, #dkSales .dks-tdin .dks-tr { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) 90px 60px 70px; }
+  }
+}

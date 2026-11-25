@@ -109,8 +109,8 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 
 ## La arquitectura
 
-Frontend estático, sin build. `index.html` es un monolito y hay ~157 módulos
-`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 34 hojas
+Frontend estático, sin build. `index.html` es un monolito y hay ~158 módulos
+`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 35 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
 12 funciones en `api/` sobre Vercel. **El tope del plan son 12, y está lleno**
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 176 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 177 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -499,6 +499,26 @@ sección de hoy vive tal cual dentro del armazón.
   salen en la ventana centrada de `#mSheet`: el generador acota a
   `body.dk #mSheet` todo lo de dentro de la hoja (teclado, lista, su
   buscador), para que no toque nada más del escritorio.
+- **La pantalla Sales** (Axel, 2026-11-25, lámina A: "el Full Report
+  que veo es el del teléfono […] no tiene una pantalla dedicada de
+  escritorio"): `src/desk-sales.js` y `styles/desk-sales.css`, la sección
+  Sales de la barra (ya sin "Soon"). La abren también "Full report" /
+  "All products" de la tarjeta: `BarStockMobileSales.abrir` se la pasa a
+  `BarStockDeskSales.abrir` donde no está el armazón del teléfono
+  (`body.m-shell`), en la misma semana, día y vista. Arriba la semana con
+  ‹ ›, cinco cifras y los siete días más la semana; debajo **dos tablas
+  con un cambio** (Axel lo eligió al saber que no cabían en una): el
+  DINERO va por lo que vende Toast ("Espresso Martini") y las BOTELLAS
+  por el producto del inventario ("Kahlua"), que salen de recetas y
+  pours. Las dos ordenables por cualquier columna y con filtro por
+  nombre; el dinero, además, por licor o vino. Un producto del
+  inventario abre su ficha (`BarStockDeskSearch.buscar` + `elegir`); un
+  artículo de Toast, no. Las cuentas son de la hoja del teléfono,
+  exportadas: `comparar` (vs usual, "So far…", "Closed"), `vsUsual` (un
+  producto contra su mediana) y `pies` (lo que el dinero deja fuera, las
+  líneas sin precio). Ojo: una clase suelta para un color (`.bot`) pintó
+  la tabla entera; los colores van sólo en barras y puntos. Prueba:
+  `test-sales-escritorio`.
 - **Running out en el Home del escritorio** (Axel, 2026-11-25, lámina A:
   "más similar al del teléfono, siluetas, pero al tener espacio podemos
   seguir incluyendo el estimado en número"): las botellas del teléfono
@@ -1002,7 +1022,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 176 suites · ~2430 comprobaciones. Tienen que pasar enteras.
+`npm test` · 177 suites · ~2470 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
