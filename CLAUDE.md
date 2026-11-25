@@ -109,8 +109,8 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 
 ## La arquitectura
 
-Frontend estático, sin build. `index.html` es un monolito y hay ~152 módulos
-`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 31 hojas
+Frontend estático, sin build. `index.html` es un monolito y hay ~156 módulos
+`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 33 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
 12 funciones en `api/` sobre Vercel. **El tope del plan son 12, y está lleno**
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 174 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 175 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -542,6 +542,27 @@ sección de hoy vive tal cual dentro del armazón.
   (`localStorage`, `bs-dk-lado-oculto`, con try/catch: sin almacenamiento
   funciona y sólo se olvida al recargar). Sin animación con reducir
   movimiento.
+- **Do we have en el escritorio** (Axel, 2026-11-25, lámina A): un
+  campo en la barra de arriba, justo tras el saludo, en TODAS las
+  pantallas (`src/desk-search.js`, `#dkBusca`). Con 2 letras se abre un
+  panel grande debajo (`#dkBuscar`): las tarjetas a la izquierda y la
+  ficha del producto elegido a la derecha; Enter abre la primera. Esc,
+  tocar fuera o abrir una sección lo cierran; "/" (no escribiendo en otro
+  campo) y ⌘K / Ctrl+K llevan al campo. **Todo es del teléfono**:
+  `BarStockMobileSearch.buscar`, `tarjetaResultado`,
+  `engancharResultados` (✎ Check the shelf y "Tell the team it's low",
+  con su teclado como ventana centrada) y `llenarFicha`, que el teléfono
+  usa también. **Sus estilos se GENERAN** de los de mobile-app.css:
+  `node tools/compartir-ficha.js` escribe `styles/desk-ficha.css`
+  (colgado de `#dkBuscar`; el teclado, de `body.dk #mSheet`); no se
+  edita a mano, y la prueba falla si no está al día: tocar la tarjeta o
+  la ficha del teléfono pide regenerarlo. El panel va oscuro también en
+  el claro: las filas de la ficha son transparentes con texto blanco y
+  sobre el vidrio claro no se leían. La locación va centrada con
+  `absolute` y el flex no la esquiva: el ancho del campo se MIDE contra
+  ella (`ajustarAncho`, al montar y con un ResizeObserver, nunca al
+  escribir), y sin sitio la fecha del saludo se va (`dkb-apretado`).
+  Prueba: `test-buscador-escritorio`.
 
 ## Reglas del dominio que no son obvias
 
@@ -884,7 +905,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 174 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 175 suites · ~2380 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

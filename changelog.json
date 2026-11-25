@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-145621",
+    "items": [
+      "Desktop: Do we have search in the top bar",
+      "Press / or Ctrl+K to search from any screen"
+    ]
+  },
+  {
     "build": "20261125-143215",
     "items": [
       "Review prices opens the list right there, not Settings"
@@ -190,12 +197,6 @@
     "build": "20261122-230438",
     "items": [
       "Orders: room under the run-out card"
-    ]
-  },
-  {
-    "build": "20261122-221546",
-    "items": [
-      "Skipped week: Sent shows only this week in This cycle"
     ]
   }
 ]

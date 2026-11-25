@@ -97,6 +97,10 @@
        Va tras app.css y toolbar-pills.css, que es a quienes corrige. -->
   <link rel="stylesheet" href="styles/desk-shell.css?v=dk8">
   <link rel="stylesheet" href="styles/desk-home.css?v=dkh5">
+  <!-- "Do we have" del escritorio: la tarjeta y la ficha generadas de las
+       del teléfono (tools/compartir-ficha.js), y el campo y su panel. -->
+  <link rel="stylesheet" href="styles/desk-ficha.css?v=dkf1">
+  <link rel="stylesheet" href="styles/desk-search.css?v=dks1">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -385,7 +389,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261125-143215</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261125-145621</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5653,7 +5657,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/band-dock.js?v=dock16"></script>
 <script src="src/mobile-running-out.js?v=mro12"></script>
 <script src="src/mobile-home.js?v=mh84"></script>
-<script src="src/mobile-search.js?v=m33"></script>
+<script src="src/mobile-search.js?v=m34"></script>
 <script src="src/mobile-cycle.js?v=m9"></script>
 <script src="src/mobile-inventory.js?v=m29g"></script>
 <script src="src/mobile-orders.js?v=m38"></script>
@@ -6372,6 +6376,9 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <!-- El Home del escritorio: pinta con los datos de mobile-home.js (más
      arriba) dentro del armazón de desk-shell.js. -->
 <script src="src/desk-home.js?v=dkh4"></script>
+<!-- El buscador del escritorio: la búsqueda, la tarjeta y la ficha de
+     mobile-search.js (más arriba), en un panel bajo la barra de arriba. -->
+<script src="src/desk-search.js?v=dks1"></script>
 <script>
 // ===== BACKGROUND SELECTOR =====
 (function(){

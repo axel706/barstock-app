@@ -162,16 +162,26 @@
     //
     // `m-res` sigue en el envoltorio porque es lo que se toca para abrir
     // la ficha, igual que con la fila.
+    caja.innerHTML = res.map(r => tarjetaResultado(r)).join('');
+    engancharResultados(caja, (i) => ficha(host, i), () => pintarLista(host));
+  }
+
+  // ── Una tarjeta de resultado y sus botones ──────────────────────────
+  //
+  // Fuera de pintarLista porque el buscador del escritorio (desk-search.js,
+  // 2026-11-25, lámina A) pinta LAS MISMAS tarjetas en su panel: una sola
+  // tarjeta, con su "Tell the team it's low" y su lápiz. Cada uno dice
+  // cómo abrir la ficha y cómo repintar su lista.
+  function tarjetaResultado(r) {
     const H = HERO();
-    caja.innerHTML = res.map((r, i) => {
-      const mi = master().indexOf(r);
-      if (H && H.html) {
-        return `<div class="m-res m-res-fic" data-i="${mi}" role="button" tabindex="0">
+    const mi = master().indexOf(r);
+    if (H && H.html) {
+      return `<div class="m-res m-res-fic" data-i="${mi}" role="button" tabindex="0">
           ${H.html(r, { par: parDe(r), semana: true, pie: bajo(r, mi), lapiz: mi })}</div>`;
-      }
-      // Sin el módulo, la fila de antes: fea, pero dice qué hay.
-      const k = tono(r);
-      return `
+    }
+    // Sin el módulo, la fila de antes: fea, pero dice qué hay.
+    const k = tono(r);
+    return `
         <button type="button" class="m-card m-res" data-i="${mi}">
           <span class="m-res-l">
             <span class="m-res-n">${esc(r.item)}</span>
@@ -183,10 +193,11 @@
           </span>
           <i class="ti ti-chevron-right m-chev" aria-hidden="true"></i>
         </button>`;
-    }).join('');
+  }
 
+  function engancharResultados(caja, abrir, repintar) {
     caja.querySelectorAll('.m-res').forEach(b => {
-      b.onclick = () => ficha(host, Number(b.dataset.i));
+      b.onclick = () => abrir(Number(b.dataset.i));
     });
     // Los botones de "Running low" viven DENTRO de la tarjeta, que abre la
     // ficha al tocarla: sin parar el toque, abrirían las dos cosas.
@@ -203,8 +214,8 @@
         ev.stopPropagation();
         const r = master()[Number(b.dataset.low != null ? b.dataset.low : b.dataset.lowR)];
         if (!r) return;
-        if (b.hasAttribute('data-low')) avisarBajo(host, r);
-        else quitarDeLista(host, b);
+        if (b.hasAttribute('data-low')) avisarBajo(repintar, r);
+        else quitarDeLista(repintar, b);
       };
     });
   }
@@ -247,7 +258,7 @@
     return `<button type="button" class="m-low-b" data-low="${mi}"><i class="ti ti-speakerphone" aria-hidden="true"></i>Tell the team it’s low</button>`;
   }
 
-  function avisarBajo(host, r) {
+  function avisarBajo(repintar, r) {
     const LC = window.BarStockLiveCache;
     const queda = LC && LC.cuanto ? LC.cuanto(r) : Number(r.onHand) || 0;
     const vivo = !!(LC && LC.vivo && LC.vivo(r));
@@ -271,13 +282,13 @@
         // La verificación ya está guardada: si la lista falla, se dice
         // así, no como si no se hubiera guardado nada.
         if (!a.ok) return { ok: false, error: 'the count of ' + n + ' was saved, but it was not added to the list (' + (a.error || 'unknown error') + ')' };
-        if (TB() && TB().cargar) TB().cargar().then(() => pintarLista(host));
+        if (TB() && TB().cargar) TB().cargar().then(() => repintar());
         return { ok: true };
       }
     });
   }
 
-  function quitarDeLista(host, b) {
+  function quitarDeLista(repintar, b) {
     const SL = window.BarStockShoppingList;
     b.disabled = true;
     SL.quitar(b.dataset.lowX, quien()).then(x => {
@@ -286,7 +297,7 @@
         if (window.BarStockToast) window.BarStockToast.show('Not removed: ' + (x.error || 'unknown error'));
         return;
       }
-      if (TB() && TB().cargar) TB().cargar().then(() => pintarLista(host));
+      if (TB() && TB().cargar) TB().cargar().then(() => repintar());
     });
   }
 
@@ -567,8 +578,57 @@
   // ── Ficha ────────────────────────────────────────────────────────────
 
   function ficha(host, idx) {
+    if (!master()[idx]) return;
+    // ── Una HOJA, no una pantalla ───────────────────────────────────
+    //
+    // Esto reemplazaba la lista de resultados y se salia con un
+    // chevron propio. Dos problemas: la app ya tiene una vuelta atras
+    // —la del armazon— y poner otra al lado confunde cual es cual; y
+    // al volver perdias de vista los resultados, que es justo lo que
+    // estabas mirando.
+    //
+    // Ahora sube desde abajo, igual que la hoja de producto de
+    // Inventory, y los resultados se quedan detras. Mirar una botella
+    // y volver a la lista deja de ser navegar.
+    cerrarHoja();
+    // DESPUÉS de cerrarHoja(), que lo pone a -1. Se apuntaba antes y la
+    // hoja abierta quedaba siempre en -1: refrescar() repintaba la lista
+    // en vez de la ficha, y el LIVE que llegaba no la encontraba.
+    _ficha = idx;
+    const h = document.createElement('div');
+    h.className = 'm-sheet';
+    // El id no es decoracion: las reglas de esta hoja se apoyan en el
+    // para ganarle en especificidad al radio de app.css.
+    h.id = 'mSheet';
+    const caja = document.createElement('div');
+    caja.className = 'm-sheet-box m-ficha';
+    caja.setAttribute('role', 'dialog');
+    caja.setAttribute('aria-label', 'Product');
+    const fondo = document.createElement('div');
+    fondo.className = 'm-sheet-bg';
+    h.appendChild(fondo); h.appendChild(caja);
+    document.body.appendChild(h);
+    // El asa de arriba dice "arrastrame para cerrar". Que lo diga
+    // de verdad, y que el fondo no se mueva mientras tanto.
+    if (window.BarStockSheet) window.BarStockSheet.enganchar(h, () => cerrarHoja());
+    fondo.onclick = () => cerrarHoja();
+
+    llenarFicha(caja, idx, () => ficha(host, idx), true);
+  }
+
+  // ── Lo de dentro de la ficha, en cualquier caja ────────────────────
+  //
+  // Separado de la hoja (2026-11-25) porque el buscador del escritorio
+  // (desk-search.js) pinta LA MISMA ficha en la columna derecha de su
+  // panel: una sola ficha, con sus zonas, sus ventas, sus semanas, su
+  // Pour·IQ y sus botones. `rehacer` es cómo se vuelve a pintar quien la
+  // tiene (tras aplicar el par o recibir); `asa`, la del teléfono.
+  function llenarFicha(caja, idx, rehacer, asa) {
     const r = master()[idx];
-    if (!r) return;
+    if (!r || !caja) return;
+    // Abrir una ficha vuelve a poner "Sold in Toast" en ayer: el día que
+    // tocaste en otra (o en ésta, la vez anterior) no es el que buscas.
+    _diaFicha = null;
     const par = parDe(r);
     const k = tono(r);
 
@@ -600,45 +660,8 @@
       : Number(r.onHand) <= 0 ? 'Out of stock'
       : dias !== null ? 'Runs out in ' + cuantos(dias, 'day') : '';
 
-    // ── Una HOJA, no una pantalla ───────────────────────────────────
-    //
-    // Esto reemplazaba la lista de resultados y se salia con un
-    // chevron propio. Dos problemas: la app ya tiene una vuelta atras
-    // —la del armazon— y poner otra al lado confunde cual es cual; y
-    // al volver perdias de vista los resultados, que es justo lo que
-    // estabas mirando.
-    //
-    // Ahora sube desde abajo, igual que la hoja de producto de
-    // Inventory, y los resultados se quedan detras. Mirar una botella
-    // y volver a la lista deja de ser navegar.
-    cerrarHoja();
-    // DESPUÉS de cerrarHoja(), que lo pone a -1. Se apuntaba antes y la
-    // hoja abierta quedaba siempre en -1: refrescar() repintaba la lista
-    // en vez de la ficha, y el LIVE que llegaba no la encontraba.
-    // Abrir una ficha vuelve a poner "Sold in Toast" en ayer: el día que
-    // tocaste en otra (o en ésta, la vez anterior) no es el que buscas.
-    _diaFicha = null;
-    _ficha = idx;
-    const h = document.createElement('div');
-    h.className = 'm-sheet';
-    // El id no es decoracion: las reglas de esta hoja se apoyan en el
-    // para ganarle en especificidad al radio de app.css.
-    h.id = 'mSheet';
-    const caja = document.createElement('div');
-    caja.className = 'm-sheet-box m-ficha';
-    caja.setAttribute('role', 'dialog');
-    caja.setAttribute('aria-label', 'Product');
-    const fondo = document.createElement('div');
-    fondo.className = 'm-sheet-bg';
-    h.appendChild(fondo); h.appendChild(caja);
-    document.body.appendChild(h);
-    // El asa de arriba dice "arrastrame para cerrar". Que lo diga
-    // de verdad, y que el fondo no se mueva mientras tanto.
-    if (window.BarStockSheet) window.BarStockSheet.enganchar(h, () => cerrarHoja());
-    fondo.onclick = () => cerrarHoja();
-
     caja.innerHTML = `
-      <div class="m-sheet-grip"></div>
+      ${asa ? '<div class="m-sheet-grip"></div>' : ''}
 
       <!-- La MISMA cabecera que usa la hoja de Inventory. Es un solo
            sitio a proposito: dos copias acaban diciendo cosas
@@ -696,7 +719,7 @@
         await window.BarStockProductWeeks.aplicarPar(r, destino);
         if (window.BarStockToast) window.BarStockToast.show('Par set to ' + destino);
         if (typeof window.render === 'function') window.render();
-        ficha(host, idx);
+        rehacer();
       } catch (e) {
         console.warn('[ficha] no se pudo aplicar el par', e);
         iq.disabled = false;
@@ -721,7 +744,7 @@
     };
     const recv = caja.querySelector('#msRecv');
     if (recv) recv.onclick = () => {
-      if (window.BarStockStockIn) window.BarStockStockIn.open(r, () => ficha(host, idx));
+      if (window.BarStockStockIn) window.BarStockStockIn.open(r, rehacer);
     };
     // El lápiz de la cabecera y su "Change" (check-shelf.js). Delegado en
     // la caja: alLive() cambia la cabecera entera cuando se rehace el
@@ -739,8 +762,6 @@
     pintarOrigenPrecio(caja, r.item);
     pintarSemanas(caja, r.item);
   }
-
-
 
   // ── La pantalla ──────────────────────────────────────────────────────
 
@@ -859,7 +880,12 @@
   }
   if (window.BarStockLiveCache) window.BarStockLiveCache.alCambiar(alLive);
 
-  window.BarStockMobileSearch = { mount, show, abrirItem };
+  window.BarStockMobileSearch = {
+    mount, show, abrirItem,
+    // Para el buscador del escritorio: la misma búsqueda, la misma
+    // tarjeta con sus botones y la misma ficha.
+    buscar, tarjetaResultado, engancharResultados, llenarFicha
+  };
 
   function registrar() {
     if (!window.BarStockMobile) return;
