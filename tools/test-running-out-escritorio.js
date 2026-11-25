@@ -84,6 +84,7 @@ function entorno(html) {
     prueba('se monta dentro de la sección, no fija encima de todo', !!host.querySelector('.m-ro-dk') && !w.document.querySelector('.m-ro'));
     prueba('sin la banda del teléfono', w.__banda === null);
     prueba('una fila por producto, en el orden de la lista', filas.length === 2 && filas[0].dataset.item === 'Woodford Reserve');
+    prueba('el resumen y los títulos de las columnas en el bloque que se pega', !!host.querySelector('.m-ro-pega > .m-ro-sumf') && /Product.*Left.*Next 5 days/.test(txt(host.querySelector('.m-ro-pega .m-ro-cols'))));
     prueba('cada una con su silueta (home-cartas + formaDe)', !!filas[0].querySelector('.m-ro-sil svg[data-forma="woodford"]') && !!filas[1].querySelector('svg[data-forma="vodka"]'));
     prueba('llena contra su par (1.6 de 2)', w.__sil.some(x => Math.abs(x.lleno - 0.8) < 1e-9));
     prueba('poca, con su tono (0.4 de 6)', !!filas[1].querySelector('.m-ro-sil-bajo') && !!filas[0].querySelector('.m-ro-sil-medio'));
@@ -115,6 +116,7 @@ function entorno(html) {
     const f = w.document.querySelector('.m-ro .m-ro-c');
     prueba('su pantalla fija, con la banda', !!w.document.querySelector('.m-ro') && w.__banda === 'Running out');
     prueba('sin silueta', !f.querySelector('.m-ro-sil') && w.__sil.length === 0);
+    prueba('sin bloque pegado ni títulos de columnas', !w.document.querySelector('.m-ro-pega') && !w.document.querySelector('.m-ro-cols') && !!w.document.querySelector('.m-ro > .m-ro-sumf'));
     prueba('el número sin su par', !f.querySelector('.m-ro-par') && /≈1\.6/.test(txt(f.querySelector('.m-ro-v b'))));
   }
 
@@ -146,7 +148,11 @@ function entorno(html) {
   prueba('la fila ancha: silueta, nombre, número, días, el por qué', /grid-template-columns: 48px minmax\(0, 1\.4fr\) 120px minmax\(0, 1\.3fr\) minmax\(0, 1\.7fr\)/.test(CSS));
   prueba('la cabecera del teléfono se abre en columnas', /\.m-ro-top \{ display: contents; \}/.test(CSS));
   prueba('con poco sitio se apila (por el ancho de la sección)', /@container dkro \(max-width: 900px\)/.test(CSS));
-  prueba('la sección lleva vidrio (TODO necesita blur)', /#runningOutSection \{[^}]*backdrop-filter: blur\(\d+px\)/.test(CSS));
+  // La forma de las secciones (el estándar, lámina "Section screens" A):
+  // .dk-pantalla pone el vidrio, fijo detrás (desk-shell.css).
+  prueba('es una pantalla del estándar (.dk-pantalla), no una caja', /'card section-card dk-ro-sec dk-pantalla'/.test(DRO) && !/#runningOutSection \{[^}]*(border-radius|background: rgba)/.test(CSS));
+  prueba('el resumen, Edit order y las columnas, pegados bajo la barra al bajar', /#dkRo \.m-ro-pega \{[^}]*position: sticky; top: var\(--dk-alto\)/.test(CSS)
+    && /_escritorio \? `<div class="m-ro-pega">\$\{sumf\}/.test(MRO) && /m-ro-cols/.test(MRO));
   prueba('las hojas, con su versión', /styles\/desk-running-out\.css\?v=/.test(INDEX) && /src\/desk-running-out\.js\?v=/.test(INDEX));
 
   console.log('\n' + ok + ' ok · ' + mal + ' mal');

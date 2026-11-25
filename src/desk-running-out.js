@@ -45,7 +45,8 @@
     const wrap = document.querySelector('.wrap');
     if (!wrap) return;
     _sec = document.createElement('section');
-    _sec.className = 'card section-card dk-ro-sec';
+    // dk-pantalla: la forma de las secciones (desk-shell.css, el estándar).
+    _sec.className = 'card section-card dk-ro-sec dk-pantalla';
     _sec.id = 'runningOutSection';
     _sec.innerHTML = '<h2 class="dk-ro-t">Running out</h2><div id="dkRo"></div>';
     wrap.appendChild(_sec);

@@ -538,6 +538,11 @@ sección de hoy vive tal cual dentro del armazón.
     barra de arriba** (sticky a `--dk-alto`), con el mismo vidrio.
   - Cada sección se rehace una a la vez, con su lámina para lo que
     enseña; ésta es la forma de todas.
+  - Se pone con la clase `dk-pantalla` en la `.section-card`
+    (desk-shell.css: sin caja, pegada a la barra, y su vidrio en una capa
+    FIJA detrás, `::before`; desenfocando la sección misma, al bajar por
+    una lista larga se veía la foto nítida). Ya la llevan Sales y Running
+    out.
 - **Running out en el Home del escritorio** (Axel, 2026-11-25, lámina A:
   "más similar al del teléfono, siluetas, pero al tener espacio podemos
   seguir incluyendo el estimado en número"): las botellas del teléfono
@@ -564,7 +569,11 @@ sección de hoy vive tal cual dentro del armazón.
   nombre · número · cinco días · el por qué y sus botones, con la
   cabecera del teléfono en `display: contents`) en
   `styles/desk-running-out.css`, que se apila con `@container dkro
-  (max-width: 900px)`. Prueba: `test-running-out-escritorio`.
+  (max-width: 900px)`. Con el estándar de las secciones desde el mismo
+  día (`dk-pantalla`): el título grande en la cabeza, y el resumen, Edit
+  order y los títulos de las columnas en `.m-ro-pega`, pegados bajo la
+  barra al bajar (sólo en el escritorio). Prueba:
+  `test-running-out-escritorio`.
 - **Spent this cycle en el escritorio** (Axel, 2026-11-25, lámina A:
   "como el teléfono"): UN botón, Sync, o Review en ámbar con algo que
   arreglar, o "MarginEdge" sin conectar (→ Settings › `integrations`).

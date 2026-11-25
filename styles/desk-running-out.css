@@ -12,23 +12,27 @@
 
 @media (min-width: 641px) {
   body.dk .wrap.bs-focus-mode > #runningOutSection.bs-active-section { display: block; }
-  /* Un panel de vidrio, como en la lámina: sobre la foto del fondo el
-     título y el resumen no se leían. Las filas van dentro con su Tinta
-     (sin desenfoque propio, como en el teléfono). !important por .card
-     (app.css le pone fondo y borde con !important en el claro). */
-  body.dk #runningOutSection {
-    background: rgba(11, 18, 32, .72) !important;
-    border: 1px solid rgba(255, 255, 255, .1) !important;
-    border-radius: 22px !important;
-    box-shadow: none !important;
-    backdrop-filter: blur(16px) saturate(140%) !important; -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
-    padding: 18px 18px 22px !important;
-    margin-bottom: 28px;
-    color: #f8fafc;
-    container: dkro / inline-size;
+  /* La pantalla es .dk-pantalla (el estándar, en desk-shell.css): aquí
+     sólo su relleno, su contenedor y el título grande de la cabeza. */
+  body.dk #runningOutSection { padding: 22px 28px 40px !important; color: #f8fafc; container: dkro / inline-size; }
+  #runningOutSection .dk-ro-t { margin: 0; font-size: 34px; font-weight: 800; letter-spacing: -.6px; color: #f8fafc; }
+  /* Lo que se queda pegado bajo la barra de arriba al bajar: el resumen,
+     Edit order y los títulos de las columnas, con el vidrio de la barra
+     y a lo ancho de la pantalla. */
+  #dkRo .m-ro-pega {
+    position: sticky; top: var(--dk-alto); z-index: 5;
+    margin: 10px -28px 0; padding: 10px 28px 8px;
+    background: rgba(9, 14, 26, .82);
+    backdrop-filter: blur(18px) saturate(150%); -webkit-backdrop-filter: blur(18px) saturate(150%);
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
   }
-  #runningOutSection .dk-ro-t { margin: 4px 0 2px; font-size: 26px; font-weight: 800; letter-spacing: -.4px; color: #f8fafc; }
-  #dkRo .m-ro-sumf { margin-bottom: 4px; }
+  #dkRo .m-ro-cols {
+    display: grid; grid-template-columns: 48px minmax(0, 1.4fr) 120px minmax(0, 1.3fr) minmax(0, 1.7fr);
+    column-gap: 18px; padding: 10px 19px 0;
+    font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #94a3b8;
+  }
+  #dkRo .m-ro-cols span:first-child { grid-column: 2; }
+  #dkRo .m-ro-sumf { margin: 0; align-items: center; }
   #dkRo .m-ro-sum { font-size: 13.5px; color: #a9bacd; }
   /* Más fuerte que "#dkRo .m-ro-v small" del teléfono (display: block). */
   #dkRo .m-ro-v b small.m-ro-par { display: inline; margin: 0; font-size: .5em; font-weight: 700; color: #a9bacd; }
@@ -85,6 +89,7 @@
      el número arriba; los días, el por qué y los botones debajo, a lo
      ancho. */
   @container dkro (max-width: 900px) {
+    #dkRo .m-ro-cols { display: none; }
     #dkRo .m-ro-c:not(.m-ro-ed) { grid-template-columns: 48px minmax(0, 1fr) auto; }
     #dkRo .m-ro-c:not(.m-ro-ed) .m-ro-sil { grid-row: 1; }
     #dkRo .m-ro-c:not(.m-ro-ed) .m-ro-n { grid-row: 1; }

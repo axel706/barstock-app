@@ -195,9 +195,14 @@
       (nFij && i === 0 ? `<div class="m-ro-k">Pinned &middot; ${nFij}</div>` : '') +
       (nFij && i === nFij && i < base.length ? '<div class="m-ro-k">By date</div>' : '') +
       tarjeta(x)).join('');
+    const sumf = `<div class="m-ro-sumf"><div class="m-ro-sum">${partes.map(esc).join(' &middot; ')}</div>${
+        base.length > 1 ? '<button type="button" class="m-ro-ord" data-ro-edit>Edit order</button>' : ''}</div>`;
+    // En el escritorio, el resumen y "Edit order" van con los títulos de
+    // las columnas en un bloque que se queda pegado bajo la barra de arriba
+    // al bajar (la forma de las secciones, el estándar de CLAUDE.md).
     _el.innerHTML = `
-      <div class="m-ro-sumf"><div class="m-ro-sum">${partes.map(esc).join(' &middot; ')}</div>${
-        base.length > 1 ? '<button type="button" class="m-ro-ord" data-ro-edit>Edit order</button>' : ''}</div>
+      ${_escritorio ? `<div class="m-ro-pega">${sumf}${todos.length ? `<div class="m-ro-cols" aria-hidden="true">
+        <span>Product</span><span>Left</span><span>Next 5 days</span><span>Why · what to do</span></div>` : ''}</div>` : sumf}
       ${_cargando && !todos.length ? '<div class="m-ro-vacio">Loading…</div>' : ''}
       ${!_cargando && !todos.length ? '<div class="m-ro-vacio">Nothing runs out this week.</div>' : ''}
       ${cuerpo}`;
@@ -231,9 +236,10 @@
     const arriba = base.filter(x => x.fijado);
     const fij = new Set(arriba.map(x => x.item));
     const abajo = (R && R.lista ? R.lista({ porFecha: true }) : base).filter(x => !fij.has(x.item));
+    const sumf = `<div class="m-ro-sumf"><div class="m-ro-sum">Drag to put yours first</div>${
+        arriba.length ? '<button type="button" class="m-ro-ord" data-ro-reset>Reset</button>' : ''}</div>`;
     _el.innerHTML = `
-      <div class="m-ro-sumf"><div class="m-ro-sum">Drag to put yours first</div>${
-        arriba.length ? '<button type="button" class="m-ro-ord" data-ro-reset>Reset</button>' : ''}</div>
+      ${_escritorio ? `<div class="m-ro-pega">${sumf}</div>` : sumf}
       <div class="m-ro-orden">
         <div class="m-ro-k" data-ro-k="pin">Pinned &middot; ${arriba.length ? arriba.length : 'drag here'}</div>
         ${arriba.map(compacta).join('')}
