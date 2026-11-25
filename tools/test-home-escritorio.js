@@ -117,6 +117,11 @@ w.showSettingsPanel = (p) => ajustes.push(p);
 w.BarStockLiveDiag = { semana: () => diag instanceof Error ? Promise.reject(diag) : Promise.resolve(diag) };
 w.BarStockRunningOut = { lista: () => [{ r: { item: 'Cointreau', suggested: 2 }, item: 'Cointreau', vivo: true, out: { txt: 'Out Thu', tono: 'r' } }] };
 w.BarStockLiveCache = { cuanto: () => 0.8, pedir: () => 2 };
+// La silueta es la de home-cartas (la del conteo); aquí se ve con quién y
+// con qué se llamó.
+const siluetas = [];
+w.BarStockBottleProfiles = { formaDe: (r) => 'forma-de-' + r.item };
+w.BarStockHomeCartas = { silueta: (forma, lleno, id) => { siluetas.push({ forma, lleno, id }); return `<svg class="sil-falsa" data-forma="${forma}"></svg>`; } };
 w.bsOpenSection = (n) => { llamadas.push('open:' + n); D.querySelector('.wrap').classList.add('bs-focus-mode'); };
 
 const C = (o) => Object.assign({ go: () => llamadas.push('go:' + o.k), go2: () => llamadas.push('go2:' + o.k) }, o);
@@ -245,6 +250,16 @@ const H = () => D.getElementById('dkHome');
   prueba('Running out sin "See them"', !/See them/.test(agota.textContent));
   prueba('Running out sin "To buy"', !/To buy/.test(agota.textContent));
   prueba('pero con cuánto pedir', /Order 2/.test(agota.textContent), agota.textContent.replace(/\s+/g, ' '));
+  // Lámina A (2026-11-25): las botellas del teléfono, con su número.
+  prueba('cada producto con la silueta del conteo (home-cartas.silueta + formaDe)',
+    !!agota.querySelector('.dkh-ro svg.sil-falsa[data-forma="forma-de-Cointreau"]'));
+  prueba('llena contra su par (0.8 de 2)', siluetas.some(x => Math.abs(x.lleno - 0.4) < 1e-9));
+  prueba('cada recorte con su id propio', siluetas.every(x => /^dkhRo\d+$/.test(x.id)));
+  prueba('y el número debajo, con su par', /≈0\.8\s*\/2/.test(agota.querySelector('.dkh-ro-v').textContent));
+  prueba('el día y el nombre', /Out Thu/.test(agota.textContent) && /Cointreau/.test(agota.querySelector('.dkh-ro-n').textContent));
+  prueba('poca (menos de un tercio del par) lleva su tono', !agota.querySelector('.dkh-ro-bajo') && !!agota.querySelector('.dkh-ro-medio'));
+  prueba('ya no hay barra', !agota.querySelector('.dkh-ro-bar'));
+  prueba('desk-home no dibuja la botella por su cuenta', !/pathFor|clipPath/.test(DH));
   const tr = H().querySelector('.dkh-lado');
   prueba('el transfer sin "Choose yours"', !/>Choose yours</.test(tr.innerHTML));
   prueba('y lo dice', /Choose your product on your phone/.test(tr.textContent));

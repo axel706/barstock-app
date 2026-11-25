@@ -478,6 +478,15 @@ sección de hoy vive tal cual dentro del armazón.
   1180 va a cuatro con la barra escondida (~1130 px) y a dos con ella
   (~900). Es lo que pide "las reglas de ancho miran la VENTANA" de arriba
   para cada sección que se rehaga.
+- **Running out en el Home del escritorio** (Axel, 2026-11-25, lámina A:
+  "más similar al del teléfono, siluetas, pero al tener espacio podemos
+  seguir incluyendo el estimado en número"): las botellas del teléfono
+  en fila, hasta seis, cada una con su número y su par (≈1.6/2), el día
+  y cuánto pedir, y el nombre en dos renglones. La silueta es UNA:
+  `BarStockHomeCartas.silueta(forma, lleno, id)`, la que usan también
+  las botellas del carrusel del teléfono (`formaDe`, llena contra su
+  par). El líquido, ámbar; rojo con menos de un tercio del par; vacía,
+  el borde en rojo. "See all" llega con la sección Running out.
 - **Spent this cycle en el escritorio** (Axel, 2026-11-25, lámina A:
   "como el teléfono"): UN botón, Sync, o Review en ámbar con algo que
   arreglar, o "MarginEdge" sin conectar (→ Settings › `integrations`).

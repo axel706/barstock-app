@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261125-154149",
+    "items": [
+      "Desktop Home: Running out shows bottles and numbers"
+    ]
+  },
+  {
     "build": "20261125-152752",
     "items": [
       "iPad landscape: desktop Home layout with sidebar hidden"
@@ -191,13 +197,6 @@
     "items": [
       "Counting: label guides on 9 more bottles, traced",
       "Oban, Balvenie, Michter’s, WhistlePig and more"
-    ]
-  },
-  {
-    "build": "20261124-083742",
-    "items": [
-      "Count panel: the Glenfiddich stag, traced",
-      "Chivas: text centered in its ribbons"
     ]
   }
 ]

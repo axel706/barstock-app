@@ -37,22 +37,26 @@
   // que está muy por debajo se ve casi vacía, que es lo que avisa.
   // `items`: [{ forma, lleno (0..1), dia, nombre }], como mucho cuatro.
   function botellas(items) {
+    return '<div class="m-hc-bots">' + (items || []).slice(0, 4).map((x, i) =>
+      '<div class="m-hc-bot">' + silueta(x.forma, x.lleno, 'mhcB' + i) + '<b>' + esc(x.dia) + '</b><small>' + esc(x.nombre) + '</small></div>'
+    ).join('') + '</div>';
+  }
+
+  // La silueta sola, llena hasta `lleno` (0..1). La usan las botellas de
+  // aquí y la tarjeta de Running out del escritorio (desk-home.js, lámina
+  // A del 2026-11-25), que pone su número debajo: una sola forma de
+  // dibujarla. `id` es el del recorte y tiene que ser único en la página.
+  function silueta(forma, lleno, id) {
     const B = window.BarStockBottleProfiles;
+    if (!B || !B.pathFor) return '';
     const W = 40, H = 72, P = 3;
-    return '<div class="m-hc-bots">' + (items || []).slice(0, 4).map((x, i) => {
-      const k = B ? B.resolveKey(x.forma || 'generic') : 'generic';
-      let svg = '';
-      if (B && B.pathFor) {
-        const d = B.pathFor(k, W, H, P);
-        const f = Math.max(0, Math.min(1, Number(x.lleno) || 0));
-        const y = B.yToPx(k, B.heightFor(k, f), W, H, P);
-        const id = 'mhcB' + i;
-        svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true"><defs><clipPath id="' + id + '"><path d="' + d +
-              '"/></clipPath></defs><path class="m-hc-vid" d="' + d + '"/><g clip-path="url(#' + id + ')">' +
-              '<rect class="m-hc-liq" x="0" y="' + num(y, 1) + '" width="' + W + '" height="' + H + '"/></g></svg>';
-      }
-      return '<div class="m-hc-bot">' + svg + '<b>' + esc(x.dia) + '</b><small>' + esc(x.nombre) + '</small></div>';
-    }).join('') + '</div>';
+    const k = B.resolveKey(forma || 'generic');
+    const d = B.pathFor(k, W, H, P);
+    const f = Math.max(0, Math.min(1, Number(lleno) || 0));
+    const y = B.yToPx(k, B.heightFor(k, f), W, H, P);
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true"><defs><clipPath id="' + id + '"><path d="' + d +
+           '"/></clipPath></defs><path class="m-hc-vid" d="' + d + '"/><g clip-path="url(#' + id + ')">' +
+           '<rect class="m-hc-liq" x="0" y="' + num(y, 1) + '" width="' + W + '" height="' + H + '"/></g></svg>';
   }
 
   // ── Orders waiting: una columna por proveedor ───────────────────────
@@ -126,5 +130,5 @@
       '<div class="m-hc-trq"><b>' + esc(o.cantidad) + '</b><span>' + esc(o.producto) + '</span></div>';
   }
 
-  window.BarStockHomeCartas = { botellas, proveedores, llegadas, pista, pasos, columnas, traslado, esc };
+  window.BarStockHomeCartas = { botellas, silueta, proveedores, llegadas, pista, pasos, columnas, traslado, esc };
 })();

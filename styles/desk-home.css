@@ -157,18 +157,28 @@
   #dkHome .dkh-ahora.solo { grid-template-columns: minmax(0, 1fr); }
   #dkHome .dkh-hero h3 { font-size: 24px; }
 
-  /* Running out, cada producto en su columna */
+  /* Running out: las botellas del teléfono en fila, con su número debajo
+     (lámina A, 2026-11-25). La silueta es la de home-cartas.silueta; sus
+     clases (m-hc-vid, m-hc-liq) sólo tienen estilo en el teléfono, así
+     que aquí llevan el suyo. */
   #dkHome .dkh-ros { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
   #dkHome .dkh-ro {
-    border-radius: 14px; background: rgba(0, 0, 0, .25); padding: 10px 12px;
-    display: flex; flex-direction: column; gap: 5px; min-width: 0;
+    border-radius: 16px; background: rgba(0, 0, 0, .2); padding: 12px 8px 10px;
+    display: flex; flex-direction: column; align-items: center; text-align: center; gap: 3px; min-width: 0;
   }
-  #dkHome .dkh-ro-n { font-size: 13px; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #dkHome .dkh-ro-v { font-size: 22px; font-weight: 800; color: #f8fafc; }
+  #dkHome .dkh-ro svg { height: 84px; width: auto; margin-bottom: 4px; }
+  #dkHome .dkh-ro .m-hc-vid { fill: rgba(255, 255, 255, .08); stroke: rgba(255, 255, 255, .55); stroke-width: 1.2; }
+  #dkHome .dkh-ro .m-hc-liq { fill: #fbbf24; }
+  #dkHome .dkh-ro-bajo .m-hc-liq { fill: #f87171; }
+  #dkHome .dkh-ro-cero .m-hc-vid { stroke: rgba(248, 113, 113, .75); }
+  #dkHome .dkh-ro-v { font-size: 22px; font-weight: 800; color: #f8fafc; line-height: 1.1; }
   #dkHome .dkh-ro-v small { font-size: 12px; color: rgba(241, 245, 249, .7); font-weight: 700; }
-  #dkHome .dkh-ro-bar { height: 6px; border-radius: 99px; background: rgba(255, 255, 255, .14); overflow: hidden; }
-  #dkHome .dkh-ro-bar i { display: block; height: 100%; background: #fcd34d; border-radius: 99px; }
-  #dkHome .dkh-ro-d { font-size: 12px; color: #e2e8f0; }
+  #dkHome .dkh-ro-d { font-size: 12px; color: #fde2e6; }
+  /* El nombre entero, en dos renglones como mucho. */
+  #dkHome .dkh-ro-n {
+    font-size: 12.5px; color: #f8fafc; line-height: 1.25; max-width: 100%;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
 
   /* ── Lo demás y las ventas ── */
   #dkHome .dkh-resto { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }

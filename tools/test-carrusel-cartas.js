@@ -138,6 +138,15 @@ grupo('Running out: las botellas (R2)');
   prueba('el número a la derecha del encabezado', !!c && !!c.querySelector('.m-hero-kr'), c && c.querySelector('.m-hero-k').textContent);
 }
 
+grupo('Una sola forma de dibujar la botella (teléfono y escritorio)');
+{
+  const HC = leer('src/home-cartas.js');
+  prueba('home-cartas exporta silueta', /BarStockHomeCartas = \{[^}]*silueta/.test(HC));
+  prueba('las botellas del teléfono la usan', /function botellas[\s\S]{0,300}silueta\(x\.forma, x\.lleno/.test(HC));
+  prueba('sólo silueta() dibuja el contorno', (HC.match(/pathFor\(/g) || []).length === 1);
+  prueba('el escritorio la usa', /HC\.silueta\(BP\.formaDe\(x\.r\)/.test(leer('src/desk-home.js')));
+}
+
 grupo('Running out: el pie sólo dice lo que no cabe');
 {
   const cinco = ['A', 'B', 'C', 'D', 'E'].map(x => ({ item: 'Prod ' + x, onHand: 0.5, avg: 10, par: 4, forma: 'whiskey' }));

@@ -371,26 +371,36 @@
       </article>`;
   }
 
-  // ── Running out, ancha: cada producto en su columna ────────────────
+  // ── Running out, ancha: las botellas del teléfono, con su número ────
   //
-  // La misma lista de la tarjeta del teléfono (running-out.js), con lo
-  // que cabe en el escritorio: el número, su par, el día y cuánto pedir.
+  // Axel, 2026-11-25, lámina A: "el estilo debería ser más similar al del
+  // teléfono, siluetas, pero al tener espacio podemos seguir incluyendo
+  // el estimado de cuánto hay en número". La misma lista de la tarjeta del
+  // teléfono (running-out.js) y la misma silueta (home-cartas.silueta, la
+  // del conteo: formaDe), llena contra su par como en el teléfono; debajo,
+  // el número, el día y cuánto pedir, y el nombre. Hasta seis.
   function tarjetaAgota(c, i) {
     const RO = window.BarStockRunningOut;
     const LC = window.BarStockLiveCache;
+    const HC = window.BarStockHomeCartas;
+    const BP = window.BarStockBottleProfiles;
     const lista = RO ? RO.lista() : [];
-    const cols = lista.slice(0, 6).map(x => {
+    const r1 = (v) => String(Math.round(v * 10) / 10);
+    const cols = lista.slice(0, 6).map((x, k) => {
       const par = Number(x.r && x.r.suggested) || 0;
       const hay = LC && LC.cuanto ? LC.cuanto(x.r) : (Number(x.r && x.r.onHand) || 0);
       const lleno = par > 0 ? Math.max(0, Math.min(1, hay / par)) : 0;
       const n = LC && LC.pedir ? LC.pedir(x.r) : null;
-      const r1 = (v) => String(Math.round(v * 10) / 10);
+      // El color del líquido dice lo mismo que el número: vacía (borde
+      // rojo), poca (roja, menos de un tercio del par) o lo demás (ámbar).
+      const tono = hay <= 0 ? 'cero' : lleno < 1 / 3 ? 'bajo' : 'medio';
+      const sil = HC && HC.silueta && BP && BP.formaDe ? HC.silueta(BP.formaDe(x.r), lleno, 'dkhRo' + k) : '';
       return `
-        <div class="dkh-ro">
-          <b class="dkh-ro-n" title="${esc(x.item)}">${esc(x.item)}</b>
+        <div class="dkh-ro dkh-ro-${tono}">
+          ${sil}
           <span class="dkh-ro-v">${x.vivo ? '≈' : ''}${r1(hay)}<small>/${r1(par)}</small></span>
-          <span class="dkh-ro-bar"><i style="width:${(lleno * 100).toFixed(0)}%"></i></span>
           <span class="dkh-ro-d"><em class="dkh-out-${esc((x.out && x.out.tono) || 'a')}">${esc((x.out && x.out.txt) || '')}</em>${n > 0 ? ' · Order ' + esc(n) : n === 0 ? ' · Covered' : ''}</span>
+          <b class="dkh-ro-n" title="${esc(x.item)}">${esc(x.item)}</b>
         </div>`;
     }).join('');
     const mas = lista.length > 6 ? `<span class="dkh-vs">and ${lista.length - 6} more</span>` : '';
