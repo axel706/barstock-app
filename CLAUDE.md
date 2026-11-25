@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 169 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 170 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -677,6 +677,21 @@ Usage). Pruebas: `test-saltar-conteo` y el último grupo de
 una semana sin fila de Pour·IQ va a la fila abierta de antes
 (`filaDelPedido`, `test-snapshot-pedido`).
 
+**La cámara del escáner sólo corre mientras puede leer** (Axel,
+2026-11-23: contando por nombre el teléfono "empieza a calentarse aun
+cuando no se está usando"; lámina "Count without the camera"). Se abría a
+1920×1080 y no se soltaba hasta cerrar: buscar por nombre, el panel de una
+botella o Finish count sólo paraban la lectura. Ahora `scan-count.js`
+la APAGA (suelta sus pistas: `apagar()`) en todo lo que tapa el visor y la
+enciende al volver (`encender()`, ~1 s; un arranque en vuelo que llega
+tarde se suelta, `camGen`), y 30 s sin leer la duermen (`dormir()`,
+"Camera off to save battery · Tap to scan"). Leer un código reinicia los
+30 s. Con la hoja subida sigue encendida (a propósito: volver a escanear
+sería un arranque cada vez). Sin probar todavía en el iPhone si volver a
+pedir la cámara repite el permiso en la app instalada. Prueba:
+`test-camara-dormida`. Lo siguiente, ya elegido (lámina "Count by name",
+opción B, orden 2): la pantalla de contar por nombre sin cámara.
+
 **El emparejamiento factura↔orden** va línea por línea y el primero que pide
 un recibo se lo queda. `src/invoice-order-auto.js` decide una sola vez de
 qué orden es cada factura y lo escribe como enlace, **sólo del ciclo
@@ -712,7 +727,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 169 suites · ~2340 comprobaciones. Tienen que pasar enteras.
+`npm test` · 170 suites · ~2340 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

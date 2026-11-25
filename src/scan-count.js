@@ -75,6 +75,8 @@
   let audio = null;
   let learned = new Map();   // upc -> { item_name, code }
   let pausedFor = null;      // upc a la espera de que alguien diga que es
+  let suenoTimer = null;     // los 30 s sin leer antes de dormir la cámara
+  let camGen = 0;            // sube al apagar: un arranque en vuelo se descarta
 
   const $ = (id) => document.getElementById(id);
   const fmt = (ms) => (ms / 1000).toFixed(1) + ' s';
@@ -299,8 +301,8 @@
     $('scAssignSearch').addEventListener('input', (e) => renderPicks(e.target.value));
     $('scFinish').addEventListener('click', () => {
       if (window.BarStockCountFinish) {
-        stopLoop();
-        window.BarStockCountFinish.open(() => { mark(); startLoop(); }, close);
+        apagar();
+        window.BarStockCountFinish.open(() => encender(), close);
       }
     });
     // Etiqueta rota, botella rellenable o destileria pequeña sin codigo:
@@ -468,7 +470,7 @@
   // rota, botella rellenable, destileria que no imprime codigo.
   function askAssign(upc) {
     pausedFor = upc;
-    stopLoop();                   // no tiene sentido decodificar mientras elige
+    apagar();                     // buscando por nombre no se lee: cámara apagada
 
     const box = $('scAssign');
     box.classList.add('on');
@@ -650,7 +652,7 @@
     const { url, key, account } = cfg();
 
     // Sin codigo no hay nada que aprender: se va directo a contar.
-    if (!upc) { closeAssign(); toCount(itemName); return; }
+    if (!upc) { closeAssign(false); toCount(itemName); return; }
 
     $('scPicks').innerHTML = '<div class="sc-empty">Saving…</div>';
 
@@ -684,7 +686,7 @@
              <div class="sc-item">${esc(itemName)}</div>
              <div class="sc-meta">learned · tap if this is the wrong bottle</div>
            </div>`);
-      closeAssign();
+      closeAssign(false);
       toCount(itemName, upc, sizeMl || null);
     } catch (e) {
       // No se cierra el panel: el codigo sigue en pantalla y se puede
@@ -711,20 +713,22 @@
   function toCount(itemName, upc, sizeMl) {
     const master = (window.state && state.master) || [];
     const row = master.find(r => r.item === itemName);
-    if (!row || !window.BarStockCountPanel) return;
-    stopLoop();
+    if (!row || !window.BarStockCountPanel) return encender();
+    apagar();
     // El cuarto argumento es el tamaño de ESTE codigo. Sin el, el panel
     // usa el del producto, que es lo correcto al contar por nombre.
     window.BarStockCountPanel.open(
-      row, () => { mark(); startLoop(); stats(); }, upc, sizeMl || null);
+      row, () => { stats(); encender(); }, upc, sizeMl || null);
   }
 
-  function closeAssign() {
+  // `seguir` en false cuando lo que viene es el panel de la botella: la
+  // cámara seguiría apagada, y encenderla para apagarla al instante es
+  // un arranque de cámara para nada.
+  function closeAssign(seguir) {
     $('scAssign').classList.remove('on');
     _enTamano = false;
     pausedFor = null;
-    mark();
-    startLoop();
+    if (seguir !== false) encender();
   }
 
   function onHit(text, format) {
@@ -737,6 +741,7 @@
 
     feedback();
     stats();
+    armarSueno();          // leer algo reinicia los 30 s
 
     const found = resolve(text);
 
@@ -772,11 +777,8 @@
       // decodificando por detras solo puede colar otra lectura encima de
       // la que se esta contando.
       if (found.row && window.BarStockCountPanel) {
-        stopLoop();
-        window.BarStockCountPanel.open(found.row, () => {
-          mark();
-          startLoop();
-        }, text, found.sizeMl);   // el upc viaja —el panel ofrece corregirlo
+        apagar();
+        window.BarStockCountPanel.open(found.row, () => encender(), text, found.sizeMl);   // el upc viaja —el panel ofrece corregirlo
                                   //  si esta mal— y con el su tamaño
       }
     } else {
@@ -827,10 +829,9 @@
         const upc = card.dataset.upc;
         const f = resolve(upc);
         if (!f || !f.row || !window.BarStockCountPanel) return;
-        stopLoop();
+        apagar();
         el.classList.remove('on');
-        window.BarStockCountPanel.open(
-          f.row, () => { mark(); startLoop(); }, upc, f.sizeMl);
+        window.BarStockCountPanel.open(f.row, () => encender(), upc, f.sizeMl);
       };
     }
   }
@@ -965,6 +966,122 @@
     loopId = null;
   }
 
+  // ── La cámara sólo corre mientras puede leer ────────────────────────
+  //
+  // Axel, 2026-11-23: contando por nombre, "el dispositivo empieza a
+  // calentarse aun cuando no se está usando". La cámara se abría a
+  // 1920×1080 al entrar y no se soltaba hasta cerrar el escáner: buscar
+  // por nombre, el panel de una botella o Finish count sólo paraban la
+  // LECTURA (stopLoop) y la cámara seguía capturando detrás. Ahora todo
+  // lo que tapa el visor la APAGA (suelta sus pistas) y volver la
+  // enciende (~1 s), y 30 s sin leer nada la duermen con "Tap to scan".
+  // Lámina "Count without the camera", lo común a A y B.
+  const SUENO_MS = 30000;
+
+  function armarSueno() {
+    clearTimeout(suenoTimer);
+    suenoTimer = setTimeout(dormir, SUENO_MS);
+  }
+
+  function apagar() {
+    stopLoop();
+    clearTimeout(suenoTimer);
+    suenoTimer = null;
+    camGen++;            // un getUserMedia en vuelo suelta lo que traiga
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    stream = null;
+    const vid = $('scVid');
+    if (vid) vid.srcObject = null;
+  }
+
+  // Dormida: apagada, y el visor lo dice. Un toque la vuelve a encender.
+  function dormir() {
+    apagar();
+    const st = $('scStage');
+    if (!st) return;
+    st.classList.add('sc-zzz');
+    let b = $('scDormida');
+    if (!b) {
+      b = document.createElement('button');
+      b.type = 'button';
+      b.id = 'scDormida';
+      b.className = 'sc-dormida';
+      b.innerHTML = '<i class="ti ti-camera-off" aria-hidden="true"></i>' +
+        '<span>Camera off to save battery</span><b>Tap to scan</b>';
+      b.addEventListener('click', () => encender());
+      st.appendChild(b);
+    }
+  }
+
+  function despertar() {
+    const st = $('scStage');
+    if (st) st.classList.remove('sc-zzz');
+  }
+
+  async function encender() {
+    despertar();
+    if (!$('scOverlay') || !$('scOverlay').classList.contains('on')) return;
+    if (stream) { mark(); startLoop(); armarSueno(); return; }
+    const mio = ++camGen;
+    let s2;
+    try {
+      // Resolucion alta y enfoque continuo. En un UPC las barras miden
+      // fracciones de milimetro: sin resolucion y sin foco no hay nada
+      // que decodificar por mucho que se vea bien en la pantalla.
+      s2 = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: 'environment' },
+          width:  { ideal: 1920 },
+          height: { ideal: 1080 },
+          advanced: [{ focusMode: 'continuous' }]
+        },
+        audio: false
+      });
+    } catch (e) {
+      return diag('No camera permission (' + esc(e.name) + '). Enable it in Safari settings.', 'sc-bad');
+    }
+    // Se apagó mientras arrancaba (se abrió el panel, se cerró el
+    // escáner): lo que llegó se suelta en vez de quedarse encendido sin
+    // que nadie lo apunte.
+    if (mio !== camGen) { s2.getTracks().forEach(t => t.stop()); return; }
+    stream = s2;
+
+    const track = stream.getVideoTracks()[0];
+    const st = track.getSettings ? track.getSettings() : {};
+
+    const vid = $('scVid');
+    vid.srcObject = stream;
+    await vid.play().catch(() => {});
+
+    diag((nativeDetector ? 'Native reader' : 'ZXing') + ' · camera ' +
+         (st.width || '?') + '×' + (st.height || '?'), 'sc-ok');
+
+    mark();
+    startLoop();
+    armarSueno();
+
+    // La linterna cambia mucho las cosas en una bodega. El soporte en
+    // iOS es irregular, asi que se ofrece y si falla se dice. Es de ESTA
+    // pista: al volver a encender, la de antes ya no existe.
+    const caps = track.getCapabilities ? track.getCapabilities() : {};
+    const tb = $('scTorch');
+    if (!('torch' in caps)) {
+      tb.disabled = true;
+      tb.textContent = 'No flashlight';
+    } else {
+      let on = false;
+      tb.disabled = false;
+      tb.textContent = 'Flashlight';
+      tb.onclick = async () => {
+        on = !on;
+        try {
+          await track.applyConstraints({ advanced: [{ torch: on }] });
+          tb.textContent = on ? 'Turn off' : 'Flashlight';
+        } catch (e) { tb.disabled = true; tb.textContent = 'No flashlight'; }
+      };
+    }
+  }
+
   async function tick(mine) {
     if (!running || mine !== gen) return;
     const vid = $('scVid');
@@ -1094,73 +1211,21 @@
       }
     }
 
-    try {
-      // Resolucion alta y enfoque continuo. En un UPC las barras miden
-      // fracciones de milimetro: sin resolucion y sin foco no hay nada
-      // que decodificar por mucho que se vea bien en la pantalla.
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: 'environment' },
-          width:  { ideal: 1920 },
-          height: { ideal: 1080 },
-          advanced: [{ focusMode: 'continuous' }]
-        },
-        audio: false
-      });
-    } catch (e) {
-      return diag('No camera permission (' + esc(e.name) + '). Enable it in Safari settings.', 'sc-bad');
-    }
-
-    const track = stream.getVideoTracks()[0];
-    const st = track.getSettings ? track.getSettings() : {};
-
-    const vid = $('scVid');
-    vid.srcObject = stream;
-    await vid.play().catch(() => {});
-
-    diag((nativeDetector ? 'Native reader' : 'ZXing') + ' · camera ' +
-         (st.width || '?') + '×' + (st.height || '?'), 'sc-ok');
-
-    mark();
-    // Cinco veces por segundo bastaba cuando esto tambien pintaba un
-    // cronometro por fotograma. Ese cronometro era del banco de pruebas y
-    // se retiro hace tiempo: quedaba la llamada a un #scTimer que ya no
-    // existe en ningun sitio. Ahora solo se refresca el contador, y dos
-    // veces por segundo sobra para un numero que sube de uno en uno.
-    hudTimer = setInterval(stats, 500);
-    startLoop();
-
-    // La linterna cambia mucho las cosas en una bodega. El soporte en
-    // iOS es irregular, asi que se ofrece y si falla se dice.
-    const caps = track.getCapabilities ? track.getCapabilities() : {};
-    const tb = $('scTorch');
-    if (!('torch' in caps)) {
-      tb.disabled = true;
-      tb.textContent = 'No flashlight';
-    } else {
-      let on = false;
-      tb.onclick = async () => {
-        on = !on;
-        try {
-          await track.applyConstraints({ advanced: [{ torch: on }] });
-          tb.textContent = on ? 'Turn off' : 'Flashlight';
-        } catch (e) { tb.disabled = true; tb.textContent = 'No flashlight'; }
-      };
-    }
+    await encender();
   }
 
   function close() {
     // stopLoop y no `running = false` a secas: sube la generacion, asi
     // que un tick que vuelva de su await con el escaner ya cerrado se
     // muere en vez de reagendarse contra una camara apagada.
-    stopLoop();
+    // Soltar las pistas es obligatorio: sin esto la camara se queda
+    // encendida gastando bateria con el panel ya cerrado. apagar() lo
+    // hace y quita el sueño pendiente.
+    apagar();
+    despertar();
     clearTimeout(markTimer);
     clearInterval(hudTimer);
     hudTimer = null; markTimer = null;
-    // Soltar las pistas es obligatorio: sin esto la camara se queda
-    // encendida gastando bateria con el panel ya cerrado.
-    if (stream) stream.getTracks().forEach(t => t.stop());
-    stream = null;
     pausedFor = null;
     const a = $('scAssign');
     if (a) a.classList.remove('on');
@@ -1224,5 +1289,8 @@
   window.BarStockScanCount = { open, close, forget, learnedSize, setLearnedSize,
     // Solo para tools/test-count.js: deja empezar en el paso de asignar
     // sin tener que simular una camara.
-    __askAssign: askAssign };
+    __askAssign: askAssign,
+    // Solo para tools/test-camara-dormida.js: lo que hace leer un código
+    // con el sueño (lo llama onHit), sin simular una lectura.
+    __leido: armarSueno };
 })();

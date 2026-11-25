@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-105312",
+    "items": [
+      "Counting: the camera turns off while you search by name",
+      "After 30 s without a scan it sleeps: tap to scan"
+    ]
+  },
+  {
     "build": "20261125-104403",
     "items": [
       "Counting: new Macallan outline, more label text",
@@ -185,12 +192,6 @@
     "build": "20261122-122827",
     "items": [
       "Home: On the shelf shimmers while it counts"
-    ]
-  },
-  {
-    "build": "20261122-122535",
-    "items": [
-      "Home: On the shelf shows “Counting” while it loads"
     ]
   }
 ]
