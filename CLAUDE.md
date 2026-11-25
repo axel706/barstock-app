@@ -506,8 +506,8 @@ falta una del frente), Clase Azul (pintada a mano, sin un borde que
 calcar) y `don_julio` (la foto es del Reposado y la silueta la comparte el
 Blanco de 750; sin foto del Blanco no se puede comprobar que su etiqueta
 sea igual). En `cajas.json`, `w` y `h` son el tamaño de la IMAGEN, no de
-la caja: `encima.js` los usa para dibujar la foto. La tanda 7 (2026-11-25,
-en develop, pendiente de que Axel la apruebe sobre la lámina), de fotos de
+la caja: `encima.js` los usa para dibujar la foto. La tanda 7 (aprobada y
+en main el 2026-11-25, tras sus tres correcciones), de fotos de
 Total Wine que mandó Axel (la red de la sesión no deja bajarlas: su página
 contesta con un captcha): Belvedere (la ORGANIC, la que tienen, con su
 renglón ORGANIC), St. Elder (ahora el frente) y Macallan 12 Double Cask.
