@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-223852",
+    "items": [
+      "Product panel: bottle card first, Overview and Edit tabs",
+      "Glass buttons; Pour·IQ history and Zero par under ⋯"
+    ]
+  },
+  {
     "build": "20261125-222216",
     "items": [
       "Bigger Inventory rows on desktop",
@@ -184,13 +191,6 @@
     "build": "20261125-133304",
     "items": [
       "iPad app: top bar and sidebar no longer under the clock"
-    ]
-  },
-  {
-    "build": "20261125-132422",
-    "items": [
-      "Desktop: greeting in the top bar, location centered",
-      "Cycle button now under the logo in the sidebar"
     ]
   }
 ]

@@ -209,17 +209,35 @@ w.eval(DI);
   prueba('al crear, sin On Hand a mano (empieza en 0)', /#newItemModalBg label:has\(#newItemOnHand\) \{ display: none; \}/.test(CSS));
   prueba('al volver al Home, Do we have vuelve a su sitio y el header de siempre', (() => { w.BarStockDeskHeader.marcar('home'); const ok2 = !D.body.classList.contains('dk-cab') && D.getElementById('dkBusca').previousElementSibling.id === 'dkSaludo'; w.BarStockDeskHeader.marcar('inventory'); return ok2; })());
 
-  grupo('4. El producto (panel A)');
+  grupo('4. El producto (panel B: la tarjeta primero, Overview | Edit)');
   llamadas.length = 0;
+  w.BarStockDeskHeader.menu = (ancla, items) => { llamadas.push('menu'); w._menuItems = items; };
   caja.querySelector('.dki-fila[data-item="Tito\'s Vodka"]').click(); await esperar(10);
   const pan = () => caja.querySelector('#dkiPanel');
-  prueba('abre su panel con la ficha de Do we have', /Tito's Vodka/.test(txt(pan().querySelector('.dki-ph'))) && llamadas.some(x => /^ficha:/.test(x)));
-  prueba('sin On Hand editable', !pan().querySelector('input[id*="Hand"], input[id*="hand"]') && !/onHand:/.test(DI.slice(DI.indexOf('bsSaveItemFields(i2'), DI.indexOf('bsSaveItemFields(i2') + 200)));
-  ['categoria', 'botella', 'info', 'cero', 'recibido'].forEach(a => pan().querySelector(`[data-acc="${a}"]`).click());
+  const abierto = () => !!pan().querySelector('.dki-pn');
+  prueba('abre su panel con la ficha de Do we have', abierto() && llamadas.some(x => /^ficha:/.test(x)) && pan().querySelector('#dkiFicha .m-fic'));
+  // Lámina "Product panel · reorganized", B (Axel, 2026-11-26).
+  prueba('el nombre sale una vez: sin la cabecera de antes (lo dice la tarjeta)', !pan().querySelector('.dki-ph, h3'));
+  prueba('la ✕ va en el panel, sin title', pan().querySelector('.dki-x[data-acc="cerrar"]') && !pan().querySelector('.dki-x').hasAttribute('title'));
+  const CSSI4 = fs.readFileSync(path.join(__dirname, '..', 'styles', 'desk-inventory.css'), 'utf8');
+  prueba('la tarjeta de la botella va primero (order), lo repetido de la ficha se esconde', /#dkiPanel #dkiFicha \{[^}]*display: contents/.test(CSSI4) && /#dkiPanel #dkiFicha > \.m-fic \{[^}]*order: 1/.test(CSSI4) && /#dkiPanel :is\(\.m-rows, \.m-acts, \.m-sheet-grip\) \{ display: none/.test(CSSI4));
+  prueba('tres cifras: Uses / week, Unit price, Runs out', /Uses \/ week/.test(txt(pan().querySelector('.dki-c3'))) && /Unit price/.test(txt(pan().querySelector('.dki-c3'))) && /Runs out/.test(txt(pan().querySelector('.dki-c3'))) && /\$25\.00/.test(txt(pan().querySelector('.dki-c3'))));
+  prueba('un solo Received', pan().querySelectorAll('[data-acc="recibido"]').length === 1);
+  prueba('Add to order es el de la ficha (#msAdd)', /msAdd/.test(DI) && pan().querySelector('[data-acc="pedir"]'));
+  prueba('los botones del panel, de cristal (la MISMA regla que el header)', /#dkInv :is\(\.dki-cr, \.dki-tabs\)/.test(CSSH) && pan().querySelectorAll('.dki-cr').length >= 4 && pan().querySelector('.dki-tabs'));
+  prueba('abre en Overview: los campos de Edit escondidos', pan().dataset.tab === 'ver' && /#dkiPanel\[data-tab="ver"\] :is\(\.dki-ed, \.dki-pie\) \{ display: none/.test(CSSI4));
+  pan().querySelector('[data-acc="mas"]').click();
+  prueba('⋯ lleva Pour·IQ history y Zero par', llamadas.includes('menu') && (w._menuItems || []).map(i => i.label).join('|') === 'Pour·IQ history|Zero par');
+  (w._menuItems || []).forEach(i => i.fn());
+  ['categoria', 'botella', 'recibido'].forEach(a => pan().querySelector(`[data-acc="${a}"]`).click());
   prueba('categoría, botella, Pour·IQ history (Item Info), Zero par y Received', llamadas.includes('categoria:0') && llamadas.includes('botella') && llamadas.includes('info:0') && llamadas.includes('cero:0') && llamadas.includes('recibido:0'), llamadas.join(','));
+  pan().querySelector('.dki-tabs [data-tab="ed"]').click();
+  prueba('Edit cambia de pestaña sin repintar la ficha', pan().dataset.tab === 'ed' && llamadas.filter(x => /^ficha:/.test(x)).length === 1);
+  prueba('sin On Hand editable', !pan().querySelector('input[id*="Hand"], input[id*="hand"]') && !/onHand:/.test(DI.slice(DI.indexOf('bsSaveItemFields(i2'), DI.indexOf('bsSaveItemFields(i2') + 200)));
   prueba('Save empieza apagado', pan().querySelector('.dki-guardar').disabled);
   pan().querySelector('[data-par="1"]').click();
   prueba('tocar el par lo cambia y enciende Save', pan().querySelector('#dkiPar').value === '7' && !pan().querySelector('.dki-guardar').disabled);
+  prueba('   y la pestaña Edit lo marca', pan().querySelector('.dki-tabs [data-tab="ed"]').classList.contains('sucio'));
 
   grupo('5. EL TIEMPO REAL');
   // Llega un cambio de otro dispositivo: inventory-realtime REEMPLAZA la
@@ -228,7 +246,7 @@ w.eval(DI);
   w.BarStockEvents.emit('inventoryUpdated', { source: 'inventory-realtime' });
   await esperar(40);
   prueba('la lista se repinta con lo que cambió fuera', /\$99\.00/.test(txt(caja.querySelector('.dki-fila[data-item="Aperol"]'))));
-  prueba('el producto abierto sigue abierto (por su nombre)', /Tito's Vodka/.test(txt(pan().querySelector('.dki-ph'))) && caja.querySelector('.dki-fila.sel').dataset.item === "Tito's Vodka");
+  prueba('el producto abierto sigue abierto (por su nombre), en su pestaña', abierto() && pan().dataset.tab === 'ed' && caja.querySelector('.dki-fila.sel').dataset.item === "Tito's Vodka");
   prueba('lo que estabas editando no se pisa', pan().querySelector('#dkiPar').value === '7' && !pan().querySelector('.dki-guardar').disabled);
   oyenteLive && oyenteLive();
   await esperar(40);
@@ -248,7 +266,7 @@ w.eval(DI);
   prueba('Delete pide un segundo clic', !llamadas.some(x => /^borrar:/.test(x)) && /Click again/.test(txt(pan().querySelector('[data-acc="borrar"]'))));
   pan().querySelector('[data-acc="borrar"]').click(); await esperar(30);
   prueba('el segundo borra con BarStockItemEdit.borrar (respaldo primero)', llamadas.includes("borrar:Tito's Vodka") && !filas().includes("Tito's Vodka"));
-  prueba('y el panel se cierra', !caja.querySelector('#dkiPanel .dki-ph'));
+  prueba('y el panel se cierra', !caja.querySelector('#dkiPanel .dki-pn'));
   prueba('Rename por BarStockItemEdit.renombrar', /E\.renombrar\(r, \{ nombre:/.test(DI));
 
   grupo('7. Carga y versiones');

@@ -53,6 +53,7 @@
      Done y el +. El reflejo va DEBAJO del icono y del texto (isolation y
      z-index −1), o los lava. */
   #dkCab :is(.dkc-pl, .dkc-seg),
+  #dkInv :is(.dki-cr, .dki-tabs),
   body.dk.dk-cab .bs-header #dkMenu,
   body.dk.dk-cab .bs-header #dkCab #dkBusca {
     -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
@@ -68,6 +69,7 @@
     isolation: isolate;
   }
   #dkCab :is(.dkc-pl, .dkc-seg)::before,
+  #dkInv :is(.dki-cr, .dki-tabs)::before,
   body.dk.dk-cab .bs-header #dkMenu::before,
   body.dk.dk-cab .bs-header #dkCab #dkBusca::before {
     content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
@@ -75,9 +77,14 @@
     mix-blend-mode: screen;
   }
   body.dk.dk-cab .bs-header #dkMenu { position: relative; }
-  #dkCab .dkc-pl.azul, #dkCab .dkc-pl.en {
+  #dkCab .dkc-pl.azul, #dkCab .dkc-pl.en, #dkInv .dki-cr.azul:not(:disabled) {
     color: #f0f9ff; background: rgba(56, 189, 248, .42); border-color: rgba(186, 230, 253, .62);
     box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .5), inset 0 0 14px rgba(56, 189, 248, .45), 0 6px 18px rgba(0, 0, 0, .28);
+  }
+  /* Rojo (Delete del panel de Inventory), como Reopen de Sent. */
+  #dkInv .dki-cr.rojo {
+    color: #fee2e2; background: rgba(248, 113, 113, .3); border-color: rgba(254, 202, 202, .55);
+    box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .45), inset 0 0 14px rgba(248, 113, 113, .4), 0 6px 18px rgba(0, 0, 0, .28);
   }
   #dkCab .dkc-pl.verde {
     color: #ecfdf5; background: rgba(52, 211, 153, .42); border-color: rgba(167, 243, 208, .62);
@@ -98,7 +105,7 @@
     box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
   }
   #dkCab .dkc-seg button:hover { color: #fff; }
-  #dkCab .dkc-seg button.on {
+  #dkCab .dkc-seg button.on, #dkInv .dki-tabs button.on {
     color: #fff; background: rgba(125, 211, 252, .32);
     box-shadow: inset 0 0 0 1px rgba(186, 230, 253, .55), inset 0 1.5px 0 rgba(255, 255, 255, .55),
       inset 0 0 10px rgba(125, 211, 252, .35), 0 2px 8px rgba(0, 0, 0, .25);

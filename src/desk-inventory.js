@@ -46,6 +46,9 @@
   let _sec = null, _caja = null;
   // Lo elegido. `_orden`: los tres del teléfono (valor, falta, nombre) o
   // una columna ('onhand', 'avg', 'par', 'pedir', 'precio', 'vendor').
+  // La pestaña del panel: Overview ('ver') o Edit ('ed'). Cada producto
+  // abre en Overview; repintar el mismo la conserva.
+  let _tab = 'ver';
   let _vista = 'todo', _vendor = 'ALL', _orden = 'valor', _dir = 1, _q = '';
   let _sel = null;           // el NOMBRE del producto abierto
   let _borrador = null;      // { item, nombre, codigo, vendor, par, precio, override, renombrar }
@@ -313,19 +316,38 @@
           : '<em>not for this vendor</em>'}</b></div>
         <p class="dki-err" id="dkiErr"></p>
       </div>`;
+    // Lámina "Product panel · reorganized", B (Axel, 2026-11-26): la
+    // tarjeta de la botella primero (es la de la ficha: #dkiFicha va en
+    // `display: contents` y el CSS la pone delante con `order`), sus tres
+    // cifras, las acciones, y debajo Overview | Edit. El nombre se decía
+    // dos veces (la cabecera y la tarjeta), Received salía dos veces y los
+    // renglones Uses / Par / Unit price de la ficha repetían los campos:
+    // se fueron. Pour·IQ history y Zero par, en ⋯.
+    const ag = LC() && LC().agota ? LC().agota(r) : null;
+    const pa = parAdj(r);
+    const c3 = (v, k) => `<div><b>${v}</b><small>${k}</small></div>`;
+    const tab = edita ? _tab : 'ver';
     return `
-      <div class="dki-ph">
-        <div><h3>${esc(r.item)}</h3><small>${esc([r.code || 'No code', r.vendor || 'Unknown'].join(' · '))}</small></div>
-        <button type="button" class="dki-b ic" data-acc="cerrar" aria-label="Close" title="Close (Esc)"><i class="ti ti-x" aria-hidden="true"></i></button>
-      </div>
-      ${editar}
+      <div class="dki-pn">
+      <button type="button" class="dki-x dki-cr" data-acc="cerrar" aria-label="Close (Esc)"><i class="ti ti-x" aria-hidden="true"></i></button>
       <div class="dki-ficha m-ficha" id="dkiFicha"></div>
-      <div class="dki-acc">
-        ${typeof window.openItemInfoModal === 'function' ? '<button type="button" class="dki-b" data-acc="info"><i class="ti ti-chart-dots" aria-hidden="true"></i>Pour·IQ history</button>' : ''}
-        ${edita && typeof window.openStockIn === 'function' ? '<button type="button" class="dki-b" data-acc="recibido"><i class="ti ti-truck-delivery" aria-hidden="true"></i>Received</button>' : ''}
-        ${edita ? '<button type="button" class="dki-b" data-acc="cero">Zero par</button>' : ''}
-        ${edita ? `<button type="button" class="dki-b rd" data-acc="borrar">${_borrarArmado ? 'Click again to delete' : 'Delete'}</button>` : ''}
-        ${edita ? `<button type="button" class="dki-b go dki-guardar" data-acc="guardar"${b ? '' : ' disabled'}>Save</button>` : ''}
+      <div class="dki-c3">${c3(pa && num(pa.avgUsed) > 0 ? r1(pa.avgUsed) : '—', 'Uses / week')}${c3(num(r.value) > 0 ? dinero(r.value) : '—', 'Unit price')}${c3(ag ? esc(String(ag.txt).replace(/^Out\s+/, '')) : '—', 'Runs out')}</div>
+      <div class="dki-acts">
+        ${puede('ordenes') ? '<button type="button" class="dki-cr azul" data-acc="pedir"><i class="ti ti-plus" aria-hidden="true"></i>Add to order</button>' : ''}
+        ${edita && typeof window.openStockIn === 'function' ? '<button type="button" class="dki-cr" data-acc="recibido"><i class="ti ti-truck-delivery" aria-hidden="true"></i>Received</button>' : ''}
+        <span class="dki-esp"></span>
+        <button type="button" class="dki-cr dki-redondo" data-acc="mas" aria-label="More"><i class="ti ti-dots" aria-hidden="true"></i></button>
+      </div>
+      ${edita ? `<div class="dki-tabs" role="tablist">
+        <button type="button" role="tab" data-tab="ver" class="${tab === 'ver' ? 'on' : ''}" aria-selected="${tab === 'ver'}">Overview</button>
+        <button type="button" role="tab" data-tab="ed" class="${tab === 'ed' ? 'on' : ''}${b ? ' sucio' : ''}" aria-selected="${tab === 'ed'}">Edit</button>
+      </div>` : ''}
+      ${editar}
+      ${edita ? `<div class="dki-pie">
+        <button type="button" class="dki-cr rojo" data-acc="borrar">${_borrarArmado ? 'Click again to delete' : 'Delete'}</button>
+        <span class="dki-esp"></span>
+        <button type="button" class="dki-cr azul dki-guardar" data-acc="guardar"${b ? '' : ' disabled'}>Save</button>
+      </div>` : ''}
       </div>`;
   }
 
@@ -338,7 +360,7 @@
     const lista = filas();
     const idx = _sel ? idxDe(_sel) : -1;
     if (_sel && idx < 0) { _sel = null; _borrador = null; }      // lo borraron (aquí o en otro dispositivo)
-    const conservarPanel = !!(_borrador && _sel && _caja.querySelector('#dkiPanel .dki-ph') && !(opts && opts.panel));
+    const conservarPanel = !!(_borrador && _sel && _caja.querySelector('#dkiPanel .dki-pn') && !(opts && opts.panel));
 
     _caja.querySelector('#dkiCabeza').innerHTML = cifras();
     const conteo = document.getElementById('countResumeHost');
@@ -349,6 +371,7 @@
       : `<p class="dki-vacio">${_q.trim().length >= 2 ? 'Nothing matches.' : _vista === 'fix' ? 'Nothing left to fix.' : _vista === 'agota' ? 'Nothing runs out this week.' : master().length ? 'Nothing here with this vendor.' : 'No inventory yet.'}</p>`;
     const pan = _caja.querySelector('#dkiPanel');
     _caja.classList.toggle('con-panel', !!_sel);
+    pan.dataset.tab = _sel && puede('editar_productos') ? _tab : 'ver';
     if (!_sel) { pan.innerHTML = ''; }
     else if (!conservarPanel) {
       pan.innerHTML = panel(master()[idx], idx);
@@ -389,6 +412,8 @@
   function marcarSucio() {
     const g = _caja.querySelector('.dki-guardar');
     if (g) g.disabled = false;
+    const t = _caja.querySelector('.dki-tabs [data-tab="ed"]');
+    if (t) t.classList.add('sucio');
     const u = _caja.querySelector('.dki-ed > u span');
     if (u) u.textContent = 'Not saved yet';
   }
@@ -465,6 +490,7 @@
     if (_borrador && _borrador.item !== nombre && !confirm('Discard the changes you have not saved?')) return;
     if (_borrador && _borrador.item !== nombre) _borrador = null;
     _sel = _sel === nombre ? null : nombre;
+    _tab = 'ver';
     _borrarArmado = false;
     pintar({ panel: true });
   }
@@ -482,6 +508,14 @@
       else if (a === 'renombrar' && r) { _borrador = leerBorrador(r); _borrador.renombrar = true; pintar({ panel: true }); const n = _caja.querySelector('#dkiNombre'); if (n) n.focus(); }
       else if (a === 'categoria' && idx >= 0 && typeof window.openCategoryModal === 'function') window.openCategoryModal(idx);
       else if (a === 'botella' && r && window.BarStockBottlePicker) window.BarStockBottlePicker.open(r, () => pintar({ panel: !_borrador }));
+      else if (a === 'pedir') { const m = _caja.querySelector('#msAdd'); if (m) m.click(); }
+      else if (a === 'mas' && idx >= 0) {
+        const DH = window.BarStockDeskHeader;
+        const items = [];
+        if (typeof window.openItemInfoModal === 'function') items.push({ icon: 'ti-chart-dots', label: 'Pour·IQ history', fn: () => window.openItemInfoModal(idx) });
+        if (puede('editar_productos') && typeof window.quickZeroSuggested === 'function') items.push({ icon: 'ti-circle-off', label: 'Zero par', fn: () => window.quickZeroSuggested(idx) });
+        if (DH && DH.menu && items.length) DH.menu(acc, items);
+      }
       else if (a === 'info' && idx >= 0) window.openItemInfoModal(idx);
       // Lo comprado fuera de una orden (la tienda) entra a Pour·IQ como
       // "ordered", no al on hand: openStockIn de index.html, el de siempre.
@@ -489,6 +523,15 @@
       else if (a === 'cero' && idx >= 0 && typeof window.quickZeroSuggested === 'function') window.quickZeroSuggested(idx);
       else if (a === 'borrar') borrar();
       else if (a === 'guardar') guardar();
+      return;
+    }
+    // Cambiar de pestaña no repinta: la ficha (y lo que carga sola) se queda.
+    const tb = t.closest('.dki-tabs [data-tab]');
+    if (tb) {
+      _tab = tb.dataset.tab;
+      const pan = _caja.querySelector('#dkiPanel');
+      pan.dataset.tab = _tab;
+      pan.querySelectorAll('.dki-tabs [data-tab]').forEach(x => { x.classList.toggle('on', x === tb); x.setAttribute('aria-selected', String(x === tb)); });
       return;
     }
     const pb = t.closest('[data-par]');

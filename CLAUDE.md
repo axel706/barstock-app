@@ -777,6 +777,18 @@ sección de hoy vive tal cual dentro del armazón.
   luego la ficha de Do we have (`llenarFicha`, estilos generados bajo
   `#dkiPanel`) y Pour·IQ history, Received, Zero par, Delete (dos
   clics, `BarStockItemEdit.borrar`) y Save (`bsSaveItemFields`).
+  **El panel, reorganizado** (2026-11-26, lámina "Product panel ·
+  reorganized", B): la tarjeta de la botella primero (la de la ficha:
+  `#dkiFicha` en `display: contents` y el orden con `order`, sin tocar la
+  ficha del teléfono), con la ✕ dentro; tres cifras (Uses / week, Unit
+  price, Runs out); Add to order (el `#msAdd` de la ficha) y Received, y
+  en ⋯ Pour·IQ history y Zero par; debajo **Overview | Edit**: Overview
+  es lo de mirar de la ficha (zonas, transfers, Toast, Pour·IQ), Edit los
+  campos con Delete y Save fijos al pie. Cada producto abre en Overview;
+  cambiar de pestaña no repinta; con algo sin guardar, Edit lleva un
+  punto. Lo que repetía (el nombre en una cabecera, el segundo Received,
+  Uses / Par / Unit price de la ficha) se fue. Los botones, del cristal
+  del header: la MISMA regla de desk-header.css (`.dki-cr`, `.dki-tabs`).
   **Quitado por Axel**: el On Hand a mano (también al crear: empieza en
   0), Scan Price Invoice (los precios vienen de MarginEdge) y el modo
   focus. **El tiempo real no se toca**: inventory-realtime sigue

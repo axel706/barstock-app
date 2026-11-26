@@ -21,19 +21,15 @@
   body.dk #dkInv { display: block; color: #f8fafc; container: dkinv / inline-size; }
   body.dk #inventorySection.dk-pantalla { padding: 20px 28px 40px !important; }
 
-  /* ── Los botones del panel ── */
-  #dkInv .dki-b {
-    display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px;
-    border-radius: 999px !important; border: 1px solid rgba(255, 255, 255, .2); background: rgba(255, 255, 255, .07);
-    color: #e2e8f0; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; white-space: nowrap;
-    box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  /* ── Los botones del panel: su forma. El cristal es el del header
+     (desk-header.css, "El cristal"), la MISMA regla, no una copia. ── */
+  #dkInv .dki-cr {
+    position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 16px; margin: 0;
+    border-radius: 999px !important; font: inherit; font-size: 14px; font-weight: 750; cursor: pointer; white-space: nowrap;
   }
-  #dkInv .dki-b:hover:not(:disabled) { background: rgba(255, 255, 255, .13); }
-  #dkInv .dki-b:disabled { opacity: .45; cursor: default; }
-  #dkInv .dki-b .ti { font-size: 16px; }
-  #dkInv .dki-b.ic { width: 34px; padding: 0; justify-content: center; }
-  #dkInv .dki-b.go { background: rgba(56, 189, 248, .4); border-color: rgba(186, 230, 253, .55); color: #f0f9ff; }
-  #dkInv .dki-b.rd { background: rgba(239, 68, 68, .2); border-color: rgba(252, 165, 165, .4); color: #fecaca; }
+  #dkInv .dki-cr:disabled { cursor: default; color: #94a3b8; }
+  #dkInv .dki-cr .ti { font-size: 17px; }
+  #dkInv .dki-redondo { width: 38px; padding: 0; }
 
   /* ── Las cuatro cifras (la cabeza de antes, 2026-11-26) ── */
   #dkInv .dki-cifras { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr)); }
@@ -132,9 +128,6 @@
     background: rgba(9, 14, 26, .78); border: 1px solid rgba(255, 255, 255, .12);
     display: flex; flex-direction: column; gap: 10px; font-size: 13px;
   }
-  #dkInv .dki-ph { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
-  #dkInv .dki-ph h3 { margin: 0; font-size: 18px; line-height: 1.25; }
-  #dkInv .dki-ph small { color: #a9bacd; font-size: 12px; }
   #dkInv .dki-blk { padding: 10px; border-radius: 14px; background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .07); display: flex; flex-direction: column; gap: 6px; }
   #dkInv .dki-blk > u { text-decoration: none; display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #94a3b8; }
   #dkInv .dki-blk > u span { color: #7dd3fc; letter-spacing: .04em; }
@@ -161,11 +154,45 @@
   }
   #dkInv .dki-err:empty { display: none; }
   #dkInv .dki-err { margin: 0; color: #fca5a5; font-size: 12.5px; }
-  #dkInv .dki-acc { display: flex; flex-wrap: wrap; gap: 6px; }
-  #dkInv .dki-acc .dki-guardar { margin-left: auto; }
   /* La ficha de "Do we have" dentro del panel: sus estilos son los del
      teléfono, generados (desk-ficha.css, #dkInvP); aquí su caja. */
-  #dkInv .dki-ficha { display: flex; flex-direction: column; gap: 10px; }
+  /* Lámina "Product panel · reorganized", B (Axel, 2026-11-26). La ficha
+     no lleva caja propia: sus piezas son hermanas de las del panel y el
+     orden lo pone `order` (la tarjeta de la botella primero). Así no se
+     toca la ficha del teléfono (mobile-search.llenarFicha). Lo que
+     repetía los campos (Uses / Par / Unit price) y sus botones (Add to
+     order y Received, ya en la fila de acciones) se esconden. */
+  #dkiPanel #dkiFicha { display: contents; }
+  #dkiPanel .dki-pn { position: relative; display: flex; flex-direction: column; gap: 10px; }
+  #dkiPanel #dkiFicha > * { order: 5; margin: 0; }
+  #dkiPanel #dkiFicha > .m-fic { order: 1; }
+  #dkiPanel .dki-c3 { order: 2; }
+  #dkiPanel .dki-acts { order: 3; }
+  #dkiPanel .dki-tabs { order: 4; }
+  #dkiPanel .dki-ed { order: 6; }
+  #dkiPanel .dki-pie { order: 7; }
+  #dkiPanel :is(.m-rows, .m-acts, .m-sheet-grip) { display: none; }
+  #dkiPanel[data-tab="ver"] :is(.dki-ed, .dki-pie) { display: none; }
+  #dkiPanel[data-tab="ed"] #dkiFicha > :not(.m-fic) { display: none; }
+  /* La ✕ dentro de la tarjeta, arriba a la derecha (sobre el hueco de la
+     gráfica, que va abajo); "Live" se corre a su izquierda. */
+  #dkiPanel .dki-x { position: absolute; z-index: 2; top: 10px; right: 10px; width: 34px; height: 34px; padding: 0; }
+  #dkiPanel .m-fic .m-fic-live { right: 54px; top: 18px; }
+  #dkiPanel .dki-c3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  #dkiPanel .dki-c3 > div { padding: 9px 6px; border-radius: 14px; text-align: center; background: var(--tinta); border: 1px solid var(--tinta-borde); }
+  #dkiPanel .dki-c3 b { display: block; font-size: 19px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  #dkiPanel .dki-c3 small { color: #a9bacd; font-size: 12px; }
+  #dkiPanel .dki-acts, #dkiPanel .dki-pie { display: flex; align-items: center; gap: 8px; }
+  #dkiPanel .dki-esp { flex: 1; }
+  #dkiPanel .dki-tabs { display: flex; gap: 2px; padding: 4px; border-radius: 999px; }
+  #dkiPanel .dki-tabs button {
+    flex: 1; padding: 8px 14px; margin: 0; border: 0; border-radius: 999px !important; background: none; color: #dbe4ee; cursor: pointer;
+    font: inherit; font-size: 14px; font-weight: 750; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  /* Edit con algo sin guardar: un punto, porque Save se queda en su pestaña. */
+  #dkiPanel .dki-tabs button.sucio::after { content: ''; display: inline-block; width: 7px; height: 7px; margin-left: 7px; border-radius: 50%; background: #fbbf24; vertical-align: middle; }
+  /* Save y Delete, fijos al pie del panel mientras lo demás rueda. */
+  #dkiPanel .dki-pie { position: sticky; bottom: -14px; margin: 0 -14px -14px; padding: 12px 14px; border-top: 1px solid rgba(255, 255, 255, .1); background: rgba(9, 14, 26, .92); }
 
   /* Poco sitio (el iPad con la barra a la vista): el panel se superpone a
      la derecha, de la altura de la pantalla, en vez de estrechar la lista. */
