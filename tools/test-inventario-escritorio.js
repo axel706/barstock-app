@@ -177,11 +177,11 @@ w.eval(DI);
   caja.querySelector('[data-col="precio"]').click(); await esperar(10);
   prueba('tocar una columna ordena por ella', filas()[0] === "Tito's Vodka", filas().join('|'));
   prueba('   y el botón de orden lo dice', /Sort: Price/.test(cab.querySelector('.dkc-pl[data-dkc="orden"]').getAttribute('aria-label')));
-  let q = D.getElementById('dkiQ'); q.focus(); q.value = 'hen'; q.dispatchEvent(new w.Event('input', { bubbles: true })); await esperar(10);
+  let q = D.getElementById('dkiQ'); q.focus(); q.value = 'hen'; q.dispatchEvent(new w.Event('input', { bubbles: true })); await esperar(200);
   prueba('el filtro', filas().join('|') === 'Hennessy VS');
   prueba('   al repintar conserva el foco (se escribe seguido)', D.activeElement && D.activeElement.id === 'dkiQ' && D.activeElement.value === 'hen');
   prueba('   el texto en uso se esconde con opacity, no visibility (si no, no recibe el foco)', /:is\(b, input\) \{ opacity: 0; \}/.test(CSSH) && !/input \{ visibility: hidden/.test(CSSH));
-  q = D.getElementById('dkiQ'); q.value = ''; q.dispatchEvent(new w.Event('input', { bubbles: true })); await esperar(10);
+  q = D.getElementById('dkiQ'); q.value = ''; q.dispatchEvent(new w.Event('input', { bubbles: true })); await esperar(200);
   prueba('los nombres de las columnas se pegan bajo el header', /\.dki-pega \{[^}]*position: sticky; top: var\(--dk-alto\)/.test(CSS));
   prueba('las reglas de filas son las del teléfono (filtrar / faltas exportadas)', /BarStockMobileInventory = \{[^}]*filtrar, faltas \}/.test(MI) && /M\.filtrar\(/.test(DI) && /M\.faltas\(/.test(DI));
 
@@ -208,6 +208,29 @@ w.eval(DI);
   prueba('sin Scan Price Invoice (los precios vienen de MarginEdge)', !/Scan|invoice/i.test(txt(cab)) && !/openInvoiceScanModal/.test(DI));
   prueba('al crear, sin On Hand a mano (empieza en 0)', /#newItemModalBg label:has\(#newItemOnHand\) \{ display: none; \}/.test(CSS));
   prueba('al volver al Home, Do we have vuelve a su sitio y el header de siempre', (() => { w.BarStockDeskHeader.marcar('home'); const ok2 = !D.body.classList.contains('dk-cab') && D.getElementById('dkBusca').previousElementSibling.id === 'dkSaludo'; w.BarStockDeskHeader.marcar('inventory'); return ok2; })());
+
+  grupo('3c. Buscar en Inventory: la lupa, sin Do we have, y sin lag');
+  {
+    // Axel, 2026-11-26: "en inventario no necesitamos do we have, el botón
+    // de filtro debe ser la lupa para buscar entre los productos", y el
+    // filtro iba "super laggy": cada letra rehacía el header entero (con
+    // el propio campo) y la lista.
+    const cq = cab.querySelector('.dkc-campo');
+    prueba('el filtro es la lupa y busca en el inventario', !!cq.querySelector('.ti-search') && /^Search \d+ items$/.test(cq.querySelector('input').placeholder));
+    prueba('sin Do we have en Inventory: su hueco queda vacío (lo demás no se corre)', D.body.classList.contains('dkc-sin-busca') && /body\.dk\.dk-cab\.dkc-sin-busca \.bs-header #dkCab #dkBusca \{ display: none/.test(CSSH) && !!cab.querySelector('.dkc-busca'));
+    prueba('   y vuelve en el Home', (() => { w.BarStockDeskHeader.marcar('home'); const ok2 = !D.body.classList.contains('dkc-sin-busca'); w.BarStockDeskHeader.marcar('inventory'); return ok2; })());
+    const inp0 = D.getElementById('dkiQ');
+    inp0.focus(); inp0.value = 'ti'; inp0.dispatchEvent(new w.Event('input', { bubbles: true }));
+    await esperar(5);
+    inp0.value = 'tit'; inp0.dispatchEvent(new w.Event('input', { bubbles: true }));
+    await esperar(5);
+    prueba('escribir no rehace el campo (el mismo elemento, con su foco)', D.getElementById('dkiQ') === inp0 && D.activeElement === inp0);
+    prueba('   y la lista espera a que dejes de escribir', /setTimeout\(\(\) => \{ _tq = 0; pintar\(\); \}, 120\)/.test(DI));
+    await esperar(200);
+    prueba('   y luego filtra', filas().join(',') === "Tito's Vodka", filas().join(','));
+    prueba('   sin rehacer el campo tampoco al pintar (el azul de "en uso" se pone aparte)', D.getElementById('dkiQ') === inp0 && D.activeElement === inp0 && inp0.closest('.dkc-campo').classList.contains('en'));
+    inp0.value = ''; inp0.dispatchEvent(new w.Event('input', { bubbles: true })); await esperar(200);
+  }
 
   grupo('4. El producto (panel B: la tarjeta primero, Overview | Edit)');
   llamadas.length = 0;

@@ -176,6 +176,8 @@
      bien porque cubre a todos"): vas a escribir. Abierto, su cristal es
      casi opaco, para que no se lean los botones de debajo. */
   #dkCab .dkc-busca { width: 38px; }
+  /* Una sección sin Do we have (Inventory): el hueco se queda, vacío. */
+  body.dk.dk-cab.dkc-sin-busca .bs-header #dkCab #dkBusca { display: none; }
   body.dk.dk-cab .bs-header #dkCab #dkBusca {
     position: absolute; top: 0; right: 0; z-index: 1; margin: 0; pointer-events: none;
     width: 38px; max-width: 38px; height: 38px; padding: 0 9px; gap: 8px; overflow: hidden;

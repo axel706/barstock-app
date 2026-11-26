@@ -315,7 +315,7 @@
     const spec = _specs[sec];
     if (!spec || !montar()) {
       if (document.body.classList.contains('dk-cab')) {
-        document.body.classList.remove('dk-cab');
+        document.body.classList.remove('dk-cab', 'dkc-sin-busca');
         cerrarMenu();
         moverBusca(false);
       }
@@ -325,6 +325,11 @@
     const cambio = _sec !== sec || !document.body.classList.contains('dk-cab');
     _sec = sec;
     document.body.classList.add('dk-cab');
+    // Una sección sin Do we have (spec.busca === false, Inventory: allí se
+    // busca en el inventario) deja su hueco VACÍO, del mismo tamaño: ⋯ no
+    // se corre. El campo se mueve igual y se esconde (display: none), así
+    // que "/" y ⌘K no abren un buscador invisible.
+    document.body.classList.toggle('dkc-sin-busca', spec.busca === false);
     if (cambio) { cerrarMenu(); refrescar(sec); }
     moverBusca(true);
   }
@@ -337,15 +342,30 @@
     const act = document.activeElement;
     const foco = act && _cab.contains(act) && act.id && act.tagName === 'INPUT' ? { id: act.id, pos: act.selectionStart } : null;
     _cab.querySelector('.dkc-titulo span').textContent = sp.titulo || '';
-    _cab.querySelector('.dkc-centro').innerHTML = sp.vistas ? sp.vistas() : '';
+    // Sólo se rehace lo que cambió: con cada letra del filtro se rehacía el
+    // header entero, el campo incluido (se destruía y volvía a crearse con
+    // su foco), y era lo más lento de escribir. El valor de un campo no
+    // cuenta como cambio: lo lleva el navegador.
+    const poner = (el, html) => {
+      // Ni el valor ni la marca de "en uso" del campo (que cambia con la
+      // primera letra): esa se pone abajo, sin rehacerlo.
+      const k = html.replace(/ value="[^"]*"/g, '').replace(/dkc-campo en"/g, 'dkc-campo"');
+      if (el._dkc === k) return false;
+      el._dkc = k; el.innerHTML = html; return true;
+    };
     // Las vistas nuevas (sus cuentas cambian al filtrar) en el mismo sitio
     // que las de antes: sin su margen medido, saltaban al escribir.
-    const segN = _cab.querySelector('.dkc-centro').firstElementChild;
-    if (segN) segN.style.marginLeft = _margen + 'px';
+    const a0 = poner(_cab.querySelector('.dkc-centro'), sp.vistas ? sp.vistas() : '');
+    if (a0) {
+      const segN = _cab.querySelector('.dkc-centro').firstElementChild;
+      if (segN) segN.style.marginLeft = _margen + 'px';
+    }
     const tres = sp.afinar ? sp.afinar() : [];
-    _cab.querySelector('.dkc-afinar').innerHTML = [0, 1, 2].map(k => tres[k] || vacio()).join('');
+    const a1 = poner(_cab.querySelector('.dkc-afinar'), [0, 1, 2].map(k => tres[k] || vacio()).join(''));
     const dos = sp.acciones ? sp.acciones() : [];
-    _cab.querySelector('.dkc-acciones').innerHTML = [0, 1].map(k => dos[k] || vacio()).join('');
+    const a2 = poner(_cab.querySelector('.dkc-acciones'), [0, 1].map(k => dos[k] || vacio()).join(''));
+    _cab.querySelectorAll('.dkc-campo').forEach(l => { const i = l.querySelector('input'); l.classList.toggle('en', !!(i && i.value.trim())); });
+    if (!a0 && !a1 && !a2) return;
     ponerAnchos();
     if (foco) {
       const e = document.getElementById(foco.id);

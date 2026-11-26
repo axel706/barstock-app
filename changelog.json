@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261126-114526",
+    "items": [
+      "Inventory search is the magnifier, and typing is smooth",
+      "No Do we have inside Inventory"
+    ]
+  },
+  {
     "build": "20261126-113753",
     "items": [
       "Pour·IQ par suggestion moved to Edit, under Par"
@@ -186,12 +193,6 @@
     "items": [
       "Desktop: Do we have search in the top bar",
       "Press / or Ctrl+K to search from any screen"
-    ]
-  },
-  {
-    "build": "20261125-143215",
-    "items": [
-      "Review prices opens the list right there, not Settings"
     ]
   }
 ]

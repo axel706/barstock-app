@@ -884,7 +884,18 @@ sección de hoy vive tal cual dentro del armazón.
   - Con poco ancho (`@container dkcab`; el iPad de 1180 con la barra):
     las vistas van en el hueco entre el título y los botones, y por
     debajo de 900 con el nombre corto (All / Fix / Out).
-  Prueba: grupos 2, 3 y 3b de `test-inventario-escritorio`.
+  - **Una sección puede ir sin Do we have** (`spec.busca: false`;
+    Inventory, Axel 2026-11-26: "en inventario no necesitamos do we have",
+    allí se busca en el inventario con la lupa de afinar). Su hueco queda
+    VACÍO del mismo tamaño (⋯ no se corre) y el campo, movido igual, va en
+    `display: none` (`body.dkc-sin-busca`): "/" y ⌘K no abren un buscador
+    invisible.
+  - **`refrescar` sólo rehace lo que cambió** (Axel: el filtro iba "super
+    laggy"): cada letra rehacía el header entero, el campo incluido. Ni su
+    valor ni su marca de "en uso" cuentan como cambio (esa se pone aparte).
+    Y la lista de Inventory espera 120 ms a que dejes de escribir. Medido:
+    0,1 ms por letra; antes ~130 ms.
+  Prueba: grupos 2, 3, 3b y 3c de `test-inventario-escritorio`.
 
 ## Reglas del dominio que no son obvias
 

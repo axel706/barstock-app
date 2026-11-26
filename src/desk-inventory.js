@@ -49,6 +49,7 @@
   // La pestaña del panel: Overview ('ver') o Edit ('ed'). Cada producto
   // abre en Overview; repintar el mismo la conserva.
   let _tab = 'ver';
+  let _tq = 0;
   let _vista = 'todo', _vendor = 'ALL', _orden = 'valor', _dir = 1, _q = '';
   let _sel = null;           // el NOMBRE del producto abierto
   let _borrador = null;      // { item, nombre, codigo, vendor, par, precio, override, renombrar }
@@ -210,6 +211,9 @@
   const COLS = { nombre: 'Product', vendor: 'Vendor', onhand: 'On hand', avg: 'Avg/wk', par: 'Par', pedir: 'To order', precio: 'Price' };
   const CABECERA = {
     titulo: 'Inventory',
+    // Sin Do we have (Axel, 2026-11-26): aquí se busca en el inventario,
+    // con la lupa de afinar. Su hueco queda vacío.
+    busca: false,
     vistas() {
       const n = cuentas();
       // Dos nombres: el largo y el corto, que el header usa sin sitio.
@@ -221,7 +225,9 @@
       const agota = _vista === 'agota';
       const ord = ORDENES.find(o => o[0] === _orden);
       return [
-        DH.campo({ id: 'dkiQ', icon: 'ti-filter', placeholder: 'Filter ' + master().length + ' items', value: _q }),
+        // La lupa: en Inventory se busca en el inventario (Do we have no
+        // va aquí: CABECERA.busca = false).
+        DH.campo({ id: 'dkiQ', icon: 'ti-search', placeholder: 'Search ' + master().length + ' items', value: _q }),
         DH.boton({ acc: 'vendor', icon: 'ti-truck', label: agota ? 'Not here' : 'All vendors', en: !agota && _vendor !== 'ALL', valor: 'Vendor: ' + cap(_vendor), apagado: agota }),
         // Un nombre corto: abierto, el botón aparta a sus vecinos hasta donde
         // hay sitio, y "Sort: Money on the shelf" no cabía (salía cortado).
@@ -259,8 +265,14 @@
         DH.menu(t, items);
       }
     },
+    // La lista espera a que dejes de escribir (120 ms): repintarla en cada
+    // letra la hacía ir a saltos ("super laggy", Axel), y la letra ya sale
+    // al momento en el campo, que es del navegador.
     alEscribir(ev) {
-      if (ev.target.id === 'dkiQ') { _q = ev.target.value; pintar(); }
+      if (ev.target.id !== 'dkiQ') return;
+      _q = ev.target.value;
+      clearTimeout(_tq);
+      _tq = setTimeout(() => { _tq = 0; pintar(); }, 120);
     }
   };
 
