@@ -66,6 +66,9 @@ function entorno() {
   w.setVendorTab = (v) => w.__clics.push('tab:' + v);
   w.BarStockVendorLogo = { html: (v) => `<span class="logo-falso">${v}</span>`, color: () => '#888' };
   w.BarStockSugerencia = { preparar: async () => {}, para: () => null, antes: () => null, llegada: (v) => (v === 'SOUTHERN' ? 'Wed 4 PM' : null) };
+  // La cabecera del armazón del teléfono (mobile-shell.cabecera), con su
+  // total a la derecha: sin ella, la revisión no tendría .m-cab-d.
+  w.BarStockMobile = { register() {}, cabecera: (o) => '<div class="m-cab"><button type="button" class="m-atras" id="mAtras"></button><div class="m-cab-t"><div class="m-inv-t">' + (o.titulo || '') + '</div></div>' + (o.der ? '<div class="m-cab-d">' + o.der + '</div>' : '') + '</div>' };
   w.requestAnimationFrame = w.requestAnimationFrame || ((f) => setTimeout(f, 0));
   w.BarStockDeskShell = { activa: () => 'vendor', ir: (s) => { w.__ir = s; } };
   w.eval(MO);
@@ -147,7 +150,14 @@ function entorno() {
 
   grupo('5a. Review and send: la orden a la izquierda, el envío a la derecha (lámina A invertida)');
   prueba('el título dice Orders › el proveedor › Review', /^Orders › SOUTHERN › Review$/.test(txt(cab.querySelector('.dkc-titulo span'))), txt(cab.querySelector('.dkc-titulo span')));
-  prueba('dos columnas: la lista a la izquierda, total y envío a la derecha, quietos', /#dkOrd\.dko-revisando #dkoDet \{[^}]*grid-template-areas: "lab tot" "lista tot" "lista env"/.test(CSS) && /\.m-rev-enviar \{[^}]*position: sticky/.test(CSS));
+  // El total y el envío, UNA columna pegada (Axel, en la Mac: en filas
+  // separadas de la rejilla, la lista larga las estiraba y quedaba un hueco
+  // entre los dos; y al bajar sólo debe rodar la lista).
+  {
+    const der = det.querySelector(':scope > .dko-rev-der');
+    prueba('dos columnas: total y envío juntos en la derecha', !!der && !!der.querySelector('.m-cab-d') && !!der.querySelector('.m-rev-enviar') && der.firstElementChild.classList.contains('m-cab-d'), der ? der.innerHTML.slice(0, 80) : 'sin columna');
+    prueba('   quietos al bajar: la columna entera va pegada, la lista rueda', /#dkOrd\.dko-revisando #dkoDet \{[^}]*grid-template-areas: "lab der" "lista der"/.test(CSS) && /\.dko-rev-der \{[^}]*position: sticky/.test(CSS));
+  }
   // Sin "Back to the lines" (Axel, en la Mac: dejaba mucho aire encima de
   // la lista): se vuelve desde el header, como el ‹ vuelve al Home.
   prueba('sin "Back to the lines": la vuelta de dentro se esconde siempre', /#dkOrd #dkoDet \.m-cab \.m-atras \{ display: none; \}/.test(CSS) && !/content: 'Back to the lines'/.test(CSS));

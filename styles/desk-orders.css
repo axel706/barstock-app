@@ -109,31 +109,35 @@
      mientras baja la lista. Las piezas son las de la revisión del teléfono
      (pintarRevision): la cabecera se abre (display: contents) para que su
      total vaya a la derecha; su título va en el header ("Orders › LOOP ›
-     Review", con Orders y LOOP de vuelta a las líneas). La tarjeta del
-     total cruza dos filas: la lista empieza justo bajo su rótulo, no bajo
-     la tarjeta (con una fila "lab tot", el rótulo se iba al fondo de una
-     fila tan alta como el total y dejaba un hueco encima de la lista). */
+     Review", con Orders y LOOP de vuelta a las líneas). El total y el
+     envío van JUNTOS en una columna (.dko-rev-der, la arma desk-orders.js)
+     que cruza las dos filas y se queda quieta al bajar: puestos cada uno en
+     su fila, la lista larga estiraba las filas y entre los dos quedaba un
+     hueco (Axel, en la Mac). La segunda fila es 1fr para que la columna no
+     agrande la del rótulo. */
   #dkOrd.dko-revisando #dkoDet {
     /* align-content: start: el panel mide al menos la pantalla y la rejilla
        repartía lo que sobra entre sus filas. */
     display: grid; column-gap: 28px; align-items: start; align-content: start;
     grid-template-columns: minmax(0, 1fr) 420px;
-    grid-template-areas: "lab tot" "lista tot" "lista env";
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "lab der" "lista der";
   }
   #dkOrd.dko-revisando #dkoDet > .m-cab { display: contents; }
   #dkOrd.dko-revisando #dkoDet .m-cab > .m-cab-t { display: none; }
-  #dkOrd.dko-revisando #dkoDet .m-cab > .m-cab-d {
-    grid-area: tot; text-align: left; padding: 16px 20px; border-radius: 20px;
-    background: var(--tinta); border: 1px solid var(--tinta-borde);
-  }
-  #dkOrd.dko-revisando #dkoDet .m-cab .m-ord-tot { font-size: 34px; font-weight: 850; text-align: left; }
-  #dkOrd.dko-revisando #dkoDet .m-cab .m-ord-tot small { display: block; font-size: 14px; font-weight: 600; margin-top: 2px; }
-  #dkOrd.dko-revisando #dkoDet > .m-rev-lab { grid-area: lab; margin: 4px 0 8px; }
-  #dkOrd.dko-revisando #dkoDet > .m-rev-list { grid-area: lista; }
-  #dkOrd.dko-revisando #dkoDet > .m-rev-enviar {
-    grid-area: env; margin-top: 14px;
+  #dkOrd.dko-revisando #dkoDet > .dko-rev-der {
+    grid-area: der; display: flex; flex-direction: column; gap: 14px;
     position: sticky; top: calc(var(--dk-alto) + 14px);
   }
+  #dkOrd.dko-revisando #dkoDet .dko-rev-der > .m-cab-d {
+    text-align: left; padding: 16px 20px; border-radius: 20px;
+    background: var(--tinta); border: 1px solid var(--tinta-borde);
+  }
+  #dkOrd.dko-revisando #dkoDet .dko-rev-der .m-ord-tot { font-size: 34px; font-weight: 850; text-align: left; }
+  #dkOrd.dko-revisando #dkoDet .dko-rev-der .m-ord-tot small { display: block; font-size: 14px; font-weight: 600; margin-top: 2px; }
+  #dkOrd.dko-revisando #dkoDet .dko-rev-der > .m-rev-enviar { margin: 0; }
+  #dkOrd.dko-revisando #dkoDet > .m-rev-lab { grid-area: lab; margin: 4px 0 8px; }
+  #dkOrd.dko-revisando #dkoDet > .m-rev-list { grid-area: lista; }
   #dkOrd.dko-revisando #dkoDet .m-rev-l { font-size: 15px; padding-top: 11px; padding-bottom: 11px; }
   #dkOrd.dko-revisando #dkoDet .m-rev-l .v.sin { color: #fcd34d; font-weight: 800; }
   #dkOrd.dko-revisando #dkoDet .m-rev-l .v.sin::first-letter { text-transform: uppercase; }

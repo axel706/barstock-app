@@ -107,6 +107,7 @@
     if (e.sec === 'open' && e.vendor) { _vendor = e.vendor; _auto = null; }
     _revisando = !!e.revisar;
     _caja.classList.toggle('dko-revisando', _revisando);
+    if (_revisando) columnaRevision();
     pintarLista();
     pie();
     filtrar();
@@ -120,6 +121,25 @@
     _caja.dataset.vista = _vista;
     MO().abrirEscritorio(det, { sec: _vista, vendor: _vista === 'open' ? _vendor : null, alCambiar });
   }
+  // Review and send: el total y el envío, juntos en UNA columna a la
+  // derecha que se queda quieta mientras rueda la lista (Axel, en la Mac).
+  // Puestos en filas separadas de la rejilla, la lista larga estiraba esas
+  // filas y entre el total y el envío quedaba un hueco. Son piezas del
+  // teléfono (pintarRevision): se MUEVEN con sus botones ya enganchados, y
+  // en cada pintado, porque el teléfono rehace la revisión entera.
+  function columnaRevision() {
+    const det = _caja.querySelector('#dkoDet');
+    if (!det || det.querySelector(':scope > .dko-rev-der')) return;
+    const tot = det.querySelector('.m-cab .m-cab-d');
+    const env = det.querySelector(':scope > .m-rev-enviar');
+    if (!tot && !env) return;
+    const der = document.createElement('div');
+    der.className = 'dko-rev-der';
+    if (tot) der.appendChild(tot);
+    if (env) der.appendChild(env);
+    det.appendChild(der);
+  }
+
   function elegir(nombre) {
     _vendor = nombre;
     _vista = 'open';

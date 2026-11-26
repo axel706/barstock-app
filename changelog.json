@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261126-132134",
+    "items": [
+      "Review: total and send panel together, no gap",
+      "They stay put while the order list scrolls"
+    ]
+  },
+  {
     "build": "20261126-131354",
     "items": [
       "Review: tap Orders or the vendor in the title to go back",
@@ -187,13 +194,6 @@
     "items": [
       "Desktop: Home › Section at the top to go back",
       "Esc goes back to the Home"
-    ]
-  },
-  {
-    "build": "20261125-161551",
-    "items": [
-      "iPad: the top bar stays put when you pull down",
-      "Desktop: no more stray status line above sections"
     ]
   }
 ]

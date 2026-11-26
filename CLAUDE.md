@@ -873,7 +873,11 @@ sección de hoy vive tal cual dentro del armazón.
   encima de la lista): **"Orders" y el proveedor del título son enlaces de
   vuelta a las líneas**, como el ‹ lleva al Home. El título de una sección
   puede ser una lista de piezas, `{ t, miga }` las que son enlace
-  (`data-dkc="miga"`, a su `alClic`). Son las piezas de `pintarRevision` del
+  (`data-dkc="miga"`, a su `alClic`). El total y el envío van JUNTOS en una
+  columna pegada (`.dko-rev-der`, que desk-orders arma moviendo las piezas
+  del teléfono en cada pintado): en filas separadas de la rejilla, la lista
+  larga las estiraba y quedaba un hueco entre los dos; al bajar sólo rueda
+  la lista. Son las piezas de `pintarRevision` del
   teléfono en una rejilla (su cabecera en `display: contents`, con
   `align-content: start`: el panel mide la pantalla y la rejilla repartía
   lo que sobraba). **LOOP en el escritorio sale por CSV, no por correo**
