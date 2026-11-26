@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261126-183353",
+    "items": [
+      "Orders with nothing to order: centered message with icon"
+    ]
+  },
+  {
     "build": "20261126-182818",
     "items": [
       "No flash without blur when switching sections",
@@ -193,13 +199,6 @@
     "items": [
       "Bigger bottles in Inventory, green, amber or red by level",
       "With a product open, the list goes up to the top"
-    ]
-  },
-  {
-    "build": "20261126-105959",
-    "items": [
-      "Product panel runs full height, no scrolling inside",
-      "Tidier Overview: each block in its own card"
     ]
   }
 ]

@@ -67,8 +67,15 @@
     const VL = window.BarStockVendorLogo;
     const lineas = vs.reduce((s, v) => s + v.filas.length, 0);
     const total = vs.reduce((s, v) => s + v.total, 0);
+    // Sin nada que pedir, el vacío del teléfono (mobile-orders.vacio: "Nothing
+    // to order" o "No count yet"), centrado en TODA la sección y a la medida
+    // del escritorio (Axel, 2026-11-26: "un mensaje centrado con icono como
+    // el móvil"). Antes era una frase suelta arriba a la izquierda.
+    _caja.classList.toggle('dko-vacio', !vs.length);
+    const n = !vs.length && MO() && MO().vacio ? MO().vacio() : null;
     col.innerHTML = !vs.length
-      ? '<p class="dko-nada">Nothing to order right now: every product is at or above its par.</p>'
+      ? `<div class="dko-nada"><span class="dko-nada-i${n && n.bien ? ' bien' : ''}"><i class="ti ${n ? n.icono : 'ti-circle-check'}" aria-hidden="true"></i></span>
+          <b>${esc(n ? n.titulo : 'Nothing to order')}</b><small>${esc(n ? n.texto : '')}</small></div>`
       : `<div class="dko-k">${vs.length} vendor${vs.length === 1 ? '' : 's'} · ${lineas} line${lineas === 1 ? '' : 's'} · ${money(total)}</div>` +
         vs.map(v => {
           const sub = [llegadaDe(v.nombre), v.filas.length ? v.filas.length + ' line' + (v.filas.length === 1 ? '' : 's') : ''].filter(Boolean).join(' · ');

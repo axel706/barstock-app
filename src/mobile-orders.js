@@ -115,6 +115,18 @@
     return out;
   }
 
+  // Open sin nada que pedir: cuál de los dos vacíos es. Una sola regla
+  // para el teléfono y el escritorio (desk-orders), que sólo cambian cómo
+  // se pinta (Axel, 2026-11-26: "como el móvil").
+  function vacio() {
+    const W = window.BarStockWeeklyCycle;
+    const st = (W && W.estado) ? W.estado() : 'loading';
+    const contado = st === 'done';
+    return contado
+      ? { bien: true, icono: 'ti-circle-check', titulo: 'Nothing to order', texto: 'Every product is at or above its par. Order lines show up here when something drops below.' }
+      : { bien: false, icono: 'ti-scan', titulo: 'No count yet', texto: 'Count the bottles and the order lines appear here, grouped by vendor.' };
+  }
+
   function cantidad(r) {
     // Una línea de una orden YA enviada (reenviar desde Sent): lo que se
     // pidió, no lo que pediría hoy el automático.
@@ -167,19 +179,14 @@
       // has contado" es una tarea pendiente, y "no hace falta pedir
       // nada" es una buena noticia. El mensaje de antes servía para
       // los dos y no decía ninguno.
-      const W = window.BarStockWeeklyCycle;
-      const st = (W && W.estado) ? W.estado() : 'loading';
-      const contado = st === 'done';
-
+      const n = vacio();
       host.innerHTML = `
         <div class="m-nada">
-          <span class="m-nada-i${contado ? ' bien' : ''}">
-            <i class="ti ti-${contado ? 'circle-check' : 'scan'}" aria-hidden="true"></i>
+          <span class="m-nada-i${n.bien ? ' bien' : ''}">
+            <i class="ti ${n.icono}" aria-hidden="true"></i>
           </span>
-          <b>${contado ? 'Nothing to order' : 'No count yet'}</b>
-          <small>${contado
-            ? 'Every product is at or above its par. Order lines show up here when something drops below.'
-            : 'Count the bottles and the order lines appear here, grouped by vendor.'}</small>
+          <b>${n.titulo}</b>
+          <small>${n.texto}</small>
         </div>`;
       return;
     }
@@ -1754,7 +1761,7 @@
 
   window.BarStockMobileOrders = {
     refresh, falloAlGuardar, abrirVendor, enviarCorreo, abrirSeccion,
-    revisarBorrador, abrirEscritorio, cerrarEscritorio, listaResumen, reenviarEscritorio, revisarBorradorEscritorio,
+    revisarBorrador, abrirEscritorio, cerrarEscritorio, listaResumen, reenviarEscritorio, revisarBorradorEscritorio, vacio,
     // Cuántos hay pendientes en cada pestaña (las cuentas del header).
     cuentas: () => ({
       open: proveedores().length,

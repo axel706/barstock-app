@@ -19,7 +19,25 @@
     display: flex; flex-direction: column; gap: 8px;
   }
   #dkOrd .dko-k { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #94a3b8; padding: 0 2px 2px; }
-  #dkOrd .dko-nada { color: #a9bacd; margin: 6px 2px; }
+  /* Open sin nada que pedir: el vacío del teléfono, centrado en toda la
+     sección (la columna se queda sola y ocupa el ancho; el panel de la
+     orden se va) y a la medida del escritorio: el icono de 96, el título de
+     32 y el texto de 17, en 460 de ancho. */
+  body.dk #dkOrd[data-vista="open"].dko-vacio { grid-template-columns: minmax(0, 1fr); }
+  #dkOrd[data-vista="open"].dko-vacio .dko-der { display: none; }
+  #dkOrd[data-vista="open"].dko-vacio .dko-lista { position: static; max-height: none; overflow: visible; }
+  #dkOrd .dko-nada {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    min-height: calc(100dvh - var(--dk-alto) - 120px); padding: 0 24px 40px;
+  }
+  #dkOrd .dko-nada-i {
+    width: 96px; height: 96px; border-radius: 50%; margin-bottom: 26px;
+    display: flex; align-items: center; justify-content: center; font-size: 46px; color: #9fb0c4;
+    background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .14);
+  }
+  #dkOrd .dko-nada-i.bien { color: #4ade80; background: rgba(74, 222, 128, .12); border-color: rgba(74, 222, 128, .3); }
+  #dkOrd .dko-nada b { font-size: 32px; font-weight: 850; letter-spacing: -.5px; color: #fff; }
+  #dkOrd .dko-nada small { display: block; font-size: 17px; line-height: 1.55; color: #a9bacd; margin-top: 10px; max-width: 460px; }
   #dkOrd .dko-v {
     display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; text-align: left;
     margin: 0; padding: 12px 14px; border-radius: 18px !important; cursor: pointer; color: inherit; font: inherit;

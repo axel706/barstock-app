@@ -284,6 +284,22 @@ function entorno() {
   prueba('los estilos de Open generados bajo #dkoDet', /#dkoDet \.m-ord-l \{/.test(GEN) && /#dkoDet \.m-rev/.test(GEN));
   prueba('lo de antes se esconde, no se quita', /body\.dk #vendorSection > :not\(#dkOrd\) \{ display: none !important; \}/.test(CSS) && /id="vendorSectionBody"/.test(INDEX));
 
+  grupo('9. Sin nada que pedir: el vacío del teléfono, centrado y a su medida');
+  {
+    // Axel, 2026-11-26: "la sección orders sin nada que ordenar debe tener
+    // un mensaje centrado con icono como el móvil". Antes era una frase
+    // suelta arriba a la izquierda, en la columna de proveedores.
+    const w2 = new JSDOM('<!doctype html><body></body>', { runScripts: 'outside-only' }).window;
+    w2.BarStockWeeklyCycle = { estado: () => 'done' };
+    w2.eval(MO);
+    const V = w2.BarStockMobileOrders && w2.BarStockMobileOrders.vacio;
+    prueba('una sola regla para los dos vacíos (mobile-orders.vacio)', !!V && V().titulo === 'Nothing to order' && V().bien === true);
+    if (V) { w2.BarStockWeeklyCycle.estado = () => 'step2'; prueba('   y sin contar, "No count yet"', V().titulo === 'No count yet' && !V().bien); }
+    prueba('el teléfono la usa (no tiene su copia)', /const n = vacio\(\);/.test(MO) && !/Every product is at or above its par[\s\S]*Every product is at or above its par/.test(MO));
+    prueba('el escritorio la usa, con su icono, en toda la sección', /MO\(\)\.vacio\(\)/.test(DO) && /_caja\.classList\.toggle\('dko-vacio', !vs\.length\)/.test(DO) && /dko-nada-i/.test(DO));
+    prueba('   a la medida del escritorio: icono 96, título 32, texto 17, centrado', /#dkOrd \.dko-nada \{[^}]*align-items: center; justify-content: center; text-align: center;/.test(CSS) && /\.dko-nada-i \{[^}]*width: 96px; height: 96px;/.test(CSS) && /\.dko-nada b \{ font-size: 32px;/.test(CSS) && /\.dko-nada small \{[^}]*font-size: 17px;/.test(CSS) && /\.dko-vacio \.dko-der \{ display: none; \}/.test(CSS));
+  }
+
   console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
   process.exit(mal ? 1 : 0);
 })();
