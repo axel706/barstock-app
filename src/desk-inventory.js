@@ -386,7 +386,7 @@
     pan.dataset.tab = _sel && puede('editar_productos') ? _tab : 'ver';
     if (!_sel) { pan.innerHTML = ''; }
     else if (!conservarPanel) {
-      pan.classList.remove('apretado'); pan._altoSuelto = 0;
+      pan.classList.remove('apretado'); pan._altoLleno = 0;
       pan.innerHTML = panel(master()[idx], idx);
       const ficha = pan.querySelector('#dkiFicha');
       const MS = window.BarStockMobileSearch;
@@ -407,18 +407,23 @@
   let _raf = 0;
   const repintar = () => { if (_raf) return; _raf = requestAnimationFrame(() => { _raf = 0; pintar(); }); };
 
-  // Se aprieta sólo si sobra contenido, y se suelta si al aprietarlo
-  // sobraría sitio de verdad (con su alto completo cabría): sin eso,
-  // apretar y soltar se turnarían en cada cambio.
+  // Se aprieta si el contenido no cabe, y se guarda ESE alto completo, el
+  // que no cupo; sólo se suelta si ese alto cabe (la ventana creció). Lo
+  // que llegue después, apretado, no lo suelta. Antes se soltaba comparando
+  // con el alto de ANTES de que llegaran las ventas, que siempre cabía:
+  // cualquier cambio lo soltaba, no cabía, volvía a apretar… sin parar (en
+  // el iPad la gráfica de Toast "se glitchea": 20 veces en 1,5 s medido).
   function apretar() {
     const pan = _caja && _caja.querySelector('#dkiPanel');
     const pn = pan && pan.querySelector('.dki-pn');
     if (!pn) return;
     const sitio = pan.clientHeight - 28;
-    const alto = pn.scrollHeight;
-    if (!pan.classList.contains('apretado')) { if (alto > sitio + 1) pan.classList.toggle('apretado', true); }
-    else if (pan._altoSuelto && pan._altoSuelto <= sitio) pan.classList.toggle('apretado', false);
-    if (!pan.classList.contains('apretado')) pan._altoSuelto = alto;
+    if (!pan.classList.contains('apretado')) {
+      const alto = pn.scrollHeight;
+      if (alto > sitio + 1) { pan._altoLleno = alto; pan.classList.add('apretado'); }
+    } else if (pan._altoLleno && pan._altoLleno <= sitio) {
+      pan.classList.remove('apretado');
+    }
   }
 
   // ── El borrador ──
@@ -651,5 +656,5 @@
   if (document.getElementById('inventorySection')) montar();
   else document.addEventListener('DOMContentLoaded', montar);
 
-  window.BarStockDeskInventory = { montar, pintar, abierta, elegir: (n) => elegir(n), _estado: () => ({ sel: _sel, borrador: _borrador, vista: _vista, vendor: _vendor, orden: _orden, q: _q }) };
+  window.BarStockDeskInventory = { montar, pintar, abierta, elegir: (n) => elegir(n), _apretar: () => apretar(), _estado: () => ({ sel: _sel, borrador: _borrador, vista: _vista, vendor: _vendor, orden: _orden, q: _q }) };
 })();

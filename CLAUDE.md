@@ -798,7 +798,10 @@ sección de hoy vive tal cual dentro del armazón.
   **El contenedor de ancho es `#dkiMain`, no `#dkInv`**: un contenedor
   hace de caja a lo fijo de dentro, y el cajón del iPad rodaba con la
   página. Si no cabe, primero Toast deja sus barras (`.apretado`,
-  `apretar()`); el scroll es sólo el último recurso. Overview: cada bloque
+  `apretar()`); el scroll es sólo el último recurso. Al apretar se guarda
+  el alto COMPLETO que no cupo (`_altoLleno`) y sólo se suelta si ese alto
+  cabe: soltando contra el alto de antes de las ventas, iba y venía sin
+  parar (20 veces en 1,5 s; en el iPad la gráfica "se glitchea"). Overview: cada bloque
   la MISMA tarjeta con su título (Price, Where it is, Transfers, Sold in
   Toast, Pour·IQ), y los huecos vacíos de la ficha no suman aire. Con el
   panel abierto, las columnas escondidas van en `display: none` (con 0 de

@@ -262,7 +262,7 @@ w.eval(DI);
   prueba('   sin medir la barra pegada para colocarlo', !/medirPega|--dki-pega/.test(DI + CSSI4));
   prueba('   los huecos vacíos de la ficha no suman aire', /#dkiPanel #dkiFicha > :empty \{ display: none/.test(CSSI4));
   prueba('   cada bloque de Overview, la misma tarjeta', /#dkiPanel :is\(\.m-rows, \.m-zon, \.m-trf, \.m-vt, \.m-iqb\) \{/.test(CSSI4));
-  prueba('   sin sitio, Toast se queda en su renglón (no rueda el panel)', /#dkiPanel\.apretado \.m-vt :is\(\.m-ts-g, \.m-ts-d\) \{ display: none/.test(CSSI4) && /classList\.toggle\('apretado'/.test(DI));
+  prueba('   sin sitio, Toast se queda en su renglón (no rueda el panel)', /#dkiPanel\.apretado \.m-vt :is\(\.m-ts-g, \.m-ts-d\) \{ display: none/.test(CSSI4) && /classList\.add\('apretado'\)/.test(DI));
   // Axel, 2026-11-26, en el iPad: con un producto abierto, las cuatro
   // cifras de arriba no se ven (la página no sube hasta ellas), y las
   // botellas de la lista más grandes y del color de su nivel, como el
@@ -286,6 +286,27 @@ w.eval(DI);
   // al par que cambia, no en Overview.
   prueba('Pour·IQ va en Edit, justo debajo de Par / Price', (() => { const iq = pan().querySelector('.m-iqb'); return !!iq && !!iq.closest('.dki-ed') && iq.previousElementSibling && iq.previousElementSibling.classList.contains('dki-duo'); })());
   prueba('   en un renglón, y en Edit sin las tres cifras (para que quepa sin rodar)', /#dkiPanel \.dki-ed \.m-iqb \{ display: flex/.test(CSSI4) && /#dkiPanel\[data-tab="ed"\] \.dki-c3 \{ display: none/.test(CSSI4));
+  // Apretar Toast no puede ir y venir (Axel, en el iPad: la gráfica "se
+  // glitchea"): se soltaba comparando con el alto de ANTES de que llegaran
+  // las ventas, que siempre cabía, y cualquier cambio después lo hacía
+  // soltar, no caber y volver a apretar, sin parar (20 veces en 1,5 s).
+  {
+    const pn0 = pan(), pnn = pn0.querySelector('.dki-pn');
+    let alto = 500;
+    Object.defineProperty(pn0, 'clientHeight', { configurable: true, get: () => 728 });
+    Object.defineProperty(pnn, 'scrollHeight', { configurable: true, get: () => alto });
+    const DIa = w.BarStockDeskInventory;
+    DIa._apretar();                                   // cabe
+    alto = 760; DIa._apretar();                       // llegan las ventas: no cabe → aprieta
+    const ap1 = pn0.classList.contains('apretado');
+    alto = 690; DIa._apretar();                       // apretado ya cabe: se queda apretado
+    alto = 700; DIa._apretar();                       // llega otra cosa: sigue apretado
+    prueba('apretar no va y viene: sólo suelta si cabe con su alto completo', ap1 && pn0.classList.contains('apretado'));
+    Object.defineProperty(pn0, 'clientHeight', { configurable: true, get: () => 900 });
+    DIa._apretar();                                   // la ventana creció: 760 cabe en 872
+    prueba('   y suelta cuando de verdad cabe (la ventana creció)', !pn0.classList.contains('apretado'));
+    delete pn0.clientHeight; delete pnn.scrollHeight;
+  }
   prueba('Edit cambia de pestaña sin repintar la ficha', pan().dataset.tab === 'ed' && llamadas.filter(x => /^ficha:/.test(x)).length === 1);
   prueba('sin On Hand editable', !pan().querySelector('input[id*="Hand"], input[id*="hand"]') && !/onHand:/.test(DI.slice(DI.indexOf('bsSaveItemFields(i2'), DI.indexOf('bsSaveItemFields(i2') + 200)));
   prueba('Save empieza apagado', pan().querySelector('.dki-guardar').disabled);

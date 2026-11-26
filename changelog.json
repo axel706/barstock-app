@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261126-115544",
+    "items": [
+      "Toast chart in the product panel no longer flickers"
+    ]
+  },
+  {
     "build": "20261126-114526",
     "items": [
       "Inventory search is the magnifier, and typing is smooth",
@@ -186,13 +192,6 @@
     "items": [
       "Desktop search window is centered",
       "The page behind the search no longer scrolls"
-    ]
-  },
-  {
-    "build": "20261125-145621",
-    "items": [
-      "Desktop: Do we have search in the top bar",
-      "Press / or Ctrl+K to search from any screen"
     ]
   }
 ]
