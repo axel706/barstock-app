@@ -140,7 +140,9 @@
   // sin haberla visto funcionar.
   const VISTAS = [['open', 'Open'], ['sent', 'Sent']];
   const CABECERA = {
-    titulo: 'Orders',
+    // Con un proveedor abierto, su nombre en el título (Axel, en la Mac:
+    // "< Orders - SOUTHERN"); la cabecera de dentro se va (desk-orders.css).
+    titulo: () => (_vista === 'open' && _vendor ? 'Orders › ' + _vendor : 'Orders'),
     vistas() {
       const n = MO() && MO().cuentas ? MO().cuentas() : {};
       return '<div class="dkc-seg" role="tablist">' + VISTAS.map(([k, t]) =>

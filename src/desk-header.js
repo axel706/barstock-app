@@ -341,7 +341,9 @@
     const sp = _specs[sec];
     const act = document.activeElement;
     const foco = act && _cab.contains(act) && act.id && act.tagName === 'INPUT' ? { id: act.id, pos: act.selectionStart } : null;
-    _cab.querySelector('.dkc-titulo span').textContent = sp.titulo || '';
+    // El título puede ser una función: Orders con un proveedor abierto es
+    // "Orders › SOUTHERN" (Axel, 2026-11-26).
+    _cab.querySelector('.dkc-titulo span').textContent = (typeof sp.titulo === 'function' ? sp.titulo() : sp.titulo) || '';
     // Sólo se rehace lo que cambió: con cada letra del filtro se rehacía el
     // header entero, el campo incluido (se destruía y volvía a crearse con
     // su foco), y era lo más lento de escribir. El valor de un campo no

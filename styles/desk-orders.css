@@ -46,24 +46,34 @@
   /* "Review and send" sale en el pie, con el total; el del teléfono sigue
      en el DOM (el pie le hace clic). */
   #dkOrd #dkoDet .m-ord-enviar { display: none; }
-  #dkOrd[data-vista="open"] #dkoDet .m-cab { margin-top: 0; }
+  /* El proveedor va en el título del header ("Orders › SOUTHERN") y el
+     total, sólo abajo, en el pie (Axel, 2026-11-26): la cabecera de dentro
+     (nombre y total) se va. En la revisión se queda: es su título y su
+     vuelta a las líneas. */
+  #dkOrd:not(.dko-revisando) #dkoDet .m-cab { display: none; }
+  /* "No price" donde va el precio, no junto al nombre. */
+  #dkOrd #dkoDet .m-ord-l .m-ord-l-top .m-ord-sin { display: none; }
+  #dkOrd #dkoDet .m-ord-l.sinprecio .m-ord-l-t { font-size: 0; }
+  #dkOrd #dkoDet .m-ord-l.sinprecio .m-ord-l-t::before { content: 'No price'; font-size: 13px; font-weight: 800; color: #fcd34d; }
 
   /* Cada línea ancha (lámina A): el nombre y lo de debajo a la izquierda,
      la sugerencia en medio y la cantidad con su total a la derecha. Las
      piezas son las del teléfono (linea() de mobile-orders.js). */
   #dkOrd #dkoDet .m-ord-l:not(.m-ord-extra) {
     display: grid; column-gap: 18px; align-items: center;
-    grid-template-columns: minmax(0, 1fr) minmax(180px, 260px) 270px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, max-content) 270px;
     grid-template-areas: "top sg q" "s sg q" "undo sg q";
   }
   #dkOrd #dkoDet .m-ord-l > .m-ord-l-top { grid-area: top; }
   #dkOrd #dkoDet .m-ord-l > .m-ord-l-s { grid-area: s; }
   #dkOrd #dkoDet .m-ord-l > :is(.m-ord-q, .m-ord-auto) { grid-area: q; margin: 0; }
   #dkOrd #dkoDet .m-ord-l > .m-ord-undo { grid-area: undo; justify-self: start; }
-  #dkOrd #dkoDet .m-ord-l > .m-ord-sg { grid-area: sg; margin: 0; }
+  /* La sugerencia ocupa lo que lleva (sin ella, la columna no reserva
+     nada y el nombre no se corta), y como mucho 280 px. */
+  #dkOrd #dkoDet .m-ord-l > .m-ord-sg { grid-area: sg; margin: 0; max-width: 280px; }
   #dkOrd #dkoDet .m-ord-l[hidden] { display: none; }
   /* La cantidad entera, con su decimal (el teléfono la hace estrecha). */
-  #dkOrd #dkoDet .m-ord-q input { width: 72px; min-width: 72px; }
+  #dkOrd #dkoDet .m-ord-q input { flex: none; width: 72px; min-width: 72px; }
   /* La ✕ (dejar fuera de esta orden) al final de la fila, como en la
      lámina: en el teléfono va junto al nombre, dentro de .m-ord-l-top. */
   #dkOrd #dkoDet .m-ord-l:not(.m-ord-extra) { position: relative; padding-right: 60px; }

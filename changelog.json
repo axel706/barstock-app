@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261126-123130",
+    "items": [
+      "Orders: vendor in the title, total only at the bottom",
+      "No price shows where the price goes"
+    ]
+  },
+  {
     "build": "20261126-121329",
     "items": [
       "New Orders on desktop: vendors left, order right",
@@ -185,13 +192,6 @@
     "build": "20261125-152752",
     "items": [
       "iPad landscape: desktop Home layout with sidebar hidden"
-    ]
-  },
-  {
-    "build": "20261125-151857",
-    "items": [
-      "Desktop: sidebar and top bar are one glass",
-      "Unmatched and History show their icons"
     ]
   }
 ]

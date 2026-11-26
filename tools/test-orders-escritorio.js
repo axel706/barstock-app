@@ -130,6 +130,12 @@ function entorno() {
   prueba('la lupa esconde las líneas que no casan, sin repintar', visibles.join(',') === 'Kamora', visibles.join(','));
   void q;
 
+  grupo('4b. El proveedor en el header (Axel, en la Mac: "< Orders - SOUTHERN")');
+  prueba('el título dice Orders › el proveedor', /^Orders › SOUTHERN$/.test(txt(cab.querySelector('.dkc-titulo span'))), txt(cab.querySelector('.dkc-titulo span')));
+  prueba('la cabecera de dentro (nombre y total) se va: el total, sólo abajo', /#dkOrd:not\(\.dko-revisando\) #dkoDet \.m-cab \{ display: none; \}/.test(CSS));
+  prueba('"no price" donde va el precio, no junto al nombre', /#dkoDet \.m-ord-l \.m-ord-l-top \.m-ord-sin \{ display: none; \}/.test(CSS) && /\.m-ord-l\.sinprecio \.m-ord-l-t::before \{[^}]*content: 'No price'/.test(CSS));
+  prueba('el título del header puede cambiar con la sección (función)', /typeof sp\.titulo === 'function'/.test(DHJ));
+
   grupo('5. El pie: el total y Review and send');
   const pie = D.getElementById('dkoPie');
   prueba('con el total del proveedor', !pie.hidden && /\$\d/.test(txt(pie)) && /2 lines/.test(txt(pie)), txt(pie));

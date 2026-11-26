@@ -857,7 +857,12 @@ sección de hoy vive tal cual dentro del armazón.
   Quick order verde; en ⋯, Order analysis. **To buy e Invoices, con la
   lámina de Sent e Invoices**: sus pantallas del teléfono leen de la nube
   y sus estilos no están generados aquí; no se ofrecen sin verlas
-  funcionar. Prueba: `test-orders-escritorio`.
+  funcionar. Con un proveedor abierto el título del header es "Orders ›
+  SOUTHERN" (`titulo` puede ser una función) y la cabecera de dentro
+  (nombre y total) se va: el total, sólo en el pie; "No price" va en la
+  columna del precio, no junto al nombre (Axel, 2026-11-26, en la Mac).
+  La sugerencia ocupa sólo lo que lleva (`max-content`, hasta 280): una
+  columna fija cortaba los nombres. Prueba: `test-orders-escritorio`.
 - **EL HEADER DE LAS SECCIONES: SITIOS FIJOS** (Axel, 2026-11-26, lámina
   "Section header · fixed places": "es dinámico, pero a la vez es fijo
   […] los controles siempre en las mismas posiciones"). El estándar para
