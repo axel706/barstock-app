@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261126-131354",
+    "items": [
+      "Review: tap Orders or the vendor in the title to go back",
+      "Order list starts right under the header"
+    ]
+  },
+  {
     "build": "20261126-130131",
     "items": [
       "Review and send on desktop: the order left, send right",
@@ -187,13 +194,6 @@
     "items": [
       "iPad: the top bar stays put when you pull down",
       "Desktop: no more stray status line above sections"
-    ]
-  },
-  {
-    "build": "20261125-155003",
-    "items": [
-      "Desktop: Running out section with every product",
-      "Add to list, I have enough and Edit order on desktop"
     ]
   }
 ]

@@ -168,6 +168,14 @@
   // cerrarse (--dkc-empuje). Lo caro (los anchos) se mide al pintar y al
   // cambiar de tamaño, con todo cerrado; al pasar el ratón sólo se resta
   // (como band-dock: medir no es animar).
+  // El título como lo da la sección (texto, o piezas con enlaces) y como
+  // texto plano: el encabezado del menú ⋯ lo escapaba tal cual y, con un
+  // título en función, enseñaba el código de la función.
+  const tituloDe = (sp) => (typeof sp.titulo === 'function' ? sp.titulo() : sp.titulo) || '';
+  function tituloTexto(sp) {
+    const tt = tituloDe(sp);
+    return Array.isArray(tt) ? tt.map((p) => (p && typeof p === 'object' ? p.t : p)).join(' › ') : tt;
+  }
   let _holgura = { der: 0, izq: 0 }, _margen = 0;
   function medir() {
     if (!_cab || !document.body.classList.contains('dk-cab')) return;
@@ -269,7 +277,7 @@
         if (_pop && _pop._ancla === t) { cerrarMenu(); return; }
         const sp = _specs[_sec];
         const ex = sp && sp.extras ? sp.extras() : [];
-        menu(t, (ex.length ? [{ h: sp.titulo }].concat(ex) : []).concat(deLaApp()));
+        menu(t, (ex.length ? [{ h: tituloTexto(sp) }].concat(ex) : []).concat(deLaApp()));
         return;
       }
       if (t && t.getAttribute('aria-disabled') === 'true') return;
@@ -343,7 +351,17 @@
     const foco = act && _cab.contains(act) && act.id && act.tagName === 'INPUT' ? { id: act.id, pos: act.selectionStart } : null;
     // El título puede ser una función: Orders con un proveedor abierto es
     // "Orders › SOUTHERN" (Axel, 2026-11-26).
-    _cab.querySelector('.dkc-titulo span').textContent = (typeof sp.titulo === 'function' ? sp.titulo() : sp.titulo) || '';
+    // Y puede ser una lista de piezas: { t, miga } es un enlace dentro del
+    // título ("Orders › LOOP › Review": Orders y LOOP vuelven a las líneas,
+    // Axel 2026-11-26); el resto del título sigue llevando al Home.
+    const tt = tituloDe(sp);
+    const tsp = _cab.querySelector('.dkc-titulo span');
+    if (Array.isArray(tt)) {
+      const e = (x) => String(x).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+      tsp.innerHTML = tt.map((p) => (p && typeof p === 'object' && p.miga
+        ? `<span class="dkc-miga" data-dkc="miga" data-miga="${e(p.miga)}">${e(p.t)}</span>`
+        : e(p && typeof p === 'object' ? p.t : p))).join(' › ');
+    } else tsp.textContent = tt;
     // Sólo se rehace lo que cambió: con cada letra del filtro se rehacía el
     // header entero, el campo incluido (se destruía y volvía a crearse con
     // su foco), y era lo más lento de escribir. El valor de un campo no

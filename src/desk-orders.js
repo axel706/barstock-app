@@ -144,7 +144,12 @@
   const CABECERA = {
     // Con un proveedor abierto, su nombre en el título (Axel, en la Mac:
     // "< Orders - SOUTHERN"); la cabecera de dentro se va (desk-orders.css).
-    titulo: () => (_vista === 'open' && _vendor ? 'Orders › ' + _vendor + (_revisando ? ' › Review' : '') : 'Orders'),
+    // En la revisión, "Orders" y el proveedor son enlaces de vuelta a las
+    // líneas (Axel, 2026-11-26: "Back to the lines" dejaba mucho aire encima
+    // de la lista; como el ‹ lleva al Home, el proveedor lleva a su orden).
+    titulo: () => (_vista === 'open' && _vendor
+      ? (_revisando ? [{ t: 'Orders', miga: 'orders' }, { t: _vendor, miga: 'vendor' }, 'Review'] : 'Orders › ' + _vendor)
+      : 'Orders'),
     vistas() {
       const n = MO() && MO().cuentas ? MO().cuentas() : {};
       return '<div class="dkc-seg" role="tablist">' + VISTAS.map(([k, t]) =>
@@ -168,6 +173,7 @@
     alClic(ev, t) {
       const k = t.dataset.dkc;
       if (k === 'vista') return verVista(t.dataset.vista);
+      if (k === 'miga') { if (_vendor) elegir(_vendor); return; }
       if (k === 'quick') return clicEn('quickOrderBtn');
       if (k === 'exportar') {
         const it = (label, id, icon) => ({ icon, label, fn: () => conProveedor(() => clicEn(id)) });

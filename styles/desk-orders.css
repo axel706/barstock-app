@@ -40,9 +40,10 @@
   /* ── La orden (Open del teléfono) ── */
   #dkOrd .dko-der { min-width: 0; display: flex; flex-direction: column; min-height: calc(100vh - var(--dk-alto) - 18px); }
   #dkOrd .dko-det { flex: 1; padding-bottom: 18px; }
-  /* Sin "All orders": la lista es la columna de al lado. En la revisión
-     sí: es la vuelta a las líneas (la columna no está). */
-  #dkOrd:not(.dko-revisando) #dkoDet .m-cab .m-atras { display: none; }
+  /* Sin "All orders": la lista es la columna de al lado, y en la revisión
+     se vuelve desde el header ("Orders" o el proveedor; Axel, 2026-11-26:
+     "Back to the lines" dejaba mucho aire encima de la lista). */
+  #dkOrd #dkoDet .m-cab .m-atras { display: none; }
   /* "Review and send" sale en el pie, con el total; el del teléfono sigue
      en el DOM (el pie le hace clic). */
   #dkOrd #dkoDet .m-ord-enviar { display: none; }
@@ -107,18 +108,19 @@
      la izquierda, a lo ancho; el total y el envío a la derecha, quietos
      mientras baja la lista. Las piezas son las de la revisión del teléfono
      (pintarRevision): la cabecera se abre (display: contents) para que su
-     vuelta vaya arriba y su total, a la derecha; su título va en el
-     header ("Orders › LOOP › Review"). */
+     total vaya a la derecha; su título va en el header ("Orders › LOOP ›
+     Review", con Orders y LOOP de vuelta a las líneas). La tarjeta del
+     total cruza dos filas: la lista empieza justo bajo su rótulo, no bajo
+     la tarjeta (con una fila "lab tot", el rótulo se iba al fondo de una
+     fila tan alta como el total y dejaba un hueco encima de la lista). */
   #dkOrd.dko-revisando #dkoDet {
     /* align-content: start: el panel mide al menos la pantalla y la rejilla
-       repartía lo que sobra entre sus filas (la vuelta salía con 130 px). */
+       repartía lo que sobra entre sus filas. */
     display: grid; column-gap: 28px; align-items: start; align-content: start;
     grid-template-columns: minmax(0, 1fr) 420px;
-    grid-template-areas: "vuelta vuelta" "lab tot" "lista env";
+    grid-template-areas: "lab tot" "lista tot" "lista env";
   }
   #dkOrd.dko-revisando #dkoDet > .m-cab { display: contents; }
-  #dkOrd.dko-revisando #dkoDet .m-cab > .m-atras { grid-area: vuelta; justify-self: start; margin: 0 0 12px; width: auto; padding: 0 12px 0 6px; gap: 6px; display: inline-flex; align-items: center; color: #7dd3fc; font-weight: 750; }
-  #dkOrd.dko-revisando #dkoDet .m-cab > .m-atras::after { content: 'Back to the lines'; font-size: 14px; }
   #dkOrd.dko-revisando #dkoDet .m-cab > .m-cab-t { display: none; }
   #dkOrd.dko-revisando #dkoDet .m-cab > .m-cab-d {
     grid-area: tot; text-align: left; padding: 16px 20px; border-radius: 20px;
@@ -126,7 +128,7 @@
   }
   #dkOrd.dko-revisando #dkoDet .m-cab .m-ord-tot { font-size: 34px; font-weight: 850; text-align: left; }
   #dkOrd.dko-revisando #dkoDet .m-cab .m-ord-tot small { display: block; font-size: 14px; font-weight: 600; margin-top: 2px; }
-  #dkOrd.dko-revisando #dkoDet > .m-rev-lab { grid-area: lab; align-self: end; margin: 0 0 8px; }
+  #dkOrd.dko-revisando #dkoDet > .m-rev-lab { grid-area: lab; margin: 4px 0 8px; }
   #dkOrd.dko-revisando #dkoDet > .m-rev-list { grid-area: lista; }
   #dkOrd.dko-revisando #dkoDet > .m-rev-enviar {
     grid-area: env; margin-top: 14px;

@@ -66,6 +66,7 @@ function entorno() {
   w.setVendorTab = (v) => w.__clics.push('tab:' + v);
   w.BarStockVendorLogo = { html: (v) => `<span class="logo-falso">${v}</span>`, color: () => '#888' };
   w.BarStockSugerencia = { preparar: async () => {}, para: () => null, antes: () => null, llegada: (v) => (v === 'SOUTHERN' ? 'Wed 4 PM' : null) };
+  w.requestAnimationFrame = w.requestAnimationFrame || ((f) => setTimeout(f, 0));
   w.BarStockDeskShell = { activa: () => 'vendor', ir: (s) => { w.__ir = s; } };
   w.eval(MO);
   w.eval(DHJ);
@@ -142,11 +143,29 @@ function entorno() {
   prueba('el "Review and send" del teléfono se esconde (lo lleva el pie)', /#dkOrd #dkoDet \.m-ord-enviar \{ display: none; \}/.test(CSS));
   pie.querySelector('[data-acc="enviar"]').click(); await esperar(20);
   prueba('el pie abre la revisión del teléfono', /Review the order/.test(txt(det)) && caja.classList.contains('dko-revisando'));
-  prueba('   a todo el ancho, con su vuelta a las líneas', /body\.dk #dkOrd:is\(\.dko-revisando[^{]*\{ grid-template-columns: minmax\(0, 1fr\); \}/.test(CSS) && /dko-revisando[^{]*\.dko-lista \{ display: none; \}/.test(CSS) && /#dkOrd:not\(\.dko-revisando\) #dkoDet \.m-cab \.m-atras \{ display: none; \}/.test(CSS));
+  prueba('   a todo el ancho, sin la columna de proveedores', /body\.dk #dkOrd:is\(\.dko-revisando[^{]*\{ grid-template-columns: minmax\(0, 1fr\); \}/.test(CSS) && /dko-revisando[^{]*\.dko-lista \{ display: none; \}/.test(CSS) && !/grid-area: vuelta/.test(CSS));
 
   grupo('5a. Review and send: la orden a la izquierda, el envío a la derecha (lámina A invertida)');
   prueba('el título dice Orders › el proveedor › Review', /^Orders › SOUTHERN › Review$/.test(txt(cab.querySelector('.dkc-titulo span'))), txt(cab.querySelector('.dkc-titulo span')));
-  prueba('dos columnas: la lista a la izquierda, total y envío a la derecha, quietos', /#dkOrd\.dko-revisando #dkoDet \{[^}]*grid-template-areas: "vuelta vuelta" "lab tot" "lista env"/.test(CSS) && /\.m-rev-enviar \{[^}]*position: sticky/.test(CSS));
+  prueba('dos columnas: la lista a la izquierda, total y envío a la derecha, quietos', /#dkOrd\.dko-revisando #dkoDet \{[^}]*grid-template-areas: "lab tot" "lista tot" "lista env"/.test(CSS) && /\.m-rev-enviar \{[^}]*position: sticky/.test(CSS));
+  // Sin "Back to the lines" (Axel, en la Mac: dejaba mucho aire encima de
+  // la lista): se vuelve desde el header, como el ‹ vuelve al Home.
+  prueba('sin "Back to the lines": la vuelta de dentro se esconde siempre', /#dkOrd #dkoDet \.m-cab \.m-atras \{ display: none; \}/.test(CSS) && !/content: 'Back to the lines'/.test(CSS));
+  {
+    const migas = [...cab.querySelectorAll('.dkc-titulo [data-dkc="miga"]')].map(txt);
+    prueba('   en el header, "Orders" y el proveedor son enlaces; "Review" no', migas.join('|') === 'Orders|SOUTHERN', migas.join('|'));
+    cab.querySelector('.dkc-titulo [data-dkc="miga"][data-miga="vendor"]').click(); await esperar(20);
+    prueba('   el proveedor vuelve a sus líneas (no al Home)', !caja.classList.contains('dko-revisando') && !/Review the order/.test(txt(det)) && /^Orders › SOUTHERN$/.test(txt(cab.querySelector('.dkc-titulo span'))) && w.__ir !== 'home', txt(cab.querySelector('.dkc-titulo span')));
+    prueba('   fuera de la revisión, el título no lleva enlaces', !cab.querySelector('.dkc-titulo [data-dkc="miga"]'));
+    pie.querySelector('[data-acc="enviar"]').click(); await esperar(20);
+    cab.querySelector('.dkc-titulo [data-dkc="miga"][data-miga="orders"]').click(); await esperar(20);
+    prueba('   "Orders" también vuelve a las líneas', !caja.classList.contains('dko-revisando') && w.__ir !== 'home');
+    pie.querySelector('[data-acc="enviar"]').click(); await esperar(20);
+    cab.querySelector('.dkc-hueco[data-dkc="mas"]').click(); await esperar(5);
+    const mh = D.querySelector('.dkc-mh');
+    prueba('   el menú ⋯ titula con el texto, no con el código de la función', !!mh && /^Orders › SOUTHERN › Review$/.test(txt(mh)), mh && txt(mh).slice(0, 60));
+    cab.querySelector('.dkc-hueco[data-dkc="mas"]').click(); await esperar(5);
+  }
   {
     // LOOP en el escritorio: se guarda y se descarga su CSV, sin correo
     // (Axel: "al enviar en la versión de escritorio se descarga el csv").

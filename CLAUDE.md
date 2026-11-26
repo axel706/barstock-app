@@ -869,7 +869,11 @@ sección de hoy vive tal cual dentro del armazón.
   `updateFinalOrder` llama a `refresh()`). **Review and send** (lámina A
   invertida, 2026-11-26): la orden a la izquierda, a lo ancho; el total y
   el envío a la derecha, quietos (sticky); "Orders › LOOP › Review" en el
-  header y "‹ Back to the lines". Son las piezas de `pintarRevision` del
+  header, sin "Back to the lines" (Axel, el mismo día: dejaba mucho aire
+  encima de la lista): **"Orders" y el proveedor del título son enlaces de
+  vuelta a las líneas**, como el ‹ lleva al Home. El título de una sección
+  puede ser una lista de piezas, `{ t, miga }` las que son enlace
+  (`data-dkc="miga"`, a su `alClic`). Son las piezas de `pintarRevision` del
   teléfono en una rejilla (su cabecera en `display: contents`, con
   `align-content: start`: el panel mide la pantalla y la rejilla repartía
   lo que sobraba). **LOOP en el escritorio sale por CSV, no por correo**
