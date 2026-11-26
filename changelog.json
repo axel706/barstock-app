@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261126-180903",
+    "items": [
+      "Bigger greeting with the logo gradient, no date"
+    ]
+  },
+  {
     "build": "20261126-175906",
     "items": [
       "Only the ‹ goes Home; the section name stays in it"
@@ -192,13 +198,6 @@
     "items": [
       "Product panel shows again where the price came from",
       "And how long it lasts, for items without Toast"
-    ]
-  },
-  {
-    "build": "20261125-223852",
-    "items": [
-      "Product panel: bottle card first, Overview and Edit tabs",
-      "Glass buttons; Pour·IQ history and Zero par under ⋯"
     ]
   }
 ]

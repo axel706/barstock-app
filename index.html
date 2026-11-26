@@ -95,12 +95,12 @@
   <link rel="stylesheet" href="styles/mobile-app.css?v=mapp294">
   <!-- El armazón del escritorio: barra lateral y header en una fila.
        Va tras app.css y toolbar-pills.css, que es a quienes corrige. -->
-  <link rel="stylesheet" href="styles/desk-shell.css?v=dk12">
+  <link rel="stylesheet" href="styles/desk-shell.css?v=dk13">
   <link rel="stylesheet" href="styles/desk-home.css?v=dkh14">
   <!-- "Do we have" del escritorio: la tarjeta y la ficha generadas de las
        del teléfono (tools/compartir-ficha.js), y el campo y su panel. -->
   <link rel="stylesheet" href="styles/desk-ficha.css?v=dkf9">
-  <link rel="stylesheet" href="styles/desk-search.css?v=dks2">
+  <link rel="stylesheet" href="styles/desk-search.css?v=dks3">
   <link rel="stylesheet" href="styles/desk-running-out.css?v=dkr2">
   <link rel="stylesheet" href="styles/desk-sales.css?v=dksa3">
   <link rel="stylesheet" href="styles/desk-inventory.css?v=dki13">
@@ -394,7 +394,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261126-175906</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261126-180903</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -6412,13 +6412,13 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/desk-tobuy.js?v=dkt1"></script>
 <script src="src/desk-orders.js?v=dko13"></script>
 <!-- Después de bsOpenSection/bsCloseSection, que son lo que llama. -->
-<script src="src/desk-shell.js?v=dk10"></script>
+<script src="src/desk-shell.js?v=dk11"></script>
 <!-- El Home del escritorio: pinta con los datos de mobile-home.js (más
      arriba) dentro del armazón de desk-shell.js. -->
 <script src="src/desk-home.js?v=dkh11"></script>
 <!-- El buscador del escritorio: la búsqueda, la tarjeta y la ficha de
      mobile-search.js (más arriba), en un panel bajo la barra de arriba. -->
-<script src="src/desk-search.js?v=dks4"></script>
+<script src="src/desk-search.js?v=dks7"></script>
 <script>
 // ===== BACKGROUND SELECTOR =====
 (function(){

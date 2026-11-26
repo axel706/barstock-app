@@ -214,7 +214,12 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   prueba('sin nombre, la fecha entera', /day/.test(sal.textContent) && !/Hello/.test(sal.textContent), sal.textContent);
   nombre = 'Axel';
   oyentesMH.forEach(f => f());
-  prueba('con nombre, "Hello, Axel" y la fecha', /^Hello, Axel/.test(sal.textContent) && sal.querySelector('span'), sal.textContent);
+  // Axel, 2026-11-26: "en el saludo elimina la fecha y hazlo más grande".
+  {
+    const CS = fs.readFileSync(path.join(__dirname, '..', 'styles', 'desk-shell.css'), 'utf8');
+    prueba('el saludo, grande y con el degradado del logo', /\.dk-saludo b \{[^}]*font-size: 28px;[^}]*background: var\(--bs-stock-grad[^}]*background-clip: text;/.test(CS));
+  }
+  prueba('con nombre, "Hello, Axel" sin la fecha al lado', sal.textContent === 'Hello, Axel' && !sal.querySelector('span'), sal.textContent);
   prueba('la locación, al centro de la barra', /\.bs-loc-wrap \{\s*position: absolute; left: 50%;[^}]*translate\(-50%, -50%\)/.test(CSS));
 
   grupo('8d. La barra de estado del iPad (app instalada)');

@@ -178,7 +178,9 @@
 
   // El saludo es el del Home del teléfono (mobile-home: el nombre de la
   // sesión de PIN o el del perfil de remitente). Sin nombre, mobile-home
-  // dice el día ("Wednesday"): entonces va la fecha entera, sin repetir.
+  // dice el día ("Wednesday"): entonces va la fecha entera. Con nombre, sin
+  // la fecha al lado (Axel, 2026-11-26: "en el saludo elimina la fecha y
+  // hazlo más grande, ponle el degradado del logo").
   function pintarSaludo() {
     const el = document.getElementById('dkSaludo');
     if (!el) return;
@@ -188,8 +190,7 @@
     const fmt = (o) => new Intl.DateTimeFormat('en-US', Object.assign({ timeZone: 'America/New_York' }, o)).format(new Date());
     const con = /^Hello/.test(s);
     const titulo = con ? s : fmt({ weekday: 'long', month: 'short', day: 'numeric' });
-    const fecha = con ? fmt({ weekday: 'short', month: 'short', day: 'numeric' }).replace(',', '') : '';
-    const html = `<b>${esc(titulo)}</b>${fecha ? `<span>${esc(fecha)}</span>` : ''}`;
+    const html = `<b>${esc(titulo)}</b>`;
     if (el._html !== html) { el.innerHTML = html; el._html = html; }
   }
 

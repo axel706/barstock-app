@@ -58,21 +58,24 @@
       const tope = loc && loc.offsetParent ? loc.getBoundingClientRect().left - 14 : izq + 340;
       return Math.round(tope - izq);
     };
-    // Sin sitio (una ventana de ~1180 con la barra lateral entera), la
-    // fecha del saludo se va antes que el campo se meta bajo la locación.
-    document.body.classList.remove('dkb-apretado');
+    // Sin sitio cede lo de la izquierda, con "…", hasta que el campo mide
+    // 130: en el Home, el saludo (Axel,
+    // 2026-11-26: más grande y sin la fecha, que era lo que cedía antes; a
+    // 1180 con la barra el campo se metía bajo la locación; "Hello, Axl" a
+    // 28 px cabe entero y deja 155 al campo); dentro de una
+    // sección, el nombre de la ruta ("Home › Running out": "Home ›" se queda
+    // entero, es el botón de volver). 130: el campo más corto que aún se lee
+    // ("Do we have…"); así los nombres cortos (Pour·IQ, Costs) salen enteros
+    // a 1180 con la barra.
     const nombre = document.querySelector('#dkMiga b');
-    if (nombre) nombre.style.maxWidth = '';
+    const saludo = document.querySelector('#dkSaludo b');
+    [nombre, saludo].forEach(el => { if (el) el.style.maxWidth = ''; });
     let ancho = medir();
-    if (ancho < 170) { document.body.classList.add('dkb-apretado'); ancho = medir(); }
-    // Dentro de una sección, la ruta ("Home › Running out") está donde el
-    // saludo y no tiene fecha que quitar: lo que cede es el nombre de la
-    // sección, con "…". "Home ›" se queda entero: es el botón de volver.
-    // 130: el campo más corto que aún se lee ("Do we have…"); así los
-    // nombres cortos (Pour·IQ, Costs) salen enteros a 1180 con la barra.
-    if (ancho < 130 && nombre && nombre.offsetParent) {
-      const w = nombre.getBoundingClientRect().width;
-      nombre.style.maxWidth = Math.max(60, Math.floor(w - (130 - ancho))) + 'px';
+    const cede = nombre && nombre.offsetParent ? nombre : (saludo && saludo.offsetParent ? saludo : null);
+    const minimo = 130;
+    if (ancho < minimo && cede) {
+      const w = cede.getBoundingClientRect().width;
+      cede.style.maxWidth = Math.max(60, Math.floor(w - (minimo - ancho))) + 'px';
       ancho = medir();
     }
     ancho = Math.max(120, Math.min(340, ancho));

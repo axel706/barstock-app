@@ -318,13 +318,21 @@ body.dk .bs-header #dkMenu { display: none; }
     min-width: 0;
     white-space: nowrap;
   }
+  /* Grande y con el degradado de "Stock" del logo (Axel, 2026-11-26):
+     --bs-stock-grad, el mismo de la marca; en el claro, el recorrido más
+     hondo del logo de la barra (el de la marca no se lee sobre blanco).
+     Sin la fecha al lado. El relleno de abajo es para la cola de la "y". */
   body.dk .bs-header .dk-saludo b {
-    font-size: 20px; font-weight: 800; letter-spacing: -.3px; color: #f8fafc;
+    font-size: 28px; font-weight: 850; letter-spacing: -.5px; line-height: 1.15; padding-bottom: 2px;
     overflow: hidden; text-overflow: ellipsis;
+    color: var(--bs-stock-solid, #6ee7b7);
+    background: var(--bs-stock-grad, linear-gradient(95deg, #6ee7b7, #38bdf8));
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
   }
-  body.dk .bs-header .dk-saludo span { font-size: 13px; font-weight: 700; color: #cbd5e1; flex: none; }
-  body.light.dk .bs-header .dk-saludo b { color: #0f172a; }
-  body.light.dk .bs-header .dk-saludo span { color: #334155; }
+  body.light.dk .bs-header .dk-saludo b {
+    background: linear-gradient(95deg, #059669 0%, #0d9488 45%, #0284c7 100%);
+    -webkit-background-clip: text; background-clip: text;
+  }
   body.dk .bs-header .dk-imp { order: 4; margin-left: auto; }
   body.dk .bs-header .dk-exp { order: 5; }
   body.dk .bs-header .dk-mas { order: 6; margin-left: 0 !important; }
@@ -389,7 +397,6 @@ body.dk .bs-header #dkMenu { display: none; }
   #dkLado #cycleBtn { justify-content: center; padding: 0 !important; }
   #dkLado #cycleBtn > span:not(.cyc-num):not(.cyc-bar),
   #dkLado #cycleBtn .cyc-again { display: none; }
-  body.dk .bs-header .dk-saludo span { display: none; }
 }
 
 /* Las secciones de hoy deciden su forma por el ancho de la VENTANA
