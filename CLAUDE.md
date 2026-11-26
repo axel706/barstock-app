@@ -2335,6 +2335,23 @@ deja de acabarse se conserva y vuelve a su sitio. Prueba:
 ## Pendientes conocidos
 
 - **Fase 0**: las 16 políticas RLS en `using (true)` con repo público.
+- **Quitar la estructura vieja de Inventory del escritorio** (Axel,
+  2026-11-26: "anótalo como parte del proyecto cuando terminemos con
+  todo"; al final de rehacer las secciones, no antes). Sigue escondida
+  detrás del Inventory nuevo y NO se puede borrar de golpe: `render()` de
+  index.html escribe `#inventoryBody` y `#inventoryVendorTabs` sin mirar
+  si existen y corre también en el teléfono (tras cada guardado y cada
+  cambio en tiempo real); Count del escritorio le hace clic a
+  `#takeInventoryBtn` (ahí vive la comprobación del ciclo);
+  `#countResumeHost` nace ahí y desk-inventory lo mueve; `#vendorFilter`
+  lo leen order-history-ui y theoretical-usage; inventory-realtime mira
+  `#inventoryBody`; inventory-value escribe en `#invPanelBody`. Por
+  pasos, cada uno con su prueba y nada visible: (1) que `render()` no
+  pinte la tabla en el escritorio nuevo, (2) la comprobación del ciclo de
+  Count en su propia función, (3) el conteo a medias y el proveedor con
+  su sitio propio, (4) borrar el HTML. Lo que cuesta dejarla: el HTML de
+  todas las filas que nadie ve en cada `render()`, y el código en dos
+  sitios.
 - `Resend` sigue apareciendo en órdenes LOOP, que salen por CSV y nunca por
   correo.
 - No hay forma de abrir el panel de una botella fuera de un conteo activo.
