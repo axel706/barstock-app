@@ -165,6 +165,7 @@ function entorno() {
     // date y time su estilo nativo y un ancho mínimo mayor que la columna.
     prueba('sin el estilo nativo y con min-width 0 (no se salen de su columna)',
       /#dkOrd \.dkq-meta label \{ min-width: 0; \}/.test(CSSO) && /#dkOrd \.dkq-meta input \{[^}]*min-width: 0;[^}]*-webkit-appearance: none;[^}]*appearance: none;/.test(CSSO));
+    prueba('   y el valor de date y time centrado en su alto, como la nota', /#dkOrd \.dkq-meta input \{ line-height: 42px;/.test(CSSO) && /::-webkit-date-and-time-value \{[^}]*line-height: 42px;/.test(CSSO));
   }
 
   grupo('6. Carga');

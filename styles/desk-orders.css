@@ -78,6 +78,11 @@
   /* Los − / + centrados: les llegaba el relleno que app.css pone a todo
      <button> y el signo caía abajo a la izquierda (Axel, en la Mac). */
   #dkOrd #dkoDet .m-ord-q button { display: inline-flex; align-items: center; justify-content: center; width: 38px; padding: 0; line-height: 1; }
+  /* Redondos y de cristal, como el −/+ de Q-O (Axel, 2026-11-26): eran el
+     cuadrado redondeado del teléfono (generado, con !important; por eso el
+     radio también lo lleva). El cristal es la regla del header
+     (desk-header.css). */
+  #dkOrd #dkoDet .m-ord-q button { flex: 0 0 38px; height: 38px; border-radius: 50% !important; font-size: 18px; position: relative; }
   /* La ✕ (dejar fuera de esta orden) al final de la fila, como en la
      lámina: en el teléfono va junto al nombre, dentro de .m-ord-l-top. */
   #dkOrd #dkoDet .m-ord-l:not(.m-ord-extra) { position: relative; padding-right: 60px; }
@@ -349,7 +354,11 @@
      se ve. */
   #dkOrd .dkq-meta label { min-width: 0; }
   #dkOrd .dkq-meta input { display: block; min-width: 0; max-width: 100%; -webkit-appearance: none; appearance: none; text-align: left; }
-  #dkOrd .dkq-meta input::-webkit-date-and-time-value { text-align: left; }
+  /* Sin el estilo nativo, Safari pega el valor de date y time ARRIBA del
+     campo (la nota sí iba centrada): la altura de línea los centra. */
+  #dkOrd .dkq-meta input { line-height: 42px; padding-top: 0; padding-bottom: 0; }
+  #dkOrd .dkq-meta input::-webkit-date-and-time-value { text-align: left; margin: 0; line-height: 42px; }
+  #dkOrd .dkq-meta input::-webkit-datetime-edit { padding: 0; line-height: 42px; }
   #dkOrd .dkq-meta span { display: block; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #94a3b8; margin-bottom: 5px; }
   #dkOrd .dkq-meta input, #dkOrd .dkq-l input {
     width: 100%; box-sizing: border-box; height: 44px; padding: 0 12px; border-radius: 12px; font-size: 16px; color: #f8fafc;

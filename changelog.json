@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261126-163818",
+    "items": [
+      "Orders: round glass − / + on each line",
+      "Quick order: date and time centered"
+    ]
+  },
+  {
     "build": "20261126-163133",
     "items": [
       "Quick order: date, time and note no longer overlap"
@@ -192,12 +199,6 @@
     "build": "20261125-175656",
     "items": [
       "Desktop: the cycle card shows the week day by day"
-    ]
-  },
-  {
-    "build": "20261125-174017",
-    "items": [
-      "Desktop: Running out is a full screen too"
     ]
   }
 ]

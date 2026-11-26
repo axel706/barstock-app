@@ -60,6 +60,7 @@
   #dkCab :is(.dkc-pl, .dkc-seg),
   :is(#dkInv, #dkOrd) :is(.dki-cr, .dki-tabs, .dkq-seg),
   #dkOrd[data-vista="sent"] .dks-pie .m-hacc button,
+  #dkOrd #dkoDet .m-ord-q button,
   body.dk.dk-cab .bs-header #dkMenu,
   body.dk.dk-cab .bs-header #dkCab #dkBusca {
     -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
@@ -77,6 +78,7 @@
   #dkCab :is(.dkc-pl, .dkc-seg)::before,
   :is(#dkInv, #dkOrd) :is(.dki-cr, .dki-tabs, .dkq-seg)::before,
   #dkOrd[data-vista="sent"] .dks-pie .m-hacc button::before,
+  #dkOrd #dkoDet .m-ord-q button::before,
   body.dk.dk-cab .bs-header #dkMenu::before,
   body.dk.dk-cab .bs-header #dkCab #dkBusca::before {
     content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;

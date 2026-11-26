@@ -207,6 +207,13 @@ function entorno() {
     prueba('en el teléfono LOOP sigue igual (sólo el escritorio descarga)', /const csv = !!_esc && esLoop\(/.test(MO));
   }
 
+  grupo('5d. El −/+ de las líneas: redondo y de cristal, como en Q-O');
+  {
+    const CSSO = leer('styles/desk-orders.css'), CSSH2 = leer('styles/desk-header.css');
+    prueba('redondo (le gana al radio generado del teléfono)', /#dkOrd #dkoDet \.m-ord-q button \{[^}]*border-radius: 50% !important;/.test(CSSO));
+    prueba('   con el cristal del header', /#dkOrd #dkoDet \.m-ord-q button,\n/.test(CSSH2) && /#dkOrd #dkoDet \.m-ord-q button::before,/.test(CSSH2));
+  }
+
   grupo('5c. Resend desde Sent: la misma revisión, sin guardar nada');
   {
     // Axel, 2026-11-26: "el botón Resend debería abrir un panel similar a
