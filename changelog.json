@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261126-174156",
+    "items": [
+      "Tapping Orders in the title goes to Orders, not Home"
+    ]
+  },
+  {
     "build": "20261126-173438",
     "items": [
       "Quick order and To buy: total, Live and Review on one line"
@@ -193,12 +199,6 @@
     "build": "20261125-194817",
     "items": [
       "Desktop: top bar buttons make room, glass style"
-    ]
-  },
-  {
-    "build": "20261125-193356",
-    "items": [
-      "Desktop Inventory: the four figures are back"
     ]
   }
 ]

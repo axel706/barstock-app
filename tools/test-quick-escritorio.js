@@ -158,6 +158,28 @@ function entorno() {
   D.getElementById('mrDone').click(); await esperar(20);
   prueba('Done: a Sent, donde acaba de aparecer', w.BarStockDeskOrders.vista() === 'sent');
 
+  grupo('5a. "Orders" del título lleva a Orders, aunque el toque le llegue al botón');
+  {
+    // En el iPad, tocar "Orders" de "Orders › Q-O" llevaba al Home (Axel,
+    // 2026-11-26): el trozo vive dentro del botón del Home y Safari puede
+    // darle el toque al botón. Se simula así: el clic llega al botón, con
+    // las coordenadas encima de "Orders".
+    w.BarStockDeskOrders.abrirQuick(); await esperar(20);
+    const mi = cab.querySelector('.dkc-miga[data-miga="orders"]');
+    prueba('en Q-O, "Orders" es un enlace del título', !!mi && w.BarStockDeskOrders.vista() === 'quick');
+    let alHome = 0;
+    const S = w.BarStockDeskShell = w.BarStockDeskShell || {};
+    const irAntes = S.ir; S.ir = (x) => { if (x === 'home') alHome++; else if (irAntes) irAntes(x); };
+    if (mi) {
+      mi.getBoundingClientRect = () => ({ left: 100, right: 170, top: 10, bottom: 40, width: 70, height: 30 });
+      const bt = cab.querySelector('.dkc-titulo');
+      bt.dispatchEvent(new w.MouseEvent('click', { bubbles: true, clientX: 130, clientY: 25 }));
+      await esperar(20);
+    }
+    prueba('   el toque en "Orders" lleva a Open, no al Home', w.BarStockDeskOrders.vista() === 'open' && alHome === 0, w.BarStockDeskOrders.vista() + ' · home ' + alHome);
+    S.ir = irAntes;
+  }
+
   grupo('5b. Fecha, hora y nota, cada uno en su columna');
   {
     const CSSO = leer('styles/desk-orders.css');

@@ -283,7 +283,16 @@
         if (inp && document.activeElement !== inp) inp.focus();
         return;
       }
-      if (t && t.dataset.dkc === 'home') { const S = window.BarStockDeskShell; if (S && S.ir) S.ir('home'); return; }
+      if (t && t.dataset.dkc === 'home') {
+        // Un trozo enlazado del título ("Orders" de "Orders › Q-O › LOOP")
+        // vive DENTRO del botón que lleva al Home. En el iPad, tocar
+        // "Orders" llevaba al Home (Axel, 2026-11-26): Safari puede darle el
+        // toque al botón y no al trozo. Se decide por DÓNDE cayó el dedo,
+        // con unos píxeles de holgura: un dedo no es un puntero.
+        const m = migaEn(t, ev);
+        if (m) { const sp = _specs[_sec]; if (sp && sp.alClic) sp.alClic(ev, m); return; }
+        const S = window.BarStockDeskShell; if (S && S.ir) S.ir('home'); return;
+      }
       if (t && t.dataset.dkc === 'mas') {
         if (_pop && _pop._ancla === t) { cerrarMenu(); return; }
         const sp = _specs[_sec];
@@ -351,6 +360,18 @@
     document.body.classList.toggle('dkc-sin-busca', spec.busca === false);
     if (cambio) { cerrarMenu(); refrescar(sec); }
     moverBusca(true);
+  }
+
+  // El trozo enlazado del título bajo el punto del clic, o null.
+  function migaEn(boton, ev) {
+    if (!ev || typeof ev.clientX !== 'number') return null;
+    const H = 8;
+    for (const m of boton.querySelectorAll('.dkc-miga')) {
+      const r = m.getBoundingClientRect();
+      if (!r.width) continue;
+      if (ev.clientX >= r.left - H && ev.clientX <= r.right + H && ev.clientY >= r.top - H && ev.clientY <= r.bottom + H) return m;
+    }
+    return null;
   }
 
   // La sección repinta lo suyo (vistas, huecos) con su estado de ahora.
