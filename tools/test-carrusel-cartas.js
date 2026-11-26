@@ -135,6 +135,23 @@ grupo('Running out: las botellas (R2)');
   prueba('el día y el nombre debajo', !!bots[0] && /Now/.test(bots[0].querySelector('b').textContent) && /Red Schooner/.test(bots[0].querySelector('small').textContent),
     bots[0] && bots[0].textContent);
   prueba('See them sigue', !!c && /See them/.test(c.querySelector('.m-hero-acts').textContent));
+  // Cada silueta calculaba su contorno y su nivel desde cero (~10 ms): en
+  // el Inventory del escritorio, 220 filas tardaban 2 s en cada clic. Se
+  // calcula una vez por forma (y por nivel) y se recuerda.
+  {
+    const HCm = w.BarStockHomeCartas;
+    let nP = 0, nH = 0;
+    const pf = B.pathFor, hf = B.heightFor;
+    B.pathFor = function () { nP++; return pf.apply(this, arguments); };
+    B.heightFor = function () { nH++; return hf.apply(this, arguments); };
+    const a1 = HCm.silueta('jameson', 0.37, 'x1');
+    for (let k = 0; k < 50; k++) HCm.silueta('jameson', 0.37, 'x' + k);
+    const a2 = HCm.silueta('jameson', 0.37, 'x1');
+    B.pathFor = pf; B.heightFor = hf;
+    prueba('la silueta se calcula una vez por forma y nivel', nP === 1 && nH === 1, nP + ' / ' + nH);
+    prueba('   y sale igual', a1 === a2);
+    prueba('   cada una con su id (su recorte)', /clipPath id="x7"/.test(HCm.silueta('jameson', 0.37, 'x7')));
+  }
   prueba('el número a la derecha del encabezado', !!c && !!c.querySelector('.m-hero-kr'), c && c.querySelector('.m-hero-k').textContent);
 }
 

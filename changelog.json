@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261126-104313",
+    "items": [
+      "The product panel opens right away on desktop"
+    ]
+  },
+  {
     "build": "20261126-102515",
     "items": [
       "Product panel shows again where the price came from",
@@ -186,12 +192,6 @@
     "items": [
       "iPad app: the top edge blends in, no more glare",
       "Light mode: clearer top bar"
-    ]
-  },
-  {
-    "build": "20261125-133822",
-    "items": [
-      "Desktop: button to hide or show the sidebar"
     ]
   }
 ]

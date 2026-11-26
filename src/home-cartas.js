@@ -46,14 +46,30 @@
   // aquí y la tarjeta de Running out del escritorio (desk-home.js, lámina
   // A del 2026-11-25), que pone su número debajo: una sola forma de
   // dibujarla. `id` es el del recorte y tiene que ser único en la página.
+  // El contorno y el nivel se recuerdan por forma: calcularlos son ~10 ms
+  // (120 puntos del contorno, y 40 vueltas de integrar el volumen para el
+  // nivel), y el Inventory del escritorio dibuja una por fila en cada
+  // pintado: con 220 filas, cada clic tardaba 2 s. La llave es el PERFIL
+  // (WeakMap): si llega una forma nueva o cambia una, es otro objeto y se
+  // calcula de nuevo. El nivel va redondeado a milésimas (menos de una
+  // décima de píxel).
+  const _memo = new WeakMap();
+  function calculo(B, k) {
+    const prof = B.get ? B.get(k) : null;
+    let m = prof ? _memo.get(prof) : null;
+    if (!m) { m = { d: null, ys: new Map() }; if (prof) _memo.set(prof, m); }
+    return m;
+  }
   function silueta(forma, lleno, id) {
     const B = window.BarStockBottleProfiles;
     if (!B || !B.pathFor) return '';
     const W = 40, H = 72, P = 3;
     const k = B.resolveKey(forma || 'generic');
-    const d = B.pathFor(k, W, H, P);
-    const f = Math.max(0, Math.min(1, Number(lleno) || 0));
-    const y = B.yToPx(k, B.heightFor(k, f), W, H, P);
+    const m = calculo(B, k);
+    const d = m.d || (m.d = B.pathFor(k, W, H, P));
+    const f = Math.round(Math.max(0, Math.min(1, Number(lleno) || 0)) * 1000) / 1000;
+    let y = m.ys.get(f);
+    if (y === undefined) { y = B.yToPx(k, B.heightFor(k, f), W, H, P); m.ys.set(f, y); }
     return '<svg viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true"><defs><clipPath id="' + id + '"><path d="' + d +
            '"/></clipPath></defs><path class="m-hc-vid" d="' + d + '"/><g clip-path="url(#' + id + ')">' +
            '<rect class="m-hc-liq" x="0" y="' + num(y, 1) + '" width="' + W + '" height="' + H + '"/></g></svg>';
