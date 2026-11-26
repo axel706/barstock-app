@@ -1012,7 +1012,12 @@ sección de hoy vive tal cual dentro del armazón.
   línea: con poco ancho se compacta, no se parte. Y tocar un trozo
   enlazado del título ("Orders" de "Orders › Q-O") se decide por dónde
   cayó el dedo (`migaEn`): en el iPad, Safari le daba el toque al botón
-  del Home que lo contiene. Pruebas: `test-tobuy-escritorio`, 5a de
+  del Home que lo contiene. **Sólo el ‹ lleva al Home** (Axel, el mismo
+  día: "EL CHEVRON te saca, la palabra te lleva a esa sección o
+  subsección"; `enChevron`, con holgura): un trozo enlazado va a lo suyo y
+  el resto del título, a la sección misma (`alTitulo` del registro:
+  Orders a Open, Inventory cierra el producto). Con el teclado (sin punto)
+  el botón sigue siendo volver, como Esc. Pruebas: `test-tobuy-escritorio`, 5a de
   `test-quick-escritorio`.
 - **EL HEADER DE LAS SECCIONES: SITIOS FIJOS** (Axel, 2026-11-26, lámina
   "Section header · fixed places": "es dinámico, pero a la vez es fijo

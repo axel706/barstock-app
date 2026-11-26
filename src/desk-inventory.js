@@ -211,6 +211,9 @@
   const COLS = { nombre: 'Product', vendor: 'Vendor', onhand: 'On hand', avg: 'Avg/wk', par: 'Par', pedir: 'To order', precio: 'Price' };
   const CABECERA = {
     titulo: 'Inventory',
+    // La palabra es Inventory, a su principio: cierra el producto abierto y
+    // sube. Sólo el ‹ lleva al Home (Axel, 2026-11-26).
+    alTitulo() { if (_sel) elegir(_sel); if (window.scrollTo) window.scrollTo(0, 0); },
     // Sin Do we have (Axel, 2026-11-26): aquí se busca en el inventario,
     // con la lupa de afinar. Su hueco queda vacío.
     busca: false,

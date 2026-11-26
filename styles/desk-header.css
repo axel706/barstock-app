@@ -46,9 +46,9 @@
      and send): al pasar el ratón se marca ella y no el ‹ del Home. */
   #dkCab .dkc-titulo .dkc-miga { border-radius: 8px; transition: color .15s; }
   #dkCab .dkc-titulo .dkc-miga:hover { color: #7dd3fc; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
-  #dkCab .dkc-titulo:has(.dkc-miga:hover) .ti { color: #64748b; transform: none; }
   #dkCab .dkc-titulo .ti { font-size: 22px; color: #64748b; flex: none; transition: color .15s, transform .15s; }
-  #dkCab .dkc-titulo:hover .ti { color: #7dd3fc; transform: translateX(-2px); }
+  /* Sólo el ‹ se mueve al pasar por él: es lo único que lleva al Home. */
+  #dkCab .dkc-titulo .ti:hover { color: #7dd3fc; transform: translateX(-2px); }
 
   /* ── El cristal (Axel, 2026-11-26: "dales estilo liquid glass a todos")
      El MISMO del teléfono (mobile-app.css, "Cristal": la banda, Done, el

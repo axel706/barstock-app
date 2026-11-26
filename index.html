@@ -105,7 +105,7 @@
   <link rel="stylesheet" href="styles/desk-sales.css?v=dksa3">
   <link rel="stylesheet" href="styles/desk-inventory.css?v=dki13">
   <link rel="stylesheet" href="styles/desk-orders.css?v=dko21">
-  <link rel="stylesheet" href="styles/desk-header.css?v=dkc18">
+  <link rel="stylesheet" href="styles/desk-header.css?v=dkc19">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -394,7 +394,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261126-174925</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261126-175906</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -6382,7 +6382,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <!-- El header de las secciones (sitios fijos: título, vistas al centro,
      afinar, acciones, Do we have y ⋯). Antes que las secciones que lo
      usan (se registran al montar) y que desk-shell.js (lo avisa). -->
-<script src="src/desk-header.js?v=dkc15"></script>
+<script src="src/desk-header.js?v=dkc16"></script>
 <script src="src/desk-running-out.js?v=dkr2"></script>
 <!-- Sales del escritorio: lo de toast-sales.js y las cuentas de
      mobile-sales.js (más arriba) en su .section-card. También antes de
@@ -6391,7 +6391,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <!-- Inventory del escritorio: la sección de siempre (#inventorySection) con
      la pantalla nueva dentro; usa mobile-inventory, live-cache y la ficha
      de mobile-search (más arriba). También antes de desk-shell.js. -->
-<script src="src/desk-inventory.js?v=dki13"></script>
+<script src="src/desk-inventory.js?v=dki14"></script>
 <!-- Orders del escritorio: la sección de siempre (#vendorSection) con la
      pantalla nueva dentro; la orden es Open de mobile-orders (más arriba)
      en modo escritorio. También antes de desk-shell.js. -->
@@ -6410,7 +6410,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
      orden de Q-O a la derecha. Tras desk-quick.js, que usa; antes que
      desk-orders.js, que lo monta. -->
 <script src="src/desk-tobuy.js?v=dkt1"></script>
-<script src="src/desk-orders.js?v=dko12"></script>
+<script src="src/desk-orders.js?v=dko13"></script>
 <!-- Después de bsOpenSection/bsCloseSection, que son lo que llama. -->
 <script src="src/desk-shell.js?v=dk10"></script>
 <!-- El Home del escritorio: pinta con los datos de mobile-home.js (más

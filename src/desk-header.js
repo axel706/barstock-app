@@ -284,14 +284,21 @@
         return;
       }
       if (t && t.dataset.dkc === 'home') {
-        // Un trozo enlazado del título ("Orders" de "Orders › Q-O › LOOP")
-        // vive DENTRO del botón que lleva al Home. En el iPad, tocar
-        // "Orders" llevaba al Home (Axel, 2026-11-26): Safari puede darle el
-        // toque al botón y no al trozo. Se decide por DÓNDE cayó el dedo,
-        // con unos píxeles de holgura: un dedo no es un puntero.
-        const m = migaEn(t, ev);
-        if (m) { const sp = _specs[_sec]; if (sp && sp.alClic) sp.alClic(ev, m); return; }
-        const S = window.BarStockDeskShell; if (S && S.ir) S.ir('home'); return;
+        // SÓLO el ‹ lleva al Home; la palabra lleva a lo que nombra (Axel,
+        // 2026-11-26: "EL CHEVRON te saca, la palabra te lleva a esa sección
+        // o subsección"). El título entero era el botón del Home, y sólo
+        // algunos trozos llevaban enlace: tocar "Orders" o "Inventory" sacaba
+        // al Home. Se decide por DÓNDE cayó el dedo (en el iPad, Safari puede
+        // darle el toque al botón y no al trozo), con holgura en el ‹: un
+        // dedo no es un puntero. Con el teclado (Enter, sin punto) sigue
+        // siendo volver, como dice su etiqueta (Esc hace lo mismo).
+        const sp = _specs[_sec];
+        if (enChevron(t, ev)) { const S = window.BarStockDeskShell; if (S && S.ir) S.ir('home'); return; }
+        const m = ev.target.closest && ev.target.closest('.dkc-miga') || migaEn(t, ev);
+        if (m) { if (sp && sp.alClic) sp.alClic(ev, m); return; }
+        // Lo demás del título: la sección misma (cerrar lo abierto, arriba).
+        if (sp && sp.alTitulo) sp.alTitulo();
+        return;
       }
       if (t && t.dataset.dkc === 'mas') {
         if (_pop && _pop._ancla === t) { cerrarMenu(); return; }
@@ -360,6 +367,19 @@
     document.body.classList.toggle('dkc-sin-busca', spec.busca === false);
     if (cambio) { cerrarMenu(); refrescar(sec); }
     moverBusca(true);
+  }
+
+  // ¿El clic fue al ‹? Por el elemento, o por el punto (con 10 px de
+  // holgura a su derecha y alrededor). Un clic sin punto (el teclado) es el
+  // botón entero: volver.
+  function enChevron(boton, ev) {
+    if (ev && ev.target && ev.target.closest && ev.target.closest('.ti')) return true;
+    if (!ev || !(ev.detail > 0) || typeof ev.clientX !== 'number') return true;
+    const c = boton.querySelector('.ti');
+    if (!c) return false;
+    const r = c.getBoundingClientRect();
+    if (!r.width) return false;
+    return ev.clientX <= r.right + 10 && ev.clientY >= r.top - 14 && ev.clientY <= r.bottom + 14;
   }
 
   // El trozo enlazado del título bajo el punto del clic, o null.

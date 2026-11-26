@@ -348,8 +348,11 @@
         ? [{ t: 'Orders', miga: 'orders' }, { t: 'Q-O', miga: 'qo' }, DQ().vendor()]
         : [{ t: 'Orders', miga: 'orders' }, 'Q-O'])
       : _vista === 'open' && _vendor
-      ? (_revisando ? [{ t: 'Orders', miga: 'orders' }, { t: _vendor, miga: 'vendor' }, 'Review'] : 'Orders › ' + _vendor)
+      ? (_revisando ? [{ t: 'Orders', miga: 'orders' }, { t: _vendor, miga: 'vendor' }, 'Review'] : [{ t: 'Orders', miga: 'orders' }, _vendor])
       : 'Orders'),
+    // "Orders" solo (Open, Sent, Invoices, To buy): la palabra es Orders, a
+    // su principio. Sólo el ‹ lleva al Home.
+    alTitulo() { if (_otra) salirOtra(); if (_vista !== 'open') verVista('open'); if (window.scrollTo) window.scrollTo(0, 0); },
     vistas() {
       const n = Object.assign({}, MO() && MO().cuentas ? MO().cuentas() : {});
       // Invoices: cuántas facturas tienen líneas sin botella, una vez

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261126-175906",
+    "items": [
+      "Only the ‹ goes Home; the section name stays in it"
+    ]
+  },
+  {
     "build": "20261126-174925",
     "items": [
       "One glass footer bar on Orders and Inventory screens",
@@ -193,13 +199,6 @@
     "items": [
       "Product panel: bottle card first, Overview and Edit tabs",
       "Glass buttons; Pour·IQ history and Zero par under ⋯"
-    ]
-  },
-  {
-    "build": "20261125-222216",
-    "items": [
-      "Bigger Inventory rows on desktop",
-      "Price moved before Avg/wk; On hand is now the last column"
     ]
   }
 ]

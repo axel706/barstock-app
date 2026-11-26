@@ -167,7 +167,9 @@ function entorno() {
     prueba('   en el header, "Orders" y el proveedor son enlaces; "Review" no', migas.join('|') === 'Orders|SOUTHERN', migas.join('|'));
     cab.querySelector('.dkc-titulo [data-dkc="miga"][data-miga="vendor"]').click(); await esperar(20);
     prueba('   el proveedor vuelve a sus líneas (no al Home)', !caja.classList.contains('dko-revisando') && !/Review the order/.test(txt(det)) && /^Orders › SOUTHERN$/.test(txt(cab.querySelector('.dkc-titulo span'))) && w.__ir !== 'home', txt(cab.querySelector('.dkc-titulo span')));
-    prueba('   fuera de la revisión, el título no lleva enlaces', !cab.querySelector('.dkc-titulo [data-dkc="miga"]'));
+    // Fuera de la revisión, "Orders" sigue siendo un enlace (sólo el ‹ va al
+    // Home: Axel, 2026-11-26) y el proveedor, que es donde estás, no.
+    prueba('   fuera de la revisión, sólo "Orders" es enlace (el proveedor es donde estás)', [...cab.querySelectorAll('.dkc-titulo [data-dkc="miga"]')].map(m => m.textContent).join('|') === 'Orders');
     pie.querySelector('[data-acc="enviar"]').click(); await esperar(20);
     cab.querySelector('.dkc-titulo [data-dkc="miga"][data-miga="orders"]').click(); await esperar(20);
     prueba('   "Orders" también vuelve a las líneas', !caja.classList.contains('dko-revisando') && w.__ir !== 'home');

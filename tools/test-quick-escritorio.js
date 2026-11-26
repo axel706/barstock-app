@@ -175,10 +175,25 @@ function entorno() {
     if (mi) {
       mi.getBoundingClientRect = () => ({ left: 100, right: 170, top: 10, bottom: 40, width: 70, height: 30 });
       const bt = cab.querySelector('.dkc-titulo');
-      bt.dispatchEvent(new w.MouseEvent('click', { bubbles: true, clientX: 130, clientY: 25 }));
+      bt.dispatchEvent(new w.MouseEvent('click', { bubbles: true, clientX: 130, clientY: 25, detail: 1 }));
       await esperar(20);
     }
     prueba('   el toque en "Orders" lleva a Open, no al Home', w.BarStockDeskOrders.vista() === 'open' && alHome === 0, w.BarStockDeskOrders.vista() + ' · home ' + alHome);
+    // Axel, 2026-11-26: "EL CHEVRON te saca, la palabra te lleva a esa
+    // sección". En Open el título era texto plano ("Orders › SOUTHERN"), y
+    // tocarlo entero sacaba al Home.
+    const bt = cab.querySelector('.dkc-titulo');
+    const chev = bt.querySelector('.ti');
+    chev.getBoundingClientRect = () => ({ left: 60, right: 80, top: 12, bottom: 36, width: 20, height: 24 });
+    w.BarStockDeskOrders.verSent(); await esperar(20);
+    bt.dispatchEvent(new w.MouseEvent('click', { bubbles: true, clientX: 160, clientY: 25, detail: 1 })); await esperar(20);
+    prueba('   en Sent, la palabra "Orders" lleva a Orders (Open), no al Home', w.BarStockDeskOrders.vista() === 'open' && alHome === 0, w.BarStockDeskOrders.vista() + ' · home ' + alHome);
+    bt.dispatchEvent(new w.MouseEvent('click', { bubbles: true, clientX: 160, clientY: 25, detail: 1 })); await esperar(20);
+    prueba('   en Open, tocar la palabra tampoco saca al Home', alHome === 0, 'home ' + alHome);
+    bt.dispatchEvent(new w.MouseEvent('click', { bubbles: true, clientX: 75, clientY: 25, detail: 1 })); await esperar(20);
+    prueba('   el ‹ sí lleva al Home', alHome === 1, 'home ' + alHome);
+    chev.dispatchEvent(new w.MouseEvent('click', { bubbles: true, detail: 1 })); await esperar(20);
+    prueba('   también si el toque le llega al icono mismo', alHome === 2, 'home ' + alHome);
     S.ir = irAntes;
   }
 
