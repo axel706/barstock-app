@@ -58,7 +58,7 @@
      Done y el +. El reflejo va DEBAJO del icono y del texto (isolation y
      z-index −1), o los lava. */
   #dkCab :is(.dkc-pl, .dkc-seg),
-  :is(#dkInv, #dkOrd) :is(.dki-cr, .dki-tabs),
+  :is(#dkInv, #dkOrd) :is(.dki-cr, .dki-tabs, .dkq-seg),
   #dkOrd[data-vista="sent"] .dks-pie .m-hacc button,
   body.dk.dk-cab .bs-header #dkMenu,
   body.dk.dk-cab .bs-header #dkCab #dkBusca {
@@ -75,7 +75,7 @@
     isolation: isolate;
   }
   #dkCab :is(.dkc-pl, .dkc-seg)::before,
-  :is(#dkInv, #dkOrd) :is(.dki-cr, .dki-tabs)::before,
+  :is(#dkInv, #dkOrd) :is(.dki-cr, .dki-tabs, .dkq-seg)::before,
   #dkOrd[data-vista="sent"] .dks-pie .m-hacc button::before,
   body.dk.dk-cab .bs-header #dkMenu::before,
   body.dk.dk-cab .bs-header #dkCab #dkBusca::before {
@@ -115,7 +115,7 @@
     box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
   }
   #dkCab .dkc-seg button:hover { color: #fff; }
-  #dkCab .dkc-seg button.on, #dkInv .dki-tabs button.on {
+  #dkCab .dkc-seg button.on, #dkInv .dki-tabs button.on, #dkOrd .dkq-seg button.on {
     color: #fff; background: rgba(125, 211, 252, .32);
     box-shadow: inset 0 0 0 1px rgba(186, 230, 253, .55), inset 0 1.5px 0 rgba(255, 255, 255, .55),
       inset 0 0 10px rgba(125, 211, 252, .35), 0 2px 8px rgba(0, 0, 0, .25);

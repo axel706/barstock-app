@@ -152,7 +152,7 @@ function entorno() {
   prueba('cada columna rueda por su cuenta y la página no (alto de la pantalla, overflow propio)',
     /body\.dk #dkOrd\[data-vista="sent"\] \{[^}]*height: calc\(100dvh - var\(--dk-alto\) - 18px\)/.test(CSS) &&
     /#dkOrd :is\(\.dks-col, \.dks-det\) \{[^}]*overflow-y: auto;[^}]*overscroll-behavior: contain/.test(CSS) &&
-    /\.wrap:has\(> #vendorSection\.bs-active-section #dkOrd\[data-vista="sent"\]\) \{ padding-bottom: 0 !important; \}/.test(CSS));
+    /\.wrap:has\(> #vendorSection\.bs-active-section #dkOrd:is\(\[data-vista="sent"\][^)]*\)\) \{ padding-bottom: 0 !important; \}/.test(CSS));
   prueba('   las tres cifras se pegan arriba al rodar la orden, opacas', /\.dks-det > \.m-itot \{[^}]*position: sticky; top: 0;[^}]*background: #0e1628/.test(CSS));
   prueba('   los bloques de la orden no se aplastan (la lista con overflow se quedaba en una línea)', /#dkOrd \.dks-det > \* \{ flex: none; \}/.test(CSS));
   prueba('los meses son un rótulo (sin el fondo de botón de app.css) con aire arriba', /#dkOrd\[data-vista="sent"\] \.m-hmes \{[^}]*background: none !important;[^}]*margin: 22px 0 0/.test(CSS));

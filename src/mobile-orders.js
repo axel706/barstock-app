@@ -1581,6 +1581,18 @@
     pintar(host);
     return true;
   }
+  // Quick order del escritorio (desk-quick.js): el borrador va a ESTA
+  // revisión, la de Open, en el sitio de la revisión de Open, como el de
+  // Quick order del teléfono (revisarBorrador). Correo a quien sea o, en
+  // LOOP, el CSV; guarda colocar(), con la llegada y la hora del borrador.
+  function revisarBorradorEscritorio(host, b, o) {
+    if (!host || !b || !b.nombre || !Array.isArray(b.filas) || !b.filas.length) return false;
+    _esc = { sec: 'open', alCambiar: o && o.alCambiar };
+    _borrador = { nombre: b.nombre, filas: b.filas.slice(), nota: b.nota || 'Quick Order', llegada: b.llegada, cuando: b.cuando };
+    montarBorrador();
+    pintar(host);
+    return true;
+  }
   function abrirEscritorio(host, o) {
     _esc = o || {};
     _sec = _esc.sec || 'open';
@@ -1697,7 +1709,7 @@
     if (!b || !b.nombre || !Array.isArray(b.filas) || !b.filas.length) return false;
     // `llegada`: la respuesta a "¿al LIVE ya?" del quick order
     // (mobile-quick.js). Viaja hasta la orden para que se guarde con ella.
-    _borrador = { nombre: b.nombre, filas: b.filas.slice(), nota: b.nota || 'Quick Order', llegada: b.llegada };
+    _borrador = { nombre: b.nombre, filas: b.filas.slice(), nota: b.nota || 'Quick Order', llegada: b.llegada, cuando: b.cuando };
     if (window.BarStockMobile) window.BarStockMobile.ir('orders');
     return true;
   }
@@ -1715,6 +1727,11 @@
     _deBorrador = true;
     _extra = { quickOrder: true, note: b.nota };
     if (b.llegada !== undefined) _extra.arrivesAt = b.llegada;
+    // La hora del pedido que se puso en Quick order (un store run apuntado
+    // después). Sin ella, la de ahora, como siempre.
+    if (b.cuando instanceof Date && !Number.isNaN(b.cuando.getTime())) {
+      _extra.createdAt = _extra.date = b.cuando.toISOString();
+    }
     const botellas = b.filas.reduce((s, r) => s + cantidad(r), 0);
     _vista = {
       nombre: b.nombre,
@@ -1728,7 +1745,7 @@
 
   window.BarStockMobileOrders = {
     refresh, falloAlGuardar, abrirVendor, enviarCorreo, abrirSeccion,
-    revisarBorrador, abrirEscritorio, cerrarEscritorio, listaResumen, reenviarEscritorio,
+    revisarBorrador, abrirEscritorio, cerrarEscritorio, listaResumen, reenviarEscritorio, revisarBorradorEscritorio,
     // Cuántos hay pendientes en cada pestaña (las cuentas del header).
     cuentas: () => ({
       open: proveedores().length,

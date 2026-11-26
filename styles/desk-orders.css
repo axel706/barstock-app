@@ -162,6 +162,7 @@
      historial de órdenes independiente del scroll de la orden"): la vista
      mide lo que queda bajo el header y la página no rueda. */
   #dkOrd:not([data-vista="sent"]) :is(.dks-col, .dks-det) { display: none; }
+  #dkOrd:not([data-vista="quick"]) :is(.dkq-p1, .dkq-col, .dkq-der) { display: none; }
   body.dk #dkOrd[data-vista="sent"] {
     grid-template-columns: 340px minmax(0, 1fr); align-items: stretch;
     /* La pantalla menos el header y los 18 de aire de arriba; abajo, nada:
@@ -172,7 +173,7 @@
   /* Que la página no ruede: la sección mide la pantalla (dk-pantalla,
      min-height) y .wrap le suma 20 px de relleno abajo; con eso, la página
      rodaba 20 px por detrás de las dos columnas. */
-  body.dk .wrap:has(> #vendorSection.bs-active-section #dkOrd[data-vista="sent"]) { padding-bottom: 0 !important; }
+  body.dk .wrap:has(> #vendorSection.bs-active-section #dkOrd:is([data-vista="sent"], [data-vista="quick"][data-paso="2"])) { padding-bottom: 0 !important; }
   #dkOrd[data-vista="sent"] :is(.dko-lista, .dko-der) { display: none; }
   #dkOrd :is(.dks-col, .dks-det) { min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
   #dkOrd .dks-col { padding: 0 6px 18px 0; }
@@ -279,4 +280,125 @@
   #dkOrd .m-hln-d { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }
   #dkOrd[data-vista="sent"] .dks-det .m-hln.mal .m-hln-q { color: #fcd34d; }
   #dkOrd[data-vista="sent"] .dks-det .m-hprec { margin-top: 14px; }
+
+  /* ── Q-O, Quick order (desk-quick.js; lámina "Quick order · desktop · in
+     two steps", Axel 2026-11-26) ──
+     Paso 1, el proveedor (tarjetas); paso 2, sus productos a la izquierda
+     y la orden a la derecha, cada columna con su scroll como Sent, y el
+     pie fijo abajo: el total, "Count in Live now?" y Review and send. */
+  #dkOrd[data-vista="quick"] :is(.dko-lista, .dko-der) { display: none; }
+  body.dk #dkOrd[data-vista="quick"] { grid-template-columns: minmax(0, 1fr); }
+  #dkOrd[data-vista="quick"][data-paso="1"] :is(.dkq-col, .dkq-der) { display: none; }
+  #dkOrd[data-vista="quick"][data-paso="2"] .dkq-p1 { display: none; }
+  body.dk #dkOrd[data-vista="quick"][data-paso="2"] {
+    grid-template-columns: 420px minmax(0, 1fr); align-items: stretch;
+    height: calc(100dvh - var(--dk-alto) - 18px);
+  }
+  #dkOrd :is(.dkq-col, .dkq-der) { min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  #dkOrd .dkq-col { padding: 0 6px 18px 0; }
+  #dkOrd .dkq-der { display: flex; flex-direction: column; }
+  #dkOrd .dkq-der > * { flex: none; }
+  #dkOrd .dkq-k { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #94a3b8; margin: 16px 2px 8px; }
+  #dkOrd .dkq-nada { color: #a9bacd; margin: 10px 2px; }
+
+  /* Paso 1: una tarjeta por proveedor. */
+  #dkOrd .dkq-p1 { padding: 22px 8px 28px; max-width: 1100px; }
+  #dkOrd .dkq-h { font-size: 26px; font-weight: 850; }
+  #dkOrd .dkq-s { color: #a9bacd; margin: 4px 0 22px; font-size: 14.5px; }
+  #dkOrd .dkq-vs { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  #dkOrd .dkq-v {
+    display: flex; align-items: center; gap: 14px; text-align: left; cursor: pointer; color: inherit; font: inherit;
+    margin: 0; padding: 18px; border-radius: 20px !important; background: var(--tinta); border: 1px solid var(--tinta-borde);
+    box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  #dkOrd .dkq-v:hover { border-color: rgba(125, 211, 252, .55); }
+  #dkOrd .dkq-v > .ti { margin-left: auto; color: #94a3b8; font-size: 20px; }
+  #dkOrd .dkq-vlg { display: flex; flex: none; width: 48px; height: 48px; align-items: center; justify-content: center; }
+  #dkOrd .dkq-vlg > * { max-width: 48px; max-height: 48px; }
+  #dkOrd .dkq-vn { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  #dkOrd .dkq-vn b { font-size: 18px; }
+  #dkOrd .dkq-vn small { color: #a9bacd; font-size: 13px; }
+
+  /* Paso 2, la izquierda: el proveedor, la búsqueda y sus productos. */
+  #dkOrd .dkq-cab { display: flex; align-items: center; gap: 12px; margin: 2px 0 14px; }
+  #dkOrd .dkq-cab b { display: block; font-size: 21px; font-weight: 850; }
+  #dkOrd .dkq-cab small { color: #a9bacd; font-size: 13px; }
+  #dkOrd .dkq-busca { display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px; border-radius: 14px; background: rgba(0, 0, 0, .28); border: 1px solid rgba(255, 255, 255, .18); color: #cbd5e1; }
+  #dkOrd .dkq-busca:focus-within { border-color: #7dd3fc; box-shadow: 0 0 0 3px rgba(125, 211, 252, .2); }
+  #dkOrd .dkq-busca input { flex: 1; min-width: 0; height: 100%; border: 0; background: none; color: #f8fafc; font-size: 16px; outline: none; box-shadow: none; padding: 0; }
+  #dkOrd .dkq-p {
+    width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto auto 32px; gap: 10px; align-items: center; text-align: left;
+    margin: 6px 0 0; padding: 10px 12px; border-radius: 14px !important; cursor: pointer; color: inherit; font: inherit;
+    background: var(--tinta); border: 1px solid var(--tinta-borde); box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  #dkOrd .dkq-p:hover { border-color: rgba(52, 211, 153, .45); }
+  #dkOrd .dkq-p.en { border-color: rgba(52, 211, 153, .6); }
+  #dkOrd .dkq-pn { min-width: 0; font-size: 15px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; }
+  #dkOrd .dkq-pn small { display: block; color: #94a3b8; font-size: 12px; font-weight: 500; margin-top: 2px; }
+  #dkOrd .dkq-pp { color: #cbd5e1; font-size: 14px; font-variant-numeric: tabular-nums; }
+  #dkOrd .dkq-pa { color: #6ee7b7; font-size: 12px; font-weight: 800; white-space: nowrap; }
+  #dkOrd .dkq-mas { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(52, 211, 153, .42); border: 1px solid rgba(167, 243, 208, .6); color: #ecfdf5; }
+
+  /* Paso 2, la derecha: fecha, hora y nota, y las líneas. Los campos a 16
+     px: el iPad hace zoom en lo que mide menos. */
+  #dkOrd .dkq-meta { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 10px; margin-top: 2px; }
+  #dkOrd .dkq-meta span { display: block; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #94a3b8; margin-bottom: 5px; }
+  #dkOrd .dkq-meta input, #dkOrd .dkq-l input {
+    width: 100%; box-sizing: border-box; height: 44px; padding: 0 12px; border-radius: 12px; font-size: 16px; color: #f8fafc;
+    background: rgba(0, 0, 0, .28); border: 1px solid rgba(255, 255, 255, .18); box-shadow: none;
+  }
+  #dkOrd .dkq-l {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto 120px 100px 32px; gap: 12px; align-items: center;
+    margin-top: 7px; padding: 10px 12px 10px 16px; border-radius: 16px; background: var(--tinta); border: 1px solid var(--tinta-borde);
+  }
+  #dkOrd .dkq-ln { min-width: 0; font-size: 15.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #dkOrd .dkq-q { display: flex; align-items: center; gap: 6px; }
+  #dkOrd .dkq-q .dki-cr { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1; }
+  #dkOrd .dkq-q input { width: 64px; height: 38px; text-align: center; font-weight: 800; padding: 0 4px; }
+  #dkOrd .dkq-pr { display: flex; align-items: center; gap: 4px; color: #94a3b8; }
+  #dkOrd .dkq-pr input { height: 38px; text-align: right; }
+  #dkOrd .dkq-lt { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }
+  #dkOrd .dkq-x { width: 32px; height: 32px; padding: 0; border-radius: 50% !important; display: flex; align-items: center; justify-content: center; color: #94a3b8; background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  #dkOrd .dkq-x:hover { color: #fca5a5; }
+
+  /* El pie: el total, "Count in Live now?" (el carril de cristal de las
+     vistas del header, con lo elegido en cristal azul) y Review and send. */
+  #dkOrd .dkq-pie {
+    position: sticky; bottom: 0; z-index: 5; margin-top: auto;
+    display: flex; align-items: center; flex-wrap: wrap; gap: 14px 18px;
+    padding: 14px 0 max(6px, calc(env(safe-area-inset-bottom) / 2));
+    background: linear-gradient(180deg, rgba(9, 14, 26, 0), #090e1a 30%);
+  }
+  #dkOrd .dkq-pie[hidden] { display: none; }
+  #dkOrd .dkq-tot b { display: block; font-size: 24px; font-weight: 850; font-variant-numeric: tabular-nums; }
+  #dkOrd .dkq-tot small { color: #a9bacd; font-size: 13px; }
+  #dkOrd .dkq-live { display: flex; align-items: center; gap: 10px; color: #cbd5e1; font-size: 13.5px; font-weight: 700; }
+  #dkOrd .dkq-seg { display: flex; gap: 2px; padding: 4px; border-radius: 999px; position: relative; }
+  #dkOrd .dkq-seg button { height: 36px; padding: 0 14px; border-radius: 999px !important; font-size: 13.5px; font-weight: 750; color: #dbe4ee; background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; cursor: pointer; white-space: nowrap; }
+  #dkOrd .dkq-seg button:disabled { color: #7f8ea3; cursor: default; }
+  #dkOrd .dkq-go { margin-left: auto; height: 46px; padding: 0 24px; font-size: 15px; gap: 8px; }
+  #dkOrd .dkq-go:disabled { opacity: 1; color: #94a3b8; }
+
+  /* Con poco ancho (el iPad de 1180 con la barra lateral): la columna de
+     productos más estrecha; en la orden, el nombre en su renglón y debajo
+     cantidad, precio, total y ✕ (con todo en uno el nombre se quedaba sin
+     sitio); el pie en dos filas: total y Review arriba, Live debajo. */
+  @media (max-width: 1300px) {
+    body.dk #dkOrd[data-vista="quick"][data-paso="2"] { grid-template-columns: 360px minmax(0, 1fr); }
+  }
+  #dkOrd .dkq-der { container: dkqder / inline-size; }
+  @container dkqder (max-width: 720px) {
+    #dkOrd .dkq-l { grid-template-columns: auto minmax(0, 1fr) auto 32px; grid-template-areas: "n n n n" "q pr t x"; row-gap: 8px; }
+    #dkOrd .dkq-ln { grid-area: n; }
+    #dkOrd .dkq-q { grid-area: q; }
+    #dkOrd .dkq-pr { grid-area: pr; max-width: 140px; }
+    #dkOrd .dkq-lt { grid-area: t; }
+    #dkOrd .dkq-x { grid-area: x; }
+    #dkOrd .dkq-meta { grid-template-columns: 1fr 1fr; }
+    #dkOrd .dkq-meta label:last-child { grid-column: 1 / -1; }
+    #dkOrd .dkq-pie { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "tot go" "live live"; }
+    #dkOrd .dkq-tot { grid-area: tot; }
+    #dkOrd .dkq-go { grid-area: go; margin-left: 0; }
+    #dkOrd .dkq-live { grid-area: live; }
+  }
 }

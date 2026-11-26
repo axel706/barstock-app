@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 180 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 181 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -941,7 +941,31 @@ sección de hoy vive tal cual dentro del armazón.
   Done vuelven a esa orden (`desk-orders.reenviar` / `terminarReenvio`). En
   el teléfono Resend sigue mandando al guardado. Los menús del header se
   abren hacia ARRIBA si abajo no caben (el ⋯ del pie se salía de la
-  pantalla), y el pie va más abajo (la vista sin aire debajo). Prueba: `test-sent-escritorio`.
+  pantalla), y el pie va más abajo (la vista sin aire debajo).
+- **Orders › Q-O, Quick order en el escritorio** (Axel, 2026-11-26,
+  lámina "Quick order · desktop", A, en dos pasos: "selecciono el vendor y
+  trabajo en una quick order para él"; "Q-O" para que quepa en el header):
+  `src/desk-quick.js`, la vista `quick` de Orders, que abre el Quick order
+  verde del header (sin desk-quick, el diálogo de antes, que sigue en el
+  DOM). Paso 1, una tarjeta por proveedor (sin UNKNOWN) con sus productos y
+  su entrega; paso 2, "Orders › Q-O › SOUTHERN": a la izquierda sus
+  productos A LA VISTA (lo que Axel pidió conservar del diálogo: elegido el
+  proveedor, la lista sólo de los suyos), con la búsqueda encima, + que
+  añade y suma, Enter que añade el primero; a la derecha fecha, hora, nota y
+  las líneas (−/+, precio, total); abajo, fijos como en Sent, el total,
+  "Count in Live now?" (Yes, it's here / Next delivery, en el carril de
+  cristal de las vistas; sin contestar no se revisa, como la hoja del
+  teléfono) y Review and send. **El borrador es el de Quick order del
+  TELÉFONO** (`BarStockMobileQuick.escritorio`; la forma de línea, en
+  `linea()`, una sola para agregar, precargar y el escritorio), y enviarlo
+  es la revisión de Open (`mobile-orders.revisarBorradorEscritorio`): correo
+  a quien sea o, en LOOP, el CSV; guarda `colocar()` con `quickOrder`, la
+  llegada elegida y la HORA del borrador (`_extra.createdAt`: un store run
+  apuntado después). Colocada, el borrador queda vacío y Done va a Sent.
+  Resend y Q-O entran a esa revisión por UNA función de desk-orders
+  (`otraRevision` / `salirOtra`, con su título y su vuelta). "Save Quick
+  Order" del diálogo de antes no mandaba correo ni preguntaba por el LIVE.
+  Prueba: `test-quick-escritorio`. Prueba: `test-sent-escritorio`.
 - **EL HEADER DE LAS SECCIONES: SITIOS FIJOS** (Axel, 2026-11-26, lámina
   "Section header · fixed places": "es dinámico, pero a la vez es fijo
   […] los controles siempre en las mismas posiciones"). El estándar para
@@ -1349,7 +1373,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 180 suites · ~2470 comprobaciones. Tienen que pasar enteras.
+`npm test` · 181 suites · ~2470 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

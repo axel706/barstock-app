@@ -24,6 +24,9 @@
   // Sent (desk-sent.js): su columna, su orden y su parte del header.
   const DS = () => window.BarStockDeskSent;
   const enSent = () => _vista === 'sent' && !!DS();
+  // Q-O, Quick order (desk-quick.js).
+  const DQ = () => window.BarStockDeskQuick;
+  const enQuick = () => _vista === 'quick' && !!DQ();
   const DH = () => window.BarStockDeskHeader;
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -37,7 +40,7 @@
   let _abierto = false;   // si el módulo del teléfono está montado aquí
   let _auto = null;       // el último proveedor elegido solo
   let _revisando = false; // en Review and send
-  let _reenviando = null;  // reenviar una orden de Sent: { vendor, sentId }
+  let _otra = null;        // la revisión de Open para Resend o Q-O: { titulo, alSalir }
 
   function abierta() { return !!(_sec && _sec.classList.contains('bs-active-section')); }
   const lista = () => (MO() && MO().listaResumen ? MO().listaResumen() : []);
@@ -118,51 +121,102 @@
     if (DH() && DH().refrescar) DH().refrescar('vendor');
   }
 
-  // ── Resend desde Sent (Axel, 2026-11-26: "debería abrir un panel
-  // similar a review and send, o el mismo, para poder enviar a cualquier
-  // destinatario") ──
-  // Es la MISMA revisión de Open (mobile-orders.reenviarEscritorio, con la
-  // orden ya guardada: no guarda nada, sólo el PDF y el correo) en el
-  // mismo sitio y con la misma forma (dko-revisando). Salir de ella
-  // (Done, o "Sent" en el título) vuelve a Sent, a esa orden.
-  function reenviar(orden, deSent) {
+  // ── La revisión de Open para lo que no es la orden de Open ──
+  // Resend de Sent y Q-O entran a la MISMA revisión (mobile-orders), en el
+  // mismo sitio y con la misma forma (dko-revisando, su columna). `_otra`
+  // dice qué título lleva y adónde se vuelve al salir (Done tras enviar, o
+  // un enlace del título). Una sola entrada y una sola salida: con dos
+  // copias, una se queda sin el arreglo de la otra.
+  function otraRevision(montarla, o) {
     const det = _caja && _caja.querySelector('#dkoDet');
-    if (!det || !MO() || !MO().reenviarEscritorio) return;
-    _reenviando = { vendor: orden.vendor, sentId: deSent && deSent.id };
+    if (!det || !MO()) return;
+    if (_abierto && MO().cerrarEscritorio) MO().cerrarEscritorio();
+    _abierto = false;
     if (DS() && DS().abierto()) DS().cerrar();
-    _caja.dataset.vista = 'reenvio';
+    if (DQ() && DQ().abierto()) DQ().cerrar();
+    _otra = o;
+    _caja.dataset.vista = 'revision';
     _caja.classList.add('dko-revisando');
-    MO().reenviarEscritorio(det, orden, { alCambiar: alReenvio });
+    pie();
+    montarla(det, { alCambiar: alOtra });
     if (window.scrollTo) window.scrollTo(0, 0);
   }
-  function alReenvio(e) {
-    if (!_reenviando) return;
+  function alOtra(e) {
+    if (!_otra) return;
     if (e && e.revisar) {
       columnaRevision();
       if (DH() && DH().refrescar) DH().refrescar('vendor');
       return;
     }
-    terminarReenvio();
+    salirOtra();
   }
-  function terminarReenvio() {
-    if (!_reenviando) return;
-    const volver = _reenviando.sentId;
-    _reenviando = null;
+  function salirOtra() {
+    if (!_otra) return;
+    const o = _otra;
+    _otra = null;
     _revisando = false;
     _caja.classList.remove('dko-revisando');
     if (MO() && MO().cerrarEscritorio) MO().cerrarEscritorio();
     const det = _caja.querySelector('#dkoDet');
     if (det) det.innerHTML = '';
-    _vista = 'sent';
-    _caja.dataset.vista = 'sent';
-    if (DS()) DS().abrir(_caja, volver);
+    o.alSalir();
     if (DH() && DH().refrescar) DH().refrescar('vendor');
+  }
+
+  // Resend desde Sent (Axel, 2026-11-26: "debería abrir un panel similar a
+  // review and send, o el mismo, para poder enviar a cualquier
+  // destinatario"): la orden ya guardada (mobile-orders.reenviarEscritorio:
+  // no guarda nada, sólo el PDF y el correo). Al salir, a Sent, a esa
+  // orden.
+  function reenviar(orden, deSent) {
+    otraRevision((det, op) => MO().reenviarEscritorio(det, orden, op), {
+      titulo: [{ t: 'Sent', miga: 'sent' }, orden.vendor, 'Resend'],
+      alSalir: () => { _vista = 'sent'; _caja.dataset.vista = 'sent'; if (DS()) DS().abrir(_caja, deSent && deSent.id); }
+    });
+  }
+  // Q-O: el borrador de Quick order (desk-quick.revisar) a la revisión.
+  // Colocada, el borrador queda vacío (colocar() lo limpia) y se va a
+  // Sent, donde acaba de aparecer, como en el teléfono; si no, de vuelta
+  // a su orden.
+  function revisarQuick(b) {
+    if (!MO() || !MO().revisarBorradorEscritorio) return;
+    otraRevision((det, op) => MO().revisarBorradorEscritorio(det, b, op), {
+      // Sin "Orders": con él no cabía y "Review" salía como "…".
+      titulo: [{ t: 'Q-O', miga: 'qo' }, { t: b.nombre, miga: 'qov' }, 'Review'],
+      alSalir: () => {
+        const Q = window.BarStockMobileQuick && window.BarStockMobileQuick.escritorio;
+        _vista = Q && Q.borrador().items.length ? 'quick' : 'sent';
+        montarModulo();
+        const S = window.BarStockDeskShell;
+        if (S && S.marcarLado) S.marcarLado();
+      }
+    });
+  }
+  function abrirQuick() {
+    // Sin desk-quick.js (no cargó), el diálogo de antes: mejor que una
+    // vista vacía.
+    if (!DQ()) return clicEn('quickOrderBtn');
+    if (_otra) salirOtra();
+    if (_vista === 'quick') { if (DQ()) DQ().paso1(); return; }
+    verVista('quick');
   }
 
   function montarModulo() {
     const det = _caja.querySelector('#dkoDet');
-    if (_reenviando) { _reenviando = null; _caja.classList.remove('dko-revisando'); if (MO() && MO().cerrarEscritorio) MO().cerrarEscritorio(); }
+    if (_otra) { _otra = null; _caja.classList.remove('dko-revisando'); if (MO() && MO().cerrarEscritorio) MO().cerrarEscritorio(); }
     _caja.dataset.vista = _vista;
+    // Q-O (desk-quick.js): Open y Sent se sueltan.
+    if (enQuick()) {
+      if (_abierto && MO() && MO().cerrarEscritorio) MO().cerrarEscritorio();
+      _abierto = false;
+      if (det) det.innerHTML = '';
+      if (DS() && DS().abierto()) DS().cerrar();
+      pie();
+      DQ().abrir(_caja, { alCambiar: () => { if (DH() && DH().refrescar) DH().refrescar('vendor'); } });
+      if (DH() && DH().refrescar) DH().refrescar('vendor');
+      return;
+    }
+    if (DQ() && DQ().abierto()) DQ().cerrar();
     // Sent es otro módulo (desk-sent.js): Open se suelta y su panel se
     // vacía; al volver a Open, al revés.
     if (enSent()) {
@@ -238,8 +292,11 @@
     // En la revisión, "Orders" y el proveedor son enlaces de vuelta a las
     // líneas (Axel, 2026-11-26: "Back to the lines" dejaba mucho aire encima
     // de la lista; como el ‹ lleva al Home, el proveedor lleva a su orden).
-    titulo: () => (_reenviando
-      ? [{ t: 'Sent', miga: 'sent' }, _reenviando.vendor, 'Resend']
+    // Q-O: Quick order, corto para que quepa (Axel, 2026-11-26).
+    titulo: () => (_otra ? _otra.titulo
+      : enQuick() ? (DQ().paso() === 2 && DQ().vendor()
+        ? [{ t: 'Orders', miga: 'orders' }, { t: 'Q-O', miga: 'qo' }, DQ().vendor()]
+        : [{ t: 'Orders', miga: 'orders' }, 'Q-O'])
       : _vista === 'open' && _vendor
       ? (_revisando ? [{ t: 'Orders', miga: 'orders' }, { t: _vendor, miga: 'vendor' }, 'Review'] : 'Orders › ' + _vendor)
       : 'Orders'),
@@ -251,6 +308,7 @@
     },
     afinar() {
       if (enSent()) return DS().CAB.afinar();
+      if (enQuick() || _otra) { const D = DH(); return [D.vacio(), D.vacio(), D.vacio()]; }
       const D = DH();
       return [D.campo({ id: 'dkoQ', icon: 'ti-search', placeholder: 'Search lines', value: _q }), D.vacio(), D.vacio()];
     },
@@ -269,9 +327,16 @@
     alClic(ev, t) {
       const k = t.dataset.dkc;
       if (k === 'vista') return verVista(t.dataset.vista);
-      if (k === 'miga' && t.dataset.miga === 'sent') return terminarReenvio();
-      if (k === 'miga') { if (_vendor) elegir(_vendor); return; }
-      if (k === 'quick') return clicEn('quickOrderBtn');
+      if (k === 'miga') {
+        const m = t.dataset.miga;
+        if (m === 'sent' || m === 'qov') return salirOtra();
+        if (m === 'qo') { if (_otra) salirOtra(); if (DQ()) DQ().paso1(); return; }
+        if (m === 'orders' && (enQuick() || _otra)) { if (_otra) salirOtra(); return verVista('open'); }
+        if (_vendor) elegir(_vendor);
+        return;
+      }
+      // Quick order: la pantalla Q-O (desk-quick.js), no el diálogo de antes.
+      if (k === 'quick') return abrirQuick();
       if (enSent()) return DS().CAB.alClic(ev, t);
       if (k === 'exportar') {
         const it = (label, id, icon) => ({ icon, label, fn: () => conProveedor(() => clicEn(id)) });
@@ -306,10 +371,14 @@
 
   function alAbrirCerrar() {
     const sentAbierto = !!(DS() && DS().abierto());
-    if (abierta()) { if (!_abierto && !sentAbierto) montarModulo(); }
+    // Con Sent, Q-O o una revisión prestada (Resend, Q-O) en pantalla, nada
+    // que montar: cualquier cambio de clase de la sección los deshacía.
+    const otraVista = sentAbierto || (DQ() && DQ().abierto()) || !!_otra;
+    if (abierta()) { if (!_abierto && !otraVista) montarModulo(); }
     else {
       if (sentAbierto) DS().cerrar();
-      if (_reenviando) { _reenviando = null; _caja.classList.remove('dko-revisando'); _caja.dataset.vista = _vista; if (MO() && MO().cerrarEscritorio) MO().cerrarEscritorio(); const d = _caja.querySelector('#dkoDet'); if (d) d.innerHTML = ''; return; }
+      if (DQ() && DQ().abierto()) DQ().cerrar();
+      if (_otra) { _otra = null; _caja.classList.remove('dko-revisando'); _caja.dataset.vista = _vista; if (MO() && MO().cerrarEscritorio) MO().cerrarEscritorio(); const d = _caja.querySelector('#dkoDet'); if (d) d.innerHTML = ''; return; }
       if (!_abierto) return;
       _abierto = false;
       if (MO() && MO().cerrarEscritorio) MO().cerrarEscritorio();
@@ -352,5 +421,5 @@
   if (document.getElementById('vendorSection')) montar();
   else document.addEventListener('DOMContentLoaded', montar);
 
-  window.BarStockDeskOrders = { montar, abierta, elegir: (n) => elegir(n), verSent, verOpen, reenviar, vista: () => _vista, _estado: () => ({ vista: _vista, vendor: _vendor, q: _q }) };
+  window.BarStockDeskOrders = { montar, abierta, elegir: (n) => elegir(n), verSent, verOpen, reenviar, revisarQuick, abrirQuick, vista: () => _vista, _estado: () => ({ vista: _vista, vendor: _vendor, q: _q }) };
 })();

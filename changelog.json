@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261126-153127",
+    "items": [
+      "Desktop Quick order: pick the vendor, then its products",
+      "Asks if it counts in Live, then Review and send"
+    ]
+  },
+  {
     "build": "20261126-143123",
     "items": [
       "Sent: the buttons sit at the very bottom"
@@ -191,12 +198,6 @@
     "build": "20261125-173600",
     "items": [
       "Desktop: Sales is a full screen, controls stay on top"
-    ]
-  },
-  {
-    "build": "20261125-172100",
-    "items": [
-      "Sales: taller day bars; today shows its sales"
     ]
   }
 ]

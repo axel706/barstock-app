@@ -118,7 +118,7 @@ function entorno() {
   prueba('Export azul y Quick order verde', !!cab.querySelector('.dkc-acciones .dkc-pl.azul[data-dkc="exportar"]') && !!cab.querySelector('.dkc-acciones .dkc-pl.verde[data-dkc="quick"]'));
   w.__clics.length = 0;
   cab.querySelector('.dkc-hueco[data-dkc="quick"]').click();
-  prueba('Quick order es el de siempre', w.__clics.includes('quickOrderBtn'));
+  prueba('Quick order sin desk-quick (no cargó): el diálogo de siempre (con él, la pantalla Q-O: test-quick-escritorio)', w.__clics.includes('quickOrderBtn'));
   let menu = null;
   w.BarStockDeskHeader.menu = (a, items) => { menu = items; };
   cab.querySelector('.dkc-hueco[data-dkc="exportar"]').click();

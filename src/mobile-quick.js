@@ -138,30 +138,35 @@
     if (cant <= 0) return avisar('How many did you get?');
 
     const precio = precioEscrito !== '' ? num(precioEscrito) : num(_elegido.value);
-
-    // La MISMA forma de línea que `addItem` del escritorio. `toOrder` y
-    // `orderOverride` llevan los dos la cantidad a propósito:
-    // `getEffectiveOrder` sólo mira `orderOverride` en los proveedores
-    // que admiten ajuste manual, así que con uno solo de los dos la
-    // cantidad se perdería en los demás.
-    _items.push({
-      code: String(_elegido.code || '').trim(),
-      item: String(_elegido.item || ''),
-      vendor: _vendor,
-      onHand: Math.max(0, num(_elegido.onHand)),
-      suggested: Math.max(0, num(_elegido.suggested)),
-      value: Math.max(0, precio),
-      qty: cant,
-      toOrder: cant,
-      orderOverride: cant,
-      finalOrder: cant,
-      quickOrder: true
-    });
+    _items.push(linea(_elegido, cant, precio));
 
     _elegido = null;
     _busca = '';
     _fallo = '';
     repintar();
+  }
+
+  // La MISMA forma de línea que `addItem` del escritorio. `toOrder` y
+  // `orderOverride` llevan los dos la cantidad a propósito:
+  // `getEffectiveOrder` sólo mira `orderOverride` en los proveedores que
+  // admiten ajuste manual, así que con uno solo de los dos la cantidad se
+  // perdería en los demás. Una sola función: la usan agregar(),
+  // precargar() y Quick order del escritorio (desk-quick.js).
+  function linea(r, cant, precio) {
+    return {
+      code: String(r.code || '').trim(),
+      item: String(r.item || ''),
+      vendor: _vendor,
+      onHand: Math.max(0, num(r.onHand)),
+      suggested: Math.max(0, num(r.suggested)),
+      value: Math.max(0, precio == null ? num(r.value) : num(precio)),
+      qty: cant, toOrder: cant, orderOverride: cant, finalOrder: cant,
+      quickOrder: true
+    };
+  }
+  // La cantidad de una línea, en sus cuatro campos a la vez (ver linea()).
+  function ponerCantidad(x, cant) {
+    x.qty = x.toOrder = x.orderOverride = x.finalOrder = Math.max(0, num(cant));
   }
 
   function avisar(t) {
@@ -639,17 +644,7 @@
       if (!r) { faltan.push(f.item); continue; }
       const cant = Math.max(0, num(f.qty));
       if (!(cant > 0)) continue;
-      // La MISMA forma de línea que agregar().
-      _items.push({
-        code: String(r.code || '').trim(),
-        item: String(r.item || ''),
-        vendor: _vendor,
-        onHand: Math.max(0, num(r.onHand)),
-        suggested: Math.max(0, num(r.suggested)),
-        value: Math.max(0, num(r.value)),
-        qty: cant, toOrder: cant, orderOverride: cant, finalOrder: cant,
-        quickOrder: true
-      });
+      _items.push(linea(r, cant));
       _deLista.set(r.item, f.id);
     }
     _nota = 'To buy list';
@@ -657,7 +652,41 @@
     return { ok: _items.length > 0, faltan };
   }
 
-  window.BarStockMobileQuick = { limpiar, precargar, pintar: () => repintar() };
+  // ── El escritorio (desk-quick.js, lámina "Quick order · desktop in two
+  // steps", Axel 2026-11-26) ──
+  // El MISMO borrador, con su forma de pantalla: elige el proveedor (paso
+  // 1), añade, cambia cantidades y precios, y lo entrega a la revisión de
+  // Open (desk-orders). Nada de aquí guarda: guarda la revisión.
+  const escritorio = {
+    borrador: () => ({ vendor: _vendor, items: _items, cuando: _cuando, nota: _nota }),
+    proveedores,
+    // Cambiar de proveedor vacía las líneas (una orden es a un
+    // proveedor); quien llama pregunta antes si las hay.
+    elegirVendor(v) {
+      if (v === _vendor) return;
+      _vendor = v; _items = []; _deLista = null; _elegido = null; _busca = ''; _fallo = '';
+    },
+    // Una botella más de un producto del catálogo: si ya está, +1.
+    anadir(r, cant) {
+      const ya = _items.find(x => x.item === r.item);
+      if (ya) ponerCantidad(ya, num(ya.qty) + (cant || 1));
+      else _items.push(linea(r, cant || 1));
+    },
+    cantidad(i, cant) { const x = _items[i]; if (!x) return; if (num(cant) <= 0) _items.splice(i, 1); else ponerCantidad(x, cant); },
+    precio(i, v) { const x = _items[i]; if (x) x.value = Math.max(0, num(v)); },
+    quitar(i) { _items.splice(i, 1); },
+    ponerCuando(d) { _cuando = d instanceof Date && !Number.isNaN(d.getTime()) ? d : null; },
+    ponerNota(t) { _nota = String(t || ''); },
+    // Lo que se lleva la revisión: como revisar(), con la llegada que se
+    // eligió y el momento del pedido (`cuando`: un store run apuntado
+    // después lleva su hora).
+    paraRevisar(llegada) {
+      return { nombre: _vendor, filas: _items.slice(), nota: _nota.trim() || 'Quick Order', llegada, cuando: cuando() };
+    },
+    botellas, total, porCorreo
+  };
+
+  window.BarStockMobileQuick = { limpiar, precargar, pintar: () => repintar(), escritorio };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', registrar);
   else registrar();
