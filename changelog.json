@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261126-182818",
+    "items": [
+      "No flash without blur when switching sections",
+      "Sidebar fits the iPad screen height"
+    ]
+  },
+  {
     "build": "20261126-181829",
     "items": [
       "Sidebar: Orders opens into To buy, Open, Sent, Invoices",
@@ -193,12 +200,6 @@
     "items": [
       "Product panel runs full height, no scrolling inside",
       "Tidier Overview: each block in its own card"
-    ]
-  },
-  {
-    "build": "20261126-104313",
-    "items": [
-      "The product panel opens right away on desktop"
     ]
   }
 ]

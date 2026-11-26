@@ -131,6 +131,12 @@
   }
 
   function marcar() {
+    // El vidrio de las secciones (#dkVidrio, desk-shell.css): a la vista
+    // sólo con una sección de la forma estándar abierta. Va aquí, en la
+    // misma vuelta en que cambia la sección (el MutationObserver corre
+    // antes de pintar), para que no haya un fotograma sin él.
+    const sec = document.querySelector('.card.section-card.bs-active-section');
+    document.body.classList.toggle('dk-vidrio', !!(sec && sec.classList.contains('dk-pantalla')));
     pintarMiga();
     // El header de las secciones que ya tienen el suyo (desk-header.js):
     // título, vistas al centro y sus controles en sitios fijos. Las demás
@@ -302,6 +308,14 @@
     // Dentro, va bajo el header (40) y sobre lo demás de la página.
     const wrap = header.closest('.wrap') || document.body;
     wrap.insertBefore(marco, wrap.firstChild);
+    // El vidrio de las secciones: una capa fija y PERMANENTE (ver
+    // marcar() y desk-shell.css). Primera de .wrap, con z-index 0: las
+    // secciones (z-index 0, después en el DOM) pintan encima, y la foto
+    // del fondo (fuera de .wrap) queda detrás.
+    const vidrio = document.createElement('div');
+    vidrio.id = 'dkVidrio';
+    vidrio.setAttribute('aria-hidden', 'true');
+    wrap.insertBefore(vidrio, wrap.firstChild);
     const medirAlto = () => {
       const h = Math.round(header.getBoundingClientRect().height);
       if (h > 0) document.documentElement.style.setProperty('--dk-alto', h + 'px');

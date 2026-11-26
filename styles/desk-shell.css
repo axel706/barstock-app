@@ -409,12 +409,22 @@ body.dk .bs-header #dkMenu { display: none; }
     background: none !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
     backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
   }
-  body.dk .wrap > .section-card.dk-pantalla::before {
-    content: ""; position: fixed; z-index: -1; pointer-events: none;
+  /* El vidrio de las secciones es UNA capa fija y permanente (#dkVidrio,
+     la crea desk-shell), no un ::before de cada sección: al cambiar de
+     sección, la capa de la vieja se destruía y la de la nueva nacía, y en
+     el iPad una capa con desenfoque recién creada sale un instante sin él
+     (Axel, 2026-11-26: "el panel aparece sin blur por un instante […] al
+     cambiar entre secciones"). La permanente siempre está pintada: en el
+     Home y en las secciones sin la forma estándar va a opacidad 0, y con
+     una sección .dk-pantalla abierta (body.dk-vidrio) a 1, sin transición. */
+  body.dk #dkVidrio {
+    position: fixed; z-index: 0; pointer-events: none;
     top: var(--dk-alto); right: 0; bottom: 0; left: var(--dk-x);
     background: rgba(11, 18, 32, .62);
     backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%);
+    opacity: 0;
   }
+  body.dk.dk-vidrio #dkVidrio { opacity: 1; }
 
   /* El renglón de estado de la app de antes ("Orders loaded", "Could not
      load No Match from cloud."): salía suelto encima de la sección, sin
@@ -422,6 +432,24 @@ body.dk .bs-header #dkMenu { display: none; }
      mismo ya sale como aviso flotante (toast.js envuelve setStatus), así
      que aquí sobra. Sólo se esconde: sigue en el DOM por si algo lo lee. */
   body.dk #statusBar { display: none !important; }
+}
+
+/* Con poco alto (el iPad horizontal mide 820, y la app instalada resta la
+   franja de la hora): la barra no cabía desde que Orders lleva sus vistas
+   y "Soon" su grupo (885 px: Settings quedaba cortado abajo). Se compacta,
+   sin quitar nada: renglones y grupos más juntos, Settings y Admin como
+   círculos junto a Count, el estado en una línea. */
+@media (min-width: 1101px) and (max-height: 960px) {
+  #dkLado .dk-logo { padding-bottom: 12px; }
+  #dkLado .dk-ciclo { margin-bottom: 10px; }
+  #dkLado .dk-nav { padding-top: 5px; padding-bottom: 5px; }
+  #dkLado .dk-grupo { margin: 9px 12px 2px; }
+  #dkLado .dk-pie { grid-template-columns: minmax(0, 1fr) auto; align-items: center; padding-top: 10px; gap: 8px; }
+  #dkLado .dk-pie > .dk-estado { grid-column: 1 / -1; }
+  #dkLado .dk-chicos { gap: 6px; }
+  #dkLado .dk-nav.dk-chico { flex: none; width: 42px; height: 42px; padding: 0; border-radius: 50% !important; }
+  #dkLado .dk-nav.dk-chico .dk-lbl { display: none; }
+  #dkLado #bsStatusRow { flex-direction: row; flex-wrap: wrap; }
 }
 
 /* Entre 641 y 1100 px (un iPad, una ventana estrecha): sólo iconos. */

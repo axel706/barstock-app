@@ -290,8 +290,30 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   prueba('.dk-pantalla: sin caja, pegada a la barra y del alto de la pantalla',
     /\.section-card\.dk-pantalla \{[^}]*margin: -18px -24px 0 !important;[^}]*min-height: calc\(100vh - var\(--dk-alto\)\);[^}]*border-radius: 0 !important/.test(CSS));
   prueba('su vidrio es una capa fija detrás (no se ve la foto nítida al bajar)',
-    /\.dk-pantalla::before \{[^}]*position: fixed; z-index: -1;[^}]*top: var\(--dk-alto\); right: 0; bottom: 0; left: var\(--dk-x\);[^}]*backdrop-filter: blur/.test(CSS)
+    /body\.dk #dkVidrio \{[^}]*position: fixed; z-index: 0;[^}]*top: var\(--dk-alto\); right: 0; bottom: 0; left: var\(--dk-x\);[^}]*backdrop-filter: blur/.test(CSS)
     && /\.section-card\.dk-pantalla \{[^}]*position: relative; z-index: 0;[^}]*backdrop-filter: none !important/.test(CSS));
+  // Axel, 2026-11-26, en el iPad: "el panel aparece sin blur por un
+  // instante al cambiar entre secciones". Cada sección traía su propio
+  // vidrio (::before) y al cambiar nacía uno nuevo, que Safari pinta un
+  // instante sin desenfoque. Ahora es UNO, permanente: sólo se muestra.
+  prueba('   y no nace con cada sección: no hay ::before por sección', !/\.dk-pantalla::before/.test(CSS));
+  {
+    const v = D.getElementById('dkVidrio');
+    prueba('   UNA capa de vidrio, la primera de .wrap', !!v && D.querySelectorAll('#dkVidrio').length === 1 && v.parentElement.classList.contains('wrap'));
+    prueba('   que se muestra con opacidad (no display: se queda pintada)', /body\.dk #dkVidrio \{[^}]*opacity: 0;/.test(CSS) && /body\.dk\.dk-vidrio #dkVidrio \{ opacity: 1; \}/.test(CSS) && !/#dkVidrio[^{]*\{[^}]*display: none/.test(CSS));
+    D.getElementById('costReportSection').classList.add('dk-pantalla');
+    w.bsOpenSection('costReport'); await espera();
+    const con = D.body.classList.contains('dk-vidrio');
+    w.bsOpenSection('pourIq'); await espera();
+    const sin = D.body.classList.contains('dk-vidrio');
+    w.bsOpenSection('costReport'); await espera();
+    prueba('   a la vista sólo con una sección de la forma estándar, y la misma capa al cambiar', con && !sin && D.body.classList.contains('dk-vidrio') && D.getElementById('dkVidrio') === v);
+    D.getElementById('costReportSection').classList.remove('dk-pantalla');
+  }
+  // La barra lateral con Orders y sus vistas medía 885 px: a 820 (el iPad
+  // horizontal) Settings quedaba cortado. Con poco alto se compacta.
+  prueba('con poco alto la barra lateral se compacta (Settings y Admin en círculos junto a Count)',
+    /@media \(min-width: 1101px\) and \(max-height: 960px\) \{[\s\S]*?#dkLado \.dk-nav \{ padding-top: 5px; padding-bottom: 5px; \}[\s\S]*?#dkLado \.dk-nav\.dk-chico \.dk-lbl \{ display: none; \}/.test(CSS));
   prueba('CLAUDE.md lo dice como el estándar', /EL ESTÁNDAR DE LAS SECCIONES DEL ESCRITORIO/.test(leer('CLAUDE.md')));
 
   grupo('8i. Sin el renglón de estado de antes');

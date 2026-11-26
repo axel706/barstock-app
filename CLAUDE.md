@@ -451,7 +451,9 @@ sección de hoy vive tal cual dentro del armazón.
   a Count. History se fue: `ALIAS` la manda a Sent (el teléfono y la
   portada aún la piden). **El botón del ciclo, de cristal** (Axel: "liquid
   glass para distinguirlo más"), teñido del color de su paso: el rojo
-  sigue siendo el que borra. Entre 641 y 1100 px, sólo iconos. **Las reglas de
+  sigue siendo el que borra. Con poco alto (≤ 960, el iPad horizontal
+  mide 820) se compacta sin quitar nada: medía 885 y Settings quedaba
+  cortado. Entre 641 y 1100 px, sólo iconos. **Las reglas de
   ancho de las secciones miran la VENTANA**, no lo que queda junto a la
   barra: la de 980 de Inventory se repite con el ancho de la barra
   sumado; las demás (~18) se arreglan al rehacer cada sección. Prueba:
@@ -591,8 +593,13 @@ sección de hoy vive tal cual dentro del armazón.
     enseña; ésta es la forma de todas.
   - Se pone con la clase `dk-pantalla` en la `.section-card`
     (desk-shell.css: sin caja, pegada a la barra, y su vidrio en una capa
-    FIJA detrás, `::before`; desenfocando la sección misma, al bajar por
-    una lista larga se veía la foto nítida). Ya la llevan Sales y Running
+    FIJA detrás; desenfocando la sección misma, al bajar por una lista
+    larga se veía la foto nítida). **Esa capa es UNA y permanente**
+    (`#dkVidrio`, primera de `.wrap`, opacidad 1 con `body.dk-vidrio`, que
+    pone `desk-shell.marcar` en la misma vuelta del cambio): era un
+    `::before` de cada sección, nacía con ella, y en el iPad una capa con
+    desenfoque recién creada sale un instante sin él (Axel, 2026-11-26: "el
+    panel aparece sin blur por un instante al cambiar entre secciones"). Ya la llevan Sales y Running
     out.
 - **Running out en el Home del escritorio** (Axel, 2026-11-25, lámina A:
   "más similar al del teléfono, siluetas, pero al tener espacio podemos
