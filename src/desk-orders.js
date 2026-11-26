@@ -33,6 +33,7 @@
   let _vista = 'open', _vendor = null, _q = '', _tq = 0;
   let _abierto = false;   // si el módulo del teléfono está montado aquí
   let _auto = null;       // el último proveedor elegido solo
+  let _revisando = false; // en Review and send
 
   function abierta() { return !!(_sec && _sec.classList.contains('bs-active-section')); }
   const lista = () => (MO() && MO().listaResumen ? MO().listaResumen() : []);
@@ -104,7 +105,8 @@
       if (vs.length && _abierto && _auto !== vs[0].nombre) { _auto = vs[0].nombre; setTimeout(() => elegir(vs[0].nombre), 0); return; }
     }
     if (e.sec === 'open' && e.vendor) { _vendor = e.vendor; _auto = null; }
-    _caja.classList.toggle('dko-revisando', !!e.revisar);
+    _revisando = !!e.revisar;
+    _caja.classList.toggle('dko-revisando', _revisando);
     pintarLista();
     pie();
     filtrar();
@@ -142,7 +144,7 @@
   const CABECERA = {
     // Con un proveedor abierto, su nombre en el título (Axel, en la Mac:
     // "< Orders - SOUTHERN"); la cabecera de dentro se va (desk-orders.css).
-    titulo: () => (_vista === 'open' && _vendor ? 'Orders › ' + _vendor : 'Orders'),
+    titulo: () => (_vista === 'open' && _vendor ? 'Orders › ' + _vendor + (_revisando ? ' › Review' : '') : 'Orders'),
     vistas() {
       const n = MO() && MO().cuentas ? MO().cuentas() : {};
       return '<div class="dkc-seg" role="tablist">' + VISTAS.map(([k, t]) =>

@@ -103,8 +103,46 @@
   #dkOrd .dko-pt small { margin-left: 8px; color: #a9bacd; font-size: 13px; }
   #dkOrd .dko-send { margin-left: auto; height: 44px; padding: 0 22px; font-size: 15px; }
 
+  /* ── Review and send (lámina A invertida, Axel 2026-11-26): la orden a
+     la izquierda, a lo ancho; el total y el envío a la derecha, quietos
+     mientras baja la lista. Las piezas son las de la revisión del teléfono
+     (pintarRevision): la cabecera se abre (display: contents) para que su
+     vuelta vaya arriba y su total, a la derecha; su título va en el
+     header ("Orders › LOOP › Review"). */
+  #dkOrd.dko-revisando #dkoDet {
+    /* align-content: start: el panel mide al menos la pantalla y la rejilla
+       repartía lo que sobra entre sus filas (la vuelta salía con 130 px). */
+    display: grid; column-gap: 28px; align-items: start; align-content: start;
+    grid-template-columns: minmax(0, 1fr) 420px;
+    grid-template-areas: "vuelta vuelta" "lab tot" "lista env";
+  }
+  #dkOrd.dko-revisando #dkoDet > .m-cab { display: contents; }
+  #dkOrd.dko-revisando #dkoDet .m-cab > .m-atras { grid-area: vuelta; justify-self: start; margin: 0 0 12px; width: auto; padding: 0 12px 0 6px; gap: 6px; display: inline-flex; align-items: center; color: #7dd3fc; font-weight: 750; }
+  #dkOrd.dko-revisando #dkoDet .m-cab > .m-atras::after { content: 'Back to the lines'; font-size: 14px; }
+  #dkOrd.dko-revisando #dkoDet .m-cab > .m-cab-t { display: none; }
+  #dkOrd.dko-revisando #dkoDet .m-cab > .m-cab-d {
+    grid-area: tot; text-align: left; padding: 16px 20px; border-radius: 20px;
+    background: var(--tinta); border: 1px solid var(--tinta-borde);
+  }
+  #dkOrd.dko-revisando #dkoDet .m-cab .m-ord-tot { font-size: 34px; font-weight: 850; text-align: left; }
+  #dkOrd.dko-revisando #dkoDet .m-cab .m-ord-tot small { display: block; font-size: 14px; font-weight: 600; margin-top: 2px; }
+  #dkOrd.dko-revisando #dkoDet > .m-rev-lab { grid-area: lab; align-self: end; margin: 0 0 8px; }
+  #dkOrd.dko-revisando #dkoDet > .m-rev-list { grid-area: lista; }
+  #dkOrd.dko-revisando #dkoDet > .m-rev-enviar {
+    grid-area: env; margin-top: 14px;
+    position: sticky; top: calc(var(--dk-alto) + 14px);
+  }
+  #dkOrd.dko-revisando #dkoDet .m-rev-l { font-size: 15px; padding-top: 11px; padding-bottom: 11px; }
+  #dkOrd.dko-revisando #dkoDet .m-rev-l .v.sin { color: #fcd34d; font-weight: 800; }
+  #dkOrd.dko-revisando #dkoDet .m-rev-l .v.sin::first-letter { text-transform: uppercase; }
+  /* Lo de "enviado" (una sola pieza), centrado a lo ancho. */
+  #dkOrd.dko-revisando #dkoDet > .m-rev-ok { grid-column: 1 / -1; max-width: 520px; justify-self: center; }
+
   /* En la revisión, To buy, Sent e Invoices, la orden a todo el ancho:
      la columna de proveedores es de Open. */
-  #dkOrd:is(.dko-revisando, [data-vista="buy"], [data-vista="sent"], [data-vista="inv"]) { grid-template-columns: minmax(0, 1fr); }
-  #dkOrd:is(.dko-revisando, [data-vista="buy"], [data-vista="sent"], [data-vista="inv"]) .dko-lista { display: none; }
+  /* Con body.dk delante: sin él, la regla de las dos columnas (body.dk
+     #dkOrd) pesaba más y la revisión se quedaba en el hueco de 320 px de
+     la columna de proveedores (la de las capturas de Axel). */
+  body.dk #dkOrd:is(.dko-revisando, [data-vista="buy"], [data-vista="sent"], [data-vista="inv"]) { grid-template-columns: minmax(0, 1fr); }
+  body.dk #dkOrd:is(.dko-revisando, [data-vista="buy"], [data-vista="sent"], [data-vista="inv"]) .dko-lista { display: none; }
 }

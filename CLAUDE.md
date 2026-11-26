@@ -866,7 +866,20 @@ sección de hoy vive tal cual dentro del armazón.
   mismos avisos que el teléfono (`inventoryUpdated`, `ordersUpdated`,
   `parAdjustmentsUpdated`) y llama a `refresh()`; sin eso, lo cambiado en
   el teléfono no se veía aquí hasta recargar (lo del escritorio sí, porque
-  `updateFinalOrder` llama a `refresh()`). Prueba: `test-orders-escritorio`.
+  `updateFinalOrder` llama a `refresh()`). **Review and send** (lámina A
+  invertida, 2026-11-26): la orden a la izquierda, a lo ancho; el total y
+  el envío a la derecha, quietos (sticky); "Orders › LOOP › Review" en el
+  header y "‹ Back to the lines". Son las piezas de `pintarRevision` del
+  teléfono en una rejilla (su cabecera en `display: contents`, con
+  `align-content: start`: el panel mide la pantalla y la rejilla repartía
+  lo que sobraba). **LOOP en el escritorio sale por CSV, no por correo**
+  (Axel: "al enviar en la versión de escritorio se descarga el csv"):
+  "Place & download CSV" guarda la orden y llama a
+  `exportLoopCsvFromRows`, sin direcciones ni nota, como el escritorio de
+  antes (place-order.js); en el teléfono LOOP sigue igual. Ojo con la
+  especificidad: la regla de una columna lleva `body.dk` delante, o la de
+  dos columnas ganaba y la revisión cabía en 320 px.
+  Prueba: `test-orders-escritorio`.
 - **EL HEADER DE LAS SECCIONES: SITIOS FIJOS** (Axel, 2026-11-26, lámina
   "Section header · fixed places": "es dinámico, pero a la vez es fijo
   […] los controles siempre en las mismas posiciones"). El estándar para

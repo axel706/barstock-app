@@ -740,11 +740,14 @@
     host.innerHTML = `
       <div class="m-rev-ok">
         <div class="m-rev-ok-i"><i class="ti ti-circle-check" aria-hidden="true"></i></div>
-        <div class="m-rev-ok-t">Sent to ${esc(e.vendor)}</div>
+        <div class="m-rev-ok-t">${e.csv ? 'Placed for ' : 'Sent to '}${esc(e.vendor)}</div>
         <div class="m-rev-ok-s">${n2(e.botellas)} bottles · ${money(e.total)}</div>
+        ${e.csv ? `<div class="m-rev-ok-n">${e.bajado
+          ? 'The order is placed and its CSV (<b>loop_upload.csv</b>) is in your downloads, ready to upload to LOOP.'
+          : 'The order is placed, but the CSV did not download. Get it from Export › LOOP (upload ready).'}</div>` : `
         <div class="m-rev-ok-m">${e.to.map(x => esc(x)).join('<br>')}</div>
         <div class="m-rev-ok-n">The order is placed and the email is on its way
-          with the PDF attached. You can resend it from History.</div>
+          with the PDF attached. You can resend it from History.</div>`}
         <button type="button" class="m-rev-go" id="mrDone">Done</button>
       </div>`;
     // Salir lo decides tú. Que la pantalla se cierre sola es lo que
@@ -765,6 +768,11 @@
     if (!v) { salirRevision(); _vendor = null; return pintarResumen(host); }
 
     const botellas = v.botellas;
+    // LOOP en el escritorio sale por CSV, no por correo (Axel, 2026-11-26:
+    // "al enviar en la versión de escritorio se descarga el csv de la
+    // orden"): era lo que hacía el escritorio de antes (place-order.js).
+    // En el teléfono, igual que siempre.
+    const csv = !!_esc && esLoop(v.nombre);
 
     host.innerHTML = `
       ${cab({
@@ -781,6 +789,17 @@
            una barra negra. Arriba no hace falta nada pegajoso: lo
            primero que ves al entrar es a quién va y el botón, y las
            líneas quedan debajo para repasarlas si quieres. -->
+      ${csv ? `
+      <div class="m-rev-enviar">
+        <div class="m-rev-enviar-h">Place this order</div>
+        <div class="m-rev-ok-n">LOOP orders go out as a CSV to upload, not by email. Placing it saves the order and downloads <b>loop_upload.csv</b>.</div>
+        ${_colocando ? `
+          <div class="m-rev-pasos">
+            <div class="${_paso > 1 ? 'ok' : 'go'}">${_paso > 1 ? '✓' : '●'} Saving the order</div>
+            <div class="${_paso > 1 ? 'go' : ''}">● Downloading the CSV</div>
+          </div>` : ''}
+        <button type="button" class="m-rev-go" id="mrGo"${_colocando ? ' disabled' : ''}>${_colocando ? 'Working…' : 'Place & download CSV'}</button>
+      </div>` : `
       <div class="m-rev-enviar">
         <!-- Un título, para que el bloque se lea como UNA cosa. Sin
              él, las fichas, el campo y la casilla parecían tres
@@ -858,7 +877,7 @@
             : 'Place & send'}</button>
         ${!_to.length && !_cargandoDest
           ? '<div class="m-rev-falta">Add at least one address first.</div>' : ''}
-      </div>
+      </div>`}
 
       <div class="m-rev-lab">You are ordering</div>
       <div class="m-rev-list">
@@ -866,7 +885,7 @@
           <div class="m-rev-l">
             <span class="q">${n2(cantidad(r))}×</span>
             <span class="n">${esc(r.item || '')}</span>
-            <span class="v">${num(r.value) > 0
+            <span class="v${num(r.value) > 0 ? '' : ' sin'}">${num(r.value) > 0
               ? money(num(r.value) * cantidad(r)) : 'no price'}</span>
           </div>`).join('')}
       </div>`;
@@ -879,6 +898,11 @@
       if (aQuick) { _vendor = null; volverAQuick(); return; }
       repintar();
     });
+
+    if (csv) {
+      host.querySelector('#mrGo').onclick = () => colocar(v, host, { csv: true });
+      return;
+    }
 
     host.querySelectorAll('[data-quitar]').forEach(b => {
       b.onclick = () => { _to.splice(Number(b.dataset.quitar), 1); repintar(); };
@@ -1069,9 +1093,10 @@
     }
   }
 
-  async function colocar(v, host) {
+  async function colocar(v, host, op) {
+    const csv = !!(op && op.csv);
     if (_colocando) return;
-    if (!_to.length) return;
+    if (!csv && !_to.length) return;
 
     const avisar = (t) => { if (window.BarStockToast) window.BarStockToast.show(t); };
 
@@ -1162,6 +1187,24 @@
       // mandarse otra vez — y eso son dos órdenes al proveedor.
       if (_extra && _extra.quickOrder && window.BarStockMobileQuick) {
         try { window.BarStockMobileQuick.limpiar(); } catch (e) {}
+      }
+
+      // LOOP en el escritorio: el CSV de siempre (exportLoopCsvFromRows,
+      // como place-order.js) y sin correo. Guardada ya, un fallo al
+      // descargar no la deshace: se dice, y se puede bajar de Export.
+      if (csv) {
+        _paso = 2;
+        repintar();
+        let bajado = true;
+        try {
+          await alMenos(PASO_MS, Promise.resolve());
+          if (hay('exportLoopCsvFromRows')) window.exportLoopCsvFromRows(orden.items, orden.filename);
+          else bajado = false;
+        } catch (e) { bajado = false; console.error('[orders] el CSV de LOOP no se descargó', e); }
+        _colocando = false; _paso = 0; _colocada = null;
+        _enviado = { vendor: v.nombre, to: [], botellas: orden.totalUnits, total: orden.subtotal, csv: true, bajado };
+        repintar();
+        return;
       }
 
       await guardarDestinatarios(v.nombre);

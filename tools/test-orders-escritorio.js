@@ -142,7 +142,40 @@ function entorno() {
   prueba('el "Review and send" del teléfono se esconde (lo lleva el pie)', /#dkOrd #dkoDet \.m-ord-enviar \{ display: none; \}/.test(CSS));
   pie.querySelector('[data-acc="enviar"]').click(); await esperar(20);
   prueba('el pie abre la revisión del teléfono', /Review the order/.test(txt(det)) && caja.classList.contains('dko-revisando'));
-  prueba('   a todo el ancho, con su vuelta a las líneas', /dko-revisando[^{]*\.dko-lista \{ display: none; \}/.test(CSS) && /#dkOrd:not\(\.dko-revisando\) #dkoDet \.m-cab \.m-atras \{ display: none; \}/.test(CSS));
+  prueba('   a todo el ancho, con su vuelta a las líneas', /body\.dk #dkOrd:is\(\.dko-revisando[^{]*\{ grid-template-columns: minmax\(0, 1fr\); \}/.test(CSS) && /dko-revisando[^{]*\.dko-lista \{ display: none; \}/.test(CSS) && /#dkOrd:not\(\.dko-revisando\) #dkoDet \.m-cab \.m-atras \{ display: none; \}/.test(CSS));
+
+  grupo('5a. Review and send: la orden a la izquierda, el envío a la derecha (lámina A invertida)');
+  prueba('el título dice Orders › el proveedor › Review', /^Orders › SOUTHERN › Review$/.test(txt(cab.querySelector('.dkc-titulo span'))), txt(cab.querySelector('.dkc-titulo span')));
+  prueba('dos columnas: la lista a la izquierda, total y envío a la derecha, quietos', /#dkOrd\.dko-revisando #dkoDet \{[^}]*grid-template-areas: "vuelta vuelta" "lab tot" "lista env"/.test(CSS) && /\.m-rev-enviar \{[^}]*position: sticky/.test(CSS));
+  {
+    // LOOP en el escritorio: se guarda y se descarga su CSV, sin correo
+    // (Axel: "al enviar en la versión de escritorio se descarga el csv").
+    const w3 = entorno();
+    w3.state.master.push({ item: 'Aperol', code: 'APE', vendor: 'LOOP', onHand: 0, suggested: 3, value: 21, toOrder: 3, orderOverride: '' });
+    w3.getActiveVendors = () => ['SOUTHERN', 'BREAKTHRU', 'LOOP'];
+    let guardada = null, csv = null, correo = 0;
+    w3.persistOrderToSupabase = async (o) => { guardada = o; };
+    w3.loadOrdersFromCloud = async () => {};
+    w3.uniqueOrderId = () => 'ord_1';
+    w3.exportLoopCsvFromRows = (rows, nombre) => { csv = { rows: rows.length, nombre }; };
+    w3.fetch = async () => { correo++; return { ok: true, json: async () => ({}) }; };
+    const D3 = w3.document;
+    w3.BarStockDeskHeader.marcar('vendor');
+    const s3 = D3.getElementById('vendorSection');
+    s3.classList.remove('bs-active-section'); await esperar(5); s3.classList.add('bs-active-section'); await esperar(30);
+    D3.querySelector('#dkoLista .dko-v[data-v="LOOP"]').click(); await esperar(10);
+    D3.querySelector('#dkoPie [data-acc="enviar"]').click(); await esperar(10);
+    const det3 = D3.getElementById('dkoDet');
+    prueba('LOOP: sin direcciones ni nota (no sale por correo)', !det3.querySelector('#mrTo, #mrNotaAdd, #mrRec') && /CSV/.test(txt(det3)), txt(det3).slice(0, 160));
+    const go = det3.querySelector('#mrGo');
+    prueba('   el botón dice que descarga el CSV y está listo', !!go && !go.disabled && /download CSV/i.test(txt(go)));
+    go.click(); await esperar(2500);
+    prueba('   guarda la orden (la misma de siempre, loop_csv)', !!guardada && guardada.vendor === 'LOOP' && guardada.exportType === 'loop_csv');
+    prueba('   descarga su CSV, el de siempre', !!csv && csv.rows === 1 && csv.nombre === 'loop_upload.csv', JSON.stringify(csv));
+    prueba('   y no manda correo', correo === 0);
+    prueba('   lo dice al terminar', /CSV/.test(txt(det3)) && !/email is on its way/.test(txt(det3)), txt(det3).slice(0, 200));
+    prueba('en el teléfono LOOP sigue igual (sólo el escritorio descarga)', /const csv = !!_esc && esLoop\(/.test(MO));
+  }
 
   grupo('5b. El tiempo real: lo cambiado en el teléfono se ve aquí');
   {
