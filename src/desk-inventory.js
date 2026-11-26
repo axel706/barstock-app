@@ -103,7 +103,7 @@
     const par = num(r.suggested);
     const v = vivo(r);
     return `<div class="dki-fila${r.item === _sel ? ' sel' : ''}" data-item="${esc(r.item)}" role="button" tabindex="0">
-      <span class="dki-silc">${silueta(r)}</span>
+      <span class="dki-silc" style="--liq:${color(r)}">${silueta(r)}</span>
       <span class="dki-n"><b>${esc(r.item)}</b><small>${v ? '<span class="dki-live">● Live</span>' : ''}${ag ? `<span class="dki-out ${ag.tono}">${esc(ag.txt)}</span>` : ''}${chip}${
         falt.map(f => `<span class="dki-falta ${f === 'no price' ? 'r' : f === 'no par' ? 'g' : 'a'}">${esc(f)}</span>`).join('')}${extra ? `<span>${esc(extra)}</span>` : ''}</small></span>
       <span class="dki-v">${typeof window.badge === 'function' ? window.badge(r.vendor || 'UNKNOWN') : esc(r.vendor || '')}</span>
@@ -500,7 +500,15 @@
     _sel = _sel === nombre ? null : nombre;
     _tab = 'ver';
     _borrarArmado = false;
+    // Abrir o cerrar el panel quita o pone las cuatro cifras de arriba, y
+    // la lista sube o baja ~300 px: la fila tocada saltaba bajo el dedo.
+    // Se mide antes y después y la página compensa la diferencia.
+    const fila = (n) => [..._caja.querySelectorAll('.dki-fila')].find(f => f.dataset.item === n);
+    const f0 = fila(nombre);
+    const y0 = f0 ? f0.getBoundingClientRect().top : null;
     pintar({ panel: true });
+    const f1 = y0 === null ? null : fila(nombre);
+    if (f1) { const d = f1.getBoundingClientRect().top - y0; if (Math.abs(d) > 1 && window.scrollBy) window.scrollBy(0, d); }
   }
 
   // ── Los toques ──

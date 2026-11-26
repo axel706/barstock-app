@@ -97,9 +97,12 @@
   #dkInv .dki-fila.sel { border-color: rgba(125, 211, 252, .85); box-shadow: 0 0 0 1px rgba(125, 211, 252, .5); }
   #dkInv .dki-fila:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
   #dkInv .dki-silc { display: flex; justify-content: center; }
-  #dkInv .dki-silc svg { height: 38px; width: auto; }
+  /* Más grandes (Axel, 2026-11-26: "las botellas son muy pequeñas"), y el
+     líquido del color de su nivel, el MISMO que su número (--liq, el
+     tono de product-hero que pone la fila): iban todas en amarillo. */
+  #dkInv .dki-silc svg { height: 56px; width: auto; }
   #dkInv .m-hc-vid { fill: rgba(255, 255, 255, .08); stroke: rgba(255, 255, 255, .5); stroke-width: 1.4; }
-  #dkInv .m-hc-liq { fill: #fbbf24; }
+  #dkInv .dki-silc .m-hc-liq { fill: var(--liq, #fbbf24); }
   #dkInv .dki-n { min-width: 0; }
   #dkInv .dki-n b { display: block; font-size: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* Un renglón: lo que no cabe se corta. */
@@ -130,6 +133,13 @@
      sólo de último recurso. ── */
   #dkInv { --dki-pw: 410px; }
   #dkInv.con-panel .dki-main { margin-right: calc(var(--dki-pw) - 28px + 16px); }
+  /* Con un producto abierto, las cuatro cifras de arriba se van (Axel, en
+     el iPad): apretadas junto al panel salían a medias bajo el header, y
+     lo que se mira es la lista. Al cerrarlo vuelven. */
+  #dkInv.con-panel .dki-cabeza { display: none; }
+  /* Y sin el aire de arriba de la sección: sin las cifras, era una franja
+     vacía encima de los títulos de las columnas. */
+  body.dk #inventorySection.dk-pantalla:has(#dkInv.con-panel) { padding-top: 0 !important; }
   #dkInv .dki-panel:empty { display: none; }
   #dkInv .dki-panel {
     position: fixed; z-index: 30; top: var(--dk-alto); right: 0; bottom: 0; width: var(--dki-pw);

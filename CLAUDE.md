@@ -804,7 +804,13 @@ sección de hoy vive tal cual dentro del armazón.
   panel abierto, las columnas escondidas van en `display: none` (con 0 de
   ancho seguían sumando su separación) y, con poco ancho, también Par.
   Al elegir un producto tardaba 2 s con 220: cada fila recalculaba su
-  silueta; `home-cartas.silueta` ya recuerda contorno y nivel por forma. Los botones, del cristal
+  silueta; `home-cartas.silueta` ya recuerda contorno y nivel por forma.
+  **Con un producto abierto, las cuatro cifras se esconden** (Axel, en el
+  iPad: apretadas junto al panel salían a medias bajo el header) y la
+  sección pierde su aire de arriba; abrir o cerrar el panel compensa el
+  scroll para que la fila tocada no salte (`elegir`). Las botellas de la
+  lista a 56 px y su líquido del color de su nivel, el MISMO que su
+  número (`--liq`, el tono de product-hero): iban todas en amarillo. Los botones, del cristal
   del header: la MISMA regla de desk-header.css (`.dki-cr`, `.dki-tabs`).
   **Quitado por Axel**: el On Hand a mano (también al crear: empieza en
   0), Scan Price Invoice (los precios vienen de MarginEdge) y el modo

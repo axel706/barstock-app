@@ -130,7 +130,7 @@ w.eval(DI);
   prueba('columnas: Product, Vendor, Price, Avg, Par, To order, On hand', cols.join(',') === 'nombre,vendor,precio,avg,par,pedir,onhand');
   prueba('   y en la fila, el número al final', tito.lastElementChild.classList.contains('dki-hay') && /\$/.test(txt(tito.children[3])));
   const CSSI = fs.readFileSync(path.join(__dirname, '..', 'styles', 'desk-inventory.css'), 'utf8');
-  prueba('filas la mitad más grandes (nombre 19, On hand 26, botella 38)', /\.dki-n b \{[^}]*font-size: 19px/.test(CSSI) && /\.dki-hay \{[^}]*font-size: 26px/.test(CSSI) && /\.dki-silc svg \{[^}]*height: 38px/.test(CSSI));
+  prueba('filas la mitad más grandes (nombre 19, On hand 26, botella 56)', /\.dki-n b \{[^}]*font-size: 19px/.test(CSSI) && /\.dki-hay \{[^}]*font-size: 26px/.test(CSSI) && /\.dki-silc svg \{[^}]*height: 56px/.test(CSSI));
   prueba('lo que le falta a cada uno (no price, no par)', /no price/.test(txt(caja.querySelector('.dki-fila[data-item="Hennessy VS"]'))) && /no par/.test(txt(caja.querySelector('.dki-fila[data-item="Hennessy VS"]'))));
 
   grupo('2. El header de sitios fijos');
@@ -240,6 +240,14 @@ w.eval(DI);
   prueba('   los huecos vacíos de la ficha no suman aire', /#dkiPanel #dkiFicha > :empty \{ display: none/.test(CSSI4));
   prueba('   cada bloque de Overview, la misma tarjeta', /#dkiPanel :is\(\.m-rows, \.m-zon, \.m-trf, \.m-vt, \.m-iqb\) \{/.test(CSSI4));
   prueba('   sin sitio, Toast se queda en su renglón (no rueda el panel)', /#dkiPanel\.apretado \.m-vt :is\(\.m-ts-g, \.m-ts-d\) \{ display: none/.test(CSSI4) && /classList\.toggle\('apretado'/.test(DI));
+  // Axel, 2026-11-26, en el iPad: con un producto abierto, las cuatro
+  // cifras de arriba no se ven (la página no sube hasta ellas), y las
+  // botellas de la lista más grandes y del color de su nivel, como el
+  // número: verde, ámbar o rojo (iban todas en amarillo).
+  prueba('con el panel abierto, las cifras de arriba se esconden', /#dkInv\.con-panel \.dki-cabeza \{ display: none/.test(CSSI4));
+  prueba('   y la fila tocada no salta: la página compensa lo que se fue', /window\.scrollBy\(0, d\)/.test(DI));
+  prueba('las botellas de la lista, más grandes', /#dkInv \.dki-silc svg \{[^}]*height: 56px/.test(CSSI4));
+  prueba('   y del color de su nivel (el mismo que su número)', /--liq:\$\{color\(r\)\}/.test(DI) && /#dkInv \.dki-silc \.m-hc-liq \{ fill: var\(--liq/.test(CSSI4) && !/#dkInv \.m-hc-liq \{ fill: #fbbf24/.test(CSSI4));
   prueba('tres cifras: Uses / week, Unit price, Runs out', /Uses \/ week/.test(txt(pan().querySelector('.dki-c3'))) && /Unit price/.test(txt(pan().querySelector('.dki-c3'))) && /Runs out/.test(txt(pan().querySelector('.dki-c3'))) && /\$25\.00/.test(txt(pan().querySelector('.dki-c3'))));
   prueba('un solo Received', pan().querySelectorAll('[data-acc="recibido"]').length === 1);
   prueba('Add to order es el de la ficha (#msAdd)', /msAdd/.test(DI) && pan().querySelector('[data-acc="pedir"]'));

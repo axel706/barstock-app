@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261126-111910",
+    "items": [
+      "Bigger bottles in Inventory, green, amber or red by level",
+      "With a product open, the list goes up to the top"
+    ]
+  },
+  {
     "build": "20261126-105959",
     "items": [
       "Product panel runs full height, no scrolling inside",
@@ -186,12 +193,6 @@
     "items": [
       "Desktop Home: Sync and Review on Spent this cycle",
       "Shows invoice progress while it syncs"
-    ]
-  },
-  {
-    "build": "20261125-140138",
-    "items": [
-      "iPad app: top bar sits below the iOS haze and blends in"
     ]
   }
 ]
