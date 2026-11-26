@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261126-113753",
+    "items": [
+      "Pour·IQ par suggestion moved to Edit, under Par"
+    ]
+  },
+  {
     "build": "20261126-111910",
     "items": [
       "Bigger bottles in Inventory, green, amber or red by level",
@@ -186,13 +192,6 @@
     "build": "20261125-143215",
     "items": [
       "Review prices opens the list right there, not Settings"
-    ]
-  },
-  {
-    "build": "20261125-141515",
-    "items": [
-      "Desktop Home: Sync and Review on Spent this cycle",
-      "Shows invoice progress while it syncs"
     ]
   }
 ]

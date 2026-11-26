@@ -379,6 +379,13 @@
       const ficha = pan.querySelector('#dkiFicha');
       const MS = window.BarStockMobileSearch;
       if (ficha && MS && MS.llenarFicha) MS.llenarFicha(ficha, idx, () => pintar({ panel: true }), false);
+      // "Pour·IQ says the par should be…" va en Edit, justo debajo de Par
+      // y Price (Axel, 2026-11-26): es una propuesta de cambiar el par, no
+      // algo que mirar. Se MUEVE el bloque de la ficha (con su Apply ya
+      // enganchado); sin Edit (sin permiso de editar), se queda en Overview.
+      const iq = ficha && ficha.querySelector('.m-iqb');
+      const duo = pan.querySelector('.dki-ed .dki-duo');
+      if (iq && duo) duo.after(iq);
     }
     // El header (vistas con sus cuentas, el filtro, lo que está en uso);
     // el campo del filtro conserva el foco y el cursor (desk-header).

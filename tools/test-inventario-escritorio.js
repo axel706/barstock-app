@@ -90,7 +90,7 @@ const oyentes = {};
 w.BarStockEvents = { on: (n, f) => { (oyentes[n] = oyentes[n] || []).push(f); }, emit: (n, d) => (oyentes[n] || []).forEach(f => f(d)) };
 let oyenteLive = null;
 w.BarStockLiveCache = { cuanto: (r) => r.item === "Tito's Vodka" ? 2.4 : Number(r.onHand), vivo: (r) => r.item === "Tito's Vodka", agota: (r) => r.item === "Tito's Vodka" ? { txt: 'Out Sat', tono: 'a' } : null, alCambiar: (f) => { oyenteLive = f; } };
-w.BarStockMobileSearch = { llenarFicha: (caja, idx) => { llamadas.push('ficha:' + idx); caja.innerHTML = '<div class="m-fic">ficha</div>'; } };
+w.BarStockMobileSearch = { llenarFicha: (caja, idx) => { llamadas.push('ficha:' + idx); caja.innerHTML = '<div class="m-fic">ficha</div><div class="m-iqb">Pour·IQ says the par should be 9<button id="msIQ">Apply → 9</button></div>'; } };
 w.BarStockGuest = { puede: () => true };
 w.BarStockMobile = { register: () => {} };
 // El Home: su "On the shelf" (LIVE × precio) es el número de Inventory.
@@ -259,6 +259,10 @@ w.eval(DI);
   ['categoria', 'botella', 'recibido'].forEach(a => pan().querySelector(`[data-acc="${a}"]`).click());
   prueba('categoría, botella, Pour·IQ history (Item Info), Zero par y Received', llamadas.includes('categoria:0') && llamadas.includes('botella') && llamadas.includes('info:0') && llamadas.includes('cero:0') && llamadas.includes('recibido:0'), llamadas.join(','));
   pan().querySelector('.dki-tabs [data-tab="ed"]').click();
+  // Axel, 2026-11-26: "Pour·IQ says the par should be…" va en Edit, junto
+  // al par que cambia, no en Overview.
+  prueba('Pour·IQ va en Edit, justo debajo de Par / Price', (() => { const iq = pan().querySelector('.m-iqb'); return !!iq && !!iq.closest('.dki-ed') && iq.previousElementSibling && iq.previousElementSibling.classList.contains('dki-duo'); })());
+  prueba('   en un renglón, y en Edit sin las tres cifras (para que quepa sin rodar)', /#dkiPanel \.dki-ed \.m-iqb \{ display: flex/.test(CSSI4) && /#dkiPanel\[data-tab="ed"\] \.dki-c3 \{ display: none/.test(CSSI4));
   prueba('Edit cambia de pestaña sin repintar la ficha', pan().dataset.tab === 'ed' && llamadas.filter(x => /^ficha:/.test(x)).length === 1);
   prueba('sin On Hand editable', !pan().querySelector('input[id*="Hand"], input[id*="hand"]') && !/onHand:/.test(DI.slice(DI.indexOf('bsSaveItemFields(i2'), DI.indexOf('bsSaveItemFields(i2') + 200)));
   prueba('Save empieza apagado', pan().querySelector('.dki-guardar').disabled);

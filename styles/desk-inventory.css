@@ -228,6 +228,12 @@
     background: rgba(255, 255, 255, .08); color: #fff; font: inherit; font-size: 12.5px; font-weight: 750; cursor: pointer;
     box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
   }
+  /* Pour·IQ en Edit, en UN renglón: el texto y Apply pequeño al lado. En
+     dos (el botón a lo ancho) Edit no cabía en el iPad y Order override
+     quedaba detrás de Save. */
+  #dkiPanel .dki-ed .m-iqb { display: flex; align-items: center; gap: 10px; padding: 8px 10px; }
+  #dkiPanel .dki-ed .m-iqb-t { flex: 1; min-width: 0; margin: 0; font-size: 13px; }
+  #dkiPanel .dki-ed .m-iqb-b { flex: none; width: auto; margin: 0; height: 30px; padding: 0 12px; font-size: 13px; }
   /* Sin sitio para todo: Toast deja sus barras y se queda en su renglón. */
   #dkiPanel.apretado .m-vt :is(.m-ts-g, .m-ts-d) { display: none; }
   /* De .m-rows sólo se van los renglones que repiten (Uses, Par, Unit
@@ -240,6 +246,10 @@
   #dkiPanel .m-rows:not(:has(.m-fuente, .ti-hourglass)) { display: none; }
   #dkiPanel[data-tab="ver"] :is(.dki-ed, .dki-pie) { display: none; }
   #dkiPanel[data-tab="ed"] #dkiFicha > :not(.m-fic) { display: none; }
+  /* En Edit tampoco van las tres cifras: el precio ya está en su campo y
+     lo demás es para mirar. Con ellas Edit no cabía en el iPad (820 de
+     alto) y Order override quedaba detrás de Save. */
+  #dkiPanel[data-tab="ed"] .dki-c3 { display: none; }
   /* La ✕ dentro de la tarjeta, arriba a la derecha (sobre el hueco de la
      gráfica, que va abajo); "Live" se corre a su izquierda. */
   #dkiPanel .dki-x { position: absolute; z-index: 2; top: 10px; right: 10px; width: 34px; height: 34px; padding: 0; }

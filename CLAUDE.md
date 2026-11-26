@@ -810,7 +810,12 @@ sección de hoy vive tal cual dentro del armazón.
   sección pierde su aire de arriba; abrir o cerrar el panel compensa el
   scroll para que la fila tocada no salte (`elegir`). Las botellas de la
   lista a 56 px y su líquido del color de su nivel, el MISMO que su
-  número (`--liq`, el tono de product-hero): iban todas en amarillo. Los botones, del cristal
+  número (`--liq`, el tono de product-hero): iban todas en amarillo. **"Pour·IQ says the par should
+  be…" va en Edit**, justo debajo de Par y Price, en un renglón (Axel,
+  2026-11-26: es cambiar el par, no algo que mirar): se MUEVE el bloque
+  de la ficha con su Apply ya enganchado; sin permiso de editar no hay
+  Edit y se queda en Overview. En Edit no van las tres cifras: sin eso
+  no cabía a 820 de alto. Los botones, del cristal
   del header: la MISMA regla de desk-header.css (`.dki-cr`, `.dki-tabs`).
   **Quitado por Axel**: el On Hand a mano (también al crear: empieza en
   0), Scan Price Invoice (los precios vienen de MarginEdge) y el modo
