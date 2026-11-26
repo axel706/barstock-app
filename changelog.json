@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261126-172025",
+    "items": [
+      "Invoices on desktop: list cards no longer pill-shaped"
+    ]
+  },
+  {
     "build": "20261126-171158",
     "items": [
       "Invoices on desktop: list and invoice side by side",
@@ -194,12 +200,6 @@
     "items": [
       "Desktop: new Inventory screen with filters",
       "Product panel: edit, details and actions together"
-    ]
-  },
-  {
-    "build": "20261125-181239",
-    "items": [
-      "Desktop Home: every card keeps its place and size"
     ]
   }
 ]

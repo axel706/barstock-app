@@ -81,5 +81,7 @@ const pos = s => INDEX.indexOf(s);
 prueba('desk-invoices carga antes que desk-orders', pos('src/desk-invoices.js') > 0 && pos('src/desk-invoices.js') < pos('src/desk-orders.js'));
 prueba('los estilos del teléfono, generados bajo la vista', /#dkOrd\[data-vista="inv"\] \.m-iln \{/.test(GEN) && /#dkOrd\[data-vista="inv"\] \.m-itot \{/.test(GEN));
 
+prueba('las tarjetas de la lista con el radio de Sent, no en píldora (app.css fuerza 999px a los botones)', /#dkOrd\[data-vista="inv"\] \.m-hcard \{\s*border-radius: 15px !important;/.test(GEN));
+
 console.log('\n' + (mal ? mal + ' MAL' : 'todo bien') + '   ·   ' + (ok + mal) + ' comprobaciones');
 process.exit(mal ? 1 : 0);

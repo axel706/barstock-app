@@ -3048,6 +3048,71 @@
   }
 
   /* Invoices (mobile-invoices.js en modo escritorio), en la vista Invoices de Orders. */
+  #dkOrd[data-vista="inv"] .m-cab {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    margin: 0 0 14px -12px;
+  }
+  #dkOrd[data-vista="inv"] .m-atras {
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -6px;
+    background: none;
+    border: 0;
+    box-shadow: none;
+    color: #7dd3fc;
+    font-size: var(--m-screen);
+    cursor: pointer;
+  }
+  #dkOrd[data-vista="inv"] .m-atras:active {
+    color: #bae6fd;
+  }
+  #dkOrd[data-vista="inv"] .m-cab-t {
+    flex: 1;
+    min-width: 0;
+    padding-top: 1px;
+  }
+  #dkOrd[data-vista="inv"] .m-cab-d {
+    flex: 0 0 auto;
+    text-align: right;
+    padding-top: 2px;
+  }
+  #dkOrd[data-vista="inv"] .m-cab-sola {
+    margin-bottom: 4px;
+  }
+  #dkOrd[data-vista="inv"] .m-inv-t {
+    color: #fff;
+    font-size: var(--m-screen);
+    font-weight: 800;
+    letter-spacing: -.5px;
+    line-height: 1.1;
+  }
+  #dkOrd[data-vista="inv"] .m-lab {
+    font-size: var(--m-eyebrow);
+    font-weight: 800;
+    color: #c3d2e2;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin: 18px 2px 9px;
+  }
+  #dkOrd[data-vista="inv"] .m-empty {
+    font-size: var(--m-body);
+    color: #a9bacd;
+    text-align: center;
+    padding: 34px 20px;
+    line-height: 1.6;
+  }
+  #dkOrd[data-vista="inv"] .m-empty small {
+    font-size: var(--m-small);
+  }
+  #dkOrd[data-vista="inv"] .m-hcard {
+    border-radius: 15px !important;
+  }
   #dkOrd[data-vista="inv"] .m-hcard {
     width: 100%;
     display: flex;

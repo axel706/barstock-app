@@ -228,6 +228,14 @@ function generar() {
         while (q) { q = false; for (const a of ARMAZON) { if (a.test(t)) { t = t.replace(a, ''); q = true; } } }
         if (!/^(html|body)\b/.test(t)) deSent.push(SENT_RAIZ + t);
       }
+      // Invoices también: sin esto le llegaban sólo las sueltas y le faltaba
+      // el radio de 15 px de las tarjetas (`:is(#mScreens…) .m-hcard`), así
+      // que app.css las dejaba en píldora (Axel, en el iPad, 2026-11-26).
+      if (reInv.test(s) && !/:has\(|m-txt-|bs-guest|bs-sin-|fondo-vivo|m-hero|#mhAcc|m-det-fijo|m-tx-hueco|#mInvHide/.test(s)) {
+        let t = s, q = true;
+        while (q) { q = false; for (const a of ARMAZON) { if (a.test(t)) { t = t.replace(a, ''); q = true; } } }
+        if (!/^(html|body)\b/.test(t)) deInv.push(INV_RAIZ + t);
+      }
       if (!reClase.test(s)) continue;
       // Lo que depende del tamaño de letra del teléfono o del modo invitado
       // no aplica en el escritorio.
