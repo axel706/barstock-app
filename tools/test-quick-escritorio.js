@@ -158,6 +158,15 @@ function entorno() {
   D.getElementById('mrDone').click(); await esperar(20);
   prueba('Done: a Sent, donde acaba de aparecer', w.BarStockDeskOrders.vista() === 'sent');
 
+  grupo('5b. Fecha, hora y nota, cada uno en su columna');
+  {
+    const CSSO = leer('styles/desk-orders.css');
+    // Axel, en el iPad: "date time note están encimados". Safari les da a
+    // date y time su estilo nativo y un ancho mínimo mayor que la columna.
+    prueba('sin el estilo nativo y con min-width 0 (no se salen de su columna)',
+      /#dkOrd \.dkq-meta label \{ min-width: 0; \}/.test(CSSO) && /#dkOrd \.dkq-meta input \{[^}]*min-width: 0;[^}]*-webkit-appearance: none;[^}]*appearance: none;/.test(CSSO));
+  }
+
   grupo('6. Carga');
   const iQ = INDEX.indexOf('src/desk-quick.js'), iMQ = INDEX.indexOf('src/mobile-quick.js'), iO = INDEX.indexOf('src/desk-orders.js');
   prueba('desk-quick después de mobile-quick y antes de desk-orders', iMQ > 0 && iQ > iMQ && iQ < iO);

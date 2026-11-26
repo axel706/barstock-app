@@ -342,6 +342,14 @@
   /* Paso 2, la derecha: fecha, hora y nota, y las líneas. Los campos a 16
      px: el iPad hace zoom en lo que mide menos. */
   #dkOrd .dkq-meta { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 10px; margin-top: 2px; }
+  /* Cada campo dentro de su columna (Axel, en el iPad: "date time note
+     están encimados"): Safari dibuja date y time con su estilo nativo y un
+     ancho mínimo propio, más que la columna, y se salían sobre el de al
+     lado. Sin el estilo nativo y con min-width 0, encogen. En Chromium no
+     se ve. */
+  #dkOrd .dkq-meta label { min-width: 0; }
+  #dkOrd .dkq-meta input { display: block; min-width: 0; max-width: 100%; -webkit-appearance: none; appearance: none; text-align: left; }
+  #dkOrd .dkq-meta input::-webkit-date-and-time-value { text-align: left; }
   #dkOrd .dkq-meta span { display: block; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #94a3b8; margin-bottom: 5px; }
   #dkOrd .dkq-meta input, #dkOrd .dkq-l input {
     width: 100%; box-sizing: border-box; height: 44px; padding: 0 12px; border-radius: 12px; font-size: 16px; color: #f8fafc;

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261126-163133",
+    "items": [
+      "Quick order: date, time and note no longer overlap"
+    ]
+  },
+  {
     "build": "20261126-153127",
     "items": [
       "Desktop Quick order: pick the vendor, then its products",
@@ -192,12 +198,6 @@
     "build": "20261125-174017",
     "items": [
       "Desktop: Running out is a full screen too"
-    ]
-  },
-  {
-    "build": "20261125-173600",
-    "items": [
-      "Desktop: Sales is a full screen, controls stay on top"
     ]
   }
 ]
