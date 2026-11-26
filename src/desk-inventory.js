@@ -86,6 +86,9 @@
     return HC.silueta(BP.formaDe(r), lleno, 'dkiS' + (_nSil++));
   }
 
+  // Price donde estaba On hand y On hand al final, donde termina la mirada
+  // (Axel, 2026-11-26, lámina "Inventory rows", B). Los títulos de barra()
+  // van en el mismo orden: comparten la rejilla.
   function fila(r) {
     const M = MI();
     const falt = M && M.faltas ? M.faltas(r) : [];
@@ -101,11 +104,11 @@
       <span class="dki-n"><b>${esc(r.item)}</b><small>${v ? '<span class="dki-live">● Live</span>' : ''}${ag ? `<span class="dki-out ${ag.tono}">${esc(ag.txt)}</span>` : ''}${chip}${
         falt.map(f => `<span class="dki-falta ${f === 'no price' ? 'r' : f === 'no par' ? 'g' : 'a'}">${esc(f)}</span>`).join('')}${extra ? `<span>${esc(extra)}</span>` : ''}</small></span>
       <span class="dki-v">${typeof window.badge === 'function' ? window.badge(r.vendor || 'UNKNOWN') : esc(r.vendor || '')}</span>
-      <span class="num dki-hay" style="color:${color(r)}">${v ? '≈' + r1(cuanto(r)) : r1(cuanto(r))}<small>/${par > 0 ? r1(par) : '—'}</small></span>
+      <span class="num dki-pr${num(r.value) > 0 ? '' : ' r'}">${num(r.value) > 0 ? dinero(r.value) : '—'}</span>
       <span class="num">${p && num(p.avgUsed) > 0 ? r1(p.avgUsed) : '—'}</span>
       <span class="num">${par > 0 ? r1(par) : '—'}</span>
       <span class="num">${num(r.toOrder) > 0 ? r1(r.toOrder) : '—'}</span>
-      <span class="num${num(r.value) > 0 ? '' : ' r'}">${num(r.value) > 0 ? dinero(r.value) : '—'}</span>
+      <span class="num dki-hay" style="color:${color(r)}">${v ? '≈' + r1(cuanto(r)) : r1(cuanto(r))}<small>/${par > 0 ? r1(par) : '—'}</small></span>
     </div>`;
   }
 
@@ -270,7 +273,7 @@
     const col = (k, t, cls) => `<button type="button" class="dki-th${cls ? ' ' + cls : ''}${_orden === k ? ' on' : ''}" data-col="${k}">${t}${_orden === k ? (_dir < 0 ? ' ▾' : ' ▴') : ''}</button>`;
     return `
       <div class="dki-cols">
-        <span></span>${col('nombre', 'Product')}${col('vendor', 'Vendor')}${col('onhand', 'On hand', 'num')}${col('avg', 'Avg/wk', 'num')}${col('par', 'Par', 'num')}${col('pedir', 'To order', 'num')}${col('precio', 'Price', 'num')}
+        <span></span>${col('nombre', 'Product')}${col('vendor', 'Vendor')}${col('precio', 'Price', 'num')}${col('avg', 'Avg/wk', 'num')}${col('par', 'Par', 'num')}${col('pedir', 'To order', 'num')}${col('onhand', 'On hand', 'num')}
       </div>`;
   }
 

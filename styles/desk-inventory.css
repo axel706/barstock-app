@@ -61,17 +61,28 @@
   }
 
   /* Las columnas: las de la barra y las de cada fila, la misma rejilla. */
+  /* La mitad más grandes que la primera versión (Axel, 2026-11-26, lámina
+     "Inventory rows", B: "que todo respire", no sólo la fila: la botella,
+     el texto, el proveedor y los números). Price donde estaba On hand y On
+     hand al final. Con el panel abierto se van Avg/wk y To order (abajo):
+     con todas, el nombre se quedaba sin sitio. */
   #dkInv .dki-cols, #dkInv .dki-fila {
-    display: grid; gap: 10px; align-items: center;
-    grid-template-columns: 30px minmax(0, 2.6fr) 124px 96px 64px 56px 70px 80px;
+    display: grid; gap: 20px; align-items: center;
+    grid-template-columns: 52px minmax(0, 1fr) 160px 100px 86px 70px 92px 136px;
   }
+  /* El proveedor también se va: con la píldora a su tamaño nuevo se cortaba
+     ("WINE MERCHA…") y el panel ya lo dice en su cabeza. */
+  #dkInv.con-panel .dki-cols, #dkInv.con-panel .dki-fila { grid-template-columns: 44px minmax(0, 1fr) 0 90px 0 60px 0 120px; gap: 14px; }
+  #dkInv.con-panel .dki-cols > :nth-child(3), #dkInv.con-panel .dki-fila > :nth-child(3),
+  #dkInv.con-panel .dki-cols > :nth-child(5), #dkInv.con-panel .dki-fila > :nth-child(5),
+  #dkInv.con-panel .dki-cols > :nth-child(7), #dkInv.con-panel .dki-fila > :nth-child(7) { visibility: hidden; }
   /* Con el panel abierto la lista se estrecha: los títulos de las columnas
      (en la barra, a lo ancho) dejan el mismo hueco para cuadrar. */
   #dkInv.con-panel .dki-cols { margin-right: 406px; }
-  #dkInv .dki-cols { padding: 10px 14px 8px; }
+  #dkInv .dki-cols { padding: 10px 23px 8px; }
   #dkInv .dki-th {
     padding: 0; border: 0; background: none; text-align: left; color: #7f8ea3; cursor: pointer; border-radius: 0 !important;
-    font: inherit; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+    font: inherit; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
     box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
   }
   #dkInv .dki-th.on { color: #7dd3fc; }
@@ -82,32 +93,33 @@
   #dkInv .dki-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding-top: 6px; }
   #dkInv.con-panel .dki-cuerpo { grid-template-columns: minmax(0, 1fr) 390px; }
   #dkInv .dki-fila {
-    margin-top: 6px; padding: 9px 14px; border-radius: 14px; cursor: pointer; font-size: 13.5px;
+    margin-top: 12px; padding: 18px 22px; border-radius: 20px; cursor: pointer; font-size: 17px;
     background: var(--tinta); border: 1px solid var(--tinta-borde);
   }
   #dkInv .dki-fila:hover { border-color: rgba(125, 211, 252, .35); }
   #dkInv .dki-fila.sel { border-color: rgba(125, 211, 252, .85); box-shadow: 0 0 0 1px rgba(125, 211, 252, .5); }
   #dkInv .dki-fila:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
   #dkInv .dki-silc { display: flex; justify-content: center; }
-  #dkInv .dki-silc svg { height: 34px; width: auto; }
+  #dkInv .dki-silc svg { height: 38px; width: auto; }
   #dkInv .m-hc-vid { fill: rgba(255, 255, 255, .08); stroke: rgba(255, 255, 255, .5); stroke-width: 1.4; }
   #dkInv .m-hc-liq { fill: #fbbf24; }
   #dkInv .dki-n { min-width: 0; }
-  #dkInv .dki-n b { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #dkInv .dki-n b { display: block; font-size: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* Un renglón: lo que no cabe se corta. */
-  #dkInv .dki-n small { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; margin-top: 2px; font-size: 11.5px; color: #a9bacd; overflow: hidden; white-space: nowrap; }
+  #dkInv .dki-n small { display: flex; flex-wrap: nowrap; align-items: center; gap: 9px; margin-top: 7px; font-size: 14px; color: #a9bacd; overflow: hidden; white-space: nowrap; }
   #dkInv .dki-n small > * { flex: none; }
   #dkInv .dki-n small > span:last-child { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   #dkInv .dki-live { color: #34d399; font-weight: 800; }
-  #dkInv .dki-out, #dkInv .dki-falta { padding: 0 6px; border-radius: 6px; font-weight: 800; }
+  #dkInv .dki-out, #dkInv .dki-falta { padding: 2px 9px; border-radius: 7px; font-weight: 800; }
   #dkInv .dki-out.r, #dkInv .dki-falta.r { background: rgba(248, 113, 113, .18); color: #fca5a5; }
   #dkInv .dki-out.a, #dkInv .dki-falta.a { background: rgba(251, 191, 36, .18); color: #fcd34d; }
   #dkInv .dki-out.g, #dkInv .dki-falta.g { background: rgba(255, 255, 255, .1); color: #cbd5e1; }
-  #dkInv .dki-n .par-chip { margin: 0; }
+  #dkInv .dki-n .par-chip { margin: 0; font-size: 12.5px; padding: 3px 9px; border-radius: 7px; }
   #dkInv .dki-v { min-width: 0; overflow: hidden; }
-  #dkInv .dki-v > * { white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: middle; font-size: 11px; }
-  #dkInv .dki-hay { font-size: 17px; font-weight: 800; }
-  #dkInv .dki-hay small { font-size: 11px; color: #a9bacd; font-weight: 700; }
+  #dkInv .dki-v > * { white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: middle; font-size: 13.5px; padding: 6px 13px; }
+  #dkInv .dki-hay { font-size: 26px; font-weight: 850; }
+  #dkInv .dki-pr { font-weight: 750; }
+  #dkInv .dki-hay small { font-size: 14px; color: #a9bacd; font-weight: 700; }
   #dkInv .dki-vacio { padding: 30px 0; text-align: center; color: #a9bacd; }
 
   /* ── El panel del producto (A): pegado bajo la barra, con su propio
@@ -164,7 +176,7 @@
       max-height: none; box-shadow: -20px 0 50px rgba(0, 0, 0, .45);
       backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); background: rgba(9, 14, 26, .92);
     }
-    #dkInv .dki-cols, #dkInv .dki-fila { grid-template-columns: 28px minmax(0, 2fr) 110px 84px 0 54px 0 74px; }
+    #dkInv .dki-cols, #dkInv .dki-fila { grid-template-columns: 44px minmax(0, 1fr) 200px 90px 0 60px 0 120px; gap: 14px; }
     #dkInv.con-panel .dki-cols { margin-right: 0; }
     #dkInv .dki-cols > :nth-child(5), #dkInv .dki-fila > :nth-child(5),
     #dkInv .dki-cols > :nth-child(7), #dkInv .dki-fila > :nth-child(7) { visibility: hidden; }

@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-222216",
+    "items": [
+      "Bigger Inventory rows on desktop",
+      "Price moved before Avg/wk; On hand is now the last column"
+    ]
+  },
+  {
     "build": "20261125-194817",
     "items": [
       "Desktop: top bar buttons make room, glass style"
@@ -184,13 +191,6 @@
     "items": [
       "Desktop: greeting in the top bar, location centered",
       "Cycle button now under the logo in the sidebar"
-    ]
-  },
-  {
-    "build": "20261125-131745",
-    "items": [
-      "Desktop: glass blur on the sidebar, top bar and Home",
-      "Bigger logo, readable text in light and dark"
     ]
   }
 ]

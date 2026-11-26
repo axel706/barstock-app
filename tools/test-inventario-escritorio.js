@@ -124,6 +124,13 @@ w.eval(DI);
   const tito = caja.querySelector('.dki-fila[data-item="Tito\'s Vodka"]');
   prueba('el número es el LIVE con ≈ y su par', /≈2\.4\s*\/6/.test(txt(tito.querySelector('.dki-hay'))));
   prueba('● Live, Out Sat y el chip de Pour·IQ', /Live/.test(txt(tito)) && /Out Sat/.test(txt(tito)) && !!tito.querySelector('.par-chip'));
+  // Axel, 2026-11-26 (lámina "Inventory rows"): Price donde estaba On hand
+  // y On hand al final, en los títulos y en cada fila (la misma rejilla).
+  const cols = [...caja.querySelectorAll('.dki-cols .dki-th')].map(b => b.dataset.col);
+  prueba('columnas: Product, Vendor, Price, Avg, Par, To order, On hand', cols.join(',') === 'nombre,vendor,precio,avg,par,pedir,onhand');
+  prueba('   y en la fila, el número al final', tito.lastElementChild.classList.contains('dki-hay') && /\$/.test(txt(tito.children[3])));
+  const CSSI = fs.readFileSync(path.join(__dirname, '..', 'styles', 'desk-inventory.css'), 'utf8');
+  prueba('filas la mitad más grandes (nombre 19, On hand 26, botella 38)', /\.dki-n b \{[^}]*font-size: 19px/.test(CSSI) && /\.dki-hay \{[^}]*font-size: 26px/.test(CSSI) && /\.dki-silc svg \{[^}]*height: 38px/.test(CSSI));
   prueba('lo que le falta a cada uno (no price, no par)', /no price/.test(txt(caja.querySelector('.dki-fila[data-item="Hennessy VS"]'))) && /no par/.test(txt(caja.querySelector('.dki-fila[data-item="Hennessy VS"]'))));
 
   grupo('2. El header de sitios fijos');

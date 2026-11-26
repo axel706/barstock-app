@@ -784,7 +784,12 @@ sección de hoy vive tal cual dentro del armazón.
   `inventoryUpdated`; el Inventory nuevo escucha ese aviso (y
   `ordersUpdated`, `parAdjustmentsUpdated` y el LIVE), recuerda el
   producto abierto por su NOMBRE (la recarga cambia los objetos) y,
-  con algo a medio editar, repinta la lista pero no el panel. Prueba:
+  con algo a medio editar, repinta la lista pero no el panel. **Las
+  filas, la mitad más grandes** (2026-11-26, lámina "Inventory rows", B:
+  "que todo respire", no sólo la fila): nombre 19, On hand 26, botella 38;
+  columnas Product · Vendor · Price · Avg/wk · Par · To order · On hand
+  (Price donde estaba On hand, On hand al final). Con el panel abierto se
+  van Vendor, Avg/wk y To order. Prueba:
   `test-inventario-escritorio`.
 - **EL HEADER DE LAS SECCIONES: SITIOS FIJOS** (Axel, 2026-11-26, lámina
   "Section header · fixed places": "es dinámico, pero a la vez es fijo
