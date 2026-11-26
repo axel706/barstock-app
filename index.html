@@ -95,7 +95,7 @@
   <link rel="stylesheet" href="styles/mobile-app.css?v=mapp294">
   <!-- El armazón del escritorio: barra lateral y header en una fila.
        Va tras app.css y toolbar-pills.css, que es a quienes corrige. -->
-  <link rel="stylesheet" href="styles/desk-shell.css?v=dk13">
+  <link rel="stylesheet" href="styles/desk-shell.css?v=dk15">
   <link rel="stylesheet" href="styles/desk-home.css?v=dkh14">
   <!-- "Do we have" del escritorio: la tarjeta y la ficha generadas de las
        del teléfono (tools/compartir-ficha.js), y el campo y su panel. -->
@@ -394,7 +394,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261126-180903</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261126-181829</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -6410,9 +6410,9 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
      orden de Q-O a la derecha. Tras desk-quick.js, que usa; antes que
      desk-orders.js, que lo monta. -->
 <script src="src/desk-tobuy.js?v=dkt1"></script>
-<script src="src/desk-orders.js?v=dko13"></script>
+<script src="src/desk-orders.js?v=dko14"></script>
 <!-- Después de bsOpenSection/bsCloseSection, que son lo que llama. -->
-<script src="src/desk-shell.js?v=dk11"></script>
+<script src="src/desk-shell.js?v=dk12"></script>
 <!-- El Home del escritorio: pinta con los datos de mobile-home.js (más
      arriba) dentro del armazón de desk-shell.js. -->
 <script src="src/desk-home.js?v=dkh11"></script>

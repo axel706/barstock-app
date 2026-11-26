@@ -321,6 +321,14 @@
     _vista = 'sent';
     if (_caja && abierta()) montarModulo();
   }
+  // Cualquier vista desde la barra lateral (desk-shell): se pone antes de
+  // abrir la sección. To buy sin nada en la lista no existe: Open.
+  function ver(v) {
+    if (v === 'buy' && !hayBuy()) v = 'open';
+    if (_otra) salirOtra();
+    _vista = v;
+    if (_caja && abierta()) montarModulo();
+  }
   function verOpen() {
     if (_vista === 'open') return;
     _vista = 'open';
@@ -497,5 +505,5 @@
   if (document.getElementById('vendorSection')) montar();
   else document.addEventListener('DOMContentLoaded', montar);
 
-  window.BarStockDeskOrders = { montar, abierta, elegir: (n) => elegir(n), verSent, verOpen, reenviar, revisarQuick, abrirQuick, vista: () => _vista, _estado: () => ({ vista: _vista, vendor: _vendor, q: _q }) };
+  window.BarStockDeskOrders = { montar, abierta, elegir: (n) => elegir(n), verSent, verOpen, ver, reenviar, revisarQuick, abrirQuick, vista: () => _vista, _estado: () => ({ vista: _vista, vendor: _vendor, q: _q }) };
 })();

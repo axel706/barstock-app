@@ -29,28 +29,41 @@
   // #cycleBtn (weekly-cycle.js lo busca por id y le puso su clic al
   // arrancar; moverlo no le quita ninguna de las dos cosas).
   //
-  // Lo que el escritorio aún no tiene (Transfers, Counts) sale como
-  // "Soon", apagado: Axel lo eligió frente a
-  // esconderlo, para que se vea lo que viene.
+  // Lo que el escritorio aún no tiene (Transfers, Counts) sale apagado:
+  // Axel lo eligió frente a esconderlo, para que se vea lo que viene. Va
+  // en su propio grupo "Soon", al final (lámina "Desktop sidebar ·
+  // restructure", A, 2026-11-26), no mezclado con lo que funciona.
+  //
+  // La misma lámina: History se fue (abría Orders › Sent, ya no es una
+  // sección); bajo Orders van sus vistas, las mismas del header, con su
+  // cuenta (`vista`; To buy sólo con algo en la lista, como su pestaña).
+  // Running out sube tras el Home: es lo primero que se mira. Settings y
+  // Admin, chicos junto a Count (`pie`).
 
   const ITEMS = [
     { id: 'home', label: 'Home', icon: 'ti-home' },
+    { id: 'runningOut', label: 'Running out', icon: 'ti-hourglass-low', sec: 'runningOut' },
     { id: 'inventory', label: 'Inventory', icon: 'ti-package', sec: 'inventory' },
     { id: 'noMatch', label: 'Unmatched', icon: 'ti-alert-circle', sec: 'noMatch', sub: true },
     { id: 'vendor', label: 'Orders', icon: 'ti-shopping-cart', sec: 'vendor' },
-    { id: 'history', label: 'History', icon: 'ti-history', sec: 'history', sub: true },
-    { id: 'runningOut', label: 'Running out', icon: 'ti-hourglass-low', sec: 'runningOut' },
-    { id: 'transfers', label: 'Transfers', icon: 'ti-arrows-exchange', pronto: true },
+    { id: 'ordBuy', label: 'To buy', icon: 'ti-basket', sec: 'vendor', vista: 'buy', sub: true },
+    { id: 'ordOpen', label: 'Open', icon: 'ti-file-pencil', sec: 'vendor', vista: 'open', sub: true },
+    { id: 'ordSent', label: 'Sent', icon: 'ti-send', sec: 'vendor', vista: 'sent', sub: true },
+    { id: 'ordInv', label: 'Invoices', icon: 'ti-receipt', sec: 'vendor', vista: 'inv', sub: true },
     { grupo: 'Reports' },
     { id: 'sales', label: 'Sales', icon: 'ti-chart-line', sec: 'sales' },
     { id: 'pourIq', label: 'Pour·IQ', icon: 'ti-brain', sec: 'pourIq' },
     { id: 'consumption', label: 'Variance', icon: 'ti-chart-histogram', sec: 'consumption' },
     { id: 'costReport', label: 'Costs', icon: 'ti-chart-bar', sec: 'costReport' },
+    { grupo: 'Soon' },
+    { id: 'transfers', label: 'Transfers', icon: 'ti-arrows-exchange', pronto: true },
     { id: 'counts', label: 'Counts', icon: 'ti-clock-hour-4', pronto: true },
-    { grupo: 'Account' },
-    { id: 'settings', label: 'Settings', icon: 'ti-settings' },
-    { id: 'admin', label: 'Admin', icon: 'ti-shield-lock', sec: 'admin', admin: true }
+    { id: 'settings', label: 'Settings', icon: 'ti-settings', pie: true },
+    { id: 'admin', label: 'Admin', icon: 'ti-shield-lock', sec: 'admin', admin: true, pie: true }
   ];
+  // History (lo que llaman el teléfono, la portada y los enlaces de antes)
+  // es Orders › Sent.
+  const ALIAS = { history: 'ordSent' };
 
   let _lado = null;
 
@@ -63,14 +76,16 @@
     const cls = ['dk-nav'];
     if (it.sub) cls.push('dk-sub');
     if (it.pronto) cls.push('dk-pronto');
-    const soon = it.pronto ? '<span class="dk-soon">Soon</span>' : '';
+    if (it.pie) cls.push('dk-chico');
+    // Sin la pastilla "Soon": ya van en su grupo, que lo dice.
+    const soon = '';
     // El "Soon" no es un botón: un botón que no hace nada es una
     // afordancia que miente. Es un renglón apagado.
     const tag = it.pronto ? 'div' : 'button';
     const tipo = it.pronto ? '' : ' type="button"';
     const oculto = it.admin ? ' style="display:none"' : '';
     return `<${tag}${tipo} class="${cls.join(' ')}" data-dk="${it.id}" title="${esc(it.label)}"${oculto}>` +
-      `<i class="ti ${it.icon}" aria-hidden="true"></i><span class="dk-lbl">${esc(it.label)}</span>${soon}</${tag}>`;
+      `<i class="ti ${it.icon}" aria-hidden="true"></i><span class="dk-lbl">${esc(it.label)}</span>${soon}${it.vista ? '<em class="dk-n" hidden></em>' : ''}</${tag}>`;
   }
 
   // Qué sección está abierta: la que lleva .bs-active-section. Ninguna
@@ -124,28 +139,56 @@
     if (DH && DH.marcar) DH.marcar(activa());
     marcarLado();
   }
-  // Orders en Sent es "History" en la barra lateral.
+  // En Orders se enciende su vista (To buy, Open, Sent, Invoices); en Q-O o
+  // en una revisión prestada, Orders.
   function marcarLado() {
     if (!_lado) return;
     let a = activa();
     const DO = window.BarStockDeskOrders;
-    if (a === 'vendor' && DO && DO.vista && DO.vista() === 'sent') a = 'history';
+    if (a === 'vendor' && DO && DO.vista) {
+      const v = ITEMS.find(x => x.vista && x.vista === DO.vista());
+      if (v) a = v.id;
+    }
     _lado.querySelectorAll('.dk-nav[data-dk]').forEach(b => {
       b.classList.toggle('on', b.dataset.dk === a);
     });
+    cuentas();
   }
 
-  function ir(id) {
+  // La cuenta de cada vista de Orders, la misma de las pestañas del header
+  // (mobile-orders.cuentas; Invoices, la de mobile-invoices una vez
+  // leídas). To buy no sale sin nada en la lista, como su pestaña.
+  function cuentas() {
+    if (!_lado) return;
+    const MO = window.BarStockMobileOrders;
+    const MI = window.BarStockMobileInvoices;
+    let n = {};
+    try { n = Object.assign({}, MO && MO.cuentas ? MO.cuentas() : {}); } catch (e) { n = {}; }
+    try { const ei = MI && MI.estadoEscritorio ? MI.estadoEscritorio() : null; if (ei) n.inv = ei.conSueltas; } catch (e) {}
+    const hayBuy = !!(MO && MO.hayToBuy && MO.hayToBuy());
+    ITEMS.filter(x => x.vista).forEach(it => {
+      const b = _lado.querySelector(`[data-dk="${it.id}"]`);
+      if (!b) return;
+      if (it.vista === 'buy') b.hidden = !hayBuy;
+      const em = b.querySelector('.dk-n');
+      const c = Number(n[it.vista]) || 0;
+      if (em) { em.hidden = !(c > 0) || it.vista === 'open'; em.textContent = c > 0 ? String(c) : ''; }
+    });
+  }
+
+  function ir(id0) {
+    const id = ALIAS[id0] || id0;
     const it = ITEMS.find(x => x.id === id);
     if (!it || it.pronto) return;
     if (id === 'home') {
       if (typeof window.bsCloseSection === 'function') window.bsCloseSection();
     } else if (id === 'settings') {
       if (typeof window.openSettingsModal === 'function') window.openSettingsModal();
-    } else if (id === 'history' && window.BarStockDeskOrders && window.BarStockDeskOrders.verSent) {
-      // History es Orders › Sent (desk-sent.js, lámina "Sent · desktop"):
-      // la sección de antes queda escondida, sin que nada la abra.
-      window.BarStockDeskOrders.verSent();
+    } else if (it.vista && window.BarStockDeskOrders && window.BarStockDeskOrders.ver) {
+      // Una vista de Orders: se pone antes de abrir la sección, para que
+      // entre ya en ella (Sent: la sección History de antes queda
+      // escondida, sin que nada la abra).
+      window.BarStockDeskOrders.ver(it.vista);
       if (typeof window.bsOpenSection === 'function') window.bsOpenSection('vendor');
     } else if (it.sec && typeof window.bsOpenSection === 'function') {
       // Orders desde la barra lateral entra en Open.
@@ -158,7 +201,7 @@
   // Las pantallas del teléfono que tienen su sección en el escritorio.
   // Lo demás (Buscar, el ciclo, To buy…) aún no existe aquí y no hace
   // nada: el Home del escritorio no enseña los botones que llevan ahí.
-  const DESDE_MOVIL = { home: 'home', inventory: 'inventory', orders: 'vendor', history: 'history', runningOut: 'runningOut' };
+  const DESDE_MOVIL = { home: 'home', inventory: 'inventory', orders: 'vendor', history: 'ordSent', runningOut: 'runningOut' };
   function desdeMovil(id) {
     const a = DESDE_MOVIL[id];
     if (!a) return false;
@@ -238,9 +281,10 @@
     _lado.innerHTML =
       `<div class="dk-logo brand-logo-type">${logoHtml}</div>` +
       `<div class="dk-ciclo" id="dkCiclo"></div>` +
-      `<div class="dk-lista">${ITEMS.map(itemHtml).join('')}</div>` +
+      `<div class="dk-lista">${ITEMS.filter(x => !x.pie).map(itemHtml).join('')}</div>` +
       `<div class="dk-pie">` +
         `<button type="button" class="dk-contar" id="dkContar" title="Count"><i class="ti ti-scan" aria-hidden="true"></i><span class="dk-lbl">Count</span></button>` +
+        `<div class="dk-chicos">${ITEMS.filter(x => x.pie).map(itemHtml).join('')}</div>` +
         `<div class="dk-estado" id="dkEstado"></div>` +
       `</div>`;
     document.body.appendChild(_lado);
@@ -334,6 +378,10 @@
     const tab = document.getElementById('bsAdminNavTab');
     if (tab) new MutationObserver(copiarAdmin).observe(tab, { attributes: true, attributeFilter: ['style'] });
     copiarAdmin();
+    // Las cuentas de las vistas de Orders cambian con la lista de compras y
+    // las facturas, también sin cambiar de sección.
+    const E = window.BarStockEvents;
+    if (E && E.on) ['toBuyCounted', 'ordersUpdated', 'inventoryUpdated'].forEach(n => E.on(n, cuentas));
     marcar();
   }
 

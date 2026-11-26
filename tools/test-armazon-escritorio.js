@@ -95,8 +95,18 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   prueba('la barra lateral se monta', !!lado);
   prueba('el body lleva la marca dk', D.body.classList.contains('dk'));
   const S = w.BarStockDeskShell;
-  for (const id of ['home', 'inventory', 'noMatch', 'vendor', 'history', 'pourIq', 'consumption', 'costReport', 'settings', 'admin']) {
+  for (const id of ['home', 'inventory', 'noMatch', 'vendor', 'ordOpen', 'ordSent', 'ordInv', 'pourIq', 'consumption', 'costReport', 'settings', 'admin']) {
     prueba('lleva ' + id, !!item(id));
+  }
+  // Lámina "Desktop sidebar · restructure", A (Axel, 2026-11-26: "history?
+  // ya no tenemos una sección con ese nombre").
+  prueba('History ya no está: es Orders › Sent', !item('history') && !/>History</.test(lado.innerHTML));
+  {
+    const orden = [...lado.querySelectorAll('.dk-lista [data-dk]')].map(e => e.dataset.dk);
+    prueba('Running out justo tras el Home', orden[0] === 'home' && orden[1] === 'runningOut', orden.join(','));
+    prueba('bajo Orders, sus vistas: To buy, Open, Sent, Invoices', orden.slice(orden.indexOf('vendor'), orden.indexOf('vendor') + 5).join(',') === 'vendor,ordBuy,ordOpen,ordSent,ordInv', orden.join(','));
+    prueba('Settings y Admin, chicos junto a Count', !!lado.querySelector('.dk-pie .dk-chicos [data-dk="settings"]') && !!lado.querySelector('.dk-pie .dk-chicos [data-dk="admin"]'));
+    prueba('To buy sin nada en la lista no sale (como su pestaña)', item('ordBuy').hidden === true);
   }
   prueba('Running out ya no es "Soon": es un botón que abre su sección', !!item('runningOut') && item('runningOut').tagName === 'BUTTON' && !/Soon/.test(item('runningOut').textContent));
   // Las secciones de hoy están en index.html; las que se rehacen para el
@@ -108,11 +118,15 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
       donde ? leer(donde).includes(`'${it.sec}Section'`) : INDEX.includes(`id="${it.sec}Section"`));
   }
 
-  grupo('2. Lo que aún no hay sale "Soon" y no es un botón');
-  for (const id of ['transfers', 'counts']) {
-    const e = item(id);
-    prueba(id + ' sale con "Soon"', !!e && /Soon/.test(e.textContent));
-    prueba(id + ' no es un botón', !!e && e.tagName !== 'BUTTON');
+  grupo('2. Lo que aún no hay va en su grupo "Soon", al final, y no es un botón');
+  {
+    const g = [...lado.querySelectorAll('.dk-grupo')].find(x => x.textContent === 'Soon');
+    prueba('hay un grupo "Soon"', !!g);
+    for (const id of ['transfers', 'counts']) {
+      const e = item(id);
+      prueba(id + ' va en el grupo "Soon"', !!g && !!e && !!(g.compareDocumentPosition(e) & 4) && ![...lado.querySelectorAll('.dk-grupo')].some(x => x !== g && (g.compareDocumentPosition(x) & 4) && (x.compareDocumentPosition(e) & 4)));
+      prueba(id + ' no es un botón', !!e && e.tagName !== 'BUTTON');
+    }
   }
   llamadas.length = 0;
   item('transfers') && item('transfers').click();
@@ -123,8 +137,8 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   llamadas.length = 0;
   item('inventory').click();
   prueba('Inventory → bsOpenSection("inventory")', llamadas[0] === 'open:inventory', llamadas.join(','));
-  item('history').click();
-  prueba('History → bsOpenSection("history")', llamadas[1] === 'open:history', llamadas.join(','));
+  item('ordSent').click();
+  prueba('Sent → abre Orders (bsOpenSection("vendor"))', llamadas[1] === 'open:vendor', llamadas.join(','));
   item('home').click();
   prueba('Home → bsCloseSection()', llamadas[2] === 'close', llamadas.join(','));
   item('settings').click();
@@ -217,7 +231,8 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   // Axel, 2026-11-26: "en el saludo elimina la fecha y hazlo más grande".
   {
     const CS = fs.readFileSync(path.join(__dirname, '..', 'styles', 'desk-shell.css'), 'utf8');
-    prueba('el saludo, grande y con el degradado del logo', /\.dk-saludo b \{[^}]*font-size: 28px;[^}]*background: var\(--bs-stock-grad[^}]*background-clip: text;/.test(CS));
+    prueba('el botón del ciclo, de cristal y del color de su paso', /#dkLado #cycleBtn \{[^}]*backdrop-filter: blur\(10px\)[^}]*\}/.test(CS) && /#dkLado #cycleBtn\.cyc-step1 \{ background: rgba\(239, 68, 68/.test(CS) && /#dkLado #cycleBtn::after \{/.test(CS));
+  prueba('el saludo, grande y con el degradado del logo', /\.dk-saludo b \{[^}]*font-size: 28px;[^}]*background: var\(--bs-stock-grad[^}]*background-clip: text;/.test(CS));
   }
   prueba('con nombre, "Hello, Axel" sin la fecha al lado', sal.textContent === 'Hello, Axel' && !sal.querySelector('span'), sal.textContent);
   prueba('la locación, al centro de la barra', /\.bs-loc-wrap \{\s*position: absolute; left: 50%;[^}]*translate\(-50%, -50%\)/.test(CSS));

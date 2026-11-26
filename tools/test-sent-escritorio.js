@@ -124,10 +124,14 @@ function entorno() {
   const sec = D.getElementById('vendorSection');
 
   grupo('1. Sent es una vista de Orders: History la abre');
-  prueba('desk-shell: History abre Orders en Sent (verSent), no la sección de antes',
-    /id === 'history' && window\.BarStockDeskOrders && window\.BarStockDeskOrders\.verSent/.test(leer('src/desk-shell.js')) &&
-    /BarStockDeskOrders\.verSent\(\);\s*\n\s*if \(typeof window\.bsOpenSection === 'function'\) window\.bsOpenSection\('vendor'\)/.test(leer('src/desk-shell.js')));
-  prueba('   y la barra lateral marca History en Sent', /DO\.vista\(\) === 'sent'\) a = 'history'/.test(leer('src/desk-shell.js')));
+  // La barra lateral (lámina "Desktop sidebar", A): History se fue, y
+  // "Sent" bajo Orders es esta vista; "history" (el teléfono, la portada)
+  // es un alias de ella.
+  prueba('desk-shell: Sent de la barra abre Orders en Sent (ver), no la sección de antes',
+    /id: 'ordSent', label: 'Sent', icon: 'ti-send', sec: 'vendor', vista: 'sent'/.test(leer('src/desk-shell.js')) &&
+    /BarStockDeskOrders\.ver\(it\.vista\);\s*\n\s*if \(typeof window\.bsOpenSection === 'function'\) window\.bsOpenSection\('vendor'\)/.test(leer('src/desk-shell.js')) &&
+    /const ALIAS = \{ history: 'ordSent' \}/.test(leer('src/desk-shell.js')));
+  prueba('   y la barra lateral marca la vista de Orders en la que estás', /x\.vista === DO\.vista\(\)/.test(leer('src/desk-shell.js')));
   w.BarStockDeskOrders.verSent();
   w.BarStockDeskHeader.marcar('vendor');
   sec.classList.add('bs-active-section'); await esperar(60);

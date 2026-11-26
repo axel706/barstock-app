@@ -439,9 +439,19 @@ sección de hoy vive tal cual dentro del armazón.
   `bsCloseSection`, no las envuelve, y lo encendido sigue a
   `.bs-active-section`. Count = clic en `#takeInventoryBtn` (su
   comprobación del ciclo). Admin copia la visibilidad de
-  `#bsAdminNavTab`. Running out, Transfers, Sales y Counts salen
-  "Soon", apagados y sin ser botones (Axel lo eligió frente a
-  esconderlos). Entre 641 y 1100 px, sólo iconos. **Las reglas de
+  `#bsAdminNavTab`. Lo que aún no existe (Transfers, Counts) sale
+  apagado y sin ser botón (Axel lo eligió frente a esconderlo), en su
+  grupo "Soon" al final. **La barra, reestructurada** (2026-11-26,
+  lámina "Desktop sidebar · restructure", A: "history? ya no tenemos una
+  sección con ese nombre"): Home, Running out (justo después: es lo
+  primero que se mira), Inventory › Unmatched, Orders › To buy · Open ·
+  Sent · Invoices (las vistas del header, cada una con la cuenta de su
+  pestaña; To buy sólo con algo en la lista; `vista` en ITEMS y
+  `BarStockDeskOrders.ver`), Reports, Soon; Settings y Admin chicos junto
+  a Count. History se fue: `ALIAS` la manda a Sent (el teléfono y la
+  portada aún la piden). **El botón del ciclo, de cristal** (Axel: "liquid
+  glass para distinguirlo más"), teñido del color de su paso: el rojo
+  sigue siendo el que borra. Entre 641 y 1100 px, sólo iconos. **Las reglas de
   ancho de las secciones miran la VENTANA**, no lo que queda junto a la
   barra: la de 980 de Inventory se repite con el ancho de la barra
   sumado; las demás (~18) se arreglan al rehacer cada sección. Prueba:
@@ -889,9 +899,9 @@ sección de hoy vive tal cual dentro del armazón.
 - **Orders › Sent en el escritorio** (Axel, 2026-11-26, lámina "Sent ·
   desktop", A, con el gasto en la columna, opción 1 de "the top, lighter":
   "la parte superior se siente muy saturada"): `src/desk-sent.js`, la vista
-  Sent de Orders (Open · Sent en el header). **History de la barra lateral
-  abre esta vista** (`desk-shell.ir` → `BarStockDeskOrders.verSent`) y se
-  marca en Sent; la sección History de antes queda escondida, sin que nada
+  Sent de Orders (Open · Sent en el header). **Sent de la barra lateral
+  (antes History) abre esta vista** (`desk-shell.ir` →
+  `BarStockDeskOrders.ver`) y se marca; la sección History de antes queda escondida, sin que nada
   la abra. La forma de Open: a la izquierda Spent this cycle (la cuenta de
   History de antes, `BarStockSpend.compute`, con una barra por categoría y
   lo de antes al pasar el ratón) y las órdenes (este ciclo, "This cycle · N

@@ -1,5 +1,13 @@
 [
   {
+    "build": "20261126-181829",
+    "items": [
+      "Sidebar: Orders opens into To buy, Open, Sent, Invoices",
+      "Running out right after Home; History is now Sent",
+      "The cycle button is liquid glass"
+    ]
+  },
+  {
     "build": "20261126-180903",
     "items": [
       "Bigger greeting with the logo gradient, no date"
@@ -191,13 +199,6 @@
     "build": "20261126-104313",
     "items": [
       "The product panel opens right away on desktop"
-    ]
-  },
-  {
-    "build": "20261126-102515",
-    "items": [
-      "Product panel shows again where the price came from",
-      "And how long it lasts, for items without Toast"
     ]
   }
 ]
