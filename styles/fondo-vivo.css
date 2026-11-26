@@ -1,0 +1,41 @@
+/* ── Los fondos animados: el dibujo (src/fondo-vivo.js) ──────────────
+   Aurora, Liquid y Bokeh (Axel, 2026-11-22, sobre lámina). Vivían dentro
+   del @media del teléfono en mobile-app.css; desde el 2026-11-26 también
+   los ofrece el escritorio ("agrega versión de los fondos animados del
+   teléfono para escritorio"), así que el dibujo es UNO, aquí, sin media.
+   Lo de cada armazón va en el suyo: el velo del teléfono sin desenfoque
+   (mobile-app.css) y los vidrios grandes del escritorio sin desenfoque
+   (desk-shell.css). Sólo se anima transform: lo mueve la tarjeta gráfica.
+   Las unidades son de la ventana (%, vmin, vmax, vh), así que el mismo
+   dibujo llena un iPad o un monitor ancho. */
+body.fondo-vivo > #bgLayer { background: #070b14; }
+#bgLayer .fv { position: absolute; inset: 0; overflow: hidden; }
+#bgLayer .fv-mancha, #bgLayer .fv-giro, #bgLayer .fv-luz { position: absolute; will-change: transform; }
+
+/* Aurora: cuatro manchas que derivan, cada una a su ritmo */
+#bgLayer .fv-mancha { border-radius: 50%; animation: 30s ease-in-out infinite alternate; }
+#bgLayer .fv-a1 { width: 84%; height: 54%; left: -6%; top: -4%; background: radial-gradient(closest-side, rgba(56,189,248,.85), rgba(56,189,248,0)); animation-name: fv-deriva1; animation-duration: 26s; }
+#bgLayer .fv-a2 { width: 78%; height: 50%; right: -12%; top: 26%; background: radial-gradient(closest-side, rgba(52,211,153,.7), rgba(52,211,153,0)); animation-name: fv-deriva2; animation-duration: 32s; }
+#bgLayer .fv-a3 { width: 90%; height: 54%; left: 2%; bottom: -12%; background: radial-gradient(closest-side, rgba(168,85,247,.6), rgba(168,85,247,0)); animation-name: fv-deriva3; animation-duration: 38s; }
+#bgLayer .fv-a4 { width: 54%; height: 36%; left: 38%; top: 4%; background: radial-gradient(closest-side, rgba(14,165,233,.55), rgba(14,165,233,0)); animation-name: fv-deriva4; animation-duration: 22s; }
+@keyframes fv-deriva1 { to { transform: translate(35%, 40%) scale(1.15); } }
+@keyframes fv-deriva2 { to { transform: translate(-45%, 25%) scale(.9); } }
+@keyframes fv-deriva3 { to { transform: translate(20%, -45%) scale(1.2); } }
+@keyframes fv-deriva4 { to { transform: translate(-50%, 60%) scale(1.1); } }
+
+/* Liquid: el remolino se desenfoca UNA vez (filter en el de dentro) y
+ * lo que gira es su contenedor: girar una capa ya pintada no la vuelve
+ * a desenfocar. */
+#bgLayer .fv-giro { left: 50%; top: 50%; width: 220vmax; height: 220vmax; margin: -110vmax 0 0 -110vmax; animation: fv-gira 60s linear infinite; }
+#bgLayer .fv-remolino { position: absolute; inset: 0; filter: blur(40px);
+  background: conic-gradient(from 0deg at 50% 50%, #0b1220 0deg, rgba(56,189,248,.85) 60deg, #0e1a2e 130deg, rgba(52,211,153,.75) 200deg, #0e1a2e 255deg, rgba(168,85,247,.7) 315deg, #0b1220 360deg); }
+#bgLayer .fv-remolino::after { content: ''; position: absolute; inset: 0; background: radial-gradient(closest-side, transparent 45%, rgba(7,11,20,.55) 95%); }
+@keyframes fv-gira { to { transform: rotate(360deg); } }
+
+/* Bokeh: luces de barra que suben de punta a punta */
+#bgLayer .fv-luz { top: 100%; border-radius: 50%; animation: fv-sube linear infinite; }
+@keyframes fv-sube { to { transform: translateY(-150vh); } }
+
+/* Escondida la app, en pausa; con "reducir movimiento", quietos. */
+body.fondo-pausa #bgLayer * { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { #bgLayer .fv-mancha, #bgLayer .fv-giro, #bgLayer .fv-luz { animation: none; } }

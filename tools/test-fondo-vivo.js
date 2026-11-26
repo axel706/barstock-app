@@ -47,7 +47,10 @@ function entorno() {
   }
   return w;
 }
-const css = leer('styles/mobile-app.css');
+// El dibujo vive en su hoja, compartida con el escritorio (2026-11-26);
+// el velo del teléfono, en mobile-app.css.
+const css = leer('styles/fondo-vivo.css') + '\n' + leer('styles/mobile-app.css');
+const cssDibujo = leer('styles/fondo-vivo.css');
 
 grupo('en el selector del teléfono');
 {
@@ -57,7 +60,12 @@ grupo('en el selector del teléfono');
   prueba('los tres: Aurora, Liquid y Bokeh', vivos.map(b => b.label).join() === 'Aurora,Liquid,Bokeh', vivos.map(b => b.label).join());
   prueba('guardados como un nombre, no como una imagen', vivos.every(b => /^anim:[a-z]+$/.test(b.src)), vivos.map(b => b.src).join());
   prueba('cada uno con su miniatura propia', vivos.every(b => /gradient\(/.test(b.mini || '')));
-  prueba('no salen en el escritorio', !w.BarStockBackgrounds.lista().some(b => b.anim));
+  // Desde el 2026-11-26 también en el escritorio (Axel: "agrega versión de
+  // los fondos animados del teléfono para escritorio"); la pantalla de
+  // entrada, que pinta una imagen, sigue sin ellos.
+  const esc = w.BarStockBackgrounds.listaEscritorio ? w.BarStockBackgrounds.listaEscritorio() : [];
+  prueba('el selector del escritorio ofrece los mismos tres', esc.filter(b => b.anim).map(b => b.src).join() === vivos.map(b => b.src).join(), esc.filter(b => b.anim).map(b => b.label).join());
+  prueba('la pantalla de entrada (lista) no', !w.BarStockBackgrounds.lista().some(b => b.anim));
 }
 
 grupo('aplicarlos');
@@ -106,6 +114,16 @@ grupo('lo que no puede volver: el velo desenfocando algo que se mueve');
     const props = [...m[2].matchAll(/([a-z-]+)\s*:/g)].map(x => x[1]);
     return props.length && props.every(p => p === 'transform');
   }), fotogramas.map(m => m[1] + ': ' + [...m[2].matchAll(/([a-z-]+)\s*:/g)].map(x => x[1]).join('/')).join(' · '));
+}
+
+grupo('en el escritorio');
+{
+  prueba('el dibujo es UNO, fuera del @media del teléfono (styles/fondo-vivo.css, sin media)', /#bgLayer \.fv-a1 \{/.test(cssDibujo) && !/@media \(max-width/.test(cssDibujo) && !/#bgLayer \.fv-a1 \{/.test(leer('styles/mobile-app.css')));
+  const dk = leer('styles/desk-shell.css');
+  prueba('con uno puesto, los vidrios grandes del escritorio no desenfocan', /body\.dk\.fondo-vivo :is\(#dkMarco, #dkVidrio, #dkHome \.dkh-cf, #dkHome \.dkh-card[^)]*\) \{\s*backdrop-filter: none !important;/.test(dk));
+  const html = leer('index.html');
+  prueba('el selector del escritorio usa su lista y la miniatura de los animados', /BarStockBackgrounds\.listaEscritorio/.test(html) && /\$\{bg\.anim \? `background:\$\{bg\.mini\};`/.test(html));
+  prueba('la hoja carga', /styles\/fondo-vivo\.css\?v=/.test(html));
 }
 
 grupo('la miniatura en Settings');

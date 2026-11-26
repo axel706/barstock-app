@@ -426,6 +426,17 @@ body.dk .bs-header #dkMenu { display: none; }
   }
   body.dk.dk-vidrio #dkVidrio { opacity: 1; }
 
+  /* Con un fondo animado (body.fondo-vivo, src/fondo-vivo.js; Axel,
+     2026-11-26: los del teléfono también en el escritorio), los vidrios
+     grandes NO desenfocan: desenfocar algo que se mueve rehace el blur de
+     la pantalla entera en CADA fotograma (lo mismo que en el teléfono le
+     quitó el desenfoque al velo). Los fondos animados ya son borrosos de
+     por sí, así que se ve casi igual: el tinte de cada vidrio sigue. Una
+     regla para todos, la barra, la sección y las tarjetas del Home. */
+  body.dk.fondo-vivo :is(#dkMarco, #dkVidrio, #dkHome .dkh-cf, #dkHome .dkh-card, #dkHome #dkVentas > .m-ts) {
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  }
+
   /* El renglón de estado de la app de antes ("Orders loaded", "Could not
      load No Match from cloud."): salía suelto encima de la sección, sin
      decir de dónde venía (Axel, 2026-11-25: "¿qué es ese mensaje?"). Lo

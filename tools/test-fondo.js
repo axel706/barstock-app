@@ -164,7 +164,9 @@ grupo('el selector del escritorio, tal cual esta en el index');
 
   w.BarStockBackground.renderBgGrid();
   const miniaturas = w.document.querySelectorAll('#bgGrid .bg-thumb');
-  prueba('pinta las miniaturas del catalogo', miniaturas.length === w.BarStockBackgrounds.lista().length + 1,
+  // El selector del escritorio lleva también los animados del teléfono
+  // (listaEscritorio, 2026-11-26), más "Default".
+  prueba('pinta las miniaturas del catalogo', miniaturas.length === w.BarStockBackgrounds.listaEscritorio().length + 1,
     String(miniaturas.length));
   const lounge = Array.from(miniaturas).find(m => /crown-lounge/.test(m.dataset.src));
   lounge.click();

@@ -97,6 +97,11 @@
     // animados, luego las generales que funcionan en vertical.
     listaMovil: () => SOLO_MOVIL.concat(ANIMADOS, IMAGENES.filter(x => !APAISADAS.includes(x.id)))
       .map(x => Object.assign({}, x)),
+    // Lo que se ofrece en el escritorio (su selector de Settings ›
+    // Appearance): las fotos y, desde el 2026-11-26, los mismos animados del
+    // teléfono. `lista()` sigue sin ellos: la usa también la pantalla de
+    // entrada, que pinta una imagen.
+    listaEscritorio: () => IMAGENES.concat(ANIMADOS).map(x => Object.assign({}, x)),
     tiene: (src) => IMAGENES.some(x => x.src === src)
   };
 })();

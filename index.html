@@ -53,7 +53,7 @@
 <script src="src/settings-ui.js"></script>
 <script src="src/logger.js"></script>
 <script src="src/order-validator.js"></script>
-<script src="src/backgrounds.js?v=bg4"></script>
+<script src="src/backgrounds.js?v=bg5"></script>
 <!-- Aplicar y guardar el fondo. Después del catálogo y antes del
      selector del escritorio, que lo usa. -->
 <script src="src/fondo-vivo.js?v=fv1"></script>
@@ -92,10 +92,11 @@
   <link rel="stylesheet" href="styles/theoretical-usage.css">
   <link rel="stylesheet" href="styles/chip-glow.css">
   <link rel="stylesheet" href="styles/mobile.css?v=mob5">
-  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp294">
+  <link rel="stylesheet" href="styles/mobile-app.css?v=mapp295">
+  <link rel="stylesheet" href="styles/fondo-vivo.css?v=fv1">
   <!-- El armazón del escritorio: barra lateral y header en una fila.
        Va tras app.css y toolbar-pills.css, que es a quienes corrige. -->
-  <link rel="stylesheet" href="styles/desk-shell.css?v=dk17">
+  <link rel="stylesheet" href="styles/desk-shell.css?v=dk18">
   <link rel="stylesheet" href="styles/desk-home.css?v=dkh14">
   <!-- "Do we have" del escritorio: la tarjeta y la ficha generadas de las
        del teléfono (tools/compartir-ficha.js), y el campo y su panel. -->
@@ -394,7 +395,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261126-183353</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261126-183911</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -6427,7 +6428,9 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
   // habían divergido sin que nadie lo decidiera.
   //
   // "Default" no sale del catálogo porque no es una imagen: es quitarla.
-  const BACKGROUNDS = ((window.BarStockBackgrounds && window.BarStockBackgrounds.lista()) || [
+  // Con los animados del teléfono (listaEscritorio): su miniatura es un
+  // degradado (`mini`), no una imagen.
+  const BACKGROUNDS = ((window.BarStockBackgrounds && (window.BarStockBackgrounds.listaEscritorio || window.BarStockBackgrounds.lista)()) || [
     { id: 'wills-bills',    label: "Will's & Bill's",    src: 'assets/backgrounds/wills-bills.jpg' },
     { id: 'jockey-bar',     label: 'The Jockey Tavern',  src: 'assets/backgrounds/jockey-bar.jpg' },
     { id: 'crown-dining',   label: 'Crown Dining',       src: 'assets/backgrounds/crown-dining.jpg' },
@@ -6450,7 +6453,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
     const current = F.actual();
     grid.innerHTML = BACKGROUNDS.map(bg => `
       <div class="bg-thumb ${current === bg.src ? 'bg-thumb-active' : ''}" data-src="${bg.src}" style="
-        background-image:url('${bg.src}');
+        ${bg.anim ? `background:${bg.mini};` : `background-image:url('${bg.src}');`}
         background-size:cover;
         background-position:center;
         border-radius:10px;
@@ -6460,7 +6463,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
         position:relative;
         overflow:hidden;
       ">
-        <div style="position:absolute;bottom:0;left:0;right:0;padding:4px 8px;background:rgba(0,0,0,.55);font-size:11px;font-weight:600;color:#fff;">${bg.label}</div>
+        <div style="position:absolute;bottom:0;left:0;right:0;padding:4px 8px;background:rgba(0,0,0,.55);font-size:11px;font-weight:600;color:#fff;">${bg.label}${bg.anim ? ' · Animated' : ''}</div>
       </div>
     `).join('');
     grid.querySelectorAll('.bg-thumb').forEach(el => {

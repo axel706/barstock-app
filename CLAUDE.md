@@ -110,7 +110,7 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 ## La arquitectura
 
 Frontend estático, sin build. `index.html` es un monolito y hay ~165 módulos
-`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 38 hojas
+`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 39 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
 12 funciones en `api/` sobre Vercel. **El tope del plan son 12, y está lleno**
@@ -217,7 +217,15 @@ rehace el blur de la pantalla entera en cada fotograma. Los colores ya
 son suaves de por sí, sólo se anima `transform`, se pausan con la app
 escondida (`fondo-pausa`) y se quedan quietos con reducir movimiento.
 Lo que sí sigue desenfocando encima: la escalera de la banda (6 capas,
-sólo arriba). Prueba: `test-fondo-vivo`.
+sólo arriba). **También en el escritorio** (Axel, 2026-11-26: "agrega
+versión de los fondos animados del teléfono para escritorio"): el
+selector de Settings › Appearance los ofrece (`listaEscritorio`, con su
+miniatura; `lista()`, la de la pantalla de entrada, sigue sin ellos) y se
+guardan en `background_src`. El dibujo es UNO, `styles/fondo-vivo.css`,
+sin media (vivía dentro del @media del teléfono); y con uno puesto, los
+vidrios grandes del escritorio (la barra y el header, `#dkVidrio`, las
+tarjetas del Home) van sin desenfoque, la misma razón que el velo del
+teléfono. Prueba: `test-fondo-vivo`.
 
 **Tinta es el fondo de las tarjetas, desde ahora el estándar** (Axel,
 2026-11-18, lámina B: "vamos a ir ajustando las distintas pantallas a
