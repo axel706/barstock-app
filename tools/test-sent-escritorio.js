@@ -150,11 +150,11 @@ function entorno() {
     prueba('   y la tarjeta de la lista dice lo mismo: "10 products", sin "items"', /10 products/.test(txt(filas[0])) && !/items?\b/.test(txt(lista)), txt(filas[0]));
   }
   prueba('cada columna rueda por su cuenta y la página no (alto de la pantalla, overflow propio)',
-    /body\.dk #dkOrd\[data-vista="sent"\] \{[^}]*height: calc\(100dvh - var\(--dk-alto\) - 18px\)/.test(CSS) &&
-    /#dkOrd :is\(\.dks-col, \.dks-det\) \{[^}]*overflow-y: auto;[^}]*overscroll-behavior: contain/.test(CSS) &&
+    /body\.dk #dkOrd(?:\[data-vista="sent"\]|:is\(\[data-vista="sent"\], \[data-vista="inv"\]\)) \{[^}]*height: calc\(100dvh - var\(--dk-alto\) - 18px\)/.test(CSS) &&
+    /#dkOrd :is\(\.dks-col, \.dks-det[^)]*\) \{[^}]*overflow-y: auto;[^}]*overscroll-behavior: contain/.test(CSS) &&
     /\.wrap:has\(> #vendorSection\.bs-active-section #dkOrd:is\(\[data-vista="sent"\][^)]*\)\) \{ padding-bottom: 0 !important; \}/.test(CSS));
-  prueba('   las tres cifras se pegan arriba al rodar la orden, opacas', /\.dks-det > \.m-itot \{[^}]*position: sticky; top: 0;[^}]*background: #0e1628/.test(CSS));
-  prueba('   los bloques de la orden no se aplastan (la lista con overflow se quedaba en una línea)', /#dkOrd \.dks-det > \* \{ flex: none; \}/.test(CSS));
+  prueba('   las tres cifras se pegan arriba al rodar la orden, opacas', /\.dks-det(?:, \[data-vista="inv"\] \.dkv-det\))? > \.m-itot \{[^}]*position: sticky; top: 0;[^}]*background: #0e1628/.test(CSS));
+  prueba('   los bloques de la orden no se aplastan (la lista con overflow se quedaba en una línea)', /#dkOrd (?:\.dks-det|:is\(\.dks-det, \.dkv-det\)) > \* \{ flex: none; \}/.test(CSS));
   prueba('los meses son un rótulo (sin el fondo de botón de app.css) con aire arriba', /#dkOrd\[data-vista="sent"\] \.m-hmes \{[^}]*background: none !important;[^}]*margin: 22px 0 0/.test(CSS));
   prueba('   con sus tres cifras y cada línea pedida → recibida, con su dinero', !!det.querySelector('.m-itot') && det.querySelectorAll('.m-hln').length === 2 && !!det.querySelector('.m-hln-d') && !!det.querySelector('.m-hln-cols'));
   prueba('sin el buscador del teléfono (va en el header)', !lista.querySelector('#mhQ, .m-inv-bar2'));
@@ -175,9 +175,9 @@ function entorno() {
   const pie = det.querySelector(':scope > .dks-pie');
   prueba('   los cuatro, abajo en el pie fijo (como Review and send de Open), no en la cabecera',
     !!pie && pie === det.lastElementChild && !!pie.querySelector('#mhRe') && !!pie.querySelector('#mhAbrir') && !!pie.querySelector('[data-dks="jpg"]') && !!pie.querySelector('[data-dks="mas"]') &&
-    !det.querySelector('.m-hdk-cab button') && /#dkOrd \.dks-pie \{[^}]*position: sticky; bottom: 0;/.test(CSS) &&
+    !det.querySelector('.m-hdk-cab button') && /#dkOrd (?:\.dks-pie|:is\(\.dks-pie, \.dkv-pie\)) \{[^}]*position: sticky; bottom: 0;/.test(CSS) &&
     // Abajo del todo: media zona segura, no entera más relleno (Axel).
-    /\.dks-pie \{[^}]*padding: 12px 0 max\(6px, calc\(env\(safe-area-inset-bottom\) \/ 2\)\);/.test(CSS));
+    /(?:\.dks-pie|:is\(\.dks-pie, \.dkv-pie\)) \{[^}]*padding: 12px 0 max\(6px, calc\(env\(safe-area-inset-bottom\) \/ 2\)\);/.test(CSS));
   {
     // Resend abre la revisión de Open con esta orden (desk-orders), no
     // manda el correo directo al guardado.
@@ -243,7 +243,7 @@ function entorno() {
   grupo('Volver a Open suelta Sent');
   cab.querySelector('.dkc-seg [data-vista="open"]').click(); await esperar(10);
   prueba('la vista es Open y Sent está cerrado', caja.dataset.vista === 'open' && !w.BarStockDeskSent.abierto() && w.__lado === 'vendor');
-  prueba('   y lo de Sent se esconde (CSS)', /#dkOrd:not\(\[data-vista="sent"\]\) :is\(\.dks-col, \.dks-det\) \{ display: none; \}/.test(CSS) && /#dkOrd\[data-vista="sent"\] :is\(\.dko-lista, \.dko-der\) \{ display: none; \}/.test(CSS));
+  prueba('   y lo de Sent se esconde (CSS)', /#dkOrd:not\(\[data-vista="sent"\]\) :is\(\.dks-col, \.dks-det\) \{ display: none; \}/.test(CSS) && /#dkOrd(?:\[data-vista="sent"\]|:is\(\[data-vista="sent"\], \[data-vista="inv"\]\)) :is\(\.dko-lista, \.dko-der\) \{ display: none; \}/.test(CSS));
 
   grupo('6. El teléfono no cambia');
   {

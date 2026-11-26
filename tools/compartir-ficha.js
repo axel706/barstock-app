@@ -100,6 +100,17 @@ const reSent = new RegExp('\\.(' + SENT.map(c => c.replace(/-/g, '\\-')).join('|
   SENT.map(c => c.replace(/-/g, '\\-')).join('|') + ')-[A-Za-z0-9_-]+');
 const SENT_RAIZ = '#dkOrd[data-vista="sent"] ';
 
+// Invoices (desk-invoices.js, lámina "Invoices · desktop", A,
+// 2026-11-26): Invoices del teléfono (mobile-invoices.js en modo
+// escritorio), con la misma forma que Sent. Sus reglas también están
+// entre las sueltas (ver sueltas()).
+const INV = ['m-iln', 'm-icard', 'm-isin', 'm-iask', 'm-isug', 'm-irow2', 'm-ialt', 'm-ino', 'm-ibus', 'm-iav',
+  'm-iatar', 'm-iord', 'm-itot', 'm-iday', 'm-iflag', 'm-ipie', 'm-ilink', 'm-idanger', 'm-idlab', 'm-idrow',
+  'm-idbtn', 'm-idnote', 'm-ivacio', 'm-ichg', 'm-isub', 'm-hcard', 'm-hsub', 'm-lab', 'm-empty', 'm-cab', 'm-atras', 'm-inv-t'];
+const reInv = new RegExp('\\.(' + INV.map(c => c.replace(/-/g, '\\-')).join('|') + ')(?![A-Za-z0-9_])|\\.(' +
+  INV.map(c => c.replace(/-/g, '\\-')).join('|') + ')-[A-Za-z0-9_-]+');
+const INV_RAIZ = '#dkOrd[data-vista="inv"] ';
+
 // El teclado numérico de ✎ Check the shelf y 📣 Tell the team it's low
 // (num-pad.js): una hoja #mSheet colgada del body, con sus clases m-kp.
 // Y la hoja de "All products" / "Full report" (mobile-sales.js), que en el
@@ -164,7 +175,7 @@ function aTeclado(s) {
 
 function generar() {
   const css = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8');
-  const reglas = [], teclado = [], ro = [], ts = [], ord = [], sent = [];
+  const reglas = [], teclado = [], ro = [], ts = [], ord = [], sent = [], inv = [];
   const deMedia = trozos(css);
   const fuera = new Set(sueltas(css));
   for (const r of deMedia.concat([...fuera])) {
@@ -182,13 +193,17 @@ function generar() {
       if (ch === ',' && prof === 0) { sel.push(cur.trim()); cur = ''; } else cur += ch;
     }
     if (cur.trim()) sel.push(cur.trim());
-    const nuevos = [], deRo = [], deTs = [], deOrd = [], deSent = [];
+    const nuevos = [], deRo = [], deTs = [], deOrd = [], deSent = [], deInv = [];
     for (let s of sel) {
       if (soloSent) {
-        if (reSent.test(s) && !/:has\(|m-txt-|bs-guest|bs-sin-|fondo-vivo|m-hero|#mhAcc|m-det-fijo|m-tx-hueco/.test(s)) {
-          let t = s, q = true;
+        const limpio = (x) => { let t = x, q = true;
           while (q) { q = false; for (const a of ARMAZON) { if (a.test(t)) { t = t.replace(a, ''); q = true; } } }
-          if (!/^(html|body)\b/.test(t)) deSent.push(SENT_RAIZ + t);
+          return /^(html|body)\b/.test(t) ? null : t; };
+        if (reSent.test(s) && !/:has\(|m-txt-|bs-guest|bs-sin-|fondo-vivo|m-hero|#mhAcc|m-det-fijo|m-tx-hueco/.test(s)) {
+          const t = limpio(s); if (t) deSent.push(SENT_RAIZ + t);
+        }
+        if (reInv.test(s) && !/:has\(|m-txt-|bs-guest|bs-sin-|fondo-vivo|m-hero|#mhAcc|m-det-fijo|m-tx-hueco|#mInvHide/.test(s)) {
+          const t = limpio(s); if (t) deInv.push(INV_RAIZ + t);
         }
         continue;
       }
@@ -234,6 +249,7 @@ function generar() {
     if (nuevos.length) reglas.push('  ' + nuevos.join(',\n  ') + ' {\n' + decl + '\n  }');
     if (deRo.length) ro.push('  ' + deRo.join(',\n  ') + ' {\n' + decl + '\n  }');
     if (deTs.length) ts.push('  ' + deTs.join(',\n  ') + ' {\n' + decl + '\n  }');
+    if (deInv.length) inv.push('  ' + deInv.join(',\n  ') + ' {\n' + decl + '\n  }');
     if (deSent.length) sent.push('  ' + deSent.join(',\n  ') + ' {\n' + decl + '\n  }');
     if (deOrd.length) ord.push('  ' + deOrd.join(',\n  ') + ' {\n' + decl + '\n  }');
     const tec = sel.map(aTeclado).filter(Boolean);
@@ -256,6 +272,8 @@ function generar() {
     ord.join('\n') + '\n\n' +
     '  /* Sent (mobile-history.js en modo escritorio), en la vista Sent de Orders. */\n' +
     sent.join('\n') + '\n\n' +
+    '  /* Invoices (mobile-invoices.js en modo escritorio), en la vista Invoices de Orders. */\n' +
+    inv.join('\n') + '\n\n' +
     '  /* El teclado numérico (num-pad.js), en la hoja #mSheet del body. */\n' +
     teclado.join('\n') + '\n}\n';
 }

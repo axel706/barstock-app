@@ -166,9 +166,12 @@
      Cada columna rueda POR SU CUENTA (Axel, 2026-11-26: "scroll en el
      historial de órdenes independiente del scroll de la orden"): la vista
      mide lo que queda bajo el header y la página no rueda. */
+  /* Invoices (desk-invoices.js) tiene la MISMA forma: estas reglas valen
+     para las dos vistas (sus columnas son .dkv-col y .dkv-det). */
   #dkOrd:not([data-vista="sent"]) :is(.dks-col, .dks-det) { display: none; }
+  #dkOrd:not([data-vista="inv"]) :is(.dkv-col, .dkv-det) { display: none; }
   #dkOrd:not([data-vista="quick"]) :is(.dkq-p1, .dkq-col, .dkq-der) { display: none; }
-  body.dk #dkOrd[data-vista="sent"] {
+  body.dk #dkOrd:is([data-vista="sent"], [data-vista="inv"]) {
     grid-template-columns: 340px minmax(0, 1fr); align-items: stretch;
     /* La pantalla menos el header y los 18 de aire de arriba; abajo, nada:
        con 18 también abajo los botones del pie quedaban altos (Axel, en
@@ -178,15 +181,15 @@
   /* Que la página no ruede: la sección mide la pantalla (dk-pantalla,
      min-height) y .wrap le suma 20 px de relleno abajo; con eso, la página
      rodaba 20 px por detrás de las dos columnas. */
-  body.dk .wrap:has(> #vendorSection.bs-active-section #dkOrd:is([data-vista="sent"], [data-vista="quick"][data-paso="2"])) { padding-bottom: 0 !important; }
-  #dkOrd[data-vista="sent"] :is(.dko-lista, .dko-der) { display: none; }
-  #dkOrd :is(.dks-col, .dks-det) { min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
-  #dkOrd .dks-col { padding: 0 6px 18px 0; }
-  #dkOrd .dks-det { display: flex; flex-direction: column; }
+  body.dk .wrap:has(> #vendorSection.bs-active-section #dkOrd:is([data-vista="sent"], [data-vista="inv"], [data-vista="quick"][data-paso="2"])) { padding-bottom: 0 !important; }
+  #dkOrd:is([data-vista="sent"], [data-vista="inv"]) :is(.dko-lista, .dko-der) { display: none; }
+  #dkOrd :is(.dks-col, .dks-det, .dkv-col, .dkv-det) { min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  #dkOrd :is(.dks-col, .dkv-col) { padding: 0 6px 18px 0; }
+  #dkOrd :is(.dks-det, .dkv-det) { display: flex; flex-direction: column; }
   /* Ningún bloque se encoge para caber: la lista lleva overflow: hidden
      (del teléfono) y en una columna flex se aplastaba a una línea; rueda
      la columna. */
-  #dkOrd .dks-det > * { flex: none; }
+  #dkOrd :is(.dks-det, .dkv-det) > * { flex: none; }
 
   /* Spent this cycle: una tarjeta, una barra por categoría y sus cifras;
      lo de antes de cada una al pasar el ratón por ella. */
@@ -227,9 +230,9 @@
   #dkOrd[data-vista="sent"] .m-hmes-c { padding-top: 10px; }
 
   /* La orden elegida en la lista. */
-  #dkOrd[data-vista="sent"] .m-hcard.sel { border-color: rgba(125, 211, 252, .85); box-shadow: 0 0 0 1px rgba(125, 211, 252, .5); }
-  #dkOrd[data-vista="sent"] .m-hcard:hover { border-color: rgba(125, 211, 252, .35); }
-  #dkOrd[data-vista="sent"] .m-hcard .m-hcard-v { font-weight: 750; }
+  #dkOrd:is([data-vista="sent"], [data-vista="inv"]) .m-hcard.sel { border-color: rgba(125, 211, 252, .85); box-shadow: 0 0 0 1px rgba(125, 211, 252, .5); }
+  #dkOrd:is([data-vista="sent"], [data-vista="inv"]) .m-hcard:hover { border-color: rgba(125, 211, 252, .35); }
+  #dkOrd:is([data-vista="sent"], [data-vista="inv"]) .m-hcard .m-hcard-v { font-weight: 750; }
 
   /* La cabecera de la orden: logo, nombre y la línea con su estado. Los
      botones van abajo, en .dks-pie (desk-sent.alPie). */
@@ -243,7 +246,7 @@
      lámina). Resend y Reopen son del teléfono (.m-hacc) y JPG y ⋯ de aquí
      (.dks-ext); las dos cajas se abren (display: contents) y cada botón
      lleva su sitio. Resend, a lo ancho, como en el teléfono. */
-  #dkOrd .dks-pie {
+  #dkOrd :is(.dks-pie, .dkv-pie) {
     position: sticky; bottom: 0; z-index: 5; margin-top: auto;
     display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
     /* Abajo del todo (Axel, en el iPad: "pueden y deben ir más abajo"):
@@ -271,7 +274,7 @@
   /* Las tres cifras se quedan arriba al chocar con el header (Axel): la
      orden rueda por debajo, así que van opacas (al 97 % todavía se leían
      las líneas de detrás). */
-  #dkOrd[data-vista="sent"] .dks-det > .m-itot {
+  #dkOrd :is([data-vista="sent"] .dks-det, [data-vista="inv"] .dkv-det) > .m-itot {
     position: sticky; top: 0; z-index: 4; flex: none; margin: 0 0 12px;
     background: #0e1628;
   }
@@ -418,4 +421,52 @@
     #dkOrd .dkq-go { grid-area: go; margin-left: 0; }
     #dkOrd .dkq-live { grid-area: live; }
   }
+
+  /* ── Invoices: lo suyo (desk-invoices.js; lámina "Invoices · desktop",
+     A) ── las líneas a lo ancho (cantidad · lo de la factura → tu botella ·
+     total y precio · el lápiz), el pie con Hide y el buscador de botellas
+     en una ventana. */
+  #dkOrd[data-vista="inv"] .dkv-det > .m-itot b { font-size: 24px; }
+  #dkOrd .m-dkv-atras { align-self: flex-start; margin: 0 0 10px; height: 34px; padding: 0 12px 0 6px; display: inline-flex; align-items: center; gap: 6px; color: #7dd3fc; font-weight: 750; background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; cursor: pointer; }
+  #dkOrd .m-iln-cols { display: grid; grid-template-columns: 64px minmax(0, 1fr) 140px 44px; gap: 14px; padding: 6px 16px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #8ea0bd; }
+  #dkOrd .m-iln-cols span:nth-child(3) { text-align: right; }
+  #dkOrd[data-vista="inv"] .dkv-det .m-iln { display: grid; grid-template-columns: 64px minmax(0, 1fr) 140px 44px; gap: 14px; align-items: center; font-size: 15px; }
+  #dkOrd[data-vista="inv"] .dkv-det .m-iln .q { font-weight: 800; }
+  #dkOrd[data-vista="inv"] .dkv-det .m-iln .v { text-align: right; font-weight: 800; }
+  #dkOrd[data-vista="inv"] .dkv-det .m-iln .v small { display: block; font-weight: 500; color: #a9bacd; }
+  #dkOrd[data-vista="inv"] .dkv-det .m-iln:not(.m-icard) { grid-template-columns: 64px minmax(0, 1fr) 140px; }
+  #dkOrd[data-vista="inv"] .dkv-det .m-ichg { width: 36px; height: 36px; border-radius: 50% !important; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+  /* Una línea sin botella: lo que la arregla, en un renglón. */
+  #dkOrd[data-vista="inv"] .dkv-det .m-isin .m-irow2 { display: flex; gap: 8px; }
+  #dkOrd[data-vista="inv"] .dkv-det .m-isin :is(.m-isug, .m-ibus) { max-width: 520px; }
+  /* Los dos del pie, de su tamaño (del teléfono llegan a lo ancho), a la
+     izquierda, como en la lámina. */
+  #dkOrd .dkv-pie > .dki-cr { flex: none; width: auto; height: 42px; padding: 0 18px; font-size: 14px; font-weight: 800; gap: 8px; margin: 0; }
+  #dkOrd .dkv-pie > #mInvHideV { color: #fecaca; }
+  /* El rótulo de la lista, el de Sent ("THIS CYCLE · 4 ORDERS"). */
+  #dkOrd[data-vista="inv"] .dkv-lista > .m-lab { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #94a3b8; margin: 4px 2px 0; }
+  /* A qué orden cuenta: compacto y a la izquierda (en el teléfono va
+     centrado, a lo ancho del dedo): cada botón con su explicación al lado. */
+  #dkOrd[data-vista="inv"] .dkv-det .m-iatar { text-align: left; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 16px; align-items: center; padding: 12px 16px; margin: 0 0 12px; }
+  #dkOrd[data-vista="inv"] .dkv-det .m-iatar :is(.m-iatar-s, .m-ialt) { margin: 0; }
+  #dkOrd[data-vista="inv"] .dkv-det .m-iatar .m-ialt { justify-self: start; }
+  #dkOrd[data-vista="inv"] .dkv-det .m-iatar > :is(.m-iask, .m-iord, .m-ivacio, .m-ino) { grid-column: 1 / -1; }
+  #dkOrd[data-vista="inv"] .dkv-det .m-iatar.on { grid-template-columns: minmax(0, 1fr) auto; }
+
+  /* El buscador de botellas de una línea, en una ventana centrada. */
+  #dkvBus { position: fixed; inset: 0; z-index: 1300; display: flex; align-items: center; justify-content: center; }
+  #dkvBus .dkv-bus-bg { position: absolute; inset: 0; background: rgba(5, 8, 16, .6); }
+  #dkvBus .dkv-bus { position: relative; width: min(560px, calc(100vw - 40px)); max-height: min(640px, calc(100vh - 80px)); display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 22px; background: rgba(12, 18, 34, .97); border: 1px solid rgba(255, 255, 255, .16); box-shadow: 0 30px 80px rgba(0, 0, 0, .55); color: #f1f5f9; }
+  #dkvBus .dkv-bus-h { display: flex; flex-direction: column; gap: 2px; padding-right: 40px; }
+  #dkvBus .dkv-bus-h b { font-size: 17px; }
+  #dkvBus .dkv-bus-h small { color: #a9bacd; font-size: 13px; }
+  #dkvBus .dkv-bus-x { position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; border-radius: 50% !important; display: flex; align-items: center; justify-content: center; padding: 0; color: #cbd5e1; }
+  #dkvBus .dkv-bus-q { display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px; border-radius: 14px; background: rgba(0, 0, 0, .28); border: 1px solid rgba(255, 255, 255, .18); color: #cbd5e1; }
+  #dkvBus .dkv-bus-q:focus-within { border-color: #7dd3fc; }
+  #dkvBus .dkv-bus-q input { flex: 1; min-width: 0; height: 100%; border: 0; background: none; color: #f8fafc; font-size: 16px; outline: none; box-shadow: none; padding: 0; }
+  #dkvBus .dkv-bus-l { overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 6px; min-height: 120px; }
+  #dkvBus .dkv-bus-p { text-align: left; padding: 11px 14px; border-radius: 12px !important; color: inherit; font: inherit; font-size: 15px; cursor: pointer; background: var(--tinta); border: 1px solid var(--tinta-borde); box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  #dkvBus .dkv-bus-p:hover, #dkvBus .dkv-bus-p.on { border-color: rgba(125, 211, 252, .6); }
+  #dkvBus .dkv-bus-nada { color: #a9bacd; margin: 8px 2px; }
+  #dkvBus .dkv-bus-pie { display: flex; gap: 8px; justify-content: flex-end; }
 }

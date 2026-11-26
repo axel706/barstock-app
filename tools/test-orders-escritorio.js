@@ -109,7 +109,7 @@ function entorno() {
   grupo('4. El header de sitios fijos');
   const cab = D.getElementById('dkCab');
   prueba('título Orders', /Orders/.test(txt(cab.querySelector('.dkc-titulo'))));
-  prueba('vistas Open · Sent (To buy e Invoices, con su lámina)', [...cab.querySelectorAll('.dkc-seg [data-vista]')].map(b => b.dataset.vista).join(',') === 'open,sent');
+  prueba('vistas Open · Sent · Invoices (To buy, con su lámina)', [...cab.querySelectorAll('.dkc-seg [data-vista]')].map(b => b.dataset.vista).join(',') === 'open,sent,inv');
   prueba('   con su nombre corto también (con poco ancho el header enseña ése)', [...cab.querySelectorAll('.dkc-seg [data-vista]')].every(b => b.querySelector('.c') && b.querySelector('.c').textContent.trim()));
   // Sent es ya una vista de Orders (desk-sent.js): lo prueba
   // test-sent-escritorio. Aquí, que no manda a la sección de antes.

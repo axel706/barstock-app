@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261126-171158",
+    "items": [
+      "Invoices on desktop: list and invoice side by side",
+      "\"It arrived before the count\" links to an earlier order"
+    ]
+  },
+  {
     "build": "20261126-165250",
     "items": [
       "It arrived before the count: link to an earlier order"
@@ -193,12 +200,6 @@
     "build": "20261125-181239",
     "items": [
       "Desktop Home: every card keeps its place and size"
-    ]
-  },
-  {
-    "build": "20261125-180132",
-    "items": [
-      "Desktop: Orders placed lists the cycle orders"
     ]
   }
 ]

@@ -68,6 +68,12 @@
   let _verAjenas = false;   // enseñar tambien las que no son de barra
   let _eligiendoOrden = false;
   let _abierta = null;    // order_id de la que se está mirando
+  // En el escritorio (desk-invoices.js, lámina "Invoices · desktop", A,
+  // Axel 2026-11-26): la lista y la factura a la vez, cada una en su sitio
+  // ({ lista, detalle, alCambiar, buscar }). La búsqueda, "sólo sin
+  // botella" y el proveedor los pone el header de allí.
+  let _esc = null;
+  let _escBusca = '', _escSueltas = false, _escProv = '';
   let _busy = new Set();
 
   function cfg() {
@@ -597,9 +603,16 @@
 
     let html = cabecera();
     let ultimoDia = '';
+    if (_esc) {
+      const t = _facturas.reduce((a, f) => a + (Number(f.total) || 0), 0);
+      html += '<div class="m-lab">This cycle · ' + n + (n === 1 ? ' invoice' : ' invoices') + ' · ' + dinero(t) + '</div>';
+    }
+    let vistas = 0;
 
     for (let i = 0; i < n; i++) {
       const f = _facturas[i];
+      if (_esc && !pasaEsc(f)) continue;
+      vistas++;
       const d = f.sinFecha ? 'No date from MarginEdge' : dia(f.fecha).txt;
       if (d !== ultimoDia) { html += '<div class="m-iday">' + esc(d) + '</div>'; ultimoDia = d; }
 
@@ -608,7 +621,7 @@
       // primera versión eran filas sueltas con una rayita, y al lado
       // del resto de la app se veían de otro programa.
       html +=
-        '<button type="button" class="m-hcard" data-inv="' + i + '">' +
+        '<button type="button" class="m-hcard' + (_esc && f.id === _abierta ? ' sel' : '') + '" data-inv="' + i + '">' +
           logo(f.vendor) +
           '<span class="m-hcard-l">' +
             '<span class="m-hcard-v">' + esc(f.vendor || 'Unknown vendor') + '</span>' +
@@ -629,6 +642,7 @@
         '</button>';
     }
 
+    if (_esc && !vistas) html += '<div class="m-empty">' + (_escBusca.trim() ? 'No invoice has that vendor, number or product.' : 'Nothing with that filter.') + '</div>';
     html += pieHuecos();
 
     host.innerHTML = html;
@@ -854,12 +868,14 @@
   // sería otra vez dos maneras de volver.
   const cab = (o) => {
     const M = window.BarStockMobile;
-    if (M && M.enBanda && M.enBanda(o.titulo || '')) {
+    if (!_esc && M && M.enBanda && M.enBanda(o.titulo || '')) {
       return o.sub ? '<div class="m-hsub m-set-intro">' + esc(o.sub) + '</div>' : '';
     }
     return (M && M.cabecera) ? M.cabecera(o) : '<div class="m-inv-t">' + esc(o.titulo || '') + '</div>';
   };
   const volverCon = (host, fn) => {
+    // En el escritorio no hay banda: la vuelta es el ‹ de la cabecera.
+    if (_esc) { const a = host.querySelector('.m-atras'); if (a) a.onclick = fn; return; }
     const M = window.BarStockMobile;
     if (!M) return;
     if (M.alVolver && M.alVolver(host, fn)) return;
@@ -983,12 +999,27 @@
     const linea = [f.numero ? '#' + f.numero : '', dia(f.fecha).txt.replace(',', ''),
       f.status ? String(f.status).charAt(0).toUpperCase() + String(f.status).slice(1).toLowerCase() : '']
       .filter(Boolean).join(' \u00b7 ');
-    const enBanda = !!(M && M.enBanda && M.enBanda(titulo, linea));
+    const enBanda = !_esc && !!(M && M.enBanda && M.enBanda(titulo, linea));
+    // En el escritorio, su cabecera (logo, nombre, la línea de la banda y
+    // si le faltan botellas), las tres cifras pegadas arriba y los
+    // títulos de las columnas. Una factura de un ciclo anterior lleva la
+    // vuelta a esa lista: un renglón propio con texto, porque en el
+    // escritorio no hay banda donde poner el atrás del teléfono (y con la
+    // flecha, no el chevron: el chevron con texto es el patrón viejo que
+    // test-logo no deja volver al teléfono).
+    const cabEsc = () =>
+      (_verFuera ? '<button type="button" class="m-atras m-dkv-atras"><i class="ti ti-arrow-left" aria-hidden="true"></i> Earlier cycles</button>' : '') +
+      '<div class="m-hdk-cab">' + logo(f.vendor) +
+        '<div class="m-hdk-t"><b>' + esc(titulo) + '</b><span>' + esc(linea) +
+          (f.sueltas ? ' <i class="m-iflag">' + f.sueltas + ' unlinked</i>' : '') + '</span></div></div>' +
+      totales(true) + bloqueOrden(f) +
+      '<div class="m-iln-cols"><span>Qty</span><span>On the invoice → your bottle</span><span>Total · each</span><span></span></div>';
     let html =
-      (enBanda
-        ? totales(true)
-        : cab({ volverA: 'Invoices', titulo, sub }) + totales(false)) +
-      bloqueOrden(f);
+      (_esc ? cabEsc()
+        : (enBanda
+          ? totales(true)
+          : cab({ volverA: 'Invoices', titulo, sub }) + totales(false)) +
+          bloqueOrden(f));
 
     f.lineas.forEach((l, k) => {
       const cuerpo =
@@ -1086,10 +1117,13 @@
           'tell the app which ones are yours.</div>' +
       '</div>';
 
+    // En el escritorio sin "What gets written to your stock comes from the
+    // confirmed packaging": nada en la app confirma un empaque (una
+    // afordancia que miente, anotada en CLAUDE.md). El teléfono, aparte.
     html += '<div class="m-ipie">' + ocultas +
       'These are <b>purchase units</b>, not bottles: a 2 might be ' +
-      'two bottles or two cases of twelve. What gets written to your stock comes from the ' +
-      'confirmed packaging, not from here.</div>';
+      'two bottles or two cases of twelve.' + (_esc ? '' : ' What gets written to your stock comes from the ' +
+      'confirmed packaging, not from here.') + '</div>';
 
     host.innerHTML = html;
     enganchar(host, f);
@@ -1119,7 +1153,7 @@
     // En cada pintado: elegir una orden o cambiar una botella repinta
     // aquí sin pasar por el marco de Orders, y el bloque es otro.
     const fijo = host.querySelector(':scope > .m-det-fijo');
-    if (fijo && window.BarStockBandDock && window.BarStockBandDock.fijar) window.BarStockBandDock.fijar(fijo);
+    if (fijo && !_esc && window.BarStockBandDock && window.BarStockBandDock.fijar) window.BarStockBandDock.fijar(fijo);
 
     const tras = (k, item) => {
       // Se refleja en memoria y se repinta: volver a leer la base
@@ -1423,13 +1457,16 @@
   function abrirBuscador(host, f, k) {
     const l = f.lineas[k];
     const B = window.BarStockBottleSearch;
-    if (!l || !B || !B.abrir) return;
+    if (!l || ((!B || !B.abrir) && !(_esc && _esc.buscar))) return;
     const filas = master().filter(r => r && r.item);
     const deNombre = new Map(filas.map(r => [r.item, r]));
     const pie = l.suelto && !l.editando
       ? [{ id: 'no', texto: 'Not mine', sub: 'This line is not a bar bottle' }]
       : (l.item ? [{ id: 'unlink', texto: 'Unlink', sub: 'Leave this line without a bottle' }] : []);
-    B.abrir({
+    // En el escritorio, su propia ventana (desk-invoices.buscar): el
+    // buscador del teléfono es a pantalla completa con su teclado.
+    const abrirB = (_esc && _esc.buscar) ? _esc.buscar : B.abrir;
+    abrirB({
       pantalla: true,
       titulo: l.nombre || '',
       sub: 'For: ' + n1(l.qty) + '× ' + (l.nombre || ''),
@@ -1438,12 +1475,12 @@
       actual: l.item || '',
       pie,
       alElegir: (p) => {
-        B.cerrar();
+        if (!_esc || !_esc.buscar) B.cerrar();
         const r = deNombre.get(p);
         if (r) enlazar(host, f, k, r);
       },
       alPie: (id) => {
-        B.cerrar();
+        if (!_esc || !_esc.buscar) B.cerrar();
         const b = host.querySelector('[data-' + (id === 'no' ? 'no' : 'unlink') + '="' + k + '"]');
         if (b) b.click();
       }
@@ -1469,6 +1506,7 @@
   // Un fallo aquí dejaba la pantalla en blanco, que es indistinguible
   // de "no hay nada". Se enseña, con la forma de volver.
   function pintar(host) {
+    if (_esc) return pintarEsc();
     if (!host || !_facturas) return;
     try {
       // El DETALLE manda sobre la lista, venga de donde venga.
@@ -1493,6 +1531,37 @@
     } catch (e) {
       falloAlPintar(host, e);
     }
+  }
+
+  // ── En el escritorio: la lista y lo abierto a la vez ─────────────────
+  // Lo abierto puede ser una factura o una de las listas de "Not shown
+  // here" (pintarFuera); sin nada abierto, la primera factura que se ve.
+  function pasaEsc(f) {
+    if (_escSueltas && !f.sueltas) return false;
+    if (_escProv && f.vendor !== _escProv) return false;
+    const q = _escBusca.trim().toUpperCase();
+    if (!q) return true;
+    return String(f.vendor || '').toUpperCase().includes(q) || String(f.numero || '').toUpperCase().includes(q) ||
+      f.lineas.some(l => String(l.nombre || '').toUpperCase().includes(q) || String(l.item || '').toUpperCase().includes(q));
+  }
+  function pintarEsc() {
+    if (!_esc || !_facturas) return;
+    const det = _esc.detalle;
+    try {
+      pintarLista(_esc.lista);
+      let f = _abierta && (_facturas.find(x => x.id === _abierta) || _viejasFac.find(x => x.id === _abierta));
+      if (!f && !_verFuera) {
+        f = _facturas.find(pasaEsc) || null;
+        _abierta = f ? f.id : null;
+        if (f) pintarLista(_esc.lista);
+      }
+      if (f) pintarDetalle(det, f);
+      else if (_verFuera) {
+        const p = pintarFuera(det);
+        if (p && p.catch) p.catch(e => falloAlPintar(det, e));
+      } else det.innerHTML = '<div class="m-ivacio">' + (_facturas.length ? 'No invoice matches.' : '<b>No invoices yet this cycle.</b><br>They show up on their own as MarginEdge closes them.') + '</div>';
+    } catch (e) { falloAlPintar(det, e); }
+    if (_esc.alCambiar) _esc.alCambiar({ abierta: _abierta });
   }
 
   function falloAlPintar(host, e) {
@@ -1575,8 +1644,33 @@
   //
   // `enDetalle` cuenta las DOS formas de estar dentro: una factura
   // abierta, o una de las listas de "no mostrado aquí".
+  // El escritorio (desk-invoices.js).
+  async function abrirEscritorio(o) {
+    _esc = o || {};
+    _abierta = null;
+    _esc.lista.innerHTML = '';
+    return montar(_esc.detalle);
+  }
+  function cerrarEscritorio() { _esc = null; _abierta = null; _verFuera = ''; _escBusca = ''; _escSueltas = false; _escProv = ''; }
+  function verEscritorio(c) {
+    if (!c) return;
+    if ('busca' in c) _escBusca = String(c.busca || '');
+    if ('sueltas' in c) _escSueltas = !!c.sueltas;
+    if ('prov' in c) _escProv = c.prov || '';
+    // Con un filtro nuevo, lo abierto se elige otra vez si ya no se ve.
+    const f = _abierta && (_facturas || []).find(x => x.id === _abierta);
+    if (f && !pasaEsc(f)) _abierta = null;
+    pintarEsc();
+  }
+
   window.BarStockMobileInvoices = {
-    ordenesPara,
+    ordenesPara, abrirEscritorio, cerrarEscritorio, verEscritorio,
+    estadoEscritorio: () => ({
+      busca: _escBusca, sueltas: _escSueltas, prov: _escProv, abierta: _abierta,
+      conSueltas: (_facturas || []).filter(f => f.sueltas).length,
+      total: (_facturas || []).length,
+      proveedores: [...new Set((_facturas || []).map(f => f.vendor).filter(Boolean))].sort()
+    }),
     montar, resumen, _cargar: cargar, _sugerir: sugerir,
     enDetalle: () => !!_abierta || !!_verFuera,
     cerrarDetalle(host) {

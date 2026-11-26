@@ -99,12 +99,12 @@
   <link rel="stylesheet" href="styles/desk-home.css?v=dkh14">
   <!-- "Do we have" del escritorio: la tarjeta y la ficha generadas de las
        del teléfono (tools/compartir-ficha.js), y el campo y su panel. -->
-  <link rel="stylesheet" href="styles/desk-ficha.css?v=dkf7">
+  <link rel="stylesheet" href="styles/desk-ficha.css?v=dkf8">
   <link rel="stylesheet" href="styles/desk-search.css?v=dks2">
   <link rel="stylesheet" href="styles/desk-running-out.css?v=dkr2">
   <link rel="stylesheet" href="styles/desk-sales.css?v=dksa3">
   <link rel="stylesheet" href="styles/desk-inventory.css?v=dki12">
-  <link rel="stylesheet" href="styles/desk-orders.css?v=dko15">
+  <link rel="stylesheet" href="styles/desk-orders.css?v=dko17">
   <link rel="stylesheet" href="styles/desk-header.css?v=dkc17">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -394,7 +394,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261126-165250</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261126-171158</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5675,7 +5675,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
      Lo llama el historial al repartir, asi que va ANTES que el. -->
 <script src="src/invoice-order-auto.js?v=ioa4"></script>
 <script src="src/mobile-history.js?v=mhis34"></script>
-<script src="src/mobile-invoices.js?v=miv30"></script>
+<script src="src/mobile-invoices.js?v=miv32"></script>
 <script src="src/mobile-toast-wine.js?v=mtw2"></script>
 <script src="src/mobile-toast-liquor.js?v=mtq6"></script>
 <script src="src/mobile-toast-pours.js?v=mtp1"></script>
@@ -6399,10 +6399,14 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
      teléfono (mobile-history) en la vista Sent de Orders. Antes que
      desk-orders.js, que lo monta. -->
 <script src="src/desk-sent.js?v=dks3"></script>
+<!-- Orders › Invoices (desk-invoices.js, lámina "Invoices · desktop"):
+     Invoices del teléfono (mobile-invoices) en la vista Invoices de Orders.
+     Antes que desk-orders.js, que lo monta. -->
+<script src="src/desk-invoices.js?v=dkv1"></script>
 <!-- Q-O, Quick order (desk-quick.js): el borrador de mobile-quick y la
      revisión de mobile-orders. Antes que desk-orders.js, que lo monta. -->
 <script src="src/desk-quick.js?v=dkq2"></script>
-<script src="src/desk-orders.js?v=dko10"></script>
+<script src="src/desk-orders.js?v=dko11"></script>
 <!-- Después de bsOpenSection/bsCloseSection, que son lo que llama. -->
 <script src="src/desk-shell.js?v=dk10"></script>
 <!-- El Home del escritorio: pinta con los datos de mobile-home.js (más

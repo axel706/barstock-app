@@ -109,7 +109,7 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 
 ## La arquitectura
 
-Frontend estático, sin build. `index.html` es un monolito y hay ~160 módulos
+Frontend estático, sin build. `index.html` es un monolito y hay ~165 módulos
 `src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 38 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 182 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 183 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -854,9 +854,8 @@ sección de hoy vive tal cual dentro del armazón.
   cantidad · ✕) y el pie, en desk-orders.css. El header de sitios fijos:
   vistas Open · Sent (Sent lleva a History, hoy lo enviado), la lupa
   (esconde líneas, sin repintar), Export azul (CSV, XLSX, JPG, LOOP) y
-  Quick order verde; en ⋯, Order analysis. **To buy e Invoices, con la
-  lámina de Sent e Invoices**: sus pantallas del teléfono leen de la nube
-  y sus estilos no están generados aquí; no se ofrecen sin verlas
+  Quick order verde; en ⋯, Order analysis. Sent e Invoices ya
+  están (abajo); **To buy, con su lámina**: no se ofrece sin verla
   funcionar. Con un proveedor abierto el título del header es "Orders ›
   SOUTHERN" (`titulo` puede ser una función) y la cabecera de dentro
   (nombre y total) se va: el total, sólo en el pie; "No price" va en la
@@ -966,6 +965,24 @@ sección de hoy vive tal cual dentro del armazón.
   (`otraRevision` / `salirOtra`, con su título y su vuelta). "Save Quick
   Order" del diálogo de antes no mandaba correo ni preguntaba por el LIVE.
   Prueba: `test-quick-escritorio`. Prueba: `test-sent-escritorio`.
+- **Orders › Invoices en el escritorio** (Axel, 2026-11-26, lámina
+  "Invoices · desktop", A: "la misma forma que Sent"): `src/desk-invoices.js`,
+  la vista `inv` de Orders (Open · Sent · Invoices; la cuenta, las facturas
+  con líneas sin botella). **Es Invoices del TELÉFONO**:
+  `BarStockMobileInvoices.abrirEscritorio({ lista, detalle, alCambiar,
+  buscar })` pinta la lista ("This cycle · N invoices · $") y la factura a
+  la vez, sin la banda (`_esc`); la lupa, Show: All · Unlinked y el
+  proveedor van en el header (`verEscritorio`). La factura: su cabecera, las
+  tres cifras pegadas, a qué orden cuenta (Link to an order e "It arrived
+  before the count", la misma regla `ordenesPara`) y cada línea con su
+  botella. Hide this invoice / Hide el proveedor se MUEVEN a un pie fijo
+  (`.dkv-pie`). El buscador de botellas de una línea es una ventana
+  centrada (`#dkvBus`, `buscar` de desk-invoices), no el de pantalla
+  completa del teléfono: lo mismo (pista, "Not mine"), con el ratón. Sus
+  estilos, GENERADOS bajo `#dkOrd[data-vista="inv"]` (con las `sueltas`,
+  como Sent); el diseño de la vista comparte las reglas de Sent en
+  desk-orders.css (`:is([data-vista="sent"],[data-vista="inv"])`). Prueba:
+  `test-invoices-escritorio`.
 - **EL HEADER DE LAS SECCIONES: SITIOS FIJOS** (Axel, 2026-11-26, lámina
   "Section header · fixed places": "es dinámico, pero a la vez es fijo
   […] los controles siempre en las mismas posiciones"). El estándar para
@@ -1373,7 +1390,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 182 suites · ~2470 comprobaciones. Tienen que pasar enteras.
+`npm test` · 183 suites · ~2470 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
