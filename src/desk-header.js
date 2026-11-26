@@ -78,10 +78,21 @@
       : `<button type="button" role="menuitem" class="dkc-mi${it.on ? ' on' : ''}${it.peligro ? ' rd' : ''}" data-k="${k}"><i class="ti ${esc(it.icon || 'ti-point')}" aria-hidden="true"></i><span>${esc(it.label)}</span>${it.on ? '<i class="ti ti-check dkc-ok" aria-hidden="true"></i>' : ''}</button>`).join('');
     document.body.appendChild(_pop);
     const r = ancla.getBoundingClientRect();
-    _pop.style.top = Math.round(r.bottom + 8) + 'px';
-    // Todo el alto que queda: con un tope fijo, ⋯ cortaba "App" y el tema,
-    // Settings y Logout quedaban escondidos bajo un scroll que no se ve.
-    _pop.style.maxHeight = Math.max(200, Math.round(window.innerHeight - r.bottom - 20)) + 'px';
+    // Hacia abajo, salvo que no quepa y arriba haya más sitio: el ⋯ de una
+    // orden de Sent va en el pie, abajo del todo, y el menú se abría fuera
+    // de la pantalla (Axel, en el iPad).
+    const abajo = window.innerHeight - r.bottom - 20, arriba = r.top - 20;
+    const alto = _pop.scrollHeight;
+    if (alto > abajo && arriba > abajo) {
+      _pop.style.bottom = Math.round(window.innerHeight - r.top + 8) + 'px';
+      _pop.style.maxHeight = Math.max(200, Math.round(arriba)) + 'px';
+      _pop.classList.add('arriba');
+    } else {
+      _pop.style.top = Math.round(r.bottom + 8) + 'px';
+      // Todo el alto que queda: con un tope fijo, ⋯ cortaba "App" y el
+      // tema, Settings y Logout quedaban escondidos bajo un scroll.
+      _pop.style.maxHeight = Math.max(200, Math.round(abajo)) + 'px';
+    }
     _pop.style.right = Math.max(8, Math.round(window.innerWidth - r.right)) + 'px';
     // Abierto se marca en el botón (lo que se dibuja), y el menú cuelga del
     // hueco (lo que recibe el ratón).

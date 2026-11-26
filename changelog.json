@@ -1,5 +1,13 @@
 [
   {
+    "build": "20261126-142615",
+    "items": [
+      "Sent: Resend opens Review and send for any address",
+      "The ⋯ menu opens upward when there is no room",
+      "Sent: buttons sit lower"
+    ]
+  },
+  {
     "build": "20261126-141308",
     "items": [
       "Sent: each order shows its bottles as products"
@@ -190,12 +198,6 @@
     "items": [
       "Desktop: new Sales screen in the sidebar",
       "Full report opens it, with money and bottles tables"
-    ]
-  },
-  {
-    "build": "20261125-165654",
-    "items": [
-      "Desktop: Toast card keeps its size in Bottles and $"
     ]
   }
 ]

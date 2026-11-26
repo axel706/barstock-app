@@ -843,7 +843,11 @@
     if (ab) ab.onclick = () => { _confirmando = true; pintar(host); };
     if (no) no.onclick = () => { _confirmando = false; _vuelve = true; pintar(host); };
 
-    if (re) re.onclick = async () => {
+    // En el escritorio Resend abre la revisión de "Review and send" con
+    // esta orden (desk-orders), para mandarla a quien sea; en el teléfono,
+    // al correo guardado del proveedor, como siempre.
+    if (re && _esc && _esc.reenviar) re.onclick = () => _esc.reenviar(laDelEscritorio(o.appId), o);
+    else if (re) re.onclick = async () => {
       const orden = laDelEscritorio(o.appId);
       const M = window.BarStockMobileOrders;
       if (!orden || !M || typeof M.enviarCorreo !== 'function') {

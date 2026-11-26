@@ -228,7 +228,9 @@
     return M.abrirEscritorio({
       lista: caja.querySelector('#dksLista'),
       detalle: caja.querySelector('#dksDet'),
-      extras, alCambiar, elegir
+      extras, alCambiar, elegir,
+      // Resend: la revisión de Open con esta orden (desk-orders.reenviar).
+      reenviar: (h, o) => { const DO = window.BarStockDeskOrders; if (h && DO && DO.reenviar) DO.reenviar(h, o); }
     }).then(() => { if (_q && M.verEscritorio) M.verEscritorio({ busca: _q }); });
   }
   function cerrar() {

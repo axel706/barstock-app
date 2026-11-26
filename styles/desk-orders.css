@@ -164,8 +164,10 @@
   #dkOrd:not([data-vista="sent"]) :is(.dks-col, .dks-det) { display: none; }
   body.dk #dkOrd[data-vista="sent"] {
     grid-template-columns: 340px minmax(0, 1fr); align-items: stretch;
-    /* La pantalla menos el header y 18 de aire arriba y abajo. */
-    height: calc(100dvh - var(--dk-alto) - 36px);
+    /* La pantalla menos el header y los 18 de aire de arriba; abajo, nada:
+       con 18 también abajo los botones del pie quedaban altos (Axel, en
+       el iPad: "un poco más abajo"). */
+    height: calc(100dvh - var(--dk-alto) - 18px);
   }
   /* Que la página no ruede: la sección mide la pantalla (dk-pantalla,
      min-height) y .wrap le suma 20 px de relleno abajo; con eso, la página
@@ -238,7 +240,7 @@
   #dkOrd .dks-pie {
     position: sticky; bottom: 0; z-index: 5; margin-top: auto;
     display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
-    padding: 14px 0 calc(14px + env(safe-area-inset-bottom));
+    padding: 14px 0 calc(10px + env(safe-area-inset-bottom));
     /* Opaco desde un poco más abajo del borde: las líneas que pasan por
        detrás se leían a través del .92. */
     background: linear-gradient(180deg, rgba(9, 14, 26, 0), #090e1a 30%);

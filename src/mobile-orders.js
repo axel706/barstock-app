@@ -116,6 +116,9 @@
   }
 
   function cantidad(r) {
+    // Una línea de una orden YA enviada (reenviar desde Sent): lo que se
+    // pidió, no lo que pediría hoy el automático.
+    if (r && r._enviada) return num(r.finalOrder);
     return hay('getEffectiveOrder') ? num(window.getEffectiveOrder(r)) : num(r.toOrder);
   }
   // Lo que el automático pide (en una semana saltada, con el interruptor
@@ -699,6 +702,7 @@
     // La nota es de ESTA orden. Si sobreviviera, el "antes del jueves"
     // de Southern le llegaría al siguiente proveedor.
     _notaProv = ''; _notaAbierta = false;
+    _reenvio = null;
   }
 
   // ── Lo que distingue una orden rápida ──────────────────────────────
@@ -746,8 +750,9 @@
           ? 'The order is placed and its CSV (<b>loop_upload.csv</b>) is in your downloads, ready to upload to LOOP.'
           : 'The order is placed, but the CSV did not download. Get it from Export › LOOP (upload ready).'}</div>` : `
         <div class="m-rev-ok-m">${e.to.map(x => esc(x)).join('<br>')}</div>
-        <div class="m-rev-ok-n">The order is placed and the email is on its way
-          with the PDF attached. You can resend it from History.</div>`}
+        <div class="m-rev-ok-n">${e.reenvio
+          ? 'The email is on its way again with the PDF attached. Nothing else changed.'
+          : 'The order is placed and the email is on its way\n          with the PDF attached. You can resend it from History.'}</div>`}
         <button type="button" class="m-rev-go" id="mrDone">Done</button>
       </div>`;
     // Salir lo decides tú. Que la pantalla se cierre sola es lo que
@@ -804,7 +809,7 @@
         <!-- Un título, para que el bloque se lea como UNA cosa. Sin
              él, las fichas, el campo y la casilla parecían tres
              controles sueltos que casualmente estaban juntos. -->
-        <div class="m-rev-enviar-h">Send this order</div>
+        <div class="m-rev-enviar-h">${_reenvio ? 'Send this order again' : 'Send this order'}</div>
         <div class="m-rev-lab">To</div>
         <div class="m-rev-chips" id="mrTo">
           ${_cargandoDest && !_to.length
@@ -836,10 +841,10 @@
             <i class="ti ti-message-plus" aria-hidden="true"></i> Add a note for the vendor
           </button>`}
 
-        <label class="m-rev-rec">
+        ${_reenvio ? '' : `<label class="m-rev-rec">
           <input type="checkbox" id="mrRec"${_recordar ? ' checked' : ''}>
           <span>Remember these for ${esc(v.nombre)}</span>
-        </label>
+        </label>`}
 
         ${_colocando ? `
           <!-- Tres pasos y no una rueda: si el correo falla hay que
@@ -847,7 +852,7 @@
                un mínimo en pantalla, o pasan tan rápido que no se leen
                y parece que no hizo nada. -->
           <div class="m-rev-pasos">
-            <div class="${_paso > 1 ? 'ok' : 'go'}">${_paso > 1 ? '✓' : '●'} Saving the order</div>
+            ${_reenvio ? '' : `<div class="${_paso > 1 ? 'ok' : 'go'}">${_paso > 1 ? '✓' : '●'} Saving the order</div>`}
             <div class="${_paso > 2 ? 'ok' : _paso === 2 ? 'go' : ''}">${
               _paso > 2 ? '✓' : '●'} Building the PDF</div>
             <div class="${_paso === 3 ? 'go' : ''}">● Emailing ${esc(_to[0] || '')}</div>
@@ -865,8 +870,8 @@
             it again.
           </div>` : `
           <div class="m-rev-fallo">
-            <b>The order is placed.</b> The email did not go out.
-            You can send it again from here or from History.
+            ${_reenvio ? '<b>The email did not go out.</b> The order is as it was. Try again from here.'
+              : '<b>The order is placed.</b> The email did not go out.\n            You can send it again from here or from History.'}
           </div>`) : ''}
 
         <button type="button" class="m-rev-go" id="mrGo"${
@@ -874,6 +879,7 @@
           _colocando ? 'Working…'
             : _dudaCorreo ? 'Send it again anyway'
             : _falloCorreo ? 'Try sending again'
+            : _reenvio ? 'Resend'
             : 'Place & send'}</button>
         ${!_to.length && !_cargandoDest
           ? '<div class="m-rev-falta">Add at least one address first.</div>' : ''}
@@ -940,7 +946,8 @@
     const notaTxt = host.querySelector('#mrNota');
     if (notaTxt) notaTxt.oninput = () => { _notaProv = notaTxt.value; };
 
-    host.querySelector('#mrRec').onchange = (ev) => { _recordar = !!ev.target.checked; };
+    const rec = host.querySelector('#mrRec');
+    if (rec) rec.onchange = (ev) => { _recordar = !!ev.target.checked; };
     host.querySelector('#mrGo').onclick = () => colocar(v, host);
 
     cargarDestinatarios(v.nombre, host);   // no hace nada si ya se preguntó
@@ -1265,8 +1272,10 @@
     _enviado = {
       vendor: v.nombre,
       to: fueron.slice(),
-      botellas: orden.totalUnits,
-      total: orden.subtotal
+      // Una orden de Sent puede no traer totalUnits: lo de la revisión.
+      botellas: orden.totalUnits != null ? orden.totalUnits : v.botellas,
+      total: orden.subtotal != null ? orden.subtotal : v.total,
+      reenvio: !!_reenvio
     };
     repintar();
   }
@@ -1545,6 +1554,33 @@
   //   `alCambiar({ sec, vendor, revisar })` avisa al escritorio en cada
   //   pintado (para marcar el proveedor elegido o volver a la lista).
   let _esc = null;
+  // Reenviar una orden ya colocada desde Sent del escritorio (Axel,
+  // 2026-11-26: "el botón Resend debería abrir un panel similar a review
+  // and send, o el mismo, para poder enviar a cualquier destinatario"):
+  // la MISMA revisión con la orden ya guardada en `_colocada`, así que
+  // colocar() se salta el guardado y sólo hace el PDF y el correo. Nada
+  // se guarda ni se reabre. `_reenvio` cambia lo que dice la pantalla.
+  let _reenvio = null;
+  function reenviarEscritorio(host, orden, o) {
+    if (!host || !orden) return false;
+    _esc = { sec: 'open', alCambiar: o && o.alCambiar };
+    _sec = 'open';
+    salirRevision();
+    _vendor = orden.vendor;
+    const filas = (orden.items || []).map(it => Object.assign({}, it, { vendor: orden.vendor, _enviada: true }));
+    _vista = {
+      nombre: orden.vendor,
+      filas,
+      total: num(orden.subtotal) || filas.reduce((t, r) => t + num(r.value) * cantidad(r), 0),
+      sinPrecio: filas.filter(r => num(r.value) <= 0).length,
+      botellas: filas.reduce((t, r) => t + cantidad(r), 0)
+    };
+    _revisar = true;
+    _colocada = orden;
+    _reenvio = { po: orden.poNumber || '' };
+    pintar(host);
+    return true;
+  }
   function abrirEscritorio(host, o) {
     _esc = o || {};
     _sec = _esc.sec || 'open';
@@ -1692,7 +1728,7 @@
 
   window.BarStockMobileOrders = {
     refresh, falloAlGuardar, abrirVendor, enviarCorreo, abrirSeccion,
-    revisarBorrador, abrirEscritorio, cerrarEscritorio, listaResumen,
+    revisarBorrador, abrirEscritorio, cerrarEscritorio, listaResumen, reenviarEscritorio,
     // Cuántos hay pendientes en cada pestaña (las cuentas del header).
     cuentas: () => ({
       open: proveedores().length,

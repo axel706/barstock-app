@@ -207,6 +207,40 @@ function entorno() {
     prueba('en el teléfono LOOP sigue igual (sólo el escritorio descarga)', /const csv = !!_esc && esLoop\(/.test(MO));
   }
 
+  grupo('5c. Resend desde Sent: la misma revisión, sin guardar nada');
+  {
+    // Axel, 2026-11-26: "el botón Resend debería abrir un panel similar a
+    // review and send, o el mismo, para poder enviar a cualquier
+    // destinatario".
+    const w4 = entorno();
+    let guardada = 0, correos = [];
+    w4.persistOrderToSupabase = async () => { guardada++; };
+    w4.loadOrdersFromCloud = async () => {};
+    w4.BarStockEmailOrder = { generarPdf: async () => 'PDF' };
+    w4.BarStockVendorDefaults = { getDefaults: async () => ({ vendor_email: 'rep@southern.test' }) };
+    w4.fetch = async (u, o) => { correos.push(JSON.parse(o && o.body || '{}')); return { ok: true, status: 200, json: async () => ({ ok: true, sent: (JSON.parse(o.body).to || []) }), text: async () => '{}' }; };
+    const D4 = w4.document;
+    const det4 = D4.getElementById('dkoDet');
+    // Una orden YA enviada: sus cantidades son las pedidas (finalOrder),
+    // no lo que pediría hoy el automático (toOrder de la fila es otro).
+    const orden = { id: 'a11', vendor: 'SOUTHERN', poNumber: 'CT-0224', exportType: 'vendor_jpg', subtotal: 120, totalUnits: 7,
+      items: [{ item: "Tito's Vodka", code: 'TIT', finalOrder: 4, value: 20, toOrder: 99 }, { item: 'Kamora', code: 'KAM', finalOrder: 3, value: 13.33, toOrder: 99 }] };
+    w4.BarStockMobileOrders.reenviarEscritorio(det4, orden, {});
+    await esperar(20);
+    prueba('la revisión de Open con la orden: "Send this order again" y Resend', /Send this order again/.test(txt(det4)) && /Resend/.test(txt(det4.querySelector('#mrGo'))), txt(det4).slice(0, 160));
+    prueba('   las cantidades son las pedidas (4× y 3×), no las de hoy', /4×\s*Tito's Vodka/.test(txt(det4)) && /3×\s*Kamora/.test(txt(det4)) && !/99×/.test(txt(det4)));
+    prueba('   con el correo guardado del proveedor puesto, y se pueden añadir otros', /rep@southern\.test/.test(txt(det4)) && !!det4.querySelector('#mrAdd'));
+    prueba('   sin "Remember these" (reenviar no cambia los guardados)', !det4.querySelector('#mrRec'));
+    det4.querySelector('#mrAdd').click();
+    det4.querySelector('#mrMail').value = 'axel@crown.test';
+    det4.querySelector('#mrOk').click(); await esperar(10);
+    prueba('   un destinatario cualquiera se añade', /axel@crown\.test/.test(txt(det4.querySelector('#mrTo'))));
+    det4.querySelector('#mrGo').click(); await esperar(1600);
+    prueba('Resend NO guarda otra orden', guardada === 0);
+    prueba('   manda el correo a los dos', correos.length === 1 && (correos[0].to || []).join(',') === 'rep@southern.test,axel@crown.test', JSON.stringify(correos.map(c => c.to)));
+    prueba('   y dice que salió otra vez, sin "placed"', /Sent to SOUTHERN/.test(txt(det4)) && /on its way again/.test(txt(det4)) && !/order is placed/.test(txt(det4)), txt(det4).slice(0, 200));
+  }
+
   grupo('5b. El tiempo real: lo cambiado en el teléfono se ve aquí');
   {
     // Axel, 2026-11-26: "los que hago en el móvil no los ve la pc en

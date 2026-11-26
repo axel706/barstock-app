@@ -929,7 +929,19 @@ sección de hoy vive tal cual dentro del armazón.
   la lista igual ("27 products"; Axel: "items también debe ser
   reemplazado por products en el móvil"), las dos con `botellasDe`. El
   aviso de lo corto dice "N products came up short" (ése sí cuenta
-  líneas: cuántos productos llegaron cortos). Prueba: `test-sent-escritorio`.
+  líneas: cuántos productos llegaron cortos). **Resend abre "Review and
+  send"** (Axel: "un panel similar a review and send, o el mismo, para
+  poder enviar a cualquier destinatario"): la MISMA revisión de Open
+  (`BarStockMobileOrders.reenviarEscritorio`) con la orden ya guardada en
+  `_colocada`, así que `colocar()` se salta el guardado y sólo hace el PDF
+  y el correo, a los destinatarios que se pongan (el guardado del
+  proveedor, de entrada). Sin "Remember these" ni "Saving the order"; las
+  cantidades son las pedidas (`_enviada` → `finalOrder`, no
+  `getEffectiveOrder`). En el título, "Sent › SOUTHERN › Resend"; "Sent" y
+  Done vuelven a esa orden (`desk-orders.reenviar` / `terminarReenvio`). En
+  el teléfono Resend sigue mandando al guardado. Los menús del header se
+  abren hacia ARRIBA si abajo no caben (el ⋯ del pie se salía de la
+  pantalla), y el pie va más abajo (la vista sin aire debajo). Prueba: `test-sent-escritorio`.
 - **EL HEADER DE LAS SECCIONES: SITIOS FIJOS** (Axel, 2026-11-26, lámina
   "Section header · fixed places": "es dinámico, pero a la vez es fijo
   […] los controles siempre en las mismas posiciones"). El estándar para

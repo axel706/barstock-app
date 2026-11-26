@@ -150,7 +150,7 @@ function entorno() {
     prueba('   y la tarjeta de la lista dice lo mismo: "10 products", sin "items"', /10 products/.test(txt(filas[0])) && !/items?\b/.test(txt(lista)), txt(filas[0]));
   }
   prueba('cada columna rueda por su cuenta y la página no (alto de la pantalla, overflow propio)',
-    /body\.dk #dkOrd\[data-vista="sent"\] \{[^}]*height: calc\(100dvh - var\(--dk-alto\) - 36px\)/.test(CSS) &&
+    /body\.dk #dkOrd\[data-vista="sent"\] \{[^}]*height: calc\(100dvh - var\(--dk-alto\) - 18px\)/.test(CSS) &&
     /#dkOrd :is\(\.dks-col, \.dks-det\) \{[^}]*overflow-y: auto;[^}]*overscroll-behavior: contain/.test(CSS) &&
     /\.wrap:has\(> #vendorSection\.bs-active-section #dkOrd\[data-vista="sent"\]\) \{ padding-bottom: 0 !important; \}/.test(CSS));
   prueba('   las tres cifras se pegan arriba al rodar la orden, opacas', /\.dks-det > \.m-itot \{[^}]*position: sticky; top: 0;[^}]*background: #0e1628/.test(CSS));
@@ -176,6 +176,16 @@ function entorno() {
   prueba('   los cuatro, abajo en el pie fijo (como Review and send de Open), no en la cabecera',
     !!pie && pie === det.lastElementChild && !!pie.querySelector('#mhRe') && !!pie.querySelector('#mhAbrir') && !!pie.querySelector('[data-dks="jpg"]') && !!pie.querySelector('[data-dks="mas"]') &&
     !det.querySelector('.m-hdk-cab button') && /#dkOrd \.dks-pie \{[^}]*position: sticky; bottom: 0;/.test(CSS));
+  {
+    // Resend abre la revisión de Open con esta orden (desk-orders), no
+    // manda el correo directo al guardado.
+    const antes = w.BarStockDeskOrders.reenviar;
+    let pedido = null;
+    w.BarStockDeskOrders.reenviar = (h, o) => { pedido = { h, o }; };
+    det.querySelector('#mhRe').click();
+    w.BarStockDeskOrders.reenviar = antes;
+    prueba('   Resend abre la revisión con la orden del escritorio (no manda el correo directo)', !!pedido && pedido.h && pedido.h.id === 'a11' && pedido.o.vendor === 'SOUTHERN');
+  }
   det.querySelector('#mhAbrir').click(); await esperar(10);
   prueba('   Reopen pide confirmar en el mismo pie', !!det.querySelector('.dks-pie .m-hacc-conf #mhSi') && !det.querySelector('.m-hdk-cab .m-hacc-conf'));
   det.querySelector('#mhNo').click(); await esperar(10);

@@ -37,6 +37,7 @@
   let _abierto = false;   // si el módulo del teléfono está montado aquí
   let _auto = null;       // el último proveedor elegido solo
   let _revisando = false; // en Review and send
+  let _reenviando = null;  // reenviar una orden de Sent: { vendor, sentId }
 
   function abierta() { return !!(_sec && _sec.classList.contains('bs-active-section')); }
   const lista = () => (MO() && MO().listaResumen ? MO().listaResumen() : []);
@@ -117,8 +118,50 @@
     if (DH() && DH().refrescar) DH().refrescar('vendor');
   }
 
+  // ── Resend desde Sent (Axel, 2026-11-26: "debería abrir un panel
+  // similar a review and send, o el mismo, para poder enviar a cualquier
+  // destinatario") ──
+  // Es la MISMA revisión de Open (mobile-orders.reenviarEscritorio, con la
+  // orden ya guardada: no guarda nada, sólo el PDF y el correo) en el
+  // mismo sitio y con la misma forma (dko-revisando). Salir de ella
+  // (Done, o "Sent" en el título) vuelve a Sent, a esa orden.
+  function reenviar(orden, deSent) {
+    const det = _caja && _caja.querySelector('#dkoDet');
+    if (!det || !MO() || !MO().reenviarEscritorio) return;
+    _reenviando = { vendor: orden.vendor, sentId: deSent && deSent.id };
+    if (DS() && DS().abierto()) DS().cerrar();
+    _caja.dataset.vista = 'reenvio';
+    _caja.classList.add('dko-revisando');
+    MO().reenviarEscritorio(det, orden, { alCambiar: alReenvio });
+    if (window.scrollTo) window.scrollTo(0, 0);
+  }
+  function alReenvio(e) {
+    if (!_reenviando) return;
+    if (e && e.revisar) {
+      columnaRevision();
+      if (DH() && DH().refrescar) DH().refrescar('vendor');
+      return;
+    }
+    terminarReenvio();
+  }
+  function terminarReenvio() {
+    if (!_reenviando) return;
+    const volver = _reenviando.sentId;
+    _reenviando = null;
+    _revisando = false;
+    _caja.classList.remove('dko-revisando');
+    if (MO() && MO().cerrarEscritorio) MO().cerrarEscritorio();
+    const det = _caja.querySelector('#dkoDet');
+    if (det) det.innerHTML = '';
+    _vista = 'sent';
+    _caja.dataset.vista = 'sent';
+    if (DS()) DS().abrir(_caja, volver);
+    if (DH() && DH().refrescar) DH().refrescar('vendor');
+  }
+
   function montarModulo() {
     const det = _caja.querySelector('#dkoDet');
+    if (_reenviando) { _reenviando = null; _caja.classList.remove('dko-revisando'); if (MO() && MO().cerrarEscritorio) MO().cerrarEscritorio(); }
     _caja.dataset.vista = _vista;
     // Sent es otro módulo (desk-sent.js): Open se suelta y su panel se
     // vacía; al volver a Open, al revés.
@@ -195,7 +238,9 @@
     // En la revisión, "Orders" y el proveedor son enlaces de vuelta a las
     // líneas (Axel, 2026-11-26: "Back to the lines" dejaba mucho aire encima
     // de la lista; como el ‹ lleva al Home, el proveedor lleva a su orden).
-    titulo: () => (_vista === 'open' && _vendor
+    titulo: () => (_reenviando
+      ? [{ t: 'Sent', miga: 'sent' }, _reenviando.vendor, 'Resend']
+      : _vista === 'open' && _vendor
       ? (_revisando ? [{ t: 'Orders', miga: 'orders' }, { t: _vendor, miga: 'vendor' }, 'Review'] : 'Orders › ' + _vendor)
       : 'Orders'),
     vistas() {
@@ -224,6 +269,7 @@
     alClic(ev, t) {
       const k = t.dataset.dkc;
       if (k === 'vista') return verVista(t.dataset.vista);
+      if (k === 'miga' && t.dataset.miga === 'sent') return terminarReenvio();
       if (k === 'miga') { if (_vendor) elegir(_vendor); return; }
       if (k === 'quick') return clicEn('quickOrderBtn');
       if (enSent()) return DS().CAB.alClic(ev, t);
@@ -263,6 +309,7 @@
     if (abierta()) { if (!_abierto && !sentAbierto) montarModulo(); }
     else {
       if (sentAbierto) DS().cerrar();
+      if (_reenviando) { _reenviando = null; _caja.classList.remove('dko-revisando'); _caja.dataset.vista = _vista; if (MO() && MO().cerrarEscritorio) MO().cerrarEscritorio(); const d = _caja.querySelector('#dkoDet'); if (d) d.innerHTML = ''; return; }
       if (!_abierto) return;
       _abierto = false;
       if (MO() && MO().cerrarEscritorio) MO().cerrarEscritorio();
@@ -305,5 +352,5 @@
   if (document.getElementById('vendorSection')) montar();
   else document.addEventListener('DOMContentLoaded', montar);
 
-  window.BarStockDeskOrders = { montar, abierta, elegir: (n) => elegir(n), verSent, verOpen, vista: () => _vista, _estado: () => ({ vista: _vista, vendor: _vendor, q: _q }) };
+  window.BarStockDeskOrders = { montar, abierta, elegir: (n) => elegir(n), verSent, verOpen, reenviar, vista: () => _vista, _estado: () => ({ vista: _vista, vendor: _vendor, q: _q }) };
 })();
