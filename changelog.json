@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261126-174925",
+    "items": [
+      "One glass footer bar on Orders and Inventory screens",
+      "Quick order: Count in Live is now Now | Tue 7 AM"
+    ]
+  },
+  {
     "build": "20261126-174156",
     "items": [
       "Tapping Orders in the title goes to Orders, not Home"
@@ -193,12 +200,6 @@
     "items": [
       "Bigger Inventory rows on desktop",
       "Price moved before Avg/wk; On hand is now the last column"
-    ]
-  },
-  {
-    "build": "20261125-194817",
-    "items": [
-      "Desktop: top bar buttons make room, glass style"
     ]
   }
 ]

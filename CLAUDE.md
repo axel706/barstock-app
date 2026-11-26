@@ -999,6 +999,21 @@ sección de hoy vive tal cual dentro del armazón.
   también desde la revisión** (`mobile-quick.trasColocar`, que
   `mobile-orders.colocar` llama antes de tirar el borrador): antes sólo lo
   hacía el guardado de LOOP del teléfono. Prueba: `test-tobuy-escritorio`.
+- **LOS PIES DEL ESCRITORIO: UNA barra de cristal** (Axel, 2026-11-26,
+  lámina "Quick order & To buy · the footer", A: "ese pie está HORRIBLE";
+  "aplícalo a TODAS las pantallas que llevan barras de ese estilo"). Open
+  (total y Review and send), Sent (Resend, JPG, Reopen, ⋯), Invoices
+  (Hide), Q-O y To buy (total, "Count in Live: Now | Tue 7 AM", Review) y
+  Delete / Save del panel de Inventory: una barra que flota a 10 px del
+  borde, radio 22, como Done del teléfono. Es UNA regla en
+  desk-header.css (`:is(#dkOrd .dko-pie, … #dkiPanel .dki-pie)`); cada
+  sección sólo pone lo suyo (dónde se va al fondo, si parte renglón). **Un
+  pie nuevo entra en esa lista, no se copia.** El de Q-O va siempre en una
+  línea: con poco ancho se compacta, no se parte. Y tocar un trozo
+  enlazado del título ("Orders" de "Orders › Q-O") se decide por dónde
+  cayó el dedo (`migaEn`): en el iPad, Safari le daba el toque al botón
+  del Home que lo contiene. Pruebas: `test-tobuy-escritorio`, 5a de
+  `test-quick-escritorio`.
 - **EL HEADER DE LAS SECCIONES: SITIOS FIJOS** (Axel, 2026-11-26, lámina
   "Section header · fixed places": "es dinámico, pero a la vez es fijo
   […] los controles siempre en las mismas posiciones"). El estándar para

@@ -132,6 +132,16 @@ function final() {
           const pos = s => I.indexOf(s);
           prueba('desk-tobuy tras desk-quick y antes de desk-orders', pos('src/desk-quick.js') > 0 && pos('src/desk-quick.js') < pos('src/desk-tobuy.js') && pos('src/desk-tobuy.js') < pos('src/desk-orders.js'));
           prueba('la vista usa la rejilla de Q-O', /\[data-vista="buy"\]\) \{\s*grid-template-columns: 420px/.test(leer('styles/desk-orders.css')));
+          {
+            // Lámina "the footer", A: los cinco pies, UNA barra de cristal,
+            // en UNA regla (no cinco copias que dejan de decir lo mismo).
+            const H = leer('styles/desk-header.css');
+            const m = H.match(/:is\(([^)]*)\) \{\s*position: sticky; z-index: 5; bottom: max\(10px[^}]*border-radius: 22px;[^}]*backdrop-filter: blur\(18px\)/);
+            const lista = m ? m[1] : '';
+            prueba('los cinco pies (Open, Sent, Invoices, Q-O/To buy, Inventory) son UNA barra de cristal', ['.dko-pie', '.dks-pie', '.dkv-pie', '.dkq-pie', '.dki-pie'].every(c => lista.includes(c)), lista);
+            const O = leer('styles/desk-orders.css') + leer('styles/desk-inventory.css');
+            prueba('   y ninguno conserva su fondo propio de antes', !/\.(dko|dks|dkv|dkq|dki)-pie[^{]*\{[^}]*background:/.test(O));
+          }
           prueba('el pie de To buy y Q-O en UNA línea (sin wrap ni la rejilla de dos filas)', /#dkOrd \.dkq-pie \{[^}]*flex-wrap: nowrap;/.test(leer('styles/desk-orders.css')) && !/grid-template-areas: "tot go" "live live"/.test(leer('styles/desk-orders.css')));
           fin();
         });

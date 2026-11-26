@@ -277,4 +277,29 @@
   @media (prefers-reduced-motion: reduce) {
     #dkCab .dkc-pl, #dkCab .dkc-pl b, #dkCab .dkc-seg, #dkCab .dkc-titulo .ti, body.dk.dk-cab .bs-header #dkCab #dkBusca { transition: none; }
   }
+
+  /* ── LOS PIES: una barra de cristal (Axel, 2026-11-26, lámina "Quick
+     order & To buy · the footer", A: "aplicarlo a TODAS las pantallas que
+     llevan barras de ese estilo") ──
+     Open (total y Review and send), Sent (Resend, JPG, Reopen, ⋯),
+     Invoices (Hide), Q-O y To buy (total, Live y Review), y Delete / Save
+     del panel de Inventory: UNA barra que flota sobre lo que rueda, como
+     la de Done del teléfono. Antes eran piezas sueltas sobre un degradado
+     oscuro, cada una con su regla ("ese pie está HORRIBLE"). Una sola
+     regla: un pie nuevo entra en esta lista, no se copia.
+     Flota a 10 px del borde (media zona segura si es más), y con el mismo
+     margen debajo cuando no rueda nada. */
+  :is(#dkOrd .dko-pie, #dkOrd .dks-pie, #dkOrd .dkv-pie, #dkOrd .dkq-pie, #dkiPanel .dki-pie) {
+    position: sticky; z-index: 5; bottom: max(10px, calc(env(safe-area-inset-bottom) / 2));
+    margin-bottom: max(10px, calc(env(safe-area-inset-bottom) / 2));
+    box-sizing: border-box; min-height: 70px;
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 12px 11px 18px; border-radius: 22px;
+    background: rgba(15, 23, 42, .66); border: 1px solid rgba(255, 255, 255, .2);
+    box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .22), 0 10px 30px rgba(0, 0, 0, .35);
+    backdrop-filter: blur(18px) saturate(1.3); -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  }
+  /* Los que empiezan con botones (Sent, Invoices, Inventory): el mismo aire
+     por los cuatro lados. */
+  :is(#dkOrd .dks-pie, #dkOrd .dkv-pie, #dkiPanel .dki-pie) { padding-left: 12px; }
 }

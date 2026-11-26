@@ -168,6 +168,17 @@
     if (_abierto && _paso === 2) pintarPie();
   }
   const fecha = (iso) => (VD() && VD().fecha ? VD().fecha(iso) : String(iso));
+  // "Tue 7 AM" / "Wed 4:30 PM", en Nueva York: el pie de la lámina A lo
+  // dice corto ("Count in Live: Now | Tue 7 AM"); la fecha entera va en
+  // su aria-label.
+  function corto(iso) {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return String(iso);
+    const p = {};
+    new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' })
+      .formatToParts(d).forEach(x => { p[x.type] = x.value; });
+    return p.weekday + ' ' + p.hour + (p.minute && p.minute !== '00' ? ':' + p.minute : '') + ' ' + (p.dayPeriod || '').trim();
+  }
   function pintarPie() {
     const el = _caja.querySelector('#dkqPie');
     const Q = QE();
@@ -175,10 +186,10 @@
     const listo = ls.length && _live && (_live === 'ya' || _sig);
     const correo = Q.porCorreo(vendor());
     el.innerHTML = `<div class="dkq-tot"><b>${money(Q.total())}</b><small>${n2(Q.botellas())} bottle${Q.botellas() === 1 ? '' : 's'}</small></div>
-      <div class="dkq-live"><span>Count in Live now?</span>
-        <div class="dkq-seg" role="radiogroup" aria-label="Count in Live now?">
-          <button type="button" role="radio" aria-checked="${_live === 'ya'}" class="${_live === 'ya' ? 'on' : ''}" data-dkq="live" data-v="ya">Yes, it's here</button>
-          <button type="button" role="radio" aria-checked="${_live === 'luego'}" class="${_live === 'luego' ? 'on' : ''}" data-dkq="live" data-v="luego"${_sig ? '' : ' disabled'}>${_sig ? '<span class="dkq-sig-l">Next delivery · </span>' + esc(fecha(_sig)) : 'No delivery day'}</button>
+      <div class="dkq-live"><span>Count in Live</span>
+        <div class="dkq-seg" role="radiogroup" aria-label="Count in Live: now, or at the next delivery">
+          <button type="button" role="radio" aria-checked="${_live === 'ya'}" class="${_live === 'ya' ? 'on' : ''}" data-dkq="live" data-v="ya" aria-label="Now: it's here">Now</button>
+          <button type="button" role="radio" aria-checked="${_live === 'luego'}" class="${_live === 'luego' ? 'on' : ''}" data-dkq="live" data-v="luego"${_sig ? ` aria-label="At the next delivery, ${esc(fecha(_sig))}"` : ' disabled'}>${_sig ? esc(corto(_sig)) : 'No delivery day'}</button>
         </div></div>
       <button type="button" class="dki-cr azul dkq-go" data-dkq="revisar"${listo ? '' : ' disabled'}><i class="ti ti-send" aria-hidden="true"></i>${correo ? 'Review and send' : 'Review and place'}</button>`;
     el.hidden = !ls.length;

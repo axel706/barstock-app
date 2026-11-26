@@ -99,11 +99,8 @@
   #dkOrd .dko-der { container: dkord / inline-size; }
 
   /* ── El pie: el total del proveedor y "Review and send", pegado abajo ── */
-  #dkOrd .dko-pie {
-    position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; gap: 14px;
-    margin: 0 -28px 0 0; padding: 12px 28px calc(12px + env(safe-area-inset-bottom)) 0;
-    background: linear-gradient(180deg, rgba(9, 14, 26, 0), rgba(9, 14, 26, .92) 26%);
-  }
+  /* La barra misma (cristal, sitio, alto) es LA regla de los pies, en
+     desk-header.css. */
   #dkOrd .dko-pie[hidden] { display: none; }
   #dkOrd .dko-pt b { font-size: 24px; font-weight: 850; font-variant-numeric: tabular-nums; }
   #dkOrd .dko-pt small { margin-left: 8px; color: #a9bacd; font-size: 13px; }
@@ -246,17 +243,10 @@
      lámina). Resend y Reopen son del teléfono (.m-hacc) y JPG y ⋯ de aquí
      (.dks-ext); las dos cajas se abren (display: contents) y cada botón
      lleva su sitio. Resend, a lo ancho, como en el teléfono. */
-  #dkOrd :is(.dks-pie, .dkv-pie) {
-    position: sticky; bottom: 0; z-index: 5; margin-top: auto;
-    display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
-    /* Abajo del todo (Axel, en el iPad: "pueden y deben ir más abajo"):
-       sólo media zona segura, que la barra de inicio del iPad es una
-       línea fina y no tapa un botón de 44. */
-    padding: 12px 0 max(6px, calc(env(safe-area-inset-bottom) / 2));
-    /* Opaco desde un poco más abajo del borde: las líneas que pasan por
-       detrás se leían a través del .92. */
-    background: linear-gradient(180deg, rgba(9, 14, 26, 0), #090e1a 30%);
-  }
+  /* La barra (cristal, sitio, alto): LA regla de los pies, en
+     desk-header.css. Aquí sólo que se va al fondo de su columna y que el
+     aviso de Reopen ("Delete and reopen") puede bajar a su renglón. */
+  #dkOrd :is(.dks-pie, .dkv-pie) { margin-top: auto; flex-wrap: wrap; }
   #dkOrd .dks-pie > :is(.m-hacc, .dks-ext) { display: contents; }
   #dkOrd .dks-pie #mhRe { order: 1; }
   #dkOrd .dks-pie [data-dks="jpg"] { order: 2; }
@@ -384,18 +374,14 @@
 
   /* El pie: el total, "Count in Live now?" (el carril de cristal de las
      vistas del header, con lo elegido en cristal azul) y Review and send. */
-  #dkOrd .dkq-pie {
-    position: sticky; bottom: 0; z-index: 5; margin-top: auto;
-    /* TODO en una línea (Axel, en el iPad: el envío bajaba a otra fila):
-       sin wrap; con poco ancho se compacta (abajo), no se parte. */
-    display: flex; align-items: center; flex-wrap: nowrap; gap: 16px;
-    padding: 14px 0 max(6px, calc(env(safe-area-inset-bottom) / 2));
-    background: linear-gradient(180deg, rgba(9, 14, 26, 0), #090e1a 30%);
-  }
+  /* La barra (cristal, sitio, alto): LA regla de los pies, en
+     desk-header.css. TODO en una línea (Axel, en el iPad: el envío bajaba
+     a otra fila): sin wrap; con poco ancho se compacta (abajo). */
+  #dkOrd .dkq-pie { margin-top: auto; flex-wrap: nowrap; }
   #dkOrd .dkq-pie[hidden] { display: none; }
   #dkOrd .dkq-tot b { display: block; font-size: 24px; font-weight: 850; font-variant-numeric: tabular-nums; }
   #dkOrd .dkq-tot small { color: #a9bacd; font-size: 13px; }
-  #dkOrd .dkq-live { display: flex; align-items: center; gap: 10px; color: #cbd5e1; font-size: 13.5px; font-weight: 700; }
+  #dkOrd .dkq-live { display: flex; align-items: center; gap: 10px; color: #cbd5e1; font-size: 13.5px; font-weight: 700; white-space: nowrap; }
   #dkOrd .dkq-seg { display: flex; gap: 2px; padding: 4px; border-radius: 999px; position: relative; }
   #dkOrd .dkq-seg button { height: 36px; padding: 0 14px; border-radius: 999px !important; font-size: 13.5px; font-weight: 750; color: #dbe4ee; background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; cursor: pointer; white-space: nowrap; }
   #dkOrd .dkq-seg button:disabled { color: #7f8ea3; cursor: default; }
@@ -426,15 +412,14 @@
     #dkOrd .dkq-meta { grid-template-columns: 1fr 1fr; }
     #dkOrd .dkq-meta label:last-child { grid-column: 1 / -1; }
   }
-  /* El pie con poco ancho (el iPad de 1180 con la barra): la pregunta,
-     chica encima de sus botones; "Next delivery ·" se va y queda el día; el
-     envío, sólo con su nombre. Sigue en UNA línea. */
-  @container dkqder (max-width: 900px) {
+  /* Con poco ancho (el iPad de 1180 con la barra) sigue en UNA línea: el
+     envío sin su icono y todo un poco más junto. */
+  @container dkqder (max-width: 620px) {
     #dkOrd .dkq-pie { gap: 10px; }
     #dkOrd .dkq-tot b { font-size: 20px; }
-    #dkOrd .dkq-live { flex-direction: column; align-items: flex-start; gap: 3px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #94a3b8; }
-    #dkOrd .dkq-seg button { padding: 0 9px; font-size: 12.5px; height: 34px; }
-    #dkOrd .dkq-sig-l, #dkOrd .dkq-go > .ti { display: none; }
+    #dkOrd .dkq-live { gap: 7px; font-size: 12.5px; }
+    #dkOrd .dkq-seg button { padding: 0 11px; }
+    #dkOrd .dkq-go > .ti { display: none; }
     #dkOrd .dkq-go { padding: 0 16px; font-size: 14.5px; }
   }
 

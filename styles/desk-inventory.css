@@ -268,7 +268,9 @@
   /* Edit con algo sin guardar: un punto, porque Save se queda en su pestaña. */
   #dkiPanel .dki-tabs button.sucio::after { content: ''; display: inline-block; width: 7px; height: 7px; margin-left: 7px; border-radius: 50%; background: #fbbf24; vertical-align: middle; }
   /* Save y Delete, fijos al pie del panel mientras lo demás rueda. */
-  #dkiPanel .dki-pie { position: sticky; bottom: calc(-14px - env(safe-area-inset-bottom)); margin: auto -14px calc(-14px - env(safe-area-inset-bottom)); padding: 12px 14px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid rgba(255, 255, 255, .1); background: rgba(9, 14, 26, .92); }
+  /* La barra (cristal, sitio, alto) es LA regla de los pies, en
+     desk-header.css. */
+  #dkiPanel .dki-pie { margin-top: auto; }
 
   /* Poco sitio para la lista: Avg/wk y To order se van. */
   @container dkinv (max-width: 1000px) {

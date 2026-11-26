@@ -133,7 +133,9 @@ function entorno() {
   grupo('4. "Count in Live now?" antes de revisar');
   const pie = () => D.getElementById('dkqPie');
   prueba('sin contestar, Review and send no se puede', pie().querySelector('[data-dkq="revisar"]').disabled);
-  prueba('   "Next delivery" con su fecha (SOUTHERN tiene día)', !pie().querySelector('[data-v="luego"]').disabled && /Next delivery · Wed Dec 2/.test(txt(pie())), txt(pie()));
+  // Lámina "the footer", A: "Count in Live: Now | Wed 4 PM", en corto; la
+  // fecha entera, en su aria-label.
+  prueba('   la siguiente entrega, corta ("Wed 4 PM"), con la fecha entera para leerla (SOUTHERN tiene día)', !pie().querySelector('[data-v="luego"]').disabled && /Count in Live Now Wed 4 PM/.test(txt(pie())) && /Wed Dec 2/.test(pie().querySelector('[data-v="luego"]').getAttribute('aria-label') || ''), txt(pie()));
   // Un store run apuntado después: su fecha y hora.
   D.getElementById('dkqFecha').value = '2026-11-25'; D.getElementById('dkqHora').value = '15:10';
   D.getElementById('dkqFecha').dispatchEvent(new w.Event('change', { bubbles: true })); await esperar(10);
