@@ -138,7 +138,15 @@ w.eval(DI);
   prueba('5 · acciones: Count (azul) y Add item (verde), en dos huecos', cab.querySelectorAll('.dkc-acciones > .dkc-hueco').length === 2 && !!cab.querySelector('.dkc-acciones .dkc-pl.azul[data-dkc="contar"]') && !!cab.querySelector('.dkc-acciones .dkc-pl.verde[data-dkc="nuevo"]'));
   prueba('5 · Do we have (el mismo campo, movido) y ⋯, al final', cab.querySelector('.dkc-busca #dkBusca') === D.getElementById('dkBusca') && !!cab.querySelector('[data-dkc="mas"]'));
   prueba('fuera en una sección: saludo, locación, Import, Export, tema, Logout', ['#dkMiga', '.dk-saludo', '.bs-loc-wrap', '.dk-imp', '.dk-exp', '.dk-mas', '#themeToggle', '#authLogoutBtn'].every(x => CSSH.includes('body.dk.dk-cab .bs-header ' + x)));
-  prueba('los huecos miden siempre lo mismo y el botón se abre ENCIMA', /\.dkc-hueco \{ position: relative; width: 38px; height: 38px;/.test(CSSH) && /\.dkc-pl \{\s*position: absolute;[^}]*pointer-events: none/.test(CSSH));
+  // Lámina "Header buttons · no overlapping", A (2026-11-26): abiertos
+  // encima se encimaban con el vecino (capturas de Axel).
+  prueba('un botón abierto ya no se dibuja encima: crece y aparta a los de al lado', /\.dkc-pl \{\s*position: relative;/.test(CSSH) && !/\.dkc-pl \{\s*position: absolute/.test(CSSH));
+  prueba('   abierto mide su nombre (--w), con tope en el sitio que hay', /max-width: var\(--w, 200px\)/.test(CSSH) && /const tope = 38 \+ _holgura\.der \+ _holgura\.izq;/.test(DH));
+  prueba('   si no cabe, las vistas se apartan lo que falta y vuelven (--dkc-empuje)', /\.dkc-seg \{[^}]*transform: translateX\(calc\(-1 \* var\(--dkc-empuje, 0px\)\)\)/.test(CSSH) && /w - 38 - _holgura\.der/.test(DH));
+  prueba('   medir no es animar: se mide con todo cerrado y tras la animación', /setTimeout\(medir, 260\)/.test(DH) && /if \(_cab\.querySelector\('\.dkc-pl\.abierto, \.dkc-pl\.toque, \.dkc-hueco:hover'\)/.test(DH));
+  prueba('   Do we have sí se abre ancho por encima (va a escribirse)', /#dkCab #dkBusca \{\s*position: absolute;/.test(CSSH));
+  prueba('sin la etiqueta gris del navegador (title) en los botones del header', !/title=/.test(txt(cab) + cab.innerHTML.replace(/<input[^>]*>/g, '')) && !cab.querySelector('[title]'), [...cab.querySelectorAll('[title]')].map(e => e.outerHTML.slice(0, 60)).join(' | '));
+  prueba('liquid glass: el cristal del teléfono en todos (desenfoque, filo de luz, reflejo)', /#dkCab :is\(\.dkc-pl, \.dkc-seg\),[\s\S]{0,120}#dkMenu,[\s\S]{0,120}#dkBusca \{\s*-webkit-backdrop-filter: blur\(10px\) saturate\(180%\) brightness\(1\.08\);/.test(CSSH) && /inset 0 1\.5px 0 rgba\(255, 255, 255, \.5\)/.test(CSSH) && /radial-gradient\(120% 70% at 30% 0%/.test(CSSH));
 
   grupo('3. Las vistas y afinar, con las reglas del teléfono');
   cab.querySelector('[data-vista="fix"]').click(); await esperar(10);

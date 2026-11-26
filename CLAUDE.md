@@ -809,13 +809,27 @@ sección de hoy vive tal cual dentro del armazón.
     su `<input>`). Do we have es EL MISMO campo de desk-search, movido a
     su hueco y de vuelta al Home.
   - Los botones son círculos de 38 px que se abren con su nombre al
-    pasar el ratón, POR ENCIMA de sus vecinos (nada se mueve): los de
-    afinar hacia la derecha, los de las acciones hacia la izquierda;
-    hacia el centro tapaban las vistas. **Lo que recibe el ratón es el
-    hueco, no el botón abierto** (`pointer-events: none`): abierto
-    encima del vecino no dejaba llegar a él. Con el dedo, un toque hace
-    la acción y el nombre se ve un momento. Un campo (el filtro) se abre
-    al tocarlo; Esc o Enter lo cierran sin borrarlo.
+    pasar el ratón y **APARTAN a sus vecinos** (lámina "Header buttons ·
+    no overlapping", A, 2026-11-26; abiertos encima se encimaban, en las
+    capturas de Axel): el hueco crece de verdad, los de su izquierda se
+    deslizan hacia el sitio libre entre las vistas y los botones, y lo de
+    su derecha no se mueve (el botón sigue bajo el ratón). Abierto mide
+    su nombre (`--w`); si el sitio libre no alcanza (59 px a 1440 con la
+    barra), las VISTAS se apartan lo que falta (`--dkc-empuje`) hacia lo
+    que sobra junto al título, y vuelven al cerrarse; nunca más que eso
+    (si no cabe, "…"). Los anchos y el sitio se miden al pintar y tras la
+    animación con todo cerrado (`medir`), y al pasar el ratón sólo se
+    resta (`empujar`): medir no es animar. Los nombres, cortos ("Sort:
+    Value"). Do we have sí se abre ancho por encima de todo ("lo hace muy
+    bien porque cubre a todos"). Sin `title`: el navegador repetía el
+    nombre en su etiqueta gris. Con el dedo, un toque hace la acción y el
+    nombre se ve un momento. Un campo (el filtro) se abre al tocarlo; Esc
+    o Enter lo cierran sin borrarlo.
+  - **Todos de cristal** (Axel, el mismo día: "dales estilo liquid glass
+    a todos"): el MISMO cristal del teléfono (la banda, Done, el +): los
+    círculos, el carril de las vistas con la elegida en cristal azul,
+    `#dkMenu` y Do we have; la acción azul, crear verde, lo que está en
+    uso azul. El reflejo, en ::before bajo el icono y el texto.
   - Lo que está en uso (un proveedor, un filtro) va azul con un punto y
     su valor al pasar el ratón; no se queda abierto (no cabía y
     empujaba las vistas). Las cuentas de las vistas bajan ("All 9").

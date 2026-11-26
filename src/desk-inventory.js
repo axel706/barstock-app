@@ -200,7 +200,7 @@
     };
   };
   const cap = (v) => String(v).toLowerCase().replace(/(^|\s)\S/g, m => m.toUpperCase());
-  const ORDENES = [['valor', 'Money on the shelf', 'ti-currency-dollar'], ['falta', 'Closest to empty', 'ti-battery-1'], ['nombre', 'Name', 'ti-sort-a-z']];
+  const ORDENES = [['valor', 'Money on the shelf', 'ti-currency-dollar', 'Value'], ['falta', 'Closest to empty', 'ti-battery-1', 'Lowest first'], ['nombre', 'Name', 'ti-sort-a-z', 'Name']];
   const COLS = { nombre: 'Product', vendor: 'Vendor', onhand: 'On hand', avg: 'Avg/wk', par: 'Par', pedir: 'To order', precio: 'Price' };
   const CABECERA = {
     titulo: 'Inventory',
@@ -216,8 +216,10 @@
       const ord = ORDENES.find(o => o[0] === _orden);
       return [
         DH.campo({ id: 'dkiQ', icon: 'ti-filter', placeholder: 'Filter ' + master().length + ' items', value: _q }),
-        DH.boton({ acc: 'vendor', icon: 'ti-truck', label: agota ? 'Vendor · not in Running out' : 'All vendors', en: !agota && _vendor !== 'ALL', valor: 'Vendor: ' + cap(_vendor), apagado: agota }),
-        DH.boton({ acc: 'orden', icon: 'ti-arrows-sort', label: agota ? 'Sort · by date in Running out' : 'Sort: ' + (ord ? ord[1] : COLS[_orden] + (_dir < 0 ? ' ↓' : ' ↑')), apagado: agota })
+        DH.boton({ acc: 'vendor', icon: 'ti-truck', label: agota ? 'Not here' : 'All vendors', en: !agota && _vendor !== 'ALL', valor: 'Vendor: ' + cap(_vendor), apagado: agota }),
+        // Un nombre corto: abierto, el botón aparta a sus vecinos hasta donde
+        // hay sitio, y "Sort: Money on the shelf" no cabía (salía cortado).
+        DH.boton({ acc: 'orden', icon: 'ti-arrows-sort', label: agota ? 'By date' : 'Sort: ' + (ord ? ord[3] : COLS[_orden] + (_dir < 0 ? ' ↓' : ' ↑')), apagado: agota })
       ];
     },
     acciones() {

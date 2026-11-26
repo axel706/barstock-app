@@ -51,14 +51,16 @@
     // La acción va en el HUECO (que es lo que recibe el ratón: el botón
     // abierto no, ver desk-header.css) y en el botón (el teclado).
     const dis = o.apagado ? ' aria-disabled="true"' : '';
-    return `<span class="dkc-hueco" data-dkc="${esc(o.acc)}"${dis} title="${esc(txt)}"><button type="button" class="dkc-pl${o.tono ? ' ' + o.tono : ''}${o.en ? ' en' : ''}${o.apagado ? ' apagado' : ''}"
+    // Sin `title`: el navegador dibujaba su etiqueta gris repitiendo el
+    // nombre que el botón ya enseña al abrirse (Axel, en sus capturas).
+    return `<span class="dkc-hueco" data-dkc="${esc(o.acc)}"${dis}><button type="button" class="dkc-pl${o.tono ? ' ' + o.tono : ''}${o.en ? ' en' : ''}${o.apagado ? ' apagado' : ''}"
       data-dkc="${esc(o.acc)}" aria-label="${esc(txt)}"${dis}><i class="ti ${esc(o.icon)}" aria-hidden="true"></i><b>${esc(txt)}</b></button></span>`;
   }
   // Un campo que es un botón redondo hasta que se toca (el filtro de la
   // lista). `o`: { id, icon, placeholder, value }.
   function campo(o) {
     const lleno = String(o.value || '').trim() !== '';
-    return `<span class="dkc-hueco" data-dkc="campo" title="${esc(lleno ? o.value : o.placeholder)}"><label class="dkc-pl dkc-campo${lleno ? ' en' : ''}">
+    return `<span class="dkc-hueco" data-dkc="campo"><label class="dkc-pl dkc-campo${lleno ? ' en' : ''}">
       <i class="ti ${esc(o.icon || 'ti-filter')}" aria-hidden="true"></i><input id="${esc(o.id)}" type="search" autocomplete="off" spellcheck="false"
       placeholder="${esc(o.placeholder || 'Filter')}" aria-label="${esc(o.placeholder || 'Filter')}" value="${esc(o.value || '')}"></label></span>`;
   }
@@ -85,6 +87,7 @@
     // hueco (lo que recibe el ratón).
     const dib = ancla.querySelector('.dkc-pl') || ancla;
     dib.classList.add('abierto');
+    empujar();
     _pop._ancla = ancla;
     _pop._dib = dib;
     _pop.addEventListener('click', (ev) => {
@@ -103,6 +106,7 @@
     document.removeEventListener('pointerdown', fueraDelMenu, true);
     if (!_pop) return false;
     if (_pop._dib) _pop._dib.classList.remove('abierto');
+    requestAnimationFrame(empujar);
     _pop.remove();
     _pop = null;
     return true;
@@ -154,6 +158,78 @@
     }
   }
 
+  // ── Hacer sitio (lámina "no overlapping", A: "los de al lado se
+  // apartan") ──
+  // Un botón abierto crece de verdad y aparta a los de su izquierda hacia
+  // el sitio libre entre las vistas y los botones. Ese sitio era de 59 px
+  // a 1440 con la barra lateral, y "Add item" o "Sort: Money on the
+  // shelf" no cabían: cuando no alcanza, las VISTAS también se apartan,
+  // sólo lo que falta, hacia lo que sobra junto al título, y vuelven al
+  // cerrarse (--dkc-empuje). Lo caro (los anchos) se mide al pintar y al
+  // cambiar de tamaño, con todo cerrado; al pasar el ratón sólo se resta
+  // (como band-dock: medir no es animar).
+  let _holgura = { der: 0, izq: 0 }, _margen = 0;
+  function medir() {
+    if (!_cab || !document.body.classList.contains('dk-cab')) return;
+    if (_cab.querySelector('.dkc-pl.abierto, .dkc-pl.toque, .dkc-hueco:hover') || (_cab.contains(document.activeElement) && document.activeElement.tagName === 'INPUT')) return;
+    const cen = _cab.querySelector('.dkc-centro');
+    const seg = cen && cen.firstElementChild;
+    const prim = _cab.querySelector('.dkc-der > *');
+    const tit = _cab.querySelector('.dkc-titulo');
+    if (!cen || !prim) return;
+    _cab.style.setProperty('--dkc-empuje', '0px');
+    // Con poco ancho las vistas van en una columna que encoge cuando los
+    // botones crecen: centradas con justify-content se irían moviendo; se
+    // centran con un margen medido aquí.
+    if (seg) seg.style.marginLeft = '0px';
+    const rc = cen.getBoundingClientRect();
+    const ancho = seg ? seg.getBoundingClientRect().width : 0;
+    _margen = seg && getComputedStyle(cen).justifyContent === 'flex-start' ? Math.max(0, Math.floor((rc.width - ancho) / 2)) : 0;
+    if (seg) seg.style.marginLeft = _margen + 'px';
+    const rs = seg ? seg.getBoundingClientRect() : rc;
+    _holgura = {
+      der: Math.max(0, Math.floor(prim.getBoundingClientRect().left - rs.right - 14)),
+      izq: Math.max(0, Math.floor(rs.left - (tit ? tit.getBoundingClientRect().right : rc.left) - 14))
+    };
+    // El ancho de cada botón abierto: el de su nombre. Se guarda por su
+    // acción para dárselo al botón nuevo de cada repintado (el filtro se
+    // repinta en cada letra, con el campo enfocado, cuando no se mide: sin
+    // su ancho guardado se abría sin apartar nada y pisaba las vistas).
+    _cab.querySelectorAll('.dkc-hueco > .dkc-pl').forEach(pl => {
+      const b = pl.querySelector('b');
+      // Nunca más de lo que hay: su hueco, el sitio libre y lo que las
+      // vistas pueden apartarse (a 1180 con la barra, el filtro de 240
+      // pisaba las vistas 16 px). Si no cabe, el nombre se corta con "…".
+      const tope = 38 + _holgura.der + _holgura.izq;
+      const w = Math.min(tope, pl.classList.contains('dkc-campo') ? 240 : b ? Math.ceil(b.scrollWidth + 18 + 8 + 28) : 38);
+      _anchos[pl.parentElement.dataset.dkc] = w;
+    });
+    ponerAnchos();
+  }
+  const _anchos = {};
+  function ponerAnchos() {
+    _cab.querySelectorAll('.dkc-hueco > .dkc-pl').forEach(pl => {
+      const w = _anchos[pl.parentElement.dataset.dkc];
+      if (!w) return;
+      pl.style.setProperty('--w', w + 'px');
+      pl.dataset.w = w;
+    });
+  }
+  // Después de que se cierre lo que estaba abierto (la animación dura
+  // .22 s): medido a medio cerrar, las vistas volvían a otro sitio.
+  let _tM = 0;
+  const medirLuego = () => { clearTimeout(_tM); _tM = setTimeout(medir, 260); };
+  // Lo que se aparta: lo que el botón abierto necesita más allá de su
+  // hueco y del sitio libre de la derecha, hasta lo que sobra a la
+  // izquierda. Sin nada abierto, vuelve a 0.
+  function empujar() {
+    if (!_cab) return;
+    const abierto = _cab.querySelector('.dkc-hueco:hover > .dkc-pl, .dkc-pl.abierto, .dkc-pl.toque, .dkc-campo:focus-within');
+    const w = abierto ? Number(abierto.dataset.w) || 38 : 38;
+    const e = abierto ? Math.max(0, Math.min(_holgura.izq, w - 38 - _holgura.der)) : 0;
+    _cab.style.setProperty('--dkc-empuje', e + 'px');
+  }
+
   // ── Montar y pintar ──
   function montar() {
     if (_cab) return true;
@@ -165,14 +241,14 @@
     // reglas de poco ancho, @container dkcab) y un contenedor no puede
     // cambiar su propia rejilla por su ancho.
     _cab.innerHTML = `<div class="dkc-grid">
-      <div class="dkc-izq"><button type="button" class="dkc-titulo" data-dkc="home" title="Back to Home (Esc)"><i class="ti ti-chevron-left" aria-hidden="true"></i><span></span></button></div>
+      <div class="dkc-izq"><button type="button" class="dkc-titulo" data-dkc="home" aria-label="Back to Home (Esc)"><i class="ti ti-chevron-left" aria-hidden="true"></i><span></span></button></div>
       <div class="dkc-centro"></div>
       <div class="dkc-der">
         <span class="dkc-afinar"></span>
         <span class="dkc-acciones"></span>
         <span class="dkc-sep" aria-hidden="true"></span>
-        <span class="dkc-hueco dkc-busca" data-dkc="busca" title="Do we have… (/ or ⌘K)"></span>
-        <span class="dkc-hueco" data-dkc="mas" title="More"><button type="button" class="dkc-pl dkc-mas" data-dkc="mas" aria-label="More"><i class="ti ti-dots" aria-hidden="true"></i></button></span>
+        <span class="dkc-hueco dkc-busca" data-dkc="busca"></span>
+        <span class="dkc-hueco" data-dkc="mas"><button type="button" class="dkc-pl dkc-mas" data-dkc="mas" aria-label="More"><i class="ti ti-dots" aria-hidden="true"></i></button></span>
       </div></div>`;
     const menuBtn = document.getElementById('dkMenu');
     if (menuBtn && menuBtn.parentElement === header) menuBtn.insertAdjacentElement('afterend', _cab);
@@ -216,13 +292,21 @@
       const b = h && h.querySelector('button.dkc-pl');
       if (!b) return;
       b.classList.add('toque');
-      setTimeout(() => b.classList.remove('toque'), 1200);
+      empujar();
+      setTimeout(() => { b.classList.remove('toque'); empujar(); }, 1200);
     });
     // Esc cierra el menú antes que nada (antes que "volver al Home").
     window.addEventListener('keydown', (ev) => {
       if (ev.key === 'Escape' && _pop) { ev.preventDefault(); ev.stopPropagation(); cerrarMenu(); }
     }, true);
     window.addEventListener('resize', cerrarMenu, { passive: true });
+    if (window.ResizeObserver) new ResizeObserver(medirLuego).observe(_cab);
+    else window.addEventListener('resize', medirLuego, { passive: true });
+    // Al soltar el ratón o el foco, otra medida (algo pudo cambiar con
+    // un botón abierto, cuando no se mide).
+    _cab.addEventListener('mouseleave', medirLuego);
+    _cab.addEventListener('focusout', medirLuego);
+    ['mouseover', 'mouseout', 'focusin', 'focusout'].forEach(n => _cab.addEventListener(n, () => requestAnimationFrame(empujar)));
     return true;
   }
 
@@ -254,14 +338,20 @@
     const foco = act && _cab.contains(act) && act.id && act.tagName === 'INPUT' ? { id: act.id, pos: act.selectionStart } : null;
     _cab.querySelector('.dkc-titulo span').textContent = sp.titulo || '';
     _cab.querySelector('.dkc-centro').innerHTML = sp.vistas ? sp.vistas() : '';
+    // Las vistas nuevas (sus cuentas cambian al filtrar) en el mismo sitio
+    // que las de antes: sin su margen medido, saltaban al escribir.
+    const segN = _cab.querySelector('.dkc-centro').firstElementChild;
+    if (segN) segN.style.marginLeft = _margen + 'px';
     const tres = sp.afinar ? sp.afinar() : [];
     _cab.querySelector('.dkc-afinar').innerHTML = [0, 1, 2].map(k => tres[k] || vacio()).join('');
     const dos = sp.acciones ? sp.acciones() : [];
     _cab.querySelector('.dkc-acciones').innerHTML = [0, 1].map(k => dos[k] || vacio()).join('');
+    ponerAnchos();
     if (foco) {
       const e = document.getElementById(foco.id);
       if (e) { e.focus(); try { e.setSelectionRange(foco.pos, foco.pos); } catch (x) {} }
     }
+    medirLuego();
   }
 
   function registrar(sec, spec) {

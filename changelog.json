@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261125-194817",
+    "items": [
+      "Desktop: top bar buttons make room, glass style"
+    ]
+  },
+  {
     "build": "20261125-193356",
     "items": [
       "Desktop Inventory: the four figures are back"
@@ -185,13 +191,6 @@
     "items": [
       "Desktop: glass blur on the sidebar, top bar and Home",
       "Bigger logo, readable text in light and dark"
-    ]
-  },
-  {
-    "build": "20261125-130559",
-    "items": [
-      "New desktop Home: figures, running out, week and sales",
-      "Live vs count on the desktop Home"
     ]
   }
 ]
