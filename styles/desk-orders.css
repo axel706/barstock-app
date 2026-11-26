@@ -74,6 +74,9 @@
   #dkOrd #dkoDet .m-ord-l[hidden] { display: none; }
   /* La cantidad entera, con su decimal (el teléfono la hace estrecha). */
   #dkOrd #dkoDet .m-ord-q input { flex: none; width: 72px; min-width: 72px; }
+  /* Los − / + centrados: les llegaba el relleno que app.css pone a todo
+     <button> y el signo caía abajo a la izquierda (Axel, en la Mac). */
+  #dkOrd #dkoDet .m-ord-q button { display: inline-flex; align-items: center; justify-content: center; width: 38px; padding: 0; line-height: 1; }
   /* La ✕ (dejar fuera de esta orden) al final de la fila, como en la
      lámina: en el teléfono va junto al nombre, dentro de .m-ord-l-top. */
   #dkOrd #dkoDet .m-ord-l:not(.m-ord-extra) { position: relative; padding-right: 60px; }

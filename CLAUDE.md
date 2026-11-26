@@ -862,7 +862,11 @@ sección de hoy vive tal cual dentro del armazón.
   (nombre y total) se va: el total, sólo en el pie; "No price" va en la
   columna del precio, no junto al nombre (Axel, 2026-11-26, en la Mac).
   La sugerencia ocupa sólo lo que lleva (`max-content`, hasta 280): una
-  columna fija cortaba los nombres. Prueba: `test-orders-escritorio`.
+  columna fija cortaba los nombres. **El tiempo real**: escucha los
+  mismos avisos que el teléfono (`inventoryUpdated`, `ordersUpdated`,
+  `parAdjustmentsUpdated`) y llama a `refresh()`; sin eso, lo cambiado en
+  el teléfono no se veía aquí hasta recargar (lo del escritorio sí, porque
+  `updateFinalOrder` llama a `refresh()`). Prueba: `test-orders-escritorio`.
 - **EL HEADER DE LAS SECCIONES: SITIOS FIJOS** (Axel, 2026-11-26, lámina
   "Section header · fixed places": "es dinámico, pero a la vez es fijo
   […] los controles siempre en las mismas posiciones"). El estándar para

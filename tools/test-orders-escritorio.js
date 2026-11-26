@@ -144,6 +144,33 @@ function entorno() {
   prueba('el pie abre la revisión del teléfono', /Review the order/.test(txt(det)) && caja.classList.contains('dko-revisando'));
   prueba('   a todo el ancho, con su vuelta a las líneas', /dko-revisando[^{]*\.dko-lista \{ display: none; \}/.test(CSS) && /#dkOrd:not\(\.dko-revisando\) #dkoDet \.m-cab \.m-atras \{ display: none; \}/.test(CSS));
 
+  grupo('5b. El tiempo real: lo cambiado en el teléfono se ve aquí');
+  {
+    // Axel, 2026-11-26: "los que hago en el móvil no los ve la pc en
+    // tiempo real". inventory-realtime recarga el maestro y avisa
+    // inventoryUpdated; el Orders del escritorio no lo escuchaba (sólo se
+    // repintaba con lo cambiado en el propio escritorio).
+    const w2 = entorno();
+    const oyentes = {};
+    w2.BarStockEvents = { on: (n, f) => { (oyentes[n] = oyentes[n] || []).push(f); return () => {}; } };
+    // Se vuelve a montar con los eventos puestos.
+    w2.eval(DO.replace('if (window.BarStockDeskOrders) return;', ''));
+    const D2 = w2.document;
+    w2.BarStockDeskHeader.marcar('vendor');
+    const sec2 = D2.getElementById('vendorSection');
+    sec2.classList.remove('bs-active-section'); await esperar(5); sec2.classList.add('bs-active-section'); await esperar(30);
+    const cant = () => { const l = [...D2.querySelectorAll('#dkoDet .m-ord-l')].find(x => /Kamora/.test(txt(x))); return l && l.querySelector('input') ? l.querySelector('input').value : null; };
+    const antes = cant();
+    // Llega del teléfono: Kamora a 9, el maestro reemplazado (objetos nuevos).
+    w2.state.master = w2.state.master.map(r => Object.assign({}, r, r.item === 'Kamora' ? { toOrder: 9 } : {}));
+    (oyentes.inventoryUpdated || []).forEach(f => f({ source: 'inventory-realtime' }));
+    await esperar(60);
+    prueba('escucha inventoryUpdated, ordersUpdated y Pour·IQ', ['inventoryUpdated', 'ordersUpdated', 'parAdjustmentsUpdated'].every(n => (oyentes[n] || []).length));
+    prueba('y repinta la orden con lo que llegó', antes === '5' && cant() === '9', antes + ' → ' + cant());
+  }
+
+  prueba('los − / + centrados (sin el relleno de app.css)', /#dkOrd #dkoDet \.m-ord-q button \{ display: inline-flex; align-items: center; justify-content: center; width: 38px; padding: 0;/.test(CSS));
+
   grupo('6. Carga y estilos');
   const pos = (f) => INDEX.indexOf(f);
   prueba('después de mobile-orders y antes de desk-shell', pos('src/mobile-orders.js') > 0 && pos('src/desk-orders.js') > pos('src/mobile-orders.js') && pos('src/desk-orders.js') < pos('src/desk-shell.js'));

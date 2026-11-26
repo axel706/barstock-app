@@ -221,6 +221,19 @@
     _sec.insertBefore(_caja, _sec.firstChild);
     _caja.addEventListener('click', alClic);
     new MutationObserver(alAbrirCerrar).observe(_sec, { attributes: true, attributeFilter: ['class'] });
+    // El tiempo real (Axel: "los cambios que hago en el móvil no los ve la
+    // pc"): inventory-realtime recarga el maestro y avisa inventoryUpdated,
+    // y aquí no se escuchaba; lo cambiado en el propio escritorio sí se
+    // veía porque updateFinalOrder llama a refresh(). Los mismos avisos
+    // que escucha el teléfono (mobile-shell), y sólo con la sección
+    // abierta. refresh() repinta la orden y su alCambiar, la columna.
+    const E = window.BarStockEvents;
+    let raf = 0;
+    const repintar = () => {
+      if (raf || !_abierto || !abierta()) return;
+      raf = (window.requestAnimationFrame || setTimeout)(() => { raf = 0; if (_abierto && MO() && MO().refresh) MO().refresh(); });
+    };
+    if (E && E.on) ['inventoryUpdated', 'ordersUpdated', 'parAdjustmentsUpdated'].forEach(n => E.on(n, repintar));
     const D = DH();
     if (D && D.registrar) D.registrar('vendor', CABECERA);
   }

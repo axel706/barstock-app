@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261126-124237",
+    "items": [
+      "Orders on desktop updates live with changes from the phone",
+      "Centered − and + buttons"
+    ]
+  },
+  {
     "build": "20261126-123130",
     "items": [
       "Orders: vendor in the title, total only at the bottom",
@@ -186,12 +193,6 @@
     "build": "20261125-154149",
     "items": [
       "Desktop Home: Running out shows bottles and numbers"
-    ]
-  },
-  {
-    "build": "20261125-152752",
-    "items": [
-      "iPad landscape: desktop Home layout with sidebar hidden"
     ]
   }
 ]
