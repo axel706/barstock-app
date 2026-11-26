@@ -157,12 +157,28 @@
      La misma forma que Open: la columna (Spent this cycle y las órdenes)
      y la orden elegida. Las piezas son Sent del teléfono; sus estilos,
      GENERADOS bajo #dkOrd[data-vista="sent"] (desk-ficha.css). Aquí, lo
-     que cambia en el escritorio. Rueda la página: sin scroll dentro. */
+     que cambia en el escritorio.
+     Cada columna rueda POR SU CUENTA (Axel, 2026-11-26: "scroll en el
+     historial de órdenes independiente del scroll de la orden"): la vista
+     mide lo que queda bajo el header y la página no rueda. */
   #dkOrd:not([data-vista="sent"]) :is(.dks-col, .dks-det) { display: none; }
-  body.dk #dkOrd[data-vista="sent"] { grid-template-columns: 340px minmax(0, 1fr); }
+  body.dk #dkOrd[data-vista="sent"] {
+    grid-template-columns: 340px minmax(0, 1fr); align-items: stretch;
+    /* La pantalla menos el header y 18 de aire arriba y abajo. */
+    height: calc(100dvh - var(--dk-alto) - 36px);
+  }
+  /* Que la página no ruede: la sección mide la pantalla (dk-pantalla,
+     min-height) y .wrap le suma 20 px de relleno abajo; con eso, la página
+     rodaba 20 px por detrás de las dos columnas. */
+  body.dk .wrap:has(> #vendorSection.bs-active-section #dkOrd[data-vista="sent"]) { padding-bottom: 0 !important; }
   #dkOrd[data-vista="sent"] :is(.dko-lista, .dko-der) { display: none; }
-  #dkOrd .dks-col { min-width: 0; }
-  #dkOrd .dks-det { min-width: 0; padding-bottom: 28px; container: dksdet / inline-size; }
+  #dkOrd :is(.dks-col, .dks-det) { min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  #dkOrd .dks-col { padding: 0 6px 18px 0; }
+  #dkOrd .dks-det { display: flex; flex-direction: column; }
+  /* Ningún bloque se encoge para caber: la lista lleva overflow: hidden
+     (del teléfono) y en una columna flex se aplastaba a una línea; rueda
+     la columna. */
+  #dkOrd .dks-det > * { flex: none; }
 
   /* Spent this cycle: una tarjeta, una barra por categoría y sus cifras;
      lo de antes de cada una al pasar el ratón por ella. */
@@ -188,42 +204,66 @@
   #dkOrd .dks-comp span { margin-right: auto; }
   #dkOrd .dks-comp .dki-cr { height: 32px; padding: 0 12px; font-size: 13px; }
 
+  /* Los meses: un rótulo como "This cycle", no un botón flotando (app.css
+     le pone fondo, borde y desenfoque a todo <button>), con su aire por
+     arriba: pegado a la tarjeta de arriba se encimaba. */
+  #dkOrd[data-vista="sent"] .m-hmes {
+    background: none !important; border: 0 !important; box-shadow: none !important;
+    -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+    height: auto; margin: 22px 0 0; padding: 0 2px; gap: 8px;
+  }
+  #dkOrd[data-vista="sent"] .m-hmes-t { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #94a3b8; }
+  #dkOrd[data-vista="sent"] .m-hmes-m { font-size: 12px; font-weight: 700; color: #94a3b8; }
+  #dkOrd[data-vista="sent"] .m-hmes-v { font-size: 14px; color: #94a3b8; }
+  #dkOrd[data-vista="sent"] .m-hmes:hover :is(.m-hmes-t, .m-hmes-v) { color: #e2e8f0; }
+  #dkOrd[data-vista="sent"] .m-hmes-c { padding-top: 10px; }
+
   /* La orden elegida en la lista. */
   #dkOrd[data-vista="sent"] .m-hcard.sel { border-color: rgba(125, 211, 252, .85); box-shadow: 0 0 0 1px rgba(125, 211, 252, .5); }
   #dkOrd[data-vista="sent"] .m-hcard:hover { border-color: rgba(125, 211, 252, .35); }
   #dkOrd[data-vista="sent"] .m-hcard .m-hcard-v { font-weight: 750; }
 
-  /* La cabecera de la orden: logo, nombre, la línea con su estado, y los
-     botones (Resend, JPG o CSV, Reopen, ⋯). */
+  /* La cabecera de la orden: logo, nombre y la línea con su estado. Los
+     botones van abajo, en .dks-pie (desk-sent.alPie). */
   #dkOrd .m-hdk-cab { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 2px 0 14px; }
   #dkOrd .m-hdk-cab > .vlogo, #dkOrd .m-hdk-cab > :first-child { flex: none; }
   #dkOrd .m-hdk-t { min-width: 0; display: flex; flex-direction: column; gap: 3px; margin-right: auto; }
   #dkOrd .m-hdk-t b { font-size: 22px; font-weight: 850; }
   #dkOrd .m-hdk-t span { color: #a9bacd; font-size: 13px; }
   #dkOrd .m-hdk-t .m-hs { margin: 0 0 0 4px; }
-  /* Resend · JPG · Reopen · ⋯, como la lámina: Resend y Reopen son del
-     teléfono (.m-hacc) y JPG y ⋯ de aquí (.dks-ext); las dos cajas se
-     abren (display: contents) y cada botón lleva su sitio. */
-  #dkOrd .m-hdk-cab > :is(.m-hacc, .dks-ext) { display: contents; }
-  #dkOrd .m-hdk-cab #mhRe { order: 1; }
-  #dkOrd .m-hdk-cab [data-dks="jpg"] { order: 2; }
-  #dkOrd .m-hdk-cab #mhAbrir { order: 3; }
-  #dkOrd .m-hdk-cab .dks-mas { order: 4; }
-  #dkOrd .m-hdk-cab > :is(.m-hacc-conf, .m-hacc-no) { order: 5; flex-basis: 100%; margin: 0; }
-  #dkOrd[data-vista="sent"] .m-hdk-cab .m-hacc button { flex: none; height: 40px; padding: 0 18px; font-size: 14px; font-weight: 800; border-radius: 999px; position: relative; }
-  #dkOrd[data-vista="sent"] .m-hdk-cab .m-hacc-conf .m-hacc { display: flex; gap: 8px; margin: 10px 0 0; }
-  /* Con poco ancho (el iPad con la barra lateral) no caben junto al
-     nombre: bajan TODOS a su renglón, en su orden (partidos, Resend se
-     quedaba arriba solo). */
-  @container dksdet (max-width: 860px) {
-    #dkOrd .m-hdk-t { flex-basis: calc(100% - 80px); }
+  /* El pie, fijo abajo como el de Open: Resend · JPG · Reopen · ⋯ (la
+     lámina). Resend y Reopen son del teléfono (.m-hacc) y JPG y ⋯ de aquí
+     (.dks-ext); las dos cajas se abren (display: contents) y cada botón
+     lleva su sitio. Resend, a lo ancho, como en el teléfono. */
+  #dkOrd .dks-pie {
+    position: sticky; bottom: 0; z-index: 5; margin-top: auto;
+    display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+    padding: 14px 0 calc(14px + env(safe-area-inset-bottom));
+    /* Opaco desde un poco más abajo del borde: las líneas que pasan por
+       detrás se leían a través del .92. */
+    background: linear-gradient(180deg, rgba(9, 14, 26, 0), #090e1a 30%);
   }
-  #dkOrd .dks-ext .dki-cr { height: 40px; padding: 0 16px; font-size: 14px; gap: 7px; }
-  #dkOrd .dks-ext .dks-mas { width: 40px; padding: 0; justify-content: center; }
+  #dkOrd .dks-pie > :is(.m-hacc, .dks-ext) { display: contents; }
+  #dkOrd .dks-pie #mhRe { order: 1; }
+  #dkOrd .dks-pie [data-dks="jpg"] { order: 2; }
+  #dkOrd .dks-pie #mhAbrir { order: 3; }
+  #dkOrd .dks-pie .dks-mas { order: 4; }
+  #dkOrd .dks-pie > :is(.m-hacc-conf, .m-hacc-no) { order: 5; flex-basis: 100%; margin: 0; }
+  #dkOrd[data-vista="sent"] .dks-pie .m-hacc button { flex: none; height: 44px; padding: 0 20px; font-size: 15px; font-weight: 800; border-radius: 999px; position: relative; }
+  #dkOrd[data-vista="sent"] .dks-pie .m-hacc button#mhRe { flex: 1 1 auto; }
+  #dkOrd[data-vista="sent"] .dks-pie .m-hacc-conf .m-hacc { display: flex; gap: 8px; margin: 10px 0 0; }
+  #dkOrd .dks-ext .dki-cr { height: 44px; padding: 0 18px; font-size: 15px; gap: 7px; }
+  #dkOrd .dks-ext .dks-mas { width: 44px; padding: 0; justify-content: center; }
 
   /* Las tres cifras y la lista de la orden, a lo ancho: Product · Ordered →
      received · Received $. */
-  #dkOrd[data-vista="sent"] .dks-det .m-itot { margin: 0 0 12px; }
+  /* Las tres cifras se quedan arriba al chocar con el header (Axel): la
+     orden rueda por debajo, así que van opacas (al 97 % todavía se leían
+     las líneas de detrás). */
+  #dkOrd[data-vista="sent"] .dks-det > .m-itot {
+    position: sticky; top: 0; z-index: 4; flex: none; margin: 0 0 12px;
+    background: #0e1628;
+  }
   #dkOrd[data-vista="sent"] .dks-det .m-itot b { font-size: 24px; }
   #dkOrd .m-hln-cols, #dkOrd[data-vista="sent"] .dks-det .m-hln { display: grid; grid-template-columns: minmax(0, 1fr) 170px 120px; gap: 14px; align-items: center; }
   #dkOrd .m-hln-cols { padding: 6px 16px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #8ea0bd; }

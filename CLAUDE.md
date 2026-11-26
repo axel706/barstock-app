@@ -916,7 +916,16 @@ sección de hoy vive tal cual dentro del armazón.
   (max-width: 640px)` se cierra antes de "Historial de órdenes" (la llave
   tras `.m-qk-vacio`) y ~350 reglas quedaron sueltas, también en el
   escritorio; el generador las lee sólo para Sent (`sueltas`). Arreglar esa
-  llave es otro cambio. Prueba: `test-sent-escritorio`.
+  llave es otro cambio. **Ajustado el mismo día sobre el iPad** (Axel, en
+  una captura): cada columna rueda POR SU CUENTA y la página no (la vista
+  mide la pantalla bajo el header; `.wrap` pierde sus 20 px de abajo, que
+  con el alto mínimo de `dk-pantalla` hacían rodar la página); los botones
+  van abajo en un pie fijo (`.dks-pie`, como el de Open: desk-sent los
+  MUEVE ahí en cada pintado, Resend a lo ancho); las tres cifras se pegan
+  arriba al rodar la orden, opacas; los meses son un rótulo, no un botón
+  flotando (app.css le ponía fondo y borde), con su aire arriba; y la
+  tercera cifra son las BOTELLAS pedidas con "products" (contaba códigos;
+  también en el teléfono, es la misma tira). Prueba: `test-sent-escritorio`.
 - **EL HEADER DE LAS SECCIONES: SITIOS FIJOS** (Axel, 2026-11-26, lámina
   "Section header · fixed places": "es dinámico, pero a la vez es fijo
   […] los controles siempre en las mismas posiciones"). El estándar para

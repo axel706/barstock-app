@@ -142,7 +142,9 @@ grupo('Sent: el nombre en el header y los dos botones pegados');
   // línea chica del PO sube a la banda, bajo el nombre, con el estado.
   const prim = host.firstElementChild;
   prueba('la tira de totales es lo primero', !!prim && prim.classList.contains('m-itot'), prim && prim.outerHTML.slice(0, 80));
-  prueba('con lo recibido, lo pedido y los productos', !!prim && /received/.test(txt(prim)) && /ordered/.test(txt(prim)) && /items?/.test(txt(prim)), txt(prim));
+  // La tercera son las botellas pedidas, "products" (Axel, 2026-11-26:
+  // contaba códigos); la orden de prueba pide 2.
+  prueba('con lo recibido, lo pedido y los productos (botellas)', !!prim && /received/.test(txt(prim)) && /ordered/.test(txt(prim)) && /2\s*products/.test(txt(prim)), txt(prim));
   prueba('y se pega, marcada para Orders', w.__fijados[w.__fijados.length - 1] === prim && prim.classList.contains('m-det-fijo'));
   prueba('la línea del PO va a la banda, bajo el nombre', /^CT-0213 · \w{3} \w{3} \d+ · /.test(w.__banda.sub || ''), w.__banda.sub);
   prueba('y no se repite en la página', !host.querySelector('.m-hsub') && !/PO CT-0213/.test(txt(host)));

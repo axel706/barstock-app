@@ -90,7 +90,24 @@
     return e && e.orden ? e.orden : null;
   }
 
+  // Los botones de la orden, abajo y fijos, como el total y "Review and
+  // send" de Open (Axel, 2026-11-26). Son piezas del teléfono (Resend,
+  // Reopen, su confirmación, "ocupado") y las de aquí (JPG, ⋯): se MUEVEN
+  // a un pie al final de la orden con sus botones ya enganchados, en cada
+  // pintado, porque el teléfono rehace la orden entera.
+  function alPie() {
+    const det = _caja && _caja.querySelector('#dksDet');
+    const cab = det && det.querySelector('.m-hdk-cab');
+    if (!cab) return;
+    const piezas = cab.querySelectorAll(':scope > :is(.m-hacc, .dks-ext, .m-hacc-conf, .m-hacc-no)');
+    if (!piezas.length) return;
+    let pie = det.querySelector(':scope > .dks-pie');
+    if (!pie) { pie = document.createElement('div'); pie.className = 'dks-pie'; det.appendChild(pie); }
+    piezas.forEach(p => pie.appendChild(p));
+  }
+
   function alCambiar() {
+    alPie();
     pintarComparar();
     const D = DH();
     if (D && D.refrescar) D.refrescar('vendor');

@@ -603,12 +603,15 @@
     // Sin precio de factura, lo recibido es una estimación con los
     // tuyos: decirlo en su etiqueta. Un número que parece dato y es
     // cálculo es peor que no darlo.
+    const botellas = Math.round(o.items.reduce((t, i) => t + (Number(i.pedido) || 0), 0) * 10) / 10;
     const tira =
       '<div class="m-itot m-det-fijo">' +
         '<div><b>' + (espera ? '—' : money(o.recibidoDinero)) + '</b><span>' +
           (espera || o.precioReal ? 'received' : 'received, est.') + '</span></div>' +
         '<div><b>' + money(o.pedidoDinero) + '</b><span>ordered</span></div>' +
-        '<div><b>' + o.items.length + '</b><span>' + (o.items.length === 1 ? 'item' : 'items') + '</span></div>' +
+        // Las botellas pedidas, no los códigos (Axel, 2026-11-26: "items"
+        // contaba las líneas; lo que se mira es cuántas botellas).
+        '<div><b>' + botellas + '</b><span>products</span></div>' +
       '</div>';
     const cabEsc = () =>
       '<div class="m-hdk-cab">' + logo(o.vendor) +
@@ -709,7 +712,9 @@
         if (RT && RT.recargar) {
           try { await RT.recargar(); } catch (e) { console.warn('[historial] no se pudo releer el catálogo', e); }
         }
-        if (_orden === o) pintarDetalle(host);
+        // pintar y no pintarDetalle: en el escritorio repinta las dos
+        // partes y avisa (los botones vuelven a su pie).
+        if (_orden === o) pintar(host);
         // Y la campana deja de pedir lo que ya se hizo.
         if (window.BarStockMobileNotif) window.BarStockMobileNotif.refrescar();
       } catch (e) {

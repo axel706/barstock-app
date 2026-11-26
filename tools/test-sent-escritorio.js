@@ -142,6 +142,19 @@ function entorno() {
   const filas = [...lista.querySelectorAll('.m-hcard')];
   prueba('las órdenes en la columna (este ciclo y los meses)', filas.length >= 2 && /SOUTHERN/.test(txt(lista)) && !!lista.querySelector('.m-hmes'), txt(lista).slice(0, 120));
   prueba('la primera elegida sola, a la derecha', filas[0].classList.contains('sel') && /SOUTHERN/.test(txt(det.querySelector('.m-hdk-cab'))), txt(det).slice(0, 80));
+  {
+    // Axel, 2026-11-26: "cambia items por products, me refiero a la
+    // cantidad de botellas en lugar de la cantidad de códigos".
+    const cel = [...det.querySelectorAll('.m-itot > div')].pop();
+    prueba('   la tercera cifra son las BOTELLAS pedidas (6 + 4), "products", no los códigos', /^10\s*products$/.test(txt(cel)), txt(cel));
+  }
+  prueba('cada columna rueda por su cuenta y la página no (alto de la pantalla, overflow propio)',
+    /body\.dk #dkOrd\[data-vista="sent"\] \{[^}]*height: calc\(100dvh - var\(--dk-alto\) - 36px\)/.test(CSS) &&
+    /#dkOrd :is\(\.dks-col, \.dks-det\) \{[^}]*overflow-y: auto;[^}]*overscroll-behavior: contain/.test(CSS) &&
+    /\.wrap:has\(> #vendorSection\.bs-active-section #dkOrd\[data-vista="sent"\]\) \{ padding-bottom: 0 !important; \}/.test(CSS));
+  prueba('   las tres cifras se pegan arriba al rodar la orden, opacas', /\.dks-det > \.m-itot \{[^}]*position: sticky; top: 0;[^}]*background: #0e1628/.test(CSS));
+  prueba('   los bloques de la orden no se aplastan (la lista con overflow se quedaba en una línea)', /#dkOrd \.dks-det > \* \{ flex: none; \}/.test(CSS));
+  prueba('los meses son un rótulo (sin el fondo de botón de app.css) con aire arriba', /#dkOrd\[data-vista="sent"\] \.m-hmes \{[^}]*background: none !important;[^}]*margin: 22px 0 0/.test(CSS));
   prueba('   con sus tres cifras y cada línea pedida → recibida, con su dinero', !!det.querySelector('.m-itot') && det.querySelectorAll('.m-hln').length === 2 && !!det.querySelector('.m-hln-d') && !!det.querySelector('.m-hln-cols'));
   prueba('sin el buscador del teléfono (va en el header)', !lista.querySelector('#mhQ, .m-inv-bar2'));
   filas[1].click(); await esperar(10);
@@ -158,7 +171,16 @@ function entorno() {
   filas[0].click(); await esperar(10);
   const jpg = det.querySelector('[data-dks="jpg"]');
   prueba('SOUTHERN lleva JPG a la vista, junto a Resend y Reopen', !!jpg && /JPG/.test(txt(jpg)) && !!det.querySelector('#mhRe') && !!det.querySelector('#mhAbrir'));
-  jpg.click();
+  const pie = det.querySelector(':scope > .dks-pie');
+  prueba('   los cuatro, abajo en el pie fijo (como Review and send de Open), no en la cabecera',
+    !!pie && pie === det.lastElementChild && !!pie.querySelector('#mhRe') && !!pie.querySelector('#mhAbrir') && !!pie.querySelector('[data-dks="jpg"]') && !!pie.querySelector('[data-dks="mas"]') &&
+    !det.querySelector('.m-hdk-cab button') && /#dkOrd \.dks-pie \{[^}]*position: sticky; bottom: 0;/.test(CSS));
+  det.querySelector('#mhAbrir').click(); await esperar(10);
+  prueba('   Reopen pide confirmar en el mismo pie', !!det.querySelector('.dks-pie .m-hacc-conf #mhSi') && !det.querySelector('.m-hdk-cab .m-hacc-conf'));
+  det.querySelector('#mhNo').click(); await esperar(10);
+  prueba('   y Cancel deja los botones donde estaban', !!det.querySelector('.dks-pie #mhRe'));
+  // Tras Reopen / Cancel la orden se repintó: el botón es otro.
+  det.querySelector('[data-dks="jpg"]').click();
   prueba('   y es el Re-export de antes, con la orden del escritorio', w.__llamadas.includes('reExportHistoryOrder:a11'), w.__llamadas.join(','));
   let menu = null;
   w.BarStockDeskHeader.menu = (a, items) => { menu = items; };
@@ -174,8 +196,8 @@ function entorno() {
   w.BarStockDialog = { confirmar: async () => true };
   await menu.find(i => i.label === 'Delete order').fn();
   prueba('   y confirmado, borra la de siempre', w.__llamadas.includes('deleteHistoryOrder:a11'));
-  prueba('Resend y Reopen, de cristal (no el color sólido del teléfono)', /#dkOrd\[data-vista="sent"\] \.m-hdk-cab \.m-hacc button,/.test(leer('styles/desk-header.css')) && /#dkOrd\[data-vista="sent"\] \.m-hdk-cab \.m-hacc button\.mal \{/.test(leer('styles/desk-header.css')));
-  prueba('   en el orden de la lámina: Resend · JPG · Reopen · ⋯', /#mhRe \{ order: 1; \}/.test(CSS) && /\[data-dks="jpg"\] \{ order: 2; \}/.test(CSS) && /#mhAbrir \{ order: 3; \}/.test(CSS) && /\.dks-mas \{ order: 4; \}/.test(CSS));
+  prueba('Resend y Reopen, de cristal (no el color sólido del teléfono)', /#dkOrd\[data-vista="sent"\] \.dks-pie \.m-hacc button,/.test(leer('styles/desk-header.css')) && /#dkOrd\[data-vista="sent"\] \.dks-pie \.m-hacc button\.mal \{/.test(leer('styles/desk-header.css')));
+  prueba('   en el orden de la lámina: Resend · JPG · Reopen · ⋯', /\.dks-pie #mhRe \{ order: 1; \}/.test(CSS) && /\.dks-pie \[data-dks="jpg"\] \{ order: 2; \}/.test(CSS) && /\.dks-pie #mhAbrir \{ order: 3; \}/.test(CSS) && /\.dks-pie \.dks-mas \{ order: 4; \}/.test(CSS));
 
   grupo('5. El header de Sent');
   prueba('la lupa (proveedor o producto), Show y proveedor', !!cab.querySelector('.dkc-afinar #dksQ') && !!cab.querySelector('.dkc-afinar [data-dkc="estado"]') && !!cab.querySelector('.dkc-afinar [data-dkc="prov"]'));

@@ -1,5 +1,13 @@
 [
   {
+    "build": "20261126-140425",
+    "items": [
+      "Sent: list and order scroll on their own",
+      "Sent: buttons fixed at the bottom, totals stay on top",
+      "Sent: products shows bottles, not lines"
+    ]
+  },
+  {
     "build": "20261126-134613",
     "items": [
       "Desktop Sent: orders left, the chosen one right",
@@ -188,13 +196,6 @@
     "build": "20261125-164758",
     "items": [
       "Desktop: shorter Toast sales card, All products on top"
-    ]
-  },
-  {
-    "build": "20261125-163746",
-    "items": [
-      "Desktop: Toast sales card like the phone",
-      "Bottles / $, past weeks and All products on desktop"
     ]
   }
 ]

@@ -104,8 +104,8 @@
   <link rel="stylesheet" href="styles/desk-running-out.css?v=dkr2">
   <link rel="stylesheet" href="styles/desk-sales.css?v=dksa3">
   <link rel="stylesheet" href="styles/desk-inventory.css?v=dki12">
-  <link rel="stylesheet" href="styles/desk-orders.css?v=dko8">
-  <link rel="stylesheet" href="styles/desk-header.css?v=dkc14">
+  <link rel="stylesheet" href="styles/desk-orders.css?v=dko9">
+  <link rel="stylesheet" href="styles/desk-header.css?v=dkc15">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -394,7 +394,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261126-134613</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261126-140425</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5674,7 +5674,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <!-- Decide de que orden es cada factura y lo escribe como enlace.
      Lo llama el historial al repartir, asi que va ANTES que el. -->
 <script src="src/invoice-order-auto.js?v=ioa4"></script>
-<script src="src/mobile-history.js?v=mhis31"></script>
+<script src="src/mobile-history.js?v=mhis32"></script>
 <script src="src/mobile-invoices.js?v=miv29"></script>
 <script src="src/mobile-toast-wine.js?v=mtw2"></script>
 <script src="src/mobile-toast-liquor.js?v=mtq6"></script>
@@ -6398,7 +6398,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <!-- Orders › Sent (desk-sent.js, lámina "Sent · desktop"): Sent del
      teléfono (mobile-history) en la vista Sent de Orders. Antes que
      desk-orders.js, que lo monta. -->
-<script src="src/desk-sent.js?v=dks1"></script>
+<script src="src/desk-sent.js?v=dks2"></script>
 <script src="src/desk-orders.js?v=dko8"></script>
 <!-- Después de bsOpenSection/bsCloseSection, que son lo que llama. -->
 <script src="src/desk-shell.js?v=dk10"></script>
