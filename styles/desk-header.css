@@ -59,6 +59,7 @@
      z-index −1), o los lava. */
   #dkCab :is(.dkc-pl, .dkc-seg),
   :is(#dkInv, #dkOrd) :is(.dki-cr, .dki-tabs),
+  #dkOrd[data-vista="sent"] .m-hdk-cab .m-hacc button,
   body.dk.dk-cab .bs-header #dkMenu,
   body.dk.dk-cab .bs-header #dkCab #dkBusca {
     -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
@@ -75,6 +76,7 @@
   }
   #dkCab :is(.dkc-pl, .dkc-seg)::before,
   :is(#dkInv, #dkOrd) :is(.dki-cr, .dki-tabs)::before,
+  #dkOrd[data-vista="sent"] .m-hdk-cab .m-hacc button::before,
   body.dk.dk-cab .bs-header #dkMenu::before,
   body.dk.dk-cab .bs-header #dkCab #dkBusca::before {
     content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
@@ -82,12 +84,15 @@
     mix-blend-mode: screen;
   }
   body.dk.dk-cab .bs-header #dkMenu { position: relative; }
-  #dkCab .dkc-pl.azul, #dkCab .dkc-pl.en, :is(#dkInv, #dkOrd) .dki-cr.azul:not(:disabled) {
+  #dkCab .dkc-pl.azul, #dkCab .dkc-pl.en, :is(#dkInv, #dkOrd) .dki-cr.azul:not(:disabled),
+  #dkOrd[data-vista="sent"] .m-hdk-cab .m-hacc button:not(.mal):not(#mhNo) {
     color: #f0f9ff; background: rgba(56, 189, 248, .42); border-color: rgba(186, 230, 253, .62);
     box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .5), inset 0 0 14px rgba(56, 189, 248, .45), 0 6px 18px rgba(0, 0, 0, .28);
   }
-  /* Rojo (Delete del panel de Inventory), como Reopen de Sent. */
-  #dkInv .dki-cr.rojo {
+  /* Rojo (Delete del panel de Inventory), como Reopen de Sent: las piezas
+     de Sent son del teléfono (Resend, Reopen y su confirmación); aquí
+     llevan el cristal en vez de su color sólido. */
+  #dkInv .dki-cr.rojo, #dkOrd[data-vista="sent"] .m-hdk-cab .m-hacc button.mal {
     color: #fee2e2; background: rgba(248, 113, 113, .3); border-color: rgba(254, 202, 202, .55);
     box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .45), inset 0 0 14px rgba(248, 113, 113, .4), 0 6px 18px rgba(0, 0, 0, .28);
   }

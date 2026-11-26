@@ -1,5 +1,13 @@
 [
   {
+    "build": "20261126-134613",
+    "items": [
+      "Desktop Sent: orders left, the chosen one right",
+      "What arrived vs ordered, with search and filters",
+      "JPG export kept next to Resend"
+    ]
+  },
+  {
     "build": "20261126-132134",
     "items": [
       "Review: total and send panel together, no gap",
@@ -187,13 +195,6 @@
     "items": [
       "Desktop: Toast sales card like the phone",
       "Bottles / $, past weeks and All products on desktop"
-    ]
-  },
-  {
-    "build": "20261125-162308",
-    "items": [
-      "Desktop: Home › Section at the top to go back",
-      "Esc goes back to the Home"
     ]
   }
 ]

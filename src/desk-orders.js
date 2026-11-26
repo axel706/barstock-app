@@ -21,6 +21,9 @@
   // tiempo real y render() siguen escribiendo ahí.
 
   const MO = () => window.BarStockMobileOrders;
+  // Sent (desk-sent.js): su columna, su orden y su parte del header.
+  const DS = () => window.BarStockDeskSent;
+  const enSent = () => _vista === 'sent' && !!DS();
   const DH = () => window.BarStockDeskHeader;
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -116,9 +119,21 @@
 
   function montarModulo() {
     const det = _caja.querySelector('#dkoDet');
+    _caja.dataset.vista = _vista;
+    // Sent es otro módulo (desk-sent.js): Open se suelta y su panel se
+    // vacía; al volver a Open, al revés.
+    if (enSent()) {
+      if (_abierto && MO() && MO().cerrarEscritorio) MO().cerrarEscritorio();
+      _abierto = false;
+      if (det) det.innerHTML = '';
+      pie();
+      DS().abrir(_caja);
+      if (DH() && DH().refrescar) DH().refrescar('vendor');
+      return;
+    }
+    if (DS() && DS().abierto()) DS().cerrar();
     if (!MO() || !MO().abrirEscritorio || !det) return;
     _abierto = true;
-    _caja.dataset.vista = _vista;
     MO().abrirEscritorio(det, { sec: _vista, vendor: _vista === 'open' ? _vendor : null, alCambiar });
   }
   // Review and send: el total y el envío, juntos en UNA columna a la
@@ -148,18 +163,31 @@
     if (det && det.getBoundingClientRect && det.getBoundingClientRect().top < 0 && window.scrollTo) window.scrollTo(0, 0);
   }
   function verVista(v) {
-    if (v === 'sent') { const S = window.BarStockDeskShell; if (S && S.ir) S.ir('history'); return; }
     if (v === _vista) return;
     _vista = v;
     montarModulo();
+    // La barra lateral marca History en Sent y Orders en Open.
+    const S = window.BarStockDeskShell;
+    if (S && S.marcarLado) S.marcarLado();
+  }
+  // History de la barra lateral abre esta vista (desk-shell.ir): se pone
+  // antes de abrir la sección, para que entre ya en Sent.
+  function verSent() {
+    _vista = 'sent';
+    if (_caja && abierta()) montarModulo();
+  }
+  function verOpen() {
+    if (_vista === 'open') return;
+    _vista = 'open';
+    if (_caja && abierta()) montarModulo();
   }
 
   // ── El header de sitios fijos ──
-  // Open y Sent por ahora. Sent es hoy la sección History del escritorio y
-  // lleva a ella. To buy e Invoices (el escritorio nunca las tuvo) entran
-  // con la lámina de Sent e Invoices: sus pantallas del teléfono leen de la
-  // nube y sus estilos no están generados aquí, y una vista no se ofrece
-  // sin haberla visto funcionar.
+  // Open y Sent (desk-sent.js, lámina "Sent · desktop": la sección History
+  // de antes queda escondida, y History de la barra lateral abre Sent).
+  // To buy e Invoices (el escritorio nunca las tuvo) entran con su lámina:
+  // sus pantallas del teléfono leen de la nube y sus estilos no están
+  // generados aquí, y una vista no se ofrece sin haberla visto funcionar.
   const VISTAS = [['open', 'Open'], ['sent', 'Sent']];
   const CABECERA = {
     // Con un proveedor abierto, su nombre en el título (Axel, en la Mac:
@@ -177,10 +205,12 @@
           n[k] ? `<em class="${k === 'buy' || k === 'inv' ? 'a' : ''}">${n[k]}</em>` : ''}</button>`).join('') + '</div>';
     },
     afinar() {
+      if (enSent()) return DS().CAB.afinar();
       const D = DH();
       return [D.campo({ id: 'dkoQ', icon: 'ti-search', placeholder: 'Search lines', value: _q }), D.vacio(), D.vacio()];
     },
     acciones() {
+      if (enSent()) return DS().CAB.acciones();
       const D = DH();
       return [
         D.boton({ acc: 'exportar', icon: 'ti-file-export', label: 'Export', tono: 'azul' }),
@@ -188,6 +218,7 @@
       ];
     },
     extras() {
+      if (enSent()) return DS().CAB.extras();
       return [{ icon: 'ti-chart-dots', label: 'Order analysis', fn: () => conProveedor(() => clicEn('orderAnalysisBtn')) }];
     },
     alClic(ev, t) {
@@ -195,6 +226,7 @@
       if (k === 'vista') return verVista(t.dataset.vista);
       if (k === 'miga') { if (_vendor) elegir(_vendor); return; }
       if (k === 'quick') return clicEn('quickOrderBtn');
+      if (enSent()) return DS().CAB.alClic(ev, t);
       if (k === 'exportar') {
         const it = (label, id, icon) => ({ icon, label, fn: () => conProveedor(() => clicEn(id)) });
         DH().menu(t, [{ h: _vendor ? 'Export ' + _vendor : 'Export' },
@@ -203,6 +235,7 @@
       }
     },
     alEscribir(ev) {
+      if (enSent()) return DS().CAB.alEscribir(ev);
       if (ev.target.id !== 'dkoQ') return;
       _q = ev.target.value;
       clearTimeout(_tq);
@@ -226,8 +259,11 @@
   }
 
   function alAbrirCerrar() {
-    if (abierta()) { if (!_abierto) montarModulo(); }
-    else if (_abierto) {
+    const sentAbierto = !!(DS() && DS().abierto());
+    if (abierta()) { if (!_abierto && !sentAbierto) montarModulo(); }
+    else {
+      if (sentAbierto) DS().cerrar();
+      if (!_abierto) return;
       _abierto = false;
       if (MO() && MO().cerrarEscritorio) MO().cerrarEscritorio();
       const det = _caja.querySelector('#dkoDet');
@@ -269,5 +305,5 @@
   if (document.getElementById('vendorSection')) montar();
   else document.addEventListener('DOMContentLoaded', montar);
 
-  window.BarStockDeskOrders = { montar, abierta, elegir: (n) => elegir(n), _estado: () => ({ vista: _vista, vendor: _vendor, q: _q }) };
+  window.BarStockDeskOrders = { montar, abierta, elegir: (n) => elegir(n), verSent, verOpen, vista: () => _vista, _estado: () => ({ vista: _vista, vendor: _vendor, q: _q }) };
 })();

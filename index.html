@@ -99,13 +99,13 @@
   <link rel="stylesheet" href="styles/desk-home.css?v=dkh14">
   <!-- "Do we have" del escritorio: la tarjeta y la ficha generadas de las
        del teléfono (tools/compartir-ficha.js), y el campo y su panel. -->
-  <link rel="stylesheet" href="styles/desk-ficha.css?v=dkf6">
+  <link rel="stylesheet" href="styles/desk-ficha.css?v=dkf7">
   <link rel="stylesheet" href="styles/desk-search.css?v=dks2">
   <link rel="stylesheet" href="styles/desk-running-out.css?v=dkr2">
   <link rel="stylesheet" href="styles/desk-sales.css?v=dksa3">
   <link rel="stylesheet" href="styles/desk-inventory.css?v=dki12">
-  <link rel="stylesheet" href="styles/desk-orders.css?v=dko7">
-  <link rel="stylesheet" href="styles/desk-header.css?v=dkc13">
+  <link rel="stylesheet" href="styles/desk-orders.css?v=dko8">
+  <link rel="stylesheet" href="styles/desk-header.css?v=dkc14">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -394,7 +394,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261126-132134</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261126-134613</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5571,7 +5571,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/bottle-assign.js?v=btl30"></script>
 <script src="src/bottle-picker.js?v=btl11"></script>
 <script src="src/inventory-value.js?v=iv2"></script>
-<script src="src/spend-by-category.js?v=sp4"></script>
+<script src="src/spend-by-category.js?v=sp5"></script>
 <script src="src/settings-home.js?v=sh3"></script>
 <script src="src/inventory-backup.js?v=bk1"></script>
 <script src="src/item-edit.js?v=ie1"></script>
@@ -5674,7 +5674,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <!-- Decide de que orden es cada factura y lo escribe como enlace.
      Lo llama el historial al repartir, asi que va ANTES que el. -->
 <script src="src/invoice-order-auto.js?v=ioa4"></script>
-<script src="src/mobile-history.js?v=mhis30"></script>
+<script src="src/mobile-history.js?v=mhis31"></script>
 <script src="src/mobile-invoices.js?v=miv29"></script>
 <script src="src/mobile-toast-wine.js?v=mtw2"></script>
 <script src="src/mobile-toast-liquor.js?v=mtq6"></script>
@@ -6395,9 +6395,13 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <!-- Orders del escritorio: la sección de siempre (#vendorSection) con la
      pantalla nueva dentro; la orden es Open de mobile-orders (más arriba)
      en modo escritorio. También antes de desk-shell.js. -->
-<script src="src/desk-orders.js?v=dko7"></script>
+<!-- Orders › Sent (desk-sent.js, lámina "Sent · desktop"): Sent del
+     teléfono (mobile-history) en la vista Sent de Orders. Antes que
+     desk-orders.js, que lo monta. -->
+<script src="src/desk-sent.js?v=dks1"></script>
+<script src="src/desk-orders.js?v=dko8"></script>
 <!-- Después de bsOpenSection/bsCloseSection, que son lo que llama. -->
-<script src="src/desk-shell.js?v=dk9"></script>
+<script src="src/desk-shell.js?v=dk10"></script>
 <!-- El Home del escritorio: pinta con los datos de mobile-home.js (más
      arriba) dentro del armazón de desk-shell.js. -->
 <script src="src/desk-home.js?v=dkh11"></script>

@@ -91,6 +91,15 @@ const ORD = ['m-ord', 'm-ordv', 'm-rev', 'm-cab', 'm-atras', 'm-inv-t', 'm-hsub'
 const reOrd = new RegExp('\\.(' + ORD.map(c => c.replace(/-/g, '\\-')).join('|') + ')(?![A-Za-z0-9_])|\\.(' +
   ORD.map(c => c.replace(/-/g, '\\-')).join('|') + ')-[A-Za-z0-9_-]+');
 
+// Sent (desk-sent.js, lámina "Sent · desktop", A con el gasto en la
+// columna, 2026-11-26): Sent del teléfono (mobile-history.js en modo
+// escritorio), con su lista en la columna (#dksCol) y la orden a la derecha
+// (#dksDet). Colgado de la vista: #dkOrd[data-vista="sent"].
+const SENT = ['m-hcard', 'm-hmes', 'm-hs', 'm-hlist', 'm-hln', 'm-hnote', 'm-hprec', 'm-itot', 'm-hacc', 'm-hsub', 'm-empty', 'm-lab'];
+const reSent = new RegExp('\\.(' + SENT.map(c => c.replace(/-/g, '\\-')).join('|') + ')(?![A-Za-z0-9_])|\\.(' +
+  SENT.map(c => c.replace(/-/g, '\\-')).join('|') + ')-[A-Za-z0-9_-]+');
+const SENT_RAIZ = '#dkOrd[data-vista="sent"] ';
+
 // El teclado numérico de ✎ Check the shelf y 📣 Tell the team it's low
 // (num-pad.js): una hoja #mSheet colgada del body, con sus clases m-kp.
 // Y la hoja de "All products" / "Full report" (mobile-sales.js), que en el
@@ -99,6 +108,23 @@ const reOrd = new RegExp('\\.(' + ORD.map(c => c.replace(/-/g, '\\-')).join('|')
 const TECLADO = ['m-sheet', 'm-kp', 'm-ro-b', 'm-ro-go', 'm-vl', 'm-searchbar', 'm-ts-ley'];
 const reTeclado = new RegExp('\\.(' + TECLADO.map(c => c.replace(/-/g, '\\-')).join('|') + ')(?![A-Za-z0-9_])|\\.(' +
   TECLADO.map(c => c.replace(/-/g, '\\-')).join('|') + ')-[A-Za-z0-9_-]+');
+
+// Las reglas de primer nivel, fuera de cualquier @media. Sent las
+// necesita: en mobile-app.css el @media (max-width: 640px) se cierra antes
+// del bloque "Historial de órdenes" (la llave suelta tras .m-qk-vacio), y
+// lo de detrás quedó suelto. Sólo se usan para Sent: arreglar esa llave es
+// otro cambio (mueve ~350 reglas que hoy también tocan el escritorio).
+function sueltas(css) {
+  const out = [];
+  const limpio = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  let prof = 0, j = 0, ini = 0, sel = '';
+  for (let i = 0; i < limpio.length; i++) {
+    const ch = limpio[i];
+    if (ch === '{') { if (prof === 0) { sel = limpio.slice(j, i).trim(); ini = i + 1; } prof++; }
+    else if (ch === '}') { prof--; if (prof === 0) { if (!sel.startsWith('@')) out.push({ sel, decl: limpio.slice(ini, i) }); j = i + 1; } }
+  }
+  return out;
+}
 
 function partir(sel) {
   // Por comas de primer nivel: un :is(a, b) no se parte.
@@ -138,8 +164,11 @@ function aTeclado(s) {
 
 function generar() {
   const css = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8');
-  const reglas = [], teclado = [], ro = [], ts = [], ord = [];
-  for (const r of trozos(css)) {
+  const reglas = [], teclado = [], ro = [], ts = [], ord = [], sent = [];
+  const deMedia = trozos(css);
+  const fuera = new Set(sueltas(css));
+  for (const r of deMedia.concat([...fuera])) {
+    const soloSent = fuera.has(r);
     if (!r.sel || r.sel.startsWith('@')) continue;          // las @media de dentro (reducir movimiento) se quedan fuera
     if (/\{/.test(r.decl)) continue;                          // nada anidado
     const partes = r.sel.split(',').map(s => s.trim()).filter(Boolean);
@@ -153,8 +182,16 @@ function generar() {
       if (ch === ',' && prof === 0) { sel.push(cur.trim()); cur = ''; } else cur += ch;
     }
     if (cur.trim()) sel.push(cur.trim());
-    const nuevos = [], deRo = [], deTs = [], deOrd = [];
+    const nuevos = [], deRo = [], deTs = [], deOrd = [], deSent = [];
     for (let s of sel) {
+      if (soloSent) {
+        if (reSent.test(s) && !/:has\(|m-txt-|bs-guest|bs-sin-|fondo-vivo|m-hero|#mhAcc|m-det-fijo|m-tx-hueco/.test(s)) {
+          let t = s, q = true;
+          while (q) { q = false; for (const a of ARMAZON) { if (a.test(t)) { t = t.replace(a, ''); q = true; } } }
+          if (!/^(html|body)\b/.test(t)) deSent.push(SENT_RAIZ + t);
+        }
+        continue;
+      }
       if (reTs.test(s) && !/:has\(|m-txt-|bs-guest|bs-sin-|fondo-vivo|m-vl/.test(s)) {
         let t = s, q = true;
         while (q) { q = false; for (const a of ARMAZON) { if (a.test(t)) { t = t.replace(a, ''); q = true; } } }
@@ -169,6 +206,12 @@ function generar() {
         let t = s, q = true;
         while (q) { q = false; for (const a of ARMAZON) { if (a.test(t)) { t = t.replace(a, ''); q = true; } } }
         if (!/^(html|body)\b/.test(t)) deOrd.push('#dkoDet ' + t);
+      }
+      // .m-hero-ln .m-hln es la tarjeta del Home, no Sent.
+      if (reSent.test(s) && !/:has\(|m-txt-|bs-guest|bs-sin-|fondo-vivo|m-hero|#mhAcc|m-det-fijo|m-tx-hueco/.test(s)) {
+        let t = s, q = true;
+        while (q) { q = false; for (const a of ARMAZON) { if (a.test(t)) { t = t.replace(a, ''); q = true; } } }
+        if (!/^(html|body)\b/.test(t)) deSent.push(SENT_RAIZ + t);
       }
       if (!reClase.test(s)) continue;
       // Lo que depende del tamaño de letra del teléfono o del modo invitado
@@ -191,6 +234,7 @@ function generar() {
     if (nuevos.length) reglas.push('  ' + nuevos.join(',\n  ') + ' {\n' + decl + '\n  }');
     if (deRo.length) ro.push('  ' + deRo.join(',\n  ') + ' {\n' + decl + '\n  }');
     if (deTs.length) ts.push('  ' + deTs.join(',\n  ') + ' {\n' + decl + '\n  }');
+    if (deSent.length) sent.push('  ' + deSent.join(',\n  ') + ' {\n' + decl + '\n  }');
     if (deOrd.length) ord.push('  ' + deOrd.join(',\n  ') + ' {\n' + decl + '\n  }');
     const tec = sel.map(aTeclado).filter(Boolean);
     if (tec.length) teclado.push('  ' + tec.join(',\n  ') + ' {\n' + decl + '\n  }');
@@ -210,6 +254,8 @@ function generar() {
     ts.join('\n') + '\n\n' +
     '  /* Orders (mobile-orders.js en modo escritorio), en el panel #dkoDet. */\n' +
     ord.join('\n') + '\n\n' +
+    '  /* Sent (mobile-history.js en modo escritorio), en la vista Sent de Orders. */\n' +
+    sent.join('\n') + '\n\n' +
     '  /* El teclado numérico (num-pad.js), en la hoja #mSheet del body. */\n' +
     teclado.join('\n') + '\n}\n';
 }

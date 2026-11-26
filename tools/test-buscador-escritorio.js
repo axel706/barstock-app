@@ -60,8 +60,8 @@ catch (e) { alDia = false; salida = String(e.stdout || e.message); }
 prueba('styles/desk-ficha.css está al día con mobile-app.css', alDia, salida.trim());
 const GEN = leer('styles/desk-ficha.css');
 prueba('el generado lo dice en su cabecera', /GENERADO por tools\/compartir-ficha\.js/.test(GEN));
-prueba('todas sus reglas cuelgan de #dkBuscar, #dkRo (Running out), #dkVentas (Toast), #dkiPanel (Inventory), #dkoDet (Orders) o de la hoja del escritorio',
-  GEN.split('\n').filter(l => /^\s{2}[^\s/@}].*[{,]$/.test(l)).every(l => /^\s{2}(#dkBuscar |#dkRo |#dkVentas |#dkiPanel |#dkoDet |body\.dk)/.test(l)));
+prueba('todas sus reglas cuelgan de #dkBuscar, #dkRo (Running out), #dkVentas (Toast), #dkiPanel (Inventory), #dkoDet (Orders), la vista Sent o de la hoja del escritorio',
+  GEN.split('\n').filter(l => /^\s{2}[^\s/@}].*[{,]$/.test(l)).every(l => /^\s{2}(#dkBuscar |#dkRo |#dkVentas |#dkiPanel |#dkoDet |#dkOrd\[data-vista="sent"\] |body\.dk)/.test(l)));
 prueba('lo de dentro de la hoja cuelga de #mSheet (no toca nada más del escritorio)',
   GEN.split('\n').filter(l => /^\s{2}body\.dk /.test(l)).every(l => /^\s{2}body\.dk (#mSheet|\.m-sheet)/.test(l)));
 prueba('van dentro de @media (min-width: 641px)', /^@media \(min-width: 641px\) \{/m.test(GEN));

@@ -153,7 +153,7 @@ w.eval(DI);
   prueba('   medir no es animar: se mide con todo cerrado y tras la animación', /setTimeout\(medir, 260\)/.test(DH) && /if \(_cab\.querySelector\('\.dkc-pl\.abierto, \.dkc-pl\.toque, \.dkc-hueco:hover'\)/.test(DH));
   prueba('   Do we have sí se abre ancho por encima (va a escribirse)', /#dkCab #dkBusca \{\s*position: absolute;/.test(CSSH));
   prueba('sin la etiqueta gris del navegador (title) en los botones del header', !/title=/.test(txt(cab) + cab.innerHTML.replace(/<input[^>]*>/g, '')) && !cab.querySelector('[title]'), [...cab.querySelectorAll('[title]')].map(e => e.outerHTML.slice(0, 60)).join(' | '));
-  prueba('liquid glass: el cristal del teléfono en todos (desenfoque, filo de luz, reflejo)', /#dkCab :is\(\.dkc-pl, \.dkc-seg\),[\s\S]{0,120}#dkMenu,[\s\S]{0,120}#dkBusca \{\s*-webkit-backdrop-filter: blur\(10px\) saturate\(180%\) brightness\(1\.08\);/.test(CSSH) && /inset 0 1\.5px 0 rgba\(255, 255, 255, \.5\)/.test(CSSH) && /radial-gradient\(120% 70% at 30% 0%/.test(CSSH));
+  prueba('liquid glass: el cristal del teléfono en todos (desenfoque, filo de luz, reflejo)', /#dkCab :is\(\.dkc-pl, \.dkc-seg\),[\s\S]{0,200}#dkMenu,[\s\S]{0,120}#dkBusca \{\s*-webkit-backdrop-filter: blur\(10px\) saturate\(180%\) brightness\(1\.08\);/.test(CSSH) && /inset 0 1\.5px 0 rgba\(255, 255, 255, \.5\)/.test(CSSH) && /radial-gradient\(120% 70% at 30% 0%/.test(CSSH));
 
   grupo('3. Las vistas y afinar, con las reglas del teléfono');
   cab.querySelector('[data-vista="fix"]').click(); await esperar(10);

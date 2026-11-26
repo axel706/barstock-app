@@ -26,6 +26,14 @@
   let _abiertos = null;
   let _busca = '';
   let _datos = null;     // { ciclos: [...], porOrden: Map }
+  // En el escritorio (desk-sent.js, lámina "Sent · desktop", A con el
+  // gasto en la columna, Axel 2026-11-26): la lista y la orden se pintan
+  // a la vez, cada una en su sitio ({ lista, detalle, alCambiar, extras }).
+  // La búsqueda y el filtro los pone el header de allí (sin la barra de
+  // aquí) y, además, el proveedor (`_prov`).
+  let _esc = null;
+  let _prov = '';
+  let _cuenta = { all: 0, short: 0, waiting: 0 };
 
   // "El mismo nombre" (sin acentos, apóstrofes ni signos: "Bailey's" y
   // "Baileys" son el mismo producto) vive en order-receipts.js, con el
@@ -267,7 +275,7 @@
     // orden no puede vivir diciendo que gastaste 1.422 si llegaron
     // 1.208.
     const importe = o.estado === 'waiting' ? o.pedidoDinero : o.recibidoDinero;
-    return '<button type="button" class="m-hcard" data-o="' + i + '">' +
+    return '<button type="button" class="m-hcard' + (_esc && _orden === o ? ' sel' : '') + '" data-o="' + i + '">' +
       logo(o.vendor) +
       '<span class="m-hcard-l">' +
         '<span class="m-hcard-v">' + esc(o.vendor) + '</span>' +
@@ -306,6 +314,7 @@
     // escrito, "Short · 3" son tres órdenes de Tito's, no tres del
     // total. Un contador que ignora el filtro de al lado miente.
     const enBusca = todas.filter(o => {
+      if (_esc && _prov && o.vendor !== _prov) return false;
       if (!_busca.trim()) return true;
       const t = _busca.trim().toUpperCase();
       return String(o.vendor).toUpperCase().includes(t) ||
@@ -318,6 +327,7 @@
       // "coming", y el contador no puede decir otra cosa.
       waiting: enBusca.filter(o => o.estado === 'waiting' && !viene(o)).length
     };
+    _cuenta = cuenta;
     // Los nombres de los filtros, para el botón y para la hoja.
     const NOMBRE = { all: 'All', short: 'Short', waiting: 'Waiting' };
 
@@ -333,7 +343,8 @@
       return o.items.some(i => String(i.item).toUpperCase().includes(q));
     };
 
-    const pasa = o => (_filtro === 'all' || (o.estado === _filtro && !(_filtro === 'waiting' && viene(o)))) && coincide(o);
+    const delProv = o => !_esc || !_prov || o.vendor === _prov;
+    const pasa = o => (_filtro === 'all' || (o.estado === _filtro && !(_filtro === 'waiting' && viene(o)))) && coincide(o) && delProv(o);
     const visibles = todas.filter(pasa);
 
     const importe = o => o.estado === 'waiting' ? o.pedidoDinero : o.recibidoDinero;
@@ -359,6 +370,9 @@
     if (_abiertos === null) {
       _abiertos = new Set(meses.length ? [meses[0]] : []);
     }
+    // En el escritorio se busca desde el header: buscar abre todos los
+    // meses, como el campo de aquí (abajo, oninput).
+    if (_esc && _busca.trim()) _abiertos = new Set(meses);
 
     const M = window.BarStockMobile;
 
@@ -373,7 +387,8 @@
     //
     // El botón se enciende cuando hay un filtro puesto, para que no se
     // pueda estar filtrando sin verlo.
-    let html =
+    // En el escritorio la búsqueda y el filtro van en el header.
+    let html = _esc ? '' :
       '<div class="m-inv-bar2">' +
         '<label class="m-searchbar on m-hfind">' +
           '<i class="ti ti-search" aria-hidden="true"></i>' +
@@ -392,10 +407,17 @@
         : '<button type="button" class="m-hfiltro" id="mhClr">' +
             esc(NOMBRE[_filtro] || _filtro) + ' &middot; ' + cuenta[_filtro] +
             ' <i class="ti ti-x" aria-hidden="true"></i></button>');
+    // Lo que se ve, en su orden: desk-sent elige la primera sola.
+    if (_esc) _esc.visibles = abiertas.concat(resto);
 
     if (abiertas.length) {
       const gasto = abiertas.reduce((t, o) => t + importe(o), 0);
-      html += '<div class="m-lab">This cycle · ' + money(gasto) + '</div>' +
+      // En el escritorio, cuántas: el dinero ya lo dice Spent this cycle
+      // encima, y es otra cuenta (lo pedido, no lo recibido): dos cifras
+      // distintas con el mismo nombre una sobre otra confunden.
+      html += '<div class="m-lab">This cycle · ' + (_esc
+        ? abiertas.length + (abiertas.length === 1 ? ' order' : ' orders')
+        : money(gasto)) + '</div>' +
               abiertas.map(o => fila(o, todas.indexOf(o))).join('');
     }
 
@@ -529,14 +551,21 @@
       })
       .filter(c => c && Math.abs(c.factura - c.actual) > CAMBIO_MIN);
 
-    const lineas = o.items.map(i => {
+    // En el escritorio cada línea lleva también su dinero recibido, y la
+    // lista sus títulos (lámina "Sent · desktop": Ordered, Received,
+    // Received $).
+    const lineas = (_esc
+      ? '<div class="m-hln-cols"><span>Product</span><span>Ordered → received</span><span>Received $</span></div>'
+      : '') + o.items.map(i => {
       const mal = i.recibido !== i.pedido;
       return '<div class="m-hln' + (mal ? ' mal' : '') + '">' +
         '<span class="m-hln-n">' + esc(i.item) + '</span>' +
         '<span class="m-hln-q">' + i.pedido +
           '<em>→</em>' +
           (o.estado === 'waiting' ? '—' : i.recibido) +
-        '</span></div>';
+        '</span>' +
+        (_esc ? '<span class="m-hln-d">' + (o.estado === 'waiting' ? '—' : money(i.dinero)) + '</span>' : '') +
+        '</div>';
     }).join('');
 
     // ── El nombre en el header, los dos botones abajo ────────────
@@ -566,7 +595,9 @@
     const M = window.BarStockMobile;
     const sub = (o.po ? 'PO ' + o.po + ' · ' : '') + 'sent ' + dia(o.fecha) +
                 (o.factura ? ' · invoice ' + o.factura : '');
-    const enBanda = !!(M && M.enBanda && M.enBanda(o.vendor, lineaBanda(o)));
+    // En el escritorio no hay banda: la cabecera es suya (logo, nombre, la
+    // línea de la banda con su estado, y los botones con los de allí).
+    const enBanda = !_esc && !!(M && M.enBanda && M.enBanda(o.vendor, lineaBanda(o)));
     const conBotones = !!laDelEscritorio(o.appId);
     const espera = o.estado === 'waiting';
     // Sin precio de factura, lo recibido es una estimación con los
@@ -579,10 +610,20 @@
         '<div><b>' + money(o.pedidoDinero) + '</b><span>ordered</span></div>' +
         '<div><b>' + o.items.length + '</b><span>' + (o.items.length === 1 ? 'item' : 'items') + '</span></div>' +
       '</div>';
+    const cabEsc = () =>
+      '<div class="m-hdk-cab">' + logo(o.vendor) +
+        '<div class="m-hdk-t"><b>' + esc(o.vendor) + '</b>' +
+          '<span>' + esc([o.po ? 'PO ' + o.po : '', 'sent ' + dia(o.fecha), o.factura ? 'invoice ' + o.factura : ''].filter(Boolean).join(' · ')) +
+          ' ' + etiqueta(o) + '</span></div>' +
+        (_esc.extras ? _esc.extras(o, !!conBotones) : '') +
+        acciones(o) +
+      '</div>';
     host.innerHTML =
-      (enBanda
-        ? tira + (conBotones ? '' : acciones(o))
-        : cab({ volverA: 'Order history', titulo: o.vendor, sub }) + acciones(o)) +
+      (_esc
+        ? cabEsc() + tira
+        : enBanda
+          ? tira + (conBotones ? '' : acciones(o))
+          : cab({ volverA: 'Order history', titulo: o.vendor, sub }) + acciones(o)) +
 
       '<div class="m-hlist">' + lineas + '</div>' +
 
@@ -623,8 +664,9 @@
           '</div>'
         : '') +
 
-      // Sin banda, los totales siguen al final; con ella, van en la tira.
-      (enBanda ? '' :
+      // Sin banda, los totales siguen al final; con ella (o en el
+      // escritorio), van en la tira.
+      (enBanda || _esc ? '' :
         '<div class="m-htot"><span>Ordered</span><b>' + money(o.pedidoDinero) + '</b></div>' +
         (o.estado !== 'waiting'
           ? '<div class="m-htot"><span>Received' +
@@ -638,12 +680,12 @@
       // Abajo, fijos: el hueco para que lo último no quede tapado.
       (enBanda && conBotones ? '<div class="m-tx-hueco"></div>' + acciones(o, true) : '');
 
-    volverCon(host, () => { _orden = null; pintar(host); cambioDeNivel(); });
+    if (!_esc) volverCon(host, () => { _orden = null; pintar(host); cambioDeNivel(); });
     engancharAcciones(host, o);
     // En cada pintado: confirmar Reopen repinta aquí sin pasar por el
     // marco de Orders, y la tira es otro elemento.
     const fijo = host.querySelector(':scope > .m-det-fijo');
-    if (fijo && window.BarStockBandDock && window.BarStockBandDock.fijar) window.BarStockBandDock.fijar(fijo);
+    if (fijo && !_esc && window.BarStockBandDock && window.BarStockBandDock.fijar) window.BarStockBandDock.fijar(fijo);
 
     const bp = host.querySelector('#mhPrec');
     if (bp) bp.onclick = async () => {
@@ -864,8 +906,26 @@
   }
 
   function pintar(host) {
+    if (_esc) return pintarEsc();
     if (!host) return;
     if (_orden) pintarDetalle(host); else pintarLista(host);
+  }
+
+  // ── En el escritorio: la lista y la orden a la vez ──────────────────
+  //
+  // Lo que elige, busca o reabre aquí llama a pintar(host) con su propio
+  // sitio; en el escritorio pinta los dos. Sin orden elegida (al entrar,
+  // o la elegida se reabrió), la primera de lo que se ve.
+  function pintarEsc() {
+    if (!_esc) return;
+    if (!_datos) return;
+    pintarLista(_esc.lista);
+    const vis = _esc.visibles || [];
+    if (!_orden && vis.length) { _orden = vis[0]; pintarLista(_esc.lista); }
+    if (_orden) pintarDetalle(_esc.detalle);
+    else _esc.detalle.innerHTML = '<div class="m-hsub">' +
+      (_datos.ordenes.length ? 'No order matches.' : 'Orders you place show up here with what actually arrived against them.') + '</div>';
+    if (_esc.alCambiar) _esc.alCambiar({ orden: _orden, cuenta: _cuenta });
   }
 
   // `aviso` lo pasa el contenedor de Orders. Hay que llamarlo cada vez
@@ -899,7 +959,44 @@
   // Lo que sí tiene que exponer es su estado de navegación: el
   // contenedor necesita saber si está en un detalle para esconder el
   // segmentado, y poder cerrarlo desde el gesto del borde.
+  // El escritorio (desk-sent.js). `abrirEscritorio` lee y pinta; los
+  // demás cambian lo que se ve sin volver a leer.
+  async function abrirEscritorio(o) {
+    _esc = o || {};
+    _orden = null; _confirmando = false; _trabajando = '';
+    _datos = null;
+    _esc.lista.innerHTML = '';
+    // Releer sin perder la orden que se miraba (`elegir`, su id de
+    // vendor_orders): si ya no está (se borró), la primera.
+    // Si la lectura falla, montar() la repite y dice qué pasó.
+    if (_esc.elegir) {
+      const quiere = String(_esc.elegir);
+      try { await cargar(); } catch (e) { _datos = null; }
+      if (_datos) { _orden = _datos.ordenes.find(x => x.id === quiere) || null; pintarEsc(); return; }
+    }
+    return montar(_esc.detalle);
+  }
+  function cerrarEscritorio() { _esc = null; _orden = null; _prov = ''; _busca = ''; _filtro = 'all'; _abiertos = null; }
+  function verEscritorio(c) {
+    if (!c) return;
+    if ('busca' in c) { _busca = String(c.busca || ''); if (!_busca.trim()) _abiertos = null; }
+    if ('filtro' in c) _filtro = c.filtro || 'all';
+    if ('prov' in c) _prov = c.prov || '';
+    pintarEsc();
+  }
+
   window.BarStockMobileHistory = {
+    abrirEscritorio, cerrarEscritorio, verEscritorio,
+    // Lo que el header del escritorio necesita: las cuentas de los
+    // filtros, los proveedores y la orden abierta (con su `appId`).
+    estadoEscritorio: () => ({
+      cuenta: _cuenta, filtro: _filtro, busca: _busca, prov: _prov, orden: _orden,
+      proveedores: _datos ? [...new Set(_datos.ordenes.map(o => o.vendor).filter(Boolean))].sort() : [],
+      cargado: !!_datos
+    }),
+    // Lo de la orden en el escritorio de antes (state.orderHistory), por
+    // su id: Resend/JPG/⋯ trabajan sobre ella.
+    laDelEscritorio,
     montar,
     enDetalle: () => !!_orden,
     cerrarDetalle(host) { _orden = null; pintar(host); cambioDeNivel(); },

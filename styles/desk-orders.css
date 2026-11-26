@@ -149,6 +149,89 @@
   /* Con body.dk delante: sin él, la regla de las dos columnas (body.dk
      #dkOrd) pesaba más y la revisión se quedaba en el hueco de 320 px de
      la columna de proveedores (la de las capturas de Axel). */
-  body.dk #dkOrd:is(.dko-revisando, [data-vista="buy"], [data-vista="sent"], [data-vista="inv"]) { grid-template-columns: minmax(0, 1fr); }
-  body.dk #dkOrd:is(.dko-revisando, [data-vista="buy"], [data-vista="sent"], [data-vista="inv"]) .dko-lista { display: none; }
+  body.dk #dkOrd:is(.dko-revisando, [data-vista="buy"], [data-vista="inv"]) { grid-template-columns: minmax(0, 1fr); }
+  body.dk #dkOrd:is(.dko-revisando, [data-vista="buy"], [data-vista="inv"]) .dko-lista { display: none; }
+
+  /* ── Sent (desk-sent.js; lámina "Sent · desktop", A con el gasto en la
+     columna, Axel 2026-11-26) ──
+     La misma forma que Open: la columna (Spent this cycle y las órdenes)
+     y la orden elegida. Las piezas son Sent del teléfono; sus estilos,
+     GENERADOS bajo #dkOrd[data-vista="sent"] (desk-ficha.css). Aquí, lo
+     que cambia en el escritorio. Rueda la página: sin scroll dentro. */
+  #dkOrd:not([data-vista="sent"]) :is(.dks-col, .dks-det) { display: none; }
+  body.dk #dkOrd[data-vista="sent"] { grid-template-columns: 340px minmax(0, 1fr); }
+  #dkOrd[data-vista="sent"] :is(.dko-lista, .dko-der) { display: none; }
+  #dkOrd .dks-col { min-width: 0; }
+  #dkOrd .dks-det { min-width: 0; padding-bottom: 28px; container: dksdet / inline-size; }
+
+  /* Spent this cycle: una tarjeta, una barra por categoría y sus cifras;
+     lo de antes de cada una al pasar el ratón por ella. */
+  #dkOrd .dks-gasto { border-radius: 18px; background: var(--tinta); border: 1px solid var(--tinta-borde); padding: 14px 16px; margin-bottom: 14px; }
+  #dkOrd .dks-gasto[hidden] { display: none; }
+  #dkOrd .dks-gl { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #94a3b8; }
+  #dkOrd .dks-gt { font-size: 30px; font-weight: 850; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  #dkOrd .dks-gd { font-size: 13px; font-weight: 800; }
+  #dkOrd .dks-gd.up { color: #fca5a5; }
+  #dkOrd .dks-gd.dn { color: #6ee7b7; }
+  #dkOrd .dks-gb { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin: 12px 0 8px; background: rgba(255, 255, 255, .08); }
+  #dkOrd .dks-gk { display: flex; flex-wrap: wrap; gap: 5px 12px; font-size: 12.5px; color: #cbd5e1; }
+  #dkOrd .dks-gk span { position: relative; white-space: nowrap; cursor: default; }
+  #dkOrd .dks-gk i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+  #dkOrd .dks-gk span:hover::after {
+    content: attr(data-antes); position: absolute; left: 0; top: calc(100% + 4px); z-index: 3; white-space: nowrap;
+    padding: 4px 8px; border-radius: 8px; background: rgba(12, 18, 34, .97); border: 1px solid rgba(255, 255, 255, .16); color: #e2e8f0; font-size: 12px;
+  }
+
+  /* Comparar: lo elegido con "Select to compare" (⋯ de una orden). */
+  #dkOrd .dks-comp { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 8px 10px 8px 14px; border-radius: 14px; border: 1px solid rgba(125, 211, 252, .4); background: rgba(56, 189, 248, .1); font-size: 13px; font-weight: 700; }
+  #dkOrd .dks-comp[hidden] { display: none; }
+  #dkOrd .dks-comp span { margin-right: auto; }
+  #dkOrd .dks-comp .dki-cr { height: 32px; padding: 0 12px; font-size: 13px; }
+
+  /* La orden elegida en la lista. */
+  #dkOrd[data-vista="sent"] .m-hcard.sel { border-color: rgba(125, 211, 252, .85); box-shadow: 0 0 0 1px rgba(125, 211, 252, .5); }
+  #dkOrd[data-vista="sent"] .m-hcard:hover { border-color: rgba(125, 211, 252, .35); }
+  #dkOrd[data-vista="sent"] .m-hcard .m-hcard-v { font-weight: 750; }
+
+  /* La cabecera de la orden: logo, nombre, la línea con su estado, y los
+     botones (Resend, JPG o CSV, Reopen, ⋯). */
+  #dkOrd .m-hdk-cab { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 2px 0 14px; }
+  #dkOrd .m-hdk-cab > .vlogo, #dkOrd .m-hdk-cab > :first-child { flex: none; }
+  #dkOrd .m-hdk-t { min-width: 0; display: flex; flex-direction: column; gap: 3px; margin-right: auto; }
+  #dkOrd .m-hdk-t b { font-size: 22px; font-weight: 850; }
+  #dkOrd .m-hdk-t span { color: #a9bacd; font-size: 13px; }
+  #dkOrd .m-hdk-t .m-hs { margin: 0 0 0 4px; }
+  /* Resend · JPG · Reopen · ⋯, como la lámina: Resend y Reopen son del
+     teléfono (.m-hacc) y JPG y ⋯ de aquí (.dks-ext); las dos cajas se
+     abren (display: contents) y cada botón lleva su sitio. */
+  #dkOrd .m-hdk-cab > :is(.m-hacc, .dks-ext) { display: contents; }
+  #dkOrd .m-hdk-cab #mhRe { order: 1; }
+  #dkOrd .m-hdk-cab [data-dks="jpg"] { order: 2; }
+  #dkOrd .m-hdk-cab #mhAbrir { order: 3; }
+  #dkOrd .m-hdk-cab .dks-mas { order: 4; }
+  #dkOrd .m-hdk-cab > :is(.m-hacc-conf, .m-hacc-no) { order: 5; flex-basis: 100%; margin: 0; }
+  #dkOrd[data-vista="sent"] .m-hdk-cab .m-hacc button { flex: none; height: 40px; padding: 0 18px; font-size: 14px; font-weight: 800; border-radius: 999px; position: relative; }
+  #dkOrd[data-vista="sent"] .m-hdk-cab .m-hacc-conf .m-hacc { display: flex; gap: 8px; margin: 10px 0 0; }
+  /* Con poco ancho (el iPad con la barra lateral) no caben junto al
+     nombre: bajan TODOS a su renglón, en su orden (partidos, Resend se
+     quedaba arriba solo). */
+  @container dksdet (max-width: 860px) {
+    #dkOrd .m-hdk-t { flex-basis: calc(100% - 80px); }
+  }
+  #dkOrd .dks-ext .dki-cr { height: 40px; padding: 0 16px; font-size: 14px; gap: 7px; }
+  #dkOrd .dks-ext .dks-mas { width: 40px; padding: 0; justify-content: center; }
+
+  /* Las tres cifras y la lista de la orden, a lo ancho: Product · Ordered →
+     received · Received $. */
+  #dkOrd[data-vista="sent"] .dks-det .m-itot { margin: 0 0 12px; }
+  #dkOrd[data-vista="sent"] .dks-det .m-itot b { font-size: 24px; }
+  #dkOrd .m-hln-cols, #dkOrd[data-vista="sent"] .dks-det .m-hln { display: grid; grid-template-columns: minmax(0, 1fr) 170px 120px; gap: 14px; align-items: center; }
+  #dkOrd .m-hln-cols { padding: 6px 16px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #8ea0bd; }
+  #dkOrd .m-hln-cols span:not(:first-child) { text-align: right; }
+  #dkOrd[data-vista="sent"] .dks-det .m-hln { padding: 12px 16px; font-size: 15px; }
+  #dkOrd[data-vista="sent"] .dks-det .m-hln-n { font-size: 15px; }
+  #dkOrd[data-vista="sent"] .dks-det .m-hln-q { text-align: right; font-size: 15px; }
+  #dkOrd .m-hln-d { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }
+  #dkOrd[data-vista="sent"] .dks-det .m-hln.mal .m-hln-q { color: #fcd34d; }
+  #dkOrd[data-vista="sent"] .dks-det .m-hprec { margin-top: 14px; }
 }

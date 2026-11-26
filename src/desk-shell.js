@@ -122,8 +122,14 @@
     // siguen con la ruta hasta que se rehagan.
     const DH = window.BarStockDeskHeader;
     if (DH && DH.marcar) DH.marcar(activa());
+    marcarLado();
+  }
+  // Orders en Sent es "History" en la barra lateral.
+  function marcarLado() {
     if (!_lado) return;
-    const a = activa();
+    let a = activa();
+    const DO = window.BarStockDeskOrders;
+    if (a === 'vendor' && DO && DO.vista && DO.vista() === 'sent') a = 'history';
     _lado.querySelectorAll('.dk-nav[data-dk]').forEach(b => {
       b.classList.toggle('on', b.dataset.dk === a);
     });
@@ -136,7 +142,14 @@
       if (typeof window.bsCloseSection === 'function') window.bsCloseSection();
     } else if (id === 'settings') {
       if (typeof window.openSettingsModal === 'function') window.openSettingsModal();
+    } else if (id === 'history' && window.BarStockDeskOrders && window.BarStockDeskOrders.verSent) {
+      // History es Orders › Sent (desk-sent.js, lámina "Sent · desktop"):
+      // la sección de antes queda escondida, sin que nada la abra.
+      window.BarStockDeskOrders.verSent();
+      if (typeof window.bsOpenSection === 'function') window.bsOpenSection('vendor');
     } else if (it.sec && typeof window.bsOpenSection === 'function') {
+      // Orders desde la barra lateral entra en Open.
+      if (id === 'vendor' && window.BarStockDeskOrders && window.BarStockDeskOrders.verOpen) window.BarStockDeskOrders.verOpen();
       window.bsOpenSection(it.sec);
     }
     marcar();
@@ -326,5 +339,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', montar);
   else montar();
 
-  window.BarStockDeskShell = { montar, ir, activa, desdeMovil, esconderLado, ITEMS };
+  window.BarStockDeskShell = { montar, ir, activa, desdeMovil, esconderLado, marcarLado, ITEMS };
 })();

@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 179 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 180 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -888,6 +888,35 @@ sección de hoy vive tal cual dentro del armazón.
   especificidad: la regla de una columna lleva `body.dk` delante, o la de
   dos columnas ganaba y la revisión cabía en 320 px.
   Prueba: `test-orders-escritorio`.
+- **Orders › Sent en el escritorio** (Axel, 2026-11-26, lámina "Sent ·
+  desktop", A, con el gasto en la columna, opción 1 de "the top, lighter":
+  "la parte superior se siente muy saturada"): `src/desk-sent.js`, la vista
+  Sent de Orders (Open · Sent en el header). **History de la barra lateral
+  abre esta vista** (`desk-shell.ir` → `BarStockDeskOrders.verSent`) y se
+  marca en Sent; la sección History de antes queda escondida, sin que nada
+  la abra. La forma de Open: a la izquierda Spent this cycle (la cuenta de
+  History de antes, `BarStockSpend.compute`, con una barra por categoría y
+  lo de antes al pasar el ratón) y las órdenes (este ciclo, "This cycle · N
+  orders": el dinero ya está arriba y es otra cuenta; los meses plegados);
+  a la derecha la elegida, la primera sola. **Es Sent del TELÉFONO**:
+  `BarStockMobileHistory.abrirEscritorio({ lista, detalle, extras,
+  alCambiar, elegir })` pinta la lista y la orden a la vez, sin su buscador
+  (la lupa, Show: All · Short · Waiting y el proveedor van en el header,
+  `verEscritorio`), con la cabecera de la orden (`.m-hdk-cab`), las tres
+  cifras y cada línea pedida → recibida con su dinero. Los botones: Resend
+  y Reopen del teléfono, de cristal, y **el JPG a la vista** (Axel: "hay un
+  export de jpg en las órdenes, no vaya a ser que lo elimines"; el
+  Re-export de antes, `reExportHistoryOrder`: CSV en LOOP) y ⋯ con Compare
+  to previous, Select to compare (y su barra Compare / Clear) y Delete (que
+  ahora pregunta). Export del header: la orden elegida y todas (JSON); en
+  ⋯, Import y Reset orders. **"Edit date" no pasó**: sólo cambiaba la copia
+  del navegador (`saveHistoryDateEdit` no escribe en la nube) y la
+  siguiente carga lo deshacía. Sus estilos del teléfono, GENERADOS bajo
+  `#dkOrd[data-vista="sent"]`; ojo: en mobile-app.css el `@media
+  (max-width: 640px)` se cierra antes de "Historial de órdenes" (la llave
+  tras `.m-qk-vacio`) y ~350 reglas quedaron sueltas, también en el
+  escritorio; el generador las lee sólo para Sent (`sueltas`). Arreglar esa
+  llave es otro cambio. Prueba: `test-sent-escritorio`.
 - **EL HEADER DE LAS SECCIONES: SITIOS FIJOS** (Axel, 2026-11-26, lámina
   "Section header · fixed places": "es dinámico, pero a la vez es fijo
   […] los controles siempre en las mismas posiciones"). El estándar para
@@ -1295,7 +1324,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 179 suites · ~2470 comprobaciones. Tienen que pasar enteras.
+`npm test` · 180 suites · ~2470 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

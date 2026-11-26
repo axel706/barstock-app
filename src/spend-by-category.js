@@ -199,5 +199,8 @@
       <div class="sp-list">${rows}</div>`;
   }
 
-  window.BarStockSpend = { render, compute };
+  // El color de una categoría, el mismo de estas barras: Sent del
+  // escritorio (desk-sent.js) pinta la suya con él.
+  const color = (name) => String(name || '').startsWith('—') ? NONE : (COLORS[name] || NONE);
+  window.BarStockSpend = { render, compute, color };
 })();
