@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261126-173438",
+    "items": [
+      "Quick order and To buy: total, Live and Review on one line"
+    ]
+  },
+  {
     "build": "20261126-172823",
     "items": [
       "To buy on desktop: tick what goes, order it as LOOP",
@@ -193,13 +199,6 @@
     "build": "20261125-193356",
     "items": [
       "Desktop Inventory: the four figures are back"
-    ]
-  },
-  {
-    "build": "20261125-191841",
-    "items": [
-      "Desktop: Inventory controls in the top bar",
-      "Money on the shelf matches Home"
     ]
   }
 ]

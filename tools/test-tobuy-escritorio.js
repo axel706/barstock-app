@@ -132,6 +132,7 @@ function final() {
           const pos = s => I.indexOf(s);
           prueba('desk-tobuy tras desk-quick y antes de desk-orders', pos('src/desk-quick.js') > 0 && pos('src/desk-quick.js') < pos('src/desk-tobuy.js') && pos('src/desk-tobuy.js') < pos('src/desk-orders.js'));
           prueba('la vista usa la rejilla de Q-O', /\[data-vista="buy"\]\) \{\s*grid-template-columns: 420px/.test(leer('styles/desk-orders.css')));
+          prueba('el pie de To buy y Q-O en UNA línea (sin wrap ni la rejilla de dos filas)', /#dkOrd \.dkq-pie \{[^}]*flex-wrap: nowrap;/.test(leer('styles/desk-orders.css')) && !/grid-template-areas: "tot go" "live live"/.test(leer('styles/desk-orders.css')));
           fin();
         });
       });

@@ -178,7 +178,7 @@
       <div class="dkq-live"><span>Count in Live now?</span>
         <div class="dkq-seg" role="radiogroup" aria-label="Count in Live now?">
           <button type="button" role="radio" aria-checked="${_live === 'ya'}" class="${_live === 'ya' ? 'on' : ''}" data-dkq="live" data-v="ya">Yes, it's here</button>
-          <button type="button" role="radio" aria-checked="${_live === 'luego'}" class="${_live === 'luego' ? 'on' : ''}" data-dkq="live" data-v="luego"${_sig ? '' : ' disabled'}>${_sig ? 'Next delivery · ' + esc(fecha(_sig)) : 'No delivery day'}</button>
+          <button type="button" role="radio" aria-checked="${_live === 'luego'}" class="${_live === 'luego' ? 'on' : ''}" data-dkq="live" data-v="luego"${_sig ? '' : ' disabled'}>${_sig ? '<span class="dkq-sig-l">Next delivery · </span>' + esc(fecha(_sig)) : 'No delivery day'}</button>
         </div></div>
       <button type="button" class="dki-cr azul dkq-go" data-dkq="revisar"${listo ? '' : ' disabled'}><i class="ti ti-send" aria-hidden="true"></i>${correo ? 'Review and send' : 'Review and place'}</button>`;
     el.hidden = !ls.length;

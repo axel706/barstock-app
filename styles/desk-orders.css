@@ -386,7 +386,9 @@
      vistas del header, con lo elegido en cristal azul) y Review and send. */
   #dkOrd .dkq-pie {
     position: sticky; bottom: 0; z-index: 5; margin-top: auto;
-    display: flex; align-items: center; flex-wrap: wrap; gap: 14px 18px;
+    /* TODO en una línea (Axel, en el iPad: el envío bajaba a otra fila):
+       sin wrap; con poco ancho se compacta (abajo), no se parte. */
+    display: flex; align-items: center; flex-wrap: nowrap; gap: 16px;
     padding: 14px 0 max(6px, calc(env(safe-area-inset-bottom) / 2));
     background: linear-gradient(180deg, rgba(9, 14, 26, 0), #090e1a 30%);
   }
@@ -397,7 +399,13 @@
   #dkOrd .dkq-seg { display: flex; gap: 2px; padding: 4px; border-radius: 999px; position: relative; }
   #dkOrd .dkq-seg button { height: 36px; padding: 0 14px; border-radius: 999px !important; font-size: 13.5px; font-weight: 750; color: #dbe4ee; background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; cursor: pointer; white-space: nowrap; }
   #dkOrd .dkq-seg button:disabled { color: #7f8ea3; cursor: default; }
-  #dkOrd .dkq-go { margin-left: auto; height: 46px; padding: 0 24px; font-size: 15px; gap: 8px; }
+  #dkOrd .dkq-tot, #dkOrd .dkq-go { flex: none; }
+  /* Si aun así no cabe, el carril se recorta (el día con "…"), nunca se
+     encima con el envío. */
+  #dkOrd .dkq-live { min-width: 0; }
+  #dkOrd .dkq-seg { max-width: 100%; }
+  #dkOrd .dkq-seg button { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  #dkOrd .dkq-go { margin-left: auto; height: 46px; padding: 0 24px; font-size: 15px; gap: 8px; white-space: nowrap; }
   #dkOrd .dkq-go:disabled { opacity: 1; color: #94a3b8; }
 
   /* Con poco ancho (el iPad de 1180 con la barra lateral): la columna de
@@ -417,10 +425,17 @@
     #dkOrd .dkq-x { grid-area: x; }
     #dkOrd .dkq-meta { grid-template-columns: 1fr 1fr; }
     #dkOrd .dkq-meta label:last-child { grid-column: 1 / -1; }
-    #dkOrd .dkq-pie { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "tot go" "live live"; }
-    #dkOrd .dkq-tot { grid-area: tot; }
-    #dkOrd .dkq-go { grid-area: go; margin-left: 0; }
-    #dkOrd .dkq-live { grid-area: live; }
+  }
+  /* El pie con poco ancho (el iPad de 1180 con la barra): la pregunta,
+     chica encima de sus botones; "Next delivery ·" se va y queda el día; el
+     envío, sólo con su nombre. Sigue en UNA línea. */
+  @container dkqder (max-width: 900px) {
+    #dkOrd .dkq-pie { gap: 10px; }
+    #dkOrd .dkq-tot b { font-size: 20px; }
+    #dkOrd .dkq-live { flex-direction: column; align-items: flex-start; gap: 3px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #94a3b8; }
+    #dkOrd .dkq-seg button { padding: 0 9px; font-size: 12.5px; height: 34px; }
+    #dkOrd .dkq-sig-l, #dkOrd .dkq-go > .ti { display: none; }
+    #dkOrd .dkq-go { padding: 0 16px; font-size: 14.5px; }
   }
 
   /* ── Invoices: lo suyo (desk-invoices.js; lámina "Invoices · desktop",
