@@ -270,6 +270,12 @@
   // de Open e Invoices).
   const logo = (v) => (window.BarStockVendorLogo ? window.BarStockVendorLogo.html(v) : '');
 
+  // Las botellas pedidas de una orden: lo que dice "products" en la
+  // tarjeta y en la tira (Axel, 2026-11-26: "items" contaba códigos, y lo
+  // que se mira es cuántas botellas). Una sola cuenta para las dos.
+  const botellasDe = (o) => Math.round(o.items.reduce((t, i) => t + (Number(i.pedido) || 0), 0) * 10) / 10;
+  const productos = (o) => { const n = botellasDe(o); return n + (n === 1 ? ' product' : ' products'); };
+
   function fila(o, i) {
     // El dinero que se enseña es lo RECIBIDO cuando ya se sabe. Una
     // orden no puede vivir diciendo que gastaste 1.422 si llegaron
@@ -283,7 +289,7 @@
           // Mientras viene, la fecha que importa es la de llegada, en
           // su línea; la de colocación sólo estorbaría.
           (o.po ? esc(o.po) + ' · ' : '') + (viene(o) ? '' : esc(dia(o.fecha)) + ' · ') +
-          o.items.length + ' item' + (o.items.length === 1 ? '' : 's') +
+          productos(o) +
         '</span>' +
         (o.llegada && viene(o)
           ? '<span class="m-hcard-arr">Arrives ' + esc(fechaLlegada(o.llegada)) + '</span>'
@@ -603,7 +609,7 @@
     // Sin precio de factura, lo recibido es una estimación con los
     // tuyos: decirlo en su etiqueta. Un número que parece dato y es
     // cálculo es peor que no darlo.
-    const botellas = Math.round(o.items.reduce((t, i) => t + (Number(i.pedido) || 0), 0) * 10) / 10;
+    const botellas = botellasDe(o);
     const tira =
       '<div class="m-itot m-det-fijo">' +
         '<div><b>' + (espera ? '—' : money(o.recibidoDinero)) + '</b><span>' +
@@ -635,7 +641,7 @@
           'yet, so the figure below is what you ordered, not what arrived.</div>'
         : faltan.length
           ? '<div class="m-hnote">' + faltan.length +
-            (faltan.length === 1 ? ' item came' : ' items came') + ' up short. ' +
+            (faltan.length === 1 ? ' product came' : ' products came') + ' up short. ' +
             money(diferencia) + ' of this order never arrived — the received ' +
             'figure below already reflects that.</div>'
           : '') +

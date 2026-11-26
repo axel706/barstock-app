@@ -108,7 +108,7 @@ grupo('la llegada en cada tarjeta');
   const { m, host } = await tarjetas();
   prueba('antes de llegar: "coming", no "waiting"', m['CT-0230'] && /coming/i.test(m['CT-0230'].tag), m['CT-0230'] && m['CT-0230'].tag);
   prueba('con su línea "Arrives …" en hora de Nueva York', m['CT-0230'] && m['CT-0230'].arr && /Arrives \w{3} \w{3} \d+ · \d+:\d{2} (AM|PM)/.test(m['CT-0230'].txt));
-  prueba('mientras viene, la fecha de colocación no estorba', m['CT-0230'] && !/CT-0230 · [A-Za-z]{3} \d+ ·/.test(m['CT-0230'].txt) && /CT-0230 · \d+ item/.test(m['CT-0230'].txt), m['CT-0230'] && m['CT-0230'].txt);
+  prueba('mientras viene, la fecha de colocación no estorba', m['CT-0230'] && !/CT-0230 · [A-Za-z]{3} \d+ ·/.test(m['CT-0230'].txt) && /CT-0230 · \d+(\.\d+)? products?/.test(m['CT-0230'].txt), m['CT-0230'] && m['CT-0230'].txt);
   prueba('ya llegado y sin factura: "waiting" con "Arrived …"', m['CT-0229'] && /waiting/i.test(m['CT-0229'].tag) && /Arrived /.test(m['CT-0229'].txt) && !m['CT-0229'].arr);
   prueba('con factura: su estado, sin línea de llegada', m['CT-0228'] && /all in/i.test(m['CT-0228'].tag) && !/Arriv/.test(m['CT-0228'].txt), m['CT-0228'] && m['CT-0228'].tag);
   prueba('un pedido de antes de esto: como siempre', m['CT-0200'] && /waiting/i.test(m['CT-0200'].tag) && !/Arriv/.test(m['CT-0200'].txt));

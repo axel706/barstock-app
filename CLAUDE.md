@@ -925,7 +925,11 @@ sección de hoy vive tal cual dentro del armazón.
   arriba al rodar la orden, opacas; los meses son un rótulo, no un botón
   flotando (app.css le ponía fondo y borde), con su aire arriba; y la
   tercera cifra son las BOTELLAS pedidas con "products" (contaba códigos;
-  también en el teléfono, es la misma tira). Prueba: `test-sent-escritorio`.
+  también en el teléfono, es la misma tira), y la tarjeta de cada orden de
+  la lista igual ("27 products"; Axel: "items también debe ser
+  reemplazado por products en el móvil"), las dos con `botellasDe`. El
+  aviso de lo corto dice "N products came up short" (ése sí cuenta
+  líneas: cuántos productos llegaron cortos). Prueba: `test-sent-escritorio`.
 - **EL HEADER DE LAS SECCIONES: SITIOS FIJOS** (Axel, 2026-11-26, lámina
   "Section header · fixed places": "es dinámico, pero a la vez es fijo
   […] los controles siempre en las mismas posiciones"). El estándar para

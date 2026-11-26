@@ -147,6 +147,7 @@ function entorno() {
     // cantidad de botellas en lugar de la cantidad de códigos".
     const cel = [...det.querySelectorAll('.m-itot > div')].pop();
     prueba('   la tercera cifra son las BOTELLAS pedidas (6 + 4), "products", no los códigos', /^10\s*products$/.test(txt(cel)), txt(cel));
+    prueba('   y la tarjeta de la lista dice lo mismo: "10 products", sin "items"', /10 products/.test(txt(filas[0])) && !/items?\b/.test(txt(lista)), txt(filas[0]));
   }
   prueba('cada columna rueda por su cuenta y la página no (alto de la pantalla, overflow propio)',
     /body\.dk #dkOrd\[data-vista="sent"\] \{[^}]*height: calc\(100dvh - var\(--dk-alto\) - 36px\)/.test(CSS) &&
@@ -245,6 +246,7 @@ function entorno() {
     w2.document.body.appendChild(host);
     await w2.BarStockMobileHistory.montar(host);
     prueba('su lista sigue con su buscador y "This cycle · $"', !!host.querySelector('#mhQ') && /This cycle · \$/.test(txt(host)), txt(host).slice(0, 100));
+    prueba('   y sus tarjetas dicen las botellas como "products", no "items"', /10 products/.test(txt(host)) && !/\bitems?\b/.test(txt(host)), txt(host).slice(0, 160));
   }
 
   grupo('7. Carga y estilos');

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261126-141308",
+    "items": [
+      "Sent: each order shows its bottles as products"
+    ]
+  },
+  {
     "build": "20261126-140425",
     "items": [
       "Sent: list and order scroll on their own",
@@ -190,12 +196,6 @@
     "build": "20261125-165654",
     "items": [
       "Desktop: Toast card keeps its size in Bottles and $"
-    ]
-  },
-  {
-    "build": "20261125-164758",
-    "items": [
-      "Desktop: shorter Toast sales card, All products on top"
     ]
   }
 ]
