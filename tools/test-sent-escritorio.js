@@ -175,7 +175,9 @@ function entorno() {
   const pie = det.querySelector(':scope > .dks-pie');
   prueba('   los cuatro, abajo en el pie fijo (como Review and send de Open), no en la cabecera',
     !!pie && pie === det.lastElementChild && !!pie.querySelector('#mhRe') && !!pie.querySelector('#mhAbrir') && !!pie.querySelector('[data-dks="jpg"]') && !!pie.querySelector('[data-dks="mas"]') &&
-    !det.querySelector('.m-hdk-cab button') && /#dkOrd \.dks-pie \{[^}]*position: sticky; bottom: 0;/.test(CSS));
+    !det.querySelector('.m-hdk-cab button') && /#dkOrd \.dks-pie \{[^}]*position: sticky; bottom: 0;/.test(CSS) &&
+    // Abajo del todo: media zona segura, no entera más relleno (Axel).
+    /\.dks-pie \{[^}]*padding: 12px 0 max\(6px, calc\(env\(safe-area-inset-bottom\) \/ 2\)\);/.test(CSS));
   {
     // Resend abre la revisión de Open con esta orden (desk-orders), no
     // manda el correo directo al guardado.

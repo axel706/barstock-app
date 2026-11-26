@@ -240,7 +240,10 @@
   #dkOrd .dks-pie {
     position: sticky; bottom: 0; z-index: 5; margin-top: auto;
     display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
-    padding: 14px 0 calc(10px + env(safe-area-inset-bottom));
+    /* Abajo del todo (Axel, en el iPad: "pueden y deben ir más abajo"):
+       sólo media zona segura, que la barra de inicio del iPad es una
+       línea fina y no tapa un botón de 44. */
+    padding: 12px 0 max(6px, calc(env(safe-area-inset-bottom) / 2));
     /* Opaco desde un poco más abajo del borde: las líneas que pasan por
        detrás se leían a través del .92. */
     background: linear-gradient(180deg, rgba(9, 14, 26, 0), #090e1a 30%);

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261126-143123",
+    "items": [
+      "Sent: the buttons sit at the very bottom"
+    ]
+  },
+  {
     "build": "20261126-142615",
     "items": [
       "Sent: Resend opens Review and send for any address",
@@ -191,13 +197,6 @@
     "build": "20261125-172100",
     "items": [
       "Sales: taller day bars; today shows its sales"
-    ]
-  },
-  {
-    "build": "20261125-170949",
-    "items": [
-      "Desktop: new Sales screen in the sidebar",
-      "Full report opens it, with money and bottles tables"
     ]
   }
 ]
