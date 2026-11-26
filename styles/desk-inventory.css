@@ -3,7 +3,8 @@
  * src/desk-inventory.js, dentro de #inventorySection, con el estándar de
  * las secciones (.dk-pantalla en desk-shell.css) y su header de sitios
  * fijos (desk-header.js, 2026-11-26): el título, las vistas y los
- * controles van en el header; aquí, el dinero del estante con su reparto,
+ * controles van en el header; aquí, las cuatro cifras (Money on the shelf
+ * con su reparto, Items, Needs fixing, Running out),
  * el conteo en curso, los nombres de las columnas (pegados bajo el
  * header al bajar), una fila por producto y el producto en un panel a la
  * derecha (A), pegado bajo las columnas.
@@ -34,16 +35,18 @@
   #dkInv .dki-b.go { background: rgba(56, 189, 248, .4); border-color: rgba(186, 230, 253, .55); color: #f0f9ff; }
   #dkInv .dki-b.rd { background: rgba(239, 68, 68, .2); border-color: rgba(252, 165, 165, .4); color: #fecaca; }
 
-  /* ── Lo que el header no dice: el dinero del estante ── */
-  #dkInv .dki-din { display: flex; align-items: flex-end; gap: 28px; }
-  #dkInv .dki-k { flex: none; min-width: 0; }
+  /* ── Las cuatro cifras (la cabeza de antes, 2026-11-26) ── */
+  #dkInv .dki-cifras { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr)); }
+  #dkInv .dki-k { padding: 0 18px; border-left: 1px solid rgba(255, 255, 255, .1); min-width: 0; }
+  #dkInv .dki-k:first-child { padding-left: 0; border-left: 0; }
   #dkInv .dki-k u { text-decoration: none; font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #94a3b8; }
-  #dkInv .dki-k b { display: block; font-size: 36px; font-weight: 800; letter-spacing: -.6px; line-height: 1.1; margin-top: 2px; }
+  #dkInv .dki-k b { display: block; font-size: 32px; font-weight: 800; letter-spacing: -.5px; line-height: 1.15; margin-top: 2px; }
+  #dkInv .dki-k b.a { color: #fcd34d; }
+  #dkInv .dki-k b.r { color: #fca5a5; }
   #dkInv .dki-k small { display: block; font-size: 12px; color: #a9bacd; margin-top: 2px; }
-  #dkInv .dki-reparto { flex: 1; min-width: 0; max-width: 760px; padding-bottom: 2px; }
-  #dkInv .dki-cats { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: rgba(255, 255, 255, .08); }
+  #dkInv .dki-cats { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 10px; background: rgba(255, 255, 255, .08); }
   #dkInv .dki-cats i { display: block; height: 100%; }
-  #dkInv .dki-ley { display: flex; flex-wrap: wrap; gap: 3px 14px; margin-top: 7px; font-size: 12px; color: #a9bacd; }
+  #dkInv .dki-ley { display: flex; flex-wrap: wrap; gap: 3px 12px; margin-top: 6px; font-size: 11.5px; color: #a9bacd; }
   #dkInv .dki-ley span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; background: var(--c); }
   #dkInv .dki-conteo:not(:empty) { margin-top: 14px; }
 
@@ -161,11 +164,21 @@
       max-height: none; box-shadow: -20px 0 50px rgba(0, 0, 0, .45);
       backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); background: rgba(9, 14, 26, .92);
     }
-    #dkInv .dki-din { flex-wrap: wrap; row-gap: 10px; }
     #dkInv .dki-cols, #dkInv .dki-fila { grid-template-columns: 28px minmax(0, 2fr) 110px 84px 0 54px 0 74px; }
     #dkInv.con-panel .dki-cols { margin-right: 0; }
     #dkInv .dki-cols > :nth-child(5), #dkInv .dki-fila > :nth-child(5),
     #dkInv .dki-cols > :nth-child(7), #dkInv .dki-fila > :nth-child(7) { visibility: hidden; }
+  }
+
+  /* Las cuatro cifras en una fila también en el iPad con la barra (Axel lo
+     enseñó así en su foto); en dos filas sólo cuando de verdad no caben. */
+  @container dkinv (max-width: 700px) {
+    #dkInv .dki-cifras { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); row-gap: 14px; }
+    #dkInv .dki-k:nth-child(3) { padding-left: 0; border-left: 0; }
+  }
+  @container dkinv (max-width: 1000px) {
+    #dkInv .dki-k { padding: 0 12px; }
+    #dkInv .dki-k b { font-size: 28px; }
   }
 
   /* Alta de un producto: empieza en cero. El On Hand a mano se quitó

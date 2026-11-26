@@ -19,7 +19,8 @@
  *   4. El header de sitios fijos (2026-11-26, desk-header.js): el título,
  *      las vistas con sus cuentas, afinar (filtro, proveedor, orden) y las
  *      acciones; lo que está en uso, azul. Y Money on the shelf, el MISMO
- *      número del Home (antes, con el mismo nombre, decía lo contado).
+ *      número del Home (antes, con el mismo nombre, decía lo contado), en
+ *      la primera de las cuatro cifras (Items, Needs fixing, Running out).
  *
  *   node tools/test-inventario-escritorio.js
  */
@@ -113,11 +114,12 @@ w.eval(DI);
   prueba('la sección es una pantalla del estándar (.dk-pantalla)', sec.classList.contains('dk-pantalla'));
   prueba('lo de antes se esconde en el escritorio (sigue en el DOM para render())', /#inventorySection > \.section-header-row,\s*body\.dk #inventorySection > #inventorySectionBody \{ display: none !important; \}/.test(CSS) && !!D.getElementById('inventorySectionBody'));
   prueba('el conteo en curso, bajo el dinero', !!caja.querySelector('#dkiConteo #countResumeHost'));
-  const din = txt(caja.querySelector('.dki-din'));
+  const din = txt(caja.querySelector('.dki-cifras .dki-k1'));
+  const cif = txt(caja.querySelector('.dki-cifras'));
   prueba('Money on the shelf es el número del Home (LIVE), no lo contado', /Money on the shelf\s*≈\$138/.test(din) && /Live/.test(din) && !/\$141/.test(din), din);
   prueba('con sus botellas y lo que no tiene precio', /≈7 bottles/.test(din) && /1 in stock with no price/.test(din), din);
   prueba('el reparto suma el total: contado + llegó − vendido de cada fila', /Vodka \$138/.test(din), din);
-  prueba('sin las cuatro cifras de antes (las cuentas van en las vistas)', !caja.querySelector('.dki-cifras') && !/Items/.test(din));
+  prueba('las cuatro cifras (Axel, en el iPad: "me gusta más partido en 4")', caja.querySelectorAll('.dki-cifras > .dki-k').length === 4 && /Items\s*3/.test(cif) && /Needs fixing\s*2/.test(cif) && /Running out\s*1/.test(cif), cif);
   prueba('una fila por producto, en el orden del teléfono (dinero en el estante)', filas().join('|') === "Aperol|Tito's Vodka|Hennessy VS", filas().join('|'));
   const tito = caja.querySelector('.dki-fila[data-item="Tito\'s Vodka"]');
   prueba('el número es el LIVE con ≈ y su par', /≈2\.4\s*\/6/.test(txt(tito.querySelector('.dki-hay'))));

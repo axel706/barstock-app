@@ -109,7 +109,7 @@
     </div>`;
   }
 
-  // ── Debajo del header: el dinero del estante ──
+  // ── Debajo del header: las cifras ──
   //
   // Lámina "Section header · fixed places": la cabeza de la página y la
   // barra pegada se fueron (los controles están en el header, desk-
@@ -137,14 +137,30 @@
     return [...por.entries()].map(([name, value]) => ({ name, value })).filter(x => Math.abs(x.value) >= 0.5)
       .sort((a, b) => b.value - a.value);
   }
-  function dineroLinea() {
+  // Las cuatro cifras de arriba (Axel, 2026-11-26, sobre el iPad: "me gusta
+  // más este encabezado partido en 4 secciones […] en lugar de este que
+  // sólo es Money on the shelf"). Money on the shelf sigue siendo el del
+  // Home; Items, Needs fixing y Running out cuentan sobre TODO el
+  // inventario (las vistas del header cuentan lo filtrado).
+  function cifras() {
     const MH = window.BarStockMobileHome;
     const e = MH && MH.estante ? MH.estante() : null;
     const L = LC();
     const bt = L && L.botellas ? L.botellas() : null;
+    const V = window.BarStockInventoryValue;
+    const c = V && V.compute ? V.compute() : null;
+    const M = MI();
+    const fix = M && M.faltas ? master().filter(r => M.faltas(r).length).length : 0;
+    const RO = window.BarStockRunningOut;
+    const agotan = RO && RO.lista ? RO.lista().length : 0;
+    const otras = `
+        <div class="dki-k"><u>Items</u><b>${master().length}</b><small>${c && c.uncategorized ? c.uncategorized + ' with no category' : 'all with a category'}</small></div>
+        <div class="dki-k"><u>Needs fixing</u><b class="${fix ? 'a' : ''}">${fix}</b><small>no vendor, price or par</small></div>
+        <div class="dki-k"><u>Running out</u><b class="${agotan ? 'r' : ''}">${agotan}</b><small>before Sunday</small></div>`;
     if (!e) {
       const espera = L && L.listo && !L.listo();
-      return `<div class="dki-din"><div class="dki-k"><u>Money on the shelf</u><b>${espera ? '…' : '—'}</b><small>${espera ? 'Counting' : 'No prices yet'}</small></div></div>`;
+      return `<div class="dki-cifras"><div class="dki-k dki-k1"><u>Money on the shelf</u><b>${espera ? '…' : '—'}</b><small>${espera ? 'Counting' : 'No prices yet'}</small></div>${otras}</div>
+    <div class="dki-conteo" id="dkiConteo"></div>`;
     }
     // Sin LIVE (conteo activo, nada movido) el Home dice contado +
     // facturado: las categorías son las de lo contado y lo llegado va
@@ -152,22 +168,20 @@
     let cats;
     if (e.live) cats = repartoVivo();
     else {
-      const V = window.BarStockInventoryValue;
-      const c = V && V.compute ? V.compute() : null;
       cats = (c ? c.cats : []).map(x => ({ name: /uncategorized/.test(x.name) ? '' : x.name, value: x.value }));
       if (num(e.llego) > 0) cats.push({ name: '\u0000llego', value: num(e.llego) });
     }
     const suma = cats.reduce((a, x) => a + Math.max(0, x.value), 0) || 1;
     const nombre = (x) => x.name === '\u0000llego' ? 'Arrived since the count' : x.name || 'No category';
     const col = (x, k) => x.name === '\u0000llego' ? '#94a3b8' : !x.name ? '#64748b' : COL[k % COL.length];
-    const ver = cats.slice(0, 9);
-    const sobra = cats.slice(9).reduce((a, x) => a + x.value, 0);
+    const ver = cats.slice(0, 6);
+    const sobra = cats.slice(6).reduce((a, x) => a + x.value, 0);
     const linea = [bt ? (bt.live ? '≈' : '') + Math.round(bt.total).toLocaleString('en-US') + ' bottles' : '', e.live ? 'Live' : 'as counted',
       e.sin ? e.sin + ' in stock with no price' : ''].filter(Boolean).join(' · ');
-    return `<div class="dki-din">
-      <div class="dki-k"><u>Money on the shelf</u><b>${e.live ? '≈' : ''}${dinero0(e.total)}</b><small>${esc(linea)}</small></div>
-      ${ver.length ? `<div class="dki-reparto"><span class="dki-cats">${ver.map((x, k) => `<i style="width:${(Math.max(0, x.value) / suma * 100).toFixed(2)}%;background:${col(x, k)}" title="${esc(nombre(x))} ${dinero0(x.value)}"></i>`).join('')}${sobra > 0 ? `<i style="width:${(sobra / suma * 100).toFixed(2)}%;background:#475569"></i>` : ''}</span>
-        <span class="dki-ley">${ver.map((x, k) => `<span style="--c:${col(x, k)}">${esc(nombre(x))} ${dinero0(x.value)}</span>`).join('')}${sobra > 0 ? `<span style="--c:#475569">Other ${dinero0(sobra)}</span>` : ''}</span></div>` : ''}
+    return `<div class="dki-cifras">
+      <div class="dki-k dki-k1"><u>Money on the shelf</u><b>${e.live ? '≈' : ''}${dinero0(e.total)}</b><small>${esc(linea)}</small>
+      ${ver.length ? `<span class="dki-cats">${ver.map((x, k) => `<i style="width:${(Math.max(0, x.value) / suma * 100).toFixed(2)}%;background:${col(x, k)}" title="${esc(nombre(x))} ${dinero0(x.value)}"></i>`).join('')}${sobra > 0 ? `<i style="width:${(sobra / suma * 100).toFixed(2)}%;background:#475569"></i>` : ''}</span>
+        <span class="dki-ley">${ver.map((x, k) => `<span style="--c:${col(x, k)}">${esc(nombre(x))} ${dinero0(x.value)}</span>`).join('')}${sobra > 0 ? `<span style="--c:#475569">Other ${dinero0(sobra)}</span>` : ''}</span>` : ''}</div>${otras}
     </div>
     <div class="dki-conteo" id="dkiConteo"></div>`;
   }
@@ -321,7 +335,7 @@
     if (_sel && idx < 0) { _sel = null; _borrador = null; }      // lo borraron (aquí o en otro dispositivo)
     const conservarPanel = !!(_borrador && _sel && _caja.querySelector('#dkiPanel .dki-ph') && !(opts && opts.panel));
 
-    _caja.querySelector('#dkiCabeza').innerHTML = dineroLinea();
+    _caja.querySelector('#dkiCabeza').innerHTML = cifras();
     const conteo = document.getElementById('countResumeHost');
     const hueco = _caja.querySelector('#dkiConteo');
     if (conteo && hueco) hueco.appendChild(conteo);

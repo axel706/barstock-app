@@ -759,11 +759,15 @@ sección de hoy vive tal cual dentro del armazón.
   el header de sitios fijos (abajo): All / Needs fixing / Running out
   al centro, con sus cuentas acotadas por el filtro y el proveedor;
   filtro, proveedor y orden; Count y Add item; en ⋯, categorías y
-  botellas automáticas. En la página sólo queda **Money on the shelf**,
-  el MISMO número del Home (`BarStockMobileHome.estante`: antes decía
-  lo contado con el mismo nombre), con su reparto por categoría sacado
-  fila por fila de la misma cuenta (contado + llegó − vendido) para que
-  sume el total; el conteo en curso (`#countResumeHost`, movido); y los
+  botellas automáticas. En la página, las CUATRO cifras de antes (Axel,
+  el mismo día, en el iPad: "me gusta más partido en 4", también en una
+  fila con la barra lateral): **Money on the shelf**, el MISMO número
+  del Home (`BarStockMobileHome.estante`: antes decía lo contado con el
+  mismo nombre), con su reparto por categoría sacado fila por fila de la
+  misma cuenta (contado + llegó − vendido) para que sume el total;
+  Items, Needs fixing y Running out, sobre todo el inventario (las
+  vistas del header cuentan lo filtrado); el conteo en curso
+  (`#countResumeHost`, movido); y los
   títulos de las columnas, pegados bajo el header, que también
   ordenan. **Las reglas de las filas son
   las del teléfono**: `BarStockMobileInventory.filtrar` y `faltas`. El

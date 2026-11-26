@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261125-193356",
+    "items": [
+      "Desktop Inventory: the four figures are back"
+    ]
+  },
+  {
     "build": "20261125-191841",
     "items": [
       "Desktop: Inventory controls in the top bar",
@@ -186,13 +192,6 @@
     "items": [
       "New desktop Home: figures, running out, week and sales",
       "Live vs count on the desktop Home"
-    ]
-  },
-  {
-    "build": "20261125-125119",
-    "items": [
-      "New desktop layout: sections in a sidebar",
-      "Location, cycle, Import, Export and More in one top bar"
     ]
   }
 ]
