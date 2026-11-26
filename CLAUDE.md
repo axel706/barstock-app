@@ -2420,6 +2420,13 @@ deja de acabarse se conserva y vuelve a su sitio. Prueba:
   su sitio propio, (4) borrar el HTML. Lo que cuesta dejarla: el HTML de
   todas las filas que nadie ve en cada `render()`, y el código en dos
   sitios.
+- **Vercel dejó de desplegar producción solo** (2026-11-26, desde
+  `ddb8476`): con `main` en el mismo commit que `develop` ya había
+  desplegado como Preview, no se creaba el despliegue de Production (se
+  ve en `api.github.com/repos/axel706/barstock-app/deployments`; antes
+  se creaban los dos). Se sacó con "Promote to Production" a mano. Si
+  vuelve a pasar: revisar en Vercel › Settings › Git, y mientras tanto
+  empujar a `main` ANTES que a `develop`.
 - `Resend` sigue apareciendo en órdenes LOOP, que salen por CSV y nunca por
   correo.
 - No hay forma de abrir el panel de una botella fuera de un conteo activo.
