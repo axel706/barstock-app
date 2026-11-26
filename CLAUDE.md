@@ -790,7 +790,21 @@ sección de hoy vive tal cual dentro del armazón.
   Uses / Par / Unit price de la ficha) se fue. De `.m-rows` se esconden SÓLO esos
   renglones: esconder la caja entera se llevó de qué factura vino el
   precio (`#msPrecio`) y "Lasts about · needs N weeks", que no están en
-  otro sitio; van primero en Overview. Los botones, del cristal
+  otro sitio; van primero en Overview.
+  **A toda la altura, sin scroll dentro** (2026-11-26, lámina "Product
+  panel · full height", A): una columna FIJA desde el header hasta abajo
+  (`--dki-pw`, 410), y la lista y las cifras se apartan (`margin-right`
+  de `#dkiMain`); por debajo de 1000 px de ventana va encima de la lista.
+  **El contenedor de ancho es `#dkiMain`, no `#dkInv`**: un contenedor
+  hace de caja a lo fijo de dentro, y el cajón del iPad rodaba con la
+  página. Si no cabe, primero Toast deja sus barras (`.apretado`,
+  `apretar()`); el scroll es sólo el último recurso. Overview: cada bloque
+  la MISMA tarjeta con su título (Price, Where it is, Transfers, Sold in
+  Toast, Pour·IQ), y los huecos vacíos de la ficha no suman aire. Con el
+  panel abierto, las columnas escondidas van en `display: none` (con 0 de
+  ancho seguían sumando su separación) y, con poco ancho, también Par.
+  Al elegir un producto tardaba 2 s con 220: cada fila recalculaba su
+  silueta; `home-cartas.silueta` ya recuerda contorno y nivel por forma. Los botones, del cristal
   del header: la MISMA regla de desk-header.css (`.dki-cr`, `.dki-tabs`).
   **Quitado por Axel**: el On Hand a mano (también al crear: empieza en
   0), Scan Price Invoice (los precios vienen de MarginEdge) y el modo

@@ -225,9 +225,21 @@ w.eval(DI);
   // ningún otro sitio: de qué factura vino el precio (#msPrecio) y "Lasts
   // about · needs N weeks". Se esconden sólo los renglones repetidos.
   prueba('de la ficha se quitan sólo Uses / Par / Unit price: el origen del precio y "Lasts about" se quedan',
-    !/:is\(\.m-rows,/.test(CSSI4) && /#dkiPanel \.m-rows > \.m-row:not\(:has\(\.ti-hourglass\)\) \{ display: none/.test(CSSI4)
+    !/:is\(\.m-rows, \.m-acts/.test(CSSI4) && /#dkiPanel \.m-rows > \.m-row:not\(:has\(\.ti-hourglass\)\) \{ display: none/.test(CSSI4)
     && /#dkiPanel \.m-rows:not\(:has\(\.m-fuente, \.ti-hourglass\)\) \{ display: none/.test(CSSI4)
     && /#dkiPanel #dkiFicha > \.m-rows \{ order: 5/.test(CSSI4));
+  // Lámina "Product panel · full height", A (Axel, 2026-11-26): el panel
+  // de la altura de la pantalla, desde el header, sin scroll dentro, y la
+  // lista se aparta. #dkInv era el contenedor de las reglas de ancho, y un
+  // contenedor hace de caja a lo fijo de dentro: el cajón del iPad rodaba
+  // con la página. El contenedor es ahora #dkiMain y el panel va fuera.
+  prueba('el panel va fuera del contenedor de ancho (#dkiMain)', pan().parentElement === caja && !!caja.querySelector('#dkiMain #dkiLista') && !caja.querySelector('#dkiMain #dkiPanel'));
+  prueba('   el contenedor es #dkiMain, no #dkInv', /#dkiMain \{[^}]*container: dkinv \/ inline-size/.test(CSSI4) && !/#dkInv \{[^}]*container:/.test(CSSI4));
+  prueba('   fijo del header hasta abajo, y la lista le deja su sitio', /#dkInv \.dki-panel \{[^}]*position: fixed;[^}]*top: var\(--dk-alto\);[^}]*bottom: 0;/.test(CSSI4) && /#dkInv\.con-panel \.dki-main \{[^}]*margin-right:/.test(CSSI4));
+  prueba('   sin medir la barra pegada para colocarlo', !/medirPega|--dki-pega/.test(DI + CSSI4));
+  prueba('   los huecos vacíos de la ficha no suman aire', /#dkiPanel #dkiFicha > :empty \{ display: none/.test(CSSI4));
+  prueba('   cada bloque de Overview, la misma tarjeta', /#dkiPanel :is\(\.m-rows, \.m-zon, \.m-trf, \.m-vt, \.m-iqb\) \{/.test(CSSI4));
+  prueba('   sin sitio, Toast se queda en su renglón (no rueda el panel)', /#dkiPanel\.apretado \.m-vt :is\(\.m-ts-g, \.m-ts-d\) \{ display: none/.test(CSSI4) && /classList\.toggle\('apretado'/.test(DI));
   prueba('tres cifras: Uses / week, Unit price, Runs out', /Uses \/ week/.test(txt(pan().querySelector('.dki-c3'))) && /Unit price/.test(txt(pan().querySelector('.dki-c3'))) && /Runs out/.test(txt(pan().querySelector('.dki-c3'))) && /\$25\.00/.test(txt(pan().querySelector('.dki-c3'))));
   prueba('un solo Received', pan().querySelectorAll('[data-acc="recibido"]').length === 1);
   prueba('Add to order es el de la ficha (#msAdd)', /msAdd/.test(DI) && pan().querySelector('[data-acc="pedir"]'));

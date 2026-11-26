@@ -18,7 +18,11 @@
 @media (min-width: 641px) {
   body.dk #inventorySection > .section-header-row,
   body.dk #inventorySection > #inventorySectionBody { display: none !important; }
-  body.dk #dkInv { display: block; color: #f8fafc; container: dkinv / inline-size; }
+  body.dk #dkInv { display: block; color: #f8fafc; }
+  /* El contenedor de las reglas de ancho es #dkiMain, no #dkInv: un
+     contenedor hace de caja a lo fijo de dentro, y el panel (fijo, fuera
+     de #dkiMain) rodaba con la página. */
+  body.dk #dkiMain { container: dkinv / inline-size; }
   body.dk #inventorySection.dk-pantalla { padding: 20px 28px 40px !important; }
 
   /* ── Los botones del panel: su forma. El cristal es el del header
@@ -68,13 +72,11 @@
   }
   /* El proveedor también se va: con la píldora a su tamaño nuevo se cortaba
      ("WINE MERCHA…") y el panel ya lo dice en su cabeza. */
-  #dkInv.con-panel .dki-cols, #dkInv.con-panel .dki-fila { grid-template-columns: 44px minmax(0, 1fr) 0 90px 0 60px 0 120px; gap: 14px; }
-  #dkInv.con-panel .dki-cols > :nth-child(3), #dkInv.con-panel .dki-fila > :nth-child(3),
-  #dkInv.con-panel .dki-cols > :nth-child(5), #dkInv.con-panel .dki-fila > :nth-child(5),
-  #dkInv.con-panel .dki-cols > :nth-child(7), #dkInv.con-panel .dki-fila > :nth-child(7) { visibility: hidden; }
-  /* Con el panel abierto la lista se estrecha: los títulos de las columnas
-     (en la barra, a lo ancho) dejan el mismo hueco para cuadrar. */
-  #dkInv.con-panel .dki-cols { margin-right: 406px; }
+  /* Fuera del todo (display: none), no sólo invisibles: una columna de 0
+     seguía sumando su separación y en el iPad, con el panel de la altura de
+     la pantalla, el nombre se quedaba en "T…". */
+  #dkInv.con-panel .dki-cols, #dkInv.con-panel .dki-fila { grid-template-columns: 44px minmax(0, 1fr) 90px 60px 120px; gap: 14px; }
+  #dkInv.con-panel :is(.dki-cols, .dki-fila) > :is(:nth-child(3), :nth-child(5), :nth-child(7)) { display: none; }
   #dkInv .dki-cols { padding: 10px 23px 8px; }
   #dkInv .dki-th {
     padding: 0; border: 0; background: none; text-align: left; color: #7f8ea3; cursor: pointer; border-radius: 0 !important;
@@ -86,8 +88,7 @@
   #dkInv .r { color: #fca5a5; }
 
   /* ── El cuerpo: la lista y, con un producto abierto, su panel ── */
-  #dkInv .dki-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding-top: 6px; }
-  #dkInv.con-panel .dki-cuerpo { grid-template-columns: minmax(0, 1fr) 390px; }
+  #dkInv .dki-cuerpo { padding-top: 6px; }
   #dkInv .dki-fila {
     margin-top: 12px; padding: 18px 22px; border-radius: 20px; cursor: pointer; font-size: 17px;
     background: var(--tinta); border: 1px solid var(--tinta-borde);
@@ -118,15 +119,32 @@
   #dkInv .dki-hay small { font-size: 14px; color: #a9bacd; font-weight: 700; }
   #dkInv .dki-vacio { padding: 30px 0; text-align: center; color: #a9bacd; }
 
-  /* ── El panel del producto (A): pegado bajo la barra, con su propio
-     scroll si es más alto que lo que queda de pantalla. ── */
+  /* ── El panel del producto (lámina "Product panel · full height", A,
+     2026-11-26): una columna FIJA de la altura de la pantalla, desde el
+     header hasta abajo, pegada al borde derecho como la lámina de vidrio
+     de la sección, y SIN scroll dentro (Axel: "no me gusta"). Pegado bajo
+     la barra de columnas dejaba encima una franja muerta. La lista y las
+     cifras se apartan (margin-right de #dkiMain): 28 px son el padding de
+     la sección y 16 el aire hasta la lista. Si aun así no cabe, primero
+     se aprieta Toast (.apretado, desk-inventory.apretar); el scroll queda
+     sólo de último recurso. ── */
+  #dkInv { --dki-pw: 410px; }
+  #dkInv.con-panel .dki-main { margin-right: calc(var(--dki-pw) - 28px + 16px); }
   #dkInv .dki-panel:empty { display: none; }
   #dkInv .dki-panel {
-    position: sticky; top: calc(var(--dk-alto) + var(--dki-pega, 100px) + 10px); align-self: start;
-    max-height: calc(100vh - var(--dk-alto) - var(--dki-pega, 100px) - 24px); overflow-y: auto; overscroll-behavior: contain;
-    margin-top: 6px; padding: 14px; border-radius: 18px;
-    background: rgba(9, 14, 26, .78); border: 1px solid rgba(255, 255, 255, .12);
-    display: flex; flex-direction: column; gap: 10px; font-size: 13px;
+    position: fixed; z-index: 30; top: var(--dk-alto); right: 0; bottom: 0; width: var(--dki-pw);
+    overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
+    padding: 14px 14px calc(14px + env(safe-area-inset-bottom)); box-sizing: border-box;
+    background: rgba(9, 14, 26, .82); border-left: 1px solid rgba(255, 255, 255, .12);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    display: flex; flex-direction: column; font-size: 13px;
+  }
+  #dkInv .dki-panel::-webkit-scrollbar { display: none; }
+  /* Con poco ancho (el iPad en vertical), el panel va ENCIMA de la lista,
+     del mismo alto: apartarla la dejaba en una tira. */
+  @media (max-width: 1000px) {
+    #dkInv.con-panel .dki-main { margin-right: 0; }
+    #dkInv .dki-panel { width: min(var(--dki-pw), 100vw); box-shadow: -20px 0 50px rgba(0, 0, 0, .45); background: rgba(9, 14, 26, .92); }
   }
   #dkInv .dki-blk { padding: 10px; border-radius: 14px; background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .07); display: flex; flex-direction: column; gap: 6px; }
   #dkInv .dki-blk > u { text-decoration: none; display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #94a3b8; }
@@ -163,7 +181,7 @@
      repetía los campos (Uses / Par / Unit price) y sus botones (Add to
      order y Received, ya en la fila de acciones) se esconden. */
   #dkiPanel #dkiFicha { display: contents; }
-  #dkiPanel .dki-pn { position: relative; display: flex; flex-direction: column; gap: 10px; }
+  #dkiPanel .dki-pn { position: relative; display: flex; flex-direction: column; gap: 10px; flex: 1 0 auto; }
   #dkiPanel #dkiFicha > * { order: 6; margin: 0; }
   #dkiPanel #dkiFicha > .m-fic { order: 1; }
   #dkiPanel .dki-c3 { order: 2; }
@@ -172,6 +190,36 @@
   #dkiPanel .dki-ed { order: 7; }
   #dkiPanel .dki-pie { order: 8; }
   #dkiPanel :is(.m-acts, .m-sheet-grip) { display: none; }
+  /* Los huecos que la ficha deja vacíos (sin transfers, sin zonas…)
+     sumaban el gap igual: el aire entre bloques salía desigual. */
+  #dkiPanel #dkiFicha > :empty { display: none; }
+  /* Overview: cada bloque la MISMA tarjeta, con su título igual, el mismo
+     relleno y el mismo aire (lámina A). Transfers salía suelto y el origen
+     del precio flotaba a la derecha: en el escritorio no llegaban sus
+     estilos del teléfono. */
+  #dkiPanel :is(.m-rows, .m-zon, .m-trf, .m-vt, .m-iqb) {
+    margin: 0; padding: 10px 12px; border-radius: 14px;
+    background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .09); box-shadow: none;
+  }
+  #dkiPanel :is(.m-zon-k, .m-trf-k, .m-vt-k),
+  #dkiPanel .m-rows:has(.m-fuente)::before {
+    display: block; margin: 0 0 6px; font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #94a3b8;
+  }
+  #dkiPanel .m-rows:has(.m-fuente)::before { content: 'Price'; }
+  #dkiPanel .m-fuente { padding: 0; text-align: left; font-size: 13px; color: #cbd5e1; line-height: 1.4; }
+  #dkiPanel .m-fuente b { font-weight: 800; }
+  #dkiPanel .m-rows > .m-row { padding: 6px 0 0; border: 0; min-height: 0; }
+  #dkiPanel .m-trf-l { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: 13px; }
+  #dkiPanel .m-trf-l > span:first-child { min-width: 0; }
+  #dkiPanel .m-trf-pend { padding: 6px 8px; border-radius: 10px; border: 1px dashed #7dd3fc; color: #bae6fd; }
+  #dkiPanel .m-trf-b { display: flex; gap: 6px; flex: none; }
+  #dkiPanel .m-trf-b button {
+    height: 28px; padding: 0 12px; margin: 0; border-radius: 999px !important; border: 1px solid rgba(255, 255, 255, .25);
+    background: rgba(255, 255, 255, .08); color: #fff; font: inherit; font-size: 12.5px; font-weight: 750; cursor: pointer;
+    box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  /* Sin sitio para todo: Toast deja sus barras y se queda en su renglón. */
+  #dkiPanel.apretado .m-vt :is(.m-ts-g, .m-ts-d) { display: none; }
   /* De .m-rows sólo se van los renglones que repiten (Uses, Par, Unit
      price). Esconderlo entero se llevó lo que no está en ningún otro
      sitio: de qué factura vino el precio (#msPrecio, que llega después,
@@ -200,21 +248,22 @@
   /* Edit con algo sin guardar: un punto, porque Save se queda en su pestaña. */
   #dkiPanel .dki-tabs button.sucio::after { content: ''; display: inline-block; width: 7px; height: 7px; margin-left: 7px; border-radius: 50%; background: #fbbf24; vertical-align: middle; }
   /* Save y Delete, fijos al pie del panel mientras lo demás rueda. */
-  #dkiPanel .dki-pie { position: sticky; bottom: -14px; margin: 0 -14px -14px; padding: 12px 14px; border-top: 1px solid rgba(255, 255, 255, .1); background: rgba(9, 14, 26, .92); }
+  #dkiPanel .dki-pie { position: sticky; bottom: calc(-14px - env(safe-area-inset-bottom)); margin: auto -14px calc(-14px - env(safe-area-inset-bottom)); padding: 12px 14px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid rgba(255, 255, 255, .1); background: rgba(9, 14, 26, .92); }
 
-  /* Poco sitio (el iPad con la barra a la vista): el panel se superpone a
-     la derecha, de la altura de la pantalla, en vez de estrechar la lista. */
+  /* Poco sitio para la lista: Avg/wk y To order se van. */
   @container dkinv (max-width: 1000px) {
-    #dkInv.con-panel .dki-cuerpo { grid-template-columns: minmax(0, 1fr); }
-    #dkInv .dki-panel {
-      position: fixed; z-index: 30; right: 12px; top: calc(var(--dk-alto) + 12px); bottom: 12px; width: min(400px, calc(100vw - 24px));
-      max-height: none; box-shadow: -20px 0 50px rgba(0, 0, 0, .45);
-      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); background: rgba(9, 14, 26, .92);
-    }
     #dkInv .dki-cols, #dkInv .dki-fila { grid-template-columns: 44px minmax(0, 1fr) 200px 90px 0 60px 0 120px; gap: 14px; }
-    #dkInv.con-panel .dki-cols { margin-right: 0; }
     #dkInv .dki-cols > :nth-child(5), #dkInv .dki-fila > :nth-child(5),
     #dkInv .dki-cols > :nth-child(7), #dkInv .dki-fila > :nth-child(7) { visibility: hidden; }
+  }
+
+  /* Con el panel abierto y poco ancho (el iPad con la barra lateral, la
+     lista en ~440 px): sin Par, y la fila menos holgada. */
+  @container dkinv (max-width: 600px) {
+    #dkInv.con-panel .dki-cols, #dkInv.con-panel .dki-fila { grid-template-columns: 36px minmax(0, 1fr) 82px 104px; gap: 12px; }
+    #dkInv.con-panel :is(.dki-cols, .dki-fila) > :nth-child(6) { display: none; }
+    #dkInv.con-panel .dki-fila { padding: 16px; }
+    #dkInv.con-panel .dki-cols { padding-left: 17px; padding-right: 17px; }
   }
 
   /* Las cuatro cifras en una fila también en el iPad con la barra (Axel lo

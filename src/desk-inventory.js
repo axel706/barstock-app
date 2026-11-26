@@ -374,6 +374,7 @@
     pan.dataset.tab = _sel && puede('editar_productos') ? _tab : 'ver';
     if (!_sel) { pan.innerHTML = ''; }
     else if (!conservarPanel) {
+      pan.classList.remove('apretado'); pan._altoSuelto = 0;
       pan.innerHTML = panel(master()[idx], idx);
       const ficha = pan.querySelector('#dkiFicha');
       const MS = window.BarStockMobileSearch;
@@ -383,15 +384,22 @@
     // el campo del filtro conserva el foco y el cursor (desk-header).
     const DH = window.BarStockDeskHeader;
     if (DH && DH.refrescar) DH.refrescar('inventory');
-    medirPega();
   }
   let _raf = 0;
   const repintar = () => { if (_raf) return; _raf = requestAnimationFrame(() => { _raf = 0; pintar(); }); };
 
-  // El panel se pega bajo la barra pegada: se mide su alto al pintar.
-  function medirPega() {
-    const p = _caja && _caja.querySelector('#dkiPega');
-    if (p) _caja.style.setProperty('--dki-pega', Math.round(p.getBoundingClientRect().height) + 'px');
+  // Se aprieta sólo si sobra contenido, y se suelta si al aprietarlo
+  // sobraría sitio de verdad (con su alto completo cabría): sin eso,
+  // apretar y soltar se turnarían en cada cambio.
+  function apretar() {
+    const pan = _caja && _caja.querySelector('#dkiPanel');
+    const pn = pan && pan.querySelector('.dki-pn');
+    if (!pn) return;
+    const sitio = pan.clientHeight - 28;
+    const alto = pn.scrollHeight;
+    if (!pan.classList.contains('apretado')) { if (alto > sitio + 1) pan.classList.toggle('apretado', true); }
+    else if (pan._altoSuelto && pan._altoSuelto <= sitio) pan.classList.toggle('apretado', false);
+    if (!pan.classList.contains('apretado')) pan._altoSuelto = alto;
   }
 
   // ── El borrador ──
@@ -578,9 +586,14 @@
     _sec.classList.add('dk-pantalla', 'dk-inv-sec');
     _caja = document.createElement('div');
     _caja.id = 'dkInv';
-    _caja.innerHTML = `<header class="dki-cabeza" id="dkiCabeza"></header>
+    // El panel va FUERA de #dkiMain: #dkiMain es el contenedor de las
+    // reglas de ancho (container), y un contenedor hace de caja a lo fijo
+    // de dentro; con el panel dentro, su `position: fixed` rodaba con la
+    // página (el cajón del iPad).
+    _caja.innerHTML = `<div class="dki-main" id="dkiMain"><header class="dki-cabeza" id="dkiCabeza"></header>
       <div class="dki-pega" id="dkiPega"></div>
-      <div class="dki-cuerpo"><div class="dki-lista" id="dkiLista"></div><aside class="dki-panel" id="dkiPanel" aria-label="Product"></aside></div>`;
+      <div class="dki-cuerpo"><div class="dki-lista" id="dkiLista"></div></div></div>
+      <aside class="dki-panel" id="dkiPanel" aria-label="Product"></aside>`;
     _sec.insertBefore(_caja, _sec.firstChild);
     _caja.addEventListener('click', alClic);
     _caja.addEventListener('change', alCambiar);
@@ -593,7 +606,17 @@
     const E = window.BarStockEvents;
     if (E && E.on) ['inventoryUpdated', 'ordersUpdated', 'parAdjustmentsUpdated'].forEach(n => E.on(n, repintar));
     if (LC() && LC().alCambiar) LC().alCambiar(repintar);
-    window.addEventListener('resize', medirPega, { passive: true });
+    // Sin scroll dentro del panel (Axel): si lo que lleva no cabe en su
+    // alto, Sold in Toast deja sus barras y se queda en su renglón. Se
+    // mira cada vez que el panel cambia de tamaño o de contenido (las
+    // zonas, los transfers y las ventas llegan después).
+    const pan = _caja.querySelector('#dkiPanel');
+    if (window.ResizeObserver) {
+      const ro = new ResizeObserver(() => apretar());
+      ro.observe(pan);
+      new MutationObserver(() => { const pn = pan.querySelector('.dki-pn'); if (pn && !pn._visto) { pn._visto = true; ro.observe(pn); } apretar(); })
+        .observe(pan, { childList: true, subtree: true });
+    }
     const DH = window.BarStockDeskHeader;
     if (DH && DH.registrar) DH.registrar('inventory', CABECERA);
   }

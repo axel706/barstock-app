@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261126-105959",
+    "items": [
+      "Product panel runs full height, no scrolling inside",
+      "Tidier Overview: each block in its own card"
+    ]
+  },
+  {
     "build": "20261126-104313",
     "items": [
       "The product panel opens right away on desktop"
@@ -185,13 +192,6 @@
     "build": "20261125-140138",
     "items": [
       "iPad app: top bar sits below the iOS haze and blends in"
-    ]
-  },
-  {
-    "build": "20261125-134738",
-    "items": [
-      "iPad app: the top edge blends in, no more glare",
-      "Light mode: clearer top bar"
     ]
   }
 ]
