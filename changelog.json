@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261126-165250",
+    "items": [
+      "It arrived before the count: link to an earlier order"
+    ]
+  },
+  {
     "build": "20261126-163818",
     "items": [
       "Orders: round glass − / + on each line",
@@ -193,12 +199,6 @@
     "build": "20261125-180132",
     "items": [
       "Desktop: Orders placed lists the cycle orders"
-    ]
-  },
-  {
-    "build": "20261125-175656",
-    "items": [
-      "Desktop: the cycle card shows the week day by day"
     ]
   }
 ]

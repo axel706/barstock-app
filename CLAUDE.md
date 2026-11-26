@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 181 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 182 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -1373,7 +1373,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 181 suites · ~2470 comprobaciones. Tienen que pasar enteras.
+`npm test` · 182 suites · ~2470 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios
@@ -2448,11 +2448,17 @@ la que recibe tiene UNA orden TRANSFER con todas las líneas. Un
 transfer de un solo producto no manda `group_id` (funciona sin la 046). **Fase 4 (la factura):** el
 enlace automático (`invoice-order-auto.proponer`) tiene en cuenta las
 órdenes TRANSFER aunque sean de antes del ciclo (las demás no: el pasado
-no se mueve), y la factura sin enlazar ofrece "It arrived before the
-count" (`mobile-invoices.llegoAntes`): elige de qué locación, crea un
-transfer "antes del conteo" por línea con producto y enlaza la factura a
-la orden del primero. Sin enlace, el reparto ya se la daba a la orden
-TRANSFER por producto (no exige proveedor).
+no se mueve). Sin enlace, el reparto ya se la daba a la orden
+TRANSFER por producto (no exige proveedor). **"It arrived before the
+count" de la factura ya NO crea un transfer** (Axel, 2026-11-26: "eso es
+incorrecto, ese botón debería permitirme linkear ese invoice con una
+orden de ciclos anteriores"): abre la lista de las órdenes de ANTES del
+ciclo (`mobile-invoices.ordenesPara('antes', …)`, la más nueva primero) y
+enlaza con la misma tabla que "Link to an order". Sirve porque el reparto
+empieza por la orden más NUEVA: sin enlace, la factura de una orden vieja
+se la quedaba la de este ciclo del mismo producto ("llegó" sin haber
+llegado) y la vieja seguía "waiting". El transfer "antes del conteo"
+sigue en More › Transfers. Prueba: `test-llego-antes`.
 
 **"This week" es la semana del ciclo (2026-11-19).** Running out decía
 "10 run out this week" un jueves y todos se acababan el martes o el

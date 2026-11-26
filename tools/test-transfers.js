@@ -429,11 +429,10 @@ grupo('6 · la factura (fase 4)');
   prueba('una orden normal de antes del ciclo, no (el pasado no se mueve)', r[0] && r[0].enlaza === null, JSON.stringify(r));
 
   const mi = leer('src/mobile-invoices.js');
-  prueba('en la factura sin enlazar: "It arrived before the count", con permiso, conteo y líneas con producto',
-    /id="miAntes"/.test(mi) && /TR\.puede\(\) && LC && LC\.conteo && LC\.conteo\(\) && f\.lineas\.some\(l => l\.item && l\.qty > 0\)/.test(mi));
-  prueba('crea UN transfer "antes del conteo" con todas las líneas, desde la locación elegida', /TR\.crear\(\{ otra, entra: true, antes: true, conteo, por[^}]*\n?\s*lineas: lineas\.map/.test(mi));
-  prueba('y enlaza la factura a la orden del transfer', /guardarEnlaceOrden\(f\.id, ord\[0\]\.id\)/.test(mi));
-  prueba('lo que no se pudo, se dice', /Fixed, but not everything/.test(mi));
+  // "It arrived before the count" ya no crea un transfer desde la factura
+  // (Axel, 2026-11-26: "eso es incorrecto"): enlaza la factura a una orden
+  // de un ciclo anterior. Lo prueba test-llego-antes.
+  prueba('la factura ya no crea transfers "antes del conteo"', !/TR\.crear\(/.test(mi) && /id="miAntes"/.test(mi));
   {
     const css = leer('styles/mobile-app.css');
     prueba('los dos de la factura, de cristal (lámina B): en la regla del cristal y con su reflejo',
