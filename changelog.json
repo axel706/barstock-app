@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261126-102515",
+    "items": [
+      "Product panel shows again where the price came from",
+      "And how long it lasts, for items without Toast"
+    ]
+  },
+  {
     "build": "20261125-223852",
     "items": [
       "Product panel: bottle card first, Overview and Edit tabs",
@@ -185,12 +192,6 @@
     "build": "20261125-133822",
     "items": [
       "Desktop: button to hide or show the sidebar"
-    ]
-  },
-  {
-    "build": "20261125-133304",
-    "items": [
-      "iPad app: top bar and sidebar no longer under the clock"
     ]
   }
 ]

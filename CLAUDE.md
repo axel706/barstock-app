@@ -787,7 +787,10 @@ sección de hoy vive tal cual dentro del armazón.
   campos con Delete y Save fijos al pie. Cada producto abre en Overview;
   cambiar de pestaña no repinta; con algo sin guardar, Edit lleva un
   punto. Lo que repetía (el nombre en una cabecera, el segundo Received,
-  Uses / Par / Unit price de la ficha) se fue. Los botones, del cristal
+  Uses / Par / Unit price de la ficha) se fue. De `.m-rows` se esconden SÓLO esos
+  renglones: esconder la caja entera se llevó de qué factura vino el
+  precio (`#msPrecio`) y "Lasts about · needs N weeks", que no están en
+  otro sitio; van primero en Overview. Los botones, del cristal
   del header: la MISMA regla de desk-header.css (`.dki-cr`, `.dki-tabs`).
   **Quitado por Axel**: el On Hand a mano (también al crear: empieza en
   0), Scan Price Invoice (los precios vienen de MarginEdge) y el modo

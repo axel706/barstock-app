@@ -220,7 +220,14 @@ w.eval(DI);
   prueba('el nombre sale una vez: sin la cabecera de antes (lo dice la tarjeta)', !pan().querySelector('.dki-ph, h3'));
   prueba('la ✕ va en el panel, sin title', pan().querySelector('.dki-x[data-acc="cerrar"]') && !pan().querySelector('.dki-x').hasAttribute('title'));
   const CSSI4 = fs.readFileSync(path.join(__dirname, '..', 'styles', 'desk-inventory.css'), 'utf8');
-  prueba('la tarjeta de la botella va primero (order), lo repetido de la ficha se esconde', /#dkiPanel #dkiFicha \{[^}]*display: contents/.test(CSSI4) && /#dkiPanel #dkiFicha > \.m-fic \{[^}]*order: 1/.test(CSSI4) && /#dkiPanel :is\(\.m-rows, \.m-acts, \.m-sheet-grip\) \{ display: none/.test(CSSI4));
+  prueba('la tarjeta de la botella va primero (order), lo repetido de la ficha se esconde', /#dkiPanel #dkiFicha \{[^}]*display: contents/.test(CSSI4) && /#dkiPanel #dkiFicha > \.m-fic \{[^}]*order: 1/.test(CSSI4) && /#dkiPanel :is\(\.m-acts, \.m-sheet-grip\) \{ display: none/.test(CSSI4));
+  // Esconder .m-rows entero se llevó dos renglones que no se repiten en
+  // ningún otro sitio: de qué factura vino el precio (#msPrecio) y "Lasts
+  // about · needs N weeks". Se esconden sólo los renglones repetidos.
+  prueba('de la ficha se quitan sólo Uses / Par / Unit price: el origen del precio y "Lasts about" se quedan',
+    !/:is\(\.m-rows,/.test(CSSI4) && /#dkiPanel \.m-rows > \.m-row:not\(:has\(\.ti-hourglass\)\) \{ display: none/.test(CSSI4)
+    && /#dkiPanel \.m-rows:not\(:has\(\.m-fuente, \.ti-hourglass\)\) \{ display: none/.test(CSSI4)
+    && /#dkiPanel #dkiFicha > \.m-rows \{ order: 5/.test(CSSI4));
   prueba('tres cifras: Uses / week, Unit price, Runs out', /Uses \/ week/.test(txt(pan().querySelector('.dki-c3'))) && /Unit price/.test(txt(pan().querySelector('.dki-c3'))) && /Runs out/.test(txt(pan().querySelector('.dki-c3'))) && /\$25\.00/.test(txt(pan().querySelector('.dki-c3'))));
   prueba('un solo Received', pan().querySelectorAll('[data-acc="recibido"]').length === 1);
   prueba('Add to order es el de la ficha (#msAdd)', /msAdd/.test(DI) && pan().querySelector('[data-acc="pedir"]'));
