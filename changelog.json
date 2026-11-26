@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261126-121329",
+    "items": [
+      "New Orders on desktop: vendors left, order right",
+      "Review and send from desktop, same as the phone"
+    ]
+  },
+  {
     "build": "20261126-115544",
     "items": [
       "Toast chart in the product panel no longer flickers"
@@ -185,13 +192,6 @@
     "items": [
       "Desktop: sidebar and top bar are one glass",
       "Unmatched and History show their icons"
-    ]
-  },
-  {
-    "build": "20261125-150716",
-    "items": [
-      "Desktop search window is centered",
-      "The page behind the search no longer scrolls"
     ]
   }
 ]

@@ -53,7 +53,7 @@
      Done y el +. El reflejo va DEBAJO del icono y del texto (isolation y
      z-index −1), o los lava. */
   #dkCab :is(.dkc-pl, .dkc-seg),
-  #dkInv :is(.dki-cr, .dki-tabs),
+  :is(#dkInv, #dkOrd) :is(.dki-cr, .dki-tabs),
   body.dk.dk-cab .bs-header #dkMenu,
   body.dk.dk-cab .bs-header #dkCab #dkBusca {
     -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(1.08);
@@ -69,7 +69,7 @@
     isolation: isolate;
   }
   #dkCab :is(.dkc-pl, .dkc-seg)::before,
-  #dkInv :is(.dki-cr, .dki-tabs)::before,
+  :is(#dkInv, #dkOrd) :is(.dki-cr, .dki-tabs)::before,
   body.dk.dk-cab .bs-header #dkMenu::before,
   body.dk.dk-cab .bs-header #dkCab #dkBusca::before {
     content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
@@ -77,7 +77,7 @@
     mix-blend-mode: screen;
   }
   body.dk.dk-cab .bs-header #dkMenu { position: relative; }
-  #dkCab .dkc-pl.azul, #dkCab .dkc-pl.en, #dkInv .dki-cr.azul:not(:disabled) {
+  #dkCab .dkc-pl.azul, #dkCab .dkc-pl.en, :is(#dkInv, #dkOrd) .dki-cr.azul:not(:disabled) {
     color: #f0f9ff; background: rgba(56, 189, 248, .42); border-color: rgba(186, 230, 253, .62);
     box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .5), inset 0 0 14px rgba(56, 189, 248, .45), 0 6px 18px rgba(0, 0, 0, .28);
   }

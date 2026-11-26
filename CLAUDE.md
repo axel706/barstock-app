@@ -110,7 +110,7 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 ## La arquitectura
 
 Frontend estático, sin build. `index.html` es un monolito y hay ~160 módulos
-`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 37 hojas
+`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 38 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
 12 funciones en `api/` sobre Vercel. **El tope del plan son 12, y está lleno**
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 178 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 179 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -834,6 +834,30 @@ sección de hoy vive tal cual dentro del armazón.
   (Price donde estaba On hand, On hand al final). Con el panel abierto se
   van Vendor, Avg/wk y To order. Prueba:
   `test-inventario-escritorio`.
+- **Orders en el escritorio** (Axel, 2026-11-26, lámina "Orders ·
+  desktop", A): `src/desk-orders.js` y `styles/desk-orders.css`, dentro de
+  `#vendorSection` (lo de antes se ESCONDE: Export, Quick order y Order
+  analysis le hacen clic a sus botones; Export y Order analysis ponen
+  antes la pestaña del proveedor elegido con `setVendorTab`, porque
+  trabajan sobre ella). Los proveedores en una columna a la izquierda
+  (pegada al bajar): su llegada (`BarStockSugerencia.llegada`, del
+  horario de Settings › Delivery), sus líneas, su total y lo suyo que no
+  llega a su entrega; la orden del elegido a la derecha y, abajo, pegado,
+  el total y "Review and send". **La orden es Open del TELÉFONO**
+  (`BarStockMobileOrders.abrirEscritorio(host, { sec, vendor, alCambiar
+  })`): sin su marco (banda, pestañas, lista pegada), con su cabecera
+  propia (sin la banda, `enBanda` contesta que no), sus líneas, la
+  revisión y el envío. Lo que coloca y manda una orden vive en un solo
+  sitio. La lista de proveedores también es una (`listaResumen`, la usan
+  el resumen del teléfono y la columna). Sus estilos, GENERADOS bajo
+  `#dkoDet` (compartir-ficha.js); la fila ancha (nombre · sugerencia ·
+  cantidad · ✕) y el pie, en desk-orders.css. El header de sitios fijos:
+  vistas Open · Sent (Sent lleva a History, hoy lo enviado), la lupa
+  (esconde líneas, sin repintar), Export azul (CSV, XLSX, JPG, LOOP) y
+  Quick order verde; en ⋯, Order analysis. **To buy e Invoices, con la
+  lámina de Sent e Invoices**: sus pantallas del teléfono leen de la nube
+  y sus estilos no están generados aquí; no se ofrecen sin verlas
+  funcionar. Prueba: `test-orders-escritorio`.
 - **EL HEADER DE LAS SECCIONES: SITIOS FIJOS** (Axel, 2026-11-26, lámina
   "Section header · fixed places": "es dinámico, pero a la vez es fijo
   […] los controles siempre en las mismas posiciones"). El estándar para
@@ -1241,7 +1265,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 178 suites · ~2470 comprobaciones. Tienen que pasar enteras.
+`npm test` · 179 suites · ~2470 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

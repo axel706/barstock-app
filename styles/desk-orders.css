@@ -1,0 +1,97 @@
+/* ── Orders en el escritorio (desk-orders.js; lámina "Orders · desktop",
+   A, 2026-11-26) ──
+   Los proveedores en una columna a la izquierda y la orden del elegido a
+   la derecha. La orden es Open del teléfono: sus estilos salen GENERADOS
+   (desk-ficha.css, bajo #dkoDet) y aquí sólo va lo que cambia en el
+   escritorio: la columna, la fila ancha de cada línea y el pie con el
+   total y "Review and send". Con el estándar de las secciones
+   (dk-pantalla, desk-shell.css). */
+@media (min-width: 641px) {
+  /* Lo de antes se esconde (sigue en el DOM: Export, Quick order y Order
+     analysis le hacen clic a sus botones). */
+  body.dk #vendorSection > :not(#dkOrd) { display: none !important; }
+  body.dk #dkOrd { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 22px; align-items: start; color: #f8fafc; }
+  body.dk #vendorSection.dk-pantalla { padding: 18px 28px 0 !important; }
+
+  /* ── La columna de proveedores: pegada bajo el header al bajar ── */
+  #dkOrd .dko-lista {
+    position: sticky; top: calc(var(--dk-alto) + 14px);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  #dkOrd .dko-k { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #94a3b8; padding: 0 2px 2px; }
+  #dkOrd .dko-nada { color: #a9bacd; margin: 6px 2px; }
+  #dkOrd .dko-v {
+    display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; text-align: left;
+    margin: 0; padding: 12px 14px; border-radius: 18px !important; cursor: pointer; color: inherit; font: inherit;
+    background: var(--tinta); border: 1px solid var(--tinta-borde);
+    box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  #dkOrd .dko-v:hover { border-color: rgba(125, 211, 252, .35); }
+  #dkOrd .dko-v.sel { border-color: rgba(125, 211, 252, .85); box-shadow: 0 0 0 1px rgba(125, 211, 252, .5); }
+  #dkOrd .dko-lg { display: flex; width: 40px; height: 40px; align-items: center; justify-content: center; }
+  #dkOrd .dko-lg > * { max-width: 40px; max-height: 40px; }
+  #dkOrd .dko-n { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  #dkOrd .dko-n b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #dkOrd .dko-n small { color: #a9bacd; font-size: 12.5px; }
+  #dkOrd .dko-n em { font-style: normal; font-size: 12px; font-weight: 800; color: #fcd34d; }
+  #dkOrd .dko-n em.g { color: #cbd5e1; font-weight: 700; }
+  #dkOrd .dko-t { font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums; }
+
+  /* ── La orden (Open del teléfono) ── */
+  #dkOrd .dko-der { min-width: 0; display: flex; flex-direction: column; min-height: calc(100vh - var(--dk-alto) - 18px); }
+  #dkOrd .dko-det { flex: 1; padding-bottom: 18px; }
+  /* Sin "All orders": la lista es la columna de al lado. En la revisión
+     sí: es la vuelta a las líneas (la columna no está). */
+  #dkOrd:not(.dko-revisando) #dkoDet .m-cab .m-atras { display: none; }
+  /* "Review and send" sale en el pie, con el total; el del teléfono sigue
+     en el DOM (el pie le hace clic). */
+  #dkOrd #dkoDet .m-ord-enviar { display: none; }
+  #dkOrd[data-vista="open"] #dkoDet .m-cab { margin-top: 0; }
+
+  /* Cada línea ancha (lámina A): el nombre y lo de debajo a la izquierda,
+     la sugerencia en medio y la cantidad con su total a la derecha. Las
+     piezas son las del teléfono (linea() de mobile-orders.js). */
+  #dkOrd #dkoDet .m-ord-l:not(.m-ord-extra) {
+    display: grid; column-gap: 18px; align-items: center;
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 260px) 270px;
+    grid-template-areas: "top sg q" "s sg q" "undo sg q";
+  }
+  #dkOrd #dkoDet .m-ord-l > .m-ord-l-top { grid-area: top; }
+  #dkOrd #dkoDet .m-ord-l > .m-ord-l-s { grid-area: s; }
+  #dkOrd #dkoDet .m-ord-l > :is(.m-ord-q, .m-ord-auto) { grid-area: q; margin: 0; }
+  #dkOrd #dkoDet .m-ord-l > .m-ord-undo { grid-area: undo; justify-self: start; }
+  #dkOrd #dkoDet .m-ord-l > .m-ord-sg { grid-area: sg; margin: 0; }
+  #dkOrd #dkoDet .m-ord-l[hidden] { display: none; }
+  /* La cantidad entera, con su decimal (el teléfono la hace estrecha). */
+  #dkOrd #dkoDet .m-ord-q input { width: 72px; min-width: 72px; }
+  /* La ✕ (dejar fuera de esta orden) al final de la fila, como en la
+     lámina: en el teléfono va junto al nombre, dentro de .m-ord-l-top. */
+  #dkOrd #dkoDet .m-ord-l:not(.m-ord-extra) { position: relative; padding-right: 60px; }
+  #dkOrd #dkoDet .m-ord-l:not(.m-ord-extra) .m-ord-x { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); margin: 0; }
+
+  /* Con poco ancho (el iPad con la barra lateral): la sugerencia bajo el
+     nombre, la cantidad a la derecha. */
+  @container dkord (max-width: 760px) {
+    #dkOrd #dkoDet .m-ord-l:not(.m-ord-extra) {
+      grid-template-columns: minmax(0, 1fr) 270px;
+      grid-template-areas: "top q" "s q" "sg sg" "undo undo";
+    }
+  }
+  #dkOrd .dko-der { container: dkord / inline-size; }
+
+  /* ── El pie: el total del proveedor y "Review and send", pegado abajo ── */
+  #dkOrd .dko-pie {
+    position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; gap: 14px;
+    margin: 0 -28px 0 0; padding: 12px 28px calc(12px + env(safe-area-inset-bottom)) 0;
+    background: linear-gradient(180deg, rgba(9, 14, 26, 0), rgba(9, 14, 26, .92) 26%);
+  }
+  #dkOrd .dko-pie[hidden] { display: none; }
+  #dkOrd .dko-pt b { font-size: 24px; font-weight: 850; font-variant-numeric: tabular-nums; }
+  #dkOrd .dko-pt small { margin-left: 8px; color: #a9bacd; font-size: 13px; }
+  #dkOrd .dko-send { margin-left: auto; height: 44px; padding: 0 22px; font-size: 15px; }
+
+  /* En la revisión, To buy, Sent e Invoices, la orden a todo el ancho:
+     la columna de proveedores es de Open. */
+  #dkOrd:is(.dko-revisando, [data-vista="buy"], [data-vista="sent"], [data-vista="inv"]) { grid-template-columns: minmax(0, 1fr); }
+  #dkOrd:is(.dko-revisando, [data-vista="buy"], [data-vista="sent"], [data-vista="inv"]) .dko-lista { display: none; }
+}

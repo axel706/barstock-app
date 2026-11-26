@@ -82,6 +82,15 @@ const reRo = /\.m-ro-[A-Za-z0-9_-]+/;
 // m-ts y m-ts-*.
 const reTs = /\.m-ts(?![A-Za-z0-9_-])|\.m-ts-[A-Za-z0-9_-]+/;
 
+// Orders (desk-orders.js, lámina "Orders · desktop", A, 2026-11-26): Open
+// del teléfono (mobile-orders.js en modo escritorio) en el panel de la
+// derecha, #dkoDet: sus líneas (m-ord-*), lo que no llega a su entrega, la
+// revisión y el envío (m-rev-*) y la cabecera que pinta sin la banda
+// (m-cab, m-atras, m-inv-t, m-hsub).
+const ORD = ['m-ord', 'm-ordv', 'm-rev', 'm-cab', 'm-atras', 'm-inv-t', 'm-hsub', 'm-nada', 'm-chev'];
+const reOrd = new RegExp('\\.(' + ORD.map(c => c.replace(/-/g, '\\-')).join('|') + ')(?![A-Za-z0-9_])|\\.(' +
+  ORD.map(c => c.replace(/-/g, '\\-')).join('|') + ')-[A-Za-z0-9_-]+');
+
 // El teclado numérico de ✎ Check the shelf y 📣 Tell the team it's low
 // (num-pad.js): una hoja #mSheet colgada del body, con sus clases m-kp.
 // Y la hoja de "All products" / "Full report" (mobile-sales.js), que en el
@@ -129,7 +138,7 @@ function aTeclado(s) {
 
 function generar() {
   const css = fs.readFileSync(path.join(RAIZ, 'styles/mobile-app.css'), 'utf8');
-  const reglas = [], teclado = [], ro = [], ts = [];
+  const reglas = [], teclado = [], ro = [], ts = [], ord = [];
   for (const r of trozos(css)) {
     if (!r.sel || r.sel.startsWith('@')) continue;          // las @media de dentro (reducir movimiento) se quedan fuera
     if (/\{/.test(r.decl)) continue;                          // nada anidado
@@ -144,7 +153,7 @@ function generar() {
       if (ch === ',' && prof === 0) { sel.push(cur.trim()); cur = ''; } else cur += ch;
     }
     if (cur.trim()) sel.push(cur.trim());
-    const nuevos = [], deRo = [], deTs = [];
+    const nuevos = [], deRo = [], deTs = [], deOrd = [];
     for (let s of sel) {
       if (reTs.test(s) && !/:has\(|m-txt-|bs-guest|bs-sin-|fondo-vivo|m-vl/.test(s)) {
         let t = s, q = true;
@@ -155,6 +164,11 @@ function generar() {
         let t = s, q = true;
         while (q) { q = false; for (const a of ARMAZON) { if (a.test(t)) { t = t.replace(a, ''); q = true; } } }
         if (!/^(html|body)\b/.test(t)) deRo.push('#dkRo ' + t);
+      }
+      if (reOrd.test(s) && !/:has\(|m-txt-|bs-guest|bs-sin-|fondo-vivo|#moAcc|#moRun|m-tx-hueco/.test(s)) {
+        let t = s, q = true;
+        while (q) { q = false; for (const a of ARMAZON) { if (a.test(t)) { t = t.replace(a, ''); q = true; } } }
+        if (!/^(html|body)\b/.test(t)) deOrd.push('#dkoDet ' + t);
       }
       if (!reClase.test(s)) continue;
       // Lo que depende del tamaño de letra del teléfono o del modo invitado
@@ -177,6 +191,7 @@ function generar() {
     if (nuevos.length) reglas.push('  ' + nuevos.join(',\n  ') + ' {\n' + decl + '\n  }');
     if (deRo.length) ro.push('  ' + deRo.join(',\n  ') + ' {\n' + decl + '\n  }');
     if (deTs.length) ts.push('  ' + deTs.join(',\n  ') + ' {\n' + decl + '\n  }');
+    if (deOrd.length) ord.push('  ' + deOrd.join(',\n  ') + ' {\n' + decl + '\n  }');
     const tec = sel.map(aTeclado).filter(Boolean);
     if (tec.length) teclado.push('  ' + tec.join(',\n  ') + ' {\n' + decl + '\n  }');
   }
@@ -193,6 +208,8 @@ function generar() {
     ro.join('\n') + '\n\n' +
     '  /* Las ventas de Toast (mobile-home.ventas), en el Home del escritorio. */\n' +
     ts.join('\n') + '\n\n' +
+    '  /* Orders (mobile-orders.js en modo escritorio), en el panel #dkoDet. */\n' +
+    ord.join('\n') + '\n\n' +
     '  /* El teclado numérico (num-pad.js), en la hoja #mSheet del body. */\n' +
     teclado.join('\n') + '\n}\n';
 }

@@ -139,13 +139,24 @@
   const logo = (v) => (VL() ? VL().html(v) : '');
   const colorDe = (v) => (VL() ? VL().color(v) : '#94a3b8');
 
-  function pintarResumen(host) {
+  // Los proveedores del resumen: los que tienen líneas y, aunque no
+  // tenga líneas propias, LOOP si hay algo de otro proveedor que no llega
+  // a su entrega (lámina C, 2026-11-19). La usan el resumen del teléfono y
+  // la columna de proveedores del escritorio (desk-orders.js): una sola
+  // lista, o los dos acabarían enseñando proveedores distintos.
+  function listaResumen() {
     const vs = proveedores();
-    // LOOP sale aunque no tenga líneas propias si hay algo de otro
-    // proveedor que no llega a su entrega (lámina C, 2026-11-19).
     prepararTodos();
     const nLoop = puentes('LOOP').length;
     if (nLoop && !vs.some(v => esLoop(v.nombre))) vs.push({ nombre: 'LOOP', filas: [], total: 0, sinPrecio: 0 });
+    // Lo de cada uno que no llega a su entrega (en LOOP, lo de todos).
+    vs.forEach(v => { v.puentes = esLoop(v.nombre) ? nLoop : puentes(v.nombre).length; });
+    return vs;
+  }
+
+  function pintarResumen(host) {
+    const vs = listaResumen();
+    const nLoop = puentes('LOOP').length;
     const total = vs.reduce((s, v) => s + v.total, 0);
 
     if (!vs.length) {
@@ -410,7 +421,8 @@
     if (esLoop(_vendor)) prepararTodos();
     // LOOP sin líneas propias, sólo con lo que no llega a su entrega.
     if (!v && esLoop(_vendor) && puentes('LOOP').length) v = { nombre: _vendor, filas: [], total: 0, sinPrecio: 0 };
-    if (!v) { _vendor = null; return pintarResumen(host); }
+    // En el escritorio, la lista es su columna: el panel se vacía.
+    if (!v) { _vendor = null; if (_esc) { host.innerHTML = ''; return; } return pintarResumen(host); }
     const fuera = excluidas(v.nombre);
     prepararSugerencia(v.nombre);
     const extra = noEnLaOrden(v, fuera);
@@ -1479,12 +1491,37 @@
   let _host = null;
   const repintar = () => pintar(_host);
 
+  // ── En el escritorio (desk-orders.js, lámina "Orders · desktop", A) ──
+  //
+  // El mismo Open en el panel de la derecha, sin el marco del teléfono
+  // (ni la banda, ni las pestañas, ni la lista que se pega): las pestañas
+  // son las del header del escritorio y la lista de proveedores, su
+  // columna. Lo que coloca y manda una orden no se escribe dos veces: es
+  // esto. Sin la banda, el detalle pinta su propia cabecera (enBanda
+  // contesta que no), como hacía antes del armazón.
+  //   `alCambiar({ sec, vendor, revisar })` avisa al escritorio en cada
+  //   pintado (para marcar el proveedor elegido o volver a la lista).
+  let _esc = null;
+  function abrirEscritorio(host, o) {
+    _esc = o || {};
+    _sec = _esc.sec || 'open';
+    _vendor = _esc.vendor || null;
+    salirRevision();
+    pintar(host);
+  }
+  function cerrarEscritorio() { _esc = null; _host = null; _vendor = null; salirRevision(); }
+
   function pintar(host) {
     if (!host) return;
     _host = host;
     // To buy sin nada que comprar ya no tiene pestaña: a Open.
     if (_sec === 'buy' && !hayToBuy() && TB() && TB().cuantos() !== null) _sec = 'open';
-    const cuerpo = marco(host);
+    const cuerpo = _esc ? host : marco(host);
+    try { pintarSeccion(cuerpo); }
+    finally { if (_esc && _esc.alCambiar) _esc.alCambiar({ sec: _sec, vendor: _vendor, revisar: _revisar }); }
+  }
+
+  function pintarSeccion(cuerpo) {
     // El cuerpo es el mismo para las cuatro: se marca cuál está puesta
     // para que una lectura tardía de To buy no pinte encima de otra.
     cuerpo.dataset.sec = _sec;
@@ -1504,6 +1541,9 @@
     // la orden se guarda.
     if (_revisar) pintarRevision(cuerpo);
     else if (_vendor) pintarDetalle(cuerpo);
+    // En el escritorio la lista de proveedores es su columna: sin uno
+    // elegido, el panel se queda vacío y el escritorio elige.
+    else if (_esc) cuerpo.innerHTML = '';
     else pintarResumen(cuerpo);
   }
 
@@ -1512,6 +1552,7 @@
   }
 
   function refresh() {
+    if (_esc) { if (_host && _host.isConnected) pintar(_host); return; }
     const host = pantalla();
     if (host && host.classList.contains('on')) pintar(host);
   }
@@ -1608,7 +1649,14 @@
 
   window.BarStockMobileOrders = {
     refresh, falloAlGuardar, abrirVendor, enviarCorreo, abrirSeccion,
-    revisarBorrador
+    revisarBorrador, abrirEscritorio, cerrarEscritorio, listaResumen,
+    // Cuántos hay pendientes en cada pestaña (las cuentas del header).
+    cuentas: () => ({
+      open: proveedores().length,
+      inv: (I() && I().resumen && (I().resumen() || {}).sueltas) || 0,
+      buy: hayToBuy() ? (TB().cuantos() || 0) : 0
+    }),
+    hayToBuy: () => hayToBuy()
   };
 
   function registrar() {

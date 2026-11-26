@@ -27,12 +27,12 @@
 
   /* ── Los botones del panel: su forma. El cristal es el del header
      (desk-header.css, "El cristal"), la MISMA regla, no una copia. ── */
-  #dkInv .dki-cr {
+  :is(#dkInv, #dkOrd) .dki-cr {
     position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 16px; margin: 0;
     border-radius: 999px !important; font: inherit; font-size: 14px; font-weight: 750; cursor: pointer; white-space: nowrap;
   }
-  #dkInv .dki-cr:disabled { cursor: default; color: #94a3b8; }
-  #dkInv .dki-cr .ti { font-size: 17px; }
+  :is(#dkInv, #dkOrd) .dki-cr:disabled { cursor: default; color: #94a3b8; }
+  :is(#dkInv, #dkOrd) .dki-cr .ti { font-size: 17px; }
   #dkInv .dki-redondo { width: 38px; padding: 0; }
 
   /* ── Las cuatro cifras (la cabeza de antes, 2026-11-26) ── */

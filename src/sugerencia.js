@@ -119,5 +119,17 @@
       outTxt: ag && ag.txt ? ag.txt : 'Out ' + cuando(x.fin.en).dia, llegaTxt: ll.dia + ' ' + ll.hora };
   }
 
-  window.BarStockSugerencia = { preparar, olvidar, para, antes };
+  // Cuándo llega la siguiente entrega del proveedor ("Wed 4 PM"), o null
+  // sin su horario (o sin leerlo aún: preparar). La columna de proveedores
+  // de Orders del escritorio (desk-orders.js).
+  function llegada(vendor, ahora) {
+    const vd = VD(), horario = _horario.get(vendor);
+    if (!vd || !horario) return null;
+    const a = vd.siguienteEntrega(horario, ahora == null ? Date.now() : ahora);
+    if (!a) return null;
+    const c = cuando(Date.parse(a));
+    return c.dia + ' ' + c.hora;
+  }
+
+  window.BarStockSugerencia = { preparar, olvidar, para, antes, llegada };
 })();

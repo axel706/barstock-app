@@ -274,7 +274,7 @@ w.eval(DI);
   prueba('tres cifras: Uses / week, Unit price, Runs out', /Uses \/ week/.test(txt(pan().querySelector('.dki-c3'))) && /Unit price/.test(txt(pan().querySelector('.dki-c3'))) && /Runs out/.test(txt(pan().querySelector('.dki-c3'))) && /\$25\.00/.test(txt(pan().querySelector('.dki-c3'))));
   prueba('un solo Received', pan().querySelectorAll('[data-acc="recibido"]').length === 1);
   prueba('Add to order es el de la ficha (#msAdd)', /msAdd/.test(DI) && pan().querySelector('[data-acc="pedir"]'));
-  prueba('los botones del panel, de cristal (la MISMA regla que el header)', /#dkInv :is\(\.dki-cr, \.dki-tabs\)/.test(CSSH) && pan().querySelectorAll('.dki-cr').length >= 4 && pan().querySelector('.dki-tabs'));
+  prueba('los botones del panel, de cristal (la MISMA regla que el header)', /:is\(#dkInv, #dkOrd\) :is\(\.dki-cr, \.dki-tabs\)/.test(CSSH) && pan().querySelectorAll('.dki-cr').length >= 4 && pan().querySelector('.dki-tabs'));
   prueba('abre en Overview: los campos de Edit escondidos', pan().dataset.tab === 'ver' && /#dkiPanel\[data-tab="ver"\] :is\(\.dki-ed, \.dki-pie\) \{ display: none/.test(CSSI4));
   pan().querySelector('[data-acc="mas"]').click();
   prueba('⋯ lleva Pour·IQ history y Zero par', llamadas.includes('menu') && (w._menuItems || []).map(i => i.label).join('|') === 'Pour·IQ history|Zero par');
