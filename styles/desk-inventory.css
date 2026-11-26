@@ -1,11 +1,12 @@
 /* ── Inventory en el escritorio (Axel, 2026-11-25) ──────────────────────
  *
  * src/desk-inventory.js, dentro de #inventorySection, con el estándar de
- * las secciones (.dk-pantalla en desk-shell.css). La cabeza (título,
- * herramientas, conteo en curso, cuatro cifras); la barra C, que se pega
- * bajo la barra de arriba al bajar (un control segmentado suave, dos menús
- * y el buscador, y los nombres de las columnas); una fila por producto; y
- * el producto en un panel a la derecha (A), pegado bajo la barra.
+ * las secciones (.dk-pantalla en desk-shell.css) y su header de sitios
+ * fijos (desk-header.js, 2026-11-26): el título, las vistas y los
+ * controles van en el header; aquí, el dinero del estante con su reparto,
+ * el conteo en curso, los nombres de las columnas (pegados bajo el
+ * header al bajar), una fila por producto y el producto en un panel a la
+ * derecha (A), pegado bajo las columnas.
  * Lo de antes de la sección (su cabecera, la tabla, el panel lateral) se
  * esconde: el render() de siempre lo sigue pintando, porque el tiempo
  * real y otros módulos lo llaman.
@@ -17,12 +18,9 @@
   body.dk #inventorySection > .section-header-row,
   body.dk #inventorySection > #inventorySectionBody { display: none !important; }
   body.dk #dkInv { display: block; color: #f8fafc; container: dkinv / inline-size; }
-  body.dk #inventorySection.dk-pantalla { padding: 22px 28px 40px !important; }
+  body.dk #inventorySection.dk-pantalla { padding: 20px 28px 40px !important; }
 
-  /* ── La cabeza ── */
-  #dkInv .dki-top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-  #dkInv .dki-t { margin: 0; font-size: 34px; font-weight: 800; letter-spacing: -.6px; }
-  #dkInv .dki-herr { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  /* ── Los botones del panel ── */
   #dkInv .dki-b {
     display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px;
     border-radius: 999px !important; border: 1px solid rgba(255, 255, 255, .2); background: rgba(255, 255, 255, .07);
@@ -34,60 +32,30 @@
   #dkInv .dki-b .ti { font-size: 16px; }
   #dkInv .dki-b.ic { width: 34px; padding: 0; justify-content: center; }
   #dkInv .dki-b.go { background: rgba(56, 189, 248, .4); border-color: rgba(186, 230, 253, .55); color: #f0f9ff; }
-  #dkInv .dki-b.gr { background: rgba(34, 197, 94, .32); border-color: rgba(134, 239, 172, .5); color: #f0fdf4; }
   #dkInv .dki-b.rd { background: rgba(239, 68, 68, .2); border-color: rgba(252, 165, 165, .4); color: #fecaca; }
-  #dkInv .dki-conteo:not(:empty) { margin-top: 12px; }
-  #dkInv .dki-cifras { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr)); margin-top: 18px; }
-  #dkInv .dki-k { padding: 0 18px; border-left: 1px solid rgba(255, 255, 255, .1); min-width: 0; }
-  #dkInv .dki-k:first-child { padding-left: 0; border-left: 0; }
-  #dkInv .dki-k u { text-decoration: none; font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #94a3b8; }
-  #dkInv .dki-k b { display: block; font-size: 30px; font-weight: 800; letter-spacing: -.4px; margin-top: 2px; }
-  #dkInv .dki-k b.a { color: #fcd34d; }
-  #dkInv .dki-k b.r { color: #fca5a5; }
-  #dkInv .dki-k small { display: block; font-size: 12px; color: #a9bacd; }
-  #dkInv .dki-cats { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 8px; background: rgba(255, 255, 255, .08); }
-  #dkInv .dki-cats i { display: block; height: 100%; }
-  #dkInv .dki-ley { display: flex; flex-wrap: wrap; gap: 3px 12px; margin-top: 6px; font-size: 11.5px; color: #a9bacd; }
-  #dkInv .dki-ley span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; background: var(--c); }
 
-  /* ── La barra que se pega (lámina "the bar that sticks", C) ──
-     Con el vidrio de la barra de arriba, a lo ancho de la pantalla. */
+  /* ── Lo que el header no dice: el dinero del estante ── */
+  #dkInv .dki-din { display: flex; align-items: flex-end; gap: 28px; }
+  #dkInv .dki-k { flex: none; min-width: 0; }
+  #dkInv .dki-k u { text-decoration: none; font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #94a3b8; }
+  #dkInv .dki-k b { display: block; font-size: 36px; font-weight: 800; letter-spacing: -.6px; line-height: 1.1; margin-top: 2px; }
+  #dkInv .dki-k small { display: block; font-size: 12px; color: #a9bacd; margin-top: 2px; }
+  #dkInv .dki-reparto { flex: 1; min-width: 0; max-width: 760px; padding-bottom: 2px; }
+  #dkInv .dki-cats { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: rgba(255, 255, 255, .08); }
+  #dkInv .dki-cats i { display: block; height: 100%; }
+  #dkInv .dki-ley { display: flex; flex-wrap: wrap; gap: 3px 14px; margin-top: 7px; font-size: 12px; color: #a9bacd; }
+  #dkInv .dki-ley span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; background: var(--c); }
+  #dkInv .dki-conteo:not(:empty) { margin-top: 14px; }
+
+  /* ── Los nombres de las columnas, pegados bajo el header ──
+     Con el vidrio del header, a lo ancho de la pantalla. */
   #dkInv .dki-pega {
     position: sticky; top: var(--dk-alto); z-index: 6;
-    margin: 18px -28px 0; padding: 10px 28px 0;
+    margin: 14px -28px 0; padding: 0 28px;
     background: rgba(9, 14, 26, .82);
     backdrop-filter: blur(18px) saturate(150%); -webkit-backdrop-filter: blur(18px) saturate(150%);
     border-bottom: 1px solid rgba(255, 255, 255, .08);
   }
-  #dkInv .dki-fil { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  #dkInv .dki-seg { display: inline-flex; padding: 3px; border-radius: 12px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .1); }
-  #dkInv .dki-seg button {
-    padding: 6px 13px; border: 0; border-radius: 9px !important; background: none; color: #cbd5e1;
-    font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
-  }
-  #dkInv .dki-seg button.on { background: rgba(255, 255, 255, .14); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2); }
-  #dkInv .dki-seg em { font-style: normal; font-size: 11.5px; margin-left: 4px; color: #94a3b8; }
-  #dkInv .dki-seg em.a { color: #fcd34d; }
-  #dkInv .dki-seg em.r { color: #fca5a5; }
-  /* Los campos van a 16px, no a 13: el iPad es "escritorio" con el dedo
-     y por debajo de 16 Safari hace zoom al tocarlos (test-zoom-ios). */
-  #dkInv .dki-sel select {
-    height: 34px; padding: 0 30px 0 12px; border-radius: 10px !important; border: 1px solid rgba(255, 255, 255, .1);
-    background: rgba(255, 255, 255, .06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23cbd5e1' stroke-width='1.6' fill='none'/%3E%3C/svg%3E") no-repeat right 11px center;
-    color: #e2e8f0; font: inherit; font-size: 16px; font-weight: 700; appearance: none; -webkit-appearance: none; cursor: pointer; box-shadow: none;
-  }
-  #dkInv .dki-sel select:disabled { opacity: .45; cursor: default; }
-  #dkInv .dki-sel option { background: #0f172a; }
-  #dkInv .dki-q {
-    margin-left: auto; width: min(320px, 100%); height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 12px;
-    border-radius: 10px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .1); color: #94a3b8;
-  }
-  #dkInv #dkiQ {
-    flex: 1; min-width: 0; height: 100%; border: 0 !important; background: none !important; box-shadow: none !important; outline: none;
-    border-radius: 0 !important; padding: 0 !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
-    font: inherit; font-size: 16px; color: #f8fafc;
-  }
-  #dkInv #dkiQ::placeholder { color: #94a3b8; }
 
   /* Las columnas: las de la barra y las de cada fila, la misma rejilla. */
   #dkInv .dki-cols, #dkInv .dki-fila {
@@ -193,8 +161,7 @@
       max-height: none; box-shadow: -20px 0 50px rgba(0, 0, 0, .45);
       backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); background: rgba(9, 14, 26, .92);
     }
-    #dkInv .dki-cifras { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); row-gap: 14px; }
-    #dkInv .dki-k:nth-child(3) { padding-left: 0; border-left: 0; }
+    #dkInv .dki-din { flex-wrap: wrap; row-gap: 10px; }
     #dkInv .dki-cols, #dkInv .dki-fila { grid-template-columns: 28px minmax(0, 2fr) 110px 84px 0 54px 0 74px; }
     #dkInv.con-panel .dki-cols { margin-right: 0; }
     #dkInv .dki-cols > :nth-child(5), #dkInv .dki-fila > :nth-child(5),

@@ -109,62 +109,150 @@
     </div>`;
   }
 
-  // ── La cabeza de la página ──
-  function cabeza() {
-    const V = window.BarStockInventoryValue;
-    const c = V && V.compute ? V.compute() : null;
-    const M = MI();
-    const fix = M && M.faltas ? master().filter(r => M.faltas(r).length).length : 0;
-    const RO = window.BarStockRunningOut;
-    const agotan = RO && RO.lista ? RO.lista().length : 0;
-    const COL = ['#38bdf8', '#c084fc', '#f59e0b', '#22c55e', '#f472b6', '#2dd4bf', '#fb7185', '#a3e635', '#818cf8', '#facc15'];
-    const cats = c ? c.cats.slice(0, 10) : [];
-    const colorCat = (x, k) => /uncategorized/.test(x.name) ? '#64748b' : COL[k % COL.length];
-    const puedeEditar = puede('editar_productos');
-    return `
-      <div class="dki-top">
-        <h2 class="dki-t">Inventory</h2>
-        <span class="dki-herr">
-          <button type="button" class="dki-b go" data-acc="contar"><i class="ti ti-scan" aria-hidden="true"></i>Count</button>
-          ${puedeEditar ? '<button type="button" class="dki-b gr" data-acc="nuevo"><i class="ti ti-plus" aria-hidden="true"></i>Add item</button>' : ''}
-          ${puedeEditar ? '<button type="button" class="dki-b ic" data-acc="categorias" title="Assign categories automatically" aria-label="Assign categories automatically"><i class="ti ti-tags" aria-hidden="true"></i></button>' : ''}
-          ${puedeEditar ? '<button type="button" class="dki-b ic" data-acc="botellas" title="Assign bottle shapes and sizes" aria-label="Assign bottle shapes and sizes"><i class="ti ti-bottle" aria-hidden="true"></i></button>' : ''}
-        </span>
-      </div>
-      <div class="dki-conteo" id="dkiConteo"></div>
-      <div class="dki-cifras">
-        <div class="dki-k dki-k1"><u>Money on the shelf</u><b>${c ? dinero0(c.total) : '—'}</b><small>as counted${c && c.noPrice ? ' · ' + c.noPrice + ' in stock with no price' : ''}${c && c.llegado ? ' · +' + dinero0(c.llegado) + ' arrived since' : ''}</small>
-          ${cats.length ? `<span class="dki-cats">${cats.map((x, k) => `<i style="width:${x.pct.toFixed(1)}%;background:${colorCat(x, k)}" title="${esc(x.name.replace('— ', ''))} ${dinero0(x.value)}"></i>`).join('')}</span>
-          <span class="dki-ley">${cats.slice(0, 6).map((x, k) => `<span style="--c:${colorCat(x, k)}">${esc(x.name.replace('— uncategorized', 'No category'))} ${dinero0(x.value)}</span>`).join('')}</span>` : ''}</div>
-        <div class="dki-k"><u>Items</u><b>${master().length}</b><small>${c && c.uncategorized ? c.uncategorized + ' with no category' : 'all with a category'}</small></div>
-        <div class="dki-k"><u>Needs fixing</u><b class="${fix ? 'a' : ''}">${fix}</b><small>no vendor, price or par</small></div>
-        <div class="dki-k"><u>Running out</u><b class="${agotan ? 'r' : ''}">${agotan}</b><small>before Sunday</small></div>
-      </div>`;
+  // ── Debajo del header: el dinero del estante ──
+  //
+  // Lámina "Section header · fixed places": la cabeza de la página y la
+  // barra pegada se fueron (los controles están en el header, desk-
+  // header.js), y aquí queda sólo lo que el header no dice. El número es
+  // el MISMO del Home (BarStockMobileHome.estante): con el mismo nombre,
+  // aquí se enseñaba lo contado y en el Home el LIVE (Axel, 2026-11-26).
+  // El reparto por categoría sale de la misma cuenta, fila por fila
+  // (contado + llegó − vendido, al precio de cada una: live-cache.dinero),
+  // para que sus partes sumen el total que se ve.
+  const COL = ['#38bdf8', '#c084fc', '#f59e0b', '#22c55e', '#f472b6', '#2dd4bf', '#fb7185', '#a3e635', '#818cf8', '#facc15'];
+  function repartoVivo() {
+    const precio = (r) => typeof window.parseNum === 'function' ? window.parseNum(r.value) : num(r.value);
+    const mano = (r) => typeof window.parseNum === 'function' ? window.parseNum(r.onHand) : num(r.onHand);
+    const L = LC();
+    const por = new Map();
+    for (const r of master()) {
+      if (!r || !r.item) continue;
+      const p = precio(r);
+      if (p <= 0) continue;
+      const v = L && L.vivo ? L.vivo(r) : null;
+      const val = (mano(r) + (v ? num(v.llego) - num(v.vendido) : 0)) * p;
+      const k = r.category || '';
+      por.set(k, (por.get(k) || 0) + val);
+    }
+    return [...por.entries()].map(([name, value]) => ({ name, value })).filter(x => Math.abs(x.value) >= 0.5)
+      .sort((a, b) => b.value - a.value);
+  }
+  function dineroLinea() {
+    const MH = window.BarStockMobileHome;
+    const e = MH && MH.estante ? MH.estante() : null;
+    const L = LC();
+    const bt = L && L.botellas ? L.botellas() : null;
+    if (!e) {
+      const espera = L && L.listo && !L.listo();
+      return `<div class="dki-din"><div class="dki-k"><u>Money on the shelf</u><b>${espera ? '…' : '—'}</b><small>${espera ? 'Counting' : 'No prices yet'}</small></div></div>`;
+    }
+    // Sin LIVE (conteo activo, nada movido) el Home dice contado +
+    // facturado: las categorías son las de lo contado y lo llegado va
+    // aparte, sin repartir, para que todo sume lo mismo.
+    let cats;
+    if (e.live) cats = repartoVivo();
+    else {
+      const V = window.BarStockInventoryValue;
+      const c = V && V.compute ? V.compute() : null;
+      cats = (c ? c.cats : []).map(x => ({ name: /uncategorized/.test(x.name) ? '' : x.name, value: x.value }));
+      if (num(e.llego) > 0) cats.push({ name: '\u0000llego', value: num(e.llego) });
+    }
+    const suma = cats.reduce((a, x) => a + Math.max(0, x.value), 0) || 1;
+    const nombre = (x) => x.name === '\u0000llego' ? 'Arrived since the count' : x.name || 'No category';
+    const col = (x, k) => x.name === '\u0000llego' ? '#94a3b8' : !x.name ? '#64748b' : COL[k % COL.length];
+    const ver = cats.slice(0, 9);
+    const sobra = cats.slice(9).reduce((a, x) => a + x.value, 0);
+    const linea = [bt ? (bt.live ? '≈' : '') + Math.round(bt.total).toLocaleString('en-US') + ' bottles' : '', e.live ? 'Live' : 'as counted',
+      e.sin ? e.sin + ' in stock with no price' : ''].filter(Boolean).join(' · ');
+    return `<div class="dki-din">
+      <div class="dki-k"><u>Money on the shelf</u><b>${e.live ? '≈' : ''}${dinero0(e.total)}</b><small>${esc(linea)}</small></div>
+      ${ver.length ? `<div class="dki-reparto"><span class="dki-cats">${ver.map((x, k) => `<i style="width:${(Math.max(0, x.value) / suma * 100).toFixed(2)}%;background:${col(x, k)}" title="${esc(nombre(x))} ${dinero0(x.value)}"></i>`).join('')}${sobra > 0 ? `<i style="width:${(sobra / suma * 100).toFixed(2)}%;background:#475569"></i>` : ''}</span>
+        <span class="dki-ley">${ver.map((x, k) => `<span style="--c:${col(x, k)}">${esc(nombre(x))} ${dinero0(x.value)}</span>`).join('')}${sobra > 0 ? `<span style="--c:#475569">Other ${dinero0(sobra)}</span>` : ''}</span></div>` : ''}
+    </div>
+    <div class="dki-conteo" id="dkiConteo"></div>`;
   }
 
-  // ── La barra que se pega (C) ──
-  function barra(n) {
+  // ── Lo que va en el header (desk-header.js, sitios fijos) ──
+  const cuentas = () => {
     const M = MI();
-    const fix = M && M.faltas ? master().filter(r => M.faltas(r).length).length : 0;
-    const RO = window.BarStockRunningOut;
-    const agotan = RO && RO.lista ? RO.lista().length : 0;
-    const vendors = typeof window.getVendorsForFilter === 'function' ? window.getVendorsForFilter() : ['ALL'];
-    const cap = (v) => String(v).toLowerCase().replace(/(^|\s)\S/g, m => m.toUpperCase());
+    if (!M || !M.filtrar) return { todo: master().length, fix: 0, agota: 0 };
+    // Cuentan con lo que acota la lista (buscador y proveedor): "All 9"
+    // dice que la lista está filtrada. Running out es la lista de la
+    // tarjeta: sólo el buscador la acota (la regla del teléfono).
+    return {
+      todo: M.filtrar({ q: _q, vendor: _vendor, solo: 'todo' }).length,
+      fix: M.filtrar({ q: _q, vendor: _vendor, solo: 'fix' }).length,
+      agota: M.filtrar({ q: _q, filtro: 'agota' }).length
+    };
+  };
+  const cap = (v) => String(v).toLowerCase().replace(/(^|\s)\S/g, m => m.toUpperCase());
+  const ORDENES = [['valor', 'Money on the shelf', 'ti-currency-dollar'], ['falta', 'Closest to empty', 'ti-battery-1'], ['nombre', 'Name', 'ti-sort-a-z']];
+  const COLS = { nombre: 'Product', vendor: 'Vendor', onhand: 'On hand', avg: 'Avg/wk', par: 'Par', pedir: 'To order', precio: 'Price' };
+  const CABECERA = {
+    titulo: 'Inventory',
+    vistas() {
+      const n = cuentas();
+      // Dos nombres: el largo y el corto, que el header usa sin sitio.
+      const b = (k, t, corto, c, cls) => `<button type="button" data-dkc="vista" data-vista="${k}" class="${_vista === k ? 'on' : ''}"><span class="l">${t}</span><span class="c">${corto}</span><em class="${cls}">${c}</em></button>`;
+      return `<div class="dkc-seg" role="group" aria-label="View">${b('todo', 'All', 'All', n.todo, '')}${b('fix', 'Needs fixing', 'Fix', n.fix, 'a')}${b('agota', 'Running out', 'Out', n.agota, 'r')}</div>`;
+    },
+    afinar() {
+      const DH = window.BarStockDeskHeader;
+      const agota = _vista === 'agota';
+      const ord = ORDENES.find(o => o[0] === _orden);
+      return [
+        DH.campo({ id: 'dkiQ', icon: 'ti-filter', placeholder: 'Filter ' + master().length + ' items', value: _q }),
+        DH.boton({ acc: 'vendor', icon: 'ti-truck', label: agota ? 'Vendor · not in Running out' : 'All vendors', en: !agota && _vendor !== 'ALL', valor: 'Vendor: ' + cap(_vendor), apagado: agota }),
+        DH.boton({ acc: 'orden', icon: 'ti-arrows-sort', label: agota ? 'Sort · by date in Running out' : 'Sort: ' + (ord ? ord[1] : COLS[_orden] + (_dir < 0 ? ' ↓' : ' ↑')), apagado: agota })
+      ];
+    },
+    acciones() {
+      const DH = window.BarStockDeskHeader;
+      return [
+        DH.boton({ acc: 'contar', icon: 'ti-scan', label: 'Count', tono: 'azul' }),
+        puede('editar_productos') ? DH.boton({ acc: 'nuevo', icon: 'ti-plus', label: 'Add item', tono: 'verde' }) : ''
+      ];
+    },
+    extras() {
+      if (!puede('editar_productos')) return [];
+      return [
+        window.BarStockAutoCategory ? { icon: 'ti-tags', label: 'Assign categories automatically', fn: () => accion('categorias') } : null,
+        window.BarStockBottleAssign ? { icon: 'ti-bottle', label: 'Assign bottle shapes and sizes', fn: () => accion('botellas') } : null
+      ].filter(Boolean);
+    },
+    alClic(ev, t) {
+      if (!t) return;
+      const a = t.dataset.dkc;
+      const DH = window.BarStockDeskHeader;
+      if (a === 'vista') { _vista = t.dataset.vista; pintar(); }
+      else if (a === 'contar' || a === 'nuevo') accion(a);
+      else if (a === 'vendor') {
+        if (DH.abiertoMenu()) { DH.cerrarMenu(); return; }
+        const vs = typeof window.getVendorsForFilter === 'function' ? window.getVendorsForFilter() : ['ALL'];
+        DH.menu(t, vs.map(v => ({ icon: v === 'ALL' ? 'ti-list' : 'ti-truck', label: v === 'ALL' ? 'All vendors' : cap(v), on: v === _vendor, fn: () => { _vendor = v; pintar(); } })));
+      } else if (a === 'orden') {
+        if (DH.abiertoMenu()) { DH.cerrarMenu(); return; }
+        const items = ORDENES.map(([k, txt, icon]) => ({ icon, label: txt, on: _orden === k, fn: () => { _orden = k; _dir = 1; pintar(); } }));
+        if (!ORDENES.some(o => o[0] === _orden)) items.push({ sep: true }, { icon: 'ti-columns', label: 'By ' + COLS[_orden] + ' (column)', on: true, fn: () => {} });
+        DH.menu(t, items);
+      }
+    },
+    alEscribir(ev) {
+      if (ev.target.id === 'dkiQ') { _q = ev.target.value; pintar(); }
+    }
+  };
+
+  function accion(a) {
+    if (a === 'contar') { const b = document.getElementById('takeInventoryBtn'); if (b) b.click(); }
+    else if (a === 'nuevo' && typeof window.openNewItemModal === 'function') window.openNewItemModal();
+    else if (a === 'categorias' && window.BarStockAutoCategory) window.BarStockAutoCategory.run();
+    else if (a === 'botellas' && window.BarStockBottleAssign) window.BarStockBottleAssign.run();
+  }
+
+  // ── Los títulos de las columnas, pegados bajo el header ──
+  function barra() {
     const col = (k, t, cls) => `<button type="button" class="dki-th${cls ? ' ' + cls : ''}${_orden === k ? ' on' : ''}" data-col="${k}">${t}${_orden === k ? (_dir < 0 ? ' ▾' : ' ▴') : ''}</button>`;
     return `
-      <div class="dki-fil">
-        <span class="dki-seg" role="group" aria-label="View">
-          <button type="button" class="${_vista === 'todo' ? 'on' : ''}" data-vista="todo">Everything <em>${master().length}</em></button>
-          <button type="button" class="${_vista === 'fix' ? 'on' : ''}" data-vista="fix">Needs fixing <em class="a">${fix}</em></button>
-          <button type="button" class="${_vista === 'agota' ? 'on' : ''}" data-vista="agota">Running out <em class="r">${agotan}</em></button>
-        </span>
-        <label class="dki-sel"><select id="dkiVendor" aria-label="Vendor"${_vista === 'agota' ? ' disabled' : ''}>${vendors.map(v =>
-          `<option value="${esc(v)}"${v === _vendor ? ' selected' : ''}>${v === 'ALL' ? 'All vendors' : esc(cap(v))}</option>`).join('')}</select></label>
-        <label class="dki-sel"><select id="dkiOrden" aria-label="Sort"${_vista === 'agota' ? ' disabled' : ''}>
-          ${[['valor', 'Money on the shelf'], ['falta', 'Closest to empty'], ['nombre', 'Name']].map(([k, t]) => `<option value="${k}"${_orden === k ? ' selected' : ''}>${t}</option>`).join('')}
-          ${['valor', 'falta', 'nombre'].includes(_orden) ? '' : '<option value="col" selected>By column</option>'}</select></label>
-        <label class="dki-q"><i class="ti ti-search" aria-hidden="true"></i><input id="dkiQ" type="search" autocomplete="off" placeholder="Filter ${n} items" value="${esc(_q)}"></label>
-      </div>
       <div class="dki-cols">
         <span></span>${col('nombre', 'Product')}${col('vendor', 'Vendor')}${col('onhand', 'On hand', 'num')}${col('avg', 'Avg/wk', 'num')}${col('par', 'Par', 'num')}${col('pedir', 'To order', 'num')}${col('precio', 'Price', 'num')}
       </div>`;
@@ -231,15 +319,13 @@
     const lista = filas();
     const idx = _sel ? idxDe(_sel) : -1;
     if (_sel && idx < 0) { _sel = null; _borrador = null; }      // lo borraron (aquí o en otro dispositivo)
-    const enfocado = document.activeElement && document.activeElement.id;
-    const posQ = enfocado === 'dkiQ' ? document.activeElement.selectionStart : null;
     const conservarPanel = !!(_borrador && _sel && _caja.querySelector('#dkiPanel .dki-ph') && !(opts && opts.panel));
 
-    _caja.querySelector('#dkiCabeza').innerHTML = cabeza();
+    _caja.querySelector('#dkiCabeza').innerHTML = dineroLinea();
     const conteo = document.getElementById('countResumeHost');
     const hueco = _caja.querySelector('#dkiConteo');
     if (conteo && hueco) hueco.appendChild(conteo);
-    _caja.querySelector('#dkiPega').innerHTML = barra(lista.length);
+    _caja.querySelector('#dkiPega').innerHTML = barra();
     _caja.querySelector('#dkiLista').innerHTML = lista.length ? lista.map(fila).join('')
       : `<p class="dki-vacio">${_q.trim().length >= 2 ? 'Nothing matches.' : _vista === 'fix' ? 'Nothing left to fix.' : _vista === 'agota' ? 'Nothing runs out this week.' : master().length ? 'Nothing here with this vendor.' : 'No inventory yet.'}</p>`;
     const pan = _caja.querySelector('#dkiPanel');
@@ -251,8 +337,10 @@
       const MS = window.BarStockMobileSearch;
       if (ficha && MS && MS.llenarFicha) MS.llenarFicha(ficha, idx, () => pintar({ panel: true }), false);
     }
-    // El buscador conserva el foco y el cursor al repintar.
-    if (enfocado === 'dkiQ') { const q = _caja.querySelector('#dkiQ'); if (q) { q.focus(); try { q.setSelectionRange(posQ, posQ); } catch (e) {} } }
+    // El header (vistas con sus cuentas, el filtro, lo que está en uso);
+    // el campo del filtro conserva el foco y el cursor (desk-header).
+    const DH = window.BarStockDeskHeader;
+    if (DH && DH.refrescar) DH.refrescar('inventory');
     medirPega();
   }
   let _raf = 0;
@@ -371,11 +459,7 @@
       const a = acc.dataset.acc;
       const r = _sel ? master()[idxDe(_sel)] : null;
       const idx = _sel ? idxDe(_sel) : -1;
-      if (a === 'contar') { const b = document.getElementById('takeInventoryBtn'); if (b) b.click(); }
-      else if (a === 'nuevo' && typeof window.openNewItemModal === 'function') window.openNewItemModal();
-      else if (a === 'categorias' && window.BarStockAutoCategory) window.BarStockAutoCategory.run();
-      else if (a === 'botellas' && window.BarStockBottleAssign) window.BarStockBottleAssign.run();
-      else if (a === 'cerrar') elegir(_sel);
+      if (a === 'cerrar') elegir(_sel);
       else if (a === 'renombrar' && r) { _borrador = leerBorrador(r); _borrador.renombrar = true; pintar({ panel: true }); const n = _caja.querySelector('#dkiNombre'); if (n) n.focus(); }
       else if (a === 'categoria' && idx >= 0 && typeof window.openCategoryModal === 'function') window.openCategoryModal(idx);
       else if (a === 'botella' && r && window.BarStockBottlePicker) window.BarStockBottlePicker.open(r, () => pintar({ panel: !_borrador }));
@@ -395,8 +479,6 @@
       if (r && inp) { inp.value = Math.max(0, num(inp.value) + Number(pb.dataset.par)); _borrador = leerBorrador(r); marcarSucio(); }
       return;
     }
-    const v = t.closest('[data-vista]');
-    if (v) { _vista = v.dataset.vista; pintar(); return; }
     const c = t.closest('[data-col]');
     if (c) { const k = c.dataset.col; if (_orden === k) _dir = -_dir; else { _orden = k; _dir = /nombre|vendor/.test(k) ? 1 : -1; } pintar(); return; }
     const f = t.closest('.dki-fila');
@@ -404,13 +486,10 @@
   }
   function alCambiar(ev) {
     const id = ev.target.id;
-    if (id === 'dkiVendor') { _vendor = ev.target.value; pintar(); }
-    else if (id === 'dkiOrden') { if (ev.target.value !== 'col') { _orden = ev.target.value; _dir = 1; } pintar(); }
-    else if (/^dki(Vend|Par|Precio|Ov|Nombre|Codigo)$/.test(id)) { const r = master()[idxDe(_sel)]; if (r) { _borrador = leerBorrador(r); marcarSucio(); } }
+    if (/^dki(Vend|Par|Precio|Ov|Nombre|Codigo)$/.test(id)) { const r = master()[idxDe(_sel)]; if (r) { _borrador = leerBorrador(r); marcarSucio(); } }
   }
   function alEscribir(ev) {
-    if (ev.target.id === 'dkiQ') { _q = ev.target.value; pintar(); }
-    else if (/^dki(Par|Precio|Ov|Nombre|Codigo)$/.test(ev.target.id)) { const r = master()[idxDe(_sel)]; if (r) { _borrador = leerBorrador(r); marcarSucio(); } }
+    if (/^dki(Par|Precio|Ov|Nombre|Codigo)$/.test(ev.target.id)) { const r = master()[idxDe(_sel)]; if (r) { _borrador = leerBorrador(r); marcarSucio(); } }
   }
   // Esc cierra el panel (antes que "volver al Home" de desk-shell), y ↑ ↓
   // pasan de producto con el panel abierto. Escribiendo en un campo, no.
@@ -453,6 +532,8 @@
     if (E && E.on) ['inventoryUpdated', 'ordersUpdated', 'parAdjustmentsUpdated'].forEach(n => E.on(n, repintar));
     if (LC() && LC().alCambiar) LC().alCambiar(repintar);
     window.addEventListener('resize', medirPega, { passive: true });
+    const DH = window.BarStockDeskHeader;
+    if (DH && DH.registrar) DH.registrar('inventory', CABECERA);
   }
 
   if (document.getElementById('inventorySection')) montar();

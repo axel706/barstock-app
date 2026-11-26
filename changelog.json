@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261125-191841",
+    "items": [
+      "Desktop: Inventory controls in the top bar",
+      "Money on the shelf matches Home"
+    ]
+  },
+  {
     "build": "20261125-184346",
     "items": [
       "Desktop: new Inventory screen with filters",
@@ -186,13 +193,6 @@
     "items": [
       "New desktop layout: sections in a sidebar",
       "Location, cycle, Import, Export and More in one top bar"
-    ]
-  },
-  {
-    "build": "20261125-120340",
-    "items": [
-      "Changing a delivery day now moves orders on the way",
-      "Running out and the orders card follow it"
     ]
   }
 ]

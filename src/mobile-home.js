@@ -3157,6 +3157,10 @@
 
   window.BarStockMobileHome = {
     render, refresh, datos, vigilar, detalleEstante, saludo,
+    // "On the shelf" en dinero, la MISMA cuenta para el Inventory del
+    // escritorio: con el mismo nombre decía lo contado y el Home el LIVE
+    // (Axel, 2026-11-26: "no es el mismo money on the shelf").
+    estante,
     sincronizarHoy: () => sincronizarHoy(null),
     // La cifra de MarginEdge en el escritorio: su Sync (el mismo de
     // aquí, sin botón propio: el avance llega por alSync) y lo que dice

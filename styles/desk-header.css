@@ -1,0 +1,204 @@
+/* ── El header de las secciones del escritorio (Axel, 2026-11-26) ───────
+ *
+ * src/desk-header.js. Lámina "Section header · fixed places": cinco
+ * sitios fijos (barra lateral, título, vistas al centro, afinar,
+ * acciones + Do we have + ⋯). En el Home no se ve nada de esto.
+ *
+ * Todo cuelga de #dkCab (un id): app.css le pone a cada <button> su
+ * radio, su desenfoque y su sombra con un selector de 21 :not(), y sólo
+ * un id le gana.
+ */
+
+#dkCab { display: none; }
+
+@media (min-width: 641px) {
+  /* En una sección con su header: fuera el saludo, la ruta, la locación y
+     los botones de la app (siguen en el DOM: ⋯ les hace clic). */
+  body.dk.dk-cab .bs-header #dkMiga,
+  body.dk.dk-cab .bs-header .dk-saludo,
+  body.dk.dk-cab .bs-header .bs-loc-wrap,
+  body.dk.dk-cab .bs-header .dk-imp,
+  body.dk.dk-cab .bs-header .dk-exp,
+  body.dk.dk-cab .bs-header .dk-mas,
+  body.dk.dk-cab .bs-header #themeToggle,
+  body.dk.dk-cab .bs-header #authLogoutBtn { display: none !important; }
+
+  /* La rejilla: el centro en su columna, entre dos iguales. Así las
+     vistas quedan en medio digan lo que digan los lados. */
+  body.dk.dk-cab .bs-header #dkCab { order: 1; flex: 1; min-width: 0; display: block; }
+  #dkCab .dkc-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; column-gap: 14px; }
+  body.dk.dk-cab .bs-header #dkCab { container: dkcab / inline-size; }
+  #dkCab .dkc-seg .c { display: none; }
+  #dkCab .dkc-izq, #dkCab .dkc-der { display: flex; align-items: center; min-width: 0; }
+  #dkCab .dkc-der { justify-content: flex-end; gap: 6px; }
+  #dkCab .dkc-afinar, #dkCab .dkc-acciones { display: flex; gap: 6px; }
+  #dkCab .dkc-sep { width: 1px; height: 24px; margin: 0 3px; background: rgba(255, 255, 255, .14); flex: none; }
+
+  /* 2 · El título, grande. "‹" dice que es la vuelta al Home. */
+  #dkCab .dkc-titulo {
+    display: inline-flex; align-items: center; gap: 4px; min-width: 0; height: 44px; padding: 0 6px 0 0; margin: 0;
+    border: 0; background: none; color: #f8fafc; cursor: pointer; border-radius: 12px !important;
+    font: inherit; font-size: 30px; font-weight: 850; letter-spacing: -.7px; white-space: nowrap;
+    box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  #dkCab .dkc-titulo span { overflow: hidden; text-overflow: ellipsis; }
+  #dkCab .dkc-titulo .ti { font-size: 22px; color: #64748b; flex: none; transition: color .15s, transform .15s; }
+  #dkCab .dkc-titulo:hover .ti { color: #7dd3fc; transform: translateX(-2px); }
+
+  /* 3 · Las vistas. */
+  #dkCab .dkc-seg { display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12); }
+  #dkCab .dkc-seg button {
+    padding: 7px 14px; margin: 0; border: 0; border-radius: 999px !important; background: none; color: #cbd5e1; cursor: pointer;
+    font: inherit; font-size: 13.5px; font-weight: 750; white-space: nowrap;
+    box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  #dkCab .dkc-seg button:hover { color: #fff; }
+  #dkCab .dkc-seg button.on { background: rgba(56, 189, 248, .24); color: #fff; box-shadow: inset 0 0 0 1px rgba(125, 211, 252, .55); }
+  #dkCab .dkc-seg em { font-style: normal; margin-left: 6px; font-weight: 800; color: #94a3b8; font-variant-numeric: tabular-nums; }
+  #dkCab .dkc-seg em.a { color: #fcd34d; }
+  #dkCab .dkc-seg em.r { color: #fca5a5; }
+
+  /* 4 y 5 · Los huecos: 38 px fijos. El botón va ENCIMA (absoluto) y al
+     abrirse crece por encima de sus vecinos: nada se mueve. Los de afinar
+     (4) crecen hacia la DERECHA y los de las acciones (5) hacia la
+     izquierda: así ninguno tapa nunca las vistas del centro (el filtro,
+     abierto hacia la izquierda, se comía "Needs fixing").
+     Lo que recibe el ratón es el HUECO, no el botón abierto (que va con
+     pointer-events: none): abierto encima del vecino, el botón no dejaba
+     llegar a él, porque al ir hacia el vecino el ratón seguía encima del
+     abierto. Así, al pasar al hueco de al lado, el anterior se cierra. */
+  #dkCab .dkc-hueco { position: relative; width: 38px; height: 38px; flex: none; cursor: pointer; }
+  #dkCab .dkc-vacio { cursor: default; pointer-events: none; }
+  #dkCab .dkc-pl {
+    position: absolute; top: 0; right: 0; z-index: 1; pointer-events: none;
+    display: flex; flex-direction: row-reverse; align-items: center; justify-content: flex-start; gap: 8px;
+    height: 38px; min-width: 38px; max-width: 38px; padding: 0 9px; margin: 0; overflow: hidden;
+    border-radius: 999px !important; border: 1px solid rgba(255, 255, 255, .16); background: rgba(255, 255, 255, .06);
+    color: #e2e8f0; font: inherit; font-size: 13.5px; font-weight: 750; white-space: nowrap;
+    box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+    transition: max-width .22s ease, background-color .15s, border-color .15s;
+  }
+  #dkCab .dkc-afinar .dkc-pl { right: auto; left: 0; flex-direction: row; }
+  #dkCab .dkc-pl .ti { font-size: 18px; flex: none; width: 18px; text-align: center; }
+  #dkCab .dkc-pl b { font-weight: inherit; opacity: 0; transition: opacity .15s; }
+  /* Abierto: con el ratón en su hueco, con el teclado, con su menú abierto
+     o un momento tras un toque. Fondo opaco: encima de un vecino no se
+     mezcla. */
+  #dkCab :is(.dkc-hueco:hover > .dkc-pl, .dkc-pl:focus-visible, .dkc-pl.abierto, .dkc-pl.toque) { max-width: 280px; z-index: 3; background: #13233a; border-color: rgba(255, 255, 255, .3); }
+  #dkCab :is(.dkc-hueco:hover > .dkc-pl, .dkc-pl:focus-visible, .dkc-pl.abierto, .dkc-pl.toque) b { opacity: 1; }
+  #dkCab .dkc-pl.azul { background: rgba(56, 189, 248, .22); border-color: rgba(125, 211, 252, .55); color: #f0f9ff; }
+  #dkCab :is(.dkc-hueco:hover > .dkc-pl, .dkc-pl:focus-visible, .dkc-pl.abierto, .dkc-pl.toque).azul { background: #0c3a52; }
+  #dkCab .dkc-pl.verde { background: rgba(34, 197, 94, .24); border-color: rgba(134, 239, 172, .55); color: #f0fdf4; }
+  #dkCab :is(.dkc-hueco:hover > .dkc-pl, .dkc-pl:focus-visible, .dkc-pl.abierto, .dkc-pl.toque).verde { background: #14532d; }
+  /* En uso (un proveedor elegido, un filtro escrito): azul y un punto. */
+  #dkCab .dkc-pl.en { background: rgba(56, 189, 248, .24); border-color: rgba(125, 211, 252, .65); color: #fff; overflow: visible; }
+  #dkCab .dkc-pl.en::after { content: ""; position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; border-radius: 50%; background: #38bdf8; border: 2px solid #0b1220; }
+  /* El texto de lo que está en uso se esconde con opacity, NO con
+     visibility: el filtro se repinta en cada letra y desk-header le
+     devuelve el foco al campo nuevo, que todavía no tiene :focus-within;
+     con visibility: hidden no podía recibirlo y sólo entraba la primera
+     letra. */
+  #dkCab .dkc-hueco:not(:hover) > .dkc-pl.en:not(:focus-visible, :focus-within, .abierto, .toque) :is(b, input) { opacity: 0; }
+  #dkCab :is(.dkc-hueco:hover > .dkc-pl, .dkc-pl:focus-visible, .dkc-pl.abierto, .dkc-pl.toque).en { background: #0c3a52; overflow: hidden; }
+  #dkCab .dkc-pl.apagado { opacity: .4; }
+  #dkCab .dkc-hueco:has(.apagado) { cursor: default; }
+
+  /* Un campo (el filtro de la lista): redondo hasta que se toca, y
+     escribiendo recibe el ratón (para el cursor y la selección). 16 px:
+     en el iPad, por debajo, Safari hace zoom al tocarlo (test-zoom-ios). */
+  #dkCab .dkc-campo { flex-direction: row; }
+  #dkCab .dkc-campo:focus-within { pointer-events: auto; cursor: text; }
+  #dkCab .dkc-campo input {
+    flex: 1; min-width: 0; height: 100%; padding: 0; margin: 0;
+    border: 0 !important; background: none !important; box-shadow: none !important; outline: none; border-radius: 0 !important;
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+    color: #f8fafc; font: inherit; font-size: 16px; font-weight: 600;
+  }
+  #dkCab .dkc-campo input::placeholder { color: #94a3b8; font-weight: 500; }
+  #dkCab .dkc-campo input::-webkit-search-cancel-button { display: none; }
+  #dkCab .dkc-hueco:hover > .dkc-campo, #dkCab .dkc-campo:focus-within { max-width: 300px; width: 300px; }
+  #dkCab .dkc-campo:focus-within { z-index: 4; background: #13233a; border-color: rgba(125, 211, 252, .8); }
+
+  /* 5 · Do we have: el campo de desk-search, en su hueco, como lupa. Se
+     abre con el ratón en su hueco y se queda abierto escribiendo o con su
+     panel; el hueco le pasa el clic al campo (desk-header.js). */
+  body.dk.dk-cab .bs-header #dkCab #dkBusca {
+    position: absolute; top: 0; right: 0; z-index: 1; margin: 0; pointer-events: none;
+    width: 38px; max-width: 38px; height: 38px; padding: 0 9px; gap: 8px; overflow: hidden;
+    flex-direction: row-reverse; justify-content: flex-start;
+    background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .16); box-shadow: none;
+    transition: max-width .22s ease, width .22s ease;
+  }
+  body.dk.dk-cab .bs-header #dkCab #dkBusca .ti-search { font-size: 18px; opacity: 1; width: 18px; text-align: center; }
+  body.dk.dk-cab .bs-header #dkCab #dkBusca #dkBuscaIn { flex: 1; min-width: 0; }
+  body.dk.dk-cab .bs-header #dkCab .dkc-busca:hover > #dkBusca,
+  body.dk.dk-cab .bs-header #dkCab #dkBusca:focus-within,
+  body.dk.dk-cab.dk-buscando .bs-header #dkCab #dkBusca { width: 320px; max-width: 320px; z-index: 4; background: #13233a; border-color: rgba(255, 255, 255, .3); }
+  body.dk.dk-cab .bs-header #dkCab #dkBusca:focus-within,
+  body.dk.dk-cab.dk-buscando .bs-header #dkCab #dkBusca { pointer-events: auto; border-color: rgba(125, 211, 252, .8); box-shadow: 0 0 0 3px rgba(56, 189, 248, .2); }
+
+  /* ── El menú que cuelga de un botón (proveedor, orden, ⋯) ── */
+  #dkcPop {
+    position: fixed; z-index: 1200; min-width: 230px; max-width: 320px; overflow-y: auto; overscroll-behavior: contain;
+    padding: 6px; border-radius: 14px; background: rgba(12, 20, 36, .97); border: 1px solid rgba(255, 255, 255, .16);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, .5); color: #e2e8f0;
+  }
+  #dkcPop .dkc-mh { padding: 8px 10px 3px; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #7f8ea3; }
+  #dkcPop .dkc-mh:not(:first-child) { margin-top: 4px; border-top: 1px solid rgba(255, 255, 255, .08); padding-top: 10px; }
+  #dkcPop .dkc-msep { height: 1px; margin: 4px 6px; background: rgba(255, 255, 255, .08); }
+  #dkcPop .dkc-mi {
+    display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; margin: 0;
+    border: 0; border-radius: 9px !important; background: none; color: inherit; cursor: pointer; text-align: left;
+    font: inherit; font-size: 13.5px; font-weight: 600; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  #dkcPop .dkc-mi:hover { background: rgba(255, 255, 255, .08); }
+  #dkcPop .dkc-mi .ti { font-size: 17px; color: #94a3b8; flex: none; }
+  #dkcPop .dkc-mi span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #dkcPop .dkc-mi.on { color: #fff; }
+  #dkcPop .dkc-mi.on .ti { color: #7dd3fc; }
+  #dkcPop .dkc-mi .dkc-ok { margin-left: auto; color: #7dd3fc; }
+  #dkcPop .dkc-mi.rd, #dkcPop .dkc-mi.rd .ti { color: #fca5a5; }
+
+  /* ── El claro: el mismo vidrio claro del header de siempre ── */
+  body.light.dk #dkCab .dkc-titulo { color: #0f172a; }
+  body.light.dk #dkCab .dkc-seg { background: rgba(255, 255, 255, .55); border-color: rgba(15, 23, 42, .12); }
+  body.light.dk #dkCab .dkc-seg button { color: #334155; }
+  body.light.dk #dkCab .dkc-seg button.on { background: #0ea5e9; color: #fff; box-shadow: none; }
+  body.light.dk #dkCab .dkc-seg em { color: #64748b; }
+  body.light.dk #dkCab .dkc-seg button.on em { color: #e0f2fe; }
+  body.light.dk #dkCab .dkc-seg em.a { color: #b45309; }
+  body.light.dk #dkCab .dkc-seg em.r { color: #b91c1c; }
+  body.light.dk #dkCab .dkc-pl,
+  body.light.dk.dk-cab .bs-header #dkCab #dkBusca { background: rgba(255, 255, 255, .7); border-color: rgba(15, 23, 42, .14); color: #0f172a; }
+  body.light.dk #dkCab :is(.dkc-hueco:hover > .dkc-pl, .dkc-pl:focus-visible, .dkc-pl.abierto, .dkc-pl.toque),
+  body.light.dk #dkCab .dkc-campo:focus-within,
+  body.light.dk.dk-cab .bs-header #dkCab .dkc-busca:hover > #dkBusca,
+  body.light.dk.dk-cab .bs-header #dkCab #dkBusca:focus-within { background: #fff; }
+  body.light.dk #dkCab .dkc-campo input { color: #0f172a; }
+  body.light.dk #dkCab .dkc-pl.azul, body.light.dk #dkCab .dkc-pl.en { background: #0ea5e9; border-color: #0284c7; color: #fff; }
+  body.light.dk #dkCab .dkc-pl.verde { background: #16a34a; border-color: #15803d; color: #fff; }
+  body.light.dk #dkCab .dkc-sep { background: rgba(15, 23, 42, .14); }
+  /* Abiertos, los de color siguen de su color: la regla de arriba (blanco)
+     les ganaba y el texto blanco de Add item desaparecía. */
+  body.light.dk #dkCab :is(.dkc-hueco:hover > .dkc-pl, .dkc-pl:focus-visible, .dkc-pl.abierto, .dkc-pl.toque):is(.azul, .en) { background: #0284c7; color: #fff; }
+  body.light.dk #dkCab :is(.dkc-hueco:hover > .dkc-pl, .dkc-pl:focus-visible, .dkc-pl.abierto, .dkc-pl.toque).verde { background: #15803d; color: #fff; }
+
+  /* Poco ancho (el iPad de 1180 con la barra lateral): con los dos lados
+     iguales las vistas no caben en medio y se encimaban con los botones.
+     Entonces van en el hueco entre el título y los botones (centradas en
+     él), y por debajo de ~900, con los nombres cortos (All / Fix). */
+  @container dkcab (max-width: 1060px) {
+    #dkCab .dkc-grid { grid-template-columns: auto minmax(0, 1fr) auto; }
+    #dkCab .dkc-centro { display: flex; justify-content: center; min-width: 0; }
+    #dkCab .dkc-titulo { font-size: 26px; }
+  }
+  @container dkcab (max-width: 900px) {
+    #dkCab .dkc-seg button { padding: 7px 10px; }
+    #dkCab .dkc-seg .l { display: none; }
+    #dkCab .dkc-seg .c { display: inline; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #dkCab .dkc-pl, #dkCab .dkc-pl b, #dkCab .dkc-titulo .ti, body.dk.dk-cab .bs-header #dkCab #dkBusca { transition: none; }
+  }
+}

@@ -109,8 +109,8 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 
 ## La arquitectura
 
-Frontend estático, sin build. `index.html` es un monolito y hay ~159 módulos
-`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 36 hojas
+Frontend estático, sin build. `index.html` es un monolito y hay ~160 módulos
+`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 37 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
 12 funciones en `api/` sobre Vercel. **El tope del plan son 12, y está lleno**
@@ -755,12 +755,17 @@ sección de hoy vive tal cual dentro del armazón.
   (`dk-pantalla`). Lo de antes (`.section-header-row` y
   `#inventorySectionBody`) se ESCONDE, no se quita: `render()` de
   index.html sigue escribiendo ahí y el conteo, los modales y el
-  tiempo real cuelgan de eso. La cabeza: Count (clic en
-  `#takeInventoryBtn`), Add item, categorías y botellas automáticas, el
-  conteo en curso (`#countResumeHost`, movido) y cuatro cifras (dinero,
-  items, Needs fixing, Running out). La barra C, pegada: Everything /
-  Needs fixing / Running out, proveedor, orden, buscador y los títulos
-  de las columnas, que también ordenan. **Las reglas de las filas son
+  tiempo real cuelgan de eso. Desde el 2026-11-26 los controles van en
+  el header de sitios fijos (abajo): All / Needs fixing / Running out
+  al centro, con sus cuentas acotadas por el filtro y el proveedor;
+  filtro, proveedor y orden; Count y Add item; en ⋯, categorías y
+  botellas automáticas. En la página sólo queda **Money on the shelf**,
+  el MISMO número del Home (`BarStockMobileHome.estante`: antes decía
+  lo contado con el mismo nombre), con su reparto por categoría sacado
+  fila por fila de la misma cuenta (contado + llegó − vendido) para que
+  sume el total; el conteo en curso (`#countResumeHost`, movido); y los
+  títulos de las columnas, pegados bajo el header, que también
+  ordenan. **Las reglas de las filas son
   las del teléfono**: `BarStockMobileInventory.filtrar` y `faltas`. El
   panel A a la derecha (cajón por encima con menos de 1000 px de
   sección): Rename (`BarStockItemEdit.renombrar`), proveedor, categoría,
@@ -777,6 +782,46 @@ sección de hoy vive tal cual dentro del armazón.
   producto abierto por su NOMBRE (la recarga cambia los objetos) y,
   con algo a medio editar, repinta la lista pero no el panel. Prueba:
   `test-inventario-escritorio`.
+- **EL HEADER DE LAS SECCIONES: SITIOS FIJOS** (Axel, 2026-11-26, lámina
+  "Section header · fixed places": "es dinámico, pero a la vez es fijo
+  […] los controles siempre en las mismas posiciones"). El estándar para
+  toda sección que se rehaga; el Home no cambia. `src/desk-header.js` y
+  `styles/desk-header.css`; la sección se registra
+  (`BarStockDeskHeader.registrar(sec, { titulo, vistas, afinar,
+  acciones, extras, alClic, alEscribir })`) y llama a `refrescar(sec)`
+  al pintarse; desk-shell le avisa en cada `marcar()`. Ya lo usa
+  Inventory; las demás siguen con la ruta hasta rehacerse.
+  - Cinco sitios, siempre en este orden y del mismo tamaño: 1 la barra
+    lateral (`#dkMenu`), 2 el título grande (‹ y clic: Home; Esc
+    también), 3 las vistas CENTRADAS (rejilla `1fr auto 1fr`), 4 afinar
+    (tres huecos: filtro, proveedor, orden…), 5 acciones (dos huecos:
+    la de la sección en azul, crear en verde) y después Do we have y ⋯.
+    Un sitio que la sección no usa queda VACÍO del mismo tamaño
+    (`vacio()`): la siguiente no se corre.
+  - En una sección se van el saludo, la ruta, la locación ("si ya
+    estamos en la locación, ya sabemos dónde estamos") e Import,
+    Export, More, tema y Logout: van en ⋯, cada renglón le hace clic al
+    botón de siempre (escondido, sigue en el DOM; el de un archivo, a
+    su `<input>`). Do we have es EL MISMO campo de desk-search, movido a
+    su hueco y de vuelta al Home.
+  - Los botones son círculos de 38 px que se abren con su nombre al
+    pasar el ratón, POR ENCIMA de sus vecinos (nada se mueve): los de
+    afinar hacia la derecha, los de las acciones hacia la izquierda;
+    hacia el centro tapaban las vistas. **Lo que recibe el ratón es el
+    hueco, no el botón abierto** (`pointer-events: none`): abierto
+    encima del vecino no dejaba llegar a él. Con el dedo, un toque hace
+    la acción y el nombre se ve un momento. Un campo (el filtro) se abre
+    al tocarlo; Esc o Enter lo cierran sin borrarlo.
+  - Lo que está en uso (un proveedor, un filtro) va azul con un punto y
+    su valor al pasar el ratón; no se queda abierto (no cabía y
+    empujaba las vistas). Las cuentas de las vistas bajan ("All 9").
+    Su texto se esconde con `opacity`, no `visibility`: el filtro se
+    repinta en cada letra y con `visibility` el campo nuevo no recibía
+    el foco (sólo entraba la primera letra).
+  - Con poco ancho (`@container dkcab`; el iPad de 1180 con la barra):
+    las vistas van en el hueco entre el título y los botones, y por
+    debajo de 900 con el nombre corto (All / Fix / Out).
+  Prueba: grupos 2, 3 y 3b de `test-inventario-escritorio`.
 
 ## Reglas del dominio que no son obvias
 

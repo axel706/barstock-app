@@ -49,6 +49,9 @@
   function ajustarAncho() {
     const cont = document.getElementById('dkBusca');
     if (!cont) return;
+    // En una sección con el header estándar (desk-header.js) el campo es la
+    // lupa de su hueco y se abre por encima: no hay ancho que medir.
+    if (document.body.classList.contains('dk-cab')) return;
     const loc = document.querySelector('.bs-header .bs-loc-wrap');
     const medir = () => {
       const izq = cont.getBoundingClientRect().left;
@@ -285,7 +288,7 @@
   else setTimeout(() => arrancar(0), 0);
 
   window.BarStockDeskSearch = {
-    montar, cerrar, elegir,
+    montar, cerrar, elegir, ajustar: ajustarAncho,
     buscar: (q) => { if (_campo) { _campo.value = q; alEscribir(); } }
   };
 })();

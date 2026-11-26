@@ -117,6 +117,11 @@
 
   function marcar() {
     pintarMiga();
+    // El header de las secciones que ya tienen el suyo (desk-header.js):
+    // título, vistas al centro y sus controles en sitios fijos. Las demás
+    // siguen con la ruta hasta que se rehagan.
+    const DH = window.BarStockDeskHeader;
+    if (DH && DH.marcar) DH.marcar(activa());
     if (!_lado) return;
     const a = activa();
     _lado.querySelectorAll('.dk-nav[data-dk]').forEach(b => {

@@ -13,8 +13,13 @@
  *      categorías, botellas, Pour·IQ chip e Item Info, categoría, Rename,
  *      proveedor, par, precio, override, botella, Received, Zero, Delete),
  *      salvo lo que Axel quitó: el On Hand a mano y Scan Price Invoice.
+ *      Ni del header: Import, Export, los datos, el tema, Settings y
+ *      Logout siguen en ⋯ (cada renglón es el botón de siempre).
  *   3. Las reglas de las filas son las del teléfono (filtrar / faltas).
- *   4. La barra C y el panel A; el estándar de las secciones.
+ *   4. El header de sitios fijos (2026-11-26, desk-header.js): el título,
+ *      las vistas con sus cuentas, afinar (filtro, proveedor, orden) y las
+ *      acciones; lo que está en uso, azul. Y Money on the shelf, el MISMO
+ *      número del Home (antes, con el mismo nombre, decía lo contado).
  *
  *   node tools/test-inventario-escritorio.js
  */
@@ -35,11 +40,20 @@ const txt = (el) => (el ? el.textContent.replace(/\s+/g, ' ').trim() : '');
 
 const INDEX = leer('index.html');
 const DI = leer('src/desk-inventory.js');
+const DH = leer('src/desk-header.js');
+const CSSH = leer('styles/desk-header.css');
 const MI = leer('src/mobile-inventory.js');
 const CSS = leer('styles/desk-inventory.css');
 const RT = leer('src/inventory-realtime.js');
 
 const w = new JSDOM(`<!doctype html><body class="dk"><div class="wrap">
+  <div class="bs-header card"><button id="dkMenu"></button><div id="dkSaludo" class="dk-saludo">Hi</div>
+    <label id="dkBusca"><i class="ti ti-search"></i><input id="dkBuscaIn"></label>
+    <div class="bs-loc-wrap">Crown</div>
+    <div class="bs-toolbar-group dk-imp"><button id="importMenuBtn">Import</button><div id="importMenu"><label class="bs-dd-item"><i class="ti ti-archive"></i>Import backup<input type="file" id="backupFile"></label></div></div>
+    <div class="bs-toolbar-group dk-exp"><button id="exportMenuBtn">Export</button><div id="exportMenu"><button id="exportMasterBtn" class="bs-dd-item"><i class="ti ti-table-export"></i>Export master CSV</button></div></div>
+    <div class="dk-mas"><div id="bsMoreMenu"><button id="restoreBackupBtn" class="bs-dd-item" style="display:none">Restore backup</button><button id="resetBtn" class="bs-dd-item bs-dd-danger">Reset master</button></div></div>
+    <button id="themeToggle">t</button><button id="authLogoutBtn">Logout</button></div>
   <div class="card section-card" id="inventorySection">
     <div class="section-header-row">old</div>
     <div class="section-body" id="inventorySectionBody"><div id="countResumeHost"><b>In progress</b></div>
@@ -78,7 +92,13 @@ w.BarStockLiveCache = { cuanto: (r) => r.item === "Tito's Vodka" ? 2.4 : Number(
 w.BarStockMobileSearch = { llenarFicha: (caja, idx) => { llamadas.push('ficha:' + idx); caja.innerHTML = '<div class="m-fic">ficha</div>'; } };
 w.BarStockGuest = { puede: () => true };
 w.BarStockMobile = { register: () => {} };
+// El Home: su "On the shelf" (LIVE × precio) es el número de Inventory.
+w.BarStockMobileHome = { estante: () => ({ live: true, total: 138, contado: 141, llego: 0, vendido: 3, n: 3, sin: 1 }) };
+w.BarStockLiveCache.botellas = () => ({ total: 7.4, live: true });
+w.BarStockDeskShell = { activa: () => 'inventory', ir: (id) => llamadas.push('ir:' + id) };
+w.openSettingsModal = () => llamadas.push('ajustes');
 w.eval(MI);
+w.eval(DH);
 w.eval(DI);
 
 (async () => {
@@ -92,45 +112,85 @@ w.eval(DI);
   grupo('1. El estándar y la pantalla');
   prueba('la sección es una pantalla del estándar (.dk-pantalla)', sec.classList.contains('dk-pantalla'));
   prueba('lo de antes se esconde en el escritorio (sigue en el DOM para render())', /#inventorySection > \.section-header-row,\s*body\.dk #inventorySection > #inventorySectionBody \{ display: none !important; \}/.test(CSS) && !!D.getElementById('inventorySectionBody'));
-  prueba('el conteo en curso, en la cabeza', !!caja.querySelector('#dkiConteo #countResumeHost'));
-  prueba('cuatro cifras: dinero, items, needs fixing, running out', /Money on the shelf/.test(txt(caja.querySelector('.dki-cifras'))) && /Items/.test(txt(caja.querySelector('.dki-cifras'))) && /Needs fixing\s*2/.test(txt(caja.querySelector('.dki-cifras'))) && /Running out\s*1/.test(txt(caja.querySelector('.dki-cifras'))));
+  prueba('el conteo en curso, bajo el dinero', !!caja.querySelector('#dkiConteo #countResumeHost'));
+  const din = txt(caja.querySelector('.dki-din'));
+  prueba('Money on the shelf es el número del Home (LIVE), no lo contado', /Money on the shelf\s*≈\$138/.test(din) && /Live/.test(din) && !/\$141/.test(din), din);
+  prueba('con sus botellas y lo que no tiene precio', /≈7 bottles/.test(din) && /1 in stock with no price/.test(din), din);
+  prueba('el reparto suma el total: contado + llegó − vendido de cada fila', /Vodka \$138/.test(din), din);
+  prueba('sin las cuatro cifras de antes (las cuentas van en las vistas)', !caja.querySelector('.dki-cifras') && !/Items/.test(din));
   prueba('una fila por producto, en el orden del teléfono (dinero en el estante)', filas().join('|') === "Aperol|Tito's Vodka|Hennessy VS", filas().join('|'));
   const tito = caja.querySelector('.dki-fila[data-item="Tito\'s Vodka"]');
   prueba('el número es el LIVE con ≈ y su par', /≈2\.4\s*\/6/.test(txt(tito.querySelector('.dki-hay'))));
   prueba('● Live, Out Sat y el chip de Pour·IQ', /Live/.test(txt(tito)) && /Out Sat/.test(txt(tito)) && !!tito.querySelector('.par-chip'));
   prueba('lo que le falta a cada uno (no price, no par)', /no price/.test(txt(caja.querySelector('.dki-fila[data-item="Hennessy VS"]'))) && /no par/.test(txt(caja.querySelector('.dki-fila[data-item="Hennessy VS"]'))));
 
-  grupo('2. La barra C');
-  prueba('segmentado: Everything, Needs fixing, Running out', caja.querySelectorAll('.dki-seg [data-vista]').length === 3);
-  caja.querySelector('[data-vista="fix"]').click(); await esperar(10);
-  prueba('Needs fixing: sólo lo incompleto (regla del teléfono)', filas().join('|') === 'Hennessy VS|Aperol' || filas().join('|') === 'Aperol|Hennessy VS', filas().join('|'));
-  caja.querySelector('[data-vista="agota"]').click(); await esperar(10);
+  grupo('2. El header de sitios fijos');
+  const cab = D.getElementById('dkCab');
+  prueba('Inventory usa el header de las secciones', !!cab && D.body.classList.contains('dk-cab'));
+  prueba('2 · el título, grande, y vuelve al Home', txt(cab.querySelector('.dkc-titulo')) === 'Inventory');
+  cab.querySelector('.dkc-titulo').click();
+  prueba('   (clic en el título → Home)', llamadas.includes('ir:home'));
+  const vistas = () => txt(cab.querySelector('.dkc-centro'));
+  prueba('3 · las vistas, al centro, con sus cuentas', /All\s*All\s*3/.test(vistas()) && /Needs fixing\s*Fix\s*2/.test(vistas()) && /Running out\s*Out\s*1/.test(vistas()), vistas());
+  prueba('4 · afinar: tres huecos (filtro, proveedor, orden)', cab.querySelectorAll('.dkc-afinar > .dkc-hueco').length === 3 && !!cab.querySelector('.dkc-afinar #dkiQ') && !!cab.querySelector('.dkc-afinar [data-dkc="vendor"]') && !!cab.querySelector('.dkc-afinar [data-dkc="orden"]'));
+  prueba('5 · acciones: Count (azul) y Add item (verde), en dos huecos', cab.querySelectorAll('.dkc-acciones > .dkc-hueco').length === 2 && !!cab.querySelector('.dkc-acciones .dkc-pl.azul[data-dkc="contar"]') && !!cab.querySelector('.dkc-acciones .dkc-pl.verde[data-dkc="nuevo"]'));
+  prueba('5 · Do we have (el mismo campo, movido) y ⋯, al final', cab.querySelector('.dkc-busca #dkBusca') === D.getElementById('dkBusca') && !!cab.querySelector('[data-dkc="mas"]'));
+  prueba('fuera en una sección: saludo, locación, Import, Export, tema, Logout', ['#dkMiga', '.dk-saludo', '.bs-loc-wrap', '.dk-imp', '.dk-exp', '.dk-mas', '#themeToggle', '#authLogoutBtn'].every(x => CSSH.includes('body.dk.dk-cab .bs-header ' + x)));
+  prueba('los huecos miden siempre lo mismo y el botón se abre ENCIMA', /\.dkc-hueco \{ position: relative; width: 38px; height: 38px;/.test(CSSH) && /\.dkc-pl \{\s*position: absolute;[^}]*pointer-events: none/.test(CSSH));
+
+  grupo('3. Las vistas y afinar, con las reglas del teléfono');
+  cab.querySelector('[data-vista="fix"]').click(); await esperar(10);
+  prueba('Needs fixing: sólo lo incompleto', filas().join('|') === 'Hennessy VS|Aperol' || filas().join('|') === 'Aperol|Hennessy VS', filas().join('|'));
+  prueba('   y la vista elegida se marca', cab.querySelector('[data-vista="fix"]').classList.contains('on'));
+  cab.querySelector('[data-vista="agota"]').click(); await esperar(10);
   prueba('Running out: la lista de Running out', filas().join('|') === "Tito's Vodka");
-  caja.querySelector('[data-vista="todo"]').click(); await esperar(10);
-  const sel = caja.querySelector('#dkiVendor'); sel.value = 'SOUTHERN'; sel.dispatchEvent(new w.Event('change', { bubbles: true })); await esperar(10);
-  prueba('menú de proveedor', filas().join('|') === 'Hennessy VS');
-  const sel2 = caja.querySelector('#dkiVendor'); sel2.value = 'ALL'; sel2.dispatchEvent(new w.Event('change', { bubbles: true })); await esperar(10);
-  const ord = caja.querySelector('#dkiOrden'); ord.value = 'nombre'; ord.dispatchEvent(new w.Event('change', { bubbles: true })); await esperar(10);
-  prueba('menú de orden (Name)', filas().join('|') === "Aperol|Hennessy VS|Tito's Vodka");
+  prueba('   ahí el proveedor y el orden no aplican (apagados, en su sitio)', cab.querySelector('.dkc-hueco[data-dkc="vendor"]').getAttribute('aria-disabled') === 'true' && cab.querySelectorAll('.dkc-afinar > .dkc-hueco').length === 3);
+  cab.querySelector('[data-vista="todo"]').click(); await esperar(10);
+  cab.querySelector('.dkc-hueco[data-dkc="vendor"]').click(); await esperar(10);
+  const pop = () => D.getElementById('dkcPop');
+  prueba('el proveedor abre su menú', !!pop() && /All vendors/.test(txt(pop())) && /Southern/.test(txt(pop())));
+  [...pop().querySelectorAll('.dkc-mi')].find(b => /Southern/.test(b.textContent)).click(); await esperar(10);
+  prueba('elegir un proveedor filtra', filas().join('|') === 'Hennessy VS');
+  prueba('   y queda azul "en uso", con su nombre, y las cuentas bajan', cab.querySelector('.dkc-pl[data-dkc="vendor"]').classList.contains('en') && /Vendor: Southern/.test(cab.querySelector('.dkc-pl[data-dkc="vendor"]').getAttribute('aria-label')) && /All\s*All\s*1/.test(vistas()), vistas());
+  cab.querySelector('.dkc-hueco[data-dkc="vendor"]').click(); await esperar(10);
+  [...pop().querySelectorAll('.dkc-mi')].find(b => /All vendors/.test(b.textContent)).click(); await esperar(10);
+  cab.querySelector('.dkc-hueco[data-dkc="orden"]').click(); await esperar(10);
+  [...pop().querySelectorAll('.dkc-mi')].find(b => /Name/.test(b.textContent)).click(); await esperar(10);
+  prueba('el orden (Name)', filas().join('|') === "Aperol|Hennessy VS|Tito's Vodka");
   caja.querySelector('[data-col="precio"]').click(); await esperar(10);
   prueba('tocar una columna ordena por ella', filas()[0] === "Tito's Vodka", filas().join('|'));
-  const q = caja.querySelector('#dkiQ'); q.value = 'hen'; q.dispatchEvent(new w.Event('input', { bubbles: true })); await esperar(10);
-  prueba('buscador', filas().join('|') === 'Hennessy VS');
-  const q2 = caja.querySelector('#dkiQ'); q2.value = ''; q2.dispatchEvent(new w.Event('input', { bubbles: true })); await esperar(10);
-  prueba('la barra se pega bajo la barra de arriba', /\.dki-pega \{[^}]*position: sticky; top: var\(--dk-alto\)/.test(CSS));
+  prueba('   y el botón de orden lo dice', /Sort: Price/.test(cab.querySelector('.dkc-pl[data-dkc="orden"]').getAttribute('aria-label')));
+  let q = D.getElementById('dkiQ'); q.focus(); q.value = 'hen'; q.dispatchEvent(new w.Event('input', { bubbles: true })); await esperar(10);
+  prueba('el filtro', filas().join('|') === 'Hennessy VS');
+  prueba('   al repintar conserva el foco (se escribe seguido)', D.activeElement && D.activeElement.id === 'dkiQ' && D.activeElement.value === 'hen');
+  prueba('   el texto en uso se esconde con opacity, no visibility (si no, no recibe el foco)', /:is\(b, input\) \{ opacity: 0; \}/.test(CSSH) && !/input \{ visibility: hidden/.test(CSSH));
+  q = D.getElementById('dkiQ'); q.value = ''; q.dispatchEvent(new w.Event('input', { bubbles: true })); await esperar(10);
+  prueba('los nombres de las columnas se pegan bajo el header', /\.dki-pega \{[^}]*position: sticky; top: var\(--dk-alto\)/.test(CSS));
   prueba('las reglas de filas son las del teléfono (filtrar / faltas exportadas)', /BarStockMobileInventory = \{[^}]*filtrar, faltas \}/.test(MI) && /M\.filtrar\(/.test(DI) && /M\.faltas\(/.test(DI));
 
-  grupo('3. Las herramientas de la cabeza');
+  grupo('3b. Las acciones y ⋯');
   llamadas.length = 0;
   let contado = 0; D.getElementById('takeInventoryBtn').addEventListener('click', () => contado++);
-  caja.querySelector('[data-acc="contar"]').click();
-  caja.querySelector('[data-acc="nuevo"]').click();
-  caja.querySelector('[data-acc="categorias"]').click();
-  caja.querySelector('[data-acc="botellas"]').click();
+  cab.querySelector('.dkc-hueco[data-dkc="contar"]').click();
+  cab.querySelector('.dkc-hueco[data-dkc="nuevo"]').click();
   prueba('Count = Take inventory (con su comprobación del ciclo)', contado === 1);
-  prueba('Add item, categorías y botellas, lo de siempre', llamadas.includes('nuevo') && llamadas.includes('autocat') && llamadas.includes('autobot'), llamadas.join(','));
-  prueba('sin Scan Price Invoice (los precios vienen de MarginEdge)', !/Scan|invoice/i.test(txt(caja.querySelector('.dki-herr'))) && !/openInvoiceScanModal/.test(DI));
+  prueba('Add item, el de siempre', llamadas.includes('nuevo'), llamadas.join(','));
+  cab.querySelector('.dkc-hueco[data-dkc="mas"]').click(); await esperar(10);
+  const mas = txt(pop());
+  prueba('⋯: categorías y botellas de Inventory, arriba', /^Inventory\s*Assign categories automatically\s*Assign bottle shapes and sizes/.test(mas), mas);
+  prueba('⋯: Import, Export, los datos, el tema, Settings y Logout', /Import backup/.test(mas) && /Export master CSV/.test(mas) && /Reset master/.test(mas) && /Light mode|Dark mode/.test(mas) && /Settings/.test(mas) && /Logout/.test(mas), mas);
+  prueba('⋯: lo escondido no sale (Restore backup)', !/Restore backup/.test(mas));
+  let exp = 0; D.getElementById('exportMasterBtn').addEventListener('click', () => exp++);
+  let arch = 0; D.getElementById('backupFile').addEventListener('click', () => arch++);
+  [...pop().querySelectorAll('.dkc-mi')].find(b => /Export master/.test(b.textContent)).click(); await esperar(10);
+  cab.querySelector('.dkc-hueco[data-dkc="mas"]').click(); await esperar(10);
+  [...pop().querySelectorAll('.dkc-mi')].find(b => /Import backup/.test(b.textContent)).click(); await esperar(10);
+  cab.querySelector('.dkc-hueco[data-dkc="mas"]').click(); await esperar(10);
+  [...pop().querySelectorAll('.dkc-mi')].find(b => /Assign categories/.test(b.textContent)).click(); await esperar(10);
+  prueba('cada renglón es el botón de siempre (y el de un archivo, su <input>)', exp === 1 && arch === 1 && llamadas.includes('autocat'), [exp, arch, llamadas.join(',')].join(' '));
+  prueba('sin Scan Price Invoice (los precios vienen de MarginEdge)', !/Scan|invoice/i.test(txt(cab)) && !/openInvoiceScanModal/.test(DI));
   prueba('al crear, sin On Hand a mano (empieza en 0)', /#newItemModalBg label:has\(#newItemOnHand\) \{ display: none; \}/.test(CSS));
+  prueba('al volver al Home, Do we have vuelve a su sitio y el header de siempre', (() => { w.BarStockDeskHeader.marcar('home'); const ok2 = !D.body.classList.contains('dk-cab') && D.getElementById('dkBusca').previousElementSibling.id === 'dkSaludo'; w.BarStockDeskHeader.marcar('inventory'); return ok2; })());
 
   grupo('4. El producto (panel A)');
   llamadas.length = 0;
