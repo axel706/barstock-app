@@ -1193,7 +1193,16 @@
       // la revisión enseñaría los mismos renglones listos para
       // mandarse otra vez — y eso son dos órdenes al proveedor.
       if (_extra && _extra.quickOrder && window.BarStockMobileQuick) {
-        try { window.BarStockMobileQuick.limpiar(); } catch (e) {}
+        // Antes de tirarlo: si salió de To buy, sus líneas pasan a
+        // "Ordered" (la lista se acuerda de qué línea es cuál sólo en el
+        // borrador). Sin esto, lo pedido desde la revisión seguía por
+        // comprar.
+        const Q = window.BarStockMobileQuick;
+        if (Q.trasColocar) {
+          try { const aviso = await Q.trasColocar(orden); if (aviso) avisar(aviso); }
+          catch (e) { avisar('Saved, but the To buy list was not updated. Remove those lines by hand so nobody buys them twice.'); }
+        }
+        try { Q.limpiar(); } catch (e) {}
       }
 
       // LOOP en el escritorio: el CSV de siempre (exportLoopCsvFromRows,

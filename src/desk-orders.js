@@ -7,7 +7,7 @@
   // Los proveedores en una columna a la izquierda (su llegada, sus líneas,
   // su total y lo suyo que no llega a su entrega) y la orden del elegido a
   // la derecha. Con el header de sitios fijos (desk-header.js): las vistas
-  // Open · Sent (To buy e Invoices, con su lámina); la lupa para buscar líneas; Export
+  // To buy · Open · Sent · Invoices; la lupa para buscar líneas; Export
   // (azul) y Quick order (verde); en ⋯, Order analysis.
   //
   // La orden de la derecha NO es una segunda pantalla: es Open del
@@ -30,6 +30,12 @@
   // Q-O, Quick order (desk-quick.js).
   const DQ = () => window.BarStockDeskQuick;
   const enQuick = () => _vista === 'quick' && !!DQ();
+  // To buy (desk-tobuy.js): la lista y su orden de LOOP en una pantalla.
+  const DT = () => window.BarStockDeskToBuy;
+  const enBuy = () => _vista === 'buy' && !!DT();
+  // ¿Sale la pestaña? La regla del teléfono: con algo por comprar o algo
+  // pedido que aún no llega (mobile-orders.hayToBuy).
+  const hayBuy = () => !!(DT() && MO() && MO().hayToBuy && MO().hayToBuy());
   const DH = () => window.BarStockDeskHeader;
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -138,6 +144,7 @@
     if (DS() && DS().abierto()) DS().cerrar();
     if (DQ() && DQ().abierto()) DQ().cerrar();
     if (DV() && DV().abierto()) DV().cerrar();
+    if (DT() && DT().abierto()) DT().cerrar();
     _otra = o;
     _caja.dataset.vista = 'revision';
     _caja.classList.add('dko-revisando');
@@ -182,14 +189,18 @@
   // Colocada, el borrador queda vacío (colocar() lo limpia) y se va a
   // Sent, donde acaba de aparecer, como en el teléfono; si no, de vuelta
   // a su orden.
-  function revisarQuick(b) {
+  // Desde To buy (desk-tobuy), `de` trae su título y su vuelta: con algo
+  // aún en la orden, a To buy; colocada, a Sent.
+  function revisarQuick(b, de) {
     if (!MO() || !MO().revisarBorradorEscritorio) return;
+    const vuelta = (de && de.vista) || 'quick';
     otraRevision((det, op) => MO().revisarBorradorEscritorio(det, b, op), {
       // Sin "Orders": con él no cabía y "Review" salía como "…".
-      titulo: [{ t: 'Q-O', miga: 'qo' }, { t: b.nombre, miga: 'qov' }, 'Review'],
+      titulo: (de && de.titulo) || [{ t: 'Q-O', miga: 'qo' }, { t: b.nombre, miga: 'qov' }, 'Review'],
       alSalir: () => {
         const Q = window.BarStockMobileQuick && window.BarStockMobileQuick.escritorio;
-        _vista = Q && Q.borrador().items.length ? 'quick' : 'sent';
+        _vista = Q && Q.borrador().items.length ? vuelta : 'sent';
+        if (_vista === 'buy' && !hayBuy()) _vista = 'sent';
         montarModulo();
         const S = window.BarStockDeskShell;
         if (S && S.marcarLado) S.marcarLado();
@@ -208,7 +219,27 @@
   function montarModulo() {
     const det = _caja.querySelector('#dkoDet');
     if (_otra) { _otra = null; _caja.classList.remove('dko-revisando'); if (MO() && MO().cerrarEscritorio) MO().cerrarEscritorio(); }
+    if (_vista === 'buy' && !hayBuy()) _vista = 'open';
     _caja.dataset.vista = _vista;
+    if (!enBuy() && DT() && DT().abierto()) DT().cerrar();
+    // To buy (desk-tobuy.js): como Q-O, con la lista a la izquierda.
+    if (enBuy()) {
+      if (_abierto && MO() && MO().cerrarEscritorio) MO().cerrarEscritorio();
+      _abierto = false;
+      if (det) det.innerHTML = '';
+      if (DS() && DS().abierto()) DS().cerrar();
+      if (DV() && DV().abierto()) DV().cerrar();
+      pie();
+      const refrescar = () => { if (DH() && DH().refrescar) DH().refrescar('vendor'); };
+      DT().abrir(_caja, {
+        alCambiar: refrescar,
+        alVaciar: () => verVista('open'),
+        alCancelar: () => verVista('open'),
+        revision: { vista: 'buy', titulo: [{ t: 'To buy', miga: 'qov' }, 'LOOP', 'Review'] }
+      });
+      refrescar();
+      return;
+    }
     // Invoices (desk-invoices.js): como Sent, Open se suelta.
     if (enInv()) {
       if (_abierto && MO() && MO().cerrarEscritorio) MO().cerrarEscritorio();
@@ -298,11 +329,13 @@
 
   // ── El header de sitios fijos ──
   // Open y Sent (desk-sent.js, lámina "Sent · desktop": la sección History
-  // de antes queda escondida, y History de la barra lateral abre Sent).
-  // To buy e Invoices (el escritorio nunca las tuvo) entran con su lámina:
-  // sus pantallas del teléfono leen de la nube y sus estilos no están
-  // generados aquí, y una vista no se ofrece sin haberla visto funcionar.
-  const VISTAS = [['open', 'Open'], ['sent', 'Sent'], ['inv', 'Invoices']];
+  // de antes queda escondida, y History de la barra lateral abre Sent),
+  // Invoices (desk-invoices.js) y To buy (desk-tobuy.js), cada una con su
+  // lámina.
+  // To buy, primera y sólo con algo en la lista (la regla del teléfono;
+  // lámina "To buy · desktop", B).
+  const VISTAS_TODAS = [['buy', 'To buy'], ['open', 'Open'], ['sent', 'Sent'], ['inv', 'Invoices']];
+  const vistasHoy = () => VISTAS_TODAS.filter(([k]) => k !== 'buy' || hayBuy() || _vista === 'buy');
   const CABECERA = {
     // Con un proveedor abierto, su nombre en el título (Axel, en la Mac:
     // "< Orders - SOUTHERN"); la cabecera de dentro se va (desk-orders.css).
@@ -325,14 +358,14 @@
       const MI = window.BarStockMobileInvoices;
       const ei = MI && MI.estadoEscritorio ? MI.estadoEscritorio() : null;
       n.inv = ei ? ei.conSueltas : 0;
-      return '<div class="dkc-seg" role="tablist">' + VISTAS.map(([k, t]) =>
+      return '<div class="dkc-seg" role="tablist">' + vistasHoy().map(([k, t]) =>
         `<button type="button" data-dkc="vista" data-vista="${k}" class="${_vista === k ? 'on' : ''}" aria-selected="${_vista === k}"><span class="l">${t}</span><span class="c">${t}</span>${
           n[k] ? `<em class="${k === 'buy' || k === 'inv' ? 'a' : ''}">${n[k]}</em>` : ''}</button>`).join('') + '</div>';
     },
     afinar() {
       if (enSent()) return DS().CAB.afinar();
       if (enInv()) return DV().CAB.afinar();
-      if (enQuick() || _otra) { const D = DH(); return [D.vacio(), D.vacio(), D.vacio()]; }
+      if (enQuick() || enBuy() || _otra) { const D = DH(); return [D.vacio(), D.vacio(), D.vacio()]; }
       const D = DH();
       return [D.campo({ id: 'dkoQ', icon: 'ti-search', placeholder: 'Search lines', value: _q }), D.vacio(), D.vacio()];
     },
@@ -340,6 +373,7 @@
       if (enSent()) return DS().CAB.acciones();
       if (enInv()) return DV().CAB.acciones();
       const D = DH();
+      if (enBuy()) return [D.vacio(), D.boton({ acc: 'quick', icon: 'ti-bolt', label: 'Quick order', tono: 'verde' })];
       return [
         D.boton({ acc: 'exportar', icon: 'ti-file-export', label: 'Export', tono: 'azul' }),
         D.boton({ acc: 'quick', icon: 'ti-bolt', label: 'Quick order', tono: 'verde' })
@@ -357,7 +391,7 @@
         const m = t.dataset.miga;
         if (m === 'sent' || m === 'qov') return salirOtra();
         if (m === 'qo') { if (_otra) salirOtra(); if (DQ()) DQ().paso1(); return; }
-        if (m === 'orders' && (enQuick() || _otra)) { if (_otra) salirOtra(); return verVista('open'); }
+        if (m === 'orders' && (enQuick() || enBuy() || _otra)) { if (_otra) salirOtra(); return verVista('open'); }
         if (_vendor) elegir(_vendor);
         return;
       }
@@ -401,12 +435,20 @@
     const sentAbierto = !!(DS() && DS().abierto());
     // Con Sent, Q-O o una revisión prestada (Resend, Q-O) en pantalla, nada
     // que montar: cualquier cambio de clase de la sección los deshacía.
-    const otraVista = sentAbierto || (DQ() && DQ().abierto()) || (DV() && DV().abierto()) || !!_otra;
-    if (abierta()) { if (!_abierto && !otraVista) montarModulo(); }
+    const otraVista = sentAbierto || (DQ() && DQ().abierto()) || (DV() && DV().abierto()) || (DT() && DT().abierto()) || !!_otra;
+    if (abierta()) {
+      // La lista de To buy se lee al abrir Orders (en el teléfono la lee su
+      // pestaña): de ella depende que salga la pestaña. Si cambia la cuenta,
+      // toBuyCounted repinta el header.
+      const TBm = window.BarStockMobileToBuy;
+      if (TBm && TBm.cargar) TBm.cargar();
+      if (!_abierto && !otraVista) montarModulo();
+    }
     else {
       if (sentAbierto) DS().cerrar();
       if (DQ() && DQ().abierto()) DQ().cerrar();
       if (DV() && DV().abierto()) DV().cerrar();
+      if (DT() && DT().abierto()) DT().cerrar();
       if (_otra) { _otra = null; _caja.classList.remove('dko-revisando'); _caja.dataset.vista = _vista; if (MO() && MO().cerrarEscritorio) MO().cerrarEscritorio(); const d = _caja.querySelector('#dkoDet'); if (d) d.innerHTML = ''; return; }
       if (!_abierto) return;
       _abierto = false;
@@ -443,6 +485,8 @@
       raf = (window.requestAnimationFrame || setTimeout)(() => { raf = 0; if (_abierto && MO() && MO().refresh) MO().refresh(); });
     };
     if (E && E.on) ['inventoryUpdated', 'ordersUpdated', 'parAdjustmentsUpdated'].forEach(n => E.on(n, repintar));
+    // To buy: la pestaña sale o se va con la lista.
+    if (E && E.on) E.on('toBuyCounted', () => { if (abierta() && DH() && DH().refrescar) DH().refrescar('vendor'); });
     const D = DH();
     if (D && D.registrar) D.registrar('vendor', CABECERA);
   }

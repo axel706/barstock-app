@@ -43,6 +43,11 @@
   let _sig = null;        // la siguiente entrega del proveedor (ISO) o null
   let _sigDe = '';        // de qué proveedor y momento es _sig
   let _alCambiar = null;  // desk-orders: el título y los botones del header
+  // To buy (desk-tobuy.js, lámina "To buy · desktop", B): la misma orden
+  // de la derecha y el mismo pie, con la LISTA a la izquierda en lugar de
+  // los productos del proveedor. { pintar(el), clic(ev) → true si era suyo,
+  // revision: { titulo, alSalir } }.
+  let _col = null;
 
   const avisar = (t) => { if (window.BarStockToast) window.BarStockToast.show(t); };
   const logo = (v) => (window.BarStockVendorLogo ? window.BarStockVendorLogo.html(v) : '');
@@ -113,6 +118,7 @@
   }
   function pintarCol() {
     const col = _caja.querySelector('#dkqCol');
+    if (_col) return _col.pintar(col);
     const v = vendor();
     const total = master().filter(r => mismo(r.vendor, v)).length;
     col.innerHTML = `<div class="dkq-cab"><span class="dkq-vlg">${logo(v)}</span><span><b>${esc(v)}</b><small>${esc(entrega(v))}</small></span></div>
@@ -121,6 +127,7 @@
       <div class="dkq-ps" id="dkqPs">${filasProductos()}</div>`;
   }
   function repintarProductos() {
+    if (_col) return _col.pintar(_caja.querySelector('#dkqCol'));
     const el = _caja.querySelector('#dkqPs');
     if (el) el.innerHTML = filasProductos();
   }
@@ -137,7 +144,7 @@
         <label><span>Time</span><input id="dkqHora" type="time" value="${horaInput(cuando)}"></label>
         <label><span>Note</span><input id="dkqNota" type="text" placeholder="Quick Order" value="${esc(b.nota)}"></label>
       </div>
-      <div class="dkq-k">This quick order · ${ls.length} line${ls.length === 1 ? '' : 's'}</div>
+      <div class="dkq-k">${_col ? esc(b.vendor) + ' · from the list' : 'This quick order'} · ${ls.length} line${ls.length === 1 ? '' : 's'}</div>
       ${ls.length ? ls.map((x, i) => `<div class="dkq-l">
           <span class="dkq-ln">${esc(x.item)}</span>
           <span class="dkq-q"><button type="button" class="dki-cr" data-dkq="menos" data-i="${i}" aria-label="One less">−</button><input type="number" min="0" step="1" data-dkq="cant" data-i="${i}" value="${n2(x.qty)}" aria-label="How many"><button type="button" class="dki-cr" data-dkq="mas" data-i="${i}" aria-label="One more">+</button></span>
@@ -189,6 +196,7 @@
   function repintarOrden() { pintarDer(); pintarPie(); repintarProductos(); }
 
   function alClic(ev) {
+    if (_col && ev.currentTarget && ev.currentTarget.id === 'dkqCol') { _col.clic(ev); return; }
     const b = ev.target.closest('[data-dkq]');
     if (!b || !QE()) return;
     const k = b.dataset.dkq, i = Number(b.dataset.i);
@@ -233,7 +241,7 @@
     const b = Q.borrador();
     const llegada = _live === 'ya' ? (b.cuando || new Date()).toISOString() : _sig;
     const DO = window.BarStockDeskOrders;
-    if (DO && DO.revisarQuick) DO.revisarQuick(Q.paraRevisar(llegada));
+    if (DO && DO.revisarQuick) DO.revisarQuick(Q.paraRevisar(llegada), _col ? _col.revision : null);
   }
 
   // ── Montar y soltar (desk-orders.js, al entrar y salir de la vista) ──
@@ -241,6 +249,7 @@
   function abrir(caja, o) {
     _caja = caja;
     _alCambiar = o && o.alCambiar;
+    _col = (o && o.columna) || null;
     if (!caja.querySelector('#dkqP1')) {
       caja.insertAdjacentHTML('beforeend', `<div class="dkq-p1" id="dkqP1"></div>
         <aside class="dkq-col" id="dkqCol" aria-label="Products"></aside>
@@ -254,14 +263,14 @@
       });
     }
     _abierto = true;
-    _paso = QE() && lineas().length && vendor() ? 2 : 1;
+    _paso = _col || (QE() && lineas().length && vendor()) ? 2 : 1;
     _sigDe = '';
     pintar();
   }
-  function cerrar() { _abierto = false; }
+  function cerrar() { _abierto = false; _col = null; }
   function alPaso1() { _paso = 1; pintar(); }
   function alPaso2() { if (vendor()) { _paso = 2; pintar(); } }
 
   window.BarStockDeskQuick = { abrir, cerrar, paso1: alPaso1, paso2: alPaso2, abierto: () => _abierto,
-    paso: () => _paso, vendor };
+    paso: () => _paso, vendor, repintar: () => { if (_abierto) pintar(); } };
 })();

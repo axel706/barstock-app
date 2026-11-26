@@ -226,5 +226,24 @@
   // tarjeta de "Do we have" la usa para decir que ya está en la lista.
   const deProducto = (item) => porComprar().find(x => x.item_name === item) || pedidas().find(x => x.item_name === item) || null;
 
-  window.BarStockMobileToBuy = { montar, cargar, cuantos, pedidos, visible, deProducto };
+  // ── El escritorio (desk-tobuy.js, lámina "To buy · desktop", B) ──
+  // La MISMA lista y las mismas reglas (qué está por comprar, qué pedido
+  // sigue sin llegar, el porqué de cada línea, cambiar y quitar); allí
+  // sólo cambia cómo se pinta.
+  const escritorio = {
+    porComprar, pedidas, porque, pedidaTxt, puede: () => puede('ordenes'),
+    cantidad: (x, q) => guardarQty(x, q),
+    quitar(x) {
+      return SL().quitar(x.id, quien()).then(r => {
+        if (!r.ok) return r;
+        _lista = _lista.filter(y => y !== x);
+        const O = window.BarStockMobileOrders;
+        if (O && O.refresh) O.refresh();
+        if (window.BarStockEvents && window.BarStockEvents.emit) window.BarStockEvents.emit('toBuyCounted', {});
+        return r;
+      });
+    }
+  };
+
+  window.BarStockMobileToBuy = { montar, cargar, cuantos, pedidos, visible, deProducto, escritorio };
 })();

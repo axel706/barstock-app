@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 183 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 184 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -854,9 +854,8 @@ sección de hoy vive tal cual dentro del armazón.
   cantidad · ✕) y el pie, en desk-orders.css. El header de sitios fijos:
   vistas Open · Sent (Sent lleva a History, hoy lo enviado), la lupa
   (esconde líneas, sin repintar), Export azul (CSV, XLSX, JPG, LOOP) y
-  Quick order verde; en ⋯, Order analysis. Sent e Invoices ya
-  están (abajo); **To buy, con su lámina**: no se ofrece sin verla
-  funcionar. Con un proveedor abierto el título del header es "Orders ›
+  Quick order verde; en ⋯, Order analysis. Sent, Invoices y To buy
+  ya están (abajo). Con un proveedor abierto el título del header es "Orders ›
   SOUTHERN" (`titulo` puede ser una función) y la cabecera de dentro
   (nombre y total) se va: el total, sólo en el pie; "No price" va en la
   columna del precio, no junto al nombre (Axel, 2026-11-26, en la Mac).
@@ -983,6 +982,23 @@ sección de hoy vive tal cual dentro del armazón.
   como Sent); el diseño de la vista comparte las reglas de Sent en
   desk-orders.css (`:is([data-vista="sent"],[data-vista="inv"])`). Prueba:
   `test-invoices-escritorio`.
+- **Orders › To buy en el escritorio** (Axel, 2026-11-26, lámina "To buy ·
+  desktop", B: lista y orden en una pantalla): `src/desk-tobuy.js`, la vista
+  `buy` de Orders, PRIMERA y sólo con algo por comprar o pedido sin llegar
+  (`mobile-orders.hayToBuy`, la regla del teléfono; la lista se lee al abrir
+  Orders). A la izquierda la lista del TELÉFONO
+  (`BarStockMobileToBuy.escritorio`: porqué, quién, cuándo, ✕), cada línea
+  con su casilla y lo que queda con su "Out" (live-cache); a la derecha la
+  orden de Q-O (desk-quick con `columna`: la lista en lugar de los productos
+  del proveedor) sobre el borrador de Quick order, siempre LOOP
+  (`escritorio.desdeLista`: se rehace al marcar; lo cambiado a mano en la
+  orden se queda). **Lo desmarcado se QUEDA en la lista** (la casilla es
+  nueva: el teléfono manda la lista entera). Un Quick order a medias de
+  otra cosa no se pisa sin preguntar. Review abre la revisión de Open
+  ("To buy › LOOP › Review"). **Colocada, las líneas pasan a "Ordered"
+  también desde la revisión** (`mobile-quick.trasColocar`, que
+  `mobile-orders.colocar` llama antes de tirar el borrador): antes sólo lo
+  hacía el guardado de LOOP del teléfono. Prueba: `test-tobuy-escritorio`.
 - **EL HEADER DE LAS SECCIONES: SITIOS FIJOS** (Axel, 2026-11-26, lámina
   "Section header · fixed places": "es dinámico, pero a la vez es fijo
   […] los controles siempre en las mismas posiciones"). El estándar para
@@ -1390,7 +1406,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 183 suites · ~2470 comprobaciones. Tienen que pasar enteras.
+`npm test` · 184 suites · ~2470 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

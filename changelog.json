@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261126-172823",
+    "items": [
+      "To buy on desktop: tick what goes, order it as LOOP",
+      "Ordering from To buy marks the lines Ordered"
+    ]
+  },
+  {
     "build": "20261126-172025",
     "items": [
       "Invoices on desktop: list cards no longer pill-shaped"
@@ -193,13 +200,6 @@
     "items": [
       "Desktop: Inventory controls in the top bar",
       "Money on the shelf matches Home"
-    ]
-  },
-  {
-    "build": "20261125-184346",
-    "items": [
-      "Desktop: new Inventory screen with filters",
-      "Product panel: edit, details and actions together"
     ]
   }
 ]

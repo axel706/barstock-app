@@ -200,18 +200,7 @@
         total: e ? num(e.subtotal) : total(),
         deLista: !!_deLista
       };
-      // ── Las líneas de To buy, a "Ordered" ──────────────────────────
-      // La orden YA existe: si marcar falla, se dice así, porque las
-      // líneas seguirían por comprar y alguien las compraría dos veces.
-      if (_deLista && e) {
-        const lineas = _items.filter(x => _deLista.has(x.item))
-          .map(x => ({ id: _deLista.get(x.item), qty: num(x.qty) }));
-        const SL = window.BarStockShoppingList;
-        const g = window.BarStockGuest;
-        const por = (g && g.nombre && g.nombre()) || '';
-        const m = SL && SL.marcarPedidas ? await SL.marcarPedidas(lineas, e.id, por) : { ok: false, error: 'Not loaded.' };
-        if (!m.ok) _hecho.avisoLista = 'Saved, but the To buy list was not updated (' + (m.error || 'unknown error') + '). Remove those lines by hand so nobody buys them twice.';
-      }
+      if (e) { const aviso = await marcarLista(e.id, _items); if (aviso) _hecho.avisoLista = aviso; }
       limpiar();
     } catch (err) {
       // Se dice, y el borrador se QUEDA. Vaciarlo tras un fallo de red
@@ -222,6 +211,30 @@
       _guardando = false;
       repintar();
     }
+  }
+
+  // ── Las líneas de To buy, a "Ordered" ──────────────────────────────
+  // Una sola función para los dos caminos que colocan un borrador que
+  // salió de la lista: el guardado de LOOP de aquí y la revisión de
+  // Orders (mobile-orders.colocar, que la llama con trasColocar; antes
+  // ése no las marcaba y lo pedido seguía "To buy"). La orden YA existe:
+  // si marcar falla se devuelve el aviso, porque las líneas seguirían por
+  // comprar y alguien las compraría dos veces.
+  async function marcarLista(ordenId, items) {
+    if (!_deLista || !ordenId) return '';
+    const lineas = (items || []).filter(x => _deLista.has(x.item))
+      .map(x => ({ id: _deLista.get(x.item), qty: num(x.finalOrder != null ? x.finalOrder : x.qty) }));
+    if (!lineas.length) return '';
+    const SL = window.BarStockShoppingList;
+    const g = window.BarStockGuest;
+    const por = (g && g.nombre && g.nombre()) || '';
+    const m = SL && SL.marcarPedidas ? await SL.marcarPedidas(lineas, ordenId, por) : { ok: false, error: 'Not loaded.' };
+    return m.ok ? '' : 'Saved, but the To buy list was not updated (' + (m.error || 'unknown error') + '). Remove those lines by hand so nobody buys them twice.';
+  }
+  // La revisión de Orders acaba de guardar la orden (con sus líneas, las
+  // que de verdad se pidieron): marca las de la lista. → '' o el aviso.
+  function trasColocar(orden) {
+    return marcarLista(orden && orden.id, orden && Array.isArray(orden.items) ? orden.items : _items);
   }
 
   // El resto de proveedores: a la revisión de Orders. Allí viven los
@@ -683,10 +696,36 @@
     paraRevisar(llegada) {
       return { nombre: _vendor, filas: _items.slice(), nota: _nota.trim() || 'Quick Order', llegada, cuando: cuando() };
     },
-    botellas, total, porCorreo
+    botellas, total, porCorreo,
+    // To buy del escritorio (desk-tobuy.js, lámina "To buy · desktop", B):
+    // la orden de LOOP con lo marcado de la lista. Se rehace cada vez que
+    // cambia lo marcado, y lo que ya estaba conserva su cantidad y su
+    // precio (lo cambiado a mano en la orden no se pierde al marcar otra).
+    //   filas: [{ id, item, qty }] → { faltan: [nombres sin producto] }
+    desdeLista(filas) {
+      const antes = new Map(_items.map(x => [x.item, x]));
+      const vs = proveedores();
+      _vendor = vs.includes('LOOP') ? 'LOOP' : (vs[0] || 'LOOP');
+      _items = []; _elegido = null; _busca = ''; _fallo = '';
+      _deLista = new Map();
+      const faltan = [];
+      for (const f of filas || []) {
+        const r = master().find(m => m.item === f.item);
+        if (!r) { faltan.push(f.item); continue; }
+        const ya = antes.get(r.item);
+        if (ya) _items.push(ya);
+        else { const cant = Math.max(0, num(f.qty)); if (cant > 0) _items.push(linea(r, cant)); else continue; }
+        _deLista.set(r.item, f.id);
+      }
+      if (!_nota) _nota = 'To buy list';
+      return { faltan };
+    },
+    // ¿El borrador salió de la lista? (To buy no pisa un Quick order a
+    // medias de otra cosa sin preguntar.)
+    deLista: () => !!_deLista
   };
 
-  window.BarStockMobileQuick = { limpiar, precargar, pintar: () => repintar(), escritorio };
+  window.BarStockMobileQuick = { limpiar, precargar, trasColocar, pintar: () => repintar(), escritorio };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', registrar);
   else registrar();
