@@ -419,7 +419,10 @@
   // Lo que dice la sección (mobile-transfers.datos, la misma lista): nada
   // por confirmar, cuántos van esta semana, y New transfer (con "Make and
   // send orders") / See all, que abren la sección. Sin leer todavía, sin
-  // número: un "0 this week" sería un dato que no hay.
+  // número: un "0 this week" sería un dato que no hay. Mide lo que Toast
+  // (sitio fijo): el texto arriba a la izquierda dejaba la tarjeta vacía,
+  // así que va en el centro con su icono, como el vacío de Orders, y los
+  // botones centrados debajo (Axel, 2026-11-27, en el iPad).
   function tarjetaTransfers() {
     const MT = window.BarStockMobileTransfers;
     if (!MT || !MT.datos) return '';
@@ -430,10 +433,11 @@
     return `
       <article class="dkh-card dkh-calm dkh-txs">
         <div class="dkh-k"><span><i class="ti ti-arrows-exchange" aria-hidden="true"></i> Transfers</span></div>
-        <div class="dkh-top"><div class="dkh-txt">
+        <div class="dkh-txs-vacio">
+          <span class="dkh-txs-i"><i class="ti ti-arrows-exchange" aria-hidden="true"></i></span>
           <h3>Nothing to confirm</h3>
           <p class="dkh-sub">${esc(sub)}</p>
-        </div></div>
+        </div>
         <div class="dkh-acts">
           ${d.puede ? '<button type="button" class="dkh-b dkh-b1" data-tx="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> New transfer</button>' : ''}
           <button type="button" class="dkh-b" data-tx="todos">See all</button>

@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261127-110624",
+    "items": [
+      "Desktop Home: Transfers card centered, with its icon"
+    ]
+  },
+  {
     "build": "20261127-104709",
     "items": [
       "Desktop Home: Transfers card next to Toast sales"
@@ -192,12 +198,6 @@
     "items": [
       "New Orders on desktop: vendors left, order right",
       "Review and send from desktop, same as the phone"
-    ]
-  },
-  {
-    "build": "20261126-115544",
-    "items": [
-      "Toast chart in the product panel no longer flickers"
     ]
   }
 ]

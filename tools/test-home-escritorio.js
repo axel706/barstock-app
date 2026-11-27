@@ -275,6 +275,9 @@ const H = () => D.getElementById('dkHome');
     prueba('a la derecha de Toast, la tarjeta Transfers', hs.length === 3 && hs[1].id === 'dkVentas' && ul.classList.contains('dkh-txs'), hs.map(x => x.id || x.className).join(' | '));
     prueba('dice que no hay nada que confirmar', /Nothing to confirm/.test(ul.textContent), ul.textContent.replace(/\s+/g, ' '));
     prueba('y cuántos van esta semana', /2 this week/.test(ul.textContent));
+    prueba('el texto, en el centro con su icono (Axel, en el iPad)', !!ul.querySelector('.dkh-txs-vacio .dkh-txs-i .ti-arrows-exchange')
+      && /\.dkh-txs-vacio \{[^}]*justify-content: center;[^}]*text-align: center/.test(CSS_DH));
+    prueba('y los botones centrados debajo', /\.dkh-txs \.dkh-acts \{ justify-content: center;/.test(CSS_DH));
     const b = (t) => [...ul.querySelectorAll('button')].find(x => x.textContent.trim().includes(t));
     b('New transfer').click();
     prueba('New transfer abre la sección y su formulario', irA.join(',') === 'ir:transfers,nuevo', irA.join(','));
