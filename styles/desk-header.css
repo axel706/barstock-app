@@ -58,7 +58,7 @@
      Done y el +. El reflejo va DEBAJO del icono y del texto (isolation y
      z-index −1), o los lava. */
   #dkCab :is(.dkc-pl, .dkc-seg),
-  :is(#dkInv, #dkOrd) :is(.dki-cr, .dki-tabs, .dkq-seg),
+  :is(#dkInv, #dkOrd, #dkTx) :is(.dki-cr, .dki-tabs, .dkq-seg),
   #dkOrd[data-vista="sent"] .dks-pie .m-hacc button,
   #dkOrd #dkoDet .m-ord-q button,
   body.dk.dk-cab .bs-header #dkMenu,
@@ -76,7 +76,7 @@
     isolation: isolate;
   }
   #dkCab :is(.dkc-pl, .dkc-seg)::before,
-  :is(#dkInv, #dkOrd) :is(.dki-cr, .dki-tabs, .dkq-seg)::before,
+  :is(#dkInv, #dkOrd, #dkTx) :is(.dki-cr, .dki-tabs, .dkq-seg)::before,
   #dkOrd[data-vista="sent"] .dks-pie .m-hacc button::before,
   #dkOrd #dkoDet .m-ord-q button::before,
   body.dk.dk-cab .bs-header #dkMenu::before,
@@ -86,7 +86,7 @@
     mix-blend-mode: screen;
   }
   body.dk.dk-cab .bs-header #dkMenu { position: relative; }
-  #dkCab .dkc-pl.azul, #dkCab .dkc-pl.en, :is(#dkInv, #dkOrd) .dki-cr.azul:not(:disabled),
+  #dkCab .dkc-pl.azul, #dkCab .dkc-pl.en, :is(#dkInv, #dkOrd, #dkTx) .dki-cr.azul:not(:disabled),
   #dkOrd[data-vista="sent"] .dks-pie .m-hacc button:not(.mal):not(#mhNo) {
     color: #f0f9ff; background: rgba(56, 189, 248, .42); border-color: rgba(186, 230, 253, .62);
     box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .5), inset 0 0 14px rgba(56, 189, 248, .45), 0 6px 18px rgba(0, 0, 0, .28);
@@ -94,11 +94,11 @@
   /* Rojo (Delete del panel de Inventory), como Reopen de Sent: las piezas
      de Sent son del teléfono (Resend, Reopen y su confirmación); aquí
      llevan el cristal en vez de su color sólido. */
-  #dkInv .dki-cr.rojo, #dkOrd[data-vista="sent"] .dks-pie .m-hacc button.mal {
+  #dkInv .dki-cr.rojo, #dkTx .dki-cr.rojo, #dkOrd[data-vista="sent"] .dks-pie .m-hacc button.mal {
     color: #fee2e2; background: rgba(248, 113, 113, .3); border-color: rgba(254, 202, 202, .55);
     box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .45), inset 0 0 14px rgba(248, 113, 113, .4), 0 6px 18px rgba(0, 0, 0, .28);
   }
-  #dkCab .dkc-pl.verde {
+  #dkCab .dkc-pl.verde, #dkTx .dki-cr.verde:not(:disabled) {
     color: #ecfdf5; background: rgba(52, 211, 153, .42); border-color: rgba(167, 243, 208, .62);
     box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .5), inset 0 0 14px rgba(52, 211, 153, .45), 0 6px 18px rgba(0, 0, 0, .28);
   }
@@ -117,7 +117,7 @@
     box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
   }
   #dkCab .dkc-seg button:hover { color: #fff; }
-  #dkCab .dkc-seg button.on, #dkInv .dki-tabs button.on, #dkOrd .dkq-seg button.on {
+  #dkCab .dkc-seg button.on, #dkInv .dki-tabs button.on, :is(#dkOrd, #dkTx) .dkq-seg button.on {
     color: #fff; background: rgba(125, 211, 252, .32);
     box-shadow: inset 0 0 0 1px rgba(186, 230, 253, .55), inset 0 1.5px 0 rgba(255, 255, 255, .55),
       inset 0 0 10px rgba(125, 211, 252, .35), 0 2px 8px rgba(0, 0, 0, .25);
@@ -253,7 +253,7 @@
   body.light.dk #dkCab .dkc-campo input { color: #0f172a; }
   body.light.dk #dkCab .dkc-campo input::placeholder { color: #475569; }
   body.light.dk #dkCab :is(.dkc-pl.azul, .dkc-pl.en) { background: rgba(14, 165, 233, .82); border-color: rgba(186, 230, 253, .9); color: #fff; }
-  body.light.dk #dkCab .dkc-pl.verde { background: rgba(22, 163, 74, .82); border-color: rgba(187, 247, 208, .9); color: #fff; }
+  body.light.dk #dkCab .dkc-pl.verde, #dkTx .dki-cr.verde:not(:disabled) { background: rgba(22, 163, 74, .82); border-color: rgba(187, 247, 208, .9); color: #fff; }
   body.light.dk #dkCab :is(.dkc-hueco:hover > .dkc-pl, .dkc-pl:focus-visible, .dkc-pl.abierto, .dkc-pl.toque):is(.azul, .en) { background: #0284c7; color: #fff; }
   body.light.dk #dkCab :is(.dkc-hueco:hover > .dkc-pl, .dkc-pl:focus-visible, .dkc-pl.abierto, .dkc-pl.toque).verde { background: #15803d; color: #fff; }
   body.light.dk #dkCab .dkc-pl.en::after { border-color: #fff; }
@@ -289,7 +289,7 @@
      regla: un pie nuevo entra en esta lista, no se copia.
      Flota a 10 px del borde (media zona segura si es más), y con el mismo
      margen debajo cuando no rueda nada. */
-  :is(#dkOrd .dko-pie, #dkOrd .dks-pie, #dkOrd .dkv-pie, #dkOrd .dkq-pie, #dkiPanel .dki-pie) {
+  :is(#dkOrd .dko-pie, #dkOrd .dks-pie, #dkOrd .dkv-pie, #dkOrd .dkq-pie, #dkiPanel .dki-pie, #dkTx .dktx-pie) {
     position: sticky; z-index: 5; bottom: max(10px, calc(env(safe-area-inset-bottom) / 2));
     margin-bottom: max(10px, calc(env(safe-area-inset-bottom) / 2));
     box-sizing: border-box; min-height: 70px;

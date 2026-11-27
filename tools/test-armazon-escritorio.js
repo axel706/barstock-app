@@ -111,7 +111,7 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   prueba('Running out ya no es "Soon": es un botón que abre su sección', !!item('runningOut') && item('runningOut').tagName === 'BUTTON' && !/Soon/.test(item('runningOut').textContent));
   // Las secciones de hoy están en index.html; las que se rehacen para el
   // escritorio las crea su módulo (Running out: desk-running-out.js).
-  const PROPIAS = { runningOut: 'src/desk-running-out.js', sales: 'src/desk-sales.js' };
+  const PROPIAS = { runningOut: 'src/desk-running-out.js', sales: 'src/desk-sales.js', transfers: 'src/desk-transfers.js' };
   for (const it of S.ITEMS.filter(x => x.sec)) {
     const donde = PROPIAS[it.sec];
     prueba(`${it.label} apunta a una sección (#${it.sec}Section)` + (donde ? ' de ' + donde : ' de index.html'),
@@ -122,14 +122,14 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   {
     const g = [...lado.querySelectorAll('.dk-grupo')].find(x => x.textContent === 'Soon');
     prueba('hay un grupo "Soon"', !!g);
-    for (const id of ['transfers', 'counts']) {
+    // Transfers salió de "Soon" el 2026-11-27 (desk-transfers.js).
+    for (const id of ['counts']) {
       const e = item(id);
       prueba(id + ' va en el grupo "Soon"', !!g && !!e && !!(g.compareDocumentPosition(e) & 4) && ![...lado.querySelectorAll('.dk-grupo')].some(x => x !== g && (g.compareDocumentPosition(x) & 4) && (x.compareDocumentPosition(e) & 4)));
       prueba(id + ' no es un botón', !!e && e.tagName !== 'BUTTON');
     }
   }
   llamadas.length = 0;
-  item('transfers') && item('transfers').click();
   S.ir('counts');
   prueba('tocar un "Soon" no hace nada', llamadas.length === 0, llamadas.join(','));
 

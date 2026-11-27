@@ -400,9 +400,11 @@
   #dkOrd .dkq-tot b { display: block; font-size: 24px; font-weight: 850; font-variant-numeric: tabular-nums; }
   #dkOrd .dkq-tot small { color: #a9bacd; font-size: 13px; }
   #dkOrd .dkq-live { display: flex; align-items: center; gap: 10px; color: #cbd5e1; font-size: 13.5px; font-weight: 700; white-space: nowrap; }
-  #dkOrd .dkq-seg { display: flex; gap: 2px; padding: 4px; border-radius: 999px; position: relative; }
-  #dkOrd .dkq-seg button { height: 36px; padding: 0 14px; border-radius: 999px !important; font-size: 13.5px; font-weight: 750; color: #dbe4ee; background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; cursor: pointer; white-space: nowrap; }
-  #dkOrd .dkq-seg button:disabled { color: #7f8ea3; cursor: default; }
+  /* El carril de dos opciones (Live now; en Transfers, la dirección y
+     cuándo): el mismo en las dos secciones. */
+  :is(#dkOrd, #dkTx) .dkq-seg { display: flex; gap: 2px; padding: 4px; border-radius: 999px; position: relative; }
+  :is(#dkOrd, #dkTx) .dkq-seg button { height: 36px; padding: 0 14px; border-radius: 999px !important; font-size: 13.5px; font-weight: 750; color: #dbe4ee; background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; cursor: pointer; white-space: nowrap; }
+  :is(#dkOrd, #dkTx) .dkq-seg button:disabled { color: #7f8ea3; cursor: default; }
   #dkOrd .dkq-tot, #dkOrd .dkq-go { flex: none; }
   /* Si aun así no cabe, el carril se recorta (el día con "…"), nunca se
      encima con el envío. */

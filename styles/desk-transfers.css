@@ -1,0 +1,99 @@
+/* ── Transfers en el escritorio (desk-transfers.js; lámina "Transfers ·
+   desktop", A, Axel 2026-11-27: "como Sent") ──
+   La columna de transfers y el elegido, cada uno con su scroll; la página
+   no rueda (la vista mide la pantalla bajo el header, como Sent). El pie
+   es LA barra de cristal de todos los pies (desk-header.css). Con el
+   estándar de las secciones (dk-pantalla). Todo con el prefijo de id:
+   app.css fuerza el radio de los botones. */
+@media (min-width: 641px) {
+  body.dk #transfersSection.bs-active-section { display: block; }
+  body.dk #transfersSection.dk-pantalla { padding: 18px 28px 0 !important; }
+  body.dk .wrap:has(> #transfersSection.bs-active-section) { padding-bottom: 0 !important; }
+  #dkTx {
+    display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 22px; align-items: stretch;
+    height: calc(100dvh - var(--dk-alto) - 18px); color: #f8fafc;
+  }
+  #dkTx :is(.dktx-col, .dktx-det) { min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  #dkTx .dktx-col { padding: 0 6px 18px 0; }
+  #dkTx .dktx-det { display: flex; flex-direction: column; }
+  #dkTx .dktx-det > * { flex: none; }
+  #dkTx .dktx-k { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #94a3b8; margin: 18px 2px 8px; }
+  #dkTx .dktx-col > .dktx-k:first-child { margin-top: 2px; }
+  #dkTx .dktx-nada { color: #a9bacd; margin: 10px 2px; }
+
+  /* La columna: una tarjeta por transfer. */
+  #dkTx .dktx-c {
+    width: 100%; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; text-align: left;
+    margin: 8px 0 0; padding: 12px 14px; border-radius: 16px !important; cursor: pointer; color: inherit; font: inherit;
+    background: var(--tinta); border: 1px solid var(--tinta-borde); box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  #dkTx .dktx-c:hover { border-color: rgba(125, 211, 252, .35); }
+  #dkTx .dktx-c.sel { border-color: rgba(125, 211, 252, .85); box-shadow: 0 0 0 1px rgba(125, 211, 252, .5); }
+  #dkTx .dktx-cn { min-width: 0; }
+  #dkTx .dktx-cn b { display: block; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #dkTx .dktx-cn small { display: block; color: #a9bacd; font-size: 12.5px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #dkTx .dktx-dir { flex: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  #dkTx .dktx-dir.in { background: rgba(52, 211, 153, .2); color: #6ee7b7; }
+  #dkTx .dktx-dir.out { background: rgba(251, 191, 36, .18); color: #fcd34d; }
+  #dkTx .dktx-dir.nuevo { background: rgba(56, 189, 248, .2); color: #7dd3fc; }
+  #dkTx .dktx-st { font-size: 11.5px; font-weight: 800; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+  #dkTx .dktx-st.in { background: rgba(56, 189, 248, .22); color: #7dd3fc; }
+  #dkTx .dktx-st.w { background: rgba(100, 116, 139, .3); color: #cbd5e1; }
+  #dkTx .dktx-st.ok { background: rgba(16, 185, 129, .2); color: #6ee7b7; }
+  #dkTx .dktx-st.no { background: rgba(239, 68, 68, .22); color: #fca5a5; }
+  #dkTx .dktx-st.off { background: rgba(100, 116, 139, .2); color: #94a3b8; }
+
+  /* El elegido. */
+  #dkTx .dktx-cab { display: flex; align-items: center; gap: 14px; padding: 4px 0 4px; }
+  #dkTx .dktx-cab .dktx-dir { width: 44px; height: 44px; font-size: 22px; }
+  #dkTx .dktx-cab h3 { margin: 0; font-size: 22px; font-weight: 850; }
+  #dkTx .dktx-s { color: #a9bacd; font-size: 13px; margin-top: 2px; }
+  #dkTx .dktx-cab .dktx-st { margin-left: auto; }
+  #dkTx .dktx-l {
+    display: grid; grid-template-columns: 56px minmax(0, 1fr) 22px minmax(0, 1fr) auto; gap: 12px; align-items: center;
+    margin-top: 7px; padding: 11px 14px; border-radius: 14px; background: var(--tinta); border: 1px solid var(--tinta-borde); font-size: 15px;
+  }
+  #dkTx .dktx-l .q { font-weight: 850; font-size: 17px; }
+  #dkTx .dktx-l > .ti { color: #7dd3fc; text-align: center; }
+  #dkTx .dktx-l .mio { color: #6ee7b7; }
+  #dkTx .dktx-l .falta { color: #fcd34d; font-weight: 700; }
+  #dkTx .dktx-ch { height: 34px; padding: 0 14px; font-size: 13px; font-weight: 800; }
+  #dkTx .dktx-nota { color: #94a3b8; font-size: 13px; margin: 12px 2px 0; }
+  #dkTx .dktx-err { color: #fca5a5; font-size: 13.5px; margin: 10px 2px 0; }
+
+  /* El pie: LA barra de cristal (desk-header.css). Aquí su sitio y lo de dentro. */
+  #dkTx .dktx-pie { margin-top: auto; }
+  #dkTx .dktx-pie .dki-cr { height: 44px; padding: 0 20px; font-size: 14.5px; font-weight: 800; gap: 8px; width: auto; }
+  #dkTx .dktx-pie .dktx-go { min-width: 160px; }
+  #dkTx .dktx-pie .dktx-go:disabled { opacity: 1; color: #94a3b8; }
+  #dkTx .dktx-pie-t { color: #cbd5e1; font-weight: 700; }
+  #dkTx .dktx-pie-t b { display: block; font-size: 20px; color: #fff; }
+  #dkTx .dktx-pie-t small { display: block; color: #a9bacd; font-size: 12.5px; font-weight: 500; }
+  #dkTx .dktx-pie .verde { margin-left: auto; }
+
+  /* New transfer. */
+  #dkTx .dktx-seg { align-self: flex-start; }
+  #dkTx .dktx-locs { display: flex; flex-wrap: wrap; gap: 8px; }
+  #dkTx .dktx-loc {
+    padding: 9px 16px; border-radius: 12px !important; font: inherit; font-size: 14px; font-weight: 750; color: #e2e8f0; cursor: pointer;
+    background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .18); box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  #dkTx .dktx-loc.on { border-color: #7dd3fc; background: rgba(56, 189, 248, .22); color: #fff; }
+  #dkTx .dktx-nl {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto 32px; gap: 12px; align-items: center;
+    margin-top: 7px; padding: 10px 12px 10px 16px; border-radius: 16px; background: var(--tinta); border: 1px solid var(--tinta-borde);
+  }
+  #dkTx .dktx-nn b { display: block; font-size: 15.5px; }
+  #dkTx .dktx-nn small { display: block; color: #94a3b8; font-size: 12.5px; margin-top: 2px; }
+  #dkTx .dktx-qn { display: inline-flex; min-width: 40px; justify-content: center; font-size: 16px; }
+  #dkTx .dkq-q { display: flex; align-items: center; gap: 6px; }
+  #dkTx .dkq-q .dki-cr { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; }
+  #dkTx .dkq-x { width: 32px; height: 32px; padding: 0; border-radius: 50% !important; display: flex; align-items: center; justify-content: center; color: #94a3b8; background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; cursor: pointer; }
+  #dkTx .dktx-add { align-self: flex-start; margin-top: 10px; height: 42px; padding: 0 18px; gap: 8px; font-weight: 800; width: auto; }
+
+  /* Sin nada elegido: el vacío, centrado como el de Orders. */
+  #dkTx .dktx-vacio { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 24px 60px; }
+  #dkTx .dktx-vacio-i { width: 88px; height: 88px; border-radius: 50%; margin-bottom: 22px; display: flex; align-items: center; justify-content: center; font-size: 42px; color: #7dd3fc; background: rgba(56, 189, 248, .12); border: 1px solid rgba(125, 211, 252, .3); }
+  #dkTx .dktx-vacio b { font-size: 28px; font-weight: 850; }
+  #dkTx .dktx-vacio small { font-size: 16px; color: #a9bacd; margin-top: 8px; max-width: 420px; line-height: 1.5; }
+}

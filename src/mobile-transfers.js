@@ -52,29 +52,74 @@
   }
   const aMas = () => { const m = M(); if (m && m.volver) m.volver(); };
 
-  // ── La lista (opción A) ──────────────────────────────────────────────
-  function pintarLista() {
-    const h = _host;
-    if (!h) return;
+  // ── Lo que sale en la lista: una sola regla para el teléfono y el
+  // escritorio (desk-transfers.js, 2026-11-27) ─────────────────────────
+  // Por confirmar (lo que la otra locación mandó y espera aquí), lo de
+  // los últimos días, y el estado de cada grupo. `todos`: cada grupo, para
+  // la vista "All" del escritorio.
+  function datos() {
     const t = T(), c = TC();
     const st = c && c.estado ? c.estado() : {};
     const loc = st.loc, locs = st.locs || [], filas = st.filas || [];
-    const puede = !!(t && t.puede());
-    const nombre = (id) => (t ? t.nombreDe(locs, id) : '');
     const LC = window.BarStockLiveCache;
     const conteo = LC && LC.conteo ? LC.conteo() : null;
-
     const porConf = c && c.gruposPend ? c.gruposPend() : [];
     const pendIds = new Set([].concat(...porConf).map(x => x.id));
     const desde = Date.now() - RECIENTES_DIAS * 864e5;
     const recientes = t && loc ? t.grupos(filas.filter(x => !pendIds.has(x.id) &&
       (Date.parse(x.created_at) > desde || Date.parse(x.status_at || 0) > desde))) : [];
-
+    const todos = t && loc ? t.grupos(filas) : [];
+    // [texto, clase]: lo que el estado dice de este grupo desde AQUÍ.
     const estado = (g) => {
       const s = g[0].status;
       if (s === 'pending') return t.loRegistre(g[0], loc) ? ['waiting', 'w'] : ['to confirm', 'in'];
       return s === 'confirmed' ? ['confirmed', 'ok'] : s === 'rejected' ? ['not right', 'no'] : ['undone', 'off'];
     };
+    return { t, c, loc, locs, filas, conteo, porConf, recientes, todos, estado,
+      puede: !!(t && t.puede()), nombre: (id) => (t ? t.nombreDe(locs, id) : ''),
+      deshacible: (g) => !!(t && t.puede() && t.cuentaAqui(g[0], loc) && t.deshacible(g[0], conteo)) };
+  }
+
+  // Undo, con su pregunta (el teléfono y el escritorio). → true si se hizo.
+  async function deshacer(g) {
+    const t = T();
+    const D = window.BarStockDialog;
+    const ok = D && D.preguntar ? await D.preguntar({ titulo: 'Undo this transfer?',
+      cuerpo: 'It stops counting in both locations, and its order leaves Sent.', ok: 'Undo', cancelar: 'Keep it', peligro: true })
+      : window.confirm('Undo this transfer?');
+    if (!ok) return false;
+    const LC = window.BarStockLiveCache;
+    const conteo = LC && LC.conteo ? LC.conteo() : null;
+    const r = await t.deshacer(g, quien(), conteo);
+    toast(!r.ok ? 'Not undone: ' + (r.error || 'unknown error') : r.aviso ? 'Undone, but not everything: ' + r.aviso : 'Transfer undone');
+    if (r.ok && LC && LC.caducar) LC.caducar();
+    return !!r.ok;
+  }
+
+  // Guardar un "New transfer" (el borrador { entra, otra, antes, lineas }).
+  // → { ok, error }. El aviso lo da aquí.
+  async function crear(nuevo) {
+    const t = T(), c = TC();
+    const st = c && c.estado ? c.estado() : {};
+    const loc = st.loc, locs = st.locs || [], filas = st.filas || [];
+    const LC = window.BarStockLiveCache;
+    const conteo = LC && LC.conteo ? LC.conteo() : null;
+    const pareja = (item) => (nuevo.otra ? t.pareja(filas, loc, nuevo.otra, item) : null);
+    const r = await t.crear({ otra: nuevo.otra, entra: nuevo.entra, antes: nuevo.antes, conteo, por: quien(),
+      lineas: nuevo.lineas.map(l => ({ item: l.item, otroItem: pareja(l.item), qty: l.qty })) });
+    if (!r.ok) return { ok: false, error: r.error || 'It was not saved.' };
+    toast(r.aviso ? 'Transfer saved, but not everything: ' + r.aviso : 'Transfer saved · ' + t.nombreDe(locs, nuevo.otra) + ' will confirm it');
+    if (LC && LC.caducar) LC.caducar();
+    return { ok: true };
+  }
+
+  // ── La lista (opción A) ──────────────────────────────────────────────
+  function pintarLista() {
+    const h = _host;
+    if (!h) return;
+    const d = datos();
+    const { t, c, loc, porConf, recientes, puede, nombre, estado } = d;
+    const LC = window.BarStockLiveCache;
 
     h.innerHTML = cabecera('Transfers', aMas) +
       (puede ? '<button type="button" class="m-tx-nuevo" id="mTxNew"><i class="ti ti-arrows-exchange" aria-hidden="true"></i> New transfer</button>' : '') +
@@ -95,13 +140,13 @@
       (recientes.length ? `<div class="m-lab">THIS WEEK</div>` + recientes.map((g, i) => {
         const x = g[0];
         const [txt, k] = estado(g);
-        const deshacer = puede && t.cuentaAqui(x, loc) && t.deshacible(x, conteo);
+        const puedeDeshacer = d.deshacible(g);
         return `<div class="m-tx">
           <div class="m-tx-top"><b>${t.entra(x, loc) ? 'From' : 'To'} ${esc(corta(nombre(t.otraLoc(x, loc))))}</b><span class="m-tx-st ${k}">${txt}</span></div>
           <div class="m-tx-sub">${g.map(y => esc(n(y.qty)) + ' ' + esc(t.miItem(y, loc) || t.suItem(y, loc) || '')).join(' · ')}</div>
           <div class="m-tx-sub">${esc(cuandoNY(x.moved_at, true))}${x.created_by ? ' · ' + esc(x.created_by) : ''}${x.before_count ? ' · before the count' : ''}${
             x.vendor_order_id && t.entra(x, loc) ? ' · in Sent' : ''}${
-            deshacer ? ` · <button type="button" class="m-tx-undo" data-tx-undo="${i}">Undo</button>` : ''}</div>
+            puedeDeshacer ? ` · <button type="button" class="m-tx-undo" data-tx-undo="${i}">Undo</button>` : ''}</div>
         </div>`;
       }).join('') : '') +
       (loc != null && !porConf.length && !recientes.length
@@ -112,16 +157,7 @@
     h.querySelectorAll('[data-tx-ok]').forEach(b => { b.onclick = async () => { b.disabled = true; await c.confirmar(porConf[Number(b.dataset.txOk)]); refrescar(); }; });
     h.querySelectorAll('[data-tx-no]').forEach(b => { b.onclick = async () => { await c.noEsAsi(porConf[Number(b.dataset.txNo)]); refrescar(); }; });
     h.querySelectorAll('[data-tx-undo]').forEach(b => { b.onclick = async () => {
-      const g = recientes[Number(b.dataset.txUndo)];
-      const D = window.BarStockDialog;
-      const ok = D && D.preguntar ? await D.preguntar({ titulo: 'Undo this transfer?',
-        cuerpo: 'It stops counting in both locations, and its order leaves Sent.', ok: 'Undo', cancelar: 'Keep it', peligro: true })
-        : window.confirm('Undo this transfer?');
-      if (!ok) return;
-      const r = await t.deshacer(g, quien(), conteo);
-      toast(!r.ok ? 'Not undone: ' + (r.error || 'unknown error') : r.aviso ? 'Undone, but not everything: ' + r.aviso : 'Transfer undone');
-      if (r.ok && LC && LC.caducar) LC.caducar();
-      refrescar();
+      if (await deshacer(recientes[Number(b.dataset.txUndo)])) refrescar();
     }; });
   }
 
@@ -187,11 +223,8 @@
     const go = h.querySelector('#mTxGo');
     go.onclick = async () => {
       go.disabled = true;
-      const r = await t.crear({ otra: _nuevo.otra, entra: _nuevo.entra, antes: _nuevo.antes, conteo, por: quien(),
-        lineas: _nuevo.lineas.map(l => ({ item: l.item, otroItem: pareja(l.item), qty: l.qty })) });
-      if (!r.ok) return pintarNuevo(r.error || 'It was not saved.');
-      toast(r.aviso ? 'Transfer saved, but not everything: ' + r.aviso : 'Transfer saved · ' + t.nombreDe(locs, _nuevo.otra) + ' will confirm it');
-      if (LC && LC.caducar) LC.caducar();
+      const r = await crear(_nuevo);
+      if (!r.ok) return pintarNuevo(r.error);
       _nuevo = null; _vista = 'lista';
       refrescar();
     };
@@ -252,5 +285,6 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', registrar);
   else registrar();
 
-  window.BarStockMobileTransfers = { montar, abrirNuevo, pendientes, _estado: () => ({ vista: _vista, nuevo: _nuevo }) };
+  window.BarStockMobileTransfers = { montar, abrirNuevo, pendientes, datos, deshacer, crear, cuandoNY, corta, n,
+    _estado: () => ({ vista: _vista, nuevo: _nuevo }) };
 })();

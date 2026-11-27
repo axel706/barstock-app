@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261127-101700",
+    "items": [
+      "Transfers on desktop: confirm, choose yours, undo",
+      "New transfer from the desktop"
+    ]
+  },
+  {
     "build": "20261126-183911",
     "items": [
       "Animated backgrounds on desktop: Aurora, Liquid, Bokeh"
@@ -192,12 +199,6 @@
     "items": [
       "Inventory search is the magnifier, and typing is smooth",
       "No Do we have inside Inventory"
-    ]
-  },
-  {
-    "build": "20261126-113753",
-    "items": [
-      "Pour·IQ par suggestion moved to Edit, under Par"
     ]
   }
 ]

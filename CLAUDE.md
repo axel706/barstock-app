@@ -110,7 +110,7 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 ## La arquitectura
 
 Frontend estático, sin build. `index.html` es un monolito y hay ~165 módulos
-`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 39 hojas
+`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 40 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
 12 funciones en `api/` sobre Vercel. **El tope del plan son 12, y está lleno**
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 184 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 185 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -447,7 +447,7 @@ sección de hoy vive tal cual dentro del armazón.
   `bsCloseSection`, no las envuelve, y lo encendido sigue a
   `.bs-active-section`. Count = clic en `#takeInventoryBtn` (su
   comprobación del ciclo). Admin copia la visibilidad de
-  `#bsAdminNavTab`. Lo que aún no existe (Transfers, Counts) sale
+  `#bsAdminNavTab`. Lo que aún no existe (Counts) sale
   apagado y sin ser botón (Axel lo eligió frente a esconderlo), en su
   grupo "Soon" al final. **La barra, reestructurada** (2026-11-26,
   lámina "Desktop sidebar · restructure", A: "history? ya no tenemos una
@@ -455,7 +455,8 @@ sección de hoy vive tal cual dentro del armazón.
   primero que se mira), Inventory › Unmatched, Orders › To buy · Open ·
   Sent · Invoices (las vistas del header, cada una con la cuenta de su
   pestaña; To buy sólo con algo en la lista; `vista` en ITEMS y
-  `BarStockDeskOrders.ver`), Reports, Soon; Settings y Admin chicos junto
+  `BarStockDeskOrders.ver`), Transfers (con su número, `cuenta`),
+  Reports, Soon; Settings y Admin chicos junto
   a Count. History se fue: `ALIAS` la manda a Sent (el teléfono y la
   portada aún la piden). **El botón del ciclo, de cristal** (Axel: "liquid
   glass para distinguirlo más"), teñido del color de su paso: el rojo
@@ -1024,6 +1025,24 @@ sección de hoy vive tal cual dentro del armazón.
   también desde la revisión** (`mobile-quick.trasColocar`, que
   `mobile-orders.colocar` llama antes de tirar el borrador): antes sólo lo
   hacía el guardado de LOOP del teléfono. Prueba: `test-tobuy-escritorio`.
+- **Transfers en el escritorio** (Axel, 2026-11-27, lámina "Transfers ·
+  desktop", A: "como Sent"): `src/desk-transfers.js` y
+  `styles/desk-transfers.css`, la sección de la barra lateral (ya sin
+  "Soon", con el número de lo que espera que confirmes). Se crea antes de
+  desk-shell, como Running out. A la izquierda los transfers (vistas To
+  confirm · This week · All en el header, la lupa y la locación); a la
+  derecha el elegido, cada producto "lo suyo → lo tuyo" con Choose /
+  Change, y en la barra de cristal Confirm all / Choose yours / Not right,
+  o Undo. New transfer (el + verde) en el mismo panel: dirección, la otra
+  locación, cuándo, las líneas con −/+ y "Transfer N bottles". **Es el
+  Transfers del TELÉFONO**: qué sale, el Undo con su pregunta y el guardar
+  viven UNA vez en `mobile-transfers` (`datos`, `deshacer`, `crear`);
+  confirmar y "Not right", los de `transfer-confirm`. **Elegir una botella
+  en el escritorio es UNA ventana**, `src/desk-botella.js` (nació en
+  Invoices): la usan Invoices, "Add a product" y "Choose yours"
+  (`transfer-confirm.elegir`, sin el armazón del teléfono); sin escribir,
+  primero lo que casa con la pista y luego todo lo demás (`verTodo`).
+  Prueba: `test-transfers-escritorio`.
 - **LOS PIES DEL ESCRITORIO: UNA barra de cristal** (Axel, 2026-11-26,
   lámina "Quick order & To buy · the footer", A: "ese pie está HORRIBLE";
   "aplícalo a TODAS las pantallas que llevan barras de ese estilo"). Open
@@ -1451,7 +1470,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 184 suites · ~2470 comprobaciones. Tienen que pasar enteras.
+`npm test` · 185 suites · ~2470 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

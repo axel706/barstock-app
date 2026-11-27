@@ -105,8 +105,9 @@
   <link rel="stylesheet" href="styles/desk-running-out.css?v=dkr2">
   <link rel="stylesheet" href="styles/desk-sales.css?v=dksa3">
   <link rel="stylesheet" href="styles/desk-inventory.css?v=dki13">
-  <link rel="stylesheet" href="styles/desk-orders.css?v=dko22">
-  <link rel="stylesheet" href="styles/desk-header.css?v=dkc19">
+  <link rel="stylesheet" href="styles/desk-orders.css?v=dko23">
+  <link rel="stylesheet" href="styles/desk-transfers.css?v=dktx1">
+  <link rel="stylesheet" href="styles/desk-header.css?v=dkc20">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -395,7 +396,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261126-183911</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261127-101700</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5652,8 +5653,8 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/bottle-search.js?v=bs6"></script>
 <script src="src/vendor-logo.js?v=vl2"></script>
 <script src="src/home-cartas.js?v=hc4"></script>
-<script src="src/transfer-confirm.js?v=tc6"></script>
-<script src="src/mobile-transfers.js?v=mtx4"></script>
+<script src="src/transfer-confirm.js?v=tc7"></script>
+<script src="src/mobile-transfers.js?v=mtx5"></script>
 <script src="src/product-hero.js?v=ph10"></script>
 <!-- El consumo semanal y el paso de Pour·IQ. Lo usan las DOS fichas,
      la del escritorio y la del telefono: la consulta, la correccion
@@ -6385,6 +6386,13 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
      usan (se registran al montar) y que desk-shell.js (lo avisa). -->
 <script src="src/desk-header.js?v=dkc16"></script>
 <script src="src/desk-running-out.js?v=dkr2"></script>
+<!-- La ventana para elegir una botella (desk-botella.js): la usan Invoices,
+     Transfers y "Choose yours" de transfer-confirm. Antes que ellas. -->
+<script src="src/desk-botella.js?v=dkb1"></script>
+<!-- Transfers del escritorio: la sección (como Running out, antes de
+     desk-shell.js, que vigila las secciones al montar). Los datos, de
+     mobile-transfers y transfer-confirm (más arriba). -->
+<script src="src/desk-transfers.js?v=dktx1"></script>
 <!-- Sales del escritorio: lo de toast-sales.js y las cuentas de
      mobile-sales.js (más arriba) en su .section-card. También antes de
      desk-shell.js. -->
@@ -6403,7 +6411,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <!-- Orders › Invoices (desk-invoices.js, lámina "Invoices · desktop"):
      Invoices del teléfono (mobile-invoices) en la vista Invoices de Orders.
      Antes que desk-orders.js, que lo monta. -->
-<script src="src/desk-invoices.js?v=dkv1"></script>
+<script src="src/desk-invoices.js?v=dkv2"></script>
 <!-- Q-O, Quick order (desk-quick.js): el borrador de mobile-quick y la
      revisión de mobile-orders. Antes que desk-orders.js, que lo monta. -->
 <script src="src/desk-quick.js?v=dkq6"></script>
@@ -6413,7 +6421,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/desk-tobuy.js?v=dkt1"></script>
 <script src="src/desk-orders.js?v=dko15"></script>
 <!-- Después de bsOpenSection/bsCloseSection, que son lo que llama. -->
-<script src="src/desk-shell.js?v=dk13"></script>
+<script src="src/desk-shell.js?v=dk14"></script>
 <!-- El Home del escritorio: pinta con los datos de mobile-home.js (más
      arriba) dentro del armazón de desk-shell.js. -->
 <script src="src/desk-home.js?v=dkh11"></script>

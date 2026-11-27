@@ -34,6 +34,7 @@
   // en su propio grupo "Soon", al final (lámina "Desktop sidebar ·
   // restructure", A, 2026-11-26), no mezclado con lo que funciona.
   //
+  // Running out ya no está en "Soon"; Transfers tampoco (2026-11-27).
   // La misma lámina: History se fue (abría Orders › Sent, ya no es una
   // sección); bajo Orders van sus vistas, las mismas del header, con su
   // cuenta (`vista`; To buy sólo con algo en la lista, como su pestaña).
@@ -55,8 +56,11 @@
     { id: 'pourIq', label: 'Pour·IQ', icon: 'ti-brain', sec: 'pourIq' },
     { id: 'consumption', label: 'Variance', icon: 'ti-chart-histogram', sec: 'consumption' },
     { id: 'costReport', label: 'Costs', icon: 'ti-chart-bar', sec: 'costReport' },
+    // Transfers (desk-transfers.js, lámina "Transfers · desktop", A,
+    // 2026-11-27), con su número de lo que espera que lo confirmes.
+    { id: 'transfers', label: 'Transfers', icon: 'ti-arrows-exchange', sec: 'transfers',
+      cuenta: () => { const M = window.BarStockMobileTransfers; return M && M.pendientes ? M.pendientes() : 0; } },
     { grupo: 'Soon' },
-    { id: 'transfers', label: 'Transfers', icon: 'ti-arrows-exchange', pronto: true },
     { id: 'counts', label: 'Counts', icon: 'ti-clock-hour-4', pronto: true },
     { id: 'settings', label: 'Settings', icon: 'ti-settings', pie: true },
     { id: 'admin', label: 'Admin', icon: 'ti-shield-lock', sec: 'admin', admin: true, pie: true }
@@ -85,7 +89,7 @@
     const tipo = it.pronto ? '' : ' type="button"';
     const oculto = it.admin ? ' style="display:none"' : '';
     return `<${tag}${tipo} class="${cls.join(' ')}" data-dk="${it.id}" title="${esc(it.label)}"${oculto}>` +
-      `<i class="ti ${it.icon}" aria-hidden="true"></i><span class="dk-lbl">${esc(it.label)}</span>${soon}${it.vista ? '<em class="dk-n" hidden></em>' : ''}</${tag}>`;
+      `<i class="ti ${it.icon}" aria-hidden="true"></i><span class="dk-lbl">${esc(it.label)}</span>${soon}${it.vista || it.cuenta ? '<em class="dk-n" hidden></em>' : ''}</${tag}>`;
   }
 
   // Qué sección está abierta: la que lleva .bs-active-section. Ninguna
@@ -179,6 +183,14 @@
       const em = b.querySelector('.dk-n');
       const c = Number(n[it.vista]) || 0;
       if (em) { em.hidden = !(c > 0) || it.vista === 'open'; em.textContent = c > 0 ? String(c) : ''; }
+    });
+    // Las de su sección (Transfers: lo que espera que lo confirmes).
+    ITEMS.filter(x => x.cuenta).forEach(it => {
+      const em = _lado.querySelector(`[data-dk="${it.id}"] .dk-n`);
+      if (!em) return;
+      let c = 0;
+      try { c = Number(it.cuenta()) || 0; } catch (e) { c = 0; }
+      em.hidden = !(c > 0); em.textContent = c > 0 ? String(c) : '';
     });
   }
 

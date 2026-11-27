@@ -59,10 +59,14 @@ prueba('Hide this invoice / Hide el proveedor se mueven al pie', /#mInvHideI, #m
 
 grupo('5. El buscador de botellas, en una ventana');
 {
+  // La ventana vive en desk-botella.js desde que Transfers también la usa
+  // (2026-11-27); desk-invoices se la pide.
   const w = new JSDOM('<!doctype html><body></body>', { runScripts: 'outside-only' }).window;
+  const DBsrc = fs.existsSync(path.join(RAIZ, 'src/desk-botella.js')) ? leer('src/desk-botella.js') : '';
+  if (DBsrc) w.eval(DBsrc);
   if (DV) w.eval(DV);
   const D = w.BarStockDeskInvoices;
-  prueba('desk-invoices existe', !!D);
+  prueba('desk-invoices existe y le pide la ventana a desk-botella', !!D && !!w.BarStockDeskBotella && /BarStockDeskBotella\.abrir\(o\)/.test(DV));
   if (D) {
     let elegido = null, pie = null;
     D._buscar({ titulo: 'Cinzano', productos: ['Cinzano Sweet Vermouth', "Tito's Vodka"], pista: 'CINZANO SWEET 1L', pie: [{ id: 'not', texto: 'Not mine' }], alElegir: p => { elegido = p; }, alPie: id => { pie = id; } });

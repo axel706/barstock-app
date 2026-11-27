@@ -126,13 +126,23 @@
   // hacía lo mismo que el campo de la factura. La pista es SU producto:
   // sin escribir salen los míos que comparten palabras con él.
   function elegir(t, despues) {
+    const suyo = T().suItem(t, _loc) || '';
+    const sub = deDonde(t) + ' sent ' + n(t.qty) + ' ' + (suyo || 'bottles') + '. Which is yours?';
+    // En el escritorio (sin el armazón del teléfono), la ventana de
+    // desk-botella.js: la pantalla completa del teléfono no es para ahí
+    // (Transfers del escritorio, 2026-11-27).
+    const DB = window.BarStockDeskBotella;
+    if (DB && document.body.classList.contains('dk') && !document.body.classList.contains('m-shell')) {
+      return DB.abrir({ titulo: 'Which is yours?', sub, pista: suyo, verTodo: true,
+        productos: master().filter(r => r && r.item).map(r => r.item).sort((a, b) => a.localeCompare(b)),
+        alElegir: (p) => { _elegido.set(t.id, p); avisar(); if (despues) despues(); } });
+    }
     const B = window.BarStockBottleSearch;
     if (!B || !B.abrir) return;
-    const suyo = T().suItem(t, _loc) || '';
     B.abrir({
       pantalla: true,
       titulo: 'Which is yours?',
-      sub: deDonde(t) + ' sent ' + n(t.qty) + ' ' + (suyo || 'bottles') + '. Which is yours?',
+      sub,
       productos: master().filter(r => r && r.item).map(r => r.item).sort((a, b) => a.localeCompare(b)),
       pista: suyo,
       que: 'products',
