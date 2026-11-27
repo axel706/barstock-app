@@ -252,8 +252,45 @@ const H = () => D.getElementById('dkHome');
   prueba('el ciclo va a su lado', /Cycle open/.test((ahora.querySelector('.dkh-lado') || {}).textContent || ''));
   prueba('y lleva la marca de tamaño fijo', !!ahora.querySelector('.dkh-lado.dkh-fija'));
   const resto = [...H().querySelectorAll('.dkh-resto > *')].map(e => e.textContent.replace(/\s+/g, ' '));
-  prueba('debajo: las órdenes, luego el transfer, y Toast al final', /Orders waiting/.test(resto[0] || '') && /Transfer/.test(resto[1] || '') && H().querySelector('.dkh-resto > :last-child').id === 'dkVentas', resto.map(x => x.slice(0, 20)).join(' | '));
+  // Lámina "the gap next to Toast", B (Axel, 2026-11-27): el sitio a la
+  // derecha de Toast es SIEMPRE de Transfers; antes el transfer iba antes
+  // de Toast y, sin transfer, quedaba un hueco a su derecha.
+  const hijos = [...H().querySelectorAll('.dkh-resto > *')];
+  prueba('debajo: las órdenes, Toast, y el transfer a su derecha', /Orders waiting/.test(resto[0] || '') && hijos[1] && hijos[1].id === 'dkVentas'
+    && /Transfer/.test(resto[2] || '') && hijos.length === 3, resto.map(x => x.slice(0, 20)).join(' | '));
   prueba('sin nada que se acabe, el sitio ancho es de las órdenes', /todas\.find\(x => es\(x, 'agota'\)\) \|\| todas\.find\(x => es\(x, 'ordenes'\)\)/.test(DH));
+
+  grupo('3b. Sin transfer por confirmar, la tarjeta Transfers en su sitio');
+  {
+    const antes = cards;
+    const irA = [];
+    w.BarStockDeskShell = { ir: (s) => irA.push('ir:' + s) };
+    w.BarStockDeskTransfers = { nuevo: () => irA.push('nuevo') };
+    let puede = true;
+    w.BarStockMobileTransfers = { datos: () => ({ loc: 'crown', porConf: [], recientes: [[{}], [{}]], puede }) };
+    cards = antes.filter(c => !c.transfer);
+    w.BarStockDeskHome.pintar();
+    const hs = [...H().querySelectorAll('.dkh-resto > *')];
+    const ul = hs[hs.length - 1];
+    prueba('a la derecha de Toast, la tarjeta Transfers', hs.length === 3 && hs[1].id === 'dkVentas' && ul.classList.contains('dkh-txs'), hs.map(x => x.id || x.className).join(' | '));
+    prueba('dice que no hay nada que confirmar', /Nothing to confirm/.test(ul.textContent), ul.textContent.replace(/\s+/g, ' '));
+    prueba('y cuántos van esta semana', /2 this week/.test(ul.textContent));
+    const b = (t) => [...ul.querySelectorAll('button')].find(x => x.textContent.trim().includes(t));
+    b('New transfer').click();
+    prueba('New transfer abre la sección y su formulario', irA.join(',') === 'ir:transfers,nuevo', irA.join(','));
+    irA.length = 0;
+    b('See all').click();
+    prueba('See all abre la sección', irA.join(',') === 'ir:transfers', irA.join(','));
+    puede = false;
+    w.BarStockDeskHome.pintar();
+    prueba('sin permiso, sin New transfer', !/New transfer/.test(H().querySelector('.dkh-txs').textContent));
+    w.BarStockMobileTransfers = { datos: () => ({ loc: null, porConf: [], recientes: [], puede: true }) };
+    w.BarStockDeskHome.pintar();
+    prueba('sin leer todavía, no inventa un "0 this week"', !/this week/.test(H().querySelector('.dkh-txs').textContent));
+    delete w.BarStockMobileTransfers; delete w.BarStockDeskTransfers; delete w.BarStockDeskShell;
+    cards = antes;
+    w.BarStockDeskHome.pintar();
+  }
 
   grupo('4. Nada lleva a lo que el escritorio no tiene');
   const agota = H().querySelector('.dkh-agota');

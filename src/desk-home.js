@@ -415,6 +415,32 @@
       </article>`;
   }
 
+  // ── Transfers, sin nada que confirmar ──────────────────────────────
+  // Lo que dice la sección (mobile-transfers.datos, la misma lista): nada
+  // por confirmar, cuántos van esta semana, y New transfer (con "Make and
+  // send orders") / See all, que abren la sección. Sin leer todavía, sin
+  // número: un "0 this week" sería un dato que no hay.
+  function tarjetaTransfers() {
+    const MT = window.BarStockMobileTransfers;
+    if (!MT || !MT.datos) return '';
+    let d;
+    try { d = MT.datos(); } catch (e) { return ''; }
+    const n = (d.recientes || []).length;
+    const sub = d.loc == null ? 'Between your locations' : n ? n + ' this week' : 'None this week';
+    return `
+      <article class="dkh-card dkh-calm dkh-txs">
+        <div class="dkh-k"><span><i class="ti ti-arrows-exchange" aria-hidden="true"></i> Transfers</span></div>
+        <div class="dkh-top"><div class="dkh-txt">
+          <h3>Nothing to confirm</h3>
+          <p class="dkh-sub">${esc(sub)}</p>
+        </div></div>
+        <div class="dkh-acts">
+          ${d.puede ? '<button type="button" class="dkh-b dkh-b1" data-tx="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> New transfer</button>' : ''}
+          <button type="button" class="dkh-b" data-tx="todos">See all</button>
+        </div>
+      </article>`;
+  }
+
   // ── Running out, ancha: las botellas del teléfono, con su número ────
   //
   // Axel, 2026-11-25, lámina A: "el estilo debería ser más similar al del
@@ -548,6 +574,12 @@
     const rango = (x) => es(x, 'ordenes') ? 0 : es(x, 'puestas') ? 1 : x.c.transfer ? 2 : 3;
     const demas = todas.filter(x => x !== hero && x !== lado).sort((a, b) => rango(a) - rango(b) || a.i - b.i);
     const pintaHero = (x) => x.c.fase === 'agota' ? tarjetaAgota(x.c, x.i) : tarjeta(x.c, x.i, 'dkh-hero');
+    // El sitio a la derecha de Toast es SIEMPRE de Transfers (Axel,
+    // 2026-11-27, lámina "the gap next to Toast", B): el transfer por
+    // confirmar, o la tarjeta Transfers. Iba antes de Toast y, sin
+    // transfer, dejaba un hueco a su derecha.
+    const tx = demas.find(x => x.c.transfer);
+    const fila = demas.filter(x => x !== tx);
 
 
     _host.innerHTML = `
@@ -557,8 +589,9 @@
         ${lado ? tarjeta(lado.c, lado.i, 'dkh-lado') : ''}
       </div>
       <div class="dkh-resto">
-        ${demas.map(x => x.c.fase === 'agota' ? tarjetaAgota(x.c, x.i) : tarjeta(x.c, x.i)).join('')}
+        ${fila.map(x => x.c.fase === 'agota' ? tarjetaAgota(x.c, x.i) : tarjeta(x.c, x.i)).join('')}
         ${tarjetaVentas()}
+        ${tx ? tarjeta(tx.c, tx.i) : tarjetaTransfers()}
       </div>
       ${reportes()}`;
 
@@ -590,6 +623,14 @@
     if (cf('estante') && M.detalleEstante) cf('estante').onclick = () => M.detalleEstante();
     if (cf('ayer') && M.sincronizarHoy) cf('ayer').onclick = () => M.sincronizarHoy();
     engancharGasto();
+    _host.querySelectorAll('[data-tx]').forEach(b => {
+      b.onclick = () => {
+        const S = window.BarStockDeskShell;
+        if (S && S.ir) S.ir('transfers');
+        const T = window.BarStockDeskTransfers;
+        if (b.dataset.tx === 'nuevo' && T && T.nuevo) T.nuevo();
+      };
+    });
     _host.querySelectorAll('[data-ro-todo]').forEach(b => {
       b.onclick = () => { const S = window.BarStockDeskShell; if (S && S.ir) S.ir('runningOut'); };
     });

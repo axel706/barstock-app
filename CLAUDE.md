@@ -504,8 +504,12 @@ sección de hoy vive tal cual dentro del armazón.
   contenido que se adapte al tamaño actual de la tarjeta, no una tarjeta
   nueva con el contenido que quieres mostrar").
   - **Sitio fijo**: las cuatro cifras; Running out ancha con el ciclo a
-    su lado; debajo las órdenes (waiting o placed), lo demás (el
-    transfer por confirmar) y Toast; los reportes. La urgencia de
+    su lado; debajo las órdenes (waiting o placed), Toast y, a su
+    derecha, SIEMPRE Transfers (Axel, 2026-11-27, lámina "the gap next
+    to Toast", B): el transfer por confirmar o, sin él, la tarjeta
+    Transfers ("Nothing to confirm", cuántos esta semana de
+    `mobile-transfers.datos`, New transfer y See all a la sección); sin
+    ella quedaba un hueco a la derecha de Toast; los reportes. La urgencia de
     `home-orden` (quién va primero) es SÓLO del teléfono: siguiéndola, en
     Will's & Bill's las órdenes ocupaban el sitio ancho y Running out no
     cabía en el suyo. Sin nada que se acabe, el sitio ancho es de las

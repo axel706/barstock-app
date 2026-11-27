@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261127-104709",
+    "items": [
+      "Desktop Home: Transfers card next to Toast sales"
+    ]
+  },
+  {
     "build": "20261127-101700",
     "items": [
       "Transfers on desktop: confirm, choose yours, undo",
@@ -192,13 +198,6 @@
     "build": "20261126-115544",
     "items": [
       "Toast chart in the product panel no longer flickers"
-    ]
-  },
-  {
-    "build": "20261126-114526",
-    "items": [
-      "Inventory search is the magnifier, and typing is smooth",
-      "No Do we have inside Inventory"
     ]
   }
 ]
