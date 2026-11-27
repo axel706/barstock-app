@@ -44,7 +44,8 @@ const INDEX = leer('index.html');
 (async () => {
   grupo('1. Una sección de la barra lateral');
   prueba('Transfers abre su sección, con su número', /id: 'transfers', label: 'Transfers', icon: 'ti-arrows-exchange', sec: 'transfers',\s*\n\s*cuenta:/.test(SHELL));
-  prueba('   y ya no está en "Soon" (allí sólo Counts)', !/id: 'transfers'[^}]*pronto: true/.test(SHELL) && /\{ grupo: 'Soon' \},\s*\n\s*\{ id: 'counts'/.test(SHELL));
+  // Counts salió de "Soon" el mismo día (desk-counts.js): el grupo se fue.
+  prueba('   y ya no está en "Soon"', !/id: 'transfers'[^}]*pronto: true/.test(SHELL) && !/grupo: 'Soon'/.test(SHELL));
 
   grupo('2. Lo del teléfono, una vez');
   prueba('mobile-transfers da qué sale, el Undo y el guardar', /BarStockMobileTransfers = \{ montar, abrirNuevo, pendientes, datos, deshacer, crear/.test(MTsrc));

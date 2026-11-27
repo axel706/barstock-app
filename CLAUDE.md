@@ -109,8 +109,8 @@ resolver y él lo sabe. No es un descubrimiento que haya que anunciarle.
 
 ## La arquitectura
 
-Frontend estático, sin build. `index.html` es un monolito y hay ~165 módulos
-`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 40 hojas
+Frontend estático, sin build. `index.html` es un monolito y hay ~169 módulos
+`src/*.js`, cada uno un IIFE que se cuelga de `window.BarStock*`. 41 hojas
 en `styles/`. Supabase se habla con `fetch` crudo contra PostgREST.
 
 12 funciones en `api/` sobre Vercel. **El tope del plan son 12, y está lleno**
@@ -119,7 +119,7 @@ integración vive en `lib/`, y esa función comprueba la sesión una vez y
 reparte. Antes de
 crear una nueva, mira si cabe en una que ya existe.
 
-Las pruebas son 185 suites en `tools/test-*.js`, con `jsdom`. Se corren con
+Las pruebas son 187 suites en `tools/test-*.js`, con `jsdom`. Se corren con
 `npm test` y tienen que pasar enteras antes de entregar nada.
 
 ### El rompe-caché
@@ -447,9 +447,9 @@ sección de hoy vive tal cual dentro del armazón.
   `bsCloseSection`, no las envuelve, y lo encendido sigue a
   `.bs-active-section`. Count = clic en `#takeInventoryBtn` (su
   comprobación del ciclo). Admin copia la visibilidad de
-  `#bsAdminNavTab`. Lo que aún no existe (Counts) sale
-  apagado y sin ser botón (Axel lo eligió frente a esconderlo), en su
-  grupo "Soon" al final. **La barra, reestructurada** (2026-11-26,
+  `#bsAdminNavTab`. Lo que aún no existía salía apagado y sin ser botón
+  (Axel lo eligió frente a esconderlo), en un grupo "Soon" al final; con
+  Counts (2026-11-27) ya no queda nada ahí. **La barra, reestructurada** (2026-11-26,
   lámina "Desktop sidebar · restructure", A: "history? ya no tenemos una
   sección con ese nombre"): Home, Running out (justo después: es lo
   primero que se mira), Inventory › Unmatched, Orders › To buy · Open ·
@@ -1047,6 +1047,36 @@ sección de hoy vive tal cual dentro del armazón.
   (`transfer-confirm.elegir`, sin el armazón del teléfono); sin escribir,
   primero lo que casa con la pista y luego todo lo demás (`verTodo`).
   Prueba: `test-transfers-escritorio`.
+- **Reports › Counts** (Axel, 2026-11-27, láminas "Counts · desktop" B y
+  "the report of one count": "un registro de los counts […] en modo
+  reporte, fácil de entender pero mostrando información útil"; "sin que
+  esto se convierta en una lista infinita"): `src/desk-counts.js` y
+  `styles/desk-counts.css`, la sección de la barra lateral (en Reports,
+  tras Costs; ya no queda nada en "Soon"). La lista: cada conteo (una
+  SEMANA, el primer cierre; los demás, "+1 recount") con su tiempo, por
+  producto, contra el anterior y su Live vs count. Tocar uno abre su
+  reporte, en el orden de Axel: el resumen junto a la cascada ("Where the
+  money went": lo que había, lo que llegó, lo vendido, lo esperado y lo
+  contado, sólo de lo que Toast vende); la tabla de TODOS los productos con
+  SU scroll (la página no crece), la diferencia en una píldora, el dinero
+  aparte, la verificación de la semana en su columna en la MISMA línea
+  ("en un renglón extra está mal") y, bajo el producto, la franja del
+  porqué (ámbar faltó, verde sobró, rojo parece error al contar, gris
+  información); Check these first, lo corto y lo de más juntos y lo que se
+  repite (3 conteos del mismo lado), lado a lado; semana tras semana con
+  los tragos sin receta del ciclo. **Las cuentas viven en
+  `src/count-report.js`** (las usará el teléfono): lee `count_sessions`,
+  `inventory_snapshots.on_hand_start` (lo contado cada semana) y
+  `live_expected` (desde el 2026-11-15; sin él, sin esperado ni "not
+  counted": no se inventa). El porqué son las causas de
+  `live-diagnostico.causa` (las del correo del lunes; su historia por
+  producto, `historia()`, es UNA para los dos) más cuatro nuevas: no
+  contado esta vez, contado en 0 con ventas, un salto sin nada que lo
+  explique y media caja/una caja corta con una orden que llegó. La cifra
+  grande es la del Home (lo corto de lo que se aleja). Sin "Recount": no
+  hay panel de botella fuera de un conteo. El teléfono (Time Machine) va
+  después, con su lámina. Pruebas: `test-count-report` y
+  `test-counts-escritorio`.
 - **LOS PIES DEL ESCRITORIO: UNA barra de cristal** (Axel, 2026-11-26,
   lámina "Quick order & To buy · the footer", A: "ese pie está HORRIBLE";
   "aplícalo a TODAS las pantallas que llevan barras de ese estilo"). Open
@@ -1474,7 +1504,7 @@ veces:
 
 ## Las pruebas
 
-`npm test` · 185 suites · ~2470 comprobaciones. Tienen que pasar enteras.
+`npm test` · 187 suites · ~2470 comprobaciones. Tienen que pasar enteras.
 
 **Un test que no puede fallar no sirve.** Escribe el test, compruébalo
 contra el código roto, y sólo entonces arréglalo. En esta sesión varios

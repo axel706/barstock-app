@@ -59,7 +59,7 @@ const html = `<!doctype html><body>
     <div class="bs-header-line4"><button id="bsAdminNavTab" style="display:none" data-section="admin"></button></div>
   </div>
   <button id="takeInventoryBtn"></button>
-  ${['inventory', 'vendor', 'history', 'noMatch', 'costReport', 'consumption', 'pourIq', 'admin']
+  ${['inventory', 'vendor', 'history', 'noMatch', 'costReport', 'consumption', 'pourIq', 'admin', 'counts']
     .map(s => `<div class="card section-card" id="${s}Section"></div>`).join('')}
 </div></body>`;
 
@@ -111,27 +111,23 @@ const item = id => lado && lado.querySelector(`[data-dk="${id}"]`);
   prueba('Running out ya no es "Soon": es un botón que abre su sección', !!item('runningOut') && item('runningOut').tagName === 'BUTTON' && !/Soon/.test(item('runningOut').textContent));
   // Las secciones de hoy están en index.html; las que se rehacen para el
   // escritorio las crea su módulo (Running out: desk-running-out.js).
-  const PROPIAS = { runningOut: 'src/desk-running-out.js', sales: 'src/desk-sales.js', transfers: 'src/desk-transfers.js' };
+  const PROPIAS = { runningOut: 'src/desk-running-out.js', sales: 'src/desk-sales.js', transfers: 'src/desk-transfers.js', counts: 'src/desk-counts.js' };
   for (const it of S.ITEMS.filter(x => x.sec)) {
     const donde = PROPIAS[it.sec];
     prueba(`${it.label} apunta a una sección (#${it.sec}Section)` + (donde ? ' de ' + donde : ' de index.html'),
       donde ? leer(donde).includes(`'${it.sec}Section'`) : INDEX.includes(`id="${it.sec}Section"`));
   }
 
-  grupo('2. Lo que aún no hay va en su grupo "Soon", al final, y no es un botón');
+  grupo('2. Ya no queda nada en "Soon"');
   {
-    const g = [...lado.querySelectorAll('.dk-grupo')].find(x => x.textContent === 'Soon');
-    prueba('hay un grupo "Soon"', !!g);
-    // Transfers salió de "Soon" el 2026-11-27 (desk-transfers.js).
-    for (const id of ['counts']) {
-      const e = item(id);
-      prueba(id + ' va en el grupo "Soon"', !!g && !!e && !!(g.compareDocumentPosition(e) & 4) && ![...lado.querySelectorAll('.dk-grupo')].some(x => x !== g && (g.compareDocumentPosition(x) & 4) && (x.compareDocumentPosition(e) & 4)));
-      prueba(id + ' no es un botón', !!e && e.tagName !== 'BUTTON');
-    }
+    // Counts salió el 2026-11-27 (desk-counts.js), el último: el grupo se fue.
+    prueba('sin grupo "Soon"', ![...lado.querySelectorAll('.dk-grupo')].some(x => x.textContent === 'Soon'));
+    prueba('Counts es un botón, en Reports, tras Costs', !!item('counts') && item('counts').tagName === 'BUTTON'
+      && [...lado.querySelectorAll('.dk-lista [data-dk]')].map(e => e.dataset.dk).join(',').includes('costReport,counts'));
   }
   llamadas.length = 0;
   S.ir('counts');
-  prueba('tocar un "Soon" no hace nada', llamadas.length === 0, llamadas.join(','));
+  prueba('Counts → bsOpenSection("counts")', llamadas[0] === 'open:counts', llamadas.join(','));
 
   grupo('3. Cada renglón llama a lo de siempre');
   llamadas.length = 0;

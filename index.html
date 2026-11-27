@@ -107,6 +107,7 @@
   <link rel="stylesheet" href="styles/desk-inventory.css?v=dki13">
   <link rel="stylesheet" href="styles/desk-orders.css?v=dko23">
   <link rel="stylesheet" href="styles/desk-transfers.css?v=dktx1">
+  <link rel="stylesheet" href="styles/desk-counts.css?v=dkn1">
   <link rel="stylesheet" href="styles/desk-header.css?v=dkc20">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -396,7 +397,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span class="bs-build" id="buildBadge">BUILD-20261127-110624</span>
+        <span class="bs-build" id="buildBadge">BUILD-20261127-152411</span>
         <div class="bs-toolbar-group">
         <button id="bsMoreBtn" class="bs-btn bs-btn-more"><i class="ti ti-dots" aria-hidden="true"></i></button>
         <div id="bsMoreMenu" class="bs-dropdown bs-dropdown-right hidden">
@@ -5640,7 +5641,10 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/home-orden.js?v=ho2"></script>
 <script src="src/live-cache.js?v=lc14"></script>
 <script src="src/sugerencia.js?v=sg3"></script>
-<script src="src/live-diagnostico.js?v=ld2"></script>
+<script src="src/live-diagnostico.js?v=ld3"></script>
+<!-- El reporte de un conteo (Reports › Counts): usa las causas de
+     live-diagnostico (justo arriba). Lo pintan desk-counts y el teléfono. -->
+<script src="src/count-report.js?v=cr1"></script>
 <script src="src/live-expected.js?v=le4"></script>
 <script src="src/running-out.js?v=rof6"></script>
 <script src="src/toast-sales.js?v=ts8"></script>
@@ -6393,6 +6397,9 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
      desk-shell.js, que vigila las secciones al montar). Los datos, de
      mobile-transfers y transfer-confirm (más arriba). -->
 <script src="src/desk-transfers.js?v=dktx1"></script>
+<!-- Reports › Counts del escritorio: la sección (antes de desk-shell.js,
+     que vigila las secciones al montar). Las cuentas, de count-report.js. -->
+<script src="src/desk-counts.js?v=dkn1"></script>
 <!-- Sales del escritorio: lo de toast-sales.js y las cuentas de
      mobile-sales.js (más arriba) en su .section-card. También antes de
      desk-shell.js. -->
@@ -6421,7 +6428,7 @@ if(state.master.length){ setStatus(`Persistent master ready. ${state.master.leng
 <script src="src/desk-tobuy.js?v=dkt1"></script>
 <script src="src/desk-orders.js?v=dko15"></script>
 <!-- Después de bsOpenSection/bsCloseSection, que son lo que llama. -->
-<script src="src/desk-shell.js?v=dk14"></script>
+<script src="src/desk-shell.js?v=dk15"></script>
 <!-- El Home del escritorio: pinta con los datos de mobile-home.js (más
      arriba) dentro del armazón de desk-shell.js. -->
 <script src="src/desk-home.js?v=dkh13"></script>

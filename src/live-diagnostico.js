@@ -63,12 +63,12 @@
   const horasDe = (c) => (Date.parse(c.cycle_end) - Date.parse(c.cycle_start)) / 3600e3;
   const corto = (c) => !!(c && c.cycle_start && c.cycle_end && !(horasDe(c) >= MIN_HORAS));
 
-  function diagnosticar({ ciclos, filas, proveedor }) {
-    if (!ciclos || !ciclos.length) return { hay: false };
-    if (corto(ciclos[0])) return { hay: true, invalido: true, fin: ciclos[0].end_day, horas: Math.max(0, Math.round(horasDe(ciclos[0]))) };
-    // La historia sigue sin los ciclos cortos: no dicen nada de una semana.
-    ciclos = ciclos.filter((c, i) => i === 0 || !corto(c));
-    const ult = ciclos[0];
+  // La historia de cada producto, del ciclo ciclos[0] hacia atrás. La
+  // usan el correo del lunes (diagnosticar) y el reporte de un conteo
+  // (count-report.js): una sola forma de decir "las semanas de antes".
+  // Sin los ciclos cortos, que no dicen nada de una semana.
+  function historia(ciclos, filas) {
+    ciclos = (ciclos || []).filter((c, i) => i === 0 || !corto(c));
     const orden = new Map(ciclos.map((c, i) => [c.id, i]));
     const porItem = new Map();
     for (const f of filas || []) {
@@ -76,19 +76,31 @@
       if (!porItem.has(f.item_name)) porItem.set(f.item_name, []);
       porItem.get(f.item_name).push(f);
     }
-    const lista = [];
-    for (const [item, fs] of porItem) {
-      fs.sort((a, b) => orden.get(a.cycle_id) - orden.get(b.cycle_id));
-      const f = fs[0];
-      if (orden.get(f.cycle_id) !== 0 || !f.in_toast) continue;
-      const dif = Number(f.difference) || 0, vendido = Number(f.sold) || 0;
-      if (!seAleja(dif, vendido)) continue;
-      // La historia: las semanas de antes, seguidas, con Toast.
+    for (const fs of porItem.values()) fs.sort((a, b) => orden.get(a.cycle_id) - orden.get(b.cycle_id));
+    // Las semanas de antes de una fila de ciclos[0], seguidas, con Toast.
+    const prevDe = (fs) => {
       const prev = [];
       for (let i = 1; i < fs.length; i++) {
         if (orden.get(fs[i].cycle_id) !== i || !fs[i].in_toast) break;
         prev.push({ dif: Number(fs[i].difference) || 0, vendido: Number(fs[i].sold) || 0 });
       }
+      return prev;
+    };
+    return { ciclos, orden, porItem, prevDe };
+  }
+
+  function diagnosticar({ ciclos, filas, proveedor }) {
+    if (!ciclos || !ciclos.length) return { hay: false };
+    if (corto(ciclos[0])) return { hay: true, invalido: true, fin: ciclos[0].end_day, horas: Math.max(0, Math.round(horasDe(ciclos[0]))) };
+    const H = historia(ciclos, filas);
+    const ult = H.ciclos[0];
+    const lista = [];
+    for (const [item, fs] of H.porItem) {
+      const f = fs[0];
+      if (H.orden.get(f.cycle_id) !== 0 || !f.in_toast) continue;
+      const dif = Number(f.difference) || 0, vendido = Number(f.sold) || 0;
+      if (!seAleja(dif, vendido)) continue;
+      const prev = H.prevDe(fs);
       const precio = Number(f.unit_price) > 0 ? Number(f.unit_price) : null;
       lista.push(Object.assign({
         item, esperado: r1(Number(f.expected) || 0), contado: r2(Number(f.counted) || 0), dif: r2(dif),
@@ -152,5 +164,5 @@
     return diagnosticar({ ciclos, filas, proveedor: (i) => prov.get(i) || '' });
   }
 
-  window.BarStockLiveDiag = { UMBRAL, PARTE, seAleja, leer, diagnosticar, causa, semana, MAX, MIN_HORAS };
+  window.BarStockLiveDiag = { UMBRAL, PARTE, seAleja, leer, diagnosticar, causa, historia, corto, semana, MAX, MIN_HORAS, CAJAS, CERCA_CAJA };
 })();

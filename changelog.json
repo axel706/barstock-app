@@ -1,5 +1,12 @@
 [
   {
+    "build": "20261127-152411",
+    "items": [
+      "Desktop: Counts, every count with its report",
+      "What was short or over, and what it could be"
+    ]
+  },
+  {
     "build": "20261127-110624",
     "items": [
       "Desktop Home: Transfers card centered, with its icon"
@@ -191,13 +198,6 @@
     "items": [
       "Orders: vendor in the title, total only at the bottom",
       "No price shows where the price goes"
-    ]
-  },
-  {
-    "build": "20261126-121329",
-    "items": [
-      "New Orders on desktop: vendors left, order right",
-      "Review and send from desktop, same as the phone"
     ]
   }
 ]

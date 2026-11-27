@@ -1,0 +1,152 @@
+/* ── Reports › Counts en el escritorio (desk-counts.js; Axel 2026-11-27,
+   láminas "Counts · desktop" B y "the report of one count") ──
+   La lista de conteos y el reporte de uno, con el estándar de las
+   secciones (dk-pantalla). La tabla de productos tiene SU scroll: la
+   página no crece con los 190 (Axel: "scroll interno para no irnos a una
+   pantalla nueva"). Las tarjetas en Tinta (las variables, nunca el color
+   copiado). Todo con el prefijo de id: app.css fuerza el radio de los
+   botones. */
+@media (min-width: 641px) {
+  body.dk #countsSection.bs-active-section { display: block; }
+  body.dk #countsSection.dk-pantalla { padding: 18px 28px 28px !important; }
+  #dkCnt { color: #f8fafc; }
+  #dkCnt .am { color: #fcd34d; } #dkCnt .ok { color: #6ee7b7; } #dkCnt .ma { color: #fca5a5; } #dkCnt .gr { color: #94a3b8; }
+  #dkCnt .dkn-k { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #94a3b8; }
+  #dkCnt .dkn-kr { display: flex; justify-content: space-between; gap: 12px; }
+  #dkCnt .dkn-kr .am { letter-spacing: 0; text-transform: none; font-size: 12.5px; }
+  #dkCnt .dkn-sk { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #94a3b8; margin: 22px 2px 8px; }
+  #dkCnt .dkn-car { border-radius: 18px; background: var(--tinta); border: 1px solid var(--tinta-borde); padding: 14px 18px; min-width: 0; }
+  #dkCnt .dkn-car.ro { border-color: rgba(248, 113, 113, .45); }
+  #dkCnt .dkn-car.am2 { border-color: rgba(251, 191, 36, .45); }
+  #dkCnt .dkn-p { margin: 8px 0 0; font-size: 14.5px; line-height: 1.5; color: #e2e8f0; }
+  #dkCnt .dkn-p b { color: #fff; }
+  #dkCnt .dkn-nd { margin: 10px 0 0; color: #a9bacd; font-size: 13.5px; }
+  #dkCnt .dkn-nada {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px;
+    min-height: calc(100dvh - var(--dk-alto) - 120px); color: #a9bacd;
+  }
+  #dkCnt .dkn-nada i { font-size: 46px; color: #9fb0c4; }
+  #dkCnt .dkn-nada b { font-size: 26px; color: #fff; }
+  #dkCnt .dkn-nada small { font-size: 15px; max-width: 460px; line-height: 1.5; }
+  #dkCnt .dkn-nada.mal i { color: #fca5a5; }
+  #dkCnt .dkn-big { font-size: 42px; font-weight: 850; line-height: 1.05; margin-top: 6px; letter-spacing: -.5px; }
+
+  /* La lista */
+  #dkCnt .dkn-cab { display: flex; gap: 34px; align-items: flex-end; margin: 4px 2px 18px; }
+  #dkCnt .dkn-vs { font-weight: 800; font-size: 14px; margin-top: 6px; }
+  #dkCnt .dkn-m b { display: block; font-size: 24px; font-weight: 850; }
+  #dkCnt .dkn-m span { color: #a9bacd; font-size: 12.5px; }
+  #dkCnt .dkn-ch { flex: 1; height: 100px; display: flex; align-items: flex-end; gap: 8px; min-width: 0; }
+  #dkCnt .dkn-ch div { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; min-width: 0; }
+  #dkCnt .dkn-ch i { width: 100%; border-radius: 6px 6px 2px 2px; background: rgba(125, 211, 252, .35); }
+  #dkCnt .dkn-ch i.on { background: #38bdf8; }
+  #dkCnt .dkn-ch small { font-size: 10.5px; color: #94a3b8; white-space: nowrap; }
+  #dkCnt .dkn-lc { display: grid; grid-template-columns: minmax(0, 1.3fr) 110px 90px 110px 170px 190px; gap: 14px; align-items: center; }
+  #dkCnt .dkn-cols { padding: 6px 16px; font-size: 11px; font-weight: 800; letter-spacing: .08em; color: #8ea0bd; }
+  #dkCnt .dkn-cols span:not(:first-child), #dkCnt .dkn-fila .n { text-align: right; }
+  #dkCnt button.dkn-fila {
+    width: 100%; margin: 7px 0 0; padding: 12px 16px; border-radius: 16px !important; cursor: pointer; text-align: left; font: inherit; color: inherit; font-size: 14.5px;
+    background: var(--tinta); border: 1px solid var(--tinta-borde); box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; height: auto;
+  }
+  #dkCnt button.dkn-fila:hover { border-color: rgba(125, 211, 252, .45); }
+  #dkCnt .dkn-fila .n { font-weight: 800; }
+  #dkCnt .dkn-fila small { margin-left: 8px; color: #94a3b8; font-size: 12px; }
+
+  /* El reporte: el resumen y la cascada */
+  #dkCnt .dkn-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px; }
+  #dkCnt .dkn-verd.am { border-color: rgba(251, 191, 36, .45); }
+  #dkCnt .dkn-mini { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+  #dkCnt .dkn-mini div { border-radius: 12px; background: rgba(255, 255, 255, .05); padding: 8px 10px; }
+  #dkCnt .dkn-mini b { display: block; font-size: 19px; font-weight: 850; }
+  #dkCnt .dkn-mini span { font-size: 11.5px; color: #a9bacd; }
+  #dkCnt .dkn-cas { display: flex; align-items: flex-end; gap: 14px; height: 140px; margin-top: 8px; }
+  #dkCnt .dkn-cas div { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; min-width: 0; }
+  #dkCnt .dkn-cas i { width: 100%; border-radius: 8px; background: rgba(125, 211, 252, .4); }
+  #dkCnt .dkn-cas i.p { background: rgba(110, 231, 183, .5); }
+  #dkCnt .dkn-cas i.n { background: rgba(251, 191, 36, .6); }
+  #dkCnt .dkn-cas i.on { background: rgba(56, 189, 248, .75); }
+  #dkCnt .dkn-cas b { font-size: 13px; }
+  #dkCnt .dkn-cas span { font-size: 12px; color: #a9bacd; white-space: nowrap; }
+  #dkCnt .dkn-wf .dkn-p { font-size: 13px; color: #cbd5e1; }
+
+  /* La tabla: su scroll, los títulos pegados arriba */
+  #dkCnt .dkn-tb { border-radius: 18px; background: var(--tinta); border: 1px solid var(--tinta-borde); overflow: hidden; }
+  #dkCnt .dkn-sc { max-height: min(560px, calc(100dvh - var(--dk-alto) - 190px)); overflow-y: auto; overscroll-behavior: contain; }
+  #dkCnt .dkn-tr {
+    display: grid; grid-template-columns: minmax(0, 1.7fr) 56px 56px 60px 76px 72px 104px 76px 170px;
+    gap: 10px; padding: 0 16px; min-height: 40px; align-items: center; font-size: 13.5px; border-top: 1px solid rgba(255, 255, 255, .07);
+  }
+  #dkCnt .dkn-tr > span:not(.nm):not(.dkn-wy) { text-align: right; }
+  #dkCnt .dkn-th > span:first-child { text-align: left !important; }
+  #dkCnt .dkn-tr .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #dkCnt .dkn-tr .c { font-weight: 800; }
+  #dkCnt .dkn-tr .usd { font-weight: 700; }
+  #dkCnt .dkn-tr.cw { padding-top: 9px; padding-bottom: 10px; }
+  #dkCnt .dkn-th {
+    position: sticky; top: 0; z-index: 1; border-top: 0; min-height: 34px; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; color: #8ea0bd;
+    background: rgba(15, 23, 42, .97); border-bottom: 1px solid rgba(255, 255, 255, .12);
+  }
+  #dkCnt .dkn-wy { grid-column: 1 / -1; margin-top: 7px; font-size: 12.5px; border-radius: 10px; padding: 5px 10px; text-align: left; }
+  #dkCnt .dkn-wy.a { color: #fde68a; background: rgba(251, 191, 36, .1); }
+  #dkCnt .dkn-wy.v { color: #a7f3d0; background: rgba(110, 231, 183, .08); }
+  #dkCnt .dkn-wy.ro { color: #fecaca; background: rgba(248, 113, 113, .12); }
+  #dkCnt .dkn-wy.gx { color: #cbd5e1; background: rgba(255, 255, 255, .05); }
+  #dkCnt .dkn-dif { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 58px; padding: 3px 9px; border-radius: 999px; font-weight: 850; font-size: 13px; white-space: nowrap; }
+  #dkCnt .dkn-dif.m { background: rgba(251, 191, 36, .2); color: #fde68a; }
+  #dkCnt .dkn-dif.p { background: rgba(110, 231, 183, .18); color: #a7f3d0; }
+  #dkCnt .dkn-dif.e { background: rgba(248, 113, 113, .2); color: #fecaca; }
+  #dkCnt .dkn-dif.z { color: #6ee7b7; min-width: 0; padding: 0; }
+  #dkCnt .dkn-ck { display: inline-flex; gap: 4px; align-items: center; padding: 3px 9px; border-radius: 999px; background: rgba(56, 189, 248, .18); color: #bae6fd; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  #dkCnt .dkn-vacio { padding: 16px; color: #a9bacd; margin: 0; }
+  #dkCnt .dkn-pie { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; padding: 9px 16px; border-top: 1px solid rgba(255, 255, 255, .1); font-size: 12px; color: #a9bacd; }
+  #dkCnt .dkn-pie .lg { display: inline-flex; gap: 6px; align-items: center; }
+  #dkCnt .dkn-pie .lg:first-of-type { margin-left: auto; }
+  #dkCnt .dkn-pie .dkn-dif { min-width: 0; font-size: 12px; }
+  #dkCnt button.dkn-lk {
+    background: none; border: 0; padding: 0; margin: 10px 0 0; color: #7dd3fc; font: inherit; font-weight: 800; font-size: 13px; cursor: pointer;
+    box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; height: auto; border-radius: 0 !important;
+  }
+  #dkCnt .dkn-pie button.dkn-lk { margin: 0; font-size: 12px; }
+
+  /* Las tres tarjetas y semana tras semana */
+  #dkCnt .dkn-tres { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 14px; margin-top: 22px; }
+  #dkCnt .dkn-li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 10px 0; border-top: 1px solid rgba(255, 255, 255, .07); align-items: start; }
+  #dkCnt .dkn-k + .dkn-li { border-top: 0; }
+  #dkCnt .dkn-li b { font-size: 14px; }
+  #dkCnt .dkn-li small { display: block; color: #cbd5e1; font-size: 12.5px; margin-top: 2px; }
+  #dkCnt .dkn-li > span { font-weight: 800; white-space: nowrap; }
+  #dkCnt .dkn-mas { margin: 8px 0 0; font-size: 12.5px; color: #a9bacd; }
+  #dkCnt .dkn-dos { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+  #dkCnt .dkn-px { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+  #dkCnt .dkn-px span { padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, .07); font-size: 12px; color: #cbd5e1; }
+  #dkCnt .dkn-bars { display: flex; align-items: flex-end; gap: 10px; height: 110px; margin-top: 10px; }
+  #dkCnt .dkn-bars div { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; min-width: 0; font-size: 11px; color: #94a3b8; }
+  #dkCnt .dkn-bars i { width: 100%; border-radius: 6px; background: rgba(251, 191, 36, .45); }
+  #dkCnt .dkn-bars i.p { background: rgba(110, 231, 183, .45); }
+  #dkCnt .dkn-bars i.on { background: #fbbf24; }
+  #dkCnt .dkn-bars i.on.p { background: #34d399; }
+  #dkCnt .dkn-bars b { color: #e2e8f0; font-size: 11.5px; }
+  #dkCnt .dkn-bars span { white-space: nowrap; }
+  #dkCnt > .dkn-car:last-child { margin-top: 14px; }
+}
+
+/* Poco ancho. Mide la sección, no la ventana: el iPad de 1180 con la
+   barra deja ~900 px, donde aún caben el resumen junto a la cascada y las
+   tres tarjetas en fila (apiladas, el reporte se volvía largo); la tabla
+   se aprieta y la verificación deja su nombre. Por debajo de 820, todo
+   en una columna. */
+#countsSection { container: dkcnt / inline-size; }
+@container dkcnt (max-width: 1100px) {
+  #dkCnt .dkn-tr { grid-template-columns: minmax(0, 1.3fr) 40px 46px 52px 66px 64px 92px 60px 128px; gap: 8px; font-size: 13px; padding: 0 12px; }
+  #dkCnt .dkn-th { font-size: 9.5px; letter-spacing: .05em; }
+  #dkCnt .dkn-ck .ckx { display: none; }
+  #dkCnt .dkn-lc { grid-template-columns: minmax(0, 1fr) 90px 80px 90px 150px 170px; }
+  #dkCnt .dkn-ch { display: none; }
+  #dkCnt .dkn-tres { grid-template-columns: 1fr 1.3fr 1fr; gap: 12px; }
+  #dkCnt .dkn-dos { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  #dkCnt .dkn-cas { gap: 8px; }
+  #dkCnt .dkn-cas span { font-size: 11px; }
+}
+@container dkcnt (max-width: 820px) {
+  #dkCnt .dkn-top, #dkCnt .dkn-tres { grid-template-columns: minmax(0, 1fr); }
+}

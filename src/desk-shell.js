@@ -56,12 +56,13 @@
     { id: 'pourIq', label: 'Pour·IQ', icon: 'ti-brain', sec: 'pourIq' },
     { id: 'consumption', label: 'Variance', icon: 'ti-chart-histogram', sec: 'consumption' },
     { id: 'costReport', label: 'Costs', icon: 'ti-chart-bar', sec: 'costReport' },
+    // Counts, en Reports (desk-counts.js, 2026-11-27): los conteos y el reporte de
+    // cada uno. Ya no queda nada en "Soon".
+    { id: 'counts', label: 'Counts', icon: 'ti-clock-hour-4', sec: 'counts' },
     // Transfers (desk-transfers.js, lámina "Transfers · desktop", A,
     // 2026-11-27), con su número de lo que espera que lo confirmes.
     { id: 'transfers', label: 'Transfers', icon: 'ti-arrows-exchange', sec: 'transfers',
       cuenta: () => { const M = window.BarStockMobileTransfers; return M && M.pendientes ? M.pendientes() : 0; } },
-    { grupo: 'Soon' },
-    { id: 'counts', label: 'Counts', icon: 'ti-clock-hour-4', pronto: true },
     { id: 'settings', label: 'Settings', icon: 'ti-settings', pie: true },
     { id: 'admin', label: 'Admin', icon: 'ti-shield-lock', sec: 'admin', admin: true, pie: true }
   ];
