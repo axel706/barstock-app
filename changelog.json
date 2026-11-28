@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261128-115746",
+    "items": [
+      "Phone greeting in the logo colors"
+    ]
+  },
+  {
     "build": "20261127-152411",
     "items": [
       "Desktop: Counts, every count with its report",
@@ -191,13 +197,6 @@
     "items": [
       "Orders on desktop updates live with changes from the phone",
       "Centered − and + buttons"
-    ]
-  },
-  {
-    "build": "20261126-123130",
-    "items": [
-      "Orders: vendor in the title, total only at the bottom",
-      "No price shows where the price goes"
     ]
   }
 ]

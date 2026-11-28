@@ -939,11 +939,17 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
   /* "Hello Alejandro" es más largo que "Sunday", así que el saludo se
    * encoge antes que la píldora de locación y se corta con puntos.
    * Sin esto, un nombre largo empujaba la píldora fuera. */
+  /* Con el degradado de "Stock" del logo, como el saludo del escritorio
+   * (Axel, 2026-11-28): --bs-stock-grad, el mismo de la marca, sin
+   * copiarlo. El relleno de abajo es para la cola de la "y" y la "g". */
   .m-day {
     flex: 1 1 auto; min-width: 0;
-    font-size: var(--m-screen); font-weight: 800; color: #fff;
-    letter-spacing: -.5px; line-height: 1.1;
+    font-size: var(--m-screen); font-weight: 800;
+    letter-spacing: -.5px; line-height: 1.1; padding-bottom: 2px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    color: var(--bs-stock-solid, #6ee7b7);
+    background: var(--bs-stock-grad, linear-gradient(95deg, #6ee7b7, #38bdf8));
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
   }
 
   /* Sólida y opaca: es lo único opaco de la pantalla, así que resalta

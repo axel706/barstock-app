@@ -473,6 +473,9 @@ const H = () => D.getElementById('dkHome');
     prueba(`.dkh-${t} usa la variable`, new RegExp('\\.dkh-' + t + '\\s*\\{ background: var\\(--hero-' + t + '\\)').test(CSS_DH));
   }
   prueba('el teléfono también usa las variables', /\.m-hero-red\s*\{ background: var\(--hero-red\)/.test(CSS_M));
+  // El saludo del teléfono, con el mismo degradado que el del escritorio
+  // (Axel, 2026-11-28): la variable de la marca, no el color copiado.
+  prueba('el saludo del teléfono lleva el degradado del logo (la variable)', /\.m-day \{[^}]*background: var\(--bs-stock-grad[^}]*background-clip: text/.test(CSS_M));
   prueba('ningún degradado copiado en desk-home.css', !/linear-gradient\(135deg, rgba/.test(CSS_DH));
   const i = (f) => INDEX.indexOf(f);
   prueba('desk-home.js después de mobile-home.js', i('src/desk-home.js') > i('src/mobile-home.js') && i('src/mobile-home.js') > 0);
