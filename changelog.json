@@ -1,5 +1,11 @@
 [
   {
+    "build": "20261128-120518",
+    "items": [
+      "Phone greeting: the full green-to-blue gradient"
+    ]
+  },
+  {
     "build": "20261128-115746",
     "items": [
       "Phone greeting in the logo colors"
@@ -190,13 +196,6 @@
     "items": [
       "Review and send on desktop: the order left, send right",
       "LOOP on desktop: place and download the CSV, no email"
-    ]
-  },
-  {
-    "build": "20261126-124237",
-    "items": [
-      "Orders on desktop updates live with changes from the phone",
-      "Centered − and + buttons"
     ]
   }
 ]

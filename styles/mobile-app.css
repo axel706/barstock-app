@@ -941,9 +941,14 @@ body.m-shell.m-txt-lg { --m-base: 15.5px; }
    * Sin esto, un nombre largo empujaba la píldora fuera. */
   /* Con el degradado de "Stock" del logo, como el saludo del escritorio
    * (Axel, 2026-11-28): --bs-stock-grad, el mismo de la marca, sin
-   * copiarlo. El relleno de abajo es para la cola de la "y" y la "g". */
+   * copiarlo. El relleno de abajo es para la cola de la "y" y la "g".
+   * Mide lo que su texto (flex 0, no 1): estirado hasta la píldora, el
+   * degradado se repartía en todo ese ancho y "Saturday" se quedaba con
+   * el tramo verde (Axel: "todo se ve casi verde"). La píldora sigue a la
+   * derecha por el space-between de .m-daterow, y un nombre largo sigue
+   * encogiéndose con puntos. */
   .m-day {
-    flex: 1 1 auto; min-width: 0;
+    flex: 0 1 auto; min-width: 0;
     font-size: var(--m-screen); font-weight: 800;
     letter-spacing: -.5px; line-height: 1.1; padding-bottom: 2px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
